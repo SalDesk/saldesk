@@ -1,237 +1,208 @@
-import { usePageTitle } from '../hooks/usePageTitle';
 import { useState, useEffect, useCallback } from 'react';
-import MetricCard from '../components/financial/MetricCard';
-import SimpleChart from '../components/financial/SimpleChart';
-import UnitPerformance from '../components/financial/UnitPerformance';
-import TopCustomers from '../components/financial/TopCustomers';
-import { exportarPDF } from '../components/financial/PdfReport';
-import { getResumo, getReceita, getUnidades, getTopClientes } from '../services/financeiroService';
-import useAuthStore from '../store/authStore';
+import { Euro, BarChart2, BookOpen, TrendingUp, Download, FileSpreadsheet, PiggyBank } from 'lucide-react';
+import { getResumo, getReceita, getUnidades, getTopClientes, getCanais, exportExcel } from '../services/financeiroService';
+import { useT } from '../i18n';
+import PageHeader from '../components/layout/PageHeader';
+import Button from '../components/ui/Button';
+import Card from '../components/ui/Card';
+import KpiCard from '../components/financial/KpiCard';
+import RevenueChart from '../components/financial/RevenueChart';
+import ChannelChart from '../components/financial/ChannelChart';
+import UnitTable from '../components/financial/UnitTable';
+import TopCustomersList from '../components/financial/TopCustomersList';
+import LoadingSpinner from '../components/shared/LoadingSpinner';
 
-function periodoMesAtual() {
-  const now = new Date();
-  const y = now.getFullYear();
-  const m = String(now.getMonth() + 1).padStart(2, '0');
-  const ultimo = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
-  return { inicio: `${y}-${m}-01`, fim: `${y}-${m}-${String(ultimo).padStart(2, '0')}` };
+/* ─── Helpers de periodo ─── */
+function mesAtual() {
+  const n = new Date(), y = n.getFullYear(), m = String(n.getMonth() + 1).padStart(2, '0');
+  return { inicio: `${y}-${m}-01`, fim: `${y}-${m}-${new Date(y, n.getMonth() + 1, 0).getDate()}` };
 }
-
-function periodoMesAnterior() {
-  const now = new Date();
-  const m = now.getMonth() === 0 ? 11 : now.getMonth() - 1;
-  const y = now.getMonth() === 0 ? now.getFullYear() - 1 : now.getFullYear();
-  const ultimo = new Date(y, m + 1, 0).getDate();
-  const ms = String(m + 1).padStart(2, '0');
-  return { inicio: `${y}-${ms}-01`, fim: `${y}-${ms}-${String(ultimo).padStart(2, '0')}` };
+function mesAnterior() {
+  const n = new Date(), mo = n.getMonth() === 0 ? 11 : n.getMonth() - 1;
+  const y = n.getMonth() === 0 ? n.getFullYear() - 1 : n.getFullYear();
+  const ms = String(mo + 1).padStart(2, '0');
+  return { inicio: `${y}-${ms}-01`, fim: `${y}-${ms}-${new Date(y, mo + 1, 0).getDate()}` };
+}
+function esteAno() {
+  const y = new Date().getFullYear();
+  return { inicio: `${y}-01-01`, fim: `${y}-12-31` };
 }
 
 const PRESETS = [
-  { label: 'Este mês', fn: periodoMesAtual },
-  { label: 'Mês anterior', fn: periodoMesAnterior },
-  { label: 'Este ano', fn: () => { const y = new Date().getFullYear(); return { inicio: `${y}-01-01`, fim: `${y}-12-31` }; } }
+  { label: 'Este mes',     fn: mesAtual },
+  { label: 'Mes anterior', fn: mesAnterior },
+  { label: 'Este ano',     fn: esteAno },
 ];
 
 const GRANULARIDADES = [
-  { value: 'day', label: 'Dia' },
-  { value: 'week', label: 'Semana' },
-  { value: 'month', label: 'Mês' }
+  { value: 'day',   label: 'Dia' },
+  { value: 'week',  label: 'Semana' },
+  { value: 'month', label: 'Mes' },
 ];
 
 export default function Financial() {
-  usePageTitle('Financeiro');
-  const { token, operator } = useAuthStore();
-  const [periodo, setPeriodo] = useState(periodoMesAtual());
+  const t = useT();
+  const [periodo, setPeriodo] = useState(mesAtual());
+  const [presetAtivo, setPresetAtivo] = useState(0);
   const [granularidade, setGranularidade] = useState('week');
-  const [dados, setDados] = useState({ resumo: null, receita: [], unidades: [], clientes: [] });
-  const [loading, setLoading] = useState(true);
-  const [exportando, setExportando] = useState(false);
-  const [erroLoad, setErroLoad] = useState('');
+  const [exporting, setExporting] = useState(false);
 
-  const carregar = useCallback(async () => {
+  const [resumo,    setResumo]    = useState(null);
+  const [receita,   setReceita]   = useState([]);
+  const [unidades,  setUnidades]  = useState([]);
+  const [clientes,  setClientes]  = useState([]);
+  const [canais,    setCanais]    = useState([]);
+  const [loading,   setLoading]   = useState(true);
+
+  const carregar = useCallback(async (p, gran) => {
     setLoading(true);
-    setErroLoad('');
     try {
-      const [resumoRes, receitaRes, unidadesRes, clientesRes] = await Promise.all([
-        getResumo(token, periodo.inicio, periodo.fim),
-        getReceita(token, periodo.inicio, periodo.fim, granularidade),
-        getUnidades(token, periodo.inicio, periodo.fim),
-        getTopClientes(token, periodo.inicio, periodo.fim)
+      const [r, rec, un, cli, can] = await Promise.all([
+        getResumo(p.inicio, p.fim),
+        getReceita(p.inicio, p.fim, gran),
+        getUnidades(p.inicio, p.fim),
+        getTopClientes(p.inicio, p.fim),
+        getCanais(p.inicio, p.fim),
       ]);
-      setDados({
-        resumo: resumoRes.data,
-        receita: receitaRes.data,
-        unidades: unidadesRes.data,
-        clientes: clientesRes.data
-      });
+      setResumo(r); setReceita(rec); setUnidades(un); setClientes(cli); setCanais(can);
     } catch (err) {
-      setErroLoad(err.message);
+      console.error(err);
     } finally {
       setLoading(false);
     }
-  }, [token, periodo, granularidade]);
+  }, []);
 
-  useEffect(() => { carregar(); }, [carregar]);
+  useEffect(() => { carregar(periodo, granularidade); }, [periodo, granularidade]);
 
-  async function handleExport() {
-    if (!dados.resumo) return;
-    setExportando(true);
-    try {
-      await exportarPDF({
-        operator,
-        periodo,
-        resumo: dados.resumo,
-        receitaDados: dados.receita,
-        unidadesDados: dados.unidades,
-        topClientesDados: dados.clientes
-      });
-    } catch (err) {
-      alert('Erro ao gerar PDF: ' + err.message);
-    } finally {
-      setExportando(false);
-    }
+  function selectPreset(i) {
+    const p = PRESETS[i].fn();
+    setPresetAtivo(i);
+    setPeriodo(p);
   }
 
-  const { resumo } = dados;
+  async function handleExport() {
+    setExporting(true);
+    try { await exportExcel(periodo.inicio, periodo.fim); }
+    finally { setExporting(false); }
+  }
+
+  const v = resumo?.variacao;
+  const atual = resumo?.atual;
 
   return (
     <div>
-      {/* Cabeçalho */}
-      <div className="flex flex-wrap items-start justify-between gap-4 mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Painel Financeiro</h1>
-          <p className="text-gray-500 text-sm mt-1">Receita, ocupação e performance</p>
-        </div>
+      <PageHeader
+        title={t('financial.title')}
+        actions={
+          <Button variant="secondary" icon={FileSpreadsheet} loading={exporting} onClick={handleExport}>
+            {t('financial.exportExcel')}
+          </Button>
+        }
+      />
 
-        <div className="flex flex-wrap items-center gap-2">
-          {/* Presets de período */}
-          {PRESETS.map(({ label, fn }) => (
-            <button key={label} onClick={() => setPeriodo(fn())} className="btn-secondary text-xs py-1.5 px-3">
-              {label}
+      {/* Barra de controlo */}
+      <div className="flex flex-wrap items-center gap-3 mb-6">
+        {/* Presets */}
+        <div className="flex gap-1 bg-n-100 rounded-sm p-0.5">
+          {PRESETS.map((p, i) => (
+            <button
+              key={p.label}
+              onClick={() => selectPreset(i)}
+              className={`px-3 py-1.5 rounded-xs text-xs font-body font-semibold transition-colors ${presetAtivo === i ? 'bg-white text-ocean-700 shadow-sm' : 'text-n-500 hover:text-n-700'}`}
+            >
+              {p.label}
             </button>
           ))}
-
-          {/* Datas customizadas */}
-          <input type="date" className="input text-sm py-1.5 w-36" value={periodo.inicio}
-            onChange={(e) => setPeriodo({ ...periodo, inicio: e.target.value })} />
-          <span className="text-gray-400">→</span>
-          <input type="date" className="input text-sm py-1.5 w-36" value={periodo.fim}
-            onChange={(e) => setPeriodo({ ...periodo, fim: e.target.value })} />
-
-          {/* Exportar PDF */}
-          <button
-            onClick={handleExport}
-            disabled={!dados.resumo || exportando}
-            className="btn-secondary text-sm py-1.5 px-4 flex items-center gap-1.5"
-          >
-            {exportando ? (
-              <span className="text-gray-400">A gerar...</span>
-            ) : (
-              <>⬇ <span>Exportar PDF</span></>
-            )}
-          </button>
         </div>
+
+        {/* Granularidade */}
+        <div className="flex gap-1 bg-n-100 rounded-sm p-0.5">
+          {GRANULARIDADES.map((g) => (
+            <button
+              key={g.value}
+              onClick={() => setGranularidade(g.value)}
+              className={`px-3 py-1.5 rounded-xs text-xs font-body font-semibold transition-colors ${granularidade === g.value ? 'bg-white text-ocean-700 shadow-sm' : 'text-n-500 hover:text-n-700'}`}
+            >
+              {g.label}
+            </button>
+          ))}
+        </div>
+
+        <span className="text-xs font-body text-n-400 ml-1">
+          {periodo.inicio} — {periodo.fim}
+        </span>
       </div>
 
-      {erroLoad && (
-        <div className="bg-red-50 text-red-600 rounded-xl p-4 mb-6 text-sm">{erroLoad}</div>
-      )}
-
       {loading ? (
-        <div className="text-center py-20 text-gray-400">
-          <div className="text-4xl mb-3">📊</div>
-          <p>A carregar dados financeiros...</p>
+        <div className="flex justify-center py-24"><LoadingSpinner size={36} /></div>
+      ) : (
+        <div className="space-y-6">
+          {/* KPIs */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <KpiCard
+              label={t('financial.revenue')}
+              value={atual?.receita}
+              delta={v?.receita}
+              deltaLabel="vs periodo ant."
+              icon={Euro}
+              format="euro"
+            />
+            <KpiCard
+              label={t('financial.occupancy')}
+              value={atual?.taxa_ocupacao}
+              delta={v?.taxa_ocupacao}
+              deltaLabel="p.p."
+              icon={BarChart2}
+              format="percent"
+            />
+            <KpiCard
+              label={t('dashboard.reservations')}
+              value={atual?.num_reservas}
+              delta={v?.num_reservas}
+              deltaLabel="vs periodo ant."
+              icon={BookOpen}
+            />
+            <KpiCard
+              label={t('financial.commissionsSaved')}
+              value={resumo?.poupanca_comissoes}
+              icon={PiggyBank}
+              format="euro"
+            />
+          </div>
+
+          {/* Graficos principais */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            <Card
+              className="lg:col-span-2"
+              header={
+                <div className="flex items-center justify-between">
+                  <h3 className="font-display font-semibold text-sm text-n-700">{t('financial.revenue')}</h3>
+                </div>
+              }
+              padding="px-5 pb-5 pt-2"
+            >
+              <RevenueChart data={receita} granularidade={granularidade} />
+            </Card>
+
+            <Card
+              header={<h3 className="font-display font-semibold text-sm text-n-700">{t('financial.byChannel')}</h3>}
+              padding="px-5 pb-5 pt-2"
+            >
+              <ChannelChart data={canais} />
+            </Card>
+          </div>
+
+          {/* Unidades + Top clientes */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <Card header={<h3 className="font-display font-semibold text-sm text-n-700">{t('financial.byUnit')}</h3>}>
+              <UnitTable data={unidades} />
+            </Card>
+
+            <Card header={<h3 className="font-display font-semibold text-sm text-n-700">Top Clientes</h3>}>
+              <TopCustomersList data={clientes} />
+            </Card>
+          </div>
         </div>
-      ) : resumo && (
-        <>
-          {/* Métricas principais */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-            <MetricCard
-              label="Receita Total"
-              value={resumo.atual.receita}
-              variacao={resumo.variacao.receita}
-              variacaoLabel={`${resumo.variacao.receita >= 0 ? '+' : ''}${resumo.variacao.receita}%`}
-              icon="💰"
-              formato="euro"
-            />
-            <MetricCard
-              label="Nº Reservas"
-              value={resumo.atual.num_reservas}
-              variacao={resumo.variacao.num_reservas}
-              variacaoLabel={`${resumo.variacao.num_reservas >= 0 ? '+' : ''}${resumo.variacao.num_reservas}`}
-              icon="📅"
-            />
-            <MetricCard
-              label="Taxa de Ocupação"
-              value={resumo.atual.taxa_ocupacao}
-              variacao={resumo.variacao.taxa_ocupacao}
-              variacaoLabel={`${resumo.variacao.taxa_ocupacao >= 0 ? '+' : ''}${resumo.variacao.taxa_ocupacao}pp`}
-              icon="📊"
-              formato="percentagem"
-            />
-            <MetricCard
-              label="Valor Médio / Reserva"
-              value={resumo.atual.valor_medio}
-              variacao={resumo.variacao.valor_medio}
-              variacaoLabel={`${resumo.variacao.valor_medio >= 0 ? '+' : ''}${resumo.variacao.valor_medio}%`}
-              icon="🧾"
-              formato="euro"
-            />
-          </div>
-
-          {/* Gráfico de receita */}
-          <div className="card mb-6">
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <h2 className="font-semibold text-gray-900">Receita por Período</h2>
-                <p className="text-xs text-gray-400 mt-0.5">
-                  {periodo.inicio} → {periodo.fim}
-                </p>
-              </div>
-              <div className="flex gap-1 bg-gray-100 rounded-lg p-1">
-                {GRANULARIDADES.map(({ value, label }) => (
-                  <button
-                    key={value}
-                    onClick={() => setGranularidade(value)}
-                    className={`text-xs px-3 py-1 rounded-md transition-colors ${
-                      granularidade === value
-                        ? 'bg-white text-primary-500 shadow-sm font-medium'
-                        : 'text-gray-500 hover:text-gray-700'
-                    }`}
-                  >
-                    {label}
-                  </button>
-                ))}
-              </div>
-            </div>
-            <SimpleChart dados={dados.receita} />
-          </div>
-
-          {/* Performance + Top clientes */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div className="card">
-              <h2 className="font-semibold text-gray-900 mb-4">Performance por Unidade</h2>
-              <UnitPerformance dados={dados.unidades} />
-            </div>
-            <div className="card">
-              <h2 className="font-semibold text-gray-900 mb-4">Top Clientes no Período</h2>
-              <TopCustomers dados={dados.clientes} />
-            </div>
-          </div>
-
-          {/* Comparativo */}
-          <div className="card mt-6 bg-primary-50 border-primary-100">
-            <h3 className="text-sm font-semibold text-primary-700 mb-2">Comparativo com período anterior</h3>
-            <p className="text-xs text-primary-600">
-              Período anterior: <strong>{resumo.periodo_anterior.inicio}</strong> → <strong>{resumo.periodo_anterior.fim}</strong>
-              {' '}·{' '}
-              Receita: <strong>{Number(resumo.anterior.receita).toFixed(2)} €</strong>
-              {' '}·{' '}
-              Reservas: <strong>{resumo.anterior.num_reservas}</strong>
-              {' '}·{' '}
-              Ocupação: <strong>{resumo.anterior.taxa_ocupacao}%</strong>
-            </p>
-          </div>
-        </>
       )}
     </div>
   );

@@ -1,102 +1,103 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Euro, BookOpen, BarChart2, CalendarDays, Users, Zap, Building2, ArrowRight } from 'lucide-react';
 import { getResumo } from '../services/financeiroService';
 import useAuthStore from '../store/authStore';
+import { useT } from '../i18n';
+import PageHeader from '../components/layout/PageHeader';
+import Button from '../components/ui/Button';
+import KpiCard from '../components/financial/KpiCard';
 
 const TYPE_LABEL = {
-  hotel: 'Hotel / Alojamento',
-  activity: 'Actividade Turística',
-  rentacar: 'Rent-a-Car',
-  restaurant: 'Restaurante / Bar'
+  hotel:      'Hotel / Alojamento',
+  activity:   'Actividade Turistica',
+  rentacar:   'Rent-a-Car',
+  restaurant: 'Restaurante / Bar',
 };
 
 function mesAtual() {
-  const now = new Date();
-  const y = now.getFullYear();
-  const m = String(now.getMonth() + 1).padStart(2, '0');
-  const ultimo = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
-  return { inicio: `${y}-${m}-01`, fim: `${y}-${m}-${String(ultimo).padStart(2, '0')}` };
+  const n = new Date(), y = n.getFullYear(), m = String(n.getMonth() + 1).padStart(2, '0');
+  return { inicio: `${y}-${m}-01`, fim: `${y}-${m}-${new Date(y, n.getMonth() + 1, 0).getDate()}` };
 }
 
+const QUICK_LINKS = [
+  { icon: BookOpen,    label: 'Reservas',    desc: 'Gerir e acompanhar reservas',        to: '/reservas' },
+  { icon: CalendarDays,label: 'Calendario',  desc: 'Vista mensal de ocupacao',           to: '/calendario' },
+  { icon: Users,       label: 'Clientes',    desc: 'CRM com historico e estatisticas',   to: '/clientes' },
+  { icon: Zap,         label: 'Automacoes',  desc: 'Emails e WhatsApp automaticos',      to: '/automacoes' },
+  { icon: BarChart2,   label: 'Financeiro',  desc: 'Relatorios e exportacoes',           to: '/financeiro' },
+  { icon: Building2,   label: 'Unidades',    desc: 'Gerir quartos, actividades, etc.',   to: '/unidades' },
+];
+
 export default function Dashboard() {
-  const { token, operator } = useAuthStore();
+  const t = useT();
+  const { operator } = useAuthStore();
   const navigate = useNavigate();
-  const [metricas, setMetricas] = useState(null);
+  const [resumo, setResumo] = useState(null);
   const periodo = mesAtual();
 
   useEffect(() => {
-    getResumo(token, periodo.inicio, periodo.fim)
-      .then(({ data }) => setMetricas(data.atual))
+    getResumo(periodo.inicio, periodo.fim)
+      .then(setResumo)
       .catch(() => {});
   }, []);
 
-  const cards = [
-    {
-      label: 'Receita este mês',
-      value: metricas ? `${Number(metricas.receita).toFixed(2)} €` : '—',
-      icon: '💰',
-      to: '/financeiro'
-    },
-    {
-      label: 'Reservas este mês',
-      value: metricas ? String(metricas.num_reservas) : '—',
-      icon: '📅',
-      to: '/reservas'
-    },
-    {
-      label: 'Taxa de ocupação',
-      value: metricas ? `${metricas.taxa_ocupacao}%` : '—',
-      icon: '📊',
-      to: '/financeiro'
-    }
-  ];
+  const atual = resumo?.atual;
+  const v     = resumo?.variacao;
 
   return (
     <div>
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900">
-          Bem-vindo, {operator?.name} 👋
-        </h1>
-        <p className="text-gray-500 mt-1 text-sm">
-          {TYPE_LABEL[operator?.operator_type]} · {periodo.inicio.slice(0, 7)}
-        </p>
+      <PageHeader
+        title={`Bem-vindo, ${operator?.name || ''}`}
+        subtitle={`${TYPE_LABEL[operator?.operator_type] || ''} · ${periodo.inicio.slice(0, 7)}`}
+      />
+
+      {/* KPIs do mes */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+        <KpiCard
+          label={t('dashboard.revenue')}
+          value={atual?.receita ?? '—'}
+          delta={v?.receita}
+          deltaLabel="vs mes ant."
+          icon={Euro}
+          format="euro"
+        />
+        <KpiCard
+          label={t('dashboard.reservations')}
+          value={atual?.num_reservas ?? '—'}
+          delta={v?.num_reservas}
+          deltaLabel="vs mes ant."
+          icon={BookOpen}
+        />
+        <KpiCard
+          label={t('dashboard.occupancy')}
+          value={atual?.taxa_ocupacao ?? '—'}
+          delta={v?.taxa_ocupacao}
+          deltaLabel="p.p."
+          icon={BarChart2}
+          format="percent"
+        />
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-        {cards.map(({ label, value, icon, to }) => (
+      {/* Accoes rapidas */}
+      <h2 className="font-display font-semibold text-sm text-n-700 uppercase tracking-wide mb-3">
+        {t('dashboard.quickActions')}
+      </h2>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+        {QUICK_LINKS.map(({ icon: Icon, label, desc, to }) => (
           <button
-            key={label}
+            key={to}
             onClick={() => navigate(to)}
-            className="card flex items-center gap-4 text-left hover:shadow-md hover:border-primary-200 border-2 border-transparent transition-all"
+            className="bg-white rounded-md border border-n-200 shadow-sm px-4 py-3.5 flex items-center gap-3 text-left hover:border-ocean-300 hover:shadow-md transition-all group"
           >
-            <div className="text-3xl">{icon}</div>
-            <div>
-              <p className="text-sm text-gray-500">{label}</p>
-              <p className="text-2xl font-bold text-gray-900">{value}</p>
+            <div className="w-9 h-9 rounded-sm bg-ocean-50 flex items-center justify-center shrink-0 group-hover:bg-ocean-100 transition-colors">
+              <Icon size={18} strokeWidth={1.75} className="text-ocean-700" />
             </div>
-          </button>
-        ))}
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {[
-          { icon: '📅', titulo: 'Reservas', desc: 'Gerir e acompanhar todas as reservas', to: '/reservas' },
-          { icon: '🗓️', titulo: 'Calendário', desc: 'Vista mensal de ocupação por unidade', to: '/calendario' },
-          { icon: '👥', titulo: 'Clientes', desc: 'CRM com histórico e estatísticas', to: '/clientes' },
-          { icon: '💰', titulo: 'Financeiro', desc: 'Relatórios, exportação PDF', to: '/financeiro' }
-        ].map(({ icon, titulo, desc, to }) => (
-          <button
-            key={titulo}
-            onClick={() => navigate(to)}
-            className="card flex items-center gap-4 text-left hover:shadow-md hover:border-primary-200 border-2 border-transparent transition-all"
-          >
-            <div className="w-12 h-12 bg-primary-50 rounded-xl flex items-center justify-center text-2xl shrink-0">
-              {icon}
+            <div className="flex-1 min-w-0">
+              <p className="font-display font-semibold text-sm text-n-900">{label}</p>
+              <p className="text-xs font-body text-n-500 mt-0.5 truncate">{desc}</p>
             </div>
-            <div>
-              <p className="font-semibold text-gray-900">{titulo}</p>
-              <p className="text-sm text-gray-500">{desc}</p>
-            </div>
+            <ArrowRight size={14} strokeWidth={1.75} className="text-n-300 shrink-0 group-hover:text-ocean-700 transition-colors" />
           </button>
         ))}
       </div>

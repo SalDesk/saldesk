@@ -1,35 +1,39 @@
-const API = '/api';
+import api from './api';
 
-async function handleResponse(res) {
-  const json = await res.json();
-  if (!res.ok) throw new Error(json.error || 'Erro na requisição');
-  return json;
+export async function getResumo(inicio, fim) {
+  const { data } = await api.get('/financial/resumo', { params: { inicio, fim } });
+  return data.data;
 }
 
-function headers(token) {
-  return { Authorization: `Bearer ${token}` };
+export async function getReceita(inicio, fim, granularidade = 'week') {
+  const { data } = await api.get('/financial/receita', { params: { inicio, fim, granularidade } });
+  return data.data;
 }
 
-function qs(params) {
-  return new URLSearchParams(params).toString();
+export async function getUnidades(inicio, fim) {
+  const { data } = await api.get('/financial/unidades', { params: { inicio, fim } });
+  return data.data;
 }
 
-export async function getResumo(token, inicio, fim) {
-  const res = await fetch(`${API}/financeiro/resumo?${qs({ inicio, fim })}`, { headers: headers(token) });
-  return handleResponse(res);
+export async function getTopClientes(inicio, fim) {
+  const { data } = await api.get('/financial/clientes', { params: { inicio, fim } });
+  return data.data;
 }
 
-export async function getReceita(token, inicio, fim, granularidade = 'week') {
-  const res = await fetch(`${API}/financeiro/receita?${qs({ inicio, fim, granularidade })}`, { headers: headers(token) });
-  return handleResponse(res);
+export async function getCanais(inicio, fim) {
+  const { data } = await api.get('/financial/canais', { params: { inicio, fim } });
+  return data.data;
 }
 
-export async function getUnidades(token, inicio, fim) {
-  const res = await fetch(`${API}/financeiro/unidades?${qs({ inicio, fim })}`, { headers: headers(token) });
-  return handleResponse(res);
-}
-
-export async function getTopClientes(token, inicio, fim) {
-  const res = await fetch(`${API}/financeiro/clientes?${qs({ inicio, fim })}`, { headers: headers(token) });
-  return handleResponse(res);
+export async function exportExcel(inicio, fim) {
+  const response = await api.get('/financial/export', {
+    params: { inicio, fim },
+    responseType: 'blob',
+  });
+  const url = URL.createObjectURL(response.data);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `saldesk-${inicio}-${fim}.xlsx`;
+  a.click();
+  URL.revokeObjectURL(url);
 }
