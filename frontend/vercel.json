@@ -1,0 +1,7 @@
+{
+  "rewrites": [
+    { "source": "/api/:path*",    "destination": "https://SEU_APP.railway.app/api/:path*" },
+    { "source": "/public/:path*", "destination": "https://SEU_APP.railway.app/public/:path*" },
+    { "source": "/:path*",        "destination": "/index.html" }
+  ]
+}

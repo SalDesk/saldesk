@@ -1,0 +1,60 @@
+:root {
+  /* Ocean — Cor Primaria */
+  --ocean-900: #062A38;
+  --ocean-800: #0A3F55;
+  --ocean-700: #0D5470;
+  --ocean-600: #10698C;
+  --ocean-500: #1480A8;
+  --ocean-400: #3A9BBF;
+  --ocean-300: #71BDD4;
+  --ocean-200: #A8D9E8;
+  --ocean-100: #D6EEF5;
+  --ocean-50:  #EBF7FB;
+
+  /* Sand — Cor Secundaria / Acento */
+  --sand-600:  #BE941C;
+  --sand-500:  #D4A82A;
+  --sand-400:  #E0BF5A;
+  --sand-300:  #EAD08A;
+  --sand-100:  #F8F0D8;
+  --sand-50:   #FDF8EE;
+
+  /* Neutrals */
+  --n900: #1A2332;
+  --n800: #1F2937;
+  --n700: #374151;
+  --n600: #4B5563;
+  --n500: #6B7280;
+  --n400: #9CA3AF;
+  --n300: #D1D5DB;
+  --n200: #E5E8EC;
+  --n100: #F3F4F6;
+  --n50:  #F9FAFB;
+
+  /* Semanticas */
+  --success:       #1A7A4A;
+  --success-light: #DCFCE7;
+  --warning:       #B45309;
+  --warning-light: #FEF3C7;
+  --error:         #B91C1C;
+  --error-light:   #FEE2E2;
+  --info:          #0D5470;
+  --info-light:    #EBF7FB;
+
+  /* Tipografia */
+  --font-display: 'Sora', sans-serif;
+  --font-body:    'DM Sans', sans-serif;
+  --font-mono:    'DM Mono', monospace;
+
+  /* Border radius */
+  --radius-xs:  4px;
+  --radius-sm:  8px;
+  --radius-md:  12px;
+  --radius-lg:  16px;
+  --radius-xl:  24px;
+
+  /* Sombras */
+  --shadow-sm: 0 1px 4px rgba(6,42,56,0.08);
+  --shadow-md: 0 4px 16px rgba(6,42,56,0.10);
+  --shadow-lg: 0 12px 40px rgba(6,42,56,0.14);
+}

@@ -1,0 +1,37 @@
+@import './tokens.css';
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  *, *::before, *::after {
+    box-sizing: border-box;
+  }
+
+  html {
+    font-size: 16px;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  body {
+    font-family: var(--font-body);
+    background-color: var(--n50);
+    color: var(--n900);
+    line-height: 1.5;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-display);
+    color: var(--n900);
+    line-height: 1.25;
+  }
+
+  a {
+    color: var(--ocean-700);
+    text-decoration: none;
+  }
+
+  a:hover {
+    color: var(--ocean-500);
+  }
+}
