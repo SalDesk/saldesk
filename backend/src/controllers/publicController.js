@@ -159,4 +159,30 @@ async function criarReserva(req, res, next) {
   }
 }
 
-module.exports = { getOperador, verificarDisponibilidadePublica, criarReserva };
+async function discover(req, res, next) {
+  try {
+    const { type, search } = req.query;
+
+    let q = supabaseAdmin
+      .from('operators')
+      .select('id, name, slug, operator_type, description, address, phone, logo_url')
+      .eq('onboarding_complete', true)
+      .order('name');
+
+    if (type && ['hotel','activity','rentacar','restaurant'].includes(type)) {
+      q = q.eq('operator_type', type);
+    }
+    if (search) {
+      q = q.ilike('name', `%${search}%`);
+    }
+
+    const { data, error } = await q;
+    if (error) throw error;
+
+    return res.json({ data: data || [], message: 'Operadores listados' });
+  } catch (err) {
+    next(err);
+  }
+}
+
+module.exports = { getOperador, verificarDisponibilidadePublica, criarReserva, discover };
