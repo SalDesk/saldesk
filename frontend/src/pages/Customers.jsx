@@ -1,109 +1,180 @@
-import { usePageTitle } from '../hooks/usePageTitle';
 import { useState, useEffect, useCallback } from 'react';
-import CustomerCard from '../components/crm/CustomerCard';
+import { Search, Download, Users, Globe, TrendingUp, Star } from 'lucide-react';
+import { listCustomers, exportCustomersCsv } from '../services/customersService';
+import { useT } from '../i18n';
+import PageHeader from '../components/layout/PageHeader';
+import Button from '../components/ui/Button';
+import Input from '../components/ui/Input';
+import Card from '../components/ui/Card';
+import Table from '../components/ui/Table';
 import CustomerDetail from '../components/crm/CustomerDetail';
-import { listCustomers } from '../services/customersService';
-import useAuthStore from '../store/authStore';
+import LoadingSpinner from '../components/shared/LoadingSpinner';
+
+function MetricCard({ icon: Icon, label, value, sub }) {
+  return (
+    <div className="bg-white rounded-md border border-n-200 shadow-sm px-5 py-4 flex items-center gap-4">
+      <div className="w-10 h-10 rounded-sm bg-ocean-50 flex items-center justify-center shrink-0">
+        <Icon size={20} strokeWidth={1.75} className="text-ocean-700" />
+      </div>
+      <div>
+        <p className="font-display font-bold text-xl text-n-900">{value}</p>
+        <p className="text-xs font-body text-n-500 mt-0.5">{label}</p>
+        {sub && <p className="text-xs font-body text-n-400">{sub}</p>}
+      </div>
+    </div>
+  );
+}
+
+const COLUMNS = (t, onSelect) => [
+  {
+    key: 'name',
+    label: t('customers.name'),
+    render: (c) => (
+      <button onClick={() => onSelect(c.id)} className="font-body font-semibold text-n-900 hover:text-ocean-700 transition-colors text-left">
+        {c.name}
+      </button>
+    ),
+  },
+  { key: 'email', label: t('customers.email'), render: (c) => <span className="text-n-600">{c.email}</span> },
+  { key: 'country_code', label: t('customers.nationality'), render: (c) => c.country_code || '—', width: '80px' },
+  { key: 'total_visits', label: t('customers.visits'), render: (c) => c.total_visits, width: '80px' },
+  {
+    key: 'total_spent',
+    label: t('customers.totalSpent'),
+    render: (c) => (
+      <span className="font-display font-semibold text-ocean-700">
+        €{Number(c.total_spent).toFixed(2)}
+      </span>
+    ),
+    width: '110px',
+  },
+  {
+    key: 'language',
+    label: 'Idioma',
+    render: (c) => <span className="text-n-500 text-xs uppercase">{c.language}</span>,
+    width: '70px',
+  },
+];
 
 export default function Customers() {
-  usePageTitle('Clientes');
-  const token = useAuthStore((s) => s.token);
+  const t = useT();
   const [customers, setCustomers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
-  const [detalheId, setDetalheId] = useState(null);
+  const [countryFilter, setCountryFilter] = useState('');
+  const [selectedId, setSelectedId] = useState(null);
+  const [exporting, setExporting] = useState(false);
 
-  const carregar = useCallback(async (q = search) => {
+  const carregar = useCallback(async (q = search, country = countryFilter) => {
     setLoading(true);
     try {
       const filtros = {};
       if (q) filtros.search = q;
-      const { data } = await listCustomers(token, filtros);
+      if (country) filtros.country_code = country;
+      const data = await listCustomers(filtros);
       setCustomers(data);
     } finally {
       setLoading(false);
     }
-  }, [token, search]);
+  }, []);
 
-  useEffect(() => { carregar(''); }, []);
+  useEffect(() => { carregar('', ''); }, []);
 
   function handleSearch(e) {
     e.preventDefault();
-    carregar(search);
+    carregar(search, countryFilter);
+  }
+
+  function handleCountryFilter(country) {
+    setCountryFilter(country);
+    carregar(search, country);
+  }
+
+  async function handleExport() {
+    setExporting(true);
+    try { await exportCustomersCsv(); }
+    finally { setExporting(false); }
   }
 
   function handleUpdate(updated) {
-    setCustomers(customers.map((c) => (c.id === updated.id ? { ...c, ...updated } : c)));
+    setCustomers((prev) => prev.map((c) => (c.id === updated.id ? { ...c, ...updated } : c)));
   }
 
-  const totalGasto = customers.reduce((sum, c) => sum + Number(c.total_spent), 0);
-  const totalVisitas = customers.reduce((sum, c) => sum + c.total_visits, 0);
+  const totalGasto   = customers.reduce((s, c) => s + Number(c.total_spent), 0);
+  const totalVisitas = customers.reduce((s, c) => s + c.total_visits, 0);
+  const paises       = new Set(customers.map((c) => c.country_code).filter(Boolean)).size;
+  const topCliente   = customers[0];
+
+  const countries = [...new Set(customers.map((c) => c.country_code).filter(Boolean))].sort();
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Clientes</h1>
-          <p className="text-gray-500 text-sm mt-1">{customers.length} cliente(s) registado(s)</p>
-        </div>
+      <PageHeader
+        title={t('customers.title')}
+        subtitle={`${customers.length} cliente(s) registado(s)`}
+        actions={
+          <Button variant="secondary" icon={Download} loading={exporting} onClick={handleExport}>
+            Exportar CSV
+          </Button>
+        }
+      />
+
+      {/* Metricas */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <MetricCard icon={Users}    label="Total clientes"  value={customers.length} />
+        <MetricCard icon={TrendingUp} label="Receita total" value={`€${totalGasto.toFixed(0)}`} />
+        <MetricCard icon={Globe}    label="Paises"          value={paises} />
+        <MetricCard icon={Star}     label="Top cliente"     value={topCliente?.name?.split(' ')[0] || '—'} sub={topCliente ? `€${Number(topCliente.total_spent).toFixed(0)}` : ''} />
       </div>
 
-      {/* Stats rápidas */}
-      <div className="grid grid-cols-3 gap-4 mb-6">
-        {[
-          { label: 'Total de clientes', value: customers.length, icon: '👥' },
-          { label: 'Total de visitas', value: totalVisitas, icon: '🏨' },
-          { label: 'Receita total (CRM)', value: `${totalGasto.toFixed(2)} €`, icon: '💰' }
-        ].map(({ label, value, icon }) => (
-          <div key={label} className="card flex items-center gap-3 py-4">
-            <span className="text-2xl">{icon}</span>
-            <div>
-              <p className="text-xs text-gray-400">{label}</p>
-              <p className="text-xl font-bold text-gray-900">{value}</p>
-            </div>
+      {/* Pesquisa e filtros */}
+      <div className="flex flex-wrap gap-3 mb-4">
+        <form onSubmit={handleSearch} className="flex gap-2 flex-1 min-w-[200px]">
+          <div className="flex-1">
+            <Input
+              placeholder={`${t('common.search')}...`}
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
           </div>
-        ))}
+          <Button type="submit" icon={Search} variant="secondary" size="md" />
+        </form>
+
+        {countries.length > 0 && (
+          <div className="flex gap-2 flex-wrap items-center">
+            <button
+              onClick={() => handleCountryFilter('')}
+              className={`px-3 py-1.5 rounded-sm text-xs font-body font-semibold transition-colors ${!countryFilter ? 'bg-ocean-700 text-white' : 'bg-white border border-n-200 text-n-600 hover:border-ocean-300'}`}
+            >
+              Todos
+            </button>
+            {countries.slice(0, 8).map((c) => (
+              <button
+                key={c}
+                onClick={() => handleCountryFilter(c)}
+                className={`px-3 py-1.5 rounded-sm text-xs font-body font-semibold transition-colors ${countryFilter === c ? 'bg-ocean-700 text-white' : 'bg-white border border-n-200 text-n-600 hover:border-ocean-300'}`}
+              >
+                {c}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
-      {/* Pesquisa */}
-      <form onSubmit={handleSearch} className="flex gap-2 mb-6">
-        <input
-          type="text"
-          className="input flex-1"
-          placeholder="Pesquisar por nome ou email..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
+      {/* Tabela */}
+      <Card padding="p-0">
+        <Table
+          columns={COLUMNS(t, setSelectedId)}
+          rows={customers}
+          loading={loading}
         />
-        <button type="submit" className="btn-primary px-5">Pesquisar</button>
-        {search && (
-          <button type="button" onClick={() => { setSearch(''); carregar(''); }} className="btn-secondary px-3">
-            Limpar
-          </button>
-        )}
-      </form>
+      </Card>
 
-      {loading ? (
-        <div className="text-center py-16 text-gray-400">A carregar...</div>
-      ) : customers.length === 0 ? (
-        <div className="text-center py-16 text-gray-400">
-          <div className="text-5xl mb-4">👥</div>
-          <p className="font-medium">
-            {search ? 'Nenhum cliente encontrado' : 'Sem clientes ainda'}
-          </p>
-          <p className="text-sm mt-1">Os clientes são criados automaticamente a cada nova reserva</p>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {customers.map((c) => (
-            <CustomerCard key={c.id} customer={c} onClick={(c) => setDetalheId(c.id)} />
-          ))}
-        </div>
-      )}
-
-      {detalheId && (
+      {/* Perfil lateral */}
+      {selectedId && (
         <CustomerDetail
-          customerId={detalheId}
-          onClose={() => setDetalheId(null)}
+          customerId={selectedId}
+          onClose={() => setSelectedId(null)}
           onUpdate={handleUpdate}
         />
       )}

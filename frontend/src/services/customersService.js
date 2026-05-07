@@ -1,29 +1,31 @@
-const API = '/api';
+import api from './api';
 
-async function handleResponse(res) {
-  const json = await res.json();
-  if (!res.ok) throw new Error(json.error || 'Erro na requisição');
-  return json;
+export async function listCustomers(filtros = {}) {
+  const { data } = await api.get('/customers', { params: filtros });
+  return data.data;
 }
 
-function headers(token) {
-  return { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` };
+export async function getCustomer(id) {
+  const { data } = await api.get(`/customers/${id}`);
+  return data.data;
 }
 
-export async function listCustomers(token, filtros = {}) {
-  const params = new URLSearchParams(filtros).toString();
-  const res = await fetch(`${API}/customers${params ? '?' + params : ''}`, { headers: headers(token) });
-  return handleResponse(res);
+export async function updateCustomer(id, dados) {
+  const { data } = await api.put(`/customers/${id}`, dados);
+  return data.data;
 }
 
-export async function getCustomer(token, id) {
-  const res = await fetch(`${API}/customers/${id}`, { headers: headers(token) });
-  return handleResponse(res);
+export async function getSegments() {
+  const { data } = await api.get('/customers/segments');
+  return data.data;
 }
 
-export async function updateCustomer(token, id, dados) {
-  const res = await fetch(`${API}/customers/${id}`, {
-    method: 'PUT', headers: headers(token), body: JSON.stringify(dados)
-  });
-  return handleResponse(res);
+export async function exportCustomersCsv() {
+  const response = await api.get('/customers/export', { responseType: 'blob' });
+  const url = URL.createObjectURL(response.data);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `clientes-${new Date().toISOString().split('T')[0]}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
 }

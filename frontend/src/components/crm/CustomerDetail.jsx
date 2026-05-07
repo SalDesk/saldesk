@@ -1,141 +1,166 @@
 import { useState, useEffect } from 'react';
+import { X, ArrowRight, Pencil, Check } from 'lucide-react';
 import { getCustomer, updateCustomer } from '../../services/customersService';
-import StatusBadge from '../reservations/StatusBadge';
-import useAuthStore from '../../store/authStore';
+import { useT } from '../../i18n';
+import Badge from '../ui/Badge';
+import Button from '../ui/Button';
+import Input, { Textarea } from '../ui/Input';
+import LoadingSpinner from '../shared/LoadingSpinner';
 
-function fmt(date) {
-  return new Date(date + 'T00:00:00').toLocaleDateString('pt-PT', { day: '2-digit', month: 'short', year: 'numeric' });
+function formatDate(d) {
+  if (!d) return '—';
+  const [y, m, day] = d.split('-');
+  return `${day}/${m}/${y}`;
 }
 
 export default function CustomerDetail({ customerId, onClose, onUpdate }) {
-  const token = useAuthStore((s) => s.token);
-  const [dados, setDados] = useState(null);
+  const t = useT();
+  const [customer, setCustomer] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [editandoNota, setEditandoNota] = useState(false);
-  const [nota, setNota] = useState('');
+  const [editingNotes, setEditingNotes] = useState(false);
+  const [notes, setNotes] = useState('');
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    getCustomer(token, customerId)
-      .then(({ data }) => { setDados(data); setNota(data.notes || ''); })
+    if (!customerId) return;
+    setLoading(true);
+    getCustomer(customerId)
+      .then((data) => {
+        setCustomer(data);
+        setNotes(data.notes || '');
+      })
       .finally(() => setLoading(false));
   }, [customerId]);
 
-  async function handleSaveNota() {
+  async function saveNotes() {
     setSaving(true);
     try {
-      const { data } = await updateCustomer(token, customerId, { notes: nota });
-      setDados({ ...dados, notes: data.notes });
-      onUpdate(data);
-      setEditandoNota(false);
+      const updated = await updateCustomer(customerId, { notes });
+      setCustomer({ ...customer, notes: updated.notes });
+      onUpdate?.(updated);
+      setEditingNotes(false);
     } finally {
       setSaving(false);
     }
   }
 
   return (
-    <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] flex flex-col">
+    <div className="fixed inset-0 z-40 flex justify-end">
+      {/* Overlay */}
+      <div className="absolute inset-0 bg-ocean-900/30" onClick={onClose} />
+
+      {/* Painel */}
+      <div className="relative z-50 w-full max-w-md bg-white shadow-lg flex flex-col h-full overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-100">
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-full bg-primary-100 text-primary-500 flex items-center justify-center font-bold text-xl">
-              {dados?.name?.charAt(0).toUpperCase() || '?'}
-            </div>
-            <div>
-              <h2 className="text-lg font-bold text-gray-900">{dados?.name}</h2>
-              <p className="text-sm text-gray-400">{dados?.email}</p>
-            </div>
-          </div>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-2xl leading-none">×</button>
+        <div className="flex items-center justify-between px-5 py-4 border-b border-n-200 shrink-0">
+          <h2 className="font-display font-bold text-base text-n-900">
+            {loading ? 'A carregar...' : customer?.name}
+          </h2>
+          <button onClick={onClose} className="p-1 text-n-400 hover:text-n-700 transition-colors">
+            <X size={18} strokeWidth={1.75} />
+          </button>
         </div>
 
         {loading ? (
-          <div className="flex-1 flex items-center justify-center text-gray-400 p-8">A carregar...</div>
-        ) : (
-          <div className="flex-1 overflow-y-auto p-6 space-y-6">
-            {/* Stats */}
-            <div className="grid grid-cols-3 gap-4">
+          <div className="flex-1 flex items-center justify-center">
+            <LoadingSpinner size={28} />
+          </div>
+        ) : customer ? (
+          <div className="flex-1 overflow-y-auto">
+            {/* Metricas */}
+            <div className="grid grid-cols-3 border-b border-n-200">
               {[
-                { label: 'Visitas', value: dados.total_visits },
-                { label: 'Total gasto', value: `${Number(dados.total_spent).toFixed(2)} €` },
-                { label: 'Idioma', value: dados.language === 'en' ? '🇬🇧 English' : '🇵🇹 Português' }
-              ].map(({ label, value }) => (
-                <div key={label} className="bg-gray-50 rounded-xl p-3 text-center">
-                  <p className="font-bold text-gray-900">{value}</p>
-                  <p className="text-xs text-gray-400 mt-0.5">{label}</p>
+                { label: 'Visitas',      value: customer.total_visits },
+                { label: 'Total gasto',  value: `€${Number(customer.total_spent).toFixed(0)}` },
+                { label: 'Pais',         value: customer.country_code || '—' },
+              ].map((m) => (
+                <div key={m.label} className="px-4 py-4 text-center border-r last:border-r-0 border-n-200">
+                  <p className="font-display font-bold text-xl text-ocean-700">{m.value}</p>
+                  <p className="text-xs font-body text-n-500 mt-0.5">{m.label}</p>
                 </div>
               ))}
             </div>
 
-            {/* Info */}
-            <div className="grid grid-cols-2 gap-2 text-sm text-gray-600">
-              {dados.phone && <p>📞 {dados.phone}</p>}
-              {dados.country_code && <p>🌍 {dados.country_code}</p>}
-              <p>📅 Cliente desde {fmt(dados.created_at.split('T')[0])}</p>
-            </div>
-
-            {/* Notas */}
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <h3 className="font-semibold text-gray-700 text-sm">Notas internas</h3>
-                {!editandoNota && (
-                  <button onClick={() => setEditandoNota(true)} className="text-xs text-primary-500 hover:underline">
-                    {dados.notes ? 'Editar' : 'Adicionar nota'}
-                  </button>
-                )}
-              </div>
-              {editandoNota ? (
+            <div className="px-5 py-4 space-y-5">
+              {/* Dados de contacto */}
+              <section>
+                <h3 className="text-xs font-body font-bold uppercase tracking-wide text-n-500 mb-3">Contacto</h3>
                 <div className="space-y-2">
-                  <textarea
-                    className="input resize-none w-full"
-                    rows={3}
-                    value={nota}
-                    onChange={(e) => setNota(e.target.value)}
-                    autoFocus
-                    placeholder="Notas sobre este cliente..."
-                  />
-                  <div className="flex gap-2">
-                    <button onClick={() => setEditandoNota(false)} className="btn-secondary text-sm py-1 px-3">Cancelar</button>
-                    <button onClick={handleSaveNota} disabled={saving} className="btn-primary text-sm py-1 px-3">
-                      {saving ? 'A guardar...' : 'Guardar'}
+                  <InfoRow label="Email"    value={customer.email} />
+                  <InfoRow label="Telefone" value={customer.phone || '—'} />
+                  <InfoRow label="Idioma"   value={customer.language?.toUpperCase()} />
+                </div>
+              </section>
+
+              {/* Notas */}
+              <section>
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="text-xs font-body font-bold uppercase tracking-wide text-n-500">Notas</h3>
+                  {!editingNotes && (
+                    <button
+                      onClick={() => setEditingNotes(true)}
+                      className="text-xs text-ocean-700 hover:underline flex items-center gap-1"
+                    >
+                      <Pencil size={11} strokeWidth={1.75} /> Editar
                     </button>
-                  </div>
+                  )}
                 </div>
-              ) : (
-                <p className="text-sm text-gray-500 bg-gray-50 rounded-lg p-3 min-h-[60px]">
-                  {dados.notes || <span className="text-gray-300 italic">Sem notas</span>}
-                </p>
-              )}
-            </div>
-
-            {/* Histórico de reservas */}
-            <div>
-              <h3 className="font-semibold text-gray-700 text-sm mb-3">
-                Histórico de reservas ({dados.reservations?.length || 0})
-              </h3>
-              {dados.reservations?.length === 0 ? (
-                <p className="text-sm text-gray-400">Sem reservas</p>
-              ) : (
-                <div className="space-y-2">
-                  {dados.reservations?.map((r) => (
-                    <div key={r.id} className="flex items-center justify-between text-sm border border-gray-100 rounded-lg p-3">
-                      <div>
-                        <p className="font-medium text-gray-800">{r.units?.name}</p>
-                        <p className="text-xs text-gray-400">{fmt(r.check_in)} → {fmt(r.check_out)}</p>
-                      </div>
-                      <div className="text-right">
-                        <p className="font-bold text-primary-500">{Number(r.total_price).toFixed(2)} €</p>
-                        <StatusBadge status={r.status} />
-                      </div>
+                {editingNotes ? (
+                  <div className="space-y-2">
+                    <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={3} />
+                    <div className="flex gap-2">
+                      <Button size="sm" variant="secondary" onClick={() => setEditingNotes(false)} className="flex-1">Cancelar</Button>
+                      <Button size="sm" loading={saving} onClick={saveNotes} className="flex-1">Guardar</Button>
                     </div>
-                  ))}
-                </div>
-              )}
+                  </div>
+                ) : (
+                  <p className="text-sm font-body text-n-600 whitespace-pre-line min-h-[2rem]">
+                    {customer.notes || <span className="text-n-400 italic">Sem notas</span>}
+                  </p>
+                )}
+              </section>
+
+              {/* Historico de reservas */}
+              <section>
+                <h3 className="text-xs font-body font-bold uppercase tracking-wide text-n-500 mb-3">
+                  Historico ({customer.reservations?.length || 0})
+                </h3>
+                {customer.reservations?.length === 0 ? (
+                  <p className="text-sm font-body text-n-400 italic">Sem reservas</p>
+                ) : (
+                  <div className="space-y-2">
+                    {customer.reservations?.map((r) => (
+                      <div key={r.id} className="rounded-sm border border-n-200 px-3 py-2.5">
+                        <div className="flex items-center justify-between gap-2 mb-1">
+                          <p className="text-xs font-body font-semibold text-n-700 truncate">
+                            {r.units?.name || '—'}
+                          </p>
+                          <Badge variant={r.status}>{t(`reservations.status.${r.status}`)}</Badge>
+                        </div>
+                        <div className="flex items-center gap-1.5 text-xs font-body text-n-500">
+                          <span>{formatDate(r.check_in)}</span>
+                          <ArrowRight size={10} strokeWidth={1.75} />
+                          <span>{formatDate(r.check_out)}</span>
+                          <span className="ml-auto font-semibold text-n-700">€{Number(r.total_price).toFixed(2)}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </section>
             </div>
           </div>
-        )}
+        ) : null}
       </div>
+    </div>
+  );
+}
+
+function InfoRow({ label, value }) {
+  return (
+    <div className="flex items-center gap-2 text-sm">
+      <span className="font-body text-n-500 w-20 shrink-0">{label}</span>
+      <span className="font-body text-n-800">{value}</span>
     </div>
   );
 }
