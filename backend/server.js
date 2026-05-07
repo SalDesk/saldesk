@@ -11,10 +11,12 @@ const reservationsRoutes= require('./src/routes/reservations');
 const calendarRoutes    = require('./src/routes/calendar');
 const customersRoutes   = require('./src/routes/customers');
 const automationsRoutes = require('./src/routes/automations');
-const financeiroRoutes  = require('./src/routes/financeiro');
-const publicRoutes      = require('./src/routes/public');
-const errorHandler      = require('./src/middleware/errorHandler');
-const { iniciarCron }   = require('./src/services/cronService');
+const financeiroRoutes    = require('./src/routes/financeiro');
+const publicRoutes        = require('./src/routes/public');
+const integrationRoutes   = require('./src/routes/integrations');
+const errorHandler        = require('./src/middleware/errorHandler');
+const { iniciarCron }     = require('./src/services/cronService');
+const { initQueues }      = require('./src/queues/queueManager');
 
 const app = express();
 
@@ -63,15 +65,19 @@ app.use('/api/v1/reservations', reservationsRoutes);
 app.use('/api/v1/calendar',     calendarRoutes);
 app.use('/api/v1/customers',    customersRoutes);
 app.use('/api/v1/automations',  automationsRoutes);
-app.use('/api/v1/financial',    financeiroRoutes);
-app.use('/api/v1/public',       publicLimiter, publicRoutes);
+app.use('/api/v1/financial',     financeiroRoutes);
+app.use('/api/v1/public',        publicLimiter, publicRoutes);
+app.use('/api/v1/integrations',  integrationRoutes);
 
 app.use(errorHandler);
 
 const PORT = process.env.PORT || 3001;
-app.listen(PORT, () => {
+app.listen(PORT, async () => {
   console.log(`SalDesk API v2 a correr na porta ${PORT} [${process.env.NODE_ENV}]`);
-  if (process.env.NODE_ENV !== 'test') iniciarCron();
+  if (process.env.NODE_ENV !== 'test') {
+    await initQueues();
+    iniciarCron();
+  }
 });
 
 module.exports = app;

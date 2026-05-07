@@ -138,10 +138,30 @@ async function enviarMensagem(auto, reserva) {
   });
 }
 
-function iniciarCron() {
-  // Executa a cada hora, no início de cada hora
-  cron.schedule('0 * * * *', processarAutomacoes, { timezone: 'Atlantic/Cape_Verde' });
-  console.log('[Cron] Serviço de automações iniciado — executa a cada hora (fuso: Cabo Verde)');
+async function sincronizarCanais() {
+  console.log('[Cron] A sincronizar canais OTA...');
+  try {
+    const { supabaseAdmin: sb } = require('../config/supabase');
+    const { addSyncJob } = require('../queues/queueManager');
+
+    const { data: canais } = await sb
+      .from('operator_channels')
+      .select('id, operator_id, channel')
+      .eq('is_active', true);
+
+    for (const canal of canais || []) {
+      await addSyncJob({ channelId: canal.id, operatorId: canal.operator_id, channel: canal.channel });
+    }
+    console.log(`[Cron] Sync iniciado para ${(canais || []).length} canal(is)`);
+  } catch (err) {
+    console.error('[Cron] Erro no sync de canais:', err.message);
+  }
 }
 
-module.exports = { iniciarCron, processarAutomacoes };
+function iniciarCron() {
+  cron.schedule('0 * * * *', processarAutomacoes, { timezone: 'Atlantic/Cape_Verde' });
+  cron.schedule('*/15 * * * *', sincronizarCanais, { timezone: 'Atlantic/Cape_Verde' });
+  console.log('[Cron] Servicos iniciados — automacoes (1h) + sync OTA (15min)');
+}
+
+module.exports = { iniciarCron, processarAutomacoes, sincronizarCanais };
