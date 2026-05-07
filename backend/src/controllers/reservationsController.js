@@ -1,0 +1,216 @@
+const { supabaseAdmin } = require('../config/supabase');
+const { verificarDisponibilidade, calcularPreco } = require('../helpers/bookingHelpers');
+const { obterOuCriarCliente, actualizarStatsCheckout } = require('../helpers/customerHelper');
+
+const TRANSICOES = {
+  pending:    ['confirmed', 'cancelled'],
+  confirmed:  ['checked_in', 'cancelled'],
+  checked_in: ['checked_out', 'cancelled'],
+  checked_out: [],
+  cancelled:  []
+};
+
+async function listar(req, res, next) {
+  try {
+    const { status, unit_id, check_in_from, check_in_to } = req.query;
+
+    let q = supabaseAdmin
+      .from('reservations')
+      .select('*, units(name, unit_type)')
+      .eq('operator_id', req.operator.id)
+      .order('check_in', { ascending: false });
+
+    if (status) q = q.eq('status', status);
+    if (unit_id) q = q.eq('unit_id', unit_id);
+    if (check_in_from) q = q.gte('check_in', check_in_from);
+    if (check_in_to) q = q.lte('check_in', check_in_to);
+
+    const { data, error } = await q;
+    if (error) throw error;
+
+    return res.json({ data, message: 'Reservas listadas' });
+  } catch (err) {
+    next(err);
+  }
+}
+
+async function criar(req, res, next) {
+  try {
+    const { unit_id, customer_name, customer_email, customer_phone, customer_country,
+            check_in, check_out, guests, notes } = req.body;
+
+    if (!unit_id || !customer_name || !customer_email || !check_in || !check_out) {
+      return res.status(400).json({ error: 'Campos obrigatórios em falta', code: 'MISSING_FIELDS' });
+    }
+    if (check_out <= check_in) {
+      return res.status(400).json({ error: 'Checkout deve ser posterior ao check-in', code: 'INVALID_DATES' });
+    }
+
+    const { data: unit } = await supabaseAdmin
+      .from('units')
+      .select('*, pricing_rules(*)')
+      .eq('id', unit_id)
+      .eq('operator_id', req.operator.id)
+      .single();
+
+    if (!unit) {
+      return res.status(404).json({ error: 'Unidade não encontrada', code: 'NOT_FOUND' });
+    }
+
+    const disponivel = await verificarDisponibilidade(supabaseAdmin, unit_id, check_in, check_out);
+    if (!disponivel) {
+      return res.status(409).json({ error: 'Unidade indisponível nas datas seleccionadas', code: 'UNAVAILABLE' });
+    }
+
+    const { total } = calcularPreco(unit, check_in, check_out);
+
+    // Criar ou obter cliente CRM
+    const customer = await obterOuCriarCliente(req.operator.id, {
+      name: customer_name,
+      email: customer_email,
+      phone: customer_phone,
+      country_code: customer_country
+    });
+
+    const { data, error } = await supabaseAdmin
+      .from('reservations')
+      .insert({
+        operator_id: req.operator.id,
+        unit_id,
+        customer_id: customer.id,
+        customer_name,
+        customer_email,
+        customer_phone: customer_phone || null,
+        customer_country: customer_country || null,
+        check_in,
+        check_out,
+        guests: guests || 1,
+        total_price: total,
+        status: 'confirmed',
+        source: 'admin',
+        notes: notes || null
+      })
+      .select('*, units(name, unit_type)')
+      .single();
+
+    if (error) throw error;
+
+    return res.status(201).json({ data, message: 'Reserva criada com sucesso' });
+  } catch (err) {
+    next(err);
+  }
+}
+
+async function obter(req, res, next) {
+  try {
+    const { data, error } = await supabaseAdmin
+      .from('reservations')
+      .select('*, units(name, unit_type, base_price)')
+      .eq('id', req.params.id)
+      .eq('operator_id', req.operator.id)
+      .single();
+
+    if (error || !data) {
+      return res.status(404).json({ error: 'Reserva não encontrada', code: 'NOT_FOUND' });
+    }
+
+    return res.json({ data, message: 'Reserva encontrada' });
+  } catch (err) {
+    next(err);
+  }
+}
+
+async function actualizar(req, res, next) {
+  try {
+    const { customer_name, customer_email, customer_phone, customer_country, guests, notes } = req.body;
+
+    const updates = { updated_at: new Date().toISOString() };
+    if (customer_name !== undefined) updates.customer_name = customer_name;
+    if (customer_email !== undefined) updates.customer_email = customer_email;
+    if (customer_phone !== undefined) updates.customer_phone = customer_phone;
+    if (customer_country !== undefined) updates.customer_country = customer_country;
+    if (guests !== undefined) updates.guests = guests;
+    if (notes !== undefined) updates.notes = notes;
+
+    const { data, error } = await supabaseAdmin
+      .from('reservations')
+      .update(updates)
+      .eq('id', req.params.id)
+      .eq('operator_id', req.operator.id)
+      .select('*, units(name, unit_type)')
+      .single();
+
+    if (error || !data) {
+      return res.status(404).json({ error: 'Reserva não encontrada', code: 'NOT_FOUND' });
+    }
+
+    return res.json({ data, message: 'Reserva actualizada' });
+  } catch (err) {
+    next(err);
+  }
+}
+
+async function mudarStatus(req, res, next) {
+  try {
+    const { status } = req.body;
+
+    if (!Object.keys(TRANSICOES).includes(status)) {
+      return res.status(400).json({ error: 'Status inválido', code: 'INVALID_STATUS' });
+    }
+
+    const { data: reserva } = await supabaseAdmin
+      .from('reservations')
+      .select('status, customer_id, total_price')
+      .eq('id', req.params.id)
+      .eq('operator_id', req.operator.id)
+      .single();
+
+    if (!reserva) {
+      return res.status(404).json({ error: 'Reserva não encontrada', code: 'NOT_FOUND' });
+    }
+
+    if (!TRANSICOES[reserva.status].includes(status)) {
+      return res.status(400).json({
+        error: `Transição de "${reserva.status}" para "${status}" não permitida`,
+        code: 'INVALID_TRANSITION'
+      });
+    }
+
+    const { data, error } = await supabaseAdmin
+      .from('reservations')
+      .update({ status, updated_at: new Date().toISOString() })
+      .eq('id', req.params.id)
+      .eq('operator_id', req.operator.id)
+      .select('*, units(name, unit_type)')
+      .single();
+
+    if (error) throw error;
+
+    // Actualizar stats do cliente após checkout
+    if (status === 'checked_out' && reserva.customer_id) {
+      await actualizarStatsCheckout(reserva.customer_id, reserva.total_price);
+    }
+
+    return res.json({ data, message: `Status actualizado para "${status}"` });
+  } catch (err) {
+    next(err);
+  }
+}
+
+async function eliminar(req, res, next) {
+  try {
+    const { error } = await supabaseAdmin
+      .from('reservations')
+      .delete()
+      .eq('id', req.params.id)
+      .eq('operator_id', req.operator.id);
+
+    if (error) throw error;
+
+    return res.json({ data: null, message: 'Reserva eliminada' });
+  } catch (err) {
+    next(err);
+  }
+}
+
+module.exports = { listar, criar, obter, actualizar, mudarStatus, eliminar };
