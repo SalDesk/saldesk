@@ -1,128 +1,120 @@
 import { useMemo } from 'react';
 
-const STATUS_COLOR = {
-  pending:     'bg-yellow-400',
-  confirmed:   'bg-blue-500',
-  checked_in:  'bg-green-500',
-  checked_out: 'bg-gray-400'
+const STATUS_COLORS = {
+  confirmed:   'bg-ocean-700 text-white',
+  pending:     'bg-sand-400 text-n-900',
+  checked_in:  'bg-[var(--success)] text-white',
+  checked_out: 'bg-n-300 text-n-700',
+  cancelled:   'bg-n-200 text-n-400 line-through',
 };
 
-function diasDoMes(ano, mes) {
-  const dias = [];
-  const d = new Date(ano, mes, 1);
-  while (d.getMonth() === mes) {
-    dias.push(new Date(d));
-    d.setDate(d.getDate() + 1);
-  }
-  return dias;
+const WEEK_DAYS = ['D','S','T','Q','Q','S','S'];
+
+function getDaysInMonth(year, month) {
+  const total = new Date(year, month + 1, 0).getDate();
+  return Array.from({ length: total }, (_, i) => new Date(year, month, i + 1));
 }
 
-function toStr(d) {
+function toDateStr(d) {
   return d.toISOString().split('T')[0];
 }
 
-export default function CalendarView({ units, reservations, blockedDates, ano, mes }) {
-  const dias = useMemo(() => diasDoMes(ano, mes), [ano, mes]);
+export default function CalendarView({ year, month, units, reservations, blockedDates, onDayClick }) {
+  const days = useMemo(() => getDaysInMonth(year, month), [year, month]);
+  const todayStr = toDateStr(new Date());
 
-  // Indexar reservas e bloqueios por unidade+data para lookup O(1)
-  const reservasPorUnidadeData = useMemo(() => {
+  const reservationsByUnit = useMemo(() => {
     const map = {};
     for (const r of reservations) {
-      const dtIn = new Date(r.check_in + 'T00:00:00');
-      const dtOut = new Date(r.check_out + 'T00:00:00');
-      const cur = new Date(dtIn);
-      while (cur < dtOut) {
-        const key = `${r.unit_id}_${toStr(cur)}`;
-        map[key] = r;
-        cur.setDate(cur.getDate() + 1);
-      }
+      if (!map[r.unit_id]) map[r.unit_id] = [];
+      map[r.unit_id].push(r);
     }
     return map;
   }, [reservations]);
 
-  const bloqueiosPorUnidadeData = useMemo(() => {
-    const set = new Set();
+  const blockedByUnit = useMemo(() => {
+    const map = {};
     for (const b of blockedDates) {
-      set.add(`${b.unit_id}_${b.date}`);
+      if (!map[b.unit_id]) map[b.unit_id] = new Set();
+      map[b.unit_id].add(b.date);
     }
-    return set;
+    return map;
   }, [blockedDates]);
 
-  const hoje = toStr(new Date());
+  if (!units.length) {
+    return (
+      <div className="flex items-center justify-center py-20 text-n-400">
+        <p className="font-body text-sm">Sem unidades activas. Crie unidades primeiro.</p>
+      </div>
+    );
+  }
 
   return (
-    <div className="overflow-x-auto">
-      <div className="min-w-max">
-        {/* Cabeçalho dos dias */}
-        <div className="flex">
-          <div className="w-40 shrink-0" />
-          {dias.map((d) => {
-            const str = toStr(d);
-            const isHoje = str === hoje;
-            const isWeekend = d.getDay() === 0 || d.getDay() === 6;
+    <div className="overflow-x-auto rounded-md border border-n-200">
+      <table className="w-full text-xs border-collapse" style={{ minWidth: units.length * 130 + 80 }}>
+        <thead>
+          <tr className="bg-n-50">
+            <th className="sticky left-0 z-10 bg-n-50 border-b border-r border-n-200 px-3 py-2.5 text-left text-n-500 font-body font-bold uppercase tracking-wide w-20 min-w-[80px]">
+              Dia
+            </th>
+            {units.map((u) => (
+              <th key={u.id} className="border-b border-r border-n-200 px-3 py-2.5 text-left min-w-[130px]">
+                <div className="font-display font-semibold text-n-700 truncate">{u.name}</div>
+                <div className="font-body text-n-400 font-normal mt-0.5">{u.unit_type}</div>
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {days.map((day) => {
+            const dateStr = toDateStr(day);
+            const isToday = dateStr === todayStr;
+            const isWeekend = day.getDay() === 0 || day.getDay() === 6;
+
             return (
-              <div
-                key={str}
-                className={`w-9 text-center text-xs py-1 border-l border-gray-200 font-medium
-                  ${isHoje ? 'bg-primary-500 text-white' : isWeekend ? 'text-gray-400 bg-gray-50' : 'text-gray-500'}`}
-              >
-                <div>{d.getDate()}</div>
-                <div className="text-gray-400 font-normal">{['D','S','T','Q','Q','S','S'][d.getDay()]}</div>
-              </div>
+              <tr key={dateStr} className={`border-b border-n-100 hover:bg-n-50/50 ${isWeekend ? 'bg-n-50/30' : ''}`}>
+                <td className={`sticky left-0 z-10 border-r border-n-200 px-3 py-1.5 font-body font-medium whitespace-nowrap ${isToday ? 'bg-ocean-50 text-ocean-700' : 'bg-white text-n-600'}`}>
+                  <div className="flex items-center gap-1.5">
+                    {isToday && <span className="w-1.5 h-1.5 rounded-full bg-ocean-700 shrink-0" />}
+                    <span className="font-display font-semibold">{day.getDate()}</span>
+                    <span className="text-n-300">{WEEK_DAYS[day.getDay()]}</span>
+                  </div>
+                </td>
+
+                {units.map((unit) => {
+                  const isBlocked = blockedByUnit[unit.id]?.has(dateStr);
+                  const reservation = reservationsByUnit[unit.id]?.find(
+                    (r) => r.check_in <= dateStr && r.check_out > dateStr
+                  );
+
+                  return (
+                    <td
+                      key={unit.id}
+                      className="border-r border-n-100 px-1.5 py-1 cursor-pointer"
+                      onClick={() => onDayClick?.(dateStr, unit, reservation)}
+                    >
+                      {reservation ? (
+                        <div
+                          className={`rounded-xs px-2 py-0.5 truncate font-body font-medium ${STATUS_COLORS[reservation.status] || 'bg-n-100 text-n-600'}`}
+                          title={`${reservation.customer_name} · ${reservation.status}`}
+                        >
+                          {reservation.check_in === dateStr ? reservation.customer_name : '·'}
+                        </div>
+                      ) : isBlocked ? (
+                        <div className="rounded-xs px-2 py-0.5 bg-n-200 text-n-400 font-body">
+                          Bloq.
+                        </div>
+                      ) : (
+                        <div className="h-5" />
+                      )}
+                    </td>
+                  );
+                })}
+              </tr>
             );
           })}
-        </div>
-
-        {/* Linhas por unidade */}
-        {units.map((unit, i) => (
-          <div key={unit.id} className={`flex items-center border-t border-gray-200 ${i % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'}`}>
-            <div className="w-40 shrink-0 px-3 py-2">
-              <p className="text-sm font-medium text-gray-800 truncate">{unit.name}</p>
-              <p className="text-xs text-gray-400">{unit.unit_type}</p>
-            </div>
-
-            {dias.map((d) => {
-              const str = toStr(d);
-              const key = `${unit.id}_${str}`;
-              const reserva = reservasPorUnidadeData[key];
-              const bloqueado = bloqueiosPorUnidadeData.has(key);
-              const isHoje = str === hoje;
-
-              return (
-                <div
-                  key={str}
-                  title={reserva ? `${reserva.customer_name} (${reserva.status})` : bloqueado ? 'Bloqueado' : ''}
-                  className={`w-9 h-10 border-l border-gray-200 flex items-center justify-center
-                    ${isHoje ? 'bg-primary-50' : ''}
-                    ${reserva ? STATUS_COLOR[reserva.status] + ' cursor-pointer' : ''}
-                    ${bloqueado && !reserva ? 'bg-gray-300' : ''}
-                  `}
-                />
-              );
-            })}
-          </div>
-        ))}
-
-        {units.length === 0 && (
-          <div className="flex items-center justify-center h-24 text-gray-400 text-sm">
-            Sem unidades activas
-          </div>
-        )}
-      </div>
-
-      {/* Legenda */}
-      <div className="flex gap-4 mt-4 text-xs text-gray-600">
-        {Object.entries(STATUS_COLOR).map(([status, cls]) => (
-          <span key={status} className="flex items-center gap-1.5">
-            <span className={`w-3 h-3 rounded-sm ${cls}`} />
-            {status === 'pending' ? 'Pendente' : status === 'confirmed' ? 'Confirmada' : status === 'checked_in' ? 'Check-in' : 'Check-out'}
-          </span>
-        ))}
-        <span className="flex items-center gap-1.5">
-          <span className="w-3 h-3 rounded-sm bg-gray-300" />
-          Bloqueado
-        </span>
-      </div>
+        </tbody>
+      </table>
     </div>
   );
 }

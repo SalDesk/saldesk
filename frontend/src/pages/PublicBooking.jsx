@@ -1,297 +1,293 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
+import { MapPin, Phone, Globe, ArrowRight, Check, Calendar, Users, Euro } from 'lucide-react';
+import { getOperador, checkAvailability, criarReservaPublica } from '../services/publicService';
+import useUiStore from '../store/uiStore';
+import { useT } from '../i18n';
+import Input from '../components/ui/Input';
+import Button from '../components/ui/Button';
+import LoadingSpinner from '../components/shared/LoadingSpinner';
+import LanguageToggle from '../components/shared/LanguageToggle';
+import Logo from '../components/shared/Logo';
 
-const hoje = new Date().toISOString().split('T')[0];
+const STEPS = { SELECT: 1, DATES: 2, FORM: 3, CONFIRM: 4 };
 
-const TYPE_LABEL = {
-  hotel: 'Hotel / Alojamento',
-  activity: 'Actividade Turística',
-  rentacar: 'Rent-a-Car',
-  restaurant: 'Restaurante / Bar'
-};
-
-function fmt(date) {
-  return new Date(date + 'T00:00:00').toLocaleDateString('pt-PT', { day: '2-digit', month: 'long', year: 'numeric' });
-}
-
-// --- Passo 1: Seleccionar unidade e datas ---
-function SelectorUnidade({ units, onNext }) {
-  const [checkIn, setCheckIn] = useState('');
-  const [checkOut, setCheckOut] = useState('');
-  const [disponibilidade, setDisponibilidade] = useState({});
-  const [verificando, setVerificando] = useState(false);
+export default function PublicBooking() {
   const { slug } = useParams();
+  const t = useT();
+  const [operador, setOperador] = useState(null);
+  const [units, setUnits] = useState([]);
+  const [loadingPage, setLoadingPage] = useState(true);
+  const [notFound, setNotFound] = useState(false);
 
-  async function verificar() {
-    if (!checkIn || !checkOut || checkOut <= checkIn) return;
-    setVerificando(true);
-    const results = {};
-    await Promise.all(
-      units.map(async (u) => {
-        try {
-          const params = new URLSearchParams({ unitId: u.id, checkIn, checkOut });
-          const res = await fetch(`/public/${slug}/availability?${params}`);
-          const json = await res.json();
-          results[u.id] = json.data;
-        } catch {
-          results[u.id] = { disponivel: false };
-        }
-      })
-    );
-    setDisponibilidade(results);
-    setVerificando(false);
-  }
+  const [step, setStep] = useState(STEPS.SELECT);
+  const [selectedUnit, setSelectedUnit] = useState(null);
+  const [dates, setDates] = useState({ checkIn: '', checkOut: '' });
+  const [availability, setAvailability] = useState(null);
+  const [checkingAvail, setCheckingAvail] = useState(false);
+  const [form, setForm] = useState({ name: '', email: '', phone: '', country: '', guests: 1, notes: '' });
+  const [submitting, setSubmitting] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+  const [bookingRef, setBookingRef] = useState(null);
+  const [error, setError] = useState('');
 
   useEffect(() => {
-    if (checkIn && checkOut && checkOut > checkIn) verificar();
-  }, [checkIn, checkOut]);
+    getOperador(slug)
+      .then(({ operator, units: u }) => {
+        setOperador(operator);
+        setUnits(u);
+      })
+      .catch(() => setNotFound(true))
+      .finally(() => setLoadingPage(false));
+  }, [slug]);
 
-  return (
-    <div>
-      <h2 className="text-xl font-bold text-gray-900 mb-1">Fazer Reserva</h2>
-      <p className="text-gray-500 text-sm mb-6">Seleccione as datas e a unidade desejada</p>
+  const verifyAvailability = useCallback(async () => {
+    if (!selectedUnit || !dates.checkIn || !dates.checkOut || dates.checkOut <= dates.checkIn) return;
+    setCheckingAvail(true);
+    try {
+      const result = await checkAvailability(slug, selectedUnit.id, dates.checkIn, dates.checkOut);
+      setAvailability(result);
+    } catch {
+      setAvailability(null);
+    } finally {
+      setCheckingAvail(false);
+    }
+  }, [slug, selectedUnit, dates]);
 
-      <div className="grid grid-cols-2 gap-4 mb-6">
-        <div>
-          <label className="label">Check-in</label>
-          <input type="date" className="input" value={checkIn} min={hoje}
-            onChange={(e) => setCheckIn(e.target.value)} />
-        </div>
-        <div>
-          <label className="label">Check-out</label>
-          <input type="date" className="input" value={checkOut} min={checkIn || hoje}
-            onChange={(e) => setCheckOut(e.target.value)} />
-        </div>
-      </div>
-
-      {verificando && <p className="text-sm text-gray-400 mb-4">A verificar disponibilidade...</p>}
-
-      <div className="space-y-3">
-        {units.map((u) => {
-          const info = disponibilidade[u.id];
-          const temDatas = checkIn && checkOut && checkOut > checkIn;
-          const disponivel = !temDatas || !info || info.disponivel;
-
-          return (
-            <div key={u.id} className={`border-2 rounded-xl p-4 transition-all ${
-              !temDatas ? 'border-gray-200' :
-              disponivel ? 'border-green-300 bg-green-50/50' : 'border-gray-200 bg-gray-50 opacity-60'
-            }`}>
-              <div className="flex items-start justify-between">
-                <div>
-                  <h3 className="font-semibold text-gray-900">{u.name}</h3>
-                  <p className="text-xs text-gray-400 mt-0.5">{u.unit_type} · Cap. {u.capacity}</p>
-                  {u.description && <p className="text-sm text-gray-500 mt-2">{u.description}</p>}
-                </div>
-                <div className="text-right shrink-0 ml-4">
-                  <p className="text-lg font-bold text-primary-500">
-                    {info?.total_price != null
-                      ? `${Number(info.total_price).toFixed(2)} €`
-                      : `${Number(u.base_price).toFixed(2)} €`}
-                  </p>
-                  <p className="text-xs text-gray-400">
-                    {info?.dias ? `${info.dias} noite(s)` : 'por noite'}
-                  </p>
-                </div>
-              </div>
-              {temDatas && disponivel && (
-                <button
-                  onClick={() => onNext(u, checkIn, checkOut, info?.total_price)}
-                  className="btn-primary w-full mt-3 py-2"
-                >
-                  Reservar esta unidade
-                </button>
-              )}
-              {temDatas && !disponivel && (
-                <p className="text-sm text-red-500 mt-2 font-medium">Indisponível nas datas seleccionadas</p>
-              )}
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
-// --- Passo 2: Formulário do cliente ---
-function FormularioCliente({ unit, checkIn, checkOut, totalPrice, slug, onBack, onConfirm }) {
-  const [form, setForm] = useState({ name: '', email: '', phone: '', country: '', guests: 1, notes: '' });
-  const [loading, setLoading] = useState(false);
-  const [erro, setErro] = useState('');
+  useEffect(() => {
+    if (step === STEPS.DATES) verifyAvailability();
+  }, [dates.checkIn, dates.checkOut, step]);
 
   async function handleSubmit(e) {
     e.preventDefault();
-    setErro('');
-    setLoading(true);
+    setError('');
+    setSubmitting(true);
     try {
-      const res = await fetch(`/public/${slug}/reservations`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          unit_id: unit.id,
-          customer_name: form.name,
-          customer_email: form.email,
-          customer_phone: form.phone || null,
-          customer_country: form.country || null,
-          check_in: checkIn,
-          check_out: checkOut,
-          guests: Number(form.guests),
-          notes: form.notes || null
-        })
+      const result = await criarReservaPublica(slug, {
+        unit_id: selectedUnit.id,
+        customer_name: form.name,
+        customer_email: form.email,
+        customer_phone: form.phone || null,
+        customer_country: form.country || null,
+        check_in: dates.checkIn,
+        check_out: dates.checkOut,
+        guests: Number(form.guests),
+        notes: form.notes || null,
       });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error);
-      onConfirm(json.data);
+      setBookingRef(result.id);
+      setSubmitted(true);
+      setStep(STEPS.CONFIRM);
     } catch (err) {
-      setErro(err.message);
+      setError(err.response?.data?.error || t('errors.generic'));
     } finally {
-      setLoading(false);
+      setSubmitting(false);
     }
   }
 
-  return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="bg-primary-50 rounded-xl p-4 text-sm text-primary-700 mb-2">
-        <p className="font-semibold">{unit.name}</p>
-        <p>{fmt(checkIn)} → {fmt(checkOut)}</p>
-        {totalPrice && <p className="font-bold mt-1">Total: {Number(totalPrice).toFixed(2)} €</p>}
+  if (loadingPage) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-n-50">
+        <LoadingSpinner size={32} />
       </div>
+    );
+  }
 
-      <div>
-        <label className="label">Nome completo *</label>
-        <input type="text" className="input" value={form.name}
-          onChange={(e) => setForm({ ...form, name: e.target.value })} required autoFocus />
+  if (notFound) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-n-50 p-4 text-center">
+        <Logo />
+        <p className="mt-6 text-n-600 font-body">Pagina de reserva nao encontrada.</p>
       </div>
-      <div>
-        <label className="label">Email *</label>
-        <input type="email" className="input" value={form.email}
-          onChange={(e) => setForm({ ...form, email: e.target.value })} required />
-      </div>
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <label className="label">Telefone</label>
-          <input type="tel" className="input" value={form.phone}
-            onChange={(e) => setForm({ ...form, phone: e.target.value })} />
-        </div>
-        <div>
-          <label className="label">País</label>
-          <input type="text" className="input" value={form.country} placeholder="PT, GB..."
-            onChange={(e) => setForm({ ...form, country: e.target.value.toUpperCase() })} maxLength={2} />
-        </div>
-      </div>
-      <div>
-        <label className="label">Número de hóspedes</label>
-        <input type="number" className="input" value={form.guests} min={1} max={unit.capacity}
-          onChange={(e) => setForm({ ...form, guests: e.target.value })} />
-      </div>
-      <div>
-        <label className="label">Notas / pedidos especiais</label>
-        <textarea className="input resize-none" rows={2} value={form.notes}
-          onChange={(e) => setForm({ ...form, notes: e.target.value })} />
-      </div>
-
-      {erro && <p className="text-sm text-red-600 bg-red-50 rounded-lg p-3">{erro}</p>}
-
-      <div className="flex gap-3">
-        <button type="button" onClick={onBack} className="btn-secondary flex-1">Voltar</button>
-        <button type="submit" className="btn-primary flex-1" disabled={loading}>
-          {loading ? 'A submeter...' : 'Confirmar reserva'}
-        </button>
-      </div>
-    </form>
-  );
-}
-
-// --- Passo 3: Confirmação ---
-function Confirmacao({ reserva }) {
-  return (
-    <div className="text-center py-4">
-      <div className="text-6xl mb-4">✅</div>
-      <h2 className="text-xl font-bold text-gray-900 mb-2">Reserva submetida!</h2>
-      <p className="text-gray-500 mb-4">
-        Obrigado, <strong>{reserva.customer_name}</strong>. A sua reserva foi recebida e aguarda confirmação.
-      </p>
-      <div className="bg-gray-50 rounded-xl p-4 text-sm text-gray-600 text-left">
-        <p>📧 Confirmação enviada para: <strong>{reserva.customer_email}</strong></p>
-        <p className="mt-1">🔑 Referência: <code className="bg-gray-200 px-1 rounded">{reserva.id.slice(0, 8).toUpperCase()}</code></p>
-      </div>
-    </div>
-  );
-}
-
-// --- Página principal ---
-export default function PublicBooking() {
-  const { slug } = useParams();
-  const [dados, setDados] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [erro, setErro] = useState('');
-  const [passo, setPasso] = useState(1);
-  const [seleccao, setSeleccao] = useState(null); // { unit, checkIn, checkOut, totalPrice }
-  const [reservaConfirmada, setReservaConfirmada] = useState(null);
-
-  useEffect(() => {
-    fetch(`/public/${slug}`)
-      .then((r) => r.json())
-      .then((json) => {
-        if (json.data) setDados(json.data);
-        else setErro('Página não encontrada');
-      })
-      .catch(() => setErro('Erro ao carregar a página'))
-      .finally(() => setLoading(false));
-  }, [slug]);
-
-  if (loading) return (
-    <div className="min-h-screen flex items-center justify-center text-gray-400">A carregar...</div>
-  );
-
-  if (erro) return (
-    <div className="min-h-screen flex items-center justify-center">
-      <div className="text-center">
-        <p className="text-6xl mb-4">🔍</p>
-        <h1 className="text-xl font-bold text-gray-900">{erro}</h1>
-      </div>
-    </div>
-  );
-
-  const { operator, units } = dados;
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-n-50">
       {/* Header */}
-      <header className="bg-primary-500 text-white py-6 px-4 text-center">
-        <h1 className="text-2xl font-bold">{operator.name}</h1>
-        <p className="text-primary-100 text-sm mt-1">{TYPE_LABEL[operator.operator_type]}</p>
-        {operator.address && <p className="text-primary-200 text-xs mt-1">📍 {operator.address}</p>}
+      <header className="bg-ocean-900 text-white px-4 py-4">
+        <div className="max-w-xl mx-auto flex items-center justify-between">
+          <Logo white />
+          <LanguageToggle variant="white" />
+        </div>
       </header>
 
-      <main className="max-w-lg mx-auto p-4 py-8">
-        <div className="card">
-          {passo === 1 && (
-            <SelectorUnidade
-              units={units}
-              onNext={(unit, checkIn, checkOut, totalPrice) => {
-                setSeleccao({ unit, checkIn, checkOut, totalPrice });
-                setPasso(2);
-              }}
-            />
-          )}
-          {passo === 2 && seleccao && (
-            <FormularioCliente
-              {...seleccao}
-              slug={slug}
-              onBack={() => setPasso(1)}
-              onConfirm={(reserva) => { setReservaConfirmada(reserva); setPasso(3); }}
-            />
-          )}
-          {passo === 3 && reservaConfirmada && (
-            <Confirmacao reserva={reservaConfirmada} />
-          )}
+      {/* Info do operador */}
+      <div className="bg-ocean-800 text-white px-4 py-5">
+        <div className="max-w-xl mx-auto">
+          <h1 className="font-display font-bold text-xl">{operador.name}</h1>
+          <div className="flex flex-wrap gap-3 mt-2 text-sm text-ocean-200">
+            {operador.address && (
+              <span className="flex items-center gap-1">
+                <MapPin size={13} strokeWidth={1.75} />
+                {operador.address}
+              </span>
+            )}
+            {operador.phone && (
+              <span className="flex items-center gap-1">
+                <Phone size={13} strokeWidth={1.75} />
+                {operador.phone}
+              </span>
+            )}
+          </div>
         </div>
-      </main>
+      </div>
 
-      <footer className="text-center py-6 text-xs text-gray-400">
-        Powered by <strong>SalDesk</strong> · Gestão Turística · Ilha do Sal
-      </footer>
+      <div className="max-w-xl mx-auto px-4 py-6">
+        {/* Passo 1 — Seleccionar unidade */}
+        {step === STEPS.SELECT && (
+          <div>
+            <h2 className="font-display font-bold text-lg text-n-900 mb-4">
+              Escolha o que pretende reservar
+            </h2>
+            <div className="space-y-3">
+              {units.map((unit) => (
+                <button
+                  key={unit.id}
+                  onClick={() => { setSelectedUnit(unit); setAvailability(null); setStep(STEPS.DATES); }}
+                  className="w-full bg-white rounded-md border border-n-200 shadow-sm p-4 text-left hover:border-ocean-300 hover:shadow-md transition-all"
+                >
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <p className="font-display font-semibold text-n-900">{unit.name}</p>
+                      <p className="text-xs font-body text-n-500 mt-0.5">{unit.unit_type} · Cap. {unit.capacity}</p>
+                    </div>
+                    <div className="text-right shrink-0 ml-3">
+                      <p className="font-display font-bold text-ocean-700">€{Number(unit.base_price).toFixed(2)}</p>
+                      <p className="text-xs font-body text-n-400">por noite</p>
+                    </div>
+                  </div>
+                  {unit.description && (
+                    <p className="text-xs font-body text-n-600 mt-2 line-clamp-2">{unit.description}</p>
+                  )}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Passo 2 — Datas */}
+        {step === STEPS.DATES && selectedUnit && (
+          <div>
+            <button onClick={() => { setStep(STEPS.SELECT); setAvailability(null); }} className="text-xs font-body text-ocean-700 mb-4 flex items-center gap-1 hover:underline">
+              ← Voltar
+            </button>
+            <h2 className="font-display font-bold text-lg text-n-900 mb-1">{selectedUnit.name}</h2>
+            <p className="text-sm font-body text-n-500 mb-5">Seleccione as datas</p>
+
+            <div className="grid grid-cols-2 gap-3 mb-4">
+              <Input
+                label="Check-in"
+                type="date"
+                value={dates.checkIn}
+                onChange={(e) => setDates({ ...dates, checkIn: e.target.value })}
+                min={new Date().toISOString().split('T')[0]}
+              />
+              <Input
+                label="Check-out"
+                type="date"
+                value={dates.checkOut}
+                onChange={(e) => setDates({ ...dates, checkOut: e.target.value })}
+                min={dates.checkIn || new Date().toISOString().split('T')[0]}
+              />
+            </div>
+
+            {checkingAvail && (
+              <div className="flex items-center gap-2 text-sm font-body text-n-500">
+                <LoadingSpinner size={14} /> A verificar disponibilidade...
+              </div>
+            )}
+
+            {availability && !checkingAvail && (
+              <div className={`rounded-sm px-4 py-3 mb-4 ${availability.disponivel ? 'bg-[var(--success-light)] text-[var(--success)]' : 'bg-[var(--error-light)] text-[var(--error)]'}`}>
+                {availability.disponivel ? (
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-body font-semibold">Disponivel</span>
+                    <span className="font-display font-bold">€{Number(availability.total_price).toFixed(2)}</span>
+                  </div>
+                ) : (
+                  <p className="text-sm font-body font-semibold">Indisponivel nas datas seleccionadas</p>
+                )}
+              </div>
+            )}
+
+            <Button
+              className="w-full"
+              disabled={!availability?.disponivel}
+              iconRight={ArrowRight}
+              onClick={() => setStep(STEPS.FORM)}
+            >
+              Continuar
+            </Button>
+          </div>
+        )}
+
+        {/* Passo 3 — Formulario cliente */}
+        {step === STEPS.FORM && (
+          <div>
+            <button onClick={() => setStep(STEPS.DATES)} className="text-xs font-body text-ocean-700 mb-4 flex items-center gap-1 hover:underline">
+              ← Voltar
+            </button>
+            <h2 className="font-display font-bold text-lg text-n-900 mb-1">Os seus dados</h2>
+            <p className="text-sm font-body text-n-500 mb-5">Preencha para concluir a reserva</p>
+
+            {/* Sumario */}
+            <div className="bg-ocean-50 rounded-md p-3 mb-5 space-y-1">
+              <p className="text-xs font-body font-semibold text-ocean-700">{selectedUnit?.name}</p>
+              <div className="flex items-center gap-3 text-xs font-body text-n-600">
+                <span>{dates.checkIn} → {dates.checkOut}</span>
+                <span className="font-bold text-ocean-700">€{Number(availability?.total_price || 0).toFixed(2)}</span>
+              </div>
+            </div>
+
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <Input label="Nome completo" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required placeholder="Joao Silva" />
+              <Input label="Email" type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} required placeholder="email@exemplo.com" />
+              <div className="grid grid-cols-2 gap-3">
+                <Input label="Telefone" type="tel" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="+351 910 000 000" />
+                <Input label="Pais (ISO)" value={form.country} onChange={(e) => setForm({ ...form, country: e.target.value.toUpperCase() })} placeholder="PT" maxLength={2} />
+              </div>
+              <Input label="Hospedes" type="number" value={form.guests} onChange={(e) => setForm({ ...form, guests: e.target.value })} min="1" max={selectedUnit?.capacity} />
+
+              {error && (
+                <p className="text-sm font-body px-3 py-2 rounded-sm bg-[var(--error-light)] text-[var(--error)]">{error}</p>
+              )}
+
+              <Button type="submit" loading={submitting} className="w-full" iconRight={ArrowRight}>
+                Confirmar Reserva
+              </Button>
+            </form>
+          </div>
+        )}
+
+        {/* Passo 4 — Confirmacao */}
+        {step === STEPS.CONFIRM && (
+          <div className="text-center py-8">
+            <div className="w-16 h-16 rounded-full bg-[var(--success-light)] flex items-center justify-center mx-auto mb-4">
+              <Check size={32} strokeWidth={1.75} className="text-[var(--success)]" />
+            </div>
+            <h2 className="font-display font-bold text-xl text-n-900 mb-2">Reserva submetida!</h2>
+            <p className="text-sm font-body text-n-600 mb-6">
+              Recebemos o seu pedido. Entraremos em contacto por email para confirmar.
+            </p>
+            <div className="bg-n-50 rounded-md p-4 text-left space-y-2">
+              <SummaryRow label="Unidade"   value={selectedUnit?.name} />
+              <SummaryRow label="Check-in"  value={dates.checkIn} />
+              <SummaryRow label="Check-out" value={dates.checkOut} />
+              <SummaryRow label="Total"     value={`€${Number(availability?.total_price || 0).toFixed(2)}`} />
+              <SummaryRow label="Ref."      value={bookingRef?.slice(0, 8).toUpperCase()} />
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function SummaryRow({ label, value }) {
+  return (
+    <div className="flex justify-between text-sm">
+      <span className="font-body text-n-500">{label}</span>
+      <span className="font-body font-semibold text-n-800">{value}</span>
     </div>
   );
 }

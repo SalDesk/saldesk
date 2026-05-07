@@ -1,99 +1,138 @@
 import { useState } from 'react';
-import StatusBadge from './StatusBadge';
-import ConfirmDialog from '../ui/ConfirmDialog';
+import { CalendarDays, User, ArrowRight, Pencil, Trash2, ChevronDown } from 'lucide-react';
 import { changeStatus, deleteReservation } from '../../services/reservationsService';
-import useAuthStore from '../../store/authStore';
-import { useToast } from '../../store/toastStore';
+import { useT } from '../../i18n';
+import Badge from '../ui/Badge';
+import Button from '../ui/Button';
+import Modal from '../ui/Modal';
 
-const PROXIMOS_STATUS = {
-  pending:    [{ value: 'confirmed', label: 'Confirmar' }, { value: 'cancelled', label: 'Cancelar' }],
-  confirmed:  [{ value: 'checked_in', label: 'Check-in' }, { value: 'cancelled', label: 'Cancelar' }],
-  checked_in: [{ value: 'checked_out', label: 'Check-out' }],
-  checked_out: [],
-  cancelled:  []
+const STATUS_NEXT = {
+  pending:    'confirmed',
+  confirmed:  'checked_in',
+  checked_in: 'checked_out',
 };
 
-function fmt(date) {
-  return new Date(date + 'T00:00:00').toLocaleDateString('pt-PT', { day: '2-digit', month: 'short', year: 'numeric' });
+const STATUS_LABEL_NEXT = {
+  pending:    'Confirmar',
+  confirmed:  'Check-in',
+  checked_in: 'Check-out',
+};
+
+function formatDate(d) {
+  if (!d) return '';
+  const [y, m, day] = d.split('-');
+  return `${day}/${m}/${y}`;
 }
 
-export default function ReservationCard({ reservation, onUpdate, onEdit }) {
-  const token = useAuthStore((s) => s.token);
-  const toast = useToast();
+export default function ReservationCard({ reservation: r, onUpdate, onEdit }) {
+  const t = useT();
+  const [loading, setLoading] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
-  const proximos = PROXIMOS_STATUS[reservation.status] || [];
 
-  async function handleStatus(status) {
+  async function handleNextStatus() {
+    const next = STATUS_NEXT[r.status];
+    if (!next) return;
+    setLoading(true);
     try {
-      const { data } = await changeStatus(token, reservation.id, status);
-      onUpdate(data);
-      toast.success(`Estado alterado para "${status}"`);
+      const updated = await changeStatus(r.id, next);
+      onUpdate(updated);
     } catch (err) {
-      toast.error(err.message);
+      console.error(err);
+    } finally {
+      setLoading(false);
     }
   }
 
   async function handleDelete() {
     try {
-      await deleteReservation(token, reservation.id);
-      onUpdate(null);
-      toast.success('Reserva eliminada');
+      await deleteReservation(r.id);
+      onUpdate(null, r.id);
     } catch (err) {
-      toast.error(err.message);
+      console.error(err);
     } finally {
       setConfirmDelete(false);
     }
   }
 
+  const canAdvance = !!STATUS_NEXT[r.status];
+
   return (
-    <div className="card flex flex-col gap-3">
-      <div className="flex items-start justify-between">
-        <div>
-          <p className="font-semibold text-gray-900">{reservation.customer_name}</p>
-          <p className="text-xs text-gray-400">{reservation.customer_email}</p>
+    <>
+      <div className="bg-white rounded-md border border-n-200 shadow-sm p-4 flex flex-col gap-3">
+        <div className="flex items-start justify-between gap-2">
+          <div className="min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              <Badge variant={r.status}>{t(`reservations.status.${r.status}`)}</Badge>
+              <Badge variant={r.source === 'direct' || r.source === 'public' ? 'direct' : 'default'}>
+                {t(`reservations.source.${r.source}`)}
+              </Badge>
+            </div>
+            <p className="font-display font-semibold text-sm text-n-900 mt-2 truncate">
+              {r.units?.name || '—'}
+            </p>
+          </div>
+          <div className="text-right shrink-0">
+            <p className="font-display font-bold text-base text-ocean-700">
+              €{Number(r.total_price).toFixed(2)}
+            </p>
+            <p className="text-xs font-body text-n-400">{r.guests} hósp.</p>
+          </div>
         </div>
-        <StatusBadge status={reservation.status} />
+
+        <div className="flex items-center gap-2 text-xs font-body text-n-600">
+          <CalendarDays size={13} strokeWidth={1.75} className="text-n-400 shrink-0" />
+          <span>{formatDate(r.check_in)}</span>
+          <ArrowRight size={11} strokeWidth={1.75} className="text-n-300" />
+          <span>{formatDate(r.check_out)}</span>
+        </div>
+
+        <div className="flex items-center gap-2 text-xs font-body text-n-600">
+          <User size={13} strokeWidth={1.75} className="text-n-400 shrink-0" />
+          <span className="truncate">{r.customer_name}</span>
+          {r.customer_country && (
+            <span className="shrink-0 text-n-400">· {r.customer_country}</span>
+          )}
+        </div>
+
+        <div className="flex items-center gap-2 pt-1 border-t border-n-100">
+          {canAdvance && (
+            <Button
+              size="sm"
+              loading={loading}
+              onClick={handleNextStatus}
+              className="flex-1"
+            >
+              {STATUS_LABEL_NEXT[r.status]}
+            </Button>
+          )}
+          <Button variant="ghost" size="sm" icon={Pencil} onClick={() => onEdit(r)} aria-label="Editar" />
+          {r.status === 'pending' || r.status === 'cancelled' ? (
+            <Button
+              variant="ghost" size="sm" icon={Trash2}
+              onClick={() => setConfirmDelete(true)}
+              className="hover:text-error hover:bg-[var(--error-light)]"
+              aria-label="Eliminar"
+            />
+          ) : null}
+        </div>
       </div>
 
-      <div className="text-sm text-gray-600 space-y-1">
-        <p>🏠 {reservation.units?.name} <span className="text-gray-400">({reservation.units?.unit_type})</span></p>
-        <p>📅 {fmt(reservation.check_in)} → {fmt(reservation.check_out)}</p>
-        <p>👥 {reservation.guests} hóspede(s)</p>
-      </div>
-
-      <div className="flex items-center justify-between pt-1 border-t border-gray-100">
-        <span className="font-bold text-primary-500">{Number(reservation.total_price).toFixed(2)} €</span>
-        <span className="text-xs text-gray-400">{reservation.source === 'public' ? 'Online' : 'Admin'}</span>
-      </div>
-
-      <div className="flex flex-wrap gap-2">
-        {proximos.map(({ value, label }) => (
-          <button
-            key={value}
-            onClick={() => handleStatus(value)}
-            className={value === 'cancelled' ? 'btn-danger text-xs py-1 px-3' : 'btn-primary text-xs py-1 px-3'}
-          >
-            {label}
-          </button>
-        ))}
-        <button onClick={() => onEdit(reservation)} className="btn-secondary text-xs py-1 px-3 ml-auto">
-          Editar
-        </button>
-        {['pending', 'cancelled'].includes(reservation.status) && (
-          <button onClick={() => setConfirmDelete(true)} className="text-xs text-red-500 hover:text-red-700 underline">
-            Eliminar
-          </button>
-        )}
-      </div>
-
-      {confirmDelete && (
-        <ConfirmDialog
-          mensagem={`Eliminar a reserva de ${reservation.customer_name}? Esta acção não pode ser desfeita.`}
-          onConfirmar={handleDelete}
-          onCancelar={() => setConfirmDelete(false)}
-          labelConfirmar="Eliminar"
-        />
-      )}
-    </div>
+      <Modal
+        open={confirmDelete}
+        onClose={() => setConfirmDelete(false)}
+        title={t('common.confirm')}
+        size="sm"
+        footer={
+          <>
+            <Button variant="secondary" onClick={() => setConfirmDelete(false)}>{t('common.cancel')}</Button>
+            <Button variant="danger" onClick={handleDelete}>{t('common.delete')}</Button>
+          </>
+        }
+      >
+        <p className="text-sm font-body text-n-700">
+          {t('reservations.confirmDelete')}
+        </p>
+      </Modal>
+    </>
   );
 }

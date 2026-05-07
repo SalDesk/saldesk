@@ -1,27 +1,31 @@
-import { usePageTitle } from '../hooks/usePageTitle';
 import { useState, useEffect } from 'react';
-import UnitList from '../components/units/UnitList';
-import UnitForm from '../components/units/UnitForm';
-import ConfirmDialog from '../components/ui/ConfirmDialog';
+import { Plus } from 'lucide-react';
 import { listUnits, createUnit, updateUnit, deleteUnit } from '../services/unitsService';
 import useAuthStore from '../store/authStore';
-import { useToast } from '../store/toastStore';
+import { useT } from '../i18n';
+import PageHeader from '../components/layout/PageHeader';
+import Button from '../components/ui/Button';
+import Modal from '../components/ui/Modal';
+import UnitList from '../components/units/UnitList';
+import UnitForm from '../components/units/UnitForm';
+import LoadingSpinner from '../components/shared/LoadingSpinner';
 
 export default function Units() {
-  usePageTitle('Unidades');
-  const { token, operator } = useAuthStore();
-  const toast = useToast();
+  const t = useT();
+  const { operator } = useAuthStore();
   const [units, setUnits] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [modal, setModal] = useState(null);
-  const [confirmDelete, setConfirmDelete] = useState(null); // unit a eliminar
+  const [modal, setModal] = useState(null); // null | 'create' | unit
   const [formLoading, setFormLoading] = useState(false);
-  const [formErro, setFormErro] = useState('');
+  const [formError, setFormError] = useState('');
+  const [deleteTarget, setDeleteTarget] = useState(null);
 
   async function carregar() {
     try {
-      const { data } = await listUnits(token);
+      const data = await listUnits();
       setUnits(data);
+    } catch (err) {
+      console.error(err);
     } finally {
       setLoading(false);
     }
@@ -30,87 +34,104 @@ export default function Units() {
   useEffect(() => { carregar(); }, []);
 
   async function handleSave(dados) {
-    setFormErro('');
+    setFormError('');
     setFormLoading(true);
     try {
       if (modal === 'create') {
-        const { data } = await createUnit(token, dados);
-        setUnits([data, ...units]);
-        toast.success('Unidade criada com sucesso');
+        const unit = await createUnit(dados);
+        setUnits([unit, ...units]);
       } else {
-        const { data } = await updateUnit(token, modal.unit.id, dados);
-        setUnits(units.map((u) => (u.id === data.id ? data : u)));
-        toast.success('Unidade actualizada');
+        const unit = await updateUnit(modal.id, dados);
+        setUnits(units.map((u) => (u.id === unit.id ? unit : u)));
       }
       setModal(null);
     } catch (err) {
-      setFormErro(err.message);
+      setFormError(err.response?.data?.error || t('errors.generic'));
     } finally {
       setFormLoading(false);
     }
   }
 
   async function handleDelete() {
-    if (!confirmDelete) return;
+    if (!deleteTarget) return;
     try {
-      await deleteUnit(token, confirmDelete.id);
-      setUnits(units.filter((u) => u.id !== confirmDelete.id));
-      toast.success(`"${confirmDelete.name}" eliminada`);
+      await deleteUnit(deleteTarget.id);
+      setUnits(units.filter((u) => u.id !== deleteTarget.id));
     } catch (err) {
-      toast.error(err.message);
+      console.error(err);
     } finally {
-      setConfirmDelete(null);
+      setDeleteTarget(null);
     }
   }
 
+  const modalTitle = modal === 'create'
+    ? t('units.new')
+    : modal ? `${t('common.edit')}: ${modal.name}` : '';
+
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Unidades</h1>
-          <p className="text-gray-500 text-sm mt-1">{units.length} unidade(s) registada(s)</p>
-        </div>
-        <button onClick={() => { setFormErro(''); setModal('create'); }} className="btn-primary">
-          + Nova Unidade
-        </button>
-      </div>
+      <PageHeader
+        title={t('units.title')}
+        subtitle={`${units.length} unidade(s) registada(s)`}
+        actions={
+          <Button icon={Plus} onClick={() => { setFormError(''); setModal('create'); }}>
+            {t('units.new')}
+          </Button>
+        }
+      />
 
       {loading ? (
-        <div className="text-center py-16 text-gray-400">A carregar...</div>
+        <div className="flex justify-center py-20">
+          <LoadingSpinner size={32} />
+        </div>
       ) : (
         <UnitList
           units={units}
-          onEdit={(unit) => { setFormErro(''); setModal({ unit }); }}
-          onDelete={(unit) => setConfirmDelete(unit)}
+          onEdit={(unit) => { setFormError(''); setModal(unit); }}
+          onDelete={setDeleteTarget}
         />
       )}
 
-      {modal && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-md p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">
-              {modal === 'create' ? 'Nova Unidade' : `Editar: ${modal.unit.name}`}
-            </h2>
-            <UnitForm
-              unit={modal !== 'create' ? modal.unit : null}
-              operatorType={operator?.operator_type}
-              onSave={handleSave}
-              onCancel={() => setModal(null)}
-              loading={formLoading}
-              erro={formErro}
-            />
-          </div>
-        </div>
-      )}
+      <Modal
+        open={!!modal}
+        onClose={() => setModal(null)}
+        title={modalTitle}
+        size="md"
+        footer={null}
+      >
+        {modal && (
+          <UnitForm
+            unit={modal !== 'create' ? modal : null}
+            operatorType={operator?.operator_type}
+            onSave={handleSave}
+            onCancel={() => setModal(null)}
+            loading={formLoading}
+            error={formError}
+          />
+        )}
+      </Modal>
 
-      {confirmDelete && (
-        <ConfirmDialog
-          mensagem={`Eliminar a unidade "${confirmDelete.name}"? As reservas associadas serão mantidas, mas a unidade ficará indisponível.`}
-          onConfirmar={handleDelete}
-          onCancelar={() => setConfirmDelete(null)}
-          labelConfirmar="Eliminar"
-        />
-      )}
+      <Modal
+        open={!!deleteTarget}
+        onClose={() => setDeleteTarget(null)}
+        title={t('common.confirm')}
+        size="sm"
+        footer={
+          <>
+            <Button variant="secondary" onClick={() => setDeleteTarget(null)}>
+              {t('common.cancel')}
+            </Button>
+            <Button variant="danger" onClick={handleDelete}>
+              {t('common.delete')}
+            </Button>
+          </>
+        }
+      >
+        <p className="text-sm font-body text-n-700">
+          Eliminar a unidade <strong>"{deleteTarget?.name}"</strong>?
+          As reservas associadas serao mantidas mas a unidade ficara indisponivel.
+        </p>
+      </Modal>
     </div>
   );
 }

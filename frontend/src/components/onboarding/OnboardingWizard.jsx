@@ -37,7 +37,7 @@ export default function OnboardingWizard() {
     language:          operator?.language || 'pt',
     currency:          operator?.currency || 'EUR',
     timezone:          operator?.timezone || 'Atlantic/Cape_Verde',
-    booking_link_slug: operator?.booking_link_slug || '',
+    slug:              operator?.slug || '',
   });
 
   const set = (field) => (e) => setData({ ...data, [field]: e.target.value });
@@ -212,9 +212,9 @@ export default function OnboardingWizard() {
               </Select>
               <Input
                 label={t('onboarding.bookingSlug')}
-                value={data.booking_link_slug}
-                onChange={set('booking_link_slug')}
-                hint={`${t('onboarding.bookingSlugHint')}${data.booking_link_slug || 'o-seu-negocio'}`}
+                value={data.slug}
+                onChange={set('slug')}
+                hint={`${t('onboarding.bookingSlugHint')}${data.slug || 'o-seu-negocio'}`}
                 placeholder="o-meu-negocio"
               />
             </div>
@@ -233,7 +233,7 @@ export default function OnboardingWizard() {
               <SummaryRow label="Tipo" value={t(`onboarding.operatorTypes.${data.operator_type}`)} />
               <SummaryRow label={t('onboarding.businessName')} value={data.name} />
               <SummaryRow label={t('onboarding.language')} value={data.language.toUpperCase()} />
-              <SummaryRow label={t('onboarding.bookingSlug')} value={`/book/${data.booking_link_slug}`} />
+              <SummaryRow label={t('onboarding.bookingSlug')} value={`/book/${data.slug}`} />
             </div>
           </div>
         )}

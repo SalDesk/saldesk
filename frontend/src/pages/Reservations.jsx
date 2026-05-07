@@ -1,42 +1,40 @@
-import { usePageTitle } from '../hooks/usePageTitle';
 import { useState, useEffect } from 'react';
-import ReservationCard from '../components/reservations/ReservationCard';
-import ReservationForm from '../components/reservations/ReservationForm';
+import { Plus } from 'lucide-react';
 import { listReservations, createReservation, updateReservation } from '../services/reservationsService';
 import { listUnits } from '../services/unitsService';
-import useAuthStore from '../store/authStore';
+import { useT } from '../i18n';
+import PageHeader from '../components/layout/PageHeader';
+import Button from '../components/ui/Button';
+import Modal from '../components/ui/Modal';
+import Badge from '../components/ui/Badge';
+import ReservationCard from '../components/reservations/ReservationCard';
+import ReservationForm from '../components/reservations/ReservationForm';
+import LoadingSpinner from '../components/shared/LoadingSpinner';
 
-const FILTROS_STATUS = [
-  { value: '', label: 'Todas' },
-  { value: 'pending', label: 'Pendentes' },
-  { value: 'confirmed', label: 'Confirmadas' },
-  { value: 'checked_in', label: 'Check-in' },
-  { value: 'checked_out', label: 'Check-out' },
-  { value: 'cancelled', label: 'Canceladas' }
-];
+const STATUS_FILTERS = ['', 'pending', 'confirmed', 'checked_in', 'checked_out', 'cancelled'];
 
 export default function Reservations() {
-  usePageTitle('Reservas');
-  const token = useAuthStore((s) => s.token);
+  const t = useT();
   const [reservations, setReservations] = useState([]);
   const [units, setUnits] = useState([]);
-  const [filtroStatus, setFiltroStatus] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
   const [loading, setLoading] = useState(true);
-  const [modal, setModal] = useState(null); // null | 'create' | { reservation }
+  const [modal, setModal] = useState(null);
   const [formLoading, setFormLoading] = useState(false);
-  const [formErro, setFormErro] = useState('');
+  const [formError, setFormError] = useState('');
 
-  async function carregar(status = filtroStatus) {
+  async function carregar(status = statusFilter) {
     setLoading(true);
     try {
-      const filtros = {};
-      if (status) filtros.status = status;
-      const [resRes, unitsRes] = await Promise.all([
-        listReservations(token, filtros),
-        listUnits(token)
+      const filtros = status ? { status } : {};
+      const [res, uns] = await Promise.all([
+        listReservations(filtros),
+        listUnits(),
       ]);
-      setReservations(resRes.data);
-      setUnits(unitsRes.data.filter((u) => u.status === 'active'));
+      setReservations(res);
+      setUnits(uns.filter((u) => u.status === 'active'));
+    } catch (err) {
+      console.error(err);
     } finally {
       setLoading(false);
     }
@@ -44,74 +42,75 @@ export default function Reservations() {
 
   useEffect(() => { carregar(); }, []);
 
-  async function handleFiltro(status) {
-    setFiltroStatus(status);
-    carregar(status);
+  function handleFilterChange(s) {
+    setStatusFilter(s);
+    carregar(s);
   }
 
   async function handleSave(dados) {
-    setFormErro('');
+    setFormError('');
     setFormLoading(true);
     try {
       if (modal === 'create') {
-        const { data } = await createReservation(token, dados);
-        setReservations([data, ...reservations]);
+        const r = await createReservation(dados);
+        setReservations([r, ...reservations]);
       } else {
-        const { data } = await updateReservation(token, modal.reservation.id, dados);
-        setReservations(reservations.map((r) => (r.id === data.id ? data : r)));
+        const r = await updateReservation(modal.id, dados);
+        setReservations(reservations.map((x) => (x.id === r.id ? r : x)));
       }
       setModal(null);
     } catch (err) {
-      setFormErro(err.message);
+      setFormError(err.response?.data?.error || t('errors.generic'));
     } finally {
       setFormLoading(false);
     }
   }
 
-  function handleUpdate(updated) {
-    if (!updated) {
-      setReservations(reservations.filter((r) => r.id !== updated?.id));
-      carregar(filtroStatus);
-      return;
+  function handleUpdate(updated, deletedId) {
+    if (updated === null) {
+      setReservations(reservations.filter((r) => r.id !== deletedId));
+    } else {
+      setReservations(reservations.map((r) => (r.id === updated.id ? updated : r)));
     }
-    setReservations(reservations.map((r) => (r.id === updated.id ? updated : r)));
   }
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Reservas</h1>
-          <p className="text-gray-500 text-sm mt-1">{reservations.length} resultado(s)</p>
-        </div>
-        <button onClick={() => { setFormErro(''); setModal('create'); }} className="btn-primary">
-          + Nova Reserva
-        </button>
-      </div>
+      <PageHeader
+        title={t('reservations.title')}
+        subtitle={`${reservations.length} resultado(s)`}
+        actions={
+          <Button icon={Plus} onClick={() => { setFormError(''); setModal('create'); }}>
+            {t('reservations.new')}
+          </Button>
+        }
+      />
 
       {/* Filtros de status */}
       <div className="flex gap-2 flex-wrap mb-6">
-        {FILTROS_STATUS.map(({ value, label }) => (
+        {STATUS_FILTERS.map((s) => (
           <button
-            key={value}
-            onClick={() => handleFiltro(value)}
-            className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
-              filtroStatus === value
-                ? 'bg-primary-500 text-white'
-                : 'bg-white border border-gray-200 text-gray-600 hover:border-primary-500'
-            }`}
+            key={s}
+            onClick={() => handleFilterChange(s)}
+            className={[
+              'px-3 py-1.5 rounded-sm text-xs font-body font-semibold transition-colors',
+              statusFilter === s
+                ? 'bg-ocean-700 text-white'
+                : 'bg-white border border-n-200 text-n-600 hover:border-ocean-300',
+            ].join(' ')}
           >
-            {label}
+            {s ? t(`reservations.status.${s}`) : 'Todas'}
           </button>
         ))}
       </div>
 
       {loading ? (
-        <div className="text-center py-16 text-gray-400">A carregar...</div>
+        <div className="flex justify-center py-20">
+          <LoadingSpinner size={32} />
+        </div>
       ) : reservations.length === 0 ? (
-        <div className="text-center py-16 text-gray-400">
-          <div className="text-5xl mb-4">📅</div>
-          <p className="font-medium">Sem reservas</p>
+        <div className="flex flex-col items-center justify-center py-20 text-n-400">
+          <p className="font-body text-sm">{t('common.noResults')}</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -120,29 +119,29 @@ export default function Reservations() {
               key={r.id}
               reservation={r}
               onUpdate={handleUpdate}
-              onEdit={(res) => { setFormErro(''); setModal({ reservation: res }); }}
+              onEdit={(res) => { setFormError(''); setModal(res); }}
             />
           ))}
         </div>
       )}
 
-      {modal && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50 overflow-y-auto">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-lg p-6 my-4">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">
-              {modal === 'create' ? 'Nova Reserva' : `Editar Reserva`}
-            </h2>
-            <ReservationForm
-              reservation={modal !== 'create' ? modal.reservation : null}
-              units={units}
-              onSave={handleSave}
-              onCancel={() => setModal(null)}
-              loading={formLoading}
-              erro={formErro}
-            />
-          </div>
-        </div>
-      )}
+      <Modal
+        open={!!modal}
+        onClose={() => setModal(null)}
+        title={modal === 'create' ? t('reservations.new') : 'Editar Reserva'}
+        size="md"
+      >
+        {modal && (
+          <ReservationForm
+            reservation={modal !== 'create' ? modal : null}
+            units={units}
+            onSave={handleSave}
+            onCancel={() => setModal(null)}
+            loading={formLoading}
+            error={formError}
+          />
+        )}
+      </Modal>
     </div>
   );
 }

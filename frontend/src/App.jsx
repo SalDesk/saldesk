@@ -10,6 +10,8 @@ import Calendar from './pages/Calendar';
 import Customers from './pages/Customers';
 import Automations from './pages/Automations';
 import Financial from './pages/Financial';
+import Integrations from './pages/Integrations';
+import Settings from './pages/Settings';
 import PublicBooking from './pages/PublicBooking';
 import Layout from './components/layout/Layout';
 
@@ -55,6 +57,8 @@ export default function App() {
           <Route path="clientes" element={<Customers />} />
           <Route path="automacoes" element={<Automations />} />
           <Route path="financeiro" element={<Financial />} />
+          <Route path="integracoes" element={<Integrations />} />
+          <Route path="definicoes" element={<Settings />} />
         </Route>
         <Route path="/book/:slug" element={<PublicBooking />} />
         <Route path="*" element={<Navigate to="/" replace />} />
