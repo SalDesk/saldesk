@@ -1,110 +1,400 @@
-# Guia de Deploy — SalDesk
+# SalDesk v2 — Guia de Deploy Completo
 
-## 1. Supabase (base de dados + auth)
-
-1. Criar projeto em [supabase.com](https://supabase.com)
-2. Em **SQL Editor**, executar por ordem:
-   - `database/001_fase1_schema.sql`
-   - `database/002_fase2_schema.sql`
-   - `database/003_fase3_schema.sql`
-3. Em **Project Settings → API**, copiar:
-   - `SUPABASE_URL`
-   - `SUPABASE_ANON_KEY` (public)
-   - `SUPABASE_SERVICE_KEY` (service_role — manter secreto)
+**Infraestrutura:** Hostinger VPS KVM 2 (Ubuntu 22.04 LTS) + Supabase + SendGrid + Twilio
 
 ---
 
-## 2. Railway (backend)
+## Indice
 
-1. Criar conta em [railway.app](https://railway.app)
-2. **New Project → Deploy from GitHub repo**
-3. Seleccionar o repositório, definir **Root Directory** como `backend/`
-4. Em **Variables**, adicionar todas as variáveis de ambiente:
+1. [Supabase — Base de dados](#1-supabase)
+2. [Hostinger VPS — Comprar e aceder](#2-hostinger-vps)
+3. [Setup do servidor](#3-setup-do-servidor)
+4. [Clonar repositorio](#4-clonar-repositorio)
+5. [Variaveis de ambiente](#5-variaveis-de-ambiente)
+6. [Nginx — Configurar dominios](#6-nginx)
+7. [SSL — Let's Encrypt](#7-ssl)
+8. [Primeiro deploy](#8-primeiro-deploy)
+9. [Verificar todos os fluxos](#9-verificacao)
+10. [DNS — Apontar dominios](#10-dns)
+11. [Actualizacoes futuras](#11-actualizacoes)
+12. [Troubleshooting](#12-troubleshooting)
+
+---
+
+## 1. Supabase
+
+### 1.1 Criar projecto
+
+1. Aceder a [supabase.com](https://supabase.com) e criar conta
+2. **New Project** — nome: `saldesk-prod`, regiao: EU West
+3. Guardar a password da base de dados num local seguro
+
+### 1.2 Executar migrations (por ordem)
+
+No **SQL Editor** do Supabase, executar cada ficheiro por ordem:
 
 ```
-PORT=3001
-NODE_ENV=production
-FRONTEND_URL=https://SEU_APP.vercel.app
-
-SUPABASE_URL=https://xxxx.supabase.co
-SUPABASE_ANON_KEY=eyJ...
-SUPABASE_SERVICE_KEY=eyJ...
-
-SENDGRID_API_KEY=SG.xxx
-SENDGRID_FROM_EMAIL=noreply@seudominio.com
-
-TWILIO_ACCOUNT_SID=ACxxx
-TWILIO_AUTH_TOKEN=xxx
-TWILIO_WHATSAPP_FROM=whatsapp:+14155238886
+database/001_fase1_schema.sql   — operators, units, pricing_rules
+database/002_fase2_schema.sql   — reservations, blocked_dates
+database/003_fase3_schema.sql   — customers, automations, automation_logs
+database/004_fase2_v2_operators.sql  — campos adicionais em operators
+database/005_fase5_channels.sql — operator_channels, integration_logs
 ```
 
-5. Railway detecta `railway.toml` automaticamente — start command e health check já configurados
-6. Após deploy, copiar o URL público do Railway (ex: `https://saldesk-backend.up.railway.app`)
+> Copiar o conteudo de cada ficheiro e colar no SQL Editor, depois clicar **Run**.
+
+### 1.3 Obter credenciais
+
+Em **Project Settings > API**:
+- `SUPABASE_URL` — URL do projecto
+- `SUPABASE_ANON_KEY` — chave publica (anon)
+- `SUPABASE_SERVICE_KEY` — chave privada (service_role) — **manter secreta**
+
+### 1.4 Storage (opcional — para logos dos operadores)
+
+1. **Storage > New bucket** — nome: `logos`, visibilidade: **Public**
+2. **Policies > New policy** — permitir INSERT/SELECT para utilizadores autenticados
 
 ---
 
-## 3. Vercel (frontend)
+## 2. Hostinger VPS
 
-1. Criar conta em [vercel.com](https://vercel.com)
-2. **New Project → Import Git Repository**
-3. Seleccionar o repositório, definir **Root Directory** como `frontend/`
-4. **Framework Preset**: Vite
-5. Editar `frontend/vercel.json` — substituir `SEU_APP.railway.app` pelo URL real do Railway:
-```json
-{
-  "rewrites": [
-    { "source": "/api/:path*",    "destination": "https://saldesk-backend.up.railway.app/api/:path*" },
-    { "source": "/public/:path*", "destination": "https://saldesk-backend.up.railway.app/public/:path*" },
-    { "source": "/:path*",        "destination": "/index.html" }
-  ]
-}
+### 2.1 Comprar VPS
+
+1. Aceder a [hostinger.com](https://hostinger.com)
+2. **VPS Hosting > KVM 2** (2 vCPU, 8GB RAM, 100GB SSD)
+3. Sistema operativo: **Ubuntu 22.04 LTS**
+4. Regiao: Europe (mais proximo dos utilizadores europeus)
+
+### 2.2 Primeiro acesso SSH
+
+```bash
+ssh root@IP_DO_SERVIDOR
 ```
-6. Deploy — sem variáveis de ambiente necessárias no frontend (tudo vai pelo proxy do vercel.json)
+
+O IP e fornecido no painel da Hostinger apos o VPS ficar activo.
 
 ---
 
-## 4. Actualizar CORS no Railway
+## 3. Setup do servidor
 
-Depois do deploy Vercel, voltar ao Railway e actualizar:
+### 3.1 Correr o script de setup
+
+Copiar o script para o servidor e executar:
+
+```bash
+# No servidor, como root:
+curl -o setup-vps.sh https://raw.githubusercontent.com/SEU_USER/saldesk/main/deploy/setup-vps.sh
+chmod +x setup-vps.sh
+./setup-vps.sh
 ```
-FRONTEND_URL=https://SEU_APP.vercel.app
+
+Ou copiar manualmente via `scp`:
+
+```bash
+# No computador local:
+scp deploy/setup-vps.sh root@IP_DO_SERVIDOR:/root/
+ssh root@IP_DO_SERVIDOR
+chmod +x /root/setup-vps.sh && /root/setup-vps.sh
+```
+
+O script instala automaticamente: Node.js 20, PM2, Redis, Nginx, Certbot, ufw, fail2ban.
+
+### 3.2 Verificar instalacoes
+
+```bash
+node --version     # v20.x.x
+npm --version      # 10.x.x
+pm2 --version      # 5.x.x
+redis-cli ping     # PONG
+nginx -v           # nginx/1.18.x
+certbot --version  # certbot 2.x.x
 ```
 
 ---
 
-## 5. SendGrid — configuração
+## 4. Clonar repositorio
 
-1. Criar conta em [sendgrid.com](https://sendgrid.com)
-2. **Settings → API Keys → Create API Key** (Full Access)
-3. **Settings → Sender Authentication** — verificar o domínio de envio
-4. Activar o remetente com o email em `SENDGRID_FROM_EMAIL`
+```bash
+cd /var/www/saldesk
+git init
+git remote add origin https://github.com/SEU_USER/saldesk.git
+git pull origin main
+```
 
----
+Ou clonar directamente:
 
-## 6. Twilio WhatsApp — configuração
-
-1. Criar conta em [twilio.com](https://twilio.com)
-2. Em **Messaging → Try it out → Send a WhatsApp message**, activar o sandbox
-3. Copiar `Account SID`, `Auth Token`, e o número sandbox (`whatsapp:+14155238886`)
-4. Para produção, submeter template de mensagem para aprovação da Meta
-
----
-
-## Checklist pós-deploy
-
-- [ ] `/api/health` responde `{ status: "ok" }` no Railway
-- [ ] Login funciona no Vercel
-- [ ] Onboarding cria operador na BD
-- [ ] Reserva pública cria registo com `source: "public"`
-- [ ] Email de recepção chegou após reserva pública (verificar spam)
-- [ ] Cron de automações regista em `automation_logs` após 1 hora
+```bash
+git clone https://github.com/SEU_USER/saldesk.git /var/www/saldesk
+```
 
 ---
 
-## Domínio personalizado (opcional)
+## 5. Variaveis de ambiente
 
-**Vercel:** Project Settings → Domains → Add Domain
+### 5.1 Criar o ficheiro .env de producao
 
-**Railway:** Service → Settings → Networking → Custom Domain
+```bash
+cp /var/www/saldesk/deploy/.env.production /var/www/saldesk/backend/.env
+nano /var/www/saldesk/backend/.env
+```
 
-Actualizar `FRONTEND_URL` no Railway depois de adicionar o domínio Vercel.
+Preencher todos os valores (ver [deploy/.env.production](deploy/.env.production)).
+
+### 5.2 Gerar ENCRYPTION_KEY
+
+```bash
+openssl rand -hex 32
+# Copiar o output para ENCRYPTION_KEY no .env
+```
+
+### 5.3 Verificar que o .env nao e commitable
+
+```bash
+cat /var/www/saldesk/.gitignore | grep .env
+# Deve aparecer: .env
+```
+
+---
+
+## 6. Nginx
+
+### 6.1 Activar a configuracao
+
+```bash
+# Copiar configuracao
+cp /var/www/saldesk/deploy/nginx/saldesk.conf /etc/nginx/sites-available/saldesk
+
+# Activar (symlink)
+ln -s /etc/nginx/sites-available/saldesk /etc/nginx/sites-enabled/saldesk
+
+# Remover configuracao default (opcional)
+rm -f /etc/nginx/sites-enabled/default
+
+# Testar configuracao
+nginx -t
+
+# Se OK, recarregar
+systemctl reload nginx
+```
+
+### 6.2 Verificar
+
+```bash
+curl -I http://SEU_IP
+# Deve responder 301 (redirect para HTTPS, mesmo sem SSL ainda)
+```
+
+---
+
+## 7. SSL (Let's Encrypt)
+
+### 7.1 Pre-requisito: DNS ja apontado
+
+Os dominios devem resolver para o IP do VPS **antes** de correr o Certbot.
+Ver [Secção 10 — DNS](#10-dns).
+
+### 7.2 Emitir certificados
+
+```bash
+certbot --nginx \
+  -d saldesk.cv \
+  -d www.saldesk.cv \
+  -d app.saldesk.cv \
+  -d api.saldesk.cv \
+  --email hello@saldesk.cv \
+  --agree-tos \
+  --no-eff-email
+```
+
+O Certbot actualiza automaticamente o `saldesk.conf` com os blocos SSL.
+
+### 7.3 Renovacao automatica
+
+```bash
+# Testar renovacao
+certbot renew --dry-run
+
+# O cron de renovacao e instalado automaticamente pelo Certbot
+# Verificar:
+systemctl status certbot.timer
+```
+
+---
+
+## 8. Primeiro deploy
+
+```bash
+cd /var/www/saldesk
+chmod +x deploy/deploy.sh
+bash deploy/deploy.sh
+```
+
+O script faz:
+1. `git pull` — actualizar codigo
+2. `npm install + npm run build` — compilar frontend
+3. `npm install` — instalar dependencias backend
+4. Copiar website estatico
+5. `pm2 restart` — reiniciar API
+6. Verificar health endpoint
+
+### 8.1 Verificar PM2
+
+```bash
+pm2 status
+pm2 logs saldesk-api
+```
+
+---
+
+## 9. Verificacao
+
+### 9.1 Checklist de fluxos criticos
+
+Testar **manualmente** cada um:
+
+```
+[ ] https://saldesk.cv              — Landing page carrega
+[ ] https://saldesk.cv/discover/    — Directorio carrega
+[ ] https://app.saldesk.cv          — Dashboard redireciona para /login
+[ ] https://app.saldesk.cv/register — Formulario de registo funciona
+[ ] Registo de novo operador        — Email recebido (SendGrid)
+[ ] Onboarding 5 passos             — Dados guardados no Supabase
+[ ] Criar unidade                   — Aparece na lista
+[ ] Criar reserva manual            — Status muda (pending → confirmed)
+[ ] Motor publico                   — https://app.saldesk.cv/book/SLUG
+[ ] Calendario                      — Grid carrega, bloqueio de datas
+[ ] CRM — exportar CSV              — Ficheiro descarregado
+[ ] Financeiro — export Excel       — Ficheiro descarregado
+[ ] https://api.saldesk.cv/api/health — {"status":"ok","version":"2.0.0"}
+```
+
+### 9.2 Testar webhooks (Fase 5)
+
+```bash
+# Simular webhook Viator (sem HMAC em dev — nao chegara a processar)
+curl -X POST https://api.saldesk.cv/api/v1/integrations/webhooks/viator \
+  -H "Content-Type: application/json" \
+  -d '{"event":"booking_new","booking":{"bookingRef":"TEST-001"}}'
+# Deve responder: {"received":true}
+```
+
+### 9.3 Verificar logs
+
+```bash
+pm2 logs saldesk-api --lines 50
+tail -f /var/log/nginx/error.log
+tail -f /var/log/saldesk/api-error.log
+```
+
+---
+
+## 10. DNS
+
+### 10.1 Registos a criar no painel do dominio
+
+| Tipo | Nome | Valor | TTL |
+|------|------|-------|-----|
+| A | `@` (saldesk.cv) | IP_DO_SERVIDOR | 300 |
+| A | `www` | IP_DO_SERVIDOR | 300 |
+| A | `app` | IP_DO_SERVIDOR | 300 |
+| A | `api` | IP_DO_SERVIDOR | 300 |
+
+### 10.2 Verificar propagacao DNS
+
+```bash
+# No computador local:
+nslookup saldesk.cv
+nslookup app.saldesk.cv
+nslookup api.saldesk.cv
+
+# Ou online: https://dnschecker.org
+```
+
+A propagacao pode demorar ate 24-48 horas (normalmente < 1h com TTL 300).
+
+---
+
+## 11. Actualizacoes futuras
+
+Para cada nova versao do codigo:
+
+```bash
+ssh root@IP_DO_SERVIDOR
+cd /var/www/saldesk
+bash deploy/deploy.sh
+```
+
+O script faz git pull, rebuild e restart automaticamente.
+
+### 11.1 Novas migrations de BD
+
+Se houver novos ficheiros em `database/`, executar manualmente no SQL Editor do Supabase antes de fazer deploy.
+
+### 11.2 Rollback de emergencia
+
+```bash
+cd /var/www/saldesk
+git log --oneline -5          # Ver commits recentes
+git checkout HASH_DO_COMMIT   # Voltar a versao anterior
+bash deploy/deploy.sh         # Redeploy
+```
+
+---
+
+## 12. Troubleshooting
+
+### API nao responde
+
+```bash
+pm2 status                    # Ver estado dos processos
+pm2 logs saldesk-api          # Ver logs de erro
+pm2 restart saldesk-api       # Reiniciar
+curl http://localhost:3001/api/health  # Testar localmente
+```
+
+### Nginx 502 Bad Gateway
+
+```bash
+# A API nao esta a correr
+pm2 start ecosystem.config.js --env production
+```
+
+### Certificado SSL expirado
+
+```bash
+certbot renew
+systemctl reload nginx
+```
+
+### Redis nao disponivel
+
+```bash
+systemctl status redis-server
+systemctl start redis-server
+redis-cli ping
+```
+
+### Espaco em disco
+
+```bash
+df -h
+# Limpar logs antigos:
+pm2 flush
+journalctl --vacuum-size=100M
+```
+
+### Ver logs em tempo real
+
+```bash
+pm2 logs saldesk-api --lines 100 --raw
+tail -f /var/log/nginx/access.log
+tail -f /var/log/saldesk/deploy.log
+```
+
+---
+
+## Contacto
+
+- Email: hello@saldesk.cv
+- Deploy issues: verificar `/var/log/saldesk/` e `pm2 logs`
