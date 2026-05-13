@@ -2,6 +2,7 @@ import { NavLink, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, CalendarDays, BookOpen, Users,
   Zap, BarChart2, Building2, Puzzle, Settings, LogOut, X,
+  UserCheck, MessageCircle, Truck,
 } from 'lucide-react';
 import useAuthStore from '../../store/authStore';
 import useUiStore from '../../store/uiStore';
@@ -15,9 +16,12 @@ const navItems = [
   { to: '/clientes',    icon: Users,           key: 'nav.customers' },
   { to: '/automacoes',  icon: Zap,             key: 'nav.automations' },
   { to: '/financeiro',  icon: BarChart2,       key: 'nav.financial' },
-  { to: '/unidades',    icon: Building2,       key: 'nav.units' },
-  { to: '/integracoes', icon: Puzzle,          key: 'nav.integrations' },
-  { to: '/definicoes',  icon: Settings,        key: 'nav.settings' },
+  { to: '/unidades',      icon: Building2,      key: 'nav.units' },
+  { to: '/colaboradores', icon: UserCheck,     label: 'Colaboradores' },
+  { to: '/frota',         icon: Truck,         label: 'Frota' },
+  { to: '/mensagens',     icon: MessageCircle, label: 'Mensagens' },
+  { to: '/integracoes',   icon: Puzzle,        key: 'nav.integrations' },
+  { to: '/definicoes',    icon: Settings,      key: 'nav.settings' },
 ];
 
 export default function Sidebar({ onClose }) {
@@ -56,7 +60,7 @@ export default function Sidebar({ onClose }) {
       )}
 
       <nav className="flex-1 overflow-y-auto py-3 px-2 space-y-0.5">
-        {navItems.map(({ to, icon: Icon, key, end }) => (
+        {navItems.map(({ to, icon: Icon, key, label, end }) => (
           <NavLink
             key={to}
             to={to}
@@ -71,7 +75,7 @@ export default function Sidebar({ onClose }) {
             }
           >
             <Icon size={18} strokeWidth={1.75} className="shrink-0" />
-            {t(key)}
+            {label || t(key)}
           </NavLink>
         ))}
       </nav>

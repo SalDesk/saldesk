@@ -1,0 +1,17 @@
+{
+  "name": "SalDesk — Gestao Turistica",
+  "short_name": "SalDesk",
+  "description": "Plataforma de gestao turistica para operadores da Ilha do Sal",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#062A38",
+  "theme_color": "#0D5470",
+  "lang": "pt",
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ],
+  "categories": ["business", "productivity"],
+  "screenshots": []
+}
