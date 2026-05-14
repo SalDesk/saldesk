@@ -12,6 +12,56 @@ import Logo from '../components/shared/Logo';
 
 const STEPS = { SELECT: 1, DATES: 2, FORM: 3, PAYMENT: 4, CONFIRM: 5 };
 
+const TYPE_LD = {
+  hotel:      'LodgingBusiness',
+  activity:   'TouristAttraction',
+  rentacar:   'RentAction',
+  restaurant: 'Restaurant',
+};
+
+function injectSeo(op, slug) {
+  document.title = `${op.name} — Reservar em Ilha do Sal | SalDesk`;
+  const desc = op.description || `Reserve directamente em ${op.name}, Ilha do Sal, Cabo Verde.`;
+  const url  = window.location.href;
+
+  const setMeta = (name, content, prop = false) => {
+    const attr  = prop ? 'property' : 'name';
+    let el = document.querySelector(`meta[${attr}="${name}"]`);
+    if (!el) { el = document.createElement('meta'); el.setAttribute(attr, name); document.head.appendChild(el); }
+    el.setAttribute('content', content);
+    el.dataset.seo = '1';
+  };
+
+  setMeta('description', desc);
+  setMeta('og:title', document.title, true);
+  setMeta('og:description', desc, true);
+  setMeta('og:url', url, true);
+  setMeta('og:type', 'website', true);
+  if (op.logo_url) setMeta('og:image', op.logo_url, true);
+  setMeta('twitter:card', 'summary');
+  setMeta('twitter:title', document.title);
+  setMeta('twitter:description', desc);
+
+  const ldType = TYPE_LD[op.operator_type] || 'LocalBusiness';
+  const ld = {
+    '@context': 'https://schema.org',
+    '@type': ldType,
+    name: op.name,
+    description: desc,
+    url,
+    address: { '@type': 'PostalAddress', addressLocality: 'Santa Maria', addressCountry: 'CV' },
+    ...(op.phone ? { telephone: op.phone } : {}),
+  };
+  let ldEl = document.getElementById('sd-jsonld');
+  if (!ldEl) { ldEl = document.createElement('script'); ldEl.id = 'sd-jsonld'; ldEl.type = 'application/ld+json'; document.head.appendChild(ldEl); }
+  ldEl.textContent = JSON.stringify(ld);
+}
+
+function removeSeo() {
+  document.querySelectorAll('meta[data-seo]').forEach(el => el.remove());
+  document.getElementById('sd-jsonld')?.remove();
+}
+
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3001/api/v1';
 
 export default function PublicBooking() {
@@ -42,9 +92,12 @@ export default function PublicBooking() {
       .then(({ operator, units: u }) => {
         setOperador(operator);
         setUnits(u);
+        /* SEO dinâmico */
+        injectSeo(operator, slug);
       })
       .catch(() => setNotFound(true))
       .finally(() => setLoadingPage(false));
+    return () => removeSeo();
   }, [slug]);
 
   const verifyAvailability = useCallback(async () => {
