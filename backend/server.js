@@ -20,6 +20,8 @@ const assignmentRoutes   = require('./src/routes/assignments');
 const messageRoutes      = require('./src/routes/messages');
 const fleetRoutes        = require('./src/routes/fleet');
 const notificationRoutes = require('./src/routes/notifications');
+const paymentRoutes      = require('./src/routes/payments');
+const reviewRoutes       = require('./src/routes/reviews');
 const errorHandler       = require('./src/middleware/errorHandler');
 const { iniciarCron }    = require('./src/services/cronService');
 const { initQueues }     = require('./src/queues/queueManager');
@@ -74,6 +76,8 @@ app.use('/api/v1/assignments',   assignmentRoutes);
 app.use('/api/v1/messages',      messageRoutes);
 app.use('/api/v1/fleet',         fleetRoutes);
 app.use('/api/v1/notifications', notificationRoutes);
+app.use('/api/v1/payments',     paymentRoutes);
+app.use('/api/v1/reviews',      reviewRoutes);
 
 app.use(errorHandler);
 

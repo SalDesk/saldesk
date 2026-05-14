@@ -2,7 +2,7 @@ import { NavLink, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, CalendarDays, BookOpen, Users,
   Zap, BarChart2, Building2, Puzzle, Settings, LogOut, X,
-  UserCheck, MessageCircle, Truck,
+  UserCheck, MessageCircle, Truck, Star,
 } from 'lucide-react';
 import useAuthStore from '../../store/authStore';
 import useUiStore from '../../store/uiStore';
@@ -20,6 +20,7 @@ const navItems = [
   { to: '/colaboradores', icon: UserCheck,     label: 'Colaboradores' },
   { to: '/frota',         icon: Truck,         label: 'Frota' },
   { to: '/mensagens',     icon: MessageCircle, label: 'Mensagens' },
+  { to: '/avaliacoes',    icon: Star,          label: 'Avaliacoes' },
   { to: '/integracoes',   icon: Puzzle,        key: 'nav.integrations' },
   { to: '/definicoes',    icon: Settings,      key: 'nav.settings' },
 ];

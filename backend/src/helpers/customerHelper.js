@@ -52,24 +52,40 @@ async function obterOuCriarCliente(operatorId, { name, email, phone, country_cod
   return data;
 }
 
-// Incrementa total_visits e total_spent após checkout
-async function actualizarStatsCheckout(customerId, totalPrice) {
+/* Incrementa total_visits, total_spent e pontos de fidelizacao apos checkout */
+async function actualizarStatsCheckout(customerId, totalPrice, source = 'admin') {
   const { data: customer } = await supabaseAdmin
     .from('customers')
-    .select('total_visits, total_spent')
+    .select('total_visits, total_spent, loyalty_points')
     .eq('id', customerId)
     .single();
 
   if (!customer) return;
 
+  /* Reservas directas ganham 10 pontos; OTAs nao ganham pontos */
+  const pontosGanhos = ['direct', 'public', 'admin', 'manual'].includes(source) ? 10 : 0;
+
   await supabaseAdmin
     .from('customers')
     .update({
-      total_visits: customer.total_visits + 1,
-      total_spent: Number(customer.total_spent) + Number(totalPrice),
-      updated_at: new Date().toISOString()
+      total_visits:   customer.total_visits + 1,
+      total_spent:    Number(customer.total_spent) + Number(totalPrice),
+      loyalty_points: (customer.loyalty_points || 0) + pontosGanhos,
+      updated_at:     new Date().toISOString(),
     })
     .eq('id', customerId);
 }
 
-module.exports = { obterOuCriarCliente, actualizarStatsCheckout };
+/* Resgatar pontos de fidelizacao */
+async function resgatarPontos(customerId, pontos) {
+  const { data: customer } = await supabaseAdmin
+    .from('customers').select('loyalty_points').eq('id', customerId).single();
+  if (!customer || customer.loyalty_points < pontos) return false;
+  await supabaseAdmin
+    .from('customers')
+    .update({ loyalty_points: customer.loyalty_points - pontos, updated_at: new Date().toISOString() })
+    .eq('id', customerId);
+  return true;
+}
+
+module.exports = { obterOuCriarCliente, actualizarStatsCheckout, resgatarPontos };

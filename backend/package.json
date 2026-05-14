@@ -9,6 +9,7 @@
     "test": "jest --coverage"
   },
   "dependencies": {
+    "@paypal/paypal-server-sdk": "^2.3.0",
     "@sendgrid/mail": "^8.1.0",
     "@supabase/supabase-js": "^2.38.0",
     "axios": "^1.16.0",

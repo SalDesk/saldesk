@@ -13,6 +13,7 @@ import Financial from './pages/Financial';
 import Integrations from './pages/Integrations';
 import Settings from './pages/Settings';
 import Staff from './pages/Staff';
+import Reviews from './pages/Reviews';
 import Fleet from './pages/Fleet';
 import Messages from './pages/Messages';
 import PublicBooking from './pages/PublicBooking';
@@ -53,6 +54,7 @@ export default function App() {
           <Route path="colaboradores" element={<Staff />} />
           <Route path="frota"       element={<Fleet />} />
           <Route path="mensagens"   element={<Messages />} />
+          <Route path="avaliacoes"  element={<Reviews />} />
           <Route path="definicoes"  element={<Settings />} />
         </Route>
 

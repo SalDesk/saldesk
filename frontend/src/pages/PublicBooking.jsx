@@ -10,7 +10,9 @@ import LoadingSpinner from '../components/shared/LoadingSpinner';
 import LanguageToggle from '../components/shared/LanguageToggle';
 import Logo from '../components/shared/Logo';
 
-const STEPS = { SELECT: 1, DATES: 2, FORM: 3, CONFIRM: 4 };
+const STEPS = { SELECT: 1, DATES: 2, FORM: 3, PAYMENT: 4, CONFIRM: 5 };
+
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3001/api/v1';
 
 export default function PublicBooking() {
   const { slug } = useParams();
@@ -29,6 +31,10 @@ export default function PublicBooking() {
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [bookingRef, setBookingRef] = useState(null);
+  const [reservationId, setReservationId] = useState(null);
+  const [paymentMethod, setPaymentMethod] = useState('paypal');
+  const [paypalOrderId, setPaypalOrderId] = useState(null);
+  const [paymentLoading, setPaymentLoading] = useState(false);
   const [error, setError] = useState('');
 
   useEffect(() => {
@@ -75,8 +81,8 @@ export default function PublicBooking() {
         notes: form.notes || null,
       });
       setBookingRef(result.id);
-      setSubmitted(true);
-      setStep(STEPS.CONFIRM);
+      setReservationId(result.id);
+      setStep(STEPS.PAYMENT);
     } catch (err) {
       setError(err.response?.data?.error || t('errors.generic'));
     } finally {
@@ -259,7 +265,86 @@ export default function PublicBooking() {
           </div>
         )}
 
-        {/* Passo 4 — Confirmacao */}
+        {/* Passo 4 — Pagamento */}
+        {step === STEPS.PAYMENT && (
+          <div>
+            <h2 className="font-display font-bold text-lg text-n-900 mb-1">Metodo de pagamento</h2>
+            <p className="text-sm font-body text-n-500 mb-5">Escolha como pretende pagar</p>
+
+            {/* Sumario */}
+            <div className="bg-ocean-50 rounded-md p-3 mb-5 space-y-1">
+              <p className="text-xs font-body font-semibold text-ocean-700">{selectedUnit?.name}</p>
+              <div className="flex items-center justify-between text-xs font-body text-n-600">
+                <span>{dates.checkIn} → {dates.checkOut}</span>
+                <span className="font-bold text-ocean-700">€{Number(availability?.total_price || 0).toFixed(2)}</span>
+              </div>
+            </div>
+
+            {/* Opcoes */}
+            <div className="space-y-3 mb-5">
+              {[
+                { value: 'paypal', label: 'Cartao internacional (PayPal)', desc: 'Visa, Mastercard, American Express — pagamento seguro via PayPal' },
+                { value: 'sisp',   label: 'Cartao cabo-verdiano (SISP Vinti4)', desc: 'Cartao de debito ou credito emitido em Cabo Verde' },
+                { value: 'cash',   label: 'Pagar presencialmente', desc: 'Dinheiro ou transferencia no momento da actividade' },
+              ].map((opt) => (
+                <button key={opt.value} onClick={() => setPaymentMethod(opt.value)}
+                  className={`w-full text-left p-4 rounded-md border-2 transition-all ${paymentMethod === opt.value ? 'border-ocean-700 bg-ocean-50' : 'border-n-200 hover:border-n-300'}`}>
+                  <p className={`font-body font-semibold text-sm ${paymentMethod === opt.value ? 'text-ocean-700' : 'text-n-900'}`}>{opt.label}</p>
+                  <p className="text-xs font-body text-n-500 mt-0.5">{opt.desc}</p>
+                </button>
+              ))}
+            </div>
+
+            {error && (
+              <p className="text-sm font-body px-3 py-2 rounded-sm bg-[var(--error-light)] text-[var(--error)] mb-4">{error}</p>
+            )}
+
+            <Button
+              className="w-full"
+              loading={paymentLoading}
+              onClick={async () => {
+                if (paymentMethod === 'cash') {
+                  setStep(STEPS.CONFIRM);
+                  return;
+                }
+                setPaymentLoading(true);
+                setError('');
+                try {
+                  const amount = availability?.total_price || 0;
+                  if (paymentMethod === 'paypal') {
+                    const r = await fetch(`${API_BASE}/payments/create-intent`, {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ reservation_id: reservationId, amount }),
+                    }).then(r => r.json());
+                    if (r.data?.order_id) {
+                      setPaypalOrderId(r.data.order_id);
+                      window.open(`https://www.sandbox.paypal.com/checkoutnow?token=${r.data.order_id}`, '_blank');
+                      setTimeout(() => setStep(STEPS.CONFIRM), 2000);
+                    }
+                  } else if (paymentMethod === 'sisp') {
+                    const r = await fetch(`${API_BASE}/payments/sisp/init`, {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ reservation_id: reservationId, amount }),
+                    }).then(r => r.json());
+                    if (r.data?.payment_url) {
+                      window.location.href = r.data.payment_url;
+                    }
+                  }
+                } catch (err) {
+                  setError('Erro ao iniciar pagamento. Tente novamente.');
+                } finally {
+                  setPaymentLoading(false);
+                }
+              }}
+            >
+              {paymentMethod === 'cash' ? 'Confirmar reserva' : 'Prosseguir para pagamento'}
+            </Button>
+          </div>
+        )}
+
+        {/* Passo 5 — Confirmacao */}
         {step === STEPS.CONFIRM && (
           <div className="text-center py-8">
             <div className="w-16 h-16 rounded-full bg-[var(--success-light)] flex items-center justify-center mx-auto mb-4">
