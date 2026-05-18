@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import useAuthStore from '../store/authStore';
+import AuthLayout from '../components/auth/AuthLayout';
 import OnboardingWizard from '../components/onboarding/OnboardingWizard';
 
 export default function Onboarding() {
@@ -12,8 +13,8 @@ export default function Onboarding() {
   }, [operator, navigate]);
 
   return (
-    <div className="min-h-screen bg-n-50 flex items-center justify-center p-4">
+    <AuthLayout showLangToggle>
       <OnboardingWizard />
-    </div>
+    </AuthLayout>
   );
 }

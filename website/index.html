@@ -209,7 +209,7 @@
     <ul class="nav-links">
       <li><a href="#features" class="pt">Funcionalidades</a><a href="#features" class="en">Features</a></li>
       <li><a href="#pricing" class="pt">Precos</a><a href="#pricing" class="en">Pricing</a></li>
-      <li><a href="discover/" class="pt">Directorio</a><a href="discover/" class="en">Directory</a></li>
+      <li><a href="discover/">SalDesk Connect</a></li>
       <li><a href="#contact" class="pt">Contacto</a><a href="#contact" class="en">Contact</a></li>
     </ul>
     <div class="nav-right">
@@ -438,11 +438,16 @@
         <span class="pt">30 dias gratuitos em qualquer plano. Sem cartao de credito.</span>
         <span class="en">30 days free on any plan. No credit card required.</span>
       </p>
+      <!-- Toggle EUR/CVE -->
+      <div style="display:inline-flex;gap:0;background:var(--n100);border-radius:8px;padding:3px;margin-top:20px" id="currencyToggle">
+        <button onclick="setCurrency('EUR')" id="btnEUR" style="padding:6px 18px;border:none;border-radius:6px;font-family:var(--font-body);font-size:.8125rem;font-weight:700;cursor:pointer;background:var(--ocean-700);color:#fff;transition:all .2s">EUR</button>
+        <button onclick="setCurrency('CVE')" id="btnCVE" style="padding:6px 18px;border:none;border-radius:6px;font-family:var(--font-body);font-size:.8125rem;font-weight:700;cursor:pointer;background:transparent;color:var(--n500);transition:all .2s">CVE</button>
+      </div>
     </div>
     <div class="pricing-grid fade-up">
       <div class="plan">
         <div class="plan-name">Starter</div>
-        <div class="plan-price">€29<span class="pt">/mes</span><span class="en">/mo</span></div>
+        <div class="plan-price"><span class="price-eur">€29</span><span class="price-cve" style="display:none">3.190 CVE</span><span class="pt">/mes</span><span class="en">/mo</span></div>
         <div class="plan-desc pt">Para operadores a comecar</div>
         <div class="plan-desc en">For operators getting started</div>
         <ul class="plan-features">
@@ -462,7 +467,7 @@
         <div class="plan-badge pt">Mais popular</div>
         <div class="plan-badge en">Most popular</div>
         <div class="plan-name">Business</div>
-        <div class="plan-price">€69<span class="pt">/mes</span><span class="en">/mo</span></div>
+        <div class="plan-price"><span class="price-eur">€69</span><span class="price-cve" style="display:none">7.590 CVE</span><span class="pt">/mes</span><span class="en">/mo</span></div>
         <div class="plan-desc pt">Para operadores em crescimento</div>
         <div class="plan-desc en">For growing operators</div>
         <ul class="plan-features">
@@ -480,7 +485,7 @@
       </div>
       <div class="plan">
         <div class="plan-name">Pro</div>
-        <div class="plan-price">€129<span class="pt">/mes</span><span class="en">/mo</span></div>
+        <div class="plan-price"><span class="price-eur">€129</span><span class="price-cve" style="display:none">14.190 CVE</span><span class="pt">/mes</span><span class="en">/mo</span></div>
         <div class="plan-desc pt">Para operadores com presenca nas OTAs</div>
         <div class="plan-desc en">For operators on OTA platforms</div>
         <ul class="plan-features">
@@ -564,22 +569,22 @@
     <div class="fade-up">
       <div class="inv-timeline">
         <div class="inv-step">
-          <h4 class="pt">Fase 1 — Produto (actual)</h4>
-          <h4 class="en">Phase 1 — Product (current)</h4>
-          <p class="pt">Plataforma completa com reservas, CRM, financeiro e channel manager. MVP testado com operadores piloto.</p>
-          <p class="en">Complete platform with bookings, CRM, financials and channel manager. MVP tested with pilot operators.</p>
+          <h4 class="pt">Fase 1 — Produto (2025 — concluido)</h4>
+          <h4 class="en">Phase 1 — Product (2025 — completed)</h4>
+          <p class="pt">Plataforma completa: reservas directas, CRM, financeiro, channel manager Viator/GYG, colaboradores, pagamentos e SalDesk Connect.</p>
+          <p class="en">Complete platform: direct bookings, CRM, financials, Viator/GYG channel manager, staff, payments and SalDesk Connect.</p>
         </div>
         <div class="inv-step">
-          <h4 class="pt">Fase 2 — Crescimento (2025)</h4>
-          <h4 class="en">Phase 2 — Growth (2025)</h4>
-          <p class="pt">Onboarding de 50 operadores. Lancamento do directorio publico com receita publicitaria.</p>
-          <p class="en">Onboarding of 50 operators. Launch of public directory with advertising revenue.</p>
+          <h4 class="pt">Fase 2 — Crescimento (2026)</h4>
+          <h4 class="en">Phase 2 — Growth (2026)</h4>
+          <p class="pt">Onboarding de 50 operadores. Directorio SalDesk Connect com receita publicitaria. Aplicacao mobile iOS/Android.</p>
+          <p class="en">Onboarding 50 operators. SalDesk Connect directory with advertising revenue. iOS/Android mobile app.</p>
         </div>
         <div class="inv-step">
-          <h4 class="pt">Fase 3 — Expansao (2026)</h4>
-          <h4 class="en">Phase 3 — Expansion (2026)</h4>
-          <p class="pt">Expansao para outras ilhas de Cabo Verde e mercados africanos de turismo de sol e mar.</p>
-          <p class="en">Expansion to other Cape Verde islands and African sun-and-sea tourism markets.</p>
+          <h4 class="pt">Fase 3 — Expansao (2027/2028)</h4>
+          <h4 class="en">Phase 3 — Expansion (2027/2028)</h4>
+          <p class="pt">Expansao para Santiago, Fogo e Boavista. Parcerias com companhias aereas e seguradores. Mercados africanos.</p>
+          <p class="en">Expansion to Santiago, Fogo and Boavista. Airline and insurance partnerships. African markets.</p>
         </div>
       </div>
     </div>
@@ -641,9 +646,8 @@
     <div class="footer-bottom">
       <span class="pt">© 2025 SalDesk · Ilha do Sal, Cabo Verde</span>
       <span class="en">© 2025 SalDesk · Ilha do Sal, Cape Verde</span>
-      <span style="color:rgba(255,255,255,.3);font-size:.75rem">
-        <span class="pt">Feito com cuidado para os operadores da ilha</span>
-        <span class="en">Made with care for island operators</span>
+      <span style="color:rgba(255,255,255,.4);font-size:.75rem">
+        Sistema desenvolvido por <strong style="color:rgba(255,255,255,.6)">WANDR — Travel Technology Company</strong>
       </span>
     </div>
   </div>
@@ -669,6 +673,20 @@
 
   const saved = localStorage.getItem('sd-lang');
   if (saved) setLang(saved);
+
+  /* ─── Toggle EUR/CVE ─── */
+  function setCurrency(cur) {
+    document.querySelectorAll('.price-eur').forEach(el => { el.style.display = cur === 'EUR' ? '' : 'none'; });
+    document.querySelectorAll('.price-cve').forEach(el => { el.style.display = cur === 'CVE' ? '' : 'none'; });
+    const btnEur = document.getElementById('btnEUR');
+    const btnCve = document.getElementById('btnCVE');
+    if (btnEur && btnCve) {
+      btnEur.style.background = cur === 'EUR' ? 'var(--ocean-700)' : 'transparent';
+      btnEur.style.color      = cur === 'EUR' ? '#fff' : 'var(--n500)';
+      btnCve.style.background = cur === 'CVE' ? 'var(--ocean-700)' : 'transparent';
+      btnCve.style.color      = cur === 'CVE' ? '#fff' : 'var(--n500)';
+    }
+  }
 
   /* ─── Intersection observer para animacoes ─── */
   const obs = new IntersectionObserver((entries) => {

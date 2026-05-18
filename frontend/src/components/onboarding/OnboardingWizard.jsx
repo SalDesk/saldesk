@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Hotel, Waves, Car, UtensilsCrossed, Check, ArrowLeft, ArrowRight } from 'lucide-react';
+import { Hotel, Waves, Car, UtensilsCrossed, Check, ArrowLeft, ArrowRight, Upload, ImageIcon } from 'lucide-react';
+import { createClient } from '@supabase/supabase-js';
 import useAuthStore from '../../store/authStore';
 import { createOperator, updateOperator } from '../../services/authService';
 import { useT } from '../../i18n';
@@ -8,6 +9,11 @@ import Logo from '../shared/Logo';
 import Button from '../ui/Button';
 import Input, { Textarea, Select } from '../ui/Input';
 import LanguageToggle from '../shared/LanguageToggle';
+
+const supabase = createClient(
+  import.meta.env.VITE_SUPABASE_URL || '',
+  import.meta.env.VITE_SUPABASE_ANON_KEY || ''
+);
 
 const STEPS = [1, 2, 3, 4, 5];
 
@@ -26,6 +32,30 @@ export default function OnboardingWizard() {
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [logoPreview, setLogoPreview] = useState(operator?.logo_url || null);
+  const [uploadingLogo, setUploadingLogo] = useState(false);
+  const logoInputRef = useRef(null);
+
+  async function handleLogoUpload(e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 2 * 1024 * 1024) { setError('Logotipo deve ter menos de 2MB'); return; }
+    setUploadingLogo(true);
+    setError('');
+    try {
+      const ext  = file.name.split('.').pop();
+      const path = `logos/${user?.id || Date.now()}.${ext}`;
+      const { error: upErr } = await supabase.storage.from('logos').upload(path, file, { upsert: true });
+      if (upErr) throw upErr;
+      const { data: { publicUrl } } = supabase.storage.from('logos').getPublicUrl(path);
+      setLogoPreview(publicUrl);
+      setData((d) => ({ ...d, logo_url: publicUrl }));
+    } catch (err) {
+      setError('Erro ao carregar logotipo. Verifique as permissoes do bucket.');
+    } finally {
+      setUploadingLogo(false);
+    }
+  }
 
   const [data, setData] = useState({
     operator_type:     operator?.operator_type || '',
@@ -178,10 +208,22 @@ export default function OnboardingWizard() {
                 <label className="text-xs font-body font-bold uppercase tracking-wide text-n-600 block mb-1">
                   {t('onboarding.logo')} <span className="text-n-400 normal-case font-normal">{t('common.optional')}</span>
                 </label>
-                <div className="border-2 border-dashed border-n-200 rounded-md p-8 flex flex-col items-center gap-2 text-center bg-n-50 hover:border-ocean-300 transition-colors cursor-pointer">
-                  <p className="text-sm font-body text-n-500">{t('onboarding.uploadLogo')}</p>
-                  <p className="text-xs font-body text-n-400">{t('onboarding.dragDrop')}</p>
-                  <p className="text-xs font-body text-n-400">PNG, JPG — max 2MB</p>
+                <input ref={logoInputRef} type="file" accept="image/png,image/jpeg,image/webp" className="hidden" onChange={handleLogoUpload} />
+                <div
+                  onClick={() => logoInputRef.current?.click()}
+                  className="border-2 border-dashed border-n-200 rounded-md p-6 flex flex-col items-center gap-3 text-center bg-n-50 hover:border-ocean-300 transition-colors cursor-pointer"
+                >
+                  {logoPreview ? (
+                    <img src={logoPreview} alt="Logo preview" className="h-16 object-contain rounded" />
+                  ) : (
+                    <ImageIcon size={28} strokeWidth={1.25} className="text-n-300" />
+                  )}
+                  <div>
+                    <p className="text-sm font-body text-n-600 font-semibold">
+                      {uploadingLogo ? 'A carregar...' : logoPreview ? 'Clique para alterar' : t('onboarding.uploadLogo')}
+                    </p>
+                    <p className="text-xs font-body text-n-400 mt-0.5">PNG, JPG, WebP — max 2MB</p>
+                  </div>
                 </div>
               </div>
             </div>

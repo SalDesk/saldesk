@@ -6,6 +6,22 @@ function limparSlug(s) {
   return (s || '').toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
 }
 
+/* Gera slug unico — tenta base, depois base-XXXX com sufixo aleatorio */
+async function gerarSlugUnico(base, excludeId = null) {
+  let candidato = limparSlug(base);
+  if (!candidato) candidato = 'operador';
+
+  for (let tentativa = 0; tentativa < 10; tentativa++) {
+    let q = supabaseAdmin.from('operators').select('id').eq('slug', candidato);
+    if (excludeId) q = q.neq('id', excludeId);
+    const { data } = await q.maybeSingle();
+    if (!data) return candidato;
+    const sufixo = Math.random().toString(36).slice(2, 6);
+    candidato = `${limparSlug(base)}-${sufixo}`;
+  }
+  return `${limparSlug(base)}-${Date.now().toString(36)}`;
+}
+
 async function createOperator(req, res, next) {
   try {
     if (req.operator) {
@@ -18,38 +34,27 @@ async function createOperator(req, res, next) {
     if (!name || !operator_type) {
       return res.status(400).json({ error: 'Nome e tipo sao obrigatorios', code: 'MISSING_FIELDS' });
     }
-
     if (!VALID_TYPES.includes(operator_type)) {
       return res.status(400).json({ error: 'Tipo de operador invalido', code: 'INVALID_TYPE' });
     }
 
-    const slugLimpo = limparSlug(slug || name);
-
-    const { data: existente } = await supabaseAdmin
-      .from('operators')
-      .select('id')
-      .eq('slug', slugLimpo)
-      .maybeSingle();
-
-    if (existente) {
-      return res.status(409).json({ error: 'Este slug ja esta em uso', code: 'SLUG_TAKEN' });
-    }
+    const slugFinal = await gerarSlugUnico(slug || name);
 
     const { data, error } = await supabaseAdmin
       .from('operators')
       .insert({
-        user_id:    req.user.id,
+        user_id:             req.user.id,
         name,
         operator_type,
-        slug:       slugLimpo,
-        email:      req.user.email,
-        phone:      phone || null,
-        whatsapp:   whatsapp || null,
-        address:    address || null,
-        description: description || null,
-        language:   language || 'pt',
-        currency:   currency || 'EUR',
-        timezone:   timezone || 'Atlantic/Cape_Verde',
+        slug:                slugFinal,
+        email:               req.user.email,
+        phone:               phone || null,
+        whatsapp:            whatsapp || null,
+        address:             address || null,
+        description:         description || null,
+        language:            language || 'pt',
+        currency:            currency || 'EUR',
+        timezone:            timezone || 'Atlantic/Cape_Verde',
         onboarding_complete: false,
       })
       .select()
@@ -72,34 +77,24 @@ async function updateOperator(req, res, next) {
     }
 
     const { name, operator_type, phone, whatsapp, address, description,
-            slug, language, currency, timezone, onboarding_complete } = req.body;
+            slug, language, currency, timezone, onboarding_complete, logo_url } = req.body;
 
     const updates = { updated_at: new Date().toISOString() };
-    if (name !== undefined)        updates.name = name;
+    if (name !== undefined)              updates.name = name;
     if (operator_type !== undefined && VALID_TYPES.includes(operator_type)) updates.operator_type = operator_type;
-    if (phone !== undefined)       updates.phone = phone;
-    if (whatsapp !== undefined)    updates.whatsapp = whatsapp;
-    if (address !== undefined)     updates.address = address;
-    if (description !== undefined) updates.description = description;
-    if (language !== undefined)    updates.language = language;
-    if (currency !== undefined)    updates.currency = currency;
-    if (timezone !== undefined)    updates.timezone = timezone;
+    if (phone !== undefined)             updates.phone = phone;
+    if (whatsapp !== undefined)          updates.whatsapp = whatsapp;
+    if (address !== undefined)           updates.address = address;
+    if (description !== undefined)       updates.description = description;
+    if (language !== undefined)          updates.language = language;
+    if (currency !== undefined)          updates.currency = currency;
+    if (timezone !== undefined)          updates.timezone = timezone;
     if (onboarding_complete !== undefined) updates.onboarding_complete = onboarding_complete;
+    if (logo_url !== undefined)          updates.logo_url = logo_url;
 
     if (slug !== undefined) {
-      const slugLimpo = limparSlug(slug);
-      if (slugLimpo !== req.operator.slug) {
-        const { data: existente } = await supabaseAdmin
-          .from('operators')
-          .select('id')
-          .eq('slug', slugLimpo)
-          .neq('id', req.operator.id)
-          .maybeSingle();
-        if (existente) {
-          return res.status(409).json({ error: 'Este slug ja esta em uso', code: 'SLUG_TAKEN' });
-        }
-        updates.slug = slugLimpo;
-      }
+      const slugFinal = await gerarSlugUnico(slug || req.operator.name, req.operator.id);
+      if (slugFinal !== req.operator.slug) updates.slug = slugFinal;
     }
 
     const { data, error } = await supabaseAdmin

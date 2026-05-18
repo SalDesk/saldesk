@@ -69,7 +69,11 @@ export default function Settings() {
     } finally { setSavingPayments(false); }
   }
 
-  const qrcodeUrl = `${import.meta.env.VITE_API_URL || 'http://localhost:3001/api/v1'}/marketing/qrcode`;
+  /* QR Code usa endpoint publico /public/:slug/qrcode — nao precisa de auth */
+  const apiBase   = (import.meta.env.VITE_API_URL || 'http://localhost:3001/api/v1').replace('/api/v1', '');
+  const qrcodeUrl = operator?.slug
+    ? `${apiBase}/api/v1/public/${operator.slug}/qrcode`
+    : null;
 
   return (
     <div>

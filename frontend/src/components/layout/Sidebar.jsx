@@ -1,92 +1,130 @@
 import { NavLink, useNavigate } from 'react-router-dom';
 import {
-  LayoutDashboard, CalendarDays, BookOpen, Users,
-  Zap, BarChart2, Building2, Puzzle, Settings, LogOut, X,
-  UserCheck, MessageCircle, Truck, Star,
+  LayoutDashboard, CalendarDays, BookOpen, Users, Zap, BarChart2,
+  Settings, LogOut, X, UserCheck, MessageCircle, Truck, Star,
+  Hotel, Waves, Car, UtensilsCrossed, Package, Puzzle, User,
 } from 'lucide-react';
 import useAuthStore from '../../store/authStore';
-import useUiStore from '../../store/uiStore';
 import { useT } from '../../i18n';
 import Logo from '../shared/Logo';
 
-const navItems = [
-  { to: '/',            icon: LayoutDashboard, key: 'nav.dashboard',    end: true },
-  { to: '/reservas',    icon: BookOpen,        key: 'nav.reservations' },
-  { to: '/calendario',  icon: CalendarDays,    key: 'nav.calendar' },
-  { to: '/clientes',    icon: Users,           key: 'nav.customers' },
-  { to: '/automacoes',  icon: Zap,             key: 'nav.automations' },
-  { to: '/financeiro',  icon: BarChart2,       key: 'nav.financial' },
-  { to: '/unidades',      icon: Building2,      key: 'nav.units' },
-  { to: '/colaboradores', icon: UserCheck,     label: 'Colaboradores' },
-  { to: '/frota',         icon: Truck,         label: 'Frota' },
-  { to: '/mensagens',     icon: MessageCircle, label: 'Mensagens' },
-  { to: '/avaliacoes',    icon: Star,          label: 'Avaliacoes' },
-  { to: '/integracoes',   icon: Puzzle,        key: 'nav.integrations' },
-  { to: '/definicoes',    icon: Settings,      key: 'nav.settings' },
+/* Itens base — todos os operadores */
+const BASE_ITEMS = [
+  { to: '/',           icon: LayoutDashboard, label: { pt: 'Dashboard',  en: 'Dashboard'  }, end: true },
+  { to: '/reservas',   icon: BookOpen,        label: { pt: 'Reservas',   en: 'Bookings'   } },
+  { to: '/calendario', icon: CalendarDays,    label: { pt: 'Calendario', en: 'Calendar'   } },
+  { to: '/clientes',   icon: Users,           label: { pt: 'Clientes',   en: 'Customers'  } },
+  { to: '/financeiro', icon: BarChart2,       label: { pt: 'Financeiro', en: 'Financial'  } },
+  { to: '/automacoes', icon: Zap,             label: { pt: 'Automacoes', en: 'Automations'} },
+  { to: '/avaliacoes', icon: Star,            label: { pt: 'Avaliacoes', en: 'Reviews'    } },
+  { to: '/mensagens',  icon: MessageCircle,   label: { pt: 'Mensagens',  en: 'Messages'   } },
+];
+
+/* Itens por tipo de operador */
+const TYPE_ITEMS = {
+  hotel: [
+    { to: '/unidades',  icon: Hotel,     label: { pt: 'Quartos',    en: 'Rooms'      } },
+  ],
+  activity: [
+    { to: '/unidades',      icon: Waves,     label: { pt: 'Servicos',       en: 'Services'   } },
+    { to: '/colaboradores', icon: UserCheck, label: { pt: 'Guias/Equipa',   en: 'Guides/Team'} },
+    { to: '/frota',         icon: Package,   label: { pt: 'Equipamento',    en: 'Equipment'  } },
+    { to: '/integracoes',   icon: Puzzle,    label: { pt: 'Integracoes',    en: 'Integrations'} },
+  ],
+  rentacar: [
+    { to: '/unidades',      icon: Car,       label: { pt: 'Frota/Viaturas', en: 'Fleet/Cars' } },
+    { to: '/colaboradores', icon: UserCheck, label: { pt: 'Colaboradores',  en: 'Staff'      } },
+    { to: '/frota',         icon: Truck,     label: { pt: 'Equipamento',    en: 'Equipment'  } },
+  ],
+  restaurant: [
+    { to: '/unidades',  icon: UtensilsCrossed, label: { pt: 'Mesas/Menus', en: 'Tables/Menus'} },
+  ],
+};
+
+/* Itens finais — todos */
+const END_ITEMS = [
+  { to: '/definicoes', icon: Settings, label: { pt: 'Definicoes', en: 'Settings' } },
 ];
 
 export default function Sidebar({ onClose }) {
   const { operator, logout } = useAuthStore();
-  const sidebarOpen = useUiStore((s) => s.sidebarOpen);
-  const t = useT();
+  const t   = useT();
   const navigate = useNavigate();
 
-  function handleLogout() {
-    logout();
-    navigate('/login');
-  }
+  function handleLogout() { logout(); navigate('/login'); }
+
+  const opType    = operator?.operator_type || 'hotel';
+  const typeItems = TYPE_ITEMS[opType] || [];
+  const allItems  = [...BASE_ITEMS, ...typeItems, ...END_ITEMS];
+
+  const labelKey = (item) => {
+    const lang = document.documentElement.getAttribute('data-lang') || 'pt';
+    return item.label?.[lang] || item.label?.pt || '';
+  };
 
   return (
     <aside className="w-64 bg-ocean-900 text-white flex flex-col h-full shrink-0">
-      <div className="flex items-center justify-between px-5 py-5 border-b border-ocean-800">
-        <Logo white />
+      {/* Logo */}
+      <div className="flex items-center justify-between px-5 py-4 border-b border-ocean-800">
+        <Logo white size="md" />
         {onClose && (
-          <button
-            onClick={onClose}
-            className="md:hidden text-ocean-300 hover:text-white p-1"
-            aria-label="Fechar menu"
-          >
+          <button onClick={onClose} className="md:hidden text-ocean-300 hover:text-white p-1" aria-label="Fechar">
             <X size={18} strokeWidth={1.75} />
           </button>
         )}
       </div>
 
+      {/* Info operador */}
       {operator?.name && (
-        <div className="px-5 py-3 border-b border-ocean-800">
-          <p className="text-xs font-body font-bold uppercase tracking-wide text-ocean-400">
-            {t('nav.dashboard').replace('Dashboard', operator.name)}
-          </p>
-          <p className="text-[11px] text-ocean-400 mt-0.5 truncate">{operator.name}</p>
+        <div className="px-4 py-3 border-b border-ocean-800 flex items-center gap-3">
+          {operator.logo_url ? (
+            <img src={operator.logo_url} alt={operator.name} className="w-8 h-8 rounded-full object-cover shrink-0 bg-ocean-800"/>
+          ) : (
+            <div className="w-8 h-8 rounded-full bg-ocean-700 flex items-center justify-center shrink-0 text-xs font-display font-bold">
+              {operator.name[0]}
+            </div>
+          )}
+          <div className="min-w-0">
+            <p className="text-sm font-display font-semibold text-white truncate">{operator.name}</p>
+            <p className="text-[10px] text-ocean-400 uppercase tracking-wide">{opType}</p>
+          </div>
         </div>
       )}
 
-      <nav className="flex-1 overflow-y-auto py-3 px-2 space-y-0.5">
-        {navItems.map(({ to, icon: Icon, key, label, end }) => (
+      {/* Nav */}
+      <nav className="flex-1 overflow-y-auto py-2 px-2 space-y-0.5">
+        {allItems.map(({ to, icon: Icon, label, end }) => (
           <NavLink
             key={to}
             to={to}
             end={end}
             className={({ isActive }) =>
-              [
-                'flex items-center gap-3 px-3 py-2.5 rounded-sm text-sm font-body font-medium transition-colors',
-                isActive
-                  ? 'bg-ocean-700 text-white'
-                  : 'text-ocean-200 hover:bg-ocean-800 hover:text-white',
-              ].join(' ')
+              `flex items-center gap-3 px-3 py-2.5 rounded-sm text-sm font-body font-medium transition-colors ${
+                isActive ? 'bg-ocean-700 text-white' : 'text-ocean-200 hover:bg-ocean-800 hover:text-white'
+              }`
             }
           >
-            <Icon size={18} strokeWidth={1.75} className="shrink-0" />
-            {label || t(key)}
+            <Icon size={17} strokeWidth={1.75} className="shrink-0" />
+            <span className="truncate">{labelKey({ label })}</span>
           </NavLink>
         ))}
       </nav>
 
-      <div className="px-2 py-3 border-t border-ocean-800">
-        <button
-          onClick={handleLogout}
-          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-sm text-sm font-body font-medium text-ocean-300 hover:bg-ocean-800 hover:text-white transition-colors"
+      {/* Logout + Perfil */}
+      <div className="px-2 py-3 border-t border-ocean-800 space-y-0.5">
+        <NavLink to="/perfil"
+          className={({ isActive }) =>
+            `flex items-center gap-3 px-3 py-2.5 rounded-sm text-sm font-body font-medium transition-colors ${
+              isActive ? 'bg-ocean-700 text-white' : 'text-ocean-300 hover:bg-ocean-800 hover:text-white'
+            }`
+          }
         >
-          <LogOut size={18} strokeWidth={1.75} className="shrink-0" />
+          <User size={17} strokeWidth={1.75} className="shrink-0" />
+          Perfil
+        </NavLink>
+        <button onClick={handleLogout}
+          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-sm text-sm font-body font-medium text-ocean-400 hover:bg-ocean-800 hover:text-white transition-colors">
+          <LogOut size={17} strokeWidth={1.75} className="shrink-0" />
           {t('auth.logout')}
         </button>
       </div>

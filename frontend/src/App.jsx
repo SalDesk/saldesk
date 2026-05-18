@@ -14,6 +14,7 @@ import Integrations from './pages/Integrations';
 import Settings from './pages/Settings';
 import Staff from './pages/Staff';
 import Reviews from './pages/Reviews';
+import Profile from './pages/Profile';
 import Fleet from './pages/Fleet';
 import Messages from './pages/Messages';
 import PublicBooking from './pages/PublicBooking';
@@ -35,6 +36,13 @@ function OnboardingGuard({ children }) {
   const { token, operator } = useAuthStore();
   if (!token) return <Navigate to="/login" replace />;
   if (!operator?.onboarding_complete) return <Navigate to="/onboarding" replace />;
+  return children;
+}
+
+function FounderGuard({ children }) {
+  const { token, user } = useAuthStore();
+  if (!token) return <Navigate to="/login" replace />;
+  if (user?.user_metadata?.role !== 'FUNDADOR') return <Navigate to="/" replace />;
   return children;
 }
 
@@ -61,10 +69,11 @@ export default function App() {
           <Route path="mensagens"     element={<Messages />} />
           <Route path="avaliacoes"    element={<Reviews />} />
           <Route path="definicoes"    element={<Settings />} />
+          <Route path="perfil"        element={<Profile />} />
         </Route>
 
-        {/* Painel do Fundador */}
-        <Route path="/admin" element={<ProtectedRoute><AdminLayout /></ProtectedRoute>}>
+        {/* Painel do Fundador — protegido por role FUNDADOR */}
+        <Route path="/admin" element={<FounderGuard><AdminLayout /></FounderGuard>}>
           <Route index                       element={<AdminDashboard />} />
           <Route path="operators"            element={<AdminOperators />} />
           <Route path="leads"                element={<AdminLeads />} />
