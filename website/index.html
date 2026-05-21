@@ -58,9 +58,12 @@
     .btn-sand{background:var(--sand-500);color:#fff;padding:14px 28px;font-size:1rem}
     .btn-sand:hover{background:var(--sand-600)}
 
-    /* Hero */
-    .hero{padding:140px 0 80px;background:linear-gradient(135deg,var(--ocean-900) 0%,var(--ocean-700) 60%,var(--ocean-500) 100%);color:#fff;overflow:hidden;position:relative}
-    .hero::before{content:'';position:absolute;inset:0;background:url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")}
+    /* Hero — carousel de praias */
+    .hero{padding:140px 0 80px;color:#fff;overflow:hidden;position:relative}
+    .hero-slide{position:absolute;inset:0;background-size:cover;background-position:center;opacity:0;transition:opacity 1.2s ease;z-index:0}
+    .hero-slide.active{opacity:1}
+    .hero-overlay{position:absolute;inset:0;background:rgba(13,84,112,.60);z-index:1}
+    .hero-inner,.hero-badge,.hero h1,.hero p,.hero-ctas,.hero-stats{position:relative;z-index:2}
     .hero-inner{display:grid;grid-template-columns:1fr 1fr;gap:64px;align-items:center;position:relative}
     .hero-badge{display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);border-radius:100px;padding:6px 14px;font-size:.75rem;font-weight:600;margin-bottom:24px;color:var(--sand-400)}
     .hero h1{font-size:clamp(2rem,4vw,3rem);font-weight:800;line-height:1.1;margin-bottom:20px}
@@ -202,9 +205,8 @@
 <!-- NAV -->
 <nav>
   <div class="container nav-inner">
-    <a href="/" class="nav-logo">
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--ocean-700)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17h18M3 12h18M8 7h13M3 7h2"/><circle cx="5" cy="17" r="1.5" fill="var(--ocean-700)" stroke="none"/><circle cx="5" cy="12" r="1.5" fill="var(--ocean-700)" stroke="none"/></svg>
-      SalDesk
+    <a href="/" class="nav-logo" style="letter-spacing:-.5px">
+      SAL<span style="display:inline-block;width:10px;height:10px;background:#F5A623;border-radius:2px;margin:0 2px;vertical-align:middle;position:relative;top:-1px"></span>DESK
     </a>
     <ul class="nav-links">
       <li><a href="#features" class="pt">Funcionalidades</a><a href="#features" class="en">Features</a></li>
@@ -229,6 +231,13 @@
 
 <!-- HERO -->
 <section class="hero" id="home">
+  <!-- Carousel de praias da Ilha do Sal -->
+  <div class="hero-slide active" style="background-image:url('https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=1600&q=80')"></div>
+  <div class="hero-slide" style="background-image:url('https://images.unsplash.com/photo-1519046904884-53103b34b206?w=1600&q=80')"></div>
+  <div class="hero-slide" style="background-image:url('https://images.unsplash.com/photo-1506929562872-bb421503ef21?w=1600&q=80')"></div>
+  <div class="hero-slide" style="background-image:url('https://images.unsplash.com/photo-1471922694854-ff1b63b20054?w=1600&q=80')"></div>
+  <div class="hero-slide" style="background-image:url('https://images.unsplash.com/photo-1500375592092-40eb2168fd21?w=1600&q=80')"></div>
+  <div class="hero-overlay"></div>
   <div class="container hero-inner">
     <div>
       <div class="hero-badge">
@@ -509,10 +518,17 @@
 <section class="section testimonials-bg" id="testimonials">
   <div class="container">
     <div class="fade-up" style="text-align:center">
-      <div class="section-label" style="color:var(--sand-400) pt">Testemunhos</div>
-      <div class="section-label" style="color:var(--sand-400) en">Testimonials</div>
-      <h2 class="section-title" style="color:#fff pt">O que dizem os operadores</h2>
-      <h2 class="section-title" style="color:#fff en">What operators say</h2>
+      <div class="section-label" style="color:var(--sand-400)">
+        <span class="pt">Testemunhos</span><span class="en">Testimonials</span>
+      </div>
+      <h2 class="section-title" style="color:#fff">
+        <span class="pt">O que dizem os operadores</span>
+        <span class="en">What operators say</span>
+      </h2>
+      <p style="font-size:.75rem;color:rgba(255,255,255,.35);margin-top:8px;font-family:var(--font-mono)">
+        <span class="pt">Gerenciavel pelo Fundador em app.saldesk.cv/admin</span>
+        <span class="en">Manageable by the Founder at app.saldesk.cv/admin</span>
+      </p>
     </div>
     <div class="testimonials-grid fade-up">
       <div class="testimonial">
@@ -569,22 +585,22 @@
     <div class="fade-up">
       <div class="inv-timeline">
         <div class="inv-step">
-          <h4 class="pt">Fase 1 — Produto (2025 — concluido)</h4>
-          <h4 class="en">Phase 1 — Product (2025 — completed)</h4>
-          <p class="pt">Plataforma completa: reservas directas, CRM, financeiro, channel manager Viator/GYG, colaboradores, pagamentos e SalDesk Connect.</p>
-          <p class="en">Complete platform: direct bookings, CRM, financials, Viator/GYG channel manager, staff, payments and SalDesk Connect.</p>
+          <h4 class="pt">Fase 1 — Produto (2026 · actual)</h4>
+          <h4 class="en">Phase 1 — Product (2026 · current)</h4>
+          <p class="pt">Plataforma completa em producao: reservas directas, CRM, financeiro, channel manager Viator/GYG, colaboradores, pagamentos e SalDesk Connect.</p>
+          <p class="en">Complete platform in production: direct bookings, CRM, financials, Viator/GYG channel manager, staff, payments and SalDesk Connect.</p>
         </div>
         <div class="inv-step">
           <h4 class="pt">Fase 2 — Crescimento (2026)</h4>
           <h4 class="en">Phase 2 — Growth (2026)</h4>
-          <p class="pt">Onboarding de 50 operadores. Directorio SalDesk Connect com receita publicitaria. Aplicacao mobile iOS/Android.</p>
-          <p class="en">Onboarding 50 operators. SalDesk Connect directory with advertising revenue. iOS/Android mobile app.</p>
+          <p class="pt">Onboarding de 50 operadores na Ilha do Sal. SalDesk Connect com receita publicitaria. Aplicacao mobile iOS/Android.</p>
+          <p class="en">Onboarding 50 operators in Ilha do Sal. SalDesk Connect with advertising revenue. iOS/Android mobile app.</p>
         </div>
         <div class="inv-step">
-          <h4 class="pt">Fase 3 — Expansao (2027/2028)</h4>
-          <h4 class="en">Phase 3 — Expansion (2027/2028)</h4>
-          <p class="pt">Expansao para Santiago, Fogo e Boavista. Parcerias com companhias aereas e seguradores. Mercados africanos.</p>
-          <p class="en">Expansion to Santiago, Fogo and Boavista. Airline and insurance partnerships. African markets.</p>
+          <h4 class="pt">Fase 3 — Expansao (2027)</h4>
+          <h4 class="en">Phase 3 — Expansion (2027)</h4>
+          <p class="pt">Expansao para Santiago, Fogo e Boavista. Parcerias com companhias aereas e seguradores. Mercados africanos de sol e mar.</p>
+          <p class="en">Expansion to Santiago, Fogo and Boavista. Airline and insurance partnerships. African sun-and-sea markets.</p>
         </div>
       </div>
     </div>
@@ -612,7 +628,7 @@
   <div class="container">
     <div class="footer-grid">
       <div>
-        <div class="footer-brand">SalDesk</div>
+        <div class="footer-brand" style="letter-spacing:-.5px">SAL<span style="display:inline-block;width:9px;height:9px;background:#F5A623;border-radius:2px;margin:0 2px;vertical-align:middle;position:relative;top:-1px"></span>DESK</div>
         <p class="footer-desc pt">A primeira plataforma SaaS de gestao turistica para operadores da Ilha do Sal, Cabo Verde.</p>
         <p class="footer-desc en">The first SaaS tourism management platform for operators in Ilha do Sal, Cape Verde.</p>
       </div>
@@ -687,6 +703,18 @@
       btnCve.style.color      = cur === 'CVE' ? '#fff' : 'var(--n500)';
     }
   }
+
+  /* ─── Hero carousel ─── */
+  (function() {
+    const slides = document.querySelectorAll('.hero-slide');
+    if (!slides.length) return;
+    let current = 0;
+    setInterval(function() {
+      slides[current].classList.remove('active');
+      current = (current + 1) % slides.length;
+      slides[current].classList.add('active');
+    }, 5000);
+  })();
 
   /* ─── Intersection observer para animacoes ─── */
   const obs = new IntersectionObserver((entries) => {

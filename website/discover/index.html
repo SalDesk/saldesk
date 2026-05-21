@@ -39,7 +39,9 @@
     .lang-btn span.active{background:rgba(255,255,255,.15);color:#fff}
 
     /* Hero */
-    .hero-dir{background:linear-gradient(135deg,var(--ocean-900),var(--ocean-700));padding:56px 0;color:#fff}
+    .hero-dir{background:linear-gradient(135deg,var(--ocean-900),var(--ocean-700));padding:56px 0;color:#fff;position:relative;overflow:hidden}
+    .hero-dir-bg{position:absolute;inset:0;background-size:cover;background-position:center;background-image:url('https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=1600&q=80');opacity:.35}
+    .hero-dir>.container{position:relative;z-index:2}
     .hero-dir h1{font-size:clamp(1.75rem,3.5vw,2.5rem);font-weight:800;margin-bottom:12px}
     .hero-dir p{font-size:1.0625rem;opacity:.8;margin-bottom:28px;max-width:560px}
     .search-bar{background:#fff;border-radius:12px;padding:8px;display:flex;gap:8px;max-width:680px;box-shadow:var(--shadow-lg)}
@@ -157,9 +159,8 @@
 <!-- NAV -->
 <nav>
   <div class="container nav-inner">
-    <a href="../" class="nav-logo">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--ocean-300)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17h18M3 12h18M8 7h13M3 7h2"/><circle cx="5" cy="17" r="1.5" fill="var(--ocean-300)" stroke="none"/><circle cx="5" cy="12" r="1.5" fill="var(--ocean-300)" stroke="none"/></svg>
-      SalDesk Connect
+    <a href="../" class="nav-logo" style="letter-spacing:-.5px">
+      SAL<span style="display:inline-block;width:9px;height:9px;background:#F5A623;border-radius:2px;margin:0 2px;vertical-align:middle;position:relative;top:-1px"></span>DESK Connect
     </a>
     <div style="font-family:var(--font-display);font-size:.8125rem;color:rgba(255,255,255,.5)">
       <span class="pt">Ilha do Sal · Cabo Verde</span>
@@ -179,6 +180,7 @@
 
 <!-- 1. HERO com pesquisa -->
 <section class="hero-dir">
+  <div class="hero-dir-bg"></div>
   <div class="container">
     <div class="pt"><div style="font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--sand-400);margin-bottom:12px">Ilha do Sal · Cabo Verde</div>
     <h1>SalDesk Connect<br><span style="font-size:.6em;font-weight:600;opacity:.85">Descubra e Reserve Experiencias Unicas</span></h1>
@@ -491,7 +493,7 @@
 <footer>
   <div class="container footer-inner">
     <div>
-      <div class="footer-brand">SalDesk Connect</div>
+      <div class="footer-brand" style="letter-spacing:-.5px">SAL<span style="display:inline-block;width:9px;height:9px;background:#F5A623;border-radius:2px;margin:0 2px;vertical-align:middle;position:relative;top:-1px"></span>DESK Connect</div>
       <div style="font-size:.8125rem;margin-top:4px">
         <span class="pt">© 2025 SalDesk · Ilha do Sal, Cabo Verde</span>
         <span class="en">© 2025 SalDesk · Ilha do Sal, Cape Verde</span>
