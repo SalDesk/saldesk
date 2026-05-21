@@ -109,7 +109,6 @@ async function criarReserva(req, res, next) {
 
     const { total } = calcularPreco(unit, check_in, check_out);
 
-    // Criar ou obter cliente CRM
     const customer = await obterOuCriarCliente(operator.id, {
       name: customer_name,
       email: customer_email,
@@ -140,7 +139,6 @@ async function criarReserva(req, res, next) {
 
     if (error) throw error;
 
-    // Email de recepção imediata (a confirmação via automação chega quando admin confirmar)
     const idioma = detectarIdioma(customer_country);
     enviarEmail({
       to: customer_email,
@@ -159,30 +157,227 @@ async function criarReserva(req, res, next) {
   }
 }
 
+/* ─── Discover — listagem pública de operadores ─── */
 async function discover(req, res, next) {
   try {
-    const { type, search } = req.query;
+    const { type, search, featured, limit } = req.query;
 
     let q = supabaseAdmin
       .from('operators')
-      .select('id, name, slug, operator_type, description, address, phone, logo_url')
+      .select('id, name, slug, operator_type, description, address, phone, logo_url, currency')
       .eq('onboarding_complete', true)
       .order('name');
 
-    if (type && ['hotel','activity','rentacar','restaurant'].includes(type)) {
+    if (type && ['hotel', 'activity', 'rentacar', 'restaurant'].includes(type)) {
       q = q.eq('operator_type', type);
     }
     if (search) {
-      q = q.ilike('name', `%${search}%`);
+      q = q.or(`name.ilike.%${search}%,description.ilike.%${search}%`);
+    }
+    if (featured === 'true') {
+      const { data: featuredLinks } = await supabaseAdmin
+        .from('cms_featured')
+        .select('operator_id')
+        .eq('is_active', true)
+        .order('position');
+      if (featuredLinks?.length > 0) {
+        q = q.in('id', featuredLinks.map((f) => f.operator_id));
+      }
+    }
+    if (limit) {
+      q = q.limit(Math.min(parseInt(limit) || 9, 50));
     }
 
-    const { data, error } = await q;
+    const { data: operators, error } = await q;
     if (error) throw error;
+    if (!operators?.length) return res.json({ data: [] });
 
-    return res.json({ data: data || [], message: 'Operadores listados' });
+    const ids = operators.map((o) => o.id);
+
+    // Ratings agregadas
+    const { data: ratings } = await supabaseAdmin
+      .from('reviews')
+      .select('operator_id, rating')
+      .in('operator_id', ids)
+      .eq('is_public', true);
+
+    const ratingMap = {};
+    (ratings || []).forEach((r) => {
+      if (!ratingMap[r.operator_id]) ratingMap[r.operator_id] = [];
+      ratingMap[r.operator_id].push(r.rating);
+    });
+
+    // Preco base minimo por operador
+    const { data: prices } = await supabaseAdmin
+      .from('units')
+      .select('operator_id, base_price')
+      .in('operator_id', ids)
+      .eq('status', 'active')
+      .not('base_price', 'is', null);
+
+    const priceMap = {};
+    (prices || []).forEach((p) => {
+      if (p.base_price && (!priceMap[p.operator_id] || p.base_price < priceMap[p.operator_id])) {
+        priceMap[p.operator_id] = p.base_price;
+      }
+    });
+
+    const enriched = operators.map((op) => {
+      const opRatings = ratingMap[op.id] || [];
+      return {
+        ...op,
+        avg_rating: opRatings.length
+          ? parseFloat((opRatings.reduce((s, r) => s + r, 0) / opRatings.length).toFixed(1))
+          : null,
+        review_count: opRatings.length || 0,
+        base_price: priceMap[op.id] || null,
+      };
+    });
+
+    return res.json({ data: enriched, message: 'Operadores listados' });
   } catch (err) {
     next(err);
   }
 }
 
-module.exports = { getOperador, verificarDisponibilidadePublica, criarReserva, discover };
+/* ─── CMS público — experiências ─── */
+async function cmsExperiences(req, res, next) {
+  try {
+    const { data, error } = await supabaseAdmin
+      .from('cms_experiences')
+      .select('id, title_pt, title_en, description_pt, description_en, includes_pt, includes_en, price_from, duration_days, theme')
+      .eq('is_active', true)
+      .order('sort_order');
+    if (error) throw error;
+    return res.json({ data: data || [] });
+  } catch (err) {
+    next(err);
+  }
+}
+
+/* ─── CMS público — eventos ─── */
+async function cmsEvents(req, res, next) {
+  try {
+    const today = new Date().toISOString().split('T')[0];
+    const { data, error } = await supabaseAdmin
+      .from('cms_events')
+      .select('id, name_pt, name_en, description_pt, description_en, event_date, event_type')
+      .eq('is_active', true)
+      .gte('event_date', today)
+      .order('event_date')
+      .limit(12);
+    if (error) throw error;
+    return res.json({ data: data || [] });
+  } catch (err) {
+    next(err);
+  }
+}
+
+/* ─── CMS público — banners ─── */
+async function cmsBanners(req, res, next) {
+  try {
+    const now = new Date().toISOString();
+    const { data, error } = await supabaseAdmin
+      .from('cms_banners')
+      .select('id, title, image_url, link_url, position')
+      .eq('is_active', true)
+      .lte('starts_at', now)
+      .gte('ends_at', now)
+      .order('position');
+    if (error) throw error;
+    return res.json({ data: data || [] });
+  } catch (err) {
+    next(err);
+  }
+}
+
+/* ─── Avaliações públicas recentes ─── */
+async function publicReviews(req, res, next) {
+  try {
+    const limit = Math.min(parseInt(req.query.limit) || 6, 20);
+
+    const { data: reviews, error } = await supabaseAdmin
+      .from('reviews')
+      .select('id, rating, comment, created_at, operator_id, customer_id')
+      .eq('is_public', true)
+      .not('comment', 'is', null)
+      .neq('comment', '')
+      .order('created_at', { ascending: false })
+      .limit(limit);
+
+    if (error) throw error;
+    if (!reviews?.length) return res.json({ data: [] });
+
+    const opIds = [...new Set(reviews.map((r) => r.operator_id))];
+    const custIds = [...new Set(reviews.map((r) => r.customer_id).filter(Boolean))];
+
+    const [{ data: operators }, { data: customers }] = await Promise.all([
+      supabaseAdmin
+        .from('operators')
+        .select('id, name, operator_type, slug')
+        .in('id', opIds),
+      custIds.length
+        ? supabaseAdmin
+            .from('customers')
+            .select('id, first_name, nationality')
+            .in('id', custIds)
+        : Promise.resolve({ data: [] }),
+    ]);
+
+    const opMap  = Object.fromEntries((operators  || []).map((o) => [o.id, o]));
+    const custMap = Object.fromEntries((customers || []).map((c) => [c.id, c]));
+
+    const enriched = reviews.map((r) => ({
+      id:          r.id,
+      rating:      r.rating,
+      comment:     r.comment,
+      created_at:  r.created_at,
+      operator:    opMap[r.operator_id] || null,
+      author_name: custMap[r.customer_id]?.first_name || 'Visitante',
+      nationality: custMap[r.customer_id]?.nationality || null,
+    }));
+
+    return res.json({ data: enriched });
+  } catch (err) {
+    next(err);
+  }
+}
+
+/* ─── Formulário de contacto / newsletter público ─── */
+async function publicContact(req, res, next) {
+  try {
+    const { email, operator_type, language, source } = req.body;
+
+    if (!email || !email.includes('@')) {
+      return res.status(400).json({ error: 'Email inválido', code: 'INVALID_EMAIL' });
+    }
+
+    await supabaseAdmin
+      .from('leads')
+      .upsert(
+        {
+          email:         email.trim().toLowerCase(),
+          operator_type: operator_type || 'other',
+          language:      language || 'pt',
+          source:        source || 'website',
+        },
+        { onConflict: 'email', ignoreDuplicates: false }
+      );
+
+    return res.json({ message: 'Contacto recebido' });
+  } catch (err) {
+    next(err);
+  }
+}
+
+module.exports = {
+  getOperador,
+  verificarDisponibilidadePublica,
+  criarReserva,
+  discover,
+  cmsExperiences,
+  cmsEvents,
+  cmsBanners,
+  publicReviews,
+  publicContact,
+};

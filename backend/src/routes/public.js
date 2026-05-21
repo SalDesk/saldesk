@@ -1,13 +1,37 @@
 const express = require('express');
 const router  = express.Router();
-const { getOperador, verificarDisponibilidadePublica, criarReserva, discover } = require('../controllers/publicController');
+const {
+  getOperador,
+  verificarDisponibilidadePublica,
+  criarReserva,
+  discover,
+  cmsExperiences,
+  cmsEvents,
+  cmsBanners,
+  publicReviews,
+  publicContact,
+} = require('../controllers/publicController');
 
-router.get('/discover',              discover);
-router.get('/:slug',                 getOperador);
-router.get('/:slug/availability',    verificarDisponibilidadePublica);
-router.post('/:slug/reservations',   criarReserva);
+/* ─── Discover / directorio ─── */
+router.get('/discover',            discover);
 
-/* QR Code publico — nao requer autenticacao */
+/* ─── CMS público ─── */
+router.get('/cms/experiences',     cmsExperiences);
+router.get('/cms/events',          cmsEvents);
+router.get('/cms/banners',         cmsBanners);
+
+/* ─── Avaliações públicas recentes ─── */
+router.get('/reviews',             publicReviews);
+
+/* ─── Formulário de contacto / newsletter ─── */
+router.post('/contact',            publicContact);
+
+/* ─── Operador individual ─── */
+router.get('/:slug',               getOperador);
+router.get('/:slug/availability',  verificarDisponibilidadePublica);
+router.post('/:slug/reservations', criarReserva);
+
+/* ─── QR Code público — sem autenticação ─── */
 router.get('/:slug/qrcode', (req, res) => {
   const base = process.env.FRONTEND_URL || 'https://app.saldesk.cv';
   const url  = encodeURIComponent(`${base}/book/${req.params.slug}`);
