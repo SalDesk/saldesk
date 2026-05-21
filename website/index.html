@@ -119,17 +119,21 @@
     .market-stat-lbl{font-size:.8125rem;color:var(--n500);margin-top:4px}
     .market-visual{background:linear-gradient(135deg,var(--ocean-800),var(--ocean-600));border-radius:var(--radius-xl);padding:40px;color:#fff;position:relative;overflow:hidden}
     .market-visual::after{content:'Ilha do Sal';position:absolute;bottom:20px;right:20px;font-family:var(--font-display);font-size:5rem;font-weight:800;opacity:.06;color:#fff;white-space:nowrap}
+    .progress-fill{width:0;transition:width 1.2s cubic-bezier(.4,0,.2,1)}
 
     /* Pricing */
     .pricing-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;margin-top:48px}
-    .plan{background:#fff;border:1px solid var(--n200);border-radius:var(--radius-lg);padding:32px;position:relative}
-    .plan.featured{border-color:var(--ocean-700);box-shadow:var(--shadow-lg)}
+    .plan{background:#fff;border:1px solid var(--n200);border-radius:var(--radius-lg);padding:32px;position:relative;transition:transform .25s,box-shadow .25s}
+    .plan:hover{transform:translateY(-4px);box-shadow:var(--shadow-lg)}
+    @keyframes plan-glow{0%,100%{box-shadow:0 12px 40px rgba(6,42,56,.14)}50%{box-shadow:0 0 0 5px rgba(13,84,112,.12),0 12px 40px rgba(6,42,56,.14)}}
+    .plan.featured{border-color:var(--ocean-700);box-shadow:var(--shadow-lg);animation:plan-glow 3s ease-in-out infinite}
+    .plan.featured:hover{transform:translateY(-4px);animation:none;box-shadow:0 0 0 5px rgba(13,84,112,.15),0 20px 60px rgba(6,42,56,.18)}
     .plan-badge{position:absolute;top:-12px;left:50%;transform:translateX(-50%);background:var(--ocean-700);color:#fff;font-size:.7rem;font-weight:700;text-transform:uppercase;padding:4px 14px;border-radius:100px;letter-spacing:.05em}
     .plan-name{font-family:var(--font-display);font-size:1.125rem;font-weight:700;color:var(--n900);margin-bottom:6px}
     .plan-price{font-family:var(--font-display);font-size:2.25rem;font-weight:800;color:var(--ocean-700);margin:16px 0}
     .plan-price span{font-size:1rem;font-weight:500;color:var(--n500)}
     .plan-desc{font-size:.875rem;color:var(--n500);margin-bottom:24px}
-    .plan-features{list-style:none;space-y:8px;margin-bottom:28px}
+    .plan-features{list-style:none;margin-bottom:28px}
     .plan-features li{font-size:.875rem;color:var(--n600);padding:6px 0;border-bottom:1px solid var(--n100);display:flex;align-items:center;gap:8px}
     .plan-features li::before{content:'';width:6px;height:6px;background:var(--success);border-radius:50%;flex-shrink:0}
     .plan-features li.no::before{background:var(--n300)}
@@ -170,16 +174,61 @@
     .btn-outline-white:hover{border-color:#fff;background:rgba(255,255,255,.1)}
 
     /* Footer */
-    footer{background:var(--ocean-900);color:rgba(255,255,255,.7);padding:48px 0 32px}
-    .footer-grid{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:40px;margin-bottom:40px}
-    .footer-brand{font-family:var(--font-display);font-weight:800;font-size:1.25rem;color:#fff;margin-bottom:12px}
-    .footer-desc{font-size:.875rem;line-height:1.6;max-width:260px}
-    .footer-col h4{font-family:var(--font-display);font-weight:700;font-size:.875rem;color:#fff;margin-bottom:14px}
+    .footer-separator{height:3px;background:linear-gradient(90deg,var(--ocean-700),var(--sand-500),var(--ocean-700))}
+    footer{background:var(--ocean-900);color:rgba(255,255,255,.7);padding:56px 0 32px}
+    .footer-grid{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:40px;margin-bottom:48px}
+    .footer-brand{margin-bottom:14px}
+    .footer-desc{font-size:.875rem;line-height:1.6;max-width:260px;color:rgba(255,255,255,.55)}
+    .footer-col h4{font-family:var(--font-display);font-weight:700;font-size:.875rem;color:#fff;margin-bottom:14px;letter-spacing:.01em}
     .footer-links{list-style:none}
     .footer-links li{margin-bottom:8px}
-    .footer-links a{font-size:.8125rem;color:rgba(255,255,255,.55);transition:color .2s}
+    .footer-links a{font-size:.8125rem;color:rgba(255,255,255,.5);transition:color .2s}
     .footer-links a:hover{color:#fff}
-    .footer-bottom{display:flex;align-items:center;justify-content:space-between;padding-top:24px;border-top:1px solid rgba(255,255,255,.1);font-size:.8125rem;flex-wrap:gap}
+    .footer-bottom{display:flex;align-items:center;justify-content:space-between;padding-top:24px;border-top:1px solid rgba(255,255,255,.1);font-size:.8125rem;flex-wrap:wrap;gap:8px}
+    .social-icons{display:flex;gap:10px;margin-top:18px}
+    .social-icon{width:34px;height:34px;border-radius:8px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.5);transition:all .2s}
+    .social-icon:hover{background:rgba(255,255,255,.14);color:#fff;border-color:rgba(255,255,255,.2)}
+    .newsletter-wrap{margin-top:20px}
+    .newsletter-label{font-size:.8125rem;color:rgba(255,255,255,.55);margin-bottom:8px}
+    .newsletter-form{display:flex;gap:6px;margin-top:6px}
+    .newsletter-input{flex:1;min-width:0;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.14);border-radius:var(--radius-sm);padding:9px 12px;font-family:var(--font-body);font-size:.8125rem;color:#fff;outline:none;transition:border-color .2s}
+    .newsletter-input::placeholder{color:rgba(255,255,255,.35)}
+    .newsletter-input:focus{border-color:rgba(255,255,255,.3)}
+    .newsletter-btn{background:var(--sand-500);color:#fff;border:none;border-radius:var(--radius-sm);padding:9px 14px;font-family:var(--font-body);font-size:.8125rem;font-weight:600;cursor:pointer;transition:background .2s;white-space:nowrap}
+    .newsletter-btn:hover{background:var(--sand-600)}
+
+    /* Modals */
+    .modal-overlay{position:fixed;inset:0;background:rgba(6,42,56,.65);z-index:500;display:flex;align-items:center;justify-content:center;padding:24px;opacity:0;visibility:hidden;transition:opacity .3s,visibility .3s;backdrop-filter:blur(4px)}
+    .modal-overlay.open{opacity:1;visibility:visible}
+    .modal-box{background:#fff;border-radius:var(--radius-xl);padding:40px;width:100%;position:relative;transform:translateY(16px);transition:transform .3s;max-height:90vh;overflow-y:auto}
+    .modal-overlay.open .modal-box{transform:none}
+    .modal-close{position:absolute;top:16px;right:16px;background:none;border:none;cursor:pointer;color:var(--n400);padding:8px;border-radius:6px;transition:all .2s;line-height:0}
+    .modal-close:hover{background:var(--n100);color:var(--n700)}
+    .modal-title{font-family:var(--font-display);font-size:1.25rem;font-weight:700;color:var(--n900);margin-bottom:6px}
+    .modal-sub{font-size:.875rem;color:var(--n500);margin-bottom:28px;line-height:1.6}
+
+    /* Form elements inside modal */
+    .form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+    .form-group{margin-bottom:12px}
+    .form-label{display:block;font-size:.8125rem;font-weight:600;color:var(--n700);margin-bottom:5px}
+    .form-input{width:100%;background:var(--n50);border:1px solid var(--n300);border-radius:var(--radius-sm);padding:10px 12px;font-family:var(--font-body);font-size:.875rem;color:var(--n900);outline:none;transition:border-color .2s;-webkit-appearance:none}
+    .form-input:focus{border-color:var(--ocean-500);background:#fff;box-shadow:0 0 0 3px rgba(13,84,112,.08)}
+    textarea.form-input{resize:vertical}
+    select.form-input{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236B7280' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;padding-right:32px}
+
+    /* Success checkmark */
+    @keyframes check-scale{0%{transform:scale(.6);opacity:0}80%{transform:scale(1.1)}100%{transform:scale(1);opacity:1}}
+    @keyframes check-draw{from{stroke-dashoffset:80}to{stroke-dashoffset:0}}
+    .success-icon{width:64px;height:64px;background:var(--success-light);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 20px;animation:check-scale .4s ease both}
+    .success-check{stroke-dasharray:80;stroke-dashoffset:80;animation:check-draw .5s .3s ease forwards}
+
+    /* Animations */
+    .fade-up{opacity:0;transform:translateY(24px);transition:opacity .6s,transform .6s}
+    .fade-up.visible{opacity:1;transform:none}
+    .slide-in-left{opacity:0;transform:translateX(-24px);transition:opacity .6s,transform .6s}
+    .slide-in-left.visible{opacity:1;transform:none}
+    .slide-in-right{opacity:0;transform:translateX(24px);transition:opacity .6s,transform .6s}
+    .slide-in-right.visible{opacity:1;transform:none}
 
     /* Responsive */
     @media(max-width:900px){
@@ -188,16 +237,14 @@
       .cards-3,.features-grid,.pricing-grid,.testimonials-grid{grid-template-columns:1fr}
       .nav-links{display:none}
       .footer-grid{grid-template-columns:1fr 1fr}
+      .form-row{grid-template-columns:1fr}
     }
     @media(max-width:600px){
       .section{padding:56px 0}
       .footer-grid{grid-template-columns:1fr}
       .market-stats,.investors-metrics{grid-template-columns:1fr}
+      .modal-box{padding:28px 20px}
     }
-
-    /* Animations */
-    .fade-up{opacity:0;transform:translateY(24px);transition:opacity .6s,transform .6s}
-    .fade-up.visible{opacity:1;transform:none}
   </style>
 </head>
 <body>
@@ -231,7 +278,6 @@
 
 <!-- HERO -->
 <section class="hero" id="home">
-  <!-- Carousel de praias da Ilha do Sal -->
   <div class="hero-slide active" style="background-image:url('https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=1600&q=80')"></div>
   <div class="hero-slide" style="background-image:url('https://images.unsplash.com/photo-1519046904884-53103b34b206?w=1600&q=80')"></div>
   <div class="hero-slide" style="background-image:url('https://images.unsplash.com/photo-1506929562872-bb421503ef21?w=1600&q=80')"></div>
@@ -257,9 +303,21 @@
         </a>
       </div>
       <div class="hero-stats">
-        <div><div class="hero-stat-value">0%</div><div class="hero-stat-label pt">Comissao nas reservas directas</div><div class="hero-stat-label en">Commission on direct bookings</div></div>
-        <div><div class="hero-stat-value">4</div><div class="hero-stat-label pt">Tipos de operador suportados</div><div class="hero-stat-label en">Supported operator types</div></div>
-        <div><div class="hero-stat-value">15min</div><div class="hero-stat-label pt">Sincronizacao com Viator e GYG</div><div class="hero-stat-label en">Sync with Viator and GYG</div></div>
+        <div>
+          <div class="hero-stat-value">0%</div>
+          <div class="hero-stat-label pt">Comissao nas reservas directas</div>
+          <div class="hero-stat-label en">Commission on direct bookings</div>
+        </div>
+        <div>
+          <div class="hero-stat-value" data-count="4">4</div>
+          <div class="hero-stat-label pt">Tipos de operador suportados</div>
+          <div class="hero-stat-label en">Supported operator types</div>
+        </div>
+        <div>
+          <div class="hero-stat-value" data-count="15" data-suffix="min">15min</div>
+          <div class="hero-stat-label pt">Sincronizacao com Viator e GYG</div>
+          <div class="hero-stat-label en">Sync with Viator and GYG</div>
+        </div>
       </div>
     </div>
     <div class="hero-visual">
@@ -304,8 +362,8 @@
       <p class="section-sub pt">Os operadores da Ilha do Sal perdem ate 20% de receita em comissoes OTA, nao tem visibilidade financeira e gerem reservas em folhas de calculo.</p>
       <p class="section-sub en">Operators in Ilha do Sal lose up to 20% of revenue in OTA commissions, have no financial visibility, and manage bookings in spreadsheets.</p>
     </div>
-    <div class="cards-3 fade-up">
-      <div class="card">
+    <div class="cards-3">
+      <div class="card fade-up" style="transition-delay:.05s">
         <div class="card-icon red">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#B91C1C" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
         </div>
@@ -314,7 +372,7 @@
         <p class="pt">Booking.com, Viator e GetYourGuide cobram entre 15% e 25% por cada reserva. Dinheiro que deveria ficar no seu negocio.</p>
         <p class="en">Booking.com, Viator and GetYourGuide charge 15–25% per booking. Money that should stay in your business.</p>
       </div>
-      <div class="card">
+      <div class="card fade-up" style="transition-delay:.15s">
         <div class="card-icon orange">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#B45309" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
         </div>
@@ -323,7 +381,7 @@
         <p class="pt">Reservas em WhatsApp, pagamentos em folhas de calculo, clientes sem registo. Ineficiencia operacional diaria.</p>
         <p class="en">Bookings via WhatsApp, payments in spreadsheets, no customer records. Daily operational inefficiency.</p>
       </div>
-      <div class="card">
+      <div class="card fade-up" style="transition-delay:.25s">
         <div class="card-icon blue">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#0D5470" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
         </div>
@@ -345,43 +403,43 @@
       <h2 class="section-title pt">Tudo o que precisa, num so lugar</h2>
       <h2 class="section-title en">Everything you need, in one place</h2>
     </div>
-    <div class="features-grid fade-up">
-      <div class="feature-card">
+    <div class="features-grid">
+      <div class="feature-card fade-up" style="transition-delay:.04s">
         <div class="feature-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg></div>
         <h3 class="pt">Motor de Reserva Directa</h3>
         <h3 class="en">Direct Booking Engine</h3>
         <p class="pt">Link publico personalizado. Os seus clientes reservam directamente sem intermediarios. Zero comissoes.</p>
         <p class="en">Custom public link. Your customers book directly with no intermediaries. Zero commissions.</p>
       </div>
-      <div class="feature-card">
+      <div class="feature-card fade-up" style="transition-delay:.1s">
         <div class="feature-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div>
         <h3 class="pt">Calendario de Disponibilidade</h3>
         <h3 class="en">Availability Calendar</h3>
         <p class="pt">Vista mensal por unidade, bloqueio de datas, gestao de check-in/check-out. Sem conflitos de reserva.</p>
         <p class="en">Monthly view per unit, date blocking, check-in/check-out management. No booking conflicts.</p>
       </div>
-      <div class="feature-card">
+      <div class="feature-card fade-up" style="transition-delay:.16s">
         <div class="feature-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
         <h3 class="pt">CRM de Clientes</h3>
         <h3 class="en">Customer CRM</h3>
         <p class="pt">Perfil automatico de cada cliente com historico de reservas, valor total e notas. Exportacao CSV.</p>
         <p class="en">Automatic customer profile with booking history, total value and notes. CSV export.</p>
       </div>
-      <div class="feature-card">
+      <div class="feature-card fade-up" style="transition-delay:.22s">
         <div class="feature-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div>
         <h3 class="pt">Painel Financeiro</h3>
         <h3 class="en">Financial Dashboard</h3>
         <p class="pt">KPIs em tempo real, graficos de receita, distribuicao por canal, exportacao Excel. Comparativo vs periodo anterior.</p>
         <p class="en">Real-time KPIs, revenue charts, channel distribution, Excel export. Comparison vs previous period.</p>
       </div>
-      <div class="feature-card">
+      <div class="feature-card fade-up" style="transition-delay:.28s">
         <div class="feature-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><polyline points="13 2 13 9 20 9"/></svg></div>
         <h3 class="pt">Automacoes de Comunicacao</h3>
         <h3 class="en">Communication Automations</h3>
         <p class="pt">Emails e WhatsApp automaticos na confirmacao, antes do check-in e apos o checkout. PT e EN.</p>
         <p class="en">Automatic emails and WhatsApp on confirmation, before check-in and after checkout. PT and EN.</p>
       </div>
-      <div class="feature-card">
+      <div class="feature-card fade-up" style="transition-delay:.34s">
         <div class="feature-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg></div>
         <h3 class="pt">Channel Manager</h3>
         <h3 class="en">Channel Manager</h3>
@@ -395,42 +453,50 @@
 <!-- MERCADO -->
 <section class="section" id="market">
   <div class="container market-inner">
-    <div class="fade-up">
+    <div class="slide-in-left">
       <div class="section-label pt">O mercado</div>
       <div class="section-label en">The market</div>
       <h2 class="section-title pt">Ilha do Sal — destino em crescimento</h2>
       <h2 class="section-title en">Ilha do Sal — growing destination</h2>
       <p class="section-sub pt">O turismo na Ilha do Sal cresce consistentemente. Com mais de 800.000 visitantes por ano, o potencial de mercado para operadores digitalizados e significativo.</p>
       <p class="section-sub en">Tourism in Ilha do Sal grows consistently. With over 800,000 visitors per year, the market potential for digitized operators is significant.</p>
-      <div class="market-stats">
-        <div class="market-stat"><div class="market-stat-val">800k+</div><div class="market-stat-lbl pt">Turistas por ano</div><div class="market-stat-lbl en">Tourists per year</div></div>
-        <div class="market-stat"><div class="market-stat-val">€180M</div><div class="market-stat-lbl pt">Receita turistica anual</div><div class="market-stat-lbl en">Annual tourism revenue</div></div>
-        <div class="market-stat"><div class="market-stat-val">320+</div><div class="market-stat-lbl pt">Operadores na ilha</div><div class="market-stat-lbl en">Operators on the island</div></div>
-        <div class="market-stat"><div class="market-stat-val">5%</div><div class="market-stat-lbl pt">Digitalizados actualmente</div><div class="market-stat-lbl en">Currently digitized</div></div>
+      <div class="market-stats" id="market-stats">
+        <div class="market-stat fade-up" style="transition-delay:.05s"><div class="market-stat-val">800k+</div><div class="market-stat-lbl pt">Turistas por ano</div><div class="market-stat-lbl en">Tourists per year</div></div>
+        <div class="market-stat fade-up" style="transition-delay:.15s"><div class="market-stat-val">€180M</div><div class="market-stat-lbl pt">Receita turistica anual</div><div class="market-stat-lbl en">Annual tourism revenue</div></div>
+        <div class="market-stat fade-up" style="transition-delay:.25s"><div class="market-stat-val">320+</div><div class="market-stat-lbl pt">Operadores na ilha</div><div class="market-stat-lbl en">Operators on the island</div></div>
+        <div class="market-stat fade-up" style="transition-delay:.35s"><div class="market-stat-val">5%</div><div class="market-stat-lbl pt">Digitalizados actualmente</div><div class="market-stat-lbl en">Currently digitized</div></div>
       </div>
     </div>
-    <div class="market-visual fade-up">
+    <div class="market-visual slide-in-right" id="market-visual">
       <div style="font-family:var(--font-display);font-weight:800;font-size:1.5rem;color:#fff;margin-bottom:8px">Ilha do Sal</div>
       <div style="font-size:.875rem;opacity:.7;margin-bottom:24px">Cabo Verde · Atlantico</div>
-      <div style="display:flex;flex-direction:column;gap:12px">
-        <div style="display:flex;justify-content:space-between;align-items:center">
-          <span style="font-size:.8125rem;opacity:.8 pt">Kitesurf</span>
-          <div style="height:6px;background:rgba(255,255,255,.15);border-radius:3px;flex:1;margin:0 12px"><div style="height:100%;background:var(--sand-400);border-radius:3px;width:90%"></div></div>
-          <span style="font-size:.75rem;font-weight:600">90%</span>
+      <div style="display:flex;flex-direction:column;gap:16px">
+        <div>
+          <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+            <span style="font-size:.8125rem;opacity:.85">Kitesurf</span>
+            <span style="font-size:.75rem;font-weight:600">90%</span>
+          </div>
+          <div style="height:6px;background:rgba(255,255,255,.15);border-radius:3px"><div class="progress-fill" data-width="90%" style="height:100%;background:var(--sand-400);border-radius:3px"></div></div>
         </div>
-        <div style="display:flex;justify-content:space-between;align-items:center">
-          <span style="font-size:.8125rem;opacity:.8">Mergulho</span>
-          <div style="height:6px;background:rgba(255,255,255,.15);border-radius:3px;flex:1;margin:0 12px"><div style="height:100%;background:var(--sand-400);border-radius:3px;width:75%"></div></div>
-          <span style="font-size:.75rem;font-weight:600">75%</span>
+        <div>
+          <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+            <span style="font-size:.8125rem;opacity:.85">Mergulho</span>
+            <span style="font-size:.75rem;font-weight:600">75%</span>
+          </div>
+          <div style="height:6px;background:rgba(255,255,255,.15);border-radius:3px"><div class="progress-fill" data-width="75%" style="height:100%;background:var(--sand-400);border-radius:3px"></div></div>
         </div>
-        <div style="display:flex;justify-content:space-between;align-items:center">
-          <span style="font-size:.8125rem;opacity:.8">Alojamento</span>
-          <div style="height:6px;background:rgba(255,255,255,.15);border-radius:3px;flex:1;margin:0 12px"><div style="height:100%;background:var(--sand-400);border-radius:3px;width:85%"></div></div>
-          <span style="font-size:.75rem;font-weight:600">85%</span>
+        <div>
+          <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+            <span style="font-size:.8125rem;opacity:.85">Alojamento</span>
+            <span style="font-size:.75rem;font-weight:600">85%</span>
+          </div>
+          <div style="height:6px;background:rgba(255,255,255,.15);border-radius:3px"><div class="progress-fill" data-width="85%" style="height:100%;background:var(--sand-400);border-radius:3px"></div></div>
         </div>
       </div>
-      <div style="margin-top:24px;padding-top:20px;border-top:1px solid rgba(255,255,255,.15);font-size:.75rem;opacity:.6 pt">Satisfacao dos turistas com actividades na ilha</div>
-      <div style="margin-top:24px;padding-top:20px;border-top:1px solid rgba(255,255,255,.15);font-size:.75rem;opacity:.6 en">Tourist satisfaction with activities on the island</div>
+      <div style="margin-top:24px;padding-top:20px;border-top:1px solid rgba(255,255,255,.15);font-size:.75rem;opacity:.55">
+        <span class="pt">Satisfacao dos turistas com actividades na ilha</span>
+        <span class="en">Tourist satisfaction with activities on the island</span>
+      </div>
     </div>
   </div>
 </section>
@@ -447,7 +513,6 @@
         <span class="pt">30 dias gratuitos em qualquer plano. Sem cartao de credito.</span>
         <span class="en">30 days free on any plan. No credit card required.</span>
       </p>
-      <!-- Toggle EUR/CVE -->
       <div style="display:inline-flex;gap:0;background:var(--n100);border-radius:8px;padding:3px;margin-top:20px" id="currencyToggle">
         <button onclick="setCurrency('EUR')" id="btnEUR" style="padding:6px 18px;border:none;border-radius:6px;font-family:var(--font-body);font-size:.8125rem;font-weight:700;cursor:pointer;background:var(--ocean-700);color:#fff;transition:all .2s">EUR</button>
         <button onclick="setCurrency('CVE')" id="btnCVE" style="padding:6px 18px;border:none;border-radius:6px;font-family:var(--font-body);font-size:.8125rem;font-weight:700;cursor:pointer;background:transparent;color:var(--n500);transition:all .2s">CVE</button>
@@ -468,9 +533,9 @@
           <li class="no pt">Channel Manager</li><li class="no en">Channel Manager</li>
           <li class="no pt">Automacoes avancadas</li><li class="no en">Advanced automations</li>
         </ul>
-        <a href="https://app.saldesk.cv/register" class="btn btn-secondary" style="width:100%;justify-content:center">
+        <button onclick="openPricingModal()" class="btn btn-secondary" style="width:100%;justify-content:center">
           <span class="pt">Comecar gratis</span><span class="en">Start free</span>
-        </a>
+        </button>
       </div>
       <div class="plan featured">
         <div class="plan-badge pt">Mais popular</div>
@@ -488,9 +553,9 @@
           <li class="pt">Automacoes email + WhatsApp</li><li class="en">Email + WhatsApp automations</li>
           <li class="no pt">Channel Manager</li><li class="no en">Channel Manager</li>
         </ul>
-        <a href="https://app.saldesk.cv/register" class="btn btn-primary" style="width:100%;justify-content:center">
+        <button onclick="openPricingModal()" class="btn btn-primary" style="width:100%;justify-content:center">
           <span class="pt">Comecar gratis</span><span class="en">Start free</span>
-        </a>
+        </button>
       </div>
       <div class="plan">
         <div class="plan-name">Pro</div>
@@ -506,9 +571,9 @@
           <li class="pt">Suporte prioritario</li><li class="en">Priority support</li>
           <li class="pt">Export Excel avancado</li><li class="en">Advanced Excel export</li>
         </ul>
-        <a href="https://app.saldesk.cv/register" class="btn btn-secondary" style="width:100%;justify-content:center">
+        <button onclick="openPricingModal()" class="btn btn-secondary" style="width:100%;justify-content:center">
           <span class="pt">Comecar gratis</span><span class="en">Start free</span>
-        </a>
+        </button>
       </div>
     </div>
   </div>
@@ -530,8 +595,8 @@
         <span class="en">Manageable by the Founder at app.saldesk.cv/admin</span>
       </p>
     </div>
-    <div class="testimonials-grid fade-up">
-      <div class="testimonial">
+    <div class="testimonials-grid">
+      <div class="testimonial fade-up" style="transition-delay:.05s">
         <div class="stars">★★★★★</div>
         <div class="testimonial-text pt">"Desde que adoptei o SalDesk, as reservas directas aumentaram 40%. Deixei de pagar comissoes ao Booking.com para clientes que ja me conheciam."</div>
         <div class="testimonial-text en">"Since I adopted SalDesk, direct bookings increased 40%. I stopped paying commissions to Booking.com for customers who already knew me."</div>
@@ -540,7 +605,7 @@
           <div><div class="testimonial-name">Joao Monteiro</div><div class="testimonial-role pt">Hotel Sal Rei · Santa Maria</div><div class="testimonial-role en">Sal Rei Hotel · Santa Maria</div></div>
         </div>
       </div>
-      <div class="testimonial">
+      <div class="testimonial fade-up" style="transition-delay:.15s">
         <div class="stars">★★★★★</div>
         <div class="testimonial-text pt">"O channel manager com o Viator poupoume horas de trabalho manual. As reservas chegam automaticamente e a disponibilidade actualiza-se sozinha."</div>
         <div class="testimonial-text en">"The channel manager with Viator saved me hours of manual work. Bookings arrive automatically and availability updates itself."</div>
@@ -549,7 +614,7 @@
           <div><div class="testimonial-name">Ana Costa</div><div class="testimonial-role pt">Sal Kite Center · Kitesurf</div><div class="testimonial-role en">Sal Kite Center · Kitesurfing</div></div>
         </div>
       </div>
-      <div class="testimonial">
+      <div class="testimonial fade-up" style="transition-delay:.25s">
         <div class="stars">★★★★★</div>
         <div class="testimonial-text pt">"O painel financeiro deu-me pela primeira vez uma visao clara da ocupacao por unidade e da receita real. Essencial para tomar decisoes."</div>
         <div class="testimonial-text en">"The financial dashboard gave me for the first time a clear view of occupancy per unit and real revenue. Essential for making decisions."</div>
@@ -565,7 +630,7 @@
 <!-- INVESTIDORES -->
 <section class="section" id="investors">
   <div class="container investors-inner">
-    <div class="fade-up">
+    <div class="slide-in-left">
       <div class="section-label pt">Para investidores</div>
       <div class="section-label en">For investors</div>
       <h2 class="section-title pt">Oportunidade no turismo africano</h2>
@@ -573,16 +638,17 @@
       <p class="section-sub pt">O SalDesk esta a digitalizar o sector turistico da Ilha do Sal. Com 320+ operadores potenciais e crescimento de 15% ao ano, o timing e ideal.</p>
       <p class="section-sub en">SalDesk is digitizing the tourism sector of Ilha do Sal. With 320+ potential operators and 15% annual growth, the timing is ideal.</p>
       <div class="investors-metrics">
-        <div class="inv-metric"><div class="inv-metric-val">€180M</div><div class="inv-metric-lbl pt">TAM turismo Ilha do Sal</div><div class="inv-metric-lbl en">Ilha do Sal tourism TAM</div></div>
-        <div class="inv-metric"><div class="inv-metric-val">15%</div><div class="inv-metric-lbl pt">Crescimento anual do sector</div><div class="inv-metric-lbl en">Annual sector growth</div></div>
-        <div class="inv-metric"><div class="inv-metric-val">€1M</div><div class="inv-metric-lbl pt">ARR potencial (320 ops)</div><div class="inv-metric-lbl en">Potential ARR (320 ops)</div></div>
-        <div class="inv-metric"><div class="inv-metric-val">SaaS</div><div class="inv-metric-lbl pt">Modelo recorrente + ads</div><div class="inv-metric-lbl en">Recurring + ads model</div></div>
+        <div class="inv-metric fade-up" style="transition-delay:.05s"><div class="inv-metric-val">€180M</div><div class="inv-metric-lbl pt">TAM turismo Ilha do Sal</div><div class="inv-metric-lbl en">Ilha do Sal tourism TAM</div></div>
+        <div class="inv-metric fade-up" style="transition-delay:.15s"><div class="inv-metric-val">15%</div><div class="inv-metric-lbl pt">Crescimento anual do sector</div><div class="inv-metric-lbl en">Annual sector growth</div></div>
+        <div class="inv-metric fade-up" style="transition-delay:.25s"><div class="inv-metric-val">€1M</div><div class="inv-metric-lbl pt">ARR potencial (320 ops)</div><div class="inv-metric-lbl en">Potential ARR (320 ops)</div></div>
+        <div class="inv-metric fade-up" style="transition-delay:.35s"><div class="inv-metric-val">SaaS</div><div class="inv-metric-lbl pt">Modelo recorrente + ads</div><div class="inv-metric-lbl en">Recurring + ads model</div></div>
       </div>
-      <a href="mailto:invest@saldesk.cv" class="btn btn-primary btn-lg" style="margin-top:28px">
+      <button onclick="openContactModal()" class="btn btn-primary btn-lg" style="margin-top:28px">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
         <span class="pt">Contactar equipa</span><span class="en">Contact the team</span>
-      </a>
+      </button>
     </div>
-    <div class="fade-up">
+    <div class="slide-in-right">
       <div class="inv-timeline">
         <div class="inv-step">
           <h4 class="pt">Fase 1 — Produto (2026 · actual)</h4>
@@ -623,14 +689,44 @@
   </div>
 </section>
 
+<!-- FOOTER SEPARATOR -->
+<div class="footer-separator"></div>
+
 <!-- FOOTER -->
 <footer>
   <div class="container">
     <div class="footer-grid">
       <div>
-        <div class="footer-brand"><img src="/logo.png" alt="SalDesk" height="28" style="height:28px;width:auto;filter:brightness(0) invert(1);"></div>
+        <div class="footer-brand">
+          <img src="/logo.png" alt="SalDesk" height="28" style="height:28px;width:auto;filter:brightness(0) invert(1);">
+        </div>
         <p class="footer-desc pt">A primeira plataforma SaaS de gestao turistica para operadores da Ilha do Sal, Cabo Verde.</p>
         <p class="footer-desc en">The first SaaS tourism management platform for operators in Ilha do Sal, Cape Verde.</p>
+        <div class="social-icons">
+          <a href="#" class="social-icon" aria-label="Instagram">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+          </a>
+          <a href="#" class="social-icon" aria-label="Facebook">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>
+          </a>
+          <a href="#" class="social-icon" aria-label="LinkedIn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
+          </a>
+        </div>
+        <div class="newsletter-wrap">
+          <p class="newsletter-label pt">Receba novidades sobre o SalDesk</p>
+          <p class="newsletter-label en">Get SalDesk news and updates</p>
+          <form class="newsletter-form" id="newsletter-form">
+            <input type="email" class="newsletter-input" id="newsletter-email" placeholder="Email" required />
+            <button type="submit" class="newsletter-btn">
+              <span class="pt">Subscrever</span><span class="en">Subscribe</span>
+            </button>
+          </form>
+          <p id="newsletter-ok" style="display:none;font-size:.8125rem;color:var(--sand-400);margin-top:8px">
+            <span class="pt">Obrigado! Ficara a par das novidades.</span>
+            <span class="en">Thank you! You will be the first to know.</span>
+          </p>
+        </div>
       </div>
       <div>
         <h4 class="pt">Produto</h4><h4 class="en">Product</h4>
@@ -656,18 +752,121 @@
           <li><a href="#investors" class="pt">Investidores</a><a href="#investors" class="en">Investors</a></li>
           <li><a href="mailto:hello@saldesk.cv">hello@saldesk.cv</a></li>
           <li><a href="mailto:invest@saldesk.cv">invest@saldesk.cv</a></li>
+          <li><a href="#" onclick="openContactModal();return false;" class="pt">Falar connosco</a><a href="#" onclick="openContactModal();return false;" class="en">Get in touch</a></li>
         </ul>
       </div>
     </div>
     <div class="footer-bottom">
-      <span class="pt">© 2025 SalDesk · Ilha do Sal, Cabo Verde</span>
-      <span class="en">© 2025 SalDesk · Ilha do Sal, Cape Verde</span>
-      <span style="color:rgba(255,255,255,.4);font-size:.75rem">
-        Sistema desenvolvido por <strong style="color:rgba(255,255,255,.6)">WANDR — Travel Technology Company</strong>
+      <span style="color:rgba(255,255,255,.45)">
+        <span class="pt">© 2026 SalDesk · Ilha do Sal, Cabo Verde</span>
+        <span class="en">© 2026 SalDesk · Ilha do Sal, Cape Verde</span>
+      </span>
+      <span style="color:rgba(255,255,255,.35);font-size:.75rem">
+        <span class="pt">Sistema desenvolvido por </span>
+        <span class="en">System developed by </span>
+        <a href="https://wandr.cv" target="_blank" rel="noopener" style="color:rgba(255,255,255,.55);font-weight:600;transition:color .2s" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='rgba(255,255,255,.55)'">WANDR — Travel Technology</a>
       </span>
     </div>
   </div>
 </footer>
+
+<!-- MODAL: Escolha de inicio -->
+<div class="modal-overlay" id="modal-pricing" onclick="if(event.target===this)closeModal('modal-pricing')">
+  <div class="modal-box" style="max-width:440px">
+    <button class="modal-close" onclick="closeModal('modal-pricing')" aria-label="Fechar">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+    <p class="modal-title pt">Comecar com o SalDesk</p>
+    <p class="modal-title en">Get started with SalDesk</p>
+    <p class="modal-sub pt">30 dias gratuitos, sem cartao de credito. Escolha como prefere avancar.</p>
+    <p class="modal-sub en">30 days free, no credit card required. Choose how you want to proceed.</p>
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <a href="https://app.saldesk.cv/register" class="btn btn-primary btn-lg" style="width:100%;justify-content:center">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
+        <span class="pt">Criar conta agora</span><span class="en">Create account now</span>
+      </a>
+      <button onclick="openContactFromPricing()" class="btn btn-secondary btn-lg" style="width:100%;justify-content:center">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        <span class="pt">Agendar demonstracao</span><span class="en">Schedule a demo</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Formulario de contacto -->
+<div class="modal-overlay" id="modal-contact" onclick="if(event.target===this)closeModal('modal-contact')">
+  <div class="modal-box" style="max-width:520px">
+    <button class="modal-close" onclick="closeModal('modal-contact')" aria-label="Fechar">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+
+    <!-- Form state -->
+    <div id="contact-form-wrap">
+      <p class="modal-title pt">Falar com a equipa</p>
+      <p class="modal-title en">Talk to the team</p>
+      <p class="modal-sub pt">Respondemos em menos de 24 horas. Todos os campos marcados com * sao obrigatorios.</p>
+      <p class="modal-sub en">We reply within 24 hours. All fields marked * are required.</p>
+      <form id="contact-form">
+        <div class="form-row">
+          <div class="form-group" style="margin-bottom:0">
+            <label class="form-label"><span class="pt">Nome *</span><span class="en">Name *</span></label>
+            <input type="text" name="name" class="form-input" required placeholder="Joao Silva" />
+          </div>
+          <div class="form-group" style="margin-bottom:0">
+            <label class="form-label">Email *</label>
+            <input type="email" name="email" class="form-input" required placeholder="joao@exemplo.cv" />
+          </div>
+        </div>
+        <div class="form-row" style="margin-top:12px">
+          <div class="form-group" style="margin-bottom:0">
+            <label class="form-label"><span class="pt">Telefone</span><span class="en">Phone</span></label>
+            <input type="tel" name="phone" class="form-input" placeholder="+238 9XX XXXX" />
+          </div>
+          <div class="form-group" style="margin-bottom:0">
+            <label class="form-label"><span class="pt">Tipo de negocio</span><span class="en">Business type</span></label>
+            <select name="operator_type" class="form-input">
+              <option value="hotel">Hotel / Alojamento</option>
+              <option value="activity">Actividade / Kitesurf / Mergulho</option>
+              <option value="rentacar">Rent-a-Car</option>
+              <option value="restaurant">Restaurante</option>
+              <option value="investor">Investidor</option>
+              <option value="other">Outro</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group" style="margin-top:12px">
+          <label class="form-label"><span class="pt">Mensagem *</span><span class="en">Message *</span></label>
+          <textarea name="message" class="form-input" rows="4" required placeholder="..."></textarea>
+        </div>
+        <button type="submit" id="contact-submit" class="btn btn-primary btn-lg" style="width:100%;justify-content:center;margin-top:8px">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+          <span class="pt">Enviar mensagem</span><span class="en">Send message</span>
+        </button>
+        <p id="contact-error" style="display:none;margin-top:12px;color:var(--error);font-size:.8125rem;text-align:center"></p>
+      </form>
+    </div>
+
+    <!-- Success state -->
+    <div id="contact-success" style="display:none;text-align:center;padding:16px 0 8px">
+      <div class="success-icon">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <polyline class="success-check" points="20 6 9 17 4 12"/>
+        </svg>
+      </div>
+      <h3 style="font-family:var(--font-display);font-size:1.25rem;font-weight:700;color:var(--n900);margin-bottom:8px">
+        <span class="pt">Mensagem enviada!</span>
+        <span class="en">Message sent!</span>
+      </h3>
+      <p style="font-size:.9375rem;color:var(--n500);margin-bottom:24px">
+        <span class="pt">Obrigado pelo contacto. Respondemos em menos de 24 horas.</span>
+        <span class="en">Thank you for reaching out. We reply within 24 hours.</span>
+      </p>
+      <button onclick="closeModal('modal-contact')" class="btn btn-primary">
+        <span class="pt">Fechar</span><span class="en">Close</span>
+      </button>
+    </div>
+  </div>
+</div>
 
 <script>
   /* ─── Language toggle ─── */
@@ -716,12 +915,154 @@
     }, 5000);
   })();
 
-  /* ─── Intersection observer para animacoes ─── */
-  const obs = new IntersectionObserver((entries) => {
-    entries.forEach((e) => { if (e.isIntersecting) e.target.classList.add('visible'); });
+  /* ─── Scroll animations (fade-up, slide-in) ─── */
+  const scrollObs = new IntersectionObserver((entries) => {
+    entries.forEach((e) => {
+      if (e.isIntersecting) {
+        e.target.classList.add('visible');
+        scrollObs.unobserve(e.target);
+      }
+    });
   }, { threshold: 0.1 });
 
-  document.querySelectorAll('.fade-up').forEach((el) => obs.observe(el));
+  document.querySelectorAll('.fade-up, .slide-in-left, .slide-in-right').forEach((el) => scrollObs.observe(el));
+
+  /* ─── Hero counter animation ─── */
+  function animateCounter(el) {
+    const target = parseInt(el.dataset.count, 10);
+    const suffix = el.dataset.suffix || '';
+    const duration = 1200;
+    const start = performance.now();
+    function tick(now) {
+      const p = Math.min((now - start) / duration, 1);
+      const ease = 1 - Math.pow(1 - p, 3);
+      el.textContent = Math.round(ease * target) + suffix;
+      if (p < 1) requestAnimationFrame(tick);
+    }
+    requestAnimationFrame(tick);
+  }
+
+  const heroStatsEl = document.querySelector('.hero-stats');
+  if (heroStatsEl) {
+    const counterObs = new IntersectionObserver((entries) => {
+      entries.forEach(e => {
+        if (e.isIntersecting) {
+          e.target.querySelectorAll('[data-count]').forEach(animateCounter);
+          counterObs.disconnect();
+        }
+      });
+    }, { threshold: 0.5 });
+    counterObs.observe(heroStatsEl);
+  }
+
+  /* ─── Market progress bars ─── */
+  const marketVisualEl = document.getElementById('market-visual');
+  if (marketVisualEl) {
+    const progressObs = new IntersectionObserver((entries) => {
+      entries.forEach(e => {
+        if (e.isIntersecting) {
+          e.target.querySelectorAll('.progress-fill[data-width]').forEach(bar => {
+            bar.style.width = bar.dataset.width;
+          });
+          progressObs.unobserve(e.target);
+        }
+      });
+    }, { threshold: 0.35 });
+    progressObs.observe(marketVisualEl);
+  }
+
+  /* ─── Modals ─── */
+  function openModal(id) {
+    document.getElementById(id).classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+  function closeModal(id) {
+    document.getElementById(id).classList.remove('open');
+    document.body.style.overflow = '';
+  }
+  function openPricingModal() { openModal('modal-pricing'); }
+  function openContactModal() { openModal('modal-contact'); }
+  function openContactFromPricing() {
+    closeModal('modal-pricing');
+    openModal('modal-contact');
+  }
+
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+      closeModal('modal-pricing');
+      closeModal('modal-contact');
+    }
+  });
+
+  /* ─── Contact form submit ─── */
+  document.getElementById('contact-form').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const form = e.target;
+    const submit = document.getElementById('contact-submit');
+    const errorEl = document.getElementById('contact-error');
+    const lang = html.getAttribute('data-lang') || 'pt';
+
+    submit.disabled = true;
+    submit.style.opacity = '.6';
+    errorEl.style.display = 'none';
+
+    const body = {
+      name:          form.name.value.trim(),
+      email:         form.email.value.trim(),
+      phone:         form.phone.value.trim() || undefined,
+      operator_type: form.operator_type.value,
+      message:       form.message.value.trim(),
+      source:        'website',
+      language:      lang
+    };
+
+    try {
+      const res = await fetch('https://api.saldesk.cv/api/v1/public/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+      if (!res.ok) throw new Error('server');
+      document.getElementById('contact-form-wrap').style.display = 'none';
+      document.getElementById('contact-success').style.display = '';
+      form.reset();
+    } catch (_) {
+      errorEl.textContent = lang === 'pt'
+        ? 'Nao foi possivel enviar. Tente novamente ou escreva para hello@saldesk.cv'
+        : 'Could not send. Please try again or email hello@saldesk.cv';
+      errorEl.style.display = 'block';
+    } finally {
+      submit.disabled = false;
+      submit.style.opacity = '';
+    }
+  });
+
+  /* reset contact modal when closed */
+  document.getElementById('modal-contact').addEventListener('transitionend', function() {
+    if (!this.classList.contains('open')) {
+      setTimeout(() => {
+        document.getElementById('contact-form-wrap').style.display = '';
+        document.getElementById('contact-success').style.display = 'none';
+        document.getElementById('contact-error').style.display = 'none';
+      }, 200);
+    }
+  });
+
+  /* ─── Newsletter submit ─── */
+  document.getElementById('newsletter-form').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const email = document.getElementById('newsletter-email').value.trim();
+    const lang = html.getAttribute('data-lang') || 'pt';
+    try {
+      await fetch('https://api.saldesk.cv/api/v1/public/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, source: 'newsletter', operator_type: 'other', message: 'Newsletter subscription', language: lang })
+      });
+    } catch (_) { /* fail silently */ }
+    document.getElementById('newsletter-form').style.display = 'none';
+    document.getElementById('newsletter-ok').style.display = '';
+  });
 </script>
 </body>
 </html>
