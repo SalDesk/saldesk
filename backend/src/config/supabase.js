@@ -1,15 +1,19 @@
 const { createClient } = require('@supabase/supabase-js');
+const ws = require('ws');
 
-// Cliente admin (service key) para operações privilegiadas no servidor
-const supabaseAdmin = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_KEY
-);
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_KEY;
+const supabaseAnonKey = process.env.SUPABASE_ANON_KEY;
 
-// Cliente anon para autenticação de utilizadores (sign in/up)
-const supabaseAnon = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_ANON_KEY
-);
+const supabase = createClient(supabaseUrl, supabaseServiceKey, {
+  realtime: { transport: ws }
+});
 
-module.exports = { supabaseAdmin, supabaseAnon };
+const supabasePublic = createClient(supabaseUrl, supabaseAnonKey, {
+  realtime: { transport: ws }
+});
+
+const supabaseAdmin = supabase;
+const supabaseAnon = supabasePublic;
+
+module.exports = { supabase, supabasePublic, supabaseAdmin, supabaseAnon };
