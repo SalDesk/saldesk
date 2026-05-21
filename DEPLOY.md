@@ -34,11 +34,16 @@
 No **SQL Editor** do Supabase, executar cada ficheiro por ordem:
 
 ```
-database/001_fase1_schema.sql   — operators, units, pricing_rules
-database/002_fase2_schema.sql   — reservations, blocked_dates
-database/003_fase3_schema.sql   — customers, automations, automation_logs
-database/004_fase2_v2_operators.sql  — campos adicionais em operators
-database/005_fase5_channels.sql — operator_channels, integration_logs
+database/001_fase1_schema.sql        — operators, units, pricing_rules, blocked_dates
+database/002_fase2_schema.sql        — reservations, customers
+database/003_fase3_schema.sql        — automations, automation_logs, leads
+database/004_fase2_v2_operators.sql  — campos adicionais em operators (slug, plano)
+database/005_fase5_channels.sql      — operator_channels, integration_logs
+database/006_fase5_staff.sql         — staff, staff_availability, job_assignments
+database/007_fase5_messages.sql      — messages, message_groups
+database/008_fase5_fleet.sql         — fleet, fleet_assignments
+database/009_fase6_reviews.sql       — reviews
+database/010_fase8_cms.sql           — cms_featured, cms_banners, cms_experiences, cms_events, cms_articles
 ```
 
 > Copiar o conteudo de cada ficheiro e colar no SQL Editor, depois clicar **Run**.
@@ -141,14 +146,33 @@ nano /var/www/saldesk/backend/.env
 
 Preencher todos os valores (ver [deploy/.env.production](deploy/.env.production)).
 
-### 5.2 Gerar ENCRYPTION_KEY
+### 5.2 Gerar chaves VAPID (push notifications)
+
+```bash
+cd /var/www/saldesk/backend
+node -e "
+  const wp = require('web-push');
+  const k = wp.generateVAPIDKeys();
+  console.log('VAPID_PUBLIC_KEY=' + k.publicKey);
+  console.log('VAPID_PRIVATE_KEY=' + k.privateKey);
+"
+# Copiar os valores para o .env
+```
+
+Copiar o `VAPID_PUBLIC_KEY` tambem para o frontend:
+```bash
+# frontend/.env (criar se nao existir)
+VITE_VAPID_PUBLIC_KEY=<valor_gerado>
+```
+
+### 5.3 Gerar ENCRYPTION_KEY
 
 ```bash
 openssl rand -hex 32
 # Copiar o output para ENCRYPTION_KEY no .env
 ```
 
-### 5.3 Verificar que o .env nao e commitable
+### 5.4 Verificar que o .env nao e commitable
 
 ```bash
 cat /var/www/saldesk/.gitignore | grep .env
@@ -244,6 +268,18 @@ O script faz:
 pm2 status
 pm2 logs saldesk-api
 ```
+
+### 8.2 Definir role FUNDADOR
+
+Apos o primeiro registo com o email do fundador, correr no Supabase SQL Editor:
+
+```sql
+UPDATE auth.users
+SET raw_user_meta_data = raw_user_meta_data || '{"role": "FUNDADOR"}'::jsonb
+WHERE email = 'ritsdelgado@gmail.com';
+```
+
+Verificar que o acesso a `https://app.saldesk.cv/admin` funciona.
 
 ---
 
@@ -391,6 +427,38 @@ pm2 logs saldesk-api --lines 100 --raw
 tail -f /var/log/nginx/access.log
 tail -f /var/log/saldesk/deploy.log
 ```
+
+---
+
+## 13. Activar PayPal em modo Live
+
+1. Criar app em [developer.paypal.com](https://developer.paypal.com) com modo **Live**
+2. Copiar `Client ID` e `Secret`
+3. Criar webhook apontando para `https://api.saldesk.cv/api/v1/payments/webhook/paypal`
+4. Actualizar no `.env`:
+   ```
+   PAYPAL_CLIENT_ID=<live_client_id>
+   PAYPAL_CLIENT_SECRET=<live_secret>
+   PAYPAL_WEBHOOK_ID=<id_do_webhook>
+   PAYPAL_MODE=live
+   ```
+5. `pm2 restart saldesk-api`
+
+---
+
+## 14. Activar SISP Vinti4
+
+1. Contactar [sisp.cv](https://www.sisp.cv) para contrato de gateway de pagamento (processo: 2-6 semanas)
+2. Apos aprovacao, preencher no `.env`:
+   ```
+   SISP_MERCHANT_ID=<id_real>
+   SISP_API_KEY=<chave_real>
+   SISP_API_URL=https://mc.vinti4net.cv/
+   SISP_WEBHOOK_SECRET=<segredo_do_webhook>
+   ```
+3. `pm2 restart saldesk-api`
+
+O sistema detecta automaticamente credenciais reais e desactiva o DEV_MODE de simulacao.
 
 ---
 
