@@ -514,14 +514,14 @@ const IMGS = {
 };
 
 const LOCATIONS = [
-  { name:'Santa Maria',    key:'santa maria',  img:'photo-1507525428034-b723cf961d3e' },
-  { name:'Pedra de Lume',  key:'pedra de lume',img:'photo-1519046904884-53103b34b206' },
-  { name:'Buracona',       key:'buracona',     img:'photo-1506929562872-bb421503ef21' },
-  { name:'Murdeira Bay',   key:'murdeira',     img:'photo-1471922694854-ff1b63b20054' },
-  { name:'Palmeira',       key:'palmeira',     img:'photo-1500375592092-40eb2168fd21' },
-  { name:'Espargos',       key:'espargos',     img:'photo-1469474968028-56623f02e42e' },
-  { name:'Ponta Preta',    key:'ponta preta',  img:'photo-1544551763-46a013bb70d5' },
-  { name:'Terra Boa',      key:'terra boa',    img:'photo-1559128010-7c1ad6e1b6a5' },
+  { name:'Santa Maria',    key:'santa maria',  img:'photo-1507525428034-b723cf961d3e', slug:'santa-maria' },
+  { name:'Pedra de Lume',  key:'pedra de lume',img:'photo-1519046904884-53103b34b206', slug:'pedra-de-lume' },
+  { name:'Buracona',       key:'buracona',     img:'photo-1506929562872-bb421503ef21', slug:'buracona' },
+  { name:'Murdeira Bay',   key:'murdeira',     img:'photo-1471922694854-ff1b63b20054', slug:'murdeira-bay' },
+  { name:'Palmeira',       key:'palmeira',     img:'photo-1500375592092-40eb2168fd21', slug:'palmeira' },
+  { name:'Espargos',       key:'espargos',     img:'photo-1469474968028-56623f02e42e', slug:'espargos' },
+  { name:'Ponta Preta',    key:'ponta preta',  img:'photo-1544551763-46a013bb70d5',    slug:'ponta-preta' },
+  { name:'Terra Boa',      key:'terra boa',    img:'photo-1559128010-7c1ad6e1b6a5',    slug:'terra-boa' },
 ];
 
 const TLABELS = {
@@ -811,15 +811,16 @@ function renderLocations() {
     const cntTxt = L() === 'pt'
       ? `${cnt} actividade${cnt !== 1 ? 's' : ''}`
       : `${cnt} activit${cnt !== 1 ? 'ies' : 'y'}`;
+    const href = `/discover/lugares/${loc.slug}.html`;
     return `
-      <div class="loc-card ${activeLoc === loc.key ? 'active' : ''}" onclick="setLocation('${loc.key}')">
+      <a class="loc-card" href="${href}">
         <img src="https://images.unsplash.com/${loc.img}?w=300&q=75" alt="${esc(loc.name)}" loading="lazy" />
         <div class="loc-overlay"></div>
         <div class="loc-body">
           <div class="loc-name">${esc(loc.name)}</div>
           <div class="loc-count">${cntTxt}</div>
         </div>
-      </div>`;
+      </a>`;
   }).join('');
 }
 
