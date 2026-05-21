@@ -164,7 +164,7 @@ async function discover(req, res, next) {
 
     let q = supabaseAdmin
       .from('operators')
-      .select('id, name, slug, operator_type, description, address, phone, logo_url, currency')
+      .select('id, name, slug, operator_type, description, address, phone, logo_url, currency, created_at')
       .eq('onboarding_complete', true)
       .order('name');
 
@@ -222,6 +222,20 @@ async function discover(req, res, next) {
       }
     });
 
+    // Reservas recentes (últimos 30 dias) por operador
+    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+    const { data: recentRes } = await supabaseAdmin
+      .from('reservations')
+      .select('operator_id')
+      .in('operator_id', ids)
+      .gte('created_at', thirtyDaysAgo)
+      .in('status', ['confirmed', 'checked_in', 'checked_out']);
+
+    const bookingMap = {};
+    (recentRes || []).forEach((r) => {
+      bookingMap[r.operator_id] = (bookingMap[r.operator_id] || 0) + 1;
+    });
+
     const enriched = operators.map((op) => {
       const opRatings = ratingMap[op.id] || [];
       return {
@@ -231,6 +245,7 @@ async function discover(req, res, next) {
           : null,
         review_count: opRatings.length || 0,
         base_price: priceMap[op.id] || null,
+        recent_bookings: bookingMap[op.id] || 0,
       };
     });
 

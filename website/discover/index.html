@@ -3,306 +3,335 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>SalDesk Connect — Ilha do Sal, Cabo Verde</title>
-  <meta name="description" content="SalDesk Connect — Descubra e reserve hoteis, actividades, rent-a-car e restaurantes na Ilha do Sal. Reserve directamente sem comissoes." />
-  <meta property="og:title" content="SalDesk Connect — Ilha do Sal" />
-  <meta property="og:description" content="Descubra e reserve na Ilha do Sal, Cabo Verde. Reservas directas sem comissoes." />
-  <meta property="og:type" content="website" />
+  <title>SalDesk Connect — Descubra Ilha do Sal</title>
+  <meta name="description" content="Descubra e reserve hoteis, actividades, rent-a-car e restaurantes na Ilha do Sal, Cabo Verde. Reservas directas sem comissoes." />
+  <meta property="og:title" content="SalDesk Connect — Descubra Ilha do Sal" />
+  <meta property="og:description" content="Reserve directamente com os melhores operadores da Ilha do Sal." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet" />
   <style>
-    :root {
-      --ocean-900:#062A38;--ocean-800:#0A3F55;--ocean-700:#0D5470;--ocean-600:#10698C;
-      --ocean-500:#1480A8;--ocean-400:#3A9BBF;--ocean-300:#71BDD4;--ocean-100:#D6EEF5;--ocean-50:#EBF7FB;
-      --sand-600:#BE941C;--sand-500:#D4A82A;--sand-400:#E0BF5A;--sand-100:#F8F0D8;--sand-50:#FDF8EE;
-      --n900:#1A2332;--n800:#1F2937;--n700:#374151;--n600:#4B5563;--n500:#6B7280;
-      --n400:#9CA3AF;--n300:#D1D5DB;--n200:#E5E8EC;--n100:#F3F4F6;--n50:#F9FAFB;
-      --success:#1A7A4A;--success-light:#DCFCE7;--error:#B91C1C;--error-light:#FEE2E2;
-      --font-display:'Sora',sans-serif;--font-body:'DM Sans',sans-serif;--font-mono:'DM Mono',monospace;
-      --radius-sm:8px;--radius-md:12px;--radius-lg:16px;--radius-xl:24px;
-      --shadow-sm:0 1px 4px rgba(6,42,56,.08);--shadow-md:0 4px 16px rgba(6,42,56,.10);--shadow-lg:0 12px 40px rgba(6,42,56,.14);
+    :root{
+      --oc9:#062A38;--oc8:#0A3F55;--oc7:#0D5470;--oc6:#10698C;--oc5:#1480A8;--oc4:#3A9BBF;--oc3:#71BDD4;--oc1:#D6EEF5;--oc0:#EBF7FB;
+      --sa6:#BE941C;--sa5:#D4A82A;--sa4:#E0BF5A;
+      --n9:#1A2332;--n8:#1F2937;--n7:#374151;--n6:#4B5563;--n5:#6B7280;--n4:#9CA3AF;--n3:#D1D5DB;--n2:#E5E8EC;--n1:#F3F4F6;--n0:#F9FAFB;
+      --ok:#1A7A4A;--okl:#DCFCE7;--err:#B91C1C;--errl:#FEE2E2;
+      --fd:'Sora',sans-serif;--fb:'DM Sans',sans-serif;
+      --r8:8px;--r12:12px;--r16:16px;--r24:24px;
+      --sh1:0 1px 4px rgba(6,42,56,.07);--sh2:0 4px 16px rgba(6,42,56,.10);--sh3:0 12px 40px rgba(6,42,56,.14);
     }
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-    html{scroll-behavior:smooth;font-size:16px;-webkit-font-smoothing:antialiased}
-    body{font-family:var(--font-body);color:var(--n900);background:var(--n50);line-height:1.6}
-    h1,h2,h3,h4{font-family:var(--font-display);line-height:1.2}
+    html{scroll-behavior:smooth;-webkit-font-smoothing:antialiased}
+    body{font-family:var(--fb);color:var(--n9);background:#fff;line-height:1.6}
+    h1,h2,h3,h4{font-family:var(--fd);line-height:1.2}
     a{color:inherit;text-decoration:none}
     img{max-width:100%;display:block}
     .container{max-width:1120px;margin:0 auto;padding:0 24px}
-    .section{padding:72px 0}
+    .section{padding:64px 0}
     [data-lang="pt"] .en{display:none}
     [data-lang="en"] .pt{display:none}
 
-    /* ── Nav ── */
-    nav{position:sticky;top:0;z-index:200;background:var(--ocean-900);border-bottom:1px solid rgba(255,255,255,.08)}
-    .nav-inner{display:flex;align-items:center;justify-content:space-between;height:60px;gap:16px}
-    .nav-logo{display:flex;align-items:center;gap:10px}
-    .nav-tagline{font-size:.75rem;font-weight:600;color:rgba(255,255,255,.45);letter-spacing:.03em;padding-left:10px;border-left:1px solid rgba(255,255,255,.15)}
-    .nav-right{display:flex;align-items:center;gap:10px}
-    .nav-link{font-size:.8125rem;font-weight:500;color:rgba(255,255,255,.6);transition:color .2s}
-    .nav-link:hover{color:#fff}
-    .lang-btn{background:rgba(255,255,255,.08);border:none;border-radius:6px;padding:2px;display:flex;gap:2px;cursor:pointer}
-    .lang-btn span{font-size:.7rem;font-weight:700;padding:4px 8px;border-radius:4px;text-transform:uppercase;color:rgba(255,255,255,.5);transition:all .2s}
-    .lang-btn span.active{background:rgba(255,255,255,.14);color:#fff}
-    .btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;font-family:var(--font-body);font-weight:600;font-size:.875rem;border-radius:var(--radius-sm);border:none;cursor:pointer;transition:all .2s;text-decoration:none;white-space:nowrap}
-    .btn-primary{background:var(--ocean-700);color:#fff;padding:9px 18px}
-    .btn-primary:hover{background:var(--ocean-500)}
-    .btn-sand{background:var(--sand-500);color:#fff;padding:9px 18px}
-    .btn-sand:hover{background:var(--sand-600)}
-    .btn-outline{background:transparent;color:rgba(255,255,255,.8);border:1px solid rgba(255,255,255,.3);padding:7px 16px;font-size:.8125rem}
-    .btn-outline:hover{border-color:#fff;color:#fff}
+    /* ── NAV ── */
+    #navbar{position:sticky;top:0;z-index:300;background:#fff;border-bottom:1px solid var(--n2);box-shadow:var(--sh1)}
+    .nav-inner{display:flex;align-items:center;gap:16px;height:64px}
+    .nav-logo img{height:32px;width:auto}
+    .nav-search-wrap{flex:1;max-width:440px;display:flex;align-items:center;background:var(--n1);border:1px solid var(--n2);border-radius:100px;padding:6px 6px 6px 16px;gap:8px;transition:box-shadow .2s}
+    .nav-search-wrap:focus-within{box-shadow:0 0 0 3px rgba(13,84,112,.12);border-color:var(--oc5)}
+    .nav-search-input{flex:1;border:none;background:transparent;font-family:var(--fb);font-size:.875rem;color:var(--n9);outline:none}
+    .nav-search-input::placeholder{color:var(--n4)}
+    .nav-search-btn{background:var(--oc7);color:#fff;border:none;border-radius:100px;padding:6px 14px;cursor:pointer;display:flex;align-items:center;gap:6px;font-family:var(--fb);font-size:.8125rem;font-weight:600;transition:background .2s;flex-shrink:0}
+    .nav-search-btn:hover{background:var(--oc5)}
+    .nav-actions{display:flex;align-items:center;gap:8px;margin-left:auto}
+    .nav-icon-btn{background:none;border:1px solid var(--n2);border-radius:100px;width:40px;height:40px;display:flex;align-items:center;justify-content:center;cursor:pointer;position:relative;color:var(--n7);transition:all .2s}
+    .nav-icon-btn:hover{border-color:var(--oc7);color:var(--oc7)}
+    .wish-badge{position:absolute;top:-4px;right:-4px;background:var(--err);color:#fff;border-radius:100px;min-width:18px;height:18px;font-size:.65rem;font-weight:700;display:flex;align-items:center;justify-content:center;padding:0 4px;border:2px solid #fff}
+    .cur-pill{background:var(--n1);border:1px solid var(--n2);border-radius:100px;padding:5px 14px;font-family:var(--fb);font-size:.8125rem;font-weight:700;cursor:pointer;color:var(--n7);transition:all .2s}
+    .cur-pill:hover{border-color:var(--oc7);color:var(--oc7)}
+    .lang-btn{background:var(--n1);border:none;border-radius:100px;padding:2px;display:flex;gap:2px;cursor:pointer}
+    .lang-btn span{font-size:.7rem;font-weight:700;padding:4px 8px;border-radius:100px;text-transform:uppercase;color:var(--n5);transition:all .2s}
+    .lang-btn span.active{background:#fff;color:var(--oc7);box-shadow:var(--sh1)}
+    .nav-profile{display:flex;align-items:center;gap:6px;border:1px solid var(--n2);border-radius:100px;padding:5px 12px 5px 5px;cursor:pointer;color:var(--n7);transition:all .2s;font-size:.8125rem;font-weight:500}
+    .nav-profile:hover{border-color:var(--oc7);color:var(--oc7)}
+    .nav-profile-icon{width:28px;height:28px;background:var(--n1);border-radius:50%;display:flex;align-items:center;justify-content:center}
 
-    /* ── Hero ── */
-    .hero{position:relative;min-height:420px;display:flex;align-items:center;overflow:hidden;padding:80px 0 64px}
+    /* ── HERO ── */
+    .hero{position:relative;min-height:480px;display:flex;align-items:center;padding:80px 0 64px}
     .hero-bg{position:absolute;inset:0;background-image:url('https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=1600&q=80');background-size:cover;background-position:center}
-    .hero-overlay{position:absolute;inset:0;background:rgba(13,84,112,.72)}
-    .hero-content{position:relative;z-index:2;text-align:center;color:#fff;max-width:720px;margin:0 auto;width:100%}
-    .hero-badge{display:inline-flex;align-items:center;gap:7px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);border-radius:100px;padding:5px 14px;font-size:.75rem;font-weight:600;margin-bottom:20px;color:var(--sand-400)}
-    .hero h1{font-size:clamp(2rem,4vw,3rem);font-weight:800;margin-bottom:12px;letter-spacing:-.02em}
-    .hero p{font-size:1.0625rem;opacity:.82;margin-bottom:36px;line-height:1.65}
+    .hero-overlay{position:absolute;inset:0;background:linear-gradient(135deg,rgba(6,42,56,.75) 0%,rgba(13,84,112,.60) 100%)}
+    .hero-content{position:relative;z-index:2;text-align:center;color:#fff;max-width:740px;margin:0 auto;width:100%}
+    .hero h1{font-size:clamp(2.25rem,4.5vw,3.5rem);font-weight:800;letter-spacing:-.02em;margin-bottom:12px}
+    .hero h1 span{color:var(--sa4)}
+    .hero-sub{font-size:1.125rem;opacity:.85;margin-bottom:40px;line-height:1.6}
+    .hero-search{background:#fff;border-radius:var(--r16);padding:8px;display:flex;gap:6px;box-shadow:0 8px 40px rgba(6,42,56,.3);max-width:700px;margin:0 auto}
+    .hs-wrap{flex:1;display:flex;align-items:center;gap:10px;padding:6px 8px}
+    .hs-input{flex:1;border:none;outline:none;font-family:var(--fb);font-size:.9375rem;color:var(--n9)}
+    .hs-input::placeholder{color:var(--n4)}
+    .hs-divider{width:1px;background:var(--n2);align-self:stretch;margin:4px 0;flex-shrink:0}
+    .hs-select{border:none;outline:none;font-family:var(--fb);font-size:.875rem;color:var(--n7);padding:6px 12px;cursor:pointer;background:transparent;min-width:140px}
+    .hs-btn{background:var(--oc7);color:#fff;border:none;border-radius:var(--r12);padding:12px 24px;font-family:var(--fb);font-size:.9375rem;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:8px;transition:background .2s;flex-shrink:0}
+    .hs-btn:hover{background:var(--oc5)}
 
-    /* Search bar */
-    .search-wrap{background:#fff;border-radius:var(--radius-lg);padding:6px;display:flex;gap:6px;max-width:660px;margin:0 auto;box-shadow:0 8px 32px rgba(6,42,56,.25)}
-    .search-input{flex:1;min-width:0;border:none;outline:none;font-family:var(--font-body);font-size:.9375rem;color:var(--n900);padding:10px 14px;background:transparent}
-    .search-input::placeholder{color:var(--n400)}
-    .search-divider{width:1px;background:var(--n200);align-self:stretch;margin:6px 0;flex-shrink:0}
-    .search-type{border:none;outline:none;font-family:var(--font-body);font-size:.875rem;color:var(--n700);background:transparent;padding:10px 12px;cursor:pointer;min-width:140px}
-    .search-btn{background:var(--ocean-700);color:#fff;border:none;border-radius:10px;padding:10px 18px;cursor:pointer;display:flex;align-items:center;gap:7px;font-family:var(--font-body);font-size:.875rem;font-weight:600;transition:background .2s;flex-shrink:0}
-    .search-btn:hover{background:var(--ocean-500)}
+    /* ── LOCATIONS SCROLL ── */
+    .locs-scroll{display:flex;gap:14px;overflow-x:auto;padding:4px 0 12px;scrollbar-width:thin;scrollbar-color:var(--n2) transparent;-webkit-overflow-scrolling:touch}
+    .locs-scroll::-webkit-scrollbar{height:4px}
+    .locs-scroll::-webkit-scrollbar-thumb{background:var(--n2);border-radius:2px}
+    .loc-card{flex-shrink:0;width:145px;border-radius:var(--r12);overflow:hidden;cursor:pointer;position:relative;transition:transform .2s,box-shadow .2s}
+    .loc-card:hover{transform:translateY(-3px);box-shadow:var(--sh2)}
+    .loc-card.active{outline:3px solid var(--oc7);outline-offset:2px}
+    .loc-card img{width:100%;height:108px;object-fit:cover;display:block}
+    .loc-overlay{position:absolute;inset:0;background:linear-gradient(to top,rgba(6,42,56,.72) 0%,transparent 55%)}
+    .loc-body{position:absolute;bottom:0;left:0;right:0;padding:8px 10px;color:#fff}
+    .loc-name{font-family:var(--fd);font-size:.8125rem;font-weight:700;line-height:1.2}
+    .loc-count{font-size:.7rem;opacity:.72;margin-top:2px}
 
-    /* ── Categories ── */
-    .categories-section{background:#fff;padding:36px 0;border-bottom:1px solid var(--n200)}
-    .categories-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
-    .cat-card{background:var(--n50);border:2px solid var(--n200);border-radius:var(--radius-md);padding:20px;display:flex;align-items:center;gap:16px;cursor:pointer;transition:all .2s;position:relative;overflow:hidden}
-    .cat-card:hover{border-color:var(--ocean-400);background:var(--ocean-50);transform:translateY(-2px);box-shadow:var(--shadow-md)}
-    .cat-card.active{border-color:var(--ocean-700);background:var(--ocean-50)}
-    .cat-card.active .cat-name{color:var(--ocean-700)}
-    .cat-icon{width:48px;height:48px;border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:center;flex-shrink:0}
-    .cat-icon.hotel{background:var(--ocean-50);color:var(--ocean-700)}
-    .cat-icon.activity{background:#FEF9EE;color:#B45309}
-    .cat-icon.rentacar{background:var(--success-light);color:var(--success)}
-    .cat-icon.restaurant{background:var(--error-light);color:var(--error)}
-    .cat-name{font-family:var(--font-display);font-size:.9375rem;font-weight:700;color:var(--n800)}
-    .cat-count{font-size:.8125rem;color:var(--n500);margin-top:2px}
+    /* ── FEATURED ── */
+    .featured-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+    .feat-card{border-radius:var(--r16);overflow:hidden;background:#fff;box-shadow:var(--sh2);transition:transform .25s,box-shadow .25s;position:relative;display:flex;flex-direction:column}
+    .feat-card:hover{transform:translateY(-5px);box-shadow:var(--sh3)}
+    .feat-img{position:relative;height:220px;overflow:hidden}
+    .feat-img img{width:100%;height:100%;object-fit:cover;transition:transform .4s}
+    .feat-card:hover .feat-img img{transform:scale(1.05)}
+    .feat-img-overlay{position:absolute;inset:0;background:linear-gradient(to top,rgba(6,42,56,.55) 0%,transparent 55%)}
 
-    /* ── Section labels ── */
-    .section-label{font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--ocean-700);margin-bottom:8px}
-    .section-title{font-size:clamp(1.375rem,2.5vw,1.875rem);font-weight:700;color:var(--n900);margin-bottom:6px}
-    .section-sub{font-size:.9375rem;color:var(--n500);line-height:1.6}
-    .section-header{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:32px;flex-wrap:wrap;gap:12px}
+    /* ── TYPE BADGES ── */
+    .tb{display:inline-block;font-size:.62rem;font-weight:800;text-transform:uppercase;letter-spacing:.07em;padding:3px 10px;border-radius:100px}
+    .tb-hotel{background:var(--oc0);color:var(--oc7)}
+    .tb-activity{background:#FEF9EE;color:#B45309}
+    .tb-rentacar{background:var(--okl);color:var(--ok)}
+    .tb-restaurant{background:var(--errl);color:var(--err)}
 
-    /* ── Featured cards ── */
-    .featured-bg{background:var(--n50)}
-    .featured-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px}
-    .feat-card{background:#fff;border-radius:var(--radius-xl);overflow:hidden;box-shadow:var(--shadow-md);transition:all .3s;display:flex;flex-direction:column}
-    .feat-card:hover{transform:translateY(-4px);box-shadow:var(--shadow-lg)}
-    .feat-card-img{position:relative;height:200px;overflow:hidden}
-    .feat-card-img img{width:100%;height:100%;object-fit:cover;transition:transform .4s}
-    .feat-card:hover .feat-card-img img{transform:scale(1.04)}
-    .feat-card-img-overlay{position:absolute;inset:0;background:linear-gradient(to top,rgba(6,42,56,.55) 0%,transparent 60%)}
-    .feat-card-body{padding:20px;flex:1;display:flex;flex-direction:column}
-    .feat-card-name{font-family:var(--font-display);font-size:1.0625rem;font-weight:700;color:var(--n900);margin-bottom:4px}
-    .feat-card-location{font-size:.8125rem;color:var(--n500);display:flex;align-items:center;gap:5px;margin-bottom:10px}
-    .feat-card-desc{font-size:.8125rem;color:var(--n600);line-height:1.55;flex:1;margin-bottom:14px}
-    .feat-card-footer{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-top:auto}
+    /* ── WISH BUTTON ── */
+    .wish-btn{position:absolute;top:12px;right:12px;width:36px;height:36px;background:rgba(255,255,255,.9);border:none;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px);transition:all .2s;z-index:2}
+    .wish-btn:hover{background:#fff;transform:scale(1.1)}
+    .wish-btn.active svg{fill:#e00;stroke:#e00}
+    @keyframes wish-pop{0%{transform:scale(1)}50%{transform:scale(1.35)}100%{transform:scale(1)}}
+    .wish-btn.pop{animation:wish-pop .3s ease}
 
-    /* ── Op Badge ── */
-    .op-badge{display:inline-block;font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;padding:3px 10px;border-radius:100px}
-    .badge-hotel{background:var(--ocean-50);color:var(--ocean-700)}
-    .badge-activity{background:#FEF9EE;color:#B45309}
-    .badge-rentacar{background:var(--success-light);color:var(--success)}
-    .badge-restaurant{background:var(--error-light);color:var(--error)}
+    .feat-body{padding:18px;flex:1;display:flex;flex-direction:column}
+    .feat-name{font-family:var(--fd);font-size:1.0625rem;font-weight:700;color:var(--n9);margin-bottom:5px}
+    .feat-location{font-size:.8125rem;color:var(--n5);display:flex;align-items:center;gap:5px;margin-bottom:8px}
+    .feat-rating{display:flex;align-items:center;gap:6px;margin-bottom:10px}
+    .stars{color:var(--sa4);font-size:.8rem;letter-spacing:1px}
+    .rating-count{font-size:.8125rem;color:var(--n5)}
+    .feat-price{font-size:.8125rem;color:var(--n5);margin-bottom:14px;flex:1}
+    .feat-price strong{font-family:var(--fd);font-size:1.1875rem;font-weight:800;color:var(--oc7)}
 
-    /* ── Operator cards (grid) ── */
-    .operators-section{background:#fff}
-    .ops-toolbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;gap:12px;flex-wrap:wrap}
-    .ops-count{font-size:.875rem;color:var(--n500)}
-    .ops-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
-    .op-card{background:#fff;border:1px solid var(--n200);border-radius:var(--radius-lg);overflow:hidden;box-shadow:var(--shadow-sm);transition:all .25s;display:flex;flex-direction:column}
-    .op-card:hover{transform:translateY(-3px);box-shadow:var(--shadow-md);border-color:var(--ocean-300)}
-    .op-card-img{position:relative;height:180px;overflow:hidden;background:var(--n100)}
-    .op-card-img img{width:100%;height:100%;object-fit:cover;transition:transform .35s}
-    .op-card:hover .op-card-img img{transform:scale(1.05)}
-    .op-card-img-overlay{position:absolute;inset:0;background:linear-gradient(to top,rgba(6,42,56,.4) 0%,transparent 50%)}
-    .op-card-badge{position:absolute;top:12px;left:12px}
-    .op-card-body{padding:16px;flex:1;display:flex;flex-direction:column}
-    .op-card-name{font-family:var(--font-display);font-size:.9375rem;font-weight:700;color:var(--n900);margin-bottom:4px}
-    .op-card-desc{font-size:.8125rem;color:var(--n500);line-height:1.5;margin-bottom:10px;flex:1}
-    .op-card-meta{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:6px}
-    .op-location{font-size:.75rem;color:var(--n500);display:flex;align-items:center;gap:4px}
-    .op-rating{font-size:.75rem;font-weight:600;color:var(--sand-600);display:flex;align-items:center;gap:4px}
-    .op-stars{color:var(--sand-400);font-size:.8rem;letter-spacing:1px}
-    .op-price{font-size:.8125rem;font-weight:700;color:var(--ocean-700);margin-bottom:12px}
-    .op-card-footer{display:flex;gap:8px;margin-top:auto}
-    .op-card-footer .btn{flex:1;font-size:.8125rem;padding:8px 12px}
+    /* ── ATTRACTIONS ── */
+    .attr-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-top:32px}
+    .attr-card{border-radius:var(--r16);padding:28px 20px;cursor:pointer;transition:transform .2s,box-shadow .2s;position:relative;overflow:hidden;display:flex;flex-direction:column;gap:14px}
+    .attr-card:hover{transform:translateY(-4px);box-shadow:var(--sh3)}
+    .attr-card.active{outline:3px solid rgba(255,255,255,.5)}
+    .attr-icon-wrap{width:52px;height:52px;background:rgba(255,255,255,.18);border-radius:14px;display:flex;align-items:center;justify-content:center}
+    .attr-card-name{font-family:var(--fd);font-size:1rem;font-weight:700;color:#fff}
+    .attr-card-count{font-size:.8125rem;color:rgba(255,255,255,.72)}
+    .ac-restaurant{background:linear-gradient(135deg,#B91C1C,#E53E3E)}
+    .ac-activity{background:linear-gradient(135deg,var(--oc8),var(--oc5))}
+    .ac-hotel{background:linear-gradient(135deg,#5B21B6,#7C3AED)}
+    .ac-rentacar{background:linear-gradient(135deg,#1A7A4A,#2E9E68)}
 
-    /* ── Empty / error states ── */
-    .state-empty{text-align:center;padding:64px 24px;color:var(--n500)}
-    .state-empty-icon{width:64px;height:64px;margin:0 auto 16px;opacity:.35}
-    .state-empty h3{font-family:var(--font-display);font-size:1.125rem;font-weight:700;color:var(--n700);margin-bottom:8px}
-    .state-empty p{font-size:.875rem}
-    .state-error{background:var(--error-light);border:1px solid #FECACA;border-radius:var(--radius-md);padding:16px 20px;display:flex;gap:12px;align-items:flex-start;margin-bottom:24px}
-    .state-error p{font-size:.875rem;color:var(--error)}
+    /* ── ACTIVITY CARDS ── */
+    .act-header{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:28px}
+    .act-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:20px}
+    .act-card{border-radius:var(--r16);overflow:hidden;background:#fff;box-shadow:var(--sh1);transition:transform .25s,box-shadow .25s;border:1px solid var(--n2);display:flex;flex-direction:column}
+    .act-card:hover{transform:translateY(-4px) scale(1.01);box-shadow:var(--sh3);border-color:transparent}
+    .act-img{position:relative;height:200px;overflow:hidden;background:var(--n1)}
+    .act-img img{width:100%;height:100%;object-fit:cover;transition:transform .35s}
+    .act-card:hover .act-img img{transform:scale(1.06)}
+    .act-img-overlay{position:absolute;inset:0;background:linear-gradient(to top,rgba(6,42,56,.35) 0%,transparent 45%)}
+    .act-badge{position:absolute;bottom:10px;left:10px;font-size:.62rem;font-weight:800;text-transform:uppercase;padding:3px 10px;border-radius:100px;letter-spacing:.06em}
+    .bdg-hot{background:#FEE2E2;color:#B91C1C}
+    .bdg-gold{background:#FEF3C7;color:#B45309}
+    .bdg-new{background:var(--okl);color:var(--ok)}
+    .act-body{padding:16px;flex:1;display:flex;flex-direction:column}
+    .act-rating-row{display:flex;align-items:center;gap:7px;margin-bottom:6px}
+    .act-name{font-family:var(--fd);font-size:.9375rem;font-weight:700;color:var(--n9);margin-bottom:4px}
+    .act-meta-row{font-size:.8125rem;color:var(--n5);display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:12px;flex:1}
+    .act-price-row{display:flex;align-items:baseline;gap:5px;margin-bottom:14px}
+    .act-price-from{font-size:.75rem;color:var(--n5)}
+    .act-price-val{font-family:var(--fd);font-size:1.25rem;font-weight:800;color:var(--oc7)}
+    .act-price-unit{font-size:.75rem;color:var(--n4)}
+    .act-footer{display:flex;gap:8px;align-items:center}
+    .act-footer .btn-book{flex:1}
+    .btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;font-family:var(--fb);font-weight:600;font-size:.875rem;border-radius:var(--r8);border:none;cursor:pointer;transition:all .2s;text-decoration:none;white-space:nowrap;padding:10px 18px}
+    .btn-primary{background:var(--oc7);color:#fff}
+    .btn-primary:hover{background:var(--oc5)}
+    .btn-ghost{background:var(--n1);color:var(--n7);border:1px solid var(--n2)}
+    .btn-ghost:hover{border-color:var(--oc7);color:var(--oc7)}
+    .btn-sm{padding:7px 14px;font-size:.8125rem}
+    .btn-sand{background:var(--sa5);color:#fff}
+    .btn-sand:hover{background:var(--sa6)}
 
-    /* ── Skeleton ── */
+    /* Load more */
+    #load-more-wrap{text-align:center;margin-top:36px}
+
+    /* ── SKELETON ── */
     @keyframes shimmer{0%{background-position:-300% 0}100%{background-position:300% 0}}
-    .sk{background:linear-gradient(90deg,var(--n100) 25%,var(--n200) 50%,var(--n100) 75%);background-size:300% 100%;animation:shimmer 1.6s infinite;border-radius:6px}
-    .sk-card{background:#fff;border:1px solid var(--n200);border-radius:var(--radius-lg);overflow:hidden}
-    .sk-img{height:180px}
-    .sk-body{padding:16px}
-    .sk-line{height:14px;margin-bottom:10px}
-    .sk-line.wide{width:80%}
-    .sk-line.mid{width:55%}
-    .sk-line.short{width:35%}
+    .sk{background:linear-gradient(90deg,var(--n1) 25%,var(--n2) 50%,var(--n1) 75%);background-size:300% 100%;animation:shimmer 1.6s infinite;border-radius:6px}
+    .sk-card{background:#fff;border:1px solid var(--n2);border-radius:var(--r16);overflow:hidden}
+    .sk-img{height:200px}
+    .sk-body{padding:16px;display:flex;flex-direction:column;gap:10px}
+    .sk-line{height:14px}.sk-wide{width:80%}.sk-mid{width:55%}.sk-short{width:35%}
 
-    /* ── Pagination ── */
-    .pagination{display:flex;justify-content:center;align-items:center;gap:8px;margin-top:40px;flex-wrap:wrap}
-    .page-btn{min-width:36px;height:36px;border-radius:8px;border:1px solid var(--n300);background:#fff;font-family:var(--font-body);font-size:.875rem;font-weight:500;color:var(--n600);cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;padding:0 8px}
-    .page-btn:hover{border-color:var(--ocean-700);color:var(--ocean-700)}
-    .page-btn.active{background:var(--ocean-700);color:#fff;border-color:var(--ocean-700)}
-    .page-btn:disabled{opacity:.4;cursor:not-allowed}
-
-    /* ── Experiences ── */
-    .exp-bg{background:var(--ocean-50)}
-    .exp-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-top:32px}
-    .exp-card{background:#fff;border:1px solid var(--ocean-100);border-radius:var(--radius-lg);padding:24px;box-shadow:var(--shadow-sm);transition:all .25s}
-    .exp-card:hover{box-shadow:var(--shadow-md);transform:translateY(-2px)}
-    .exp-theme{font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--ocean-500);margin-bottom:8px}
-    .exp-title{font-family:var(--font-display);font-size:1rem;font-weight:700;color:var(--n900);margin-bottom:6px}
-    .exp-desc{font-size:.8125rem;color:var(--n500);line-height:1.55;margin-bottom:14px}
-    .exp-meta{display:flex;gap:16px;flex-wrap:wrap}
-    .exp-meta-item{font-size:.75rem;color:var(--n600);display:flex;align-items:center;gap:5px}
-
-    /* ── Events ── */
-    .events-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-top:32px}
-    .event-card{background:#fff;border:1px solid var(--n200);border-radius:var(--radius-md);padding:20px;display:flex;gap:16px;align-items:flex-start;box-shadow:var(--shadow-sm)}
-    .event-date-box{background:var(--ocean-700);color:#fff;border-radius:var(--radius-sm);padding:8px 12px;text-align:center;flex-shrink:0;min-width:52px}
-    .event-day{font-family:var(--font-display);font-size:1.5rem;font-weight:800;line-height:1}
-    .event-month{font-size:.65rem;font-weight:600;text-transform:uppercase;opacity:.75;margin-top:2px}
-    .event-name{font-family:var(--font-display);font-size:.9375rem;font-weight:700;color:var(--n900);margin-bottom:4px}
-    .event-desc{font-size:.8125rem;color:var(--n500);line-height:1.5}
-    .event-type-badge{font-size:.65rem;font-weight:700;text-transform:uppercase;padding:2px 8px;border-radius:100px;margin-top:6px;display:inline-block}
-    .event-festival{background:#FEF9EE;color:#B45309}
-    .event-sport{background:var(--success-light);color:var(--success)}
-    .event-culture{background:var(--ocean-50);color:var(--ocean-700)}
-    .event-high_season{background:var(--sand-100);color:var(--sand-600)}
-
-    /* ── Reviews ── */
-    .reviews-bg{background:var(--ocean-900);color:#fff}
+    /* ── REVIEWS ── */
+    .reviews-bg{background:var(--oc9)}
     .reviews-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-top:32px}
-    .review-card{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:var(--radius-md);padding:24px}
-    .review-stars{color:var(--sand-400);font-size:.875rem;letter-spacing:2px;margin-bottom:10px}
-    .review-comment{font-size:.9375rem;color:rgba(255,255,255,.8);line-height:1.65;font-style:italic;margin-bottom:16px}
-    .review-author{display:flex;align-items:center;gap:10px}
-    .review-avatar{width:36px;height:36px;border-radius:50%;background:var(--ocean-600);display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-weight:700;font-size:.8125rem;color:#fff;flex-shrink:0}
-    .review-name{font-weight:600;font-size:.8125rem;color:#fff}
-    .review-op{font-size:.75rem;color:rgba(255,255,255,.45);margin-top:1px}
+    .rev-card{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);border-radius:var(--r16);padding:24px}
+    .rev-stars{color:var(--sa4);font-size:.875rem;letter-spacing:2px;margin-bottom:10px}
+    .rev-comment{font-size:.9375rem;color:rgba(255,255,255,.82);line-height:1.65;font-style:italic;margin-bottom:18px}
+    .rev-author{display:flex;align-items:center;gap:10px}
+    .rev-avatar{width:38px;height:38px;border-radius:50%;background:var(--oc6);display:flex;align-items:center;justify-content:center;font-family:var(--fd);font-weight:700;font-size:.8125rem;color:#fff;flex-shrink:0}
+    .rev-name{font-weight:600;font-size:.8125rem;color:#fff}
+    .rev-op{font-size:.75rem;color:rgba(255,255,255,.45);margin-top:1px}
 
-    /* ── Banner ── */
-    #banner-wrap{display:none}
-    .banner-inner{border-radius:var(--radius-xl);overflow:hidden;position:relative;min-height:100px}
-    .banner-inner img{width:100%;height:140px;object-fit:cover}
-    .banner-inner a{display:block}
+    /* ── EMPTY / ERROR ── */
+    .state-empty{text-align:center;padding:60px 20px;grid-column:1/-1}
+    .state-empty h3{font-family:var(--fd);font-size:1.125rem;font-weight:700;color:var(--n7);margin:16px 0 8px}
+    .state-empty p{font-size:.875rem;color:var(--n5);margin-bottom:20px}
 
-    /* ── Footer ── */
-    .footer-sep{height:3px;background:linear-gradient(90deg,var(--ocean-700),var(--sand-500),var(--ocean-700))}
-    footer{background:var(--ocean-900);color:rgba(255,255,255,.7);padding:48px 0 28px}
-    .footer-inner{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:40px;margin-bottom:36px}
-    .footer-desc{font-size:.8125rem;line-height:1.6;color:rgba(255,255,255,.5);margin-top:12px;max-width:240px}
-    .footer-col h4{font-family:var(--font-display);font-size:.875rem;font-weight:700;color:#fff;margin-bottom:12px}
+    /* ── SECTION LABELS ── */
+    .sl{font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--oc7);margin-bottom:6px}
+    .st{font-size:clamp(1.375rem,2.5vw,1.875rem);font-weight:700;color:var(--n9);margin-bottom:4px}
+    .ss{font-size:.9375rem;color:var(--n5)}
+
+    /* ── WISHLIST MODAL ── */
+    .modal-overlay{position:fixed;inset:0;background:rgba(6,42,56,.6);z-index:500;display:flex;align-items:center;justify-content:center;padding:20px;opacity:0;visibility:hidden;transition:opacity .3s,visibility .3s;backdrop-filter:blur(4px)}
+    .modal-overlay.open{opacity:1;visibility:visible}
+    .wish-panel{background:#fff;border-radius:var(--r24);width:100%;max-width:560px;max-height:80vh;display:flex;flex-direction:column;transform:translateY(16px);transition:transform .3s}
+    .modal-overlay.open .wish-panel{transform:none}
+    .wish-header{display:flex;align-items:center;justify-content:space-between;padding:20px 24px;border-bottom:1px solid var(--n2)}
+    .wish-header h3{font-family:var(--fd);font-size:1.125rem;font-weight:700;color:var(--n9)}
+    .modal-close{background:none;border:none;cursor:pointer;color:var(--n4);padding:6px;border-radius:8px;line-height:0;transition:all .2s}
+    .modal-close:hover{background:var(--n1);color:var(--n7)}
+    .wish-list{overflow-y:auto;padding:12px 24px 20px;display:flex;flex-direction:column;gap:12px}
+    .wish-item{display:flex;align-items:center;gap:12px;padding:12px;border:1px solid var(--n2);border-radius:var(--r12)}
+    .wish-item img{width:60px;height:60px;border-radius:10px;object-fit:cover;flex-shrink:0}
+    .wish-item-info{flex:1;min-width:0}
+    .wish-item-name{font-family:var(--fd);font-size:.9375rem;font-weight:700;color:var(--n9);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .wish-item-type{font-size:.8125rem;color:var(--n5);margin-top:2px}
+    .wish-remove{background:none;border:none;cursor:pointer;color:var(--n4);padding:6px;border-radius:6px;line-height:0;transition:color .2s}
+    .wish-remove:hover{color:var(--err)}
+
+    /* ── FOOTER ── */
+    .footer-sep{height:3px;background:linear-gradient(90deg,var(--oc7),var(--sa5),var(--oc7))}
+    footer{background:var(--oc9);color:rgba(255,255,255,.65);padding:52px 0 28px}
+    .footer-grid{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:40px;margin-bottom:44px}
+    .footer-desc{font-size:.8125rem;line-height:1.6;color:rgba(255,255,255,.45);margin-top:12px;max-width:240px}
+    .footer-col h4{font-family:var(--fd);font-weight:700;font-size:.875rem;color:#fff;margin-bottom:12px}
     .footer-links{list-style:none}
     .footer-links li{margin-bottom:7px}
     .footer-links a{font-size:.8125rem;color:rgba(255,255,255,.45);transition:color .2s}
     .footer-links a:hover{color:#fff}
+    .social-icons{display:flex;gap:8px;margin-top:16px}
+    .sicon{width:34px;height:34px;border-radius:8px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.5);transition:all .2s}
+    .sicon:hover{background:rgba(255,255,255,.14);color:#fff}
     .footer-bottom{display:flex;align-items:center;justify-content:space-between;padding-top:20px;border-top:1px solid rgba(255,255,255,.1);font-size:.8125rem;flex-wrap:wrap;gap:8px}
 
-    /* ── Scroll animations ── */
+    /* ── SCROLL ANIMATIONS ── */
     .fade-up{opacity:0;transform:translateY(20px);transition:opacity .55s,transform .55s}
     .fade-up.visible{opacity:1;transform:none}
-    .slide-left{opacity:0;transform:translateX(-20px);transition:opacity .55s,transform .55s}
-    .slide-left.visible{opacity:1;transform:none}
 
-    /* ── Coming soon ── */
-    .coming-soon{text-align:center;padding:40px;color:var(--n400);font-size:.875rem;border:2px dashed var(--n200);border-radius:var(--radius-lg);margin-top:32px}
-
-    /* ── Responsive ── */
-    @media(max-width:900px){
-      .categories-grid{grid-template-columns:repeat(2,1fr)}
-      .featured-grid,.ops-grid,.exp-grid,.events-grid,.reviews-grid{grid-template-columns:1fr 1fr}
-      .footer-inner{grid-template-columns:1fr 1fr}
-      .search-type{min-width:100px}
+    /* ── RESPONSIVE ── */
+    @media(max-width:1000px){
+      .featured-grid,.attr-grid,.reviews-grid{grid-template-columns:repeat(2,1fr)}
+      .act-grid{grid-template-columns:1fr 1fr}
     }
-    @media(max-width:600px){
-      .section{padding:48px 0}
-      .featured-grid,.ops-grid,.exp-grid,.events-grid,.reviews-grid{grid-template-columns:1fr}
-      .footer-inner{grid-template-columns:1fr}
-      .search-wrap{flex-wrap:wrap}
-      .search-divider{display:none}
-      .search-type{width:100%;padding:8px 12px;border-top:1px solid var(--n200)}
-      .search-btn{width:100%;justify-content:center}
-      .categories-grid{grid-template-columns:1fr 1fr}
-      .nav-tagline{display:none}
+    @media(max-width:768px){
+      .nav-search-wrap{display:none}
+      .featured-grid,.reviews-grid{grid-template-columns:1fr}
+      .act-grid{grid-template-columns:1fr}
+      .attr-grid{grid-template-columns:repeat(2,1fr)}
+      .footer-grid{grid-template-columns:1fr 1fr}
+      .hs-divider{display:none}
+      .hs-select{border-top:1px solid var(--n2);width:100%}
+      .hero-search{flex-wrap:wrap}
+    }
+    @media(max-width:500px){
+      .section{padding:44px 0}
+      .footer-grid{grid-template-columns:1fr}
+      .attr-grid{grid-template-columns:1fr 1fr}
     }
   </style>
 </head>
 <body>
 
-<!-- NAV -->
-<nav>
-  <div class="container nav-inner">
-    <div class="nav-logo">
-      <a href="/">
-        <img src="../logo.png" alt="SalDesk" height="28" style="height:28px;width:auto;filter:brightness(0) invert(1);" />
-      </a>
-      <span class="nav-tagline pt">Connect · Ilha do Sal</span>
-      <span class="nav-tagline en">Connect · Ilha do Sal</span>
+<!-- WISHLIST MODAL -->
+<div id="modal-wishlist" class="modal-overlay" onclick="if(event.target===this)closeWishlist()">
+  <div class="wish-panel">
+    <div class="wish-header">
+      <h3>
+        <span class="pt">A minha Lista</span>
+        <span class="en">My Wishlist</span>
+        <span id="wish-modal-count" style="font-size:.875rem;font-weight:400;color:var(--n5);margin-left:8px"></span>
+      </h3>
+      <button class="modal-close" onclick="closeWishlist()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
     </div>
-    <div class="nav-right">
-      <a href="/" class="nav-link pt">Inicio</a>
-      <a href="/" class="nav-link en">Home</a>
-      <button class="lang-btn" id="langToggle" aria-label="Toggle language">
+    <div class="wish-list" id="wish-list"></div>
+  </div>
+</div>
+
+<!-- NAV -->
+<nav id="navbar">
+  <div class="container nav-inner">
+    <a href="/" class="nav-logo">
+      <img src="/logo.png" alt="SalDesk" />
+    </a>
+    <div class="nav-search-wrap">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--n4)" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input class="nav-search-input" id="nav-search-input" type="text" autocomplete="off" />
+      <button class="nav-search-btn" onclick="handleSearch()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      </button>
+    </div>
+    <div class="nav-actions">
+      <button class="nav-icon-btn" id="wish-nav-btn" onclick="openWishlist()" aria-label="Wishlist">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+        <span id="wish-count" class="wish-badge" style="display:none">0</span>
+      </button>
+      <button class="cur-pill" id="cur-toggle" onclick="toggleCurrency()">EUR</button>
+      <button class="lang-btn" id="langToggle">
         <span id="langPt" class="active">PT</span>
         <span id="langEn">EN</span>
       </button>
-      <a href="https://app.saldesk.cv/register" class="btn btn-outline pt">Listar o seu negocio</a>
-      <a href="https://app.saldesk.cv/register" class="btn btn-outline en">List your business</a>
+      <a href="https://app.saldesk.cv/login" class="nav-profile">
+        <span class="nav-profile-icon">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        </span>
+        <span class="pt">Perfil</span><span class="en">Profile</span>
+      </a>
     </div>
   </div>
 </nav>
 
 <!-- HERO -->
-<section class="hero">
+<section class="hero" id="home">
   <div class="hero-bg"></div>
   <div class="hero-overlay"></div>
   <div class="container">
     <div class="hero-content">
-      <div class="hero-badge">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg>
-        SalDesk Connect
-      </div>
-      <h1 class="pt">Descubra e Reserve em <br>Ilha do Sal</h1>
-      <h1 class="en">Discover and Book in <br>Ilha do Sal</h1>
-      <p class="pt">Hoteis, actividades, rent-a-car e restaurantes. Reserve directamente com os operadores, sem intermediarios.</p>
-      <p class="en">Hotels, activities, car rentals and restaurants. Book directly with operators, no intermediaries.</p>
-      <div class="search-wrap" role="search">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--n400)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="margin-left:8px;flex-shrink:0"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-        <input class="search-input" id="search-input" type="text" autocomplete="off" />
-        <span class="search-divider"></span>
-        <select class="search-type" id="type-select" aria-label="Tipo de operador">
+      <h1 class="pt">Descubra <span>Ilha do Sal</span></h1>
+      <h1 class="en">Discover <span>Ilha do Sal</span></h1>
+      <p class="hero-sub pt">Reserve directamente. Sem intermediarios.</p>
+      <p class="hero-sub en">Book directly. No intermediaries.</p>
+      <div class="hero-search">
+        <div class="hs-wrap">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--n4)" stroke-width="1.75"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input class="hs-input" id="hero-search" type="text" autocomplete="off" />
+        </div>
+        <span class="hs-divider"></span>
+        <select class="hs-select" id="hero-type">
           <option value="" class="pt">Todos os tipos</option>
-          <option value="" class="en">All types</option>
-          <option value="hotel" class="pt">Hotel</option>
-          <option value="hotel" class="en">Hotel</option>
+          <option value="" class="en" style="display:none">All types</option>
+          <option value="hotel">Hotel</option>
           <option value="activity" class="pt">Actividade</option>
-          <option value="activity" class="en">Activity</option>
-          <option value="rentacar" class="pt">Rent-a-Car</option>
-          <option value="rentacar" class="en">Rent-a-Car</option>
+          <option value="activity" class="en" style="display:none">Activity</option>
+          <option value="rentacar">Rent-a-Car</option>
           <option value="restaurant" class="pt">Restaurante</option>
-          <option value="restaurant" class="en">Restaurant</option>
+          <option value="restaurant" class="en" style="display:none">Restaurant</option>
         </select>
-        <button class="search-btn" id="search-btn" onclick="handleSearch()">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <button class="hs-btn" onclick="handleHeroSearch()">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
           <span class="pt">Pesquisar</span><span class="en">Search</span>
         </button>
       </div>
@@ -310,144 +339,122 @@
   </div>
 </section>
 
-<!-- CATEGORIAS -->
-<section class="categories-section" id="categories">
+<!-- PONTOS TURÍSTICOS -->
+<section class="section" id="locations-section" style="padding-bottom:40px">
   <div class="container">
-    <div class="categories-grid" id="categories-grid">
-      <div class="cat-card" id="cat-hotel" onclick="setTypeFilter('hotel')">
-        <div class="cat-icon hotel">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M3 22V8l9-5 9 5v14"/><path d="M10 22v-5h4v5"/><path d="M3 12h18"/></svg>
+    <div class="fade-up" style="margin-bottom:20px">
+      <h2 class="st pt">Ache actividades incriveis em qualquer lugar</h2>
+      <h2 class="st en">Find incredible activities anywhere</h2>
+    </div>
+    <div class="locs-scroll" id="locs-grid"></div>
+  </div>
+</section>
+
+<!-- EM DESTAQUE -->
+<section class="section fade-up" id="featured-section" style="background:var(--n0)">
+  <div class="container">
+    <div style="margin-bottom:28px">
+      <div class="sl"><span class="pt">Destaques</span><span class="en">Highlights</span></div>
+      <h2 class="st"><span class="pt">Em Destaque</span><span class="en">Featured</span></h2>
+    </div>
+    <div class="featured-grid" id="featured-grid"></div>
+  </div>
+</section>
+
+<!-- ATRAÇÕES IMPERDÍVEIS -->
+<section class="section" id="attractions-section">
+  <div class="container">
+    <div class="fade-up" style="margin-bottom:0">
+      <div class="sl"><span class="pt">Categorias</span><span class="en">Categories</span></div>
+      <h2 class="st"><span class="pt">Atracoes Imperdiveis</span><span class="en">Must-See Attractions</span></h2>
+    </div>
+    <div class="attr-grid" id="attr-grid">
+      <div class="attr-card ac-restaurant fade-up" style="transition-delay:.04s" onclick="setFilter('restaurant')">
+        <div class="attr-icon-wrap">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/><path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3z"/><path d="M21 15v7"/></svg>
         </div>
-        <div>
-          <div class="cat-name"><span class="pt">Hotel &amp; Alojamento</span><span class="en">Hotel &amp; Accommodation</span></div>
-          <div class="cat-count" id="count-hotel"><span class="pt">A carregar...</span><span class="en">Loading...</span></div>
-        </div>
+        <div class="attr-card-name"><span class="pt">Restaurantes &amp; Bares</span><span class="en">Restaurants &amp; Bars</span></div>
+        <div class="attr-card-count" id="attr-count-restaurant"><span class="pt">A carregar...</span><span class="en">Loading...</span></div>
       </div>
-      <div class="cat-card" id="cat-activity" onclick="setTypeFilter('activity')">
-        <div class="cat-icon activity">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg>
+      <div class="attr-card ac-activity fade-up" style="transition-delay:.1s" onclick="setFilter('activity')">
+        <div class="attr-icon-wrap">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg>
         </div>
-        <div>
-          <div class="cat-name"><span class="pt">Actividades</span><span class="en">Activities</span></div>
-          <div class="cat-count" id="count-activity"><span class="pt">A carregar...</span><span class="en">Loading...</span></div>
-        </div>
+        <div class="attr-card-name"><span class="pt">Actividades &amp; Tours</span><span class="en">Activities &amp; Tours</span></div>
+        <div class="attr-card-count" id="attr-count-activity"><span class="pt">A carregar...</span><span class="en">Loading...</span></div>
       </div>
-      <div class="cat-card" id="cat-rentacar" onclick="setTypeFilter('rentacar')">
-        <div class="cat-icon rentacar">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="22" height="13" rx="2"/><path d="M16 16v3a1 1 0 0 1-1 1h-2a1 1 0 0 1-1-1v-3"/><path d="M8 16v3a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-3"/><line x1="1" y1="11" x2="23" y2="11"/></svg>
+      <div class="attr-card ac-hotel fade-up" style="transition-delay:.16s" onclick="setFilter('hotel')">
+        <div class="attr-icon-wrap">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M3 22V8l9-5 9 5v14"/><path d="M10 22v-5h4v5"/><path d="M3 12h18"/></svg>
         </div>
-        <div>
-          <div class="cat-name">Rent-a-Car</div>
-          <div class="cat-count" id="count-rentacar"><span class="pt">A carregar...</span><span class="en">Loading...</span></div>
-        </div>
+        <div class="attr-card-name"><span class="pt">Alojamento</span><span class="en">Accommodation</span></div>
+        <div class="attr-card-count" id="attr-count-hotel"><span class="pt">A carregar...</span><span class="en">Loading...</span></div>
       </div>
-      <div class="cat-card" id="cat-restaurant" onclick="setTypeFilter('restaurant')">
-        <div class="cat-icon restaurant">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/><path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3z"/><path d="M21 15v7"/></svg>
+      <div class="attr-card ac-rentacar fade-up" style="transition-delay:.22s" onclick="setFilter('rentacar')">
+        <div class="attr-icon-wrap">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="22" height="13" rx="2"/><path d="M16 16v3a1 1 0 0 1-1 1h-2a1 1 0 0 1-1-1v-3"/><path d="M8 16v3a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-3"/><line x1="1" y1="11" x2="23" y2="11"/></svg>
         </div>
-        <div>
-          <div class="cat-name"><span class="pt">Restaurante</span><span class="en">Restaurant</span></div>
-          <div class="cat-count" id="count-restaurant"><span class="pt">A carregar...</span><span class="en">Loading...</span></div>
-        </div>
+        <div class="attr-card-name">Rent-a-Car</div>
+        <div class="attr-card-count" id="attr-count-rentacar"><span class="pt">A carregar...</span><span class="en">Loading...</span></div>
       </div>
     </div>
   </div>
 </section>
 
-<!-- EM FOCO / FEATURED -->
-<section class="section featured-bg fade-up" id="featured-section">
+<!-- ACTIVIDADES GRID -->
+<section class="section" id="activities-section" style="background:var(--n0)">
   <div class="container">
-    <div class="section-header">
+    <div class="act-header fade-up">
       <div>
-        <div class="section-label"><span class="pt">Destaques</span><span class="en">Highlights</span></div>
-        <h2 class="section-title"><span class="pt">Em Foco</span><span class="en">Featured</span></h2>
+        <div class="sl"><span class="pt">Directorio completo</span><span class="en">Full directory</span></div>
+        <h2 class="st"><span class="pt">Actividades &amp; Experiencias</span><span class="en">Activities &amp; Experiences</span></h2>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+        <span id="act-count" style="font-size:.875rem;color:var(--n5)"></span>
+        <button id="clear-filter-btn" onclick="clearFilters()" style="display:none" class="btn btn-ghost btn-sm">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          <span class="pt">Limpar filtro</span><span class="en">Clear filter</span>
+        </button>
+        <div style="background:#fff;border:1px solid var(--n2);border-radius:100px;padding:3px;display:flex;gap:2px">
+          <button id="btn-eur" onclick="setCurrency('EUR')" style="padding:5px 14px;border:none;border-radius:100px;font-family:var(--fb);font-size:.8125rem;font-weight:700;cursor:pointer;background:var(--oc7);color:#fff;transition:all .2s">EUR</button>
+          <button id="btn-cve" onclick="setCurrency('CVE')" style="padding:5px 14px;border:none;border-radius:100px;font-family:var(--fb);font-size:.8125rem;font-weight:700;cursor:pointer;background:transparent;color:var(--n5);transition:all .2s">CVE</button>
+        </div>
       </div>
     </div>
-    <div class="featured-grid" id="featured-grid">
-      <!-- skeletons rendered by JS -->
+    <div class="act-grid" id="act-grid"></div>
+    <div id="load-more-wrap" style="display:none;text-align:center;margin-top:36px">
+      <button onclick="loadMore()" class="btn btn-ghost" style="padding:12px 32px">
+        <span class="pt">Ver mais actividades</span><span class="en">Load more</span>
+      </button>
     </div>
   </div>
 </section>
 
-<!-- BANNER -->
-<div id="banner-wrap" style="display:none">
-  <div class="container" style="padding:0 24px 40px">
-    <div class="banner-inner" id="banner-content"></div>
-  </div>
-</div>
-
-<!-- TODOS OS OPERADORES -->
-<section class="section operators-section" id="operators-section">
-  <div class="container">
-    <div class="section-header">
-      <div>
-        <div class="section-label"><span class="pt">Directorio</span><span class="en">Directory</span></div>
-        <h2 class="section-title"><span class="pt">Todos os Operadores</span><span class="en">All Operators</span></h2>
-      </div>
-      <span class="ops-count" id="ops-count"></span>
-    </div>
-    <div id="api-error" style="display:none" class="state-error">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--error)" stroke-width="2" style="flex-shrink:0"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-      <p class="pt">Nao foi possivel carregar os operadores. Verifique a ligacao e tente novamente.</p>
-      <p class="en">Could not load operators. Check your connection and try again.</p>
-    </div>
-    <div class="ops-grid" id="ops-grid">
-      <!-- content injected by JS -->
-    </div>
-    <div class="pagination" id="pagination"></div>
-  </div>
-</section>
-
-<!-- EXPERIÊNCIAS CURADAS -->
-<section class="section exp-bg fade-up" id="experiences-section">
-  <div class="container">
-    <div class="section-header">
-      <div>
-        <div class="section-label"><span class="pt">Curadas pela equipa</span><span class="en">Curated by the team</span></div>
-        <h2 class="section-title"><span class="pt">Experiencias Curadas</span><span class="en">Curated Experiences</span></h2>
-        <p class="section-sub pt">Combinacoes seleccionadas para um dia perfeito em Ilha do Sal.</p>
-        <p class="section-sub en">Handpicked combinations for a perfect day in Ilha do Sal.</p>
-      </div>
-    </div>
-    <div id="exp-content"></div>
-  </div>
-</section>
-
-<!-- ÉPOCAS E EVENTOS -->
-<section class="section fade-up" id="events-section" style="background:#fff">
-  <div class="container">
-    <div class="section-header">
-      <div>
-        <div class="section-label"><span class="pt">Calendario</span><span class="en">Calendar</span></div>
-        <h2 class="section-title"><span class="pt">Epocas e Eventos</span><span class="en">Seasons &amp; Events</span></h2>
-      </div>
-    </div>
-    <div id="events-content"></div>
-  </div>
-</section>
-
-<!-- AVALIAÇÕES RECENTES -->
+<!-- AVALIAÇÕES -->
 <section class="section reviews-bg fade-up" id="reviews-section" style="display:none">
   <div class="container">
-    <div class="section-header" style="border-bottom:1px solid rgba(255,255,255,.1);padding-bottom:24px">
-      <div>
-        <div class="section-label" style="color:var(--sand-400)"><span class="pt">Visitantes</span><span class="en">Visitors</span></div>
-        <h2 class="section-title" style="color:#fff"><span class="pt">O que dizem os visitantes</span><span class="en">What visitors say</span></h2>
-      </div>
+    <div style="margin-bottom:0;padding-bottom:24px;border-bottom:1px solid rgba(255,255,255,.1)">
+      <div class="sl" style="color:var(--sa4)"><span class="pt">Visitantes</span><span class="en">Visitors</span></div>
+      <h2 class="st" style="color:#fff"><span class="pt">O que dizem os visitantes</span><span class="en">What visitors say</span></h2>
     </div>
     <div class="reviews-grid" id="reviews-grid"></div>
   </div>
 </section>
 
-<!-- FOOTER SEP + FOOTER -->
+<!-- FOOTER -->
 <div class="footer-sep"></div>
 <footer>
   <div class="container">
-    <div class="footer-inner">
+    <div class="footer-grid">
       <div>
-        <img src="../logo.png" alt="SalDesk" height="26" style="height:26px;width:auto;filter:brightness(0) invert(1);" />
-        <p class="footer-desc pt">SalDesk Connect — Directorio de operadores turisticos da Ilha do Sal, Cabo Verde.</p>
-        <p class="footer-desc en">SalDesk Connect — Directory of tourism operators in Ilha do Sal, Cape Verde.</p>
+        <img src="/logo.png" alt="SalDesk" style="height:26px;width:auto;filter:brightness(0) invert(1)" />
+        <p class="footer-desc pt">SalDesk Connect — Descubra e reserve os melhores operadores da Ilha do Sal, Cabo Verde.</p>
+        <p class="footer-desc en">SalDesk Connect — Discover and book the best operators in Ilha do Sal, Cape Verde.</p>
+        <div class="social-icons">
+          <a href="#" class="sicon" aria-label="Instagram"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg></a>
+          <a href="#" class="sicon" aria-label="Facebook"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg></a>
+          <a href="#" class="sicon" aria-label="LinkedIn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg></a>
+        </div>
       </div>
       <div>
         <h4 class="pt">Navegacao</h4><h4 class="en">Navigate</h4>
@@ -455,22 +462,23 @@
           <li><a href="/"><span class="pt">Inicio</span><span class="en">Home</span></a></li>
           <li><a href="/#features"><span class="pt">Funcionalidades</span><span class="en">Features</span></a></li>
           <li><a href="/#pricing"><span class="pt">Precos</span><span class="en">Pricing</span></a></li>
+          <li><a href="/#contact"><span class="pt">Contacto</span><span class="en">Contact</span></a></li>
         </ul>
       </div>
       <div>
         <h4 class="pt">Categorias</h4><h4 class="en">Categories</h4>
         <ul class="footer-links">
-          <li><a href="#" onclick="setTypeFilter('hotel');return false">Hotel</a></li>
-          <li><a href="#" onclick="setTypeFilter('activity');return false"><span class="pt">Actividades</span><span class="en">Activities</span></a></li>
-          <li><a href="#" onclick="setTypeFilter('rentacar');return false">Rent-a-Car</a></li>
-          <li><a href="#" onclick="setTypeFilter('restaurant');return false"><span class="pt">Restaurante</span><span class="en">Restaurant</span></a></li>
+          <li><a href="#" onclick="setFilter('hotel');return false">Hotel</a></li>
+          <li><a href="#" onclick="setFilter('activity');return false"><span class="pt">Actividades</span><span class="en">Activities</span></a></li>
+          <li><a href="#" onclick="setFilter('rentacar');return false">Rent-a-Car</a></li>
+          <li><a href="#" onclick="setFilter('restaurant');return false"><span class="pt">Restaurante</span><span class="en">Restaurant</span></a></li>
         </ul>
       </div>
       <div>
         <h4 class="pt">Empresa</h4><h4 class="en">Company</h4>
         <ul class="footer-links">
-          <li><a href="/#investors"><span class="pt">Investidores</span><span class="en">Investors</span></a></li>
-          <li><a href="https://app.saldesk.cv/register"><span class="pt">Listar negocio</span><span class="en">List business</span></a></li>
+          <li><a href="https://app.saldesk.cv/register"><span class="pt">Listar negocio</span><span class="en">List your business</span></a></li>
+          <li><a href="https://app.saldesk.cv/login"><span class="pt">Entrar</span><span class="en">Sign in</span></a></li>
           <li><a href="mailto:hello@saldesk.cv">hello@saldesk.cv</a></li>
         </ul>
       </div>
@@ -481,7 +489,7 @@
         <span class="en">© 2026 SalDesk · Ilha do Sal, Cape Verde</span>
       </span>
       <span style="color:rgba(255,255,255,.3);font-size:.75rem">
-        <span class="pt">Desenvolvido por </span><span class="en">Developed by </span>
+        <span class="pt">Sistema desenvolvido por </span><span class="en">System developed by </span>
         <a href="https://wandr.cv" target="_blank" rel="noopener" style="color:rgba(255,255,255,.5);font-weight:600;transition:color .2s" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='rgba(255,255,255,.5)'">WANDR — Travel Technology</a>
       </span>
     </div>
@@ -489,599 +497,601 @@
 </footer>
 
 <script>
-  /* ════════════════════════════════════════════
-     CONSTANTS
-  ════════════════════════════════════════════ */
-  const API      = 'https://api.saldesk.cv/api/v1/public';
-  const APP      = 'https://app.saldesk.cv';
-  const PER_PAGE = 9;
+/* ══════════════════════════════════════════
+   CONSTANTS
+══════════════════════════════════════════ */
+const API = 'https://api.saldesk.cv/api/v1/public';
+const APP = 'https://app.saldesk.cv';
+const EUR_CVE = 110;
+const PER_PAGE = 8;
 
-  const PLACEHOLDERS = {
-    hotel:      'https://images.unsplash.com/photo-1571003123894-1f0594d2b5d9?w=600&q=75',
-    activity:   'https://images.unsplash.com/photo-1506929562872-bb421503ef21?w=600&q=75',
-    rentacar:   'https://images.unsplash.com/photo-1494976388531-d1058494cdd8?w=600&q=75',
-    restaurant: 'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=600&q=75',
-    default:    'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=600&q=75',
-  };
+const IMGS = {
+  hotel:      'https://images.unsplash.com/photo-1571003123894-1f0594d2b5d9?w=600&q=75',
+  activity:   'https://images.unsplash.com/photo-1506929562872-bb421503ef21?w=600&q=75',
+  rentacar:   'https://images.unsplash.com/photo-1494976388531-d1058494cdd8?w=600&q=75',
+  restaurant: 'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=600&q=75',
+  default:    'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=600&q=75',
+};
 
-  const TYPE_LABELS = {
-    hotel:      { pt: 'Hotel', en: 'Hotel' },
-    activity:   { pt: 'Actividade', en: 'Activity' },
-    rentacar:   { pt: 'Rent-a-Car', en: 'Rent-a-Car' },
-    restaurant: { pt: 'Restaurante', en: 'Restaurant' },
-  };
+const LOCATIONS = [
+  { name:'Santa Maria',    key:'santa maria',  img:'photo-1507525428034-b723cf961d3e' },
+  { name:'Pedra de Lume',  key:'pedra de lume',img:'photo-1519046904884-53103b34b206' },
+  { name:'Buracona',       key:'buracona',     img:'photo-1506929562872-bb421503ef21' },
+  { name:'Murdeira Bay',   key:'murdeira',     img:'photo-1471922694854-ff1b63b20054' },
+  { name:'Palmeira',       key:'palmeira',     img:'photo-1500375592092-40eb2168fd21' },
+  { name:'Espargos',       key:'espargos',     img:'photo-1469474968028-56623f02e42e' },
+  { name:'Ponta Preta',    key:'ponta preta',  img:'photo-1544551763-46a013bb70d5' },
+  { name:'Terra Boa',      key:'terra boa',    img:'photo-1559128010-7c1ad6e1b6a5' },
+];
 
-  const EVENT_TYPE_LABELS = {
-    festival:    { pt: 'Festival', en: 'Festival' },
-    sport:       { pt: 'Desporto', en: 'Sport' },
-    culture:     { pt: 'Cultura', en: 'Culture' },
-    high_season: { pt: 'Alta Epoca', en: 'High Season' },
-  };
+const TLABELS = {
+  hotel:      { pt:'Hotel',       en:'Hotel'       },
+  activity:   { pt:'Actividade',  en:'Activity'    },
+  rentacar:   { pt:'Rent-a-Car',  en:'Rent-a-Car'  },
+  restaurant: { pt:'Restaurante', en:'Restaurant'  },
+};
 
-  /* ════════════════════════════════════════════
-     STATE
-  ════════════════════════════════════════════ */
-  let allOperators = [];
-  let filtered     = [];
-  let page         = 1;
-  let activeType   = '';
+/* ══════════════════════════════════════════
+   STATE
+══════════════════════════════════════════ */
+let operators  = [];
+let filtered   = [];
+let visible    = PER_PAGE;
+let currency   = 'EUR';
+let activeType = '';
+let activeLoc  = '';
 
-  /* ════════════════════════════════════════════
-     HELPERS
-  ════════════════════════════════════════════ */
-  function L() { return document.documentElement.dataset.lang || 'pt'; }
+/* ══════════════════════════════════════════
+   HELPERS
+══════════════════════════════════════════ */
+function L() { return document.documentElement.dataset.lang || 'pt'; }
 
-  function esc(s) {
-    if (s == null) return '';
-    return String(s)
-      .replace(/&/g,'&amp;').replace(/</g,'&lt;')
-      .replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+function esc(s) {
+  return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
+function truncate(s, n) {
+  if (!s) return '';
+  return s.length > n ? s.slice(0, n).trimEnd() + '…' : s;
+}
+
+function tLabel(t) { return (TLABELS[t] || { pt:t, en:t })[L()]; }
+
+function imgFor(op) { return op.logo_url || IMGS[op.operator_type] || IMGS.default; }
+
+function renderStars(r) {
+  if (!r) return '';
+  const f = Math.floor(r), e = 5 - f;
+  return '★'.repeat(f) + '☆'.repeat(e);
+}
+
+function fmtPrice(price, opCur) {
+  if (!price) return L() === 'pt' ? 'Consultar' : 'On request';
+  if (currency === 'EUR') {
+    const eur = opCur === 'CVE' ? price / EUR_CVE : price;
+    return '€' + (eur < 10 ? eur.toFixed(1) : Math.round(eur));
+  }
+  const cve = opCur === 'CVE' ? price : price * EUR_CVE;
+  return Math.round(cve).toLocaleString('pt-PT') + ' CVE';
+}
+
+function getBadge(op) {
+  if ((op.recent_bookings || 0) >= 4)
+    return { txt: L() === 'pt' ? 'Esgota Rapido' : 'Selling Fast', cls:'bdg-hot' };
+  const maxRev = Math.max(...operators.map(o => o.review_count || 0), 0);
+  if (maxRev > 0 && (op.review_count || 0) === maxRev)
+    return { txt: L() === 'pt' ? 'Mais Vendido' : 'Best Seller', cls:'bdg-gold' };
+  if (op.created_at) {
+    const days = (Date.now() - new Date(op.created_at)) / 86400000;
+    if (days < 30) return { txt: L() === 'pt' ? 'Novo' : 'New', cls:'bdg-new' };
+  }
+  return null;
+}
+
+/* ══════════════════════════════════════════
+   WISHLIST
+══════════════════════════════════════════ */
+function getWishlist()    { return JSON.parse(localStorage.getItem('sd-wish') || '[]'); }
+function saveWishlist(w)  { localStorage.setItem('sd-wish', JSON.stringify(w)); }
+function isWished(slug)   { return getWishlist().includes(slug); }
+
+function toggleWishlist(slug) {
+  const w = getWishlist();
+  const i = w.indexOf(slug);
+  if (i >= 0) w.splice(i, 1); else w.push(slug);
+  saveWishlist(w);
+  updateWishCount();
+  // Update all heart buttons for this slug
+  document.querySelectorAll(`[data-wish="${slug}"]`).forEach(btn => {
+    btn.classList.toggle('active', w.includes(slug));
+    btn.classList.add('pop');
+    btn.addEventListener('animationend', () => btn.classList.remove('pop'), { once: true });
+  });
+}
+
+function updateWishCount() {
+  const n  = getWishlist().length;
+  const el = document.getElementById('wish-count');
+  if (el) { el.textContent = n; el.style.display = n > 0 ? '' : 'none'; }
+}
+
+function openWishlist() {
+  renderWishlistModal();
+  document.getElementById('modal-wishlist').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeWishlist() {
+  document.getElementById('modal-wishlist').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+function renderWishlistModal() {
+  const w  = getWishlist();
+  const mc = document.getElementById('wish-modal-count');
+  const wl = document.getElementById('wish-list');
+  if (mc) mc.textContent = `(${w.length})`;
+
+  if (!w.length) {
+    wl.innerHTML = `<div class="state-empty" style="grid-column:auto;padding:40px 20px">
+      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--n3)" stroke-width="1.5" style="margin:0 auto 12px"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+      <p style="color:var(--n5);font-size:.875rem"><span class="pt">A sua lista esta vazia.</span><span class="en">Your wishlist is empty.</span></p>
+    </div>`;
+    if (L() === 'en') { wl.querySelectorAll('.en').forEach(e=>e.style.display=''); wl.querySelectorAll('.pt').forEach(e=>e.style.display='none'); }
+    return;
   }
 
-  function truncate(s, n) {
-    if (!s) return '';
-    return s.length > n ? s.slice(0, n).trimEnd() + '…' : s;
-  }
+  const wishOps = operators.filter(o => w.includes(o.slug));
+  wl.innerHTML = wishOps.map(op => `
+    <div class="wish-item">
+      <img src="${esc(imgFor(op))}" alt="${esc(op.name)}" onerror="this.src='${IMGS.default}'" />
+      <div class="wish-item-info">
+        <div class="wish-item-name">${esc(op.name)}</div>
+        <div class="wish-item-type">${tLabel(op.operator_type)}</div>
+      </div>
+      <a href="${APP}/book/${esc(op.slug)}" class="btn btn-primary btn-sm">
+        <span class="pt">Reservar</span><span class="en">Book</span>
+      </a>
+      <button class="wish-remove" onclick="toggleWishlist('${esc(op.slug)}');renderWishlistModal()" aria-label="Remover">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+      </button>
+    </div>`).join('');
+  if (L() === 'en') { wl.querySelectorAll('.en').forEach(e=>e.style.display=''); wl.querySelectorAll('.pt').forEach(e=>e.style.display='none'); }
+}
 
-  function typeLabel(t) { return (TYPE_LABELS[t] || { pt: t, en: t })[L()]; }
+/* ══════════════════════════════════════════
+   API
+══════════════════════════════════════════ */
+async function apiFetch(path) {
+  try {
+    const r = await fetch(API + path);
+    if (!r.ok) return null;
+    const j = await r.json();
+    return j.data !== undefined ? j.data : null;
+  } catch { return null; }
+}
 
-  function imgFor(op) { return op.logo_url || PLACEHOLDERS[op.operator_type] || PLACEHOLDERS.default; }
+/* ══════════════════════════════════════════
+   SKELETONS
+══════════════════════════════════════════ */
+function skCards(n, h = '200px') {
+  return Array.from({ length:n }, () => `
+    <div class="sk-card">
+      <div class="sk sk-img" style="height:${h}"></div>
+      <div class="sk-body"><div class="sk sk-line sk-wide"></div><div class="sk sk-line sk-mid"></div><div class="sk sk-line sk-short"></div></div>
+    </div>`).join('');
+}
 
-  function renderStars(rating) {
-    if (!rating) return '';
-    const full  = Math.floor(rating);
-    const empty = 5 - full;
-    return '★'.repeat(full) + '☆'.repeat(empty);
-  }
+/* ══════════════════════════════════════════
+   RENDER — FEATURED CARD
+══════════════════════════════════════════ */
+function renderFeatCard(op) {
+  const img  = esc(imgFor(op));
+  const name = esc(op.name);
+  const loc  = esc(op.address || 'Ilha do Sal');
+  const wished = isWished(op.slug);
+  const badge = getBadge(op);
+  const priceHtml = `<span class="pt">A partir de </span><span class="en">From </span><strong>${fmtPrice(op.base_price, op.currency)}</strong>`;
 
-  function formatPrice(price, currency) {
-    if (!price) return '';
-    const sym = currency === 'CVE' ? 'CVE ' : '€';
-    return sym + Math.round(price).toLocaleString('pt-PT');
-  }
-
-  function dateStr(iso) {
-    try {
-      const d = new Date(iso);
-      return { day: d.getDate(), month: d.toLocaleString(L() === 'en' ? 'en-GB' : 'pt-PT', { month: 'short' }) };
-    } catch { return { day: '--', month: '--' }; }
-  }
-
-  /* ════════════════════════════════════════════
-     API
-  ════════════════════════════════════════════ */
-  async function apiFetch(path) {
-    try {
-      const r = await fetch(API + path);
-      if (!r.ok) return null;
-      const j = await r.json();
-      return j.data !== undefined ? j.data : null;
-    } catch { return null; }
-  }
-
-  /* ════════════════════════════════════════════
-     SKELETON
-  ════════════════════════════════════════════ */
-  function skeletonCards(n, large) {
-    const h = large ? '200px' : '180px';
-    return Array.from({ length: n }, () => `
-      <div class="sk-card">
-        <div class="sk sk-img" style="height:${h}"></div>
-        <div class="sk-body">
-          <div class="sk sk-line wide"></div>
-          <div class="sk sk-line mid"></div>
-          <div class="sk sk-line short"></div>
+  return `
+    <div class="feat-card fade-up">
+      <div class="feat-img">
+        <img src="${img}" alt="${name}" loading="lazy" onerror="this.src='${IMGS.default}'" />
+        <div class="feat-img-overlay"></div>
+        <button class="wish-btn ${wished?'active':''}" data-wish="${esc(op.slug)}" onclick="toggleWishlist('${esc(op.slug)}')" aria-label="Wishlist">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="${wished?'#e00':'none'}" stroke="${wished?'#e00':'currentColor'}" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+        </button>
+        <span class="tb tb-${op.operator_type}" style="position:absolute;bottom:12px;left:12px">${tLabel(op.operator_type)}</span>
+        ${badge ? `<span class="act-badge ${badge.cls}" style="position:absolute;top:12px;left:12px">${esc(badge.txt)}</span>` : ''}
+      </div>
+      <div class="feat-body">
+        <div class="feat-name">${name}</div>
+        <div class="feat-location">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+          ${loc}
         </div>
-      </div>`).join('');
-  }
+        ${op.avg_rating ? `<div class="feat-rating"><span class="stars">${renderStars(op.avg_rating)}</span><span class="rating-count">${op.avg_rating} (${op.review_count})</span></div>` : ''}
+        <div class="feat-price">${priceHtml}</div>
+        <a href="${APP}/book/${esc(op.slug)}" class="btn btn-primary" style="width:100%;justify-content:center">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          <span class="pt">Reservar</span><span class="en">Book now</span>
+        </a>
+      </div>
+    </div>`;
+}
 
-  /* ════════════════════════════════════════════
-     RENDER — FEATURED CARD
-  ════════════════════════════════════════════ */
-  function renderFeaturedCard(op) {
-    const img      = esc(imgFor(op));
-    const name     = esc(op.name);
-    const loc      = esc(op.address || 'Ilha do Sal');
-    const desc     = esc(truncate(op.description, 100));
-    const badge    = esc(typeLabel(op.operator_type));
-    const badgeClass = `badge-${op.operator_type}`;
-    const bookUrl  = `${APP}/book/${esc(op.slug)}`;
-    const ratingHtml = op.avg_rating
-      ? `<span class="op-rating"><span class="op-stars">${renderStars(op.avg_rating)}</span> ${op.avg_rating} (${op.review_count})</span>`
-      : '';
-    const priceHtml = op.base_price
-      ? `<span style="font-size:.8125rem;font-weight:700;color:var(--ocean-700)"><span class="pt">A partir de </span><span class="en">From </span>${formatPrice(op.base_price, op.currency)}</span>`
-      : '';
+/* ══════════════════════════════════════════
+   RENDER — ACTIVITY CARD
+══════════════════════════════════════════ */
+function renderActCard(op) {
+  const img    = esc(imgFor(op));
+  const name   = esc(op.name);
+  const loc    = esc(op.address || 'Ilha do Sal');
+  const desc   = esc(truncate(op.description, 60));
+  const wished = isWished(op.slug);
+  const badge  = getBadge(op);
+  const priceVal = fmtPrice(op.base_price, op.currency);
+  const hasPrice = !!op.base_price;
 
-    return `
-      <div class="feat-card fade-up">
-        <div class="feat-card-img">
-          <img src="${img}" alt="${name}" loading="lazy" onerror="this.src='${PLACEHOLDERS.default}'" />
-          <div class="feat-card-img-overlay"></div>
-          <span class="op-badge ${badgeClass}" style="position:absolute;bottom:12px;left:12px">${badge}</span>
+  return `
+    <div class="act-card fade-up">
+      <div class="act-img">
+        <img src="${img}" alt="${name}" loading="lazy" onerror="this.src='${IMGS.default}'" />
+        <div class="act-img-overlay"></div>
+        <button class="wish-btn ${wished?'active':''}" data-wish="${esc(op.slug)}" onclick="toggleWishlist('${esc(op.slug)}')" aria-label="Wishlist">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="${wished?'#e00':'none'}" stroke="${wished?'#e00':'currentColor'}" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+        </button>
+        ${badge ? `<span class="act-badge ${badge.cls}">${esc(badge.txt)}</span>` : ''}
+      </div>
+      <div class="act-body">
+        <div class="act-rating-row">
+          ${op.avg_rating
+            ? `<span class="stars">${renderStars(op.avg_rating)}</span><span style="font-size:.8125rem;font-weight:600;color:var(--n7)">${op.avg_rating}</span><span style="font-size:.8125rem;color:var(--n5)">(${op.review_count})</span>`
+            : `<span style="font-size:.8125rem;color:var(--n4)"><span class="pt">Sem avaliacoes</span><span class="en">No reviews yet</span></span>`}
         </div>
-        <div class="feat-card-body">
-          <div class="feat-card-name">${name}</div>
-          <div class="feat-card-location">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+        <div class="act-name">${name}</div>
+        <div class="act-meta-row">
+          <span class="tb tb-${op.operator_type}" style="font-size:.6rem">${tLabel(op.operator_type)}</span>
+          <span style="display:flex;align-items:center;gap:3px;color:var(--n5)">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
             ${loc}
-          </div>
-          ${desc ? `<div class="feat-card-desc">${desc}</div>` : ''}
-          <div class="feat-card-footer">
-            ${ratingHtml}
-            ${priceHtml}
-          </div>
-          <a href="${bookUrl}" class="btn btn-primary" style="width:100%;justify-content:center;margin-top:14px">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          </span>
+        </div>
+        <div class="act-price-row">
+          ${hasPrice
+            ? `<span class="act-price-from"><span class="pt">A partir de</span><span class="en">From</span></span>
+               <span class="act-price-val">${esc(priceVal)}</span>
+               <span class="act-price-unit"><span class="pt">/pessoa</span><span class="en">/person</span></span>`
+            : `<span class="act-price-val" style="font-size:1rem;color:var(--n5)">${esc(priceVal)}</span>`}
+        </div>
+        <div class="act-footer">
+          <a href="${APP}/book/${esc(op.slug)}" class="btn btn-primary btn-book">
             <span class="pt">Reservar</span><span class="en">Book now</span>
           </a>
+          <a href="${APP}/book/${esc(op.slug)}" class="btn btn-ghost" style="padding:10px 12px">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+          </a>
         </div>
-      </div>`;
-  }
+      </div>
+    </div>`;
+}
 
-  /* ════════════════════════════════════════════
-     RENDER — OPERATOR CARD
-  ════════════════════════════════════════════ */
-  function renderOperatorCard(op) {
-    const img      = esc(imgFor(op));
-    const name     = esc(op.name);
-    const loc      = esc(op.address || 'Ilha do Sal');
-    const desc     = esc(truncate(op.description, 80));
-    const badge    = esc(typeLabel(op.operator_type));
-    const badgeClass = `badge-${op.operator_type}`;
-    const bookUrl  = `${APP}/book/${esc(op.slug)}`;
-    const ratingHtml = op.avg_rating
-      ? `<span class="op-rating"><span class="op-stars">${renderStars(op.avg_rating)}</span> ${op.avg_rating}</span>`
-      : '<span></span>';
-    const priceHtml = op.base_price
-      ? `<div class="op-price"><span class="pt">A partir de </span><span class="en">From </span>${formatPrice(op.base_price, op.currency)}</div>`
-      : '';
+/* ══════════════════════════════════════════
+   RENDER — REVIEW CARD
+══════════════════════════════════════════ */
+function renderRevCard(rv) {
+  const author  = esc(rv.author_name || 'Visitante');
+  const comment = esc(truncate(rv.comment, 160));
+  const opName  = rv.operator ? esc(rv.operator.name) : '';
+  const opSlug  = rv.operator?.slug;
+  return `
+    <div class="rev-card fade-up">
+      <div class="rev-stars">${renderStars(rv.rating)}</div>
+      <div class="rev-comment">"${comment}"</div>
+      <div class="rev-author">
+        <div class="rev-avatar">${author.charAt(0).toUpperCase()}</div>
+        <div>
+          <div class="rev-name">${author}</div>
+          ${opName ? `<div class="rev-op">${opName}${opSlug ? ` · <a href="${APP}/book/${opSlug}" style="color:rgba(255,255,255,.45)">${tLabel(rv.operator.operator_type)}</a>` : ''}</div>` : ''}
+        </div>
+      </div>
+    </div>`;
+}
 
+/* ══════════════════════════════════════════
+   LOCATIONS
+══════════════════════════════════════════ */
+function renderLocations() {
+  const grid = document.getElementById('locs-grid');
+  if (!grid) return;
+  grid.innerHTML = LOCATIONS.map(loc => {
+    const cnt = operators.filter(op =>
+      (op.address || '').toLowerCase().includes(loc.key)
+    ).length;
+    const cntTxt = L() === 'pt'
+      ? `${cnt} actividade${cnt !== 1 ? 's' : ''}`
+      : `${cnt} activit${cnt !== 1 ? 'ies' : 'y'}`;
     return `
-      <div class="op-card fade-up">
-        <div class="op-card-img">
-          <img src="${img}" alt="${name}" loading="lazy" onerror="this.src='${PLACEHOLDERS.default}'" />
-          <div class="op-card-img-overlay"></div>
-          <span class="op-badge ${badgeClass} op-card-badge">${badge}</span>
-        </div>
-        <div class="op-card-body">
-          <div class="op-card-name">${name}</div>
-          ${desc ? `<div class="op-card-desc">${desc}</div>` : '<div class="op-card-desc"></div>'}
-          <div class="op-card-meta">
-            <span class="op-location">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-              ${loc}
-            </span>
-            ${ratingHtml}
-          </div>
-          ${priceHtml}
-          <div class="op-card-footer">
-            <a href="${bookUrl}" class="btn btn-primary">
-              <span class="pt">Reservar</span><span class="en">Book</span>
-            </a>
-            <a href="${bookUrl}" class="btn" style="background:var(--n100);color:var(--n700);flex:0 0 auto">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
-              <span class="pt">Ver</span><span class="en">View</span>
-            </a>
-          </div>
+      <div class="loc-card ${activeLoc === loc.key ? 'active' : ''}" onclick="setLocation('${loc.key}')">
+        <img src="https://images.unsplash.com/${loc.img}?w=300&q=75" alt="${esc(loc.name)}" loading="lazy" />
+        <div class="loc-overlay"></div>
+        <div class="loc-body">
+          <div class="loc-name">${esc(loc.name)}</div>
+          <div class="loc-count">${cntTxt}</div>
         </div>
       </div>`;
-  }
+  }).join('');
+}
 
-  /* ════════════════════════════════════════════
-     RENDER — EXPERIENCE CARD
-  ════════════════════════════════════════════ */
-  function renderExpCard(exp) {
-    const l       = L();
-    const title   = esc(exp[`title_${l}`] || exp.title_pt);
-    const desc    = esc(truncate(exp[`description_${l}`] || exp.description_pt, 120));
-    const theme   = esc(exp.theme || '');
-    const price   = exp.price_from ? `€${Math.round(exp.price_from)}` : '';
-    const days    = exp.duration_days;
-    const durTxt  = days ? (l === 'pt' ? `${days} dia${days>1?'s':''}` : `${days} day${days>1?'s':''}`) : '';
+function setLocation(key) {
+  activeLoc = activeLoc === key ? '' : key;
+  renderLocations();
+  applyFilters();
+  document.getElementById('activities-section').scrollIntoView({ behavior:'smooth' });
+}
 
-    return `
-      <div class="exp-card fade-up">
-        ${theme ? `<div class="exp-theme">${theme}</div>` : ''}
-        <div class="exp-title">${title}</div>
-        ${desc ? `<div class="exp-desc">${desc}</div>` : ''}
-        <div class="exp-meta">
-          ${price ? `<span class="exp-meta-item"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>${price}</span>` : ''}
-          ${durTxt ? `<span class="exp-meta-item"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>${durTxt}</span>` : ''}
-        </div>
-      </div>`;
-  }
-
-  /* ════════════════════════════════════════════
-     RENDER — EVENT CARD
-  ════════════════════════════════════════════ */
-  function renderEventCard(ev) {
-    const l    = L();
-    const name = esc(ev[`name_${l}`] || ev.name_pt);
-    const desc = esc(truncate(ev[`description_${l}`] || ev.description_pt, 90));
-    const { day, month } = dateStr(ev.event_date);
-    const typeLabel = (EVENT_TYPE_LABELS[ev.event_type] || { pt: ev.event_type, en: ev.event_type })[l];
-
-    return `
-      <div class="event-card fade-up">
-        <div class="event-date-box">
-          <div class="event-day">${day}</div>
-          <div class="event-month">${esc(month)}</div>
-        </div>
-        <div style="flex:1;min-width:0">
-          <div class="event-name">${name}</div>
-          ${desc ? `<div class="event-desc">${desc}</div>` : ''}
-          <span class="event-type-badge event-${ev.event_type}">${esc(typeLabel)}</span>
-        </div>
-      </div>`;
-  }
-
-  /* ════════════════════════════════════════════
-     RENDER — REVIEW CARD
-  ════════════════════════════════════════════ */
-  function renderReviewCard(rv) {
-    const l       = L();
-    const comment = esc(truncate(rv.comment, 160));
-    const author  = esc(rv.author_name || 'Visitante');
-    const opName  = rv.operator ? esc(rv.operator.name) : '';
-    const opSlug  = rv.operator ? esc(rv.operator.slug) : null;
-    const opType  = rv.operator ? rv.operator.operator_type : '';
-    const stars   = renderStars(rv.rating);
-    const initial = author.charAt(0).toUpperCase();
-
-    return `
-      <div class="review-card fade-up">
-        <div class="review-stars">${stars}</div>
-        <div class="review-comment">"${comment}"</div>
-        <div class="review-author">
-          <div class="review-avatar">${initial}</div>
-          <div>
-            <div class="review-name">${author}</div>
-            ${opName ? `<div class="review-op">${opName}${opSlug ? ` · <a href="${APP}/book/${opSlug}" style="color:rgba(255,255,255,.5)">${typeLabel(opType)}</a>` : ''}</div>` : ''}
-          </div>
-        </div>
-      </div>`;
-  }
-
-  /* ════════════════════════════════════════════
-     GRID + PAGINATION
-  ════════════════════════════════════════════ */
-  function applyFilters() {
-    const search = document.getElementById('search-input').value.toLowerCase().trim();
-    const type   = activeType;
-
-    filtered = allOperators.filter((op) => {
-      const matchType   = !type || op.operator_type === type;
-      const matchSearch = !search
-        || (op.name        || '').toLowerCase().includes(search)
-        || (op.description || '').toLowerCase().includes(search)
-        || (op.address     || '').toLowerCase().includes(search);
-      return matchType && matchSearch;
-    });
-
-    page = 1;
-    renderGrid();
-    renderPagination();
-    updateCount();
-  }
-
-  function updateCount() {
-    const el = document.getElementById('ops-count');
-    const n  = filtered.length;
-    if (el) el.textContent = L() === 'pt'
+/* ══════════════════════════════════════════
+   CATEGORY COUNTS
+══════════════════════════════════════════ */
+function updateCounts() {
+  const types = ['hotel','activity','rentacar','restaurant'];
+  const l = L();
+  types.forEach(t => {
+    const n  = operators.filter(o => o.operator_type === t).length;
+    const el = document.getElementById(`attr-count-${t}`);
+    if (el) el.textContent = l === 'pt'
       ? `${n} operador${n !== 1 ? 'es' : ''}`
       : `${n} operator${n !== 1 ? 's' : ''}`;
+  });
+}
+
+/* ══════════════════════════════════════════
+   FILTERS + GRID
+══════════════════════════════════════════ */
+function applyFilters() {
+  const search = (document.getElementById('hero-search')?.value
+    || document.getElementById('nav-search-input')?.value || '').toLowerCase().trim();
+
+  filtered = operators.filter(op => {
+    const matchType = !activeType || op.operator_type === activeType;
+    const matchLoc  = !activeLoc  || (op.address || '').toLowerCase().includes(activeLoc);
+    const matchSearch = !search
+      || (op.name        || '').toLowerCase().includes(search)
+      || (op.description || '').toLowerCase().includes(search)
+      || (op.address     || '').toLowerCase().includes(search);
+    return matchType && matchLoc && matchSearch;
+  });
+
+  visible = PER_PAGE;
+  renderGrid();
+  updateActCount();
+  updateClearBtn();
+}
+
+function renderGrid() {
+  const grid = document.getElementById('act-grid');
+  if (!grid) return;
+  const slice = filtered.slice(0, visible);
+
+  if (!slice.length) {
+    grid.innerHTML = `
+      <div class="state-empty">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--n3)" stroke-width="1.5" style="margin:0 auto"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <h3><span class="pt">Nenhum resultado</span><span class="en">No results found</span></h3>
+        <p><span class="pt">Tente outros termos ou remova o filtro.</span><span class="en">Try different terms or clear the filter.</span></p>
+        <button onclick="clearFilters()" class="btn btn-primary">
+          <span class="pt">Limpar filtros</span><span class="en">Clear filters</span>
+        </button>
+      </div>`;
+    document.getElementById('load-more-wrap').style.display = 'none';
+    if (L() === 'en') fixLang(grid);
+    return;
   }
 
-  function renderGrid() {
-    const grid  = document.getElementById('ops-grid');
-    const start = (page - 1) * PER_PAGE;
-    const slice = filtered.slice(start, start + PER_PAGE);
+  grid.innerHTML = slice.map(renderActCard).join('');
+  observeFadeUp(grid);
+  if (L() === 'en') fixLang(grid);
 
-    if (!slice.length) {
-      grid.innerHTML = `
-        <div class="state-empty" style="grid-column:1/-1">
-          <div class="state-empty-icon">
-            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="var(--n300)" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-          </div>
-          <h3><span class="pt">Nenhum operador encontrado</span><span class="en">No operators found</span></h3>
-          <p><span class="pt">Tente outros termos ou remova o filtro.</span><span class="en">Try different terms or clear the filter.</span></p>
-          <button onclick="clearFilters()" class="btn btn-primary" style="margin-top:16px">
-            <span class="pt">Limpar filtros</span><span class="en">Clear filters</span>
-          </button>
-        </div>`;
-      return;
-    }
+  const lmw = document.getElementById('load-more-wrap');
+  lmw.style.display = visible < filtered.length ? '' : 'none';
+}
 
-    grid.innerHTML = slice.map(renderOperatorCard).join('');
-    observeAnimations(grid);
-    if (L() === 'en') {
-      grid.querySelectorAll('.en').forEach(e => e.style.display = '');
-      grid.querySelectorAll('.pt').forEach(e => e.style.display = 'none');
-    }
+function loadMore() {
+  visible += PER_PAGE;
+  renderGrid();
+}
+
+function updateActCount() {
+  const el = document.getElementById('act-count');
+  const n  = filtered.length;
+  if (el) el.textContent = L() === 'pt'
+    ? `${n} resultado${n !== 1 ? 's' : ''}`
+    : `${n} result${n !== 1 ? 's' : ''}`;
+}
+
+function updateClearBtn() {
+  const btn = document.getElementById('clear-filter-btn');
+  if (btn) btn.style.display = (activeType || activeLoc) ? '' : 'none';
+}
+
+function setFilter(type) {
+  activeType = activeType === type ? '' : type;
+  document.querySelectorAll('.attr-card').forEach(c => c.classList.remove('active'));
+  if (activeType) {
+    const card = document.querySelector(`.ac-${activeType}`);
+    if (card) card.classList.add('active');
+  }
+  applyFilters();
+  document.getElementById('activities-section').scrollIntoView({ behavior:'smooth' });
+}
+
+function clearFilters() {
+  activeType = '';
+  activeLoc  = '';
+  document.getElementById('hero-search').value = '';
+  document.getElementById('nav-search-input').value = '';
+  document.querySelectorAll('.attr-card').forEach(c => c.classList.remove('active'));
+  renderLocations();
+  applyFilters();
+}
+
+/* ══════════════════════════════════════════
+   CURRENCY
+══════════════════════════════════════════ */
+function setCurrency(cur) {
+  currency = cur;
+  const btnEur = document.getElementById('btn-eur');
+  const btnCve = document.getElementById('btn-cve');
+  const pill   = document.getElementById('cur-toggle');
+  if (btnEur) { btnEur.style.background = cur === 'EUR' ? 'var(--oc7)' : 'transparent'; btnEur.style.color = cur === 'EUR' ? '#fff' : 'var(--n5)'; }
+  if (btnCve) { btnCve.style.background = cur === 'CVE' ? 'var(--oc7)' : 'transparent'; btnCve.style.color = cur === 'CVE' ? '#fff' : 'var(--n5)'; }
+  if (pill)    pill.textContent = cur;
+  renderGrid();
+}
+
+function toggleCurrency() { setCurrency(currency === 'EUR' ? 'CVE' : 'EUR'); }
+
+/* ══════════════════════════════════════════
+   SEARCH
+══════════════════════════════════════════ */
+function handleHeroSearch() {
+  const search = document.getElementById('hero-search').value;
+  const type   = document.getElementById('hero-type').value;
+  document.getElementById('nav-search-input').value = search;
+  activeType = type;
+  applyFilters();
+  document.getElementById('activities-section').scrollIntoView({ behavior:'smooth' });
+}
+
+function handleSearch() {
+  const v = document.getElementById('nav-search-input').value;
+  document.getElementById('hero-search').value = v;
+  applyFilters();
+  document.getElementById('activities-section').scrollIntoView({ behavior:'smooth' });
+}
+
+/* ══════════════════════════════════════════
+   LOADERS
+══════════════════════════════════════════ */
+async function loadOperators() {
+  const grid = document.getElementById('act-grid');
+  grid.innerHTML = skCards(8);
+
+  const data = await apiFetch('/discover');
+  if (!data) {
+    grid.innerHTML = `<div class="state-empty"><h3><span class="pt">Servico indisponivel</span><span class="en">Service unavailable</span></h3><p><span class="pt">Verifique a ligacao e tente novamente.</span><span class="en">Check your connection and try again.</span></p></div>`;
+    if (L() === 'en') fixLang(grid);
+    return;
   }
 
-  function renderPagination() {
-    const el    = document.getElementById('pagination');
-    const total = Math.ceil(filtered.length / PER_PAGE);
-    if (total <= 1) { el.innerHTML = ''; return; }
+  operators = data;
+  filtered  = [...operators];
+  updateCounts();
+  renderLocations();
+  applyFilters();
+}
 
-    let html = `<button class="page-btn" onclick="goToPage(${page - 1})" ${page === 1 ? 'disabled' : ''}>
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
-    </button>`;
+async function loadFeatured() {
+  const grid = document.getElementById('featured-grid');
+  grid.innerHTML = skCards(3, '220px');
 
-    for (let i = 1; i <= total; i++) {
-      if (i === 1 || i === total || (i >= page - 1 && i <= page + 1)) {
-        html += `<button class="page-btn ${i === page ? 'active' : ''}" onclick="goToPage(${i})">${i}</button>`;
-      } else if (i === page - 2 || i === page + 2) {
-        html += `<span style="color:var(--n400);padding:0 4px">...</span>`;
-      }
-    }
+  const data = await apiFetch('/discover?featured=true&limit=3');
+  const ops  = data?.length ? data : operators.slice(0, 3);
 
-    html += `<button class="page-btn" onclick="goToPage(${page + 1})" ${page === total ? 'disabled' : ''}>
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
-    </button>`;
-
-    el.innerHTML = html;
+  if (!ops.length) {
+    document.getElementById('featured-section').style.display = 'none';
+    return;
   }
 
-  function goToPage(n) {
-    const total = Math.ceil(filtered.length / PER_PAGE);
-    if (n < 1 || n > total) return;
-    page = n;
+  grid.innerHTML = ops.map(renderFeatCard).join('');
+  observeFadeUp(grid);
+  if (L() === 'en') fixLang(grid);
+}
+
+async function loadReviews() {
+  const data = await apiFetch('/reviews?limit=3');
+  if (!data?.length) return;
+  document.getElementById('reviews-section').style.display = '';
+  const grid = document.getElementById('reviews-grid');
+  grid.innerHTML = data.map(renderRevCard).join('');
+  observeFadeUp(grid);
+  if (L() === 'en') fixLang(grid);
+}
+
+/* ══════════════════════════════════════════
+   ANIMATIONS
+══════════════════════════════════════════ */
+const obs = new IntersectionObserver(entries => {
+  entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); obs.unobserve(e.target); } });
+}, { threshold: 0.08 });
+
+function observeFadeUp(root) {
+  root.querySelectorAll('.fade-up').forEach(el => obs.observe(el));
+}
+
+document.querySelectorAll('.fade-up').forEach(el => obs.observe(el));
+
+/* ══════════════════════════════════════════
+   LANGUAGE
+══════════════════════════════════════════ */
+function fixLang(root) {
+  root.querySelectorAll('.en').forEach(e => e.style.display = '');
+  root.querySelectorAll('.pt').forEach(e => e.style.display = 'none');
+}
+
+function setLang(lang) {
+  document.documentElement.setAttribute('data-lang', lang);
+  document.documentElement.setAttribute('lang', lang);
+  document.getElementById('langPt').classList.toggle('active', lang === 'pt');
+  document.getElementById('langEn').classList.toggle('active', lang === 'en');
+  localStorage.setItem('sd-lang', lang);
+
+  // Update search placeholder
+  const pi = document.getElementById('hero-search');
+  const pn = document.getElementById('nav-search-input');
+  if (pi) pi.placeholder = lang === 'pt' ? 'Para onde vai? O que quer fazer?' : 'Where are you going? What do you want to do?';
+  if (pn) pn.placeholder = lang === 'pt' ? 'Pesquisar...' : 'Search...';
+
+  // Re-render dynamic sections
+  if (operators.length) {
+    updateCounts();
+    renderLocations();
     renderGrid();
-    renderPagination();
-    document.getElementById('operators-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
+}
 
-  /* ════════════════════════════════════════════
-     FILTER CONTROLS
-  ════════════════════════════════════════════ */
-  function handleSearch() {
-    applyFilters();
-    document.getElementById('operators-section').scrollIntoView({ behavior: 'smooth' });
-  }
+document.getElementById('langToggle').addEventListener('click', () => {
+  setLang(document.documentElement.dataset.lang === 'pt' ? 'en' : 'pt');
+});
 
-  function setTypeFilter(type) {
-    activeType = activeType === type ? '' : type;
-    document.getElementById('type-select').value = activeType;
+// Keyboard search
+['hero-search', 'nav-search-input'].forEach(id => {
+  const el = document.getElementById(id);
+  if (el) el.addEventListener('keydown', e => { if (e.key === 'Enter') handleSearch(); });
+});
 
-    document.querySelectorAll('.cat-card').forEach((c) => c.classList.remove('active'));
-    if (activeType) {
-      const card = document.getElementById(`cat-${activeType}`);
-      if (card) card.classList.add('active');
-    }
+// Hero type select sync
+document.getElementById('hero-type')?.addEventListener('change', e => {
+  activeType = e.target.value;
+  applyFilters();
+});
 
-    applyFilters();
-    document.getElementById('operators-section').scrollIntoView({ behavior: 'smooth' });
-  }
+// ESC closes wishlist
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeWishlist(); });
 
-  function clearFilters() {
-    activeType = '';
-    document.getElementById('search-input').value = '';
-    document.getElementById('type-select').value = '';
-    document.querySelectorAll('.cat-card').forEach((c) => c.classList.remove('active'));
-    applyFilters();
-  }
+/* ══════════════════════════════════════════
+   INIT
+══════════════════════════════════════════ */
+async function init() {
+  const savedLang = localStorage.getItem('sd-lang') || 'pt';
+  setLang(savedLang);
+  updateWishCount();
 
-  /* ════════════════════════════════════════════
-     CATEGORY COUNTS
-  ════════════════════════════════════════════ */
-  function renderCategoryCounts() {
-    const types = ['hotel', 'activity', 'rentacar', 'restaurant'];
-    const l = L();
-    types.forEach((t) => {
-      const n   = allOperators.filter((o) => o.operator_type === t).length;
-      const el  = document.getElementById(`count-${t}`);
-      if (el) el.textContent = l === 'pt'
-        ? `${n} operador${n !== 1 ? 'es' : ''}`
-        : `${n} operator${n !== 1 ? 's' : ''}`;
-    });
-  }
+  await loadOperators();
+  await Promise.all([loadFeatured(), loadReviews()]);
+}
 
-  /* ════════════════════════════════════════════
-     LOADERS
-  ════════════════════════════════════════════ */
-  async function loadOperators() {
-    const grid = document.getElementById('ops-grid');
-    grid.innerHTML = skeletonCards(PER_PAGE, false);
-
-    const data = await apiFetch('/discover');
-
-    if (!data) {
-      grid.innerHTML = '';
-      document.getElementById('api-error').style.display = 'flex';
-      return;
-    }
-
-    allOperators = data;
-    filtered     = [...allOperators];
-    renderCategoryCounts();
-    applyFilters();
-  }
-
-  async function loadFeatured() {
-    const grid = document.getElementById('featured-grid');
-    grid.innerHTML = skeletonCards(3, true);
-
-    const data = await apiFetch('/discover?featured=true&limit=3');
-    const ops  = data?.length ? data : allOperators.slice(0, 3);
-
-    if (!ops.length) {
-      document.getElementById('featured-section').style.display = 'none';
-      return;
-    }
-
-    grid.innerHTML = ops.map(renderFeaturedCard).join('');
-    observeAnimations(grid);
-    if (L() === 'en') {
-      grid.querySelectorAll('.en').forEach(e => e.style.display = '');
-      grid.querySelectorAll('.pt').forEach(e => e.style.display = 'none');
-    }
-  }
-
-  async function loadExperiences() {
-    const data = await apiFetch('/cms/experiences');
-    const wrap = document.getElementById('exp-content');
-
-    if (!data?.length) {
-      wrap.innerHTML = `<div class="coming-soon"><span class="pt">Experiencias em breve — a equipa esta a preparar sugestoes especiais.</span><span class="en">Experiences coming soon — the team is preparing special suggestions.</span></div>`;
-      return;
-    }
-
-    wrap.innerHTML = `<div class="exp-grid">${data.map(renderExpCard).join('')}</div>`;
-    observeAnimations(wrap);
-  }
-
-  async function loadEvents() {
-    const data = await apiFetch('/cms/events');
-    const wrap = document.getElementById('events-content');
-
-    if (!data?.length) {
-      wrap.innerHTML = `<div class="coming-soon"><span class="pt">Sem eventos proximos agendados. Volte em breve.</span><span class="en">No upcoming events scheduled. Check back soon.</span></div>`;
-      return;
-    }
-
-    wrap.innerHTML = `<div class="events-grid">${data.map(renderEventCard).join('')}</div>`;
-    observeAnimations(wrap);
-  }
-
-  async function loadReviews() {
-    const data = await apiFetch('/reviews?limit=6');
-    if (!data?.length) return;
-
-    document.getElementById('reviews-section').style.display = '';
-    document.getElementById('reviews-grid').innerHTML = data.map(renderReviewCard).join('');
-    observeAnimations(document.getElementById('reviews-grid'));
-  }
-
-  async function loadBanners() {
-    const data = await apiFetch('/cms/banners');
-    if (!data?.length) return;
-
-    const banner = data.find((b) => b.position === 'main') || data[0];
-    if (!banner?.image_url) return;
-
-    document.getElementById('banner-wrap').style.display = '';
-    const content = banner.link_url
-      ? `<a href="${esc(banner.link_url)}" target="_blank" rel="noopener"><img src="${esc(banner.image_url)}" alt="${esc(banner.title || 'Banner')}" /></a>`
-      : `<img src="${esc(banner.image_url)}" alt="${esc(banner.title || 'Banner')}" />`;
-    document.getElementById('banner-content').innerHTML = content;
-  }
-
-  /* ════════════════════════════════════════════
-     SCROLL ANIMATIONS
-  ════════════════════════════════════════════ */
-  const scrollObs = new IntersectionObserver((entries) => {
-    entries.forEach((e) => {
-      if (e.isIntersecting) {
-        e.target.classList.add('visible');
-        scrollObs.unobserve(e.target);
-      }
-    });
-  }, { threshold: 0.1 });
-
-  function observeAnimations(root) {
-    root.querySelectorAll('.fade-up, .slide-left').forEach((el) => scrollObs.observe(el));
-  }
-
-  /* ════════════════════════════════════════════
-     LANGUAGE
-  ════════════════════════════════════════════ */
-  function setLang(lang) {
-    const html = document.documentElement;
-    html.setAttribute('data-lang', lang);
-    html.setAttribute('lang', lang);
-    document.getElementById('langPt').classList.toggle('active', lang === 'pt');
-    document.getElementById('langEn').classList.toggle('active', lang === 'en');
-    localStorage.setItem('sd-lang', lang);
-
-    // Re-render type-select options (only one value="" option at a time)
-    const sel = document.getElementById('type-select');
-    if (sel) {
-      // Update placeholder option text
-      const emptyOpts = sel.querySelectorAll(`option[value=""]`);
-      emptyOpts.forEach((o) => {
-        o.style.display = o.classList.contains(lang) ? '' : 'none';
-      });
-    }
-
-    // Update category counts text
-    if (allOperators.length) renderCategoryCounts();
-    if (filtered.length) updateCount();
-  }
-
-  document.getElementById('langToggle').addEventListener('click', () => {
-    const cur = document.documentElement.dataset.lang || 'pt';
-    setLang(cur === 'pt' ? 'en' : 'pt');
-  });
-
-  // Search on Enter
-  document.getElementById('search-input').addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') handleSearch();
-  });
-
-  // Type-select changes
-  document.getElementById('type-select').addEventListener('change', (e) => {
-    activeType = e.target.value;
-    document.querySelectorAll('.cat-card').forEach((c) => c.classList.remove('active'));
-    if (activeType) {
-      const card = document.getElementById(`cat-${activeType}`);
-      if (card) card.classList.add('active');
-    }
-    applyFilters();
-  });
-
-  // Observe static fade-up sections
-  document.querySelectorAll('.fade-up, .slide-left').forEach((el) => scrollObs.observe(el));
-
-  /* ════════════════════════════════════════════
-     INIT
-  ════════════════════════════════════════════ */
-  async function init() {
-    const savedLang = localStorage.getItem('sd-lang') || 'pt';
-    setLang(savedLang);
-
-    // Populate search placeholder in current lang
-    const searchInput = document.getElementById('search-input');
-    searchInput.setAttribute('placeholder', savedLang === 'pt'
-      ? 'Pesquisar actividades, hoteis...'
-      : 'Search activities, hotels...');
-
-    // Load operators first (needed for featured fallback + category counts)
-    await loadOperators();
-
-    // Load rest in parallel
-    await Promise.all([
-      loadFeatured(),
-      loadExperiences(),
-      loadEvents(),
-      loadReviews(),
-      loadBanners(),
-    ]);
-  }
-
-  document.addEventListener('DOMContentLoaded', init);
+document.addEventListener('DOMContentLoaded', init);
 </script>
 </body>
 </html>
