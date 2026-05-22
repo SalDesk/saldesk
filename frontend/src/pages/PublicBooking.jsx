@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import {
   MapPin, Phone, Star, ChevronLeft, ChevronRight, MessageCircle, Clock,
@@ -17,10 +17,10 @@ const FALLBACK_IMGS = [
 ];
 const TYPE_LABELS = { hotel: 'Hotel', activity: 'Actividade', rentacar: 'Rent-a-Car', restaurant: 'Restaurante' };
 
-/* â”€â”€ SEO â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── SEO ─────────────────────────────────────────── */
 function injectSeo(op, slug) {
   const desc = op.description || `Reserve directamente em ${op.name}, Ilha do Sal, Cabo Verde.`;
-  document.title = `${op.name} â€” Reservar Â· SalDesk`;
+  document.title = `${op.name} — Reservar · SalDesk`;
   const TYPE_LD = { hotel: 'LodgingBusiness', activity: 'TouristAttraction', rentacar: 'RentAction', restaurant: 'Restaurant' };
   const meta = (n, c, prop = false) => {
     const attr = prop ? 'property' : 'name';
@@ -48,15 +48,15 @@ function injectSeo(op, slug) {
 function removeSeo() {
   document.querySelectorAll('meta[data-seo]').forEach(el => el.remove());
   document.getElementById('sd-jsonld')?.remove();
-  document.title = 'SalDesk â€” GestÃ£o TurÃ­stica';
+  document.title = 'SalDesk — Gestão Turística';
 }
 
-/* â”€â”€ Price formatter â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Price formatter ─────────────────────────────── */
 function fmtPrice(price, priceUnit, opCurrency, viewCurrency, lang) {
   if (!price) return lang === 'en' ? 'On request' : 'Consultar';
   const unitLabels = {
     night: lang === 'en' ? '/night' : '/noite', day: lang === 'en' ? '/day' : '/dia',
-    hour: lang === 'en' ? '/hour' : '/hora', session: lang === 'en' ? '/session' : '/sessÃ£o',
+    hour: lang === 'en' ? '/hour' : '/hora', session: lang === 'en' ? '/session' : '/sessão',
     person: lang === 'en' ? '/person' : '/pessoa',
   };
   const suffix = unitLabels[priceUnit] || '';
@@ -65,10 +65,10 @@ function fmtPrice(price, priceUnit, opCurrency, viewCurrency, lang) {
     return `${Math.round(cve).toLocaleString('pt-PT')} CVE${suffix}`;
   }
   const eur = (opCurrency || 'EUR') === 'CVE' ? price / EUR_CVE : price;
-  return `â‚¬${eur < 10 ? eur.toFixed(1) : Math.round(eur)}${suffix}`;
+  return `€${eur < 10 ? eur.toFixed(1) : Math.round(eur)}${suffix}`;
 }
 
-/* â”€â”€ StarRating â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── StarRating ──────────────────────────────────── */
 function StarRating({ rating, size = 13 }) {
   return (
     <div className="flex gap-0.5">
@@ -80,7 +80,7 @@ function StarRating({ rating, size = 13 }) {
   );
 }
 
-/* â”€â”€ Hero Carousel â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Hero Carousel ───────────────────────────────── */
 function HeroCarousel({ images }) {
   const [idx, setIdx] = useState(0);
   const imgs = images?.filter(Boolean).length ? images.filter(Boolean) : FALLBACK_IMGS;
@@ -120,7 +120,7 @@ function HeroCarousel({ images }) {
   );
 }
 
-/* â”€â”€ ServiceCard â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── ServiceCard ─────────────────────────────────── */
 function ServiceCard({ unit, onBook, currency, lang, opCurrency }) {
   const price = fmtPrice(unit.base_price, unit.price_unit, opCurrency, currency, lang);
   return (
@@ -140,7 +140,7 @@ function ServiceCard({ unit, onBook, currency, lang, opCurrency }) {
         {unit.capacity && (
           <div className="flex items-center gap-1 text-xs text-n-400 mb-3">
             <Users size={12} strokeWidth={1.75} />
-            <span>{lang === 'en' ? 'Up to' : 'AtÃ©'} {unit.capacity} {lang === 'en' ? 'people' : 'pessoas'}</span>
+            <span>{lang === 'en' ? 'Up to' : 'Até'} {unit.capacity} {lang === 'en' ? 'people' : 'pessoas'}</span>
           </div>
         )}
         <div className="flex items-center justify-between gap-2">
@@ -158,9 +158,9 @@ function ServiceCard({ unit, onBook, currency, lang, opCurrency }) {
   );
 }
 
-/* â”€â”€ Booking Modal System â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Booking Modal System ──────────────────────────── */
 
-// â”€â”€ constants â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── constants ──────────────────────────────────────
 const IN  = 'w-full border border-n-300 rounded-xl px-4 py-2.5 font-body text-sm focus:outline-none focus:border-ocean-500 focus:ring-2 focus:ring-ocean-500/10 bg-white transition-all';
 const LB  = 'block text-xs font-body font-semibold text-n-600 mb-1.5';
 const SH  = 'font-display font-semibold text-n-900 text-sm mb-4';
@@ -172,30 +172,30 @@ function dys(a, b) { return (a && b && b > a) ? Math.max(1, Math.ceil((new Date(
 
 const TOUR_SLOTS  = ['07:00','08:00','09:00','10:00','11:00','12:00','13:00','14:00','15:00','16:00','17:00'];
 const REST_SLOTS  = ['12:00','12:30','13:00','13:30','14:00','14:30','19:00','19:30','20:00','20:30','21:00','21:30','22:00','22:30'];
-const CV_LOCS_PT  = ['Aeroporto (SID)','Hotel / Alojamento','EscritÃ³rio da empresa','Outro endereÃ§o'];
+const CV_LOCS_PT  = ['Aeroporto (SID)','Hotel / Alojamento','Escritório da empresa','Outro endereço'];
 const CV_LOCS_EN  = ['Airport (SID)','Hotel / Accommodation','Company office','Other address'];
 const CAR_EXTRAS  = [
   { k:'insurance',    pt:'Seguro adicional',    en:'Additional insurance' },
-  { k:'gps',          pt:'GPS incluÃ­do',         en:'GPS navigation' },
-  { k:'baby_seat',    pt:'Cadeira de bebÃ©',      en:'Baby / child seat' },
+  { k:'gps',          pt:'GPS incluído',         en:'GPS navigation' },
+  { k:'baby_seat',    pt:'Cadeira de bebé',      en:'Baby / child seat' },
   { k:'extra_driver', pt:'Condutor adicional',   en:'Additional driver' },
 ];
 const OCCASIONS = [
-  { v:'',          pt:'Sem ocasiÃ£o especial',   en:'No special occasion' },
-  { v:'birthday',  pt:'AniversÃ¡rio',            en:'Birthday' },
+  { v:'',          pt:'Sem ocasião especial',   en:'No special occasion' },
+  { v:'birthday',  pt:'Aniversário',            en:'Birthday' },
   { v:'honeymoon', pt:'Lua-de-mel',             en:'Honeymoon' },
-  { v:'business',  pt:'ReuniÃ£o de negÃ³cios',    en:'Business meeting' },
-  { v:'other',     pt:'Outra ocasiÃ£o',          en:'Other occasion' },
+  { v:'business',  pt:'Reunião de negócios',    en:'Business meeting' },
+  { v:'other',     pt:'Outra ocasião',          en:'Other occasion' },
 ];
 
-// â”€â”€ Counter â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Counter ─────────────────────────────────────────
 function Cnt({ label, val, set, min = 0, max = 20 }) {
   return (
     <div>
       <label className={LB}>{label}</label>
       <div className="flex items-center gap-3">
         <button type="button" onClick={() => set(Math.max(min, val - 1))}
-          className="w-9 h-9 rounded-full border border-n-300 flex items-center justify-center text-n-500 hover:border-ocean-700 hover:text-ocean-700 transition-all select-none text-xl font-light leading-none">âˆ’</button>
+          className="w-9 h-9 rounded-full border border-n-300 flex items-center justify-center text-n-500 hover:border-ocean-700 hover:text-ocean-700 transition-all select-none text-xl font-light leading-none">−</button>
         <span className="flex-1 text-center font-display font-bold text-n-900 text-lg tabular-nums">{val}</span>
         <button type="button" onClick={() => set(Math.min(max, val + 1))}
           className="w-9 h-9 rounded-full border border-n-300 flex items-center justify-center text-n-500 hover:border-ocean-700 hover:text-ocean-700 transition-all select-none text-xl font-light leading-none">+</button>
@@ -204,14 +204,14 @@ function Cnt({ label, val, set, min = 0, max = 20 }) {
   );
 }
 
-// â”€â”€ GuestForm (shared name/email/phone/country) â”€â”€â”€â”€â”€â”€
+// ── GuestForm (shared name/email/phone/country) ──────
 function GF({ d, set, lang, children }) {
   const u = k => e => set(p => ({ ...p, [k]: e.target.value }));
   return (
     <div className="space-y-3">
       <div>
         <label className={LB}>{lang === 'en' ? 'Full name' : 'Nome completo'} *</label>
-        <input className={IN} value={d.name || ''} onChange={u('name')} required placeholder={lang === 'en' ? 'John Smith' : 'JoÃ£o Silva'} />
+        <input className={IN} value={d.name || ''} onChange={u('name')} required placeholder={lang === 'en' ? 'John Smith' : 'João Silva'} />
       </div>
       <div>
         <label className={LB}>Email *</label>
@@ -223,7 +223,7 @@ function GF({ d, set, lang, children }) {
           <input className={IN} type="tel" value={d.phone || ''} onChange={u('phone')} placeholder="+351 9XX XXX XXX" />
         </div>
         <div>
-          <label className={LB}>{lang === 'en' ? 'Country' : 'PaÃ­s de origem'}</label>
+          <label className={LB}>{lang === 'en' ? 'Country' : 'País de origem'}</label>
           <input className={IN} value={d.country || ''} onChange={u('country')} placeholder={lang === 'en' ? 'Portugal' : 'Portugal'} />
         </div>
       </div>
@@ -232,7 +232,7 @@ function GF({ d, set, lang, children }) {
   );
 }
 
-// â”€â”€ Summary table â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Summary table ────────────────────────────────────
 function ST({ lines }) {
   return (
     <div className="bg-ocean-50 border border-ocean-100 rounded-xl p-4 space-y-2.5">
@@ -246,14 +246,14 @@ function ST({ lines }) {
   );
 }
 
-// â”€â”€ Payment options â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Payment options ──────────────────────────────────
 function PO({ lang, v, set }) {
   return (
     <div className="space-y-2.5">
       {[
-        { k:'paypal', l:lang==='en'?'International card (PayPal)':'CartÃ£o internacional (PayPal)',   s:'Visa Â· Mastercard Â· American Express' },
-        { k:'sisp',   l:lang==='en'?'Cape Verdean card (Vinti4)':'CartÃ£o cabo-verdiano (Vinti4)',    s:'SISP Vinti4 Â· MasterCard local' },
-        { k:'cash',   l:lang==='en'?'Pay on arrival':'Pagar presencialmente', s:lang==='en'?'Cash or card on site':'Dinheiro ou cartÃ£o no local' },
+        { k:'paypal', l:lang==='en'?'International card (PayPal)':'Cartão internacional (PayPal)',   s:'Visa · Mastercard · American Express' },
+        { k:'sisp',   l:lang==='en'?'Cape Verdean card (Vinti4)':'Cartão cabo-verdiano (Vinti4)',    s:'SISP Vinti4 · MasterCard local' },
+        { k:'cash',   l:lang==='en'?'Pay on arrival':'Pagar presencialmente', s:lang==='en'?'Cash or card on site':'Dinheiro ou cartão no local' },
       ].map(o => (
         <button key={o.k} type="button" onClick={() => set(o.k)}
           className={`w-full text-left p-3.5 rounded-xl border-2 transition-all ${v===o.k?'border-ocean-700 bg-ocean-50':'border-n-200 hover:border-n-300'}`}>
@@ -272,7 +272,7 @@ function PO({ lang, v, set }) {
   );
 }
 
-// â”€â”€ Success screen â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Success screen ───────────────────────────────────
 function BS({ resId, lang, type, onClose }) {
   const T = { hotel:{pt:'Quarto reservado!',en:'Room booked!'},activity:{pt:'Tour reservado!',en:'Tour booked!'},rentacar:{pt:'Viatura reservada!',en:'Vehicle reserved!'},restaurant:{pt:'Mesa reservada!',en:'Table reserved!'} };
   const m = T[type] || T.activity;
@@ -283,11 +283,11 @@ function BS({ resId, lang, type, onClose }) {
       </div>
       <h3 className="font-display font-bold text-xl text-n-900 mb-3">{lang==='en'?m.en:m.pt}</h3>
       <p className="text-sm font-body text-n-500 leading-relaxed mb-6 max-w-xs mx-auto">
-        {lang==='en'?'You will receive a confirmation email shortly. The operator will confirm within 24h.':'ReceberÃ¡ um email de confirmaÃ§Ã£o em breve. O operador confirmarÃ¡ a sua reserva em 24h.'}
+        {lang==='en'?'You will receive a confirmation email shortly. The operator will confirm within 24h.':'Receberá um email de confirmação em breve. O operador confirmará a sua reserva em 24h.'}
       </p>
       {resId && (
         <div className="bg-n-50 border border-n-200 rounded-xl px-4 py-3 inline-block mb-6">
-          <p className="text-xs text-n-400 font-body mb-1">{lang==='en'?'Booking reference':'ReferÃªncia da reserva'}</p>
+          <p className="text-xs text-n-400 font-body mb-1">{lang==='en'?'Booking reference':'Referência da reserva'}</p>
           <p className="font-mono font-bold text-n-800 text-sm tracking-widest">{resId.slice(0,8).toUpperCase()}</p>
         </div>
       )}
@@ -298,7 +298,7 @@ function BS({ resId, lang, type, onClose }) {
   );
 }
 
-// â”€â”€ Modal shell â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Modal shell ──────────────────────────────────────
 function MS({ icon, title, step, lang, onClose, children, onPrev, onNext, nextLabel, nextDis, sub, err, ok }) {
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-ocean-900/60 backdrop-blur-sm p-0 sm:p-4">
@@ -347,7 +347,7 @@ function MS({ icon, title, step, lang, onClose, children, onPrev, onNext, nextLa
   );
 }
 
-// â”€â”€ Submit helper â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Submit helper ────────────────────────────────────
 async function postReservation(slug, payload) {
   const r = await fetch(`${API}/public/${slug}/reservations`, {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -358,7 +358,7 @@ async function postReservation(slug, payload) {
   return j.data?.id || 'ok';
 }
 
-/* â”€â”€ HotelModal â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── HotelModal ───────────────────────────────────── */
 function HotelModal({ unit, op, slug, lang, onClose }) {
   const [step, ss]     = useState(1);
   const [ci, sci]      = useState('');
@@ -390,16 +390,16 @@ function HotelModal({ unit, op, slug, lang, onClose }) {
     if (step===1) {
       if (!ci||!co)  { se(lang==='en'?'Select both dates':'Seleccione ambas as datas'); return false; }
       if (co<=ci)    { se(lang==='en'?'Check-out must be after check-in':'Check-out deve ser posterior ao check-in'); return false; }
-      if (!avail?.disponivel) { se(lang==='en'?'Room unavailable for these dates':'Quarto indisponÃ­vel nestas datas'); return false; }
+      if (!avail?.disponivel) { se(lang==='en'?'Room unavailable for these dates':'Quarto indisponível nestas datas'); return false; }
     }
-    if (step===2 && (!info.name||!info.email)) { se(lang==='en'?'Name and email required':'Nome e email obrigatÃ³rios'); return false; }
+    if (step===2 && (!info.name||!info.email)) { se(lang==='en'?'Name and email required':'Nome e email obrigatórios'); return false; }
     se(''); return true;
   }
 
   async function submit() {
     ssub(true); se('');
     try {
-      const notes = [`${adults} ${lang==='en'?'adults':'adultos'}, ${kids} ${lang==='en'?'children':'crianÃ§as'}`, info.notes].filter(Boolean).join('. ');
+      const notes = [`${adults} ${lang==='en'?'adults':'adultos'}, ${kids} ${lang==='en'?'children':'crianças'}`, info.notes].filter(Boolean).join('. ');
       sr(await postReservation(slug, { unit_id:unit.id, customer_name:info.name, customer_email:info.email, customer_phone:info.phone||null, customer_country:info.country||null, check_in:ci, check_out:co, guests:adults+kids, notes }));
     } catch(e) { se(e.message); } finally { ssub(false); }
   }
@@ -412,7 +412,7 @@ function HotelModal({ unit, op, slug, lang, onClose }) {
     { label:'Check-in',                        value:ci },
     { label:'Check-out',                       value:co },
     { label:lang==='en'?'Nights':'Noites',     value:`${nights}` },
-    { label:lang==='en'?'Guests':'HÃ³spedes',   value:`${adults} ${lang==='en'?'adults':'adultos'}${kids>0?` + ${kids} ${lang==='en'?'children':'crianÃ§as'}`:''}`},
+    { label:lang==='en'?'Guests':'Hóspedes',   value:`${adults} ${lang==='en'?'adults':'adultos'}${kids>0?` + ${kids} ${lang==='en'?'children':'crianças'}`:''}`},
     ...(total ? [{ label:'Total', value:total, hi:true }] : []),
   ];
 
@@ -423,7 +423,7 @@ function HotelModal({ unit, op, slug, lang, onClose }) {
       {resId ? <div className="p-5"><BS resId={resId} lang={lang} type="hotel" onClose={onClose} /></div>
       : step===1 ? (
         <div className="p-5 space-y-4">
-          <p className={SH}>{lang==='en'?'Select dates & guests':'Seleccione datas e hÃ³spedes'}</p>
+          <p className={SH}>{lang==='en'?'Select dates & guests':'Seleccione datas e hóspedes'}</p>
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className={LB}>Check-in *</label>
@@ -443,17 +443,17 @@ function HotelModal({ unit, op, slug, lang, onClose }) {
           {(chk || avail) && (
             <div className={`rounded-xl px-4 py-3 flex items-center gap-2 text-sm font-body font-semibold ${chk?'bg-n-50 text-n-400':avail?.disponivel?'bg-success-light text-success':'bg-error-light text-error'}`}>
               {chk ? <><div className="w-3.5 h-3.5 rounded-full border-2 border-ocean-300 border-t-ocean-700 animate-spin flex-shrink-0" />{lang==='en'?'Checking availability...':'A verificar disponibilidade...'}</>
-                   : <>{avail?.disponivel?(lang==='en'?'Available':'DisponÃ­vel'):(lang==='en'?'Not available for these dates':'IndisponÃ­vel nestas datas')}</>}
+                   : <>{avail?.disponivel?(lang==='en'?'Available':'Disponível'):(lang==='en'?'Not available for these dates':'Indisponível nestas datas')}</>}
             </div>
           )}
           <div className="grid grid-cols-2 gap-4">
             <Cnt label={lang==='en'?'Adults (1-10)':'Adultos (1-10)'} val={adults} set={sa} min={1} max={10} />
-            <Cnt label={lang==='en'?'Children (0-5)':'CrianÃ§as (0-5)'} val={kids} set={sk} min={0} max={5} />
+            <Cnt label={lang==='en'?'Children (0-5)':'Crianças (0-5)'} val={kids} set={sk} min={0} max={5} />
           </div>
         </div>
       ) : step===2 ? (
         <div className="p-5">
-          <p className={SH}>{lang==='en'?'Guest details':'Dados do hÃ³spede'}</p>
+          <p className={SH}>{lang==='en'?'Guest details':'Dados do hóspede'}</p>
           <GF d={info} set={si} lang={lang}>
             <div>
               <label className={LB}>{lang==='en'?'Special requests (optional)':'Pedidos especiais (opcional)'}</label>
@@ -467,7 +467,7 @@ function HotelModal({ unit, op, slug, lang, onClose }) {
         <div className="p-5 space-y-4">
           <p className={SH}>{lang==='en'?'Review & payment':'Resumo e pagamento'}</p>
           <ST lines={sumL} />
-          <p className="text-xs font-body font-semibold text-n-700">{lang==='en'?'Payment method':'MÃ©todo de pagamento'}</p>
+          <p className="text-xs font-body font-semibold text-n-700">{lang==='en'?'Payment method':'Método de pagamento'}</p>
           <PO lang={lang} v={pay} set={sp} />
         </div>
       )}
@@ -475,7 +475,7 @@ function HotelModal({ unit, op, slug, lang, onClose }) {
   );
 }
 
-/* â”€â”€ ActivityModal â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── ActivityModal ────────────────────────────────── */
 function ActivityModal({ unit, op, slug, lang, onClose }) {
   const [step, ss]    = useState(1);
   const [date, sd]    = useState('');
@@ -495,17 +495,17 @@ function ActivityModal({ unit, op, slug, lang, onClose }) {
   function valid() {
     if (step===1) {
       if (!date)        { se(lang==='en'?'Select a date':'Seleccione uma data'); return false; }
-      if (!time)        { se(lang==='en'?'Select a time slot':'Seleccione um horÃ¡rio'); return false; }
-      if (adults < 1)   { se(lang==='en'?'At least 1 adult required':'MÃ­nimo 1 adulto'); return false; }
+      if (!time)        { se(lang==='en'?'Select a time slot':'Seleccione um horário'); return false; }
+      if (adults < 1)   { se(lang==='en'?'At least 1 adult required':'Mínimo 1 adulto'); return false; }
     }
-    if (step===2 && (!info.name||!info.email)) { se(lang==='en'?'Name and email required':'Nome e email obrigatÃ³rios'); return false; }
+    if (step===2 && (!info.name||!info.email)) { se(lang==='en'?'Name and email required':'Nome e email obrigatórios'); return false; }
     se(''); return true;
   }
 
   async function submit() {
     ssub(true); se('');
     try {
-      const notes = [`${lang==='en'?'Time':'Hora'}: ${time}`, `${adults} ${lang==='en'?'adults':'adultos'}, ${kids} ${lang==='en'?'children':'crianÃ§as'}`, info.needs ? (lang==='en'?'Needs:':'Necessidades:')+' '+info.needs : ''].filter(Boolean).join('. ');
+      const notes = [`${lang==='en'?'Time':'Hora'}: ${time}`, `${adults} ${lang==='en'?'adults':'adultos'}, ${kids} ${lang==='en'?'children':'crianças'}`, info.needs ? (lang==='en'?'Needs:':'Necessidades:')+' '+info.needs : ''].filter(Boolean).join('. ');
       sr(await postReservation(slug, { unit_id:unit.id, customer_name:info.name, customer_email:info.email, customer_phone:info.phone||null, customer_country:info.country||null, check_in:date, check_out:date, guests:adults+kids, notes }));
     } catch(e) { se(e.message); } finally { ssub(false); }
   }
@@ -516,8 +516,8 @@ function ActivityModal({ unit, op, slug, lang, onClose }) {
   const sumL = [
     { label:lang==='en'?'Tour / Activity':'Tour / Actividade', value:unit.name },
     { label:lang==='en'?'Date':'Data', value:date },
-    { label:lang==='en'?'Time':'HorÃ¡rio', value:time },
-    { label:lang==='en'?'Group':'Grupo', value:`${adults} ${lang==='en'?'adults':'adultos'}${kids>0?` + ${kids} ${lang==='en'?'children':'crianÃ§as'}`:''}`},
+    { label:lang==='en'?'Time':'Horário', value:time },
+    { label:lang==='en'?'Group':'Grupo', value:`${adults} ${lang==='en'?'adults':'adultos'}${kids>0?` + ${kids} ${lang==='en'?'children':'crianças'}`:''}`},
     ...(total ? [{ label:'Total', value:total, hi:true }] : []),
   ];
 
@@ -527,14 +527,14 @@ function ActivityModal({ unit, op, slug, lang, onClose }) {
       {resId ? <div className="p-5"><BS resId={resId} lang={lang} type="activity" onClose={onClose} /></div>
       : step===1 ? (
         <div className="p-5 space-y-4">
-          <p className={SH}>{lang==='en'?'Select date, time & group':'Seleccione data, horÃ¡rio e grupo'}</p>
+          <p className={SH}>{lang==='en'?'Select date, time & group':'Seleccione data, horário e grupo'}</p>
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className={LB}>{lang==='en'?'Date':'Data'} *</label>
               <input type="date" className={IN} min={today} value={date} onChange={e=>sd(e.target.value)} />
             </div>
             <div>
-              <label className={LB}>{lang==='en'?'Time slot':'HorÃ¡rio'} *</label>
+              <label className={LB}>{lang==='en'?'Time slot':'Horário'} *</label>
               <select className={SEL} value={time} onChange={e=>st(e.target.value)}>
                 <option value="">{lang==='en'?'-- Select --':'-- Seleccionar --'}</option>
                 {TOUR_SLOTS.map(h => <option key={h} value={h}>{h}</option>)}
@@ -549,7 +549,7 @@ function ActivityModal({ unit, op, slug, lang, onClose }) {
           )}
           <div className="grid grid-cols-2 gap-4">
             <Cnt label={lang==='en'?'Adults (1-20)':'Adultos (1-20)'} val={adults} set={sa} min={1} max={20} />
-            <Cnt label={lang==='en'?'Children (0-10)':'CrianÃ§as (0-10)'} val={kids} set={sk} min={0} max={10} />
+            <Cnt label={lang==='en'?'Children (0-10)':'Crianças (0-10)'} val={kids} set={sk} min={0} max={10} />
           </div>
         </div>
       ) : step===2 ? (
@@ -568,7 +568,7 @@ function ActivityModal({ unit, op, slug, lang, onClose }) {
         <div className="p-5 space-y-4">
           <p className={SH}>{lang==='en'?'Review & payment':'Resumo e pagamento'}</p>
           <ST lines={sumL} />
-          <p className="text-xs font-body font-semibold text-n-700">{lang==='en'?'Payment method':'MÃ©todo de pagamento'}</p>
+          <p className="text-xs font-body font-semibold text-n-700">{lang==='en'?'Payment method':'Método de pagamento'}</p>
           <PO lang={lang} v={pay} set={sp} />
         </div>
       )}
@@ -576,7 +576,7 @@ function ActivityModal({ unit, op, slug, lang, onClose }) {
   );
 }
 
-/* â”€â”€ RentACarModal â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── RentACarModal ────────────────────────────────── */
 function RentACarModal({ unit, op, slug, lang, onClose }) {
   const [step, ss]    = useState(1);
   const [pu, spu]     = useState({ date:'', time:'09:00', loc:'' });
@@ -595,13 +595,13 @@ function RentACarModal({ unit, op, slug, lang, onClose }) {
 
   function valid() {
     if (step===1) {
-      if (!pu.date||!re.date) { se(lang==='en'?'Select pickup and return dates':'Seleccione datas de levantamento e devoluÃ§Ã£o'); return false; }
-      if (re.date <= pu.date) { se(lang==='en'?'Return date must be after pickup':'Data de devoluÃ§Ã£o deve ser posterior ao levantamento'); return false; }
+      if (!pu.date||!re.date) { se(lang==='en'?'Select pickup and return dates':'Seleccione datas de levantamento e devolução'); return false; }
+      if (re.date <= pu.date) { se(lang==='en'?'Return date must be after pickup':'Data de devolução deve ser posterior ao levantamento'); return false; }
       if (!pu.loc)            { se(lang==='en'?'Select pickup location':'Seleccione o local de levantamento'); return false; }
     }
     if (step===2) {
-      if (!drv.name||!drv.email) { se(lang==='en'?'Name and email required':'Nome e email obrigatÃ³rios'); return false; }
-      if (!drv.license)          { se(lang==='en'?'Driving licence number required':'NÃºmero de carta de conduÃ§Ã£o obrigatÃ³rio'); return false; }
+      if (!drv.name||!drv.email) { se(lang==='en'?'Name and email required':'Nome e email obrigatórios'); return false; }
+      if (!drv.license)          { se(lang==='en'?'Driving licence number required':'Número de carta de condução obrigatório'); return false; }
     }
     se(''); return true;
   }
@@ -612,7 +612,7 @@ function RentACarModal({ unit, op, slug, lang, onClose }) {
       const extNames = extList.map(e => lang==='en'?e.en:e.pt).join(', ');
       const notes = [
         `${lang==='en'?'Pickup':'Levantamento'}: ${pu.loc} ${pu.date} ${pu.time}`,
-        `${lang==='en'?'Return':'DevoluÃ§Ã£o'}: ${re.loc||pu.loc} ${re.date} ${re.time}`,
+        `${lang==='en'?'Return':'Devolução'}: ${re.loc||pu.loc} ${re.date} ${re.time}`,
         `${lang==='en'?'Driver':'Condutor'}: ${drv.age?`${drv.age}${lang==='en'?' years old':' anos'}, `:''} ${lang==='en'?'Licence:':'Carta:'} ${drv.license} (${drv.licCountry||''})`,
         extNames ? `${lang==='en'?'Extras':'Extras'}: ${extNames}` : '',
       ].filter(Boolean).join('. ');
@@ -625,10 +625,10 @@ function RentACarModal({ unit, op, slug, lang, onClose }) {
   const today = TODAY_STR();
   const sumL = [
     { label:lang==='en'?'Vehicle':'Viatura',     value:unit.name },
-    { label:lang==='en'?'Pickup':'Levantamento', value:`${pu.date} ${pu.time} Â· ${pu.loc}` },
-    { label:lang==='en'?'Return':'DevoluÃ§Ã£o',    value:`${re.date} ${re.time} Â· ${re.loc||pu.loc}` },
-    { label:lang==='en'?'Duration':'DuraÃ§Ã£o',    value:`${days} ${lang==='en'?(days===1?'day':'days'):(days===1?'dia':'dias')}` },
-    ...(extList.length ? [{ label:lang==='en'?'Extras':'Extras', value:extList.map(e=>lang==='en'?e.en:e.pt).join(' Â· ') }] : []),
+    { label:lang==='en'?'Pickup':'Levantamento', value:`${pu.date} ${pu.time} · ${pu.loc}` },
+    { label:lang==='en'?'Return':'Devolução',    value:`${re.date} ${re.time} · ${re.loc||pu.loc}` },
+    { label:lang==='en'?'Duration':'Duração',    value:`${days} ${lang==='en'?(days===1?'day':'days'):(days===1?'dia':'dias')}` },
+    ...(extList.length ? [{ label:lang==='en'?'Extras':'Extras', value:extList.map(e=>lang==='en'?e.en:e.pt).join(' · ') }] : []),
     ...(total ? [{ label:'Total', value:total, hi:true }] : []),
   ];
 
@@ -638,7 +638,7 @@ function RentACarModal({ unit, op, slug, lang, onClose }) {
       {resId ? <div className="p-5"><BS resId={resId} lang={lang} type="rentacar" onClose={onClose} /></div>
       : step===1 ? (
         <div className="p-5 space-y-4">
-          <p className={SH}>{lang==='en'?'Pickup & return details':'Levantamento e devoluÃ§Ã£o'}</p>
+          <p className={SH}>{lang==='en'?'Pickup & return details':'Levantamento e devolução'}</p>
           <div>
             <p className="text-xs font-body font-bold text-ocean-700 uppercase tracking-widest mb-3">{lang==='en'?'Pickup':'Levantamento'}</p>
             <div className="grid grid-cols-2 gap-3 mb-3">
@@ -660,7 +660,7 @@ function RentACarModal({ unit, op, slug, lang, onClose }) {
             </div>
           </div>
           <div>
-            <p className="text-xs font-body font-bold text-ocean-700 uppercase tracking-widest mb-3">{lang==='en'?'Return':'DevoluÃ§Ã£o'}</p>
+            <p className="text-xs font-body font-bold text-ocean-700 uppercase tracking-widest mb-3">{lang==='en'?'Return':'Devolução'}</p>
             <div className="grid grid-cols-2 gap-3 mb-3">
               <div>
                 <label className={LB}>{lang==='en'?'Date':'Data'} *</label>
@@ -692,11 +692,11 @@ function RentACarModal({ unit, op, slug, lang, onClose }) {
           <GF d={drv} set={sd} lang={lang}>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className={LB}>{lang==='en'?'Driving licence no.':'NÂº carta de conduÃ§Ã£o'} *</label>
+                <label className={LB}>{lang==='en'?'Driving licence no.':'Nº carta de condução'} *</label>
                 <input className={IN} value={drv.license} onChange={e=>sd(d=>({...d,license:e.target.value}))} required placeholder="PT-123456" />
               </div>
               <div>
-                <label className={LB}>{lang==='en'?'Issuing country':'PaÃ­s emissor'}</label>
+                <label className={LB}>{lang==='en'?'Issuing country':'País emissor'}</label>
                 <input className={IN} value={drv.licCountry} onChange={e=>sd(d=>({...d,licCountry:e.target.value}))} placeholder="Portugal" />
               </div>
             </div>
@@ -726,7 +726,7 @@ function RentACarModal({ unit, op, slug, lang, onClose }) {
         <div className="p-5 space-y-4">
           <p className={SH}>{lang==='en'?'Review & payment':'Resumo e pagamento'}</p>
           <ST lines={sumL} />
-          <p className="text-xs font-body font-semibold text-n-700">{lang==='en'?'Payment method':'MÃ©todo de pagamento'}</p>
+          <p className="text-xs font-body font-semibold text-n-700">{lang==='en'?'Payment method':'Método de pagamento'}</p>
           <PO lang={lang} v={pay} set={sp} />
         </div>
       )}
@@ -734,7 +734,7 @@ function RentACarModal({ unit, op, slug, lang, onClose }) {
   );
 }
 
-/* â”€â”€ RestaurantModal â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── RestaurantModal ──────────────────────────────── */
 function RestaurantModal({ unit, op, slug, lang, onClose }) {
   const [step, ss]     = useState(1);
   const [date, sd]     = useState('');
@@ -749,9 +749,9 @@ function RestaurantModal({ unit, op, slug, lang, onClose }) {
   function valid() {
     if (step===1) {
       if (!date) { se(lang==='en'?'Select a date':'Seleccione uma data'); return false; }
-      if (!time) { se(lang==='en'?'Select a time':'Seleccione um horÃ¡rio'); return false; }
+      if (!time) { se(lang==='en'?'Select a time':'Seleccione um horário'); return false; }
     }
-    if (step===2 && (!info.name||!info.email)) { se(lang==='en'?'Name and email required':'Nome e email obrigatÃ³rios'); return false; }
+    if (step===2 && (!info.name||!info.email)) { se(lang==='en'?'Name and email required':'Nome e email obrigatórios'); return false; }
     se(''); return true;
   }
 
@@ -761,7 +761,7 @@ function RestaurantModal({ unit, op, slug, lang, onClose }) {
       const occLabel = OCCASIONS.find(o=>o.v===occasion)?.[lang==='en'?'en':'pt'] || '';
       const notes = [
         time ? `${lang==='en'?'Time':'Hora'}: ${time}` : '',
-        occLabel && occasion ? `${lang==='en'?'Occasion':'OcasiÃ£o'}: ${occLabel}` : '',
+        occLabel && occasion ? `${lang==='en'?'Occasion':'Ocasião'}: ${occLabel}` : '',
         info.notes,
       ].filter(Boolean).join('. ');
       sr(await postReservation(slug, { unit_id:unit.id, customer_name:info.name, customer_email:info.email, customer_phone:info.phone||null, customer_country:info.country||null, check_in:date, check_out:date, guests:party, notes }));
@@ -777,7 +777,7 @@ function RestaurantModal({ unit, op, slug, lang, onClose }) {
     { label:lang==='en'?'Date':'Data',   value:date },
     { label:lang==='en'?'Time':'Hora',   value:time },
     { label:lang==='en'?'Guests':'Pessoas', value:`${party}` },
-    ...(occasion ? [{ label:lang==='en'?'Occasion':'OcasiÃ£o', value:occLabel }] : []),
+    ...(occasion ? [{ label:lang==='en'?'Occasion':'Ocasião', value:occLabel }] : []),
   ];
 
   return (
@@ -786,7 +786,7 @@ function RestaurantModal({ unit, op, slug, lang, onClose }) {
       {resId ? <div className="p-5"><BS resId={resId} lang={lang} type="restaurant" onClose={onClose} /></div>
       : step===1 ? (
         <div className="p-5 space-y-4">
-          <p className={SH}>{lang==='en'?'Date, time & party size':'Data, hora e nÃºmero de pessoas'}</p>
+          <p className={SH}>{lang==='en'?'Date, time & party size':'Data, hora e número de pessoas'}</p>
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className={LB}>{lang==='en'?'Date':'Data'} *</label>
@@ -800,9 +800,9 @@ function RestaurantModal({ unit, op, slug, lang, onClose }) {
               </select>
             </div>
           </div>
-          <Cnt label={lang==='en'?'Number of guests (1-20)':'NÃºmero de pessoas (1-20)'} val={party} set={spa} min={1} max={20} />
+          <Cnt label={lang==='en'?'Number of guests (1-20)':'Número de pessoas (1-20)'} val={party} set={spa} min={1} max={20} />
           <div>
-            <label className={LB}>{lang==='en'?'Special occasion':'OcasiÃ£o especial'}</label>
+            <label className={LB}>{lang==='en'?'Special occasion':'Ocasião especial'}</label>
             <select className={SEL} value={occasion} onChange={e=>so(e.target.value)}>
               {OCCASIONS.map(o => <option key={o.v} value={o.v}>{lang==='en'?o.en:o.pt}</option>)}
             </select>
@@ -813,10 +813,10 @@ function RestaurantModal({ unit, op, slug, lang, onClose }) {
           <p className={SH}>{lang==='en'?'Contact details':'Dados de contacto'}</p>
           <GF d={info} set={si} lang={lang}>
             <div>
-              <label className={LB}>{lang==='en'?'Special requests (allergies, dietary, decoration...)':'Pedidos especiais (alergias, vegetariano, decoraÃ§Ã£o...)'}</label>
+              <label className={LB}>{lang==='en'?'Special requests (allergies, dietary, decoration...)':'Pedidos especiais (alergias, vegetariano, decoração...)'}</label>
               <textarea className={IN+' resize-none'} rows={3} value={info.notes}
                 onChange={e=>si(i=>({...i,notes:e.target.value}))}
-                placeholder={lang==='en'?'Vegetarian menu, allergy to nuts, birthday cake...':'Menu vegetariano, alergia a frutos secos, bolo de aniversÃ¡rio...'} />
+                placeholder={lang==='en'?'Vegetarian menu, allergy to nuts, birthday cake...':'Menu vegetariano, alergia a frutos secos, bolo de aniversário...'} />
             </div>
           </GF>
         </div>
@@ -826,7 +826,7 @@ function RestaurantModal({ unit, op, slug, lang, onClose }) {
           <ST lines={sumL} />
           <div className="bg-sand-50 border border-sand-200 rounded-xl px-4 py-3 text-sm font-body text-n-700 leading-relaxed">
             <span className="font-semibold text-sand-700">{lang==='en'?'No advance payment required.':'Sem pagamento antecipado.'}</span>
-            {' '}{lang==='en'?'Payment on arrival. We will confirm your reservation within 2 hours.':'Pagamento Ã  chegada. Confirmaremos a sua reserva em 2 horas.'}
+            {' '}{lang==='en'?'Payment on arrival. We will confirm your reservation within 2 hours.':'Pagamento à chegada. Confirmaremos a sua reserva em 2 horas.'}
           </div>
         </div>
       )}
@@ -834,7 +834,7 @@ function RestaurantModal({ unit, op, slug, lang, onClose }) {
   );
 }
 
-/* â”€â”€ BookingModal dispatcher â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── BookingModal dispatcher ─────────────────────── */
 function BookingModal({ unit, op, slug, lang, onClose }) {
   if (!unit || !op) return null;
   const t = op.operator_type;
@@ -847,7 +847,7 @@ function BookingModal({ unit, op, slug, lang, onClose }) {
 }
 
 
-/* â”€â”€ Lightbox â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Lightbox ─────────────────────────────────────── */
 function Lightbox({ images, idx, onClose, onMove }) {
   useEffect(() => {
     const handler = e => {
@@ -882,7 +882,7 @@ function Lightbox({ images, idx, onClose, onMove }) {
   );
 }
 
-/* â”€â”€ ChatWidget â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── ChatWidget ───────────────────────────────────── */
 function ChatWidget({ slug, opName, lang }) {
   const [open, setOpen]       = useState(false);
   const [message, setMessage] = useState('');
@@ -932,7 +932,7 @@ function ChatWidget({ slug, opName, lang }) {
           ) : (
             <form onSubmit={send} className="p-4 space-y-2">
               <div className="bg-n-50 rounded-xl px-3 py-2.5 text-xs font-body text-n-600 leading-relaxed mb-3">
-                {lang === 'en' ? 'Hello! How can I help you?' : 'OlÃ¡! Como posso ajudar?'}
+                {lang === 'en' ? 'Hello! How can I help you?' : 'Olá! Como posso ajudar?'}
               </div>
               <input type="email" required value={email} onChange={e => setEmail(e.target.value)}
                 placeholder="Email" className="w-full border border-n-200 rounded-lg px-3 py-2 text-xs font-body focus:outline-none focus:border-ocean-500" />
@@ -957,15 +957,15 @@ function ChatWidget({ slug, opName, lang }) {
   );
 }
 
-/* â”€â”€ Not Found â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Not Found ────────────────────────────────────── */
 function NotFoundPage() {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-n-50 p-6 text-center">
       <Logo size="lg" />
       <div className="mt-8 max-w-sm">
-        <h2 className="font-display font-bold text-xl text-n-900 mb-3">PÃ¡gina nÃ£o encontrada</h2>
+        <h2 className="font-display font-bold text-xl text-n-900 mb-3">Página não encontrada</h2>
         <p className="text-sm font-body text-n-500 leading-relaxed mb-6">
-          Este link de reserva nÃ£o existe ou o operador ainda nÃ£o estÃ¡ activo na plataforma.
+          Este link de reserva não existe ou o operador ainda não está activo na plataforma.
         </p>
         <a href="https://saldesk.cv/discover/"
           className="inline-flex items-center gap-2 bg-ocean-700 text-white font-body font-semibold px-6 py-3 rounded-xl hover:bg-ocean-500 transition-colors text-sm">
@@ -976,7 +976,7 @@ function NotFoundPage() {
   );
 }
 
-/* â”€â”€ Skeleton â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Skeleton ─────────────────────────────────────── */
 function SkeletonPage() {
   return (
     <div className="min-h-screen bg-n-50 animate-pulse">
@@ -997,9 +997,9 @@ function SkeletonPage() {
   );
 }
 
-/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+/* ══════════════════════════════════════════════════
    MAIN COMPONENT
-â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
+══════════════════════════════════════════════════ */
 export default function PublicBooking() {
   const { slug } = useParams();
 
@@ -1093,39 +1093,39 @@ export default function PublicBooking() {
   }));
 
   const whatsappUrl = op.whatsapp
-    ? `https://wa.me/${op.whatsapp.replace(/\D/g, '')}?text=${encodeURIComponent(lang === 'en' ? `Hello, I saw your profile on SalDesk and would like to know more about ${op.name}.` : `OlÃ¡, vi o vosso perfil no SalDesk e gostaria de saber mais sobre ${op.name}.`)}`
+    ? `https://wa.me/${op.whatsapp.replace(/\D/g, '')}?text=${encodeURIComponent(lang === 'en' ? `Hello, I saw your profile on SalDesk and would like to know more about ${op.name}.` : `Olá, vi o vosso perfil no SalDesk e gostaria de saber mais sobre ${op.name}.`)}`
     : null;
 
   const isTopRated    = avgRating >= 4.5 && reviews.length >= 3;
   const isVerified    = !!op.onboarding_complete;
 
   const navLinks = [
-    { id: 'home',       pt: 'InÃ­cio',     en: 'Home'     },
-    { id: 'servicos',   pt: 'ServiÃ§os',   en: 'Services' },
+    { id: 'home',       pt: 'Início',     en: 'Home'     },
+    { id: 'servicos',   pt: 'Serviços',   en: 'Services' },
     { id: 'galeria',    pt: 'Galeria',    en: 'Gallery'  },
-    { id: 'avaliacoes', pt: 'AvaliaÃ§Ãµes', en: 'Reviews'  },
+    { id: 'avaliacoes', pt: 'Avaliações', en: 'Reviews'  },
     { id: 'contacto',   pt: 'Contacto',   en: 'Contact'  },
   ];
 
   const FAQ_ITEMS = [
     {
-      q: lang === 'en' ? 'How do I book?' : 'Como faÃ§o uma reserva?',
-      a: lang === 'en' ? 'Select a service, choose your dates, fill in your details and choose a payment method. You\'ll receive a confirmation by email.' : 'Seleccione um serviÃ§o, escolha as datas, preencha os seus dados e escolha o mÃ©todo de pagamento. ReceberÃ¡ uma confirmaÃ§Ã£o por email.',
+      q: lang === 'en' ? 'How do I book?' : 'Como faço uma reserva?',
+      a: lang === 'en' ? 'Select a service, choose your dates, fill in your details and choose a payment method. You\'ll receive a confirmation by email.' : 'Seleccione um serviço, escolha as datas, preencha os seus dados e escolha o método de pagamento. Receberá uma confirmação por email.',
     },
     {
       q: lang === 'en' ? 'Can I cancel my booking?' : 'Posso cancelar a minha reserva?',
-      a: lang === 'en' ? 'Please contact us via WhatsApp or email to discuss cancellation options for your booking.' : 'Por favor contacte-nos via WhatsApp ou email para discutir as opÃ§Ãµes de cancelamento da sua reserva.',
+      a: lang === 'en' ? 'Please contact us via WhatsApp or email to discuss cancellation options for your booking.' : 'Por favor contacte-nos via WhatsApp ou email para discutir as opções de cancelamento da sua reserva.',
     },
     {
-      q: lang === 'en' ? 'What payment methods are accepted?' : 'Quais os mÃ©todos de pagamento aceites?',
-      a: lang === 'en' ? 'We accept international cards via PayPal, Cape Verdean cards via SISP Vinti4, and cash or card on arrival.' : 'Aceitamos cartÃ£o internacional via PayPal, cartÃ£o cabo-verdiano via SISP Vinti4, e dinheiro ou cartÃ£o no local.',
+      q: lang === 'en' ? 'What payment methods are accepted?' : 'Quais os métodos de pagamento aceites?',
+      a: lang === 'en' ? 'We accept international cards via PayPal, Cape Verdean cards via SISP Vinti4, and cash or card on arrival.' : 'Aceitamos cartão internacional via PayPal, cartão cabo-verdiano via SISP Vinti4, e dinheiro ou cartão no local.',
     },
   ];
 
   return (
     <div className="min-h-screen bg-white">
 
-      {/* â”€â”€ Navbar â”€â”€ */}
+      {/* ── Navbar ── */}
       <nav className={`fixed top-0 left-0 right-0 z-40 transition-all duration-300 ${navScrolled ? 'bg-white shadow-md' : 'bg-transparent'}`}>
         <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between gap-4">
           {/* Logo */}
@@ -1188,7 +1188,7 @@ export default function PublicBooking() {
         )}
       </nav>
 
-      {/* â”€â”€ Hero â”€â”€ */}
+      {/* ── Hero ── */}
       <section id="home">
         <div className="relative">
           <HeroCarousel images={op.images || []} />
@@ -1225,7 +1225,7 @@ export default function PublicBooking() {
                   <div className="flex items-center gap-1.5">
                     <StarRating rating={avgRating} size={14} />
                     <span className="text-white/85 text-sm font-body font-semibold">
-                      {avgRating.toFixed(1)} ({reviews.length} {lang === 'en' ? 'reviews' : 'avaliaÃ§Ãµes'})
+                      {avgRating.toFixed(1)} ({reviews.length} {lang === 'en' ? 'reviews' : 'avaliações'})
                     </span>
                   </div>
                 )}
@@ -1238,7 +1238,7 @@ export default function PublicBooking() {
                 </button>
                 <button onClick={() => scrollTo('servicos')}
                   className="flex items-center gap-2 bg-white/15 backdrop-blur-sm border border-white/30 text-white font-body font-semibold px-6 py-3 rounded-full hover:bg-white/25 transition-all text-sm">
-                  {lang === 'en' ? 'View Services' : 'Ver ServiÃ§os'}
+                  {lang === 'en' ? 'View Services' : 'Ver Serviços'}
                 </button>
               </div>
             </div>
@@ -1246,18 +1246,18 @@ export default function PublicBooking() {
         </div>
       </section>
 
-      {/* â”€â”€ Urgency strip â”€â”€ */}
+      {/* ── Urgency strip ── */}
       <div className="bg-ocean-700 text-white text-center py-2.5 px-4">
         <p className="text-xs font-body font-semibold">
           <span className="text-sand-400 font-bold">{viewerCount}</span>
-          {lang === 'en' ? ' people viewed this page today' : ' pessoas viram esta pÃ¡gina hoje'}
-          {units.length > 0 && <> Â· <span className="text-sand-400 font-bold">{units.length}</span> {lang === 'en' ? 'services available' : 'serviÃ§os disponÃ­veis'}</>}
+          {lang === 'en' ? ' people viewed this page today' : ' pessoas viram esta página hoje'}
+          {units.length > 0 && <> · <span className="text-sand-400 font-bold">{units.length}</span> {lang === 'en' ? 'services available' : 'serviços disponíveis'}</>}
         </p>
       </div>
 
       <div className="max-w-5xl mx-auto px-4 sm:px-6">
 
-        {/* â”€â”€ Sobre NÃ³s â”€â”€ */}
+        {/* ── Sobre Nós ── */}
         <section id="sobre" className="py-12 sm:py-16">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
             {op.logo_url && (
@@ -1267,7 +1267,7 @@ export default function PublicBooking() {
             )}
             <div className={op.logo_url ? '' : 'lg:col-span-2'}>
               <p className="text-xs font-body font-bold text-ocean-700 uppercase tracking-widest mb-2">
-                {lang === 'en' ? 'About us' : 'Sobre nÃ³s'}
+                {lang === 'en' ? 'About us' : 'Sobre nós'}
               </p>
               <h2 className="font-display font-bold text-2xl sm:text-3xl text-n-900 mb-4">{op.name}</h2>
               {op.description && (
@@ -1275,10 +1275,10 @@ export default function PublicBooking() {
               )}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 {[
-                  { icon: <MapPin size={18} strokeWidth={1.75} />, label: lang === 'en' ? 'Location' : 'LocalizaÃ§Ã£o', value: op.address?.split(',')[0] || 'Ilha do Sal' },
-                  { icon: <Globe size={18} strokeWidth={1.75} />, label: lang === 'en' ? 'Languages' : 'Idiomas', value: 'PT Â· EN' },
-                  { icon: <Award size={18} strokeWidth={1.75} />, label: lang === 'en' ? 'Type' : 'Tipo', value: TYPE_LABELS[op.operator_type] || 'ServiÃ§os' },
-                  { icon: <Star size={18} strokeWidth={1.75} />, label: lang === 'en' ? 'Rating' : 'AvaliaÃ§Ã£o', value: avgRating > 0 ? `${avgRating.toFixed(1)}/5` : (lang === 'en' ? 'New' : 'Novo') },
+                  { icon: <MapPin size={18} strokeWidth={1.75} />, label: lang === 'en' ? 'Location' : 'Localização', value: op.address?.split(',')[0] || 'Ilha do Sal' },
+                  { icon: <Globe size={18} strokeWidth={1.75} />, label: lang === 'en' ? 'Languages' : 'Idiomas', value: 'PT · EN' },
+                  { icon: <Award size={18} strokeWidth={1.75} />, label: lang === 'en' ? 'Type' : 'Tipo', value: TYPE_LABELS[op.operator_type] || 'Serviços' },
+                  { icon: <Star size={18} strokeWidth={1.75} />, label: lang === 'en' ? 'Rating' : 'Avaliação', value: avgRating > 0 ? `${avgRating.toFixed(1)}/5` : (lang === 'en' ? 'New' : 'Novo') },
                 ].map((item, i) => (
                   <div key={i} className="bg-n-50 border border-n-200 rounded-xl p-3 text-center">
                     <div className="w-8 h-8 rounded-full bg-ocean-50 flex items-center justify-center mx-auto mb-2 text-ocean-700">
@@ -1305,7 +1305,7 @@ export default function PublicBooking() {
           </div>
         </section>
 
-        {/* â”€â”€ ServiÃ§os â”€â”€ */}
+        {/* ── Serviços ── */}
         {units.length > 0 && (
           <section id="servicos" className="py-12 sm:py-16 border-t border-n-100">
             <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
@@ -1314,7 +1314,7 @@ export default function PublicBooking() {
                   {lang === 'en' ? 'What we offer' : 'O que oferecemos'}
                 </p>
                 <h2 className="font-display font-bold text-2xl sm:text-3xl text-n-900">
-                  {lang === 'en' ? 'Our Services' : 'Os Nossos ServiÃ§os'}
+                  {lang === 'en' ? 'Our Services' : 'Os Nossos Serviços'}
                 </h2>
               </div>
               <div className="flex items-center gap-1 bg-n-100 rounded-full p-1">
@@ -1332,7 +1332,7 @@ export default function PublicBooking() {
           </section>
         )}
 
-        {/* â”€â”€ Galeria â”€â”€ */}
+        {/* ── Galeria ── */}
         {galleryImgs.length > 0 && (
           <section id="galeria" className="py-12 sm:py-16 border-t border-n-100">
             <p className="text-xs font-body font-bold text-ocean-700 uppercase tracking-widest mb-2">
@@ -1361,7 +1361,7 @@ export default function PublicBooking() {
           </section>
         )}
 
-        {/* â”€â”€ AvaliaÃ§Ãµes â”€â”€ */}
+        {/* ── Avaliações ── */}
         {reviews.length > 0 && (
           <section id="avaliacoes" className="py-12 sm:py-16 border-t border-n-100">
             <p className="text-xs font-body font-bold text-ocean-700 uppercase tracking-widest mb-2">
@@ -1376,7 +1376,7 @@ export default function PublicBooking() {
                 <div className="text-center mb-5">
                   <p className="font-display font-extrabold text-5xl text-n-900">{avgRating.toFixed(1)}</p>
                   <StarRating rating={avgRating} size={18} />
-                  <p className="text-sm font-body text-n-400 mt-1">{reviews.length} {lang === 'en' ? 'reviews' : 'avaliaÃ§Ãµes'}</p>
+                  <p className="text-sm font-body text-n-400 mt-1">{reviews.length} {lang === 'en' ? 'reviews' : 'avaliações'}</p>
                 </div>
                 <div className="space-y-2">
                   {ratingBreakdown.map(({ r, count, pct }) => (
@@ -1423,7 +1423,7 @@ export default function PublicBooking() {
           </section>
         )}
 
-        {/* â”€â”€ FAQ â”€â”€ */}
+        {/* ── FAQ ── */}
         <section className="py-12 sm:py-16 border-t border-n-100">
           <p className="text-xs font-body font-bold text-ocean-700 uppercase tracking-widest mb-2">FAQ</p>
           <h2 className="font-display font-bold text-2xl sm:text-3xl text-n-900 mb-6">
@@ -1447,10 +1447,10 @@ export default function PublicBooking() {
           </div>
         </section>
 
-        {/* â”€â”€ LocalizaÃ§Ã£o â”€â”€ */}
+        {/* ── Localização ── */}
         <section id="localizacao" className="py-12 sm:py-16 border-t border-n-100">
           <p className="text-xs font-body font-bold text-ocean-700 uppercase tracking-widest mb-2">
-            {lang === 'en' ? 'Location' : 'LocalizaÃ§Ã£o'}
+            {lang === 'en' ? 'Location' : 'Localização'}
           </p>
           <h2 className="font-display font-bold text-2xl sm:text-3xl text-n-900 mb-6">
             {lang === 'en' ? 'Where to find us' : 'Onde nos encontrar'}
@@ -1505,7 +1505,7 @@ export default function PublicBooking() {
           </div>
         </section>
 
-        {/* â”€â”€ Contacto â”€â”€ */}
+        {/* ── Contacto ── */}
         <section id="contacto" className="py-12 sm:py-16 border-t border-n-100">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
             <div>
@@ -1516,7 +1516,7 @@ export default function PublicBooking() {
                 {lang === 'en' ? 'Contact us' : 'Fale connosco'}
               </h2>
               <p className="font-body text-n-500 leading-relaxed mb-6">
-                {lang === 'en' ? 'Have questions? We respond within 24 hours.' : 'Tem dÃºvidas? Respondemos em 24 horas.'}
+                {lang === 'en' ? 'Have questions? We respond within 24 hours.' : 'Tem dúvidas? Respondemos em 24 horas.'}
               </p>
               <div className="space-y-3">
                 {op.phone && <div className="flex items-center gap-3 text-sm font-body text-n-600"><Phone size={16} strokeWidth={1.75} className="text-ocean-400" />{op.phone}</div>}
@@ -1577,7 +1577,7 @@ export default function PublicBooking() {
         </section>
       </div>
 
-      {/* â”€â”€ Footer â”€â”€ */}
+      {/* ── Footer ── */}
       <footer className="bg-ocean-900 text-white/70 mt-16">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 py-12">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 mb-8">
@@ -1588,7 +1588,7 @@ export default function PublicBooking() {
                 <Logo size="sm" white />
               )}
               <p className="text-sm font-body leading-relaxed mb-3 text-white/55">
-                {op.description ? op.description.slice(0, 120) + (op.description.length > 120 ? '...' : '') : `${op.name} â€” Ilha do Sal, Cabo Verde`}
+                {op.description ? op.description.slice(0, 120) + (op.description.length > 120 ? '...' : '') : `${op.name} — Ilha do Sal, Cabo Verde`}
               </p>
               {avgRating > 0 && (
                 <div className="flex items-center gap-2">
@@ -1607,7 +1607,7 @@ export default function PublicBooking() {
             </div>
             <div>
               <h4 className="font-display font-bold text-sm text-white mb-3">
-                {lang === 'en' ? 'Navigation' : 'NavegaÃ§Ã£o'}
+                {lang === 'en' ? 'Navigation' : 'Navegação'}
               </h4>
               <ul className="space-y-2">
                 {navLinks.map(l => (
@@ -1637,7 +1637,7 @@ export default function PublicBooking() {
               <button onClick={() => setBook(units[0] || null)}
                 className="w-full bg-sand-500 text-white font-body font-semibold text-sm py-3 rounded-xl hover:bg-sand-600 transition-colors flex items-center justify-center gap-2 mb-3">
                 <Calendar size={14} strokeWidth={1.75} />
-                {lang === 'en' ? 'Reserve a service' : 'Reservar um serviÃ§o'}
+                {lang === 'en' ? 'Reserve a service' : 'Reservar um serviço'}
               </button>
               {whatsappUrl && (
                 <a href={whatsappUrl} target="_blank" rel="noopener noreferrer"
@@ -1650,7 +1650,7 @@ export default function PublicBooking() {
           </div>
           <div className="border-t border-white/10 pt-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs font-body">
             <p className="text-white/40">
-              Â© 2026 {op.name} Â· Ilha do Sal, Cabo Verde
+              © 2026 {op.name} · Ilha do Sal, Cabo Verde
             </p>
             <p className="text-white/35">
               {lang === 'en' ? 'Powered by' : 'Plataforma'}{' '}
@@ -1662,7 +1662,7 @@ export default function PublicBooking() {
         </div>
       </footer>
 
-      {/* â”€â”€ Bottom CTA bar (mobile) â”€â”€ */}
+      {/* ── Bottom CTA bar (mobile) ── */}
       {units.length > 0 && (
         <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-n-200 px-4 py-3 flex gap-3 z-30 sm:hidden shadow-lg">
           <button onClick={() => setBook(units[0])}
@@ -1679,7 +1679,7 @@ export default function PublicBooking() {
         </div>
       )}
 
-      {/* â”€â”€ WhatsApp FAB â”€â”€ */}
+      {/* ── WhatsApp FAB ── */}
       {whatsappUrl && (
         <a href={whatsappUrl} target="_blank" rel="noopener noreferrer"
           className="fixed bottom-20 sm:bottom-6 right-4 z-30 w-13 h-13 sm:w-14 sm:h-14 rounded-full bg-[#25D366] flex items-center justify-center shadow-xl hover:scale-110 transition-transform"
@@ -1689,10 +1689,10 @@ export default function PublicBooking() {
         </a>
       )}
 
-      {/* â”€â”€ Chat widget â”€â”€ */}
+      {/* ── Chat widget ── */}
       <ChatWidget slug={slug} opName={op.name} lang={lang} />
 
-      {/* â”€â”€ Modals â”€â”€ */}
+      {/* ── Modals ── */}
       {bookUnit !== null && bookUnit !== undefined && (
         <BookingModal
           unit={bookUnit}
