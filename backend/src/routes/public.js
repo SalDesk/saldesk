@@ -10,6 +10,8 @@ const {
   cmsBanners,
   publicReviews,
   publicContact,
+  slugReviews,
+  slugContact,
 } = require('../controllers/publicController');
 
 /* ─── Discover / directorio ─── */
@@ -28,8 +30,10 @@ router.post('/contact',            publicContact);
 
 /* ─── Operador individual ─── */
 router.get('/:slug',               getOperador);
+router.get('/:slug/reviews',       slugReviews);
 router.get('/:slug/availability',  verificarDisponibilidadePublica);
 router.post('/:slug/reservations', criarReserva);
+router.post('/:slug/contact',      slugContact);
 
 /* ─── QR Code público — sem autenticação ─── */
 router.get('/:slug/qrcode', (req, res) => {

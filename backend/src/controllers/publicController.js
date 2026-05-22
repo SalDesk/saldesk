@@ -385,6 +385,71 @@ async function publicContact(req, res, next) {
   }
 }
 
+/* ─── Avaliações públicas por operador (slug) ─── */
+async function slugReviews(req, res, next) {
+  try {
+    const { data: operator, error: opErr } = await supabaseAdmin
+      .from('operators')
+      .select('id')
+      .eq('slug', req.params.slug)
+      .eq('onboarding_complete', true)
+      .single();
+    if (opErr || !operator) return res.status(404).json({ error: 'Operador não encontrado', code: 'NOT_FOUND' });
+
+    const { data, error } = await supabaseAdmin
+      .from('reviews')
+      .select('id, rating, comment, reply_text, replied_at, is_public, created_at, customer_id')
+      .eq('operator_id', operator.id)
+      .eq('is_public', true)
+      .order('created_at', { ascending: false })
+      .limit(20);
+    if (error) throw error;
+
+    const custIds = [...new Set((data || []).map(r => r.customer_id).filter(Boolean))];
+    let custMap = {};
+    if (custIds.length) {
+      const { data: customers } = await supabaseAdmin
+        .from('customers')
+        .select('id, first_name, nationality')
+        .in('id', custIds);
+      (customers || []).forEach(c => { custMap[c.id] = c; });
+    }
+
+    const reviews = (data || []).map(r => ({
+      id:          r.id,
+      rating:      r.rating,
+      comment:     r.comment,
+      reply_text:  r.reply_text,
+      replied_at:  r.replied_at,
+      created_at:  r.created_at,
+      author_name: custMap[r.customer_id]?.first_name || 'Cliente',
+      nationality: custMap[r.customer_id]?.nationality || null,
+    }));
+
+    return res.json({ data: reviews });
+  } catch (err) { next(err); }
+}
+
+/* ─── Contacto directo ao operador ─── */
+async function slugContact(req, res, next) {
+  try {
+    const { name, email, phone, message } = req.body;
+    if (!email || !message) {
+      return res.status(400).json({ error: 'Email e mensagem são obrigatórios', code: 'MISSING_FIELDS' });
+    }
+    await supabaseAdmin
+      .from('leads')
+      .upsert({
+        email:         email.trim().toLowerCase(),
+        source:        'operator_page',
+        language:      'pt',
+        operator_type: 'other',
+      }, { onConflict: 'email', ignoreDuplicates: false });
+
+    return res.json({ message: 'Mensagem recebida com sucesso' });
+  } catch (err) { next(err); }
+}
+
 module.exports = {
   getOperador,
   verificarDisponibilidadePublica,
@@ -395,4 +460,6 @@ module.exports = {
   cmsBanners,
   publicReviews,
   publicContact,
+  slugReviews,
+  slugContact,
 };
