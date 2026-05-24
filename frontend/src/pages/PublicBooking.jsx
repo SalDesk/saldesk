@@ -1,7 +1,7 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
-import { useParams } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import {
-  MapPin, Phone, Star, ChevronLeft, ChevronRight, MessageCircle, Clock,
+  MapPin, Phone, Star, ChevronLeft, ChevronRight, MessageCircle,
   Menu, X, Globe, Mail, Calendar, Users, Check, ArrowRight, Shield,
   ExternalLink, ChevronDown, ChevronUp, Copy, Send, Award, Share2,
   Compass, Car, Utensils,
@@ -121,10 +121,12 @@ function HeroCarousel({ images }) {
 }
 
 /* ── ServiceCard ─────────────────────────────────── */
-function ServiceCard({ unit, onBook, currency, lang, opCurrency }) {
+function ServiceCard({ unit, slug, currency, lang, opCurrency }) {
+  const navigate = useNavigate();
   const price = fmtPrice(unit.base_price, unit.price_unit, opCurrency, currency, lang);
   return (
-    <div className="bg-white rounded-xl border border-n-200 shadow-sm overflow-hidden hover:shadow-md hover:-translate-y-1 transition-all duration-200">
+    <div onClick={() => navigate(`/book/${slug}/servico/${unit.id}`)}
+      className="bg-white rounded-xl border border-n-200 shadow-sm overflow-hidden hover:shadow-md hover:-translate-y-1 transition-all duration-200 cursor-pointer">
       {unit.images?.[0] ? (
         <div className="h-44 bg-cover bg-center" style={{ backgroundImage: `url(${unit.images[0]})` }} />
       ) : (
@@ -144,708 +146,17 @@ function ServiceCard({ unit, onBook, currency, lang, opCurrency }) {
           </div>
         )}
         <div className="flex items-center justify-between gap-2">
-          <div>
-            <p className="font-display font-bold text-ocean-700 text-base leading-tight">{price}</p>
-          </div>
-          <button onClick={() => onBook(unit)}
+          <p className="font-display font-bold text-ocean-700 text-base leading-tight">{price}</p>
+          <button onClick={e => { e.stopPropagation(); navigate(`/book/${slug}/servico/${unit.id}`); }}
             className="flex items-center gap-1.5 bg-ocean-700 text-white text-xs font-body font-semibold px-4 py-2 rounded-lg hover:bg-ocean-500 transition-colors">
-            <Calendar size={14} strokeWidth={1.75} />
-            {lang === 'en' ? 'Book' : 'Reservar'}
+            <ArrowRight size={14} strokeWidth={1.75} />
+            {lang === 'en' ? 'Details' : 'Ver mais'}
           </button>
         </div>
       </div>
     </div>
   );
 }
-
-/* ── Booking Modal System ──────────────────────────── */
-
-// ── constants ──────────────────────────────────────
-const IN  = 'w-full border border-n-300 rounded-xl px-4 py-2.5 font-body text-sm focus:outline-none focus:border-ocean-500 focus:ring-2 focus:ring-ocean-500/10 bg-white transition-all';
-const LB  = 'block text-xs font-body font-semibold text-n-600 mb-1.5';
-const SH  = 'font-display font-semibold text-n-900 text-sm mb-4';
-const SEL = IN + ' appearance-none cursor-pointer';
-
-const TODAY_STR = () => new Date().toISOString().split('T')[0];
-function nts(a, b) { return (a && b && b > a) ? Math.round((new Date(b) - new Date(a)) / 864e5) : 0; }
-function dys(a, b) { return (a && b && b > a) ? Math.max(1, Math.ceil((new Date(b) - new Date(a)) / 864e5)) : 0; }
-
-const TOUR_SLOTS  = ['07:00','08:00','09:00','10:00','11:00','12:00','13:00','14:00','15:00','16:00','17:00'];
-const REST_SLOTS  = ['12:00','12:30','13:00','13:30','14:00','14:30','19:00','19:30','20:00','20:30','21:00','21:30','22:00','22:30'];
-const CV_LOCS_PT  = ['Aeroporto (SID)','Hotel / Alojamento','Escritório da empresa','Outro endereço'];
-const CV_LOCS_EN  = ['Airport (SID)','Hotel / Accommodation','Company office','Other address'];
-const CAR_EXTRAS  = [
-  { k:'insurance',    pt:'Seguro adicional',    en:'Additional insurance' },
-  { k:'gps',          pt:'GPS incluído',         en:'GPS navigation' },
-  { k:'baby_seat',    pt:'Cadeira de bebé',      en:'Baby / child seat' },
-  { k:'extra_driver', pt:'Condutor adicional',   en:'Additional driver' },
-];
-const OCCASIONS = [
-  { v:'',          pt:'Sem ocasião especial',   en:'No special occasion' },
-  { v:'birthday',  pt:'Aniversário',            en:'Birthday' },
-  { v:'honeymoon', pt:'Lua-de-mel',             en:'Honeymoon' },
-  { v:'business',  pt:'Reunião de negócios',    en:'Business meeting' },
-  { v:'other',     pt:'Outra ocasião',          en:'Other occasion' },
-];
-
-// ── Counter ─────────────────────────────────────────
-function Cnt({ label, val, set, min = 0, max = 20 }) {
-  return (
-    <div>
-      <label className={LB}>{label}</label>
-      <div className="flex items-center gap-3">
-        <button type="button" onClick={() => set(Math.max(min, val - 1))}
-          className="w-9 h-9 rounded-full border border-n-300 flex items-center justify-center text-n-500 hover:border-ocean-700 hover:text-ocean-700 transition-all select-none text-xl font-light leading-none">−</button>
-        <span className="flex-1 text-center font-display font-bold text-n-900 text-lg tabular-nums">{val}</span>
-        <button type="button" onClick={() => set(Math.min(max, val + 1))}
-          className="w-9 h-9 rounded-full border border-n-300 flex items-center justify-center text-n-500 hover:border-ocean-700 hover:text-ocean-700 transition-all select-none text-xl font-light leading-none">+</button>
-      </div>
-    </div>
-  );
-}
-
-// ── GuestForm (shared name/email/phone/country) ──────
-function GF({ d, set, lang, children }) {
-  const u = k => e => set(p => ({ ...p, [k]: e.target.value }));
-  return (
-    <div className="space-y-3">
-      <div>
-        <label className={LB}>{lang === 'en' ? 'Full name' : 'Nome completo'} *</label>
-        <input className={IN} value={d.name || ''} onChange={u('name')} required placeholder={lang === 'en' ? 'John Smith' : 'João Silva'} />
-      </div>
-      <div>
-        <label className={LB}>Email *</label>
-        <input className={IN} type="email" value={d.email || ''} onChange={u('email')} required placeholder="joao@email.com" />
-      </div>
-      <div className="grid grid-cols-2 gap-3">
-        <div>
-          <label className={LB}>{lang === 'en' ? 'Phone / WhatsApp' : 'Telefone / WhatsApp'}</label>
-          <input className={IN} type="tel" value={d.phone || ''} onChange={u('phone')} placeholder="+351 9XX XXX XXX" />
-        </div>
-        <div>
-          <label className={LB}>{lang === 'en' ? 'Country' : 'País de origem'}</label>
-          <input className={IN} value={d.country || ''} onChange={u('country')} placeholder={lang === 'en' ? 'Portugal' : 'Portugal'} />
-        </div>
-      </div>
-      {children}
-    </div>
-  );
-}
-
-// ── Summary table ────────────────────────────────────
-function ST({ lines }) {
-  return (
-    <div className="bg-ocean-50 border border-ocean-100 rounded-xl p-4 space-y-2.5">
-      {lines.map((l, i) => (
-        <div key={i} className="flex items-start justify-between gap-3">
-          <span className="text-xs font-body text-n-500 leading-relaxed flex-shrink-0">{l.label}</span>
-          <span className={`text-xs font-body text-right ${l.hi ? 'text-ocean-700 text-sm font-bold' : 'text-n-800 font-semibold'}`}>{l.value}</span>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-// ── Payment options ──────────────────────────────────
-function PO({ lang, v, set }) {
-  return (
-    <div className="space-y-2.5">
-      {[
-        { k:'paypal', l:lang==='en'?'International card (PayPal)':'Cartão internacional (PayPal)',   s:'Visa · Mastercard · American Express' },
-        { k:'sisp',   l:lang==='en'?'Cape Verdean card (Vinti4)':'Cartão cabo-verdiano (Vinti4)',    s:'SISP Vinti4 · MasterCard local' },
-        { k:'cash',   l:lang==='en'?'Pay on arrival':'Pagar presencialmente', s:lang==='en'?'Cash or card on site':'Dinheiro ou cartão no local' },
-      ].map(o => (
-        <button key={o.k} type="button" onClick={() => set(o.k)}
-          className={`w-full text-left p-3.5 rounded-xl border-2 transition-all ${v===o.k?'border-ocean-700 bg-ocean-50':'border-n-200 hover:border-n-300'}`}>
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <p className={`text-sm font-body font-semibold ${v===o.k?'text-ocean-700':'text-n-800'}`}>{o.l}</p>
-              <p className="text-xs font-body text-n-400 mt-0.5">{o.s}</p>
-            </div>
-            <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${v===o.k?'border-ocean-700 bg-ocean-700':'border-n-300'}`}>
-              {v===o.k && <div className="w-2 h-2 bg-white rounded-full" />}
-            </div>
-          </div>
-        </button>
-      ))}
-    </div>
-  );
-}
-
-// ── Success screen ───────────────────────────────────
-function BS({ resId, lang, type, onClose }) {
-  const T = { hotel:{pt:'Quarto reservado!',en:'Room booked!'},activity:{pt:'Tour reservado!',en:'Tour booked!'},rentacar:{pt:'Viatura reservada!',en:'Vehicle reserved!'},restaurant:{pt:'Mesa reservada!',en:'Table reserved!'} };
-  const m = T[type] || T.activity;
-  return (
-    <div className="text-center py-8 px-4">
-      <div className="w-16 h-16 rounded-full bg-success-light flex items-center justify-center mx-auto mb-4">
-        <Check size={28} strokeWidth={2.5} className="text-success" />
-      </div>
-      <h3 className="font-display font-bold text-xl text-n-900 mb-3">{lang==='en'?m.en:m.pt}</h3>
-      <p className="text-sm font-body text-n-500 leading-relaxed mb-6 max-w-xs mx-auto">
-        {lang==='en'?'You will receive a confirmation email shortly. The operator will confirm within 24h.':'Receberá um email de confirmação em breve. O operador confirmará a sua reserva em 24h.'}
-      </p>
-      {resId && (
-        <div className="bg-n-50 border border-n-200 rounded-xl px-4 py-3 inline-block mb-6">
-          <p className="text-xs text-n-400 font-body mb-1">{lang==='en'?'Booking reference':'Referência da reserva'}</p>
-          <p className="font-mono font-bold text-n-800 text-sm tracking-widest">{resId.slice(0,8).toUpperCase()}</p>
-        </div>
-      )}
-      <button onClick={onClose} className="border-2 border-n-200 text-n-700 font-body font-semibold py-3 px-8 rounded-xl hover:border-ocean-700 hover:text-ocean-700 transition-all">
-        {lang==='en'?'Close':'Fechar'}
-      </button>
-    </div>
-  );
-}
-
-// ── Modal shell ──────────────────────────────────────
-function MS({ icon, title, step, lang, onClose, children, onPrev, onNext, nextLabel, nextDis, sub, err, ok }) {
-  return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-ocean-900/60 backdrop-blur-sm p-0 sm:p-4">
-      <div className="bg-white w-full sm:max-w-[480px] rounded-t-2xl sm:rounded-2xl shadow-2xl max-h-[92vh] flex flex-col overflow-hidden">
-        {!ok && (
-          <div className="flex-shrink-0 px-5 pt-5 pb-4 border-b border-n-100">
-            <div className="flex items-start justify-between mb-4">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-ocean-50 flex items-center justify-center text-ocean-700 flex-shrink-0">{icon}</div>
-                <div>
-                  <p className="font-display font-bold text-n-900 text-sm leading-snug">{title}</p>
-                  <p className="text-xs font-body text-n-400 mt-0.5">{lang==='en'?`Step ${step} of 3`:`Passo ${step} de 3`}</p>
-                </div>
-              </div>
-              <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-full text-n-400 hover:text-n-700 hover:bg-n-100 transition-all mt-0.5 flex-shrink-0">
-                <X size={16} strokeWidth={2.5} />
-              </button>
-            </div>
-            <div className="flex gap-1.5">
-              {[1,2,3].map(s => <div key={s} className={`h-1.5 flex-1 rounded-full transition-all duration-300 ${s<=step?'bg-ocean-700':'bg-n-200'}`} />)}
-            </div>
-          </div>
-        )}
-        <div className="flex-1 overflow-y-auto">{children}</div>
-        {!ok && (
-          <div className="flex-shrink-0 px-5 py-4 border-t border-n-100">
-            {err && <p className="text-xs text-error font-body text-center mb-3 bg-error-light rounded-lg px-3 py-2">{err}</p>}
-            <div className="flex gap-3">
-              {step > 1 && (
-                <button type="button" onClick={onPrev}
-                  className="flex-1 border-2 border-n-200 text-n-700 font-body font-semibold py-3 rounded-xl text-sm flex items-center justify-center gap-1.5 hover:border-ocean-700 hover:text-ocean-700 transition-all">
-                  <ChevronLeft size={15} strokeWidth={2.5} />{lang==='en'?'Back':'Anterior'}
-                </button>
-              )}
-              <button type="button" onClick={onNext} disabled={nextDis || sub}
-                className={`font-body font-semibold py-3 rounded-xl text-sm flex items-center justify-center gap-2 transition-all disabled:opacity-40 disabled:cursor-not-allowed bg-ocean-700 text-white hover:bg-ocean-500 ${step===1?'w-full':'flex-[2]'}`}>
-                {sub
-                  ? <><div className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />{lang==='en'?'Please wait...':'A aguardar...'}</>
-                  : <>{nextLabel}<ArrowRight size={15} strokeWidth={2.5} /></>}
-              </button>
-            </div>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
-
-// ── Submit helper ────────────────────────────────────
-async function postReservation(slug, payload) {
-  const r = await fetch(`${API}/public/${slug}/reservations`, {
-    method: 'POST', headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload),
-  });
-  const j = await r.json();
-  if (!r.ok) throw new Error(j.error || 'Erro ao submeter reserva');
-  return j.data?.id || 'ok';
-}
-
-/* ── HotelModal ───────────────────────────────────── */
-function HotelModal({ unit, op, slug, lang, onClose }) {
-  const [step, ss]     = useState(1);
-  const [ci, sci]      = useState('');
-  const [co, sco]      = useState('');
-  const [adults, sa]   = useState(2);
-  const [kids, sk]     = useState(0);
-  const [info, si]     = useState({ name:'', email:'', phone:'', country:'', notes:'' });
-  const [pay, sp]      = useState('cash');
-  const [sub, ssub]    = useState(false);
-  const [resId, sr]    = useState(null);
-  const [err, se]      = useState('');
-  const [avail, sav]   = useState(null);
-  const [chk, sc]      = useState(false);
-
-  const nights  = nts(ci, co);
-  const total   = nights > 0 && unit.base_price ? fmtPrice(nights * unit.base_price, null, op.currency||'EUR', 'EUR', lang) : null;
-
-  useEffect(() => {
-    if (!ci || !co || co <= ci) { sav(null); return; }
-    const t = setTimeout(async () => {
-      sc(true);
-      try { sav((await (await fetch(`${API}/public/${slug}/availability?unitId=${unit.id}&checkIn=${ci}&checkOut=${co}`)).json()).data); }
-      catch { sav(null); } finally { sc(false); }
-    }, 700);
-    return () => clearTimeout(t);
-  }, [ci, co]);
-
-  function valid() {
-    if (step===1) {
-      if (!ci||!co)  { se(lang==='en'?'Select both dates':'Seleccione ambas as datas'); return false; }
-      if (co<=ci)    { se(lang==='en'?'Check-out must be after check-in':'Check-out deve ser posterior ao check-in'); return false; }
-      if (!avail?.disponivel) { se(lang==='en'?'Room unavailable for these dates':'Quarto indisponível nestas datas'); return false; }
-    }
-    if (step===2 && (!info.name||!info.email)) { se(lang==='en'?'Name and email required':'Nome e email obrigatórios'); return false; }
-    se(''); return true;
-  }
-
-  async function submit() {
-    ssub(true); se('');
-    try {
-      const notes = [`${adults} ${lang==='en'?'adults':'adultos'}, ${kids} ${lang==='en'?'children':'crianças'}`, info.notes].filter(Boolean).join('. ');
-      sr(await postReservation(slug, { unit_id:unit.id, customer_name:info.name, customer_email:info.email, customer_phone:info.phone||null, customer_country:info.country||null, check_in:ci, check_out:co, guests:adults+kids, notes }));
-    } catch(e) { se(e.message); } finally { ssub(false); }
-  }
-
-  function next() { if (!valid()) return; step<3 ? ss(s=>s+1) : submit(); }
-  const nl = step<3 ? (lang==='en'?'Continue':'Continuar') : (lang==='en'?'Confirm booking':'Confirmar reserva');
-  const icon = <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M2 22V10a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v12"/><path d="M2 22h20"/><path d="M7 22v-4h10v4"/><rect x="7" y="10" width="4" height="4" rx="1"/><rect x="13" y="10" width="4" height="4" rx="1"/></svg>;
-  const sumL = [
-    { label:lang==='en'?'Room':'Quarto',      value:unit.name },
-    { label:'Check-in',                        value:ci },
-    { label:'Check-out',                       value:co },
-    { label:lang==='en'?'Nights':'Noites',     value:`${nights}` },
-    { label:lang==='en'?'Guests':'Hóspedes',   value:`${adults} ${lang==='en'?'adults':'adultos'}${kids>0?` + ${kids} ${lang==='en'?'children':'crianças'}`:''}`},
-    ...(total ? [{ label:'Total', value:total, hi:true }] : []),
-  ];
-
-  const today = TODAY_STR();
-  return (
-    <MS icon={icon} title={lang==='en'?'Book room':'Reservar quarto'} step={step} lang={lang} onClose={onClose}
-        onPrev={() => ss(s=>s-1)} onNext={next} nextLabel={nl} nextDis={step===1&&(!avail?.disponivel||chk)} sub={sub} err={err} ok={!!resId}>
-      {resId ? <div className="p-5"><BS resId={resId} lang={lang} type="hotel" onClose={onClose} /></div>
-      : step===1 ? (
-        <div className="p-5 space-y-4">
-          <p className={SH}>{lang==='en'?'Select dates & guests':'Seleccione datas e hóspedes'}</p>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className={LB}>Check-in *</label>
-              <input type="date" className={IN} min={today} value={ci} onChange={e=>sci(e.target.value)} />
-            </div>
-            <div>
-              <label className={LB}>Check-out *</label>
-              <input type="date" className={IN} min={ci||today} value={co} onChange={e=>sco(e.target.value)} />
-            </div>
-          </div>
-          {nights > 0 && (
-            <div className="flex justify-between items-center bg-ocean-50 border border-ocean-100 rounded-xl px-4 py-2.5">
-              <span className="text-sm font-body font-semibold text-ocean-700">{nights} {lang==='en'?(nights===1?'night':'nights'):(nights===1?'noite':'noites')}</span>
-              {total && <span className="font-display font-bold text-ocean-700 text-sm">{total}</span>}
-            </div>
-          )}
-          {(chk || avail) && (
-            <div className={`rounded-xl px-4 py-3 flex items-center gap-2 text-sm font-body font-semibold ${chk?'bg-n-50 text-n-400':avail?.disponivel?'bg-success-light text-success':'bg-error-light text-error'}`}>
-              {chk ? <><div className="w-3.5 h-3.5 rounded-full border-2 border-ocean-300 border-t-ocean-700 animate-spin flex-shrink-0" />{lang==='en'?'Checking availability...':'A verificar disponibilidade...'}</>
-                   : <>{avail?.disponivel?(lang==='en'?'Available':'Disponível'):(lang==='en'?'Not available for these dates':'Indisponível nestas datas')}</>}
-            </div>
-          )}
-          <div className="grid grid-cols-2 gap-4">
-            <Cnt label={lang==='en'?'Adults (1-10)':'Adultos (1-10)'} val={adults} set={sa} min={1} max={10} />
-            <Cnt label={lang==='en'?'Children (0-5)':'Crianças (0-5)'} val={kids} set={sk} min={0} max={5} />
-          </div>
-        </div>
-      ) : step===2 ? (
-        <div className="p-5">
-          <p className={SH}>{lang==='en'?'Guest details':'Dados do hóspede'}</p>
-          <GF d={info} set={si} lang={lang}>
-            <div>
-              <label className={LB}>{lang==='en'?'Special requests (optional)':'Pedidos especiais (opcional)'}</label>
-              <textarea className={IN+' resize-none'} rows={3} value={info.notes}
-                onChange={e=>si(i=>({...i,notes:e.target.value}))}
-                placeholder={lang==='en'?'Early check-in, late check-out, high floor, quiet room...':'Early check-in, late check-out, andar alto, quarto silencioso...'} />
-            </div>
-          </GF>
-        </div>
-      ) : (
-        <div className="p-5 space-y-4">
-          <p className={SH}>{lang==='en'?'Review & payment':'Resumo e pagamento'}</p>
-          <ST lines={sumL} />
-          <p className="text-xs font-body font-semibold text-n-700">{lang==='en'?'Payment method':'Método de pagamento'}</p>
-          <PO lang={lang} v={pay} set={sp} />
-        </div>
-      )}
-    </MS>
-  );
-}
-
-/* ── ActivityModal ────────────────────────────────── */
-function ActivityModal({ unit, op, slug, lang, onClose }) {
-  const [step, ss]    = useState(1);
-  const [date, sd]    = useState('');
-  const [time, st]    = useState('');
-  const [adults, sa]  = useState(2);
-  const [kids, sk]    = useState(0);
-  const [info, si]    = useState({ name:'', email:'', phone:'', country:'', needs:'' });
-  const [pay, sp]     = useState('cash');
-  const [sub, ssub]   = useState(false);
-  const [resId, sr]   = useState(null);
-  const [err, se]     = useState('');
-
-  const total = unit.base_price
-    ? fmtPrice((adults + kids) * unit.base_price, 'person', op.currency||'EUR', 'EUR', lang)
-    : null;
-
-  function valid() {
-    if (step===1) {
-      if (!date)        { se(lang==='en'?'Select a date':'Seleccione uma data'); return false; }
-      if (!time)        { se(lang==='en'?'Select a time slot':'Seleccione um horário'); return false; }
-      if (adults < 1)   { se(lang==='en'?'At least 1 adult required':'Mínimo 1 adulto'); return false; }
-    }
-    if (step===2 && (!info.name||!info.email)) { se(lang==='en'?'Name and email required':'Nome e email obrigatórios'); return false; }
-    se(''); return true;
-  }
-
-  async function submit() {
-    ssub(true); se('');
-    try {
-      const notes = [`${lang==='en'?'Time':'Hora'}: ${time}`, `${adults} ${lang==='en'?'adults':'adultos'}, ${kids} ${lang==='en'?'children':'crianças'}`, info.needs ? (lang==='en'?'Needs:':'Necessidades:')+' '+info.needs : ''].filter(Boolean).join('. ');
-      sr(await postReservation(slug, { unit_id:unit.id, customer_name:info.name, customer_email:info.email, customer_phone:info.phone||null, customer_country:info.country||null, check_in:date, check_out:date, guests:adults+kids, notes }));
-    } catch(e) { se(e.message); } finally { ssub(false); }
-  }
-
-  function next() { if (!valid()) return; step<3 ? ss(s=>s+1) : submit(); }
-  const nl = step<3 ? (lang==='en'?'Continue':'Continuar') : (lang==='en'?'Confirm booking':'Confirmar reserva');
-  const today = TODAY_STR();
-  const sumL = [
-    { label:lang==='en'?'Tour / Activity':'Tour / Actividade', value:unit.name },
-    { label:lang==='en'?'Date':'Data', value:date },
-    { label:lang==='en'?'Time':'Horário', value:time },
-    { label:lang==='en'?'Group':'Grupo', value:`${adults} ${lang==='en'?'adults':'adultos'}${kids>0?` + ${kids} ${lang==='en'?'children':'crianças'}`:''}`},
-    ...(total ? [{ label:'Total', value:total, hi:true }] : []),
-  ];
-
-  return (
-    <MS icon={<Compass size={18} strokeWidth={1.75} />} title={lang==='en'?'Book tour':'Reservar tour'} step={step} lang={lang} onClose={onClose}
-        onPrev={() => ss(s=>s-1)} onNext={next} nextLabel={nl} nextDis={step===1&&(!date||!time)} sub={sub} err={err} ok={!!resId}>
-      {resId ? <div className="p-5"><BS resId={resId} lang={lang} type="activity" onClose={onClose} /></div>
-      : step===1 ? (
-        <div className="p-5 space-y-4">
-          <p className={SH}>{lang==='en'?'Select date, time & group':'Seleccione data, horário e grupo'}</p>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className={LB}>{lang==='en'?'Date':'Data'} *</label>
-              <input type="date" className={IN} min={today} value={date} onChange={e=>sd(e.target.value)} />
-            </div>
-            <div>
-              <label className={LB}>{lang==='en'?'Time slot':'Horário'} *</label>
-              <select className={SEL} value={time} onChange={e=>st(e.target.value)}>
-                <option value="">{lang==='en'?'-- Select --':'-- Seleccionar --'}</option>
-                {TOUR_SLOTS.map(h => <option key={h} value={h}>{h}</option>)}
-              </select>
-            </div>
-          </div>
-          {total && (date||adults) && (
-            <div className="flex justify-between items-center bg-ocean-50 border border-ocean-100 rounded-xl px-4 py-2.5">
-              <span className="text-xs font-body text-ocean-600">{adults+kids} {lang==='en'?'people':'pessoas'}</span>
-              <span className="font-display font-bold text-ocean-700 text-sm">{total}</span>
-            </div>
-          )}
-          <div className="grid grid-cols-2 gap-4">
-            <Cnt label={lang==='en'?'Adults (1-20)':'Adultos (1-20)'} val={adults} set={sa} min={1} max={20} />
-            <Cnt label={lang==='en'?'Children (0-10)':'Crianças (0-10)'} val={kids} set={sk} min={0} max={10} />
-          </div>
-        </div>
-      ) : step===2 ? (
-        <div className="p-5">
-          <p className={SH}>{lang==='en'?'Contact details':'Dados de contacto'}</p>
-          <GF d={info} set={si} lang={lang}>
-            <div>
-              <label className={LB}>{lang==='en'?'Special needs (optional)':'Necessidades especiais (opcional)'}</label>
-              <textarea className={IN+' resize-none'} rows={3} value={info.needs}
-                onChange={e=>si(i=>({...i,needs:e.target.value}))}
-                placeholder={lang==='en'?'Wheelchair accessible, vegetarian, allergies...':'Cadeira de rodas, vegetariano, alergias alimentares...'} />
-            </div>
-          </GF>
-        </div>
-      ) : (
-        <div className="p-5 space-y-4">
-          <p className={SH}>{lang==='en'?'Review & payment':'Resumo e pagamento'}</p>
-          <ST lines={sumL} />
-          <p className="text-xs font-body font-semibold text-n-700">{lang==='en'?'Payment method':'Método de pagamento'}</p>
-          <PO lang={lang} v={pay} set={sp} />
-        </div>
-      )}
-    </MS>
-  );
-}
-
-/* ── RentACarModal ────────────────────────────────── */
-function RentACarModal({ unit, op, slug, lang, onClose }) {
-  const [step, ss]    = useState(1);
-  const [pu, spu]     = useState({ date:'', time:'09:00', loc:'' });
-  const [re, sre]     = useState({ date:'', time:'09:00', loc:'' });
-  const [drv, sd]     = useState({ name:'', email:'', phone:'', country:'', license:'', licCountry:'', age:'' });
-  const [ext, sex]    = useState({ insurance:false, gps:false, baby_seat:false, extra_driver:false });
-  const [pay, sp]     = useState('cash');
-  const [sub, ssub]   = useState(false);
-  const [resId, sr]   = useState(null);
-  const [err, se]     = useState('');
-
-  const days    = dys(pu.date, re.date);
-  const total   = days > 0 && unit.base_price ? fmtPrice(days * unit.base_price, 'day', op.currency||'EUR', 'EUR', lang) : null;
-  const locs    = lang==='en' ? CV_LOCS_EN : CV_LOCS_PT;
-  const extList = CAR_EXTRAS.filter(e => ext[e.k]);
-
-  function valid() {
-    if (step===1) {
-      if (!pu.date||!re.date) { se(lang==='en'?'Select pickup and return dates':'Seleccione datas de levantamento e devolução'); return false; }
-      if (re.date <= pu.date) { se(lang==='en'?'Return date must be after pickup':'Data de devolução deve ser posterior ao levantamento'); return false; }
-      if (!pu.loc)            { se(lang==='en'?'Select pickup location':'Seleccione o local de levantamento'); return false; }
-    }
-    if (step===2) {
-      if (!drv.name||!drv.email) { se(lang==='en'?'Name and email required':'Nome e email obrigatórios'); return false; }
-      if (!drv.license)          { se(lang==='en'?'Driving licence number required':'Número de carta de condução obrigatório'); return false; }
-    }
-    se(''); return true;
-  }
-
-  async function submit() {
-    ssub(true); se('');
-    try {
-      const extNames = extList.map(e => lang==='en'?e.en:e.pt).join(', ');
-      const notes = [
-        `${lang==='en'?'Pickup':'Levantamento'}: ${pu.loc} ${pu.date} ${pu.time}`,
-        `${lang==='en'?'Return':'Devolução'}: ${re.loc||pu.loc} ${re.date} ${re.time}`,
-        `${lang==='en'?'Driver':'Condutor'}: ${drv.age?`${drv.age}${lang==='en'?' years old':' anos'}, `:''} ${lang==='en'?'Licence:':'Carta:'} ${drv.license} (${drv.licCountry||''})`,
-        extNames ? `${lang==='en'?'Extras':'Extras'}: ${extNames}` : '',
-      ].filter(Boolean).join('. ');
-      sr(await postReservation(slug, { unit_id:unit.id, customer_name:drv.name, customer_email:drv.email, customer_phone:drv.phone||null, customer_country:drv.country||null, check_in:pu.date, check_out:re.date, guests:1, notes }));
-    } catch(e) { se(e.message); } finally { ssub(false); }
-  }
-
-  function next() { if (!valid()) return; step<3 ? ss(s=>s+1) : submit(); }
-  const nl  = step<3 ? (lang==='en'?'Continue':'Continuar') : (lang==='en'?'Confirm booking':'Confirmar reserva');
-  const today = TODAY_STR();
-  const sumL = [
-    { label:lang==='en'?'Vehicle':'Viatura',     value:unit.name },
-    { label:lang==='en'?'Pickup':'Levantamento', value:`${pu.date} ${pu.time} · ${pu.loc}` },
-    { label:lang==='en'?'Return':'Devolução',    value:`${re.date} ${re.time} · ${re.loc||pu.loc}` },
-    { label:lang==='en'?'Duration':'Duração',    value:`${days} ${lang==='en'?(days===1?'day':'days'):(days===1?'dia':'dias')}` },
-    ...(extList.length ? [{ label:lang==='en'?'Extras':'Extras', value:extList.map(e=>lang==='en'?e.en:e.pt).join(' · ') }] : []),
-    ...(total ? [{ label:'Total', value:total, hi:true }] : []),
-  ];
-
-  return (
-    <MS icon={<Car size={18} strokeWidth={1.75} />} title={lang==='en'?'Book vehicle':'Reservar viatura'} step={step} lang={lang} onClose={onClose}
-        onPrev={() => ss(s=>s-1)} onNext={next} nextLabel={nl} nextDis={step===1&&(!pu.date||!re.date||!pu.loc)} sub={sub} err={err} ok={!!resId}>
-      {resId ? <div className="p-5"><BS resId={resId} lang={lang} type="rentacar" onClose={onClose} /></div>
-      : step===1 ? (
-        <div className="p-5 space-y-4">
-          <p className={SH}>{lang==='en'?'Pickup & return details':'Levantamento e devolução'}</p>
-          <div>
-            <p className="text-xs font-body font-bold text-ocean-700 uppercase tracking-widest mb-3">{lang==='en'?'Pickup':'Levantamento'}</p>
-            <div className="grid grid-cols-2 gap-3 mb-3">
-              <div>
-                <label className={LB}>{lang==='en'?'Date':'Data'} *</label>
-                <input type="date" className={IN} min={today} value={pu.date} onChange={e=>spu(p=>({...p,date:e.target.value}))} />
-              </div>
-              <div>
-                <label className={LB}>{lang==='en'?'Time':'Hora'}</label>
-                <input type="time" className={IN} value={pu.time} onChange={e=>spu(p=>({...p,time:e.target.value}))} />
-              </div>
-            </div>
-            <div>
-              <label className={LB}>{lang==='en'?'Location':'Local'} *</label>
-              <select className={SEL} value={pu.loc} onChange={e=>spu(p=>({...p,loc:e.target.value}))}>
-                <option value="">{lang==='en'?'-- Select location --':'-- Seleccionar local --'}</option>
-                {locs.map(l => <option key={l} value={l}>{l}</option>)}
-              </select>
-            </div>
-          </div>
-          <div>
-            <p className="text-xs font-body font-bold text-ocean-700 uppercase tracking-widest mb-3">{lang==='en'?'Return':'Devolução'}</p>
-            <div className="grid grid-cols-2 gap-3 mb-3">
-              <div>
-                <label className={LB}>{lang==='en'?'Date':'Data'} *</label>
-                <input type="date" className={IN} min={pu.date||today} value={re.date} onChange={e=>sre(p=>({...p,date:e.target.value}))} />
-              </div>
-              <div>
-                <label className={LB}>{lang==='en'?'Time':'Hora'}</label>
-                <input type="time" className={IN} value={re.time} onChange={e=>sre(p=>({...p,time:e.target.value}))} />
-              </div>
-            </div>
-            <div>
-              <label className={LB}>{lang==='en'?'Location (leave blank if same)':'Local (deixar em branco se igual)'}</label>
-              <select className={SEL} value={re.loc} onChange={e=>sre(p=>({...p,loc:e.target.value}))}>
-                <option value="">{lang==='en'?'Same as pickup':'Mesmo local de levantamento'}</option>
-                {locs.map(l => <option key={l} value={l}>{l}</option>)}
-              </select>
-            </div>
-          </div>
-          {days > 0 && (
-            <div className="flex justify-between items-center bg-ocean-50 border border-ocean-100 rounded-xl px-4 py-2.5">
-              <span className="text-sm font-body font-semibold text-ocean-700">{days} {lang==='en'?(days===1?'day':'days'):(days===1?'dia':'dias')}</span>
-              {total && <span className="font-display font-bold text-ocean-700 text-sm">{total}</span>}
-            </div>
-          )}
-        </div>
-      ) : step===2 ? (
-        <div className="p-5 space-y-4">
-          <p className={SH}>{lang==='en'?'Driver details':'Dados do condutor'}</p>
-          <GF d={drv} set={sd} lang={lang}>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className={LB}>{lang==='en'?'Driving licence no.':'Nº carta de condução'} *</label>
-                <input className={IN} value={drv.license} onChange={e=>sd(d=>({...d,license:e.target.value}))} required placeholder="PT-123456" />
-              </div>
-              <div>
-                <label className={LB}>{lang==='en'?'Issuing country':'País emissor'}</label>
-                <input className={IN} value={drv.licCountry} onChange={e=>sd(d=>({...d,licCountry:e.target.value}))} placeholder="Portugal" />
-              </div>
-            </div>
-            <div>
-              <label className={LB}>{lang==='en'?'Driver age':'Idade do condutor'}</label>
-              <input className={IN} type="number" min={18} max={99} value={drv.age} onChange={e=>sd(d=>({...d,age:e.target.value}))} placeholder="28" />
-            </div>
-          </GF>
-          <div>
-            <p className="text-xs font-body font-bold text-n-700 mb-3">{lang==='en'?'Extras (optional)':'Extras (opcional)'}</p>
-            <div className="grid grid-cols-2 gap-2.5">
-              {CAR_EXTRAS.map(e => (
-                <button key={e.k} type="button" onClick={() => sex(x=>({...x,[e.k]:!x[e.k]}))}
-                  className={`p-3 rounded-xl border-2 text-left transition-all ${ext[e.k]?'border-ocean-700 bg-ocean-50':'border-n-200 hover:border-n-300'}`}>
-                  <div className="flex items-center gap-2">
-                    <div className={`w-4 h-4 rounded border-2 flex items-center justify-center flex-shrink-0 transition-all ${ext[e.k]?'border-ocean-700 bg-ocean-700':'border-n-300'}`}>
-                      {ext[e.k] && <Check size={10} strokeWidth={3} className="text-white" />}
-                    </div>
-                    <span className={`text-xs font-body font-semibold ${ext[e.k]?'text-ocean-700':'text-n-700'}`}>{lang==='en'?e.en:e.pt}</span>
-                  </div>
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-      ) : (
-        <div className="p-5 space-y-4">
-          <p className={SH}>{lang==='en'?'Review & payment':'Resumo e pagamento'}</p>
-          <ST lines={sumL} />
-          <p className="text-xs font-body font-semibold text-n-700">{lang==='en'?'Payment method':'Método de pagamento'}</p>
-          <PO lang={lang} v={pay} set={sp} />
-        </div>
-      )}
-    </MS>
-  );
-}
-
-/* ── RestaurantModal ──────────────────────────────── */
-function RestaurantModal({ unit, op, slug, lang, onClose }) {
-  const [step, ss]     = useState(1);
-  const [date, sd]     = useState('');
-  const [time, st]     = useState('');
-  const [party, spa]   = useState(2);
-  const [occasion, so] = useState('');
-  const [info, si]     = useState({ name:'', email:'', phone:'', country:'', notes:'' });
-  const [sub, ssub]    = useState(false);
-  const [resId, sr]    = useState(null);
-  const [err, se]      = useState('');
-
-  function valid() {
-    if (step===1) {
-      if (!date) { se(lang==='en'?'Select a date':'Seleccione uma data'); return false; }
-      if (!time) { se(lang==='en'?'Select a time':'Seleccione um horário'); return false; }
-    }
-    if (step===2 && (!info.name||!info.email)) { se(lang==='en'?'Name and email required':'Nome e email obrigatórios'); return false; }
-    se(''); return true;
-  }
-
-  async function submit() {
-    ssub(true); se('');
-    try {
-      const occLabel = OCCASIONS.find(o=>o.v===occasion)?.[lang==='en'?'en':'pt'] || '';
-      const notes = [
-        time ? `${lang==='en'?'Time':'Hora'}: ${time}` : '',
-        occLabel && occasion ? `${lang==='en'?'Occasion':'Ocasião'}: ${occLabel}` : '',
-        info.notes,
-      ].filter(Boolean).join('. ');
-      sr(await postReservation(slug, { unit_id:unit.id, customer_name:info.name, customer_email:info.email, customer_phone:info.phone||null, customer_country:info.country||null, check_in:date, check_out:date, guests:party, notes }));
-    } catch(e) { se(e.message); } finally { ssub(false); }
-  }
-
-  function next() { if (!valid()) return; step<3 ? ss(s=>s+1) : submit(); }
-  const nl  = step<3 ? (lang==='en'?'Continue':'Continuar') : (lang==='en'?'Confirm reservation':'Confirmar reserva');
-  const today = TODAY_STR();
-  const occLabel = OCCASIONS.find(o=>o.v===occasion)?.[lang==='en'?'en':'pt'] || '';
-  const sumL = [
-    { label:lang==='en'?'Restaurant':'Restaurante', value:unit.name },
-    { label:lang==='en'?'Date':'Data',   value:date },
-    { label:lang==='en'?'Time':'Hora',   value:time },
-    { label:lang==='en'?'Guests':'Pessoas', value:`${party}` },
-    ...(occasion ? [{ label:lang==='en'?'Occasion':'Ocasião', value:occLabel }] : []),
-  ];
-
-  return (
-    <MS icon={<Utensils size={18} strokeWidth={1.75} />} title={lang==='en'?'Book table':'Reservar mesa'} step={step} lang={lang} onClose={onClose}
-        onPrev={() => ss(s=>s-1)} onNext={next} nextLabel={nl} nextDis={step===1&&(!date||!time)} sub={sub} err={err} ok={!!resId}>
-      {resId ? <div className="p-5"><BS resId={resId} lang={lang} type="restaurant" onClose={onClose} /></div>
-      : step===1 ? (
-        <div className="p-5 space-y-4">
-          <p className={SH}>{lang==='en'?'Date, time & party size':'Data, hora e número de pessoas'}</p>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className={LB}>{lang==='en'?'Date':'Data'} *</label>
-              <input type="date" className={IN} min={today} value={date} onChange={e=>sd(e.target.value)} />
-            </div>
-            <div>
-              <label className={LB}>{lang==='en'?'Time':'Hora'} *</label>
-              <select className={SEL} value={time} onChange={e=>st(e.target.value)}>
-                <option value="">{lang==='en'?'-- Select --':'-- Seleccionar --'}</option>
-                {REST_SLOTS.map(h => <option key={h} value={h}>{h}</option>)}
-              </select>
-            </div>
-          </div>
-          <Cnt label={lang==='en'?'Number of guests (1-20)':'Número de pessoas (1-20)'} val={party} set={spa} min={1} max={20} />
-          <div>
-            <label className={LB}>{lang==='en'?'Special occasion':'Ocasião especial'}</label>
-            <select className={SEL} value={occasion} onChange={e=>so(e.target.value)}>
-              {OCCASIONS.map(o => <option key={o.v} value={o.v}>{lang==='en'?o.en:o.pt}</option>)}
-            </select>
-          </div>
-        </div>
-      ) : step===2 ? (
-        <div className="p-5">
-          <p className={SH}>{lang==='en'?'Contact details':'Dados de contacto'}</p>
-          <GF d={info} set={si} lang={lang}>
-            <div>
-              <label className={LB}>{lang==='en'?'Special requests (allergies, dietary, decoration...)':'Pedidos especiais (alergias, vegetariano, decoração...)'}</label>
-              <textarea className={IN+' resize-none'} rows={3} value={info.notes}
-                onChange={e=>si(i=>({...i,notes:e.target.value}))}
-                placeholder={lang==='en'?'Vegetarian menu, allergy to nuts, birthday cake...':'Menu vegetariano, alergia a frutos secos, bolo de aniversário...'} />
-            </div>
-          </GF>
-        </div>
-      ) : (
-        <div className="p-5 space-y-4">
-          <p className={SH}>{lang==='en'?'Confirm reservation':'Confirmar reserva'}</p>
-          <ST lines={sumL} />
-          <div className="bg-sand-50 border border-sand-200 rounded-xl px-4 py-3 text-sm font-body text-n-700 leading-relaxed">
-            <span className="font-semibold text-sand-700">{lang==='en'?'No advance payment required.':'Sem pagamento antecipado.'}</span>
-            {' '}{lang==='en'?'Payment on arrival. We will confirm your reservation within 2 hours.':'Pagamento à chegada. Confirmaremos a sua reserva em 2 horas.'}
-          </div>
-        </div>
-      )}
-    </MS>
-  );
-}
-
-/* ── BookingModal dispatcher ─────────────────────── */
-function BookingModal({ unit, op, slug, lang, onClose }) {
-  if (!unit || !op) return null;
-  const t = op.operator_type;
-  const props = { unit, op, slug, lang, onClose };
-  if (t === 'hotel')      return <HotelModal {...props} />;
-  if (t === 'activity')   return <ActivityModal {...props} />;
-  if (t === 'rentacar')   return <RentACarModal {...props} />;
-  if (t === 'restaurant') return <RestaurantModal {...props} />;
-  return <ActivityModal {...props} />; /* fallback */
-}
-
 
 /* ── Lightbox ─────────────────────────────────────── */
 function Lightbox({ images, idx, onClose, onMove }) {
@@ -916,7 +227,7 @@ function ChatWidget({ slug, opName, lang }) {
             </div>
             <div className="flex items-center gap-1.5 text-white/70">
               <div className="w-2 h-2 rounded-full bg-green-400" />
-              <span className="text-xs font-body">{lang === 'en' ? 'Online' : 'Online'}</span>
+              <span className="text-xs font-body">Online</span>
             </div>
           </div>
           {sent ? (
@@ -1001,7 +312,8 @@ function SkeletonPage() {
    MAIN COMPONENT
 ══════════════════════════════════════════════════ */
 export default function PublicBooking() {
-  const { slug } = useParams();
+  const { slug }   = useParams();
+  const navigate   = useNavigate();
 
   const [op, setOp]             = useState(null);
   const [units, setUnits]       = useState([]);
@@ -1010,7 +322,6 @@ export default function PublicBooking() {
   const [notFound, setNotFound] = useState(false);
   const [lang, setLang]         = useState(() => localStorage.getItem('sd-lang') || 'pt');
   const [currency, setCur]      = useState('EUR');
-  const [bookUnit, setBook]     = useState(null);
   const [lbIdx, setLbIdx]       = useState(null);
   const [navScrolled, setNavScrolled] = useState(false);
   const [mobileMenu, setMobileMenu]   = useState(false);
@@ -1046,7 +357,6 @@ export default function PublicBooking() {
     return () => window.removeEventListener('scroll', handler);
   }, []);
 
-  /* Lang sync */
   function toggleLang() {
     const nl = lang === 'pt' ? 'en' : 'pt';
     setLang(nl); localStorage.setItem('sd-lang', nl);
@@ -1056,6 +366,11 @@ export default function PublicBooking() {
   function scrollTo(id) {
     document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     setMobileMenu(false);
+  }
+
+  function goBook() {
+    if (units[0]) navigate(`/book/${slug}/servico/${units[0].id}`);
+    else scrollTo('servicos');
   }
 
   async function sendContact(e) {
@@ -1128,7 +443,6 @@ export default function PublicBooking() {
       {/* ── Navbar ── */}
       <nav className={`fixed top-0 left-0 right-0 z-40 transition-all duration-300 ${navScrolled ? 'bg-white shadow-md' : 'bg-transparent'}`}>
         <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between gap-4">
-          {/* Logo */}
           <a href={`/book/${slug}`} className="flex items-center gap-2 flex-shrink-0">
             {op.logo_url ? (
               <img src={op.logo_url} alt={op.name} className={`h-9 w-auto object-contain ${navScrolled ? '' : 'brightness-0 invert'}`} />
@@ -1137,8 +451,7 @@ export default function PublicBooking() {
             )}
           </a>
 
-          {/* Desktop nav links */}
-          <div className={`hidden md:flex items-center gap-6 ${navScrolled ? '' : ''}`}>
+          <div className="hidden md:flex items-center gap-6">
             {navLinks.map(l => (
               <button key={l.id} onClick={() => scrollTo(l.id)}
                 className={`text-sm font-body font-medium transition-colors ${navScrolled ? 'text-n-600 hover:text-ocean-700' : 'text-white/85 hover:text-white'}`}>
@@ -1147,14 +460,13 @@ export default function PublicBooking() {
             ))}
           </div>
 
-          {/* Right actions */}
           <div className="flex items-center gap-2">
             <button onClick={toggleLang}
               className={`hidden sm:flex items-center gap-1 text-xs font-body font-bold border rounded-full px-3 py-1.5 transition-all ${navScrolled ? 'border-n-200 text-n-600 hover:border-ocean-700 hover:text-ocean-700' : 'border-white/30 text-white/80 hover:border-white hover:text-white'}`}>
               <Globe size={12} strokeWidth={1.75} />
               {lang === 'pt' ? 'EN' : 'PT'}
             </button>
-            <button onClick={() => setBook(units[0] || null)}
+            <button onClick={goBook}
               className="flex items-center gap-1.5 bg-ocean-700 text-white text-sm font-body font-semibold px-4 py-2 rounded-full hover:bg-ocean-500 transition-colors">
               <Calendar size={14} strokeWidth={1.75} />
               {lang === 'en' ? 'Book Now' : 'Reservar'}
@@ -1166,7 +478,6 @@ export default function PublicBooking() {
           </div>
         </div>
 
-        {/* Mobile drawer */}
         {mobileMenu && (
           <div className="md:hidden bg-white border-t border-n-200 shadow-lg">
             {navLinks.map(l => (
@@ -1231,7 +542,7 @@ export default function PublicBooking() {
                 )}
               </div>
               <div className="flex flex-wrap gap-3">
-                <button onClick={() => setBook(units[0] || null)}
+                <button onClick={goBook}
                   className="flex items-center gap-2 bg-sand-500 text-white font-body font-bold px-6 py-3 rounded-full hover:bg-sand-600 transition-all shadow-lg text-sm">
                   <Calendar size={16} strokeWidth={1.75} />
                   {lang === 'en' ? 'Book Now' : 'Reservar Agora'}
@@ -1326,7 +637,7 @@ export default function PublicBooking() {
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
               {units.map(unit => (
-                <ServiceCard key={unit.id} unit={unit} onBook={setBook} currency={currency} lang={lang} opCurrency={op.currency} />
+                <ServiceCard key={unit.id} unit={unit} slug={slug} currency={currency} lang={lang} opCurrency={op.currency} />
               ))}
             </div>
           </section>
@@ -1371,7 +682,6 @@ export default function PublicBooking() {
               {lang === 'en' ? 'What visitors say' : 'O que dizem os clientes'}
             </h2>
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
-              {/* Breakdown */}
               <div className="bg-n-50 rounded-2xl p-6 border border-n-200">
                 <div className="text-center mb-5">
                   <p className="font-display font-extrabold text-5xl text-n-900">{avgRating.toFixed(1)}</p>
@@ -1391,7 +701,6 @@ export default function PublicBooking() {
                   ))}
                 </div>
               </div>
-              {/* Review cards */}
               <div className="lg:col-span-2 space-y-4">
                 {reviews.slice(0, 4).map((r, i) => (
                   <div key={i} className="bg-white border border-n-200 rounded-xl p-5 shadow-sm">
@@ -1596,14 +905,14 @@ export default function PublicBooking() {
                   <span className="text-xs text-white/50">{avgRating.toFixed(1)} ({reviews.length})</span>
                 </div>
               )}
-              <div className="flex flex-wrap gap-2 mt-3">
-                {isVerified && (
+              {isVerified && (
+                <div className="flex flex-wrap gap-2 mt-3">
                   <span className="flex items-center gap-1 text-xs font-body text-white/60 border border-white/15 px-2.5 py-1 rounded-full">
                     <Shield size={10} strokeWidth={2} />
                     {lang === 'en' ? 'Verified' : 'Verificado'}
                   </span>
-                )}
-              </div>
+                </div>
+              )}
             </div>
             <div>
               <h4 className="font-display font-bold text-sm text-white mb-3">
@@ -1634,7 +943,7 @@ export default function PublicBooking() {
               <h4 className="font-display font-bold text-sm text-white mb-3">
                 {lang === 'en' ? 'Book now' : 'Reservar'}
               </h4>
-              <button onClick={() => setBook(units[0] || null)}
+              <button onClick={goBook}
                 className="w-full bg-sand-500 text-white font-body font-semibold text-sm py-3 rounded-xl hover:bg-sand-600 transition-colors flex items-center justify-center gap-2 mb-3">
                 <Calendar size={14} strokeWidth={1.75} />
                 {lang === 'en' ? 'Reserve a service' : 'Reservar um serviço'}
@@ -1649,9 +958,7 @@ export default function PublicBooking() {
             </div>
           </div>
           <div className="border-t border-white/10 pt-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs font-body">
-            <p className="text-white/40">
-              © 2026 {op.name} · Ilha do Sal, Cabo Verde
-            </p>
+            <p className="text-white/40">© 2026 {op.name} · Ilha do Sal, Cabo Verde</p>
             <p className="text-white/35">
               {lang === 'en' ? 'Powered by' : 'Plataforma'}{' '}
               <a href="https://saldesk.cv" className="text-white/55 hover:text-white transition-colors font-semibold">SalDesk</a>
@@ -1665,7 +972,7 @@ export default function PublicBooking() {
       {/* ── Bottom CTA bar (mobile) ── */}
       {units.length > 0 && (
         <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-n-200 px-4 py-3 flex gap-3 z-30 sm:hidden shadow-lg">
-          <button onClick={() => setBook(units[0])}
+          <button onClick={goBook}
             className="flex-1 bg-ocean-700 text-white font-body font-semibold py-3 rounded-xl flex items-center justify-center gap-2 hover:bg-ocean-500 transition-colors text-sm">
             <Calendar size={16} strokeWidth={1.75} />
             {lang === 'en' ? 'Book Now' : 'Reservar Agora'}
@@ -1682,7 +989,7 @@ export default function PublicBooking() {
       {/* ── WhatsApp FAB ── */}
       {whatsappUrl && (
         <a href={whatsappUrl} target="_blank" rel="noopener noreferrer"
-          className="fixed bottom-20 sm:bottom-6 right-4 z-30 w-13 h-13 sm:w-14 sm:h-14 rounded-full bg-[#25D366] flex items-center justify-center shadow-xl hover:scale-110 transition-transform"
+          className="fixed bottom-20 sm:bottom-6 right-4 z-30 rounded-full bg-[#25D366] flex items-center justify-center shadow-xl hover:scale-110 transition-transform"
           style={{ width: 52, height: 52 }}>
           <div className="absolute inset-0 rounded-full bg-[#25D366] animate-ping opacity-25" />
           <MessageCircle size={22} strokeWidth={1.75} className="text-white relative z-10" />
@@ -1692,16 +999,7 @@ export default function PublicBooking() {
       {/* ── Chat widget ── */}
       <ChatWidget slug={slug} opName={op.name} lang={lang} />
 
-      {/* ── Modals ── */}
-      {bookUnit !== null && bookUnit !== undefined && (
-        <BookingModal
-          unit={bookUnit}
-          op={op}
-          slug={slug}
-          lang={lang}
-          onClose={() => setBook(null)}
-        />
-      )}
+      {/* ── Lightbox ── */}
       {lbIdx !== null && (
         <Lightbox
           images={galleryImgs}

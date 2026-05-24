@@ -18,6 +18,7 @@ import Profile from './pages/Profile';
 import Fleet from './pages/Fleet';
 import Messages from './pages/Messages';
 import PublicBooking from './pages/PublicBooking';
+import ServiceDetail from './pages/ServiceDetail';
 import StaffPortal from './pages/StaffPortal';
 import AdminLayout from './components/layout/AdminLayout';
 import AdminDashboard from './pages/admin/AdminDashboard';
@@ -89,6 +90,7 @@ export default function App() {
 
         {/* Motor de reserva publica */}
         <Route path="/book/:slug" element={<PublicBooking />} />
+        <Route path="/book/:slug/servico/:id" element={<ServiceDetail />} />
 
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

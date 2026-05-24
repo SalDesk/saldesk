@@ -450,6 +450,216 @@ async function slugContact(req, res, next) {
   } catch (err) { next(err); }
 }
 
+/* ─── Unidade específica por slug + unitId ─── */
+async function getUnit(req, res, next) {
+  try {
+    const { slug, unitId } = req.params;
+
+    const { data: operator } = await supabaseAdmin
+      .from('operators')
+      .select('id, name, slug, operator_type, email, phone, whatsapp, address, logo_url, currency, description')
+      .eq('slug', slug)
+      .eq('onboarding_complete', true)
+      .single();
+
+    if (!operator) return res.status(404).json({ error: 'Operador não encontrado', code: 'NOT_FOUND' });
+
+    const { data: unit, error: unitErr } = await supabaseAdmin
+      .from('units')
+      .select('*, pricing_rules(*)')
+      .eq('id', unitId)
+      .eq('operator_id', operator.id)
+      .eq('is_active', true)
+      .single();
+
+    if (unitErr || !unit) return res.status(404).json({ error: 'Serviço não encontrado', code: 'NOT_FOUND' });
+
+    const { data: related } = await supabaseAdmin
+      .from('units')
+      .select('id, name, description, unit_type, base_price, price_unit, capacity, images')
+      .eq('operator_id', operator.id)
+      .eq('is_active', true)
+      .neq('id', unitId)
+      .limit(3);
+
+    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+    const { count: recentBookings } = await supabaseAdmin
+      .from('reservations')
+      .select('id', { count: 'exact', head: true })
+      .eq('unit_id', unitId)
+      .gte('created_at', thirtyDaysAgo)
+      .in('status', ['confirmed', 'checked_in', 'checked_out']);
+
+    return res.json({
+      data: { operator, unit, related: related || [], recent_bookings: recentBookings || 0 },
+      message: 'Serviço encontrado',
+    });
+  } catch (err) { next(err); }
+}
+
+/* ─── Avaliações de uma unidade específica ─── */
+async function getUnitReviews(req, res, next) {
+  try {
+    const { slug, unitId } = req.params;
+
+    const { data: operator } = await supabaseAdmin
+      .from('operators')
+      .select('id')
+      .eq('slug', slug)
+      .eq('onboarding_complete', true)
+      .single();
+
+    if (!operator) return res.status(404).json({ error: 'Operador não encontrado', code: 'NOT_FOUND' });
+
+    const { data: reservationIds } = await supabaseAdmin
+      .from('reservations')
+      .select('id')
+      .eq('unit_id', unitId)
+      .eq('operator_id', operator.id);
+
+    const resIds = (reservationIds || []).map(r => r.id);
+    let reviews = [];
+
+    if (resIds.length > 0) {
+      const { data: unitReviews } = await supabaseAdmin
+        .from('reviews')
+        .select('id, rating, comment, reply_text, created_at, customer_id')
+        .in('reservation_id', resIds)
+        .eq('is_public', true)
+        .order('created_at', { ascending: false })
+        .limit(20);
+      reviews = unitReviews || [];
+    }
+
+    if (reviews.length === 0) {
+      const { data: opReviews } = await supabaseAdmin
+        .from('reviews')
+        .select('id, rating, comment, reply_text, created_at, customer_id')
+        .eq('operator_id', operator.id)
+        .eq('is_public', true)
+        .order('created_at', { ascending: false })
+        .limit(20);
+      reviews = opReviews || [];
+    }
+
+    const custIds = [...new Set(reviews.map(r => r.customer_id).filter(Boolean))];
+    let custMap = {};
+    if (custIds.length) {
+      const { data: customers } = await supabaseAdmin
+        .from('customers')
+        .select('id, first_name, nationality')
+        .in('id', custIds);
+      (customers || []).forEach(c => { custMap[c.id] = c; });
+    }
+
+    const enriched = reviews.map(r => ({
+      id: r.id,
+      rating: r.rating,
+      comment: r.comment,
+      reply_text: r.reply_text,
+      created_at: r.created_at,
+      author_name: custMap[r.customer_id]?.first_name || 'Cliente',
+      nationality: custMap[r.customer_id]?.nationality || null,
+    }));
+
+    return res.json({ data: enriched });
+  } catch (err) { next(err); }
+}
+
+/* ─── Submissão de candidatura de operador (website) ─── */
+async function submitLead(req, res, next) {
+  try {
+    const {
+      nome, email, telefone, whatsapp, funcao,
+      nome_negocio, tipo_negocio, localizacao, anos_operacao, clientes_mes,
+      tem_site, url_site, como_gere_reservas, desafios, num_funcionarios, otas, volume_mensal,
+      plano_interesse, quando_comecar, como_soube, disponivel_demo, horario_contacto,
+      comentarios, aceita_termos, aceita_comunicacoes,
+    } = req.body;
+
+    if (!nome || !email || !email.includes('@')) {
+      return res.status(400).json({ error: 'Nome e email são obrigatórios', code: 'MISSING_FIELDS' });
+    }
+    if (!aceita_termos) {
+      return res.status(400).json({ error: 'Deve aceitar os termos e condições', code: 'TERMS_REQUIRED' });
+    }
+
+    const { error } = await supabaseAdmin
+      .from('leads')
+      .insert({
+        email:               email.trim().toLowerCase(),
+        name:                nome,
+        operator_type:       tipo_negocio || 'other',
+        language:            'pt',
+        source:              'operadores_form',
+        telefone,
+        whatsapp:            whatsapp || null,
+        funcao:              funcao || null,
+        nome_negocio:        nome_negocio || null,
+        tipo_negocio:        tipo_negocio || null,
+        localizacao:         localizacao || null,
+        anos_operacao:       anos_operacao || null,
+        clientes_mes:        clientes_mes || null,
+        tem_site:            !!tem_site,
+        url_site:            url_site || null,
+        como_gere_reservas:  Array.isArray(como_gere_reservas) ? como_gere_reservas : [],
+        desafios:            Array.isArray(desafios) ? desafios : [],
+        num_funcionarios:    num_funcionarios || null,
+        otas:                Array.isArray(otas) ? otas : [],
+        volume_mensal:       volume_mensal || null,
+        plano_interesse:     plano_interesse || null,
+        quando_comecar:      quando_comecar || null,
+        como_soube:          como_soube || null,
+        disponivel_demo:     !!disponivel_demo,
+        horario_contacto:    horario_contacto || null,
+        comentarios:         comentarios || null,
+        aceita_termos:       !!aceita_termos,
+        aceita_comunicacoes: !!aceita_comunicacoes,
+        status:              'novo',
+      });
+
+    if (error) throw error;
+
+    const linha = (l, v) => v ? `<tr><td style="padding:4px 12px 4px 0;color:#6B7280;font-size:13px">${l}</td><td style="padding:4px 0;font-size:13px;font-weight:500">${Array.isArray(v) ? v.join(', ') : v}</td></tr>` : '';
+    const html = `
+<div style="font-family:sans-serif;max-width:600px">
+  <h2 style="color:#0D5470">Nova candidatura — SalDesk</h2>
+  <table>
+    ${linha('Nome', nome)}
+    ${linha('Email', email)}
+    ${linha('Telefone', telefone)}
+    ${linha('Função', funcao)}
+    ${linha('Negócio', nome_negocio)}
+    ${linha('Tipo', tipo_negocio)}
+    ${linha('Localização', localizacao)}
+    ${linha('Há quanto tempo', anos_operacao)}
+    ${linha('Clientes/mês', clientes_mes)}
+    ${linha('Site', url_site || (tem_site ? 'Sim' : 'Não'))}
+    ${linha('Gere reservas via', Array.isArray(como_gere_reservas) ? como_gere_reservas : [])}
+    ${linha('Desafios', Array.isArray(desafios) ? desafios : [])}
+    ${linha('Funcionários', num_funcionarios)}
+    ${linha('OTAs', Array.isArray(otas) ? otas : [])}
+    ${linha('Volume mensal', volume_mensal)}
+    ${linha('Plano de interesse', plano_interesse)}
+    ${linha('Quando começar', quando_comecar)}
+    ${linha('Como soube', como_soube)}
+    ${linha('Demo disponível', disponivel_demo ? 'Sim' : 'Não')}
+    ${linha('Horário preferido', horario_contacto)}
+    ${linha('Comentários', comentarios)}
+  </table>
+</div>`;
+
+    enviarEmail({
+      to: process.env.CONTACT_EMAIL || 'contacto@saldesk.cv',
+      subject: `[Candidatura] ${nome_negocio || nome} — ${tipo_negocio || 'Novo operador'}`,
+      html,
+      text: `Nova candidatura de ${nome} (${email}) — ${nome_negocio || ''} [${tipo_negocio || ''}]`,
+    }).catch(err => console.error('[Email] Erro ao enviar notificação de lead:', err.message));
+
+    return res.json({ message: 'Candidatura recebida com sucesso' });
+  } catch (err) { next(err); }
+}
+
 module.exports = {
   getOperador,
   verificarDisponibilidadePublica,
@@ -462,4 +672,7 @@ module.exports = {
   publicContact,
   slugReviews,
   slugContact,
+  getUnit,
+  getUnitReviews,
+  submitLead,
 };

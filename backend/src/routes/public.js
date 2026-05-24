@@ -12,6 +12,9 @@ const {
   publicContact,
   slugReviews,
   slugContact,
+  getUnit,
+  getUnitReviews,
+  submitLead,
 } = require('../controllers/publicController');
 
 /* ─── Discover / directorio ─── */
@@ -27,6 +30,13 @@ router.get('/reviews',             publicReviews);
 
 /* ─── Formulário de contacto / newsletter ─── */
 router.post('/contact',            publicContact);
+
+/* ─── Candidatura de operador (website /operadores) ─── */
+router.post('/leads',              submitLead);
+
+/* ─── Unidade individual ─── */
+router.get('/:slug/units/:unitId',         getUnit);
+router.get('/:slug/units/:unitId/reviews', getUnitReviews);
 
 /* ─── Operador individual ─── */
 router.get('/:slug',               getOperador);

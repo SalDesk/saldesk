@@ -1,0 +1,1532 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Junte-se à SalDesk — Registe o seu negócio turístico</title>
+  <meta name="description" content="Registe o seu negócio turístico na SalDesk e comece a receber reservas directas. 0% comissão, 30 dias grátis, sem cartão." />
+  <meta property="og:title" content="Junte-se à SalDesk" />
+  <meta property="og:description" content="Plataforma operacional para negócios turísticos da Ilha do Sal, Cabo Verde." />
+  <meta property="og:image" content="https://saldesk.cv/og.png" />
+  <meta property="og:url" content="https://saldesk.cv/operadores.html" />
+  <link rel="canonical" href="https://saldesk.cv/operadores.html" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --ocean-900: #062A38;
+      --ocean-700: #0D5470;
+      --ocean-500: #1480A8;
+      --ocean-50:  #EBF7FB;
+      --sand-500:  #D4A82A;
+      --sand-300:  #EAD08A;
+      --n900: #1A2332;
+      --n500: #6B7280;
+      --n200: #E5E8EC;
+      --n50:  #F9FAFB;
+      --success: #1A7A4A;
+      --error:   #B91C1C;
+      --warning: #B45309;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px;
+      color: var(--n900);
+      background: var(--n50);
+      line-height: 1.6;
+    }
+
+    h1, h2, h3, h4 { font-family: 'Sora', sans-serif; }
+
+    a { color: inherit; text-decoration: none; }
+
+    input, select, textarea {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px;
+    }
+
+    /* ── NAVBAR ──────────────────────────────────── */
+    .navbar {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: #fff;
+      border-bottom: 1px solid var(--n200);
+      padding: 0 24px;
+      height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .navbar-left { display: flex; align-items: center; gap: 24px; }
+
+    .nav-back {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      color: var(--n500);
+      transition: color .15s;
+    }
+
+    .nav-back:hover { color: var(--ocean-700); }
+
+    .lang-toggle {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      background: var(--n50);
+      border: 1px solid var(--n200);
+      border-radius: 8px;
+      padding: 4px;
+    }
+
+    .lang-btn {
+      padding: 4px 10px;
+      border-radius: 6px;
+      border: none;
+      background: transparent;
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      color: var(--n500);
+      cursor: pointer;
+      transition: all .15s;
+    }
+
+    .lang-btn.active {
+      background: var(--ocean-700);
+      color: #fff;
+    }
+
+    /* ── HERO ────────────────────────────────────── */
+    .hero {
+      background: var(--ocean-900);
+      background-image: linear-gradient(135deg, var(--ocean-900) 0%, var(--ocean-700) 100%);
+      padding: 64px 24px 56px;
+      text-align: center;
+    }
+
+    .hero h1 {
+      font-size: clamp(28px, 5vw, 48px);
+      font-weight: 800;
+      color: #fff;
+      letter-spacing: -1px;
+      margin-bottom: 12px;
+    }
+
+    .hero p {
+      font-size: 16px;
+      color: rgba(255,255,255,.78);
+      max-width: 520px;
+      margin: 0 auto 32px;
+    }
+
+    .hero-badges {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 12px;
+    }
+
+    .hero-badge {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(255,255,255,.12);
+      border: 1px solid rgba(255,255,255,.2);
+      border-radius: 100px;
+      padding: 8px 18px;
+      font-size: 13px;
+      color: rgba(255,255,255,.9);
+      font-weight: 500;
+    }
+
+    .hero-badge svg { flex-shrink: 0; }
+
+    /* ── LAYOUT ──────────────────────────────────── */
+    .page-body {
+      max-width: 1080px;
+      margin: 0 auto;
+      padding: 40px 16px 80px;
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 32px;
+    }
+
+    @media (min-width: 900px) {
+      .page-body {
+        grid-template-columns: 1fr 340px;
+        padding: 48px 24px 80px;
+      }
+    }
+
+    /* ── PROGRESS BAR ────────────────────────────── */
+    .progress-wrap {
+      background: #fff;
+      border: 1px solid var(--n200);
+      border-radius: 16px;
+      padding: 24px;
+      margin-bottom: 24px;
+    }
+
+    .steps-row {
+      display: flex;
+      align-items: center;
+      gap: 0;
+    }
+
+    .step-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      flex: 1;
+      position: relative;
+    }
+
+    .step-item:not(:last-child)::after {
+      content: '';
+      position: absolute;
+      top: 18px;
+      left: 50%;
+      width: 100%;
+      height: 2px;
+      background: var(--n200);
+      transition: background .3s;
+    }
+
+    .step-item.done:not(:last-child)::after,
+    .step-item.active:not(:last-child)::after {
+      background: var(--ocean-500);
+    }
+
+    .step-circle {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      border: 2px solid var(--n200);
+      background: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Sora', sans-serif;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--n500);
+      position: relative;
+      z-index: 1;
+      transition: all .3s;
+    }
+
+    .step-item.done .step-circle {
+      border-color: var(--success);
+      background: var(--success);
+      color: #fff;
+    }
+
+    .step-item.active .step-circle {
+      border-color: var(--ocean-700);
+      background: var(--ocean-700);
+      color: #fff;
+    }
+
+    .step-label {
+      margin-top: 8px;
+      font-size: 11px;
+      font-family: 'DM Mono', monospace;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      color: var(--n500);
+      text-align: center;
+      display: none;
+    }
+
+    @media (min-width: 480px) { .step-label { display: block; } }
+
+    .step-item.active .step-label { color: var(--ocean-700); font-weight: 500; }
+
+    /* ── FORM CARD ───────────────────────────────── */
+    .form-card {
+      background: #fff;
+      border: 1px solid var(--n200);
+      border-radius: 16px;
+      padding: 32px 24px;
+    }
+
+    .form-card h2 {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--n900);
+      margin-bottom: 4px;
+    }
+
+    .form-card .step-sub {
+      font-size: 13px;
+      color: var(--n500);
+      margin-bottom: 28px;
+    }
+
+    .step-panel { display: none; }
+    .step-panel.active { display: block; }
+
+    /* ── FIELDS ──────────────────────────────────── */
+    .field-group { display: flex; flex-direction: column; gap: 20px; }
+
+    .field-row {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 20px;
+    }
+
+    @media (min-width: 560px) {
+      .field-row { grid-template-columns: 1fr 1fr; }
+    }
+
+    .field { display: flex; flex-direction: column; gap: 6px; }
+
+    .field label {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--n900);
+    }
+
+    .field label span.req { color: var(--error); margin-left: 2px; }
+
+    .field input,
+    .field select,
+    .field textarea {
+      width: 100%;
+      padding: 10px 14px;
+      border: 1.5px solid var(--n200);
+      border-radius: 10px;
+      font-size: 14px;
+      color: var(--n900);
+      background: #fff;
+      transition: border-color .15s, box-shadow .15s;
+      outline: none;
+      appearance: none;
+      -webkit-appearance: none;
+    }
+
+    .field input:focus,
+    .field select:focus,
+    .field textarea:focus {
+      border-color: var(--ocean-500);
+      box-shadow: 0 0 0 3px rgba(20,128,168,.12);
+    }
+
+    .field input.error,
+    .field select.error {
+      border-color: var(--error);
+    }
+
+    .field-error {
+      font-size: 12px;
+      color: var(--error);
+      display: none;
+    }
+
+    .field input.error + .field-error,
+    .field select.error + .field-error,
+    .field-error.show { display: block; }
+
+    .field textarea { resize: vertical; min-height: 90px; }
+
+    .url-row {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 8px;
+      align-items: start;
+    }
+
+    /* ── CHECKBOX GROUP ──────────────────────────── */
+    .checkbox-group {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .checkbox-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .checkbox-item input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      min-width: 18px;
+      border: 1.5px solid var(--n200);
+      border-radius: 5px;
+      appearance: none;
+      -webkit-appearance: none;
+      background: #fff;
+      cursor: pointer;
+      position: relative;
+      transition: all .15s;
+    }
+
+    .checkbox-item input[type="checkbox"]:checked {
+      background: var(--ocean-700);
+      border-color: var(--ocean-700);
+    }
+
+    .checkbox-item input[type="checkbox"]:checked::after {
+      content: '';
+      position: absolute;
+      left: 4px;
+      top: 1px;
+      width: 6px;
+      height: 10px;
+      border: 2px solid #fff;
+      border-top: none;
+      border-left: none;
+      transform: rotate(45deg);
+    }
+
+    .checkbox-item span {
+      font-size: 14px;
+      color: var(--n900);
+    }
+
+    /* ── RADIO GROUP ─────────────────────────────── */
+    .radio-group {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .radio-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .radio-item input[type="radio"] {
+      width: 18px;
+      height: 18px;
+      min-width: 18px;
+      border: 1.5px solid var(--n200);
+      border-radius: 50%;
+      appearance: none;
+      -webkit-appearance: none;
+      background: #fff;
+      cursor: pointer;
+      position: relative;
+      transition: all .15s;
+    }
+
+    .radio-item input[type="radio"]:checked {
+      background: var(--ocean-700);
+      border-color: var(--ocean-700);
+    }
+
+    .radio-item input[type="radio"]:checked::after {
+      content: '';
+      position: absolute;
+      left: 4px;
+      top: 4px;
+      width: 6px;
+      height: 6px;
+      background: #fff;
+      border-radius: 50%;
+    }
+
+    .radio-item span { font-size: 14px; color: var(--n900); }
+
+    /* ── SITE TOGGLE ─────────────────────────────── */
+    .site-toggle {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .site-toggle label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      border: 1.5px solid var(--n200);
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all .15s;
+      font-size: 14px;
+    }
+
+    .site-toggle label:has(input:checked) {
+      border-color: var(--ocean-700);
+      background: var(--ocean-50);
+      color: var(--ocean-700);
+      font-weight: 500;
+    }
+
+    .site-toggle input[type="radio"] {
+      width: 14px;
+      height: 14px;
+      accent-color: var(--ocean-700);
+    }
+
+    /* ── NAVIGATION BUTTONS ──────────────────────── */
+    .nav-btns {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 32px;
+      padding-top: 24px;
+      border-top: 1px solid var(--n200);
+      gap: 12px;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 24px;
+      border-radius: 10px;
+      font-family: 'Sora', sans-serif;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      transition: all .15s;
+    }
+
+    .btn-primary {
+      background: var(--ocean-700);
+      color: #fff;
+    }
+
+    .btn-primary:hover { background: var(--ocean-900); }
+    .btn-primary:disabled { opacity: .5; cursor: not-allowed; }
+
+    .btn-ghost {
+      background: transparent;
+      color: var(--n500);
+      border: 1.5px solid var(--n200);
+    }
+
+    .btn-ghost:hover { border-color: var(--ocean-500); color: var(--ocean-700); }
+
+    .btn-ghost.hidden { visibility: hidden; }
+
+    /* ── LOADING SPINNER ─────────────────────────── */
+    .spinner {
+      width: 18px;
+      height: 18px;
+      border: 2px solid rgba(255,255,255,.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+      display: none;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── SUCCESS STATE ───────────────────────────── */
+    #success-state { display: none; }
+
+    .success-card {
+      background: #fff;
+      border: 1px solid var(--n200);
+      border-radius: 16px;
+      padding: 48px 32px;
+      text-align: center;
+    }
+
+    .success-icon {
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      background: #D1FAE5;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 24px;
+    }
+
+    .success-card h2 {
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--n900);
+      margin-bottom: 8px;
+    }
+
+    .success-card p {
+      font-size: 15px;
+      color: var(--n500);
+      margin-bottom: 32px;
+      max-width: 400px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .success-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      align-items: center;
+    }
+
+    @media (min-width: 480px) {
+      .success-actions { flex-direction: row; justify-content: center; }
+    }
+
+    /* ── SIDEBAR ─────────────────────────────────── */
+    .sidebar { display: flex; flex-direction: column; gap: 20px; }
+
+    @media (min-width: 900px) {
+      .sidebar { position: sticky; top: 80px; align-self: start; }
+    }
+
+    .sidebar-card {
+      background: #fff;
+      border: 1px solid var(--n200);
+      border-radius: 16px;
+      padding: 24px;
+    }
+
+    .sidebar-card h3 {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--n900);
+      margin-bottom: 16px;
+    }
+
+    .benefit-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--n200);
+    }
+
+    .benefit-item:last-child { border-bottom: none; }
+
+    .benefit-icon {
+      width: 32px;
+      height: 32px;
+      min-width: 32px;
+      border-radius: 8px;
+      background: var(--ocean-50);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .benefit-item strong {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--n900);
+    }
+
+    .benefit-item span {
+      font-size: 12px;
+      color: var(--n500);
+    }
+
+    .testimonial {
+      background: var(--ocean-50);
+      border-left: 3px solid var(--ocean-500);
+      border-radius: 0 12px 12px 0;
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+
+    .testimonial p {
+      font-size: 13px;
+      color: var(--n900);
+      font-style: italic;
+      line-height: 1.6;
+      margin-bottom: 10px;
+    }
+
+    .testimonial-author {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .testimonial-avatar {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: var(--ocean-700);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 700;
+      color: #fff;
+      font-family: 'Sora', sans-serif;
+    }
+
+    .testimonial-name { font-size: 12px; font-weight: 600; color: var(--n900); }
+    .testimonial-role { font-size: 11px; color: var(--n500); }
+
+    .contact-link {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: var(--ocean-700);
+      font-weight: 500;
+      margin-top: 8px;
+    }
+
+    /* ── FOOTER ──────────────────────────────────── */
+    .footer {
+      background: var(--ocean-900);
+      color: rgba(255,255,255,.5);
+      text-align: center;
+      padding: 24px;
+      font-size: 12px;
+    }
+
+    .footer strong { color: rgba(255,255,255,.7); }
+
+    /* ── SECTION SEPARATOR ───────────────────────── */
+    .section-label {
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      color: var(--ocean-700);
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .section-label::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--n200);
+    }
+
+    /* ── PLAN CARDS ──────────────────────────────── */
+    .plan-cards {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    @media (min-width: 560px) {
+      .plan-cards { grid-template-columns: repeat(4, 1fr); }
+    }
+
+    .plan-card {
+      border: 1.5px solid var(--n200);
+      border-radius: 10px;
+      padding: 14px 12px;
+      cursor: pointer;
+      transition: all .15s;
+      text-align: center;
+    }
+
+    .plan-card:has(input:checked) {
+      border-color: var(--ocean-700);
+      background: var(--ocean-50);
+    }
+
+    .plan-card input { display: none; }
+
+    .plan-card-name {
+      font-family: 'Sora', sans-serif;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--n900);
+      margin-bottom: 4px;
+    }
+
+    .plan-card-price {
+      font-size: 12px;
+      color: var(--n500);
+    }
+
+    .plan-card:has(input:checked) .plan-card-name { color: var(--ocean-700); }
+    .plan-card:has(input:checked) .plan-card-price { color: var(--ocean-500); }
+
+    /* ── TERMS AREA ──────────────────────────────── */
+    .terms-block {
+      background: var(--n50);
+      border: 1px solid var(--n200);
+      border-radius: 10px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    /* ── ALERT BANNER ────────────────────────────── */
+    .alert {
+      display: none;
+      background: #FEF3C7;
+      border: 1px solid #FCD34D;
+      border-radius: 10px;
+      padding: 12px 16px;
+      font-size: 13px;
+      color: #92400E;
+      margin-bottom: 16px;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .alert.show { display: flex; }
+    .alert.error { background: #FEE2E2; border-color: #FECACA; color: var(--error); }
+  </style>
+</head>
+<body>
+
+<!-- ── NAVBAR ──────────────────────────────────────── -->
+<nav class="navbar">
+  <div class="navbar-left">
+    <a href="/">
+      <img src="/logo.png" alt="SalDesk" style="height:36px;" onerror="this.outerHTML='<span style=\'font-family:Sora,sans-serif;font-weight:800;font-size:18px;color:#0D5470\'>SalDesk</span>'" />
+    </a>
+    <a href="/" class="nav-back">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
+      <span data-pt="Voltar ao site" data-en="Back to site">Voltar ao site</span>
+    </a>
+  </div>
+  <div class="lang-toggle">
+    <button class="lang-btn active" onclick="setLang('pt')">PT</button>
+    <button class="lang-btn" onclick="setLang('en')">EN</button>
+  </div>
+</nav>
+
+<!-- ── HERO ──────────────────────────────────────────── -->
+<section class="hero">
+  <h1 data-pt="Junte-se à SalDesk" data-en="Join SalDesk">Junte-se à SalDesk</h1>
+  <p data-pt="Registe o seu negócio e comece a receber reservas directas hoje. Sem comissões. Sem complicações." data-en="Register your business and start receiving direct bookings today. No commissions. No complications.">
+    Registe o seu negócio e comece a receber reservas directas hoje. Sem comissões. Sem complicações.
+  </p>
+  <div class="hero-badges">
+    <div class="hero-badge">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#D4A82A" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+      <span data-pt="0% comissão" data-en="0% commission">0% comissão</span>
+    </div>
+    <div class="hero-badge">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#D4A82A" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+      <span data-pt="Site profissional incluído" data-en="Professional website included">Site profissional incluído</span>
+    </div>
+    <div class="hero-badge">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#D4A82A" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+      <span data-pt="30 dias grátis" data-en="30 days free">30 dias grátis</span>
+    </div>
+  </div>
+</section>
+
+<!-- ── PAGE BODY ─────────────────────────────────────── -->
+<div class="page-body">
+
+  <!-- LEFT: FORM -->
+  <div>
+    <!-- Progress -->
+    <div class="progress-wrap">
+      <div class="steps-row">
+        <div class="step-item active" id="step-dot-1">
+          <div class="step-circle" id="step-circle-1">1</div>
+          <div class="step-label" data-pt="Dados pessoais" data-en="Personal data">Dados pessoais</div>
+        </div>
+        <div class="step-item" id="step-dot-2">
+          <div class="step-circle" id="step-circle-2">2</div>
+          <div class="step-label" data-pt="Negócio" data-en="Business">Negócio</div>
+        </div>
+        <div class="step-item" id="step-dot-3">
+          <div class="step-circle" id="step-circle-3">3</div>
+          <div class="step-label" data-pt="Situação actual" data-en="Current situation">Situação actual</div>
+        </div>
+        <div class="step-item" id="step-dot-4">
+          <div class="step-circle" id="step-circle-4">4</div>
+          <div class="step-label" data-pt="Interesse" data-en="Interest">Interesse</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Alert banner -->
+    <div class="alert" id="form-alert" role="alert">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      <span id="form-alert-text"></span>
+    </div>
+
+    <!-- Form card -->
+    <div class="form-card" id="form-state">
+      <form id="lead-form" novalidate>
+
+        <!-- STEP 1 -->
+        <div class="step-panel active" id="panel-1">
+          <h2 data-pt="Informações Pessoais" data-en="Personal Information">Informações Pessoais</h2>
+          <p class="step-sub" data-pt="Passo 1 de 4 — Quem é responsável pelo negócio?" data-en="Step 1 of 4 — Who is responsible for the business?">Passo 1 de 4 — Quem é responsável pelo negócio?</p>
+          <div class="field-group">
+            <div class="field-row">
+              <div class="field">
+                <label for="nome">
+                  <span data-pt="Nome completo" data-en="Full name">Nome completo</span>
+                  <span class="req">*</span>
+                </label>
+                <input type="text" id="nome" name="nome" autocomplete="name" placeholder="Ex: João Silva" />
+                <span class="field-error" data-pt="Campo obrigatório" data-en="Required field">Campo obrigatório</span>
+              </div>
+              <div class="field">
+                <label for="email">
+                  <span data-pt="Email" data-en="Email">Email</span>
+                  <span class="req">*</span>
+                </label>
+                <input type="email" id="email" name="email" autocomplete="email" placeholder="joao@exemplo.com" />
+                <span class="field-error" data-pt="Email inválido" data-en="Invalid email">Email inválido</span>
+              </div>
+            </div>
+            <div class="field-row">
+              <div class="field">
+                <label for="telefone">
+                  <span data-pt="Telefone" data-en="Phone">Telefone</span>
+                  <span class="req">*</span>
+                </label>
+                <input type="tel" id="telefone" name="telefone" autocomplete="tel" placeholder="+238 9XX XXX" />
+                <span class="field-error" data-pt="Campo obrigatório" data-en="Required field">Campo obrigatório</span>
+              </div>
+              <div class="field">
+                <label for="whatsapp">
+                  <span data-pt="WhatsApp (se diferente)" data-en="WhatsApp (if different)">WhatsApp (se diferente)</span>
+                </label>
+                <input type="tel" id="whatsapp" name="whatsapp" placeholder="+238 9XX XXX" />
+              </div>
+            </div>
+            <div class="field">
+              <label for="funcao" data-pt="Função na empresa" data-en="Role in the company">Função na empresa</label>
+              <select id="funcao" name="funcao">
+                <option value="" data-pt="Seleccionar..." data-en="Select...">Seleccionar...</option>
+                <option value="proprietario" data-pt="Proprietário / Sócio" data-en="Owner / Partner">Proprietário / Sócio</option>
+                <option value="gestor" data-pt="Gestor / Director" data-en="Manager / Director">Gestor / Director</option>
+                <option value="outro" data-pt="Outro" data-en="Other">Outro</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- STEP 2 -->
+        <div class="step-panel" id="panel-2">
+          <h2 data-pt="Informações do Negócio" data-en="Business Information">Informações do Negócio</h2>
+          <p class="step-sub" data-pt="Passo 2 de 4 — Conte-nos sobre a sua empresa." data-en="Step 2 of 4 — Tell us about your company.">Passo 2 de 4 — Conte-nos sobre a sua empresa.</p>
+          <div class="field-group">
+            <div class="field-row">
+              <div class="field">
+                <label for="nome_negocio">
+                  <span data-pt="Nome do negócio" data-en="Business name">Nome do negócio</span>
+                  <span class="req">*</span>
+                </label>
+                <input type="text" id="nome_negocio" name="nome_negocio" placeholder="Ex: Zy Tours" />
+                <span class="field-error" data-pt="Campo obrigatório" data-en="Required field">Campo obrigatório</span>
+              </div>
+              <div class="field">
+                <label for="tipo_negocio">
+                  <span data-pt="Tipo de negócio" data-en="Business type">Tipo de negócio</span>
+                  <span class="req">*</span>
+                </label>
+                <select id="tipo_negocio" name="tipo_negocio">
+                  <option value="" data-pt="Seleccionar..." data-en="Select...">Seleccionar...</option>
+                  <option value="hotel" data-pt="Hotel / Pensão / Alojamento" data-en="Hotel / Guesthouse / Accommodation">Hotel / Pensão / Alojamento</option>
+                  <option value="activity" data-pt="Actividades / Tours / Experiências" data-en="Activities / Tours / Experiences">Actividades / Tours / Experiências</option>
+                  <option value="rentacar" data-pt="Rent-a-Car / Transfers" data-en="Rent-a-Car / Transfers">Rent-a-Car / Transfers</option>
+                  <option value="restaurant" data-pt="Restaurante / Bar / Café" data-en="Restaurant / Bar / Café">Restaurante / Bar / Café</option>
+                  <option value="outro" data-pt="Outro" data-en="Other">Outro</option>
+                </select>
+                <span class="field-error" data-pt="Campo obrigatório" data-en="Required field">Campo obrigatório</span>
+              </div>
+            </div>
+            <div class="field-row">
+              <div class="field">
+                <label for="localizacao">
+                  <span data-pt="Localização" data-en="Location">Localização</span>
+                  <span class="req">*</span>
+                </label>
+                <select id="localizacao" name="localizacao">
+                  <option value="" data-pt="Seleccionar..." data-en="Select...">Seleccionar...</option>
+                  <option value="santa_maria" data-pt="Santa Maria" data-en="Santa Maria">Santa Maria</option>
+                  <option value="espargos" data-pt="Espargos" data-en="Espargos">Espargos</option>
+                  <option value="palmeira" data-pt="Palmeira" data-en="Palmeira">Palmeira</option>
+                  <option value="murdeira" data-pt="Murdeira" data-en="Murdeira">Murdeira</option>
+                  <option value="outro" data-pt="Outro" data-en="Other">Outro</option>
+                </select>
+                <span class="field-error" data-pt="Campo obrigatório" data-en="Required field">Campo obrigatório</span>
+              </div>
+              <div class="field">
+                <label for="anos_operacao" data-pt="Há quanto tempo está em operação?" data-en="How long have you been operating?">Há quanto tempo está em operação?</label>
+                <select id="anos_operacao" name="anos_operacao">
+                  <option value="" data-pt="Seleccionar..." data-en="Select...">Seleccionar...</option>
+                  <option value="menos_1" data-pt="Menos de 1 ano" data-en="Less than 1 year">Menos de 1 ano</option>
+                  <option value="1_3" data-pt="1 a 3 anos" data-en="1 to 3 years">1 a 3 anos</option>
+                  <option value="3_5" data-pt="3 a 5 anos" data-en="3 to 5 years">3 a 5 anos</option>
+                  <option value="mais_5" data-pt="Mais de 5 anos" data-en="More than 5 years">Mais de 5 anos</option>
+                </select>
+              </div>
+            </div>
+            <div class="field">
+              <label for="clientes_mes" data-pt="Número aproximado de clientes por mês" data-en="Approximate number of customers per month">Número aproximado de clientes por mês</label>
+              <input type="text" id="clientes_mes" name="clientes_mes" placeholder="Ex: 50-100" />
+            </div>
+            <div class="field">
+              <label data-pt="Tem site ou presença online?" data-en="Do you have a website or online presence?">Tem site ou presença online?</label>
+              <div class="site-toggle">
+                <label>
+                  <input type="radio" name="tem_site" value="nao" checked onchange="toggleUrl(false)" />
+                  <span data-pt="Não" data-en="No">Não</span>
+                </label>
+                <label>
+                  <input type="radio" name="tem_site" value="sim" onchange="toggleUrl(true)" />
+                  <span data-pt="Sim" data-en="Yes">Sim</span>
+                </label>
+              </div>
+            </div>
+            <div class="field" id="url-field" style="display:none">
+              <label for="url_site" data-pt="URL do site / página" data-en="Website / page URL">URL do site / página</label>
+              <input type="url" id="url_site" name="url_site" placeholder="https://" />
+            </div>
+          </div>
+        </div>
+
+        <!-- STEP 3 -->
+        <div class="step-panel" id="panel-3">
+          <h2 data-pt="Situação Actual" data-en="Current Situation">Situação Actual</h2>
+          <p class="step-sub" data-pt="Passo 3 de 4 — Como gere o seu negócio hoje?" data-en="Step 3 of 4 — How do you manage your business today?">Passo 3 de 4 — Como gere o seu negócio hoje?</p>
+          <div class="field-group">
+            <div class="field">
+              <label data-pt="Como gere as reservas actualmente?" data-en="How do you currently manage bookings?">Como gere as reservas actualmente?</label>
+              <div class="checkbox-group" id="cgr-group">
+                <label class="checkbox-item"><input type="checkbox" name="como_gere_reservas" value="whatsapp" /><span>WhatsApp</span></label>
+                <label class="checkbox-item"><input type="checkbox" name="como_gere_reservas" value="email" /><span>Email</span></label>
+                <label class="checkbox-item"><input type="checkbox" name="como_gere_reservas" value="telefone" data-pt="Telefone" data-en="Phone">Telefone</span></label>
+                <label class="checkbox-item"><input type="checkbox" name="como_gere_reservas" value="booking_com" /><span>Booking.com</span></label>
+                <label class="checkbox-item"><input type="checkbox" name="como_gere_reservas" value="viator" /><span>Viator</span></label>
+                <label class="checkbox-item"><input type="checkbox" name="como_gere_reservas" value="getyourguide" /><span>GetYourGuide</span></label>
+                <label class="checkbox-item"><input type="checkbox" name="como_gere_reservas" value="outro" data-pt="Outro" data-en="Other"><span data-pt="Outro" data-en="Other">Outro</span></label>
+              </div>
+            </div>
+
+            <div class="field">
+              <label data-pt="Quais são os maiores desafios?" data-en="What are the biggest challenges?">Quais são os maiores desafios?</label>
+              <div class="checkbox-group">
+                <label class="checkbox-item"><input type="checkbox" name="desafios" value="gestao_manual" /><span data-pt="Gestão de reservas manual / por WhatsApp" data-en="Manual / WhatsApp booking management">Gestão de reservas manual / por WhatsApp</span></label>
+                <label class="checkbox-item"><input type="checkbox" name="desafios" value="comissoes_otas" /><span data-pt="Dependência das OTAs e comissões altas" data-en="Dependence on OTAs and high commissions">Dependência das OTAs e comissões altas</span></label>
+                <label class="checkbox-item"><input type="checkbox" name="desafios" value="sem_presenca_digital" /><span data-pt="Sem presença digital profissional" data-en="No professional digital presence">Sem presença digital profissional</span></label>
+                <label class="checkbox-item"><input type="checkbox" name="desafios" value="gestao_colaboradores" /><span data-pt="Dificuldade em gerir colaboradores" data-en="Difficulty managing staff">Dificuldade em gerir colaboradores</span></label>
+                <label class="checkbox-item"><input type="checkbox" name="desafios" value="sem_dados_financeiros" /><span data-pt="Falta de dados financeiros e relatórios" data-en="Lack of financial data and reports">Falta de dados financeiros e relatórios</span></label>
+                <label class="checkbox-item"><input type="checkbox" name="desafios" value="outro" /><span data-pt="Outro" data-en="Other">Outro</span></label>
+              </div>
+            </div>
+
+            <div class="field-row">
+              <div class="field">
+                <label for="num_funcionarios" data-pt="Tem funcionários / colaboradores?" data-en="Do you have employees / staff?">Tem funcionários / colaboradores?</label>
+                <select id="num_funcionarios" name="num_funcionarios">
+                  <option value="" data-pt="Seleccionar..." data-en="Select...">Seleccionar...</option>
+                  <option value="nenhum" data-pt="Não, trabalho sozinho" data-en="No, I work alone">Não, trabalho sozinho</option>
+                  <option value="1_3" data-pt="1 a 3 colaboradores" data-en="1 to 3 employees">1 a 3 colaboradores</option>
+                  <option value="4_10" data-pt="4 a 10 colaboradores" data-en="4 to 10 employees">4 a 10 colaboradores</option>
+                  <option value="mais_10" data-pt="Mais de 10 colaboradores" data-en="More than 10 employees">Mais de 10 colaboradores</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="volume_mensal" data-pt="Volume de negócio mensal aproximado" data-en="Approximate monthly revenue">Volume de negócio mensal aproximado</label>
+                <select id="volume_mensal" name="volume_mensal">
+                  <option value="" data-pt="Seleccionar..." data-en="Select...">Seleccionar...</option>
+                  <option value="menos_500" data-pt="Menos de €500" data-en="Less than €500">Menos de €500</option>
+                  <option value="500_2000" data-pt="€500 – €2.000" data-en="€500 – €2,000">€500 – €2.000</option>
+                  <option value="2000_5000" data-pt="€2.000 – €5.000" data-en="€2,000 – €5,000">€2.000 – €5.000</option>
+                  <option value="mais_5000" data-pt="Mais de €5.000" data-en="More than €5,000">Mais de €5.000</option>
+                  <option value="nao_diz" data-pt="Prefiro não dizer" data-en="Prefer not to say">Prefiro não dizer</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="field">
+              <label data-pt="Trabalha com alguma OTA actualmente?" data-en="Do you currently work with any OTA?">Trabalha com alguma OTA actualmente?</label>
+              <div class="checkbox-group">
+                <label class="checkbox-item"><input type="checkbox" name="otas" value="booking_com" /><span>Booking.com</span></label>
+                <label class="checkbox-item"><input type="checkbox" name="otas" value="viator" /><span>Viator</span></label>
+                <label class="checkbox-item"><input type="checkbox" name="otas" value="getyourguide" /><span>GetYourGuide</span></label>
+                <label class="checkbox-item"><input type="checkbox" name="otas" value="airbnb" /><span>Airbnb</span></label>
+                <label class="checkbox-item"><input type="checkbox" name="otas" value="nenhuma" data-pt="Nenhuma" data-en="None"><span data-pt="Nenhuma" data-en="None">Nenhuma</span></label>
+                <label class="checkbox-item"><input type="checkbox" name="otas" value="outro" /><span data-pt="Outro" data-en="Other">Outro</span></label>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- STEP 4 -->
+        <div class="step-panel" id="panel-4">
+          <h2 data-pt="Interesse e Disponibilidade" data-en="Interest and Availability">Interesse e Disponibilidade</h2>
+          <p class="step-sub" data-pt="Passo 4 de 4 — Quase lá! Diga-nos o que espera." data-en="Step 4 of 4 — Almost there! Tell us what you expect.">Passo 4 de 4 — Quase lá! Diga-nos o que espera.</p>
+          <div class="field-group">
+
+            <div class="field">
+              <label data-pt="Qual plano te interessa?" data-en="Which plan interests you?">Qual plano te interessa?</label>
+              <div class="plan-cards">
+                <label class="plan-card">
+                  <input type="radio" name="plano_interesse" value="starter" />
+                  <div class="plan-card-name">Starter</div>
+                  <div class="plan-card-price">€29/mês</div>
+                </label>
+                <label class="plan-card">
+                  <input type="radio" name="plano_interesse" value="business" />
+                  <div class="plan-card-name">Business</div>
+                  <div class="plan-card-price">€69/mês</div>
+                </label>
+                <label class="plan-card">
+                  <input type="radio" name="plano_interesse" value="pro" />
+                  <div class="plan-card-name">Pro</div>
+                  <div class="plan-card-price">€129/mês</div>
+                </label>
+                <label class="plan-card">
+                  <input type="radio" name="plano_interesse" value="nao_sei" />
+                  <div class="plan-card-name" data-pt="Ainda não sei" data-en="Not sure yet">Ainda não sei</div>
+                  <div class="plan-card-price" data-pt="Precisamos conversar" data-en="Let's talk first">Precisamos conversar</div>
+                </label>
+              </div>
+            </div>
+
+            <div class="field-row">
+              <div class="field">
+                <label for="quando_comecar" data-pt="Quando gostaria de começar?" data-en="When would you like to start?">Quando gostaria de começar?</label>
+                <select id="quando_comecar" name="quando_comecar">
+                  <option value="" data-pt="Seleccionar..." data-en="Select...">Seleccionar...</option>
+                  <option value="imediatamente" data-pt="Imediatamente" data-en="Immediately">Imediatamente</option>
+                  <option value="1_mes" data-pt="Em 1 mês" data-en="In 1 month">Em 1 mês</option>
+                  <option value="3_meses" data-pt="Em 3 meses" data-en="In 3 months">Em 3 meses</option>
+                  <option value="explorando" data-pt="Só a explorar" data-en="Just exploring">Só a explorar</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="como_soube" data-pt="Como soube do SalDesk?" data-en="How did you hear about SalDesk?">Como soube do SalDesk?</label>
+                <select id="como_soube" name="como_soube">
+                  <option value="" data-pt="Seleccionar..." data-en="Select...">Seleccionar...</option>
+                  <option value="recomendacao" data-pt="Recomendação de colega" data-en="Colleague recommendation">Recomendação de colega</option>
+                  <option value="redes_sociais" data-pt="Redes sociais" data-en="Social media">Redes sociais</option>
+                  <option value="google" data-pt="Google / pesquisa online" data-en="Google / online search">Google / pesquisa online</option>
+                  <option value="evento" data-pt="Evento / feira" data-en="Event / trade fair">Evento / feira</option>
+                  <option value="outro" data-pt="Outro" data-en="Other">Outro</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="field">
+              <label data-pt="Disponível para uma demonstração?" data-en="Available for a demo?">Disponível para uma demonstração?</label>
+              <div class="radio-group" style="flex-direction:row;gap:24px;flex-wrap:wrap">
+                <label class="radio-item">
+                  <input type="radio" name="disponivel_demo" value="sim" />
+                  <span data-pt="Sim, com todo o gosto" data-en="Yes, I'd love to">Sim, com todo o gosto</span>
+                </label>
+                <label class="radio-item">
+                  <input type="radio" name="disponivel_demo" value="nao" />
+                  <span data-pt="Não por agora" data-en="Not right now">Não por agora</span>
+                </label>
+              </div>
+            </div>
+
+            <div class="field">
+              <label for="horario_contacto" data-pt="Horário preferido para contacto" data-en="Preferred contact time">Horário preferido para contacto</label>
+              <select id="horario_contacto" name="horario_contacto">
+                <option value="" data-pt="Seleccionar..." data-en="Select...">Seleccionar...</option>
+                <option value="manha" data-pt="Manhã (8h – 12h)" data-en="Morning (8am – 12pm)">Manhã (8h – 12h)</option>
+                <option value="tarde" data-pt="Tarde (12h – 17h)" data-en="Afternoon (12pm – 5pm)">Tarde (12h – 17h)</option>
+                <option value="noite" data-pt="Final do dia (17h – 20h)" data-en="End of day (5pm – 8pm)">Final do dia (17h – 20h)</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label for="comentarios" data-pt="Comentários adicionais" data-en="Additional comments">Comentários adicionais</label>
+              <textarea id="comentarios" name="comentarios" placeholder="Conte-nos mais sobre o seu negócio ou coloque as suas questões..." rows="4"></textarea>
+            </div>
+
+            <div class="terms-block">
+              <label class="checkbox-item">
+                <input type="checkbox" id="aceita_termos" name="aceita_termos" value="true" />
+                <span>
+                  <span data-pt="Aceito os" data-en="I accept the">Aceito os</span>
+                  <a href="/termos.html" target="_blank" style="color:var(--ocean-700);font-weight:500" data-pt="Termos e Condições" data-en="Terms and Conditions">Termos e Condições</a>
+                  <span data-pt="da SalDesk" data-en="of SalDesk">da SalDesk</span>
+                  <span class="req">*</span>
+                </span>
+              </label>
+              <label class="checkbox-item">
+                <input type="checkbox" id="aceita_comunicacoes" name="aceita_comunicacoes" value="true" />
+                <span data-pt="Aceito receber comunicações e novidades da SalDesk por email" data-en="I agree to receive updates and news from SalDesk by email">Aceito receber comunicações e novidades da SalDesk por email</span>
+              </label>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Navigation -->
+        <div class="nav-btns">
+          <button type="button" class="btn btn-ghost hidden" id="btn-prev" onclick="prevStep()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
+            <span data-pt="Anterior" data-en="Previous">Anterior</span>
+          </button>
+          <button type="button" class="btn btn-primary" id="btn-next" onclick="nextStep()">
+            <span id="btn-next-label" data-pt="Próximo" data-en="Next">Próximo</span>
+            <div class="spinner" id="btn-spinner"></div>
+            <svg id="btn-next-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+          </button>
+        </div>
+
+      </form>
+    </div><!-- /form-card -->
+
+    <!-- Success state -->
+    <div id="success-state">
+      <div class="success-card">
+        <div class="success-icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#1A7A4A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        </div>
+        <h2 data-pt="Candidatura enviada!" data-en="Application submitted!">Candidatura enviada!</h2>
+        <p data-pt="Obrigado pelo seu interesse na SalDesk. A nossa equipa irá entrar em contacto consigo em até 24 horas." data-en="Thank you for your interest in SalDesk. Our team will contact you within 24 hours.">
+          Obrigado pelo seu interesse na SalDesk. A nossa equipa irá entrar em contacto consigo em até 24 horas.
+        </p>
+        <div class="success-actions">
+          <a href="/discover" class="btn btn-primary" style="text-decoration:none">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+            <span data-pt="Explorar o SalDesk Connect" data-en="Explore SalDesk Connect">Explorar o SalDesk Connect</span>
+          </a>
+          <a href="/" class="btn btn-ghost" style="text-decoration:none">
+            <span data-pt="Voltar ao site" data-en="Back to site">Voltar ao site</span>
+          </a>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /left col -->
+
+  <!-- RIGHT: SIDEBAR -->
+  <aside class="sidebar">
+
+    <!-- Benefits -->
+    <div class="sidebar-card">
+      <h3 data-pt="Porquê escolher a SalDesk?" data-en="Why choose SalDesk?">Porquê escolher a SalDesk?</h3>
+      <div class="benefit-item">
+        <div class="benefit-icon">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0D5470" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+        </div>
+        <div>
+          <strong data-pt="0% comissão nas reservas directas" data-en="0% commission on direct bookings">0% comissão nas reservas directas</strong>
+          <span data-pt="Receba 100% do valor das suas reservas" data-en="Keep 100% of your booking revenue">Receba 100% do valor das suas reservas</span>
+        </div>
+      </div>
+      <div class="benefit-item">
+        <div class="benefit-icon">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0D5470" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+        </div>
+        <div>
+          <strong data-pt="Site profissional incluído" data-en="Professional website included">Site profissional incluído</strong>
+          <span data-pt="Página pública para reservas directas" data-en="Public page for direct bookings">Página pública para reservas directas</span>
+        </div>
+      </div>
+      <div class="benefit-item">
+        <div class="benefit-icon">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0D5470" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+        </div>
+        <div>
+          <strong data-pt="Gestão completa num só lugar" data-en="Complete management in one place">Gestão completa num só lugar</strong>
+          <span data-pt="Reservas, colaboradores, finanças, clientes" data-en="Bookings, staff, finances, customers">Reservas, colaboradores, finanças, clientes</span>
+        </div>
+      </div>
+      <div class="benefit-item">
+        <div class="benefit-icon">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0D5470" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        </div>
+        <div>
+          <strong data-pt="Suporte em português" data-en="Support in Portuguese">Suporte em português</strong>
+          <span data-pt="Equipa local, disponível no horário laboral" data-en="Local team, available during business hours">Equipa local, disponível no horário laboral</span>
+        </div>
+      </div>
+      <div class="benefit-item">
+        <div class="benefit-icon">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0D5470" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        </div>
+        <div>
+          <strong data-pt="30 dias grátis, sem cartão" data-en="30 days free, no credit card">30 dias grátis, sem cartão</strong>
+          <span data-pt="Experimente sem compromisso" data-en="Try without commitment">Experimente sem compromisso</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Testimonial -->
+    <div class="sidebar-card">
+      <h3 data-pt="O que dizem os operadores" data-en="What operators say">O que dizem os operadores</h3>
+      <div class="testimonial">
+        <p data-pt="&ldquo;Com a SalDesk deixámos de perder reservas por WhatsApp. Agora tudo fica registado e a equipa sabe o que fazer sem eu ter de explicar tudo.&rdquo;" data-en="&ldquo;With SalDesk we stopped losing bookings over WhatsApp. Now everything is recorded and the team knows what to do without me having to explain everything.&rdquo;">
+          &ldquo;Com a SalDesk deixámos de perder reservas por WhatsApp. Agora tudo fica registado e a equipa sabe o que fazer sem eu ter de explicar tudo.&rdquo;
+        </p>
+        <div class="testimonial-author">
+          <div class="testimonial-avatar">ZT</div>
+          <div>
+            <div class="testimonial-name">Zy Tours</div>
+            <div class="testimonial-role" data-pt="Operador de actividades · Santa Maria" data-en="Activity operator · Santa Maria">Operador de actividades · Santa Maria</div>
+          </div>
+        </div>
+      </div>
+      <div class="contact-link">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+        <a href="mailto:hello@saldesk.cv">hello@saldesk.cv</a>
+      </div>
+    </div>
+
+    <!-- Plans quick ref -->
+    <div class="sidebar-card">
+      <h3 data-pt="Planos disponíveis" data-en="Available plans">Planos disponíveis</h3>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--n200)">
+          <div>
+            <div style="font-weight:600;font-size:13px">Starter</div>
+            <div style="font-size:12px;color:var(--n500)" data-pt="Ideal para começar" data-en="Ideal to get started">Ideal para começar</div>
+          </div>
+          <div style="font-family:Sora,sans-serif;font-weight:700;color:var(--ocean-700)">€29<span style="font-size:11px;font-weight:400;color:var(--n500)">/mês</span></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--n200)">
+          <div>
+            <div style="font-weight:600;font-size:13px">Business</div>
+            <div style="font-size:12px;color:var(--n500)" data-pt="O mais popular" data-en="Most popular">O mais popular</div>
+          </div>
+          <div style="font-family:Sora,sans-serif;font-weight:700;color:var(--ocean-700)">€69<span style="font-size:11px;font-weight:400;color:var(--n500)">/mês</span></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0">
+          <div>
+            <div style="font-weight:600;font-size:13px">Pro</div>
+            <div style="font-size:12px;color:var(--n500)" data-pt="Para equipas e múltiplos serviços" data-en="For teams and multiple services">Para equipas e múltiplos serviços</div>
+          </div>
+          <div style="font-family:Sora,sans-serif;font-weight:700;color:var(--ocean-700)">€129<span style="font-size:11px;font-weight:400;color:var(--n500)">/mês</span></div>
+        </div>
+      </div>
+    </div>
+
+  </aside>
+
+</div><!-- /page-body -->
+
+<!-- ── FOOTER ─────────────────────────────────────────── -->
+<footer class="footer">
+  <p>Sistema desenvolvido por <strong>WANDR — Travel Technology Company</strong></p>
+  <p style="margin-top:4px">&copy; 2026 SalDesk. Todos os direitos reservados.</p>
+</footer>
+
+<script>
+  /* ── LANG ───────────────────────────────────────────── */
+  let currentLang = 'pt';
+
+  function setLang(lang) {
+    currentLang = lang;
+    document.documentElement.lang = lang;
+    document.querySelectorAll('.lang-btn').forEach(b => b.classList.toggle('active', b.textContent === lang.toUpperCase()));
+    document.querySelectorAll('[data-pt]').forEach(el => {
+      const val = el.getAttribute('data-' + lang);
+      if (!val) return;
+      if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
+        el.placeholder = val;
+      } else if (el.tagName === 'OPTION') {
+        el.textContent = val;
+      } else {
+        el.textContent = val;
+      }
+    });
+  }
+
+  /* ── STEP LOGIC ──────────────────────────────────────── */
+  let currentStep = 1;
+  const TOTAL_STEPS = 4;
+
+  function updateProgress() {
+    for (let i = 1; i <= TOTAL_STEPS; i++) {
+      const dot  = document.getElementById('step-dot-' + i);
+      const circ = document.getElementById('step-circle-' + i);
+      dot.classList.remove('active', 'done');
+      if (i < currentStep) {
+        dot.classList.add('done');
+        circ.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
+      } else if (i === currentStep) {
+        dot.classList.add('active');
+        circ.textContent = i;
+      } else {
+        circ.textContent = i;
+      }
+    }
+
+    document.querySelectorAll('.step-panel').forEach(p => p.classList.remove('active'));
+    document.getElementById('panel-' + currentStep).classList.add('active');
+
+    const prevBtn = document.getElementById('btn-prev');
+    const nextLabel = document.getElementById('btn-next-label');
+    const nextIcon  = document.getElementById('btn-next-icon');
+
+    prevBtn.classList.toggle('hidden', currentStep === 1);
+
+    if (currentStep === TOTAL_STEPS) {
+      nextLabel.setAttribute('data-pt', 'Enviar candidatura');
+      nextLabel.setAttribute('data-en', 'Submit application');
+      nextLabel.textContent = currentLang === 'en' ? 'Submit application' : 'Enviar candidatura';
+      nextIcon.style.display = 'none';
+    } else {
+      nextLabel.setAttribute('data-pt', 'Próximo');
+      nextLabel.setAttribute('data-en', 'Next');
+      nextLabel.textContent = currentLang === 'en' ? 'Next' : 'Próximo';
+      nextIcon.style.display = '';
+    }
+
+    hideAlert();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function showAlert(msg, isError = true) {
+    const el = document.getElementById('form-alert');
+    const txt = document.getElementById('form-alert-text');
+    el.classList.toggle('error', isError);
+    txt.textContent = msg;
+    el.classList.add('show');
+    el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  function hideAlert() {
+    document.getElementById('form-alert').classList.remove('show');
+  }
+
+  function validateStep(step) {
+    if (step === 1) {
+      const nome = document.getElementById('nome');
+      const email = document.getElementById('email');
+      const tel = document.getElementById('telefone');
+      let ok = true;
+      [nome, tel].forEach(f => { f.classList.toggle('error', !f.value.trim()); if (!f.value.trim()) ok = false; });
+      const emailOk = email.value.includes('@') && email.value.includes('.');
+      email.classList.toggle('error', !emailOk);
+      if (!emailOk) ok = false;
+      if (!ok) showAlert(currentLang === 'en' ? 'Please fill in all required fields.' : 'Por favor preencha todos os campos obrigatórios.');
+      return ok;
+    }
+    if (step === 2) {
+      const nb = document.getElementById('nome_negocio');
+      const tp = document.getElementById('tipo_negocio');
+      const lc = document.getElementById('localizacao');
+      let ok = true;
+      [nb, tp, lc].forEach(f => { f.classList.toggle('error', !f.value.trim()); if (!f.value.trim()) ok = false; });
+      if (!ok) showAlert(currentLang === 'en' ? 'Please fill in all required fields.' : 'Por favor preencha todos os campos obrigatórios.');
+      return ok;
+    }
+    if (step === 4) {
+      if (!document.getElementById('aceita_termos').checked) {
+        showAlert(currentLang === 'en' ? 'You must accept the terms and conditions to proceed.' : 'Deve aceitar os termos e condições para continuar.');
+        return false;
+      }
+    }
+    return true;
+  }
+
+  function nextStep() {
+    if (!validateStep(currentStep)) return;
+    if (currentStep === TOTAL_STEPS) {
+      submitForm();
+      return;
+    }
+    currentStep++;
+    updateProgress();
+  }
+
+  function prevStep() {
+    if (currentStep > 1) { currentStep--; updateProgress(); }
+  }
+
+  /* ── SITE TOGGLE ─────────────────────────────────────── */
+  function toggleUrl(show) {
+    document.getElementById('url-field').style.display = show ? '' : 'none';
+  }
+
+  /* ── FORM SUBMIT ─────────────────────────────────────── */
+  async function submitForm() {
+    const btn     = document.getElementById('btn-next');
+    const spinner = document.getElementById('btn-spinner');
+    const icon    = document.getElementById('btn-next-icon');
+    const label   = document.getElementById('btn-next-label');
+
+    btn.disabled = true;
+    spinner.style.display = 'block';
+    icon.style.display    = 'none';
+    label.textContent = currentLang === 'en' ? 'Sending...' : 'A enviar...';
+
+    const getChecked = (name) => [...document.querySelectorAll(`input[name="${name}"]:checked`)].map(i => i.value);
+    const getVal     = (id)   => (document.getElementById(id)?.value || '').trim();
+    const getRadio   = (name) => (document.querySelector(`input[name="${name}"]:checked`)?.value || '');
+
+    const payload = {
+      nome:                getVal('nome'),
+      email:               getVal('email'),
+      telefone:            getVal('telefone'),
+      whatsapp:            getVal('whatsapp'),
+      funcao:              getVal('funcao'),
+      nome_negocio:        getVal('nome_negocio'),
+      tipo_negocio:        getVal('tipo_negocio'),
+      localizacao:         getVal('localizacao'),
+      anos_operacao:       getVal('anos_operacao'),
+      clientes_mes:        getVal('clientes_mes'),
+      tem_site:            getRadio('tem_site') === 'sim',
+      url_site:            getVal('url_site'),
+      como_gere_reservas:  getChecked('como_gere_reservas'),
+      desafios:            getChecked('desafios'),
+      num_funcionarios:    getVal('num_funcionarios'),
+      otas:                getChecked('otas'),
+      volume_mensal:       getVal('volume_mensal'),
+      plano_interesse:     getRadio('plano_interesse'),
+      quando_comecar:      getVal('quando_comecar'),
+      como_soube:          getVal('como_soube'),
+      disponivel_demo:     getRadio('disponivel_demo') === 'sim',
+      horario_contacto:    getVal('horario_contacto'),
+      comentarios:         getVal('comentarios'),
+      aceita_termos:       document.getElementById('aceita_termos').checked,
+      aceita_comunicacoes: document.getElementById('aceita_comunicacoes').checked,
+    };
+
+    try {
+      const res = await fetch('https://api.saldesk.cv/api/v1/public/leads', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || (currentLang === 'en' ? 'Submission error. Please try again.' : 'Erro no envio. Por favor tente novamente.'));
+      }
+
+      document.getElementById('form-state').style.display = 'none';
+      document.querySelector('.progress-wrap').style.display = 'none';
+      document.getElementById('form-alert').classList.remove('show');
+      document.getElementById('success-state').style.display = 'block';
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+
+    } catch (err) {
+      showAlert(err.message || (currentLang === 'en' ? 'Connection error. Please try again.' : 'Erro de ligação. Por favor tente novamente.'));
+      btn.disabled = false;
+      spinner.style.display = 'none';
+      icon.style.display    = '';
+      label.textContent = currentLang === 'en' ? 'Submit application' : 'Enviar candidatura';
+    }
+  }
+
+  /* init */
+  updateProgress();
+</script>
+</body>
+</html>
