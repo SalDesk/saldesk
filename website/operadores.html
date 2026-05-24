@@ -38,7 +38,7 @@
       font-family: 'DM Sans', sans-serif;
       font-size: 14px;
       color: var(--n900);
-      background: var(--n50);
+      background: #F5F7FA;
       line-height: 1.6;
     }
 
@@ -115,7 +115,7 @@
       background-image: url('https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=1600&q=80');
       background-size: cover;
       background-position: center 60%;
-      padding: 88px 24px 72px;
+      padding: 88px 24px 96px;
       text-align: center;
       overflow: hidden;
     }
@@ -129,6 +129,19 @@
     }
 
     .hero > * { position: relative; z-index: 1; }
+
+    /* ── WAVE hero → page ──────────────────────── */
+    .hero-wave {
+      position: absolute;
+      bottom: -1px;
+      left: 0;
+      width: 100%;
+      line-height: 0;
+      z-index: 2;
+      pointer-events: none;
+    }
+
+    .hero-wave svg { display: block; width: 100%; }
 
     .hero h1 {
       font-size: clamp(30px, 5.5vw, 52px);
@@ -209,6 +222,7 @@
       border-radius: 16px;
       padding: 24px;
       margin-bottom: 24px;
+      box-shadow: 0 2px 12px rgba(6,42,56,.05);
     }
 
     .steps-row {
@@ -233,12 +247,15 @@
       width: 100%;
       height: 2px;
       background: var(--n200);
-      transition: background .3s;
+      transition: background .4s;
     }
 
-    .step-item.done:not(:last-child)::after,
-    .step-item.active:not(:last-child)::after {
+    .step-item.done:not(:last-child)::after {
       background: var(--ocean-500);
+    }
+
+    .step-item.active:not(:last-child)::after {
+      background: linear-gradient(to right, var(--ocean-500) 0%, var(--n200) 100%);
     }
 
     .step-circle {
@@ -263,12 +280,14 @@
       border-color: var(--success);
       background: var(--success);
       color: #fff;
+      box-shadow: 0 0 0 4px rgba(26,122,74,.12);
     }
 
     .step-item.active .step-circle {
       border-color: var(--ocean-700);
       background: var(--ocean-700);
       color: #fff;
+      box-shadow: 0 0 0 4px rgba(13,84,112,.18);
     }
 
     .step-label {
@@ -289,9 +308,10 @@
     /* ── FORM CARD ───────────────────────────────── */
     .form-card {
       background: #fff;
-      border: 1px solid var(--n200);
+      border: 1px solid #E5E8EC;
       border-radius: 16px;
       padding: 32px 24px;
+      box-shadow: 0 4px 24px rgba(6,42,56,.07), 0 1px 4px rgba(6,42,56,.04);
     }
 
     .form-card h2 {
@@ -338,12 +358,12 @@
     .field textarea {
       width: 100%;
       padding: 10px 14px;
-      border: 1.5px solid var(--n200);
+      border: 1.5px solid #DDE1E7;
       border-radius: 10px;
       font-size: 14px;
       color: var(--n900);
-      background: #fff;
-      transition: border-color .15s, box-shadow .15s;
+      background: #F9FAFB;
+      transition: border-color .15s, box-shadow .15s, background .15s;
       outline: none;
       appearance: none;
       -webkit-appearance: none;
@@ -352,8 +372,9 @@
     .field input:focus,
     .field select:focus,
     .field textarea:focus {
-      border-color: var(--ocean-500);
-      box-shadow: 0 0 0 3px rgba(20,128,168,.12);
+      border-color: var(--ocean-700);
+      box-shadow: 0 0 0 3px rgba(13,84,112,.12);
+      background: #fff;
     }
 
     .field input.error,
@@ -556,16 +577,23 @@
       font-weight: 600;
       cursor: pointer;
       border: none;
-      transition: all .15s;
+      transition: all .2s;
     }
 
     .btn-primary {
-      background: var(--ocean-700);
+      background: linear-gradient(135deg, var(--ocean-700) 0%, var(--ocean-500) 100%);
       color: #fff;
+      box-shadow: 0 2px 8px rgba(13,84,112,.25);
     }
 
-    .btn-primary:hover { background: var(--ocean-900); }
-    .btn-primary:disabled { opacity: .5; cursor: not-allowed; }
+    .btn-primary:hover {
+      background: linear-gradient(135deg, var(--ocean-900) 0%, var(--ocean-700) 100%);
+      box-shadow: 0 6px 20px rgba(13,84,112,.38);
+      transform: translateY(-1px);
+    }
+
+    .btn-primary:active { transform: translateY(0); box-shadow: 0 2px 8px rgba(13,84,112,.25); }
+    .btn-primary:disabled { opacity: .5; cursor: not-allowed; transform: none; box-shadow: none; }
 
     .btn-ghost {
       background: transparent;
@@ -651,6 +679,7 @@
       border: 1px solid var(--n200);
       border-radius: 16px;
       padding: 24px;
+      box-shadow: 0 2px 12px rgba(6,42,56,.05);
     }
 
     .sidebar-card h3 {
@@ -659,6 +688,67 @@
       color: var(--n900);
       margin-bottom: 16px;
     }
+
+    /* benefits */
+    .sidebar-card--benefits {
+      background: var(--ocean-50);
+      border-color: #C5E4F0;
+    }
+
+    .sidebar-card--benefits .benefit-icon {
+      background: rgba(255,255,255,.7);
+    }
+
+    /* testimonial */
+    .sidebar-card--testimonial {
+      background: var(--ocean-900);
+      border-color: var(--ocean-900);
+    }
+
+    .sidebar-card--testimonial h3 {
+      color: rgba(255,255,255,.55);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      font-family: 'DM Mono', monospace;
+    }
+
+    .sidebar-card--testimonial .testimonial {
+      background: rgba(255,255,255,.05);
+      border-left-color: var(--sand-500);
+      border-radius: 8px;
+    }
+
+    .sidebar-card--testimonial .testimonial p {
+      color: rgba(255,255,255,.82);
+    }
+
+    .sidebar-card--testimonial .testimonial-name { color: #fff; }
+    .sidebar-card--testimonial .testimonial-role { color: rgba(255,255,255,.45); }
+
+    .sidebar-card--testimonial .contact-link {
+      color: var(--sand-300);
+    }
+
+    .sidebar-card--testimonial .contact-link a {
+      color: var(--sand-300);
+    }
+
+    /* plans */
+    .plan-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 11px 12px;
+      margin-bottom: 6px;
+      border-left: 3px solid var(--ocean-700);
+      border-radius: 0 8px 8px 0;
+      background: var(--ocean-50);
+      transition: background .15s;
+    }
+
+    .plan-row:last-child { margin-bottom: 0; }
+    .plan-row:hover { background: #D5EDF5; }
 
     .benefit-item {
       display: flex;
@@ -858,6 +948,11 @@
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#EAD08A" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
       <span data-pt="30 dias grátis" data-en="30 days free">30 dias grátis</span>
     </div>
+  </div>
+  <div class="hero-wave" aria-hidden="true">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 64" preserveAspectRatio="none">
+      <path d="M0,32 C180,58 360,8 540,28 C720,48 900,10 1080,30 C1260,50 1380,16 1440,32 L1440,64 L0,64 Z" fill="#F5F7FA"/>
+    </svg>
   </div>
 </section>
 
@@ -1303,7 +1398,7 @@
   <aside class="sidebar">
 
     <!-- Benefits -->
-    <div class="sidebar-card">
+    <div class="sidebar-card sidebar-card--benefits">
       <h3 data-pt="Porquê escolher a SalDesk?" data-en="Why choose SalDesk?">Porquê escolher a SalDesk?</h3>
       <div class="benefit-item">
         <div class="benefit-icon">
@@ -1353,7 +1448,7 @@
     </div>
 
     <!-- Testimonial -->
-    <div class="sidebar-card">
+    <div class="sidebar-card sidebar-card--testimonial">
       <h3 data-pt="O que dizem os operadores" data-en="What operators say">O que dizem os operadores</h3>
       <div class="testimonial">
         <p data-pt="&ldquo;Com a SalDesk deixámos de perder reservas por WhatsApp. Agora tudo fica registado e a equipa sabe o que fazer sem eu ter de explicar tudo.&rdquo;" data-en="&ldquo;With SalDesk we stopped losing bookings over WhatsApp. Now everything is recorded and the team knows what to do without me having to explain everything.&rdquo;">
@@ -1374,26 +1469,26 @@
     </div>
 
     <!-- Plans quick ref -->
-    <div class="sidebar-card">
+    <div class="sidebar-card sidebar-card--plans">
       <h3 data-pt="Planos disponíveis" data-en="Available plans">Planos disponíveis</h3>
-      <div style="display:flex;flex-direction:column;gap:8px">
-        <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--n200)">
+      <div style="display:flex;flex-direction:column;gap:0">
+        <div class="plan-row">
           <div>
-            <div style="font-weight:600;font-size:13px">Starter</div>
+            <div style="font-weight:600;font-size:13px;color:var(--n900)">Starter</div>
             <div style="font-size:12px;color:var(--n500)" data-pt="Ideal para começar" data-en="Ideal to get started">Ideal para começar</div>
           </div>
           <div style="font-family:Sora,sans-serif;font-weight:700;color:var(--ocean-700)">€29<span style="font-size:11px;font-weight:400;color:var(--n500)">/mês</span></div>
         </div>
-        <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--n200)">
+        <div class="plan-row">
           <div>
-            <div style="font-weight:600;font-size:13px">Business</div>
+            <div style="font-weight:600;font-size:13px;color:var(--n900)">Business</div>
             <div style="font-size:12px;color:var(--n500)" data-pt="O mais popular" data-en="Most popular">O mais popular</div>
           </div>
           <div style="font-family:Sora,sans-serif;font-weight:700;color:var(--ocean-700)">€69<span style="font-size:11px;font-weight:400;color:var(--n500)">/mês</span></div>
         </div>
-        <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0">
+        <div class="plan-row">
           <div>
-            <div style="font-weight:600;font-size:13px">Pro</div>
+            <div style="font-weight:600;font-size:13px;color:var(--n900)">Pro</div>
             <div style="font-size:12px;color:var(--n500)" data-pt="Para equipas e múltiplos serviços" data-en="For teams and multiple services">Para equipas e múltiplos serviços</div>
           </div>
           <div style="font-family:Sora,sans-serif;font-weight:700;color:var(--ocean-700)">€129<span style="font-size:11px;font-weight:400;color:var(--n500)">/mês</span></div>
