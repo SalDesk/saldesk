@@ -11,35 +11,45 @@ const UNIT_TYPES_BY_OPERATOR = {
 };
 
 const PRICE_UNITS_BY_OPERATOR = {
-  hotel:      [{ value: 'night', label: 'por noite' }],
+  hotel:      [{ value: 'night',   label: 'por noite'  }],
   activity:   [{ value: 'session', label: 'por sessao' }, { value: 'person', label: 'por pessoa' }],
-  rentacar:   [{ value: 'day', label: 'por dia' }],
-  restaurant: [{ value: 'hour', label: 'por hora' }],
+  rentacar:   [{ value: 'day',     label: 'por dia'    }],
+  restaurant: [{ value: 'hour',    label: 'por hora'   }],
 };
 
 export default function UnitForm({ unit, operatorType, onSave, onCancel, loading, error }) {
   const t = useT();
-  const tipos = UNIT_TYPES_BY_OPERATOR[operatorType] || [];
+  const tipos      = UNIT_TYPES_BY_OPERATOR[operatorType] || [];
   const priceUnits = PRICE_UNITS_BY_OPERATOR[operatorType] || [{ value: 'day', label: 'por dia' }];
 
   const [form, setForm] = useState({
-    name:        unit?.name || '',
+    name:        unit?.name        || '',
     description: unit?.description || '',
-    unit_type:   unit?.unit_type || tipos[0] || '',
-    base_price:  unit?.base_price ?? '',
-    price_unit:  unit?.price_unit || priceUnits[0]?.value || 'night',
-    capacity:    unit?.capacity ?? 1,
-    status:      unit?.status || 'active',
+    unit_type:   unit?.unit_type   || tipos[0] || '',
+    base_price:  unit?.base_price  ?? '',
+    price_unit:  unit?.price_unit  || priceUnits[0]?.value || 'night',
+    capacity:    unit?.capacity    ?? 1,
+    status:      unit?.status      || 'active',
+    images_raw:  unit?.images?.join(', ') || '',
   });
 
   const set = (field) => (e) => setForm({ ...form, [field]: e.target.value });
 
   function handleSubmit(e) {
     e.preventDefault();
+    const images = form.images_raw
+      .split(',')
+      .map(s => s.trim())
+      .filter(Boolean);
     onSave({
-      ...form,
-      base_price: Number(form.base_price),
-      capacity:   Number(form.capacity),
+      name:        form.name,
+      description: form.description,
+      unit_type:   form.unit_type,
+      base_price:  Number(form.base_price),
+      price_unit:  form.price_unit,
+      capacity:    Number(form.capacity),
+      status:      form.status,
+      images,
     });
   }
 
@@ -56,7 +66,7 @@ export default function UnitForm({ unit, operatorType, onSave, onCancel, loading
 
       <div className="grid grid-cols-2 gap-3">
         <Select label={t('units.type')} value={form.unit_type} onChange={set('unit_type')} required>
-          {tipos.map((t) => <option key={t} value={t}>{t}</option>)}
+          {tipos.map((tp) => <option key={tp} value={tp}>{tp}</option>)}
           <option value="Outro">Outro</option>
         </Select>
         <Select label={t('units.priceUnit')} value={form.price_unit} onChange={set('price_unit')}>
@@ -93,6 +103,14 @@ export default function UnitForm({ unit, operatorType, onSave, onCancel, loading
         onChange={set('description')}
         placeholder="Descreva a unidade..."
         rows={3}
+      />
+
+      <Textarea
+        label="Fotos (URLs separados por virgula)"
+        value={form.images_raw}
+        onChange={set('images_raw')}
+        placeholder="https://exemplo.com/foto1.jpg, https://exemplo.com/foto2.jpg"
+        rows={2}
       />
 
       {unit && (

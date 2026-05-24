@@ -37,3 +37,8 @@ export async function updatePricingRule(unitId, ruleId, dados) {
 export async function deletePricingRule(unitId, ruleId) {
   await api.delete(`/units/${unitId}/pricing-rules/${ruleId}`);
 }
+
+export async function toggleUnitStatus(id, status) {
+  const { data } = await api.put(`/units/${id}`, { status });
+  return data.data;
+}

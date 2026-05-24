@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Plus } from 'lucide-react';
-import { listUnits, createUnit, updateUnit, deleteUnit } from '../services/unitsService';
+import { listUnits, createUnit, updateUnit, deleteUnit, toggleUnitStatus } from '../services/unitsService';
 import useAuthStore from '../store/authStore';
 import { useT } from '../i18n';
 import PageHeader from '../components/layout/PageHeader';
@@ -13,11 +13,11 @@ import LoadingSpinner from '../components/shared/LoadingSpinner';
 export default function Units() {
   const t = useT();
   const { operator } = useAuthStore();
-  const [units, setUnits] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [modal, setModal] = useState(null); // null | 'create' | unit
-  const [formLoading, setFormLoading] = useState(false);
-  const [formError, setFormError] = useState('');
+  const [units,        setUnits]        = useState([]);
+  const [loading,      setLoading]      = useState(true);
+  const [modal,        setModal]        = useState(null); // null | 'create' | unit
+  const [formLoading,  setFormLoading]  = useState(false);
+  const [formError,    setFormError]    = useState('');
   const [deleteTarget, setDeleteTarget] = useState(null);
 
   async function carregar() {
@@ -52,6 +52,16 @@ export default function Units() {
     }
   }
 
+  async function handleToggle(unit) {
+    const next = unit.status === 'inactive' ? 'active' : 'inactive';
+    try {
+      const updated = await toggleUnitStatus(unit.id, next);
+      setUnits(units.map((u) => (u.id === updated.id ? updated : u)));
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
   async function handleDelete() {
     if (!deleteTarget) return;
     try {
@@ -64,6 +74,12 @@ export default function Units() {
     }
   }
 
+  const stats = useMemo(() => ({
+    total:    units.length,
+    active:   units.filter(u => u.status !== 'inactive').length,
+    inactive: units.filter(u => u.status === 'inactive').length,
+  }), [units]);
+
   const modalTitle = modal === 'create'
     ? t('units.new')
     : modal ? `${t('common.edit')}: ${modal.name}` : '';
@@ -72,13 +88,35 @@ export default function Units() {
     <div>
       <PageHeader
         title={t('units.title')}
-        subtitle={`${units.length} unidade(s) registada(s)`}
+        subtitle={`${stats.total} unidade(s) registada(s)`}
         actions={
           <Button icon={Plus} onClick={() => { setFormError(''); setModal('create'); }}>
             {t('units.new')}
           </Button>
         }
       />
+
+      {/* Stats bar */}
+      {!loading && units.length > 0 && (
+        <div className="flex gap-4 mb-6">
+          <div className="bg-white rounded-sm border border-n-200 px-4 py-2.5 flex items-center gap-2">
+            <span className="text-xs font-body text-n-500">Total</span>
+            <span className="font-display font-bold text-sm text-n-900">{stats.total}</span>
+          </div>
+          <div className="bg-[#ECFDF5] rounded-sm border border-[#BBF7D0] px-4 py-2.5 flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-[#1A7A4A]" />
+            <span className="text-xs font-body text-[#1A7A4A]">Activas</span>
+            <span className="font-display font-bold text-sm text-[#1A7A4A]">{stats.active}</span>
+          </div>
+          {stats.inactive > 0 && (
+            <div className="bg-n-50 rounded-sm border border-n-200 px-4 py-2.5 flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-n-300" />
+              <span className="text-xs font-body text-n-500">Inactivas</span>
+              <span className="font-display font-bold text-sm text-n-500">{stats.inactive}</span>
+            </div>
+          )}
+        </div>
+      )}
 
       {loading ? (
         <div className="flex justify-center py-20">
@@ -89,6 +127,7 @@ export default function Units() {
           units={units}
           onEdit={(unit) => { setFormError(''); setModal(unit); }}
           onDelete={setDeleteTarget}
+          onToggle={handleToggle}
         />
       )}
 
