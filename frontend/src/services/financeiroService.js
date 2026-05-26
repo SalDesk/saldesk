@@ -37,3 +37,21 @@ export async function exportExcel(inicio, fim) {
   a.click();
   URL.revokeObjectURL(url);
 }
+
+export async function getTransacoes(inicio, fim, params = {}) {
+  const { data } = await api.get('/financial/transacoes', { params: { inicio, fim, ...params } });
+  return data.data;
+}
+
+export async function exportPdf(inicio, fim) {
+  const response = await api.get('/financial/export-pdf', {
+    params: { inicio, fim },
+    responseType: 'blob',
+  });
+  const url = URL.createObjectURL(response.data);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `saldesk-${inicio}-${fim}.pdf`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
