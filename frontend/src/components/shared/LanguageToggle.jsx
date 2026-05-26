@@ -1,11 +1,10 @@
 import useUiStore from '../../store/uiStore';
-import { SUPPORTED_LANGS } from '../../i18n';
 
-/* authMode=true mostra apenas PT/EN (paginas de auth/publicas) */
+/* PT/EN apenas — DE/NL disponiveis na Fase 6 */
 export default function LanguageToggle({ variant = 'default', authMode = false }) {
   const { lang, setLang } = useUiStore();
   const isWhite = variant === 'white';
-  const langs   = authMode ? ['pt', 'en'] : SUPPORTED_LANGS;
+  const langs   = ['pt', 'en'];
   const base = 'text-xs font-body font-semibold uppercase tracking-wide px-2 py-1 rounded-xs transition-colors';
   const active   = isWhite ? 'bg-white text-ocean-700'       : 'bg-ocean-700 text-white';
   const inactive = isWhite ? 'text-white/70 hover:text-white' : 'text-n-500 hover:text-n-700';
