@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import {
   Copy, Check, Download, CreditCard, Globe, User, Bell,
-  Link2, Shield, Instagram, Facebook,
+  Link2, Shield, ExternalLink, Share2,
   Eye, RefreshCw, AlertCircle, CheckCircle2, XCircle, Upload,
   Camera, ChevronUp, ChevronDown, X, Plus, ArrowUpRight,
   Lock, Key, Smartphone, Phone, Wifi, WifiOff,
@@ -307,8 +307,8 @@ function PerfilPublicoTab({ operator }) {
       <Card header={<h3 className="font-display font-semibold text-sm text-n-700">Redes sociais</h3>}>
         <div className="space-y-3">
           {[
-            { key: 'instagram',   label: 'Instagram',        icon: Instagram,  ph: 'https://instagram.com/...' },
-            { key: 'facebook',    label: 'Facebook',         icon: Facebook,   ph: 'https://facebook.com/...' },
+            { key: 'instagram',   label: 'ExternalLink',        icon: ExternalLink,  ph: 'https://instagram.com/...' },
+            { key: 'facebook',    label: 'Share2',         icon: Share2,   ph: 'https://facebook.com/...' },
             { key: 'tripadvisor', label: 'TripAdvisor',      icon: Globe,      ph: 'https://tripadvisor.com/...' },
             { key: 'whatsapp',    label: 'WhatsApp Business', icon: Phone,      ph: '+238 900 0000' },
           ].map(({ key, label, icon: Icon, ph }) => (
