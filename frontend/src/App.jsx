@@ -25,6 +25,8 @@ import AdminDashboard from './pages/admin/AdminDashboard';
 import AdminOperators from './pages/admin/AdminOperators';
 import AdminLeads from './pages/admin/AdminLeads';
 import AdminCms from './pages/admin/AdminCms';
+import AdminImpact from './pages/admin/AdminImpact';
+import AdminSystem from './pages/admin/AdminSystem';
 import Layout from './components/layout/Layout';
 
 function ProtectedRoute({ children }) {
@@ -76,13 +78,11 @@ export default function App() {
         {/* Painel do Fundador — protegido por role FUNDADOR */}
         <Route path="/admin" element={<FounderGuard><AdminLayout /></FounderGuard>}>
           <Route index                       element={<AdminDashboard />} />
-          <Route path="operators"            element={<AdminOperators />} />
-          <Route path="leads"                element={<AdminLeads />} />
-          <Route path="cms/featured"         element={<AdminCms type="featured" />} />
-          <Route path="cms/banners"          element={<AdminCms type="banners" />} />
-          <Route path="cms/experiences"      element={<AdminCms type="experiences" />} />
-          <Route path="cms/events"           element={<AdminCms type="events" />} />
-          <Route path="cms/articles"         element={<AdminCms type="articles" />} />
+          <Route path="operators"  element={<AdminOperators />} />
+          <Route path="leads"      element={<AdminLeads />} />
+          <Route path="cms"        element={<AdminCms />} />
+          <Route path="impacto"    element={<AdminImpact />} />
+          <Route path="sistema"    element={<AdminSystem />} />
         </Route>
 
         {/* Portal do colaborador — mobile-first */}
