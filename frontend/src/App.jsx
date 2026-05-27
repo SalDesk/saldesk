@@ -60,6 +60,7 @@ export default function App() {
         {/* Dashboard do gestor */}
         <Route path="/" element={<OnboardingGuard><Layout /></OnboardingGuard>}>
           <Route index                element={<Dashboard />} />
+          <Route path="dashboard"     element={<Dashboard />} />
           <Route path="unidades"      element={<Units />} />
           <Route path="reservas"      element={<Reservations />} />
           <Route path="calendario"    element={<Calendar />} />

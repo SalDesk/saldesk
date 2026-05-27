@@ -26,7 +26,11 @@ export default function Login() {
     try {
       const result = await login(form.email, form.password);
       setAuth(result.access_token, result.user, result.operator);
-      navigate(result.operator?.onboarding_complete ? '/' : '/onboarding');
+      if (result.user?.user_metadata?.role === 'FUNDADOR') {
+        navigate('/admin');
+      } else {
+        navigate(result.operator?.onboarding_complete ? '/dashboard' : '/onboarding');
+      }
     } catch (err) {
       setError(err.response?.data?.error || t('errors.generic'));
     } finally {

@@ -67,7 +67,7 @@ export default function AdminLayout() {
 
         <div className="px-2 py-3 border-t border-ocean-800 space-y-0.5">
           <button
-            onClick={() => navigate('/')}
+            onClick={() => navigate('/dashboard')}
             className="w-full flex items-center gap-2.5 px-3 py-2 rounded-sm text-sm font-body text-ocean-400 hover:bg-ocean-800 hover:text-white transition-colors"
           >
             <BarChart2 size={16} strokeWidth={1.75} />
