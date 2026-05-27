@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useRef } from 'react';
 
 const STATUS_COLORS = {
   confirmed:   'bg-ocean-700 text-white',
@@ -19,13 +19,23 @@ function toDateStr(d) {
   return d.toISOString().split('T')[0];
 }
 
-export default function CalendarView({ year, month, units, reservations, blockedDates, onDayClick }) {
-  const days = useMemo(() => getDaysInMonth(year, month), [year, month]);
-  const todayStr = toDateStr(new Date());
+export default function CalendarView({
+  year, month, units, reservations, blockedDates,
+  onDayClick, onEventClick,
+  onDrop, draggingId,
+  filterUnit,
+}) {
+  const days         = useMemo(() => getDaysInMonth(year, month), [year, month]);
+  const todayStr     = toDateStr(new Date());
+  const dragDataRef  = useRef(null);
+
+  const visibleUnits = filterUnit
+    ? (units || []).filter(u => u.id === filterUnit)
+    : (units || []);
 
   const reservationsByUnit = useMemo(() => {
     const map = {};
-    for (const r of reservations) {
+    for (const r of reservations || []) {
       if (!map[r.unit_id]) map[r.unit_id] = [];
       map[r.unit_id].push(r);
     }
@@ -34,14 +44,14 @@ export default function CalendarView({ year, month, units, reservations, blocked
 
   const blockedByUnit = useMemo(() => {
     const map = {};
-    for (const b of blockedDates) {
+    for (const b of blockedDates || []) {
       if (!map[b.unit_id]) map[b.unit_id] = new Set();
-      map[b.unit_id].add(b.date);
+      map[b.unit_id].add(b.date || b.start_date);
     }
     return map;
   }, [blockedDates]);
 
-  if (!units.length) {
+  if (!visibleUnits.length) {
     return (
       <div className="flex items-center justify-center py-20 text-n-400">
         <p className="font-body text-sm">Sem unidades activas. Crie unidades primeiro.</p>
@@ -49,15 +59,40 @@ export default function CalendarView({ year, month, units, reservations, blocked
     );
   }
 
+  function handleDragStart(e, reservation) {
+    const dur = (reservation.check_in && reservation.check_out)
+      ? Math.max(1, Math.round((new Date(reservation.check_out) - new Date(reservation.check_in)) / 86400000))
+      : 1;
+    const payload = { reservationId: reservation.id, duration: dur, unitId: reservation.unit_id };
+    dragDataRef.current = payload;
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', JSON.stringify(payload));
+  }
+
+  function handleDragOver(e) {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+  }
+
+  function handleDrop(e, dateStr, unit) {
+    e.preventDefault();
+    let payload = dragDataRef.current;
+    try {
+      const raw = e.dataTransfer.getData('text/plain');
+      if (raw) payload = JSON.parse(raw);
+    } catch {}
+    if (payload?.reservationId) onDrop?.(dateStr, unit.id, payload);
+  }
+
   return (
     <div className="overflow-x-auto rounded-md border border-n-200">
-      <table className="w-full text-xs border-collapse" style={{ minWidth: units.length * 130 + 80 }}>
+      <table className="w-full text-xs border-collapse" style={{ minWidth: visibleUnits.length * 130 + 80 }}>
         <thead>
           <tr className="bg-n-50">
             <th className="sticky left-0 z-10 bg-n-50 border-b border-r border-n-200 px-3 py-2.5 text-left text-n-500 font-body font-bold uppercase tracking-wide w-20 min-w-[80px]">
               Dia
             </th>
-            {units.map((u) => (
+            {visibleUnits.map((u) => (
               <th key={u.id} className="border-b border-r border-n-200 px-3 py-2.5 text-left min-w-[130px]">
                 <div className="font-display font-semibold text-n-700 truncate">{u.name}</div>
                 <div className="font-body text-n-400 font-normal mt-0.5">{u.unit_type}</div>
@@ -67,8 +102,8 @@ export default function CalendarView({ year, month, units, reservations, blocked
         </thead>
         <tbody>
           {days.map((day) => {
-            const dateStr = toDateStr(day);
-            const isToday = dateStr === todayStr;
+            const dateStr  = toDateStr(day);
+            const isToday  = dateStr === todayStr;
             const isWeekend = day.getDay() === 0 || day.getDay() === 6;
 
             return (
@@ -81,21 +116,27 @@ export default function CalendarView({ year, month, units, reservations, blocked
                   </div>
                 </td>
 
-                {units.map((unit) => {
-                  const isBlocked = blockedByUnit[unit.id]?.has(dateStr);
+                {visibleUnits.map((unit) => {
+                  const isBlocked   = blockedByUnit[unit.id]?.has(dateStr);
                   const reservation = reservationsByUnit[unit.id]?.find(
                     (r) => r.check_in <= dateStr && r.check_out > dateStr
                   );
+                  const isDragging = reservation?.id === draggingId;
 
                   return (
                     <td
                       key={unit.id}
                       className="border-r border-n-100 px-1.5 py-1 cursor-pointer"
-                      onClick={() => onDayClick?.(dateStr, unit, reservation)}
+                      onClick={() => !reservation && !isBlocked && onDayClick?.(dateStr, unit, null)}
+                      onDragOver={handleDragOver}
+                      onDrop={(e) => handleDrop(e, dateStr, unit)}
                     >
                       {reservation ? (
                         <div
-                          className={`rounded-xs px-2 py-0.5 truncate font-body font-medium ${STATUS_COLORS[reservation.status] || 'bg-n-100 text-n-600'}`}
+                          draggable
+                          onDragStart={(e) => handleDragStart(e, reservation)}
+                          onClick={(e) => { e.stopPropagation(); onEventClick?.(reservation); }}
+                          className={`rounded-xs px-2 py-0.5 truncate font-body font-medium cursor-grab active:cursor-grabbing select-none transition-opacity ${STATUS_COLORS[reservation.status] || 'bg-n-100 text-n-600'} ${isDragging ? 'opacity-30' : ''}`}
                           title={`${reservation.customer_name} · ${reservation.status}`}
                         >
                           {reservation.check_in === dateStr ? reservation.customer_name : '·'}

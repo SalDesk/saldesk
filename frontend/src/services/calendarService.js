@@ -13,3 +13,8 @@ export async function createBlockedDates(dados) {
 export async function deleteBlockedDate(id) {
   await api.delete(`/calendar/blocked-dates/${id}`);
 }
+
+export async function updateReservation(id, payload) {
+  const { data } = await api.put(`/reservations/${id}`, payload);
+  return data.data;
+}
