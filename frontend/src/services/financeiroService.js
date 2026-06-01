@@ -55,3 +55,18 @@ export async function exportPdf(inicio, fim) {
   a.click();
   URL.revokeObjectURL(url);
 }
+
+export async function getByTour(inicio, fim) {
+  const { data } = await api.get('/financial/by-tour', { params: { inicio, fim } });
+  return data.data;
+}
+
+export async function getForecast() {
+  const { data } = await api.get('/financial/forecast');
+  return data.data;
+}
+
+export async function getStats() {
+  const { data } = await api.get('/financial/stats');
+  return data.data;
+}

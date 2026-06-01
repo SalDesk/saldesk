@@ -19,6 +19,7 @@ import Fleet from './pages/Fleet';
 import Messages from './pages/Messages';
 import Guides from './pages/Guides';
 import Marketing from './pages/Marketing';
+import Analytics from './pages/Analytics';
 import PublicBooking from './pages/PublicBooking';
 import ServiceDetail from './pages/ServiceDetail';
 import StaffPortal from './pages/StaffPortal';
@@ -76,6 +77,7 @@ export default function App() {
           <Route path="mensagens"     element={<Messages />} />
           <Route path="avaliacoes"    element={<Reviews />} />
           <Route path="marketing"     element={<Marketing />} />
+          <Route path="analytics"     element={<Analytics />} />
           <Route path="definicoes"    element={<Settings />} />
           <Route path="perfil"        element={<Profile />} />
         </Route>

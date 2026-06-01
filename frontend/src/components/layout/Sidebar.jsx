@@ -5,6 +5,7 @@ import {
   Star, MessageCircle, Globe, Megaphone, Settings,
   LogOut, X, ExternalLink, User,
   Compass, Hotel, Car, Truck, UtensilsCrossed, ChefHat, Wrench,
+  Activity,
 } from 'lucide-react';
 import useAuthStore from '../../store/authStore';
 import Logo from '../shared/Logo';
@@ -19,6 +20,7 @@ const TYPE_NAV = {
     { to: '/clientes',      icon: UserCheck,       label: 'Clientes'                     },
     { to: '/colaboradores', icon: UsersRound,      label: 'Colaboradores'                },
     { to: '/financeiro',    icon: BarChart2,       label: 'Financeiro'                   },
+    { to: '/analytics',     icon: Activity,        label: 'Analytics'                    },
     { to: '/avaliacoes',    icon: Star,            label: 'Avaliacoes'                   },
     { to: '/mensagens',     icon: MessageCircle,   label: 'Mensagens'                    },
     { to: '/integracoes',   icon: Globe,           label: 'Channel Manager'              },
@@ -33,6 +35,7 @@ const TYPE_NAV = {
     { to: '/clientes',      icon: UserCheck,       label: 'Clientes'                },
     { to: '/colaboradores', icon: UsersRound,      label: 'Colaboradores'           },
     { to: '/financeiro',    icon: BarChart2,       label: 'Financeiro'              },
+    { to: '/analytics',     icon: Activity,        label: 'Analytics'               },
     { to: '/avaliacoes',    icon: Star,            label: 'Avaliacoes'              },
     { to: '/mensagens',     icon: MessageCircle,   label: 'Mensagens'               },
     { to: '/marketing',     icon: Megaphone,       label: 'Marketing'               },
@@ -47,6 +50,7 @@ const TYPE_NAV = {
     { to: '/clientes',      icon: UserCheck,       label: 'Clientes'                },
     { to: '/colaboradores', icon: UsersRound,      label: 'Colaboradores'           },
     { to: '/financeiro',    icon: BarChart2,       label: 'Financeiro'              },
+    { to: '/analytics',     icon: Activity,        label: 'Analytics'               },
     { to: '/avaliacoes',    icon: Star,            label: 'Avaliacoes'              },
     { to: '/mensagens',     icon: MessageCircle,   label: 'Mensagens'               },
     { to: '/marketing',     icon: Megaphone,       label: 'Marketing'               },
@@ -61,6 +65,7 @@ const TYPE_NAV = {
     { to: '/clientes',      icon: UserCheck,       label: 'Clientes'                },
     { to: '/colaboradores', icon: UsersRound,      label: 'Colaboradores'           },
     { to: '/financeiro',    icon: BarChart2,       label: 'Financeiro'              },
+    { to: '/analytics',     icon: Activity,        label: 'Analytics'               },
     { to: '/avaliacoes',    icon: Star,            label: 'Avaliacoes'              },
     { to: '/mensagens',     icon: MessageCircle,   label: 'Mensagens'               },
     { to: '/marketing',     icon: Megaphone,       label: 'Marketing'               },
