@@ -1,11 +1,12 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import {
   ChevronLeft, ChevronRight, Lock,
-  CheckCircle, LogIn, LogOut, XCircle, X,
+  CheckCircle, LogIn, LogOut, XCircle, X, Users,
 } from 'lucide-react';
 import {
   getCalendar, createBlockedDates, deleteBlockedDate, updateReservation,
 } from '../services/calendarService';
+import { listStaff } from '../services/staffService';
 import { useT } from '../i18n';
 import PageHeader from '../components/layout/PageHeader';
 import Button from '../components/ui/Button';
@@ -65,15 +66,17 @@ export default function Calendar() {
   const t    = useT();
   const hoje = new Date();
 
-  const [view,       setView]       = useState('month');
-  const [ano,        setAno]        = useState(hoje.getFullYear());
-  const [mes,        setMes]        = useState(hoje.getMonth());
-  const [weekStr,    setWeekStr]    = useState(getWeekStart(toDateStr(hoje)));
-  const [dayStr,     setDayStr]     = useState(toDateStr(hoje));
-  const [filterUnit, setFilterUnit] = useState('');
-  const [dados,      setDados]      = useState({ units: [], reservations: [], blocked_dates: [] });
-  const [loading,    setLoading]    = useState(true);
-  const [draggingId, setDraggingId] = useState(null);
+  const [view,        setView]       = useState('month');
+  const [ano,         setAno]        = useState(hoje.getFullYear());
+  const [mes,         setMes]        = useState(hoje.getMonth());
+  const [weekStr,     setWeekStr]    = useState(getWeekStart(toDateStr(hoje)));
+  const [dayStr,      setDayStr]     = useState(toDateStr(hoje));
+  const [filterUnit,  setFilterUnit] = useState('');
+  const [filterGuide, setFilterGuide]= useState('');
+  const [guides,      setGuides]     = useState([]);
+  const [dados,       setDados]      = useState({ units: [], reservations: [], blocked_dates: [] });
+  const [loading,     setLoading]    = useState(true);
+  const [draggingId,  setDraggingId] = useState(null);
 
   const [blockModal,   setBlockModal]   = useState(null);
   const [blockEnd,     setBlockEnd]     = useState('');
@@ -111,6 +114,10 @@ export default function Calendar() {
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { carregar(); }, [view, ano, mes, weekStr, dayStr]);
+
+  useEffect(() => {
+    listStaff().then(setGuides).catch(() => {});
+  }, []);
 
   function navigate(dir) {
     if (view === 'month') {
@@ -205,9 +212,21 @@ export default function Calendar() {
     }
   }
 
-  const visibleUnits = filterUnit
-    ? (dados.units || []).filter(u => u.id === filterUnit)
-    : (dados.units || []);
+  // If guide filter active, show only units assigned to that guide via reservations
+  const guideResUnitIds = useMemo(() => {
+    if (!filterGuide) return null;
+    const ids = new Set();
+    for (const r of dados.reservations || []) {
+      if (r.staff_id === filterGuide || r.guide_id === filterGuide) ids.add(r.unit_id);
+    }
+    return ids;
+  }, [filterGuide, dados.reservations]);
+
+  const visibleUnits = (dados.units || []).filter(u => {
+    if (filterUnit  && u.id !== filterUnit)              return false;
+    if (guideResUnitIds && !guideResUnitIds.has(u.id))   return false;
+    return true;
+  });
 
   const resByUnit = useMemo(() => {
     const map = {};
@@ -231,6 +250,13 @@ export default function Calendar() {
 
   function getResForCell(unitId, dateStr) {
     return resByUnit[unitId]?.find(r => r.check_in <= dateStr && r.check_out > dateStr);
+  }
+
+  function getSlotsForCell(unit, dateStr) {
+    const res = resByUnit[unit.id]?.filter(r => r.check_in === dateStr) || [];
+    const booked = res.reduce((s, r) => s + (r.guests || 1), 0);
+    const total  = unit.capacity || 0;
+    return total > 0 ? { booked, available: Math.max(0, total - booked), total } : null;
   }
 
   const todayStr = toDateStr(hoje);
@@ -287,24 +313,44 @@ export default function Calendar() {
                       }}
                     >
                       {res ? (
-                        <div
-                          draggable
-                          onDragStart={e => {
-                            const dur = Math.max(1, Math.round((new Date(res.check_out) - new Date(res.check_in)) / 86400000));
-                            const payload = { reservationId: res.id, duration: dur, unitId: res.unit_id };
-                            dragPayloadRef.current = payload;
-                            e.dataTransfer.setData('text/plain', JSON.stringify(payload));
-                          }}
-                          onClick={e => { e.stopPropagation(); setSelectedEvent(res); }}
-                          className={`rounded-xs px-2 py-0.5 truncate font-body font-medium cursor-grab active:cursor-grabbing select-none transition-opacity ${STATUS_COLORS[res.status] || 'bg-n-100 text-n-600'} ${isDragging ? 'opacity-30' : ''}`}
-                          title={`${res.customer_name} · ${STATUS_LABELS[res.status]}`}
-                        >
-                          {res.check_in === d ? res.customer_name.split(' ')[0] : '·'}
+                        <div className="space-y-0.5">
+                          <div
+                            draggable
+                            onDragStart={e => {
+                              const dur = Math.max(1, Math.round((new Date(res.check_out) - new Date(res.check_in)) / 86400000));
+                              const payload = { reservationId: res.id, duration: dur, unitId: res.unit_id };
+                              dragPayloadRef.current = payload;
+                              e.dataTransfer.setData('text/plain', JSON.stringify(payload));
+                            }}
+                            onClick={e => { e.stopPropagation(); setSelectedEvent(res); }}
+                            className={`rounded-xs px-2 py-0.5 truncate font-body font-medium cursor-grab active:cursor-grabbing select-none transition-opacity ${STATUS_COLORS[res.status] || 'bg-n-100 text-n-600'} ${isDragging ? 'opacity-30' : ''}`}
+                            title={`${res.customer_name} · ${STATUS_LABELS[res.status]}`}
+                          >
+                            {res.check_in === d ? res.customer_name.split(' ')[0] : '·'}
+                          </div>
+                          {(() => {
+                            const slots = getSlotsForCell(unit, d);
+                            return slots && res.check_in === d ? (
+                              <div className={`text-[9px] font-mono text-center ${slots.available === 0 ? 'text-error' : 'text-n-400'}`}>
+                                {slots.available}/{slots.total} vagas
+                              </div>
+                            ) : null;
+                          })()}
                         </div>
                       ) : isBlocked ? (
                         <div className="rounded-xs px-2 py-0.5 bg-n-200 text-n-400 font-body text-center">Bloq.</div>
                       ) : (
-                        <div className="h-6" />
+                        <>
+                          <div className="h-5" />
+                          {(() => {
+                            const slots = getSlotsForCell(unit, d);
+                            return slots ? (
+                              <div className="text-[9px] font-mono text-center text-n-300">
+                                {slots.available}/{slots.total}
+                              </div>
+                            ) : null;
+                          })()}
+                        </>
                       )}
                     </td>
                   );
@@ -361,8 +407,12 @@ export default function Calendar() {
                 >
                   <p className="font-display font-semibold text-sm">{res.customer_name}</p>
                   <p className="text-xs opacity-80 mt-0.5">
-                    {STATUS_LABELS[res.status]} · {res.guests || 1} hospede(s)
+                    {STATUS_LABELS[res.status]} · {res.guests || 1} pax
                     {res.total_amount ? ` · €${Number(res.total_amount).toLocaleString('pt-PT')}` : ''}
+                    {(() => {
+                      const slots = getSlotsForCell(unit, dayStr);
+                      return slots ? ` · ${slots.available} vagas restantes` : '';
+                    })()}
                   </p>
                 </button>
               ) : isBlocked ? (
@@ -427,14 +477,22 @@ export default function Calendar() {
 
             {/* Unit filter */}
             {(dados.units || []).length > 1 && (
-              <select
-                value={filterUnit}
-                onChange={e => setFilterUnit(e.target.value)}
-                className="h-8 px-2 rounded-sm border border-n-200 text-xs font-body text-n-700 bg-white focus:outline-none focus:ring-1 focus:ring-ocean-300"
-              >
+              <select value={filterUnit} onChange={e => setFilterUnit(e.target.value)}
+                className="h-8 px-2 rounded-sm border border-n-200 text-xs font-body text-n-700 bg-white focus:outline-none focus:ring-1 focus:ring-ocean-300">
                 <option value="">Todas as unidades</option>
                 {(dados.units || []).map(u => (
                   <option key={u.id} value={u.id}>{u.name}</option>
+                ))}
+              </select>
+            )}
+
+            {/* Guide filter */}
+            {guides.length > 0 && (
+              <select value={filterGuide} onChange={e => setFilterGuide(e.target.value)}
+                className="h-8 px-2 rounded-sm border border-n-200 text-xs font-body text-n-700 bg-white focus:outline-none focus:ring-1 focus:ring-ocean-300">
+                <option value="">Todos os guias</option>
+                {guides.map(g => (
+                  <option key={g.id} value={g.id}>{g.name}</option>
                 ))}
               </select>
             )}

@@ -1,10 +1,11 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { io } from 'socket.io-client';
 import {
   Plus, Pencil, Trash2, Star, Briefcase, Phone, Mail, MessageSquare,
   Users, CheckSquare, AlertTriangle, Camera, Send, Upload, Shield,
   Search, MoreVertical, CheckCircle2, XCircle, Clock, X, Tag,
   Circle, ChevronRight, ArrowRight, Hash, Volume2,
+  Pin, CornerUpLeft, Megaphone, ClipboardCheck, Mic, MicOff, Settings2,
 } from 'lucide-react';
 import {
   listStaff, createStaff, updateStaff, deleteStaff,
@@ -34,6 +35,15 @@ const PRIO_COLORS = {
   high:   'text-error bg-red-50',
   urgent: 'text-white bg-error',
 };
+const CHECKLIST_KEY = 'saldesk_checklist_v1';
+const DEFAULT_TASKS = [
+  'Verificar equipamento e material',
+  'Confirmar reservas do dia',
+  'Briefing com a equipa',
+  'Verificar seguranca e primeiros socorros',
+  'Comunicar horario de inicio ao grupo',
+];
+
 const KANBAN_COLS = [
   { key: 'pending',     label: 'Pendente',    color: 'border-yellow-300 text-yellow-800 bg-yellow-50' },
   { key: 'in_progress', label: 'Em Progresso', color: 'border-ocean-300 text-ocean-700 bg-ocean-50' },
@@ -536,25 +546,194 @@ function KanbanBoard({ staffList }) {
   );
 }
 
-/* ── Chat Message ── */
-function MessageBubble({ msg, isOwn, staffList }) {
-  const sender = staffList.find(s => s.id === msg.sender_id);
+/* ── Checklist Tab ── */
+function ChecklistTab() {
+  const todayStr = new Date().toISOString().split('T')[0];
+
+  function load() {
+    try { return JSON.parse(localStorage.getItem(CHECKLIST_KEY) || '{}'); } catch { return {}; }
+  }
+  function save(data) { localStorage.setItem(CHECKLIST_KEY, JSON.stringify(data)); }
+
+  const stored      = load();
+  const [tasks,     setTasks]     = useState(stored.tasks     || DEFAULT_TASKS);
+  const [completions, setCompletions] = useState(stored.completions || {});
+  const [configOpen,  setConfig]  = useState(false);
+  const [newTask,     setNewTask] = useState('');
+
+  const todayCompletions = completions[todayStr] || {};
+  const doneCount  = Object.keys(todayCompletions).length;
+  const allDone    = doneCount === tasks.length;
+
+  function toggle(idx) {
+    const current = { ...completions };
+    const day     = { ...(current[todayStr] || {}) };
+    if (day[idx]) {
+      delete day[idx];
+    } else {
+      day[idx] = { at: new Date().toISOString(), by: 'manager' };
+    }
+    current[todayStr] = day;
+    setCompletions(current);
+    save({ tasks, completions: current });
+  }
+
+  function addTask() {
+    if (!newTask.trim()) return;
+    const updated = [...tasks, newTask.trim()];
+    setTasks(updated);
+    setNewTask('');
+    save({ tasks: updated, completions });
+  }
+
+  function removeTask(idx) {
+    const updated = tasks.filter((_, i) => i !== idx);
+    setTasks(updated);
+    save({ tasks: updated, completions });
+  }
+
+  const incomplete = tasks.length - doneCount;
+  const isLate     = incomplete > 0 && new Date().getHours() >= 8;
+
   return (
-    <div className={`flex items-end gap-2 ${isOwn ? 'flex-row-reverse' : ''}`}>
+    <div className="space-y-4">
+      {/* Alert */}
+      {isLate && !allDone && (
+        <div className="flex items-center gap-2 px-4 py-3 bg-yellow-50 border border-yellow-200 rounded-md text-sm font-body text-yellow-800">
+          <AlertTriangle size={16} strokeWidth={1.75} className="shrink-0" />
+          <span>{incomplete} tarefa(s) por completar — verifique antes do tour</span>
+        </div>
+      )}
+
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="font-display font-semibold text-n-900">Checklist do dia</p>
+          <p className="text-xs font-body text-n-500 mt-0.5">
+            {todayStr} · {doneCount}/{tasks.length} concluidas
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          {allDone && (
+            <span className="flex items-center gap-1.5 text-xs font-body text-[#1A7A4A] bg-[#ECFDF5] px-3 py-1.5 rounded-sm border border-green-200">
+              <CheckCircle2 size={13} strokeWidth={1.75} />
+              Tudo concluido
+            </span>
+          )}
+          <button onClick={() => setConfig(v => !v)}
+            className="p-2 rounded-sm text-n-500 hover:text-ocean-700 hover:bg-ocean-50 transition-colors" title="Configurar checklist">
+            <Settings2 size={16} strokeWidth={1.75} />
+          </button>
+        </div>
+      </div>
+
+      {/* Progress bar */}
+      <div className="w-full h-1.5 bg-n-100 rounded-full overflow-hidden">
+        <div className="h-full bg-ocean-700 rounded-full transition-all" style={{ width: `${tasks.length ? (doneCount / tasks.length) * 100 : 0}%` }} />
+      </div>
+
+      {/* Task list */}
+      <div className="bg-white border border-n-200 rounded-md divide-y divide-n-100">
+        {tasks.map((task, idx) => {
+          const done = !!todayCompletions[idx];
+          const at   = todayCompletions[idx]?.at;
+          return (
+            <label key={idx}
+              className={`flex items-start gap-3 px-4 py-3.5 cursor-pointer hover:bg-n-50 transition-colors ${done ? 'opacity-70' : ''}`}>
+              <input type="checkbox" checked={done} onChange={() => toggle(idx)}
+                className="mt-0.5 w-4 h-4 accent-ocean-700 cursor-pointer" />
+              <div className="flex-1">
+                <p className={`text-sm font-body text-n-800 ${done ? 'line-through text-n-400' : ''}`}>{task}</p>
+                {done && at && (
+                  <p className="text-xs font-body text-n-400 mt-0.5">
+                    Confirmado as {new Date(at).toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' })}
+                  </p>
+                )}
+              </div>
+              {done && <CheckCircle2 size={16} strokeWidth={1.75} className="text-[#1A7A4A] shrink-0 mt-0.5" />}
+            </label>
+          );
+        })}
+        {tasks.length === 0 && (
+          <div className="px-4 py-8 text-center text-n-400 text-sm font-body">
+            Sem tarefas configuradas. Use o icone de configuracoes para adicionar.
+          </div>
+        )}
+      </div>
+
+      {/* Config panel */}
+      {configOpen && (
+        <div className="bg-n-50 border border-n-200 rounded-md p-4 space-y-3">
+          <p className="text-xs font-mono uppercase tracking-wide text-n-500">Gerir tarefas</p>
+          <div className="space-y-1.5">
+            {tasks.map((task, idx) => (
+              <div key={idx} className="flex items-center gap-2">
+                <span className="flex-1 text-sm font-body text-n-800 px-3 py-1.5 bg-white border border-n-200 rounded-sm">{task}</span>
+                <button onClick={() => removeTask(idx)}
+                  className="p-1.5 rounded text-n-400 hover:text-error hover:bg-red-50 transition-colors">
+                  <X size={13} strokeWidth={2} />
+                </button>
+              </div>
+            ))}
+          </div>
+          <div className="flex gap-2">
+            <input value={newTask} onChange={e => setNewTask(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && addTask()}
+              placeholder="Nova tarefa + Enter"
+              className="flex-1 h-9 px-3 rounded-sm border border-n-300 text-sm font-body bg-white placeholder:text-n-400 focus:outline-none focus:border-ocean-700" />
+            <Button size="sm" onClick={addTask} icon={Plus}>Adicionar</Button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ── Chat Message ── */
+function MessageBubble({ msg, isOwn, staffList, pinnedIds, onPin, onReply, allMessages }) {
+  const sender    = staffList.find(s => s.id === msg.sender_id);
+  const isPinned  = pinnedIds?.has(msg.id);
+  const replyMsg  = msg.reply_to_id ? allMessages?.find(m => m.id === msg.reply_to_id) : null;
+  const replySender = replyMsg ? staffList.find(s => s.id === replyMsg.sender_id) : null;
+
+  return (
+    <div className={`group flex items-end gap-2 ${isOwn ? 'flex-row-reverse' : ''}`}>
       {!isOwn && sender && <StaffAvatar member={sender} size={24} showStatus={false} />}
       {!isOwn && !sender && (
         <div className="w-6 h-6 rounded-full bg-n-200 flex items-center justify-center shrink-0">
           <Hash size={10} strokeWidth={1.75} className="text-n-500" />
         </div>
       )}
-      <div className={`max-w-[72%] px-3 py-2 rounded-lg text-sm font-body ${isOwn ? 'bg-ocean-700 text-white rounded-br-sm' : 'bg-n-100 text-n-900 rounded-bl-sm'}`}>
-        {!isOwn && sender && (
-          <p className={`text-xs font-mono font-semibold mb-0.5 ${isOwn ? 'text-ocean-200' : 'text-ocean-700'}`}>{sender.name.split(' ')[0]}</p>
+      <div className="flex flex-col max-w-[72%]">
+        {/* Reply context */}
+        {replyMsg && (
+          <div className={`mb-1 px-2 py-1 rounded-sm border-l-2 border-ocean-500 ${isOwn ? 'bg-ocean-600 text-ocean-200 self-end' : 'bg-n-200 text-n-500'} text-xs font-body`}>
+            <span className="font-semibold mr-1">{replySender?.name.split(' ')[0] || 'Sistema'}</span>
+            <span className="truncate">{replyMsg.content?.slice(0, 60)}</span>
+          </div>
         )}
-        <p>{msg.content}</p>
-        <p className={`text-xs mt-1 ${isOwn ? 'text-ocean-200' : 'text-n-400'}`}>
-          {new Date(msg.created_at).toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' })}
-        </p>
+        <div className={`px-3 py-2 rounded-lg text-sm font-body relative ${isOwn ? 'bg-ocean-700 text-white rounded-br-sm' : 'bg-n-100 text-n-900 rounded-bl-sm'}`}>
+          {isPinned && (
+            <Pin size={10} strokeWidth={1.75} className={`absolute top-1.5 ${isOwn ? 'left-2 text-ocean-300' : 'right-2 text-n-400'}`} />
+          )}
+          {!isOwn && sender && (
+            <p className="text-xs font-mono font-semibold mb-0.5 text-ocean-700">{sender.name.split(' ')[0]}</p>
+          )}
+          <p>{msg.content}</p>
+          <p className={`text-xs mt-1 ${isOwn ? 'text-ocean-200' : 'text-n-400'}`}>
+            {new Date(msg.created_at).toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' })}
+          </p>
+        </div>
+      </div>
+      {/* Action buttons on hover */}
+      <div className={`flex flex-col gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity ${isOwn ? 'order-first' : ''}`}>
+        <button onClick={() => onReply?.(msg)} title="Responder"
+          className="p-1 rounded text-n-400 hover:text-ocean-700 hover:bg-ocean-50 transition-colors">
+          <CornerUpLeft size={12} strokeWidth={1.75} />
+        </button>
+        <button onClick={() => onPin?.(msg.id)} title={isPinned ? 'Desafixar' : 'Fixar'}
+          className={`p-1 rounded transition-colors ${isPinned ? 'text-ocean-700 bg-ocean-50' : 'text-n-400 hover:text-ocean-700 hover:bg-ocean-50'}`}>
+          <Pin size={12} strokeWidth={1.75} />
+        </button>
       </div>
     </div>
   );
@@ -563,19 +742,24 @@ function MessageBubble({ msg, isOwn, staffList }) {
 /* ── Chat Tab ── */
 function ChatTab({ staffList }) {
   const { user }  = useAuthStore();
-  const [groups, setGroups]         = useState([]);
-  const [messages, setMessages]     = useState([]);
-  const [conversation, setConvo]    = useState(null);
-  const [input, setInput]           = useState('');
-  const [loadingMsgs, setLoadMsgs]  = useState(false);
-  const [groupModal, setGroupModal] = useState(false);
-  const [groupName, setGroupName]   = useState('');
-  const socketRef   = useRef(null);
-  const endRef      = useRef(null);
+  const [groups,       setGroups]      = useState([]);
+  const [messages,     setMessages]    = useState([]);
+  const [conversation, setConvo]       = useState(null);
+  const [input,        setInput]       = useState('');
+  const [loadingMsgs,  setLoadMsgs]   = useState(false);
+  const [groupModal,   setGroupModal]  = useState(false);
+  const [groupName,    setGroupName]   = useState('');
+  const [replyTo,      setReplyTo]     = useState(null);
+  const [pinnedIds,    setPinnedIds]   = useState(new Set());
+  const [broadcastModal, setBroadcast] = useState(false);
+  const [broadcastText,  setBroadcastText] = useState('');
+  const [broadcasting,   setBroadcasting]  = useState(false);
+  const socketRef = useRef(null);
+  const endRef    = useRef(null);
+  const inputRef  = useRef(null);
 
   useEffect(() => {
     listGroups().then(setGroups).catch(() => {});
-
     const BASE = (import.meta.env.VITE_API_URL || 'http://localhost:3001/api/v1').replace('/api/v1', '');
     const sock = io(BASE, {
       auth: { token: useAuthStore.getState().token },
@@ -593,17 +777,37 @@ function ChatTab({ staffList }) {
   useEffect(() => {
     if (!conversation) return;
     setLoadMsgs(true);
+    setPinnedIds(new Set());
+    setReplyTo(null);
     const params = conversation.type === 'group'
       ? { group_id: conversation.id }
       : { recipient_id: conversation.id };
     listMessages(params)
       .then(data => {
-        setMessages(data.data || []);
+        const msgs = data.data || [];
+        setMessages(msgs);
+        // restore pins from local storage
+        const stored = localStorage.getItem(`saldesk_pins_${conversation.id}`);
+        if (stored) { try { setPinnedIds(new Set(JSON.parse(stored))); } catch {} }
         endRef.current?.scrollIntoView({ behavior: 'smooth' });
       })
       .catch(() => setMessages([]))
       .finally(() => setLoadMsgs(false));
   }, [conversation]);
+
+  function handlePin(msgId) {
+    setPinnedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(msgId)) next.delete(msgId); else next.add(msgId);
+      localStorage.setItem(`saldesk_pins_${conversation?.id}`, JSON.stringify([...next]));
+      return next;
+    });
+  }
+
+  function handleReply(msg) {
+    setReplyTo(msg);
+    inputRef.current?.focus();
+  }
 
   async function handleSend(e) {
     e.preventDefault();
@@ -611,6 +815,7 @@ function ChatTab({ staffList }) {
     const payload = {
       content: input.trim(),
       message_type: conversation.type === 'group' ? 'group' : 'direct',
+      reply_to_id: replyTo?.id || undefined,
       ...(conversation.type === 'group'
         ? { group_id: conversation.id }
         : { recipient_id: conversation.id, recipient_type: 'staff' }),
@@ -619,6 +824,7 @@ function ChatTab({ staffList }) {
       const msg = await sendMessage(payload);
       setMessages(p => [...p, msg]);
       setInput('');
+      setReplyTo(null);
       endRef.current?.scrollIntoView({ behavior: 'smooth' });
     } catch (err) { console.error(err); }
   }
@@ -634,7 +840,29 @@ function ChatTab({ staffList }) {
     } catch (err) { console.error(err); }
   }
 
+  async function handleBroadcast(e) {
+    e.preventDefault();
+    if (!broadcastText.trim()) return;
+    setBroadcasting(true);
+    try {
+      await Promise.all(
+        staffList.map(s =>
+          sendMessage({
+            content: broadcastText.trim(),
+            message_type: 'direct',
+            recipient_id: s.id,
+            recipient_type: 'staff',
+          })
+        )
+      );
+      setBroadcastText('');
+      setBroadcast(false);
+    } catch (err) { console.error(err); }
+    finally { setBroadcasting(false); }
+  }
+
   const isAnnouncements = conversation?.type === 'group' && conversation?.isAnnouncements;
+  const pinnedMsgs = messages.filter(m => pinnedIds.has(m.id));
 
   return (
     <div className="flex border border-n-200 rounded-md overflow-hidden" style={{ height: 'calc(100vh - 220px)', minHeight: 420 }}>
@@ -642,13 +870,18 @@ function ChatTab({ staffList }) {
       <div className="w-56 shrink-0 border-r border-n-200 bg-n-50 flex flex-col">
         <div className="px-3 py-2.5 border-b border-n-200 flex items-center justify-between">
           <span className="text-xs font-mono uppercase tracking-wider text-n-500">Mensagens</span>
-          <button onClick={() => setGroupModal(true)}
-            className="p-1 rounded text-n-400 hover:text-ocean-700 hover:bg-ocean-50 transition-colors" title="Novo grupo">
-            <Plus size={13} strokeWidth={1.75} />
-          </button>
+          <div className="flex items-center gap-0.5">
+            <button onClick={() => setBroadcast(true)} title="Broadcast"
+              className="p-1 rounded text-n-400 hover:text-sand-500 hover:bg-sand-50 transition-colors">
+              <Megaphone size={13} strokeWidth={1.75} />
+            </button>
+            <button onClick={() => setGroupModal(true)} title="Novo grupo"
+              className="p-1 rounded text-n-400 hover:text-ocean-700 hover:bg-ocean-50 transition-colors">
+              <Plus size={13} strokeWidth={1.75} />
+            </button>
+          </div>
         </div>
         <div className="flex-1 overflow-y-auto">
-          {/* Announcements */}
           <button
             onClick={() => setConvo({ type: 'group', id: 'announcements', name: 'Anuncios', isAnnouncements: true })}
             className={`w-full flex items-center gap-2.5 px-3 py-2.5 hover:bg-white transition-colors ${conversation?.id === 'announcements' ? 'bg-white border-r-2 border-ocean-700' : ''}`}>
@@ -658,7 +891,6 @@ function ChatTab({ staffList }) {
             <span className="text-sm font-body text-n-800 truncate">Anuncios</span>
           </button>
 
-          {/* Groups */}
           {groups.length > 0 && (
             <>
               <div className="px-3 pt-3 pb-1">
@@ -676,7 +908,6 @@ function ChatTab({ staffList }) {
             </>
           )}
 
-          {/* Direct messages */}
           <div className="px-3 pt-3 pb-1">
             <span className="text-xs font-mono text-n-400 uppercase">Direto</span>
           </div>
@@ -693,24 +924,66 @@ function ChatTab({ staffList }) {
       {/* Chat area */}
       {conversation ? (
         <div className="flex-1 flex flex-col min-w-0">
+          {/* Header */}
           <div className="px-4 py-3 border-b border-n-200 bg-white flex items-center gap-2 shrink-0">
             <MessageSquare size={15} strokeWidth={1.75} className="text-ocean-700" />
-            <p className="font-display font-semibold text-sm text-n-900">{conversation.name}</p>
+            <p className="font-display font-semibold text-sm text-n-900 flex-1">{conversation.name}</p>
+            {pinnedMsgs.length > 0 && (
+              <span className="flex items-center gap-1 text-xs font-body text-n-500">
+                <Pin size={11} strokeWidth={1.75} />
+                {pinnedMsgs.length} fixada(s)
+              </span>
+            )}
           </div>
+
+          {/* Pinned messages bar */}
+          {pinnedMsgs.length > 0 && (
+            <div className="px-4 py-2 bg-ocean-50 border-b border-ocean-100 shrink-0">
+              {pinnedMsgs.slice(-1).map(m => (
+                <div key={m.id} className="flex items-center gap-2 text-xs font-body text-ocean-700">
+                  <Pin size={10} strokeWidth={1.75} className="shrink-0" />
+                  <span className="truncate">{m.content}</span>
+                  <button onClick={() => handlePin(m.id)} className="ml-auto text-ocean-400 hover:text-ocean-700">
+                    <X size={10} strokeWidth={2} />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+
           <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-n-50">
             {loadingMsgs
               ? <div className="flex justify-center pt-8"><LoadingSpinner size={24} /></div>
               : messages.length === 0
                 ? <p className="text-xs font-body text-n-400 text-center pt-8">Sem mensagens ainda</p>
                 : messages.map(msg => (
-                  <MessageBubble key={msg.id} msg={msg} isOwn={msg.sender_id === user?.id} staffList={staffList} />
+                  <MessageBubble key={msg.id} msg={msg}
+                    isOwn={msg.sender_id === user?.id}
+                    staffList={staffList}
+                    pinnedIds={pinnedIds}
+                    onPin={handlePin}
+                    onReply={handleReply}
+                    allMessages={messages}
+                  />
                 ))
             }
             <div ref={endRef} />
           </div>
+
+          {/* Reply preview */}
+          {replyTo && (
+            <div className="flex items-center gap-2 px-3 py-2 bg-ocean-50 border-t border-ocean-100 shrink-0">
+              <CornerUpLeft size={12} strokeWidth={1.75} className="text-ocean-600 shrink-0" />
+              <span className="text-xs font-body text-ocean-700 truncate flex-1">{replyTo.content?.slice(0, 80)}</span>
+              <button onClick={() => setReplyTo(null)} className="text-ocean-400 hover:text-ocean-700">
+                <X size={12} strokeWidth={2} />
+              </button>
+            </div>
+          )}
+
           {!isAnnouncements ? (
             <form onSubmit={handleSend} className="p-3 border-t border-n-200 bg-white flex gap-2 shrink-0">
-              <input value={input} onChange={e => setInput(e.target.value)}
+              <input ref={inputRef} value={input} onChange={e => setInput(e.target.value)}
                 placeholder="Escrever mensagem..."
                 className="flex-1 h-9 px-3 rounded-sm border border-n-200 text-sm font-body bg-n-100 text-n-900 placeholder:text-n-400 focus:outline-none focus:border-ocean-700 focus:bg-white"
               />
@@ -720,9 +993,16 @@ function ChatTab({ staffList }) {
               </button>
             </form>
           ) : (
-            <div className="p-3 border-t border-n-200 bg-n-50 shrink-0">
-              <p className="text-xs font-body text-n-400 text-center">Canal de leitura — apenas gestores podem enviar</p>
-            </div>
+            <form onSubmit={handleSend} className="p-3 border-t border-n-200 bg-white flex gap-2 shrink-0">
+              <input ref={inputRef} value={input} onChange={e => setInput(e.target.value)}
+                placeholder="Escrever anuncio..."
+                className="flex-1 h-9 px-3 rounded-sm border border-n-200 text-sm font-body bg-n-100 text-n-900 placeholder:text-n-400 focus:outline-none focus:border-ocean-700 focus:bg-white"
+              />
+              <button type="submit" disabled={!input.trim()}
+                className="px-3 bg-sand-500 text-white rounded-sm hover:bg-sand-400 disabled:opacity-40 transition-colors">
+                <Megaphone size={15} strokeWidth={1.75} />
+              </button>
+            </form>
           )}
         </div>
       ) : (
@@ -741,6 +1021,28 @@ function ChatTab({ staffList }) {
           <div className="flex gap-3">
             <Button type="button" variant="secondary" onClick={() => setGroupModal(false)} className="flex-1">Cancelar</Button>
             <Button type="submit" className="flex-1">Criar grupo</Button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* Broadcast modal */}
+      <Modal open={broadcastModal} onClose={() => setBroadcast(false)} title="Broadcast — enviar a todos" size="sm">
+        <form onSubmit={handleBroadcast} className="space-y-4">
+          <div className="px-3 py-2.5 bg-sand-50 border border-sand-200 rounded-sm">
+            <p className="text-xs font-body text-sand-600">
+              Esta mensagem sera enviada individualmente para {staffList.length} colaborador(es) activo(s).
+            </p>
+          </div>
+          <Input
+            label="Mensagem"
+            value={broadcastText}
+            onChange={e => setBroadcastText(e.target.value)}
+            required
+            placeholder="Escrever mensagem de broadcast..."
+          />
+          <div className="flex gap-3">
+            <Button type="button" variant="secondary" onClick={() => setBroadcast(false)} className="flex-1">Cancelar</Button>
+            <Button type="submit" loading={broadcasting} icon={Megaphone} className="flex-1">Enviar</Button>
           </div>
         </form>
       </Modal>
@@ -794,9 +1096,10 @@ export default function Staff() {
     : staffList;
 
   const TABS = [
-    { key: 'staff', label: 'Colaboradores', Icon: Users },
-    { key: 'tasks', label: 'Tarefas',        Icon: CheckSquare },
-    { key: 'chat',  label: 'Chat',           Icon: MessageSquare, badge: unread },
+    { key: 'staff',     label: 'Colaboradores', Icon: Users },
+    { key: 'checklist', label: 'Checklist',      Icon: ClipboardCheck },
+    { key: 'tasks',     label: 'Tarefas',        Icon: CheckSquare },
+    { key: 'chat',      label: 'Chat',           Icon: MessageSquare, badge: unread },
   ];
 
   return (
@@ -864,6 +1167,9 @@ export default function Staff() {
           )}
         </div>
       )}
+
+      {/* Checklist tab */}
+      {tab === 'checklist' && <ChecklistTab />}
 
       {/* Tarefas tab */}
       {tab === 'tasks' && <KanbanBoard staffList={staffList} />}
