@@ -152,7 +152,9 @@ function PerfilPublicoTab({ operator }) {
     instagram:   operator?.social?.instagram   || '',
     facebook:    operator?.social?.facebook    || '',
     tripadvisor: operator?.social?.tripadvisor || '',
+    google_maps: operator?.social?.google_maps || '',
     whatsapp:    operator?.social?.whatsapp    || '',
+    linkedin:    operator?.social?.linkedin    || '',
   });
   const [hours, setHours] = useState(() =>
     WEEK_DAYS.reduce((acc, d) => ({
@@ -307,15 +309,30 @@ function PerfilPublicoTab({ operator }) {
       <Card header={<h3 className="font-display font-semibold text-sm text-n-700">Redes sociais</h3>}>
         <div className="space-y-3">
           {[
-            { key: 'instagram',   label: 'ExternalLink',        icon: ExternalLink,  ph: 'https://instagram.com/...' },
-            { key: 'facebook',    label: 'Share2',         icon: Share2,   ph: 'https://facebook.com/...' },
-            { key: 'tripadvisor', label: 'TripAdvisor',      icon: Globe,      ph: 'https://tripadvisor.com/...' },
-            { key: 'whatsapp',    label: 'WhatsApp Business', icon: Phone,      ph: '+238 900 0000' },
-          ].map(({ key, label, icon: Icon, ph }) => (
-            <div key={key} className="flex items-center gap-3">
-              <Icon size={16} strokeWidth={1.75} className="text-n-400 shrink-0" />
-              <Input label={label} value={social[key]} placeholder={ph}
-                onChange={e => setSocial(p => ({ ...p, [key]: e.target.value }))} />
+            { key: 'instagram',   label: 'Instagram',            icon: ExternalLink, ph: 'https://instagram.com/...',           preview: true  },
+            { key: 'facebook',    label: 'Facebook',             icon: Share2,       ph: 'https://facebook.com/...',            preview: true  },
+            { key: 'tripadvisor', label: 'TripAdvisor',          icon: Globe,        ph: 'https://tripadvisor.com/...',         preview: true  },
+            { key: 'google_maps', label: 'Google Maps',          icon: Globe,        ph: 'https://maps.app.goo.gl/...',         preview: true  },
+            { key: 'whatsapp',    label: 'WhatsApp Business',    icon: Phone,        ph: '+238 900 0000',                       preview: false },
+            { key: 'linkedin',    label: 'LinkedIn (opcional)',   icon: ExternalLink, ph: 'https://linkedin.com/company/...',    preview: true  },
+          ].map(({ key, label, icon: Icon, ph, preview }) => (
+            <div key={key} className="flex items-start gap-2">
+              <Icon size={16} strokeWidth={1.75} className="text-n-400 shrink-0 mt-7" />
+              <div className="flex-1">
+                <Input label={label} value={social[key]} placeholder={ph}
+                  onChange={e => setSocial(p => ({ ...p, [key]: e.target.value }))} />
+              </div>
+              {preview && social[key] && (
+                <a
+                  href={social[key].startsWith('http') ? social[key] : `https://${social[key]}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  title={`Abrir ${label}`}
+                  className="mt-6 w-9 h-9 flex items-center justify-center border border-n-200 rounded-sm bg-n-50 text-ocean-700 hover:bg-ocean-50 hover:border-ocean-300 transition-colors shrink-0"
+                >
+                  <ExternalLink size={14} strokeWidth={1.75} />
+                </a>
+              )}
             </div>
           ))}
         </div>
