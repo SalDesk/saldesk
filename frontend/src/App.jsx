@@ -20,6 +20,8 @@ import Messages from './pages/Messages';
 import Guides from './pages/Guides';
 import Marketing from './pages/Marketing';
 import Analytics from './pages/Analytics';
+import Loyalty from './pages/Loyalty';
+import Vouchers from './pages/Vouchers';
 import PublicBooking from './pages/PublicBooking';
 import ServiceDetail from './pages/ServiceDetail';
 import StaffPortal from './pages/StaffPortal';
@@ -78,6 +80,8 @@ export default function App() {
           <Route path="avaliacoes"    element={<Reviews />} />
           <Route path="marketing"     element={<Marketing />} />
           <Route path="analytics"     element={<Analytics />} />
+          <Route path="fidelidade"    element={<Loyalty />} />
+          <Route path="vouchers"      element={<Vouchers />} />
           <Route path="definicoes"    element={<Settings />} />
           <Route path="perfil"        element={<Profile />} />
         </Route>

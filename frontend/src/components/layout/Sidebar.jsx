@@ -5,7 +5,7 @@ import {
   Star, MessageCircle, Globe, Megaphone, Settings,
   LogOut, X, ExternalLink, User,
   Compass, Hotel, Car, Truck, UtensilsCrossed, ChefHat, Wrench,
-  Activity,
+  Activity, Award, Tag,
 } from 'lucide-react';
 import useAuthStore from '../../store/authStore';
 import Logo from '../shared/Logo';
@@ -25,6 +25,8 @@ const TYPE_NAV = {
     { to: '/mensagens',     icon: MessageCircle,   label: 'Mensagens'                    },
     { to: '/integracoes',   icon: Globe,           label: 'Channel Manager'              },
     { to: '/marketing',     icon: Megaphone,       label: 'Marketing'                    },
+    { to: '/fidelidade',    icon: Award,           label: 'Fidelidade'                   },
+    { to: '/vouchers',      icon: Tag,             label: 'Vouchers'                     },
     { to: '/definicoes',    icon: Settings,        label: 'Definicoes'                   },
   ],
   hotel: [
@@ -39,6 +41,8 @@ const TYPE_NAV = {
     { to: '/avaliacoes',    icon: Star,            label: 'Avaliacoes'              },
     { to: '/mensagens',     icon: MessageCircle,   label: 'Mensagens'               },
     { to: '/marketing',     icon: Megaphone,       label: 'Marketing'               },
+    { to: '/fidelidade',    icon: Award,           label: 'Fidelidade'              },
+    { to: '/vouchers',      icon: Tag,             label: 'Vouchers'                },
     { to: '/definicoes',    icon: Settings,        label: 'Definicoes'              },
   ],
   rentacar: [
@@ -54,6 +58,8 @@ const TYPE_NAV = {
     { to: '/avaliacoes',    icon: Star,            label: 'Avaliacoes'              },
     { to: '/mensagens',     icon: MessageCircle,   label: 'Mensagens'               },
     { to: '/marketing',     icon: Megaphone,       label: 'Marketing'               },
+    { to: '/fidelidade',    icon: Award,           label: 'Fidelidade'              },
+    { to: '/vouchers',      icon: Tag,             label: 'Vouchers'                },
     { to: '/definicoes',    icon: Settings,        label: 'Definicoes'              },
   ],
   restaurant: [
@@ -69,6 +75,8 @@ const TYPE_NAV = {
     { to: '/avaliacoes',    icon: Star,            label: 'Avaliacoes'              },
     { to: '/mensagens',     icon: MessageCircle,   label: 'Mensagens'               },
     { to: '/marketing',     icon: Megaphone,       label: 'Marketing'               },
+    { to: '/fidelidade',    icon: Award,           label: 'Fidelidade'              },
+    { to: '/vouchers',      icon: Tag,             label: 'Vouchers'                },
     { to: '/definicoes',    icon: Settings,        label: 'Definicoes'              },
   ],
 };
