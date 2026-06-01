@@ -22,6 +22,8 @@ import Marketing from './pages/Marketing';
 import Analytics from './pages/Analytics';
 import Loyalty from './pages/Loyalty';
 import Vouchers from './pages/Vouchers';
+import Occurrences from './pages/Occurrences';
+import Feedback from './pages/Feedback';
 import PublicBooking from './pages/PublicBooking';
 import ServiceDetail from './pages/ServiceDetail';
 import StaffPortal from './pages/StaffPortal';
@@ -82,6 +84,8 @@ export default function App() {
           <Route path="analytics"     element={<Analytics />} />
           <Route path="fidelidade"    element={<Loyalty />} />
           <Route path="vouchers"      element={<Vouchers />} />
+          <Route path="ocorrencias"   element={<Occurrences />} />
+          <Route path="feedback"      element={<Feedback />} />
           <Route path="definicoes"    element={<Settings />} />
           <Route path="perfil"        element={<Profile />} />
         </Route>

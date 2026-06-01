@@ -28,3 +28,10 @@ export async function getAutomationLogs(id) {
   const { data } = await api.get(`/automations/${id}/logs`);
   return data.data;
 }
+
+export async function getLogsAll() {
+  try {
+    const { data } = await api.get('/automations/logs');
+    return data.data || [];
+  } catch { return []; }
+}
