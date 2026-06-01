@@ -15,8 +15,9 @@ const TYPE_NAV = {
     { to: '/unidades',      icon: Compass,         label: 'Tours & Actividades'          },
     { to: '/reservas',      icon: Calendar,        label: 'Reservas'                     },
     { to: '/calendario',    icon: CalendarDays,    label: 'Calendario'                   },
-    { to: '/colaboradores', icon: Users,           label: 'Guias'                        },
+    { to: '/guias',         icon: Users,           label: 'Guias'                        },
     { to: '/clientes',      icon: UserCheck,       label: 'Clientes'                     },
+    { to: '/colaboradores', icon: UsersRound,      label: 'Colaboradores'                },
     { to: '/financeiro',    icon: BarChart2,       label: 'Financeiro'                   },
     { to: '/avaliacoes',    icon: Star,            label: 'Avaliacoes'                   },
     { to: '/mensagens',     icon: MessageCircle,   label: 'Mensagens'                    },
@@ -135,7 +136,7 @@ export default function Sidebar({ onClose }) {
             className="flex items-center gap-3 px-3 py-2.5 rounded-sm text-sm font-body font-medium text-ocean-300 hover:bg-ocean-800 hover:text-white transition-colors"
           >
             <ExternalLink size={17} strokeWidth={1.75} className="shrink-0" />
-            <span>Perfil Publico</span>
+            <span>Ver o meu site</span>
           </a>
         )}
         <NavLink

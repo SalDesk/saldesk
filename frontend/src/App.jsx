@@ -17,6 +17,8 @@ import Reviews from './pages/Reviews';
 import Profile from './pages/Profile';
 import Fleet from './pages/Fleet';
 import Messages from './pages/Messages';
+import Guides from './pages/Guides';
+import Marketing from './pages/Marketing';
 import PublicBooking from './pages/PublicBooking';
 import ServiceDetail from './pages/ServiceDetail';
 import StaffPortal from './pages/StaffPortal';
@@ -68,10 +70,12 @@ export default function App() {
           <Route path="automacoes"    element={<Automations />} />
           <Route path="financeiro"    element={<Financial />} />
           <Route path="integracoes"   element={<Integrations />} />
+          <Route path="guias"         element={<Guides />} />
           <Route path="colaboradores" element={<Staff />} />
           <Route path="frota"         element={<Fleet />} />
           <Route path="mensagens"     element={<Messages />} />
           <Route path="avaliacoes"    element={<Reviews />} />
+          <Route path="marketing"     element={<Marketing />} />
           <Route path="definicoes"    element={<Settings />} />
           <Route path="perfil"        element={<Profile />} />
         </Route>
