@@ -1,8 +1,8 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   QrCode, Link2, Copy, Check, Share2, Code2, ChevronLeft,
-  ChevronRight, Plus, Pencil, Trash2, Calendar, Instagram,
-  Facebook, Globe2, Image, Clock, BarChart2, Eye, MousePointerClick,
+  ChevronRight, Plus, Pencil, Trash2, Calendar, ExternalLink,
+  Globe2, Clock, BarChart2, Eye, MousePointerClick,
   TrendingUp, X, CheckCircle2,
 } from 'lucide-react';
 import { getBookingLink, getMarketingStats, getWidgetCode, getQrCode } from '../services/marketingService';
@@ -40,9 +40,9 @@ const TEMPLATES = [
 ];
 
 const PLATFORMS = [
-  { value: 'instagram', label: 'Instagram', icon: Instagram },
-  { value: 'facebook',  label: 'Facebook',  icon: Facebook  },
-  { value: 'ambos',     label: 'Instagram + Facebook', icon: Globe2 },
+  { value: 'instagram', label: 'Instagram',          icon: ExternalLink },
+  { value: 'facebook',  label: 'Facebook',           icon: Share2       },
+  { value: 'ambos',     label: 'Instagram + Facebook', icon: Globe2     },
 ];
 
 const STATUS_CONFIG = {
@@ -494,7 +494,7 @@ export default function Marketing() {
               </button>
               <button onClick={shareFacebook} disabled={!bookingLink}
                 className="flex items-center gap-1.5 text-sm px-3 py-2 rounded-sm bg-[#1877F2] text-white font-body font-medium hover:bg-[#1565d8] transition-colors disabled:opacity-40">
-                <Facebook size={14} strokeWidth={1.75} />
+                <Share2 size={14} strokeWidth={1.75} />
                 Facebook
               </button>
             </div>
