@@ -10,12 +10,46 @@ import UnitList from '../components/units/UnitList';
 import UnitForm from '../components/units/UnitForm';
 import LoadingSpinner from '../components/shared/LoadingSpinner';
 
+const LABELS = {
+  activity: {
+    title:      'Tours & Actividades',
+    subtitle:   (n) => `${n} tour(s) disponivel(is)`,
+    newBtn:     'Novo Tour',
+    editPrefix: 'Editar tour',
+    deleteMsg:  (name) => `Eliminar o tour "${name}"? As reservas associadas serao mantidas mas o tour ficara indisponivel.`,
+  },
+  hotel: {
+    title:      'Quartos & Alojamentos',
+    subtitle:   (n) => `${n} unidade(s) registada(s)`,
+    newBtn:     'Nova Unidade',
+    editPrefix: 'Editar',
+    deleteMsg:  (name) => `Eliminar a unidade "${name}"? As reservas associadas serao mantidas mas a unidade ficara indisponivel.`,
+  },
+  rentacar: {
+    title:      'Frota',
+    subtitle:   (n) => `${n} viatura(s) registada(s)`,
+    newBtn:     'Nova Viatura',
+    editPrefix: 'Editar',
+    deleteMsg:  (name) => `Eliminar a viatura "${name}"? As reservas associadas serao mantidas.`,
+  },
+  restaurant: {
+    title:      'Mesas',
+    subtitle:   (n) => `${n} mesa(s) registada(s)`,
+    newBtn:     'Nova Mesa',
+    editPrefix: 'Editar',
+    deleteMsg:  (name) => `Eliminar a mesa "${name}"? As reservas associadas serao mantidas.`,
+  },
+};
+
 export default function Units() {
   const t = useT();
   const { operator } = useAuthStore();
+  const opType = operator?.operator_type || 'hotel';
+  const lbl    = LABELS[opType] || LABELS.hotel;
+
   const [units,        setUnits]        = useState([]);
   const [loading,      setLoading]      = useState(true);
-  const [modal,        setModal]        = useState(null); // null | 'create' | unit
+  const [modal,        setModal]        = useState(null);
   const [formLoading,  setFormLoading]  = useState(false);
   const [formError,    setFormError]    = useState('');
   const [deleteTarget, setDeleteTarget] = useState(null);
@@ -81,22 +115,21 @@ export default function Units() {
   }), [units]);
 
   const modalTitle = modal === 'create'
-    ? t('units.new')
-    : modal ? `${t('common.edit')}: ${modal.name}` : '';
+    ? lbl.newBtn
+    : modal ? `${lbl.editPrefix}: ${modal.name}` : '';
 
   return (
     <div>
       <PageHeader
-        title={t('units.title')}
-        subtitle={`${stats.total} unidade(s) registada(s)`}
+        title={lbl.title}
+        subtitle={lbl.subtitle(stats.total)}
         actions={
           <Button icon={Plus} onClick={() => { setFormError(''); setModal('create'); }}>
-            {t('units.new')}
+            {lbl.newBtn}
           </Button>
         }
       />
 
-      {/* Stats bar */}
       {!loading && units.length > 0 && (
         <div className="flex gap-4 mb-6">
           <div className="bg-white rounded-sm border border-n-200 px-4 py-2.5 flex items-center gap-2">
@@ -105,13 +138,13 @@ export default function Units() {
           </div>
           <div className="bg-[#ECFDF5] rounded-sm border border-[#BBF7D0] px-4 py-2.5 flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-[#1A7A4A]" />
-            <span className="text-xs font-body text-[#1A7A4A]">Activas</span>
+            <span className="text-xs font-body text-[#1A7A4A]">Activos</span>
             <span className="font-display font-bold text-sm text-[#1A7A4A]">{stats.active}</span>
           </div>
           {stats.inactive > 0 && (
             <div className="bg-n-50 rounded-sm border border-n-200 px-4 py-2.5 flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-n-300" />
-              <span className="text-xs font-body text-n-500">Inactivas</span>
+              <span className="text-xs font-body text-n-500">Inactivos</span>
               <span className="font-display font-bold text-sm text-n-500">{stats.inactive}</span>
             </div>
           )}
@@ -125,6 +158,7 @@ export default function Units() {
       ) : (
         <UnitList
           units={units}
+          operatorType={opType}
           onEdit={(unit) => { setFormError(''); setModal(unit); }}
           onDelete={setDeleteTarget}
           onToggle={handleToggle}
@@ -135,13 +169,13 @@ export default function Units() {
         open={!!modal}
         onClose={() => setModal(null)}
         title={modalTitle}
-        size="md"
+        size={opType === 'activity' ? 'lg' : 'md'}
         footer={null}
       >
         {modal && (
           <UnitForm
             unit={modal !== 'create' ? modal : null}
-            operatorType={operator?.operator_type}
+            operatorType={opType}
             onSave={handleSave}
             onCancel={() => setModal(null)}
             loading={formLoading}
@@ -167,8 +201,7 @@ export default function Units() {
         }
       >
         <p className="text-sm font-body text-n-700">
-          Eliminar a unidade <strong>"{deleteTarget?.name}"</strong>?
-          As reservas associadas serao mantidas mas a unidade ficara indisponivel.
+          {lbl.deleteMsg(deleteTarget?.name || '')}
         </p>
       </Modal>
     </div>

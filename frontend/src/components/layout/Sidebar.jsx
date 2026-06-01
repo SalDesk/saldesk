@@ -1,66 +1,81 @@
 import { NavLink, useNavigate } from 'react-router-dom';
 import {
-  LayoutDashboard, CalendarDays, BookOpen, Users, Zap, BarChart2,
-  Settings, LogOut, X, UserCheck, MessageCircle, Truck, Star,
-  Hotel, Waves, Car, UtensilsCrossed, Package, Puzzle, User,
+  LayoutDashboard, Calendar, CalendarDays,
+  Users, UserCheck, UsersRound, BarChart2,
+  Star, MessageCircle, Globe, Megaphone, Settings,
+  LogOut, X, ExternalLink, User,
+  Compass, Hotel, Car, Truck, UtensilsCrossed, ChefHat, Wrench,
 } from 'lucide-react';
 import useAuthStore from '../../store/authStore';
-import { useT } from '../../i18n';
 import Logo from '../shared/Logo';
 
-/* Itens base — todos os operadores */
-const BASE_ITEMS = [
-  { to: '/',           icon: LayoutDashboard, label: { pt: 'Dashboard',  en: 'Dashboard'  }, end: true },
-  { to: '/reservas',   icon: BookOpen,        label: { pt: 'Reservas',   en: 'Bookings'   } },
-  { to: '/calendario', icon: CalendarDays,    label: { pt: 'Calendario', en: 'Calendar'   } },
-  { to: '/clientes',   icon: Users,           label: { pt: 'Clientes',   en: 'Customers'  } },
-  { to: '/financeiro', icon: BarChart2,       label: { pt: 'Financeiro', en: 'Financial'  } },
-  { to: '/automacoes', icon: Zap,             label: { pt: 'Automacoes', en: 'Automations'} },
-  { to: '/avaliacoes', icon: Star,            label: { pt: 'Avaliacoes', en: 'Reviews'    } },
-  { to: '/mensagens',  icon: MessageCircle,   label: { pt: 'Mensagens',  en: 'Messages'   } },
-];
-
-/* Itens por tipo de operador */
-const TYPE_ITEMS = {
-  hotel: [
-    { to: '/unidades',  icon: Hotel,     label: { pt: 'Quartos',    en: 'Rooms'      } },
-  ],
+const TYPE_NAV = {
   activity: [
-    { to: '/unidades',      icon: Waves,     label: { pt: 'Servicos',       en: 'Services'   } },
-    { to: '/colaboradores', icon: UserCheck, label: { pt: 'Guias/Equipa',   en: 'Guides/Team'} },
-    { to: '/frota',         icon: Package,   label: { pt: 'Equipamento',    en: 'Equipment'  } },
-    { to: '/integracoes',   icon: Puzzle,    label: { pt: 'Integracoes',    en: 'Integrations'} },
+    { to: '/',              icon: LayoutDashboard, label: 'Dashboard',         end: true },
+    { to: '/unidades',      icon: Compass,         label: 'Tours & Actividades'          },
+    { to: '/reservas',      icon: Calendar,        label: 'Reservas'                     },
+    { to: '/calendario',    icon: CalendarDays,    label: 'Calendario'                   },
+    { to: '/colaboradores', icon: Users,           label: 'Guias'                        },
+    { to: '/clientes',      icon: UserCheck,       label: 'Clientes'                     },
+    { to: '/financeiro',    icon: BarChart2,       label: 'Financeiro'                   },
+    { to: '/avaliacoes',    icon: Star,            label: 'Avaliacoes'                   },
+    { to: '/mensagens',     icon: MessageCircle,   label: 'Mensagens'                    },
+    { to: '/integracoes',   icon: Globe,           label: 'Channel Manager'              },
+    { to: '/marketing',     icon: Megaphone,       label: 'Marketing'                    },
+    { to: '/definicoes',    icon: Settings,        label: 'Definicoes'                   },
+  ],
+  hotel: [
+    { to: '/',              icon: LayoutDashboard, label: 'Dashboard',    end: true },
+    { to: '/unidades',      icon: Hotel,           label: 'Quartos'                 },
+    { to: '/reservas',      icon: Calendar,        label: 'Reservas'                },
+    { to: '/calendario',    icon: CalendarDays,    label: 'Calendario'              },
+    { to: '/clientes',      icon: UserCheck,       label: 'Clientes'                },
+    { to: '/colaboradores', icon: UsersRound,      label: 'Colaboradores'           },
+    { to: '/financeiro',    icon: BarChart2,       label: 'Financeiro'              },
+    { to: '/avaliacoes',    icon: Star,            label: 'Avaliacoes'              },
+    { to: '/mensagens',     icon: MessageCircle,   label: 'Mensagens'               },
+    { to: '/marketing',     icon: Megaphone,       label: 'Marketing'               },
+    { to: '/definicoes',    icon: Settings,        label: 'Definicoes'              },
   ],
   rentacar: [
-    { to: '/unidades',      icon: Car,       label: { pt: 'Frota/Viaturas', en: 'Fleet/Cars' } },
-    { to: '/colaboradores', icon: UserCheck, label: { pt: 'Colaboradores',  en: 'Staff'      } },
-    { to: '/frota',         icon: Truck,     label: { pt: 'Equipamento',    en: 'Equipment'  } },
+    { to: '/',              icon: LayoutDashboard, label: 'Dashboard',    end: true },
+    { to: '/frota',         icon: Car,             label: 'Frota'                   },
+    { to: '/reservas',      icon: Calendar,        label: 'Reservas'                },
+    { to: '/calendario',    icon: CalendarDays,    label: 'Calendario'              },
+    { to: '/manutencao',    icon: Wrench,          label: 'Manutencao'              },
+    { to: '/clientes',      icon: UserCheck,       label: 'Clientes'                },
+    { to: '/colaboradores', icon: UsersRound,      label: 'Colaboradores'           },
+    { to: '/financeiro',    icon: BarChart2,       label: 'Financeiro'              },
+    { to: '/avaliacoes',    icon: Star,            label: 'Avaliacoes'              },
+    { to: '/mensagens',     icon: MessageCircle,   label: 'Mensagens'               },
+    { to: '/marketing',     icon: Megaphone,       label: 'Marketing'               },
+    { to: '/definicoes',    icon: Settings,        label: 'Definicoes'              },
   ],
   restaurant: [
-    { to: '/unidades',  icon: UtensilsCrossed, label: { pt: 'Mesas/Menus', en: 'Tables/Menus'} },
+    { to: '/',              icon: LayoutDashboard, label: 'Dashboard',    end: true },
+    { to: '/unidades',      icon: UtensilsCrossed, label: 'Mesas'                   },
+    { to: '/menu',          icon: ChefHat,         label: 'Menu'                    },
+    { to: '/reservas',      icon: Calendar,        label: 'Reservas'                },
+    { to: '/calendario',    icon: CalendarDays,    label: 'Calendario'              },
+    { to: '/clientes',      icon: UserCheck,       label: 'Clientes'                },
+    { to: '/colaboradores', icon: UsersRound,      label: 'Colaboradores'           },
+    { to: '/financeiro',    icon: BarChart2,       label: 'Financeiro'              },
+    { to: '/avaliacoes',    icon: Star,            label: 'Avaliacoes'              },
+    { to: '/mensagens',     icon: MessageCircle,   label: 'Mensagens'               },
+    { to: '/marketing',     icon: Megaphone,       label: 'Marketing'               },
+    { to: '/definicoes',    icon: Settings,        label: 'Definicoes'              },
   ],
 };
 
-/* Itens finais — todos */
-const END_ITEMS = [
-  { to: '/definicoes', icon: Settings, label: { pt: 'Definicoes', en: 'Settings' } },
-];
-
 export default function Sidebar({ onClose }) {
   const { operator, logout } = useAuthStore();
-  const t   = useT();
   const navigate = useNavigate();
 
   function handleLogout() { logout(); navigate('/login'); }
 
-  const opType    = operator?.operator_type || 'hotel';
-  const typeItems = TYPE_ITEMS[opType] || [];
-  const allItems  = [...BASE_ITEMS, ...typeItems, ...END_ITEMS];
-
-  const labelKey = (item) => {
-    const lang = document.documentElement.getAttribute('data-lang') || 'pt';
-    return item.label?.[lang] || item.label?.pt || '';
-  };
+  const opType   = operator?.operator_type || 'hotel';
+  const navItems = TYPE_NAV[opType] || TYPE_NAV.hotel;
+  const slug     = operator?.booking_link_slug;
 
   return (
     <aside className="w-64 bg-ocean-900 text-white flex flex-col h-full shrink-0">
@@ -78,7 +93,7 @@ export default function Sidebar({ onClose }) {
       {operator?.name && (
         <div className="px-4 py-3 border-b border-ocean-800 flex items-center gap-3">
           {operator.logo_url ? (
-            <img src={operator.logo_url} alt={operator.name} className="w-8 h-8 rounded-full object-cover shrink-0 bg-ocean-800"/>
+            <img src={operator.logo_url} alt={operator.name} className="w-8 h-8 rounded-full object-cover shrink-0 bg-ocean-800" />
           ) : (
             <div className="w-8 h-8 rounded-full bg-ocean-700 flex items-center justify-center shrink-0 text-xs font-display font-bold">
               {operator.name[0]}
@@ -93,9 +108,9 @@ export default function Sidebar({ onClose }) {
 
       {/* Nav */}
       <nav className="flex-1 overflow-y-auto py-2 px-2 space-y-0.5">
-        {allItems.map(({ to, icon: Icon, label, end }) => (
+        {navItems.map(({ to, icon: Icon, label, end }) => (
           <NavLink
-            key={to}
+            key={`${to}-${label}`}
             to={to}
             end={end}
             className={({ isActive }) =>
@@ -105,14 +120,26 @@ export default function Sidebar({ onClose }) {
             }
           >
             <Icon size={17} strokeWidth={1.75} className="shrink-0" />
-            <span className="truncate">{labelKey({ label })}</span>
+            <span className="truncate">{label}</span>
           </NavLink>
         ))}
       </nav>
 
-      {/* Logout + Perfil */}
+      {/* Footer */}
       <div className="px-2 py-3 border-t border-ocean-800 space-y-0.5">
-        <NavLink to="/perfil"
+        {slug && (
+          <a
+            href={`/book/${slug}`}
+            target="_blank"
+            rel="noreferrer"
+            className="flex items-center gap-3 px-3 py-2.5 rounded-sm text-sm font-body font-medium text-ocean-300 hover:bg-ocean-800 hover:text-white transition-colors"
+          >
+            <ExternalLink size={17} strokeWidth={1.75} className="shrink-0" />
+            <span>Perfil Publico</span>
+          </a>
+        )}
+        <NavLink
+          to="/perfil"
           className={({ isActive }) =>
             `flex items-center gap-3 px-3 py-2.5 rounded-sm text-sm font-body font-medium transition-colors ${
               isActive ? 'bg-ocean-700 text-white' : 'text-ocean-300 hover:bg-ocean-800 hover:text-white'
@@ -122,10 +149,12 @@ export default function Sidebar({ onClose }) {
           <User size={17} strokeWidth={1.75} className="shrink-0" />
           Perfil
         </NavLink>
-        <button onClick={handleLogout}
-          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-sm text-sm font-body font-medium text-ocean-400 hover:bg-ocean-800 hover:text-white transition-colors">
+        <button
+          onClick={handleLogout}
+          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-sm text-sm font-body font-medium text-ocean-400 hover:bg-ocean-800 hover:text-white transition-colors"
+        >
           <LogOut size={17} strokeWidth={1.75} className="shrink-0" />
-          {t('auth.logout')}
+          Sair
         </button>
       </div>
     </aside>
