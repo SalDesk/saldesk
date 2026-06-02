@@ -6,6 +6,7 @@ import {
   LogOut, X, ExternalLink, User,
   Compass, Hotel, Car, Truck, UtensilsCrossed, ChefHat, Wrench,
   Activity, Award, Tag, FileWarning, ThumbsUp, CloudSun, LineChart,
+  UserPlus, Users2, Package, Handshake,
 } from 'lucide-react';
 import useAuthStore from '../../store/authStore';
 import Logo from '../shared/Logo';
@@ -31,6 +32,10 @@ const TYPE_NAV = {
     { to: '/marketing',     icon: Megaphone,       label: 'Marketing'                    },
     { to: '/fidelidade',    icon: Award,           label: 'Fidelidade'                   },
     { to: '/vouchers',      icon: Tag,             label: 'Vouchers'                     },
+    { to: '/afiliados',     icon: UserPlus,        label: 'Afiliados'                    },
+    { to: '/grupos',        icon: Users2,          label: 'Grupos'                       },
+    { to: '/pacotes',       icon: Package,         label: 'Pacotes'                      },
+    { to: '/parcerias',     icon: Handshake,       label: 'Parcerias'                    },
     { to: '/definicoes',    icon: Settings,        label: 'Definicoes'                   },
   ],
   hotel: [
@@ -51,6 +56,10 @@ const TYPE_NAV = {
     { to: '/marketing',     icon: Megaphone,       label: 'Marketing'               },
     { to: '/fidelidade',    icon: Award,           label: 'Fidelidade'              },
     { to: '/vouchers',      icon: Tag,             label: 'Vouchers'                },
+    { to: '/afiliados',     icon: UserPlus,        label: 'Afiliados'               },
+    { to: '/grupos',        icon: Users2,          label: 'Grupos'                  },
+    { to: '/pacotes',       icon: Package,         label: 'Pacotes'                 },
+    { to: '/parcerias',     icon: Handshake,       label: 'Parcerias'               },
     { to: '/definicoes',    icon: Settings,        label: 'Definicoes'              },
   ],
   rentacar: [
@@ -72,6 +81,10 @@ const TYPE_NAV = {
     { to: '/marketing',     icon: Megaphone,       label: 'Marketing'               },
     { to: '/fidelidade',    icon: Award,           label: 'Fidelidade'              },
     { to: '/vouchers',      icon: Tag,             label: 'Vouchers'                },
+    { to: '/afiliados',     icon: UserPlus,        label: 'Afiliados'               },
+    { to: '/grupos',        icon: Users2,          label: 'Grupos'                  },
+    { to: '/pacotes',       icon: Package,         label: 'Pacotes'                 },
+    { to: '/parcerias',     icon: Handshake,       label: 'Parcerias'               },
     { to: '/definicoes',    icon: Settings,        label: 'Definicoes'              },
   ],
   restaurant: [
@@ -93,6 +106,10 @@ const TYPE_NAV = {
     { to: '/marketing',     icon: Megaphone,       label: 'Marketing'               },
     { to: '/fidelidade',    icon: Award,           label: 'Fidelidade'              },
     { to: '/vouchers',      icon: Tag,             label: 'Vouchers'                },
+    { to: '/afiliados',     icon: UserPlus,        label: 'Afiliados'               },
+    { to: '/grupos',        icon: Users2,          label: 'Grupos'                  },
+    { to: '/pacotes',       icon: Package,         label: 'Pacotes'                 },
+    { to: '/parcerias',     icon: Handshake,       label: 'Parcerias'               },
     { to: '/definicoes',    icon: Settings,        label: 'Definicoes'              },
   ],
 };

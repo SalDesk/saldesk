@@ -26,6 +26,11 @@ import Occurrences from './pages/Occurrences';
 import Feedback from './pages/Feedback';
 import Weather from './pages/Weather';
 import Demand from './pages/Demand';
+import Affiliates from './pages/Affiliates';
+import AffiliatePortal from './pages/AffiliatePortal';
+import Groups from './pages/Groups';
+import Packages from './pages/Packages';
+import Partners from './pages/Partners';
 import PublicBooking from './pages/PublicBooking';
 import ServiceDetail from './pages/ServiceDetail';
 import StaffPortal from './pages/StaffPortal';
@@ -90,6 +95,10 @@ export default function App() {
           <Route path="feedback"      element={<Feedback />} />
           <Route path="meteorologia"  element={<Weather />} />
           <Route path="previsao"      element={<Demand />} />
+          <Route path="afiliados"     element={<Affiliates />} />
+          <Route path="grupos"        element={<Groups />} />
+          <Route path="pacotes"       element={<Packages />} />
+          <Route path="parcerias"     element={<Partners />} />
           <Route path="definicoes"    element={<Settings />} />
           <Route path="perfil"        element={<Profile />} />
         </Route>
@@ -106,6 +115,9 @@ export default function App() {
 
         {/* Portal do colaborador — mobile-first */}
         <Route path="/staff/*" element={<ProtectedRoute><StaffPortal /></ProtectedRoute>} />
+
+        {/* Portal do afiliado — publico */}
+        <Route path="/afiliado/:codigo" element={<AffiliatePortal />} />
 
         {/* Motor de reserva publica */}
         <Route path="/book/:slug" element={<PublicBooking />} />
