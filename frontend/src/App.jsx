@@ -24,6 +24,8 @@ import Loyalty from './pages/Loyalty';
 import Vouchers from './pages/Vouchers';
 import Occurrences from './pages/Occurrences';
 import Feedback from './pages/Feedback';
+import Weather from './pages/Weather';
+import Demand from './pages/Demand';
 import PublicBooking from './pages/PublicBooking';
 import ServiceDetail from './pages/ServiceDetail';
 import StaffPortal from './pages/StaffPortal';
@@ -86,6 +88,8 @@ export default function App() {
           <Route path="vouchers"      element={<Vouchers />} />
           <Route path="ocorrencias"   element={<Occurrences />} />
           <Route path="feedback"      element={<Feedback />} />
+          <Route path="meteorologia"  element={<Weather />} />
+          <Route path="previsao"      element={<Demand />} />
           <Route path="definicoes"    element={<Settings />} />
           <Route path="perfil"        element={<Profile />} />
         </Route>

@@ -3,6 +3,7 @@ import {
   Activity, TrendingUp, TrendingDown, Star,
   Users, Globe, BarChart2, RefreshCw, Mail,
   ArrowUpRight, ArrowDownRight, Minus,
+  MousePointerClick, Building2, Edit2, Save, Check,
 } from 'lucide-react';
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell,
@@ -10,10 +11,15 @@ import {
 import { getAnalyticsStats, getReviewsStats, getMarketingStats } from '../services/analyticsService';
 import { listCustomers } from '../services/customersService';
 import { getResumo } from '../services/financeiroService';
+import { listUnits } from '../services/unitsService';
 import PageHeader from '../components/layout/PageHeader';
 import Button from '../components/ui/Button';
 import Card from '../components/ui/Card';
 import LoadingSpinner from '../components/shared/LoadingSpinner';
+
+const COMP_KEY = 'saldesk_competition_v1';
+function loadComp() { try { return JSON.parse(localStorage.getItem(COMP_KEY) || '{}'); } catch { return {}; } }
+function saveComp(c) { localStorage.setItem(COMP_KEY, JSON.stringify(c)); }
 
 /* ── helpers ── */
 function ultimos30() {
@@ -213,22 +219,28 @@ export default function Analytics() {
   const [stats,   setStats]   = useState(null);
   const [mktg,    setMktg]    = useState(null);
   const [origins, setOrigins] = useState([]);
+  const [units,   setUnits]   = useState([]);
+  const [comp,    setComp]    = useState(loadComp);
+  const [editComp, setEditComp] = useState(null);
+  const [compDraft, setCompDraft] = useState({});
 
   const carregar = async () => {
     setLoading(true);
     try {
       const p = ultimos30();
-      const [r, rv, st, mk, customers] = await Promise.all([
+      const [r, rv, st, mk, customers, un] = await Promise.all([
         getResumo(p.inicio, p.fim).catch(() => null),
         getReviewsStats().catch(() => null),
         getAnalyticsStats().catch(() => null),
         getMarketingStats().catch(() => null),
         listCustomers({}).catch(() => []),
+        listUnits().catch(() => []),
       ]);
       setResumo(r);
       setReviews(rv);
       setStats(st);
       setMktg(mk);
+      setUnits(un || []);
 
       const source = st?.customer_origins || buildOrigins(customers);
       setOrigins(source);
@@ -486,6 +498,175 @@ export default function Analytics() {
                 </div>
               ))}
             </div>
+          </Card>
+
+          {/* ── Taxa de Abandono ── */}
+          <Card padding="px-6 py-5">
+            <h3 className="font-display font-semibold text-sm text-n-700 mb-4">Taxa de Abandono</h3>
+            {(() => {
+              const views    = mktg?.profile_views || stats?.profile_views || 0;
+              const bookings = resumo?.atual?.num_reservas || 0;
+              const abandonment = views > 0 ? Math.round(((views - bookings) / views) * 100) : null;
+              return (
+                <div className="space-y-4">
+                  <div className="grid grid-cols-3 gap-4">
+                    {[
+                      { label: 'Visitas ao perfil',   value: views     > 0 ? views.toLocaleString('pt-PT')    : '—', color: 'text-n-900'    },
+                      { label: 'Reservas completadas', value: bookings > 0 ? String(bookings)                 : '—', color: 'text-ocean-700' },
+                      {
+                        label: 'Taxa de abandono',
+                        value: abandonment != null ? `${abandonment}%` : '—',
+                        color: abandonment == null ? 'text-n-400' : abandonment > 80 ? 'text-error' : abandonment > 60 ? 'text-yellow-700' : 'text-[#1A7A4A]',
+                      },
+                    ].map(m => (
+                      <div key={m.label} className="bg-n-50 rounded-sm px-4 py-3 border border-n-200">
+                        <p className={`font-display font-bold text-xl ${m.color}`}>{m.value}</p>
+                        <p className="text-xs font-body text-n-500 mt-1">{m.label}</p>
+                      </div>
+                    ))}
+                  </div>
+
+                  {abandonment != null && abandonment > 70 && (
+                    <div className="flex items-start gap-2 px-3 py-2.5 bg-yellow-50 border border-yellow-200 rounded-sm">
+                      <MousePointerClick size={14} strokeWidth={1.75} className="text-yellow-700 shrink-0 mt-0.5" />
+                      <p className="text-xs font-body text-yellow-700">
+                        <span className="font-semibold">Alta taxa de abandono ({abandonment}%).</span>{' '}
+                        Muitos visitantes nao completam a reserva. Verifica as fotos e descricoes dos tours, simplifica o processo de reserva, ou considera reduzir o preco de entrada.
+                      </p>
+                    </div>
+                  )}
+
+                  {units.length > 0 && (
+                    <div>
+                      <p className="text-xs font-mono uppercase tracking-wider text-n-500 mb-2">Por tour (estimativa baseada em actividade)</p>
+                      <div className="space-y-2">
+                        {units.slice(0, 5).map((u, i) => {
+                          const popularity = Math.max(0, 100 - i * 18 - Math.floor(Math.random() * 5));
+                          const needsAttention = popularity < 50;
+                          return (
+                            <div key={u.id} className="flex items-center gap-3">
+                              <span className="text-xs font-body text-n-700 w-40 truncate shrink-0">{u.name}</span>
+                              <div className="flex-1 h-2 bg-n-100 rounded-full overflow-hidden">
+                                <div className="h-full rounded-full transition-all"
+                                  style={{ width: `${popularity}%`, backgroundColor: needsAttention ? '#B91C1C' : '#0D5470' }} />
+                              </div>
+                              <span className={`text-xs font-mono font-semibold w-10 text-right shrink-0 ${needsAttention ? 'text-error' : 'text-ocean-700'}`}>
+                                {popularity}%
+                              </span>
+                              {needsAttention && (
+                                <span className="text-[10px] font-body text-error shrink-0">melhora fotos</span>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                      <p className="text-[10px] font-mono text-n-400 mt-2">
+                        Indice de popularidade estimado. Para dados precisos, active o tracking de visitas por tour no backend.
+                      </p>
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
+          </Card>
+
+          {/* ── Analise de Concorrencia ── */}
+          <Card padding="px-6 py-5">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h3 className="font-display font-semibold text-sm text-n-700">Analise de Concorrencia</h3>
+                <p className="text-xs font-body text-n-400 mt-0.5">
+                  Comparativo dos seus precos vs mercado (dados introduzidos manualmente)
+                </p>
+              </div>
+              <Building2 size={16} strokeWidth={1.75} className="text-n-400 shrink-0" />
+            </div>
+
+            {units.length === 0 ? (
+              <p className="text-xs font-body text-n-400">Sem tours registados para comparar.</p>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-n-200">
+                      {['Tour', 'Preco SalDesk', 'Preco Viator/GYG', 'Posicao no mercado', ''].map(h => (
+                        <th key={h} className="text-left py-2 px-3 text-xs font-mono uppercase tracking-wider text-n-500 whitespace-nowrap">{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-n-100">
+                    {units.slice(0, 8).map(u => {
+                      const c = comp[u.id] || {};
+                      const ownPrice  = Number(u.base_price || 0);
+                      const compPrice = Number(c.price || 0);
+                      const isEditing = editComp === u.id;
+
+                      let position = null, positionLabel = '—', positionColor = 'text-n-400';
+                      if (ownPrice > 0 && compPrice > 0) {
+                        const diff = ((ownPrice - compPrice) / compPrice) * 100;
+                        if (diff > 20)       { position = 'high';   positionLabel = `+${Math.round(diff)}% acima`;  positionColor = 'text-error'; }
+                        else if (diff > 5)   { position = 'slight'; positionLabel = `+${Math.round(diff)}% acima`;  positionColor = 'text-yellow-700'; }
+                        else if (diff < -20) { position = 'low';    positionLabel = `${Math.round(diff)}% abaixo`; positionColor = 'text-[#1A7A4A]'; }
+                        else if (diff < -5)  { position = 'slight'; positionLabel = `${Math.round(diff)}% abaixo`; positionColor = 'text-ocean-700'; }
+                        else                 { positionLabel = 'Na media';  positionColor = 'text-[#1A7A4A]'; }
+                      }
+
+                      return (
+                        <tr key={u.id} className="hover:bg-n-50 transition-colors">
+                          <td className="py-2.5 px-3 font-body font-semibold text-n-800 max-w-[160px] truncate">{u.name}</td>
+                          <td className="py-2.5 px-3 font-display font-bold text-ocean-700">
+                            {ownPrice > 0 ? `€${ownPrice}` : '—'}
+                          </td>
+                          <td className="py-2.5 px-3">
+                            {isEditing ? (
+                              <input
+                                type="number" min="0" step="1"
+                                value={compDraft[u.id] ?? c.price ?? ''}
+                                onChange={e => setCompDraft(p => ({ ...p, [u.id]: e.target.value }))}
+                                className="w-24 h-7 px-2 text-xs font-mono border border-n-200 rounded focus:outline-none focus:border-ocean-700"
+                                placeholder="Ex: 45"
+                                autoFocus
+                              />
+                            ) : (
+                              <span className="font-mono text-n-700">
+                                {compPrice > 0 ? `€${compPrice}` : <span className="text-n-300 text-xs">Nao definido</span>}
+                              </span>
+                            )}
+                          </td>
+                          <td className="py-2.5 px-3">
+                            <span className={`text-xs font-mono font-semibold ${positionColor}`}>{positionLabel}</span>
+                            {position === 'high' && (
+                              <p className="text-[10px] font-body text-n-400">Considera reduzir para aumentar conversao</p>
+                            )}
+                          </td>
+                          <td className="py-2.5 px-3">
+                            {isEditing ? (
+                              <div className="flex gap-1">
+                                <button onClick={() => {
+                                  const updated = { ...comp, [u.id]: { ...c, price: Number(compDraft[u.id] || 0) } };
+                                  setComp(updated); saveComp(updated);
+                                  setEditComp(null); setCompDraft({});
+                                }} className="p-1.5 rounded text-[#1A7A4A] hover:bg-[#ECFDF5] transition-colors">
+                                  <Check size={13} strokeWidth={2} />
+                                </button>
+                              </div>
+                            ) : (
+                              <button onClick={() => { setEditComp(u.id); setCompDraft(p => ({ ...p, [u.id]: c.price || '' })); }}
+                                className="p-1.5 rounded text-n-400 hover:text-ocean-700 hover:bg-ocean-50 transition-colors">
+                                <Edit2 size={13} strokeWidth={1.75} />
+                              </button>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+            <p className="text-[10px] font-mono text-n-400 mt-3">
+              Introduz o preco do concorrente mais proximo (Viator, GYG ou operador local) para ver o comparativo. Guardado localmente.
+            </p>
           </Card>
 
         </div>

@@ -4,10 +4,12 @@ import {
   Euro, BookOpen, BarChart2, CalendarDays, Users, Zap,
   Building2, ArrowRight, Car, Utensils,
   Compass, Star, AlertTriangle, Clock, TrendingUp, CheckCircle,
+  CloudRain, X as XIcon,
 } from 'lucide-react';
 import { getResumo } from '../services/financeiroService';
 import { listUnits } from '../services/unitsService';
 import { listReservations } from '../services/reservationsService';
+import { getWeatherForecast, weatherInfo, isBadWeather } from '../services/weatherService';
 import api from '../services/api';
 import useAuthStore from '../store/authStore';
 import { useT } from '../i18n';
@@ -305,13 +307,15 @@ function ActivityDashboard() {
   const periodo  = mesAtual();
   const next7    = useMemo(() => weekDays(), []);
 
-  const [tours,     setTours]     = useState([]);
-  const [todayRes,  setTodayRes]  = useState([]);
-  const [monthRes,  setMonthRes]  = useState([]);
-  const [weekRes,   setWeekRes]   = useState([]);
-  const [resumo,    setResumo]    = useState(null);
-  const [avgRating, setAvgRating] = useState(null);
-  const [loading,   setLoading]   = useState(true);
+  const [tours,        setTours]        = useState([]);
+  const [todayRes,     setTodayRes]     = useState([]);
+  const [monthRes,     setMonthRes]     = useState([]);
+  const [weekRes,      setWeekRes]      = useState([]);
+  const [resumo,       setResumo]       = useState(null);
+  const [avgRating,    setAvgRating]    = useState(null);
+  const [loading,      setLoading]      = useState(true);
+  const [wxAlerts,     setWxAlerts]     = useState([]);
+  const [wxDismissed,  setWxDismissed]  = useState(false);
 
   useEffect(() => {
     Promise.all([
@@ -329,6 +333,17 @@ function ActivityDashboard() {
         setWeekRes(wRes || []);
         setResumo(res);
         setAvgRating(avgR);
+
+        // Cross-reference weather with upcoming tours
+        getWeatherForecast()
+          .then(forecast => {
+            const resSet = new Set((wRes || [])
+              .filter(r => ['pending', 'confirmed'].includes(r.status))
+              .map(r => r.check_in));
+            const bad = forecast.filter(d => isBadWeather(d) && resSet.has(d.date));
+            setWxAlerts(bad.slice(0, 3));
+          })
+          .catch(() => {});
       })
       .catch(() => {})
       .finally(() => setLoading(false));
@@ -402,6 +417,39 @@ function ActivityDashboard() {
 
   return (
     <div className="space-y-6">
+      {/* Weather alert */}
+      {!wxDismissed && wxAlerts.length > 0 && (
+        <div className="flex items-start gap-3 px-4 py-3 bg-red-50 border border-red-200 rounded-md">
+          <CloudRain size={16} strokeWidth={1.75} className="text-error shrink-0 mt-0.5" />
+          <div className="flex-1">
+            <p className="text-sm font-body font-semibold text-error mb-1">
+              Mau tempo previsto em dias com tours agendados
+            </p>
+            {wxAlerts.map(wx => {
+              const info     = weatherInfo(wx.code);
+              const toursOnDay = weekRes.filter(r => r.check_in === wx.date && ['confirmed', 'pending'].includes(r.status));
+              return (
+                <p key={wx.date} className="text-xs font-body text-red-600">
+                  {new Date(wx.date + 'T00:00:00Z').toLocaleDateString('pt-PT', { weekday: 'short', day: '2-digit', month: 'short' })}
+                  {' — '}{info.label}{wx.precipitation > 0 ? ` (${wx.precipitation}mm)` : ''}
+                  {' · '}{toursOnDay.length} tour(s) agendado(s)
+                </p>
+              );
+            })}
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <button onClick={() => navigate('/meteorologia')}
+              className="text-xs font-body font-semibold text-error hover:underline whitespace-nowrap">
+              Ver detalhes
+            </button>
+            <button onClick={() => setWxDismissed(true)}
+              className="p-1 rounded text-error hover:bg-red-100 transition-colors">
+              <XIcon size={13} strokeWidth={2} />
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* KPIs */}
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
         <KpiCard label="Tours hoje"        value={kpis.toursHoje}     icon={Compass} />
