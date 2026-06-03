@@ -24,6 +24,46 @@ export async function changePassword(password) {
   return data;
 }
 
+export async function forgotPassword(email) {
+  const { data } = await api.post('/auth/forgot-password', { email });
+  return data;
+}
+
+export async function resetPassword(token, password) {
+  const { data } = await api.post('/auth/reset-password', { token, password });
+  return data;
+}
+
+export async function sendTwoFactor(email) {
+  const { data } = await api.post('/auth/2fa/send', { email });
+  return data;
+}
+
+export async function verifyTwoFactor(email, code) {
+  const { data } = await api.post('/auth/2fa/verify', { email, code });
+  return data.data;
+}
+
+export async function toggleTwoFactor(enabled) {
+  const { data } = await api.put('/auth/2fa/toggle', { enabled });
+  return data.data;
+}
+
+export async function getLoginHistory() {
+  try {
+    const { data } = await api.get('/auth/sessions');
+    return data.data || [];
+  } catch { return []; }
+}
+
+export async function terminateSession(sessionId) {
+  await api.delete(`/auth/sessions/${sessionId}`).catch(() => {});
+}
+
+export async function terminateAllSessions() {
+  await api.delete('/auth/sessions').catch(() => {});
+}
+
 export async function createOperator(dados) {
   const { data } = await api.post('/onboarding/operator', dados);
   return data.data;

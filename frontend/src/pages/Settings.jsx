@@ -2,12 +2,18 @@ import { useState, useEffect, useRef } from 'react';
 import {
   Copy, Check, Download, CreditCard, Globe, User, Bell,
   Link2, Shield, ExternalLink, Share2,
-  Eye, RefreshCw, AlertCircle, CheckCircle2, XCircle, Upload,
+  Eye, EyeOff, RefreshCw, AlertCircle, CheckCircle2, XCircle, Upload,
   Camera, ChevronUp, ChevronDown, X, Plus, ArrowUpRight,
-  Lock, Key, Smartphone, Phone, Wifi, WifiOff,
+  Lock, Key, Smartphone, Phone, Wifi, WifiOff, Trash2,
+  Clock, AlertTriangle, Monitor, ToggleLeft, ToggleRight,
 } from 'lucide-react';
 import api from '../services/api';
-import { updateOperator, changePassword } from '../services/authService';
+import {
+  updateOperator, changePassword,
+  sendTwoFactor, verifyTwoFactor, toggleTwoFactor, getLoginHistory,
+  terminateSession, terminateAllSessions,
+} from '../services/authService';
+import PasswordStrength, { getPasswordStrength } from '../components/auth/PasswordStrength';
 import { getStatus, connectChannel, disconnectChannel, syncManual } from '../services/integrationsService';
 import useAuthStore from '../store/authStore';
 import PageHeader from '../components/layout/PageHeader';
@@ -744,69 +750,310 @@ function IntegracoesTab() {
    TAB 6 — SEGURANCA
 ───────────────────────────────────────────────────────── */
 function SegurancaTab() {
-  const [form, setForm]       = useState({ current: '', newPw: '', confirm: '' });
-  const [saving,   setSaving] = useState(false);
-  const [saved,    setSaved]  = useState(false);
-  const [error,    setError]  = useState('');
-  const set = f => e => setForm(p => ({ ...p, [f]: e.target.value }));
+  const { user } = useAuthStore();
 
-  async function handlePw(e) {
-    e.preventDefault(); setError('');
-    if (form.newPw.length < 8) { setError('A password deve ter pelo menos 8 caracteres'); return; }
-    if (form.newPw !== form.confirm) { setError('As passwords nao coincidem'); return; }
-    setSaving(true);
+  /* ── Password change ── */
+  const [pwForm,   setPwForm]  = useState({ current: '', newPw: '', confirm: '' });
+  const [pwSaving, setPwSave]  = useState(false);
+  const [pwSaved,  setPwSaved] = useState(false);
+  const [pwError,  setPwError] = useState('');
+  const [showPw,   setShowPw]  = useState({ current: false, newPw: false, confirm: false });
+
+  async function handlePwChange(e) {
+    e.preventDefault(); setPwError('');
+    if (getPasswordStrength(pwForm.newPw) < 2) {
+      setPwError('A password deve ser forte: 8+ caracteres, maiuscula, numero e especial.');
+      return;
+    }
+    if (pwForm.newPw !== pwForm.confirm) { setPwError('As passwords nao coincidem.'); return; }
+    setPwSave(true);
     try {
-      await changePassword(form.newPw);
-      setForm({ current: '', newPw: '', confirm: '' });
-      setSaved(true); setTimeout(() => setSaved(false), 3000);
+      await changePassword(pwForm.newPw);
+      setPwForm({ current: '', newPw: '', confirm: '' });
+      setPwSaved(true); setTimeout(() => setPwSaved(false), 3000);
     } catch (err) {
-      setError(err.response?.data?.error || 'Erro ao alterar password');
-    } finally { setSaving(false); }
+      setPwError(err.response?.data?.error || 'Erro ao alterar password.');
+    } finally { setPwSave(false); }
+  }
+
+  /* ── 2FA ── */
+  const twoFaEnabled2FAKey = `saldesk_2fa_${user?.id}`;
+  const [twoFaEnabled, setTwoFaEnabled] = useState(() => {
+    try { return JSON.parse(localStorage.getItem(twoFaEnabled2FAKey) || 'false'); } catch { return false; }
+  });
+  const [twoFaModal,  setTwoFaModal]  = useState(false);
+  const [twoFaCode,   setTwoFaCode]   = useState('');
+  const [twoFaSaving, setTwoFaSaving] = useState(false);
+  const [twoFaError,  setTwoFaError]  = useState('');
+  const [twoFaSent,   setTwoFaSent]   = useState(false);
+  const [resendCount, setResendCount] = useState(0);
+
+  async function handleToggle2FA() {
+    if (twoFaEnabled) {
+      setTwoFaEnabled(false);
+      localStorage.setItem(twoFaEnabled2FAKey, 'false');
+      try { await toggleTwoFactor(false); } catch {}
+      return;
+    }
+    /* Activating — send test code */
+    setTwoFaSaving(true); setTwoFaError('');
+    try {
+      await sendTwoFactor(user?.email || '');
+      setTwoFaSent(true);
+      setTwoFaModal(true);
+    } catch {
+      setTwoFaError('Nao foi possivel enviar o codigo. Verifica o email configurado.');
+    } finally { setTwoFaSaving(false); }
+  }
+
+  async function handleVerify2FA(e) {
+    e.preventDefault(); setTwoFaError('');
+    if (twoFaCode.length !== 6) { setTwoFaError('Introduce os 6 digitos do codigo.'); return; }
+    setTwoFaSaving(true);
+    try {
+      await verifyTwoFactor(user?.email || '', twoFaCode);
+      await toggleTwoFactor(true);
+      setTwoFaEnabled(true);
+      localStorage.setItem(twoFaEnabled2FAKey, 'true');
+      setTwoFaModal(false); setTwoFaCode('');
+    } catch {
+      setTwoFaError('Codigo incorrecto ou expirado.');
+    } finally { setTwoFaSaving(false); }
+  }
+
+  async function handleResend2FA() {
+    try { await sendTwoFactor(user?.email || ''); setResendCount(c => c + 1); } catch {}
+  }
+
+  /* ── Sessions ── */
+  const [sessions,    setSessions]    = useState([]);
+  const [loadSessions, setLoadSess]   = useState(false);
+  const [sesLoaded,   setSesLoaded]   = useState(false);
+
+  async function loadSessionsData() {
+    setLoadSess(true);
+    try { setSessions(await getLoginHistory()); setSesLoaded(true); }
+    catch { setSessions([]); } finally { setLoadSess(false); }
+  }
+
+  function fmtDevice(ua) {
+    if (!ua) return 'Dispositivo desconhecido';
+    if (/Mobile|Android|iPhone/i.test(ua)) return 'Dispositivo movel';
+    if (/Mac/i.test(ua)) return 'Mac';
+    if (/Windows/i.test(ua)) return 'Windows';
+    return 'Desktop';
+  }
+
+  function fmtBrowser(ua) {
+    if (!ua) return '—';
+    if (/Chrome/i.test(ua) && !/Edge/i.test(ua)) return 'Chrome';
+    if (/Firefox/i.test(ua)) return 'Firefox';
+    if (/Safari/i.test(ua) && !/Chrome/i.test(ua)) return 'Safari';
+    if (/Edge/i.test(ua)) return 'Edge';
+    return 'Browser';
+  }
+
+  function fmtTS(ts) {
+    if (!ts) return '—';
+    return new Date(ts).toLocaleString('pt-PT', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
+  }
+
+  async function handleTerminateAll() {
+    if (!window.confirm('Terminar todas as sessoes activas? Seras desligado de todos os dispositivos.')) return;
+    await terminateAllSessions();
+    setSessions([]);
   }
 
   return (
     <div className="space-y-5 max-w-2xl">
-      <form onSubmit={handlePw}>
+      {/* ── Alterar password ── */}
+      <form onSubmit={handlePwChange}>
         <Card header={<h3 className="font-display font-semibold text-sm text-n-700">Alterar password</h3>}>
           <div className="space-y-3">
-            <Input label="Password actual" type="password" value={form.current} onChange={set('current')} required />
-            <Input label="Nova password" type="password" value={form.newPw} onChange={set('newPw')} required
-              hint="Minimo 8 caracteres" />
-            <Input label="Confirmar nova password" type="password" value={form.confirm} onChange={set('confirm')} required />
-            {error && <p className="text-sm font-body px-3 py-2 rounded bg-red-50 text-error">{error}</p>}
+            {[
+              { field: 'current', label: 'Password actual',          ac: 'current-password' },
+              { field: 'newPw',   label: 'Nova password',            ac: 'new-password'     },
+              { field: 'confirm', label: 'Confirmar nova password',  ac: 'new-password'     },
+            ].map(({ field, label, ac }) => (
+              <div key={field} className="flex flex-col gap-1">
+                <label className="text-xs font-body font-bold uppercase tracking-wide text-n-600">{label}</label>
+                <div className="relative">
+                  <input
+                    type={showPw[field] ? 'text' : 'password'}
+                    value={pwForm[field]}
+                    onChange={e => setPwForm(p => ({ ...p, [field]: e.target.value }))}
+                    required autoComplete={ac}
+                    className="w-full h-9 px-3 pr-10 rounded-sm border border-n-300 text-sm font-body bg-n-100 text-n-900 placeholder:text-n-400 focus:outline-none focus:ring-2 focus:ring-ocean-300 focus:border-ocean-700 focus:bg-white transition-colors"
+                  />
+                  <button type="button"
+                    onClick={() => setShowPw(p => ({ ...p, [field]: !p[field] }))}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-n-400 hover:text-n-600 transition-colors">
+                    {showPw[field] ? <EyeOff size={14} strokeWidth={1.75} /> : <Eye size={14} strokeWidth={1.75} />}
+                  </button>
+                </div>
+                {field === 'newPw' && pwForm.newPw && <PasswordStrength password={pwForm.newPw} />}
+                {field === 'confirm' && pwForm.confirm && pwForm.newPw !== pwForm.confirm && (
+                  <p className="text-xs text-error">As passwords nao coincidem.</p>
+                )}
+              </div>
+            ))}
+            {pwError && <p className="text-sm font-body px-3 py-2 rounded bg-red-50 text-error">{pwError}</p>}
             <div className="flex items-center gap-3 pt-1">
-              <Button type="submit" loading={saving} icon={Lock}>Alterar password</Button>
-              <SaveBanner saved={saved} />
+              <Button type="submit" loading={pwSaving} icon={Lock}>Alterar password</Button>
+              <SaveBanner saved={pwSaved} />
             </div>
           </div>
         </Card>
       </form>
 
+      {/* ── 2FA ── */}
       <Card header={
         <div className="flex items-center justify-between">
-          <h3 className="font-display font-semibold text-sm text-n-700">Autenticacao de dois factores (2FA)</h3>
-          <span className="text-xs font-mono text-n-400 bg-n-100 px-2 py-0.5 rounded">Em desenvolvimento</span>
+          <h3 className="font-display font-semibold text-sm text-n-700">Autenticacao de dois factores</h3>
+          <button onClick={handleToggle2FA} disabled={twoFaSaving}
+            className={`flex items-center gap-1.5 text-xs font-body font-semibold px-3 py-1.5 rounded-sm border transition-colors ${
+              twoFaEnabled
+                ? 'bg-[#ECFDF5] text-[#1A7A4A] border-green-200 hover:bg-green-100'
+                : 'bg-n-100 text-n-600 border-n-200 hover:bg-n-200'
+            }`}>
+            {twoFaEnabled
+              ? <ToggleRight size={14} strokeWidth={1.75} />
+              : <ToggleLeft  size={14} strokeWidth={1.75} />}
+            {twoFaEnabled ? 'Activo' : 'Inactivo'}
+          </button>
         </div>
       }>
-        <div className="flex items-start gap-4 text-n-500">
-          <Smartphone size={32} strokeWidth={1.25} className="shrink-0 mt-1" />
-          <div>
-            <p className="text-sm font-body text-n-700 font-semibold mb-1">Autenticacao via aplicacao (TOTP)</p>
-            <p className="text-sm font-body text-n-500">
-              A autenticacao de dois factores via Google Authenticator ou Authy estara disponivel em breve.
-              Sera uma camada extra de seguranca para a sua conta.
-            </p>
+        <div className="space-y-3">
+          <div className="flex items-start gap-3">
+            <Shield size={16} strokeWidth={1.75} className="text-ocean-700 shrink-0 mt-0.5" />
+            <div>
+              <p className="text-sm font-body text-n-700">
+                {twoFaEnabled
+                  ? 'A autenticacao de dois factores esta activa. Cada login requer um codigo enviado por email.'
+                  : 'Activa a verificacao em dois passos para proteger a tua conta com um codigo por email.'}
+              </p>
+              <p className="text-xs font-body text-n-500 mt-1">
+                Metodo: codigo por email · Validade: 10 minutos
+              </p>
+            </div>
           </div>
+          {twoFaError && <p className="text-xs text-error px-3 py-2 bg-red-50 rounded">{twoFaError}</p>}
         </div>
       </Card>
 
-      <Card header={<h3 className="font-display font-semibold text-sm text-n-700">Sessoes activas</h3>}>
-        <div className="flex items-center gap-3 text-n-500">
-          <Key size={16} strokeWidth={1.75} />
-          <p className="text-xs font-body">
-            Gestao de sessoes activas e revogacao de tokens em desenvolvimento.
-          </p>
+      {/* 2FA verification modal */}
+      {twoFaModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-ocean-900/60 px-4">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-sm p-6">
+            <div className="flex items-center justify-between mb-4">
+              <p className="font-display font-bold text-sm text-n-900">Confirmar activacao do 2FA</p>
+              <button onClick={() => setTwoFaModal(false)} className="p-1 text-n-400 hover:text-n-600">
+                <X size={18} strokeWidth={1.75} />
+              </button>
+            </div>
+            <p className="text-xs font-body text-n-500 mb-4">
+              Enviamos um codigo de 6 digitos para <span className="font-semibold">{user?.email}</span>.
+              Introduz-o abaixo para confirmar a activacao.
+            </p>
+            <form onSubmit={handleVerify2FA} className="space-y-4">
+              <div>
+                <input
+                  type="text" inputMode="numeric" maxLength={6}
+                  value={twoFaCode}
+                  onChange={e => setTwoFaCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                  placeholder="000000"
+                  className="w-full h-12 text-center font-mono font-bold text-2xl tracking-widest rounded-lg border-2 border-n-200 focus:outline-none focus:border-ocean-700 bg-n-50"
+                />
+                {twoFaError && <p className="text-xs text-error mt-1">{twoFaError}</p>}
+              </div>
+              <div className="flex gap-2">
+                <Button variant="secondary" onClick={() => setTwoFaModal(false)} type="button" className="flex-1">Cancelar</Button>
+                <Button type="submit" loading={twoFaSaving} className="flex-1">Confirmar</Button>
+              </div>
+              <button type="button" onClick={handleResend2FA}
+                className="w-full text-xs font-body text-ocean-700 hover:underline">
+                Reenviar codigo {resendCount > 0 ? `(${resendCount})` : ''}
+              </button>
+            </form>
+          </div>
         </div>
+      )}
+
+      {/* ── Sessoes activas ── */}
+      <Card header={
+        <div className="flex items-center justify-between">
+          <h3 className="font-display font-semibold text-sm text-n-700">Historico de acessos</h3>
+          {!sesLoaded && (
+            <Button variant="secondary" size="sm" icon={RefreshCw} onClick={loadSessionsData} loading={loadSessions}>
+              Carregar
+            </Button>
+          )}
+          {sesLoaded && sessions.length > 0 && (
+            <Button variant="secondary" size="sm" icon={Trash2} onClick={handleTerminateAll}
+              className="text-error border-red-200 hover:bg-red-50">
+              Terminar todas
+            </Button>
+          )}
+        </div>
+      }>
+        {!sesLoaded ? (
+          <p className="text-xs font-body text-n-400">
+            Clica em "Carregar" para ver os ultimos acessos e gerir sessoes activas.
+          </p>
+        ) : sessions.length === 0 ? (
+          <p className="text-xs font-body text-n-400">Sem historico de acessos disponivel.</p>
+        ) : (
+          <div className="space-y-2">
+            {sessions.slice(0, 10).map((s, i) => {
+              const isRecent = i === 0;
+              const isSuspect = s.status === 'failed' || s.status === 'blocked';
+              return (
+                <div key={s.id || i}
+                  className={`flex items-start gap-3 px-3 py-2.5 rounded-sm border transition-colors ${
+                    isSuspect ? 'bg-red-50 border-red-100' : isRecent ? 'bg-ocean-50 border-ocean-100' : 'bg-n-50 border-n-100'
+                  }`}>
+                  <Monitor size={15} strokeWidth={1.75} className={`shrink-0 mt-0.5 ${isSuspect ? 'text-error' : 'text-n-500'}`} />
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <p className="text-xs font-body font-semibold text-n-700">
+                        {fmtDevice(s.user_agent)} · {fmtBrowser(s.user_agent)}
+                      </p>
+                      {isRecent && !isSuspect && (
+                        <span className="text-[9px] font-mono text-ocean-700 bg-ocean-100 px-1 py-0.5 rounded-xs">ACTUAL</span>
+                      )}
+                      {isSuspect && (
+                        <span className="text-[9px] font-mono text-error bg-red-100 px-1 py-0.5 rounded-xs flex items-center gap-0.5">
+                          <AlertTriangle size={8} strokeWidth={2} />SUSPEITO
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-3 mt-0.5">
+                      <span className="text-[10px] font-mono text-n-400 flex items-center gap-1">
+                        <Clock size={9} strokeWidth={1.75} />{fmtTS(s.created_at)}
+                      </span>
+                      {s.ip_address && (
+                        <span className="text-[10px] font-mono text-n-400">{s.ip_address}</span>
+                      )}
+                      {s.location && (
+                        <span className="text-[10px] font-body text-n-400">{s.location}</span>
+                      )}
+                    </div>
+                  </div>
+                  {!isRecent && s.id && (
+                    <button
+                      onClick={() => { terminateSession(s.id); setSessions(p => p.filter(x => x.id !== s.id)); }}
+                      className="p-1 text-n-400 hover:text-error transition-colors shrink-0">
+                      <X size={13} strokeWidth={1.75} />
+                    </button>
+                  )}
+                </div>
+              );
+            })}
+            <p className="text-[10px] font-mono text-n-400 text-right">
+              A mostrar ultimos {Math.min(10, sessions.length)} acessos
+            </p>
+          </div>
+        )}
       </Card>
     </div>
   );

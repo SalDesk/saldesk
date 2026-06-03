@@ -33,6 +33,7 @@ import Packages from './pages/Packages';
 import Partners from './pages/Partners';
 import BeachSeller from './pages/BeachSeller';
 import BeachSale from './pages/BeachSale';
+import ResetPassword from './pages/ResetPassword';
 import PublicBooking from './pages/PublicBooking';
 import ServiceDetail from './pages/ServiceDetail';
 import StaffPortal from './pages/StaffPortal';
@@ -83,7 +84,8 @@ export default function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/login"    element={<Login />} />
-        <Route path="/register" element={<Register />} />
+        <Route path="/register"       element={<Register />} />
+        <Route path="/reset-password"  element={<ResetPassword />} />
         <Route path="/onboarding" element={<ProtectedRoute><Onboarding /></ProtectedRoute>} />
 
         {/* Dashboard do gestor */}
