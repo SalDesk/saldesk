@@ -31,6 +31,8 @@ import AffiliatePortal from './pages/AffiliatePortal';
 import Groups from './pages/Groups';
 import Packages from './pages/Packages';
 import Partners from './pages/Partners';
+import BeachSeller from './pages/BeachSeller';
+import BeachSale from './pages/BeachSale';
 import PublicBooking from './pages/PublicBooking';
 import ServiceDetail from './pages/ServiceDetail';
 import StaffPortal from './pages/StaffPortal';
@@ -49,10 +51,23 @@ function ProtectedRoute({ children }) {
   return children;
 }
 
+function isVendedor(user) {
+  return user?.user_metadata?.role === 'VENDEDOR' ||
+         user?.user_metadata?.staff_role === 'Vendedor de Praia';
+}
+
 function OnboardingGuard({ children }) {
-  const { token, operator } = useAuthStore();
+  const { token, operator, user } = useAuthStore();
   if (!token) return <Navigate to="/login" replace />;
+  if (isVendedor(user)) return <Navigate to="/vendedor" replace />;
   if (!operator?.onboarding_complete) return <Navigate to="/onboarding" replace />;
+  return children;
+}
+
+function BeachSellerGuard({ children }) {
+  const { token, user } = useAuthStore();
+  if (!token) return <Navigate to="/login" replace />;
+  if (!isVendedor(user)) return <Navigate to="/" replace />;
   return children;
 }
 
@@ -118,6 +133,10 @@ export default function App() {
 
         {/* Portal do afiliado — publico */}
         <Route path="/afiliado/:codigo" element={<AffiliatePortal />} />
+
+        {/* Vendedor de Praia — mobile */}
+        <Route path="/vendedor" element={<BeachSellerGuard><BeachSeller /></BeachSellerGuard>} />
+        <Route path="/vendedor/nova-reserva" element={<BeachSellerGuard><BeachSale /></BeachSellerGuard>} />
 
         {/* Motor de reserva publica */}
         <Route path="/book/:slug" element={<PublicBooking />} />

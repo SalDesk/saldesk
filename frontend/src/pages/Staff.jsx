@@ -10,6 +10,7 @@ import {
 import {
   listStaff, createStaff, updateStaff, deleteStaff,
 } from '../services/staffService';
+import { listSellerCommissions, markCommissionPaid } from '../services/sellerService';
 import {
   listAssignments, startAssignment, completeAssignment,
   cancelAssignment, createAssignment,
@@ -26,7 +27,8 @@ import Badge from '../components/ui/Badge';
 import LoadingSpinner from '../components/shared/LoadingSpinner';
 
 /* ── Constants ── */
-const ROLES = ['Instrutor', 'Guia', 'Motorista', 'Assistente', 'Recepcao', 'Coordenador', 'Outro'];
+const ROLES = ['Instrutor', 'Guia', 'Motorista', 'Assistente', 'Recepcao', 'Coordenador', 'Vendedor de Praia', 'Outro'];
+const SELLER_ZONES = ['Santa Maria Norte', 'Santa Maria Sul', 'Praia de Santa Maria', 'Aeroporto', 'Espargos', 'Outro'];
 const DAYS  = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sab', 'Dom'];
 const PRIO  = { low: 'Baixa', medium: 'Media', high: 'Alta', urgent: 'Urgente' };
 const PRIO_COLORS = {
@@ -84,7 +86,14 @@ function StaffCard({ member, onEdit, onDelete }) {
         <div className="flex items-center gap-3">
           <StaffAvatar member={member} size={44} />
           <div>
-            <p className="font-display font-semibold text-sm text-n-900">{member.name}</p>
+            <div className="flex items-center gap-2">
+              <p className="font-display font-semibold text-sm text-n-900">{member.name}</p>
+              {member.role === 'Vendedor de Praia' && (
+                <span className="text-[9px] font-mono font-semibold px-1.5 py-0.5 bg-sand-300 text-sand-700 rounded-xs uppercase tracking-wide">
+                  Vendedor
+                </span>
+              )}
+            </div>
             <p className="text-xs font-body text-n-500">{member.role}</p>
           </div>
         </div>
@@ -133,14 +142,18 @@ function StaffCard({ member, onEdit, onDelete }) {
 /* ── StaffForm ── */
 function StaffForm({ member, onSave, onCancel, loading, error }) {
   const [form, setForm] = useState({
-    name:       member?.name      || '',
-    role:       member?.role      || ROLES[0],
-    phone:      member?.phone     || '',
-    email:      member?.email     || '',
-    whatsapp:   member?.whatsapp  || '',
-    photo_url:  member?.photo_url || '',
-    status:     member?.status    || 'active',
+    name:           member?.name          || '',
+    role:           member?.role          || ROLES[0],
+    phone:          member?.phone         || '',
+    email:          member?.email         || '',
+    whatsapp:       member?.whatsapp      || '',
+    photo_url:      member?.photo_url     || '',
+    status:         member?.status        || 'active',
+    commission_pct: member?.commission_pct || '',
+    seller_zone:    member?.seller_zone    || '',
   });
+  const [sellerTourIds, setSellerTourIds] = useState(member?.seller_tour_ids || []);
+  const [availUnits, setAvailUnits] = useState([]);
   const [photoPreview, setPhotoPreview] = useState(member?.photo_url || null);
   const [createAccess, setCreateAccess]  = useState(false);
   const [skillInput, setSkillInput]      = useState('');
@@ -149,6 +162,12 @@ function StaffForm({ member, onSave, onCancel, loading, error }) {
   const fileRef = useRef(null);
 
   const set = f => e => setForm(p => ({ ...p, [f]: e.target.value }));
+
+  useEffect(() => {
+    if (form.role === 'Vendedor de Praia') {
+      import('../services/unitsService').then(m => m.listUnits()).then(d => setAvailUnits(d || [])).catch(() => {});
+    }
+  }, [form.role]);
 
   function handleFile(e) {
     const file = e.target.files[0];
@@ -175,7 +194,14 @@ function StaffForm({ member, onSave, onCancel, loading, error }) {
 
   function handleSubmit(e) {
     e.preventDefault();
-    onSave({ ...form, skills, schedule, create_access: createAccess });
+    onSave({
+      ...form,
+      skills,
+      schedule,
+      create_access:  createAccess,
+      seller_tour_ids: sellerTourIds,
+      commission_pct:  form.commission_pct ? Number(form.commission_pct) : null,
+    });
   }
 
   return (
@@ -259,6 +285,61 @@ function StaffForm({ member, onSave, onCancel, loading, error }) {
           className="w-full h-9 px-3 rounded-sm border border-n-300 text-sm font-body bg-n-100 text-n-900 placeholder:text-n-400 focus:outline-none focus:ring-2 focus:ring-ocean-300 focus:border-ocean-700 focus:bg-white"
         />
       </div>
+
+      {/* Vendor-specific fields */}
+      {form.role === 'Vendedor de Praia' && (
+        <div className="border border-sand-300 bg-[#FFF7E6] rounded-md p-4 space-y-3">
+          <p className="text-xs font-body font-bold uppercase tracking-wide text-sand-700">
+            Configuracao do Vendedor de Praia
+          </p>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="text-xs font-body font-bold uppercase tracking-wide text-n-600 block mb-1">
+                Comissao (%)
+              </label>
+              <input type="number" min="0" max="50" step="0.5"
+                value={form.commission_pct}
+                onChange={set('commission_pct')}
+                placeholder="Ex: 10"
+                className="w-full h-9 px-3 rounded-sm border border-n-300 text-sm font-mono bg-white focus:outline-none focus:border-ocean-700"
+              />
+            </div>
+            <div>
+              <label className="text-xs font-body font-bold uppercase tracking-wide text-n-600 block mb-1">
+                Zona de actuacao
+              </label>
+              <select value={form.seller_zone} onChange={set('seller_zone')}
+                className="w-full h-9 px-3 rounded-sm border border-n-300 text-sm font-body bg-white focus:outline-none focus:border-ocean-700">
+                <option value="">Todas as zonas</option>
+                {SELLER_ZONES.map(z => <option key={z} value={z}>{z}</option>)}
+              </select>
+            </div>
+          </div>
+          {availUnits.length > 0 && (
+            <div>
+              <label className="text-xs font-body font-bold uppercase tracking-wide text-n-600 block mb-2">
+                Tours que pode vender ({sellerTourIds.length === 0 ? 'todos' : `${sellerTourIds.length} seleccionado(s)`})
+              </label>
+              <div className="flex flex-wrap gap-1.5">
+                {availUnits.map(u => (
+                  <button key={u.id} type="button"
+                    onClick={() => setSellerTourIds(p => p.includes(u.id) ? p.filter(x => x !== u.id) : [...p, u.id])}
+                    className={`text-xs px-2.5 py-1 rounded-sm border font-body transition-colors ${
+                      sellerTourIds.includes(u.id)
+                        ? 'bg-ocean-700 text-white border-ocean-700'
+                        : 'bg-white text-n-600 border-n-200 hover:border-ocean-300'
+                    }`}>
+                    {u.name}
+                  </button>
+                ))}
+              </div>
+              <p className="text-[10px] font-mono text-n-400 mt-1">
+                Deixar sem seleccao = pode vender todos os tours activos.
+              </p>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Create access account */}
       {!member && (
@@ -1167,6 +1248,72 @@ export default function Staff() {
           )}
         </div>
       )}
+
+      {/* Vendedores de Praia section */}
+      {tab === 'staff' && (() => {
+        const sellers = staffList.filter(s => s.role === 'Vendedor de Praia');
+        if (sellers.length === 0) return null;
+        const month = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}`;
+        return (
+          <div className="mt-6">
+            <div className="flex items-center gap-2 mb-4">
+              <div className="flex-1 h-px bg-n-200" />
+              <p className="text-xs font-mono uppercase tracking-wider text-n-500 px-3">Vendedores de Praia</p>
+              <div className="flex-1 h-px bg-n-200" />
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {sellers.map(s => {
+                const comms = listSellerCommissions(s.id);
+                const monthComms = typeof comms?.then === 'function' ? [] : comms.filter(c => c.created_at?.startsWith(month));
+                const totalMonth   = monthComms.reduce((sum, c) => sum + (c.amount || 0), 0);
+                const totalPending = monthComms.filter(c => c.status === 'pending').reduce((sum, c) => sum + (c.amount || 0), 0);
+                return (
+                  <div key={s.id} className="bg-white rounded-md border border-sand-200 shadow-sm p-4 space-y-3">
+                    <div className="flex items-start justify-between">
+                      <div className="flex items-center gap-3">
+                        <StaffAvatar member={s} size={40} />
+                        <div>
+                          <p className="font-display font-semibold text-sm text-n-900">{s.name}</p>
+                          <p className="text-xs font-body text-n-500">{s.seller_zone || 'Sem zona definida'}</p>
+                        </div>
+                      </div>
+                      <span className="text-[9px] font-mono font-semibold px-1.5 py-0.5 bg-sand-300 text-sand-700 rounded-xs uppercase tracking-wide shrink-0">
+                        Vendedor
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div className="bg-n-50 rounded-sm px-2.5 py-2">
+                        <p className="font-display font-bold text-sm text-ocean-700">€{Math.round(totalMonth)}</p>
+                        <p className="text-[10px] font-body text-n-400">Comissoes mes</p>
+                      </div>
+                      <div className="bg-yellow-50 rounded-sm px-2.5 py-2">
+                        <p className="font-display font-bold text-sm text-yellow-700">€{Math.round(totalPending)}</p>
+                        <p className="text-[10px] font-body text-n-400">Por pagar</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between text-xs font-body text-n-500 pt-1 border-t border-n-100">
+                      <span>{s.commission_pct || 10}% comissao</span>
+                      {totalPending > 0 && (
+                        <button
+                          onClick={() => {
+                            if (!window.confirm(`Registar pagamento de €${Math.round(totalPending)} ao vendedor ${s.name}?`)) return;
+                            const comms = listSellerCommissions(s.id);
+                            if (typeof comms?.then !== 'function') {
+                              comms.filter(c => c.status === 'pending').forEach(c => markCommissionPaid(c.id));
+                            }
+                          }}
+                          className="text-xs font-body font-semibold text-ocean-700 hover:underline">
+                          Registar pagamento
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Checklist tab */}
       {tab === 'checklist' && <ChecklistTab />}
