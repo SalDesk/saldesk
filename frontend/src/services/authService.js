@@ -24,6 +24,11 @@ export async function changePassword(password) {
   return data;
 }
 
+export async function validateInvite(code) {
+  const { data } = await api.post('/auth/validate-invite', { code });
+  return data.data; // { valid: boolean }
+}
+
 export async function forgotPassword(email) {
   const { data } = await api.post('/auth/forgot-password', { email });
   return data;

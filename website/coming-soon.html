@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="pt" data-lang="pt">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SalDesk — Brevemente · Ilha do Sal, Cabo Verde</title>
+  <meta name="description" content="A primeira plataforma de gestao turistica da Ilha do Sal. Em breve." />
+  <meta property="og:title" content="SalDesk — Brevemente" />
+  <meta property="og:description" content="A primeira plataforma de gestao turistica da Ilha do Sal, Cabo Verde." />
+  <meta property="og:image" content="https://saldesk.cv/og-image.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700;800&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
+
+  <style>
+    :root {
+      --ocean-900:#062A38;--ocean-800:#0A3F55;--ocean-700:#0D5470;--ocean-600:#10698C;
+      --ocean-500:#1480A8;--ocean-400:#3A9BBF;--ocean-300:#71BDD4;--ocean-100:#D6EEF5;--ocean-50:#EBF7FB;
+      --sand-500:#D4A82A;--sand-300:#EAD08A;
+      --n900:#1A2332;--n700:#374151;--n500:#6B7280;--n300:#D1D5DB;--n200:#E5E8EC;--n100:#F3F4F6;
+      --success:#1A7A4A;--error:#B91C1C;
+      --ff-display:'Sora',sans-serif;--ff-body:'DM Sans',sans-serif;--ff-mono:'DM Mono',monospace;
+    }
+    *,*::before,*::after { box-sizing:border-box; margin:0; padding:0 }
+    html { font-size:16px; -webkit-font-smoothing:antialiased; scroll-behavior:smooth }
+    body {
+      font-family:var(--ff-body);
+      min-height:100vh;
+      background-color:var(--ocean-900);
+      /* Background: beach photo with overlay — replace /bg-sal.jpg with actual photo path */
+      background-image:
+        linear-gradient(rgba(6,42,56,0.72), rgba(6,42,56,0.72)),
+        url('/bg-sal.jpg');
+      background-size:cover;
+      background-position:center;
+      background-attachment:fixed;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      padding:24px 16px;
+    }
+
+    /* ── Card ── */
+    .card {
+      background:rgba(255,255,255,0.06);
+      backdrop-filter:blur(20px);
+      -webkit-backdrop-filter:blur(20px);
+      border:1px solid rgba(255,255,255,0.12);
+      border-radius:20px;
+      padding:48px 40px;
+      width:100%;
+      max-width:520px;
+      text-align:center;
+    }
+    @media(max-width:600px){
+      .card { padding:32px 24px; border-radius:16px }
+    }
+
+    /* ── Logo ── */
+    .logo {
+      width:140px;
+      height:auto;
+      margin:0 auto 32px;
+      display:block;
+    }
+    .logo-fallback {
+      font-family:var(--ff-display);
+      font-weight:800;
+      font-size:28px;
+      color:#fff;
+      letter-spacing:-1px;
+      margin-bottom:32px;
+    }
+    .logo-fallback span { color:var(--sand-300) }
+
+    /* ── Lang toggle ── */
+    .lang-toggle {
+      position:fixed;
+      top:20px;
+      right:20px;
+      background:rgba(255,255,255,0.12);
+      border:1px solid rgba(255,255,255,0.18);
+      border-radius:20px;
+      padding:6px 14px;
+      font-family:var(--ff-mono);
+      font-size:12px;
+      font-weight:500;
+      color:rgba(255,255,255,0.9);
+      cursor:pointer;
+      letter-spacing:0.08em;
+      transition:background 0.2s;
+      backdrop-filter:blur(8px);
+    }
+    .lang-toggle:hover { background:rgba(255,255,255,0.20) }
+
+    /* ── Headline ── */
+    .badge {
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      background:rgba(212,168,42,0.18);
+      border:1px solid rgba(212,168,42,0.35);
+      border-radius:20px;
+      padding:4px 14px;
+      font-family:var(--ff-mono);
+      font-size:11px;
+      font-weight:500;
+      color:var(--sand-300);
+      letter-spacing:0.1em;
+      text-transform:uppercase;
+      margin-bottom:20px;
+    }
+    .badge-dot {
+      width:6px; height:6px;
+      background:var(--sand-500);
+      border-radius:50%;
+      animation:pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0%,100% { opacity:1 }
+      50% { opacity:0.4 }
+    }
+
+    .headline {
+      font-family:var(--ff-display);
+      font-weight:800;
+      font-size:clamp(32px, 6vw, 52px);
+      color:#fff;
+      line-height:1.1;
+      letter-spacing:-1.5px;
+      margin-bottom:16px;
+    }
+    .headline-en { display:none }
+
+    .subtitle {
+      font-family:var(--ff-body);
+      font-size:16px;
+      color:rgba(255,255,255,0.72);
+      line-height:1.6;
+      margin-bottom:36px;
+      max-width:380px;
+      margin-left:auto;
+      margin-right:auto;
+    }
+
+    /* ── Countdown ── */
+    .countdown {
+      display:flex;
+      justify-content:center;
+      gap:12px;
+      margin-bottom:36px;
+    }
+    .countdown-item {
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      gap:4px;
+      min-width:64px;
+    }
+    .countdown-num {
+      font-family:var(--ff-display);
+      font-weight:700;
+      font-size:36px;
+      color:#fff;
+      line-height:1;
+      letter-spacing:-1px;
+    }
+    .countdown-label {
+      font-family:var(--ff-mono);
+      font-size:9px;
+      font-weight:500;
+      color:rgba(255,255,255,0.45);
+      text-transform:uppercase;
+      letter-spacing:0.12em;
+    }
+    .countdown-sep {
+      font-family:var(--ff-display);
+      font-size:28px;
+      font-weight:700;
+      color:rgba(255,255,255,0.25);
+      align-self:flex-start;
+      padding-top:4px;
+      line-height:1;
+    }
+    @media(max-width:400px){
+      .countdown-num { font-size:28px }
+      .countdown-item { min-width:52px }
+      .countdown-sep { font-size:22px }
+    }
+
+    /* ── Form ── */
+    .form { display:flex; flex-direction:column; gap:12px; margin-bottom:28px }
+    .form-row { display:flex; gap:8px }
+    @media(max-width:440px){ .form-row { flex-direction:column } }
+
+    .email-input {
+      flex:1;
+      height:48px;
+      padding:0 16px;
+      border-radius:10px;
+      border:1.5px solid rgba(255,255,255,0.15);
+      background:rgba(255,255,255,0.09);
+      color:#fff;
+      font-family:var(--ff-body);
+      font-size:14px;
+      outline:none;
+      transition:border-color 0.2s, background 0.2s;
+    }
+    .email-input::placeholder { color:rgba(255,255,255,0.40) }
+    .email-input:focus {
+      border-color:var(--ocean-400);
+      background:rgba(255,255,255,0.13);
+    }
+
+    .submit-btn {
+      height:48px;
+      padding:0 24px;
+      border-radius:10px;
+      background:var(--ocean-500);
+      color:#fff;
+      font-family:var(--ff-body);
+      font-weight:600;
+      font-size:14px;
+      border:none;
+      cursor:pointer;
+      transition:background 0.2s, transform 0.1s;
+      white-space:nowrap;
+    }
+    .submit-btn:hover { background:var(--ocean-400) }
+    .submit-btn:active { transform:scale(0.98) }
+    .submit-btn:disabled { opacity:0.6; cursor:not-allowed }
+
+    /* ── Success message ── */
+    .success-msg {
+      display:none;
+      align-items:center;
+      justify-content:center;
+      gap:8px;
+      padding:12px 16px;
+      background:rgba(26,122,74,0.20);
+      border:1px solid rgba(26,122,74,0.35);
+      border-radius:10px;
+      color:#4ADE80;
+      font-family:var(--ff-body);
+      font-size:13px;
+    }
+    .success-msg.visible { display:flex }
+
+    .error-msg {
+      display:none;
+      font-family:var(--ff-body);
+      font-size:12px;
+      color:#FCA5A5;
+      text-align:center;
+    }
+    .error-msg.visible { display:block }
+
+    /* ── Divider ── */
+    .divider {
+      display:flex;
+      align-items:center;
+      gap:12px;
+      margin-bottom:20px;
+    }
+    .divider-line { flex:1; height:1px; background:rgba(255,255,255,0.12) }
+    .divider-text {
+      font-family:var(--ff-mono);
+      font-size:10px;
+      color:rgba(255,255,255,0.35);
+      letter-spacing:0.1em;
+      text-transform:uppercase;
+    }
+
+    /* ── Social ── */
+    .social { display:flex; justify-content:center; gap:12px; margin-bottom:32px }
+    .social-link {
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      width:40px;
+      height:40px;
+      border-radius:50%;
+      background:rgba(255,255,255,0.09);
+      border:1px solid rgba(255,255,255,0.12);
+      color:rgba(255,255,255,0.75);
+      transition:background 0.2s, color 0.2s, transform 0.1s;
+      text-decoration:none;
+    }
+    .social-link:hover { background:rgba(255,255,255,0.18); color:#fff; transform:scale(1.08) }
+
+    /* ── Footer ── */
+    .footer {
+      font-family:var(--ff-body);
+      font-size:12px;
+      color:rgba(255,255,255,0.38);
+      line-height:1.7;
+    }
+    .footer a { color:rgba(255,255,255,0.55); text-decoration:none }
+    .footer a:hover { color:rgba(255,255,255,0.85) }
+    .footer-brand {
+      display:block;
+      margin-top:6px;
+      font-family:var(--ff-mono);
+      font-size:10px;
+      letter-spacing:0.05em;
+      color:rgba(255,255,255,0.28);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Lang toggle -->
+  <button class="lang-toggle" id="langBtn" onclick="toggleLang()">EN</button>
+
+  <div class="card">
+
+    <!-- Logo -->
+    <img src="/logo-white.png" alt="SalDesk" class="logo"
+      onerror="this.style.display='none'; document.getElementById('logo-fallback').style.display='block'" />
+    <div class="logo-fallback" id="logo-fallback" style="display:none">Sal<span>Desk</span></div>
+
+    <!-- Badge -->
+    <div class="badge">
+      <span class="badge-dot"></span>
+      <span data-pt="Em desenvolvimento" data-en="In development">Em desenvolvimento</span>
+    </div>
+
+    <!-- Headline -->
+    <h1 class="headline">
+      <span data-pt="Brevemente" data-en="Coming Soon">Brevemente</span>
+    </h1>
+
+    <!-- Subtitle -->
+    <p class="subtitle"
+       data-pt="A primeira plataforma de gestao turistica da Ilha do Sal, Cabo Verde."
+       data-en="The first tourism management platform for Sal Island, Cape Verde.">
+      A primeira plataforma de gestao turistica da Ilha do Sal, Cabo Verde.
+    </p>
+
+    <!-- Countdown -->
+    <div class="countdown" aria-label="Contagem regressiva">
+      <div class="countdown-item">
+        <span class="countdown-num" id="cd-days">--</span>
+        <span class="countdown-label" data-pt="Dias" data-en="Days">Dias</span>
+      </div>
+      <span class="countdown-sep">:</span>
+      <div class="countdown-item">
+        <span class="countdown-num" id="cd-hours">--</span>
+        <span class="countdown-label" data-pt="Horas" data-en="Hours">Horas</span>
+      </div>
+      <span class="countdown-sep">:</span>
+      <div class="countdown-item">
+        <span class="countdown-num" id="cd-mins">--</span>
+        <span class="countdown-label" data-pt="Min" data-en="Min">Min</span>
+      </div>
+      <span class="countdown-sep">:</span>
+      <div class="countdown-item">
+        <span class="countdown-num" id="cd-secs">--</span>
+        <span class="countdown-label" data-pt="Seg" data-en="Sec">Seg</span>
+      </div>
+    </div>
+
+    <!-- Waitlist form -->
+    <div class="form">
+      <p style="font-family:var(--ff-body); font-size:13px; color:rgba(255,255,255,0.65); margin-bottom:4px;"
+         data-pt="Se o primeiro a saber quando lançarmos"
+         data-en="Be the first to know when we launch">
+        Se o primeiro a saber quando lançarmos
+      </p>
+      <div class="form-row">
+        <input
+          class="email-input"
+          id="emailInput"
+          type="email"
+          placeholder="o-teu@email.com"
+          autocomplete="email"
+          data-pt-placeholder="o-teu@email.com"
+          data-en-placeholder="your@email.com"
+        />
+        <button class="submit-btn" id="submitBtn" onclick="submitWaitlist()">
+          <span data-pt="Notifica-me" data-en="Notify me">Notifica-me</span>
+        </button>
+      </div>
+      <div class="success-msg" id="successMsg">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        <span data-pt="Inscrito! Avisamos quando lançarmos." data-en="Subscribed! We'll notify you when we launch.">Inscrito! Avisamos quando lançarmos.</span>
+      </div>
+      <div class="error-msg" id="errorMsg">
+        <span data-pt="Algo correu mal. Tenta novamente." data-en="Something went wrong. Please try again.">Algo correu mal. Tenta novamente.</span>
+      </div>
+    </div>
+
+    <!-- Social -->
+    <div class="divider">
+      <span class="divider-line"></span>
+      <span class="divider-text" data-pt="Seguir-nos" data-en="Follow us">Seguir-nos</span>
+      <span class="divider-line"></span>
+    </div>
+    <div class="social">
+      <!-- Instagram -->
+      <a href="#" class="social-link" aria-label="Instagram" rel="noopener">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
+          <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/>
+          <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/>
+        </svg>
+      </a>
+      <!-- Facebook -->
+      <a href="#" class="social-link" aria-label="Facebook" rel="noopener">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/>
+        </svg>
+      </a>
+      <!-- Link (website) -->
+      <a href="https://saldesk.cv" class="social-link" aria-label="Website" rel="noopener">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"/>
+          <line x1="2" y1="12" x2="22" y2="12"/>
+          <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+        </svg>
+      </a>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+      <span data-pt="© 2026 SalDesk · Ilha do Sal, Cabo Verde" data-en="© 2026 SalDesk · Sal Island, Cape Verde">
+        © 2026 SalDesk · Ilha do Sal, Cabo Verde
+      </span>
+      <span class="footer-brand">
+        <span data-pt="Sistema desenvolvido por " data-en="System developed by ">Sistema desenvolvido por </span>
+        <a href="https://wandr.cv" target="_blank" rel="noopener">WANDR — Travel Technology Company</a>
+      </span>
+    </div>
+
+  </div><!-- /card -->
+
+  <script>
+    /* ── Countdown ── */
+    const LAUNCH = new Date('2026-07-01T00:00:00+00:00');
+
+    function pad(n) { return String(Math.max(0, n)).padStart(2, '0'); }
+
+    function tick() {
+      const diff = LAUNCH - Date.now();
+      if (diff <= 0) {
+        document.getElementById('cd-days').textContent  = '00';
+        document.getElementById('cd-hours').textContent = '00';
+        document.getElementById('cd-mins').textContent  = '00';
+        document.getElementById('cd-secs').textContent  = '00';
+        return;
+      }
+      const days  = Math.floor(diff / 86400000);
+      const hours = Math.floor((diff % 86400000) / 3600000);
+      const mins  = Math.floor((diff % 3600000)  / 60000);
+      const secs  = Math.floor((diff % 60000)    / 1000);
+      document.getElementById('cd-days').textContent  = pad(days);
+      document.getElementById('cd-hours').textContent = pad(hours);
+      document.getElementById('cd-mins').textContent  = pad(mins);
+      document.getElementById('cd-secs').textContent  = pad(secs);
+    }
+    tick();
+    setInterval(tick, 1000);
+
+    /* ── Waitlist form ── */
+    async function submitWaitlist() {
+      const emailEl  = document.getElementById('emailInput');
+      const btn      = document.getElementById('submitBtn');
+      const successEl = document.getElementById('successMsg');
+      const errorEl   = document.getElementById('errorMsg');
+      const email    = emailEl.value.trim();
+
+      if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        emailEl.style.borderColor = 'var(--error)';
+        setTimeout(() => { emailEl.style.borderColor = '' }, 2000);
+        return;
+      }
+
+      btn.disabled = true;
+      errorEl.classList.remove('visible');
+
+      try {
+        const res = await fetch('https://api.saldesk.cv/api/v1/public/waitlist', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, lang: document.documentElement.getAttribute('lang') || 'pt' }),
+        });
+        if (!res.ok) throw new Error();
+        emailEl.closest('.form-row') ? emailEl.closest('.form-row').style.display = 'none' : null;
+        successEl.classList.add('visible');
+      } catch {
+        errorEl.classList.add('visible');
+        btn.disabled = false;
+      }
+    }
+
+    document.getElementById('emailInput').addEventListener('keydown', e => {
+      if (e.key === 'Enter') submitWaitlist();
+    });
+
+    /* ── PT/EN toggle ── */
+    let currentLang = 'pt';
+
+    function toggleLang() {
+      currentLang = currentLang === 'pt' ? 'en' : 'pt';
+      applyLang(currentLang);
+    }
+
+    function applyLang(lang) {
+      document.documentElement.setAttribute('lang', lang);
+      document.getElementById('langBtn').textContent = lang === 'pt' ? 'EN' : 'PT';
+
+      document.querySelectorAll('[data-pt]').forEach(el => {
+        const val = lang === 'pt' ? el.getAttribute('data-pt') : el.getAttribute('data-en');
+        if (val !== null) el.textContent = val;
+      });
+
+      /* placeholder */
+      const emailInput = document.getElementById('emailInput');
+      const ph = emailInput.getAttribute('data-' + lang + '-placeholder');
+      if (ph) emailInput.placeholder = ph;
+    }
+
+    /* Detect browser language on load */
+    (function detectLang() {
+      const nav = navigator.language || navigator.userLanguage || 'pt';
+      if (nav.toLowerCase().startsWith('en')) {
+        currentLang = 'en';
+        applyLang('en');
+      }
+    })();
+  </script>
+
+</body>
+</html>
