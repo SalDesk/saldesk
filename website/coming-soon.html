@@ -27,13 +27,10 @@
       font-family:var(--ff-body);
       min-height:100vh;
       background-color:var(--ocean-900);
-      /* Background: beach photo with overlay — replace /bg-sal.jpg with actual photo path */
-      background-image:
-        linear-gradient(rgba(6,42,56,0.72), rgba(6,42,56,0.72)),
-        url('/bg-sal.jpg');
       background-size:cover;
       background-position:center;
       background-attachment:fixed;
+      transition: background-image 1s ease-in-out;
       display:flex;
       flex-direction:column;
       align-items:center;
@@ -316,7 +313,7 @@
   <div class="card">
 
     <!-- Logo -->
-    <img src="/logo-white.png" alt="SalDesk" class="logo"
+    <img src="/logo.png" alt="SalDesk" class="logo"
       onerror="this.style.display='none'; document.getElementById('logo-fallback').style.display='block'" />
     <div class="logo-fallback" id="logo-fallback" style="display:none">Sal<span>Desk</span></div>
 
@@ -531,5 +528,17 @@
     })();
   </script>
 
+
+<script>
+const bgs = ['/bg1.jpg', '/bg2.jpg', '/bg3.jpg'];
+let current = 0;
+function changeBg() {
+  const overlay = 'linear-gradient(rgba(6,42,56,0.72), rgba(6,42,56,0.72))';
+  document.body.style.backgroundImage = overlay + ', url(' + bgs[current] + ')';
+  current = (current + 1) % bgs.length;
+}
+changeBg();
+setInterval(changeBg, 5000);
+</script>
 </body>
 </html>
