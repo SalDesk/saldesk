@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useT } from '../../i18n';
 import Input, { Textarea, Select } from '../ui/Input';
 import Button from '../ui/Button';
+import ImageUploader from '../shared/ImageUploader';
 
 const UNIT_TYPES_BY_OPERATOR = {
   hotel:      ['Quarto Standard', 'Quarto Double', 'Suite', 'Apartamento', 'Villa', 'Bungalow'],
@@ -52,8 +53,8 @@ function TourForm({ unit, onSave, onCancel, loading, error }) {
     base_price:    unit?.base_price    != null ? String(unit.base_price) : '',
     price_child:   meta.price_child    != null ? String(meta.price_child) : '',
     price_private: meta.price_private  != null ? String(meta.price_private) : '',
-    status:        unit?.status        || 'active',
-    images_raw:    unit?.images?.join(', ') || '',
+    status:   unit?.status  || 'active',
+    images:   unit?.images  || [],
   });
 
   const set = (field) => (e) => setForm(f => ({ ...f, [field]: e.target.value }));
@@ -69,7 +70,7 @@ function TourForm({ unit, onSave, onCancel, loading, error }) {
 
   function handleSubmit(e) {
     e.preventDefault();
-    const images = form.images_raw.split(',').map(s => s.trim()).filter(Boolean);
+    const images = form.images || [];
     const tourMeta = {
       name_en:       form.name_en       || null,
       desc_pt:       form.desc_pt       || null,
@@ -267,12 +268,11 @@ function TourForm({ unit, onSave, onCancel, loading, error }) {
 
       <div>
         <SectionLabel>Fotos</SectionLabel>
-        <Textarea
-          label="URLs das fotos (separados por virgula)"
-          value={form.images_raw}
-          onChange={set('images_raw')}
-          placeholder="https://exemplo.com/foto1.jpg, https://exemplo.com/foto2.jpg"
-          rows={2}
+        <ImageUploader
+          value={form.images}
+          onChange={(urls) => setForm(f => ({ ...f, images: urls }))}
+          maxImages={10}
+          hint="Primeira foto = capa principal · max 10 fotos · 5MB cada"
         />
       </div>
 
@@ -329,15 +329,14 @@ export default function UnitForm({ unit, operatorType, onSave, onCancel, loading
     base_price:  unit?.base_price  ?? '',
     price_unit:  unit?.price_unit  || priceUnits[0]?.value || 'night',
     capacity:    unit?.capacity    ?? 1,
-    status:      unit?.status      || 'active',
-    images_raw:  unit?.images?.join(', ') || '',
+    status:  unit?.status  || 'active',
+    images:  unit?.images  || [],
   });
 
   const set = (field) => (e) => setForm({ ...form, [field]: e.target.value });
 
   function handleSubmit(e) {
     e.preventDefault();
-    const images = form.images_raw.split(',').map(s => s.trim()).filter(Boolean);
     onSave({
       name:        form.name,
       description: form.description,
@@ -346,7 +345,7 @@ export default function UnitForm({ unit, operatorType, onSave, onCancel, loading
       price_unit:  form.price_unit,
       capacity:    Number(form.capacity),
       status:      form.status,
-      images,
+      images:      form.images,
     });
   }
 
@@ -402,12 +401,11 @@ export default function UnitForm({ unit, operatorType, onSave, onCancel, loading
         rows={3}
       />
 
-      <Textarea
-        label="Fotos (URLs separados por virgula)"
-        value={form.images_raw}
-        onChange={set('images_raw')}
-        placeholder="https://exemplo.com/foto1.jpg, https://exemplo.com/foto2.jpg"
-        rows={2}
+      <ImageUploader
+        value={form.images}
+        onChange={(urls) => setForm(f => ({ ...f, images: urls }))}
+        maxImages={10}
+        hint="Primeira foto = capa principal · max 10 fotos · 5MB cada"
       />
 
       {unit && (

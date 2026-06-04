@@ -10,7 +10,8 @@ const calendarRoutes = require('./routes/calendar');
 const customersRoutes = require('./routes/customers');
 const automationsRoutes = require('./routes/automations');
 const financeiroRoutes = require('./routes/financeiro');
-const publicRoutes = require('./routes/public');
+const publicRoutes     = require('./routes/public');
+const uploadRoutes     = require('./routes/upload');
 const errorHandler = require('./middleware/errorHandler');
 const { iniciarCron } = require('./services/cronService');
 
@@ -39,7 +40,8 @@ app.use('/api/calendar', calendarRoutes);
 app.use('/api/customers', customersRoutes);
 app.use('/api/automations', automationsRoutes);
 app.use('/api/financeiro', financeiroRoutes);
-app.use('/public', publicRoutes);
+app.use('/api/v1/upload',  uploadRoutes);
+app.use('/public',         publicRoutes);
 
 app.use(errorHandler);
 
