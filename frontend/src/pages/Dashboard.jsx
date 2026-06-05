@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Euro, BookOpen, BarChart2, CalendarDays, Users, Zap,
-  Building2, ArrowRight, Car, Utensils,
+  Building2, ArrowRight, Car, Utensils, UtensilsCrossed,
   Compass, Star, AlertTriangle, Clock, TrendingUp, CheckCircle,
   CloudRain, X as XIcon,
   Wrench, MoveRight, MoveLeft, BedDouble, Sparkles,
@@ -152,24 +152,74 @@ function FleetGrid({ units, todayRes }) {
   );
 }
 
-function TableMap({ units, todayRes }) {
+function TableCell({ unit, status }) {
+  const s    = CELL[status] || CELL.available;
+  const meta = parseVehicleMeta(unit);
+  const num  = meta.number ? `M${meta.number}` : unit.name;
+  const cap  = meta.capacity_max || unit.capacity || '';
+  return (
+    <div className={`rounded-sm border border-n-100 px-2 py-2.5 flex flex-col gap-0.5 ${s.bg}`}>
+      <span className={`text-sm font-display font-bold leading-snug ${s.text}`}>{num}</span>
+      {cap ? <span className="text-[10px] font-body text-n-400">{cap} pax</span> : null}
+      <div className="flex items-center gap-1 mt-0.5">
+        <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${s.dot}`} />
+        <span className={`text-[10px] font-mono uppercase tracking-wide ${s.text}`}>{s.label}</span>
+      </div>
+    </div>
+  );
+}
+
+const ZONE_LABELS = { interior: 'Interior', esplanada: 'Esplanada', terraco: 'Terraco', vip: 'VIP', privado: 'Privado' };
+const ZONE_ORDER  = ['interior', 'esplanada', 'terraco', 'vip', 'privado'];
+
+function TableMap({ units, todayRes, onSelect }) {
   const statusMap = useMemo(() => {
     const m = {};
-    todayRes
-      .filter(r => ['confirmed', 'checked_in'].includes(r.status))
-      .forEach(r => { m[r.unit_id] = r.status === 'checked_in' ? 'occupied' : 'checkin'; });
+    todayRes.forEach(r => {
+      if (r.status === 'checked_in' && !m[r.unit_id])               { m[r.unit_id] = 'occupied'; return; }
+      if (['pending', 'confirmed'].includes(r.status) && !m[r.unit_id]) m[r.unit_id] = 'checkin';
+    });
     return m;
   }, [todayRes]);
 
+  const zones = useMemo(() => {
+    const map = {};
+    units.forEach(u => {
+      const zone = parseVehicleMeta(u).zone || 'interior';
+      if (!map[zone]) map[zone] = [];
+      map[zone].push(u);
+    });
+    return map;
+  }, [units]);
+
   if (!units.length)
     return <p className="text-sm font-body text-n-400 py-4">Sem mesas registadas.</p>;
+
+  const zoneKeys = ZONE_ORDER.filter(z => zones[z]).concat(Object.keys(zones).filter(z => !ZONE_ORDER.includes(z)));
+
   return (
     <>
-      <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-2">
-        {units.map(u => (
-          <StatusCell key={u.id} name={u.name} status={unitStatus(u) || statusMap[u.id] || 'available'} />
-        ))}
-      </div>
+      {zoneKeys.map(zone => (
+        <div key={zone} className="mb-5 last:mb-0">
+          <p className="text-[10px] font-mono font-semibold text-n-500 uppercase tracking-widest mb-2">
+            {ZONE_LABELS[zone] || zone}
+          </p>
+          <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-2">
+            {zones[zone].map(u => {
+              const st = unitStatus(u) || statusMap[u.id] || 'available';
+              if (onSelect) {
+                return (
+                  <button key={u.id} type="button" onClick={() => onSelect(u)}
+                    className="text-left w-full hover:ring-2 hover:ring-ocean-300 rounded-sm transition-all">
+                    <TableCell unit={u} status={st} />
+                  </button>
+                );
+              }
+              return <TableCell key={u.id} unit={u} status={st} />;
+            })}
+          </div>
+        </div>
+      ))}
       <MapLegend keys={['available', 'checkin', 'occupied', 'inactive']} />
     </>
   );
@@ -781,6 +831,254 @@ function RentacarDashboard() {
             unit={selected}
             state={getVehicleState(selected)}
             reservation={vehicleRes}
+            onClose={() => setSelected(null)}
+            onNavigate={() => { navigate('/reservas'); setSelected(null); }}
+          />
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ─── Restaurant dashboard ──────────────────────────────────── */
+
+function TurnoSection({ label, reservations, units, emptyMsg }) {
+  return (
+    <div className="bg-white rounded-md border border-n-200 shadow-sm">
+      <div className="px-5 py-4 border-b border-n-100 flex items-center gap-2">
+        <Clock size={14} strokeWidth={1.75} className="text-n-500" />
+        <h2 className="font-display font-semibold text-sm text-n-700">{label}</h2>
+        <span className="ml-auto text-xs font-body text-n-400">{reservations.length}</span>
+      </div>
+      {reservations.length === 0 ? (
+        <p className="px-5 py-6 text-center text-xs font-body text-n-400">{emptyMsg}</p>
+      ) : (
+        <div className="divide-y divide-n-100">
+          {reservations.map(r => {
+            const unit  = units.find(u => u.id === r.unit_id);
+            const umeta = unit ? parseVehicleMeta(unit) : {};
+            const tbl   = unit ? (umeta.number ? `Mesa ${umeta.number}` : unit.name) : 'Sem mesa';
+            let gm = {};
+            try { gm = JSON.parse(r.notes_guest || '{}'); } catch {}
+            return (
+              <div key={r.id} className="px-5 py-3 flex items-center gap-3">
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-display font-semibold text-n-900 truncate">{r.customer_name || '—'}</p>
+                  <p className="text-xs font-body text-n-400">
+                    {tbl} · {r.guests} pax{gm.ocasiao ? ` · ${gm.ocasiao}` : ''}
+                  </p>
+                </div>
+                <Badge variant={r.status === 'checked_in' ? 'info' : r.status === 'confirmed' ? 'confirmed' : 'pending'}>
+                  {r.status === 'checked_in' ? 'Sentados' : r.status === 'confirmed' ? 'Confirmado' : 'Pendente'}
+                </Badge>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function TableDetailCard({ unit, state, reservation, onClose, onNavigate }) {
+  const s    = CELL[state] || CELL.available;
+  const meta = parseVehicleMeta(unit);
+  const tbl  = meta.number ? `Mesa ${meta.number}` : unit.name;
+  const zone = ZONE_LABELS[meta.zone] || meta.zone || '';
+  const cap  = meta.capacity_max || unit.capacity;
+  let gm = {};
+  if (reservation) { try { gm = JSON.parse(reservation.notes_guest || '{}'); } catch {} }
+
+  return (
+    <div className="bg-white rounded-xl border border-n-200 shadow-2xl w-full max-w-sm">
+      <div className="p-6">
+        <div className="flex items-start justify-between mb-3">
+          <div>
+            <h3 className="font-display font-bold text-base text-n-900">{tbl}</h3>
+            <p className="text-xs font-body text-n-500 mt-0.5">
+              {[zone, cap ? `${cap} pax` : null].filter(Boolean).join(' · ')}
+            </p>
+          </div>
+          <button onClick={onClose} className="p-1 text-n-400 hover:text-n-700 rounded">
+            <XIcon size={16} strokeWidth={1.75} />
+          </button>
+        </div>
+
+        <div className={`flex items-center gap-2 px-2.5 py-2 rounded-md mb-4 ${s.bg}`}>
+          <span className={`w-2 h-2 rounded-full ${s.dot}`} />
+          <span className={`text-xs font-mono font-bold uppercase tracking-wide ${s.text}`}>{s.label}</span>
+        </div>
+
+        {reservation ? (
+          <div className="bg-n-50 rounded-md p-3 mb-4 space-y-1">
+            <p className="text-sm font-display font-semibold text-n-900">{reservation.customer_name || '—'}</p>
+            <p className="text-xs font-body text-n-500">
+              {reservation.guests} pessoas{gm.turno ? ` · Turno ${gm.turno}` : ''}
+            </p>
+            {gm.ocasiao && <p className="text-xs font-body text-n-400">{gm.ocasiao}</p>}
+            {gm.pedidos_especiais && <p className="text-xs font-body text-n-400 italic">{gm.pedidos_especiais}</p>}
+          </div>
+        ) : (
+          <p className="text-sm font-body text-n-400 mb-4">Mesa disponivel.</p>
+        )}
+
+        <div className="flex gap-2">
+          <button onClick={onClose}
+            className="flex-1 h-9 rounded-md border border-n-200 text-sm font-body text-n-700 hover:bg-n-50 transition-colors">
+            Fechar
+          </button>
+          <button onClick={onNavigate}
+            className="flex-1 h-9 rounded-md bg-ocean-700 text-white text-sm font-body font-medium hover:bg-ocean-500 transition-colors flex items-center justify-center gap-1.5">
+            <BookOpen size={13} strokeWidth={1.75} />
+            Ver reservas
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function RestaurantDashboard() {
+  const navigate = useNavigate();
+  const periodo  = mesAtual();
+
+  const [units,     setUnits]     = useState([]);
+  const [todayRes,  setTodayRes]  = useState([]);
+  const [monthRes,  setMonthRes]  = useState([]);
+  const [resumo,    setResumo]    = useState(null);
+  const [avgRating, setAvgRating] = useState(null);
+  const [loading,   setLoading]   = useState(true);
+  const [selected,  setSelected]  = useState(null);
+
+  useEffect(() => {
+    Promise.all([
+      listUnits(),
+      listReservations({ from: TODAY, to: TODAY }),
+      listReservations({ from: periodo.inicio, to: periodo.fim }),
+      getResumo(periodo.inicio, periodo.fim),
+      api.get('/reviews/stats').then(r => r.data?.data?.average_rating ?? null).catch(() => null),
+    ])
+      .then(([u, tRes, mRes, res, avgR]) => {
+        setUnits((u || []).filter(x => x.unit_type !== 'menu_item' && x.unit_type !== 'tasting_menu'));
+        setTodayRes(tRes || []);
+        setMonthRes(mRes || []);
+        setResumo(res);
+        setAvgRating(avgR);
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const statusMap = useMemo(() => {
+    const m = {};
+    todayRes.forEach(r => {
+      if (r.status === 'checked_in' && !m[r.unit_id])               { m[r.unit_id] = 'occupied'; return; }
+      if (['pending', 'confirmed'].includes(r.status) && !m[r.unit_id]) m[r.unit_id] = 'checkin';
+    });
+    return m;
+  }, [todayRes]);
+
+  function getTableState(unit) { return unitStatus(unit) || statusMap[unit.id] || 'available'; }
+
+  const kpis = useMemo(() => ({
+    reservasHoje: todayRes.filter(r => ['pending', 'confirmed', 'checked_in'].includes(r.status)).length,
+    coversMes:    monthRes.filter(r => ['confirmed', 'checked_in', 'checked_out'].includes(r.status)).reduce((s, r) => s + (r.guests || 0), 0),
+    receita:      resumo?.atual?.receita ?? 0,
+    rating:       avgRating,
+  }), [todayRes, monthRes, resumo, avgRating]);
+
+  const alerts = useMemo(() => {
+    const out = [];
+    const pendentes = todayRes.filter(r => r.status === 'pending');
+    if (pendentes.length > 0)
+      out.push({ msg: `${pendentes.length} reserva(s) sem confirmacao hoje` });
+    return out;
+  }, [todayRes]);
+
+  const shifts = useMemo(() => {
+    const a = [], j = [], o = [];
+    todayRes.filter(r => ['pending', 'confirmed', 'checked_in'].includes(r.status)).forEach(r => {
+      let meta = {};
+      try { meta = JSON.parse(r.notes_guest || '{}'); } catch {}
+      if      (meta.turno === 'almoco') a.push(r);
+      else if (meta.turno === 'jantar') j.push(r);
+      else                              o.push(r);
+    });
+    return { almoco: a, jantar: j, outros: o };
+  }, [todayRes]);
+
+  const tableRes = useMemo(() => {
+    if (!selected) return null;
+    return todayRes.find(r =>
+      r.unit_id === selected.id && ['pending', 'confirmed', 'checked_in'].includes(r.status)
+    ) || null;
+  }, [selected, todayRes]);
+
+  if (loading) return <div className="flex justify-center py-20"><LoadingSpinner size={32} /></div>;
+
+  return (
+    <div className="space-y-6">
+
+      {/* Alerts */}
+      {alerts.length > 0 && (
+        <div className="space-y-2">
+          {alerts.map((a, i) => (
+            <div key={i} className="flex items-center gap-3 px-4 py-3 bg-[#FFF7ED] border border-[#FDBA74] rounded-md">
+              <AlertTriangle size={15} strokeWidth={1.75} className="text-[#B45309] shrink-0" />
+              <p className="text-sm font-body text-[#B45309] flex-1">{a.msg}</p>
+              <button onClick={() => navigate('/reservas')}
+                className="text-xs font-semibold text-[#B45309] underline shrink-0 whitespace-nowrap">
+                Ver reservas
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* KPIs */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <KpiCard label="Reservas hoje"    value={kpis.reservasHoje}                             icon={CalendarDays} />
+        <KpiCard label="Covers do mes"    value={kpis.coversMes}                                icon={Users}        />
+        <KpiCard label="Receita estimada" value={kpis.receita}                                  icon={Euro}         format="euro" />
+        <KpiCard label="Avaliacao media"  value={kpis.rating ? kpis.rating.toFixed(1) : '—'}   icon={Star}         />
+      </div>
+
+      {/* Table map */}
+      <div className="bg-white rounded-md border border-n-200 shadow-sm p-5">
+        <div className="flex items-center gap-2 mb-4">
+          <UtensilsCrossed size={15} strokeWidth={1.75} className="text-n-500" />
+          <h2 className="font-display font-semibold text-sm text-n-700 uppercase tracking-wide">
+            Mapa de Mesas — Hoje
+          </h2>
+          <button onClick={() => navigate('/unidades')}
+            className="ml-auto text-xs font-body text-ocean-700 hover:underline">
+            Gerir mesas
+          </button>
+        </div>
+        <TableMap units={units} todayRes={todayRes} onSelect={setSelected} />
+      </div>
+
+      {/* Turnos */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <TurnoSection label="Almoco · 12h–15h" reservations={shifts.almoco} units={units} emptyMsg="Sem reservas de almoco" />
+        <TurnoSection label="Jantar · 19h–23h"  reservations={shifts.jantar} units={units} emptyMsg="Sem reservas de jantar"  />
+      </div>
+
+      {shifts.outros.length > 0 && (
+        <TurnoSection label="Sem turno definido" reservations={shifts.outros} units={units} emptyMsg="" />
+      )}
+
+      {/* Table detail overlay */}
+      {selected && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
+          onClick={e => { if (e.target === e.currentTarget) setSelected(null); }}
+        >
+          <TableDetailCard
+            unit={selected}
+            state={getTableState(selected)}
+            reservation={tableRes}
             onClose={() => setSelected(null)}
             onNavigate={() => { navigate('/reservas'); setSelected(null); }}
           />
@@ -1403,7 +1701,9 @@ export default function Dashboard() {
           ? <HotelDashboard />
           : opType === 'rentacar'
             ? <RentacarDashboard />
-            : <GenericDashboard />
+            : opType === 'restaurant'
+              ? <RestaurantDashboard />
+              : <GenericDashboard />
       }
     </div>
   );

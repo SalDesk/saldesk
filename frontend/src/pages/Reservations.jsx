@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import {
   Plus, ClipboardList, Pencil, Trash2, ChevronRight, Filter, X,
   CalendarDays, Mail, UserX, FileText, Car, MoveRight, MoveLeft,
-  Fuel, AlertTriangle,
+  Fuel, AlertTriangle, Utensils, CheckCircle, Users,
 } from 'lucide-react';
 import { listReservations, createReservation, updateReservation, changeStatus, deleteReservation } from '../services/reservationsService';
 import api from '../services/api';
@@ -762,12 +762,228 @@ function RentacarTable({ reservations, units, onEdit, onLevantamento, onDevoluca
   );
 }
 
+const TURNO_LABELS = { almoco: 'Almoco', jantar: 'Jantar' };
+const OCASIAO_LABELS = {
+  aniversario: 'Aniversario', lua_de_mel: 'Lua-de-mel', negocios: 'Negocios', outro: 'Outro',
+};
+
+function parseRestaurantMeta(r) {
+  try { return JSON.parse(r?.notes_guest || '{}'); } catch { return {}; }
+}
+
+function RestaurantCreateModal({ reservation, units, open, onClose, onDone }) {
+  const prevMeta = parseRestaurantMeta(reservation);
+  const [form, setForm] = useState({
+    turno:            prevMeta.turno             || 'jantar',
+    ocasiao:          prevMeta.ocasiao            || '',
+    pedidos_especiais:prevMeta.pedidos_especiais  || '',
+    lista_espera:     prevMeta.lista_espera        ?? false,
+  });
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (reservation) {
+      const m = parseRestaurantMeta(reservation);
+      setForm({ turno: m.turno || 'jantar', ocasiao: m.ocasiao || '', pedidos_especiais: m.pedidos_especiais || '', lista_espera: m.lista_espera ?? false });
+    }
+  }, [reservation]);
+
+  const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
+
+  async function handleSave() {
+    if (!reservation) return;
+    setSaving(true);
+    try {
+      let prev = {};
+      try { prev = JSON.parse(reservation.notes_guest || '{}'); } catch {}
+      await updateReservation(reservation.id, { notes_guest: JSON.stringify({ ...prev, ...form }) });
+      onDone();
+    } catch (err) { console.error(err); }
+    finally { setSaving(false); }
+  }
+
+  const unit = units.find(u => u.id === reservation?.unit_id);
+
+  return (
+    <Modal open={open} onClose={onClose} title="Detalhes da reserva" size="sm" footer={null}>
+      <div className="space-y-4">
+        {reservation && (
+          <div className="flex items-center gap-3 p-3 bg-n-50 rounded-md border border-n-200">
+            <Utensils size={14} strokeWidth={1.75} className="text-ocean-700 shrink-0" />
+            <div>
+              <p className="font-display font-semibold text-sm text-n-900">{reservation.customer_name || '—'}</p>
+              <p className="text-xs font-body text-n-400">{reservation.guests} pessoas · {unit?.name || 'Sem mesa'}</p>
+            </div>
+          </div>
+        )}
+
+        <div>
+          <label className="block text-xs font-mono text-n-500 uppercase tracking-wide mb-2">Turno</label>
+          <div className="flex gap-2">
+            {[{ v: 'almoco', l: 'Almoco · 12h-15h' }, { v: 'jantar', l: 'Jantar · 19h-23h' }].map(o => (
+              <button key={o.v} type="button" onClick={() => set('turno', o.v)}
+                className={`flex-1 py-2 rounded-md border text-sm font-body font-medium transition-colors ${
+                  form.turno === o.v ? 'bg-ocean-700 border-ocean-700 text-white' : 'bg-n-50 border-n-200 text-n-700 hover:border-ocean-400'
+                }`}>
+                {o.l}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <label className="block text-xs font-mono text-n-500 uppercase tracking-wide mb-1.5">Ocasiao especial</label>
+          <select value={form.ocasiao} onChange={e => set('ocasiao', e.target.value)}
+            className="w-full h-9 rounded-md border border-n-200 bg-n-50 px-3 text-sm font-body text-n-900 focus:outline-none focus:ring-2 focus:ring-ocean-700">
+            <option value="">Nenhuma</option>
+            <option value="aniversario">Aniversario</option>
+            <option value="lua_de_mel">Lua-de-mel</option>
+            <option value="negocios">Negocios</option>
+            <option value="outro">Outro</option>
+          </select>
+        </div>
+
+        <div>
+          <label className="block text-xs font-mono text-n-500 uppercase tracking-wide mb-1.5">Pedidos especiais</label>
+          <textarea value={form.pedidos_especiais} onChange={e => set('pedidos_especiais', e.target.value)} rows={2}
+            placeholder="Alergias, decoracao, menu vegetariano..."
+            className="w-full rounded-md border border-n-200 bg-n-50 px-3 py-2 text-sm font-body text-n-900 focus:outline-none focus:ring-2 focus:ring-ocean-700 resize-none" />
+        </div>
+
+        <label className="flex items-center gap-2 cursor-pointer">
+          <input type="checkbox" checked={form.lista_espera} onChange={e => set('lista_espera', e.target.checked)} className="w-4 h-4 accent-ocean-700" />
+          <span className="text-sm font-body text-n-700">Lista de espera (sem mesa disponivel)</span>
+        </label>
+
+        <div className="flex gap-3 pt-1">
+          <button type="button" onClick={onClose} className="flex-1 h-9 rounded-md border border-n-200 text-sm font-body text-n-700 hover:bg-n-50 transition-colors">Cancelar</button>
+          <button type="button" onClick={handleSave} disabled={saving}
+            className="flex-1 h-9 rounded-md bg-ocean-700 text-white text-sm font-body font-medium hover:bg-ocean-500 transition-colors disabled:opacity-60">
+            {saving ? 'A guardar...' : 'Guardar detalhes'}
+          </button>
+        </div>
+      </div>
+    </Modal>
+  );
+}
+
+function RestaurantTable({ reservations, units, onEdit, onDetails, onUpdate }) {
+  const t = useT();
+  const [actionLoading, setActionLoading] = useState(null);
+
+  const STATUS_NEXT_R = { pending: 'confirmed', confirmed: 'checked_in', checked_in: 'checked_out' };
+  const STATUS_BTN_R  = { pending: 'Confirmar', confirmed: 'Sentar', checked_in: 'Liberar mesa' };
+
+  async function handleNext(r) {
+    const next = STATUS_NEXT_R[r.status];
+    if (!next) return;
+    setActionLoading(r.id);
+    try {
+      const updated = await changeStatus(r.id, next);
+      onUpdate(updated);
+    } catch (err) { console.error(err); }
+    finally { setActionLoading(null); }
+  }
+
+  if (reservations.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 text-n-400">
+        <Utensils size={40} strokeWidth={1.25} className="mb-3" />
+        <p className="font-body text-sm">{t('common.noResults')}</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="bg-white rounded-md border border-n-200 shadow-sm overflow-hidden">
+      <div className="overflow-x-auto">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-b border-n-200 bg-n-50">
+              <th className="text-left px-4 py-3 text-xs font-body font-bold uppercase tracking-wide text-n-500 whitespace-nowrap">Ref</th>
+              <th className="text-left px-4 py-3 text-xs font-body font-bold uppercase tracking-wide text-n-500 whitespace-nowrap">Mesa</th>
+              <th className="text-left px-4 py-3 text-xs font-body font-bold uppercase tracking-wide text-n-500 whitespace-nowrap">Turno</th>
+              <th className="text-center px-4 py-3 text-xs font-body font-bold uppercase tracking-wide text-n-500">Pax</th>
+              <th className="text-left px-4 py-3 text-xs font-body font-bold uppercase tracking-wide text-n-500 whitespace-nowrap">Cliente</th>
+              <th className="text-left px-4 py-3 text-xs font-body font-bold uppercase tracking-wide text-n-500 whitespace-nowrap">Ocasiao</th>
+              <th className="text-left px-4 py-3 text-xs font-body font-bold uppercase tracking-wide text-n-500 whitespace-nowrap">Estado</th>
+              <th className="px-4 py-3" />
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-n-100">
+            {reservations.map(r => {
+              const unit    = units.find(u => u.id === r.unit_id);
+              let umeta = {};
+              try { umeta = JSON.parse(unit?.description || '{}'); } catch {}
+              const tbl    = unit ? (umeta.number ? `Mesa ${umeta.number}` : unit.name) : '—';
+              const rcMeta = parseRestaurantMeta(r);
+              const isLoading = actionLoading === r.id;
+              const canNext   = !!STATUS_NEXT_R[r.status];
+
+              return (
+                <tr key={r.id} className="hover:bg-n-50 transition-colors">
+                  <td className="px-4 py-3">
+                    <span className="text-xs font-mono text-n-400">{r.id?.slice(0, 8)}</span>
+                  </td>
+                  <td className="px-4 py-3">
+                    <p className="font-display font-semibold text-sm text-n-900">{tbl}</p>
+                    {rcMeta.lista_espera && (
+                      <span className="text-[9px] font-mono uppercase tracking-wide text-[#B45309] bg-[#FFF7ED] px-1.5 py-0.5 rounded">Lista espera</span>
+                    )}
+                  </td>
+                  <td className="px-4 py-3">
+                    <span className="text-xs font-mono text-n-700">
+                      {rcMeta.turno ? TURNO_LABELS[rcMeta.turno] || rcMeta.turno : '—'}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3 text-center">
+                    <span className="text-sm font-body font-semibold text-n-900">{r.guests}</span>
+                  </td>
+                  <td className="px-4 py-3">
+                    <p className="text-sm font-body text-n-900 truncate max-w-[120px]">{r.customer_name || '—'}</p>
+                    <p className="text-xs font-body text-n-400">{formatDate(r.check_in)}</p>
+                  </td>
+                  <td className="px-4 py-3">
+                    {rcMeta.ocasiao ? (
+                      <span className="text-xs font-body text-n-600">{OCASIAO_LABELS[rcMeta.ocasiao] || rcMeta.ocasiao}</span>
+                    ) : <span className="text-n-300">—</span>}
+                  </td>
+                  <td className="px-4 py-3">
+                    <Badge variant={r.status}>{t(`reservations.status.${r.status}`)}</Badge>
+                  </td>
+                  <td className="px-4 py-3">
+                    <div className="flex items-center gap-1 justify-end flex-wrap">
+                      {canNext && (
+                        <button onClick={() => handleNext(r)} disabled={isLoading}
+                          className="flex items-center gap-1 px-2 py-1 rounded-xs bg-ocean-700 text-white text-xs font-body font-medium hover:bg-ocean-500 transition-colors disabled:opacity-50 whitespace-nowrap">
+                          {STATUS_BTN_R[r.status]}
+                          <ChevronRight size={11} strokeWidth={2} />
+                        </button>
+                      )}
+                      <button onClick={() => onDetails(r)} title="Turno / pedidos especiais"
+                        className="p-1.5 rounded text-n-400 hover:text-ocean-700 hover:bg-ocean-50 transition-colors">
+                        <Utensils size={13} strokeWidth={1.75} />
+                      </button>
+                      <Button variant="ghost" size="sm" icon={Pencil} onClick={() => onEdit(r)} aria-label="Editar" />
+                    </div>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
 export default function Reservations() {
   const t = useT();
   const { operator } = useAuthStore();
   const opType = operator?.operator_type || 'hotel';
-  const isActivity  = opType === 'activity';
-  const isRentacar  = opType === 'rentacar';
+  const isActivity   = opType === 'activity';
+  const isRentacar   = opType === 'rentacar';
+  const isRestaurant = opType === 'restaurant';
 
   const [reservations,    setReservations]    = useState([]);
   const [units,           setUnits]           = useState([]);
@@ -781,6 +997,8 @@ export default function Reservations() {
   const [voucherLoading,  setVoucherLoading]  = useState(null);
   const [levantamentoRes, setLevantamentoRes] = useState(null);
   const [devolucaoRes,    setDevolucaoRes]    = useState(null);
+  const [detailsRes,      setDetailsRes]      = useState(null);
+  const [turnoFilter,     setTurnoFilter]     = useState('');
 
   const [statusFilter, setStatusFilter] = useState('');
   const [tourFilter,   setTourFilter]   = useState('');
@@ -792,7 +1010,10 @@ export default function Reservations() {
     try {
       const [res, uns] = await Promise.all([listReservations({}), listUnits()]);
       setReservations(res);
-      setUnits(uns.filter(u => u.status === 'active'));
+      const tables = opType === 'restaurant'
+        ? uns.filter(u => u.unit_type !== 'menu_item' && u.unit_type !== 'tasting_menu')
+        : uns;
+      setUnits(tables.filter(u => u.status === 'active'));
     } catch (err) {
       console.error(err);
     } finally {
@@ -808,9 +1029,14 @@ export default function Reservations() {
       if (tourFilter   && r.unit_id  !== tourFilter)   return false;
       if (dateFilter   && r.check_in !== dateFilter)   return false;
       if (sourceFilter && r.source   !== sourceFilter) return false;
+      if (isRestaurant && turnoFilter) {
+        let meta = {};
+        try { meta = JSON.parse(r.notes_guest || '{}'); } catch {}
+        if ((meta.turno || '') !== turnoFilter) return false;
+      }
       return true;
     });
-  }, [reservations, statusFilter, tourFilter, dateFilter, sourceFilter]);
+  }, [reservations, statusFilter, tourFilter, dateFilter, sourceFilter, isRestaurant, turnoFilter]);
 
   const hasFilters = statusFilter || tourFilter || dateFilter || sourceFilter;
 
@@ -952,6 +1178,22 @@ export default function Reservations() {
               {s ? t(`reservations.status.${s}`) : 'Todas'}
             </button>
           ))}
+          {isRestaurant && (
+            <>
+              <div className="w-px bg-n-200 self-stretch mx-1" />
+              {[{ v: '', l: 'Todos turnos' }, { v: 'almoco', l: 'Almoco' }, { v: 'jantar', l: 'Jantar' }].map(o => (
+                <button key={o.v} onClick={() => setTurnoFilter(o.v)}
+                  className={[
+                    'px-3 py-1.5 rounded-sm text-xs font-body font-semibold transition-colors',
+                    turnoFilter === o.v
+                      ? 'bg-ocean-700 text-white'
+                      : 'bg-white border border-n-200 text-n-600 hover:border-ocean-300',
+                  ].join(' ')}>
+                  {o.l}
+                </button>
+              ))}
+            </>
+          )}
         </div>
       )}
 
@@ -977,6 +1219,14 @@ export default function Reservations() {
           onEdit={r => { setFormError(''); setModal(r); }}
           onLevantamento={setLevantamentoRes}
           onDevolucao={setDevolucaoRes}
+          onUpdate={u => handleUpdate(u)}
+        />
+      ) : isRestaurant ? (
+        <RestaurantTable
+          reservations={filtered}
+          units={units}
+          onEdit={r => { setFormError(''); setModal(r); }}
+          onDetails={setDetailsRes}
           onUpdate={u => handleUpdate(u)}
         />
       ) : filtered.length === 0 ? (
@@ -1069,6 +1319,14 @@ export default function Reservations() {
           ));
           setDevolucaoRes(null);
         }}
+      />
+
+      <RestaurantCreateModal
+        reservation={detailsRes}
+        units={units}
+        open={!!detailsRes}
+        onClose={() => setDetailsRes(null)}
+        onDone={() => setDetailsRes(null)}
       />
     </div>
   );

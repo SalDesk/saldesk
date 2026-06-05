@@ -46,6 +46,7 @@ const BeachSale       = lazy(() => import('./pages/BeachSale'));
 const StaffPortal     = lazy(() => import('./pages/StaffPortal'));
 const Housekeeping    = lazy(() => import('./pages/Housekeeping'));
 const Maintenance     = lazy(() => import('./pages/Maintenance'));
+const MenuDigital     = lazy(() => import('./pages/MenuDigital'));
 
 // Lazy — admin panel
 const AdminLayout     = lazy(() => import('./components/layout/AdminLayout'));
@@ -122,6 +123,7 @@ export default function App() {
           <Route path="colaboradores" element={<PlanGuard plan="business" feature="colaboradores"><Staff /></PlanGuard>} />
           <Route path="housekeeping"  element={<Housekeeping />} />
           <Route path="manutencao"    element={<Maintenance />} />
+          <Route path="menu-digital"  element={<MenuDigital />} />
           <Route path="frota"         element={<Fleet />} />
           <Route path="mensagens"     element={<Messages />} />
           <Route path="avaliacoes"    element={<Reviews />} />

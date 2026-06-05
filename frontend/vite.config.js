@@ -37,7 +37,8 @@ export default defineConfig({
             id.includes('/pages/Customers') ||
             id.includes('/pages/Units') ||
             id.includes('/pages/Housekeeping') ||
-            id.includes('/pages/Maintenance')
+            id.includes('/pages/Maintenance') ||
+            id.includes('/pages/MenuDigital')
           ) {
             return 'chunk-dashboard';
           }

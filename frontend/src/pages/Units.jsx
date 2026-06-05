@@ -57,7 +57,10 @@ export default function Units() {
   async function carregar() {
     try {
       const data = await listUnits();
-      setUnits(data);
+      const filtered = opType === 'restaurant'
+        ? data.filter(u => u.unit_type !== 'menu_item' && u.unit_type !== 'tasting_menu')
+        : data;
+      setUnits(filtered);
     } catch (err) {
       console.error(err);
     } finally {
@@ -169,7 +172,7 @@ export default function Units() {
         open={!!modal}
         onClose={() => setModal(null)}
         title={modalTitle}
-        size={['activity', 'hotel', 'rentacar'].includes(opType) ? 'lg' : 'md'}
+        size={['activity', 'hotel', 'rentacar'].includes(opType) ? 'lg' : 'sm'}
         footer={null}
       >
         {modal && (

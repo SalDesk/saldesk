@@ -683,6 +683,116 @@ function RentacarVehicleForm({ unit, onSave, onCancel, loading, error }) {
   );
 }
 
+const TABLE_ZONES = ['interior', 'esplanada', 'terraco', 'vip', 'privado'];
+const ZONE_LABEL_MAP = { interior: 'Interior', esplanada: 'Esplanada', terraco: 'Terraco', vip: 'VIP', privado: 'Privado' };
+
+function parseTableMeta(description) {
+  if (!description?.startsWith('{')) return {};
+  try { return JSON.parse(description); } catch { return {}; }
+}
+
+function RestaurantTableForm({ unit, onSave, onCancel, loading, error }) {
+  const meta = parseTableMeta(unit?.description);
+
+  const [form, setForm] = useState({
+    number:       meta.number       || '',
+    name:         unit?.name        || '',
+    zone:         meta.zone         || 'interior',
+    capacity_min: meta.capacity_min != null ? String(meta.capacity_min) : '1',
+    capacity_max: meta.capacity_max != null ? String(meta.capacity_max) : String(unit?.capacity ?? '4'),
+    combinable:   meta.combinable   ?? false,
+    status:       unit?.status      || 'active',
+  });
+
+  const set = (k) => (e) => setForm(f => ({ ...f, [k]: e.target.value }));
+
+  function handleSubmit(e) {
+    e.preventDefault();
+    const tableMeta = {
+      number:       form.number       || null,
+      zone:         form.zone,
+      capacity_min: Number(form.capacity_min) || 1,
+      capacity_max: Number(form.capacity_max) || 4,
+      combinable:   form.combinable,
+    };
+    const displayName = form.number
+      ? `Mesa ${form.number}${form.name ? ` — ${form.name}` : ''}`
+      : form.name || `Mesa`;
+    onSave({
+      name:        displayName,
+      description: JSON.stringify(tableMeta),
+      unit_type:   ZONE_LABEL_MAP[form.zone] || form.zone,
+      base_price:  0,
+      price_unit:  'hour',
+      capacity:    Number(form.capacity_max) || 4,
+      status:      form.status,
+      images:      unit?.images || [],
+    });
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-5">
+
+      <div>
+        <SectionLabel>Identificacao</SectionLabel>
+        <div className="grid grid-cols-3 gap-3 mb-3">
+          <Input label="Numero" value={form.number} onChange={set('number')} placeholder="1" autoFocus />
+          <div className="col-span-2">
+            <Input label="Nome / descricao (opcional)" value={form.name} onChange={set('name')} placeholder="Ex: Terraco Vista Mar" />
+          </div>
+        </div>
+        <Select label="Zona" value={form.zone} onChange={set('zone')} required>
+          {TABLE_ZONES.map(z => (
+            <option key={z} value={z}>{ZONE_LABEL_MAP[z]}</option>
+          ))}
+        </Select>
+      </div>
+
+      <div>
+        <SectionLabel>Capacidade</SectionLabel>
+        <div className="grid grid-cols-2 gap-3">
+          <Input label="Minimo (pessoas)" type="number" value={form.capacity_min} onChange={set('capacity_min')} min="1" required />
+          <Input label="Maximo (pessoas)" type="number" value={form.capacity_max} onChange={set('capacity_max')} min="1" required />
+        </div>
+      </div>
+
+      <div>
+        <SectionLabel>Opcoes</SectionLabel>
+        <label className="flex items-center gap-3 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={form.combinable}
+            onChange={e => setForm(f => ({ ...f, combinable: e.target.checked }))}
+            className="w-4 h-4 accent-ocean-700"
+          />
+          <span className="text-sm font-body text-n-700">Mesa combinavel com outras</span>
+        </label>
+      </div>
+
+      {unit && (
+        <div>
+          <SectionLabel>Estado</SectionLabel>
+          <Select value={form.status} onChange={set('status')}>
+            <option value="active">Activa</option>
+            <option value="inactive">Bloqueada</option>
+          </Select>
+        </div>
+      )}
+
+      {error && (
+        <p className="text-sm font-body px-3 py-2 rounded-sm bg-[var(--error-light)] text-[var(--error)]">{error}</p>
+      )}
+
+      <div className="flex gap-3 pt-1">
+        <Button type="button" variant="secondary" onClick={onCancel} className="flex-1">Cancelar</Button>
+        <Button type="submit" loading={loading} className="flex-1">
+          {unit ? 'Guardar alteracoes' : 'Criar mesa'}
+        </Button>
+      </div>
+    </form>
+  );
+}
+
 export default function UnitForm({ unit, operatorType, onSave, onCancel, loading, error }) {
   const t = useT();
 
@@ -701,6 +811,18 @@ export default function UnitForm({ unit, operatorType, onSave, onCancel, loading
   if (operatorType === 'hotel') {
     return (
       <HotelRoomForm
+        unit={unit}
+        onSave={onSave}
+        onCancel={onCancel}
+        loading={loading}
+        error={error}
+      />
+    );
+  }
+
+  if (operatorType === 'restaurant') {
+    return (
+      <RestaurantTableForm
         unit={unit}
         onSave={onSave}
         onCancel={onCancel}
