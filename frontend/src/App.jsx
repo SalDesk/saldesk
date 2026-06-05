@@ -1,51 +1,66 @@
+import { lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import useAuthStore from './store/authStore';
+import Layout from './components/layout/Layout';
+import PlanGuard from './components/PlanGuard';
+
+// Eager — critical path, must load instantly
 import Login from './pages/Login';
 import Register from './pages/Register';
-import Onboarding from './pages/Onboarding';
-import Dashboard from './pages/Dashboard';
-import Units from './pages/Units';
-import Reservations from './pages/Reservations';
-import Calendar from './pages/Calendar';
-import Customers from './pages/Customers';
-import Automations from './pages/Automations';
-import Financial from './pages/Financial';
-import Integrations from './pages/Integrations';
-import Settings from './pages/Settings';
-import Staff from './pages/Staff';
-import Reviews from './pages/Reviews';
-import Profile from './pages/Profile';
-import Fleet from './pages/Fleet';
-import Messages from './pages/Messages';
-import Guides from './pages/Guides';
-import Marketing from './pages/Marketing';
-import Analytics from './pages/Analytics';
-import Loyalty from './pages/Loyalty';
-import Vouchers from './pages/Vouchers';
-import Occurrences from './pages/Occurrences';
-import Feedback from './pages/Feedback';
-import Weather from './pages/Weather';
-import Demand from './pages/Demand';
-import Affiliates from './pages/Affiliates';
-import AffiliatePortal from './pages/AffiliatePortal';
-import Groups from './pages/Groups';
-import Packages from './pages/Packages';
-import Partners from './pages/Partners';
-import BeachSeller from './pages/BeachSeller';
-import BeachSale from './pages/BeachSale';
 import ResetPassword from './pages/ResetPassword';
 import PublicBooking from './pages/PublicBooking';
 import ServiceDetail from './pages/ServiceDetail';
-import StaffPortal from './pages/StaffPortal';
-import AdminLayout from './components/layout/AdminLayout';
-import AdminDashboard from './pages/admin/AdminDashboard';
-import AdminOperators from './pages/admin/AdminOperators';
-import AdminLeads from './pages/admin/AdminLeads';
-import AdminCms from './pages/admin/AdminCms';
-import AdminImpact from './pages/admin/AdminImpact';
-import AdminSystem from './pages/admin/AdminSystem';
-import Layout from './components/layout/Layout';
-import PlanGuard from './components/PlanGuard';
+
+// Lazy — dashboard pages
+const Onboarding      = lazy(() => import('./pages/Onboarding'));
+const Dashboard       = lazy(() => import('./pages/Dashboard'));
+const Units           = lazy(() => import('./pages/Units'));
+const Reservations    = lazy(() => import('./pages/Reservations'));
+const Calendar        = lazy(() => import('./pages/Calendar'));
+const Customers       = lazy(() => import('./pages/Customers'));
+const Automations     = lazy(() => import('./pages/Automations'));
+const Financial       = lazy(() => import('./pages/Financial'));
+const Integrations    = lazy(() => import('./pages/Integrations'));
+const Settings        = lazy(() => import('./pages/Settings'));
+const Staff           = lazy(() => import('./pages/Staff'));
+const Reviews         = lazy(() => import('./pages/Reviews'));
+const Profile         = lazy(() => import('./pages/Profile'));
+const Fleet           = lazy(() => import('./pages/Fleet'));
+const Messages        = lazy(() => import('./pages/Messages'));
+const Guides          = lazy(() => import('./pages/Guides'));
+const Marketing       = lazy(() => import('./pages/Marketing'));
+const Analytics       = lazy(() => import('./pages/Analytics'));
+const Loyalty         = lazy(() => import('./pages/Loyalty'));
+const Vouchers        = lazy(() => import('./pages/Vouchers'));
+const Occurrences     = lazy(() => import('./pages/Occurrences'));
+const Feedback        = lazy(() => import('./pages/Feedback'));
+const Weather         = lazy(() => import('./pages/Weather'));
+const Demand          = lazy(() => import('./pages/Demand'));
+const Affiliates      = lazy(() => import('./pages/Affiliates'));
+const AffiliatePortal = lazy(() => import('./pages/AffiliatePortal'));
+const Groups          = lazy(() => import('./pages/Groups'));
+const Packages        = lazy(() => import('./pages/Packages'));
+const Partners        = lazy(() => import('./pages/Partners'));
+const BeachSeller     = lazy(() => import('./pages/BeachSeller'));
+const BeachSale       = lazy(() => import('./pages/BeachSale'));
+const StaffPortal     = lazy(() => import('./pages/StaffPortal'));
+
+// Lazy — admin panel
+const AdminLayout     = lazy(() => import('./components/layout/AdminLayout'));
+const AdminDashboard  = lazy(() => import('./pages/admin/AdminDashboard'));
+const AdminOperators  = lazy(() => import('./pages/admin/AdminOperators'));
+const AdminLeads      = lazy(() => import('./pages/admin/AdminLeads'));
+const AdminCms        = lazy(() => import('./pages/admin/AdminCms'));
+const AdminImpact     = lazy(() => import('./pages/admin/AdminImpact'));
+const AdminSystem     = lazy(() => import('./pages/admin/AdminSystem'));
+
+function AppLoader() {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-n-50">
+      <div className="w-8 h-8 border-2 border-ocean-700 border-t-transparent rounded-full animate-spin" />
+    </div>
+  );
+}
 
 function ProtectedRoute({ children }) {
   const token = useAuthStore((s) => s.token);
@@ -83,6 +98,7 @@ function FounderGuard({ children }) {
 export default function App() {
   return (
     <BrowserRouter>
+      <Suspense fallback={<AppLoader />}>
       <Routes>
         <Route path="/login"    element={<Login />} />
         <Route path="/register"       element={<Register />} />
@@ -147,6 +163,7 @@ export default function App() {
 
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
+      </Suspense>
     </BrowserRouter>
   );
 }
