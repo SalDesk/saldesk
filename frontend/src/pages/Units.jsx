@@ -169,7 +169,7 @@ export default function Units() {
         open={!!modal}
         onClose={() => setModal(null)}
         title={modalTitle}
-        size={opType === 'activity' ? 'lg' : 'md'}
+        size={['activity', 'hotel'].includes(opType) ? 'lg' : 'md'}
         footer={null}
       >
         {modal && (

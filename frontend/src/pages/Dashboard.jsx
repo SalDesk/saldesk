@@ -5,6 +5,7 @@ import {
   Building2, ArrowRight, Car, Utensils,
   Compass, Star, AlertTriangle, Clock, TrendingUp, CheckCircle,
   CloudRain, X as XIcon,
+  Wrench, MoveRight, MoveLeft, BedDouble, Sparkles,
 } from 'lucide-react';
 import usePlan from '../hooks/usePlan';
 import { getResumo } from '../services/financeiroService';
@@ -29,15 +30,20 @@ function mesAtual() {
 /* ─── Shared helpers ─────────────────────────────────────────── */
 
 const CELL = {
-  available: { bg: 'bg-[#ECFDF5]', text: 'text-[#1A7A4A]', dot: 'bg-[#1A7A4A]', label: 'Disponivel' },
-  occupied:  { bg: 'bg-ocean-50',   text: 'text-ocean-700',  dot: 'bg-ocean-500',  label: 'Ocupado'   },
-  checkin:   { bg: 'bg-[#FFFBEB]',  text: 'text-[#92400E]',  dot: 'bg-[#F59E0B]',  label: 'Check-in'  },
-  checkout:  { bg: 'bg-[#FEF3C7]',  text: 'text-[#78350F]',  dot: 'bg-[#D97706]',  label: 'Check-out' },
-  inactive:  { bg: 'bg-n-50',       text: 'text-n-400',      dot: 'bg-n-300',       label: 'Inactivo'  },
+  available:   { bg: 'bg-[#ECFDF5]', text: 'text-[#1A7A4A]',  dot: 'bg-[#1A7A4A]',  label: 'Disponivel' },
+  occupied:    { bg: 'bg-ocean-50',  text: 'text-ocean-700',   dot: 'bg-ocean-500',   label: 'Ocupado'    },
+  checkin:     { bg: 'bg-[#FFFBEB]', text: 'text-[#92400E]',   dot: 'bg-[#F59E0B]',   label: 'Check-in'   },
+  checkout:    { bg: 'bg-[#FEF3C7]', text: 'text-[#78350F]',   dot: 'bg-[#D97706]',   label: 'Check-out'  },
+  cleaning:    { bg: 'bg-orange-50', text: 'text-orange-700',  dot: 'bg-orange-400',  label: 'Limpeza'    },
+  maintenance: { bg: 'bg-[#FEF2F2]', text: 'text-error',       dot: 'bg-error',       label: 'Manutencao' },
+  inactive:    { bg: 'bg-n-50',      text: 'text-n-400',       dot: 'bg-n-300',       label: 'Inactivo'   },
 };
 
 function unitStatus(unit) {
-  return unit.status === 'inactive' || unit.is_active === false ? 'inactive' : null;
+  if (unit.status === 'maintenance') return 'maintenance';
+  if (unit.status === 'cleaning')    return 'cleaning';
+  if (unit.status === 'inactive' || unit.is_active === false) return 'inactive';
+  return null;
 }
 
 function StatusCell({ name, status }) {
@@ -68,27 +74,41 @@ function MapLegend({ keys }) {
 
 /* ─── Type-specific map components ──────────────────────────── */
 
-function HotelMap({ units, todayRes }) {
+function HotelMap({ units, todayRes, onSelect }) {
   const statusMap = useMemo(() => {
     const m = {};
     todayRes.forEach(r => {
-      if (r.status === 'checked_in')                                              { m[r.unit_id] = 'occupied'; return; }
-      if (r.check_out === TODAY && !m[r.unit_id])                                 { m[r.unit_id] = 'checkout'; return; }
-      if (r.check_in === TODAY && r.status === 'confirmed' && !m[r.unit_id])        m[r.unit_id] = 'checkin';
+      if (r.status === 'checked_in')                                               { m[r.unit_id] = 'occupied'; return; }
+      if (r.check_out === TODAY && !m[r.unit_id])                                  { m[r.unit_id] = 'checkout'; return; }
+      if (r.check_in === TODAY && r.status === 'confirmed' && !m[r.unit_id])         m[r.unit_id] = 'checkin';
     });
     return m;
   }, [todayRes]);
 
   if (!units.length)
     return <p className="text-sm font-body text-n-400 py-4">Sem unidades registadas.</p>;
+
   return (
     <>
       <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-2">
-        {units.map(u => (
-          <StatusCell key={u.id} name={u.name} status={unitStatus(u) || statusMap[u.id] || 'available'} />
-        ))}
+        {units.map(u => {
+          const st = unitStatus(u) || statusMap[u.id] || 'available';
+          if (onSelect) {
+            return (
+              <button
+                key={u.id}
+                type="button"
+                onClick={() => onSelect(u)}
+                className="text-left w-full hover:ring-2 hover:ring-ocean-300 rounded-sm transition-all"
+              >
+                <StatusCell name={u.name} status={st} />
+              </button>
+            );
+          }
+          return <StatusCell key={u.id} name={u.name} status={st} />;
+        })}
       </div>
-      <MapLegend keys={['available', 'checkin', 'occupied', 'checkout', 'inactive']} />
+      <MapLegend keys={['available', 'checkin', 'occupied', 'checkout', 'cleaning', 'maintenance', 'inactive']} />
     </>
   );
 }
@@ -146,6 +166,270 @@ function TableMap({ units, todayRes }) {
       </div>
       <MapLegend keys={['available', 'checkin', 'occupied', 'inactive']} />
     </>
+  );
+}
+
+/* ─── Hotel dashboard ───────────────────────────────────────── */
+
+const STATUS_BADGE_MAP_H = {
+  pending: 'pending', confirmed: 'confirmed',
+  checked_in: 'info', checked_out: 'default', cancelled: 'cancelled',
+};
+const STATUS_PT_H = {
+  pending: 'Pendente', confirmed: 'Confirmado',
+  checked_in: 'Activo', checked_out: 'Concluido', cancelled: 'Cancelado',
+};
+
+function HotelDashboard() {
+  const navigate = useNavigate();
+  const periodo  = mesAtual();
+
+  const [units,    setUnits]    = useState([]);
+  const [todayRes, setTodayRes] = useState([]);
+  const [monthRes, setMonthRes] = useState([]);
+  const [resumo,   setResumo]   = useState(null);
+  const [loading,  setLoading]  = useState(true);
+  const [selected, setSelected] = useState(null);
+
+  useEffect(() => {
+    Promise.all([
+      listUnits(),
+      listReservations({ from: TODAY, to: TODAY }),
+      listReservations({ from: periodo.inicio, to: periodo.fim }),
+      getResumo(periodo.inicio, periodo.fim),
+    ])
+      .then(([u, tRes, mRes, res]) => {
+        setUnits(u || []);
+        setTodayRes(tRes || []);
+        setMonthRes(mRes || []);
+        setResumo(res);
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const kpis = useMemo(() => {
+    const active   = units.filter(u => !['inactive', 'maintenance'].includes(u.status) && u.is_active !== false);
+    const occupied = active.filter(u => todayRes.some(r => r.unit_id === u.id && r.status === 'checked_in')).length;
+    const pct      = active.length ? Math.round((occupied / active.length) * 100) : 0;
+    return {
+      ocupacao:  pct,
+      receita:   resumo?.atual?.receita ?? 0,
+      checkins:  todayRes.filter(r => r.check_in  === TODAY && ['pending', 'confirmed'].includes(r.status)).length,
+      checkouts: todayRes.filter(r => r.check_out === TODAY && r.status === 'checked_in').length,
+      pendentes: monthRes.filter(r => r.status === 'pending').length,
+    };
+  }, [units, todayRes, monthRes, resumo]);
+
+  const checkinsHoje  = useMemo(() =>
+    todayRes.filter(r => r.check_in === TODAY && ['pending', 'confirmed'].includes(r.status)),
+    [todayRes]
+  );
+  const checkoutsHoje = useMemo(() =>
+    todayRes.filter(r => r.check_out === TODAY && r.status === 'checked_in'),
+    [todayRes]
+  );
+
+  const alertas = useMemo(() => ({
+    manutencao:      units.filter(u => u.status === 'maintenance'),
+    semConfirmacao:  todayRes.filter(r => r.check_in === TODAY && r.status === 'pending'),
+    limpeza:         units.filter(u => u.status === 'cleaning').length,
+  }), [units, todayRes]);
+
+  const roomRes = useMemo(() => {
+    if (!selected) return null;
+    return todayRes.find(r =>
+      r.unit_id === selected.id && ['checked_in', 'confirmed', 'pending'].includes(r.status)
+    ) || null;
+  }, [selected, todayRes]);
+
+  if (loading) return <div className="flex justify-center py-20"><LoadingSpinner size={32} /></div>;
+
+  return (
+    <div className="space-y-6">
+
+      {/* Alertas */}
+      {(alertas.manutencao.length > 0 || alertas.semConfirmacao.length > 0 || alertas.limpeza > 0) && (
+        <div className="space-y-2">
+          {alertas.manutencao.length > 0 && (
+            <div className="flex items-start gap-3 px-4 py-3 bg-[#FEF2F2] border border-[#FCA5A5] rounded-md">
+              <Wrench size={15} strokeWidth={1.75} className="text-error shrink-0 mt-0.5" />
+              <p className="text-sm font-body text-error flex-1">
+                <span className="font-semibold">{alertas.manutencao.length} quarto(s) em manutencao:</span>{' '}
+                {alertas.manutencao.map(u => u.name).join(', ')}
+              </p>
+            </div>
+          )}
+          {alertas.semConfirmacao.length > 0 && (
+            <div className="flex items-center gap-3 px-4 py-3 bg-[#FFF7ED] border border-[#FDBA74] rounded-md">
+              <AlertTriangle size={15} strokeWidth={1.75} className="text-[#B45309] shrink-0" />
+              <p className="text-sm font-body text-[#B45309] flex-1">
+                <span className="font-semibold">{alertas.semConfirmacao.length} check-in(s) hoje sem confirmacao</span>
+              </p>
+              <button
+                onClick={() => navigate('/reservas')}
+                className="text-xs font-semibold text-[#B45309] underline whitespace-nowrap shrink-0"
+              >
+                Ver reservas
+              </button>
+            </div>
+          )}
+          {alertas.limpeza > 0 && (
+            <div className="flex items-center gap-3 px-4 py-3 bg-orange-50 border border-orange-200 rounded-md">
+              <Sparkles size={15} strokeWidth={1.75} className="text-orange-600 shrink-0" />
+              <p className="text-sm font-body text-orange-700 flex-1">
+                <span className="font-semibold">{alertas.limpeza} quarto(s) com limpeza em curso</span>
+              </p>
+              <button
+                onClick={() => navigate('/housekeeping')}
+                className="text-xs font-semibold text-orange-700 underline whitespace-nowrap shrink-0"
+              >
+                Housekeeping
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* KPIs */}
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
+        <KpiCard label="Ocupacao hoje"      value={kpis.ocupacao}  format="percent" icon={BarChart2}  />
+        <KpiCard label="Receita mes"        value={kpis.receita}   format="euro"    icon={Euro}       />
+        <KpiCard label="Check-ins hoje"     value={kpis.checkins}  icon={MoveRight}                   />
+        <KpiCard label="Check-outs hoje"    value={kpis.checkouts} icon={MoveLeft}                    />
+        <KpiCard label="Reservas pendentes" value={kpis.pendentes} icon={Clock}                       />
+      </div>
+
+      {/* Mapa de quartos */}
+      <div className="bg-white rounded-md border border-n-200 shadow-sm p-5">
+        <div className="flex items-center gap-2 mb-4">
+          <BedDouble size={15} strokeWidth={1.75} className="text-n-500" />
+          <h2 className="font-display font-semibold text-sm text-n-700 uppercase tracking-wide">
+            Mapa de Quartos — Hoje
+          </h2>
+          <button
+            onClick={() => navigate('/housekeeping')}
+            className="ml-auto text-xs font-body text-ocean-700 hover:underline flex items-center gap-1"
+          >
+            <Sparkles size={11} strokeWidth={1.75} />
+            Housekeeping
+          </button>
+        </div>
+        <HotelMap units={units} todayRes={todayRes} onSelect={setSelected} />
+      </div>
+
+      {/* Check-ins + Check-outs */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div className="bg-white rounded-md border border-n-200 shadow-sm">
+          <div className="px-5 py-4 border-b border-n-100 flex items-center gap-2">
+            <MoveRight size={14} strokeWidth={1.75} className="text-[#1A7A4A]" />
+            <h2 className="font-display font-semibold text-sm text-n-700">Check-ins hoje</h2>
+            <span className="ml-auto text-xs font-body text-n-400">{checkinsHoje.length}</span>
+          </div>
+          {checkinsHoje.length === 0 ? (
+            <p className="px-5 py-6 text-center text-xs font-body text-n-400">Nenhum check-in agendado para hoje</p>
+          ) : (
+            <div className="divide-y divide-n-100">
+              {checkinsHoje.map(r => (
+                <div key={r.id} className="px-5 py-3 flex items-center gap-3">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-display font-semibold text-n-900 truncate">{r.customer_name || '—'}</p>
+                    <p className="text-xs font-body text-n-400">
+                      {units.find(u => u.id === r.unit_id)?.name || '—'} · {r.guests || 1} hospede(s)
+                    </p>
+                  </div>
+                  <Badge variant={r.status === 'confirmed' ? 'confirmed' : 'pending'}>
+                    {r.status === 'confirmed' ? 'Confirmado' : 'Pendente'}
+                  </Badge>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="bg-white rounded-md border border-n-200 shadow-sm">
+          <div className="px-5 py-4 border-b border-n-100 flex items-center gap-2">
+            <MoveLeft size={14} strokeWidth={1.75} className="text-n-500" />
+            <h2 className="font-display font-semibold text-sm text-n-700">Check-outs hoje</h2>
+            <span className="ml-auto text-xs font-body text-n-400">{checkoutsHoje.length}</span>
+          </div>
+          {checkoutsHoje.length === 0 ? (
+            <p className="px-5 py-6 text-center text-xs font-body text-n-400">Nenhum check-out agendado para hoje</p>
+          ) : (
+            <div className="divide-y divide-n-100">
+              {checkoutsHoje.map(r => (
+                <div key={r.id} className="px-5 py-3 flex items-center gap-3">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-display font-semibold text-n-900 truncate">{r.customer_name || '—'}</p>
+                    <p className="text-xs font-body text-n-400">
+                      {units.find(u => u.id === r.unit_id)?.name || '—'} · {r.guests || 1} hospede(s)
+                    </p>
+                  </div>
+                  <Badge variant="info">Check-out</Badge>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Room detail overlay */}
+      {selected && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
+          onClick={e => { if (e.target === e.currentTarget) setSelected(null); }}
+        >
+          <div className="bg-white rounded-xl border border-n-200 shadow-2xl p-6 w-full max-w-sm">
+            <div className="flex items-start justify-between mb-4">
+              <div>
+                <h3 className="font-display font-bold text-base text-n-900">{selected.name}</h3>
+                <p className="text-xs font-body text-n-500 mt-0.5">
+                  {selected.unit_type || '—'}
+                  {(() => { try { const m = JSON.parse(selected.description || '{}'); return m.floor ? ` · Andar ${m.floor}` : ''; } catch { return ''; } })()}
+                </p>
+              </div>
+              <button onClick={() => setSelected(null)} className="p-1 text-n-400 hover:text-n-700 rounded">
+                <XIcon size={16} strokeWidth={1.75} />
+              </button>
+            </div>
+
+            {roomRes ? (
+              <div className="bg-n-50 rounded-md p-3 mb-4 space-y-1">
+                <p className="text-sm font-display font-semibold text-n-900">{roomRes.customer_name || '—'}</p>
+                <p className="text-xs font-body text-n-500">
+                  Entrada: {roomRes.check_in} · Saida: {roomRes.check_out}
+                </p>
+                <p className="text-xs font-body text-n-500">{roomRes.guests || 1} hospede(s)</p>
+                <div className="pt-1">
+                  <Badge variant={STATUS_BADGE_MAP_H[roomRes.status] || 'default'}>
+                    {STATUS_PT_H[roomRes.status] || roomRes.status}
+                  </Badge>
+                </div>
+              </div>
+            ) : (
+              <p className="text-sm font-body text-n-400 mb-4">Sem reserva activa para hoje.</p>
+            )}
+
+            <div className="flex gap-2">
+              <button
+                onClick={() => setSelected(null)}
+                className="flex-1 h-9 rounded-md border border-n-200 text-sm font-body text-n-700 hover:bg-n-50 transition-colors"
+              >
+                Fechar
+              </button>
+              <button
+                onClick={() => { navigate('/reservas'); setSelected(null); }}
+                className="flex-1 h-9 rounded-md bg-ocean-700 text-white text-sm font-body font-medium hover:bg-ocean-500 transition-colors flex items-center justify-center gap-1.5"
+              >
+                <BookOpen size={13} strokeWidth={1.75} />
+                Ver reservas
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -756,7 +1040,12 @@ export default function Dashboard() {
         subtitle={`${TYPE_LABEL[opType] || ''} · ${periodo.inicio.slice(0, 7)}`}
       />
       <TrialBanner />
-      {opType === 'activity' ? <ActivityDashboard /> : <GenericDashboard />}
+      {opType === 'activity'
+        ? <ActivityDashboard />
+        : opType === 'hotel'
+          ? <HotelDashboard />
+          : <GenericDashboard />
+      }
     </div>
   );
 }

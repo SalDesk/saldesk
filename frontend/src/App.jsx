@@ -44,6 +44,7 @@ const Partners        = lazy(() => import('./pages/Partners'));
 const BeachSeller     = lazy(() => import('./pages/BeachSeller'));
 const BeachSale       = lazy(() => import('./pages/BeachSale'));
 const StaffPortal     = lazy(() => import('./pages/StaffPortal'));
+const Housekeeping    = lazy(() => import('./pages/Housekeeping'));
 
 // Lazy — admin panel
 const AdminLayout     = lazy(() => import('./components/layout/AdminLayout'));
@@ -118,6 +119,7 @@ export default function App() {
           <Route path="integracoes"   element={<PlanGuard plan="pro"      feature="integracoes">  <Integrations /></PlanGuard>} />
           <Route path="guias"         element={<PlanGuard plan="business" feature="guias">        <Guides /></PlanGuard>} />
           <Route path="colaboradores" element={<PlanGuard plan="business" feature="colaboradores"><Staff /></PlanGuard>} />
+          <Route path="housekeeping"  element={<Housekeeping />} />
           <Route path="frota"         element={<Fleet />} />
           <Route path="mensagens"     element={<Messages />} />
           <Route path="avaliacoes"    element={<Reviews />} />
