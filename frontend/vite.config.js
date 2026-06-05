@@ -35,7 +35,9 @@ export default defineConfig({
             id.includes('/pages/Reservations') ||
             id.includes('/pages/Calendar') ||
             id.includes('/pages/Customers') ||
-            id.includes('/pages/Units')
+            id.includes('/pages/Units') ||
+            id.includes('/pages/Housekeeping') ||
+            id.includes('/pages/Maintenance')
           ) {
             return 'chunk-dashboard';
           }

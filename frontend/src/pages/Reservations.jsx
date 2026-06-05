@@ -1,7 +1,8 @@
 import { useState, useEffect, useMemo } from 'react';
 import {
   Plus, ClipboardList, Pencil, Trash2, ChevronRight, Filter, X,
-  CalendarDays, Mail, UserX, FileText,
+  CalendarDays, Mail, UserX, FileText, Car, MoveRight, MoveLeft,
+  Fuel, AlertTriangle,
 } from 'lucide-react';
 import { listReservations, createReservation, updateReservation, changeStatus, deleteReservation } from '../services/reservationsService';
 import api from '../services/api';
@@ -385,11 +386,388 @@ function NoShowModal({ reservation, open, onClose, onDone }) {
   );
 }
 
+function parseRentacarMeta(r) {
+  try { return JSON.parse(r?.notes_internal || '{}')?.rentacar || {}; } catch { return {}; }
+}
+
+const FUEL_LEVELS = [
+  { value: 0, label: 'Vazio' },
+  { value: 1, label: '1/4'   },
+  { value: 2, label: '1/2'   },
+  { value: 3, label: '3/4'   },
+  { value: 4, label: 'Cheio' },
+];
+
+function FuelSelector({ value, onChange }) {
+  return (
+    <div className="flex gap-1">
+      {FUEL_LEVELS.map(f => (
+        <button
+          key={f.value}
+          type="button"
+          onClick={() => onChange(f.value)}
+          className={`px-2.5 py-1.5 rounded-sm border text-xs font-mono font-medium transition-colors ${
+            value === f.value
+              ? 'bg-ocean-700 border-ocean-700 text-white'
+              : 'bg-n-50 border-n-200 text-n-600 hover:border-ocean-400'
+          }`}
+        >
+          {f.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function LevantamentoModal({ reservation, units, open, onClose, onDone }) {
+  const unit = units.find(u => u.id === reservation?.unit_id);
+  const prevMeta = parseRentacarMeta(reservation);
+
+  const [form, setForm] = useState({
+    fuel_out:    prevMeta.fuel_out    ?? 4,
+    km_out:      prevMeta.km_out      != null ? String(prevMeta.km_out) : '',
+    damages_out: prevMeta.damages_out || '',
+    caucao:      prevMeta.caucao      != null ? String(prevMeta.caucao) : '',
+    caucao_paid: prevMeta.caucao_paid ?? false,
+  });
+  const [saving, setSaving] = useState(false);
+
+  const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
+
+  useEffect(() => {
+    if (reservation) {
+      const m = parseRentacarMeta(reservation);
+      setForm({
+        fuel_out:    m.fuel_out    ?? 4,
+        km_out:      m.km_out      != null ? String(m.km_out) : '',
+        damages_out: m.damages_out || '',
+        caucao:      m.caucao      != null ? String(m.caucao) : '',
+        caucao_paid: m.caucao_paid ?? false,
+      });
+    }
+  }, [reservation]);
+
+  async function handleSave() {
+    if (!reservation) return;
+    setSaving(true);
+    try {
+      let prevInternal = {};
+      try { prevInternal = JSON.parse(reservation.notes_internal || '{}'); } catch {}
+      const rentacarData = { ...parseRentacarMeta(reservation), ...form, km_out: form.km_out ? Number(form.km_out) : null };
+      await updateReservation(reservation.id, {
+        notes_internal: JSON.stringify({ ...prevInternal, rentacar: rentacarData }),
+      });
+      await changeStatus(reservation.id, 'checked_in');
+      onDone();
+    } catch (err) { console.error(err); }
+    finally { setSaving(false); }
+  }
+
+  let unitMeta = {};
+  try { unitMeta = JSON.parse(unit?.description || '{}'); } catch {}
+
+  return (
+    <Modal open={open} onClose={onClose} title="Levantamento de viatura" size="sm" footer={null}>
+      <div className="space-y-5">
+        <div className="flex items-center gap-3 p-3 bg-n-50 rounded-md border border-n-200">
+          <Car size={16} strokeWidth={1.75} className="text-ocean-700 shrink-0" />
+          <div>
+            <p className="font-display font-semibold text-sm text-n-900">
+              {unitMeta.brand ? `${unitMeta.brand} ${unitMeta.model || ''}`.trim() : unit?.name || '—'}
+            </p>
+            {unitMeta.plate && <p className="text-xs font-mono text-n-400">{unitMeta.plate}</p>}
+          </div>
+          <div className="ml-auto text-right">
+            <p className="font-display font-semibold text-sm text-n-900">{reservation?.customer_name || '—'}</p>
+            <p className="text-xs font-body text-n-400">{reservation?.check_in} → {reservation?.check_out}</p>
+          </div>
+        </div>
+
+        <div>
+          <label className="block text-xs font-mono text-n-500 uppercase tracking-wide mb-2">Nivel combustivel (saida)</label>
+          <FuelSelector value={form.fuel_out} onChange={v => set('fuel_out', v)} />
+        </div>
+
+        <div>
+          <label className="block text-xs font-mono text-n-500 uppercase tracking-wide mb-1.5">Km na saida</label>
+          <input type="number" value={form.km_out} onChange={e => set('km_out', e.target.value)} placeholder="0"
+            className="w-full h-9 rounded-md border border-n-200 bg-n-50 px-3 text-sm font-body text-n-900 focus:outline-none focus:ring-2 focus:ring-ocean-700" />
+        </div>
+
+        <div>
+          <label className="block text-xs font-mono text-n-500 uppercase tracking-wide mb-1.5">Danos existentes (registo)</label>
+          <textarea value={form.damages_out} onChange={e => set('damages_out', e.target.value)} rows={2}
+            placeholder="Descrever danos pre-existentes..."
+            className="w-full rounded-md border border-n-200 bg-n-50 px-3 py-2 text-sm font-body text-n-900 focus:outline-none focus:ring-2 focus:ring-ocean-700 resize-none" />
+        </div>
+
+        <div>
+          <label className="block text-xs font-mono text-n-500 uppercase tracking-wide mb-1.5">Caucao (€)</label>
+          <div className="flex gap-3">
+            <input type="number" value={form.caucao} onChange={e => set('caucao', e.target.value)} placeholder="0.00" step="0.01"
+              className="flex-1 h-9 rounded-md border border-n-200 bg-n-50 px-3 text-sm font-body text-n-900 focus:outline-none focus:ring-2 focus:ring-ocean-700" />
+            <label className="flex items-center gap-2 text-sm font-body text-n-700 cursor-pointer">
+              <input type="checkbox" checked={form.caucao_paid} onChange={e => set('caucao_paid', e.target.checked)} className="w-4 h-4 accent-ocean-700" />
+              Paga
+            </label>
+          </div>
+        </div>
+
+        <div className="flex gap-3 pt-1">
+          <button type="button" onClick={onClose} className="flex-1 h-9 rounded-md border border-n-200 text-sm font-body text-n-700 hover:bg-n-50 transition-colors">Cancelar</button>
+          <button type="button" onClick={handleSave} disabled={saving}
+            className="flex-1 h-9 rounded-md bg-ocean-700 text-white text-sm font-body font-medium hover:bg-ocean-500 transition-colors flex items-center justify-center gap-1.5 disabled:opacity-60">
+            <MoveRight size={13} strokeWidth={1.75} />
+            {saving ? 'A processar...' : 'Confirmar levantamento'}
+          </button>
+        </div>
+      </div>
+    </Modal>
+  );
+}
+
+function DevolucaoModal({ reservation, units, open, onClose, onDone }) {
+  const unit = units.find(u => u.id === reservation?.unit_id);
+  const prevMeta = parseRentacarMeta(reservation);
+
+  const [form, setForm] = useState({
+    fuel_in:        prevMeta.fuel_in        ?? 4,
+    km_in:          prevMeta.km_in          != null ? String(prevMeta.km_in) : '',
+    damages_in:     prevMeta.damages_in     || '',
+    caucao_retained:prevMeta.caucao_retained!= null ? String(prevMeta.caucao_retained) : '0',
+    caucao_status:  prevMeta.caucao_status  || 'returned',
+  });
+  const [saving, setSaving] = useState(false);
+
+  const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
+
+  useEffect(() => {
+    if (reservation) {
+      const m = parseRentacarMeta(reservation);
+      setForm({
+        fuel_in:         m.fuel_in        ?? 4,
+        km_in:           m.km_in          != null ? String(m.km_in) : '',
+        damages_in:      m.damages_in     || '',
+        caucao_retained: m.caucao_retained!= null ? String(m.caucao_retained) : '0',
+        caucao_status:   m.caucao_status  || 'returned',
+      });
+    }
+  }, [reservation]);
+
+  async function handleSave() {
+    if (!reservation) return;
+    setSaving(true);
+    try {
+      let prevInternal = {};
+      try { prevInternal = JSON.parse(reservation.notes_internal || '{}'); } catch {}
+      const rentacarData = { ...parseRentacarMeta(reservation), ...form, km_in: form.km_in ? Number(form.km_in) : null, caucao_retained: Number(form.caucao_retained) || 0 };
+      await updateReservation(reservation.id, {
+        notes_internal: JSON.stringify({ ...prevInternal, rentacar: rentacarData }),
+      });
+      await changeStatus(reservation.id, 'checked_out');
+      onDone();
+    } catch (err) { console.error(err); }
+    finally { setSaving(false); }
+  }
+
+  let unitMeta = {};
+  try { unitMeta = JSON.parse(unit?.description || '{}'); } catch {}
+  const prevKmOut = prevMeta.km_out;
+  const kmTotal   = form.km_in && prevKmOut ? Number(form.km_in) - Number(prevKmOut) : null;
+
+  return (
+    <Modal open={open} onClose={onClose} title="Devolucao de viatura" size="sm" footer={null}>
+      <div className="space-y-5">
+        <div className="flex items-center gap-3 p-3 bg-n-50 rounded-md border border-n-200">
+          <Car size={16} strokeWidth={1.75} className="text-n-500 shrink-0" />
+          <div>
+            <p className="font-display font-semibold text-sm text-n-900">
+              {unitMeta.brand ? `${unitMeta.brand} ${unitMeta.model || ''}`.trim() : unit?.name || '—'}
+            </p>
+            {unitMeta.plate && <p className="text-xs font-mono text-n-400">{unitMeta.plate}</p>}
+          </div>
+          <div className="ml-auto text-right">
+            <p className="font-display font-semibold text-sm text-n-900">{reservation?.customer_name || '—'}</p>
+            {prevKmOut && <p className="text-xs font-body text-n-400">Saida: {Number(prevKmOut).toLocaleString()} km</p>}
+          </div>
+        </div>
+
+        <div>
+          <label className="block text-xs font-mono text-n-500 uppercase tracking-wide mb-2">Nivel combustivel (chegada)</label>
+          <FuelSelector value={form.fuel_in} onChange={v => set('fuel_in', v)} />
+        </div>
+
+        <div>
+          <label className="block text-xs font-mono text-n-500 uppercase tracking-wide mb-1.5">Km na chegada</label>
+          <div className="flex items-center gap-3">
+            <input type="number" value={form.km_in} onChange={e => set('km_in', e.target.value)} placeholder="0"
+              className="flex-1 h-9 rounded-md border border-n-200 bg-n-50 px-3 text-sm font-body text-n-900 focus:outline-none focus:ring-2 focus:ring-ocean-700" />
+            {kmTotal !== null && (
+              <span className="text-sm font-mono text-n-600 whitespace-nowrap">{kmTotal.toLocaleString()} km percorridos</span>
+            )}
+          </div>
+        </div>
+
+        <div>
+          <label className="block text-xs font-mono text-n-500 uppercase tracking-wide mb-1.5">Danos na devolucao</label>
+          <textarea value={form.damages_in} onChange={e => set('damages_in', e.target.value)} rows={2}
+            placeholder="Descrever danos verificados na chegada..."
+            className="w-full rounded-md border border-n-200 bg-n-50 px-3 py-2 text-sm font-body text-n-900 focus:outline-none focus:ring-2 focus:ring-ocean-700 resize-none" />
+        </div>
+
+        <div>
+          <label className="block text-xs font-mono text-n-500 uppercase tracking-wide mb-2">Caucao</label>
+          <div className="flex gap-2 mb-3">
+            {[
+              { value: 'returned', label: 'Devolvida' },
+              { value: 'retained', label: 'Retida (parcial)' },
+              { value: 'full',     label: 'Retida (total)' },
+            ].map(o => (
+              <button key={o.value} type="button" onClick={() => set('caucao_status', o.value)}
+                className={`flex-1 px-2 py-1.5 rounded-sm border text-xs font-mono font-medium transition-colors ${
+                  form.caucao_status === o.value ? 'bg-ocean-700 border-ocean-700 text-white' : 'bg-n-50 border-n-200 text-n-600 hover:border-ocean-400'
+                }`}>
+                {o.label}
+              </button>
+            ))}
+          </div>
+          {form.caucao_status !== 'returned' && (
+            <div>
+              <label className="block text-xs font-mono text-n-500 uppercase tracking-wide mb-1.5">Valor retido (€)</label>
+              <input type="number" value={form.caucao_retained} onChange={e => set('caucao_retained', e.target.value)} placeholder="0.00" step="0.01"
+                className="w-full h-9 rounded-md border border-n-200 bg-n-50 px-3 text-sm font-body text-n-900 focus:outline-none focus:ring-2 focus:ring-ocean-700" />
+            </div>
+          )}
+        </div>
+
+        <div className="flex gap-3 pt-1">
+          <button type="button" onClick={onClose} className="flex-1 h-9 rounded-md border border-n-200 text-sm font-body text-n-700 hover:bg-n-50 transition-colors">Cancelar</button>
+          <button type="button" onClick={handleSave} disabled={saving}
+            className="flex-1 h-9 rounded-md bg-ocean-700 text-white text-sm font-body font-medium hover:bg-ocean-500 transition-colors flex items-center justify-center gap-1.5 disabled:opacity-60">
+            <MoveLeft size={13} strokeWidth={1.75} />
+            {saving ? 'A processar...' : 'Confirmar devolucao'}
+          </button>
+        </div>
+      </div>
+    </Modal>
+  );
+}
+
+function RentacarTable({ reservations, units, onEdit, onLevantamento, onDevolucao, onUpdate }) {
+  const t = useT();
+  const [actionLoading, setActionLoading] = useState(null);
+
+  async function handleCancel(r) {
+    setActionLoading(r.id);
+    try {
+      const updated = await changeStatus(r.id, 'cancelled');
+      onUpdate(updated);
+    } catch (err) { console.error(err); }
+    finally { setActionLoading(null); }
+  }
+
+  if (reservations.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 text-n-400">
+        <Car size={40} strokeWidth={1.25} className="mb-3" />
+        <p className="font-body text-sm">{t('common.noResults')}</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="bg-white rounded-md border border-n-200 shadow-sm overflow-hidden">
+      <div className="overflow-x-auto">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-b border-n-200 bg-n-50">
+              <th className="text-left px-4 py-3 text-xs font-body font-bold uppercase tracking-wide text-n-500 whitespace-nowrap">Ref</th>
+              <th className="text-left px-4 py-3 text-xs font-body font-bold uppercase tracking-wide text-n-500 whitespace-nowrap">Viatura</th>
+              <th className="text-left px-4 py-3 text-xs font-body font-bold uppercase tracking-wide text-n-500 whitespace-nowrap">Levantamento</th>
+              <th className="text-left px-4 py-3 text-xs font-body font-bold uppercase tracking-wide text-n-500 whitespace-nowrap">Devolucao</th>
+              <th className="text-left px-4 py-3 text-xs font-body font-bold uppercase tracking-wide text-n-500 whitespace-nowrap">Cliente</th>
+              <th className="text-left px-4 py-3 text-xs font-body font-bold uppercase tracking-wide text-n-500 whitespace-nowrap">Estado</th>
+              <th className="text-right px-4 py-3 text-xs font-body font-bold uppercase tracking-wide text-n-500 whitespace-nowrap">Total</th>
+              <th className="px-4 py-3" />
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-n-100">
+            {reservations.map(r => {
+              const unit = units.find(u => u.id === r.unit_id);
+              let unitMeta = {};
+              try { unitMeta = JSON.parse(unit?.description || '{}'); } catch {}
+              const rcMeta = parseRentacarMeta(r);
+              const isLoading = actionLoading === r.id;
+
+              return (
+                <tr key={r.id} className="hover:bg-n-50 transition-colors">
+                  <td className="px-4 py-3">
+                    <span className="text-xs font-mono text-n-400">{r.id?.slice(0, 8)}</span>
+                  </td>
+                  <td className="px-4 py-3">
+                    <p className="font-display font-semibold text-sm text-n-900 truncate max-w-[120px]">
+                      {unitMeta.brand ? `${unitMeta.brand} ${unitMeta.model || ''}`.trim() : unit?.name || '—'}
+                    </p>
+                    {unitMeta.plate && <p className="text-xs font-mono text-n-400">{unitMeta.plate}</p>}
+                  </td>
+                  <td className="px-4 py-3 whitespace-nowrap">
+                    <span className="text-sm font-body text-n-700">{formatDate(r.check_in)}</span>
+                    {rcMeta.km_out && <p className="text-xs font-mono text-n-400">{Number(rcMeta.km_out).toLocaleString()} km</p>}
+                  </td>
+                  <td className="px-4 py-3 whitespace-nowrap">
+                    <span className="text-sm font-body text-n-700">{formatDate(r.check_out)}</span>
+                    {rcMeta.km_in && <p className="text-xs font-mono text-n-400">{Number(rcMeta.km_in).toLocaleString()} km</p>}
+                  </td>
+                  <td className="px-4 py-3">
+                    <p className="text-sm font-body text-n-900 truncate max-w-[120px]">{r.customer_name || '—'}</p>
+                  </td>
+                  <td className="px-4 py-3">
+                    <Badge variant={r.status}>{t(`reservations.status.${r.status}`)}</Badge>
+                  </td>
+                  <td className="px-4 py-3 text-right whitespace-nowrap">
+                    <span className="font-display font-bold text-sm text-ocean-700">
+                      €{Number(r.total_price || r.total_amount || 0).toFixed(0)}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3">
+                    <div className="flex items-center gap-1 justify-end flex-wrap">
+                      {['pending', 'confirmed'].includes(r.status) && (
+                        <button
+                          onClick={() => onLevantamento(r)}
+                          className="flex items-center gap-1 px-2 py-1 rounded-xs bg-[#1A7A4A] text-white text-xs font-body font-medium hover:bg-[#15623C] transition-colors whitespace-nowrap"
+                        >
+                          <MoveRight size={11} strokeWidth={2} />
+                          Levantamento
+                        </button>
+                      )}
+                      {r.status === 'checked_in' && (
+                        <button
+                          onClick={() => onDevolucao(r)}
+                          className="flex items-center gap-1 px-2 py-1 rounded-xs bg-ocean-700 text-white text-xs font-body font-medium hover:bg-ocean-500 transition-colors whitespace-nowrap"
+                        >
+                          <MoveLeft size={11} strokeWidth={2} />
+                          Devolucao
+                        </button>
+                      )}
+                      <Button variant="ghost" size="sm" icon={Pencil} onClick={() => onEdit(r)} aria-label="Editar" />
+                    </div>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
 export default function Reservations() {
   const t = useT();
   const { operator } = useAuthStore();
   const opType = operator?.operator_type || 'hotel';
-  const isActivity = opType === 'activity';
+  const isActivity  = opType === 'activity';
+  const isRentacar  = opType === 'rentacar';
 
   const [reservations,    setReservations]    = useState([]);
   const [units,           setUnits]           = useState([]);
@@ -401,6 +779,8 @@ export default function Reservations() {
   const [rescheduleRes,   setRescheduleRes]   = useState(null);
   const [noShowRes,       setNoShowRes]       = useState(null);
   const [voucherLoading,  setVoucherLoading]  = useState(null);
+  const [levantamentoRes, setLevantamentoRes] = useState(null);
+  const [devolucaoRes,    setDevolucaoRes]    = useState(null);
 
   const [statusFilter, setStatusFilter] = useState('');
   const [tourFilter,   setTourFilter]   = useState('');
@@ -590,6 +970,15 @@ export default function Reservations() {
           onVoucher={handleSendVoucher}
           voucherLoading={voucherLoading}
         />
+      ) : isRentacar ? (
+        <RentacarTable
+          reservations={filtered}
+          units={units}
+          onEdit={r => { setFormError(''); setModal(r); }}
+          onLevantamento={setLevantamentoRes}
+          onDevolucao={setDevolucaoRes}
+          onUpdate={u => handleUpdate(u)}
+        />
       ) : filtered.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 text-n-400">
           <p className="font-body text-sm">{t('common.noResults')}</p>
@@ -653,6 +1042,32 @@ export default function Reservations() {
             r.id === noShowRes?.id ? { ...r, status: 'no_show' } : r
           ));
           setNoShowRes(null);
+        }}
+      />
+
+      <LevantamentoModal
+        reservation={levantamentoRes}
+        units={units}
+        open={!!levantamentoRes}
+        onClose={() => setLevantamentoRes(null)}
+        onDone={() => {
+          setReservations(prev => prev.map(r =>
+            r.id === levantamentoRes?.id ? { ...r, status: 'checked_in' } : r
+          ));
+          setLevantamentoRes(null);
+        }}
+      />
+
+      <DevolucaoModal
+        reservation={devolucaoRes}
+        units={units}
+        open={!!devolucaoRes}
+        onClose={() => setDevolucaoRes(null)}
+        onDone={() => {
+          setReservations(prev => prev.map(r =>
+            r.id === devolucaoRes?.id ? { ...r, status: 'checked_out' } : r
+          ));
+          setDevolucaoRes(null);
         }}
       />
     </div>
