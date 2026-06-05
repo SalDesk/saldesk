@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import PlanGuard from '../components/PlanGuard';
 import {
   Plus, Pencil, Trash2, Star, Camera, Upload, X, Tag,
   Phone, Mail, Award, Globe2, Clock, Briefcase, Search,

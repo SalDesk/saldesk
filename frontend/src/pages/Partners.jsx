@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import PlanGuard from '../components/PlanGuard';
 import {
   Handshake, Plus, Pencil, Trash2, ArrowUpRight, ArrowDownRight,
   Hotel, Car, Utensils, Compass, ToggleLeft, ToggleRight,

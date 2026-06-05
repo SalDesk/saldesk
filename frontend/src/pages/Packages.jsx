@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import PlanGuard from '../components/PlanGuard';
 import {
   Package, Plus, Pencil, Trash2, Eye, EyeOff,
   BarChart2, Image as ImageIcon, Copy, Check,

@@ -4,8 +4,9 @@ import {
   FileSpreadsheet, FileText, ArrowUpRight, ArrowDownRight,
   Minus, Receipt, RefreshCw, Wallet, Edit2,
   CalendarDays, AlertTriangle, Layers, Plus, Trash2,
-  Users, Percent, Calculator, Check, Save,
+  Users, Percent, Calculator, Check, Save, Lock,
 } from 'lucide-react';
+import usePlan from '../hooks/usePlan';
 import {
   PieChart, Pie, Cell,
   BarChart, Bar, XAxis, YAxis, Tooltip as ChartTooltip,
@@ -26,6 +27,7 @@ import {
 } from '../services/sellerService';
 import { listStaff } from '../services/staffService';
 import { useT } from '../i18n';
+import PlanGuard from '../components/PlanGuard';
 import PageHeader from '../components/layout/PageHeader';
 import Button from '../components/ui/Button';
 import Card from '../components/ui/Card';
@@ -43,12 +45,12 @@ const EUR_CVE = 110;
 const TOUR_COSTS_KEY = 'saldesk_tour_costs_v1';
 
 const SECTIONS = [
-  { key: 'receitas',   label: 'Receitas',   Icon: TrendingUp   },
-  { key: 'despesas',   label: 'Despesas',   Icon: TrendingDown  },
-  { key: 'salarios',   label: 'Salarios',   Icon: Users         },
-  { key: 'comissoes',  label: 'Comissoes',  Icon: Percent       },
-  { key: 'obrigacoes', label: 'Obrigacoes', Icon: AlertTriangle  },
-  { key: 'resultado',  label: 'Resultado',  Icon: Calculator    },
+  { key: 'receitas',   label: 'Receitas',   Icon: TrendingUp,   pro: false },
+  { key: 'despesas',   label: 'Despesas',   Icon: TrendingDown,  pro: true  },
+  { key: 'salarios',   label: 'Salarios',   Icon: Users,         pro: true  },
+  { key: 'comissoes',  label: 'Comissoes',  Icon: Percent,       pro: false },
+  { key: 'obrigacoes', label: 'Obrigacoes', Icon: AlertTriangle,  pro: true  },
+  { key: 'resultado',  label: 'Resultado',  Icon: Calculator,    pro: true  },
 ];
 
 const RECEITAS_TABS = [
@@ -1068,6 +1070,7 @@ function ResultadoTab({ resumo, currency, sazonal }) {
 /* ─────────────────── MAIN ─────────────────── */
 export default function Financial() {
   useT();
+  const { canAccess } = usePlan();
   const [activeSec,     setActiveSec]     = useState('receitas');
   const [activeTab,     setActiveTab]     = useState('geral');
   const [periodo,       setPeriodo]       = useState(ultimos30);
@@ -1184,14 +1187,18 @@ export default function Financial() {
 
       {/* Section tabs (top level) */}
       <div className="flex gap-0.5 overflow-x-auto border-b border-n-200 mb-5">
-        {SECTIONS.map(({ key, label, Icon }) => (
-          <button key={key} onClick={() => setActiveSec(key)}
-            className={`flex items-center gap-2 px-4 py-2.5 text-sm font-body font-semibold border-b-2 -mb-px transition-colors whitespace-nowrap ${
-              activeSec === key ? 'border-ocean-700 text-ocean-700' : 'border-transparent text-n-500 hover:text-n-700'
-            }`}>
-            <Icon size={15} strokeWidth={1.75} />{label}
-          </button>
-        ))}
+        {SECTIONS.map(({ key, label, Icon, pro }) => {
+          const locked = pro && !canAccess('financeiro-completo');
+          return (
+            <button key={key} onClick={() => setActiveSec(key)}
+              className={`flex items-center gap-2 px-4 py-2.5 text-sm font-body font-semibold border-b-2 -mb-px transition-colors whitespace-nowrap ${
+                activeSec === key ? 'border-ocean-700 text-ocean-700' : 'border-transparent text-n-500 hover:text-n-700'
+              }`}>
+              <Icon size={15} strokeWidth={1.75} />{label}
+              {locked && <Lock size={11} strokeWidth={1.75} className="text-n-300 shrink-0" />}
+            </button>
+          );
+        })}
       </div>
 
       {/* ── RECEITAS section ── */}
@@ -1281,11 +1288,11 @@ export default function Financial() {
         </>
       )}
 
-      {activeSec === 'despesas'   && <DespesasTab   currency={currency} staff={staff} />}
-      {activeSec === 'salarios'   && <SalariosTab   currency={currency} />}
+      {activeSec === 'despesas'   && <PlanGuard plan="pro" feature="financeiro-completo"><DespesasTab   currency={currency} staff={staff} /></PlanGuard>}
+      {activeSec === 'salarios'   && <PlanGuard plan="pro" feature="financeiro-completo"><SalariosTab   currency={currency} /></PlanGuard>}
       {activeSec === 'comissoes'  && <ComissoesTab  currency={currency} />}
-      {activeSec === 'obrigacoes' && <ObrigacoesTab currency={currency} />}
-      {activeSec === 'resultado'  && <ResultadoTab  resumo={resumo} currency={currency} sazonal={sazonal} />}
+      {activeSec === 'obrigacoes' && <PlanGuard plan="pro" feature="financeiro-completo"><ObrigacoesTab currency={currency} /></PlanGuard>}
+      {activeSec === 'resultado'  && <PlanGuard plan="pro" feature="financeiro-completo"><ResultadoTab  resumo={resumo} currency={currency} sazonal={sazonal} /></PlanGuard>}
 
       {/* CVE/EUR toggle for non-receitas sections */}
       {activeSec !== 'receitas' && (

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import PlanGuard from '../components/PlanGuard';
 import {
   Users2, Plus, Pencil, Trash2, ChevronDown, ChevronUp,
   Building2, Euro, CalendarDays, FileText, Check,

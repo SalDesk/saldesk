@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
+import PlanGuard from '../components/PlanGuard';
 import {
   TrendingUp, TrendingDown, Gift, AlertTriangle,
   BarChart2, RefreshCw, Calendar, Zap, Minus,

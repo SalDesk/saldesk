@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { RefreshCw, Link2, Link2Off, CheckCircle, XCircle, Clock, AlertTriangle } from 'lucide-react';
+import PlanGuard from '../components/PlanGuard';
 import { getStatus, connectChannel, disconnectChannel, syncManual, getLogs } from '../services/integrationsService';
 import { useT } from '../i18n';
 import PageHeader from '../components/layout/PageHeader';

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import PlanGuard from '../components/PlanGuard';
 import {
   Activity, TrendingUp, TrendingDown, Star,
   Users, Globe, BarChart2, RefreshCw, Mail,

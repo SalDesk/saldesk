@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import PlanGuard from '../components/PlanGuard';
 import {
   Mail, MessageCircle, Calendar, Star, Gift, Newspaper,
   ChevronDown, ChevronUp, Eye, Edit2, Save, X as XIcon,

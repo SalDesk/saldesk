@@ -6,6 +6,7 @@ import {
   Compass, Star, AlertTriangle, Clock, TrendingUp, CheckCircle,
   CloudRain, X as XIcon,
 } from 'lucide-react';
+import usePlan from '../hooks/usePlan';
 import { getResumo } from '../services/financeiroService';
 import { listUnits } from '../services/unitsService';
 import { listReservations } from '../services/reservationsService';
@@ -676,6 +677,66 @@ function ActivityDashboard() {
   );
 }
 
+/* ─── Trial banner ───────────────────────────────────────────── */
+
+function TrialBanner() {
+  const navigate = useNavigate();
+  const { isInTrial, isTrialExpired, trialDaysLeft } = usePlan();
+
+  if (isTrialExpired()) {
+    return (
+      <div className="mb-6 flex flex-wrap items-center gap-3 px-4 py-3 bg-[#FEF2F2] border border-[#FCA5A5] rounded-md">
+        <AlertTriangle size={16} strokeWidth={1.75} className="text-error shrink-0" />
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-body font-semibold text-error">Periodo de avaliacao expirado</p>
+          <p className="text-xs font-body text-red-600">O teu acesso esta limitado. Subscreve um plano para continuar.</p>
+        </div>
+        <button
+          onClick={() => navigate('/definicoes')}
+          className="flex items-center gap-1.5 h-8 px-3 rounded-md bg-error text-white text-xs font-body font-semibold hover:bg-red-700 transition-colors shrink-0"
+        >
+          Ver planos
+          <ArrowRight size={13} strokeWidth={1.75} />
+        </button>
+      </div>
+    );
+  }
+
+  if (!isInTrial()) return null;
+
+  const days    = trialDaysLeft();
+  const urgent  = days <= 7;
+
+  return (
+    <div className={`mb-6 flex flex-wrap items-center gap-3 px-4 py-3 rounded-md border ${
+      urgent ? 'bg-[#FFF7ED] border-[#FDBA74]' : 'bg-ocean-50 border-ocean-200'
+    }`}>
+      <Clock size={16} strokeWidth={1.75} className={`shrink-0 ${urgent ? 'text-[#B45309]' : 'text-ocean-600'}`} />
+      <div className="flex-1 min-w-0">
+        <p className={`text-sm font-body font-semibold ${urgent ? 'text-[#B45309]' : 'text-ocean-700'}`}>
+          {days === 0
+            ? 'Ultimo dia do periodo de avaliacao'
+            : `${days} dia${days !== 1 ? 's' : ''} restante${days !== 1 ? 's' : ''} no periodo de avaliacao`}
+        </p>
+        <p className={`text-xs font-body ${urgent ? 'text-orange-600' : 'text-ocean-600'}`}>
+          Faz upgrade para continuar a usar todas as funcionalidades sem interrupcoes.
+        </p>
+      </div>
+      <button
+        onClick={() => navigate('/definicoes')}
+        className={`flex items-center gap-1.5 h-8 px-3 rounded-md text-xs font-body font-semibold transition-colors shrink-0 ${
+          urgent
+            ? 'bg-[#B45309] text-white hover:bg-[#92400E]'
+            : 'bg-ocean-700 text-white hover:bg-ocean-500'
+        }`}
+      >
+        Ver planos
+        <ArrowRight size={13} strokeWidth={1.75} />
+      </button>
+    </div>
+  );
+}
+
 /* ─── Main export ────────────────────────────────────────────── */
 
 const TYPE_LABEL = {
@@ -694,6 +755,7 @@ export default function Dashboard() {
         title={`Bem-vindo, ${operator?.name || ''}`}
         subtitle={`${TYPE_LABEL[opType] || ''} · ${periodo.inicio.slice(0, 7)}`}
       />
+      <TrialBanner />
       {opType === 'activity' ? <ActivityDashboard /> : <GenericDashboard />}
     </div>
   );

@@ -1,41 +1,46 @@
+import { useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, Calendar, CalendarDays,
   Users, UserCheck, UsersRound, BarChart2,
   Star, MessageCircle, Globe, Megaphone, Settings,
-  LogOut, X, ExternalLink, User,
+  LogOut, X, ExternalLink, User, Lock, Zap,
   Compass, Hotel, Car, Truck, UtensilsCrossed, ChefHat, Wrench,
   Activity, Award, Tag, FileWarning, ThumbsUp, CloudSun, LineChart,
   UserPlus, Users2, Package, Handshake,
 } from 'lucide-react';
 import useAuthStore from '../../store/authStore';
+import usePlan from '../../hooks/usePlan';
+import { UpgradeModal } from '../PlanGuard';
 import Logo from '../shared/Logo';
 
+/* requiredPlan: plan gate | feature: key for UpgradeModal description */
 const TYPE_NAV = {
   activity: [
     { to: '/',              icon: LayoutDashboard, label: 'Dashboard',         end: true },
     { to: '/unidades',      icon: Compass,         label: 'Tours & Actividades'          },
     { to: '/reservas',      icon: Calendar,        label: 'Reservas'                     },
     { to: '/calendario',    icon: CalendarDays,    label: 'Calendario'                   },
-    { to: '/guias',         icon: Users,           label: 'Guias'                        },
+    { to: '/guias',         icon: Users,           label: 'Guias',            requiredPlan: 'business', feature: 'guias'          },
     { to: '/clientes',      icon: UserCheck,       label: 'Clientes'                     },
-    { to: '/colaboradores', icon: UsersRound,      label: 'Colaboradores'                },
+    { to: '/colaboradores', icon: UsersRound,      label: 'Colaboradores',    requiredPlan: 'business', feature: 'colaboradores'  },
     { to: '/financeiro',    icon: BarChart2,       label: 'Financeiro'                   },
-    { to: '/analytics',     icon: Activity,        label: 'Analytics'                    },
-    { to: '/meteorologia',  icon: CloudSun,        label: 'Meteorologia'                 },
-    { to: '/previsao',      icon: LineChart,       label: 'Previsao'                     },
+    { to: '/analytics',     icon: Activity,        label: 'Analytics',        requiredPlan: 'business', feature: 'analytics'      },
+    { to: '/meteorologia',  icon: CloudSun,        label: 'Meteorologia',     requiredPlan: 'business', feature: 'meteorologia'   },
+    { to: '/previsao',      icon: LineChart,       label: 'Previsao',         requiredPlan: 'pro',      feature: 'previsao'       },
     { to: '/avaliacoes',    icon: Star,            label: 'Avaliacoes'                   },
     { to: '/ocorrencias',   icon: FileWarning,     label: 'Ocorrencias'                  },
     { to: '/feedback',      icon: ThumbsUp,        label: 'Feedback'                     },
     { to: '/mensagens',     icon: MessageCircle,   label: 'Mensagens'                    },
-    { to: '/integracoes',   icon: Globe,           label: 'Channel Manager'              },
-    { to: '/marketing',     icon: Megaphone,       label: 'Marketing'                    },
-    { to: '/fidelidade',    icon: Award,           label: 'Fidelidade'                   },
-    { to: '/vouchers',      icon: Tag,             label: 'Vouchers'                     },
-    { to: '/afiliados',     icon: UserPlus,        label: 'Afiliados'                    },
-    { to: '/grupos',        icon: Users2,          label: 'Grupos'                       },
-    { to: '/pacotes',       icon: Package,         label: 'Pacotes'                      },
-    { to: '/parcerias',     icon: Handshake,       label: 'Parcerias'                    },
+    { to: '/integracoes',   icon: Globe,           label: 'Channel Manager',  requiredPlan: 'pro',      feature: 'integracoes'    },
+    { to: '/marketing',     icon: Megaphone,       label: 'Marketing',        requiredPlan: 'business', feature: 'marketing'      },
+    { to: '/automacoes',    icon: Zap,             label: 'Automacoes',       requiredPlan: 'pro',      feature: 'automacoes'     },
+    { to: '/fidelidade',    icon: Award,           label: 'Fidelidade',       requiredPlan: 'pro',      feature: 'fidelidade'     },
+    { to: '/vouchers',      icon: Tag,             label: 'Vouchers',         requiredPlan: 'business', feature: 'vouchers'       },
+    { to: '/afiliados',     icon: UserPlus,        label: 'Afiliados',        requiredPlan: 'business', feature: 'afiliados'      },
+    { to: '/grupos',        icon: Users2,          label: 'Grupos',           requiredPlan: 'pro',      feature: 'grupos'         },
+    { to: '/pacotes',       icon: Package,         label: 'Pacotes',          requiredPlan: 'pro',      feature: 'pacotes'        },
+    { to: '/parcerias',     icon: Handshake,       label: 'Parcerias',        requiredPlan: 'pro',      feature: 'parcerias'      },
     { to: '/definicoes',    icon: Settings,        label: 'Definicoes'                   },
   ],
   hotel: [
@@ -44,22 +49,23 @@ const TYPE_NAV = {
     { to: '/reservas',      icon: Calendar,        label: 'Reservas'                },
     { to: '/calendario',    icon: CalendarDays,    label: 'Calendario'              },
     { to: '/clientes',      icon: UserCheck,       label: 'Clientes'                },
-    { to: '/colaboradores', icon: UsersRound,      label: 'Colaboradores'           },
+    { to: '/colaboradores', icon: UsersRound,      label: 'Colaboradores',  requiredPlan: 'business', feature: 'colaboradores' },
     { to: '/financeiro',    icon: BarChart2,       label: 'Financeiro'              },
-    { to: '/analytics',     icon: Activity,        label: 'Analytics'               },
-    { to: '/meteorologia',  icon: CloudSun,        label: 'Meteorologia'            },
-    { to: '/previsao',      icon: LineChart,       label: 'Previsao'                },
+    { to: '/analytics',     icon: Activity,        label: 'Analytics',      requiredPlan: 'business', feature: 'analytics'     },
+    { to: '/meteorologia',  icon: CloudSun,        label: 'Meteorologia',   requiredPlan: 'business', feature: 'meteorologia'  },
+    { to: '/previsao',      icon: LineChart,       label: 'Previsao',       requiredPlan: 'pro',      feature: 'previsao'      },
     { to: '/avaliacoes',    icon: Star,            label: 'Avaliacoes'              },
     { to: '/ocorrencias',   icon: FileWarning,     label: 'Ocorrencias'             },
     { to: '/feedback',      icon: ThumbsUp,        label: 'Feedback'                },
     { to: '/mensagens',     icon: MessageCircle,   label: 'Mensagens'               },
-    { to: '/marketing',     icon: Megaphone,       label: 'Marketing'               },
-    { to: '/fidelidade',    icon: Award,           label: 'Fidelidade'              },
-    { to: '/vouchers',      icon: Tag,             label: 'Vouchers'                },
-    { to: '/afiliados',     icon: UserPlus,        label: 'Afiliados'               },
-    { to: '/grupos',        icon: Users2,          label: 'Grupos'                  },
-    { to: '/pacotes',       icon: Package,         label: 'Pacotes'                 },
-    { to: '/parcerias',     icon: Handshake,       label: 'Parcerias'               },
+    { to: '/marketing',     icon: Megaphone,       label: 'Marketing',      requiredPlan: 'business', feature: 'marketing'     },
+    { to: '/automacoes',    icon: Zap,             label: 'Automacoes',     requiredPlan: 'pro',      feature: 'automacoes'    },
+    { to: '/fidelidade',    icon: Award,           label: 'Fidelidade',     requiredPlan: 'pro',      feature: 'fidelidade'    },
+    { to: '/vouchers',      icon: Tag,             label: 'Vouchers',       requiredPlan: 'business', feature: 'vouchers'      },
+    { to: '/afiliados',     icon: UserPlus,        label: 'Afiliados',      requiredPlan: 'business', feature: 'afiliados'     },
+    { to: '/grupos',        icon: Users2,          label: 'Grupos',         requiredPlan: 'pro',      feature: 'grupos'        },
+    { to: '/pacotes',       icon: Package,         label: 'Pacotes',        requiredPlan: 'pro',      feature: 'pacotes'       },
+    { to: '/parcerias',     icon: Handshake,       label: 'Parcerias',      requiredPlan: 'pro',      feature: 'parcerias'     },
     { to: '/definicoes',    icon: Settings,        label: 'Definicoes'              },
   ],
   rentacar: [
@@ -69,22 +75,23 @@ const TYPE_NAV = {
     { to: '/calendario',    icon: CalendarDays,    label: 'Calendario'              },
     { to: '/manutencao',    icon: Wrench,          label: 'Manutencao'              },
     { to: '/clientes',      icon: UserCheck,       label: 'Clientes'                },
-    { to: '/colaboradores', icon: UsersRound,      label: 'Colaboradores'           },
+    { to: '/colaboradores', icon: UsersRound,      label: 'Colaboradores',  requiredPlan: 'business', feature: 'colaboradores' },
     { to: '/financeiro',    icon: BarChart2,       label: 'Financeiro'              },
-    { to: '/analytics',     icon: Activity,        label: 'Analytics'               },
-    { to: '/meteorologia',  icon: CloudSun,        label: 'Meteorologia'            },
-    { to: '/previsao',      icon: LineChart,       label: 'Previsao'                },
+    { to: '/analytics',     icon: Activity,        label: 'Analytics',      requiredPlan: 'business', feature: 'analytics'     },
+    { to: '/meteorologia',  icon: CloudSun,        label: 'Meteorologia',   requiredPlan: 'business', feature: 'meteorologia'  },
+    { to: '/previsao',      icon: LineChart,       label: 'Previsao',       requiredPlan: 'pro',      feature: 'previsao'      },
     { to: '/avaliacoes',    icon: Star,            label: 'Avaliacoes'              },
     { to: '/ocorrencias',   icon: FileWarning,     label: 'Ocorrencias'             },
     { to: '/feedback',      icon: ThumbsUp,        label: 'Feedback'                },
     { to: '/mensagens',     icon: MessageCircle,   label: 'Mensagens'               },
-    { to: '/marketing',     icon: Megaphone,       label: 'Marketing'               },
-    { to: '/fidelidade',    icon: Award,           label: 'Fidelidade'              },
-    { to: '/vouchers',      icon: Tag,             label: 'Vouchers'                },
-    { to: '/afiliados',     icon: UserPlus,        label: 'Afiliados'               },
-    { to: '/grupos',        icon: Users2,          label: 'Grupos'                  },
-    { to: '/pacotes',       icon: Package,         label: 'Pacotes'                 },
-    { to: '/parcerias',     icon: Handshake,       label: 'Parcerias'               },
+    { to: '/marketing',     icon: Megaphone,       label: 'Marketing',      requiredPlan: 'business', feature: 'marketing'     },
+    { to: '/automacoes',    icon: Zap,             label: 'Automacoes',     requiredPlan: 'pro',      feature: 'automacoes'    },
+    { to: '/fidelidade',    icon: Award,           label: 'Fidelidade',     requiredPlan: 'pro',      feature: 'fidelidade'    },
+    { to: '/vouchers',      icon: Tag,             label: 'Vouchers',       requiredPlan: 'business', feature: 'vouchers'      },
+    { to: '/afiliados',     icon: UserPlus,        label: 'Afiliados',      requiredPlan: 'business', feature: 'afiliados'     },
+    { to: '/grupos',        icon: Users2,          label: 'Grupos',         requiredPlan: 'pro',      feature: 'grupos'        },
+    { to: '/pacotes',       icon: Package,         label: 'Pacotes',        requiredPlan: 'pro',      feature: 'pacotes'       },
+    { to: '/parcerias',     icon: Handshake,       label: 'Parcerias',      requiredPlan: 'pro',      feature: 'parcerias'     },
     { to: '/definicoes',    icon: Settings,        label: 'Definicoes'              },
   ],
   restaurant: [
@@ -94,29 +101,37 @@ const TYPE_NAV = {
     { to: '/reservas',      icon: Calendar,        label: 'Reservas'                },
     { to: '/calendario',    icon: CalendarDays,    label: 'Calendario'              },
     { to: '/clientes',      icon: UserCheck,       label: 'Clientes'                },
-    { to: '/colaboradores', icon: UsersRound,      label: 'Colaboradores'           },
+    { to: '/colaboradores', icon: UsersRound,      label: 'Colaboradores',  requiredPlan: 'business', feature: 'colaboradores' },
     { to: '/financeiro',    icon: BarChart2,       label: 'Financeiro'              },
-    { to: '/analytics',     icon: Activity,        label: 'Analytics'               },
-    { to: '/meteorologia',  icon: CloudSun,        label: 'Meteorologia'            },
-    { to: '/previsao',      icon: LineChart,       label: 'Previsao'                },
+    { to: '/analytics',     icon: Activity,        label: 'Analytics',      requiredPlan: 'business', feature: 'analytics'     },
+    { to: '/meteorologia',  icon: CloudSun,        label: 'Meteorologia',   requiredPlan: 'business', feature: 'meteorologia'  },
+    { to: '/previsao',      icon: LineChart,       label: 'Previsao',       requiredPlan: 'pro',      feature: 'previsao'      },
     { to: '/avaliacoes',    icon: Star,            label: 'Avaliacoes'              },
     { to: '/ocorrencias',   icon: FileWarning,     label: 'Ocorrencias'             },
     { to: '/feedback',      icon: ThumbsUp,        label: 'Feedback'                },
     { to: '/mensagens',     icon: MessageCircle,   label: 'Mensagens'               },
-    { to: '/marketing',     icon: Megaphone,       label: 'Marketing'               },
-    { to: '/fidelidade',    icon: Award,           label: 'Fidelidade'              },
-    { to: '/vouchers',      icon: Tag,             label: 'Vouchers'                },
-    { to: '/afiliados',     icon: UserPlus,        label: 'Afiliados'               },
-    { to: '/grupos',        icon: Users2,          label: 'Grupos'                  },
-    { to: '/pacotes',       icon: Package,         label: 'Pacotes'                 },
-    { to: '/parcerias',     icon: Handshake,       label: 'Parcerias'               },
+    { to: '/marketing',     icon: Megaphone,       label: 'Marketing',      requiredPlan: 'business', feature: 'marketing'     },
+    { to: '/automacoes',    icon: Zap,             label: 'Automacoes',     requiredPlan: 'pro',      feature: 'automacoes'    },
+    { to: '/fidelidade',    icon: Award,           label: 'Fidelidade',     requiredPlan: 'pro',      feature: 'fidelidade'    },
+    { to: '/vouchers',      icon: Tag,             label: 'Vouchers',       requiredPlan: 'business', feature: 'vouchers'      },
+    { to: '/afiliados',     icon: UserPlus,        label: 'Afiliados',      requiredPlan: 'business', feature: 'afiliados'     },
+    { to: '/grupos',        icon: Users2,          label: 'Grupos',         requiredPlan: 'pro',      feature: 'grupos'        },
+    { to: '/pacotes',       icon: Package,         label: 'Pacotes',        requiredPlan: 'pro',      feature: 'pacotes'       },
+    { to: '/parcerias',     icon: Handshake,       label: 'Parcerias',      requiredPlan: 'pro',      feature: 'parcerias'     },
     { to: '/definicoes',    icon: Settings,        label: 'Definicoes'              },
   ],
+};
+
+const PLAN_BADGE = {
+  business: { label: 'Business', cls: 'bg-ocean-600 text-white' },
+  pro:      { label: 'Pro',      cls: 'bg-sand-500 text-white'   },
 };
 
 export default function Sidebar({ onClose }) {
   const { operator, logout } = useAuthStore();
   const navigate = useNavigate();
+  const { canAccess } = usePlan();
+  const [upgradeModal, setUpgradeModal] = useState(null); // { plan, feature }
 
   function handleLogout() { logout(); navigate('/login'); }
 
@@ -157,22 +172,61 @@ export default function Sidebar({ onClose }) {
 
       {/* Nav */}
       <nav className="flex-1 overflow-y-auto py-2 px-2 space-y-0.5">
-        {navItems.map(({ to, icon: Icon, label, end }) => (
-          <NavLink
-            key={`${to}-${label}`}
-            to={to}
-            end={end}
-            className={({ isActive }) =>
-              `flex items-center gap-3 px-3 py-2.5 rounded-sm text-sm font-body font-medium transition-colors ${
-                isActive ? 'bg-ocean-700 text-white' : 'text-ocean-200 hover:bg-ocean-800 hover:text-white'
-              }`
-            }
-          >
-            <Icon size={17} strokeWidth={1.75} className="shrink-0" />
-            <span className="truncate">{label}</span>
-          </NavLink>
-        ))}
+        {navItems.map(({ to, icon: Icon, label, end, requiredPlan, feature }) => {
+          const locked = requiredPlan && !canAccess(feature || requiredPlan);
+          const badge  = requiredPlan ? PLAN_BADGE[requiredPlan] : null;
+
+          if (locked) {
+            return (
+              <button
+                key={`${to}-${label}`}
+                type="button"
+                onClick={() => setUpgradeModal({ plan: requiredPlan, feature })}
+                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-sm text-sm font-body font-medium text-ocean-600 hover:bg-ocean-800/50 hover:text-ocean-400 transition-colors"
+              >
+                <Icon size={17} strokeWidth={1.75} className="shrink-0" />
+                <span className="truncate flex-1 text-left">{label}</span>
+                {badge && (
+                  <span className={`text-[9px] font-mono font-bold px-1.5 py-0.5 rounded uppercase tracking-wide shrink-0 ${badge.cls}`}>
+                    {badge.label}
+                  </span>
+                )}
+                <Lock size={12} strokeWidth={1.75} className="shrink-0 text-ocean-600" />
+              </button>
+            );
+          }
+
+          return (
+            <NavLink
+              key={`${to}-${label}`}
+              to={to}
+              end={end}
+              className={({ isActive }) =>
+                `flex items-center gap-3 px-3 py-2.5 rounded-sm text-sm font-body font-medium transition-colors ${
+                  isActive ? 'bg-ocean-700 text-white' : 'text-ocean-200 hover:bg-ocean-800 hover:text-white'
+                }`
+              }
+            >
+              <Icon size={17} strokeWidth={1.75} className="shrink-0" />
+              <span className="truncate flex-1">{label}</span>
+              {badge && (
+                <span className={`text-[9px] font-mono font-bold px-1.5 py-0.5 rounded uppercase tracking-wide shrink-0 ${badge.cls}`}>
+                  {badge.label}
+                </span>
+              )}
+            </NavLink>
+          );
+        })}
       </nav>
+
+      {/* Upgrade modal (triggered from locked items) */}
+      {upgradeModal && (
+        <UpgradeModal
+          plan={upgradeModal.plan}
+          feature={upgradeModal.feature}
+          onClose={() => setUpgradeModal(null)}
+        />
+      )}
 
       {/* Footer */}
       <div className="px-2 py-3 border-t border-ocean-800 space-y-0.5">

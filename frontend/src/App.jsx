@@ -45,6 +45,7 @@ import AdminCms from './pages/admin/AdminCms';
 import AdminImpact from './pages/admin/AdminImpact';
 import AdminSystem from './pages/admin/AdminSystem';
 import Layout from './components/layout/Layout';
+import PlanGuard from './components/PlanGuard';
 
 function ProtectedRoute({ children }) {
   const token = useAuthStore((s) => s.token);
@@ -96,26 +97,26 @@ export default function App() {
           <Route path="reservas"      element={<Reservations />} />
           <Route path="calendario"    element={<Calendar />} />
           <Route path="clientes"      element={<Customers />} />
-          <Route path="automacoes"    element={<Automations />} />
+          <Route path="automacoes"    element={<PlanGuard plan="pro"      feature="automacoes">   <Automations /></PlanGuard>} />
           <Route path="financeiro"    element={<Financial />} />
-          <Route path="integracoes"   element={<Integrations />} />
-          <Route path="guias"         element={<Guides />} />
-          <Route path="colaboradores" element={<Staff />} />
+          <Route path="integracoes"   element={<PlanGuard plan="pro"      feature="integracoes">  <Integrations /></PlanGuard>} />
+          <Route path="guias"         element={<PlanGuard plan="business" feature="guias">        <Guides /></PlanGuard>} />
+          <Route path="colaboradores" element={<PlanGuard plan="business" feature="colaboradores"><Staff /></PlanGuard>} />
           <Route path="frota"         element={<Fleet />} />
           <Route path="mensagens"     element={<Messages />} />
           <Route path="avaliacoes"    element={<Reviews />} />
-          <Route path="marketing"     element={<Marketing />} />
-          <Route path="analytics"     element={<Analytics />} />
-          <Route path="fidelidade"    element={<Loyalty />} />
-          <Route path="vouchers"      element={<Vouchers />} />
+          <Route path="marketing"     element={<PlanGuard plan="business" feature="marketing">    <Marketing /></PlanGuard>} />
+          <Route path="analytics"     element={<PlanGuard plan="business" feature="analytics">    <Analytics /></PlanGuard>} />
+          <Route path="fidelidade"    element={<PlanGuard plan="pro"      feature="fidelidade">   <Loyalty /></PlanGuard>} />
+          <Route path="vouchers"      element={<PlanGuard plan="business" feature="vouchers">     <Vouchers /></PlanGuard>} />
           <Route path="ocorrencias"   element={<Occurrences />} />
           <Route path="feedback"      element={<Feedback />} />
-          <Route path="meteorologia"  element={<Weather />} />
-          <Route path="previsao"      element={<Demand />} />
-          <Route path="afiliados"     element={<Affiliates />} />
-          <Route path="grupos"        element={<Groups />} />
-          <Route path="pacotes"       element={<Packages />} />
-          <Route path="parcerias"     element={<Partners />} />
+          <Route path="meteorologia"  element={<PlanGuard plan="business" feature="meteorologia"> <Weather /></PlanGuard>} />
+          <Route path="previsao"      element={<PlanGuard plan="pro"      feature="previsao">     <Demand /></PlanGuard>} />
+          <Route path="afiliados"     element={<PlanGuard plan="business" feature="afiliados">    <Affiliates /></PlanGuard>} />
+          <Route path="grupos"        element={<PlanGuard plan="pro"      feature="grupos">       <Groups /></PlanGuard>} />
+          <Route path="pacotes"       element={<PlanGuard plan="pro"      feature="pacotes">      <Packages /></PlanGuard>} />
+          <Route path="parcerias"     element={<PlanGuard plan="pro"      feature="parcerias">    <Partners /></PlanGuard>} />
           <Route path="definicoes"    element={<Settings />} />
           <Route path="perfil"        element={<Profile />} />
         </Route>
@@ -137,8 +138,8 @@ export default function App() {
         <Route path="/afiliado/:codigo" element={<AffiliatePortal />} />
 
         {/* Vendedor de Praia — mobile */}
-        <Route path="/vendedor" element={<BeachSellerGuard><BeachSeller /></BeachSellerGuard>} />
-        <Route path="/vendedor/nova-reserva" element={<BeachSellerGuard><BeachSale /></BeachSellerGuard>} />
+        <Route path="/vendedor" element={<BeachSellerGuard><PlanGuard plan="pro" feature="vendedor"><BeachSeller /></PlanGuard></BeachSellerGuard>} />
+        <Route path="/vendedor/nova-reserva" element={<BeachSellerGuard><PlanGuard plan="pro" feature="vendedor"><BeachSale /></PlanGuard></BeachSellerGuard>} />
 
         {/* Motor de reserva publica */}
         <Route path="/book/:slug" element={<PublicBooking />} />

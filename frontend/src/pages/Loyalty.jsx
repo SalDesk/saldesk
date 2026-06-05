@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import PlanGuard from '../components/PlanGuard';
 import {
   Award, Users, Gift, Edit2, Save, ToggleLeft, ToggleRight,
   Plus, Minus, ChevronDown, ChevronUp, Star,

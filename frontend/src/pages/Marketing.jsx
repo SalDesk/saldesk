@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import PlanGuard from '../components/PlanGuard';
 import {
   QrCode, Link2, Copy, Check, Share2, Code2, ChevronLeft,
   ChevronRight, Plus, Pencil, Trash2, Calendar, ExternalLink,

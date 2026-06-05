@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
+import PlanGuard from '../components/PlanGuard';
 import { io } from 'socket.io-client';
 import {
   Plus, Pencil, Trash2, Star, Briefcase, Phone, Mail, MessageSquare,
