@@ -796,6 +796,62 @@
       margin-top: 8px;
     }
 
+    /* ── ERROR STATE ────────────────────────── */
+    .impact-error {
+      display: none;
+      text-align: center;
+      padding: 72px 32px;
+      background: #fff;
+      border: 1.5px solid rgba(185,28,28,.12);
+      border-radius: 16px;
+    }
+
+    .impact-error-icon {
+      width: 56px;
+      height: 56px;
+      border-radius: 14px;
+      background: rgba(185,28,28,.06);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 20px;
+    }
+
+    .impact-error h3 {
+      font-family: 'Sora', sans-serif;
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--n900);
+      margin-bottom: 10px;
+    }
+
+    .impact-error p {
+      font-size: 14px;
+      color: var(--n500);
+      max-width: 400px;
+      margin: 0 auto 28px;
+      line-height: 1.6;
+    }
+
+    .btn-retry {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 11px 24px;
+      border-radius: 8px;
+      background: var(--ocean-700);
+      color: #fff;
+      font-family: 'Sora', sans-serif;
+      font-size: 13px;
+      font-weight: 600;
+      border: none;
+      cursor: pointer;
+      transition: background .15s, opacity .15s;
+    }
+
+    .btn-retry:hover:not(:disabled) { background: var(--ocean-900); }
+    .btn-retry:disabled { cursor: not-allowed; }
+
     /* ── RESPONSIVE ──────────────────────────── */
     @media (max-width: 1024px) {
       .kpi-grid { grid-template-columns: repeat(3, 1fr); }
@@ -896,7 +952,19 @@
       <h2 data-pt="Em Números" data-en="By the Numbers">Em Números</h2>
       <p data-pt="Impacto directo no sector turístico da Ilha do Sal" data-en="Direct impact on the tourism sector of Ilha do Sal">Impacto directo no sector turístico da Ilha do Sal</p>
     </div>
-    <div class="kpi-grid">
+    <div class="impact-error" id="impact-error">
+      <div class="impact-error-icon">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#B91C1C" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      </div>
+      <h3 data-pt="Dados temporariamente indisponíveis" data-en="Data temporarily unavailable">Dados temporariamente indisponíveis</h3>
+      <p data-pt="Não foi possível carregar os dados em tempo real. Verifique a sua ligação à internet e tente novamente." data-en="Unable to load real-time data. Please check your internet connection and try again.">Não foi possível carregar os dados em tempo real. Verifique a sua ligação à internet e tente novamente.</p>
+      <button class="btn-retry" onclick="retryImpact()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>
+        <span data-pt="Tentar novamente" data-en="Try again">Tentar novamente</span>
+      </button>
+    </div>
+
+    <div class="kpi-grid" id="kpi-grid">
 
       <div class="kpi-card">
         <div class="kpi-icon">
@@ -951,6 +1019,15 @@
       <p data-pt="Crescimento mensal nos últimos 6 meses" data-en="Monthly growth over the last 6 months">Crescimento mensal nos últimos 6 meses</p>
     </div>
 
+    <div class="impact-error" id="charts-error">
+      <div class="impact-error-icon">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#B91C1C" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      </div>
+      <h3 data-pt="Gráficos indisponíveis" data-en="Charts unavailable">Gráficos indisponíveis</h3>
+      <p data-pt="Os dados para os gráficos não estão disponíveis de momento." data-en="The data for charts is not available at the moment.">Os dados para os gráficos não estão disponíveis de momento.</p>
+    </div>
+
+    <div id="charts-body">
     <div class="charts-2col">
       <div class="chart-card">
         <div class="chart-header">
@@ -985,6 +1062,7 @@
         </div>
       </div>
     </div>
+    </div><!-- /charts-body -->
 
   </div>
 </section>
@@ -1177,7 +1255,7 @@
 
 <script>
   /* ─── Config ─── */
-  const API_BASE = 'https://api.saldesk.cv/public';
+  const API_BASE = 'https://api.saldesk.cv/api/v1/public';
 
   const MONTHS_PT = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
   const MONTHS_EN = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
@@ -1472,42 +1550,53 @@
     });
   }
 
-  /* ─── Placeholder fallback ─── */
-  function buildFallback() {
-    var now    = new Date();
-    var months = [];
-    var opMonths  = [];
-    var resMonths = [];
-    for (var i = 5; i >= 0; i--) {
-      var d = new Date(now);
-      d.setDate(1);
-      d.setMonth(d.getMonth() - i);
-      var key = d.toISOString().substring(0, 7);
-      opMonths.push({ month: key,  count: [3,5,8,11,9,11][5-i] });
-      resMonths.push({ month: key, count: [312,428,537,614,493,457][5-i] });
-    }
-    return {
-      operators_total:      47,
-      reservations_total:   2841,
-      clients_total:        1923,
-      islands_count:        1,
-      operator_types:       { activity: 24, rentacar: 12, hotel: 8, restaurant: 3 },
-      monthly_operators:    opMonths,
-      monthly_reservations: resMonths,
-    };
+  /* ─── Error state ─── */
+  function showImpactError() {
+    var kpiGrid    = document.getElementById('kpi-grid');
+    var kpiErr     = document.getElementById('impact-error');
+    var chartsBody = document.getElementById('charts-body');
+    var chartsErr  = document.getElementById('charts-error');
+    if (kpiGrid)    kpiGrid.style.display    = 'none';
+    if (kpiErr)     kpiErr.style.display     = 'block';
+    if (chartsBody) chartsBody.style.display = 'none';
+    if (chartsErr)  chartsErr.style.display  = 'block';
+  }
+
+  function hideImpactError() {
+    var kpiGrid    = document.getElementById('kpi-grid');
+    var kpiErr     = document.getElementById('impact-error');
+    var chartsBody = document.getElementById('charts-body');
+    var chartsErr  = document.getElementById('charts-error');
+    if (kpiGrid)    kpiGrid.style.display    = '';
+    if (kpiErr)     kpiErr.style.display     = 'none';
+    if (chartsBody) chartsBody.style.display = '';
+    if (chartsErr)  chartsErr.style.display  = 'none';
+  }
+
+  function retryImpact() {
+    var btn = document.querySelector('.btn-retry');
+    if (btn) { btn.disabled = true; btn.style.opacity = '.6'; }
+    hideImpactError();
+    loadImpact().finally(function() {
+      if (btn) { btn.disabled = false; btn.style.opacity = ''; }
+    });
   }
 
   /* ─── Fetch ─── */
   async function loadImpact() {
     try {
-      var res  = await fetch(API_BASE + '/impact');
+      var res = await fetch(API_BASE + '/impact');
+      if (!res.ok) throw new Error('HTTP ' + res.status);
       var json = await res.json();
+      if (!json.data) throw new Error('Resposta inválida');
       impactData = json.data;
-    } catch (_) {
-      impactData = buildFallback();
+      hideImpactError();
+      populateKPIs(impactData);
+      renderCharts(impactData);
+    } catch (err) {
+      console.error('[SalDesk] Erro ao carregar dados de impacto:', err.message);
+      showImpactError();
     }
-    populateKPIs(impactData);
-    renderCharts(impactData);
   }
 
   async function loadOperators() {
