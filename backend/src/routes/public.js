@@ -15,7 +15,11 @@ const {
   getUnit,
   getUnitReviews,
   submitLead,
+  getImpact,
 } = require('../controllers/publicController');
+
+/* ─── Relatório de impacto público ─── */
+router.get('/impact',              getImpact);
 
 /* ─── Discover / directorio ─── */
 router.get('/discover',            discover);

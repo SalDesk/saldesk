@@ -566,6 +566,82 @@ async function getUnitReviews(req, res, next) {
   } catch (err) { next(err); }
 }
 
+/* ─── Relatório de impacto público (sem auth) ─── */
+async function getImpact(req, res, next) {
+  try {
+    const { count: operatorsTotal } = await supabaseAdmin
+      .from('operators')
+      .select('*', { count: 'exact', head: true })
+      .eq('onboarding_complete', true);
+
+    const { data: opTypes } = await supabaseAdmin
+      .from('operators')
+      .select('operator_type')
+      .eq('onboarding_complete', true);
+
+    const typeMap = {};
+    (opTypes || []).forEach((o) => {
+      typeMap[o.operator_type] = (typeMap[o.operator_type] || 0) + 1;
+    });
+
+    const { count: reservationsTotal } = await supabaseAdmin
+      .from('reservations')
+      .select('*', { count: 'exact', head: true })
+      .in('status', ['confirmed', 'checked_in', 'checked_out', 'cancelled']);
+
+    const { count: clientsTotal } = await supabaseAdmin
+      .from('customers')
+      .select('*', { count: 'exact', head: true });
+
+    const sixMonthsAgo = new Date();
+    sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+    const cutoff = sixMonthsAgo.toISOString();
+
+    const { data: opMonthly } = await supabaseAdmin
+      .from('operators')
+      .select('created_at')
+      .eq('onboarding_complete', true)
+      .gte('created_at', cutoff);
+
+    const { data: resMonthly } = await supabaseAdmin
+      .from('reservations')
+      .select('created_at')
+      .gte('created_at', cutoff)
+      .in('status', ['confirmed', 'checked_in', 'checked_out']);
+
+    function aggregateByMonth(rows) {
+      const map = {};
+      (rows || []).forEach((r) => {
+        const m = r.created_at.substring(0, 7);
+        map[m] = (map[m] || 0) + 1;
+      });
+      const result = [];
+      for (let i = 5; i >= 0; i--) {
+        const d = new Date();
+        d.setDate(1);
+        d.setMonth(d.getMonth() - i);
+        const key = d.toISOString().substring(0, 7);
+        result.push({ month: key, count: map[key] || 0 });
+      }
+      return result;
+    }
+
+    return res.json({
+      data: {
+        operators_total:      operatorsTotal  || 0,
+        reservations_total:   reservationsTotal || 0,
+        clients_total:        clientsTotal    || 0,
+        islands_count:        1,
+        operator_types:       typeMap,
+        monthly_operators:    aggregateByMonth(opMonthly),
+        monthly_reservations: aggregateByMonth(resMonthly),
+      }
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
 /* ─── Submissão de candidatura de operador (website) ─── */
 async function submitLead(req, res, next) {
   try {
@@ -675,4 +751,5 @@ module.exports = {
   getUnit,
   getUnitReviews,
   submitLead,
+  getImpact,
 };
