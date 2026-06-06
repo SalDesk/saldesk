@@ -73,7 +73,7 @@ export default function Login() {
   const registeredOk = searchParams.get('registered') === '1';
   const resetOk      = searchParams.get('reset') === '1';
 
-  useEffect(() => { if (token) navigate('/'); }, [token, navigate]);
+  useEffect(() => { if (token) { const user = JSON.parse(localStorage.getItem('saldesk-auth') || '{}')?.state?.user; if (user?.user_metadata?.role === 'FUNDADOR') navigate('/admin'); else navigate('/'); } }, [token, navigate]);
 
   /* Update rate state when email changes */
   useEffect(() => {
