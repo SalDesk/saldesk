@@ -53,6 +53,7 @@ const AdminLayout     = lazy(() => import('./components/layout/AdminLayout'));
 const AdminDashboard  = lazy(() => import('./pages/admin/AdminDashboard'));
 const AdminOperators  = lazy(() => import('./pages/admin/AdminOperators'));
 const AdminLeads      = lazy(() => import('./pages/admin/AdminLeads'));
+const AdminPipeline   = lazy(() => import('./pages/admin/AdminPipeline'));
 const AdminCms        = lazy(() => import('./pages/admin/AdminCms'));
 const AdminImpact     = lazy(() => import('./pages/admin/AdminImpact'));
 const AdminSystem     = lazy(() => import('./pages/admin/AdminSystem'));
@@ -148,6 +149,7 @@ export default function App() {
           <Route index                       element={<AdminDashboard />} />
           <Route path="operators"  element={<AdminOperators />} />
           <Route path="leads"      element={<AdminLeads />} />
+          <Route path="pipeline"   element={<AdminPipeline />} />
           <Route path="cms"        element={<AdminCms />} />
           <Route path="impacto"    element={<AdminImpact />} />
           <Route path="sistema"    element={<AdminSystem />} />

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, Users, TrendingUp, Layers,
-  Globe, Server, LogOut, Shield, BarChart2,
+  Globe, Server, LogOut, Shield, BarChart2, GitBranch,
 } from 'lucide-react';
 import useAuthStore from '../../store/authStore';
 import Logo from '../shared/Logo';
@@ -27,6 +27,7 @@ export default function AdminLayout() {
     { to: '/admin',           label: 'Dashboard',   icon: LayoutDashboard, end: true },
     { to: '/admin/operators', label: 'Operadores',  icon: Users,       badge: counts.trials },
     { to: '/admin/leads',     label: 'Leads',       icon: TrendingUp,  badge: counts.leads },
+    { to: '/admin/pipeline',  label: 'Pipeline',    icon: GitBranch },
     { to: '/admin/cms',       label: 'CMS',         icon: Layers },
     { to: '/admin/impacto',   label: 'Impacto',     icon: Globe },
     { to: '/admin/sistema',   label: 'Sistema',     icon: Server },

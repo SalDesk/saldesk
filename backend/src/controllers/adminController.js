@@ -2,9 +2,24 @@ const { supabaseAdmin } = require('../config/supabase');
 const { enviarEmail }   = require('../helpers/emailHelper');
 
 const PLAN_PRICES   = { starter: 29, business: 59, pro: 99 };
-const TIPO_SCORE    = { hotel: 30, activity: 25, rentacar: 20, restaurant: 15 };
+const TIPO_SCORE    = { hotel: 30, activity: 25, restaurant: 20, rentacar: 15 };
 const LEAD_STATUSES = ['novo', 'contactado', 'demo_agendada', 'proposta_enviada', 'convertido', 'descartado'];
+const STAGE_LABELS  = { novo: 'Novo', contactado: 'Contactado', demo_agendada: 'Demo agendada', proposta_enviada: 'Proposta enviada', convertido: 'Convertido', descartado: 'Descartado' };
+const CONTACT_TYPES = ['email', 'telefone', 'reuniao', 'demo'];
 const MONTH_NAMES   = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+
+/* extrai um numero representativo de campos de texto livre ("500-2000", "+5000", "mais de 5 anos") */
+function parseLeadNumber(text) {
+  if (!text) return null;
+  const s = text.toString().toLowerCase().replace(/\s+/g, '');
+  const plus = s.match(/(?:\+|maisde)\s*(\d+)|(\d+)\s*\+/);
+  if (plus) return Number(plus[1] || plus[2]) + 1;
+  const range = s.match(/(\d+)\s*[-aà]\s*(\d+)/);
+  if (range) return (Number(range[1]) + Number(range[2])) / 2;
+  const single = s.match(/(\d+)/);
+  if (single) return Number(single[1]);
+  return null;
+}
 
 function lastMonths(n) {
   const months = [];
@@ -264,26 +279,50 @@ async function listOperators(req, res, next) {
 async function getOperatorDetail(req, res, next) {
   try {
     const id = req.params.id;
-    const [opRes, resRes, cusRes] = await Promise.all([
+    const [opRes, resRes, cusRes, reviewRes] = await Promise.all([
       supabaseAdmin.from('operators').select('*').eq('id', id).single(),
       supabaseAdmin.from('reservations')
         .select('id, status, total_price, created_at', { count: 'exact' })
         .eq('operator_id', id)
         .order('created_at', { ascending: false }),
       supabaseAdmin.from('customers').select('id', { count: 'exact' }).eq('operator_id', id),
+      supabaseAdmin.from('reviews').select('rating').eq('operator_id', id),
     ]);
     if (opRes.error) throw opRes.error;
+    const operator = opRes.data;
     const reservas = resRes.data || [];
     const receita  = reservas.filter(r => r.status === 'checked_out').reduce((s, r) => s + Number(r.total_price || 0), 0);
+
+    const ratings   = (reviewRes.data || []).map(r => r.rating).filter(r => r != null);
+    const avgRating = ratings.length ? Math.round((ratings.reduce((a, b) => a + b, 0) / ratings.length) * 10) / 10 : null;
+
+    let lastLogin = null;
+    if (operator?.user_id) {
+      try {
+        const { data: authUser } = await supabaseAdmin.auth.admin.getUserById(operator.user_id);
+        lastLogin = authUser?.user?.last_sign_in_at || null;
+      } catch { /* user pode nao existir mais no Auth */ }
+    }
+
+    /* reservas por mes — ultimos 6 meses, para grafico */
+    const months   = lastMonths(6);
+    const monthMap = Object.fromEntries(months.map(m => [m, 0]));
+    reservas.forEach(r => { const m = (r.created_at || '').slice(0, 7); if (monthMap[m] !== undefined) monthMap[m] += 1; });
+    const reservationsByMonth = months.map(m => ({ label: MONTH_NAMES[Number(m.slice(5)) - 1], count: monthMap[m] }));
+
     return res.json({
       data: {
-        operator: opRes.data,
+        operator,
         stats: {
           reservations_total: resRes.count || 0,
           revenue_total:      Math.round(receita),
           customers_total:    cusRes.count || 0,
+          avg_rating:         avgRating,
+          last_login:         lastLogin,
         },
-        recent_activity: reservas.slice(0, 8).map(r => ({
+        reservations_by_month: reservationsByMonth,
+        notes_log: Array.isArray(operator?.notes_log) ? operator.notes_log : [],
+        recent_activity: reservas.slice(0, 20).map(r => ({
           type: 'reservation', status: r.status, amount: r.total_price, time: r.created_at,
         })),
       },
@@ -293,13 +332,16 @@ async function getOperatorDetail(req, res, next) {
 
 async function updateOperator(req, res, next) {
   try {
+    const id = req.params.id;
     const allowed = ['plan', 'plan_status', 'trial_ends_at', 'notes_internal'];
     const updates = { updated_at: new Date().toISOString() };
     allowed.forEach(k => { if (req.body[k] !== undefined) updates[k] = req.body[k]; });
 
+    const { data: current } = await supabaseAdmin
+      .from('operators').select('plan, plan_status, trial_ends_at, email, name, notes_log').eq('id', id).single();
+
     if (req.body.extend_trial_days) {
       const days = parseInt(req.body.extend_trial_days);
-      const { data: current } = await supabaseAdmin.from('operators').select('trial_ends_at').eq('id', req.params.id).single();
       const base = (current?.trial_ends_at && new Date(current.trial_ends_at) > new Date())
         ? new Date(current.trial_ends_at)
         : new Date();
@@ -308,9 +350,35 @@ async function updateOperator(req, res, next) {
       updates.plan_status   = 'trial';
     }
 
+    const reason = req.body.reason?.trim();
+    const now    = new Date().toISOString();
+    const logEntries = [];
+    if (current && updates.plan_status !== undefined && updates.plan_status !== current.plan_status) {
+      logEntries.push({ text: `Estado alterado de "${current.plan_status}" para "${updates.plan_status}"${reason ? ` — ${reason}` : ''}`, at: now, type: 'status_change' });
+    }
+    if (current && updates.plan !== undefined && updates.plan !== current.plan) {
+      logEntries.push({ text: `Plano alterado de "${current.plan}" para "${updates.plan}"${reason ? ` — ${reason}` : ''}`, at: now, type: 'plan_change' });
+    }
+    if (logEntries.length) {
+      const log = Array.isArray(current?.notes_log) ? current.notes_log : [];
+      updates.notes_log = [...log, ...logEntries];
+    }
+
     const { data, error } = await supabaseAdmin
-      .from('operators').update(updates).eq('id', req.params.id).select().single();
+      .from('operators').update(updates).eq('id', id).select().single();
     if (error) throw error;
+
+    /* notificar operador por email em caso de suspensao/reactivacao */
+    if (current && updates.plan_status && updates.plan_status !== current.plan_status &&
+        (updates.plan_status === 'suspended' || (current.plan_status === 'suspended' && updates.plan_status === 'active'))) {
+      const suspending = updates.plan_status === 'suspended';
+      const subject = suspending ? 'A sua conta SalDesk foi suspensa' : 'A sua conta SalDesk foi reactivada';
+      const body = suspending
+        ? `Ola ${current.name},\n\nA sua conta na SalDesk foi suspensa.${reason ? `\n\nMotivo: ${reason}` : ''}\n\nContacte-nos para mais informacoes.\n\nEquipa SalDesk`
+        : `Ola ${current.name},\n\nA sua conta na SalDesk foi reactivada e ja pode aceder normalmente.\n\nEquipa SalDesk`;
+      enviarEmail({ to: current.email, subject, text: body }).catch(() => {});
+    }
+
     return res.json({ data, message: 'Operador actualizado' });
   } catch (err) { next(err); }
 }
@@ -320,27 +388,72 @@ async function updateOperatorStatus(req, res, next) {
   return updateOperator(req, res, next);
 }
 
+async function extendOperatorTrial(req, res, next) {
+  const days = parseInt(req.body?.days ?? req.body?.extend_trial_days);
+  if (![7, 15, 30].includes(days)) return res.status(400).json({ error: 'Numero de dias invalido (7, 15 ou 30)' });
+  req.body = { extend_trial_days: days };
+  return updateOperator(req, res, next);
+}
+
+async function messageOperator(req, res, next) {
+  try {
+    const id = req.params.id;
+    const { subject, body } = req.body;
+    if (!subject?.trim() || !body?.trim()) return res.status(400).json({ error: 'Assunto e mensagem obrigatorios' });
+
+    const { data: operator, error } = await supabaseAdmin.from('operators').select('id, name, email, notes_log').eq('id', id).single();
+    if (error) throw error;
+    if (!operator) return res.status(404).json({ error: 'Operador nao encontrado' });
+
+    await enviarEmail({ to: operator.email, subject: subject.trim(), text: body.trim() });
+
+    const log   = Array.isArray(operator.notes_log) ? operator.notes_log : [];
+    const entry = { text: `Mensagem enviada — "${subject.trim()}"`, at: new Date().toISOString(), type: 'message' };
+    await supabaseAdmin.from('operators').update({ notes_log: [...log, entry] }).eq('id', id);
+
+    return res.json({ message: 'Mensagem enviada ao operador' });
+  } catch (err) { next(err); }
+}
+
+async function impersonateOperator(req, res, next) {
+  try {
+    const id = req.params.id;
+    const { data: operator, error } = await supabaseAdmin.from('operators').select('id, name, user_id').eq('id', id).single();
+    if (error) throw error;
+    if (!operator?.user_id) return res.status(400).json({ error: 'Operador sem conta de utilizador associada' });
+
+    const { data: authUser, error: userErr } = await supabaseAdmin.auth.admin.getUserById(operator.user_id);
+    if (userErr || !authUser?.user?.email) return res.status(404).json({ error: 'Utilizador nao encontrado' });
+
+    const { data: link, error: linkErr } = await supabaseAdmin.auth.admin.generateLink({
+      type:  'magiclink',
+      email: authUser.user.email,
+    });
+    if (linkErr) throw linkErr;
+
+    return res.json({
+      data: {
+        action_link: link?.properties?.action_link || null,
+        operator:    { id: operator.id, name: operator.name },
+      },
+      message: 'Link de acesso ao operador gerado — guarde a sua sessao actual antes de o abrir',
+    });
+  } catch (err) { next(err); }
+}
+
 /* ─── Leads (operator_leads — candidaturas de operadores) ────── */
 function computeLeadScore(lead) {
   const breakdown = {};
   breakdown.tipo_negocio = TIPO_SCORE[lead.tipo_negocio] ?? 10;
 
-  const vol = (lead.volume_mensal || lead.clientes_mes || '').toString().toLowerCase();
-  if (/\+|\b[5-9]\d|\d{3}/.test(vol))      breakdown.volume = 20;
-  else if (/\b[2-4]\d/.test(vol))          breakdown.volume = 14;
-  else if (/\b1\d/.test(vol))              breakdown.volume = 8;
-  else                                     breakdown.volume = 4;
+  const vol = parseLeadNumber(lead.volume_mensal || lead.clientes_mes);
+  breakdown.volume_mensal = vol == null ? 5 : vol > 5000 ? 20 : vol >= 2000 ? 15 : vol >= 500 ? 10 : 5;
 
-  const anos = (lead.anos_operacao || '').toString().toLowerCase();
-  if (/\+|\b[5-9]|\d{2,}/.test(anos))      breakdown.anos_operacao = 15;
-  else if (/\b[2-4]/.test(anos))           breakdown.anos_operacao = 10;
-  else                                     breakdown.anos_operacao = 5;
+  const anos = parseLeadNumber(lead.anos_operacao);
+  breakdown.anos_operacao = anos == null ? 3 : anos > 5 ? 15 : anos >= 3 ? 10 : anos >= 1 ? 7 : 3;
 
-  breakdown.tem_site = lead.tem_site ? 5 : 0;
+  breakdown.tem_site = lead.tem_site ? 10 : 0;
   breakdown.usa_otas = (Array.isArray(lead.otas) && lead.otas.length > 0) ? 10 : 0;
-
-  const days = (Date.now() - new Date(lead.created_at)) / 86400000;
-  breakdown.recencia = days < 7 ? 10 : days < 30 ? 6 : days < 90 ? 2 : 0;
 
   const total = Object.values(breakdown).reduce((s, v) => s + v, 0);
   return { score: Math.min(100, total), breakdown };
@@ -404,14 +517,21 @@ async function sendLeadEmail(req, res, next) {
     const { subject, body } = req.body;
     if (!subject?.trim() || !body?.trim()) return res.status(400).json({ error: 'Assunto e mensagem obrigatorios' });
 
-    const { data: lead, error } = await supabaseAdmin.from('operator_leads').select('id, email, nome, status, contacted_at').eq('id', id).single();
+    const { data: lead, error } = await supabaseAdmin.from('operator_leads').select('id, email, nome, status, contacted_at, contact_log, stage_history').eq('id', id).single();
     if (error) throw error;
     if (!lead) return res.status(404).json({ error: 'Lead nao encontrado' });
 
     await enviarEmail({ to: lead.email, subject: subject.trim(), text: body.trim() });
 
-    const updates = {};
-    if (lead.status === 'novo') { updates.status = 'contactado'; updates.contacted_at = new Date().toISOString(); }
+    const now = new Date().toISOString();
+    const contactLog = Array.isArray(lead.contact_log) ? lead.contact_log : [];
+    const updates = { contact_log: [...contactLog, { type: 'email', date: now.slice(0, 10), notes: subject.trim(), at: now }] };
+    if (lead.status === 'novo') {
+      updates.status       = 'contactado';
+      updates.contacted_at = now;
+      const stageHistory = Array.isArray(lead.stage_history) ? lead.stage_history : [];
+      updates.stage_history = [...stageHistory, { from: 'novo', to: 'contactado', at: now }];
+    }
     let updated = lead;
     if (Object.keys(updates).length) {
       const { data: u } = await supabaseAdmin.from('operator_leads').update(updates).eq('id', id).select().single();
@@ -474,6 +594,155 @@ async function convertLead(req, res, next) {
     if (updErr) throw updErr;
 
     return res.json({ data: { lead: updatedLead, operator }, message: 'Lead convertido em operador' });
+  } catch (err) { next(err); }
+}
+
+async function updateLeadStage(req, res, next) {
+  try {
+    const id = req.params.id;
+    const { stage } = req.body;
+    if (!LEAD_STATUSES.includes(stage)) return res.status(400).json({ error: 'Fase de pipeline invalida' });
+
+    const { data: current, error: curErr } = await supabaseAdmin
+      .from('operator_leads').select('status, stage_history, contacted_at, converted_at').eq('id', id).single();
+    if (curErr) throw curErr;
+    if (!current) return res.status(404).json({ error: 'Lead nao encontrado' });
+
+    const now = new Date().toISOString();
+    const updates = { status: stage };
+    if (current.status !== stage) {
+      const history = Array.isArray(current.stage_history) ? current.stage_history : [];
+      updates.stage_history = [...history, { from: current.status || 'novo', to: stage, at: now }];
+    }
+    if (stage === 'contactado' && !current.contacted_at) updates.contacted_at = now;
+    if (stage === 'convertido' && !current.converted_at) updates.converted_at = now;
+
+    const { data, error } = await supabaseAdmin
+      .from('operator_leads').update(updates).eq('id', id).select().single();
+    if (error) throw error;
+
+    const { score, breakdown } = computeLeadScore(data);
+    return res.json({ data: { ...data, score, score_breakdown: breakdown, computed_status: computeLeadStatus(data) }, message: 'Fase do lead actualizada' });
+  } catch (err) { next(err); }
+}
+
+async function addLeadNote(req, res, next) {
+  try {
+    const id = req.params.id;
+    const { text } = req.body;
+    if (!text?.trim()) return res.status(400).json({ error: 'Texto da nota obrigatorio' });
+
+    const { data: current, error: curErr } = await supabaseAdmin.from('operator_leads').select('notes_log').eq('id', id).single();
+    if (curErr) throw curErr;
+    if (!current) return res.status(404).json({ error: 'Lead nao encontrado' });
+
+    const log   = Array.isArray(current.notes_log) ? current.notes_log : [];
+    const entry = { text: text.trim(), at: new Date().toISOString() };
+
+    const { data, error } = await supabaseAdmin
+      .from('operator_leads')
+      .update({ notes_log: [...log, entry], notes_internal: text.trim() })
+      .eq('id', id).select().single();
+    if (error) throw error;
+
+    return res.status(201).json({ data, message: 'Nota adicionada' });
+  } catch (err) { next(err); }
+}
+
+async function addLeadContact(req, res, next) {
+  try {
+    const id = req.params.id;
+    const { type, date, notes } = req.body;
+    if (!CONTACT_TYPES.includes(type)) return res.status(400).json({ error: 'Tipo de contacto invalido' });
+
+    const { data: current, error: curErr } = await supabaseAdmin
+      .from('operator_leads').select('contact_log, contacted_at, status, stage_history').eq('id', id).single();
+    if (curErr) throw curErr;
+    if (!current) return res.status(404).json({ error: 'Lead nao encontrado' });
+
+    const now   = new Date().toISOString();
+    const log   = Array.isArray(current.contact_log) ? current.contact_log : [];
+    const entry = { type, date: date || now.slice(0, 10), notes: notes?.trim() || '', at: now };
+
+    const updates = { contact_log: [...log, entry] };
+    if (!current.contacted_at) {
+      updates.contacted_at = now;
+      if (current.status === 'novo') {
+        updates.status = 'contactado';
+        const history = Array.isArray(current.stage_history) ? current.stage_history : [];
+        updates.stage_history = [...history, { from: 'novo', to: 'contactado', at: now }];
+      }
+    }
+
+    const { data, error } = await supabaseAdmin
+      .from('operator_leads').update(updates).eq('id', id).select().single();
+    if (error) throw error;
+
+    const { score, breakdown } = computeLeadScore(data);
+    return res.status(201).json({ data: { ...data, score, score_breakdown: breakdown, computed_status: computeLeadStatus(data) }, message: 'Contacto registado' });
+  } catch (err) { next(err); }
+}
+
+async function getPipelineStats(req, res, next) {
+  try {
+    const { data, error } = await supabaseAdmin.from('operator_leads').select('*');
+    if (error) throw error;
+    const leads = data || [];
+    const now   = Date.now();
+    const total = leads.length;
+
+    const byStage = Object.fromEntries(LEAD_STATUSES.map(s => [s, 0]));
+    leads.forEach(l => { const s = computeLeadStatus(l); byStage[s] += 1; });
+
+    /* tempo medio (dias) passado em cada fase, a partir do stage_history */
+    const durations = Object.fromEntries(LEAD_STATUSES.map(s => [s, []]));
+    leads.forEach(l => {
+      const hist    = Array.isArray(l.stage_history) ? l.stage_history : [];
+      const entries = [{ to: 'novo', at: l.created_at }, ...hist];
+      entries.forEach((entry, i) => {
+        if (!LEAD_STATUSES.includes(entry.to)) return;
+        const enteredAt = new Date(entry.at).getTime();
+        const leftAt    = i + 1 < entries.length ? new Date(entries[i + 1].at).getTime() : now;
+        durations[entry.to].push((leftAt - enteredAt) / 86400000);
+      });
+    });
+    const avgDaysPerStage = Object.fromEntries(LEAD_STATUSES.map(s => {
+      const arr = durations[s];
+      return [s, arr.length ? Math.round((arr.reduce((a, b) => a + b, 0) / arr.length) * 10) / 10 : null];
+    }));
+
+    /* funil de conversao: % de leads que alguma vez alcancaram cada fase */
+    const order      = LEAD_STATUSES.filter(s => s !== 'descartado');
+    const stageIndex = Object.fromEntries(order.map((s, i) => [s, i]));
+    const conversionByStage = order.map((stage, idx) => {
+      const reached = leads.filter(l => {
+        const hist    = Array.isArray(l.stage_history) ? l.stage_history : [];
+        const visited = new Set(['novo', ...hist.map(h => h.to)]);
+        return [...visited].some(v => (stageIndex[v] ?? -1) >= idx);
+      }).length;
+      return { stage, label: STAGE_LABELS[stage], count: reached, rate: total ? Math.round((reached / total) * 1000) / 10 : 0 };
+    });
+
+    /* leads activos com maior probabilidade de fechar (por score) */
+    const topLeads = leads
+      .filter(l => !['convertido', 'descartado'].includes(computeLeadStatus(l)))
+      .map(l => ({ ...l, ...computeLeadScore(l) }))
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 10)
+      .map(l => ({
+        id: l.id, nome: l.nome, nome_negocio: l.nome_negocio, tipo_negocio: l.tipo_negocio,
+        score: l.score, status: computeLeadStatus(l), created_at: l.created_at,
+      }));
+
+    return res.json({
+      data: {
+        total,
+        by_stage:            byStage,
+        avg_days_per_stage:  avgDaysPerStage,
+        conversion_by_stage: conversionByStage,
+        top_leads:           topLeads,
+      },
+    });
   } catch (err) { next(err); }
 }
 
@@ -716,7 +985,9 @@ const articles    = cmsRouter('cms_articles',    'published_at');
 module.exports = {
   getStats, getActivity,
   listOperators, getOperatorDetail, updateOperator, updateOperatorStatus,
+  extendOperatorTrial, messageOperator, impersonateOperator,
   listLeads, updateLead, sendLeadEmail, convertLead,
+  updateLeadStage, addLeadNote, addLeadContact, getPipelineStats,
   getWaitlist, sendWaitlistEmail,
   listInviteCodes, createInviteCode, updateInviteCode,
   getImpact, getLogs, getSystemHealth,

@@ -1,5 +1,11 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Download, ExternalLink, Search, ArrowUp, ArrowDown, ArrowUpDown, Ban, CheckCircle2 } from 'lucide-react';
+import {
+  Download, ExternalLink, Search, ArrowUp, ArrowDown, ArrowUpDown,
+  Ban, CheckCircle2, Star, Clock, Send, Check, LogIn, BookOpen, Euro,
+} from 'lucide-react';
+import {
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+} from 'recharts';
 import api from '../../services/api';
 import PageHeader from '../../components/layout/PageHeader';
 import Card from '../../components/ui/Card';
@@ -14,6 +20,9 @@ const PLAN_BADGE   = { starter: 'info', business: 'pending', pro: 'confirmed' };
 const STATUS_BADGE = { trial: 'pending', active: 'confirmed', suspended: 'cancelled', cancelled: 'cancelled' };
 const TYPE_LABELS  = { activity: 'Actividade', hotel: 'Hotel', rentacar: 'Rent-a-car', restaurant: 'Restaurante' };
 
+const AXIS_TICK   = { fontSize: 11, fontFamily: 'DM Sans', fill: '#6B7280' };
+const TOOLTIP_CSS = { fontFamily: 'DM Sans', fontSize: 12, borderRadius: 6, border: '1px solid #E5E8EC' };
+
 function exportCsv(rows) {
   const keys    = ['name', 'email', 'operator_type', 'plan', 'plan_status', 'reservation_count', 'last_login', 'trial_ends_at', 'created_at'];
   const headers = ['Nome', 'Email', 'Tipo', 'Plano', 'Estado', 'Reservas', 'Ultimo login', 'Trial ate', 'Registado em'];
@@ -24,6 +33,13 @@ function exportCsv(rows) {
   const a       = document.createElement('a');
   a.href = url; a.download = `operadores-${new Date().toISOString().slice(0, 10)}.csv`; a.click();
   URL.revokeObjectURL(url);
+}
+
+function fmtDateTime(iso) {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  return d.toLocaleDateString('pt-PT', { day: '2-digit', month: '2-digit', year: 'numeric' }) +
+    ' · ' + d.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' });
 }
 
 function OperatorAvatar({ op }) {
@@ -49,6 +65,20 @@ function SortHeader({ label, sortKey, sortBy, sortDir, onSort }) {
   );
 }
 
+function KpiBox({ icon: Icon, label, value }) {
+  return (
+    <div className="bg-n-50 rounded-sm p-3 flex items-center gap-3">
+      <div className="w-8 h-8 rounded-sm bg-white border border-n-200 flex items-center justify-center shrink-0">
+        <Icon size={15} strokeWidth={1.75} className="text-ocean-700" />
+      </div>
+      <div className="min-w-0">
+        <p className="font-display font-bold text-base text-n-900 leading-tight truncate">{value ?? '—'}</p>
+        <p className="text-xs font-body text-n-400 truncate">{label}</p>
+      </div>
+    </div>
+  );
+}
+
 export default function AdminOperators() {
   const [operators, setOperators] = useState([]);
   const [loading,   setLoading]   = useState(true);
@@ -64,9 +94,15 @@ export default function AdminOperators() {
   const [detailLoading, setDetailLoading] = useState(false);
 
   const [editModal, setEditModal] = useState(null);
-  const [editForm,  setEditForm]  = useState({ plan: '', plan_status: '', trial_ends_at: '', notes_internal: '' });
+  const [editForm,  setEditForm]  = useState({ plan: '', plan_status: '', trial_ends_at: '', notes_internal: '', reason: '' });
   const [saving,    setSaving]    = useState(false);
   const [extending, setExtending] = useState(false);
+  const [impersonating, setImpersonating] = useState(false);
+
+  const [messageModal, setMessageModal] = useState(null);
+  const [messageForm,  setMessageForm]  = useState({ subject: '', body: '' });
+  const [sendingMessage, setSendingMessage] = useState(false);
+  const [messageSentOk,  setMessageSentOk]  = useState(false);
 
   function loadOperators() {
     const params = { sort_by: sortBy, sort_dir: sortDir };
@@ -110,6 +146,7 @@ export default function AdminOperators() {
         plan:           editForm.plan,
         plan_status:    editForm.plan_status,
         notes_internal: editForm.notes_internal,
+        reason:         editForm.reason?.trim() || undefined,
       };
       if (editForm.trial_ends_at) payload.trial_ends_at = editForm.trial_ends_at;
       const { data } = await api.put(`/admin/operators/${editModal.id}`, payload);
@@ -118,23 +155,43 @@ export default function AdminOperators() {
     } catch {} finally { setSaving(false); }
   }
 
-  async function handleQuickStatus(op, status) {
+  async function handleSuspend(op) {
+    const reason = window.prompt(`Motivo da suspensao de "${op.name}" (sera incluido no email enviado ao operador):`, '');
+    if (reason === null) return;
     try {
-      const { data } = await api.put(`/admin/operators/${op.id}`, { plan_status: status });
+      const { data } = await api.put(`/admin/operators/${op.id}`, { plan_status: 'suspended', reason: reason.trim() });
       applyUpdate(op.id, data.data);
-    } catch {}
+    } catch (err) { window.alert(err?.response?.data?.error || 'Nao foi possivel suspender o operador.'); }
+  }
+
+  async function handleReactivate(op) {
+    if (!window.confirm(`Reactivar "${op.name}"? O operador sera notificado por email.`)) return;
+    try {
+      const { data } = await api.put(`/admin/operators/${op.id}`, { plan_status: 'active', reason: 'Reactivacao manual pelo fundador' });
+      applyUpdate(op.id, data.data);
+    } catch (err) { window.alert(err?.response?.data?.error || 'Nao foi possivel reactivar o operador.'); }
   }
 
   async function handleExtendTrial(op, days) {
     setExtending(true);
     try {
-      const { data } = await api.put(`/admin/operators/${op.id}`, { extend_trial_days: days });
+      const { data } = await api.post(`/admin/operators/${op.id}/extend-trial`, { days });
       applyUpdate(op.id, data.data);
-    } catch {} finally { setExtending(false); }
+    } catch (err) { window.alert(err?.response?.data?.error || 'Nao foi possivel estender o trial.'); }
+    finally { setExtending(false); }
   }
 
-  function handleImpersonate(op) {
-    window.alert(`Impersonation disponivel na Fase 9 (producao).\n\nOperador: ${op.name}\nID: ${op.id}`);
+  async function handleImpersonate(op) {
+    if (!op?.id) return;
+    if (!window.confirm(`Aceder como "${op.name}"?\n\nGuarde a sua sessao actual: sera aberto um novo separador com uma sessao autenticada como este operador.`)) return;
+    setImpersonating(true);
+    try {
+      const { data } = await api.post(`/admin/operators/${op.id}/impersonate`);
+      if (data?.data?.action_link) window.open(data.data.action_link, '_blank', 'noopener,noreferrer');
+      else window.alert('Nao foi possivel gerar o link de acesso.');
+    } catch (err) {
+      window.alert(err?.response?.data?.error || 'Nao foi possivel aceder como operador.');
+    } finally { setImpersonating(false); }
   }
 
   function openEdit(op) {
@@ -143,11 +200,32 @@ export default function AdminOperators() {
       plan_status:    op.plan_status,
       trial_ends_at:  op.trial_ends_at?.split('T')[0] || '',
       notes_internal: op.notes_internal || '',
+      reason:         '',
     });
     setEditModal(op);
   }
 
+  function openMessage(op) {
+    setMessageModal(op);
+    setMessageForm({ subject: '', body: '' });
+    setMessageSentOk(false);
+  }
+
+  async function handleSendMessage() {
+    if (!messageModal || !messageForm.subject.trim() || !messageForm.body.trim()) return;
+    setSendingMessage(true);
+    try {
+      await api.post(`/admin/operators/${messageModal.id}/message`, messageForm);
+      setMessageSentOk(true);
+      setTimeout(() => { setMessageModal(null); setMessageSentOk(false); }, 1200);
+    } catch (err) { window.alert(err?.response?.data?.error || 'Nao foi possivel enviar a mensagem.'); }
+    finally { setSendingMessage(false); }
+  }
+
   const displayed = useMemo(() => operators, [operators]);
+
+  const planChanged   = editModal && editForm.plan        && editForm.plan        !== editModal.plan;
+  const statusChanged = editModal && editForm.plan_status && editForm.plan_status !== editModal.plan_status;
 
   const columns = [
     {
@@ -201,11 +279,11 @@ export default function AdminOperators() {
           <Button variant="ghost" size="sm" onClick={() => openDetail(o)}>Ver</Button>
           <Button variant="ghost" size="sm" onClick={() => openEdit(o)}>Editar</Button>
           {o.plan_status === 'suspended' ? (
-            <Button variant="ghost" size="sm" icon={CheckCircle2} onClick={() => handleQuickStatus(o, 'active')} title="Activar">
-              Activar
+            <Button variant="ghost" size="sm" icon={CheckCircle2} onClick={() => handleReactivate(o)} title="Reactivar">
+              Reactivar
             </Button>
           ) : (
-            <Button variant="ghost" size="sm" icon={Ban} onClick={() => handleQuickStatus(o, 'suspended')} title="Suspender">
+            <Button variant="ghost" size="sm" icon={Ban} onClick={() => handleSuspend(o)} title="Suspender">
               Suspender
             </Button>
           )}
@@ -280,22 +358,22 @@ export default function AdminOperators() {
         <Table columns={columns} rows={displayed} loading={loading} />
       </Card>
 
-      {/* Modal detalhe */}
+      {/* Modal detalhe — perfil completo */}
       <Modal
         open={!!detailModal}
         onClose={() => { setDetailModal(null); setDetail(null); }}
         title={detailModal?.name || 'Detalhe'}
-        size="md"
+        size="lg"
         footer={
           <div className="flex gap-2 w-full flex-wrap">
-            <Button variant="ghost" size="sm" icon={ExternalLink} onClick={() => handleImpersonate(detailModal)}>
+            <Button variant="ghost" size="sm" icon={LogIn} loading={impersonating} onClick={() => handleImpersonate(detailModal)}>
               Aceder como operador
             </Button>
-            {detailModal?.operator_type && (
-              <Button
-                variant="ghost" size="sm" icon={ExternalLink}
-                onClick={() => window.open(`/${detail?.operator?.slug || ''}`, '_blank')}
-              >
+            <Button variant="ghost" size="sm" icon={Send} onClick={() => openMessage(detailModal)}>
+              Enviar mensagem
+            </Button>
+            {detail?.operator?.slug && (
+              <Button variant="ghost" size="sm" icon={ExternalLink} onClick={() => window.open(`/${detail.operator.slug}`, '_blank')}>
                 Pagina publica
               </Button>
             )}
@@ -310,35 +388,44 @@ export default function AdminOperators() {
         {detailLoading ? (
           <div className="flex justify-center py-8"><LoadingSpinner /></div>
         ) : detail ? (
-          <div className="space-y-4">
+          <div className="space-y-5">
             <div className="flex items-center gap-3">
               <OperatorAvatar op={detail.operator} />
               <div>
                 <p className="font-display font-bold text-n-900">{detail.operator.name}</p>
                 <p className="text-xs font-body text-n-500">{detail.operator.email} · {detail.operator.phone || '—'}</p>
               </div>
-              <Badge variant={STATUS_BADGE[detail.operator.plan_status] || 'default'} className="ml-auto">
-                {detail.operator.plan_status}
-              </Badge>
+              <div className="ml-auto flex items-center gap-2">
+                <Badge variant={PLAN_BADGE[detail.operator.plan] || 'default'}>{detail.operator.plan}</Badge>
+                <Badge variant={STATUS_BADGE[detail.operator.plan_status] || 'default'}>{detail.operator.plan_status}</Badge>
+              </div>
             </div>
 
-            <div className="grid grid-cols-3 gap-3">
-              {[
-                { label: 'Reservas', value: detail.stats?.reservations_total ?? '—' },
-                { label: 'Receita gerada', value: detail.stats?.revenue_total != null ? `€${detail.stats.revenue_total}` : '—' },
-                { label: 'Clientes', value: detail.stats?.customers_total ?? '—' },
-              ].map(s => (
-                <div key={s.label} className="bg-n-50 rounded-sm p-3 text-center">
-                  <p className="font-display font-bold text-lg text-n-900">{s.value}</p>
-                  <p className="text-xs font-body text-n-400">{s.label}</p>
-                </div>
-              ))}
+            {/* KPIs */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+              <KpiBox icon={BookOpen}      label="Reservas totais" value={detail.stats?.reservations_total ?? '—'} />
+              <KpiBox icon={Euro}          label="Receita gerada"  value={detail.stats?.revenue_total != null ? `€${detail.stats.revenue_total}` : '—'} />
+              <KpiBox icon={Star}          label="Avaliacao media" value={detail.stats?.avg_rating != null ? `${detail.stats.avg_rating} / 5` : 'Sem avaliacoes'} />
+              <KpiBox icon={Clock}         label="Ultimo login"    value={detail.stats?.last_login ? fmtDateTime(detail.stats.last_login) : 'Nunca'} />
+            </div>
+
+            {/* Grafico de reservas por mes */}
+            <div>
+              <p className="text-xs font-mono uppercase tracking-wide text-n-400 mb-1.5">Reservas por mes (ultimos 6 meses)</p>
+              <ResponsiveContainer width="100%" height={180}>
+                <BarChart data={detail.reservations_by_month || []} margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#E5E8EC" vertical={false} />
+                  <XAxis dataKey="label" tick={AXIS_TICK} axisLine={false} tickLine={false} />
+                  <YAxis tick={AXIS_TICK} axisLine={false} tickLine={false} allowDecimals={false} width={28} />
+                  <Tooltip formatter={v => [v, 'Reservas']} contentStyle={TOOLTIP_CSS} />
+                  <Bar dataKey="count" fill="#1480A8" radius={[3, 3, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
             </div>
 
             <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm font-body">
               {[
                 ['Tipo', TYPE_LABELS[detail.operator.operator_type] || detail.operator.operator_type],
-                ['Plano', detail.operator.plan],
                 ['Moeda', detail.operator.currency || '—'],
                 ['Timezone', detail.operator.timezone || '—'],
                 ['Idioma', detail.operator.language || '—'],
@@ -353,7 +440,7 @@ export default function AdminOperators() {
               ))}
             </div>
 
-            {/* Extender trial */}
+            {/* Estender trial */}
             {detail.operator.plan_status === 'trial' && (
               <div>
                 <p className="text-xs font-mono uppercase tracking-wide text-n-400 mb-1.5">Estender trial</p>
@@ -367,21 +454,33 @@ export default function AdminOperators() {
               </div>
             )}
 
-            {/* Notas internas */}
-            {detail.operator.notes_internal && (
-              <div>
-                <p className="text-xs font-mono uppercase tracking-wide text-n-400 mb-1">Notas internas</p>
-                <p className="text-sm font-body text-n-700 bg-n-50 rounded-sm p-3 whitespace-pre-wrap">{detail.operator.notes_internal}</p>
-              </div>
-            )}
+            {/* Notas internas com historico */}
+            <div>
+              <p className="text-xs font-mono uppercase tracking-wide text-n-400 mb-1.5">Notas internas</p>
+              {detail.operator.notes_internal && (
+                <p className="text-sm font-body text-n-700 bg-n-50 rounded-sm p-3 whitespace-pre-wrap mb-2">{detail.operator.notes_internal}</p>
+              )}
+              {(detail.notes_log || []).length === 0 ? (
+                !detail.operator.notes_internal && <p className="text-xs font-body text-n-400">Sem notas registadas.</p>
+              ) : (
+                <div className="space-y-1.5">
+                  {[...(detail.notes_log || [])].reverse().map((n, i) => (
+                    <div key={i} className="flex items-start justify-between gap-2 bg-n-50 rounded-sm px-3 py-2">
+                      <p className="text-xs font-body text-n-600">{n.text}</p>
+                      <p className="text-xs font-mono text-n-400 shrink-0">{fmtDateTime(n.at)}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
 
             {/* Historico de actividade */}
             <div>
-              <p className="text-xs font-mono uppercase tracking-wide text-n-400 mb-1.5">Actividade recente</p>
+              <p className="text-xs font-mono uppercase tracking-wide text-n-400 mb-1.5">Actividade recente (ultimas {Math.min(20, (detail.recent_activity || []).length)})</p>
               {(detail.recent_activity || []).length === 0 ? (
                 <p className="text-xs font-body text-n-400">Sem reservas registadas</p>
               ) : (
-                <div className="divide-y divide-n-100 border border-n-100 rounded-sm">
+                <div className="divide-y divide-n-100 border border-n-100 rounded-sm max-h-64 overflow-y-auto">
                   {detail.recent_activity.map((a, i) => (
                     <div key={i} className="px-3 py-2 flex items-center justify-between gap-2 text-xs font-body">
                       <span className="text-n-700">Reserva · {a.status}</span>
@@ -396,7 +495,7 @@ export default function AdminOperators() {
         ) : null}
       </Modal>
 
-      {/* Modal editar */}
+      {/* Modal editar — plano/estado com motivo */}
       <Modal
         open={!!editModal}
         onClose={() => setEditModal(null)}
@@ -421,6 +520,16 @@ export default function AdminOperators() {
             <option value="suspended">Suspenso</option>
             <option value="cancelled">Cancelado</option>
           </Select>
+          {(planChanged || statusChanged) && (
+            <Textarea
+              label="Motivo da alteracao"
+              hint={statusChanged && editForm.plan_status === 'suspended' ? 'Sera incluido no email de notificacao ao operador.' : 'Fica registado no historico interno do operador.'}
+              rows={2}
+              value={editForm.reason}
+              onChange={e => setEditForm({ ...editForm, reason: e.target.value })}
+              placeholder="Explique o motivo desta alteracao..."
+            />
+          )}
           <Input
             label="Trial ate (opcional)"
             type="date"
@@ -446,6 +555,45 @@ export default function AdminOperators() {
             </div>
           )}
         </div>
+      </Modal>
+
+      {/* Modal mensagem directa */}
+      <Modal
+        open={!!messageModal}
+        onClose={() => setMessageModal(null)}
+        title={`Mensagem directa — ${messageModal?.name || ''}`}
+        size="lg"
+        footer={
+          <>
+            <Button variant="secondary" onClick={() => setMessageModal(null)}>Cancelar</Button>
+            <Button
+              icon={messageSentOk ? Check : Send}
+              loading={sendingMessage}
+              onClick={handleSendMessage}
+              disabled={!messageForm.subject.trim() || !messageForm.body.trim()}
+              className={messageSentOk ? 'text-[#1A7A4A]' : ''}
+            >
+              {messageSentOk ? 'Enviada' : 'Enviar'}
+            </Button>
+          </>
+        }
+      >
+        {messageModal && (
+          <div className="space-y-4">
+            <p className="text-xs font-body text-n-500">Para: <span className="font-mono text-n-700">{messageModal.email}</span></p>
+            <Input
+              label="Assunto"
+              value={messageForm.subject}
+              onChange={e => setMessageForm(p => ({ ...p, subject: e.target.value }))}
+            />
+            <Textarea
+              label="Mensagem"
+              value={messageForm.body}
+              onChange={e => setMessageForm(p => ({ ...p, body: e.target.value }))}
+              rows={8}
+            />
+          </div>
+        )}
       </Modal>
     </div>
   );
