@@ -1,11 +1,11 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Download, ExternalLink, Search, Filter } from 'lucide-react';
+import { Download, ExternalLink, Search, ArrowUp, ArrowDown, ArrowUpDown, Ban, CheckCircle2 } from 'lucide-react';
 import api from '../../services/api';
 import PageHeader from '../../components/layout/PageHeader';
 import Card from '../../components/ui/Card';
 import Badge from '../../components/ui/Badge';
 import Button from '../../components/ui/Button';
-import Input, { Select } from '../../components/ui/Input';
+import Input, { Select, Textarea } from '../../components/ui/Input';
 import Table from '../../components/ui/Table';
 import Modal from '../../components/ui/Modal';
 import LoadingSpinner from '../../components/shared/LoadingSpinner';
@@ -15,9 +15,9 @@ const STATUS_BADGE = { trial: 'pending', active: 'confirmed', suspended: 'cancel
 const TYPE_LABELS  = { activity: 'Actividade', hotel: 'Hotel', rentacar: 'Rent-a-car', restaurant: 'Restaurante' };
 
 function exportCsv(rows) {
-  const keys    = ['name', 'email', 'operator_type', 'plan', 'plan_status', 'trial_ends_at', 'created_at'];
-  const headers = ['Nome', 'Email', 'Tipo', 'Plano', 'Estado', 'Trial ate', 'Registado em'];
-  const lines   = rows.map(o => keys.map(k => `"${(o[k] || '').toString().replace(/"/g, '""')}"`).join(','));
+  const keys    = ['name', 'email', 'operator_type', 'plan', 'plan_status', 'reservation_count', 'last_login', 'trial_ends_at', 'created_at'];
+  const headers = ['Nome', 'Email', 'Tipo', 'Plano', 'Estado', 'Reservas', 'Ultimo login', 'Trial ate', 'Registado em'];
+  const lines   = rows.map(o => keys.map(k => `"${(o[k] ?? '').toString().replace(/"/g, '""')}"`).join(','));
   const csv     = [headers.join(','), ...lines].join('\n');
   const blob    = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
   const url     = URL.createObjectURL(blob);
@@ -35,6 +35,20 @@ function OperatorAvatar({ op }) {
   );
 }
 
+function SortHeader({ label, sortKey, sortBy, sortDir, onSort }) {
+  const active = sortBy === sortKey;
+  const Icon   = active ? (sortDir === 'asc' ? ArrowUp : ArrowDown) : ArrowUpDown;
+  return (
+    <button
+      onClick={() => onSort(sortKey)}
+      className={`inline-flex items-center gap-1 hover:text-ocean-700 transition-colors ${active ? 'text-ocean-700' : ''}`}
+    >
+      {label}
+      <Icon size={12} strokeWidth={1.75} />
+    </button>
+  );
+}
+
 export default function AdminOperators() {
   const [operators, setOperators] = useState([]);
   const [loading,   setLoading]   = useState(true);
@@ -42,17 +56,20 @@ export default function AdminOperators() {
   const [filterType,   setFilterType]   = useState('');
   const [filterPlan,   setFilterPlan]   = useState('');
   const [filterStatus, setFilterStatus] = useState('');
+  const [sortBy,  setSortBy]  = useState('created_at');
+  const [sortDir, setSortDir] = useState('desc');
 
   const [detailModal, setDetailModal] = useState(null);
   const [detail,      setDetail]      = useState(null);
   const [detailLoading, setDetailLoading] = useState(false);
 
   const [editModal, setEditModal] = useState(null);
-  const [editForm,  setEditForm]  = useState({ plan: '', plan_status: '', trial_ends_at: '' });
+  const [editForm,  setEditForm]  = useState({ plan: '', plan_status: '', trial_ends_at: '', notes_internal: '' });
   const [saving,    setSaving]    = useState(false);
+  const [extending, setExtending] = useState(false);
 
-  useEffect(() => {
-    const params = {};
+  function loadOperators() {
+    const params = { sort_by: sortBy, sort_dir: sortDir };
     if (filterType)   params.operator_type = filterType;
     if (filterPlan)   params.plan          = filterPlan;
     if (filterStatus) params.plan_status   = filterStatus;
@@ -62,7 +79,14 @@ export default function AdminOperators() {
       .then(r => setOperators(r.data.data || []))
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, [search, filterType, filterPlan, filterStatus]);
+  }
+
+  useEffect(loadOperators, [search, filterType, filterPlan, filterStatus, sortBy, sortDir]);
+
+  function handleSort(key) {
+    if (sortBy === key) setSortDir(d => d === 'asc' ? 'desc' : 'asc');
+    else { setSortBy(key); setSortDir('asc'); }
+  }
 
   async function openDetail(op) {
     setDetailModal(op);
@@ -74,26 +98,60 @@ export default function AdminOperators() {
     finally { setDetailLoading(false); }
   }
 
+  function applyUpdate(id, patchedOperator) {
+    setOperators(prev => prev.map(o => o.id === id ? { ...o, ...patchedOperator } : o));
+    setDetail(prev => (prev && prev.operator?.id === id) ? { ...prev, operator: { ...prev.operator, ...patchedOperator } } : prev);
+  }
+
   async function handleSave() {
     setSaving(true);
     try {
-      const payload = { plan: editForm.plan, plan_status: editForm.plan_status };
+      const payload = {
+        plan:           editForm.plan,
+        plan_status:    editForm.plan_status,
+        notes_internal: editForm.notes_internal,
+      };
       if (editForm.trial_ends_at) payload.trial_ends_at = editForm.trial_ends_at;
       const { data } = await api.put(`/admin/operators/${editModal.id}`, payload);
-      setOperators(prev => prev.map(o => o.id === editModal.id ? { ...o, ...data.data } : o));
+      applyUpdate(editModal.id, data.data);
       setEditModal(null);
     } catch {} finally { setSaving(false); }
+  }
+
+  async function handleQuickStatus(op, status) {
+    try {
+      const { data } = await api.put(`/admin/operators/${op.id}`, { plan_status: status });
+      applyUpdate(op.id, data.data);
+    } catch {}
+  }
+
+  async function handleExtendTrial(op, days) {
+    setExtending(true);
+    try {
+      const { data } = await api.put(`/admin/operators/${op.id}`, { extend_trial_days: days });
+      applyUpdate(op.id, data.data);
+    } catch {} finally { setExtending(false); }
   }
 
   function handleImpersonate(op) {
     window.alert(`Impersonation disponivel na Fase 9 (producao).\n\nOperador: ${op.name}\nID: ${op.id}`);
   }
 
+  function openEdit(op) {
+    setEditForm({
+      plan:           op.plan,
+      plan_status:    op.plan_status,
+      trial_ends_at:  op.trial_ends_at?.split('T')[0] || '',
+      notes_internal: op.notes_internal || '',
+    });
+    setEditModal(op);
+  }
+
   const displayed = useMemo(() => operators, [operators]);
 
   const columns = [
     {
-      key: 'name', label: 'Operador',
+      key: 'name', label: <SortHeader label="Operador" sortKey="name" sortBy={sortBy} sortDir={sortDir} onSort={handleSort} />,
       render: o => (
         <div className="flex items-center gap-2.5">
           <OperatorAvatar op={o} />
@@ -105,38 +163,52 @@ export default function AdminOperators() {
       ),
     },
     {
-      key: 'operator_type', label: 'Tipo', width: '110px',
+      key: 'operator_type', label: <SortHeader label="Tipo" sortKey="operator_type" sortBy={sortBy} sortDir={sortDir} onSort={handleSort} />, width: '110px',
       render: o => <span className="text-xs font-body text-n-600">{TYPE_LABELS[o.operator_type] || o.operator_type}</span>,
     },
     {
-      key: 'plan', label: 'Plano', width: '90px',
+      key: 'plan', label: <SortHeader label="Plano" sortKey="plan" sortBy={sortBy} sortDir={sortDir} onSort={handleSort} />, width: '90px',
       render: o => <Badge variant={PLAN_BADGE[o.plan] || 'default'}>{o.plan}</Badge>,
     },
     {
-      key: 'plan_status', label: 'Estado', width: '100px',
+      key: 'plan_status', label: <SortHeader label="Estado" sortKey="plan_status" sortBy={sortBy} sortDir={sortDir} onSort={handleSort} />, width: '100px',
       render: o => <Badge variant={STATUS_BADGE[o.plan_status] || 'default'}>{o.plan_status}</Badge>,
     },
     {
-      key: 'trial_ends_at', label: 'Trial ate', width: '110px',
+      key: 'reservation_count', label: <SortHeader label="Reservas" sortKey="reservation_count" sortBy={sortBy} sortDir={sortDir} onSort={handleSort} />, width: '90px',
+      render: o => <span className="font-mono text-xs text-n-700">{o.reservation_count ?? 0}</span>,
+    },
+    {
+      key: 'last_login', label: <SortHeader label="Ultimo login" sortKey="last_login" sortBy={sortBy} sortDir={sortDir} onSort={handleSort} />, width: '120px',
+      render: o => o.last_login
+        ? <span className="font-mono text-xs text-n-500">{new Date(o.last_login).toLocaleDateString('pt-PT', { day: '2-digit', month: '2-digit', year: '2-digit' })}</span>
+        : <span className="text-n-300">—</span>,
+    },
+    {
+      key: 'trial_ends_at', label: <SortHeader label="Trial ate" sortKey="trial_ends_at" sortBy={sortBy} sortDir={sortDir} onSort={handleSort} />, width: '110px',
       render: o => o.trial_ends_at
         ? <span className="font-mono text-xs text-n-600">{o.trial_ends_at.split('T')[0]}</span>
         : <span className="text-n-300">—</span>,
     },
     {
-      key: 'created_at', label: 'Registo', width: '100px',
+      key: 'created_at', label: <SortHeader label="Registo" sortKey="created_at" sortBy={sortBy} sortDir={sortDir} onSort={handleSort} />, width: '100px',
       render: o => <span className="font-mono text-xs text-n-500">{o.created_at?.split('T')[0]}</span>,
     },
     {
-      key: 'actions', label: '', width: '120px',
+      key: 'actions', label: '', width: '180px',
       render: o => (
         <div className="flex gap-1">
           <Button variant="ghost" size="sm" onClick={() => openDetail(o)}>Ver</Button>
-          <Button
-            variant="ghost" size="sm"
-            onClick={() => { setEditForm({ plan: o.plan, plan_status: o.plan_status, trial_ends_at: o.trial_ends_at?.split('T')[0] || '' }); setEditModal(o); }}
-          >
-            Editar
-          </Button>
+          <Button variant="ghost" size="sm" onClick={() => openEdit(o)}>Editar</Button>
+          {o.plan_status === 'suspended' ? (
+            <Button variant="ghost" size="sm" icon={CheckCircle2} onClick={() => handleQuickStatus(o, 'active')} title="Activar">
+              Activar
+            </Button>
+          ) : (
+            <Button variant="ghost" size="sm" icon={Ban} onClick={() => handleQuickStatus(o, 'suspended')} title="Suspender">
+              Suspender
+            </Button>
+          )}
         </div>
       ),
     },
@@ -215,26 +287,21 @@ export default function AdminOperators() {
         title={detailModal?.name || 'Detalhe'}
         size="md"
         footer={
-          <div className="flex gap-2 w-full">
-            <Button
-              variant="ghost"
-              size="sm"
-              icon={ExternalLink}
-              onClick={() => handleImpersonate(detailModal)}
-            >
+          <div className="flex gap-2 w-full flex-wrap">
+            <Button variant="ghost" size="sm" icon={ExternalLink} onClick={() => handleImpersonate(detailModal)}>
               Aceder como operador
             </Button>
+            {detailModal?.operator_type && (
+              <Button
+                variant="ghost" size="sm" icon={ExternalLink}
+                onClick={() => window.open(`/${detail?.operator?.slug || ''}`, '_blank')}
+              >
+                Pagina publica
+              </Button>
+            )}
             <div className="flex-1" />
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={() => {
-                setDetailModal(null); setDetail(null);
-                setEditForm({ plan: detailModal?.plan, plan_status: detailModal?.plan_status, trial_ends_at: detailModal?.trial_ends_at?.split('T')[0] || '' });
-                setEditModal(detailModal);
-              }}
-            >
-              Editar plano
+            <Button variant="secondary" size="sm" onClick={() => { setDetailModal(null); setDetail(null); openEdit(detailModal); }}>
+              Editar
             </Button>
             <Button variant="secondary" size="sm" onClick={() => { setDetailModal(null); setDetail(null); }}>Fechar</Button>
           </div>
@@ -277,13 +344,53 @@ export default function AdminOperators() {
                 ['Idioma', detail.operator.language || '—'],
                 ['Registo', detail.operator.created_at?.split('T')[0]],
                 ['Trial ate', detail.operator.trial_ends_at?.split('T')[0] || '—'],
-                ['Slug', detail.operator.booking_link_slug || '—'],
+                ['Slug', detail.operator.slug || '—'],
               ].map(([k, v]) => (
                 <div key={k} className="flex gap-2">
                   <span className="text-n-400 w-20 shrink-0">{k}</span>
                   <span className="text-n-700 font-medium truncate">{v}</span>
                 </div>
               ))}
+            </div>
+
+            {/* Extender trial */}
+            {detail.operator.plan_status === 'trial' && (
+              <div>
+                <p className="text-xs font-mono uppercase tracking-wide text-n-400 mb-1.5">Estender trial</p>
+                <div className="flex gap-2">
+                  {[7, 15, 30].map(days => (
+                    <Button key={days} variant="secondary" size="sm" loading={extending} onClick={() => handleExtendTrial(detail.operator, days)}>
+                      +{days} dias
+                    </Button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Notas internas */}
+            {detail.operator.notes_internal && (
+              <div>
+                <p className="text-xs font-mono uppercase tracking-wide text-n-400 mb-1">Notas internas</p>
+                <p className="text-sm font-body text-n-700 bg-n-50 rounded-sm p-3 whitespace-pre-wrap">{detail.operator.notes_internal}</p>
+              </div>
+            )}
+
+            {/* Historico de actividade */}
+            <div>
+              <p className="text-xs font-mono uppercase tracking-wide text-n-400 mb-1.5">Actividade recente</p>
+              {(detail.recent_activity || []).length === 0 ? (
+                <p className="text-xs font-body text-n-400">Sem reservas registadas</p>
+              ) : (
+                <div className="divide-y divide-n-100 border border-n-100 rounded-sm">
+                  {detail.recent_activity.map((a, i) => (
+                    <div key={i} className="px-3 py-2 flex items-center justify-between gap-2 text-xs font-body">
+                      <span className="text-n-700">Reserva · {a.status}</span>
+                      <span className="text-n-500">€{Number(a.amount || 0)}</span>
+                      <span className="font-mono text-n-400">{a.time?.split('T')[0]}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         ) : null}
@@ -320,6 +427,24 @@ export default function AdminOperators() {
             value={editForm.trial_ends_at}
             onChange={e => setEditForm({ ...editForm, trial_ends_at: e.target.value })}
           />
+          <Textarea
+            label="Notas internas (visiveis apenas para a equipa SalDesk)"
+            rows={3}
+            value={editForm.notes_internal}
+            onChange={e => setEditForm({ ...editForm, notes_internal: e.target.value })}
+          />
+          {editModal?.plan_status === 'trial' && (
+            <div>
+              <p className="text-xs font-mono uppercase tracking-wide text-n-400 mb-1.5">Estender trial</p>
+              <div className="flex gap-2">
+                {[7, 15, 30].map(days => (
+                  <Button key={days} variant="secondary" size="sm" loading={extending} onClick={() => handleExtendTrial(editModal, days)}>
+                    +{days} dias
+                  </Button>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </Modal>
     </div>

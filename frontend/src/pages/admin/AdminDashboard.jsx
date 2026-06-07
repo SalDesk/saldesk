@@ -1,11 +1,13 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Users, BookOpen, Euro, TrendingUp, AlertTriangle, Clock,
   Mail, Key, Plus, ToggleLeft, ToggleRight, Download, Send,
-  Trash2, Check, X,
+  Check, X, Activity, UserX, ArrowRight, CalendarCheck, Percent,
 } from 'lucide-react';
 import {
-  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip,
+  LineChart, Line, AreaChart, Area, BarChart, Bar,
+  XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, PieChart, Pie, Cell, Legend,
 } from 'recharts';
 import api from '../../services/api';
@@ -18,7 +20,10 @@ import LoadingSpinner from '../../components/shared/LoadingSpinner';
 const PIE_COLORS   = ['#0D5470','#1480A8','#3A9BBF','#D4A82A'];
 const TYPE_LABELS  = { activity: 'Actividade', hotel: 'Hotel', rentacar: 'Rent-a-car', restaurant: 'Restaurante' };
 const PLAN_BADGE   = { starter: 'info', business: 'pending', pro: 'confirmed' };
-const STATUS_BADGE = { trial: 'pending', active: 'confirmed', suspended: 'cancelled' };
+const ACTIVITY_ICON = { reservation: BookOpen, operator: Users, lead: TrendingUp };
+
+const AXIS_TICK   = { fontSize: 11, fontFamily: 'DM Sans', fill: '#6B7280' };
+const TOOLTIP_CSS = { fontFamily: 'DM Sans', fontSize: 12, borderRadius: 6, border: '1px solid #E5E8EC' };
 
 function KpiCard({ icon: Icon, label, value, sub, accent = false }) {
   return (
@@ -29,15 +34,15 @@ function KpiCard({ icon: Icon, label, value, sub, accent = false }) {
       <div className="min-w-0">
         <p className="font-display font-bold text-xl text-n-900 leading-tight">{value ?? '—'}</p>
         <p className="text-xs font-body text-n-500 mt-0.5">{label}</p>
-        {sub && <p className="text-xs font-body text-n-400">{sub}</p>}
+        {sub && <p className="text-xs font-body text-n-400 truncate">{sub}</p>}
       </div>
     </div>
   );
 }
 
-function AlertCard({ icon: Icon, color, title, items, emptyMsg }) {
+function AlertCard({ icon: Icon, color, title, items, emptyMsg, renderItem, action }) {
   return (
-    <div className={`border rounded-md p-4 ${color}`}>
+    <div className={`border rounded-md p-4 flex flex-col ${color}`}>
       <div className="flex items-center gap-2 mb-3">
         <Icon size={16} strokeWidth={1.75} />
         <p className="text-sm font-body font-semibold">{title}</p>
@@ -48,17 +53,83 @@ function AlertCard({ icon: Icon, color, title, items, emptyMsg }) {
       {items.length === 0 ? (
         <p className="text-xs font-body opacity-60">{emptyMsg}</p>
       ) : (
-        <div className="space-y-1.5">
+        <div className="space-y-1.5 flex-1">
           {items.slice(0, 4).map((item, i) => (
             <div key={i} className="text-xs font-body opacity-80 truncate">
-              {item.name || item.email}
-              {item.trial_ends_at && <span className="ml-1 opacity-60">· {item.trial_ends_at?.split('T')[0]}</span>}
+              {renderItem ? renderItem(item) : (item.name || item.email)}
             </div>
           ))}
           {items.length > 4 && <p className="text-xs font-body opacity-50">+ {items.length - 4} mais</p>}
         </div>
       )}
+      {action && (
+        <button
+          onClick={action.onClick}
+          className="mt-3 inline-flex items-center gap-1.5 text-xs font-body font-semibold opacity-80 hover:opacity-100 transition-opacity self-start"
+        >
+          {action.label}
+          <ArrowRight size={13} strokeWidth={1.75} />
+        </button>
+      )}
     </div>
+  );
+}
+
+/* ── Activity feed ── */
+function ActivityFeed() {
+  const [events,  setEvents]  = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  const load = useCallback(() => {
+    api.get('/admin/activity', { params: { limit: 10 } })
+      .then(r => setEvents(r.data.data || []))
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
+
+  useEffect(() => {
+    load();
+    const id = setInterval(load, 30_000);
+    return () => clearInterval(id);
+  }, [load]);
+
+  return (
+    <Card
+      header={
+        <div className="flex items-center gap-2">
+          <Activity size={16} strokeWidth={1.75} className="text-ocean-700" />
+          <h3 className="font-display font-semibold text-sm text-n-700">Actividade recente</h3>
+          <span className="ml-auto text-xs font-mono text-n-400">actualiza a cada 30s</span>
+        </div>
+      }
+      padding="p-0"
+    >
+      {loading ? (
+        <div className="flex justify-center py-8"><LoadingSpinner size={22} /></div>
+      ) : events.length === 0 ? (
+        <p className="px-4 py-8 text-center text-n-400 text-xs font-body">Sem actividade recente</p>
+      ) : (
+        <div className="divide-y divide-n-100 max-h-[360px] overflow-y-auto">
+          {events.map((e, i) => {
+            const Icon = ACTIVITY_ICON[e.type] || Activity;
+            return (
+              <div key={i} className="px-4 py-3 flex items-start gap-3">
+                <div className="w-7 h-7 rounded-sm bg-ocean-50 flex items-center justify-center shrink-0 mt-0.5">
+                  <Icon size={14} strokeWidth={1.75} className="text-ocean-700" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs font-body font-semibold text-n-900 truncate">{e.title}</p>
+                  <p className="text-xs font-body text-n-400 truncate">{e.sub}</p>
+                </div>
+                <p className="text-xs font-mono text-n-400 whitespace-nowrap shrink-0">
+                  {e.time ? new Date(e.time).toLocaleString('pt-PT', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : '—'}
+                </p>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </Card>
   );
 }
 
@@ -329,6 +400,7 @@ function InviteCodesSection() {
 export default function AdminDashboard() {
   const [stats,   setStats]   = useState(null);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
   useEffect(() => {
     api.get('/admin/stats')
@@ -358,7 +430,7 @@ export default function AdminDashboard() {
           icon={Users}
           label="Operadores activos"
           value={stats.operators.active}
-          sub={`${stats.operators.total} total · ${stats.operators.trial} trial`}
+          sub={`${stats.operators.trial} trial · ${stats.operators.suspended} suspensos`}
         />
         <KpiCard
           icon={Euro}
@@ -369,34 +441,54 @@ export default function AdminDashboard() {
         />
         <KpiCard
           icon={BookOpen}
-          label="Reservas totais"
-          value={stats.reservations.total}
-          sub={`${stats.reservations.checked_out} concluidas`}
+          label="Reservas hoje"
+          value={stats.reservations.today}
+          sub={`${stats.reservations.this_month} este mes · ${stats.reservations.total} total`}
+        />
+        <KpiCard
+          icon={CalendarCheck}
+          label="Trials a expirar (7 dias)"
+          value={(stats.trials_expiring || []).length}
+          sub="Necessitam de seguimento"
         />
         <KpiCard
           icon={TrendingUp}
-          label="Leads novos"
-          value={stats.leads.new_uncontacted}
+          label="Leads (24h)"
+          value={stats.leads.new_24h}
           sub={`${stats.leads.total} total · ${stats.leads.converted} convertidos`}
+        />
+        <KpiCard
+          icon={Percent}
+          label="Taxa de conversao"
+          value={`${stats.leads.conversion_rate}%`}
+          sub="Leads convertidos em operadores"
+        />
+        <KpiCard
+          icon={UserX}
+          label="Operadores inactivos"
+          value={(stats.inactive_operators || []).length}
+          sub="Sem reservas nos ultimos 30 dias"
+        />
+        <KpiCard
+          icon={Users}
+          label="Operadores totais"
+          value={stats.operators.total}
+          sub={`${stats.operators.active} activos · ${stats.operators.trial} trial`}
         />
       </div>
 
       {/* Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
         <Card
-          className="lg:col-span-2"
           header={<h3 className="font-display font-semibold text-sm text-n-700">Crescimento de operadores (ultimos 6 meses)</h3>}
           padding="px-5 pb-5 pt-2"
         >
-          <ResponsiveContainer width="100%" height={200}>
+          <ResponsiveContainer width="100%" height={220}>
             <LineChart data={stats.operator_growth || []} margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#E5E8EC" vertical={false} />
-              <XAxis dataKey="label" tick={{ fontSize: 11, fontFamily: 'DM Sans', fill: '#6B7280' }} axisLine={false} tickLine={false} />
-              <YAxis tick={{ fontSize: 11, fontFamily: 'DM Sans', fill: '#6B7280' }} axisLine={false} tickLine={false} allowDecimals={false} width={28} />
-              <Tooltip
-                formatter={v => [v, 'Operadores']}
-                contentStyle={{ fontFamily: 'DM Sans', fontSize: 12, borderRadius: 6, border: '1px solid #E5E8EC' }}
-              />
+              <XAxis dataKey="label" tick={AXIS_TICK} axisLine={false} tickLine={false} />
+              <YAxis tick={AXIS_TICK} axisLine={false} tickLine={false} allowDecimals={false} width={28} />
+              <Tooltip formatter={v => [v, 'Operadores']} contentStyle={TOOLTIP_CSS} />
               <Line
                 type="monotone"
                 dataKey="count"
@@ -410,11 +502,47 @@ export default function AdminDashboard() {
         </Card>
 
         <Card
+          header={<h3 className="font-display font-semibold text-sm text-n-700">MRR estimado (ultimos 6 meses)</h3>}
+          padding="px-5 pb-5 pt-2"
+        >
+          <ResponsiveContainer width="100%" height={220}>
+            <AreaChart data={stats.mrr_by_month || []} margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>
+              <defs>
+                <linearGradient id="mrrGradient" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%"  stopColor="#D4A82A" stopOpacity={0.35} />
+                  <stop offset="95%" stopColor="#D4A82A" stopOpacity={0.02} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" stroke="#E5E8EC" vertical={false} />
+              <XAxis dataKey="label" tick={AXIS_TICK} axisLine={false} tickLine={false} />
+              <YAxis tick={AXIS_TICK} axisLine={false} tickLine={false} allowDecimals={false} width={36} tickFormatter={v => `€${v}`} />
+              <Tooltip formatter={v => [`€${v}`, 'MRR']} contentStyle={TOOLTIP_CSS} />
+              <Area type="monotone" dataKey="mrr" stroke="#D4A82A" strokeWidth={2} fill="url(#mrrGradient)" />
+            </AreaChart>
+          </ResponsiveContainer>
+        </Card>
+
+        <Card
+          header={<h3 className="font-display font-semibold text-sm text-n-700">Reservas diarias (ultimos 30 dias)</h3>}
+          padding="px-5 pb-5 pt-2"
+        >
+          <ResponsiveContainer width="100%" height={220}>
+            <BarChart data={stats.daily_reservations || []} margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#E5E8EC" vertical={false} />
+              <XAxis dataKey="label" tick={AXIS_TICK} axisLine={false} tickLine={false} interval={4} />
+              <YAxis tick={AXIS_TICK} axisLine={false} tickLine={false} allowDecimals={false} width={28} />
+              <Tooltip formatter={v => [v, 'Reservas']} contentStyle={TOOLTIP_CSS} />
+              <Bar dataKey="count" fill="#1480A8" radius={[3, 3, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </Card>
+
+        <Card
           header={<h3 className="font-display font-semibold text-sm text-n-700">Operadores por tipo</h3>}
           padding="px-4 pb-4 pt-2"
         >
           {byType.length > 0 ? (
-            <ResponsiveContainer width="100%" height={200}>
+            <ResponsiveContainer width="100%" height={220}>
               <PieChart>
                 <Pie
                   data={byType}
@@ -430,10 +558,7 @@ export default function AdminDashboard() {
                     <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
                   ))}
                 </Pie>
-                <Tooltip
-                  formatter={(v, n) => [v, n]}
-                  contentStyle={{ fontFamily: 'DM Sans', fontSize: 12, borderRadius: 6, border: '1px solid #E5E8EC' }}
-                />
+                <Tooltip formatter={(v, n) => [v, n]} contentStyle={TOOLTIP_CSS} />
                 <Legend
                   iconType="circle"
                   iconSize={8}
@@ -448,13 +573,15 @@ export default function AdminDashboard() {
       </div>
 
       {/* Alertas + Actividade */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
         <AlertCard
           icon={Clock}
           color="bg-[var(--warning-light)] text-[var(--warning)] border-[var(--warning)]"
           title="Trials a expirar (7 dias)"
           items={stats.trials_expiring || []}
           emptyMsg="Nenhum trial a expirar em breve"
+          renderItem={item => <>{item.name} <span className="opacity-60">· {item.trial_ends_at?.split('T')[0]}</span></>}
+          action={{ label: 'Ver operadores', onClick: () => navigate('/admin/operators') }}
         />
         <AlertCard
           icon={AlertTriangle}
@@ -462,8 +589,24 @@ export default function AdminDashboard() {
           title="Leads sem resposta (48h)"
           items={stats.new_leads_48h || []}
           emptyMsg="Todos os leads foram contactados"
+          renderItem={item => <>{item.nome || item.email} <span className="opacity-60">· {TYPE_LABELS[item.tipo_negocio] || item.tipo_negocio}</span></>}
+          action={{ label: 'Ver leads', onClick: () => navigate('/admin/leads') }}
         />
+        <AlertCard
+          icon={UserX}
+          color="bg-[var(--error-light)] text-[var(--error)] border-[var(--error)]"
+          title="Operadores inactivos"
+          items={stats.inactive_operators || []}
+          emptyMsg="Todos os operadores tem actividade recente"
+          renderItem={item => <>{item.name} <span className="opacity-60">· {TYPE_LABELS[item.operator_type] || item.operator_type}</span></>}
+          action={{ label: 'Ver operadores', onClick: () => navigate('/admin/operators') }}
+        />
+      </div>
 
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
+        <div className="lg:col-span-2">
+          <ActivityFeed />
+        </div>
         <Card header={<h3 className="font-display font-semibold text-sm text-n-700">Operadores recentes</h3>} padding="p-0">
           {(stats.recent_operators || []).length === 0 ? (
             <p className="px-4 py-8 text-center text-n-400 text-xs font-body">Sem registos recentes</p>
@@ -489,7 +632,7 @@ export default function AdminDashboard() {
       </div>
 
       {/* Waitlist + Invite codes */}
-      <div className="mt-6 space-y-5">
+      <div className="space-y-5">
         <WaitlistSection />
         <InviteCodesSection />
       </div>
