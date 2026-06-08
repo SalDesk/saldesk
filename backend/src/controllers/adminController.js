@@ -976,11 +976,141 @@ function cmsRouter(table, orderCol = 'created_at') {
   };
 }
 
-const featured    = cmsRouter('cms_featured',    'position');
-const banners     = cmsRouter('cms_banners');
-const experiences = cmsRouter('cms_experiences', 'sort_order');
-const events      = cmsRouter('cms_events',      'event_date');
-const articles    = cmsRouter('cms_articles',    'published_at');
+const featured     = cmsRouter('cms_featured',     'position');
+const banners      = cmsRouter('cms_banners');
+const experiences  = cmsRouter('cms_experiences',  'sort_order');
+const events       = cmsRouter('cms_events',       'event_date');
+const articles     = cmsRouter('cms_articles',     'published_at');
+const testimonials = cmsRouter('cms_testimonials', 'order_index');
+const faqs         = cmsRouter('cms_faqs',         'order_index');
+const landmarks    = cmsRouter('cms_landmarks',    'name_pt');
+
+/* ─── CMS: precos dos planos ────────────────────────────────── */
+async function getCmsPricing(req, res, next) {
+  try {
+    const { data, error } = await supabaseAdmin.from('cms_pricing').select('*').order('price_eur');
+    if (error) throw error;
+    return res.json({ data });
+  } catch (err) { next(err); }
+}
+
+async function updateCmsPricing(req, res, next) {
+  try {
+    const updates = {
+      price_eur:  req.body.price_eur,
+      price_cve:  req.body.price_cve,
+      updated_at: new Date().toISOString(),
+    };
+    const { data, error } = await supabaseAdmin.from('cms_pricing').update(updates).eq('plan', req.params.plan).select().single();
+    if (error || !data) return res.status(404).json({ error: 'Plano nao encontrado' });
+    return res.json({ data });
+  } catch (err) { next(err); }
+}
+
+/* ─── CMS: hero do website (chave/valor em cms_settings) ────── */
+const HERO_KEYS = ['hero_title_pt', 'hero_title_en', 'hero_subtitle_pt', 'hero_subtitle_en'];
+
+async function getCmsHero(req, res, next) {
+  try {
+    const { data, error } = await supabaseAdmin.from('cms_settings').select('*').in('key', HERO_KEYS);
+    if (error) throw error;
+    const hero = {};
+    HERO_KEYS.forEach(k => { hero[k] = (data || []).find(r => r.key === k)?.value || ''; });
+    return res.json({ data: hero });
+  } catch (err) { next(err); }
+}
+
+async function updateCmsHero(req, res, next) {
+  try {
+    const rows = HERO_KEYS
+      .filter(k => req.body[k] !== undefined)
+      .map(k => ({ key: k, value: String(req.body[k] ?? ''), updated_at: new Date().toISOString() }));
+    if (!rows.length) return res.status(400).json({ error: 'Sem dados para guardar' });
+    const { error } = await supabaseAdmin.from('cms_settings').upsert(rows, { onConflict: 'key' });
+    if (error) throw error;
+    return res.json({ data: req.body });
+  } catch (err) { next(err); }
+}
+
+/* ─── CMS: configuracoes globais (chave/valor em cms_settings) ─ */
+const SETTINGS_KEYS = [
+  'launch_date', 'invite_only', 'coming_soon_mode', 'maintenance_message',
+  'social_instagram', 'social_facebook', 'social_linkedin',
+];
+
+async function getCmsSettings(req, res, next) {
+  try {
+    const { data, error } = await supabaseAdmin.from('cms_settings').select('*').in('key', SETTINGS_KEYS);
+    if (error) throw error;
+    const settings = {};
+    SETTINGS_KEYS.forEach(k => { settings[k] = (data || []).find(r => r.key === k)?.value || ''; });
+    return res.json({ data: settings });
+  } catch (err) { next(err); }
+}
+
+async function updateCmsSettings(req, res, next) {
+  try {
+    const rows = SETTINGS_KEYS
+      .filter(k => req.body[k] !== undefined)
+      .map(k => ({ key: k, value: String(req.body[k] ?? ''), updated_at: new Date().toISOString() }));
+    if (!rows.length) return res.status(400).json({ error: 'Sem dados para guardar' });
+    const { error } = await supabaseAdmin.from('cms_settings').upsert(rows, { onConflict: 'key' });
+    if (error) throw error;
+    return res.json({ data: req.body });
+  } catch (err) { next(err); }
+}
+
+/* ─── CMS: templates de email ───────────────────────────────── */
+async function listEmailTemplates(req, res, next) {
+  try {
+    const { data, error } = await supabaseAdmin.from('cms_email_templates').select('*').order('type');
+    if (error) throw error;
+    return res.json({ data });
+  } catch (err) { next(err); }
+}
+
+async function updateEmailTemplate(req, res, next) {
+  try {
+    const updates = {
+      subject_pt: req.body.subject_pt,
+      subject_en: req.body.subject_en,
+      body_pt:    req.body.body_pt,
+      body_en:    req.body.body_en,
+      updated_at: new Date().toISOString(),
+    };
+    const { data, error } = await supabaseAdmin.from('cms_email_templates').update(updates).eq('id', req.params.id).select().single();
+    if (error || !data) return res.status(404).json({ error: 'Template nao encontrado' });
+    return res.json({ data });
+  } catch (err) { next(err); }
+}
+
+const TEMPLATE_SAMPLE_VARS = {
+  nome: 'Maria Silva', tour: 'Passeio de barco ao por-do-sol',
+  data: '2026-07-12', dias: '5',
+  link: 'https://app.saldesk.cv/reset-password?token=exemplo',
+};
+
+function fillTemplateVars(text) {
+  if (!text) return '';
+  return text.replace(/\{(\w+)\}/g, (m, key) => TEMPLATE_SAMPLE_VARS[key] ?? m);
+}
+
+async function sendTestEmailTemplate(req, res, next) {
+  try {
+    const { data: tpl, error } = await supabaseAdmin.from('cms_email_templates').select('*').eq('id', req.params.id).single();
+    if (error || !tpl) return res.status(404).json({ error: 'Template nao encontrado' });
+
+    const to = req.body.to || req.user?.email;
+    if (!to) return res.status(400).json({ error: 'Indique um email de destino' });
+
+    const lang    = req.body.lang === 'en' ? 'en' : 'pt';
+    const subject = fillTemplateVars(lang === 'en' ? tpl.subject_en : tpl.subject_pt);
+    const body    = fillTemplateVars(lang === 'en' ? tpl.body_en    : tpl.body_pt);
+
+    await enviarEmail({ to, subject: `[TESTE] ${subject}`, text: body });
+    return res.json({ data: null, message: 'Email de teste enviado' });
+  } catch (err) { next(err); }
+}
 
 module.exports = {
   getStats, getActivity,
@@ -993,4 +1123,9 @@ module.exports = {
   getImpact, getLogs, getSystemHealth,
   getRevenue,
   featured, banners, experiences, events, articles,
+  testimonials, faqs, landmarks,
+  getCmsPricing, updateCmsPricing,
+  getCmsHero, updateCmsHero,
+  getCmsSettings, updateCmsSettings,
+  listEmailTemplates, updateEmailTemplate, sendTestEmailTemplate,
 };

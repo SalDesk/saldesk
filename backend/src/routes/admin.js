@@ -11,6 +11,11 @@ const {
   getImpact, getLogs, getSystemHealth,
   getRevenue,
   featured, banners, experiences, events, articles,
+  testimonials, faqs, landmarks,
+  getCmsPricing, updateCmsPricing,
+  getCmsHero, updateCmsHero,
+  getCmsSettings, updateCmsSettings,
+  listEmailTemplates, updateEmailTemplate, sendTestEmailTemplate,
 } = require('../controllers/adminController');
 const auth           = require('../middleware/auth');
 const requireFounder = require('../middleware/requireFounder');
@@ -81,5 +86,33 @@ router.get('/cms/articles',             articles.list);
 router.post('/cms/articles',            articles.create);
 router.put('/cms/articles/:id',         articles.update);
 router.delete('/cms/articles/:id',      articles.remove);
+
+router.get('/cms/testimonials',         testimonials.list);
+router.post('/cms/testimonials',        testimonials.create);
+router.put('/cms/testimonials/:id',     testimonials.update);
+router.delete('/cms/testimonials/:id',  testimonials.remove);
+
+router.get('/cms/faqs',                 faqs.list);
+router.post('/cms/faqs',                faqs.create);
+router.put('/cms/faqs/:id',             faqs.update);
+router.delete('/cms/faqs/:id',          faqs.remove);
+
+router.get('/cms/landmarks',            landmarks.list);
+router.post('/cms/landmarks',           landmarks.create);
+router.put('/cms/landmarks/:id',        landmarks.update);
+router.delete('/cms/landmarks/:id',     landmarks.remove);
+
+router.get('/cms/pricing',              getCmsPricing);
+router.put('/cms/pricing/:plan',        updateCmsPricing);
+
+router.get('/cms/hero',                 getCmsHero);
+router.put('/cms/hero',                 updateCmsHero);
+
+router.get('/cms/settings',             getCmsSettings);
+router.put('/cms/settings',             updateCmsSettings);
+
+router.get('/cms/email-templates',           listEmailTemplates);
+router.put('/cms/email-templates/:id',       updateEmailTemplate);
+router.post('/cms/email-templates/:id/test', sendTestEmailTemplate);
 
 module.exports = router;
