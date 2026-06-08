@@ -1,4 +1,5 @@
 const { supabaseAdmin, supabaseAnon } = require('../config/supabase');
+const { addFailedLogin } = require('../services/logStore');
 
 async function register(req, res, next) {
   try {
@@ -34,6 +35,7 @@ async function login(req, res, next) {
     const { data, error } = await supabaseAnon.auth.signInWithPassword({ email, password });
 
     if (error) {
+      addFailedLogin({ ip: req.ip || '', email: email || '' });
       return res.status(401).json({ error: 'Credenciais invalidas', code: 'INVALID_CREDENTIALS' });
     }
 

@@ -22,6 +22,10 @@ const {
   sendMarketingEmail, sendLaunchEmail,
   getAnalyticsTraffic, getAnalyticsFunnel, getAnalyticsChurn,
   getAnalyticsGeography, sendAnalyticsReport,
+  getSystemStats, getApiLogs, deleteApiLogs,
+  getSystemSecurity, blockIp,
+  getSystemSettings, updateSystemSettings,
+  triggerBackup, flushRedisCache, restartApi,
 } = require('../controllers/adminController');
 const auth           = require('../middleware/auth');
 const requireFounder = require('../middleware/requireFounder');
@@ -126,6 +130,18 @@ router.put('/cms/settings',             updateCmsSettings);
 router.get('/cms/email-templates',           listEmailTemplates);
 router.put('/cms/email-templates/:id',       updateEmailTemplate);
 router.post('/cms/email-templates/:id/test', sendTestEmailTemplate);
+
+/* Sistema avancado */
+router.get('/system/stats',          getSystemStats);
+router.get('/system/logs',           getApiLogs);
+router.delete('/system/logs',        deleteApiLogs);
+router.get('/system/security',       getSystemSecurity);
+router.post('/system/block-ip',      blockIp);
+router.get('/system/settings',       getSystemSettings);
+router.put('/system/settings',       updateSystemSettings);
+router.post('/system/backup',        triggerBackup);
+router.post('/system/flush-cache',   flushRedisCache);
+router.post('/system/restart',       restartApi);
 
 /* Analytics */
 router.get('/analytics/traffic',     getAnalyticsTraffic);
