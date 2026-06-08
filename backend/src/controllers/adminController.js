@@ -1349,6 +1349,240 @@ async function sendTestEmailTemplate(req, res, next) {
   } catch (err) { next(err); }
 }
 
+/* ─── Comunicações avançadas ────────────────────────────────── */
+const { emitToOperator, emitToAdmin, isOperatorOnline, getOnlineOperatorIds } = require('../services/socketService');
+
+async function listConversations(req, res, next) {
+  try {
+    const { data: operators, error: opErr } = await supabaseAdmin
+      .from('operators')
+      .select('id, name, email, plan, plan_status, operator_type, updated_at')
+      .order('name');
+    if (opErr) throw opErr;
+
+    const { data: lastMsgs } = await supabaseAdmin
+      .from('admin_messages')
+      .select('operator_id, content, created_at, sender_type, is_read')
+      .order('created_at', { ascending: false });
+
+    const { data: unreadRows } = await supabaseAdmin
+      .from('admin_messages')
+      .select('operator_id')
+      .eq('is_read', false)
+      .eq('sender_type', 'operator');
+
+    const lastMsgMap    = {};
+    const unreadCountMap = {};
+    (lastMsgs || []).forEach(m => { if (!lastMsgMap[m.operator_id]) lastMsgMap[m.operator_id] = m; });
+    (unreadRows || []).forEach(m => { unreadCountMap[m.operator_id] = (unreadCountMap[m.operator_id] || 0) + 1; });
+
+    const onlineIds = new Set(getOnlineOperatorIds());
+    const result = (operators || []).map(o => ({
+      ...o,
+      last_message:  lastMsgMap[o.id]  || null,
+      unread_count:  unreadCountMap[o.id] || 0,
+      online:        onlineIds.has(o.id),
+    })).sort((a, b) => {
+      const at = a.last_message?.created_at || a.updated_at || '';
+      const bt = b.last_message?.created_at || b.updated_at || '';
+      return bt.localeCompare(at);
+    });
+
+    return res.json({ data: result });
+  } catch (err) { next(err); }
+}
+
+async function getConversation(req, res, next) {
+  try {
+    const { operatorId } = req.params;
+    const limit = Math.min(parseInt(req.query.limit || 50), 100);
+
+    const { data, error } = await supabaseAdmin
+      .from('admin_messages')
+      .select('*')
+      .eq('operator_id', operatorId)
+      .order('created_at', { ascending: true })
+      .limit(limit);
+    if (error) throw error;
+
+    /* Marcar como lidas as mensagens do operador */
+    await supabaseAdmin
+      .from('admin_messages')
+      .update({ is_read: true, read_at: new Date().toISOString() })
+      .eq('operator_id', operatorId)
+      .eq('sender_type', 'operator')
+      .eq('is_read', false);
+
+    return res.json({ data: data || [] });
+  } catch (err) { next(err); }
+}
+
+async function sendConversationMessage(req, res, next) {
+  try {
+    const { operatorId } = req.params;
+    const { content } = req.body;
+    if (!content?.trim()) return res.status(400).json({ error: 'Conteudo obrigatorio' });
+
+    const { data, error } = await supabaseAdmin.from('admin_messages').insert({
+      operator_id: operatorId,
+      sender_type: 'admin',
+      content:     content.trim(),
+    }).select().single();
+    if (error) throw error;
+
+    emitToOperator(operatorId, 'admin:message:new', data);
+    return res.status(201).json({ data });
+  } catch (err) { next(err); }
+}
+
+function buildOperatorFilter(operators, target, segmentPlan, segmentType) {
+  let list = operators;
+  if (target === 'trial')   list = list.filter(o => o.plan_status === 'trial');
+  if (target === 'paying')  list = list.filter(o => o.plan_status === 'active');
+  if (target === 'waitlist') return []; /* waitlist uses leads table — handled separately */
+  if (segmentPlan) list = list.filter(o => o.plan === segmentPlan);
+  if (segmentType) list = list.filter(o => o.operator_type === segmentType);
+  return list;
+}
+
+async function sendBroadcast(req, res, next) {
+  try {
+    const { title, content, target = 'all', segment_plan, segment_type } = req.body;
+    if (!title?.trim() || !content?.trim()) return res.status(400).json({ error: 'Titulo e conteudo obrigatorios' });
+
+    const { data: operators } = await supabaseAdmin
+      .from('operators')
+      .select('id, plan, plan_status, operator_type');
+
+    const targets = buildOperatorFilter(operators || [], target, segment_plan, segment_type);
+
+    targets.forEach(o => {
+      emitToOperator(o.id, 'admin:broadcast', { title, content });
+    });
+
+    const { data, error } = await supabaseAdmin.from('admin_broadcasts').insert({
+      title:        title.trim(),
+      content:      content.trim(),
+      channel:      'app',
+      target,
+      segment_plan: segment_plan || null,
+      segment_type: segment_type || null,
+      sent_count:   targets.length,
+      sent_at:      new Date().toISOString(),
+    }).select().single();
+    if (error) throw error;
+
+    return res.status(201).json({ data, message: `Broadcast enviado para ${targets.length} operador(es)` });
+  } catch (err) { next(err); }
+}
+
+async function listBroadcasts(req, res, next) {
+  try {
+    const { data, error } = await supabaseAdmin
+      .from('admin_broadcasts')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(50);
+    if (error) throw error;
+    return res.json({ data: data || [] });
+  } catch (err) { next(err); }
+}
+
+const SEGMENT_LABELS = { all: 'Todos', trial: 'Trial', paying: 'Pagantes' };
+
+async function sendMarketingEmail(req, res, next) {
+  try {
+    const { subject, body, target = 'all', segment_plan, segment_type } = req.body;
+    if (!subject?.trim() || !body?.trim()) return res.status(400).json({ error: 'Assunto e corpo obrigatorios' });
+
+    const { data: operators } = await supabaseAdmin
+      .from('operators')
+      .select('id, name, email, plan, plan_status, operator_type, trial_ends_at');
+
+    const targets = buildOperatorFilter(operators || [], target, segment_plan, segment_type)
+      .filter(o => o.email);
+
+    const sampleVars = (o) => ({
+      nome:       o.name || o.email,
+      plano:      o.plan || '',
+      dias_trial: o.trial_ends_at
+        ? Math.max(0, Math.ceil((new Date(o.trial_ends_at) - new Date()) / (1000 * 60 * 60 * 24)))
+        : 0,
+    });
+
+    function fillVars(text, vars) {
+      return text.replace(/\{(\w+)\}/g, (m, key) => vars[key] != null ? String(vars[key]) : m);
+    }
+
+    let sent = 0;
+    for (const o of targets) {
+      try {
+        const vars = sampleVars(o);
+        await enviarEmail({
+          to:      o.email,
+          subject: fillVars(subject, vars),
+          text:    fillVars(body, vars),
+        });
+        sent++;
+      } catch { /* continuar se um envio falhar */ }
+    }
+
+    const { data, error } = await supabaseAdmin.from('admin_broadcasts').insert({
+      title:        subject.trim(),
+      content:      body.trim(),
+      channel:      'email',
+      subject:      subject.trim(),
+      target,
+      segment_plan: segment_plan || null,
+      segment_type: segment_type || null,
+      sent_count:   sent,
+      sent_at:      new Date().toISOString(),
+    }).select().single();
+    if (error) throw error;
+
+    return res.status(201).json({ data, message: `Email enviado para ${sent} de ${targets.length} operador(es)` });
+  } catch (err) { next(err); }
+}
+
+async function sendLaunchEmail(req, res, next) {
+  try {
+    const { subject, body } = req.body;
+    const { data: waitlist, error } = await supabaseAdmin.from('leads').select('email, nome, name');
+    if (error) throw error;
+    const list = (waitlist || []).filter(s => s.email);
+    if (!list.length) return res.json({ data: { sent: 0, total: 0 }, message: 'Sem subscritores na waitlist' });
+
+    const emailSubject = (subject || '').trim() || 'A SalDesk acabou de ser lancada!';
+    const emailBody    = (body    || '').trim() ||
+      'Ola!\n\nA SalDesk acabou de ser lancada e ja pode comecar a usar a plataforma gratuitamente.\n\nAceda em https://app.saldesk.cv e comece hoje mesmo.\n\nEquipa SalDesk';
+
+    let sent = 0;
+    for (const sub of list) {
+      try {
+        const nome = sub.nome || sub.name || '';
+        await enviarEmail({
+          to:      sub.email,
+          subject: emailSubject,
+          text:    emailBody.replace(/\{nome\}/g, nome || 'ola'),
+        });
+        sent++;
+      } catch { /* continuar */ }
+    }
+
+    await supabaseAdmin.from('admin_broadcasts').insert({
+      title:     emailSubject,
+      content:   emailBody,
+      channel:   'email',
+      subject:   emailSubject,
+      target:    'waitlist',
+      sent_count: sent,
+      sent_at:   new Date().toISOString(),
+    });
+
+    return res.json({ data: { sent, total: list.length }, message: `Email de lancamento enviado para ${sent} de ${list.length} subscritores` });
+  } catch (err) { next(err); }
+}
+
 module.exports = {
   getStats, getActivity,
   listOperators, getOperatorDetail, updateOperator, updateOperatorStatus,
@@ -1366,4 +1600,7 @@ module.exports = {
   getCmsHero, updateCmsHero,
   getCmsSettings, updateCmsSettings,
   listEmailTemplates, updateEmailTemplate, sendTestEmailTemplate,
+  listConversations, getConversation, sendConversationMessage,
+  sendBroadcast, listBroadcasts,
+  sendMarketingEmail, sendLaunchEmail,
 };

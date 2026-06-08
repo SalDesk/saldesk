@@ -1,6 +1,8 @@
 require('dotenv').config();
+const http    = require('http');
 const express = require('express');
-const cors = require('cors');
+const cors    = require('cors');
+const { initSocket } = require('./services/socketService');
 
 const authRoutes = require('./routes/auth');
 const onboardingRoutes = require('./routes/onboarding');
@@ -47,8 +49,11 @@ app.use('/public',         publicRoutes);
 
 app.use(errorHandler);
 
-const PORT = process.env.PORT || 3001;
-app.listen(PORT, () => {
+const PORT   = process.env.PORT || 3001;
+const server = http.createServer(app);
+initSocket(server);
+
+server.listen(PORT, () => {
   console.log(`Servidor SalDesk a correr na porta ${PORT} [${process.env.NODE_ENV}]`);
   if (process.env.NODE_ENV !== 'test') iniciarCron();
 });

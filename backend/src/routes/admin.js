@@ -17,6 +17,9 @@ const {
   getCmsHero, updateCmsHero,
   getCmsSettings, updateCmsSettings,
   listEmailTemplates, updateEmailTemplate, sendTestEmailTemplate,
+  listConversations, getConversation, sendConversationMessage,
+  sendBroadcast, listBroadcasts,
+  sendMarketingEmail, sendLaunchEmail,
 } = require('../controllers/adminController');
 const auth           = require('../middleware/auth');
 const requireFounder = require('../middleware/requireFounder');
@@ -121,5 +124,14 @@ router.put('/cms/settings',             updateCmsSettings);
 router.get('/cms/email-templates',           listEmailTemplates);
 router.put('/cms/email-templates/:id',       updateEmailTemplate);
 router.post('/cms/email-templates/:id/test', sendTestEmailTemplate);
+
+/* Comunicacoes */
+router.get('/communications/conversations',                  listConversations);
+router.get('/communications/conversations/:operatorId',      getConversation);
+router.post('/communications/conversations/:operatorId',     sendConversationMessage);
+router.post('/communications/broadcast',                     sendBroadcast);
+router.get('/communications/broadcasts',                     listBroadcasts);
+router.post('/communications/email',                         sendMarketingEmail);
+router.post('/communications/launch-email',                  sendLaunchEmail);
 
 module.exports = router;
