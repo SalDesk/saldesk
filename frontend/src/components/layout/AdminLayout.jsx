@@ -30,7 +30,8 @@ export default function AdminLayout() {
     { to: '/admin/pipeline',  label: 'Pipeline',    icon: GitBranch },
     { to: '/admin/cms',                     label: 'CMS',         icon: Layers },
     { to: '/admin/financeiro-plataforma',  label: 'Financeiro',   icon: Euro },
-    { to: '/admin/comunicacoes',           label: 'Comunicacao',  icon: MessageSquare },
+    { to: '/admin/comunicacoes',            label: 'Comunicacao',  icon: MessageSquare },
+    { to: '/admin/analytics-plataforma',  label: 'Analytics',    icon: BarChart2 },
     { to: '/admin/impacto',               label: 'Impacto',      icon: Globe },
     { to: '/admin/sistema',   label: 'Sistema',     icon: Server },
   ];

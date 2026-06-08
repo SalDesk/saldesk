@@ -20,6 +20,8 @@ const {
   listConversations, getConversation, sendConversationMessage,
   sendBroadcast, listBroadcasts,
   sendMarketingEmail, sendLaunchEmail,
+  getAnalyticsTraffic, getAnalyticsFunnel, getAnalyticsChurn,
+  getAnalyticsGeography, sendAnalyticsReport,
 } = require('../controllers/adminController');
 const auth           = require('../middleware/auth');
 const requireFounder = require('../middleware/requireFounder');
@@ -124,6 +126,13 @@ router.put('/cms/settings',             updateCmsSettings);
 router.get('/cms/email-templates',           listEmailTemplates);
 router.put('/cms/email-templates/:id',       updateEmailTemplate);
 router.post('/cms/email-templates/:id/test', sendTestEmailTemplate);
+
+/* Analytics */
+router.get('/analytics/traffic',     getAnalyticsTraffic);
+router.get('/analytics/funnel',      getAnalyticsFunnel);
+router.get('/analytics/churn',       getAnalyticsChurn);
+router.get('/analytics/geography',   getAnalyticsGeography);
+router.post('/analytics/send-report', sendAnalyticsReport);
 
 /* Comunicacoes */
 router.get('/communications/conversations',                  listConversations);
