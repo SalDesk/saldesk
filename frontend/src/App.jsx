@@ -55,6 +55,7 @@ const AdminOperators  = lazy(() => import('./pages/admin/AdminOperators'));
 const AdminLeads      = lazy(() => import('./pages/admin/AdminLeads'));
 const AdminPipeline   = lazy(() => import('./pages/admin/AdminPipeline'));
 const AdminCms        = lazy(() => import('./pages/admin/AdminCms'));
+const AdminFinancial  = lazy(() => import('./pages/admin/AdminFinancial'));
 const AdminImpact     = lazy(() => import('./pages/admin/AdminImpact'));
 const AdminSystem     = lazy(() => import('./pages/admin/AdminSystem'));
 
@@ -150,8 +151,9 @@ export default function App() {
           <Route path="operators"  element={<AdminOperators />} />
           <Route path="leads"      element={<AdminLeads />} />
           <Route path="pipeline"   element={<AdminPipeline />} />
-          <Route path="cms"        element={<AdminCms />} />
-          <Route path="impacto"    element={<AdminImpact />} />
+          <Route path="cms"                     element={<AdminCms />} />
+          <Route path="financeiro-plataforma"  element={<AdminFinancial />} />
+          <Route path="impacto"               element={<AdminImpact />} />
           <Route path="sistema"    element={<AdminSystem />} />
         </Route>
 

@@ -1,5 +1,6 @@
 const { supabaseAdmin } = require('../config/supabase');
 const { enviarEmail }   = require('../helpers/emailHelper');
+const ExcelJS           = require('exceljs');
 
 const PLAN_PRICES   = { starter: 29, business: 59, pro: 99 };
 const TIPO_SCORE    = { hotel: 30, activity: 25, restaurant: 20, rentacar: 15 };
@@ -941,6 +942,242 @@ async function getRevenue(req, res, next) {
   } catch (err) { next(err); }
 }
 
+/* ─── Financeiro da plataforma ──────────────────────────────── */
+const COST_KEYS = ['cost_hostinger', 'cost_supabase', 'cost_sendgrid', 'cost_domains_annual', 'cost_outros'];
+
+async function loadPriceMap() {
+  const { data } = await supabaseAdmin.from('cms_pricing').select('plan, price_eur');
+  const map = { ...PLAN_PRICES };
+  (data || []).forEach(p => { map[p.plan] = Number(p.price_eur); });
+  return map;
+}
+
+async function getFinancialSummary(req, res, next) {
+  try {
+    const now = new Date();
+    const thisMonth = now.toISOString().slice(0, 7);
+    const prevMonth = lastMonths(2)[0];
+
+    const [opsRes, priceMap] = await Promise.all([
+      supabaseAdmin.from('operators').select('id, plan, plan_status, created_at, updated_at'),
+      loadPriceMap(),
+    ]);
+    const operators = opsRes.data || [];
+
+    const active  = operators.filter(o => o.plan_status === 'active');
+    const mrr     = active.reduce((s, o) => s + (priceMap[o.plan] || 0), 0);
+    const mrrPrev = operators
+      .filter(o => o.plan_status === 'active' && o.created_at.slice(0, 7) <= prevMonth)
+      .reduce((s, o) => s + (priceMap[o.plan] || 0), 0);
+
+    const mrrChangePct = mrrPrev > 0 ? Math.round(((mrr - mrrPrev) / mrrPrev) * 1000) / 10 : 0;
+
+    const churnCount = operators.filter(o =>
+      o.plan_status === 'cancelled' && o.updated_at && o.updated_at.slice(0, 7) === thisMonth
+    ).length;
+
+    const ltvAvg = active.length ? Math.round(
+      active.reduce((s, o) => {
+        const months = Math.max(1, (now - new Date(o.created_at)) / (1000 * 60 * 60 * 24 * 30.44));
+        return s + months * (priceMap[o.plan] || 0);
+      }, 0) / active.length
+    ) : 0;
+
+    const last3 = lastMonths(3);
+    const mrr3  = last3.map(m =>
+      operators.filter(o => o.plan_status === 'active' && o.created_at.slice(0, 7) <= m)
+        .reduce((s, o) => s + (priceMap[o.plan] || 0), 0)
+    );
+    let monthlyGrowth = 0;
+    if (mrr3[0] > 0) {
+      const rates = [];
+      for (let i = 1; i < mrr3.length; i++) rates.push((mrr3[i] - mrr3[i - 1]) / mrr3[i - 1]);
+      monthlyGrowth = rates.reduce((s, r) => s + r, 0) / rates.length;
+    }
+    const forecast = [1, 2, 3].map(i => {
+      const d = new Date(now.getFullYear(), now.getMonth() + i, 1);
+      return {
+        label: `${MONTH_NAMES[d.getMonth()]} ${d.getFullYear()}`,
+        mrr:   Math.round(mrr * Math.pow(1 + monthlyGrowth, i)),
+      };
+    });
+
+    return res.json({
+      data: {
+        mrr, mrr_prev: mrrPrev, mrr_change_pct: mrrChangePct,
+        paying_operators: active.length,
+        trial_operators:  operators.filter(o => o.plan_status === 'trial').length,
+        churn_this_month: churnCount,
+        ltv_avg: ltvAvg,
+        forecast,
+        price_map: priceMap,
+      },
+    });
+  } catch (err) { next(err); }
+}
+
+async function getFinancialMrrHistory(req, res, next) {
+  try {
+    const [opsRes, priceMap] = await Promise.all([
+      supabaseAdmin.from('operators').select('id, plan, plan_status, created_at, updated_at'),
+      loadPriceMap(),
+    ]);
+    const operators = opsRes.data || [];
+    const months    = lastMonths(12);
+
+    const data = months.map(m => {
+      const inMonth = operators.filter(o => o.plan_status === 'active' && o.created_at.slice(0, 7) <= m);
+      const starter  = inMonth.filter(o => o.plan === 'starter' ).length * (priceMap.starter  || 0);
+      const business = inMonth.filter(o => o.plan === 'business').length * (priceMap.business || 0);
+      const pro      = inMonth.filter(o => o.plan === 'pro'     ).length * (priceMap.pro      || 0);
+      const churn    = operators.filter(o =>
+        o.plan_status === 'cancelled' && o.updated_at && o.updated_at.slice(0, 7) === m
+      ).length;
+      return {
+        month:    m,
+        label:    MONTH_NAMES[parseInt(m.slice(5)) - 1],
+        mrr:      starter + business + pro,
+        starter, business, pro, churn,
+      };
+    });
+
+    return res.json({ data });
+  } catch (err) { next(err); }
+}
+
+async function getFinancialCosts(req, res, next) {
+  try {
+    const { data, error } = await supabaseAdmin.from('cms_settings').select('*').in('key', COST_KEYS);
+    if (error) throw error;
+    const costs = {};
+    COST_KEYS.forEach(k => { costs[k] = Number((data || []).find(r => r.key === k)?.value || 0); });
+    return res.json({ data: costs });
+  } catch (err) { next(err); }
+}
+
+async function updateFinancialCosts(req, res, next) {
+  try {
+    const rows = COST_KEYS
+      .filter(k => req.body[k] !== undefined)
+      .map(k => ({ key: k, value: String(Number(req.body[k]) || 0), updated_at: new Date().toISOString() }));
+    if (!rows.length) return res.status(400).json({ error: 'Sem dados para guardar' });
+    const { error } = await supabaseAdmin.from('cms_settings').upsert(rows, { onConflict: 'key' });
+    if (error) throw error;
+    return res.json({ data: req.body });
+  } catch (err) { next(err); }
+}
+
+async function exportFinancial(req, res, next) {
+  try {
+    const [opsRes, priceMap, costsRes] = await Promise.all([
+      supabaseAdmin.from('operators').select('id, name, email, plan, plan_status, created_at, operator_type'),
+      loadPriceMap(),
+      supabaseAdmin.from('cms_settings').select('*').in('key', COST_KEYS),
+    ]);
+    const operators = opsRes.data || [];
+    const costs = {};
+    COST_KEYS.forEach(k => { costs[k] = Number((costsRes.data || []).find(r => r.key === k)?.value || 0); });
+
+    const now      = new Date();
+    const active   = operators.filter(o => o.plan_status === 'active');
+    const mrr      = active.reduce((s, o) => s + (priceMap[o.plan] || 0), 0);
+    const monthlyFixed = costs.cost_hostinger + costs.cost_supabase + costs.cost_sendgrid + costs.cost_outros
+      + Math.round((costs.cost_domains_annual / 12) * 100) / 100;
+    const margin   = mrr > 0 ? Math.round(((mrr - monthlyFixed) / mrr) * 1000) / 10 : 0;
+
+    const workbook = new ExcelJS.Workbook();
+    workbook.creator = 'SalDesk Admin';
+    workbook.created = now;
+
+    const H_STYLE = {
+      font: { bold: true, color: { argb: 'FFFFFFFF' } },
+      fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF0D5470' } },
+      alignment: { vertical: 'middle' },
+    };
+
+    /* Folha 1 — Resumo KPIs */
+    const wsKpi = workbook.addWorksheet('Resumo Financeiro');
+    wsKpi.addRow(['SalDesk — Financeiro da Plataforma']);
+    wsKpi.getRow(1).font = { bold: true, size: 14 };
+    wsKpi.addRow([`Gerado em: ${now.toISOString().slice(0, 10)}`]);
+    wsKpi.addRow([]);
+    wsKpi.addRow(['Indicador', 'Valor']);
+    wsKpi.getRow(4).eachCell(c => Object.assign(c, H_STYLE));
+    wsKpi.addRow(['MRR actual (EUR)', mrr]);
+    wsKpi.addRow(['Operadores pagantes', active.length]);
+    wsKpi.addRow(['Operadores em trial', operators.filter(o => o.plan_status === 'trial').length]);
+    wsKpi.addRow(['Custos fixos mensais (EUR)', monthlyFixed]);
+    wsKpi.addRow(['Margem (%)', margin]);
+    wsKpi.addRow(['Resultado liquido (EUR)', Math.round((mrr - monthlyFixed) * 100) / 100]);
+    wsKpi.columns = [{ width: 34 }, { width: 18 }];
+
+    /* Folha 2 — Historico MRR */
+    const months = lastMonths(12);
+    const wsMrr  = workbook.addWorksheet('Historico MRR');
+    wsMrr.columns = [
+      { header: 'Mes',             key: 'month',    width: 12 },
+      { header: 'MRR total (EUR)', key: 'mrr',      width: 18 },
+      { header: 'Starter',         key: 'starter',  width: 12 },
+      { header: 'Business',        key: 'business', width: 12 },
+      { header: 'Pro',             key: 'pro',      width: 12 },
+      { header: 'Churn',           key: 'churn',    width: 10 },
+    ];
+    wsMrr.getRow(1).eachCell(c => Object.assign(c, H_STYLE));
+    months.forEach(m => {
+      const inM  = operators.filter(o => o.plan_status === 'active' && o.created_at.slice(0, 7) <= m);
+      const s    = inM.filter(o => o.plan === 'starter' ).length * (priceMap.starter  || 0);
+      const b    = inM.filter(o => o.plan === 'business').length * (priceMap.business || 0);
+      const p    = inM.filter(o => o.plan === 'pro'     ).length * (priceMap.pro      || 0);
+      const churn = operators.filter(o => o.plan_status === 'cancelled' && o.updated_at?.slice(0, 7) === m).length;
+      wsMrr.addRow({ month: m, mrr: s + b + p, starter: s, business: b, pro: p, churn });
+    });
+
+    /* Folha 3 — Custos mensais */
+    const wsCosts = workbook.addWorksheet('Custos Mensais');
+    wsCosts.columns = [
+      { header: 'Fornecedor',          key: 'nome',  width: 30 },
+      { header: 'Custo mensal (EUR)',  key: 'custo', width: 20 },
+      { header: 'Notas',               key: 'notas', width: 32 },
+    ];
+    wsCosts.getRow(1).eachCell(c => Object.assign(c, H_STYLE));
+    wsCosts.addRow({ nome: 'Hostinger VPS',      custo: costs.cost_hostinger,    notas: 'Servidor VPS KVM 2' });
+    wsCosts.addRow({ nome: 'Supabase',           custo: costs.cost_supabase,     notas: 'Base de dados + Auth' });
+    wsCosts.addRow({ nome: 'SendGrid',           custo: costs.cost_sendgrid,     notas: 'Emails transaccionais' });
+    wsCosts.addRow({ nome: 'Dominios (rateio)',  custo: Math.round(costs.cost_domains_annual / 12 * 100) / 100, notas: `Custo anual EUR ${costs.cost_domains_annual} / 12 meses` });
+    wsCosts.addRow({ nome: 'Outros',             custo: costs.cost_outros,       notas: '' });
+    wsCosts.addRow([]);
+    wsCosts.addRow({ nome: 'TOTAL MENSAL', custo: monthlyFixed });
+    wsCosts.getRow(wsCosts.rowCount).font = { bold: true };
+
+    /* Folha 4 — Operadores */
+    const wsOps = workbook.addWorksheet('Operadores');
+    wsOps.columns = [
+      { header: 'Nome',          key: 'name',         width: 28 },
+      { header: 'Email',         key: 'email',        width: 30 },
+      { header: 'Tipo',          key: 'operator_type', width: 14 },
+      { header: 'Plano',         key: 'plan',         width: 12 },
+      { header: 'Estado',        key: 'plan_status',  width: 14 },
+      { header: 'Inscricao',     key: 'created_at',   width: 14 },
+      { header: 'EUR/mes',       key: 'monthly_eur',  width: 12 },
+    ];
+    wsOps.getRow(1).eachCell(c => Object.assign(c, H_STYLE));
+    operators
+      .filter(o => o.plan_status === 'active' || o.plan_status === 'trial')
+      .sort((a, b) => (a.name || '').localeCompare(b.name || ''))
+      .forEach(o => wsOps.addRow({
+        name: o.name, email: o.email, operator_type: o.operator_type,
+        plan: o.plan, plan_status: o.plan_status,
+        created_at: o.created_at?.slice(0, 10),
+        monthly_eur: o.plan_status === 'active' ? (priceMap[o.plan] || 0) : 0,
+      }));
+
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', `attachment; filename=saldesk-financeiro-${now.toISOString().slice(0, 10)}.xlsx`);
+    await workbook.xlsx.write(res);
+    res.end();
+  } catch (err) { next(err); }
+}
+
 /* ─── CMS helpers ───────────────────────────────────────────── */
 function cmsRouter(table, orderCol = 'created_at') {
   return {
@@ -1123,6 +1360,7 @@ module.exports = {
   getImpact, getLogs, getSystemHealth,
   getRevenue,
   featured, banners, experiences, events, articles,
+  getFinancialSummary, getFinancialMrrHistory, getFinancialCosts, updateFinancialCosts, exportFinancial,
   testimonials, faqs, landmarks,
   getCmsPricing, updateCmsPricing,
   getCmsHero, updateCmsHero,

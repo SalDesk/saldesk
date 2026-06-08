@@ -10,6 +10,7 @@ const {
   listInviteCodes, createInviteCode, updateInviteCode,
   getImpact, getLogs, getSystemHealth,
   getRevenue,
+  getFinancialSummary, getFinancialMrrHistory, getFinancialCosts, updateFinancialCosts, exportFinancial,
   featured, banners, experiences, events, articles,
   testimonials, faqs, landmarks,
   getCmsPricing, updateCmsPricing,
@@ -27,6 +28,12 @@ router.use(requireFounder);
 router.get('/stats',                    getStats);
 router.get('/activity',                 getActivity);
 router.get('/revenue',                  getRevenue);
+
+router.get('/financial/summary',        getFinancialSummary);
+router.get('/financial/mrr-history',    getFinancialMrrHistory);
+router.get('/financial/costs',          getFinancialCosts);
+router.put('/financial/costs',          updateFinancialCosts);
+router.get('/financial/export',         exportFinancial);
 router.get('/operators',                listOperators);
 router.get('/operators/:id',            getOperatorDetail);
 router.put('/operators/:id',            updateOperator);
