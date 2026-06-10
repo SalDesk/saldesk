@@ -40,7 +40,7 @@ export default function Register() {
     setInviteLoading(true);
     try {
       const result = await validateInvite(inviteCode.trim().toUpperCase());
-      if (result?.valid) {
+      if (result?.data?.valid) {
         setInviteValid(true);
       } else {
         setInviteError('Codigo invalido ou expirado. Verifica o codigo e tenta novamente.');

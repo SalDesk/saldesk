@@ -26,7 +26,7 @@ export async function changePassword(password) {
 
 export async function validateInvite(code) {
   const { data } = await api.post('/auth/validate-invite', { code });
-  return data.data; // { valid: boolean }
+  return data; // { data: { valid: boolean } }
 }
 
 export async function forgotPassword(email) {
