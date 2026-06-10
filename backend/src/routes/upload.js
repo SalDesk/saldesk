@@ -16,7 +16,8 @@ const authMiddleware = require('../middleware/auth');
 const router = express.Router();
 
 /* ── Constants ── */
-const UPLOAD_ROOT    = '/var/www/saldesk/uploads/operators';
+const UPLOADS_DIR    = process.env.UPLOADS_DIR || '/var/www/saldesk/uploads';
+const UPLOAD_ROOT    = path.join(UPLOADS_DIR, 'operators');
 const MAX_FILE_SIZE  = 5 * 1024 * 1024;  // 5MB
 const ALLOWED_MIMES  = ['image/jpeg', 'image/png', 'image/webp'];
 const MAX_WIDTH      = 1200;

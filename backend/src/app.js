@@ -1,5 +1,6 @@
 require('dotenv').config();
 const http    = require('http');
+const path    = require('path');
 const express = require('express');
 const cors    = require('cors');
 const { initSocket } = require('./services/socketService');
@@ -46,6 +47,10 @@ app.use('/api/financeiro', financeiroRoutes);
 app.use('/api/v1/upload',  uploadRoutes);
 app.use('/api/admin',      adminRoutes);
 app.use('/public',         publicRoutes);
+
+/* Ficheiros enviados — em producao o Nginx serve /uploads/ directamente,
+   mas mantemos isto para que funcione tambem em dev sem Nginx. */
+app.use('/uploads', express.static(path.resolve(process.env.UPLOADS_DIR || '/var/www/saldesk/uploads')));
 
 app.use(errorHandler);
 
