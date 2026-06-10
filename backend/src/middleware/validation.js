@@ -14,13 +14,17 @@ function validate(schema) {
 
 const schemas = {
   register: Joi.object({
-    name:     Joi.string().min(2).max(100).required(),
-    email:    Joi.string().email().required(),
-    password: Joi.string().min(6).required(),
+    name:        Joi.string().min(2).max(100).required(),
+    email:       Joi.string().email().required(),
+    password:    Joi.string().min(6).required(),
+    invite_code: Joi.string().trim().optional().allow(''),
   }),
   login: Joi.object({
     email:    Joi.string().email().required(),
     password: Joi.string().required(),
+  }),
+  validateInvite: Joi.object({
+    code: Joi.string().trim().required(),
   }),
   changePassword: Joi.object({
     password: Joi.string().min(6).required(),

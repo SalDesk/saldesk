@@ -3,7 +3,23 @@ const { addFailedLogin } = require('../services/logStore');
 
 async function register(req, res, next) {
   try {
-    const { email, password, name } = req.body;
+    const { email, password, name, invite_code } = req.body;
+
+    let invite = null;
+    if (invite_code) {
+      const { data: inviteRow, error: inviteError } = await supabaseAdmin
+        .from('invite_codes')
+        .select('*')
+        .eq('code', invite_code.trim().toUpperCase())
+        .eq('active', true)
+        .maybeSingle();
+
+      if (inviteError) throw inviteError;
+      if (!inviteRow || inviteRow.uses >= inviteRow.max_uses) {
+        return res.status(400).json({ error: 'Codigo de convite invalido ou expirado', code: 'INVALID_INVITE' });
+      }
+      invite = inviteRow;
+    }
 
     const { data, error } = await supabaseAdmin.auth.admin.createUser({
       email,
@@ -19,10 +35,37 @@ async function register(req, res, next) {
       return res.status(400).json({ error: error.message, code: 'REGISTER_ERROR' });
     }
 
+    if (invite) {
+      await supabaseAdmin.from('invite_codes').update({ uses: invite.uses + 1 }).eq('id', invite.id);
+    }
+
     return res.status(201).json({
       data: { user_id: data.user.id, email: data.user.email },
       message: 'Conta criada com sucesso',
     });
+  } catch (err) {
+    next(err);
+  }
+}
+
+async function validateInvite(req, res, next) {
+  try {
+    const { code } = req.body;
+    if (!code || !code.trim()) {
+      return res.json({ data: { valid: false } });
+    }
+
+    const { data, error } = await supabaseAdmin
+      .from('invite_codes')
+      .select('*')
+      .eq('code', code.trim().toUpperCase())
+      .eq('active', true)
+      .maybeSingle();
+
+    if (error) throw error;
+
+    const valid = !!data && data.uses < data.max_uses;
+    return res.json({ data: { valid } });
   } catch (err) {
     next(err);
   }
@@ -91,4 +134,4 @@ async function changePassword(req, res, next) {
   }
 }
 
-module.exports = { register, login, getMe, logout, changePassword };
+module.exports = { register, login, getMe, logout, changePassword, validateInvite };

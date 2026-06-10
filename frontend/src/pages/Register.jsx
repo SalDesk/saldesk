@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, Shield, Key, ArrowRight, CheckCircle2 } from 'lucide-react';
 import useAuthStore from '../store/authStore';
-import { register, validateInvite } from '../services/authService';
+import { register, login, validateInvite } from '../services/authService';
 import { useT } from '../i18n';
 import AuthLayout from '../components/auth/AuthLayout';
 import Input from '../components/ui/Input';
@@ -14,7 +14,7 @@ const INVITE_REQUIRED = import.meta.env.VITE_INVITE_REQUIRED !== 'false';
 
 export default function Register() {
   const t = useT();
-  const { token } = useAuthStore();
+  const { token, setAuth } = useAuthStore();
   const navigate = useNavigate();
 
   /* Invite gate */
@@ -70,7 +70,9 @@ export default function Register() {
     setErrors({}); setServerError(''); setLoading(true);
     try {
       await register(form.name, form.email, form.password, inviteCode.trim().toUpperCase() || undefined);
-      navigate('/login?registered=1');
+      const { access_token, user, operator } = await login(form.email, form.password);
+      setAuth(access_token, user, operator);
+      navigate('/onboarding');
     } catch (err) {
       setServerError(err.response?.data?.error || t('errors.generic'));
     } finally {
