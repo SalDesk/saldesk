@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Camera, Save, Check } from 'lucide-react';
 import api from '../services/api';
 import { uploadImage, validateImageFile } from '../services/uploadService';
@@ -29,6 +29,9 @@ export default function Profile() {
   const [logoUrl,     setLogoUrl]     = useState(operator?.logo_url || null);
   const [logoError,   setLogoError]   = useState('');
   const [coverImages, setCoverImages] = useState(operator?.cover_images || []);
+  useEffect(() => {
+    if (operator?.cover_images) setCoverImages(operator.cover_images);
+  }, [operator?.id]);
   const fileRef = useRef(null);
 
   const set = (f) => (e) => setForm(p => ({ ...p, [f]: e.target.value }));
