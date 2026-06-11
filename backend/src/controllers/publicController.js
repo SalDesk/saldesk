@@ -495,7 +495,7 @@ async function getUnit(req, res, next) {
 
     const { data: operator } = await supabaseAdmin
       .from('operators')
-      .select('id, name, slug, operator_type, email, phone, whatsapp, address, logo_url, currency, description')
+      .select('id, name, slug, operator_type, email, phone, whatsapp, address, logo_url, cover_images, business_name, tagline, currency, description')
       .eq('slug', slug)
       .eq('onboarding_complete', true)
       .single();
