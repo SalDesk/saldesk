@@ -20,7 +20,7 @@ const TYPE_LABELS = { hotel: 'Hotel', activity: 'Actividade', rentacar: 'Rent-a-
 /* ── SEO ─────────────────────────────────────────── */
 function injectSeo(op, slug) {
   const desc = op.description || `Reserve directamente em ${op.name}, Ilha do Sal, Cabo Verde.`;
-  document.title = `${op.name} — Reservar · SalDesk`;
+  document.title = `${op.business_name || op.name} — Reservar · SalDesk`;
   const TYPE_LD = { hotel: 'LodgingBusiness', activity: 'TouristAttraction', rentacar: 'RentAction', restaurant: 'Restaurant' };
   const meta = (n, c, prop = false) => {
     const attr = prop ? 'property' : 'name';
@@ -37,7 +37,7 @@ function injectSeo(op, slug) {
   meta('twitter:card', 'summary_large_image');
   const ld = {
     '@context': 'https://schema.org', '@type': TYPE_LD[op.operator_type] || 'LocalBusiness',
-    name: op.name, description: desc, url: window.location.href,
+    name: op.business_name || op.name, description: desc, url: window.location.href,
     address: { '@type': 'PostalAddress', addressLocality: 'Santa Maria', addressCountry: 'CV' },
     ...(op.phone ? { telephone: op.phone } : {}),
   };
@@ -394,6 +394,7 @@ export default function PublicBooking() {
   if (notFound) return <NotFoundPage />;
 
   const galleryImgs = [
+    ...(op.cover_images?.filter(Boolean) || []),
     ...(op.images?.filter(Boolean) || []),
     ...FALLBACK_IMGS,
   ].slice(0, 8);
@@ -502,7 +503,7 @@ export default function PublicBooking() {
       {/* ── Hero ── */}
       <section id="home">
         <div className="relative">
-          <HeroCarousel images={op.images || []} />
+          <HeroCarousel images={op.cover_images?.length ? op.cover_images : (op.images || [])} />
           <div className="absolute bottom-0 left-0 right-0 p-6 sm:p-10">
             <div className="max-w-5xl mx-auto">
               <div className="flex flex-wrap gap-2 mb-3">
@@ -523,7 +524,7 @@ export default function PublicBooking() {
                 </span>
               </div>
               <h1 className="font-display font-extrabold text-white text-3xl sm:text-5xl leading-tight mb-3 drop-shadow-md tracking-tight">
-                {op.name}
+                {op.business_name || op.name}
               </h1>
               <div className="flex flex-wrap items-center gap-4 mb-5">
                 {op.address && (
@@ -580,7 +581,7 @@ export default function PublicBooking() {
               <p className="text-xs font-body font-bold text-ocean-700 uppercase tracking-widest mb-2">
                 {lang === 'en' ? 'About us' : 'Sobre nós'}
               </p>
-              <h2 className="font-display font-bold text-2xl sm:text-3xl text-n-900 mb-4">{op.name}</h2>
+              <h2 className="font-display font-bold text-2xl sm:text-3xl text-n-900 mb-4">{op.business_name || op.name}</h2>
               {op.description && (
                 <p className="font-body text-n-600 leading-relaxed text-base mb-6">{op.description}</p>
               )}
