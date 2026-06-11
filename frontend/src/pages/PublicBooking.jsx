@@ -522,6 +522,18 @@ export default function PublicBooking() {
                 <span className="bg-white/15 backdrop-blur-sm border border-white/25 text-white text-xs font-body font-bold px-3 py-1 rounded-full">
                   {TYPE_LABELS[op.operator_type] || op.operator_type}
                 </span>
+                {units.length > 0 && (
+                  <span className="flex items-center gap-1 bg-white/15 backdrop-blur-sm border border-white/25 text-white text-xs font-body font-bold px-3 py-1 rounded-full">
+                    <Check size={11} strokeWidth={2.5} />
+                    {units.length} {lang === 'en' ? (units.length === 1 ? 'service' : 'services') : (units.length === 1 ? 'serviço' : 'serviços')}
+                  </span>
+                )}
+                {reviews.length >= 5 && (
+                  <span className="flex items-center gap-1 bg-white/15 backdrop-blur-sm border border-white/25 text-white text-xs font-body font-bold px-3 py-1 rounded-full">
+                    <Star size={11} strokeWidth={2} className="fill-sand-400 text-sand-400" />
+                    {reviews.length} {lang === 'en' ? 'reviews' : 'avaliações'}
+                  </span>
+                )}
               </div>
               <h1 className="font-display font-extrabold text-white text-3xl sm:text-5xl leading-tight mb-3 drop-shadow-md tracking-tight">
                 {op.business_name || op.name}
@@ -570,6 +582,40 @@ export default function PublicBooking() {
           {lang === 'en' ? ' people viewed this page today' : ' pessoas viram esta página hoje'}
           {units.length > 0 && <> · <span className="text-sand-400 font-bold">{units.length}</span> {lang === 'en' ? 'services available' : 'serviços disponíveis'}</>}
         </p>
+      </div>
+
+      {/* ── Trust Bar ── */}
+      <div className="border-b border-n-100 bg-n-50">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 py-4">
+          <div className="flex flex-wrap items-center justify-center gap-6 sm:gap-10">
+            <div className="flex items-center gap-2 text-n-600">
+              <div className="w-7 h-7 rounded-full bg-ocean-50 flex items-center justify-center flex-shrink-0">
+                <Shield size={14} strokeWidth={1.75} className="text-ocean-700" />
+              </div>
+              <span className="text-xs font-body font-semibold">{lang === 'en' ? 'Verified operator' : 'Operador verificado'}</span>
+            </div>
+            <div className="flex items-center gap-2 text-n-600">
+              <div className="w-7 h-7 rounded-full bg-ocean-50 flex items-center justify-center flex-shrink-0">
+                <Check size={14} strokeWidth={2} className="text-ocean-700" />
+              </div>
+              <span className="text-xs font-body font-semibold">{lang === 'en' ? 'Direct booking · 0% commission' : 'Reserva directa · 0% comissão'}</span>
+            </div>
+            <div className="flex items-center gap-2 text-n-600">
+              <div className="w-7 h-7 rounded-full bg-ocean-50 flex items-center justify-center flex-shrink-0">
+                <MessageCircle size={14} strokeWidth={1.75} className="text-ocean-700" />
+              </div>
+              <span className="text-xs font-body font-semibold">{lang === 'en' ? 'WhatsApp support' : 'Suporte via WhatsApp'}</span>
+            </div>
+            {avgRating > 0 && (
+              <div className="flex items-center gap-2 text-n-600">
+                <div className="w-7 h-7 rounded-full bg-sand-50 flex items-center justify-center flex-shrink-0">
+                  <Star size={14} strokeWidth={1.75} className="text-sand-500 fill-sand-500" />
+                </div>
+                <span className="text-xs font-body font-semibold">{avgRating.toFixed(1)} / 5 ({reviews.length} {lang === 'en' ? 'reviews' : 'avaliações'})</span>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
 
       <div className="max-w-5xl mx-auto px-4 sm:px-6">
