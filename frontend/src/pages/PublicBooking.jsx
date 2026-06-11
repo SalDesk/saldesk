@@ -526,6 +526,11 @@ export default function PublicBooking() {
               <h1 className="font-display font-extrabold text-white text-3xl sm:text-5xl leading-tight mb-3 drop-shadow-md tracking-tight">
                 {op.business_name || op.name}
               </h1>
+              {op.tagline && (
+                <p className="font-body text-white/85 text-base sm:text-lg mb-4 max-w-xl leading-relaxed drop-shadow">
+                  {op.tagline}
+                </p>
+              )}
               <div className="flex flex-wrap items-center gap-4 mb-5">
                 {op.address && (
                   <div className="flex items-center gap-1.5 text-white/80 text-sm font-body">
