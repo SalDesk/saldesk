@@ -5,6 +5,7 @@
  */
 
 const OCEAN  = '#0D5470';
+const SAND   = '#D4A82A';
 const INK    = '#1A2332';
 const MUTED  = '#6B7280';
 const BORDER = '#E5E8EC';
@@ -37,9 +38,10 @@ function formatDateShort(dateStr) {
 function logoBlock() {
   return `
     <tr>
-      <td style="padding:24px 32px;background:${OCEAN};text-align:center;">
-        <img src="https://saldesk.cv/logo.png" alt="SalDesk"
-             style="height:48px; width:auto; display:block; margin:0 auto 16px;">
+      <td style="padding:24px 32px 0;background:#FFFFFF;text-align:center;">
+        <div style="text-align:center; margin-bottom:24px;">
+          <span style="font-family:Arial,sans-serif; font-size:28px; font-weight:900; color:${OCEAN}; letter-spacing:-1px;">SAL</span><span style="font-family:Arial,sans-serif; font-size:28px; font-weight:900; color:${SAND}; letter-spacing:-1px;">DESK</span>
+        </div>
       </td>
     </tr>`;
 }
