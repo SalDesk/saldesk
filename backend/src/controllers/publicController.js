@@ -3,6 +3,7 @@ const { verificarDisponibilidade, calcularPreco } = require('../helpers/bookingH
 const { obterOuCriarCliente } = require('../helpers/customerHelper');
 const { enviarEmail } = require('../helpers/emailHelper');
 const { detectarIdioma } = require('../helpers/languageHelper');
+const { confirmacaoClienteEmail, notificacaoOperadorEmail } = require('../helpers/emailTemplates');
 
 async function getOperador(req, res, next) {
   try {
@@ -81,7 +82,7 @@ async function criarReserva(req, res, next) {
 
     const { data: operator } = await supabaseAdmin
       .from('operators')
-      .select('id')
+      .select('id, name, slug, email, phone, currency, language')
       .eq('slug', req.params.slug)
       .eq('onboarding_complete', true)
       .single();
@@ -140,13 +141,50 @@ async function criarReserva(req, res, next) {
     if (error) throw error;
 
     const idioma = detectarIdioma(customer_country);
+    const currency = operator.currency || 'EUR';
+
+    const clienteEmail = confirmacaoClienteEmail({
+      idioma,
+      customerName: customer_name,
+      tourName: unit.name,
+      checkIn: check_in,
+      checkOut: check_out,
+      guests: guests || 1,
+      total,
+      currency,
+      operator
+    });
     enviarEmail({
       to: customer_email,
-      subject: idioma === 'en' ? 'Reservation request received' : 'Pedido de reserva recebido',
-      text: idioma === 'en'
-        ? `Hello ${customer_name},\n\nWe received your reservation request for ${unit.name} (${check_in} → ${check_out}).\n\nWe will confirm your booking shortly.\n\nThank you!`
-        : `Olá ${customer_name},\n\nRecebemos o seu pedido de reserva para ${unit.name} (${check_in} → ${check_out}).\n\nIremos confirmar a sua reserva em breve.\n\nObrigado!`
+      subject: clienteEmail.subject,
+      html: clienteEmail.html,
+      text: clienteEmail.text
     }).catch((err) => console.error('[Email] Erro ao enviar recepção:', err.message));
+
+    if (operator.email) {
+      const operadorEmail = notificacaoOperadorEmail({
+        operatorName: operator.name,
+        tourName: unit.name,
+        checkIn: check_in,
+        checkOut: check_out,
+        guests: guests || 1,
+        total,
+        currency,
+        customer: {
+          name: customer_name,
+          email: customer_email,
+          phone: customer_phone,
+          country: customer_country
+        },
+        notes
+      });
+      enviarEmail({
+        to: operator.email,
+        subject: operadorEmail.subject,
+        html: operadorEmail.html,
+        text: operadorEmail.text
+      }).catch((err) => console.error('[Email] Erro ao enviar notificação ao operador:', err.message));
+    }
 
     return res.status(201).json({
       data,
