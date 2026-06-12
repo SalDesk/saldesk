@@ -698,29 +698,41 @@ export default function PublicBooking() {
         {/* ── Galeria ── */}
         {galleryImgs.length > 0 && (
           <section id="galeria" className="py-12 sm:py-16 border-t border-n-100">
-            <p className="text-xs font-body font-bold text-ocean-700 uppercase tracking-widest mb-2">
-              {lang === 'en' ? 'Gallery' : 'Galeria'}
-            </p>
-            <h2 className="font-display font-bold text-2xl sm:text-3xl text-n-900 mb-6">
-              {lang === 'en' ? 'Photo Gallery' : 'Galeria de Fotos'}
-            </h2>
+            <div className="flex items-end justify-between mb-6 gap-4">
+              <div>
+                <p className="text-xs font-body font-bold text-ocean-700 uppercase tracking-widest mb-2">
+                  {lang === 'en' ? 'Gallery' : 'Galeria'}
+                </p>
+                <h2 className="font-display font-bold text-2xl sm:text-3xl text-n-900">
+                  {lang === 'en' ? 'Photo Gallery' : 'Galeria de Fotos'}
+                </h2>
+              </div>
+              {galleryImgs.length > 1 && (
+                <button onClick={() => setLbIdx(0)}
+                  className="flex items-center gap-2 text-sm font-body font-semibold text-ocean-700 hover:text-ocean-500 transition-colors flex-shrink-0">
+                  {lang === 'en' ? `View all ${galleryImgs.length} photos` : `Ver todas (${galleryImgs.length})`}
+                </button>
+              )}
+            </div>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-              {galleryImgs.slice(0, 6).map((src, i) => (
+              {galleryImgs.slice(0, 5).map((src, i) => (
                 <div key={i}
                   className={`overflow-hidden rounded-xl cursor-pointer group relative ${i === 0 ? 'col-span-2 row-span-2' : ''}`}
-                  style={{ height: i === 0 ? 320 : 155 }}
+                  style={{ height: i === 0 ? 340 : 163 }}
                   onClick={() => setLbIdx(i)}>
-                  <img src={src} alt={`Foto ${i + 1}`} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
-                  <div className="absolute inset-0 bg-ocean-900/0 group-hover:bg-ocean-900/20 transition-colors" />
+                  <img src={src} alt={`Foto ${i + 1}`} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                  <div className="absolute inset-0 bg-ocean-900/0 group-hover:bg-ocean-900/25 transition-colors duration-300" />
+                  {i === 4 && galleryImgs.length > 5 && (
+                    <div className="absolute inset-0 bg-ocean-900/55 flex items-center justify-center">
+                      <div className="text-center">
+                        <p className="font-display font-extrabold text-white text-2xl">+{galleryImgs.length - 5}</p>
+                        <p className="text-white/80 text-xs font-body">{lang === 'en' ? 'photos' : 'fotos'}</p>
+                      </div>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
-            {galleryImgs.length > 6 && (
-              <button onClick={() => setLbIdx(6)}
-                className="mt-3 text-sm font-body font-semibold text-ocean-700 hover:text-ocean-500 transition-colors">
-                {lang === 'en' ? `+${galleryImgs.length - 6} more photos` : `+${galleryImgs.length - 6} fotos`}
-              </button>
-            )}
           </section>
         )}
 
