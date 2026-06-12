@@ -736,6 +736,42 @@ export default function PublicBooking() {
           </section>
         )}
 
+        {/* Localizacao */}
+        {op.address && (
+          <section id="localizacao" className="py-12 sm:py-16 border-t border-n-100">
+            <p className="text-xs font-body font-bold text-ocean-700 uppercase tracking-widest mb-2">
+              {lang === 'en' ? 'Location' : 'Localizacao'}
+            </p>
+            <h2 className="font-display font-bold text-2xl sm:text-3xl text-n-900 mb-6">
+              {lang === 'en' ? 'Where to find us' : 'Onde nos encontrar'}
+            </h2>
+            <div className="rounded-2xl overflow-hidden border border-n-200 shadow-sm">
+              <iframe
+                title="Mapa"
+                width="100%"
+                height="360"
+                style={{ border: 0, display: 'block' }}
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+                src={`https://maps.google.com/maps?q=${encodeURIComponent((op.business_name || op.name) + ' ' + op.address + ' Cabo Verde')}&output=embed&z=15`}
+              />
+            </div>
+            <div className="flex items-center gap-2 mt-3">
+              <MapPin size={14} strokeWidth={1.75} className="text-n-400 flex-shrink-0" />
+              <span className="text-sm font-body text-n-600">{op.address}</span>
+              <a
+                href={`https://www.google.com/maps/search/${encodeURIComponent((op.business_name || op.name) + ' ' + op.address + ' Cabo Verde')}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="ml-auto flex items-center gap-1 text-xs font-body font-semibold text-ocean-700 hover:text-ocean-500 transition-colors flex-shrink-0"
+              >
+                <ExternalLink size={12} strokeWidth={1.75} />
+                {lang === 'en' ? 'Open in Google Maps' : 'Abrir no Google Maps'}
+              </a>
+            </div>
+          </section>
+        )}
+
         {/* ── Avaliações ── */}
         {reviews.length > 0 && (
           <section id="avaliacoes" className="py-12 sm:py-16 border-t border-n-100">
