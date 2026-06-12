@@ -810,7 +810,13 @@ export default function PublicBooking() {
                           {(r.author_name || 'C').charAt(0).toUpperCase()}
                         </div>
                         <div>
-                          <p className="font-body font-semibold text-n-900 text-sm">{r.author_name || 'Cliente'}</p>
+                          <div className="flex items-center gap-2">
+                            <p className="font-body font-semibold text-n-900 text-sm">{r.author_name || 'Cliente'}</p>
+                            <span className="flex items-center gap-0.5 bg-ocean-50 text-ocean-700 text-[10px] font-body font-bold px-1.5 py-0.5 rounded-full">
+                              <Check size={9} strokeWidth={2.5} />
+                              {lang === 'en' ? 'Verified' : 'Verificado'}
+                            </span>
+                          </div>
                           <p className="text-xs font-body text-n-400">{r.created_at?.split('T')[0]}</p>
                         </div>
                       </div>
