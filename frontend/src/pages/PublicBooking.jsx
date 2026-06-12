@@ -423,21 +423,30 @@ export default function PublicBooking() {
     { id: 'contacto',   pt: 'Contacto',   en: 'Contact'  },
   ];
 
-  const FAQ_ITEMS = [
-    {
-      q: lang === 'en' ? 'How do I book?' : 'Como faço uma reserva?',
-      a: lang === 'en' ? 'Select a service, choose your dates, fill in your details and choose a payment method. You\'ll receive a confirmation by email.' : 'Seleccione um serviço, escolha as datas, preencha os seus dados e escolha o método de pagamento. Receberá uma confirmação por email.',
-    },
-    {
-      q: lang === 'en' ? 'Can I cancel my booking?' : 'Posso cancelar a minha reserva?',
-      a: lang === 'en' ? 'Please contact us via WhatsApp or email to discuss cancellation options for your booking.' : 'Por favor contacte-nos via WhatsApp ou email para discutir as opções de cancelamento da sua reserva.',
-    },
-    {
-      q: lang === 'en' ? 'What payment methods are accepted?' : 'Quais os métodos de pagamento aceites?',
-      a: lang === 'en' ? 'We accept international cards via PayPal, Cape Verdean cards via SISP Vinti4, and cash or card on arrival.' : 'Aceitamos cartão internacional via PayPal, cartão cabo-verdiano via SISP Vinti4, e dinheiro ou cartão no local.',
-    },
+  const FAQ_BY_TYPE = {
+    hotel: [
+      { q: lang === 'en' ? 'What time is check-in and check-out?' : 'Qual o horario de check-in e check-out?', a: lang === 'en' ? 'Check-in from 14:00, check-out until 11:00. Early/late options on request.' : 'Check-in a partir das 14h00, check-out ate as 11h00. Opcoes antecipadas/tardias mediante pedido.' },
+      { q: lang === 'en' ? 'Is breakfast included?' : 'O pequeno-almoco esta incluido?', a: lang === 'en' ? 'Breakfast inclusion varies by room type. Check the room details when booking.' : 'A inclusao do pequeno-almoco varia consoante o tipo de quarto. Verifique os detalhes ao reservar.' },
+    ],
+    activity: [
+      { q: lang === 'en' ? 'What should I bring?' : 'O que devo trazer?', a: lang === 'en' ? 'Comfortable clothing, sunscreen, water and a camera. Requirements depend on the activity.' : 'Roupa confortavel, protector solar, agua e camara. Os requisitos dependem da actividade.' },
+      { q: lang === 'en' ? 'Is it suitable for children?' : 'E adequado para criancas?', a: lang === 'en' ? 'Most activities are family-friendly. Check service details or contact us.' : 'A maioria das actividades e adequada para familias. Consulte os detalhes ou contacte-nos.' },
+    ],
+    rentacar: [
+      { q: lang === 'en' ? 'What documents do I need?' : 'Que documentos preciso?', a: lang === 'en' ? 'Valid driving licence, passport or ID, and a credit/debit card for the deposit.' : 'Carta de conducao valida, passaporte ou BI, e cartao de credito/debito para o deposito.' },
+      { q: lang === 'en' ? 'Is insurance included?' : 'O seguro esta incluido?', a: lang === 'en' ? 'Basic insurance is included. Full coverage available at extra cost.' : 'O seguro basico esta incluido. Cobertura total disponivel com custo adicional.' },
+    ],
+    restaurant: [
+      { q: lang === 'en' ? 'Do I need a reservation?' : 'Preciso de reserva?', a: lang === 'en' ? 'Reservations are recommended, especially for dinner and weekends.' : 'As reservas sao recomendadas, especialmente para jantar e fins de semana.' },
+      { q: lang === 'en' ? 'Do you have vegetarian options?' : 'Tem opcoes vegetarianas?', a: lang === 'en' ? 'Yes, we have vegetarian and vegan options. Inform us of dietary requirements when booking.' : 'Sim, temos opcoes vegetarianas e veganas. Informe-nos de requisitos dieteticos ao reservar.' },
+    ],
+  };
+  const FAQ_COMMON = [
+    { q: lang === 'en' ? 'How do I book?' : 'Como faco uma reserva?', a: lang === 'en' ? 'Select a service, choose dates, fill in details and choose a payment method. You will receive a confirmation by email.' : 'Seleccione um servico, escolha as datas, preencha os dados e escolha o metodo de pagamento. Recebera uma confirmacao por email.' },
+    { q: lang === 'en' ? 'Can I cancel my booking?' : 'Posso cancelar a minha reserva?', a: lang === 'en' ? 'Contact us via WhatsApp or email to discuss cancellation options.' : 'Contacte-nos via WhatsApp ou email para discutir as opcoes de cancelamento.' },
+    { q: lang === 'en' ? 'What payment methods are accepted?' : 'Quais os metodos de pagamento aceites?', a: lang === 'en' ? 'International cards via PayPal, Cape Verdean cards via SISP Vinti4, and cash or card on arrival.' : 'Cartao internacional via PayPal, cartao cabo-verdiano via SISP Vinti4, e dinheiro ou cartao no local.' },
   ];
-
+  const FAQ_ITEMS = [...(FAQ_BY_TYPE[op.operator_type] || []), ...FAQ_COMMON];
   return (
     <div className="min-h-screen bg-white">
 
