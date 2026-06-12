@@ -586,10 +586,29 @@ export default function PublicBooking() {
 
       {/* ── Urgency strip ── */}
       <div className="bg-ocean-700 text-white text-center py-2.5 px-4">
-        <p className="text-xs font-body font-semibold">
-          <span className="text-sand-400 font-bold">{viewerCount}</span>
-          {lang === 'en' ? ' people viewed this page today' : ' pessoas viram esta página hoje'}
-          {units.length > 0 && <> · <span className="text-sand-400 font-bold">{units.length}</span> {lang === 'en' ? 'services available' : 'serviços disponíveis'}</>}
+        <p className="text-xs font-body font-semibold flex items-center justify-center gap-3 flex-wrap">
+          <span>
+            <span className="text-sand-400 font-bold">{viewerCount}</span>
+            {lang === 'en' ? ' people viewed this page today' : ' pessoas viram esta pagina hoje'}
+          </span>
+          {units.length > 0 && (
+            <span className="opacity-60">·</span>
+          )}
+          {units.length > 0 && (
+            <span>
+              <span className="text-sand-400 font-bold">{units.length}</span>
+              {lang === 'en' ? ' services available' : ' servicos disponiveis'}
+            </span>
+          )}
+          {isVerified && (
+            <>
+              <span className="opacity-60">·</span>
+              <span className="flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse inline-block" />
+                {lang === 'en' ? 'Booking open' : 'Reservas abertas'}
+              </span>
+            </>
+          )}
         </p>
       </div>
 
@@ -948,6 +967,13 @@ export default function PublicBooking() {
                 {op.address && <div className="flex items-center gap-3 text-sm font-body text-n-600"><MapPin size={16} strokeWidth={1.75} className="text-ocean-400" />{op.address}</div>}
               </div>
               <div className="flex items-center gap-3 mt-6">
+                {typeof navigator !== 'undefined' && navigator.share && (
+                  <button onClick={() => navigator.share({ title: op.business_name || op.name, url: window.location.href })}
+                    className="flex items-center gap-1.5 border border-n-300 text-n-600 text-xs font-body font-semibold px-4 py-2 rounded-full hover:border-ocean-700 hover:text-ocean-700 transition-colors">
+                    <Share2 size={12} strokeWidth={1.75} />
+                    {lang === 'en' ? 'Share' : 'Partilhar'}
+                  </button>
+                )}
                 <button onClick={copyLink}
                   className="flex items-center gap-1.5 border border-n-300 text-n-600 text-xs font-body font-semibold px-4 py-2 rounded-full hover:border-ocean-700 hover:text-ocean-700 transition-colors">
                   {copied ? <Check size={12} strokeWidth={2} /> : <Copy size={12} strokeWidth={1.75} />}
