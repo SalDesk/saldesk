@@ -791,3 +791,34 @@ module.exports = {
   submitLead,
   getImpact,
 };
+
+/* ─── CMS público para o website ─────────────────────────────── */
+async function getCmsPublic(req, res) {
+  try {
+    const [pricing, testimonials, faqs, hero] = await Promise.all([
+      supabaseAdmin.from('cms_pricing').select('*').order('price_eur'),
+      supabaseAdmin.from('cms_testimonials').select('*').order('order_index'),
+      supabaseAdmin.from('cms_faqs').select('*').order('order_index'),
+      supabaseAdmin.from('cms_settings').select('*').in('key', [
+        'hero_title_pt','hero_title_en','hero_subtitle_pt','hero_subtitle_en',
+        'site_launch_date','site_operators_count','site_revenue_saved'
+      ]),
+    ]);
+
+    const heroMap = {};
+    (hero.data || []).forEach(r => { heroMap[r.key] = r.value; });
+
+    return res.json({
+      data: {
+        pricing:      pricing.data || [],
+        testimonials: testimonials.data || [],
+        faqs:         faqs.data || [],
+        hero:         heroMap,
+      }
+    });
+  } catch (err) {
+    return res.status(500).json({ error: 'Erro interno' });
+  }
+}
+
+module.exports = Object.assign(module.exports, { getCmsPublic });

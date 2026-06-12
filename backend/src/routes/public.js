@@ -38,6 +38,9 @@ router.post('/contact',            publicContact);
 /* ─── Candidatura de operador (website /operadores) ─── */
 router.post('/leads',              submitLead);
 
+/* ─── CMS website público ─── */
+router.get('/cms', require('../controllers/publicController').getCmsPublic);
+
 /* ─── Unidade individual ─── */
 router.get('/:slug/units/:unitId',         getUnit);
 router.get('/:slug/units/:unitId/reviews', getUnitReviews);
@@ -55,5 +58,7 @@ router.get('/:slug/qrcode', (req, res) => {
   const url  = encodeURIComponent(`${base}/book/${req.params.slug}`);
   return res.redirect(`https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${url}&format=png`);
 });
+
+router.get('/cms', require('../controllers/publicController').getCmsPublic);
 
 module.exports = router;
