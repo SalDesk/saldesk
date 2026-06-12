@@ -14,14 +14,16 @@ export default function Profile() {
   useT();
   const { operator, setOperator } = useAuthStore();
   const [form, setForm] = useState({
-    name:        operator?.name || '',
-    phone:       operator?.phone || '',
-    whatsapp:    operator?.whatsapp || '',
-    address:     operator?.address || '',
-    description: operator?.description || '',
-    language:    operator?.language || 'pt',
-    currency:    operator?.currency || 'EUR',
-    timezone:    operator?.timezone || 'Atlantic/Cape_Verde',
+    name:          operator?.name || '',
+    business_name: operator?.business_name || '',
+    tagline:       operator?.tagline || '',
+    phone:         operator?.phone || '',
+    whatsapp:      operator?.whatsapp || '',
+    address:       operator?.address || '',
+    description:   operator?.description || '',
+    language:      operator?.language || 'pt',
+    currency:      operator?.currency || 'EUR',
+    timezone:      operator?.timezone || 'Atlantic/Cape_Verde',
   });
   const [saving,      setSaving]      = useState(false);
   const [saved,       setSaved]       = useState(false);
@@ -147,7 +149,11 @@ export default function Profile() {
         <form onSubmit={handleSave} className="space-y-4">
           <Card header={<h3 className="font-display font-semibold text-sm text-n-700">Informacoes do negocio</h3>}>
             <div className="space-y-4">
-              <Input label="Nome do negocio" value={form.name} onChange={set('name')} required />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <Input label="Nome legal" value={form.name} onChange={set('name')} required />
+                <Input label="Nome comercial" value={form.business_name} onChange={set('business_name')} placeholder="Ex: Zy Tours Sal" />
+              </div>
+              <Input label="Tagline" value={form.tagline} onChange={set('tagline')} placeholder="Ex: A melhor experiencia na Ilha do Sal" />
               <Textarea
                 label="Descricao"
                 value={form.description}
