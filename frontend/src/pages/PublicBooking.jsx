@@ -7,6 +7,7 @@ import {
   Compass, Car, Utensils,
 } from 'lucide-react';
 import Logo from '../components/shared/Logo';
+import QRCode from 'qrcode';
 
 const API     = import.meta.env.VITE_API_URL || 'http://localhost:3001/api/v1';
 const EUR_CVE = 110;
@@ -330,6 +331,8 @@ export default function PublicBooking() {
   const [viewerCount]           = useState(() => 8 + Math.floor(Math.abs(slug.split('').reduce((a, c) => a + c.charCodeAt(0), 0)) % 40));
   const [faqOpen, setFaqOpen]   = useState(null);
   const [copied, setCopied]     = useState(false);
+  const [qrUrl, setQrUrl]       = useState('');
+  const [showQr, setShowQr]     = useState(false);
 
   /* Load data */
   useEffect(() => {
@@ -383,6 +386,12 @@ export default function PublicBooking() {
     } catch { /* silent */ }
     setContactSent(true);
   }
+
+  useEffect(() => {
+    QRCode.toDataURL(window.location.href, { width: 200, margin: 1, color: { dark: '#0c4a6e', light: '#ffffff' } })
+      .then(url => setQrUrl(url))
+      .catch(() => {});
+  }, []);
 
   function copyLink() {
     navigator.clipboard.writeText(window.location.href).then(() => {
@@ -985,7 +994,23 @@ export default function PublicBooking() {
                     <MessageCircle size={12} strokeWidth={1.75} />WhatsApp
                   </a>
                 )}
+                {qrUrl && (
+                  <button onClick={() => setShowQr(o => !o)}
+                    className="flex items-center gap-1.5 border border-n-300 text-n-600 text-xs font-body font-semibold px-4 py-2 rounded-full hover:border-ocean-700 hover:text-ocean-700 transition-colors">
+                    <Share2 size={12} strokeWidth={1.75} />QR Code
+                  </button>
+                )}
               </div>
+              {showQr && qrUrl && (
+                <div className="mt-4 flex flex-col items-start gap-2">
+                  <img src={qrUrl} alt="QR Code" className="w-32 h-32 rounded-xl border border-n-200 shadow-sm" />
+                  <p className="text-xs font-body text-n-400">{lang === 'en' ? 'Scan to open this page' : 'Scannear para abrir esta pagina'}</p>
+                  <a href={qrUrl} download={`qr-${slug}.png`}
+                    className="text-xs font-body font-semibold text-ocean-700 hover:text-ocean-500 transition-colors">
+                    {lang === 'en' ? 'Download QR Code' : 'Descarregar QR Code'}
+                  </a>
+                </div>
+              )}
             </div>
             <div className="bg-n-50 rounded-2xl p-6 border border-n-200">
               {contactSent ? (
