@@ -9,7 +9,7 @@ async function getOperador(req, res, next) {
   try {
     const { data: operator, error } = await supabaseAdmin
       .from('operators')
-      .select('id, name, slug, operator_type, email, phone, address, logo_url')
+      .select('id, name, slug, operator_type, email, phone, address, logo_url, cover_images, business_name, tagline')
       .eq('slug', req.params.slug)
       .eq('onboarding_complete', true)
       .single();
@@ -202,7 +202,7 @@ async function discover(req, res, next) {
 
     let q = supabaseAdmin
       .from('operators')
-      .select('id, name, slug, operator_type, description, address, phone, logo_url, currency, created_at')
+      .select('id, name, slug, operator_type, description, address, phone, logo_url, cover_images, business_name, tagline, currency, created_at')
       .eq('onboarding_complete', true)
       .order('name');
 
