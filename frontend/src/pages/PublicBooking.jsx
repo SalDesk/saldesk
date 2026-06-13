@@ -4,7 +4,7 @@ import {
   MapPin, Phone, Star, ChevronLeft, ChevronRight, MessageCircle,
   Menu, X, Globe, Mail, Calendar, Users, Check, ArrowRight, Shield,
   ExternalLink, ChevronDown, ChevronUp, Copy, Send, Award, Share2,
-  Compass, Car, Utensils,
+  Compass, Car, Utensils, Lock, RotateCcw, CheckCircle, Clock, Filter,
 } from 'lucide-react';
 import Logo from '../components/shared/Logo';
 import QRCode from 'qrcode';
@@ -17,6 +17,19 @@ const FALLBACK_IMGS = [
   'https://images.unsplash.com/photo-1506929562872-bb421503ef21?w=1200&q=80',
 ];
 const TYPE_LABELS = { hotel: 'Hotel', activity: 'Actividade', rentacar: 'Rent-a-Car', restaurant: 'Restaurante' };
+const PRICE_RANGES = [
+  { id: 'low',  max: 30,  pt: 'Até €30',   en: 'Up to €30' },
+  { id: 'mid',  min: 30, max: 80, pt: '€30 – €80', en: '€30 – €80' },
+  { id: 'high', min: 80, pt: '€80+', en: '€80+' },
+];
+const DURATION_RANGES = [
+  { id: 'short', max: 60,  pt: 'Até 1h',  en: 'Up to 1h' },
+  { id: 'mid',   min: 60, max: 180, pt: '1h – 3h', en: '1h – 3h' },
+  { id: 'long',  min: 180, pt: '3h+', en: '3h+' },
+];
+function formatUnitType(type) {
+  return type.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+}
 
 /* ── SEO ─────────────────────────────────────────── */
 function injectSeo(op, slug) {
@@ -115,6 +128,9 @@ function HeroCarousel({ images }) {
                 className={`h-1.5 rounded-full transition-all duration-300 ${i === idx ? 'bg-white w-6' : 'bg-white/45 w-1.5'}`} />
             ))}
           </div>
+          <div className="absolute bottom-6 right-4 sm:right-6 bg-black/30 backdrop-blur-sm text-white text-xs font-body font-semibold px-2.5 py-1 rounded-full">
+            {idx + 1} / {imgs.length}
+          </div>
         </>
       )}
     </div>
@@ -122,36 +138,77 @@ function HeroCarousel({ images }) {
 }
 
 /* ── ServiceCard ─────────────────────────────────── */
-function ServiceCard({ unit, slug, currency, lang, opCurrency }) {
+function fmtDuration(minutes) {
+  if (minutes < 60) return `${minutes}min`;
+  const h = minutes / 60;
+  return `${h % 1 === 0 ? h : h.toFixed(1)}h`;
+}
+
+function ServiceCard({ unit, slug, currency, lang, opCurrency, isFirst }) {
   const navigate = useNavigate();
   const price = fmtPrice(unit.base_price, unit.price_unit, opCurrency, currency, lang);
+  const isNew = unit.created_at
+    ? (Date.now() - new Date(unit.created_at).getTime()) < 30 * 24 * 60 * 60 * 1000
+    : false;
+  const goDetails = () => navigate(`/book/${slug}/servico/${unit.id}`);
   return (
-    <div onClick={() => navigate(`/book/${slug}/servico/${unit.id}`)}
+    <div onClick={goDetails}
       className="bg-white rounded-xl border border-n-200 shadow-sm overflow-hidden hover:shadow-md hover:-translate-y-1 transition-all duration-200 cursor-pointer">
-      {unit.images?.[0] ? (
-        <div className="h-44 bg-cover bg-center" style={{ backgroundImage: `url(${unit.images[0]})` }} />
-      ) : (
-        <div className="h-44 bg-gradient-to-br from-ocean-100 to-ocean-50 flex items-center justify-center">
-          <Calendar size={32} strokeWidth={1.25} className="text-ocean-300" />
-        </div>
-      )}
+      <div className="relative">
+        {unit.images?.[0] ? (
+          <div className="h-44 bg-cover bg-center" style={{ backgroundImage: `url(${unit.images[0]})` }} />
+        ) : (
+          <div className="h-44 bg-gradient-to-br from-ocean-100 to-ocean-50 flex items-center justify-center">
+            <Calendar size={32} strokeWidth={1.25} className="text-ocean-300" />
+          </div>
+        )}
+        {(isFirst || isNew) && (
+          <div className="absolute top-3 left-3 flex flex-col gap-1.5">
+            {isFirst && (
+              <span className="flex items-center gap-1 bg-sand-500 text-white text-xs font-body font-bold px-2.5 py-1 rounded-full shadow-sm">
+                <Star size={11} strokeWidth={2} className="fill-white" />
+                {lang === 'en' ? 'Most Popular' : 'Mais Popular'}
+              </span>
+            )}
+            {isNew && (
+              <span className="flex items-center gap-1 bg-ocean-700 text-white text-xs font-body font-bold px-2.5 py-1 rounded-full shadow-sm">
+                {lang === 'en' ? 'New' : 'Novo'}
+              </span>
+            )}
+          </div>
+        )}
+      </div>
       <div className="p-4">
         <p className="font-display font-bold text-n-900 mb-1 text-sm">{unit.name}</p>
         {unit.description && (
           <p className="text-xs font-body text-n-500 line-clamp-2 mb-3 leading-relaxed">{unit.description}</p>
         )}
-        {unit.capacity && (
-          <div className="flex items-center gap-1 text-xs text-n-400 mb-3">
-            <Users size={12} strokeWidth={1.75} />
-            <span>{lang === 'en' ? 'Up to' : 'Até'} {unit.capacity} {lang === 'en' ? 'people' : 'pessoas'}</span>
+        {(unit.capacity || unit.duration_minutes) && (
+          <div className="flex items-center gap-3 text-xs text-n-400 mb-3">
+            {unit.capacity && (
+              <div className="flex items-center gap-1">
+                <Users size={12} strokeWidth={1.75} />
+                <span>{lang === 'en' ? 'Up to' : 'Até'} {unit.capacity} {lang === 'en' ? 'people' : 'pessoas'}</span>
+              </div>
+            )}
+            {unit.duration_minutes && (
+              <div className="flex items-center gap-1">
+                <Clock size={12} strokeWidth={1.75} />
+                <span>{fmtDuration(unit.duration_minutes)}</span>
+              </div>
+            )}
           </div>
         )}
-        <div className="flex items-center justify-between gap-2">
-          <p className="font-display font-bold text-ocean-700 text-base leading-tight">{price}</p>
-          <button onClick={e => { e.stopPropagation(); navigate(`/book/${slug}/servico/${unit.id}`); }}
-            className="flex items-center gap-1.5 bg-ocean-700 text-white text-xs font-body font-semibold px-4 py-2 rounded-lg hover:bg-ocean-500 transition-colors">
+        <p className="font-display font-bold text-ocean-700 text-base leading-tight mb-3">{price}</p>
+        <div className="flex items-center gap-2">
+          <button onClick={e => { e.stopPropagation(); goDetails(); }}
+            className="flex-1 flex items-center justify-center gap-1.5 border border-n-300 text-n-700 text-xs font-body font-semibold px-3 py-2 rounded-lg hover:border-ocean-700 hover:text-ocean-700 transition-colors">
+            {lang === 'en' ? 'View details' : 'Ver detalhes'}
+          </button>
+          <button onClick={e => { e.stopPropagation(); goDetails(); }}
+            className="flex-1 flex items-center justify-center gap-1.5 bg-sand-500 text-white text-xs font-body font-semibold px-3 py-2 rounded-lg hover:bg-sand-600 transition-colors">
             <ArrowRight size={14} strokeWidth={1.75} />
-            {lang === 'en' ? 'Details' : 'Ver mais'}
+            {lang === 'en' ? 'Book' : 'Reservar'}
           </button>
         </div>
       </div>
@@ -333,6 +390,11 @@ export default function PublicBooking() {
   const [copied, setCopied]     = useState(false);
   const [qrUrl, setQrUrl]       = useState('');
   const [showQr, setShowQr]     = useState(false);
+  const [categoryFilter, setCategoryFilter] = useState('all');
+  const [priceFilter, setPriceFilter]       = useState('all');
+  const [durationFilter, setDurationFilter] = useState('all');
+  const [reviewFilter, setReviewFilter]     = useState(null);
+  const [reviewsExpanded, setReviewsExpanded] = useState(false);
 
   /* Load data */
   useEffect(() => {
@@ -423,6 +485,39 @@ export default function PublicBooking() {
 
   const isTopRated    = avgRating >= 4.5 && reviews.length >= 3;
   const isVerified    = !!op.onboarding_complete;
+
+  /* ── Filtros de serviços ── */
+  const unitCategories = [...new Set(units.map(u => u.unit_type).filter(Boolean))];
+  const hasDuration    = units.some(u => u.duration_minutes);
+
+  function unitPriceEur(u) {
+    const price = u.base_price || 0;
+    return (op.currency || 'EUR') === 'CVE' ? price / EUR_CVE : price;
+  }
+
+  const filteredUnits = units.filter(u => {
+    if (categoryFilter !== 'all' && u.unit_type !== categoryFilter) return false;
+    if (priceFilter !== 'all') {
+      const range = PRICE_RANGES.find(r => r.id === priceFilter);
+      const eur = unitPriceEur(u);
+      if (range.min != null && eur < range.min) return false;
+      if (range.max != null && eur >= range.max) return false;
+    }
+    if (durationFilter !== 'all') {
+      const range = DURATION_RANGES.find(r => r.id === durationFilter);
+      const mins = u.duration_minutes;
+      if (mins == null) return false;
+      if (range.min != null && mins < range.min) return false;
+      if (range.max != null && mins >= range.max) return false;
+    }
+    return true;
+  });
+
+  /* ── Filtro de avaliações ── */
+  const filteredReviews = reviewFilter
+    ? reviews.filter(r => Math.round(r.rating) === reviewFilter)
+    : reviews;
+  const visibleReviews = reviewsExpanded ? filteredReviews : filteredReviews.slice(0, 4);
 
   const navLinks = [
     { id: 'home',       pt: 'Início',     en: 'Home'     },
@@ -590,6 +685,11 @@ export default function PublicBooking() {
               </div>
             </div>
           </div>
+          <button onClick={() => scrollTo('sobre')}
+            aria-label={lang === 'en' ? 'Scroll down' : 'Descer'}
+            className="hidden sm:flex absolute bottom-4 right-6 text-white/70 hover:text-white transition-colors animate-bounce">
+            <ChevronDown size={28} strokeWidth={1.75} />
+          </button>
         </div>
       </section>
 
@@ -724,11 +824,66 @@ export default function PublicBooking() {
                   className={`text-xs font-body font-bold px-4 py-1.5 rounded-full transition-all ${currency === 'CVE' ? 'bg-ocean-700 text-white' : 'text-n-500'}`}>CVE</button>
               </div>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
-              {units.map(unit => (
-                <ServiceCard key={unit.id} unit={unit} slug={slug} currency={currency} lang={lang} opCurrency={op.currency} />
-              ))}
+
+            {/* Filtros */}
+            <div className="flex flex-wrap items-center gap-2 mb-6">
+              <span className="flex items-center gap-1.5 text-xs font-body font-bold text-n-400 uppercase tracking-wide mr-1">
+                <Filter size={13} strokeWidth={1.75} />
+                {lang === 'en' ? 'Filter' : 'Filtrar'}
+              </span>
+              {unitCategories.length > 1 && (
+                <div className="flex items-center gap-1 bg-n-100 rounded-full p-1 flex-wrap">
+                  <button onClick={() => setCategoryFilter('all')}
+                    className={`text-xs font-body font-semibold px-3 py-1.5 rounded-full transition-all ${categoryFilter === 'all' ? 'bg-ocean-700 text-white' : 'text-n-500'}`}>
+                    {lang === 'en' ? 'All' : 'Todas'}
+                  </button>
+                  {unitCategories.map(c => (
+                    <button key={c} onClick={() => setCategoryFilter(c)}
+                      className={`text-xs font-body font-semibold px-3 py-1.5 rounded-full transition-all ${categoryFilter === c ? 'bg-ocean-700 text-white' : 'text-n-500'}`}>
+                      {formatUnitType(c)}
+                    </button>
+                  ))}
+                </div>
+              )}
+              <div className="flex items-center gap-1 bg-n-100 rounded-full p-1 flex-wrap">
+                <button onClick={() => setPriceFilter('all')}
+                  className={`text-xs font-body font-semibold px-3 py-1.5 rounded-full transition-all ${priceFilter === 'all' ? 'bg-ocean-700 text-white' : 'text-n-500'}`}>
+                  {lang === 'en' ? 'Any price' : 'Qualquer preço'}
+                </button>
+                {PRICE_RANGES.map(r => (
+                  <button key={r.id} onClick={() => setPriceFilter(r.id)}
+                    className={`text-xs font-body font-semibold px-3 py-1.5 rounded-full transition-all ${priceFilter === r.id ? 'bg-ocean-700 text-white' : 'text-n-500'}`}>
+                    {lang === 'en' ? r.en : r.pt}
+                  </button>
+                ))}
+              </div>
+              {hasDuration && (
+                <div className="flex items-center gap-1 bg-n-100 rounded-full p-1 flex-wrap">
+                  <button onClick={() => setDurationFilter('all')}
+                    className={`text-xs font-body font-semibold px-3 py-1.5 rounded-full transition-all ${durationFilter === 'all' ? 'bg-ocean-700 text-white' : 'text-n-500'}`}>
+                    {lang === 'en' ? 'Any duration' : 'Qualquer duração'}
+                  </button>
+                  {DURATION_RANGES.map(r => (
+                    <button key={r.id} onClick={() => setDurationFilter(r.id)}
+                      className={`text-xs font-body font-semibold px-3 py-1.5 rounded-full transition-all ${durationFilter === r.id ? 'bg-ocean-700 text-white' : 'text-n-500'}`}>
+                      {lang === 'en' ? r.en : r.pt}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
+
+            {filteredUnits.length > 0 ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
+                {filteredUnits.map(unit => (
+                  <ServiceCard key={unit.id} unit={unit} slug={slug} currency={currency} lang={lang} opCurrency={op.currency} isFirst={unit.id === units[0]?.id} />
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-12 text-n-400 font-body text-sm">
+                {lang === 'en' ? 'No services match these filters.' : 'Nenhum serviço corresponde a estes filtros.'}
+              </div>
+            )}
           </section>
         )}
 
@@ -827,19 +982,31 @@ export default function PublicBooking() {
                 </div>
                 <div className="space-y-2">
                   {ratingBreakdown.map(({ r, count, pct }) => (
-                    <div key={r} className="flex items-center gap-2">
+                    <button key={r} onClick={() => setReviewFilter(reviewFilter === r ? null : r)}
+                      className={`flex items-center gap-2 w-full rounded-lg px-1.5 py-0.5 transition-colors ${reviewFilter === r ? 'bg-ocean-100' : 'hover:bg-n-100'}`}>
                       <span className="text-xs font-body font-semibold text-n-600 w-3">{r}</span>
                       <Star size={11} strokeWidth={1.75} className="text-sand-400 fill-sand-400 flex-shrink-0" />
                       <div className="flex-1 bg-n-200 rounded-full h-1.5">
                         <div className="bg-sand-400 h-full rounded-full transition-all" style={{ width: `${pct}%` }} />
                       </div>
                       <span className="text-xs text-n-400 font-body w-4 text-right">{count}</span>
-                    </div>
+                    </button>
                   ))}
                 </div>
+                {reviewFilter && (
+                  <button onClick={() => setReviewFilter(null)}
+                    className="mt-3 text-xs font-body font-semibold text-ocean-700 hover:underline">
+                    {lang === 'en' ? 'Clear filter' : 'Limpar filtro'}
+                  </button>
+                )}
               </div>
               <div className="lg:col-span-2 space-y-4">
-                {reviews.slice(0, 4).map((r, i) => (
+                {visibleReviews.length === 0 && (
+                  <div className="text-center py-10 text-n-400 font-body text-sm">
+                    {lang === 'en' ? 'No reviews with this rating.' : 'Sem avaliações com esta classificação.'}
+                  </div>
+                )}
+                {visibleReviews.map((r, i) => (
                   <div key={i} className="bg-white border border-n-200 rounded-xl p-5 shadow-sm">
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex items-center gap-3">
@@ -854,7 +1021,10 @@ export default function PublicBooking() {
                               {lang === 'en' ? 'Verified' : 'Verificado'}
                             </span>
                           </div>
-                          <p className="text-xs font-body text-n-400">{r.created_at?.split('T')[0]}</p>
+                          <p className="text-xs font-body text-n-400">
+                            {r.created_at?.split('T')[0]}
+                            {r.unit_name && ` · ${r.unit_name}`}
+                          </p>
                         </div>
                       </div>
                       <StarRating rating={r.rating} size={12} />
@@ -870,10 +1040,44 @@ export default function PublicBooking() {
                     )}
                   </div>
                 ))}
+                {!reviewsExpanded && filteredReviews.length > 4 && (
+                  <button onClick={() => setReviewsExpanded(true)}
+                    className="w-full flex items-center justify-center gap-1.5 border border-n-200 text-n-600 text-sm font-body font-semibold py-2.5 rounded-lg hover:border-ocean-700 hover:text-ocean-700 transition-colors">
+                    {lang === 'en' ? 'Show more' : 'Ver mais'}
+                    <ChevronDown size={16} strokeWidth={1.75} />
+                  </button>
+                )}
+                {reviewsExpanded && filteredReviews.length > 4 && (
+                  <button onClick={() => setReviewsExpanded(false)}
+                    className="w-full flex items-center justify-center gap-1.5 border border-n-200 text-n-600 text-sm font-body font-semibold py-2.5 rounded-lg hover:border-ocean-700 hover:text-ocean-700 transition-colors">
+                    {lang === 'en' ? 'Show less' : 'Ver menos'}
+                    <ChevronUp size={16} strokeWidth={1.75} />
+                  </button>
+                )}
               </div>
             </div>
           </section>
         )}
+
+        {/* ── Confiança ── */}
+        <section className="py-12 sm:py-16 bg-n-50 border-t border-n-100">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {[
+              { Icon: Shield, pt: 'Reserva Directa', en: 'Direct Booking', subPt: 'Sem comissões de plataformas externas', subEn: 'No fees from external platforms' },
+              { Icon: Lock, pt: 'Pagamento Seguro', en: 'Secure Payment', subPt: 'Dados protegidos em todas as transacções', subEn: 'Protected data on every transaction' },
+              { Icon: RotateCcw, pt: 'Cancelamento', en: 'Cancellation', subPt: 'Política de cancelamento clara e simples', subEn: 'Clear and simple cancellation policy' },
+              { Icon: CheckCircle, pt: 'Confirmação Imediata', en: 'Instant Confirmation', subPt: 'Resposta rápida a cada pedido de reserva', subEn: 'Fast response to every booking request' },
+            ].map(({ Icon, pt, en, subPt, subEn }, i) => (
+              <div key={i} className="flex flex-col items-center text-center gap-2">
+                <div className="w-12 h-12 rounded-full bg-ocean-50 flex items-center justify-center mb-1">
+                  <Icon size={22} strokeWidth={1.75} className="text-ocean-700" />
+                </div>
+                <p className="font-display font-bold text-n-900 text-sm">{lang === 'en' ? en : pt}</p>
+                <p className="text-xs font-body text-n-500 leading-relaxed">{lang === 'en' ? subEn : subPt}</p>
+              </div>
+            ))}
+          </div>
+        </section>
 
         {/* ── FAQ ── */}
         <section className="py-12 sm:py-16 border-t border-n-100">
@@ -1079,6 +1283,24 @@ export default function PublicBooking() {
                   </span>
                 </div>
               )}
+              {(op.instagram || op.facebook) && (
+                <div className="flex flex-wrap gap-2 mt-3">
+                  {op.instagram && (
+                    <a href={op.instagram} target="_blank" rel="noopener noreferrer"
+                      className="flex items-center gap-1 text-xs font-body text-white/50 hover:text-white border border-white/15 px-2.5 py-1 rounded-full transition-colors">
+                      Instagram
+                      <ExternalLink size={10} strokeWidth={2} />
+                    </a>
+                  )}
+                  {op.facebook && (
+                    <a href={op.facebook} target="_blank" rel="noopener noreferrer"
+                      className="flex items-center gap-1 text-xs font-body text-white/50 hover:text-white border border-white/15 px-2.5 py-1 rounded-full transition-colors">
+                      Facebook
+                      <ExternalLink size={10} strokeWidth={2} />
+                    </a>
+                  )}
+                </div>
+              )}
             </div>
             <div>
               <h4 className="font-display font-bold text-sm text-white mb-3">
@@ -1128,8 +1350,8 @@ export default function PublicBooking() {
             <p className="text-white/35">
               {lang === 'en' ? 'Powered by' : 'Plataforma'}{' '}
               <a href="https://saldesk.cv" className="text-white/55 hover:text-white transition-colors font-semibold">SalDesk</a>
-              {' '}&middot; Sistema desenvolvido por{' '}
-              <a href="https://wandr.cv" className="text-white/55 hover:text-white transition-colors font-semibold">WANDR</a>
+              {' '}&middot;{' '}
+              <a href="https://wandr.cv" className="text-white/55 hover:text-white transition-colors font-semibold">Tecnologia by WANDR Travel Technology</a>
             </p>
           </div>
         </div>

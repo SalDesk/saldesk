@@ -20,7 +20,7 @@ async function getOperador(req, res, next) {
 
     const { data: units } = await supabaseAdmin
       .from('units')
-      .select('id, name, description, unit_type, base_price, capacity, images, pricing_rules(*)')
+      .select('id, name, description, unit_type, base_price, capacity, images, created_at, pricing_rules(*)')
       .eq('operator_id', operator.id)
       .eq('status', 'active')
       .order('name');
