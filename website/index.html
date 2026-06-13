@@ -101,8 +101,8 @@ h1,h2,h3,h4{font-family:'Sora',sans-serif;color:var(--n900);line-height:1.2}
 /* ============================================================
    SECTION BASE
    ============================================================ */
-.section{padding:96px 0}
-@media (max-width:768px){.section{padding:64px 0}}
+.section{padding:120px 0}
+@media (max-width:768px){.section{padding:72px 0}}
 .bg-alt{background:var(--n50)}
 .bg-dark{background:var(--ocean-900)}
 
@@ -226,13 +226,13 @@ h1,h2,h3,h4{font-family:'Sora',sans-serif;color:var(--n900);line-height:1.2}
 .mockup-side-item{height:10px;border-radius:5px;background:rgba(255,255,255,.08)}
 .mockup-side-item.active{background:rgba(13,84,112,.55);height:28px}
 .mockup-main{display:flex;flex-direction:column;gap:16px}
-.mockup-kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.mockup-kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
 .mockup-kpi{
   background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);
-  border-radius:12px;padding:12px;
+  border-radius:12px;padding:16px 14px;
 }
-.mockup-kpi-value{font-family:'Sora',sans-serif;font-size:1.05rem;font-weight:800;color:#fff}
-.mockup-kpi-label{font-size:.66rem;color:rgba(255,255,255,.55);margin-top:2px;text-transform:uppercase;letter-spacing:.06em}
+.mockup-kpi-value{font-family:'Sora',sans-serif;font-size:1.5rem;font-weight:800;color:#fff;letter-spacing:-0.01em}
+.mockup-kpi-label{font-size:.72rem;color:rgba(255,255,255,.65);margin-top:4px;text-transform:uppercase;letter-spacing:.06em}
 .mockup-chart{
   display:flex;align-items:flex-end;gap:8px;height:90px;background:rgba(255,255,255,.04);
   border-radius:12px;padding:14px;border:1px solid rgba(255,255,255,.08);
@@ -265,6 +265,9 @@ h1,h2,h3,h4{font-family:'Sora',sans-serif;color:var(--n900);line-height:1.2}
   .hero-ctas{flex-direction:column;align-items:stretch}
   .hero-ctas .btn{width:100%}
   .hero-stats{gap:28px}
+  .mockup-kpi{padding:12px 8px}
+  .mockup-kpi-value{font-size:1.2rem}
+  .mockup-kpi-label{font-size:.62rem}
 }
 
 /* === SOCIAL-PROOF === */
@@ -346,6 +349,14 @@ h1,h2,h3,h4{font-family:'Sora',sans-serif;color:var(--n900);line-height:1.2}
 .feature-icon svg{width:23px;height:23px;stroke-width:1.75}
 .feature-item h3{color:#fff;font-size:1.08rem;font-weight:700;margin-bottom:10px;letter-spacing:-0.01em}
 .feature-item p{color:var(--ocean-100);font-size:.9rem;line-height:1.7;opacity:.75}
+.feature-link{
+  display:inline-flex;align-items:center;gap:6px;margin-top:16px;
+  font-family:'Sora',sans-serif;font-size:.85rem;font-weight:700;color:var(--sand-400);
+  text-decoration:none;transition:gap .25s ease,color .2s ease;
+}
+.feature-link svg{width:16px;height:16px;stroke-width:2;transition:transform .25s ease}
+.feature-item:hover .feature-link{color:var(--sand-500)}
+.feature-item:hover .feature-link svg{transform:translateX(4px)}
 @media (max-width:860px){
   .features-grid{grid-template-columns:repeat(2,1fr)}
 }
@@ -820,6 +831,8 @@ h1,h2,h3,h4{font-family:'Sora',sans-serif;color:var(--n900);line-height:1.2}
         <h3 class="en">Booking Engine</h3>
         <p class="pt">Página de reservas directa, calendário em tempo real e gestão de disponibilidade sem sobreposições.</p>
         <p class="en">Direct booking page, real-time calendar and availability management without overlaps.</p>
+        <a class="feature-link pt" href="#pricing">Saber mais <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></a>
+        <a class="feature-link en" href="#pricing">Learn more <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></a>
       </div>
 
       <div class="feature-item">
@@ -829,6 +842,8 @@ h1,h2,h3,h4{font-family:'Sora',sans-serif;color:var(--n900);line-height:1.2}
         <h3>CRM</h3>
         <p class="pt">Histórico de clientes, contactos, preferências e segmentação para campanhas direccionadas.</p>
         <p class="en">Customer history, contacts, preferences and segmentation for targeted campaigns.</p>
+        <a class="feature-link pt" href="#pricing">Saber mais <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></a>
+        <a class="feature-link en" href="#pricing">Learn more <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></a>
       </div>
 
       <div class="feature-item">
@@ -839,6 +854,8 @@ h1,h2,h3,h4{font-family:'Sora',sans-serif;color:var(--n900);line-height:1.2}
         <h3 class="en">Finance</h3>
         <p class="pt">Receitas, despesas, pagamentos e relatórios automáticos — sem folhas de Excel.</p>
         <p class="en">Revenue, expenses, payments and automatic reports — no more spreadsheets.</p>
+        <a class="feature-link pt" href="#pricing">Saber mais <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></a>
+        <a class="feature-link en" href="#pricing">Learn more <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></a>
       </div>
 
       <div class="feature-item">
@@ -848,6 +865,8 @@ h1,h2,h3,h4{font-family:'Sora',sans-serif;color:var(--n900);line-height:1.2}
         <h3>Analytics</h3>
         <p class="pt">Indicadores de ocupação, receita e origem de tráfego actualizados em tempo real.</p>
         <p class="en">Occupancy, revenue and traffic-source indicators updated in real time.</p>
+        <a class="feature-link pt" href="#pricing">Saber mais <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></a>
+        <a class="feature-link en" href="#pricing">Learn more <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></a>
       </div>
 
       <div class="feature-item">
@@ -858,6 +877,8 @@ h1,h2,h3,h4{font-family:'Sora',sans-serif;color:var(--n900);line-height:1.2}
         <h3 class="en">Channel Manager</h3>
         <p class="pt">Sincronização automática com Viator e GetYourGuide — sem reservas duplicadas.</p>
         <p class="en">Automatic sync with Viator and GetYourGuide — no duplicate bookings.</p>
+        <a class="feature-link pt" href="#pricing">Saber mais <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></a>
+        <a class="feature-link en" href="#pricing">Learn more <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></a>
       </div>
 
       <div class="feature-item">
@@ -868,6 +889,8 @@ h1,h2,h3,h4{font-family:'Sora',sans-serif;color:var(--n900);line-height:1.2}
         <h3 class="en">Automations</h3>
         <p class="pt">Confirmações, lembretes e pedidos de avaliação enviados automaticamente por email e WhatsApp.</p>
         <p class="en">Confirmations, reminders and review requests sent automatically by email and WhatsApp.</p>
+        <a class="feature-link pt" href="#pricing">Saber mais <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></a>
+        <a class="feature-link en" href="#pricing">Learn more <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></a>
       </div>
     </div>
   </div>
@@ -1320,8 +1343,20 @@ async function loadCms() {
     const data = json && json.data;
     if (!data) return;
 
+    const cmsPricingByPlan = {};
+    (data.pricing || []).forEach((p) => { cmsPricingByPlan[p.plan] = p; });
+    const pricing = FALLBACK_DATA.pricing.map((fallback) => {
+      const live = cmsPricingByPlan[fallback.plan];
+      if (!live) return fallback;
+      return {
+        ...fallback,
+        price_eur: Number(live.price_eur) || fallback.price_eur,
+        price_cve: Number(live.price_cve) || fallback.price_cve,
+      };
+    });
+
     cmsData = {
-      pricing: (data.pricing && data.pricing.length) ? data.pricing : FALLBACK_DATA.pricing,
+      pricing,
       testimonials: (data.testimonials && data.testimonials.length) ? data.testimonials : FALLBACK_DATA.testimonials,
       faqs: (data.faqs && data.faqs.length) ? data.faqs : FALLBACK_DATA.faqs,
     };
