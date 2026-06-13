@@ -106,7 +106,7 @@ function HeroCarousel({ images }) {
   }, [imgs.length]);
 
   return (
-    <div className="relative h-[60vh] min-h-[400px] max-h-[680px] overflow-hidden">
+    <div className="relative min-h-[85vh] max-h-[900px] overflow-hidden">
       {imgs.map((src, i) => (
         <div key={i} className="absolute inset-0 transition-opacity duration-1000 bg-cover bg-center"
           style={{ backgroundImage: `url(${src})`, opacity: i === idx ? 1 : 0 }} />
@@ -177,8 +177,16 @@ function ServiceCard({ unit, slug, currency, lang, opCurrency, isFirst }) {
             )}
           </div>
         )}
+        <div className="absolute bottom-3 right-3 bg-white rounded-xl px-3 py-1.5 shadow-md">
+          <span className="font-display font-bold text-ocean-700 text-sm">{price}</span>
+        </div>
       </div>
       <div className="p-4">
+        {unit.unit_type && (
+          <p className="text-[11px] font-body font-bold text-ocean-500 uppercase tracking-wide mb-1">
+            {formatUnitType(unit.unit_type)}
+          </p>
+        )}
         <p className="font-display font-bold text-n-900 mb-1 text-sm">{unit.name}</p>
         {unit.description && (
           <p className="text-xs font-body text-n-500 line-clamp-2 mb-3 leading-relaxed">{unit.description}</p>
@@ -199,8 +207,7 @@ function ServiceCard({ unit, slug, currency, lang, opCurrency, isFirst }) {
             )}
           </div>
         )}
-        <p className="font-display font-bold text-ocean-700 text-base leading-tight mb-3">{price}</p>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 pt-1">
           <button onClick={e => { e.stopPropagation(); goDetails(); }}
             className="flex-1 flex items-center justify-center gap-1.5 border border-n-300 text-n-700 text-xs font-body font-semibold px-3 py-2 rounded-lg hover:border-ocean-700 hover:text-ocean-700 transition-colors">
             {lang === 'en' ? 'View details' : 'Ver detalhes'}
@@ -581,7 +588,7 @@ export default function PublicBooking() {
               {lang === 'pt' ? 'EN' : 'PT'}
             </button>
             <button onClick={goBook}
-              className="flex items-center gap-1.5 bg-ocean-700 text-white text-sm font-body font-semibold px-4 py-2 rounded-full hover:bg-ocean-500 transition-colors">
+              className="flex items-center gap-1.5 bg-ocean-700 text-white text-sm font-body font-semibold px-4 py-2 rounded-full shadow-sm hover:bg-ocean-500 transition-colors">
               <Calendar size={14} strokeWidth={1.75} />
               {lang === 'en' ? 'Book Now' : 'Reservar'}
             </button>
@@ -685,10 +692,13 @@ export default function PublicBooking() {
               </div>
             </div>
           </div>
-          <button onClick={() => scrollTo('sobre')}
+          <button onClick={() => scrollTo('servicos')}
             aria-label={lang === 'en' ? 'Scroll down' : 'Descer'}
-            className="hidden sm:flex absolute bottom-4 right-6 text-white/70 hover:text-white transition-colors animate-bounce">
-            <ChevronDown size={28} strokeWidth={1.75} />
+            className="hidden sm:flex flex-col items-center gap-1 absolute bottom-4 right-6 text-white/70 hover:text-white transition-colors animate-bounce">
+            <span className="text-xs font-body font-semibold">
+              {lang === 'en' ? 'Scroll to explore' : 'Explorar'}
+            </span>
+            <ChevronDown size={22} strokeWidth={1.75} />
           </button>
         </div>
       </section>
@@ -722,92 +732,42 @@ export default function PublicBooking() {
       </div>
 
       {/* ── Trust Bar ── */}
-      <div className="border-b border-n-100 bg-n-50">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 py-4">
-          <div className="flex flex-wrap items-center justify-center gap-6 sm:gap-10">
-            <div className="flex items-center gap-2 text-n-600">
-              <div className="w-7 h-7 rounded-full bg-ocean-50 flex items-center justify-center flex-shrink-0">
-                <Shield size={14} strokeWidth={1.75} className="text-ocean-700" />
-              </div>
-              <span className="text-xs font-body font-semibold">{lang === 'en' ? 'Verified operator' : 'Operador verificado'}</span>
+      <div className="border-b border-n-100 bg-white">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6">
+          <div className="flex flex-wrap items-center justify-center gap-x-8 gap-y-4 sm:gap-x-12 text-center">
+            <div className="px-2 sm:border-l sm:border-n-200 sm:first:border-0 sm:pl-8 sm:first:pl-0">
+              <p className="font-display font-extrabold text-2xl text-ocean-700">{units.length}</p>
+              <p className="text-xs font-body text-n-500 mt-0.5">
+                {lang === 'en' ? (units.length === 1 ? 'service available' : 'services available') : (units.length === 1 ? 'serviço disponível' : 'serviços disponíveis')}
+              </p>
             </div>
-            <div className="flex items-center gap-2 text-n-600">
-              <div className="w-7 h-7 rounded-full bg-ocean-50 flex items-center justify-center flex-shrink-0">
-                <Check size={14} strokeWidth={2} className="text-ocean-700" />
-              </div>
-              <span className="text-xs font-body font-semibold">{lang === 'en' ? 'Direct booking · 0% commission' : 'Reserva directa · 0% comissão'}</span>
+            <div className="px-2 sm:border-l sm:border-n-200 sm:pl-8">
+              <p className="font-display font-extrabold text-2xl text-ocean-700">
+                {avgRating > 0 ? avgRating.toFixed(1) : (lang === 'en' ? 'New' : 'Novo')}
+              </p>
+              <p className="text-xs font-body text-n-500 mt-0.5">
+                {avgRating > 0
+                  ? `${reviews.length} ${lang === 'en' ? 'reviews' : 'avaliações'}`
+                  : (lang === 'en' ? 'on SalDesk' : 'na SalDesk')}
+              </p>
             </div>
-            <div className="flex items-center gap-2 text-n-600">
-              <div className="w-7 h-7 rounded-full bg-ocean-50 flex items-center justify-center flex-shrink-0">
-                <MessageCircle size={14} strokeWidth={1.75} className="text-ocean-700" />
-              </div>
-              <span className="text-xs font-body font-semibold">{lang === 'en' ? 'WhatsApp support' : 'Suporte via WhatsApp'}</span>
+            <div className="px-2 sm:border-l sm:border-n-200 sm:pl-8">
+              <p className="font-display font-extrabold text-2xl text-ocean-700">0%</p>
+              <p className="text-xs font-body text-n-500 mt-0.5">{lang === 'en' ? 'OTA commission' : 'comissão OTA'}</p>
             </div>
-            {avgRating > 0 && (
-              <div className="flex items-center gap-2 text-n-600">
-                <div className="w-7 h-7 rounded-full bg-sand-50 flex items-center justify-center flex-shrink-0">
-                  <Star size={14} strokeWidth={1.75} className="text-sand-500 fill-sand-500" />
-                </div>
-                <span className="text-xs font-body font-semibold">{avgRating.toFixed(1)} / 5 ({reviews.length} {lang === 'en' ? 'reviews' : 'avaliações'})</span>
-              </div>
-            )}
+            <div className="px-2 sm:border-l sm:border-n-200 sm:pl-8">
+              <p className="font-display font-extrabold text-2xl text-ocean-700">24h</p>
+              <p className="text-xs font-body text-n-500 mt-0.5">{lang === 'en' ? 'response time' : 'tempo de resposta'}</p>
+            </div>
           </div>
         </div>
       </div>
 
       <div className="max-w-5xl mx-auto px-4 sm:px-6">
 
-        {/* ── Sobre Nós ── */}
-        <section id="sobre" className="py-12 sm:py-16">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
-            {op.logo_url && (
-              <div className="rounded-2xl overflow-hidden bg-n-50 flex items-center justify-center p-8 border border-n-200">
-                <img src={op.logo_url} alt={op.name} className="max-h-48 object-contain" />
-              </div>
-            )}
-            <div className={op.logo_url ? '' : 'lg:col-span-2'}>
-              <p className="text-xs font-body font-bold text-ocean-700 uppercase tracking-widest mb-2">
-                {lang === 'en' ? 'About us' : 'Sobre nós'}
-              </p>
-              <h2 className="font-display font-bold text-2xl sm:text-3xl text-n-900 mb-4">{op.business_name || op.name}</h2>
-              {op.description && (
-                <p className="font-body text-n-600 leading-relaxed text-base mb-6">{op.description}</p>
-              )}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                {[
-                  { icon: <MapPin size={18} strokeWidth={1.75} />, label: lang === 'en' ? 'Location' : 'Localização', value: op.address?.split(',')[0] || 'Ilha do Sal' },
-                  { icon: <Globe size={18} strokeWidth={1.75} />, label: lang === 'en' ? 'Languages' : 'Idiomas', value: 'PT · EN' },
-                  { icon: <Award size={18} strokeWidth={1.75} />, label: lang === 'en' ? 'Type' : 'Tipo', value: TYPE_LABELS[op.operator_type] || 'Serviços' },
-                  { icon: <Star size={18} strokeWidth={1.75} />, label: lang === 'en' ? 'Rating' : 'Avaliação', value: avgRating > 0 ? `${avgRating.toFixed(1)}/5` : (lang === 'en' ? 'New' : 'Novo') },
-                ].map((item, i) => (
-                  <div key={i} className="bg-n-50 border border-n-200 rounded-xl p-3 text-center">
-                    <div className="w-8 h-8 rounded-full bg-ocean-50 flex items-center justify-center mx-auto mb-2 text-ocean-700">
-                      {item.icon}
-                    </div>
-                    <p className="text-xs font-body text-n-400 mb-0.5">{item.label}</p>
-                    <p className="text-xs font-body font-bold text-n-800">{item.value}</p>
-                  </div>
-                ))}
-              </div>
-              {op.phone && (
-                <div className="flex flex-wrap gap-3 mt-5">
-                  <a href={`tel:${op.phone}`} className="flex items-center gap-2 border border-n-300 text-n-700 text-sm font-body font-medium px-4 py-2 rounded-full hover:border-ocean-700 hover:text-ocean-700 transition-colors">
-                    <Phone size={14} strokeWidth={1.75} /> {op.phone}
-                  </a>
-                  {op.email && (
-                    <a href={`mailto:${op.email}`} className="flex items-center gap-2 border border-n-300 text-n-700 text-sm font-body font-medium px-4 py-2 rounded-full hover:border-ocean-700 hover:text-ocean-700 transition-colors">
-                      <Mail size={14} strokeWidth={1.75} /> {op.email}
-                    </a>
-                  )}
-                </div>
-              )}
-            </div>
-          </div>
-        </section>
-
         {/* ── Serviços ── */}
         {units.length > 0 && (
-          <section id="servicos" className="py-12 sm:py-16 border-t border-n-100">
+          <section id="servicos" className="py-12 sm:py-16">
             <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
               <div>
                 <p className="text-xs font-body font-bold text-ocean-700 uppercase tracking-widest mb-1">
@@ -886,10 +846,63 @@ export default function PublicBooking() {
             )}
           </section>
         )}
+      </div>
+
+      {/* ── Sobre Nós ── */}
+      <section id="sobre" className="bg-n-50 border-t border-n-100">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 py-12 sm:py-16">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
+            {op.logo_url && (
+              <div className="rounded-2xl overflow-hidden bg-white flex items-center justify-center p-8 border border-n-200">
+                <img src={op.logo_url} alt={op.name} className="max-h-48 object-contain" />
+              </div>
+            )}
+            <div className={op.logo_url ? '' : 'lg:col-span-2'}>
+              <p className="text-xs font-body font-bold text-ocean-700 uppercase tracking-widest mb-2">
+                {lang === 'en' ? 'About us' : 'Sobre nós'}
+              </p>
+              <h2 className="font-display font-bold text-2xl sm:text-3xl text-n-900 mb-4">{op.business_name || op.name}</h2>
+              {op.description && (
+                <p className="font-body text-n-600 leading-relaxed text-base mb-6">{op.description}</p>
+              )}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                {[
+                  { icon: <MapPin size={18} strokeWidth={1.75} />, label: lang === 'en' ? 'Location' : 'Localização', value: op.address?.split(',')[0] || 'Ilha do Sal' },
+                  { icon: <Globe size={18} strokeWidth={1.75} />, label: lang === 'en' ? 'Languages' : 'Idiomas', value: 'PT · EN' },
+                  { icon: <Award size={18} strokeWidth={1.75} />, label: lang === 'en' ? 'Type' : 'Tipo', value: TYPE_LABELS[op.operator_type] || 'Serviços' },
+                  { icon: <Star size={18} strokeWidth={1.75} />, label: lang === 'en' ? 'Rating' : 'Avaliação', value: avgRating > 0 ? `${avgRating.toFixed(1)}/5` : (lang === 'en' ? 'New' : 'Novo') },
+                ].map((item, i) => (
+                  <div key={i} className="bg-white border border-n-200 rounded-xl p-3 text-center">
+                    <div className="w-8 h-8 rounded-full bg-ocean-50 flex items-center justify-center mx-auto mb-2 text-ocean-700">
+                      {item.icon}
+                    </div>
+                    <p className="text-xs font-body text-n-400 mb-0.5">{item.label}</p>
+                    <p className="text-xs font-body font-bold text-n-800">{item.value}</p>
+                  </div>
+                ))}
+              </div>
+              {op.phone && (
+                <div className="flex flex-wrap gap-3 mt-5">
+                  <a href={`tel:${op.phone}`} className="flex items-center gap-2 border border-n-300 text-n-700 text-sm font-body font-medium px-4 py-2 rounded-full hover:border-ocean-700 hover:text-ocean-700 transition-colors">
+                    <Phone size={14} strokeWidth={1.75} /> {op.phone}
+                  </a>
+                  {op.email && (
+                    <a href={`mailto:${op.email}`} className="flex items-center gap-2 border border-n-300 text-n-700 text-sm font-body font-medium px-4 py-2 rounded-full hover:border-ocean-700 hover:text-ocean-700 transition-colors">
+                      <Mail size={14} strokeWidth={1.75} /> {op.email}
+                    </a>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div className="max-w-5xl mx-auto px-4 sm:px-6">
 
         {/* ── Galeria ── */}
         {galleryImgs.length > 0 && (
-          <section id="galeria" className="py-12 sm:py-16 border-t border-n-100">
+          <section id="galeria" className="py-12 sm:py-16">
             <div className="flex items-end justify-between mb-6 gap-4">
               <div>
                 <p className="text-xs font-body font-bold text-ocean-700 uppercase tracking-widest mb-2">
@@ -924,42 +937,6 @@ export default function PublicBooking() {
                   )}
                 </div>
               ))}
-            </div>
-          </section>
-        )}
-
-        {/* Localizacao */}
-        {op.address && (
-          <section id="localizacao" className="py-12 sm:py-16 border-t border-n-100">
-            <p className="text-xs font-body font-bold text-ocean-700 uppercase tracking-widest mb-2">
-              {lang === 'en' ? 'Location' : 'Localizacao'}
-            </p>
-            <h2 className="font-display font-bold text-2xl sm:text-3xl text-n-900 mb-6">
-              {lang === 'en' ? 'Where to find us' : 'Onde nos encontrar'}
-            </h2>
-            <div className="rounded-2xl overflow-hidden border border-n-200 shadow-sm">
-              <iframe
-                title="Mapa"
-                width="100%"
-                height="360"
-                style={{ border: 0, display: 'block' }}
-                loading="lazy"
-                referrerPolicy="no-referrer-when-downgrade"
-                src={`https://maps.google.com/maps?q=${encodeURIComponent((op.business_name || op.name) + ' ' + op.address + ' Cabo Verde')}&output=embed&z=15`}
-              />
-            </div>
-            <div className="flex items-center gap-2 mt-3">
-              <MapPin size={14} strokeWidth={1.75} className="text-n-400 flex-shrink-0" />
-              <span className="text-sm font-body text-n-600">{op.address}</span>
-              <a
-                href={`https://www.google.com/maps/search/${encodeURIComponent((op.business_name || op.name) + ' ' + op.address + ' Cabo Verde')}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="ml-auto flex items-center gap-1 text-xs font-body font-semibold text-ocean-700 hover:text-ocean-500 transition-colors flex-shrink-0"
-              >
-                <ExternalLink size={12} strokeWidth={1.75} />
-                {lang === 'en' ? 'Open in Google Maps' : 'Abrir no Google Maps'}
-              </a>
             </div>
           </section>
         )}
@@ -1059,8 +1036,11 @@ export default function PublicBooking() {
           </section>
         )}
 
-        {/* ── Confiança ── */}
-        <section className="py-12 sm:py-16 bg-n-50 border-t border-n-100">
+      </div>
+
+      {/* ── Confiança ── */}
+      <section className="bg-n-50 border-t border-n-100">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 py-12 sm:py-16">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {[
               { Icon: Shield, pt: 'Reserva Directa', en: 'Direct Booking', subPt: 'Sem comissões de plataformas externas', subEn: 'No fees from external platforms' },
@@ -1069,7 +1049,7 @@ export default function PublicBooking() {
               { Icon: CheckCircle, pt: 'Confirmação Imediata', en: 'Instant Confirmation', subPt: 'Resposta rápida a cada pedido de reserva', subEn: 'Fast response to every booking request' },
             ].map(({ Icon, pt, en, subPt, subEn }, i) => (
               <div key={i} className="flex flex-col items-center text-center gap-2">
-                <div className="w-12 h-12 rounded-full bg-ocean-50 flex items-center justify-center mb-1">
+                <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center mb-1">
                   <Icon size={22} strokeWidth={1.75} className="text-ocean-700" />
                 </div>
                 <p className="font-display font-bold text-n-900 text-sm">{lang === 'en' ? en : pt}</p>
@@ -1077,109 +1057,57 @@ export default function PublicBooking() {
               </div>
             ))}
           </div>
-        </section>
+        </div>
+      </section>
 
-        {/* ── FAQ ── */}
-        <section className="py-12 sm:py-16 border-t border-n-100">
-          <p className="text-xs font-body font-bold text-ocean-700 uppercase tracking-widest mb-2">FAQ</p>
-          <h2 className="font-display font-bold text-2xl sm:text-3xl text-n-900 mb-6">
-            {lang === 'en' ? 'Frequently Asked Questions' : 'Perguntas Frequentes'}
-          </h2>
-          <div className="space-y-3 max-w-2xl">
-            {FAQ_ITEMS.map((item, i) => (
-              <div key={i} className="border border-n-200 rounded-xl overflow-hidden">
-                <button onClick={() => setFaqOpen(faqOpen === i ? null : i)}
-                  className="w-full flex items-center justify-between px-5 py-4 text-left hover:bg-n-50 transition-colors">
-                  <span className="font-body font-semibold text-n-800 text-sm">{item.q}</span>
-                  {faqOpen === i ? <ChevronUp size={16} strokeWidth={2} className="text-n-400 flex-shrink-0" /> : <ChevronDown size={16} strokeWidth={2} className="text-n-400 flex-shrink-0" />}
-                </button>
-                {faqOpen === i && (
-                  <div className="px-5 pb-4 text-sm font-body text-n-500 leading-relaxed border-t border-n-100 pt-3">
-                    {item.a}
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        </section>
+      <div className="max-w-5xl mx-auto px-4 sm:px-6">
 
-        {/* ── Localização ── */}
-        <section id="localizacao" className="py-12 sm:py-16 border-t border-n-100">
+        {/* ── Localização + Contacto ── */}
+        <section id="contacto" className="py-12 sm:py-16">
           <p className="text-xs font-body font-bold text-ocean-700 uppercase tracking-widest mb-2">
-            {lang === 'en' ? 'Location' : 'Localização'}
+            {lang === 'en' ? 'Get in touch' : 'Entre em contacto'}
           </p>
-          <h2 className="font-display font-bold text-2xl sm:text-3xl text-n-900 mb-6">
-            {lang === 'en' ? 'Where to find us' : 'Onde nos encontrar'}
+          <h2 className="font-display font-bold text-2xl sm:text-3xl text-n-900 mb-4">
+            {lang === 'en' ? 'Location & Contact' : 'Localização & Contacto'}
           </h2>
-          <div className="bg-ocean-50 border border-ocean-100 rounded-2xl overflow-hidden">
-            <div className="relative h-52 bg-cover bg-center"
-              style={{ backgroundImage: `url(https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=800&q=75)` }}>
-              <div className="absolute inset-0 bg-ocean-900/40" />
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="bg-white rounded-2xl p-5 text-center shadow-xl max-w-xs mx-4">
-                  <div className="w-10 h-10 bg-ocean-700 rounded-full flex items-center justify-center mx-auto mb-2">
-                    <MapPin size={18} strokeWidth={1.75} className="text-white" />
-                  </div>
-                  <p className="font-display font-bold text-n-900 text-sm mb-1">{op.name}</p>
-                  <p className="text-xs font-body text-n-500 mb-3">{op.address || 'Ilha do Sal, Cabo Verde'}</p>
-                  <a href={`https://maps.google.com?q=${encodeURIComponent((op.address || 'Santa Maria Ilha do Sal') + ' Cabo Verde')}`}
-                    target="_blank" rel="noopener noreferrer"
-                    className="flex items-center justify-center gap-1.5 bg-ocean-700 text-white text-xs font-body font-semibold px-4 py-2 rounded-lg hover:bg-ocean-500 transition-colors">
-                    <ExternalLink size={12} strokeWidth={1.75} />
-                    {lang === 'en' ? 'Open in Google Maps' : 'Abrir no Google Maps'}
-                  </a>
-                </div>
-              </div>
-            </div>
-            {(op.phone || op.email) && (
-              <div className="p-5 grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {op.phone && (
-                  <a href={`tel:${op.phone}`} className="flex items-center gap-3 p-3 bg-white rounded-xl border border-n-200 hover:border-ocean-300 transition-colors">
-                    <div className="w-8 h-8 bg-ocean-50 rounded-full flex items-center justify-center text-ocean-700">
-                      <Phone size={14} strokeWidth={1.75} />
-                    </div>
-                    <div>
-                      <p className="text-xs font-body text-n-400">{lang === 'en' ? 'Phone' : 'Telefone'}</p>
-                      <p className="text-sm font-body font-semibold text-n-800">{op.phone}</p>
-                    </div>
-                  </a>
-                )}
-                {whatsappUrl && (
-                  <a href={whatsappUrl} target="_blank" rel="noopener noreferrer"
-                    className="flex items-center gap-3 p-3 bg-white rounded-xl border border-n-200 hover:border-green-400 transition-colors">
-                    <div className="w-8 h-8 bg-green-50 rounded-full flex items-center justify-center text-green-600">
-                      <MessageCircle size={14} strokeWidth={1.75} />
-                    </div>
-                    <div>
-                      <p className="text-xs font-body text-n-400">WhatsApp</p>
-                      <p className="text-sm font-body font-semibold text-n-800">{op.whatsapp}</p>
-                    </div>
-                  </a>
-                )}
-              </div>
-            )}
-          </div>
-        </section>
-
-        {/* ── Contacto ── */}
-        <section id="contacto" className="py-12 sm:py-16 border-t border-n-100">
+          <p className="font-body text-n-500 leading-relaxed mb-6 max-w-xl">
+            {lang === 'en' ? 'Have questions? We respond within 24 hours.' : 'Tem dúvidas? Respondemos em 24 horas.'}
+          </p>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
             <div>
-              <p className="text-xs font-body font-bold text-ocean-700 uppercase tracking-widest mb-2">
-                {lang === 'en' ? 'Get in touch' : 'Entre em contacto'}
-              </p>
-              <h2 className="font-display font-bold text-2xl sm:text-3xl text-n-900 mb-4">
-                {lang === 'en' ? 'Contact us' : 'Fale connosco'}
-              </h2>
-              <p className="font-body text-n-500 leading-relaxed mb-6">
-                {lang === 'en' ? 'Have questions? We respond within 24 hours.' : 'Tem dúvidas? Respondemos em 24 horas.'}
-              </p>
+              {op.address && (
+                <>
+                  <div className="rounded-2xl overflow-hidden border border-n-200 shadow-sm mb-3">
+                    <iframe
+                      title="Mapa"
+                      width="100%"
+                      height="280"
+                      style={{ border: 0, display: 'block' }}
+                      loading="lazy"
+                      referrerPolicy="no-referrer-when-downgrade"
+                      src={`https://maps.google.com/maps?q=${encodeURIComponent((op.business_name || op.name) + ' ' + op.address + ' Cabo Verde')}&output=embed&z=15`}
+                    />
+                  </div>
+                  <div className="flex items-center gap-2 mb-6">
+                    <MapPin size={14} strokeWidth={1.75} className="text-n-400 flex-shrink-0" />
+                    <span className="text-sm font-body text-n-600">{op.address}</span>
+                    <a
+                      href={`https://www.google.com/maps/search/${encodeURIComponent((op.business_name || op.name) + ' ' + op.address + ' Cabo Verde')}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="ml-auto flex items-center gap-1 text-xs font-body font-semibold text-ocean-700 hover:text-ocean-500 transition-colors flex-shrink-0"
+                    >
+                      <ExternalLink size={12} strokeWidth={1.75} />
+                      {lang === 'en' ? 'Open in Google Maps' : 'Abrir no Google Maps'}
+                    </a>
+                  </div>
+                </>
+              )}
               <div className="space-y-3">
                 {op.phone && <div className="flex items-center gap-3 text-sm font-body text-n-600"><Phone size={16} strokeWidth={1.75} className="text-ocean-400" />{op.phone}</div>}
                 {op.email && <div className="flex items-center gap-3 text-sm font-body text-n-600"><Mail size={16} strokeWidth={1.75} className="text-ocean-400" />{op.email}</div>}
-                {op.address && <div className="flex items-center gap-3 text-sm font-body text-n-600"><MapPin size={16} strokeWidth={1.75} className="text-ocean-400" />{op.address}</div>}
               </div>
-              <div className="flex items-center gap-3 mt-6">
+              <div className="flex items-center gap-3 mt-6 flex-wrap">
                 {typeof navigator !== 'undefined' && navigator.share && (
                   <button onClick={() => navigator.share({ title: op.business_name || op.name, url: window.location.href })}
                     className="flex items-center gap-1.5 border border-n-300 text-n-600 text-xs font-body font-semibold px-4 py-2 rounded-full hover:border-ocean-700 hover:text-ocean-700 transition-colors">
@@ -1252,6 +1180,30 @@ export default function PublicBooking() {
                 </form>
               )}
             </div>
+          </div>
+        </section>
+
+        {/* ── FAQ ── */}
+        <section className="py-12 sm:py-16 border-t border-n-100">
+          <p className="text-xs font-body font-bold text-ocean-700 uppercase tracking-widest mb-2">FAQ</p>
+          <h2 className="font-display font-bold text-2xl sm:text-3xl text-n-900 mb-6">
+            {lang === 'en' ? 'Frequently Asked Questions' : 'Perguntas Frequentes'}
+          </h2>
+          <div className="space-y-3 max-w-2xl">
+            {FAQ_ITEMS.map((item, i) => (
+              <div key={i} className="border border-n-200 rounded-xl overflow-hidden">
+                <button onClick={() => setFaqOpen(faqOpen === i ? null : i)}
+                  className="w-full flex items-center justify-between px-5 py-4 text-left hover:bg-n-50 transition-colors">
+                  <span className="font-body font-semibold text-n-800 text-sm">{item.q}</span>
+                  {faqOpen === i ? <ChevronUp size={16} strokeWidth={2} className="text-n-400 flex-shrink-0" /> : <ChevronDown size={16} strokeWidth={2} className="text-n-400 flex-shrink-0" />}
+                </button>
+                {faqOpen === i && (
+                  <div className="px-5 pb-4 text-sm font-body text-n-500 leading-relaxed border-t border-n-100 pt-3">
+                    {item.a}
+                  </div>
+                )}
+              </div>
+            ))}
           </div>
         </section>
       </div>
