@@ -144,9 +144,25 @@ function fmtDuration(minutes) {
   return `${h % 1 === 0 ? h : h.toFixed(1)}h`;
 }
 
+/* unit.description guarda metadados JSON (tour/quarto/viatura/mesa) — extrair o texto legível */
+function getUnitDescription(unit, lang) {
+  const raw = unit.description;
+  if (!raw) return '';
+  if (raw.startsWith('{')) {
+    try {
+      const meta = JSON.parse(raw);
+      return (lang === 'en' ? meta.desc_en : meta.desc_pt) || meta.description || '';
+    } catch {
+      return '';
+    }
+  }
+  return raw;
+}
+
 function ServiceCard({ unit, slug, currency, lang, opCurrency, isFirst }) {
   const navigate = useNavigate();
   const price = fmtPrice(unit.base_price, unit.price_unit, opCurrency, currency, lang);
+  const description = getUnitDescription(unit, lang);
   const isNew = unit.created_at
     ? (Date.now() - new Date(unit.created_at).getTime()) < 30 * 24 * 60 * 60 * 1000
     : false;
@@ -188,8 +204,8 @@ function ServiceCard({ unit, slug, currency, lang, opCurrency, isFirst }) {
           </p>
         )}
         <p className="font-display font-bold text-n-900 mb-1 text-sm">{unit.name}</p>
-        {unit.description && (
-          <p className="text-xs font-body text-n-500 line-clamp-2 mb-3 leading-relaxed">{unit.description}</p>
+        {description && (
+          <p className="text-xs font-body text-n-500 line-clamp-2 mb-3 leading-relaxed">{description}</p>
         )}
         {(unit.capacity || unit.duration_minutes) && (
           <div className="flex items-center gap-3 text-xs text-n-400 mb-3">
