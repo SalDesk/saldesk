@@ -573,7 +573,12 @@ export default function PublicBooking() {
     { q: lang === 'en' ? 'Can I cancel my booking?' : 'Posso cancelar a minha reserva?', a: lang === 'en' ? 'Contact us via WhatsApp or email to discuss cancellation options.' : 'Contacte-nos via WhatsApp ou email para discutir as opcoes de cancelamento.' },
     { q: lang === 'en' ? 'What payment methods are accepted?' : 'Quais os metodos de pagamento aceites?', a: lang === 'en' ? 'International cards via PayPal, Cape Verdean cards via SISP Vinti4, and cash or card on arrival.' : 'Cartao internacional via PayPal, cartao cabo-verdiano via SISP Vinti4, e dinheiro ou cartao no local.' },
   ];
-  const FAQ_ITEMS = [...(FAQ_BY_TYPE[op.operator_type] || []), ...FAQ_COMMON];
+  const FAQ_ITEMS = op.custom_faqs?.length
+    ? op.custom_faqs.map(f => ({
+        q: (lang === 'en' ? f.question_en : f.question_pt) || f.question_pt || f.question_en,
+        a: (lang === 'en' ? f.answer_en   : f.answer_pt)   || f.answer_pt   || f.answer_en,
+      }))
+    : [...(FAQ_BY_TYPE[op.operator_type] || []), ...FAQ_COMMON];
   return (
     <div className="min-h-screen bg-white">
 

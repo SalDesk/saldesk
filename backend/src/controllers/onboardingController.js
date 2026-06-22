@@ -77,7 +77,8 @@ async function updateOperator(req, res, next) {
     }
 
     const { name, operator_type, phone, whatsapp, address, description,
-            slug, language, currency, timezone, onboarding_complete, logo_url, cover_images, business_name, tagline } = req.body;
+            slug, language, currency, timezone, onboarding_complete, logo_url, cover_images, business_name, tagline,
+            custom_faqs } = req.body;
 
     const updates = { updated_at: new Date().toISOString() };
     if (name !== undefined)              updates.name = name;
@@ -94,6 +95,7 @@ async function updateOperator(req, res, next) {
     if (cover_images !== undefined)      updates.cover_images = cover_images;
     if (business_name !== undefined)     updates.business_name = business_name;
     if (tagline !== undefined)           updates.tagline = tagline;
+    if (custom_faqs !== undefined && Array.isArray(custom_faqs)) updates.custom_faqs = custom_faqs;
 
     if (slug !== undefined) {
       const slugFinal = await gerarSlugUnico(slug || req.operator.name, req.operator.id);

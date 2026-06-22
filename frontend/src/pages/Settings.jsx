@@ -154,6 +154,7 @@ function PerfilPublicoTab({ operator }) {
   const [covers, setCovers]         = useState([]);
   const [descPt,  setDescPt]        = useState(operator?.description_pt || '');
   const [descEn,  setDescEn]        = useState(operator?.description_en || '');
+  const [faqs, setFaqs] = useState(operator?.custom_faqs || []);
   const [social,  setSocial]        = useState({
     instagram:   operator?.social?.instagram   || '',
     facebook:    operator?.social?.facebook    || '',
@@ -210,6 +211,27 @@ function PerfilPublicoTab({ operator }) {
     });
   }
 
+  function addFaq() {
+    setFaqs(p => [...p, { question_pt: '', question_en: '', answer_pt: '', answer_en: '' }]);
+  }
+
+  function updateFaq(idx, field, value) {
+    setFaqs(p => p.map((f, i) => i === idx ? { ...f, [field]: value } : f));
+  }
+
+  function removeFaq(idx) {
+    setFaqs(p => p.filter((_, i) => i !== idx));
+  }
+
+  function moveFaq(idx, dir) {
+    setFaqs(p => {
+      const arr = [...p];
+      const [item] = arr.splice(idx, 1);
+      arr.splice(idx + dir, 0, item);
+      return arr;
+    });
+  }
+
   function toggleSpokenLang(l) {
     setSpokenLangs(p => p.includes(l) ? p.filter(x => x !== l) : [...p, l]);
   }
@@ -230,6 +252,7 @@ function PerfilPublicoTab({ operator }) {
         spoken_languages: spokenLangs,
         lat: parseFloat(lat) || null,
         lng: parseFloat(lng) || null,
+        custom_faqs: faqs.filter(f => f.question_pt || f.question_en),
       };
       const updated = await updateOperator(payload);
       setOperator(updated);
@@ -308,6 +331,47 @@ function PerfilPublicoTab({ operator }) {
             rows={4} placeholder="Descricao do operador em portugues..." />
           <Textarea label="Ingles (EN)" value={descEn} onChange={e => setDescEn(e.target.value)}
             rows={4} placeholder="Operator description in English..." />
+        </div>
+      </Card>
+
+      {/* FAQ personalizado */}
+      <Card header={<h3 className="font-display font-semibold text-sm text-n-700">FAQ personalizado</h3>}>
+        <div className="space-y-4">
+          <p className="text-xs font-body text-n-400">
+            Se adicionares perguntas aqui, substituem as FAQ genéricas na página pública.
+          </p>
+          {faqs.map((f, i) => (
+            <div key={i} className="border border-n-200 rounded-md p-3 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-body font-bold uppercase tracking-wide text-n-500">Pergunta {i + 1}</span>
+                <div className="flex gap-1">
+                  <button type="button" onClick={() => moveFaq(i, -1)} disabled={i === 0}
+                    className="w-6 h-6 flex items-center justify-center rounded bg-n-100 text-n-500 disabled:opacity-30">
+                    <ChevronUp size={12} strokeWidth={2} />
+                  </button>
+                  <button type="button" onClick={() => moveFaq(i, 1)} disabled={i === faqs.length - 1}
+                    className="w-6 h-6 flex items-center justify-center rounded bg-n-100 text-n-500 disabled:opacity-30">
+                    <ChevronDown size={12} strokeWidth={2} />
+                  </button>
+                  <button type="button" onClick={() => removeFaq(i)}
+                    className="w-6 h-6 flex items-center justify-center rounded bg-error/10 text-error">
+                    <X size={12} strokeWidth={2} />
+                  </button>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <Input label="Pergunta PT" value={f.question_pt} onChange={e => updateFaq(i, 'question_pt', e.target.value)} />
+                <Input label="Pergunta EN" value={f.question_en} onChange={e => updateFaq(i, 'question_en', e.target.value)} />
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <Textarea label="Resposta PT" rows={2} value={f.answer_pt} onChange={e => updateFaq(i, 'answer_pt', e.target.value)} />
+                <Textarea label="Resposta EN" rows={2} value={f.answer_en} onChange={e => updateFaq(i, 'answer_en', e.target.value)} />
+              </div>
+            </div>
+          ))}
+          <Button type="button" variant="secondary" icon={Plus} size="sm" onClick={addFaq}>
+            Adicionar pergunta
+          </Button>
         </div>
       </Card>
 
