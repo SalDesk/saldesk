@@ -15,7 +15,7 @@ import { UpgradeModal } from '../PlanGuard';
 import Logo from '../shared/Logo';
 
 /* requiredPlan: plan gate | feature: key for UpgradeModal description */
-const TYPE_NAV = {
+export const TYPE_NAV = {
   activity: [
     { to: '/',              icon: LayoutDashboard, label: 'Dashboard',         end: true },
     { to: '/unidades',      icon: Compass,         label: 'Tours & Actividades'          },
@@ -108,7 +108,7 @@ const TYPE_NAV = {
   ],
 };
 
-const PLAN_BADGE = {
+export const PLAN_BADGE = {
   business: { label: 'Business', cls: 'bg-ocean-600 text-white' },
   pro:      { label: 'Pro',      cls: 'bg-sand-500 text-white'   },
 };

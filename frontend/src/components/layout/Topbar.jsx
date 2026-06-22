@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  Menu, ChevronDown, Bell,
+  ChevronDown, Bell,
   Calendar, XCircle, Star, MessageCircle,
 } from 'lucide-react';
 import useAuthStore from '../../store/authStore';
@@ -31,7 +31,7 @@ function timeAgo(dateStr) {
   return `${Math.floor(diff / 86400)}d`;
 }
 
-export default function Topbar({ onMenuClick }) {
+export default function Topbar() {
   const { operator } = useAuthStore();
   const navigate     = useNavigate();
 
@@ -98,14 +98,6 @@ export default function Topbar({ onMenuClick }) {
 
   return (
     <header className="h-14 bg-white border-b border-n-200 flex items-center justify-between px-4 shrink-0">
-      <button
-        onClick={onMenuClick}
-        className="md:hidden p-2 rounded-sm text-n-500 hover:text-n-700 hover:bg-n-100 transition-colors"
-        aria-label="Toggle menu"
-      >
-        <Menu size={20} strokeWidth={1.75} />
-      </button>
-
       <div className="flex-1" />
 
       <div className="flex items-center gap-3">
