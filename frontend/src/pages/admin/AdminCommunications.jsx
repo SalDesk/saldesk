@@ -602,7 +602,7 @@ export default function AdminCommunications() {
   useEffect(() => {
     if (!token) return;
     const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
-    const wsUrl  = apiUrl.replace('/api', '').replace(/\/$/, '');
+    const wsUrl  = apiUrl.replace(/\/api\/v1\/?$/, '');
     const s = io(wsUrl, {
       auth:           { role: 'FUNDADOR', token },
       transports:     ['websocket'],
