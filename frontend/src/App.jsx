@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import useAuthStore from './store/authStore';
 import Layout from './components/layout/Layout';
 import PlanGuard from './components/PlanGuard';
+import { isVendedor, isStaff } from './utils/userRoles';
 
 // Eager — critical path, must load instantly
 import Login from './pages/Login';
@@ -73,15 +74,6 @@ function ProtectedRoute({ children }) {
   const token = useAuthStore((s) => s.token);
   if (!token) return <Navigate to="/login" replace />;
   return children;
-}
-
-function isVendedor(user) {
-  return user?.user_metadata?.role === 'VENDEDOR' ||
-         user?.user_metadata?.staff_role === 'Vendedor de Praia';
-}
-
-function isStaff(user) {
-  return user?.user_metadata?.role === 'STAFF';
 }
 
 function OnboardingGuard({ children }) {
@@ -173,8 +165,8 @@ export default function App() {
         <Route path="/afiliado/:codigo" element={<AffiliatePortal />} />
 
         {/* Vendedor de Praia — mobile */}
-        <Route path="/vendedor" element={<BeachSellerGuard><PlanGuard plan="pro" feature="vendedor"><BeachSeller /></PlanGuard></BeachSellerGuard>} />
-        <Route path="/vendedor/nova-reserva" element={<BeachSellerGuard><PlanGuard plan="pro" feature="vendedor"><BeachSale /></PlanGuard></BeachSellerGuard>} />
+        <Route path="/vendedor" element={<BeachSellerGuard><BeachSeller /></BeachSellerGuard>} />
+        <Route path="/vendedor/nova-reserva" element={<BeachSellerGuard><BeachSale /></BeachSellerGuard>} />
 
         {/* Motor de reserva publica */}
         <Route path="/book/:slug" element={<PublicBooking />} />
