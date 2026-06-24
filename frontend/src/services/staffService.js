@@ -8,3 +8,4 @@ export const deleteStaff     = (id)     => api.delete(`/staff/${id}`);
 export const getStaffJobs    = (id)     => api.get(`/staff/${id}/jobs`).then(r => r.data.data);
 export const getStaffEarnings= (id)     => api.get(`/staff/${id}/earnings`).then(r => r.data.data);
 export const setAvailability = (id, d)  => api.put(`/staff/${id}/availability`, d).then(r => r.data.data);
+export const createStaffAccount = (id)  => api.post(`/staff/${id}/create-account`).then(r => r.data.data);

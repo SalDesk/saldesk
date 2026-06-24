@@ -269,7 +269,37 @@ function notificacaoOperadorEmail({
   return { subject, html, text: textLines.join('\n') };
 }
 
+/* ── c) Convite de acesso para colaborador ── */
+
+function staffInviteEmail({ name, operatorName, link }) {
+  const subject = 'O seu acesso à SalDesk';
+
+  const intro = `<p style="margin:0 0 20px;font-family:${FONT};font-size:14px;line-height:1.6;color:${MUTED};">Olá ${name}, a equipa de <strong>${operatorName}</strong> criou o seu acesso à SalDesk. Defina a sua password para começar a usar o portal de colaborador.</p>`;
+
+  const body = paragraph('Depois de definir a password, faça login em app.saldesk.cv com o seu email.');
+
+  const html = wrapEmail({
+    title: 'O seu acesso à SalDesk',
+    introHtml: intro,
+    bodyHtml: body,
+    ctaUrl: link,
+    ctaLabel: 'Definir password',
+  });
+
+  const text = [
+    `Olá ${name},`,
+    '',
+    `A equipa de ${operatorName} criou o seu acesso à SalDesk.`,
+    `Defina a sua password: ${link}`,
+    '',
+    'Depois faça login em https://app.saldesk.cv/login',
+  ].join('\n');
+
+  return { subject, html, text };
+}
+
 module.exports = {
   confirmacaoClienteEmail,
   notificacaoOperadorEmail,
+  staffInviteEmail,
 };

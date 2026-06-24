@@ -9,8 +9,9 @@ import {
   Pin, CornerUpLeft, Megaphone, ClipboardCheck, Mic, MicOff, Settings2,
 } from 'lucide-react';
 import {
-  listStaff, createStaff, updateStaff, deleteStaff,
+  listStaff, createStaff, updateStaff, deleteStaff, createStaffAccount,
 } from '../services/staffService';
+import { useToast } from '../store/toastStore';
 import { listSellerCommissions, markCommissionPaid } from '../services/sellerService';
 import {
   listAssignments, startAssignment, completeAssignment,
@@ -80,7 +81,7 @@ function StaffAvatar({ member, size = 40, showStatus = true }) {
 }
 
 /* ── StaffCard ── */
-function StaffCard({ member, onEdit, onDelete }) {
+function StaffCard({ member, onEdit, onDelete, onCreateAccount, creatingAccountId }) {
   return (
     <div className="bg-white rounded-md border border-n-200 shadow-sm p-4 flex flex-col gap-3">
       <div className="flex items-start justify-between">
@@ -119,6 +120,20 @@ function StaffCard({ member, onEdit, onDelete }) {
           <p className="text-xs font-body text-n-600 flex items-center gap-1.5">
             <Mail size={11} strokeWidth={1.75} className="text-n-400" />{member.email}
           </p>
+        )}
+        {member.email && (
+          member.user_id ? (
+            <p className="text-xs font-body text-green-600 flex items-center gap-1.5">
+              <CheckCircle2 size={11} strokeWidth={1.75} />Conta activa
+            </p>
+          ) : (
+            <button type="button" onClick={() => onCreateAccount(member)}
+              disabled={creatingAccountId === member.id}
+              className="text-xs font-body font-semibold text-ocean-700 hover:underline flex items-center gap-1.5 disabled:opacity-50">
+              <Shield size={11} strokeWidth={1.75} />
+              {creatingAccountId === member.id ? 'A criar conta...' : 'Criar conta'}
+            </button>
+          )
         )}
       </div>
       <div className="flex items-center justify-between pt-2 border-t border-n-100 text-xs font-body text-n-500">
@@ -357,7 +372,7 @@ function StaffForm({ member, onSave, onCancel, loading, error }) {
           </div>
           {createAccess && (
             <p className="text-xs font-body text-n-500 bg-n-50 rounded p-2">
-              Sera criada uma conta de acesso com email e password temporaria. O colaborador recebera as credenciais por WhatsApp.
+              Sera criada uma conta de acesso e enviado um email ao colaborador com um link para definir a sua password.
             </p>
           )}
         </div>
@@ -1143,17 +1158,41 @@ export default function Staff() {
   const [deleteTarget, setDelTarget]= useState(null);
   const [unread, setUnread]         = useState(0);
   const [search, setSearch]         = useState('');
+  const [accountCreatingId, setAccountCreatingId] = useState(null);
+  const toast = useToast();
 
   useEffect(() => {
     listStaff().then(setStaffList).finally(() => setLoading(false));
     getUnreadCount().then(setUnread).catch(() => {});
   }, []);
 
+  async function handleCreateAccount(member) {
+    setAccountCreatingId(member.id);
+    try {
+      const acc = await createStaffAccount(member.id);
+      setStaffList(p => p.map(s => s.id === member.id ? { ...s, user_id: acc.user_id } : s));
+      toast.success('Conta criada e email enviado ao colaborador');
+    } catch (err) {
+      toast.error(err.response?.data?.error || 'Erro ao criar conta');
+    } finally {
+      setAccountCreatingId(null);
+    }
+  }
+
   async function handleSave(dados) {
     setFormError(''); setFormLoad(true);
     try {
       if (modal === 'create') {
         const m = await createStaff(dados);
+        if (dados.create_access && m.email) {
+          try {
+            const acc = await createStaffAccount(m.id);
+            m.user_id = acc.user_id;
+            toast.success('Colaborador criado e conta de acesso enviada por email');
+          } catch {
+            toast.error('Colaborador criado, mas a conta de acesso falhou — tente novamente no cartao do colaborador');
+          }
+        }
         setStaffList(p => [m, ...p]);
       } else {
         const m = await updateStaff(modal.id, dados);
@@ -1243,7 +1282,9 @@ export default function Staff() {
               {filtered.map(m => (
                 <StaffCard key={m.id} member={m}
                   onEdit={m => { setFormError(''); setModal(m); }}
-                  onDelete={setDelTarget} />
+                  onDelete={setDelTarget}
+                  onCreateAccount={handleCreateAccount}
+                  creatingAccountId={accountCreatingId} />
               ))}
             </div>
           )}

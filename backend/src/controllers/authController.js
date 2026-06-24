@@ -134,4 +134,27 @@ async function changePassword(req, res, next) {
   }
 }
 
-module.exports = { register, login, getMe, logout, changePassword, validateInvite };
+async function resetPassword(req, res, next) {
+  try {
+    const { token, password } = req.body;
+    if (!token || !password) {
+      return res.status(400).json({ error: 'Token e password são obrigatórios', code: 'MISSING_FIELDS' });
+    }
+
+    const { data: { user }, error: userErr } = await supabaseAdmin.auth.getUser(token);
+    if (userErr || !user) {
+      return res.status(400).json({ error: 'Link expirado ou inválido', code: 'INVALID_TOKEN' });
+    }
+
+    const { error } = await supabaseAdmin.auth.admin.updateUserById(user.id, { password });
+    if (error) {
+      return res.status(400).json({ error: error.message, code: 'PASSWORD_ERROR' });
+    }
+
+    return res.json({ data: null, message: 'Password definida com sucesso' });
+  } catch (err) {
+    next(err);
+  }
+}
+
+module.exports = { register, login, getMe, logout, changePassword, validateInvite, resetPassword };
