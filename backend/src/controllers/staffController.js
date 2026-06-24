@@ -1,4 +1,7 @@
+const crypto = require('crypto');
 const { supabaseAdmin } = require('../config/supabase');
+const { enviarEmail } = require('../helpers/emailHelper');
+const { staffInviteEmail } = require('../helpers/emailTemplates');
 
 async function listar(req, res, next) {
   try {
@@ -66,11 +69,16 @@ async function eliminar(req, res, next) {
 
 async function getJobs(req, res, next) {
   try {
-    const { data, error } = await supabaseAdmin
+    if (req.staff && req.staff.id !== req.params.id) {
+      return res.status(403).json({ error: 'Acesso não autorizado', code: 'FORBIDDEN' });
+    }
+    let q = supabaseAdmin
       .from('job_assignments')
       .select('*, reservations(check_in, check_out, customer_name, total_amount, units(name, unit_type))')
       .eq('staff_id', req.params.id)
       .order('created_at', { ascending: false });
+    if (req.operator) q = q.eq('operator_id', req.operator.id);
+    const { data, error } = await q;
     if (error) throw error;
     return res.json({ data, message: 'Trabalhos listados' });
   } catch (err) { next(err); }
@@ -78,11 +86,16 @@ async function getJobs(req, res, next) {
 
 async function getEarnings(req, res, next) {
   try {
-    const { data, error } = await supabaseAdmin
+    if (req.staff && req.staff.id !== req.params.id) {
+      return res.status(403).json({ error: 'Acesso não autorizado', code: 'FORBIDDEN' });
+    }
+    let q = supabaseAdmin
       .from('job_assignments')
       .select('earnings_amount, earnings_paid, completed_at')
       .eq('staff_id', req.params.id)
       .eq('status', 'completed');
+    if (req.operator) q = q.eq('operator_id', req.operator.id);
+    const { data, error } = await q;
     if (error) throw error;
     const total = (data || []).reduce((s, j) => s + Number(j.earnings_amount), 0);
     const paid  = (data || []).filter((j) => j.earnings_paid).reduce((s, j) => s + Number(j.earnings_amount), 0);
@@ -113,4 +126,54 @@ async function savePushSubscription(req, res, next) {
   } catch (err) { next(err); }
 }
 
-module.exports = { listar, obter, criar, actualizar, eliminar, getJobs, getEarnings, setAvailability, savePushSubscription };
+async function createAccount(req, res, next) {
+  try {
+    const { data: staff, error } = await supabaseAdmin
+      .from('staff').select('*').eq('id', req.params.id).eq('operator_id', req.operator.id).single();
+    if (error || !staff) return res.status(404).json({ error: 'Colaborador não encontrado', code: 'NOT_FOUND' });
+    if (!staff.email) return res.status(400).json({ error: 'Colaborador precisa de email para criar conta', code: 'MISSING_EMAIL' });
+    if (staff.user_id) return res.status(400).json({ error: 'Conta já existe para este colaborador', code: 'ACCOUNT_EXISTS' });
+
+    const tempPassword = crypto.randomBytes(18).toString('base64url');
+
+    const { data: created, error: createErr } = await supabaseAdmin.auth.admin.createUser({
+      email: staff.email,
+      password: tempPassword,
+      email_confirm: true,
+      user_metadata: {
+        role: 'STAFF',
+        staff_id: staff.id,
+        operator_id: req.operator.id,
+        name: staff.name,
+        staff_role: staff.role,
+      },
+    });
+    if (createErr) {
+      if (createErr.message?.includes('already registered')) {
+        return res.status(409).json({ error: 'Este email já está registado na SalDesk', code: 'EMAIL_EXISTS' });
+      }
+      throw createErr;
+    }
+
+    await supabaseAdmin.from('staff')
+      .update({ user_id: created.user.id, updated_at: new Date().toISOString() })
+      .eq('id', staff.id);
+
+    const { data: link } = await supabaseAdmin.auth.admin.generateLink({
+      type: 'recovery',
+      email: staff.email,
+      options: { redirectTo: 'https://app.saldesk.cv/reset-password' },
+    });
+
+    const { subject, html, text } = staffInviteEmail({
+      name: staff.name,
+      operatorName: req.operator.business_name || req.operator.name,
+      link: link?.properties?.action_link,
+    });
+    await enviarEmail({ to: staff.email, subject, html, text });
+
+    return res.status(201).json({ data: { user_id: created.user.id }, message: 'Conta criada e email enviado' });
+  } catch (err) { next(err); }
+}
+
+module.exports = { listar, obter, criar, actualizar, eliminar, getJobs, getEarnings, setAvailability, savePushSubscription, createAccount };

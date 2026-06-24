@@ -80,10 +80,15 @@ function isVendedor(user) {
          user?.user_metadata?.staff_role === 'Vendedor de Praia';
 }
 
+function isStaff(user) {
+  return user?.user_metadata?.role === 'STAFF';
+}
+
 function OnboardingGuard({ children }) {
   const { token, operator, user } = useAuthStore();
   if (!token) return <Navigate to="/login" replace />;
   if (isVendedor(user)) return <Navigate to="/vendedor" replace />;
+  if (isStaff(user)) return <Navigate to="/staff" replace />;
   if (!operator?.onboarding_complete) return <Navigate to="/onboarding" replace />;
   return children;
 }

@@ -192,12 +192,12 @@ function Earnings({ staffId }) {
 
 /* ─── Portal Principal ─── */
 export default function StaffPortal() {
-  const { operator, logout } = useAuthStore();
+  const { user, logout } = useAuthStore();
   const navigate = useNavigate();
-  const staffId  = operator?.staff_id || operator?.id;
+  const staffId  = user?.user_metadata?.staff_id;
 
-  if (!operator) {
-    navigate('/staff/login');
+  if (!staffId) {
+    navigate('/login');
     return null;
   }
 
@@ -210,7 +210,7 @@ export default function StaffPortal() {
       <div className="bg-ocean-900 text-white px-4 py-3 flex items-center justify-between">
         <Logo white size="sm"/>
         <div className="flex items-center gap-3">
-          <span className="text-sm font-body opacity-80">{operator?.name}</span>
+          <span className="text-sm font-body opacity-80">{user?.user_metadata?.name}</span>
           <button onClick={() => { logout(); navigate('/login'); }} className="opacity-60 hover:opacity-100">
             <LogOut size={16} strokeWidth={1.75}/>
           </button>

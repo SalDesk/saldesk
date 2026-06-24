@@ -23,6 +23,18 @@ async function authMiddleware(req, res, next) {
     .single();
 
   req.operator = operator || null;
+
+  req.staff = null;
+  if (!req.operator && user.user_metadata?.staff_id) {
+    const { data: staff } = await supabaseAdmin
+      .from('staff')
+      .select('*')
+      .eq('id', user.user_metadata.staff_id)
+      .eq('status', 'active')
+      .single();
+    req.staff = staff || null;
+  }
+
   next();
 }
 

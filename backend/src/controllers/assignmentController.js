@@ -67,15 +67,22 @@ async function mudarStatus(req, res, next) {
   try {
     const { status, notes_staff, notes_manager } = req.body;
     const { data: current } = await supabaseAdmin
-      .from('job_assignments').select('*, staff(*)').eq('id', req.params.id).eq('operator_id', req.operator.id).single();
+      .from('job_assignments').select('*, staff(*)').eq('id', req.params.id).single();
     if (!current) return res.status(404).json({ error: 'Nao encontrada', code: 'NOT_FOUND' });
+
+    const isOwnerOperator = req.operator && current.operator_id === req.operator.id;
+    const isOwnerStaff    = req.staff && current.staff_id === req.staff.id;
+    if (!isOwnerOperator && !isOwnerStaff) {
+      return res.status(403).json({ error: 'Acesso não autorizado', code: 'FORBIDDEN' });
+    }
+
     if (!TRANSITIONS[current.status]?.includes(status)) {
       return res.status(400).json({ error: `Transicao ${current.status} -> ${status} invalida`, code: 'INVALID_TRANSITION' });
     }
 
     const updates = { status, updated_at: new Date().toISOString() };
     if (notes_staff)   updates.notes_staff   = notes_staff;
-    if (notes_manager) updates.notes_manager = notes_manager;
+    if (notes_manager && isOwnerOperator) updates.notes_manager = notes_manager;
     if (status === 'confirmed')   updates.confirmed_at  = new Date().toISOString();
     if (status === 'in_progress') updates.started_at    = new Date().toISOString();
     if (status === 'completed') {
@@ -90,7 +97,7 @@ async function mudarStatus(req, res, next) {
       .from('job_assignments').update(updates).eq('id', req.params.id).select('*, staff(name, role), reservations(check_in, check_out, customer_name, units(name))').single();
     if (error) throw error;
 
-    emitToOperator(req.operator.id, 'assignment:updated', data);
+    emitToOperator(current.operator_id, 'assignment:updated', data);
     return res.json({ data, message: `Estado actualizado para ${status}` });
   } catch (err) { next(err); }
 }
