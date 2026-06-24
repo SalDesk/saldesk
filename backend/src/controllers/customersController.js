@@ -1,14 +1,22 @@
 const { supabaseAdmin } = require('../config/supabase');
 const { detectarIdioma } = require('../helpers/languageHelper');
 
+function getOperatorId(req) {
+  return req.operator?.id || req.staff?.operator_id;
+}
+
 async function listar(req, res, next) {
   try {
+    if (!req.operator) {
+      return res.status(403).json({ error: 'Apenas operadores podem gerir clientes', code: 'OPERATOR_ONLY' });
+    }
+
     const { search, country_code, sort = 'total_spent' } = req.query;
 
     let q = supabaseAdmin
       .from('customers')
       .select('*')
-      .eq('operator_id', req.operator.id);
+      .eq('operator_id', getOperatorId(req));
 
     if (search) q = q.or(`name.ilike.%${search}%,email.ilike.%${search}%`);
     if (country_code) q = q.eq('country_code', country_code.toUpperCase());
@@ -29,12 +37,16 @@ async function listar(req, res, next) {
 
 async function obter(req, res, next) {
   try {
+    if (!req.operator) {
+      return res.status(403).json({ error: 'Apenas operadores podem gerir clientes', code: 'OPERATOR_ONLY' });
+    }
+
     const [clienteRes, reservasRes] = await Promise.all([
       supabaseAdmin
         .from('customers')
         .select('*')
         .eq('id', req.params.id)
-        .eq('operator_id', req.operator.id)
+        .eq('operator_id', getOperatorId(req))
         .single(),
       supabaseAdmin
         .from('reservations')
@@ -58,6 +70,10 @@ async function obter(req, res, next) {
 
 async function actualizar(req, res, next) {
   try {
+    if (!req.operator) {
+      return res.status(403).json({ error: 'Apenas operadores podem gerir clientes', code: 'OPERATOR_ONLY' });
+    }
+
     const { name, phone, country_code, notes } = req.body;
 
     const updates = { updated_at: new Date().toISOString() };
@@ -73,7 +89,7 @@ async function actualizar(req, res, next) {
       .from('customers')
       .update(updates)
       .eq('id', req.params.id)
-      .eq('operator_id', req.operator.id)
+      .eq('operator_id', getOperatorId(req))
       .select()
       .single();
 
@@ -89,10 +105,14 @@ async function actualizar(req, res, next) {
 
 async function segmentos(req, res, next) {
   try {
+    if (!req.operator) {
+      return res.status(403).json({ error: 'Apenas operadores podem gerir clientes', code: 'OPERATOR_ONLY' });
+    }
+
     const { data, error } = await supabaseAdmin
       .from('customers')
       .select('*')
-      .eq('operator_id', req.operator.id)
+      .eq('operator_id', getOperatorId(req))
       .order('total_spent', { ascending: false });
 
     if (error) throw error;
@@ -128,10 +148,14 @@ async function segmentos(req, res, next) {
 
 async function exportCsv(req, res, next) {
   try {
+    if (!req.operator) {
+      return res.status(403).json({ error: 'Apenas operadores podem gerir clientes', code: 'OPERATOR_ONLY' });
+    }
+
     const { data, error } = await supabaseAdmin
       .from('customers')
       .select('name, email, phone, country_code, language, total_visits, total_spent, notes, created_at')
-      .eq('operator_id', req.operator.id)
+      .eq('operator_id', getOperatorId(req))
       .order('total_spent', { ascending: false });
 
     if (error) throw error;

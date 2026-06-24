@@ -2,10 +2,10 @@ const express = require('express');
 const router = express.Router();
 const { listar, criar, obter, actualizar, mudarStatus, eliminar } = require('../controllers/reservationsController');
 const authMiddleware = require('../middleware/auth');
-const requireOperator = require('../middleware/requireOperator');
+const requireOperatorOrStaff = require('../middleware/requireOperatorOrStaff');
 
 router.use(authMiddleware);
-router.use(requireOperator);
+router.use(requireOperatorOrStaff);
 
 router.get('/', listar);
 router.post('/', criar);
