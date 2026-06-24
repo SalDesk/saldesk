@@ -134,12 +134,9 @@ export default function BeachSale() {
           phone:         clientPhone,
           special_requirements: notes,
         }),
-        customer: {
-          first_name: clientName.split(' ')[0] || clientName,
-          last_name:  clientName.split(' ').slice(1).join(' ') || '',
-          email:      clientEmail,
-          phone:      clientPhone,
-        },
+        customer_name:    clientName,
+        customer_email:   clientEmail,
+        customer_phone:   clientPhone,
       });
 
       const comm = addCommissionLocal({
