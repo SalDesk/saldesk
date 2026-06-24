@@ -31,11 +31,23 @@ async function obter(req, res, next) {
 
 async function criar(req, res, next) {
   try {
-    const { name, role, phone, email, whatsapp } = req.body;
+    const {
+      name, role, phone, email, whatsapp,
+      photo_url, skills, schedule, commission_pct, seller_zone, seller_tour_ids,
+    } = req.body;
     if (!name || !role) return res.status(400).json({ error: 'Nome e cargo sao obrigatorios', code: 'MISSING_FIELDS' });
     const { data, error } = await supabaseAdmin
       .from('staff')
-      .insert({ operator_id: req.operator.id, name, role, phone: phone || null, email: email || null, whatsapp: whatsapp || null })
+      .insert({
+        operator_id: req.operator.id, name, role,
+        phone: phone || null, email: email || null, whatsapp: whatsapp || null,
+        photo_url: photo_url || null,
+        skills: skills || [],
+        schedule: schedule || [],
+        commission_pct: commission_pct ?? null,
+        seller_zone: seller_zone || null,
+        seller_tour_ids: seller_tour_ids || [],
+      })
       .select().single();
     if (error) throw error;
     return res.status(201).json({ data, message: 'Colaborador criado' });
@@ -44,14 +56,23 @@ async function criar(req, res, next) {
 
 async function actualizar(req, res, next) {
   try {
-    const { name, role, phone, email, whatsapp, status } = req.body;
+    const {
+      name, role, phone, email, whatsapp, status,
+      photo_url, skills, schedule, commission_pct, seller_zone, seller_tour_ids,
+    } = req.body;
     const updates = { updated_at: new Date().toISOString() };
-    if (name !== undefined)    updates.name = name;
-    if (role !== undefined)    updates.role = role;
-    if (phone !== undefined)   updates.phone = phone;
-    if (email !== undefined)   updates.email = email;
-    if (whatsapp !== undefined) updates.whatsapp = whatsapp;
-    if (status !== undefined)  updates.status = status;
+    if (name !== undefined)            updates.name = name;
+    if (role !== undefined)            updates.role = role;
+    if (phone !== undefined)           updates.phone = phone;
+    if (email !== undefined)           updates.email = email;
+    if (whatsapp !== undefined)        updates.whatsapp = whatsapp;
+    if (status !== undefined)          updates.status = status;
+    if (photo_url !== undefined)       updates.photo_url = photo_url;
+    if (skills !== undefined)          updates.skills = skills;
+    if (schedule !== undefined)        updates.schedule = schedule;
+    if (commission_pct !== undefined)  updates.commission_pct = commission_pct;
+    if (seller_zone !== undefined)     updates.seller_zone = seller_zone;
+    if (seller_tour_ids !== undefined) updates.seller_tour_ids = seller_tour_ids;
     const { data, error } = await supabaseAdmin
       .from('staff').update(updates).eq('id', req.params.id).eq('operator_id', req.operator.id).select().single();
     if (error || !data) return res.status(404).json({ error: 'Nao encontrado', code: 'NOT_FOUND' });
