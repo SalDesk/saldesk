@@ -50,8 +50,8 @@ async function criar(req, res, next) {
     if (!unit_id || !customer_name || !customer_email || !check_in || !check_out) {
       return res.status(400).json({ error: 'Campos obrigatórios em falta', code: 'MISSING_FIELDS' });
     }
-    if (check_out <= check_in) {
-      return res.status(400).json({ error: 'Checkout deve ser posterior ao check-in', code: 'INVALID_DATES' });
+    if (check_out < check_in) {
+      return res.status(400).json({ error: 'Checkout não pode ser anterior ao check-in', code: 'INVALID_DATES' });
     }
 
     const { data: unit } = await supabaseAdmin
