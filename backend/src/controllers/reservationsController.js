@@ -41,7 +41,8 @@ async function listar(req, res, next) {
 async function criar(req, res, next) {
   try {
     const { unit_id, customer_name, customer_email, customer_phone, customer_country,
-            check_in, check_out, guests, notes } = req.body;
+            check_in, check_out, guests, notes, notes_internal, notes_guest,
+            total_amount, source, payment_method, payment_status } = req.body;
 
     if (!unit_id || !customer_name || !customer_email || !check_in || !check_out) {
       return res.status(400).json({ error: 'Campos obrigatórios em falta', code: 'MISSING_FIELDS' });
@@ -67,6 +68,9 @@ async function criar(req, res, next) {
     }
 
     const { total } = calcularPreco(unit, check_in, check_out);
+    const finalPrice = (total_amount !== undefined && total_amount !== null) ? Number(total_amount) : total;
+    const finalNotes = notes_internal || notes_guest || notes || null;
+    const finalSource = source || 'admin';
 
     // Criar ou obter cliente CRM
     const customer = await obterOuCriarCliente(getOperatorId(req), {
@@ -89,10 +93,10 @@ async function criar(req, res, next) {
         check_in,
         check_out,
         guests: guests || 1,
-        total_price: total,
+        total_price: finalPrice,
         status: 'confirmed',
-        source: 'admin',
-        notes: notes || null
+        source: finalSource,
+        notes: finalNotes
       })
       .select('*, units(name, unit_type)')
       .single();
