@@ -16,10 +16,6 @@ const TRANSICOES = {
 
 async function listar(req, res, next) {
   try {
-    if (!req.operator) {
-      return res.status(403).json({ error: 'Apenas operadores podem gerir esta reserva', code: 'OPERATOR_ONLY' });
-    }
-
     const { status, unit_id, check_in_from, check_in_to } = req.query;
 
     let q = supabaseAdmin
