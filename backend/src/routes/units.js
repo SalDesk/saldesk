@@ -5,10 +5,10 @@ const {
   createPricingRule, updatePricingRule, deletePricingRule
 } = require('../controllers/unitsController');
 const authMiddleware = require('../middleware/auth');
-const requireOperator = require('../middleware/requireOperator');
+const requireOperatorOrStaff = require('../middleware/requireOperatorOrStaff');
 
 router.use(authMiddleware);
-router.use(requireOperator);
+router.use(requireOperatorOrStaff);
 
 router.get('/', listUnits);
 router.post('/', createUnit);

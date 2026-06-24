@@ -1,11 +1,15 @@
 const { supabaseAdmin } = require('../config/supabase');
 
+function getOperatorId(req) {
+  return req.operator?.id || req.staff?.operator_id;
+}
+
 async function listUnits(req, res, next) {
   try {
     const { data, error } = await supabaseAdmin
       .from('units')
       .select('*, pricing_rules(*)')
-      .eq('operator_id', req.operator.id)
+      .eq('operator_id', getOperatorId(req))
       .order('created_at', { ascending: false });
 
     if (error) throw error;
@@ -18,6 +22,10 @@ async function listUnits(req, res, next) {
 
 async function createUnit(req, res, next) {
   try {
+    if (!req.operator) {
+      return res.status(403).json({ error: 'Apenas operadores podem gerir unidades', code: 'OPERATOR_ONLY' });
+    }
+
     const { name, description, unit_type, base_price, capacity, images } = req.body;
 
     if (!name || !unit_type || base_price === undefined || base_price === null) {
@@ -57,7 +65,7 @@ async function getUnit(req, res, next) {
       .from('units')
       .select('*, pricing_rules(*)')
       .eq('id', req.params.id)
-      .eq('operator_id', req.operator.id)
+      .eq('operator_id', getOperatorId(req))
       .single();
 
     if (error || !data) {
@@ -72,6 +80,10 @@ async function getUnit(req, res, next) {
 
 async function updateUnit(req, res, next) {
   try {
+    if (!req.operator) {
+      return res.status(403).json({ error: 'Apenas operadores podem gerir unidades', code: 'OPERATOR_ONLY' });
+    }
+
     const { name, description, unit_type, base_price, capacity, images, status } = req.body;
 
     const updates = {};
@@ -104,6 +116,10 @@ async function updateUnit(req, res, next) {
 
 async function deleteUnit(req, res, next) {
   try {
+    if (!req.operator) {
+      return res.status(403).json({ error: 'Apenas operadores podem gerir unidades', code: 'OPERATOR_ONLY' });
+    }
+
     const { error } = await supabaseAdmin
       .from('units')
       .delete()
@@ -120,6 +136,10 @@ async function deleteUnit(req, res, next) {
 
 async function createPricingRule(req, res, next) {
   try {
+    if (!req.operator) {
+      return res.status(403).json({ error: 'Apenas operadores podem gerir unidades', code: 'OPERATOR_ONLY' });
+    }
+
     const { name, price_modifier, modifier_type, start_date, end_date, days_of_week } = req.body;
 
     if (!name || price_modifier === undefined || !modifier_type) {
@@ -166,6 +186,10 @@ async function createPricingRule(req, res, next) {
 
 async function updatePricingRule(req, res, next) {
   try {
+    if (!req.operator) {
+      return res.status(403).json({ error: 'Apenas operadores podem gerir unidades', code: 'OPERATOR_ONLY' });
+    }
+
     const { name, price_modifier, modifier_type, start_date, end_date, days_of_week, active } = req.body;
 
     const updates = {};
@@ -197,6 +221,10 @@ async function updatePricingRule(req, res, next) {
 
 async function deletePricingRule(req, res, next) {
   try {
+    if (!req.operator) {
+      return res.status(403).json({ error: 'Apenas operadores podem gerir unidades', code: 'OPERATOR_ONLY' });
+    }
+
     const { error } = await supabaseAdmin
       .from('pricing_rules')
       .delete()
