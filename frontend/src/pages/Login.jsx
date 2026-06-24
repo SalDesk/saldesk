@@ -3,6 +3,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Shield, AlertTriangle, Lock, Eye, EyeOff } from 'lucide-react';
 import useAuthStore from '../store/authStore';
 import { login, forgotPassword } from '../services/authService';
+import { isVendedor, isStaff } from '../utils/userRoles';
 import { useT } from '../i18n';
 import AuthLayout from '../components/auth/AuthLayout';
 import Input from '../components/ui/Input';
@@ -73,7 +74,15 @@ export default function Login() {
   const registeredOk = searchParams.get('registered') === '1';
   const resetOk      = searchParams.get('reset') === '1';
 
-  useEffect(() => { if (token) { const user = JSON.parse(localStorage.getItem('saldesk-auth') || '{}')?.state?.user; if (user?.user_metadata?.role === 'FUNDADOR') navigate('/admin'); else navigate('/'); } }, [token, navigate]);
+  useEffect(() => {
+    if (token) {
+      const user = JSON.parse(localStorage.getItem('saldesk-auth') || '{}')?.state?.user;
+      if (user?.user_metadata?.role === 'FUNDADOR') navigate('/admin');
+      else if (isVendedor(user)) navigate('/vendedor');
+      else if (isStaff(user)) navigate('/staff');
+      else navigate('/');
+    }
+  }, [token, navigate]);
 
   /* Update rate state when email changes */
   useEffect(() => {
@@ -122,6 +131,10 @@ export default function Login() {
       setAuth(result.access_token, result.user, result.operator);
       if (result.user?.user_metadata?.role === 'FUNDADOR') {
         navigate('/admin');
+      } else if (isVendedor(result.user)) {
+        navigate('/vendedor');
+      } else if (isStaff(result.user)) {
+        navigate('/staff');
       } else {
         navigate(result.operator?.onboarding_complete ? '/dashboard' : '/onboarding');
       }
