@@ -2,6 +2,10 @@ const { supabaseAdmin } = require('../config/supabase');
 const { verificarDisponibilidade, calcularPreco } = require('../helpers/bookingHelpers');
 const { obterOuCriarCliente, actualizarStatsCheckout } = require('../helpers/customerHelper');
 
+function getOperatorId(req) {
+  return req.operator?.id || req.staff?.operator_id;
+}
+
 const TRANSICOES = {
   pending:    ['confirmed', 'cancelled'],
   confirmed:  ['checked_in', 'cancelled'],
@@ -12,12 +16,16 @@ const TRANSICOES = {
 
 async function listar(req, res, next) {
   try {
+    if (!req.operator) {
+      return res.status(403).json({ error: 'Apenas operadores podem gerir esta reserva', code: 'OPERATOR_ONLY' });
+    }
+
     const { status, unit_id, check_in_from, check_in_to } = req.query;
 
     let q = supabaseAdmin
       .from('reservations')
       .select('*, units(name, unit_type)')
-      .eq('operator_id', req.operator.id)
+      .eq('operator_id', getOperatorId(req))
       .order('check_in', { ascending: false });
 
     if (status) q = q.eq('status', status);
@@ -50,7 +58,7 @@ async function criar(req, res, next) {
       .from('units')
       .select('*, pricing_rules(*)')
       .eq('id', unit_id)
-      .eq('operator_id', req.operator.id)
+      .eq('operator_id', getOperatorId(req))
       .single();
 
     if (!unit) {
@@ -65,7 +73,7 @@ async function criar(req, res, next) {
     const { total } = calcularPreco(unit, check_in, check_out);
 
     // Criar ou obter cliente CRM
-    const customer = await obterOuCriarCliente(req.operator.id, {
+    const customer = await obterOuCriarCliente(getOperatorId(req), {
       name: customer_name,
       email: customer_email,
       phone: customer_phone,
@@ -75,7 +83,7 @@ async function criar(req, res, next) {
     const { data, error } = await supabaseAdmin
       .from('reservations')
       .insert({
-        operator_id: req.operator.id,
+        operator_id: getOperatorId(req),
         unit_id,
         customer_id: customer.id,
         customer_name,
@@ -103,11 +111,15 @@ async function criar(req, res, next) {
 
 async function obter(req, res, next) {
   try {
+    if (!req.operator) {
+      return res.status(403).json({ error: 'Apenas operadores podem gerir esta reserva', code: 'OPERATOR_ONLY' });
+    }
+
     const { data, error } = await supabaseAdmin
       .from('reservations')
       .select('*, units(name, unit_type, base_price)')
       .eq('id', req.params.id)
-      .eq('operator_id', req.operator.id)
+      .eq('operator_id', getOperatorId(req))
       .single();
 
     if (error || !data) {
@@ -122,6 +134,10 @@ async function obter(req, res, next) {
 
 async function actualizar(req, res, next) {
   try {
+    if (!req.operator) {
+      return res.status(403).json({ error: 'Apenas operadores podem gerir esta reserva', code: 'OPERATOR_ONLY' });
+    }
+
     const { customer_name, customer_email, customer_phone, customer_country, guests, notes } = req.body;
 
     const updates = { updated_at: new Date().toISOString() };
@@ -136,7 +152,7 @@ async function actualizar(req, res, next) {
       .from('reservations')
       .update(updates)
       .eq('id', req.params.id)
-      .eq('operator_id', req.operator.id)
+      .eq('operator_id', getOperatorId(req))
       .select('*, units(name, unit_type)')
       .single();
 
@@ -152,6 +168,10 @@ async function actualizar(req, res, next) {
 
 async function mudarStatus(req, res, next) {
   try {
+    if (!req.operator) {
+      return res.status(403).json({ error: 'Apenas operadores podem gerir esta reserva', code: 'OPERATOR_ONLY' });
+    }
+
     const { status } = req.body;
 
     if (!Object.keys(TRANSICOES).includes(status)) {
@@ -162,7 +182,7 @@ async function mudarStatus(req, res, next) {
       .from('reservations')
       .select('status, customer_id, total_price')
       .eq('id', req.params.id)
-      .eq('operator_id', req.operator.id)
+      .eq('operator_id', getOperatorId(req))
       .single();
 
     if (!reserva) {
@@ -180,7 +200,7 @@ async function mudarStatus(req, res, next) {
       .from('reservations')
       .update({ status, updated_at: new Date().toISOString() })
       .eq('id', req.params.id)
-      .eq('operator_id', req.operator.id)
+      .eq('operator_id', getOperatorId(req))
       .select('*, units(name, unit_type)')
       .single();
 
@@ -199,11 +219,15 @@ async function mudarStatus(req, res, next) {
 
 async function eliminar(req, res, next) {
   try {
+    if (!req.operator) {
+      return res.status(403).json({ error: 'Apenas operadores podem gerir esta reserva', code: 'OPERATOR_ONLY' });
+    }
+
     const { error } = await supabaseAdmin
       .from('reservations')
       .delete()
       .eq('id', req.params.id)
-      .eq('operator_id', req.operator.id);
+      .eq('operator_id', getOperatorId(req));
 
     if (error) throw error;
 
