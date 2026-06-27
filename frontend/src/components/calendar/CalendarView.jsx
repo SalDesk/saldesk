@@ -19,6 +19,16 @@ function toDateStr(d) {
   return d.toISOString().split('T')[0];
 }
 
+function isFromSeller(reservation) {
+  return reservation?.source === 'manual' && reservation?.notes?.startsWith('Vendedor:');
+}
+
+function getSellerName(reservation) {
+  if (!isFromSeller(reservation)) return null;
+  const match = reservation.notes.match(/^Vendedor:\s*([^(]+)\(/);
+  return match ? match[1].trim() : null;
+}
+
 export default function CalendarView({
   year, month, units, reservations, blockedDates,
   onDayClick, onEventClick,
@@ -136,9 +146,16 @@ export default function CalendarView({
                           draggable
                           onDragStart={(e) => handleDragStart(e, reservation)}
                           onClick={(e) => { e.stopPropagation(); onEventClick?.(reservation); }}
-                          className={`rounded-xs px-2 py-0.5 truncate font-body font-medium cursor-grab active:cursor-grabbing select-none transition-opacity ${STATUS_COLORS[reservation.status] || 'bg-n-100 text-n-600'} ${isDragging ? 'opacity-30' : ''}`}
-                          title={`${reservation.customer_name} · ${reservation.status}`}
+                          className={`relative rounded-xs px-2 py-0.5 truncate font-body font-medium cursor-grab active:cursor-grabbing select-none transition-opacity ${STATUS_COLORS[reservation.status] || 'bg-n-100 text-n-600'} ${isDragging ? 'opacity-30' : ''} ${isFromSeller(reservation) ? 'border-l-[3px] border-l-sand-500' : ''}`}
+                          title={
+                            isFromSeller(reservation)
+                              ? `${reservation.customer_name} · ${reservation.status} · Vendido por ${getSellerName(reservation)}`
+                              : `${reservation.customer_name} · ${reservation.status}`
+                          }
                         >
+                          {isFromSeller(reservation) && (
+                            <span className="inline-block w-1.5 h-1.5 rounded-full bg-sand-500 mr-1 shrink-0" aria-hidden="true" />
+                          )}
                           {reservation.check_in === dateStr ? reservation.customer_name : '·'}
                         </div>
                       ) : isBlocked ? (
