@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   ChevronLeft, ChevronRight, Plus, Minus,
@@ -17,14 +17,25 @@ const TODAY = new Date().toISOString().slice(0, 10);
 const MONTHS_PT = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
 const DAYS_PT   = ['Dom','Seg','Ter','Qua','Qui','Sex','Sab'];
 
-function addDays(d, n) {
-  const dt = new Date(d + 'T00:00:00Z'); dt.setUTCDate(dt.getUTCDate() + n);
-  return dt.toISOString().slice(0, 10);
-}
-
 function fmtDatePT(dateStr) {
   const d = new Date(dateStr + 'T00:00:00Z');
   return `${DAYS_PT[d.getUTCDay()]} ${d.getUTCDate()} ${MONTHS_PT[d.getUTCMonth()]}`;
+}
+
+function getMonthGrid(year, month) {
+  const firstDay = new Date(Date.UTC(year, month, 1));
+  const startWeekday = firstDay.getUTCDay();
+  const daysInMonth = new Date(Date.UTC(year, month + 1, 0)).getUTCDate();
+  const cells = [];
+  for (let i = 0; i < startWeekday; i++) cells.push(null);
+  for (let day = 1; day <= daysInMonth; day++) {
+    const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    cells.push(dateStr);
+  }
+  while (cells.length % 7 !== 0) cells.push(null);
+  const weeks = [];
+  for (let i = 0; i < cells.length; i += 7) weeks.push(cells.slice(i, i + 7));
+  return weeks;
 }
 
 function parseMeta(description) {
@@ -74,6 +85,10 @@ export default function BeachSale() {
   /* Form state */
   const [selectedTour, setSelectedTour] = useState(null);
   const [selectedDate, setSelectedDate] = useState(TODAY);
+  const [viewMonth, setViewMonth] = useState(() => {
+    const d = new Date();
+    return { year: d.getUTCFullYear(), month: d.getUTCMonth() };
+  });
   const [selectedTime, setSelectedTime] = useState('');
   const [adults,       setAdults]       = useState(1);
   const [kids,         setKids]         = useState(0);
@@ -110,10 +125,6 @@ export default function BeachSale() {
   const timeSlots = meta.start_time
     ? [meta.start_time, ...(meta.time_slots || [])]
     : ['09:00', '11:00', '14:00', '16:00'];
-
-  const next7Days = useMemo(() => (
-    Array.from({ length: 7 }, (_, i) => addDays(TODAY, i))
-  ), []);
 
   async function handleConfirm() {
     if (!clientName.trim()) { setError('Nome do cliente obrigatorio.'); return; }
@@ -273,33 +284,86 @@ export default function BeachSale() {
               <button onClick={() => setStep(1)} className="text-xs font-body text-ocean-700 underline">Mudar</button>
             </div>
 
-            {/* Date picker */}
+            {/* Date picker — calendario mensal completo */}
             <div>
               <p className="font-display font-semibold text-sm text-n-800 mb-3 flex items-center gap-2">
                 <Calendar size={16} strokeWidth={1.75} />Data
               </p>
-              <div className="flex gap-2 overflow-x-auto pb-1">
-                {next7Days.map(d => {
-                  const dt   = new Date(d + 'T00:00:00Z');
-                  const isT  = d === TODAY;
-                  const isSel = d === selectedDate;
-                  return (
-                    <button key={d} onClick={() => setSelectedDate(d)}
-                      className={`flex flex-col items-center px-3 py-2.5 rounded-xl border-2 min-w-[56px] transition-all active:scale-95 ${
-                        isSel
-                          ? 'bg-ocean-700 border-ocean-700 text-white'
-                          : isT
-                          ? 'border-ocean-300 text-ocean-700 bg-ocean-50'
-                          : 'border-n-200 text-n-600 bg-white'
-                      }`}>
-                      <span className="text-[10px] font-mono uppercase tracking-wide opacity-75">
-                        {DAYS_PT[dt.getUTCDay()]}
-                      </span>
-                      <span className="font-display font-bold text-lg leading-none mt-0.5">{dt.getUTCDate()}</span>
-                      {isT && !isSel && <span className="text-[8px] font-mono text-ocean-600">Hoje</span>}
-                    </button>
-                  );
-                })}
+
+              <div className="bg-white rounded-2xl border-2 border-n-200 p-4">
+                {/* Navegacao de mes */}
+                <div className="flex items-center justify-between mb-4">
+                  <button
+                    type="button"
+                    onClick={() => setViewMonth(v => {
+                      const m = v.month === 0 ? 11 : v.month - 1;
+                      const y = v.month === 0 ? v.year - 1 : v.year;
+                      return { year: y, month: m };
+                    })}
+                    className="w-9 h-9 rounded-full flex items-center justify-center text-n-500 hover:bg-n-100 active:scale-95 transition-all"
+                    aria-label="Mes anterior"
+                  >
+                    <ChevronLeft size={18} strokeWidth={2} />
+                  </button>
+                  <p className="font-display font-bold text-base text-n-900">
+                    {MONTHS_PT[viewMonth.month]} {viewMonth.year}
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => setViewMonth(v => {
+                      const m = v.month === 11 ? 0 : v.month + 1;
+                      const y = v.month === 11 ? v.year + 1 : v.year;
+                      return { year: y, month: m };
+                    })}
+                    className="w-9 h-9 rounded-full flex items-center justify-center text-n-500 hover:bg-n-100 active:scale-95 transition-all"
+                    aria-label="Mes seguinte"
+                  >
+                    <ChevronRight size={18} strokeWidth={2} />
+                  </button>
+                </div>
+
+                {/* Cabecalho dos dias da semana */}
+                <div className="grid grid-cols-7 gap-1 mb-2">
+                  {DAYS_PT.map(d => (
+                    <div key={d} className="text-center text-[10px] font-mono uppercase tracking-wide text-n-400 py-1">
+                      {d}
+                    </div>
+                  ))}
+                </div>
+
+                {/* Grelha de dias */}
+                <div className="space-y-1">
+                  {getMonthGrid(viewMonth.year, viewMonth.month).map((week, wi) => (
+                    <div key={wi} className="grid grid-cols-7 gap-1">
+                      {week.map((d, di) => {
+                        if (!d) return <div key={di} />;
+                        const isPast = d < TODAY;
+                        const isT    = d === TODAY;
+                        const isSel  = d === selectedDate;
+                        const dayNum = Number(d.slice(8, 10));
+                        return (
+                          <button
+                            key={d}
+                            type="button"
+                            disabled={isPast}
+                            onClick={() => setSelectedDate(d)}
+                            className={`aspect-square rounded-lg flex items-center justify-center text-sm font-body font-semibold transition-all active:scale-95 ${
+                              isSel
+                                ? 'bg-ocean-700 text-white'
+                                : isPast
+                                ? 'text-n-300 cursor-not-allowed'
+                                : isT
+                                ? 'bg-ocean-50 text-ocean-700 border-2 border-ocean-300'
+                                : 'text-n-700 hover:bg-n-100'
+                            }`}
+                          >
+                            {dayNum}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
 
