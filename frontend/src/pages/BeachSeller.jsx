@@ -60,7 +60,7 @@ export default function BeachSeller() {
     ]).then(([res, comms]) => {
       // Filter reservations by this seller
       const myRes = (res || []).filter(r => {
-        const notes = r.notes_internal || '';
+        const notes = r.notes || '';
         return notes.includes(sellerId) || notes.includes(sellerName);
       });
       setReservations(myRes);
@@ -166,7 +166,7 @@ export default function BeachSeller() {
               </p>
               {reservations.map(r => {
                 const sc  = STATUS_CFG[r.status] || STATUS_CFG.pending;
-                const val = Number(r.total_amount || 0);
+                const val = Number(r.total_price || 0);
                 const com = val * (commPct / 100);
                 return (
                   <div key={r.id} className="bg-white rounded-2xl border border-n-200 px-4 py-4 space-y-3">
