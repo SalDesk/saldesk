@@ -209,6 +209,7 @@ function notificacaoOperadorEmail({
   currency = 'EUR',
   customer = {},
   notes,
+  sellerName,
 }) {
   const subject = `Nova reserva — ${tourName} | ${formatDateShort(checkIn)}`;
 
@@ -216,7 +217,10 @@ function notificacaoOperadorEmail({
     ? `${formatDate(checkIn, 'pt')} → ${formatDate(checkOut, 'pt')}`
     : formatDate(checkIn, 'pt');
 
-  const intro = `<p style="margin:0 0 20px;font-family:${FONT};font-size:14px;line-height:1.6;color:${MUTED};">Olá ${operatorName}, recebeu uma nova reserva através da SalDesk.</p>`;
+  const introText = sellerName
+    ? `Olá ${operatorName}, o seu colaborador <strong>${sellerName}</strong> registou uma nova reserva.`
+    : `Olá ${operatorName}, recebeu uma nova reserva através da SalDesk.`;
+  const intro = `<p style="margin:0 0 20px;font-family:${FONT};font-size:14px;line-height:1.6;color:${MUTED};">${introText}</p>`;
 
   const reservaDetails = detailsTable([
     detailRow('Serviço',  tourName),
@@ -249,7 +253,9 @@ function notificacaoOperadorEmail({
   const textLines = [
     `Olá ${operatorName},`,
     '',
-    'Recebeu uma nova reserva através da SalDesk.',
+    sellerName
+      ? `O seu colaborador ${sellerName} registou uma nova reserva.`
+      : 'Recebeu uma nova reserva através da SalDesk.',
     '',
     'Detalhes da reserva:',
     `- Serviço: ${tourName}`,

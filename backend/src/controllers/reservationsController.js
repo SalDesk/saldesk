@@ -1,6 +1,8 @@
 const { supabaseAdmin } = require('../config/supabase');
 const { verificarDisponibilidade, calcularPreco } = require('../helpers/bookingHelpers');
 const { obterOuCriarCliente, actualizarStatsCheckout } = require('../helpers/customerHelper');
+const { enviarEmail } = require('../helpers/emailHelper');
+const { confirmacaoClienteEmail, notificacaoOperadorEmail } = require('../helpers/emailTemplates');
 
 function getOperatorId(req) {
   return req.operator?.id || req.staff?.operator_id;
@@ -102,6 +104,63 @@ async function criar(req, res, next) {
       .single();
 
     if (error) throw error;
+
+    // Buscar dados do operador para os emails (idioma, moeda, nome, email)
+    const { data: operatorData } = await supabaseAdmin
+      .from('operators')
+      .select('name, email, currency, language')
+      .eq('id', getOperatorId(req))
+      .single();
+
+    const idioma = operatorData?.language || 'pt';
+    const currency = operatorData?.currency || 'EUR';
+
+    // Email de confirmacao ao cliente
+    const clienteEmail = confirmacaoClienteEmail({
+      idioma,
+      customerName: customer_name,
+      tourName: unit.name,
+      checkIn: check_in,
+      checkOut: check_out,
+      guests: guests || 1,
+      total: finalPrice,
+      currency,
+      operator: operatorData,
+    });
+    enviarEmail({
+      to: customer_email,
+      subject: clienteEmail.subject,
+      html: clienteEmail.html,
+      text: clienteEmail.text,
+    }).catch((err) => console.error('[Email] Erro ao enviar confirmacao ao cliente:', err.message));
+
+    // Email de notificacao ao operador (com nome do vendedor, se aplicavel)
+    if (operatorData?.email) {
+      const sellerName = req.staff?.name || null;
+      const operadorEmail = notificacaoOperadorEmail({
+        operatorName: operatorData.name,
+        tourName: unit.name,
+        checkIn: check_in,
+        checkOut: check_out,
+        guests: guests || 1,
+        total: finalPrice,
+        currency,
+        customer: {
+          name: customer_name,
+          email: customer_email,
+          phone: customer_phone,
+          country: customer_country,
+        },
+        notes: finalNotes,
+        sellerName,
+      });
+      enviarEmail({
+        to: operatorData.email,
+        subject: operadorEmail.subject,
+        html: operadorEmail.html,
+        text: operadorEmail.text,
+      }).catch((err) => console.error('[Email] Erro ao enviar notificacao ao operador:', err.message));
+    }
 
     return res.status(201).json({ data, message: 'Reserva criada com sucesso' });
   } catch (err) {
