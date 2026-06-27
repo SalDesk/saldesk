@@ -39,6 +39,7 @@ const LEGEND = [
   { label: 'Check-in',   cls: 'bg-[var(--success)]' },
   { label: 'Check-out',  cls: 'bg-n-300' },
   { label: 'Bloqueado',  cls: 'bg-n-200 border border-n-300' },
+  { label: 'Vendido por colaborador', cls: 'bg-white border-l-[3px] border-l-sand-500' },
 ];
 
 function toDateStr(d) {
