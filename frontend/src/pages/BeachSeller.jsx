@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import {
   Plus, Euro, Clock, Check, Calendar, Sun,
   TrendingUp, LogOut, BarChart2, MapPin, User,
+  ChevronLeft, ChevronRight,
 } from 'lucide-react';
 import { listReservations } from '../services/reservationsService';
 import {
@@ -25,11 +26,6 @@ function fmtMoney(v) {
   return `€${Number(v || 0).toFixed(0)}`;
 }
 
-function thisMonth() {
-  const n = new Date();
-  return `${n.getFullYear()}-${String(n.getMonth() + 1).padStart(2, '0')}`;
-}
-
 const STATUS_CFG = {
   pending:     { label: 'Pendente',   cls: 'bg-sand-100 text-sand-600'         },
   confirmed:   { label: 'Confirmado', cls: 'bg-ocean-50 text-ocean-700'        },
@@ -46,13 +42,16 @@ export default function BeachSeller() {
   const sellerId   = user?.user_metadata?.staff_id || user?.id || 'unknown';
   const sellerName = user?.user_metadata?.name || user?.email?.split('@')[0] || 'Vendedor';
   const commPct    = getSellerCommissionPct(sellerId, 10);
-  const month      = thisMonth();
 
   const [activeTab,    setActiveTab]    = useState('hoje');
   const [reservations, setReservations] = useState([]);
   const [commissions,  setCommissions]  = useState([]);
   const [loading,      setLoading]      = useState(true);
   const [payingId,     setPayingId]     = useState(null);
+  const [viewMonth,    setViewMonth]    = useState(() => {
+    const d = new Date();
+    return { year: d.getFullYear(), month: d.getMonth() };
+  });
 
   useEffect(() => {
     setLoading(true);
@@ -70,10 +69,21 @@ export default function BeachSeller() {
     }).finally(() => setLoading(false));
   }, [sellerId]);
 
-  /* Commission stats */
+  /* Commission stats — mes actual fixo, usado no card do cabecalho */
+  const now = new Date();
+  const currentMonthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  const totalCurrentMonth = useMemo(() =>
+    commissions.filter(c => c.created_at?.startsWith(currentMonthKey)).reduce((s, c) => s + c.amount, 0),
+    [commissions, currentMonthKey],
+  );
+
+  /* Commission stats — mes navegavel, usado na aba "Minhas Comissoes" */
+  const monthKey = `${viewMonth.year}-${String(viewMonth.month + 1).padStart(2, '0')}`;
+  const isCurrentMonth = viewMonth.year === now.getFullYear() && viewMonth.month === now.getMonth();
+
   const monthComms = useMemo(() =>
-    commissions.filter(c => c.created_at?.startsWith(month)),
-    [commissions, month],
+    commissions.filter(c => c.created_at?.startsWith(monthKey)),
+    [commissions, monthKey],
   );
 
   const totalMonth   = monthComms.reduce((s, c) => s + c.amount, 0);
@@ -127,7 +137,7 @@ export default function BeachSeller() {
           </div>
           <div className="bg-gradient-to-br from-turquoise-600 to-turquoise-400 rounded-3xl p-4">
             <Euro size={20} strokeWidth={1.75} className="text-white mb-2" />
-            <p className="font-display font-bold text-3xl text-white leading-none">{fmtMoney(totalMonth)}</p>
+            <p className="font-display font-bold text-3xl text-white leading-none">{fmtMoney(totalCurrentMonth)}</p>
             <p className="text-white/80 text-xs font-body font-semibold mt-1.5">Comissão este mês</p>
           </div>
         </div>
@@ -208,6 +218,40 @@ export default function BeachSeller() {
         ) : (
           /* Tab comissoes */
           <div className="space-y-4">
+            {/* Navegacao de mes */}
+            <div className="flex items-center justify-between px-1">
+              <button
+                type="button"
+                onClick={() => setViewMonth(v => {
+                  const m = v.month === 0 ? 11 : v.month - 1;
+                  const y = v.month === 0 ? v.year - 1 : v.year;
+                  return { year: y, month: m };
+                })}
+                className="w-9 h-9 rounded-full flex items-center justify-center text-n-500 hover:bg-n-100 active:scale-95 transition-all"
+                aria-label="Mes anterior"
+              >
+                <ChevronLeft size={18} strokeWidth={2} />
+              </button>
+              <p className="font-display font-bold text-base text-n-900">
+                {MONTHS_PT[viewMonth.month]} {viewMonth.year}
+              </p>
+              <button
+                type="button"
+                disabled={isCurrentMonth}
+                onClick={() => setViewMonth(v => {
+                  const m = v.month === 11 ? 0 : v.month + 1;
+                  const y = v.month === 11 ? v.year + 1 : v.year;
+                  return { year: y, month: m };
+                })}
+                className={`w-9 h-9 rounded-full flex items-center justify-center transition-all ${
+                  isCurrentMonth ? 'text-n-300 opacity-30 cursor-not-allowed' : 'text-n-500 hover:bg-n-100 active:scale-95'
+                }`}
+                aria-label="Mes seguinte"
+              >
+                <ChevronRight size={18} strokeWidth={2} />
+              </button>
+            </div>
+
             {/* Stats cards */}
             <div className="grid grid-cols-3 gap-2">
               {[
@@ -232,7 +276,7 @@ export default function BeachSeller() {
             ) : (
               <div className="space-y-2">
                 <p className="text-xs font-mono uppercase tracking-wider text-n-500">
-                  Historico — {MONTHS_PT[new Date().getMonth()]}
+                  Historico — {MONTHS_PT[viewMonth.month]}
                 </p>
                 {[...monthComms].sort((a, b) => b.created_at.localeCompare(a.created_at)).map(c => (
                   <div key={c.id} className="bg-white rounded-2xl border border-n-200 px-4 py-3">
