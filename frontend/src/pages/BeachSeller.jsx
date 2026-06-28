@@ -1,18 +1,20 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  Plus, Euro, Clock, Check, Calendar,
-  TrendingUp, LogOut, BarChart2, ChevronRight,
+  Plus, Euro, Clock, Check, Calendar, Sun,
+  TrendingUp, LogOut, BarChart2, MapPin,
 } from 'lucide-react';
 import { listReservations } from '../services/reservationsService';
 import {
   listSellerCommissions, markCommissionPaid, getSellerCommissionPct,
 } from '../services/sellerService';
 import useAuthStore from '../store/authStore';
+import Logo from '../components/shared/Logo';
 
 /* ── helpers ── */
 const TODAY = new Date().toISOString().slice(0, 10);
 const MONTHS_PT = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+const TOUR_ICON_BG = ['bg-turquoise-100 text-turquoise-700', 'bg-sand-100 text-sand-600', 'bg-ocean-100 text-ocean-700'];
 
 function fmtDate(d) {
   if (!d) return '—';
@@ -29,11 +31,11 @@ function thisMonth() {
 }
 
 const STATUS_CFG = {
-  pending:     { label: 'Pendente',   cls: 'bg-n-100 text-n-600'              },
-  confirmed:   { label: 'Confirmado', cls: 'bg-ocean-50 text-ocean-700'       },
-  checked_in:  { label: 'Activo',     cls: 'bg-[#ECFDF5] text-[#1A7A4A]'     },
-  checked_out: { label: 'Concluido',  cls: 'bg-n-100 text-n-500'              },
-  cancelled:   { label: 'Cancelado',  cls: 'bg-red-50 text-error'             },
+  pending:     { label: 'Pendente',   cls: 'bg-sand-100 text-sand-600'         },
+  confirmed:   { label: 'Confirmado', cls: 'bg-ocean-50 text-ocean-700'        },
+  checked_in:  { label: 'Activo',     cls: 'bg-turquoise-100 text-turquoise-700' },
+  checked_out: { label: 'Concluido',  cls: 'bg-n-100 text-n-500'               },
+  cancelled:   { label: 'Cancelado',  cls: 'bg-red-50 text-error'              },
 };
 
 /* ─────────────────────── Main ─────────────────────── */
@@ -77,6 +79,7 @@ export default function BeachSeller() {
   const totalMonth   = monthComms.reduce((s, c) => s + c.amount, 0);
   const totalPaid    = monthComms.filter(c => c.status === 'paid').reduce((s, c) => s + c.amount, 0);
   const totalPending = monthComms.filter(c => c.status === 'pending').reduce((s, c) => s + c.amount, 0);
+  const totalToday   = reservations.reduce((s, r) => s + Number(r.total_price || 0), 0);
 
   async function handleMarkPaid(commId) {
     setPayingId(commId);
@@ -92,52 +95,46 @@ export default function BeachSeller() {
   return (
     <div className="min-h-screen bg-n-50 flex flex-col max-w-md mx-auto">
       {/* Header */}
-      <header className="bg-ocean-900 px-4 pt-5 pb-4">
-        <div className="flex items-start justify-between mb-3">
-          <div>
-            <p className="text-ocean-400 text-[10px] font-mono uppercase tracking-wider">SalDesk · Vendedor</p>
-            <p className="font-display font-bold text-xl text-white mt-0.5">{sellerName}</p>
-          </div>
+      <header className="bg-gradient-to-br from-ocean-900 to-ocean-700 px-5 pt-6 pb-6 rounded-b-3xl shadow-lg">
+        <div className="flex items-center justify-between mb-5">
+          <Logo white size="sm" />
           <button onClick={handleLogout}
-            className="p-2 rounded-full hover:bg-ocean-800 transition-colors">
-            <LogOut size={18} strokeWidth={1.75} className="text-ocean-400" />
+            className="w-10 h-10 rounded-full flex items-center justify-center hover:bg-white/10 active:scale-95 transition-all">
+            <LogOut size={18} strokeWidth={1.75} className="text-ocean-200" />
           </button>
         </div>
-        {/* Monthly summary */}
-        <div className="flex gap-3">
-          <div className="flex-1 bg-ocean-800 rounded-xl px-3 py-2.5">
-            <p className="text-ocean-400 text-[10px] font-mono uppercase">Este mes</p>
-            <p className="font-display font-bold text-lg text-white">{fmtMoney(totalMonth)}</p>
+
+        <div className="flex items-center gap-2 mb-1">
+          <Sun size={20} strokeWidth={1.75} className="text-sand-400" />
+          <p className="font-display font-bold text-2xl text-white">Olá, {sellerName}</p>
+        </div>
+        <p className="text-ocean-300 text-sm font-body">Pronto para a próxima venda?</p>
+
+        {/* Stats cards */}
+        <div className="grid grid-cols-2 gap-3 mt-5">
+          <div className="bg-sand-500 rounded-3xl p-4">
+            <TrendingUp size={20} strokeWidth={1.75} className="text-ocean-900 mb-2" />
+            <p className="font-display font-bold text-3xl text-ocean-900 leading-none">{fmtMoney(totalToday)}</p>
+            <p className="text-ocean-900/70 text-xs font-body font-semibold mt-1.5">
+              Hoje · {reservations.length} reserva(s)
+            </p>
           </div>
-          <div className="flex-1 bg-ocean-800 rounded-xl px-3 py-2.5">
-            <p className="text-ocean-400 text-[10px] font-mono uppercase">Pendente</p>
-            <p className="font-display font-bold text-lg text-sand-300">{fmtMoney(totalPending)}</p>
-          </div>
-          <div className="flex-1 bg-ocean-800 rounded-xl px-3 py-2.5">
-            <p className="text-ocean-400 text-[10px] font-mono uppercase">Pago</p>
-            <p className="font-display font-bold text-lg text-[#4ADE80]">{fmtMoney(totalPaid)}</p>
+          <div className="bg-gradient-to-br from-turquoise-600 to-turquoise-400 rounded-3xl p-4">
+            <Euro size={20} strokeWidth={1.75} className="text-white mb-2" />
+            <p className="font-display font-bold text-3xl text-white leading-none">{fmtMoney(totalMonth)}</p>
+            <p className="text-white/80 text-xs font-body font-semibold mt-1.5">Comissão este mês</p>
           </div>
         </div>
       </header>
 
-      {/* CTA */}
-      <div className="px-4 pt-5 pb-2">
-        <button
-          onClick={() => navigate('/vendedor/nova-reserva')}
-          className="w-full h-16 bg-ocean-700 text-white rounded-2xl font-display font-bold text-xl flex items-center justify-center gap-3 active:scale-[0.99] transition-all hover:bg-ocean-800 shadow-lg shadow-ocean-200">
-          <Plus size={26} strokeWidth={2.5} />
-          Nova Reserva
-        </button>
-      </div>
-
       {/* Tabs */}
-      <div className="flex mx-4 mt-4 gap-1 bg-n-100 rounded-xl p-1">
+      <div className="flex mx-4 mt-5 gap-1 bg-n-100 rounded-2xl p-1">
         {[
           { key: 'hoje',      label: 'Hoje'            },
           { key: 'comissoes', label: 'Minhas Comissoes' },
         ].map(t => (
           <button key={t.key} onClick={() => setActiveTab(t.key)}
-            className={`flex-1 py-2.5 rounded-lg text-sm font-body font-semibold transition-colors ${
+            className={`flex-1 py-3 rounded-xl text-sm font-body font-semibold transition-colors ${
               activeTab === t.key ? 'bg-white text-ocean-700 shadow-sm' : 'text-n-500'
             }`}>
             {t.label}
@@ -145,7 +142,7 @@ export default function BeachSeller() {
         ))}
       </div>
 
-      <main className="flex-1 px-4 py-4 space-y-3">
+      <main className="flex-1 px-4 py-4 space-y-3 pb-28">
         {loading ? (
           <div className="flex justify-center py-16">
             <div className="w-8 h-8 border-3 border-ocean-200 border-t-ocean-700 rounded-full animate-spin" />
@@ -164,33 +161,37 @@ export default function BeachSeller() {
               <p className="text-xs font-mono uppercase tracking-wider text-n-500 mb-2">
                 {reservations.length} reserva(s) hoje
               </p>
-              {reservations.map(r => {
+              {reservations.map((r, i) => {
                 const sc  = STATUS_CFG[r.status] || STATUS_CFG.pending;
                 const val = Number(r.total_price || 0);
                 const com = val * (commPct / 100);
+                const iconBg = TOUR_ICON_BG[i % TOUR_ICON_BG.length];
                 return (
-                  <div key={r.id} className="bg-white rounded-2xl border border-n-200 px-4 py-4 space-y-3">
-                    <div className="flex items-start justify-between gap-2">
+                  <div key={r.id} className="bg-white rounded-3xl border border-n-200 shadow-sm px-4 py-4 space-y-3">
+                    <div className="flex items-start gap-3">
+                      <div className={`w-11 h-11 rounded-2xl flex items-center justify-center shrink-0 ${iconBg}`}>
+                        <MapPin size={18} strokeWidth={1.75} />
+                      </div>
                       <div className="flex-1 min-w-0">
-                        <p className="font-display font-semibold text-n-900 truncate">
-                          {r.units?.name || r.unit_name || '—'}
+                        <p className="font-display font-bold text-base text-n-900 truncate">
+                          {r.customers?.first_name || r.customer_name || '—'}
                         </p>
-                        <p className="text-sm font-body text-n-500 mt-0.5">
-                          {r.customers?.first_name || r.customer_name || '—'} · {r.guests || 1} pax
+                        <p className="text-sm font-body text-n-500 mt-0.5 truncate">
+                          {r.units?.name || r.unit_name || '—'} · {r.guests || 1} pax
                         </p>
                       </div>
                       <span className={`text-xs font-mono px-2 py-1 rounded-lg shrink-0 ${sc.cls}`}>
                         {sc.label}
                       </span>
                     </div>
-                    <div className="flex items-center justify-between pt-2 border-t border-n-100">
+                    <div className="flex items-center justify-between pt-3 border-t border-n-100">
                       <div className="flex items-center gap-1 text-n-500">
                         <Clock size={13} strokeWidth={1.75} />
                         <span className="text-sm font-body">{r.check_in}</span>
                       </div>
                       <div className="text-right">
-                        <p className="font-display font-bold text-ocean-700">{fmtMoney(val)}</p>
-                        <p className="text-xs font-body text-[#1A7A4A]">Comissao: {fmtMoney(com)}</p>
+                        <p className="font-display font-bold text-lg text-ocean-700">{fmtMoney(val)}</p>
+                        <p className="text-xs font-body text-turquoise-700">Comissao: {fmtMoney(com)}</p>
                       </div>
                     </div>
                   </div>
@@ -204,11 +205,11 @@ export default function BeachSeller() {
             {/* Stats cards */}
             <div className="grid grid-cols-3 gap-2">
               {[
-                { label: 'Total',    value: fmtMoney(totalMonth),   color: 'text-n-900',     bg: 'bg-white'       },
-                { label: 'Pago',     value: fmtMoney(totalPaid),    color: 'text-[#1A7A4A]', bg: 'bg-[#ECFDF5]'  },
-                { label: 'Pendente', value: fmtMoney(totalPending), color: 'text-yellow-700', bg: 'bg-yellow-50'  },
+                { label: 'Total',    value: fmtMoney(totalMonth),   color: 'text-n-900',         bg: 'bg-white'         },
+                { label: 'Pago',     value: fmtMoney(totalPaid),    color: 'text-turquoise-700',  bg: 'bg-turquoise-50' },
+                { label: 'Pendente', value: fmtMoney(totalPending), color: 'text-yellow-700',     bg: 'bg-yellow-50'     },
               ].map(m => (
-                <div key={m.label} className={`${m.bg} rounded-xl border border-n-200 px-3 py-3 text-center`}>
+                <div key={m.label} className={`${m.bg} rounded-2xl border border-n-200 px-3 py-3 text-center`}>
                   <p className={`font-display font-bold text-lg ${m.color}`}>{m.value}</p>
                   <p className="text-[10px] font-mono text-n-400 mt-0.5">{m.label}</p>
                 </div>
@@ -228,7 +229,7 @@ export default function BeachSeller() {
                   Historico — {MONTHS_PT[new Date().getMonth()]}
                 </p>
                 {[...monthComms].sort((a, b) => b.created_at.localeCompare(a.created_at)).map(c => (
-                  <div key={c.id} className="bg-white rounded-xl border border-n-200 px-4 py-3">
+                  <div key={c.id} className="bg-white rounded-2xl border border-n-200 px-4 py-3">
                     <div className="flex items-center justify-between gap-2">
                       <div className="flex-1 min-w-0">
                         <p className="font-body font-semibold text-n-800 truncate">{c.tour_name}</p>
@@ -237,19 +238,20 @@ export default function BeachSeller() {
                         </p>
                       </div>
                       <div className="text-right shrink-0">
-                        <p className="font-display font-bold text-lg text-[#1A7A4A]">{fmtMoney(c.amount)}</p>
+                        <p className="font-display font-bold text-lg text-turquoise-700">{fmtMoney(c.amount)}</p>
                         <p className="text-[10px] font-body text-n-400">{c.percentage}% de {fmtMoney(c.total_amount)}</p>
                       </div>
                     </div>
                     <div className="flex items-center justify-between mt-2 pt-2 border-t border-n-100">
-                      <span className={`text-xs font-mono px-2 py-0.5 rounded-lg ${c.status === 'paid' ? 'bg-[#ECFDF5] text-[#1A7A4A]' : 'bg-yellow-50 text-yellow-700'}`}>
+                      <span className={`text-xs font-mono px-2 py-0.5 rounded-lg flex items-center gap-1 ${c.status === 'paid' ? 'bg-turquoise-50 text-turquoise-700' : 'bg-yellow-50 text-yellow-700'}`}>
+                        {c.status === 'paid' && <Check size={11} strokeWidth={2} />}
                         {c.status === 'paid' ? 'Pago' : 'Pendente'}
                       </span>
                       {c.status === 'pending' && (
                         <button
                           onClick={() => handleMarkPaid(c.id)}
                           disabled={payingId === c.id}
-                          className="text-xs font-body text-ocean-700 hover:underline disabled:opacity-50">
+                          className="text-xs font-body font-semibold text-turquoise-700 hover:underline disabled:opacity-50">
                           Registar pagamento
                         </button>
                       )}
@@ -264,6 +266,18 @@ export default function BeachSeller() {
           </div>
         )}
       </main>
+
+      {/* Floating CTA */}
+      <div className="fixed bottom-0 inset-x-0 z-20 px-4 pb-5 pt-6 bg-gradient-to-t from-n-50 via-n-50/90 to-transparent">
+        <div className="max-w-md mx-auto">
+          <button
+            onClick={() => navigate('/vendedor/nova-reserva')}
+            className="w-full h-16 bg-sand-500 text-ocean-900 rounded-full font-display font-bold text-lg flex items-center justify-center gap-2 shadow-2xl shadow-sand-500/30 active:scale-95 transition-all hover:bg-sand-600">
+            <Plus size={24} strokeWidth={2.5} />
+            Nova Reserva
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

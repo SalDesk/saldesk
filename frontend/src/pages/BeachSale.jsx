@@ -11,11 +11,13 @@ import {
   addCommissionLocal, getSellerCommissionPct, getSellerMeta,
 } from '../services/sellerService';
 import useAuthStore from '../store/authStore';
+import Logo from '../components/shared/Logo';
 
 /* ── helpers ── */
 const TODAY = new Date().toISOString().slice(0, 10);
 const MONTHS_PT = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
 const DAYS_PT   = ['Dom','Seg','Ter','Qua','Qui','Sex','Sab'];
+const TOUR_ICON_BG = ['bg-turquoise-100 text-turquoise-700', 'bg-sand-100 text-sand-600', 'bg-ocean-100 text-ocean-700'];
 
 function fmtDatePT(dateStr) {
   const d = new Date(dateStr + 'T00:00:00Z');
@@ -51,14 +53,14 @@ function Counter({ value, min = 0, max = 99, onChange, label }) {
         <button
           type="button" onClick={() => onChange(Math.max(min, value - 1))}
           disabled={value <= min}
-          className="w-11 h-11 rounded-full border-2 border-n-200 flex items-center justify-center text-n-700 hover:border-ocean-700 hover:text-ocean-700 disabled:opacity-30 disabled:cursor-not-allowed active:scale-95 transition-all">
+          className="w-12 h-12 rounded-full border-2 border-n-200 flex items-center justify-center text-n-700 hover:border-turquoise-500 hover:text-turquoise-600 disabled:opacity-30 disabled:cursor-not-allowed active:scale-95 transition-all">
           <Minus size={18} strokeWidth={2} />
         </button>
         <span className="font-display font-bold text-xl text-n-900 w-8 text-center">{value}</span>
         <button
           type="button" onClick={() => onChange(Math.min(max, value + 1))}
           disabled={value >= max}
-          className="w-11 h-11 rounded-full bg-ocean-700 text-white flex items-center justify-center hover:bg-ocean-800 disabled:opacity-30 disabled:cursor-not-allowed active:scale-95 transition-all">
+          className="w-12 h-12 rounded-full bg-turquoise-500 text-white flex items-center justify-center hover:bg-turquoise-600 disabled:opacity-30 disabled:cursor-not-allowed active:scale-95 transition-all">
           <Plus size={18} strokeWidth={2} />
         </button>
       </div>
@@ -188,29 +190,32 @@ export default function BeachSale() {
   return (
     <div className="min-h-screen bg-n-50 flex flex-col max-w-md mx-auto">
       {/* Header */}
-      <header className="bg-ocean-900 px-4 py-4 flex items-center gap-3 sticky top-0 z-10">
+      <header className="bg-gradient-to-br from-ocean-900 to-ocean-700 px-4 py-4 flex items-center gap-3 sticky top-0 z-10 rounded-b-3xl shadow-md">
         {step < 4 && (
           <button
             onClick={() => step > 1 ? setStep(s => s - 1) : navigate('/vendedor')}
-            className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-ocean-800 transition-colors">
+            className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-white/10 active:scale-95 transition-colors shrink-0">
             <ChevronLeft size={20} strokeWidth={1.75} className="text-white" />
           </button>
         )}
-        <div className="flex-1">
-          <p className="font-display font-bold text-white text-base">
+        <div className="flex-1 min-w-0">
+          <p className="font-display font-bold text-white text-base truncate">
             {step === 4 ? 'Reserva confirmada' : 'Nova Reserva'}
           </p>
           {step < 4 && (
-            <p className="text-ocean-400 text-xs mt-0.5">Passo {step} de 3 — {STEPS[step - 1]}</p>
+            <p className="text-ocean-300 text-xs mt-0.5">Passo {step} de 3 — {STEPS[step - 1]}</p>
           )}
         </div>
+        <Logo white size="sm" />
       </header>
 
       {/* Progress bar */}
       {step < 4 && (
-        <div className="flex gap-0.5 px-4 py-2 bg-ocean-900">
+        <div className="flex gap-1.5 px-4 py-3 bg-white">
           {[1, 2, 3].map(i => (
-            <div key={i} className={`flex-1 h-1 rounded-full transition-colors ${i <= step ? 'bg-sand-500' : 'bg-ocean-800'}`} />
+            <div key={i} className={`flex-1 h-1.5 rounded-full transition-colors ${
+              i < step ? 'bg-sand-500' : i === step ? 'bg-ocean-700' : 'bg-n-200'
+            }`} />
           ))}
         </div>
       )}
@@ -231,20 +236,21 @@ export default function BeachSale() {
               </div>
             ) : (
               <div className="grid grid-cols-1 gap-3">
-                {tours.map(tour => {
+                {tours.map((tour, i) => {
                   const m = parseMeta(tour.description);
+                  const iconBg = TOUR_ICON_BG[i % TOUR_ICON_BG.length];
                   return (
                     <button
                       key={tour.id}
                       onClick={() => { setSelectedTour(tour); setStep(2); }}
-                      className="bg-white rounded-xl border-2 border-n-200 p-4 flex items-center gap-4 text-left active:scale-[0.99] transition-all hover:border-ocean-400">
+                      className="bg-white rounded-2xl border-2 border-n-200 shadow-sm p-4 flex items-center gap-4 text-left active:scale-[0.99] transition-all hover:border-turquoise-400">
                       {tour.images?.[0] ? (
                         <img src={tour.images[0]} alt={tour.name}
-                          className="w-16 h-16 rounded-lg object-cover shrink-0"
+                          className="w-16 h-16 rounded-2xl object-cover shrink-0"
                           onError={e => { e.target.style.display = 'none'; }} />
                       ) : (
-                        <div className="w-16 h-16 rounded-lg bg-ocean-50 flex items-center justify-center shrink-0">
-                          <MapPin size={24} strokeWidth={1.25} className="text-ocean-300" />
+                        <div className={`w-16 h-16 rounded-2xl flex items-center justify-center shrink-0 ${iconBg}`}>
+                          <MapPin size={24} strokeWidth={1.25} />
                         </div>
                       )}
                       <div className="flex-1 min-w-0">
@@ -276,7 +282,7 @@ export default function BeachSale() {
         {step === 2 && selectedTour && (
           <div className="space-y-6">
             {/* Selected tour summary */}
-            <div className="bg-ocean-50 border border-ocean-200 rounded-xl px-4 py-3 flex items-center gap-3">
+            <div className="bg-ocean-50 border border-ocean-200 rounded-2xl px-4 py-3 flex items-center gap-3">
               <div className="flex-1">
                 <p className="font-display font-semibold text-sm text-ocean-900">{selectedTour.name}</p>
                 <p className="text-xs font-mono text-ocean-600">€{selectedTour.base_price}/pax</p>
@@ -349,7 +355,7 @@ export default function BeachSale() {
                             onClick={() => setSelectedDate(d)}
                             className={`aspect-square rounded-lg flex items-center justify-center text-sm font-body font-semibold transition-all active:scale-95 ${
                               isSel
-                                ? 'bg-ocean-700 text-white'
+                                ? 'bg-turquoise-500 text-white'
                                 : isPast
                                 ? 'text-n-300 cursor-not-allowed'
                                 : isT
@@ -375,10 +381,10 @@ export default function BeachSale() {
               <div className="grid grid-cols-3 gap-2">
                 {timeSlots.map(slot => (
                   <button key={slot} onClick={() => setSelectedTime(slot)}
-                    className={`py-3 rounded-xl border-2 font-display font-semibold text-base transition-all active:scale-95 ${
+                    className={`py-3 rounded-2xl border-2 font-display font-semibold text-base transition-all active:scale-95 ${
                       selectedTime === slot
-                        ? 'bg-ocean-700 border-ocean-700 text-white'
-                        : 'bg-white border-n-200 text-n-700 hover:border-ocean-300'
+                        ? 'bg-turquoise-500 border-turquoise-500 text-white'
+                        : 'bg-white border-n-200 text-n-700 hover:border-turquoise-300'
                     }`}>
                     {slot}
                   </button>
@@ -391,29 +397,29 @@ export default function BeachSale() {
               <p className="font-display font-semibold text-sm text-n-800 mb-2 flex items-center gap-2">
                 <Users size={16} strokeWidth={1.75} />Composicao do grupo
               </p>
-              <div className="bg-white rounded-xl border border-n-200 px-4 divide-y divide-n-100">
+              <div className="bg-white rounded-2xl border border-n-200 px-4 divide-y divide-n-100">
                 <Counter label="Adultos" value={adults} min={1} onChange={setAdults} />
                 <Counter label="Criancas" value={kids} min={0} onChange={setKids} />
               </div>
             </div>
 
             {/* Total */}
-            <div className="bg-ocean-700 rounded-xl px-5 py-4 flex items-center justify-between text-white">
+            <div className="bg-gradient-to-br from-ocean-700 to-turquoise-600 rounded-2xl px-5 py-4 flex items-center justify-between text-white">
               <div>
-                <p className="text-ocean-300 text-xs font-mono uppercase tracking-wide">Total</p>
+                <p className="text-white/70 text-xs font-mono uppercase tracking-wide">Total</p>
                 <p className="font-display font-bold text-2xl mt-0.5">€{totalPrice.toFixed(0)}</p>
-                <p className="text-ocean-300 text-xs">{totalPax} pax × €{tourPrice}</p>
+                <p className="text-white/70 text-xs">{totalPax} pax × €{tourPrice}</p>
               </div>
               <div className="text-right">
-                <p className="text-ocean-300 text-xs font-mono uppercase tracking-wide">A sua comissao</p>
+                <p className="text-white/70 text-xs font-mono uppercase tracking-wide">A sua comissao</p>
                 <p className="font-display font-bold text-xl mt-0.5 text-sand-300">€{commission.toFixed(0)}</p>
-                <p className="text-ocean-300 text-xs">{commPct}%</p>
+                <p className="text-white/70 text-xs">{commPct}%</p>
               </div>
             </div>
 
             <button
               onClick={() => { if (!selectedTime) { setError('Selecciona um horario.'); return; } setError(''); setStep(3); }}
-              className="w-full h-16 bg-ocean-700 text-white rounded-xl font-display font-bold text-lg flex items-center justify-center gap-2 active:scale-[0.99] transition-all hover:bg-ocean-800">
+              className="w-full h-16 bg-gradient-to-r from-ocean-700 to-turquoise-600 text-white rounded-2xl font-display font-bold text-lg flex items-center justify-center gap-2 active:scale-[0.99] transition-all hover:opacity-90">
               Continuar
               <ChevronRight size={20} strokeWidth={2} />
             </button>
@@ -425,7 +431,7 @@ export default function BeachSale() {
         {step === 3 && (
           <div className="space-y-5">
             {/* Summary */}
-            <div className="bg-n-50 border border-n-200 rounded-xl px-4 py-3 space-y-1.5">
+            <div className="bg-n-50 border border-n-200 rounded-2xl px-4 py-3 space-y-1.5">
               <p className="font-display font-semibold text-sm text-n-800">{selectedTour?.name}</p>
               <p className="text-xs font-body text-n-500 flex items-center gap-1.5">
                 <Calendar size={12} strokeWidth={1.75} />{fmtDatePT(selectedDate)} — {selectedTime}
@@ -445,7 +451,7 @@ export default function BeachSale() {
                 <input
                   type="text" required value={clientName} onChange={e => setClientName(e.target.value)}
                   placeholder="Nome e apelido do cliente"
-                  className="w-full h-12 px-4 rounded-xl border-2 border-n-200 text-base font-body bg-white focus:outline-none focus:border-ocean-700 transition-colors"
+                  className="w-full h-12 px-4 rounded-2xl border-2 border-n-200 text-base font-body bg-white focus:outline-none focus:border-turquoise-500 transition-colors"
                 />
               </div>
 
@@ -456,7 +462,7 @@ export default function BeachSale() {
                 <input
                   type="email" value={clientEmail} onChange={e => setClientEmail(e.target.value)}
                   placeholder="cliente@email.com"
-                  className="w-full h-12 px-4 rounded-xl border-2 border-n-200 text-base font-body bg-white focus:outline-none focus:border-ocean-700 transition-colors"
+                  className="w-full h-12 px-4 rounded-2xl border-2 border-n-200 text-base font-body bg-white focus:outline-none focus:border-turquoise-500 transition-colors"
                 />
               </div>
 
@@ -467,7 +473,7 @@ export default function BeachSale() {
                 <input
                   type="tel" value={clientPhone} onChange={e => setClientPhone(e.target.value)}
                   placeholder="+238 900 0000"
-                  className="w-full h-12 px-4 rounded-xl border-2 border-n-200 text-base font-body bg-white focus:outline-none focus:border-ocean-700 transition-colors"
+                  className="w-full h-12 px-4 rounded-2xl border-2 border-n-200 text-base font-body bg-white focus:outline-none focus:border-turquoise-500 transition-colors"
                 />
               </div>
 
@@ -478,29 +484,29 @@ export default function BeachSale() {
                 <textarea
                   value={notes} onChange={e => setNotes(e.target.value)}
                   rows={3} placeholder="Ex: vegetariano, aniversario, necessidades especiais..."
-                  className="w-full px-4 py-3 rounded-xl border-2 border-n-200 text-base font-body bg-white focus:outline-none focus:border-ocean-700 resize-none transition-colors"
+                  className="w-full px-4 py-3 rounded-2xl border-2 border-n-200 text-base font-body bg-white focus:outline-none focus:border-turquoise-500 resize-none transition-colors"
                 />
               </div>
             </div>
 
             {error && (
-              <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3">
+              <div className="bg-red-50 border border-red-200 rounded-2xl px-4 py-3">
                 <p className="text-sm text-error">{error}</p>
               </div>
             )}
 
             {/* Commission preview */}
-            <div className="bg-[#ECFDF5] border border-green-200 rounded-xl px-4 py-3 flex items-center justify-between">
-              <p className="text-sm font-body text-[#1A7A4A]">A tua comissao nesta reserva</p>
-              <p className="font-display font-bold text-xl text-[#1A7A4A]">€{commission.toFixed(0)}</p>
+            <div className="bg-turquoise-50 border border-turquoise-300 rounded-2xl px-4 py-3 flex items-center justify-between">
+              <p className="text-sm font-body text-turquoise-700">A tua comissao nesta reserva</p>
+              <p className="font-display font-bold text-xl text-turquoise-700">€{commission.toFixed(0)}</p>
             </div>
 
             <button
               onClick={handleConfirm}
               disabled={saving || !clientName.trim()}
-              className="w-full h-16 bg-ocean-700 text-white rounded-xl font-display font-bold text-lg flex items-center justify-center gap-2 active:scale-[0.99] transition-all hover:bg-ocean-800 disabled:opacity-50 disabled:cursor-not-allowed">
+              className="w-full h-16 bg-sand-500 text-ocean-900 rounded-full font-display font-bold text-lg flex items-center justify-center gap-2 active:scale-[0.99] transition-all hover:bg-sand-600 disabled:opacity-50 disabled:cursor-not-allowed">
               {saving ? (
-                <span className="w-6 h-6 border-3 border-white/30 border-t-white rounded-full animate-spin" />
+                <span className="w-6 h-6 border-3 border-ocean-900/30 border-t-ocean-900 rounded-full animate-spin" />
               ) : (
                 <>Confirmar Reserva <Check size={20} strokeWidth={2.5} /></>
               )}
@@ -512,8 +518,8 @@ export default function BeachSale() {
         {step === 4 && successData && (
           <div className="flex flex-col items-center text-center py-8 space-y-6">
             {/* Success icon */}
-            <div className="w-20 h-20 bg-[#ECFDF5] rounded-full flex items-center justify-center">
-              <Check size={36} strokeWidth={2.5} className="text-[#1A7A4A]" />
+            <div className="w-20 h-20 bg-turquoise-50 rounded-full flex items-center justify-center">
+              <Check size={36} strokeWidth={2.5} className="text-turquoise-600" />
             </div>
 
             <div>
@@ -523,13 +529,13 @@ export default function BeachSale() {
             </div>
 
             {/* Commission earned */}
-            <div className="bg-ocean-700 rounded-2xl px-8 py-5 w-full">
-              <p className="text-ocean-300 text-sm font-body">Ganhaste nesta reserva</p>
+            <div className="bg-gradient-to-br from-ocean-700 to-turquoise-600 rounded-3xl px-8 py-5 w-full">
+              <p className="text-white/70 text-sm font-body">Ganhaste nesta reserva</p>
               <p className="font-display font-bold text-4xl text-white mt-1">€{successData.commission.toFixed(0)}</p>
-              <p className="text-ocean-300 text-xs mt-1">{commPct}% de €{successData.total.toFixed(0)}</p>
+              <p className="text-white/70 text-xs mt-1">{commPct}% de €{successData.total.toFixed(0)}</p>
             </div>
 
-            <div className="bg-n-50 rounded-xl px-4 py-3 w-full text-left space-y-1.5">
+            <div className="bg-n-50 rounded-2xl px-4 py-3 w-full text-left space-y-1.5">
               <div className="flex justify-between text-sm">
                 <span className="text-n-500">Pax</span>
                 <span className="font-body font-semibold text-n-800">{successData.pax} pessoa(s)</span>
@@ -543,12 +549,12 @@ export default function BeachSale() {
             <div className="flex flex-col gap-3 w-full">
               <button
                 onClick={resetForm}
-                className="w-full h-14 bg-ocean-700 text-white rounded-xl font-display font-bold text-base active:scale-[0.99] transition-all hover:bg-ocean-800">
+                className="w-full h-16 bg-sand-500 text-ocean-900 rounded-full font-display font-bold text-lg active:scale-[0.99] transition-all hover:bg-sand-600">
                 Nova Reserva
               </button>
               <button
                 onClick={() => navigate('/vendedor')}
-                className="w-full h-12 bg-white border-2 border-n-200 text-n-700 rounded-xl font-body font-semibold text-sm active:scale-[0.99] transition-all hover:border-ocean-300">
+                className="w-full h-12 bg-white border-2 border-n-200 text-n-700 rounded-2xl font-body font-semibold text-sm active:scale-[0.99] transition-all hover:border-turquoise-300">
                 Ver Minhas Reservas
               </button>
             </div>

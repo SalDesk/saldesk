@@ -34,6 +34,15 @@ export default {
           200: '#E5E8EC',
           100: '#F3F4F6',
           50:  '#F9FAFB',
+        },
+        turquoise: {
+          700: '#0F766E',
+          600: '#0D9488',
+          500: '#14B8A6',
+          400: '#2DD4BF',
+          300: '#5EEAD4',
+          100: '#CCFBF1',
+          50:  '#F0FDFA',
         }
       },
       fontFamily: {
