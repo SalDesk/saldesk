@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Plus, Euro, Clock, Check, Calendar, Sun,
-  TrendingUp, LogOut, BarChart2, MapPin,
+  TrendingUp, LogOut, BarChart2, MapPin, User,
 } from 'lucide-react';
 import { listReservations } from '../services/reservationsService';
 import {
@@ -98,10 +98,16 @@ export default function BeachSeller() {
       <header className="bg-gradient-to-br from-ocean-900 to-ocean-700 px-5 pt-6 pb-6 rounded-b-3xl shadow-lg">
         <div className="flex items-center justify-between mb-5">
           <Logo white size="sm" />
-          <button onClick={handleLogout}
-            className="w-10 h-10 rounded-full flex items-center justify-center hover:bg-white/10 active:scale-95 transition-all">
-            <LogOut size={18} strokeWidth={1.75} className="text-ocean-200" />
-          </button>
+          <div className="flex items-center gap-1">
+            <button onClick={() => navigate('/vendedor/perfil')}
+              className="w-10 h-10 rounded-full flex items-center justify-center hover:bg-white/10 active:scale-95 transition-all">
+              <User size={18} strokeWidth={1.75} className="text-ocean-200" />
+            </button>
+            <button onClick={handleLogout}
+              className="w-10 h-10 rounded-full flex items-center justify-center hover:bg-white/10 active:scale-95 transition-all">
+              <LogOut size={18} strokeWidth={1.75} className="text-ocean-200" />
+            </button>
+          </div>
         </div>
 
         <div className="flex items-center gap-2 mb-1">

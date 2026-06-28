@@ -197,4 +197,34 @@ async function createAccount(req, res, next) {
   } catch (err) { next(err); }
 }
 
-module.exports = { listar, obter, criar, actualizar, eliminar, getJobs, getEarnings, setAvailability, savePushSubscription, createAccount };
+async function obterPerfilProprio(req, res, next) {
+  try {
+    if (!req.staff) {
+      return res.status(403).json({ error: 'Apenas colaboradores podem ver o proprio perfil', code: 'STAFF_ONLY' });
+    }
+    return res.json({ data: req.staff, message: 'Perfil encontrado' });
+  } catch (err) { next(err); }
+}
+
+async function actualizarPerfilProprio(req, res, next) {
+  try {
+    if (!req.staff) {
+      return res.status(403).json({ error: 'Apenas colaboradores podem editar o proprio perfil', code: 'STAFF_ONLY' });
+    }
+    const { phone, whatsapp, photo_url } = req.body;
+    const updates = { updated_at: new Date().toISOString() };
+    if (phone !== undefined)     updates.phone = phone;
+    if (whatsapp !== undefined)  updates.whatsapp = whatsapp;
+    if (photo_url !== undefined) updates.photo_url = photo_url;
+    const { data, error } = await supabaseAdmin
+      .from('staff')
+      .update(updates)
+      .eq('id', req.staff.id)
+      .select()
+      .single();
+    if (error || !data) return res.status(404).json({ error: 'Nao encontrado', code: 'NOT_FOUND' });
+    return res.json({ data, message: 'Perfil actualizado' });
+  } catch (err) { next(err); }
+}
+
+module.exports = { listar, obter, criar, actualizar, eliminar, getJobs, getEarnings, setAvailability, savePushSubscription, createAccount, obterPerfilProprio, actualizarPerfilProprio };

@@ -1,5 +1,7 @@
 const { supabaseAdmin, supabaseAnon } = require('../config/supabase');
 const { addFailedLogin } = require('../services/logStore');
+const { enviarEmail } = require('../helpers/emailHelper');
+const { passwordResetEmail } = require('../helpers/emailTemplates');
 
 async function register(req, res, next) {
   try {
@@ -157,4 +159,36 @@ async function resetPassword(req, res, next) {
   }
 }
 
-module.exports = { register, login, getMe, logout, changePassword, validateInvite, resetPassword };
+async function forgotPassword(req, res, next) {
+  const generic = { data: null, message: 'Se o email existir, ira receber um link de recuperacao.' };
+  try {
+    const { email } = req.body;
+    if (!email) {
+      return res.status(400).json({ error: 'Email é obrigatório', code: 'MISSING_FIELDS' });
+    }
+
+    // Nunca revelar se o email existe ou nao (anti-enumeracao)
+    try {
+      const { data: link, error } = await supabaseAdmin.auth.admin.generateLink({
+        type: 'recovery',
+        email,
+        options: { redirectTo: 'https://app.saldesk.cv/reset-password' },
+      });
+      if (!error && link?.properties?.action_link) {
+        const { subject, html, text } = passwordResetEmail({
+          name: link.user?.user_metadata?.name,
+          link: link.properties.action_link,
+        });
+        await enviarEmail({ to: email, subject, html, text });
+      }
+    } catch (err) {
+      console.error('[ForgotPassword] Erro ao gerar/enviar link:', err.message);
+    }
+
+    return res.json(generic);
+  } catch (err) {
+    next(err);
+  }
+}
+
+module.exports = { register, login, getMe, logout, changePassword, validateInvite, resetPassword, forgotPassword };

@@ -9,3 +9,5 @@ export const getStaffJobs    = (id)     => api.get(`/staff/${id}/jobs`).then(r =
 export const getStaffEarnings= (id)     => api.get(`/staff/${id}/earnings`).then(r => r.data.data);
 export const setAvailability = (id, d)  => api.put(`/staff/${id}/availability`, d).then(r => r.data.data);
 export const createStaffAccount = (id)  => api.post(`/staff/${id}/create-account`).then(r => r.data.data);
+export const getMyProfile    = ()       => api.get('/staff/me').then(r => r.data.data);
+export const updateMyProfile = (d)      => api.put('/staff/me', d).then(r => r.data.data);

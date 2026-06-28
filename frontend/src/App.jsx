@@ -44,6 +44,7 @@ const Packages        = lazy(() => import('./pages/Packages'));
 const Partners        = lazy(() => import('./pages/Partners'));
 const BeachSeller     = lazy(() => import('./pages/BeachSeller'));
 const BeachSale       = lazy(() => import('./pages/BeachSale'));
+const VendedorPerfil  = lazy(() => import('./pages/VendedorPerfil'));
 const StaffPortal     = lazy(() => import('./pages/StaffPortal'));
 const Housekeeping    = lazy(() => import('./pages/Housekeeping'));
 const Maintenance     = lazy(() => import('./pages/Maintenance'));
@@ -167,6 +168,7 @@ export default function App() {
         {/* Vendedor de Praia — mobile */}
         <Route path="/vendedor" element={<BeachSellerGuard><BeachSeller /></BeachSellerGuard>} />
         <Route path="/vendedor/nova-reserva" element={<BeachSellerGuard><BeachSale /></BeachSellerGuard>} />
+        <Route path="/vendedor/perfil" element={<BeachSellerGuard><VendedorPerfil /></BeachSellerGuard>} />
 
         {/* Motor de reserva publica */}
         <Route path="/book/:slug" element={<PublicBooking />} />

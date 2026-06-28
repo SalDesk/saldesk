@@ -1,6 +1,6 @@
 const express = require('express');
 const router  = express.Router();
-const { listar, obter, criar, actualizar, eliminar, getJobs, getEarnings, setAvailability, savePushSubscription, createAccount } = require('../controllers/staffController');
+const { listar, obter, criar, actualizar, eliminar, getJobs, getEarnings, setAvailability, savePushSubscription, createAccount, obterPerfilProprio, actualizarPerfilProprio } = require('../controllers/staffController');
 const auth    = require('../middleware/auth');
 const reqOp   = require('../middleware/requireOperator');
 const reqOpOrStaff = require('../middleware/requireOperatorOrStaff');
@@ -8,6 +8,8 @@ const reqOpOrStaff = require('../middleware/requireOperatorOrStaff');
 router.use(auth);
 
 router.get('/',                        reqOp, listar);
+router.get('/me',                      reqOpOrStaff, obterPerfilProprio);
+router.put('/me',                      reqOpOrStaff, actualizarPerfilProprio);
 router.get('/:id',                     reqOp, obter);
 router.post('/',                       reqOp, criar);
 router.put('/:id',                     reqOp, actualizar);

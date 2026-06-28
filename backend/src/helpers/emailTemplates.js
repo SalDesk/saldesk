@@ -304,8 +304,38 @@ function staffInviteEmail({ name, operatorName, link }) {
   return { subject, html, text };
 }
 
+/* ── d) Recuperacao de password ── */
+
+function passwordResetEmail({ name, link }) {
+  const subject = 'Repor a sua password SalDesk';
+
+  const intro = `<p style="margin:0 0 20px;font-family:${FONT};font-size:14px;line-height:1.6;color:${MUTED};">Olá ${name || ''}, recebemos um pedido para repor a sua password. Clique no botão abaixo para definir uma nova.</p>`;
+
+  const body = paragraph('Se não foi você a pedir, pode ignorar este email — a sua password actual mantém-se inalterada.');
+
+  const html = wrapEmail({
+    title: 'Repor a sua password',
+    introHtml: intro,
+    bodyHtml: body,
+    ctaUrl: link,
+    ctaLabel: 'Repor password',
+  });
+
+  const text = [
+    `Olá ${name || ''},`,
+    '',
+    'Recebemos um pedido para repor a sua password SalDesk.',
+    `Defina uma nova password: ${link}`,
+    '',
+    'Se não foi você a pedir, ignore este email.',
+  ].join('\n');
+
+  return { subject, html, text };
+}
+
 module.exports = {
   confirmacaoClienteEmail,
   notificacaoOperadorEmail,
   staffInviteEmail,
+  passwordResetEmail,
 };
