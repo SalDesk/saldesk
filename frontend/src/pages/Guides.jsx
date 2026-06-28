@@ -631,7 +631,7 @@ export default function Guides() {
   useEffect(() => {
     Promise.all([listStaff(), listUnits(), listReservations({})])
       .then(([staff, uns, res]) => {
-        setGuides(staff);
+        setGuides((staff || []).filter(s => s.role !== 'Vendedor de Praia'));
         setUnits(uns.filter(u => u.status === 'active' || u.is_active));
         setReservations(res);
       })
