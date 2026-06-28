@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import {
   Plus, Euro, Clock, Check, Calendar, Sun,
   TrendingUp, LogOut, BarChart2, MapPin, User,
-  ChevronLeft, ChevronRight, Trophy,
+  ChevronLeft, ChevronRight, Trophy, MessageCircle,
 } from 'lucide-react';
 import { listReservations } from '../services/reservationsService';
 import {
@@ -11,6 +11,7 @@ import {
 } from '../services/sellerService';
 import useAuthStore from '../store/authStore';
 import Logo from '../components/shared/Logo';
+import { buildWhatsAppLink } from '../utils/whatsapp';
 
 /* ── helpers ── */
 const TODAY = new Date().toISOString().slice(0, 10);
@@ -354,9 +355,23 @@ export default function BeachSeller() {
                           {r.units?.name || r.unit_name || '—'} · {r.guests || 1} pax
                         </p>
                       </div>
-                      <span className={`text-xs font-mono px-2 py-1 rounded-lg shrink-0 ${sc.cls}`}>
-                        {sc.label}
-                      </span>
+                      <div className="flex flex-col items-end gap-1.5 shrink-0">
+                        <span className={`text-xs font-mono px-2 py-1 rounded-lg ${sc.cls}`}>
+                          {sc.label}
+                        </span>
+                        {r.customer_phone && (
+                          <a
+                            href={buildWhatsAppLink(r.customer_phone, `Olá ${r.customer_name}! Sobre a sua reserva...`)}
+                            target="_blank"
+                            rel="noreferrer"
+                            onClick={(e) => e.stopPropagation()}
+                            className="w-8 h-8 rounded-full bg-[#25D366]/10 flex items-center justify-center text-[#25D366] hover:bg-[#25D366]/20 transition-colors"
+                            aria-label="Contactar via WhatsApp"
+                          >
+                            <MessageCircle size={16} strokeWidth={1.75} />
+                          </a>
+                        )}
+                      </div>
                     </div>
                     <div className="flex items-center justify-between pt-3 border-t border-n-100">
                       <div className="flex items-center gap-1 text-n-500">

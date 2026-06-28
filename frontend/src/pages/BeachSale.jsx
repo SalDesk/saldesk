@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import {
   ChevronLeft, ChevronRight, Plus, Minus,
   Check, User, Mail, Phone, Calendar,
-  Clock, Users, MapPin,
+  Clock, Users, MapPin, MessageCircle,
 } from 'lucide-react';
 import { listUnits } from '../services/unitsService';
 import { createReservation } from '../services/reservationsService';
@@ -12,6 +12,7 @@ import {
 } from '../services/sellerService';
 import useAuthStore from '../store/authStore';
 import Logo from '../components/shared/Logo';
+import { buildWhatsAppLink } from '../utils/whatsapp';
 
 /* ── helpers ── */
 const TODAY = new Date().toISOString().slice(0, 10);
@@ -168,6 +169,8 @@ export default function BeachSale() {
         time:       selectedTime,
         pax:        totalPax,
         total:      totalPrice,
+        clientName,
+        clientPhone,
       });
       setStep(4);
     } catch (err) {
@@ -557,6 +560,20 @@ export default function BeachSale() {
                 className="w-full h-12 bg-white border-2 border-n-200 text-n-700 rounded-2xl font-body font-semibold text-sm active:scale-[0.99] transition-all hover:border-turquoise-300">
                 Ver Minhas Reservas
               </button>
+              {successData.clientPhone && (
+                <a
+                  href={buildWhatsAppLink(
+                    successData.clientPhone,
+                    `Olá ${successData.clientName}! A sua reserva para ${successData.tourName} no dia ${fmtDatePT(successData.date)} às ${successData.time} está confirmada. Até breve!`
+                  )}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="w-full h-12 bg-[#25D366] text-white rounded-2xl font-body font-semibold text-sm flex items-center justify-center gap-2 active:scale-[0.99] transition-all hover:bg-[#1FB855]"
+                >
+                  <MessageCircle size={18} strokeWidth={1.75} />
+                  Enviar confirmação por WhatsApp
+                </a>
+              )}
             </div>
           </div>
         )}
