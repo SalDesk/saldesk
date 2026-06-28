@@ -250,7 +250,7 @@ export default function Calendar() {
   const weekDays = useMemo(() => getWeekDays(weekStr), [weekStr]);
 
   function getResForCell(unitId, dateStr) {
-    return resByUnit[unitId]?.find(r => r.check_in <= dateStr && r.check_out > dateStr);
+    return resByUnit[unitId]?.find(r => r.check_in <= dateStr && (r.check_out > dateStr || r.check_in === r.check_out));
   }
 
   function getSlotsForCell(unit, dateStr) {
