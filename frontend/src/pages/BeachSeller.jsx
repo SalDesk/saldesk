@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import {
   Plus, Euro, Clock, Check, Calendar, Sun,
   TrendingUp, LogOut, BarChart2, MapPin, User,
-  ChevronLeft, ChevronRight,
+  ChevronLeft, ChevronRight, Trophy,
 } from 'lucide-react';
 import { listReservations } from '../services/reservationsService';
 import {
@@ -111,6 +111,55 @@ export default function BeachSeller() {
     return reservations.filter(r => r.check_in?.startsWith(reservMonthKey));
   }, [reservations, reservMode, reservMonthKey]);
 
+  /* Meta pessoal — recordes historicos por dia (reservations ja vem filtrado por vendedor) */
+  const dailyStats = useMemo(() => {
+    const byDay = {};
+    reservations.forEach(r => {
+      const day = r.check_in;
+      if (!byDay[day]) byDay[day] = { count: 0, total: 0 };
+      byDay[day].count += 1;
+      byDay[day].total += Number(r.total_price || 0);
+    });
+    return byDay;
+  }, [reservations]);
+
+  const recordDay = useMemo(() => {
+    let best = { day: null, count: 0, total: 0 };
+    Object.entries(dailyStats).forEach(([day, stats]) => {
+      if (stats.total > best.total) best = { day, ...stats };
+    });
+    return best;
+  }, [dailyStats]);
+
+  const recordCountDay = useMemo(() => {
+    let best = { day: null, count: 0, total: 0 };
+    Object.entries(dailyStats).forEach(([day, stats]) => {
+      if (stats.count > best.count) best = { day, ...stats };
+    });
+    return best;
+  }, [dailyStats]);
+
+  const todayStats = dailyStats[TODAY] || { count: 0, total: 0 };
+
+  const isBeatingRecordValue = recordDay.total > 0 && todayStats.total >= recordDay.total;
+  const isBeatingRecordCount = recordCountDay.count > 0 && todayStats.count >= recordCountDay.count;
+
+  function getMotivationMessage() {
+    if (todayStats.count === 0) {
+      return recordCountDay.count > 0
+        ? `O teu recorde é ${recordCountDay.count} venda(s) num dia. Vamos lá!`
+        : 'Hoje é um bom dia para a primeira venda!';
+    }
+    if (isBeatingRecordValue && isBeatingRecordCount) {
+      return 'Novo recorde pessoal! Continua assim!';
+    }
+    const remaining = Math.max(0, recordCountDay.count - todayStats.count);
+    if (remaining > 0 && remaining <= 2) {
+      return `Faltam ${remaining} venda(s) para bateres o teu recorde!`;
+    }
+    return 'Continua a vender — cada venda conta.';
+  }
+
   async function handleMarkPaid(commId) {
     setPayingId(commId);
     await markCommissionPaid(commId, 'Pago pelo gestor');
@@ -162,6 +211,36 @@ export default function BeachSeller() {
           </div>
         </div>
       </header>
+
+      {/* Meta pessoal */}
+      {recordCountDay.day ? (
+        <div className="mx-4 mt-3 bg-gradient-to-r from-turquoise-500 to-turquoise-700 rounded-2xl p-4 text-white">
+          <div className="flex items-center gap-2 mb-2">
+            <Trophy size={18} strokeWidth={1.75} />
+            <p className="font-display font-bold text-sm">Meta Pessoal</p>
+          </div>
+          <p className="text-sm font-body opacity-90">{getMotivationMessage()}</p>
+          <div className="flex items-center gap-4 mt-3 pt-3 border-t border-white/20">
+            <div>
+              <p className="text-[10px] font-mono uppercase tracking-wide opacity-70">Recorde vendas/dia</p>
+              <p className="font-display font-bold text-lg">{recordCountDay.count}</p>
+            </div>
+            <div>
+              <p className="text-[10px] font-mono uppercase tracking-wide opacity-70">Recorde valor/dia</p>
+              <p className="font-display font-bold text-lg">{fmtMoney(recordDay.total)}</p>
+            </div>
+            <div>
+              <p className="text-[10px] font-mono uppercase tracking-wide opacity-70">Hoje</p>
+              <p className="font-display font-bold text-lg">{todayStats.count} · {fmtMoney(todayStats.total)}</p>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div className="mx-4 mt-3 bg-gradient-to-r from-turquoise-500 to-turquoise-700 rounded-2xl p-4 text-white flex items-center gap-3">
+          <Trophy size={20} strokeWidth={1.75} className="shrink-0" />
+          <p className="text-sm font-body font-semibold">Ainda sem vendas — hoje pode ser o teu primeiro recorde!</p>
+        </div>
+      )}
 
       {/* Tabs */}
       <div className="flex mx-4 mt-5 gap-1 bg-n-100 rounded-2xl p-1">
