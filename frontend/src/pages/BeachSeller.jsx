@@ -4,6 +4,7 @@ import {
   Plus, Euro, Clock, Check, Calendar, Sun,
   TrendingUp, LogOut, BarChart2, MapPin, User,
   ChevronLeft, ChevronRight, Trophy, MessageCircle,
+  ClipboardCheck, X,
 } from 'lucide-react';
 import { listReservations } from '../services/reservationsService';
 import {
@@ -16,6 +17,7 @@ import { buildWhatsAppLink } from '../utils/whatsapp';
 /* ── helpers ── */
 const TODAY = new Date().toISOString().slice(0, 10);
 const MONTHS_PT = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+const DAYS_PT   = ['Dom','Seg','Ter','Qua','Qui','Sex','Sab'];
 const TOUR_ICON_BG = ['bg-turquoise-100 text-turquoise-700', 'bg-sand-100 text-sand-600', 'bg-ocean-100 text-ocean-700'];
 
 function fmtDate(d) {
@@ -23,8 +25,32 @@ function fmtDate(d) {
   return new Date(d + 'T00:00:00Z').toLocaleDateString('pt-PT', { day: '2-digit', month: 'short' });
 }
 
+function fmtDatePT(dateStr) {
+  const d = new Date(dateStr + 'T00:00:00Z');
+  return `${DAYS_PT[d.getUTCDay()]} ${d.getUTCDate()} ${MONTHS_PT[d.getUTCMonth()]}`;
+}
+
 function fmtMoney(v) {
   return `€${Number(v || 0).toFixed(0)}`;
+}
+
+function buildShiftSummaryText({ sellerName, date, reservations, commission }) {
+  const lines = [
+    `*Resumo do Turno — ${sellerName}*`,
+    `${fmtDatePT(date)}`,
+    '',
+    `Vendas: ${reservations.length}`,
+    `Total vendido: ${fmtMoney(reservations.reduce((s, r) => s + Number(r.total_price || 0), 0))}`,
+    `Comissão gerada: ${fmtMoney(commission)}`,
+    '',
+  ];
+  if (reservations.length > 0) {
+    lines.push('Detalhe das vendas:');
+    reservations.forEach(r => {
+      lines.push(`- ${r.customer_name} · ${fmtMoney(r.total_price)}`);
+    });
+  }
+  return lines.join('\n');
 }
 
 const STATUS_CFG = {
@@ -58,6 +84,7 @@ export default function BeachSeller() {
     const d = new Date();
     return { year: d.getFullYear(), month: d.getMonth() };
   });
+  const [showShiftSummary, setShowShiftSummary] = useState(false);
 
   useEffect(() => {
     setLoading(true);
@@ -142,6 +169,12 @@ export default function BeachSeller() {
 
   const todayStats = dailyStats[TODAY] || { count: 0, total: 0 };
 
+  /* Fim de turno — comissao gerada hoje */
+  const todayCommission = useMemo(() =>
+    commissions.filter(c => c.created_at?.startsWith(TODAY)).reduce((s, c) => s + c.amount, 0),
+    [commissions],
+  );
+
   const isBeatingRecordValue = recordDay.total > 0 && todayStats.total >= recordDay.total;
   const isBeatingRecordCount = recordCountDay.count > 0 && todayStats.count >= recordCountDay.count;
 
@@ -190,9 +223,18 @@ export default function BeachSeller() {
           </div>
         </div>
 
-        <div className="flex items-center gap-2 mb-1">
-          <Sun size={20} strokeWidth={1.75} className="text-sand-400" />
-          <p className="font-display font-bold text-2xl text-white">Olá, {sellerName}</p>
+        <div className="flex items-center justify-between gap-2 mb-1">
+          <div className="flex items-center gap-2">
+            <Sun size={20} strokeWidth={1.75} className="text-sand-400" />
+            <p className="font-display font-bold text-2xl text-white">Olá, {sellerName}</p>
+          </div>
+          <button
+            onClick={() => setShowShiftSummary(true)}
+            className="flex items-center gap-2 px-3 py-2 bg-white/10 rounded-xl text-white text-xs font-body font-semibold hover:bg-white/20 transition-colors shrink-0"
+          >
+            <ClipboardCheck size={15} strokeWidth={1.75} />
+            Fim de Turno
+          </button>
         </div>
         <p className="text-ocean-300 text-sm font-body">Pronto para a próxima venda?</p>
 
@@ -502,6 +544,76 @@ export default function BeachSeller() {
           </button>
         </div>
       </div>
+
+      {/* Fim de Turno — bottom sheet */}
+      {showShiftSummary && (
+        <>
+          <div
+            className="fixed inset-0 bg-ocean-900/50 z-40"
+            onClick={() => setShowShiftSummary(false)}
+          />
+          <div className="fixed bottom-0 inset-x-0 z-50 bg-white rounded-t-3xl shadow-xl max-h-[85vh] overflow-y-auto max-w-md mx-auto">
+            <div className="flex justify-center pt-3 pb-1">
+              <span className="w-10 h-1.5 rounded-full bg-n-300" />
+            </div>
+            <div className="px-5 py-4 space-y-4">
+              <div className="flex items-center justify-between">
+                <p className="font-display font-bold text-lg text-n-900">Fim de Turno</p>
+                <button onClick={() => setShowShiftSummary(false)} className="text-n-400">
+                  <X size={20} strokeWidth={1.75} />
+                </button>
+              </div>
+
+              <div className="bg-gradient-to-br from-ocean-700 to-turquoise-600 rounded-2xl p-5 text-white">
+                <p className="text-sm opacity-80">{fmtDatePT(TODAY)}</p>
+                <div className="flex items-center gap-6 mt-3">
+                  <div>
+                    <p className="font-display font-bold text-3xl">{todayReservations.length}</p>
+                    <p className="text-xs opacity-80">vendas</p>
+                  </div>
+                  <div>
+                    <p className="font-display font-bold text-3xl">{fmtMoney(totalToday)}</p>
+                    <p className="text-xs opacity-80">total vendido</p>
+                  </div>
+                  <div>
+                    <p className="font-display font-bold text-3xl">{fmtMoney(todayCommission)}</p>
+                    <p className="text-xs opacity-80">comissão</p>
+                  </div>
+                </div>
+              </div>
+
+              {todayReservations.length > 0 && (
+                <div className="space-y-2">
+                  <p className="text-xs font-mono uppercase tracking-wider text-n-500">Vendas de hoje</p>
+                  {todayReservations.map(r => (
+                    <div key={r.id} className="flex items-center justify-between bg-n-50 rounded-xl px-3 py-2.5">
+                      <span className="text-sm font-body text-n-800">{r.customer_name}</span>
+                      <span className="font-display font-bold text-sm text-ocean-700">{fmtMoney(r.total_price)}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <a
+                href={`https://wa.me/?text=${encodeURIComponent(
+                  buildShiftSummaryText({
+                    sellerName,
+                    date: TODAY,
+                    reservations: todayReservations,
+                    commission: todayCommission,
+                  })
+                )}`}
+                target="_blank"
+                rel="noreferrer"
+                className="w-full h-14 bg-[#25D366] text-white rounded-2xl font-display font-bold flex items-center justify-center gap-2 active:scale-[0.99] transition-all"
+              >
+                <MessageCircle size={18} strokeWidth={1.75} />
+                Partilhar por WhatsApp
+              </a>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }
