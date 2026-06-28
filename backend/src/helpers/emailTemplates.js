@@ -40,7 +40,7 @@ function logoBlock() {
     <tr>
       <td style="padding:24px 32px 0;background:#FFFFFF;text-align:center;">
         <div style="text-align:center; margin-bottom:24px;">
-          <img src="https://saldesk.cv/logo.png" alt="SalDesk" width="160" style="display:inline-block;width:160px;max-width:160px;height:auto;" />
+          <img src="https://saldesk.cv/logo-email.png" alt="SalDesk" width="160" style="display:inline-block;width:160px;max-width:160px;height:auto;" />
         </div>
       </td>
     </tr>`;
