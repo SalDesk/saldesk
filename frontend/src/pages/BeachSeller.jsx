@@ -52,11 +52,17 @@ export default function BeachSeller() {
     const d = new Date();
     return { year: d.getFullYear(), month: d.getMonth() };
   });
+  const [reservMode,     setReservMode]     = useState('hoje'); // 'hoje' | 'mes'
+  const [reservViewMonth, setReservViewMonth] = useState(() => {
+    const d = new Date();
+    return { year: d.getFullYear(), month: d.getMonth() };
+  });
 
   useEffect(() => {
     setLoading(true);
     Promise.all([
-      listReservations({ from: TODAY, to: TODAY }).catch(() => []),
+      // O backend ignora from/to e devolve sempre todo o historico — filtro feito no frontend
+      listReservations().catch(() => []),
       listSellerCommissions(sellerId),
     ]).then(([res, comms]) => {
       // Filter reservations by this seller
@@ -89,7 +95,21 @@ export default function BeachSeller() {
   const totalMonth   = monthComms.reduce((s, c) => s + c.amount, 0);
   const totalPaid    = monthComms.filter(c => c.status === 'paid').reduce((s, c) => s + c.amount, 0);
   const totalPending = monthComms.filter(c => c.status === 'pending').reduce((s, c) => s + c.amount, 0);
-  const totalToday   = reservations.reduce((s, r) => s + Number(r.total_price || 0), 0);
+
+  /* Reservas de hoje — fixo, usado no card do cabecalho independentemente do modo da aba */
+  const todayReservations = useMemo(() =>
+    reservations.filter(r => r.check_in === TODAY),
+    [reservations],
+  );
+  const totalToday = todayReservations.reduce((s, r) => s + Number(r.total_price || 0), 0);
+
+  /* Reservas filtradas conforme o modo seleccionado na aba "Hoje" (hoje vs mes navegavel) */
+  const reservMonthKey = `${reservViewMonth.year}-${String(reservViewMonth.month + 1).padStart(2, '0')}`;
+  const isReservCurrentMonth = reservViewMonth.year === now.getFullYear() && reservViewMonth.month === now.getMonth();
+  const reservationsFiltered = useMemo(() => {
+    if (reservMode === 'hoje') return reservations.filter(r => r.check_in === TODAY);
+    return reservations.filter(r => r.check_in?.startsWith(reservMonthKey));
+  }, [reservations, reservMode, reservMonthKey]);
 
   async function handleMarkPaid(commId) {
     setPayingId(commId);
@@ -132,7 +152,7 @@ export default function BeachSeller() {
             <TrendingUp size={20} strokeWidth={1.75} className="text-ocean-900 mb-2" />
             <p className="font-display font-bold text-3xl text-ocean-900 leading-none">{fmtMoney(totalToday)}</p>
             <p className="text-ocean-900/70 text-xs font-body font-semibold mt-1.5">
-              Hoje · {reservations.length} reserva(s)
+              Hoje · {todayReservations.length} reserva(s)
             </p>
           </div>
           <div className="bg-gradient-to-br from-turquoise-600 to-turquoise-400 rounded-3xl p-4">
@@ -164,20 +184,79 @@ export default function BeachSeller() {
             <div className="w-8 h-8 border-3 border-ocean-200 border-t-ocean-700 rounded-full animate-spin" />
           </div>
         ) : activeTab === 'hoje' ? (
-          reservations.length === 0 ? (
-            <div className="text-center py-16 text-n-400">
-              <Calendar size={40} strokeWidth={1} className="mx-auto mb-3 text-n-300" />
-              <p className="font-body font-semibold text-n-600">Sem reservas hoje</p>
-              <p className="text-sm font-body text-n-400 mt-1">
-                Usa o botao "Nova Reserva" para registar vendas.
-              </p>
+          <>
+            {/* Selector de modo */}
+            <div className="flex items-center gap-2 mb-3">
+              <button
+                onClick={() => setReservMode('hoje')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-body font-semibold transition-colors ${
+                  reservMode === 'hoje' ? 'bg-ocean-700 text-white' : 'bg-n-100 text-n-500'
+                }`}
+              >
+                Hoje
+              </button>
+              <button
+                onClick={() => setReservMode('mes')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-body font-semibold transition-colors ${
+                  reservMode === 'mes' ? 'bg-ocean-700 text-white' : 'bg-n-100 text-n-500'
+                }`}
+              >
+                Por mês
+              </button>
             </div>
-          ) : (
-            <>
-              <p className="text-xs font-mono uppercase tracking-wider text-n-500 mb-2">
-                {reservations.length} reserva(s) hoje
-              </p>
-              {reservations.map((r, i) => {
+
+            {/* Navegacao de mes */}
+            {reservMode === 'mes' && (
+              <div className="flex items-center justify-between px-1 mb-3">
+                <button
+                  type="button"
+                  onClick={() => setReservViewMonth(v => {
+                    const m = v.month === 0 ? 11 : v.month - 1;
+                    const y = v.month === 0 ? v.year - 1 : v.year;
+                    return { year: y, month: m };
+                  })}
+                  className="w-9 h-9 rounded-full flex items-center justify-center text-n-500 hover:bg-n-100 active:scale-95 transition-all"
+                  aria-label="Mes anterior"
+                >
+                  <ChevronLeft size={18} strokeWidth={2} />
+                </button>
+                <p className="font-display font-bold text-base text-n-900">
+                  {MONTHS_PT[reservViewMonth.month]} {reservViewMonth.year}
+                </p>
+                <button
+                  type="button"
+                  disabled={isReservCurrentMonth}
+                  onClick={() => setReservViewMonth(v => {
+                    const m = v.month === 11 ? 0 : v.month + 1;
+                    const y = v.month === 11 ? v.year + 1 : v.year;
+                    return { year: y, month: m };
+                  })}
+                  className={`w-9 h-9 rounded-full flex items-center justify-center transition-all ${
+                    isReservCurrentMonth ? 'text-n-300 opacity-30 cursor-not-allowed' : 'text-n-500 hover:bg-n-100 active:scale-95'
+                  }`}
+                  aria-label="Mes seguinte"
+                >
+                  <ChevronRight size={18} strokeWidth={2} />
+                </button>
+              </div>
+            )}
+
+            {reservationsFiltered.length === 0 ? (
+              <div className="text-center py-16 text-n-400">
+                <Calendar size={40} strokeWidth={1} className="mx-auto mb-3 text-n-300" />
+                <p className="font-body font-semibold text-n-600">
+                  Sem reservas {reservMode === 'hoje' ? 'hoje' : `em ${MONTHS_PT[reservViewMonth.month]}`}
+                </p>
+                <p className="text-sm font-body text-n-400 mt-1">
+                  Usa o botao "Nova Reserva" para registar vendas.
+                </p>
+              </div>
+            ) : (
+              <>
+                <p className="text-xs font-mono uppercase tracking-wider text-n-500 mb-2">
+                  {reservationsFiltered.length} reserva(s) {reservMode === 'hoje' ? 'hoje' : `em ${MONTHS_PT[reservViewMonth.month]}`}
+                </p>
+                {reservationsFiltered.map((r, i) => {
                 const sc  = STATUS_CFG[r.status] || STATUS_CFG.pending;
                 const val = Number(r.total_price || 0);
                 const com = val * (commPct / 100);
@@ -212,9 +291,10 @@ export default function BeachSeller() {
                     </div>
                   </div>
                 );
-              })}
-            </>
-          )
+                })}
+              </>
+            )}
+          </>
         ) : (
           /* Tab comissoes */
           <div className="space-y-4">
