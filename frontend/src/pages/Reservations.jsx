@@ -7,6 +7,7 @@ import {
 import { listReservations, createReservation, updateReservation, changeStatus, deleteReservation } from '../services/reservationsService';
 import api from '../services/api';
 import { listUnits } from '../services/unitsService';
+import { listStaff } from '../services/staffService';
 import useAuthStore from '../store/authStore';
 import { useT } from '../i18n';
 import PageHeader from '../components/layout/PageHeader';
@@ -15,6 +16,7 @@ import Modal from '../components/ui/Modal';
 import Badge from '../components/ui/Badge';
 import ReservationCard from '../components/reservations/ReservationCard';
 import ReservationForm from '../components/reservations/ReservationForm';
+import AssignCompositeModal from '../components/assignments/AssignCompositeModal';
 import LoadingSpinner from '../components/shared/LoadingSpinner';
 
 const STATUS_FILTERS = ['', 'pending', 'confirmed', 'checked_in', 'checked_out', 'cancelled'];
@@ -56,9 +58,10 @@ function SourceBadge({ source }) {
   );
 }
 
-function ActivityTable({ reservations, units, onEdit, onUpdate, onReschedule, onNoShow, onVoucher, voucherLoading }) {
+function ActivityTable({ reservations, units, guides, onEdit, onUpdate, onReschedule, onNoShow, onVoucher, voucherLoading }) {
   const t = useT();
   const [actionLoading, setActionLoading] = useState(null);
+  const [assignRes, setAssignRes] = useState(null);
 
   async function handleNextStatus(r) {
     const next = STATUS_NEXT[r.status];
@@ -166,6 +169,12 @@ function ActivityTable({ reservations, units, onEdit, onUpdate, onReschedule, on
                           <UserX size={13} strokeWidth={1.75} />
                         </button>
                       )}
+                      {!['cancelled','no_show'].includes(r.status) && (
+                        <button onClick={() => setAssignRes(r)} title="Atribuir equipa"
+                          className="p-1.5 rounded text-n-400 hover:text-ocean-700 hover:bg-ocean-50 transition-colors">
+                          <Users size={13} strokeWidth={1.75} />
+                        </button>
+                      )}
                       <Button variant="ghost" size="sm" icon={Pencil} onClick={() => onEdit(r)} aria-label="Editar" />
                     </div>
                   </td>
@@ -175,6 +184,15 @@ function ActivityTable({ reservations, units, onEdit, onUpdate, onReschedule, on
           </tbody>
         </table>
       </div>
+
+      {assignRes && (
+        <AssignCompositeModal
+          reservation={assignRes}
+          guides={guides}
+          onClose={() => setAssignRes(null)}
+          onDone={() => setAssignRes(null)}
+        />
+      )}
     </div>
   );
 }
@@ -987,6 +1005,7 @@ export default function Reservations() {
 
   const [reservations,    setReservations]    = useState([]);
   const [units,           setUnits]           = useState([]);
+  const [guides,          setGuides]          = useState([]);
   const [loading,         setLoading]         = useState(true);
   const [modal,           setModal]           = useState(null);
   const [formLoading,     setFormLoading]     = useState(false);
@@ -1008,12 +1027,17 @@ export default function Reservations() {
   async function carregar() {
     setLoading(true);
     try {
-      const [res, uns] = await Promise.all([listReservations({}), listUnits()]);
+      const [res, uns, staff] = await Promise.all([
+        listReservations({}),
+        listUnits(),
+        isActivity ? listStaff() : Promise.resolve([]),
+      ]);
       setReservations(res);
       const tables = opType === 'restaurant'
         ? uns.filter(u => u.unit_type !== 'menu_item' && u.unit_type !== 'tasting_menu')
         : uns;
       setUnits(tables.filter(u => u.status === 'active'));
+      setGuides((staff || []).filter(s => ['Guia', 'Instrutor', 'Condutor', 'Motorista'].includes(s.role)));
     } catch (err) {
       console.error(err);
     } finally {
@@ -1205,6 +1229,7 @@ export default function Reservations() {
         <ActivityTable
           reservations={filtered}
           units={units}
+          guides={guides}
           onEdit={r => { setFormError(''); setModal(r); }}
           onUpdate={handleUpdate}
           onReschedule={setRescheduleRes}
