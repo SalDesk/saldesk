@@ -105,8 +105,8 @@ async function mudarStatus(req, res, next) {
 async function criarComposta(req, res, next) {
   try {
     const { reservation_id, vehicle_id, guide_id, driver_id } = req.body;
-    if (!reservation_id || !vehicle_id || !guide_id || !driver_id) {
-      return res.status(400).json({ error: 'reservation_id, vehicle_id, guide_id e driver_id sao obrigatorios', code: 'MISSING_FIELDS' });
+    if (!reservation_id || !guide_id || !driver_id) {
+      return res.status(400).json({ error: 'reservation_id, guide_id e driver_id sao obrigatorios', code: 'MISSING_FIELDS' });
     }
 
     const isCombined = guide_id === driver_id;
@@ -114,7 +114,7 @@ async function criarComposta(req, res, next) {
 
     if (isCombined) {
       rows.push({
-        reservation_id, vehicle_id,
+        reservation_id, vehicle_id: vehicle_id || null,
         staff_id: guide_id,
         operator_id: req.operator.id,
         role: 'guide',
@@ -123,7 +123,7 @@ async function criarComposta(req, res, next) {
       });
     } else {
       rows.push({
-        reservation_id, vehicle_id,
+        reservation_id, vehicle_id: vehicle_id || null,
         staff_id: guide_id,
         operator_id: req.operator.id,
         role: 'guide',
@@ -131,7 +131,7 @@ async function criarComposta(req, res, next) {
         status: 'pending',
       });
       rows.push({
-        reservation_id, vehicle_id,
+        reservation_id, vehicle_id: vehicle_id || null,
         staff_id: driver_id,
         operator_id: req.operator.id,
         role: 'driver',

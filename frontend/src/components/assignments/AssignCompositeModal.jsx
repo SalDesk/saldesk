@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { listFleet } from '../../services/fleetService';
 import { createCompositeAssignment } from '../../services/assignmentService';
 import Modal from '../ui/Modal';
@@ -34,7 +35,7 @@ export default function AssignCompositeModal({ reservation, reservations, guide,
     r.check_in >= new Date().toISOString().split('T')[0]
   ).sort((a, b) => a.check_in.localeCompare(b.check_in));
 
-  const canSubmit = selected && guideId && driverId && vehicleId;
+  const canSubmit = selected && guideId && driverId;
 
   async function handleAssign() {
     if (!canSubmit) return;
@@ -42,7 +43,7 @@ export default function AssignCompositeModal({ reservation, reservations, guide,
     try {
       await createCompositeAssignment({
         reservation_id: selected,
-        vehicle_id: vehicleId,
+        vehicle_id: vehicleId || null,
         guide_id: guideId,
         driver_id: driverId,
       });
@@ -118,10 +119,17 @@ export default function AssignCompositeModal({ reservation, reservations, guide,
           {(guides || []).map(g => <option key={g.id} value={g.id}>{g.name} ({g.role})</option>)}
         </Select>
 
-        <Select label="Viatura" value={vehicleId} onChange={e => setVehicleId(e.target.value)} required>
-          <option value="">Seleccionar viatura...</option>
+        <Select label="Viatura (opcional)" value={vehicleId} onChange={e => setVehicleId(e.target.value)}>
+          <option value="">Nenhuma</option>
           {vehicles.map(v => <option key={v.id} value={v.id}>{v.name}</option>)}
         </Select>
+
+        {vehicles.length === 0 && (
+          <p className="text-xs font-body text-n-500">
+            Nenhuma viatura cadastrada — pode adicionar em{' '}
+            <Link to="/frota" className="text-ocean-700 underline">Frota</Link>.
+          </p>
+        )}
 
         {error && <p className="text-xs font-body text-error">{error}</p>}
       </div>
