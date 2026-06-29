@@ -484,13 +484,13 @@ function StaffProfile() {
         <div className="flex justify-center py-16"><LoadingSpinner size={28}/></div>
       ) : (
         <>
-          {/* Header com foto */}
-          <div className="bg-gradient-to-br from-ocean-900 to-ocean-700 px-5 pt-8 pb-8 rounded-b-3xl shadow-lg flex flex-col items-center">
+          {/* Foto de perfil */}
+          <div className="flex flex-col items-center pt-6 pb-2">
             <div className="relative">
-              <div className="w-24 h-24 rounded-full bg-white/15 flex items-center justify-center overflow-hidden border-4 border-white/30 shadow-md">
+              <div className="w-24 h-24 rounded-full bg-ocean-100 flex items-center justify-center overflow-hidden border-4 border-ocean-200 shadow-md">
                 {photoPreview
                   ? <img src={photoPreview} alt={staffName} className="w-full h-full object-cover" />
-                  : <Camera size={28} strokeWidth={1.5} className="text-white/70" />}
+                  : <Camera size={28} strokeWidth={1.5} className="text-ocean-400" />}
               </div>
               <button type="button" onClick={() => fileRef.current?.click()}
                 className="absolute -bottom-1 -right-1 w-8 h-8 bg-sand-500 text-ocean-900 rounded-full flex items-center justify-center shadow-md hover:bg-sand-600 active:scale-95 transition-all">
@@ -498,12 +498,6 @@ function StaffProfile() {
               </button>
               <input ref={fileRef} type="file" accept="image/*" onChange={handleFile} className="hidden" />
             </div>
-            <p className="font-display font-bold text-lg text-white mt-3">{staffName}</p>
-            {profile?.role && (
-              <span className="mt-1 text-[10px] font-mono uppercase tracking-wide text-sand-400">
-                {profile.role}
-              </span>
-            )}
           </div>
 
           <div className="px-4 pt-5 space-y-6">
