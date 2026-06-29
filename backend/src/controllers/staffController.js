@@ -95,7 +95,7 @@ async function getJobs(req, res, next) {
     }
     let q = supabaseAdmin
       .from('job_assignments')
-      .select('*, reservations(check_in, check_out, customer_name, total_amount, units(name, unit_type)), fleet(name, type)')
+      .select('*, reservations(check_in, check_out, customer_name, total_price, units(name, unit_type)), fleet(name, type)')
       .eq('staff_id', req.params.id)
       .order('created_at', { ascending: false });
     if (req.operator) q = q.eq('operator_id', req.operator.id);
