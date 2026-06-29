@@ -16,7 +16,7 @@ router.put('/:id',                     reqOp, actualizar);
 router.delete('/:id',                  reqOp, eliminar);
 router.get('/:id/jobs',                reqOpOrStaff, getJobs);
 router.get('/:id/earnings',            reqOpOrStaff, getEarnings);
-router.put('/:id/availability',        reqOp, setAvailability);
+router.put('/:id/availability',        reqOpOrStaff, setAvailability);
 router.post('/:id/push-subscription',  reqOp, savePushSubscription);
 router.post('/:id/create-account',     reqOp, createAccount);
 

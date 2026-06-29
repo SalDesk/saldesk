@@ -126,10 +126,14 @@ async function getEarnings(req, res, next) {
 
 async function setAvailability(req, res, next) {
   try {
+    if (req.staff && req.staff.id !== req.params.id) {
+      return res.status(403).json({ error: 'Acesso não autorizado', code: 'FORBIDDEN' });
+    }
     const { dates } = req.body;
     if (!Array.isArray(dates)) return res.status(400).json({ error: 'dates[] obrigatorio', code: 'MISSING_FIELDS' });
+    const operatorId = req.operator?.id || req.staff?.operator_id;
     const rows = dates.map((d) => ({
-      staff_id: req.params.id, operator_id: req.operator.id,
+      staff_id: req.params.id, operator_id: operatorId,
       date: d.date, is_available: d.is_available ?? true, notes: d.notes || null,
     }));
     const { data, error } = await supabaseAdmin

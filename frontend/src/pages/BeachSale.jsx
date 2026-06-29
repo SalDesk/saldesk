@@ -13,6 +13,7 @@ import {
 import useAuthStore from '../store/authStore';
 import Logo from '../components/shared/Logo';
 import { buildWhatsAppLink } from '../utils/whatsapp';
+import { getMonthGrid } from '../utils/calendar';
 
 /* ── helpers ── */
 const TODAY = new Date().toISOString().slice(0, 10);
@@ -23,22 +24,6 @@ const TOUR_ICON_BG = ['bg-turquoise-100 text-turquoise-700', 'bg-sand-100 text-s
 function fmtDatePT(dateStr) {
   const d = new Date(dateStr + 'T00:00:00Z');
   return `${DAYS_PT[d.getUTCDay()]} ${d.getUTCDate()} ${MONTHS_PT[d.getUTCMonth()]}`;
-}
-
-function getMonthGrid(year, month) {
-  const firstDay = new Date(Date.UTC(year, month, 1));
-  const startWeekday = firstDay.getUTCDay();
-  const daysInMonth = new Date(Date.UTC(year, month + 1, 0)).getUTCDate();
-  const cells = [];
-  for (let i = 0; i < startWeekday; i++) cells.push(null);
-  for (let day = 1; day <= daysInMonth; day++) {
-    const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-    cells.push(dateStr);
-  }
-  while (cells.length % 7 !== 0) cells.push(null);
-  const weeks = [];
-  for (let i = 0; i < cells.length; i += 7) weeks.push(cells.slice(i, i + 7));
-  return weeks;
 }
 
 function parseMeta(description) {
