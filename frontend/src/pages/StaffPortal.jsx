@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, Route, Routes, NavLink } from 'react-router-dom';
 import {
-  Briefcase, Euro, LogOut, CheckCircle, PlayCircle, Clock, MapPin, User, ChevronRight, Car, AlertTriangle,
-  Calendar, CalendarCheck, MessageCircle, Camera, Upload, Phone, Lock, Mail,
+  Briefcase, Euro, LogOut, CheckCircle, PlayCircle, Clock, MapPin, User, ChevronRight, ChevronLeft, Car, AlertTriangle,
+  Calendar, CalendarCheck, MessageCircle, Camera, Upload, Phone, Lock, Mail, Sun,
 } from 'lucide-react';
 import api from '../services/api';
 import { getMyProfile, updateMyProfile, setAvailability } from '../services/staffService';
@@ -11,18 +11,27 @@ import { getMonthGrid } from '../utils/calendar';
 import useAuthStore from '../store/authStore';
 import { useToast } from '../store/toastStore';
 import Button from '../components/ui/Button';
-import Badge from '../components/ui/Badge';
 import LoadingSpinner from '../components/shared/LoadingSpinner';
 import Logo from '../components/shared/Logo';
 
-const STATUS_BADGE  = { pending:'pending', confirmed:'info', in_progress:'checked_in', completed:'checked_out', cancelled:'cancelled' };
-const STATUS_LABELS = { pending:'Pendente', confirmed:'Confirmado', in_progress:'Em curso', completed:'Concluido', cancelled:'Cancelado' };
+const STATUS_CFG = {
+  pending:     { label: 'Pendente',   cls: 'bg-sand-100 text-sand-600' },
+  confirmed:   { label: 'Confirmado', cls: 'bg-ocean-50 text-ocean-700' },
+  in_progress: { label: 'Em curso',   cls: 'bg-turquoise-100 text-turquoise-700' },
+  completed:   { label: 'Concluido',  cls: 'bg-n-100 text-n-500' },
+  cancelled:   { label: 'Cancelado',  cls: 'bg-red-50 text-error' },
+};
+const TOUR_ICON_BG = ['bg-turquoise-100 text-turquoise-700', 'bg-sand-100 text-sand-600', 'bg-ocean-100 text-ocean-700'];
 const MONTHS_PT = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
 const DAYS_PT   = ['Dom','Seg','Ter','Qua','Qui','Sex','Sab'];
 const TODAY = new Date().toISOString().slice(0, 10);
 
 function formatDate(d) { if (!d) return '—'; const dt = new Date(d+'T00:00:00Z'); return dt.toLocaleDateString('pt-PT',{day:'2-digit',month:'short',year:'numeric'}); }
-function formatTime(d) { if (!d) return ''; return new Date(d).toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit'}); }
+
+function StatusBadge({ status }) {
+  const sc = STATUS_CFG[status] || STATUS_CFG.pending;
+  return <span className={`text-xs font-mono px-2 py-1 rounded-lg ${sc.cls}`}>{sc.label}</span>;
+}
 
 function getWeekRange() {
   const now = new Date();
@@ -60,25 +69,25 @@ function JobsList({ staffId }) {
     <div className="px-4 py-4 space-y-6">
       {/* Proximo trabalho */}
       <div>
-        <p className="text-xs font-body font-bold uppercase tracking-wide text-n-500 mb-2">Proximo trabalho</p>
+        <p className="text-xs font-mono font-bold uppercase tracking-wide text-n-500 mb-2">Proximo trabalho</p>
         {nextJob ? (
           <button onClick={() => navigate(`/staff/jobs/${nextJob.id}`)}
-            className="w-full bg-ocean-900 rounded-xl p-4 flex items-center justify-between text-left">
+            className="w-full bg-gradient-to-br from-ocean-700 to-turquoise-600 rounded-2xl p-4 flex items-center justify-between text-left active:scale-[0.99] transition-all">
             <div className="flex items-start gap-3">
-              <div className="w-10 h-10 rounded-lg bg-white/10 flex items-center justify-center shrink-0">
-                <MapPin size={18} strokeWidth={1.75} className="text-sand-400" />
+              <div className="w-11 h-11 rounded-2xl bg-white/15 flex items-center justify-center shrink-0">
+                <MapPin size={18} strokeWidth={1.75} className="text-white" />
               </div>
               <div>
                 <p className="font-display font-bold text-base text-white">{nextJob.reservations?.units?.name || '—'}</p>
-                <p className="text-xs font-body text-ocean-200 mt-0.5">
+                <p className="text-xs font-body text-white/80 mt-0.5">
                   {nextJob.reservations?.customer_name} · {formatDate(nextJob.reservations?.check_in)}
                 </p>
               </div>
             </div>
-            <ChevronRight size={18} strokeWidth={1.75} className="text-ocean-300 shrink-0" />
+            <ChevronRight size={18} strokeWidth={1.75} className="text-white/70 shrink-0" />
           </button>
         ) : (
-          <div className="bg-white rounded-xl border border-n-200 p-4 text-center text-n-400">
+          <div className="bg-white rounded-2xl border border-n-200 p-5 text-center text-n-400">
             <Briefcase size={24} strokeWidth={1.25} className="mx-auto mb-2" />
             <p className="text-sm font-body">Sem trabalhos agendados</p>
           </div>
@@ -87,34 +96,37 @@ function JobsList({ staffId }) {
       </div>
 
       <div>
-        <p className="text-xs font-body font-bold uppercase tracking-wide text-n-500 mb-3">Proximos trabalhos</p>
+        <p className="text-xs font-mono font-bold uppercase tracking-wide text-n-500 mb-3">Proximos trabalhos</p>
         {upcoming.length === 0 ? (
           <div className="text-center py-8 text-n-400"><Briefcase size={28} strokeWidth={1.25} className="mx-auto mb-2"/><p className="text-sm font-body">Sem trabalhos pendentes</p></div>
-        ) : upcoming.map(j => (
+        ) : upcoming.map((j, i) => (
           <button key={j.id} onClick={() => navigate(`/staff/jobs/${j.id}`)}
-            className="w-full bg-white rounded-md border border-n-200 shadow-sm p-4 mb-3 flex items-center justify-between text-left hover:border-ocean-300">
-            <div>
-              <div className="flex items-center gap-2 mb-1">
-                <Badge variant={STATUS_BADGE[j.status]}>{STATUS_LABELS[j.status]}</Badge>
-              </div>
-              <p className="font-display font-semibold text-sm text-n-900">{j.reservations?.units?.name}</p>
-              <p className="text-xs font-body text-n-500 mt-0.5">{j.reservations?.customer_name} · {formatDate(j.reservations?.check_in)}</p>
+            className="w-full bg-white rounded-3xl border border-n-200 shadow-sm px-4 py-4 mb-3 flex items-center gap-3 text-left hover:border-turquoise-300 transition-colors">
+            <div className={`w-11 h-11 rounded-2xl flex items-center justify-center shrink-0 ${TOUR_ICON_BG[i % TOUR_ICON_BG.length]}`}>
+              <MapPin size={18} strokeWidth={1.75} />
             </div>
-            <ChevronRight size={16} strokeWidth={1.75} className="text-n-300 shrink-0"/>
+            <div className="flex-1 min-w-0">
+              <p className="font-display font-bold text-sm text-n-900 truncate">{j.reservations?.units?.name}</p>
+              <p className="text-xs font-body text-n-500 mt-0.5 truncate">{j.reservations?.customer_name} · {formatDate(j.reservations?.check_in)}</p>
+            </div>
+            <div className="flex flex-col items-end gap-1.5 shrink-0">
+              <StatusBadge status={j.status} />
+              <ChevronRight size={16} strokeWidth={1.75} className="text-n-300"/>
+            </div>
           </button>
         ))}
       </div>
 
       {history.length > 0 && (
         <div>
-          <p className="text-xs font-body font-bold uppercase tracking-wide text-n-500 mb-3">Historico recente</p>
+          <p className="text-xs font-mono font-bold uppercase tracking-wide text-n-500 mb-3">Historico recente</p>
           {history.map(j => (
-            <div key={j.id} className="bg-white rounded-md border border-n-100 p-3 mb-2 flex items-center justify-between opacity-70">
+            <div key={j.id} className="bg-white rounded-2xl border border-n-100 px-4 py-3 mb-2 flex items-center justify-between opacity-70">
               <div>
                 <p className="text-sm font-body font-semibold text-n-700">{j.reservations?.units?.name}</p>
                 <p className="text-xs font-body text-n-400">{formatDate(j.reservations?.check_in)}</p>
               </div>
-              <Badge variant={STATUS_BADGE[j.status]}>{STATUS_LABELS[j.status]}</Badge>
+              <StatusBadge status={j.status} />
             </div>
           ))}
         </div>
@@ -167,12 +179,14 @@ function JobDetail({ staffId }) {
 
   return (
     <div className="px-4 py-4">
-      <button onClick={() => navigate('/staff/jobs')} className="text-xs font-body text-ocean-700 mb-4 flex items-center gap-1">← Voltar</button>
+      <button onClick={() => navigate('/staff/jobs')} className="text-xs font-body font-semibold text-ocean-700 mb-4 flex items-center gap-1">
+        <ChevronLeft size={14} strokeWidth={2}/> Voltar
+      </button>
 
-      <div className="bg-white rounded-md border border-n-200 shadow-sm p-5 space-y-4">
+      <div className="bg-white rounded-3xl border border-n-200 shadow-sm p-5 space-y-4">
         <div className="flex items-center justify-between">
           <h2 className="font-display font-bold text-base text-n-900">{r?.units?.name}</h2>
-          <Badge variant={STATUS_BADGE[job.status]}>{STATUS_LABELS[job.status]}</Badge>
+          <StatusBadge status={job.status} />
         </div>
 
         <div className="space-y-3 py-3 border-y border-n-100">
@@ -184,34 +198,39 @@ function JobDetail({ staffId }) {
         </div>
 
         {job.notes_manager && (
-          <div className="bg-n-50 rounded-sm px-3 py-2">
-            <p className="text-xs font-body font-bold uppercase tracking-wide text-n-500 mb-1">Notas do gestor</p>
+          <div className="bg-n-50 rounded-xl px-3 py-2">
+            <p className="text-xs font-mono font-bold uppercase tracking-wide text-n-500 mb-1">Notas do gestor</p>
             <p className="text-sm font-body text-n-700">{job.notes_manager}</p>
           </div>
         )}
 
         <div className="space-y-2 pt-2">
           {job.status === 'pending' && (
-            <Button className="w-full" icon={CheckCircle} loading={acting} onClick={() => updateStatus('confirm')}>
-              Confirmar trabalho
-            </Button>
+            <button onClick={() => updateStatus('confirm')} disabled={acting}
+              className="w-full h-12 bg-turquoise-600 hover:bg-turquoise-700 text-white rounded-2xl font-display font-bold text-sm flex items-center justify-center gap-2 active:scale-[0.99] transition-all disabled:opacity-50">
+              <CheckCircle size={17} strokeWidth={1.75} />
+              {acting ? 'A confirmar...' : 'Confirmar trabalho'}
+            </button>
           )}
           {job.status === 'confirmed' && (
-            <Button className="w-full" icon={PlayCircle} loading={acting} onClick={() => updateStatus('start')}>
-              Iniciar
-            </Button>
+            <button onClick={() => updateStatus('start')} disabled={acting}
+              className="w-full h-12 bg-turquoise-600 hover:bg-turquoise-700 text-white rounded-2xl font-display font-bold text-sm flex items-center justify-center gap-2 active:scale-[0.99] transition-all disabled:opacity-50">
+              <PlayCircle size={17} strokeWidth={1.75} />
+              {acting ? 'A iniciar...' : 'Iniciar'}
+            </button>
           )}
           {job.status === 'in_progress' && (
-            <Button className="w-full" loading={acting} onClick={() => updateStatus('complete')}>
-              Marcar como concluido
-            </Button>
+            <button onClick={() => updateStatus('complete')} disabled={acting}
+              className="w-full h-12 bg-sand-500 hover:bg-sand-600 text-ocean-900 rounded-2xl font-display font-bold text-sm flex items-center justify-center gap-2 active:scale-[0.99] transition-all disabled:opacity-50">
+              {acting ? 'A concluir...' : 'Marcar como concluido'}
+            </button>
           )}
         </div>
 
         {job.fleet?.name && (
           <div className="pt-2 border-t border-n-100">
             {reportDone && (
-              <p className="text-xs font-body text-[#1A7A4A] mb-2">Problema reportado ao gestor.</p>
+              <p className="text-xs font-body text-turquoise-700 mb-2">Problema reportado ao gestor.</p>
             )}
             {!showReport ? (
               <button onClick={() => setShowReport(true)}
@@ -224,7 +243,7 @@ function JobDetail({ staffId }) {
                 <textarea
                   value={reportText} onChange={e => setReportText(e.target.value)}
                   rows={3} placeholder="Descreva o problema com a viatura..."
-                  className="w-full px-3 py-2 rounded-sm border border-n-300 text-sm font-body bg-n-100 focus:outline-none focus:ring-2 focus:ring-ocean-300 focus:border-ocean-700 focus:bg-white resize-none"
+                  className="w-full px-3 py-2 rounded-xl border border-n-300 text-sm font-body bg-n-100 focus:outline-none focus:ring-2 focus:ring-turquoise-300 focus:border-turquoise-600 focus:bg-white resize-none"
                 />
                 <div className="flex gap-2">
                   <Button variant="secondary" className="flex-1" onClick={() => { setShowReport(false); setReportText(''); }}>
@@ -249,43 +268,6 @@ function InfoRow({ icon: Icon, label, value }) {
       <Icon size={15} strokeWidth={1.75} className="text-n-400 shrink-0"/>
       <span className="text-xs font-body text-n-500 w-20">{label}</span>
       <span className="text-sm font-body font-semibold text-n-800">{value || '—'}</span>
-    </div>
-  );
-}
-
-/* ─── Vista: Ganhos (mantida, sem rota/uso no portal generico) ─── */
-function Earnings({ staffId }) {
-  const [data, setData] = useState(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    api.get(`/staff/${staffId}/earnings`).then(r => setData(r.data.data)).finally(() => setLoading(false));
-  }, [staffId]);
-
-  if (loading) return <div className="flex justify-center py-16"><LoadingSpinner size={28}/></div>;
-
-  return (
-    <div className="px-4 py-4">
-      <div className="grid grid-cols-2 gap-3 mb-6">
-        <div className="bg-ocean-700 rounded-md p-4 text-white">
-          <p className="font-display font-bold text-2xl">€{Number(data?.total || 0).toFixed(2)}</p>
-          <p className="text-xs opacity-70 mt-1">Total ganho</p>
-        </div>
-        <div className="bg-white rounded-md border border-n-200 p-4">
-          <p className="font-display font-bold text-2xl text-n-900">€{Number(data?.pending || 0).toFixed(2)}</p>
-          <p className="text-xs text-n-500 mt-1">Por receber</p>
-        </div>
-      </div>
-      <p className="text-xs font-body font-bold uppercase tracking-wide text-n-500 mb-3">Historico</p>
-      {(data?.jobs || []).slice(0,20).map((j, i) => (
-        <div key={i} className="bg-white rounded-sm border border-n-100 px-3 py-2.5 mb-2 flex items-center justify-between">
-          <div>
-            <p className="text-sm font-body font-semibold text-n-800">{formatDate(j.completed_at)}</p>
-            <p className="text-xs font-body text-n-400">{j.earnings_paid ? 'Pago' : 'Pendente'}</p>
-          </div>
-          <p className="font-display font-bold text-ocean-700">€{Number(j.earnings_amount).toFixed(2)}</p>
-        </div>
-      ))}
     </div>
   );
 }
@@ -349,7 +331,7 @@ function StaffAvailability({ staffId }) {
         Toca num dia para marcar como indisponivel. Os dias nao marcados sao considerados disponiveis.
       </p>
 
-      <div className="bg-white rounded-xl border border-n-200 p-4">
+      <div className="bg-white rounded-2xl border border-n-200 p-4">
         <div className="flex items-center justify-between mb-4">
           <button
             type="button"
@@ -361,7 +343,7 @@ function StaffAvailability({ staffId }) {
             className="w-9 h-9 rounded-full flex items-center justify-center text-n-500 hover:bg-n-100 active:scale-95 transition-all"
             aria-label="Mes anterior"
           >
-            ←
+            <ChevronLeft size={18} strokeWidth={2} />
           </button>
           <p className="font-display font-bold text-base text-n-900">
             {MONTHS_PT[viewMonth.month]} {viewMonth.year}
@@ -376,7 +358,7 @@ function StaffAvailability({ staffId }) {
             className="w-9 h-9 rounded-full flex items-center justify-center text-n-500 hover:bg-n-100 active:scale-95 transition-all"
             aria-label="Mes seguinte"
           >
-            →
+            <ChevronRight size={18} strokeWidth={2} />
           </button>
         </div>
 
@@ -401,11 +383,11 @@ function StaffAvailability({ staffId }) {
                     type="button"
                     disabled={isPast}
                     onClick={() => toggle(d)}
-                    className={`aspect-square rounded-lg flex items-center justify-center text-sm font-body font-semibold transition-all active:scale-95 ${
+                    className={`aspect-square rounded-xl flex items-center justify-center text-sm font-body font-semibold transition-all active:scale-95 ${
                       isPast
                         ? 'text-n-300 cursor-not-allowed'
                         : isAvailable
-                        ? `text-[#1A7A4A] bg-[#ECFDF5] ${isT ? 'border-2 border-ocean-300' : ''}`
+                        ? `text-turquoise-700 bg-turquoise-50 ${isT ? 'border-2 border-turquoise-400' : ''}`
                         : 'text-error bg-red-50'
                     }`}
                   >
@@ -419,13 +401,16 @@ function StaffAvailability({ staffId }) {
       </div>
 
       <div className="flex items-center gap-4 text-xs font-body text-n-500">
-        <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-xs bg-[#ECFDF5] border border-[#BBF7D0]" />Disponivel</span>
-        <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-xs bg-red-50 border border-red-200" />Indisponivel</span>
+        <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-md bg-turquoise-50 border border-turquoise-200" />Disponivel</span>
+        <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-md bg-red-50 border border-red-200" />Indisponivel</span>
       </div>
 
-      <Button className="w-full" disabled={!hasChanges} loading={saving} onClick={handleSave}>
-        Guardar
-      </Button>
+      <button
+        onClick={handleSave}
+        disabled={!hasChanges || saving}
+        className="w-full h-12 bg-sand-500 hover:bg-sand-600 text-ocean-900 rounded-2xl font-display font-bold text-sm flex items-center justify-center gap-2 active:scale-[0.99] transition-all disabled:opacity-50">
+        {saving ? 'A guardar...' : 'Guardar'}
+      </button>
     </div>
   );
 }
@@ -494,81 +479,86 @@ function StaffProfile() {
   }
 
   return (
-    <div className="px-4 py-6 space-y-6">
+    <div className="pb-6">
       {loading ? (
         <div className="flex justify-center py-16"><LoadingSpinner size={28}/></div>
       ) : (
         <>
-          {/* Photo */}
-          <div className="flex flex-col items-center">
+          {/* Header com foto */}
+          <div className="bg-gradient-to-br from-ocean-900 to-ocean-700 px-5 pt-8 pb-8 rounded-b-3xl shadow-lg flex flex-col items-center">
             <div className="relative">
-              <div className="w-24 h-24 rounded-full bg-ocean-50 flex items-center justify-center overflow-hidden border-4 border-white shadow-md">
+              <div className="w-24 h-24 rounded-full bg-white/15 flex items-center justify-center overflow-hidden border-4 border-white/30 shadow-md">
                 {photoPreview
                   ? <img src={photoPreview} alt={staffName} className="w-full h-full object-cover" />
-                  : <Camera size={28} strokeWidth={1.5} className="text-ocean-400" />}
+                  : <Camera size={28} strokeWidth={1.5} className="text-white/70" />}
               </div>
               <button type="button" onClick={() => fileRef.current?.click()}
-                className="absolute -bottom-1 -right-1 w-8 h-8 bg-ocean-700 text-white rounded-full flex items-center justify-center shadow-md hover:bg-ocean-500 active:scale-95 transition-all">
+                className="absolute -bottom-1 -right-1 w-8 h-8 bg-sand-500 text-ocean-900 rounded-full flex items-center justify-center shadow-md hover:bg-sand-600 active:scale-95 transition-all">
                 <Upload size={14} strokeWidth={2} />
               </button>
               <input ref={fileRef} type="file" accept="image/*" onChange={handleFile} className="hidden" />
             </div>
-            <p className="font-display font-bold text-lg text-n-900 mt-3">{staffName}</p>
+            <p className="font-display font-bold text-lg text-white mt-3">{staffName}</p>
             {profile?.role && (
-              <span className="mt-1 text-[10px] font-mono uppercase tracking-wide text-sand-600 bg-sand-50 px-2 py-0.5 rounded-full">
+              <span className="mt-1 text-[10px] font-mono uppercase tracking-wide text-sand-400">
                 {profile.role}
               </span>
             )}
           </div>
 
-          {/* Editable fields */}
-          <div className="space-y-4">
+          <div className="px-4 pt-5 space-y-6">
+            {/* Editable fields */}
+            <div className="space-y-4">
+              <div>
+                <label className="flex items-center gap-1.5 text-sm font-body font-semibold text-n-700 mb-2">
+                  <Phone size={14} strokeWidth={1.75} />Telefone
+                </label>
+                <input
+                  type="tel" value={phone} onChange={e => setPhone(e.target.value)}
+                  placeholder="+238 900 0000"
+                  className="w-full h-11 px-4 rounded-xl border border-n-300 text-sm font-body bg-n-100 focus:outline-none focus:ring-2 focus:ring-turquoise-300 focus:border-turquoise-500 focus:bg-white transition-colors"
+                />
+              </div>
+
+              <div>
+                <label className="flex items-center gap-1.5 text-sm font-body font-semibold text-n-700 mb-2">
+                  <MessageCircle size={14} strokeWidth={1.75} />WhatsApp
+                </label>
+                <input
+                  type="tel" value={whatsapp} onChange={e => setWhatsapp(e.target.value)}
+                  placeholder="+238 900 0000"
+                  className="w-full h-11 px-4 rounded-xl border border-n-300 text-sm font-body bg-n-100 focus:outline-none focus:ring-2 focus:ring-turquoise-300 focus:border-turquoise-500 focus:bg-white transition-colors"
+                />
+              </div>
+            </div>
+
+            {/* Read-only info */}
             <div>
-              <label className="flex items-center gap-1.5 text-sm font-body font-semibold text-n-700 mb-2">
-                <Phone size={14} strokeWidth={1.75} />Telefone
-              </label>
-              <input
-                type="tel" value={phone} onChange={e => setPhone(e.target.value)}
-                placeholder="+238 900 0000"
-                className="w-full h-11 px-4 rounded-xl border border-n-300 text-sm font-body bg-n-100 focus:outline-none focus:ring-2 focus:ring-ocean-300 focus:border-ocean-700 focus:bg-white transition-colors"
-              />
+              <p className="text-xs font-mono uppercase tracking-wider text-n-400 mb-2">Definido pelo operador</p>
+              <div className="bg-white rounded-2xl border border-n-200 divide-y divide-n-100">
+                <ReadOnlyRow icon={User} label="Nome" value={staffName} />
+                {profile?.role && <ReadOnlyRow icon={Briefcase} label="Cargo" value={profile.role} />}
+                {staffEmail && <ReadOnlyRow icon={Mail} label="Email" value={staffEmail} />}
+              </div>
             </div>
 
-            <div>
-              <label className="flex items-center gap-1.5 text-sm font-body font-semibold text-n-700 mb-2">
-                <MessageCircle size={14} strokeWidth={1.75} />WhatsApp
-              </label>
-              <input
-                type="tel" value={whatsapp} onChange={e => setWhatsapp(e.target.value)}
-                placeholder="+238 900 0000"
-                className="w-full h-11 px-4 rounded-xl border border-n-300 text-sm font-body bg-n-100 focus:outline-none focus:ring-2 focus:ring-ocean-300 focus:border-ocean-700 focus:bg-white transition-colors"
-              />
-            </div>
+            {/* Change password */}
+            <button
+              onClick={handleChangePassword}
+              disabled={sendingReset}
+              className="w-full h-12 bg-white border border-n-300 text-n-700 rounded-2xl font-body font-semibold text-sm flex items-center justify-center gap-2 active:scale-[0.99] transition-all hover:border-turquoise-300 disabled:opacity-50">
+              <Lock size={16} strokeWidth={1.75} />
+              {sendingReset ? 'A enviar...' : 'Alterar password'}
+            </button>
+
+            {/* Save */}
+            <button
+              onClick={handleSave}
+              disabled={saving}
+              className="w-full h-12 bg-sand-500 hover:bg-sand-600 text-ocean-900 rounded-2xl font-display font-bold text-sm flex items-center justify-center gap-2 active:scale-[0.99] transition-all disabled:opacity-50">
+              {saving ? 'A guardar...' : 'Guardar alteracoes'}
+            </button>
           </div>
-
-          {/* Read-only info */}
-          <div>
-            <p className="text-xs font-mono uppercase tracking-wider text-n-400 mb-2">Definido pelo operador</p>
-            <div className="bg-white rounded-xl border border-n-200 divide-y divide-n-100">
-              <ReadOnlyRow icon={User} label="Nome" value={staffName} />
-              {profile?.role && <ReadOnlyRow icon={Briefcase} label="Cargo" value={profile.role} />}
-              {staffEmail && <ReadOnlyRow icon={Mail} label="Email" value={staffEmail} />}
-            </div>
-          </div>
-
-          {/* Change password */}
-          <button
-            onClick={handleChangePassword}
-            disabled={sendingReset}
-            className="w-full h-12 bg-white border border-n-300 text-n-700 rounded-xl font-body font-semibold text-sm flex items-center justify-center gap-2 active:scale-[0.99] transition-all hover:border-ocean-300 disabled:opacity-50">
-            <Lock size={16} strokeWidth={1.75} />
-            {sendingReset ? 'A enviar...' : 'Alterar password'}
-          </button>
-
-          {/* Save */}
-          <Button className="w-full" size="lg" loading={saving} onClick={handleSave}>
-            Guardar alterações
-          </Button>
         </>
       )}
     </div>
@@ -591,6 +581,7 @@ export default function StaffPortal() {
   const navigate = useNavigate();
   const staffId  = user?.user_metadata?.staff_id;
   const staffRole = user?.user_metadata?.staff_role;
+  const staffName = user?.user_metadata?.name || 'Colaborador';
 
   if (!staffId) {
     navigate('/login');
@@ -598,28 +589,33 @@ export default function StaffPortal() {
   }
 
   const navClass = ({ isActive }) =>
-    `flex-1 flex flex-col items-center gap-1 py-2 text-xs font-body font-semibold transition-colors ${isActive ? 'text-ocean-700' : 'text-n-400'}`;
+    `flex-1 flex flex-col items-center gap-1 py-2.5 text-xs font-body font-semibold transition-colors ${isActive ? 'text-turquoise-700' : 'text-n-400'}`;
+
+  function handleLogout() { logout(); navigate('/login'); }
 
   return (
     <div className="min-h-screen bg-n-50 flex flex-col max-w-md mx-auto">
       {/* Header */}
-      <div className="bg-ocean-900 text-white px-4 py-3 flex items-center justify-between">
-        <Logo white size="sm"/>
-        <div className="flex items-center gap-3">
-          <div className="text-right">
-            <p className="text-sm font-body opacity-80 leading-tight">{user?.user_metadata?.name}</p>
-            {staffRole && (
-              <span className="text-[9px] font-mono uppercase tracking-wide text-sand-400">{staffRole}</span>
-            )}
-          </div>
-          <button onClick={() => { logout(); navigate('/login'); }} className="opacity-60 hover:opacity-100">
-            <LogOut size={16} strokeWidth={1.75}/>
+      <header className="bg-gradient-to-br from-ocean-900 to-ocean-700 px-5 pt-6 pb-5 rounded-b-3xl shadow-lg">
+        <div className="flex items-center justify-between mb-5">
+          <Logo white size="sm" />
+          <button onClick={handleLogout}
+            className="w-10 h-10 rounded-full flex items-center justify-center hover:bg-white/10 active:scale-95 transition-all">
+            <LogOut size={18} strokeWidth={1.75} className="text-ocean-200" />
           </button>
         </div>
-      </div>
+
+        <div className="flex items-center gap-2 mb-1">
+          <Sun size={20} strokeWidth={1.75} className="text-sand-400" />
+          <p className="font-display font-bold text-2xl text-white">Ola, {staffName}</p>
+        </div>
+        {staffRole && (
+          <span className="text-[10px] font-mono uppercase tracking-wide text-sand-400">{staffRole}</span>
+        )}
+      </header>
 
       {/* Conteudo */}
-      <div className="flex-1 overflow-y-auto pb-16">
+      <div className="flex-1 overflow-y-auto pb-20">
         <Routes>
           <Route index element={<JobsList staffId={staffId}/>}/>
           <Route path="jobs"      element={<JobsList staffId={staffId}/>}/>
