@@ -102,6 +102,79 @@ async function mudarStatus(req, res, next) {
   } catch (err) { next(err); }
 }
 
+async function criarComposta(req, res, next) {
+  try {
+    const { reservation_id, vehicle_id, guide_id, driver_id } = req.body;
+    if (!reservation_id || !vehicle_id || !guide_id || !driver_id) {
+      return res.status(400).json({ error: 'reservation_id, vehicle_id, guide_id e driver_id sao obrigatorios', code: 'MISSING_FIELDS' });
+    }
+
+    const isCombined = guide_id === driver_id;
+    const rows = [];
+
+    if (isCombined) {
+      rows.push({
+        reservation_id, vehicle_id,
+        staff_id: guide_id,
+        operator_id: req.operator.id,
+        role: 'guide',
+        role_combined: true,
+        status: 'pending',
+      });
+    } else {
+      rows.push({
+        reservation_id, vehicle_id,
+        staff_id: guide_id,
+        operator_id: req.operator.id,
+        role: 'guide',
+        role_combined: false,
+        status: 'pending',
+      });
+      rows.push({
+        reservation_id, vehicle_id,
+        staff_id: driver_id,
+        operator_id: req.operator.id,
+        role: 'driver',
+        role_combined: false,
+        status: 'pending',
+      });
+    }
+
+    const { data, error } = await supabaseAdmin
+      .from('job_assignments')
+      .insert(rows)
+      .select('*, staff(name, role), reservations(check_in, check_out, customer_name, units(name)), fleet(name, type)');
+    if (error) throw error;
+    return res.status(201).json({ data, message: 'Atribuicao criada' });
+  } catch (err) { next(err); }
+}
+
+async function actualizarNotas(req, res, next) {
+  try {
+    const { notes_staff } = req.body;
+    if (!notes_staff) return res.status(400).json({ error: 'notes_staff e obrigatorio', code: 'MISSING_FIELDS' });
+
+    const { data: current } = await supabaseAdmin
+      .from('job_assignments').select('staff_id, operator_id').eq('id', req.params.id).single();
+    if (!current) return res.status(404).json({ error: 'Nao encontrada', code: 'NOT_FOUND' });
+
+    const isOwnerOperator = req.operator && current.operator_id === req.operator.id;
+    const isOwnerStaff    = req.staff && current.staff_id === req.staff.id;
+    if (!isOwnerOperator && !isOwnerStaff) {
+      return res.status(403).json({ error: 'Acesso não autorizado', code: 'FORBIDDEN' });
+    }
+
+    const { data, error } = await supabaseAdmin
+      .from('job_assignments')
+      .update({ notes_staff, updated_at: new Date().toISOString() })
+      .eq('id', req.params.id)
+      .select()
+      .single();
+    if (error) throw error;
+    return res.json({ data, message: 'Nota guardada' });
+  } catch (err) { next(err); }
+}
+
 async function getAvailableStaff(req, res, next) {
   try {
     const { date } = req.query;
@@ -120,4 +193,4 @@ async function getAvailableStaff(req, res, next) {
   } catch (err) { next(err); }
 }
 
-module.exports = { listar, criar, mudarStatus, getAvailableStaff };
+module.exports = { listar, criar, criarComposta, mudarStatus, actualizarNotas, getAvailableStaff };

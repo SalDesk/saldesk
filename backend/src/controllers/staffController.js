@@ -22,7 +22,7 @@ async function obter(req, res, next) {
   try {
     const [staffRes, jobsRes] = await Promise.all([
       supabaseAdmin.from('staff').select('*').eq('id', req.params.id).eq('operator_id', req.operator.id).single(),
-      supabaseAdmin.from('job_assignments').select('*, reservations(check_in, check_out, customer_name, units(name))').eq('staff_id', req.params.id).order('created_at', { ascending: false }).limit(20),
+      supabaseAdmin.from('job_assignments').select('*, reservations(check_in, check_out, customer_name, units(name)), fleet(name, type)').eq('staff_id', req.params.id).order('created_at', { ascending: false }).limit(20),
     ]);
     if (!staffRes.data) return res.status(404).json({ error: 'Colaborador nao encontrado', code: 'NOT_FOUND' });
     return res.json({ data: { ...staffRes.data, jobs: jobsRes.data || [] }, message: 'Colaborador encontrado' });
@@ -95,7 +95,7 @@ async function getJobs(req, res, next) {
     }
     let q = supabaseAdmin
       .from('job_assignments')
-      .select('*, reservations(check_in, check_out, customer_name, total_amount, units(name, unit_type))')
+      .select('*, reservations(check_in, check_out, customer_name, total_amount, units(name, unit_type)), fleet(name, type)')
       .eq('staff_id', req.params.id)
       .order('created_at', { ascending: false });
     if (req.operator) q = q.eq('operator_id', req.operator.id);

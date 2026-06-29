@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Route, Routes, NavLink } from 'react-router-dom';
-import { Briefcase, Euro, LogOut, CheckCircle, PlayCircle, Clock, MapPin, User, ChevronRight } from 'lucide-react';
+import { Briefcase, Euro, LogOut, CheckCircle, PlayCircle, Clock, MapPin, User, ChevronRight, Car, AlertTriangle } from 'lucide-react';
 import api from '../services/api';
 import useAuthStore from '../store/authStore';
 import { useT } from '../i18n';
@@ -76,6 +76,10 @@ function JobDetail({ staffId }) {
   const [job, setJob]       = useState(null);
   const [loading, setLoading] = useState(true);
   const [acting, setActing]   = useState(false);
+  const [showReport, setShowReport] = useState(false);
+  const [reportText, setReportText] = useState('');
+  const [reporting, setReporting]   = useState(false);
+  const [reportDone, setReportDone] = useState(false);
 
   useEffect(() => {
     api.get(`/staff/${staffId}/jobs`).then(r => {
@@ -90,6 +94,16 @@ function JobDetail({ staffId }) {
       await api.put(`/assignments/${jobId}/${action}`, { notes_staff: notes });
       navigate('/staff/jobs');
     } finally { setActing(false); }
+  }
+
+  async function handleReportIssue() {
+    if (!reportText.trim()) return;
+    setReporting(true);
+    try {
+      await api.put(`/assignments/${jobId}/notes`, { notes_staff: reportText });
+      setReportDone(true);
+      setShowReport(false);
+    } finally { setReporting(false); }
   }
 
   if (loading) return <div className="flex justify-center py-16"><LoadingSpinner size={28}/></div>;
@@ -111,6 +125,7 @@ function JobDetail({ staffId }) {
           <InfoRow icon={User}    label="Cliente"   value={r?.customer_name} />
           <InfoRow icon={Clock}   label="Check-in"  value={formatDate(r?.check_in)} />
           <InfoRow icon={Clock}   label="Check-out" value={formatDate(r?.check_out)} />
+          {job.fleet?.name && <InfoRow icon={Car} label="Viatura" value={job.fleet.name} />}
           {job.earnings_amount > 0 && <InfoRow icon={Euro} label="Ganho" value={`€${Number(job.earnings_amount).toFixed(2)}`} />}
         </div>
 
@@ -138,6 +153,37 @@ function JobDetail({ staffId }) {
             </Button>
           )}
         </div>
+
+        {job.fleet?.name && (
+          <div className="pt-2 border-t border-n-100">
+            {reportDone && (
+              <p className="text-xs font-body text-[#1A7A4A] mb-2">Problema reportado ao gestor.</p>
+            )}
+            {!showReport ? (
+              <button onClick={() => setShowReport(true)}
+                className="w-full text-sm font-body font-semibold text-error flex items-center justify-center gap-1.5 py-2">
+                <AlertTriangle size={14} strokeWidth={1.75} />
+                Reportar problema com a viatura
+              </button>
+            ) : (
+              <div className="space-y-2">
+                <textarea
+                  value={reportText} onChange={e => setReportText(e.target.value)}
+                  rows={3} placeholder="Descreva o problema com a viatura..."
+                  className="w-full px-3 py-2 rounded-sm border border-n-300 text-sm font-body bg-n-100 focus:outline-none focus:ring-2 focus:ring-ocean-300 focus:border-ocean-700 focus:bg-white resize-none"
+                />
+                <div className="flex gap-2">
+                  <Button variant="secondary" className="flex-1" onClick={() => { setShowReport(false); setReportText(''); }}>
+                    Cancelar
+                  </Button>
+                  <Button className="flex-1" loading={reporting} disabled={!reportText.trim()} onClick={handleReportIssue}>
+                    Enviar
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

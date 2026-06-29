@@ -29,7 +29,7 @@ import Badge from '../components/ui/Badge';
 import LoadingSpinner from '../components/shared/LoadingSpinner';
 
 /* ── Constants ── */
-const ROLES = ['Instrutor', 'Guia', 'Motorista', 'Assistente', 'Recepcao', 'Coordenador', 'Vendedor de Praia', 'Outro'];
+const ROLES = ['Instrutor', 'Guia', 'Motorista', 'Condutor', 'Assistente', 'Recepcao', 'Coordenador', 'Vendedor de Praia', 'Outro'];
 const SELLER_ZONES = ['Santa Maria Norte', 'Santa Maria Sul', 'Praia de Santa Maria', 'Aeroporto', 'Espargos', 'Outro'];
 const DAYS  = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sab', 'Dom'];
 const PRIO  = { low: 'Baixa', medium: 'Media', high: 'Alta', urgent: 'Urgente' };
