@@ -29,7 +29,13 @@ import Badge from '../components/ui/Badge';
 import LoadingSpinner from '../components/shared/LoadingSpinner';
 
 /* ── Constants ── */
-const ROLES = ['Instrutor', 'Guia', 'Motorista', 'Condutor', 'Assistente', 'Recepcao', 'Coordenador', 'Vendedor de Praia', 'Outro'];
+const ROLES_BY_TYPE = {
+  activity:   ['Guia', 'Instrutor', 'Condutor', 'Vendedor de Praia', 'Administracao', 'Gestor/Supervisor'],
+  hotel:      ['Recepcionista', 'Camareira/Housekeeping', 'Porteiro', 'Manutencao', 'Administracao', 'Gestor/Supervisor'],
+  rentacar:   ['Mecanico', 'Motorista', 'Lavador/Detailing', 'Inspector', 'Administracao', 'Gestor/Supervisor'],
+  restaurant: ['Garcom', 'Cozinheiro/Chef', 'Sub-chef', 'Bartender', 'Caixa', 'Empregado de Limpeza', 'Administracao', 'Gestor/Supervisor'],
+};
+const ROLES_DEFAULT = ['Administracao', 'Gestor/Supervisor'];
 const SELLER_ZONES = ['Santa Maria Norte', 'Santa Maria Sul', 'Praia de Santa Maria', 'Aeroporto', 'Espargos', 'Outro'];
 const DAYS  = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sab', 'Dom'];
 const PRIO  = { low: 'Baixa', medium: 'Media', high: 'Alta', urgent: 'Urgente' };
@@ -156,10 +162,10 @@ function StaffCard({ member, onEdit, onDelete, onCreateAccount, creatingAccountI
 }
 
 /* ── StaffForm ── */
-function StaffForm({ member, onSave, onCancel, loading, error }) {
+function StaffForm({ member, onSave, onCancel, loading, error, roles }) {
   const [form, setForm] = useState({
     name:           member?.name          || '',
-    role:           member?.role          || ROLES[0],
+    role:           member?.role          || roles[0],
     phone:          member?.phone         || '',
     email:          member?.email         || '',
     whatsapp:       member?.whatsapp      || '',
@@ -246,7 +252,10 @@ function StaffForm({ member, onSave, onCancel, loading, error }) {
 
       <div className="grid grid-cols-2 gap-3">
         <Select label="Cargo" value={form.role} onChange={set('role')} required>
-          {ROLES.map(r => <option key={r} value={r}>{r}</option>)}
+          {member?.role && !roles.includes(member.role) && (
+            <option value={member.role}>{member.role} (cargo anterior)</option>
+          )}
+          {roles.map(r => <option key={r} value={r}>{r}</option>)}
         </Select>
         {member && (
           <Select label="Estado" value={form.status} onChange={set('status')}>
@@ -1149,6 +1158,9 @@ function ChatTab({ staffList }) {
 
 /* ── Main Staff Page ── */
 export default function Staff() {
+  const { operator } = useAuthStore();
+  const ROLES = ROLES_BY_TYPE[operator?.operator_type] || ROLES_DEFAULT;
+
   const [tab, setTab]               = useState('staff');
   const [staffList, setStaffList]   = useState([]);
   const [loading, setLoading]       = useState(true);
@@ -1379,6 +1391,7 @@ export default function Staff() {
             onCancel={() => setModal(null)}
             loading={formLoading}
             error={formError}
+            roles={ROLES}
           />
         )}
       </Modal>
