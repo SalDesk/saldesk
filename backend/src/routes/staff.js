@@ -7,7 +7,7 @@ const reqOpOrStaff = require('../middleware/requireOperatorOrStaff');
 
 router.use(auth);
 
-router.get('/',                        reqOp, listar);
+router.get('/',                        reqOpOrStaff, listar);
 router.get('/me',                      reqOpOrStaff, obterPerfilProprio);
 router.put('/me',                      reqOpOrStaff, actualizarPerfilProprio);
 router.get('/:id',                     reqOp, obter);

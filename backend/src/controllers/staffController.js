@@ -9,7 +9,7 @@ async function listar(req, res, next) {
     let q = supabaseAdmin
       .from('staff')
       .select('*')
-      .eq('operator_id', req.operator.id)
+      .eq('operator_id', req.operator?.id || req.staff?.operator_id)
       .order('name');
     if (status) q = q.eq('status', status);
     const { data, error } = await q;

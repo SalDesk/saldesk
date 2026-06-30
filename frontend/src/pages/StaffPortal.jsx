@@ -1,12 +1,12 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, Route, Routes, NavLink } from 'react-router-dom';
 import {
-  Briefcase, Euro, LogOut, CheckCircle, PlayCircle, Clock, MapPin, User, ChevronRight, ChevronLeft, Car, AlertTriangle,
+  Briefcase, Euro, LogOut, CheckCircle, PlayCircle, Clock, MapPin, User, Users, ChevronRight, ChevronLeft, Car, AlertTriangle,
   Calendar, CalendarCheck, MessageCircle, Camera, Upload, Phone, Lock, Mail, Sun, Send,
 } from 'lucide-react';
 import { io } from 'socket.io-client';
 import api from '../services/api';
-import { getMyProfile, updateMyProfile, setAvailability } from '../services/staffService';
+import { getMyProfile, updateMyProfile, setAvailability, listStaff } from '../services/staffService';
 import { listGroups, listMessages, sendMessage } from '../services/messageService';
 import { forgotPassword } from '../services/authService';
 import { getMonthGrid } from '../utils/calendar';
@@ -287,56 +287,86 @@ function StaffCalendar() {
 
 /* ─── Vista: Chat de equipa ─── */
 function StaffChat({ staffId }) {
-  const { token, user } = useAuthStore();
-  const [group,    setGroup]    = useState(null);
-  const [messages, setMessages] = useState([]);
-  const [text,     setText]     = useState('');
-  const [loading,  setLoading]  = useState(true);
-  const [status,   setStatus]   = useState('loading'); // 'loading' | 'no_group' | 'not_member' | 'ready'
-  const socketRef = useRef(null);
-  const bottomRef = useRef(null);
+  const { token } = useAuthStore();
+  const [view,            setView]      = useState('list'); // 'list' | 'conversation'
+  const [selectedContact, setSelected]  = useState(null);  // { id, name, type:'group'|'dm', ... }
+  const [groups,      setGroups]     = useState([]);
+  const [colleagues,  setColleagues] = useState([]);
+  const [messages,    setMessages]   = useState([]);
+  const [text,        setText]       = useState('');
+  const [loading,     setLoading]    = useState(true);
+  const [loadingMsgs, setLoadingMsgs] = useState(false);
+  const socketRef    = useRef(null);
+  const bottomRef    = useRef(null);
+  const selectedRef  = useRef(null);
 
+  useEffect(() => { selectedRef.current = selectedContact; }, [selectedContact]);
+
+  /* Carregar grupos + colegas ao montar */
   useEffect(() => {
-    (async () => {
-      try {
-        const groups = await listGroups();
-        const teamGroup = (groups || []).find(g => g.name === 'Equipa');
-        if (!teamGroup) { setStatus('no_group'); return; }
-        const isMember = (teamGroup.members || []).includes(staffId);
-        if (!isMember) { setStatus('not_member'); return; }
-        setGroup(teamGroup);
-        const result = await listMessages({ group_id: teamGroup.id });
-        setMessages(result?.data || []);
-        setStatus('ready');
-        setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: 'auto' }), 50);
-      } catch {
-        setStatus('no_group');
-      } finally {
-        setLoading(false);
-      }
-    })();
+    Promise.all([listGroups(), listStaff({ status: 'active' })])
+      .then(([g, s]) => {
+        setGroups(g || []);
+        setColleagues((s || []).filter(m => m.id !== staffId));
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
   }, [staffId]);
 
+  /* WebSocket — ligado enquanto a aba Chat estiver aberta */
   useEffect(() => {
-    if (status !== 'ready' || !group) return;
+    if (!token) return;
     const socketUrl = (import.meta.env.VITE_API_URL || 'http://localhost:3001/api/v1').replace('/api/v1', '');
     const socket = io(socketUrl, { auth: { token } });
     socketRef.current = socket;
     socket.on('message:new', (msg) => {
-      if (msg.group_id === group.id) {
+      const cur = selectedRef.current;
+      if (!cur) return;
+      const isRelevant =
+        (cur.type === 'group' && msg.group_id === cur.id) ||
+        (cur.type === 'dm' && !msg.group_id && (
+          msg.sender_id === cur.id ||
+          (msg.sender_id === staffId && msg.recipient_id === cur.id)
+        ));
+      if (isRelevant) {
         setMessages(prev => prev.find(m => m.id === msg.id) ? prev : [...prev, msg]);
         setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: 'smooth' }), 50);
       }
     });
     return () => socket.disconnect();
-  }, [status, group, token]);
+  }, [token, staffId]);
+
+  async function openConversation(contact) {
+    setSelected(contact);
+    selectedRef.current = contact;
+    setView('conversation');
+    setMessages([]);
+    setLoadingMsgs(true);
+    try {
+      const params = contact.type === 'group'
+        ? { group_id: contact.id }
+        : { recipient_id: contact.id };
+      const result = await listMessages(params);
+      setMessages(result?.data || []);
+      setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: 'auto' }), 50);
+    } finally {
+      setLoadingMsgs(false);
+    }
+  }
 
   async function handleSend() {
     const content = text.trim();
-    if (!content || !group) return;
+    if (!content || !selectedContact) return;
     setText('');
+    const payload = selectedContact.type === 'group'
+      ? { content, group_id: selectedContact.id, message_type: 'group', recipient_type: 'group' }
+      : { content, recipient_id: selectedContact.id, recipient_type: 'staff', message_type: 'direct' };
     try {
-      await sendMessage({ group_id: group.id, content, message_type: 'group', recipient_type: 'group' });
+      const msg = await sendMessage(payload);
+      if (msg) {
+        setMessages(prev => [...prev, msg]);
+        setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: 'smooth' }), 50);
+      }
     } catch {
       setText(content);
     }
@@ -344,38 +374,91 @@ function StaffChat({ staffId }) {
 
   if (loading) return <div className="flex justify-center py-16"><LoadingSpinner size={28}/></div>;
 
-  if (status === 'no_group') return (
-    <div className="flex flex-col items-center justify-center py-16 px-6 text-center">
-      <MessageCircle size={40} strokeWidth={1} className="text-n-300 mb-3"/>
-      <p className="font-display font-bold text-n-700">Sem grupo de equipa</p>
-      <p className="text-sm font-body text-n-400 mt-2">O operador ainda nao criou o grupo de equipa. Contacte o seu responsavel.</p>
-    </div>
-  );
+  /* === Vista: lista de contactos === */
+  if (view === 'list') {
+    const hasAnything = groups.length > 0 || colleagues.length > 0;
+    return (
+      <div className="px-4 py-4 space-y-5">
+        {!hasAnything && (
+          <div className="flex flex-col items-center justify-center py-16 text-center">
+            <MessageCircle size={40} strokeWidth={1} className="text-n-300 mb-3"/>
+            <p className="font-display font-bold text-n-700">Sem conversas</p>
+            <p className="text-sm font-body text-n-400 mt-2">Ainda nao existem grupos nem colaboradores associados.</p>
+          </div>
+        )}
 
-  if (status === 'not_member') return (
-    <div className="flex flex-col items-center justify-center py-16 px-6 text-center">
-      <MessageCircle size={40} strokeWidth={1} className="text-n-300 mb-3"/>
-      <p className="font-display font-bold text-n-700">Nao foi adicionado</p>
-      <p className="text-sm font-body text-n-400 mt-2">Ainda nao foi adicionado ao grupo de equipa. Contacte o seu responsavel.</p>
-    </div>
-  );
+        {groups.length > 0 && (
+          <div>
+            <p className="text-xs font-mono font-bold uppercase tracking-wide text-n-500 mb-3">Grupos</p>
+            {groups.map(g => (
+              <button key={g.id}
+                onClick={() => openConversation({ id: g.id, name: g.name, type: 'group', memberCount: (g.members || []).length })}
+                className="w-full bg-white rounded-2xl border border-n-200 shadow-sm px-4 py-3 mb-2 flex items-center gap-3 text-left hover:border-turquoise-300 transition-colors">
+                <div className="w-10 h-10 rounded-xl bg-sand-100 flex items-center justify-center shrink-0">
+                  <Users size={16} strokeWidth={1.75} className="text-sand-600"/>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-display font-bold text-sm text-n-900">{g.name}</p>
+                  <p className="text-xs font-body text-n-400 mt-0.5">{(g.members || []).length} membros</p>
+                </div>
+                <ChevronRight size={16} strokeWidth={1.75} className="text-n-300 shrink-0"/>
+              </button>
+            ))}
+          </div>
+        )}
 
+        {colleagues.length > 0 && (
+          <div>
+            <p className="text-xs font-mono font-bold uppercase tracking-wide text-n-500 mb-3">Equipa</p>
+            {colleagues.map((c, i) => (
+              <button key={c.id}
+                onClick={() => openConversation({ id: c.id, name: c.name, type: 'dm', role: c.role })}
+                className="w-full bg-white rounded-2xl border border-n-200 shadow-sm px-4 py-3 mb-2 flex items-center gap-3 text-left hover:border-turquoise-300 transition-colors">
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${TOUR_ICON_BG[i % TOUR_ICON_BG.length]}`}>
+                  <User size={16} strokeWidth={1.75}/>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-display font-bold text-sm text-n-900">{c.name}</p>
+                  {c.role && <p className="text-xs font-body text-n-400 mt-0.5">{c.role}</p>}
+                </div>
+                <ChevronRight size={16} strokeWidth={1.75} className="text-n-300 shrink-0"/>
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  /* === Vista: conversa activa === */
   return (
     <div className="flex flex-col" style={{ height: 'calc(100vh - 13rem)' }}>
-      {/* Header do grupo */}
+      {/* Cabeçalho */}
       <div className="px-4 py-3 border-b border-n-200 flex items-center gap-3 bg-white">
-        <div className="w-9 h-9 rounded-xl bg-sand-100 flex items-center justify-center shrink-0">
-          <MessageCircle size={16} strokeWidth={1.75} className="text-sand-600"/>
+        <button onClick={() => { setView('list'); setSelected(null); selectedRef.current = null; }}
+          className="w-8 h-8 rounded-xl flex items-center justify-center text-n-500 hover:bg-n-100 transition-colors shrink-0">
+          <ChevronLeft size={18} strokeWidth={2}/>
+        </button>
+        <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${selectedContact.type === 'group' ? 'bg-sand-100' : 'bg-turquoise-100'}`}>
+          {selectedContact.type === 'group'
+            ? <Users size={16} strokeWidth={1.75} className="text-sand-600"/>
+            : <User  size={16} strokeWidth={1.75} className="text-turquoise-700"/>}
         </div>
-        <div>
-          <p className="font-display font-bold text-sm text-n-900">Equipa</p>
-          <p className="text-xs font-body text-n-400">{(group?.members || []).length} membros</p>
+        <div className="min-w-0 flex-1">
+          <p className="font-display font-bold text-sm text-n-900 truncate">{selectedContact.name}</p>
+          <p className="text-xs font-body text-n-400">
+            {selectedContact.type === 'group'
+              ? `${selectedContact.memberCount} membros`
+              : selectedContact.role || 'Colaborador'}
+          </p>
         </div>
       </div>
 
-      {/* Lista de mensagens */}
+      {/* Mensagens */}
       <div className="flex-1 overflow-y-auto px-4 py-3 space-y-2">
-        {messages.length === 0 ? (
+        {loadingMsgs ? (
+          <div className="flex justify-center py-8"><LoadingSpinner size={24}/></div>
+        ) : messages.length === 0 ? (
           <div className="flex justify-center py-12">
             <p className="text-xs font-body text-n-400">Sem mensagens ainda. Comece a conversa.</p>
           </div>
@@ -388,8 +471,8 @@ function StaffChat({ staffId }) {
                   ? 'bg-ocean-700 text-white rounded-br-sm'
                   : 'bg-white border border-n-200 text-n-800 rounded-bl-sm'
               }`}>
-                {!isOwn && (
-                  <p className="text-[10px] font-mono text-n-400 mb-0.5 capitalize">
+                {!isOwn && selectedContact.type === 'group' && (
+                  <p className="text-[10px] font-mono text-n-400 mb-0.5">
                     {msg.sender_name || (msg.sender_type === 'manager' ? 'Gestor' : 'Equipa')}
                   </p>
                 )}
