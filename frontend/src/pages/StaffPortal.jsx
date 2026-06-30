@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { useParams, useNavigate, Route, Routes, NavLink } from 'react-router-dom';
 import {
   Briefcase, Euro, LogOut, CheckCircle, PlayCircle, Clock, MapPin, User, Users, ChevronRight, ChevronLeft, Car, AlertTriangle,
@@ -45,14 +45,8 @@ function getWeekRange() {
 }
 
 /* ─── Vista: Lista de trabalhos ─── */
-function JobsList({ staffId }) {
-  const [jobs, setJobs]     = useState([]);
-  const [loading, setLoading] = useState(true);
+function JobsList({ jobs, loading }) {
   const navigate = useNavigate();
-
-  useEffect(() => {
-    api.get(`/staff/${staffId}/jobs`).then(r => setJobs(r.data.data || [])).finally(() => setLoading(false));
-  }, [staffId]);
 
   if (loading) return <div className="flex justify-center py-16"><LoadingSpinner size={28}/></div>;
 
@@ -274,13 +268,122 @@ function InfoRow({ icon: Icon, label, value }) {
   );
 }
 
-/* ─── Vista: Calendario (placeholder) ─── */
-function StaffCalendar() {
+/* ─── Vista: Calendario ─── */
+function StaffCalendar({ jobs, loading }) {
+  const navigate = useNavigate();
+  const [viewMonth, setViewMonth] = useState(() => {
+    const d = new Date();
+    return { year: d.getFullYear(), month: d.getMonth() };
+  });
+
+  const jobsByDate = useMemo(() => {
+    const map = {};
+    (jobs || []).forEach(j => {
+      const d = j.reservations?.check_in;
+      if (!d) return;
+      if (!map[d]) map[d] = [];
+      map[d].push(j);
+    });
+    return map;
+  }, [jobs]);
+
+  function dayStyle(d) {
+    const dayJobs = jobsByDate[d] || [];
+    const isToday = d === TODAY;
+    if (dayJobs.length === 0) {
+      return isToday
+        ? 'bg-ocean-50 border-2 border-ocean-300 text-ocean-700'
+        : 'text-n-700';
+    }
+    const statuses = dayJobs.map(j => j.status);
+    if (statuses.includes('in_progress')) return 'bg-turquoise-500 text-white';
+    if (statuses.includes('confirmed'))   return 'bg-ocean-700 text-white';
+    if (statuses.includes('pending'))     return 'bg-sand-100 border border-sand-400 text-sand-700';
+    return 'bg-n-200 text-n-600';
+  }
+
+  if (loading) return <div className="flex justify-center py-16"><LoadingSpinner size={28}/></div>;
+
   return (
-    <div className="flex flex-col items-center justify-center py-20 text-n-400 px-4">
-      <Calendar size={36} strokeWidth={1.25} className="mb-3" />
-      <p className="font-body font-semibold text-n-600">Em breve</p>
-      <p className="text-sm font-body text-n-400 mt-1 text-center">A vista de calendario completa estara disponivel brevemente.</p>
+    <div className="px-4 py-4 space-y-4">
+      {/* Navegacao de mes */}
+      <div className="flex items-center justify-between">
+        <button
+          type="button"
+          onClick={() => setViewMonth(v => {
+            const m = v.month === 0 ? 11 : v.month - 1;
+            const y = v.month === 0 ? v.year - 1 : v.year;
+            return { year: y, month: m };
+          })}
+          className="w-9 h-9 rounded-full flex items-center justify-center text-n-500 hover:bg-n-100 active:scale-95 transition-all"
+          aria-label="Mes anterior"
+        >
+          <ChevronLeft size={18} strokeWidth={2}/>
+        </button>
+        <p className="font-display font-bold text-base text-n-900">
+          {MONTHS_PT[viewMonth.month]} {viewMonth.year}
+        </p>
+        <button
+          type="button"
+          onClick={() => setViewMonth(v => {
+            const m = v.month === 11 ? 0 : v.month + 1;
+            const y = v.month === 11 ? v.year + 1 : v.year;
+            return { year: y, month: m };
+          })}
+          className="w-9 h-9 rounded-full flex items-center justify-center text-n-500 hover:bg-n-100 active:scale-95 transition-all"
+          aria-label="Mes seguinte"
+        >
+          <ChevronRight size={18} strokeWidth={2}/>
+        </button>
+      </div>
+
+      {/* Cabecalho dos dias */}
+      <div className="grid grid-cols-7 gap-1">
+        {DAYS_PT.map(d => (
+          <div key={d} className="text-center text-[10px] font-mono uppercase tracking-wide text-n-400 py-1">{d}</div>
+        ))}
+      </div>
+
+      {/* Grelha */}
+      <div className="space-y-1">
+        {getMonthGrid(viewMonth.year, viewMonth.month).map((week, wi) => (
+          <div key={wi} className="grid grid-cols-7 gap-1">
+            {week.map((d, di) => {
+              if (!d) return <div key={di}/>;
+              const dayJobs = jobsByDate[d] || [];
+              const hasJob  = dayJobs.length > 0;
+              const dayNum  = Number(d.slice(8, 10));
+              return (
+                <button
+                  key={d}
+                  type="button"
+                  disabled={!hasJob}
+                  onClick={() => hasJob && navigate(`/staff/jobs/${dayJobs[0].id}`)}
+                  className={`aspect-square rounded-xl flex flex-col items-center justify-center text-sm font-body font-semibold transition-all ${
+                    hasJob ? 'active:scale-95' : 'cursor-default'
+                  } ${dayStyle(d)}`}
+                >
+                  {dayNum}
+                  {hasJob && <span className="w-1 h-1 rounded-full bg-current opacity-60 mt-0.5"/>}
+                </button>
+              );
+            })}
+          </div>
+        ))}
+      </div>
+
+      {/* Legenda */}
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-2 pt-1 text-xs font-body text-n-500">
+        <span className="flex items-center gap-1.5">
+          <span className="w-3.5 h-3.5 rounded-lg bg-ocean-700 shrink-0"/>Confirmado
+        </span>
+        <span className="flex items-center gap-1.5">
+          <span className="w-3.5 h-3.5 rounded-lg bg-turquoise-500 shrink-0"/>Em curso
+        </span>
+        <span className="flex items-center gap-1.5">
+          <span className="w-3.5 h-3.5 rounded-lg bg-sand-100 border border-sand-400 shrink-0"/>Pendente
+        </span>
+      </div>
     </div>
   );
 }
@@ -783,10 +886,21 @@ function ReadOnlyRow({ icon: Icon, label, value }) {
 /* ─── Portal Principal ─── */
 export default function StaffPortal() {
   const { user, logout } = useAuthStore();
-  const navigate = useNavigate();
-  const staffId  = user?.user_metadata?.staff_id;
+  const navigate  = useNavigate();
+  const staffId   = user?.user_metadata?.staff_id;
   const staffRole = user?.user_metadata?.staff_role;
   const staffName = user?.user_metadata?.name || 'Colaborador';
+
+  const [jobs, setJobs]           = useState([]);
+  const [jobsLoading, setJobsLoading] = useState(false);
+
+  useEffect(() => {
+    if (!staffId) return;
+    setJobsLoading(true);
+    api.get(`/staff/${staffId}/jobs`)
+      .then(r => setJobs(r.data.data || []))
+      .finally(() => setJobsLoading(false));
+  }, [staffId]);
 
   if (!staffId) {
     navigate('/login');
@@ -822,13 +936,13 @@ export default function StaffPortal() {
       {/* Conteudo */}
       <div className="flex-1 overflow-y-auto pb-20">
         <Routes>
-          <Route index element={<JobsList staffId={staffId}/>}/>
-          <Route path="jobs"      element={<JobsList staffId={staffId}/>}/>
+          <Route index element={<JobsList jobs={jobs} loading={jobsLoading}/>}/>
+          <Route path="jobs"        element={<JobsList jobs={jobs} loading={jobsLoading}/>}/>
           <Route path="jobs/:jobId" element={<JobDetail staffId={staffId}/>}/>
-          <Route path="calendario"     element={<StaffCalendar/>}/>
-          <Route path="disponibilidade" element={<StaffAvailability staffId={staffId}/>}/>
-          <Route path="chat"           element={<StaffChat staffId={staffId}/>}/>
-          <Route path="perfil"         element={<StaffProfile/>}/>
+          <Route path="calendario"       element={<StaffCalendar jobs={jobs} loading={jobsLoading}/>}/>
+          <Route path="disponibilidade"  element={<StaffAvailability staffId={staffId}/>}/>
+          <Route path="chat"             element={<StaffChat staffId={staffId}/>}/>
+          <Route path="perfil"           element={<StaffProfile/>}/>
         </Routes>
       </div>
 
