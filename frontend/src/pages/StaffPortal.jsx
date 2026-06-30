@@ -2,10 +2,12 @@ import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, Route, Routes, NavLink } from 'react-router-dom';
 import {
   Briefcase, Euro, LogOut, CheckCircle, PlayCircle, Clock, MapPin, User, ChevronRight, ChevronLeft, Car, AlertTriangle,
-  Calendar, CalendarCheck, MessageCircle, Camera, Upload, Phone, Lock, Mail, Sun,
+  Calendar, CalendarCheck, MessageCircle, Camera, Upload, Phone, Lock, Mail, Sun, Send,
 } from 'lucide-react';
+import { io } from 'socket.io-client';
 import api from '../services/api';
 import { getMyProfile, updateMyProfile, setAvailability } from '../services/staffService';
+import { listGroups, listMessages, sendMessage } from '../services/messageService';
 import { forgotPassword } from '../services/authService';
 import { getMonthGrid } from '../utils/calendar';
 import useAuthStore from '../store/authStore';
@@ -283,13 +285,139 @@ function StaffCalendar() {
   );
 }
 
-/* ─── Vista: Chat (placeholder) ─── */
-function StaffChat() {
+/* ─── Vista: Chat de equipa ─── */
+function StaffChat({ staffId }) {
+  const { token, user } = useAuthStore();
+  const [group,    setGroup]    = useState(null);
+  const [messages, setMessages] = useState([]);
+  const [text,     setText]     = useState('');
+  const [loading,  setLoading]  = useState(true);
+  const [status,   setStatus]   = useState('loading'); // 'loading' | 'no_group' | 'not_member' | 'ready'
+  const socketRef = useRef(null);
+  const bottomRef = useRef(null);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const groups = await listGroups();
+        const teamGroup = (groups || []).find(g => g.name === 'Equipa');
+        if (!teamGroup) { setStatus('no_group'); return; }
+        const isMember = (teamGroup.members || []).includes(staffId);
+        if (!isMember) { setStatus('not_member'); return; }
+        setGroup(teamGroup);
+        const result = await listMessages({ group_id: teamGroup.id });
+        setMessages(result?.data || []);
+        setStatus('ready');
+        setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: 'auto' }), 50);
+      } catch {
+        setStatus('no_group');
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, [staffId]);
+
+  useEffect(() => {
+    if (status !== 'ready' || !group) return;
+    const socketUrl = (import.meta.env.VITE_API_URL || 'http://localhost:3001/api/v1').replace('/api/v1', '');
+    const socket = io(socketUrl, { auth: { token } });
+    socketRef.current = socket;
+    socket.on('message:new', (msg) => {
+      if (msg.group_id === group.id) {
+        setMessages(prev => prev.find(m => m.id === msg.id) ? prev : [...prev, msg]);
+        setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: 'smooth' }), 50);
+      }
+    });
+    return () => socket.disconnect();
+  }, [status, group, token]);
+
+  async function handleSend() {
+    const content = text.trim();
+    if (!content || !group) return;
+    setText('');
+    try {
+      await sendMessage({ group_id: group.id, content, message_type: 'group', recipient_type: 'group' });
+    } catch {
+      setText(content);
+    }
+  }
+
+  if (loading) return <div className="flex justify-center py-16"><LoadingSpinner size={28}/></div>;
+
+  if (status === 'no_group') return (
+    <div className="flex flex-col items-center justify-center py-16 px-6 text-center">
+      <MessageCircle size={40} strokeWidth={1} className="text-n-300 mb-3"/>
+      <p className="font-display font-bold text-n-700">Sem grupo de equipa</p>
+      <p className="text-sm font-body text-n-400 mt-2">O operador ainda nao criou o grupo de equipa. Contacte o seu responsavel.</p>
+    </div>
+  );
+
+  if (status === 'not_member') return (
+    <div className="flex flex-col items-center justify-center py-16 px-6 text-center">
+      <MessageCircle size={40} strokeWidth={1} className="text-n-300 mb-3"/>
+      <p className="font-display font-bold text-n-700">Nao foi adicionado</p>
+      <p className="text-sm font-body text-n-400 mt-2">Ainda nao foi adicionado ao grupo de equipa. Contacte o seu responsavel.</p>
+    </div>
+  );
+
   return (
-    <div className="flex flex-col items-center justify-center py-20 text-n-400 px-4">
-      <MessageCircle size={36} strokeWidth={1.25} className="mb-3" />
-      <p className="font-body font-semibold text-n-600">Em breve</p>
-      <p className="text-sm font-body text-n-400 mt-1 text-center">O chat com o gestor estara disponivel brevemente.</p>
+    <div className="flex flex-col" style={{ height: 'calc(100vh - 13rem)' }}>
+      {/* Header do grupo */}
+      <div className="px-4 py-3 border-b border-n-200 flex items-center gap-3 bg-white">
+        <div className="w-9 h-9 rounded-xl bg-sand-100 flex items-center justify-center shrink-0">
+          <MessageCircle size={16} strokeWidth={1.75} className="text-sand-600"/>
+        </div>
+        <div>
+          <p className="font-display font-bold text-sm text-n-900">Equipa</p>
+          <p className="text-xs font-body text-n-400">{(group?.members || []).length} membros</p>
+        </div>
+      </div>
+
+      {/* Lista de mensagens */}
+      <div className="flex-1 overflow-y-auto px-4 py-3 space-y-2">
+        {messages.length === 0 ? (
+          <div className="flex justify-center py-12">
+            <p className="text-xs font-body text-n-400">Sem mensagens ainda. Comece a conversa.</p>
+          </div>
+        ) : messages.map((msg, i) => {
+          const isOwn = msg.sender_type === 'staff' && msg.sender_id === staffId;
+          return (
+            <div key={msg.id || i} className={`flex ${isOwn ? 'justify-end' : 'justify-start'}`}>
+              <div className={`max-w-[75%] px-3 py-2 rounded-2xl text-sm font-body ${
+                isOwn
+                  ? 'bg-ocean-700 text-white rounded-br-sm'
+                  : 'bg-white border border-n-200 text-n-800 rounded-bl-sm'
+              }`}>
+                {!isOwn && (
+                  <p className="text-[10px] font-mono text-n-400 mb-0.5 capitalize">
+                    {msg.sender_name || (msg.sender_type === 'manager' ? 'Gestor' : 'Equipa')}
+                  </p>
+                )}
+                <p className="leading-relaxed whitespace-pre-wrap break-words">{msg.content}</p>
+              </div>
+            </div>
+          );
+        })}
+        <div ref={bottomRef} />
+      </div>
+
+      {/* Input */}
+      <div className="px-4 py-3 bg-white border-t border-n-200 flex items-center gap-2">
+        <input
+          value={text}
+          onChange={e => setText(e.target.value)}
+          onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
+          placeholder="Escreva uma mensagem..."
+          className="flex-1 bg-n-50 rounded-xl px-4 py-2.5 text-sm font-body outline-none focus:ring-2 focus:ring-turquoise-300 transition-all"
+        />
+        <button
+          onClick={handleSend}
+          disabled={!text.trim()}
+          className="w-10 h-10 bg-ocean-700 hover:bg-ocean-500 rounded-xl flex items-center justify-center text-white disabled:opacity-40 active:scale-95 transition-all"
+        >
+          <Send size={16} strokeWidth={1.75}/>
+        </button>
+      </div>
     </div>
   );
 }
@@ -622,7 +750,7 @@ export default function StaffPortal() {
           <Route path="jobs/:jobId" element={<JobDetail staffId={staffId}/>}/>
           <Route path="calendario"     element={<StaffCalendar/>}/>
           <Route path="disponibilidade" element={<StaffAvailability staffId={staffId}/>}/>
-          <Route path="chat"           element={<StaffChat/>}/>
+          <Route path="chat"           element={<StaffChat staffId={staffId}/>}/>
           <Route path="perfil"         element={<StaffProfile/>}/>
         </Routes>
       </div>

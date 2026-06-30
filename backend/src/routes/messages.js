@@ -1,18 +1,18 @@
 const express = require('express');
 const router  = express.Router();
 const { listar, enviar, marcarLida, unreadCount, listarGrupos, criarGrupo, adicionarMembro } = require('../controllers/messageController');
-const auth  = require('../middleware/auth');
-const reqOp = require('../middleware/requireOperator');
+const auth          = require('../middleware/auth');
+const reqOp         = require('../middleware/requireOperator');
+const reqOpOrStaff  = require('../middleware/requireOperatorOrStaff');
 
 router.use(auth);
-router.use(reqOp);
 
-router.get('/unread-count',        unreadCount);
-router.get('/groups',              listarGrupos);
-router.post('/groups',             criarGrupo);
-router.post('/groups/:id/members', adicionarMembro);
-router.get('/',                    listar);
-router.post('/',                   enviar);
-router.put('/:id/read',            marcarLida);
+router.get('/unread-count',        reqOp,        unreadCount);
+router.get('/groups',              reqOpOrStaff, listarGrupos);
+router.post('/groups',             reqOp,        criarGrupo);
+router.post('/groups/:id/members', reqOp,        adicionarMembro);
+router.get('/',                    reqOpOrStaff, listar);
+router.post('/',                   reqOpOrStaff, enviar);
+router.put('/:id/read',            reqOpOrStaff, marcarLida);
 
 module.exports = router;
