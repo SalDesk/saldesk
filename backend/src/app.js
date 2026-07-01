@@ -16,6 +16,10 @@ const financeiroRoutes = require('./routes/financeiro');
 const publicRoutes     = require('./routes/public');
 const uploadRoutes     = require('./routes/upload');
 const adminRoutes      = require('./routes/admin');
+const fleetRoutes     = require('./routes/fleet');
+const staffRoutes     = require('./routes/staff');
+const messageRoutes   = require('./routes/messages');
+const assignmentRoutes = require('./routes/assignments');
 const errorHandler = require('./middleware/errorHandler');
 const { iniciarCron } = require('./services/cronService');
 
@@ -47,6 +51,10 @@ app.use('/api/financeiro', financeiroRoutes);
 app.use('/api/v1/upload',  uploadRoutes);
 app.use('/api/admin',      adminRoutes);
 app.use('/public',         publicRoutes);
+app.use('/api/v1/fleet',       fleetRoutes);
+app.use('/api/v1/staff',       staffRoutes);
+app.use('/api/v1/messages',    messageRoutes);
+app.use('/api/v1/assignments', assignmentRoutes);
 
 /* Ficheiros enviados — em producao o Nginx serve /uploads/ directamente,
    mas mantemos isto para que funcione tambem em dev sem Nginx. */
