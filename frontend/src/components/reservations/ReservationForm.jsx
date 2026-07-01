@@ -2,11 +2,13 @@ import { useState, useEffect } from 'react';
 import { useT } from '../../i18n';
 import Input, { Textarea, Select } from '../ui/Input';
 import Button from '../ui/Button';
+import FleetSelector from '../fleet/FleetSelector';
 
 const SOURCES = ['direct', 'booking_com', 'airbnb', 'viator', 'getyourguide', 'manual'];
 
 export default function ReservationForm({ reservation, units, onSave, onCancel, loading, error }) {
   const t = useT();
+  const [fleetId, setFleetId] = useState(reservation?.fleet_id || null);
   const [form, setForm] = useState({
     unit_id:          reservation?.unit_id || '',
     customer_name:    reservation?.customer_name || '',
@@ -39,7 +41,7 @@ export default function ReservationForm({ reservation, units, onSave, onCancel, 
 
   function handleSubmit(e) {
     e.preventDefault();
-    onSave({ ...form, guests: Number(form.guests) });
+    onSave({ ...form, guests: Number(form.guests), fleet_id: fleetId || null });
   }
 
   return (
@@ -55,6 +57,14 @@ export default function ReservationForm({ reservation, units, onSave, onCancel, 
         <Input label={t('reservations.checkIn')} type="date" value={form.check_in} onChange={set('check_in')} required />
         <Input label={t('reservations.checkOut')} type="date" value={form.check_out} onChange={set('check_out')} min={form.check_in || undefined} required />
       </div>
+
+      <FleetSelector
+        unitId={form.unit_id}
+        date={form.check_in}
+        value={fleetId}
+        onChange={setFleetId}
+        onLoad={() => setFleetId(reservation?.fleet_id || null)}
+      />
 
       {pricePreview && (
         <div className="bg-ocean-50 border border-ocean-100 rounded-sm px-3 py-2 flex items-center justify-between">

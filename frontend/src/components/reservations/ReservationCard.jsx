@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { CalendarDays, User, ArrowRight, Pencil, Trash2, ChevronDown } from 'lucide-react';
+import { CalendarDays, User, ArrowRight, Pencil, Trash2, ChevronDown, Car } from 'lucide-react';
 import { changeStatus, deleteReservation } from '../../services/reservationsService';
 import { useT } from '../../i18n';
 import Badge from '../ui/Badge';
@@ -93,6 +93,13 @@ export default function ReservationCard({ reservation: r, onUpdate, onEdit }) {
             <span className="shrink-0 text-n-400">· {r.customer_country}</span>
           )}
         </div>
+
+        {r.fleet?.name && (
+          <div className="flex items-center gap-2 text-xs font-body text-n-500">
+            <Car size={13} strokeWidth={1.75} className="text-n-400 shrink-0" />
+            <span>{r.fleet.name} ({r.fleet.capacity} lugares)</span>
+          </div>
+        )}
 
         <div className="flex items-center gap-2 pt-1 border-t border-n-100">
           {canAdvance && (

@@ -22,7 +22,7 @@ async function listar(req, res, next) {
 
     let q = supabaseAdmin
       .from('reservations')
-      .select('*, units(name, unit_type)')
+      .select('*, units(name, unit_type), fleet(name, capacity)')
       .eq('operator_id', getOperatorId(req))
       .order('check_in', { ascending: false });
 
@@ -101,7 +101,7 @@ async function criar(req, res, next) {
         notes: finalNotes,
         fleet_id: fleet_id || null
       })
-      .select('*, units(name, unit_type)')
+      .select('*, units(name, unit_type), fleet(name, capacity)')
       .single();
 
     if (error) throw error;
@@ -198,7 +198,7 @@ async function actualizar(req, res, next) {
       return res.status(403).json({ error: 'Apenas operadores podem gerir esta reserva', code: 'OPERATOR_ONLY' });
     }
 
-    const { customer_name, customer_email, customer_phone, customer_country, guests, notes } = req.body;
+    const { customer_name, customer_email, customer_phone, customer_country, guests, notes, fleet_id } = req.body;
 
     const updates = { updated_at: new Date().toISOString() };
     if (customer_name !== undefined) updates.customer_name = customer_name;
@@ -207,13 +207,14 @@ async function actualizar(req, res, next) {
     if (customer_country !== undefined) updates.customer_country = customer_country;
     if (guests !== undefined) updates.guests = guests;
     if (notes !== undefined) updates.notes = notes;
+    if (fleet_id !== undefined) updates.fleet_id = fleet_id || null;
 
     const { data, error } = await supabaseAdmin
       .from('reservations')
       .update(updates)
       .eq('id', req.params.id)
       .eq('operator_id', getOperatorId(req))
-      .select('*, units(name, unit_type)')
+      .select('*, units(name, unit_type), fleet(name, capacity)')
       .single();
 
     if (error || !data) {
