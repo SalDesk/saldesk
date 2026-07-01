@@ -51,6 +51,7 @@ app.use('/api/financeiro', financeiroRoutes);
 app.use('/api/v1/upload',  uploadRoutes);
 app.use('/api/admin',      adminRoutes);
 app.use('/public',         publicRoutes);
+app.use('/api/v1/public',  publicRoutes);
 app.use('/api/v1/fleet',       fleetRoutes);
 app.use('/api/v1/staff',       staffRoutes);
 app.use('/api/v1/messages',    messageRoutes);
