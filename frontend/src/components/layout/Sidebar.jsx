@@ -22,6 +22,7 @@ export const TYPE_NAV = {
     { to: '/reservas',      icon: Calendar,        label: 'Reservas'                     },
     { to: '/calendario',    icon: CalendarDays,    label: 'Calendario'                   },
     { to: '/guias',         icon: Users,           label: 'Guias',            requiredPlan: 'business', feature: 'guias'          },
+    { to: '/frota',         icon: Car,             label: 'Frota'                                                                       },
     { to: '/clientes',      icon: UserCheck,       label: 'Clientes'                     },
     { to: '/colaboradores', icon: UsersRound,      label: 'Colaboradores',    requiredPlan: 'business', feature: 'colaboradores'  },
     { to: '/financeiro',    icon: BarChart2,       label: 'Financeiro'                   },
