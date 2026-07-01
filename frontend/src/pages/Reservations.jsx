@@ -1281,6 +1281,7 @@ export default function Reservations() {
           <ReservationForm
             reservation={modal !== 'create' ? modal : null}
             units={units}
+            operatorType={opType}
             onSave={handleSave}
             onCancel={() => setModal(null)}
             loading={formLoading}

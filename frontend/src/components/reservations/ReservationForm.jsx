@@ -6,7 +6,7 @@ import FleetSelector from '../fleet/FleetSelector';
 
 const SOURCES = ['direct', 'booking_com', 'airbnb', 'viator', 'getyourguide', 'manual'];
 
-export default function ReservationForm({ reservation, units, onSave, onCancel, loading, error }) {
+export default function ReservationForm({ reservation, units, operatorType, onSave, onCancel, loading, error }) {
   const t = useT();
   const [fleetId, setFleetId] = useState(reservation?.fleet_id || null);
   const [form, setForm] = useState({
@@ -18,6 +18,7 @@ export default function ReservationForm({ reservation, units, onSave, onCancel, 
     check_in:         reservation?.check_in || '',
     check_out:        reservation?.check_out || '',
     guests:           reservation?.guests || 1,
+    tour_time:        reservation?.tour_time || '09:00',
     source:           reservation?.source || 'manual',
     notes:            reservation?.notes || '',
   });
@@ -26,37 +27,65 @@ export default function ReservationForm({ reservation, units, onSave, onCancel, 
   const set = (field) => (e) => setForm({ ...form, [field]: e.target.value });
 
   useEffect(() => {
-    if (form.unit_id && form.check_in && form.check_out && form.check_out > form.check_in) {
-      const unit = units.find((u) => u.id === form.unit_id);
-      if (unit) {
+    const unit = units.find((u) => u.id === form.unit_id);
+    if (!unit) { setPricePreview(null); return; }
+
+    if (operatorType === 'activity') {
+      if (form.check_in && form.guests) {
+        setPricePreview({ total: Number(unit.base_price) * Number(form.guests), tipo: 'activity' });
+      } else {
+        setPricePreview(null);
+      }
+    } else {
+      if (form.check_in && form.check_out && form.check_out > form.check_in) {
         const dias = Math.ceil(
           (new Date(form.check_out) - new Date(form.check_in)) / (1000 * 60 * 60 * 24)
         );
-        setPricePreview({ total: Number(unit.base_price) * dias, dias });
+        setPricePreview({ total: Number(unit.base_price) * dias, dias, tipo: 'hotel' });
+      } else {
+        setPricePreview(null);
       }
-    } else {
-      setPricePreview(null);
     }
-  }, [form.unit_id, form.check_in, form.check_out, units]);
+  }, [form.unit_id, form.check_in, form.check_out, form.guests, units, operatorType]);
 
   function handleSubmit(e) {
     e.preventDefault();
-    onSave({ ...form, guests: Number(form.guests), fleet_id: fleetId || null });
+    onSave({
+      ...form,
+      guests:   Number(form.guests),
+      fleet_id: fleetId || null,
+      notes: operatorType === 'activity' && form.tour_time
+        ? `Hora: ${form.tour_time}${form.notes ? ' | ' + form.notes : ''}`
+        : form.notes,
+    });
   }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <Select label={t('reservations.unit')} value={form.unit_id} onChange={set('unit_id')} required>
+      <Select label={operatorType === 'activity' ? 'Tour / Actividade' : t('reservations.unit')} value={form.unit_id} onChange={set('unit_id')} required>
         <option value="">Seleccionar unidade...</option>
         {units.map((u) => (
           <option key={u.id} value={u.id}>{u.name}</option>
         ))}
       </Select>
 
-      <div className="grid grid-cols-2 gap-3">
-        <Input label={t('reservations.checkIn')} type="date" value={form.check_in} onChange={set('check_in')} required />
-        <Input label={t('reservations.checkOut')} type="date" value={form.check_out} onChange={set('check_out')} min={form.check_in || undefined} required />
-      </div>
+      {operatorType === 'activity' ? (
+        <div className="grid grid-cols-2 gap-3">
+          <Input
+            label="Data do tour"
+            type="date"
+            value={form.check_in}
+            onChange={e => setForm(f => ({ ...f, check_in: e.target.value, check_out: e.target.value }))}
+            required
+          />
+          <Input label="Hora" type="time" value={form.tour_time} onChange={set('tour_time')} />
+        </div>
+      ) : (
+        <div className="grid grid-cols-2 gap-3">
+          <Input label={t('reservations.checkIn')} type="date" value={form.check_in} onChange={set('check_in')} required />
+          <Input label={t('reservations.checkOut')} type="date" value={form.check_out} onChange={set('check_out')} min={form.check_in || undefined} required />
+        </div>
+      )}
 
       <FleetSelector
         unitId={form.unit_id}
@@ -68,7 +97,11 @@ export default function ReservationForm({ reservation, units, onSave, onCancel, 
 
       {pricePreview && (
         <div className="bg-ocean-50 border border-ocean-100 rounded-sm px-3 py-2 flex items-center justify-between">
-          <span className="text-xs font-body text-ocean-700">{pricePreview.dias} noite(s)</span>
+          <span className="text-xs font-body text-ocean-700">
+            {pricePreview.tipo === 'activity'
+              ? `${form.guests} pessoa(s)`
+              : `${pricePreview.dias} noite(s)`}
+          </span>
           <span className="font-display font-bold text-ocean-700">€{pricePreview.total.toFixed(2)}</span>
         </div>
       )}
