@@ -3,7 +3,7 @@ const { supabaseAdmin } = require('../config/supabase');
 async function listar(req, res, next) {
   try {
     const { status, type } = req.query;
-    let q = supabaseAdmin.from('fleet').select('*').eq('operator_id', req.operator.id).order('name');
+    let q = supabaseAdmin.from('fleet').select('*, units(id, name)').eq('operator_id', req.operator.id).order('name');
     if (status) q = q.eq('status', status);
     if (type)   q = q.eq('type', type);
     const { data, error } = await q;
@@ -31,11 +31,11 @@ async function disponivel(req, res, next) {
 
 async function criar(req, res, next) {
   try {
-    const { name, type, description, notes, next_maintenance_at } = req.body;
+    const { name, type, description, notes, next_maintenance_at, capacity, unit_id } = req.body;
     if (!name || !type) return res.status(400).json({ error: 'Nome e tipo sao obrigatorios', code: 'MISSING_FIELDS' });
     const { data, error } = await supabaseAdmin
       .from('fleet')
-      .insert({ operator_id: req.operator.id, name, type, description: description || null, notes: notes || null, next_maintenance_at: next_maintenance_at || null })
+      .insert({ operator_id: req.operator.id, name, type, description: description || null, notes: notes || null, next_maintenance_at: next_maintenance_at || null, capacity: capacity || 2, unit_id: unit_id || null })
       .select().single();
     if (error) throw error;
     return res.status(201).json({ data, message: 'Item de frota criado' });
@@ -44,7 +44,7 @@ async function criar(req, res, next) {
 
 async function actualizar(req, res, next) {
   try {
-    const { name, type, description, status, notes, last_maintenance_at, next_maintenance_at } = req.body;
+    const { name, type, description, status, notes, last_maintenance_at, next_maintenance_at, capacity, unit_id } = req.body;
     const updates = { updated_at: new Date().toISOString() };
     if (name !== undefined)                updates.name = name;
     if (type !== undefined)                updates.type = type;
@@ -53,6 +53,8 @@ async function actualizar(req, res, next) {
     if (notes !== undefined)               updates.notes = notes;
     if (last_maintenance_at !== undefined) updates.last_maintenance_at = last_maintenance_at;
     if (next_maintenance_at !== undefined) updates.next_maintenance_at = next_maintenance_at;
+    if (capacity !== undefined)            updates.capacity = capacity;
+    if (unit_id !== undefined)             updates.unit_id = unit_id || null;
     const { data, error } = await supabaseAdmin
       .from('fleet').update(updates).eq('id', req.params.id).eq('operator_id', req.operator.id).select().single();
     if (error || !data) return res.status(404).json({ error: 'Nao encontrado', code: 'NOT_FOUND' });
