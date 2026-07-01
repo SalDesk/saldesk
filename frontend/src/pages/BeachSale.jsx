@@ -3,10 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import {
   ChevronLeft, ChevronRight, Plus, Minus,
   Check, User, Mail, Phone, Calendar,
-  Clock, Users, MapPin, MessageCircle,
+  Clock, Users, MapPin, MessageCircle, Car,
 } from 'lucide-react';
 import { listUnits } from '../services/unitsService';
 import { createReservation } from '../services/reservationsService';
+import { getFleetAvailability } from '../services/fleetService';
 import {
   addCommissionLocal, getSellerCommissionPct, getSellerMeta,
 } from '../services/sellerService';
@@ -85,6 +86,11 @@ export default function BeachSale() {
   const [clientPhone,  setClientPhone]  = useState('');
   const [notes,        setNotes]        = useState('');
 
+  /* Fleet state */
+  const [availableFleet,  setAvailableFleet]  = useState([]);
+  const [selectedFleetId, setSelectedFleetId] = useState(null);
+  const [loadingFleet,    setLoadingFleet]    = useState(false);
+
   /* Success state */
   const [successData, setSuccessData] = useState(null);
 
@@ -103,6 +109,16 @@ export default function BeachSale() {
       .catch(() => {})
       .finally(() => setLoading(false));
   }, []);
+
+  useEffect(() => {
+    if (!selectedTour || !selectedDate) return;
+    setSelectedFleetId(null);
+    setLoadingFleet(true);
+    getFleetAvailability(selectedTour.id, selectedDate)
+      .then(data => setAvailableFleet(data || []))
+      .catch(() => setAvailableFleet([]))
+      .finally(() => setLoadingFleet(false));
+  }, [selectedTour, selectedDate]);
 
   const totalPax    = adults + kids;
   const tourPrice   = Number(selectedTour?.base_price || 0);
@@ -136,6 +152,7 @@ export default function BeachSale() {
         customer_name:    clientName,
         customer_email:   clientEmail,
         customer_phone:   clientPhone,
+        fleet_id:         selectedFleetId || null,
       });
 
       const comm = addCommissionLocal({
@@ -169,6 +186,7 @@ export default function BeachSale() {
     setSelectedTour(null); setSelectedDate(TODAY); setSelectedTime('');
     setAdults(1); setKids(0); setClientName(''); setClientEmail('');
     setClientPhone(''); setNotes(''); setSuccessData(null);
+    setAvailableFleet([]); setSelectedFleetId(null);
     setError(''); setStep(1);
   }
 
@@ -380,6 +398,49 @@ export default function BeachSale() {
               </div>
             </div>
 
+            {/* Fleet selector — shown only when tour has associated vehicles */}
+            {loadingFleet && (
+              <div className="flex items-center gap-2 text-xs font-body text-n-400 py-2">
+                <span className="w-4 h-4 border-2 border-n-200 border-t-turquoise-500 rounded-full animate-spin shrink-0" />
+                A verificar disponibilidade de buggys...
+              </div>
+            )}
+            {!loadingFleet && availableFleet.length > 0 && (
+              <div className="space-y-2">
+                <p className="text-xs font-mono uppercase tracking-wider text-n-500">
+                  Escolha o buggy
+                </p>
+                {availableFleet.map(v => (
+                  <button
+                    key={v.id}
+                    type="button"
+                    onClick={() => v.available && setSelectedFleetId(v.id)}
+                    disabled={!v.available}
+                    className={`w-full flex items-center justify-between px-4 py-3 rounded-2xl border-2 transition-all ${
+                      selectedFleetId === v.id
+                        ? 'border-ocean-700 bg-ocean-50'
+                        : v.available
+                          ? 'border-n-200 bg-white hover:border-ocean-300'
+                          : 'border-n-100 bg-n-50 opacity-50 cursor-not-allowed'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${v.available ? 'bg-turquoise-50' : 'bg-n-100'}`}>
+                        <Car size={18} strokeWidth={1.75} className={v.available ? 'text-turquoise-600' : 'text-n-400'} />
+                      </div>
+                      <div className="text-left">
+                        <p className="font-body font-semibold text-n-900">{v.name}</p>
+                        <p className="text-xs font-body text-n-400">{v.capacity} lugares</p>
+                      </div>
+                    </div>
+                    <span className={`text-xs font-mono px-2 py-1 rounded-lg ${v.available ? 'bg-turquoise-50 text-turquoise-700' : 'bg-n-100 text-n-400'}`}>
+                      {v.available ? 'Livre' : 'Ocupado'}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            )}
+
             {/* Counters */}
             <div>
               <p className="font-display font-semibold text-sm text-n-800 mb-2 flex items-center gap-2">
@@ -406,7 +467,20 @@ export default function BeachSale() {
             </div>
 
             <button
-              onClick={() => { if (!selectedTime) { setError('Selecciona um horario.'); return; } setError(''); setStep(3); }}
+              onClick={() => {
+                if (!selectedTime) { setError('Selecciona um horario.'); return; }
+                if (availableFleet.length > 0) {
+                  if (availableFleet.every(v => !v.available)) {
+                    setError('Nao ha buggys disponiveis para esta data — escolhe outra data.');
+                    return;
+                  }
+                  if (!selectedFleetId) {
+                    setError('Por favor escolhe um buggy para continuar.');
+                    return;
+                  }
+                }
+                setError(''); setStep(3);
+              }}
               className="w-full h-16 bg-gradient-to-r from-ocean-700 to-turquoise-600 text-white rounded-2xl font-display font-bold text-lg flex items-center justify-center gap-2 active:scale-[0.99] transition-all hover:opacity-90">
               Continuar
               <ChevronRight size={20} strokeWidth={2} />

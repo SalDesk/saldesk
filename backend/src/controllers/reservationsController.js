@@ -44,7 +44,7 @@ async function criar(req, res, next) {
   try {
     const { unit_id, customer_name, customer_email, customer_phone, customer_country,
             check_in, check_out, guests, notes, notes_internal, notes_guest,
-            total_amount, source, payment_method, payment_status } = req.body;
+            total_amount, source, payment_method, payment_status, fleet_id } = req.body;
 
     if (!unit_id || !customer_name || !customer_email || !check_in || !check_out) {
       return res.status(400).json({ error: 'Campos obrigatórios em falta', code: 'MISSING_FIELDS' });
@@ -98,7 +98,8 @@ async function criar(req, res, next) {
         total_price: finalPrice,
         status: 'confirmed',
         source: finalSource,
-        notes: finalNotes
+        notes: finalNotes,
+        fleet_id: fleet_id || null
       })
       .select('*, units(name, unit_type)')
       .single();
