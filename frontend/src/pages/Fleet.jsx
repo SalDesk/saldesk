@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Plus, Pencil, Trash2, Car, Wrench, Package, Users } from 'lucide-react';
+import { Plus, Pencil, Trash2, Car, Wrench, Package, Users, Compass } from 'lucide-react';
 import { listFleet, createFleet, updateFleet, deleteFleet } from '../services/fleetService';
 import { listUnits } from '../services/unitsService';
 import { useT } from '../i18n';
@@ -18,29 +18,47 @@ const STATUS_LABELS = { available: 'Disponivel', in_use: 'Em uso', maintenance: 
 
 function FleetForm({ item, units, onSave, onCancel, loading, error }) {
   const [form, setForm] = useState({
-    name: item?.name || '', type: item?.type || 'vehicle',
-    description: item?.description || '', notes: item?.notes || '',
-    status: item?.status || 'available',
+    name:                item?.name || '',
+    plate:               item?.plate || '',
+    type:                item?.type || 'vehicle',
+    description:         item?.description || '',
+    notes:               item?.notes || '',
+    status:              item?.status || 'available',
+    last_maintenance_at: item?.last_maintenance_at?.split('T')[0] || '',
     next_maintenance_at: item?.next_maintenance_at?.split('T')[0] || '',
-    capacity: item?.capacity || 2,
-    unit_id: item?.unit_id || '',
+    capacity:            item?.capacity || 2,
+    unit_id:             item?.unit_id || '',
+    photo:               item?.images?.[0] || '',
   });
   const set = (f) => (e) => setForm({ ...form, [f]: e.target.value });
+
+  function handleSubmit(e) {
+    e.preventDefault();
+    onSave({
+      ...form,
+      unit_id: form.unit_id || null,
+      images:  form.photo ? [form.photo] : (item?.images || []),
+    });
+  }
+
   return (
-    <form onSubmit={(e) => { e.preventDefault(); onSave({ ...form, unit_id: form.unit_id || null }); }} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-4">
       <Input label="Nome" value={form.name} onChange={set('name')} required placeholder="Ex: Kia Sportage, Prancha Kite 12m" />
+      <Input label="Matricula" value={form.plate} onChange={set('plate')} placeholder="SL-00-AA" />
       <div className="grid grid-cols-2 gap-3">
         <Select label="Tipo" value={form.type} onChange={set('type')} required>
           <option value="vehicle">Viatura</option>
           <option value="equipment">Equipamento</option>
           <option value="gear">Material</option>
         </Select>
-        {item && <Select label="Estado" value={form.status} onChange={set('status')}>
-          <option value="available">Disponivel</option>
-          <option value="in_use">Em uso</option>
-          <option value="maintenance">Manutencao</option>
-          <option value="retired">Retirado</option>
-        </Select>}
+        {item && (
+          <Select label="Estado" value={form.status} onChange={set('status')}>
+            <option value="available">Disponivel</option>
+            <option value="in_use">Em uso</option>
+            <option value="maintenance">Manutencao</option>
+            <option value="retired">Retirado</option>
+          </Select>
+        )}
       </div>
       <div className="grid grid-cols-2 gap-3">
         <Select label="Capacidade (lugares)" value={form.capacity} onChange={(e) => setForm(f => ({ ...f, capacity: Number(e.target.value) }))}>
@@ -57,7 +75,28 @@ function FleetForm({ item, units, onSave, onCancel, loading, error }) {
         </Select>
       </div>
       <Textarea label="Descricao" value={form.description} onChange={set('description')} rows={2} />
-      <Input label="Proxima manutencao" type="date" value={form.next_maintenance_at} onChange={set('next_maintenance_at')} />
+      <div className="grid grid-cols-2 gap-3">
+        <Input label="Ultima manutencao" type="date" value={form.last_maintenance_at} onChange={set('last_maintenance_at')} />
+        <Input label="Proxima manutencao" type="date" value={form.next_maintenance_at} onChange={set('next_maintenance_at')} />
+      </div>
+      <div>
+        <label className="block text-sm font-body font-semibold text-n-700 mb-2">Foto da viatura</label>
+        {form.photo && (
+          <img src={form.photo} alt="Viatura" className="w-full h-40 object-cover rounded-xl mb-2 border border-n-200" />
+        )}
+        <input
+          type="file"
+          accept="image/*"
+          onChange={e => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = ev => setForm(f => ({ ...f, photo: ev.target.result }));
+            reader.readAsDataURL(file);
+          }}
+          className="text-sm font-body text-n-500"
+        />
+      </div>
       {error && <p className="text-sm font-body px-3 py-2 rounded-sm bg-[var(--error-light)] text-[var(--error)]">{error}</p>}
       <div className="flex gap-3 pt-2">
         <Button type="button" variant="secondary" onClick={onCancel} className="flex-1">Cancelar</Button>
@@ -120,41 +159,56 @@ export default function Fleet() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {items.map((item) => {
             const Icon = TYPE_ICONS[item.type] || Package;
+            const manutencaoAtrasada = item.next_maintenance_at && new Date(item.next_maintenance_at) < new Date();
             return (
-              <div key={item.id} className="bg-white rounded-md border border-n-200 shadow-sm p-4 flex flex-col gap-3">
-                <div className="flex items-start justify-between gap-2">
-                  <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-sm bg-ocean-50 flex items-center justify-center shrink-0">
-                      <Icon size={18} strokeWidth={1.75} className="text-ocean-700"/>
-                    </div>
-                    <div>
-                      <p className="font-display font-semibold text-sm text-n-900">{item.name}</p>
-                      <p className="text-xs font-body text-n-500">{TYPE_LABELS[item.type]}</p>
-                    </div>
+              <div key={item.id} className="bg-white rounded-xl border border-n-200 shadow-sm overflow-hidden flex flex-col">
+                {/* Photo / placeholder */}
+                {item.images?.[0] ? (
+                  <img src={item.images[0]} alt={item.name} className="w-full h-36 object-cover" />
+                ) : (
+                  <div className="w-full h-36 bg-ocean-50 flex items-center justify-center">
+                    <Icon size={32} strokeWidth={1.25} className="text-ocean-300" />
                   </div>
-                  <Badge variant={STATUS_BADGE[item.status] || 'default'}>{STATUS_LABELS[item.status]}</Badge>
-                </div>
-                {item.description && <p className="text-xs font-body text-n-600 line-clamp-2">{item.description}</p>}
-                <div className="flex flex-wrap gap-2">
-                  {item.capacity && (
-                    <span className="inline-flex items-center gap-1 text-xs font-body text-n-600 bg-n-100 rounded-sm px-2 py-0.5">
-                      <Users size={10} strokeWidth={1.75}/> {item.capacity} lugares
-                    </span>
-                  )}
-                  {item.units?.name && (
-                    <span className="inline-flex items-center gap-1 text-xs font-body text-ocean-700 bg-ocean-50 rounded-sm px-2 py-0.5">
-                      {item.units.name}
-                    </span>
-                  )}
-                </div>
-                {item.next_maintenance_at && (
-                  <p className="text-xs font-body text-n-500 flex items-center gap-1">
-                    <Wrench size={11} strokeWidth={1.75}/> Manutencao: {item.next_maintenance_at.split('T')[0]}
-                  </p>
                 )}
-                <div className="flex justify-end gap-1 pt-2 border-t border-n-100">
-                  <Button variant="ghost" size="sm" icon={Pencil} onClick={() => { setFormError(''); setModal(item); }} aria-label="Editar"/>
-                  <Button variant="ghost" size="sm" icon={Trash2} onClick={() => setDeleteTarget(item)} className="hover:text-error hover:bg-[var(--error-light)]" aria-label="Eliminar"/>
+
+                {/* Body */}
+                <div className="p-4 flex flex-col gap-3 flex-1">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <p className="font-display font-semibold text-sm text-n-900 truncate">{item.name}</p>
+                      {item.plate && (
+                        <p className="text-xs font-mono text-n-400 mt-0.5">{item.plate}</p>
+                      )}
+                    </div>
+                    <Badge variant={STATUS_BADGE[item.status] || 'default'}>{STATUS_LABELS[item.status]}</Badge>
+                  </div>
+
+                  <div className="flex flex-wrap gap-2">
+                    {item.capacity && (
+                      <span className="inline-flex items-center gap-1 text-xs font-body text-n-600 bg-n-100 rounded-full px-2.5 py-0.5">
+                        <Users size={10} strokeWidth={1.75} /> {item.capacity} lugares
+                      </span>
+                    )}
+                    {item.units?.name && (
+                      <span className="inline-flex items-center gap-1 text-xs font-body text-ocean-700 bg-ocean-50 rounded-full px-2.5 py-0.5">
+                        <Compass size={10} strokeWidth={1.75} /> {item.units.name}
+                      </span>
+                    )}
+                  </div>
+
+                  {item.next_maintenance_at && (
+                    <p className={`text-xs font-body flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg ${manutencaoAtrasada ? 'bg-red-50 text-error' : 'bg-n-50 text-n-500'}`}>
+                      <Wrench size={11} strokeWidth={1.75} />
+                      {manutencaoAtrasada ? 'Manutencao atrasada: ' : 'Manutencao: '}
+                      {item.next_maintenance_at.split('T')[0]}
+                      {manutencaoAtrasada && ' (atrasada)'}
+                    </p>
+                  )}
+
+                  <div className="flex justify-end gap-1 pt-2 border-t border-n-100 mt-auto">
+                    <Button variant="ghost" size="sm" icon={Pencil} onClick={() => { setFormError(''); setModal(item); }} aria-label="Editar" />
+                    <Button variant="ghost" size="sm" icon={Trash2} onClick={() => setDeleteTarget(item)} className="hover:text-error hover:bg-[var(--error-light)]" aria-label="Eliminar" />
+                  </div>
                 </div>
               </div>
             );
