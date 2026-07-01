@@ -1,5 +1,9 @@
 const { supabaseAdmin } = require('../config/supabase');
 
+function getOperatorId(req) {
+  return req.operator?.id || req.staff?.operator_id;
+}
+
 async function listar(req, res, next) {
   try {
     const { status, type } = req.query;
@@ -93,4 +97,40 @@ async function devolver(req, res, next) {
   } catch (err) { next(err); }
 }
 
-module.exports = { listar, disponivel, criar, actualizar, eliminar, atribuir, devolver };
+async function getAvailability(req, res, next) {
+  try {
+    const { unit_id, date } = req.query;
+    if (!unit_id || !date) {
+      return res.status(400).json({ error: 'unit_id e date sao obrigatorios', code: 'MISSING_FIELDS' });
+    }
+    const operatorId = getOperatorId(req);
+
+    const { data: viaturas, error: fleetError } = await supabaseAdmin
+      .from('fleet')
+      .select('id, name, capacity, status')
+      .eq('operator_id', operatorId)
+      .eq('unit_id', unit_id)
+      .eq('status', 'available');
+    if (fleetError) throw fleetError;
+
+    const { data: reservas, error: resError } = await supabaseAdmin
+      .from('reservations')
+      .select('fleet_id, guests, status')
+      .eq('operator_id', operatorId)
+      .eq('unit_id', unit_id)
+      .eq('check_in', date)
+      .not('fleet_id', 'is', null)
+      .not('status', 'in', '("cancelled")');
+    if (resError) throw resError;
+
+    const ocupadas = new Set((reservas || []).map(r => r.fleet_id));
+    const result = (viaturas || []).map(v => ({
+      ...v,
+      available: !ocupadas.has(v.id),
+    }));
+
+    return res.json({ data: result, message: 'Disponibilidade calculada' });
+  } catch (err) { next(err); }
+}
+
+module.exports = { listar, disponivel, criar, actualizar, eliminar, atribuir, devolver, getAvailability };
