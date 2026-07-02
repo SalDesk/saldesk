@@ -42,6 +42,7 @@ app.get('/api/health', (_req, res) => {
 });
 
 app.use('/api/auth', authRoutes);
+app.use('/api/v1/auth', authRoutes);
 app.use('/api/onboarding', onboardingRoutes);
 app.use('/api/units', unitsRoutes);
 app.use('/api/reservations', reservationsRoutes);
