@@ -776,7 +776,7 @@ async function submitLead(req, res, next) {
   <h2 style="color:#0D5470">Olá ${nome},</h2>
   <p>Recebemos a sua candidatura para aderir à SalDesk.</p>
   <p>A nossa equipa irá entrar em contacto consigo em até 24 horas.</p>
-  <p>Enquanto isso, pode explorar a plataforma em <a href="https://saldesk.cv" style="color:#0D5470">app.saldesk.cv</a>.</p>
+  <p>Enquanto isso, pode explorar a plataforma em <a href="https://saldesk.cv" style="color:#0D5470">saldesk.cv</a>.</p>
   <br/><p style="color:#6B7280;font-size:13px">Equipa SalDesk · hello@saldesk.cv</p>
 </div>`,
       text: `Olá ${nome}, recebemos a sua candidatura. Entraremos em contacto em até 24 horas. Equipa SalDesk.`,
