@@ -769,6 +769,18 @@ async function submitLead(req, res, next) {
       html,
       text: `Nova candidatura de ${nome} (${email}) — ${nome_negocio || ''} [${tipo_negocio || ''}]`,
     }).catch(err => console.error('[Email] Erro ao enviar notificação de lead:', err.message));
+    enviarEmail({
+      to: email,
+      subject: 'Recebemos a sua candidatura — SalDesk',
+      html: `<div style="font-family:sans-serif;max-width:600px">
+  <h2 style="color:#0D5470">Olá ${nome},</h2>
+  <p>Recebemos a sua candidatura para aderir à SalDesk.</p>
+  <p>A nossa equipa irá entrar em contacto consigo em até 24 horas.</p>
+  <p>Enquanto isso, pode explorar a plataforma em <a href="https://app.saldesk.cv" style="color:#0D5470">app.saldesk.cv</a>.</p>
+  <br/><p style="color:#6B7280;font-size:13px">Equipa SalDesk · hello@saldesk.cv</p>
+</div>`,
+      text: `Olá ${nome}, recebemos a sua candidatura. Entraremos em contacto em até 24 horas. Equipa SalDesk.`,
+    }).catch(err => console.error('[Email] Erro ao enviar confirmacao ao candidato:', err.message));
 
     return res.json({ message: 'Candidatura recebida com sucesso' });
   } catch (err) { next(err); }
