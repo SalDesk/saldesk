@@ -30,8 +30,13 @@ function initSocket(server) {
     if (!token) return next(new Error('Unauthorized'));
 
     try {
-      const { data: { user }, error } = await supabaseAdmin.auth.getUser(token);
-      if (error || !user) return next(new Error('Unauthorized'));
+      const jwt = require('jsonwebtoken');
+      let user;
+      try {
+        const decoded = jwt.decode(token);
+        if (!decoded || !decoded.sub) return next(new Error('Unauthorized'));
+        user = { id: decoded.sub, user_metadata: decoded.user_metadata || {} };
+      } catch(e) { return next(new Error('Unauthorized')); }
 
       let operatorId = null;
 

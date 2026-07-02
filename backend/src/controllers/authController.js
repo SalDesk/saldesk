@@ -1,4 +1,5 @@
 const { supabaseAdmin, supabaseAnon } = require('../config/supabase');
+const https = require('https');
 const { addFailedLogin } = require('../services/logStore');
 const { enviarEmail } = require('../helpers/emailHelper');
 const { passwordResetEmail } = require('../helpers/emailTemplates');
@@ -74,22 +75,33 @@ async function validateInvite(req, res, next) {
 }
 
 async function login(req, res, next) {
+  console.log('[LOGIN] Request recebido', req.body?.email);
   try {
     const { email, password } = req.body;
 
-    const authResponse = await fetch(
-      `${process.env.SUPABASE_URL}/auth/v1/token?grant_type=password`,
-      {
+    const authJson = await new Promise((resolve, reject) => {
+      const body = JSON.stringify({ email, password });
+      const url = new URL(process.env.SUPABASE_URL + '/auth/v1/token?grant_type=password');
+      const options = {
+        hostname: url.hostname,
+        path: url.pathname + url.search,
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'apikey': process.env.SUPABASE_ANON_KEY,
+          'Content-Length': Buffer.byteLength(body),
         },
-        body: JSON.stringify({ email, password }),
-      }
-    );
-    const authJson = await authResponse.json();
-    if (!authResponse.ok || authJson.error) {
+      };
+      const req2 = https.request(options, (r) => {
+        let data = '';
+        r.on('data', (chunk) => data += chunk);
+        r.on('end', () => { try { resolve(JSON.parse(data)); } catch(e) { reject(e); } });
+      });
+      req2.on('error', reject);
+      req2.write(body);
+      req2.end();
+    });
+    if (!authJson.access_token || authJson.error) {
       addFailedLogin({ ip: req.ip || '', email: email || '' });
       return res.status(401).json({ error: 'Credenciais invalidas', code: 'INVALID_CREDENTIALS' });
     }
