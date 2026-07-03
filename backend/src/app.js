@@ -34,8 +34,10 @@ app.use(cors({
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
+app.use((req, res, next) => { if (req.method === 'PUT' || req.method === 'POST') console.log('[BODY]', req.method, req.path, req.headers['content-type']); next(); });
 app.use(express.json({ limit: '10mb', strict: false }));
 app.use((req, res, next) => { req.setTimeout(30000); next(); });
+app.use((req, res, next) => { if (req.body !== undefined) { return next(); } let d = ''; req.on('data', c => d += c); req.on('end', () => next()); });
 
 app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok', version: '1.0.0', timestamp: new Date().toISOString() });
@@ -75,7 +77,7 @@ app.use(errorHandler);
 
 const PORT   = process.env.PORT || 3001;
 const server = http.createServer(app);
-initSocket(server);
+// initSocket(server); // TEMP DISABLED
 
 server.listen(PORT, () => {
   console.log(`Servidor SalDesk a correr na porta ${PORT} [${process.env.NODE_ENV}]`);
