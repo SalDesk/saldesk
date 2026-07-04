@@ -120,11 +120,23 @@ section[id]{scroll-margin-top:80px}
   padding:100px 0 80px;
   position:relative;overflow:hidden;
 }
-.hero-bg{
+.hero > .hero-bg-slides{ position:absolute !important; inset:0; z-index:0 !important; opacity:.16; }
+.hero-bg-slide{
   position:absolute;inset:0;
-  background-image:url('bg1.jpg');
   background-size:cover;background-position:center;
-  opacity:.12;
+  opacity:0;
+  animation:heroFadeHome 24s infinite;
+}
+.hero-bg-slide:nth-child(1){ animation-delay:0s; }
+.hero-bg-slide:nth-child(2){ animation-delay:6s; }
+.hero-bg-slide:nth-child(3){ animation-delay:12s; }
+.hero-bg-slide:nth-child(4){ animation-delay:18s; }
+@keyframes heroFadeHome{
+  0%   { opacity:0; }
+  2%   { opacity:1; }
+  23%  { opacity:1; }
+  27%  { opacity:0; }
+  100% { opacity:0; }
 }
 .hero-grain{
   position:absolute;inset:0;
@@ -436,7 +448,12 @@ section[id]{scroll-margin-top:80px}
 
 <!-- HERO -->
 <section class="hero" id="home">
-  <div class="hero-bg"></div>
+  <div class="hero-bg-slides">
+    <div class="hero-bg-slide" style="background-image:url('/images/hero-santa-maria.jpg')"></div>
+    <div class="hero-bg-slide" style="background-image:url('/images/hero-shark.jpg')"></div>
+    <div class="hero-bg-slide" style="background-image:url('/images/hero-blue-cave.jpg')"></div>
+    <div class="hero-bg-slide" style="background-image:url('/images/hero-buracona.jpg')"></div>
+  </div>
   <div class="hero-grain"></div>
   <div class="hero-content">
     <div class="hero-eyebrow">
