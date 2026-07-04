@@ -1,0 +1,1410 @@
+<!DOCTYPE html>
+<html lang="pt" data-lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SalDesk — Gestão Turística · Ilha do Sal, Cabo Verde</title>
+<meta name="description" content="A primeira plataforma SaaS de gestão turística para operadores da Ilha do Sal. Reservas directas sem comissão, CRM, financeiro e channel manager.">
+<meta property="og:title" content="SalDesk — Gestão Turística · Ilha do Sal">
+<meta property="og:description" content="Reservas directas sem comissão OTA. CRM, financeiro e channel manager para hotéis, actividades, rent-a-car e restaurantes.">
+<meta property="og:image" content="https://saldesk.cv/logo.png">
+<meta property="og:url" content="https://saldesk.cv">
+<meta property="og:type" content="website">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="canonical" href="https://saldesk.cv">
+<link rel="icon" href="logo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+
+/* ============================================================
+   TOKENS
+   ============================================================ */
+:root{
+  --ocean-900:#062A38; --ocean-800:#0A3F55; --ocean-700:#0D5470;
+  --ocean-600:#10698C; --ocean-500:#1480A8; --ocean-400:#3A9BBF;
+  --ocean-300:#71BDD4; --ocean-100:#D6EEF5; --ocean-50:#EBF7FB;
+  --sand-600:#BE941C; --sand-500:#D4A82A; --sand-400:#E0BF5A;
+  --n900:#1A2332; --n800:#1F2937; --n700:#374151; --n600:#4B5563;
+  --n500:#6B7280; --n400:#9CA3AF; --n300:#D1D5DB; --n200:#E5E8EC; --n100:#F3F4F6; --n50:#F9FAFB;
+  --shadow-sm:0 1px 4px rgba(6,42,56,.08);
+  --shadow-lg:0 12px 40px rgba(6,42,56,.14);
+  --radius-card:20px; --radius-pill:50px;
+}
+
+/* ============================================================
+   RESET & BASE
+   ============================================================ */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  font-family:'DM Sans',sans-serif;
+  font-size:0.9rem; line-height:1.65; color:var(--n700);
+  background:#fff; -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;
+}
+img{max-width:100%;display:block}
+a{color:inherit;text-decoration:none}
+ul{list-style:none}
+button{font-family:inherit;cursor:pointer;border:none;background:none}
+svg{display:block}
+.container{max-width:1120px;margin:0 auto;padding:0 24px}
+section[id]{scroll-margin-top:84px}
+
+h1,h2,h3,h4{font-family:'Sora',sans-serif;color:var(--n900);line-height:1.2}
+
+[data-lang="pt"] .en{display:none}
+[data-lang="en"] .pt{display:none}
+
+/* ============================================================
+   TYPOGRAPHY UTILITIES
+   ============================================================ */
+.eyebrow{
+  display:inline-block;font-family:'Sora',sans-serif;font-size:.72rem;font-weight:700;
+  text-transform:uppercase;letter-spacing:.1em;color:var(--ocean-600);
+  margin-bottom:14px;
+}
+.eyebrow.on-dark{color:var(--ocean-300)}
+
+.section-title{
+  font-size:clamp(1.8rem,3vw,2.8rem); font-weight:800; letter-spacing:-0.02em; margin-bottom:18px;
+}
+.section-title.on-dark{color:#fff}
+
+.section-sub{font-size:1.1rem;line-height:1.75;color:var(--n500)}
+.section-sub.on-dark{color:var(--ocean-100)}
+
+.section-head{max-width:640px;margin:0 auto 64px;text-align:center}
+.section-head.align-left{margin:0 0 64px;text-align:left}
+
+/* ============================================================
+   BUTTONS
+   ============================================================ */
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  padding:14px 30px;border-radius:var(--radius-pill);
+  font-family:'Sora',sans-serif;font-weight:700;font-size:.9rem;letter-spacing:-0.01em;
+  transition:transform .15s ease, background .15s ease, border-color .15s ease, color .15s ease;
+  white-space:nowrap;
+}
+.btn-lg{padding:17px 36px;font-size:.98rem}
+.btn-sand{background:var(--sand-500);color:var(--ocean-900)}
+.btn-sand:hover{background:var(--sand-400);transform:translateY(-2px)}
+.btn-ghost{background:transparent;color:#fff;border:1.5px solid rgba(255,255,255,.32)}
+.btn-ghost:hover{border-color:rgba(255,255,255,.7);transform:translateY(-2px)}
+.btn-outline{background:transparent;color:var(--ocean-700);border:1.5px solid var(--n200)}
+.btn-outline:hover{border-color:var(--ocean-700);transform:translateY(-2px)}
+.btn-dark{background:var(--ocean-900);color:#fff}
+.btn-dark:hover{background:var(--ocean-700);transform:translateY(-2px)}
+.btn svg{width:16px;height:16px;stroke-width:1.75}
+
+/* ============================================================
+   SECTION BASE
+   ============================================================ */
+.section{padding:120px 0}
+@media (max-width:768px){.section{padding:72px 0}}
+.bg-alt{background:var(--n50)}
+.bg-dark{background:var(--ocean-900)}
+
+/* ============================================================
+   NAV
+   ============================================================ */
+.nav{
+  position:fixed;top:0;left:0;right:0;z-index:1000;
+  padding:22px 0; transition:background .3s ease, padding .3s ease, box-shadow .3s ease, border-color .3s ease;
+  border-bottom:1px solid transparent;
+}
+.nav.scrolled{
+  background:rgba(255,255,255,.92); backdrop-filter:blur(10px);
+  padding:14px 0; box-shadow:var(--shadow-sm); border-bottom-color:var(--n100);
+}
+.nav-inner{display:flex;align-items:center;justify-content:space-between;gap:24px}
+.nav-logo{display:flex;align-items:center}
+.nav-logo img{height:34px;width:auto;display:block;filter:brightness(0) invert(1);transition:filter .25s}
+.nav.scrolled .nav-logo img{filter:none}
+
+.nav-links{display:flex;align-items:center;gap:36px}
+.nav-link{font-family:'Sora',sans-serif;font-size:.86rem;font-weight:600;color:rgba(255,255,255,.85);transition:color .2s}
+.nav.scrolled .nav-link{color:var(--n600)}
+.nav-link:hover{color:var(--sand-400)}
+.nav.scrolled .nav-link:hover{color:var(--ocean-700)}
+
+.nav-actions{display:flex;align-items:center;gap:14px}
+.lang-toggle{
+  display:flex;align-items:center;gap:4px;font-family:'Sora',sans-serif;font-size:.78rem;font-weight:700;
+  border:1.5px solid rgba(255,255,255,.32);border-radius:var(--radius-pill);padding:6px 6px;color:#fff;
+}
+.nav.scrolled .lang-toggle{border-color:var(--n200);color:var(--n500)}
+.lang-toggle button{padding:4px 10px;border-radius:20px;color:inherit;font-weight:700;transition:all .2s}
+.lang-toggle button.active{background:var(--sand-500);color:var(--ocean-900)}
+
+.nav-link-ghost{font-family:'Sora',sans-serif;font-size:.86rem;font-weight:700;color:#fff}
+.nav.scrolled .nav-link-ghost{color:var(--ocean-900)}
+.nav-btn-register{
+  font-family:'Sora',sans-serif;font-weight:700;font-size:.84rem;
+  background:var(--sand-500);color:var(--ocean-900);padding:11px 24px;border-radius:var(--radius-pill);
+  transition:background .2s, transform .2s;
+}
+.nav-btn-register:hover{background:var(--sand-400);transform:translateY(-1px)}
+
+.nav-burger{display:none;width:40px;height:40px;align-items:center;justify-content:center;border-radius:10px}
+.nav-burger svg{width:22px;height:22px;stroke-width:1.75;color:#fff}
+.nav.scrolled .nav-burger svg{color:var(--ocean-900)}
+
+.nav-mobile{
+  position:fixed;top:0;right:0;bottom:0;width:min(320px,84vw);background:#fff;z-index:1100;
+  box-shadow:-8px 0 40px rgba(6,42,56,.18); transform:translateX(100%); transition:transform .3s ease;
+  display:flex;flex-direction:column;padding:28px 28px 32px;gap:8px;
+}
+.nav-mobile.open{transform:translateX(0)}
+.nav-mobile-close{align-self:flex-end;width:36px;height:36px;display:flex;align-items:center;justify-content:center;border-radius:10px;margin-bottom:8px}
+.nav-mobile-close svg{width:20px;height:20px;stroke-width:1.75;color:var(--n700)}
+.nav-mobile a.nav-link{color:var(--n800);font-size:1rem;padding:12px 4px;border-bottom:1px solid var(--n100)}
+.nav-mobile-actions{display:flex;flex-direction:column;gap:12px;margin-top:18px}
+.nav-mobile-actions .btn{width:100%}
+.nav-mobile-actions .btn-outline{color:var(--ocean-700)}
+.nav-overlay{
+  position:fixed;inset:0;background:rgba(6,42,56,.5);z-index:1050;opacity:0;visibility:hidden;
+  transition:opacity .3s ease, visibility .3s ease;
+}
+.nav-overlay.open{opacity:1;visibility:visible}
+
+@media (max-width:860px){
+  .nav-links{display:none}
+  .nav-actions .lang-toggle, .nav-actions .nav-link-ghost, .nav-actions .nav-btn-register{display:none}
+  .nav-burger{display:flex}
+}
+
+/* === HERO === */
+.hero{position:relative;min-height:100vh;display:flex;align-items:center;overflow:hidden;padding:140px 0 80px}
+.hero-bg{position:absolute;inset:0;z-index:0}
+.hero-bg img{
+  position:absolute;inset:0;width:100%;height:100%;object-fit:cover;
+  opacity:0;transition:opacity 1.2s ease;
+}
+.hero-bg img.active{opacity:1}
+.hero-overlay{
+  position:absolute;inset:0;z-index:1;
+  background:linear-gradient(135deg, rgba(6,42,56,.85) 0%, rgba(6,42,56,.6) 60%, rgba(10,63,85,.5) 100%);
+}
+.hero-inner{position:relative;z-index:2;display:grid;grid-template-columns:1.05fr .95fr;gap:64px;align-items:center}
+.hero-badge{
+  display:inline-flex;align-items:center;gap:8px;font-family:'Sora',sans-serif;font-size:.74rem;font-weight:700;
+  letter-spacing:.06em;text-transform:uppercase;color:#fff;background:rgba(255,255,255,.1);
+  border:1px solid rgba(255,255,255,.2);border-radius:var(--radius-pill);padding:9px 18px;margin-bottom:24px;
+  backdrop-filter:blur(6px);
+}
+.hero-badge svg{width:14px;height:14px;stroke-width:1.75;color:var(--sand-400)}
+.hero h1{
+  font-size:clamp(2.4rem,5vw,3.8rem);font-weight:800;letter-spacing:-0.03em;color:#fff;margin-bottom:22px;
+}
+.hero h1 span{color:var(--sand-400)}
+.hero-lead{font-size:1.1rem;line-height:1.75;color:var(--ocean-100);max-width:520px;margin-bottom:36px}
+.hero-ctas{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:56px}
+.hero-stats{display:flex;gap:40px;flex-wrap:wrap}
+.hero-stat-value{font-family:'Sora',sans-serif;font-size:1.7rem;font-weight:800;color:#fff;letter-spacing:-0.02em}
+.hero-stat-label{font-size:.78rem;color:var(--ocean-200,var(--ocean-100));margin-top:2px}
+
+/* Hero mockup */
+.hero-mockup{position:relative}
+.mockup-window{
+  border-radius:var(--radius-card); background:rgba(255,255,255,.07); backdrop-filter:blur(16px);
+  border:1px solid rgba(255,255,255,.12); box-shadow:0 24px 64px rgba(0,0,0,.35);
+  padding:18px; overflow:hidden;
+}
+.mockup-titlebar{display:flex;align-items:center;gap:8px;margin-bottom:18px;padding:0 4px}
+.mockup-dot{width:10px;height:10px;border-radius:50%}
+.mockup-dot.red{background:#EF4444}
+.mockup-dot.yellow{background:#F59E0B}
+.mockup-dot.green{background:#22C55E}
+.mockup-url{
+  margin-left:10px;font-family:'DM Mono','DM Sans',monospace;font-size:.72rem;color:rgba(255,255,255,.55);
+  background:rgba(255,255,255,.06);border-radius:6px;padding:4px 12px;
+}
+.mockup-body{display:grid;grid-template-columns:84px 1fr;gap:14px}
+.mockup-sidebar{display:flex;flex-direction:column;gap:8px}
+.mockup-side-item{height:10px;border-radius:5px;background:rgba(255,255,255,.08)}
+.mockup-side-item.active{background:rgba(13,84,112,.55);height:28px}
+.mockup-main{display:flex;flex-direction:column;gap:16px}
+.mockup-kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.mockup-kpi{
+  background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);
+  border-radius:12px;padding:16px 14px;
+}
+.mockup-kpi-value{font-family:'Sora',sans-serif;font-size:1.5rem;font-weight:800;color:#fff;letter-spacing:-0.01em}
+.mockup-kpi-label{font-size:.72rem;color:rgba(255,255,255,.65);margin-top:4px;text-transform:uppercase;letter-spacing:.06em}
+.mockup-chart{
+  display:flex;align-items:flex-end;gap:8px;height:90px;background:rgba(255,255,255,.04);
+  border-radius:12px;padding:14px;border:1px solid rgba(255,255,255,.08);
+}
+.mockup-bar{flex:1;border-radius:4px 4px 0 0;background:linear-gradient(180deg,var(--ocean-400),var(--ocean-700))}
+.mockup-bar.active{animation:pulseBar 2.4s ease-in-out infinite}
+@keyframes pulseBar{0%,100%{opacity:1}50%{opacity:.55}}
+.mockup-divider{height:1px;background:rgba(255,255,255,.08)}
+.mockup-tags{display:flex;gap:8px;flex-wrap:wrap}
+.mockup-tag{
+  font-family:'Sora',sans-serif;font-size:.66rem;font-weight:700;color:#fff;
+  background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.1);
+  border-radius:var(--radius-pill);padding:6px 12px;
+}
+.hero-mockup-glow{
+  position:absolute;width:340px;height:340px;border-radius:50%;
+  background:radial-gradient(circle, rgba(212,168,42,.25), transparent 70%);
+  top:-60px;right:-60px;z-index:-1;filter:blur(40px);
+}
+
+@media (max-width:980px){
+  .hero-inner{grid-template-columns:1fr;text-align:center}
+  .hero-lead{margin-left:auto;margin-right:auto}
+  .hero-ctas{justify-content:center}
+  .hero-stats{justify-content:center}
+  .hero-mockup{max-width:480px;margin:0 auto}
+}
+@media (max-width:480px){
+  .hero{padding:120px 0 64px}
+  .hero-ctas{flex-direction:column;align-items:stretch}
+  .hero-ctas .btn{width:100%}
+  .hero-stats{gap:28px}
+  .mockup-kpi{padding:12px 8px}
+  .mockup-kpi-value{font-size:1.2rem}
+  .mockup-kpi-label{font-size:.62rem}
+}
+
+/* === SOCIAL-PROOF === */
+.social-proof{
+  background:#fff;border-top:1px solid var(--n100);border-bottom:1px solid var(--n100);
+  padding:28px 0;
+}
+.social-proof-inner{display:flex;align-items:center;gap:32px}
+.social-proof-label{
+  font-family:'Sora',sans-serif;font-size:.72rem;font-weight:700;text-transform:uppercase;
+  letter-spacing:.1em;color:var(--n400);white-space:nowrap;
+}
+.social-proof-logos{
+  display:flex;align-items:center;gap:40px;overflow-x:auto;flex:1;
+  font-family:'Sora',sans-serif;font-weight:700;font-size:1rem;color:var(--n300);
+  scrollbar-width:none;
+}
+.social-proof-logos::-webkit-scrollbar{display:none}
+.social-proof-logos span{white-space:nowrap;transition:color .2s}
+.social-proof-logos span:hover{color:var(--ocean-600)}
+@media (max-width:640px){
+  .social-proof-inner{gap:20px}
+  .social-proof-label{display:none}
+}
+
+/* === PROBLEM === */
+.problem-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:24px}
+.problem-card{
+  background:#fff;border:1px solid var(--n200);border-radius:var(--radius-card);
+  padding:32px;transition:box-shadow .2s ease, transform .2s ease;
+}
+.problem-card:hover{box-shadow:var(--shadow-lg);transform:translateY(-4px)}
+.problem-icon{
+  width:48px;height:48px;border-radius:14px;display:flex;align-items:center;justify-content:center;
+  background:var(--ocean-50);color:var(--ocean-700);margin-bottom:20px;
+}
+.problem-icon svg{width:24px;height:24px;stroke-width:1.75}
+.problem-card h3{font-size:1.05rem;font-weight:700;margin-bottom:10px}
+.problem-card p{color:var(--n500);font-size:.9rem;line-height:1.65}
+@media (max-width:768px){
+  .problem-grid{grid-template-columns:1fr}
+}
+
+/* === FEATURES === */
+.features-section{background:var(--ocean-900);position:relative;overflow:hidden}
+.features-section::before{
+  content:'';position:absolute;top:-200px;right:-160px;width:560px;height:560px;border-radius:50%;
+  background:radial-gradient(circle, rgba(212,168,42,.10) 0%, rgba(212,168,42,0) 70%);
+  pointer-events:none;
+}
+.features-section::after{
+  content:'';position:absolute;bottom:-220px;left:-180px;width:520px;height:520px;border-radius:50%;
+  background:radial-gradient(circle, rgba(58,155,191,.10) 0%, rgba(58,155,191,0) 70%);
+  pointer-events:none;
+}
+.features-grid{
+  display:grid;grid-template-columns:repeat(3,1fr);
+  border-top:1px solid rgba(255,255,255,.08); border-left:1px solid rgba(255,255,255,.08);
+  position:relative;
+}
+.feature-item{
+  padding:44px 40px;border-right:1px solid rgba(255,255,255,.08);border-bottom:1px solid rgba(255,255,255,.08);
+  position:relative;transition:background .25s ease;
+}
+.feature-item::before{
+  content:'';position:absolute;top:-1px;left:0;width:100%;height:2px;
+  background:linear-gradient(90deg,var(--sand-500),var(--ocean-400));
+  transform:scaleX(0);transform-origin:left;transition:transform .35s ease;
+}
+.feature-item:hover{background:rgba(255,255,255,.035)}
+.feature-item:hover::before{transform:scaleX(1)}
+.feature-icon{
+  width:48px;height:48px;border-radius:14px;display:flex;align-items:center;justify-content:center;
+  background:linear-gradient(135deg,rgba(212,168,42,.18),rgba(212,168,42,.05));
+  border:1px solid rgba(212,168,42,.18);color:var(--sand-400);margin-bottom:24px;
+  transition:transform .25s ease,border-color .25s ease;
+}
+.feature-item:hover .feature-icon{transform:translateY(-2px);border-color:rgba(212,168,42,.35)}
+.feature-icon svg{width:23px;height:23px;stroke-width:1.75}
+.feature-item h3{color:#fff;font-size:1.08rem;font-weight:700;margin-bottom:10px;letter-spacing:-0.01em}
+.feature-item p{color:var(--ocean-100);font-size:.9rem;line-height:1.7;opacity:.75}
+.feature-link{
+  display:inline-flex;align-items:center;gap:6px;margin-top:16px;
+  font-family:'Sora',sans-serif;font-size:.85rem;font-weight:700;color:var(--sand-400);
+  text-decoration:none;transition:gap .25s ease,color .2s ease;
+}
+.feature-link svg{width:16px;height:16px;stroke-width:2;transition:transform .25s ease}
+.feature-item:hover .feature-link{color:var(--sand-500)}
+.feature-item:hover .feature-link svg{transform:translateX(4px)}
+@media (max-width:860px){
+  .features-grid{grid-template-columns:repeat(2,1fr)}
+}
+@media (max-width:560px){
+  .features-grid{grid-template-columns:1fr}
+}
+
+/* === PRICING === */
+.pricing-toggle{display:flex;align-items:center;justify-content:center;gap:14px;margin-bottom:40px;flex-wrap:wrap}
+.toggle-label{font-family:'Sora',sans-serif;font-size:.88rem;font-weight:600;color:var(--n400);transition:color .2s;cursor:pointer}
+.toggle-label.active{color:var(--n900);font-weight:700}
+.toggle-switch{
+  width:52px;height:28px;border-radius:var(--radius-pill);background:var(--n200);border:none;
+  position:relative;cursor:pointer;flex-shrink:0;transition:background .25s ease;padding:0;
+}
+.toggle-switch.active{background:var(--ocean-700)}
+.toggle-knob{
+  position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:#fff;
+  box-shadow:0 1px 4px rgba(6,42,56,.2);transition:transform .25s ease;
+}
+.toggle-switch.active .toggle-knob{transform:translateX(24px)}
+.save-badge{
+  background:rgba(212,168,42,.14);color:var(--sand-600);font-family:'Sora',sans-serif;
+  font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;
+  padding:5px 12px;border-radius:var(--radius-pill);
+}
+.unit-note{display:block;font-size:.7rem;font-weight:600;color:var(--n400);text-transform:none;letter-spacing:0;margin-top:2px}
+.price-card.highlighted .unit-note{color:var(--ocean-200)}
+.pricing-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;align-items:stretch;padding-top:8px}
+.price-card{
+  background:#fff;border:1px solid var(--n200);border-radius:var(--radius-card);
+  padding:40px 36px;display:flex;flex-direction:column;align-items:center;text-align:center;position:relative;
+  transition:box-shadow .25s ease, transform .25s ease, border-color .25s ease;
+}
+.price-card:hover{box-shadow:var(--shadow-lg);transform:translateY(-4px);border-color:var(--n300)}
+.price-card.highlighted{
+  background:linear-gradient(165deg,var(--ocean-800) 0%,var(--ocean-900) 65%);
+  border-color:var(--ocean-900);color:#fff;
+  box-shadow:0 24px 64px -16px rgba(212,168,42,.28), var(--shadow-lg);
+  transform:translateY(-12px);
+}
+.price-card.highlighted:hover{transform:translateY(-16px)}
+.price-badge{
+  position:absolute;top:-14px;left:50%;transform:translateX(-50%);
+  background:var(--sand-500);color:var(--ocean-900);white-space:nowrap;
+  font-family:'Sora',sans-serif;font-weight:700;font-size:.7rem;text-transform:uppercase;letter-spacing:.08em;
+  padding:7px 18px;border-radius:var(--radius-pill);box-shadow:0 6px 16px rgba(212,168,42,.35);
+}
+.price-name{font-family:'Sora',sans-serif;font-size:1.2rem;font-weight:800;margin-bottom:8px;letter-spacing:-0.01em}
+.price-card.highlighted .price-name{color:#fff}
+.price-desc{font-size:.88rem;color:var(--n500);margin-bottom:28px;line-height:1.6}
+.price-card.highlighted .price-desc{color:var(--ocean-200)}
+.price-amount{
+  display:flex;flex-direction:column;align-items:center;gap:4px;
+  margin-bottom:28px;padding-bottom:28px;width:100%;border-bottom:1px solid var(--n100);
+}
+.price-card.highlighted .price-amount{border-bottom-color:rgba(255,255,255,.1)}
+.price-amount .value{font-family:'Sora',sans-serif;font-size:3.6rem;font-weight:800;letter-spacing:-0.03em;line-height:1}
+.price-amount .unit{font-size:.74rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--n500)}
+.price-card.highlighted .price-amount .unit{color:var(--ocean-200)}
+.price-features{display:flex;flex-direction:column;gap:14px;margin-bottom:32px;flex:1;width:100%;text-align:left}
+.price-features li{display:flex;align-items:flex-start;gap:12px;font-size:.88rem;line-height:1.5}
+.price-features .check{
+  width:20px;height:20px;border-radius:50%;flex-shrink:0;margin-top:1px;
+  display:flex;align-items:center;justify-content:center;
+  background:var(--ocean-50);color:var(--ocean-600);
+}
+.price-features .check svg{width:12px;height:12px;stroke-width:3}
+.price-card.highlighted .price-features .check{background:rgba(212,168,42,.16);color:var(--sand-400)}
+.price-card .btn{width:100%}
+.pricing-note{
+  text-align:center;margin-top:48px;font-size:.86rem;color:var(--n500);
+}
+.pricing-note svg{width:14px;height:14px;stroke-width:1.75;vertical-align:-2px;margin-right:4px;color:var(--ocean-600)}
+@media (max-width:900px){
+  .pricing-grid{grid-template-columns:1fr;max-width:420px;margin:0 auto}
+  .price-card.highlighted{order:-1;transform:none}
+  .price-card.highlighted:hover{transform:translateY(-4px)}
+}
+
+/* === TESTIMONIALS === */
+.testimonials-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px}
+.testimonial-card{
+  background:#fff;border:1px solid var(--n200);border-radius:var(--radius-card);
+  padding:32px;display:flex;flex-direction:column;
+}
+.testimonial-stars{display:flex;gap:3px;margin-bottom:18px}
+.testimonial-stars svg{width:16px;height:16px;fill:var(--sand-500);stroke:var(--sand-500);stroke-width:1}
+.testimonial-quote{font-style:italic;color:var(--n700);font-size:.94rem;line-height:1.7;margin-bottom:24px;flex:1}
+.testimonial-author{display:flex;align-items:center;gap:12px}
+.testimonial-avatar{
+  width:42px;height:42px;border-radius:50%;background:var(--ocean-700);color:#fff;
+  display:flex;align-items:center;justify-content:center;font-family:'Sora',sans-serif;font-weight:700;font-size:.95rem;
+  flex-shrink:0;
+}
+.testimonial-name{font-family:'Sora',sans-serif;font-weight:700;font-size:.88rem;color:var(--n900)}
+.testimonial-role{font-size:.78rem;color:var(--n500)}
+@media (max-width:900px){
+  .testimonials-grid{grid-template-columns:1fr;max-width:480px;margin:0 auto}
+}
+
+/* === FAQ === */
+.faq-list{max-width:720px;margin:0 auto;display:flex;flex-direction:column;gap:12px}
+.faq-item{border:1px solid var(--n200);border-radius:16px;overflow:hidden;transition:border-color .2s}
+.faq-item.open{border-color:var(--ocean-300)}
+.faq-question{
+  display:flex;align-items:center;justify-content:space-between;gap:16px;
+  width:100%;text-align:left;padding:20px 24px;font-family:'Sora',sans-serif;font-weight:700;
+  font-size:.95rem;color:var(--n900);
+}
+.faq-icon{width:22px;height:22px;flex-shrink:0;color:var(--ocean-600);transition:transform .25s ease}
+.faq-icon svg{width:22px;height:22px;stroke-width:1.75}
+.faq-icon .icon-minus{display:none}
+.faq-item.open .faq-icon .icon-plus{display:none}
+.faq-item.open .faq-icon .icon-minus{display:block}
+.faq-answer{max-height:0;overflow:hidden;transition:max-height .3s ease}
+.faq-answer-inner{padding:0 24px 20px;font-size:.9rem;color:var(--n500);line-height:1.7}
+
+/* === CTA-FINAL === */
+.cta-final{
+  background:var(--ocean-700);position:relative;overflow:hidden;
+  text-align:center;
+}
+.cta-pattern{
+  position:absolute;inset:0;opacity:.12;
+  background-image:radial-gradient(circle at 1px 1px, #fff 1px, transparent 1px);
+  background-size:28px 28px;
+}
+.cta-inner{position:relative;z-index:1;max-width:640px;margin:0 auto}
+.cta-final h2{color:#fff;font-size:clamp(1.8rem,3vw,2.8rem);font-weight:800;letter-spacing:-0.02em;margin-bottom:16px}
+.cta-final p{color:var(--ocean-100);font-size:1.05rem;line-height:1.7;margin-bottom:36px}
+.cta-buttons{display:flex;gap:14px;justify-content:center;flex-wrap:wrap}
+@media (max-width:480px){
+  .cta-buttons{flex-direction:column;align-items:stretch}
+  .cta-buttons .btn{width:100%}
+}
+
+/* === FOOTER === */
+.footer{background:var(--n900);color:var(--n300);padding:80px 0 0}
+.footer-grid{display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr;gap:48px;padding-bottom:56px}
+.footer-brand{display:flex;align-items:center;margin-bottom:16px}
+.footer-brand img{height:32px;width:auto;display:block;filter:brightness(0) invert(1)}
+.footer-desc{font-size:.86rem;line-height:1.7;color:var(--n400);max-width:280px;margin-bottom:20px}
+.social-icons{display:flex;gap:10px;margin-bottom:28px}
+.social-icon{
+  width:34px;height:34px;border-radius:8px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);
+  display:flex;align-items:center;justify-content:center;color:var(--n400);transition:all .2s;
+}
+.social-icon:hover{background:rgba(255,255,255,.12);color:#fff;border-color:rgba(255,255,255,.2)}
+.newsletter-label{font-size:.86rem;color:var(--n300);margin-bottom:10px}
+.newsletter-form{display:flex;gap:8px}
+.newsletter-input{
+  flex:1;min-width:0;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);
+  border-radius:var(--radius-sm);padding:11px 14px;font-family:'DM Sans',sans-serif;font-size:.86rem;color:#fff;outline:none;
+  transition:border-color .2s;
+}
+.newsletter-input::placeholder{color:var(--n500)}
+.newsletter-input:focus{border-color:rgba(255,255,255,.3)}
+.newsletter-btn{
+  background:var(--sand-500);color:var(--ocean-900);border:none;border-radius:var(--radius-sm);
+  padding:11px 18px;font-family:'Sora',sans-serif;font-size:.86rem;font-weight:700;cursor:pointer;
+  transition:background .2s;white-space:nowrap;
+}
+.newsletter-btn:hover{background:var(--sand-400)}
+.newsletter-ok{font-size:.84rem;color:var(--sand-400);margin-top:10px}
+.footer-col h4{
+  font-family:'Sora',sans-serif;font-size:.74rem;font-weight:700;text-transform:uppercase;
+  letter-spacing:.1em;color:var(--n400);margin-bottom:18px;
+}
+.footer-col ul{display:flex;flex-direction:column;gap:12px}
+.footer-col a{font-size:.86rem;color:var(--n300);transition:color .2s}
+.footer-col a:hover{color:var(--sand-400)}
+.footer-bottom{
+  border-top:1px solid rgba(255,255,255,.08);padding:24px 0;
+  display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px;
+  font-size:.8rem;color:var(--n500);
+}
+.footer-bottom-left{display:flex;align-items:center;gap:20px;flex-wrap:wrap}
+.status-badge{display:inline-flex;align-items:center;gap:8px;font-size:.8rem;color:var(--n300)}
+.status-dot{
+  width:8px;height:8px;border-radius:50%;background:#22C55E;
+  box-shadow:0 0 0 0 rgba(34,197,94,.6);animation:pulseDot 2s infinite;
+}
+@keyframes pulseDot{
+  0%{box-shadow:0 0 0 0 rgba(34,197,94,.5)}
+  70%{box-shadow:0 0 0 8px rgba(34,197,94,0)}
+  100%{box-shadow:0 0 0 0 rgba(34,197,94,0)}
+}
+.footer-credit{font-size:.8rem;color:var(--n500)}
+.footer-credit a{color:var(--n300);font-weight:600;transition:color .2s}
+.footer-credit a:hover{color:#fff}
+@media (max-width:860px){
+  .footer-grid{grid-template-columns:repeat(2,1fr);gap:40px 24px}
+}
+@media (max-width:560px){
+  .footer-grid{grid-template-columns:1fr;gap:36px}
+  .footer-bottom{flex-direction:column;align-items:flex-start}
+}
+
+</style>
+</head>
+<body>
+
+<!-- ============================================================
+     NAV
+     ============================================================ -->
+<nav class="nav" id="nav">
+  <div class="container nav-inner">
+    <a href="#home" class="nav-logo">
+      <img src="logo.png" alt="SalDesk">
+    </a>
+    <div class="nav-links">
+      <a href="#features" class="nav-link"><span class="pt">Funcionalidades</span><span class="en">Features</span></a>
+      <a href="#pricing" class="nav-link"><span class="pt">Preços</span><span class="en">Pricing</span></a>
+      <a href="#faq" class="nav-link">FAQ</a>
+      <a href="discover/" class="nav-link"><span class="pt">Directório</span><span class="en">Directory</span></a>
+    </div>
+    <div class="nav-actions">
+      <div class="lang-toggle" id="langToggle">
+        <button data-lang-btn="pt" id="langPt" class="active">PT</button>
+        <button data-lang-btn="en" id="langEn">EN</button>
+      </div>
+      <a href="https://app.saldesk.cv" class="nav-link-ghost"><span class="pt">Entrar</span><span class="en">Log in</span></a>
+      <a href="https://app.saldesk.cv/register" class="nav-btn-register"><span class="pt">Registar</span><span class="en">Sign up</span></a>
+    </div>
+    <button class="nav-burger" id="navBurger" aria-label="Menu">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+    </button>
+  </div>
+</nav>
+
+<div class="nav-overlay" id="navOverlay"></div>
+<div class="nav-mobile" id="navMobile">
+  <button class="nav-mobile-close" id="navMobileClose" aria-label="Fechar">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+  </button>
+  <a href="#features" class="nav-link"><span class="pt">Funcionalidades</span><span class="en">Features</span></a>
+  <a href="#pricing" class="nav-link"><span class="pt">Preços</span><span class="en">Pricing</span></a>
+  <a href="#faq" class="nav-link">FAQ</a>
+  <a href="discover/" class="nav-link"><span class="pt">Directório</span><span class="en">Directory</span></a>
+  <div class="nav-mobile-actions">
+    <div class="lang-toggle" id="langToggleMobile">
+      <button data-lang-btn="pt" class="active">PT</button>
+      <button data-lang-btn="en">EN</button>
+    </div>
+    <a href="https://app.saldesk.cv" class="btn btn-outline"><span class="pt">Entrar</span><span class="en">Log in</span></a>
+    <a href="https://app.saldesk.cv/register" class="btn btn-sand"><span class="pt">Registar</span><span class="en">Sign up</span></a>
+  </div>
+</div>
+
+<!-- ============================================================
+     HERO
+     ============================================================ -->
+<section class="hero" id="home">
+  <div class="hero-bg" id="heroBg">
+    <img src="bg1.jpg" alt="" class="active" loading="eager">
+    <img src="bg2.jpg" alt="" loading="lazy">
+    <img src="bg3.jpg" alt="" loading="lazy">
+  </div>
+  <div class="hero-overlay"></div>
+
+  <div class="container hero-inner">
+    <div class="hero-content">
+      <div class="hero-badge">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 2 7l10 5 10-5-10-5Z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+        <span class="pt">Primeira plataforma SaaS da Ilha do Sal</span>
+        <span class="en">First SaaS platform on Ilha do Sal</span>
+      </div>
+
+      <h1 class="pt">Gestão turística sem <span>comissões OTA</span></h1>
+      <h1 class="en">Tourism management without <span>OTA commissions</span></h1>
+
+      <p class="hero-lead pt">
+        A plataforma operacional completa para operadores da Ilha do Sal — reservas directas,
+        CRM, financeiro e equipa, tudo num só lugar.
+      </p>
+      <p class="hero-lead en">
+        The complete operations platform for Ilha do Sal operators — direct bookings,
+        CRM, finance and staff, all in one place.
+      </p>
+
+      <div class="hero-ctas">
+        <a href="https://app.saldesk.cv/register" class="btn btn-sand btn-lg">
+          <span class="pt">Começar grátis — 30 dias</span>
+          <span class="en">Start free — 30 days</span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+        </a>
+        <a href="discover/" class="btn btn-ghost btn-lg">
+          <span class="pt">Ver directório</span>
+          <span class="en">View directory</span>
+        </a>
+      </div>
+
+      <div class="hero-stats">
+        <div>
+          <div class="hero-stat-value">0%</div>
+          <div class="hero-stat-label pt">Comissão por reserva</div>
+          <div class="hero-stat-label en">Commission per booking</div>
+        </div>
+        <div>
+          <div class="hero-stat-value">4</div>
+          <div class="hero-stat-label pt">Tipos de operador</div>
+          <div class="hero-stat-label en">Operator types</div>
+        </div>
+        <div>
+          <div class="hero-stat-value">30</div>
+          <div class="hero-stat-label pt">Dias de trial gratuito</div>
+          <div class="hero-stat-label en">Days free trial</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="hero-mockup">
+      <div class="hero-mockup-glow"></div>
+      <div class="mockup-window">
+        <div class="mockup-titlebar">
+          <span class="mockup-dot red"></span>
+          <span class="mockup-dot yellow"></span>
+          <span class="mockup-dot green"></span>
+          <span class="mockup-url">app.saldesk.cv</span>
+        </div>
+        <div class="mockup-body">
+          <div class="mockup-sidebar">
+            <div class="mockup-side-item active"></div>
+            <div class="mockup-side-item"></div>
+            <div class="mockup-side-item"></div>
+            <div class="mockup-side-item"></div>
+            <div class="mockup-side-item"></div>
+          </div>
+          <div class="mockup-main">
+            <div class="mockup-kpis">
+              <div class="mockup-kpi">
+                <div class="mockup-kpi-value">&euro;4.2k</div>
+                <div class="mockup-kpi-label pt">Receita</div>
+                <div class="mockup-kpi-label en">Revenue</div>
+              </div>
+              <div class="mockup-kpi">
+                <div class="mockup-kpi-value">87%</div>
+                <div class="mockup-kpi-label pt">Ocupação</div>
+                <div class="mockup-kpi-label en">Occupancy</div>
+              </div>
+              <div class="mockup-kpi">
+                <div class="mockup-kpi-value">24</div>
+                <div class="mockup-kpi-label pt">Reservas</div>
+                <div class="mockup-kpi-label en">Bookings</div>
+              </div>
+            </div>
+            <div class="mockup-chart">
+              <div class="mockup-bar" style="height:45%"></div>
+              <div class="mockup-bar" style="height:65%"></div>
+              <div class="mockup-bar" style="height:38%"></div>
+              <div class="mockup-bar" style="height:80%"></div>
+              <div class="mockup-bar active" style="height:95%"></div>
+              <div class="mockup-bar" style="height:58%"></div>
+              <div class="mockup-bar" style="height:70%"></div>
+            </div>
+            <div class="mockup-divider"></div>
+            <div class="mockup-tags">
+              <span class="mockup-tag">Hotel</span>
+              <span class="mockup-tag pt">Actividade</span>
+              <span class="mockup-tag en">Activity</span>
+              <span class="mockup-tag">Rent-a-Car</span>
+              <span class="mockup-tag pt">Restaurante</span>
+              <span class="mockup-tag en">Restaurant</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     SOCIAL PROOF STRIP
+     ============================================================ -->
+<div class="social-proof">
+  <div class="container social-proof-inner">
+    <span class="social-proof-label pt">Integrações</span>
+    <span class="social-proof-label en">Integrations</span>
+    <div class="social-proof-logos">
+      <span>Viator</span>
+      <span>GetYourGuide</span>
+      <span>Booking.com</span>
+      <span>Airbnb</span>
+      <span>SISP Vinti4</span>
+      <span>PayPal</span>
+      <span>WhatsApp</span>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     PROBLEMA
+     ============================================================ -->
+<section class="section" id="problem">
+  <div class="container">
+    <div class="section-head">
+      <span class="eyebrow pt">O Problema</span>
+      <span class="eyebrow en">The Problem</span>
+      <h2 class="section-title pt">Gestão manual custa tempo e dinheiro</h2>
+      <h2 class="section-title en">Manual management costs time and money</h2>
+      <p class="section-sub pt">Operadores da Ilha do Sal ainda dependem de Excel, WhatsApp e plataformas externas que cobram comissões pesadas.</p>
+      <p class="section-sub en">Ilha do Sal operators still rely on spreadsheets, WhatsApp and external platforms that charge heavy commissions.</p>
+    </div>
+
+    <div class="problem-grid">
+      <div class="problem-card">
+        <div class="problem-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+        </div>
+        <h3 class="pt">Comissões que comem a margem</h3>
+        <h3 class="en">Commissions that eat your margin</h3>
+        <p class="pt">Plataformas como Booking.com e Airbnb cobram até 20% por reserva — uma fatia enorme do lucro de pequenos operadores.</p>
+        <p class="en">Platforms like Booking.com and Airbnb charge up to 20% per booking — a huge slice of a small operator's profit.</p>
+      </div>
+
+      <div class="problem-card">
+        <div class="problem-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
+        </div>
+        <h3 class="pt">Sem visão financeira</h3>
+        <h3 class="en">No financial visibility</h3>
+        <p class="pt">Receitas, despesas e pagamentos espalhados por folhas de Excel, dificultando decisões rápidas e informadas.</p>
+        <p class="en">Revenue, expenses and payments scattered across spreadsheets, making fast and informed decisions difficult.</p>
+      </div>
+
+      <div class="problem-card">
+        <div class="problem-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><path d="M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01"/></svg>
+        </div>
+        <h3 class="pt">Overbooking e erros de calendário</h3>
+        <h3 class="en">Overbooking and calendar errors</h3>
+        <p class="pt">Gerir disponibilidade em múltiplos canais manualmente leva a reservas duplicadas e clientes frustrados.</p>
+        <p class="en">Managing availability across multiple channels manually leads to duplicate bookings and frustrated customers.</p>
+      </div>
+
+      <div class="problem-card">
+        <div class="problem-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        </div>
+        <h3 class="pt">Sem presença digital própria</h3>
+        <h3 class="en">No digital presence of their own</h3>
+        <p class="pt">Sem uma página de reservas própria, o operador depende inteiramente de terceiros para ser encontrado.</p>
+        <p class="en">Without their own booking page, the operator depends entirely on third parties to be found.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     FEATURES
+     ============================================================ -->
+<section class="section features-section" id="features">
+  <div class="container">
+    <div class="section-head">
+      <span class="eyebrow on-dark pt">Funcionalidades</span>
+      <span class="eyebrow on-dark en">Features</span>
+      <h2 class="section-title on-dark pt">Tudo o que precisa, num só lugar</h2>
+      <h2 class="section-title on-dark en">Everything you need, in one place</h2>
+      <p class="section-sub on-dark pt">Um sistema operacional completo, desenhado para a realidade dos operadores da Ilha do Sal.</p>
+      <p class="section-sub on-dark en">A complete operating system, built for the reality of Ilha do Sal operators.</p>
+    </div>
+  </div>
+
+  <div class="container" style="padding:0">
+    <div class="features-grid">
+      <div class="feature-item">
+        <div class="feature-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        </div>
+        <h3 class="pt">Motor de Reservas</h3>
+        <h3 class="en">Booking Engine</h3>
+        <p class="pt">Página de reservas directa, calendário em tempo real e gestão de disponibilidade sem sobreposições.</p>
+        <p class="en">Direct booking page, real-time calendar and availability management without overlaps.</p>
+        <a class="feature-link pt" href="#pricing">Saber mais <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></a>
+        <a class="feature-link en" href="#pricing">Learn more <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></a>
+      </div>
+
+      <div class="feature-item">
+        <div class="feature-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        </div>
+        <h3>CRM</h3>
+        <p class="pt">Histórico de clientes, contactos, preferências e segmentação para campanhas direccionadas.</p>
+        <p class="en">Customer history, contacts, preferences and segmentation for targeted campaigns.</p>
+        <a class="feature-link pt" href="#pricing">Saber mais <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></a>
+        <a class="feature-link en" href="#pricing">Learn more <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></a>
+      </div>
+
+      <div class="feature-item">
+        <div class="feature-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+        </div>
+        <h3 class="pt">Financeiro</h3>
+        <h3 class="en">Finance</h3>
+        <p class="pt">Receitas, despesas, pagamentos e relatórios automáticos — sem folhas de Excel.</p>
+        <p class="en">Revenue, expenses, payments and automatic reports — no more spreadsheets.</p>
+        <a class="feature-link pt" href="#pricing">Saber mais <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></a>
+        <a class="feature-link en" href="#pricing">Learn more <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></a>
+      </div>
+
+      <div class="feature-item">
+        <div class="feature-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M18.7 8 14 12.7l-3-3L7 14.3"/></svg>
+        </div>
+        <h3>Analytics</h3>
+        <p class="pt">Indicadores de ocupação, receita e origem de tráfego actualizados em tempo real.</p>
+        <p class="en">Occupancy, revenue and traffic-source indicators updated in real time.</p>
+        <a class="feature-link pt" href="#pricing">Saber mais <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></a>
+        <a class="feature-link en" href="#pricing">Learn more <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></a>
+      </div>
+
+      <div class="feature-item">
+        <div class="feature-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+        </div>
+        <h3 class="pt">Channel Manager</h3>
+        <h3 class="en">Channel Manager</h3>
+        <p class="pt">Sincronização automática com Viator e GetYourGuide — sem reservas duplicadas.</p>
+        <p class="en">Automatic sync with Viator and GetYourGuide — no duplicate bookings.</p>
+        <a class="feature-link pt" href="#pricing">Saber mais <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></a>
+        <a class="feature-link en" href="#pricing">Learn more <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></a>
+      </div>
+
+      <div class="feature-item">
+        <div class="feature-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+        </div>
+        <h3 class="pt">Automações</h3>
+        <h3 class="en">Automations</h3>
+        <p class="pt">Confirmações, lembretes e pedidos de avaliação enviados automaticamente por email e WhatsApp.</p>
+        <p class="en">Confirmations, reminders and review requests sent automatically by email and WhatsApp.</p>
+        <a class="feature-link pt" href="#pricing">Saber mais <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></a>
+        <a class="feature-link en" href="#pricing">Learn more <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     PRICING
+     ============================================================ -->
+<section class="section" id="pricing">
+  <div class="container">
+    <div class="section-head">
+      <span class="eyebrow pt">Preços</span>
+      <span class="eyebrow en">Pricing</span>
+      <h2 class="section-title pt">Simples, transparente, sem surpresas</h2>
+      <h2 class="section-title en">Simple, transparent, no surprises</h2>
+      <p class="section-sub pt">Escolha o plano certo para o tamanho do seu negócio. Sem comissões por reserva.</p>
+      <p class="section-sub en">Choose the right plan for the size of your business. No per-booking commissions.</p>
+    </div>
+
+    <div class="pricing-toggle">
+      <span class="toggle-label pt active" data-period="monthly">Mensal</span>
+      <span class="toggle-label en active" data-period="monthly">Monthly</span>
+      <button class="toggle-switch" id="billingToggle" aria-label="Alternar entre plano mensal e anual"><span class="toggle-knob"></span></button>
+      <span class="toggle-label pt" data-period="annual">Anual</span>
+      <span class="toggle-label en" data-period="annual">Annual</span>
+      <span class="save-badge pt">Poupa 20%</span>
+      <span class="save-badge en">Save 20%</span>
+    </div>
+
+    <div class="pricing-grid" id="pricingGrid">
+      <!-- Conteudo gerado por JS (renderPricing) com fallback estatico -->
+    </div>
+
+    <p class="pricing-note">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+      <span class="pt">30 dias gratuitos. Sem cartão de crédito.</span>
+      <span class="en">30 days free. No credit card required.</span>
+    </p>
+  </div>
+</section>
+
+<!-- ============================================================
+     TESTIMONIALS
+     ============================================================ -->
+<section class="section bg-alt" id="testimonials">
+  <div class="container">
+    <div class="section-head">
+      <span class="eyebrow pt">Testemunhos</span>
+      <span class="eyebrow en">Testimonials</span>
+      <h2 class="section-title pt">Operadores que já confiam</h2>
+      <h2 class="section-title en">Operators who already trust us</h2>
+    </div>
+
+    <div class="testimonials-grid" id="testimonialsGrid">
+      <!-- Conteudo gerado por JS (renderTestimonials) com fallback estatico -->
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     FAQ
+     ============================================================ -->
+<section class="section" id="faq">
+  <div class="container">
+    <div class="section-head">
+      <span class="eyebrow pt">Perguntas Frequentes</span>
+      <span class="eyebrow en">FAQ</span>
+      <h2 class="section-title pt">Tudo o que precisa saber</h2>
+      <h2 class="section-title en">Everything you need to know</h2>
+    </div>
+
+    <div class="faq-list" id="faqList">
+      <!-- Conteudo gerado por JS (renderFaqs) com fallback estatico -->
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     CTA FINAL
+     ============================================================ -->
+<section class="section cta-final" id="cta">
+  <div class="cta-pattern"></div>
+  <div class="container cta-inner">
+    <h2 class="pt">Pronto para eliminar as comissões?</h2>
+    <h2 class="en">Ready to eliminate commissions?</h2>
+    <p class="pt">Junte-se aos operadores da Ilha do Sal que já gerem o seu negócio com a SalDesk. Comece hoje, gratuitamente.</p>
+    <p class="en">Join the Ilha do Sal operators already running their business with SalDesk. Start today, for free.</p>
+    <div class="cta-buttons">
+      <a href="https://app.saldesk.cv/register" class="btn btn-sand btn-lg">
+        <span class="pt">Começar grátis</span>
+        <span class="en">Start for free</span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+      </a>
+      <a href="mailto:hello@saldesk.cv" class="btn btn-ghost btn-lg">
+        <span class="pt">Falar com a equipa</span>
+        <span class="en">Talk to the team</span>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     FOOTER
+     ============================================================ -->
+<footer class="footer">
+  <div class="container">
+    <div class="footer-grid">
+      <div>
+        <div class="footer-brand">
+          <img src="logo.png" alt="SalDesk">
+        </div>
+        <p class="footer-desc pt">A plataforma operacional completa para operadores turísticos da Ilha do Sal, Cabo Verde.</p>
+        <p class="footer-desc en">The complete operations platform for tourism operators on Ilha do Sal, Cape Verde.</p>
+        <div class="social-icons">
+          <a href="https://instagram.com/saldesk" class="social-icon" aria-label="Instagram" target="_blank" rel="noopener">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+          </a>
+          <a href="#" class="social-icon" aria-label="Facebook">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>
+          </a>
+          <a href="#" class="social-icon" aria-label="LinkedIn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
+          </a>
+        </div>
+        <div class="newsletter-wrap">
+          <p class="newsletter-label pt">Receba novidades sobre o SalDesk</p>
+          <p class="newsletter-label en">Get SalDesk news and updates</p>
+          <form class="newsletter-form" id="newsletter-form">
+            <input type="email" class="newsletter-input" id="newsletter-email" placeholder="Email" required>
+            <button type="submit" class="newsletter-btn">
+              <span class="pt">Subscrever</span><span class="en">Subscribe</span>
+            </button>
+          </form>
+          <p class="newsletter-ok" id="newsletter-ok" style="display:none">
+            <span class="pt">Obrigado! Vai receber as nossas novidades.</span>
+            <span class="en">Thank you! You will receive our updates.</span>
+          </p>
+        </div>
+      </div>
+
+      <div class="footer-col">
+        <h4 class="pt">Produto</h4>
+        <h4 class="en">Product</h4>
+        <ul>
+          <li><a href="#features"><span class="pt">Funcionalidades</span><span class="en">Features</span></a></li>
+          <li><a href="#pricing"><span class="pt">Preços</span><span class="en">Pricing</span></a></li>
+          <li><a href="https://app.saldesk.cv/register"><span class="pt">Criar conta</span><span class="en">Create account</span></a></li>
+          <li><a href="https://app.saldesk.cv"><span class="pt">Entrar</span><span class="en">Log in</span></a></li>
+        </ul>
+      </div>
+
+      <div class="footer-col">
+        <h4 class="pt">Descobrir</h4>
+        <h4 class="en">Discover</h4>
+        <ul>
+          <li><a href="discover/?type=hotel"><span class="pt">Hotéis</span><span class="en">Hotels</span></a></li>
+          <li><a href="discover/?type=activity"><span class="pt">Actividades</span><span class="en">Activities</span></a></li>
+          <li><a href="discover/?type=rentacar">Rent-a-Car</a></li>
+          <li><a href="discover/?type=restaurant"><span class="pt">Restaurantes</span><span class="en">Restaurants</span></a></li>
+        </ul>
+      </div>
+
+      <div class="footer-col">
+        <h4 class="pt">Empresa</h4>
+        <h4 class="en">Company</h4>
+        <ul>
+          <li><a href="operadores.html"><span class="pt">Para operadores</span><span class="en">For operators</span></a></li>
+          <li><a href="impacto.html"><span class="pt">Impacto</span><span class="en">Impact</span></a></li>
+          <li><a href="mailto:hello@saldesk.cv">hello@saldesk.cv</a></li>
+          <li><a href="https://wa.me/238XXXXXXX">WhatsApp</a></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="footer-bottom">
+      <div class="footer-bottom-left">
+        <span>&copy; <span id="year"></span> SalDesk. <span class="pt">Todos os direitos reservados.</span><span class="en">All rights reserved.</span></span>
+        <span class="status-badge">
+          <span class="status-dot"></span>
+          <span class="pt">Sistema operacional</span>
+          <span class="en">All systems operational</span>
+        </span>
+      </div>
+      <span class="footer-credit">
+        <span class="pt">Sistema desenvolvido por </span>
+        <span class="en">System developed by </span>
+        <a href="https://wandr.cv" target="_blank" rel="noopener">WANDR — Travel Technology</a>
+      </span>
+    </div>
+  </div>
+</footer>
+
+<script>
+
+/* ============================================================
+   DADOS — fallback estatico (usado se o CMS falhar)
+   ============================================================ */
+const FALLBACK_DATA = {
+  pricing: [
+    { plan: 'starter', price_eur: 29, name_pt: 'Starter', name_en: 'Starter',
+      description_pt: 'Para começar', description_en: 'To get started',
+      features_pt: ['1 utilizador', 'Até 50 reservas/mês', 'CRM básico', 'Landing page pública'],
+      features_en: ['1 user', 'Up to 50 bookings/month', 'Basic CRM', 'Public landing page'],
+      highlighted: false },
+    { plan: 'pro', price_eur: 79, name_pt: 'Pro', name_en: 'Pro',
+      description_pt: 'Para crescer — o mais popular', description_en: 'To grow — most popular',
+      features_pt: ['3 utilizadores', 'Reservas ilimitadas', 'CRM completo', 'Financeiro', 'Channel manager', 'Automações'],
+      features_en: ['3 users', 'Unlimited bookings', 'Full CRM', 'Finance', 'Channel manager', 'Automations'],
+      highlighted: true },
+    { plan: 'business', price_eur: 129, name_pt: 'Business', name_en: 'Business',
+      description_pt: 'Para escalar', description_en: 'To scale',
+      features_pt: ['Utilizadores ilimitados', 'Multi-propriedade', 'API access', 'Manager dedicado'],
+      features_en: ['Unlimited users', 'Multi-property', 'API access', 'Dedicated manager'],
+      highlighted: false }
+  ],
+  testimonials: [
+    { name: 'Carlos Monteiro', role: 'Proprietário', company: 'Hotel Morabeza',
+      text_pt: 'Desde que adoptamos o SalDesk, as reservas directas aumentaram 40%.',
+      text_en: 'Since we adopted SalDesk, direct bookings increased 40%.', rating: 5 },
+    { name: 'Ana Ferreira', role: 'Gestora', company: 'Zy Tours',
+      text_pt: 'A plataforma é intuitiva e o suporte é excelente.',
+      text_en: 'The platform is intuitive and the support is excellent.', rating: 5 },
+    { name: 'Miguel Santos', role: 'Director', company: 'Sal Rent-a-Car',
+      text_pt: 'O channel manager sincroniza com a Viator automaticamente.',
+      text_en: 'The channel manager syncs with Viator automatically.', rating: 5 }
+  ],
+  faqs: [
+    { question_pt: 'Quanto tempo demora a configurar?', question_en: 'How long does setup take?',
+      answer_pt: 'A maioria dos operadores está operacional em menos de 30 minutos.',
+      answer_en: 'Most operators are up and running in less than 30 minutes.', order_index: 1 },
+    { question_pt: 'Posso cancelar a qualquer momento?', question_en: 'Can I cancel at any time?',
+      answer_pt: 'Sim, sem contratos nem penalizações.',
+      answer_en: 'Yes, no contracts or penalties.', order_index: 2 },
+    { question_pt: 'O SalDesk funciona com o meu site actual?', question_en: 'Does SalDesk work with my current website?',
+      answer_pt: 'Sim. Cada operador recebe uma landing page pública gratuita.',
+      answer_en: 'Yes. Each operator gets a free public landing page.', order_index: 3 },
+    { question_pt: 'Que métodos de pagamento aceita?', question_en: 'What payment methods are accepted?',
+      answer_pt: 'SISP Vinti4 para cartões cabo-verdianos, PayPal para cartões internacionais.',
+      answer_en: 'SISP Vinti4 for Cape Verdean cards, PayPal for international cards.', order_index: 4 }
+  ]
+};
+
+let cmsData = FALLBACK_DATA;
+const html = document.documentElement;
+
+/* ============================================================
+   LANGUAGE TOGGLE
+   ============================================================ */
+function setLang(lang) {
+  html.setAttribute('data-lang', lang);
+  html.setAttribute('lang', lang);
+  document.querySelectorAll('[data-lang-btn]').forEach((btn) => {
+    btn.classList.toggle('active', btn.dataset.langBtn === lang);
+  });
+  localStorage.setItem('sd-lang', lang);
+  renderPricing();
+  renderTestimonials();
+  renderFaqs();
+}
+
+document.querySelectorAll('[data-lang-btn]').forEach((btn) => {
+  btn.addEventListener('click', () => setLang(btn.dataset.langBtn));
+});
+
+/* ============================================================
+   NAV — scroll state
+   ============================================================ */
+const nav = document.getElementById('nav');
+function updateNavScroll() {
+  nav.classList.toggle('scrolled', window.scrollY > 40);
+}
+window.addEventListener('scroll', updateNavScroll);
+
+/* ============================================================
+   NAV — mobile menu
+   ============================================================ */
+const navBurger = document.getElementById('navBurger');
+const navMobile = document.getElementById('navMobile');
+const navOverlay = document.getElementById('navOverlay');
+const navMobileClose = document.getElementById('navMobileClose');
+
+function openMobileNav() {
+  navMobile.classList.add('open');
+  navOverlay.classList.add('open');
+}
+function closeMobileNav() {
+  navMobile.classList.remove('open');
+  navOverlay.classList.remove('open');
+}
+
+navBurger.addEventListener('click', openMobileNav);
+navMobileClose.addEventListener('click', closeMobileNav);
+navOverlay.addEventListener('click', closeMobileNav);
+navMobile.querySelectorAll('a').forEach((a) => a.addEventListener('click', closeMobileNav));
+
+/* ============================================================
+   HERO — carousel de imagens de fundo
+   ============================================================ */
+const heroImgs = document.querySelectorAll('#heroBg img');
+let heroIndex = 0;
+if (heroImgs.length > 1) {
+  setInterval(() => {
+    heroImgs[heroIndex].classList.remove('active');
+    heroIndex = (heroIndex + 1) % heroImgs.length;
+    heroImgs[heroIndex].classList.add('active');
+  }, 6000);
+}
+
+/* ============================================================
+   HELPERS
+   ============================================================ */
+function getLang() {
+  return html.getAttribute('data-lang') || 'pt';
+}
+
+function getInitials(name) {
+  return name.split(' ').filter(Boolean).slice(0, 2).map((w) => w[0]).join('').toUpperCase();
+}
+
+function starsSvg(rating) {
+  let out = '';
+  for (let i = 0; i < 5; i++) {
+    const filled = i < rating;
+    out += `<svg viewBox="0 0 24 24" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" style="${filled ? '' : 'fill:none;stroke:var(--n300)'}"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`;
+  }
+  return out;
+}
+
+const checkIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
+
+/* ============================================================
+   PRICING — render a partir do CMS ou fallback
+   ============================================================ */
+let billingPeriod = 'monthly';
+
+function renderPricing() {
+  const grid = document.getElementById('pricingGrid');
+  if (!grid) return;
+  const lang = getLang();
+  const annual = billingPeriod === 'annual';
+
+  grid.innerHTML = cmsData.pricing.map((plan) => {
+    const features = plan[`features_${lang}`] || plan.features || [];
+    const badge = plan.highlighted
+      ? `<span class="price-badge">${lang === 'pt' ? 'Mais popular' : 'Most popular'}</span>`
+      : '';
+    const displayPrice = annual ? Math.round(plan.price_eur * 0.8) : plan.price_eur;
+    const unitNote = annual
+      ? `<span class="unit-note pt">cobrado anualmente</span><span class="unit-note en">billed annually</span>`
+      : '';
+    return `
+      <div class="price-card ${plan.highlighted ? 'highlighted' : ''}">
+        ${badge}
+        <div class="price-name">${plan[`name_${lang}`] || plan.plan}</div>
+        <div class="price-desc">${plan[`description_${lang}`] || ''}</div>
+        <div class="price-amount">
+          <span class="value">&euro;${displayPrice}</span>
+          <span class="unit">${lang === 'pt' ? '/mês' : '/month'}${unitNote}</span>
+        </div>
+        <ul class="price-features">
+          ${features.map((f) => `<li><span class="check">${checkIcon}</span><span>${f}</span></li>`).join('')}
+        </ul>
+        <a href="https://app.saldesk.cv/register" class="btn ${plan.highlighted ? 'btn-sand' : 'btn-outline'}">
+          ${lang === 'pt' ? 'Começar grátis' : 'Start for free'}
+        </a>
+      </div>`;
+  }).join('');
+}
+
+const billingToggle = document.getElementById('billingToggle');
+if (billingToggle) {
+  billingToggle.addEventListener('click', () => {
+    billingPeriod = billingPeriod === 'monthly' ? 'annual' : 'monthly';
+    billingToggle.classList.toggle('active', billingPeriod === 'annual');
+    document.querySelectorAll('.toggle-label').forEach((label) => {
+      label.classList.toggle('active', label.dataset.period === billingPeriod);
+    });
+    renderPricing();
+  });
+}
+
+/* ============================================================
+   TESTIMONIALS — render a partir do CMS ou fallback
+   ============================================================ */
+function renderTestimonials() {
+  const grid = document.getElementById('testimonialsGrid');
+  if (!grid) return;
+  const lang = getLang();
+
+  grid.innerHTML = cmsData.testimonials.map((t) => `
+    <div class="testimonial-card">
+      <div class="testimonial-stars">${starsSvg(t.rating || 5)}</div>
+      <p class="testimonial-quote">&ldquo;${t[`text_${lang}`] || ''}&rdquo;</p>
+      <div class="testimonial-author">
+        <div class="testimonial-avatar">${getInitials(t.name)}</div>
+        <div>
+          <div class="testimonial-name">${t.name}</div>
+          <div class="testimonial-role">${t.role} &middot; ${t.company}</div>
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+/* ============================================================
+   FAQ — render + accordion
+   ============================================================ */
+function renderFaqs() {
+  const list = document.getElementById('faqList');
+  if (!list) return;
+  const lang = getLang();
+  const sorted = [...cmsData.faqs].sort((a, b) => (a.order_index || 0) - (b.order_index || 0));
+
+  list.innerHTML = sorted.map((f) => `
+    <div class="faq-item">
+      <button class="faq-question" type="button">
+        <span>${f[`question_${lang}`] || ''}</span>
+        <span class="faq-icon">
+          <svg class="icon-plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          <svg class="icon-minus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        </span>
+      </button>
+      <div class="faq-answer"><div class="faq-answer-inner">${f[`answer_${lang}`] || ''}</div></div>
+    </div>`).join('');
+
+  list.querySelectorAll('.faq-item').forEach((item) => {
+    const question = item.querySelector('.faq-question');
+    const answer = item.querySelector('.faq-answer');
+    question.addEventListener('click', () => {
+      const isOpen = item.classList.contains('open');
+      list.querySelectorAll('.faq-item.open').forEach((openItem) => {
+        openItem.classList.remove('open');
+        openItem.querySelector('.faq-answer').style.maxHeight = null;
+      });
+      if (!isOpen) {
+        item.classList.add('open');
+        answer.style.maxHeight = `${answer.scrollHeight}px`;
+      }
+    });
+  });
+}
+
+/* ============================================================
+   CMS — fetch publico, com fallback estatico
+   ============================================================ */
+async function loadCms() {
+  try {
+    const res = await fetch('https://api.saldesk.cv/api/v1/public/cms');
+    if (!res.ok) return;
+    const json = await res.json();
+    const data = json && json.data;
+    if (!data) return;
+
+    const cmsPricingByPlan = {};
+    (data.pricing || []).forEach((p) => { cmsPricingByPlan[p.plan] = p; });
+    const pricing = FALLBACK_DATA.pricing.map((fallback) => {
+      const live = cmsPricingByPlan[fallback.plan];
+      if (!live) return fallback;
+      return {
+        ...fallback,
+        price_eur: Number(live.price_eur) || fallback.price_eur,
+        price_cve: Number(live.price_cve) || fallback.price_cve,
+      };
+    });
+
+    cmsData = {
+      pricing,
+      testimonials: (data.testimonials && data.testimonials.length) ? data.testimonials : FALLBACK_DATA.testimonials,
+      faqs: (data.faqs && data.faqs.length) ? data.faqs : FALLBACK_DATA.faqs,
+    };
+    renderPricing();
+    renderTestimonials();
+    renderFaqs();
+  } catch (err) {
+    /* mantém fallback estatico — sem expor erro ao utilizador */
+  }
+}
+
+/* ============================================================
+   NEWSLETTER
+   ============================================================ */
+const newsletterForm = document.getElementById('newsletter-form');
+if (newsletterForm) {
+  newsletterForm.addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const email = document.getElementById('newsletter-email').value.trim();
+    const lang = getLang();
+    try {
+      await fetch('https://api.saldesk.cv/api/v1/public/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, source: 'newsletter', operator_type: 'other', message: 'Newsletter subscription', language: lang })
+      });
+    } catch (_) { /* falha silenciosa */ }
+    newsletterForm.style.display = 'none';
+    document.getElementById('newsletter-ok').style.display = '';
+  });
+}
+
+/* ============================================================
+   INIT
+   ============================================================ */
+document.getElementById('year').textContent = new Date().getFullYear();
+updateNavScroll();
+renderPricing();
+renderTestimonials();
+renderFaqs();
+loadCms();
+
+const savedLang = localStorage.getItem('sd-lang');
+if (savedLang) setLang(savedLang);
+
+</script>
+
+
+
+</body>
+</html>
