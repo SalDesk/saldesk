@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="pt" data-lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sobre Nós — SalDesk · Ilha do Sal, Cabo Verde</title>
+<meta name="description" content="Conheça a SalDesk: a plataforma de gestão turística construída na Ilha do Sal, para os operadores da Ilha do Sal.">
+<meta property="og:title" content="Sobre Nós — SalDesk">
+<meta property="og:description" content="A história, a missão e a equipa por trás da SalDesk.">
+<meta property="og:image" content="https://saldesk.cv/og.png">
+<meta property="og:url" content="https://saldesk.cv/sobre.html">
+<meta property="og:type" content="website">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="canonical" href="https://saldesk.cv/sobre.html">
+<link rel="icon" href="/logo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=DM+Sans:ital,wght@0,400;0,500;0,600;1,400&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* — TOKENS ————————————————————————————————————————— */
+:root {
+  --ocean-900: #062A38;
+  --ocean-800: #0A3F55;
+  --ocean-700: #0D5470;
+  --ocean-500: #1480A8;
+  --ocean-300: #71BDD4;
+  --ocean-100: #D6EEF5;
+  --ocean-50:  #EBF7FB;
+  --sand-500:  #D4A82A;
+  --sand-400:  #E0BF5A;
+  --sand-100:  #FBF3DC;
+  --n900: #0F1923;
+  --n800: #1A2332;
+  --n700: #2D3748;
+  --n600: #4A5568;
+  --n500: #718096;
+  --n400: #A0AEC0;
+  --n200: #E2E8F0;
+  --n100: #F7F8FA;
+  --n50:  #FAFBFC;
+  --white: #FFFFFF;
+  --r: 16px;
+  --r-lg: 24px;
+  --shadow: 0 4px 24px rgba(6,42,56,.10);
+  --shadow-lg: 0 16px 48px rgba(6,42,56,.16);
+}
+
+/* — RESET ————————————————————————————————————————————— */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+body{font-family:'DM Sans',sans-serif;font-size:1rem;line-height:1.65;color:var(--n700);background:var(--white);-webkit-font-smoothing:antialiased}
+img{max-width:100%;display:block}
+a{color:inherit;text-decoration:none}
+ul{list-style:none}
+button{font-family:inherit;cursor:pointer;border:none;background:none}
+svg{display:block;flex-shrink:0}
+
+/* — LANG ——————————————————————————————————————————————— */
+[data-lang="pt"] .en{display:none}
+[data-lang="en"] .pt{display:none}
+
+/* — LAYOUT ————————————————————————————————————————————— */
+.container{max-width:1100px;margin:0 auto;padding:0 24px}
+section[id]{scroll-margin-top:80px}
+
+/* — NAV ———————————————————————————————————————————————— */
+.nav{
+  position:fixed;top:0;left:0;right:0;z-index:100;
+  background:rgba(6,42,56,.92);backdrop-filter:blur(16px);
+  border-bottom:1px solid rgba(255,255,255,.07);
+  transition:background .3s;
+}
+.nav-inner{
+  max-width:1100px;margin:0 auto;padding:0 24px;
+  height:68px;display:flex;align-items:center;justify-content:space-between;gap:24px;
+}
+.nav-logo{display:flex;align-items:center;gap:10px}
+.nav-logo img{height:56px}
+.nav-links{display:flex;align-items:center;gap:4px}
+.nav-link{
+  padding:7px 14px;border-radius:8px;
+  font-family:'Sora',sans-serif;font-size:.82rem;font-weight:600;
+  color:rgba(255,255,255,.75);transition:color .15s,background .15s;
+}
+.nav-link:hover{color:#fff;background:rgba(255,255,255,.07)}
+.nav-cta{
+  padding:9px 20px;border-radius:10px;
+  background:var(--sand-500);color:var(--ocean-900);
+  font-family:'Sora',sans-serif;font-size:.82rem;font-weight:700;
+  transition:background .15s,transform .1s;
+}
+.nav-cta:hover{background:var(--sand-400);transform:translateY(-1px)}
+.nav-lang{
+  display:flex;align-items:center;gap:2px;
+  background:rgba(255,255,255,.08);border-radius:8px;overflow:hidden;
+}
+.lang-btn{
+  padding:6px 11px;font-family:'DM Mono',monospace;font-size:.72rem;font-weight:500;
+  color:rgba(255,255,255,.5);cursor:pointer;transition:all .15s;
+}
+.lang-btn.active{background:rgba(255,255,255,.12);color:#fff}
+.nav-mobile-cta{display:none}
+.hamburger{display:none;flex-direction:column;gap:5px;padding:8px;cursor:pointer}
+.hamburger span{width:22px;height:2px;background:#fff;border-radius:2px;transition:.2s}
+@media(max-width:860px){
+  .nav-links,.nav-lang{display:none}
+  .hamburger{display:flex}
+  .nav-mobile-cta{
+    display:block;padding:8px 16px;border-radius:9px;
+    background:var(--sand-500);color:var(--ocean-900);
+    font-family:'Sora',sans-serif;font-size:.8rem;font-weight:700;
+  }
+}
+
+/* — PAGE HERO (variante menor) ——————————————————————————— */
+.page-hero{
+  min-height:60svh;
+  background:var(--ocean-900);
+  display:flex;flex-direction:column;justify-content:center;
+  padding:140px 0 80px;
+  position:relative;overflow:hidden;
+}
+.page-hero-bg{
+  position:absolute;inset:0;
+  background-image:url('bg1.jpg');
+  background-size:cover;background-position:center;
+  opacity:.12;
+}
+.page-hero-grain{
+  position:absolute;inset:0;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+  opacity:.4;pointer-events:none;
+}
+.page-hero-content{position:relative;z-index:1;max-width:1100px;margin:0 auto;padding:0 24px}
+.hero-eyebrow{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:6px 14px;border-radius:50px;
+  background:rgba(212,168,42,.12);border:1px solid rgba(212,168,42,.25);
+  font-family:'DM Mono',monospace;font-size:.72rem;font-weight:500;
+  color:var(--sand-400);letter-spacing:.06em;text-transform:uppercase;
+  margin-bottom:28px;
+}
+.hero-eyebrow-dot{width:6px;height:6px;border-radius:50%;background:var(--sand-500);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.page-hero h1{
+  font-family:'Sora',sans-serif;font-size:clamp(2.2rem,5vw,3.4rem);
+  font-weight:800;line-height:1.1;letter-spacing:-.03em;
+  color:var(--white);max-width:760px;margin-bottom:24px;
+}
+.page-hero h1 em{font-style:normal;color:var(--sand-500)}
+.page-hero-sub{
+  font-size:clamp(1rem,2vw,1.15rem);line-height:1.6;color:rgba(255,255,255,.65);
+  max-width:560px;
+}
+
+/* — SECTION SHARED ———————————————————————————————————————— */
+.section-eyebrow{
+  font-family:'DM Mono',monospace;font-size:.72rem;font-weight:500;
+  color:var(--ocean-500);letter-spacing:.1em;text-transform:uppercase;
+  margin-bottom:16px;
+}
+.section-title{
+  font-family:'Sora',sans-serif;font-size:clamp(1.8rem,3.5vw,2.6rem);
+  font-weight:800;letter-spacing:-.02em;color:var(--n900);
+  line-height:1.15;margin-bottom:16px;
+}
+.section-sub{
+  font-size:1.05rem;color:var(--n500);max-width:540px;line-height:1.65;
+  margin-bottom:56px;
+}
+
+/* — STORY ————————————————————————————————————————————— */
+.story{padding:100px 0;background:var(--white)}
+.story-grid{display:grid;grid-template-columns:1fr 1fr;gap:64px;align-items:start}
+.story-text p{font-size:1rem;color:var(--n600);line-height:1.8;margin-bottom:20px}
+.story-quote{
+  background:var(--ocean-50);border-left:3px solid var(--ocean-500);
+  border-radius:0 var(--r) var(--r) 0;padding:28px 32px;
+  font-family:'Sora',sans-serif;font-size:1.15rem;font-weight:600;
+  color:var(--ocean-900);line-height:1.5;
+}
+.story-quote span{display:block;margin-top:14px;font-family:'DM Sans',sans-serif;font-size:.82rem;font-weight:500;color:var(--ocean-500)}
+@media(max-width:800px){.story-grid{grid-template-columns:1fr;gap:40px}}
+
+/* — VALUES ———————————————————————————————————————————— */
+.values{background:var(--n50);padding:100px 0}
+.values-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px}
+.value-card{
+  background:var(--white);border-radius:var(--r-lg);
+  padding:32px;border:1px solid var(--n200);
+  transition:box-shadow .2s,transform .2s;
+}
+.value-card:hover{box-shadow:var(--shadow-lg);transform:translateY(-3px)}
+.value-icon{
+  width:48px;height:48px;border-radius:12px;
+  background:var(--ocean-50);display:flex;align-items:center;justify-content:center;
+  margin-bottom:20px;
+}
+.value-icon svg{width:22px;height:22px;stroke:var(--ocean-700);stroke-width:1.75;fill:none}
+.value-card h3{
+  font-family:'Sora',sans-serif;font-size:1.05rem;font-weight:700;
+  color:var(--n900);margin-bottom:10px;
+}
+.value-card p{font-size:.9rem;color:var(--n500);line-height:1.6}
+@media(max-width:700px){.values-grid{grid-template-columns:1fr}}
+
+/* — BUILT BY ——————————————————————————————————————————— */
+.builtby{padding:90px 0;background:var(--ocean-900)}
+.builtby-inner{
+  max-width:820px;margin:0 auto;padding:0 24px;text-align:center;
+}
+.builtby .section-eyebrow{color:var(--sand-400)}
+.builtby h2{
+  font-family:'Sora',sans-serif;font-size:clamp(1.6rem,3vw,2.2rem);
+  font-weight:800;color:var(--white);letter-spacing:-.02em;
+  line-height:1.25;margin-bottom:20px;
+}
+.builtby h2 em{font-style:normal;color:var(--sand-500)}
+.builtby p{color:rgba(255,255,255,.6);font-size:1rem;line-height:1.7;max-width:620px;margin:0 auto}
+.builtby a{color:var(--sand-400);font-weight:600;transition:color .15s}
+.builtby a:hover{color:var(--sand-300,#e8cd7f)}
+
+/* — CTA ———————————————————————————————————————————————— */
+.cta-section{
+  padding:100px 0;background:var(--ocean-900);
+  position:relative;overflow:hidden;
+}
+.cta-bg{
+  position:absolute;inset:0;
+  background-image:url('bg2.jpg');
+  background-size:cover;background-position:center bottom;
+  opacity:.08;
+}
+.cta-inner{position:relative;z-index:1;max-width:600px;margin:0 auto;text-align:center;padding:0 24px}
+.cta-inner h2{
+  font-family:'Sora',sans-serif;font-size:clamp(1.8rem,4vw,2.8rem);
+  font-weight:800;letter-spacing:-.02em;color:var(--white);
+  line-height:1.15;margin-bottom:16px;
+}
+.cta-inner h2 em{font-style:normal;color:var(--sand-500)}
+.cta-inner p{color:rgba(255,255,255,.6);font-size:1rem;margin-bottom:40px;line-height:1.65}
+.btn-primary{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:14px 28px;border-radius:12px;
+  background:var(--sand-500);color:var(--ocean-900);
+  font-family:'Sora',sans-serif;font-size:.92rem;font-weight:700;
+  transition:background .15s,transform .1s,box-shadow .15s;
+  box-shadow:0 4px 20px rgba(212,168,42,.35);
+}
+.btn-primary:hover{background:var(--sand-400);transform:translateY(-2px);box-shadow:0 8px 28px rgba(212,168,42,.45)}
+.cta-note{font-size:.78rem;color:rgba(255,255,255,.3);margin-top:16px}
+
+/* — FOOTER ———————————————————————————————————————————— */
+.footer{
+  background:var(--n900);padding:56px 0 32px;
+  border-top:1px solid rgba(255,255,255,.06);
+}
+.footer-inner{
+  max-width:1100px;margin:0 auto;padding:0 24px;
+  display:grid;grid-template-columns:1.4fr 1fr 1fr 1.2fr;gap:32px;
+  margin-bottom:40px;
+}
+.footer-col{display:flex;flex-direction:column;align-items:flex-start;gap:10px}
+.footer-logo{display:flex;align-items:center;gap:10px}
+.footer-logo img{height:150px;opacity:.9}
+.footer-tagline{font-size:.84rem;color:rgba(255,255,255,.4);line-height:1.5;margin-top:10px;max-width:220px}
+.footer-heading{font-family:'Sora',sans-serif;font-size:.76rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:rgba(255,255,255,.5);margin-bottom:2px}
+.footer-links{display:flex;flex-direction:column;gap:10px}
+.footer-link{font-size:.84rem;color:rgba(255,255,255,.4);transition:color .15s}
+.footer-link:hover{color:rgba(255,255,255,.8)}
+.footer-social{display:flex;gap:12px;margin-top:6px}
+.footer-social a{display:inline-flex;transition:transform .15s}
+.footer-social a:hover{transform:translateY(-2px)}
+.footer-social svg{width:36px;height:36px;display:block}
+.footer-bottom{
+  max-width:1100px;margin:0 auto;padding:24px 24px 0;
+  border-top:1px solid rgba(255,255,255,.06);
+  display:flex;align-items:center;justify-content:space-between;
+  flex-wrap:wrap;gap:12px;
+}
+.footer-copy{font-size:.78rem;color:rgba(255,255,255,.25)}
+.footer-credit{color:rgba(255,255,255,.35);text-decoration:none;transition:color .15s}
+.footer-credit:hover{color:rgba(255,255,255,.6)}
+.footer-wa{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:9px 18px;border-radius:10px;
+  background:rgba(37,211,102,.1);border:1px solid rgba(37,211,102,.2);
+  color:#25D366;font-family:'Sora',sans-serif;font-size:.8rem;font-weight:600;
+  transition:background .15s;
+}
+.footer-wa:hover{background:rgba(37,211,102,.15)}
+@media (max-width:800px){
+  .footer-inner{grid-template-columns:1fr 1fr;}
+}
+@media (max-width:520px){
+  .footer-inner{grid-template-columns:1fr;}
+  .footer-bottom{flex-direction:column;align-items:flex-start;text-align:left}
+}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="nav" id="nav">
+  <div class="nav-inner">
+    <a href="/" class="nav-logo">
+      <img src="/logo-white.png" alt="SalDesk" onerror="this.outerHTML='<span style=\'font-family:Sora,sans-serif;font-weight:800;font-size:1.1rem;color:#D4A82A\'>SalDesk</span>'">
+    </a>
+    <div class="nav-links">
+      <a href="/#problem" class="nav-link pt">O Problema</a>
+      <a href="/#problem" class="nav-link en">The Problem</a>
+      <a href="/#features" class="nav-link pt">Funcionalidades</a>
+      <a href="/#features" class="nav-link en">Features</a>
+      <a href="/#pricing" class="nav-link pt">Preços</a>
+      <a href="/#pricing" class="nav-link en">Pricing</a>
+      <a href="/sobre.html" class="nav-link pt" style="color:#fff">Sobre</a>
+      <a href="/sobre.html" class="nav-link en" style="color:#fff">About</a>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px">
+      <div class="nav-lang">
+        <button class="lang-btn active" onclick="setLang('pt')">PT</button>
+        <button class="lang-btn" onclick="setLang('en')">EN</button>
+      </div>
+      <a href="/operadores.html" class="nav-cta pt">Registar negócio</a>
+      <a href="/operadores.html" class="nav-cta en">Get started</a>
+    </div>
+    <a href="/operadores.html" class="nav-mobile-cta pt">Registar</a>
+    <a href="/operadores.html" class="nav-mobile-cta en">Start</a>
+    <div class="hamburger" onclick="toggleMenu()">
+      <span></span><span></span><span></span>
+    </div>
+  </div>
+</nav>
+
+<!-- PAGE HERO -->
+<section class="page-hero">
+  <div class="page-hero-bg"></div>
+  <div class="page-hero-grain"></div>
+  <div class="page-hero-content">
+    <div class="hero-eyebrow">
+      <span class="hero-eyebrow-dot"></span>
+      <span class="pt">A nossa história</span>
+      <span class="en">Our story</span>
+    </div>
+    <h1 class="pt">Construído na Ilha do Sal,<br>para quem <em>trabalha nela.</em></h1>
+    <h1 class="en">Built on Ilha do Sal,<br>for those who <em>work here.</em></h1>
+    <p class="page-hero-sub pt">A SalDesk nasceu para resolver um problema muito concreto: operadores turísticos da Ilha do Sal a perder tempo, clientes e receita por falta de ferramentas digitais feitas à sua medida.</p>
+    <p class="page-hero-sub en">SalDesk was created to solve a very concrete problem: Ilha do Sal tour operators losing time, clients and revenue for lack of digital tools built for them.</p>
+  </div>
+</section>
+
+<!-- STORY -->
+<section class="story">
+  <div class="container">
+    <div class="story-grid">
+      <div class="story-text">
+        <div class="section-eyebrow pt">Como começou</div>
+        <div class="section-eyebrow en">How it started</div>
+        <h2 class="section-title pt">Uma ilha cheia de operadores, sem uma ferramenta feita para eles</h2>
+        <h2 class="section-title en">An island full of operators, with no tool built for them</h2>
+        <p class="pt">Na Ilha do Sal, dezenas de operadores de tours, mergulho, aluguer de viaturas e outras actividades geriam o negócio como sempre fizeram: agendas de papel, grupos de WhatsApp e folhas de Excel espalhadas. Funciona, até não funcionar — até a reserva se perder, o buggy ser alugado duas vezes no mesmo horário, ou a comissão de 20% de uma OTA levar a margem que devia ser do operador.</p>
+        <p class="en">On Ilha do Sal, dozens of tour, diving, car rental and other activity operators ran their business the way they always had: paper agendas, WhatsApp groups and scattered spreadsheets. It works, until it doesn't — until a booking gets lost, a buggy gets rented twice for the same slot, or a 20% OTA commission eats the margin that should have gone to the operator.</p>
+        <p class="pt">A SalDesk existe para mudar isso. Não é uma plataforma internacional adaptada às pressas para Cabo Verde — foi pensada de raiz para a realidade da Ilha do Sal: negócios pequenos e independentes, equipas enxutas, e a necessidade real de vender directamente, sem intermediários a levar a maior fatia.</p>
+        <p class="en">SalDesk exists to change that. It's not an international platform hastily adapted for Cabo Verde — it was designed from the ground up for the reality of Ilha do Sal: small, independent businesses, lean teams, and a real need to sell directly, without intermediaries taking the biggest slice.</p>
+      </div>
+      <div>
+        <div class="story-quote pt">
+          "Cada reserva perdida por falta de controlo é dinheiro que sai da ilha. Construímos a SalDesk para que fique cá."
+          <span>— Equipa SalDesk</span>
+        </div>
+        <div class="story-quote en">
+          "Every booking lost to poor visibility is money leaving the island. We built SalDesk so it stays here."
+          <span>— SalDesk Team</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- VALUES -->
+<section class="values">
+  <div class="container">
+    <div class="section-eyebrow pt">O que nos guia</div>
+    <div class="section-eyebrow en">What guides us</div>
+    <h2 class="section-title pt">Princípios simples, aplicados a sério</h2>
+    <h2 class="section-title en">Simple principles, taken seriously</h2>
+    <p class="section-sub pt">Não somos uma multinacional de software. Somos uma equipa próxima dos operadores que serve, e isso molda tudo o que construímos.</p>
+    <p class="section-sub en">We're not a software multinational. We're a team close to the operators we serve, and that shapes everything we build.</p>
+
+    <div class="values-grid">
+      <div class="value-card">
+        <div class="value-icon">
+          <svg viewBox="0 0 24 24"><path d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48l2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48l2.83-2.83"/></svg>
+        </div>
+        <h3 class="pt">Sem comissões escondidas</h3>
+        <h3 class="en">No hidden commissions</h3>
+        <p class="pt">O operador paga uma mensalidade fixa, não uma percentagem por reserva. Cada venda directa é 100% sua.</p>
+        <p class="en">Operators pay a fixed monthly fee, not a percentage per booking. Every direct sale is 100% theirs.</p>
+      </div>
+      <div class="value-card">
+        <div class="value-icon">
+          <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        </div>
+        <h3 class="pt">Proximidade real</h3>
+        <h3 class="en">Real proximity</h3>
+        <p class="pt">Estamos na Ilha do Sal. Conhecemos os operadores pelo nome, não por número de ticket de suporte.</p>
+        <p class="en">We're based on Ilha do Sal. We know operators by name, not by support ticket number.</p>
+      </div>
+      <div class="value-card">
+        <div class="value-icon">
+          <svg viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+        </div>
+        <h3 class="pt">Simplicidade acima de tudo</h3>
+        <h3 class="en">Simplicity above all</h3>
+        <p class="pt">Se precisar de um manual de 50 páginas, falhámos. A SalDesk é feita para se aprender em minutos.</p>
+        <p class="en">If it needs a 50-page manual, we've failed. SalDesk is built to be learned in minutes.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- BUILT BY -->
+<section class="builtby">
+  <div class="builtby-inner">
+    <div class="section-eyebrow pt">Por trás da plataforma</div>
+    <div class="section-eyebrow en">Behind the platform</div>
+    <h2 class="pt">Desenvolvido pela <em>Wandr</em></h2>
+    <h2 class="en">Built by <em>Wandr</em></h2>
+    <p class="pt">A SalDesk é desenvolvida pela Wandr - Travel Technology Company, uma empresa focada em construir ferramentas digitais para o sector do turismo em Cabo Verde. Saiba mais em <a href="https://www.wandrtech.cv" target="_blank" rel="noreferrer">wandrtech.cv</a>.</p>
+    <p class="en">SalDesk is developed by Wandr - Travel Technology Company, a company focused on building digital tools for the tourism sector in Cape Verde. Learn more at. <a href="https://www.wandrtech.cv" target="_blank" rel="noreferrer">wandrtech.cv</a>.</p>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta-section" id="cta">
+  <div class="cta-bg"></div>
+  <div class="cta-inner">
+    <h2 class="pt">Faça parte dos primeiros<br>operadores na <em>SalDesk</em></h2>
+    <h2 class="en">Be among the first<br>operators on <em>SalDesk</em></h2>
+    <p class="pt">Estamos a seleccionar os primeiros operadores para o lançamento. Registe o seu negócio agora e garanta condições especiais de lançamento.</p>
+    <p class="en">We're selecting the first operators for launch. Register your business now and secure special launch conditions.</p>
+    <a href="/operadores.html" class="btn-primary" style="display:inline-flex;margin:0 auto">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+      <span class="pt">Registar o meu negócio</span>
+      <span class="en">Register my business</span>
+    </a>
+    <p class="cta-note pt">Sem compromisso · 30 dias de trial gratuito</p>
+    <p class="cta-note en">No commitment · 30 days free trial</p>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer class="footer">
+  <div class="footer-inner">
+    <div class="footer-col">
+      <div class="footer-logo">
+        <img src="/logo-white.png" alt="SalDesk" onerror="this.outerHTML='<span style=\'font-family:Sora,sans-serif;font-weight:800;color:#D4A82A\'>SalDesk</span>'">
+      </div>
+      <p class="footer-tagline pt">A gestão do seu negócio turístico, num só lugar.</p>
+      <p class="footer-tagline en">Your tourism business management, all in one place.</p>
+    </div>
+
+    <div class="footer-col">
+      <span class="footer-heading pt">Produto</span>
+      <span class="footer-heading en">Product</span>
+      <nav class="footer-links">
+        <a href="/#funcionalidades" class="footer-link pt">Funcionalidades</a>
+        <a href="/#funcionalidades" class="footer-link en">Features</a>
+        <a href="/#precos" class="footer-link pt">Preços</a>
+        <a href="/#precos" class="footer-link en">Pricing</a>
+        <a href="/#como-funciona" class="footer-link pt">Como funciona</a>
+        <a href="/#como-funciona" class="footer-link en">How it works</a>
+      </nav>
+    </div>
+
+    <div class="footer-col">
+      <span class="footer-heading pt">Empresa</span>
+      <span class="footer-heading en">Company</span>
+      <nav class="footer-links">
+        <a href="/sobre.html" class="footer-link pt">Sobre</a>
+        <a href="/sobre.html" class="footer-link en">About</a>
+        <a href="/operadores.html" class="footer-link pt">Registar negócio</a>
+        <a href="/operadores.html" class="footer-link en">Register business</a>
+        <a href="https://app.saldesk.cv" class="footer-link pt">Entrar</a>
+        <a href="https://app.saldesk.cv" class="footer-link en">Sign in</a>
+      </nav>
+    </div>
+
+    <div class="footer-col">
+      <span class="footer-heading pt">Fale connosco</span>
+      <span class="footer-heading en">Get in touch</span>
+      <a href="mailto:hello@saldesk.cv" class="footer-link">hello@saldesk.cv</a>
+      <a href="https://wa.me/2389994119" target="_blank" rel="noreferrer" class="footer-wa">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="#25D366"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z"/></svg>
+        +238 999 4119
+      </a>
+      <div class="footer-social">
+        <a href="https://www.facebook.com/profile.php?id=61589577563497" target="_blank" rel="noreferrer" aria-label="Facebook">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="12" fill="#1877F2"/><path fill="#fff" d="M13.6 21v-6.9h2.3l.35-2.7h-2.65V9.6c0-.78.22-1.31 1.33-1.31h1.42V5.87c-.25-.03-1.08-.1-2.06-.1-2.04 0-3.44 1.24-3.44 3.53v1.97H8.4v2.7h2.45V21h2.75Z"/></svg>
+        </a>
+        <a href="https://www.instagram.com/saldesk.cv/" target="_blank" rel="noreferrer" aria-label="Instagram">
+          <svg viewBox="0 0 24 24">
+  <defs>
+    <radialGradient id="igGradFooter2" cx="30%" cy="107%" r="150%">
+      <stop offset="0%" stop-color="#fdf497"/>
+      <stop offset="5%" stop-color="#fdf497"/>
+      <stop offset="45%" stop-color="#fd5949"/>
+      <stop offset="60%" stop-color="#d6249f"/>
+      <stop offset="90%" stop-color="#285AEB"/>
+    </radialGradient>
+  </defs>
+  <circle cx="12" cy="12" r="12" fill="url(#igGradFooter2)"/>
+  <rect x="7" y="7" width="10" height="10" rx="3" fill="none" stroke="#fff" stroke-width="1.4"/>
+  <circle cx="12" cy="12" r="2.6" fill="none" stroke="#fff" stroke-width="1.4"/>
+  <circle cx="15" cy="9" r="0.8" fill="#fff"/>
+</svg>
+        </a>
+      </div>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <span class="footer-copy pt">© 2026 SalDesk · Ilha do Sal, Cabo Verde</span>
+    <span class="footer-copy en">© 2026 SalDesk · Ilha do Sal, Cape Verde</span>
+    <a href="https://www.wandrtech.cv" target="_blank" rel="noreferrer" class="footer-copy footer-credit pt">Desenvolvido por <strong>Wandr</strong> - Travel Technology Company</a>
+    <a href="https://www.wandrtech.cv" target="_blank" rel="noreferrer" class="footer-copy footer-credit en">Built by <strong>Wandr</strong> - Travel Technology Company</a>
+    <span class="footer-copy pt">Orgulhosamente cabo-verdiano.</span>
+    <span class="footer-copy en">Proudly Cape Verdean.</span>
+  </div>
+</footer>
+
+<script>
+/* — LANG ——————————————————————————————————————————————— */
+function setLang(lang) {
+  document.documentElement.setAttribute('data-lang', lang);
+  document.querySelectorAll('.lang-btn').forEach(b => {
+    b.classList.toggle('active', b.textContent === lang.toUpperCase());
+  });
+  localStorage.setItem('sd_lang', lang);
+}
+(function(){
+  const saved = localStorage.getItem('sd_lang');
+  const browser = navigator.language?.slice(0,2).toLowerCase();
+  const lang = saved || (browser === 'en' ? 'en' : 'pt');
+  setLang(lang);
+})();
+
+/* — NAV SCROLL ————————————————————————————————————————— */
+window.addEventListener('scroll', () => {
+  const nav = document.getElementById('nav');
+  if (window.scrollY > 40) {
+    nav.style.background = 'rgba(6,42,56,.98)';
+  } else {
+    nav.style.background = 'rgba(6,42,56,.92)';
+  }
+}, { passive: true });
+
+/* — MENU MOBILE ———————————————————————————————————————— */
+function toggleMenu() {
+  const links = document.querySelector('.nav-links');
+  const lang = document.querySelector('.nav-lang');
+  if (links) links.style.display = links.style.display === 'flex' ? 'none' : 'flex';
+  if (lang) lang.style.display = lang.style.display === 'flex' ? 'none' : 'flex';
+}
+</script>
+</body>
+</html>
