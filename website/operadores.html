@@ -10,21 +10,37 @@
   <meta property="og:image" content="https://saldesk.cv/og.png" />
   <meta property="og:url" content="https://saldesk.cv/operadores.html" />
   <link rel="canonical" href="https://saldesk.cv/operadores.html" />
+  <link rel="icon" href="/logo.png">
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
   <style>
     :root {
       --ocean-900: #062A38;
+      --ocean-800: #0A3F55;
       --ocean-700: #0D5470;
       --ocean-500: #1480A8;
+      --ocean-300: #71BDD4;
+      --ocean-100: #D6EEF5;
       --ocean-50:  #EBF7FB;
       --sand-500:  #D4A82A;
+      --sand-400:  #E0BF5A;
       --sand-300:  #EAD08A;
-      --n900: #1A2332;
-      --n500: #6B7280;
-      --n200: #E5E8EC;
-      --n50:  #F9FAFB;
+      --sand-100:  #FBF3DC;
+      --n900: #0F1923;
+      --n800: #1A2332;
+      --n700: #2D3748;
+      --n600: #4A5568;
+      --n500: #718096;
+      --n400: #A0AEC0;
+      --n200: #E2E8F0;
+      --n100: #F7F8FA;
+      --n50:  #FAFBFC;
+      --white: #FFFFFF;
+      --r: 16px;
+      --r-lg: 24px;
+      --shadow: 0 4px 24px rgba(6,42,56,.10);
+      --shadow-lg: 0 16px 48px rgba(6,42,56,.16);
       --success: #1A7A4A;
       --error:   #B91C1C;
       --warning: #B45309;
@@ -37,9 +53,10 @@
     body {
       font-family: 'DM Sans', sans-serif;
       font-size: 14px;
-      color: var(--n900);
+      color: var(--n800);
       background: #F5F7FA;
       line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
     }
 
     h1, h2, h3, h4 { font-family: 'Sora', sans-serif; }
@@ -51,62 +68,39 @@
       font-size: 14px;
     }
 
-    /* ── NAVBAR ──────────────────────────────────── */
-    .navbar {
-      position: sticky;
-      top: 0;
-      z-index: 100;
-      background: #fff;
-      border-bottom: 1px solid var(--n200);
-      padding: 0 24px;
-      height: 64px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
+    svg{display:block;flex-shrink:0}
+
+    /* ── NAV (identidade SalDesk) ─────────────────── */
+    .nav{
+      position:fixed;top:0;left:0;right:0;z-index:100;
+      background:rgba(6,42,56,.92);backdrop-filter:blur(16px);
+      border-bottom:1px solid rgba(255,255,255,.07);
+      transition:background .3s;
     }
-
-    .navbar-left { display: flex; align-items: center; gap: 24px; }
-
-    .nav-back {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      font-size: 13px;
-      color: var(--n500);
-      transition: color .15s;
+    .nav-inner{
+      max-width:1100px;margin:0 auto;padding:0 24px;
+      height:68px;display:flex;align-items:center;justify-content:space-between;gap:24px;
     }
-
-    .nav-back:hover { color: var(--ocean-700); }
-
-    .lang-toggle {
-      display: flex;
-      align-items: center;
-      gap: 4px;
-      background: var(--n50);
-      border: 1px solid var(--n200);
-      border-radius: 8px;
-      padding: 4px;
+    .nav-logo{display:flex;align-items:center;gap:10px}
+    .nav-logo img{height:44px}
+    .nav-link{
+      display:flex;align-items:center;gap:6px;
+      padding:7px 14px;border-radius:8px;
+      font-family:'Sora',sans-serif;font-size:.82rem;font-weight:600;
+      color:rgba(255,255,255,.75);transition:color .15s,background .15s;
     }
-
-    .lang-btn {
-      padding: 4px 10px;
-      border-radius: 6px;
-      border: none;
-      background: transparent;
-      font-family: 'DM Mono', monospace;
-      font-size: 11px;
-      font-weight: 500;
-      text-transform: uppercase;
-      letter-spacing: .06em;
-      color: var(--n500);
-      cursor: pointer;
-      transition: all .15s;
+    .nav-link:hover{color:#fff;background:rgba(255,255,255,.07)}
+    .nav-lang{
+      display:flex;align-items:center;gap:2px;
+      background:rgba(255,255,255,.08);border-radius:8px;overflow:hidden;
     }
-
-    .lang-btn.active {
-      background: var(--ocean-700);
-      color: #fff;
+    .lang-btn{
+      padding:6px 11px;border-radius:6px;border:none;background:transparent;
+      font-family:'DM Mono',monospace;font-size:.72rem;font-weight:500;
+      text-transform:uppercase;letter-spacing:.06em;
+      color:rgba(255,255,255,.5);cursor:pointer;transition:all .15s;
     }
+    .lang-btn.active{background:rgba(255,255,255,.12);color:#fff}
 
     /* ── HERO ────────────────────────────────────── */
     .hero {
@@ -115,7 +109,7 @@
       background-image: url('https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=1600&q=80');
       background-size: cover;
       background-position: center 60%;
-      padding: 88px 24px 96px;
+      padding: 128px 24px 96px;
       text-align: center;
       overflow: hidden;
     }
@@ -130,7 +124,6 @@
 
     .hero > * { position: relative; z-index: 1; }
 
-    /* ── WAVE hero → page ──────────────────────── */
     .hero-wave {
       position: absolute;
       bottom: -1px;
@@ -308,7 +301,7 @@
     /* ── FORM CARD ───────────────────────────────── */
     .form-card {
       background: #fff;
-      border: 1px solid #E5E8EC;
+      border: 1px solid var(--n200);
       border-radius: 16px;
       padding: 32px 24px;
       box-shadow: 0 4px 24px rgba(6,42,56,.07), 0 1px 4px rgba(6,42,56,.04);
@@ -357,16 +350,22 @@
     .field select,
     .field textarea {
       width: 100%;
-      padding: 10px 14px;
-      border: 1.5px solid #DDE1E7;
+      padding: 11px 14px;
+      border: 1.5px solid var(--n200);
       border-radius: 10px;
       font-size: 14px;
       color: var(--n900);
-      background: #F9FAFB;
+      background: var(--n50);
       transition: border-color .15s, box-shadow .15s, background .15s;
       outline: none;
       appearance: none;
       -webkit-appearance: none;
+    }
+
+    .field select{
+      background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23718096' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+      background-repeat:no-repeat;background-position:right 12px center;background-size:16px;
+      padding-right:38px;
     }
 
     .field input:focus,
@@ -394,165 +393,38 @@
 
     .field textarea { resize: vertical; min-height: 90px; }
 
+    /* ── CHOICE CARDS (radio + checkbox unificados) ── */
+    .choice-grid{
+      display:flex;flex-direction:column;gap:10px;
+    }
+    .choice-grid.choice-row{
+      flex-direction:row;flex-wrap:wrap;
+    }
+    .choice-card{
+      display:flex;align-items:center;gap:12px;
+      padding:13px 16px;border:1.5px solid var(--n200);border-radius:12px;
+      cursor:pointer;user-select:none;transition:all .15s;background:#fff;
+    }
+    .choice-grid.choice-row .choice-card{flex:1 1 140px}
+    .choice-card:hover{border-color:var(--ocean-500);background:var(--ocean-50)}
+    .choice-card:has(input:checked){
+      border-color:var(--ocean-700);background:var(--ocean-50);
+      box-shadow:0 0 0 3px rgba(13,84,112,.10);
+    }
+    .choice-card input[type="checkbox"],
+    .choice-card input[type="radio"]{
+      width:19px;height:19px;min-width:19px;
+      accent-color:var(--ocean-700);cursor:pointer;flex-shrink:0;
+    }
+    .choice-card span{
+      font-size:14px;color:var(--n900);line-height:1.4;font-weight:500;
+    }
+
     .url-row {
       display: grid;
       grid-template-columns: auto 1fr;
       gap: 8px;
       align-items: start;
-    }
-
-    /* ── CHECKBOX GROUP ──────────────────────────── */
-    .checkbox-group {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
-
-    .checkbox-item {
-      display: flex;
-      align-items: flex-start;
-      gap: 12px;
-      cursor: pointer;
-      user-select: none;
-      padding: 9px 12px;
-      border-radius: 8px;
-      transition: background .12s;
-    }
-
-    .checkbox-item:hover { background: var(--n50); }
-
-    .checkbox-item input[type="checkbox"] {
-      width: 18px;
-      height: 18px;
-      min-width: 18px;
-      margin-top: 1px;
-      border: 1.5px solid var(--n200);
-      border-radius: 5px;
-      appearance: none;
-      -webkit-appearance: none;
-      background: #fff;
-      cursor: pointer;
-      position: relative;
-      transition: all .15s;
-      flex-shrink: 0;
-    }
-
-    .checkbox-item input[type="checkbox"]:checked {
-      background: var(--ocean-700);
-      border-color: var(--ocean-700);
-    }
-
-    .checkbox-item input[type="checkbox"]:checked::after {
-      content: '';
-      position: absolute;
-      left: 4px;
-      top: 1px;
-      width: 6px;
-      height: 10px;
-      border: 2px solid #fff;
-      border-top: none;
-      border-left: none;
-      transform: rotate(45deg);
-    }
-
-    .checkbox-item span {
-      font-size: 14px;
-      color: var(--n900);
-      line-height: 1.5;
-      padding-top: 0;
-    }
-
-    /* ── RADIO GROUP ─────────────────────────────── */
-    .radio-group {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
-
-    .radio-item {
-      display: flex;
-      align-items: flex-start;
-      gap: 12px;
-      cursor: pointer;
-      user-select: none;
-      padding: 9px 12px;
-      border-radius: 8px;
-      transition: background .12s;
-    }
-
-    .radio-item:hover { background: var(--n50); }
-
-    .radio-item input[type="radio"] {
-      width: 18px;
-      height: 18px;
-      min-width: 18px;
-      margin-top: 2px;
-      border: 1.5px solid var(--n200);
-      border-radius: 50%;
-      appearance: none;
-      -webkit-appearance: none;
-      background: #fff;
-      cursor: pointer;
-      position: relative;
-      transition: all .15s;
-      flex-shrink: 0;
-    }
-
-    .radio-item input[type="radio"]:checked {
-      background: var(--ocean-700);
-      border-color: var(--ocean-700);
-    }
-
-    .radio-item input[type="radio"]:checked::after {
-      content: '';
-      position: absolute;
-      left: 4px;
-      top: 4px;
-      width: 6px;
-      height: 6px;
-      background: #fff;
-      border-radius: 50%;
-    }
-
-    .radio-item span {
-      font-size: 14px;
-      color: var(--n900);
-      line-height: 1.5;
-    }
-
-    /* radio-item inline (demo toggle) */
-    .radio-inline { flex-direction: row; flex-wrap: wrap; gap: 4px; }
-
-    /* ── SITE TOGGLE ─────────────────────────────── */
-    .site-toggle {
-      display: flex;
-      gap: 12px;
-      flex-wrap: wrap;
-    }
-
-    .site-toggle label {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding: 8px 16px;
-      border: 1.5px solid var(--n200);
-      border-radius: 8px;
-      cursor: pointer;
-      transition: all .15s;
-      font-size: 14px;
-    }
-
-    .site-toggle label:has(input:checked) {
-      border-color: var(--ocean-700);
-      background: var(--ocean-50);
-      color: var(--ocean-700);
-      font-weight: 500;
-    }
-
-    .site-toggle input[type="radio"] {
-      width: 14px;
-      height: 14px;
-      accent-color: var(--ocean-700);
     }
 
     /* ── NAVIGATION BUTTONS ──────────────────────── */
@@ -689,7 +561,6 @@
       margin-bottom: 16px;
     }
 
-    /* benefits */
     .sidebar-card--benefits {
       background: var(--ocean-50);
       border-color: #C5E4F0;
@@ -699,7 +570,6 @@
       background: rgba(255,255,255,.7);
     }
 
-    /* testimonial */
     .sidebar-card--testimonial {
       background: var(--ocean-900);
       border-color: var(--ocean-900);
@@ -726,15 +596,9 @@
     .sidebar-card--testimonial .testimonial-name { color: #fff; }
     .sidebar-card--testimonial .testimonial-role { color: rgba(255,255,255,.45); }
 
-    .sidebar-card--testimonial .contact-link {
-      color: var(--sand-300);
-    }
+    .sidebar-card--testimonial .contact-link { color: var(--sand-300); }
+    .sidebar-card--testimonial .contact-link a { color: var(--sand-300); }
 
-    .sidebar-card--testimonial .contact-link a {
-      color: var(--sand-300);
-    }
-
-    /* plans */
     .plan-row {
       display: flex;
       justify-content: space-between;
@@ -799,11 +663,7 @@
       margin-bottom: 10px;
     }
 
-    .testimonial-author {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
+    .testimonial-author { display: flex; align-items: center; gap: 8px; }
 
     .testimonial-avatar {
       width: 28px;
@@ -831,30 +691,6 @@
       font-weight: 500;
       margin-top: 8px;
     }
-
-    /* ── FOOTER ──────────────────────────────────── */
-    .footer {
-      background: var(--ocean-900);
-      color: rgba(255,255,255,.48);
-      text-align: center;
-      padding: 32px 24px;
-      font-size: 12px;
-    }
-
-    .footer-inner {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .footer-logo {
-      margin-bottom: 4px;
-      opacity: .65;
-      filter: brightness(0) invert(1);
-    }
-
-    .footer strong { color: rgba(255,255,255,.68); }
 
     /* ── SECTION SEPARATOR ───────────────────────── */
     .section-label {
@@ -887,6 +723,10 @@
       flex-direction: column;
       gap: 12px;
     }
+    .terms-block .choice-card{background:transparent;border:none;padding:6px 4px}
+    .terms-block .choice-card:hover{background:rgba(13,84,112,.05)}
+    .terms-block .choice-card:has(input:checked){box-shadow:none;background:rgba(13,84,112,.05)}
+    .terms-block span{font-weight:400}
 
     /* ── ALERT BANNER ────────────────────────────── */
     .alert {
@@ -904,24 +744,70 @@
 
     .alert.show { display: flex; }
     .alert.error { background: #FEE2E2; border-color: #FECACA; color: var(--error); }
+
+    /* ── FOOTER (identidade SalDesk) ──────────────── */
+    .footer{
+      background:var(--n900);padding:56px 0 32px;
+      border-top:1px solid rgba(255,255,255,.06);
+    }
+    .footer-inner{
+      max-width:1100px;margin:0 auto;padding:0 24px;
+      display:grid;grid-template-columns:1.4fr 1fr 1fr 1.2fr;gap:32px;
+      margin-bottom:40px;
+    }
+    .footer-col{display:flex;flex-direction:column;align-items:flex-start;gap:10px}
+    .footer-logo-img{height:150px;opacity:.9}
+    .footer-tagline{font-size:.84rem;color:rgba(255,255,255,.4);line-height:1.5;margin-top:10px;max-width:220px}
+    .footer-heading{font-family:'Sora',sans-serif;font-size:.76rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:rgba(255,255,255,.5);margin-bottom:2px}
+    .footer-links{display:flex;flex-direction:column;gap:10px}
+    .footer-link{font-size:.84rem;color:rgba(255,255,255,.4);transition:color .15s}
+    .footer-link:hover{color:rgba(255,255,255,.8)}
+    .footer-social{display:flex;gap:12px;margin-top:6px}
+    .footer-social a{display:inline-flex;transition:transform .15s}
+    .footer-social a:hover{transform:translateY(-2px)}
+    .footer-social svg{width:36px;height:36px;display:block}
+    .footer-bottom{
+      max-width:1100px;margin:0 auto;padding:24px 24px 0;
+      border-top:1px solid rgba(255,255,255,.06);
+      display:flex;align-items:center;justify-content:space-between;
+      flex-wrap:wrap;gap:12px;
+    }
+    .footer-copy{font-size:.78rem;color:rgba(255,255,255,.25)}
+    .footer-credit{color:rgba(255,255,255,.35);text-decoration:none;transition:color .15s}
+    .footer-credit:hover{color:rgba(255,255,255,.6)}
+    .footer-wa{
+      display:inline-flex;align-items:center;gap:8px;
+      padding:9px 18px;border-radius:10px;
+      background:rgba(37,211,102,.1);border:1px solid rgba(37,211,102,.2);
+      color:#25D366;font-family:'Sora',sans-serif;font-size:.8rem;font-weight:600;
+      transition:background .15s;
+    }
+    .footer-wa:hover{background:rgba(37,211,102,.15)}
+    @media (max-width:800px){ .footer-inner{grid-template-columns:1fr 1fr;} }
+    @media (max-width:520px){
+      .footer-inner{grid-template-columns:1fr;}
+      .footer-bottom{flex-direction:column;align-items:flex-start;text-align:left}
+    }
   </style>
 </head>
 <body>
 
-<!-- ── NAVBAR ──────────────────────────────────────── -->
-<nav class="navbar">
-  <div class="navbar-left">
-    <a href="/">
-      <img src="/logo.png" alt="SalDesk" style="height:36px;" onerror="this.outerHTML='<span style=\'font-family:Sora,sans-serif;font-weight:800;font-size:18px;color:#0D5470\'>SalDesk</span>'" />
+<!-- ── NAV ─────────────────────────────────────────── -->
+<nav class="nav" id="nav">
+  <div class="nav-inner">
+    <a href="/" class="nav-logo">
+      <img src="/logo-white.png" alt="SalDesk" onerror="this.outerHTML='<span style=\'font-family:Sora,sans-serif;font-weight:800;font-size:1.1rem;color:#D4A82A\'>SalDesk</span>'" />
     </a>
-    <a href="/" class="nav-back">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
-      <span data-pt="Voltar ao site" data-en="Back to site">Voltar ao site</span>
-    </a>
-  </div>
-  <div class="lang-toggle">
-    <button class="lang-btn active" onclick="setLang('pt')">PT</button>
-    <button class="lang-btn" onclick="setLang('en')">EN</button>
+    <div style="display:flex;align-items:center;gap:8px">
+      <a href="/" class="nav-link">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
+        <span data-pt="Voltar ao site" data-en="Back to site">Voltar ao site</span>
+      </a>
+      <div class="nav-lang">
+        <button class="lang-btn active" onclick="setLang('pt')">PT</button>
+        <button class="lang-btn" onclick="setLang('en')">EN</button>
+      </div>
+    </div>
   </div>
 </nav>
 
@@ -1107,12 +993,12 @@
             </div>
             <div class="field">
               <label data-pt="Tem site ou presença online?" data-en="Do you have a website or online presence?">Tem site ou presença online?</label>
-              <div class="site-toggle">
-                <label>
+              <div class="choice-grid choice-row">
+                <label class="choice-card">
                   <input type="radio" name="tem_site" value="nao" checked onchange="toggleUrl(false)" />
                   <span data-pt="Não" data-en="No">Não</span>
                 </label>
-                <label>
+                <label class="choice-card">
                   <input type="radio" name="tem_site" value="sim" onchange="toggleUrl(true)" />
                   <span data-pt="Sim" data-en="Yes">Sim</span>
                 </label>
@@ -1132,32 +1018,32 @@
           <div class="field-group">
             <div class="field">
               <label data-pt="Como gere as reservas actualmente?" data-en="How do you currently manage bookings?">Como gere as reservas actualmente?</label>
-              <div class="checkbox-group" id="cgr-group">
-                <label class="checkbox-item">
+              <div class="choice-grid" id="cgr-group">
+                <label class="choice-card">
                   <input type="checkbox" name="como_gere_reservas" value="whatsapp" />
                   <span>WhatsApp</span>
                 </label>
-                <label class="checkbox-item">
+                <label class="choice-card">
                   <input type="checkbox" name="como_gere_reservas" value="email" />
                   <span>Email</span>
                 </label>
-                <label class="checkbox-item">
+                <label class="choice-card">
                   <input type="checkbox" name="como_gere_reservas" value="telefone" />
                   <span data-pt="Telefone" data-en="Phone">Telefone</span>
                 </label>
-                <label class="checkbox-item">
+                <label class="choice-card">
                   <input type="checkbox" name="como_gere_reservas" value="booking_com" />
                   <span>Booking.com</span>
                 </label>
-                <label class="checkbox-item">
+                <label class="choice-card">
                   <input type="checkbox" name="como_gere_reservas" value="viator" />
                   <span>Viator</span>
                 </label>
-                <label class="checkbox-item">
+                <label class="choice-card">
                   <input type="checkbox" name="como_gere_reservas" value="getyourguide" />
                   <span>GetYourGuide</span>
                 </label>
-                <label class="checkbox-item">
+                <label class="choice-card">
                   <input type="checkbox" name="como_gere_reservas" value="outro" />
                   <span data-pt="Outro" data-en="Other">Outro</span>
                 </label>
@@ -1166,28 +1052,28 @@
 
             <div class="field">
               <label data-pt="Quais são os maiores desafios?" data-en="What are the biggest challenges?">Quais são os maiores desafios?</label>
-              <div class="checkbox-group">
-                <label class="checkbox-item">
+              <div class="choice-grid">
+                <label class="choice-card">
                   <input type="checkbox" name="desafios" value="gestao_manual" />
                   <span data-pt="Gestão de reservas manual / por WhatsApp" data-en="Manual / WhatsApp booking management">Gestão de reservas manual / por WhatsApp</span>
                 </label>
-                <label class="checkbox-item">
+                <label class="choice-card">
                   <input type="checkbox" name="desafios" value="comissoes_otas" />
                   <span data-pt="Dependência das OTAs e comissões altas" data-en="Dependence on OTAs and high commissions">Dependência das OTAs e comissões altas</span>
                 </label>
-                <label class="checkbox-item">
+                <label class="choice-card">
                   <input type="checkbox" name="desafios" value="sem_presenca_digital" />
                   <span data-pt="Sem presença digital profissional" data-en="No professional digital presence">Sem presença digital profissional</span>
                 </label>
-                <label class="checkbox-item">
+                <label class="choice-card">
                   <input type="checkbox" name="desafios" value="gestao_colaboradores" />
                   <span data-pt="Dificuldade em gerir colaboradores" data-en="Difficulty managing staff">Dificuldade em gerir colaboradores</span>
                 </label>
-                <label class="checkbox-item">
+                <label class="choice-card">
                   <input type="checkbox" name="desafios" value="sem_dados_financeiros" />
                   <span data-pt="Falta de dados financeiros e relatórios" data-en="Lack of financial data and reports">Falta de dados financeiros e relatórios</span>
                 </label>
-                <label class="checkbox-item">
+                <label class="choice-card">
                   <input type="checkbox" name="desafios" value="outro" />
                   <span data-pt="Outro" data-en="Other">Outro</span>
                 </label>
@@ -1220,28 +1106,28 @@
 
             <div class="field">
               <label data-pt="Trabalha com alguma OTA actualmente?" data-en="Do you currently work with any OTA?">Trabalha com alguma OTA actualmente?</label>
-              <div class="checkbox-group">
-                <label class="checkbox-item">
+              <div class="choice-grid">
+                <label class="choice-card">
                   <input type="checkbox" name="otas" value="booking_com" />
                   <span>Booking.com</span>
                 </label>
-                <label class="checkbox-item">
+                <label class="choice-card">
                   <input type="checkbox" name="otas" value="viator" />
                   <span>Viator</span>
                 </label>
-                <label class="checkbox-item">
+                <label class="choice-card">
                   <input type="checkbox" name="otas" value="getyourguide" />
                   <span>GetYourGuide</span>
                 </label>
-                <label class="checkbox-item">
+                <label class="choice-card">
                   <input type="checkbox" name="otas" value="airbnb" />
                   <span>Airbnb</span>
                 </label>
-                <label class="checkbox-item">
+                <label class="choice-card">
                   <input type="checkbox" name="otas" value="nenhuma" />
                   <span data-pt="Nenhuma" data-en="None">Nenhuma</span>
                 </label>
-                <label class="checkbox-item">
+                <label class="choice-card">
                   <input type="checkbox" name="otas" value="outro" />
                   <span data-pt="Outro" data-en="Other">Outro</span>
                 </label>
@@ -1257,26 +1143,26 @@
           <div class="field-group">
 
             <div class="field">
-              <label data-pt="Qual a sua maior prioridade agora?" data-en="What is your biggest priority right now?">Qual a sua maior prioridade agora?</label>
-              <div class="radio-group">
-                <label class="radio-item">
-                  <input type="radio" name="plano_interesse" value="site_profissional" />
+              <label data-pt="Quais são as suas maiores prioridades agora? (pode escolher mais do que uma)" data-en="What are your biggest priorities right now? (you can choose more than one)">Quais são as suas maiores prioridades agora? (pode escolher mais do que uma)</label>
+              <div class="choice-grid">
+                <label class="choice-card">
+                  <input type="checkbox" name="plano_interesse" value="Ter um site profissional" />
                   <span data-pt="Ter um site profissional" data-en="Having a professional website">Ter um site profissional</span>
                 </label>
-                <label class="radio-item">
-                  <input type="radio" name="plano_interesse" value="reservas_directas" />
+                <label class="choice-card">
+                  <input type="checkbox" name="plano_interesse" value="Receber reservas directas" />
                   <span data-pt="Receber reservas directas" data-en="Receiving direct bookings">Receber reservas directas</span>
                 </label>
-                <label class="radio-item">
-                  <input type="radio" name="plano_interesse" value="independencia_otas" />
+                <label class="choice-card">
+                  <input type="checkbox" name="plano_interesse" value="Deixar de depender das OTAs" />
                   <span data-pt="Deixar de depender das OTAs" data-en="Reducing dependence on OTAs">Deixar de depender das OTAs</span>
                 </label>
-                <label class="radio-item">
-                  <input type="radio" name="plano_interesse" value="gerir_equipa" />
+                <label class="choice-card">
+                  <input type="checkbox" name="plano_interesse" value="Gerir melhor a minha equipa" />
                   <span data-pt="Gerir melhor a minha equipa" data-en="Managing my team better">Gerir melhor a minha equipa</span>
                 </label>
-                <label class="radio-item">
-                  <input type="radio" name="plano_interesse" value="controlo_financeiro" />
+                <label class="choice-card">
+                  <input type="checkbox" name="plano_interesse" value="Ter controlo financeiro do negócio" />
                   <span data-pt="Ter controlo financeiro do negócio" data-en="Having financial control of the business">Ter controlo financeiro do negócio</span>
                 </label>
               </div>
@@ -1308,12 +1194,12 @@
 
             <div class="field">
               <label data-pt="Disponível para uma demonstração?" data-en="Available for a demo?">Disponível para uma demonstração?</label>
-              <div class="radio-group">
-                <label class="radio-item">
+              <div class="choice-grid choice-row">
+                <label class="choice-card">
                   <input type="radio" name="disponivel_demo" value="sim" />
                   <span data-pt="Sim, com todo o gosto" data-en="Yes, I'd love to">Sim, com todo o gosto</span>
                 </label>
-                <label class="radio-item">
+                <label class="choice-card">
                   <input type="radio" name="disponivel_demo" value="nao" />
                   <span data-pt="Não por agora" data-en="Not right now">Não por agora</span>
                 </label>
@@ -1336,16 +1222,16 @@
             </div>
 
             <div class="terms-block">
-              <label class="checkbox-item">
+              <label class="choice-card">
                 <input type="checkbox" id="aceita_termos" name="aceita_termos" value="true" />
                 <span>
                   <span data-pt="Aceito os" data-en="I accept the">Aceito os</span>
-                  <a href="/termos.html" target="_blank" style="color:var(--ocean-700);font-weight:500" data-pt="Termos e Condições" data-en="Terms and Conditions">Termos e Condições</a>
+                  <a href="/termos.html" target="_blank" style="color:var(--ocean-700);font-weight:600" data-pt="Termos e Condições" data-en="Terms and Conditions">Termos e Condições</a>
                   <span data-pt="da SalDesk" data-en="of SalDesk">da SalDesk</span>
                   <span class="req">*</span>
                 </span>
               </label>
-              <label class="checkbox-item">
+              <label class="choice-card">
                 <input type="checkbox" id="aceita_comunicacoes" name="aceita_comunicacoes" value="true" />
                 <span data-pt="Aceito receber comunicações e novidades da SalDesk por email" data-en="I agree to receive updates and news from SalDesk by email">Aceito receber comunicações e novidades da SalDesk por email</span>
               </label>
@@ -1500,14 +1386,69 @@
 
 </div><!-- /page-body -->
 
-<!-- ── FOOTER ─────────────────────────────────────────── -->
+<!-- ── FOOTER (identidade SalDesk) ─────────────────────── -->
 <footer class="footer">
   <div class="footer-inner">
-    <div class="footer-logo">
-      <img src="/logo.png" alt="SalDesk" style="height:28px;" onerror="this.style.display='none'" />
+    <div class="footer-col">
+      <div class="footer-logo">
+        <img src="/logo-white.png" alt="SalDesk" class="footer-logo-img" onerror="this.outerHTML='<span style=\'font-family:Sora,sans-serif;font-weight:800;color:#D4A82A\'>SalDesk</span>'">
+      </div>
+      <p class="footer-tagline" data-pt="A gestão do seu negócio turístico, num só lugar." data-en="Your tourism business management, all in one place.">A gestão do seu negócio turístico, num só lugar.</p>
     </div>
-    <p>Sistema desenvolvido por <strong>WANDR — Travel Technology Company</strong></p>
-    <p>&copy; 2026 SalDesk. Todos os direitos reservados.</p>
+
+    <div class="footer-col">
+      <span class="footer-heading" data-pt="Produto" data-en="Product">Produto</span>
+      <nav class="footer-links">
+        <a href="/#funcionalidades" class="footer-link" data-pt="Funcionalidades" data-en="Features">Funcionalidades</a>
+        <a href="/#precos" class="footer-link" data-pt="Preços" data-en="Pricing">Preços</a>
+        <a href="/#como-funciona" class="footer-link" data-pt="Como funciona" data-en="How it works">Como funciona</a>
+      </nav>
+    </div>
+
+    <div class="footer-col">
+      <span class="footer-heading" data-pt="Empresa" data-en="Company">Empresa</span>
+      <nav class="footer-links">
+        <a href="/sobre.html" class="footer-link" data-pt="Sobre" data-en="About">Sobre</a>
+        <a href="/termos.html" class="footer-link" data-pt="Termos e Condições" data-en="Terms and Conditions">Termos e Condições</a>
+        <a href="https://app.saldesk.cv" class="footer-link" data-pt="Entrar" data-en="Sign in">Entrar</a>
+      </nav>
+    </div>
+
+    <div class="footer-col">
+      <span class="footer-heading" data-pt="Fale connosco" data-en="Get in touch">Fale connosco</span>
+      <a href="mailto:hello@saldesk.cv" class="footer-link">hello@saldesk.cv</a>
+      <a href="https://wa.me/2389994119" target="_blank" rel="noreferrer" class="footer-wa">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="#25D366"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z"/></svg>
+        +238 999 4119
+      </a>
+      <div class="footer-social">
+        <a href="https://www.facebook.com/profile.php?id=61589577563497" target="_blank" rel="noreferrer" aria-label="Facebook">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="12" fill="#1877F2"/><path fill="#fff" d="M13.6 21v-6.9h2.3l.35-2.7h-2.65V9.6c0-.78.22-1.31 1.33-1.31h1.42V5.87c-.25-.03-1.08-.1-2.06-.1-2.04 0-3.44 1.24-3.44 3.53v1.97H8.4v2.7h2.45V21h2.75Z"/></svg>
+        </a>
+        <a href="https://www.instagram.com/saldesk.cv/" target="_blank" rel="noreferrer" aria-label="Instagram">
+          <svg viewBox="0 0 24 24">
+  <defs>
+    <radialGradient id="igGradFooter3" cx="30%" cy="107%" r="150%">
+      <stop offset="0%" stop-color="#fdf497"/>
+      <stop offset="5%" stop-color="#fdf497"/>
+      <stop offset="45%" stop-color="#fd5949"/>
+      <stop offset="60%" stop-color="#d6249f"/>
+      <stop offset="90%" stop-color="#285AEB"/>
+    </radialGradient>
+  </defs>
+  <circle cx="12" cy="12" r="12" fill="url(#igGradFooter3)"/>
+  <rect x="7" y="7" width="10" height="10" rx="3" fill="none" stroke="#fff" stroke-width="1.4"/>
+  <circle cx="12" cy="12" r="2.6" fill="none" stroke="#fff" stroke-width="1.4"/>
+  <circle cx="15" cy="9" r="0.8" fill="#fff"/>
+</svg>
+        </a>
+      </div>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <span class="footer-copy" data-pt="© 2026 SalDesk · Ilha do Sal, Cabo Verde" data-en="© 2026 SalDesk · Ilha do Sal, Cape Verde">© 2026 SalDesk · Ilha do Sal, Cabo Verde</span>
+    <a href="https://www.wandrtech.cv" target="_blank" rel="noreferrer" class="footer-copy footer-credit" data-pt="Desenvolvido por Wandr - Travel Technology Company" data-en="Built by Wandr - Travel Technology Company">Desenvolvido por Wandr - Travel Technology Company</a>
+    <span class="footer-copy" data-pt="Orgulhosamente cabo-verdiano." data-en="Proudly Cape Verdean.">Orgulhosamente cabo-verdiano.</span>
   </div>
 </footer>
 
@@ -1516,7 +1457,6 @@
 
   /* ── HERO: imagem CMS + badge de operadores ─────────── */
   async function initHero() {
-    // 1. Imagem de fundo via CMS banners
     try {
       const res = await fetch(API_BASE + '/cms/banners?page=operadores');
       if (res.ok) {
@@ -1532,7 +1472,6 @@
       }
     } catch (_) { /* mantém fallback Unsplash */ }
 
-    // 2. Badge de contagem de operadores
     try {
       const res = await fetch(API_BASE + '/discover');
       if (res.ok) {
@@ -1716,7 +1655,7 @@
       num_funcionarios:    getVal('num_funcionarios'),
       otas:                getChecked('otas'),
       volume_mensal:       getVal('volume_mensal'),
-      plano_interesse:     getRadio('plano_interesse'),
+      plano_interesse:     getChecked('plano_interesse').join(', '),
       quando_comecar:      getVal('quando_comecar'),
       como_soube:          getVal('como_soube'),
       disponivel_demo:     getRadio('disponivel_demo') === 'sim',
@@ -1752,6 +1691,16 @@
       label.textContent = currentLang === 'en' ? 'Submit application' : 'Enviar candidatura';
     }
   }
+
+  /* ── NAV SCROLL ──────────────────────────────────────── */
+  window.addEventListener('scroll', () => {
+    const nav = document.getElementById('nav');
+    if (window.scrollY > 40) {
+      nav.style.background = 'rgba(6,42,56,.98)';
+    } else {
+      nav.style.background = 'rgba(6,42,56,.92)';
+    }
+  }, { passive: true });
 
   /* init */
   updateProgress();
