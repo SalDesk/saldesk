@@ -106,12 +106,27 @@
     .hero {
       position: relative;
       background-color: var(--ocean-900);
-      background-image: url('https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=1600&q=80');
-      background-size: cover;
-      background-position: center 60%;
       padding: 128px 24px 96px;
       text-align: center;
       overflow: hidden;
+    }
+
+    .hero-bg-slides { position: absolute; inset: 0; z-index: 0; }
+    .hero-bg-slide {
+      position: absolute; inset: 0;
+      background-size: cover; background-position: center;
+      opacity: 0;
+      animation: heroFade 18s infinite;
+    }
+    .hero-bg-slide:nth-child(1) { animation-delay: 0s; }
+    .hero-bg-slide:nth-child(2) { animation-delay: 6s; }
+    .hero-bg-slide:nth-child(3) { animation-delay: 12s; }
+    @keyframes heroFade {
+      0%   { opacity: 0; }
+      4%   { opacity: 1; }
+      28%  { opacity: 1; }
+      33%  { opacity: 0; }
+      100% { opacity: 0; }
     }
 
     .hero::before {
@@ -813,6 +828,11 @@
 
 <!-- ── HERO ──────────────────────────────────────────── -->
 <section class="hero" id="hero-section">
+  <div class="hero-bg-slides">
+    <div class="hero-bg-slide" style="background-image:url('/images/hero-santa-maria.jpg')"></div>
+    <div class="hero-bg-slide" style="background-image:url('/images/hero-blue-cave.jpg')"></div>
+    <div class="hero-bg-slide" style="background-image:url('/images/hero-diver.jpg')"></div>
+  </div>
   <h1 data-pt="Junte-se à SalDesk" data-en="Join SalDesk">Junte-se à SalDesk</h1>
   <p data-pt="Registe o seu negócio e comece a receber reservas directas." data-en="Register your business and start receiving direct bookings.">
     Registe o seu negócio e comece a receber reservas directas.
@@ -1466,8 +1486,12 @@
           ? banners.find(b => b.image_url && b.is_active !== false)
           : null;
         if (active?.image_url) {
-          document.getElementById('hero-section').style.backgroundImage =
+          document.querySelectorAll('.hero-bg-slide').forEach(s => s.style.display = 'none');
+          const heroSection = document.getElementById('hero-section');
+          heroSection.style.backgroundImage =
             "url('" + active.image_url.replace(/'/g, "\\'") + "')";
+          heroSection.style.backgroundSize = 'cover';
+          heroSection.style.backgroundPosition = 'center 60%';
         }
       }
     } catch (_) { /* mantém fallback Unsplash */ }
