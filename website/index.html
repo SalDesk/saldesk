@@ -370,10 +370,10 @@ section[id]{scroll-margin-top:80px}
 .footer-links{display:flex;flex-direction:column;gap:10px}
 .footer-link{font-size:.84rem;color:rgba(255,255,255,.4);transition:color .15s}
 .footer-link:hover{color:rgba(255,255,255,.8)}
-.footer-social{display:flex;gap:14px;margin-top:6px}
-.footer-social a{color:rgba(255,255,255,.4);transition:color .15s;display:inline-flex}
-.footer-social a:hover{color:rgba(255,255,255,.8)}
-.footer-social svg{width:18px;height:18px}
+.footer-social{display:flex;gap:12px;margin-top:6px}
+.footer-social a{display:inline-flex;transition:transform .15s}
+.footer-social a:hover{transform:translateY(-2px)}
+.footer-social svg{width:36px;height:36px;display:block}
 .footer-bottom{
   max-width:1100px;margin:0 auto;padding:24px 24px 0;
   border-top:1px solid rgba(255,255,255,.06);
@@ -803,10 +803,24 @@ section[id]{scroll-margin-top:80px}
       </a>
       <div class="footer-social">
         <a href="https://www.facebook.com/profile.php?id=61589577563497" target="_blank" rel="noreferrer" aria-label="Facebook">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M14.5 8.5h-1.5a2 2 0 0 0-2 2v1.5H9v2h2V19h2v-5h2l.5-2h-2.5V11a.5.5 0 0 1 .5-.5h2z"/></svg>
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="12" fill="#1877F2"/><path fill="#fff" d="M13.6 21v-6.9h2.3l.35-2.7h-2.65V9.6c0-.78.22-1.31 1.33-1.31h1.42V5.87c-.25-.03-1.08-.1-2.06-.1-2.04 0-3.44 1.24-3.44 3.53v1.97H8.4v2.7h2.45V21h2.75Z"/></svg>
         </a>
         <a href="https://www.instagram.com/saldesk.cv/" target="_blank" rel="noreferrer" aria-label="Instagram">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg>
+          <svg viewBox="0 0 24 24">
+  <defs>
+    <radialGradient id="igGradFooter" cx="30%" cy="107%" r="150%">
+      <stop offset="0%" stop-color="#fdf497"/>
+      <stop offset="5%" stop-color="#fdf497"/>
+      <stop offset="45%" stop-color="#fd5949"/>
+      <stop offset="60%" stop-color="#d6249f"/>
+      <stop offset="90%" stop-color="#285AEB"/>
+    </radialGradient>
+  </defs>
+  <circle cx="12" cy="12" r="12" fill="url(#igGradFooter)"/>
+  <rect x="7" y="7" width="10" height="10" rx="3" fill="none" stroke="#fff" stroke-width="1.4"/>
+  <circle cx="12" cy="12" r="2.6" fill="none" stroke="#fff" stroke-width="1.4"/>
+  <circle cx="15" cy="9" r="0.8" fill="#fff"/>
+</svg>
         </a>
       </div>
     </div>
