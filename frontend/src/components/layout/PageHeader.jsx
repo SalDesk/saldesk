@@ -1,14 +1,14 @@
 export default function PageHeader({ title, subtitle, actions }) {
   return (
-    <div className="flex items-start justify-between mb-6">
+    <div className="flex items-start justify-between mb-6 pb-5 border-b border-n-200">
       <div>
-        <h1 className="font-display font-bold text-2xl text-n-900">{title}</h1>
+        <h1 className="font-display font-bold text-2xl tracking-tight text-n-900">{title}</h1>
         {subtitle && (
-          <p className="text-sm font-body text-n-500 mt-0.5">{subtitle}</p>
+          <p className="text-sm font-body text-n-500 mt-1">{subtitle}</p>
         )}
       </div>
       {actions && (
-        <div className="flex items-center gap-2 ml-4">{actions}</div>
+        <div className="flex items-center gap-2.5 ml-4 shrink-0">{actions}</div>
       )}
     </div>
   );

@@ -97,7 +97,7 @@ export default function Topbar() {
     : '?';
 
   return (
-    <header className="h-14 bg-white border-b border-n-200 flex items-center justify-between px-4 shrink-0">
+    <header className="h-16 bg-white border-b border-n-200 shadow-sm flex items-center justify-between px-6 shrink-0">
       <div className="flex-1" />
 
       <div className="flex items-center gap-3">
@@ -107,7 +107,7 @@ export default function Topbar() {
         <div className="relative" ref={panelRef}>
           <button
             onClick={handleBellClick}
-            className="relative p-2 rounded-sm text-n-500 hover:text-n-700 hover:bg-n-100 transition-colors"
+            className="relative p-2 rounded-md text-n-500 hover:text-ocean-700 hover:bg-ocean-50 transition-colors"
             aria-label="Notificacoes"
           >
             <Bell size={20} strokeWidth={1.75} />
@@ -119,7 +119,7 @@ export default function Topbar() {
           </button>
 
           {open && (
-            <div className="absolute top-full right-0 mt-1 w-80 bg-white border border-n-200 rounded-sm shadow-lg z-50">
+            <div className="absolute top-full right-0 mt-2 w-80 bg-white border border-n-200 rounded-md shadow-lg z-50">
               <div className="flex items-center justify-between px-4 py-3 border-b border-n-100">
                 <span className="text-sm font-display font-semibold text-n-900">Notificacoes</span>
                 {unread > 0 && (
@@ -176,12 +176,12 @@ export default function Topbar() {
         </div>
 
         {/* User avatar */}
-        <div className="flex items-center gap-2 cursor-pointer group">
+        <div className="flex items-center gap-2.5 cursor-pointer group px-2 py-1.5 -mr-2 rounded-md hover:bg-ocean-50 transition-colors">
           <div className="w-8 h-8 rounded-full bg-ocean-700 flex items-center justify-center text-white text-xs font-display font-bold">
             {initials}
           </div>
-          <span className="text-sm font-body text-n-700 hidden sm:block">{operator?.name}</span>
-          <ChevronDown size={14} strokeWidth={1.75} className="text-n-400 group-hover:text-n-600" />
+          <span className="text-sm font-display font-semibold text-n-800 hidden sm:block">{operator?.name}</span>
+          <ChevronDown size={14} strokeWidth={1.75} className="text-n-400 group-hover:text-ocean-600" />
         </div>
       </div>
     </header>
