@@ -1402,8 +1402,10 @@ function ActivityDashboard() {
       {/* Vista do dia + Alertas */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <div className="lg:col-span-2 bg-white rounded-lg border border-n-200 shadow-sm p-5">
-          <div className="flex items-center gap-2 mb-4">
-            <Clock size={15} strokeWidth={1.75} className="text-n-500" />
+          <div className="flex items-center gap-2.5 mb-4">
+            <div className="w-7 h-7 rounded-md bg-ocean-50 flex items-center justify-center shrink-0">
+              <Clock size={14} strokeWidth={1.75} className="text-ocean-700" />
+            </div>
             <h2 className="font-display font-semibold text-sm text-n-700 uppercase tracking-wide">
               Tours hoje — {TODAY.split('-').reverse().join('/')}
             </h2>
@@ -1411,9 +1413,19 @@ function ActivityDashboard() {
           </div>
 
           {todayByTour.length === 0 ? (
-            <div className="flex flex-col items-center py-8 text-n-300">
-              <Compass size={28} strokeWidth={1.25} className="mb-2" />
-              <p className="text-sm font-body">Nenhum tour agendado para hoje</p>
+            <div className="flex flex-col items-center py-12 px-4 text-center">
+              <div className="w-16 h-16 rounded-full bg-ocean-50 flex items-center justify-center mb-4">
+                <Compass size={28} strokeWidth={1.5} className="text-ocean-300" />
+              </div>
+              <p className="text-sm font-display font-semibold text-n-600 mb-1">Nenhum tour agendado para hoje</p>
+              <p className="text-xs font-body text-n-400 mb-4">Aproveita para planear o dia ou criar uma nova reserva.</p>
+              <button
+                onClick={() => navigate('/reservas')}
+                className="inline-flex items-center gap-1.5 h-9 px-4 rounded-md bg-ocean-700 text-white text-xs font-body font-semibold hover:bg-ocean-500 transition-colors"
+              >
+                <BookOpen size={13} strokeWidth={1.75} />
+                Nova reserva
+              </button>
             </div>
           ) : (
             <div className="divide-y divide-n-100">
@@ -1450,7 +1462,7 @@ function ActivityDashboard() {
         {/* Alertas + Accoes rapidas */}
         <div className="space-y-3">
           {alertas.pendentes.length > 0 && (
-            <div className="bg-[var(--warning-light)] border border-[var(--warning)] rounded-md p-4">
+            <div className="bg-[var(--warning-light)] border border-[var(--warning)] rounded-lg p-4">
               <div className="flex items-center gap-2 mb-2">
                 <Clock size={14} strokeWidth={1.75} className="text-[var(--warning)]" />
                 <p className="text-sm font-body font-semibold text-[var(--warning)]">Reservas pendentes</p>
@@ -1469,7 +1481,7 @@ function ActivityDashboard() {
           )}
 
           {alertas.quaseEsgotados.length > 0 && (
-            <div className="bg-ocean-50 border border-ocean-200 rounded-md p-4">
+            <div className="bg-ocean-50 border border-ocean-200 rounded-lg p-4">
               <div className="flex items-center gap-2 mb-2">
                 <AlertTriangle size={14} strokeWidth={1.75} className="text-ocean-700" />
                 <p className="text-sm font-body font-semibold text-ocean-700">Quase esgotados</p>
@@ -1484,28 +1496,37 @@ function ActivityDashboard() {
           )}
 
           {alertas.pendentes.length === 0 && alertas.quaseEsgotados.length === 0 && (
-            <div className="bg-[#ECFDF5] border border-[#BBF7D0] rounded-md p-4 flex items-center gap-3">
-              <CheckCircle size={16} strokeWidth={1.75} className="text-[var(--success)] shrink-0" />
-              <p className="text-sm font-body text-[var(--success)]">Tudo em ordem para hoje</p>
+            <div className="bg-[#ECFDF5] border border-[#BBF7D0] rounded-lg p-4 flex items-center gap-3">
+              <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center shrink-0">
+                <CheckCircle size={16} strokeWidth={1.75} className="text-[var(--success)]" />
+              </div>
+              <div>
+                <p className="text-sm font-display font-semibold text-[var(--success)]">Tudo em ordem</p>
+                <p className="text-xs font-body text-[var(--success)] opacity-70">Sem pendencias para hoje</p>
+              </div>
             </div>
           )}
 
-          <div className="bg-white rounded-md border border-n-200 p-4 space-y-1">
-            <p className="text-xs font-body font-semibold text-n-500 uppercase tracking-wide mb-2">Accoes rapidas</p>
-            {[
-              { label: 'Nova reserva',    icon: BookOpen,     to: '/reservas'   },
-              { label: 'Ver calendario',  icon: CalendarDays, to: '/calendario' },
-              { label: 'Gerir tours',     icon: Compass,      to: '/unidades'   },
-            ].map(({ label, icon: Icon, to }) => (
-              <button
-                key={to}
-                onClick={() => navigate(to)}
-                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-sm text-sm font-body text-n-700 hover:bg-ocean-50 hover:text-ocean-700 transition-colors text-left"
-              >
-                <Icon size={15} strokeWidth={1.75} className="shrink-0 text-n-400" />
-                {label}
-              </button>
-            ))}
+          <div className="bg-white rounded-lg border border-n-200 shadow-sm p-4">
+            <p className="text-xs font-body font-semibold text-n-500 uppercase tracking-wide mb-3">Accoes rapidas</p>
+            <div className="space-y-1.5">
+              {[
+                { label: 'Nova reserva',    icon: BookOpen,     to: '/reservas'   },
+                { label: 'Ver calendario',  icon: CalendarDays, to: '/calendario' },
+                { label: 'Gerir tours',     icon: Compass,      to: '/unidades'   },
+              ].map(({ label, icon: Icon, to }) => (
+                <button
+                  key={to}
+                  onClick={() => navigate(to)}
+                  className="w-full flex items-center gap-3 px-2.5 py-2 rounded-md text-sm font-body text-n-700 hover:bg-ocean-50 hover:text-ocean-700 transition-colors text-left group"
+                >
+                  <div className="w-8 h-8 rounded-md bg-ocean-50 flex items-center justify-center shrink-0 group-hover:bg-white transition-colors">
+                    <Icon size={15} strokeWidth={1.75} className="text-ocean-600" />
+                  </div>
+                  {label}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
       </div>
@@ -1525,7 +1546,7 @@ function ActivityDashboard() {
               <button
                 key={dateStr}
                 onClick={() => navigate('/calendario')}
-                className={`flex flex-col items-center gap-1 py-3 rounded-sm border transition-colors ${
+                className={`flex flex-col items-center gap-1.5 py-3.5 rounded-md border transition-all hover:-translate-y-0.5 hover:shadow-sm ${
                   isToday
                     ? 'bg-ocean-700 border-ocean-700 text-white'
                     : count > 0
@@ -1536,7 +1557,7 @@ function ActivityDashboard() {
                 <span className={`text-[10px] font-mono uppercase tracking-wide ${isToday ? 'text-ocean-200' : 'text-n-400'}`}>{weekday}</span>
                 <span className="font-display font-bold text-sm">{day}</span>
                 {count > 0
-                  ? <span className={`text-[10px] font-bold ${isToday ? 'text-ocean-200' : 'text-ocean-600'}`}>{count} res.</span>
+                  ? <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${isToday ? 'bg-white/20 text-white' : 'bg-ocean-100 text-ocean-700'}`}>{count} res.</span>
                   : <span className="text-[10px] text-n-300">—</span>
                 }
               </button>
@@ -1556,7 +1577,12 @@ function ActivityDashboard() {
             </button>
           </div>
           {recentRes.length === 0 ? (
-            <p className="px-5 py-6 text-center text-xs font-body text-n-400">Sem reservas este mes</p>
+            <div className="flex flex-col items-center py-10 px-4 text-center">
+              <div className="w-12 h-12 rounded-full bg-n-50 flex items-center justify-center mb-3">
+                <BookOpen size={20} strokeWidth={1.5} className="text-n-300" />
+              </div>
+              <p className="text-xs font-body text-n-400">Sem reservas este mes</p>
+            </div>
           ) : (
             <div className="divide-y divide-n-100">
               {recentRes.map(r => (
@@ -1585,7 +1611,12 @@ function ActivityDashboard() {
             <h2 className="font-display font-semibold text-sm text-n-700">Top tours do mes</h2>
           </div>
           {topTours.length === 0 ? (
-            <p className="px-5 py-6 text-center text-xs font-body text-n-400">Sem dados este mes</p>
+            <div className="flex flex-col items-center py-10 px-4 text-center">
+              <div className="w-12 h-12 rounded-full bg-n-50 flex items-center justify-center mb-3">
+                <TrendingUp size={20} strokeWidth={1.5} className="text-n-300" />
+              </div>
+              <p className="text-xs font-body text-n-400">Sem dados este mes</p>
+            </div>
           ) : (
             <div className="divide-y divide-n-100">
               {topTours.map(({ tour, count }, idx) => {
