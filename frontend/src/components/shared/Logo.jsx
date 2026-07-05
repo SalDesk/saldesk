@@ -1,7 +1,5 @@
 import logoImg from '../../assets/logo.png';
-
-const HEIGHTS = { sm: 28, md: 36, lg: 48 };
-
+const HEIGHTS = { sm: 28, md: 36, lg: 48, xl: 76 };
 export default function Logo({ size = 'md', white = false }) {
   const h = HEIGHTS[size] || 36;
   return (
