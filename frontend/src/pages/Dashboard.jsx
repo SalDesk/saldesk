@@ -377,7 +377,7 @@ function HotelDashboard() {
 
       {/* Check-ins + Check-outs */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <div className="bg-white rounded-md border border-n-200 shadow-sm">
+        <div className="bg-white rounded-lg border border-n-200 shadow-sm">
           <div className="px-5 py-4 border-b border-n-100 flex items-center gap-2">
             <MoveRight size={14} strokeWidth={1.75} className="text-[#1A7A4A]" />
             <h2 className="font-display font-semibold text-sm text-n-700">Check-ins hoje</h2>
@@ -404,7 +404,7 @@ function HotelDashboard() {
           )}
         </div>
 
-        <div className="bg-white rounded-md border border-n-200 shadow-sm">
+        <div className="bg-white rounded-lg border border-n-200 shadow-sm">
           <div className="px-5 py-4 border-b border-n-100 flex items-center gap-2">
             <MoveLeft size={14} strokeWidth={1.75} className="text-n-500" />
             <h2 className="font-display font-semibold text-sm text-n-700">Check-outs hoje</h2>
@@ -760,7 +760,7 @@ function RentacarDashboard() {
 
       {/* Levantamentos + Devoluções */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <div className="bg-white rounded-md border border-n-200 shadow-sm">
+        <div className="bg-white rounded-lg border border-n-200 shadow-sm">
           <div className="px-5 py-4 border-b border-n-100 flex items-center gap-2">
             <MoveRight size={14} strokeWidth={1.75} className="text-[#1A7A4A]" />
             <h2 className="font-display font-semibold text-sm text-n-700">Levantamentos hoje</h2>
@@ -791,7 +791,7 @@ function RentacarDashboard() {
           )}
         </div>
 
-        <div className="bg-white rounded-md border border-n-200 shadow-sm">
+        <div className="bg-white rounded-lg border border-n-200 shadow-sm">
           <div className="px-5 py-4 border-b border-n-100 flex items-center gap-2">
             <MoveLeft size={14} strokeWidth={1.75} className="text-n-500" />
             <h2 className="font-display font-semibold text-sm text-n-700">Devolucoes hoje</h2>
@@ -844,7 +844,7 @@ function RentacarDashboard() {
 
 function TurnoSection({ label, reservations, units, emptyMsg }) {
   return (
-    <div className="bg-white rounded-md border border-n-200 shadow-sm">
+    <div className="bg-white rounded-lg border border-n-200 shadow-sm">
       <div className="px-5 py-4 border-b border-n-100 flex items-center gap-2">
         <Clock size={14} strokeWidth={1.75} className="text-n-500" />
         <h2 className="font-display font-semibold text-sm text-n-700">{label}</h2>
@@ -1193,9 +1193,9 @@ function GenericDashboard() {
           <button
             key={to}
             onClick={() => navigate(to)}
-            className="bg-white rounded-md border border-n-200 shadow-sm px-4 py-3.5 flex items-center gap-3 text-left hover:border-ocean-300 hover:shadow-md transition-all group"
+            className="bg-white rounded-lg border border-n-200 shadow-sm px-4 py-3.5 flex items-center gap-3 text-left hover:border-ocean-300 hover:shadow-md transition-all group"
           >
-            <div className="w-9 h-9 rounded-sm bg-ocean-50 flex items-center justify-center shrink-0 group-hover:bg-ocean-100 transition-colors">
+            <div className="w-9 h-9 rounded-md bg-ocean-50 flex items-center justify-center shrink-0 group-hover:bg-ocean-100 transition-colors">
               <Icon size={18} strokeWidth={1.75} className="text-ocean-700" />
             </div>
             <div className="flex-1 min-w-0">
@@ -1547,7 +1547,7 @@ function ActivityDashboard() {
 
       {/* Reservas recentes + Top tours */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <div className="bg-white rounded-md border border-n-200 shadow-sm">
+        <div className="bg-white rounded-lg border border-n-200 shadow-sm">
           <div className="px-5 py-4 border-b border-n-100 flex items-center gap-2">
             <BookOpen size={14} strokeWidth={1.75} className="text-n-500" />
             <h2 className="font-display font-semibold text-sm text-n-700">Reservas recentes</h2>
@@ -1579,7 +1579,7 @@ function ActivityDashboard() {
           )}
         </div>
 
-        <div className="bg-white rounded-md border border-n-200 shadow-sm">
+        <div className="bg-white rounded-lg border border-n-200 shadow-sm">
           <div className="px-5 py-4 border-b border-n-100 flex items-center gap-2">
             <TrendingUp size={14} strokeWidth={1.75} className="text-n-500" />
             <h2 className="font-display font-semibold text-sm text-n-700">Top tours do mes</h2>
