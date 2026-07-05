@@ -158,7 +158,7 @@ export default function Sidebar({ onClose }) {
       )}
 
       {/* Nav */}
-      <nav className="flex-1 overflow-y-auto py-3 px-3 space-y-1">
+      <nav className="flex-1 overflow-y-auto py-3 px-3 space-y-1 sidebar-scroll">
         {navItems.map(({ to, icon: Icon, label, end, requiredPlan, feature }) => {
           const locked = requiredPlan && !canAccess(feature || requiredPlan);
           const badge  = requiredPlan ? PLAN_BADGE[requiredPlan] : null;
