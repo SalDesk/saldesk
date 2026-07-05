@@ -314,6 +314,8 @@ section[id]{scroll-margin-top:80px}
   .footer-inner{grid-template-columns:1fr;}
   .footer-bottom{flex-direction:column;align-items:flex-start;text-align:left}
 }
+.reveal{opacity:0;transform:translateY(28px);transition:opacity .7s ease,transform .7s ease}
+.reveal.visible{opacity:1;transform:none}
 </style>
 </head>
 <body>
@@ -368,7 +370,7 @@ section[id]{scroll-margin-top:80px}
 </section>
 
 <!-- STORY -->
-<section class="story">
+<section class="story reveal">
   <div class="container">
     <div class="story-grid">
       <div class="story-text">
@@ -396,7 +398,7 @@ section[id]{scroll-margin-top:80px}
 </section>
 
 <!-- VALUES -->
-<section class="values">
+<section class="values reveal">
   <div class="container">
     <div class="section-eyebrow pt">O que nos guia</div>
     <div class="section-eyebrow en">What guides us</div>
@@ -438,7 +440,7 @@ section[id]{scroll-margin-top:80px}
 </section>
 
 <!-- BUILT BY -->
-<section class="builtby">
+<section class="builtby reveal">
   <div class="builtby-inner">
     <div class="section-eyebrow pt">Por trás da plataforma</div>
     <div class="section-eyebrow en">Behind the platform</div>
@@ -450,7 +452,7 @@ section[id]{scroll-margin-top:80px}
 </section>
 
 <!-- CTA -->
-<section class="cta-section" id="cta">
+<section class="cta-section reveal" id="cta">
   <div class="cta-bg"></div>
   <div class="cta-inner">
     <h2 class="pt">Faça parte dos primeiros<br>operadores na <em>SalDesk</em></h2>
@@ -579,6 +581,19 @@ function toggleMenu() {
   if (links) links.classList.toggle('mobile-open');
   if (lang) lang.classList.toggle('mobile-open');
 }
+/* — SCROLL REVEAL —————————————————————————————————————— */
+(function(){
+  const els = document.querySelectorAll('.reveal');
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('visible');
+        io.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
+  els.forEach(el => io.observe(el));
+})();
 </script>
 </body>
 </html>

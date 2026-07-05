@@ -336,7 +336,8 @@
     }
 
     .step-panel { display: none; }
-    .step-panel.active { display: block; }
+    .step-panel.active { display: block; animation: fadeInStep .4s ease; }
+    @keyframes fadeInStep { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
 
     /* ── FIELDS ──────────────────────────────────── */
     .field-group { display: flex; flex-direction: column; gap: 20px; }
@@ -525,7 +526,9 @@
       align-items: center;
       justify-content: center;
       margin: 0 auto 24px;
+      animation: popInIcon .5s cubic-bezier(.34,1.56,.64,1);
     }
+    @keyframes popInIcon { from { opacity: 0; transform: scale(.5); } to { opacity: 1; transform: scale(1); } }
 
     .success-card h2 {
       font-size: 24px;
@@ -556,6 +559,11 @@
 
     /* ── SIDEBAR ─────────────────────────────────── */
     .sidebar { display: flex; flex-direction: column; gap: 20px; }
+    .sidebar-reveal{opacity:0;transform:translateY(14px);transition:opacity .5s ease,transform .5s ease}
+    .sidebar-reveal.visible{opacity:1;transform:none}
+    .sidebar-reveal:nth-child(1){transition-delay:0s}
+    .sidebar-reveal:nth-child(2){transition-delay:.08s}
+    .sidebar-reveal:nth-child(3){transition-delay:.16s}
 
     @media (min-width: 900px) {
       .sidebar { position: sticky; top: 80px; align-self: start; }
@@ -1304,7 +1312,7 @@
   <aside class="sidebar">
 
     <!-- Benefits -->
-    <div class="sidebar-card sidebar-card--benefits">
+    <div class="sidebar-card sidebar-card--benefits sidebar-reveal">
       <h3 data-pt="Porquê escolher a SalDesk?" data-en="Why choose SalDesk?">Porquê escolher a SalDesk?</h3>
       <div class="benefit-item">
         <div class="benefit-icon">
@@ -1354,7 +1362,7 @@
     </div>
 
     <!-- Testimonial -->
-    <div class="sidebar-card sidebar-card--testimonial">
+    <div class="sidebar-card sidebar-card--testimonial sidebar-reveal">
       <h3 data-pt="O que dizem os operadores" data-en="What operators say">O que dizem os operadores</h3>
       <div class="testimonial">
         <p data-pt="&ldquo;Com a SalDesk deixámos de perder reservas por WhatsApp. Agora tudo fica registado e a equipa sabe o que fazer sem eu ter de explicar tudo.&rdquo;" data-en="&ldquo;With SalDesk we stopped losing bookings over WhatsApp. Now everything is recorded and the team knows what to do without me having to explain everything.&rdquo;">
@@ -1375,7 +1383,7 @@
     </div>
 
     <!-- Plans quick ref -->
-    <div class="sidebar-card sidebar-card--plans">
+    <div class="sidebar-card sidebar-card--plans sidebar-reveal">
       <h3 data-pt="Planos disponíveis" data-en="Available plans">Planos disponíveis</h3>
       <div style="display:flex;flex-direction:column;gap:0">
         <div class="plan-row">
@@ -1725,6 +1733,20 @@
       nav.style.background = 'rgba(6,42,56,.92)';
     }
   }, { passive: true });
+
+  /* Entrada suave da sidebar */
+  (function(){
+    const els = document.querySelectorAll('.sidebar-reveal');
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+          io.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.1 });
+    els.forEach(el => io.observe(el));
+  })();
 
   /* init */
   updateProgress();
