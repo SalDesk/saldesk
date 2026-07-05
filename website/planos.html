@@ -71,7 +71,7 @@ svg{display:block;flex-shrink:0}
   max-width:1100px;margin:0 auto;padding:0 24px;
   height:68px;display:flex;align-items:center;justify-content:space-between;gap:24px;
 }
-.nav-logo img{height:56px}
+.nav-logo img{height:76px}
 .nav-links{display:flex;align-items:center;gap:4px}
 .nav-link{
   padding:7px 14px;border-radius:8px;
@@ -128,10 +128,41 @@ svg{display:block;flex-shrink:0}
 
 /* — PAGE HERO ——————————————————————————————————————————— */
 .page-hero{
+  position:relative;
   background:var(--ocean-900);
   padding:140px 0 72px;
   text-align:center;
+  overflow:hidden;
 }
+.page-hero::before{
+  content:'';
+  position:absolute;inset:0;z-index:1;
+  background:linear-gradient(180deg, rgba(6,42,56,.85) 0%, rgba(6,42,56,.70) 45%, rgba(6,42,56,.88) 100%);
+}
+.page-hero > .hero-bg-slides{position:absolute !important;inset:0;z-index:0 !important}
+.hero-bg-slide{
+  position:absolute;inset:0;
+  background-size:cover;background-position:center;
+  opacity:0;
+  animation:heroFadePlanos 30s infinite;
+}
+.hero-bg-slide:nth-child(1){animation-delay:0s}
+.hero-bg-slide:nth-child(2){animation-delay:6s}
+.hero-bg-slide:nth-child(3){animation-delay:12s}
+.hero-bg-slide:nth-child(4){animation-delay:18s}
+.hero-bg-slide:nth-child(5){animation-delay:24s}
+@keyframes heroFadePlanos{
+  0%   { opacity:0; }
+  3%   { opacity:1; }
+  17%  { opacity:1; }
+  24%  { opacity:0; }
+  100% { opacity:0; }
+}
+.page-hero .container{position:relative;z-index:2}
+
+/* — SCROLL REVEAL ————————————————————————————————————— */
+.reveal{opacity:0;transform:translateY(28px);transition:opacity .7s ease,transform .7s ease}
+.reveal.visible{opacity:1;transform:none}
 .hero-eyebrow{
   display:inline-flex;align-items:center;gap:8px;
   padding:6px 14px;border-radius:50px;
@@ -354,6 +385,13 @@ table.compare-table{width:100%;border-collapse:collapse;min-width:640px;backgrou
 
 <!-- PAGE HERO -->
 <section class="page-hero">
+  <div class="hero-bg-slides">
+    <div class="hero-bg-slide" style="background-image:url('/images/hero-santa-maria.jpg')"></div>
+    <div class="hero-bg-slide" style="background-image:url('/images/hero-shark.jpg')"></div>
+    <div class="hero-bg-slide" style="background-image:url('/images/hero-blue-cave.jpg')"></div>
+    <div class="hero-bg-slide" style="background-image:url('/images/hero-diver.jpg')"></div>
+    <div class="hero-bg-slide" style="background-image:url('/images/hero-buracona.jpg')"></div>
+  </div>
   <div class="container">
     <div class="hero-eyebrow">
       <span class="pt">Planos e Preços</span>
@@ -367,7 +405,7 @@ table.compare-table{width:100%;border-collapse:collapse;min-width:640px;backgrou
 </section>
 
 <!-- PRICING CARDS -->
-<section class="pricing" id="pricing-cards">
+<section class="pricing reveal" id="pricing-cards">
   <div class="container">
     <div class="pricing-grid">
 
@@ -438,7 +476,7 @@ table.compare-table{width:100%;border-collapse:collapse;min-width:640px;backgrou
 </section>
 
 <!-- COMPARISON TABLE -->
-<section class="compare">
+<section class="compare reveal">
   <div class="container">
     <div class="compare-header">
       <div class="section-eyebrow pt">Comparação detalhada</div>
@@ -502,7 +540,7 @@ table.compare-table{width:100%;border-collapse:collapse;min-width:640px;backgrou
 </section>
 
 <!-- FAQ -->
-<section class="faq">
+<section class="faq reveal">
   <div class="container">
     <div class="compare-header">
       <div class="section-eyebrow pt">Perguntas frequentes</div>
@@ -540,7 +578,7 @@ table.compare-table{width:100%;border-collapse:collapse;min-width:640px;backgrou
 </section>
 
 <!-- CTA -->
-<section class="cta-section">
+<section class="cta-section reveal">
   <div class="container">
     <h2 class="pt">Ainda com dúvidas sobre qual escolher?</h2>
     <h2 class="en">Still unsure which one to choose?</h2>
@@ -669,6 +707,20 @@ function toggleMenu() {
   setTimeout(() => {
     document.getElementById('pricing-cards').scrollIntoView({ behavior: 'smooth', block: 'start' });
   }, 100);
+})();
+
+/* Animacao de entrada ao scroll */
+(function(){
+  const els = document.querySelectorAll('.reveal');
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('visible');
+        io.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
+  els.forEach(el => io.observe(el));
 })();
 </script>
 </body>
