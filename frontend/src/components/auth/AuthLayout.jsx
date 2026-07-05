@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import LanguageToggle from '../shared/LanguageToggle';
-import Logo from '../shared/Logo';
 
 /* Fotos reais da Ilha do Sal (Santa Maria, gruta azul, mergulho, tubaroes, Buracona) */
 const BEACH_IMAGES = [
@@ -50,8 +49,7 @@ export default function AuthLayout({ children, showLangToggle = true }) {
       {/* Conteudo */}
       <div className="relative z-10 flex flex-col min-h-screen">
         {/* Nav */}
-        <div className="flex items-center justify-between px-6 py-4">
-          <Logo white size="md" />
+        <div className="flex items-center justify-end px-6 py-4">
           {showLangToggle && <LanguageToggle variant="white" authMode />}
         </div>
 

@@ -8,6 +8,7 @@ import { useT } from '../i18n';
 import AuthLayout from '../components/auth/AuthLayout';
 import Input from '../components/ui/Input';
 import Button from '../components/ui/Button';
+import Logo from '../components/shared/Logo';
 
 /* ── Rate limiting (localStorage) ── */
 const MAX_ATTEMPTS     = 5;
@@ -58,6 +59,9 @@ function AuthCard({ children }) {
     <div className="relative bg-white rounded-2xl shadow-lg shadow-ocean-900/25 border border-n-100 overflow-hidden">
       <div className="h-1 w-full bg-gradient-to-r from-sand-500 via-sand-400 to-sand-500" />
       <div className="p-7">
+        <div className="flex justify-center mb-5">
+          <Logo size="lg" />
+        </div>
         {children}
       </div>
     </div>
