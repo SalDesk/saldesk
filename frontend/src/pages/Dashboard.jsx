@@ -358,7 +358,7 @@ function HotelDashboard() {
       </div>
 
       {/* Mapa de quartos */}
-      <div className="bg-white rounded-md border border-n-200 shadow-sm p-5">
+      <div className="bg-white rounded-lg border border-n-200 shadow-sm p-5">
         <div className="flex items-center gap-2 mb-4">
           <BedDouble size={15} strokeWidth={1.75} className="text-n-500" />
           <h2 className="font-display font-semibold text-sm text-n-700 uppercase tracking-wide">
@@ -741,7 +741,7 @@ function RentacarDashboard() {
       </div>
 
       {/* Fleet map */}
-      <div className="bg-white rounded-md border border-n-200 shadow-sm p-5">
+      <div className="bg-white rounded-lg border border-n-200 shadow-sm p-5">
         <div className="flex items-center gap-2 mb-4">
           <Car size={15} strokeWidth={1.75} className="text-n-500" />
           <h2 className="font-display font-semibold text-sm text-n-700 uppercase tracking-wide">
@@ -1045,7 +1045,7 @@ function RestaurantDashboard() {
       </div>
 
       {/* Table map */}
-      <div className="bg-white rounded-md border border-n-200 shadow-sm p-5">
+      <div className="bg-white rounded-lg border border-n-200 shadow-sm p-5">
         <div className="flex items-center gap-2 mb-4">
           <UtensilsCrossed size={15} strokeWidth={1.75} className="text-n-500" />
           <h2 className="font-display font-semibold text-sm text-n-700 uppercase tracking-wide">
@@ -1177,7 +1177,7 @@ function GenericDashboard() {
       </div>
 
       {mapSection && (
-        <div className="bg-white rounded-md border border-n-200 shadow-sm p-5 mb-8">
+        <div className="bg-white rounded-lg border border-n-200 shadow-sm p-5 mb-8">
           <h2 className="font-display font-semibold text-sm text-n-700 uppercase tracking-wide mb-4">{mapSection.title}</h2>
           {mapLoading ? (
             <div className="flex justify-center py-8"><LoadingSpinner size={24} /></div>
@@ -1401,7 +1401,7 @@ function ActivityDashboard() {
 
       {/* Vista do dia + Alertas */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <div className="lg:col-span-2 bg-white rounded-md border border-n-200 shadow-sm p-5">
+        <div className="lg:col-span-2 bg-white rounded-lg border border-n-200 shadow-sm p-5">
           <div className="flex items-center gap-2 mb-4">
             <Clock size={15} strokeWidth={1.75} className="text-n-500" />
             <h2 className="font-display font-semibold text-sm text-n-700 uppercase tracking-wide">
@@ -1511,7 +1511,7 @@ function ActivityDashboard() {
       </div>
 
       {/* Proximos 7 dias */}
-      <div className="bg-white rounded-md border border-n-200 shadow-sm p-5">
+      <div className="bg-white rounded-lg border border-n-200 shadow-sm p-5">
         <div className="flex items-center gap-2 mb-4">
           <CalendarDays size={15} strokeWidth={1.75} className="text-n-500" />
           <h2 className="font-display font-semibold text-sm text-n-700 uppercase tracking-wide">Proximos 7 dias</h2>
