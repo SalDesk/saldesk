@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="pt" data-lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Planos e Preços — SalDesk · Ilha do Sal, Cabo Verde</title>
+<meta name="description" content="Compare os planos SalDesk: Starter, Pro e Business. Sem comissões, 30 dias de trial gratuito. Escolha o plano certo para o seu negócio turístico.">
+<meta property="og:title" content="Planos e Preços — SalDesk">
+<meta property="og:description" content="Compare os planos e escolha o certo para o seu negócio.">
+<meta property="og:image" content="https://saldesk.cv/og.png">
+<meta property="og:url" content="https://saldesk.cv/planos.html">
+<meta property="og:type" content="website">
+<link rel="canonical" href="https://saldesk.cv/planos.html">
+<link rel="icon" href="/logo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=DM+Sans:ital,wght@0,400;0,500;0,600;1,400&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* — TOKENS ————————————————————————————————————————— */
+:root {
+  --ocean-900: #062A38;
+  --ocean-800: #0A3F55;
+  --ocean-700: #0D5470;
+  --ocean-500: #1480A8;
+  --ocean-300: #71BDD4;
+  --ocean-100: #D6EEF5;
+  --ocean-50:  #EBF7FB;
+  --sand-500:  #D4A82A;
+  --sand-400:  #E0BF5A;
+  --sand-100:  #FBF3DC;
+  --n900: #0F1923;
+  --n800: #1A2332;
+  --n700: #2D3748;
+  --n600: #4A5568;
+  --n500: #718096;
+  --n400: #A0AEC0;
+  --n200: #E2E8F0;
+  --n100: #F7F8FA;
+  --n50:  #FAFBFC;
+  --white: #FFFFFF;
+  --r: 16px;
+  --r-lg: 24px;
+  --shadow: 0 4px 24px rgba(6,42,56,.10);
+  --shadow-lg: 0 16px 48px rgba(6,42,56,.16);
+}
+
+/* — RESET ————————————————————————————————————————————— */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+body{font-family:'DM Sans',sans-serif;font-size:1rem;line-height:1.65;color:var(--n700);background:var(--white);-webkit-font-smoothing:antialiased}
+img{max-width:100%;display:block}
+a{color:inherit;text-decoration:none}
+ul{list-style:none}
+button{font-family:inherit;cursor:pointer;border:none;background:none}
+svg{display:block;flex-shrink:0}
+
+/* — LANG ——————————————————————————————————————————————— */
+[data-lang="pt"] .en{display:none}
+[data-lang="en"] .pt{display:none}
+
+/* — LAYOUT ————————————————————————————————————————————— */
+.container{max-width:1100px;margin:0 auto;padding:0 24px}
+
+/* — NAV ———————————————————————————————————————————————— */
+.nav{
+  position:fixed;top:0;left:0;right:0;z-index:100;
+  background:rgba(6,42,56,.92);backdrop-filter:blur(16px);
+  border-bottom:1px solid rgba(255,255,255,.07);
+}
+.nav-inner{
+  max-width:1100px;margin:0 auto;padding:0 24px;
+  height:68px;display:flex;align-items:center;justify-content:space-between;gap:24px;
+}
+.nav-logo img{height:56px}
+.nav-links{display:flex;align-items:center;gap:4px}
+.nav-link{
+  padding:7px 14px;border-radius:8px;
+  font-family:'Sora',sans-serif;font-size:.82rem;font-weight:600;
+  color:rgba(255,255,255,.75);transition:color .15s,background .15s;
+}
+.nav-link:hover{color:#fff;background:rgba(255,255,255,.07)}
+.nav-cta{
+  padding:9px 20px;border-radius:10px;
+  background:var(--sand-500);color:var(--ocean-900);
+  font-family:'Sora',sans-serif;font-size:.82rem;font-weight:700;
+  transition:background .15s,transform .1s;
+}
+.nav-cta:hover{background:var(--sand-400);transform:translateY(-1px)}
+.nav-lang{
+  display:flex;align-items:center;gap:2px;
+  background:rgba(255,255,255,.08);border-radius:8px;overflow:hidden;
+}
+.lang-btn{
+  padding:6px 11px;font-family:'DM Mono',monospace;font-size:.72rem;font-weight:500;
+  color:rgba(255,255,255,.5);cursor:pointer;transition:all .15s;
+}
+.lang-btn.active{background:rgba(255,255,255,.12);color:#fff}
+.nav-mobile-cta{display:none}
+.hamburger{display:none;flex-direction:column;gap:5px;padding:8px;cursor:pointer}
+.hamburger span{width:22px;height:2px;background:#fff;border-radius:2px;transition:.2s}
+@media(max-width:860px){
+  .nav-links,.nav-lang,.nav-cta{display:none}
+  .hamburger{display:flex}
+  .nav-mobile-cta{
+    display:block;padding:8px 16px;border-radius:9px;
+    background:var(--sand-500);color:var(--ocean-900);
+    font-family:'Sora',sans-serif;font-size:.8rem;font-weight:700;
+  }
+  .nav-links.mobile-open{
+    display:flex !important;
+    flex-direction:column;
+    align-items:flex-start;
+    position:absolute;
+    top:68px;left:0;right:0;
+    background:rgba(6,42,56,.98);
+    padding:12px 24px 20px;
+    gap:2px;
+    border-bottom:1px solid rgba(255,255,255,.08);
+  }
+  .nav-links.mobile-open .nav-link{width:100%;padding:12px 8px}
+  .nav-lang.mobile-open{
+    display:flex !important;
+    position:absolute;
+    top:calc(68px + 1px);left:24px;
+    margin-top:0;
+  }
+}
+
+/* — PAGE HERO ——————————————————————————————————————————— */
+.page-hero{
+  background:var(--ocean-900);
+  padding:140px 0 72px;
+  text-align:center;
+}
+.hero-eyebrow{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:6px 14px;border-radius:50px;
+  background:rgba(212,168,42,.12);border:1px solid rgba(212,168,42,.25);
+  font-family:'DM Mono',monospace;font-size:.72rem;font-weight:500;
+  color:var(--sand-400);letter-spacing:.06em;text-transform:uppercase;
+  margin-bottom:24px;
+}
+.page-hero h1{
+  font-family:'Sora',sans-serif;font-size:clamp(2rem,4.5vw,3rem);
+  font-weight:800;line-height:1.15;letter-spacing:-.03em;
+  color:var(--white);max-width:700px;margin:0 auto 16px;
+}
+.page-hero h1 em{font-style:normal;color:var(--sand-500)}
+.page-hero-sub{
+  font-size:clamp(1rem,2vw,1.1rem);line-height:1.6;color:rgba(255,255,255,.6);
+  max-width:520px;margin:0 auto;
+}
+
+/* — PRICING (reaproveitado do index.html) —————————————————— */
+.pricing{padding:64px 0 100px;background:var(--n50)}
+.pricing-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px}
+.plan-card{
+  background:var(--white);border-radius:var(--r-lg);
+  padding:36px;border:1px solid var(--n200);
+  display:flex;flex-direction:column;
+  transition:box-shadow .2s,transform .2s;
+  position:relative;
+}
+.plan-card:hover{box-shadow:var(--shadow-lg);transform:translateY(-4px)}
+.plan-card.featured{
+  background:var(--ocean-900);border-color:var(--ocean-700);
+}
+.plan-card.selected{
+  box-shadow:0 0 0 3px var(--sand-500),var(--shadow-lg);
+}
+.plan-badge{
+  position:absolute;top:-12px;left:50%;transform:translateX(-50%);
+  background:var(--sand-500);color:var(--ocean-900);
+  padding:4px 14px;border-radius:50px;
+  font-family:'Sora',sans-serif;font-size:.72rem;font-weight:700;
+  white-space:nowrap;
+}
+.plan-selected-tag{
+  position:absolute;top:-12px;right:20px;
+  background:var(--ocean-900);color:#fff;
+  padding:4px 12px;border-radius:50px;
+  font-family:'Sora',sans-serif;font-size:.68rem;font-weight:700;
+  white-space:nowrap;display:flex;align-items:center;gap:4px;
+}
+.plan-card.featured .plan-selected-tag{background:var(--sand-500);color:var(--ocean-900)}
+.plan-name{
+  font-family:'Sora',sans-serif;font-size:.78rem;font-weight:700;
+  text-transform:uppercase;letter-spacing:.08em;
+  color:var(--n500);margin-bottom:16px;
+}
+.plan-card.featured .plan-name{color:rgba(255,255,255,.5)}
+.plan-price{
+  font-family:'Sora',sans-serif;font-size:2.6rem;font-weight:800;
+  letter-spacing:-.03em;color:var(--n900);line-height:1;margin-bottom:4px;
+}
+.plan-card.featured .plan-price{color:var(--white)}
+.plan-period{font-size:.82rem;color:var(--n400);margin-bottom:12px}
+.plan-card.featured .plan-period{color:rgba(255,255,255,.4)}
+.plan-tagline{font-size:.86rem;color:var(--n500);margin-bottom:24px;line-height:1.5}
+.plan-card.featured .plan-tagline{color:rgba(255,255,255,.6)}
+.plan-features{flex:1;margin-bottom:32px}
+.plan-feature{
+  display:flex;align-items:flex-start;gap:10px;
+  padding:9px 0;border-bottom:1px solid var(--n100);
+  font-size:.88rem;color:var(--n600);
+}
+.plan-card.featured .plan-feature{border-color:rgba(255,255,255,.08);color:rgba(255,255,255,.75)}
+.plan-feature:last-child{border:none}
+.plan-feature svg{width:16px;height:16px;flex-shrink:0;margin-top:2px;stroke:var(--ocean-500);stroke-width:2.5;fill:none}
+.plan-card.featured .plan-feature svg{stroke:var(--sand-400)}
+.plan-cta{
+  display:block;text-align:center;padding:13px;border-radius:10px;
+  background:var(--ocean-900);color:var(--white);
+  font-family:'Sora',sans-serif;font-size:.88rem;font-weight:700;
+  transition:background .15s,transform .1s;
+}
+.plan-cta:hover{background:var(--ocean-700);transform:translateY(-1px)}
+.plan-card.featured .plan-cta{background:var(--sand-500);color:var(--ocean-900)}
+.plan-card.featured .plan-cta:hover{background:var(--sand-400)}
+@media(max-width:800px){.pricing-grid{grid-template-columns:1fr;max-width:420px;margin-left:auto;margin-right:auto}}
+
+/* — COMPARISON TABLE ————————————————————————————————————— */
+.compare{padding:80px 0 100px;background:var(--white)}
+.compare-header{text-align:center;margin-bottom:48px}
+.section-eyebrow{
+  font-family:'DM Mono',monospace;font-size:.72rem;font-weight:500;
+  color:var(--ocean-500);letter-spacing:.1em;text-transform:uppercase;
+  margin-bottom:16px;
+}
+.section-title{
+  font-family:'Sora',sans-serif;font-size:clamp(1.6rem,3vw,2.2rem);
+  font-weight:800;letter-spacing:-.02em;color:var(--n900);
+  line-height:1.15;
+}
+.compare-table-wrap{overflow-x:auto;border-radius:var(--r-lg);border:1px solid var(--n200)}
+table.compare-table{width:100%;border-collapse:collapse;min-width:640px;background:var(--white)}
+.compare-table th,.compare-table td{padding:14px 20px;text-align:left;border-bottom:1px solid var(--n100)}
+.compare-table thead th{
+  font-family:'Sora',sans-serif;font-size:.82rem;font-weight:700;
+  background:var(--n50);color:var(--n900);
+  position:sticky;top:0;
+}
+.compare-table thead th.col-plan{text-align:center}
+.compare-table thead th .th-price{display:block;font-weight:400;font-size:.75rem;color:var(--n500);margin-top:2px}
+.compare-table tbody tr:last-child td{border-bottom:none}
+.compare-table tbody tr:hover{background:var(--n50)}
+.compare-table td.col-feature{font-size:.88rem;color:var(--n700);font-weight:500}
+.compare-table td.col-check{text-align:center}
+.compare-table .cat-row td{
+  background:var(--ocean-50);font-family:'DM Mono',monospace;font-size:.72rem;
+  font-weight:500;text-transform:uppercase;letter-spacing:.06em;color:var(--ocean-700);
+  padding:9px 20px;
+}
+.check-yes{color:var(--ocean-500)}
+.check-no{color:var(--n200)}
+.limit-tag{font-size:.78rem;color:var(--n600);font-weight:600}
+
+/* — FAQ ————————————————————————————————————————————— */
+.faq{padding:80px 0 100px;background:var(--n50)}
+.faq-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:40px}
+.faq-item{background:var(--white);border:1px solid var(--n200);border-radius:var(--r);padding:24px}
+.faq-item h3{font-family:'Sora',sans-serif;font-size:.98rem;font-weight:700;color:var(--n900);margin-bottom:8px}
+.faq-item p{font-size:.88rem;color:var(--n500);line-height:1.6}
+@media(max-width:760px){.faq-grid{grid-template-columns:1fr}}
+
+/* — CTA ———————————————————————————————————————————————— */
+.cta-section{padding:90px 0;background:var(--ocean-900);text-align:center}
+.cta-section h2{
+  font-family:'Sora',sans-serif;font-size:clamp(1.6rem,3.5vw,2.4rem);
+  font-weight:800;letter-spacing:-.02em;color:var(--white);margin-bottom:16px;
+}
+.cta-section h2 em{font-style:normal;color:var(--sand-500)}
+.cta-section p{color:rgba(255,255,255,.6);font-size:1rem;margin-bottom:32px}
+.btn-primary{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:14px 28px;border-radius:12px;
+  background:var(--sand-500);color:var(--ocean-900);
+  font-family:'Sora',sans-serif;font-size:.92rem;font-weight:700;
+  transition:background .15s,transform .1s,box-shadow .15s;
+  box-shadow:0 4px 20px rgba(212,168,42,.35);
+}
+.btn-primary:hover{background:var(--sand-400);transform:translateY(-2px)}
+
+/* — FOOTER ———————————————————————————————————————————— */
+.footer{background:var(--n900);padding:56px 0 32px;border-top:1px solid rgba(255,255,255,.06)}
+.footer-inner{
+  max-width:1100px;margin:0 auto;padding:0 24px;
+  display:grid;grid-template-columns:1.4fr 1fr 1fr 1.2fr;gap:32px;margin-bottom:40px;
+}
+.footer-col{display:flex;flex-direction:column;align-items:flex-start;gap:10px}
+.footer-logo img{height:150px;opacity:.9}
+.footer-tagline{font-size:.84rem;color:rgba(255,255,255,.4);line-height:1.5;margin-top:10px;max-width:220px}
+.footer-heading{font-family:'Sora',sans-serif;font-size:.76rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:rgba(255,255,255,.5);margin-bottom:2px}
+.footer-links{display:flex;flex-direction:column;gap:10px}
+.footer-link{font-size:.84rem;color:rgba(255,255,255,.4);transition:color .15s}
+.footer-link:hover{color:rgba(255,255,255,.8)}
+.footer-social{display:flex;gap:12px;margin-top:6px}
+.footer-social a{display:inline-flex;transition:transform .15s}
+.footer-social a:hover{transform:translateY(-2px)}
+.footer-social svg{width:36px;height:36px;display:block}
+.footer-bottom{
+  max-width:1100px;margin:0 auto;padding:24px 24px 0;border-top:1px solid rgba(255,255,255,.06);
+  display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;
+}
+.footer-copy{font-size:.78rem;color:rgba(255,255,255,.25)}
+.footer-credit{color:rgba(255,255,255,.35);text-decoration:none;transition:color .15s}
+.footer-credit:hover{color:rgba(255,255,255,.6)}
+.footer-wa{
+  display:inline-flex;align-items:center;gap:8px;padding:9px 18px;border-radius:10px;
+  background:rgba(37,211,102,.1);border:1px solid rgba(37,211,102,.2);
+  color:#25D366;font-family:'Sora',sans-serif;font-size:.8rem;font-weight:600;transition:background .15s;
+}
+.footer-wa:hover{background:rgba(37,211,102,.15)}
+@media (max-width:800px){.footer-inner{grid-template-columns:1fr 1fr}}
+@media (max-width:520px){
+  .footer-inner{grid-template-columns:1fr}
+  .footer-bottom{flex-direction:column;align-items:flex-start;text-align:left}
+}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="nav" id="nav">
+  <div class="nav-inner">
+    <a href="/" class="nav-logo">
+      <img src="/logo-white.png" alt="SalDesk" onerror="this.outerHTML='<span style=\'font-family:Sora,sans-serif;font-weight:800;font-size:1.1rem;color:#D4A82A\'>SalDesk</span>'">
+    </a>
+    <div class="nav-links">
+      <a href="/#problem" class="nav-link pt">O Problema</a>
+      <a href="/#problem" class="nav-link en">The Problem</a>
+      <a href="/#features" class="nav-link pt">Funcionalidades</a>
+      <a href="/#features" class="nav-link en">Features</a>
+      <a href="/planos.html" class="nav-link pt" style="color:#fff">Planos</a>
+      <a href="/planos.html" class="nav-link en" style="color:#fff">Plans</a>
+      <a href="/sobre.html" class="nav-link pt">Sobre</a>
+      <a href="/sobre.html" class="nav-link en">About</a>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px">
+      <div class="nav-lang">
+        <button class="lang-btn active" onclick="setLang('pt')">PT</button>
+        <button class="lang-btn" onclick="setLang('en')">EN</button>
+      </div>
+      <a href="/operadores.html" class="nav-cta pt">Registar negócio</a>
+      <a href="/operadores.html" class="nav-cta en">Get started</a>
+    </div>
+    <a href="/operadores.html" class="nav-mobile-cta pt">Registar</a>
+    <a href="/operadores.html" class="nav-mobile-cta en">Start</a>
+    <div class="hamburger" onclick="toggleMenu()">
+      <span></span><span></span><span></span>
+    </div>
+  </div>
+</nav>
+
+<!-- PAGE HERO -->
+<section class="page-hero">
+  <div class="container">
+    <div class="hero-eyebrow">
+      <span class="pt">Planos e Preços</span>
+      <span class="en">Plans and Pricing</span>
+    </div>
+    <h1 class="pt">Simples. Transparente. <em>Sem comissões.</em></h1>
+    <h1 class="en">Simple. Transparent. <em>No commissions.</em></h1>
+    <p class="page-hero-sub pt">Escolha o plano certo para o seu negócio. Todos incluem 30 dias de trial gratuito, sem necessidade de cartão de crédito.</p>
+    <p class="page-hero-sub en">Choose the right plan for your business. All plans include a 30-day free trial, no credit card required.</p>
+  </div>
+</section>
+
+<!-- PRICING CARDS -->
+<section class="pricing" id="pricing-cards">
+  <div class="container">
+    <div class="pricing-grid">
+
+      <!-- STARTER -->
+      <div class="plan-card" id="plan-starter">
+        <div class="plan-name">Starter</div>
+        <div class="plan-price pt">€29<span style="font-size:1rem;font-weight:500;color:var(--n400)">/mês</span></div>
+        <div class="plan-price en">€29<span style="font-size:1rem;font-weight:500;color:var(--n400)">/month</span></div>
+        <div class="plan-period pt">30 dias de trial gratuito</div>
+        <div class="plan-period en">30 days free trial</div>
+        <p class="plan-tagline pt">Ideal para começar sozinho ou com uma pequena equipa.</p>
+        <p class="plan-tagline en">Ideal to get started solo or with a small team.</p>
+        <ul class="plan-features">
+          <li class="plan-feature"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg><span class="pt">Reservas directas ilimitadas, 0% comissão</span><span class="en">Unlimited direct bookings, 0% commission</span></li>
+          <li class="plan-feature"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg><span class="pt">Página pública de reservas</span><span class="en">Public booking page</span></li>
+          <li class="plan-feature"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg><span class="pt">Calendário e disponibilidade</span><span class="en">Calendar and availability</span></li>
+          <li class="plan-feature"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg><span class="pt">CRM de clientes</span><span class="en">Customer CRM</span></li>
+          <li class="plan-feature"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg><span class="pt">Até 2 colaboradores</span><span class="en">Up to 2 staff members</span></li>
+        </ul>
+        <a href="/operadores.html?plano=starter" class="plan-cta pt">Começar trial</a>
+        <a href="/operadores.html?plano=starter" class="plan-cta en">Start trial</a>
+      </div>
+
+      <!-- PRO -->
+      <div class="plan-card featured" id="plan-pro">
+        <div class="plan-badge pt">Mais popular</div>
+        <div class="plan-badge en">Most popular</div>
+        <div class="plan-name">Pro</div>
+        <div class="plan-price pt" style="color:#fff">€69<span style="font-size:1rem;font-weight:500;color:rgba(255,255,255,.4)">/mês</span></div>
+        <div class="plan-price en" style="color:#fff">€69<span style="font-size:1rem;font-weight:500;color:rgba(255,255,255,.4)">/month</span></div>
+        <div class="plan-period pt">30 dias de trial gratuito</div>
+        <div class="plan-period en">30 days free trial</div>
+        <p class="plan-tagline pt">Para negócios em crescimento que querem automatizar e vender mais.</p>
+        <p class="plan-tagline en">For growing businesses that want to automate and sell more.</p>
+        <ul class="plan-features">
+          <li class="plan-feature"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg><span class="pt">Tudo do Starter, mais:</span><span class="en">Everything in Starter, plus:</span></li>
+          <li class="plan-feature"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg><span class="pt">Colaboradores ilimitados</span><span class="en">Unlimited staff members</span></li>
+          <li class="plan-feature"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg><span class="pt">Vendedor de Praia</span><span class="en">Beach Seller mode</span></li>
+          <li class="plan-feature"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg><span class="pt">Automações e integrações OTA</span><span class="en">Automations and OTA integrations</span></li>
+          <li class="plan-feature"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg><span class="pt">Fidelidade, grupos e pacotes</span><span class="en">Loyalty, groups and packages</span></li>
+        </ul>
+        <a href="/operadores.html?plano=pro" class="plan-cta pt">Começar trial</a>
+        <a href="/operadores.html?plano=pro" class="plan-cta en">Start trial</a>
+      </div>
+
+      <!-- BUSINESS -->
+      <div class="plan-card" id="plan-business">
+        <div class="plan-name">Business</div>
+        <div class="plan-price pt">€129<span style="font-size:1rem;font-weight:500;color:var(--n400)">/mês</span></div>
+        <div class="plan-price en">€129<span style="font-size:1rem;font-weight:500;color:var(--n400)">/month</span></div>
+        <div class="plan-period pt">30 dias de trial gratuito</div>
+        <div class="plan-period en">30 days free trial</div>
+        <p class="plan-tagline pt">Para operações maiores com múltiplos serviços e equipas.</p>
+        <p class="plan-tagline en">For larger operations with multiple services and teams.</p>
+        <ul class="plan-features">
+          <li class="plan-feature"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg><span class="pt">Tudo do Pro, mais:</span><span class="en">Everything in Pro, plus:</span></li>
+          <li class="plan-feature"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg><span class="pt">Guias e marketing</span><span class="en">Guides and marketing</span></li>
+          <li class="plan-feature"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg><span class="pt">Analytics avançado</span><span class="en">Advanced analytics</span></li>
+          <li class="plan-feature"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg><span class="pt">Vouchers e afiliados</span><span class="en">Vouchers and affiliates</span></li>
+          <li class="plan-feature"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg><span class="pt">Suporte prioritário</span><span class="en">Priority support</span></li>
+        </ul>
+        <a href="/operadores.html?plano=business" class="plan-cta pt">Começar trial</a>
+        <a href="/operadores.html?plano=business" class="plan-cta en">Start trial</a>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- COMPARISON TABLE -->
+<section class="compare">
+  <div class="container">
+    <div class="compare-header">
+      <div class="section-eyebrow pt">Comparação detalhada</div>
+      <div class="section-eyebrow en">Detailed comparison</div>
+      <h2 class="section-title pt">Todas as funcionalidades, lado a lado</h2>
+      <h2 class="section-title en">All features, side by side</h2>
+    </div>
+
+    <div class="compare-table-wrap">
+      <table class="compare-table">
+        <thead>
+          <tr>
+            <th class="pt">Funcionalidade</th>
+            <th class="en">Feature</th>
+            <th class="col-plan">Starter<span class="th-price">€29</span></th>
+            <th class="col-plan">Pro<span class="th-price">€69</span></th>
+            <th class="col-plan">Business<span class="th-price">€129</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="cat-row"><td colspan="4"><span class="pt">Base — incluído em todos os planos</span><span class="en">Base — included in all plans</span></td></tr>
+          <tr><td class="col-feature pt">Reservas directas (0% comissão)</td><td class="col-feature en">Direct bookings (0% commission)</td><td class="col-check"><span class="check-yes">✓</span></td><td class="col-check"><span class="check-yes">✓</span></td><td class="col-check"><span class="check-yes">✓</span></td></tr>
+          <tr><td class="col-feature pt">Página pública de reservas</td><td class="col-feature en">Public booking page</td><td class="col-check"><span class="check-yes">✓</span></td><td class="col-check"><span class="check-yes">✓</span></td><td class="col-check"><span class="check-yes">✓</span></td></tr>
+          <tr><td class="col-feature pt">Calendário e disponibilidade</td><td class="col-feature en">Calendar and availability</td><td class="col-check"><span class="check-yes">✓</span></td><td class="col-check"><span class="check-yes">✓</span></td><td class="col-check"><span class="check-yes">✓</span></td></tr>
+          <tr><td class="col-feature pt">CRM de clientes</td><td class="col-feature en">Customer CRM</td><td class="col-check"><span class="check-yes">✓</span></td><td class="col-check"><span class="check-yes">✓</span></td><td class="col-check"><span class="check-yes">✓</span></td></tr>
+          <tr><td class="col-feature pt">Financeiro básico</td><td class="col-feature en">Basic financials</td><td class="col-check"><span class="check-yes">✓</span></td><td class="col-check"><span class="check-yes">✓</span></td><td class="col-check"><span class="check-yes">✓</span></td></tr>
+          <tr><td class="col-feature pt">Gestão de frota</td><td class="col-feature en">Fleet management</td><td class="col-check"><span class="check-yes">✓</span></td><td class="col-check"><span class="check-yes">✓</span></td><td class="col-check"><span class="check-yes">✓</span></td></tr>
+          <tr><td class="col-feature pt">Housekeeping e manutenção</td><td class="col-feature en">Housekeeping and maintenance</td><td class="col-check"><span class="check-yes">✓</span></td><td class="col-check"><span class="check-yes">✓</span></td><td class="col-check"><span class="check-yes">✓</span></td></tr>
+          <tr><td class="col-feature pt">Menu digital</td><td class="col-feature en">Digital menu</td><td class="col-check"><span class="check-yes">✓</span></td><td class="col-check"><span class="check-yes">✓</span></td><td class="col-check"><span class="check-yes">✓</span></td></tr>
+          <tr><td class="col-feature pt">Mensagens internas</td><td class="col-feature en">Internal messaging</td><td class="col-check"><span class="check-yes">✓</span></td><td class="col-check"><span class="check-yes">✓</span></td><td class="col-check"><span class="check-yes">✓</span></td></tr>
+          <tr><td class="col-feature pt">Avaliações, ocorrências e feedback</td><td class="col-feature en">Reviews, occurrences and feedback</td><td class="col-check"><span class="check-yes">✓</span></td><td class="col-check"><span class="check-yes">✓</span></td><td class="col-check"><span class="check-yes">✓</span></td></tr>
+          <tr>
+            <td class="col-feature pt">Colaboradores</td><td class="col-feature en">Staff members</td>
+            <td class="col-check"><span class="limit-tag pt">Até 2</span><span class="limit-tag en">Up to 2</span></td>
+            <td class="col-check"><span class="limit-tag pt">Ilimitado</span><span class="limit-tag en">Unlimited</span></td>
+            <td class="col-check"><span class="limit-tag pt">Ilimitado</span><span class="limit-tag en">Unlimited</span></td>
+          </tr>
+
+          <tr class="cat-row"><td colspan="4"><span class="pt">A partir do Pro</span><span class="en">Starting at Pro</span></td></tr>
+          <tr><td class="col-feature pt">Vendedor de Praia</td><td class="col-feature en">Beach Seller mode</td><td class="col-check"><span class="check-no">—</span></td><td class="col-check"><span class="check-yes">✓</span></td><td class="col-check"><span class="check-yes">✓</span></td></tr>
+          <tr><td class="col-feature pt">Automações</td><td class="col-feature en">Automations</td><td class="col-check"><span class="check-no">—</span></td><td class="col-check"><span class="check-yes">✓</span></td><td class="col-check"><span class="check-yes">✓</span></td></tr>
+          <tr><td class="col-feature pt">Integrações com OTAs</td><td class="col-feature en">OTA integrations</td><td class="col-check"><span class="check-no">—</span></td><td class="col-check"><span class="check-yes">✓</span></td><td class="col-check"><span class="check-yes">✓</span></td></tr>
+          <tr><td class="col-feature pt">Programa de fidelidade</td><td class="col-feature en">Loyalty program</td><td class="col-check"><span class="check-no">—</span></td><td class="col-check"><span class="check-yes">✓</span></td><td class="col-check"><span class="check-yes">✓</span></td></tr>
+          <tr><td class="col-feature pt">Previsão de procura</td><td class="col-feature en">Demand forecasting</td><td class="col-check"><span class="check-no">—</span></td><td class="col-check"><span class="check-yes">✓</span></td><td class="col-check"><span class="check-yes">✓</span></td></tr>
+          <tr><td class="col-feature pt">Grupos e pacotes</td><td class="col-feature en">Groups and packages</td><td class="col-check"><span class="check-no">—</span></td><td class="col-check"><span class="check-yes">✓</span></td><td class="col-check"><span class="check-yes">✓</span></td></tr>
+          <tr><td class="col-feature pt">Parcerias</td><td class="col-feature en">Partnerships</td><td class="col-check"><span class="check-no">—</span></td><td class="col-check"><span class="check-yes">✓</span></td><td class="col-check"><span class="check-yes">✓</span></td></tr>
+          <tr><td class="col-feature pt">Financeiro completo</td><td class="col-feature en">Full financial suite</td><td class="col-check"><span class="check-no">—</span></td><td class="col-check"><span class="check-yes">✓</span></td><td class="col-check"><span class="check-yes">✓</span></td></tr>
+
+          <tr class="cat-row"><td colspan="4"><span class="pt">Exclusivo Business</span><span class="en">Business exclusive</span></td></tr>
+          <tr><td class="col-feature pt">Gestão de guias</td><td class="col-feature en">Guide management</td><td class="col-check"><span class="check-no">—</span></td><td class="col-check"><span class="check-no">—</span></td><td class="col-check"><span class="check-yes">✓</span></td></tr>
+          <tr><td class="col-feature pt">Marketing</td><td class="col-feature en">Marketing</td><td class="col-check"><span class="check-no">—</span></td><td class="col-check"><span class="check-no">—</span></td><td class="col-check"><span class="check-yes">✓</span></td></tr>
+          <tr><td class="col-feature pt">Analytics avançado</td><td class="col-feature en">Advanced analytics</td><td class="col-check"><span class="check-no">—</span></td><td class="col-check"><span class="check-no">—</span></td><td class="col-check"><span class="check-yes">✓</span></td></tr>
+          <tr><td class="col-feature pt">Vouchers</td><td class="col-feature en">Vouchers</td><td class="col-check"><span class="check-no">—</span></td><td class="col-check"><span class="check-no">—</span></td><td class="col-check"><span class="check-yes">✓</span></td></tr>
+          <tr><td class="col-feature pt">Afiliados</td><td class="col-feature en">Affiliates</td><td class="col-check"><span class="check-no">—</span></td><td class="col-check"><span class="check-no">—</span></td><td class="col-check"><span class="check-yes">✓</span></td></tr>
+          <tr><td class="col-feature pt">Meteorologia</td><td class="col-feature en">Weather</td><td class="col-check"><span class="check-no">—</span></td><td class="col-check"><span class="check-no">—</span></td><td class="col-check"><span class="check-yes">✓</span></td></tr>
+          <tr><td class="col-feature pt">Suporte prioritário</td><td class="col-feature en">Priority support</td><td class="col-check"><span class="check-no">—</span></td><td class="col-check"><span class="check-no">—</span></td><td class="col-check"><span class="check-yes">✓</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section class="faq">
+  <div class="container">
+    <div class="compare-header">
+      <div class="section-eyebrow pt">Perguntas frequentes</div>
+      <div class="section-eyebrow en">Frequently asked questions</div>
+      <h2 class="section-title pt">Ainda tem dúvidas?</h2>
+      <h2 class="section-title en">Still have questions?</h2>
+    </div>
+    <div class="faq-grid">
+      <div class="faq-item">
+        <h3 class="pt">Posso mudar de plano depois?</h3>
+        <h3 class="en">Can I change plans later?</h3>
+        <p class="pt">Sim. Pode fazer upgrade ou downgrade a qualquer momento a partir das definições da sua conta.</p>
+        <p class="en">Yes. You can upgrade or downgrade at any time from your account settings.</p>
+      </div>
+      <div class="faq-item">
+        <h3 class="pt">O trial de 30 dias precisa de cartão de crédito?</h3>
+        <h3 class="en">Does the 30-day trial require a credit card?</h3>
+        <p class="pt">Não. Pode experimentar qualquer plano durante 30 dias sem introduzir dados de pagamento.</p>
+        <p class="en">No. You can try any plan for 30 days without entering payment details.</p>
+      </div>
+      <div class="faq-item">
+        <h3 class="pt">O que acontece se ultrapassar o limite de colaboradores no Starter?</h3>
+        <h3 class="en">What happens if I exceed the staff limit on Starter?</h3>
+        <p class="pt">O sistema avisa-o e sugere um upgrade para o plano Pro, que já tem colaboradores ilimitados.</p>
+        <p class="en">The system will notify you and suggest an upgrade to the Pro plan, which has unlimited staff.</p>
+      </div>
+      <div class="faq-item">
+        <h3 class="pt">Há comissão sobre as reservas directas?</h3>
+        <h3 class="en">Is there a commission on direct bookings?</h3>
+        <p class="pt">Nunca. Paga apenas a mensalidade do plano — cada reserva directa é 100% sua, em qualquer plano.</p>
+        <p class="en">Never. You only pay the monthly plan fee — every direct booking is 100% yours, on any plan.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta-section">
+  <div class="container">
+    <h2 class="pt">Ainda com dúvidas sobre qual escolher?</h2>
+    <h2 class="en">Still unsure which one to choose?</h2>
+    <p class="pt">Fale connosco no WhatsApp e ajudamos a encontrar o plano certo para o seu negócio.</p>
+    <p class="en">Message us on WhatsApp and we'll help you find the right plan for your business.</p>
+    <a href="https://wa.me/2389994119" target="_blank" rel="noreferrer" class="btn-primary">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z"/></svg>
+      <span class="pt">Falar no WhatsApp</span>
+      <span class="en">Chat on WhatsApp</span>
+    </a>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer class="footer">
+  <div class="footer-inner">
+    <div class="footer-col">
+      <div class="footer-logo">
+        <img src="/logo-white.png" alt="SalDesk" onerror="this.outerHTML='<span style=\'font-family:Sora,sans-serif;font-weight:800;color:#D4A82A\'>SalDesk</span>'">
+      </div>
+      <p class="footer-tagline pt">A gestão do seu negócio turístico, num só lugar.</p>
+      <p class="footer-tagline en">Your tourism business management, all in one place.</p>
+    </div>
+    <div class="footer-col">
+      <span class="footer-heading pt">Produto</span>
+      <span class="footer-heading en">Product</span>
+      <nav class="footer-links">
+        <a href="/#funcionalidades" class="footer-link pt">Funcionalidades</a>
+        <a href="/#funcionalidades" class="footer-link en">Features</a>
+        <a href="/planos.html" class="footer-link pt">Preços</a>
+        <a href="/planos.html" class="footer-link en">Pricing</a>
+        <a href="/#como-funciona" class="footer-link pt">Como funciona</a>
+        <a href="/#como-funciona" class="footer-link en">How it works</a>
+      </nav>
+    </div>
+    <div class="footer-col">
+      <span class="footer-heading pt">Empresa</span>
+      <span class="footer-heading en">Company</span>
+      <nav class="footer-links">
+        <a href="/sobre.html" class="footer-link pt">Sobre</a>
+        <a href="/sobre.html" class="footer-link en">About</a>
+        <a href="/termos.html" class="footer-link pt">Termos e Condições</a>
+        <a href="/termos.html" class="footer-link en">Terms and Conditions</a>
+        <a href="https://app.saldesk.cv" class="footer-link pt">Entrar</a>
+        <a href="https://app.saldesk.cv" class="footer-link en">Sign in</a>
+      </nav>
+    </div>
+    <div class="footer-col">
+      <span class="footer-heading pt">Fale connosco</span>
+      <span class="footer-heading en">Get in touch</span>
+      <a href="mailto:hello@saldesk.cv" class="footer-link">hello@saldesk.cv</a>
+      <a href="https://wa.me/2389994119" target="_blank" rel="noreferrer" class="footer-wa">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="#25D366"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z"/></svg>
+        +238 999 4119
+      </a>
+      <div class="footer-social">
+        <a href="https://www.facebook.com/profile.php?id=61589577563497" target="_blank" rel="noreferrer" aria-label="Facebook">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="12" fill="#1877F2"/><path fill="#fff" d="M13.6 21v-6.9h2.3l.35-2.7h-2.65V9.6c0-.78.22-1.31 1.33-1.31h1.42V5.87c-.25-.03-1.08-.1-2.06-.1-2.04 0-3.44 1.24-3.44 3.53v1.97H8.4v2.7h2.45V21h2.75Z"/></svg>
+        </a>
+        <a href="https://www.instagram.com/saldesk.cv/" target="_blank" rel="noreferrer" aria-label="Instagram">
+          <svg viewBox="0 0 24 24">
+  <defs>
+    <radialGradient id="igGradPlanos" cx="30%" cy="107%" r="150%">
+      <stop offset="0%" stop-color="#fdf497"/>
+      <stop offset="5%" stop-color="#fdf497"/>
+      <stop offset="45%" stop-color="#fd5949"/>
+      <stop offset="60%" stop-color="#d6249f"/>
+      <stop offset="90%" stop-color="#285AEB"/>
+    </radialGradient>
+  </defs>
+  <circle cx="12" cy="12" r="12" fill="url(#igGradPlanos)"/>
+  <rect x="7" y="7" width="10" height="10" rx="3" fill="none" stroke="#fff" stroke-width="1.4"/>
+  <circle cx="12" cy="12" r="2.6" fill="none" stroke="#fff" stroke-width="1.4"/>
+  <circle cx="15" cy="9" r="0.8" fill="#fff"/>
+</svg>
+        </a>
+      </div>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <span class="footer-copy pt">© 2026 SalDesk · Ilha do Sal, Cabo Verde</span>
+    <span class="footer-copy en">© 2026 SalDesk · Ilha do Sal, Cape Verde</span>
+    <a href="https://www.wandrtech.cv" target="_blank" rel="noreferrer" class="footer-copy footer-credit pt">Desenvolvido por Wandr - Travel Technology Company</a>
+    <a href="https://www.wandrtech.cv" target="_blank" rel="noreferrer" class="footer-copy footer-credit en">Built by Wandr - Travel Technology Company</a>
+    <span class="footer-copy pt">Orgulhosamente cabo-verdiano.</span>
+    <span class="footer-copy en">Proudly Cape Verdean.</span>
+  </div>
+</footer>
+
+<script>
+function setLang(lang) {
+  document.documentElement.setAttribute('data-lang', lang);
+  document.querySelectorAll('.lang-btn').forEach(b => b.classList.toggle('active', b.textContent === lang.toUpperCase()));
+  localStorage.setItem('sd_lang', lang);
+}
+(function(){
+  const saved = localStorage.getItem('sd_lang');
+  const browser = navigator.language?.slice(0,2).toLowerCase();
+  setLang(saved || (browser === 'en' ? 'en' : 'pt'));
+})();
+
+window.addEventListener('scroll', () => {
+  const nav = document.getElementById('nav');
+  nav.style.background = window.scrollY > 40 ? 'rgba(6,42,56,.98)' : 'rgba(6,42,56,.92)';
+}, { passive: true });
+
+function toggleMenu() {
+  const links = document.querySelector('.nav-links');
+  const lang = document.querySelector('.nav-lang');
+  if (links) links.classList.toggle('mobile-open');
+  if (lang) lang.classList.toggle('mobile-open');
+}
+
+/* Destacar o plano vindo por query param (?plano=starter|pro|business) */
+(function(){
+  const params = new URLSearchParams(window.location.search);
+  const plano = params.get('plano');
+  if (!plano) return;
+  const card = document.getElementById('plan-' + plano);
+  if (!card) return;
+  card.classList.add('selected');
+  const tag = document.createElement('div');
+  tag.className = 'plan-selected-tag';
+  tag.innerHTML = '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><span class="pt">O seu plano</span><span class="en">Your plan</span>';
+  card.appendChild(tag);
+  setTimeout(() => {
+    document.getElementById('pricing-cards').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, 100);
+})();
+</script>
+</body>
+</html>
