@@ -199,15 +199,18 @@ svg{display:block;flex-shrink:0}
 .plan-card.selected{
   box-shadow:0 0 0 3px var(--sand-500),var(--shadow-lg);
 }
+.plan-top-badges{
+  position:absolute;top:-12px;left:0;right:0;
+  display:flex;align-items:center;justify-content:center;
+  gap:10px;flex-wrap:wrap;padding:0 20px;
+}
 .plan-badge{
-  position:absolute;top:-12px;left:50%;transform:translateX(-50%);
   background:var(--sand-500);color:var(--ocean-900);
   padding:4px 14px;border-radius:50px;
   font-family:'Sora',sans-serif;font-size:.72rem;font-weight:700;
   white-space:nowrap;
 }
 .plan-selected-tag{
-  position:absolute;top:-12px;right:20px;
   background:var(--ocean-900);color:#fff;
   padding:4px 12px;border-radius:50px;
   font-family:'Sora',sans-serif;font-size:.68rem;font-weight:700;
@@ -431,8 +434,10 @@ table.compare-table{width:100%;border-collapse:collapse;min-width:640px;backgrou
 
       <!-- PRO -->
       <div class="plan-card featured" id="plan-pro">
-        <div class="plan-badge pt">Mais popular</div>
-        <div class="plan-badge en">Most popular</div>
+        <div class="plan-top-badges">
+          <div class="plan-badge pt">Mais popular</div>
+          <div class="plan-badge en">Most popular</div>
+        </div>
         <div class="plan-name">Pro</div>
         <div class="plan-price pt" style="color:#fff">€69<span style="font-size:1rem;font-weight:500;color:rgba(255,255,255,.4)">/mês</span></div>
         <div class="plan-price en" style="color:#fff">€69<span style="font-size:1rem;font-weight:500;color:rgba(255,255,255,.4)">/month</span></div>
@@ -700,10 +705,16 @@ function toggleMenu() {
   const card = document.getElementById('plan-' + plano);
   if (!card) return;
   card.classList.add('selected');
+  let wrapper = card.querySelector('.plan-top-badges');
+  if (!wrapper) {
+    wrapper = document.createElement('div');
+    wrapper.className = 'plan-top-badges';
+    card.appendChild(wrapper);
+  }
   const tag = document.createElement('div');
   tag.className = 'plan-selected-tag';
   tag.innerHTML = '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><span class="pt">O seu plano</span><span class="en">Your plan</span>';
-  card.appendChild(tag);
+  wrapper.appendChild(tag);
   setTimeout(() => {
     document.getElementById('pricing-cards').scrollIntoView({ behavior: 'smooth', block: 'start' });
   }, 100);
