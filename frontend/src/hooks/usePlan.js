@@ -1,6 +1,6 @@
 import useAuthStore from '../store/authStore';
 
-export const PLAN_LEVEL = { starter: 1, business: 2, pro: 3 };
+export const PLAN_LEVEL = { starter: 1, pro: 2, business: 3 };
 
 export const FEATURE_PLAN = {
   colaboradores:         'business',
@@ -42,7 +42,7 @@ export const FEATURE_DESCRIPTIONS = {
   vendedor:              'Activa o modo Vendedor de Praia — colaboradores vendem tours no campo com uma app simplificada.',
 };
 
-export const PLAN_PRICES = { starter: 29, business: 69, pro: 129 };
+export const PLAN_PRICES = { starter: 29, pro: 69, business: 129 };
 
 export default function usePlan() {
   const { operator } = useAuthStore();
