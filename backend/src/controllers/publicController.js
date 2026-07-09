@@ -9,7 +9,7 @@ async function getOperador(req, res, next) {
   try {
     const { data: operator, error } = await supabaseAdmin
       .from('operators')
-      .select('id, name, slug, operator_type, email, phone, address, logo_url, cover_images, business_name, tagline')
+      .select('id, name, slug, operator_type, email, phone, whatsapp, address, logo_url, cover_images, images, business_name, tagline, description, onboarding_complete, currency, instagram, facebook')
       .eq('slug', req.params.slug)
       .eq('onboarding_complete', true)
       .single();
@@ -18,9 +18,17 @@ async function getOperador(req, res, next) {
       return res.status(404).json({ error: 'Página não encontrada', code: 'NOT_FOUND' });
     }
 
+    // custom_faqs é uma feature incompleta — coluna pode não existir ainda
+    const { data: faqRow } = await supabaseAdmin
+      .from('operators')
+      .select('custom_faqs')
+      .eq('id', operator.id)
+      .single();
+    if (faqRow?.custom_faqs) operator.custom_faqs = faqRow.custom_faqs;
+
     const { data: units } = await supabaseAdmin
       .from('units')
-      .select('id, name, description, unit_type, base_price, capacity, images, created_at, pricing_rules(*)')
+      .select('id, name, description, unit_type, base_price, price_unit, capacity, duration_minutes, images, created_at, pricing_rules(*)')
       .eq('operator_id', operator.id)
       .eq('status', 'active')
       .order('name');
@@ -36,12 +44,16 @@ async function getOperador(req, res, next) {
 
 async function verificarDisponibilidadePublica(req, res, next) {
   try {
-    const { unitId, checkIn, checkOut } = req.query;
+    const { unitId, checkIn, checkOut, date } = req.query;
 
-    if (!unitId || !checkIn || !checkOut) {
-      return res.status(400).json({ error: 'unitId, checkIn e checkOut são obrigatórios', code: 'MISSING_FIELDS' });
+    // Suporta data única (activities/restaurants) ou intervalo (hotel-style)
+    const effectiveCheckIn  = checkIn  || date;
+    const effectiveCheckOut = checkOut || date;
+
+    if (!unitId || !effectiveCheckIn) {
+      return res.status(400).json({ error: 'unitId e data são obrigatórios', code: 'MISSING_FIELDS' });
     }
-    if (checkOut <= checkIn) {
+    if (effectiveCheckOut && effectiveCheckOut < effectiveCheckIn) {
       return res.status(400).json({ error: 'Checkout deve ser posterior ao check-in', code: 'INVALID_DATES' });
     }
 
@@ -56,11 +68,12 @@ async function verificarDisponibilidadePublica(req, res, next) {
       return res.status(404).json({ error: 'Unidade não encontrada', code: 'NOT_FOUND' });
     }
 
-    const disponivel = await verificarDisponibilidade(supabaseAdmin, unitId, checkIn, checkOut);
-    const { total, dias } = calcularPreco(unit, checkIn, checkOut);
+    const co = effectiveCheckOut || effectiveCheckIn;
+    const disponivel = await verificarDisponibilidade(supabaseAdmin, unitId, effectiveCheckIn, co);
+    const { total, dias } = calcularPreco(unit, effectiveCheckIn, co);
 
     return res.json({
-      data: { disponivel, total_price: total, dias },
+      data: { disponivel, total_price: total, dias: dias || 1 },
       message: disponivel ? 'Disponível' : 'Indisponível'
     });
   } catch (err) {
@@ -71,12 +84,16 @@ async function verificarDisponibilidadePublica(req, res, next) {
 async function criarReserva(req, res, next) {
   try {
     const { unit_id, customer_name, customer_email, customer_phone,
-            customer_country, check_in, check_out, guests, notes } = req.body;
+            customer_country, check_in, check_out, guests, notes,
+            party_size, tour_time } = req.body;
 
-    if (!unit_id || !customer_name || !customer_email || !check_in || !check_out) {
+    // check_out é opcional — activities/restaurants podem enviar só check_in (data do serviço)
+    const effectiveCheckOut = check_out || check_in;
+
+    if (!unit_id || !customer_name || !customer_email || !check_in) {
       return res.status(400).json({ error: 'Campos obrigatórios em falta', code: 'MISSING_FIELDS' });
     }
-    if (check_out <= check_in) {
+    if (effectiveCheckOut < check_in) {
       return res.status(400).json({ error: 'Checkout deve ser posterior ao check-in', code: 'INVALID_DATES' });
     }
 
@@ -103,12 +120,12 @@ async function criarReserva(req, res, next) {
       return res.status(404).json({ error: 'Unidade não encontrada', code: 'NOT_FOUND' });
     }
 
-    const disponivel = await verificarDisponibilidade(supabaseAdmin, unit_id, check_in, check_out);
+    const disponivel = await verificarDisponibilidade(supabaseAdmin, unit_id, check_in, effectiveCheckOut);
     if (!disponivel) {
       return res.status(409).json({ error: 'Unidade indisponível nas datas seleccionadas', code: 'UNAVAILABLE' });
     }
 
-    const { total } = calcularPreco(unit, check_in, check_out);
+    const { total } = calcularPreco(unit, check_in, effectiveCheckOut);
 
     const customer = await obterOuCriarCliente(operator.id, {
       name: customer_name,
@@ -116,6 +133,13 @@ async function criarReserva(req, res, next) {
       phone: customer_phone,
       country_code: customer_country
     });
+
+    // Compor notes: hora do tour e/ou ocasião especial junto com as notas do cliente
+    const notesLines = [];
+    if (tour_time) notesLines.push(`Hora: ${tour_time}`);
+    if (party_size) notesLines.push(`Pessoas: ${party_size}`);
+    if (notes) notesLines.push(notes);
+    const finalNotes = notesLines.join(' | ') || null;
 
     const { data, error } = await supabaseAdmin
       .from('reservations')
@@ -128,12 +152,12 @@ async function criarReserva(req, res, next) {
         customer_phone: customer_phone || null,
         customer_country: customer_country || null,
         check_in,
-        check_out,
-        guests: guests || 1,
+        check_out: effectiveCheckOut,
+        guests: party_size || guests || 1,
         total_price: total,
         status: 'pending',
         source: 'public',
-        notes: notes || null
+        notes: finalNotes
       })
       .select()
       .single();
@@ -148,8 +172,8 @@ async function criarReserva(req, res, next) {
       customerName: customer_name,
       tourName: unit.name,
       checkIn: check_in,
-      checkOut: check_out,
-      guests: guests || 1,
+      checkOut: effectiveCheckOut,
+      guests: party_size || guests || 1,
       total,
       currency,
       operator
@@ -166,8 +190,8 @@ async function criarReserva(req, res, next) {
         operatorName: operator.name,
         tourName: unit.name,
         checkIn: check_in,
-        checkOut: check_out,
-        guests: guests || 1,
+        checkOut: effectiveCheckOut,
+        guests: party_size || guests || 1,
         total,
         currency,
         customer: {
@@ -176,7 +200,7 @@ async function criarReserva(req, res, next) {
           phone: customer_phone,
           country: customer_country
         },
-        notes
+        notes: finalNotes
       });
       enviarEmail({
         to: operator.email,
@@ -216,7 +240,7 @@ async function discover(req, res, next) {
       const { data: featuredLinks } = await supabaseAdmin
         .from('cms_featured')
         .select('operator_id')
-        .eq('status', 'active')
+        .eq('is_active', true)
         .order('position');
       if (featuredLinks?.length > 0) {
         q = q.in('id', featuredLinks.map((f) => f.operator_id));
@@ -299,7 +323,7 @@ async function cmsExperiences(req, res, next) {
     const { data, error } = await supabaseAdmin
       .from('cms_experiences')
       .select('id, title_pt, title_en, description_pt, description_en, includes_pt, includes_en, price_from, duration_days, theme')
-      .eq('status', 'active')
+      .eq('is_active', true)
       .order('sort_order');
     if (error) throw error;
     return res.json({ data: data || [] });
@@ -315,7 +339,7 @@ async function cmsEvents(req, res, next) {
     const { data, error } = await supabaseAdmin
       .from('cms_events')
       .select('id, name_pt, name_en, description_pt, description_en, event_date, event_type')
-      .eq('status', 'active')
+      .eq('is_active', true)
       .gte('event_date', today)
       .order('event_date')
       .limit(12);
@@ -333,7 +357,7 @@ async function cmsBanners(req, res, next) {
     const { data, error } = await supabaseAdmin
       .from('cms_banners')
       .select('id, title, image_url, link_url, position')
-      .eq('status', 'active')
+      .eq('is_active', true)
       .lte('starts_at', now)
       .gte('ends_at', now)
       .order('position');
@@ -507,7 +531,7 @@ async function getUnit(req, res, next) {
       .select('*, pricing_rules(*)')
       .eq('id', unitId)
       .eq('operator_id', operator.id)
-      .eq('status', 'active')
+      .eq('is_active', true)
       .single();
 
     if (unitErr || !unit) return res.status(404).json({ error: 'Serviço não encontrado', code: 'NOT_FOUND' });
@@ -516,7 +540,7 @@ async function getUnit(req, res, next) {
       .from('units')
       .select('id, name, description, unit_type, base_price, price_unit, capacity, images')
       .eq('operator_id', operator.id)
-      .eq('status', 'active')
+      .eq('is_active', true)
       .neq('id', unitId)
       .limit(3);
 

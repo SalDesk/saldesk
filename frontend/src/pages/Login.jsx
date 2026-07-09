@@ -60,7 +60,7 @@ function AuthCard({ children }) {
       <div className="h-1 w-full bg-gradient-to-r from-sand-500 via-sand-400 to-sand-500" />
       <div className="p-7">
         <div className="flex justify-center mb-5">
-          <Logo size="xl" />
+          <Logo size="xl" dark />
         </div>
         {children}
       </div>

@@ -389,6 +389,297 @@ function SkeletonPage() {
   );
 }
 
+/* ── FeaturedSection ─────────────────────────────── */
+function FeaturedSection({ units, slug, currency, lang, opType, opCurrency }) {
+  const navigate = useNavigate();
+
+  const featured = units.filter(u => u.featured).length > 0
+    ? units.filter(u => u.featured).slice(0, 3)
+    : units.slice(0, 3);
+
+  if (featured.length === 0) return null;
+
+  const LABELS = {
+    activity:   { pt: 'Tours em Destaque', en: 'Featured Tours' },
+    rentacar:   { pt: 'Viaturas em Destaque', en: 'Featured Vehicles' },
+    restaurant: { pt: 'Pratos em Destaque', en: 'Featured Dishes' },
+    hotel:      { pt: 'Quartos em Destaque', en: 'Featured Rooms' },
+  };
+  const label = LABELS[opType] || LABELS.activity;
+
+  return (
+    <section className="max-w-5xl mx-auto px-4 sm:px-6 pt-10 sm:pt-14 pb-2">
+      <div className="flex items-end justify-between mb-6">
+        <div>
+          <p className="text-xs font-body font-bold text-sand-600 uppercase tracking-widest mb-1">
+            {lang === 'en' ? 'Highlights' : 'Destaques'}
+          </p>
+          <h2 className="font-display font-bold text-2xl sm:text-3xl text-n-900">
+            {lang === 'en' ? label.en : label.pt}
+          </h2>
+        </div>
+        {units.length > 3 && (
+          <button
+            onClick={() => document.getElementById('servicos')?.scrollIntoView({ behavior: 'smooth' })}
+            className="flex items-center gap-1 text-sm font-body font-semibold text-ocean-700 hover:text-ocean-500 transition-colors flex-shrink-0"
+          >
+            {lang === 'en' ? 'View all' : 'Ver todos'}
+            <ArrowRight size={14} strokeWidth={1.75} />
+          </button>
+        )}
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+        {featured.map((unit, i) => {
+          const price = fmtPrice(unit.base_price, unit.price_unit, opCurrency, currency, lang);
+          const desc  = getUnitDescription(unit, lang);
+          return (
+            <div
+              key={unit.id}
+              onClick={() => navigate(`/book/${slug}/servico/${unit.id}`)}
+              className="group relative bg-white rounded-2xl overflow-hidden shadow-sm border border-n-100 hover:shadow-lg hover:-translate-y-1 transition-all duration-200 cursor-pointer"
+            >
+              <div className="relative h-52 overflow-hidden">
+                {unit.images?.[0] ? (
+                  <img src={unit.images[0]} alt={unit.name}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                ) : (
+                  <div className="w-full h-full bg-gradient-to-br from-ocean-100 to-ocean-50 flex items-center justify-center">
+                    <Calendar size={36} strokeWidth={1.25} className="text-ocean-300" />
+                  </div>
+                )}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
+                {i === 0 && (
+                  <span className="absolute top-3 left-3 flex items-center gap-1 bg-sand-500 text-white text-xs font-body font-bold px-2.5 py-1 rounded-full shadow-sm">
+                    <Star size={10} strokeWidth={2} className="fill-white" />
+                    {lang === 'en' ? 'Most Popular' : 'Mais Popular'}
+                  </span>
+                )}
+                <div className="absolute bottom-3 right-3 bg-white rounded-xl px-3 py-1.5 shadow-md">
+                  <span className="font-display font-bold text-ocean-700 text-sm">{price}</span>
+                </div>
+              </div>
+              <div className="p-4">
+                {unit.unit_type && (
+                  <p className="text-[10px] font-body font-bold text-ocean-500 uppercase tracking-wide mb-1">
+                    {formatUnitType(unit.unit_type)}
+                  </p>
+                )}
+                <p className="font-display font-bold text-n-900 text-sm mb-1">{unit.name}</p>
+                {desc && (
+                  <p className="text-xs font-body text-n-500 line-clamp-2 leading-relaxed mb-3">{desc}</p>
+                )}
+                <div className="flex items-center gap-3 text-xs text-n-400 mb-3">
+                  {unit.capacity && (
+                    <span className="flex items-center gap-1">
+                      <Users size={11} strokeWidth={1.75} />
+                      {lang === 'en' ? `Up to ${unit.capacity}` : `Até ${unit.capacity}`}
+                    </span>
+                  )}
+                  {unit.duration_minutes && (
+                    <span className="flex items-center gap-1">
+                      <Clock size={11} strokeWidth={1.75} />
+                      {fmtDuration(unit.duration_minutes)}
+                    </span>
+                  )}
+                </div>
+                <button className="w-full flex items-center justify-center gap-1.5 bg-ocean-700 text-white text-xs font-body font-semibold px-3 py-2.5 rounded-xl hover:bg-ocean-500 transition-colors">
+                  <ArrowRight size={13} strokeWidth={1.75} />
+                  {lang === 'en' ? 'Book now' : 'Reservar agora'}
+                </button>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
+/* ── LiveAvailabilitySection ─────────────────────── */
+function LiveAvailabilitySection({ slug, units, lang, opType, currency, opCurrency }) {
+  const navigate = useNavigate();
+  const [date, setDate]       = useState('');
+  const [avail, setAvail]     = useState({});
+  const [loading, setLoading] = useState(false);
+  const [checked, setChecked] = useState(false);
+
+  const today = new Date().toISOString().split('T')[0];
+
+  async function checkAvailability() {
+    if (!date || units.length === 0) return;
+    setLoading(true);
+    setChecked(false);
+    const results = await Promise.all(
+      units.map(u =>
+        fetch(`${API}/public/${slug}/availability?unitId=${u.id}&date=${date}`)
+          .then(r => r.json())
+          .then(j => ({ id: u.id, ...(j.data || {}), ok: true }))
+          .catch(() => ({ id: u.id, disponivel: null, ok: false }))
+      )
+    );
+    const map = {};
+    results.forEach(r => { map[r.id] = r; });
+    setAvail(map);
+    setLoading(false);
+    setChecked(true);
+  }
+
+  const LABELS = {
+    activity:   { pt: 'Verificar Disponibilidade de Tours',   en: 'Check Tour Availability' },
+    rentacar:   { pt: 'Verificar Disponibilidade de Viaturas', en: 'Check Vehicle Availability' },
+    restaurant: { pt: 'Verificar Disponibilidade de Mesas',   en: 'Check Table Availability' },
+    hotel:      { pt: 'Verificar Disponibilidade',            en: 'Check Availability' },
+  };
+  const sectionLabel = LABELS[opType] || LABELS.activity;
+
+  if (units.length === 0) return null;
+
+  const availableCount = checked ? Object.values(avail).filter(v => v.disponivel).length : 0;
+  const totalChecked   = checked ? Object.keys(avail).length : 0;
+
+  return (
+    <section className="bg-ocean-900 text-white">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 py-12 sm:py-16">
+        <p className="text-xs font-body font-bold text-sand-400 uppercase tracking-widest mb-2">
+          {lang === 'en' ? 'Live Availability' : 'Disponibilidade em Tempo Real'}
+        </p>
+        <h2 className="font-display font-bold text-2xl sm:text-3xl text-white mb-2">
+          {lang === 'en' ? sectionLabel.en : sectionLabel.pt}
+        </h2>
+        <p className="text-sm font-body text-white/55 mb-8 max-w-lg">
+          {lang === 'en'
+            ? "Choose a date to see what's available instantly."
+            : 'Escolha uma data para ver o que está disponível em tempo real.'}
+        </p>
+
+        <div className="flex flex-wrap gap-3 items-end mb-8">
+          <div>
+            <label className="block text-xs font-body font-semibold text-white/60 mb-2">
+              {lang === 'en' ? 'Select date' : 'Seleccione a data'}
+            </label>
+            <input
+              type="date" min={today} value={date}
+              onChange={e => { setDate(e.target.value); setChecked(false); }}
+              className="bg-white/10 border border-white/20 text-white rounded-xl px-4 py-3 font-body text-sm focus:outline-none focus:border-sand-400 focus:ring-1 focus:ring-sand-400 [color-scheme:dark]"
+            />
+          </div>
+          <button
+            onClick={checkAvailability}
+            disabled={!date || loading}
+            className="flex items-center gap-2 bg-sand-500 text-ocean-900 font-body font-bold text-sm px-6 py-3 rounded-xl hover:bg-sand-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {loading
+              ? <span className="w-4 h-4 border-2 border-ocean-900/30 border-t-ocean-900 rounded-full animate-spin" />
+              : <Check size={16} strokeWidth={2} />}
+            {lang === 'en' ? 'Check availability' : 'Verificar disponibilidade'}
+          </button>
+        </div>
+
+        {checked && (
+          <div>
+            <p className="text-sm font-body font-semibold text-white/70 mb-4">
+              {lang === 'en'
+                ? `${availableCount} of ${totalChecked} available on ${date}`
+                : `${availableCount} de ${totalChecked} disponíveis em ${date}`}
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {units.map(u => {
+                const a = avail[u.id];
+                const isAvail   = a?.disponivel === true;
+                const isUnavail = a?.disponivel === false;
+                return (
+                  <div key={u.id} className={`rounded-xl p-4 border transition-all ${
+                    isAvail   ? 'bg-white/10 border-white/20 hover:bg-white/15' :
+                    isUnavail ? 'bg-white/5 border-white/10 opacity-60' :
+                                'bg-white/5 border-white/10'
+                  }`}>
+                    <div className="flex items-start justify-between gap-2 mb-2">
+                      <p className="font-display font-bold text-white text-sm">{u.name}</p>
+                      <span className={`flex-shrink-0 flex items-center gap-1 text-xs font-body font-bold px-2.5 py-1 rounded-full ${
+                        isAvail   ? 'bg-green-500/20 text-green-400 border border-green-500/30' :
+                        isUnavail ? 'bg-red-500/20 text-red-400 border border-red-500/30' :
+                                    'bg-white/10 text-white/40'
+                      }`}>
+                        <span className={`w-1.5 h-1.5 rounded-full ${isAvail ? 'bg-green-400' : isUnavail ? 'bg-red-400' : 'bg-white/40'}`} />
+                        {isAvail   ? (lang === 'en' ? 'Available' : 'Disponível') :
+                         isUnavail ? (lang === 'en' ? 'Booked' : 'Ocupado') :
+                                     (lang === 'en' ? 'Unknown' : 'Desconhecido')}
+                      </span>
+                    </div>
+                    {a?.total_price > 0 && (
+                      <p className="text-xs font-body text-white/50 mb-3">
+                        {fmtPrice(a.total_price, u.price_unit, opCurrency, currency, lang)}
+                      </p>
+                    )}
+                    {isAvail && (
+                      <button
+                        onClick={() => navigate(`/book/${slug}/servico/${u.id}`)}
+                        className="w-full flex items-center justify-center gap-1.5 bg-sand-500 text-ocean-900 text-xs font-body font-bold px-3 py-2 rounded-lg hover:bg-sand-400 transition-colors"
+                      >
+                        <ArrowRight size={12} strokeWidth={2} />
+                        {lang === 'en' ? 'Book now' : 'Reservar agora'}
+                      </button>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
+
+/* ── SpecialOfferSection ──────────────────────────── */
+function SpecialOfferSection({ lang, goBook }) {
+  return (
+    <section className="bg-sand-50 border-t border-sand-100">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 py-12 sm:py-16">
+        <div className="bg-gradient-to-br from-ocean-800 to-ocean-900 rounded-2xl p-8 sm:p-12 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-8">
+          <div className="flex-1">
+            <p className="text-xs font-body font-bold text-sand-400 uppercase tracking-widest mb-3">
+              {lang === 'en' ? 'Special offer' : 'Oferta especial'}
+            </p>
+            <h2 className="font-display font-bold text-2xl sm:text-3xl text-white mb-3 leading-tight">
+              {lang === 'en' ? 'Book directly and save' : 'Reserve directamente e poupe'}
+            </h2>
+            <p className="font-body text-white/60 text-sm leading-relaxed max-w-md mb-4">
+              {lang === 'en'
+                ? 'Booking directly eliminates OTA commissions — you always get the best price, guaranteed.'
+                : 'Ao reservar directamente elimina a comissão das plataformas OTA — garante sempre o melhor preço.'}
+            </p>
+            <ul className="space-y-2">
+              {[
+                { pt: 'Sem taxas escondidas',                en: 'No hidden fees' },
+                { pt: 'Confirmação imediata',                en: 'Instant confirmation' },
+                { pt: 'Contacto directo com o operador',     en: 'Direct contact with the operator' },
+              ].map((item, i) => (
+                <li key={i} className="flex items-center gap-2 text-sm font-body text-white/70">
+                  <Check size={14} strokeWidth={2.5} className="text-sand-400 flex-shrink-0" />
+                  {lang === 'en' ? item.en : item.pt}
+                </li>
+              ))}
+            </ul>
+          </div>
+          <div className="flex flex-col gap-3 flex-shrink-0 w-full sm:w-auto">
+            <button
+              onClick={goBook}
+              className="flex items-center justify-center gap-2 bg-sand-500 text-ocean-900 font-body font-bold text-sm px-8 py-4 rounded-xl hover:bg-sand-400 transition-colors shadow-lg whitespace-nowrap"
+            >
+              <Calendar size={16} strokeWidth={1.75} />
+              {lang === 'en' ? 'Book now — best price' : 'Reservar agora — melhor preço'}
+            </button>
+            <p className="text-xs font-body text-white/40 text-center">
+              {lang === 'en' ? 'Free cancellation · No card required' : 'Cancelamento gratuito · Sem cartão de crédito'}
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 /* ══════════════════════════════════════════════════
    MAIN COMPONENT
 ══════════════════════════════════════════════════ */
@@ -784,6 +1075,12 @@ export default function PublicBooking() {
         </div>
       </div>
 
+      {/* ── Featured ── */}
+      <FeaturedSection
+        units={units} slug={slug} currency={currency} lang={lang}
+        opType={op.operator_type} opCurrency={op.currency}
+      />
+
       <div className="max-w-5xl mx-auto px-4 sm:px-6">
 
         {/* ── Serviços ── */}
@@ -1059,6 +1356,12 @@ export default function PublicBooking() {
 
       </div>
 
+      {/* ── Live Availability ── */}
+      <LiveAvailabilitySection
+        slug={slug} units={units} lang={lang}
+        opType={op.operator_type} currency={currency} opCurrency={op.currency}
+      />
+
       {/* ── Confiança ── */}
       <section className="bg-n-50 border-t border-n-100">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 py-12 sm:py-16">
@@ -1228,6 +1531,9 @@ export default function PublicBooking() {
           </div>
         </section>
       </div>
+
+      {/* ── Special Offer ── */}
+      <SpecialOfferSection lang={lang} goBook={goBook} />
 
       {/* ── Footer ── */}
       <footer className="bg-ocean-900 text-white/70 mt-16">

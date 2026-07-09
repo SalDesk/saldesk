@@ -198,11 +198,6 @@ export default function Sidebar({ onClose }) {
             >
               <Icon size={17} strokeWidth={1.75} className="shrink-0" />
               <span className="truncate flex-1">{label}</span>
-              {badge && (
-                <span className={`text-[9px] font-mono font-bold px-1.5 py-0.5 rounded uppercase tracking-wide shrink-0 ${badge.cls}`}>
-                  {badge.label}
-                </span>
-              )}
             </NavLink>
           );
         })}
