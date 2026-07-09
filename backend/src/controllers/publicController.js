@@ -240,7 +240,7 @@ async function discover(req, res, next) {
       const { data: featuredLinks } = await supabaseAdmin
         .from('cms_featured')
         .select('operator_id')
-        .eq('is_active', true)
+        .eq('status', 'active')
         .order('position');
       if (featuredLinks?.length > 0) {
         q = q.in('id', featuredLinks.map((f) => f.operator_id));
@@ -323,7 +323,7 @@ async function cmsExperiences(req, res, next) {
     const { data, error } = await supabaseAdmin
       .from('cms_experiences')
       .select('id, title_pt, title_en, description_pt, description_en, includes_pt, includes_en, price_from, duration_days, theme')
-      .eq('is_active', true)
+      .eq('status', 'active')
       .order('sort_order');
     if (error) throw error;
     return res.json({ data: data || [] });
@@ -339,7 +339,7 @@ async function cmsEvents(req, res, next) {
     const { data, error } = await supabaseAdmin
       .from('cms_events')
       .select('id, name_pt, name_en, description_pt, description_en, event_date, event_type')
-      .eq('is_active', true)
+      .eq('status', 'active')
       .gte('event_date', today)
       .order('event_date')
       .limit(12);
@@ -357,7 +357,7 @@ async function cmsBanners(req, res, next) {
     const { data, error } = await supabaseAdmin
       .from('cms_banners')
       .select('id, title, image_url, link_url, position')
-      .eq('is_active', true)
+      .eq('status', 'active')
       .lte('starts_at', now)
       .gte('ends_at', now)
       .order('position');
@@ -531,7 +531,7 @@ async function getUnit(req, res, next) {
       .select('*, pricing_rules(*)')
       .eq('id', unitId)
       .eq('operator_id', operator.id)
-      .eq('is_active', true)
+      .eq('status', 'active')
       .single();
 
     if (unitErr || !unit) return res.status(404).json({ error: 'Serviço não encontrado', code: 'NOT_FOUND' });
@@ -540,7 +540,7 @@ async function getUnit(req, res, next) {
       .from('units')
       .select('id, name, description, unit_type, base_price, price_unit, capacity, images')
       .eq('operator_id', operator.id)
-      .eq('is_active', true)
+      .eq('status', 'active')
       .neq('id', unitId)
       .limit(3);
 
