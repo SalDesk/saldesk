@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="pt" data-lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Termos e Condições — SalDesk</title>
+<meta name="description" content="Termos e Condições de utilização da plataforma SalDesk.">
+<meta name="robots" content="noindex">
+<link rel="canonical" href="https://saldesk.cv/termos.html">
+<link rel="icon" href="/logo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=DM+Sans:ital,wght@0,400;0,500;0,600;1,400&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ocean-900: #062A38;
+  --ocean-800: #0A3F55;
+  --ocean-700: #0D5470;
+  --ocean-500: #1480A8;
+  --ocean-50:  #EBF7FB;
+  --sand-500:  #D4A82A;
+  --sand-400:  #E0BF5A;
+  --n900: #0F1923;
+  --n700: #2D3748;
+  --n600: #4A5568;
+  --n500: #718096;
+  --n200: #E2E8F0;
+  --n100: #F7F8FA;
+  --n50:  #FAFBFC;
+  --white: #FFFFFF;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'DM Sans',sans-serif;font-size:1rem;line-height:1.7;color:var(--n700);background:var(--n50);-webkit-font-smoothing:antialiased}
+a{color:var(--ocean-700);text-decoration:underline}
+[data-lang="pt"] .en{display:none}
+[data-lang="en"] .pt{display:none}
+
+/* NAV */
+.nav{
+  position:fixed;top:0;left:0;right:0;z-index:100;
+  background:rgba(6,42,56,.94);backdrop-filter:blur(16px);
+  border-bottom:1px solid rgba(255,255,255,.07);
+}
+.nav-inner{
+  max-width:900px;margin:0 auto;padding:0 24px;
+  height:64px;display:flex;align-items:center;justify-content:space-between;gap:24px;
+}
+.nav-logo img{height:40px}
+.nav-back{
+  display:flex;align-items:center;gap:6px;
+  font-family:'Sora',sans-serif;font-size:.82rem;font-weight:600;
+  color:rgba(255,255,255,.75);transition:color .15s;text-decoration:none;
+}
+.nav-back:hover{color:#fff}
+.nav-lang{display:flex;align-items:center;gap:2px;background:rgba(255,255,255,.08);border-radius:8px;padding:3px}
+.lang-btn{padding:5px 10px;border-radius:6px;border:none;background:transparent;font-family:'DM Mono',monospace;font-size:.7rem;font-weight:500;text-transform:uppercase;letter-spacing:.06em;color:rgba(255,255,255,.5);cursor:pointer;transition:all .15s}
+.lang-btn.active{background:rgba(255,255,255,.14);color:#fff}
+
+/* HEADER */
+.doc-header{background:var(--ocean-900);padding:120px 24px 56px;text-align:center}
+.doc-header h1{font-family:'Sora',sans-serif;font-size:clamp(1.8rem,4vw,2.4rem);font-weight:800;color:#fff;letter-spacing:-.02em;margin-bottom:12px}
+.doc-header p{color:rgba(255,255,255,.55);font-size:.9rem;font-family:'DM Mono',monospace}
+
+/* DOC BODY */
+.doc-wrap{max-width:760px;margin:0 auto;padding:56px 24px 100px}
+.doc-card{background:#fff;border:1px solid var(--n200);border-radius:16px;padding:48px 40px;box-shadow:0 4px 24px rgba(6,42,56,.06)}
+.doc-card h2{font-family:'Sora',sans-serif;font-size:1.15rem;font-weight:700;color:var(--n900);margin:36px 0 12px}
+.doc-card h2:first-child{margin-top:0}
+.doc-card h3{font-family:'Sora',sans-serif;font-size:.98rem;font-weight:700;color:var(--n900);margin:20px 0 8px}
+.doc-card p{margin-bottom:14px;font-size:.94rem;color:var(--n600)}
+.doc-card ul{margin:0 0 14px 22px}
+.doc-card li{margin-bottom:8px;font-size:.94rem;color:var(--n600)}
+.doc-card strong{color:var(--n900)}
+.doc-intro{
+  background:var(--ocean-50);border-left:3px solid var(--ocean-500);
+  border-radius:0 10px 10px 0;padding:16px 20px;margin-bottom:32px;
+  font-size:.88rem;color:var(--n700);
+}
+.toc{background:var(--n50);border:1px solid var(--n200);border-radius:12px;padding:20px 24px;margin-bottom:32px}
+.toc h3{font-family:'Sora',sans-serif;font-size:.8rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--ocean-700);margin-bottom:12px}
+.toc ol{margin-left:18px}
+.toc li{font-size:.86rem;margin-bottom:6px}
+.toc a{text-decoration:none;color:var(--n700)}
+.toc a:hover{color:var(--ocean-700);text-decoration:underline}
+.updated{font-size:.8rem;color:var(--n500);margin-top:40px;padding-top:20px;border-top:1px solid var(--n200)}
+
+/* FOOTER */
+.footer{background:var(--n900);padding:40px 24px;text-align:center}
+.footer p{color:rgba(255,255,255,.35);font-size:.78rem}
+.footer a{color:rgba(255,255,255,.5);text-decoration:none}
+.footer a:hover{color:#fff}
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="/" class="nav-logo">
+      <img src="/logo-white.png" alt="SalDesk" onerror="this.outerHTML='<span style=\'font-family:Sora,sans-serif;font-weight:800;color:#D4A82A\'>SalDesk</span>'">
+    </a>
+    <div style="display:flex;align-items:center;gap:16px">
+      <a href="/" class="nav-back">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
+        <span class="pt">Voltar ao site</span>
+        <span class="en">Back to site</span>
+      </a>
+      <div class="nav-lang">
+        <button class="lang-btn active" onclick="setLang('pt')">PT</button>
+        <button class="lang-btn" onclick="setLang('en')">EN</button>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<header class="doc-header">
+  <h1 class="pt">Termos e Condições</h1>
+  <h1 class="en">Terms and Conditions</h1>
+  <p class="pt">Última actualização: 4 de Julho de 2026</p>
+  <p class="en">Last updated: July 4, 2026</p>
+</header>
+
+<div class="doc-wrap">
+  <div class="doc-card">
+
+    <div class="doc-intro pt">
+      Este documento é um modelo geral de Termos e Condições e não substitui aconselhamento jurídico profissional. A SalDesk recomenda a revisão deste texto por um advogado licenciado em Cabo Verde antes da sua adopção definitiva.
+    </div>
+    <div class="doc-intro en">
+      This document is a general Terms and Conditions template and does not replace professional legal advice. SalDesk recommends this text be reviewed by a lawyer licensed in Cabo Verde before final adoption.
+    </div>
+
+    <div class="toc">
+      <h3 class="pt">Índice</h3>
+      <h3 class="en">Contents</h3>
+      <ol>
+        <li><a href="#s1"><span class="pt">Definições</span><span class="en">Definitions</span></a></li>
+        <li><a href="#s2"><span class="pt">Objecto do Serviço</span><span class="en">Purpose of the Service</span></a></li>
+        <li><a href="#s3"><span class="pt">Registo e Conta</span><span class="en">Registration and Account</span></a></li>
+        <li><a href="#s4"><span class="pt">Período de Teste (Trial)</span><span class="en">Trial Period</span></a></li>
+        <li><a href="#s5"><span class="pt">Planos, Preços e Pagamento</span><span class="en">Plans, Pricing and Payment</span></a></li>
+        <li><a href="#s6"><span class="pt">Cancelamento e Reembolsos</span><span class="en">Cancellation and Refunds</span></a></li>
+        <li><a href="#s7"><span class="pt">Obrigações do Operador</span><span class="en">Operator Obligations</span></a></li>
+        <li><a href="#s8"><span class="pt">Dados e Privacidade</span><span class="en">Data and Privacy</span></a></li>
+        <li><a href="#s9"><span class="pt">Propriedade Intelectual</span><span class="en">Intellectual Property</span></a></li>
+        <li><a href="#s10"><span class="pt">Disponibilidade do Serviço</span><span class="en">Service Availability</span></a></li>
+        <li><a href="#s11"><span class="pt">Limitação de Responsabilidade</span><span class="en">Limitation of Liability</span></a></li>
+        <li><a href="#s12"><span class="pt">Suspensão e Rescisão</span><span class="en">Suspension and Termination</span></a></li>
+        <li><a href="#s13"><span class="pt">Alterações aos Termos</span><span class="en">Changes to these Terms</span></a></li>
+        <li><a href="#s14"><span class="pt">Lei Aplicável e Foro</span><span class="en">Governing Law and Jurisdiction</span></a></li>
+        <li><a href="#s15"><span class="pt">Contacto</span><span class="en">Contact</span></a></li>
+      </ol>
+    </div>
+
+    <h2 id="s1" class="pt">1. Definições</h2>
+    <h2 class="en">1. Definitions</h2>
+    <p class="pt">Para efeitos destes Termos e Condições ("Termos"):</p>
+    <p class="en">For the purposes of these Terms and Conditions ("Terms"):</p>
+    <ul>
+      <li class="pt"><strong>"SalDesk"</strong> refere-se à plataforma de gestão turística disponibilizada em saldesk.cv e app.saldesk.cv, desenvolvida pela Wandr — Travel Technology Company.</li>
+      <li class="en"><strong>"SalDesk"</strong> refers to the tourism management platform available at saldesk.cv and app.saldesk.cv, developed by Wandr — Travel Technology Company.</li>
+      <li class="pt"><strong>"Operador"</strong> refere-se à pessoa singular ou colectiva que regista uma conta na SalDesk para gerir o seu negócio turístico.</li>
+      <li class="en"><strong>"Operator"</strong> refers to the individual or legal entity that registers an account on SalDesk to manage their tourism business.</li>
+      <li class="pt"><strong>"Cliente Final"</strong> refere-se ao consumidor que efectua reservas junto do Operador através da plataforma.</li>
+      <li class="en"><strong>"End Customer"</strong> refers to the consumer who makes bookings with the Operator through the platform.</li>
+      <li class="pt"><strong>"Serviço"</strong> refere-se ao conjunto de funcionalidades disponibilizadas pela SalDesk, incluindo gestão de reservas, página pública de reservas, gestão financeira, gestão de equipas e funcionalidades associadas.</li>
+      <li class="en"><strong>"Service"</strong> refers to the set of features provided by SalDesk, including booking management, a public booking page, financial management, team management and related features.</li>
+    </ul>
+
+    <h2 id="s2" class="pt">2. Objecto do Serviço</h2>
+    <h2 class="en">2. Purpose of the Service</h2>
+    <p class="pt">A SalDesk é uma plataforma de software como serviço (SaaS) destinada a operadores turísticos independentes na Ilha do Sal, Cabo Verde — nomeadamente empresas de actividades, mergulho, aluguer de viaturas e serviços similares — para gestão de reservas directas, disponibilidade, equipas e finanças.</p>
+    <p class="en">SalDesk is a software-as-a-service (SaaS) platform aimed at independent tourism operators on Ilha do Sal, Cabo Verde — namely activity, diving, car rental and similar businesses — for managing direct bookings, availability, staff and finances.</p>
+    <p class="pt">A SalDesk não é parte nas transacções realizadas entre o Operador e os seus Clientes Finais, actuando apenas como fornecedor da ferramenta tecnológica que viabiliza essas transacções.</p>
+    <p class="en">SalDesk is not a party to transactions between the Operator and their End Customers, acting solely as the provider of the technology tool that enables those transactions.</p>
+
+    <h2 id="s3" class="pt">3. Registo e Conta</h2>
+    <h2 class="en">3. Registration and Account</h2>
+    <p class="pt">Para utilizar a SalDesk, o Operador deve fornecer informação verdadeira, actual e completa durante o processo de registo, e é responsável por manter a confidencialidade das suas credenciais de acesso.</p>
+    <p class="en">To use SalDesk, the Operator must provide true, current and complete information during registration, and is responsible for keeping their access credentials confidential.</p>
+    <p class="pt">O Operador é responsável por toda a actividade que ocorra na sua conta, incluindo a de colaboradores a quem tenha concedido acesso.</p>
+    <p class="en">The Operator is responsible for all activity that occurs under their account, including that of staff members to whom they have granted access.</p>
+
+    <h2 id="s4" class="pt">4. Período de Teste (Trial)</h2>
+    <h2 class="en">4. Trial Period</h2>
+    <p class="pt">A SalDesk pode disponibilizar um período experimental gratuito (actualmente 30 dias) sem necessidade de cartão de crédito. Findo esse período, o acesso à conta poderá ser limitado ou suspenso até à subscrição de um plano pago, salvo indicação em contrário comunicada pela SalDesk.</p>
+    <p class="en">SalDesk may offer a free trial period (currently 30 days) with no credit card required. After that period, account access may be limited or suspended until a paid plan is subscribed, unless otherwise communicated by SalDesk.</p>
+
+    <h2 id="s5" class="pt">5. Planos, Preços e Pagamento</h2>
+    <h2 class="en">5. Plans, Pricing and Payment</h2>
+    <p class="pt">A SalDesk disponibiliza diferentes planos de subscrição mensal, cujos preços e funcionalidades estão descritos em saldesk.cv. A SalDesk reserva-se o direito de alterar os preços dos planos, mediante aviso prévio adequado aos Operadores existentes.</p>
+    <p class="en">SalDesk offers different monthly subscription plans, whose prices and features are described at saldesk.cv. SalDesk reserves the right to change plan pricing, with reasonable prior notice to existing Operators.</p>
+    <p class="pt">O não pagamento atempado de uma subscrição pode resultar na suspensão temporária do acesso ao Serviço até à regularização.</p>
+    <p class="en">Failure to pay a subscription on time may result in temporary suspension of access to the Service until payment is settled.</p>
+
+    <h2 id="s6" class="pt">6. Cancelamento e Reembolsos</h2>
+    <h2 class="en">6. Cancellation and Refunds</h2>
+    <p class="pt">O Operador pode cancelar a sua subscrição a qualquer momento, através da sua conta ou contactando a equipa de suporte. O cancelamento produz efeitos no final do período de facturação em curso, não havendo lugar a reembolso proporcional de períodos já pagos, salvo decisão em contrário da SalDesk.</p>
+    <p class="en">The Operator may cancel their subscription at any time, through their account or by contacting the support team. Cancellation takes effect at the end of the current billing period, with no pro-rata refund for periods already paid, unless SalDesk decides otherwise.</p>
+
+    <h2 id="s7" class="pt">7. Obrigações do Operador</h2>
+    <h2 class="en">7. Operator Obligations</h2>
+    <p class="pt">O Operador compromete-se a:</p>
+    <p class="en">The Operator agrees to:</p>
+    <ul>
+      <li class="pt">Utilizar a plataforma em conformidade com a lei aplicável em Cabo Verde;</li>
+      <li class="en">Use the platform in accordance with applicable law in Cabo Verde;</li>
+      <li class="pt">Fornecer informação verdadeira sobre os seus serviços, preços e disponibilidade;</li>
+      <li class="en">Provide truthful information about their services, prices and availability;</li>
+      <li class="pt">Honrar as reservas confirmadas através da plataforma junto dos seus Clientes Finais;</li>
+      <li class="en">Honor bookings confirmed through the platform with their End Customers;</li>
+      <li class="pt">Não utilizar a plataforma para fins ilícitos, fraudulentos ou que violem direitos de terceiros.</li>
+      <li class="en">Not use the platform for unlawful, fraudulent purposes or in ways that violate third-party rights.</li>
+    </ul>
+
+    <h2 id="s8" class="pt">8. Dados e Privacidade</h2>
+    <h2 class="en">8. Data and Privacy</h2>
+    <p class="pt">A SalDesk armazena dados do Operador e dos seus Clientes Finais (nomes, contactos, histórico de reservas) em infraestrutura de base de dados fornecida por terceiros (Supabase/PostgreSQL), com medidas de segurança adequadas ao tipo de informação tratada.</p>
+    <p class="en">SalDesk stores Operator and End Customer data (names, contact details, booking history) using third-party database infrastructure (Supabase/PostgreSQL), with security measures appropriate to the type of information processed.</p>
+    <p class="pt">O Operador é responsável por assegurar que possui base legal adequada para partilhar dados dos seus Clientes Finais com a SalDesk, nomeadamente no que respeita a comunicações de marketing.</p>
+    <p class="en">The Operator is responsible for ensuring they have an appropriate legal basis to share End Customer data with SalDesk, particularly regarding marketing communications.</p>
+    <p class="pt">A SalDesk não vende dados pessoais de Operadores ou Clientes Finais a terceiros.</p>
+    <p class="en">SalDesk does not sell personal data of Operators or End Customers to third parties.</p>
+
+    <h2 id="s9" class="pt">9. Propriedade Intelectual</h2>
+    <h2 class="en">9. Intellectual Property</h2>
+    <p class="pt">O software, marca, design e demais elementos da plataforma SalDesk são propriedade da Wandr — Travel Technology Company ou dos seus licenciadores. Nenhuma disposição destes Termos transfere qualquer direito de propriedade intelectual para o Operador, além do direito limitado de utilizar o Serviço nos termos aqui descritos.</p>
+    <p class="en">The software, brand, design and other elements of the SalDesk platform are the property of Wandr — Travel Technology Company or its licensors. Nothing in these Terms transfers any intellectual property rights to the Operator, other than the limited right to use the Service as described herein.</p>
+    <p class="pt">O conteúdo inserido pelo Operador na plataforma (fotos, descrições, preços) permanece propriedade do Operador, que concede à SalDesk uma licença para o exibir no âmbito da prestação do Serviço, incluindo na página pública de reservas.</p>
+    <p class="en">Content uploaded by the Operator to the platform (photos, descriptions, prices) remains the property of the Operator, who grants SalDesk a license to display it as part of providing the Service, including on the public booking page.</p>
+
+    <h2 id="s10" class="pt">10. Disponibilidade do Serviço</h2>
+    <h2 class="en">10. Service Availability</h2>
+    <p class="pt">A SalDesk envida esforços razoáveis para manter o Serviço disponível de forma contínua, mas não garante disponibilidade ininterrupta. Poderão ocorrer interrupções para manutenção, actualizações ou por motivos alheios ao controlo da SalDesk.</p>
+    <p class="en">SalDesk makes reasonable efforts to keep the Service continuously available, but does not guarantee uninterrupted availability. Interruptions may occur for maintenance, updates, or reasons beyond SalDesk's control.</p>
+
+    <h2 id="s11" class="pt">11. Limitação de Responsabilidade</h2>
+    <h2 class="en">11. Limitation of Liability</h2>
+    <p class="pt">Na máxima medida permitida por lei, a SalDesk não será responsável por danos indirectos, lucros cessantes, ou perda de dados resultantes da utilização ou impossibilidade de utilização do Serviço. A responsabilidade total da SalDesk perante o Operador, em qualquer circunstância, está limitada ao valor pago pelo Operador nos três meses anteriores ao facto que originou o dano.</p>
+    <p class="en">To the maximum extent permitted by law, SalDesk shall not be liable for indirect damages, loss of profits, or data loss resulting from use or inability to use the Service. SalDesk's total liability to the Operator, under any circumstance, is limited to the amount paid by the Operator in the three months preceding the event giving rise to the damage.</p>
+    <p class="pt">A SalDesk não é responsável por incumprimentos do Operador perante os seus Clientes Finais, nem pela qualidade dos serviços turísticos prestados pelo Operador.</p>
+    <p class="en">SalDesk is not responsible for the Operator's failures towards their End Customers, nor for the quality of tourism services provided by the Operator.</p>
+
+    <h2 id="s12" class="pt">12. Suspensão e Rescisão</h2>
+    <h2 class="en">12. Suspension and Termination</h2>
+    <p class="pt">A SalDesk pode suspender ou encerrar o acesso de um Operador ao Serviço em caso de violação destes Termos, falta de pagamento, ou suspeita razoável de actividade fraudulenta, mediante notificação sempre que possível.</p>
+    <p class="en">SalDesk may suspend or terminate an Operator's access to the Service in the event of a breach of these Terms, non-payment, or reasonable suspicion of fraudulent activity, with notice whenever possible.</p>
+
+    <h2 id="s13" class="pt">13. Alterações aos Termos</h2>
+    <h2 class="en">13. Changes to these Terms</h2>
+    <p class="pt">A SalDesk pode actualizar estes Termos periodicamente. Alterações materiais serão comunicadas aos Operadores com uma antecedência razoável. A utilização continuada do Serviço após a entrada em vigor de alterações constitui aceitação dos novos Termos.</p>
+    <p class="en">SalDesk may update these Terms periodically. Material changes will be communicated to Operators with reasonable advance notice. Continued use of the Service after changes take effect constitutes acceptance of the new Terms.</p>
+
+    <h2 id="s14" class="pt">14. Lei Aplicável e Foro</h2>
+    <h2 class="en">14. Governing Law and Jurisdiction</h2>
+    <p class="pt">Estes Termos são regidos pela lei cabo-verdiana. Para a resolução de qualquer litígio emergente destes Termos, é competente o foro da Comarca da Ilha do Sal, Cabo Verde, com renúncia expressa a qualquer outro.</p>
+    <p class="en">These Terms are governed by the laws of Cabo Verde. Any dispute arising from these Terms shall be subject to the jurisdiction of the Ilha do Sal Judicial District, Cabo Verde, with express waiver of any other.</p>
+
+    <h2 id="s15" class="pt">15. Contacto</h2>
+    <h2 class="en">15. Contact</h2>
+    <p class="pt">Para questões relacionadas com estes Termos, contacte-nos através de <a href="mailto:hello@saldesk.cv">hello@saldesk.cv</a> ou pelo WhatsApp <a href="https://wa.me/2389994119" target="_blank" rel="noreferrer">+238 999 4119</a>.</p>
+    <p class="en">For questions related to these Terms, contact us at <a href="mailto:hello@saldesk.cv">hello@saldesk.cv</a> or via WhatsApp at <a href="https://wa.me/2389994119" target="_blank" rel="noreferrer">+238 999 4119</a>.</p>
+
+    <div class="updated">
+      <span class="pt">Documento gerado como modelo de referência. Revisão jurídica recomendada antes da publicação final.</span>
+      <span class="en">Document generated as a reference template. Legal review recommended before final publication.</span>
+    </div>
+
+  </div>
+</div>
+
+<footer class="footer">
+  <p class="pt">© 2026 SalDesk · Desenvolvido por <a href="https://www.wandrtech.cv" target="_blank" rel="noreferrer">Wandr</a></p>
+  <p class="en">© 2026 SalDesk · Built by <a href="https://www.wandrtech.cv" target="_blank" rel="noreferrer">Wandr</a></p>
+</footer>
+
+<script>
+function setLang(lang) {
+  document.documentElement.setAttribute('data-lang', lang);
+  document.querySelectorAll('.lang-btn').forEach(b => {
+    b.classList.toggle('active', b.textContent === lang.toUpperCase());
+  });
+  localStorage.setItem('sd_lang', lang);
+}
+(function(){
+  const saved = localStorage.getItem('sd_lang');
+  const browser = navigator.language?.slice(0,2).toLowerCase();
+  const lang = saved || (browser === 'en' ? 'en' : 'pt');
+  setLang(lang);
+})();
+</script>
+</body>
+</html>

@@ -8,6 +8,7 @@ import { useT } from '../i18n';
 import AuthLayout from '../components/auth/AuthLayout';
 import Input from '../components/ui/Input';
 import Button from '../components/ui/Button';
+import Logo from '../components/shared/Logo';
 
 /* ── Rate limiting (localStorage) ── */
 const MAX_ATTEMPTS     = 5;
@@ -50,6 +51,21 @@ function recordFailedAttempt(email) {
   };
   setRateState(email, newState);
   return newState;
+}
+
+/* Cartao base reutilizado nos 3 modos (login / forgot / forgot-sent) */
+function AuthCard({ children }) {
+  return (
+    <div className="relative bg-white rounded-2xl shadow-lg shadow-ocean-900/25 border border-n-100 overflow-hidden">
+      <div className="h-1 w-full bg-gradient-to-r from-sand-500 via-sand-400 to-sand-500" />
+      <div className="p-7">
+        <div className="flex justify-center mb-5">
+          <Logo size="xl" dark />
+        </div>
+        {children}
+      </div>
+    </div>
+  );
 }
 
 /* ─────────────────────── Login ─────────────────────── */
@@ -176,8 +192,11 @@ export default function Login() {
   if (mode === 'forgot') {
     return (
       <AuthLayout>
-        <div className="bg-white rounded-lg shadow-lg p-6">
-          <h1 className="font-display font-bold text-base text-n-900 mb-1">Recuperar password</h1>
+        <AuthCard>
+          <p className="text-[11px] font-mono uppercase tracking-wider text-ocean-500 mb-2">
+            SalDesk · Recuperacao de acesso
+          </p>
+          <h1 className="font-display font-bold text-lg text-n-900 mb-1">Recuperar password</h1>
           <p className="text-xs font-body text-n-500 mb-5">
             Indica o teu email e enviamos um link para repor a password.
           </p>
@@ -198,7 +217,7 @@ export default function Login() {
             className="mt-4 text-xs font-body text-ocean-700 hover:underline w-full text-center">
             Voltar ao login
           </button>
-        </div>
+        </AuthCard>
       </AuthLayout>
     );
   }
@@ -206,25 +225,27 @@ export default function Login() {
   if (mode === 'forgot-sent') {
     return (
       <AuthLayout>
-        <div className="bg-white rounded-lg shadow-lg p-6 text-center space-y-4">
-          <div className="w-12 h-12 bg-[#ECFDF5] rounded-full flex items-center justify-center mx-auto">
-            <Shield size={22} strokeWidth={1.75} className="text-[#1A7A4A]" />
-          </div>
-          <div>
-            <p className="font-display font-bold text-base text-n-900">Email enviado</p>
-            <p className="text-sm font-body text-n-500 mt-1">
-              Se o email <span className="font-semibold text-n-700">{forgotEmail}</span> existir
-              na nossa plataforma, recebes um link de recuperacao em breve.
+        <AuthCard>
+          <div className="text-center space-y-4">
+            <div className="w-12 h-12 bg-[#ECFDF5] rounded-full flex items-center justify-center mx-auto">
+              <Shield size={22} strokeWidth={1.75} className="text-[#1A7A4A]" />
+            </div>
+            <div>
+              <p className="font-display font-bold text-base text-n-900">Email enviado</p>
+              <p className="text-sm font-body text-n-500 mt-1">
+                Se o email <span className="font-semibold text-n-700">{forgotEmail}</span> existir
+                na nossa plataforma, recebes um link de recuperacao em breve.
+              </p>
+            </div>
+            <p className="text-xs font-body text-n-400">
+              Verifica tambem a pasta de spam. O link expira em 1 hora.
             </p>
+            <button onClick={() => { setMode('login'); setForgotEmail(''); }}
+              className="text-sm font-body font-semibold text-ocean-700 hover:underline">
+              Voltar ao login
+            </button>
           </div>
-          <p className="text-xs font-body text-n-400">
-            Verifica tambem a pasta de spam. O link expira em 1 hora.
-          </p>
-          <button onClick={() => { setMode('login'); setForgotEmail(''); }}
-            className="text-sm font-body font-semibold text-ocean-700 hover:underline">
-            Voltar ao login
-          </button>
-        </div>
+        </AuthCard>
       </AuthLayout>
     );
   }
@@ -232,8 +253,11 @@ export default function Login() {
   /* ── Login mode ── */
   return (
     <AuthLayout>
-      <div className="bg-white rounded-lg shadow-lg p-6">
-        <h1 className="font-display font-bold text-base text-n-900 mb-5">
+      <AuthCard>
+        <p className="text-[11px] font-mono uppercase tracking-wider text-ocean-500 mb-2">
+          Plataforma de gestao turistica · Ilha do Sal
+        </p>
+        <h1 className="font-display font-bold text-lg text-n-900 mb-5">
           {t('auth.loginTitle')}
         </h1>
 
@@ -296,12 +320,12 @@ export default function Login() {
                 required
                 autoComplete="current-password"
                 disabled={locked}
-                className="w-full h-9 px-3 pr-10 rounded-sm border border-n-300 text-sm font-body bg-n-100 text-n-900 placeholder:text-n-400 focus:outline-none focus:ring-2 focus:ring-ocean-300 focus:border-ocean-700 focus:bg-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="w-full h-10 px-3 pr-10 rounded-sm border border-n-300 text-sm font-body bg-n-100 text-n-900 placeholder:text-n-400 focus:outline-none focus:ring-2 focus:ring-sand-300 focus:border-ocean-700 focus:bg-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               />
               <button
                 type="button"
                 onClick={() => setShowPw(p => !p)}
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-n-400 hover:text-n-600 transition-colors">
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-n-400 hover:text-ocean-700 transition-colors">
                 {showPw
                   ? <EyeOff size={15} strokeWidth={1.75} />
                   : <Eye    size={15} strokeWidth={1.75} />}
@@ -331,11 +355,13 @@ export default function Login() {
         </form>
 
         {/* SSL badge */}
-        <div className="mt-5 pt-4 border-t border-n-100 flex items-center justify-center gap-1.5 text-n-400">
-          <Shield size={12} strokeWidth={1.75} />
-          <span className="text-[11px] font-mono uppercase tracking-wider">Ligacao segura SSL</span>
+        <div className="mt-6 pt-4 border-t border-n-100 flex items-center justify-center">
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-n-50 text-n-400">
+            <Shield size={12} strokeWidth={1.75} />
+            <span className="text-[10px] font-mono uppercase tracking-wider">Ligacao segura SSL</span>
+          </span>
         </div>
-      </div>
+      </AuthCard>
 
       <p className="text-center text-sm font-body text-white/80 mt-4">
         {t('auth.noAccount')}{' '}

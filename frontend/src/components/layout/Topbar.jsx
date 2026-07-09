@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import {
   ChevronDown, Bell,
   Calendar, XCircle, Star, MessageCircle,
+  User, LogOut,
 } from 'lucide-react';
 import useAuthStore from '../../store/authStore';
 import useUiStore from '../../store/uiStore';
@@ -32,13 +33,15 @@ function timeAgo(dateStr) {
 }
 
 export default function Topbar() {
-  const { operator } = useAuthStore();
-  const navigate     = useNavigate();
+  const { operator, logout } = useAuthStore();
+  const navigate             = useNavigate();
 
-  const [open,    setOpen]    = useState(false);
-  const [notifs,  setNotifs]  = useState([]);
-  const [loading, setLoading] = useState(false);
-  const panelRef = useRef(null);
+  const [open,        setOpen]        = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
+  const [notifs,      setNotifs]      = useState([]);
+  const [loading,     setLoading]     = useState(false);
+  const panelRef    = useRef(null);
+  const profileRef  = useRef(null);
 
   const unread = notifs.filter((n) => !n.is_read).length;
 
@@ -71,6 +74,22 @@ export default function Topbar() {
     return () => document.removeEventListener('mousedown', handleClick);
   }, [open]);
 
+  useEffect(() => {
+    if (!profileOpen) return;
+    function handleClick(e) {
+      if (profileRef.current && !profileRef.current.contains(e.target)) {
+        setProfileOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, [profileOpen]);
+
+  function handleLogout() {
+    logout();
+    navigate('/login');
+  }
+
   async function markRead(notif) {
     if (notif.is_read) return;
     try {
@@ -97,7 +116,7 @@ export default function Topbar() {
     : '?';
 
   return (
-    <header className="h-14 bg-white border-b border-n-200 flex items-center justify-between px-4 shrink-0">
+    <header className="h-16 bg-white border-b border-n-200 shadow-sm flex items-center justify-between px-6 shrink-0">
       <div className="flex-1" />
 
       <div className="flex items-center gap-3">
@@ -107,7 +126,7 @@ export default function Topbar() {
         <div className="relative" ref={panelRef}>
           <button
             onClick={handleBellClick}
-            className="relative p-2 rounded-sm text-n-500 hover:text-n-700 hover:bg-n-100 transition-colors"
+            className="relative p-2 rounded-md text-n-500 hover:text-ocean-700 hover:bg-ocean-50 transition-colors"
             aria-label="Notificacoes"
           >
             <Bell size={20} strokeWidth={1.75} />
@@ -119,7 +138,7 @@ export default function Topbar() {
           </button>
 
           {open && (
-            <div className="absolute top-full right-0 mt-1 w-80 bg-white border border-n-200 rounded-sm shadow-lg z-50">
+            <div className="absolute top-full right-0 mt-2 w-80 bg-white border border-n-200 rounded-md shadow-lg z-50">
               <div className="flex items-center justify-between px-4 py-3 border-b border-n-100">
                 <span className="text-sm font-display font-semibold text-n-900">Notificacoes</span>
                 {unread > 0 && (
@@ -175,13 +194,39 @@ export default function Topbar() {
           )}
         </div>
 
-        {/* User avatar */}
-        <div className="flex items-center gap-2 cursor-pointer group">
-          <div className="w-8 h-8 rounded-full bg-ocean-700 flex items-center justify-center text-white text-xs font-display font-bold">
-            {initials}
-          </div>
-          <span className="text-sm font-body text-n-700 hidden sm:block">{operator?.name}</span>
-          <ChevronDown size={14} strokeWidth={1.75} className="text-n-400 group-hover:text-n-600" />
+        {/* User avatar + dropdown */}
+        <div className="relative" ref={profileRef}>
+          <button
+            onClick={() => setProfileOpen((v) => !v)}
+            className="flex items-center gap-2.5 cursor-pointer group px-2 py-1.5 -mr-2 rounded-md hover:bg-ocean-50 transition-colors"
+          >
+            <div className="w-8 h-8 rounded-full bg-ocean-700 flex items-center justify-center text-white text-xs font-display font-bold">
+              {initials}
+            </div>
+            <span className="text-sm font-display font-semibold text-n-800 hidden sm:block">{operator?.name}</span>
+            <ChevronDown size={14} strokeWidth={1.75} className={`text-n-400 group-hover:text-ocean-600 transition-transform ${profileOpen ? 'rotate-180' : ''}`} />
+          </button>
+
+          {profileOpen && (
+            <div className="absolute top-full right-0 mt-2 w-44 bg-white border border-n-200 rounded-md shadow-lg z-50 py-1 overflow-hidden">
+              <button
+                onClick={() => { navigate('/perfil'); setProfileOpen(false); }}
+                className="w-full flex items-center gap-2.5 px-3 py-2 text-sm font-body text-n-700 hover:bg-ocean-50 hover:text-ocean-700 transition-colors"
+              >
+                <User size={14} strokeWidth={1.75} />
+                Ver perfil
+              </button>
+              <div className="border-t border-n-100 mt-1 pt-1">
+                <button
+                  onClick={handleLogout}
+                  className="w-full flex items-center gap-2.5 px-3 py-2 text-sm font-body text-error hover:bg-red-50 transition-colors"
+                >
+                  <LogOut size={14} strokeWidth={1.75} />
+                  Sair
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </header>

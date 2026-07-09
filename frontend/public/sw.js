@@ -1,5 +1,5 @@
 /* SalDesk Service Worker */
-const CACHE = 'saldesk-v1';
+const CACHE = 'saldesk-v2';
 const PRECACHE = ['/', '/index.html'];
 
 self.addEventListener('install', (e) => {
@@ -19,6 +19,25 @@ self.addEventListener('activate', (e) => {
 self.addEventListener('fetch', (e) => {
   if (e.request.method !== 'GET') return;
   if (e.request.url.includes('/api/')) return;
+
+  /* Navegacao (HTML) — network-first, para nunca ficar preso a uma versao antiga.
+     So usa a cache se estiver offline. */
+  const isNavigation = e.request.mode === 'navigate' || e.request.destination === 'document';
+  if (isNavigation) {
+    e.respondWith(
+      fetch(e.request)
+        .then((res) => {
+          const resClone = res.clone();
+          caches.open(CACHE).then((c) => c.put(e.request, resClone));
+          return res;
+        })
+        .catch(() => caches.match(e.request))
+    );
+    return;
+  }
+
+  /* Ficheiros estaticos com hash (JS/CSS/imagens) — cache-first, ja sao
+     naturalmente versionados pelo nome do ficheiro. */
   e.respondWith(
     caches.match(e.request).then((cached) => cached || fetch(e.request))
   );
@@ -38,7 +57,6 @@ self.addEventListener('push', (e) => {
   };
   e.waitUntil(self.registration.showNotification(title, options));
 });
-
 self.addEventListener('notificationclick', (e) => {
   e.notification.close();
   const url = e.notification.data?.url || '/';

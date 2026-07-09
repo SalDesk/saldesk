@@ -131,8 +131,8 @@ export default function Sidebar({ onClose }) {
   return (
     <aside className="w-64 bg-ocean-900 text-white flex flex-col h-full shrink-0">
       {/* Logo */}
-      <div className="flex items-center justify-between px-5 py-4 border-b border-ocean-800">
-        <Logo white size="md" />
+      <div className="flex items-center justify-between px-5 py-5 border-b border-ocean-800">
+        <Logo white size="lg" />
         {onClose && (
           <button onClick={onClose} className="md:hidden text-ocean-300 hover:text-white p-1" aria-label="Fechar">
             <X size={18} strokeWidth={1.75} />
@@ -158,7 +158,7 @@ export default function Sidebar({ onClose }) {
       )}
 
       {/* Nav */}
-      <nav className="flex-1 overflow-y-auto py-2 px-2 space-y-0.5">
+      <nav className="flex-1 overflow-y-auto py-3 px-3 space-y-1 sidebar-scroll">
         {navItems.map(({ to, icon: Icon, label, end, requiredPlan, feature }) => {
           const locked = requiredPlan && !canAccess(feature || requiredPlan);
           const badge  = requiredPlan ? PLAN_BADGE[requiredPlan] : null;
@@ -169,7 +169,7 @@ export default function Sidebar({ onClose }) {
                 key={`${to}-${label}`}
                 type="button"
                 onClick={() => setUpgradeModal({ plan: requiredPlan, feature })}
-                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-sm text-sm font-body font-medium text-ocean-600 hover:bg-ocean-800/50 hover:text-ocean-400 transition-colors"
+                className="w-full flex items-center gap-3 pl-3 pr-3 py-2.5 rounded-r-md border-l-[3px] border-transparent text-sm font-body font-medium text-ocean-600 hover:bg-ocean-800/50 hover:text-ocean-400 transition-colors"
               >
                 <Icon size={17} strokeWidth={1.75} className="shrink-0" />
                 <span className="truncate flex-1 text-left">{label}</span>
@@ -189,18 +189,15 @@ export default function Sidebar({ onClose }) {
               to={to}
               end={end}
               className={({ isActive }) =>
-                `flex items-center gap-3 px-3 py-2.5 rounded-sm text-sm font-body font-medium transition-colors ${
-                  isActive ? 'bg-ocean-700 text-white' : 'text-ocean-200 hover:bg-ocean-800 hover:text-white'
+                `flex items-center gap-3 pl-3 pr-3 py-2.5 rounded-r-md border-l-[3px] text-sm font-body font-medium transition-colors ${
+                  isActive
+                    ? 'bg-ocean-800 text-white border-sand-500'
+                    : 'text-ocean-200 border-transparent hover:bg-ocean-800/60 hover:text-white'
                 }`
               }
             >
               <Icon size={17} strokeWidth={1.75} className="shrink-0" />
               <span className="truncate flex-1">{label}</span>
-              {badge && (
-                <span className={`text-[9px] font-mono font-bold px-1.5 py-0.5 rounded uppercase tracking-wide shrink-0 ${badge.cls}`}>
-                  {badge.label}
-                </span>
-              )}
             </NavLink>
           );
         })}
@@ -222,7 +219,7 @@ export default function Sidebar({ onClose }) {
             href={`https://app.saldesk.cv/book/${slug}`}
             target="_blank"
             rel="noreferrer"
-            className="flex items-center gap-3 px-3 py-2.5 rounded-sm text-sm font-body font-medium text-sand-300 hover:bg-ocean-800 hover:text-sand-300 transition-colors"
+            className="flex items-center gap-3 pl-3 pr-3 py-2.5 rounded-r-md border-l-[3px] border-transparent text-sm font-body font-medium text-sand-300 hover:bg-ocean-800/60 hover:border-sand-500/40 transition-colors"
           >
             <ExternalLink size={17} strokeWidth={1.75} className="shrink-0" />
             <span>{siteLabel}</span>
@@ -231,8 +228,10 @@ export default function Sidebar({ onClose }) {
         <NavLink
           to="/perfil"
           className={({ isActive }) =>
-            `flex items-center gap-3 px-3 py-2.5 rounded-sm text-sm font-body font-medium transition-colors ${
-              isActive ? 'bg-ocean-700 text-white' : 'text-ocean-300 hover:bg-ocean-800 hover:text-white'
+            `flex items-center gap-3 pl-3 pr-3 py-2.5 rounded-r-md border-l-[3px] text-sm font-body font-medium transition-colors ${
+              isActive
+                ? 'bg-ocean-800 text-white border-sand-500'
+                : 'text-ocean-300 border-transparent hover:bg-ocean-800/60 hover:text-white'
             }`
           }
         >
@@ -241,7 +240,7 @@ export default function Sidebar({ onClose }) {
         </NavLink>
         <button
           onClick={handleLogout}
-          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-sm text-sm font-body font-medium text-ocean-400 hover:bg-ocean-800 hover:text-white transition-colors"
+          className="w-full flex items-center gap-3 pl-3 pr-3 py-2.5 rounded-r-md border-l-[3px] border-transparent text-sm font-body font-medium text-ocean-400 hover:bg-ocean-800/60 hover:text-white transition-colors"
         >
           <LogOut size={17} strokeWidth={1.75} className="shrink-0" />
           Sair

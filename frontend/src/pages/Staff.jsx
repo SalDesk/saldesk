@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import PlanGuard from '../components/PlanGuard';
+import { UpgradeModal } from '../components/PlanGuard';
+import usePlan from '../hooks/usePlan';
 import { io } from 'socket.io-client';
 import {
   Plus, Pencil, Trash2, Star, Briefcase, Phone, Mail, MessageSquare,
@@ -46,6 +47,7 @@ const PRIO_COLORS = {
   urgent: 'text-white bg-error',
 };
 const CHECKLIST_KEY = 'saldesk_checklist_v1';
+const STARTER_STAFF_LIMIT = 2;
 const DEFAULT_TASKS = [
   'Verificar equipamento e material',
   'Confirmar reservas do dia',
@@ -1160,6 +1162,7 @@ function ChatTab({ staffList }) {
 export default function Staff() {
   const { operator } = useAuthStore();
   const ROLES = ROLES_BY_TYPE[operator?.operator_type] || ROLES_DEFAULT;
+  const { plan } = usePlan();
 
   const [tab, setTab]               = useState('staff');
   const [staffList, setStaffList]   = useState([]);
@@ -1171,7 +1174,10 @@ export default function Staff() {
   const [unread, setUnread]         = useState(0);
   const [search, setSearch]         = useState('');
   const [accountCreatingId, setAccountCreatingId] = useState(null);
+  const [showUpgrade, setShowUpgrade] = useState(false);
   const toast = useToast();
+
+  const atStarterLimit = plan === 'starter' && staffList.length >= STARTER_STAFF_LIMIT;
 
   useEffect(() => {
     listStaff().then(setStaffList).finally(() => setLoading(false));
@@ -1192,6 +1198,11 @@ export default function Staff() {
   }
 
   async function handleSave(dados) {
+    if (modal === 'create' && plan === 'starter' && staffList.length >= STARTER_STAFF_LIMIT) {
+      setModal(null);
+      setShowUpgrade(true);
+      return;
+    }
     setFormError(''); setFormLoad(true);
     try {
       if (modal === 'create') {
@@ -1239,15 +1250,34 @@ export default function Staff() {
     <div>
       <PageHeader
         title="Colaboradores"
-        subtitle={`${active} activo(s) · ${staffList.length} total`}
+        subtitle={
+          plan === 'starter'
+            ? `${active} activo(s) · ${staffList.length}/${STARTER_STAFF_LIMIT} no plano Starter`
+            : `${active} activo(s) · ${staffList.length} total`
+        }
         actions={
           tab === 'staff' && (
-            <Button icon={Plus} onClick={() => { setFormError(''); setModal('create'); }}>
+            <Button
+              icon={Plus}
+              onClick={() => {
+                if (atStarterLimit) { setShowUpgrade(true); return; }
+                setFormError(''); setModal('create');
+              }}
+            >
               Novo colaborador
             </Button>
           )
         }
       />
+
+      {atStarterLimit && (
+        <div className="mb-5 px-4 py-3 rounded-md bg-sand-50 border border-sand-200 text-sm font-body text-sand-700 flex items-center justify-between gap-3">
+          <span>Atingiu o limite de {STARTER_STAFF_LIMIT} colaboradores do plano Starter.</span>
+          <button onClick={() => setShowUpgrade(true)} className="font-semibold underline shrink-0">
+            Fazer upgrade
+          </button>
+        </div>
+      )}
 
       {/* Tab bar */}
       <div className="flex gap-0.5 mb-5 bg-n-100 p-1 rounded-md w-fit">
@@ -1408,6 +1438,10 @@ export default function Staff() {
           Eliminar o colaborador <strong>"{deleteTarget?.name}"</strong>? Esta accao nao pode ser desfeita.
         </p>
       </Modal>
+
+      {showUpgrade && (
+        <UpgradeModal plan="pro" feature="colaboradores" onClose={() => setShowUpgrade(false)} />
+      )}
     </div>
   );
 }

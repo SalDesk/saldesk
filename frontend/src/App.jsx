@@ -122,7 +122,7 @@ export default function App() {
           <Route path="financeiro"    element={<Financial />} />
           <Route path="integracoes"   element={<PlanGuard plan="pro"      feature="integracoes">  <Integrations /></PlanGuard>} />
           <Route path="guias"         element={<PlanGuard plan="business" feature="guias">        <Guides /></PlanGuard>} />
-          <Route path="colaboradores" element={<PlanGuard plan="business" feature="colaboradores"><Staff /></PlanGuard>} />
+          <Route path="colaboradores" element={<Staff />} />
           <Route path="housekeeping"  element={<Housekeeping />} />
           <Route path="manutencao"    element={<Maintenance />} />
           <Route path="menu-digital"  element={<MenuDigital />} />

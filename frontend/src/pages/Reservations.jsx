@@ -88,7 +88,75 @@ function ActivityTable({ reservations, units, guides, onEdit, onUpdate, onResche
 
   return (
     <div className="bg-white rounded-md border border-n-200 shadow-sm overflow-hidden">
-      <div className="overflow-x-auto">
+      {/* Mobile card view */}
+      <div className="md:hidden divide-y divide-n-100">
+        {reservations.map((r) => {
+          const canAdvance = !!STATUS_NEXT[r.status];
+          const isLoading  = actionLoading === r.id;
+          return (
+            <div key={r.id} className="p-4 space-y-2.5">
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="font-display font-semibold text-sm text-n-900 truncate">
+                    {r.units?.name || units.find(u => u.id === r.unit_id)?.name || '—'}
+                  </p>
+                  <p className="text-[11px] font-mono text-n-400 mt-0.5">{r.id?.slice(0, 8)}</p>
+                </div>
+                <Badge variant={r.status}>{t(`reservations.status.${r.status}`)}</Badge>
+              </div>
+              <div className="flex items-center gap-3 text-xs font-body text-n-600 flex-wrap">
+                <span>{formatDate(r.check_in)}</span>
+                {r.customer_name && <span className="truncate max-w-[140px]">{r.customer_name}</span>}
+                {r.customer_country && <span className="text-n-400">{r.customer_country}</span>}
+                {r.guests && <span>{r.guests} pax</span>}
+              </div>
+              <div className="flex items-center justify-between gap-2">
+                <SourceBadge source={r.source} />
+                <span className="font-display font-bold text-sm text-ocean-700">
+                  €{Number(r.total_price || r.total_amount || 0).toFixed(0)}
+                </span>
+              </div>
+              <div className="flex items-center gap-1 flex-wrap pt-0.5">
+                {canAdvance && (
+                  <button
+                    onClick={() => handleNextStatus(r)}
+                    disabled={isLoading}
+                    className="flex items-center gap-1 px-2 py-1 rounded-xs bg-ocean-700 text-white text-xs font-body font-medium hover:bg-ocean-500 transition-colors disabled:opacity-50"
+                  >
+                    {STATUS_NEXT_LABEL[r.status]}
+                    <ChevronRight size={11} strokeWidth={2} />
+                  </button>
+                )}
+                <button onClick={() => onReschedule(r)} title="Reagendar"
+                  className="p-1.5 rounded text-n-400 hover:text-ocean-700 hover:bg-ocean-50 transition-colors">
+                  <CalendarDays size={13} strokeWidth={1.75} />
+                </button>
+                <button onClick={() => onVoucher(r)} title="Enviar voucher"
+                  disabled={voucherLoading === r.id}
+                  className="p-1.5 rounded text-n-400 hover:text-ocean-700 hover:bg-ocean-50 transition-colors disabled:opacity-40">
+                  <Mail size={13} strokeWidth={1.75} />
+                </button>
+                {!['cancelled','no_show','checked_out'].includes(r.status) && (
+                  <button onClick={() => onNoShow(r)} title="No-show"
+                    className="p-1.5 rounded text-n-400 hover:text-error hover:bg-red-50 transition-colors">
+                    <UserX size={13} strokeWidth={1.75} />
+                  </button>
+                )}
+                {!['cancelled','no_show'].includes(r.status) && (
+                  <button onClick={() => setAssignRes(r)} title="Atribuir equipa"
+                    className="p-1.5 rounded text-n-400 hover:text-ocean-700 hover:bg-ocean-50 transition-colors">
+                    <Users size={13} strokeWidth={1.75} />
+                  </button>
+                )}
+                <Button variant="ghost" size="sm" icon={Pencil} onClick={() => onEdit(r)} aria-label="Editar" />
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Desktop table view */}
+      <div className="overflow-x-auto hidden md:block">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-n-200 bg-n-50">
