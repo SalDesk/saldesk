@@ -28,7 +28,7 @@ async function getOperador(req, res, next) {
 
     const { data: units } = await supabaseAdmin
       .from('units')
-      .select('id, name, description, unit_type, base_price, price_unit, capacity, duration_minutes, images, created_at, pricing_rules(*)')
+      .select('id, name, description, unit_type, base_price, capacity, images, created_at, pricing_rules(*)')
       .eq('operator_id', operator.id)
       .eq('status', 'active')
       .order('name');
@@ -538,7 +538,7 @@ async function getUnit(req, res, next) {
 
     const { data: related } = await supabaseAdmin
       .from('units')
-      .select('id, name, description, unit_type, base_price, price_unit, capacity, images')
+      .select('id, name, description, unit_type, base_price, capacity, images')
       .eq('operator_id', operator.id)
       .eq('status', 'active')
       .neq('id', unitId)
