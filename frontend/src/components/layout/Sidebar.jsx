@@ -122,7 +122,7 @@ export default function Sidebar({ onClose }) {
 
   function handleLogout() { logout(); navigate('/login'); }
 
-  const opType   = operator?.operator_type || 'hotel';
+  const opType   = operator?.operator_type || 'hotel'; console.log('DEBUG operator completo:', operator); console.log('DEBUG plan:', operator?.plan);
   const navItems = TYPE_NAV[opType] || TYPE_NAV.hotel;
   const slug     = operator?.booking_link_slug;
   const lang     = operator?.language || 'pt';
@@ -161,7 +161,7 @@ export default function Sidebar({ onClose }) {
       <nav className="flex-1 overflow-y-auto py-3 px-3 space-y-1 sidebar-scroll">
         {navItems.map(({ to, icon: Icon, label, end, requiredPlan, feature }) => {
           const locked = requiredPlan && !canAccess(feature || requiredPlan);
-          const badge  = requiredPlan ? PLAN_BADGE[requiredPlan] : null;
+          const badge  = locked ? PLAN_BADGE[requiredPlan] : null;
 
           if (locked) {
             return (
