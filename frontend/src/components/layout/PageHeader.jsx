@@ -1,6 +1,6 @@
 export default function PageHeader({ title, subtitle, actions }) {
   return (
-    <div className="flex items-start justify-between mb-6 pb-5 border-b border-n-200">
+    <div className="flex flex-wrap items-start justify-between gap-y-3 mb-6 pb-5 border-b border-n-200">
       <div>
         <h1 className="font-display font-bold text-2xl tracking-tight text-n-900">{title}</h1>
         {subtitle && (
