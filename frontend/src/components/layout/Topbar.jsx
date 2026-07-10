@@ -118,7 +118,7 @@ export default function Topbar() {
 
   return (
     <header className="h-16 bg-white border-b border-n-200 shadow-sm flex items-center justify-between px-6 shrink-0">
-      <Logo size="sm" /><div className="flex-1" />
+      <div className="md:hidden"><Logo size="sm" /></div><div className="flex-1" />
 
       <div className="flex items-center gap-3">
         <LanguageToggle />
