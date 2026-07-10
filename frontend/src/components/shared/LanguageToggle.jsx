@@ -12,7 +12,7 @@ export default function LanguageToggle({ variant = 'default', authMode = false }
   return (
     <div className={`flex items-center gap-0.5 ${isWhite ? 'bg-white/10 rounded-sm p-0.5' : 'bg-n-100 rounded-sm p-0.5'}`}>
       {langs.map((l) => (
-        <button key={l} onClick={() => setLang(l)} className={`${base} ${lang === l ? active : inactive}`}>
+        <button key={l} onClick={() => { console.log('CLICOU', l); setLang(l); }} className={`${base} ${lang === l ? active : inactive}`}>
           {l}
         </button>
       ))}
