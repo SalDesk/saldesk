@@ -8,6 +8,7 @@ import {
 import useAuthStore from '../../store/authStore';
 import useUiStore from '../../store/uiStore';
 import LanguageToggle from '../shared/LanguageToggle';
+import Logo from '../shared/Logo';
 import api from '../../services/api';
 
 const TYPE_ICON = {
@@ -117,7 +118,7 @@ export default function Topbar() {
 
   return (
     <header className="h-16 bg-white border-b border-n-200 shadow-sm flex items-center justify-between px-6 shrink-0">
-      <div className="flex-1" />
+      <Logo size="sm" /><div className="flex-1" />
 
       <div className="flex items-center gap-3">
         <LanguageToggle />
