@@ -486,7 +486,7 @@ const FUEL_LEVELS = [
 
 function FuelSelector({ value, onChange }) {
   return (
-    <div className="flex gap-1">
+    <div className="flex flex-wrap gap-1">
       {FUEL_LEVELS.map(f => (
         <button
           key={f.value}
@@ -1197,7 +1197,7 @@ export default function Reservations() {
       {isActivity ? (
         <div className="flex flex-wrap gap-2 mb-6 items-center">
           {/* Status */}
-          <div className="flex gap-1">
+          <div className="flex flex-wrap gap-1">
             {STATUS_FILTERS.map(s => (
               <button
                 key={s}
