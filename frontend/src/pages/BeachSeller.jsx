@@ -206,7 +206,7 @@ export default function BeachSeller() {
   function handleLogout() { logout(); navigate('/login'); }
 
   return (
-    <div className="min-h-screen bg-n-50 flex flex-col max-w-md mx-auto">
+    <div className="min-h-screen bg-n-50 flex flex-col max-w-md md:max-w-2xl lg:max-w-3xl mx-auto">
       {/* Header */}
       <header className="bg-gradient-to-br from-ocean-900 to-ocean-700 px-5 pt-6 pb-6 rounded-b-3xl shadow-lg">
         <div className="flex items-center justify-between mb-5">
