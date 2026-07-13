@@ -389,6 +389,69 @@ function SkeletonPage() {
   );
 }
 
+/* ── ExperienceTimelineSection ───────────────────── */
+function ExperienceTimelineSection({ op, units, lang }) {
+  const unit = units?.[0];
+  let meta = {};
+  if (unit?.description) {
+    try {
+      const d = JSON.parse(unit.description);
+      if (typeof d === 'object' && d !== null) meta = d;
+    } catch {}
+  }
+
+  const opType = op.operator_type;
+
+  function stepsFor() {
+    if (opType === 'rentacar') {
+      return [
+        { pt: 'Reserva confirmada', en: 'Booking confirmed', descPt: 'Confirmação imediata após a reserva.', descEn: 'Instant confirmation after booking.' },
+        { pt: 'Levantamento da viatura', en: 'Vehicle pickup', descPt: meta.meeting_point ? `Recolha em ${meta.meeting_point}.` : 'Recolha no local combinado.', descEn: meta.meeting_point ? `Pickup at ${meta.meeting_point}.` : 'Pickup at the agreed location.' },
+        { pt: 'Utilização livre', en: 'Free use', descPt: 'A viatura é sua durante todo o aluguer.', descEn: 'The vehicle is yours for the whole rental period.' },
+        { pt: 'Devolução', en: 'Return', descPt: 'Devolução no local e hora combinados.', descEn: 'Return at the agreed location and time.' },
+      ];
+    }
+    if (opType === 'restaurant') {
+      return [
+        { pt: 'Reserva confirmada', en: 'Booking confirmed', descPt: 'Confirmação imediata após a reserva.', descEn: 'Instant confirmation after booking.' },
+        { pt: 'Chegada', en: 'Arrival', descPt: meta.meeting_point ? `Receção em ${meta.meeting_point}.` : 'Receção à chegada.', descEn: meta.meeting_point ? `Welcome at ${meta.meeting_point}.` : 'Welcome upon arrival.' },
+        { pt: 'A sua refeição', en: 'Your meal', descPt: 'Desfrute da experiência gastronómica.', descEn: 'Enjoy the dining experience.' },
+        { pt: 'Fim da refeição', en: 'End of meal', descPt: 'Esperamos que volte em breve!', descEn: 'We hope to see you again soon!' },
+      ];
+    }
+    return [
+      { pt: 'Reserva confirmada', en: 'Booking confirmed', descPt: 'Confirmação imediata após a reserva.', descEn: 'Instant confirmation after booking.' },
+      { pt: 'Ponto de encontro', en: 'Meeting point', descPt: meta.meeting_point ? `Encontro em ${meta.meeting_point}${meta.start_time ? ` às ${meta.start_time}` : ''}.` : 'Encontro no local e hora combinados.', descEn: meta.meeting_point ? `Meet at ${meta.meeting_point}${meta.start_time ? ` at ${meta.start_time}` : ''}.` : 'Meet at the agreed location and time.' },
+      { pt: 'A experiência', en: 'The experience', descPt: meta.duration ? `Aproximadamente ${meta.duration}.` : 'Uma experiência inesquecível.', descEn: meta.duration ? `Approximately ${meta.duration}.` : 'An unforgettable experience.' },
+      { pt: 'Regresso', en: 'Return', descPt: 'Regresso ao ponto de partida.', descEn: 'Return to the starting point.' },
+    ];
+  }
+
+  const steps = stepsFor();
+
+  return (
+    <section className="max-w-5xl mx-auto px-4 sm:px-6 py-12 sm:py-16">
+      <h2 className="font-display font-bold text-2xl sm:text-3xl text-n-900 mb-10 text-center">
+        {lang === 'en' ? 'How It Works' : 'Como Funciona'}
+      </h2>
+      <div className="relative">
+        <div className="hidden sm:block absolute top-6 left-0 right-0 h-0.5 bg-n-200" />
+        <div className="grid grid-cols-1 sm:grid-cols-4 gap-8 sm:gap-4">
+          {steps.map((s, i) => (
+            <div key={i} className="relative flex flex-col items-center text-center">
+              <div className="w-12 h-12 rounded-full bg-ocean-700 text-white flex items-center justify-center font-display font-bold text-lg mb-4 relative z-10">
+                {i + 1}
+              </div>
+              <p className="font-display font-bold text-n-900 text-sm mb-1">{lang === 'en' ? s.en : s.pt}</p>
+              <p className="text-xs font-body text-n-500 leading-relaxed">{lang === 'en' ? s.descEn : s.descPt}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
 /* ── TourComparisonSection ───────────────────────── */
 function TourComparisonSection({ units, lang, opCurrency }) {
   const items = (units || []).slice(0, 4);
@@ -1282,7 +1345,8 @@ export default function PublicBooking() {
           </div>
         </div>
       </section>
-
+      {/* ── Experience Timeline ── */}
+      <ExperienceTimelineSection op={op} units={units} lang={lang} />
       <div className="max-w-5xl mx-auto px-4 sm:px-6">
 
         {/* ── Galeria ── */}
