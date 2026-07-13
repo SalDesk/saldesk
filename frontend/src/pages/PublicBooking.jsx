@@ -389,6 +389,73 @@ function SkeletonPage() {
   );
 }
 
+/* ── TourComparisonSection ───────────────────────── */
+function TourComparisonSection({ units, lang, opCurrency }) {
+  const items = (units || []).slice(0, 4);
+  if (items.length < 2) return null;
+
+  function parseMeta(u) {
+    try {
+      const d = JSON.parse(u.description);
+      return typeof d === 'object' && d !== null ? d : {};
+    } catch { return {}; }
+  }
+
+  function fmtPrice(u) {
+    const amount = u.base_price || 0;
+    if (opCurrency === 'CVE') return `${Math.round(amount).toLocaleString('pt-PT')} CVE`;
+    return `€${Number(amount).toFixed(0)}`;
+  }
+
+  const rows = [
+    { key: 'price',      label: { pt: 'Preço',       en: 'Price' },       get: u => fmtPrice(u) },
+    { key: 'duration',   label: { pt: 'Duração',     en: 'Duration' },    get: u => parseMeta(u).duration || '—' },
+    { key: 'difficulty', label: { pt: 'Dificuldade', en: 'Difficulty' },  get: u => parseMeta(u).difficulty || '—' },
+    { key: 'languages',  label: { pt: 'Idiomas',     en: 'Languages' },   get: u => (parseMeta(u).languages || []).join(', ') || '—' },
+    { key: 'type',       label: { pt: 'Tipo',        en: 'Type' },        get: u => {
+        const t = parseMeta(u).tour_type;
+        if (!t) return '—';
+        return t === 'privado' ? (lang === 'en' ? 'Private' : 'Privado') : (lang === 'en' ? 'Group' : 'Grupo');
+      } },
+  ];
+
+  return (
+    <section className="max-w-5xl mx-auto px-4 sm:px-6 py-12 sm:py-16">
+      <h2 className="font-display font-bold text-2xl sm:text-3xl text-n-900 mb-6 text-center">
+        {lang === 'en' ? 'Compare Tours' : 'Comparar Tours'}
+      </h2>
+      <div className="overflow-x-auto border border-n-200 rounded-lg">
+        <table className="w-full text-sm" style={{ minWidth: items.length * 160 + 140 }}>
+          <thead>
+            <tr className="bg-n-50 border-b border-n-200">
+              <th className="text-left px-4 py-3 text-xs font-body font-bold uppercase tracking-wide text-n-500 sticky left-0 bg-n-50" />
+              {items.map(u => (
+                <th key={u.id} className="text-left px-4 py-3 text-xs font-body font-bold text-n-900">
+                  {u.name}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-n-100">
+            {rows.map(r => (
+              <tr key={r.key}>
+                <td className="px-4 py-3 text-xs font-body font-bold uppercase tracking-wide text-n-500 sticky left-0 bg-white whitespace-nowrap">
+                  {lang === 'en' ? r.label.en : r.label.pt}
+                </td>
+                {items.map(u => (
+                  <td key={u.id} className="px-4 py-3 text-sm font-body text-n-700">
+                    {r.get(u)}
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  );
+}
+
 /* ── FeaturedSection ─────────────────────────────── */
 function FeaturedSection({ units, slug, currency, lang, opType, opCurrency }) {
   const navigate = useNavigate();
@@ -1355,6 +1422,9 @@ export default function PublicBooking() {
         )}
 
       </div>
+
+      {/* ── Tour Comparison ── */}
+      <TourComparisonSection units={units} lang={lang} opCurrency={op.currency} />
 
       {/* ── Live Availability ── */}
       <LiveAvailabilitySection
