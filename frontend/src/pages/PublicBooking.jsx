@@ -389,6 +389,93 @@ function SkeletonPage() {
   );
 }
 
+/* ── PartnersSection ─────────────────────────────── */
+function PartnersSection({ op, lang }) {
+  const partners = Array.isArray(op.partners) ? op.partners : [];
+  if (partners.length === 0) return null;
+  return (
+    <section className="max-w-5xl mx-auto px-4 sm:px-6 py-12 sm:py-16 border-t border-n-100">
+      <h2 className="font-display font-bold text-2xl sm:text-3xl text-n-900 mb-8 text-center">
+        {lang === 'en' ? 'Our Partners' : 'Os Nossos Parceiros'}
+      </h2>
+      <div className="flex flex-wrap items-center justify-center gap-8">
+        {partners.map((p, i) => (
+          <a key={i} href={p.url || '#'} target="_blank" rel="noopener noreferrer"
+            className="grayscale hover:grayscale-0 transition-all opacity-70 hover:opacity-100">
+            <img src={p.logo_url} alt={p.name || 'Partner'} className="h-12 object-contain" />
+          </a>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+/* ── VideoTestimonialsSection ─────────────────────── */
+function VideoTestimonialsSection({ op, lang }) {
+  const videos = Array.isArray(op.video_testimonials) ? op.video_testimonials : [];
+  if (videos.length === 0) return null;
+  return (
+    <section className="max-w-5xl mx-auto px-4 sm:px-6 py-12 sm:py-16 border-t border-n-100">
+      <h2 className="font-display font-bold text-2xl sm:text-3xl text-n-900 mb-8 text-center">
+        {lang === 'en' ? 'What Our Clients Say' : 'O Que Dizem os Nossos Clientes'}
+      </h2>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        {videos.map((v, i) => (
+          <div key={i} className="rounded-xl overflow-hidden bg-n-100 aspect-video">
+            <video src={v.url} poster={v.thumbnail_url} controls className="w-full h-full object-cover" />
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+/* ── GoogleReviewsSection ─────────────────────────── */
+function GoogleReviewsSection({ op, lang }) {
+  const reviews = Array.isArray(op.google_reviews) ? op.google_reviews : [];
+  if (reviews.length === 0) return null;
+  return (
+    <section className="max-w-5xl mx-auto px-4 sm:px-6 py-12 sm:py-16 border-t border-n-100">
+      <h2 className="font-display font-bold text-2xl sm:text-3xl text-n-900 mb-8 text-center flex items-center justify-center gap-2">
+        {lang === 'en' ? 'Google Reviews' : 'Avaliações Google'}
+      </h2>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+        {reviews.map((r, i) => (
+          <div key={i} className="bg-white border border-n-200 rounded-xl p-5">
+            <div className="flex items-center gap-2 mb-2">
+              {r.author_photo && <img src={r.author_photo} alt={r.author_name} className="w-8 h-8 rounded-full" />}
+              <p className="font-display font-bold text-sm text-n-900">{r.author_name}</p>
+            </div>
+            <p className="text-sm font-body text-n-600 leading-relaxed">{r.text}</p>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+/* ── InstagramSection ─────────────────────────────── */
+function InstagramSection({ op, lang }) {
+  if (!op.instagram) return null;
+  return (
+    <section className="max-w-5xl mx-auto px-4 sm:px-6 py-12 sm:py-16 border-t border-n-100 text-center">
+      <div className="w-14 h-14 rounded-full bg-gradient-to-tr from-sand-500 via-error to-ocean-700 flex items-center justify-center mx-auto mb-4">
+        <Globe size={24} strokeWidth={1.75} className="text-white" />
+      </div>
+      <h2 className="font-display font-bold text-2xl sm:text-3xl text-n-900 mb-3">
+        {lang === 'en' ? 'Follow Us on Instagram' : 'Segue-nos no Instagram'}
+      </h2>
+      <p className="text-sm font-body text-n-500 mb-6 max-w-md mx-auto">
+        {lang === 'en' ? 'See more photos and updates from our experiences.' : 'Vê mais fotos e novidades das nossas experiências.'}
+      </p>
+      <a href={op.instagram} target="_blank" rel="noopener noreferrer"
+        className="inline-flex items-center gap-2 bg-ocean-700 text-white text-sm font-body font-semibold px-6 py-3 rounded-full hover:bg-ocean-500 transition-colors">
+        {lang === 'en' ? 'Visit Instagram' : 'Ver Instagram'}
+      </a>
+    </section>
+  );
+}
+
 /* ── ExperienceTimelineSection ───────────────────── */
 function ExperienceTimelineSection({ op, units, lang }) {
   const unit = units?.[0];
@@ -1668,7 +1755,14 @@ export default function PublicBooking() {
 
       {/* ── Special Offer ── */}
       <SpecialOfferSection lang={lang} goBook={goBook} />
-
+      {/* ── Partners ── */}
+      <PartnersSection op={op} lang={lang} />
+      {/* ── Video Testimonials ── */}
+      <VideoTestimonialsSection op={op} lang={lang} />
+      {/* ── Google Reviews ── */}
+      <GoogleReviewsSection op={op} lang={lang} />
+      {/* ── Instagram ── */}
+      <InstagramSection op={op} lang={lang} />
       {/* ── Footer ── */}
       <footer className="bg-ocean-900 text-white/70 mt-16">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 py-12">
