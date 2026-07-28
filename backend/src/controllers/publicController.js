@@ -9,7 +9,7 @@ async function getOperador(req, res, next) {
   try {
     const { data: operator, error } = await supabaseAdmin
       .from('operators')
-      .select('id, name, slug, operator_type, email, phone, whatsapp, address, logo_url, cover_images, business_name, tagline, description, onboarding_complete, currency')
+      .select('id, name, slug, operator_type, email, phone, whatsapp, address, logo_url, cover_images, business_name, tagline, description, onboarding_complete, currency, page_config')
       .eq('slug', req.params.slug)
       .eq('onboarding_complete', true)
       .single();
@@ -519,7 +519,7 @@ async function getUnit(req, res, next) {
 
     const { data: operator } = await supabaseAdmin
       .from('operators')
-      .select('id, name, slug, operator_type, email, phone, whatsapp, address, logo_url, cover_images, business_name, tagline, currency, description')
+      .select('id, name, slug, operator_type, email, phone, whatsapp, address, logo_url, cover_images, business_name, tagline, currency, description, page_config')
       .eq('slug', slug)
       .eq('onboarding_complete', true)
       .single();

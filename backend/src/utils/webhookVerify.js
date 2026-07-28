@@ -6,7 +6,11 @@ function verifyViatorSignature(req) {
   const signature = req.headers['x-viator-signature'] || req.headers['x-signature'] || '';
   const body = JSON.stringify(req.body);
   const expected = crypto.createHmac('sha256', secret).update(body).digest('hex');
-  return crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expected));
+  try {
+    return crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expected));
+  } catch {
+    return false;
+  }
 }
 
 function verifyGygSignature(req) {

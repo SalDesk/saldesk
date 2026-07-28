@@ -26,7 +26,7 @@ async function createUnit(req, res, next) {
       return res.status(403).json({ error: 'Apenas operadores podem gerir unidades', code: 'OPERATOR_ONLY' });
     }
 
-    const { name, description, unit_type, base_price, capacity, images } = req.body;
+    const { name, description, unit_type, base_price, capacity, images, ota_product_ids } = req.body;
 
     if (!name || !unit_type || base_price === undefined || base_price === null) {
       return res.status(400).json({ error: 'Nome, tipo e preço base são obrigatórios', code: 'MISSING_FIELDS' });
@@ -46,6 +46,7 @@ async function createUnit(req, res, next) {
         base_price: Number(base_price),
         capacity: capacity || 1,
         images: images || [],
+        ota_product_ids: ota_product_ids || {},
         status: 'active'
       })
       .select()
@@ -84,7 +85,7 @@ async function updateUnit(req, res, next) {
       return res.status(403).json({ error: 'Apenas operadores podem gerir unidades', code: 'OPERATOR_ONLY' });
     }
 
-    const { name, description, unit_type, base_price, capacity, images, status } = req.body;
+    const { name, description, unit_type, base_price, capacity, images, status, ota_product_ids } = req.body;
 
     const updates = {};
     if (name !== undefined) updates.name = name;
@@ -94,6 +95,7 @@ async function updateUnit(req, res, next) {
     if (capacity !== undefined) updates.capacity = capacity;
     if (images !== undefined) updates.images = images;
     if (status !== undefined) updates.status = status;
+    if (ota_product_ids !== undefined) updates.ota_product_ids = ota_product_ids;
     updates.updated_at = new Date().toISOString();
 
     const { data, error } = await supabaseAdmin

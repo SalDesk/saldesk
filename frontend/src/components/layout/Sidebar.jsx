@@ -7,7 +7,7 @@ import {
   LogOut, X, ExternalLink, User, Lock, Zap,
   Compass, Hotel, Car, Truck, UtensilsCrossed, ChefHat, Wrench,
   Activity, Award, Tag, FileWarning, ThumbsUp, CloudSun, LineChart,
-  UserPlus, Users2, Package, Handshake, Sparkles,
+  UserPlus, Users2, Package, Handshake, Sparkles, Layers,
 } from 'lucide-react';
 import useAuthStore from '../../store/authStore';
 import usePlan from '../../hooks/usePlan';
@@ -42,6 +42,7 @@ export const TYPE_NAV = {
     { to: '/grupos',        icon: Users2,          label: 'Grupos',           requiredPlan: 'pro',      feature: 'grupos'         },
     { to: '/pacotes',       icon: Package,         label: 'Pacotes',          requiredPlan: 'pro',      feature: 'pacotes'        },
     { to: '/parcerias',     icon: Handshake,       label: 'Parcerias',        requiredPlan: 'pro',      feature: 'parcerias'      },
+    { to: '/editor-pagina', icon: Layers,          label: 'Editor da Pagina'             },
     { to: '/definicoes',    icon: Settings,        label: 'Definicoes'                   },
   ],
   hotel: [
@@ -64,6 +65,7 @@ export const TYPE_NAV = {
     { to: '/grupos',        icon: Users2,          label: 'Grupos',         requiredPlan: 'pro',      feature: 'grupos'        },
     { to: '/pacotes',       icon: Package,         label: 'Pacotes',        requiredPlan: 'pro',      feature: 'pacotes'       },
     { to: '/parcerias',     icon: Handshake,       label: 'Parcerias',      requiredPlan: 'pro',      feature: 'parcerias'     },
+    { to: '/editor-pagina', icon: Layers,          label: 'Editor da Pagina'        },
     { to: '/definicoes',    icon: Settings,        label: 'Definicoes'              },
   ],
   rentacar: [
@@ -87,6 +89,7 @@ export const TYPE_NAV = {
     { to: '/grupos',        icon: Users2,          label: 'Grupos',         requiredPlan: 'pro',      feature: 'grupos'        },
     { to: '/pacotes',       icon: Package,         label: 'Pacotes',        requiredPlan: 'pro',      feature: 'pacotes'       },
     { to: '/parcerias',     icon: Handshake,       label: 'Parcerias',      requiredPlan: 'pro',      feature: 'parcerias'     },
+    { to: '/editor-pagina', icon: Layers,          label: 'Editor da Pagina'        },
     { to: '/definicoes',    icon: Settings,        label: 'Definicoes'              },
   ],
   restaurant: [
@@ -105,6 +108,7 @@ export const TYPE_NAV = {
     { to: '/automacoes',    icon: Zap,             label: 'Automacoes',     requiredPlan: 'pro',      feature: 'automacoes'    },
     { to: '/fidelidade',    icon: Award,           label: 'Fidelidade',     requiredPlan: 'pro',      feature: 'fidelidade'    },
     { to: '/vouchers',      icon: Tag,             label: 'Vouchers',       requiredPlan: 'business', feature: 'vouchers'      },
+    { to: '/editor-pagina', icon: Layers,          label: 'Editor da Pagina'        },
     { to: '/definicoes',    icon: Settings,        label: 'Definicoes'              },
   ],
 };

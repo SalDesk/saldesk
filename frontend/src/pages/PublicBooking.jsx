@@ -31,6 +31,24 @@ function formatUnitType(type) {
   return type.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
 }
 
+/* ── Secções customizáveis da página pública ──────── */
+const DEFAULT_SECTIONS = [
+  { key: 'featured',           enabled: true },
+  { key: 'services',           enabled: true },
+  { key: 'about',              enabled: true },
+  { key: 'timeline',           enabled: true },
+  { key: 'gallery',            enabled: true },
+  { key: 'reviews',            enabled: true },
+  { key: 'comparison',         enabled: true },
+  { key: 'availability',       enabled: true },
+  { key: 'contact',            enabled: true },
+  { key: 'faq',                enabled: true },
+  { key: 'partners',           enabled: false },
+  { key: 'video_testimonials', enabled: false },
+  { key: 'google_reviews',     enabled: false },
+  { key: 'instagram',          enabled: false },
+];
+
 /* ── SEO ─────────────────────────────────────────── */
 function injectSeo(op, slug) {
   const desc = op.description || `Reserve directamente em ${op.name}, Ilha do Sal, Cabo Verde.`;
@@ -391,7 +409,7 @@ function SkeletonPage() {
 
 /* ── PartnersSection ─────────────────────────────── */
 function PartnersSection({ op, lang }) {
-  const partners = Array.isArray(op.partners) ? op.partners : [];
+  const partners = Array.isArray(op.page_config?.partners) ? op.page_config.partners : [];
   if (partners.length === 0) return null;
   return (
     <section className="max-w-5xl mx-auto px-4 sm:px-6 py-12 sm:py-16 border-t border-n-100">
@@ -412,7 +430,7 @@ function PartnersSection({ op, lang }) {
 
 /* ── VideoTestimonialsSection ─────────────────────── */
 function VideoTestimonialsSection({ op, lang }) {
-  const videos = Array.isArray(op.video_testimonials) ? op.video_testimonials : [];
+  const videos = Array.isArray(op.page_config?.video_testimonials) ? op.page_config.video_testimonials : [];
   if (videos.length === 0) return null;
   return (
     <section className="max-w-5xl mx-auto px-4 sm:px-6 py-12 sm:py-16 border-t border-n-100">
@@ -432,7 +450,7 @@ function VideoTestimonialsSection({ op, lang }) {
 
 /* ── GoogleReviewsSection ─────────────────────────── */
 function GoogleReviewsSection({ op, lang }) {
-  const reviews = Array.isArray(op.google_reviews) ? op.google_reviews : [];
+  const reviews = Array.isArray(op.page_config?.google_reviews) ? op.page_config.google_reviews : [];
   if (reviews.length === 0) return null;
   return (
     <section className="max-w-5xl mx-auto px-4 sm:px-6 py-12 sm:py-16 border-t border-n-100">
@@ -456,7 +474,8 @@ function GoogleReviewsSection({ op, lang }) {
 
 /* ── InstagramSection ─────────────────────────────── */
 function InstagramSection({ op, lang }) {
-  if (!op.instagram) return null;
+  const instagramUrl = op.page_config?.social?.instagram;
+  if (!instagramUrl) return null;
   return (
     <section className="max-w-5xl mx-auto px-4 sm:px-6 py-12 sm:py-16 border-t border-n-100 text-center">
       <div className="w-14 h-14 rounded-full bg-gradient-to-tr from-sand-500 via-error to-ocean-700 flex items-center justify-center mx-auto mb-4">
@@ -468,7 +487,7 @@ function InstagramSection({ op, lang }) {
       <p className="text-sm font-body text-n-500 mb-6 max-w-md mx-auto">
         {lang === 'en' ? 'See more photos and updates from our experiences.' : 'Vê mais fotos e novidades das nossas experiências.'}
       </p>
-      <a href={op.instagram} target="_blank" rel="noopener noreferrer"
+      <a href={instagramUrl} target="_blank" rel="noopener noreferrer"
         className="inline-flex items-center gap-2 bg-ocean-700 text-white text-sm font-body font-semibold px-6 py-3 rounded-full hover:bg-ocean-500 transition-colors">
         {lang === 'en' ? 'Visit Instagram' : 'Ver Instagram'}
       </a>
@@ -1087,6 +1106,15 @@ export default function PublicBooking() {
         a: (lang === 'en' ? f.answer_en   : f.answer_pt)   || f.answer_pt   || f.answer_en,
       }))
     : [...(FAQ_BY_TYPE[op.operator_type] || []), ...FAQ_COMMON];
+
+  /* ── Ordem/visibilidade das secções customizável pelo operador ── */
+  const pageSections = op.page_config?.sections?.length ? op.page_config.sections : DEFAULT_SECTIONS;
+  const enabledSections = pageSections.filter(s => s.enabled);
+  const sectionOrderMap = Object.fromEntries(enabledSections.map((s, i) => [s.key, i]));
+  const sectionOrder   = key => sectionOrderMap[key] ?? 999;
+  const sectionEnabled = key => sectionOrderMap[key] !== undefined;
+  const footerSocial = op.page_config?.social || {};
+
   return (
     <div className="min-h-screen bg-white">
 
@@ -1292,13 +1320,40 @@ export default function PublicBooking() {
         </div>
       </div>
 
+      {/* ── Confiança ── */}
+      <section className="bg-n-50 border-t border-n-100">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 py-12 sm:py-16">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {[
+              { Icon: Shield, pt: 'Reserva Directa', en: 'Direct Booking', subPt: 'Sem comissões de plataformas externas', subEn: 'No fees from external platforms' },
+              { Icon: Lock, pt: 'Pagamento Seguro', en: 'Secure Payment', subPt: 'Dados protegidos em todas as transacções', subEn: 'Protected data on every transaction' },
+              { Icon: RotateCcw, pt: 'Cancelamento', en: 'Cancellation', subPt: 'Política de cancelamento clara e simples', subEn: 'Clear and simple cancellation policy' },
+              { Icon: CheckCircle, pt: 'Confirmação Imediata', en: 'Instant Confirmation', subPt: 'Resposta rápida a cada pedido de reserva', subEn: 'Fast response to every booking request' },
+            ].map(({ Icon, pt, en, subPt, subEn }, i) => (
+              <div key={i} className="flex flex-col items-center text-center gap-2">
+                <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center mb-1">
+                  <Icon size={22} strokeWidth={1.75} className="text-ocean-700" />
+                </div>
+                <p className="font-display font-bold text-n-900 text-sm">{lang === 'en' ? en : pt}</p>
+                <p className="text-xs font-body text-n-500 leading-relaxed">{lang === 'en' ? subEn : subPt}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── Secções customizáveis (ordem/visibilidade definidas pelo operador) ── */}
+      <div style={{ display: 'flex', flexDirection: 'column' }}>
+
       {/* ── Featured ── */}
+      <div style={{ order: sectionOrder('featured') }}>
       <FeaturedSection
         units={units} slug={slug} currency={currency} lang={lang}
         opType={op.operator_type} opCurrency={op.currency}
       />
+      </div>
 
-      <div className="max-w-5xl mx-auto px-4 sm:px-6">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6" style={{ order: sectionOrder('services') }}>
 
         {/* ── Serviços ── */}
         {units.length > 0 && (
@@ -1384,7 +1439,7 @@ export default function PublicBooking() {
       </div>
 
       {/* ── Sobre Nós ── */}
-      <section id="sobre" className="bg-n-50 border-t border-n-100">
+      <section id="sobre" className="bg-n-50 border-t border-n-100" style={{ order: sectionOrder('about') }}>
         <div className="max-w-5xl mx-auto px-4 sm:px-6 py-12 sm:py-16">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
             {op.logo_url && (
@@ -1433,8 +1488,10 @@ export default function PublicBooking() {
         </div>
       </section>
       {/* ── Experience Timeline ── */}
-      <ExperienceTimelineSection op={op} units={units} lang={lang} />
-      <div className="max-w-5xl mx-auto px-4 sm:px-6">
+      <div style={{ order: sectionOrder('timeline') }}>
+        <ExperienceTimelineSection op={op} units={units} lang={lang} />
+      </div>
+      <div className="max-w-5xl mx-auto px-4 sm:px-6" style={{ order: sectionOrder('gallery') }}>
 
         {/* ── Galeria ── */}
         {galleryImgs.length > 0 && (
@@ -1476,7 +1533,9 @@ export default function PublicBooking() {
             </div>
           </section>
         )}
+      </div>
 
+      <div className="max-w-5xl mx-auto px-4 sm:px-6" style={{ order: sectionOrder('reviews') }}>
         {/* ── Avaliações ── */}
         {reviews.length > 0 && (
           <section id="avaliacoes" className="py-12 sm:py-16 border-t border-n-100">
@@ -1575,37 +1634,19 @@ export default function PublicBooking() {
       </div>
 
       {/* ── Tour Comparison ── */}
-      <TourComparisonSection units={units} lang={lang} opCurrency={op.currency} />
+      <div style={{ order: sectionOrder('comparison') }}>
+        <TourComparisonSection units={units} lang={lang} opCurrency={op.currency} />
+      </div>
 
       {/* ── Live Availability ── */}
-      <LiveAvailabilitySection
-        slug={slug} units={units} lang={lang}
-        opType={op.operator_type} currency={currency} opCurrency={op.currency}
-      />
+      <div style={{ order: sectionOrder('availability') }}>
+        <LiveAvailabilitySection
+          slug={slug} units={units} lang={lang}
+          opType={op.operator_type} currency={currency} opCurrency={op.currency}
+        />
+      </div>
 
-      {/* ── Confiança ── */}
-      <section className="bg-n-50 border-t border-n-100">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 py-12 sm:py-16">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {[
-              { Icon: Shield, pt: 'Reserva Directa', en: 'Direct Booking', subPt: 'Sem comissões de plataformas externas', subEn: 'No fees from external platforms' },
-              { Icon: Lock, pt: 'Pagamento Seguro', en: 'Secure Payment', subPt: 'Dados protegidos em todas as transacções', subEn: 'Protected data on every transaction' },
-              { Icon: RotateCcw, pt: 'Cancelamento', en: 'Cancellation', subPt: 'Política de cancelamento clara e simples', subEn: 'Clear and simple cancellation policy' },
-              { Icon: CheckCircle, pt: 'Confirmação Imediata', en: 'Instant Confirmation', subPt: 'Resposta rápida a cada pedido de reserva', subEn: 'Fast response to every booking request' },
-            ].map(({ Icon, pt, en, subPt, subEn }, i) => (
-              <div key={i} className="flex flex-col items-center text-center gap-2">
-                <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center mb-1">
-                  <Icon size={22} strokeWidth={1.75} className="text-ocean-700" />
-                </div>
-                <p className="font-display font-bold text-n-900 text-sm">{lang === 'en' ? en : pt}</p>
-                <p className="text-xs font-body text-n-500 leading-relaxed">{lang === 'en' ? subEn : subPt}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <div className="max-w-5xl mx-auto px-4 sm:px-6">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6" style={{ order: sectionOrder('contact') }}>
 
         {/* ── Localização + Contacto ── */}
         <section id="contacto" className="py-12 sm:py-16">
@@ -1727,7 +1768,9 @@ export default function PublicBooking() {
             </div>
           </div>
         </section>
+      </div>
 
+      <div className="max-w-5xl mx-auto px-4 sm:px-6" style={{ order: sectionOrder('faq') }}>
         {/* ── FAQ ── */}
         <section className="py-12 sm:py-16 border-t border-n-100">
           <p className="text-xs font-body font-bold text-ocean-700 uppercase tracking-widest mb-2">FAQ</p>
@@ -1753,16 +1796,27 @@ export default function PublicBooking() {
         </section>
       </div>
 
-      {/* ── Special Offer ── */}
-      <SpecialOfferSection lang={lang} goBook={goBook} />
       {/* ── Partners ── */}
-      <PartnersSection op={op} lang={lang} />
+      <div style={{ order: sectionOrder('partners') }}>
+        <PartnersSection op={op} lang={lang} />
+      </div>
       {/* ── Video Testimonials ── */}
-      <VideoTestimonialsSection op={op} lang={lang} />
+      <div style={{ order: sectionOrder('video_testimonials') }}>
+        <VideoTestimonialsSection op={op} lang={lang} />
+      </div>
       {/* ── Google Reviews ── */}
-      <GoogleReviewsSection op={op} lang={lang} />
+      <div style={{ order: sectionOrder('google_reviews') }}>
+        <GoogleReviewsSection op={op} lang={lang} />
+      </div>
       {/* ── Instagram ── */}
-      <InstagramSection op={op} lang={lang} />
+      <div style={{ order: sectionOrder('instagram') }}>
+        <InstagramSection op={op} lang={lang} />
+      </div>
+
+      </div>
+      {/* ── Special Offer (fixo, fora da zona reordenável) ── */}
+      <SpecialOfferSection lang={lang} goBook={goBook} />
+
       {/* ── Footer ── */}
       <footer className="bg-ocean-900 text-white/70 mt-16">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 py-12">
@@ -1790,17 +1844,17 @@ export default function PublicBooking() {
                   </span>
                 </div>
               )}
-              {(op.instagram || op.facebook) && (
+              {(footerSocial.instagram || footerSocial.facebook) && (
                 <div className="flex flex-wrap gap-2 mt-3">
-                  {op.instagram && (
-                    <a href={op.instagram} target="_blank" rel="noopener noreferrer"
+                  {footerSocial.instagram && (
+                    <a href={footerSocial.instagram} target="_blank" rel="noopener noreferrer"
                       className="flex items-center gap-1 text-xs font-body text-white/50 hover:text-white border border-white/15 px-2.5 py-1 rounded-full transition-colors">
                       Instagram
                       <ExternalLink size={10} strokeWidth={2} />
                     </a>
                   )}
-                  {op.facebook && (
-                    <a href={op.facebook} target="_blank" rel="noopener noreferrer"
+                  {footerSocial.facebook && (
+                    <a href={footerSocial.facebook} target="_blank" rel="noopener noreferrer"
                       className="flex items-center gap-1 text-xs font-body text-white/50 hover:text-white border border-white/15 px-2.5 py-1 rounded-full transition-colors">
                       Facebook
                       <ExternalLink size={10} strokeWidth={2} />

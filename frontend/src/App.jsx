@@ -23,6 +23,7 @@ const Automations     = lazy(() => import('./pages/Automations'));
 const Financial       = lazy(() => import('./pages/Financial'));
 const Integrations    = lazy(() => import('./pages/Integrations'));
 const Settings        = lazy(() => import('./pages/Settings'));
+const PageEditor       = lazy(() => import('./pages/PageEditor'));
 const Staff           = lazy(() => import('./pages/Staff'));
 const Reviews         = lazy(() => import('./pages/Reviews'));
 const Profile         = lazy(() => import('./pages/Profile'));
@@ -141,6 +142,7 @@ export default function App() {
           <Route path="grupos"        element={<PlanGuard plan="pro"      feature="grupos">       <Groups /></PlanGuard>} />
           <Route path="pacotes"       element={<PlanGuard plan="pro"      feature="pacotes">      <Packages /></PlanGuard>} />
           <Route path="parcerias"     element={<PlanGuard plan="pro"      feature="parcerias">    <Partners /></PlanGuard>} />
+          <Route path="editor-pagina" element={<PageEditor />} />
           <Route path="definicoes"    element={<Settings />} />
           <Route path="perfil"        element={<Profile />} />
         </Route>

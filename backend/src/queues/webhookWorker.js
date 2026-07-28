@@ -58,15 +58,37 @@ function mapGygStatus(s) {
   return map[s] || 'confirmed';
 }
 
-/* Encontra a unidade do operador correspondente ao produto OTA */
-async function encontrarUnidade(operatorId, productCode) {
+/* Encontra a unidade do operador correspondente ao produto OTA.
+   Prioriza o mapeamento explicito units.ota_product_ids[channel] == productCode.
+   So recorre a "unica unidade activa" quando nao ha ambiguidade possivel —
+   caso contrario falha com uma razao clara em vez de adivinhar a unidade. */
+async function encontrarUnidade(operatorId, channel, productCode) {
   const { data: units } = await supabaseAdmin
     .from('units')
-    .select('id, name')
+    .select('id, name, ota_product_ids')
     .eq('operator_id', operatorId)
-    .eq('status', 'active')
-    .limit(1);
-  return units?.[0] || null;
+    .eq('status', 'active');
+
+  const activas = units || [];
+  if (activas.length === 0) {
+    return { unit: null, reason: 'Nenhuma unidade activa encontrada' };
+  }
+
+  if (productCode) {
+    const match = activas.find((u) => u.ota_product_ids?.[channel] === productCode);
+    if (match) return { unit: match, reason: null };
+  }
+
+  if (activas.length === 1) {
+    return { unit: activas[0], reason: null };
+  }
+
+  return {
+    unit: null,
+    reason: productCode
+      ? `Produto OTA "${productCode}" nao esta mapeado a nenhuma unidade (operador tem ${activas.length} unidades activas). Configure o ID do produto na unidade correspondente.`
+      : `Payload sem codigo de produto e o operador tem ${activas.length} unidades activas — impossivel determinar a unidade sem ambiguidade.`,
+  };
 }
 
 async function processWebhookJob({ data }) {
@@ -110,9 +132,9 @@ async function processWebhookJob({ data }) {
   }
 
   /* Encontrar unidade */
-  const unit = await encontrarUnidade(operatorId, normalizado.productCode);
+  const { unit, reason } = await encontrarUnidade(operatorId, channel, normalizado.productCode);
   if (!unit) {
-    await actualizarLog(operatorId, channel, externalRef, 'failed', 'Nenhuma unidade activa encontrada');
+    await actualizarLog(operatorId, channel, externalRef, 'failed', reason || 'Nenhuma unidade activa encontrada');
     return;
   }
 

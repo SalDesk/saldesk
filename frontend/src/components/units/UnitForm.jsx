@@ -33,6 +33,38 @@ function SectionLabel({ children }) {
   );
 }
 
+function OtaFields({ form, set }) {
+  return (
+    <div>
+      <SectionLabel>Integração OTA (opcional)</SectionLabel>
+      <div className="grid grid-cols-2 gap-3">
+        <Input
+          label="ID produto Viator"
+          value={form.ota_viator_id}
+          onChange={set('ota_viator_id')}
+          placeholder="Ex: 12345P1"
+        />
+        <Input
+          label="ID produto GetYourGuide"
+          value={form.ota_gyg_id}
+          onChange={set('ota_gyg_id')}
+          placeholder="Ex: 67890"
+        />
+      </div>
+      <p className="text-xs font-body text-n-400 mt-1.5">
+        Liga esta unidade ao produto correspondente na Viator/GetYourGuide para que as reservas recebidas por webhook sejam atribuídas a esta unidade.
+      </p>
+    </div>
+  );
+}
+
+function buildOtaProductIds(form) {
+  return {
+    viator: form.ota_viator_id || null,
+    getyourguide: form.ota_gyg_id || null,
+  };
+}
+
 function TourForm({ unit, onSave, onCancel, loading, error }) {
   const meta = parseTourMeta(unit?.description);
 
@@ -55,6 +87,8 @@ function TourForm({ unit, onSave, onCancel, loading, error }) {
     price_private: meta.price_private  != null ? String(meta.price_private) : '',
     status:   unit?.status  || 'active',
     images:   unit?.images  || [],
+    ota_viator_id: unit?.ota_product_ids?.viator       || '',
+    ota_gyg_id:    unit?.ota_product_ids?.getyourguide || '',
   });
 
   const set = (field) => (e) => setForm(f => ({ ...f, [field]: e.target.value }));
@@ -94,6 +128,7 @@ function TourForm({ unit, onSave, onCancel, loading, error }) {
       capacity:    Number(form.capacity),
       status:      form.status,
       images,
+      ota_product_ids: buildOtaProductIds(form),
     });
   }
 
@@ -276,6 +311,8 @@ function TourForm({ unit, onSave, onCancel, loading, error }) {
         />
       </div>
 
+      <OtaFields form={form} set={set} />
+
       {unit && (
         <div>
           <SectionLabel>Estado</SectionLabel>
@@ -333,6 +370,8 @@ function HotelRoomForm({ unit, onSave, onCancel, loading, error }) {
     description:   meta.description    || '',
     status:        unit?.status        || 'active',
     images:        unit?.images        || [],
+    ota_viator_id: unit?.ota_product_ids?.viator       || '',
+    ota_gyg_id:    unit?.ota_product_ids?.getyourguide || '',
   });
 
   const set = (field) => (e) => setForm(f => ({ ...f, [field]: e.target.value }));
@@ -370,6 +409,7 @@ function HotelRoomForm({ unit, onSave, onCancel, loading, error }) {
       capacity:    Number(form.capacity),
       status:      form.status,
       images:      form.images,
+      ota_product_ids: buildOtaProductIds(form),
     });
   }
 
@@ -450,6 +490,8 @@ function HotelRoomForm({ unit, onSave, onCancel, loading, error }) {
         />
       </div>
 
+      <OtaFields form={form} set={set} />
+
       {unit && (
         <div>
           <SectionLabel>Estado</SectionLabel>
@@ -513,6 +555,8 @@ function RentacarVehicleForm({ unit, onSave, onCancel, loading, error }) {
     next_revision_km:meta.next_revision_km!= null ? String(meta.next_revision_km) : '',
     status:          unit?.status       || 'active',
     images:          unit?.images       || [],
+    ota_viator_id: unit?.ota_product_ids?.viator       || '',
+    ota_gyg_id:    unit?.ota_product_ids?.getyourguide || '',
   });
 
   const set = (k) => (e) => setForm(f => ({ ...f, [k]: e.target.value }));
@@ -560,6 +604,7 @@ function RentacarVehicleForm({ unit, onSave, onCancel, loading, error }) {
       capacity:    Number(form.seats) || 5,
       status:      form.status,
       images:      form.images,
+      ota_product_ids: buildOtaProductIds(form),
     });
   }
 
@@ -657,6 +702,8 @@ function RentacarVehicleForm({ unit, onSave, onCancel, loading, error }) {
         <ImageUploader value={form.images} onChange={(urls) => setForm(f => ({ ...f, images: urls }))} maxImages={8} hint="Primeira foto = capa · max 8 fotos · 5MB cada" />
       </div>
 
+      <OtaFields form={form} set={set} />
+
       {unit && (
         <div>
           <SectionLabel>Estado</SectionLabel>
@@ -702,6 +749,8 @@ function RestaurantTableForm({ unit, onSave, onCancel, loading, error }) {
     capacity_max: meta.capacity_max != null ? String(meta.capacity_max) : String(unit?.capacity ?? '4'),
     combinable:   meta.combinable   ?? false,
     status:       unit?.status      || 'active',
+    ota_viator_id: unit?.ota_product_ids?.viator       || '',
+    ota_gyg_id:    unit?.ota_product_ids?.getyourguide || '',
   });
 
   const set = (k) => (e) => setForm(f => ({ ...f, [k]: e.target.value }));
@@ -727,6 +776,7 @@ function RestaurantTableForm({ unit, onSave, onCancel, loading, error }) {
       capacity:    Number(form.capacity_max) || 4,
       status:      form.status,
       images:      unit?.images || [],
+      ota_product_ids: buildOtaProductIds(form),
     });
   }
 
@@ -768,6 +818,8 @@ function RestaurantTableForm({ unit, onSave, onCancel, loading, error }) {
           <span className="text-sm font-body text-n-700">Mesa combinavel com outras</span>
         </label>
       </div>
+
+      <OtaFields form={form} set={set} />
 
       {unit && (
         <div>
@@ -856,6 +908,8 @@ export default function UnitForm({ unit, operatorType, onSave, onCancel, loading
     capacity:    unit?.capacity    ?? 1,
     status:  unit?.status  || 'active',
     images:  unit?.images  || [],
+    ota_viator_id: unit?.ota_product_ids?.viator       || '',
+    ota_gyg_id:    unit?.ota_product_ids?.getyourguide || '',
   });
 
   const set = (field) => (e) => setForm({ ...form, [field]: e.target.value });
@@ -871,6 +925,7 @@ export default function UnitForm({ unit, operatorType, onSave, onCancel, loading
       capacity:    Number(form.capacity),
       status:      form.status,
       images:      form.images,
+      ota_product_ids: buildOtaProductIds(form),
     });
   }
 
@@ -932,6 +987,8 @@ export default function UnitForm({ unit, operatorType, onSave, onCancel, loading
         maxImages={10}
         hint="Primeira foto = capa principal · max 10 fotos · 5MB cada"
       />
+
+      <OtaFields form={form} set={set} />
 
       {unit && (
         <Select label={t('common.status')} value={form.status} onChange={set('status')}>

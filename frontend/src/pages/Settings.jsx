@@ -1,10 +1,11 @@
 import { useState, useEffect, useRef } from 'react';
+import { Link } from 'react-router-dom';
 import {
   Copy, Check, Download, CreditCard, Globe, User, Bell,
-  Link2, Shield, ExternalLink, Share2,
-  Eye, EyeOff, RefreshCw, AlertCircle, CheckCircle2, XCircle, Upload,
+  Shield, ExternalLink,
+  Eye, EyeOff, RefreshCw, CheckCircle2, XCircle, Upload,
   Camera, ChevronUp, ChevronDown, X, Plus, ArrowUpRight,
-  Lock, Key, Smartphone, Phone, Wifi, WifiOff, Trash2,
+  Lock, Key, Smartphone, Trash2,
   Clock, AlertTriangle, Monitor, ToggleLeft, ToggleRight,
 } from 'lucide-react';
 import api from '../services/api';
@@ -14,13 +15,13 @@ import {
   terminateSession, terminateAllSessions,
 } from '../services/authService';
 import PasswordStrength, { getPasswordStrength } from '../components/auth/PasswordStrength';
-import { getStatus, connectChannel, disconnectChannel, syncManual } from '../services/integrationsService';
 import useAuthStore from '../store/authStore';
 import PageHeader from '../components/layout/PageHeader';
 import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
 import Input, { Select, Textarea } from '../components/ui/Input';
 import Modal from '../components/ui/Modal';
+import Toggle from '../components/ui/Toggle';
 
 /* ── helpers ── */
 function CopyButton({ text }) {
@@ -43,21 +44,6 @@ function SaveBanner({ saved }) {
     <div className="flex items-center gap-2 text-sm font-body text-green-700 bg-green-50 border border-green-200 rounded px-3 py-2">
       <CheckCircle2 size={14} strokeWidth={1.75} />
       Guardado com sucesso
-    </div>
-  );
-}
-
-function Toggle({ checked, onChange, label, hint }) {
-  return (
-    <div className="flex items-start justify-between gap-4 py-3 border-b border-n-100 last:border-0">
-      <div>
-        <p className="text-sm font-display font-semibold text-n-800">{label}</p>
-        {hint && <p className="text-xs font-body text-n-500 mt-0.5">{hint}</p>}
-      </div>
-      <button type="button" onClick={() => onChange(!checked)}
-        className={`shrink-0 w-10 h-5 rounded-full transition-colors relative mt-0.5 ${checked ? 'bg-ocean-700' : 'bg-n-300'}`}>
-        <span className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-all ${checked ? 'left-[22px]' : 'left-0.5'}`} />
-      </button>
     </div>
   );
 }
@@ -138,13 +124,6 @@ function ContaTab({ operator, onSaved }) {
 /* ─────────────────────────────────────────────────────────
    TAB 2 — PERFIL PUBLICO
 ───────────────────────────────────────────────────────── */
-const WEEK_DAYS = [
-  { key: 'seg', label: 'Segunda' }, { key: 'ter', label: 'Terca' },
-  { key: 'qua', label: 'Quarta' },  { key: 'qui', label: 'Quinta' },
-  { key: 'sex', label: 'Sexta' },   { key: 'sab', label: 'Sabado' },
-  { key: 'dom', label: 'Domingo' },
-];
-const SPOKEN_LANGS = ['PT', 'EN', 'FR', 'ES', 'DE', 'NL', 'IT'];
 
 function PerfilPublicoTab({ operator }) {
   const { setOperator } = useAuthStore();
@@ -155,23 +134,6 @@ function PerfilPublicoTab({ operator }) {
   const [descPt,  setDescPt]        = useState(operator?.description_pt || '');
   const [descEn,  setDescEn]        = useState(operator?.description_en || '');
   const [faqs, setFaqs] = useState(operator?.custom_faqs || []);
-  const [social,  setSocial]        = useState({
-    instagram:   operator?.social?.instagram   || '',
-    facebook:    operator?.social?.facebook    || '',
-    tripadvisor: operator?.social?.tripadvisor || '',
-    google_maps: operator?.social?.google_maps || '',
-    whatsapp:    operator?.social?.whatsapp    || '',
-    linkedin:    operator?.social?.linkedin    || '',
-  });
-  const [hours, setHours] = useState(() =>
-    WEEK_DAYS.reduce((acc, d) => ({
-      ...acc,
-      [d.key]: operator?.opening_hours?.[d.key] || { open: d.key !== 'dom', start: '09:00', end: '18:00' },
-    }), {})
-  );
-  const [spokenLangs, setSpokenLangs] = useState(operator?.spoken_languages || ['PT', 'EN']);
-  const [lat, setLat] = useState(operator?.lat || '16.8948');
-  const [lng, setLng] = useState(operator?.lng || '-22.9144');
 
   /* marketing — loaded separately */
   const [bookingLink, setBookingLink] = useState('');
@@ -232,14 +194,6 @@ function PerfilPublicoTab({ operator }) {
     });
   }
 
-  function toggleSpokenLang(l) {
-    setSpokenLangs(p => p.includes(l) ? p.filter(x => x !== l) : [...p, l]);
-  }
-
-  function setHourField(day, field, value) {
-    setHours(p => ({ ...p, [day]: { ...p[day], [field]: value } }));
-  }
-
   async function handleSave(e) {
     e.preventDefault(); setSaving(true);
     try {
@@ -247,11 +201,6 @@ function PerfilPublicoTab({ operator }) {
         logo_url:       logoPreview,
         description_pt: descPt,
         description_en: descEn,
-        social,
-        opening_hours:  hours,
-        spoken_languages: spokenLangs,
-        lat: parseFloat(lat) || null,
-        lng: parseFloat(lng) || null,
         custom_faqs: faqs.filter(f => f.question_pt || f.question_en),
       };
       const updated = await updateOperator(payload);
@@ -375,87 +324,19 @@ function PerfilPublicoTab({ operator }) {
         </div>
       </Card>
 
-      {/* Social */}
-      <Card header={<h3 className="font-display font-semibold text-sm text-n-700">Redes sociais</h3>}>
-        <div className="space-y-3">
-          {[
-            { key: 'instagram',   label: 'Instagram',            icon: ExternalLink, ph: 'https://instagram.com/...',           preview: true  },
-            { key: 'facebook',    label: 'Facebook',             icon: Share2,       ph: 'https://facebook.com/...',            preview: true  },
-            { key: 'tripadvisor', label: 'TripAdvisor',          icon: Globe,        ph: 'https://tripadvisor.com/...',         preview: true  },
-            { key: 'google_maps', label: 'Google Maps',          icon: Globe,        ph: 'https://maps.app.goo.gl/...',         preview: true  },
-            { key: 'whatsapp',    label: 'WhatsApp Business',    icon: Phone,        ph: '+238 900 0000',                       preview: false },
-            { key: 'linkedin',    label: 'LinkedIn (opcional)',   icon: ExternalLink, ph: 'https://linkedin.com/company/...',    preview: true  },
-          ].map(({ key, label, icon: Icon, ph, preview }) => (
-            <div key={key} className="flex items-start gap-2">
-              <Icon size={16} strokeWidth={1.75} className="text-n-400 shrink-0 mt-7" />
-              <div className="flex-1">
-                <Input label={label} value={social[key]} placeholder={ph}
-                  onChange={e => setSocial(p => ({ ...p, [key]: e.target.value }))} />
-              </div>
-              {preview && social[key] && (
-                <a
-                  href={social[key].startsWith('http') ? social[key] : `https://${social[key]}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  title={`Abrir ${label}`}
-                  className="mt-6 w-9 h-9 flex items-center justify-center border border-n-200 rounded-sm bg-n-50 text-ocean-700 hover:bg-ocean-50 hover:border-ocean-300 transition-colors shrink-0"
-                >
-                  <ExternalLink size={14} strokeWidth={1.75} />
-                </a>
-              )}
-            </div>
-          ))}
+      {/* Editor da pagina publica */}
+      <Card>
+        <div className="flex items-center justify-between gap-4">
+          <div>
+            <h3 className="font-display font-semibold text-sm text-n-700">Secções, redes sociais, horário e mais</h3>
+            <p className="text-xs font-body text-n-500 mt-0.5">
+              Activar/desactivar secções, reordenar, parceiros, testemunhos, redes sociais, horário, idiomas e localização agora vivem no Editor da Página Pública.
+            </p>
+          </div>
+          <Link to="/editor-pagina" className="shrink-0">
+            <Button type="button" variant="secondary" icon={ExternalLink} size="sm">Abrir editor</Button>
+          </Link>
         </div>
-      </Card>
-
-      {/* Opening hours */}
-      <Card header={<h3 className="font-display font-semibold text-sm text-n-700">Horario de funcionamento</h3>}>
-        <div className="space-y-2">
-          {WEEK_DAYS.map(d => (
-            <div key={d.key} className="flex items-center gap-3">
-              <button type="button" onClick={() => setHourField(d.key, 'open', !hours[d.key].open)}
-                className={`w-8 h-4 rounded-full transition-colors relative shrink-0 ${hours[d.key].open ? 'bg-ocean-700' : 'bg-n-300'}`}>
-                <span className={`absolute top-0.5 w-3 h-3 bg-white rounded-full shadow transition-all ${hours[d.key].open ? 'left-4.5' : 'left-0.5'}`} />
-              </button>
-              <span className="text-sm font-body text-n-700 w-16 shrink-0">{d.label}</span>
-              {hours[d.key].open ? (
-                <div className="flex items-center gap-2">
-                  <input type="time" value={hours[d.key].start}
-                    onChange={e => setHourField(d.key, 'start', e.target.value)}
-                    className="h-8 px-2 border border-n-200 rounded text-sm font-mono text-n-800 bg-n-50 focus:outline-none focus:border-ocean-700" />
-                  <span className="text-xs text-n-400">ate</span>
-                  <input type="time" value={hours[d.key].end}
-                    onChange={e => setHourField(d.key, 'end', e.target.value)}
-                    className="h-8 px-2 border border-n-200 rounded text-sm font-mono text-n-800 bg-n-50 focus:outline-none focus:border-ocean-700" />
-                </div>
-              ) : (
-                <span className="text-xs font-body text-n-400 italic">Fechado</span>
-              )}
-            </div>
-          ))}
-        </div>
-      </Card>
-
-      {/* Spoken languages + location */}
-      <Card header={<h3 className="font-display font-semibold text-sm text-n-700">Idiomas falados</h3>}>
-        <div className="flex gap-2 flex-wrap">
-          {SPOKEN_LANGS.map(l => (
-            <button key={l} type="button" onClick={() => toggleSpokenLang(l)}
-              className={`px-3 py-1.5 rounded text-sm font-mono font-medium transition-colors ${spokenLangs.includes(l) ? 'bg-ocean-700 text-white' : 'bg-n-100 text-n-600 hover:bg-n-200'}`}>
-              {l}
-            </button>
-          ))}
-        </div>
-      </Card>
-
-      <Card header={<h3 className="font-display font-semibold text-sm text-n-700">Localizacao (coordenadas GPS)</h3>}>
-        <div className="grid grid-cols-2 gap-3">
-          <Input label="Latitude" value={lat} onChange={e => setLat(e.target.value)} placeholder="16.8948" />
-          <Input label="Longitude" value={lng} onChange={e => setLng(e.target.value)} placeholder="-22.9144" />
-        </div>
-        <p className="text-xs font-body text-n-400 mt-2">
-          Encontrar coordenadas em <strong>maps.google.com</strong> → clique direito → "What's here?"
-        </p>
       </Card>
 
       {/* Marketing tools */}
@@ -671,145 +552,6 @@ function NotificacoesTab() {
 /* ─────────────────────────────────────────────────────────
    TAB 5 — INTEGRACOES
 ───────────────────────────────────────────────────────── */
-function IntegracoesTab() {
-  const [status,   setStatus]   = useState(null);
-  const [syncing,  setSyncing]  = useState('');
-  const [syncMsg,  setSyncMsg]  = useState('');
-  const [connect,  setConnect]  = useState(null); // { channel, apiKey, supplierId }
-
-  useEffect(() => {
-    getStatus().then(setStatus).catch(() => {});
-  }, []);
-
-  async function handleSync(channel) {
-    setSyncing(channel); setSyncMsg('');
-    try {
-      await syncManual(channel);
-      setSyncMsg(`${channel} sincronizado com sucesso`);
-      setTimeout(() => setSyncMsg(''), 3000);
-      const s = await getStatus();
-      setStatus(s);
-    } catch (err) {
-      setSyncMsg(`Erro ao sincronizar: ${err.response?.data?.error || 'tente de novo'}`);
-    } finally { setSyncing(''); }
-  }
-
-  async function handleConnect(e) {
-    e.preventDefault();
-    try {
-      await connectChannel(connect.channel, { api_key: connect.apiKey, supplier_id: connect.supplierId });
-      const s = await getStatus();
-      setStatus(s);
-      setConnect(null);
-    } catch (err) { console.error(err); }
-  }
-
-  async function handleDisconnect(channel) {
-    try {
-      await disconnectChannel(channel);
-      const s = await getStatus();
-      setStatus(s);
-    } catch (err) { console.error(err); }
-  }
-
-  const CHANNELS = [
-    { key: 'viator',       label: 'Viator',        color: '#00A680', desc: 'Synchronize bookings from Viator / TripAdvisor Experiences.' },
-    { key: 'getyourguide', label: 'GetYourGuide',  color: '#FF5533', desc: 'Synchronize bookings from GetYourGuide.' },
-  ];
-
-  return (
-    <div className="space-y-4 max-w-2xl">
-      {syncMsg && (
-        <div className={`flex items-center gap-2 px-3 py-2 rounded border text-sm font-body ${syncMsg.startsWith('Erro') ? 'bg-red-50 border-red-200 text-error' : 'bg-green-50 border-green-200 text-green-700'}`}>
-          {syncMsg.startsWith('Erro') ? <AlertCircle size={14} strokeWidth={1.75} /> : <CheckCircle2 size={14} strokeWidth={1.75} />}
-          {syncMsg}
-        </div>
-      )}
-
-      {CHANNELS.map(ch => {
-        const chStatus = status?.[ch.key];
-        const isActive = chStatus?.is_active;
-        return (
-          <Card key={ch.key}>
-            <div className="flex items-start justify-between gap-4">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded border border-n-200 bg-n-50 flex items-center justify-center">
-                  <Link2 size={18} strokeWidth={1.75} className="text-n-400" />
-                </div>
-                <div>
-                  <p className="font-display font-semibold text-sm text-n-900">{ch.label}</p>
-                  <p className="text-xs font-body text-n-500">{ch.desc}</p>
-                  {isActive && chStatus.last_sync_at && (
-                    <p className="text-xs font-mono text-n-400 mt-0.5">
-                      Ultima sync: {new Date(chStatus.last_sync_at).toLocaleString('pt-PT')}
-                    </p>
-                  )}
-                </div>
-              </div>
-              <div className="flex items-center gap-2 shrink-0">
-                {isActive ? (
-                  <>
-                    <span className="flex items-center gap-1 text-xs font-body text-green-700">
-                      <Wifi size={12} strokeWidth={1.75} />
-                      Ligado
-                    </span>
-                    <Button size="sm" variant="secondary" icon={RefreshCw}
-                      loading={syncing === ch.key} onClick={() => handleSync(ch.key)}>
-                      Sync
-                    </Button>
-                    <Button size="sm" variant="secondary"
-                      onClick={() => handleDisconnect(ch.key)}>
-                      Desligar
-                    </Button>
-                  </>
-                ) : (
-                  <>
-                    <span className="flex items-center gap-1 text-xs font-body text-n-400">
-                      <WifiOff size={12} strokeWidth={1.75} />
-                      Desligado
-                    </span>
-                    <Button size="sm" icon={Plus}
-                      onClick={() => setConnect({ channel: ch.key, apiKey: '', supplierId: '' })}>
-                      Ligar
-                    </Button>
-                  </>
-                )}
-              </div>
-            </div>
-          </Card>
-        );
-      })}
-
-      <Card>
-        <div className="flex items-center gap-3 text-n-500">
-          <AlertCircle size={16} strokeWidth={1.75} />
-          <p className="text-xs font-body">
-            Viator e GetYourGuide requerem conta de parceiro activa. As reservas externas sao sincronizadas automaticamente via webhook.
-          </p>
-        </div>
-      </Card>
-
-      {/* Connect modal */}
-      <Modal open={!!connect} onClose={() => setConnect(null)} title={`Ligar ${connect?.channel}`} size="sm">
-        {connect && (
-          <form onSubmit={handleConnect} className="space-y-4">
-            <Input label="API Key" value={connect.apiKey} required
-              onChange={e => setConnect(p => ({ ...p, apiKey: e.target.value }))}
-              placeholder="Chave de API do parceiro" />
-            <Input label="Supplier / Partner ID" value={connect.supplierId}
-              onChange={e => setConnect(p => ({ ...p, supplierId: e.target.value }))}
-              placeholder="ID de parceiro (opcional)" />
-            <div className="flex gap-3">
-              <Button type="button" variant="secondary" onClick={() => setConnect(null)} className="flex-1">Cancelar</Button>
-              <Button type="submit" className="flex-1">Ligar</Button>
-            </div>
-          </form>
-        )}
-      </Modal>
-    </div>
-  );
-}
-
 /* ─────────────────────────────────────────────────────────
    TAB 6 — SEGURANCA
 ───────────────────────────────────────────────────────── */
@@ -1131,7 +873,6 @@ const TABS = [
   { id: 'perfil',     label: 'Perfil Publico', Icon: Globe },
   { id: 'pagamentos', label: 'Pagamentos',      Icon: CreditCard },
   { id: 'notificacoes', label: 'Notificacoes', Icon: Bell },
-  { id: 'integracoes',  label: 'Integracoes',  Icon: Link2 },
   { id: 'seguranca',    label: 'Seguranca',    Icon: Shield },
 ];
 
@@ -1158,7 +899,6 @@ export default function Settings() {
       {tab === 'perfil'       && <PerfilPublicoTab operator={operator} />}
       {tab === 'pagamentos'   && <PagamentosTab />}
       {tab === 'notificacoes' && <NotificacoesTab />}
-      {tab === 'integracoes'  && <IntegracoesTab />}
       {tab === 'seguranca'    && <SegurancaTab />}
     </div>
   );
