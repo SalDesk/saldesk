@@ -240,7 +240,7 @@ async function discover(req, res, next) {
       const { data: featuredLinks } = await supabaseAdmin
         .from('cms_featured')
         .select('operator_id')
-        .eq('status', 'active')
+        .eq('is_active', true)
         .order('position');
       if (featuredLinks?.length > 0) {
         q = q.in('id', featuredLinks.map((f) => f.operator_id));
@@ -323,7 +323,7 @@ async function cmsExperiences(req, res, next) {
     const { data, error } = await supabaseAdmin
       .from('cms_experiences')
       .select('id, title_pt, title_en, description_pt, description_en, includes_pt, includes_en, price_from, duration_days, theme')
-      .eq('status', 'active')
+      .eq('is_active', true)
       .order('sort_order');
     if (error) throw error;
     return res.json({ data: data || [] });
@@ -335,13 +335,13 @@ async function cmsExperiences(req, res, next) {
 /* ─── CMS público — eventos ─── */
 async function cmsEvents(req, res, next) {
   try {
-    const today = new Date().toISOString().split('T')[0];
+    // cms_events representa epocas/eventos recorrentes por mes (month_start/
+    // month_end, 1-12), nao datas especificas — nao ha "event_date" na tabela.
     const { data, error } = await supabaseAdmin
       .from('cms_events')
-      .select('id, name_pt, name_en, description_pt, description_en, event_date, event_type')
-      .eq('status', 'active')
-      .gte('event_date', today)
-      .order('event_date')
+      .select('id, name_pt, name_en, description_pt, description_en, month_start, month_end, event_type')
+      .eq('is_active', true)
+      .order('month_start')
       .limit(12);
     if (error) throw error;
     return res.json({ data: data || [] });
@@ -357,7 +357,7 @@ async function cmsBanners(req, res, next) {
     const { data, error } = await supabaseAdmin
       .from('cms_banners')
       .select('id, title, image_url, link_url, position')
-      .eq('status', 'active')
+      .eq('is_active', true)
       .lte('starts_at', now)
       .gte('ends_at', now)
       .order('position');
