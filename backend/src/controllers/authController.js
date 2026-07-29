@@ -4,6 +4,32 @@ const { addFailedLogin } = require('../services/logStore');
 const { enviarEmail } = require('../helpers/emailHelper');
 const { passwordResetEmail } = require('../helpers/emailTemplates');
 
+/* Chama o endpoint de token do Supabase Auth (password ou refresh_token grant) */
+function supabaseTokenRequest(grantType, body) {
+  return new Promise((resolve, reject) => {
+    const payload = JSON.stringify(body);
+    const url = new URL(`${process.env.SUPABASE_URL}/auth/v1/token?grant_type=${grantType}`);
+    const options = {
+      hostname: url.hostname,
+      path: url.pathname + url.search,
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': process.env.SUPABASE_ANON_KEY,
+        'Content-Length': Buffer.byteLength(payload),
+      },
+    };
+    const req = https.request(options, (r) => {
+      let data = '';
+      r.on('data', (chunk) => data += chunk);
+      r.on('end', () => { try { resolve(JSON.parse(data)); } catch (e) { reject(e); } });
+    });
+    req.on('error', reject);
+    req.write(payload);
+    req.end();
+  });
+}
+
 async function register(req, res, next) {
   try {
     const { email, password, name, invite_code } = req.body;
@@ -79,28 +105,7 @@ async function login(req, res, next) {
   try {
     const { email, password } = req.body;
 
-    const authJson = await new Promise((resolve, reject) => {
-      const body = JSON.stringify({ email, password });
-      const url = new URL(process.env.SUPABASE_URL + '/auth/v1/token?grant_type=password');
-      const options = {
-        hostname: url.hostname,
-        path: url.pathname + url.search,
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'apikey': process.env.SUPABASE_ANON_KEY,
-          'Content-Length': Buffer.byteLength(body),
-        },
-      };
-      const req2 = https.request(options, (r) => {
-        let data = '';
-        r.on('data', (chunk) => data += chunk);
-        r.on('end', () => { try { resolve(JSON.parse(data)); } catch(e) { reject(e); } });
-      });
-      req2.on('error', reject);
-      req2.write(body);
-      req2.end();
-    });
+    const authJson = await supabaseTokenRequest('password', { email, password });
     if (!authJson.access_token || authJson.error) {
       addFailedLogin({ ip: req.ip || '', email: email || '' });
       return res.status(401).json({ error: 'Credenciais invalidas', code: 'INVALID_CREDENTIALS' });
@@ -124,6 +129,38 @@ async function login(req, res, next) {
         operator: operator || null,
       },
       message: 'Login efectuado com sucesso',
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
+async function refresh(req, res, next) {
+  try {
+    const { refresh_token } = req.body;
+    if (!refresh_token) {
+      return res.status(400).json({ error: 'refresh_token em falta', code: 'MISSING_FIELDS' });
+    }
+
+    const authJson = await supabaseTokenRequest('refresh_token', { refresh_token });
+    if (!authJson.access_token || authJson.error) {
+      return res.status(401).json({ error: 'Sessao expirada, faca login novamente', code: 'INVALID_REFRESH_TOKEN' });
+    }
+
+    const { data: operator } = await supabaseAdmin
+      .from('operators')
+      .select('*')
+      .eq('user_id', authJson.user.id)
+      .single();
+
+    return res.json({
+      data: {
+        access_token: authJson.access_token,
+        refresh_token: authJson.refresh_token,
+        user: authJson.user,
+        operator: operator || null,
+      },
+      message: 'Sessao renovada',
     });
   } catch (err) {
     next(err);
@@ -217,4 +254,4 @@ async function forgotPassword(req, res, next) {
   }
 }
 
-module.exports = { register, login, getMe, logout, changePassword, validateInvite, resetPassword, forgotPassword };
+module.exports = { register, login, refresh, getMe, logout, changePassword, validateInvite, resetPassword, forgotPassword };

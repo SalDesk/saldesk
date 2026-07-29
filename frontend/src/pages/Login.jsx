@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Shield, AlertTriangle, Lock, Eye, EyeOff } from 'lucide-react';
-import useAuthStore from '../store/authStore';
+import useAuthStore, { setRememberDevice } from '../store/authStore';
 import { login, forgotPassword } from '../services/authService';
 import { isVendedor, isStaff } from '../utils/userRoles';
 import { useT } from '../i18n';
@@ -144,7 +144,8 @@ export default function Login() {
     try {
       const result = await login(form.email, form.password);
       clearRateState(form.email);
-      setAuth(result.access_token, result.user, result.operator);
+      setRememberDevice(remember);
+      setAuth(result.access_token, result.user, result.operator, result.refresh_token);
       if (result.user?.user_metadata?.role === 'FUNDADOR') {
         navigate('/admin');
       } else if (isVendedor(result.user)) {
@@ -160,10 +161,10 @@ export default function Login() {
       setRateStateLocal(newState);
       if (isLocked(newState)) {
         startCountdown(newState);
-        setError(`Conta temporariamente bloqueada por ${LOCKOUT_MINUTES} minutos por excesso de tentativas.`);
+        setError(t('auth.accountLocked', { min: LOCKOUT_MINUTES }));
       } else {
         const remaining = MAX_ATTEMPTS - newState.count;
-        setError(`Email ou password incorrectos.${remaining <= (MAX_ATTEMPTS - WARN_AFTER) ? ` Ainda tem ${remaining} tentativa(s).` : ''}`);
+        setError(`${t('auth.invalidCredentials')}${remaining <= (MAX_ATTEMPTS - WARN_AFTER) ? ` ${t('auth.attemptsRemaining', { n: remaining })}` : ''}`);
       }
     } finally {
       setLoading(false);
@@ -194,15 +195,15 @@ export default function Login() {
       <AuthLayout>
         <AuthCard>
           <p className="text-[11px] font-mono uppercase tracking-wider text-ocean-500 mb-2">
-            SalDesk · Recuperacao de acesso
+            {t('auth.forgotEyebrow')}
           </p>
-          <h1 className="font-display font-bold text-lg text-n-900 mb-1">Recuperar password</h1>
+          <h1 className="font-display font-bold text-lg text-n-900 mb-1">{t('auth.forgotTitle')}</h1>
           <p className="text-xs font-body text-n-500 mb-5">
-            Indica o teu email e enviamos um link para repor a password.
+            {t('auth.forgotSubtitle')}
           </p>
           <form onSubmit={handleForgot} className="space-y-4">
             <Input
-              label="Email" type="email" placeholder="nome@email.com"
+              label={t('auth.email')} type="email" placeholder="nome@email.com"
               value={forgotEmail} onChange={e => setForgotEmail(e.target.value)}
               required autoComplete="email"
             />
@@ -210,12 +211,12 @@ export default function Login() {
               <div className="px-3 py-2 rounded-sm bg-red-50 text-error text-sm font-body">{error}</div>
             )}
             <Button type="submit" loading={loading} className="w-full">
-              Enviar link de recuperacao
+              {t('auth.sendRecoveryLink')}
             </Button>
           </form>
           <button onClick={() => setMode('login')}
             className="mt-4 text-xs font-body text-ocean-700 hover:underline w-full text-center">
-            Voltar ao login
+            {t('auth.backToLogin')}
           </button>
         </AuthCard>
       </AuthLayout>
@@ -231,18 +232,20 @@ export default function Login() {
               <Shield size={22} strokeWidth={1.75} className="text-[#1A7A4A]" />
             </div>
             <div>
-              <p className="font-display font-bold text-base text-n-900">Email enviado</p>
+              <p className="font-display font-bold text-base text-n-900">{t('auth.emailSentTitle')}</p>
               <p className="text-sm font-body text-n-500 mt-1">
-                Se o email <span className="font-semibold text-n-700">{forgotEmail}</span> existir
-                na nossa plataforma, recebes um link de recuperacao em breve.
+                {(() => {
+                  const [before, after] = t('auth.emailSentBody').split('{{email}}');
+                  return <>{before}<span className="font-semibold text-n-700">{forgotEmail}</span>{after}</>;
+                })()}
               </p>
             </div>
             <p className="text-xs font-body text-n-400">
-              Verifica tambem a pasta de spam. O link expira em 1 hora.
+              {t('auth.checkSpam')}
             </p>
             <button onClick={() => { setMode('login'); setForgotEmail(''); }}
               className="text-sm font-body font-semibold text-ocean-700 hover:underline">
-              Voltar ao login
+              {t('auth.backToLogin')}
             </button>
           </div>
         </AuthCard>
@@ -255,7 +258,7 @@ export default function Login() {
     <AuthLayout>
       <AuthCard>
         <p className="text-[11px] font-mono uppercase tracking-wider text-ocean-500 mb-2">
-          Plataforma de gestao turistica · Ilha do Sal
+          {t('auth.loginSubtitle')}
         </p>
         <h1 className="font-display font-bold text-lg text-n-900 mb-5">
           {t('auth.loginTitle')}
@@ -264,12 +267,12 @@ export default function Login() {
         {/* Success banners */}
         {registeredOk && (
           <div className="mb-4 px-3 py-2 rounded-sm bg-[#ECFDF5] border border-green-200 text-[#1A7A4A] text-sm font-body">
-            Conta criada com sucesso. Faz login para continuar.
+            {t('auth.registeredSuccess')}
           </div>
         )}
         {resetOk && (
           <div className="mb-4 px-3 py-2 rounded-sm bg-[#ECFDF5] border border-green-200 text-[#1A7A4A] text-sm font-body">
-            Password reposta com sucesso. Faz login com a nova password.
+            {t('auth.resetSuccess')}
           </div>
         )}
 
@@ -285,15 +288,15 @@ export default function Login() {
         {showWarn && !error && (
           <div className="mb-4 px-3 py-2 rounded-sm bg-yellow-50 border border-yellow-200 text-yellow-700 text-sm font-body flex items-start gap-2">
             <AlertTriangle size={14} strokeWidth={1.75} className="shrink-0 mt-0.5" />
-            <span>{MAX_ATTEMPTS - attemptsUsed} tentativa(s) restante(s) antes do bloqueio.</span>
+            <span>{t('auth.attemptsWarning', { n: MAX_ATTEMPTS - attemptsUsed })}</span>
           </div>
         )}
 
         {/* Lockout countdown */}
         {locked && countdown > 0 && (
           <div className="mb-4 px-3 py-2 rounded-sm bg-red-50 border border-red-200 text-error text-sm font-body text-center">
-            <p className="font-semibold">Acesso bloqueado</p>
-            <p className="text-xs mt-0.5">Tenta novamente em <span className="font-mono font-bold">{formatCountdown(countdown)}</span></p>
+            <p className="font-semibold">{t('auth.accessBlocked')}</p>
+            <p className="text-xs mt-0.5">{t('auth.tryAgainIn')} <span className="font-mono font-bold">{formatCountdown(countdown)}</span></p>
           </div>
         )}
 
@@ -338,7 +341,7 @@ export default function Login() {
             <label className="flex items-center gap-2 cursor-pointer select-none">
               <input type="checkbox" checked={remember} onChange={e => setRemember(e.target.checked)}
                 className="w-3.5 h-3.5 accent-ocean-700 rounded" />
-              <span className="text-xs font-body text-n-600">Lembrar este dispositivo por 30 dias</span>
+              <span className="text-xs font-body text-n-600">{t('auth.rememberDevice')}</span>
             </label>
 
             <button
@@ -358,7 +361,7 @@ export default function Login() {
         <div className="mt-6 pt-4 border-t border-n-100 flex items-center justify-center">
           <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-n-50 text-n-400">
             <Shield size={12} strokeWidth={1.75} />
-            <span className="text-[10px] font-mono uppercase tracking-wider">Ligacao segura SSL</span>
+            <span className="text-[10px] font-mono uppercase tracking-wider">{t('auth.sslSecure')}</span>
           </span>
         </div>
       </AuthCard>

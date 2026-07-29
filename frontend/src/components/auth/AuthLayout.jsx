@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import LanguageToggle from '../shared/LanguageToggle';
+import { useT } from '../../i18n';
 
 /* Fotos reais da Ilha do Sal (Santa Maria, gruta azul, mergulho, tubaroes, Buracona) */
 const BEACH_IMAGES = [
@@ -10,24 +11,13 @@ const BEACH_IMAGES = [
   '/images/hero-buracona.jpg',
 ];
 
-const WANDR_FOOTER = (
-  <div className="text-center space-y-1">
-    <p className="text-xs text-white/50">
-      Sistema desenvolvido por{' '}
-      <span className="text-white/70 font-semibold">WANDR — Travel Technology Company</span>
-    </p>
-    <p className="text-[11px] text-white/35 font-mono uppercase tracking-wider">
-      Orgulhosamente cabo-verdiano
-    </p>
-  </div>
-);
-
-export default function AuthLayout({ children, showLangToggle = true }) {
+export default function AuthLayout({ children }) {
+  const t = useT();
   const [imgIdx, setImgIdx] = useState(0);
 
   useEffect(() => {
-    const t = setInterval(() => setImgIdx(i => (i + 1) % BEACH_IMAGES.length), 5000);
-    return () => clearInterval(t);
+    const intervalId = setInterval(() => setImgIdx(i => (i + 1) % BEACH_IMAGES.length), 5000);
+    return () => clearInterval(intervalId);
   }, []);
 
   return (
@@ -50,7 +40,7 @@ export default function AuthLayout({ children, showLangToggle = true }) {
       <div className="relative z-10 flex flex-col min-h-screen">
         {/* Nav */}
         <div className="flex items-center justify-end px-6 py-4">
-          {showLangToggle && <LanguageToggle variant="white" authMode />}
+          <LanguageToggle variant="white" authMode />
         </div>
 
         {/* Card central */}
@@ -62,7 +52,15 @@ export default function AuthLayout({ children, showLangToggle = true }) {
 
         {/* Footer WANDR */}
         <div className="pb-5 px-4">
-          {WANDR_FOOTER}
+          <div className="text-center space-y-1">
+            <p className="text-xs text-white/50">
+              {t('auth.footerCredit')}{' '}
+              <span className="text-white/70 font-semibold">WANDR — Travel Technology Company</span>
+            </p>
+            <p className="text-[11px] text-white/35 font-mono uppercase tracking-wider">
+              {t('auth.footerOrigin')}
+            </p>
+          </div>
         </div>
       </div>
     </div>

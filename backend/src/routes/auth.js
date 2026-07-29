@@ -1,11 +1,12 @@
 const express = require('express');
 const router = express.Router();
-const { register, login, getMe, logout, changePassword, validateInvite, resetPassword, forgotPassword } = require('../controllers/authController');
+const { register, login, refresh, getMe, logout, changePassword, validateInvite, resetPassword, forgotPassword } = require('../controllers/authController');
 const authMiddleware = require('../middleware/auth');
 const { validate, schemas } = require('../middleware/validation');
 
 router.post('/register', validate(schemas.register), register);
 router.post('/login',    login);
+router.post('/refresh',  refresh);
 router.post('/validate-invite', validate(schemas.validateInvite), validateInvite);
 router.post('/reset-password', resetPassword);
 router.post('/forgot-password', forgotPassword);

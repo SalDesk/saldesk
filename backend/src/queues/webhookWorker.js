@@ -110,7 +110,7 @@ async function processWebhookJob({ data }) {
         .update({ status: 'cancelled', updated_at: new Date().toISOString() })
         .eq('operator_id', operatorId)
         .eq('source', channel)
-        .like('notes_internal', `%${externalRef}%`);
+        .like('notes', `%${externalRef}%`);
     }
     await actualizarLog(operatorId, channel, externalRef, 'processed', null);
     return;
@@ -156,7 +156,7 @@ async function processWebhookJob({ data }) {
       total_price:    normalizado.totalPrice,
       status:         normalizado.status,
       source:         channel,
-      notes_internal: externalRef ? `Ref. OTA: ${externalRef}` : null,
+      notes: externalRef ? `Ref. OTA: ${externalRef}` : null,
     });
 
     await actualizarLog(operatorId, channel, externalRef, 'processed', null);

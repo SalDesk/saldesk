@@ -70,8 +70,8 @@ export default function Register() {
     setErrors({}); setServerError(''); setLoading(true);
     try {
       await register(form.name, form.email, form.password, inviteCode.trim().toUpperCase() || undefined);
-      const { access_token, user, operator } = await login(form.email, form.password);
-      setAuth(access_token, user, operator);
+      const { access_token, refresh_token, user, operator } = await login(form.email, form.password);
+      setAuth(access_token, user, operator, refresh_token);
       navigate('/onboarding');
     } catch (err) {
       setServerError(err.response?.data?.error || t('errors.generic'));

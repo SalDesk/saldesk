@@ -6,18 +6,31 @@ import useUiStore from '../store/uiStore';
 
 const translations = { pt, en, de, nl };
 
+function interpolate(str, vars) {
+  if (!vars) return str;
+  return Object.entries(vars).reduce(
+    (acc, [k, v]) => acc.replaceAll(`{{${k}}}`, v),
+    str
+  );
+}
+
+function lookup(dict, key) {
+  const parts = key.split('.');
+  let val = dict;
+  for (const part of parts) {
+    val = val?.[part];
+    if (val === undefined) return key;
+  }
+  return val ?? key;
+}
+
 export function useT() {
   const lang = useUiStore((s) => s.lang);
   const dict = translations[lang] || translations.pt;
 
-  function t(key) {
-    const parts = key.split('.');
-    let val = dict;
-    for (const part of parts) {
-      val = val?.[part];
-      if (val === undefined) return key;
-    }
-    return val ?? key;
+  function t(key, vars) {
+    const val = lookup(dict, key);
+    return typeof val === 'string' ? interpolate(val, vars) : val;
   }
 
   return t;
@@ -25,14 +38,9 @@ export function useT() {
 
 export function getT(lang = 'pt') {
   const dict = translations[lang] || translations.pt;
-  return function t(key) {
-    const parts = key.split('.');
-    let val = dict;
-    for (const part of parts) {
-      val = val?.[part];
-      if (val === undefined) return key;
-    }
-    return val ?? key;
+  return function t(key, vars) {
+    const val = lookup(dict, key);
+    return typeof val === 'string' ? interpolate(val, vars) : val;
   };
 }
 

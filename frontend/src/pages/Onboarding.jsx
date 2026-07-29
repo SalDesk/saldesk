@@ -13,7 +13,7 @@ export default function Onboarding() {
   }, [operator, navigate]);
 
   return (
-    <AuthLayout showLangToggle>
+    <AuthLayout>
       <OnboardingWizard />
     </AuthLayout>
   );
