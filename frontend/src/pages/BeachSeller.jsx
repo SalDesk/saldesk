@@ -89,16 +89,10 @@ export default function BeachSeller() {
   useEffect(() => {
     setLoading(true);
     Promise.all([
-      // O backend ignora from/to e devolve sempre todo o historico — filtro feito no frontend
-      listReservations().catch(() => []),
+      listReservations({ seller_id: sellerId }).catch(() => []),
       listSellerCommissions(sellerId),
     ]).then(([res, comms]) => {
-      // Filter reservations by this seller
-      const myRes = (res || []).filter(r => {
-        const notes = r.notes || '';
-        return notes.includes(sellerId) || notes.includes(sellerName);
-      });
-      setReservations(myRes);
+      setReservations(res || []);
       setCommissions(comms || []);
     }).finally(() => setLoading(false));
   }, [sellerId]);
@@ -535,7 +529,7 @@ export default function BeachSeller() {
 
       {/* Floating CTA */}
       <div className="fixed bottom-0 inset-x-0 z-20 px-4 pb-5 pt-6 bg-gradient-to-t from-n-50 via-n-50/90 to-transparent">
-        <div className="max-w-md mx-auto">
+        <div className="max-w-md md:max-w-2xl lg:max-w-3xl mx-auto">
           <button
             onClick={() => navigate('/vendedor/nova-reserva')}
             className="w-full h-16 bg-sand-500 text-ocean-900 rounded-full font-display font-bold text-lg flex items-center justify-center gap-2 shadow-2xl shadow-sand-500/30 active:scale-95 transition-all hover:bg-sand-600">
@@ -552,7 +546,7 @@ export default function BeachSeller() {
             className="fixed inset-0 bg-ocean-900/50 z-40"
             onClick={() => setShowShiftSummary(false)}
           />
-          <div className="fixed bottom-0 inset-x-0 z-50 bg-white rounded-t-3xl shadow-xl max-h-[85vh] overflow-y-auto max-w-md mx-auto">
+          <div className="fixed bottom-0 inset-x-0 z-50 bg-white rounded-t-3xl shadow-xl max-h-[85vh] overflow-y-auto max-w-md md:max-w-2xl lg:max-w-3xl mx-auto">
             <div className="flex justify-center pt-3 pb-1">
               <span className="w-10 h-1.5 rounded-full bg-n-300" />
             </div>

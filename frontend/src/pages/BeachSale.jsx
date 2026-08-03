@@ -9,7 +9,7 @@ import { listUnits } from '../services/unitsService';
 import { createReservation } from '../services/reservationsService';
 import FleetSelector from '../components/fleet/FleetSelector';
 import {
-  addCommissionLocal, getSellerCommissionPct, getSellerMeta,
+  getSellerCommissionPct, getSellerMeta,
 } from '../services/sellerService';
 import useAuthStore from '../store/authStore';
 import Logo from '../components/shared/Logo';
@@ -144,17 +144,11 @@ export default function BeachSale() {
         fleet_id:         selectedFleetId || null,
       });
 
-      const comm = addCommissionLocal({
-        seller_id:      sellerId,
-        reservation_id: reservation.id,
-        tour_name:      selectedTour.name,
-        total_amount:   totalPrice,
-        percentage:     commPct,
-      });
-
+      // A comissao e criada automaticamente no backend ao criar a reserva
+      // (com base em staff.commission_pct do vendedor autenticado)
       setSuccessData({
         reservation,
-        commission: comm.amount,
+        commission,
         tourName:   selectedTour.name,
         date:       selectedDate,
         time:       selectedTime,
@@ -183,7 +177,7 @@ export default function BeachSale() {
   const STEPS = ['Tour', 'Data e Grupo', 'Cliente'];
 
   return (
-    <div className="min-h-screen bg-n-50 flex flex-col max-w-md mx-auto">
+    <div className="min-h-screen bg-n-50 flex flex-col max-w-md md:max-w-2xl lg:max-w-3xl mx-auto">
       {/* Header */}
       <header className="bg-gradient-to-br from-ocean-900 to-ocean-700 px-4 py-4 flex items-center gap-3 sticky top-0 z-10 rounded-b-3xl shadow-md">
         {step < 4 && (

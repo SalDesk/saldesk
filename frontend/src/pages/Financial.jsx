@@ -774,12 +774,13 @@ function ComissoesTab({ currency }) {
   useEffect(() => {
     setLoading(true);
     listStaff()
-      .then(d => {
+      .then(async d => {
         const v = (d || []).filter(s => s.role === 'Vendedor de Praia' && s.status === 'active');
         setSellers(v);
-        const commsMap = {};
-        v.forEach(s => { commsMap[s.id] = listSellerCommissions(s.id); });
-        setSellerComms(commsMap);
+        const entries = await Promise.all(
+          v.map(async s => [s.id, await listSellerCommissions(s.id)])
+        );
+        setSellerComms(Object.fromEntries(entries));
       })
       .catch(() => {})
       .finally(() => setLoading(false));
@@ -787,7 +788,7 @@ function ComissoesTab({ currency }) {
 
   function getMonthComms(sellerId) {
     const all = sellerComms[sellerId];
-    if (!all || typeof all.then === 'function') return [];
+    if (!Array.isArray(all)) return [];
     return all.filter(c => (c.created_at || '').startsWith(month));
   }
 
@@ -818,7 +819,7 @@ function ComissoesTab({ currency }) {
             <div className="flex items-start gap-4">
               <div className="flex-1 min-w-0">
                 <p className="font-display font-semibold text-sm text-n-900">{s.name}</p>
-                <p className="text-xs font-body text-n-500">{getSellerCommissionPct(s.id, 10)}% comissao · {comms.length} reserva(s) este mes</p>
+                <p className="text-xs font-body text-n-500">{s.commission_pct ?? getSellerCommissionPct(s.id, 10)}% comissao · {comms.length} reserva(s) este mes</p>
               </div>
               <div className="flex gap-4 shrink-0">
                 {[{l: 'Total', v: fmtMoney(total, currency), c: 'text-n-800'}, {l: 'Pago', v: fmtMoney(paid, currency), c: 'text-[#1A7A4A]'}, {l: 'Pendente', v: fmtMoney(pending, currency), c: 'text-yellow-700'}].map(m => (
@@ -831,7 +832,7 @@ function ComissoesTab({ currency }) {
               <div className="mt-3 space-y-1.5">
                 {comms.map(c => (
                   <div key={c.id} className="flex items-center justify-between text-xs">
-                    <span className="font-body text-n-600 truncate">{c.tour_name}</span>
+                    <span className="font-body text-n-600 truncate">{c.reservations?.units?.name || c.reservations?.customer_name || '—'}</span>
                     <div className="flex items-center gap-3 shrink-0">
                       <span className="font-mono font-semibold text-[#1A7A4A]">{fmtMoney(c.amount, currency)}</span>
                       <span className={`font-mono px-1.5 py-0.5 rounded-xs ${c.status === 'paid' ? 'bg-[#ECFDF5] text-[#1A7A4A]' : 'bg-yellow-50 text-yellow-700'}`}>{c.status === 'paid' ? 'Pago' : 'Pendente'}</span>

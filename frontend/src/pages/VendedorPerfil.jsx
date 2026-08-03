@@ -78,7 +78,7 @@ export default function VendedorPerfil() {
   const commPct = profile?.commission_pct ?? getSellerCommissionPct(sellerId, 10);
 
   return (
-    <div className="min-h-screen bg-n-50 flex flex-col max-w-md mx-auto">
+    <div className="min-h-screen bg-n-50 flex flex-col max-w-md md:max-w-2xl lg:max-w-3xl mx-auto">
       {/* Header */}
       <header className="bg-gradient-to-br from-ocean-900 to-ocean-700 px-4 py-4 flex items-center gap-3 sticky top-0 z-10 rounded-b-3xl shadow-md">
         <button

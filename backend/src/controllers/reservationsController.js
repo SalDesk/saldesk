@@ -18,7 +18,7 @@ const TRANSICOES = {
 
 async function listar(req, res, next) {
   try {
-    const { status, unit_id, check_in_from, check_in_to } = req.query;
+    const { status, unit_id, check_in_from, check_in_to, seller_id } = req.query;
 
     let q = supabaseAdmin
       .from('reservations')
@@ -30,6 +30,9 @@ async function listar(req, res, next) {
     if (unit_id) q = q.eq('unit_id', unit_id);
     if (check_in_from) q = q.gte('check_in', check_in_from);
     if (check_in_to) q = q.lte('check_in', check_in_to);
+    // Vendedor so pode ver as suas proprias reservas; operador pode filtrar por qualquer vendedor
+    if (req.staff && !req.operator) q = q.eq('seller_id', req.staff.id);
+    else if (seller_id) q = q.eq('seller_id', seller_id);
 
     const { data, error } = await q;
     if (error) throw error;
@@ -99,12 +102,28 @@ async function criar(req, res, next) {
         status: 'confirmed',
         source: finalSource,
         notes: finalNotes,
-        fleet_id: fleet_id || null
+        fleet_id: fleet_id || null,
+        seller_id: req.staff?.id || null
       })
       .select('*, units(name, unit_type), fleet(name, capacity)')
       .single();
 
     if (error) throw error;
+
+    // Comissao automatica se quem criou a reserva for um vendedor com % definida
+    if (req.staff?.id && req.staff?.commission_pct) {
+      const pct = Number(req.staff.commission_pct);
+      await supabaseAdmin.from('seller_commissions').insert({
+        operator_id:    getOperatorId(req),
+        seller_id:      req.staff.id,
+        reservation_id: data.id,
+        amount:         Math.round(finalPrice * pct) / 100,
+        percentage:     pct,
+        status:         'pending',
+      }).then(({ error: commErr }) => {
+        if (commErr) console.error('[Comissao] Erro ao criar comissao:', commErr.message);
+      });
+    }
 
     // Buscar dados do operador para os emails (idioma, moeda, nome, email)
     const { data: operatorData } = await supabaseAdmin

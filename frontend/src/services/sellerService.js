@@ -18,25 +18,6 @@ export async function listSellerCommissions(sellerId) {
   }
 }
 
-export function addCommissionLocal({ seller_id, reservation_id, tour_name, total_amount, percentage }) {
-  const commissions = loadLocal();
-  const commission = {
-    id:            Date.now().toString(),
-    seller_id,
-    reservation_id,
-    tour_name,
-    total_amount:  Number(total_amount),
-    amount:        Number(total_amount) * (Number(percentage) / 100),
-    percentage:    Number(percentage),
-    status:        'pending',
-    created_at:    new Date().toISOString(),
-    paid_at:       null,
-    notes:         '',
-  };
-  saveLocal([...commissions, commission]);
-  return commission;
-}
-
 export async function markCommissionPaid(commissionId, notes = '') {
   try {
     const { data } = await api.put(`/seller-commissions/${commissionId}`, {
