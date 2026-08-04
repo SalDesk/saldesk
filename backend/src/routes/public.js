@@ -17,6 +17,7 @@ const {
   submitLead,
   getImpact,
 } = require('../controllers/publicController');
+const { publicInitSisp } = require('../controllers/paymentController');
 const { frontendBase } = require('../utils/urls');
 
 /* ─── Relatório de impacto público ─── */
@@ -52,6 +53,7 @@ router.get('/:slug/reviews',       slugReviews);
 router.get('/:slug/availability',  verificarDisponibilidadePublica);
 router.post('/:slug/reservations', criarReserva);
 router.post('/:slug/contact',      slugContact);
+router.post('/:slug/payments/sisp/init', publicInitSisp);
 
 /* ─── QR Code público — sem autenticação ─── */
 router.get('/:slug/qrcode', (req, res) => {

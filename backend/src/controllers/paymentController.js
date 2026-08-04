@@ -74,32 +74,54 @@ async function paypalWebhook(req, res, next) {
    formulario que ele auto-submete para a Vinti4; a resposta chega
    depois via POST directo a /payments/sisp/callback. */
 
+/* Partilhado entre a rota autenticada (operador) e a publica (cliente
+   na pagina de reserva) — so muda de onde vem o operatorId. */
+async function prepararPagamentoSisp(operatorId, reservationId, amount) {
+  const { data: operatorRow } = await supabaseAdmin
+    .from('operators')
+    .select('sisp_merchant_id_enc, sisp_api_key_enc')
+    .eq('id', operatorId)
+    .single();
+
+  if (!operatorRow?.sisp_merchant_id_enc || !operatorRow?.sisp_api_key_enc) {
+    const err = new Error('Credenciais SISP nao configuradas para este operador');
+    err.status = 400; err.code = 'SISP_NOT_CONFIGURED';
+    throw err;
+  }
+
+  const posID = decrypt(operatorRow.sisp_merchant_id_enc);
+  const posAutCode = decrypt(operatorRow.sisp_api_key_enc);
+  const apiBase = process.env.API_URL || 'http://localhost:3001';
+
+  return construirPedidoPagamento({
+    posID, posAutCode, amount,
+    urlMerchantResponse: `${apiBase}/api/v1/payments/sisp/callback?res=${reservationId}`,
+  });
+}
+
 async function initSisp(req, res, next) {
   try {
     const { reservation_id, amount } = req.body;
     if (!reservation_id || !amount) {
       return res.status(400).json({ error: 'reservation_id e amount obrigatorios', code: 'MISSING_FIELDS' });
     }
+    const pedido = await prepararPagamentoSisp(req.operator.id, reservation_id, amount);
+    return res.json({ data: { postUrl: pedido.postUrl, fields: pedido.fields }, message: 'Pedido SISP preparado' });
+  } catch (err) { next(err); }
+}
 
-    const { data: operatorRow } = await supabaseAdmin
-      .from('operators')
-      .select('sisp_merchant_id_enc, sisp_api_key_enc')
-      .eq('id', req.operator.id)
-      .single();
-
-    if (!operatorRow?.sisp_merchant_id_enc || !operatorRow?.sisp_api_key_enc) {
-      return res.status(400).json({ error: 'Credenciais SISP nao configuradas para este operador', code: 'SISP_NOT_CONFIGURED' });
+/* Rota publica — usada pelo cliente na pagina de reserva, sem sessao de operador. */
+async function publicInitSisp(req, res, next) {
+  try {
+    const { reservation_id, amount } = req.body;
+    if (!reservation_id || !amount) {
+      return res.status(400).json({ error: 'reservation_id e amount obrigatorios', code: 'MISSING_FIELDS' });
     }
+    const { data: reserva } = await supabaseAdmin
+      .from('reservations').select('id, operator_id').eq('id', reservation_id).single();
+    if (!reserva) return res.status(404).json({ error: 'Reserva nao encontrada', code: 'NOT_FOUND' });
 
-    const posID = decrypt(operatorRow.sisp_merchant_id_enc);
-    const posAutCode = decrypt(operatorRow.sisp_api_key_enc);
-    const apiBase = process.env.API_URL || 'http://localhost:3001';
-
-    const pedido = construirPedidoPagamento({
-      posID, posAutCode, amount,
-      urlMerchantResponse: `${apiBase}/api/v1/payments/sisp/callback?res=${reservation_id}`,
-    });
-
+    const pedido = await prepararPagamentoSisp(reserva.operator_id, reservation_id, amount);
     return res.json({ data: { postUrl: pedido.postUrl, fields: pedido.fields }, message: 'Pedido SISP preparado' });
   } catch (err) { next(err); }
 }
@@ -213,4 +235,4 @@ async function refund(req, res, next) {
   } catch (err) { next(err); }
 }
 
-module.exports = { createPayPalIntent, confirmPayPalPayment, paypalWebhook, initSisp, sispCallback, registerManualPayment, getHistory, refund };
+module.exports = { createPayPalIntent, confirmPayPalPayment, paypalWebhook, initSisp, publicInitSisp, sispCallback, registerManualPayment, getHistory, refund };

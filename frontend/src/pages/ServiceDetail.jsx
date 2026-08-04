@@ -225,6 +225,34 @@ async function postReservation(slug, payload) {
   return j.data?.id||'ok';
 }
 
+/* SISP so aceita escudos (CVE) — converter o total (na moeda do operador) antes de enviar. */
+function toCVE(amount, opCurrency) {
+  return Math.round((opCurrency || 'EUR') === 'CVE' ? amount : amount * EUR_CVE);
+}
+
+/* Pede os campos do formulario a Vinti4 e redirecciona o browser do cliente
+   para la — o pagamento acontece fora do nosso site (fluxo de redirect). */
+async function iniciarPagamentoSisp(slug, reservationId, amountCve) {
+  const r = await fetch(`${API}/public/${slug}/payments/sisp/init`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ reservation_id: reservationId, amount: amountCve }),
+  });
+  const j = await r.json();
+  if (!r.ok) throw new Error(j.error || 'Erro ao iniciar pagamento SISP');
+
+  const { postUrl, fields } = j.data;
+  const form = document.createElement('form');
+  form.method = 'POST';
+  form.action = postUrl;
+  Object.entries(fields).forEach(([k, v]) => {
+    const input = document.createElement('input');
+    input.type = 'hidden'; input.name = k; input.value = v;
+    form.appendChild(input);
+  });
+  document.body.appendChild(form);
+  form.submit();
+}
+
 /* ── HotelModal ───────────────────────────────────── */
 function HotelModal({ unit, op, slug, lang, onClose }) {
   const [step,ss]=useState(1); const [ci,sci]=useState(''); const [co,sco]=useState(''); const [adults,sa]=useState(2); const [kids,sk]=useState(0);
@@ -232,7 +260,18 @@ function HotelModal({ unit, op, slug, lang, onClose }) {
   const nights=nts(ci,co); const total=nights>0&&unit.base_price?fmtPrice(nights*unit.base_price,null,op.currency||'EUR','EUR',lang):null;
   useEffect(()=>{ if (!ci||!co||co<=ci){sav(null);return;} const t=setTimeout(async()=>{ sc(true); try{sav((await(await fetch(`${API}/public/${slug}/availability?unitId=${unit.id}&checkIn=${ci}&checkOut=${co}`)).json()).data);}catch{sav(null);}finally{sc(false);} },700); return()=>clearTimeout(t); },[ci,co]);
   function valid(){ if(step===1){if(!ci||!co){se(lang==='en'?'Select both dates':'Seleccione ambas as datas');return false;} if(co<=ci){se(lang==='en'?'Check-out must be after check-in':'Check-out deve ser posterior ao check-in');return false;} if(!avail?.disponivel){se(lang==='en'?'Room unavailable for these dates':'Quarto indisponível nestas datas');return false;}} if(step===2&&(!info.name||!info.email)){se(lang==='en'?'Name and email required':'Nome e email obrigatórios');return false;} se('');return true; }
-  async function submit(){ ssub(true);se(''); try{ const notes=[`${adults} ${lang==='en'?'adults':'adultos'}, ${kids} ${lang==='en'?'children':'crianças'}`,info.notes].filter(Boolean).join('. '); sr(await postReservation(slug,{unit_id:unit.id,customer_name:info.name,customer_email:info.email,customer_phone:info.phone||null,customer_country:info.country||null,check_in:ci,check_out:co,guests:adults+kids,notes})); }catch(e){se(e.message);}finally{ssub(false);} }
+  async function submit(){
+    ssub(true);se('');
+    try{
+      const notes=[`${adults} ${lang==='en'?'adults':'adultos'}, ${kids} ${lang==='en'?'children':'crianças'}`,info.notes].filter(Boolean).join('. ');
+      const newResId = await postReservation(slug,{unit_id:unit.id,customer_name:info.name,customer_email:info.email,customer_phone:info.phone||null,customer_country:info.country||null,check_in:ci,check_out:co,guests:adults+kids,notes});
+      if (pay==='sisp' && nights>0 && unit.base_price) {
+        await iniciarPagamentoSisp(slug, newResId, toCVE(nights*unit.base_price, op.currency));
+        return;
+      }
+      sr(newResId);
+    }catch(e){se(e.message);}finally{ssub(false);}
+  }
   function next(){ if(!valid())return; step<3?ss(s=>s+1):submit(); }
   const sumL=[{label:lang==='en'?'Room':'Quarto',value:unit.name},{label:'Check-in',value:ci},{label:'Check-out',value:co},{label:lang==='en'?'Nights':'Noites',value:`${nights}`},{label:lang==='en'?'Guests':'Hóspedes',value:`${adults} ${lang==='en'?'adults':'adultos'}${kids>0?` + ${kids} ${lang==='en'?'children':'crianças'}`:''}`},...(total?[{label:'Total',value:total,hi:true}]:[])];
   const icon=<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M2 22V10a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v12"/><path d="M2 22h20"/><path d="M7 22v-4h10v4"/><rect x="7" y="10" width="4" height="4" rx="1"/><rect x="13" y="10" width="4" height="4" rx="1"/></svg>;
@@ -257,7 +296,18 @@ function ActivityModal({ unit, op, slug, lang, onClose }) {
   const [info,si]=useState({name:'',email:'',phone:'',country:'',needs:''}); const [pay,sp]=useState('cash'); const [sub,ssub]=useState(false); const [resId,sr]=useState(null); const [err,se]=useState('');
   const total=unit.base_price?fmtPrice((adults+kids)*unit.base_price,'person',op.currency||'EUR','EUR',lang):null;
   function valid(){ if(step===1){if(!date){se(lang==='en'?'Select a date':'Seleccione uma data');return false;} if(!time){se(lang==='en'?'Select a time slot':'Seleccione um horário');return false;} if(adults<1){se(lang==='en'?'At least 1 adult required':'Mínimo 1 adulto');return false;}} if(step===2&&(!info.name||!info.email)){se(lang==='en'?'Name and email required':'Nome e email obrigatórios');return false;} se('');return true; }
-  async function submit(){ ssub(true);se(''); try{ const notes=[`${lang==='en'?'Time':'Hora'}: ${time}`,`${adults} ${lang==='en'?'adults':'adultos'}, ${kids} ${lang==='en'?'children':'crianças'}`,info.needs?(lang==='en'?'Needs:':'Necessidades:')+' '+info.needs:''].filter(Boolean).join('. '); sr(await postReservation(slug,{unit_id:unit.id,customer_name:info.name,customer_email:info.email,customer_phone:info.phone||null,customer_country:info.country||null,check_in:date,check_out:date,guests:adults+kids,notes})); }catch(e){se(e.message);}finally{ssub(false);} }
+  async function submit(){
+    ssub(true);se('');
+    try{
+      const notes=[`${lang==='en'?'Time':'Hora'}: ${time}`,`${adults} ${lang==='en'?'adults':'adultos'}, ${kids} ${lang==='en'?'children':'crianças'}`,info.needs?(lang==='en'?'Needs:':'Necessidades:')+' '+info.needs:''].filter(Boolean).join('. ');
+      const newResId = await postReservation(slug,{unit_id:unit.id,customer_name:info.name,customer_email:info.email,customer_phone:info.phone||null,customer_country:info.country||null,check_in:date,check_out:date,guests:adults+kids,notes});
+      if (pay==='sisp' && unit.base_price) {
+        await iniciarPagamentoSisp(slug, newResId, toCVE((adults+kids)*unit.base_price, op.currency));
+        return;
+      }
+      sr(newResId);
+    }catch(e){se(e.message);}finally{ssub(false);}
+  }
   function next(){ if(!valid())return; step<3?ss(s=>s+1):submit(); }
   const sumL=[{label:lang==='en'?'Tour / Activity':'Tour / Actividade',value:unit.name},{label:lang==='en'?'Date':'Data',value:date},{label:lang==='en'?'Time':'Horário',value:time},{label:lang==='en'?'Group':'Grupo',value:`${adults} ${lang==='en'?'adults':'adultos'}${kids>0?` + ${kids} ${lang==='en'?'children':'crianças'}`:''}`},...(total?[{label:'Total',value:total,hi:true}]:[])];
   return (
@@ -282,7 +332,18 @@ function RentACarModal({ unit, op, slug, lang, onClose }) {
   const days=dys(pu.date,re.date); const total=days>0&&unit.base_price?fmtPrice(days*unit.base_price,'day',op.currency||'EUR','EUR',lang):null;
   const locs=lang==='en'?CV_LOCS_EN:CV_LOCS_PT; const extList=CAR_EXTRAS.filter(e=>ext[e.k]);
   function valid(){ if(step===1){if(!pu.date||!re.date){se(lang==='en'?'Select pickup and return dates':'Seleccione datas');return false;} if(re.date<=pu.date){se(lang==='en'?'Return after pickup':'Devolução após levantamento');return false;} if(!pu.loc){se(lang==='en'?'Select pickup location':'Seleccione o local');return false;}} if(step===2&&(!drv.name||!drv.email)){se(lang==='en'?'Name and email required':'Nome e email obrigatórios');return false;} if(step===2&&!drv.license){se(lang==='en'?'Driving licence required':'Carta de condução obrigatória');return false;} se('');return true; }
-  async function submit(){ ssub(true);se(''); try{ const notes=[`${lang==='en'?'Pickup':'Levantamento'}: ${pu.loc} ${pu.date} ${pu.time}`,`${lang==='en'?'Return':'Devolução'}: ${re.loc||pu.loc} ${re.date} ${re.time}`,extList.length?`Extras: ${extList.map(e=>lang==='en'?e.en:e.pt).join(', ')}`:''  ].filter(Boolean).join('. '); sr(await postReservation(slug,{unit_id:unit.id,customer_name:drv.name,customer_email:drv.email,customer_phone:drv.phone||null,customer_country:drv.country||null,check_in:pu.date,check_out:re.date,guests:1,notes})); }catch(e){se(e.message);}finally{ssub(false);} }
+  async function submit(){
+    ssub(true);se('');
+    try{
+      const notes=[`${lang==='en'?'Pickup':'Levantamento'}: ${pu.loc} ${pu.date} ${pu.time}`,`${lang==='en'?'Return':'Devolução'}: ${re.loc||pu.loc} ${re.date} ${re.time}`,extList.length?`Extras: ${extList.map(e=>lang==='en'?e.en:e.pt).join(', ')}`:''  ].filter(Boolean).join('. ');
+      const newResId = await postReservation(slug,{unit_id:unit.id,customer_name:drv.name,customer_email:drv.email,customer_phone:drv.phone||null,customer_country:drv.country||null,check_in:pu.date,check_out:re.date,guests:1,notes});
+      if (pay==='sisp' && days>0 && unit.base_price) {
+        await iniciarPagamentoSisp(slug, newResId, toCVE(days*unit.base_price, op.currency));
+        return;
+      }
+      sr(newResId);
+    }catch(e){se(e.message);}finally{ssub(false);}
+  }
   function next(){ if(!valid())return; step<3?ss(s=>s+1):submit(); }
   const sumL=[{label:lang==='en'?'Vehicle':'Viatura',value:unit.name},{label:lang==='en'?'Pickup':'Levantamento',value:`${pu.date} ${pu.time} · ${pu.loc}`},{label:lang==='en'?'Return':'Devolução',value:`${re.date} ${re.time} · ${re.loc||pu.loc}`},{label:lang==='en'?'Duration':'Duração',value:`${days} ${lang==='en'?(days===1?'day':'days'):(days===1?'dia':'dias')}`},...(extList.length?[{label:'Extras',value:extList.map(e=>lang==='en'?e.en:e.pt).join(' · ')}]:[]),...(total?[{label:'Total',value:total,hi:true}]:[])];
   return (

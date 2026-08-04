@@ -11,6 +11,8 @@ import Register from './pages/Register';
 import ResetPassword from './pages/ResetPassword';
 import PublicBooking from './pages/PublicBooking';
 import ServiceDetail from './pages/ServiceDetail';
+import BookingSuccess from './pages/BookingSuccess';
+import BookingCancel from './pages/BookingCancel';
 
 // Lazy — dashboard pages
 const Onboarding      = lazy(() => import('./pages/Onboarding'));
@@ -173,6 +175,8 @@ export default function App() {
         <Route path="/vendedor/perfil" element={<BeachSellerGuard><VendedorPerfil /></BeachSellerGuard>} />
 
         {/* Motor de reserva publica */}
+        <Route path="/book/success" element={<BookingSuccess />} />
+        <Route path="/book/cancel" element={<BookingCancel />} />
         <Route path="/book/:slug" element={<PublicBooking />} />
         <Route path="/book/:slug/servico/:id" element={<ServiceDetail />} />
 
