@@ -1,6 +1,7 @@
 const { supabaseAdmin } = require('../config/supabase');
 const { createOrder, captureOrder, refundCapture, verifyWebhookSignature } = require('../services/paypalService');
-const { iniciarPagamento, verificarPagamento } = require('../services/sispService');
+const { construirPedidoPagamento, validarResposta } = require('../services/sispService');
+const { decrypt } = require('../utils/encrypt');
 const { emitToOperator } = require('../services/socketService');
 const { notifyOperator } = require('../services/pushService');
 const { frontendBase } = require('../utils/urls');
@@ -68,7 +69,10 @@ async function paypalWebhook(req, res, next) {
   } catch (err) { console.error('[PayPal Webhook]', err.message); }
 }
 
-/* ─── SISP ───────────────────────────────────────────────── */
+/* ─── SISP (Vinti4) ──────────────────────────────────────────
+   Fluxo de redirect: devolvemos ao frontend os campos de um
+   formulario que ele auto-submete para a Vinti4; a resposta chega
+   depois via POST directo a /payments/sisp/callback. */
 
 async function initSisp(req, res, next) {
   try {
@@ -76,54 +80,73 @@ async function initSisp(req, res, next) {
     if (!reservation_id || !amount) {
       return res.status(400).json({ error: 'reservation_id e amount obrigatorios', code: 'MISSING_FIELDS' });
     }
-    const apiBase = process.env.API_URL || 'http://localhost:3001/api/v1';
-    const frontBase = frontendBase();
-    const result = await iniciarPagamento({
-      amount, currency: 'EUR', reservationId: reservation_id,
-      returnUrl: `${apiBase}/payments/sisp/callback?res=${reservation_id}`,
-      cancelUrl:  `${frontBase}/book/cancel`,
+
+    const { data: operatorRow } = await supabaseAdmin
+      .from('operators')
+      .select('sisp_merchant_id_enc, sisp_api_key_enc')
+      .eq('id', req.operator.id)
+      .single();
+
+    if (!operatorRow?.sisp_merchant_id_enc || !operatorRow?.sisp_api_key_enc) {
+      return res.status(400).json({ error: 'Credenciais SISP nao configuradas para este operador', code: 'SISP_NOT_CONFIGURED' });
+    }
+
+    const posID = decrypt(operatorRow.sisp_merchant_id_enc);
+    const posAutCode = decrypt(operatorRow.sisp_api_key_enc);
+    const apiBase = process.env.API_URL || 'http://localhost:3001';
+
+    const pedido = construirPedidoPagamento({
+      posID, posAutCode, amount,
+      urlMerchantResponse: `${apiBase}/api/v1/payments/sisp/callback?res=${reservation_id}`,
     });
-    return res.json({ data: result, message: 'Sessao SISP iniciada' });
+
+    return res.json({ data: { postUrl: pedido.postUrl, fields: pedido.fields }, message: 'Pedido SISP preparado' });
   } catch (err) { next(err); }
 }
 
 async function sispCallback(req, res, next) {
+  const reservationId = req.query.res;
+  const frontBase = frontendBase();
   try {
-    const { res: reservationId, sisp_sim, ref } = req.query;
-    if (sisp_sim) {
+    const { data: reserva } = await supabaseAdmin
+      .from('reservations')
+      .select('id, operator_id')
+      .eq('id', reservationId)
+      .single();
+
+    if (!reserva) return res.redirect(`${frontBase}/book/cancel`);
+
+    const { data: operatorRow } = await supabaseAdmin
+      .from('operators')
+      .select('sisp_api_key_enc')
+      .eq('id', reserva.operator_id)
+      .single();
+
+    const posAutCode = operatorRow?.sisp_api_key_enc ? decrypt(operatorRow.sisp_api_key_enc) : null;
+    const resultado = posAutCode ? validarResposta(posAutCode, req.body) : { status: 'error' };
+
+    if (resultado.status === 'paid') {
       await supabaseAdmin
         .from('reservations')
-        .update({ payment_status: 'paid', payment_method: 'sisp', sisp_transaction_id: ref, status: 'confirmed', updated_at: new Date().toISOString() })
+        .update({
+          payment_status: 'paid', payment_method: 'sisp',
+          sisp_transaction_id: resultado.transactionID,
+          status: 'confirmed', updated_at: new Date().toISOString(),
+        })
         .eq('id', reservationId);
-      const frontBase = frontendBase();
       return res.redirect(`${frontBase}/book/success?res=${reservationId}`);
     }
-    const txId = req.query.TransactionID || req.query.transactionId;
-    if (txId) {
-      const status = await verificarPagamento(txId);
-      if (status.status === 'paid') {
-        await supabaseAdmin
-          .from('reservations')
-          .update({ payment_status: 'paid', payment_method: 'sisp', sisp_transaction_id: txId, status: 'confirmed', updated_at: new Date().toISOString() })
-          .eq('id', reservationId);
-      }
-    }
-    const frontBase = frontendBase();
-    return res.redirect(`${frontBase}/book/success?res=${reservationId}`);
-  } catch (err) { next(err); }
-}
 
-async function sispWebhook(req, res, next) {
-  res.status(200).json({ received: true });
-  try {
-    const { TransactionID, Status, ReservationID } = req.body;
-    if (Status === '0' && ReservationID) {
-      await supabaseAdmin
-        .from('reservations')
-        .update({ payment_status: 'paid', payment_method: 'sisp', sisp_transaction_id: TransactionID, status: 'confirmed', updated_at: new Date().toISOString() })
-        .eq('id', ReservationID);
+    if (resultado.status === 'cancelled') {
+      return res.redirect(`${frontBase}/book/cancel?res=${reservationId}`);
     }
-  } catch (err) { console.error('[SISP Webhook]', err.message); }
+
+    console.error('[SISP Callback] Pagamento nao validado:', resultado.status, resultado.errorDescription || '');
+    return res.redirect(`${frontBase}/book/cancel?res=${reservationId}&erro=${resultado.status}`);
+  } catch (err) {
+    console.error('[SISP Callback] Erro:', err.message);
+    return res.redirect(`${frontBase}/book/cancel?res=${reservationId}`);
+  }
 }
 
 /* ─── Manual + Histórico ────────────────────────────────── */
@@ -190,4 +213,4 @@ async function refund(req, res, next) {
   } catch (err) { next(err); }
 }
 
-module.exports = { createPayPalIntent, confirmPayPalPayment, paypalWebhook, initSisp, sispCallback, sispWebhook, registerManualPayment, getHistory, refund };
+module.exports = { createPayPalIntent, confirmPayPalPayment, paypalWebhook, initSisp, sispCallback, registerManualPayment, getHistory, refund };

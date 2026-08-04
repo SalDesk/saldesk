@@ -466,10 +466,10 @@ function PagamentosTab() {
             <p className="text-xs font-body text-n-500">
               Credenciais fornecidas pela SISP apos contrato formal. Iniciar processo em <strong>sisp.cv</strong> (2-6 semanas).
             </p>
-            <Input label="Merchant ID" type="password" value={form.sisp_merchant_id} onChange={set('sisp_merchant_id')}
-              placeholder={settings?.sisp_merchant_id ? '••••••••••••' : 'MID...'} />
-            <Input label="API Key" type="password" value={form.sisp_api_key} onChange={set('sisp_api_key')}
-              placeholder="KEY..." />
+            <Input label="POS ID" type="password" value={form.sisp_merchant_id} onChange={set('sisp_merchant_id')}
+              placeholder={settings?.sisp_merchant_id ? '••••••••••••' : 'Ex: 90051'} />
+            <Input label="POS Auth Code" type="password" value={form.sisp_api_key} onChange={set('sisp_api_key')}
+              placeholder="Ex: 123456789A" />
           </div>
         </Card>
 
