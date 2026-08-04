@@ -84,6 +84,15 @@ async function submitReview(req, res, next) {
       .eq('id', review.id).select().single();
     if (error) throw error;
 
+    supabaseAdmin.from('notifications').insert({
+      operator_id:        data.operator_id,
+      notification_type:  'new_review',
+      content:             `Nova avaliacao de ${parseInt(rating)} estrelas recebida`,
+      link:                '/avaliacoes',
+    }).then(({ error: notifErr }) => {
+      if (notifErr) console.error('[Notificacao] Erro ao criar notificacao:', notifErr.message);
+    });
+
     if (data.staff_id) {
       const { data: staff } = await supabaseAdmin.from('staff').select('average_rating, total_jobs_completed').eq('id', data.staff_id).single();
       if (staff) {

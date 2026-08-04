@@ -27,4 +27,32 @@ router.get('/vapid-public-key', (_req, res) => {
   return res.json({ data: { key: process.env.VAPID_PUBLIC_KEY || null }, message: 'VAPID key publica' });
 });
 
+router.get('/', async (req, res, next) => {
+  try {
+    const { data, error } = await supabaseAdmin
+      .from('notifications')
+      .select('*')
+      .eq('operator_id', req.operator.id)
+      .order('created_at', { ascending: false })
+      .limit(30);
+    if (error) throw error;
+    return res.json({ data, message: 'Notificacoes listadas' });
+  } catch (err) { next(err); }
+});
+
+router.put('/:id/read', async (req, res, next) => {
+  try {
+    const { data, error } = await supabaseAdmin
+      .from('notifications')
+      .update({ is_read: true })
+      .eq('id', req.params.id)
+      .eq('operator_id', req.operator.id)
+      .select()
+      .maybeSingle();
+    if (error) throw error;
+    if (!data) return res.status(404).json({ error: 'Notificacao nao encontrada', code: 'NOT_FOUND' });
+    return res.json({ data, message: 'Notificacao marcada como lida' });
+  } catch (err) { next(err); }
+});
+
 module.exports = router;

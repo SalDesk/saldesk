@@ -125,6 +125,16 @@ async function criar(req, res, next) {
       });
     }
 
+    // Notificacao para o operador
+    supabaseAdmin.from('notifications').insert({
+      operator_id:        getOperatorId(req),
+      notification_type:  'new_booking',
+      content:             `Nova reserva de ${customer_name} — ${unit.name}`,
+      link:                `/reservas/${data.id}`,
+    }).then(({ error: notifErr }) => {
+      if (notifErr) console.error('[Notificacao] Erro ao criar notificacao:', notifErr.message);
+    });
+
     // Buscar dados do operador para os emails (idioma, moeda, nome, email)
     const { data: operatorData } = await supabaseAdmin
       .from('operators')

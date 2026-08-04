@@ -105,12 +105,25 @@ async function processWebhookJob({ data }) {
   /* Cancelamentos */
   if (normalizado.status === 'cancelled') {
     if (externalRef) {
-      await supabaseAdmin
+      const { data: cancelada } = await supabaseAdmin
         .from('reservations')
         .update({ status: 'cancelled', updated_at: new Date().toISOString() })
         .eq('operator_id', operatorId)
         .eq('source', channel)
-        .like('notes', `%${externalRef}%`);
+        .like('notes', `%${externalRef}%`)
+        .select('id, customer_name')
+        .maybeSingle();
+
+      if (cancelada) {
+        supabaseAdmin.from('notifications').insert({
+          operator_id:       operatorId,
+          notification_type: 'cancellation',
+          content:            `Reserva de ${cancelada.customer_name} cancelada via ${channel}`,
+          link:               `/reservas/${cancelada.id}`,
+        }).then(({ error: notifErr }) => {
+          if (notifErr) console.error('[Notificacao] Erro ao criar notificacao:', notifErr.message);
+        });
+      }
     }
     await actualizarLog(operatorId, channel, externalRef, 'processed', null);
     return;
