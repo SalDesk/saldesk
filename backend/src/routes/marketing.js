@@ -4,13 +4,14 @@ const { supabaseAdmin } = require('../config/supabase');
 const { encrypt, decrypt } = require('../utils/encrypt');
 const auth  = require('../middleware/auth');
 const reqOp = require('../middleware/requireOperator');
+const { frontendBase } = require('../utils/urls');
 
 router.use(auth);
 router.use(reqOp);
 
 /* Link de reserva */
 router.get('/booking-link', (req, res) => {
-  const base = process.env.FRONTEND_URL || 'https://app.saldesk.cv';
+  const base = frontendBase();
   return res.json({
     data: { url: `${base}/book/${req.operator.slug}` },
     message: 'Link de reserva',
@@ -19,7 +20,7 @@ router.get('/booking-link', (req, res) => {
 
 /* QR Code — SVG/PNG via API publica de QR */
 router.get('/qrcode', (req, res) => {
-  const base = process.env.FRONTEND_URL || 'https://app.saldesk.cv';
+  const base = frontendBase();
   const url  = encodeURIComponent(`${base}/book/${req.operator.slug}`);
   const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${url}&format=png`;
   return res.redirect(qrUrl);
@@ -27,7 +28,7 @@ router.get('/qrcode', (req, res) => {
 
 /* Widget embebivel */
 router.get('/widget-code', (req, res) => {
-  const base = process.env.FRONTEND_URL || 'https://app.saldesk.cv';
+  const base = frontendBase();
   const slug = req.operator.slug;
   const iframeId = `saldesk-widget-${slug}`;
   const html = `<!-- SalDesk Widget — ${req.operator.name} -->

@@ -1,5 +1,6 @@
 const { supabaseAdmin } = require('../config/supabase');
 const { enviarEmail } = require('../helpers/emailHelper');
+const { frontendBase } = require('../utils/urls');
 const crypto = require('crypto');
 
 async function listar(req, res, next) {
@@ -52,7 +53,7 @@ async function requestReview(req, res, next) {
     }, { onConflict: 'reservation_id' });
     if (upsertErr) throw upsertErr;
 
-    const publicUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+    const publicUrl = frontendBase();
     const link = `${publicUrl}/review/${token}`;
 
     await enviarEmail({

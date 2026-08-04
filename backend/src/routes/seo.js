@@ -1,6 +1,7 @@
 const express = require('express');
 const router  = express.Router();
 const { supabaseAdmin } = require('../config/supabase');
+const { frontendBase } = require('../utils/urls');
 
 /* robots.txt */
 router.get('/robots.txt', (_req, res) => {
@@ -23,7 +24,7 @@ router.get('/sitemap.xml', async (_req, res) => {
       .select('slug, updated_at')
       .eq('onboarding_complete', true);
 
-    const base = process.env.FRONTEND_URL || 'https://app.saldesk.cv';
+    const base = frontendBase();
     const publicBase = process.env.WEBSITE_URL || 'https://saldesk.cv';
 
     const urls = [

@@ -17,6 +17,7 @@ const {
   submitLead,
   getImpact,
 } = require('../controllers/publicController');
+const { frontendBase } = require('../utils/urls');
 
 /* ─── Relatório de impacto público ─── */
 router.get('/impact',              getImpact);
@@ -54,7 +55,7 @@ router.post('/:slug/contact',      slugContact);
 
 /* ─── QR Code público — sem autenticação ─── */
 router.get('/:slug/qrcode', (req, res) => {
-  const base = process.env.FRONTEND_URL || 'https://app.saldesk.cv';
+  const base = frontendBase();
   const url  = encodeURIComponent(`${base}/book/${req.params.slug}`);
   return res.redirect(`https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${url}&format=png`);
 });

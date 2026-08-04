@@ -3,6 +3,7 @@ const { createOrder, captureOrder, refundCapture, verifyWebhookSignature } = req
 const { iniciarPagamento, verificarPagamento } = require('../services/sispService');
 const { emitToOperator } = require('../services/socketService');
 const { notifyOperator } = require('../services/pushService');
+const { frontendBase } = require('../utils/urls');
 
 /* ─── PayPal ─────────────────────────────────────────────── */
 
@@ -76,7 +77,7 @@ async function initSisp(req, res, next) {
       return res.status(400).json({ error: 'reservation_id e amount obrigatorios', code: 'MISSING_FIELDS' });
     }
     const apiBase = process.env.API_URL || 'http://localhost:3001/api/v1';
-    const frontBase = process.env.FRONTEND_URL || 'http://localhost:5173';
+    const frontBase = frontendBase();
     const result = await iniciarPagamento({
       amount, currency: 'EUR', reservationId: reservation_id,
       returnUrl: `${apiBase}/payments/sisp/callback?res=${reservation_id}`,
@@ -94,7 +95,7 @@ async function sispCallback(req, res, next) {
         .from('reservations')
         .update({ payment_status: 'paid', payment_method: 'sisp', sisp_transaction_id: ref, status: 'confirmed', updated_at: new Date().toISOString() })
         .eq('id', reservationId);
-      const frontBase = process.env.FRONTEND_URL || 'http://localhost:5173';
+      const frontBase = frontendBase();
       return res.redirect(`${frontBase}/book/success?res=${reservationId}`);
     }
     const txId = req.query.TransactionID || req.query.transactionId;
@@ -107,7 +108,7 @@ async function sispCallback(req, res, next) {
           .eq('id', reservationId);
       }
     }
-    const frontBase = process.env.FRONTEND_URL || 'http://localhost:5173';
+    const frontBase = frontendBase();
     return res.redirect(`${frontBase}/book/success?res=${reservationId}`);
   } catch (err) { next(err); }
 }
