@@ -36,8 +36,9 @@ function gerarFingerprintEnvio({
   posID, currency, transactionCode, entityCode, referenceNumber,
 }) {
   const toHash = sha512Base64(posAutCode) + timestamp + Math.trunc(parseFloat(amount) * 1000)
-    + merchantRef + merchantSession + posID
-    + currency + transactionCode + normalizarInt(entityCode) + normalizarInt(referenceNumber);
+    + String(merchantRef).trim() + String(merchantSession).trim() + String(posID).trim()
+    + String(currency).trim() + String(transactionCode).trim()
+    + normalizarInt(entityCode) + normalizarInt(referenceNumber);
   return sha512Base64(toHash);
 }
 
@@ -48,10 +49,10 @@ function gerarFingerprintResposta({
 }) {
   const toHash = sha512Base64(posAutCode) + messageType + clearingPeriod + transactionID
     + merchantReference + merchantSession
-    + Math.trunc(parseFloat(amount) * 1000) + messageID + pan
-    + merchantResponse + timestamp + normalizarInt(reference)
-    + normalizarInt(entity) + clientReceipt + additionalErrorMessage
-    + reloadCode;
+    + Math.trunc(parseFloat(amount) * 1000) + String(messageID).trim() + String(pan).trim()
+    + String(merchantResponse).trim() + timestamp + normalizarInt(reference)
+    + normalizarInt(entity) + String(clientReceipt).trim() + String(additionalErrorMessage).trim()
+    + String(reloadCode).trim();
   return sha512Base64(toHash);
 }
 
