@@ -8,7 +8,7 @@ const REDIS_URL = process.env.REDIS_URL || 'redis://localhost:6379';
 
 function createQueue(name) {
   const q = new Bull(name, REDIS_URL, {
-    redis: { enableOfflineQueue: false, connectTimeout: 3000, lazyConnect: true },
+    redis: { connectTimeout: 3000 },
   });
 
   q.on('error', (err) => {
