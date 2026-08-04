@@ -29,15 +29,28 @@ router.get('/qrcode', (req, res) => {
 router.get('/widget-code', (req, res) => {
   const base = process.env.FRONTEND_URL || 'https://app.saldesk.cv';
   const slug = req.operator.slug;
+  const iframeId = `saldesk-widget-${slug}`;
   const html = `<!-- SalDesk Widget — ${req.operator.name} -->
 <iframe
+  id="${iframeId}"
   src="${base}/book/${slug}?widget=1"
   width="100%"
-  height="600"
+  height="500"
   frameborder="0"
   style="border:none;border-radius:12px;box-shadow:0 4px 24px rgba(0,0,0,0.1)"
   title="Reservar em ${req.operator.name}"
-></iframe>`;
+></iframe>
+<script>
+(function () {
+  var iframe = document.getElementById('${iframeId}');
+  if (!iframe) return;
+  window.addEventListener('message', function (event) {
+    if (event.source === iframe.contentWindow && event.data && event.data.type === 'saldesk-widget-resize') {
+      iframe.style.height = event.data.height + 'px';
+    }
+  });
+})();
+</script>`;
   return res.json({ data: { html, slug }, message: 'Widget code gerado' });
 });
 

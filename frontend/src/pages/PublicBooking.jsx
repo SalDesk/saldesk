@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   MapPin, Phone, Star, ChevronLeft, ChevronRight, MessageCircle,
   Menu, X, Globe, Mail, Calendar, Users, Check, ArrowRight, Shield,
@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import Logo from '../components/shared/Logo';
 import QRCode from 'qrcode';
+import { useIsWidget, useWidgetResize } from '../utils/widgetMode';
 
 const API     = import.meta.env.VITE_API_URL || 'http://localhost:3001/api/v1';
 const EUR_CVE = 110;
@@ -922,6 +923,9 @@ function SpecialOfferSection({ lang, goBook }) {
 export default function PublicBooking() {
   const { slug }   = useParams();
   const navigate   = useNavigate();
+  const [searchParams] = useSearchParams();
+  const isWidget   = useIsWidget(searchParams);
+  useWidgetResize(isWidget);
 
   const [op, setOp]             = useState(null);
   const [units, setUnits]       = useState([]);
@@ -1119,6 +1123,7 @@ export default function PublicBooking() {
     <div className="min-h-screen bg-white">
 
       {/* ── Navbar ── */}
+      {!isWidget && (
       <nav className={`fixed top-0 left-0 right-0 z-40 transition-all duration-300 ${navScrolled ? 'bg-white shadow-md' : 'bg-transparent'}`}>
         <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between gap-4">
           <a href={`/book/${slug}`} className="flex items-center gap-2 flex-shrink-0">
@@ -1176,6 +1181,7 @@ export default function PublicBooking() {
           </div>
         )}
       </nav>
+      )}
 
       {/* ── Hero ── */}
       <section id="home">
@@ -1818,6 +1824,12 @@ export default function PublicBooking() {
       <SpecialOfferSection lang={lang} goBook={goBook} />
 
       {/* ── Footer ── */}
+      {isWidget ? (
+        <div className="text-center py-3 text-[11px] font-body text-n-400 border-t border-n-100">
+          {lang === 'en' ? 'Powered by' : 'Tecnologia'}{' '}
+          <a href="https://saldesk.cv" target="_blank" rel="noopener noreferrer" className="font-semibold text-n-500 hover:text-ocean-600 transition-colors">SalDesk</a>
+        </div>
+      ) : (
       <footer className="bg-ocean-900 text-white/70 mt-16">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 py-12">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 mb-8">
@@ -1917,6 +1929,7 @@ export default function PublicBooking() {
           </div>
         </div>
       </footer>
+      )}
 
       {/* ── Bottom CTA bar (mobile) ── */}
       {units.length > 0 && (

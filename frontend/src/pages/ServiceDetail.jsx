@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   MapPin, Phone, Star, ChevronLeft, ChevronRight, MessageCircle,
   Menu, X, Globe, Mail, Calendar, Users, Check, ArrowRight, Shield,
@@ -8,6 +8,7 @@ import {
   CreditCard, Lock, Building, Camera,
 } from 'lucide-react';
 import Logo from '../components/shared/Logo';
+import { useIsWidget, useWidgetResize } from '../utils/widgetMode';
 
 const API     = import.meta.env.VITE_API_URL || 'http://localhost:3001/api/v1';
 const EUR_CVE = 110;
@@ -459,6 +460,9 @@ function NotFoundPage({ slug, lang }) {
 export default function ServiceDetail() {
   const { slug, id } = useParams();
   const navigate     = useNavigate();
+  const [searchParams] = useSearchParams();
+  const isWidget     = useIsWidget(searchParams);
+  useWidgetResize(isWidget);
 
   const [op, setOp]           = useState(null);
   const [unit, setUnit]       = useState(null);
@@ -566,6 +570,7 @@ export default function ServiceDetail() {
     <div className="min-h-screen bg-white">
 
       {/* ── Navbar ── */}
+      {!isWidget && (
       <nav className={`fixed top-0 left-0 right-0 z-40 transition-all duration-300 ${navScrolled ? 'bg-white shadow-md' : 'bg-white/95 backdrop-blur-sm border-b border-n-100'}`}>
         <div className="max-w-6xl mx-auto px-4 h-14 flex items-center justify-between gap-3">
           {/* Breadcrumb */}
@@ -596,9 +601,10 @@ export default function ServiceDetail() {
           </div>
         </div>
       </nav>
+      )}
 
       {/* ── Hero Gallery ── */}
-      <div className="pt-14">
+      <div className={isWidget ? '' : 'pt-14'}>
         <HeroGallery images={imgs} unitName={unit.name} onOpen={i => setLbIdx(i)}/>
       </div>
 
@@ -1083,6 +1089,12 @@ export default function ServiceDetail() {
       </div>
 
       {/* ── Footer ── */}
+      {isWidget ? (
+        <div className="text-center py-3 text-[11px] font-body text-n-400 border-t border-n-100">
+          {lang === 'en' ? 'Powered by' : 'Tecnologia'}{' '}
+          <a href="https://saldesk.cv" target="_blank" rel="noopener noreferrer" className="font-semibold text-n-500 hover:text-ocean-600 transition-colors">SalDesk</a>
+        </div>
+      ) : (
       <footer className="bg-ocean-900 text-white/70 mt-16">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 py-10">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
@@ -1103,6 +1115,7 @@ export default function ServiceDetail() {
           </div>
         </div>
       </footer>
+      )}
 
       {/* ── Mobile bottom bar ── */}
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-n-200 px-4 py-3 flex gap-3 z-30 lg:hidden shadow-lg">
