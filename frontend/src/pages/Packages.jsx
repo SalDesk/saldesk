@@ -1,19 +1,16 @@
 import { useState, useEffect } from 'react';
-import PlanGuard from '../components/PlanGuard';
 import {
   Package, Plus, Pencil, Trash2, Eye, EyeOff,
-  BarChart2, Image as ImageIcon, Copy, Check,
+  Image as ImageIcon,
 } from 'lucide-react';
 import { listUnits } from '../services/unitsService';
+import { listPackages, createPackage, updatePackage, deletePackage } from '../services/packagesService';
 import PageHeader from '../components/layout/PageHeader';
 import Button from '../components/ui/Button';
 import Card from '../components/ui/Card';
 import Modal from '../components/ui/Modal';
 import Input, { Textarea, Select } from '../components/ui/Input';
-
-const STORAGE_KEY = 'saldesk_packages_v1';
-function load() { try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); } catch { return []; } }
-function persist(v) { localStorage.setItem(STORAGE_KEY, JSON.stringify(v)); }
+import LoadingSpinner from '../components/shared/LoadingSpinner';
 
 const STATUS_CFG = {
   activo:   { label: 'Activo',   cls: 'bg-[#ECFDF5] text-[#1A7A4A] border-[#BBF7D0]'  },
@@ -45,6 +42,9 @@ function PackageModal({ pkg, units, onSave, onClose }) {
     status:        base?.status        || 'activo',
   });
 
+  const [saving, setSaving] = useState(false);
+  const [error,  setError]  = useState('');
+
   const set = f => e => setForm(p => ({ ...p, [f]: e.target.value }));
 
   function toggleTour(id) {
@@ -64,18 +64,22 @@ function PackageModal({ pkg, units, onSave, onClose }) {
     ? originalPrice - Number(form.price)
     : 0;
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault();
-    onSave({
-      ...base,
-      ...form,
-      price:   Number(form.price),
-      limit:   form.limit ? Number(form.limit) : 0,
-      original_price: originalPrice,
-      bookings_count: base?.bookings_count || 0,
-      id:      base?.id || Date.now().toString(),
-      created_at: base?.created_at || new Date().toISOString(),
-    });
+    setSaving(true);
+    setError('');
+    try {
+      await onSave(base?.id, {
+        ...form,
+        price:   Number(form.price),
+        limit:   form.limit ? Number(form.limit) : 0,
+        original_price: originalPrice,
+      });
+    } catch {
+      setError('Erro ao guardar pacote.');
+    } finally {
+      setSaving(false);
+    }
   }
 
   return (
@@ -145,9 +149,11 @@ function PackageModal({ pkg, units, onSave, onClose }) {
           </Select>
         )}
 
+        {error && <p className="text-xs text-error">{error}</p>}
+
         <div className="flex gap-3 pt-1">
           <Button type="button" variant="secondary" onClick={onClose} className="flex-1">Cancelar</Button>
-          <Button type="submit" className="flex-1">{isNew ? 'Criar pacote' : 'Guardar'}</Button>
+          <Button type="submit" loading={saving} className="flex-1">{isNew ? 'Criar pacote' : 'Guardar'}</Button>
         </div>
       </form>
     </Modal>
@@ -156,43 +162,46 @@ function PackageModal({ pkg, units, onSave, onClose }) {
 
 /* ─────────────────────── Main ─────────────────────── */
 export default function Packages() {
-  const [packages, setPackages] = useState(load);
+  const [packages, setPackages] = useState([]);
+  const [loading,  setLoading]  = useState(true);
   const [units,    setUnits]    = useState([]);
   const [modal,    setModal]    = useState(null);
 
   useEffect(() => { listUnits().then(d => setUnits(d || [])).catch(() => {}); }, []);
+  useEffect(() => {
+    listPackages().then(d => setPackages(d || [])).catch(() => {}).finally(() => setLoading(false));
+  }, []);
 
-  function handleSave(pkg) {
-    setPackages(prev => {
-      const next = prev.find(x => x.id === pkg.id)
-        ? prev.map(x => x.id === pkg.id ? pkg : x)
-        : [...prev, pkg];
-      persist(next);
-      return next;
-    });
+  async function handleSave(id, dados) {
+    const saved = id ? await updatePackage(id, dados) : await createPackage(dados);
+    setPackages(prev => prev.find(p => p.id === saved.id) ? prev.map(p => p.id === saved.id ? saved : p) : [saved, ...prev]);
     setModal(null);
   }
 
-  function handleDelete(id) {
+  async function handleDelete(id) {
     if (!window.confirm('Eliminar este pacote?')) return;
-    setPackages(prev => { const next = prev.filter(p => p.id !== id); persist(next); return next; });
+    await deletePackage(id);
+    setPackages(prev => prev.filter(p => p.id !== id));
   }
 
-  function handleToggleStatus(id) {
-    setPackages(prev => {
-      const next = prev.map(p => {
-        if (p.id !== id) return p;
-        const nextStatus = p.status === 'activo' ? 'inactivo' : 'activo';
-        return { ...p, status: nextStatus };
-      });
-      persist(next);
-      return next;
-    });
+  async function handleToggleStatus(pkg) {
+    const nextStatus = pkg.status === 'activo' ? 'inactivo' : 'activo';
+    const updated = await updatePackage(pkg.id, { status: nextStatus });
+    setPackages(prev => prev.map(p => p.id === pkg.id ? updated : p));
   }
 
   const totalRevenue = packages.reduce((s, p) => s + (p.bookings_count || 0) * (p.price || 0), 0);
   const totalBookings = packages.reduce((s, p) => s + (p.bookings_count || 0), 0);
   const activeCount = packages.filter(p => p.status === 'activo').length;
+
+  if (loading) {
+    return (
+      <div>
+        <PageHeader title="Pacotes Sazonais" subtitle="Combina tours em pacotes com preco especial" />
+        <div className="flex justify-center py-16"><LoadingSpinner size={32} /></div>
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -317,7 +326,7 @@ export default function Packages() {
                       </span>
                     )}
                     <div className="ml-auto flex gap-1">
-                      <button onClick={() => handleToggleStatus(pkg.id)}
+                      <button onClick={() => handleToggleStatus(pkg)}
                         className="p-1.5 rounded text-n-400 hover:text-ocean-700 hover:bg-ocean-50 transition-colors"
                         title={pkg.status === 'activo' ? 'Desactivar' : 'Activar'}>
                         {pkg.status === 'activo' ? <EyeOff size={13} strokeWidth={1.75} /> : <Eye size={13} strokeWidth={1.75} />}

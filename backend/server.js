@@ -31,6 +31,7 @@ const voucherRoutes      = require('./src/routes/vouchers');
 const loyaltyRoutes      = require('./src/routes/loyalty');
 const affiliateRoutes    = require('./src/routes/affiliates');
 const groupsRoutes       = require('./src/routes/groups');
+const packagesRoutes     = require('./src/routes/packages');
 const errorHandler       = require('./src/middleware/errorHandler');
 const uploadRoutes       = require('./src/routes/upload');
 const { iniciarCron }    = require('./src/services/cronService');
@@ -97,6 +98,7 @@ app.use('/api/v1/vouchers',     voucherRoutes);
 app.use('/api/v1/loyalty',      loyaltyRoutes);
 app.use('/api/v1/affiliates',   affiliateRoutes);
 app.use('/api/v1/groups',       groupsRoutes);
+app.use('/api/v1/packages',     packagesRoutes);
 app.use('/',                    seoRoutes);
 
 app.use(errorHandler);
