@@ -1,19 +1,16 @@
 import { useState, useEffect } from 'react';
-import PlanGuard from '../components/PlanGuard';
 import {
   Users2, Plus, Pencil, Trash2, ChevronDown, ChevronUp,
-  Building2, Euro, CalendarDays, FileText, Check,
+  Building2, Euro, FileText, Check,
 } from 'lucide-react';
 import { listUnits } from '../services/unitsService';
+import { listGroups, createGroup, updateGroup, deleteGroup, createGroupPayment } from '../services/groupsService';
 import PageHeader from '../components/layout/PageHeader';
 import Button from '../components/ui/Button';
 import Card from '../components/ui/Card';
 import Modal from '../components/ui/Modal';
 import Input, { Textarea, Select } from '../components/ui/Input';
-
-const STORAGE_KEY = 'saldesk_groups_v1';
-function load() { try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); } catch { return []; } }
-function persist(v) { localStorage.setItem(STORAGE_KEY, JSON.stringify(v)); }
+import LoadingSpinner from '../components/shared/LoadingSpinner';
 
 const EVENT_TYPES = [
   { value: 'team_building', label: 'Team Building'      },
@@ -57,6 +54,9 @@ function GroupModal({ group, units, onSave, onClose }) {
     status:        base?.status        || 'pedido',
   });
 
+  const [saving, setSaving] = useState(false);
+  const [error,  setError]  = useState('');
+
   const set = f => e => setForm(p => ({ ...p, [f]: e.target.value }));
 
   function toggleTour(id) {
@@ -76,20 +76,24 @@ function GroupModal({ group, units, onSave, onClose }) {
     ? basePrice * (1 - Number(form.discount_pct) / 100) * Number(form.guests || 1)
     : basePrice * Number(form.guests || 1);
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault();
-    onSave({
-      ...base,
-      ...form,
-      guests:       Number(form.guests),
-      budget:       form.budget ? Number(form.budget) : 0,
-      discount_pct: form.discount_pct ? Number(form.discount_pct) : 0,
-      signal_pct:   Number(form.signal_pct),
-      days_before:  Number(form.days_before),
-      payments:     base?.payments || [],
-      id:      base?.id || Date.now().toString(),
-      created_at: base?.created_at || new Date().toISOString(),
-    });
+    setSaving(true);
+    setError('');
+    try {
+      await onSave(base?.id, {
+        ...form,
+        guests:       Number(form.guests),
+        budget:       form.budget ? Number(form.budget) : 0,
+        discount_pct: form.discount_pct ? Number(form.discount_pct) : 0,
+        signal_pct:   Number(form.signal_pct),
+        days_before:  Number(form.days_before),
+      });
+    } catch {
+      setError('Erro ao guardar cotacao.');
+    } finally {
+      setSaving(false);
+    }
   }
 
   return (
@@ -165,9 +169,11 @@ function GroupModal({ group, units, onSave, onClose }) {
           </Select>
         )}
 
+        {error && <p className="text-xs text-error">{error}</p>}
+
         <div className="flex gap-3 pt-1">
           <Button type="button" variant="secondary" onClick={onClose} className="flex-1">Cancelar</Button>
-          <Button type="submit" className="flex-1">{isNew ? 'Criar cotacao' : 'Guardar'}</Button>
+          <Button type="submit" loading={saving} className="flex-1">{isNew ? 'Criar cotacao' : 'Guardar'}</Button>
         </div>
       </form>
     </Modal>
@@ -179,13 +185,19 @@ function PaymentModal({ group, onSave, onClose }) {
   const [amount, setAmount] = useState('');
   const [date,   setDate]   = useState(new Date().toISOString().slice(0, 10));
   const [note,   setNote]   = useState('Sinal');
+  const [saving, setSaving] = useState(false);
 
   const totalPaid = (group.payments || []).reduce((s, p) => s + Number(p.amount || 0), 0);
 
-  function handleSave() {
+  async function handleSave() {
     if (!amount || Number(amount) <= 0) return;
-    onSave(group.id, { amount: Number(amount), date, note });
-    onClose();
+    setSaving(true);
+    try {
+      await onSave(group.id, { amount: Number(amount), date, note });
+      onClose();
+    } finally {
+      setSaving(false);
+    }
   }
 
   return (
@@ -200,7 +212,7 @@ function PaymentModal({ group, onSave, onClose }) {
         <Input label="Descricao" value={note} onChange={e => setNote(e.target.value)} placeholder="Ex: Sinal, Pagamento final..." />
         <div className="flex gap-3">
           <Button variant="secondary" onClick={onClose} className="flex-1">Cancelar</Button>
-          <Button onClick={handleSave} className="flex-1">Registar</Button>
+          <Button loading={saving} onClick={handleSave} className="flex-1">Registar</Button>
         </div>
       </div>
     </Modal>
@@ -331,7 +343,8 @@ function GroupCard({ group, units, onEdit, onDelete, onPayment, onStatusChange }
 
 /* ─────────────────────── Main ─────────────────────── */
 export default function Groups() {
-  const [groups,      setGroups]      = useState(load);
+  const [groups,      setGroups]      = useState([]);
+  const [loading,     setLoading]     = useState(true);
   const [units,       setUnits]       = useState([]);
   const [modal,       setModal]       = useState(null);
   const [payModal,    setPayModal]    = useState(null);
@@ -339,37 +352,30 @@ export default function Groups() {
   const [search,      setSearch]      = useState('');
 
   useEffect(() => { listUnits().then(d => setUnits(d || [])).catch(() => {}); }, []);
+  useEffect(() => {
+    listGroups().then(d => setGroups(d || [])).catch(() => {}).finally(() => setLoading(false));
+  }, []);
 
-  function handleSave(g) {
-    setGroups(prev => {
-      const next = prev.find(x => x.id === g.id)
-        ? prev.map(x => x.id === g.id ? g : x)
-        : [...prev, g];
-      persist(next); return next;
-    });
+  async function handleSave(id, dados) {
+    const saved = id ? await updateGroup(id, dados) : await createGroup(dados);
+    setGroups(prev => prev.find(g => g.id === saved.id) ? prev.map(g => g.id === saved.id ? saved : g) : [saved, ...prev]);
     setModal(null);
   }
 
-  function handleDelete(id) {
+  async function handleDelete(id) {
     if (!window.confirm('Eliminar esta cotacao?')) return;
-    setGroups(prev => { const next = prev.filter(g => g.id !== id); persist(next); return next; });
+    await deleteGroup(id);
+    setGroups(prev => prev.filter(g => g.id !== id));
   }
 
-  function handlePayment(groupId, payment) {
-    setGroups(prev => {
-      const next = prev.map(g => {
-        if (g.id !== groupId) return g;
-        return { ...g, payments: [...(g.payments || []), payment] };
-      });
-      persist(next); return next;
-    });
+  async function handlePayment(groupId, payment) {
+    const updated = await createGroupPayment(groupId, payment);
+    setGroups(prev => prev.map(g => g.id === groupId ? updated : g));
   }
 
-  function handleStatusChange(id, newStatus) {
-    setGroups(prev => {
-      const next = prev.map(g => g.id === id ? { ...g, status: newStatus } : g);
-      persist(next); return next;
-    });
+  async function handleStatusChange(id, newStatus) {
+    const updated = await updateGroup(id, { status: newStatus });
+    setGroups(prev => prev.map(g => g.id === id ? updated : g));
   }
 
   const filtered = groups.filter(g => {
@@ -385,6 +391,15 @@ export default function Groups() {
     confirmados: groups.filter(g => g.status === 'confirmado').length,
     pax:        groups.filter(g => ['confirmado', 'concluido'].includes(g.status)).reduce((s, g) => s + (g.guests || 0), 0),
   };
+
+  if (loading) {
+    return (
+      <div>
+        <PageHeader title="Grupos e Eventos Corporativos" subtitle="Cotacoes e propostas para grupos e empresas" />
+        <div className="flex justify-center py-16"><LoadingSpinner size={32} /></div>
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -464,7 +479,7 @@ export default function Groups() {
       {payModal && (
         <PaymentModal
           group={payModal}
-          onSave={(id, payment) => { handlePayment(id, payment); setPayModal(null); }}
+          onSave={handlePayment}
           onClose={() => setPayModal(null)}
         />
       )}
