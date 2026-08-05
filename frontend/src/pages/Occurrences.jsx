@@ -6,16 +6,13 @@ import {
 } from 'lucide-react';
 import { listStaff } from '../services/staffService';
 import { listUnits } from '../services/unitsService';
+import { listOccurrences, createOccurrence, updateOccurrence, deleteOccurrence } from '../services/occurrencesService';
 import PageHeader from '../components/layout/PageHeader';
 import Button from '../components/ui/Button';
 import Card from '../components/ui/Card';
 import Modal from '../components/ui/Modal';
 import Input, { Textarea, Select } from '../components/ui/Input';
-
-/* ── localStorage ── */
-const STORAGE_KEY = 'saldesk_occurrences_v1';
-function load() { try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); } catch { return []; } }
-function persist(v) { localStorage.setItem(STORAGE_KEY, JSON.stringify(v)); }
+import LoadingSpinner from '../components/shared/LoadingSpinner';
 
 /* ── Constants ── */
 const TYPES = [
@@ -78,20 +75,24 @@ function OccurrenceModal({ occurrence, units, staff, onSave, onClose }) {
     date:          base?.date          || new Date().toISOString().slice(0, 10),
   });
 
+  const [saving, setSaving] = useState(false);
+  const [error,  setError]  = useState('');
+
   const set = f => e => setForm(p => ({ ...p, [f]: e.target.value }));
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault();
     const unitName  = units.find(u => u.id === form.unit_id)?.name || '';
     const staffName = staff.find(s => s.id === form.staff_id)?.name || '';
-    onSave({
-      ...base,
-      ...form,
-      unit_name:  unitName,
-      staff_name: staffName,
-      id: base?.id || Date.now().toString(),
-      created_at: base?.created_at || new Date().toISOString(),
-    });
+    setSaving(true);
+    setError('');
+    try {
+      await onSave(base?.id, { ...form, unit_name: unitName, staff_name: staffName });
+    } catch {
+      setError('Erro ao guardar ocorrencia.');
+    } finally {
+      setSaving(false);
+    }
   }
 
   return (
@@ -130,9 +131,11 @@ function OccurrenceModal({ occurrence, units, staff, onSave, onClose }) {
           hint="Opcional. Separe multiplas URLs por virgula."
         />
 
+        {error && <p className="text-xs text-error">{error}</p>}
+
         <div className="flex gap-3 pt-1">
           <Button type="button" variant="secondary" onClick={onClose} className="flex-1">Cancelar</Button>
-          <Button type="submit" className="flex-1">{isNew ? 'Registar' : 'Guardar'}</Button>
+          <Button type="submit" loading={saving} className="flex-1">{isNew ? 'Registar' : 'Guardar'}</Button>
         </div>
       </form>
     </Modal>
@@ -204,7 +207,8 @@ function MonthlyReport({ occurrences }) {
 
 /* ─────────────────────── Main ─────────────────────── */
 export default function Occurrences() {
-  const [occurrences, setOccurrences] = useState(load);
+  const [occurrences, setOccurrences] = useState([]);
+  const [loading,     setLoading]     = useState(true);
   const [units,       setUnits]       = useState([]);
   const [staff,       setStaff]       = useState([]);
   const [modal,       setModal]       = useState(null);
@@ -216,6 +220,9 @@ export default function Occurrences() {
     listUnits().then(d => setUnits(d || [])).catch(() => {});
     listStaff().then(d => setStaff(d || [])).catch(() => {});
   }, []);
+  useEffect(() => {
+    listOccurrences().then(d => setOccurrences(d || [])).catch(() => {}).finally(() => setLoading(false));
+  }, []);
 
   /* Critical alert */
   const criticals = occurrences.filter(o => o.severity === 'critica' &&
@@ -223,20 +230,16 @@ export default function Occurrences() {
     (Date.now() - new Date(o.created_at || o.date).getTime()) < 7 * 24 * 60 * 60 * 1000,
   );
 
-  function handleSave(o) {
-    setOccurrences(prev => {
-      const next = prev.find(x => x.id === o.id)
-        ? prev.map(x => x.id === o.id ? o : x)
-        : [...prev, o];
-      persist(next);
-      return next;
-    });
+  async function handleSave(id, dados) {
+    const saved = id ? await updateOccurrence(id, dados) : await createOccurrence(dados);
+    setOccurrences(prev => prev.find(o => o.id === saved.id) ? prev.map(o => o.id === saved.id ? saved : o) : [saved, ...prev]);
     setModal(null);
   }
 
-  function handleDelete(id) {
+  async function handleDelete(id) {
     if (!window.confirm('Eliminar esta ocorrencia?')) return;
-    setOccurrences(prev => { const next = prev.filter(o => o.id !== id); persist(next); return next; });
+    await deleteOccurrence(id);
+    setOccurrences(prev => prev.filter(o => o.id !== id));
   }
 
   const filtered = useMemo(() => {
@@ -265,6 +268,15 @@ export default function Occurrences() {
       return d.getFullYear() === n.getFullYear() && d.getMonth() === n.getMonth();
     }).length,
   };
+
+  if (loading) {
+    return (
+      <div>
+        <PageHeader title="Ocorrencias" subtitle="Registo e gestao de incidentes operacionais" />
+        <div className="flex justify-center py-16"><LoadingSpinner size={32} /></div>
+      </div>
+    );
+  }
 
   return (
     <div>
