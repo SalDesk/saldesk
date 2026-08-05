@@ -1,5 +1,6 @@
 const { supabaseAdmin } = require('../config/supabase');
 const { detectarIdioma } = require('./languageHelper');
+const { obterConfigActiva } = require('../controllers/loyaltyController');
 
 // Procura cliente existente por email+operador ou cria um novo
 async function obterOuCriarCliente(operatorId, { name, email, phone, country_code }) {
@@ -53,7 +54,7 @@ async function obterOuCriarCliente(operatorId, { name, email, phone, country_cod
 }
 
 /* Incrementa total_visits, total_spent e pontos de fidelizacao apos checkout */
-async function actualizarStatsCheckout(customerId, totalPrice, source = 'admin') {
+async function actualizarStatsCheckout(operatorId, customerId, totalPrice, source = 'admin') {
   const { data: customer } = await supabaseAdmin
     .from('customers')
     .select('total_visits, total_spent, loyalty_points')
@@ -62,8 +63,10 @@ async function actualizarStatsCheckout(customerId, totalPrice, source = 'admin')
 
   if (!customer) return;
 
-  /* Reservas directas ganham 10 pontos; OTAs nao ganham pontos */
-  const pontosGanhos = ['direct', 'public', 'admin', 'manual'].includes(source) ? 10 : 0;
+  /* Reservas directas ganham pontos conforme a taxa configurada; OTAs nunca ganham */
+  const elegivel = ['direct', 'public', 'admin', 'manual'].includes(source);
+  const config = elegivel ? await obterConfigActiva(operatorId) : null;
+  const pontosGanhos = config ? Math.round(Number(totalPrice) * Number(config.points_per_euro)) : 0;
 
   await supabaseAdmin
     .from('customers')

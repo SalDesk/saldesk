@@ -5,15 +5,13 @@ import {
   Plus, Minus, ChevronDown, ChevronUp, Star,
 } from 'lucide-react';
 import { listCustomers, updateCustomer } from '../services/customersService';
+import { getLoyaltyConfig, updateLoyaltyConfig } from '../services/loyaltyService';
 import PageHeader from '../components/layout/PageHeader';
 import Button from '../components/ui/Button';
 import Card from '../components/ui/Card';
 import Modal from '../components/ui/Modal';
 import Input, { Select } from '../components/ui/Input';
 import LoadingSpinner from '../components/shared/LoadingSpinner';
-
-/* ── localStorage ── */
-const CONFIG_KEY = 'saldesk_loyalty_config_v1';
 
 const DEFAULT_CONFIG = {
   active: false,
@@ -30,12 +28,6 @@ const LEVEL_COLORS = {
   Prata:  { bg: '#F1F5F9', text: '#475569', border: '#CBD5E1' },
   Ouro:   { bg: '#FFF7E6', text: '#92400E', border: '#FCD34D' },
 };
-
-function loadConfig() {
-  try { return { ...DEFAULT_CONFIG, ...JSON.parse(localStorage.getItem(CONFIG_KEY) || '{}') }; }
-  catch { return DEFAULT_CONFIG; }
-}
-function saveConfig(c) { localStorage.setItem(CONFIG_KEY, JSON.stringify(c)); }
 
 /* ── Helpers ── */
 function getLevel(points, levels) {
@@ -209,12 +201,20 @@ function LevelCard({ level, index, onUpdate, totalCustomers }) {
 /* ── Main ── */
 export default function Loyalty() {
   const [activeTab,  setActiveTab]  = useState('config');
-  const [config,     setConfig]     = useState(loadConfig);
+  const [config,     setConfig]     = useState(DEFAULT_CONFIG);
+  const [configLoading, setConfigLoading] = useState(true);
   const [customers,  setCustomers]  = useState([]);
   const [loading,    setLoading]    = useState(false);
   const [search,     setSearch]     = useState('');
   const [filterLevel, setFilterLevel] = useState('');
   const [editingCustomer, setEditingCustomer] = useState(null);
+
+  useEffect(() => {
+    getLoyaltyConfig()
+      .then(d => setConfig({ ...DEFAULT_CONFIG, ...d }))
+      .catch(() => {})
+      .finally(() => setConfigLoading(false));
+  }, []);
 
   useEffect(() => {
     if (activeTab === 'clientes') {
@@ -223,9 +223,11 @@ export default function Loyalty() {
     }
   }, [activeTab]);
 
-  function persistConfig(next) {
+  async function persistConfig(next) {
     setConfig(next);
-    saveConfig(next);
+    try {
+      await updateLoyaltyConfig({ active: next.active, points_per_euro: next.points_per_euro, levels: next.levels });
+    } catch { /* mantem UI optimista; proximo load reconcilia */ }
   }
 
   function toggleActive() {
@@ -262,6 +264,15 @@ export default function Loyalty() {
     prata:  customers.filter(c => getLevel(c.loyalty_points, config.levels).name === 'Prata').length,
     ouro:   customers.filter(c => getLevel(c.loyalty_points, config.levels).name === 'Ouro').length,
   };
+
+  if (configLoading) {
+    return (
+      <div>
+        <PageHeader title="Programa de Fidelidade" subtitle="Configure niveis, pontos e recompensas" />
+        <div className="flex justify-center py-16"><LoadingSpinner size={32} /></div>
+      </div>
+    );
+  }
 
   return (
     <div>

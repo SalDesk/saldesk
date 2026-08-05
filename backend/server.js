@@ -28,6 +28,7 @@ const adminRoutes        = require('./src/routes/admin');
 const marketingRoutes    = require('./src/routes/marketing');
 const seoRoutes          = require('./src/routes/seo');
 const voucherRoutes      = require('./src/routes/vouchers');
+const loyaltyRoutes      = require('./src/routes/loyalty');
 const errorHandler       = require('./src/middleware/errorHandler');
 const uploadRoutes       = require('./src/routes/upload');
 const { iniciarCron }    = require('./src/services/cronService');
@@ -91,6 +92,7 @@ app.use('/api/v1/upload',  uploadRoutes);
 app.use('/api/v1/admin',        adminRoutes);
 app.use('/api/v1/marketing',    marketingRoutes);
 app.use('/api/v1/vouchers',     voucherRoutes);
+app.use('/api/v1/loyalty',      loyaltyRoutes);
 app.use('/',                    seoRoutes);
 
 app.use(errorHandler);

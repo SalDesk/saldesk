@@ -270,7 +270,7 @@ async function mudarStatus(req, res, next) {
 
     const { data: reserva } = await supabaseAdmin
       .from('reservations')
-      .select('status, customer_id, total_price')
+      .select('status, customer_id, total_price, source')
       .eq('id', req.params.id)
       .eq('operator_id', getOperatorId(req))
       .single();
@@ -298,7 +298,7 @@ async function mudarStatus(req, res, next) {
 
     // Actualizar stats do cliente após checkout
     if (status === 'checked_out' && reserva.customer_id) {
-      await actualizarStatsCheckout(reserva.customer_id, reserva.total_price);
+      await actualizarStatsCheckout(getOperatorId(req), reserva.customer_id, reserva.total_price, reserva.source);
     }
 
     return res.json({ data, message: `Status actualizado para "${status}"` });
