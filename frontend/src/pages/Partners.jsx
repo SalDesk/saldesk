@@ -1,18 +1,15 @@
-import { useState } from 'react';
-import PlanGuard from '../components/PlanGuard';
+import { useState, useEffect } from 'react';
 import {
   Handshake, Plus, Pencil, Trash2, ArrowUpRight, ArrowDownRight,
   Hotel, Car, Utensils, Compass, ToggleLeft, ToggleRight,
 } from 'lucide-react';
+import { listPartners, createPartner, updatePartner, deletePartner, registerPartnerBooking } from '../services/partnersService';
 import PageHeader from '../components/layout/PageHeader';
 import Button from '../components/ui/Button';
 import Card from '../components/ui/Card';
 import Modal from '../components/ui/Modal';
 import Input, { Textarea, Select } from '../components/ui/Input';
-
-const STORAGE_KEY = 'saldesk_partners_v1';
-function load() { try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); } catch { return []; } }
-function persist(v) { localStorage.setItem(STORAGE_KEY, JSON.stringify(v)); }
+import LoadingSpinner from '../components/shared/LoadingSpinner';
 
 const PARTNER_TYPES = [
   { value: 'hotel',      label: 'Hotel / Alojamento', Icon: Hotel   },
@@ -39,22 +36,28 @@ function PartnerModal({ partner, onSave, onClose }) {
     commission_pct:     base?.commission_pct     || '',
     message_pt:         base?.message_pt         || '',
     message_en:         base?.message_en         || '',
-    bookings_sent:      base?.bookings_sent      || 0,
-    bookings_received:  base?.bookings_received  || 0,
     active:             base?.active             ?? true,
   });
 
+  const [saving, setSaving] = useState(false);
+  const [error,  setError]  = useState('');
+
   const set = f => e => setForm(p => ({ ...p, [f]: e.target.value }));
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault();
-    onSave({
-      ...base,
-      ...form,
-      commission_pct: form.commission_pct ? Number(form.commission_pct) : 0,
-      id: base?.id || Date.now().toString(),
-      created_at: base?.created_at || new Date().toISOString(),
-    });
+    setSaving(true);
+    setError('');
+    try {
+      await onSave(base?.id, {
+        ...form,
+        commission_pct: form.commission_pct ? Number(form.commission_pct) : 0,
+      });
+    } catch {
+      setError('Erro ao guardar parceiro.');
+    } finally {
+      setSaving(false);
+    }
   }
 
   const needsCommission = form.partnership_type === 'commission';
@@ -93,9 +96,11 @@ function PartnerModal({ partner, onSave, onClose }) {
           </>
         )}
 
+        {error && <p className="text-xs text-error">{error}</p>}
+
         <div className="flex gap-3 pt-1">
           <Button type="button" variant="secondary" onClick={onClose} className="flex-1">Cancelar</Button>
-          <Button type="submit" className="flex-1">{isNew ? 'Adicionar' : 'Guardar'}</Button>
+          <Button type="submit" loading={saving} className="flex-1">{isNew ? 'Adicionar' : 'Guardar'}</Button>
         </div>
       </form>
     </Modal>
@@ -106,11 +111,17 @@ function PartnerModal({ partner, onSave, onClose }) {
 function BookingLogModal({ partner, onSave, onClose }) {
   const [direction, setDirection] = useState('sent');
   const [count,     setCount]     = useState('1');
+  const [saving,    setSaving]    = useState(false);
 
-  function handleSave() {
+  async function handleSave() {
     const delta = Number(count) || 1;
-    onSave(partner.id, direction, delta);
-    onClose();
+    setSaving(true);
+    try {
+      await onSave(partner.id, direction, delta);
+      onClose();
+    } finally {
+      setSaving(false);
+    }
   }
 
   return (
@@ -127,7 +138,7 @@ function BookingLogModal({ partner, onSave, onClose }) {
         <Input label="Numero de reservas" type="number" min="1" step="1" value={count} onChange={e => setCount(e.target.value)} />
         <div className="flex gap-3">
           <Button variant="secondary" onClick={onClose} className="flex-1">Cancelar</Button>
-          <Button onClick={handleSave} className="flex-1">Registar</Button>
+          <Button loading={saving} onClick={handleSave} className="flex-1">Registar</Button>
         </div>
       </div>
     </Modal>
@@ -136,44 +147,36 @@ function BookingLogModal({ partner, onSave, onClose }) {
 
 /* ─────────────────────── Main ─────────────────────── */
 export default function Partners() {
-  const [partners,  setPartners]  = useState(load);
+  const [partners,  setPartners]  = useState([]);
+  const [loading,   setLoading]   = useState(true);
   const [modal,     setModal]     = useState(null);
   const [logModal,  setLogModal]  = useState(null);
   const [activeTab, setActiveTab] = useState('parceiros');
 
-  function handleSave(p) {
-    setPartners(prev => {
-      const next = prev.find(x => x.id === p.id)
-        ? prev.map(x => x.id === p.id ? p : x)
-        : [...prev, p];
-      persist(next);
-      return next;
-    });
+  useEffect(() => {
+    listPartners().then(d => setPartners(d || [])).catch(() => {}).finally(() => setLoading(false));
+  }, []);
+
+  async function handleSave(id, dados) {
+    const saved = id ? await updatePartner(id, dados) : await createPartner(dados);
+    setPartners(prev => prev.find(p => p.id === saved.id) ? prev.map(p => p.id === saved.id ? saved : p) : [saved, ...prev]);
     setModal(null);
   }
 
-  function handleDelete(id) {
+  async function handleDelete(id) {
     if (!window.confirm('Eliminar este parceiro?')) return;
-    setPartners(prev => { const next = prev.filter(p => p.id !== id); persist(next); return next; });
+    await deletePartner(id);
+    setPartners(prev => prev.filter(p => p.id !== id));
   }
 
-  function handleToggle(id) {
-    setPartners(prev => {
-      const next = prev.map(p => p.id === id ? { ...p, active: !p.active } : p);
-      persist(next); return next;
-    });
+  async function handleToggle(p) {
+    const updated = await updatePartner(p.id, { active: !p.active });
+    setPartners(prev => prev.map(x => x.id === p.id ? updated : x));
   }
 
-  function handleLogBooking(partnerId, direction, delta) {
-    setPartners(prev => {
-      const next = prev.map(p => {
-        if (p.id !== partnerId) return p;
-        return direction === 'sent'
-          ? { ...p, bookings_sent: (p.bookings_sent || 0) + delta }
-          : { ...p, bookings_received: (p.bookings_received || 0) + delta };
-      });
-      persist(next); return next;
-    });
+  async function handleLogBooking(partnerId, direction, delta) {
+    const updated = await registerPartnerBooking(partnerId, direction, delta);
+    setPartners(prev => prev.map(p => p.id === partnerId ? updated : p));
   }
 
   /* Dashboard stats */
@@ -190,6 +193,15 @@ export default function Partners() {
     { key: 'parceiros',  label: 'Parceiros'          },
     { key: 'dashboard',  label: 'Dashboard'          },
   ];
+
+  if (loading) {
+    return (
+      <div>
+        <PageHeader title="Parcerias Cross-Selling" subtitle="Recomendacoes e comissoes entre operadores SalDesk" />
+        <div className="flex justify-center py-16"><LoadingSpinner size={32} /></div>
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -263,7 +275,7 @@ export default function Partners() {
                       className="p-1.5 rounded text-n-400 hover:text-ocean-700 hover:bg-ocean-50 transition-colors" title="Registar reservas">
                       <Handshake size={13} strokeWidth={1.75} />
                     </button>
-                    <button onClick={() => handleToggle(p.id)}
+                    <button onClick={() => handleToggle(p)}
                       className="p-1.5 rounded text-n-400 hover:text-n-700 hover:bg-n-100 transition-colors">
                       {p.active
                         ? <ToggleRight size={13} strokeWidth={1.75} className="text-ocean-700" />
