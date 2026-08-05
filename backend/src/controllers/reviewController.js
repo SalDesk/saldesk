@@ -1,7 +1,40 @@
 const { supabaseAdmin } = require('../config/supabase');
 const { enviarEmail } = require('../helpers/emailHelper');
 const { frontendBase } = require('../utils/urls');
+const { detectarIdioma } = require('../helpers/languageHelper');
 const crypto = require('crypto');
+
+const DEFAULT_TEMPLATE = {
+  subject_pt: 'Como correu o seu tour? Deixe a sua avaliacao',
+  subject_en: 'How was your tour? Leave your review',
+  body_pt:    'Ola {nome_cliente},\n\nEsperamos que tenha gostado do seu tour {nome_tour}!\n\nA sua opiniao e muito importante para nos e para futuros clientes.\nClique no link abaixo para deixar a sua avaliacao:\n\n-> {link_avaliacao}\n\nObrigado pela sua confianca!',
+  body_en:    'Hello {nome_cliente},\n\nWe hope you enjoyed your {nome_tour} tour!\n\nYour feedback is very important to us and future guests.\nClick the link below to leave your review:\n\n-> {link_avaliacao}\n\nThank you for your trust!',
+};
+
+async function obterTemplate(req, res, next) {
+  try {
+    const { data } = await supabaseAdmin
+      .from('review_request_templates').select('*').eq('operator_id', req.operator.id).maybeSingle();
+    if (data) return res.json({ data, message: 'Template de pedido de avaliacao' });
+    return res.json({ data: { operator_id: req.operator.id, ...DEFAULT_TEMPLATE }, message: 'Template de pedido de avaliacao (default)' });
+  } catch (err) { next(err); }
+}
+
+async function actualizarTemplate(req, res, next) {
+  try {
+    const { subject_pt, subject_en, body_pt, body_en } = req.body;
+    const updates = { operator_id: req.operator.id, updated_at: new Date().toISOString() };
+    if (subject_pt !== undefined) updates.subject_pt = subject_pt;
+    if (subject_en !== undefined) updates.subject_en = subject_en;
+    if (body_pt !== undefined) updates.body_pt = body_pt;
+    if (body_en !== undefined) updates.body_en = body_en;
+
+    const { data, error } = await supabaseAdmin
+      .from('review_request_templates').upsert(updates, { onConflict: 'operator_id' }).select().single();
+    if (error) throw error;
+    return res.json({ data, message: 'Template actualizado' });
+  } catch (err) { next(err); }
+}
 
 async function listar(req, res, next) {
   try {
@@ -39,7 +72,7 @@ async function requestReview(req, res, next) {
     const { reservation_id } = req.body;
     const { data: reserva } = await supabaseAdmin
       .from('reservations')
-      .select('id, customer_name, customer_email, customer_id, check_out, operator_id')
+      .select('id, customer_name, customer_email, customer_id, customer_country, check_out, operator_id, units(name)')
       .eq('id', reservation_id).eq('operator_id', req.operator.id).single();
     if (!reserva) return res.status(404).json({ error: 'Reserva nao encontrada', code: 'NOT_FOUND' });
     if (!reserva.customer_email) return res.status(400).json({ error: 'Cliente sem email', code: 'NO_EMAIL' });
@@ -56,10 +89,22 @@ async function requestReview(req, res, next) {
     const publicUrl = frontendBase();
     const link = `${publicUrl}/review/${token}`;
 
+    const { data: tplRow } = await supabaseAdmin
+      .from('review_request_templates').select('*').eq('operator_id', req.operator.id).maybeSingle();
+    const tpl = tplRow || DEFAULT_TEMPLATE;
+    const lang = detectarIdioma(reserva.customer_country) === 'en' ? 'en' : 'pt';
+
+    function preencher(texto) {
+      return String(texto)
+        .replace(/{nome_cliente}/g, reserva.customer_name || '')
+        .replace(/{nome_tour}/g, reserva.units?.name || '')
+        .replace(/{link_avaliacao}/g, link);
+    }
+
     await enviarEmail({
       to: reserva.customer_email,
-      subject: `Como foi a sua experiencia com ${req.operator.name}?`,
-      text: `Ola ${reserva.customer_name},\n\nObrigado pela sua visita! Gostavamos que partilhasse a sua opiniao.\n\nAvaliar agora: ${link}\n\nObrigado!`,
+      subject: preencher(lang === 'en' ? tpl.subject_en : tpl.subject_pt),
+      text: preencher(lang === 'en' ? tpl.body_en : tpl.body_pt),
     }).catch(() => {});
 
     return res.json({ data: { token, link }, message: 'Pedido de avaliacao enviado' });
@@ -133,4 +178,4 @@ async function publicReviews(req, res, next) {
   } catch (err) { next(err); }
 }
 
-module.exports = { listar, stats, requestReview, submitReview, reply, publicReviews };
+module.exports = { listar, stats, requestReview, submitReview, reply, publicReviews, obterTemplate, actualizarTemplate };

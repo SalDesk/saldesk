@@ -11,20 +11,12 @@ import Card from '../components/ui/Card';
 import Input, { Textarea } from '../components/ui/Input';
 import LoadingSpinner from '../components/shared/LoadingSpinner';
 
-/* ── localStorage template ── */
-const TPL_KEY = 'saldesk_review_template_v1';
 const DEFAULT_TEMPLATE = {
   subject_pt: 'Como correu o seu tour? Deixe a sua avaliacao',
   subject_en: 'How was your tour? Leave your review',
   body_pt:    'Ola {nome_cliente},\n\nEsperamos que tenha gostado do seu tour {nome_tour}!\n\nA sua opiniao e muito importante para nos e para futuros clientes.\nClique no link abaixo para deixar a sua avaliacao:\n\n→ {link_avaliacao}\n\nObrigado pela sua confianca!\n',
   body_en:    'Hello {nome_cliente},\n\nWe hope you enjoyed your {nome_tour} tour!\n\nYour feedback is very important to us and future guests.\nClick the link below to leave your review:\n\n→ {link_avaliacao}\n\nThank you for your trust!\n',
 };
-
-function loadTemplate() {
-  try { return { ...DEFAULT_TEMPLATE, ...JSON.parse(localStorage.getItem(TPL_KEY) || '{}') }; }
-  catch { return DEFAULT_TEMPLATE; }
-}
-function saveTemplate(t) { localStorage.setItem(TPL_KEY, JSON.stringify(t)); }
 
 const TEMPLATE_VARS = [
   { key: '{nome_cliente}',  desc: 'Nome do cliente'            },
@@ -58,7 +50,8 @@ export default function Feedback() {
   const [reviews,     setReviews]     = useState([]);
   const [loading,     setLoading]     = useState(true);
   const [sending,     setSending]     = useState({});
-  const [template,    setTemplate]    = useState(loadTemplate);
+  const [template,    setTemplate]    = useState(DEFAULT_TEMPLATE);
+  const [tplSaving,   setTplSaving]   = useState(false);
   const [tplSaved,    setTplSaved]    = useState(false);
   const [previewLang, setPreviewLang] = useState('pt');
 
@@ -67,9 +60,11 @@ export default function Feedback() {
     Promise.all([
       listReservations({ status: 'checked_out' }).catch(() => []),
       api.get('/reviews').then(r => r.data.data || []).catch(() => []),
-    ]).then(([res, rev]) => {
+      api.get('/reviews/template').then(r => r.data.data).catch(() => DEFAULT_TEMPLATE),
+    ]).then(([res, rev, tpl]) => {
       setReservations(res || []);
       setReviews(rev || []);
+      setTemplate({ ...DEFAULT_TEMPLATE, ...tpl });
     }).finally(() => setLoading(false));
   }, []);
 
@@ -114,10 +109,15 @@ export default function Feedback() {
     finally { setSending(p => ({ ...p, [reservationId]: false })); }
   }
 
-  function handleSaveTemplate() {
-    saveTemplate(template);
-    setTplSaved(true);
-    setTimeout(() => setTplSaved(false), 2000);
+  async function handleSaveTemplate() {
+    setTplSaving(true);
+    try {
+      await api.put('/reviews/template', template);
+      setTplSaved(true);
+      setTimeout(() => setTplSaved(false), 2000);
+    } finally {
+      setTplSaving(false);
+    }
   }
 
   /* Global stats */
@@ -327,7 +327,7 @@ export default function Feedback() {
                   onChange={e => setTemplate(p => ({ ...p, subject_en: e.target.value }))} />
                 <Textarea label="Corpo EN" value={template.body_en} rows={8}
                   onChange={e => setTemplate(p => ({ ...p, body_en: e.target.value }))} />
-                <Button icon={tplSaved ? CheckCircle2 : Save} onClick={handleSaveTemplate}
+                <Button icon={tplSaved ? CheckCircle2 : Save} onClick={handleSaveTemplate} loading={tplSaving}
                   className={tplSaved ? 'bg-[#1A7A4A] hover:bg-[#15623c]' : ''}>
                   {tplSaved ? 'Guardado' : 'Guardar template'}
                 </Button>
