@@ -126,7 +126,7 @@ function VoucherModal({ voucher, units, onSave, onClose }) {
           </Select>
           <Input
             label={form.type === 'percent' ? 'Desconto (%)' : 'Desconto (€)'}
-            type="number" min="0.01" step={form.type === 'percent' ? '1' : '0.01'}
+            type="number" min={form.type === 'percent' ? '1' : '0.01'} step={form.type === 'percent' ? '1' : '0.01'}
             max={form.type === 'percent' ? '100' : undefined}
             value={form.value} onChange={set('value')} required
             placeholder={form.type === 'percent' ? '20' : '10.00'}
