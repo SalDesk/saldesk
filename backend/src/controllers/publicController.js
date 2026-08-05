@@ -4,6 +4,7 @@ const { obterOuCriarCliente } = require('../helpers/customerHelper');
 const { enviarEmail } = require('../helpers/emailHelper');
 const { detectarIdioma } = require('../helpers/languageHelper');
 const { confirmacaoClienteEmail, notificacaoOperadorEmail } = require('../helpers/emailTemplates');
+const { validarVoucher, registarUsoVoucher } = require('./vouchersController');
 
 async function getOperador(req, res, next) {
   try {
@@ -85,7 +86,7 @@ async function criarReserva(req, res, next) {
   try {
     const { unit_id, customer_name, customer_email, customer_phone,
             customer_country, check_in, check_out, guests, notes,
-            party_size, tour_time } = req.body;
+            party_size, tour_time, voucher_code } = req.body;
 
     // check_out é opcional — activities/restaurants podem enviar só check_in (data do serviço)
     const effectiveCheckOut = check_out || check_in;
@@ -125,7 +126,25 @@ async function criarReserva(req, res, next) {
       return res.status(409).json({ error: 'Unidade indisponível nas datas seleccionadas', code: 'UNAVAILABLE' });
     }
 
-    const { total } = calcularPreco(unit, check_in, effectiveCheckOut);
+    // calcularPreco e por noite/dia (hotel, rent-a-car) — reservas de um so dia
+    // (tours/actividades, cobrados por pessoa) ficariam sempre a 0 nesse calculo,
+    // por isso usam antes base_price * numero de pessoas.
+    const numPessoas = party_size || guests || 1;
+    const total = effectiveCheckOut === check_in
+      ? Math.round(Number(unit.base_price || 0) * numPessoas * 100) / 100
+      : calcularPreco(unit, check_in, effectiveCheckOut).total;
+
+    let finalTotal = total;
+    let voucherId = null;
+    if (voucher_code) {
+      const resultado = await validarVoucher(operator.id, voucher_code, unit_id, total);
+      if (resultado.valid) {
+        finalTotal = Math.max(0, total - resultado.discount);
+        voucherId = resultado.voucherId;
+      } else {
+        return res.status(400).json({ error: resultado.error || 'Codigo invalido', code: 'INVALID_VOUCHER' });
+      }
+    }
 
     const customer = await obterOuCriarCliente(operator.id, {
       name: customer_name,
@@ -154,7 +173,7 @@ async function criarReserva(req, res, next) {
         check_in,
         check_out: effectiveCheckOut,
         guests: party_size || guests || 1,
-        total_price: total,
+        total_price: finalTotal,
         status: 'pending',
         source: 'public',
         notes: finalNotes
@@ -163,6 +182,19 @@ async function criarReserva(req, res, next) {
       .single();
 
     if (error) throw error;
+
+    if (voucherId) {
+      registarUsoVoucher(voucherId).catch(err => console.error('[Voucher] Erro ao registar uso:', err.message));
+    }
+
+    supabaseAdmin.from('notifications').insert({
+      operator_id:       operator.id,
+      notification_type: 'new_booking',
+      content:            `Nova reserva de ${customer_name} — ${unit.name}`,
+      link:               `/reservas/${data.id}`,
+    }).then(({ error: notifErr }) => {
+      if (notifErr) console.error('[Notificacao] Erro ao criar notificacao:', notifErr.message);
+    });
 
     const idioma = detectarIdioma(customer_country);
     const currency = operator.currency || 'EUR';
@@ -174,7 +206,7 @@ async function criarReserva(req, res, next) {
       checkIn: check_in,
       checkOut: effectiveCheckOut,
       guests: party_size || guests || 1,
-      total,
+      total: finalTotal,
       currency,
       operator
     });

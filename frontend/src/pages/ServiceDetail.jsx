@@ -222,7 +222,66 @@ async function postReservation(slug, payload) {
   const r = await fetch(`${API}/public/${slug}/reservations`, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload) });
   const j = await r.json();
   if (!r.ok) throw new Error(j.error||'Erro ao submeter reserva');
-  return j.data?.id||'ok';
+  return j.data || { id: 'ok' };
+}
+
+/* Verifica um codigo de voucher e devolve o desconto (sem o aplicar ainda —
+   isso so acontece quando a reserva e criada com voucher_code). */
+async function validarVoucherCode(slug, code, unitId, amount) {
+  const r = await fetch(`${API}/public/${slug}/vouchers/validate`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ code, unit_id: unitId, amount }),
+  });
+  const j = await r.json();
+  if (!r.ok) throw new Error(j.error || 'Erro ao validar codigo');
+  return j.data;
+}
+
+/* Campo de codigo de desconto reutilizado nos 3 modais com pagamento online. */
+function VoucherField({ slug, unitId, amount, lang, onApplied }) {
+  const [code, setCode] = useState('');
+  const [checking, setChecking] = useState(false);
+  const [result, setResult] = useState(null);
+
+  async function apply() {
+    if (!code.trim()) return;
+    setChecking(true); setResult(null);
+    try {
+      const r = await validarVoucherCode(slug, code.trim(), unitId, amount);
+      if (r.valid) {
+        setResult({ ok: true, discount: r.discount });
+        onApplied(code.trim(), r.discount);
+      } else {
+        setResult({ ok: false, error: r.error || (lang === 'en' ? 'Invalid code' : 'Codigo invalido') });
+        onApplied(null, 0);
+      }
+    } catch (e) {
+      setResult({ ok: false, error: e.message });
+      onApplied(null, 0);
+    } finally {
+      setChecking(false);
+    }
+  }
+
+  function clear() {
+    setCode(''); setResult(null); onApplied(null, 0);
+  }
+
+  return (
+    <div>
+      <label className={LB}>{lang === 'en' ? 'Discount code (optional)' : 'Codigo de desconto (opcional)'}</label>
+      <div className="flex gap-2">
+        <input className={IN + ' uppercase font-mono'} value={code}
+          onChange={e => { setCode(e.target.value); if (result) setResult(null); }}
+          placeholder="Ex: VERAO2025" disabled={result?.ok} />
+        {result?.ok
+          ? <button type="button" onClick={clear} className="px-4 rounded-xl border-2 border-n-200 text-n-600 text-xs font-body font-semibold hover:border-red-300 hover:text-red-600 transition-all">{lang === 'en' ? 'Remove' : 'Remover'}</button>
+          : <button type="button" onClick={apply} disabled={checking || !code.trim()} className="px-4 rounded-xl bg-ocean-700 text-white text-xs font-body font-semibold disabled:opacity-40 hover:bg-ocean-500 transition-all">{checking ? '...' : (lang === 'en' ? 'Apply' : 'Aplicar')}</button>}
+      </div>
+      {result?.ok && <p className="text-xs font-body font-semibold text-green-700 mt-1.5">{lang === 'en' ? `Discount applied: -€${result.discount.toFixed(2)}` : `Desconto aplicado: -€${result.discount.toFixed(2)}`}</p>}
+      {result && !result.ok && <p className="text-xs font-body text-red-600 mt-1.5">{result.error}</p>}
+    </div>
+  );
 }
 
 /* SISP so aceita escudos (CVE) — converter o total (na moeda do operador) antes de enviar. */
@@ -350,21 +409,22 @@ function PayPalButton({ slug, reservationId, amount, lang, onSuccess, onError })
 /* ── HotelModal ───────────────────────────────────── */
 function HotelModal({ unit, op, slug, lang, onClose }) {
   const [step,ss]=useState(1); const [ci,sci]=useState(''); const [co,sco]=useState(''); const [adults,sa]=useState(2); const [kids,sk]=useState(0);
-  const [info,si]=useState({name:'',email:'',phone:'',country:'',notes:''}); const [pay,sp]=useState('cash'); const [sub,ssub]=useState(false); const [resId,sr]=useState(null); const [pendingResId,spr]=useState(null); const [err,se]=useState(''); const [avail,sav]=useState(null); const [chk,sc]=useState(false);
-  const nights=nts(ci,co); const total=nights>0&&unit.base_price?fmtPrice(nights*unit.base_price,null,op.currency||'EUR','EUR',lang):null;
+  const [info,si]=useState({name:'',email:'',phone:'',country:'',notes:''}); const [pay,sp]=useState('cash'); const [sub,ssub]=useState(false); const [resId,sr]=useState(null); const [pendingRes,spr]=useState(null); const [err,se]=useState(''); const [avail,sav]=useState(null); const [chk,sc]=useState(false);
+  const [voucherCode,svc]=useState(null);
+  const nights=nts(ci,co); const rawTotal=nights*(unit.base_price||0); const total=nights>0&&unit.base_price?fmtPrice(rawTotal,null,op.currency||'EUR','EUR',lang):null;
   useEffect(()=>{ if (!ci||!co||co<=ci){sav(null);return;} const t=setTimeout(async()=>{ sc(true); try{sav((await(await fetch(`${API}/public/${slug}/availability?unitId=${unit.id}&checkIn=${ci}&checkOut=${co}`)).json()).data);}catch{sav(null);}finally{sc(false);} },700); return()=>clearTimeout(t); },[ci,co]);
-  function buildPayload(){ const notes=[`${adults} ${lang==='en'?'adults':'adultos'}, ${kids} ${lang==='en'?'children':'crianças'}`,info.notes].filter(Boolean).join('. '); return {unit_id:unit.id,customer_name:info.name,customer_email:info.email,customer_phone:info.phone||null,customer_country:info.country||null,check_in:ci,check_out:co,guests:adults+kids,notes}; }
-  useEffect(()=>{ if(step===3&&pay==='paypal'&&!pendingResId&&!sub){ ssub(true); postReservation(slug,buildPayload()).then(spr).catch(e=>se(e.message)).finally(()=>ssub(false)); } },[step,pay]);
+  function buildPayload(){ const notes=[`${adults} ${lang==='en'?'adults':'adultos'}, ${kids} ${lang==='en'?'children':'crianças'}`,info.notes].filter(Boolean).join('. '); return {unit_id:unit.id,customer_name:info.name,customer_email:info.email,customer_phone:info.phone||null,customer_country:info.country||null,check_in:ci,check_out:co,guests:adults+kids,notes,voucher_code:voucherCode||undefined}; }
+  useEffect(()=>{ if(step===3&&pay==='paypal'&&!pendingRes&&!sub){ ssub(true); postReservation(slug,buildPayload()).then(spr).catch(e=>se(e.message)).finally(()=>ssub(false)); } },[step,pay]);
   function valid(){ if(step===1){if(!ci||!co){se(lang==='en'?'Select both dates':'Seleccione ambas as datas');return false;} if(co<=ci){se(lang==='en'?'Check-out must be after check-in':'Check-out deve ser posterior ao check-in');return false;} if(!avail?.disponivel){se(lang==='en'?'Room unavailable for these dates':'Quarto indisponível nestas datas');return false;}} if(step===2&&(!info.name||!info.email)){se(lang==='en'?'Name and email required':'Nome e email obrigatórios');return false;} se('');return true; }
   async function submit(){
     ssub(true);se('');
     try{
-      const newResId = await postReservation(slug,buildPayload());
+      const newRes = await postReservation(slug,buildPayload());
       if (pay==='sisp' && nights>0 && unit.base_price) {
-        await iniciarPagamentoSisp(slug, newResId, toCVE(nights*unit.base_price, op.currency));
+        await iniciarPagamentoSisp(slug, newRes.id, toCVE(newRes.total_price ?? rawTotal, op.currency));
         return;
       }
-      sr(newResId);
+      sr(newRes.id);
     }catch(e){se(e.message);}finally{ssub(false);}
   }
   function next(){ if(!valid())return; step<3?ss(s=>s+1):submit(); }
@@ -380,8 +440,10 @@ function HotelModal({ unit, op, slug, lang, onClose }) {
         <div className="grid grid-cols-2 gap-4"><Cnt label={lang==='en'?'Adults (1-10)':'Adultos (1-10)'} val={adults} set={sa} min={1} max={10}/><Cnt label={lang==='en'?'Children (0-5)':'Crianças (0-5)'} val={kids} set={sk} min={0} max={5}/></div>
       </div>
       :step===2?<div className="p-5"><p className={SH}>{lang==='en'?'Guest details':'Dados do hóspede'}</p><GF d={info} set={si} lang={lang}><div><label className={LB}>{lang==='en'?'Special requests':'Pedidos especiais'}</label><textarea className={IN+' resize-none'} rows={3} value={info.notes} onChange={e=>si(i=>({...i,notes:e.target.value}))} placeholder={lang==='en'?'Early check-in, quiet room...':'Early check-in, quarto silencioso...'}/></div></GF></div>
-      :<div className="p-5 space-y-4"><p className={SH}>{lang==='en'?'Review & payment':'Resumo e pagamento'}</p><ST lines={sumL}/><p className="text-xs font-body font-semibold text-n-700">{lang==='en'?'Payment method':'Método de pagamento'}</p><PO lang={lang} v={pay} set={sp}/>
-        {pay==='paypal'&&<PayPalButton slug={slug} reservationId={pendingResId} amount={toEUR(nights*(unit.base_price||0),op.currency)} lang={lang} onSuccess={()=>sr(pendingResId)} onError={se}/>}
+      :<div className="p-5 space-y-4"><p className={SH}>{lang==='en'?'Review & payment':'Resumo e pagamento'}</p><ST lines={sumL}/>
+        {rawTotal>0&&<VoucherField slug={slug} unitId={unit.id} amount={rawTotal} lang={lang} onApplied={(c)=>svc(c)}/>}
+        <p className="text-xs font-body font-semibold text-n-700">{lang==='en'?'Payment method':'Método de pagamento'}</p><PO lang={lang} v={pay} set={sp}/>
+        {pay==='paypal'&&<PayPalButton slug={slug} reservationId={pendingRes?.id} amount={toEUR(pendingRes?.total_price ?? rawTotal,op.currency)} lang={lang} onSuccess={()=>sr(pendingRes?.id)} onError={se}/>}
       </div>}
     </MS>
   );
@@ -390,20 +452,21 @@ function HotelModal({ unit, op, slug, lang, onClose }) {
 /* ── ActivityModal ────────────────────────────────── */
 function ActivityModal({ unit, op, slug, lang, onClose }) {
   const [step,ss]=useState(1); const [date,sd]=useState(''); const [time,st]=useState(''); const [adults,sa]=useState(2); const [kids,sk]=useState(0);
-  const [info,si]=useState({name:'',email:'',phone:'',country:'',needs:''}); const [pay,sp]=useState('cash'); const [sub,ssub]=useState(false); const [resId,sr]=useState(null); const [pendingResId,spr]=useState(null); const [err,se]=useState('');
-  const total=unit.base_price?fmtPrice((adults+kids)*unit.base_price,'person',op.currency||'EUR','EUR',lang):null;
-  function buildPayload(){ const notes=[`${lang==='en'?'Time':'Hora'}: ${time}`,`${adults} ${lang==='en'?'adults':'adultos'}, ${kids} ${lang==='en'?'children':'crianças'}`,info.needs?(lang==='en'?'Needs:':'Necessidades:')+' '+info.needs:''].filter(Boolean).join('. '); return {unit_id:unit.id,customer_name:info.name,customer_email:info.email,customer_phone:info.phone||null,customer_country:info.country||null,check_in:date,check_out:date,guests:adults+kids,notes}; }
-  useEffect(()=>{ if(step===3&&pay==='paypal'&&!pendingResId&&!sub){ ssub(true); postReservation(slug,buildPayload()).then(spr).catch(e=>se(e.message)).finally(()=>ssub(false)); } },[step,pay]);
+  const [info,si]=useState({name:'',email:'',phone:'',country:'',needs:''}); const [pay,sp]=useState('cash'); const [sub,ssub]=useState(false); const [resId,sr]=useState(null); const [pendingRes,spr]=useState(null); const [err,se]=useState('');
+  const [voucherCode,svc]=useState(null);
+  const rawTotal=(adults+kids)*(unit.base_price||0); const total=unit.base_price?fmtPrice(rawTotal,'person',op.currency||'EUR','EUR',lang):null;
+  function buildPayload(){ const notes=[`${lang==='en'?'Time':'Hora'}: ${time}`,`${adults} ${lang==='en'?'adults':'adultos'}, ${kids} ${lang==='en'?'children':'crianças'}`,info.needs?(lang==='en'?'Needs:':'Necessidades:')+' '+info.needs:''].filter(Boolean).join('. '); return {unit_id:unit.id,customer_name:info.name,customer_email:info.email,customer_phone:info.phone||null,customer_country:info.country||null,check_in:date,check_out:date,guests:adults+kids,notes,voucher_code:voucherCode||undefined}; }
+  useEffect(()=>{ if(step===3&&pay==='paypal'&&!pendingRes&&!sub){ ssub(true); postReservation(slug,buildPayload()).then(spr).catch(e=>se(e.message)).finally(()=>ssub(false)); } },[step,pay]);
   function valid(){ if(step===1){if(!date){se(lang==='en'?'Select a date':'Seleccione uma data');return false;} if(!time){se(lang==='en'?'Select a time slot':'Seleccione um horário');return false;} if(adults<1){se(lang==='en'?'At least 1 adult required':'Mínimo 1 adulto');return false;}} if(step===2&&(!info.name||!info.email)){se(lang==='en'?'Name and email required':'Nome e email obrigatórios');return false;} se('');return true; }
   async function submit(){
     ssub(true);se('');
     try{
-      const newResId = await postReservation(slug,buildPayload());
+      const newRes = await postReservation(slug,buildPayload());
       if (pay==='sisp' && unit.base_price) {
-        await iniciarPagamentoSisp(slug, newResId, toCVE((adults+kids)*unit.base_price, op.currency));
+        await iniciarPagamentoSisp(slug, newRes.id, toCVE(newRes.total_price ?? rawTotal, op.currency));
         return;
       }
-      sr(newResId);
+      sr(newRes.id);
     }catch(e){se(e.message);}finally{ssub(false);}
   }
   function next(){ if(!valid())return; step<3?ss(s=>s+1):submit(); }
@@ -417,8 +480,10 @@ function ActivityModal({ unit, op, slug, lang, onClose }) {
         <div className="grid grid-cols-2 gap-4"><Cnt label={lang==='en'?'Adults (1-20)':'Adultos (1-20)'} val={adults} set={sa} min={1} max={20}/><Cnt label={lang==='en'?'Children (0-10)':'Crianças (0-10)'} val={kids} set={sk} min={0} max={10}/></div>
       </div>
       :step===2?<div className="p-5"><p className={SH}>{lang==='en'?'Contact details':'Dados de contacto'}</p><GF d={info} set={si} lang={lang}><div><label className={LB}>{lang==='en'?'Special needs (optional)':'Necessidades especiais (opcional)'}</label><textarea className={IN+' resize-none'} rows={3} value={info.needs} onChange={e=>si(i=>({...i,needs:e.target.value}))} placeholder={lang==='en'?'Wheelchair, allergies...':'Cadeira de rodas, alergias...'}/></div></GF></div>
-      :<div className="p-5 space-y-4"><p className={SH}>{lang==='en'?'Review & payment':'Resumo e pagamento'}</p><ST lines={sumL}/><p className="text-xs font-body font-semibold text-n-700">{lang==='en'?'Payment method':'Método de pagamento'}</p><PO lang={lang} v={pay} set={sp}/>
-        {pay==='paypal'&&<PayPalButton slug={slug} reservationId={pendingResId} amount={toEUR((adults+kids)*(unit.base_price||0),op.currency)} lang={lang} onSuccess={()=>sr(pendingResId)} onError={se}/>}
+      :<div className="p-5 space-y-4"><p className={SH}>{lang==='en'?'Review & payment':'Resumo e pagamento'}</p><ST lines={sumL}/>
+        {rawTotal>0&&<VoucherField slug={slug} unitId={unit.id} amount={rawTotal} lang={lang} onApplied={(c)=>svc(c)}/>}
+        <p className="text-xs font-body font-semibold text-n-700">{lang==='en'?'Payment method':'Método de pagamento'}</p><PO lang={lang} v={pay} set={sp}/>
+        {pay==='paypal'&&<PayPalButton slug={slug} reservationId={pendingRes?.id} amount={toEUR(pendingRes?.total_price ?? rawTotal,op.currency)} lang={lang} onSuccess={()=>sr(pendingRes?.id)} onError={se}/>}
       </div>}
     </MS>
   );
@@ -428,21 +493,22 @@ function ActivityModal({ unit, op, slug, lang, onClose }) {
 function RentACarModal({ unit, op, slug, lang, onClose }) {
   const [step,ss]=useState(1); const [pu,spu]=useState({date:'',time:'09:00',loc:''}); const [re,sre]=useState({date:'',time:'09:00',loc:''});
   const [drv,sd]=useState({name:'',email:'',phone:'',country:'',license:'',licCountry:'',age:''}); const [ext,sex]=useState({insurance:false,gps:false,baby_seat:false,extra_driver:false});
-  const [pay,sp]=useState('cash'); const [sub,ssub]=useState(false); const [resId,sr]=useState(null); const [pendingResId,spr]=useState(null); const [err,se]=useState('');
-  const days=dys(pu.date,re.date); const total=days>0&&unit.base_price?fmtPrice(days*unit.base_price,'day',op.currency||'EUR','EUR',lang):null;
+  const [pay,sp]=useState('cash'); const [sub,ssub]=useState(false); const [resId,sr]=useState(null); const [pendingRes,spr]=useState(null); const [err,se]=useState('');
+  const [voucherCode,svc]=useState(null);
+  const days=dys(pu.date,re.date); const rawTotal=days*(unit.base_price||0); const total=days>0&&unit.base_price?fmtPrice(rawTotal,'day',op.currency||'EUR','EUR',lang):null;
   const locs=lang==='en'?CV_LOCS_EN:CV_LOCS_PT; const extList=CAR_EXTRAS.filter(e=>ext[e.k]);
-  function buildPayload(){ const notes=[`${lang==='en'?'Pickup':'Levantamento'}: ${pu.loc} ${pu.date} ${pu.time}`,`${lang==='en'?'Return':'Devolução'}: ${re.loc||pu.loc} ${re.date} ${re.time}`,extList.length?`Extras: ${extList.map(e=>lang==='en'?e.en:e.pt).join(', ')}`:''  ].filter(Boolean).join('. '); return {unit_id:unit.id,customer_name:drv.name,customer_email:drv.email,customer_phone:drv.phone||null,customer_country:drv.country||null,check_in:pu.date,check_out:re.date,guests:1,notes}; }
-  useEffect(()=>{ if(step===3&&pay==='paypal'&&!pendingResId&&!sub){ ssub(true); postReservation(slug,buildPayload()).then(spr).catch(e=>se(e.message)).finally(()=>ssub(false)); } },[step,pay]);
+  function buildPayload(){ const notes=[`${lang==='en'?'Pickup':'Levantamento'}: ${pu.loc} ${pu.date} ${pu.time}`,`${lang==='en'?'Return':'Devolução'}: ${re.loc||pu.loc} ${re.date} ${re.time}`,extList.length?`Extras: ${extList.map(e=>lang==='en'?e.en:e.pt).join(', ')}`:''  ].filter(Boolean).join('. '); return {unit_id:unit.id,customer_name:drv.name,customer_email:drv.email,customer_phone:drv.phone||null,customer_country:drv.country||null,check_in:pu.date,check_out:re.date,guests:1,notes,voucher_code:voucherCode||undefined}; }
+  useEffect(()=>{ if(step===3&&pay==='paypal'&&!pendingRes&&!sub){ ssub(true); postReservation(slug,buildPayload()).then(spr).catch(e=>se(e.message)).finally(()=>ssub(false)); } },[step,pay]);
   function valid(){ if(step===1){if(!pu.date||!re.date){se(lang==='en'?'Select pickup and return dates':'Seleccione datas');return false;} if(re.date<=pu.date){se(lang==='en'?'Return after pickup':'Devolução após levantamento');return false;} if(!pu.loc){se(lang==='en'?'Select pickup location':'Seleccione o local');return false;}} if(step===2&&(!drv.name||!drv.email)){se(lang==='en'?'Name and email required':'Nome e email obrigatórios');return false;} if(step===2&&!drv.license){se(lang==='en'?'Driving licence required':'Carta de condução obrigatória');return false;} se('');return true; }
   async function submit(){
     ssub(true);se('');
     try{
-      const newResId = await postReservation(slug,buildPayload());
+      const newRes = await postReservation(slug,buildPayload());
       if (pay==='sisp' && days>0 && unit.base_price) {
-        await iniciarPagamentoSisp(slug, newResId, toCVE(days*unit.base_price, op.currency));
+        await iniciarPagamentoSisp(slug, newRes.id, toCVE(newRes.total_price ?? rawTotal, op.currency));
         return;
       }
-      sr(newResId);
+      sr(newRes.id);
     }catch(e){se(e.message);}finally{ssub(false);}
   }
   function next(){ if(!valid())return; step<3?ss(s=>s+1):submit(); }
@@ -458,8 +524,10 @@ function RentACarModal({ unit, op, slug, lang, onClose }) {
       :step===2?<div className="p-5 space-y-4"><p className={SH}>{lang==='en'?'Driver details':'Dados do condutor'}</p><GF d={drv} set={sd} lang={lang}><div className="grid grid-cols-2 gap-3"><div><label className={LB}>{lang==='en'?'Licence no.':'Nº carta'} *</label><input className={IN} value={drv.license} onChange={e=>sd(d=>({...d,license:e.target.value}))} required placeholder="PT-123456"/></div><div><label className={LB}>{lang==='en'?'Issuing country':'País emissor'}</label><input className={IN} value={drv.licCountry} onChange={e=>sd(d=>({...d,licCountry:e.target.value}))} placeholder="Portugal"/></div></div><div><label className={LB}>{lang==='en'?'Driver age':'Idade do condutor'}</label><input className={IN} type="number" min={18} max={99} value={drv.age} onChange={e=>sd(d=>({...d,age:e.target.value}))} placeholder="28"/></div></GF>
         <div><p className="text-xs font-body font-bold text-n-700 mb-3">{lang==='en'?'Extras (optional)':'Extras (opcional)'}</p><div className="grid grid-cols-2 gap-2.5">{CAR_EXTRAS.map(e=><button key={e.k} type="button" onClick={()=>sex(x=>({...x,[e.k]:!x[e.k]}))} className={`p-3 rounded-xl border-2 text-left transition-all ${ext[e.k]?'border-ocean-700 bg-ocean-50':'border-n-200 hover:border-n-300'}`}><div className="flex items-center gap-2"><div className={`w-4 h-4 rounded border-2 flex items-center justify-center flex-shrink-0 transition-all ${ext[e.k]?'border-ocean-700 bg-ocean-700':'border-n-300'}`}>{ext[e.k]&&<Check size={10} strokeWidth={3} className="text-white"/>}</div><span className={`text-xs font-body font-semibold ${ext[e.k]?'text-ocean-700':'text-n-700'}`}>{lang==='en'?e.en:e.pt}</span></div></button>)}</div></div>
       </div>
-      :<div className="p-5 space-y-4"><p className={SH}>{lang==='en'?'Review & payment':'Resumo e pagamento'}</p><ST lines={sumL}/><p className="text-xs font-body font-semibold text-n-700">{lang==='en'?'Payment method':'Método de pagamento'}</p><PO lang={lang} v={pay} set={sp}/>
-        {pay==='paypal'&&<PayPalButton slug={slug} reservationId={pendingResId} amount={toEUR(days*(unit.base_price||0),op.currency)} lang={lang} onSuccess={()=>sr(pendingResId)} onError={se}/>}
+      :<div className="p-5 space-y-4"><p className={SH}>{lang==='en'?'Review & payment':'Resumo e pagamento'}</p><ST lines={sumL}/>
+        {rawTotal>0&&<VoucherField slug={slug} unitId={unit.id} amount={rawTotal} lang={lang} onApplied={(c)=>svc(c)}/>}
+        <p className="text-xs font-body font-semibold text-n-700">{lang==='en'?'Payment method':'Método de pagamento'}</p><PO lang={lang} v={pay} set={sp}/>
+        {pay==='paypal'&&<PayPalButton slug={slug} reservationId={pendingRes?.id} amount={toEUR(pendingRes?.total_price ?? rawTotal,op.currency)} lang={lang} onSuccess={()=>sr(pendingRes?.id)} onError={se}/>}
       </div>}
     </MS>
   );

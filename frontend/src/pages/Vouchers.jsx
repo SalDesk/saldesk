@@ -7,20 +7,13 @@ import {
 } from 'lucide-react';
 import { listUnits } from '../services/unitsService';
 import { getBookingLink } from '../services/marketingService';
+import { listVouchers, createVoucher, updateVoucher, deleteVoucher } from '../services/vouchersService';
 import useAuthStore from '../store/authStore';
 import PageHeader from '../components/layout/PageHeader';
 import Button from '../components/ui/Button';
 import Card from '../components/ui/Card';
 import Modal from '../components/ui/Modal';
 import Input, { Select } from '../components/ui/Input';
-
-/* ── localStorage ── */
-const STORAGE_KEY = 'saldesk_vouchers_v1';
-
-function loadVouchers() {
-  try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); } catch { return []; }
-}
-function saveVouchers(v) { localStorage.setItem(STORAGE_KEY, JSON.stringify(v)); }
 
 /* ── Helpers ── */
 function generateCode() {
@@ -79,6 +72,7 @@ function VoucherModal({ voucher, units, onSave, onClose }) {
     active:     base?.active     ?? true,
   });
   const [error, setError] = useState('');
+  const [saving, setSaving] = useState(false);
 
   const set = f => e => setForm(p => ({ ...p, [f]: e.target.value }));
 
@@ -91,22 +85,24 @@ function VoucherModal({ voucher, units, onSave, onClose }) {
     }));
   }
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault();
     if (!form.code.trim()) { setError('O codigo e obrigatorio.'); return; }
     if (!form.value || Number(form.value) <= 0) { setError('O valor do desconto deve ser maior que zero.'); return; }
-    setError('');
-    onSave({
-      ...base,
-      ...form,
-      code:       form.code.trim().toUpperCase(),
-      value:      Number(form.value),
-      min_amount: form.min_amount ? Number(form.min_amount) : 0,
-      max_uses:   form.max_uses   ? Number(form.max_uses)   : 0,
-      uses_count: base?.uses_count ?? 0,
-      id:         base?.id || Date.now().toString(),
-      created_at: base?.created_at || new Date().toISOString(),
-    });
+    setError(''); setSaving(true);
+    try {
+      await onSave(base?.id, {
+        ...form,
+        code:       form.code.trim().toUpperCase(),
+        value:      Number(form.value),
+        min_amount: form.min_amount ? Number(form.min_amount) : 0,
+        max_uses:   form.max_uses   ? Number(form.max_uses)   : 0,
+      });
+    } catch (err) {
+      setError(err.response?.data?.error || 'Erro ao guardar voucher.');
+    } finally {
+      setSaving(false);
+    }
   }
 
   return (
@@ -185,7 +181,7 @@ function VoucherModal({ voucher, units, onSave, onClose }) {
 
         <div className="flex gap-3 pt-1">
           <Button type="button" variant="secondary" onClick={onClose} className="flex-1">Cancelar</Button>
-          <Button type="submit" className="flex-1">{isNew ? 'Criar voucher' : 'Guardar'}</Button>
+          <Button type="submit" loading={saving} className="flex-1">{isNew ? 'Criar voucher' : 'Guardar'}</Button>
         </div>
       </form>
     </Modal>
@@ -258,7 +254,8 @@ function ShareModal({ voucher, bookingLink, onClose }) {
 /* ── Main ── */
 export default function Vouchers() {
   const { operator } = useAuthStore();
-  const [vouchers,    setVouchers]    = useState(loadVouchers);
+  const [vouchers,    setVouchers]    = useState([]);
+  const [loading,     setLoading]     = useState(true);
   const [units,       setUnits]       = useState([]);
   const [bookingLink, setBookingLink] = useState('');
   const [modal,       setModal]       = useState(null);
@@ -267,30 +264,28 @@ export default function Vouchers() {
   const [search,      setSearch]      = useState('');
 
   useEffect(() => {
+    listVouchers().then(v => setVouchers(v || [])).catch(() => {}).finally(() => setLoading(false));
     listUnits().then(d => setUnits(d || [])).catch(() => {});
     getBookingLink()
       .then(d => setBookingLink(d?.url || d || ''))
       .catch(() => setBookingLink(operator?.booking_link_slug ? `https://saldesk.cv/book/${operator.booking_link_slug}` : ''));
   }, []);
 
-  function persist(next) {
-    const v = typeof next === 'function' ? next(vouchers) : next;
-    setVouchers(v);
-    saveVouchers(v);
-  }
-
-  function handleSave(v) {
-    persist(prev => prev.find(x => x.id === v.id) ? prev.map(x => x.id === v.id ? v : x) : [...prev, v]);
+  async function handleSave(id, payload) {
+    const saved = id ? await updateVoucher(id, payload) : await createVoucher(payload);
+    setVouchers(prev => prev.find(x => x.id === saved.id) ? prev.map(x => x.id === saved.id ? saved : x) : [saved, ...prev]);
     setModal(null);
   }
 
-  function handleDelete(id) {
+  async function handleDelete(id) {
     if (!window.confirm('Eliminar este voucher?')) return;
-    persist(prev => prev.filter(v => v.id !== id));
+    await deleteVoucher(id);
+    setVouchers(prev => prev.filter(v => v.id !== id));
   }
 
-  function handleToggleActive(id) {
-    persist(prev => prev.map(v => v.id === id ? { ...v, active: !v.active } : v));
+  async function handleToggleActive(v) {
+    const saved = await updateVoucher(v.id, { active: !v.active });
+    setVouchers(prev => prev.map(x => x.id === saved.id ? saved : x));
   }
 
   const filtered = vouchers.filter(v => {
@@ -356,7 +351,9 @@ export default function Vouchers() {
       </div>
 
       {/* List */}
-      {sorted.length === 0 ? (
+      {loading ? (
+        <Card><div className="text-center py-14 text-n-400 text-sm font-body">A carregar...</div></Card>
+      ) : sorted.length === 0 ? (
         <Card>
           <div className="text-center py-14">
             <Tag size={36} strokeWidth={1.25} className="mx-auto mb-3 text-n-300" />
@@ -421,7 +418,7 @@ export default function Vouchers() {
                             className="p-1.5 rounded text-n-400 hover:text-ocean-700 hover:bg-ocean-50 transition-colors" title="Editar">
                             <Pencil size={13} strokeWidth={1.75} />
                           </button>
-                          <button onClick={() => handleToggleActive(v.id)}
+                          <button onClick={() => handleToggleActive(v)}
                             className="p-1.5 rounded text-n-400 hover:text-n-700 hover:bg-n-100 transition-colors" title={v.active ? 'Desactivar' : 'Activar'}>
                             <RefreshCw size={13} strokeWidth={1.75} />
                           </button>
