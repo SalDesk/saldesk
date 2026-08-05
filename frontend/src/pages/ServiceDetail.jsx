@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   MapPin, Phone, Star, ChevronLeft, ChevronRight, MessageCircle,
@@ -181,7 +181,7 @@ function BS({ resId, lang, type, onClose }) {
   );
 }
 
-function MS({ icon, title, step, lang, onClose, children, onPrev, onNext, nextLabel, nextDis, sub, err, ok }) {
+function MS({ icon, title, step, lang, onClose, children, onPrev, onNext, nextLabel, nextDis, sub, err, ok, hideNext }) {
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-ocean-900/60 backdrop-blur-sm p-0 sm:p-4">
       <div className="bg-white w-full sm:max-w-[480px] rounded-t-2xl sm:rounded-2xl shadow-2xl max-h-[92vh] flex flex-col overflow-hidden">
@@ -206,10 +206,10 @@ function MS({ icon, title, step, lang, onClose, children, onPrev, onNext, nextLa
             {err&&<p className="text-xs text-red-600 font-body text-center mb-3 bg-red-50 rounded-lg px-3 py-2">{err}</p>}
             <div className="flex gap-3">
               {step>1&&<button type="button" onClick={onPrev} className="flex-1 border-2 border-n-200 text-n-700 font-body font-semibold py-3 rounded-xl text-sm flex items-center justify-center gap-1.5 hover:border-ocean-700 hover:text-ocean-700 transition-all"><ChevronLeft size={15} strokeWidth={2.5}/>{lang==='en'?'Back':'Anterior'}</button>}
-              <button type="button" onClick={onNext} disabled={nextDis||sub}
+              {!hideNext&&<button type="button" onClick={onNext} disabled={nextDis||sub}
                 className={`font-body font-semibold py-3 rounded-xl text-sm flex items-center justify-center gap-2 transition-all disabled:opacity-40 disabled:cursor-not-allowed bg-ocean-700 text-white hover:bg-ocean-500 ${step===1?'w-full':'flex-[2]'}`}>
                 {sub?<><div className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin"/>{lang==='en'?'Please wait...':'A aguardar...'}</>:<>{nextLabel}<ArrowRight size={15} strokeWidth={2.5}/></>}
-              </button>
+              </button>}
             </div>
           </div>
         )}
@@ -253,18 +253,113 @@ async function iniciarPagamentoSisp(slug, reservationId, amountCve) {
   form.submit();
 }
 
+/* PayPal cobra em EUR/USD/etc — nunca em CVE. Converter o total (na moeda do operador). */
+function toEUR(amount, opCurrency) {
+  return (opCurrency || 'EUR') === 'CVE' ? amount / EUR_CVE : amount;
+}
+
+/* Botao PayPal — carrega o SDK deles dinamicamente com o client-id publico do
+   operador, e faz o ciclo createOrder (no nosso backend) -> aprovacao no PayPal
+   -> confirm/captura (no nosso backend) sem sair da pagina. */
+function PayPalButton({ slug, reservationId, amount, lang, onSuccess, onError }) {
+  const containerRef = useRef(null);
+  const [clientId, setClientId] = useState(null);
+  const [notConfigured, setNotConfigured] = useState(false);
+  const [sdkFailed, setSdkFailed] = useState(false);
+
+  useEffect(() => {
+    fetch(`${API}/public/${slug}/payments/paypal/client-id`)
+      .then(r => r.ok ? r.json() : Promise.reject())
+      .then(j => setClientId(j.data?.client_id))
+      .catch(() => setNotConfigured(true));
+  }, [slug]);
+
+  useEffect(() => {
+    if (!clientId || !reservationId || !containerRef.current) return;
+    let cancelled = false;
+
+    function render() {
+      if (cancelled || !window.paypal || !containerRef.current) return;
+      containerRef.current.innerHTML = '';
+      window.paypal.Buttons({
+        style: { layout: 'vertical', color: 'gold', shape: 'rect', label: 'pay' },
+        createOrder: async () => {
+          const r = await fetch(`${API}/public/${slug}/payments/paypal/create-intent`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ reservation_id: reservationId, amount, currency: 'EUR' }),
+          });
+          const j = await r.json();
+          if (!r.ok) throw new Error(j.error || 'Erro ao criar pagamento');
+          return j.data.order_id;
+        },
+        onApprove: async (data) => {
+          const r = await fetch(`${API}/public/${slug}/payments/paypal/confirm`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ order_id: data.orderID, reservation_id: reservationId }),
+          });
+          const j = await r.json();
+          if (!r.ok) { onError(j.error || 'Erro ao confirmar pagamento'); return; }
+          onSuccess();
+        },
+        onError: () => onError(lang === 'en' ? 'PayPal error. Please try again.' : 'Erro no PayPal. Tente novamente.'),
+      }).render(containerRef.current);
+    }
+
+    function fail() {
+      if (!cancelled) setSdkFailed(true);
+    }
+
+    if (window.paypal) { render(); return () => { cancelled = true; }; }
+
+    let script = document.getElementById('paypal-sdk');
+    if (!script) {
+      script = document.createElement('script');
+      script.id = 'paypal-sdk';
+      script.src = `https://www.paypal.com/sdk/js?client-id=${encodeURIComponent(clientId)}&currency=EUR`;
+      document.body.appendChild(script);
+    }
+    script.addEventListener('load', render);
+    script.addEventListener('error', fail);
+    const timeout = setTimeout(() => { if (!window.paypal) fail(); }, 8000);
+    return () => {
+      cancelled = true;
+      script.removeEventListener('load', render);
+      script.removeEventListener('error', fail);
+      clearTimeout(timeout);
+    };
+  }, [clientId, reservationId, amount]);
+
+  if (notConfigured || sdkFailed) {
+    return (
+      <p className="text-xs font-body text-red-600 bg-red-50 rounded-lg px-3 py-2">
+        {lang === 'en' ? 'PayPal is not available for this operator right now.' : 'O PayPal não está disponível para este operador de momento.'}
+      </p>
+    );
+  }
+  if (!clientId || !reservationId) {
+    return (
+      <div className="flex items-center justify-center gap-2 py-4 text-n-400 text-xs font-body">
+        <div className="w-3.5 h-3.5 rounded-full border-2 border-n-300 border-t-ocean-700 animate-spin" />
+        {lang === 'en' ? 'Preparing payment...' : 'A preparar pagamento...'}
+      </div>
+    );
+  }
+  return <div ref={containerRef} />;
+}
+
 /* ── HotelModal ───────────────────────────────────── */
 function HotelModal({ unit, op, slug, lang, onClose }) {
   const [step,ss]=useState(1); const [ci,sci]=useState(''); const [co,sco]=useState(''); const [adults,sa]=useState(2); const [kids,sk]=useState(0);
-  const [info,si]=useState({name:'',email:'',phone:'',country:'',notes:''}); const [pay,sp]=useState('cash'); const [sub,ssub]=useState(false); const [resId,sr]=useState(null); const [err,se]=useState(''); const [avail,sav]=useState(null); const [chk,sc]=useState(false);
+  const [info,si]=useState({name:'',email:'',phone:'',country:'',notes:''}); const [pay,sp]=useState('cash'); const [sub,ssub]=useState(false); const [resId,sr]=useState(null); const [pendingResId,spr]=useState(null); const [err,se]=useState(''); const [avail,sav]=useState(null); const [chk,sc]=useState(false);
   const nights=nts(ci,co); const total=nights>0&&unit.base_price?fmtPrice(nights*unit.base_price,null,op.currency||'EUR','EUR',lang):null;
   useEffect(()=>{ if (!ci||!co||co<=ci){sav(null);return;} const t=setTimeout(async()=>{ sc(true); try{sav((await(await fetch(`${API}/public/${slug}/availability?unitId=${unit.id}&checkIn=${ci}&checkOut=${co}`)).json()).data);}catch{sav(null);}finally{sc(false);} },700); return()=>clearTimeout(t); },[ci,co]);
+  function buildPayload(){ const notes=[`${adults} ${lang==='en'?'adults':'adultos'}, ${kids} ${lang==='en'?'children':'crianças'}`,info.notes].filter(Boolean).join('. '); return {unit_id:unit.id,customer_name:info.name,customer_email:info.email,customer_phone:info.phone||null,customer_country:info.country||null,check_in:ci,check_out:co,guests:adults+kids,notes}; }
+  useEffect(()=>{ if(step===3&&pay==='paypal'&&!pendingResId&&!sub){ ssub(true); postReservation(slug,buildPayload()).then(spr).catch(e=>se(e.message)).finally(()=>ssub(false)); } },[step,pay]);
   function valid(){ if(step===1){if(!ci||!co){se(lang==='en'?'Select both dates':'Seleccione ambas as datas');return false;} if(co<=ci){se(lang==='en'?'Check-out must be after check-in':'Check-out deve ser posterior ao check-in');return false;} if(!avail?.disponivel){se(lang==='en'?'Room unavailable for these dates':'Quarto indisponível nestas datas');return false;}} if(step===2&&(!info.name||!info.email)){se(lang==='en'?'Name and email required':'Nome e email obrigatórios');return false;} se('');return true; }
   async function submit(){
     ssub(true);se('');
     try{
-      const notes=[`${adults} ${lang==='en'?'adults':'adultos'}, ${kids} ${lang==='en'?'children':'crianças'}`,info.notes].filter(Boolean).join('. ');
-      const newResId = await postReservation(slug,{unit_id:unit.id,customer_name:info.name,customer_email:info.email,customer_phone:info.phone||null,customer_country:info.country||null,check_in:ci,check_out:co,guests:adults+kids,notes});
+      const newResId = await postReservation(slug,buildPayload());
       if (pay==='sisp' && nights>0 && unit.base_price) {
         await iniciarPagamentoSisp(slug, newResId, toCVE(nights*unit.base_price, op.currency));
         return;
@@ -276,7 +371,7 @@ function HotelModal({ unit, op, slug, lang, onClose }) {
   const sumL=[{label:lang==='en'?'Room':'Quarto',value:unit.name},{label:'Check-in',value:ci},{label:'Check-out',value:co},{label:lang==='en'?'Nights':'Noites',value:`${nights}`},{label:lang==='en'?'Guests':'Hóspedes',value:`${adults} ${lang==='en'?'adults':'adultos'}${kids>0?` + ${kids} ${lang==='en'?'children':'crianças'}`:''}`},...(total?[{label:'Total',value:total,hi:true}]:[])];
   const icon=<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M2 22V10a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v12"/><path d="M2 22h20"/><path d="M7 22v-4h10v4"/><rect x="7" y="10" width="4" height="4" rx="1"/><rect x="13" y="10" width="4" height="4" rx="1"/></svg>;
   return (
-    <MS icon={icon} title={lang==='en'?'Book room':'Reservar quarto'} step={step} lang={lang} onClose={onClose} onPrev={()=>ss(s=>s-1)} onNext={next} nextLabel={step<3?(lang==='en'?'Continue':'Continuar'):(lang==='en'?'Confirm booking':'Confirmar reserva')} nextDis={step===1&&(!avail?.disponivel||chk)} sub={sub} err={err} ok={!!resId}>
+    <MS icon={icon} title={lang==='en'?'Book room':'Reservar quarto'} step={step} lang={lang} onClose={onClose} onPrev={()=>ss(s=>s-1)} onNext={next} nextLabel={step<3?(lang==='en'?'Continue':'Continuar'):(lang==='en'?'Confirm booking':'Confirmar reserva')} nextDis={step===1&&(!avail?.disponivel||chk)} sub={sub} err={err} ok={!!resId} hideNext={step===3&&pay==='paypal'}>
       {resId?<div className="p-5"><BS resId={resId} lang={lang} type="hotel" onClose={onClose}/></div>
       :step===1?<div className="p-5 space-y-4"><p className={SH}>{lang==='en'?'Select dates & guests':'Seleccione datas e hóspedes'}</p>
         <div className="grid grid-cols-2 gap-3"><div><label className={LB}>Check-in *</label><input type="date" className={IN} min={TODAY()} value={ci} onChange={e=>sci(e.target.value)}/></div><div><label className={LB}>Check-out *</label><input type="date" className={IN} min={ci||TODAY()} value={co} onChange={e=>sco(e.target.value)}/></div></div>
@@ -285,7 +380,9 @@ function HotelModal({ unit, op, slug, lang, onClose }) {
         <div className="grid grid-cols-2 gap-4"><Cnt label={lang==='en'?'Adults (1-10)':'Adultos (1-10)'} val={adults} set={sa} min={1} max={10}/><Cnt label={lang==='en'?'Children (0-5)':'Crianças (0-5)'} val={kids} set={sk} min={0} max={5}/></div>
       </div>
       :step===2?<div className="p-5"><p className={SH}>{lang==='en'?'Guest details':'Dados do hóspede'}</p><GF d={info} set={si} lang={lang}><div><label className={LB}>{lang==='en'?'Special requests':'Pedidos especiais'}</label><textarea className={IN+' resize-none'} rows={3} value={info.notes} onChange={e=>si(i=>({...i,notes:e.target.value}))} placeholder={lang==='en'?'Early check-in, quiet room...':'Early check-in, quarto silencioso...'}/></div></GF></div>
-      :<div className="p-5 space-y-4"><p className={SH}>{lang==='en'?'Review & payment':'Resumo e pagamento'}</p><ST lines={sumL}/><p className="text-xs font-body font-semibold text-n-700">{lang==='en'?'Payment method':'Método de pagamento'}</p><PO lang={lang} v={pay} set={sp}/></div>}
+      :<div className="p-5 space-y-4"><p className={SH}>{lang==='en'?'Review & payment':'Resumo e pagamento'}</p><ST lines={sumL}/><p className="text-xs font-body font-semibold text-n-700">{lang==='en'?'Payment method':'Método de pagamento'}</p><PO lang={lang} v={pay} set={sp}/>
+        {pay==='paypal'&&<PayPalButton slug={slug} reservationId={pendingResId} amount={toEUR(nights*(unit.base_price||0),op.currency)} lang={lang} onSuccess={()=>sr(pendingResId)} onError={se}/>}
+      </div>}
     </MS>
   );
 }
@@ -293,14 +390,15 @@ function HotelModal({ unit, op, slug, lang, onClose }) {
 /* ── ActivityModal ────────────────────────────────── */
 function ActivityModal({ unit, op, slug, lang, onClose }) {
   const [step,ss]=useState(1); const [date,sd]=useState(''); const [time,st]=useState(''); const [adults,sa]=useState(2); const [kids,sk]=useState(0);
-  const [info,si]=useState({name:'',email:'',phone:'',country:'',needs:''}); const [pay,sp]=useState('cash'); const [sub,ssub]=useState(false); const [resId,sr]=useState(null); const [err,se]=useState('');
+  const [info,si]=useState({name:'',email:'',phone:'',country:'',needs:''}); const [pay,sp]=useState('cash'); const [sub,ssub]=useState(false); const [resId,sr]=useState(null); const [pendingResId,spr]=useState(null); const [err,se]=useState('');
   const total=unit.base_price?fmtPrice((adults+kids)*unit.base_price,'person',op.currency||'EUR','EUR',lang):null;
+  function buildPayload(){ const notes=[`${lang==='en'?'Time':'Hora'}: ${time}`,`${adults} ${lang==='en'?'adults':'adultos'}, ${kids} ${lang==='en'?'children':'crianças'}`,info.needs?(lang==='en'?'Needs:':'Necessidades:')+' '+info.needs:''].filter(Boolean).join('. '); return {unit_id:unit.id,customer_name:info.name,customer_email:info.email,customer_phone:info.phone||null,customer_country:info.country||null,check_in:date,check_out:date,guests:adults+kids,notes}; }
+  useEffect(()=>{ if(step===3&&pay==='paypal'&&!pendingResId&&!sub){ ssub(true); postReservation(slug,buildPayload()).then(spr).catch(e=>se(e.message)).finally(()=>ssub(false)); } },[step,pay]);
   function valid(){ if(step===1){if(!date){se(lang==='en'?'Select a date':'Seleccione uma data');return false;} if(!time){se(lang==='en'?'Select a time slot':'Seleccione um horário');return false;} if(adults<1){se(lang==='en'?'At least 1 adult required':'Mínimo 1 adulto');return false;}} if(step===2&&(!info.name||!info.email)){se(lang==='en'?'Name and email required':'Nome e email obrigatórios');return false;} se('');return true; }
   async function submit(){
     ssub(true);se('');
     try{
-      const notes=[`${lang==='en'?'Time':'Hora'}: ${time}`,`${adults} ${lang==='en'?'adults':'adultos'}, ${kids} ${lang==='en'?'children':'crianças'}`,info.needs?(lang==='en'?'Needs:':'Necessidades:')+' '+info.needs:''].filter(Boolean).join('. ');
-      const newResId = await postReservation(slug,{unit_id:unit.id,customer_name:info.name,customer_email:info.email,customer_phone:info.phone||null,customer_country:info.country||null,check_in:date,check_out:date,guests:adults+kids,notes});
+      const newResId = await postReservation(slug,buildPayload());
       if (pay==='sisp' && unit.base_price) {
         await iniciarPagamentoSisp(slug, newResId, toCVE((adults+kids)*unit.base_price, op.currency));
         return;
@@ -311,7 +409,7 @@ function ActivityModal({ unit, op, slug, lang, onClose }) {
   function next(){ if(!valid())return; step<3?ss(s=>s+1):submit(); }
   const sumL=[{label:lang==='en'?'Tour / Activity':'Tour / Actividade',value:unit.name},{label:lang==='en'?'Date':'Data',value:date},{label:lang==='en'?'Time':'Horário',value:time},{label:lang==='en'?'Group':'Grupo',value:`${adults} ${lang==='en'?'adults':'adultos'}${kids>0?` + ${kids} ${lang==='en'?'children':'crianças'}`:''}`},...(total?[{label:'Total',value:total,hi:true}]:[])];
   return (
-    <MS icon={<Compass size={18} strokeWidth={1.75}/>} title={lang==='en'?'Book tour':'Reservar tour'} step={step} lang={lang} onClose={onClose} onPrev={()=>ss(s=>s-1)} onNext={next} nextLabel={step<3?(lang==='en'?'Continue':'Continuar'):(lang==='en'?'Confirm booking':'Confirmar reserva')} nextDis={step===1&&(!date||!time)} sub={sub} err={err} ok={!!resId}>
+    <MS icon={<Compass size={18} strokeWidth={1.75}/>} title={lang==='en'?'Book tour':'Reservar tour'} step={step} lang={lang} onClose={onClose} onPrev={()=>ss(s=>s-1)} onNext={next} nextLabel={step<3?(lang==='en'?'Continue':'Continuar'):(lang==='en'?'Confirm booking':'Confirmar reserva')} nextDis={step===1&&(!date||!time)} sub={sub} err={err} ok={!!resId} hideNext={step===3&&pay==='paypal'}>
       {resId?<div className="p-5"><BS resId={resId} lang={lang} type="activity" onClose={onClose}/></div>
       :step===1?<div className="p-5 space-y-4"><p className={SH}>{lang==='en'?'Select date, time & group':'Data, horário e grupo'}</p>
         <div className="grid grid-cols-2 gap-3"><div><label className={LB}>{lang==='en'?'Date':'Data'} *</label><input type="date" className={IN} min={TODAY()} value={date} onChange={e=>sd(e.target.value)}/></div><div><label className={LB}>{lang==='en'?'Time slot':'Horário'} *</label><select className={SEL} value={time} onChange={e=>st(e.target.value)}><option value="">{lang==='en'?'-- Select --':'-- Seleccionar --'}</option>{TOUR_SLOTS.map(h=><option key={h} value={h}>{h}</option>)}</select></div></div>
@@ -319,7 +417,9 @@ function ActivityModal({ unit, op, slug, lang, onClose }) {
         <div className="grid grid-cols-2 gap-4"><Cnt label={lang==='en'?'Adults (1-20)':'Adultos (1-20)'} val={adults} set={sa} min={1} max={20}/><Cnt label={lang==='en'?'Children (0-10)':'Crianças (0-10)'} val={kids} set={sk} min={0} max={10}/></div>
       </div>
       :step===2?<div className="p-5"><p className={SH}>{lang==='en'?'Contact details':'Dados de contacto'}</p><GF d={info} set={si} lang={lang}><div><label className={LB}>{lang==='en'?'Special needs (optional)':'Necessidades especiais (opcional)'}</label><textarea className={IN+' resize-none'} rows={3} value={info.needs} onChange={e=>si(i=>({...i,needs:e.target.value}))} placeholder={lang==='en'?'Wheelchair, allergies...':'Cadeira de rodas, alergias...'}/></div></GF></div>
-      :<div className="p-5 space-y-4"><p className={SH}>{lang==='en'?'Review & payment':'Resumo e pagamento'}</p><ST lines={sumL}/><p className="text-xs font-body font-semibold text-n-700">{lang==='en'?'Payment method':'Método de pagamento'}</p><PO lang={lang} v={pay} set={sp}/></div>}
+      :<div className="p-5 space-y-4"><p className={SH}>{lang==='en'?'Review & payment':'Resumo e pagamento'}</p><ST lines={sumL}/><p className="text-xs font-body font-semibold text-n-700">{lang==='en'?'Payment method':'Método de pagamento'}</p><PO lang={lang} v={pay} set={sp}/>
+        {pay==='paypal'&&<PayPalButton slug={slug} reservationId={pendingResId} amount={toEUR((adults+kids)*(unit.base_price||0),op.currency)} lang={lang} onSuccess={()=>sr(pendingResId)} onError={se}/>}
+      </div>}
     </MS>
   );
 }
@@ -328,15 +428,16 @@ function ActivityModal({ unit, op, slug, lang, onClose }) {
 function RentACarModal({ unit, op, slug, lang, onClose }) {
   const [step,ss]=useState(1); const [pu,spu]=useState({date:'',time:'09:00',loc:''}); const [re,sre]=useState({date:'',time:'09:00',loc:''});
   const [drv,sd]=useState({name:'',email:'',phone:'',country:'',license:'',licCountry:'',age:''}); const [ext,sex]=useState({insurance:false,gps:false,baby_seat:false,extra_driver:false});
-  const [pay,sp]=useState('cash'); const [sub,ssub]=useState(false); const [resId,sr]=useState(null); const [err,se]=useState('');
+  const [pay,sp]=useState('cash'); const [sub,ssub]=useState(false); const [resId,sr]=useState(null); const [pendingResId,spr]=useState(null); const [err,se]=useState('');
   const days=dys(pu.date,re.date); const total=days>0&&unit.base_price?fmtPrice(days*unit.base_price,'day',op.currency||'EUR','EUR',lang):null;
   const locs=lang==='en'?CV_LOCS_EN:CV_LOCS_PT; const extList=CAR_EXTRAS.filter(e=>ext[e.k]);
+  function buildPayload(){ const notes=[`${lang==='en'?'Pickup':'Levantamento'}: ${pu.loc} ${pu.date} ${pu.time}`,`${lang==='en'?'Return':'Devolução'}: ${re.loc||pu.loc} ${re.date} ${re.time}`,extList.length?`Extras: ${extList.map(e=>lang==='en'?e.en:e.pt).join(', ')}`:''  ].filter(Boolean).join('. '); return {unit_id:unit.id,customer_name:drv.name,customer_email:drv.email,customer_phone:drv.phone||null,customer_country:drv.country||null,check_in:pu.date,check_out:re.date,guests:1,notes}; }
+  useEffect(()=>{ if(step===3&&pay==='paypal'&&!pendingResId&&!sub){ ssub(true); postReservation(slug,buildPayload()).then(spr).catch(e=>se(e.message)).finally(()=>ssub(false)); } },[step,pay]);
   function valid(){ if(step===1){if(!pu.date||!re.date){se(lang==='en'?'Select pickup and return dates':'Seleccione datas');return false;} if(re.date<=pu.date){se(lang==='en'?'Return after pickup':'Devolução após levantamento');return false;} if(!pu.loc){se(lang==='en'?'Select pickup location':'Seleccione o local');return false;}} if(step===2&&(!drv.name||!drv.email)){se(lang==='en'?'Name and email required':'Nome e email obrigatórios');return false;} if(step===2&&!drv.license){se(lang==='en'?'Driving licence required':'Carta de condução obrigatória');return false;} se('');return true; }
   async function submit(){
     ssub(true);se('');
     try{
-      const notes=[`${lang==='en'?'Pickup':'Levantamento'}: ${pu.loc} ${pu.date} ${pu.time}`,`${lang==='en'?'Return':'Devolução'}: ${re.loc||pu.loc} ${re.date} ${re.time}`,extList.length?`Extras: ${extList.map(e=>lang==='en'?e.en:e.pt).join(', ')}`:''  ].filter(Boolean).join('. ');
-      const newResId = await postReservation(slug,{unit_id:unit.id,customer_name:drv.name,customer_email:drv.email,customer_phone:drv.phone||null,customer_country:drv.country||null,check_in:pu.date,check_out:re.date,guests:1,notes});
+      const newResId = await postReservation(slug,buildPayload());
       if (pay==='sisp' && days>0 && unit.base_price) {
         await iniciarPagamentoSisp(slug, newResId, toCVE(days*unit.base_price, op.currency));
         return;
@@ -347,7 +448,7 @@ function RentACarModal({ unit, op, slug, lang, onClose }) {
   function next(){ if(!valid())return; step<3?ss(s=>s+1):submit(); }
   const sumL=[{label:lang==='en'?'Vehicle':'Viatura',value:unit.name},{label:lang==='en'?'Pickup':'Levantamento',value:`${pu.date} ${pu.time} · ${pu.loc}`},{label:lang==='en'?'Return':'Devolução',value:`${re.date} ${re.time} · ${re.loc||pu.loc}`},{label:lang==='en'?'Duration':'Duração',value:`${days} ${lang==='en'?(days===1?'day':'days'):(days===1?'dia':'dias')}`},...(extList.length?[{label:'Extras',value:extList.map(e=>lang==='en'?e.en:e.pt).join(' · ')}]:[]),...(total?[{label:'Total',value:total,hi:true}]:[])];
   return (
-    <MS icon={<Car size={18} strokeWidth={1.75}/>} title={lang==='en'?'Book vehicle':'Reservar viatura'} step={step} lang={lang} onClose={onClose} onPrev={()=>ss(s=>s-1)} onNext={next} nextLabel={step<3?(lang==='en'?'Continue':'Continuar'):(lang==='en'?'Confirm booking':'Confirmar reserva')} nextDis={step===1&&(!pu.date||!re.date||!pu.loc)} sub={sub} err={err} ok={!!resId}>
+    <MS icon={<Car size={18} strokeWidth={1.75}/>} title={lang==='en'?'Book vehicle':'Reservar viatura'} step={step} lang={lang} onClose={onClose} onPrev={()=>ss(s=>s-1)} onNext={next} nextLabel={step<3?(lang==='en'?'Continue':'Continuar'):(lang==='en'?'Confirm booking':'Confirmar reserva')} nextDis={step===1&&(!pu.date||!re.date||!pu.loc)} sub={sub} err={err} ok={!!resId} hideNext={step===3&&pay==='paypal'}>
       {resId?<div className="p-5"><BS resId={resId} lang={lang} type="rentacar" onClose={onClose}/></div>
       :step===1?<div className="p-5 space-y-4"><p className={SH}>{lang==='en'?'Pickup & return':'Levantamento e devolução'}</p>
         <div><p className="text-xs font-body font-bold text-ocean-700 uppercase tracking-widest mb-2">{lang==='en'?'Pickup':'Levantamento'}</p><div className="grid grid-cols-2 gap-3 mb-2"><div><label className={LB}>{lang==='en'?'Date':'Data'} *</label><input type="date" className={IN} min={TODAY()} value={pu.date} onChange={e=>spu(p=>({...p,date:e.target.value}))}/></div><div><label className={LB}>{lang==='en'?'Time':'Hora'}</label><input type="time" className={IN} value={pu.time} onChange={e=>spu(p=>({...p,time:e.target.value}))}/></div></div><select className={SEL} value={pu.loc} onChange={e=>spu(p=>({...p,loc:e.target.value}))}><option value="">{lang==='en'?'-- Select location --':'-- Seleccionar local --'}</option>{locs.map(l=><option key={l} value={l}>{l}</option>)}</select></div>
@@ -357,7 +458,9 @@ function RentACarModal({ unit, op, slug, lang, onClose }) {
       :step===2?<div className="p-5 space-y-4"><p className={SH}>{lang==='en'?'Driver details':'Dados do condutor'}</p><GF d={drv} set={sd} lang={lang}><div className="grid grid-cols-2 gap-3"><div><label className={LB}>{lang==='en'?'Licence no.':'Nº carta'} *</label><input className={IN} value={drv.license} onChange={e=>sd(d=>({...d,license:e.target.value}))} required placeholder="PT-123456"/></div><div><label className={LB}>{lang==='en'?'Issuing country':'País emissor'}</label><input className={IN} value={drv.licCountry} onChange={e=>sd(d=>({...d,licCountry:e.target.value}))} placeholder="Portugal"/></div></div><div><label className={LB}>{lang==='en'?'Driver age':'Idade do condutor'}</label><input className={IN} type="number" min={18} max={99} value={drv.age} onChange={e=>sd(d=>({...d,age:e.target.value}))} placeholder="28"/></div></GF>
         <div><p className="text-xs font-body font-bold text-n-700 mb-3">{lang==='en'?'Extras (optional)':'Extras (opcional)'}</p><div className="grid grid-cols-2 gap-2.5">{CAR_EXTRAS.map(e=><button key={e.k} type="button" onClick={()=>sex(x=>({...x,[e.k]:!x[e.k]}))} className={`p-3 rounded-xl border-2 text-left transition-all ${ext[e.k]?'border-ocean-700 bg-ocean-50':'border-n-200 hover:border-n-300'}`}><div className="flex items-center gap-2"><div className={`w-4 h-4 rounded border-2 flex items-center justify-center flex-shrink-0 transition-all ${ext[e.k]?'border-ocean-700 bg-ocean-700':'border-n-300'}`}>{ext[e.k]&&<Check size={10} strokeWidth={3} className="text-white"/>}</div><span className={`text-xs font-body font-semibold ${ext[e.k]?'text-ocean-700':'text-n-700'}`}>{lang==='en'?e.en:e.pt}</span></div></button>)}</div></div>
       </div>
-      :<div className="p-5 space-y-4"><p className={SH}>{lang==='en'?'Review & payment':'Resumo e pagamento'}</p><ST lines={sumL}/><p className="text-xs font-body font-semibold text-n-700">{lang==='en'?'Payment method':'Método de pagamento'}</p><PO lang={lang} v={pay} set={sp}/></div>}
+      :<div className="p-5 space-y-4"><p className={SH}>{lang==='en'?'Review & payment':'Resumo e pagamento'}</p><ST lines={sumL}/><p className="text-xs font-body font-semibold text-n-700">{lang==='en'?'Payment method':'Método de pagamento'}</p><PO lang={lang} v={pay} set={sp}/>
+        {pay==='paypal'&&<PayPalButton slug={slug} reservationId={pendingResId} amount={toEUR(days*(unit.base_price||0),op.currency)} lang={lang} onSuccess={()=>sr(pendingResId)} onError={se}/>}
+      </div>}
     </MS>
   );
 }

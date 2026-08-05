@@ -17,7 +17,7 @@ const {
   submitLead,
   getImpact,
 } = require('../controllers/publicController');
-const { publicInitSisp } = require('../controllers/paymentController');
+const { publicInitSisp, publicPaypalClientId, publicCreatePaypalIntent, publicConfirmPaypalPayment } = require('../controllers/paymentController');
 const { frontendBase } = require('../utils/urls');
 
 /* ─── Relatório de impacto público ─── */
@@ -54,6 +54,9 @@ router.get('/:slug/availability',  verificarDisponibilidadePublica);
 router.post('/:slug/reservations', criarReserva);
 router.post('/:slug/contact',      slugContact);
 router.post('/:slug/payments/sisp/init', publicInitSisp);
+router.get('/:slug/payments/paypal/client-id',  publicPaypalClientId);
+router.post('/:slug/payments/paypal/create-intent', publicCreatePaypalIntent);
+router.post('/:slug/payments/paypal/confirm',   publicConfirmPaypalPayment);
 
 /* ─── QR Code público — sem autenticação ─── */
 router.get('/:slug/qrcode', (req, res) => {

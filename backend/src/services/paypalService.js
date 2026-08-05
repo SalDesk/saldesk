@@ -4,20 +4,22 @@ const BASE = process.env.PAYPAL_MODE === 'production'
   ? 'https://api-m.paypal.com'
   : 'https://api-m.sandbox.paypal.com';
 
-async function getAccessToken() {
+/* As credenciais PayPal sao por operador (ver marketing.js payment-settings),
+   nao ha um par global da plataforma — tem de vir sempre de quem chama. */
+async function getAccessToken(clientId, clientSecret) {
   const { data } = await axios.post(
     `${BASE}/v1/oauth2/token`,
     'grant_type=client_credentials',
     {
-      auth: { username: process.env.PAYPAL_CLIENT_ID, password: process.env.PAYPAL_CLIENT_SECRET },
+      auth: { username: clientId, password: clientSecret },
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     }
   );
   return data.access_token;
 }
 
-async function createOrder(amount, currency = 'EUR', description = 'SalDesk Reservation') {
-  const token = await getAccessToken();
+async function createOrder(clientId, clientSecret, amount, currency = 'EUR', description = 'SalDesk Reservation') {
+  const token = await getAccessToken(clientId, clientSecret);
   const { data } = await axios.post(
     `${BASE}/v2/checkout/orders`,
     {
@@ -32,8 +34,8 @@ async function createOrder(amount, currency = 'EUR', description = 'SalDesk Rese
   return data;
 }
 
-async function captureOrder(orderId) {
-  const token = await getAccessToken();
+async function captureOrder(clientId, clientSecret, orderId) {
+  const token = await getAccessToken(clientId, clientSecret);
   const { data } = await axios.post(
     `${BASE}/v2/checkout/orders/${orderId}/capture`,
     {},
@@ -42,8 +44,8 @@ async function captureOrder(orderId) {
   return data;
 }
 
-async function refundCapture(captureId, amount, currency = 'EUR') {
-  const token = await getAccessToken();
+async function refundCapture(clientId, clientSecret, captureId, amount, currency = 'EUR') {
+  const token = await getAccessToken(clientId, clientSecret);
   const body = amount ? { amount: { currency_code: currency, value: Number(amount).toFixed(2) } } : {};
   const { data } = await axios.post(
     `${BASE}/v2/payments/captures/${captureId}/refund`,

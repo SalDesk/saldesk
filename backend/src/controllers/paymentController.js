@@ -8,15 +8,92 @@ const { frontendBase } = require('../utils/urls');
 
 /* ─── PayPal ─────────────────────────────────────────────── */
 
+/* Credenciais PayPal sao por operador (Definicoes > Pagamentos), nunca
+   globais da plataforma. */
+async function obterCredenciaisPaypal(operatorId) {
+  const { data: operatorRow } = await supabaseAdmin
+    .from('operators')
+    .select('paypal_client_id_enc, paypal_client_secret_enc')
+    .eq('id', operatorId)
+    .single();
+
+  if (!operatorRow?.paypal_client_id_enc || !operatorRow?.paypal_client_secret_enc) {
+    const err = new Error('Credenciais PayPal nao configuradas para este operador');
+    err.status = 400; err.code = 'PAYPAL_NOT_CONFIGURED';
+    throw err;
+  }
+
+  return {
+    clientId: decrypt(operatorRow.paypal_client_id_enc),
+    clientSecret: decrypt(operatorRow.paypal_client_secret_enc),
+  };
+}
+
+async function publicPaypalClientId(req, res, next) {
+  try {
+    const { data: operatorRow } = await supabaseAdmin
+      .from('operators').select('id, paypal_client_id_enc').eq('slug', req.params.slug).single();
+    if (!operatorRow?.paypal_client_id_enc) {
+      return res.status(404).json({ error: 'PayPal nao configurado para este operador', code: 'PAYPAL_NOT_CONFIGURED' });
+    }
+    return res.json({ data: { client_id: decrypt(operatorRow.paypal_client_id_enc) }, message: 'Client ID PayPal' });
+  } catch (err) { next(err); }
+}
+
 async function createPayPalIntent(req, res, next) {
   try {
     const { reservation_id, amount, currency = 'EUR' } = req.body;
     if (!reservation_id || !amount) {
       return res.status(400).json({ error: 'reservation_id e amount obrigatorios', code: 'MISSING_FIELDS' });
     }
-    const order = await createOrder(amount, currency, `Reserva SalDesk ${reservation_id}`);
+    const { clientId, clientSecret } = await obterCredenciaisPaypal(req.operator.id);
+    const order = await createOrder(clientId, clientSecret, amount, currency, `Reserva SalDesk ${reservation_id}`);
     return res.json({ data: { order_id: order.id, status: order.status }, message: 'Order PayPal criada' });
   } catch (err) { next(err); }
+}
+
+/* Rota publica — usada pelo cliente na pagina de reserva, sem sessao de operador. */
+async function publicCreatePaypalIntent(req, res, next) {
+  try {
+    const { reservation_id, amount, currency = 'EUR' } = req.body;
+    if (!reservation_id || !amount) {
+      return res.status(400).json({ error: 'reservation_id e amount obrigatorios', code: 'MISSING_FIELDS' });
+    }
+    const { data: reserva } = await supabaseAdmin
+      .from('reservations').select('id, operator_id').eq('id', reservation_id).single();
+    if (!reserva) return res.status(404).json({ error: 'Reserva nao encontrada', code: 'NOT_FOUND' });
+
+    const { clientId, clientSecret } = await obterCredenciaisPaypal(reserva.operator_id);
+    const order = await createOrder(clientId, clientSecret, amount, currency, `Reserva SalDesk ${reservation_id}`);
+    return res.json({ data: { order_id: order.id, status: order.status }, message: 'Order PayPal criada' });
+  } catch (err) { next(err); }
+}
+
+async function confirmarCapturaPaypal(operatorId, orderId, reservationId) {
+  const { clientId, clientSecret } = await obterCredenciaisPaypal(operatorId);
+  const capture = await captureOrder(clientId, clientSecret, orderId);
+  const captureUnit = capture.purchase_units?.[0]?.payments?.captures?.[0];
+  const amount = parseFloat(captureUnit?.amount?.value || 0);
+
+  const { data, error } = await supabaseAdmin
+    .from('reservations')
+    .update({
+      payment_status: 'paid', payment_method: 'paypal',
+      paypal_order_id: orderId, amount_paid: amount,
+      status: 'confirmed', updated_at: new Date().toISOString(),
+    })
+    .eq('id', reservationId)
+    .select('*, operators(name, push_subscription)')
+    .single();
+
+  if (error) throw error;
+
+  emitToOperator(data.operator_id, 'payment:confirmed', { reservation_id: reservationId, amount, method: 'paypal' });
+  if (data.operators?.push_subscription) {
+    await notifyOperator(data.operators, { title: 'Pagamento recebido', body: `€${amount} via PayPal`, tag: 'payment', url: '/reservas' });
+  }
+
+  return data;
 }
 
 async function confirmPayPalPayment(req, res, next) {
@@ -25,29 +102,23 @@ async function confirmPayPalPayment(req, res, next) {
     if (!order_id || !reservation_id) {
       return res.status(400).json({ error: 'order_id e reservation_id obrigatorios', code: 'MISSING_FIELDS' });
     }
+    const data = await confirmarCapturaPaypal(req.operator.id, order_id, reservation_id);
+    return res.json({ data, message: 'Pagamento PayPal confirmado' });
+  } catch (err) { next(err); }
+}
 
-    const capture = await captureOrder(order_id);
-    const captureUnit = capture.purchase_units?.[0]?.payments?.captures?.[0];
-    const amount = parseFloat(captureUnit?.amount?.value || 0);
-
-    const { data, error } = await supabaseAdmin
-      .from('reservations')
-      .update({
-        payment_status: 'paid', payment_method: 'paypal',
-        paypal_order_id: order_id, amount_paid: amount,
-        status: 'confirmed', updated_at: new Date().toISOString(),
-      })
-      .eq('id', reservation_id)
-      .select('*, operators(name, push_subscription)')
-      .single();
-
-    if (error) throw error;
-
-    emitToOperator(data.operator_id, 'payment:confirmed', { reservation_id, amount, method: 'paypal' });
-    if (data.operators?.push_subscription) {
-      await notifyOperator(data.operators, { title: 'Pagamento recebido', body: `€${amount} via PayPal`, tag: 'payment', url: '/reservas' });
+/* Rota publica — o cliente confirma o proprio pagamento apos aprovar no PayPal. */
+async function publicConfirmPaypalPayment(req, res, next) {
+  try {
+    const { order_id, reservation_id } = req.body;
+    if (!order_id || !reservation_id) {
+      return res.status(400).json({ error: 'order_id e reservation_id obrigatorios', code: 'MISSING_FIELDS' });
     }
+    const { data: reserva } = await supabaseAdmin
+      .from('reservations').select('id, operator_id').eq('id', reservation_id).single();
+    if (!reserva) return res.status(404).json({ error: 'Reserva nao encontrada', code: 'NOT_FOUND' });
 
+    const data = await confirmarCapturaPaypal(reserva.operator_id, order_id, reservation_id);
     return res.json({ data, message: 'Pagamento PayPal confirmado' });
   } catch (err) { next(err); }
 }
@@ -223,7 +294,8 @@ async function refund(req, res, next) {
     if (!reserva) return res.status(404).json({ error: 'Reserva nao encontrada', code: 'NOT_FOUND' });
 
     if (reserva.payment_method === 'paypal' && reserva.paypal_order_id) {
-      await refundCapture(reserva.paypal_order_id, amount);
+      const { clientId, clientSecret } = await obterCredenciaisPaypal(req.operator.id);
+      await refundCapture(clientId, clientSecret, reserva.paypal_order_id, amount);
     }
 
     await supabaseAdmin
@@ -235,4 +307,9 @@ async function refund(req, res, next) {
   } catch (err) { next(err); }
 }
 
-module.exports = { createPayPalIntent, confirmPayPalPayment, paypalWebhook, initSisp, publicInitSisp, sispCallback, registerManualPayment, getHistory, refund };
+module.exports = {
+  createPayPalIntent, confirmPayPalPayment, paypalWebhook,
+  publicPaypalClientId, publicCreatePaypalIntent, publicConfirmPaypalPayment,
+  initSisp, publicInitSisp, sispCallback,
+  registerManualPayment, getHistory, refund,
+};
