@@ -1,16 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import {
-  Link2, Copy, Check, Share2, Euro,
+  Copy, Check, Share2, Euro,
   BarChart2, Clock, CheckCircle2, AlertCircle,
 } from 'lucide-react';
-
-const AFFILIATES_KEY = 'saldesk_affiliates_v1';
-
-function loadAffiliates() {
-  try { return JSON.parse(localStorage.getItem(AFFILIATES_KEY) || '[]'); }
-  catch { return []; }
-}
+import { affiliatePortalLogin } from '../services/affiliatesService';
 
 function CopyBtn({ text }) {
   const [copied, setCopied] = useState(false);
@@ -32,35 +26,28 @@ export default function AffiliatePortal() {
   const [email,     setEmail]     = useState('');
   const [affiliate, setAffiliate] = useState(null);
   const [error,     setError]     = useState('');
+  const [loading,   setLoading]   = useState(false);
 
-  function handleLogin(e) {
+  async function handleLogin(e) {
     e.preventDefault();
     setError('');
-    const all = loadAffiliates();
-    const found = all.find(a =>
-      a.code?.toUpperCase() === codigo?.toUpperCase() &&
-      a.email?.toLowerCase() === email.trim().toLowerCase() &&
-      a.active !== false,
-    );
-    if (found) {
-      setAffiliate(found);
+    setLoading(true);
+    try {
+      const data = await affiliatePortalLogin(codigo, email);
+      setAffiliate(data);
       setStep('dashboard');
-    } else {
+    } catch {
       setError('Email ou codigo invalido. Verifique os dados e tente novamente.');
+    } finally {
+      setLoading(false);
     }
   }
 
-  const totalCommission = (affiliate?.payments || []).reduce((s, p) => s + Number(p.amount || 0), 0);
-  const pendingCommission = Math.max(
-    0,
-    (affiliate?.bookings_count || 0) *
-    (affiliate?.avg_booking_value || 0) *
-    (affiliate?.commission_pct || 0) / 100 -
-    totalCommission,
-  );
+  const totalCommission   = Number(affiliate?.commission_paid || 0);
+  const pendingCommission = Number(affiliate?.commission_pending || 0);
 
   const affiliateLink = affiliate
-    ? `https://saldesk.cv/book/${affiliate.slug || '...'}?ref=${affiliate.code}`
+    ? `https://saldesk.cv/book/${affiliate.slug}?ref=${affiliate.code}`
     : '';
 
   return (
@@ -97,9 +84,9 @@ export default function AffiliatePortal() {
                   <p className="text-xs font-body text-error">{error}</p>
                 </div>
               )}
-              <button type="submit"
-                className="w-full h-9 bg-ocean-700 text-white rounded-sm text-sm font-body font-semibold hover:bg-ocean-800 transition-colors">
-                Entrar
+              <button type="submit" disabled={loading}
+                className="w-full h-9 bg-ocean-700 text-white rounded-sm text-sm font-body font-semibold hover:bg-ocean-800 transition-colors disabled:opacity-60">
+                {loading ? 'A entrar...' : 'Entrar'}
               </button>
             </form>
 
@@ -160,10 +147,10 @@ export default function AffiliatePortal() {
               <div className="bg-white border border-n-200 rounded-md p-4">
                 <p className="text-xs font-mono uppercase tracking-wider text-n-500 mb-3">Historico de pagamentos</p>
                 <div className="space-y-2">
-                  {[...affiliate.payments].sort((a, b) => b.date?.localeCompare(a.date || '') || 0).map((p, i) => (
+                  {affiliate.payments.map((p, i) => (
                     <div key={i} className="flex items-center justify-between py-2 border-b border-n-100 last:border-0">
                       <div>
-                        <p className="text-xs font-mono text-n-500">{p.date ? new Date(p.date + 'T00:00:00Z').toLocaleDateString('pt-PT') : '—'}</p>
+                        <p className="text-xs font-mono text-n-500">{p.payment_date ? new Date(p.payment_date + 'T00:00:00Z').toLocaleDateString('pt-PT') : '—'}</p>
                         {p.note && <p className="text-xs font-body text-n-400">{p.note}</p>}
                       </div>
                       <p className="font-display font-bold text-sm text-[#1A7A4A]">€{Number(p.amount).toFixed(2)}</p>

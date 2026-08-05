@@ -407,13 +407,13 @@ function PayPalButton({ slug, reservationId, amount, lang, onSuccess, onError })
 }
 
 /* ── HotelModal ───────────────────────────────────── */
-function HotelModal({ unit, op, slug, lang, onClose }) {
+function HotelModal({ unit, op, slug, lang, onClose, refCode }) {
   const [step,ss]=useState(1); const [ci,sci]=useState(''); const [co,sco]=useState(''); const [adults,sa]=useState(2); const [kids,sk]=useState(0);
   const [info,si]=useState({name:'',email:'',phone:'',country:'',notes:''}); const [pay,sp]=useState('cash'); const [sub,ssub]=useState(false); const [resId,sr]=useState(null); const [pendingRes,spr]=useState(null); const [err,se]=useState(''); const [avail,sav]=useState(null); const [chk,sc]=useState(false);
   const [voucherCode,svc]=useState(null);
   const nights=nts(ci,co); const rawTotal=nights*(unit.base_price||0); const total=nights>0&&unit.base_price?fmtPrice(rawTotal,null,op.currency||'EUR','EUR',lang):null;
   useEffect(()=>{ if (!ci||!co||co<=ci){sav(null);return;} const t=setTimeout(async()=>{ sc(true); try{sav((await(await fetch(`${API}/public/${slug}/availability?unitId=${unit.id}&checkIn=${ci}&checkOut=${co}`)).json()).data);}catch{sav(null);}finally{sc(false);} },700); return()=>clearTimeout(t); },[ci,co]);
-  function buildPayload(){ const notes=[`${adults} ${lang==='en'?'adults':'adultos'}, ${kids} ${lang==='en'?'children':'crianças'}`,info.notes].filter(Boolean).join('. '); return {unit_id:unit.id,customer_name:info.name,customer_email:info.email,customer_phone:info.phone||null,customer_country:info.country||null,check_in:ci,check_out:co,guests:adults+kids,notes,voucher_code:voucherCode||undefined}; }
+  function buildPayload(){ const notes=[`${adults} ${lang==='en'?'adults':'adultos'}, ${kids} ${lang==='en'?'children':'crianças'}`,info.notes].filter(Boolean).join('. '); return {unit_id:unit.id,customer_name:info.name,customer_email:info.email,customer_phone:info.phone||null,customer_country:info.country||null,check_in:ci,check_out:co,guests:adults+kids,notes,voucher_code:voucherCode||undefined,ref_code:refCode||undefined}; }
   useEffect(()=>{ if(step===3&&pay==='paypal'&&!pendingRes&&!sub){ ssub(true); postReservation(slug,buildPayload()).then(spr).catch(e=>se(e.message)).finally(()=>ssub(false)); } },[step,pay]);
   function valid(){ if(step===1){if(!ci||!co){se(lang==='en'?'Select both dates':'Seleccione ambas as datas');return false;} if(co<=ci){se(lang==='en'?'Check-out must be after check-in':'Check-out deve ser posterior ao check-in');return false;} if(!avail?.disponivel){se(lang==='en'?'Room unavailable for these dates':'Quarto indisponível nestas datas');return false;}} if(step===2&&(!info.name||!info.email)){se(lang==='en'?'Name and email required':'Nome e email obrigatórios');return false;} se('');return true; }
   async function submit(){
@@ -450,12 +450,12 @@ function HotelModal({ unit, op, slug, lang, onClose }) {
 }
 
 /* ── ActivityModal ────────────────────────────────── */
-function ActivityModal({ unit, op, slug, lang, onClose }) {
+function ActivityModal({ unit, op, slug, lang, onClose, refCode }) {
   const [step,ss]=useState(1); const [date,sd]=useState(''); const [time,st]=useState(''); const [adults,sa]=useState(2); const [kids,sk]=useState(0);
   const [info,si]=useState({name:'',email:'',phone:'',country:'',needs:''}); const [pay,sp]=useState('cash'); const [sub,ssub]=useState(false); const [resId,sr]=useState(null); const [pendingRes,spr]=useState(null); const [err,se]=useState('');
   const [voucherCode,svc]=useState(null);
   const rawTotal=(adults+kids)*(unit.base_price||0); const total=unit.base_price?fmtPrice(rawTotal,'person',op.currency||'EUR','EUR',lang):null;
-  function buildPayload(){ const notes=[`${lang==='en'?'Time':'Hora'}: ${time}`,`${adults} ${lang==='en'?'adults':'adultos'}, ${kids} ${lang==='en'?'children':'crianças'}`,info.needs?(lang==='en'?'Needs:':'Necessidades:')+' '+info.needs:''].filter(Boolean).join('. '); return {unit_id:unit.id,customer_name:info.name,customer_email:info.email,customer_phone:info.phone||null,customer_country:info.country||null,check_in:date,check_out:date,guests:adults+kids,notes,voucher_code:voucherCode||undefined}; }
+  function buildPayload(){ const notes=[`${lang==='en'?'Time':'Hora'}: ${time}`,`${adults} ${lang==='en'?'adults':'adultos'}, ${kids} ${lang==='en'?'children':'crianças'}`,info.needs?(lang==='en'?'Needs:':'Necessidades:')+' '+info.needs:''].filter(Boolean).join('. '); return {unit_id:unit.id,customer_name:info.name,customer_email:info.email,customer_phone:info.phone||null,customer_country:info.country||null,check_in:date,check_out:date,guests:adults+kids,notes,voucher_code:voucherCode||undefined,ref_code:refCode||undefined}; }
   useEffect(()=>{ if(step===3&&pay==='paypal'&&!pendingRes&&!sub){ ssub(true); postReservation(slug,buildPayload()).then(spr).catch(e=>se(e.message)).finally(()=>ssub(false)); } },[step,pay]);
   function valid(){ if(step===1){if(!date){se(lang==='en'?'Select a date':'Seleccione uma data');return false;} if(!time){se(lang==='en'?'Select a time slot':'Seleccione um horário');return false;} if(adults<1){se(lang==='en'?'At least 1 adult required':'Mínimo 1 adulto');return false;}} if(step===2&&(!info.name||!info.email)){se(lang==='en'?'Name and email required':'Nome e email obrigatórios');return false;} se('');return true; }
   async function submit(){
@@ -490,14 +490,14 @@ function ActivityModal({ unit, op, slug, lang, onClose }) {
 }
 
 /* ── RentACarModal ────────────────────────────────── */
-function RentACarModal({ unit, op, slug, lang, onClose }) {
+function RentACarModal({ unit, op, slug, lang, onClose, refCode }) {
   const [step,ss]=useState(1); const [pu,spu]=useState({date:'',time:'09:00',loc:''}); const [re,sre]=useState({date:'',time:'09:00',loc:''});
   const [drv,sd]=useState({name:'',email:'',phone:'',country:'',license:'',licCountry:'',age:''}); const [ext,sex]=useState({insurance:false,gps:false,baby_seat:false,extra_driver:false});
   const [pay,sp]=useState('cash'); const [sub,ssub]=useState(false); const [resId,sr]=useState(null); const [pendingRes,spr]=useState(null); const [err,se]=useState('');
   const [voucherCode,svc]=useState(null);
   const days=dys(pu.date,re.date); const rawTotal=days*(unit.base_price||0); const total=days>0&&unit.base_price?fmtPrice(rawTotal,'day',op.currency||'EUR','EUR',lang):null;
   const locs=lang==='en'?CV_LOCS_EN:CV_LOCS_PT; const extList=CAR_EXTRAS.filter(e=>ext[e.k]);
-  function buildPayload(){ const notes=[`${lang==='en'?'Pickup':'Levantamento'}: ${pu.loc} ${pu.date} ${pu.time}`,`${lang==='en'?'Return':'Devolução'}: ${re.loc||pu.loc} ${re.date} ${re.time}`,extList.length?`Extras: ${extList.map(e=>lang==='en'?e.en:e.pt).join(', ')}`:''  ].filter(Boolean).join('. '); return {unit_id:unit.id,customer_name:drv.name,customer_email:drv.email,customer_phone:drv.phone||null,customer_country:drv.country||null,check_in:pu.date,check_out:re.date,guests:1,notes,voucher_code:voucherCode||undefined}; }
+  function buildPayload(){ const notes=[`${lang==='en'?'Pickup':'Levantamento'}: ${pu.loc} ${pu.date} ${pu.time}`,`${lang==='en'?'Return':'Devolução'}: ${re.loc||pu.loc} ${re.date} ${re.time}`,extList.length?`Extras: ${extList.map(e=>lang==='en'?e.en:e.pt).join(', ')}`:''  ].filter(Boolean).join('. '); return {unit_id:unit.id,customer_name:drv.name,customer_email:drv.email,customer_phone:drv.phone||null,customer_country:drv.country||null,check_in:pu.date,check_out:re.date,guests:1,notes,voucher_code:voucherCode||undefined,ref_code:refCode||undefined}; }
   useEffect(()=>{ if(step===3&&pay==='paypal'&&!pendingRes&&!sub){ ssub(true); postReservation(slug,buildPayload()).then(spr).catch(e=>se(e.message)).finally(()=>ssub(false)); } },[step,pay]);
   function valid(){ if(step===1){if(!pu.date||!re.date){se(lang==='en'?'Select pickup and return dates':'Seleccione datas');return false;} if(re.date<=pu.date){se(lang==='en'?'Return after pickup':'Devolução após levantamento');return false;} if(!pu.loc){se(lang==='en'?'Select pickup location':'Seleccione o local');return false;}} if(step===2&&(!drv.name||!drv.email)){se(lang==='en'?'Name and email required':'Nome e email obrigatórios');return false;} if(step===2&&!drv.license){se(lang==='en'?'Driving licence required':'Carta de condução obrigatória');return false;} se('');return true; }
   async function submit(){
@@ -556,10 +556,10 @@ function RestaurantModal({ unit, op, slug, lang, onClose }) {
   );
 }
 
-function BookingModal({ unit, op, slug, lang, onClose }) {
+function BookingModal({ unit, op, slug, lang, onClose, refCode }) {
   if (!unit||!op) return null;
   const t=op.operator_type;
-  const props={unit,op,slug,lang,onClose};
+  const props={unit,op,slug,lang,onClose,refCode};
   if (t==='hotel') return <HotelModal {...props}/>;
   if (t==='activity') return <ActivityModal {...props}/>;
   if (t==='rentacar') return <RentACarModal {...props}/>;
@@ -695,6 +695,7 @@ export default function ServiceDetail() {
   const [searchParams] = useSearchParams();
   const isWidget     = useIsWidget(searchParams);
   useWidgetResize(isWidget);
+  const refCode      = searchParams.get('ref') || null;
 
   const [op, setOp]           = useState(null);
   const [unit, setUnit]       = useState(null);
@@ -1371,7 +1372,7 @@ export default function ServiceDetail() {
 
       {/* ── Booking Modal ── */}
       {bookOpen && (
-        <BookingModal unit={unit} op={op} slug={slug} lang={lang} onClose={() => setBookOpen(false)}/>
+        <BookingModal unit={unit} op={op} slug={slug} lang={lang} onClose={() => setBookOpen(false)} refCode={refCode}/>
       )}
 
       {/* ── Lightbox ── */}

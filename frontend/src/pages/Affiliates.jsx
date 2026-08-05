@@ -1,26 +1,20 @@
 import { useState, useEffect } from 'react';
-import PlanGuard from '../components/PlanGuard';
 import {
   UserPlus, Plus, Pencil, Trash2, Copy, Check, Share2,
-  Link2, Euro, BarChart2, ToggleLeft, ToggleRight, Save,
+  Euro, BarChart2, ToggleLeft, ToggleRight, Save,
 } from 'lucide-react';
-import { listUnits } from '../services/unitsService';
 import { getBookingLink } from '../services/marketingService';
+import {
+  listAffiliates, createAffiliate, updateAffiliate, deleteAffiliate,
+  createAffiliatePayment, getAffiliateConfig, updateAffiliateConfig,
+} from '../services/affiliatesService';
 import useAuthStore from '../store/authStore';
 import PageHeader from '../components/layout/PageHeader';
 import Button from '../components/ui/Button';
 import Card from '../components/ui/Card';
 import Modal from '../components/ui/Modal';
-import Input, { Select } from '../components/ui/Input';
-
-/* ── localStorage ── */
-const AFF_KEY  = 'saldesk_affiliates_v1';
-const CONF_KEY = 'saldesk_affiliates_config_v1';
-
-function loadAff()  { try { return JSON.parse(localStorage.getItem(AFF_KEY)  || '[]');  } catch { return [];  } }
-function loadConf() { try { return JSON.parse(localStorage.getItem(CONF_KEY) || '{}');  } catch { return {};  } }
-function saveAff(v)  { localStorage.setItem(AFF_KEY,  JSON.stringify(v)); }
-function saveConf(v) { localStorage.setItem(CONF_KEY, JSON.stringify(v)); }
+import Input from '../components/ui/Input';
+import LoadingSpinner from '../components/shared/LoadingSpinner';
 
 const DEFAULT_CONF = { active: false, commission_pct: 10, min_booking_value: 0 };
 
@@ -57,8 +51,9 @@ function AffiliateModal({ affiliate, config, onSave, onClose }) {
     commission_pct: base?.commission_pct ?? config?.commission_pct ?? 10,
     code:           base?.code           || '',
     active:         base?.active         ?? true,
-    avg_booking_value: base?.avg_booking_value || 0,
   });
+  const [saving, setSaving] = useState(false);
+  const [error,  setError]  = useState('');
 
   const set = f => e => setForm(p => ({ ...p, [f]: e.target.value }));
 
@@ -68,19 +63,25 @@ function AffiliateModal({ affiliate, config, onSave, onClose }) {
     }
   }, [form.name]);
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault();
-    onSave({
-      ...base,
-      ...form,
-      commission_pct: Number(form.commission_pct),
-      avg_booking_value: Number(form.avg_booking_value),
-      code: form.code.trim().toUpperCase(),
-      bookings_count: base?.bookings_count || 0,
-      payments: base?.payments || [],
-      id: base?.id || Date.now().toString(),
-      created_at: base?.created_at || new Date().toISOString(),
-    });
+    setSaving(true);
+    setError('');
+    try {
+      await onSave(base?.id, {
+        name: form.name,
+        email: form.email,
+        commission_pct: Number(form.commission_pct),
+        code: form.code.trim().toUpperCase(),
+        active: form.active,
+      });
+    } catch (err) {
+      setError(err.response?.data?.code === 'DUPLICATE_CODE'
+        ? 'Ja existe um afiliado com este codigo.'
+        : 'Erro ao guardar afiliado.');
+    } finally {
+      setSaving(false);
+    }
   }
 
   return (
@@ -98,13 +99,11 @@ function AffiliateModal({ affiliate, config, onSave, onClose }) {
           </div>
         </div>
 
-        <Input label="Valor medio de reserva (€)" type="number" min="0" step="1"
-          value={form.avg_booking_value} onChange={set('avg_booking_value')}
-          hint="Para calcular comissoes estimadas. Opcional." />
+        {error && <p className="text-xs text-error">{error}</p>}
 
         <div className="flex gap-3 pt-1">
           <Button type="button" variant="secondary" onClick={onClose} className="flex-1">Cancelar</Button>
-          <Button type="submit" className="flex-1">{isNew ? 'Criar afiliado' : 'Guardar'}</Button>
+          <Button type="submit" loading={saving} className="flex-1">{isNew ? 'Criar afiliado' : 'Guardar'}</Button>
         </div>
       </form>
     </Modal>
@@ -116,15 +115,21 @@ function PaymentModal({ affiliate, onSave, onClose }) {
   const [amount, setAmount] = useState('');
   const [date,   setDate]   = useState(new Date().toISOString().slice(0, 10));
   const [note,   setNote]   = useState('Pagamento de comissao');
+  const [saving, setSaving] = useState(false);
+  const [error,  setError]  = useState('');
 
-  const totalPaid = (affiliate?.payments || []).reduce((s, p) => s + Number(p.amount || 0), 0);
-  const estimated = (affiliate?.bookings_count || 0) * (affiliate?.avg_booking_value || 0) * ((affiliate?.commission_pct || 0) / 100);
-  const pending = Math.max(0, estimated - totalPaid);
+  const totalPaid = Number(affiliate?.commission_paid || 0);
+  const pending   = Number(affiliate?.commission_pending || 0);
 
-  function handleSave() {
-    if (!amount || Number(amount) <= 0) return;
-    onSave(affiliate.id, { amount: Number(amount), date, note });
-    onClose();
+  async function handleSave() {
+    if (!amount || Number(amount) <= 0) { setError('Introduza um montante valido.'); return; }
+    setSaving(true);
+    setError('');
+    try {
+      await onSave(affiliate.id, { amount: Number(amount), payment_date: date, note });
+      onClose();
+    } catch { setError('Erro ao registar pagamento.'); }
+    finally { setSaving(false); }
   }
 
   return (
@@ -136,7 +141,7 @@ function PaymentModal({ affiliate, onSave, onClose }) {
             <p className="font-display font-bold text-sm text-n-700">€{totalPaid.toFixed(2)}</p>
           </div>
           <div className="px-3 py-2 bg-yellow-50 border border-yellow-200 rounded-sm">
-            <p className="text-[10px] font-mono text-yellow-600">PENDENTE EST.</p>
+            <p className="text-[10px] font-mono text-yellow-600">PENDENTE</p>
             <p className="font-display font-bold text-sm text-yellow-700">€{pending.toFixed(2)}</p>
           </div>
         </div>
@@ -144,9 +149,10 @@ function PaymentModal({ affiliate, onSave, onClose }) {
           value={amount} onChange={e => setAmount(e.target.value)} required />
         <Input label="Data do pagamento" type="date" value={date} onChange={e => setDate(e.target.value)} />
         <Input label="Nota" value={note} onChange={e => setNote(e.target.value)} />
+        {error && <p className="text-xs text-error">{error}</p>}
         <div className="flex gap-3">
           <Button variant="secondary" onClick={onClose} className="flex-1">Cancelar</Button>
-          <Button onClick={handleSave} className="flex-1">Registar pagamento</Button>
+          <Button loading={saving} onClick={handleSave} className="flex-1">Registar pagamento</Button>
         </div>
       </div>
     </Modal>
@@ -156,13 +162,31 @@ function PaymentModal({ affiliate, onSave, onClose }) {
 /* ─────────────────────── Main ─────────────────────── */
 export default function Affiliates() {
   const { operator } = useAuthStore();
-  const [affiliates, setAffiliates] = useState(loadAff);
-  const [config,     setConfig]     = useState(() => ({ ...DEFAULT_CONF, ...loadConf() }));
+  const [affiliates, setAffiliates] = useState([]);
+  const [config,     setConfig]     = useState(DEFAULT_CONF);
+  const [loading,    setLoading]    = useState(true);
   const [slug,       setSlug]       = useState('');
   const [modal,      setModal]      = useState(null);
   const [payModal,   setPayModal]   = useState(null);
   const [activeTab,  setActiveTab]  = useState('afiliados');
+  const [confSaving, setConfSaving] = useState(false);
   const [confSaved,  setConfSaved]  = useState(false);
+
+  async function reload() {
+    const data = await listAffiliates().catch(() => []);
+    setAffiliates(data || []);
+  }
+
+  useEffect(() => {
+    setLoading(true);
+    Promise.all([
+      listAffiliates().catch(() => []),
+      getAffiliateConfig().catch(() => DEFAULT_CONF),
+    ]).then(([affs, conf]) => {
+      setAffiliates(affs || []);
+      setConfig({ ...DEFAULT_CONF, ...conf });
+    }).finally(() => setLoading(false));
+  }, []);
 
   useEffect(() => {
     if (operator?.booking_link_slug) {
@@ -182,52 +206,57 @@ export default function Affiliates() {
     return `https://saldesk.cv/book/${slug}?ref=${a.code}`;
   }
 
-  function handleSaveAff(a) {
-    setAffiliates(prev => {
-      const next = prev.find(x => x.id === a.id)
-        ? prev.map(x => x.id === a.id ? a : x)
-        : [...prev, a];
-      saveAff(next); return next;
-    });
+  async function handleSaveAff(id, dados) {
+    if (id) await updateAffiliate(id, dados);
+    else await createAffiliate(dados);
+    await reload();
     setModal(null);
   }
 
-  function handleDelete(id) {
+  async function handleDelete(id) {
     if (!window.confirm('Eliminar este afiliado?')) return;
-    setAffiliates(prev => { const next = prev.filter(a => a.id !== id); saveAff(next); return next; });
+    await deleteAffiliate(id);
+    setAffiliates(prev => prev.filter(a => a.id !== id));
   }
 
-  function handleToggle(id) {
-    setAffiliates(prev => {
-      const next = prev.map(a => a.id === id ? { ...a, active: !a.active } : a);
-      saveAff(next); return next;
-    });
+  async function handleToggle(a) {
+    const updated = await updateAffiliate(a.id, { active: !a.active });
+    setAffiliates(prev => prev.map(x => x.id === a.id ? updated : x));
   }
 
-  function handlePayment(affId, payment) {
-    setAffiliates(prev => {
-      const next = prev.map(a => {
-        if (a.id !== affId) return a;
-        return { ...a, payments: [...(a.payments || []), payment] };
-      });
-      saveAff(next); return next;
-    });
+  async function handlePayment(affId, payment) {
+    await createAffiliatePayment(affId, payment);
+    await reload();
   }
 
-  function handleSaveConfig() {
-    saveConf(config);
-    setConfSaved(true);
-    setTimeout(() => setConfSaved(false), 2000);
+  async function handleSaveConfig() {
+    setConfSaving(true);
+    try {
+      await updateAffiliateConfig(config);
+      setConfSaved(true);
+      setTimeout(() => setConfSaved(false), 2000);
+    } finally { setConfSaving(false); }
+  }
+
+  async function toggleProgramActive() {
+    const next = { ...config, active: !config.active };
+    setConfig(next);
+    await updateAffiliateConfig(next).catch(() => setConfig(config));
+  }
+
+  if (loading) {
+    return (
+      <div>
+        <PageHeader title="Programa de Afiliados" subtitle="Gere afiliados e comissoes por reservas referenciadas" />
+        <div className="flex justify-center py-16"><LoadingSpinner size={32} /></div>
+      </div>
+    );
   }
 
   /* KPIs */
-  const totalBookings  = affiliates.reduce((s, a) => s + (a.bookings_count || 0), 0);
-  const totalPaid      = affiliates.reduce((s, a) => s + (a.payments || []).reduce((ps, p) => ps + Number(p.amount || 0), 0), 0);
-  const totalPending   = affiliates.reduce((s, a) => {
-    const est  = (a.bookings_count || 0) * (a.avg_booking_value || 0) * ((a.commission_pct || 0) / 100);
-    const paid = (a.payments || []).reduce((ps, p) => ps + Number(p.amount || 0), 0);
-    return s + Math.max(0, est - paid);
-  }, 0);
+  const totalBookings = affiliates.reduce((s, a) => s + (a.bookings_count || 0), 0);
+  const totalPaid     = affiliates.reduce((s, a) => s + Number(a.commission_paid || 0), 0);
+  const totalPending  = affiliates.reduce((s, a) => s + Number(a.commission_pending || 0), 0);
 
   const TABS = [
     { key: 'afiliados',  label: 'Afiliados'      },
@@ -235,7 +264,6 @@ export default function Affiliates() {
     { key: 'analytics',  label: 'Analytics'      },
   ];
 
-  /* Sorted by bookings for analytics */
   const topAff = [...affiliates].sort((a, b) => (b.bookings_count || 0) - (a.bookings_count || 0));
 
   return (
@@ -245,11 +273,7 @@ export default function Affiliates() {
         subtitle="Gere afiliados e comissoes por reservas referenciadas"
         actions={
           <div className="flex items-center gap-2">
-            {/* Program active toggle */}
-            <button onClick={() => {
-              const next = { ...config, active: !config.active };
-              setConfig(next); saveConf(next);
-            }}
+            <button onClick={toggleProgramActive}
               className={`flex items-center gap-2 px-3 py-1.5 rounded-sm border text-xs font-body font-semibold transition-colors ${
                 config.active ? 'bg-[#ECFDF5] text-[#1A7A4A] border-green-200' : 'bg-n-100 text-n-600 border-n-200'
               }`}>
@@ -306,10 +330,7 @@ export default function Affiliates() {
         ) : (
           <div className="space-y-3">
             {affiliates.map(a => {
-              const link     = affiliateLink(a);
-              const paid     = (a.payments || []).reduce((s, p) => s + Number(p.amount || 0), 0);
-              const estimated = (a.bookings_count || 0) * (a.avg_booking_value || 0) * ((a.commission_pct || 0) / 100);
-              const pending  = Math.max(0, estimated - paid);
+              const link = affiliateLink(a);
               return (
                 <div key={a.id} className={`bg-white border border-n-200 rounded-md px-4 py-4 ${a.active === false ? 'opacity-60' : ''}`}>
                   <div className="flex items-start gap-3">
@@ -327,7 +348,7 @@ export default function Affiliates() {
                             className="p-1.5 rounded text-n-400 hover:text-ocean-700 hover:bg-ocean-50 transition-colors" title="Registar pagamento">
                             <Euro size={13} strokeWidth={1.75} />
                           </button>
-                          <button onClick={() => handleToggle(a.id)}
+                          <button onClick={() => handleToggle(a)}
                             className="p-1.5 rounded text-n-400 hover:text-n-700 hover:bg-n-100 transition-colors">
                             {a.active !== false
                               ? <ToggleRight size={13} strokeWidth={1.75} className="text-ocean-700" />
@@ -348,8 +369,8 @@ export default function Affiliates() {
                       <div className="flex gap-4 text-center mb-3">
                         {[
                           { label: 'Reservas', value: a.bookings_count || 0, color: 'text-ocean-700' },
-                          { label: 'Pago',     value: `€${paid.toFixed(0)}`,    color: 'text-[#1A7A4A]' },
-                          { label: 'Pendente', value: `€${pending.toFixed(0)}`, color: 'text-yellow-700' },
+                          { label: 'Pago',     value: `€${Number(a.commission_paid || 0).toFixed(0)}`,    color: 'text-[#1A7A4A]' },
+                          { label: 'Pendente', value: `€${Number(a.commission_pending || 0).toFixed(0)}`, color: 'text-yellow-700' },
                         ].map(m => (
                           <div key={m.label}>
                             <p className={`font-display font-bold text-sm ${m.color}`}>{m.value}</p>
@@ -413,6 +434,7 @@ export default function Affiliates() {
             </div>
 
             <Button icon={confSaved ? Check : Save}
+              loading={confSaving}
               className={confSaved ? 'bg-[#1A7A4A] hover:bg-[#15623c]' : ''}
               onClick={handleSaveConfig}>
               {confSaved ? 'Guardado' : 'Guardar configuracao'}
@@ -421,9 +443,9 @@ export default function Affiliates() {
             <div className="pt-3 border-t border-n-100">
               <p className="text-xs font-body text-n-400">
                 <span className="font-semibold">Portal do afiliado:</span> Cada afiliado pode aceder ao seu dashboard em{' '}
-                <span className="font-mono">saldesk.cv/afiliado/[CODIGO]</span>.
-                A rastreabilidade real de reservas por codigo de afiliado requer implementacao do endpoint{' '}
-                <span className="font-mono">GET /reservations?ref=CODIGO</span> no backend.
+                <span className="font-mono">saldesk.cv/afiliado/[CODIGO]</span> com o email registado.
+                As reservas feitas atraves do link (<span className="font-mono">?ref=CODIGO</span>) sao atribuidas
+                automaticamente ao afiliado.
               </p>
             </div>
           </div>
@@ -446,7 +468,6 @@ export default function Affiliates() {
                 {topAff.map((a, i) => {
                   const maxBookings = topAff[0]?.bookings_count || 1;
                   const pct = maxBookings > 0 ? ((a.bookings_count || 0) / maxBookings) * 100 : 0;
-                  const paid = (a.payments || []).reduce((s, p) => s + Number(p.amount || 0), 0);
                   return (
                     <div key={a.id} className="flex items-center gap-3">
                       <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-display font-bold shrink-0 ${
@@ -456,7 +477,7 @@ export default function Affiliates() {
                         <div className="flex items-center justify-between mb-1">
                           <p className="text-xs font-body font-semibold text-n-800 truncate">{a.name}</p>
                           <span className="text-xs font-mono text-n-600 shrink-0 ml-2">
-                            {a.bookings_count || 0} reservas · €{paid.toFixed(0)} pago
+                            {a.bookings_count || 0} reservas · €{Number(a.commission_paid || 0).toFixed(0)} pago
                           </span>
                         </div>
                         <div className="h-1.5 bg-n-100 rounded-full overflow-hidden">
@@ -484,7 +505,7 @@ export default function Affiliates() {
       {payModal && (
         <PaymentModal
           affiliate={payModal}
-          onSave={(id, payment) => { handlePayment(id, payment); setPayModal(null); }}
+          onSave={handlePayment}
           onClose={() => setPayModal(null)}
         />
       )}

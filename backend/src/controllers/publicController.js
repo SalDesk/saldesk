@@ -5,6 +5,7 @@ const { enviarEmail } = require('../helpers/emailHelper');
 const { detectarIdioma } = require('../helpers/languageHelper');
 const { confirmacaoClienteEmail, notificacaoOperadorEmail } = require('../helpers/emailTemplates');
 const { validarVoucher, registarUsoVoucher } = require('./vouchersController');
+const { encontrarAfiliadoActivo } = require('./affiliatesController');
 
 async function getOperador(req, res, next) {
   try {
@@ -86,7 +87,7 @@ async function criarReserva(req, res, next) {
   try {
     const { unit_id, customer_name, customer_email, customer_phone,
             customer_country, check_in, check_out, guests, notes,
-            party_size, tour_time, voucher_code } = req.body;
+            party_size, tour_time, voucher_code, ref_code } = req.body;
 
     // check_out é opcional — activities/restaurants podem enviar só check_in (data do serviço)
     const effectiveCheckOut = check_out || check_in;
@@ -146,6 +147,16 @@ async function criarReserva(req, res, next) {
       }
     }
 
+    let affiliateId = null;
+    if (ref_code) {
+      const { data: affConfig } = await supabaseAdmin
+        .from('affiliate_config').select('active, min_booking_value').eq('operator_id', operator.id).maybeSingle();
+      if (affConfig?.active && finalTotal >= Number(affConfig.min_booking_value || 0)) {
+        const afiliado = await encontrarAfiliadoActivo(operator.id, ref_code);
+        if (afiliado) affiliateId = afiliado.id;
+      }
+    }
+
     const customer = await obterOuCriarCliente(operator.id, {
       name: customer_name,
       email: customer_email,
@@ -176,7 +187,8 @@ async function criarReserva(req, res, next) {
         total_price: finalTotal,
         status: 'pending',
         source: 'public',
-        notes: finalNotes
+        notes: finalNotes,
+        affiliate_id: affiliateId
       })
       .select()
       .single();
