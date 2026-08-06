@@ -756,7 +756,7 @@ function renderOpCard(op) {
         <div class="op-loc">${ICONS.pin}${esc(op.address||'Ilha do Sal')}</div>
         ${ratingHtml}
         ${priceHtml}
-        <a href="${APP}/book/${esc(op.slug)}" class="btn btn-primary" style="width:100%;justify-content:center;margin-top:auto">
+        <a href="${APP}/book/${esc(op.slug)}" class="btn btn-primary" style="width:100%;justify-content:center;margin-top:auto" onclick="openBookingModal('${esc(op.slug)}','${esc(op.name)}');return false">
           <span class="pt">Reservar</span><span class="en">Book now</span>
         </a>
       </div>

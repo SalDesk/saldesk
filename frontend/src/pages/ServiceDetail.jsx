@@ -800,7 +800,12 @@ export default function ServiceDetail() {
 
   /* ── RENDER ── */
   return (
-    <div className="min-h-screen bg-white">
+    /* Sem min-h-screen em modo widget: "100vh" reflecte a altura do
+       proprio iframe, que e definida pelo pai a partir do resize
+       reportado por useWidgetResize() -- usar min-height:100vh aqui
+       criava um loop de realimentacao (a altura reportada crescia
+       porque o iframe tinha acabado de crescer). */
+    <div className={isWidget ? 'bg-white' : 'min-h-screen bg-white'}>
 
       {/* ── Navbar ── */}
       {!isWidget && (
