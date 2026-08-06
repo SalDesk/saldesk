@@ -561,7 +561,7 @@ function truncate(s, n) {
 
 function tLabel(t) { return (TLABELS[t] || { pt:t, en:t })[L()]; }
 
-function imgFor(op) { return op.logo_url || IMGS[op.operator_type] || IMGS.default; }
+function imgFor(op) { return (op.cover_images && op.cover_images[0]) || op.logo_url || IMGS[op.operator_type] || IMGS.default; }
 
 function renderStars(r) {
   if (!r) return '';

@@ -729,7 +729,7 @@ function buildFooter() {
 
 /* ── Operator card ───────────────────────────────────────── */
 const PLACEHOLDERS = { hotel:'1571003123894-1f0594d2b5d9', activity:'506929562872-bb421503ef21', rentacar:'494976388531-d1058494cdd8', restaurant:'414235077428-338989a2e8c0', default:'1507525428034-b723cf961d3e' };
-function imgOp(op) { return op.logo_url || `${UNS}${PLACEHOLDERS[op.operator_type]||PLACEHOLDERS.default}?w=600&q=75`; }
+function imgOp(op) { return (op.cover_images && op.cover_images[0]) || op.logo_url || `${UNS}${PLACEHOLDERS[op.operator_type]||PLACEHOLDERS.default}?w=600&q=75`; }
 function tLabel(t) { const M={hotel:{pt:'Hotel',en:'Hotel'},activity:{pt:'Actividade',en:'Activity'},rentacar:{pt:'Rent-a-Car',en:'Rent-a-Car'},restaurant:{pt:'Restaurante',en:'Restaurant'}}; return (M[t]||{pt:t,en:t})[L()]; }
 
 function renderOpCard(op) {
