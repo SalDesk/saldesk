@@ -19,7 +19,7 @@ import {
 } from '../services/financeiroService';
 import {
   listExpenses, addExpenseLocal, updateExpenseLocal, deleteExpenseLocal,
-  getSalaryConfig, setSalaryConfig as persistSalaryConfig, getSalaryPayments, addSalaryPayment, isMonthPaid,
+  getSalaryConfig, setSalaryConfig as persistSalaryConfig, getSalaryPayments, addSalaryPayment,
   getObligations, setObligations,
 } from '../services/expensesService';
 import {
@@ -464,20 +464,20 @@ function DespesasTab({ currency, staff }) {
     listExpenses().then(d => setExpenses(d || [])).finally(() => setLoading(false));
   }, []);
 
-  function handleSave(exp) {
+  async function handleSave(exp) {
     if (exp.id && expenses.find(e => e.id === exp.id)) {
-      updateExpenseLocal(exp.id, exp);
-      setExpenses(prev => prev.map(e => e.id === exp.id ? exp : e));
+      const updated = await updateExpenseLocal(exp.id, exp);
+      setExpenses(prev => prev.map(e => e.id === exp.id ? updated : e));
     } else {
-      const added = addExpenseLocal(exp);
+      const added = await addExpenseLocal(exp);
       setExpenses(prev => [...prev, added]);
     }
     setModal(null);
   }
 
-  function handleDelete(id) {
+  async function handleDelete(id) {
     if (!window.confirm('Eliminar esta despesa?')) return;
-    deleteExpenseLocal(id);
+    await deleteExpenseLocal(id);
     setExpenses(prev => prev.filter(e => e.id !== id));
   }
 
@@ -630,14 +630,17 @@ function SalariosTab({ currency }) {
 
   useEffect(() => {
     setLoading(true);
-    listStaff()
-      .then(d => setStaffList((d || []).filter(s => s.status === 'active')))
-      .catch(() => {})
-      .finally(() => {
-        setSalaryConfig(getSalaryConfig());
-        setPayments(getSalaryPayments());
-        setLoading(false);
-      });
+    Promise.all([
+      listStaff().then(d => (d || []).filter(s => s.status === 'active')).catch(() => []),
+      getSalaryConfig(),
+      getSalaryPayments(),
+    ])
+      .then(([staffData, cfg, pay]) => {
+        setStaffList(staffData);
+        setSalaryConfig(cfg);
+        setPayments(pay);
+      })
+      .finally(() => setLoading(false));
   }, []);
 
   function getConfig(staffId) {
@@ -649,15 +652,14 @@ function SalariosTab({ currency }) {
     return base + Number(cfg.food || 0) + Number(cfg.transport || 0) + base * (Number(cfg.inps_pct || 0) / 100);
   }
 
-  function handleSaveConfig(staffId, cfg) {
-    const next = { ...salaryConfig, [staffId]: cfg };
-    setSalaryConfig(next);
-    persistSalaryConfig(staffId, cfg);
+  async function handleSaveConfig(staffId, cfg) {
+    await persistSalaryConfig(staffId, cfg);
+    setSalaryConfig(prev => ({ ...prev, [staffId]: cfg }));
     setEditModal(null);
   }
 
-  function handlePayment(staffId, amount) {
-    const payment = addSalaryPayment({ staffId, staffName: staffList.find(s => s.id === staffId)?.name, month: curMonth, year: curYear, amount });
+  async function handlePayment(staffId, amount) {
+    const payment = await addSalaryPayment({ staffId, month: curMonth, year: curYear, amount });
     setPayments(prev => [...prev, payment]);
     setPayModal(null);
   }
@@ -861,13 +863,18 @@ function ComissoesTab({ currency }) {
 /* ─────────────────── OBRIGACOES ─────────────────── */
 
 function ObrigacoesTab({ currency }) {
-  const [obl, setObl] = useState(() => getObligations());
+  const [obl, setObl] = useState({});
+  const [loading, setLoading] = useState(true);
   const now  = new Date();
   const day  = now.getDate();
   const inpsDue = new Date(now.getFullYear(), now.getMonth(), 15);
   const daysToInps = Math.ceil((inpsDue - now) / (1000 * 60 * 60 * 24));
 
-  function saveObl(next) { setObl(next); setObligations(next); }
+  useEffect(() => { getObligations().then(setObl).finally(() => setLoading(false)); }, []);
+
+  function saveObl(next) { setObl(next); setObligations(next).catch(() => {}); }
+
+  if (loading) return <div className="flex justify-center py-16"><LoadingSpinner size={32} /></div>;
 
   function Insurance({ ins, idx }) {
     const renewal = ins.renewal_date ? new Date(ins.renewal_date + 'T00:00:00Z') : null;
@@ -969,20 +976,25 @@ function ObrigacoesTab({ currency }) {
 
 /* ─────────────────── RESULTADO ─────────────────── */
 
-function getExpensesSync() {
-  try { return JSON.parse(localStorage.getItem('saldesk_expenses_v1') || '[]'); } catch { return []; }
-}
-
 function ResultadoTab({ resumo, currency, sazonal }) {
+  const [allExp,    setAllExp]    = useState([]);
+  const [salConfig, setSalConfig] = useState({});
+  const [loading,   setLoading]   = useState(true);
+
+  useEffect(() => {
+    setLoading(true);
+    Promise.all([listExpenses(), getSalaryConfig()])
+      .then(([exp, cfg]) => { setAllExp(exp); setSalConfig(cfg); })
+      .finally(() => setLoading(false));
+  }, []);
+
   const now     = new Date();
   const month   = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
   const prevMonth = (() => { const d = new Date(now.getFullYear(), now.getMonth() - 1, 1); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`; })();
 
-  const allExp = getExpensesSync();
   const monthExp = allExp.filter(e => (e.date || '').startsWith(month));
   const prevExp  = allExp.filter(e => (e.date || '').startsWith(prevMonth));
 
-  const salConfig  = getSalaryConfig();
   const staffs     = Object.values(salConfig);
   const totalSal   = staffs.reduce((s, c) => s + Number(c.base || 0) + Number(c.food || 0) + Number(c.transport || 0) + Number(c.base || 0) * (Number(c.inps_pct || 15) / 100), 0);
 
@@ -999,6 +1011,8 @@ function ResultadoTab({ resumo, currency, sazonal }) {
     const dep = allExp.filter(e => (e.date || '').startsWith(m)).reduce((s, e) => s + Number(e.amount || 0), 0);
     return { name: MONTHS_PT[d.getMonth()], receita: Math.round(rec?.value || rec?.total || 0), despesas: Math.round(dep + totalSal) };
   });
+
+  if (loading) return <div className="flex justify-center py-16"><LoadingSpinner size={32} /></div>;
 
   return (
     <div className="space-y-5">

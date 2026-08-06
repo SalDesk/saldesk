@@ -34,6 +34,7 @@ const groupsRoutes       = require('./src/routes/groups');
 const packagesRoutes     = require('./src/routes/packages');
 const partnersRoutes     = require('./src/routes/partners');
 const occurrencesRoutes  = require('./src/routes/occurrences');
+const expensesRoutes     = require('./src/routes/expenses');
 const errorHandler       = require('./src/middleware/errorHandler');
 const uploadRoutes       = require('./src/routes/upload');
 const { iniciarCron }    = require('./src/services/cronService');
@@ -103,6 +104,7 @@ app.use('/api/v1/groups',       groupsRoutes);
 app.use('/api/v1/packages',     packagesRoutes);
 app.use('/api/v1/partners',     partnersRoutes);
 app.use('/api/v1/occurrences',  occurrencesRoutes);
+app.use('/api/v1/expenses',     expensesRoutes);
 app.use('/',                    seoRoutes);
 
 app.use(errorHandler);

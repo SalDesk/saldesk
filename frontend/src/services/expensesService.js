@@ -1,15 +1,5 @@
 import api from './api';
 
-/* ── localStorage keys ── */
-const EXP_KEY  = 'saldesk_expenses_v1';
-const SAL_CONF = 'saldesk_salary_config_v1';
-const SAL_PAY  = 'saldesk_salary_payments_v1';
-const OBL_KEY  = 'saldesk_obligations_v1';
-
-function loadList(k)  { try { return JSON.parse(localStorage.getItem(k) || '[]'); }  catch { return []; }  }
-function loadObj(k)   { try { return JSON.parse(localStorage.getItem(k) || '{}'); }  catch { return {}; }  }
-function saveKey(k,v) { localStorage.setItem(k, JSON.stringify(v)); }
-
 /* ── Expenses ── */
 
 export async function listExpenses() {
@@ -17,60 +7,68 @@ export async function listExpenses() {
     const { data } = await api.get('/expenses');
     return data.data || [];
   } catch {
-    return loadList(EXP_KEY);
+    return [];
   }
 }
 
-export function addExpenseLocal(expense) {
-  const list = loadList(EXP_KEY);
-  const item = {
-    ...expense,
-    id:         Date.now().toString(),
-    created_at: new Date().toISOString(),
-  };
-  saveKey(EXP_KEY, [...list, item]);
-  return item;
+export async function addExpenseLocal(expense) {
+  const { data } = await api.post('/expenses', expense);
+  return data.data;
 }
 
-export function updateExpenseLocal(id, data) {
-  const list = loadList(EXP_KEY).map(e => e.id === id ? { ...e, ...data } : e);
-  saveKey(EXP_KEY, list);
+export async function updateExpenseLocal(id, patch) {
+  const { data } = await api.put(`/expenses/${id}`, patch);
+  return data.data;
 }
 
-export function deleteExpenseLocal(id) {
-  saveKey(EXP_KEY, loadList(EXP_KEY).filter(e => e.id !== id));
+export async function deleteExpenseLocal(id) {
+  await api.delete(`/expenses/${id}`);
 }
 
 /* ── Salary configs ── */
 
-export function getSalaryConfig() { return loadObj(SAL_CONF); }
+export async function getSalaryConfig() {
+  try {
+    const { data } = await api.get('/expenses/salary-configs');
+    return data.data || {};
+  } catch {
+    return {};
+  }
+}
 
-export function setSalaryConfig(staffId, config) {
-  const all = loadObj(SAL_CONF);
-  saveKey(SAL_CONF, { ...all, [staffId]: config });
+export async function setSalaryConfig(staffId, config) {
+  const { data } = await api.put(`/expenses/salary-configs/${staffId}`, config);
+  return data.data;
 }
 
 /* ── Salary payments ── */
 
-export function getSalaryPayments() { return loadList(SAL_PAY); }
-
-export function addSalaryPayment(payment) {
-  const list = loadList(SAL_PAY);
-  const item = { ...payment, id: Date.now().toString(), paid_at: new Date().toISOString() };
-  saveKey(SAL_PAY, [...list, item]);
-  return item;
+export async function getSalaryPayments() {
+  try {
+    const { data } = await api.get('/expenses/salary-payments');
+    return data.data || [];
+  } catch {
+    return [];
+  }
 }
 
-export function isMonthPaid(staffId, month, year) {
-  return loadList(SAL_PAY).some(p => p.staffId === staffId && p.month === month && p.year === year);
+export async function addSalaryPayment(payment) {
+  const { data } = await api.post('/expenses/salary-payments', payment);
+  return data.data;
 }
 
 /* ── Obligations ── */
 
-export function getObligations() {
-  return loadObj(OBL_KEY);
+export async function getObligations() {
+  try {
+    const { data } = await api.get('/expenses/obligations');
+    return data.data || {};
+  } catch {
+    return {};
+  }
 }
 
-export function setObligations(data) {
-  saveKey(OBL_KEY, data);
+export async function setObligations(next) {
+  const { data } = await api.put('/expenses/obligations', next);
+  return data.data;
 }

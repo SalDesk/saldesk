@@ -449,6 +449,18 @@ export default function MenuDigital() {
     });
   }
 
+  async function downloadQrCode() {
+    try {
+      const { data } = await api.get('/marketing/qrcode', { responseType: 'blob' });
+      const url = URL.createObjectURL(data);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'qrcode-menu.png';
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch {}
+  }
+
   const menuUrl = slug ? `https://saldesk.cv/book/${slug}` : null;
 
   return (
@@ -578,14 +590,13 @@ export default function MenuDigital() {
                 </button>
               </div>
             </div>
-            <a
-              href={`https://api.saldesk.cv/api/v1/marketing/qrcode`}
-              download="qrcode-menu.png"
+            <button
+              onClick={downloadQrCode}
               className="flex items-center gap-2 px-4 py-2 rounded-md bg-ocean-700 text-white text-sm font-body hover:bg-ocean-500 transition-colors whitespace-nowrap shrink-0"
             >
               <QrCode size={14} strokeWidth={1.75} />
               Descarregar QR Code
-            </a>
+            </button>
           </div>
         ) : (
           <p className="text-sm font-body text-n-400">Configure o link do restaurante nas Definicoes para gerar o QR Code.</p>

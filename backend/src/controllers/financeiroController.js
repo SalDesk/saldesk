@@ -1,6 +1,7 @@
 const { supabaseAdmin } = require('../config/supabase');
 const { percentChange, calcularPeriodoAnterior, calcularMetricas } = require('../helpers/financeiroHelpers');
 const ExcelJS = require('exceljs');
+const PDFDocument = require('pdfkit');
 
 async function fetchReservas(operatorId, inicio, fim) {
   const { data } = await supabaseAdmin
@@ -319,4 +320,164 @@ async function exportExcel(req, res, next) {
   }
 }
 
-module.exports = { resumo, receita, unidades, topClientes, canais, exportExcel };
+async function exportPdf(req, res, next) {
+  try {
+    const { inicio, fim } = req.query;
+    if (!inicio || !fim) {
+      return res.status(400).json({ error: 'inicio e fim sao obrigatorios', code: 'MISSING_FIELDS' });
+    }
+
+    const [reservasRes, unidadesRes] = await Promise.all([
+      supabaseAdmin
+        .from('reservations')
+        .select('*, units(name, unit_type)')
+        .eq('operator_id', req.operator.id)
+        .gte('check_in', inicio)
+        .lte('check_out', fim)
+        .order('check_in'),
+      supabaseAdmin
+        .from('units')
+        .select('id, name, unit_type')
+        .eq('operator_id', req.operator.id)
+        .eq('status', 'active'),
+    ]);
+
+    const reservas = reservasRes.data || [];
+    const unidadesData = unidadesRes.data || [];
+    const naoCanceladas = reservas.filter((r) => r.status !== 'cancelled');
+    const checkout = reservas.filter((r) => r.status === 'checked_out');
+    const receitaTotal = Math.round(checkout.reduce((s, r) => s + Number(r.total_price), 0) * 100) / 100;
+    const directas = naoCanceladas.filter((r) => ['direct', 'public', 'admin'].includes(r.source)).length;
+
+    const totalDias = Math.ceil((new Date(fim + 'T00:00:00Z') - new Date(inicio + 'T00:00:00Z')) / (1000 * 60 * 60 * 24)) + 1;
+    const porUnidade = unidadesData.map((unit) => {
+      const reservasUnit = reservas.filter((r) => r.unit_id === unit.id);
+      const receitaUnit = reservasUnit.filter((r) => r.status === 'checked_out').reduce((s, r) => s + Number(r.total_price), 0);
+      return { name: unit.name, unit_type: unit.unit_type, num_reservas: reservasUnit.filter((r) => r.status !== 'cancelled').length, receita: Math.round(receitaUnit * 100) / 100 };
+    }).sort((a, b) => b.receita - a.receita);
+
+    const OCEAN = '#0D5470';
+    const N900   = '#1A2332';
+    const N500   = '#6B7280';
+    const N200   = '#E5E8EC';
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="saldesk-${inicio}-${fim}.pdf"`);
+
+    const doc = new PDFDocument({ margin: 40, size: 'A4' });
+    doc.pipe(res);
+
+    doc.font('Helvetica-Bold').fontSize(18).fillColor(OCEAN).text('SalDesk', 40, 40);
+    doc.font('Helvetica-Bold').fontSize(12).fillColor(N900).text(req.operator.name || '', 40, 62);
+    doc.font('Helvetica').fontSize(9).fillColor(N500).text(`Relatorio financeiro  ·  ${inicio} a ${fim}`, 40, 80);
+    doc.moveTo(40, 100).lineTo(555, 100).strokeColor(N200).stroke();
+
+    let y = 118;
+    const summary = [
+      ['Receita total (checked-out)', `EUR ${receitaTotal.toLocaleString('pt-PT')}`],
+      ['Total de reservas', String(naoCanceladas.length)],
+      ['Reservas directas', String(directas)],
+    ];
+    summary.forEach(([label, value]) => {
+      doc.font('Helvetica').fontSize(10).fillColor(N500).text(label, 40, y);
+      doc.font('Helvetica-Bold').fontSize(10).fillColor(N900).text(value, 300, y);
+      y += 18;
+    });
+
+    y += 16;
+    doc.font('Helvetica-Bold').fontSize(11).fillColor(OCEAN).text('Desempenho por unidade', 40, y);
+    y += 20;
+    const cols = [{ x: 40, w: 220, h: 'Unidade' }, { x: 260, w: 100, h: 'Tipo' }, { x: 370, w: 80, h: 'Reservas' }, { x: 460, w: 95, h: 'Receita' }];
+    cols.forEach((c) => doc.font('Helvetica-Bold').fontSize(8).fillColor(N500).text(c.h.toUpperCase(), c.x, y, { width: c.w }));
+    y += 14;
+    doc.moveTo(40, y).lineTo(555, y).strokeColor(N200).stroke();
+    y += 6;
+    for (const u of porUnidade) {
+      if (y > 760) { doc.addPage(); y = 40; }
+      doc.font('Helvetica').fontSize(9).fillColor(N900).text(u.name, cols[0].x, y, { width: cols[0].w });
+      doc.text(u.unit_type || '—', cols[1].x, y, { width: cols[1].w });
+      doc.text(String(u.num_reservas), cols[2].x, y, { width: cols[2].w });
+      doc.text(`EUR ${u.receita.toLocaleString('pt-PT')}`, cols[3].x, y, { width: cols[3].w });
+      y += 16;
+    }
+
+    y += 10;
+    if (y > 700) { doc.addPage(); y = 40; }
+    doc.font('Helvetica-Bold').fontSize(11).fillColor(OCEAN).text('Reservas do periodo', 40, y);
+    y += 20;
+    const rcols = [{ x: 40, w: 60, h: 'Check-in' }, { x: 105, w: 60, h: 'Check-out' }, { x: 170, w: 140, h: 'Cliente' }, { x: 320, w: 120, h: 'Unidade' }, { x: 460, w: 95, h: 'Total' }];
+    rcols.forEach((c) => doc.font('Helvetica-Bold').fontSize(8).fillColor(N500).text(c.h.toUpperCase(), c.x, y, { width: c.w }));
+    y += 14;
+    doc.moveTo(40, y).lineTo(555, y).strokeColor(N200).stroke();
+    y += 6;
+    for (const r of naoCanceladas) {
+      if (y > 770) { doc.addPage(); y = 40; }
+      doc.font('Helvetica').fontSize(8).fillColor(N900).text(r.check_in || '—', rcols[0].x, y, { width: rcols[0].w });
+      doc.text(r.check_out || '—', rcols[1].x, y, { width: rcols[1].w });
+      doc.text(r.customer_name || '—', rcols[2].x, y, { width: rcols[2].w });
+      doc.text(r.units?.name || '—', rcols[3].x, y, { width: rcols[3].w });
+      doc.text(`EUR ${Number(r.total_price).toLocaleString('pt-PT')}`, rcols[4].x, y, { width: rcols[4].w });
+      y += 14;
+    }
+
+    doc.end();
+  } catch (err) { next(err); }
+}
+
+async function forecast(req, res, next) {
+  try {
+    const operatorId = req.operator.id;
+    const hoje = new Date();
+    const hojeStr = hoje.toISOString().split('T')[0];
+
+    const horizonte = new Date(hoje); horizonte.setUTCDate(horizonte.getUTCDate() + 8 * 7);
+    const horizonteStr = horizonte.toISOString().split('T')[0];
+
+    const anoPassadoInicio = new Date(hoje); anoPassadoInicio.setUTCFullYear(anoPassadoInicio.getUTCFullYear() - 1);
+    const anoPassadoFim = new Date(horizonte); anoPassadoFim.setUTCFullYear(anoPassadoFim.getUTCFullYear() - 1);
+
+    const seisMesesAtras = new Date(hoje); seisMesesAtras.setUTCMonth(seisMesesAtras.getUTCMonth() - 6);
+
+    const [futurasRes, anoPassadoRes, historicoRes] = await Promise.all([
+      supabaseAdmin.from('reservations').select('check_in, total_price')
+        .eq('operator_id', operatorId).in('status', ['confirmed', 'checked_in', 'checked_out'])
+        .gte('check_in', hojeStr).lte('check_in', horizonteStr),
+      supabaseAdmin.from('reservations').select('total_price')
+        .eq('operator_id', operatorId).eq('status', 'checked_out')
+        .gte('check_in', anoPassadoInicio.toISOString().split('T')[0]).lte('check_in', anoPassadoFim.toISOString().split('T')[0]),
+      supabaseAdmin.from('reservations').select('check_out, total_price')
+        .eq('operator_id', operatorId).eq('status', 'checked_out')
+        .gte('check_out', seisMesesAtras.toISOString().split('T')[0]),
+    ]);
+
+    const futuras = futurasRes.data || [];
+    const confirmed_future_revenue = Math.round(futuras.reduce((s, r) => s + Number(r.total_price), 0) * 100) / 100;
+    const same_period_last_year = Math.round((anoPassadoRes.data || []).reduce((s, r) => s + Number(r.total_price), 0) * 100) / 100;
+
+    const porMes = {};
+    for (const r of historicoRes.data || []) {
+      const m = r.check_out.slice(0, 7);
+      porMes[m] = (porMes[m] || 0) + Number(r.total_price);
+    }
+    const valoresMes = Object.values(porMes);
+    const historical_avg = valoresMes.length ? Math.round((valoresMes.reduce((a, b) => a + b, 0) / valoresMes.length) * 100) / 100 : 0;
+
+    const weeks = [];
+    for (let i = 0; i < 8; i++) {
+      const inicioSemana = new Date(hoje); inicioSemana.setUTCDate(hoje.getUTCDate() + i * 7);
+      const fimSemana = new Date(inicioSemana); fimSemana.setUTCDate(inicioSemana.getUTCDate() + 6);
+      const inicioStr = inicioSemana.toISOString().split('T')[0];
+      const fimStr = fimSemana.toISOString().split('T')[0];
+      const daSemana = futuras.filter((r) => r.check_in >= inicioStr && r.check_in <= fimStr);
+      weeks.push({
+        week_label: `${inicioStr.slice(5)} a ${fimStr.slice(5)}`,
+        num_reservas: daSemana.length,
+        receita: Math.round(daSemana.reduce((s, r) => s + Number(r.total_price), 0) * 100) / 100,
+      });
+    }
+
+    return res.json({ data: { confirmed_future_revenue, same_period_last_year, historical_avg, weeks }, message: 'Previsao de receita' });
+  } catch (err) { next(err); }
+}
+
+module.exports = { resumo, receita, unidades, topClientes, canais, exportExcel, exportPdf, forecast };
