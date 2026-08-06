@@ -55,7 +55,7 @@ async function listar(req, res, next) {
 async function stats(req, res, next) {
   try {
     const { data, error } = await supabaseAdmin
-      .from('reviews').select('rating').eq('operator_id', req.operator.id);
+      .from('reviews').select('rating').eq('operator_id', req.operator.id).not('rating', 'is', null);
     if (error) throw error;
     const ratings = data || [];
     const total   = ratings.length;
@@ -80,9 +80,11 @@ async function requestReview(req, res, next) {
     const token = crypto.randomBytes(20).toString('hex');
     const expires = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
 
+    /* rating fica null e is_public false ate o cliente submeter de facto
+       via submitReview() -- um pedido enviado nao e uma avaliacao real. */
     const { error: upsertErr } = await supabaseAdmin.from('reviews').upsert({
       operator_id: req.operator.id, reservation_id, customer_id: reserva.customer_id || null,
-      review_token: token, token_expires_at: expires, rating: 5,
+      review_token: token, token_expires_at: expires, rating: null, is_public: false,
     }, { onConflict: 'reservation_id' });
     if (upsertErr) throw upsertErr;
 
@@ -125,7 +127,7 @@ async function submitReview(req, res, next) {
 
     const { data, error } = await supabaseAdmin
       .from('reviews')
-      .update({ rating: parseInt(rating), comment: comment || null, staff_id: staff_id || null, review_token: null, token_expires_at: null })
+      .update({ rating: parseInt(rating), comment: comment || null, staff_id: staff_id || null, review_token: null, token_expires_at: null, is_public: true })
       .eq('id', review.id).select().single();
     if (error) throw error;
 

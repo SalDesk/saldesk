@@ -305,7 +305,8 @@ async function discover(req, res, next) {
       .from('reviews')
       .select('operator_id, rating')
       .in('operator_id', ids)
-      .eq('is_public', true);
+      .eq('is_public', true)
+      .not('rating', 'is', null);
 
     const ratingMap = {};
     (ratings || []).forEach((r) => {
@@ -421,6 +422,7 @@ async function publicReviews(req, res, next) {
       .from('reviews')
       .select('id, rating, comment, created_at, operator_id, customer_id')
       .eq('is_public', true)
+      .not('rating', 'is', null)
       .not('comment', 'is', null)
       .neq('comment', '')
       .order('created_at', { ascending: false })
