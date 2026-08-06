@@ -61,28 +61,23 @@
     .hero-content{position:relative;z-index:2;text-align:center;color:#fff;max-width:740px;margin:0 auto;width:100%}
     .hero h1{font-size:clamp(2.25rem,4.5vw,3.5rem);font-weight:800;letter-spacing:-.02em;margin-bottom:12px}
     .hero h1 span{color:var(--sa4)}
-    .hero-sub{font-size:1.125rem;opacity:.85;margin-bottom:40px;line-height:1.6}
-    .hero-search{background:#fff;border-radius:var(--r16);padding:8px;display:flex;gap:6px;box-shadow:0 8px 40px rgba(6,42,56,.3);max-width:700px;margin:0 auto}
-    .hs-wrap{flex:1;display:flex;align-items:center;gap:10px;padding:6px 8px}
-    .hs-input{flex:1;border:none;outline:none;font-family:var(--fb);font-size:.9375rem;color:var(--n9)}
-    .hs-input::placeholder{color:var(--n4)}
-    .hs-divider{width:1px;background:var(--n2);align-self:stretch;margin:4px 0;flex-shrink:0}
-    .hs-select{border:none;outline:none;font-family:var(--fb);font-size:.875rem;color:var(--n7);padding:6px 12px;cursor:pointer;background:transparent;min-width:140px}
-    .hs-btn{background:var(--oc7);color:#fff;border:none;border-radius:var(--r12);padding:12px 24px;font-family:var(--fb);font-size:.9375rem;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:8px;transition:background .2s;flex-shrink:0}
-    .hs-btn:hover{background:var(--oc5)}
+    .hero-sub{font-size:1.125rem;opacity:.85;margin-bottom:28px;line-height:1.6}
+    .hero-ctas{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-bottom:32px}
+    .hero-ctas .btn{padding:13px 26px;font-size:.9375rem}
+    .hero-trust{display:flex;gap:24px;justify-content:center;flex-wrap:wrap}
+    .ht-item{display:flex;align-items:center;gap:7px;font-size:.8125rem;color:rgba(255,255,255,.82);font-weight:500}
+    .ht-item svg{flex-shrink:0;color:var(--sa4)}
 
-    /* ── LOCATIONS SCROLL ── */
-    .locs-scroll{display:flex;gap:14px;overflow-x:auto;padding:4px 0 12px;scrollbar-width:thin;scrollbar-color:var(--n2) transparent;-webkit-overflow-scrolling:touch}
-    .locs-scroll::-webkit-scrollbar{height:4px}
-    .locs-scroll::-webkit-scrollbar-thumb{background:var(--n2);border-radius:2px}
-    .loc-card{flex-shrink:0;width:145px;border-radius:var(--r12);overflow:hidden;cursor:pointer;position:relative;transition:transform .2s,box-shadow .2s}
-    .loc-card:hover{transform:translateY(-3px);box-shadow:var(--sh2)}
+    /* ── LOCATIONS GRID ── */
+    .locs-scroll{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:16px}
+    .loc-card{border-radius:var(--r16);overflow:hidden;cursor:pointer;position:relative;transition:transform .25s,box-shadow .25s}
+    .loc-card:hover{transform:translateY(-4px);box-shadow:var(--sh3)}
     .loc-card.active{outline:3px solid var(--oc7);outline-offset:2px}
-    .loc-card img{width:100%;height:108px;object-fit:cover;display:block}
-    .loc-overlay{position:absolute;inset:0;background:linear-gradient(to top,rgba(6,42,56,.72) 0%,transparent 55%)}
-    .loc-body{position:absolute;bottom:0;left:0;right:0;padding:8px 10px;color:#fff}
-    .loc-name{font-family:var(--fd);font-size:.8125rem;font-weight:700;line-height:1.2}
-    .loc-count{font-size:.7rem;opacity:.72;margin-top:2px}
+    .loc-card img{width:100%;height:180px;object-fit:cover;display:block}
+    .loc-overlay{position:absolute;inset:0;background:linear-gradient(to top,rgba(6,42,56,.78) 0%,transparent 60%)}
+    .loc-body{position:absolute;bottom:0;left:0;right:0;padding:14px 16px;color:#fff}
+    .loc-name{font-family:var(--fd);font-size:1.0625rem;font-weight:700;line-height:1.2}
+    .loc-count{font-size:.75rem;opacity:.75;margin-top:3px}
 
     /* ── FEATURED ── */
     .featured-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
@@ -99,6 +94,8 @@
     .tb-activity{background:#FEF9EE;color:#B45309}
     .tb-rentacar{background:var(--okl);color:var(--ok)}
     .tb-restaurant{background:var(--errl);color:var(--err)}
+    .direct-pill{display:inline-flex;align-items:center;gap:4px;font-size:.6875rem;font-weight:600;color:var(--ok);margin:2px 0 8px}
+    .direct-pill svg{flex-shrink:0}
 
     /* ── WISH BUTTON ── */
     .wish-btn{position:absolute;top:12px;right:12px;width:36px;height:36px;background:rgba(255,255,255,.9);border:none;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px);transition:all .2s;z-index:2}
@@ -160,6 +157,8 @@
     .btn-sm{padding:7px 14px;font-size:.8125rem}
     .btn-sand{background:var(--sa5);color:#fff}
     .btn-sand:hover{background:var(--sa6)}
+    .btn-outline-w{background:transparent;color:#fff;border:2px solid rgba(255,255,255,.4)}
+    .btn-outline-w:hover{border-color:#fff;background:rgba(255,255,255,.1)}
 
     /* Load more */
     #load-more-wrap{text-align:center;margin-top:36px}
@@ -241,9 +240,6 @@
       .act-grid{grid-template-columns:1fr}
       .attr-grid{grid-template-columns:repeat(2,1fr)}
       .footer-grid{grid-template-columns:1fr 1fr}
-      .hs-divider{display:none}
-      .hs-select{border-top:1px solid var(--n2);width:100%}
-      .hero-search{flex-wrap:wrap}
     }
     @media(max-width:500px){
       .section{padding:44px 0}
@@ -314,37 +310,41 @@
       <h1 class="en">Discover <span>Ilha do Sal</span></h1>
       <p class="hero-sub pt">Reserve directamente. Sem intermediarios.</p>
       <p class="hero-sub en">Book directly. No intermediaries.</p>
-      <div class="hero-search">
-        <div class="hs-wrap">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--n4)" stroke-width="1.75"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-          <input class="hs-input" id="hero-search" type="text" autocomplete="off" />
+
+      <div class="hero-ctas">
+        <a href="#locations-section" class="btn btn-sand">
+          <span class="pt">Explorar por Lugar</span><span class="en">Explore by Place</span>
+        </a>
+        <a href="#attractions-section" class="btn btn-outline-w">
+          <span class="pt">Ver Categorias</span><span class="en">Browse Categories</span>
+        </a>
+      </div>
+
+      <div class="hero-trust">
+        <div class="ht-item">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2 4 5v6c0 5.5 3.8 10.7 8 12 4.2-1.3 8-6.5 8-12V5z"/></svg>
+          <span class="pt">0% comissao OTA</span><span class="en">0% OTA commission</span>
         </div>
-        <span class="hs-divider"></span>
-        <select class="hs-select" id="hero-type">
-          <option value="" class="pt">Todos os tipos</option>
-          <option value="" class="en" style="display:none">All types</option>
-          <option value="hotel">Hotel</option>
-          <option value="activity" class="pt">Actividade</option>
-          <option value="activity" class="en" style="display:none">Activity</option>
-          <option value="rentacar">Rent-a-Car</option>
-          <option value="restaurant" class="pt">Restaurante</option>
-          <option value="restaurant" class="en" style="display:none">Restaurant</option>
-        </select>
-        <button class="hs-btn" onclick="handleHeroSearch()">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-          <span class="pt">Pesquisar</span><span class="en">Search</span>
-        </button>
+        <div class="ht-item">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          <span class="pt">Reserva directa com o operador</span><span class="en">Direct booking with the operator</span>
+        </div>
+        <div class="ht-item">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+          <span class="pt">Pagamento seguro — Vinti4 · PayPal</span><span class="en">Secure payment — Vinti4 · PayPal</span>
+        </div>
       </div>
     </div>
   </div>
 </section>
 
 <!-- PONTOS TURÍSTICOS -->
-<section class="section" id="locations-section" style="padding-bottom:40px">
+<section class="section" id="locations-section">
   <div class="container">
-    <div class="fade-up" style="margin-bottom:20px">
-      <h2 class="st pt">Ache actividades incriveis em qualquer lugar</h2>
-      <h2 class="st en">Find incredible activities anywhere</h2>
+    <div class="fade-up" style="margin-bottom:28px">
+      <div class="sl"><span class="pt">Explorar</span><span class="en">Explore</span></div>
+      <h2 class="st"><span class="pt">Ache actividades incriveis em qualquer lugar</span><span class="en">Find incredible activities anywhere</span></h2>
+      <p class="ss"><span class="pt">Cada lugar tem o seu proprio guia, com operadores verificados na zona.</span><span class="en">Each place has its own guide, with verified operators in the area.</span></p>
     </div>
     <div class="locs-scroll" id="locs-grid"></div>
   </div>
@@ -356,6 +356,7 @@
     <div style="margin-bottom:28px">
       <div class="sl"><span class="pt">Destaques</span><span class="en">Highlights</span></div>
       <h2 class="st"><span class="pt">Em Destaque</span><span class="en">Featured</span></h2>
+      <p class="ss"><span class="pt">Operadores verificados. Reserva directa, sem comissoes de terceiros.</span><span class="en">Verified operators. Direct booking, no third-party commissions.</span></p>
     </div>
     <div class="featured-grid" id="featured-grid"></div>
   </div>
@@ -401,6 +402,17 @@
   </div>
 </section>
 
+<!-- AVALIAÇÕES -->
+<section class="section reviews-bg fade-up" id="reviews-section" style="display:none">
+  <div class="container">
+    <div style="margin-bottom:0;padding-bottom:24px;border-bottom:1px solid rgba(255,255,255,.1)">
+      <div class="sl" style="color:var(--sa4)"><span class="pt">Visitantes</span><span class="en">Visitors</span></div>
+      <h2 class="st" style="color:#fff"><span class="pt">O que dizem os visitantes</span><span class="en">What visitors say</span></h2>
+    </div>
+    <div class="reviews-grid" id="reviews-grid"></div>
+  </div>
+</section>
+
 <!-- ACTIVIDADES GRID -->
 <section class="section" id="activities-section" style="background:var(--n0)">
   <div class="container">
@@ -408,6 +420,7 @@
       <div>
         <div class="sl"><span class="pt">Directorio completo</span><span class="en">Full directory</span></div>
         <h2 class="st"><span class="pt">Todos os Operadores</span><span class="en">All Operators</span></h2>
+        <p class="ss"><span class="pt">Prefere explorar por lugar ou categoria? Veja acima.</span><span class="en">Prefer browsing by place or category? See above.</span></p>
       </div>
       <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
         <span id="act-count" style="font-size:.875rem;color:var(--n5)"></span>
@@ -427,17 +440,6 @@
         <span class="pt">Ver mais actividades</span><span class="en">Load more</span>
       </button>
     </div>
-  </div>
-</section>
-
-<!-- AVALIAÇÕES -->
-<section class="section reviews-bg fade-up" id="reviews-section" style="display:none">
-  <div class="container">
-    <div style="margin-bottom:0;padding-bottom:24px;border-bottom:1px solid rgba(255,255,255,.1)">
-      <div class="sl" style="color:var(--sa4)"><span class="pt">Visitantes</span><span class="en">Visitors</span></div>
-      <h2 class="st" style="color:#fff"><span class="pt">O que dizem os visitantes</span><span class="en">What visitors say</span></h2>
-    </div>
-    <div class="reviews-grid" id="reviews-grid"></div>
   </div>
 </section>
 
@@ -503,7 +505,7 @@
 const API = 'https://api.saldesk.cv/api/v1/public';
 const APP = 'https://app.saldesk.cv';
 const EUR_CVE = 110;
-const PER_PAGE = 8;
+const PER_PAGE = 6;
 
 const IMGS = {
   hotel:      'https://images.unsplash.com/photo-1571003123894-1f0594d2b5d9?w=600&q=75',
@@ -579,8 +581,10 @@ function fmtPrice(price, opCur) {
 function getBadge(op) {
   if ((op.recent_bookings || 0) >= 4)
     return { txt: L() === 'pt' ? 'Esgota Rapido' : 'Selling Fast', cls:'bdg-hot' };
+  /* "Mais Vendido" exige um minimo de avaliacoes reais -- com poucos
+     operadores, qualquer um com so 1 review seria sempre o "maximo". */
   const maxRev = Math.max(...operators.map(o => o.review_count || 0), 0);
-  if (maxRev > 0 && (op.review_count || 0) === maxRev)
+  if (maxRev >= 3 && (op.review_count || 0) === maxRev)
     return { txt: L() === 'pt' ? 'Mais Vendido' : 'Best Seller', cls:'bdg-gold' };
   if (op.created_at) {
     const days = (Date.now() - new Date(op.created_at)) / 86400000;
@@ -711,6 +715,7 @@ function renderFeatCard(op) {
           ${loc}
         </div>
         ${op.avg_rating ? `<div class="feat-rating"><span class="stars">${renderStars(op.avg_rating)}</span><span class="rating-count">${op.avg_rating} (${op.review_count})</span></div>` : ''}
+        <span class="direct-pill"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6 9 17l-5-5"/></svg><span class="pt">Reserva Directa</span><span class="en">Direct Booking</span></span>
         <div class="feat-price">${priceHtml}</div>
         <a href="${APP}/book/${esc(op.slug)}" class="btn btn-primary" style="width:100%;justify-content:center">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
@@ -756,6 +761,7 @@ function renderActCard(op) {
             <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
             ${loc}
           </span>
+          <span class="direct-pill"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6 9 17l-5-5"/></svg><span class="pt">Reserva Directa</span><span class="en">Direct Booking</span></span>
         </div>
         <div class="act-price-row">
           ${hasPrice
@@ -850,8 +856,7 @@ function updateCounts() {
    FILTERS + GRID
 ══════════════════════════════════════════ */
 function applyFilters() {
-  const search = (document.getElementById('hero-search')?.value
-    || document.getElementById('nav-search-input')?.value || '').toLowerCase().trim();
+  const search = (document.getElementById('nav-search-input')?.value || '').toLowerCase().trim();
 
   filtered = operators.filter(op => {
     const matchType = !activeType || op.operator_type === activeType;
@@ -929,7 +934,6 @@ function setFilter(type) {
 function clearFilters() {
   activeType = '';
   activeLoc  = '';
-  document.getElementById('hero-search').value = '';
   document.getElementById('nav-search-input').value = '';
   document.querySelectorAll('.attr-card').forEach(c => c.classList.remove('active'));
   renderLocations();
@@ -955,18 +959,7 @@ function toggleCurrency() { setCurrency(currency === 'EUR' ? 'CVE' : 'EUR'); }
 /* ══════════════════════════════════════════
    SEARCH
 ══════════════════════════════════════════ */
-function handleHeroSearch() {
-  const search = document.getElementById('hero-search').value;
-  const type   = document.getElementById('hero-type').value;
-  document.getElementById('nav-search-input').value = search;
-  activeType = type;
-  applyFilters();
-  document.getElementById('activities-section').scrollIntoView({ behavior:'smooth' });
-}
-
 function handleSearch() {
-  const v = document.getElementById('nav-search-input').value;
-  document.getElementById('hero-search').value = v;
   applyFilters();
   document.getElementById('activities-section').scrollIntoView({ behavior:'smooth' });
 }
@@ -976,7 +969,7 @@ function handleSearch() {
 ══════════════════════════════════════════ */
 async function loadOperators() {
   const grid = document.getElementById('act-grid');
-  grid.innerHTML = skCards(8);
+  grid.innerHTML = skCards(PER_PAGE);
 
   const data = await apiFetch('/discover');
   if (!data) {
@@ -1048,9 +1041,7 @@ function setLang(lang) {
   localStorage.setItem('sd-lang', lang);
 
   // Update search placeholder
-  const pi = document.getElementById('hero-search');
   const pn = document.getElementById('nav-search-input');
-  if (pi) pi.placeholder = lang === 'pt' ? 'Para onde vai? O que quer fazer?' : 'Where are you going? What do you want to do?';
   if (pn) pn.placeholder = lang === 'pt' ? 'Pesquisar...' : 'Search...';
 
   // Re-render dynamic sections
@@ -1066,16 +1057,7 @@ document.getElementById('langToggle').addEventListener('click', () => {
 });
 
 // Keyboard search
-['hero-search', 'nav-search-input'].forEach(id => {
-  const el = document.getElementById(id);
-  if (el) el.addEventListener('keydown', e => { if (e.key === 'Enter') handleSearch(); });
-});
-
-// Hero type select sync
-document.getElementById('hero-type')?.addEventListener('change', e => {
-  activeType = e.target.value;
-  applyFilters();
-});
+document.getElementById('nav-search-input')?.addEventListener('keydown', e => { if (e.key === 'Enter') handleSearch(); });
 
 // ESC closes wishlist
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeWishlist(); });
