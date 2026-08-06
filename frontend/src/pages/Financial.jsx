@@ -874,8 +874,6 @@ function ObrigacoesTab({ currency }) {
 
   function saveObl(next) { setObl(next); setObligations(next).catch(() => {}); }
 
-  if (loading) return <div className="flex justify-center py-16"><LoadingSpinner size={32} /></div>;
-
   function Insurance({ ins, idx }) {
     const renewal = ins.renewal_date ? new Date(ins.renewal_date + 'T00:00:00Z') : null;
     const daysToRenew = renewal ? Math.ceil((renewal - now) / (1000 * 60 * 60 * 24)) : null;
@@ -894,6 +892,8 @@ function ObrigacoesTab({ currency }) {
   }
 
   const [newIns, setNewIns] = useState({ name: '', renewal_date: '', amount_annual: '' });
+
+  if (loading) return <div className="flex justify-center py-16"><LoadingSpinner size={32} /></div>;
 
   return (
     <div className="space-y-5 max-w-2xl">
