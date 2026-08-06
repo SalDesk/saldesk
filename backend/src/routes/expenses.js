@@ -12,11 +12,8 @@ const reqOp = require('../middleware/requireOperator');
 router.use(auth);
 router.use(reqOp);
 
-router.get('/',      listarDespesas);
-router.post('/',     criarDespesa);
-router.put('/:id',   actualizarDespesa);
-router.delete('/:id', eliminarDespesa);
-
+/* Rotas literais primeiro -- "/:id" abaixo apanharia "/obligations" etc.
+   como se fosse um id de despesa (Express faz match por ordem). */
 router.get('/salary-configs',            listarSalaryConfigs);
 router.put('/salary-configs/:staffId',   actualizarSalaryConfig);
 
@@ -25,5 +22,10 @@ router.post('/salary-payments', criarSalaryPayment);
 
 router.get('/obligations', obterObligations);
 router.put('/obligations', actualizarObligations);
+
+router.get('/',      listarDespesas);
+router.post('/',     criarDespesa);
+router.put('/:id',   actualizarDespesa);
+router.delete('/:id', eliminarDespesa);
 
 module.exports = router;
