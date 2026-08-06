@@ -1,5 +1,6 @@
 const { supabaseAdmin } = require('../config/supabase');
 const { detectarIdioma } = require('../helpers/languageHelper');
+const { parse } = require('csv-parse/sync');
 
 function getOperatorId(req) {
   return req.operator?.id || req.staff?.operator_id;
@@ -185,4 +186,65 @@ async function exportCsv(req, res, next) {
   }
 }
 
-module.exports = { listar, obter, actualizar, segmentos, exportCsv };
+async function importarCsv(req, res, next) {
+  try {
+    if (!req.operator) {
+      return res.status(403).json({ error: 'Apenas operadores podem gerir clientes', code: 'OPERATOR_ONLY' });
+    }
+    if (!req.file) {
+      return res.status(400).json({ error: 'Nenhum ficheiro recebido', code: 'MISSING_FILE' });
+    }
+
+    let linhas;
+    try {
+      linhas = parse(req.file.buffer.toString('utf-8'), {
+        columns: true,
+        skip_empty_lines: true,
+        trim: true,
+        bom: true,
+      });
+    } catch {
+      return res.status(400).json({ error: 'Ficheiro CSV invalido', code: 'INVALID_CSV' });
+    }
+
+    if (linhas.length > 5000) {
+      return res.status(400).json({ error: 'Maximo de 5000 linhas por importacao', code: 'TOO_MANY_ROWS' });
+    }
+
+    const operatorId = getOperatorId(req);
+    let imported = 0;
+    let skipped = 0;
+
+    for (const linha of linhas) {
+      const email = (linha.email || '').trim().toLowerCase();
+      const name = [linha.first_name, linha.last_name].filter(Boolean).join(' ').trim();
+      if (!email || !name) { skipped++; continue; }
+
+      const country_code = (linha.country_code || '').trim().toUpperCase() || null;
+      const language = ['pt', 'en'].includes((linha.language || '').trim().toLowerCase())
+        ? linha.language.trim().toLowerCase()
+        : detectarIdioma(country_code) || 'pt';
+
+      const { error } = await supabaseAdmin
+        .from('customers')
+        .upsert({
+          operator_id: operatorId,
+          name,
+          email,
+          phone: (linha.phone || '').trim() || null,
+          country_code,
+          language,
+          updated_at: new Date().toISOString(),
+        }, { onConflict: 'operator_id,email' });
+
+      if (error) { skipped++; continue; }
+      imported++;
+    }
+
+    return res.json({ data: { imported, skipped }, message: 'Importacao concluida' });
+  } catch (err) {
+    next(err);
+  }
+}
+
+module.exports = { listar, obter, actualizar, segmentos, exportCsv, importarCsv };
