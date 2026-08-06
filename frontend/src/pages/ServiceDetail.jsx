@@ -43,6 +43,21 @@ const TODAY = () => new Date().toISOString().split('T')[0];
 function nts(a, b) { return a && b && b > a ? Math.round((new Date(b) - new Date(a)) / 864e5) : 0; }
 function dys(a, b) { return a && b && b > a ? Math.max(1, Math.ceil((new Date(b) - new Date(a)) / 864e5)) : 0; }
 
+/* unit.description guarda metadados JSON (tour/quarto/viatura/mesa) — extrair o texto legível */
+function getUnitDescription(unit, lang) {
+  const raw = unit?.description;
+  if (!raw) return '';
+  if (raw.startsWith('{')) {
+    try {
+      const meta = JSON.parse(raw);
+      return (lang === 'en' ? meta.desc_en : meta.desc_pt) || meta.description || '';
+    } catch {
+      return '';
+    }
+  }
+  return raw;
+}
+
 function fmtPrice(price, priceUnit, opCurrency, viewCurrency, lang) {
   if (!price) return lang === 'en' ? 'On request' : 'Consultar';
   const labels = { night:lang==='en'?'/night':'/noite', day:lang==='en'?'/day':'/dia', hour:lang==='en'?'/hour':'/hora', session:lang==='en'?'/session':'/sessão', person:lang==='en'?'/person':'/pessoa' };
@@ -936,12 +951,12 @@ export default function ServiceDetail() {
             </div>
 
             {/* ── Sobre este serviço ── */}
-            {unit.description && (
+            {getUnitDescription(unit, lang) && (
               <div className="pb-10 border-b border-n-100">
                 <p className="text-xs font-body font-bold text-ocean-700 uppercase tracking-widest mb-3">
                   {lang==='en'?'About this service':'Sobre este serviço'}
                 </p>
-                <p className="font-body text-n-600 leading-relaxed text-base">{unit.description}</p>
+                <p className="font-body text-n-600 leading-relaxed text-base">{getUnitDescription(unit, lang)}</p>
 
                 {/* Highlights grid — type-specific */}
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-6">
