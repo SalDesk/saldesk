@@ -612,6 +612,7 @@ const TLABELS = {
 ══════════════════════════════════════════ */
 let operators  = [];
 let filtered   = [];
+let featuredItems = [];
 let visible    = PER_PAGE;
 let currency   = 'EUR';
 let activeType = '';
@@ -1128,7 +1129,14 @@ async function loadFeatured() {
     return;
   }
 
-  grid.innerHTML = ops.map(renderFeatCard).join('');
+  featuredItems = ops;
+  renderFeatured();
+}
+
+function renderFeatured() {
+  if (!featuredItems.length) return;
+  const grid = document.getElementById('featured-grid');
+  grid.innerHTML = featuredItems.map(renderFeatCard).join('');
   observeFadeUp(grid);
   if (L() === 'en') fixLang(grid);
 }
@@ -1181,6 +1189,7 @@ function setLang(lang) {
     renderLocations();
     renderGrid();
   }
+  renderFeatured();
 }
 
 document.getElementById('langToggle').addEventListener('click', () => {
