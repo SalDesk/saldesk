@@ -314,16 +314,21 @@ async function discover(req, res, next) {
       ratingMap[r.operator_id].push(r.rating);
     });
 
-    // Preco base minimo por operador
-    const { data: prices } = await supabaseAdmin
+    // Unidades activas por operador -- tambem usado para excluir do directorio
+    // publico operadores sem nenhum servico configurado (o botao "Reservar"
+    // abriria vazio, sem nada para o visitante reservar).
+    const { data: activeUnits } = await supabaseAdmin
       .from('units')
       .select('operator_id, base_price')
       .in('operator_id', ids)
-      .eq('status', 'active')
-      .not('base_price', 'is', null);
+      .eq('status', 'active');
+
+    const opsWithServices = new Set((activeUnits || []).map((u) => u.operator_id));
+    const bookableOperators = operators.filter((o) => opsWithServices.has(o.id));
+    if (!bookableOperators.length) return res.json({ data: [] });
 
     const priceMap = {};
-    (prices || []).forEach((p) => {
+    (activeUnits || []).forEach((p) => {
       if (p.base_price && (!priceMap[p.operator_id] || p.base_price < priceMap[p.operator_id])) {
         priceMap[p.operator_id] = p.base_price;
       }
@@ -343,7 +348,7 @@ async function discover(req, res, next) {
       bookingMap[r.operator_id] = (bookingMap[r.operator_id] || 0) + 1;
     });
 
-    const enriched = operators.map((op) => {
+    const enriched = bookableOperators.map((op) => {
       const opRatings = ratingMap[op.id] || [];
       return {
         ...op,
