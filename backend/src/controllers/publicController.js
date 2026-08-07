@@ -367,6 +367,104 @@ async function discover(req, res, next) {
   }
 }
 
+/* ─── Discover — lista achatada de servicos/unidades (nao operadores) ───
+   Formato pensado para consumo directo em JS vanilla no website/discover/
+   (uma entrada por servico, dados do operador ja denormalizados). */
+async function discoverUnits(req, res, next) {
+  try {
+    const { type, limit } = req.query;
+
+    let q = supabaseAdmin
+      .from('operators')
+      .select('id, name, slug, operator_type, address, currency')
+      .eq('onboarding_complete', true);
+
+    if (type && ['hotel', 'activity', 'rentacar', 'restaurant'].includes(type)) {
+      q = q.eq('operator_type', type);
+    }
+
+    const { data: operators, error } = await q;
+    if (error) throw error;
+    if (!operators?.length) return res.json({ data: [] });
+
+    const operatorMap = {};
+    operators.forEach((o) => { operatorMap[o.id] = o; });
+    const ids = operators.map((o) => o.id);
+
+    const { data: units, error: unitsErr } = await supabaseAdmin
+      .from('units')
+      .select('id, operator_id, name, description, base_price, images, created_at')
+      .in('operator_id', ids)
+      .eq('status', 'active');
+    if (unitsErr) throw unitsErr;
+    if (!units?.length) return res.json({ data: [] });
+
+    // Ratings agregadas por operador -- reviews nao sao por unidade
+    const { data: ratings } = await supabaseAdmin
+      .from('reviews')
+      .select('operator_id, rating')
+      .in('operator_id', ids)
+      .eq('is_public', true)
+      .not('rating', 'is', null);
+
+    const ratingMap = {};
+    (ratings || []).forEach((r) => {
+      if (!ratingMap[r.operator_id]) ratingMap[r.operator_id] = [];
+      ratingMap[r.operator_id].push(r.rating);
+    });
+
+    // Reservas recentes (ultimos 30 dias) por UNIDADE -- sinal de popularidade
+    // mais preciso que por operador, ja que reservations tem unit_id.
+    const unitIds = units.map((u) => u.id);
+    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+    const { data: recentRes } = await supabaseAdmin
+      .from('reservations')
+      .select('unit_id')
+      .in('unit_id', unitIds)
+      .gte('created_at', thirtyDaysAgo)
+      .in('status', ['confirmed', 'checked_in', 'checked_out']);
+
+    const bookingMap = {};
+    (recentRes || []).forEach((r) => {
+      bookingMap[r.unit_id] = (bookingMap[r.unit_id] || 0) + 1;
+    });
+
+    let enriched = units.map((u) => {
+      const op = operatorMap[u.operator_id];
+      const opRatings = ratingMap[u.operator_id] || [];
+      return {
+        unit_id:         u.id,
+        operator_id:     op.id,
+        operator_slug:   op.slug,
+        operator_name:   op.name,
+        operator_type:   op.operator_type,
+        address:         op.address,
+        currency:        op.currency,
+        unit_name:       u.name,
+        description:     u.description,
+        base_price:      u.base_price,
+        images:          u.images,
+        avg_rating:      opRatings.length
+          ? parseFloat((opRatings.reduce((s, r) => s + r, 0) / opRatings.length).toFixed(1))
+          : null,
+        review_count:    opRatings.length || 0,
+        recent_bookings: bookingMap[u.id] || 0,
+        created_at:      u.created_at,
+      };
+    });
+
+    enriched.sort((a, b) => b.recent_bookings - a.recent_bookings || new Date(b.created_at) - new Date(a.created_at));
+
+    if (limit) {
+      enriched = enriched.slice(0, Math.min(parseInt(limit) || 9, 50));
+    }
+
+    return res.json({ data: enriched, message: 'Servicos listados' });
+  } catch (err) {
+    next(err);
+  }
+}
+
 /* ─── CMS público — experiências ─── */
 async function cmsExperiences(req, res, next) {
   try {
@@ -866,6 +964,7 @@ module.exports = {
   verificarDisponibilidadePublica,
   criarReserva,
   discover,
+  discoverUnits,
   cmsExperiences,
   cmsEvents,
   cmsBanners,

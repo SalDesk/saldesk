@@ -16,6 +16,7 @@ const {
   getUnitReviews,
   submitLead,
   getImpact,
+  discoverUnits,
 } = require('../controllers/publicController');
 const { publicInitSisp, publicPaypalClientId, publicCreatePaypalIntent, publicConfirmPaypalPayment } = require('../controllers/paymentController');
 const { validarVoucherPublico } = require('../controllers/vouchersController');
@@ -27,6 +28,7 @@ router.get('/impact',              getImpact);
 
 /* ─── Discover / directorio ─── */
 router.get('/discover',            discover);
+router.get('/discover-units',      discoverUnits);
 
 /* ─── CMS público ─── */
 router.get('/cms/experiences',     cmsExperiences);
