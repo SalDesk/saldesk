@@ -948,6 +948,19 @@ export default function ServiceDetail() {
                   </span>
                 )}
               </div>
+
+              {/* CTA inline — so em modo widget: a sidebar com o botao "Reservar"
+                  e' desktop-only (lg:) e a barra fixa mobile fica ancorada ao fundo
+                  do iframe redimensionado (ate 1600px, ver useWidgetResize), nao ao
+                  ecra visivel — sem isto o botao de reserva fica inalcancavel. */}
+              {isWidget && (
+                <button onClick={() => setBookOpen(true)}
+                  className="w-full mt-5 bg-ocean-700 text-white font-body font-bold py-3.5 rounded-xl flex items-center justify-center gap-2 hover:bg-ocean-500 transition-colors text-sm shadow-sm">
+                  <Calendar size={16} strokeWidth={1.75}/>
+                  {lang==='en'?'Book Now':'Reservar Agora'}
+                  {displayPrice && <span className="opacity-90 font-semibold">· {displayPrice}</span>}
+                </button>
+              )}
             </div>
 
             {/* ── Sobre este serviço ── */}
