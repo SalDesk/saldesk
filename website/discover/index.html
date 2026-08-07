@@ -263,7 +263,8 @@
       .attr-grid{grid-template-columns:repeat(2,1fr)}
       .footer-grid{grid-template-columns:1fr 1fr}
       .perks-grid{grid-template-columns:1fr}
-      .hero-floats{position:static;display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:20px;inset:auto}
+      .hero{flex-direction:column}
+      .hero-floats{position:static;display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:20px;inset:auto;width:100%}
       .hero-stat-card{position:static;min-width:140px}
     }
     @media(max-width:500px){
@@ -329,16 +330,6 @@
 <section class="hero" id="home">
   <div class="hero-bg"></div>
   <div class="hero-overlay"></div>
-  <div class="hero-floats" id="hero-floats">
-    <div class="hero-stat-card hero-stat-rating" id="hero-stat-rating" style="display:none">
-      <div class="hero-stat-value" id="hero-stat-rating-value"></div>
-      <div class="hero-stat-label"><span class="pt">avaliacao media</span><span class="en">average rating</span></div>
-    </div>
-    <div class="hero-stat-card hero-stat-bookings" id="hero-stat-bookings" style="display:none">
-      <div class="hero-stat-value" id="hero-stat-bookings-value"></div>
-      <div class="hero-stat-label"><span class="pt">reservas nos ultimos 30 dias</span><span class="en">bookings in the last 30 days</span></div>
-    </div>
-  </div>
   <div class="container">
     <div class="hero-content">
       <h1 class="pt">Descubra <span>Ilha do Sal</span></h1>
@@ -369,6 +360,16 @@
           <span class="pt">Pagamento seguro — Vinti4 · PayPal</span><span class="en">Secure payment — Vinti4 · PayPal</span>
         </div>
       </div>
+    </div>
+  </div>
+  <div class="hero-floats" id="hero-floats">
+    <div class="hero-stat-card hero-stat-rating" id="hero-stat-rating" style="display:none">
+      <div class="hero-stat-value" id="hero-stat-rating-value"></div>
+      <div class="hero-stat-label"><span class="pt">avaliacao media</span><span class="en">average rating</span></div>
+    </div>
+    <div class="hero-stat-card hero-stat-bookings" id="hero-stat-bookings" style="display:none">
+      <div class="hero-stat-value" id="hero-stat-bookings-value"></div>
+      <div class="hero-stat-label"><span class="pt">reservas nos ultimos 30 dias</span><span class="en">bookings in the last 30 days</span></div>
     </div>
   </div>
 </section>
