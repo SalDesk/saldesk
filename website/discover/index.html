@@ -806,7 +806,7 @@ function renderFeatCard(item) {
           <svg width="17" height="17" viewBox="0 0 24 24" fill="${wished?'#e00':'none'}" stroke="${wished?'#e00':'currentColor'}" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
         </button>
         <span class="tb tb-${item.operator_type}" style="position:absolute;bottom:12px;left:12px">${tLabel(item.operator_type)}</span>
-        ${badge ? `<span class="act-badge ${badge.cls}" style="position:absolute;top:12px;left:12px">${esc(badge.txt)}</span>` : ''}
+        ${badge ? `<span class="act-badge ${badge.cls}" style="position:absolute;top:12px;left:12px;bottom:auto">${esc(badge.txt)}</span>` : ''}
       </div>
       <div class="feat-body">
         <div class="card-meta-label">${esc(item.operator_name)} · ${loc}</div>
