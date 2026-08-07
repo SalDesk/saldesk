@@ -139,14 +139,16 @@
     if (skel) skel.style.display = '';
   }
 
-  function openBookingModal(slug, operatorName) {
+  function openBookingModal(slug, operatorName, unitId) {
     if (!slug) return;
     injectStyle();
     injectMarkup();
     attachResizeListener();
 
+    const path = unitId ? `${slug}/servico/${unitId}` : slug;
+
     document.getElementById('bw-title').textContent = operatorName || '';
-    document.getElementById('bw-ext-link').href = `${APP}/book/${slug}`;
+    document.getElementById('bw-ext-link').href = `${APP}/book/${path}`;
     applyLangToFallback(document.getElementById('bw-overlay'));
 
     const overlay = document.getElementById('bw-overlay');
@@ -155,11 +157,11 @@
 
     const frame = document.getElementById('bw-frame');
     frame.classList.add('hidden');
-    frame.src = `${APP}/book/${slug}?widget=1`;
+    frame.src = `${APP}/book/${path}?widget=1`;
     currentIframeWindow = frame.contentWindow;
 
     clearTimeout(resizeTimeout);
-    resizeTimeout = setTimeout(() => showFallback(slug), RESIZE_TIMEOUT_MS);
+    resizeTimeout = setTimeout(() => showFallback(path), RESIZE_TIMEOUT_MS);
   }
 
   document.addEventListener('keydown', (e) => {
