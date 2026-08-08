@@ -112,6 +112,10 @@
     .direct-pill{display:inline-flex;align-items:center;gap:4px;font-size:.6875rem;font-weight:600;color:var(--ok);margin:2px 0 8px}
     .direct-pill svg{flex-shrink:0}
 
+    /* ── AVAILABILITY BADGE (sobre a imagem, canto livre inferior-direito) ── */
+    .avail-badge{position:absolute;bottom:12px;right:12px;background:rgba(255,255,255,.95);color:var(--ok);font-size:.6875rem;font-weight:700;padding:4px 10px;border-radius:100px;display:flex;align-items:center;gap:4px;backdrop-filter:blur(4px);z-index:2}
+    .avail-badge svg{flex-shrink:0}
+
     /* ── WISH BUTTON ── */
     .wish-btn{position:absolute;top:12px;right:12px;width:36px;height:36px;background:rgba(255,255,255,.9);border:none;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px);transition:all .2s;z-index:2}
     .wish-btn:hover{background:#fff;transform:scale(1.1)}
@@ -644,6 +648,23 @@ function ratingLine(item) {
     `<span style="font-size:.8125rem;color:var(--n5)">(${item.review_count})</span>`;
 }
 
+/* Badge de disponibilidade -- so mostra para os proximos 3 dias (0-3), fica em
+   branco (sem badge) se estiver mais longe ou se next_available for null (nada
+   livre nos 14 dias calculados no backend). Nunca mostra "Indisponivel". */
+function availabilityLabel(item) {
+  if (!item.next_available) return '';
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const target = new Date(item.next_available + 'T00:00:00');
+  const days = Math.round((target - today) / 86400000);
+  if (days < 0 || days > 3) return '';
+  const lang = L();
+  let txt;
+  if (days === 0) txt = lang === 'pt' ? 'Hoje' : 'Today';
+  else if (days === 1) txt = lang === 'pt' ? 'Amanha' : 'Tomorrow';
+  else txt = lang === 'pt' ? `Em ${days} dias` : `In ${days} days`;
+  return `<span class="avail-badge"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>${txt}</span>`;
+}
+
 function fmtPrice(price, opCur) {
   if (!price) return L() === 'pt' ? 'Consultar' : 'On request';
   if (currency === 'EUR') {
@@ -793,6 +814,7 @@ function renderFeatCard(item) {
         </button>
         <span class="tb tb-${item.operator_type}" style="position:absolute;bottom:12px;left:12px">${tLabel(item.operator_type)}</span>
         ${badge ? `<span class="act-badge ${badge.cls}" style="position:absolute;top:12px;left:12px;bottom:auto">${esc(badge.txt)}</span>` : ''}
+        ${availabilityLabel(item)}
       </div>
       <div class="feat-body">
         <div class="card-meta-label">${esc(item.operator_name)} · ${loc}</div>
@@ -831,6 +853,7 @@ function renderActCard(item) {
           <svg width="16" height="16" viewBox="0 0 24 24" fill="${wished?'#e00':'none'}" stroke="${wished?'#e00':'currentColor'}" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
         </button>
         ${badge ? `<span class="act-badge ${badge.cls}">${esc(badge.txt)}</span>` : ''}
+        ${availabilityLabel(item)}
       </div>
       <div class="act-body">
         <div class="act-rating-row">${ratingLine(item)}</div>

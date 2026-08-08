@@ -429,6 +429,57 @@ async function discoverUnits(req, res, next) {
       bookingMap[r.unit_id] = (bookingMap[r.unit_id] || 0) + 1;
     });
 
+    // Proximo dia livre nos proximos 14 dias, em lote para todas as unidades --
+    // mesma regra binaria de verificarDisponibilidade() (bookingHelpers.js): uma
+    // reserva pending/confirmed/checked_in sobreposta OU um blocked_dates nesse
+    // dia bloqueia. Nao considera units.capacity (nada no codigo considera).
+    const fmtDate = (d) => d.toISOString().split('T')[0];
+    const today = new Date();
+    today.setUTCHours(0, 0, 0, 0);
+    const AVAIL_WINDOW_DAYS = 14;
+    const windowEnd = new Date(today.getTime() + AVAIL_WINDOW_DAYS * 86400000);
+    const windowStartStr = fmtDate(today);
+    const windowEndStr = fmtDate(windowEnd);
+
+    const { data: upcomingRes } = await supabaseAdmin
+      .from('reservations')
+      .select('unit_id, check_in, check_out')
+      .in('unit_id', unitIds)
+      .in('status', ['pending', 'confirmed', 'checked_in'])
+      .lt('check_in', windowEndStr)
+      .gt('check_out', windowStartStr);
+
+    const { data: blockedRows } = await supabaseAdmin
+      .from('blocked_dates')
+      .select('unit_id, date')
+      .in('unit_id', unitIds)
+      .gte('date', windowStartStr)
+      .lte('date', windowEndStr);
+
+    const blockedByUnit = {};
+    const markBlocked = (unitId, dateStr) => {
+      if (!blockedByUnit[unitId]) blockedByUnit[unitId] = new Set();
+      blockedByUnit[unitId].add(dateStr);
+    };
+    (upcomingRes || []).forEach((r) => {
+      let d = new Date(r.check_in) > today ? new Date(r.check_in) : today;
+      const end = new Date(r.check_out) < windowEnd ? new Date(r.check_out) : windowEnd;
+      while (d < end) {
+        markBlocked(r.unit_id, fmtDate(d));
+        d = new Date(d.getTime() + 86400000);
+      }
+    });
+    (blockedRows || []).forEach((b) => markBlocked(b.unit_id, b.date));
+
+    function nextAvailable(unitId) {
+      const blocked = blockedByUnit[unitId];
+      for (let i = 0; i < AVAIL_WINDOW_DAYS; i++) {
+        const ds = fmtDate(new Date(today.getTime() + i * 86400000));
+        if (!blocked || !blocked.has(ds)) return ds;
+      }
+      return null;
+    }
+
     let enriched = units.map((u) => {
       const op = operatorMap[u.operator_id];
       const opRatings = ratingMap[u.operator_id] || [];
@@ -449,6 +500,7 @@ async function discoverUnits(req, res, next) {
           : null,
         review_count:    opRatings.length || 0,
         recent_bookings: bookingMap[u.id] || 0,
+        next_available:  nextAvailable(u.id),
         created_at:      u.created_at,
       };
     });
