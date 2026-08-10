@@ -26,3 +26,5 @@ export const deleteDocument  = (id, docId) => api.delete(`/staff/${id}/documents
 export const listCertifications  = (id)     => api.get(`/staff/${id}/certifications`).then(r => r.data.data);
 export const createCertification = (id, d)  => api.post(`/staff/${id}/certifications`, d).then(r => r.data.data);
 export const deleteCertification = (id, certId) => api.delete(`/staff/${id}/certifications/${certId}`);
+
+export const getHrOverview = () => api.get('/staff/hr-overview').then(r => r.data.data);

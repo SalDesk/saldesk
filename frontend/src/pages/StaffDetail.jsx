@@ -1,8 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
-  ArrowLeft, Plus, Trash2, Check, X, FileText, Award, Calendar,
-  AlertTriangle, Upload, Loader2,
+  ArrowLeft, Plus, Trash2, Check, X, FileText, Award, Calendar, Upload, Loader2,
 } from 'lucide-react';
 import {
   getStaff, listLeave, createLeave, updateLeaveStatus, getLeaveBalance, setLeaveBalance,
@@ -18,6 +17,7 @@ import Modal from '../components/ui/Modal';
 import Input, { Select, Textarea } from '../components/ui/Input';
 import Badge from '../components/ui/Badge';
 import LoadingSpinner from '../components/shared/LoadingSpinner';
+import ExpiryBadge from '../components/shared/ExpiryBadge';
 
 const TABS = [
   { key: 'ferias',        label: 'Ferias',        Icon: Calendar },
@@ -41,25 +41,6 @@ function daysBetween(a, b) {
   return Math.round((new Date(b) - new Date(a)) / 86400000) + 1;
 }
 
-function expiryState(dateStr) {
-  if (!dateStr) return null;
-  const days = Math.round((new Date(dateStr) - new Date().setHours(0, 0, 0, 0)) / 86400000);
-  if (days < 0) return 'expired';
-  if (days <= 30) return 'soon';
-  return null;
-}
-
-function ExpiryBadge({ date }) {
-  const state = expiryState(date);
-  if (!state) return date ? <span className="text-xs font-body text-n-500">{date}</span> : null;
-  return (
-    <span className={`inline-flex items-center gap-1 text-xs font-body font-semibold ${state === 'expired' ? 'text-error' : 'text-amber-600'}`}>
-      <AlertTriangle size={12} strokeWidth={1.75} />
-      {date} {state === 'expired' ? '(expirado)' : '(expira em breve)'}
-    </span>
-  );
-}
-
 /* ══════════════════════════════════════════
    FERIAS
 ══════════════════════════════════════════ */
@@ -81,7 +62,7 @@ function FeriasTab({ staffId }) {
       const [l, b] = await Promise.all([listLeave(staffId), getLeaveBalance(staffId, year)]);
       setLeave(l);
       setBalance(b);
-      setEntitledInput(b.entitled_days ?? '');
+      setEntitledInput(b.entitled_days ?? b.suggested_days ?? '');
     } catch {
       toast.error('Erro ao carregar ferias');
     } finally {
@@ -161,7 +142,9 @@ function FeriasTab({ staffId }) {
 
       {balance?.entitled_days == null && (
         <p className="text-xs font-body text-n-500 bg-amber-50 border border-amber-200 rounded-md px-3 py-2">
-          O numero de dias de ferias por lei cabo-verdiana nao esta configurado — define o direito anual deste colaborador acima (a SalDesk nao assume nenhum valor por ti).
+          {balance?.suggested_days != null
+            ? `O direito a ferias ainda nao foi configurado. Sugestao com base na data de admissao (22 dias/12 meses, proporcional): ${balance.suggested_days} dias — confirma ou ajusta em "Configurar direito".`
+            : 'O numero de dias de ferias ainda nao esta configurado — define o direito anual deste colaborador acima (adiciona a data de admissao no perfil do colaborador para receberes uma sugestao automatica).'}
         </p>
       )}
 
@@ -214,7 +197,9 @@ function FeriasTab({ staffId }) {
           <Input
             label="Dias de ferias por ano" type="number" min="0" step="0.5" required
             value={entitledInput} onChange={e => setEntitledInput(e.target.value)}
-            hint="Define aqui o numero de dias segundo o contrato/lei aplicavel — a SalDesk nao preenche este valor automaticamente."
+            hint={balance?.suggested_days != null
+              ? `Pre-preenchido com a sugestao proporcional (22 dias/12 meses) a partir da data de admissao — ajusta se o contrato definir outro valor.`
+              : 'Define aqui o numero de dias segundo o contrato/lei aplicavel.'}
           />
           <Button type="submit" loading={saving} className="w-full">Guardar</Button>
         </form>

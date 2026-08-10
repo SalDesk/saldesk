@@ -4,6 +4,16 @@ function getOperatorId(req) {
   return req.operator?.id || req.staff?.operator_id;
 }
 
+/* Sugestao de dias de ferias a partir da data de admissao, seguindo a
+   proporcao legal cabo-verdiana (22 dias / 12 meses trabalhados, ~1.83
+   dias/mes) -- e so uma sugestao para pre-preencher o formulario, nunca
+   substitui o entitled_days que o operador configurar. */
+function suggestedLeaveDays(hireDate) {
+  if (!hireDate) return null;
+  const months = Math.floor((Date.now() - new Date(hireDate)) / (30.44 * 86400000));
+  return Math.min(22, Math.round(Math.max(0, months) * 22 / 12));
+}
+
 /* ══════════════════════════════════════════
    FERIAS / AUSENCIAS
 ══════════════════════════════════════════ */
@@ -107,12 +117,13 @@ async function obterSaldoFerias(req, res, next) {
     }
     const year = parseInt(req.query.year) || new Date().getFullYear();
 
-    const [{ data: balance }, { data: approved }] = await Promise.all([
+    const [{ data: balance }, { data: approved }, { data: staffRow }] = await Promise.all([
       supabaseAdmin.from('staff_leave_balance').select('*')
         .eq('staff_id', req.params.id).eq('year', year).maybeSingle(),
       supabaseAdmin.from('staff_leave').select('start_date, end_date')
         .eq('staff_id', req.params.id).eq('status', 'approved')
         .gte('start_date', `${year}-01-01`).lte('start_date', `${year}-12-31`),
+      supabaseAdmin.from('staff').select('hire_date').eq('id', req.params.id).maybeSingle(),
     ]);
 
     const usedDays = (approved || []).reduce((sum, l) => {
@@ -124,6 +135,7 @@ async function obterSaldoFerias(req, res, next) {
       data: {
         year,
         entitled_days: balance?.entitled_days ?? null,
+        suggested_days: balance?.entitled_days == null ? suggestedLeaveDays(staffRow?.hire_date) : null,
         used_days: usedDays,
         remaining_days: balance ? Math.max(0, balance.entitled_days - usedDays) : null,
       },
@@ -256,8 +268,44 @@ async function eliminarCertificacao(req, res, next) {
   } catch (err) { next(err); }
 }
 
+/* ══════════════════════════════════════════
+   VISAO GERAL DE RH (operador)
+══════════════════════════════════════════ */
+async function obterVisaoGeralRH(req, res, next) {
+  try {
+    const operatorId = req.operator.id;
+    const in30Days = new Date(Date.now() + 30 * 86400000).toISOString().split('T')[0];
+
+    const [{ data: staffList }, { data: pendingLeave }, { data: docs }, { data: certs }] = await Promise.all([
+      supabaseAdmin.from('staff').select('id, name, role, photo_url, status')
+        .eq('operator_id', operatorId).eq('status', 'active').order('name'),
+      supabaseAdmin.from('staff_leave').select('*, staff(name)')
+        .eq('operator_id', operatorId).eq('status', 'pending').order('start_date'),
+      supabaseAdmin.from('staff_documents').select('*, staff(name)')
+        .eq('operator_id', operatorId).not('expiry_date', 'is', null).lte('expiry_date', in30Days),
+      supabaseAdmin.from('staff_certifications').select('*, staff(name)')
+        .eq('operator_id', operatorId).not('expiry_date', 'is', null).lte('expiry_date', in30Days),
+    ]);
+
+    const expiring = [
+      ...(docs || []).map((d) => ({ ...d, kind: 'document', staff_name: d.staff?.name })),
+      ...(certs || []).map((c) => ({ ...c, kind: 'certification', staff_name: c.staff?.name })),
+    ].sort((a, b) => new Date(a.expiry_date) - new Date(b.expiry_date));
+
+    return res.json({
+      data: {
+        staff: staffList || [],
+        pending_leave: (pendingLeave || []).map((l) => ({ ...l, staff_name: l.staff?.name })),
+        expiring,
+      },
+      message: 'Visao geral de RH',
+    });
+  } catch (err) { next(err); }
+}
+
 module.exports = {
   listarFerias, criarFerias, actualizarEstadoFerias, obterSaldoFerias, actualizarSaldoFerias,
   listarDocumentos, criarDocumento, eliminarDocumento,
   listarCertificacoes, criarCertificacao, eliminarCertificacao,
+  obterVisaoGeralRH,
 };

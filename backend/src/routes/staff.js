@@ -5,6 +5,7 @@ const {
   listarFerias, criarFerias, actualizarEstadoFerias, obterSaldoFerias, actualizarSaldoFerias,
   listarDocumentos, criarDocumento, eliminarDocumento,
   listarCertificacoes, criarCertificacao, eliminarCertificacao,
+  obterVisaoGeralRH,
 } = require('../controllers/staffHrController');
 const auth    = require('../middleware/auth');
 const reqOp   = require('../middleware/requireOperator');
@@ -15,6 +16,10 @@ router.use(auth);
 router.get('/',                        reqOpOrStaff, listar);
 router.get('/me',                      reqOpOrStaff, obterPerfilProprio);
 router.put('/me',                      reqOpOrStaff, actualizarPerfilProprio);
+/* Rota literal /hr-overview tem de vir ANTES de /:id -- senao o Express
+   interpreta "hr-overview" como o valor do parametro :id (mesma licao de
+   rotas ja aplicada hoje a /discover-units e /customers/import). */
+router.get('/hr-overview',             reqOp, obterVisaoGeralRH);
 router.get('/:id',                     reqOp, obter);
 router.post('/',                       reqOp, criar);
 router.put('/:id',                     reqOp, actualizar);

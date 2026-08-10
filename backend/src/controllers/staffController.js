@@ -33,7 +33,7 @@ async function criar(req, res, next) {
   try {
     const {
       name, role, phone, email, whatsapp,
-      photo_url, skills, schedule, commission_pct, seller_zone, seller_tour_ids,
+      photo_url, skills, schedule, commission_pct, seller_zone, seller_tour_ids, hire_date,
     } = req.body;
     if (!name || !role) return res.status(400).json({ error: 'Nome e cargo sao obrigatorios', code: 'MISSING_FIELDS' });
     const { data, error } = await supabaseAdmin
@@ -47,6 +47,7 @@ async function criar(req, res, next) {
         commission_pct: commission_pct ?? null,
         seller_zone: seller_zone || null,
         seller_tour_ids: seller_tour_ids || [],
+        hire_date: hire_date || null,
       })
       .select().single();
     if (error) throw error;
@@ -58,7 +59,7 @@ async function actualizar(req, res, next) {
   try {
     const {
       name, role, phone, email, whatsapp, status,
-      photo_url, skills, schedule, commission_pct, seller_zone, seller_tour_ids,
+      photo_url, skills, schedule, commission_pct, seller_zone, seller_tour_ids, hire_date,
     } = req.body;
     const updates = { updated_at: new Date().toISOString() };
     if (name !== undefined)            updates.name = name;
@@ -73,6 +74,7 @@ async function actualizar(req, res, next) {
     if (commission_pct !== undefined)  updates.commission_pct = commission_pct;
     if (seller_zone !== undefined)     updates.seller_zone = seller_zone;
     if (seller_tour_ids !== undefined) updates.seller_tour_ids = seller_tour_ids;
+    if (hire_date !== undefined)       updates.hire_date = hire_date;
     const { data, error } = await supabaseAdmin
       .from('staff').update(updates).eq('id', req.params.id).eq('operator_id', req.operator.id).select().single();
     if (error || !data) return res.status(404).json({ error: 'Nao encontrado', code: 'NOT_FOUND' });

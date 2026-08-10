@@ -179,6 +179,7 @@ function StaffForm({ member, onSave, onCancel, loading, error, roles }) {
     email:          member?.email         || '',
     whatsapp:       member?.whatsapp      || '',
     photo_url:      member?.photo_url     || '',
+    hire_date:      member?.hire_date     || '',
     status:         member?.status        || 'active',
     commission_pct: member?.commission_pct || '',
     seller_zone:    member?.seller_zone    || '',
@@ -279,6 +280,10 @@ function StaffForm({ member, onSave, onCancel, loading, error, roles }) {
         <Input label="Email" value={form.email} onChange={set('email')} type="email" placeholder="nome@email.com" />
         <Input label="WhatsApp" value={form.whatsapp} onChange={set('whatsapp')} type="tel" placeholder="+238 900 0000" />
       </div>
+      <Input
+        label="Data de admissao" type="date" value={form.hire_date} onChange={set('hire_date')}
+        hint="Opcional — usada para sugerir o direito a ferias proporcional em RH."
+      />
 
       {/* Schedule */}
       <div>

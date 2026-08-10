@@ -2,11 +2,15 @@ import { useState, useEffect, useRef, useMemo } from 'react';
 import { useParams, useNavigate, Route, Routes, NavLink } from 'react-router-dom';
 import {
   Briefcase, Euro, LogOut, CheckCircle, PlayCircle, Clock, MapPin, User, Users, ChevronRight, ChevronLeft, Car, AlertTriangle,
-  Calendar, CalendarCheck, MessageCircle, Camera, Upload, Phone, Lock, Mail, Sun, Send,
+  Calendar, CalendarCheck, MessageCircle, Camera, Upload, Phone, Lock, Mail, Sun, Send, FileText, Award, Plus, X,
 } from 'lucide-react';
 import { io } from 'socket.io-client';
 import api from '../services/api';
-import { getMyProfile, updateMyProfile, setAvailability, listStaff } from '../services/staffService';
+import {
+  getMyProfile, updateMyProfile, setAvailability, listStaff,
+  listLeave, createLeave, getLeaveBalance, listDocuments, listCertifications,
+} from '../services/staffService';
+import ExpiryBadge from '../components/shared/ExpiryBadge';
 import { listGroups, listMessages, sendMessage } from '../services/messageService';
 import { forgotPassword } from '../services/authService';
 import { getMonthGrid } from '../utils/calendar';
@@ -730,6 +734,149 @@ function StaffAvailability({ staffId }) {
 }
 
 /* ─── Vista: Perfil ─── */
+const LEAVE_TYPE_LABEL = {
+  vacation: 'Ferias', sick: 'Doenca', maternity: 'Licenca maternidade',
+  paternity: 'Licenca paternidade', unpaid: 'Sem vencimento', other: 'Outro',
+};
+const LEAVE_STATUS_CLS = {
+  pending: 'bg-sand-100 text-sand-600', approved: 'bg-ocean-50 text-ocean-700', rejected: 'bg-red-50 text-error',
+};
+function daysBetween(a, b) { return Math.round((new Date(b) - new Date(a)) / 86400000) + 1; }
+
+/* ── As minhas ferias ── */
+function MyLeaveSection({ staffId }) {
+  const toast = useToast();
+  const [leave, setLeave] = useState([]);
+  const [balance, setBalance] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [showForm, setShowForm] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [form, setForm] = useState({ type: 'vacation', start_date: '', end_date: '', notes: '' });
+
+  useEffect(() => {
+    if (!staffId) return;
+    Promise.all([listLeave(staffId), getLeaveBalance(staffId, new Date().getFullYear())])
+      .then(([l, b]) => { setLeave(l); setBalance(b); })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, [staffId]);
+
+  async function submitLeave(e) {
+    e.preventDefault();
+    if (!form.start_date || !form.end_date) return;
+    setSaving(true);
+    try {
+      await createLeave(staffId, form);
+      toast.success('Pedido enviado para aprovacao');
+      setShowForm(false);
+      setForm({ type: 'vacation', start_date: '', end_date: '', notes: '' });
+      const [l, b] = await Promise.all([listLeave(staffId), getLeaveBalance(staffId, new Date().getFullYear())]);
+      setLeave(l); setBalance(b);
+    } catch (err) {
+      toast.error(err.response?.data?.error || 'Erro ao pedir ferias');
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  if (loading) return null;
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-2">
+        <p className="text-xs font-mono uppercase tracking-wider text-n-400">As minhas ferias</p>
+        <button onClick={() => setShowForm(s => !s)} className="text-xs font-body font-semibold text-turquoise-600 flex items-center gap-1">
+          {showForm ? <X size={13} strokeWidth={2}/> : <Plus size={13} strokeWidth={2}/>}
+          {showForm ? 'Cancelar' : 'Pedir ferias'}
+        </button>
+      </div>
+
+      {balance && (
+        <div className="bg-white rounded-2xl border border-n-200 p-4 mb-2 flex justify-between text-center">
+          <div><p className="font-display font-bold text-lg text-n-900">{balance.entitled_days ?? balance.suggested_days ?? '—'}</p><p className="text-[10px] font-body text-n-400 uppercase">Direito</p></div>
+          <div><p className="font-display font-bold text-lg text-n-900">{balance.used_days}</p><p className="text-[10px] font-body text-n-400 uppercase">Usados</p></div>
+          <div><p className="font-display font-bold text-lg text-turquoise-600">{balance.remaining_days ?? '—'}</p><p className="text-[10px] font-body text-n-400 uppercase">Restantes</p></div>
+        </div>
+      )}
+
+      {showForm && (
+        <form onSubmit={submitLeave} className="bg-white rounded-2xl border border-n-200 p-4 mb-2 space-y-3">
+          <select value={form.type} onChange={e => setForm(f => ({ ...f, type: e.target.value }))}
+            className="w-full h-10 px-3 rounded-xl border border-n-300 text-sm font-body bg-n-100">
+            {Object.entries(LEAVE_TYPE_LABEL).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+          </select>
+          <div className="grid grid-cols-2 gap-2">
+            <input type="date" required value={form.start_date} onChange={e => setForm(f => ({ ...f, start_date: e.target.value }))}
+              className="h-10 px-3 rounded-xl border border-n-300 text-sm font-body bg-n-100" />
+            <input type="date" required min={form.start_date} value={form.end_date} onChange={e => setForm(f => ({ ...f, end_date: e.target.value }))}
+              className="h-10 px-3 rounded-xl border border-n-300 text-sm font-body bg-n-100" />
+          </div>
+          <button type="submit" disabled={saving} className="w-full h-10 bg-turquoise-500 text-white rounded-xl font-body font-semibold text-sm disabled:opacity-50">
+            {saving ? 'A enviar...' : 'Enviar pedido'}
+          </button>
+        </form>
+      )}
+
+      {!!leave.length && (
+        <div className="bg-white rounded-2xl border border-n-200 divide-y divide-n-100">
+          {leave.map(l => (
+            <div key={l.id} className="flex items-center justify-between gap-2 px-4 py-3">
+              <div className="min-w-0">
+                <p className="text-sm font-body font-semibold text-n-800 truncate">{LEAVE_TYPE_LABEL[l.type] || l.type}</p>
+                <p className="text-xs font-body text-n-400">{l.start_date} → {l.end_date} ({daysBetween(l.start_date, l.end_date)}d)</p>
+              </div>
+              <span className={`text-[10px] font-body font-bold uppercase px-2 py-1 rounded-full shrink-0 ${LEAVE_STATUS_CLS[l.status]}`}>
+                {l.status === 'pending' ? 'Pendente' : l.status === 'approved' ? 'Aprovado' : 'Rejeitado'}
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ── Os meus documentos / certificacoes (so leitura) ── */
+function MyDocumentsSection({ staffId }) {
+  const [docs, setDocs] = useState([]);
+  useEffect(() => { if (staffId) listDocuments(staffId).then(setDocs).catch(() => {}); }, [staffId]);
+  if (!docs.length) return null;
+  return (
+    <div>
+      <p className="text-xs font-mono uppercase tracking-wider text-n-400 mb-2">Os meus documentos</p>
+      <div className="bg-white rounded-2xl border border-n-200 divide-y divide-n-100">
+        {docs.map(d => (
+          <a key={d.id} href={d.file_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 px-4 py-3">
+            <FileText size={15} strokeWidth={1.75} className="text-turquoise-600 shrink-0" />
+            <span className="text-sm font-body text-n-800 flex-1 truncate">{d.name}</span>
+            <ExpiryBadge date={d.expiry_date} />
+          </a>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function MyCertificationsSection({ staffId }) {
+  const [certs, setCerts] = useState([]);
+  useEffect(() => { if (staffId) listCertifications(staffId).then(setCerts).catch(() => {}); }, [staffId]);
+  if (!certs.length) return null;
+  return (
+    <div>
+      <p className="text-xs font-mono uppercase tracking-wider text-n-400 mb-2">As minhas certificacoes</p>
+      <div className="bg-white rounded-2xl border border-n-200 divide-y divide-n-100">
+        {certs.map(c => (
+          <div key={c.id} className="flex items-center gap-3 px-4 py-3">
+            <Award size={15} strokeWidth={1.75} className="text-sand-600 shrink-0" />
+            <span className="text-sm font-body text-n-800 flex-1 truncate">{c.name}{c.issuer && ` · ${c.issuer}`}</span>
+            <ExpiryBadge date={c.expiry_date} />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function StaffProfile() {
   const { user } = useAuthStore();
   const toast = useToast();
@@ -849,6 +996,10 @@ function StaffProfile() {
                 {staffEmail && <ReadOnlyRow icon={Mail} label="Email" value={staffEmail} />}
               </div>
             </div>
+
+            {profile?.id && <MyLeaveSection staffId={profile.id} />}
+            {profile?.id && <MyDocumentsSection staffId={profile.id} />}
+            {profile?.id && <MyCertificationsSection staffId={profile.id} />}
 
             {/* Change password */}
             <button

@@ -7,7 +7,7 @@ import {
   LogOut, X, ExternalLink, User, Lock, Zap,
   Compass, Hotel, Car, Truck, UtensilsCrossed, ChefHat, Wrench,
   Activity, Award, Tag, FileWarning, ThumbsUp, CloudSun, LineChart,
-  UserPlus, Users2, Package, Handshake, Sparkles, Layers,
+  UserPlus, Users2, Package, Handshake, Sparkles, Layers, ClipboardList,
 } from 'lucide-react';
 import useAuthStore from '../../store/authStore';
 import usePlan from '../../hooks/usePlan';
@@ -25,6 +25,7 @@ export const TYPE_NAV = {
     { to: '/frota',         icon: Car,             label: 'Frota'                                                                       },
     { to: '/clientes',      icon: UserCheck,       label: 'Clientes'                     },
     { to: '/colaboradores', icon: UsersRound,      label: 'Colaboradores',    requiredPlan: 'business', feature: 'colaboradores'  },
+    { to: '/rh',            icon: ClipboardList,   label: 'RH',               requiredPlan: 'business', feature: 'colaboradores'  },
     { to: '/financeiro',    icon: BarChart2,       label: 'Financeiro'                   },
     { to: '/analytics',     icon: Activity,        label: 'Analytics',        requiredPlan: 'business', feature: 'analytics'      },
     { to: '/meteorologia',  icon: CloudSun,        label: 'Meteorologia',     requiredPlan: 'business', feature: 'meteorologia'   },
@@ -53,6 +54,7 @@ export const TYPE_NAV = {
     { to: '/housekeeping',  icon: Sparkles,        label: 'Housekeeping'            },
     { to: '/clientes',      icon: UserCheck,       label: 'Clientes'                },
     { to: '/colaboradores', icon: UsersRound,      label: 'Colaboradores',  requiredPlan: 'business', feature: 'colaboradores' },
+    { to: '/rh',            icon: ClipboardList,   label: 'RH',             requiredPlan: 'business', feature: 'colaboradores' },
     { to: '/financeiro',    icon: BarChart2,       label: 'Financeiro'              },
     { to: '/avaliacoes',    icon: Star,            label: 'Avaliacoes'              },
     { to: '/mensagens',     icon: MessageCircle,   label: 'Mensagens'               },
@@ -76,6 +78,7 @@ export const TYPE_NAV = {
     { to: '/manutencao',    icon: Wrench,          label: 'Manutencao'              },
     { to: '/clientes',      icon: UserCheck,       label: 'Clientes'                },
     { to: '/colaboradores', icon: UsersRound,      label: 'Colaboradores',  requiredPlan: 'business', feature: 'colaboradores' },
+    { to: '/rh',            icon: ClipboardList,   label: 'RH',             requiredPlan: 'business', feature: 'colaboradores' },
     { to: '/financeiro',    icon: BarChart2,       label: 'Financeiro'              },
     { to: '/analytics',     icon: Activity,        label: 'Analytics',      requiredPlan: 'business', feature: 'analytics'     },
     { to: '/avaliacoes',    icon: Star,            label: 'Avaliacoes'              },
@@ -100,6 +103,7 @@ export const TYPE_NAV = {
     { to: '/calendario',    icon: CalendarDays,    label: 'Calendario'              },
     { to: '/clientes',      icon: UserCheck,       label: 'Clientes'                },
     { to: '/colaboradores', icon: UsersRound,      label: 'Colaboradores',  requiredPlan: 'business', feature: 'colaboradores' },
+    { to: '/rh',            icon: ClipboardList,   label: 'RH',             requiredPlan: 'business', feature: 'colaboradores' },
     { to: '/financeiro',    icon: BarChart2,       label: 'Financeiro'              },
     { to: '/avaliacoes',    icon: Star,            label: 'Avaliacoes'              },
     { to: '/mensagens',     icon: MessageCircle,   label: 'Mensagens'               },
