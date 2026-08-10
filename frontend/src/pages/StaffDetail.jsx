@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import {
-  ArrowLeft, Plus, Trash2, Check, X, FileText, Award, Calendar, Upload, Loader2,
+  ArrowLeft, Plus, Trash2, Check, X, FileText, Award, Calendar, Upload, Loader2, Wallet,
 } from 'lucide-react';
 import {
   getStaff, listLeave, createLeave, updateLeaveStatus, getLeaveBalance, setLeaveBalance,
@@ -21,9 +21,16 @@ import ExpiryBadge from '../components/shared/ExpiryBadge';
 
 const TABS = [
   { key: 'ferias',        label: 'Ferias',        Icon: Calendar },
+  { key: 'salario',       label: 'Salario',       Icon: Wallet },
   { key: 'documentos',    label: 'Documentos',    Icon: FileText },
   { key: 'certificacoes', label: 'Certificacoes', Icon: Award },
 ];
+
+const MONTH_LABEL = ['', 'Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+
+function fmtMoney(v) {
+  return `€${Number(v || 0).toFixed(2)}`;
+}
 
 const LEAVE_TYPES = [
   { v: 'vacation',  l: 'Ferias' },
@@ -416,38 +423,93 @@ function CertificacoesTab({ staffId }) {
 }
 
 /* ══════════════════════════════════════════
-   RESUMO DE CONFORMIDADE (INPS)
-   Dado 100% real -- soma salary_payments x inps_pct ja existentes,
-   nao inventa nenhum numero novo.
+   SALARIO — configuracao actual + historico de pagamentos
+   Dado 100% real, vindo de salary_configs/salary_payments (o mesmo que
+   ja alimenta Financeiro > Salarios) -- esta aba e so de leitura, editar
+   continua a fazer-se em Financeiro para nao duplicar logica de escrita.
 ══════════════════════════════════════════ */
-function ConformidadeCard({ staffId }) {
-  const [inpsTotal, setInpsTotal] = useState(null);
+function SalarioTab({ staffId }) {
+  const toast = useToast();
+  const [cfg, setCfg] = useState(null);
+  const [payments, setPayments] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    (async () => {
-      try {
-        const [configs, payments] = await Promise.all([getSalaryConfig(), getSalaryPayments()]);
-        const pct = configs?.[staffId]?.inps_pct;
-        if (pct == null) { setInpsTotal(null); return; }
-        const year = new Date().getFullYear();
-        const total = (payments || [])
-          .filter(p => p.staffId === staffId && p.year === year)
-          .reduce((s, p) => s + Number(p.amount) * (Number(pct) / 100), 0);
-        setInpsTotal(total);
-      } catch {
-        setInpsTotal(null);
-      }
-    })();
+    setLoading(true);
+    Promise.all([getSalaryConfig(), getSalaryPayments()])
+      .then(([configs, allPayments]) => {
+        setCfg(configs?.[staffId] || null);
+        setPayments((allPayments || []).filter(p => p.staffId === staffId)
+          .sort((a, b) => b.year - a.year || b.month - a.month));
+      })
+      .catch(() => toast.error('Erro ao carregar salario'))
+      .finally(() => setLoading(false));
   }, [staffId]);
 
-  if (inpsTotal == null) return null;
+  if (loading) return <div className="py-12 flex justify-center"><LoadingSpinner /></div>;
+
+  const base = Number(cfg?.base || 0);
+  const subsidios = Number(cfg?.food || 0) + Number(cfg?.transport || 0);
+  const inpsPct = cfg ? Number(cfg.inps_pct ?? 15) : null;
+  const custoTotal = cfg ? base + subsidios + base * (inpsPct / 100) : null;
+  const year = new Date().getFullYear();
+  const paidThisYear = payments.filter(p => p.year === year).reduce((s, p) => s + Number(p.amount), 0);
+  const inpsThisYear = inpsPct != null
+    ? payments.filter(p => p.year === year).reduce((s, p) => s + Number(p.amount) * (inpsPct / 100), 0)
+    : null;
 
   return (
-    <div className="bg-ocean-50 border border-ocean-100 rounded-md px-4 py-3 mb-5 flex items-center justify-between">
-      <p className="text-sm font-body text-ocean-800">
-        Contribuicoes INPS estimadas em {new Date().getFullYear()}
-      </p>
-      <p className="font-display font-bold text-ocean-700">€{inpsTotal.toFixed(2)}</p>
+    <div className="space-y-5">
+      {!cfg ? (
+        <p className="text-sm font-body text-n-500 bg-amber-50 border border-amber-200 rounded-md px-3 py-2">
+          Configuracao salarial ainda nao definida. Define o salario base, subsidios e INPS em{' '}
+          <Link to="/financeiro" className="font-semibold text-ocean-700 hover:underline">Financeiro → Salarios</Link>.
+        </p>
+      ) : (
+        <div className="bg-white border border-n-200 rounded-md p-5 flex flex-wrap items-center justify-between gap-4">
+          <div className="flex flex-wrap gap-8">
+            <div>
+              <p className="text-xs font-body font-bold uppercase tracking-wide text-n-500">Salario base</p>
+              <p className="font-display font-bold text-2xl text-n-900">{fmtMoney(base)}</p>
+            </div>
+            <div>
+              <p className="text-xs font-body font-bold uppercase tracking-wide text-n-500">Subsidios</p>
+              <p className="font-display font-bold text-2xl text-n-900">{fmtMoney(subsidios)}</p>
+            </div>
+            <div>
+              <p className="text-xs font-body font-bold uppercase tracking-wide text-n-500">INPS patronal</p>
+              <p className="font-display font-bold text-2xl text-n-900">{inpsPct}%</p>
+            </div>
+            <div>
+              <p className="text-xs font-body font-bold uppercase tracking-wide text-n-500">Custo total/mes</p>
+              <p className="font-display font-bold text-2xl text-ocean-700">{fmtMoney(custoTotal)}</p>
+            </div>
+          </div>
+          <Link to="/financeiro" className="text-xs font-body font-semibold text-ocean-700 hover:underline whitespace-nowrap">Editar em Financeiro →</Link>
+        </div>
+      )}
+
+      <div className="grid grid-cols-2 gap-3">
+        <div className="bg-white border border-n-200 rounded-md px-4 py-3">
+          <p className="font-display font-bold text-xl text-n-900">{fmtMoney(paidThisYear)}</p>
+          <p className="text-xs font-body text-n-500">Pago em {year}</p>
+        </div>
+        <div className="bg-white border border-n-200 rounded-md px-4 py-3">
+          <p className="font-display font-bold text-xl text-n-900">{inpsThisYear != null ? fmtMoney(inpsThisYear) : '—'}</p>
+          <p className="text-xs font-body text-n-500">Contribuicoes INPS estimadas em {year}</p>
+        </div>
+      </div>
+
+      <h3 className="font-display font-semibold text-sm text-n-900">Historico de pagamentos</h3>
+      {!payments.length && <p className="text-sm font-body text-n-500">Sem pagamentos registados.</p>}
+      <div className="space-y-2">
+        {payments.map(p => (
+          <div key={p.id} className="flex items-center justify-between gap-3 bg-white border border-n-200 rounded-md px-4 py-3">
+            <p className="font-body font-semibold text-sm text-n-900">{MONTH_LABEL[p.month]} {p.year}</p>
+            <p className="font-display font-bold text-sm text-n-900">{fmtMoney(p.amount)}</p>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
@@ -472,8 +534,6 @@ export default function StaffDetail() {
       </button>
       <PageHeader title={staff?.name || 'Colaborador'} subtitle={staff?.role} />
 
-      <ConformidadeCard staffId={staffId} />
-
       <div className="flex gap-0.5 overflow-x-auto border-b border-n-200 mb-5">
         {TABS.map(({ key, label, Icon }) => (
           <button key={key} onClick={() => setActiveTab(key)}
@@ -486,6 +546,7 @@ export default function StaffDetail() {
       </div>
 
       {activeTab === 'ferias' && <FeriasTab staffId={staffId} />}
+      {activeTab === 'salario' && <SalarioTab staffId={staffId} />}
       {activeTab === 'documentos' && <DocumentosTab staffId={staffId} />}
       {activeTab === 'certificacoes' && <CertificacoesTab staffId={staffId} />}
     </div>
