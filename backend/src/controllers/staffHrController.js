@@ -10,7 +10,10 @@ function getOperatorId(req) {
    substitui o entitled_days que o operador configurar. */
 function suggestedLeaveDays(hireDate) {
   if (!hireDate) return null;
-  const months = Math.floor((Date.now() - new Date(hireDate)) / (30.44 * 86400000));
+  const hire = new Date(hireDate);
+  const now = new Date();
+  let months = (now.getFullYear() - hire.getFullYear()) * 12 + (now.getMonth() - hire.getMonth());
+  if (now.getDate() < hire.getDate()) months -= 1; // ainda nao completou o mes corrente
   return Math.min(22, Math.round(Math.max(0, months) * 22 / 12));
 }
 
