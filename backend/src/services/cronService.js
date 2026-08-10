@@ -138,6 +138,87 @@ async function enviarMensagem(auto, reserva) {
   });
 }
 
+/* ══════════════════════════════════════════
+   ALERTAS DE EXPIRACAO — RH (documentos/certificacoes)
+   Um email por operador por dia, com tudo o que expira nos proximos 7
+   dias (ou ja expirado). Dedupe via staff_hr_alerts: cada item so gera
+   um alerta por (kind, item_id, expiry_date) -- se o operador renovar o
+   documento a data muda e o alerta liberta-se sozinho.
+══════════════════════════════════════════ */
+async function processarAlertasExpiracaoRH() {
+  console.log('[Cron] A processar alertas de expiracao de RH...');
+
+  const hoje = new Date().toISOString().split('T')[0];
+  const em7Dias = addDias(hoje, 7);
+
+  const [{ data: docs }, { data: certs }, { data: jaEnviados }] = await Promise.all([
+    supabaseAdmin.from('staff_documents')
+      .select('id, name, expiry_date, operator_id, staff(name)')
+      .not('expiry_date', 'is', null).lte('expiry_date', em7Dias),
+    supabaseAdmin.from('staff_certifications')
+      .select('id, name, expiry_date, operator_id, staff(name)')
+      .not('expiry_date', 'is', null).lte('expiry_date', em7Dias),
+    supabaseAdmin.from('staff_hr_alerts').select('kind, item_id, expiry_date'),
+  ]);
+
+  const enviadoSet = new Set((jaEnviados || []).map((a) => `${a.kind}:${a.item_id}:${a.expiry_date}`));
+  const items = [
+    ...(docs || []).map((d) => ({ kind: 'document', ...d })),
+    ...(certs || []).map((c) => ({ kind: 'certification', ...c })),
+  ].filter((i) => !enviadoSet.has(`${i.kind}:${i.id}:${i.expiry_date}`));
+
+  if (!items.length) { console.log('[Cron] Sem alertas de RH novos.'); return; }
+
+  const porOperador = {};
+  for (const item of items) {
+    (porOperador[item.operator_id] ||= []).push(item);
+  }
+
+  const operatorIds = Object.keys(porOperador);
+  const { data: operators } = await supabaseAdmin
+    .from('operators').select('id, name, email, language').in('id', operatorIds);
+  const operatorById = Object.fromEntries((operators || []).map((o) => [o.id, o]));
+
+  for (const operatorId of operatorIds) {
+    const op = operatorById[operatorId];
+    if (!op?.email) continue;
+    try {
+      await enviarAlertaRH(op, porOperador[operatorId], hoje);
+      const logs = porOperador[operatorId].map((i) => ({
+        operator_id: operatorId, kind: i.kind, item_id: i.id, expiry_date: i.expiry_date,
+      }));
+      await supabaseAdmin.from('staff_hr_alerts').insert(logs);
+    } catch (err) {
+      console.error(`[Cron] Falha ao enviar alerta de RH para operador ${operatorId}:`, err.message);
+    }
+  }
+
+  console.log(`[Cron] Alertas de RH enviados a ${operatorIds.length} operador(es).`);
+}
+
+async function enviarAlertaRH(operator, items, hoje) {
+  const idioma = operator.language || 'pt';
+  const linhas = items
+    .sort((a, b) => new Date(a.expiry_date) - new Date(b.expiry_date))
+    .map((i) => {
+      const estado = i.expiry_date < hoje
+        ? (idioma === 'en' ? 'EXPIRED' : 'EXPIRADO')
+        : (idioma === 'en' ? 'expires' : 'expira em');
+      return `- ${i.staff?.name || '?'}: "${i.name}" — ${estado} ${i.expiry_date}`;
+    })
+    .join('\n');
+
+  const subject = idioma === 'en'
+    ? `SalDesk RH: ${items.length} document(s)/certification(s) expiring soon`
+    : `SalDesk RH: ${items.length} documento(s)/certificacao(oes) a expirar`;
+
+  const text = idioma === 'en'
+    ? `Hello ${operator.name},\n\nThe following staff documents/certifications are expiring soon or already expired:\n\n${linhas}\n\nRenew them from the RH section of your SalDesk dashboard.`
+    : `Ola ${operator.name},\n\nOs seguintes documentos/certificacoes de colaboradores estao a expirar em breve ou ja expiraram:\n\n${linhas}\n\nRenova-os na seccao RH do teu painel SalDesk.`;
+
+  await enviarEmail({ to: operator.email, subject, text });
+}
+
 async function sincronizarCanais() {
   console.log('[Cron] A sincronizar canais OTA...');
   try {
@@ -161,7 +242,8 @@ async function sincronizarCanais() {
 function iniciarCron() {
   cron.schedule('0 * * * *', processarAutomacoes, { timezone: 'Atlantic/Cape_Verde' });
   cron.schedule('*/15 * * * *', sincronizarCanais, { timezone: 'Atlantic/Cape_Verde' });
-  console.log('[Cron] Servicos iniciados — automacoes (1h) + sync OTA (15min)');
+  cron.schedule('0 8 * * *', processarAlertasExpiracaoRH, { timezone: 'Atlantic/Cape_Verde' });
+  console.log('[Cron] Servicos iniciados — automacoes (1h) + sync OTA (15min) + alertas RH (diario 08h)');
 }
 
-module.exports = { iniciarCron, processarAutomacoes, sincronizarCanais };
+module.exports = { iniciarCron, processarAutomacoes, sincronizarCanais, processarAlertasExpiracaoRH };
