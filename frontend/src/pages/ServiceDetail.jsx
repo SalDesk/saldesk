@@ -810,9 +810,6 @@ export default function ServiceDetail() {
     ? `https://wa.me/${op.whatsapp.replace(/\D/g,'')}?text=${encodeURIComponent(lang==='en'?`Hello, I'm interested in "${unit.name}" on SalDesk.`:`Olá, tenho interesse no serviço "${unit.name}" no SalDesk.`)}`
     : null;
 
-  const urgencyCount = recentBookings > 0 ? recentBookings : 3 + Math.floor(Math.random() * 12);
-  const spotsLeft = unit.capacity ? Math.max(0, unit.capacity - (recentBookings % (unit.capacity||10))) : null;
-
   /* ── RENDER ── */
   return (
     /* Sem min-h-screen em modo widget: "100vh" reflecte a altura do
@@ -1279,18 +1276,13 @@ export default function ServiceDetail() {
                   )}
                 </div>
 
-                {/* Urgency */}
-                {(urgencyCount > 0 || (spotsLeft !== null && spotsLeft < 5)) && (
+                {/* Urgency — so mostra com reservas reais dos ultimos 30 dias (recentBookings,
+                    vindo do backend); nunca fabrica um numero quando nao ha nenhuma reserva. */}
+                {recentBookings > 0 && (
                   <div className="px-5 py-3 border-b border-n-100 bg-amber-50">
-                    {spotsLeft !== null && spotsLeft > 0 && spotsLeft < 5 ? (
-                      <p className="text-xs font-body font-semibold text-amber-700">
-                        <span className="font-bold">{spotsLeft}</span> {lang==='en'?'spots left — book now!':'vagas restantes — reserve já!'}
-                      </p>
-                    ) : (
-                      <p className="text-xs font-body font-semibold text-amber-700">
-                        <span className="font-bold">{urgencyCount}</span> {lang==='en'?'bookings this month':'reservas este mês'}
-                      </p>
-                    )}
+                    <p className="text-xs font-body font-semibold text-amber-700">
+                      <span className="font-bold">{recentBookings}</span> {lang==='en'?'bookings this month':'reservas este mês'}
+                    </p>
                   </div>
                 )}
 
