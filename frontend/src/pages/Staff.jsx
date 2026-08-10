@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { UpgradeModal } from '../components/PlanGuard';
 import usePlan from '../hooks/usePlan';
 import { io } from 'socket.io-client';
@@ -90,6 +91,7 @@ function StaffAvatar({ member, size = 40, showStatus = true }) {
 
 /* ── StaffCard ── */
 function StaffCard({ member, onEdit, onDelete, onCreateAccount, creatingAccountId }) {
+  const navigate = useNavigate();
   return (
     <div className="bg-white rounded-md border border-n-200 shadow-sm p-4 flex flex-col gap-3">
       <div className="flex items-start justify-between">
@@ -108,6 +110,11 @@ function StaffCard({ member, onEdit, onDelete, onCreateAccount, creatingAccountI
           </div>
         </div>
         <div className="flex gap-0.5">
+          <button onClick={() => navigate(`/colaboradores/${member.id}`)}
+            title="Ferias, documentos e certificacoes"
+            className="p-1.5 rounded text-n-400 hover:text-ocean-700 hover:bg-ocean-50 transition-colors">
+            <ClipboardCheck size={14} strokeWidth={1.75} />
+          </button>
           <button onClick={() => onEdit(member)}
             className="p-1.5 rounded text-n-400 hover:text-ocean-700 hover:bg-ocean-50 transition-colors">
             <Pencil size={14} strokeWidth={1.75} />

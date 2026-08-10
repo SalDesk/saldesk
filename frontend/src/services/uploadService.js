@@ -35,3 +35,39 @@ export function validateImageFile(file) {
   }
   return null;
 }
+
+/**
+ * Upload a single document (PDF ou imagem digitalizada) ao servidor.
+ * @param {File} file
+ * @param {(pct: number) => void} onProgress
+ * @returns {{ url: string }}
+ */
+export async function uploadDocument(file, onProgress) {
+  const formData = new FormData();
+  formData.append('document', file);
+
+  const { data } = await api.post('/upload/document', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+    onUploadProgress: (evt) => {
+      if (onProgress && evt.total) {
+        onProgress(Math.round((evt.loaded / evt.total) * 100));
+      }
+    },
+  });
+
+  return data.data; // { url }
+}
+
+export const ALLOWED_DOCUMENT_TYPES = ['application/pdf', 'image/jpeg', 'image/png', 'image/webp'];
+export const MAX_DOCUMENT_SIZE_MB    = 10;
+export const MAX_DOCUMENT_SIZE_BYTES = MAX_DOCUMENT_SIZE_MB * 1024 * 1024;
+
+export function validateDocumentFile(file) {
+  if (!ALLOWED_DOCUMENT_TYPES.includes(file.type)) {
+    return `Formato invalido: ${file.name}. Usa PDF, JPG, PNG ou WebP.`;
+  }
+  if (file.size > MAX_DOCUMENT_SIZE_BYTES) {
+    return `Ficheiro demasiado grande: ${file.name}. Maximo ${MAX_DOCUMENT_SIZE_MB}MB.`;
+  }
+  return null;
+}

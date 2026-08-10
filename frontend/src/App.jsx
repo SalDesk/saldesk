@@ -27,6 +27,7 @@ const Integrations    = lazy(() => import('./pages/Integrations'));
 const Settings        = lazy(() => import('./pages/Settings'));
 const PageEditor       = lazy(() => import('./pages/PageEditor'));
 const Staff           = lazy(() => import('./pages/Staff'));
+const StaffDetail     = lazy(() => import('./pages/StaffDetail'));
 const Reviews         = lazy(() => import('./pages/Reviews'));
 const Profile         = lazy(() => import('./pages/Profile'));
 const Fleet           = lazy(() => import('./pages/Fleet'));
@@ -126,6 +127,7 @@ export default function App() {
           <Route path="integracoes"   element={<PlanGuard plan="pro"      feature="integracoes">  <Integrations /></PlanGuard>} />
           <Route path="guias"         element={<PlanGuard plan="business" feature="guias">        <Guides /></PlanGuard>} />
           <Route path="colaboradores" element={<Staff />} />
+          <Route path="colaboradores/:staffId" element={<StaffDetail />} />
           <Route path="housekeeping"  element={<Housekeeping />} />
           <Route path="manutencao"    element={<Maintenance />} />
           <Route path="menu-digital"  element={<MenuDigital />} />
