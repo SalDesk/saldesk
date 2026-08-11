@@ -45,6 +45,10 @@ export default {
           50:  '#F0FDFA',
         },
         error: '#DC2626',
+        success: {
+          DEFAULT: '#16A34A',
+          light: '#DCFCE7',
+        },
       },
       fontFamily: {
         display: ['Sora', 'sans-serif'],
