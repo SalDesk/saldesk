@@ -42,7 +42,7 @@ export const FEATURE_DESCRIPTIONS = {
   vendedor:              'Activa o modo Vendedor de Praia — colaboradores vendem tours no campo com uma app simplificada.',
 };
 
-export const PLAN_PRICES = { starter: 29, pro: 69, business: 129 };
+export const PLAN_PRICES = { starter: 29, business: 69, pro: 79 };
 
 export default function usePlan() {
   const { operator } = useAuthStore();

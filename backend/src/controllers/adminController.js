@@ -2,7 +2,7 @@ const { supabaseAdmin } = require('../config/supabase');
 const { enviarEmail }   = require('../helpers/emailHelper');
 const ExcelJS           = require('exceljs');
 
-const PLAN_PRICES   = { starter: 29, business: 59, pro: 99 };
+const PLAN_PRICES   = { starter: 29, business: 69, pro: 79 };
 const TIPO_SCORE    = { hotel: 30, activity: 25, restaurant: 20, rentacar: 15 };
 const LEAD_STATUSES = ['novo', 'contactado', 'demo_agendada', 'proposta_enviada', 'convertido', 'descartado'];
 const STAGE_LABELS  = { novo: 'Novo', contactado: 'Contactado', demo_agendada: 'Demo agendada', proposta_enviada: 'Proposta enviada', convertido: 'Convertido', descartado: 'Descartado' };
@@ -42,7 +42,7 @@ async function getStats(req, res, next) {
     const past48h       = new Date(now.getTime() - 48 * 3600000).toISOString();
     const past30dIso    = new Date(now.getTime() - 30 * 86400000).toISOString();
 
-    const [opsRes, resRes, leads24hRes, trialsRes, newLeadsRes, allLeadsRes] = await Promise.all([
+    const [opsRes, resRes, leads24hRes, trialsRes, newLeadsRes, allLeadsRes, priceMap] = await Promise.all([
       supabaseAdmin.from('operators')
         .select('id, name, email, plan, plan_status, operator_type, trial_ends_at, created_at'),
       supabaseAdmin.from('reservations')
@@ -60,6 +60,7 @@ async function getStats(req, res, next) {
         .gte('created_at', past48h)
         .eq('status', 'novo'),
       supabaseAdmin.from('operator_leads').select('id, status, created_at'),
+      loadPriceMap(),
     ]);
 
     const operators = opsRes.data || [];
@@ -68,7 +69,7 @@ async function getStats(req, res, next) {
 
     const mrr = operators
       .filter(o => o.plan_status === 'active')
-      .reduce((s, o) => s + (PLAN_PRICES[o.plan] || 0), 0);
+      .reduce((s, o) => s + (priceMap[o.plan] || 0), 0);
 
     const byPlan = { starter: 0, business: 0, pro: 0 };
     operators.forEach(o => { if (byPlan[o.plan] !== undefined) byPlan[o.plan]++; });
@@ -97,7 +98,7 @@ async function getStats(req, res, next) {
     /* MRR estimado — últimos 6 meses (operadores activos criados ate cada mes) */
     const mrr_by_month = months.map(m => {
       const activeByThen = operators.filter(o => o.plan_status === 'active' && o.created_at.slice(0, 7) <= m);
-      const total = activeByThen.reduce((s, o) => s + (PLAN_PRICES[o.plan] || 0), 0);
+      const total = activeByThen.reduce((s, o) => s + (priceMap[o.plan] || 0), 0);
       return { label: MONTH_NAMES[parseInt(m.slice(5)) - 1], mrr: total };
     });
 
@@ -1876,9 +1877,11 @@ async function getAnalyticsChurn(req, res, next) {
     const riskThreshold = new Date(now - 14 * 24 * 60 * 60 * 1000).toISOString();
     const trialWarning  = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000).toISOString();
 
-    const { data: allOps } = await supabaseAdmin
-      .from('operators')
-      .select('id, name, email, plan, plan_status, operator_type, created_at, updated_at, trial_ends_at');
+    const [{ data: allOps }, priceMap] = await Promise.all([
+      supabaseAdmin.from('operators')
+        .select('id, name, email, plan, plan_status, operator_type, created_at, updated_at, trial_ends_at'),
+      loadPriceMap(),
+    ]);
 
     const ops           = allOps || [];
     const cancelled     = ops.filter(o => o.plan_status === 'cancelled');
@@ -1893,7 +1896,7 @@ async function getAnalyticsChurn(req, res, next) {
       )
     ).slice(0, 20);
 
-    const ltvByPlan = Object.entries(PLAN_PRICES).map(([plan, price]) => {
+    const ltvByPlan = Object.entries(priceMap).map(([plan, price]) => {
       const planOps = ops.filter(o => o.plan === plan);
       const avgMonths = planOps.length > 0
         ? planOps.reduce((s, o) => {
@@ -1967,17 +1970,18 @@ async function sendAnalyticsReport(req, res, next) {
     const year      = now.getFullYear();
     const thisMonth = now.toISOString().slice(0, 7);
 
-    const [opsRes, resRes, cusRes] = await Promise.all([
+    const [opsRes, resRes, cusRes, priceMap] = await Promise.all([
       supabaseAdmin.from('operators').select('id, plan, plan_status, created_at'),
       supabaseAdmin.from('reservations').select('id, status, total_amount, created_at'),
       supabaseAdmin.from('customers').select('id', { count: 'exact' }),
+      loadPriceMap(),
     ]);
 
     const ops     = opsRes.data  || [];
     const reservas = resRes.data || [];
     const newOps  = ops.filter(o => o.created_at?.slice(0, 7) === thisMonth).length;
     const paying  = ops.filter(o => o.plan_status === 'active').length;
-    const mrr     = ops.filter(o => o.plan_status === 'active').reduce((s, o) => s + (PLAN_PRICES[o.plan] || 0), 0);
+    const mrr     = ops.filter(o => o.plan_status === 'active').reduce((s, o) => s + (priceMap[o.plan] || 0), 0);
     const revenue = reservas
       .filter(r => r.status === 'checked_out' && r.created_at?.slice(0, 7) === thisMonth)
       .reduce((s, r) => s + Number(r.total_amount || 0), 0);
