@@ -2,23 +2,23 @@ import { useEffect, useState } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import { CheckCircle, XCircle, Loader2 } from 'lucide-react';
 import api from '../services/api';
-import { confirmCheckout } from '../services/billingService';
+import { confirmSubscription } from '../services/billingService';
 import useAuthStore from '../store/authStore';
 
 export default function BillingSuccess() {
   const [searchParams] = useSearchParams();
   const setOperator = useAuthStore((s) => s.setOperator);
   const lang = localStorage.getItem('sd-lang') || 'pt';
-  const orderId = searchParams.get('token');
+  const subscriptionId = searchParams.get('subscription_id');
   const [status, setStatus] = useState('confirming');
 
   useEffect(() => {
-    if (!orderId) { setStatus('error'); return; }
-    confirmCheckout(orderId)
+    if (!subscriptionId) { setStatus('error'); return; }
+    confirmSubscription(subscriptionId)
       .then(() => api.get('/auth/me'))
       .then(({ data }) => { setOperator(data.data.operator); setStatus('done'); })
       .catch(() => setStatus('error'));
-  }, [orderId]);
+  }, [subscriptionId]);
 
   return (
     <div className="min-h-screen bg-n-50 flex items-center justify-center p-4">

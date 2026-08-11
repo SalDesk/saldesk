@@ -1,5 +1,8 @@
 const { supabaseAdmin } = require('../config/supabase');
-const { createOrder, captureOrder, verifyWebhookSignature } = require('../services/platformPaypalService');
+const {
+  createProduct, createPlan, createSubscription, getSubscription, cancelSubscription,
+  verifyWebhookSignature,
+} = require('../services/platformPaypalService');
 const { loadPriceMap } = require('../helpers/pricing');
 const { enviarEmail } = require('../helpers/emailHelper');
 const { frontendBase } = require('../utils/urls');
@@ -22,12 +25,43 @@ async function chamarGatewayPaypal(fn) {
   }
 }
 
-/* ─── Checkout ───────────────────────────────────────────────
-   Fluxo de redirect simples: cria a ordem, guarda um platform_payments
-   pending, devolve o link de aprovacao da PayPal. A confirmacao real
-   acontece em confirmCheckout (quando o browser volta) e, como reforco
-   idempotente, no webhook. */
-async function createCheckout(req, res, next) {
+/* Garante que existe um plano PayPal (Product+Plan) para este tier,
+   criando-o na primeira vez que for preciso -- sem passo manual de setup.
+   Cacheia em platform_paypal_plans, chave primaria em `plan` evita duplicar
+   em corridas concorrentes (upsert e idempotente). */
+async function ensurePaypalPlan(plan, amount) {
+  const { data: existing } = await supabaseAdmin
+    .from('platform_paypal_plans').select('paypal_plan_id').eq('plan', plan).maybeSingle();
+  if (existing) return existing.paypal_plan_id;
+
+  const { data: anyPlan } = await supabaseAdmin
+    .from('platform_paypal_plans').select('paypal_product_id').limit(1).maybeSingle();
+  const productId = anyPlan?.paypal_product_id
+    || (await chamarGatewayPaypal(() => createProduct())).id;
+
+  const paypalPlan = await chamarGatewayPaypal(() => createPlan(productId, plan, amount));
+
+  const { error: upsertError } = await supabaseAdmin.from('platform_paypal_plans').upsert({
+    plan, paypal_product_id: productId, paypal_plan_id: paypalPlan.id,
+  }, { onConflict: 'plan' });
+  if (upsertError) throw upsertError;
+
+  return paypalPlan.id;
+}
+
+/* ─── Subscricao ─────────────────────────────────────────────
+   Fluxo de redirect: cria a subscricao na PayPal, guarda um
+   platform_payments 'pending' com gateway_order_id = subscription_id
+   (mesmo padrao ja usado no fluxo de pagamento unico da ronda anterior),
+   devolve o link de aprovacao. Esta linha pending e a ligacao estavel
+   entre "esta tentativa de checkout" e "este operador" -- disponivel
+   desde o inicio, ANTES de confirmSubscription ou do webhook chegarem
+   (evita corrida: qual dos dois chega primeiro nao importa, ambos
+   encontram o mesmo pending pela mesma chave). Nao escreve nada em
+   operators aqui -- so depois de confirmado, para nao alterar o plano/
+   estado real do operador so por ter iniciado um checkout que pode nunca
+   ser aprovado. */
+async function createSubscriptionCheckout(req, res, next) {
   try {
     const { plan } = req.body;
     if (!PLANS.includes(plan)) {
@@ -40,91 +74,165 @@ async function createCheckout(req, res, next) {
       return res.status(400).json({ error: 'Preco nao configurado para este plano', code: 'PRICE_NOT_FOUND' });
     }
 
+    const planId = await ensurePaypalPlan(plan, amount);
+
     const base = frontendBase();
-    const order = await chamarGatewayPaypal(() => createOrder(
-      amount, plan,
+    const subscription = await chamarGatewayPaypal(() => createSubscription(
+      planId,
       `${base}/definicoes/facturacao/sucesso`,
       `${base}/definicoes/facturacao/cancelado`
     ));
+
+    const approveLink = (subscription.links || []).find((l) => l.rel === 'approve');
+    if (!approveLink) throw new Error('PayPal nao devolveu link de aprovacao');
 
     const { error: insertError } = await supabaseAdmin.from('platform_payments').insert({
       operator_id: req.operator.id,
       plan,
       amount_eur: amount,
       gateway: 'paypal',
-      gateway_order_id: order.id,
+      gateway_order_id: subscription.id,
       status: 'pending',
     });
     if (insertError) throw insertError;
 
-    const approveLink = (order.links || []).find((l) => l.rel === 'approve');
-    if (!approveLink) throw new Error('PayPal nao devolveu link de aprovacao');
-
-    return res.json({ data: { approval_url: approveLink.href, order_id: order.id }, message: 'Checkout criado' });
+    return res.json({
+      data: { approval_url: approveLink.href, subscription_id: subscription.id },
+      message: 'Subscricao criada',
+    });
   } catch (err) { next(err); }
 }
 
 /* Chamada pela pagina de sucesso (BillingSuccess.jsx) assim que a PayPal
-   redirecciona de volta com ?token=<orderId> -- confirmacao imediata e
-   sincrona, sem depender só do webhook assincrono. Idempotente: se o
-   pagamento ja estiver 'completed' (ex. o webhook chegou primeiro), so
-   devolve o estado actual sem capturar de novo. */
-async function confirmCheckout(req, res, next) {
+   redirecciona de volta com ?subscription_id=... -- confirmacao imediata
+   e sincrona, sem depender só do webhook assincrono. Idempotente: se o
+   pending ja estiver 'completed' (ex. o webhook chegou primeiro), so
+   devolve o estado actual sem reactivar. */
+async function confirmSubscription(req, res, next) {
   try {
-    const { order_id } = req.body;
-    if (!order_id) return res.status(400).json({ error: 'order_id obrigatorio', code: 'MISSING_FIELDS' });
+    const { subscription_id } = req.body;
+    if (!subscription_id) return res.status(400).json({ error: 'subscription_id obrigatorio', code: 'MISSING_FIELDS' });
 
     const { data: payment } = await supabaseAdmin
       .from('platform_payments').select('*')
-      .eq('gateway_order_id', order_id).eq('operator_id', req.operator.id).maybeSingle();
-    if (!payment) return res.status(404).json({ error: 'Pagamento nao encontrado', code: 'NOT_FOUND' });
+      .eq('gateway_order_id', subscription_id).eq('operator_id', req.operator.id).maybeSingle();
+    if (!payment) return res.status(404).json({ error: 'Subscricao nao encontrada', code: 'NOT_FOUND' });
 
     if (payment.status === 'completed') {
-      return res.json({ data: { status: 'completed' }, message: 'Pagamento ja confirmado' });
+      return res.json({ data: { status: 'active' }, message: 'Subscricao ja confirmada' });
     }
 
-    const capture = await chamarGatewayPaypal(() => captureOrder(order_id));
-    const captured = capture.status === 'COMPLETED';
-    if (!captured) {
-      await supabaseAdmin.from('platform_payments').update({ status: 'failed' }).eq('id', payment.id);
-      return res.status(402).json({ error: 'Pagamento nao foi concluido', code: 'PAYMENT_NOT_COMPLETED' });
+    const subscription = await chamarGatewayPaypal(() => getSubscription(subscription_id));
+    if (subscription.status !== 'ACTIVE') {
+      return res.status(402).json({ error: 'Subscricao ainda nao esta activa', code: 'SUBSCRIPTION_NOT_ACTIVE' });
     }
 
-    await aplicarPagamentoConfirmado(payment);
-    return res.json({ data: { status: 'completed' }, message: 'Pagamento confirmado' });
+    await activarSubscricaoConfirmada(payment, subscription_id, subscription.billing_info?.next_billing_time);
+    return res.json({ data: { status: 'active' }, message: 'Subscricao confirmada' });
   } catch (err) { next(err); }
 }
 
-async function aplicarPagamentoConfirmado(payment) {
+/* Ponto unico onde uma subscricao passa a valer -- chamado por
+   confirmSubscription (retorno sincrono do browser) OU pelo webhook
+   PAYMENT.SALE.COMPLETED da primeira cobranca, o que chegar primeiro;
+   qualquer um dos dois encontra o mesmo `payment` pending por
+   gateway_order_id e marca 'completed', por isso nunca duplica. */
+async function activarSubscricaoConfirmada(payment, subscriptionId, nextBillingTime) {
   const nowIso = new Date().toISOString();
-  const paidUntil = new Date(Date.now() + 30 * 86400000).toISOString();
+  const paidUntil = nextBillingTime || new Date(Date.now() + 30 * 86400000).toISOString();
 
   await supabaseAdmin.from('platform_payments')
     .update({ status: 'completed', completed_at: nowIso })
     .eq('id', payment.id);
 
   const { data: current } = await supabaseAdmin
-    .from('operators').select('name, email, plan, notes_log').eq('id', payment.operator_id).single();
-
-  const logEntry = {
-    text: `Pagamento PayPal confirmado — plano "${payment.plan}", €${payment.amount_eur}`,
-    at: nowIso, type: 'payment',
-  };
+    .from('operators').select('name, email, notes_log').eq('id', payment.operator_id).single();
   const log = Array.isArray(current?.notes_log) ? current.notes_log : [];
 
   await supabaseAdmin.from('operators').update({
     plan: payment.plan,
     plan_status: 'active',
+    paypal_subscription_id: subscriptionId,
     plan_paid_until: paidUntil,
-    notes_log: [...log, logEntry],
+    notes_log: [...log, { text: `Subscricao PayPal activada — plano "${payment.plan}", €${payment.amount_eur}`, at: nowIso, type: 'payment' }],
     updated_at: nowIso,
   }).eq('id', payment.operator_id);
 
   if (current?.email) {
     enviarEmail({
       to: current.email,
+      subject: 'Subscricao activa — SalDesk',
+      text: `Ola ${current.name},\n\nA tua subscricao SalDesk (plano ${payment.plan}, €${payment.amount_eur}/mes) esta activa e renova automaticamente.\n\nProxima cobranca: ${paidUntil.split('T')[0]}.\n\nObrigado por usares a SalDesk.`,
+    }).catch(() => {});
+  }
+}
+
+/* Renovacoes (2a cobranca em diante) -- ja nao ha pending platform_payments
+   para estas, o operator ja tem paypal_subscription_id desde a primeira
+   activacao. Cria uma linha nova por cada cobranca recorrente. */
+async function registarRenovacao(operatorId, plan, amountEur, nextBillingTime) {
+  const nowIso = new Date().toISOString();
+  const paidUntil = nextBillingTime || new Date(Date.now() + 30 * 86400000).toISOString();
+
+  await supabaseAdmin.from('platform_payments').insert({
+    operator_id: operatorId, plan, amount_eur: amountEur,
+    gateway: 'paypal', status: 'completed', completed_at: nowIso,
+  });
+
+  await supabaseAdmin.from('operators').update({
+    plan_paid_until: paidUntil, plan_status: 'active', updated_at: nowIso,
+  }).eq('id', operatorId);
+
+  const { data: op } = await supabaseAdmin.from('operators').select('name, email').eq('id', operatorId).single();
+  if (op?.email) {
+    enviarEmail({
+      to: op.email,
       subject: 'Pagamento confirmado — SalDesk',
-      text: `Ola ${current.name},\n\nO teu pagamento de €${payment.amount_eur} para o plano ${payment.plan} foi confirmado.\n\nA tua subscricao esta activa ate ${paidUntil.split('T')[0]}.\n\nObrigado por usares a SalDesk.`,
+      text: `Ola ${op.name},\n\nO teu pagamento de €${amountEur} para o plano ${plan} foi confirmado.\n\nA tua subscricao renova automaticamente. Proxima cobranca: ${paidUntil.split('T')[0]}.\n\nObrigado por usares a SalDesk.`,
+    }).catch(() => {});
+  }
+}
+
+async function cancelMySubscription(req, res, next) {
+  try {
+    const { data: operator } = await supabaseAdmin
+      .from('operators').select('id, name, email, paypal_subscription_id, notes_log').eq('id', req.operator.id).single();
+    if (!operator?.paypal_subscription_id) {
+      return res.status(400).json({ error: 'Nao existe subscricao activa para cancelar', code: 'NO_SUBSCRIPTION' });
+    }
+
+    await chamarGatewayPaypal(() => cancelSubscription(operator.paypal_subscription_id, 'Cancelado pelo operador via SalDesk'));
+
+    const nowIso = new Date().toISOString();
+    const log = Array.isArray(operator.notes_log) ? operator.notes_log : [];
+    await supabaseAdmin.from('operators').update({
+      plan_status: 'cancelled',
+      notes_log: [...log, { text: 'Subscricao PayPal cancelada pelo operador', at: nowIso, type: 'payment' }],
+      updated_at: nowIso,
+    }).eq('id', operator.id);
+
+    return res.json({ data: { status: 'cancelled' }, message: 'Subscricao cancelada' });
+  } catch (err) { next(err); }
+}
+
+async function actualizarEstadoPorSubscricao(subscriptionId, novoEstado, motivo) {
+  const { data: op } = await supabaseAdmin
+    .from('operators').select('id, name, email, notes_log').eq('paypal_subscription_id', subscriptionId).maybeSingle();
+  if (!op) return;
+
+  const nowIso = new Date().toISOString();
+  const log = Array.isArray(op.notes_log) ? op.notes_log : [];
+  await supabaseAdmin.from('operators').update({
+    plan_status: novoEstado,
+    notes_log: [...log, { text: motivo, at: nowIso, type: 'payment' }],
+    updated_at: nowIso,
+  }).eq('id', op.id);
+
+  if (op.email) {
+    const subject = novoEstado === 'suspended' ? 'A tua subscricao SalDesk foi suspensa' : 'A tua subscricao SalDesk foi cancelada';
+    enviarEmail({
+      to: op.email, subject,
+      text: `Ola ${op.name},\n\n${motivo}\n\nPodes reactivar a qualquer momento em Definicoes > Facturacao.\n\nEquipa SalDesk`,
     }).catch(() => {});
   }
 }
@@ -136,16 +244,54 @@ async function webhookPaypal(req, res, next) {
     if (!valid) { console.warn('[Billing Webhook] Assinatura invalida, ignorado'); return; }
 
     const event = req.body;
-    if (event.event_type !== 'PAYMENT.CAPTURE.COMPLETED') return;
 
-    const orderId = event.resource?.supplementary_data?.related_ids?.order_id;
-    if (!orderId) return;
+    if (event.event_type === 'PAYMENT.SALE.COMPLETED') {
+      const subscriptionId = event.resource?.billing_agreement_id;
+      if (!subscriptionId) return;
+      const amount = Number(event.resource?.amount?.total || 0);
 
-    const { data: payment } = await supabaseAdmin
-      .from('platform_payments').select('*').eq('gateway_order_id', orderId).maybeSingle();
-    if (!payment || payment.status === 'completed') return;
+      /* Primeira cobranca: ainda ha um pending com este subscription_id
+         como gateway_order_id -- pode ter chegado antes de
+         confirmSubscription (corrida), activarSubscricaoConfirmada e
+         idempotente por isso nao ha problema em qualquer ordem. */
+      const { data: pending } = await supabaseAdmin
+        .from('platform_payments').select('*')
+        .eq('gateway_order_id', subscriptionId).eq('status', 'pending').maybeSingle();
+      if (pending) {
+        await activarSubscricaoConfirmada(pending, subscriptionId, null);
+        return;
+      }
 
-    await aplicarPagamentoConfirmado(payment);
+      /* Renovacao: ja nao ha pending, o operator ja tem
+         paypal_subscription_id da primeira activacao. */
+      const { data: op } = await supabaseAdmin
+        .from('operators').select('id, plan').eq('paypal_subscription_id', subscriptionId).maybeSingle();
+      if (!op) return;
+      await registarRenovacao(op.id, op.plan, amount, null);
+      return;
+    }
+
+    if (event.event_type === 'BILLING.SUBSCRIPTION.SUSPENDED') {
+      await actualizarEstadoPorSubscricao(event.resource?.id, 'suspended', 'A PayPal suspendeu a subscricao (falhas de pagamento repetidas).');
+      return;
+    }
+    if (event.event_type === 'BILLING.SUBSCRIPTION.CANCELLED' || event.event_type === 'BILLING.SUBSCRIPTION.EXPIRED') {
+      await actualizarEstadoPorSubscricao(event.resource?.id, 'cancelled', 'A subscricao PayPal foi cancelada ou expirou.');
+      return;
+    }
+    if (event.event_type === 'BILLING.SUBSCRIPTION.PAYMENT.FAILED') {
+      /* So notifica -- a PayPal ainda vai retentar a cobranca pelo seu
+         proprio calendario de dunning, nao mexe em plan_status aqui. */
+      const { data: op } = await supabaseAdmin
+        .from('operators').select('name, email').eq('paypal_subscription_id', event.resource?.id).maybeSingle();
+      if (op?.email) {
+        enviarEmail({
+          to: op.email, subject: 'Falha no pagamento da subscricao SalDesk',
+          text: `Ola ${op.name},\n\nNao foi possivel cobrar a tua subscricao SalDesk este mes. A PayPal vai tentar novamente automaticamente.\n\nSe o cartao mudou, actualiza-o directamente na tua conta PayPal.\n\nEquipa SalDesk`,
+        }).catch(() => {});
+      }
+      return;
+    }
   } catch (err) { console.error('[Billing Webhook]', err.message); }
 }
 
@@ -160,4 +306,7 @@ async function getBillingHistory(req, res, next) {
   } catch (err) { next(err); }
 }
 
-module.exports = { createCheckout, confirmCheckout, webhookPaypal, getBillingHistory };
+module.exports = {
+  createSubscriptionCheckout, confirmSubscription, cancelMySubscription,
+  webhookPaypal, getBillingHistory,
+};

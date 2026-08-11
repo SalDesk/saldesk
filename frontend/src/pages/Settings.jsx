@@ -9,7 +9,7 @@ import {
 } from 'lucide-react';
 import api from '../services/api';
 import { updateOperator, changePassword } from '../services/authService';
-import { createCheckout, getBillingHistory } from '../services/billingService';
+import { createSubscription, cancelSubscription, getBillingHistory } from '../services/billingService';
 import PasswordStrength, { getPasswordStrength } from '../components/auth/PasswordStrength';
 import useAuthStore from '../store/authStore';
 import usePlan, { PLAN_PRICES } from '../hooks/usePlan';
@@ -488,27 +488,44 @@ const STATUS_LABEL = { trial: 'Periodo de avaliacao', active: 'Activo', suspende
 const STATUS_TONE  = { trial: 'text-ocean-700 bg-ocean-50', active: 'text-green-700 bg-green-50', suspended: 'text-error bg-red-50', cancelled: 'text-n-500 bg-n-100' };
 
 function FacturacaoTab() {
-  const { operator } = useAuthStore();
+  const { operator, setOperator } = useAuthStore();
   const { isInTrial, isTrialExpired, trialDaysLeft } = usePlan();
   const [history, setHistory] = useState([]);
-  const [payingPlan, setPayingPlan] = useState(null);
+  const [subscribingPlan, setSubscribingPlan] = useState(null);
+  const [cancelling, setCancelling] = useState(false);
+  const [showCancelModal, setShowCancelModal] = useState(false);
   const [error, setError] = useState('');
 
   useEffect(() => { getBillingHistory().then(setHistory); }, []);
 
-  async function handlePay(plan) {
+  async function handleSubscribe(plan) {
     setError('');
-    setPayingPlan(plan);
+    setSubscribingPlan(plan);
     try {
-      const { approval_url } = await createCheckout(plan);
+      const { approval_url } = await createSubscription(plan);
       window.location.href = approval_url;
     } catch {
-      setError('Nao foi possivel iniciar o pagamento. Tenta novamente.');
-      setPayingPlan(null);
+      setError('Nao foi possivel iniciar a subscricao. Tenta novamente.');
+      setSubscribingPlan(null);
+    }
+  }
+
+  async function handleCancel() {
+    setCancelling(true);
+    try {
+      await cancelSubscription();
+      const { data } = await api.get('/auth/me');
+      setOperator(data.data.operator);
+      setShowCancelModal(false);
+    } catch {
+      setError('Nao foi possivel cancelar a subscricao. Tenta novamente.');
+    } finally {
+      setCancelling(false);
     }
   }
 
   const paidUntil = operator?.plan_paid_until ? new Date(operator.plan_paid_until) : null;
+  const hasActiveSubscription = operator?.plan_status === 'active' && !!operator?.paypal_subscription_id;
 
   return (
     <div className="space-y-5 max-w-2xl">
@@ -518,12 +535,22 @@ function FacturacaoTab() {
             <p className="font-display font-bold text-lg text-n-900">{PLAN_LABEL[operator?.plan] || operator?.plan}</p>
             {isInTrial() && <p className="text-xs font-body text-n-500 mt-1">{trialDaysLeft()} dias restantes no periodo de avaliacao</p>}
             {isTrialExpired() && <p className="text-xs font-body text-error mt-1">Periodo de avaliacao terminado</p>}
-            {paidUntil && <p className="text-xs font-body text-n-500 mt-1">Pago ate {paidUntil.toLocaleDateString('pt-PT')}</p>}
+            {hasActiveSubscription && paidUntil && (
+              <p className="text-xs font-body text-n-500 mt-1">Renova automaticamente a {paidUntil.toLocaleDateString('pt-PT')}</p>
+            )}
+            {!hasActiveSubscription && paidUntil && (
+              <p className="text-xs font-body text-n-500 mt-1">Pago ate {paidUntil.toLocaleDateString('pt-PT')}</p>
+            )}
           </div>
           <span className={`text-xs font-body font-semibold px-3 py-1.5 rounded-full ${STATUS_TONE[operator?.plan_status] || 'text-n-500 bg-n-100'}`}>
             {STATUS_LABEL[operator?.plan_status] || operator?.plan_status}
           </span>
         </div>
+        {hasActiveSubscription && (
+          <button onClick={() => setShowCancelModal(true)} className="text-xs font-body font-semibold text-error hover:underline mt-3">
+            Cancelar subscricao
+          </button>
+        )}
       </Card>
 
       {error && <p className="text-sm font-body text-error bg-red-50 border border-red-200 rounded px-3 py-2">{error}</p>}
@@ -540,12 +567,12 @@ function FacturacaoTab() {
                   variant={isCurrent ? 'secondary' : 'primary'}
                   size="sm"
                   className="w-full"
-                  loading={payingPlan === plan}
+                  loading={subscribingPlan === plan}
                   disabled={isCurrent}
                   icon={Wallet}
-                  onClick={() => handlePay(plan)}
+                  onClick={() => handleSubscribe(plan)}
                 >
-                  {isCurrent ? 'Plano actual' : 'Pagar'}
+                  {isCurrent ? 'Plano actual' : 'Subscrever'}
                 </Button>
               </div>
             </Card>
@@ -572,6 +599,19 @@ function FacturacaoTab() {
           ))}
         </div>
       </Card>
+
+      <Modal open={showCancelModal} onClose={() => setShowCancelModal(false)} title="Cancelar subscricao">
+        <div className="space-y-4">
+          <p className="text-sm font-body text-n-600">
+            Tens a certeza que queres cancelar a subscricao? A cobranca automatica mensal termina
+            imediatamente e a conta fica suspensa assim que o periodo já pago acabar.
+          </p>
+          <div className="flex gap-3">
+            <Button variant="secondary" onClick={() => setShowCancelModal(false)} className="flex-1">Voltar</Button>
+            <Button variant="danger" loading={cancelling} onClick={handleCancel} className="flex-1">Confirmar cancelamento</Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }

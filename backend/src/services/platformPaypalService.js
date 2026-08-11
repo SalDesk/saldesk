@@ -2,7 +2,9 @@ const axios = require('axios');
 
 /* Conta PayPal Business da propria SalDesk -- para cobrar a subscricao dos
    operadores, distinta das credenciais por-operador em paypalService.js
-   (usadas para os operadores cobrarem os SEUS clientes). */
+   (usadas para os operadores cobrarem os SEUS clientes). Usa a
+   Subscriptions API (cobranca recorrente real), nao a Orders API
+   (pagamento unico). */
 const BASE = process.env.PLATFORM_PAYPAL_MODE === 'production'
   ? 'https://api-m.paypal.com'
   : 'https://api-m.sandbox.paypal.com';
@@ -23,19 +25,57 @@ async function getAccessToken() {
   return data.access_token;
 }
 
-async function createOrder(amountEur, plan, returnUrl, cancelUrl) {
+/* Passo 1 de setup (uma vez por instalacao) -- o "produto" a que os
+   planos de preco ficam ligados. Chamado por ensurePaypalPlan quando
+   ainda nao existe nenhum plano criado. */
+async function createProduct() {
   const token = await getAccessToken();
   const { data } = await axios.post(
-    `${BASE}/v2/checkout/orders`,
+    `${BASE}/v1/catalogs/products`,
     {
-      intent: 'CAPTURE',
-      purchase_units: [{
-        amount: { currency_code: 'EUR', value: Number(amountEur).toFixed(2) },
-        description: `Subscricao SalDesk — plano ${plan}`,
+      name: 'Subscricao SalDesk',
+      description: 'Subscricao mensal da plataforma SalDesk (gestao turistica)',
+      type: 'SERVICE',
+      category: 'SOFTWARE',
+    },
+    { headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } }
+  );
+  return data;
+}
+
+/* Passo 2 de setup (uma vez por tier) -- plano de preco fixo mensal,
+   recorrente indefinidamente (total_cycles:0). */
+async function createPlan(productId, plan, priceEur) {
+  const token = await getAccessToken();
+  const { data } = await axios.post(
+    `${BASE}/v1/billing/plans`,
+    {
+      product_id: productId,
+      name: `SalDesk — ${plan}`,
+      description: `Plano ${plan} da SalDesk, €${priceEur}/mes`,
+      billing_cycles: [{
+        frequency: { interval_unit: 'MONTH', interval_count: 1 },
+        tenure_type: 'REGULAR',
+        sequence: 1,
+        total_cycles: 0,
+        pricing_scheme: { fixed_price: { value: Number(priceEur).toFixed(2), currency_code: 'EUR' } },
       }],
+      payment_preferences: { auto_bill_outstanding: true },
+    },
+    { headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } }
+  );
+  return data;
+}
+
+async function createSubscription(planId, returnUrl, cancelUrl) {
+  const token = await getAccessToken();
+  const { data } = await axios.post(
+    `${BASE}/v1/billing/subscriptions`,
+    {
+      plan_id: planId,
       application_context: {
         brand_name: 'SalDesk',
-        user_action: 'PAY_NOW',
+        user_action: 'SUBSCRIBE_NOW',
         return_url: returnUrl,
         cancel_url: cancelUrl,
       },
@@ -45,14 +85,22 @@ async function createOrder(amountEur, plan, returnUrl, cancelUrl) {
   return data;
 }
 
-async function captureOrder(orderId) {
+async function getSubscription(subscriptionId) {
   const token = await getAccessToken();
-  const { data } = await axios.post(
-    `${BASE}/v2/checkout/orders/${orderId}/capture`,
-    {},
-    { headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } }
+  const { data } = await axios.get(
+    `${BASE}/v1/billing/subscriptions/${subscriptionId}`,
+    { headers: { Authorization: `Bearer ${token}` } }
   );
   return data;
+}
+
+async function cancelSubscription(subscriptionId, reason) {
+  const token = await getAccessToken();
+  await axios.post(
+    `${BASE}/v1/billing/subscriptions/${subscriptionId}/cancel`,
+    { reason: reason || 'Cancelado pelo operador' },
+    { headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } }
+  );
 }
 
 /* Verificacao real da assinatura do webhook (ao contrario do stub em
@@ -82,4 +130,7 @@ async function verifyWebhookSignature(headers, body) {
   }
 }
 
-module.exports = { createOrder, captureOrder, verifyWebhookSignature };
+module.exports = {
+  createProduct, createPlan, createSubscription, getSubscription, cancelSubscription,
+  verifyWebhookSignature,
+};
