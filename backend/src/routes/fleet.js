@@ -4,8 +4,10 @@ const { listar, disponivel, criar, actualizar, eliminar, atribuir, devolver, get
 const auth         = require('../middleware/auth');
 const reqOp        = require('../middleware/requireOperator');
 const reqOpOrStaff = require('../middleware/requireOperatorOrStaff');
+const requirePlanActive = require('../middleware/requirePlanActive');
 
 router.use(auth);
+router.use(requirePlanActive);
 
 router.get('/available',     reqOp,        disponivel);
 router.get('/availability',  reqOpOrStaff, getAvailability);

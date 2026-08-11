@@ -4,6 +4,7 @@ const router = express.Router();
 const { listar, obter, actualizar, segmentos, exportCsv, importarCsv } = require('../controllers/customersController');
 const authMiddleware = require('../middleware/auth');
 const requireOperatorOrStaff = require('../middleware/requireOperatorOrStaff');
+const requirePlanActive = require('../middleware/requirePlanActive');
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -19,6 +20,7 @@ const upload = multer({
 
 router.use(authMiddleware);
 router.use(requireOperatorOrStaff);
+router.use(requirePlanActive);
 
 /* Rotas literais primeiro -- "/:id" abaixo apanharia "/import" etc. */
 router.get('/segments', segmentos);

@@ -4,8 +4,10 @@ const { listar, enviar, marcarLida, unreadCount, listarGrupos, criarGrupo, adici
 const auth          = require('../middleware/auth');
 const reqOp         = require('../middleware/requireOperator');
 const reqOpOrStaff  = require('../middleware/requireOperatorOrStaff');
+const requirePlanActive = require('../middleware/requirePlanActive');
 
 router.use(auth);
+router.use(requirePlanActive);
 
 router.get('/unread-count',        reqOp,        unreadCount);
 router.get('/groups',              reqOpOrStaff, listarGrupos);

@@ -10,8 +10,10 @@ const {
 const auth    = require('../middleware/auth');
 const reqOp   = require('../middleware/requireOperator');
 const reqOpOrStaff = require('../middleware/requireOperatorOrStaff');
+const requirePlanActive = require('../middleware/requirePlanActive');
 
 router.use(auth);
+router.use(requirePlanActive);
 
 router.get('/',                        reqOpOrStaff, listar);
 router.get('/me',                      reqOpOrStaff, obterPerfilProprio);

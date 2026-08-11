@@ -8,9 +8,11 @@ const {
 } = require('../controllers/expensesController');
 const auth  = require('../middleware/auth');
 const reqOp = require('../middleware/requireOperator');
+const requirePlanActive = require('../middleware/requirePlanActive');
 
 router.use(auth);
 router.use(reqOp);
+router.use(requirePlanActive);
 
 /* Rotas literais primeiro -- "/:id" abaixo apanharia "/obligations" etc.
    como se fosse um id de despesa (Express faz match por ordem). */

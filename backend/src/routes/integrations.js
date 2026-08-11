@@ -6,6 +6,7 @@ const {
 } = require('../controllers/integrationController');
 const authMiddleware   = require('../middleware/auth');
 const requireOperator  = require('../middleware/requireOperator');
+const requirePlanActive = require('../middleware/requirePlanActive');
 
 /* Webhooks — sem autenticacao, verificacao HMAC interna */
 router.post('/webhooks/viator',       viatorWebhook);
@@ -14,6 +15,7 @@ router.post('/webhooks/getyourguide', gygWebhook);
 /* Rotas autenticadas */
 router.use(authMiddleware);
 router.use(requireOperator);
+router.use(requirePlanActive);
 
 router.post('/:channel/connect',      connectChannel);
 router.delete('/:channel',            disconnectChannel);

@@ -40,7 +40,7 @@ function LockCard({ requiredPlan, feature, onVoltar }) {
 
       <div className="flex flex-col gap-2">
         <button
-          onClick={() => navigate('/definicoes')}
+          onClick={() => navigate('/definicoes?tab=facturacao')}
           className="flex items-center justify-center gap-2 w-full h-10 px-4 rounded-md bg-ocean-700 text-white text-sm font-body font-semibold hover:bg-ocean-500 transition-colors"
         >
           Ver planos de subscricao

@@ -3,9 +3,11 @@ const router  = express.Router();
 const { supabaseAdmin } = require('../config/supabase');
 const auth  = require('../middleware/auth');
 const reqOp = require('../middleware/requireOperator');
+const requirePlanActive = require('../middleware/requirePlanActive');
 
 router.use(auth);
 router.use(reqOp);
+router.use(requirePlanActive);
 
 router.post('/subscribe', async (req, res, next) => {
   try {

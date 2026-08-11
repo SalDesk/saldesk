@@ -4,10 +4,12 @@ const { supabaseAdmin } = require('../config/supabase');
 const { encrypt, decrypt } = require('../utils/encrypt');
 const auth  = require('../middleware/auth');
 const reqOp = require('../middleware/requireOperator');
+const requirePlanActive = require('../middleware/requirePlanActive');
 const { frontendBase } = require('../utils/urls');
 
 router.use(auth);
 router.use(reqOp);
+router.use(requirePlanActive);
 
 /* Link de reserva */
 router.get('/booking-link', (req, res) => {

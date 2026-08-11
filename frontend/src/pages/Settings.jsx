@@ -1,16 +1,18 @@
 import { useState, useEffect, useRef } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import {
   Copy, Check, Download, CreditCard, Globe, User, Bell,
   Shield, ExternalLink,
   Eye, EyeOff, CheckCircle2, XCircle, Upload,
   Camera, ChevronUp, ChevronDown, X, Plus, ArrowUpRight,
-  Lock,
+  Lock, Wallet,
 } from 'lucide-react';
 import api from '../services/api';
 import { updateOperator, changePassword } from '../services/authService';
+import { createCheckout, getBillingHistory } from '../services/billingService';
 import PasswordStrength, { getPasswordStrength } from '../components/auth/PasswordStrength';
 import useAuthStore from '../store/authStore';
+import usePlan, { PLAN_PRICES } from '../hooks/usePlan';
 import PageHeader from '../components/layout/PageHeader';
 import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
@@ -478,6 +480,103 @@ function PagamentosTab() {
 }
 
 /* ─────────────────────────────────────────────────────────
+   TAB — FACTURACAO (subscricao SalDesk, distinta das credenciais de
+   pagamento acima, que sao para o operador cobrar OS SEUS clientes)
+───────────────────────────────────────────────────────── */
+const PLAN_LABEL = { starter: 'Starter', business: 'Business', pro: 'Pro' };
+const STATUS_LABEL = { trial: 'Periodo de avaliacao', active: 'Activo', suspended: 'Suspenso', cancelled: 'Cancelado' };
+const STATUS_TONE  = { trial: 'text-ocean-700 bg-ocean-50', active: 'text-green-700 bg-green-50', suspended: 'text-error bg-red-50', cancelled: 'text-n-500 bg-n-100' };
+
+function FacturacaoTab() {
+  const { operator } = useAuthStore();
+  const { isInTrial, isTrialExpired, trialDaysLeft } = usePlan();
+  const [history, setHistory] = useState([]);
+  const [payingPlan, setPayingPlan] = useState(null);
+  const [error, setError] = useState('');
+
+  useEffect(() => { getBillingHistory().then(setHistory); }, []);
+
+  async function handlePay(plan) {
+    setError('');
+    setPayingPlan(plan);
+    try {
+      const { approval_url } = await createCheckout(plan);
+      window.location.href = approval_url;
+    } catch {
+      setError('Nao foi possivel iniciar o pagamento. Tenta novamente.');
+      setPayingPlan(null);
+    }
+  }
+
+  const paidUntil = operator?.plan_paid_until ? new Date(operator.plan_paid_until) : null;
+
+  return (
+    <div className="space-y-5 max-w-2xl">
+      <Card header={<h3 className="font-display font-semibold text-sm text-n-700">Subscricao actual</h3>}>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <p className="font-display font-bold text-lg text-n-900">{PLAN_LABEL[operator?.plan] || operator?.plan}</p>
+            {isInTrial() && <p className="text-xs font-body text-n-500 mt-1">{trialDaysLeft()} dias restantes no periodo de avaliacao</p>}
+            {isTrialExpired() && <p className="text-xs font-body text-error mt-1">Periodo de avaliacao terminado</p>}
+            {paidUntil && <p className="text-xs font-body text-n-500 mt-1">Pago ate {paidUntil.toLocaleDateString('pt-PT')}</p>}
+          </div>
+          <span className={`text-xs font-body font-semibold px-3 py-1.5 rounded-full ${STATUS_TONE[operator?.plan_status] || 'text-n-500 bg-n-100'}`}>
+            {STATUS_LABEL[operator?.plan_status] || operator?.plan_status}
+          </span>
+        </div>
+      </Card>
+
+      {error && <p className="text-sm font-body text-error bg-red-50 border border-red-200 rounded px-3 py-2">{error}</p>}
+
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        {['starter', 'business', 'pro'].map((plan) => {
+          const isCurrent = operator?.plan === plan && operator?.plan_status === 'active';
+          return (
+            <Card key={plan} className={isCurrent ? 'border-ocean-700' : ''}>
+              <div className="space-y-2">
+                <p className="font-display font-bold text-n-900">{PLAN_LABEL[plan]}</p>
+                <p className="font-display font-bold text-2xl text-ocean-700">€{PLAN_PRICES[plan]}<span className="text-xs font-body font-normal text-n-500">/mes</span></p>
+                <Button
+                  variant={isCurrent ? 'secondary' : 'primary'}
+                  size="sm"
+                  className="w-full"
+                  loading={payingPlan === plan}
+                  disabled={isCurrent}
+                  icon={Wallet}
+                  onClick={() => handlePay(plan)}
+                >
+                  {isCurrent ? 'Plano actual' : 'Pagar'}
+                </Button>
+              </div>
+            </Card>
+          );
+        })}
+      </div>
+
+      <Card header={<h3 className="font-display font-semibold text-sm text-n-700">Historico de pagamentos</h3>}>
+        {!history.length && <p className="text-sm font-body text-n-500">Sem pagamentos registados.</p>}
+        <div className="space-y-2">
+          {history.map((p) => (
+            <div key={p.id} className="flex items-center justify-between gap-3 text-sm font-body py-2 border-b border-n-100 last:border-0">
+              <div>
+                <p className="font-semibold text-n-900">{PLAN_LABEL[p.plan] || p.plan}</p>
+                <p className="text-xs text-n-500">{new Date(p.created_at).toLocaleDateString('pt-PT')}</p>
+              </div>
+              <div className="text-right">
+                <p className="font-semibold text-n-900">€{Number(p.amount_eur).toFixed(2)}</p>
+                <p className={`text-xs ${p.status === 'completed' ? 'text-green-700' : p.status === 'failed' ? 'text-error' : 'text-n-500'}`}>
+                  {p.status === 'completed' ? 'Pago' : p.status === 'failed' ? 'Falhou' : 'Pendente'}
+                </p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </Card>
+    </div>
+  );
+}
+
+/* ─────────────────────────────────────────────────────────
    TAB 4 — NOTIFICACOES
 ───────────────────────────────────────────────────────── */
 const NOTIF_ITEMS = [
@@ -627,13 +726,16 @@ const TABS = [
   { id: 'conta',      label: 'Conta',          Icon: User },
   { id: 'perfil',     label: 'Perfil Publico', Icon: Globe },
   { id: 'pagamentos', label: 'Pagamentos',      Icon: CreditCard },
+  { id: 'facturacao', label: 'Facturacao',      Icon: Wallet },
   { id: 'notificacoes', label: 'Notificacoes', Icon: Bell },
   { id: 'seguranca',    label: 'Seguranca',    Icon: Shield },
 ];
 
 export default function Settings() {
   const { operator } = useAuthStore();
-  const [tab, setTab] = useState('conta');
+  const [searchParams] = useSearchParams();
+  const initialTab = TABS.some(t => t.id === searchParams.get('tab')) ? searchParams.get('tab') : 'conta';
+  const [tab, setTab] = useState(initialTab);
 
   return (
     <div>
@@ -653,6 +755,7 @@ export default function Settings() {
       {tab === 'conta'        && <ContaTab       operator={operator} />}
       {tab === 'perfil'       && <PerfilPublicoTab operator={operator} />}
       {tab === 'pagamentos'   && <PagamentosTab />}
+      {tab === 'facturacao'   && <FacturacaoTab />}
       {tab === 'notificacoes' && <NotificacoesTab />}
       {tab === 'seguranca'    && <SegurancaTab />}
     </div>

@@ -13,6 +13,8 @@ import PublicBooking from './pages/PublicBooking';
 import ServiceDetail from './pages/ServiceDetail';
 import BookingSuccess from './pages/BookingSuccess';
 import BookingCancel from './pages/BookingCancel';
+import BillingSuccess from './pages/BillingSuccess';
+import BillingCancel from './pages/BillingCancel';
 
 // Lazy — dashboard pages
 const Onboarding      = lazy(() => import('./pages/Onboarding'));
@@ -181,6 +183,10 @@ export default function App() {
         {/* Motor de reserva publica */}
         <Route path="/book/success" element={<BookingSuccess />} />
         <Route path="/book/cancel" element={<BookingCancel />} />
+
+        {/* Facturacao da subscricao SalDesk (retorno do checkout PayPal) */}
+        <Route path="/definicoes/facturacao/sucesso" element={<BillingSuccess />} />
+        <Route path="/definicoes/facturacao/cancelado" element={<BillingCancel />} />
         <Route path="/book/:slug" element={<PublicBooking />} />
         <Route path="/book/:slug/servico/:id" element={<ServiceDetail />} />
 

@@ -4,8 +4,10 @@ const { listar, criar, criarComposta, mudarStatus, actualizarNotas, getAvailable
 const auth  = require('../middleware/auth');
 const reqOp = require('../middleware/requireOperator');
 const reqOpOrStaff = require('../middleware/requireOperatorOrStaff');
+const requirePlanActive = require('../middleware/requirePlanActive');
 
 router.use(auth);
+router.use(requirePlanActive);
 
 router.get('/available-staff', reqOp, getAvailableStaff);
 router.get('/',                reqOp, listar);

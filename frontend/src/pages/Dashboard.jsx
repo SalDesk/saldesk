@@ -1662,7 +1662,7 @@ function TrialBanner() {
           <p className="text-xs font-body text-red-600">O teu acesso esta limitado. Subscreve um plano para continuar.</p>
         </div>
         <button
-          onClick={() => navigate('/definicoes')}
+          onClick={() => navigate('/definicoes?tab=facturacao')}
           className="flex items-center gap-1.5 h-8 px-3 rounded-md bg-error text-white text-xs font-body font-semibold hover:bg-red-700 transition-colors shrink-0"
         >
           Ver planos

@@ -1,8 +1,8 @@
 const { supabaseAdmin } = require('../config/supabase');
 const { enviarEmail }   = require('../helpers/emailHelper');
+const { loadPriceMap }  = require('../helpers/pricing');
 const ExcelJS           = require('exceljs');
 
-const PLAN_PRICES   = { starter: 29, business: 69, pro: 79 };
 const TIPO_SCORE    = { hotel: 30, activity: 25, restaurant: 20, rentacar: 15 };
 const LEAD_STATUSES = ['novo', 'contactado', 'demo_agendada', 'proposta_enviada', 'convertido', 'descartado'];
 const STAGE_LABELS  = { novo: 'Novo', contactado: 'Contactado', demo_agendada: 'Demo agendada', proposta_enviada: 'Proposta enviada', convertido: 'Convertido', descartado: 'Descartado' };
@@ -945,13 +945,6 @@ async function getRevenue(req, res, next) {
 
 /* ─── Financeiro da plataforma ──────────────────────────────── */
 const COST_KEYS = ['cost_hostinger', 'cost_supabase', 'cost_sendgrid', 'cost_domains_annual', 'cost_outros'];
-
-async function loadPriceMap() {
-  const { data } = await supabaseAdmin.from('cms_pricing').select('plan, price_eur');
-  const map = { ...PLAN_PRICES };
-  (data || []).forEach(p => { map[p.plan] = Number(p.price_eur); });
-  return map;
-}
 
 async function getFinancialSummary(req, res, next) {
   try {
