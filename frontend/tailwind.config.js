@@ -43,7 +43,8 @@ export default {
           300: '#5EEAD4',
           100: '#CCFBF1',
           50:  '#F0FDFA',
-        }
+        },
+        error: '#DC2626',
       },
       fontFamily: {
         display: ['Sora', 'sans-serif'],
