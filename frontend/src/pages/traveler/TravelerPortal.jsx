@@ -2,10 +2,11 @@ import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   User, CalendarCheck, Heart, LogOut, MapPin, Compass, Trash2, ExternalLink,
+  Eye, EyeOff, ShieldCheck, Lock,
 } from 'lucide-react';
 import useTravelerAuthStore from '../../store/travelerAuthStore';
 import * as travelerService from '../../services/travelerService';
-import { logout as apiLogout } from '../../services/travelerAuthService';
+import { logout as apiLogout, changePassword } from '../../services/travelerAuthService';
 import { discoverUnits } from '../../services/publicService';
 import Logo from '../../components/shared/Logo';
 import Card from '../../components/ui/Card';
@@ -13,6 +14,7 @@ import Badge from '../../components/ui/Badge';
 import Button from '../../components/ui/Button';
 import Input, { Select } from '../../components/ui/Input';
 import LoadingSpinner from '../../components/shared/LoadingSpinner';
+import PasswordStrength, { getPasswordStrength } from '../../components/auth/PasswordStrength';
 
 const APP = 'https://app.saldesk.cv';
 
@@ -30,8 +32,40 @@ function fmtDate(iso) {
   return new Date(iso).toLocaleDateString('pt-PT', { day: '2-digit', month: 'short', year: 'numeric' });
 }
 
+function initials(name) {
+  if (!name) return '?';
+  return name.trim().split(/\s+/).slice(0, 2).map(w => w[0]?.toUpperCase()).join('');
+}
+
 /* ─── Perfil ─── */
-function ProfileTab({ traveler, onUpdate }) {
+function ProfileHeader({ traveler, stats }) {
+  return (
+    <Card className="mb-4">
+      <div className="flex items-center gap-4 flex-wrap">
+        <div className="w-16 h-16 rounded-full bg-ocean-700 text-white flex items-center justify-center font-display font-bold text-xl shrink-0">
+          {initials(traveler?.name)}
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="font-display font-bold text-lg text-n-900">{traveler?.name}</p>
+          <p className="text-sm font-body text-n-500">{traveler?.email}</p>
+          <p className="text-xs font-body text-n-400 mt-0.5">Membro desde {fmtDate(traveler?.created_at)}</p>
+        </div>
+        <div className="flex gap-3">
+          <div className="text-center px-4 py-2 rounded-sm bg-n-50 border border-n-200">
+            <p className="font-display font-bold text-lg text-ocean-700">{stats.bookings ?? '—'}</p>
+            <p className="text-[11px] font-body text-n-500 uppercase tracking-wide">Reservas</p>
+          </div>
+          <div className="text-center px-4 py-2 rounded-sm bg-n-50 border border-n-200">
+            <p className="font-display font-bold text-lg text-ocean-700">{stats.wishlist ?? '—'}</p>
+            <p className="text-[11px] font-body text-n-500 uppercase tracking-wide">Guardados</p>
+          </div>
+        </div>
+      </div>
+    </Card>
+  );
+}
+
+function PersonalDataCard({ traveler, onUpdate }) {
   const [form, setForm] = useState({
     name: traveler?.name || '', phone: traveler?.phone || '',
     country: traveler?.country || '', language: traveler?.language || 'pt',
@@ -55,12 +89,14 @@ function ProfileTab({ traveler, onUpdate }) {
   }
 
   return (
-    <Card>
+    <Card header={<h3 className="font-display font-semibold text-sm text-n-700">Dados pessoais</h3>}>
       <form onSubmit={handleSave} className="space-y-4 max-w-md">
         <Input label="Nome" value={form.name} onChange={e => setForm(p => ({ ...p, name: e.target.value }))} required />
-        <Input label="Email" value={traveler?.email || ''} disabled />
-        <Input label="Telefone" value={form.phone} onChange={e => setForm(p => ({ ...p, phone: e.target.value }))} />
-        <Input label="Pais" value={form.country} onChange={e => setForm(p => ({ ...p, country: e.target.value }))} />
+        <Input label="Email" value={traveler?.email || ''} disabled hint="O email nao pode ser alterado." />
+        <div className="grid grid-cols-2 gap-3">
+          <Input label="Telefone" value={form.phone} onChange={e => setForm(p => ({ ...p, phone: e.target.value }))} />
+          <Input label="Pais" value={form.country} onChange={e => setForm(p => ({ ...p, country: e.target.value }))} />
+        </div>
         <Select label="Idioma" value={form.language} onChange={e => setForm(p => ({ ...p, language: e.target.value }))}>
           <option value="pt">Portugues</option>
           <option value="en">English</option>
@@ -70,6 +106,93 @@ function ProfileTab({ traveler, onUpdate }) {
         </Button>
       </form>
     </Card>
+  );
+}
+
+function SecurityCard() {
+  const [form, setForm]       = useState({ newPw: '', confirm: '' });
+  const [show, setShow]       = useState({ newPw: false, confirm: false });
+  const [saving, setSaving]   = useState(false);
+  const [savedOk, setSavedOk] = useState(false);
+  const [error, setError]     = useState('');
+
+  async function handleSubmit(e) {
+    e.preventDefault();
+    setError('');
+    if (getPasswordStrength(form.newPw) < 2) {
+      setError('A password deve ser forte: 8+ caracteres, maiuscula, numero e especial.');
+      return;
+    }
+    if (form.newPw !== form.confirm) {
+      setError('As passwords nao coincidem.');
+      return;
+    }
+    setSaving(true);
+    try {
+      await changePassword(form.newPw);
+      setForm({ newPw: '', confirm: '' });
+      setSavedOk(true);
+      setTimeout(() => setSavedOk(false), 3000);
+    } catch (err) {
+      setError(err?.response?.data?.error || 'Nao foi possivel alterar a password.');
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <Card header={<h3 className="font-display font-semibold text-sm text-n-700 flex items-center gap-1.5"><ShieldCheck size={14} strokeWidth={1.75} /> Seguranca</h3>}>
+      <form onSubmit={handleSubmit} className="space-y-3 max-w-md">
+        {[
+          { field: 'newPw',   label: 'Nova password' },
+          { field: 'confirm', label: 'Confirmar nova password' },
+        ].map(({ field, label }) => (
+          <div key={field} className="flex flex-col gap-1">
+            <label className="text-xs font-body font-bold uppercase tracking-wide text-n-600">{label}</label>
+            <div className="relative">
+              <input
+                type={show[field] ? 'text' : 'password'}
+                value={form[field]}
+                onChange={e => setForm(p => ({ ...p, [field]: e.target.value }))}
+                required autoComplete="new-password"
+                className="w-full h-9 px-3 pr-10 rounded-sm border border-n-300 text-sm font-body bg-n-100 text-n-900 placeholder:text-n-400 focus:outline-none focus:ring-2 focus:ring-ocean-300 focus:border-ocean-700 focus:bg-white transition-colors"
+              />
+              <button type="button"
+                onClick={() => setShow(p => ({ ...p, [field]: !p[field] }))}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-n-400 hover:text-n-600 transition-colors">
+                {show[field] ? <EyeOff size={14} strokeWidth={1.75} /> : <Eye size={14} strokeWidth={1.75} />}
+              </button>
+            </div>
+            {field === 'newPw' && form.newPw && <PasswordStrength password={form.newPw} />}
+          </div>
+        ))}
+
+        {error && <p className="text-xs text-error">{error}</p>}
+
+        <Button type="submit" loading={saving} icon={Lock}>
+          {savedOk ? 'Password alterada' : 'Alterar password'}
+        </Button>
+      </form>
+    </Card>
+  );
+}
+
+function ProfileTab({ traveler, onUpdate }) {
+  const [stats, setStats] = useState({ bookings: null, wishlist: null });
+
+  useEffect(() => {
+    travelerService.getBookings().then(b => setStats(p => ({ ...p, bookings: b.length }))).catch(() => {});
+    travelerService.getWishlist().then(w => setStats(p => ({ ...p, wishlist: w.length }))).catch(() => {});
+  }, []);
+
+  return (
+    <div>
+      <ProfileHeader traveler={traveler} stats={stats} />
+      <div className="space-y-4">
+        <PersonalDataCard traveler={traveler} onUpdate={onUpdate} />
+        <SecurityCard />
+      </div>
+    </div>
   );
 }
 
