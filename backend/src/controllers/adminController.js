@@ -2001,6 +2001,61 @@ Enviado automaticamente pelo Painel do Fundador SalDesk.`;
   } catch (err) { next(err); }
 }
 
+/* ─── Conect: moderacao de listagens ──────────────────────────
+   "Moderacao leve, nao bloqueante" -- o operador continua a operar
+   normalmente (unidade fica active/reservavel directamente) enquanto a
+   submissao ao catalogo agregado espera aprovacao. */
+async function listarPendentesConect(req, res, next) {
+  try {
+    const { data, error } = await supabaseAdmin
+      .from('units')
+      .select('id, name, description, base_price, images, updated_at, operator_id, operators(name, slug, operator_type), experience_categories(label_pt)')
+      .eq('conect_status', 'pending_review')
+      .order('updated_at');
+    if (error) throw error;
+    return res.json({ data: data || [], message: 'Pendentes de moderacao' });
+  } catch (err) { next(err); }
+}
+
+async function aprovarConect(req, res, next) {
+  try {
+    const { data, error } = await supabaseAdmin
+      .from('units')
+      .update({ conect_status: 'published', updated_at: new Date().toISOString() })
+      .eq('id', req.params.id).eq('conect_status', 'pending_review')
+      .select().single();
+    if (error || !data) return res.status(404).json({ error: 'Unidade nao encontrada ou nao esta pendente', code: 'NOT_FOUND' });
+    return res.json({ data, message: 'Publicado no Conect' });
+  } catch (err) { next(err); }
+}
+
+async function rejeitarConect(req, res, next) {
+  try {
+    const { motivo } = req.body;
+    const { data: unit } = await supabaseAdmin
+      .from('units').select('operator_id, name').eq('id', req.params.id).eq('conect_status', 'pending_review').maybeSingle();
+    if (!unit) return res.status(404).json({ error: 'Unidade nao encontrada ou nao esta pendente', code: 'NOT_FOUND' });
+
+    const { data, error } = await supabaseAdmin
+      .from('units')
+      .update({ conect_status: 'draft', updated_at: new Date().toISOString() })
+      .eq('id', req.params.id)
+      .select().single();
+    if (error) throw error;
+
+    const { data: op } = await supabaseAdmin.from('operators').select('name, email').eq('id', unit.operator_id).maybeSingle();
+    if (op?.email) {
+      enviarEmail({
+        to: op.email,
+        subject: `Submissao ao Conect rejeitada — ${unit.name}`,
+        text: `Ola ${op.name},\n\nA submissao de "${unit.name}" ao catalogo publico Conect nao foi aprovada.${motivo ? `\n\nMotivo: ${motivo}` : ''}\n\nPodes corrigir e submeter novamente a partir do painel.\n\nEquipa SalDesk`,
+      }).catch(() => {});
+    }
+
+    return res.json({ data, message: 'Submissao rejeitada' });
+  } catch (err) { next(err); }
+}
+
 module.exports = {
   getStats, getActivity,
   listOperators, getOperatorDetail, updateOperator, updateOperatorStatus,
@@ -2027,4 +2082,5 @@ module.exports = {
   getSystemSecurity, blockIp,
   getSystemSettings, updateSystemSettings,
   triggerBackup, flushRedisCache, restartApi,
+  listarPendentesConect, aprovarConect, rejeitarConect,
 };

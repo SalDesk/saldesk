@@ -26,6 +26,7 @@ const {
   getSystemSecurity, blockIp,
   getSystemSettings, updateSystemSettings,
   triggerBackup, flushRedisCache, restartApi,
+  listarPendentesConect, aprovarConect, rejeitarConect,
 } = require('../controllers/adminController');
 const auth           = require('../middleware/auth');
 const requireFounder = require('../middleware/requireFounder');
@@ -78,6 +79,10 @@ router.get('/logs',                     getLogs);
 router.get('/system/health',            getSystemHealth);
 
 /* CMS */
+router.get('/conect/pending',           listarPendentesConect);
+router.put('/conect/:id/approve',       aprovarConect);
+router.put('/conect/:id/reject',        rejeitarConect);
+
 router.get('/cms/featured',             featured.list);
 router.post('/cms/featured',            featured.create);
 router.put('/cms/featured/:id',         featured.update);

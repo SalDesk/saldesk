@@ -42,3 +42,8 @@ export async function toggleUnitStatus(id, status) {
   const { data } = await api.put(`/units/${id}`, { status });
   return data.data;
 }
+
+export async function updateConectStatus(id, conect_status) {
+  const { data } = await api.put(`/units/${id}/conect-status`, { conect_status });
+  return data.data;
+}

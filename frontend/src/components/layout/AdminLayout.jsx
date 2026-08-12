@@ -3,7 +3,7 @@ import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, Users, TrendingUp, Layers,
   Globe, Server, LogOut, Shield, BarChart2, GitBranch, Euro, MessageSquare,
-  Menu, X,
+  Menu, X, Compass,
 } from 'lucide-react';
 import useAuthStore from '../../store/authStore';
 import Logo from '../shared/Logo';
@@ -12,16 +12,20 @@ import api from '../../services/api';
 export default function AdminLayout() {
   const { logout } = useAuthStore();
   const navigate   = useNavigate();
-  const [counts,      setCounts]      = useState({ leads: 0, trials: 0 });
+  const [counts,      setCounts]      = useState({ leads: 0, trials: 0, conectPending: 0 });
   const [mobileOpen,  setMobileOpen]  = useState(false);
 
   useEffect(() => {
     api.get('/admin/stats').then(r => {
       const s = r.data.data;
-      setCounts({
+      setCounts(prev => ({
+        ...prev,
         leads:  s?.leads?.new_uncontacted || 0,
         trials: s?.trials_expiring?.length || 0,
-      });
+      }));
+    }).catch(() => {});
+    api.get('/admin/conect/pending').then(r => {
+      setCounts(prev => ({ ...prev, conectPending: (r.data.data || []).length }));
     }).catch(() => {});
   }, []);
 
@@ -31,6 +35,7 @@ export default function AdminLayout() {
     { to: '/admin/leads',     label: 'Leads',       icon: TrendingUp,  badge: counts.leads },
     { to: '/admin/pipeline',  label: 'Pipeline',    icon: GitBranch },
     { to: '/admin/cms',                     label: 'CMS',         icon: Layers },
+    { to: '/admin/conect',                  label: 'Moderação Conect', icon: Compass, badge: counts.conectPending },
     { to: '/admin/financeiro-plataforma',  label: 'Financeiro',   icon: Euro },
     { to: '/admin/comunicacoes',            label: 'Comunicacao',  icon: MessageSquare },
     { to: '/admin/analytics-plataforma',  label: 'Analytics',    icon: BarChart2 },

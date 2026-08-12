@@ -17,6 +17,7 @@ const {
   submitLead,
   getImpact,
   discoverUnits,
+  getExperienceCategories,
 } = require('../controllers/publicController');
 const { publicInitSisp, publicPaypalClientId, publicCreatePaypalIntent, publicConfirmPaypalPayment } = require('../controllers/paymentController');
 const { validarVoucherPublico } = require('../controllers/vouchersController');
@@ -29,6 +30,7 @@ router.get('/impact',              getImpact);
 /* ─── Discover / directorio ─── */
 router.get('/discover',            discover);
 router.get('/discover-units',      discoverUnits);
+router.get('/experience-categories', getExperienceCategories);
 
 /* ─── CMS público ─── */
 router.get('/cms/experiences',     cmsExperiences);

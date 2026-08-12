@@ -65,6 +65,41 @@ function buildOtaProductIds(form) {
   };
 }
 
+/* SalDesk Conect: coordenadas reais da unidade, usadas como assinatura
+   visual no catalogo publico (eyebrow "16.6013°N · 22.9184°W"). Opcional
+   -- sem coordenadas, o catalogo simplesmente nao mostra o eyebrow, nunca
+   inventa uma localizacao. A categoria (category_id) nao tem campo aqui:
+   e derivada automaticamente no backend a partir do Select "Categoria"
+   que ja existe em cada formulario. */
+function ConectFields({ form, set }) {
+  return (
+    <div>
+      <SectionLabel>Coordenadas (opcional — Conect)</SectionLabel>
+      <div className="grid grid-cols-2 gap-3">
+        <Input
+          label="Latitude"
+          type="number"
+          step="0.000001"
+          value={form.lat}
+          onChange={set('lat')}
+          placeholder="Ex: 16.6013"
+        />
+        <Input
+          label="Longitude"
+          type="number"
+          step="0.000001"
+          value={form.lng}
+          onChange={set('lng')}
+          placeholder="Ex: -22.9184"
+        />
+      </div>
+      <p className="text-xs font-body text-n-400 mt-1.5">
+        Usadas no catálogo público SalDesk Conect. No Google Maps: clique direito no local → copiar coordenadas.
+      </p>
+    </div>
+  );
+}
+
 function TourForm({ unit, onSave, onCancel, loading, error }) {
   const meta = parseTourMeta(unit?.description);
 
@@ -89,6 +124,8 @@ function TourForm({ unit, onSave, onCancel, loading, error }) {
     images:   unit?.images  || [],
     ota_viator_id: unit?.ota_product_ids?.viator       || '',
     ota_gyg_id:    unit?.ota_product_ids?.getyourguide || '',
+    lat: unit?.lat ?? '',
+    lng: unit?.lng ?? '',
   });
 
   const set = (field) => (e) => setForm(f => ({ ...f, [field]: e.target.value }));
@@ -129,6 +166,8 @@ function TourForm({ unit, onSave, onCancel, loading, error }) {
       status:      form.status,
       images,
       ota_product_ids: buildOtaProductIds(form),
+      lat: form.lat !== '' ? Number(form.lat) : null,
+      lng: form.lng !== '' ? Number(form.lng) : null,
     });
   }
 
@@ -312,6 +351,7 @@ function TourForm({ unit, onSave, onCancel, loading, error }) {
       </div>
 
       <OtaFields form={form} set={set} />
+      <ConectFields form={form} set={set} />
 
       {unit && (
         <div>
@@ -372,6 +412,8 @@ function HotelRoomForm({ unit, onSave, onCancel, loading, error }) {
     images:        unit?.images        || [],
     ota_viator_id: unit?.ota_product_ids?.viator       || '',
     ota_gyg_id:    unit?.ota_product_ids?.getyourguide || '',
+    lat: unit?.lat ?? '',
+    lng: unit?.lng ?? '',
   });
 
   const set = (field) => (e) => setForm(f => ({ ...f, [field]: e.target.value }));
@@ -410,6 +452,8 @@ function HotelRoomForm({ unit, onSave, onCancel, loading, error }) {
       status:      form.status,
       images:      form.images,
       ota_product_ids: buildOtaProductIds(form),
+      lat: form.lat !== '' ? Number(form.lat) : null,
+      lng: form.lng !== '' ? Number(form.lng) : null,
     });
   }
 
@@ -491,6 +535,7 @@ function HotelRoomForm({ unit, onSave, onCancel, loading, error }) {
       </div>
 
       <OtaFields form={form} set={set} />
+      <ConectFields form={form} set={set} />
 
       {unit && (
         <div>
@@ -557,6 +602,8 @@ function RentacarVehicleForm({ unit, onSave, onCancel, loading, error }) {
     images:          unit?.images       || [],
     ota_viator_id: unit?.ota_product_ids?.viator       || '',
     ota_gyg_id:    unit?.ota_product_ids?.getyourguide || '',
+    lat: unit?.lat ?? '',
+    lng: unit?.lng ?? '',
   });
 
   const set = (k) => (e) => setForm(f => ({ ...f, [k]: e.target.value }));
@@ -605,6 +652,8 @@ function RentacarVehicleForm({ unit, onSave, onCancel, loading, error }) {
       status:      form.status,
       images:      form.images,
       ota_product_ids: buildOtaProductIds(form),
+      lat: form.lat !== '' ? Number(form.lat) : null,
+      lng: form.lng !== '' ? Number(form.lng) : null,
     });
   }
 
@@ -703,6 +752,7 @@ function RentacarVehicleForm({ unit, onSave, onCancel, loading, error }) {
       </div>
 
       <OtaFields form={form} set={set} />
+      <ConectFields form={form} set={set} />
 
       {unit && (
         <div>
@@ -751,6 +801,8 @@ function RestaurantTableForm({ unit, onSave, onCancel, loading, error }) {
     status:       unit?.status      || 'active',
     ota_viator_id: unit?.ota_product_ids?.viator       || '',
     ota_gyg_id:    unit?.ota_product_ids?.getyourguide || '',
+    lat: unit?.lat ?? '',
+    lng: unit?.lng ?? '',
   });
 
   const set = (k) => (e) => setForm(f => ({ ...f, [k]: e.target.value }));
@@ -777,6 +829,8 @@ function RestaurantTableForm({ unit, onSave, onCancel, loading, error }) {
       status:      form.status,
       images:      unit?.images || [],
       ota_product_ids: buildOtaProductIds(form),
+      lat: form.lat !== '' ? Number(form.lat) : null,
+      lng: form.lng !== '' ? Number(form.lng) : null,
     });
   }
 
@@ -820,6 +874,7 @@ function RestaurantTableForm({ unit, onSave, onCancel, loading, error }) {
       </div>
 
       <OtaFields form={form} set={set} />
+      <ConectFields form={form} set={set} />
 
       {unit && (
         <div>
@@ -910,6 +965,8 @@ export default function UnitForm({ unit, operatorType, onSave, onCancel, loading
     images:  unit?.images  || [],
     ota_viator_id: unit?.ota_product_ids?.viator       || '',
     ota_gyg_id:    unit?.ota_product_ids?.getyourguide || '',
+    lat: unit?.lat ?? '',
+    lng: unit?.lng ?? '',
   });
 
   const set = (field) => (e) => setForm({ ...form, [field]: e.target.value });
@@ -926,6 +983,8 @@ export default function UnitForm({ unit, operatorType, onSave, onCancel, loading
       status:      form.status,
       images:      form.images,
       ota_product_ids: buildOtaProductIds(form),
+      lat: form.lat !== '' ? Number(form.lat) : null,
+      lng: form.lng !== '' ? Number(form.lng) : null,
     });
   }
 
@@ -989,6 +1048,7 @@ export default function UnitForm({ unit, operatorType, onSave, onCancel, loading
       />
 
       <OtaFields form={form} set={set} />
+      <ConectFields form={form} set={set} />
 
       {unit && (
         <Select label={t('common.status')} value={form.status} onChange={set('status')}>

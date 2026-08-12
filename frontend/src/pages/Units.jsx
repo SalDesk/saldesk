@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Plus } from 'lucide-react';
-import { listUnits, createUnit, updateUnit, deleteUnit, toggleUnitStatus } from '../services/unitsService';
+import { listUnits, createUnit, updateUnit, deleteUnit, toggleUnitStatus, updateConectStatus } from '../services/unitsService';
 import useAuthStore from '../store/authStore';
 import { useT } from '../i18n';
 import PageHeader from '../components/layout/PageHeader';
@@ -99,6 +99,16 @@ export default function Units() {
     }
   }
 
+  async function handleSubmitConect(unit) {
+    const next = ['published', 'paused'].includes(unit.conect_status) ? 'draft' : 'pending_review';
+    try {
+      const updated = await updateConectStatus(unit.id, next);
+      setUnits(units.map((u) => (u.id === updated.id ? updated : u)));
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
   async function handleDelete() {
     if (!deleteTarget) return;
     try {
@@ -165,6 +175,7 @@ export default function Units() {
           onEdit={(unit) => { setFormError(''); setModal(unit); }}
           onDelete={setDeleteTarget}
           onToggle={handleToggle}
+          onSubmitConect={handleSubmitConect}
         />
       )}
 

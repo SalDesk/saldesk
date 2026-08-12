@@ -376,7 +376,7 @@ async function discoverUnits(req, res, next) {
 
     let q = supabaseAdmin
       .from('operators')
-      .select('id, name, slug, operator_type, address, currency')
+      .select('id, name, slug, operator_type, address, currency, islands(name, slug)')
       .eq('onboarding_complete', true);
 
     if (type && ['hotel', 'activity', 'rentacar', 'restaurant'].includes(type)) {
@@ -393,9 +393,10 @@ async function discoverUnits(req, res, next) {
 
     const { data: units, error: unitsErr } = await supabaseAdmin
       .from('units')
-      .select('id, operator_id, name, description, base_price, images, created_at')
+      .select('id, operator_id, name, description, base_price, images, created_at, duration_minutes, languages_offered, lat, lng, experience_categories(label_pt, label_en)')
       .in('operator_id', ids)
-      .eq('status', 'active');
+      .eq('status', 'active')
+      .eq('conect_status', 'published');
     if (unitsErr) throw unitsErr;
     if (!units?.length) return res.json({ data: [] });
 
@@ -491,10 +492,18 @@ async function discoverUnits(req, res, next) {
         operator_type:   op.operator_type,
         address:         op.address,
         currency:        op.currency,
+        island_name:     op.islands?.name || null,
+        island_slug:     op.islands?.slug || null,
         unit_name:       u.name,
         description:     u.description,
         base_price:      u.base_price,
         images:          u.images,
+        category_label_pt: u.experience_categories?.label_pt || null,
+        category_label_en: u.experience_categories?.label_en || null,
+        duration_minutes:  u.duration_minutes,
+        languages_offered: u.languages_offered || [],
+        lat:                u.lat,
+        lng:                u.lng,
         avg_rating:      opRatings.length
           ? parseFloat((opRatings.reduce((s, r) => s + r, 0) / opRatings.length).toFixed(1))
           : null,
@@ -1011,6 +1020,20 @@ async function submitLead(req, res, next) {
   } catch (err) { next(err); }
 }
 
+/* Conect: lista de categorias para filtros do catalogo publico e para o
+   Select de categoria no UnitForm do operador (ambos consomem a mesma
+   tabela em vez de listas hardcoded duplicadas). */
+async function getExperienceCategories(req, res, next) {
+  try {
+    const { data, error } = await supabaseAdmin
+      .from('experience_categories')
+      .select('id, slug, label_pt, label_en, parent_id')
+      .order('label_pt');
+    if (error) throw error;
+    return res.json({ data: data || [], message: 'Categorias listadas' });
+  } catch (err) { next(err); }
+}
+
 module.exports = {
   getOperador,
   verificarDisponibilidadePublica,
@@ -1028,6 +1051,7 @@ module.exports = {
   getUnitReviews,
   submitLead,
   getImpact,
+  getExperienceCategories,
 };
 
 /* ─── CMS público para o website ─────────────────────────────── */

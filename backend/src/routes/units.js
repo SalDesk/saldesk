@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const {
-  listUnits, createUnit, getUnit, updateUnit, deleteUnit,
+  listUnits, createUnit, getUnit, updateUnit, deleteUnit, submeterParaConect,
   createPricingRule, updatePricingRule, deletePricingRule
 } = require('../controllers/unitsController');
 const authMiddleware = require('../middleware/auth');
@@ -17,6 +17,7 @@ router.post('/', createUnit);
 router.get('/:id', getUnit);
 router.put('/:id', updateUnit);
 router.delete('/:id', deleteUnit);
+router.put('/:id/conect-status', submeterParaConect);
 
 router.post('/:id/pricing-rules', createPricingRule);
 router.put('/:id/pricing-rules/:ruleId', updatePricingRule);
