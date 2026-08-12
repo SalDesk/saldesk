@@ -44,6 +44,10 @@ const schemas = {
   wishlistAdd: Joi.object({
     unit_id: Joi.string().uuid().required(),
   }),
+  travelerReview: Joi.object({
+    rating:  Joi.number().integer().min(1).max(5).required(),
+    comment: Joi.string().trim().max(1000).optional().allow(''),
+  }),
 };
 
 module.exports = { validate, schemas };

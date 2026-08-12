@@ -55,15 +55,73 @@ async function getBookings(req, res, next) {
     const operatorMap = Object.fromEntries((operators || []).map(o => [o.id, o]));
     const unitMap = Object.fromEntries((units || []).map(u => [u.id, u]));
 
+    const reservationIds = reservations.map(r => r.id);
+    const { data: reviews } = await supabaseAdmin
+      .from('reviews')
+      .select('reservation_id, rating, comment')
+      .in('reservation_id', reservationIds)
+      .not('rating', 'is', null);
+    const reviewMap = Object.fromEntries((reviews || []).map(rv => [rv.reservation_id, rv]));
+
     const enriched = reservations.map(r => ({
       ...r,
       operator_name: operatorMap[r.operator_id]?.name || null,
       operator_slug: operatorMap[r.operator_id]?.slug || null,
       unit_name: unitMap[r.unit_id]?.name || null,
       unit_image: unitMap[r.unit_id]?.images?.[0] || null,
+      review: reviewMap[r.id] || null,
+      can_review: r.status === 'checked_out' && !reviewMap[r.id],
     }));
 
     return res.json({ data: enriched, message: 'Reservas listadas' });
+  } catch (err) {
+    next(err);
+  }
+}
+
+/* So permite avaliar reservas ja concluidas (checked_out) e que pertencam
+   mesmo ao viajante autenticado (por customer_email, mesma verificacao de
+   getBookings) -- nunca confia no reservation_id vindo do cliente sem
+   validar a posse. Reaproveita a mesma tabela reviews e o mesmo efeito
+   (is_public=true ao submeter, sem fila de moderacao) do fluxo existente
+   por token em reviewController.js, mas dispensa o token porque o viajante
+   ja esta autenticado. */
+async function submitReview(req, res, next) {
+  try {
+    const { reservationId } = req.params;
+    const { rating, comment } = req.body;
+    const email = req.traveler.email.trim().toLowerCase();
+
+    const { data: reservation } = await supabaseAdmin
+      .from('reservations')
+      .select('id, operator_id, customer_email, status')
+      .eq('id', reservationId)
+      .maybeSingle();
+
+    if (!reservation || reservation.customer_email.trim().toLowerCase() !== email) {
+      return res.status(404).json({ error: 'Reserva não encontrada', code: 'NOT_FOUND' });
+    }
+    if (reservation.status !== 'checked_out') {
+      return res.status(400).json({ error: 'So pode avaliar reservas ja concluidas', code: 'INVALID_STATUS' });
+    }
+
+    const { data: existing } = await supabaseAdmin
+      .from('reviews')
+      .select('id, rating')
+      .eq('reservation_id', reservationId)
+      .maybeSingle();
+
+    if (existing?.rating) {
+      return res.status(409).json({ error: 'Ja avaliou esta reserva', code: 'ALREADY_REVIEWED' });
+    }
+
+    const payload = { rating, comment: comment || null, is_public: true, review_token: null, token_expires_at: null };
+    const { data, error } = existing
+      ? await supabaseAdmin.from('reviews').update(payload).eq('id', existing.id).select().single()
+      : await supabaseAdmin.from('reviews').insert({ operator_id: reservation.operator_id, reservation_id: reservationId, ...payload }).select().single();
+
+    if (error) throw error;
+    return res.status(201).json({ data, message: 'Avaliacao enviada, obrigado!' });
   } catch (err) {
     next(err);
   }
@@ -160,4 +218,4 @@ async function removeWishlist(req, res, next) {
   }
 }
 
-module.exports = { getProfile, updateProfile, getBookings, getWishlist, addWishlist, removeWishlist };
+module.exports = { getProfile, updateProfile, getBookings, getWishlist, addWishlist, removeWishlist, submitReview };

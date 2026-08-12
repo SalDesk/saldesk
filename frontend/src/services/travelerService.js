@@ -28,3 +28,8 @@ export async function addToWishlist(unitId) {
 export async function removeFromWishlist(unitId) {
   await travelerApi.delete(`/traveler/wishlist/${unitId}`);
 }
+
+export async function submitReview(reservationId, rating, comment) {
+  const { data } = await travelerApi.post(`/traveler/bookings/${reservationId}/review`, { rating, comment });
+  return data.data;
+}
