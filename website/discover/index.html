@@ -53,7 +53,9 @@
     @media(max-width:640px){.nav-island{display:none}}
 
     /* ── HERO ── */
-    .hero{position:relative;background:linear-gradient(150deg,var(--ink) 0%,var(--teal9) 78%);padding:76px 0 64px;overflow:hidden}
+    .hero{position:relative;padding:76px 0 64px;overflow:hidden}
+    .hero-bg{position:absolute;inset:0;background-image:url('/images/hero-santa-maria.jpg');background-size:cover;background-position:center}
+    .hero-bg-overlay{position:absolute;inset:0;background:linear-gradient(150deg,rgba(11,18,32,.88) 0%,rgba(8,57,66,.82) 78%)}
     .hero::after{content:'';position:absolute;inset:0;background-image:radial-gradient(rgba(255,255,255,.05) 1px,transparent 1px);background-size:22px 22px;opacity:.4;pointer-events:none}
     .hero-content{position:relative;z-index:2;text-align:center;color:#fff;max-width:660px;margin:0 auto}
     .hero-eyebrow{font-family:var(--fm);font-size:.6875rem;font-weight:500;letter-spacing:.12em;text-transform:uppercase;color:var(--ochre);margin-bottom:18px;display:flex;align-items:center;justify-content:center;gap:8px}
@@ -265,6 +267,8 @@
 
 <!-- HERO -->
 <section class="hero" id="home">
+  <div class="hero-bg"></div>
+  <div class="hero-bg-overlay"></div>
   <div class="container">
     <div class="hero-content">
       <div class="hero-eyebrow">
@@ -427,7 +431,6 @@
   </div>
 </footer>
 
-<script src="_booking-widget.js" defer></script>
 <script>
 /* ══════════════════════════════════════════
    CONSTANTS
@@ -636,7 +639,7 @@ function renderWishlistModal() {
         <div class="wish-item-name">${esc(item.operator_name)}</div>
         <div class="wish-item-type">${tLabel(item.operator_type)}</div>
       </div>
-      <a href="${APP}/book/${esc(item.operator_slug)}" class="btn btn-primary btn-sm" onclick="openBookingModal('${esc(item.operator_slug)}','${esc(item.operator_name)}');return false">
+      <a href="${APP}/book/${esc(item.operator_slug)}" class="btn btn-primary btn-sm">
         <span class="pt">Reservar</span><span class="en">Book</span>
       </a>
       <button class="wish-remove" onclick="toggleWishlist('${esc(item.operator_slug)}');renderWishlistModal()" aria-label="Remover">
@@ -694,7 +697,7 @@ function renderFeatCard(item) {
         <div class="feat-rating">${ratingLine(item)}</div>
         <span class="tb">${categoryLabel(item)}</span>
         <div class="feat-price">${priceHtml}</div>
-        <a href="${APP}/book/${esc(item.operator_slug)}/servico/${esc(item.unit_id)}" class="btn btn-primary" style="width:100%;justify-content:center" onclick="openBookingModal('${esc(item.operator_slug)}','${esc(item.operator_name)}','${esc(item.unit_id)}');return false">
+        <a href="${APP}/book/${esc(item.operator_slug)}/servico/${esc(item.unit_id)}" class="btn btn-primary" style="width:100%;justify-content:center">
           <span class="pt">Reservar</span><span class="en">Book now</span>
         </a>
       </div>
@@ -739,7 +742,7 @@ function renderActCard(item) {
             : `<span class="act-price-val" style="font-size:.9375rem;color:var(--tx-soft)">${esc(priceVal)}</span>`}
         </div>
         <div class="act-footer">
-          <a href="${bookHref}" class="btn btn-primary btn-book" onclick="openBookingModal('${esc(item.operator_slug)}','${esc(item.operator_name)}','${esc(item.unit_id)}');return false">
+          <a href="${bookHref}" class="btn btn-primary btn-book">
             <span class="pt">Reservar</span><span class="en">Book now</span>
           </a>
           <a href="${bookHref}" class="btn btn-ghost" style="padding:10px 12px" target="_blank" rel="noopener" title="${L()==='pt'?'Abrir em nova aba':'Open in new tab'}">
