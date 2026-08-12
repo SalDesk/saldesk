@@ -57,6 +57,12 @@ async function authMiddleware(req, res, next) {
     req.staff = staff || null;
   }
 
+  req.traveler = null;
+  if (!req.operator && !req.staff) {
+    const traveler = await supabaseGet('travelers', { user_id: user.id });
+    req.traveler = traveler || null;
+  }
+
   next();
 }
 

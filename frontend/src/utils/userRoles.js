@@ -6,3 +6,7 @@ export function isVendedor(user) {
 export function isStaff(user) {
   return user?.user_metadata?.role === 'STAFF';
 }
+
+export function isTraveler(user) {
+  return user?.user_metadata?.role === 'TRAVELER';
+}

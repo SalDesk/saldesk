@@ -6,6 +6,8 @@ const helmet  = require('helmet');
 const rateLimit = require('express-rate-limit');
 
 const authRoutes         = require('./src/routes/auth');
+const travelerAuthRoutes = require('./src/routes/travelerAuth');
+const travelerRoutes     = require('./src/routes/traveler');
 const onboardingRoutes   = require('./src/routes/onboarding');
 const unitsRoutes        = require('./src/routes/units');
 const reservationsRoutes = require('./src/routes/reservations');
@@ -78,6 +80,8 @@ app.get('/api/health', (_req, res) => {
 
 /* Rotas API v1 */
 app.use('/api/v1/auth',          authLimiter,  authRoutes);
+app.use('/api/v1/traveler-auth', authLimiter,  travelerAuthRoutes);
+app.use('/api/v1/traveler',      travelerRoutes);
 app.use('/api/v1/onboarding',    onboardingRoutes);
 app.use('/api/v1/units',         unitsRoutes);
 app.use('/api/v1/reservations',  reservationsRoutes);

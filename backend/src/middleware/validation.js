@@ -29,6 +29,21 @@ const schemas = {
   changePassword: Joi.object({
     password: Joi.string().min(6).required(),
   }),
+  travelerRegister: Joi.object({
+    name:     Joi.string().min(2).max(100).required(),
+    email:    Joi.string().email().required(),
+    password: Joi.string().min(6).required(),
+    phone:    Joi.string().trim().optional().allow(''),
+  }),
+  travelerProfile: Joi.object({
+    name:     Joi.string().min(2).max(100).optional(),
+    phone:    Joi.string().trim().optional().allow(''),
+    country:  Joi.string().trim().optional().allow(''),
+    language: Joi.string().valid('pt', 'en').optional(),
+  }),
+  wishlistAdd: Joi.object({
+    unit_id: Joi.string().uuid().required(),
+  }),
 };
 
 module.exports = { validate, schemas };

@@ -21,3 +21,10 @@ export async function criarReservaPublica(slug, dados) {
   const { data } = await publicApi.post(`/${slug}/reservations`, dados);
   return data.data;
 }
+
+/* Sem auth -- usado pelo separador "Explorar" do TravelerPortal para listar
+   o catalogo Conect e permitir guardar itens na wishlist. */
+export async function discoverUnits(params) {
+  const { data } = await publicApi.get('/discover-units', { params });
+  return data.data;
+}

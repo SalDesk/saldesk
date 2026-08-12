@@ -4,6 +4,7 @@ import useAuthStore from './store/authStore';
 import Layout from './components/layout/Layout';
 import PlanGuard from './components/PlanGuard';
 import { isVendedor, isStaff } from './utils/userRoles';
+import TravelerProtectedRoute from './components/traveler/TravelerProtectedRoute';
 
 // Eager — critical path, must load instantly
 import Login from './pages/Login';
@@ -53,6 +54,10 @@ const BeachSeller     = lazy(() => import('./pages/BeachSeller'));
 const BeachSale       = lazy(() => import('./pages/BeachSale'));
 const VendedorPerfil  = lazy(() => import('./pages/VendedorPerfil'));
 const StaffPortal     = lazy(() => import('./pages/StaffPortal'));
+const TravelerLogin         = lazy(() => import('./pages/traveler/TravelerLogin'));
+const TravelerRegister      = lazy(() => import('./pages/traveler/TravelerRegister'));
+const TravelerResetPassword = lazy(() => import('./pages/traveler/TravelerResetPassword'));
+const TravelerPortal        = lazy(() => import('./pages/traveler/TravelerPortal'));
 const Housekeeping    = lazy(() => import('./pages/Housekeeping'));
 const Maintenance     = lazy(() => import('./pages/Maintenance'));
 const MenuDigital     = lazy(() => import('./pages/MenuDigital'));
@@ -173,6 +178,12 @@ export default function App() {
 
         {/* Portal do colaborador — mobile-first */}
         <Route path="/staff/*" element={<ProtectedRoute><StaffPortal /></ProtectedRoute>} />
+
+        {/* Conta de viajante — publico, sessao completamente separada da do operador */}
+        <Route path="/viajante/entrar" element={<TravelerLogin />} />
+        <Route path="/viajante/registar" element={<TravelerRegister />} />
+        <Route path="/viajante/recuperar-password" element={<TravelerResetPassword />} />
+        <Route path="/viajante/*" element={<TravelerProtectedRoute><TravelerPortal /></TravelerProtectedRoute>} />
 
         {/* Portal do afiliado — publico */}
         <Route path="/afiliado/:codigo" element={<AffiliatePortal />} />
