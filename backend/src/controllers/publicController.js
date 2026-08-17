@@ -193,7 +193,15 @@ async function criarReserva(req, res, next) {
       .select()
       .single();
 
-    if (error) throw error;
+    if (error) {
+      /* reservations_no_overlap (database/040) -- ganha a corrida a segunda
+         reserva concorrente para a mesma unidade/datas, mesmo que ambas
+         tenham passado a verificarDisponibilidade() acima. */
+      if (error.code === '23P01') {
+        return res.status(409).json({ error: 'Unidade indisponível nas datas seleccionadas', code: 'UNAVAILABLE' });
+      }
+      throw error;
+    }
 
     if (voucherId) {
       registarUsoVoucher(voucherId).catch(err => console.error('[Voucher] Erro ao registar uso:', err.message));

@@ -79,7 +79,11 @@ async function confirmarCapturaPaypal(operatorId, orderId, reservationId) {
     .from('reservations')
     .update({
       payment_status: 'paid', payment_method: 'paypal',
-      paypal_order_id: orderId, amount_paid: amount,
+      /* refundCapture() exige o ID da CAPTURA (captureUnit.id), nao o da
+         ordem -- sao valores diferentes na API da PayPal. Guardar os dois:
+         paypal_order_id so para referencia/histórico, paypal_capture_id e
+         o que o reembolso realmente usa. */
+      paypal_order_id: orderId, paypal_capture_id: captureUnit?.id || null, amount_paid: amount,
       status: 'confirmed', updated_at: new Date().toISOString(),
     })
     .eq('id', reservationId)
@@ -290,12 +294,21 @@ async function getHistory(req, res, next) {
 async function refund(req, res, next) {
   try {
     const { reservation_id, amount, reason } = req.body;
-    const { data: reserva } = await supabaseAdmin.from('reservations').select('paypal_order_id, payment_method, total_amount').eq('id', reservation_id).eq('operator_id', req.operator.id).single();
+    const { data: reserva } = await supabaseAdmin.from('reservations').select('paypal_capture_id, payment_method, total_price').eq('id', reservation_id).eq('operator_id', req.operator.id).single();
     if (!reserva) return res.status(404).json({ error: 'Reserva nao encontrada', code: 'NOT_FOUND' });
 
-    if (reserva.payment_method === 'paypal' && reserva.paypal_order_id) {
+    if (reserva.payment_method === 'paypal') {
+      if (!reserva.paypal_capture_id) {
+        /* Reserva paga antes desta correcao (ver database/040) -- nao temos o
+           ID da captura, so o da ordem, que a API de reembolso da PayPal
+           rejeita. Nao adivinhar: pedir reembolso manual pelo dashboard. */
+        return res.status(400).json({
+          error: 'Esta reserva nao tem o ID de captura PayPal guardado. Reembolse manualmente pelo dashboard da PayPal.',
+          code: 'PAYPAL_CAPTURE_ID_MISSING',
+        });
+      }
       const { clientId, clientSecret } = await obterCredenciaisPaypal(req.operator.id);
-      await refundCapture(clientId, clientSecret, reserva.paypal_order_id, amount);
+      await refundCapture(clientId, clientSecret, reserva.paypal_capture_id, amount);
     }
 
     await supabaseAdmin

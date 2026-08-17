@@ -108,7 +108,15 @@ async function criar(req, res, next) {
       .select('*, units(name, unit_type), fleet(name, capacity)')
       .single();
 
-    if (error) throw error;
+    if (error) {
+      /* reservations_no_overlap (database/040) -- ganha a corrida a segunda
+         reserva concorrente para a mesma unidade/datas, mesmo que ambas
+         tenham passado a verificarDisponibilidade() acima. */
+      if (error.code === '23P01') {
+        return res.status(409).json({ error: 'Unidade indisponível nas datas seleccionadas', code: 'UNAVAILABLE' });
+      }
+      throw error;
+    }
 
     // Comissao automatica se quem criou a reserva for um vendedor com % definida
     if (req.staff?.id && req.staff?.commission_pct) {

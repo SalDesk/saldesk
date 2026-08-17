@@ -188,7 +188,14 @@ async function createBooking(req, res, next) {
       .select()
       .single();
 
-    if (error) throw error;
+    if (error) {
+      /* reservations_no_overlap (database/040) -- a unidade ficou indisponivel
+         entre o hold ser criado e este booking ser confirmado. */
+      if (error.code === '23P01') {
+        return res.status(409).json({ error: 'Unidade ja nao esta disponivel nessas datas', code: 'UNAVAILABLE' });
+      }
+      throw error;
+    }
 
     await supabaseAdmin
       .from('ota_reservation_holds')
