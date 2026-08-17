@@ -1,5 +1,7 @@
 const { supabaseAdmin } = require('../config/supabase');
 const { emitToOperator } = require('../services/socketService');
+const { enviarEmail } = require('../helpers/emailHelper');
+const { enviarWhatsApp } = require('../helpers/whatsappHelper');
 
 function getOperatorId(req) {
   return req.operator?.id || req.staff?.operator_id;
@@ -36,7 +38,7 @@ async function listar(req, res, next) {
 
 async function enviar(req, res, next) {
   try {
-    const { content, recipient_id, recipient_type, group_id, message_type = 'direct' } = req.body;
+    const { content, recipient_id, recipient_type, group_id, message_type = 'direct', channel = 'internal' } = req.body;
     if (!content) return res.status(400).json({ error: 'Conteudo obrigatorio', code: 'MISSING_FIELDS' });
 
     const operatorId = getOperatorId(req);
@@ -52,17 +54,44 @@ async function enviar(req, res, next) {
       }
     }
 
+    /* Hospede (cliente real) nao tem inbox interna -- a mensagem so chega
+       se for de facto despachada por email/WhatsApp, usando os mesmos
+       helpers ja provados em producao pelas Automacoes. */
+    let effectiveChannel = 'internal';
+    let deliveryStatus   = null;
+    if (recipient_type === 'guest') {
+      if (!recipient_id) return res.status(400).json({ error: 'Cliente obrigatorio', code: 'MISSING_FIELDS' });
+      const { data: cliente } = await supabaseAdmin
+        .from('customers').select('name, email, phone').eq('id', recipient_id).eq('operator_id', operatorId).single();
+      if (!cliente) return res.status(404).json({ error: 'Cliente nao encontrado', code: 'NOT_FOUND' });
+
+      effectiveChannel = channel === 'whatsapp' ? 'whatsapp' : 'email';
+      try {
+        if (effectiveChannel === 'whatsapp') {
+          await enviarWhatsApp({ to: cliente.phone, body: content });
+        } else {
+          await enviarEmail({ to: cliente.email, subject: `Nova mensagem de ${req.operator?.name || 'a equipa'}`, text: content });
+        }
+        deliveryStatus = 'sent';
+      } catch (err) {
+        console.error('[Messages] Falha ao entregar mensagem ao cliente:', err.message);
+        deliveryStatus = 'failed';
+      }
+    }
+
     const { data, error } = await supabaseAdmin
       .from('messages')
       .insert({
-        operator_id:    operatorId,
-        sender_id:      senderId,
-        sender_type:    senderType,
-        recipient_id:   recipient_id   || null,
-        recipient_type: recipient_type || null,
-        group_id:       group_id       || null,
+        operator_id:     operatorId,
+        sender_id:       senderId,
+        sender_type:     senderType,
+        recipient_id:    recipient_id   || null,
+        recipient_type:  recipient_type || null,
+        group_id:        group_id       || null,
         content,
         message_type,
+        channel:         effectiveChannel,
+        delivery_status: deliveryStatus,
       })
       .select().single();
     if (error) throw error;

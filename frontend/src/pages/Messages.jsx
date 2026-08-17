@@ -1,11 +1,12 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import {
   Send, Paperclip, Search, Users, Plus, X,
-  Check, CheckCheck, ArrowLeft, MessageCircle,
+  Check, CheckCheck, ArrowLeft, MessageCircle, Mail, MessageSquare, AlertTriangle,
 } from 'lucide-react';
 import { io } from 'socket.io-client';
 import { listMessages, sendMessage, markRead, listGroups, createGroup } from '../services/messageService';
 import { listStaff } from '../services/staffService';
+import { listCustomers } from '../services/customersService';
 import api from '../services/api';
 import useAuthStore from '../store/authStore';
 import { useT } from '../i18n';
@@ -39,7 +40,7 @@ function ContactAvatar({ contact, online = false, size = 36 }) {
           {isGroup ? <Users size={size * 0.44} strokeWidth={1.75} /> : contact.label?.[0]}
         </div>
       )}
-      {!isGroup && (
+      {contact.type === 'staff' && (
         <span className={`absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-white ${online ? 'bg-green-500' : 'bg-n-300'}`} />
       )}
     </div>
@@ -69,8 +70,10 @@ export default function Messages() {
 
   const [staff,           setStaff]           = useState([]);
   const [groups,          setGroups]           = useState([]);
+  const [customers,       setCustomers]        = useState([]);
   const [search,          setSearch]           = useState('');
   const [selectedContact, setSelectedContact]  = useState(null);
+  const [guestChannel,    setGuestChannel]     = useState('email');
   const [messages,        setMessages]         = useState([]);
   const [loadingMsgs,     setLoadingMsgs]      = useState(false);
   const [text,            setText]             = useState('');
@@ -96,6 +99,8 @@ export default function Messages() {
     Promise.all([listStaff({ status: 'active' }), listGroups()])
       .then(([s, g]) => { setStaff(s || []); setGroups(g || []); })
       .catch(() => {});
+    /* So operadores (nao staff) gerem clientes -- falha em silencio para staff */
+    listCustomers().then(c => setCustomers(c || [])).catch(() => {});
     registerPushNotifications();
   }, []);
 
@@ -109,7 +114,8 @@ export default function Messages() {
       const cur = selectedContactRef.current;
       const isCurrent = cur && (
         (cur.type === 'staff' && msg.sender_id === cur.id) ||
-        (cur.type === 'group' && msg.group_id === cur.id)
+        (cur.type === 'group' && msg.group_id === cur.id) ||
+        (cur.type === 'guest' && msg.recipient_type === 'guest' && msg.recipient_id === cur.id)
       );
 
       if (isCurrent) {
@@ -160,6 +166,7 @@ export default function Messages() {
 
   async function loadMessages(contact) {
     setSelectedContact(contact);
+    if (contact.type === 'guest') setGuestChannel(contact.email ? 'email' : 'whatsapp');
     setShowChat(true);
     setUnreadCounts(prev => ({ ...prev, [contact.id]: 0 }));
     setLoadingMsgs(true);
@@ -195,6 +202,8 @@ export default function Messages() {
         content: msgContent,
         ...(selectedContact.type === 'group'
           ? { group_id: selectedContact.id, message_type: 'group', recipient_type: 'group' }
+          : selectedContact.type === 'guest'
+          ? { recipient_id: selectedContact.id, recipient_type: 'guest', message_type: 'direct', channel: guestChannel }
           : { recipient_id: selectedContact.id, recipient_type: 'staff', message_type: 'direct' }
         ),
       };
@@ -224,8 +233,9 @@ export default function Messages() {
   }
 
   const contacts = [
-    ...staff.map(s  => ({ ...s, type: 'staff', label: s.name, sublabel: s.role })),
-    ...groups.map(g => ({ ...g, type: 'group', label: g.name, sublabel: `Grupo · ${(g.members || []).length} membros` })),
+    ...staff.map(s     => ({ ...s, type: 'staff', label: s.name, sublabel: s.role })),
+    ...groups.map(g    => ({ ...g, type: 'group', label: g.name, sublabel: `Grupo · ${(g.members || []).length} membros` })),
+    ...customers.map(c => ({ ...c, type: 'guest', label: c.name, sublabel: c.email || c.phone || 'Cliente' })),
   ];
 
   const filteredContacts = search.trim()
@@ -267,7 +277,7 @@ export default function Messages() {
           <div className="flex-1 overflow-y-auto">
             {filteredContacts.length === 0 ? (
               <p className="p-4 text-xs font-body text-n-400 text-center">
-                {search ? 'Sem resultados' : 'Sem colaboradores ou grupos'}
+                {search ? 'Sem resultados' : 'Sem colaboradores, grupos ou clientes'}
               </p>
             ) : filteredContacts.map(c => {
               const isOnline  = c.type === 'staff' && onlineUsers.has(c.id);
@@ -333,6 +343,28 @@ export default function Messages() {
                     <p className="text-xs font-body text-n-400 truncate">{selectedContact.sublabel}</p>
                   )}
                 </div>
+                {selectedContact.type === 'guest' && (
+                  <div className="flex items-center gap-1 shrink-0 bg-n-100 rounded-sm p-0.5">
+                    <button
+                      type="button"
+                      disabled={!selectedContact.email}
+                      onClick={() => setGuestChannel('email')}
+                      title={selectedContact.email || 'Sem email'}
+                      className={`flex items-center gap-1 px-2 py-1 rounded-xs text-xs font-body font-semibold transition-colors disabled:opacity-30 disabled:cursor-not-allowed ${guestChannel === 'email' ? 'bg-white text-ocean-700 shadow-sm' : 'text-n-500 hover:text-n-700'}`}
+                    >
+                      <Mail size={13} strokeWidth={1.75} /> Email
+                    </button>
+                    <button
+                      type="button"
+                      disabled={!selectedContact.phone}
+                      onClick={() => setGuestChannel('whatsapp')}
+                      title={selectedContact.phone || 'Sem telefone'}
+                      className={`flex items-center gap-1 px-2 py-1 rounded-xs text-xs font-body font-semibold transition-colors disabled:opacity-30 disabled:cursor-not-allowed ${guestChannel === 'whatsapp' ? 'bg-white text-ocean-700 shadow-sm' : 'text-n-500 hover:text-n-700'}`}
+                    >
+                      <MessageSquare size={13} strokeWidth={1.75} /> WhatsApp
+                    </button>
+                  </div>
+                )}
               </div>
 
               {/* Messages area */}
@@ -352,9 +384,17 @@ export default function Messages() {
                           <p className="text-xs font-semibold mb-1 opacity-60 capitalize">{msg.sender_name || msg.sender_type}</p>
                         )}
                         <p className="leading-relaxed whitespace-pre-wrap break-words">{msg.content}</p>
+                        {msg.channel && msg.channel !== 'internal' && (
+                          <p className={`flex items-center gap-1 text-xs mt-1 ${msg.delivery_status === 'failed' ? 'text-red-300' : 'opacity-60'}`}>
+                            {msg.channel === 'email' ? <Mail size={11} strokeWidth={1.75} /> : <MessageSquare size={11} strokeWidth={1.75} />}
+                            {msg.delivery_status === 'failed' ? (
+                              <span className="flex items-center gap-1"><AlertTriangle size={11} strokeWidth={2} /> Falha ao entregar</span>
+                            ) : msg.channel === 'email' ? 'Enviado por email' : 'Enviado por WhatsApp'}
+                          </p>
+                        )}
                         <div className={`flex items-center justify-end gap-1 mt-1 ${isMe ? 'opacity-60' : ''}`}>
                           <span className="text-xs">{formatTime(msg.created_at)}</span>
-                          {isMe && (
+                          {isMe && msg.channel === 'internal' && (
                             msg.is_read
                               ? <CheckCheck size={12} strokeWidth={2} className="text-sand-300" />
                               : <Check size={12} strokeWidth={2} />
@@ -381,32 +421,36 @@ export default function Messages() {
                   </div>
                 )}
                 <form onSubmit={handleSend} className="px-4 py-3 flex items-center gap-2">
-                  <input
-                    ref={fileRef}
-                    type="file"
-                    className="hidden"
-                    onChange={handleFileChange}
-                    accept="image/*,.pdf,.doc,.docx,.xls,.xlsx"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => fileRef.current?.click()}
-                    className="p-2 rounded-sm text-n-400 hover:text-ocean-700 hover:bg-ocean-50 transition-colors shrink-0"
-                    title="Anexar ficheiro"
-                  >
-                    <Paperclip size={16} strokeWidth={1.75} />
-                  </button>
+                  {selectedContact.type !== 'guest' && (
+                    <>
+                      <input
+                        ref={fileRef}
+                        type="file"
+                        className="hidden"
+                        onChange={handleFileChange}
+                        accept="image/*,.pdf,.doc,.docx,.xls,.xlsx"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => fileRef.current?.click()}
+                        className="p-2 rounded-sm text-n-400 hover:text-ocean-700 hover:bg-ocean-50 transition-colors shrink-0"
+                        title="Anexar ficheiro"
+                      >
+                        <Paperclip size={16} strokeWidth={1.75} />
+                      </button>
+                    </>
+                  )}
                   <input
                     className="flex-1 h-9 px-3 rounded-sm border border-n-300 text-sm font-body bg-n-50 focus:outline-none focus:ring-2 focus:ring-ocean-300 focus:border-ocean-700 focus:bg-white transition-colors"
                     value={text}
                     onChange={handleTextChange}
-                    placeholder="Escrever mensagem..."
+                    placeholder={selectedContact.type === 'guest' ? `Escrever mensagem por ${guestChannel === 'email' ? 'email' : 'WhatsApp'}...` : 'Escrever mensagem...'}
                   />
                   <Button
                     type="submit"
                     loading={sending}
                     icon={Send}
-                    disabled={!text.trim() && !attachment}
+                    disabled={(!text.trim() && !attachment) || (selectedContact.type === 'guest' && !selectedContact[guestChannel === 'email' ? 'email' : 'phone'])}
                     size="sm"
                   >
                     Enviar
