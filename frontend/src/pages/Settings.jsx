@@ -399,7 +399,7 @@ function PerfilPublicoTab({ operator }) {
 ───────────────────────────────────────────────────────── */
 function PagamentosTab() {
   const [settings, setSettings]     = useState(null);
-  const [form, setForm]             = useState({ paypal_client_id: '', paypal_client_secret: '', sisp_merchant_id: '', sisp_api_key: '' });
+  const [form, setForm]             = useState({ paypal_client_id: '', paypal_client_secret: '', paypal_webhook_id: '', sisp_merchant_id: '', sisp_api_key: '' });
   const [saving,  setSaving]        = useState(false);
   const [saved,   setSaved]         = useState(false);
   const set = f => e => setForm(p => ({ ...p, [f]: e.target.value }));
@@ -414,12 +414,13 @@ function PagamentosTab() {
       const body = {};
       if (form.paypal_client_id)     body.paypal_client_id     = form.paypal_client_id;
       if (form.paypal_client_secret) body.paypal_client_secret = form.paypal_client_secret;
+      if (form.paypal_webhook_id)    body.paypal_webhook_id    = form.paypal_webhook_id;
       if (form.sisp_merchant_id)     body.sisp_merchant_id     = form.sisp_merchant_id;
       if (form.sisp_api_key)         body.sisp_api_key         = form.sisp_api_key;
       await api.put('/marketing/payment-settings', body);
       const r = await api.get('/marketing/payment-settings');
       setSettings(r.data?.data);
-      setForm({ paypal_client_id: '', paypal_client_secret: '', sisp_merchant_id: '', sisp_api_key: '' });
+      setForm({ paypal_client_id: '', paypal_client_secret: '', paypal_webhook_id: '', sisp_merchant_id: '', sisp_api_key: '' });
       setSaved(true); setTimeout(() => setSaved(false), 3000);
     } finally { setSaving(false); }
   }
@@ -439,8 +440,9 @@ function PagamentosTab() {
   return (
     <div className="space-y-5 max-w-2xl">
       {settings && (
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-3 gap-3">
           <StatusBadge active={settings.has_paypal} label="PayPal" />
+          <StatusBadge active={settings.has_paypal_webhook} label="Webhook PayPal" />
           <StatusBadge active={settings.has_sisp}   label="SISP Vinti4" />
         </div>
       )}
@@ -455,6 +457,16 @@ function PagamentosTab() {
               placeholder={settings?.paypal_client_id ? '••••••••••••' : 'AaBbCc...'} />
             <Input label="Client Secret" type="password" value={form.paypal_client_secret} onChange={set('paypal_client_secret')}
               placeholder="EeFfGg..." />
+            <div className="pt-2 border-t border-n-100">
+              <p className="text-xs font-body text-n-500 mb-2">
+                Opcional, mas recomendado: em <strong>developer.paypal.com → My Apps &amp; Credentials → Webhooks</strong>,
+                crie um webhook apontando para <span className="font-mono text-[11px]">https://api.saldesk.cv/api/v1/payments/webhook/paypal</span>,
+                subscreva o evento <span className="font-mono text-[11px]">PAYMENT.CAPTURE.COMPLETED</span> e cole aqui o Webhook ID gerado.
+                Sem isto, os pagamentos continuam a ser confirmados normalmente — só a confirmação automática de segurança fica desligada.
+              </p>
+              <Input label="Webhook ID" type="password" value={form.paypal_webhook_id} onChange={set('paypal_webhook_id')}
+                placeholder={settings?.paypal_webhook_id ? '••••••••••••' : 'Ex: 8PT597110X687430LKGECATA'} />
+            </div>
           </div>
         </Card>
 

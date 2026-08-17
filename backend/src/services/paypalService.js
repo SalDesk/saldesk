@@ -55,10 +55,32 @@ async function refundCapture(clientId, clientSecret, captureId, amount, currency
   return data;
 }
 
-function verifyWebhookSignature(headers, body, webhookId) {
-  /* Verificacao simplificada — em producao usar SDK oficial */
-  const eventId = headers['paypal-transmission-id'];
-  return !!eventId;
+/* Verificacao real: chama o endpoint oficial da PayPal, que confirma a
+   assinatura do evento contra o certificado publico deles. clientId/
+   clientSecret/webhookId tem de ser da MESMA conta PayPal que possui o
+   webhook -- credenciais sao por operador, nao ha um par global. */
+async function verifyWebhookSignature(clientId, clientSecret, webhookId, headers, body) {
+  if (!webhookId) return false;
+  try {
+    const token = await getAccessToken(clientId, clientSecret);
+    const { data } = await axios.post(
+      `${BASE}/v1/notifications/verify-webhook-signature`,
+      {
+        auth_algo:         headers['paypal-auth-algo'],
+        cert_url:          headers['paypal-cert-url'],
+        transmission_id:   headers['paypal-transmission-id'],
+        transmission_sig:  headers['paypal-transmission-sig'],
+        transmission_time: headers['paypal-transmission-time'],
+        webhook_id:        webhookId,
+        webhook_event:     body,
+      },
+      { headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } }
+    );
+    return data.verification_status === 'SUCCESS';
+  } catch (err) {
+    console.error('[PayPal] Falha ao verificar assinatura do webhook:', err.message);
+    return false;
+  }
 }
 
 module.exports = { createOrder, captureOrder, refundCapture, verifyWebhookSignature };

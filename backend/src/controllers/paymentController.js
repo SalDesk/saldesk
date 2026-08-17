@@ -130,16 +130,48 @@ async function publicConfirmPaypalPayment(req, res, next) {
 async function paypalWebhook(req, res, next) {
   res.status(200).json({ received: true });
   try {
-    if (!verifyWebhookSignature(req.headers, req.body, process.env.PAYPAL_WEBHOOK_ID)) return;
     const event = req.body;
+    const orderId = event.resource?.supplementary_data?.related_ids?.order_id || event.resource?.id;
+    if (!orderId) return;
+
+    /* A conta PayPal (e por isso as credenciais/webhook ID a usar na
+       verificacao) e do OPERADOR, nao da plataforma -- tem de se saber a
+       que reserva/operador o evento pertence antes de conseguir verificar. */
+    const { data: reserva } = await supabaseAdmin
+      .from('reservations')
+      .select('id, operator_id')
+      .eq('paypal_order_id', orderId)
+      .maybeSingle();
+    if (!reserva) return;
+
+    const { data: operatorRow } = await supabaseAdmin
+      .from('operators')
+      .select('paypal_client_id_enc, paypal_client_secret_enc, paypal_webhook_id_enc')
+      .eq('id', reserva.operator_id)
+      .single();
+
+    if (!operatorRow?.paypal_client_id_enc || !operatorRow?.paypal_client_secret_enc || !operatorRow?.paypal_webhook_id_enc) {
+      console.warn(`[PayPal Webhook] Operador ${reserva.operator_id} sem Webhook ID configurado — evento ignorado (nao ha como verificar a assinatura).`);
+      return;
+    }
+
+    const valid = await verifyWebhookSignature(
+      decrypt(operatorRow.paypal_client_id_enc),
+      decrypt(operatorRow.paypal_client_secret_enc),
+      decrypt(operatorRow.paypal_webhook_id_enc),
+      req.headers,
+      req.body,
+    );
+    if (!valid) {
+      console.error('[PayPal Webhook] Assinatura invalida — evento ignorado.');
+      return;
+    }
+
     if (event.event_type === 'PAYMENT.CAPTURE.COMPLETED') {
-      const orderId = event.resource?.supplementary_data?.related_ids?.order_id;
-      if (orderId) {
-        await supabaseAdmin
-          .from('reservations')
-          .update({ payment_status: 'paid', status: 'confirmed', updated_at: new Date().toISOString() })
-          .eq('paypal_order_id', orderId);
-      }
+      await supabaseAdmin
+        .from('reservations')
+        .update({ payment_status: 'paid', status: 'confirmed', updated_at: new Date().toISOString() })
+        .eq('id', reserva.id);
     }
   } catch (err) { console.error('[PayPal Webhook]', err.message); }
 }

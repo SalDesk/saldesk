@@ -60,10 +60,11 @@ router.get('/widget-code', (req, res) => {
 /* Guardar credenciais de pagamento por operador */
 router.put('/payment-settings', async (req, res, next) => {
   try {
-    const { paypal_client_id, paypal_client_secret, sisp_merchant_id, sisp_api_key } = req.body;
+    const { paypal_client_id, paypal_client_secret, paypal_webhook_id, sisp_merchant_id, sisp_api_key } = req.body;
     const updates = { updated_at: new Date().toISOString() };
     if (paypal_client_id)     updates.paypal_client_id_enc     = encrypt(paypal_client_id);
     if (paypal_client_secret) updates.paypal_client_secret_enc = encrypt(paypal_client_secret);
+    if (paypal_webhook_id)    updates.paypal_webhook_id_enc    = encrypt(paypal_webhook_id);
     if (sisp_merchant_id)     updates.sisp_merchant_id_enc     = encrypt(sisp_merchant_id);
     if (sisp_api_key)         updates.sisp_api_key_enc         = encrypt(sisp_api_key);
     await supabaseAdmin.from('operators').update(updates).eq('id', req.operator.id);
@@ -76,16 +77,18 @@ router.get('/payment-settings', async (req, res, next) => {
   try {
     const { data } = await supabaseAdmin
       .from('operators')
-      .select('paypal_client_id_enc, sisp_merchant_id_enc')
+      .select('paypal_client_id_enc, paypal_webhook_id_enc, sisp_merchant_id_enc')
       .eq('id', req.operator.id)
       .single();
     const mask = (enc) => enc ? `${'*'.repeat(12)}${decrypt(enc).slice(-4)}` : null;
     return res.json({
       data: {
-        paypal_client_id:  mask(data?.paypal_client_id_enc),
-        sisp_merchant_id:  mask(data?.sisp_merchant_id_enc),
-        has_paypal: !!data?.paypal_client_id_enc,
-        has_sisp:   !!data?.sisp_merchant_id_enc,
+        paypal_client_id:   mask(data?.paypal_client_id_enc),
+        paypal_webhook_id:  mask(data?.paypal_webhook_id_enc),
+        sisp_merchant_id:   mask(data?.sisp_merchant_id_enc),
+        has_paypal:         !!data?.paypal_client_id_enc,
+        has_paypal_webhook: !!data?.paypal_webhook_id_enc,
+        has_sisp:           !!data?.sisp_merchant_id_enc,
       },
       message: 'Configuracoes de pagamento',
     });
