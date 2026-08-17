@@ -306,7 +306,7 @@ async function mudarStatus(req, res, next) {
 
     // Actualizar stats do cliente após checkout
     if (status === 'checked_out' && reserva.customer_id) {
-      await actualizarStatsCheckout(getOperatorId(req), reserva.customer_id, reserva.total_price, reserva.source);
+      await actualizarStatsCheckout(getOperatorId(req), reserva.customer_id, reserva.total_price, reserva.source, req.params.id);
     }
 
     return res.json({ data, message: `Status actualizado para "${status}"` });

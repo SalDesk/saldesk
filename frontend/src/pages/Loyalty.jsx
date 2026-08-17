@@ -2,10 +2,13 @@ import { useState, useEffect, useCallback } from 'react';
 import PlanGuard from '../components/PlanGuard';
 import {
   Award, Users, Gift, Edit2, Save, ToggleLeft, ToggleRight,
-  Plus, Minus, ChevronDown, ChevronUp, Star,
+  Plus, Minus, ChevronDown, ChevronUp, Star, Clock, Copy, Check as CheckIcon, AlertCircle,
 } from 'lucide-react';
-import { listCustomers, updateCustomer } from '../services/customersService';
-import { getLoyaltyConfig, updateLoyaltyConfig } from '../services/loyaltyService';
+import { listCustomers } from '../services/customersService';
+import {
+  getLoyaltyConfig, updateLoyaltyConfig,
+  getCustomerLoyaltyHistory, adjustCustomerPoints, redeemCustomerPoints,
+} from '../services/loyaltyService';
 import PageHeader from '../components/layout/PageHeader';
 import Button from '../components/ui/Button';
 import Card from '../components/ui/Card';
@@ -45,26 +48,94 @@ function LevelBadge({ name }) {
   );
 }
 
+/* ── Historico de pontos ── */
+const LEDGER_LABELS = {
+  earn:          { label: 'Ganho',        color: 'text-[#1A7A4A]' },
+  manual_adjust: { label: 'Ajuste manual', color: 'text-ocean-700' },
+  redeem:        { label: 'Resgate',      color: 'text-sand-600' },
+};
+
+function HistoryList({ customerId, refreshKey }) {
+  const [history, setHistory] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    setLoading(true);
+    getCustomerLoyaltyHistory(customerId)
+      .then(h => setHistory(h || []))
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, [customerId, refreshKey]);
+
+  if (loading) return <div className="flex justify-center py-4"><LoadingSpinner size={20} /></div>;
+  if (history.length === 0) {
+    return <p className="text-xs font-body text-n-400 text-center py-3">Sem movimentos ainda.</p>;
+  }
+
+  return (
+    <div className="space-y-1.5 max-h-40 overflow-y-auto">
+      {history.map(h => (
+        <div key={h.id} className="flex items-center justify-between text-xs font-body py-1 border-b border-n-100 last:border-0">
+          <div className="min-w-0">
+            <span className={`font-semibold ${LEDGER_LABELS[h.type]?.color || 'text-n-600'}`}>
+              {LEDGER_LABELS[h.type]?.label || h.type}
+            </span>
+            {h.reason && <span className="text-n-400 truncate"> · {h.reason}</span>}
+            <p className="text-n-400">{new Date(h.created_at).toLocaleDateString('pt-PT')}</p>
+          </div>
+          <span className={`font-mono font-semibold shrink-0 ${h.points > 0 ? 'text-[#1A7A4A]' : 'text-error'}`}>
+            {h.points > 0 ? '+' : ''}{h.points}
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 /* ── Points Modal ── */
-function PointsModal({ customer, config, onClose, onSave }) {
+function PointsModal({ customer, config, onClose, onAdjust, onRedeem }) {
   const current = Number(customer?.loyalty_points || 0);
   const [mode,   setMode]   = useState('add');
   const [amount, setAmount] = useState('');
   const [reason, setReason] = useState('');
   const [saving, setSaving] = useState(false);
   const [error,  setError]  = useState('');
+  const [historyKey, setHistoryKey] = useState(0);
+  const [redeeming, setRedeeming] = useState(false);
+  const [redeemedVoucher, setRedeemedVoucher] = useState(null);
+  const [copied, setCopied] = useState(false);
 
   async function handleSave() {
     const delta = Number(amount);
     if (!delta || delta <= 0) { setError('Introduza um valor valido.'); return; }
     setSaving(true);
     setError('');
-    const newPts = Math.max(0, mode === 'add' ? current + delta : current - delta);
     try {
-      await onSave(customer.id, newPts);
-      onClose();
+      await onAdjust(customer.id, mode === 'add' ? delta : -delta, reason);
+      setAmount('');
+      setReason('');
+      setHistoryKey(k => k + 1);
     } catch { setError('Erro ao actualizar pontos.'); }
     finally { setSaving(false); }
+  }
+
+  async function handleRedeem() {
+    setRedeeming(true);
+    setError('');
+    try {
+      const result = await onRedeem(customer.id);
+      setRedeemedVoucher(result.voucher);
+      setHistoryKey(k => k + 1);
+    } catch (err) {
+      setError(err?.response?.data?.error || 'Erro ao resgatar pontos.');
+    } finally { setRedeeming(false); }
+  }
+
+  function copyCode() {
+    navigator.clipboard.writeText(redeemedVoucher.code).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    });
   }
 
   const preview = Number(amount) > 0
@@ -75,7 +146,7 @@ function PointsModal({ customer, config, onClose, onSave }) {
   const previewLevel = getLevel(preview, config.levels);
 
   return (
-    <Modal open onClose={onClose} title={`Pontos — ${customer?.first_name} ${customer?.last_name}`} size="sm">
+    <Modal open onClose={onClose} title={`Pontos — ${customer?.name || ''}`} size="sm">
       <div className="space-y-4">
         <div className="flex items-center justify-between p-3 bg-n-50 rounded-sm border border-n-200">
           <div>
@@ -84,6 +155,36 @@ function PointsModal({ customer, config, onClose, onSave }) {
           </div>
           <LevelBadge name={currentLevel.name} />
         </div>
+
+        {/* Resgate */}
+        {redeemedVoucher ? (
+          <div className="p-3 bg-[#ECFDF5] border border-green-200 rounded-sm space-y-2">
+            <p className="text-xs font-body font-semibold text-[#1A7A4A]">Voucher gerado — {redeemedVoucher.value}% de desconto</p>
+            <div className="flex items-center gap-2">
+              <code className="flex-1 font-mono text-sm font-bold text-n-900 bg-white border border-green-200 rounded-xs px-2 py-1.5">
+                {redeemedVoucher.code}
+              </code>
+              <button onClick={copyCode} className="p-1.5 rounded text-n-500 hover:text-ocean-700 hover:bg-white transition-colors" title="Copiar codigo">
+                {copied ? <CheckIcon size={14} strokeWidth={2} className="text-[#1A7A4A]" /> : <Copy size={14} strokeWidth={1.75} />}
+              </button>
+            </div>
+            <p className="text-xs font-body text-n-500">Uso unico, valido ate {new Date(redeemedVoucher.expires_at).toLocaleDateString('pt-PT')}.</p>
+          </div>
+        ) : (
+          <div className="p-3 bg-sand-50 border border-sand-100 rounded-sm">
+            <div className="flex items-center justify-between gap-3">
+              <div className="min-w-0">
+                <p className="text-xs font-body font-semibold text-n-700 flex items-center gap-1.5">
+                  <Gift size={13} strokeWidth={1.75} /> Resgatar nivel {currentLevel.name}
+                </p>
+                <p className="text-xs font-body text-n-500 truncate">Troca todo o saldo por um voucher de {currentLevel.discount_pct}% (uso unico).</p>
+              </div>
+              <Button size="sm" variant="secondary" loading={redeeming} disabled={current <= 0} onClick={handleRedeem} className="shrink-0">
+                Resgatar
+              </Button>
+            </div>
+          </div>
+        )}
 
         <div className="flex gap-1 bg-n-100 rounded-sm p-0.5">
           {[{ v: 'add', l: 'Adicionar' }, { v: 'remove', l: 'Remover' }].map(o => (
@@ -103,7 +204,7 @@ function PointsModal({ customer, config, onClose, onSave }) {
         />
 
         <Input
-          label="Motivo (opcional)"
+          label="Motivo"
           value={reason}
           onChange={e => setReason(e.target.value)}
           placeholder="Ex: reserva especial, ajuste manual..."
@@ -123,11 +224,20 @@ function PointsModal({ customer, config, onClose, onSave }) {
           </div>
         )}
 
-        {error && <p className="text-xs text-error">{error}</p>}
+        {error && (
+          <p className="text-xs text-error flex items-center gap-1"><AlertCircle size={12} strokeWidth={2} /> {error}</p>
+        )}
 
         <div className="flex gap-3">
-          <Button variant="secondary" onClick={onClose} className="flex-1">Cancelar</Button>
-          <Button icon={Save} loading={saving} onClick={handleSave} className="flex-1">Guardar</Button>
+          <Button variant="secondary" onClick={onClose} className="flex-1">Fechar</Button>
+          <Button icon={Save} loading={saving} onClick={handleSave} className="flex-1">Guardar ajuste</Button>
+        </div>
+
+        <div className="pt-2 border-t border-n-100">
+          <p className="text-xs font-body font-bold uppercase tracking-wide text-n-500 mb-2 flex items-center gap-1.5">
+            <Clock size={12} strokeWidth={1.75} /> Historico
+          </p>
+          <HistoryList customerId={customer.id} refreshKey={historyKey} />
         </div>
       </div>
     </Modal>
@@ -239,15 +349,24 @@ export default function Loyalty() {
     persistConfig({ ...config, levels });
   }
 
-  const handleUpdatePoints = useCallback(async (customerId, newPoints) => {
-    await updateCustomer(customerId, { loyalty_points: newPoints });
-    setCustomers(prev => prev.map(c => c.id === customerId ? { ...c, loyalty_points: newPoints } : c));
+  const handleAdjustPoints = useCallback(async (customerId, delta, reason) => {
+    const result = await adjustCustomerPoints(customerId, delta, reason);
+    setCustomers(prev => prev.map(c => c.id === customerId ? { ...c, loyalty_points: result.loyalty_points } : c));
+    setEditingCustomer(prev => prev && prev.id === customerId ? { ...prev, loyalty_points: result.loyalty_points } : prev);
+    return result;
+  }, []);
+
+  const handleRedeemPoints = useCallback(async (customerId) => {
+    const result = await redeemCustomerPoints(customerId);
+    setCustomers(prev => prev.map(c => c.id === customerId ? { ...c, loyalty_points: result.loyalty_points } : c));
+    setEditingCustomer(prev => prev && prev.id === customerId ? { ...prev, loyalty_points: result.loyalty_points } : prev);
+    return result;
   }, []);
 
   const filtered = customers.filter(c => {
     if (search) {
       const q = search.toLowerCase();
-      if (!`${c.first_name} ${c.last_name}`.toLowerCase().includes(q) && !(c.email || '').toLowerCase().includes(q)) return false;
+      if (!(c.name || '').toLowerCase().includes(q) && !(c.email || '').toLowerCase().includes(q)) return false;
     }
     if (filterLevel) {
       const lvl = getLevel(c.loyalty_points, config.levels);
@@ -411,7 +530,7 @@ export default function Loyalty() {
                         return (
                           <tr key={c.id} className={`hover:bg-n-50 transition-colors ${isTop ? 'bg-[#FFF7E6]' : ''}`}>
                             <td className="py-3 px-4 font-body font-semibold text-n-900 whitespace-nowrap">
-                              {c.first_name} {c.last_name}
+                              {c.name}
                               {isTop && <Star size={11} strokeWidth={2} className="inline ml-1 text-sand-500 fill-sand-400" />}
                             </td>
                             <td className="py-3 px-4 text-n-500 text-xs">{c.email || '—'}</td>
@@ -444,7 +563,8 @@ export default function Loyalty() {
           customer={editingCustomer}
           config={config}
           onClose={() => setEditingCustomer(null)}
-          onSave={handleUpdatePoints}
+          onAdjust={handleAdjustPoints}
+          onRedeem={handleRedeemPoints}
         />
       )}
     </div>

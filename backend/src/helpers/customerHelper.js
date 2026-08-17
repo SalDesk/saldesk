@@ -54,7 +54,7 @@ async function obterOuCriarCliente(operatorId, { name, email, phone, country_cod
 }
 
 /* Incrementa total_visits, total_spent e pontos de fidelizacao apos checkout */
-async function actualizarStatsCheckout(operatorId, customerId, totalPrice, source = 'admin') {
+async function actualizarStatsCheckout(operatorId, customerId, totalPrice, source = 'admin', reservationId = null) {
   const { data: customer } = await supabaseAdmin
     .from('customers')
     .select('total_visits, total_spent, loyalty_points')
@@ -67,28 +67,25 @@ async function actualizarStatsCheckout(operatorId, customerId, totalPrice, sourc
   const elegivel = ['direct', 'public', 'admin', 'manual'].includes(source);
   const config = elegivel ? await obterConfigActiva(operatorId) : null;
   const pontosGanhos = config ? Math.round(Number(totalPrice) * Number(config.points_per_euro)) : 0;
+  const novoSaldo = (customer.loyalty_points || 0) + pontosGanhos;
 
   await supabaseAdmin
     .from('customers')
     .update({
       total_visits:   customer.total_visits + 1,
       total_spent:    Number(customer.total_spent) + Number(totalPrice),
-      loyalty_points: (customer.loyalty_points || 0) + pontosGanhos,
+      loyalty_points: novoSaldo,
       updated_at:     new Date().toISOString(),
     })
     .eq('id', customerId);
+
+  if (pontosGanhos > 0) {
+    await supabaseAdmin.from('loyalty_ledger').insert({
+      operator_id: operatorId, customer_id: customerId, type: 'earn',
+      points: pontosGanhos, balance_after: novoSaldo,
+      reason: 'Checkout de reserva', reservation_id: reservationId,
+    });
+  }
 }
 
-/* Resgatar pontos de fidelizacao */
-async function resgatarPontos(customerId, pontos) {
-  const { data: customer } = await supabaseAdmin
-    .from('customers').select('loyalty_points').eq('id', customerId).single();
-  if (!customer || customer.loyalty_points < pontos) return false;
-  await supabaseAdmin
-    .from('customers')
-    .update({ loyalty_points: customer.loyalty_points - pontos, updated_at: new Date().toISOString() })
-    .eq('id', customerId);
-  return true;
-}
-
-module.exports = { obterOuCriarCliente, actualizarStatsCheckout, resgatarPontos };
+module.exports = { obterOuCriarCliente, actualizarStatsCheckout };
