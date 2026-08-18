@@ -14,8 +14,12 @@ const verifyGygIntegrator = require('../middleware/verifyGygIntegrator');
    qualquer outra logica, incluindo pedidos que a autenticacao rejeite. */
 router.use((req, res, next) => {
   const inicio = Date.now();
+  const jsonOriginal = res.json.bind(res);
+  let corpoEnviado = null;
+  res.json = (body) => { corpoEnviado = body; return jsonOriginal(body); };
   res.on('finish', () => {
-    console.log(`[GYG Integrator] ${req.method} ${req.originalUrl} -> ${res.statusCode} (${Date.now() - inicio}ms)`);
+    const corpo = corpoEnviado ? JSON.stringify(corpoEnviado).slice(0, 500) : '(sem corpo JSON)';
+    console.log(`[GYG Integrator] ${req.method} ${req.originalUrl} -> ${res.statusCode} (${Date.now() - inicio}ms) ${corpo}`);
   });
   next();
 });
