@@ -258,21 +258,43 @@ async function cancelBooking(req, res, next) {
 /* 6. Notify Availability -- direccao SalDesk -> GYG (nos e que chamamos),
    nao uma rota. Credenciais desta direccao sao dadas pela GYG, distintas
    das que a GYG usa para nos chamar.
-   Testado contra o sandbox real (2026-08-18): confirma que o corpo tem de
-   vir dentro de um campo "data" (o mesmo envelope usado nas respostas que
-   nos devolvemos), senao a GYG devolve VALIDATION_FAILURE "data must not
-   be null". O conteudo exacto dentro de "data" (nomes de campo da
-   disponibilidade por produto/data) ainda nao esta confirmado -- falta a
-   documentacao especifica deste endpoint ("Notify Availability Update -
-   Documentation" no portal). O payload abaixo e uma convencao razoavel,
-   nao o spec confirmado. */
+   Schema confirmado ao vivo contra o sandbox oficial (2026-08-18, via as
+   mensagens de validacao devolvidas ao enviar payloads incompletos de
+   proposito): { data: { productId, availabilities: [{ dateTime, vacancies }] } }.
+   dateTime tem de estar dentro dos proximos 90 dias. Ilha do Sal nao tem
+   horario de verao, por isso o offset -01:00 e sempre correcto. */
 async function notifyAvailabilityChanged(unitId) {
-  const url = process.env.GYG_NOTIFY_AVAILABILITY_URL;
-  if (!url) return;
+  const url      = process.env.GYG_NOTIFY_AVAILABILITY_URL;
   const username = process.env.GYG_NOTIFY_USERNAME;
   const password = process.env.GYG_NOTIFY_PASSWORD;
-  if (!username || !password) return;
-  await axios.post(url, { data: { unit_id: unitId } }, { auth: { username, password } });
+  if (!url || !username || !password) return;
+
+  const { data: unit } = await supabaseAdmin
+    .from('units')
+    .select('capacity, ota_product_ids')
+    .eq('id', unitId)
+    .maybeSingle();
+
+  const productId = unit?.ota_product_ids?.getyourguide;
+  if (!productId) return; // unidade nao ligada ao GYG
+
+  const availabilities = [];
+  const hoje = new Date();
+  for (let i = 0; i < 90; i++) {
+    const dia = new Date(hoje);
+    dia.setDate(dia.getDate() + i);
+    const dataStr = dia.toISOString().split('T')[0];
+    const proximoDia = new Date(dia);
+    proximoDia.setDate(proximoDia.getDate() + 1);
+
+    const disponivel = await verificarDisponibilidade(supabaseAdmin, unitId, dataStr, proximoDia.toISOString().split('T')[0]);
+    availabilities.push({
+      dateTime:  `${dataStr}T00:00:00-01:00`,
+      vacancies: disponivel ? (unit.capacity || 1) : 0,
+    });
+  }
+
+  await axios.post(url, { data: { productId, availabilities } }, { auth: { username, password } });
 }
 
 module.exports = {
