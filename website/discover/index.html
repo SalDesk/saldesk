@@ -255,7 +255,7 @@
         <span id="langPt" class="active">PT</span>
         <span id="langEn">EN</span>
       </button>
-      <a href="https://app.saldesk.cv/viajante/entrar" class="nav-profile">
+      <a href="https://app.saldesk.cv/viajante/entrar" class="nav-profile" id="nav-profile-link">
         <span class="nav-profile-icon">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
         </span>
@@ -300,6 +300,20 @@
         </div>
       </div>
     </div>
+  </div>
+</section>
+
+<!-- RECOMENDADO -- so aparece com sessao de viajante activa (ver bootstrapTravelerSession) -->
+<section class="section fade-up" id="recommended-section" style="display:none">
+  <div class="container">
+    <div style="margin-bottom:26px">
+      <div class="sl"><span class="pt">Para si</span><span class="en">For you</span></div>
+      <h2 class="st">
+        <span class="pt" id="recommended-heading-pt">Populares agora</span>
+        <span class="en" id="recommended-heading-en">Popular right now</span>
+      </h2>
+    </div>
+    <div class="act-grid" id="recommended-grid"></div>
   </div>
 </section>
 
@@ -436,6 +450,8 @@
    CONSTANTS
 ══════════════════════════════════════════ */
 const API = 'https://api.saldesk.cv/api/v1/public';
+const API_TRAVELER_AUTH = 'https://api.saldesk.cv/api/v1/traveler-auth';
+const API_TRAVELER = 'https://api.saldesk.cv/api/v1/traveler';
 const APP = 'https://app.saldesk.cv';
 const EUR_CVE = 110;
 const PER_PAGE = 6;
@@ -469,6 +485,13 @@ let featuredItems = [];
 let visible    = PER_PAGE;
 let currency   = 'EUR';
 let activeFilter = ''; // chave estavel (label PT da categoria, ou tipo)
+
+/* Ponte de sessao com a conta de viajante (app.saldesk.cv) -- ver
+   bootstrapTravelerSession(). null enquanto anonimo ou nao verificado
+   ainda; a wishlist e as recomendacoes so ficam ligadas a conta depois
+   disto ser preenchido. */
+let travelerSession = null;      // { access_token, traveler } | null
+let wishedUnitIds   = new Set(); // so populado quando travelerSession existe
 
 /* ══════════════════════════════════════════
    HELPERS
@@ -576,9 +599,46 @@ function fmtPrice(price, opCur) {
 ══════════════════════════════════════════ */
 function getWishlist()    { return JSON.parse(localStorage.getItem('sd-wish') || '[]'); }
 function saveWishlist(w)  { localStorage.setItem('sd-wish', JSON.stringify(w)); }
-function isWished(slug)   { return getWishlist().includes(slug); }
 
-function toggleWishlist(slug) {
+/* Com sessao de viajante activa a wishlist passa a ser ao nivel da UNIDADE
+   (wishedUnitIds, espelha a conta real em traveler_wishlist); anonimo
+   continua exactamente igual, ao nivel do OPERADOR em localStorage. */
+function isWished(item) {
+  return travelerSession ? wishedUnitIds.has(item.unit_id) : getWishlist().includes(item.operator_slug);
+}
+
+async function travelerApiFetch(path, opts = {}) {
+  return fetch(API_TRAVELER + path, {
+    ...opts,
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${travelerSession.access_token}`, ...(opts.headers || {}) },
+  });
+}
+
+async function toggleWishlist(slug, unitId) {
+  if (travelerSession && unitId) {
+    const wasWished = wishedUnitIds.has(unitId);
+    wasWished ? wishedUnitIds.delete(unitId) : wishedUnitIds.add(unitId);
+    updateWishCount();
+    document.querySelectorAll(`[data-wish-unit="${unitId}"]`).forEach(btn => {
+      btn.classList.toggle('active', !wasWished);
+      btn.classList.add('pop');
+      btn.addEventListener('animationend', () => btn.classList.remove('pop'), { once: true });
+    });
+    try {
+      const r = wasWished
+        ? await travelerApiFetch(`/wishlist/${unitId}`, { method: 'DELETE' })
+        : await travelerApiFetch('/wishlist', { method: 'POST', body: JSON.stringify({ unit_id: unitId }) });
+      if (!r.ok) throw new Error();
+    } catch {
+      // reverte a actualizacao optimista se a chamada falhar (ex: access_token expirou a meio da visita)
+      wasWished ? wishedUnitIds.add(unitId) : wishedUnitIds.delete(unitId);
+      updateWishCount();
+      document.querySelectorAll(`[data-wish-unit="${unitId}"]`).forEach(btn => btn.classList.toggle('active', wasWished));
+    }
+    return;
+  }
+
+  // --- caminho anonimo, por operador, em localStorage -- inalterado ---
   const w = getWishlist();
   const i = w.indexOf(slug);
   if (i >= 0) w.splice(i, 1); else w.push(slug);
@@ -592,7 +652,7 @@ function toggleWishlist(slug) {
 }
 
 function updateWishCount() {
-  const n  = getWishlist().length;
+  const n  = travelerSession ? wishedUnitIds.size : getWishlist().length;
   const el = document.getElementById('wish-count');
   if (el) { el.textContent = n; el.style.display = n > 0 ? '' : 'none'; }
 }
@@ -607,20 +667,45 @@ function closeWishlist() {
   document.body.style.overflow = '';
 }
 
+function emptyWishlistHtml() {
+  return `<div class="state-empty" style="grid-column:auto;padding:40px 20px">
+    <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="var(--line-strong)" stroke-width="1.5" style="margin:0 auto 12px"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+    <p style="color:var(--tx-soft);font-size:.8125rem"><span class="pt">A sua lista esta vazia.</span><span class="en">Your wishlist is empty.</span></p>
+  </div>`;
+}
+
 function renderWishlistModal() {
-  const w  = getWishlist();
   const mc = document.getElementById('wish-modal-count');
   const wl = document.getElementById('wish-list');
-  if (mc) mc.textContent = `(${w.length})`;
 
-  if (!w.length) {
-    wl.innerHTML = `<div class="state-empty" style="grid-column:auto;padding:40px 20px">
-      <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="var(--line-strong)" stroke-width="1.5" style="margin:0 auto 12px"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
-      <p style="color:var(--tx-soft);font-size:.8125rem"><span class="pt">A sua lista esta vazia.</span><span class="en">Your wishlist is empty.</span></p>
-    </div>`;
+  if (travelerSession) {
+    const wishItems = operators.filter(o => wishedUnitIds.has(o.unit_id));
+    if (mc) mc.textContent = `(${wishItems.length})`;
+    if (!wishItems.length) { wl.innerHTML = emptyWishlistHtml(); if (L() === 'en') fixLang(wl); return; }
+
+    wl.innerHTML = wishItems.map(item => `
+      <div class="wish-item">
+        <div style="width:56px;height:56px;border-radius:8px;overflow:hidden;flex-shrink:0">${imgBlock(item)}</div>
+        <div class="wish-item-info">
+          <div class="wish-item-name">${esc(item.unit_name)}</div>
+          <div class="wish-item-type">${esc(item.operator_name)}</div>
+        </div>
+        <a href="${APP}/book/${esc(item.operator_slug)}/servico/${esc(item.unit_id)}" class="btn btn-primary btn-sm">
+          <span class="pt">Reservar</span><span class="en">Book</span>
+        </a>
+        <button class="wish-remove" onclick="toggleWishlist('${esc(item.operator_slug)}','${esc(item.unit_id)}');renderWishlistModal()" aria-label="Remover">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+        </button>
+      </div>`).join('');
     if (L() === 'en') fixLang(wl);
     return;
   }
+
+  // --- caminho anonimo, por operador -- inalterado ---
+  const w = getWishlist();
+  if (mc) mc.textContent = `(${w.length})`;
+
+  if (!w.length) { wl.innerHTML = emptyWishlistHtml(); if (L() === 'en') fixLang(wl); return; }
 
   /* A wishlist guarda o OPERADOR (nao o servico) -- deduplicar por
      operator_slug para nao repetir o mesmo operador no modal. */
@@ -678,14 +763,14 @@ function skCards(n, h = '200px') {
 function renderFeatCard(item) {
   const name = esc(item.unit_name);
   const loc  = esc(item.address || 'Ilha do Sal');
-  const wished = isWished(item.operator_slug);
+  const wished = isWished(item);
   const priceHtml = `<span class="pt">A partir de </span><span class="en">From </span><strong>${fmtPrice(item.base_price, item.currency)}</strong>`;
 
   return `
     <div class="feat-card card fade-up">
       <div class="feat-img img-block">
         ${imgBlock(item)}
-        <button class="wish-btn ${wished?'active':''}" data-wish="${esc(item.operator_slug)}" onclick="toggleWishlist('${esc(item.operator_slug)}')" aria-label="Wishlist">
+        <button class="wish-btn ${wished?'active':''}" data-wish="${esc(item.operator_slug)}" data-wish-unit="${esc(item.unit_id)}" onclick="toggleWishlist('${esc(item.operator_slug)}','${esc(item.unit_id)}')" aria-label="Wishlist">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="${wished?'#e00':'none'}" stroke="${wished?'#e00':'currentColor'}" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
         </button>
         ${availabilityLabel(item)}
@@ -711,7 +796,7 @@ function renderActCard(item) {
   const name   = esc(item.unit_name);
   const loc    = esc(item.address || 'Ilha do Sal');
   const desc   = esc(truncate(getUnitDescription(item, L()), 70));
-  const wished = isWished(item.operator_slug);
+  const wished = isWished(item);
   const priceVal = fmtPrice(item.base_price, item.currency);
   const hasPrice = !!item.base_price;
   const bookHref = `${APP}/book/${esc(item.operator_slug)}/servico/${esc(item.unit_id)}`;
@@ -720,7 +805,7 @@ function renderActCard(item) {
     <div class="act-card card fade-up">
       <div class="act-img img-block">
         ${imgBlock(item)}
-        <button class="wish-btn ${wished?'active':''}" data-wish="${esc(item.operator_slug)}" onclick="toggleWishlist('${esc(item.operator_slug)}')" aria-label="Wishlist">
+        <button class="wish-btn ${wished?'active':''}" data-wish="${esc(item.operator_slug)}" data-wish-unit="${esc(item.unit_id)}" onclick="toggleWishlist('${esc(item.operator_slug)}','${esc(item.unit_id)}')" aria-label="Wishlist">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="${wished?'#e00':'none'}" stroke="${wished?'#e00':'currentColor'}" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
         </button>
         ${availabilityLabel(item)}
@@ -963,6 +1048,91 @@ function renderFeatured() {
 }
 
 /* ══════════════════════════════════════════
+   SESSAO DE VIAJANTE (ponte com app.saldesk.cv)
+   Tudo aqui e estritamente aditivo: sem sessao, o comportamento fica
+   identico ao de sempre (wishlist anonima, sem secção de recomendações,
+   link "Perfil" a apontar para o login).
+══════════════════════════════════════════ */
+async function bootstrapTravelerSession() {
+  try {
+    const r = await fetch(`${API_TRAVELER_AUTH}/session`, { credentials: 'include' });
+    if (!r.ok) return null;
+    const j = await r.json();
+    return j?.data?.access_token ? j.data : null;
+  } catch { return null; }
+}
+
+function applyTravelerSession(session) {
+  travelerSession = session;
+  const link = document.getElementById('nav-profile-link');
+  if (!link) return;
+  link.href = `${APP}/viajante`;
+  const first = (session.traveler?.name || '').trim().split(/\s+/)[0] || (L() === 'pt' ? 'Perfil' : 'Profile');
+  const pt = link.querySelector('.pt'), en = link.querySelector('.en');
+  if (pt) pt.textContent = first;
+  if (en) en.textContent = first;
+}
+
+/* Fusao unica da wishlist anonima para dentro da conta -- cada slug de
+   operador ainda guardado resolve para todas as unidades publicadas desse
+   operador no catalogo ja carregado em memoria (a wishlist anonima so
+   sabia o operador, nunca uma unidade especifica). So limpa sd-wish se
+   tudo tiver sido gravado com sucesso; addWishlist e idempotente, por isso
+   tentar de novo na proxima visita e sempre seguro. */
+async function mergeAnonymousWishlist() {
+  const anonSlugs = getWishlist();
+  if (anonSlugs.length) {
+    const toMerge = [];
+    anonSlugs.forEach(slug => operators.filter(o => o.operator_slug === slug).forEach(o => toMerge.push(o.unit_id)));
+
+    let allOk = true;
+    for (const unitId of toMerge) {
+      try {
+        const r = await travelerApiFetch('/wishlist', { method: 'POST', body: JSON.stringify({ unit_id: unitId }) });
+        if (!r.ok) allOk = false;
+      } catch { allOk = false; }
+    }
+    if (allOk) localStorage.removeItem('sd-wish');
+  }
+  await loadWishedUnitIds();
+}
+
+async function loadWishedUnitIds() {
+  try {
+    const r = await travelerApiFetch('/wishlist');
+    const j = await r.json();
+    wishedUnitIds = new Set((j.data || []).map(w => w.unit_id));
+  } catch { wishedUnitIds = new Set(); }
+  updateWishCount();
+  applyFilters();
+  renderFeatured();
+}
+
+async function loadRecommendations() {
+  const section = document.getElementById('recommended-section');
+  const grid = document.getElementById('recommended-grid');
+  grid.innerHTML = skCards(3);
+  section.style.display = '';
+
+  let json;
+  try {
+    const r = await travelerApiFetch('/recommendations?limit=6');
+    if (!r.ok) throw new Error();
+    json = await r.json();
+  } catch { section.style.display = 'none'; return; }
+
+  const items = json.data || [];
+  if (!items.length) { section.style.display = 'none'; return; }
+
+  document.getElementById('recommended-heading-pt').textContent = json.personalized ? 'Baseado no que já viu e reservou' : 'Populares agora';
+  document.getElementById('recommended-heading-en').textContent = json.personalized ? "Based on what you've viewed and booked" : 'Popular right now';
+
+  grid.innerHTML = items.map(renderActCard).join('');
+  observeFadeUp(grid);
+  if (L() === 'en') fixLang(grid);
+}
+
+/* ══════════════════════════════════════════
    ANIMATIONS
 ══════════════════════════════════════════ */
 const obs = new IntersectionObserver(entries => {
@@ -1016,8 +1186,17 @@ async function init() {
   setLang(savedLang);
   updateWishCount();
 
+  const sessionPromise = bootstrapTravelerSession(); // nao bloqueia o caminho anonimo
+
   await loadServices();
   await loadFeatured();
+
+  const session = await sessionPromise;
+  if (session) {
+    applyTravelerSession(session);
+    await mergeAnonymousWishlist();
+    await loadRecommendations();
+  }
 }
 
 document.addEventListener('DOMContentLoaded', init);

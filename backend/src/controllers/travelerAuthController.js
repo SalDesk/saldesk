@@ -3,6 +3,7 @@ const https = require('https');
 const { addFailedLogin } = require('../services/logStore');
 const { enviarEmail } = require('../helpers/emailHelper');
 const { passwordResetEmail } = require('../helpers/emailTemplates');
+const { COOKIE_NAME, setTravelerSessionCookie, clearTravelerSessionCookie } = require('../helpers/travelerSessionCookie');
 
 /* Chama o endpoint de token do Supabase Auth (password ou refresh_token grant) --
    mesma mecânica de authController.js, mesma pool de utilizadores Supabase Auth,
@@ -92,6 +93,8 @@ async function login(req, res, next) {
       return res.status(403).json({ error: 'Esta conta nao e uma conta de viajante', code: 'NOT_TRAVELER' });
     }
 
+    setTravelerSessionCookie(res, authJson.refresh_token);
+
     return res.json({
       data: {
         access_token: authJson.access_token,
@@ -118,7 +121,7 @@ async function login(req, res, next) {
    Google/Apple). */
 async function oauthComplete(req, res, next) {
   try {
-    const { access_token } = req.body;
+    const { access_token, refresh_token } = req.body;
     if (!access_token) {
       return res.status(400).json({ error: 'access_token em falta', code: 'MISSING_FIELDS' });
     }
@@ -146,6 +149,8 @@ async function oauthComplete(req, res, next) {
       traveler = novoTraveler;
     }
 
+    if (refresh_token) setTravelerSessionCookie(res, refresh_token);
+
     return res.json({ data: { user, traveler }, message: 'Sessao OAuth associada' });
   } catch (err) {
     next(err);
@@ -169,6 +174,12 @@ async function refresh(req, res, next) {
       .select('*')
       .eq('user_id', authJson.user.id)
       .single();
+
+    /* Supabase roda o refresh_token a cada uso (uso unico) -- reamar a
+       cookie aqui e obrigatorio, senao a copia na cookie fica dessincronizada
+       da copia que a app acabou de consumir e a proxima tentativa de usar a
+       cookie falha. */
+    setTravelerSessionCookie(res, authJson.refresh_token);
 
     return res.json({
       data: {
@@ -197,7 +208,49 @@ async function logout(req, res, next) {
     if (token) {
       await supabaseAdmin.auth.admin.signOut(token);
     }
+    clearTravelerSessionCookie(res);
     return res.json({ data: null, message: 'Sessao terminada' });
+  } catch (err) {
+    next(err);
+  }
+}
+
+/* Chamado pelo site estatico Conect (saldesk.cv) ao carregar a pagina, com
+   credentials:'include' -- se houver uma cookie de sessao valida (dominio
+   .saldesk.cv), devolve um access_token fresco + o perfil do viajante, sem
+   o Conect precisar de saber nada sobre passwords ou fluxos de login.
+   "nao autenticado" nunca e um erro (200 sempre) -- e o estado normal para
+   a maioria das visitas anonimas. */
+async function session(req, res, next) {
+  try {
+    const refreshToken = req.cookies?.[COOKIE_NAME];
+    if (!refreshToken) {
+      return res.json({ data: null, message: 'Sem sessao activa' });
+    }
+
+    const authJson = await supabaseTokenRequest('refresh_token', { refresh_token: refreshToken });
+    if (!authJson.access_token || authJson.error) {
+      clearTravelerSessionCookie(res); // token invalido/ja consumido -- parar de o tentar reusar
+      return res.json({ data: null, message: 'Sessao expirada' });
+    }
+
+    const { data: traveler } = await supabaseAdmin
+      .from('travelers')
+      .select('*')
+      .eq('user_id', authJson.user.id)
+      .single();
+
+    if (!traveler) {
+      clearTravelerSessionCookie(res);
+      return res.json({ data: null, message: 'Sem sessao activa' });
+    }
+
+    setTravelerSessionCookie(res, authJson.refresh_token); // reamar com o token rodado
+
+    return res.json({
+      data: { access_token: authJson.access_token, traveler },
+      message: 'Sessao valida',
+    });
   } catch (err) {
     next(err);
   }
@@ -270,4 +323,4 @@ async function forgotPassword(req, res, next) {
   }
 }
 
-module.exports = { register, login, oauthComplete, refresh, getMe, logout, changePassword, resetPassword, forgotPassword };
+module.exports = { register, login, oauthComplete, refresh, getMe, logout, session, changePassword, resetPassword, forgotPassword };

@@ -33,3 +33,8 @@ export async function submitReview(reservationId, rating, comment) {
   const { data } = await travelerApi.post(`/traveler/bookings/${reservationId}/review`, { rating, comment });
   return data.data;
 }
+
+export async function getRecommendations(limit = 6) {
+  const { data } = await travelerApi.get(`/traveler/recommendations?limit=${limit}`);
+  return { items: data.data, personalized: data.personalized };
+}

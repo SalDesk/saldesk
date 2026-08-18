@@ -19,8 +19,8 @@ export async function signInWithProvider(provider) {
 /* Chamado depois do redireccionamento OAuth voltar, quando o supabase-js ja
    tem uma sessao valida (access_token do Google/Apple). Troca-a por uma
    conta de viajante real (criada agora, se for a primeira vez). */
-export async function completeOAuthLogin(accessToken) {
-  const { data } = await travelerApi.post('/traveler-auth/oauth-complete', { access_token: accessToken });
+export async function completeOAuthLogin(accessToken, refreshToken) {
+  const { data } = await travelerApi.post('/traveler-auth/oauth-complete', { access_token: accessToken, refresh_token: refreshToken });
   return data.data;
 }
 

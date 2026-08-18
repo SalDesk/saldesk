@@ -1,4 +1,5 @@
 const { supabaseAdmin } = require('../config/supabase');
+const { getDiscoverCatalog } = require('../services/discoverCatalogService');
 
 async function getProfile(req, res) {
   return res.json({ data: req.traveler, message: 'Perfil do viajante' });
@@ -218,4 +219,65 @@ async function removeWishlist(req, res, next) {
   }
 }
 
-module.exports = { getProfile, updateProfile, getBookings, getWishlist, addWishlist, removeWishlist, submitReview };
+/* Recomendacoes reais, baseadas em conteudo -- nunca ML, nunca fabricadas.
+   Junta o historico do viajante (wishlist + reservas), deriva as
+   categorias/ilhas que isso representa, e pontua o resto do catalogo por
+   correspondencia (categoria pesa mais que ilha). Sem historico, ou sem
+   nenhuma correspondencia (ex: category_id ainda nao preenchido em nenhuma
+   unidade -- estado real da BD nesta data), cai honestamente no catalogo
+   ja ordenado por popularidade que getDiscoverCatalog devolve -- o campo
+   "personalized" na resposta e o que impede o frontend de alegar
+   personalizacao que nao aconteceu. */
+async function getRecommendations(req, res, next) {
+  try {
+    const limit = Math.min(parseInt(req.query.limit) || 6, 20);
+    const email = req.traveler.email.trim().toLowerCase();
+
+    const [{ data: wishRows }, { data: bookingRows }, catalog] = await Promise.all([
+      supabaseAdmin.from('traveler_wishlist').select('unit_id').eq('traveler_id', req.traveler.id),
+      supabaseAdmin.from('reservations').select('unit_id').ilike('customer_email', email),
+      getDiscoverCatalog(),
+    ]);
+
+    const historyIds = new Set([
+      ...(wishRows || []).map(r => r.unit_id),
+      ...(bookingRows || []).map(r => r.unit_id),
+    ]);
+    const historyItems = catalog.filter(c => historyIds.has(c.unit_id));
+    const categorySet = new Set(historyItems.map(i => i.category_id).filter(Boolean));
+    const islandSet    = new Set(historyItems.map(i => i.island_id).filter(Boolean));
+    const candidates   = catalog.filter(c => !historyIds.has(c.unit_id));
+
+    let personalized = false;
+    let ranked;
+
+    if (categorySet.size === 0 && islandSet.size === 0) {
+      ranked = candidates; // ja vem ordenado por recent_bookings desc, depois created_at desc
+    } else {
+      const scored = candidates.map(c => ({
+        item: c,
+        score: (categorySet.has(c.category_id) ? 2 : 0) + (islandSet.has(c.island_id) ? 1 : 0),
+      }));
+      const matched = scored
+        .filter(s => s.score > 0)
+        .sort((a, b) => b.score - a.score || (b.item.avg_rating || 0) - (a.item.avg_rating || 0) || b.item.recent_bookings - a.item.recent_bookings);
+
+      if (matched.length) {
+        personalized = true;
+        ranked = [...matched.map(s => s.item), ...scored.filter(s => s.score === 0).map(s => s.item)];
+      } else {
+        ranked = candidates;
+      }
+    }
+
+    return res.json({
+      data: ranked.slice(0, limit),
+      personalized,
+      message: personalized ? 'Recomendacoes personalizadas' : 'Populares agora',
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
+module.exports = { getProfile, updateProfile, getBookings, getWishlist, addWishlist, removeWishlist, submitReview, getRecommendations };

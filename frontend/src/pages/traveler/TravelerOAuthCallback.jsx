@@ -22,7 +22,7 @@ export default function TravelerOAuthCallback() {
     async function concluir(session) {
       if (!session?.access_token || cancelado) return;
       try {
-        const { user, traveler } = await completeOAuthLogin(session.access_token);
+        const { user, traveler } = await completeOAuthLogin(session.access_token, session.refresh_token);
         setTravelerRememberDevice(true);
         setAuth(session.access_token, user, traveler, session.refresh_token);
         navigate('/viajante', { replace: true });

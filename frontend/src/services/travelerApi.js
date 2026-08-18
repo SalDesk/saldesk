@@ -4,6 +4,10 @@ import useTravelerAuthStore from '../store/travelerAuthStore';
 const travelerApi = axios.create({
   baseURL: import.meta.env.VITE_API_URL || 'http://localhost:3001/api/v1',
   timeout: 15_000,
+  /* Necessario para o backend conseguir definir/ler a cookie de sessao
+     partilhada (.saldesk.cv, ver travelerSessionCookie.js) -- sem isto o
+     browser ignora qualquer Set-Cookie devolvido por um pedido cross-origin. */
+  withCredentials: true,
 });
 
 travelerApi.interceptors.request.use((config) => {
@@ -23,7 +27,7 @@ async function refreshAccessToken() {
   const { refreshToken } = useTravelerAuthStore.getState();
   if (!refreshToken) throw new Error('Sem refresh token disponivel');
 
-  const { data } = await axios.post(`${travelerApi.defaults.baseURL}/traveler-auth/refresh`, { refresh_token: refreshToken });
+  const { data } = await axios.post(`${travelerApi.defaults.baseURL}/traveler-auth/refresh`, { refresh_token: refreshToken }, { withCredentials: true });
   const { access_token, refresh_token, user, traveler } = data.data;
   useTravelerAuthStore.getState().setAuth(access_token, user, traveler, refresh_token);
   return access_token;

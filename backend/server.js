@@ -3,7 +3,8 @@ const http    = require('http');
 const express = require('express');
 const cors    = require('cors');
 const helmet  = require('helmet');
-const rateLimit = require('express-rate-limit');
+const cookieParser = require('cookie-parser');
+const { publicLimiter, authLimiter } = require('./src/middleware/rateLimiters');
 
 const authRoutes         = require('./src/routes/auth');
 const travelerAuthRoutes = require('./src/routes/travelerAuth');
@@ -59,20 +60,16 @@ app.use(cors({
   origin: process.env.NODE_ENV === 'development' ? true : corsOrigins,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
+  /* Necessario para a cookie de sessao partilhada (.saldesk.cv) atravessar
+     saldesk.cv <-> api.saldesk.cv -- so muda comportamento para pedidos
+     que ja pecam credentials:'include'/withCredentials explicitamente, os
+     fetch() anonimos existentes continuam identicos. A lista de origens
+     acima ja e um array explicito (nunca '*'), por isso e seguro activar. */
+  credentials: true,
 }));
 
+app.use(cookieParser());
 app.use(express.json({ limit: '5mb' }));
-
-const publicLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, max: 100,
-  standardHeaders: true, legacyHeaders: false,
-  message: { error: 'Demasiadas tentativas.', code: 'RATE_LIMIT' },
-});
-const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, max: 20,
-  standardHeaders: true, legacyHeaders: false,
-  message: { error: 'Demasiadas tentativas de autenticacao.', code: 'RATE_LIMIT' },
-});
 
 app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok', version: '2.0.0', timestamp: new Date().toISOString() });
@@ -80,7 +77,7 @@ app.get('/api/health', (_req, res) => {
 
 /* Rotas API v1 */
 app.use('/api/v1/auth',          authLimiter,  authRoutes);
-app.use('/api/v1/traveler-auth', authLimiter,  travelerAuthRoutes);
+app.use('/api/v1/traveler-auth', travelerAuthRoutes);
 app.use('/api/v1/traveler',      travelerRoutes);
 app.use('/api/v1/onboarding',    onboardingRoutes);
 app.use('/api/v1/units',         unitsRoutes);

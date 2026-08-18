@@ -589,6 +589,7 @@ function WishlistTab() {
   const [view, setView] = useState('guardados'); // 'guardados' | 'explorar'
   const [saved, setSaved]     = useState([]);
   const [explore, setExplore] = useState([]);
+  const [recommended, setRecommended] = useState({ items: [], personalized: false });
   const [loading, setLoading] = useState(true);
   const [category, setCategory] = useState('');
   const [search, setSearch]     = useState('');
@@ -601,6 +602,7 @@ function WishlistTab() {
     setLoading(true);
     loadSaved();
     discoverUnits().then(setExplore).catch(() => {}).finally(() => setLoading(false));
+    travelerService.getRecommendations().then(setRecommended).catch(() => {});
   }, [loadSaved]);
 
   async function handleRemove(unitId) {
@@ -683,6 +685,19 @@ function WishlistTab() {
         )
       ) : (
         <div>
+          {recommended.items.length > 0 && (
+            <div className="mb-5">
+              <p className="text-xs font-body font-bold uppercase tracking-wide text-n-500 mb-2">
+                {recommended.personalized ? 'Baseado no que já viu e reservou' : 'Populares agora'}
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {recommended.items.map(item => (
+                  <ExploreCard key={item.unit_id} item={item} saved={savedIds.has(item.unit_id)} onToggle={handleToggle} />
+                ))}
+              </div>
+            </div>
+          )}
+
           <div className="relative mb-3">
             <Search size={14} strokeWidth={1.75} className="absolute left-3 top-1/2 -translate-y-1/2 text-n-400" />
             <input
