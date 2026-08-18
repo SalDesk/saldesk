@@ -3,6 +3,7 @@ const { verificarDisponibilidade, calcularPreco } = require('../helpers/bookingH
 const { obterOuCriarCliente, actualizarStatsCheckout } = require('../helpers/customerHelper');
 const { enviarEmail } = require('../helpers/emailHelper');
 const { confirmacaoClienteEmail, notificacaoOperadorEmail } = require('../helpers/emailTemplates');
+const { dispararSyncImediato } = require('../helpers/otaSyncHelper');
 
 function getOperatorId(req) {
   return req.operator?.id || req.staff?.operator_id;
@@ -142,6 +143,9 @@ async function criar(req, res, next) {
     }).then(({ error: notifErr }) => {
       if (notifErr) console.error('[Notificacao] Erro ao criar notificacao:', notifErr.message);
     });
+
+    // Disponibilidade mudou -- avisa os canais OTA ja, nao esperar pelo cron
+    dispararSyncImediato(getOperatorId(req));
 
     // Buscar dados do operador para os emails (idioma, moeda, nome, email)
     const { data: operatorData } = await supabaseAdmin
@@ -309,6 +313,9 @@ async function mudarStatus(req, res, next) {
       await actualizarStatsCheckout(getOperatorId(req), reserva.customer_id, reserva.total_price, reserva.source, req.params.id);
     }
 
+    // Cancelar liberta a unidade nas datas -- disponibilidade mudou
+    if (status === 'cancelled') dispararSyncImediato(getOperatorId(req));
+
     return res.json({ data, message: `Status actualizado para "${status}"` });
   } catch (err) {
     next(err);
@@ -328,6 +335,8 @@ async function eliminar(req, res, next) {
       .eq('operator_id', getOperatorId(req));
 
     if (error) throw error;
+
+    dispararSyncImediato(getOperatorId(req));
 
     return res.json({ data: null, message: 'Reserva eliminada' });
   } catch (err) {

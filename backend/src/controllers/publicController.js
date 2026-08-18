@@ -6,6 +6,7 @@ const { detectarIdioma } = require('../helpers/languageHelper');
 const { confirmacaoClienteEmail, notificacaoOperadorEmail } = require('../helpers/emailTemplates');
 const { validarVoucher, registarUsoVoucher } = require('./vouchersController');
 const { encontrarAfiliadoActivo } = require('./affiliatesController');
+const { dispararSyncImediato } = require('../helpers/otaSyncHelper');
 
 async function getOperador(req, res, next) {
   try {
@@ -215,6 +216,8 @@ async function criarReserva(req, res, next) {
     }).then(({ error: notifErr }) => {
       if (notifErr) console.error('[Notificacao] Erro ao criar notificacao:', notifErr.message);
     });
+
+    dispararSyncImediato(operator.id);
 
     const idioma = detectarIdioma(customer_country);
     const currency = operator.currency || 'EUR';

@@ -98,7 +98,7 @@ async function processWebhookJob({ data }) {
   try {
     normalizado = channel === 'viator' ? normalizarViator(payload) : normalizarGyg(payload);
   } catch (err) {
-    await actualizarLog(operatorId, channel, externalRef, 'failed', `Erro a normalizar payload: ${err.message}`);
+    await registarFalha(operatorId, channel, externalRef, `Erro a normalizar payload: ${err.message}`);
     return;
   }
 
@@ -140,14 +140,14 @@ async function processWebhookJob({ data }) {
       country_code: null,
     });
   } catch (err) {
-    await actualizarLog(operatorId, channel, externalRef, 'failed', `Erro CRM: ${err.message}`);
+    await registarFalha(operatorId, channel, externalRef, `Erro CRM: ${err.message}`, normalizado.customerName);
     return;
   }
 
   /* Encontrar unidade */
   const { unit, reason } = await encontrarUnidade(operatorId, channel, normalizado.productCode);
   if (!unit) {
-    await actualizarLog(operatorId, channel, externalRef, 'failed', reason || 'Nenhuma unidade activa encontrada');
+    await registarFalha(operatorId, channel, externalRef, reason || 'Nenhuma unidade activa encontrada', normalizado.customerName);
     return;
   }
 
@@ -174,7 +174,7 @@ async function processWebhookJob({ data }) {
 
     await actualizarLog(operatorId, channel, externalRef, 'processed', null);
   } catch (err) {
-    await actualizarLog(operatorId, channel, externalRef, 'failed', `Erro ao criar reserva: ${err.message}`);
+    await registarFalha(operatorId, channel, externalRef, `Erro ao criar reserva: ${err.message}`, normalizado.customerName);
   }
 }
 
@@ -187,6 +187,22 @@ async function actualizarLog(operatorId, channel, externalRef, status, errorMsg)
     .eq('channel', channel)
     .eq('external_ref', externalRef)
     .eq('status', 'received');
+}
+
+/* Uma reserva OTA real que falha a importar nao pode desaparecer em
+   silencio -- regista o log (ja existente) e cria tambem uma notificacao
+   real para o operador, mesmo padrao ja usado no cancelamento acima. */
+async function registarFalha(operatorId, channel, externalRef, motivo, customerName) {
+  await actualizarLog(operatorId, channel, externalRef, 'failed', motivo);
+  const quem = customerName ? ` de ${customerName}` : '';
+  await supabaseAdmin.from('notifications').insert({
+    operator_id:       operatorId,
+    notification_type: 'ota_import_failed',
+    content:            `Reserva${quem} via ${channel} falhou ao importar: ${motivo}`,
+    link:               '/integracoes',
+  }).then(({ error: notifErr }) => {
+    if (notifErr) console.error('[Notificacao] Erro ao criar notificacao de falha OTA:', notifErr.message);
+  });
 }
 
 module.exports = { processWebhookJob };

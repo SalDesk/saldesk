@@ -1,4 +1,5 @@
 const { supabaseAdmin } = require('../config/supabase');
+const { dispararSyncImediato } = require('../helpers/otaSyncHelper');
 
 async function getCalendar(req, res, next) {
   try {
@@ -79,6 +80,8 @@ async function criarBloqueio(req, res, next) {
 
     if (error) throw error;
 
+    dispararSyncImediato(req.operator.id);
+
     return res.status(201).json({ data, message: `${data.length} data(s) bloqueada(s)` });
   } catch (err) {
     next(err);
@@ -87,12 +90,28 @@ async function criarBloqueio(req, res, next) {
 
 async function eliminarBloqueio(req, res, next) {
   try {
+    /* blocked_dates nao tem operator_id proprio -- sem este join, qualquer
+       operador autenticado conseguia apagar o bloqueio de outro operador
+       só por adivinhar/conhecer o id (sem isolamento nenhum). */
+    const { data: bloqueio } = await supabaseAdmin
+      .from('blocked_dates')
+      .select('id, units!inner(operator_id)')
+      .eq('id', req.params.id)
+      .eq('units.operator_id', req.operator.id)
+      .maybeSingle();
+
+    if (!bloqueio) {
+      return res.status(404).json({ error: 'Bloqueio não encontrado', code: 'NOT_FOUND' });
+    }
+
     const { error } = await supabaseAdmin
       .from('blocked_dates')
       .delete()
       .eq('id', req.params.id);
 
     if (error) throw error;
+
+    dispararSyncImediato(req.operator.id);
 
     return res.json({ data: null, message: 'Bloqueio removido' });
   } catch (err) {
