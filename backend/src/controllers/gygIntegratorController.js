@@ -257,14 +257,22 @@ async function cancelBooking(req, res, next) {
 
 /* 6. Notify Availability -- direccao SalDesk -> GYG (nos e que chamamos),
    nao uma rota. Credenciais desta direccao sao dadas pela GYG, distintas
-   das que a GYG usa para nos chamar. */
+   das que a GYG usa para nos chamar.
+   Testado contra o sandbox real (2026-08-18): confirma que o corpo tem de
+   vir dentro de um campo "data" (o mesmo envelope usado nas respostas que
+   nos devolvemos), senao a GYG devolve VALIDATION_FAILURE "data must not
+   be null". O conteudo exacto dentro de "data" (nomes de campo da
+   disponibilidade por produto/data) ainda nao esta confirmado -- falta a
+   documentacao especifica deste endpoint ("Notify Availability Update -
+   Documentation" no portal). O payload abaixo e uma convencao razoavel,
+   nao o spec confirmado. */
 async function notifyAvailabilityChanged(unitId) {
   const url = process.env.GYG_NOTIFY_AVAILABILITY_URL;
   if (!url) return;
   const username = process.env.GYG_NOTIFY_USERNAME;
   const password = process.env.GYG_NOTIFY_PASSWORD;
   if (!username || !password) return;
-  await axios.post(url, { unit_id: unitId }, { auth: { username, password } });
+  await axios.post(url, { data: { unit_id: unitId } }, { auth: { username, password } });
 }
 
 module.exports = {
