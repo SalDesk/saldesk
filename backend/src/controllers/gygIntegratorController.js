@@ -115,18 +115,28 @@ async function queryAvailability(req, res, next) {
     const dataFimExclusiva = proximoDiaFim.toISOString().split('T')[0];
     const indisponiveis = await diasIndisponiveisEmLote(unit.id, dataInicio, dataFimExclusiva);
 
-    const availabilities = [];
+    /* Confirmado ao vivo pelo self-testing tool (2026-08-18): o array
+       chama-se "availability" (singular), productId vai DENTRO de cada
+       item (nao uma vez so no topo), e produtos "Time Period" (o unico
+       tipo que o SalDesk suporta hoje) tem de incluir openingTimes por
+       item. O SalDesk nao guarda horario de funcionamento por unidade,
+       por isso usa-se sempre o dia inteiro (00:00-23:59), tal como a
+       propria documentacao descreve para "opening times spanning the
+       full day". */
+    const availability = [];
     const diaCorrente = new Date(cur);
     while (diaCorrente <= fim) {
       const dataStr = diaCorrente.toISOString().split('T')[0];
-      availabilities.push({
-        dateTime:  `${dataStr}T00:00:00-01:00`,
-        vacancies: indisponiveis.has(dataStr) ? 0 : (unit.capacity || 1),
+      availability.push({
+        productId,
+        dateTime:     `${dataStr}T00:00:00-01:00`,
+        vacancies:    indisponiveis.has(dataStr) ? 0 : (unit.capacity || 1),
+        openingTimes: { fromTime: '00:00', toTime: '23:59' },
       });
       diaCorrente.setDate(diaCorrente.getDate() + 1);
     }
 
-    return res.status(200).json({ data: { productId, availabilities } });
+    return res.status(200).json({ data: { availability } });
   } catch (err) {
     next(err);
   }
