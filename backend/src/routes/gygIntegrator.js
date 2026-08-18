@@ -22,10 +22,17 @@ router.use((req, res, next) => {
 
 router.use(verifyGygIntegrator);
 
-router.get('/tours/:product_id/availability',        queryAvailability);
-router.post('/tours/:product_id/reservations',        createReservation);
-router.delete('/reservations/:reservation_id',        cancelReservation);
-router.post('/reservations/:reservation_id/booking',  createBooking);
-router.delete('/bookings/:booking_id',                cancelBooking);
+/* /1/get-availabilities confirmado ao vivo pelo self-testing tool da GYG
+   (2026-08-18): GET /1/get-availabilities?productId=...&fromDateTime=...
+   &toDateTime=... -- nem path params nem snake_case, tudo em query string
+   camelCase. Os outros 4 paths abaixo seguem a mesma convencao "/1/{verbo-
+   kebab-case}" e os nomes de verbo do SLA da documentacao (reserve/book/
+   cancel-reservation/cancel-booking), mas ainda NAO foram confirmados ao
+   vivo -- ajustar assim que o self-testing tool os exercitar. */
+router.get('/1/get-availabilities',   queryAvailability);
+router.post('/1/reserve',             createReservation);
+router.post('/1/cancel-reservation',  cancelReservation);
+router.post('/1/book',                createBooking);
+router.post('/1/cancel-booking',      cancelBooking);
 
 module.exports = router;
