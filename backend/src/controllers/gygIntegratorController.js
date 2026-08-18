@@ -29,8 +29,14 @@ const { obterOuCriarCliente } = require('../helpers/customerHelper');
 
 const HOLD_MINUTES = 60;
 
-function erro(res, errorCode, errorMessage) {
-  return res.status(200).json({ errorCode, errorMessage });
+/* Categorias de bilhete que o SalDesk aceita hoje -- confirmado ao operador
+   no formulario de configuracao do Integrator Portal (suporta CHILD alem
+   de ADULT; nao suporta MILITARY nem as restantes ainda). Ajustar aqui se
+   o suporte real mudar. */
+const SUPPORTED_TICKET_CATEGORIES = ['ADULT', 'CHILD'];
+
+function erro(res, errorCode, errorMessage, extra = {}) {
+  return res.status(200).json({ errorCode, errorMessage, ...extra });
 }
 
 async function encontrarUnidadePorProduto(productId) {
@@ -80,10 +86,13 @@ async function queryAvailability(req, res, next) {
 async function createReservation(req, res, next) {
   try {
     const { product_id } = req.params;
-    const { date_from, date_to, participants, currency } = req.body;
+    const { date_from, date_to, participants, currency, ticketCategory } = req.body;
 
     if (!date_from || !date_to) {
       return erro(res, 'VALIDATION_FAILURE', 'date_from and date_to are required.');
+    }
+    if (ticketCategory && !SUPPORTED_TICKET_CATEGORIES.includes(ticketCategory)) {
+      return erro(res, 'INVALID_TICKET_CATEGORY', `The ticket category ${ticketCategory} is not sellable.`, { ticketCategory });
     }
 
     const unit = await encontrarUnidadePorProduto(product_id);
@@ -159,10 +168,13 @@ async function cancelReservation(req, res, next) {
 async function createBooking(req, res, next) {
   try {
     const { reservation_id } = req.params;
-    const { traveller } = req.body;
+    const { traveller, ticketCategory } = req.body;
 
     if (!traveller?.email) {
       return erro(res, 'VALIDATION_FAILURE', 'traveller.email is required.');
+    }
+    if (ticketCategory && !SUPPORTED_TICKET_CATEGORIES.includes(ticketCategory)) {
+      return erro(res, 'INVALID_TICKET_CATEGORY', `The ticket category ${ticketCategory} is not sellable.`, { ticketCategory });
     }
 
     const { data: hold } = await supabaseAdmin
