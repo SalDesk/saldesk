@@ -20,6 +20,13 @@ function AppleMark() {
   );
 }
 
+/* Apple exige subscricao paga do Apple Developer Program ($99/ano) so para
+   emitir a credencial "Sign in with Apple" -- decisao do utilizador
+   (2026-08-18): avancar so com o Google por agora. O botao e o codigo do
+   provider 'apple' ficam prontos, so escondidos -- reactivar mudando esta
+   constante para true assim que a credencial existir. */
+const APPLE_ENABLED = false;
+
 /* Botoes de acesso rapido Google/Apple -- ambos usam o mesmo mecanismo
    Supabase Auth (signInWithOAuth) ja usado pelo resto da app, so mudam o
    provider. Servem tanto para login como para registo: a primeira vez que
@@ -52,15 +59,17 @@ export default function SocialLoginButtons() {
         <GoogleMark />
         {loadingProvider === 'google' ? 'A abrir o Google…' : 'Continuar com Google'}
       </button>
-      <button
-        type="button"
-        onClick={() => handleClick('apple')}
-        disabled={loadingProvider !== null}
-        className="w-full h-11 rounded-full border border-n-200 bg-white hover:bg-n-50 flex items-center justify-center gap-2.5 text-sm font-body font-semibold text-n-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-      >
-        <AppleMark />
-        {loadingProvider === 'apple' ? 'A abrir a Apple…' : 'Continuar com Apple'}
-      </button>
+      {APPLE_ENABLED && (
+        <button
+          type="button"
+          onClick={() => handleClick('apple')}
+          disabled={loadingProvider !== null}
+          className="w-full h-11 rounded-full border border-n-200 bg-white hover:bg-n-50 flex items-center justify-center gap-2.5 text-sm font-body font-semibold text-n-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          <AppleMark />
+          {loadingProvider === 'apple' ? 'A abrir a Apple…' : 'Continuar com Apple'}
+        </button>
+      )}
       {error && <p className="text-xs font-body text-error text-center">{error}</p>}
     </div>
   );
