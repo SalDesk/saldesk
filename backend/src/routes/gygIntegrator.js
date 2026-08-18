@@ -14,6 +14,17 @@ const verifyGygIntegrator = require('../middleware/verifyGygIntegrator');
    qualquer outra logica, incluindo pedidos que a autenticacao rejeite. */
 router.use((req, res, next) => {
   const inicio = Date.now();
+  /* A disponibilidade tem de ser sempre em tempo real -- o Express gera
+     ETag por omissao em toda a resposta JSON (visto num curl -I: "ETag:
+     W/..." sem nenhum Cache-Control a acompanhar). Sem uma instrucao
+     explicita, um proxy/cliente HTTP mais agressivo do lado da GYG podia
+     decidir por conta propria guardar a resposta em cache com base so no
+     ETag. no-store elimina essa possibilidade por completo, em todas as
+     respostas desta rota (mesmo as que a autenticacao rejeitar). */
+  res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+  res.set('Pragma', 'no-cache');
+  res.set('Expires', '0');
+
   const jsonOriginal = res.json.bind(res);
   let corpoEnviado = null;
   res.json = (body) => { corpoEnviado = body; return jsonOriginal(body); };
