@@ -1,7 +1,26 @@
 import travelerApi from './travelerApi';
+import supabaseAuthClient from '../lib/supabaseAuthClient';
 
 export async function login(email, password) {
   const { data } = await travelerApi.post('/traveler-auth/login', { email, password });
+  return data.data;
+}
+
+/* Inicia o redireccionamento OAuth -- a pagina navega para fora e so volta
+   em /viajante/oauth-callback, tratado por TravelerOAuthCallback.jsx. */
+export async function signInWithProvider(provider) {
+  const { error } = await supabaseAuthClient.auth.signInWithOAuth({
+    provider,
+    options: { redirectTo: `${window.location.origin}/viajante/oauth-callback` },
+  });
+  if (error) throw error;
+}
+
+/* Chamado depois do redireccionamento OAuth voltar, quando o supabase-js ja
+   tem uma sessao valida (access_token do Google/Apple). Troca-a por uma
+   conta de viajante real (criada agora, se for a primeira vez). */
+export async function completeOAuthLogin(accessToken) {
+  const { data } = await travelerApi.post('/traveler-auth/oauth-complete', { access_token: accessToken });
   return data.data;
 }
 

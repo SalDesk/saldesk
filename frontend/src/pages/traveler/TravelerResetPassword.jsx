@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Lock, Eye, EyeOff, AlertTriangle } from 'lucide-react';
 import { resetPassword } from '../../services/travelerAuthService';
-import AuthLayout from '../../components/auth/AuthLayout';
+import TravelerAuthLayout from '../../components/traveler/TravelerAuthLayout';
 import Button from '../../components/ui/Button';
 import PasswordStrength, { getPasswordStrength } from '../../components/auth/PasswordStrength';
 
@@ -52,8 +52,8 @@ export default function TravelerResetPassword() {
 
   if (invalid) {
     return (
-      <AuthLayout>
-        <div className="bg-white rounded-lg shadow-lg p-6 text-center space-y-4">
+      <TravelerAuthLayout>
+        <div className="bg-white rounded-3xl shadow-xl shadow-ocean-900/10 p-7 text-center space-y-4">
           <div className="w-12 h-12 bg-red-50 rounded-full flex items-center justify-center mx-auto">
             <AlertTriangle size={22} strokeWidth={1.75} className="text-error" />
           </div>
@@ -68,13 +68,13 @@ export default function TravelerResetPassword() {
             Voltar ao login
           </button>
         </div>
-      </AuthLayout>
+      </TravelerAuthLayout>
     );
   }
 
   return (
     <AuthLayout>
-      <div className="bg-white rounded-lg shadow-lg p-6">
+      <div className="bg-white rounded-3xl shadow-xl shadow-ocean-900/10 p-7">
         <div className="flex items-center gap-3 mb-5">
           <div className="w-9 h-9 bg-ocean-50 rounded-sm flex items-center justify-center shrink-0">
             <Lock size={18} strokeWidth={1.75} className="text-ocean-700" />

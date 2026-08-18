@@ -3,21 +3,25 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Shield, AlertTriangle, Lock, Eye, EyeOff } from 'lucide-react';
 import useTravelerAuthStore, { setTravelerRememberDevice } from '../../store/travelerAuthStore';
 import { login, forgotPassword } from '../../services/travelerAuthService';
-import AuthLayout from '../../components/auth/AuthLayout';
+import TravelerAuthLayout from '../../components/traveler/TravelerAuthLayout';
+import SocialLoginButtons from '../../components/traveler/SocialLoginButtons';
 import Input from '../../components/ui/Input';
 import Button from '../../components/ui/Button';
-import Logo from '../../components/shared/Logo';
 
 function AuthCard({ children }) {
   return (
-    <div className="relative bg-white rounded-2xl shadow-lg shadow-ocean-900/25 border border-n-100 overflow-hidden">
-      <div className="h-1 w-full bg-gradient-to-r from-sand-500 via-sand-400 to-sand-500" />
-      <div className="p-7">
-        <div className="flex justify-center mb-5">
-          <Logo size="xl" dark />
-        </div>
-        {children}
-      </div>
+    <div className="bg-white rounded-3xl shadow-xl shadow-ocean-900/10 p-7">
+      {children}
+    </div>
+  );
+}
+
+function OrDivider() {
+  return (
+    <div className="flex items-center gap-3 my-5">
+      <div className="h-px flex-1 bg-n-200" />
+      <span className="text-[11px] font-body uppercase tracking-wider text-n-400">ou</span>
+      <div className="h-px flex-1 bg-n-200" />
     </div>
   );
 }
@@ -72,7 +76,7 @@ export default function TravelerLogin() {
 
   if (mode === 'forgot') {
     return (
-      <AuthLayout>
+      <TravelerAuthLayout>
         <AuthCard>
           <p className="text-[11px] font-mono uppercase tracking-wider text-ocean-500 mb-2">Recuperar acesso</p>
           <h1 className="font-display font-bold text-lg text-n-900 mb-1">Esqueceu-se da password?</h1>
@@ -97,13 +101,13 @@ export default function TravelerLogin() {
             Voltar ao login
           </button>
         </AuthCard>
-      </AuthLayout>
+      </TravelerAuthLayout>
     );
   }
 
   if (mode === 'forgot-sent') {
     return (
-      <AuthLayout>
+      <TravelerAuthLayout>
         <AuthCard>
           <div className="text-center space-y-4">
             <div className="w-12 h-12 bg-[#ECFDF5] rounded-full flex items-center justify-center mx-auto">
@@ -122,15 +126,15 @@ export default function TravelerLogin() {
             </button>
           </div>
         </AuthCard>
-      </AuthLayout>
+      </TravelerAuthLayout>
     );
   }
 
   return (
-    <AuthLayout>
+    <TravelerAuthLayout>
       <AuthCard>
         <p className="text-[11px] font-mono uppercase tracking-wider text-ocean-500 mb-2">Conta de viajante</p>
-        <h1 className="font-display font-bold text-lg text-n-900 mb-5">Entrar</h1>
+        <h1 className="font-display font-bold text-xl text-n-900 mb-5">Bem-vindo de volta</h1>
 
         {registeredOk && (
           <div className="mb-4 px-3 py-2 rounded-sm bg-[#ECFDF5] border border-green-200 text-[#1A7A4A] text-sm font-body">
@@ -148,6 +152,9 @@ export default function TravelerLogin() {
             <span>{error}</span>
           </div>
         )}
+
+        <SocialLoginButtons />
+        <OrDivider />
 
         <form onSubmit={handleLogin} className="space-y-4">
           <Input
@@ -197,21 +204,14 @@ export default function TravelerLogin() {
             Entrar
           </Button>
         </form>
-
-        <div className="mt-6 pt-4 border-t border-n-100 flex items-center justify-center">
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-n-50 text-n-400">
-            <Shield size={12} strokeWidth={1.75} />
-            <span className="text-[10px] font-mono uppercase tracking-wider">Ligacao segura SSL</span>
-          </span>
-        </div>
       </AuthCard>
 
-      <p className="text-center text-sm font-body text-white/80 mt-4">
+      <p className="text-center text-sm font-body text-n-500 mt-5">
         Ainda nao tem conta?{' '}
-        <Link to="/viajante/registar" className="font-semibold text-white hover:text-sand-300 underline">
+        <Link to="/viajante/registar" className="font-semibold text-ocean-700 hover:underline">
           Registar
         </Link>
       </p>
-    </AuthLayout>
+    </TravelerAuthLayout>
   );
 }

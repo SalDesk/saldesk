@@ -57,6 +57,7 @@ const StaffPortal     = lazy(() => import('./pages/StaffPortal'));
 const TravelerLogin         = lazy(() => import('./pages/traveler/TravelerLogin'));
 const TravelerRegister      = lazy(() => import('./pages/traveler/TravelerRegister'));
 const TravelerResetPassword = lazy(() => import('./pages/traveler/TravelerResetPassword'));
+const TravelerOAuthCallback = lazy(() => import('./pages/traveler/TravelerOAuthCallback'));
 const TravelerPortal        = lazy(() => import('./pages/traveler/TravelerPortal'));
 const Housekeeping    = lazy(() => import('./pages/Housekeeping'));
 const Maintenance     = lazy(() => import('./pages/Maintenance'));
@@ -183,6 +184,7 @@ export default function App() {
         <Route path="/viajante/entrar" element={<TravelerLogin />} />
         <Route path="/viajante/registar" element={<TravelerRegister />} />
         <Route path="/viajante/recuperar-password" element={<TravelerResetPassword />} />
+        <Route path="/viajante/oauth-callback" element={<TravelerOAuthCallback />} />
         <Route path="/viajante/*" element={<TravelerProtectedRoute><TravelerPortal /></TravelerProtectedRoute>} />
 
         {/* Portal do afiliado — publico */}

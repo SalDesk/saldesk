@@ -12,7 +12,7 @@ travelerApi.interceptors.request.use((config) => {
   return config;
 });
 
-const AUTH_ENDPOINTS = ['/traveler-auth/login', '/traveler-auth/register', '/traveler-auth/refresh', '/traveler-auth/forgot-password', '/traveler-auth/reset-password'];
+const AUTH_ENDPOINTS = ['/traveler-auth/login', '/traveler-auth/register', '/traveler-auth/oauth-complete', '/traveler-auth/refresh', '/traveler-auth/forgot-password', '/traveler-auth/reset-password'];
 function isAuthEndpoint(url) {
   return AUTH_ENDPOINTS.some((p) => url?.includes(p));
 }

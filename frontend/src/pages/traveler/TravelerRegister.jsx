@@ -3,7 +3,8 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, Shield } from 'lucide-react';
 import useTravelerAuthStore from '../../store/travelerAuthStore';
 import { register } from '../../services/travelerAuthService';
-import AuthLayout from '../../components/auth/AuthLayout';
+import TravelerAuthLayout from '../../components/traveler/TravelerAuthLayout';
+import SocialLoginButtons from '../../components/traveler/SocialLoginButtons';
 import Input from '../../components/ui/Input';
 import Button from '../../components/ui/Button';
 import PasswordStrength, { getPasswordStrength } from '../../components/auth/PasswordStrength';
@@ -50,9 +51,10 @@ export default function TravelerRegister() {
   const set = field => e => setForm(p => ({ ...p, [field]: e.target.value }));
 
   return (
-    <AuthLayout>
-      <div className="bg-white rounded-lg shadow-lg p-6">
-        <h1 className="font-display font-bold text-base text-n-900 mb-1">Criar conta de viajante</h1>
+    <TravelerAuthLayout>
+      <div className="bg-white rounded-3xl shadow-xl shadow-ocean-900/10 p-7">
+        <p className="text-[11px] font-mono uppercase tracking-wider text-ocean-500 mb-2">Conta de viajante</p>
+        <h1 className="font-display font-bold text-xl text-n-900 mb-1">Criar conta</h1>
         <p className="text-xs font-body text-n-500 mb-5">
           Para gerir as suas reservas e guardar experiencias favoritas na Ilha do Sal.
         </p>
@@ -62,6 +64,13 @@ export default function TravelerRegister() {
             {serverError}
           </div>
         )}
+
+        <SocialLoginButtons />
+        <div className="flex items-center gap-3 my-5">
+          <div className="h-px flex-1 bg-n-200" />
+          <span className="text-[11px] font-body uppercase tracking-wider text-n-400">ou com email</span>
+          <div className="h-px flex-1 bg-n-200" />
+        </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <Input label="Nome" type="text" placeholder="Joao Silva"
@@ -129,12 +138,12 @@ export default function TravelerRegister() {
         </div>
       </div>
 
-      <p className="text-center text-sm font-body text-white/80 mt-4">
+      <p className="text-center text-sm font-body text-n-500 mt-5">
         Ja tem conta?{' '}
-        <Link to="/viajante/entrar" className="font-semibold text-white hover:text-sand-300 underline">
+        <Link to="/viajante/entrar" className="font-semibold text-ocean-700 hover:underline">
           Entrar
         </Link>
       </p>
-    </AuthLayout>
+    </TravelerAuthLayout>
   );
 }

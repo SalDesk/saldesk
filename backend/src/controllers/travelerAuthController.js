@@ -106,6 +106,52 @@ async function login(req, res, next) {
   }
 }
 
+/* Login via Google/Apple (OAuth) -- o handshake de redireccionamento e feito
+   inteiramente pelo supabase-js no frontend (mesma pool de utilizadores
+   Supabase Auth de sempre, so muda o metodo de login). Este endpoint so
+   entra em jogo DEPOIS do frontend ja ter um access_token valido: verifica-o
+   a serio contra o Supabase (nao um simples jwt.decode, ao contrario do
+   authMiddleware -- aqui e preciso confirmar que o token e mesmo genuino
+   antes de criar uma linha em travelers), e cria a linha em travelers na
+   primeira vez que essa pessoa entra (o fluxo OAuth nao passa pelo
+   formulario de registo, por isso o nome/email vem do proprio perfil
+   Google/Apple). */
+async function oauthComplete(req, res, next) {
+  try {
+    const { access_token } = req.body;
+    if (!access_token) {
+      return res.status(400).json({ error: 'access_token em falta', code: 'MISSING_FIELDS' });
+    }
+
+    const { data: { user }, error } = await supabaseAdmin.auth.getUser(access_token);
+    if (error || !user) {
+      return res.status(401).json({ error: 'Sessao OAuth invalida', code: 'INVALID_TOKEN' });
+    }
+
+    let { data: traveler } = await supabaseAdmin
+      .from('travelers')
+      .select('*')
+      .eq('user_id', user.id)
+      .maybeSingle();
+
+    if (!traveler) {
+      const nome = user.user_metadata?.full_name || user.user_metadata?.name
+        || (user.email ? user.email.split('@')[0] : 'Viajante');
+      const { data: novoTraveler, error: insertError } = await supabaseAdmin
+        .from('travelers')
+        .insert({ user_id: user.id, name: nome, email: user.email })
+        .select()
+        .single();
+      if (insertError) throw insertError;
+      traveler = novoTraveler;
+    }
+
+    return res.json({ data: { user, traveler }, message: 'Sessao OAuth associada' });
+  } catch (err) {
+    next(err);
+  }
+}
+
 async function refresh(req, res, next) {
   try {
     const { refresh_token } = req.body;
@@ -224,4 +270,4 @@ async function forgotPassword(req, res, next) {
   }
 }
 
-module.exports = { register, login, refresh, getMe, logout, changePassword, resetPassword, forgotPassword };
+module.exports = { register, login, oauthComplete, refresh, getMe, logout, changePassword, resetPassword, forgotPassword };
