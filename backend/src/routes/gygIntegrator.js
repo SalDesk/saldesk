@@ -47,10 +47,10 @@ router.use(verifyGygIntegrator);
 /* /1/get-availabilities confirmado ao vivo pelo self-testing tool da GYG
    (2026-08-18): GET /1/get-availabilities?productId=...&fromDateTime=...
    &toDateTime=... -- nem path params nem snake_case, tudo em query string
-   camelCase. Os outros 4 paths abaixo seguem a mesma convencao "/1/{verbo-
-   kebab-case}" e os nomes de verbo do SLA da documentacao (reserve/book/
-   cancel-reservation/cancel-booking), mas ainda NAO foram confirmados ao
-   vivo -- ajustar assim que o self-testing tool os exercitar. */
+   camelCase. Os outros 4 paths abaixo tem o mesmo prefixo "/1/{verbo-
+   kebab-case}" e agora seguem o spec OpenAPI publico oficial da GYG
+   (ver comentario detalhado no controller), mas ainda nao foram exercitados
+   individualmente pelo self-testing tool -- ajustar assim que o forem. */
 router.get('/1/get-availabilities',   queryAvailability);
 router.post('/1/reserve',             createReservation);
 router.post('/1/cancel-reservation',  cancelReservation);

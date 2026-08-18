@@ -13,15 +13,36 @@
      INVALID_PARTICIPANTS_CONFIGURATION, INVALID_RESERVATION,
      INVALID_BOOKING, INVALID_SUPPLIER.
    - Tempo de retencao: desejado 60min, minimo 15min.
-   Paths e convencao de campos confirmados AO VIVO pelo self-testing tool
-   do Integrator Portal (2026-08-18, via o logging de pedidos em
-   routes/gygIntegrator.js): GET /1/get-availabilities?productId=...&
-   fromDateTime=...&toDateTime=... -- sem path params, tudo em query string
-   camelCase, datas ISO8601 completas (nao so a data). Os outros 4
-   endpoints (reserve/cancel-reservation/book/cancel-booking) seguem a
-   mesma convencao por inferencia (ainda nao exercitados individualmente
-   pelo self-testing tool) -- ajustar assim que os proximos testes os
-   confirmarem ou contradisserem. */
+
+   get-availabilities: path e convencao de campos confirmados AO VIVO pelo
+   self-testing tool do Integrator Portal (2026-08-18, via o logging de
+   pedidos em routes/gygIntegrator.js) -- GET /1/get-availabilities?
+   productId=...&fromDateTime=...&toDateTime=..., resposta
+   {data:{availability:[...]}} (singular). NAO tocar nisto: o spec publico
+   (ver abaixo) descreve "availabilities" (plural), mas a validacao AO VIVO
+   da GYG rejeitou explicitamente esse formato e exigiu "availability" --
+   evidencia directa sempre vence documentacao estatica.
+
+   reserve/cancel-reservation/book/cancel-booking: ainda NAO exercitados
+   individualmente pelo self-testing tool. Reescritos em 2026-08-18 a partir
+   do spec OpenAPI publico e oficial da GYG (nao um resumo nem um PDF --
+   o proprio ficheiro fonte):
+   https://integrator.getyourguide.com/assets/api_documentation/supplier-api-supplier-endpoints.yaml
+   Diferencas importantes face ao esqueleto anterior (que era so inferencia):
+   - Corpo do pedido vem SEMPRE dentro de {data: {...}} em JSON, nao em
+     query string nem campos soltos.
+   - reserve/book usam um "dateTime" UNICO (nao fromDateTime/toDateTime) --
+     para produtos "Time Period" como os nossos, representa sempre as
+     00:00:00 do dia reservado.
+   - Participantes vao em "bookingItems": [{category, count, groupSize?}],
+     nao um "participants" solto.
+   - reserve e cancel-reservation exigem sempre "gygBookingReference".
+   - book devolve "tickets": [{category, ticketCode, ticketCodeType}], nao
+     so um status.
+   - cancel-reservation e cancel-booking devolvem {data:{}} vazio no
+     sucesso, nao um objecto com reservationReference/status.
+   Ajustar assim que o self-testing tool os confirmar ou contradisser --
+   mesma metodologia usada em get-availabilities. */
 
 const axios = require('axios');
 const { supabaseAdmin } = require('../config/supabase');
@@ -142,19 +163,37 @@ async function queryAvailability(req, res, next) {
   }
 }
 
+/* Soma os "count" de bookingItems e valida que todas as categorias sao
+   vendiveis -- usado por reserve e por book (o spec garante que os
+   bookingItems de book replicam os de reserve, por isso a mesma validacao
+   serve para os dois). Devolve null se alguma categoria for invalida. */
+function validarBookingItems(bookingItems) {
+  if (!Array.isArray(bookingItems) || bookingItems.length === 0) return null;
+  let total = 0;
+  for (const item of bookingItems) {
+    if (!SUPPORTED_TICKET_CATEGORIES.includes(item.category)) return null;
+    total += Number(item.count) || 0;
+  }
+  if (total <= 0) return null;
+  return total;
+}
+
 /* 2. Reservation ("reserve") -- retencao temporaria antes do booking final.
-   Path e convencao de campos por inferencia do padrao confirmado em
-   get-availabilities -- ainda nao exercitado individualmente. */
+   Corpo confirmado pelo spec OpenAPI publico da GYG (ver comentario no
+   topo do ficheiro): POST /1/reserve/, {data:{productId, dateTime,
+   bookingItems, gygBookingReference}}. */
 async function createReservation(req, res, next) {
   try {
-    const corpo = { ...req.query, ...req.body };
-    const { productId, fromDateTime, toDateTime, participants, currency, ticketCategory } = corpo;
+    const corpo = req.body?.data || {};
+    const { productId, dateTime, bookingItems, gygBookingReference } = corpo;
 
-    if (!productId || !fromDateTime || !toDateTime) {
-      return erro(res, 'VALIDATION_FAILURE', 'productId, fromDateTime and toDateTime are required.');
+    if (!productId || !dateTime || !gygBookingReference) {
+      return erro(res, 'VALIDATION_FAILURE', 'productId, dateTime and gygBookingReference are required.');
     }
-    if (ticketCategory && !SUPPORTED_TICKET_CATEGORIES.includes(ticketCategory)) {
-      return erro(res, 'INVALID_TICKET_CATEGORY', `The ticket category ${ticketCategory} is not sellable.`, { ticketCategory });
+
+    const totalParticipantes = validarBookingItems(bookingItems);
+    if (totalParticipantes === null) {
+      return erro(res, 'INVALID_TICKET_CATEGORY', 'One or more requested ticket categories are not sellable.');
     }
 
     const unit = await encontrarUnidadePorProduto(productId);
@@ -162,8 +201,16 @@ async function createReservation(req, res, next) {
       return erro(res, 'INVALID_PRODUCT', 'This product does not exist or is not sellable.');
     }
 
-    const dateFrom = new Date(fromDateTime).toISOString().split('T')[0];
-    const dateTo   = new Date(toDateTime).toISOString().split('T')[0];
+    /* Produto "Time Period" -- a data pedida representa sempre um dia
+       inteiro (00:00-23:59, ver queryAvailability), por isso check_in e
+       check_out sao o mesmo dia e o dia seguinte, respectivamente. */
+    const dataPedida = new Date(dateTime);
+    if (isNaN(dataPedida)) {
+      return erro(res, 'VALIDATION_FAILURE', 'dateTime must be a valid ISO 8601 datetime.');
+    }
+    const dateFrom = dataPedida.toISOString().split('T')[0];
+    const diaSeguinte = new Date(dataPedida); diaSeguinte.setDate(diaSeguinte.getDate() + 1);
+    const dateTo = diaSeguinte.toISOString().split('T')[0];
 
     const disponivel = await verificarDisponibilidade(supabaseAdmin, unit.id, dateFrom, dateTo);
     if (!disponivel) {
@@ -179,11 +226,12 @@ async function createReservation(req, res, next) {
         operator_id:  unit.operators.id,
         unit_id:      unit.id,
         channel:      'getyourguide',
+        external_ref: gygBookingReference,
         check_in:     dateFrom,
         check_out:    dateTo,
-        participants: participants || 1,
+        participants: totalParticipantes,
         total_price:  total,
-        currency:     currency || unit.operators?.currency || 'EUR',
+        currency:     unit.operators?.currency || 'EUR',
         status:       'held',
         expires_at:   expiresAt,
       })
@@ -196,8 +244,6 @@ async function createReservation(req, res, next) {
       data: {
         reservationReference:  hold.id,
         reservationExpiration: hold.expires_at,
-        totalPrice:            hold.total_price,
-        currency:              hold.currency,
       },
     });
   } catch (err) {
@@ -205,12 +251,14 @@ async function createReservation(req, res, next) {
   }
 }
 
-/* 3. Reservation Cancellation -- por inferencia, ainda nao confirmado. */
+/* 3. Reservation Cancellation -- confirmado pelo spec: POST
+   /1/cancel-reservation/, {data:{gygBookingReference, reservationReference}},
+   sucesso devolve {data:{}} vazio. */
 async function cancelReservation(req, res, next) {
   try {
-    const { reservationReference } = { ...req.query, ...req.body };
-    if (!reservationReference) {
-      return erro(res, 'VALIDATION_FAILURE', 'reservationReference is required.');
+    const { reservationReference, gygBookingReference } = req.body?.data || {};
+    if (!reservationReference || !gygBookingReference) {
+      return erro(res, 'VALIDATION_FAILURE', 'reservationReference and gygBookingReference are required.');
     }
 
     const { data, error } = await supabaseAdmin
@@ -226,25 +274,29 @@ async function cancelReservation(req, res, next) {
       return erro(res, 'INVALID_RESERVATION', 'The specified reservation does not exist or is not in a valid state.');
     }
 
-    return res.status(200).json({ data: { reservationReference, status: 'cancelled' } });
+    return res.status(200).json({ data: {} });
   } catch (err) {
     next(err);
   }
 }
 
-/* 4. Booking -- por inferencia, ainda nao confirmado. */
+/* 4. Booking -- confirmado pelo spec: POST /1/book/, {data:{productId,
+   reservationReference, gygBookingReference, currency, dateTime,
+   bookingItems, travelers, comment}}, sucesso devolve {data:{bookingReference,
+   tickets:[{category, ticketCode, ticketCodeType}]}}. */
 async function createBooking(req, res, next) {
   try {
-    const { reservationReference, traveller, ticketCategory } = { ...req.query, ...req.body };
+    const corpo = req.body?.data || {};
+    const { reservationReference, gygBookingReference, bookingItems, travelers, comment } = corpo;
 
-    if (!reservationReference) {
-      return erro(res, 'VALIDATION_FAILURE', 'reservationReference is required.');
+    if (!reservationReference || !gygBookingReference || !comment) {
+      return erro(res, 'VALIDATION_FAILURE', 'reservationReference, gygBookingReference and comment are required.');
     }
-    if (!traveller?.email) {
-      return erro(res, 'VALIDATION_FAILURE', 'traveller.email is required.');
+    if (!Array.isArray(travelers) || travelers.length === 0 || !travelers[0]?.email) {
+      return erro(res, 'VALIDATION_FAILURE', 'travelers[] with at least one entry (email, firstName, lastName, phoneNumber) is required.');
     }
-    if (ticketCategory && !SUPPORTED_TICKET_CATEGORIES.includes(ticketCategory)) {
-      return erro(res, 'INVALID_TICKET_CATEGORY', `The ticket category ${ticketCategory} is not sellable.`, { ticketCategory });
+    if (validarBookingItems(bookingItems) === null) {
+      return erro(res, 'INVALID_TICKET_CATEGORY', 'One or more requested ticket categories are not sellable.');
     }
 
     const { data: hold } = await supabaseAdmin
@@ -262,10 +314,13 @@ async function createBooking(req, res, next) {
       return erro(res, 'INVALID_RESERVATION', `Expired reservation; ${HOLD_MINUTES}min hold time was exceeded.`);
     }
 
+    const traveller = travelers[0];
+    const nomeCompleto = [traveller.firstName, traveller.lastName].filter(Boolean).join(' ') || 'GetYourGuide Guest';
+
     const customer = await obterOuCriarCliente(hold.operator_id, {
-      name:  traveller?.name  || 'GetYourGuide Guest',
-      email: traveller?.email || null,
-      phone: traveller?.phone || null,
+      name:  nomeCompleto,
+      email: traveller.email || null,
+      phone: traveller.phoneNumber || null,
       country_code: null,
     });
 
@@ -275,16 +330,16 @@ async function createBooking(req, res, next) {
         operator_id:    hold.operator_id,
         unit_id:        hold.unit_id,
         customer_id:    customer.id,
-        customer_name:  traveller?.name  || 'GetYourGuide Guest',
+        customer_name:  nomeCompleto,
         customer_email: traveller.email,
-        customer_phone: traveller?.phone || null,
+        customer_phone: traveller.phoneNumber || null,
         check_in:       hold.check_in,
         check_out:      hold.check_out,
         guests:         hold.participants,
         total_price:    hold.total_price,
         status:         'confirmed',
         source:         'getyourguide',
-        notes:          `Ref. OTA hold: ${hold.id}`,
+        notes:          `GYG booking ref: ${gygBookingReference}. Comment: ${comment}`,
       })
       .select()
       .single();
@@ -305,18 +360,36 @@ async function createBooking(req, res, next) {
 
     notifyAvailabilityChanged(hold.unit_id).catch(() => {});
 
-    return res.status(200).json({ data: { bookingReference: reserva.id, status: 'confirmed' } });
+    /* Nao ha sistema de bilhetes/QR real -- gera-se um codigo TEXT interno
+       por participante, um por cada bookingItem.count, tal como o schema
+       Ticket exige (category+ticketCode+ticketCodeType por participante). */
+    const tickets = [];
+    let n = 0;
+    for (const item of bookingItems) {
+      for (let i = 0; i < item.count; i++) {
+        n += 1;
+        tickets.push({
+          category: item.category,
+          ticketCode: `SALDESK-${reserva.id}-${n}`,
+          ticketCodeType: 'TEXT',
+        });
+      }
+    }
+
+    return res.status(200).json({ data: { bookingReference: reserva.id, tickets } });
   } catch (err) {
     next(err);
   }
 }
 
-/* 5. Booking Cancellation -- por inferencia, ainda nao confirmado. */
+/* 5. Booking Cancellation -- confirmado pelo spec: POST /1/cancel-booking/,
+   {data:{bookingReference, gygBookingReference, productId}}, sucesso
+   devolve {data:{}} vazio. */
 async function cancelBooking(req, res, next) {
   try {
-    const { bookingReference } = { ...req.query, ...req.body };
-    if (!bookingReference) {
-      return erro(res, 'VALIDATION_FAILURE', 'bookingReference is required.');
+    const { bookingReference, gygBookingReference, productId } = req.body?.data || {};
+    if (!bookingReference || !gygBookingReference || !productId) {
+      return erro(res, 'VALIDATION_FAILURE', 'bookingReference, gygBookingReference and productId are required.');
     }
 
     const { data, error } = await supabaseAdmin
@@ -334,7 +407,7 @@ async function cancelBooking(req, res, next) {
 
     notifyAvailabilityChanged(data.unit_id).catch(() => {});
 
-    return res.status(200).json({ data: { bookingReference, status: 'cancelled' } });
+    return res.status(200).json({ data: {} });
   } catch (err) {
     next(err);
   }
