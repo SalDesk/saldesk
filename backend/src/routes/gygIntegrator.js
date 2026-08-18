@@ -29,8 +29,15 @@ router.use((req, res, next) => {
   let corpoEnviado = null;
   res.json = (body) => { corpoEnviado = body; return jsonOriginal(body); };
   res.on('finish', () => {
+    /* timestamp real + IP + User-Agent -- sem isto nao ha forma de distinguir
+       no log um pedido genuino da ferramenta de self-testing da GYG de um
+       curl de diagnostico nosso feito ao mesmo endpoint. Critico para a
+       investigacao actual (2026-08-18): confirmar se os pedidos da GYG
+       chegam mesmo a este servidor quando o utilizador clica "testar". */
     const corpo = corpoEnviado ? JSON.stringify(corpoEnviado).slice(0, 500) : '(sem corpo JSON)';
-    console.log(`[GYG Integrator] ${req.method} ${req.originalUrl} -> ${res.statusCode} (${Date.now() - inicio}ms) ${corpo}`);
+    const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || '?';
+    const ua = req.headers['user-agent'] || '(sem User-Agent)';
+    console.log(`[GYG Integrator] ${new Date().toISOString()} ${req.method} ${req.originalUrl} -> ${res.statusCode} (${Date.now() - inicio}ms) ip=${ip} ua="${ua}" ${corpo}`);
   });
   next();
 });
