@@ -1,20 +1,48 @@
 /* Autenticacao das chamadas que a GetYourGuide faz PARA DENTRO do SalDesk
    (Availability Query, Reservation, Booking, etc.).
-   Esqueleto de melhor esforco: usamos uma chave partilhada estatica no
-   header X-ACCESS-TOKEN, seguindo a convencao vista no resto da API publica
-   da GYG. O mecanismo real (pode ser diferente — mTLS, OAuth, outro header)
-   so e confirmado quando formos aceites como Integrator e virmos o spec
-   tecnico verdadeiro no Integrator Portal. Ajustar aqui quando isso acontecer. */
+   Confirmado na documentacao oficial (Integrator Portal): autenticacao e
+   sempre HTTP Basic Auth (username+password no header Authorization) --
+   OAuth e Bearer token nao sao aceites pela GYG neste fluxo. As credenciais
+   sao definidas por nos (uma unica combinacao para toda a integracao, nao
+   por operador) e comunicadas a GYG no formulario "Configuracao de Teste"
+   do Integrator Portal. */
+
+const crypto = require('crypto');
+
+function hash(str) {
+  return crypto.createHash('sha256').update(String(str)).digest();
+}
+
+function timingSafeEqualStr(a, b) {
+  return crypto.timingSafeEqual(hash(a), hash(b));
+}
 
 function verifyGygIntegrator(req, res, next) {
-  const expected = process.env.GYG_INTEGRATOR_API_KEY;
-  if (!expected) {
-    return res.status(503).json({ error: 'Integracao GetYourGuide nao configurada', code: 'NOT_CONFIGURED' });
+  const username = process.env.GYG_INTEGRATOR_USERNAME;
+  const password = process.env.GYG_INTEGRATOR_PASSWORD;
+  if (!username || !password) {
+    return res.status(200).json({ errorCode: 'AUTHORIZATION_FAILURE', errorMessage: 'Integration not configured.' });
   }
 
-  const token = req.headers['x-access-token'];
-  if (!token || token !== expected) {
-    return res.status(401).json({ error: 'Token invalido', code: 'UNAUTHORIZED' });
+  const header = req.headers['authorization'] || '';
+  const match = /^Basic\s+(.+)$/i.exec(header);
+  if (!match) {
+    return res.status(200).json({ errorCode: 'AUTHORIZATION_FAILURE', errorMessage: 'The provided authentication credentials are not valid.' });
+  }
+
+  let decoded;
+  try {
+    decoded = Buffer.from(match[1], 'base64').toString('utf8');
+  } catch {
+    return res.status(200).json({ errorCode: 'AUTHORIZATION_FAILURE', errorMessage: 'The provided authentication credentials are not valid.' });
+  }
+
+  const sepIdx = decoded.indexOf(':');
+  const providedUser = sepIdx === -1 ? decoded : decoded.slice(0, sepIdx);
+  const providedPass = sepIdx === -1 ? ''      : decoded.slice(sepIdx + 1);
+
+  if (!timingSafeEqualStr(providedUser, username) || !timingSafeEqualStr(providedPass, password)) {
+    return res.status(200).json({ errorCode: 'AUTHORIZATION_FAILURE', errorMessage: 'The provided authentication credentials are not valid.' });
   }
 
   next();

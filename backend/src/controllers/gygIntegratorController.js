@@ -1,18 +1,37 @@
-/* Esqueleto de melhor esforco para a API de "Reservation System" da
-   GetYourGuide — os 6 endpoints obrigatorios listados no FAQ publico deles
-   (Availability Query, Reservation, Reservation Cancellation, Booking,
-   Booking Cancellation, Notify Availability).
-   IMPORTANTE: a GYG so revela o esquema tecnico exacto (nomes de campos,
-   formatos, codigos de erro) depois de sermos aceites no Integrator Portal.
-   Os nomes de campos aqui sao convencoes razoaveis, a ajustar quando
-   tivermos o spec real. */
+/* API "Reservation System" da GetYourGuide -- os 6 endpoints obrigatorios
+   listados no FAQ publico deles (Availability Query, Reservation,
+   Reservation Cancellation, Booking, Booking Cancellation, Notify
+   Availability). Regras de contrato confirmadas na documentacao oficial
+   (Integrator Portal, pagina "Overview", lida em 2026-08-18):
+   - Autenticacao: HTTP Basic Auth (ver verifyGygIntegrator.js).
+   - TODA a resposta e HTTP 200 -- qualquer outro status e tratado pela GYG
+     como falha de transporte/servidor. O corpo tem OU {data: ...} (sucesso)
+     OU {errorCode, errorMessage} (falha), nunca os dois.
+   - Catalogo real de errorCode confirmado: AUTHORIZATION_FAILURE,
+     INVALID_PRODUCT, VALIDATION_FAILURE, INTERNAL_SYSTEM_FAILURE,
+     NO_AVAILABILITY, INVALID_TICKET_CATEGORY,
+     INVALID_PARTICIPANTS_CONFIGURATION, INVALID_RESERVATION,
+     INVALID_BOOKING, INVALID_SUPPLIER.
+   - Tempo de retencao: desejado 60min, minimo 15min.
+   AINDA POR CONFIRMAR (falta a pagina "Supplier-side Endpoints" da
+   documentacao, com os nomes de campo exactos por endpoint): paths reais,
+   nomes de campos no corpo do pedido/resposta, estrutura de categorias de
+   bilhete (ADULT/CHILD/.../GROUP/COLLECTIVE) e groupConfiguration para
+   bilhetes de grupo, distincao time-point vs time-period. Ate isso chegar,
+   os nomes de campos abaixo continuam a ser convencoes razoaveis, nao o
+   spec confirmado -- so os codigos de erro e o formato de resposta (200
+   sempre) sao definitivos. */
 
 const axios = require('axios');
 const { supabaseAdmin } = require('../config/supabase');
 const { verificarDisponibilidade, calcularPreco } = require('../helpers/bookingHelpers');
 const { obterOuCriarCliente } = require('../helpers/customerHelper');
 
-const HOLD_MINUTES = 30;
+const HOLD_MINUTES = 60;
+
+function erro(res, errorCode, errorMessage) {
+  return res.status(200).json({ errorCode, errorMessage });
+}
 
 async function encontrarUnidadePorProduto(productId) {
   const { data } = await supabaseAdmin
@@ -24,19 +43,19 @@ async function encontrarUnidadePorProduto(productId) {
   return data || null;
 }
 
-/* 1. Availability Query — GET /tours/:product_id/availability */
+/* 1. Availability Query */
 async function queryAvailability(req, res, next) {
   try {
     const { product_id } = req.params;
     const { date_from, date_to } = req.query;
 
     if (!date_from || !date_to) {
-      return res.status(400).json({ error: 'date_from e date_to sao obrigatorios', code: 'MISSING_FIELDS' });
+      return erro(res, 'VALIDATION_FAILURE', 'date_from and date_to are required.');
     }
 
     const unit = await encontrarUnidadePorProduto(product_id);
     if (!unit) {
-      return res.status(404).json({ error: 'Produto nao encontrado', code: 'PRODUCT_NOT_FOUND' });
+      return erro(res, 'INVALID_PRODUCT', 'This product does not exist or is not sellable.');
     }
 
     const dias = [];
@@ -51,30 +70,30 @@ async function queryAvailability(req, res, next) {
       cur.setDate(cur.getDate() + 1);
     }
 
-    return res.json({ data: { product_id, availability: dias } });
+    return res.status(200).json({ data: { product_id, availability: dias } });
   } catch (err) {
     next(err);
   }
 }
 
-/* 2. Reservation (com tempo de retencao) — POST /tours/:product_id/reservations */
+/* 2. Reservation ("reserve") -- retencao temporaria antes do booking final */
 async function createReservation(req, res, next) {
   try {
     const { product_id } = req.params;
     const { date_from, date_to, participants, currency } = req.body;
 
     if (!date_from || !date_to) {
-      return res.status(400).json({ error: 'date_from e date_to sao obrigatorios', code: 'MISSING_FIELDS' });
+      return erro(res, 'VALIDATION_FAILURE', 'date_from and date_to are required.');
     }
 
     const unit = await encontrarUnidadePorProduto(product_id);
     if (!unit) {
-      return res.status(404).json({ error: 'Produto nao encontrado', code: 'PRODUCT_NOT_FOUND' });
+      return erro(res, 'INVALID_PRODUCT', 'This product does not exist or is not sellable.');
     }
 
     const disponivel = await verificarDisponibilidade(supabaseAdmin, unit.id, date_from, date_to);
     if (!disponivel) {
-      return res.status(409).json({ error: 'Sem disponibilidade para o periodo pedido', code: 'NOT_AVAILABLE' });
+      return erro(res, 'NO_AVAILABILITY', 'This activity is sold out for the requested date.');
     }
 
     const { total } = calcularPreco(unit, date_from, date_to);
@@ -99,12 +118,12 @@ async function createReservation(req, res, next) {
 
     if (error) throw error;
 
-    return res.status(201).json({
+    return res.status(200).json({
       data: {
-        reservation_id: hold.id,
-        expires_at:      hold.expires_at,
-        total_price:     hold.total_price,
-        currency:        hold.currency,
+        reservationReference:  hold.id,
+        reservationExpiration: hold.expires_at,
+        totalPrice:            hold.total_price,
+        currency:              hold.currency,
       },
     });
   } catch (err) {
@@ -112,7 +131,7 @@ async function createReservation(req, res, next) {
   }
 }
 
-/* 3. Reservation Cancellation — DELETE /reservations/:reservation_id */
+/* 3. Reservation Cancellation */
 async function cancelReservation(req, res, next) {
   try {
     const { reservation_id } = req.params;
@@ -127,23 +146,23 @@ async function cancelReservation(req, res, next) {
 
     if (error) throw error;
     if (!data) {
-      return res.status(404).json({ error: 'Reserva temporaria nao encontrada ou ja finalizada', code: 'NOT_FOUND' });
+      return erro(res, 'INVALID_RESERVATION', 'The specified reservation does not exist or is not in a valid state.');
     }
 
-    return res.json({ data: { reservation_id, status: 'cancelled' } });
+    return res.status(200).json({ data: { reservationReference: reservation_id, status: 'cancelled' } });
   } catch (err) {
     next(err);
   }
 }
 
-/* 4. Booking — POST /reservations/:reservation_id/booking */
+/* 4. Booking */
 async function createBooking(req, res, next) {
   try {
     const { reservation_id } = req.params;
     const { traveller } = req.body;
 
     if (!traveller?.email) {
-      return res.status(400).json({ error: 'traveller.email e obrigatorio', code: 'MISSING_FIELDS' });
+      return erro(res, 'VALIDATION_FAILURE', 'traveller.email is required.');
     }
 
     const { data: hold } = await supabaseAdmin
@@ -154,11 +173,11 @@ async function createBooking(req, res, next) {
       .maybeSingle();
 
     if (!hold) {
-      return res.status(404).json({ error: 'Reserva temporaria nao encontrada ou expirada', code: 'NOT_FOUND' });
+      return erro(res, 'INVALID_RESERVATION', 'The specified reservation does not exist or is not in a valid state.');
     }
     if (new Date(hold.expires_at) < new Date()) {
       await supabaseAdmin.from('ota_reservation_holds').update({ status: 'expired' }).eq('id', hold.id);
-      return res.status(410).json({ error: 'Reserva temporaria expirada', code: 'HOLD_EXPIRED' });
+      return erro(res, 'INVALID_RESERVATION', `Expired reservation; ${HOLD_MINUTES}min hold time was exceeded.`);
     }
 
     const customer = await obterOuCriarCliente(hold.operator_id, {
@@ -192,7 +211,7 @@ async function createBooking(req, res, next) {
       /* reservations_no_overlap (database/040) -- a unidade ficou indisponivel
          entre o hold ser criado e este booking ser confirmado. */
       if (error.code === '23P01') {
-        return res.status(409).json({ error: 'Unidade ja nao esta disponivel nessas datas', code: 'UNAVAILABLE' });
+        return erro(res, 'NO_AVAILABILITY', 'This activity is no longer available for the requested date.');
       }
       throw error;
     }
@@ -204,13 +223,13 @@ async function createBooking(req, res, next) {
 
     notifyAvailabilityChanged(hold.unit_id).catch(() => {});
 
-    return res.status(201).json({ data: { booking_id: reserva.id, status: 'confirmed' } });
+    return res.status(200).json({ data: { bookingReference: reserva.id, status: 'confirmed' } });
   } catch (err) {
     next(err);
   }
 }
 
-/* 5. Booking Cancellation — DELETE /bookings/:booking_id */
+/* 5. Booking Cancellation */
 async function cancelBooking(req, res, next) {
   try {
     const { booking_id } = req.params;
@@ -225,27 +244,27 @@ async function cancelBooking(req, res, next) {
 
     if (error) throw error;
     if (!data) {
-      return res.status(404).json({ error: 'Reserva nao encontrada', code: 'NOT_FOUND' });
+      return erro(res, 'INVALID_BOOKING', 'The booking does not exist or is not in a valid state.');
     }
 
     notifyAvailabilityChanged(data.unit_id).catch(() => {});
 
-    return res.json({ data: { booking_id, status: 'cancelled' } });
+    return res.status(200).json({ data: { bookingReference: booking_id, status: 'cancelled' } });
   } catch (err) {
     next(err);
   }
 }
 
-/* 6. Notify Availability — esta e a unica das 6 que, por convencao comum
-   noutras integracoes OTA, e o SalDesk a empurrar PARA a GYG (nao a GYG a
-   chamar-nos) sempre que a disponibilidade de uma unidade muda. Fica como
-   helper interno chamado apos criar/cancelar bookings, nao como rota.
-   Ajustar para o sentido correcto assim que confirmarmos no spec real. */
+/* 6. Notify Availability -- direccao SalDesk -> GYG (nos e que chamamos),
+   nao uma rota. Credenciais desta direccao sao dadas pela GYG, distintas
+   das que a GYG usa para nos chamar. */
 async function notifyAvailabilityChanged(unitId) {
   const url = process.env.GYG_NOTIFY_AVAILABILITY_URL;
   if (!url) return;
-  const apiKey = process.env.GYG_INTEGRATOR_API_KEY;
-  await axios.post(url, { unit_id: unitId }, { headers: { 'X-ACCESS-TOKEN': apiKey } });
+  const username = process.env.GYG_NOTIFY_USERNAME;
+  const password = process.env.GYG_NOTIFY_PASSWORD;
+  if (!username || !password) return;
+  await axios.post(url, { unit_id: unitId }, { auth: { username, password } });
 }
 
 module.exports = {
