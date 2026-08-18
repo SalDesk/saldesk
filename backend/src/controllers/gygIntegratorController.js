@@ -50,6 +50,45 @@ async function encontrarUnidadePorProduto(productId) {
   return data || null;
 }
 
+/* Calcula os dias indisponiveis de uma unidade num intervalo com so 2
+   consultas (reservas + bloqueios), em vez de 2 consultas POR DIA como
+   verificarDisponibilidade() faz quando chamada num ciclo -- para um
+   intervalo de 30 dias isso eram ate 60 idas a BD, facilmente fora dos
+   limites de tempo de resposta exigidos pela GYG (3-15s consoante o
+   intervalo). Mesmo padrao ja usado em syncWorker.js, so que para uma
+   unidade em vez de todas as unidades de um operador. */
+async function diasIndisponiveisEmLote(unitId, dataInicio, dataFim) {
+  const [reservasRes, bloqueiosRes] = await Promise.all([
+    supabaseAdmin
+      .from('reservations')
+      .select('check_in, check_out')
+      .eq('unit_id', unitId)
+      .in('status', ['pending', 'confirmed', 'checked_in'])
+      .lt('check_in', dataFim)
+      .gt('check_out', dataInicio),
+    supabaseAdmin
+      .from('blocked_dates')
+      .select('date')
+      .eq('unit_id', unitId)
+      .gte('date', dataInicio)
+      .lt('date', dataFim),
+  ]);
+
+  const indisponiveis = new Set();
+  for (const r of reservasRes.data || []) {
+    const cur = new Date(r.check_in + 'T00:00:00Z');
+    const fim = new Date(r.check_out + 'T00:00:00Z');
+    while (cur < fim) {
+      indisponiveis.add(cur.toISOString().split('T')[0]);
+      cur.setUTCDate(cur.getUTCDate() + 1);
+    }
+  }
+  for (const b of bloqueiosRes.data || []) {
+    indisponiveis.add(b.date);
+  }
+  return indisponiveis;
+}
+
 /* 1. Availability Query -- GET /1/get-availabilities?productId=...&
    fromDateTime=...&toDateTime=... (confirmado ao vivo). */
 async function queryAvailability(req, res, next) {
@@ -65,19 +104,26 @@ async function queryAvailability(req, res, next) {
       return erro(res, 'INVALID_PRODUCT', 'This product does not exist or is not sellable.');
     }
 
-    const availabilities = [];
     const cur = new Date(fromDateTime);
     const fim = new Date(toDateTime);
     if (isNaN(cur) || isNaN(fim)) {
       return erro(res, 'VALIDATION_FAILURE', 'fromDateTime and toDateTime must be valid ISO 8601 datetimes.');
     }
-    while (cur <= fim) {
-      const dataStr = cur.toISOString().split('T')[0];
-      const proximoDia = new Date(cur);
-      proximoDia.setDate(proximoDia.getDate() + 1);
-      const disponivel = await verificarDisponibilidade(supabaseAdmin, unit.id, dataStr, proximoDia.toISOString().split('T')[0]);
-      availabilities.push({ dateTime: `${dataStr}T00:00:00-01:00`, vacancies: disponivel ? (unit.capacity || 1) : 0 });
-      cur.setDate(cur.getDate() + 1);
+
+    const dataInicio = cur.toISOString().split('T')[0];
+    const proximoDiaFim = new Date(fim); proximoDiaFim.setDate(proximoDiaFim.getDate() + 1);
+    const dataFimExclusiva = proximoDiaFim.toISOString().split('T')[0];
+    const indisponiveis = await diasIndisponiveisEmLote(unit.id, dataInicio, dataFimExclusiva);
+
+    const availabilities = [];
+    const diaCorrente = new Date(cur);
+    while (diaCorrente <= fim) {
+      const dataStr = diaCorrente.toISOString().split('T')[0];
+      availabilities.push({
+        dateTime:  `${dataStr}T00:00:00-01:00`,
+        vacancies: indisponiveis.has(dataStr) ? 0 : (unit.capacity || 1),
+      });
+      diaCorrente.setDate(diaCorrente.getDate() + 1);
     }
 
     return res.status(200).json({ data: { productId, availabilities } });
@@ -307,19 +353,19 @@ async function notifyAvailabilityChanged(unitId) {
   const productId = unit?.ota_product_ids?.getyourguide;
   if (!productId) return; // unidade nao ligada ao GYG
 
-  const availabilities = [];
   const hoje = new Date();
+  const dataInicio = hoje.toISOString().split('T')[0];
+  const dataFimExclusiva = new Date(hoje); dataFimExclusiva.setDate(dataFimExclusiva.getDate() + 90);
+  const indisponiveis = await diasIndisponiveisEmLote(unitId, dataInicio, dataFimExclusiva.toISOString().split('T')[0]);
+
+  const availabilities = [];
   for (let i = 0; i < 90; i++) {
     const dia = new Date(hoje);
     dia.setDate(dia.getDate() + i);
     const dataStr = dia.toISOString().split('T')[0];
-    const proximoDia = new Date(dia);
-    proximoDia.setDate(proximoDia.getDate() + 1);
-
-    const disponivel = await verificarDisponibilidade(supabaseAdmin, unitId, dataStr, proximoDia.toISOString().split('T')[0]);
     availabilities.push({
       dateTime:  `${dataStr}T00:00:00-01:00`,
-      vacancies: disponivel ? (unit.capacity || 1) : 0,
+      vacancies: indisponiveis.has(dataStr) ? 0 : (unit.capacity || 1),
     });
   }
 
