@@ -484,12 +484,24 @@ function parseRoomMeta(description) {
   try { return JSON.parse(description); } catch { return {}; }
 }
 
+/* unit.name grava sempre "{numero} — {nome}" (composto no submit abaixo) --
+   registos anteriores a este fix nao tinham meta.name para recuperar o nome
+   puro, por isso o campo "Nome" carregava o nome ja composto e cada
+   gravacao voltava a compor por cima, acumulando "101 — 101 — ...". Isto
+   remove esse prefixo uma vez, para registos antigos; depois do primeiro
+   guardar com este fix, meta.name passa a ser sempre a fonte usada. */
+function stripComposedPrefix(name, prefix) {
+  if (!name || !prefix) return name || '';
+  const full = `${prefix} — `;
+  return name.startsWith(full) ? name.slice(full.length) : name;
+}
+
 function HotelRoomForm({ unit, onSave, onCancel, loading, error }) {
   const meta = parseRoomMeta(unit?.description);
 
   const [form, setForm] = useState({
     number:        meta.number         || '',
-    name:          unit?.name          || '',
+    name:          meta.name ?? stripComposedPrefix(unit?.name, meta.number),
     unit_type:     unit?.unit_type     || 'Double',
     floor:         meta.floor          || '',
     view:          meta.view           || 'Mar',
@@ -527,6 +539,7 @@ function HotelRoomForm({ unit, onSave, onCancel, loading, error }) {
     e.preventDefault();
     const roomMeta = {
       number:        form.number        || null,
+      name:          form.name          || null,
       floor:         form.floor         || null,
       view:          form.view,
       capacity_kids: Number(form.capacity_kids || 0),
@@ -887,12 +900,22 @@ function parseTableMeta(description) {
   try { return JSON.parse(description); } catch { return {}; }
 }
 
+/* Mesmo problema de composicao do HotelRoomForm: unit.name grava sempre
+   "Mesa {numero} — {nome}", por isso o nome puro so pode vir de meta.name;
+   para mesas antigas sem meta.name, tenta recuperar removendo o prefixo
+   "Mesa {numero} — " uma vez. */
+function stripMesaPrefix(name, number) {
+  if (!name || !number) return name || '';
+  const full = `Mesa ${number} — `;
+  return name.startsWith(full) ? name.slice(full.length) : name;
+}
+
 function RestaurantTableForm({ unit, onSave, onCancel, loading, error }) {
   const meta = parseTableMeta(unit?.description);
 
   const [form, setForm] = useState({
     number:       meta.number       || '',
-    name:         unit?.name        || '',
+    name:         meta.name ?? stripMesaPrefix(unit?.name, meta.number),
     zone:         meta.zone         || 'interior',
     capacity_min: meta.capacity_min != null ? String(meta.capacity_min) : '1',
     capacity_max: meta.capacity_max != null ? String(meta.capacity_max) : String(unit?.capacity ?? '4'),
@@ -920,6 +943,7 @@ function RestaurantTableForm({ unit, onSave, onCancel, loading, error }) {
     e.preventDefault();
     const tableMeta = {
       number:       form.number       || null,
+      name:         form.name         || null,
       zone:         form.zone,
       capacity_min: Number(form.capacity_min) || 1,
       capacity_max: Number(form.capacity_max) || 4,
