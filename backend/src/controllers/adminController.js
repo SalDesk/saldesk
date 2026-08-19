@@ -2009,7 +2009,7 @@ async function listarPendentesConect(req, res, next) {
   try {
     const { data, error } = await supabaseAdmin
       .from('units')
-      .select('id, name, description, base_price, images, updated_at, operator_id, operators(name, slug, operator_type), experience_categories(label_pt)')
+      .select('id, name, description, unit_type, base_price, capacity, images, lat, lng, languages_offered, duration_minutes, updated_at, operator_id, operators(name, slug, operator_type, address), experience_categories(label_pt)')
       .eq('conect_status', 'pending_review')
       .order('updated_at');
     if (error) throw error;
