@@ -247,16 +247,17 @@ async function listOperators(req, res, next) {
       (resData || []).forEach(r => { resCountMap[r.operator_id] = (resCountMap[r.operator_id] || 0) + 1; });
     }
 
-    /* Último login por operador (via user_id) */
+    /* Último login por operador -- login_history nunca chegou a ser escrita
+       em lado nenhum do codigo (tabela sempre vazia); a fonte real e o
+       proprio Supabase Auth (mesmo mecanismo ja usado em getOperatorDetail). */
     const userIds = operators.map(o => o.user_id).filter(Boolean);
     const lastLoginMap = {};
-    if (userIds.length) {
-      const { data: loginData } = await supabaseAdmin
-        .from('login_history').select('user_id, created_at')
-        .in('user_id', userIds)
-        .order('created_at', { ascending: false });
-      (loginData || []).forEach(l => { if (!lastLoginMap[l.user_id]) lastLoginMap[l.user_id] = l.created_at; });
-    }
+    await Promise.all(userIds.map(async (uid) => {
+      try {
+        const { data } = await supabaseAdmin.auth.admin.getUserById(uid);
+        if (data?.user?.last_sign_in_at) lastLoginMap[uid] = data.user.last_sign_in_at;
+      } catch { /* utilizador pode nao existir mais no Auth */ }
+    }));
 
     let result = operators.map(o => ({
       ...o,
