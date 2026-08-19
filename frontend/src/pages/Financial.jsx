@@ -667,7 +667,7 @@ function ReceitaManualModal({ receita, onSave, onClose }) {
   );
 }
 
-function ReceitasManuaisTab({ currency }) {
+function ReceitasManuaisTab({ currency, onChange }) {
   const [receitas,    setReceitas]    = useState([]);
   const [loading,     setLoading]     = useState(true);
   const [modal,       setModal]       = useState(null);
@@ -690,12 +690,14 @@ function ReceitasManuaisTab({ currency }) {
       setReceitas(prev => [...prev, added]);
     }
     setModal(null);
+    onChange?.();
   }
 
   async function handleDelete(id) {
     if (!window.confirm('Eliminar esta receita?')) return;
     await deleteReceitaManual(id);
     setReceitas(prev => prev.filter(r => r.id !== id));
+    onChange?.();
   }
 
   const periodRec = receitas.filter(r => {
@@ -1299,10 +1301,20 @@ export default function Financial() {
 
   useEffect(() => { carregar(periodo, granularidade); carregarTx(periodo); }, [periodo, granularidade]);
 
-  useEffect(() => {
+  const carregarSazonal = useCallback(() => {
     const y = new Date().getFullYear();
     getReceita(`${y}-01-01`, `${y}-12-31`, 'month').then(d => setSazonal(d || [])).catch(() => {});
   }, []);
+
+  useEffect(() => { carregarSazonal(); }, [carregarSazonal]);
+
+  /* Receitas manuais alteram resumo()/receita() no backend -- este tab
+     re-carrega os dados da Visao Geral depois de qualquer CRUD, senao os
+     KPIs/graficos ficavam presos ao valor do carregamento inicial. */
+  function refreshAposReceitaManual() {
+    carregar(periodo, granularidade);
+    carregarSazonal();
+  }
 
   useEffect(() => {
     if (activeTab === 'previsao' && activeSec === 'receitas' && !forecastLoaded) {
@@ -1462,7 +1474,7 @@ export default function Financial() {
           ) : activeTab === 'caixa' ? (
             <CaixaTab transacoes={transacoes} currency={currency} loading={loadingTx} />
           ) : activeTab === 'manuais' ? (
-            <ReceitasManuaisTab currency={currency} />
+            <ReceitasManuaisTab currency={currency} onChange={refreshAposReceitaManual} />
           ) : null}
         </>
       )}
