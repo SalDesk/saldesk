@@ -58,6 +58,16 @@ function getUnitDescription(unit, lang) {
   return raw;
 }
 
+/* Mesmos metadados JSON, devolvidos em bruto -- usado para comodidades,
+   o que esta incluido e informacao importante, tudo configurado pelo
+   operador no UnitForm. Nunca inventa conteudo: secoes ficam escondidas
+   quando o operador nao configurou nada, em vez de mostrar um generico. */
+function getUnitMeta(unit) {
+  const raw = unit?.description;
+  if (!raw?.startsWith('{')) return {};
+  try { return JSON.parse(raw); } catch { return {}; }
+}
+
 function fmtPrice(price, priceUnit, opCurrency, viewCurrency, lang) {
   if (!price) return lang === 'en' ? 'On request' : 'Consultar';
   const labels = { night:lang==='en'?'/night':'/noite', day:lang==='en'?'/day':'/dia', hour:lang==='en'?'/hour':'/hora', session:lang==='en'?'/session':'/sessão', person:lang==='en'?'/person':'/pessoa' };
@@ -778,21 +788,28 @@ export default function ServiceDetail() {
     pct: reviews.length ? reviews.filter(rv => Math.round(rv.rating) === r).length / reviews.length * 100 : 0,
   }));
 
-  const unitType  = unit.unit_type || op.operator_type;
-  const isActivity  = ['activity'].includes(unitType);
-  const isHotel     = ['hotel','room'].includes(unitType);
-  const isRentaCar  = ['rentacar','vehicle'].includes(unitType);
-  const isRestaurant = ['restaurant','table'].includes(unitType);
+  /* op.operator_type e' a fonte fiavel do tipo de negocio -- unit.unit_type
+     e' antes a categoria especifica escolhida no UnitForm (ex: "Double",
+     "Mergulho", "Economico", "Interior"), nunca um dos 4 tipos literais, por
+     isso nunca deve ser usado para esta deteccao (bug encontrado: todas as
+     unidades caiam sempre no branch generico/restaurante). */
+  const isActivity   = op.operator_type === 'activity';
+  const isHotel      = op.operator_type === 'hotel';
+  const isRentaCar   = op.operator_type === 'rentacar';
+  const isRestaurant = op.operator_type === 'restaurant';
+  const unitMeta = getUnitMeta(unit);
+  const amenities = Array.isArray(unitMeta.amenities) ? unitMeta.amenities.filter(Boolean) : [];
+  const includedItems = Array.isArray(unitMeta.included_items)
+    ? unitMeta.included_items.filter(it => it?.label?.trim())
+    : [];
+  const importantInfo = unitMeta.important_info || '';
 
   const typeBadge = {
     activity:   { pt:'Actividade',  en:'Activity',      icon:<Compass size={12} strokeWidth={1.75}/> },
     hotel:      { pt:'Alojamento',  en:'Accommodation', icon:<Building size={12} strokeWidth={1.75}/> },
-    room:       { pt:'Alojamento',  en:'Accommodation', icon:<Building size={12} strokeWidth={1.75}/> },
     rentacar:   { pt:'Viatura',     en:'Vehicle',       icon:<Car size={12} strokeWidth={1.75}/> },
-    vehicle:    { pt:'Viatura',     en:'Vehicle',       icon:<Car size={12} strokeWidth={1.75}/> },
-    restaurant: { pt:'Restaurante', en:'Restaurant',    icon:<Utensils size={12} strokeWidth={1.75}/> },
-    table:      { pt:'Mesa',        en:'Table',         icon:<Utensils size={12} strokeWidth={1.75}/> },
-  }[unitType] || { pt:'Serviço', en:'Service', icon:<Compass size={12} strokeWidth={1.75}/> };
+    restaurant: { pt:'Mesa',        en:'Table',         icon:<Utensils size={12} strokeWidth={1.75}/> },
+  }[op.operator_type] || { pt:'Serviço', en:'Service', icon:<Compass size={12} strokeWidth={1.75}/> };
 
   const priceSuffix = {
     night:   lang==='en'?'/noite':'/noite',
@@ -1014,55 +1031,55 @@ export default function ServiceDetail() {
               </div>
             )}
 
-            {/* ── O que está incluído ── */}
-            <div className="pb-10 border-b border-n-100">
-              <p className="text-xs font-body font-bold text-ocean-700 uppercase tracking-widest mb-4">
-                {lang==='en'?'What\'s included':'O que está incluído'}
-              </p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {(isActivity ? [
-                  { pt:'Guia certificado', en:'Certified guide', ok:true },
-                  { pt:'Equipamento de segurança', en:'Safety equipment', ok:true },
-                  { pt:'Fotografias do tour', en:'Tour photographs', ok:true },
-                  { pt:'Refeições', en:'Meals', ok:false },
-                  { pt:'Transporte de/para hotel', en:'Hotel transfers', ok:false },
-                ] : isHotel ? [
-                  { pt:'Wi-Fi gratuito', en:'Free Wi-Fi', ok:true },
-                  { pt:'Pequeno-almoço', en:'Breakfast', ok:false },
-                  { pt:'Parque de estacionamento', en:'Parking', ok:true },
-                  { pt:'Serviço de limpeza diária', en:'Daily housekeeping', ok:true },
-                  { pt:'Transfer aeroporto', en:'Airport transfer', ok:false },
-                ] : isRentaCar ? [
-                  { pt:'Seguro básico', en:'Basic insurance', ok:true },
-                  { pt:'Quilometragem ilimitada', en:'Unlimited mileage', ok:true },
-                  { pt:'Segunda condutora', en:'Second driver', ok:false },
-                  { pt:'GPS', en:'GPS', ok:false },
-                  { pt:'Cadeira de criança', en:'Child seat', ok:false },
-                ] : [
-                  { pt:'Água e pão', en:'Water and bread', ok:true },
-                  { pt:'Serviço de mesa', en:'Table service', ok:true },
-                  { pt:'Bebidas alcoólicas', en:'Alcoholic drinks', ok:false },
-                  { pt:'Sobremesas', en:'Desserts', ok:false },
-                ]).map((item, i) => (
-                  <div key={i} className={`flex items-center gap-3 p-3 rounded-xl border ${item.ok?'bg-green-50 border-green-100':'bg-n-50 border-n-200'}`}>
-                    {item.ok
-                      ? <Check size={16} strokeWidth={2} className="text-green-600 flex-shrink-0"/>
-                      : <X size={16} strokeWidth={2} className="text-n-400 flex-shrink-0"/>}
-                    <span className={`text-sm font-body font-medium ${item.ok?'text-green-800':'text-n-500'}`}>
-                      {lang==='en'?item.en:item.pt}
-                    </span>
-                  </div>
-                ))}
-              </div>
-              <div className="mt-3 flex items-start gap-2 bg-amber-50 border border-amber-100 rounded-xl p-3">
-                <AlertCircle size={16} strokeWidth={1.75} className="text-amber-600 flex-shrink-0 mt-0.5"/>
-                <p className="text-xs font-body text-amber-800">
-                  {lang==='en'
-                    ? 'Please bring comfortable clothing and sunscreen. Closed-toe shoes recommended.'
-                    : 'Por favor traga roupa confortável e protector solar. Sapatos fechados recomendados.'}
+            {/* ── Comodidades ── configurado pelo operador (UnitForm), nunca inventado */}
+            {amenities.length > 0 && (
+              <div className="pb-10 border-b border-n-100">
+                <p className="text-xs font-body font-bold text-ocean-700 uppercase tracking-widest mb-4">
+                  {lang==='en'?'Amenities':'Comodidades'}
                 </p>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                  {amenities.map((a, i) => (
+                    <div key={i} className="flex items-center gap-2.5 p-3 rounded-xl border border-n-200 bg-n-50">
+                      <Check size={15} strokeWidth={2} className="text-ocean-600 flex-shrink-0"/>
+                      <span className="text-sm font-body font-medium text-n-700">{a}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
+
+            {/* ── O que está incluído ── configurado pelo operador (UnitForm);
+                secção fica escondida se nada foi configurado, nunca mostra
+                uma lista generica que pode nao corresponder ao servico real. */}
+            {includedItems.length > 0 && (
+              <div className="pb-10 border-b border-n-100">
+                <p className="text-xs font-body font-bold text-ocean-700 uppercase tracking-widest mb-4">
+                  {lang==='en'?'What\'s included':'O que está incluído'}
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {includedItems.map((item, i) => (
+                    <div key={i} className={`flex items-center gap-3 p-3 rounded-xl border ${item.included?'bg-green-50 border-green-100':'bg-n-50 border-n-200'}`}>
+                      {item.included
+                        ? <Check size={16} strokeWidth={2} className="text-green-600 flex-shrink-0"/>
+                        : <X size={16} strokeWidth={2} className="text-n-400 flex-shrink-0"/>}
+                      <span className={`text-sm font-body font-medium ${item.included?'text-green-800':'text-n-500'}`}>
+                        {item.label}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* ── Informação importante ── texto livre do operador (UnitForm) */}
+            {importantInfo && (
+              <div className="pb-10 border-b border-n-100">
+                <div className="flex items-start gap-2 bg-amber-50 border border-amber-100 rounded-xl p-4">
+                  <AlertCircle size={16} strokeWidth={1.75} className="text-amber-600 flex-shrink-0 mt-0.5"/>
+                  <p className="text-sm font-body text-amber-800">{importantInfo}</p>
+                </div>
+              </div>
+            )}
 
             {/* ── Avaliações ── */}
             {reviews.length > 0 && (

@@ -1,8 +1,74 @@
 import { useState } from 'react';
+import { Check, X, Plus, Trash2 } from 'lucide-react';
 import { useT } from '../../i18n';
 import Input, { Textarea, Select } from '../ui/Input';
 import Button from '../ui/Button';
 import ImageUploader from '../shared/ImageUploader';
+
+const ACTIVITY_AMENS   = ['Equipamento incluído', 'Instrutor certificado', 'Seguro', 'Fotografias/Vídeo', 'Transporte', 'Snacks e água', 'Vestiário', 'Toalhas'];
+const RESTAURANT_AMENS = ['WiFi', 'Ar condicionado', 'Vista mar', 'Terraço', 'Acesso cadeira de rodas', 'Estacionamento', 'Música ao vivo', 'Ambiente para crianças'];
+
+/* Comodidades — chip picker reutilizado pelos 4 formularios. Lista fixa de
+   sugestoes, sem texto livre, para manter os valores consistentes entre
+   unidades (usado tambem como filtro no catalogo publico no futuro). */
+function AmenitiesPicker({ options, selected, onToggle }) {
+  return (
+    <div className="flex flex-wrap gap-2 mt-1">
+      {options.map(a => (
+        <label
+          key={a}
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-sm border text-xs font-body font-medium cursor-pointer transition-colors select-none ${
+            selected.includes(a)
+              ? 'bg-ocean-700 border-ocean-700 text-white'
+              : 'bg-n-50 border-n-300 text-n-600 hover:border-ocean-500'
+          }`}
+        >
+          <input type="checkbox" className="sr-only" checked={selected.includes(a)} onChange={() => onToggle(a)} />
+          {a}
+        </label>
+      ))}
+    </div>
+  );
+}
+
+/* O que esta incluido — lista livre de itens que o operador marca como
+   incluidos ou nao incluidos no preco. Mostrado tal e qual na pagina
+   publica; secção fica escondida la se ficar vazia (nunca inventa). */
+function IncludedItemsEditor({ items, onChange }) {
+  function addItem() { onChange([...items, { label: '', included: true }]); }
+  function updateItem(i, patch) { onChange(items.map((it, idx) => idx === i ? { ...it, ...patch } : it)); }
+  function removeItem(i) { onChange(items.filter((_, idx) => idx !== i)); }
+  return (
+    <div className="space-y-2">
+      {items.map((it, i) => (
+        <div key={i} className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => updateItem(i, { included: !it.included })}
+            title={it.included ? 'Incluído' : 'Não incluído'}
+            className={`shrink-0 w-8 h-8 rounded-sm flex items-center justify-center border transition-colors ${
+              it.included ? 'bg-green-50 border-green-200 text-green-600' : 'bg-n-50 border-n-200 text-n-400'
+            }`}
+          >
+            {it.included ? <Check size={14} strokeWidth={2.5} /> : <X size={14} strokeWidth={2.5} />}
+          </button>
+          <input
+            value={it.label}
+            onChange={e => updateItem(i, { label: e.target.value })}
+            placeholder="Ex: Pequeno-almoço"
+            className="flex-1 h-8 px-2.5 text-sm font-body border border-n-200 rounded-sm focus:outline-none focus:border-ocean-700"
+          />
+          <button type="button" onClick={() => removeItem(i)} className="shrink-0 p-1.5 rounded-sm text-n-400 hover:text-error transition-colors">
+            <Trash2 size={14} />
+          </button>
+        </div>
+      ))}
+      <button type="button" onClick={addItem} className="flex items-center gap-1 text-xs font-body font-semibold text-ocean-700 hover:text-ocean-500 transition-colors">
+        <Plus size={13} strokeWidth={2.5} /> Adicionar item
+      </button>
+    </div>
+  );
+}
 
 const UNIT_TYPES_BY_OPERATOR = {
   hotel:      ['Quarto Standard', 'Quarto Double', 'Suite', 'Apartamento', 'Villa', 'Bungalow'],
@@ -120,6 +186,9 @@ function TourForm({ unit, onSave, onCancel, loading, error }) {
     base_price:    unit?.base_price    != null ? String(unit.base_price) : '',
     price_child:   meta.price_child    != null ? String(meta.price_child) : '',
     price_private: meta.price_private  != null ? String(meta.price_private) : '',
+    amenities:      meta.amenities      || [],
+    included_items: meta.included_items || [],
+    important_info: meta.important_info || '',
     status:   unit?.status  || 'active',
     images:   unit?.images  || [],
     ota_viator_id: unit?.ota_product_ids?.viator       || '',
@@ -139,6 +208,13 @@ function TourForm({ unit, onSave, onCancel, loading, error }) {
     }));
   }
 
+  function toggleAmen(a) {
+    setForm(f => ({
+      ...f,
+      amenities: f.amenities.includes(a) ? f.amenities.filter(x => x !== a) : [...f.amenities, a],
+    }));
+  }
+
   function handleSubmit(e) {
     e.preventDefault();
     const images = form.images || [];
@@ -155,6 +231,9 @@ function TourForm({ unit, onSave, onCancel, loading, error }) {
       start_time:    form.start_time    || null,
       price_child:   form.price_child   ? Number(form.price_child)   : null,
       price_private: form.price_private ? Number(form.price_private) : null,
+      amenities:      form.amenities,
+      included_items: form.included_items.filter(it => it.label.trim()),
+      important_info: form.important_info || null,
     };
     onSave({
       name:        form.name,
@@ -341,6 +420,21 @@ function TourForm({ unit, onSave, onCancel, loading, error }) {
       </div>
 
       <div>
+        <SectionLabel>Comodidades</SectionLabel>
+        <AmenitiesPicker options={ACTIVITY_AMENS} selected={form.amenities} onToggle={toggleAmen} />
+      </div>
+
+      <div>
+        <SectionLabel>O que está incluído</SectionLabel>
+        <IncludedItemsEditor items={form.included_items} onChange={items => setForm(f => ({ ...f, included_items: items }))} />
+      </div>
+
+      <div>
+        <SectionLabel>Informação importante (opcional)</SectionLabel>
+        <Textarea value={form.important_info} onChange={set('important_info')} placeholder="Ex: Traga roupa confortável e protector solar." rows={2} />
+      </div>
+
+      <div>
         <SectionLabel>Fotos</SectionLabel>
         <ImageUploader
           value={form.images}
@@ -407,6 +501,8 @@ function HotelRoomForm({ unit, onSave, onCancel, loading, error }) {
     price_high:    meta.price_high     != null ? String(meta.price_high) : '',
     price_peak:    meta.price_peak     != null ? String(meta.price_peak) : '',
     amenities:     meta.amenities      || [],
+    included_items: meta.included_items || [],
+    important_info: meta.important_info || '',
     description:   meta.description    || '',
     status:        unit?.status        || 'active',
     images:        unit?.images        || [],
@@ -434,7 +530,9 @@ function HotelRoomForm({ unit, onSave, onCancel, loading, error }) {
       floor:         form.floor         || null,
       view:          form.view,
       capacity_kids: Number(form.capacity_kids || 0),
-      amenities:     form.amenities,
+      amenities:      form.amenities,
+      included_items: form.included_items.filter(it => it.label.trim()),
+      important_info: form.important_info || null,
       description:   form.description   || null,
       price_low:     form.price_low     ? Number(form.price_low)  : null,
       price_mid:     form.price_mid     ? Number(form.price_mid)  : null,
@@ -489,21 +587,7 @@ function HotelRoomForm({ unit, onSave, onCancel, loading, error }) {
 
       <div>
         <SectionLabel>Comodidades</SectionLabel>
-        <div className="flex flex-wrap gap-2 mt-1">
-          {ROOM_AMENS.map(a => (
-            <label
-              key={a}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-sm border text-xs font-body font-medium cursor-pointer transition-colors select-none ${
-                form.amenities.includes(a)
-                  ? 'bg-ocean-700 border-ocean-700 text-white'
-                  : 'bg-n-50 border-n-300 text-n-600 hover:border-ocean-500'
-              }`}
-            >
-              <input type="checkbox" className="sr-only" checked={form.amenities.includes(a)} onChange={() => toggleAmen(a)} />
-              {a}
-            </label>
-          ))}
-        </div>
+        <AmenitiesPicker options={ROOM_AMENS} selected={form.amenities} onToggle={toggleAmen} />
       </div>
 
       <div>
@@ -522,6 +606,16 @@ function HotelRoomForm({ unit, onSave, onCancel, loading, error }) {
       <div>
         <SectionLabel>Descricao</SectionLabel>
         <Textarea value={form.description} onChange={set('description')} placeholder="Descricao do quarto..." rows={2} />
+      </div>
+
+      <div>
+        <SectionLabel>O que está incluído</SectionLabel>
+        <IncludedItemsEditor items={form.included_items} onChange={items => setForm(f => ({ ...f, included_items: items }))} />
+      </div>
+
+      <div>
+        <SectionLabel>Informação importante (opcional)</SectionLabel>
+        <Textarea value={form.important_info} onChange={set('important_info')} placeholder="Ex: Check-in a partir das 14h, check-out até às 12h." rows={2} />
       </div>
 
       <div>
@@ -586,6 +680,8 @@ function RentacarVehicleForm({ unit, onSave, onCancel, loading, error }) {
     transmission:    meta.transmission  || 'manual',
     fuel:            meta.fuel          || 'gasolina',
     amenities:       meta.amenities     || [],
+    included_items:  meta.included_items || [],
+    important_info:  meta.important_info || '',
     base_price:      unit?.base_price   != null ? String(unit.base_price) : '',
     discount_week:   meta.discount_week != null ? String(meta.discount_week) : '',
     discount_month:  meta.discount_month!= null ? String(meta.discount_month) : '',
@@ -628,6 +724,8 @@ function RentacarVehicleForm({ unit, onSave, onCancel, loading, error }) {
       transmission:    form.transmission,
       fuel:            form.fuel,
       amenities:       form.amenities,
+      included_items:  form.included_items.filter(it => it.label.trim()),
+      important_info:  form.important_info || null,
       discount_week:   form.discount_week   ? Number(form.discount_week)   : null,
       discount_month:  form.discount_month  ? Number(form.discount_month)  : null,
       km_included:     form.km_included     ? Number(form.km_included)     : null,
@@ -696,16 +794,7 @@ function RentacarVehicleForm({ unit, onSave, onCancel, loading, error }) {
 
       <div>
         <SectionLabel>Comodidades</SectionLabel>
-        <div className="flex flex-wrap gap-2 mt-1">
-          {CAR_AMENS.map(a => (
-            <label key={a} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-sm border text-xs font-body font-medium cursor-pointer transition-colors select-none ${
-              form.amenities.includes(a) ? 'bg-ocean-700 border-ocean-700 text-white' : 'bg-n-50 border-n-300 text-n-600 hover:border-ocean-500'
-            }`}>
-              <input type="checkbox" className="sr-only" checked={form.amenities.includes(a)} onChange={() => toggleAmen(a)} />
-              {a}
-            </label>
-          ))}
-        </div>
+        <AmenitiesPicker options={CAR_AMENS} selected={form.amenities} onToggle={toggleAmen} />
       </div>
 
       <div>
@@ -744,6 +833,16 @@ function RentacarVehicleForm({ unit, onSave, onCancel, loading, error }) {
           <Input label="Km actuais" type="number" value={form.current_km} onChange={set('current_km')} min="0" placeholder="0" />
           <Input label="Proxima revisao (km)" type="number" value={form.next_revision_km} onChange={set('next_revision_km')} min="0" placeholder="10000" />
         </div>
+      </div>
+
+      <div>
+        <SectionLabel>O que está incluído</SectionLabel>
+        <IncludedItemsEditor items={form.included_items} onChange={items => setForm(f => ({ ...f, included_items: items }))} />
+      </div>
+
+      <div>
+        <SectionLabel>Informação importante (opcional)</SectionLabel>
+        <Textarea value={form.important_info} onChange={set('important_info')} placeholder="Ex: Caução exigida no levantamento, cartão de crédito obrigatório." rows={2} />
       </div>
 
       <div>
@@ -798,6 +897,9 @@ function RestaurantTableForm({ unit, onSave, onCancel, loading, error }) {
     capacity_min: meta.capacity_min != null ? String(meta.capacity_min) : '1',
     capacity_max: meta.capacity_max != null ? String(meta.capacity_max) : String(unit?.capacity ?? '4'),
     combinable:   meta.combinable   ?? false,
+    amenities:      meta.amenities      || [],
+    included_items: meta.included_items || [],
+    important_info: meta.important_info || '',
     status:       unit?.status      || 'active',
     ota_viator_id: unit?.ota_product_ids?.viator       || '',
     ota_gyg_id:    unit?.ota_product_ids?.getyourguide || '',
@@ -807,6 +909,13 @@ function RestaurantTableForm({ unit, onSave, onCancel, loading, error }) {
 
   const set = (k) => (e) => setForm(f => ({ ...f, [k]: e.target.value }));
 
+  function toggleAmen(a) {
+    setForm(f => ({
+      ...f,
+      amenities: f.amenities.includes(a) ? f.amenities.filter(x => x !== a) : [...f.amenities, a],
+    }));
+  }
+
   function handleSubmit(e) {
     e.preventDefault();
     const tableMeta = {
@@ -815,6 +924,9 @@ function RestaurantTableForm({ unit, onSave, onCancel, loading, error }) {
       capacity_min: Number(form.capacity_min) || 1,
       capacity_max: Number(form.capacity_max) || 4,
       combinable:   form.combinable,
+      amenities:      form.amenities,
+      included_items: form.included_items.filter(it => it.label.trim()),
+      important_info: form.important_info || null,
     };
     const displayName = form.number
       ? `Mesa ${form.number}${form.name ? ` — ${form.name}` : ''}`
@@ -871,6 +983,21 @@ function RestaurantTableForm({ unit, onSave, onCancel, loading, error }) {
           />
           <span className="text-sm font-body text-n-700">Mesa combinavel com outras</span>
         </label>
+      </div>
+
+      <div>
+        <SectionLabel>Comodidades</SectionLabel>
+        <AmenitiesPicker options={RESTAURANT_AMENS} selected={form.amenities} onToggle={toggleAmen} />
+      </div>
+
+      <div>
+        <SectionLabel>O que está incluído</SectionLabel>
+        <IncludedItemsEditor items={form.included_items} onChange={items => setForm(f => ({ ...f, included_items: items }))} />
+      </div>
+
+      <div>
+        <SectionLabel>Informação importante (opcional)</SectionLabel>
+        <Textarea value={form.important_info} onChange={set('important_info')} placeholder="Ex: Reserva mantida por 15 minutos após a hora marcada." rows={2} />
       </div>
 
       <OtaFields form={form} set={set} />
