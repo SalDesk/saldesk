@@ -82,7 +82,15 @@ async function criar(req, res, next) {
       return res.status(409).json({ error: 'Unidade indisponível nas datas seleccionadas', code: 'UNAVAILABLE' });
     }
 
-    const { total } = calcularPreco(unit, check_in, check_out);
+    // calcularPreco e por noite/dia (hotel, rent-a-car) — reservas de um so dia
+    // (tours/actividades, cobrados por pessoa) ficariam sempre a 0 nesse calculo,
+    // por isso usam antes base_price * numero de pessoas (mesma logica de
+    // publicController.criarReserva, para o motor de precos nao divergir consoante
+    // quem cria a reserva).
+    const numPessoas = guests || 1;
+    const total = check_out === check_in
+      ? Math.round(Number(unit.base_price || 0) * numPessoas * 100) / 100
+      : calcularPreco(unit, check_in, check_out).total;
     const finalPrice = (total_amount !== undefined && total_amount !== null) ? Number(total_amount) : total;
     const finalNotes = notes_internal || notes_guest || notes || null;
     const finalSource = source || 'admin';
