@@ -1,5 +1,5 @@
 const { supabaseAdmin } = require('../config/supabase');
-const { percentChange, calcularPeriodoAnterior, calcularMetricas } = require('../helpers/financeiroHelpers');
+const { percentChange, calcularPeriodoAnterior, calcularMetricas, bucketKey } = require('../helpers/financeiroHelpers');
 const ExcelJS = require('exceljs');
 const PDFDocument = require('pdfkit');
 
@@ -13,6 +13,16 @@ async function fetchReservas(operatorId, inicio, fim) {
   return data || [];
 }
 
+async function fetchReceitasManuais(operatorId, inicio, fim) {
+  const { data } = await supabaseAdmin
+    .from('manual_revenues')
+    .select('amount, date')
+    .eq('operator_id', operatorId)
+    .gte('date', inicio)
+    .lte('date', fim);
+  return data || [];
+}
+
 async function resumo(req, res, next) {
   try {
     const { inicio, fim } = req.query;
@@ -22,15 +32,24 @@ async function resumo(req, res, next) {
 
     const prev = calcularPeriodoAnterior(inicio, fim);
 
-    const [unidadesRes, reservasAtual, reservasAnterior] = await Promise.all([
+    const [unidadesRes, reservasAtual, reservasAnterior, manuaisAtual, manuaisAnterior] = await Promise.all([
       supabaseAdmin.from('units').select('id').eq('operator_id', req.operator.id).eq('status', 'active'),
       fetchReservas(req.operator.id, inicio, fim),
       fetchReservas(req.operator.id, prev.inicio, prev.fim),
+      fetchReceitasManuais(req.operator.id, inicio, fim),
+      fetchReceitasManuais(req.operator.id, prev.inicio, prev.fim),
     ]);
 
     const numUnidades = (unidadesRes.data || []).length;
     const atual    = calcularMetricas(reservasAtual,   numUnidades, inicio,     fim);
     const anterior = calcularMetricas(reservasAnterior, numUnidades, prev.inicio, prev.fim);
+
+    /* Receita manual soma-se ao total, mas fica fora de valor_medio/taxa_ocupacao
+       -- essas metricas sao calculadas so a partir de reservas reais. */
+    atual.receita_manual    = Math.round(manuaisAtual.reduce((s, r) => s + Number(r.amount), 0) * 100) / 100;
+    anterior.receita_manual = Math.round(manuaisAnterior.reduce((s, r) => s + Number(r.amount), 0) * 100) / 100;
+    atual.receita    = Math.round((atual.receita    + atual.receita_manual)    * 100) / 100;
+    anterior.receita = Math.round((anterior.receita + anterior.receita_manual) * 100) / 100;
 
     const directas = reservasAtual.filter((r) => r.status !== 'cancelled' && (r.source === 'direct' || r.source === 'public' || r.source === 'admin')).length;
     const poupancaComissoes = Math.round(
@@ -68,31 +87,29 @@ async function receita(req, res, next) {
       return res.status(400).json({ error: 'inicio e fim sao obrigatorios', code: 'MISSING_FIELDS' });
     }
 
-    const { data: reservas } = await supabaseAdmin
-      .from('reservations')
-      .select('check_out, total_price')
-      .eq('operator_id', req.operator.id)
-      .eq('status', 'checked_out')
-      .gte('check_out', inicio)
-      .lte('check_out', fim)
-      .order('check_out');
+    const [{ data: reservas }, manuais] = await Promise.all([
+      supabaseAdmin
+        .from('reservations')
+        .select('check_out, total_price')
+        .eq('operator_id', req.operator.id)
+        .eq('status', 'checked_out')
+        .gte('check_out', inicio)
+        .lte('check_out', fim)
+        .order('check_out'),
+      fetchReceitasManuais(req.operator.id, inicio, fim),
+    ]);
 
     const grupos = {};
     for (const r of reservas || []) {
-      const d = new Date(r.check_out + 'T00:00:00Z');
-      let chave;
-      if (granularidade === 'month') {
-        chave = `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}`;
-      } else if (granularidade === 'week') {
-        const dow = d.getUTCDay() || 7;
-        const seg = new Date(d); seg.setUTCDate(d.getUTCDate() - dow + 1);
-        chave = seg.toISOString().split('T')[0];
-      } else {
-        chave = r.check_out;
-      }
+      const chave = bucketKey(r.check_out, granularidade);
       if (!grupos[chave]) grupos[chave] = { periodo: chave, receita: 0, num_reservas: 0 };
       grupos[chave].receita += Number(r.total_price);
       grupos[chave].num_reservas += 1;
+    }
+    for (const m of manuais) {
+      const chave = bucketKey(m.date, granularidade);
+      if (!grupos[chave]) grupos[chave] = { periodo: chave, receita: 0, num_reservas: 0 };
+      grupos[chave].receita += Number(m.amount);
     }
 
     const resultado = Object.values(grupos)
@@ -424,6 +441,80 @@ async function exportPdf(req, res, next) {
   } catch (err) { next(err); }
 }
 
+/* ── Receitas manuais ── */
+
+async function listarReceitasManuais(req, res, next) {
+  try {
+    const { data, error } = await supabaseAdmin
+      .from('manual_revenues')
+      .select('*')
+      .eq('operator_id', req.operator.id)
+      .order('date', { ascending: false });
+    if (error) throw error;
+    return res.json({ data, message: 'Receitas manuais listadas' });
+  } catch (err) { next(err); }
+}
+
+async function criarReceitaManual(req, res, next) {
+  try {
+    const { category, amount, currency, date, notes, receipt_url } = req.body;
+    if (!category || amount === undefined || !date) {
+      return res.status(400).json({ error: 'category, amount e date sao obrigatorios', code: 'MISSING_FIELDS' });
+    }
+    const { data, error } = await supabaseAdmin
+      .from('manual_revenues')
+      .insert({
+        operator_id: req.operator.id,
+        category,
+        amount:      Number(amount),
+        currency:    currency || 'EUR',
+        date,
+        notes:       notes || null,
+        receipt_url: receipt_url || null,
+      })
+      .select()
+      .single();
+    if (error) throw error;
+    return res.status(201).json({ data, message: 'Receita registada' });
+  } catch (err) { next(err); }
+}
+
+async function actualizarReceitaManual(req, res, next) {
+  try {
+    const { category, amount, currency, date, notes, receipt_url } = req.body;
+    const updates = { updated_at: new Date().toISOString() };
+    if (category !== undefined)    updates.category = category;
+    if (amount !== undefined)      updates.amount = Number(amount);
+    if (currency !== undefined)    updates.currency = currency;
+    if (date !== undefined)        updates.date = date;
+    if (notes !== undefined)       updates.notes = notes || null;
+    if (receipt_url !== undefined) updates.receipt_url = receipt_url || null;
+
+    const { data, error } = await supabaseAdmin
+      .from('manual_revenues')
+      .update(updates)
+      .eq('id', req.params.id)
+      .eq('operator_id', req.operator.id)
+      .select()
+      .maybeSingle();
+    if (error) throw error;
+    if (!data) return res.status(404).json({ error: 'Receita nao encontrada', code: 'NOT_FOUND' });
+    return res.json({ data, message: 'Receita actualizada' });
+  } catch (err) { next(err); }
+}
+
+async function eliminarReceitaManual(req, res, next) {
+  try {
+    const { error } = await supabaseAdmin
+      .from('manual_revenues')
+      .delete()
+      .eq('id', req.params.id)
+      .eq('operator_id', req.operator.id);
+    if (error) throw error;
+    return res.json({ data: null, message: 'Receita eliminada' });
+  } catch (err) { next(err); }
+}
+
 async function forecast(req, res, next) {
   try {
     const operatorId = req.operator.id;
@@ -480,4 +571,7 @@ async function forecast(req, res, next) {
   } catch (err) { next(err); }
 }
 
-module.exports = { resumo, receita, unidades, topClientes, canais, exportExcel, exportPdf, forecast };
+module.exports = {
+  resumo, receita, unidades, topClientes, canais, exportExcel, exportPdf, forecast,
+  listarReceitasManuais, criarReceitaManual, actualizarReceitaManual, eliminarReceitaManual,
+};

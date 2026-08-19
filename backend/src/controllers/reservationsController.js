@@ -235,7 +235,7 @@ async function obter(req, res, next) {
 
     const { data, error } = await supabaseAdmin
       .from('reservations')
-      .select('*, units(name, unit_type, base_price)')
+      .select('*, units(name, unit_type, base_price), fleet(name, capacity)')
       .eq('id', req.params.id)
       .eq('operator_id', getOperatorId(req))
       .single();

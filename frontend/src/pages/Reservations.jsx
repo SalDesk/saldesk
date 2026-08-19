@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import {
   Plus, ClipboardList, Pencil, Trash2, ChevronRight, Filter, X,
   CalendarDays, Mail, UserX, FileText, Car, MoveRight, MoveLeft,
-  Fuel, AlertTriangle, Utensils, CheckCircle, Users,
+  Fuel, AlertTriangle, Utensils, CheckCircle, Users, Eye,
 } from 'lucide-react';
 import { listReservations, createReservation, updateReservation, changeStatus, deleteReservation } from '../services/reservationsService';
 import api from '../services/api';
@@ -16,6 +16,7 @@ import Modal from '../components/ui/Modal';
 import Badge from '../components/ui/Badge';
 import ReservationCard from '../components/reservations/ReservationCard';
 import ReservationForm from '../components/reservations/ReservationForm';
+import ReservationDetailModal from '../components/reservations/ReservationDetailModal';
 import AssignCompositeModal from '../components/assignments/AssignCompositeModal';
 import LoadingSpinner from '../components/shared/LoadingSpinner';
 
@@ -58,7 +59,7 @@ function SourceBadge({ source }) {
   );
 }
 
-function ActivityTable({ reservations, units, guides, onEdit, onUpdate, onReschedule, onNoShow, onVoucher, voucherLoading }) {
+function ActivityTable({ reservations, units, guides, onEdit, onUpdate, onReschedule, onNoShow, onVoucher, voucherLoading, onView }) {
   const t = useT();
   const [actionLoading, setActionLoading] = useState(null);
   const [assignRes, setAssignRes] = useState(null);
@@ -148,6 +149,7 @@ function ActivityTable({ reservations, units, guides, onEdit, onUpdate, onResche
                     <Users size={13} strokeWidth={1.75} />
                   </button>
                 )}
+                <Button variant="ghost" size="sm" icon={Eye} onClick={() => onView(r)} aria-label={t('reservations.view')} />
                 <Button variant="ghost" size="sm" icon={Pencil} onClick={() => onEdit(r)} aria-label="Editar" />
               </div>
             </div>
@@ -243,6 +245,7 @@ function ActivityTable({ reservations, units, guides, onEdit, onUpdate, onResche
                           <Users size={13} strokeWidth={1.75} />
                         </button>
                       )}
+                      <Button variant="ghost" size="sm" icon={Eye} onClick={() => onView(r)} aria-label={t('reservations.view')} />
                       <Button variant="ghost" size="sm" icon={Pencil} onClick={() => onEdit(r)} aria-label="Editar" />
                     </div>
                   </td>
@@ -739,7 +742,7 @@ function DevolucaoModal({ reservation, units, open, onClose, onDone }) {
   );
 }
 
-function RentacarTable({ reservations, units, onEdit, onLevantamento, onDevolucao, onUpdate }) {
+function RentacarTable({ reservations, units, onEdit, onLevantamento, onDevolucao, onUpdate, onView }) {
   const t = useT();
   const [actionLoading, setActionLoading] = useState(null);
 
@@ -835,6 +838,7 @@ function RentacarTable({ reservations, units, onEdit, onLevantamento, onDevoluca
                           Devolucao
                         </button>
                       )}
+                      <Button variant="ghost" size="sm" icon={Eye} onClick={() => onView(r)} aria-label={t('reservations.view')} />
                       <Button variant="ghost" size="sm" icon={Pencil} onClick={() => onEdit(r)} aria-label="Editar" />
                     </div>
                   </td>
@@ -953,7 +957,7 @@ function RestaurantCreateModal({ reservation, units, open, onClose, onDone }) {
   );
 }
 
-function RestaurantTable({ reservations, units, onEdit, onDetails, onUpdate }) {
+function RestaurantTable({ reservations, units, onEdit, onDetails, onUpdate, onView }) {
   const t = useT();
   const [actionLoading, setActionLoading] = useState(null);
 
@@ -1050,6 +1054,7 @@ function RestaurantTable({ reservations, units, onEdit, onDetails, onUpdate }) {
                         className="p-1.5 rounded text-n-400 hover:text-ocean-700 hover:bg-ocean-50 transition-colors">
                         <Utensils size={13} strokeWidth={1.75} />
                       </button>
+                      <Button variant="ghost" size="sm" icon={Eye} onClick={() => onView(r)} aria-label={t('reservations.view')} />
                       <Button variant="ghost" size="sm" icon={Pencil} onClick={() => onEdit(r)} aria-label="Editar" />
                     </div>
                   </td>
@@ -1085,6 +1090,7 @@ export default function Reservations() {
   const [levantamentoRes, setLevantamentoRes] = useState(null);
   const [devolucaoRes,    setDevolucaoRes]    = useState(null);
   const [detailsRes,      setDetailsRes]      = useState(null);
+  const [viewResId,       setViewResId]       = useState(null);
   const [turnoFilter,     setTurnoFilter]     = useState('');
 
   const [statusFilter, setStatusFilter] = useState('');
@@ -1304,6 +1310,7 @@ export default function Reservations() {
           onNoShow={setNoShowRes}
           onVoucher={handleSendVoucher}
           voucherLoading={voucherLoading}
+          onView={r => setViewResId(r.id)}
         />
       ) : isRentacar ? (
         <RentacarTable
@@ -1313,6 +1320,7 @@ export default function Reservations() {
           onLevantamento={setLevantamentoRes}
           onDevolucao={setDevolucaoRes}
           onUpdate={u => handleUpdate(u)}
+          onView={r => setViewResId(r.id)}
         />
       ) : isRestaurant ? (
         <RestaurantTable
@@ -1321,6 +1329,7 @@ export default function Reservations() {
           onEdit={r => { setFormError(''); setModal(r); }}
           onDetails={setDetailsRes}
           onUpdate={u => handleUpdate(u)}
+          onView={r => setViewResId(r.id)}
         />
       ) : filtered.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 text-n-400">
@@ -1334,6 +1343,7 @@ export default function Reservations() {
               reservation={r}
               onUpdate={handleUpdate}
               onEdit={res => { setFormError(''); setModal(res); }}
+              onView={res => setViewResId(res.id)}
             />
           ))}
         </div>
@@ -1421,6 +1431,12 @@ export default function Reservations() {
         open={!!detailsRes}
         onClose={() => setDetailsRes(null)}
         onDone={() => setDetailsRes(null)}
+      />
+
+      <ReservationDetailModal
+        reservationId={viewResId}
+        open={!!viewResId}
+        onClose={() => setViewResId(null)}
       />
     </div>
   );

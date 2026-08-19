@@ -153,7 +153,13 @@
     "notes": "Notas",
     "internalNotes": "Notas internas",
     "guestNotes": "Notas do hospede",
-    "confirmDelete": "Tem a certeza que quer eliminar esta reserva?"
+    "confirmDelete": "Tem a certeza que quer eliminar esta reserva?",
+    "view": "Ver",
+    "details": "Detalhes da reserva",
+    "paymentStatus": "Estado do pagamento",
+    "paymentMethod": "Metodo de pagamento",
+    "vehicle": "Viatura",
+    "createdAt": "Criada em"
   },
   "units": {
     "title": "Unidades",

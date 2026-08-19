@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { CalendarDays, User, ArrowRight, Pencil, Trash2, ChevronDown, Car } from 'lucide-react';
+import { CalendarDays, User, ArrowRight, Pencil, Trash2, ChevronDown, Car, Eye } from 'lucide-react';
 import { changeStatus, deleteReservation } from '../../services/reservationsService';
 import { useT } from '../../i18n';
 import Badge from '../ui/Badge';
@@ -24,7 +24,7 @@ function formatDate(d) {
   return `${day}/${m}/${y}`;
 }
 
-export default function ReservationCard({ reservation: r, onUpdate, onEdit }) {
+export default function ReservationCard({ reservation: r, onUpdate, onEdit, onView }) {
   const t = useT();
   const [loading, setLoading] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -112,6 +112,7 @@ export default function ReservationCard({ reservation: r, onUpdate, onEdit }) {
               {STATUS_LABEL_NEXT[r.status]}
             </Button>
           )}
+          <Button variant="ghost" size="sm" icon={Eye} onClick={() => onView(r)} aria-label={t('reservations.view')} />
           <Button variant="ghost" size="sm" icon={Pencil} onClick={() => onEdit(r)} aria-label="Editar" />
           {r.status === 'pending' || r.status === 'cancelled' ? (
             <Button

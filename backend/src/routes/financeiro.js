@@ -1,6 +1,9 @@
 const express = require('express');
 const router = express.Router();
-const { resumo, receita, unidades, topClientes, canais, exportExcel, exportPdf, forecast } = require('../controllers/financeiroController');
+const {
+  resumo, receita, unidades, topClientes, canais, exportExcel, exportPdf, forecast,
+  listarReceitasManuais, criarReceitaManual, actualizarReceitaManual, eliminarReceitaManual,
+} = require('../controllers/financeiroController');
 const authMiddleware = require('../middleware/auth');
 const requireOperator = require('../middleware/requireOperator');
 const requirePlanActive = require('../middleware/requirePlanActive');
@@ -17,5 +20,10 @@ router.get('/canais',   canais);
 router.get('/export',      exportExcel);
 router.get('/export-pdf',  exportPdf);
 router.get('/forecast',    forecast);
+
+router.get('/receitas-manuais',      listarReceitasManuais);
+router.post('/receitas-manuais',     criarReceitaManual);
+router.put('/receitas-manuais/:id',  actualizarReceitaManual);
+router.delete('/receitas-manuais/:id', eliminarReceitaManual);
 
 module.exports = router;

@@ -70,3 +70,22 @@ export async function getStats() {
   const { data } = await api.get('/financial/stats');
   return data.data;
 }
+
+export async function getReceitasManuais() {
+  const { data } = await api.get('/financial/receitas-manuais');
+  return data.data;
+}
+
+export async function createReceitaManual(dados) {
+  const { data } = await api.post('/financial/receitas-manuais', dados);
+  return data.data;
+}
+
+export async function updateReceitaManual(id, dados) {
+  const { data } = await api.put(`/financial/receitas-manuais/${id}`, dados);
+  return data.data;
+}
+
+export async function deleteReceitaManual(id) {
+  await api.delete(`/financial/receitas-manuais/${id}`);
+}

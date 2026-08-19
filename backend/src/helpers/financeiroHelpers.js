@@ -17,6 +17,19 @@ function calcularPeriodoAnterior(inicio, fim) {
   };
 }
 
+function bucketKey(dateStr, granularidade) {
+  const d = new Date(dateStr + 'T00:00:00Z');
+  if (granularidade === 'month') {
+    return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}`;
+  }
+  if (granularidade === 'week') {
+    const dow = d.getUTCDay() || 7;
+    const seg = new Date(d); seg.setUTCDate(d.getUTCDate() - dow + 1);
+    return seg.toISOString().split('T')[0];
+  }
+  return dateStr;
+}
+
 function calcularMetricas(reservas, numUnidades, inicio, fim) {
   const naoCanceladas = reservas.filter((r) => r.status !== 'cancelled');
   const checkout = reservas.filter(
@@ -55,4 +68,4 @@ function calcularMetricas(reservas, numUnidades, inicio, fim) {
   };
 }
 
-module.exports = { percentChange, calcularPeriodoAnterior, calcularMetricas };
+module.exports = { percentChange, calcularPeriodoAnterior, calcularMetricas, bucketKey };
