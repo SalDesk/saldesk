@@ -409,7 +409,7 @@ export default function Calendar() {
                   <p className="font-display font-semibold text-sm">{res.customer_name}</p>
                   <p className="text-xs opacity-80 mt-0.5">
                     {STATUS_LABELS[res.status]} · {res.guests || 1} pax
-                    {res.total_amount ? ` · €${Number(res.total_amount).toLocaleString('pt-PT')}` : ''}
+                    {res.total_price ? ` · €${Number(res.total_price).toLocaleString('pt-PT')}` : ''}
                     {(() => {
                       const slots = getSlotsForCell(unit, dayStr);
                       return slots ? ` · ${slots.available} vagas restantes` : '';
@@ -597,11 +597,11 @@ export default function Calendar() {
                 <p className="text-xs text-n-400 mb-0.5">Hospedes</p>
                 <p className="font-semibold text-n-800">{selectedEvent.guests || 1}</p>
               </div>
-              {selectedEvent.total_amount && (
+              {selectedEvent.total_price && (
                 <div className="bg-n-50 rounded-sm p-3 col-span-2">
                   <p className="text-xs text-n-400 mb-0.5">Total</p>
                   <p className="font-semibold text-n-800">
-                    €{Number(selectedEvent.total_amount).toLocaleString('pt-PT')}
+                    €{Number(selectedEvent.total_price).toLocaleString('pt-PT')}
                     {selectedEvent.payment_status === 'paid' && (
                       <span className="ml-2 text-xs font-normal text-[var(--success)]">Pago</span>
                     )}

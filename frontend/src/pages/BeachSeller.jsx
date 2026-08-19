@@ -499,7 +499,7 @@ export default function BeachSeller() {
                       </div>
                       <div className="text-right shrink-0">
                         <p className="font-display font-bold text-lg text-turquoise-700">{fmtMoney(c.amount)}</p>
-                        <p className="text-[10px] font-body text-n-400">{c.percentage}% de {fmtMoney(c.total_amount)}</p>
+                        <p className="text-[10px] font-body text-n-400">{c.percentage}% de {fmtMoney(c.reservations?.total_price)}</p>
                       </div>
                     </div>
                     <div className="flex items-center justify-between mt-2 pt-2 border-t border-n-100">

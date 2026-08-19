@@ -298,22 +298,26 @@ async function sispCallback(req, res, next) {
 
 async function registerManualPayment(req, res, next) {
   try {
-    const { reservation_id, amount, method, notes } = req.body;
+    const { reservation_id, amount, method } = req.body;
     if (!reservation_id || !amount || !method) {
       return res.status(400).json({ error: 'reservation_id, amount e method obrigatorios', code: 'MISSING_FIELDS' });
     }
-    const { data: reserva } = await supabaseAdmin.from('reservations').select('total_amount, amount_paid').eq('id', reservation_id).eq('operator_id', req.operator.id).single();
+    /* reservations nao tem "total_amount"/"notes_internal" -- as colunas
+       reais sao "total_price" e "notes". Este select/update falhava sempre
+       (coluna inexistente), fazendo o registo de pagamento manual devolver
+       um falso 404 antes mesmo de tentar gravar. */
+    const { data: reserva } = await supabaseAdmin.from('reservations').select('total_price, amount_paid').eq('id', reservation_id).eq('operator_id', req.operator.id).single();
     if (!reserva) return res.status(404).json({ error: 'Reserva nao encontrada', code: 'NOT_FOUND' });
 
     const newPaid = Number(reserva.amount_paid || 0) + Number(amount);
-    const isPaid  = newPaid >= Number(reserva.total_amount);
+    const isPaid  = newPaid >= Number(reserva.total_price);
 
     const { data, error } = await supabaseAdmin
       .from('reservations')
       .update({
         amount_paid: newPaid, payment_method: method,
         payment_status: isPaid ? 'paid' : 'partial',
-        notes_internal: notes || null, updated_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
       })
       .eq('id', reservation_id)
       .select().single();
@@ -327,7 +331,7 @@ async function getHistory(req, res, next) {
     const { from, to } = req.query;
     let q = supabaseAdmin
       .from('reservations')
-      .select('id, customer_name, total_amount, amount_paid, payment_status, payment_method, check_in, units(name)')
+      .select('id, customer_name, total_price, amount_paid, payment_status, payment_method, check_in, units(name)')
       .eq('operator_id', req.operator.id)
       .not('payment_status', 'eq', 'pending')
       .order('updated_at', { ascending: false });

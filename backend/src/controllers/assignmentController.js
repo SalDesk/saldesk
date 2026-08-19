@@ -15,7 +15,7 @@ async function listar(req, res, next) {
     const { status, staff_id, date_from, date_to } = req.query;
     let q = supabaseAdmin
       .from('job_assignments')
-      .select('*, staff(name, role, photo_url), reservations(check_in, check_out, customer_name, total_amount, units(name, unit_type))')
+      .select('*, staff(name, role, photo_url), reservations(check_in, check_out, customer_name, total_price, units(name, unit_type))')
       .eq('operator_id', req.operator.id)
       .order('created_at', { ascending: false });
     if (status)    q = q.eq('status', status);

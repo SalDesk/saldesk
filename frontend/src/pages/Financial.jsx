@@ -232,7 +232,7 @@ function TransacoesTable({ transacoes, currency, loading }) {
                 <td className="py-2.5 px-3 font-body text-n-700 max-w-[140px] truncate">{t.units?.name || '—'}</td>
                 <td className="py-2.5 px-3"><span className="text-xs font-mono text-n-500">{SRC_LABEL[t.source] || t.source || '—'}</span></td>
                 <td className="py-2.5 px-3"><span className="text-xs font-body text-n-600">{PM_LABEL[t.payment_method] || t.payment_method || '—'}</span></td>
-                <td className="py-2.5 px-3 font-display font-bold text-ocean-700 whitespace-nowrap">{fmtMoney(t.total_amount, currency)}</td>
+                <td className="py-2.5 px-3 font-display font-bold text-ocean-700 whitespace-nowrap">{fmtMoney(t.total_price, currency)}</td>
                 <td className="py-2.5 px-3"><span className={`text-xs font-mono px-1.5 py-0.5 rounded ${PS_COLOR[t.payment_status] || 'text-n-500 bg-n-100'}`}>{PS_LABEL[t.payment_status] || t.payment_status || '—'}</span></td>
               </tr>
             ))}</tbody>
@@ -367,9 +367,9 @@ function PrevisaoTab({ forecast, currency, loading }) {
 
 function CaixaTab({ transacoes, currency, loading }) {
   const cash     = (transacoes || []).filter(t => t.payment_method === 'cash');
-  const totalRec = cash.reduce((s, t) => s + Number(t.total_amount || 0), 0);
-  const pago     = cash.filter(t => t.payment_status === 'paid').reduce((s, t) => s + Number(t.total_amount || 0), 0);
-  const pendente = cash.filter(t => t.payment_status === 'pending').reduce((s, t) => s + Number(t.total_amount || 0), 0);
+  const totalRec = cash.reduce((s, t) => s + Number(t.total_price || 0), 0);
+  const pago     = cash.filter(t => t.payment_status === 'paid').reduce((s, t) => s + Number(t.total_price || 0), 0);
+  const pendente = cash.filter(t => t.payment_status === 'pending').reduce((s, t) => s + Number(t.total_price || 0), 0);
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-3 gap-4">
@@ -387,7 +387,7 @@ function CaixaTab({ transacoes, currency, loading }) {
                <td className="py-2.5 px-3 text-xs font-mono text-n-500 whitespace-nowrap">{fmtDate(t.check_in)}</td>
                <td className="py-2.5 px-3 font-body text-n-800 whitespace-nowrap">{t.customers?.first_name} {t.customers?.last_name}</td>
                <td className="py-2.5 px-3 font-body text-n-700 max-w-[160px] truncate">{t.units?.name || '—'}</td>
-               <td className="py-2.5 px-3 font-display font-bold text-ocean-700 whitespace-nowrap">{fmtMoney(t.total_amount, currency)}</td>
+               <td className="py-2.5 px-3 font-display font-bold text-ocean-700 whitespace-nowrap">{fmtMoney(t.total_price, currency)}</td>
                <td className="py-2.5 px-3"><span className={`text-xs font-mono px-1.5 py-0.5 rounded ${PS_COLOR[t.payment_status] || 'text-n-500 bg-n-100'}`}>{PS_LABEL[t.payment_status] || t.payment_status || '—'}</span></td>
              </tr>
            ))}</tbody>

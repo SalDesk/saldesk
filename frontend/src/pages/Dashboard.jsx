@@ -577,7 +577,7 @@ function VehicleDetailCard({ unit, state, reservation, onClose, onNavigate }) {
               Levantamento: {reservation.check_in} · Devolucao: {reservation.check_out}
             </p>
             <p className="text-xs font-body text-n-500">
-              €{Number(reservation.total_amount || 0).toFixed(0)}
+              €{Number(reservation.total_price || 0).toFixed(0)}
             </p>
           </div>
         ) : (

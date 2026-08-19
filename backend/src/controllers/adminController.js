@@ -1971,7 +1971,11 @@ async function sendAnalyticsReport(req, res, next) {
 
     const [opsRes, resRes, cusRes, priceMap] = await Promise.all([
       supabaseAdmin.from('operators').select('id, plan, plan_status, created_at'),
-      supabaseAdmin.from('reservations').select('id, status, total_amount, created_at'),
+      /* reservations nao tem "total_amount" -- a coluna real e "total_price"
+         (mesmo enredo do bug ja corrigido em getAnalyticsGeography: coluna
+         inexistente fazia a query PostgREST falhar por inteiro, e so `data`
+         era lido, nunca `error` -- a receita no relatorio saia sempre a €0). */
+      supabaseAdmin.from('reservations').select('id, status, total_price, created_at'),
       supabaseAdmin.from('customers').select('id', { count: 'exact' }),
       loadPriceMap(),
     ]);
@@ -1983,7 +1987,7 @@ async function sendAnalyticsReport(req, res, next) {
     const mrr     = ops.filter(o => o.plan_status === 'active').reduce((s, o) => s + (priceMap[o.plan] || 0), 0);
     const revenue = reservas
       .filter(r => r.status === 'checked_out' && r.created_at?.slice(0, 7) === thisMonth)
-      .reduce((s, r) => s + Number(r.total_amount || 0), 0);
+      .reduce((s, r) => s + Number(r.total_price || 0), 0);
 
     const body = `Relatorio Mensal SalDesk — ${monthName} ${year}
 
