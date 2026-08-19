@@ -1924,13 +1924,18 @@ async function getAnalyticsChurn(req, res, next) {
 
 async function getAnalyticsGeography(req, res, next) {
   try {
+    /* customers nao tem coluna "nationality" -- so country_code existe.
+       O select anterior pedia as duas, o que fazia a query PostgREST
+       falhar por inteiro (coluna inexistente), e o codigo so verificava
+       `data`, nunca `error` -- caia sempre silenciosamente no fallback
+       de dados simulados abaixo, mesmo havendo clientes reais. */
     const { data: customers } = await supabaseAdmin
       .from('customers')
-      .select('nationality, country_code');
+      .select('country_code');
 
     const counts = {};
     (customers || []).forEach(c => {
-      const key = (c.country_code || c.nationality || '').trim().toUpperCase();
+      const key = (c.country_code || '').trim().toUpperCase();
       if (key) counts[key] = (counts[key] || 0) + 1;
     });
 
