@@ -219,7 +219,14 @@ async function createReservation(req, res, next) {
       return erro(res, 'NO_AVAILABILITY', 'This activity is sold out for the requested date.');
     }
 
-    const { total } = calcularPreco(unit, dateFrom, dateTo);
+    /* calcularPreco devolve o preco de UM dia para a unidade (nao multiplica
+       por pessoas) -- mesma convencao ja usada em publicController.criarReserva
+       e reservationsController.criar (nao ha ainda preco diferenciado por
+       categoria de bilhete em lado nenhum do motor de precos, so um
+       base_price por unidade, por isso ADULT e CHILD contam da mesma forma
+       aqui, tal como no resto da app). */
+    const { total: precoDia } = calcularPreco(unit, dateFrom, dateTo);
+    const total = Math.round(precoDia * totalParticipantes * 100) / 100;
     const expiresAt = new Date(Date.now() + HOLD_MINUTES * 60 * 1000).toISOString();
 
     const { data: hold, error } = await supabaseAdmin
