@@ -74,7 +74,16 @@ async function verificarDisponibilidadePublica(req, res, next) {
 
     const co = effectiveCheckOut || effectiveCheckIn;
     const disponivel = await verificarDisponibilidade(supabaseAdmin, unitId, effectiveCheckIn, co);
-    const { total, dias } = calcularPreco(unit, effectiveCheckIn, co);
+
+    /* Mesma convencao das restantes correcoes ao motor de precos: calcularPreco
+       e por noite/dia (hotel, rent-a-car), reservas de um so dia (tours/
+       actividades) ficariam sempre a 0. Isto e so uma pre-visualizacao sem
+       numero de pessoas ainda escolhido (nenhum caller envia guests aqui),
+       por isso mostra o preco base de 1 unidade -- consistente com o "A
+       partir de €X" ja usado no resto do catalogo publico. */
+    const { total, dias } = effectiveCheckIn === co
+      ? { total: Math.round(Number(unit.base_price || 0) * 100) / 100, dias: 1 }
+      : calcularPreco(unit, effectiveCheckIn, co);
 
     return res.json({
       data: { disponivel, total_price: total, dias: dias || 1 },
