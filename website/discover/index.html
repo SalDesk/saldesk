@@ -97,6 +97,7 @@
     .direct-pill svg{flex-shrink:0}
 
     .avail-badge{position:absolute;bottom:10px;right:10px;background:rgba(255,255,255,.96);color:var(--ok);font-family:var(--fm);font-size:.6875rem;font-weight:600;padding:4px 9px;border-radius:6px;display:flex;align-items:center;gap:4px;z-index:2}
+    .verified-badge{position:absolute;top:10px;left:10px;background:var(--teal7);color:#fff;font-family:var(--fm);font-size:.6875rem;font-weight:600;padding:4px 9px;border-radius:6px;display:flex;align-items:center;gap:5px;z-index:2}
 
     .wish-btn{position:absolute;top:10px;right:10px;width:34px;height:34px;background:rgba(255,255,255,.92);border:none;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;z-index:2}
     .wish-btn:hover{background:#fff}
@@ -600,11 +601,13 @@ function fmtPrice(price, opCur) {
 function getWishlist()    { return JSON.parse(localStorage.getItem('sd-wish') || '[]'); }
 function saveWishlist(w)  { localStorage.setItem('sd-wish', JSON.stringify(w)); }
 
-/* Com sessao de viajante activa a wishlist passa a ser ao nivel da UNIDADE
-   (wishedUnitIds, espelha a conta real em traveler_wishlist); anonimo
-   continua exactamente igual, ao nivel do OPERADOR em localStorage. */
+/* Wishlist e sempre ao nivel da UNIDADE (tour/servico especifico), com ou
+   sem sessao de viajante activa -- com sessao usa wishedUnitIds (espelha a
+   conta real em traveler_wishlist), anonimo usa o mesmo unit_id em
+   localStorage. Guardar por operator_slug (como acontecia antes) fazia
+   todos os tours do mesmo operador aparecerem "guardados" ao gravar so um. */
 function isWished(item) {
-  return travelerSession ? wishedUnitIds.has(item.unit_id) : getWishlist().includes(item.operator_slug);
+  return travelerSession ? wishedUnitIds.has(item.unit_id) : getWishlist().includes(item.unit_id);
 }
 
 async function travelerApiFetch(path, opts = {}) {
@@ -638,14 +641,14 @@ async function toggleWishlist(slug, unitId) {
     return;
   }
 
-  // --- caminho anonimo, por operador, em localStorage -- inalterado ---
+  // --- caminho anonimo, por unidade, em localStorage ---
   const w = getWishlist();
-  const i = w.indexOf(slug);
-  if (i >= 0) w.splice(i, 1); else w.push(slug);
+  const i = w.indexOf(unitId);
+  if (i >= 0) w.splice(i, 1); else w.push(unitId);
   saveWishlist(w);
   updateWishCount();
-  document.querySelectorAll(`[data-wish="${slug}"]`).forEach(btn => {
-    btn.classList.toggle('active', w.includes(slug));
+  document.querySelectorAll(`[data-wish-unit="${unitId}"]`).forEach(btn => {
+    btn.classList.toggle('active', w.includes(unitId));
     btn.classList.add('pop');
     btn.addEventListener('animationend', () => btn.classList.remove('pop'), { once: true });
   });
@@ -701,33 +704,24 @@ function renderWishlistModal() {
     return;
   }
 
-  // --- caminho anonimo, por operador -- inalterado ---
+  // --- caminho anonimo, por unidade, em localStorage ---
   const w = getWishlist();
   if (mc) mc.textContent = `(${w.length})`;
 
   if (!w.length) { wl.innerHTML = emptyWishlistHtml(); if (L() === 'en') fixLang(wl); return; }
 
-  /* A wishlist guarda o OPERADOR (nao o servico) -- deduplicar por
-     operator_slug para nao repetir o mesmo operador no modal. */
-  const seen = new Set();
-  const wishOps = [];
-  for (const item of operators) {
-    if (w.includes(item.operator_slug) && !seen.has(item.operator_slug)) {
-      seen.add(item.operator_slug);
-      wishOps.push(item);
-    }
-  }
-  wl.innerHTML = wishOps.map(item => `
+  const wishItems = operators.filter(item => w.includes(item.unit_id));
+  wl.innerHTML = wishItems.map(item => `
     <div class="wish-item">
       <div style="width:56px;height:56px;border-radius:8px;overflow:hidden;flex-shrink:0">${imgBlock(item)}</div>
       <div class="wish-item-info">
-        <div class="wish-item-name">${esc(item.operator_name)}</div>
-        <div class="wish-item-type">${tLabel(item.operator_type)}</div>
+        <div class="wish-item-name">${esc(item.unit_name)}</div>
+        <div class="wish-item-type">${esc(item.operator_name)}</div>
       </div>
-      <a href="${APP}/book/${esc(item.operator_slug)}" class="btn btn-primary btn-sm">
+      <a href="${APP}/book/${esc(item.operator_slug)}/servico/${esc(item.unit_id)}" class="btn btn-primary btn-sm">
         <span class="pt">Reservar</span><span class="en">Book</span>
       </a>
-      <button class="wish-remove" onclick="toggleWishlist('${esc(item.operator_slug)}');renderWishlistModal()" aria-label="Remover">
+      <button class="wish-remove" onclick="toggleWishlist('${esc(item.operator_slug)}','${esc(item.unit_id)}');renderWishlistModal()" aria-label="Remover">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
       </button>
     </div>`).join('');
@@ -758,32 +752,42 @@ function skCards(n, h = '200px') {
 }
 
 /* ══════════════════════════════════════════
-   RENDER — FEATURED CARD
+   RENDER — OPERATOR CARD (secção "Em destaque")
+   Distinto do card de tour/actividade -- "Em destaque" promete operadores
+   verificados manualmente, nao servicos especificos, por isso mostra a
+   imagem/identidade do OPERADOR e liga para a pagina publica dele (nao
+   para um servico), com badge "Verificado" em vez do coracao de wishlist
+   (a wishlist e sempre ao nivel do servico, um operador nao se guarda).
 ══════════════════════════════════════════ */
-function renderFeatCard(item) {
-  const name = esc(item.unit_name);
-  const loc  = esc(item.address || 'Ilha do Sal');
-  const wished = isWished(item);
-  const priceHtml = `<span class="pt">A partir de </span><span class="en">From </span><strong>${fmtPrice(item.base_price, item.currency)}</strong>`;
+function opImgBlock(op) {
+  const img = (op.cover_images && op.cover_images[0]) || op.logo_url;
+  if (img) {
+    return `<img src="${esc(img)}" alt="${esc(op.business_name || op.name)}" loading="lazy" />`;
+  }
+  const icon = TYPE_ICON[op.operator_type] || TYPE_ICON.activity;
+  return `<div class="img-mono"><svg width="46" height="46" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">${icon}</svg></div>`;
+}
+
+function renderOperatorCard(op) {
+  const name    = esc(op.business_name || op.name);
+  const loc     = esc(op.address || 'Ilha do Sal');
+  const tagline = esc(op.tagline || truncate(op.description || '', 90));
+  const priceHtml = `<span class="pt">A partir de </span><span class="en">From </span><strong>${fmtPrice(op.base_price, op.currency)}</strong>`;
 
   return `
     <div class="feat-card card fade-up">
       <div class="feat-img img-block">
-        ${imgBlock(item)}
-        <button class="wish-btn ${wished?'active':''}" data-wish="${esc(item.operator_slug)}" data-wish-unit="${esc(item.unit_id)}" onclick="toggleWishlist('${esc(item.operator_slug)}','${esc(item.unit_id)}')" aria-label="Wishlist">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="${wished?'#e00':'none'}" stroke="${wished?'#e00':'currentColor'}" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
-        </button>
-        ${availabilityLabel(item)}
+        ${opImgBlock(op)}
+        <span class="verified-badge"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6 9 17l-5-5"/></svg><span class="pt">Verificado</span><span class="en">Verified</span></span>
       </div>
       <div class="feat-body">
-        ${coordEyebrow(item)}
-        <div class="feat-meta-label">${esc(item.operator_name)} · ${loc}</div>
+        <div class="feat-meta-label">${tLabel(op.operator_type)} · ${loc}</div>
         <div class="feat-name">${name}</div>
-        <div class="feat-rating">${ratingLine(item)}</div>
-        <span class="tb">${categoryLabel(item)}</span>
+        <div class="feat-rating">${ratingLine(op)}</div>
+        ${tagline ? `<p class="act-desc">${tagline}</p>` : ''}
         <div class="feat-price">${priceHtml}</div>
-        <a href="${APP}/book/${esc(item.operator_slug)}/servico/${esc(item.unit_id)}" class="btn btn-primary" style="width:100%;justify-content:center">
-          <span class="pt">Reservar</span><span class="en">Book now</span>
+        <a href="${APP}/book/${esc(op.slug)}" class="btn btn-primary" style="width:100%;justify-content:center">
+          <span class="pt">Ver operador</span><span class="en">View operator</span>
         </a>
       </div>
     </div>`;
@@ -1027,10 +1031,13 @@ async function loadFeatured() {
   const grid = document.getElementById('featured-grid');
   grid.innerHTML = skCards(3, '220px');
 
-  const data = await apiFetch('/discover-units?limit=3');
-  const ops  = data?.length ? data : operators.slice(0, 3);
+  /* "Em destaque" mostra OPERADORES (nao servicos individuais) -- usa
+     /discover, nao /discover-units. Sem entradas activas em cms_featured
+     o endpoint devolve os operadores reservaveis mais recentes como
+     fallback honesto (nunca inventa uma curadoria que nao existe). */
+  const ops = await apiFetch('/discover?featured=true&limit=3');
 
-  if (!ops.length) {
+  if (!ops?.length) {
     document.getElementById('featured-section').style.display = 'none';
     return;
   }
@@ -1042,7 +1049,7 @@ async function loadFeatured() {
 function renderFeatured() {
   if (!featuredItems.length) return;
   const grid = document.getElementById('featured-grid');
-  grid.innerHTML = featuredItems.map(renderFeatCard).join('');
+  grid.innerHTML = featuredItems.map(renderOperatorCard).join('');
   observeFadeUp(grid);
   if (L() === 'en') fixLang(grid);
 }
@@ -1073,20 +1080,15 @@ function applyTravelerSession(session) {
   if (en) en.textContent = first;
 }
 
-/* Fusao unica da wishlist anonima para dentro da conta -- cada slug de
-   operador ainda guardado resolve para todas as unidades publicadas desse
-   operador no catalogo ja carregado em memoria (a wishlist anonima so
-   sabia o operador, nunca uma unidade especifica). So limpa sd-wish se
-   tudo tiver sido gravado com sucesso; addWishlist e idempotente, por isso
-   tentar de novo na proxima visita e sempre seguro. */
+/* Fusao unica da wishlist anonima para dentro da conta -- sd-wish ja guarda
+   unit_ids directamente, por isso e so gravar cada um na conta. So limpa
+   sd-wish se tudo tiver sido gravado com sucesso; addWishlist e idempotente,
+   por isso tentar de novo na proxima visita e sempre seguro. */
 async function mergeAnonymousWishlist() {
-  const anonSlugs = getWishlist();
-  if (anonSlugs.length) {
-    const toMerge = [];
-    anonSlugs.forEach(slug => operators.filter(o => o.operator_slug === slug).forEach(o => toMerge.push(o.unit_id)));
-
+  const anonUnitIds = getWishlist();
+  if (anonUnitIds.length) {
     let allOk = true;
-    for (const unitId of toMerge) {
+    for (const unitId of anonUnitIds) {
       try {
         const r = await travelerApiFetch('/wishlist', { method: 'POST', body: JSON.stringify({ unit_id: unitId }) });
         if (!r.ok) allOk = false;

@@ -302,9 +302,10 @@ async function discover(req, res, next) {
         q = q.in('id', featuredLinks.map((f) => f.operator_id));
       }
     }
-    if (limit) {
-      q = q.limit(Math.min(parseInt(limit) || 9, 50));
-    }
+    /* limit aplicado no fim, depois do filtro de "tem servicos reservaveis"
+       -- aplicado aqui na query directamente cortava a lista ANTES desse
+       filtro (por ordem alfabetica), podendo devolver menos operadores
+       (ou nenhum) do que os que realmente sao reservaveis. */
 
     const { data: operators, error } = await q;
     if (error) throw error;
@@ -373,7 +374,8 @@ async function discover(req, res, next) {
       };
     });
 
-    return res.json({ data: enriched, message: 'Operadores listados' });
+    const limited = limit ? enriched.slice(0, Math.min(parseInt(limit) || 9, 50)) : enriched;
+    return res.json({ data: limited, message: 'Operadores listados' });
   } catch (err) {
     next(err);
   }
