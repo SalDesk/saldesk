@@ -1,7 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const {
-  getProfile, updateProfile, getBookings, getWishlist, addWishlist, removeWishlist, submitReview, getRecommendations,
+  getProfile, updateProfile, getBookings, getWishlist, addWishlist, removeWishlist, submitReview,
+  getRecommendations, getNotifications, markNotificationRead,
 } = require('../controllers/travelerController');
 const authMiddleware = require('../middleware/auth');
 const requireTraveler = require('../middleware/requireTraveler');
@@ -18,5 +19,7 @@ router.get('/wishlist',            getWishlist);
 router.post('/wishlist',           validate(schemas.wishlistAdd), addWishlist);
 router.delete('/wishlist/:unitId', removeWishlist);
 router.get('/recommendations',     getRecommendations);
+router.get('/notifications',              getNotifications);
+router.put('/notifications/:id/read',     markNotificationRead);
 
 module.exports = router;

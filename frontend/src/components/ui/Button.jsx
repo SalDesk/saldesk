@@ -2,8 +2,8 @@ import { Loader2 } from 'lucide-react';
 
 const variants = {
   primary:   'bg-ocean-700 hover:bg-ocean-500 text-white border border-transparent',
-  secondary: 'bg-white hover:bg-n-50 text-n-700 border border-n-300',
-  ghost:     'bg-transparent hover:bg-ocean-50 text-ocean-700 border border-transparent',
+  secondary: 'bg-white hover:bg-n-50 text-n-700 border border-n-300 dark:bg-n-800 dark:hover:bg-n-700 dark:text-n-200 dark:border-n-600',
+  ghost:     'bg-transparent hover:bg-ocean-50 text-ocean-700 border border-transparent dark:text-ocean-300 dark:hover:bg-n-800',
   danger:    'bg-error hover:bg-red-700 text-white border border-transparent',
 };
 

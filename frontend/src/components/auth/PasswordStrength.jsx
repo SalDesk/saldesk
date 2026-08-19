@@ -16,9 +16,9 @@ export function getPasswordStrength(password) {
 }
 
 const STRENGTH_CFG = [
-  { label: 'Fraca',  color: '#B91C1C', barCls: 'bg-error',      width: '33%'  },
-  { label: 'Media',  color: '#D97706', barCls: 'bg-yellow-500', width: '66%'  },
-  { label: 'Forte',  color: '#1A7A4A', barCls: 'bg-[#1A7A4A]', width: '100%' },
+  { label: 'Fraca',  textCls: 'text-error dark:text-red-400',        barCls: 'bg-error',        width: '33%'  },
+  { label: 'Media',  textCls: 'text-yellow-600 dark:text-yellow-400', barCls: 'bg-yellow-500',   width: '66%'  },
+  { label: 'Forte',  textCls: 'text-[#1A7A4A] dark:text-green-400',  barCls: 'bg-[#1A7A4A]',    width: '100%' },
 ];
 
 export default function PasswordStrength({ password, showRules = true }) {
@@ -32,13 +32,13 @@ export default function PasswordStrength({ password, showRules = true }) {
       {/* Bar */}
       {cfg && (
         <div className="flex items-center gap-2">
-          <div className="flex-1 h-1.5 bg-n-100 rounded-full overflow-hidden">
+          <div className="flex-1 h-1.5 bg-n-100 dark:bg-n-700 rounded-full overflow-hidden">
             <div
               className={`h-full rounded-full transition-all duration-300 ${cfg.barCls}`}
               style={{ width: cfg.width }}
             />
           </div>
-          <span className="text-[11px] font-mono font-semibold" style={{ color: cfg.color }}>
+          <span className={`text-[11px] font-mono font-semibold ${cfg.textCls}`}>
             {cfg.label}
           </span>
         </div>
@@ -52,9 +52,9 @@ export default function PasswordStrength({ password, showRules = true }) {
             return (
               <div key={r.id} className="flex items-center gap-1.5">
                 {ok
-                  ? <Check size={11} strokeWidth={2.5} className="text-[#1A7A4A] shrink-0" />
-                  : <X    size={11} strokeWidth={2.5} className="text-n-300 shrink-0" />}
-                <span className={`text-[11px] font-body ${ok ? 'text-[#1A7A4A]' : 'text-n-400'}`}>
+                  ? <Check size={11} strokeWidth={2.5} className="text-[#1A7A4A] dark:text-green-400 shrink-0" />
+                  : <X    size={11} strokeWidth={2.5} className="text-n-300 dark:text-n-600 shrink-0" />}
+                <span className={`text-[11px] font-body ${ok ? 'text-[#1A7A4A] dark:text-green-400' : 'text-n-400'}`}>
                   {r.label}
                 </span>
               </div>

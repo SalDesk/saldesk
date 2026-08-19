@@ -1,5 +1,6 @@
 require('dotenv').config();
 const http    = require('http');
+const path    = require('path');
 const express = require('express');
 const cors    = require('cors');
 const helmet  = require('helmet');
@@ -111,6 +112,12 @@ app.use('/api/v1/occurrences',  occurrencesRoutes);
 app.use('/api/v1/expenses',     expensesRoutes);
 app.use('/api/v1/billing',      billingRoutes);
 app.use('/',                    seoRoutes);
+
+/* Em producao o Nginx serve /uploads/ directamente (alias estatico); em dev
+   nao ha Nginx a frente, por isso o proprio Node serve os ficheiros aqui. */
+if (process.env.NODE_ENV !== 'production') {
+  app.use('/uploads', express.static(path.resolve(process.env.UPLOADS_DIR || '/var/www/saldesk/uploads')));
+}
 
 app.use(errorHandler);
 

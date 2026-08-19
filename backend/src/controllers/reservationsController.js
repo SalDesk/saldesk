@@ -4,6 +4,15 @@ const { obterOuCriarCliente, actualizarStatsCheckout } = require('../helpers/cus
 const { enviarEmail } = require('../helpers/emailHelper');
 const { confirmacaoClienteEmail, notificacaoOperadorEmail } = require('../helpers/emailTemplates');
 const { dispararSyncImediato } = require('../helpers/otaSyncHelper');
+const { criarNotificacaoViajante } = require('../helpers/travelerNotificationHelper');
+const { frontendBase } = require('../utils/urls');
+
+const STATUS_NOTIFICACAO = {
+  confirmed:   (opName) => `A sua reserva com ${opName} foi confirmada.`,
+  checked_in:  (opName) => `Bom check-in! A sua estadia/actividade com ${opName} começou.`,
+  checked_out: (opName) => `A sua reserva com ${opName} terminou. Já pode deixar uma avaliação.`,
+  cancelled:   (opName) => `A sua reserva com ${opName} foi cancelada.`,
+};
 
 function getOperatorId(req) {
   return req.operator?.id || req.staff?.operator_id;
@@ -303,7 +312,7 @@ async function mudarStatus(req, res, next) {
       .update({ status, updated_at: new Date().toISOString() })
       .eq('id', req.params.id)
       .eq('operator_id', getOperatorId(req))
-      .select('*, units(name, unit_type)')
+      .select('*, units(name, unit_type), operators(name)')
       .single();
 
     if (error) throw error;
@@ -315,6 +324,14 @@ async function mudarStatus(req, res, next) {
 
     // Cancelar liberta a unidade nas datas -- disponibilidade mudou
     if (status === 'cancelled') dispararSyncImediato(getOperatorId(req));
+
+    if (STATUS_NOTIFICACAO[status]) {
+      criarNotificacaoViajante(
+        data.customer_email, status === 'confirmed' ? 'booking_confirmed' : status,
+        STATUS_NOTIFICACAO[status](data.operators?.name || 'o operador'),
+        `${frontendBase()}/viajante`,
+      ).catch(() => {});
+    }
 
     return res.json({ data, message: `Status actualizado para "${status}"` });
   } catch (err) {

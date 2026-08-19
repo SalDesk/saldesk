@@ -36,10 +36,11 @@ const schemas = {
     phone:    Joi.string().trim().optional().allow(''),
   }),
   travelerProfile: Joi.object({
-    name:     Joi.string().min(2).max(100).optional(),
-    phone:    Joi.string().trim().optional().allow(''),
-    country:  Joi.string().trim().optional().allow(''),
-    language: Joi.string().valid('pt', 'en').optional(),
+    name:       Joi.string().min(2).max(100).optional(),
+    phone:      Joi.string().trim().optional().allow(''),
+    country:    Joi.string().trim().optional().allow(''),
+    language:   Joi.string().valid('pt', 'en').optional(),
+    avatar_url: Joi.string().uri().optional().allow(''),
   }),
   wishlistAdd: Joi.object({
     unit_id: Joi.string().uuid().required(),

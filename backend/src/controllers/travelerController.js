@@ -7,12 +7,13 @@ async function getProfile(req, res) {
 
 async function updateProfile(req, res, next) {
   try {
-    const { name, phone, country, language } = req.body;
+    const { name, phone, country, language, avatar_url } = req.body;
     const updates = { updated_at: new Date().toISOString() };
     if (name !== undefined) updates.name = name;
     if (phone !== undefined) updates.phone = phone || null;
     if (country !== undefined) updates.country = country || null;
     if (language !== undefined) updates.language = language;
+    if (avatar_url !== undefined) updates.avatar_url = avatar_url || null;
 
     const { data, error } = await supabaseAdmin
       .from('travelers')
@@ -280,4 +281,79 @@ async function getRecommendations(req, res, next) {
   }
 }
 
-module.exports = { getProfile, updateProfile, getBookings, getWishlist, addWishlist, removeWishlist, submitReview, getRecommendations };
+/* Notificacoes reais (traveler_notifications) + um lembrete sintetico de
+   "reserva por avaliar", calculado em tempo real a partir do mesmo sinal
+   ja usado em getBookings (can_review) -- nunca guardado em duplicado.
+   O lembrete sintetico usa id "review-reminder" e nao e marcavel via
+   markNotificationRead (so as linhas reais da tabela sao). */
+async function getNotifications(req, res, next) {
+  try {
+    const email = req.traveler.email.trim().toLowerCase();
+
+    const [{ data: rows, error }, { data: reservas }] = await Promise.all([
+      supabaseAdmin
+        .from('traveler_notifications')
+        .select('*')
+        .eq('traveler_id', req.traveler.id)
+        .order('created_at', { ascending: false })
+        .limit(50),
+      supabaseAdmin
+        .from('reservations')
+        .select('id')
+        .ilike('customer_email', email)
+        .eq('status', 'checked_out'),
+    ]);
+    if (error) throw error;
+
+    let pendingReview = 0;
+    if (reservas?.length) {
+      const ids = reservas.map(r => r.id);
+      const { data: reviewed } = await supabaseAdmin
+        .from('reviews')
+        .select('reservation_id')
+        .in('reservation_id', ids)
+        .not('rating', 'is', null);
+      const reviewedIds = new Set((reviewed || []).map(r => r.reservation_id));
+      pendingReview = ids.filter(id => !reviewedIds.has(id)).length;
+    }
+
+    const notificacoes = [...(rows || [])];
+    if (pendingReview > 0) {
+      notificacoes.unshift({
+        id: 'review-reminder',
+        type: 'review_reminder',
+        content: `Tem ${pendingReview} reserva${pendingReview > 1 ? 's' : ''} por avaliar.`,
+        link: null,
+        is_read: false,
+        created_at: new Date().toISOString(),
+        synthetic: true,
+      });
+    }
+
+    const unread_count = notificacoes.filter(n => !n.is_read).length;
+
+    return res.json({ data: notificacoes, unread_count, message: 'Notificacoes listadas' });
+  } catch (err) {
+    next(err);
+  }
+}
+
+async function markNotificationRead(req, res, next) {
+  try {
+    const { id } = req.params;
+    const { error } = await supabaseAdmin
+      .from('traveler_notifications')
+      .update({ is_read: true })
+      .eq('id', id)
+      .eq('traveler_id', req.traveler.id);
+    if (error) throw error;
+    return res.json({ data: null, message: 'Notificacao marcada como lida' });
+  } catch (err) {
+    next(err);
+  }
+}
+
+module.exports = {
+  getProfile, updateProfile, getBookings, getWishlist, addWishlist, removeWishlist, submitReview,
+  getRecommendations, getNotifications, markNotificationRead,
+};

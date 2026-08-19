@@ -5,10 +5,10 @@ const Input = forwardRef(function Input(
   ref
 ) {
   const baseClass = [
-    'w-full h-9 px-3 rounded-sm border text-sm font-body bg-n-100 text-n-900',
+    'w-full h-9 px-3 rounded-sm border text-sm font-body bg-n-100 text-n-900 dark:bg-n-800 dark:text-n-100',
     'placeholder:text-n-400 transition-colors',
-    'focus:outline-none focus:ring-2 focus:ring-ocean-300 focus:border-ocean-700 focus:bg-white',
-    error ? 'border-error' : 'border-n-300',
+    'focus:outline-none focus:ring-2 focus:ring-ocean-300 focus:border-ocean-700 focus:bg-white dark:focus:bg-n-800',
+    error ? 'border-error' : 'border-n-300 dark:border-n-600',
     props.disabled ? 'opacity-50 cursor-not-allowed' : '',
     className,
   ].join(' ');
@@ -16,14 +16,14 @@ const Input = forwardRef(function Input(
   return (
     <div className="flex flex-col gap-1">
       {label && (
-        <label className="text-xs font-body font-bold uppercase tracking-wide text-n-600">
+        <label className="text-xs font-body font-bold uppercase tracking-wide text-n-600 dark:text-n-400">
           {label}
           {required && <span className="text-error ml-0.5">*</span>}
         </label>
       )}
       <input ref={ref} className={baseClass} {...props} />
       {error && <p className="text-xs text-error">{error}</p>}
-      {hint && !error && <p className="text-xs text-n-500">{hint}</p>}
+      {hint && !error && <p className="text-xs text-n-500 dark:text-n-400">{hint}</p>}
     </div>
   );
 });
@@ -35,10 +35,10 @@ export const Textarea = forwardRef(function Textarea(
   ref
 ) {
   const baseClass = [
-    'w-full px-3 py-2 rounded-sm border text-sm font-body bg-n-100 text-n-900 resize-none',
+    'w-full px-3 py-2 rounded-sm border text-sm font-body bg-n-100 text-n-900 dark:bg-n-800 dark:text-n-100 resize-none',
     'placeholder:text-n-400 transition-colors',
-    'focus:outline-none focus:ring-2 focus:ring-ocean-300 focus:border-ocean-700 focus:bg-white',
-    error ? 'border-error' : 'border-n-300',
+    'focus:outline-none focus:ring-2 focus:ring-ocean-300 focus:border-ocean-700 focus:bg-white dark:focus:bg-n-800',
+    error ? 'border-error' : 'border-n-300 dark:border-n-600',
     props.disabled ? 'opacity-50 cursor-not-allowed' : '',
     className,
   ].join(' ');
@@ -46,14 +46,14 @@ export const Textarea = forwardRef(function Textarea(
   return (
     <div className="flex flex-col gap-1">
       {label && (
-        <label className="text-xs font-body font-bold uppercase tracking-wide text-n-600">
+        <label className="text-xs font-body font-bold uppercase tracking-wide text-n-600 dark:text-n-400">
           {label}
           {required && <span className="text-error ml-0.5">*</span>}
         </label>
       )}
       <textarea ref={ref} rows={rows} className={baseClass} {...props} />
       {error && <p className="text-xs text-error">{error}</p>}
-      {hint && !error && <p className="text-xs text-n-500">{hint}</p>}
+      {hint && !error && <p className="text-xs text-n-500 dark:text-n-400">{hint}</p>}
     </div>
   );
 });
@@ -63,9 +63,9 @@ export const Select = forwardRef(function Select(
   ref
 ) {
   const baseClass = [
-    'w-full h-9 px-3 rounded-sm border text-sm font-body bg-n-100 text-n-900',
-    'focus:outline-none focus:ring-2 focus:ring-ocean-300 focus:border-ocean-700 focus:bg-white',
-    error ? 'border-error' : 'border-n-300',
+    'w-full h-9 px-3 rounded-sm border text-sm font-body bg-n-100 text-n-900 dark:bg-n-800 dark:text-n-100',
+    'focus:outline-none focus:ring-2 focus:ring-ocean-300 focus:border-ocean-700 focus:bg-white dark:focus:bg-n-800',
+    error ? 'border-error' : 'border-n-300 dark:border-n-600',
     props.disabled ? 'opacity-50 cursor-not-allowed' : '',
     className,
   ].join(' ');
@@ -73,7 +73,7 @@ export const Select = forwardRef(function Select(
   return (
     <div className="flex flex-col gap-1">
       {label && (
-        <label className="text-xs font-body font-bold uppercase tracking-wide text-n-600">
+        <label className="text-xs font-body font-bold uppercase tracking-wide text-n-600 dark:text-n-400">
           {label}
           {required && <span className="text-error ml-0.5">*</span>}
         </label>
@@ -82,7 +82,7 @@ export const Select = forwardRef(function Select(
         {children}
       </select>
       {error && <p className="text-xs text-error">{error}</p>}
-      {hint && !error && <p className="text-xs text-n-500">{hint}</p>}
+      {hint && !error && <p className="text-xs text-n-500 dark:text-n-400">{hint}</p>}
     </div>
   );
 });

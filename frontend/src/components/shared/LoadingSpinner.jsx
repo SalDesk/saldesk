@@ -5,7 +5,7 @@ export default function LoadingSpinner({ size = 20, className = '' }) {
     <Loader2
       size={size}
       strokeWidth={1.75}
-      className={`animate-spin text-ocean-700 ${className}`}
+      className={`animate-spin text-ocean-700 dark:text-ocean-300 ${className}`}
     />
   );
 }

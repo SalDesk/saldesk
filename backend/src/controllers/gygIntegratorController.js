@@ -48,6 +48,8 @@ const axios = require('axios');
 const { supabaseAdmin } = require('../config/supabase');
 const { verificarDisponibilidade, calcularPreco } = require('../helpers/bookingHelpers');
 const { obterOuCriarCliente } = require('../helpers/customerHelper');
+const { criarNotificacaoViajante } = require('../helpers/travelerNotificationHelper');
+const { frontendBase } = require('../utils/urls');
 
 const HOLD_MINUTES = 60;
 
@@ -359,6 +361,12 @@ async function createBooking(req, res, next) {
       .eq('id', hold.id);
 
     notifyAvailabilityChanged(hold.unit_id).catch(() => {});
+    /* So dispara se o email da reserva GYG coincidir com uma conta de
+       viajante SalDesk ja existente -- normalmente nao coincide, ja que
+       clientes da GYG reservam inteiramente dentro da plataforma deles. */
+    criarNotificacaoViajante(
+      traveller.email, 'booking_confirmed', 'A sua reserva foi confirmada.', `${frontendBase()}/viajante`,
+    ).catch(() => {});
 
     /* Nao ha sistema de bilhetes/QR real -- gera-se um codigo TEXT interno
        por participante, um por cada bookingItem.count, tal como o schema
@@ -406,6 +414,9 @@ async function cancelBooking(req, res, next) {
     }
 
     notifyAvailabilityChanged(data.unit_id).catch(() => {});
+    criarNotificacaoViajante(
+      data.customer_email, 'cancelled', 'A sua reserva foi cancelada.', `${frontendBase()}/viajante`,
+    ).catch(() => {});
 
     return res.status(200).json({ data: {} });
   } catch (err) {

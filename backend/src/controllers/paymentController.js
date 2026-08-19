@@ -5,6 +5,7 @@ const { decrypt } = require('../utils/encrypt');
 const { emitToOperator } = require('../services/socketService');
 const { notifyOperator } = require('../services/pushService');
 const { frontendBase } = require('../utils/urls');
+const { criarNotificacaoViajante } = require('../helpers/travelerNotificationHelper');
 
 /* ─── PayPal ─────────────────────────────────────────────── */
 
@@ -96,6 +97,11 @@ async function confirmarCapturaPaypal(operatorId, orderId, reservationId) {
   if (data.operators?.push_subscription) {
     await notifyOperator(data.operators, { title: 'Pagamento recebido', body: `€${amount} via PayPal`, tag: 'payment', url: '/reservas' });
   }
+  criarNotificacaoViajante(
+    data.customer_email, 'booking_confirmed',
+    `A sua reserva com ${data.operators?.name || 'o operador'} foi confirmada.`,
+    `${frontendBase()}/viajante`,
+  ).catch(() => {});
 
   return data;
 }
@@ -139,7 +145,7 @@ async function paypalWebhook(req, res, next) {
        que reserva/operador o evento pertence antes de conseguir verificar. */
     const { data: reserva } = await supabaseAdmin
       .from('reservations')
-      .select('id, operator_id')
+      .select('id, operator_id, customer_email, operators(name)')
       .eq('paypal_order_id', orderId)
       .maybeSingle();
     if (!reserva) return;
@@ -172,6 +178,11 @@ async function paypalWebhook(req, res, next) {
         .from('reservations')
         .update({ payment_status: 'paid', status: 'confirmed', updated_at: new Date().toISOString() })
         .eq('id', reserva.id);
+      criarNotificacaoViajante(
+        reserva.customer_email, 'booking_confirmed',
+        `A sua reserva com ${reserva.operators?.name || 'o operador'} foi confirmada.`,
+        `${frontendBase()}/viajante`,
+      ).catch(() => {});
     }
   } catch (err) { console.error('[PayPal Webhook]', err.message); }
 }
@@ -239,7 +250,7 @@ async function sispCallback(req, res, next) {
   try {
     const { data: reserva } = await supabaseAdmin
       .from('reservations')
-      .select('id, operator_id')
+      .select('id, operator_id, customer_email, operators(name)')
       .eq('id', reservationId)
       .single();
 
@@ -263,6 +274,11 @@ async function sispCallback(req, res, next) {
           status: 'confirmed', updated_at: new Date().toISOString(),
         })
         .eq('id', reservationId);
+      criarNotificacaoViajante(
+        reserva.customer_email, 'booking_confirmed',
+        `A sua reserva com ${reserva.operators?.name || 'o operador'} foi confirmada.`,
+        `${frontBase}/viajante`,
+      ).catch(() => {});
       return res.redirect(`${frontBase}/book/success?res=${reservationId}`);
     }
 
@@ -326,7 +342,7 @@ async function getHistory(req, res, next) {
 async function refund(req, res, next) {
   try {
     const { reservation_id, amount, reason } = req.body;
-    const { data: reserva } = await supabaseAdmin.from('reservations').select('paypal_capture_id, payment_method, total_price').eq('id', reservation_id).eq('operator_id', req.operator.id).single();
+    const { data: reserva } = await supabaseAdmin.from('reservations').select('paypal_capture_id, payment_method, total_price, customer_email, operators(name)').eq('id', reservation_id).eq('operator_id', req.operator.id).single();
     if (!reserva) return res.status(404).json({ error: 'Reserva nao encontrada', code: 'NOT_FOUND' });
 
     if (reserva.payment_method === 'paypal') {
@@ -347,6 +363,11 @@ async function refund(req, res, next) {
       .from('reservations')
       .update({ payment_status: 'refunded', notes_internal: reason || 'Reembolso', updated_at: new Date().toISOString() })
       .eq('id', reservation_id);
+    criarNotificacaoViajante(
+      reserva.customer_email, 'refund',
+      `O pagamento da sua reserva com ${reserva.operators?.name || 'o operador'} foi reembolsado.`,
+      `${frontendBase()}/viajante`,
+    ).catch(() => {});
 
     return res.json({ data: null, message: 'Reembolso processado' });
   } catch (err) { next(err); }

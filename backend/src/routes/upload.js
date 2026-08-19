@@ -17,7 +17,6 @@ const router = express.Router();
 
 /* ── Constants ── */
 const UPLOADS_DIR    = process.env.UPLOADS_DIR || '/var/www/saldesk/uploads';
-const UPLOAD_ROOT    = path.join(UPLOADS_DIR, 'operators');
 const MAX_FILE_SIZE  = 5 * 1024 * 1024;  // 5MB
 const ALLOWED_MIMES  = ['image/jpeg', 'image/png', 'image/webp'];
 const MAX_WIDTH      = 1200;
@@ -45,15 +44,21 @@ router.post('/image', authMiddleware, upload.single('image'), async (req, res) =
       return res.status(400).json({ success: false, error: 'Nenhum ficheiro recebido.' });
     }
 
-    const operatorId  = req.operator?.id || req.user?.operator_id;
-    if (!operatorId) {
-      return res.status(401).json({ success: false, error: 'Operador nao identificado.' });
+    /* Operador OU viajante -- ambos autenticados pelo mesmo authMiddleware
+       (que ja resolve req.operator/req.staff/req.traveler pelo discriminador
+       existente), so muda a subpasta onde o ficheiro fica. */
+    const operatorId = req.operator?.id || req.user?.operator_id;
+    const travelerId = req.traveler?.id;
+    if (!operatorId && !travelerId) {
+      return res.status(401).json({ success: false, error: 'Utilizador nao identificado.' });
     }
+    const namespace = operatorId ? 'operators' : 'travelers';
+    const ownerId   = operatorId || travelerId;
 
-    const operatorDir = path.join(UPLOAD_ROOT, operatorId);
-    const thumbDir    = path.join(operatorDir, 'thumbnails');
-    fs.mkdirSync(operatorDir, { recursive: true });
-    fs.mkdirSync(thumbDir,    { recursive: true });
+    const ownerDir = path.join(UPLOADS_DIR, namespace, ownerId);
+    const thumbDir = path.join(ownerDir, 'thumbnails');
+    fs.mkdirSync(ownerDir, { recursive: true });
+    fs.mkdirSync(thumbDir, { recursive: true });
 
     const timestamp = Date.now();
     const filename  = `${timestamp}.webp`;
@@ -63,7 +68,7 @@ router.post('/image', authMiddleware, upload.single('image'), async (req, res) =
     await sharp(req.file.buffer)
       .resize({ width: MAX_WIDTH, withoutEnlargement: true })
       .webp({ quality: WEBP_QUALITY })
-      .toFile(path.join(operatorDir, filename));
+      .toFile(path.join(ownerDir, filename));
 
     /* Thumbnail — 400px width */
     await sharp(req.file.buffer)
@@ -72,8 +77,8 @@ router.post('/image', authMiddleware, upload.single('image'), async (req, res) =
       .toFile(path.join(thumbDir, thumbname));
 
     const baseUrl = process.env.API_URL || 'https://api.saldesk.cv';
-    const url      = `${baseUrl}/uploads/operators/${operatorId}/${filename}`;
-    const thumbUrl = `${baseUrl}/uploads/operators/${operatorId}/thumbnails/${thumbname}`;
+    const url      = `${baseUrl}/uploads/${namespace}/${ownerId}/${filename}`;
+    const thumbUrl = `${baseUrl}/uploads/${namespace}/${ownerId}/thumbnails/${thumbname}`;
 
     return res.json({
       success: true,

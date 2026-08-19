@@ -1,5 +1,7 @@
 const { supabaseAdmin } = require('../config/supabase');
 const { obterOuCriarCliente } = require('../helpers/customerHelper');
+const { criarNotificacaoViajante } = require('../helpers/travelerNotificationHelper');
+const { frontendBase } = require('../utils/urls');
 
 /* Normaliza payload Viator → estrutura interna */
 function normalizarViator(payload) {
@@ -102,6 +104,9 @@ async function processWebhookJob({ data }) {
     return;
   }
 
+  const { data: operatorRow } = await supabaseAdmin.from('operators').select('name').eq('id', operatorId).single();
+  const operatorName = operatorRow?.name || 'o operador';
+
   /* Cancelamentos */
   if (normalizado.status === 'cancelled') {
     if (externalRef) {
@@ -125,6 +130,11 @@ async function processWebhookJob({ data }) {
         });
       }
     }
+    criarNotificacaoViajante(
+      normalizado.customerEmail, 'cancelled',
+      `A sua reserva com ${operatorName} foi cancelada.`,
+      `${frontendBase()}/viajante`,
+    ).catch(() => {});
     await actualizarLog(operatorId, channel, externalRef, 'processed', null);
     return;
   }
@@ -171,6 +181,12 @@ async function processWebhookJob({ data }) {
       source:         channel,
       notes: externalRef ? `Ref. OTA: ${externalRef}` : null,
     });
+
+    criarNotificacaoViajante(
+      normalizado.customerEmail, 'booking_confirmed',
+      `A sua reserva com ${operatorName} foi confirmada.`,
+      `${frontendBase()}/viajante`,
+    ).catch(() => {});
 
     await actualizarLog(operatorId, channel, externalRef, 'processed', null);
   } catch (err) {

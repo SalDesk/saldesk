@@ -58,3 +58,16 @@
   --shadow-md: 0 4px 16px rgba(6,42,56,0.10);
   --shadow-lg: 0 12px 40px rgba(6,42,56,0.14);
 }
+
+/* Modo escuro — so as semanticas usadas em fundos claros/badges precisam de par escuro;
+   as escalas ocean/sand/n mantem-se, os componentes usam dark: do Tailwind directamente. */
+:root.dark {
+  --success:       #4ADE80;
+  --success-light: #0F3D26;
+  --warning:       #FBBF24;
+  --warning-light: #4A2E05;
+  --error:         #F87171;
+  --error-light:   #4A1414;
+  --info:          #71BDD4;
+  --info-light:    #0A3F55;
+}
