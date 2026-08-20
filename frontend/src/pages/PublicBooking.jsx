@@ -1009,6 +1009,15 @@ function RestaurantMenuSection({ units, lang, opCurrency, currency }) {
    degustação) mas com stepper de quantidade por prato e um carrinho que
    envia o pedido para a cozinha. Sem pagamento online -- a conta continua
    a fechar-se presencialmente, tal como já acontece nas reservas. ── */
+function fmtMoney(amount, opCurrency, viewCurrency) {
+  if (viewCurrency === 'CVE') {
+    const cve = (opCurrency || 'EUR') === 'CVE' ? amount : amount * EUR_CVE;
+    return `${Math.round(cve).toLocaleString('pt-PT')} CVE`;
+  }
+  const eur = (opCurrency || 'EUR') === 'CVE' ? amount / EUR_CVE : amount;
+  return `€${eur.toFixed(2)}`;
+}
+
 function RestaurantOrderSection({ slug, table, units, lang, opCurrency, currency }) {
   const today = String(new Date().getDay());
   const dishes   = units.filter(u => u.unit_type === 'menu_item' && u.status !== 'inactive');
@@ -1227,7 +1236,7 @@ function RestaurantOrderSection({ slug, table, units, lang, opCurrency, currency
               {cartEntries.map(([id, qty]) => (
                 <div key={id} className="flex items-center justify-between text-sm font-body">
                   <span>{qty}x {unitById[id]?.name}</span>
-                  <span className="text-white/70">{fmtPrice(Number(unitById[id]?.base_price || 0) * qty, null, opCurrency, currency, lang)}</span>
+                  <span className="text-white/70">{fmtMoney(Number(unitById[id]?.base_price || 0) * qty, opCurrency, currency)}</span>
                 </div>
               ))}
             </div>
@@ -1237,7 +1246,7 @@ function RestaurantOrderSection({ slug, table, units, lang, opCurrency, currency
               className="w-full bg-white/10 border border-white/20 text-white placeholder-white/40 rounded-lg px-3 py-2 text-sm font-body focus:outline-none focus:border-sand-400"
             />
             <div className="flex items-center justify-between pt-2 border-t border-white/10">
-              <span className="font-display font-bold text-lg">{fmtPrice(cartTotal, null, opCurrency, currency, lang)}</span>
+              <span className="font-display font-bold text-lg">{fmtMoney(cartTotal, opCurrency, currency)}</span>
               <button
                 onClick={submitOrder}
                 disabled={state === 'submitting'}
