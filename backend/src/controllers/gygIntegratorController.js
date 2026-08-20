@@ -153,7 +153,10 @@ async function queryAvailability(req, res, next) {
        unidade, por isso usa-se sempre o dia inteiro (00:00-23:59), tal como
        a propria documentacao descreve para "opening times spanning the full
        day". O nome do campo e "availabilities" (plural) -- ver comentario
-       do topo do ficheiro. */
+       do topo do ficheiro. openingTimes e um ARRAY de intervalos (nao um
+       objecto unico) -- confirmado pelo erro exacto de desserializacao
+       Jackson do self-testing tool (2026-08-20): DTO real e
+       ArrayList<SupplierApiAvailabilityOpeningTimesDTO>. */
     const availabilities = [];
     const diaCorrente = new Date(cur);
     while (diaCorrente <= fim) {
@@ -162,7 +165,7 @@ async function queryAvailability(req, res, next) {
         productId,
         dateTime:     `${dataStr}T00:00:00-01:00`,
         vacancies:    indisponiveis.has(dataStr) ? 0 : (unit.capacity || 1),
-        openingTimes: { fromTime: '00:00', toTime: '23:59' },
+        openingTimes: [{ fromTime: '00:00', toTime: '23:59' }],
       });
       diaCorrente.setDate(diaCorrente.getDate() + 1);
     }
