@@ -1,9 +1,13 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   Handshake, Plus, Pencil, Trash2, ArrowUpRight, ArrowDownRight,
-  Hotel, Car, Utensils, Compass, ToggleLeft, ToggleRight,
+  Hotel, Car, Utensils, Compass, ToggleLeft, ToggleRight, Search, Check, X, Clock,
 } from 'lucide-react';
-import { listPartners, createPartner, updatePartner, deletePartner, registerPartnerBooking } from '../services/partnersService';
+import {
+  listPartners, createPartner, updatePartner, deletePartner, registerPartnerBooking,
+  searchOperators, requestPartnership, respondPartnership,
+} from '../services/partnersService';
+import useAuthStore from '../store/authStore';
 import PageHeader from '../components/layout/PageHeader';
 import Button from '../components/ui/Button';
 import Card from '../components/ui/Card';
@@ -24,10 +28,86 @@ const PARTNERSHIP_TYPES = [
   { value: 'discount',       label: 'Desconto cruzado para clientes'     },
 ];
 
+/* ── OperatorPicker: pesquisa com debounce sobre operadores reais ── */
+function OperatorPicker({ selected, onSelect }) {
+  const [query,     setQuery]     = useState('');
+  const [results,   setResults]   = useState([]);
+  const [searching, setSearching] = useState(false);
+  const timer = useRef(null);
+
+  useEffect(() => {
+    if (timer.current) clearTimeout(timer.current);
+    if (query.trim().length < 2) { setResults([]); return; }
+    setSearching(true);
+    timer.current = setTimeout(() => {
+      searchOperators(query.trim()).then(setResults).catch(() => setResults([])).finally(() => setSearching(false));
+    }, 300);
+    return () => clearTimeout(timer.current);
+  }, [query]);
+
+  if (selected) {
+    const typeInfo = PARTNER_TYPES.find(t => t.value === selected.operator_type) || PARTNER_TYPES[0];
+    return (
+      <div className="flex items-center gap-3 border border-n-200 rounded-sm px-3 py-2.5 bg-n-50">
+        <div className="w-8 h-8 rounded-sm bg-ocean-50 flex items-center justify-center shrink-0">
+          <typeInfo.Icon size={16} strokeWidth={1.75} className="text-ocean-700" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="font-display font-semibold text-sm text-n-900 truncate">{selected.name}</p>
+          <p className="text-xs font-body text-n-500">{typeInfo.label}</p>
+        </div>
+        <button type="button" onClick={() => onSelect(null)} className="text-xs font-body text-ocean-700 hover:underline shrink-0">
+          Trocar
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="relative">
+      <div className="relative">
+        <Search size={14} strokeWidth={1.75} className="absolute left-3 top-1/2 -translate-y-1/2 text-n-400" />
+        <input
+          value={query} onChange={e => setQuery(e.target.value)}
+          placeholder="Pesquisar operador pelo nome..."
+          className="w-full h-9 pl-9 pr-3 rounded-sm border border-n-300 text-sm font-body bg-white text-n-900 focus:outline-none focus:ring-2 focus:ring-ocean-300 focus:border-ocean-700"
+        />
+      </div>
+      {query.trim().length >= 2 && (
+        <div className="mt-1 border border-n-200 rounded-sm bg-white shadow-sm max-h-48 overflow-y-auto">
+          {searching && <p className="text-xs font-body text-n-400 px-3 py-2">A pesquisar...</p>}
+          {!searching && results.length === 0 && (
+            <p className="text-xs font-body text-n-400 px-3 py-2">Nenhum operador encontrado.</p>
+          )}
+          {results.map(op => {
+            const typeInfo = PARTNER_TYPES.find(t => t.value === op.operator_type) || PARTNER_TYPES[0];
+            return (
+              <button key={op.id} type="button" onClick={() => onSelect(op)}
+                className="w-full flex items-center gap-3 px-3 py-2 hover:bg-ocean-50 transition-colors text-left">
+                <typeInfo.Icon size={15} strokeWidth={1.75} className="text-ocean-700 shrink-0" />
+                <div className="min-w-0">
+                  <p className="font-body font-semibold text-sm text-n-900 truncate">{op.name}</p>
+                  <p className="text-xs font-body text-n-400">{typeInfo.label}</p>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
 /* ── PartnerModal ── */
-function PartnerModal({ partner, onSave, onClose }) {
+function PartnerModal({ partner, onSave, onRequest, onClose }) {
   const isNew = !partner || partner._new;
   const base  = isNew ? null : partner;
+  const isRealPartner = !!base?.partner_operator_id;
+
+  const [mode, setMode] = useState(isRealPartner ? 'real' : 'manual');
+  const [selectedOperator, setSelectedOperator] = useState(
+    isRealPartner ? { id: base.partner_operator_id, name: base.name, operator_type: base.partner_type } : null
+  );
 
   const [form, setForm] = useState({
     name:               base?.name               || '',
@@ -47,16 +127,30 @@ function PartnerModal({ partner, onSave, onClose }) {
 
   async function handleSubmit(e) {
     e.preventDefault();
-    setSaving(true);
     setError('');
+
+    if (mode === 'real' && isNew && !selectedOperator) {
+      setError('Escolhe um operador da lista.');
+      return;
+    }
+
+    setSaving(true);
     try {
-      await onSave(base?.id, {
-        ...form,
+      const dadosComuns = {
+        partnership_type:  form.partnership_type,
         commission_pct:    form.commission_pct ? Number(form.commission_pct) : 0,
         avg_booking_value: form.avg_booking_value ? Number(form.avg_booking_value) : 0,
-      });
-    } catch {
-      setError('Erro ao guardar parceiro.');
+        message_pt: form.message_pt,
+        message_en: form.message_en,
+      };
+
+      if (mode === 'real' && isNew) {
+        await onRequest(selectedOperator.id, dadosComuns);
+      } else {
+        await onSave(base?.id, { ...dadosComuns, name: form.name, partner_type: form.partner_type, active: form.active });
+      }
+    } catch (err) {
+      setError(err?.response?.data?.error || 'Erro ao guardar parceiro.');
     } finally {
       setSaving(false);
     }
@@ -68,16 +162,45 @@ function PartnerModal({ partner, onSave, onClose }) {
   return (
     <Modal open onClose={onClose} title={isNew ? 'Adicionar parceiro' : 'Editar parceiro'} size="md">
       <form onSubmit={handleSubmit} className="space-y-4">
-        <Input label="Nome do parceiro" value={form.name} onChange={set('name')} required placeholder="Ex: Hotel Morabeza" />
+        {isNew && (
+          <div className="flex gap-1 bg-n-100 rounded-sm p-0.5">
+            {[{ v: 'manual', l: 'Parceiro externo' }, { v: 'real', l: 'Operador SalDesk' }].map(o => (
+              <button key={o.v} type="button" onClick={() => setMode(o.v)}
+                className={`flex-1 py-1.5 text-xs font-body font-semibold rounded-xs transition-colors ${mode === o.v ? 'bg-white text-ocean-700 shadow-sm' : 'text-n-500 hover:text-n-700'}`}>
+                {o.l}
+              </button>
+            ))}
+          </div>
+        )}
 
-        <div className="grid grid-cols-2 gap-3">
-          <Select label="Tipo de parceiro" value={form.partner_type} onChange={set('partner_type')}>
-            {PARTNER_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
-          </Select>
-          <Select label="Tipo de parceria" value={form.partnership_type} onChange={set('partnership_type')}>
-            {PARTNERSHIP_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
-          </Select>
-        </div>
+        {mode === 'manual' && (
+          <>
+            <Input label="Nome do parceiro" value={form.name} onChange={set('name')} required placeholder="Ex: Hotel Morabeza" />
+            <Select label="Tipo de parceiro" value={form.partner_type} onChange={set('partner_type')}>
+              {PARTNER_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
+            </Select>
+          </>
+        )}
+
+        {mode === 'real' && (
+          <div>
+            <label className="text-xs font-body font-bold uppercase tracking-wide text-n-600 block mb-1">Operador SalDesk</label>
+            {isRealPartner ? (
+              <OperatorPicker selected={selectedOperator} onSelect={() => {}} />
+            ) : (
+              <OperatorPicker selected={selectedOperator} onSelect={setSelectedOperator} />
+            )}
+            {!isRealPartner && (
+              <p className="text-xs font-body text-n-400 mt-1">
+                O pedido fica pendente ate o operador escolhido o aceitar.
+              </p>
+            )}
+          </div>
+        )}
+
+        <Select label="Tipo de parceria" value={form.partnership_type} onChange={set('partnership_type')}>
+          {PARTNERSHIP_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
+        </Select>
 
         {needsCommission && (
           <div className="grid grid-cols-2 gap-3">
@@ -111,7 +234,9 @@ function PartnerModal({ partner, onSave, onClose }) {
 
         <div className="flex gap-3 pt-1">
           <Button type="button" variant="secondary" onClick={onClose} className="flex-1">Cancelar</Button>
-          <Button type="submit" loading={saving} className="flex-1">{isNew ? 'Adicionar' : 'Guardar'}</Button>
+          <Button type="submit" loading={saving} className="flex-1">
+            {mode === 'real' && isNew ? 'Enviar pedido' : (isNew ? 'Adicionar' : 'Guardar')}
+          </Button>
         </div>
       </form>
     </Modal>
@@ -158,11 +283,13 @@ function BookingLogModal({ partner, onSave, onClose }) {
 
 /* ─────────────────────── Main ─────────────────────── */
 export default function Partners() {
+  const { operator } = useAuthStore();
   const [partners,  setPartners]  = useState([]);
   const [loading,   setLoading]   = useState(true);
   const [modal,     setModal]     = useState(null);
   const [logModal,  setLogModal]  = useState(null);
   const [activeTab, setActiveTab] = useState('parceiros');
+  const [responding, setResponding] = useState(null);
 
   useEffect(() => {
     listPartners().then(d => setPartners(d || [])).catch(() => {}).finally(() => setLoading(false));
@@ -172,6 +299,22 @@ export default function Partners() {
     const saved = id ? await updatePartner(id, dados) : await createPartner(dados);
     setPartners(prev => prev.find(p => p.id === saved.id) ? prev.map(p => p.id === saved.id ? saved : p) : [saved, ...prev]);
     setModal(null);
+  }
+
+  async function handleRequestPartnership(partnerOperatorId, dados) {
+    const saved = await requestPartnership({ partner_operator_id: partnerOperatorId, ...dados });
+    setPartners(prev => [saved, ...prev]);
+    setModal(null);
+  }
+
+  async function handleRespond(id, status) {
+    setResponding(id);
+    try {
+      const saved = await respondPartnership(id, status);
+      setPartners(prev => prev.map(p => p.id === id ? saved : p));
+    } finally {
+      setResponding(null);
+    }
   }
 
   async function handleDelete(id) {
@@ -190,18 +333,24 @@ export default function Partners() {
     setPartners(prev => prev.map(p => p.id === partnerId ? updated : p));
   }
 
-  /* Dashboard stats */
-  const totalSent      = partners.reduce((s, p) => s + (p.bookings_sent || 0), 0);
-  const totalReceived  = partners.reduce((s, p) => s + (p.bookings_received || 0), 0);
-  const commPayable    = partners
+  const myOperatorId    = operator?.id;
+  const activePartners  = partners.filter(p => p.status !== 'pending');
+  const pendingReceived = partners.filter(p => p.status === 'pending' && p.requested_by_operator_id !== myOperatorId);
+  const pendingSent     = partners.filter(p => p.status === 'pending' && p.requested_by_operator_id === myOperatorId);
+
+  /* Dashboard stats -- so sobre parcerias activas, nunca pendentes/recusadas */
+  const totalSent      = activePartners.reduce((s, p) => s + (p.bookings_sent || 0), 0);
+  const totalReceived  = activePartners.reduce((s, p) => s + (p.bookings_received || 0), 0);
+  const commPayable    = activePartners
     .filter(p => p.partnership_type === 'commission' && p.commission_pct > 0)
     .reduce((s, p) => s + (p.bookings_sent || 0) * (p.avg_booking_value || 0) * (p.commission_pct / 100), 0);
-  const commReceivable = partners
+  const commReceivable = activePartners
     .filter(p => p.partnership_type === 'commission' && p.commission_pct > 0)
     .reduce((s, p) => s + (p.bookings_received || 0) * (p.avg_booking_value || 0) * (p.commission_pct / 100), 0);
 
   const TABS = [
     { key: 'parceiros',  label: 'Parceiros'          },
+    { key: 'pedidos',    label: `Pedidos${pendingReceived.length > 0 ? ` (${pendingReceived.length})` : ''}` },
     { key: 'dashboard',  label: 'Dashboard'          },
   ];
 
@@ -236,7 +385,7 @@ export default function Partners() {
       </div>
 
       {activeTab === 'parceiros' && (
-        partners.length === 0 ? (
+        activePartners.length === 0 ? (
           <Card>
             <div className="text-center py-14">
               <Handshake size={36} strokeWidth={1.25} className="mx-auto mb-3 text-n-300" />
@@ -249,18 +398,27 @@ export default function Partners() {
           </Card>
         ) : (
           <div className="space-y-3">
-            {partners.map(p => {
+            {activePartners.map(p => {
               const typeInfo = PARTNER_TYPES.find(t => t.value === p.partner_type) || PARTNER_TYPES[0];
               const pshipType = PARTNERSHIP_TYPES.find(t => t.value === p.partnership_type) || PARTNERSHIP_TYPES[0];
+              const isRejected = p.status === 'rejected';
               return (
-                <div key={p.id} className={`bg-white border border-n-200 rounded-md px-4 py-4 flex items-start gap-4 ${!p.active ? 'opacity-60' : ''}`}>
+                <div key={p.id} className={`bg-white border border-n-200 rounded-md px-4 py-4 flex items-start gap-4 ${(!p.active || isRejected) ? 'opacity-60' : ''}`}>
                   <div className="w-9 h-9 rounded-sm bg-ocean-50 flex items-center justify-center shrink-0">
                     <typeInfo.Icon size={18} strokeWidth={1.75} className="text-ocean-700" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between gap-2">
                       <div>
-                        <p className="font-display font-semibold text-sm text-n-900">{p.name}</p>
+                        <p className="font-display font-semibold text-sm text-n-900 flex items-center gap-1.5">
+                          {p.name}
+                          {p.partner_operator_id && (
+                            <span className="text-[9px] font-mono uppercase tracking-wide text-ocean-700 bg-ocean-50 px-1.5 py-0.5 rounded-xs">SalDesk</span>
+                          )}
+                          {isRejected && (
+                            <span className="text-[9px] font-mono uppercase tracking-wide text-error bg-red-50 px-1.5 py-0.5 rounded-xs">Recusado</span>
+                          )}
+                        </p>
                         <p className="text-xs font-body text-n-500 mt-0.5">{typeInfo.label} · {pshipType.label}</p>
                         {p.commission_pct > 0 && (
                           <p className="text-xs font-mono text-n-400 mt-0.5">
@@ -310,11 +468,66 @@ export default function Partners() {
         )
       )}
 
+      {activeTab === 'pedidos' && (
+        <div className="space-y-6">
+          <div>
+            <h3 className="font-display font-semibold text-sm text-n-700 mb-2">Recebidos</h3>
+            {pendingReceived.length === 0 ? (
+              <p className="text-sm font-body text-n-400">Sem pedidos de parceria por responder.</p>
+            ) : (
+              <div className="space-y-2">
+                {pendingReceived.map(p => (
+                  <div key={p.id} className="bg-white border border-n-200 rounded-md px-4 py-3 flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-sm bg-ocean-50 flex items-center justify-center shrink-0">
+                      <Handshake size={16} strokeWidth={1.75} className="text-ocean-700" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-display font-semibold text-sm text-n-900">{p.name}</p>
+                      <p className="text-xs font-body text-n-500">
+                        {(PARTNERSHIP_TYPES.find(t => t.value === p.partnership_type) || PARTNERSHIP_TYPES[0]).label}
+                        {p.commission_pct > 0 ? ` · ${p.commission_pct}% comissao` : ''}
+                      </p>
+                    </div>
+                    <Button size="sm" icon={Check} loading={responding === p.id} onClick={() => handleRespond(p.id, 'accepted')}>Aceitar</Button>
+                    <Button size="sm" variant="secondary" icon={X} loading={responding === p.id} onClick={() => handleRespond(p.id, 'rejected')}>Recusar</Button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div>
+            <h3 className="font-display font-semibold text-sm text-n-700 mb-2">Enviados</h3>
+            {pendingSent.length === 0 ? (
+              <p className="text-sm font-body text-n-400">Sem pedidos de parceria enviados.</p>
+            ) : (
+              <div className="space-y-2">
+                {pendingSent.map(p => (
+                  <div key={p.id} className="bg-white border border-n-200 rounded-md px-4 py-3 flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-sm bg-n-100 flex items-center justify-center shrink-0">
+                      <Clock size={16} strokeWidth={1.75} className="text-n-500" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-display font-semibold text-sm text-n-900">{p.name}</p>
+                      <p className="text-xs font-body text-n-500">A aguardar resposta</p>
+                    </div>
+                    <button onClick={() => handleDelete(p.id)}
+                      className="p-1.5 rounded text-n-400 hover:text-error hover:bg-red-50 transition-colors" title="Cancelar pedido">
+                      <Trash2 size={14} strokeWidth={1.75} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       {activeTab === 'dashboard' && (
         <div className="space-y-5">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
             {[
-              { label: 'Parceiros activos',     value: partners.filter(p => p.active).length, color: 'text-n-900' },
+              { label: 'Parceiros activos',     value: activePartners.filter(p => p.active && p.status !== 'rejected').length, color: 'text-n-900' },
               { label: 'Reservas enviadas',      value: totalSent,                             color: 'text-ocean-700', Icon: ArrowUpRight },
               { label: 'Reservas recebidas',     value: totalReceived,                         color: 'text-[#1A7A4A]', Icon: ArrowDownRight },
               { label: 'Balanco (recebidas - enviadas)', value: totalReceived - totalSent,     color: (totalReceived - totalSent) >= 0 ? 'text-[#1A7A4A]' : 'text-error' },
@@ -326,7 +539,7 @@ export default function Partners() {
             ))}
           </div>
 
-          {partners.some(p => p.partnership_type === 'commission') && (
+          {activePartners.some(p => p.partnership_type === 'commission') && (
             <div className="grid grid-cols-2 gap-4">
               <Card padding="px-5 py-4">
                 <h3 className="font-display font-semibold text-sm text-n-700 mb-3">Comissoes a pagar</h3>
@@ -356,7 +569,7 @@ export default function Partners() {
       )}
 
       {modal && (
-        <PartnerModal partner={modal} onSave={handleSave} onClose={() => setModal(null)} />
+        <PartnerModal partner={modal} onSave={handleSave} onRequest={handleRequestPartnership} onClose={() => setModal(null)} />
       )}
       {logModal && (
         <BookingLogModal partner={logModal} onSave={handleLogBooking} onClose={() => setLogModal(null)} />
