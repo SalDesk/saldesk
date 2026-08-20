@@ -8,6 +8,10 @@ const variants = {
   no_show:     'bg-n-100 text-n-500 dark:bg-n-700 dark:text-n-400',
   direct:      'bg-sand-50 text-sand-600 dark:bg-n-700 dark:text-sand-400',
   default:     'bg-n-100 text-n-600 dark:bg-n-700 dark:text-n-300',
+  received:    'bg-[var(--info-light)] text-[var(--info)]',
+  preparing:   'bg-[var(--warning-light)] text-[var(--warning)]',
+  ready:       'bg-[var(--success-light)] text-[var(--success)]',
+  delivered:   'bg-n-100 text-n-600 dark:bg-n-700 dark:text-n-300',
 };
 
 export default function Badge({ variant = 'default', children, className = '' }) {

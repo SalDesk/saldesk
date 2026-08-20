@@ -794,6 +794,105 @@ async function callWaiter(req, res, next) {
   } catch (err) { next(err); }
 }
 
+/* ─── Criar pedido (cliente sentado à mesa, sem autenticação) ─── */
+async function createOrder(req, res, next) {
+  try {
+    const { slug, unitId } = req.params;
+    const { items, notes } = req.body;
+
+    const { data: operator } = await supabaseAdmin
+      .from('operators')
+      .select('id, name, operator_type, onboarding_complete, push_subscription')
+      .eq('slug', slug)
+      .eq('onboarding_complete', true)
+      .single();
+    if (!operator) return res.status(404).json({ error: 'Operador não encontrado', code: 'NOT_FOUND' });
+    if (operator.operator_type !== 'restaurant') {
+      return res.status(400).json({ error: 'Operador não é um restaurante', code: 'INVALID_OPERATOR_TYPE' });
+    }
+
+    const { data: table } = await supabaseAdmin
+      .from('units')
+      .select('id, name, unit_type, status, operator_id')
+      .eq('id', unitId)
+      .eq('operator_id', operator.id)
+      .single();
+    if (!table || table.status !== 'active' ||
+        table.unit_type === 'menu_item' || table.unit_type === 'tasting_menu') {
+      return res.status(404).json({ error: 'Mesa não encontrada', code: 'TABLE_NOT_FOUND' });
+    }
+
+    if (!Array.isArray(items) || items.length === 0 || items.length > 50) {
+      return res.status(400).json({ error: 'Pedido vazio ou inválido', code: 'INVALID_ITEMS' });
+    }
+    const cleanItems = items.map(i => ({
+      unit_id: i.unit_id,
+      quantity: Number.isInteger(i.quantity) ? i.quantity : 0,
+      notes: typeof i.notes === 'string' ? i.notes.slice(0, 200) : null,
+    }));
+    if (cleanItems.some(i => !i.unit_id || i.quantity < 1 || i.quantity > 20)) {
+      return res.status(400).json({ error: 'Item de pedido inválido', code: 'INVALID_ITEM' });
+    }
+
+    /* Nunca confiar no preco enviado pelo cliente -- vai sempre buscar o
+       base_price real dos pratos/menus a BD no momento do pedido. */
+    const dishIds = [...new Set(cleanItems.map(i => i.unit_id))];
+    const { data: dishes } = await supabaseAdmin
+      .from('units')
+      .select('id, name, base_price, unit_type, status, operator_id')
+      .eq('operator_id', operator.id)
+      .in('id', dishIds);
+    const dishMap = new Map((dishes || []).map(d => [d.id, d]));
+    const algumInvalido = dishIds.some(id => {
+      const d = dishMap.get(id);
+      return !d || d.status !== 'active' || !['menu_item', 'tasting_menu'].includes(d.unit_type);
+    });
+    if (algumInvalido) return res.status(400).json({ error: 'Um dos itens não está disponível', code: 'INVALID_ITEM' });
+
+    const totalPrice = cleanItems.reduce((sum, i) => sum + Number(dishMap.get(i.unit_id).base_price) * i.quantity, 0);
+
+    const { data: order, error: orderErr } = await supabaseAdmin
+      .from('orders')
+      .insert({
+        operator_id: operator.id,
+        unit_id: table.id,
+        source: 'qr',
+        notes: typeof notes === 'string' ? notes.slice(0, 500) : null,
+        total_price: totalPrice,
+      })
+      .select('*')
+      .single();
+    if (orderErr) throw orderErr;
+
+    const { data: orderItems, error: itemsErr } = await supabaseAdmin
+      .from('order_items')
+      .insert(cleanItems.map(i => {
+        const d = dishMap.get(i.unit_id);
+        return { order_id: order.id, unit_id: d.id, unit_name: d.name, unit_price: d.base_price, quantity: i.quantity, notes: i.notes };
+      }))
+      .select('*');
+    if (itemsErr) throw itemsErr;
+
+    await supabaseAdmin.from('notifications').insert({
+      operator_id: operator.id,
+      notification_type: 'new_order',
+      content: `${table.name} fez um novo pedido (${cleanItems.length} ${cleanItems.length === 1 ? 'item' : 'itens'})`,
+      link: '/pedidos',
+    });
+
+    if (operator.push_subscription) {
+      await notifyOperator(operator, {
+        title: 'Novo pedido',
+        body: `${table.name} fez um novo pedido`,
+        tag: 'new-order',
+        url: '/pedidos',
+      });
+    }
+
+    return res.status(201).json({ data: { order, items: orderItems }, message: 'Pedido enviado' });
+  } catch (err) { next(err); }
+}
+
 /* ─── Avaliações de uma unidade específica ─── */
 async function getUnitReviews(req, res, next) {
   try {
@@ -1075,6 +1174,7 @@ module.exports = {
   slugContact,
   getUnit,
   callWaiter,
+  createOrder,
   getUnitReviews,
   submitLead,
   getImpact,

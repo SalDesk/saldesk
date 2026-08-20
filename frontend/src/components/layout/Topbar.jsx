@@ -18,6 +18,7 @@ const TYPE_ICON = {
   new_message:      { Icon: MessageCircle,  color: 'text-ocean-500' },
   ota_import_failed: { Icon: AlertTriangle, color: 'text-error'     },
   call_waiter:      { Icon: Utensils,       color: 'text-sand-600'  },
+  new_order:        { Icon: Utensils,       color: 'text-ocean-700' },
 };
 
 const TYPE_LABEL = {
@@ -27,6 +28,7 @@ const TYPE_LABEL = {
   new_message:  'Nova mensagem',
   ota_import_failed: 'Falha ao importar reserva OTA',
   call_waiter:  'Mesa a chamar',
+  new_order:    'Novo pedido',
 };
 
 function timeAgo(dateStr) {

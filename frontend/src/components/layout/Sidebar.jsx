@@ -7,7 +7,7 @@ import {
   LogOut, X, ExternalLink, User, Lock, Zap,
   Compass, Hotel, Car, Truck, UtensilsCrossed, ChefHat, Wrench,
   Activity, Award, Tag, FileWarning, ThumbsUp, CloudSun, LineChart,
-  UserPlus, Users2, Package, Handshake, Sparkles, Layers, ClipboardList,
+  UserPlus, Users2, Package, Handshake, Sparkles, Layers, ClipboardList, ClipboardCheck,
 } from 'lucide-react';
 import useAuthStore from '../../store/authStore';
 import usePlan from '../../hooks/usePlan';
@@ -99,6 +99,7 @@ export const TYPE_NAV = {
     { to: '/',              icon: LayoutDashboard, label: 'Dashboard',    end: true },
     { to: '/unidades',      icon: UtensilsCrossed, label: 'Mesas'                   },
     { to: '/menu-digital',  icon: ChefHat,         label: 'Menu'                    },
+    { to: '/pedidos',       icon: ClipboardCheck,  label: 'Pedidos'                 },
     { to: '/reservas',      icon: Calendar,        label: 'Reservas'                },
     { to: '/calendario',    icon: CalendarDays,    label: 'Calendario'              },
     { to: '/clientes',      icon: UserCheck,       label: 'Clientes'                },

@@ -20,6 +20,7 @@ const {
   discoverUnits,
   getExperienceCategories,
   callWaiter,
+  createOrder,
 } = require('../controllers/publicController');
 const { publicInitSisp, publicPaypalClientId, publicCreatePaypalIntent, publicConfirmPaypalPayment } = require('../controllers/paymentController');
 const { validarVoucherPublico } = require('../controllers/vouchersController');
@@ -56,6 +57,7 @@ router.get('/cms', require('../controllers/publicController').getCmsPublic);
 router.get('/:slug/units/:unitId',         getUnit);
 router.get('/:slug/units/:unitId/reviews', getUnitReviews);
 router.post('/:slug/units/:unitId/call-waiter', publicLimiter, callWaiter);
+router.post('/:slug/units/:unitId/orders', publicLimiter, createOrder);
 
 /* ─── Operador individual ─── */
 router.get('/:slug',               getOperador);

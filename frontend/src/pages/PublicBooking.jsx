@@ -1003,6 +1003,260 @@ function RestaurantMenuSection({ units, lang, opCurrency, currency }) {
   );
 }
 
+/* ── RestaurantOrderSection ──────────────────────────
+   Versão interactiva do menu para quando o cliente já está sentado --
+   mesma estrutura de RestaurantMenuSection (categorias, menus de
+   degustação) mas com stepper de quantidade por prato e um carrinho que
+   envia o pedido para a cozinha. Sem pagamento online -- a conta continua
+   a fechar-se presencialmente, tal como já acontece nas reservas. ── */
+function RestaurantOrderSection({ slug, table, units, lang, opCurrency, currency }) {
+  const today = String(new Date().getDay());
+  const dishes   = units.filter(u => u.unit_type === 'menu_item' && u.status !== 'inactive');
+  const tastings = units.filter(u => u.unit_type === 'tasting_menu' && u.status !== 'inactive');
+  const allItems = [...dishes, ...tastings];
+  const unitById = Object.fromEntries(allItems.map(u => [u.id, u]));
+
+  const [cart, setCart]           = useState({});      // { unitId: quantidade }
+  const [itemNotes, setItemNotes] = useState({});       // { unitId: texto }
+  const [orderNotes, setOrderNotes] = useState('');
+  const [state, setState]         = useState('idle');   // idle | submitting | success | error
+  const [error, setError]         = useState('');
+
+  if (allItems.length === 0) return null;
+
+  const byCategory = {};
+  dishes.forEach(d => {
+    const meta = parseMenuMeta(d);
+    const cat = meta.category || 'outros';
+    if (!byCategory[cat]) byCategory[cat] = [];
+    byCategory[cat].push({ unit: d, meta });
+  });
+  const categoryOrder = Object.keys(MENU_CATEGORY_LABELS).filter(c => byCategory[c]?.length);
+
+  function setQty(unitId, delta) {
+    setCart(c => {
+      const next = Math.max(0, Math.min(20, (c[unitId] || 0) + delta));
+      const copy = { ...c };
+      if (next === 0) delete copy[unitId]; else copy[unitId] = next;
+      return copy;
+    });
+  }
+
+  const cartEntries = Object.entries(cart).filter(([, q]) => q > 0);
+  const cartCount = cartEntries.reduce((s, [, q]) => s + q, 0);
+  const cartTotal = cartEntries.reduce((s, [id, q]) => s + Number(unitById[id]?.base_price || 0) * q, 0);
+
+  function Stepper({ unitId }) {
+    const qty = cart[unitId] || 0;
+    return (
+      <div className="flex items-center gap-2 shrink-0">
+        {qty > 0 && (
+          <button type="button" onClick={() => setQty(unitId, -1)}
+            className="w-7 h-7 rounded-full border border-n-300 flex items-center justify-center text-n-500 hover:border-ocean-700 hover:text-ocean-700 transition-colors text-lg font-light leading-none">−</button>
+        )}
+        {qty > 0 && <span className="w-4 text-center font-display font-bold text-n-900 tabular-nums">{qty}</span>}
+        <button type="button" onClick={() => setQty(unitId, 1)}
+          className="w-7 h-7 rounded-full border border-n-300 flex items-center justify-center text-n-500 hover:border-ocean-700 hover:text-ocean-700 transition-colors text-lg font-light leading-none">+</button>
+      </div>
+    );
+  }
+
+  async function submitOrder() {
+    setState('submitting');
+    setError('');
+    try {
+      const r = await fetch(`${API}/public/${slug}/units/${table.id}/orders`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          items: cartEntries.map(([unit_id, quantity]) => ({ unit_id, quantity, notes: itemNotes[unit_id] || undefined })),
+          notes: orderNotes || undefined,
+        }),
+      });
+      const j = await r.json();
+      if (!r.ok) throw new Error(j.error || (lang === 'en' ? 'Could not submit order' : 'Erro ao enviar pedido'));
+      setState('success');
+    } catch (err) {
+      setError(err.message);
+      setState('error');
+    }
+  }
+
+  function novoPedido() {
+    setCart({});
+    setItemNotes({});
+    setOrderNotes('');
+    setState('idle');
+  }
+
+  if (state === 'success') {
+    return (
+      <section id="menu" className="max-w-2xl mx-auto px-4 sm:px-6 py-12 sm:py-16 text-center">
+        <div className="bg-white rounded-2xl border border-n-200 p-8">
+          <div className="w-12 h-12 bg-[#ECFDF5] rounded-full flex items-center justify-center mx-auto mb-4">
+            <Check size={22} strokeWidth={2} className="text-[#1A7A4A]" />
+          </div>
+          <h2 className="font-display font-bold text-xl text-n-900 mb-2">
+            {lang === 'en' ? 'Order sent!' : 'Pedido enviado!'}
+          </h2>
+          <p className="text-sm font-body text-n-500 mb-6">
+            {lang === 'en' ? 'The kitchen has been notified.' : 'A cozinha já foi notificada.'}
+          </p>
+          <button onClick={novoPedido}
+            className="inline-flex items-center gap-2 bg-ocean-700 text-white font-body font-semibold text-sm px-6 py-3 rounded-xl hover:bg-ocean-500 transition-colors">
+            {lang === 'en' ? 'Place another order' : 'Fazer novo pedido'}
+          </button>
+        </div>
+      </section>
+    );
+  }
+
+  return (
+    <section id="menu" className="max-w-5xl mx-auto px-4 sm:px-6 py-12 sm:py-16">
+      <p className="text-xs font-body font-bold text-ocean-700 uppercase tracking-widest mb-1">
+        {lang === 'en' ? 'Menu' : 'Menu'}
+      </p>
+      <h2 className="font-display font-bold text-2xl sm:text-3xl text-n-900 mb-8">
+        {lang === 'en' ? 'Order from your table' : 'Peça a partir da sua mesa'}
+      </h2>
+
+      {categoryOrder.map(cat => (
+        <div key={cat} className="mb-10 last:mb-0">
+          <h3 className="font-display font-bold text-lg text-n-900 mb-4 pb-2 border-b border-n-100">
+            {lang === 'en' ? MENU_CATEGORY_LABELS[cat].en : MENU_CATEGORY_LABELS[cat].pt}
+          </h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {byCategory[cat].map(({ unit, meta }) => {
+              const isToday = !!meta.daily_special?.[today];
+              const name = lang === 'en' && meta.name_en ? meta.name_en : unit.name;
+              const desc = lang === 'en' && meta.desc_en ? meta.desc_en : meta.desc_pt;
+              return (
+                <div key={unit.id} className="flex gap-3 bg-white rounded-xl border border-n-100 p-3">
+                  {unit.images?.[0] && (
+                    <img src={unit.images[0]} alt={name} className="w-16 h-16 rounded-lg object-cover shrink-0" />
+                  )}
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-start justify-between gap-2">
+                      <p className="font-display font-semibold text-sm text-n-900">{name}</p>
+                      <span className="font-display font-bold text-sm text-ocean-700 shrink-0">
+                        {fmtPrice(unit.base_price, 'person', opCurrency, currency, lang)}
+                      </span>
+                    </div>
+                    {desc && <p className="text-xs font-body text-n-500 mt-0.5 leading-relaxed">{desc}</p>}
+                    {(meta.diets?.length > 0 || meta.allergens?.length > 0 || isToday) && (
+                      <div className="flex flex-wrap gap-1 mt-1.5">
+                        {isToday && (
+                          <span className="text-[9px] font-mono uppercase tracking-wide px-1.5 py-0.5 rounded bg-ocean-50 text-ocean-700">
+                            {lang === 'en' ? "Today's special" : 'Prato do dia'}
+                          </span>
+                        )}
+                        {meta.diets?.map(d => (
+                          <span key={d} className="text-[9px] font-mono uppercase tracking-wide px-1.5 py-0.5 rounded bg-[#ECFDF5] text-[#1A7A4A]">
+                            {lang === 'en' ? MENU_DIET_LABELS[d]?.en || d : MENU_DIET_LABELS[d]?.pt || d}
+                          </span>
+                        ))}
+                        {meta.allergens?.map(a => (
+                          <span key={a} className="text-[9px] font-mono uppercase tracking-wide px-1.5 py-0.5 rounded bg-[#FEF2F2] text-error">
+                            {lang === 'en' ? MENU_ALLERGEN_LABELS[a]?.en || a : MENU_ALLERGEN_LABELS[a]?.pt || a}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                    <div className="flex items-center justify-between mt-2">
+                      <Stepper unitId={unit.id} />
+                    </div>
+                    {cart[unit.id] > 0 && (
+                      <input
+                        type="text" value={itemNotes[unit.id] || ''}
+                        onChange={e => setItemNotes(n => ({ ...n, [unit.id]: e.target.value }))}
+                        placeholder={lang === 'en' ? 'Note (optional, e.g. no onion)' : 'Nota (opcional, ex: sem cebola)'}
+                        className="mt-2 w-full text-xs font-body border border-n-200 rounded-md px-2 py-1.5 focus:outline-none focus:border-ocean-500"
+                      />
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      ))}
+
+      {tastings.length > 0 && (
+        <div className="mb-10">
+          <h3 className="font-display font-bold text-lg text-n-900 mb-4 pb-2 border-b border-n-100">
+            {lang === 'en' ? 'Tasting Menus' : 'Menus de Degustação'}
+          </h3>
+          <div className="space-y-3">
+            {tastings.map(t => {
+              const meta = parseMenuMeta(t);
+              const desc = lang === 'en' && meta.desc_en ? meta.desc_en : meta.desc_pt;
+              const items = meta.items || [];
+              return (
+                <div key={t.id} className="bg-white rounded-xl border border-n-100 p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="font-display font-bold text-n-900">{t.name}</p>
+                      {desc && <p className="text-xs font-body text-n-500 mt-1">{desc}</p>}
+                      {items.length > 0 && (
+                        <p className="text-xs font-body text-n-400 mt-1.5">{items.map(i => i.name_pt).join(' · ')}</p>
+                      )}
+                    </div>
+                    <span className="font-display font-bold text-ocean-700 shrink-0">
+                      {fmtPrice(t.base_price, 'person', opCurrency, currency, lang)}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between mt-2">
+                    <Stepper unitId={t.id} />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Carrinho */}
+      <div className="bg-ocean-900 text-white rounded-2xl p-5 sm:p-6 sticky bottom-4">
+        {cartCount === 0 ? (
+          <p className="text-sm font-body text-white/60 text-center">
+            {lang === 'en' ? 'Add items above to place an order.' : 'Adicione itens acima para fazer um pedido.'}
+          </p>
+        ) : (
+          <div className="space-y-3">
+            <div className="space-y-1">
+              {cartEntries.map(([id, qty]) => (
+                <div key={id} className="flex items-center justify-between text-sm font-body">
+                  <span>{qty}x {unitById[id]?.name}</span>
+                  <span className="text-white/70">{fmtPrice(Number(unitById[id]?.base_price || 0) * qty, null, opCurrency, currency, lang)}</span>
+                </div>
+              ))}
+            </div>
+            <textarea
+              value={orderNotes} onChange={e => setOrderNotes(e.target.value)} rows={2}
+              placeholder={lang === 'en' ? 'General notes for the order (optional)' : 'Notas gerais do pedido (opcional)'}
+              className="w-full bg-white/10 border border-white/20 text-white placeholder-white/40 rounded-lg px-3 py-2 text-sm font-body focus:outline-none focus:border-sand-400"
+            />
+            <div className="flex items-center justify-between pt-2 border-t border-white/10">
+              <span className="font-display font-bold text-lg">{fmtPrice(cartTotal, null, opCurrency, currency, lang)}</span>
+              <button
+                onClick={submitOrder}
+                disabled={state === 'submitting'}
+                className="flex items-center gap-2 bg-sand-500 text-ocean-900 font-body font-bold text-sm px-6 py-3 rounded-xl hover:bg-sand-400 transition-colors disabled:opacity-50"
+              >
+                {state === 'submitting'
+                  ? <span className="w-4 h-4 border-2 border-ocean-900/30 border-t-ocean-900 rounded-full animate-spin" />
+                  : <ArrowRight size={16} strokeWidth={2} />}
+                {lang === 'en' ? 'Send order' : 'Enviar pedido'}
+              </button>
+            </div>
+            {error && <p className="text-sm text-red-300">{error}</p>}
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
+
 /* ── RestaurantReservationSection ────────────────────
    Substitui a grelha de mesas-como-produtos: o cliente escolhe data/hora/
    pessoas/zona, a mesa é sempre atribuída internamente (nunca escolhida
@@ -1827,10 +2081,17 @@ export default function PublicBooking() {
       {/* ── Serviços (restaurante: formulário de reserva real, nunca a grelha de mesas) ── */}
       {isRestaurant ? (
         <div style={{ order: sectionOrder('services') }}>
-          <RestaurantMenuSection units={units} lang={lang} opCurrency={op.currency} currency={currency} />
-          {tableMode
-            ? <CallWaiterSection slug={slug} table={table} lang={lang} />
-            : <RestaurantReservationSection slug={slug} lang={lang} />}
+          {tableMode ? (
+            <>
+              <RestaurantOrderSection slug={slug} table={table} units={units} lang={lang} opCurrency={op.currency} currency={currency} />
+              <CallWaiterSection slug={slug} table={table} lang={lang} />
+            </>
+          ) : (
+            <>
+              <RestaurantMenuSection units={units} lang={lang} opCurrency={op.currency} currency={currency} />
+              <RestaurantReservationSection slug={slug} lang={lang} />
+            </>
+          )}
         </div>
       ) : (
       <div className="max-w-5xl mx-auto px-4 sm:px-6" style={{ order: sectionOrder('services') }}>

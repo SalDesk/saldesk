@@ -62,6 +62,7 @@ const TravelerPortal        = lazy(() => import('./pages/traveler/TravelerPortal
 const Housekeeping    = lazy(() => import('./pages/Housekeeping'));
 const Maintenance     = lazy(() => import('./pages/Maintenance'));
 const MenuDigital     = lazy(() => import('./pages/MenuDigital'));
+const Pedidos         = lazy(() => import('./pages/Pedidos'));
 
 // Lazy — admin panel
 const AdminLayout     = lazy(() => import('./components/layout/AdminLayout'));
@@ -142,6 +143,7 @@ export default function App() {
           <Route path="housekeeping"  element={<Housekeeping />} />
           <Route path="manutencao"    element={<Maintenance />} />
           <Route path="menu-digital"  element={<MenuDigital />} />
+          <Route path="pedidos"       element={<Pedidos />} />
           <Route path="frota"         element={<Fleet />} />
           <Route path="mensagens"     element={<Messages />} />
           <Route path="avaliacoes"    element={<Reviews />} />
