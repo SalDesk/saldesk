@@ -809,7 +809,9 @@ export default function ServiceDetail() {
     activity:   { pt:'Actividade',  en:'Activity',      icon:<Compass size={12} strokeWidth={1.75}/> },
     hotel:      { pt:'Alojamento',  en:'Accommodation', icon:<Building size={12} strokeWidth={1.75}/> },
     rentacar:   { pt:'Viatura',     en:'Vehicle',       icon:<Car size={12} strokeWidth={1.75}/> },
-    restaurant: { pt:'Mesa',        en:'Table',         icon:<Utensils size={12} strokeWidth={1.75}/> },
+    restaurant: unit.unit_type === 'tasting_menu'
+      ? { pt:'Menu Degustação', en:'Tasting Menu', icon:<Utensils size={12} strokeWidth={1.75}/> }
+      : { pt:'Prato',           en:'Dish',          icon:<Utensils size={12} strokeWidth={1.75}/> },
   }[op.operator_type] || { pt:'Serviço', en:'Service', icon:<Compass size={12} strokeWidth={1.75}/> };
 
   const priceSuffix = {
