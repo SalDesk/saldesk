@@ -77,6 +77,13 @@ async function criar(req, res, next) {
     if (!unit) {
       return res.status(404).json({ error: 'Unidade não encontrada', code: 'NOT_FOUND' });
     }
+    /* Pratos/menus de degustacao do Menu Digital sao guardados como "units"
+       (unit_type 'menu_item'/'tasting_menu') do mesmo operador -- nunca sao
+       mesas reservaveis. O dropdown do staff ja os exclui; isto e so defesa
+       em profundidade contra um pedido directo a API. */
+    if (unit.unit_type === 'menu_item' || unit.unit_type === 'tasting_menu') {
+      return res.status(404).json({ error: 'Unidade não encontrada', code: 'NOT_FOUND' });
+    }
 
     /* Reserva de restaurante criada pelo staff (ex. por telefone) tem de
        carregar uma hora real, tal como o fluxo publico -- caso contrario

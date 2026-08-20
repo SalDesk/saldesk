@@ -115,7 +115,13 @@ async function atribuirMesaAutomaticamente(supabase, operatorId, { date, startTi
     .eq('operator_id', operatorId)
     .eq('status', 'active');
 
+  /* O Menu Digital (MenuDigital.jsx) tambem grava pratos/menus de degustacao
+     como "units" do mesmo operador (unit_type 'menu_item'/'tasting_menu'),
+     com capacity=1 -- sem este filtro, um prato podia ser "atribuido" como
+     mesa a um cliente que reservasse para 1 pessoa. Mesmo filtro ja usado
+     em Reservations.jsx para o dropdown de mesas do staff. */
   const candidatas = (mesas || [])
+    .filter((unit) => unit.unit_type !== 'menu_item' && unit.unit_type !== 'tasting_menu')
     .map((unit) => ({ unit, meta: parseUnitMeta(unit) }))
     .filter(({ unit, meta }) => {
       const min = meta.capacity_min ?? 1;
