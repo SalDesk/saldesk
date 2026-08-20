@@ -361,6 +361,32 @@ async function createBooking(req, res, next) {
       return erro(res, 'INVALID_RESERVATION', `Expired reservation; ${HOLD_MINUTES}min hold time was exceeded.`);
     }
 
+    /* Se ja existia uma reserva confirmada com este MESMO gygBookingReference
+       (fluxo "mudar quantidade de bilhetes"), esta nova reserva substitui-a --
+       cancela a antiga ANTES de inserir a nova (reservations_no_overlap,
+       database/040, rejeitava sempre a nova insercao se a antiga ainda
+       estivesse activa nessa mesma data -- confirmado pelo self-testing
+       tool, 2026-08-20). reservations nao tem estado "superseded", so
+       "cancelled", que reflecte com precisao suficiente o resultado real. */
+    const { data: holdAntigo } = await supabaseAdmin
+      .from('ota_reservation_holds')
+      .select('id, reservation_id')
+      .eq('channel', 'getyourguide')
+      .eq('external_ref', gygBookingReference)
+      .eq('status', 'booked')
+      .neq('id', hold.id)
+      .not('reservation_id', 'is', null)
+      .maybeSingle();
+
+    if (holdAntigo?.reservation_id) {
+      await supabaseAdmin.from('reservations')
+        .update({ status: 'cancelled', updated_at: new Date().toISOString() })
+        .eq('id', holdAntigo.reservation_id);
+      await supabaseAdmin.from('ota_reservation_holds')
+        .update({ status: 'cancelled', updated_at: new Date().toISOString() })
+        .eq('id', holdAntigo.id);
+    }
+
     const traveller = travelers[0];
     const nomeCompleto = [traveller.firstName, traveller.lastName].filter(Boolean).join(' ') || 'GetYourGuide Guest';
 
@@ -392,6 +418,18 @@ async function createBooking(req, res, next) {
       .single();
 
     if (error) {
+      /* Se ja tinha sido cancelada a reserva antiga (substituicao) e esta
+         insercao nova falhou por qualquer motivo, reactivar a antiga -- nunca
+         deixar o cliente sem reserva nenhuma so porque a tentativa de mudar
+         quantidade nao completou. */
+      if (holdAntigo?.reservation_id) {
+        await supabaseAdmin.from('reservations')
+          .update({ status: 'confirmed', updated_at: new Date().toISOString() })
+          .eq('id', holdAntigo.reservation_id);
+        await supabaseAdmin.from('ota_reservation_holds')
+          .update({ status: 'booked', updated_at: new Date().toISOString() })
+          .eq('id', holdAntigo.id);
+      }
       /* reservations_no_overlap (database/040) -- a unidade ficou indisponivel
          entre o hold ser criado e este booking ser confirmado. */
       if (error.code === '23P01') {
@@ -404,30 +442,6 @@ async function createBooking(req, res, next) {
       .from('ota_reservation_holds')
       .update({ status: 'booked', reservation_id: reserva.id, updated_at: new Date().toISOString() })
       .eq('id', hold.id);
-
-    /* Se ja existia uma reserva confirmada com este MESMO gygBookingReference
-       (fluxo "mudar quantidade de bilhetes"), esta nova reserva substitui-a --
-       cancela a antiga para nao ficar duplicada nem a ocupar a mesma data
-       desnecessariamente (reservations nao tem estado "superseded", so
-       "cancelled", que reflecte com precisao suficiente o resultado real). */
-    const { data: holdAntigo } = await supabaseAdmin
-      .from('ota_reservation_holds')
-      .select('id, reservation_id')
-      .eq('channel', 'getyourguide')
-      .eq('external_ref', gygBookingReference)
-      .eq('status', 'booked')
-      .neq('id', hold.id)
-      .not('reservation_id', 'is', null)
-      .maybeSingle();
-
-    if (holdAntigo?.reservation_id) {
-      await supabaseAdmin.from('reservations')
-        .update({ status: 'cancelled', updated_at: new Date().toISOString() })
-        .eq('id', holdAntigo.reservation_id);
-      await supabaseAdmin.from('ota_reservation_holds')
-        .update({ status: 'cancelled', updated_at: new Date().toISOString() })
-        .eq('id', holdAntigo.id);
-    }
 
     notifyAvailabilityChanged(hold.unit_id).catch(() => {});
     /* So dispara se o email da reserva GYG coincidir com uma conta de
