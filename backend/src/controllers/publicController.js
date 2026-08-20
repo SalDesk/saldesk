@@ -1,5 +1,5 @@
 const { supabaseAdmin } = require('../config/supabase');
-const { verificarDisponibilidade, calcularPreco } = require('../helpers/bookingHelpers');
+const { verificarDisponibilidade, calcularPreco, atribuirMesaAutomaticamente, DEFAULT_SEATING_MINUTES } = require('../helpers/bookingHelpers');
 const { obterOuCriarCliente } = require('../helpers/customerHelper');
 const { enviarEmail } = require('../helpers/emailHelper');
 const { detectarIdioma } = require('../helpers/languageHelper');
@@ -94,25 +94,53 @@ async function verificarDisponibilidadePublica(req, res, next) {
   }
 }
 
-async function criarReserva(req, res, next) {
+/* ─── Disponibilidade de mesa (restaurante) — nunca devolve QUAL mesa,
+   só se há alguma disponível; a atribuição real só acontece em criarReserva ─── */
+async function verificarDisponibilidadeRestaurantePublica(req, res, next) {
   try {
-    const { unit_id, customer_name, customer_email, customer_phone,
-            customer_country, check_in, check_out, guests, notes,
-            party_size, tour_time, voucher_code, ref_code } = req.body;
-
-    // check_out é opcional — activities/restaurants podem enviar só check_in (data do serviço)
-    const effectiveCheckOut = check_out || check_in;
-
-    if (!unit_id || !customer_name || !customer_email || !check_in) {
-      return res.status(400).json({ error: 'Campos obrigatórios em falta', code: 'MISSING_FIELDS' });
-    }
-    if (effectiveCheckOut < check_in) {
-      return res.status(400).json({ error: 'Checkout deve ser posterior ao check-in', code: 'INVALID_DATES' });
+    const { date, time, party_size, zone } = req.query;
+    if (!date || !time || !party_size) {
+      return res.status(400).json({ error: 'Data, hora e número de pessoas são obrigatórios', code: 'MISSING_FIELDS' });
     }
 
     const { data: operator } = await supabaseAdmin
       .from('operators')
-      .select('id, name, slug, email, phone, currency, language')
+      .select('id, operator_type')
+      .eq('slug', req.params.slug)
+      .eq('onboarding_complete', true)
+      .single();
+
+    if (!operator) return res.status(404).json({ error: 'Operador não encontrado', code: 'NOT_FOUND' });
+    if (operator.operator_type !== 'restaurant') {
+      return res.status(400).json({ error: 'Operador não é um restaurante', code: 'INVALID_OPERATOR_TYPE' });
+    }
+
+    const mesa = await atribuirMesaAutomaticamente(supabaseAdmin, operator.id, {
+      date, startTime: time, partySize: Number(party_size), zone: zone || null,
+    });
+
+    return res.json({
+      data: { available: !!mesa, date, time, party_size: Number(party_size) },
+      message: mesa ? 'Disponível' : 'Indisponível',
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
+async function criarReserva(req, res, next) {
+  try {
+    const { unit_id, customer_name, customer_email, customer_phone,
+            customer_country, check_in, check_out, guests, notes,
+            party_size, tour_time, reservation_time, zone_preference,
+            voucher_code, ref_code } = req.body;
+
+    // check_out é opcional — activities/restaurants podem enviar só check_in (data do serviço)
+    const effectiveCheckOut = check_out || check_in;
+
+    const { data: operator } = await supabaseAdmin
+      .from('operators')
+      .select('id, name, slug, email, phone, currency, language, operator_type')
       .eq('slug', req.params.slug)
       .eq('onboarding_complete', true)
       .single();
@@ -121,21 +149,51 @@ async function criarReserva(req, res, next) {
       return res.status(404).json({ error: 'Operador não encontrado', code: 'NOT_FOUND' });
     }
 
-    const { data: unit } = await supabaseAdmin
-      .from('units')
-      .select('*, pricing_rules(*)')
-      .eq('id', unit_id)
-      .eq('operator_id', operator.id)
-      .eq('status', 'active')
-      .single();
+    const isRestaurant = operator.operator_type === 'restaurant';
 
-    if (!unit) {
-      return res.status(404).json({ error: 'Unidade não encontrada', code: 'NOT_FOUND' });
+    /* Restaurante nunca recebe unit_id do cliente -- a mesa e sempre interna,
+       atribuida por tras via atribuirMesaAutomaticamente(). Os restantes tipos
+       mantem o fluxo actual de escolher uma unidade especifica. */
+    if (isRestaurant) {
+      if (!customer_name || !customer_email || !check_in || !reservation_time) {
+        return res.status(400).json({ error: 'Campos obrigatórios em falta', code: 'MISSING_FIELDS' });
+      }
+    } else if (!unit_id || !customer_name || !customer_email || !check_in) {
+      return res.status(400).json({ error: 'Campos obrigatórios em falta', code: 'MISSING_FIELDS' });
+    }
+    if (effectiveCheckOut < check_in) {
+      return res.status(400).json({ error: 'Checkout deve ser posterior ao check-in', code: 'INVALID_DATES' });
     }
 
-    const disponivel = await verificarDisponibilidade(supabaseAdmin, unit_id, check_in, effectiveCheckOut);
-    if (!disponivel) {
-      return res.status(409).json({ error: 'Unidade indisponível nas datas seleccionadas', code: 'UNAVAILABLE' });
+    let unit;
+    if (isRestaurant) {
+      unit = await atribuirMesaAutomaticamente(supabaseAdmin, operator.id, {
+        date: check_in,
+        startTime: reservation_time,
+        partySize: Number(party_size || guests || 1),
+        zone: zone_preference || null,
+      });
+      if (!unit) {
+        return res.status(409).json({ error: 'Sem mesas disponíveis para esta data/hora', code: 'UNAVAILABLE' });
+      }
+    } else {
+      const { data: unitRow } = await supabaseAdmin
+        .from('units')
+        .select('*, pricing_rules(*)')
+        .eq('id', unit_id)
+        .eq('operator_id', operator.id)
+        .eq('status', 'active')
+        .single();
+
+      if (!unitRow) {
+        return res.status(404).json({ error: 'Unidade não encontrada', code: 'NOT_FOUND' });
+      }
+      unit = unitRow;
+
+      const disponivel = await verificarDisponibilidade(supabaseAdmin, unit_id, check_in, effectiveCheckOut);
+      if (!disponivel) {
+        return res.status(409).json({ error: 'Unidade indisponível nas datas seleccionadas', code: 'UNAVAILABLE' });
+      }
     }
 
     // calcularPreco e por noite/dia (hotel, rent-a-car) — reservas de um so dia
@@ -149,7 +207,7 @@ async function criarReserva(req, res, next) {
     let finalTotal = total;
     let voucherId = null;
     if (voucher_code) {
-      const resultado = await validarVoucher(operator.id, voucher_code, unit_id, total);
+      const resultado = await validarVoucher(operator.id, voucher_code, unit.id, total);
       if (resultado.valid) {
         finalTotal = Math.max(0, total - resultado.discount);
         voucherId = resultado.voucherId;
@@ -175,9 +233,11 @@ async function criarReserva(req, res, next) {
       country_code: customer_country
     });
 
-    // Compor notes: hora do tour e/ou ocasião especial junto com as notas do cliente
+    // Compor notes: hora do tour/reserva e/ou ocasião especial junto com as notas do cliente
     const notesLines = [];
     if (tour_time) notesLines.push(`Hora: ${tour_time}`);
+    if (isRestaurant && reservation_time) notesLines.push(`Hora: ${reservation_time}`);
+    if (isRestaurant && zone_preference) notesLines.push(`Zona preferida: ${zone_preference}`);
     if (party_size) notesLines.push(`Pessoas: ${party_size}`);
     if (notes) notesLines.push(notes);
     const finalNotes = notesLines.join(' | ') || null;
@@ -186,7 +246,7 @@ async function criarReserva(req, res, next) {
       .from('reservations')
       .insert({
         operator_id: operator.id,
-        unit_id,
+        unit_id: unit.id,
         customer_id: customer.id,
         customer_name,
         customer_email,
@@ -199,17 +259,20 @@ async function criarReserva(req, res, next) {
         status: 'pending',
         source: 'public',
         notes: finalNotes,
-        affiliate_id: affiliateId
+        affiliate_id: affiliateId,
+        start_time: isRestaurant ? reservation_time : null,
+        duration_minutes: isRestaurant ? DEFAULT_SEATING_MINUTES : null,
       })
       .select()
       .single();
 
     if (error) {
-      /* reservations_no_overlap (database/040) -- ganha a corrida a segunda
-         reserva concorrente para a mesma unidade/datas, mesmo que ambas
-         tenham passado a verificarDisponibilidade() acima. */
+      /* reservations_no_overlap (040) e reservations_no_overlap_time (048) --
+         ganham a corrida a uma segunda reserva concorrente para a mesma
+         unidade/datas/horario, mesmo que ambas tenham passado pela
+         verificacao de disponibilidade acima. */
       if (error.code === '23P01') {
-        return res.status(409).json({ error: 'Unidade indisponível nas datas seleccionadas', code: 'UNAVAILABLE' });
+        return res.status(409).json({ error: isRestaurant ? 'Sem mesas disponíveis para esta data/hora' : 'Unidade indisponível nas datas seleccionadas', code: 'UNAVAILABLE' });
       }
       throw error;
     }
@@ -232,10 +295,16 @@ async function criarReserva(req, res, next) {
     const idioma = detectarIdioma(customer_country);
     const currency = operator.currency || 'EUR';
 
+    /* Privacidade: a identidade exacta da mesa (ex. "Mesa 4 — Terraço") e sempre
+       interna -- o cliente nunca a ve, nem sequer no email de confirmacao. O
+       email do operador continua a mostrar unit.name (a mesa real), so o do
+       cliente troca para o nome do restaurante quando isRestaurant. */
+    const customerFacingName = isRestaurant ? operator.name : unit.name;
+
     const clienteEmail = confirmacaoClienteEmail({
       idioma,
       customerName: customer_name,
-      tourName: unit.name,
+      tourName: customerFacingName,
       checkIn: check_in,
       checkOut: effectiveCheckOut,
       guests: party_size || guests || 1,
@@ -620,6 +689,14 @@ async function getUnit(req, res, next) {
 
     if (!operator) return res.status(404).json({ error: 'Operador não encontrado', code: 'NOT_FOUND' });
 
+    /* Mesas de restaurante nunca sao individualmente consultaveis pela API
+       publica -- sao inventario interno, so acessiveis via o fluxo de
+       reserva (atribuirMesaAutomaticamente em criarReserva), nunca como
+       "produto" navegavel/indexavel. */
+    if (operator.operator_type === 'restaurant') {
+      return res.status(404).json({ error: 'Serviço não encontrado', code: 'NOT_FOUND' });
+    }
+
     const { data: unit, error: unitErr } = await supabaseAdmin
       .from('units')
       .select('*, pricing_rules(*)')
@@ -921,6 +998,7 @@ async function getExperienceCategories(req, res, next) {
 module.exports = {
   getOperador,
   verificarDisponibilidadePublica,
+  verificarDisponibilidadeRestaurantePublica,
   criarReserva,
   discover,
   discoverUnits,

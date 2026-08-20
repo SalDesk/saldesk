@@ -1,5 +1,5 @@
 const { supabaseAdmin } = require('../config/supabase');
-const { verificarDisponibilidade, calcularPreco } = require('../helpers/bookingHelpers');
+const { verificarDisponibilidade, calcularPreco, verificarDisponibilidadeMesa, DEFAULT_SEATING_MINUTES } = require('../helpers/bookingHelpers');
 const { obterOuCriarCliente, actualizarStatsCheckout } = require('../helpers/customerHelper');
 const { enviarEmail } = require('../helpers/emailHelper');
 const { confirmacaoClienteEmail, notificacaoOperadorEmail } = require('../helpers/emailTemplates');
@@ -57,7 +57,8 @@ async function criar(req, res, next) {
   try {
     const { unit_id, customer_name, customer_email, customer_phone, customer_country,
             check_in, check_out, guests, notes, notes_internal, notes_guest,
-            total_amount, source, payment_method, payment_status, fleet_id } = req.body;
+            total_amount, source, payment_method, payment_status, fleet_id,
+            start_time, duration_minutes } = req.body;
 
     if (!unit_id || !customer_name || !customer_email || !check_in || !check_out) {
       return res.status(400).json({ error: 'Campos obrigatórios em falta', code: 'MISSING_FIELDS' });
@@ -68,7 +69,7 @@ async function criar(req, res, next) {
 
     const { data: unit } = await supabaseAdmin
       .from('units')
-      .select('*, pricing_rules(*)')
+      .select('*, pricing_rules(*), operators(operator_type)')
       .eq('id', unit_id)
       .eq('operator_id', getOperatorId(req))
       .single();
@@ -77,9 +78,22 @@ async function criar(req, res, next) {
       return res.status(404).json({ error: 'Unidade não encontrada', code: 'NOT_FOUND' });
     }
 
-    const disponivel = await verificarDisponibilidade(supabaseAdmin, unit_id, check_in, check_out);
+    /* Reserva de restaurante criada pelo staff (ex. por telefone) tem de
+       carregar uma hora real, tal como o fluxo publico -- caso contrario
+       fica invisivel a reservations_no_overlap_time (048) e a atribuicao
+       automatica do cliente podia reservar a mesma mesa por cima sem
+       detectar conflito. Staff continua a escolher a mesa directamente. */
+    const isRestaurant = unit.operators?.operator_type === 'restaurant';
+    if (isRestaurant && !start_time) {
+      return res.status(400).json({ error: 'Hora da reserva é obrigatória', code: 'MISSING_FIELDS' });
+    }
+    const finalDuration = isRestaurant ? (Number(duration_minutes) || DEFAULT_SEATING_MINUTES) : null;
+
+    const disponivel = isRestaurant
+      ? await verificarDisponibilidadeMesa(supabaseAdmin, unit_id, check_in, start_time, finalDuration)
+      : await verificarDisponibilidade(supabaseAdmin, unit_id, check_in, check_out);
     if (!disponivel) {
-      return res.status(409).json({ error: 'Unidade indisponível nas datas seleccionadas', code: 'UNAVAILABLE' });
+      return res.status(409).json({ error: isRestaurant ? 'Mesa indisponível nesse horário' : 'Unidade indisponível nas datas seleccionadas', code: 'UNAVAILABLE' });
     }
 
     // calcularPreco e por noite/dia (hotel, rent-a-car) — reservas de um so dia
@@ -121,17 +135,20 @@ async function criar(req, res, next) {
         source: finalSource,
         notes: finalNotes,
         fleet_id: fleet_id || null,
-        seller_id: req.staff?.id || null
+        seller_id: req.staff?.id || null,
+        start_time: isRestaurant ? start_time : null,
+        duration_minutes: finalDuration,
       })
       .select('*, units(name, unit_type), fleet(name, capacity)')
       .single();
 
     if (error) {
-      /* reservations_no_overlap (database/040) -- ganha a corrida a segunda
-         reserva concorrente para a mesma unidade/datas, mesmo que ambas
-         tenham passado a verificarDisponibilidade() acima. */
+      /* reservations_no_overlap (040) e reservations_no_overlap_time (048) --
+         ganham a corrida a uma segunda reserva concorrente para a mesma
+         unidade/datas/horario, mesmo que ambas tenham passado pela
+         verificacao de disponibilidade acima. */
       if (error.code === '23P01') {
-        return res.status(409).json({ error: 'Unidade indisponível nas datas seleccionadas', code: 'UNAVAILABLE' });
+        return res.status(409).json({ error: isRestaurant ? 'Mesa indisponível nesse horário' : 'Unidade indisponível nas datas seleccionadas', code: 'UNAVAILABLE' });
       }
       throw error;
     }

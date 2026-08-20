@@ -3,6 +3,7 @@ const router  = express.Router();
 const {
   getOperador,
   verificarDisponibilidadePublica,
+  verificarDisponibilidadeRestaurantePublica,
   criarReserva,
   discover,
   cmsExperiences,
@@ -57,6 +58,7 @@ router.get('/:slug/units/:unitId/reviews', getUnitReviews);
 router.get('/:slug',               getOperador);
 router.get('/:slug/reviews',       slugReviews);
 router.get('/:slug/availability',  verificarDisponibilidadePublica);
+router.get('/:slug/restaurant-availability', verificarDisponibilidadeRestaurantePublica);
 router.post('/:slug/reservations', criarReserva);
 router.post('/:slug/vouchers/validate', validarVoucherPublico);
 router.post('/affiliates/login', affiliatePortalLogin);

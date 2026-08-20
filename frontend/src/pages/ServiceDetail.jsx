@@ -21,7 +21,6 @@ const FALLBACK_IMGS = [
 ];
 
 const TOUR_SLOTS = ['07:00','08:00','09:00','10:00','11:00','12:00','13:00','14:00','15:00','16:00','17:00'];
-const REST_SLOTS = ['12:00','12:30','13:00','13:30','14:00','14:30','19:00','19:30','20:00','20:30','21:00','21:30','22:00','22:30'];
 const CV_LOCS_PT = ['Aeroporto (SID)','Hotel / Alojamento','Escritório da empresa','Outro endereço'];
 const CV_LOCS_EN = ['Airport (SID)','Hotel / Accommodation','Company office','Other address'];
 const CAR_EXTRAS = [
@@ -29,13 +28,6 @@ const CAR_EXTRAS = [
   { k:'gps',          pt:'GPS incluído',       en:'GPS navigation' },
   { k:'baby_seat',    pt:'Cadeira de bebé',    en:'Baby / child seat' },
   { k:'extra_driver', pt:'Condutor adicional', en:'Additional driver' },
-];
-const OCCASIONS = [
-  { v:'',          pt:'Sem ocasião especial', en:'No special occasion' },
-  { v:'birthday',  pt:'Aniversário',          en:'Birthday' },
-  { v:'honeymoon', pt:'Lua-de-mel',           en:'Honeymoon' },
-  { v:'business',  pt:'Reunião de negócios',  en:'Business meeting' },
-  { v:'other',     pt:'Outra ocasião',        en:'Other occasion' },
 ];
 
 /* ── helpers ─────────────────────────────────────── */
@@ -558,29 +550,11 @@ function RentACarModal({ unit, op, slug, lang, onClose, refCode }) {
   );
 }
 
-/* ── RestaurantModal ──────────────────────────────── */
-function RestaurantModal({ unit, op, slug, lang, onClose }) {
-  const [step,ss]=useState(1); const [date,sd]=useState(''); const [time,st]=useState(''); const [party,spa]=useState(2); const [occasion,so]=useState('');
-  const [info,si]=useState({name:'',email:'',phone:'',country:'',notes:''}); const [sub,ssub]=useState(false); const [resId,sr]=useState(null); const [err,se]=useState('');
-  function valid(){ if(step===1){if(!date){se(lang==='en'?'Select a date':'Seleccione uma data');return false;} if(!time){se(lang==='en'?'Select a time':'Seleccione um horário');return false;}} if(step===2&&(!info.name||!info.email)){se(lang==='en'?'Name and email required':'Nome e email obrigatórios');return false;} se('');return true; }
-  async function submit(){ ssub(true);se(''); try{ const occLabel=OCCASIONS.find(o=>o.v===occasion)?.[lang==='en'?'en':'pt']||''; const notes=[time?`${lang==='en'?'Time':'Hora'}: ${time}`:'',occLabel&&occasion?`${lang==='en'?'Occasion':'Ocasião'}: ${occLabel}`:'',info.notes].filter(Boolean).join('. '); sr(await postReservation(slug,{unit_id:unit.id,customer_name:info.name,customer_email:info.email,customer_phone:info.phone||null,customer_country:info.country||null,check_in:date,check_out:date,guests:party,notes})); }catch(e){se(e.message);}finally{ssub(false);} }
-  function next(){ if(!valid())return; step<3?ss(s=>s+1):submit(); }
-  const occLabel=OCCASIONS.find(o=>o.v===occasion)?.[lang==='en'?'en':'pt']||'';
-  const sumL=[{label:lang==='en'?'Restaurant':'Restaurante',value:unit.name},{label:lang==='en'?'Date':'Data',value:date},{label:lang==='en'?'Time':'Hora',value:time},{label:lang==='en'?'Guests':'Pessoas',value:`${party}`},...(occasion?[{label:lang==='en'?'Occasion':'Ocasião',value:occLabel}]:[])];
-  return (
-    <MS icon={<Utensils size={18} strokeWidth={1.75}/>} title={lang==='en'?'Book table':'Reservar mesa'} step={step} lang={lang} onClose={onClose} onPrev={()=>ss(s=>s-1)} onNext={next} nextLabel={step<3?(lang==='en'?'Continue':'Continuar'):(lang==='en'?'Confirm reservation':'Confirmar reserva')} nextDis={step===1&&(!date||!time)} sub={sub} err={err} ok={!!resId}>
-      {resId?<div className="p-5"><BS resId={resId} lang={lang} type="restaurant" onClose={onClose}/></div>
-      :step===1?<div className="p-5 space-y-4"><p className={SH}>{lang==='en'?'Date, time & party size':'Data, hora e número de pessoas'}</p>
-        <div className="grid grid-cols-2 gap-3"><div><label className={LB}>{lang==='en'?'Date':'Data'} *</label><input type="date" className={IN} min={TODAY()} value={date} onChange={e=>sd(e.target.value)}/></div><div><label className={LB}>{lang==='en'?'Time':'Hora'} *</label><select className={SEL} value={time} onChange={e=>st(e.target.value)}><option value="">{lang==='en'?'-- Select --':'-- Seleccionar --'}</option>{REST_SLOTS.map(h=><option key={h} value={h}>{h}</option>)}</select></div></div>
-        <Cnt label={lang==='en'?'Number of guests (1-20)':'Número de pessoas (1-20)'} val={party} set={spa} min={1} max={20}/>
-        <div><label className={LB}>{lang==='en'?'Special occasion':'Ocasião especial'}</label><select className={SEL} value={occasion} onChange={e=>so(e.target.value)}>{OCCASIONS.map(o=><option key={o.v} value={o.v}>{lang==='en'?o.en:o.pt}</option>)}</select></div>
-      </div>
-      :step===2?<div className="p-5"><p className={SH}>{lang==='en'?'Contact details':'Dados de contacto'}</p><GF d={info} set={si} lang={lang}><div><label className={LB}>{lang==='en'?'Special requests':'Pedidos especiais'}</label><textarea className={IN+' resize-none'} rows={3} value={info.notes} onChange={e=>si(i=>({...i,notes:e.target.value}))} placeholder={lang==='en'?'Allergies, vegetarian, birthday cake...':'Alergias, vegetariano, bolo de aniversário...'}/></div></GF></div>
-      :<div className="p-5 space-y-4"><p className={SH}>{lang==='en'?'Confirm reservation':'Confirmar reserva'}</p><ST lines={sumL}/><div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 text-sm font-body text-n-700 leading-relaxed"><span className="font-semibold text-amber-700">{lang==='en'?'No advance payment required.':'Sem pagamento antecipado.'}</span>{' '}{lang==='en'?'Payment on arrival.':'Pagamento à chegada.'}</div></div>}
-    </MS>
-  );
-}
-
+/* Restaurante nao tem mais pagina de detalhe de mesa -- getUnit devolve 404
+   para unidades de operadores restaurant (mesas sao inventario interno,
+   reservadas via o formulario proprio em PublicBooking.jsx). RestaurantModal,
+   REST_SLOTS e OCCASIONS foram removidos por serem codigo morto: nunca sao
+   alcançados, dado que este ecrã cai sempre no NotFoundPage para esse tipo. */
 function BookingModal({ unit, op, slug, lang, onClose, refCode }) {
   if (!unit||!op) return null;
   const t=op.operator_type;
@@ -588,7 +562,6 @@ function BookingModal({ unit, op, slug, lang, onClose, refCode }) {
   if (t==='hotel') return <HotelModal {...props}/>;
   if (t==='activity') return <ActivityModal {...props}/>;
   if (t==='rentacar') return <RentACarModal {...props}/>;
-  if (t==='restaurant') return <RestaurantModal {...props}/>;
   return <ActivityModal {...props}/>;
 }
 

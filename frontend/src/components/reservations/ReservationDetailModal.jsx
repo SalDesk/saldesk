@@ -119,6 +119,7 @@ export default function ReservationDetailModal({ reservationId, open, onClose })
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 pt-4 border-t border-n-100">
             <Row label={t('reservations.checkIn')} value={formatDate(reservation.check_in)} />
             {!sameDay && <Row label={t('reservations.checkOut')} value={formatDate(reservation.check_out)} />}
+            {reservation.start_time && <Row label={t('reservations.time')} value={reservation.start_time.slice(0, 5)} />}
             <Row label={t('reservations.guests')} value={reservation.guests} />
             {reservation.payment_status && (
               <Row

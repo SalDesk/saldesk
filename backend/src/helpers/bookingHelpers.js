@@ -62,4 +62,86 @@ function calcularPreco(unit, checkIn, checkOut) {
   return { total: Math.round(total * 100) / 100, dias };
 }
 
-module.exports = { verificarDisponibilidade, calcularPreco };
+const DEFAULT_SEATING_MINUTES = 120;
+
+function parseUnitMeta(unit) {
+  const raw = unit?.description;
+  if (typeof raw !== 'string' || !raw.startsWith('{')) return {};
+  try { return JSON.parse(raw); } catch { return {}; }
+}
+
+// Verifica conflito de horario para UMA mesa candidata, num dia especifico --
+// reservations_no_overlap_time (048) é a rede de segurança ao nível da BD;
+// esta função decide qual mesa oferecer antes de tentar o insert.
+async function verificarDisponibilidadeMesa(supabase, unitId, date, startTime, durationMinutes, excluirReservaId = null) {
+  let query = supabase
+    .from('reservations')
+    .select('id, start_time, duration_minutes')
+    .eq('unit_id', unitId)
+    .eq('check_in', date)
+    .in('status', ['pending', 'confirmed', 'checked_in'])
+    .not('start_time', 'is', null);
+  if (excluirReservaId) query = query.neq('id', excluirReservaId);
+
+  const { data: existentes } = await query;
+
+  const toMin = (t) => { const [h, m] = t.split(':').map(Number); return h * 60 + m; };
+  const novoInicio = toMin(startTime);
+  const novoFim = novoInicio + durationMinutes;
+
+  const conflito = (existentes || []).some((r) => {
+    const oInicio = toMin(r.start_time);
+    const oFim = oInicio + (r.duration_minutes || DEFAULT_SEATING_MINUTES);
+    return oInicio < novoFim && oFim > novoInicio;
+  });
+  if (conflito) return false;
+
+  const { data: bloqueadas } = await supabase
+    .from('blocked_dates')
+    .select('id')
+    .eq('unit_id', unitId)
+    .eq('date', date);
+
+  return !(bloqueadas?.length > 0);
+}
+
+// Encontra a melhor mesa livre para operator_id/date/time/partySize(+zone).
+// Nunca inventa uma mesa fallback -- devolve null quando nao ha nenhuma.
+// Combinação de mesas (units.description.combinable) fica fora desta fase.
+async function atribuirMesaAutomaticamente(supabase, operatorId, { date, startTime, durationMinutes = DEFAULT_SEATING_MINUTES, partySize, zone = null, excluirReservaId = null }) {
+  const { data: mesas } = await supabase
+    .from('units')
+    .select('*')
+    .eq('operator_id', operatorId)
+    .eq('status', 'active');
+
+  const candidatas = (mesas || [])
+    .map((unit) => ({ unit, meta: parseUnitMeta(unit) }))
+    .filter(({ unit, meta }) => {
+      const min = meta.capacity_min ?? 1;
+      const max = meta.capacity_max ?? unit.capacity ?? 1;
+      return partySize >= min && partySize <= max;
+    })
+    .sort((a, b) => {
+      if (zone) {
+        const az = a.meta.zone === zone ? 0 : 1;
+        const bz = b.meta.zone === zone ? 0 : 1;
+        if (az !== bz) return az - bz;
+      }
+      const maxA = a.meta.capacity_max ?? a.unit.capacity ?? 1;
+      const maxB = b.meta.capacity_max ?? b.unit.capacity ?? 1;
+      return maxA - maxB;
+    });
+
+  for (const { unit } of candidatas) {
+    if (await verificarDisponibilidadeMesa(supabase, unit.id, date, startTime, durationMinutes, excluirReservaId)) {
+      return unit;
+    }
+  }
+  return null;
+}
+
+module.exports = {
+  verificarDisponibilidade, calcularPreco,
+  verificarDisponibilidadeMesa, atribuirMesaAutomaticamente, DEFAULT_SEATING_MINUTES,
+};

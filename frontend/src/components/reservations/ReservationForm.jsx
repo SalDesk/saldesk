@@ -19,6 +19,7 @@ export default function ReservationForm({ reservation, units, operatorType, onSa
     check_out:        reservation?.check_out || '',
     guests:           reservation?.guests || 1,
     tour_time:        reservation?.tour_time || '09:00',
+    start_time:       reservation?.start_time?.slice(0, 5) || '19:00',
     source:           reservation?.source || 'manual',
     notes:            reservation?.notes || '',
   });
@@ -30,7 +31,10 @@ export default function ReservationForm({ reservation, units, operatorType, onSa
     const unit = units.find((u) => u.id === form.unit_id);
     if (!unit) { setPricePreview(null); return; }
 
-    if (operatorType === 'activity') {
+    if (operatorType === 'restaurant') {
+      // Mesas nao tem preco por reserva (base_price e sempre 0) -- sem pre-visualizacao.
+      setPricePreview(null);
+    } else if (operatorType === 'activity') {
       if (form.check_in && form.guests) {
         setPricePreview({ total: Number(unit.base_price) * Number(form.guests), tipo: 'activity' });
       } else {
@@ -54,6 +58,7 @@ export default function ReservationForm({ reservation, units, operatorType, onSa
       ...form,
       guests:   Number(form.guests),
       fleet_id: fleetId || null,
+      start_time: operatorType === 'restaurant' ? form.start_time : null,
       notes: operatorType === 'activity' && form.tour_time
         ? `Hora: ${form.tour_time}${form.notes ? ' | ' + form.notes : ''}`
         : form.notes,
@@ -79,6 +84,17 @@ export default function ReservationForm({ reservation, units, operatorType, onSa
             required
           />
           <Input label="Hora" type="time" value={form.tour_time} onChange={set('tour_time')} />
+        </div>
+      ) : operatorType === 'restaurant' ? (
+        <div className="grid grid-cols-2 gap-3">
+          <Input
+            label="Data da reserva"
+            type="date"
+            value={form.check_in}
+            onChange={e => setForm(f => ({ ...f, check_in: e.target.value, check_out: e.target.value }))}
+            required
+          />
+          <Input label="Hora" type="time" value={form.start_time} onChange={set('start_time')} required />
         </div>
       ) : (
         <div className="grid grid-cols-2 gap-3">

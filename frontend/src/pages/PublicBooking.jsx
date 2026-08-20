@@ -868,6 +868,240 @@ function LiveAvailabilitySection({ slug, units, lang, opType, currency, opCurren
   );
 }
 
+/* ── RestaurantReservationSection ────────────────────
+   Substitui a grelha de mesas-como-produtos: o cliente escolhe data/hora/
+   pessoas/zona, a mesa é sempre atribuída internamente (nunca escolhida
+   directamente aqui). ── */
+const REST_SLOTS = ['12:00','12:30','13:00','13:30','14:00','14:30','19:00','19:30','20:00','20:30','21:00','21:30','22:00','22:30'];
+const ZONE_LABELS = {
+  interior: { pt: 'Interior',  en: 'Indoor' },
+  esplanada:{ pt: 'Esplanada', en: 'Terrace' },
+  terraco:  { pt: 'Terraço',   en: 'Rooftop' },
+  vip:      { pt: 'VIP',       en: 'VIP' },
+  privado:  { pt: 'Privado',   en: 'Private' },
+};
+
+function RestaurantReservationSection({ slug, lang }) {
+  const today = new Date().toISOString().split('T')[0];
+  const [date, setDate]           = useState('');
+  const [time, setTime]           = useState('');
+  const [party, setParty]         = useState(2);
+  const [zone, setZone]           = useState('');
+  const [checking, setChecking]   = useState(false);
+  const [available, setAvailable] = useState(null); // null | true | false
+  const [contact, setContact]     = useState({ name: '', email: '', phone: '', country: '' });
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError]         = useState('');
+  const [resId, setResId]         = useState(null);
+
+  function resetAvailability() {
+    setAvailable(null);
+    setError('');
+  }
+
+  async function checkAvailability() {
+    if (!date || !time || !party) return;
+    setChecking(true);
+    setError('');
+    try {
+      const params = new URLSearchParams({ date, time, party_size: String(party) });
+      if (zone) params.set('zone', zone);
+      const r = await fetch(`${API}/public/${slug}/restaurant-availability?${params}`);
+      const j = await r.json();
+      setAvailable(!!j.data?.available);
+    } catch {
+      setError(lang === 'en' ? 'Could not check availability. Try again.' : 'Não foi possível verificar disponibilidade. Tente novamente.');
+    } finally {
+      setChecking(false);
+    }
+  }
+
+  async function submitReservation(e) {
+    e.preventDefault();
+    if (!contact.name || !contact.email) {
+      setError(lang === 'en' ? 'Name and email required' : 'Nome e email obrigatórios');
+      return;
+    }
+    setSubmitting(true);
+    setError('');
+    try {
+      const r = await fetch(`${API}/public/${slug}/reservations`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          customer_name: contact.name,
+          customer_email: contact.email,
+          customer_phone: contact.phone || null,
+          customer_country: contact.country || null,
+          check_in: date,
+          reservation_time: time,
+          party_size: party,
+          zone_preference: zone || null,
+        }),
+      });
+      const j = await r.json();
+      if (!r.ok) throw new Error(j.error || (lang === 'en' ? 'Could not submit reservation' : 'Erro ao submeter reserva'));
+      setResId(j.data?.id || 'ok');
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  return (
+    <section id="servicos" className="bg-ocean-900 text-white">
+      <div className="max-w-2xl mx-auto px-4 sm:px-6 py-12 sm:py-16">
+        <p className="text-xs font-body font-bold text-sand-400 uppercase tracking-widest mb-2">
+          {lang === 'en' ? 'Reservations' : 'Reservas'}
+        </p>
+        <h2 className="font-display font-bold text-2xl sm:text-3xl text-white mb-2">
+          {lang === 'en' ? 'Book a table' : 'Reservar mesa'}
+        </h2>
+        <p className="text-sm font-body text-white/55 mb-8 max-w-lg">
+          {lang === 'en'
+            ? "Choose date, time and party size — we'll assign the best table for you."
+            : 'Escolha data, hora e número de pessoas — nós atribuímos a melhor mesa disponível.'}
+        </p>
+
+        {resId ? (
+          <div className="bg-white/10 border border-white/20 rounded-2xl p-6 flex items-start gap-4">
+            <div className="w-10 h-10 rounded-full bg-sand-500 flex items-center justify-center flex-shrink-0">
+              <Check size={20} strokeWidth={2.5} className="text-ocean-900" />
+            </div>
+            <div>
+              <p className="font-display font-bold text-white mb-1">
+                {lang === 'en' ? 'Reservation submitted!' : 'Reserva submetida!'}
+              </p>
+              <p className="text-sm font-body text-white/70">
+                {lang === 'en'
+                  ? 'Awaiting confirmation from the restaurant. You will receive an email shortly.'
+                  : 'A aguardar confirmação do restaurante. Vai receber um email em breve.'}
+              </p>
+            </div>
+          </div>
+        ) : (
+          <div className="space-y-5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-body font-semibold text-white/60 mb-2">
+                  {lang === 'en' ? 'Date' : 'Data'}
+                </label>
+                <input
+                  type="date" min={today} value={date}
+                  onChange={e => { setDate(e.target.value); resetAvailability(); }}
+                  className="w-full bg-white/10 border border-white/20 text-white rounded-xl px-4 py-3 font-body text-sm focus:outline-none focus:border-sand-400 focus:ring-1 focus:ring-sand-400 [color-scheme:dark]"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-body font-semibold text-white/60 mb-2">
+                  {lang === 'en' ? 'Time' : 'Hora'}
+                </label>
+                <select
+                  value={time}
+                  onChange={e => { setTime(e.target.value); resetAvailability(); }}
+                  className="w-full bg-white/10 border border-white/20 text-white rounded-xl px-4 py-3 font-body text-sm focus:outline-none focus:border-sand-400 focus:ring-1 focus:ring-sand-400 [color-scheme:dark]"
+                >
+                  <option value="" className="text-n-900">{lang === 'en' ? '-- Select --' : '-- Seleccionar --'}</option>
+                  {REST_SLOTS.map(h => <option key={h} value={h} className="text-n-900">{h}</option>)}
+                </select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-body font-semibold text-white/60 mb-2">
+                  {lang === 'en' ? 'Party size' : 'Número de pessoas'}
+                </label>
+                <div className="flex items-center gap-3 bg-white/10 border border-white/20 rounded-xl px-4 py-2">
+                  <button type="button" onClick={() => { setParty(p => Math.max(1, p - 1)); resetAvailability(); }}
+                    className="w-7 h-7 rounded-full border border-white/30 flex items-center justify-center text-white hover:border-sand-400 hover:text-sand-400 transition-colors text-lg font-light leading-none">−</button>
+                  <span className="flex-1 text-center font-display font-bold text-white tabular-nums">{party}</span>
+                  <button type="button" onClick={() => { setParty(p => Math.min(20, p + 1)); resetAvailability(); }}
+                    className="w-7 h-7 rounded-full border border-white/30 flex items-center justify-center text-white hover:border-sand-400 hover:text-sand-400 transition-colors text-lg font-light leading-none">+</button>
+                </div>
+              </div>
+              <div>
+                <label className="block text-xs font-body font-semibold text-white/60 mb-2">
+                  {lang === 'en' ? 'Preferred area (optional)' : 'Zona preferida (opcional)'}
+                </label>
+                <select
+                  value={zone}
+                  onChange={e => { setZone(e.target.value); resetAvailability(); }}
+                  className="w-full bg-white/10 border border-white/20 text-white rounded-xl px-4 py-3 font-body text-sm focus:outline-none focus:border-sand-400 focus:ring-1 focus:ring-sand-400 [color-scheme:dark]"
+                >
+                  <option value="" className="text-n-900">{lang === 'en' ? 'No preference' : 'Sem preferência'}</option>
+                  {Object.entries(ZONE_LABELS).map(([key, l]) => (
+                    <option key={key} value={key} className="text-n-900">{lang === 'en' ? l.en : l.pt}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            {available === null && (
+              <button
+                onClick={checkAvailability}
+                disabled={!date || !time || checking}
+                className="flex items-center gap-2 bg-sand-500 text-ocean-900 font-body font-bold text-sm px-6 py-3 rounded-xl hover:bg-sand-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {checking
+                  ? <span className="w-4 h-4 border-2 border-ocean-900/30 border-t-ocean-900 rounded-full animate-spin" />
+                  : <Check size={16} strokeWidth={2} />}
+                {lang === 'en' ? 'Check availability' : 'Verificar disponibilidade'}
+              </button>
+            )}
+
+            {available === false && (
+              <div className="flex items-start gap-3 bg-white/5 border border-white/10 rounded-xl px-4 py-3">
+                <X size={16} strokeWidth={2} className="text-red-400 flex-shrink-0 mt-0.5" />
+                <p className="text-sm font-body text-white/70">
+                  {lang === 'en'
+                    ? 'No tables available for this date/time/party size. Try a different time.'
+                    : 'Sem mesas disponíveis para esta data/hora/número de pessoas. Tente outro horário.'}
+                </p>
+              </div>
+            )}
+
+            {available === true && (
+              <form onSubmit={submitReservation} className="space-y-3 pt-2 border-t border-white/10">
+                <p className="flex items-center gap-2 text-sm font-body font-semibold text-sand-400">
+                  <Check size={14} strokeWidth={2.5} />
+                  {lang === 'en' ? 'Table available — enter your details' : 'Mesa disponível — introduza os seus dados'}
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <input required placeholder={lang === 'en' ? 'Name' : 'Nome'} value={contact.name}
+                    onChange={e => setContact(c => ({ ...c, name: e.target.value }))}
+                    className="bg-white/10 border border-white/20 text-white placeholder-white/40 rounded-xl px-4 py-3 font-body text-sm focus:outline-none focus:border-sand-400 focus:ring-1 focus:ring-sand-400" />
+                  <input required type="email" placeholder="Email" value={contact.email}
+                    onChange={e => setContact(c => ({ ...c, email: e.target.value }))}
+                    className="bg-white/10 border border-white/20 text-white placeholder-white/40 rounded-xl px-4 py-3 font-body text-sm focus:outline-none focus:border-sand-400 focus:ring-1 focus:ring-sand-400" />
+                  <input placeholder={lang === 'en' ? 'Phone' : 'Telefone'} value={contact.phone}
+                    onChange={e => setContact(c => ({ ...c, phone: e.target.value }))}
+                    className="bg-white/10 border border-white/20 text-white placeholder-white/40 rounded-xl px-4 py-3 font-body text-sm focus:outline-none focus:border-sand-400 focus:ring-1 focus:ring-sand-400" />
+                  <input placeholder={lang === 'en' ? 'Country (PT, DE...)' : 'País (PT, DE...)'} value={contact.country}
+                    onChange={e => setContact(c => ({ ...c, country: e.target.value }))}
+                    className="bg-white/10 border border-white/20 text-white placeholder-white/40 rounded-xl px-4 py-3 font-body text-sm focus:outline-none focus:border-sand-400 focus:ring-1 focus:ring-sand-400" />
+                </div>
+                <button type="submit" disabled={submitting}
+                  className="w-full flex items-center justify-center gap-2 bg-sand-500 text-ocean-900 font-body font-bold text-sm px-6 py-3 rounded-xl hover:bg-sand-400 transition-colors disabled:opacity-50">
+                  {submitting
+                    ? <span className="w-4 h-4 border-2 border-ocean-900/30 border-t-ocean-900 rounded-full animate-spin" />
+                    : <ArrowRight size={16} strokeWidth={2} />}
+                  {lang === 'en' ? 'Confirm reservation' : 'Confirmar reserva'}
+                </button>
+              </form>
+            )}
+
+            {error && (
+              <p className="text-sm font-body text-red-300">{error}</p>
+            )}
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
+
 /* ── SpecialOfferSection ──────────────────────────── */
 function SpecialOfferSection({ lang, goBook }) {
   return (
@@ -988,6 +1222,7 @@ export default function PublicBooking() {
   }
 
   function goBook() {
+    if (op.operator_type === 'restaurant') { scrollTo('servicos'); return; }
     if (units[0]) navigate(`/book/${slug}/servico/${units[0].id}`);
     else scrollTo('servicos');
   }
@@ -1017,6 +1252,11 @@ export default function PublicBooking() {
 
   if (loading)  return <SkeletonPage />;
   if (notFound) return <NotFoundPage />;
+
+  /* Restaurante: mesas sao inventario interno, nunca "produtos" navegaveis --
+     substitui a grelha de servicos/disponibilidade ao vivo por um formulario
+     de reserva real (data/hora/pessoas/zona), ver RestaurantReservationSection. */
+  const isRestaurant = op.operator_type === 'restaurant';
 
   const galleryImgs = [
     ...(op.cover_images?.filter(Boolean) || []),
@@ -1357,16 +1597,23 @@ export default function PublicBooking() {
       <div style={{ display: 'flex', flexDirection: 'column' }}>
 
       {/* ── Featured ── */}
+      {!isRestaurant && (
       <div style={{ order: sectionOrder('featured') }}>
       <FeaturedSection
         units={units} slug={slug} currency={currency} lang={lang}
         opType={op.operator_type} opCurrency={op.currency}
       />
       </div>
+      )}
 
+      {/* ── Serviços (restaurante: formulário de reserva real, nunca a grelha de mesas) ── */}
+      {isRestaurant ? (
+        <div style={{ order: sectionOrder('services') }}>
+          <RestaurantReservationSection slug={slug} lang={lang} />
+        </div>
+      ) : (
       <div className="max-w-5xl mx-auto px-4 sm:px-6" style={{ order: sectionOrder('services') }}>
 
-        {/* ── Serviços ── */}
         {units.length > 0 && (
           <section id="servicos" className="py-12 sm:py-16">
             <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
@@ -1448,6 +1695,7 @@ export default function PublicBooking() {
           </section>
         )}
       </div>
+      )}
 
       {/* ── Sobre Nós ── */}
       <section id="sobre" className="bg-n-50 border-t border-n-100" style={{ order: sectionOrder('about') }}>
@@ -1644,18 +1892,23 @@ export default function PublicBooking() {
 
       </div>
 
-      {/* ── Tour Comparison ── */}
+      {/* ── Tour Comparison (compara metadados de tour -- duração/dificuldade/idiomas --
+           que uma mesa nunca tem; sem sentido para restaurante) ── */}
+      {!isRestaurant && (
       <div style={{ order: sectionOrder('comparison') }}>
         <TourComparisonSection units={units} lang={lang} opCurrency={op.currency} />
       </div>
+      )}
 
-      {/* ── Live Availability ── */}
+      {/* ── Live Availability (restaurante: substituído pelo formulário de reserva acima) ── */}
+      {!isRestaurant && (
       <div style={{ order: sectionOrder('availability') }}>
         <LiveAvailabilitySection
           slug={slug} units={units} lang={lang}
           opType={op.operator_type} currency={currency} opCurrency={op.currency}
         />
       </div>
+      )}
 
       <div className="max-w-5xl mx-auto px-4 sm:px-6" style={{ order: sectionOrder('contact') }}>
 

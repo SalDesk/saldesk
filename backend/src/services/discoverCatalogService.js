@@ -26,10 +26,19 @@ async function getDiscoverCatalog({ type } = {}) {
   operators.forEach((o) => { operatorMap[o.id] = o; });
   const ids = operators.map((o) => o.id);
 
+  /* Mesas de restaurante nunca sao "produtos" navegaveis no catalogo agregado
+     -- sao inventario interno, reservadas via o formulario proprio na pagina
+     do restaurante (/book/{slug}), nao um card individual no Conect. Um
+     filtro type='restaurant' devolve correctamente um catalogo vazio. */
+  const bookableUnitOperatorIds = operators
+    .filter((o) => o.operator_type !== 'restaurant')
+    .map((o) => o.id);
+  if (!bookableUnitOperatorIds.length) return [];
+
   const { data: units, error: unitsErr } = await supabaseAdmin
     .from('units')
     .select('id, operator_id, name, description, base_price, images, created_at, duration_minutes, languages_offered, lat, lng, category_id, experience_categories(label_pt, label_en)')
-    .in('operator_id', ids)
+    .in('operator_id', bookableUnitOperatorIds)
     .eq('status', 'active')
     .eq('conect_status', 'published');
   if (unitsErr) throw unitsErr;

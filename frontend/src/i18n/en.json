@@ -145,6 +145,7 @@
     },
     "checkIn": "Check-in",
     "checkOut": "Check-out",
+    "time": "Time",
     "guests": "Guests",
     "unit": "Unit",
     "customer": "Customer",
