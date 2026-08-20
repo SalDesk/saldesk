@@ -87,8 +87,7 @@ async function diasIndisponiveisEmLote(unitId, dataInicio, dataFim) {
       .select('check_in, check_out')
       .eq('unit_id', unitId)
       .in('status', ['pending', 'confirmed', 'checked_in'])
-      .lt('check_in', dataFim)
-      .gt('check_out', dataInicio),
+      .lt('check_in', dataFim),
     supabaseAdmin
       .from('blocked_dates')
       .select('date')
@@ -97,10 +96,18 @@ async function diasIndisponiveisEmLote(unitId, dataInicio, dataFim) {
       .lt('date', dataFim),
   ]);
 
+  const inicioJanela = new Date(dataInicio + 'T00:00:00Z');
   const indisponiveis = new Set();
   for (const r of reservasRes.data || []) {
     const cur = new Date(r.check_in + 'T00:00:00Z');
-    const fim = new Date(r.check_out + 'T00:00:00Z');
+    const fimBruto = new Date(r.check_out + 'T00:00:00Z');
+    /* Tours/actividades sao reservas de um so dia (check_in === check_out) --
+       sem normalizar, "fim" ficava igual a "cur" e o while nunca corria,
+       deixando esse dia por marcar como indisponivel para a GYG. O filtro
+       gt('check_out', dataInicio) tambem excluia essas linhas da propria
+       query; removido a favor deste corte em JS, ja com o "fim" correcto. */
+    const fim = fimBruto > cur ? fimBruto : new Date(cur.getTime() + 86400000);
+    if (fim <= inicioJanela) continue;
     while (cur < fim) {
       indisponiveis.add(cur.toISOString().split('T')[0]);
       cur.setUTCDate(cur.getUTCDate() + 1);

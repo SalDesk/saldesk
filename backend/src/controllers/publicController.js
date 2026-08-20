@@ -201,6 +201,13 @@ async function criarReserva(req, res, next) {
     } else if (!unit_id || !customer_name || !customer_email || !check_in) {
       return res.status(400).json({ error: 'Campos obrigatórios em falta', code: 'MISSING_FIELDS' });
     }
+    /* Hotel/rent-a-car tem noites reais -- check_out omitido nao pode
+       colapsar silenciosamente para check_in (reserva de 1 noite/dia sem o
+       cliente ter pedido isso). Activity/restaurant continuam a aceitar so
+       check_in (reserva de um so dia, por desenho). */
+    if (['hotel', 'rentacar'].includes(operator.operator_type) && !check_out) {
+      return res.status(400).json({ error: 'Data de check-out é obrigatória', code: 'MISSING_FIELDS' });
+    }
     if (effectiveCheckOut < check_in) {
       return res.status(400).json({ error: 'Checkout deve ser posterior ao check-in', code: 'INVALID_DATES' });
     }
@@ -263,11 +270,15 @@ async function criarReserva(req, res, next) {
 
     // calcularPreco e por noite/dia (hotel, rent-a-car) — reservas de um so dia
     // (tours/actividades, cobrados por pessoa) ficariam sempre a 0 nesse calculo,
-    // por isso usam antes base_price * numero de pessoas.
+    // por isso usam antes base_price * numero de pessoas. Mesas de restaurante
+    // sao sempre criadas com base_price:0 (RestaurantTableForm) -- a propria
+    // reserva de mesa nao tem preco fixo, so o pre-pedido (se existir) tem.
     const numPessoas = party_size || guests || 1;
-    const total = effectiveCheckOut === check_in
-      ? Math.round(Number(unit.base_price || 0) * numPessoas * 100) / 100
-      : calcularPreco(unit, check_in, effectiveCheckOut).total;
+    const total = isRestaurant
+      ? (preOrderValidado?.totalPrice || 0)
+      : (effectiveCheckOut === check_in
+          ? Math.round(Number(unit.base_price || 0) * numPessoas * 100) / 100
+          : calcularPreco(unit, check_in, effectiveCheckOut).total);
 
     let finalTotal = total;
     let voucherId = null;

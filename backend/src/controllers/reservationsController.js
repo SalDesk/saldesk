@@ -19,11 +19,12 @@ function getOperatorId(req) {
 }
 
 const TRANSICOES = {
-  pending:    ['confirmed', 'cancelled'],
-  confirmed:  ['checked_in', 'cancelled'],
+  pending:    ['confirmed', 'cancelled', 'no_show'],
+  confirmed:  ['checked_in', 'cancelled', 'no_show'],
   checked_in: ['checked_out', 'cancelled'],
   checked_out: [],
-  cancelled:  []
+  cancelled:  [],
+  no_show:    [],
 };
 
 async function listar(req, res, next) {
@@ -113,7 +114,6 @@ async function criar(req, res, next) {
       ? Math.round(Number(unit.base_price || 0) * numPessoas * 100) / 100
       : calcularPreco(unit, check_in, check_out).total;
     const finalPrice = (total_amount !== undefined && total_amount !== null) ? Number(total_amount) : total;
-    const finalNotes = notes_internal || notes_guest || notes || null;
     const finalSource = source || 'admin';
 
     // Criar ou obter cliente CRM
@@ -140,7 +140,9 @@ async function criar(req, res, next) {
         total_price: finalPrice,
         status: 'confirmed',
         source: finalSource,
-        notes: finalNotes,
+        notes: notes || null,
+        notes_internal: notes_internal || null,
+        notes_guest: notes_guest || null,
         fleet_id: fleet_id || null,
         seller_id: req.staff?.id || null,
         start_time: isRestaurant ? start_time : null,
@@ -280,7 +282,8 @@ async function actualizar(req, res, next) {
       return res.status(403).json({ error: 'Apenas operadores podem gerir esta reserva', code: 'OPERATOR_ONLY' });
     }
 
-    const { customer_name, customer_email, customer_phone, customer_country, guests, notes, fleet_id } = req.body;
+    const { customer_name, customer_email, customer_phone, customer_country, guests, notes,
+            notes_internal, notes_guest, fleet_id, check_in, check_out } = req.body;
 
     const updates = { updated_at: new Date().toISOString() };
     if (customer_name !== undefined) updates.customer_name = customer_name;
@@ -289,7 +292,42 @@ async function actualizar(req, res, next) {
     if (customer_country !== undefined) updates.customer_country = customer_country;
     if (guests !== undefined) updates.guests = guests;
     if (notes !== undefined) updates.notes = notes;
+    if (notes_internal !== undefined) updates.notes_internal = notes_internal;
+    if (notes_guest !== undefined) updates.notes_guest = notes_guest;
     if (fleet_id !== undefined) updates.fleet_id = fleet_id || null;
+
+    /* Reagendar (mudar check_in/check_out) precisa de reconfirmar disponibilidade --
+       sem isto, o pedido "tinha sucesso" mas ou nunca persistia a nova data (campos
+       fora do whitelist anterior) ou podia sobrepor outra reserva ja confirmada sem
+       qualquer aviso. */
+    if (check_in !== undefined || check_out !== undefined) {
+      const { data: actual } = await supabaseAdmin
+        .from('reservations')
+        .select('unit_id, check_in, check_out')
+        .eq('id', req.params.id)
+        .eq('operator_id', getOperatorId(req))
+        .single();
+      if (!actual) return res.status(404).json({ error: 'Reserva não encontrada', code: 'NOT_FOUND' });
+
+      const newCheckIn = check_in !== undefined ? check_in : actual.check_in;
+      /* Reagendar so e usado hoje para tours/actividades de um so dia
+         (check_in === check_out) -- se so vier check_in, o check_out
+         acompanha-o em vez de manter a data antiga e encolher/inverter a
+         estadia por engano. */
+      const newCheckOut = check_out !== undefined ? check_out : newCheckIn;
+
+      if (newCheckOut < newCheckIn) {
+        return res.status(400).json({ error: 'Checkout não pode ser anterior ao check-in', code: 'INVALID_DATES' });
+      }
+
+      const disponivel = await verificarDisponibilidade(supabaseAdmin, actual.unit_id, newCheckIn, newCheckOut, req.params.id);
+      if (!disponivel) {
+        return res.status(409).json({ error: 'Unidade indisponível nas datas seleccionadas', code: 'UNAVAILABLE' });
+      }
+
+      updates.check_in = newCheckIn;
+      updates.check_out = newCheckOut;
+    }
 
     const { data, error } = await supabaseAdmin
       .from('reservations')
@@ -299,7 +337,13 @@ async function actualizar(req, res, next) {
       .select('*, units(name, unit_type), fleet(name, capacity)')
       .single();
 
-    if (error || !data) {
+    if (error) {
+      if (error.code === '23P01') {
+        return res.status(409).json({ error: 'Unidade indisponível nas datas seleccionadas', code: 'UNAVAILABLE' });
+      }
+      throw error;
+    }
+    if (!data) {
       return res.status(404).json({ error: 'Reserva não encontrada', code: 'NOT_FOUND' });
     }
 

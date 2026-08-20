@@ -1,26 +1,43 @@
-// Verifica se uma unidade está disponível num período
+function addDays(dateStr, n) {
+  const d = new Date(dateStr + 'T00:00:00Z');
+  d.setUTCDate(d.getUTCDate() + n);
+  return d.toISOString().split('T')[0];
+}
+
+// Verifica se uma unidade está disponível num período. Tours/actividades sao
+// reservas de um so dia (check_in === check_out) -- um intervalo exclusivo
+// [d, d) fica vazio e nunca colide consigo mesmo, por isso a comparacao SQL
+// directa (check_in < checkOut AND check_out > checkIn) deixava passar duas
+// reservas no mesmo dia para a mesma unidade sem detectar conflito nenhum.
+// Normaliza para "dia seguinte" so para efeitos de comparacao (o que fica
+// gravado na BD continua check_in === check_out, sem alteracao).
 async function verificarDisponibilidade(supabase, unitId, checkIn, checkOut, excluirReservaId = null) {
+  const effectiveCheckOut = checkOut > checkIn ? checkOut : addDays(checkIn, 1);
+
   let query = supabase
     .from('reservations')
-    .select('id')
+    .select('id, check_in, check_out')
     .eq('unit_id', unitId)
     .in('status', ['pending', 'confirmed', 'checked_in'])
-    .lt('check_in', checkOut)
-    .gt('check_out', checkIn);
+    .lt('check_in', effectiveCheckOut);
 
   if (excluirReservaId) {
     query = query.neq('id', excluirReservaId);
   }
 
-  const { data: conflitos } = await query;
-  if (conflitos?.length > 0) return false;
+  const { data: candidatos } = await query;
+  const conflito = (candidatos || []).some((r) => {
+    const rEffectiveCheckOut = r.check_out > r.check_in ? r.check_out : addDays(r.check_in, 1);
+    return rEffectiveCheckOut > checkIn;
+  });
+  if (conflito) return false;
 
   const { data: bloqueadas } = await supabase
     .from('blocked_dates')
     .select('id')
     .eq('unit_id', unitId)
     .gte('date', checkIn)
-    .lt('date', checkOut);
+    .lt('date', effectiveCheckOut);
 
   return !(bloqueadas?.length > 0);
 }

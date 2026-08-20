@@ -113,10 +113,15 @@ async function validarVoucher(operatorId, code, unitId, amount) {
   return { valid: true, voucherId: voucher.id, discount: Math.round(discount * 100) / 100 };
 }
 
+/* read-then-write (SELECT + UPDATE em dois passos) tinha uma corrida real:
+   duas reservas concorrentes com o mesmo codigo de uso unico podiam ambas
+   passar em validarVoucher() antes de qualquer uma gravar o incremento,
+   furando max_uses. registar_uso_voucher() faz o incremento condicional ao
+   limite numa UNICA instrucao SQL (atomico ao nivel da linha). */
 async function registarUsoVoucher(voucherId) {
-  const { data: v } = await supabaseAdmin.from('vouchers').select('uses_count').eq('id', voucherId).single();
-  if (!v) return;
-  await supabaseAdmin.from('vouchers').update({ uses_count: (v.uses_count || 0) + 1 }).eq('id', voucherId);
+  const { data: aplicado, error } = await supabaseAdmin.rpc('registar_uso_voucher', { p_voucher_id: voucherId });
+  if (error) throw error;
+  if (!aplicado) console.error('[Voucher] Uso nao registado -- limite max_uses ja atingido na corrida:', voucherId);
 }
 
 /* Rota publica — permite ao cliente ver o desconto antes de confirmar a

@@ -139,8 +139,15 @@ async function getDiscoverCatalog({ type } = {}) {
     blockedByUnit[unitId].add(dateStr);
   };
   (upcomingRes || []).forEach((r) => {
-    let d = new Date(r.check_in) > today ? new Date(r.check_in) : today;
-    const end = new Date(r.check_out) < windowEnd ? new Date(r.check_out) : windowEnd;
+    /* Tours/actividades sao reservas de um so dia (check_in === check_out) --
+       sem normalizar, o "end" ficava igual ao "d" inicial e o while nunca
+       corria, deixando esse dia por marcar como bloqueado (mesmo bug ja
+       corrigido em verificarDisponibilidade, bookingHelpers.js). */
+    const checkInDate = new Date(r.check_in);
+    const checkOutDate = new Date(r.check_out);
+    const effectiveCheckOutDate = checkOutDate > checkInDate ? checkOutDate : new Date(checkInDate.getTime() + 86400000);
+    let d = checkInDate > today ? checkInDate : today;
+    const end = effectiveCheckOutDate < windowEnd ? effectiveCheckOutDate : windowEnd;
     while (d < end) {
       markBlocked(r.unit_id, fmtDate(d));
       d = new Date(d.getTime() + 86400000);

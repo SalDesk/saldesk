@@ -25,7 +25,7 @@ async function processSyncJob({ data }) {
       .eq('operator_id', operatorId)
       .neq('status', 'cancelled')
       .lte('check_in', fim)
-      .gt('check_out', hoje),
+      .gte('check_out', hoje),
     supabaseAdmin
       .from('blocked_dates')
       .select('unit_id, date')
@@ -41,7 +41,12 @@ async function processSyncJob({ data }) {
   const daysUnavailable = {};
   for (const r of reservasRes.data || []) {
     const cur = new Date(r.check_in + 'T00:00:00Z');
-    const end = new Date(r.check_out + 'T00:00:00Z');
+    const endBruto = new Date(r.check_out + 'T00:00:00Z');
+    /* Tours/actividades sao reservas de um so dia (check_in === check_out) --
+       sem normalizar, "end" ficava igual a "cur" e o while nunca corria,
+       nunca reportando esse dia como indisponivel aos canais OTA (risco real
+       de overbooking vindo de fora). */
+    const end = endBruto > cur ? endBruto : new Date(cur.getTime() + 86400000);
     while (cur < end) {
       const ds = cur.toISOString().split('T')[0];
       if (!daysUnavailable[r.unit_id]) daysUnavailable[r.unit_id] = new Set();

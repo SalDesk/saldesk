@@ -302,10 +302,11 @@ async function registerManualPayment(req, res, next) {
     if (!reservation_id || !amount || !method) {
       return res.status(400).json({ error: 'reservation_id, amount e method obrigatorios', code: 'MISSING_FIELDS' });
     }
-    /* reservations nao tem "total_amount"/"notes_internal" -- as colunas
-       reais sao "total_price" e "notes". Este select/update falhava sempre
-       (coluna inexistente), fazendo o registo de pagamento manual devolver
-       um falso 404 antes mesmo de tentar gravar. */
+    /* reservations nao tem coluna "total_amount" -- a coluna real e
+       "total_price". Este select falhava sempre (coluna inexistente),
+       fazendo o registo de pagamento manual devolver um falso 404 antes
+       mesmo de tentar gravar. (notes_internal existe -- ver migracao
+       reservations_notes_split_and_no_show -- so nao e usada aqui.) */
     const { data: reserva } = await supabaseAdmin.from('reservations').select('total_price, amount_paid').eq('id', reservation_id).eq('operator_id', req.operator.id).single();
     if (!reserva) return res.status(404).json({ error: 'Reserva nao encontrada', code: 'NOT_FOUND' });
 
@@ -346,7 +347,7 @@ async function getHistory(req, res, next) {
 async function refund(req, res, next) {
   try {
     const { reservation_id, amount, reason } = req.body;
-    const { data: reserva } = await supabaseAdmin.from('reservations').select('paypal_capture_id, payment_method, total_price, customer_email, operators(name)').eq('id', reservation_id).eq('operator_id', req.operator.id).single();
+    const { data: reserva } = await supabaseAdmin.from('reservations').select('paypal_capture_id, payment_method, total_price, customer_email, notes_internal, operators(name)').eq('id', reservation_id).eq('operator_id', req.operator.id).single();
     if (!reserva) return res.status(404).json({ error: 'Reserva nao encontrada', code: 'NOT_FOUND' });
 
     if (reserva.payment_method === 'paypal') {
@@ -363,9 +364,14 @@ async function refund(req, res, next) {
       await refundCapture(clientId, clientSecret, reserva.paypal_capture_id, amount);
     }
 
+    /* notes_internal tambem guarda o checklist de entrega/recolha do rent-a-car
+       (JSON) para esta mesma reserva -- nunca sobrescrever, so acrescentar o
+       motivo do reembolso a seguir ao que ja la estiver. */
+    const refundNote = `Reembolso: ${reason || 'sem motivo indicado'}`;
+    const novoNotesInternal = reserva.notes_internal ? `${reserva.notes_internal}\n${refundNote}` : refundNote;
     await supabaseAdmin
       .from('reservations')
-      .update({ payment_status: 'refunded', notes_internal: reason || 'Reembolso', updated_at: new Date().toISOString() })
+      .update({ payment_status: 'refunded', notes_internal: novoNotesInternal, updated_at: new Date().toISOString() })
       .eq('id', reservation_id);
     criarNotificacaoViajante(
       reserva.customer_email, 'refund',
