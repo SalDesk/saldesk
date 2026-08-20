@@ -113,6 +113,7 @@ export const TYPE_NAV = {
     { to: '/automacoes',    icon: Zap,             label: 'Automacoes',     requiredPlan: 'pro',      feature: 'automacoes'    },
     { to: '/fidelidade',    icon: Award,           label: 'Fidelidade',     requiredPlan: 'pro',      feature: 'fidelidade'    },
     { to: '/vouchers',      icon: Tag,             label: 'Vouchers',       requiredPlan: 'business', feature: 'vouchers'      },
+    { to: '/parcerias',     icon: Handshake,       label: 'Parcerias',      requiredPlan: 'pro',      feature: 'parcerias'     },
     { to: '/editor-pagina', icon: Layers,          label: 'Editor da Pagina'        },
     { to: '/definicoes',    icon: Settings,        label: 'Definicoes'              },
   ],
