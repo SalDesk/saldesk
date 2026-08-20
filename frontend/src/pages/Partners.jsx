@@ -34,6 +34,7 @@ function PartnerModal({ partner, onSave, onClose }) {
     partner_type:       base?.partner_type       || 'hotel',
     partnership_type:   base?.partnership_type   || 'recommendation',
     commission_pct:     base?.commission_pct     || '',
+    avg_booking_value:  base?.avg_booking_value  || '',
     message_pt:         base?.message_pt         || '',
     message_en:         base?.message_en         || '',
     active:             base?.active             ?? true,
@@ -51,7 +52,8 @@ function PartnerModal({ partner, onSave, onClose }) {
     try {
       await onSave(base?.id, {
         ...form,
-        commission_pct: form.commission_pct ? Number(form.commission_pct) : 0,
+        commission_pct:    form.commission_pct ? Number(form.commission_pct) : 0,
+        avg_booking_value: form.avg_booking_value ? Number(form.avg_booking_value) : 0,
       });
     } catch {
       setError('Erro ao guardar parceiro.');
@@ -78,13 +80,22 @@ function PartnerModal({ partner, onSave, onClose }) {
         </div>
 
         {needsCommission && (
-          <Input
-            label="Comissao (%)"
-            type="number" min="0" max="50" step="0.5"
-            value={form.commission_pct} onChange={set('commission_pct')}
-            placeholder="Ex: 10"
-            hint="Percentagem da reserva paga ao parceiro que a referenciou"
-          />
+          <div className="grid grid-cols-2 gap-3">
+            <Input
+              label="Comissao (%)"
+              type="number" min="0" max="50" step="0.5"
+              value={form.commission_pct} onChange={set('commission_pct')}
+              placeholder="Ex: 10"
+              hint="Percentagem da reserva paga ao parceiro que a referenciou"
+            />
+            <Input
+              label="Preco medio da reserva (€)"
+              type="number" min="0" step="1"
+              value={form.avg_booking_value} onChange={set('avg_booking_value')}
+              placeholder="Ex: 80"
+              hint="Usado para estimar comissoes a pagar/receber no Dashboard"
+            />
+          </div>
         )}
 
         {needsMessage && (
@@ -252,7 +263,9 @@ export default function Partners() {
                         <p className="font-display font-semibold text-sm text-n-900">{p.name}</p>
                         <p className="text-xs font-body text-n-500 mt-0.5">{typeInfo.label} · {pshipType.label}</p>
                         {p.commission_pct > 0 && (
-                          <p className="text-xs font-mono text-n-400 mt-0.5">{p.commission_pct}% comissao</p>
+                          <p className="text-xs font-mono text-n-400 mt-0.5">
+                            {p.commission_pct}% comissao{p.avg_booking_value > 0 ? ` · reserva media €${p.avg_booking_value}` : ''}
+                          </p>
                         )}
                       </div>
                       <div className="flex items-center gap-4 shrink-0 text-center">

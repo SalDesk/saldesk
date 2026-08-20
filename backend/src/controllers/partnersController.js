@@ -10,6 +10,7 @@ function toRow(body) {
   if (body.partner_type !== undefined) row.partner_type = body.partner_type;
   if (body.partnership_type !== undefined) row.partnership_type = body.partnership_type;
   if (body.commission_pct !== undefined) row.commission_pct = Number(body.commission_pct) || 0;
+  if (body.avg_booking_value !== undefined) row.avg_booking_value = Number(body.avg_booking_value) || 0;
   if (body.message_pt !== undefined) row.message_pt = body.message_pt || null;
   if (body.message_en !== undefined) row.message_en = body.message_en || null;
   if (body.active !== undefined) row.active = body.active;
