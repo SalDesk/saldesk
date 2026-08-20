@@ -9,6 +9,9 @@ import {
 } from 'lucide-react';
 import Logo from '../components/shared/Logo';
 import { useIsWidget, useWidgetResize } from '../utils/widgetMode';
+import {
+  MENU_CATEGORY_LABELS, MENU_ALLERGEN_LABELS, MENU_DIET_LABELS, RestaurantReservationSection,
+} from '../components/restaurant/RestaurantReservationWidget';
 
 const API     = import.meta.env.VITE_API_URL || 'http://localhost:3001/api/v1';
 const EUR_CVE = 110;
@@ -711,6 +714,7 @@ export default function ServiceDetail() {
   const [mobileMenu, setMobileMenu]   = useState(false);
   const [wishlisted, setWishlisted]   = useState(false);
   const [copied, setCopied]           = useState(false);
+  const [opUnits, setOpUnits]         = useState([]); // so para restaurante -- ver useEffect abaixo
 
   /* ── Load data ── */
   useEffect(() => {
@@ -731,6 +735,18 @@ export default function ServiceDetail() {
     }).catch(() => setNotFound(true))
       .finally(() => setLoading(false));
   }, [slug, id]);
+
+  /* Prato/menu de degustação: o widget de reserva completo (escolha de mesa +
+     pré-pedido) precisa da lista COMPLETA de unidades do operador (mesas +
+     pratos), não só desta ficha -- reaproveita GET /public/:slug, o mesmo
+     endpoint que PublicBooking.jsx já usa. So dispara depois de sabermos que
+     o operador é um restaurante. */
+  useEffect(() => {
+    if (op?.operator_type !== 'restaurant') return;
+    fetch(`${API}/public/${slug}`).then(r => r.json()).then(d => {
+      setOpUnits(d.data?.units || []);
+    }).catch(() => {});
+  }, [op, slug]);
 
   /* ── Sticky nav ── */
   useEffect(() => {
@@ -770,6 +786,18 @@ export default function ServiceDetail() {
   const isHotel      = op.operator_type === 'hotel';
   const isRentaCar   = op.operator_type === 'rentacar';
   const isRestaurant = op.operator_type === 'restaurant';
+
+  /* Para um prato/menu de degustação, "reservar" nao abre um modal generico
+     -- desloca ate ao widget de reserva completo (mesa+pre-pedido) embutido
+     mais abaixo nesta mesma pagina, ver RestaurantReservationSection. */
+  function handleReservarClick() {
+    if (isRestaurant) {
+      document.getElementById('servicos')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } else {
+      setBookOpen(true);
+    }
+  }
+
   const unitMeta = getUnitMeta(unit);
   const amenities = Array.isArray(unitMeta.amenities) ? unitMeta.amenities.filter(Boolean) : [];
   const includedItems = Array.isArray(unitMeta.included_items)
@@ -833,7 +861,7 @@ export default function ServiceDetail() {
               <Globe size={12} strokeWidth={1.75}/>
               {lang === 'pt' ? 'EN' : 'PT'}
             </button>
-            <button onClick={() => setBookOpen(true)}
+            <button onClick={handleReservarClick}
               className="flex items-center gap-1.5 bg-ocean-700 text-white text-sm font-body font-semibold px-4 py-2 rounded-full hover:bg-ocean-500 transition-colors">
               <Calendar size={14} strokeWidth={1.75}/>
               {lang === 'en' ? 'Book Now' : 'Reservar'}
@@ -864,7 +892,7 @@ export default function ServiceDetail() {
                     {typeBadge.icon}
                     {lang === 'en' ? typeBadge.en : typeBadge.pt}
                   </span>
-                  {unit.capacity && (
+                  {unit.capacity && !isRestaurant && (
                     <span className="flex items-center gap-1 bg-n-50 text-n-600 text-xs font-body font-semibold px-3 py-1 rounded-full border border-n-200">
                       <Users size={11} strokeWidth={1.75}/>
                       {lang==='en'?`Up to ${unit.capacity}`:` Até ${unit.capacity} pessoas`}
@@ -922,7 +950,7 @@ export default function ServiceDetail() {
                     {isRestaurant && (lang==='en'?'Per person':'Por pessoa')}
                   </span>
                 )}
-                {unit.capacity && (
+                {unit.capacity && !isRestaurant && (
                   <span className="flex items-center gap-1.5 bg-n-50 border border-n-200 text-n-600 text-xs font-body font-semibold px-3 py-1.5 rounded-full">
                     <Users size={12} strokeWidth={1.75}/>
                     {lang==='en'?`Capacity: ${unit.capacity}`:`Capacidade: ${unit.capacity}`}
@@ -934,6 +962,26 @@ export default function ServiceDetail() {
                     {lang==='en'?'Safe & Certified':'Certificado'}
                   </span>
                 )}
+                {isRestaurant && unitMeta.category && MENU_CATEGORY_LABELS[unitMeta.category] && (
+                  <span className="flex items-center gap-1.5 bg-ocean-50 border border-ocean-100 text-ocean-700 text-xs font-body font-semibold px-3 py-1.5 rounded-full">
+                    {lang==='en'?MENU_CATEGORY_LABELS[unitMeta.category].en:MENU_CATEGORY_LABELS[unitMeta.category].pt}
+                  </span>
+                )}
+                {isRestaurant && !!unitMeta.daily_special?.[String(new Date().getDay())] && (
+                  <span className="flex items-center gap-1.5 bg-ocean-50 border border-ocean-100 text-ocean-700 text-xs font-body font-semibold px-3 py-1.5 rounded-full">
+                    {lang==='en'?"Today's special":'Prato do dia'}
+                  </span>
+                )}
+                {isRestaurant && unitMeta.diets?.map(d => (
+                  <span key={d} className="flex items-center gap-1.5 bg-[#ECFDF5] border border-[#BBF7D0] text-[#1A7A4A] text-xs font-body font-semibold px-3 py-1.5 rounded-full">
+                    {lang==='en'?MENU_DIET_LABELS[d]?.en||d:MENU_DIET_LABELS[d]?.pt||d}
+                  </span>
+                ))}
+                {isRestaurant && unitMeta.allergens?.map(a => (
+                  <span key={a} className="flex items-center gap-1.5 bg-[#FEF2F2] border border-red-100 text-error text-xs font-body font-semibold px-3 py-1.5 rounded-full">
+                    {lang==='en'?MENU_ALLERGEN_LABELS[a]?.en||a:MENU_ALLERGEN_LABELS[a]?.pt||a}
+                  </span>
+                ))}
               </div>
 
               {/* CTA inline — so em modo widget: a sidebar com o botao "Reservar"
@@ -941,7 +989,7 @@ export default function ServiceDetail() {
                   do iframe redimensionado (ate 1600px, ver useWidgetResize), nao ao
                   ecra visivel — sem isto o botao de reserva fica inalcancavel. */}
               {isWidget && (
-                <button onClick={() => setBookOpen(true)}
+                <button onClick={handleReservarClick}
                   className="w-full mt-5 bg-ocean-700 text-white font-body font-bold py-3.5 rounded-xl flex items-center justify-center gap-2 hover:bg-ocean-500 transition-colors text-sm shadow-sm">
                   <Calendar size={16} strokeWidth={1.75}/>
                   {lang==='en'?'Book Now':'Reservar Agora'}
@@ -1240,7 +1288,7 @@ export default function ServiceDetail() {
 
                 {/* Quick info */}
                 <div className="px-5 py-4 border-b border-n-100 space-y-2.5">
-                  {unit.capacity && (
+                  {unit.capacity && !isRestaurant && (
                     <div className="flex items-center justify-between text-sm font-body">
                       <span className="text-n-500 flex items-center gap-2"><Users size={14} strokeWidth={1.75} className="text-ocean-500"/>{lang==='en'?'Capacity':'Capacidade'}</span>
                       <span className="font-semibold text-n-800">{lang==='en'?`Up to ${unit.capacity} people`:`Até ${unit.capacity} pessoas`}</span>
@@ -1267,8 +1315,11 @@ export default function ServiceDetail() {
                 </div>
 
                 {/* Urgency — so mostra com reservas reais dos ultimos 30 dias (recentBookings,
-                    vindo do backend); nunca fabrica um numero quando nao ha nenhuma reserva. */}
-                {recentBookings > 0 && (
+                    vindo do backend); nunca fabrica um numero quando nao ha nenhuma reserva.
+                    Para um prato, reservations nunca referencia o seu unit_id (reservas de
+                    restaurante sao sempre contra uma mesa) -- seria sempre 0, por isso esconde-se
+                    em vez de mostrar um "0 reservas" enganoso/negativo. */}
+                {!isRestaurant && recentBookings > 0 && (
                   <div className="px-5 py-3 border-b border-n-100 bg-amber-50">
                     <p className="text-xs font-body font-semibold text-amber-700">
                       <span className="font-bold">{recentBookings}</span> {lang==='en'?'bookings this month':'reservas este mês'}
@@ -1278,7 +1329,7 @@ export default function ServiceDetail() {
 
                 {/* CTA buttons */}
                 <div className="px-5 py-5 space-y-3">
-                  <button onClick={() => setBookOpen(true)}
+                  <button onClick={handleReservarClick}
                     className="w-full bg-ocean-700 text-white font-body font-bold py-4 rounded-xl flex items-center justify-center gap-2 hover:bg-ocean-500 transition-colors text-base shadow-sm hover:shadow-md">
                     <Calendar size={18} strokeWidth={1.75}/>
                     {lang==='en'?'Book Now':'Reservar Agora'}
@@ -1336,6 +1387,16 @@ export default function ServiceDetail() {
         </div>
       </div>
 
+      {/* ── Reserva (prato/menu de degustação) — o widget completo (escolha de
+          mesa + pré-pedido) fica embutido nesta própria página, com este item
+          já pré-adicionado ao carrinho. ── */}
+      {isRestaurant && opUnits.length > 0 && (
+        <RestaurantReservationSection
+          slug={slug} lang={lang} units={opUnits} opCurrency={op.currency} currency={currency}
+          preselectedDishId={unit.id}
+        />
+      )}
+
       {/* ── Footer ── */}
       {isWidget ? (
         <div className="text-center py-3 text-[11px] font-body text-n-400 border-t border-n-100">
@@ -1372,7 +1433,7 @@ export default function ServiceDetail() {
             <p className="font-display font-bold text-ocean-700 text-base leading-tight">{displayPrice}</p>
           </div>
         )}
-        <button onClick={() => setBookOpen(true)}
+        <button onClick={handleReservarClick}
           className="flex-1 bg-ocean-700 text-white font-body font-semibold py-3 rounded-xl flex items-center justify-center gap-2 hover:bg-ocean-500 transition-colors text-sm">
           <Calendar size={16} strokeWidth={1.75}/>
           {lang==='en'?'Book Now':'Reservar Agora'}

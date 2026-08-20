@@ -788,17 +788,6 @@ async function getUnit(req, res, next) {
 
     if (!operator) return res.status(404).json({ error: 'Operador não encontrado', code: 'NOT_FOUND' });
 
-    /* Mesas de restaurante nunca sao individualmente consultaveis pela API
-       publica -- sao inventario interno, so acessiveis via o fluxo de
-       reserva em criarReserva (a lista de mesas disponiveis vem de
-       verificarDisponibilidadeRestaurantePublica, nunca desta rota), nunca
-       como "produto" navegavel/indexavel. Pratos/menus de degustacao tambem
-       ficam de fora daqui -- a sua "ficha" e a propria pagina do restaurante
-       (/book/:slug), nunca uma ServiceDetail dedicada. */
-    if (operator.operator_type === 'restaurant') {
-      return res.status(404).json({ error: 'Serviço não encontrado', code: 'NOT_FOUND' });
-    }
-
     const { data: unit, error: unitErr } = await supabaseAdmin
       .from('units')
       .select('*, pricing_rules(*)')
@@ -809,13 +798,31 @@ async function getUnit(req, res, next) {
 
     if (unitErr || !unit) return res.status(404).json({ error: 'Serviço não encontrado', code: 'NOT_FOUND' });
 
-    const { data: related } = await supabaseAdmin
+    /* Mesas de restaurante nunca sao individualmente consultaveis pela API
+       publica -- sao inventario interno, so acessiveis via o fluxo de
+       reserva em criarReserva (a lista de mesas disponiveis vem de
+       verificarDisponibilidadeRestaurantePublica, nunca desta rota), nunca
+       como "produto" navegavel/indexavel. Pratos/menus de degustacao SAO
+       consultaveis -- ganham ficha propria em ServiceDetail.jsx, com o
+       widget de reserva completo embutido (pre-pedido ligado a essa mesma
+       pagina). */
+    const isRestaurantOperator = operator.operator_type === 'restaurant';
+    if (isRestaurantOperator && !['menu_item', 'tasting_menu'].includes(unit.unit_type)) {
+      return res.status(404).json({ error: 'Serviço não encontrado', code: 'NOT_FOUND' });
+    }
+
+    let relatedQuery = supabaseAdmin
       .from('units')
       .select('id, name, description, unit_type, base_price, capacity, images')
       .eq('operator_id', operator.id)
       .eq('status', 'active')
       .neq('id', unitId)
       .limit(3);
+    if (isRestaurantOperator) {
+      // Nunca sugerir uma mesa como "servico semelhante" -- daria 404 ao clicar.
+      relatedQuery = relatedQuery.in('unit_type', ['menu_item', 'tasting_menu']);
+    }
+    const { data: related } = await relatedQuery;
 
     const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
     const { count: recentBookings } = await supabaseAdmin

@@ -810,13 +810,10 @@ function renderActCard(item) {
   const wished = isWished(item);
   const priceVal = fmtPrice(item.base_price, item.currency);
   const hasPrice = !!item.base_price;
-  /* Prato de restaurante nao tem "ficha de produto" propria (getUnit devolve
-     404 para qualquer unidade de restaurante) -- o CTA liga de volta a
-     propria pagina do restaurante, com o prato pre-seleccionado no
-     pre-pedido da seccao de reserva. */
-  const bookHref = item.operator_type === 'restaurant'
-    ? `${APP}/book/${esc(item.operator_slug)}?prato=${esc(item.unit_id)}`
-    : `${APP}/book/${esc(item.operator_slug)}/servico/${esc(item.unit_id)}`;
+  /* Um prato/menu de degustacao de restaurante ja tem ficha propria em
+     ServiceDetail.jsx (getUnit ja nao bloqueia menu_item/tasting_menu, so
+     mesas) -- mesmo CTA que qualquer outro tipo de servico. */
+  const bookHref = `${APP}/book/${esc(item.operator_slug)}/servico/${esc(item.unit_id)}`;
 
   return `
     <div class="act-card card fade-up">
