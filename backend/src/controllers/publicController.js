@@ -8,6 +8,7 @@ const { validarVoucher, registarUsoVoucher } = require('./vouchersController');
 const { encontrarAfiliadoActivo } = require('./affiliatesController');
 const { dispararSyncImediato } = require('../helpers/otaSyncHelper');
 const { getDiscoverCatalog } = require('../services/discoverCatalogService');
+const { notifyOperator } = require('../services/pushService');
 
 async function getOperador(req, res, next) {
   try {
@@ -730,6 +731,69 @@ async function getUnit(req, res, next) {
   } catch (err) { next(err); }
 }
 
+/* ─── Chamar empregado (cliente já sentado à mesa, sem autenticação) ─── */
+async function callWaiter(req, res, next) {
+  try {
+    const { slug, unitId } = req.params;
+
+    const { data: operator } = await supabaseAdmin
+      .from('operators')
+      .select('id, name, operator_type, onboarding_complete, push_subscription')
+      .eq('slug', slug)
+      .eq('onboarding_complete', true)
+      .single();
+    if (!operator) return res.status(404).json({ error: 'Operador não encontrado', code: 'NOT_FOUND' });
+    if (operator.operator_type !== 'restaurant') {
+      return res.status(400).json({ error: 'Operador não é um restaurante', code: 'INVALID_OPERATOR_TYPE' });
+    }
+
+    const { data: unit } = await supabaseAdmin
+      .from('units')
+      .select('id, name, unit_type, status, operator_id')
+      .eq('id', unitId)
+      .eq('operator_id', operator.id)
+      .single();
+    if (!unit || unit.status !== 'active' ||
+        unit.unit_type === 'menu_item' || unit.unit_type === 'tasting_menu') {
+      return res.status(404).json({ error: 'Mesa não encontrada', code: 'TABLE_NOT_FOUND' });
+    }
+
+    const link = `/unidades?mesa=${unit.id}`;
+
+    /* Deduplicacao simples -- evita duplo-toque acidental a repetir a
+       notificacao/push, sem precisar de tabela/coluna nova. */
+    const { data: recent } = await supabaseAdmin
+      .from('notifications')
+      .select('id')
+      .eq('operator_id', operator.id)
+      .eq('notification_type', 'call_waiter')
+      .eq('link', link)
+      .gte('created_at', new Date(Date.now() - 90_000).toISOString())
+      .limit(1);
+    if (recent?.length) {
+      return res.json({ data: { alreadyNotified: true }, message: 'Equipa já notificada' });
+    }
+
+    await supabaseAdmin.from('notifications').insert({
+      operator_id: operator.id,
+      notification_type: 'call_waiter',
+      content: `${unit.name} pediu apoio`,
+      link,
+    });
+
+    if (operator.push_subscription) {
+      await notifyOperator(operator, {
+        title: 'Mesa a chamar',
+        body: `${unit.name} precisa de apoio`,
+        tag: 'call-waiter',
+        url: '/unidades',
+      });
+    }
+
+    return res.status(201).json({ data: { alreadyNotified: false }, message: 'Equipa notificada' });
+  } catch (err) { next(err); }
+}
+
 /* ─── Avaliações de uma unidade específica ─── */
 async function getUnitReviews(req, res, next) {
   try {
@@ -1010,6 +1074,7 @@ module.exports = {
   slugReviews,
   slugContact,
   getUnit,
+  callWaiter,
   getUnitReviews,
   submitLead,
   getImpact,

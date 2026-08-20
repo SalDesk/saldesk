@@ -203,6 +203,7 @@ export default function App() {
         <Route path="/definicoes/facturacao/sucesso" element={<BillingSuccess />} />
         <Route path="/definicoes/facturacao/cancelado" element={<BillingCancel />} />
         <Route path="/book/:slug" element={<PublicBooking />} />
+        <Route path="/book/:slug/mesa/:tableId" element={<PublicBooking />} />
         <Route path="/book/:slug/servico/:id" element={<ServiceDetail />} />
 
         <Route path="*" element={<Navigate to="/" replace />} />

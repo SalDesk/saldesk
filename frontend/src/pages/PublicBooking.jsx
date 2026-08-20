@@ -4,7 +4,7 @@ import {
   MapPin, Phone, Star, ChevronLeft, ChevronRight, MessageCircle,
   Menu, X, Globe, Mail, Calendar, Users, Check, ArrowRight, Shield,
   ExternalLink, ChevronDown, ChevronUp, Copy, Send, Award, Share2,
-  Compass, Car, Utensils, Lock, RotateCcw, CheckCircle, Clock, Filter,
+  Compass, Car, Utensils, Lock, RotateCcw, CheckCircle, Clock, Filter, Bell,
 } from 'lucide-react';
 import Logo from '../components/shared/Logo';
 import QRCode from 'qrcode';
@@ -1237,6 +1237,78 @@ function RestaurantReservationSection({ slug, lang }) {
   );
 }
 
+/* ── CallWaiterSection ───────────────────────────────
+   Substitui o formulário de reserva quando o QR escaneado identifica uma
+   mesa real -- o cliente já está sentado, reservar não faz sentido. ── */
+function CallWaiterSection({ slug, table, lang }) {
+  const meta = parseMenuMeta(table);
+  const zoneLabel = meta.zone ? (lang === 'en' ? ZONE_LABELS[meta.zone]?.en : ZONE_LABELS[meta.zone]?.pt) : null;
+  const label = meta.number
+    ? `${lang === 'en' ? 'Table' : 'Mesa'} ${meta.number}${zoneLabel ? ` — ${zoneLabel}` : ''}`
+    : table.name;
+
+  const COOLDOWN_MS = 90_000;
+  const storageKey = `sd-call-waiter-${table.id}`;
+  const [state, setState] = useState('idle'); // idle | sending | sent | error
+  const [cooldownUntil, setCooldownUntil] = useState(() => Number(localStorage.getItem(storageKey)) || 0);
+  const [now, setNow] = useState(Date.now());
+
+  useEffect(() => {
+    if (cooldownUntil <= Date.now()) return;
+    const t = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(t);
+  }, [cooldownUntil]);
+
+  const cooling = cooldownUntil > now;
+
+  async function callWaiter() {
+    setState('sending');
+    try {
+      const r = await fetch(`${API}/public/${slug}/units/${table.id}/call-waiter`, { method: 'POST' });
+      if (!r.ok) throw new Error();
+      const until = Date.now() + COOLDOWN_MS;
+      localStorage.setItem(storageKey, String(until));
+      setCooldownUntil(until);
+      setState('sent');
+    } catch {
+      setState('error');
+    }
+  }
+
+  return (
+    <section id="servicos" className="bg-ocean-900 text-white">
+      <div className="max-w-2xl mx-auto px-4 sm:px-6 py-12 sm:py-16 text-center">
+        <p className="text-xs font-body font-bold text-sand-400 uppercase tracking-widest mb-2">
+          {lang === 'en' ? 'You are seated' : 'Está sentado'}
+        </p>
+        <h2 className="font-display font-bold text-2xl sm:text-3xl text-white mb-6">{label}</h2>
+        <button
+          onClick={callWaiter}
+          disabled={state === 'sending' || cooling}
+          className="inline-flex items-center gap-2 bg-sand-500 text-ocean-900 font-body font-bold text-sm px-8 py-4 rounded-xl hover:bg-sand-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed mx-auto"
+        >
+          {state === 'sending'
+            ? <span className="w-4 h-4 border-2 border-ocean-900/30 border-t-ocean-900 rounded-full animate-spin" />
+            : <Bell size={16} strokeWidth={2} />}
+          {cooling
+            ? (lang === 'en' ? 'Waiter called' : 'Empregado chamado')
+            : (lang === 'en' ? 'Call waiter' : 'Chamar empregado')}
+        </button>
+        {state === 'error' && (
+          <p className="mt-3 text-sm text-red-300">
+            {lang === 'en' ? 'Could not reach staff, please flag someone directly.' : 'Não foi possível notificar a equipa, por favor chame directamente.'}
+          </p>
+        )}
+        {cooling && state !== 'error' && (
+          <p className="mt-3 text-xs text-white/60">
+            {lang === 'en' ? 'The team has been notified.' : 'A equipa foi notificada.'}
+          </p>
+        )}
+      </div>
+    </section>
+  );
+}
+
 /* ── SpecialOfferSection ──────────────────────────── */
 function SpecialOfferSection({ lang, goBook }) {
   return (
@@ -1290,7 +1362,7 @@ function SpecialOfferSection({ lang, goBook }) {
    MAIN COMPONENT
 ══════════════════════════════════════════════════ */
 export default function PublicBooking() {
-  const { slug }   = useParams();
+  const { slug, tableId } = useParams();
   const navigate   = useNavigate();
   const [searchParams] = useSearchParams();
   const isWidget   = useIsWidget(searchParams);
@@ -1392,6 +1464,17 @@ export default function PublicBooking() {
      substitui a grelha de servicos/disponibilidade ao vivo por um formulario
      de reserva real (data/hora/pessoas/zona), ver RestaurantReservationSection. */
   const isRestaurant = op.operator_type === 'restaurant';
+
+  /* QR por mesa: cliente ja esta sentado, nao faz sentido mostrar o
+     formulario de reserva -- mostra "Chamar empregado" em vez disso. Se o
+     tableId da rota nao corresponder a uma mesa real activa deste operador
+     (link errado, mesa apagada/desactivada, ou aponta a um prato), cai
+     silenciosamente no fluxo normal de reserva -- nunca mostra erro nem
+     finge sucesso. */
+  const table = tableId
+    ? units.find(u => u.id === tableId && u.unit_type !== 'menu_item' && u.unit_type !== 'tasting_menu' && u.status !== 'inactive')
+    : null;
+  const tableMode = isRestaurant && !!table;
 
   const galleryImgs = [
     ...(op.cover_images?.filter(Boolean) || []),
@@ -1745,7 +1828,9 @@ export default function PublicBooking() {
       {isRestaurant ? (
         <div style={{ order: sectionOrder('services') }}>
           <RestaurantMenuSection units={units} lang={lang} opCurrency={op.currency} currency={currency} />
-          <RestaurantReservationSection slug={slug} lang={lang} />
+          {tableMode
+            ? <CallWaiterSection slug={slug} table={table} lang={lang} />
+            : <RestaurantReservationSection slug={slug} lang={lang} />}
         </div>
       ) : (
       <div className="max-w-5xl mx-auto px-4 sm:px-6" style={{ order: sectionOrder('services') }}>

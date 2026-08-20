@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   ChevronDown, Bell,
-  Calendar, XCircle, Star, MessageCircle, AlertTriangle,
+  Calendar, XCircle, Star, MessageCircle, AlertTriangle, Utensils,
   User, LogOut,
 } from 'lucide-react';
 import useAuthStore from '../../store/authStore';
@@ -17,6 +17,7 @@ const TYPE_ICON = {
   new_review:       { Icon: Star,           color: 'text-sand-500'  },
   new_message:      { Icon: MessageCircle,  color: 'text-ocean-500' },
   ota_import_failed: { Icon: AlertTriangle, color: 'text-error'     },
+  call_waiter:      { Icon: Utensils,       color: 'text-sand-600'  },
 };
 
 const TYPE_LABEL = {
@@ -25,6 +26,7 @@ const TYPE_LABEL = {
   new_review:   'Nova avaliacao',
   new_message:  'Nova mensagem',
   ota_import_failed: 'Falha ao importar reserva OTA',
+  call_waiter:  'Mesa a chamar',
 };
 
 function timeAgo(dateStr) {

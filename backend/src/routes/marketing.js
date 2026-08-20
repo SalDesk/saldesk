@@ -20,12 +20,32 @@ router.get('/booking-link', (req, res) => {
   });
 });
 
-/* QR Code — SVG/PNG via API publica de QR */
-router.get('/qrcode', (req, res) => {
-  const base = frontendBase();
-  const url  = encodeURIComponent(`${base}/book/${req.operator.slug}`);
-  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${url}&format=png`;
-  return res.redirect(qrUrl);
+/* QR Code — SVG/PNG via API publica de QR. ?unitId= gera o QR de uma mesa
+   especifica (book/{slug}/mesa/{unitId}) em vez do QR geral do restaurante --
+   nao exige status='active' (operador pode querer imprimir antes de activar). */
+router.get('/qrcode', async (req, res, next) => {
+  try {
+    const base = frontendBase();
+    let bookingPath = `book/${req.operator.slug}`;
+
+    if (req.query.unitId) {
+      const { data: unit } = await supabaseAdmin
+        .from('units')
+        .select('id, unit_type, operator_id')
+        .eq('id', req.query.unitId)
+        .single();
+
+      if (!unit || unit.operator_id !== req.operator.id ||
+          unit.unit_type === 'menu_item' || unit.unit_type === 'tasting_menu') {
+        return res.status(404).json({ error: 'Mesa não encontrada', code: 'NOT_FOUND' });
+      }
+      bookingPath += `/mesa/${unit.id}`;
+    }
+
+    const url = encodeURIComponent(`${base}/${bookingPath}`);
+    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${url}&format=png`;
+    return res.redirect(qrUrl);
+  } catch (err) { next(err); }
 });
 
 /* Widget embebivel */

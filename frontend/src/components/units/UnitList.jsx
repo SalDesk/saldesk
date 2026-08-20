@@ -1,4 +1,4 @@
-import { Building2, Compass, Pencil, Trash2, Power, ImageOff, Clock, MapPin, Users, Globe2 } from 'lucide-react';
+import { Building2, Compass, Pencil, Trash2, Power, ImageOff, Clock, MapPin, Users, Globe2, QrCode } from 'lucide-react';
 import { useT } from '../../i18n';
 import Badge from '../ui/Badge';
 import Button from '../ui/Button';
@@ -188,7 +188,7 @@ function TourCard({ unit, onEdit, onDelete, onToggle, onSubmitConect }) {
   );
 }
 
-export default function UnitList({ units, onEdit, onDelete, onToggle, onSubmitConect, operatorType }) {
+export default function UnitList({ units, onEdit, onDelete, onToggle, onSubmitConect, onViewQr, operatorType }) {
   const t = useT();
   const isTour = operatorType === 'activity';
 
@@ -263,7 +263,7 @@ export default function UnitList({ units, onEdit, onDelete, onToggle, onSubmitCo
                 </Badge>
               </div>
 
-              {unit.description && (
+              {unit.description && !unit.description.startsWith('{') && (
                 <p className="text-xs font-body text-n-600 line-clamp-2 leading-relaxed">
                   {unit.description}
                 </p>
@@ -275,6 +275,15 @@ export default function UnitList({ units, onEdit, onDelete, onToggle, onSubmitCo
                   <p className="text-xs font-body text-n-400">Cap. {unit.capacity}</p>
                 </div>
                 <div className="flex gap-1">
+                  {operatorType === 'restaurant' && onViewQr && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      icon={QrCode}
+                      onClick={() => onViewQr(unit)}
+                      aria-label="Ver QR"
+                    />
+                  )}
                   <Button
                     variant="ghost"
                     size="sm"

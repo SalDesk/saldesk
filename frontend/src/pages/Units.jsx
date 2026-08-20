@@ -1,14 +1,65 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Plus } from 'lucide-react';
+import { Plus, QrCode, Link as LinkIcon, Copy, CheckCircle } from 'lucide-react';
 import { listUnits, createUnit, updateUnit, deleteUnit, toggleUnitStatus, updateConectStatus } from '../services/unitsService';
+import { getQrCode } from '../services/marketingService';
 import useAuthStore from '../store/authStore';
 import { useT } from '../i18n';
 import PageHeader from '../components/layout/PageHeader';
 import Button from '../components/ui/Button';
 import Modal from '../components/ui/Modal';
 import UnitList from '../components/units/UnitList';
-import UnitForm from '../components/units/UnitForm';
+import UnitForm, { parseTourMeta } from '../components/units/UnitForm';
 import LoadingSpinner from '../components/shared/LoadingSpinner';
+
+function TableQrModal({ unit, onClose }) {
+  const { operator } = useAuthStore();
+  const meta = parseTourMeta(unit?.description);
+  const [blobUrl, setBlobUrl] = useState(null);
+  const [copied,  setCopied]  = useState(false);
+  const url = unit && operator ? `${window.location.origin}/book/${operator.slug}/mesa/${unit.id}` : '';
+
+  useEffect(() => {
+    if (!unit) { setBlobUrl(null); return; }
+    let revoke = null;
+    getQrCode({ unitId: unit.id }).then(blob => {
+      const u = URL.createObjectURL(blob);
+      revoke = u;
+      setBlobUrl(u);
+    }).catch(() => setBlobUrl(null));
+    return () => { if (revoke) URL.revokeObjectURL(revoke); };
+  }, [unit]);
+
+  function download() {
+    if (!blobUrl) return;
+    const a = document.createElement('a');
+    a.href = blobUrl;
+    a.download = `qrcode-mesa-${meta.number || unit.id}.png`;
+    a.click();
+  }
+
+  function copyLink() {
+    navigator.clipboard.writeText(url).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  }
+
+  return (
+    <Modal open={!!unit} onClose={onClose} title={`QR — ${unit?.name || ''}`} size="sm" footer={null}>
+      {blobUrl && (
+        <img src={blobUrl} alt="QR code" className="w-40 h-40 mx-auto mb-4 rounded-md border border-n-200" />
+      )}
+      <div className="flex items-center gap-2 bg-n-50 border border-n-200 rounded-md px-3 py-2 mb-3">
+        <LinkIcon size={12} strokeWidth={1.75} className="text-n-400 shrink-0" />
+        <span className="text-xs font-mono text-n-700 truncate flex-1">{url}</span>
+        <button onClick={copyLink} className="p-1 text-n-400 hover:text-ocean-700 transition-colors shrink-0">
+          {copied ? <CheckCircle size={13} strokeWidth={1.75} className="text-[#1A7A4A]" /> : <Copy size={13} strokeWidth={1.75} />}
+        </button>
+      </div>
+      <Button onClick={download} className="w-full" icon={QrCode}>Descarregar QR Code</Button>
+    </Modal>
+  );
+}
 
 const LABELS = {
   activity: {
@@ -53,6 +104,7 @@ export default function Units() {
   const [formLoading,  setFormLoading]  = useState(false);
   const [formError,    setFormError]    = useState('');
   const [deleteTarget, setDeleteTarget] = useState(null);
+  const [qrTarget,     setQrTarget]     = useState(null);
 
   async function carregar() {
     try {
@@ -176,8 +228,11 @@ export default function Units() {
           onDelete={setDeleteTarget}
           onToggle={handleToggle}
           onSubmitConect={handleSubmitConect}
+          onViewQr={opType === 'restaurant' ? setQrTarget : undefined}
         />
       )}
+
+      <TableQrModal unit={qrTarget} onClose={() => setQrTarget(null)} />
 
       <Modal
         open={!!modal}

@@ -19,11 +19,13 @@ const {
   getImpact,
   discoverUnits,
   getExperienceCategories,
+  callWaiter,
 } = require('../controllers/publicController');
 const { publicInitSisp, publicPaypalClientId, publicCreatePaypalIntent, publicConfirmPaypalPayment } = require('../controllers/paymentController');
 const { validarVoucherPublico } = require('../controllers/vouchersController');
 const { portalLogin: affiliatePortalLogin } = require('../controllers/affiliatesController');
 const { frontendBase } = require('../utils/urls');
+const { publicLimiter } = require('../middleware/rateLimiters');
 
 /* ─── Relatório de impacto público ─── */
 router.get('/impact',              getImpact);
@@ -53,6 +55,7 @@ router.get('/cms', require('../controllers/publicController').getCmsPublic);
 /* ─── Unidade individual ─── */
 router.get('/:slug/units/:unitId',         getUnit);
 router.get('/:slug/units/:unitId/reviews', getUnitReviews);
+router.post('/:slug/units/:unitId/call-waiter', publicLimiter, callWaiter);
 
 /* ─── Operador individual ─── */
 router.get('/:slug',               getOperador);
