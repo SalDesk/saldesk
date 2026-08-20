@@ -10,3 +10,4 @@ backend/uploads/
 Thumbs.db
 /var/log/saldesk/
 *.bak
+.claude/*.lock
