@@ -142,13 +142,16 @@ async function criarPedidoParceria(req, res, next) {
       .from('operators').select('id, name, operator_type').eq('id', partner_operator_id).eq('onboarding_complete', true).maybeSingle();
     if (!alvo) return res.status(404).json({ error: 'Operador nao encontrado', code: 'NOT_FOUND' });
 
+    /* Este par tem sempre DUAS linhas (uma por lado) quando ja existe uma
+       parceria pending/accepted -- .maybeSingle() falhava em silencio com
+       "multiple rows" (o erro nunca era verificado) e o pedido duplicado
+       passava sempre. Basta confirmar que a lista nao vem vazia. */
     const { data: existente } = await supabaseAdmin
       .from('partners')
       .select('id')
       .in('status', ['pending', 'accepted'])
-      .or(`and(operator_id.eq.${operatorId},partner_operator_id.eq.${partner_operator_id}),and(operator_id.eq.${partner_operator_id},partner_operator_id.eq.${operatorId})`)
-      .maybeSingle();
-    if (existente) {
+      .or(`and(operator_id.eq.${operatorId},partner_operator_id.eq.${partner_operator_id}),and(operator_id.eq.${partner_operator_id},partner_operator_id.eq.${operatorId})`);
+    if (existente?.length > 0) {
       return res.status(409).json({ error: 'Ja existe uma parceria (pendente ou activa) com este operador', code: 'ALREADY_EXISTS' });
     }
 
