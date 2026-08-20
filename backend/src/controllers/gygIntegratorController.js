@@ -179,16 +179,19 @@ async function queryAvailability(req, res, next) {
 /* Soma os "count" de bookingItems e valida que todas as categorias sao
    vendiveis -- usado por reserve e por book (o spec garante que os
    bookingItems de book replicam os de reserve, por isso a mesma validacao
-   serve para os dois). Devolve null se alguma categoria for invalida. */
+   serve para os dois). total:null indica falha; invalidCategory identifica
+   qual categoria foi rejeitada -- o self-testing tool da GYG (2026-08-20)
+   confirmou que a resposta INVALID_TICKET_CATEGORY exige um campo
+   "ticketCategory" com esse valor, nao so o errorCode/errorMessage. */
 function validarBookingItems(bookingItems) {
-  if (!Array.isArray(bookingItems) || bookingItems.length === 0) return null;
+  if (!Array.isArray(bookingItems) || bookingItems.length === 0) return { total: null, invalidCategory: null };
   let total = 0;
   for (const item of bookingItems) {
-    if (!SUPPORTED_TICKET_CATEGORIES.includes(item.category)) return null;
+    if (!SUPPORTED_TICKET_CATEGORIES.includes(item.category)) return { total: null, invalidCategory: item.category };
     total += Number(item.count) || 0;
   }
-  if (total <= 0) return null;
-  return total;
+  if (total <= 0) return { total: null, invalidCategory: null };
+  return { total, invalidCategory: null };
 }
 
 /* 2. Reservation ("reserve") -- retencao temporaria antes do booking final.
@@ -204,9 +207,10 @@ async function createReservation(req, res, next) {
       return erro(res, 'VALIDATION_FAILURE', 'productId, dateTime and gygBookingReference are required.');
     }
 
-    const totalParticipantes = validarBookingItems(bookingItems);
+    const { total: totalParticipantes, invalidCategory } = validarBookingItems(bookingItems);
     if (totalParticipantes === null) {
-      return erro(res, 'INVALID_TICKET_CATEGORY', 'One or more requested ticket categories are not sellable.');
+      return erro(res, 'INVALID_TICKET_CATEGORY', 'One or more requested ticket categories are not sellable.',
+        invalidCategory ? { ticketCategory: invalidCategory } : {});
     }
 
     const unit = await encontrarUnidadePorProduto(productId);
@@ -321,8 +325,10 @@ async function createBooking(req, res, next) {
     if (!Array.isArray(travelers) || travelers.length === 0 || !travelers[0]?.email) {
       return erro(res, 'VALIDATION_FAILURE', 'travelers[] with at least one entry (email, firstName, lastName, phoneNumber) is required.');
     }
-    if (validarBookingItems(bookingItems) === null) {
-      return erro(res, 'INVALID_TICKET_CATEGORY', 'One or more requested ticket categories are not sellable.');
+    const { total: totalBook, invalidCategory: invalidCategoryBook } = validarBookingItems(bookingItems);
+    if (totalBook === null) {
+      return erro(res, 'INVALID_TICKET_CATEGORY', 'One or more requested ticket categories are not sellable.',
+        invalidCategoryBook ? { ticketCategory: invalidCategoryBook } : {});
     }
 
     const { data: hold } = await supabaseAdmin
