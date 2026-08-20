@@ -40,7 +40,7 @@ async function createUnit(req, res, next) {
 
     const {
       name, description, unit_type, base_price, capacity, images, ota_product_ids,
-      duration_minutes, languages_offered, lat, lng,
+      duration_minutes, languages_offered, lat, lng, price_unit,
     } = req.body;
 
     if (!name || !unit_type || base_price === undefined || base_price === null) {
@@ -59,6 +59,7 @@ async function createUnit(req, res, next) {
         description: description || null,
         unit_type,
         base_price: Number(base_price),
+        price_unit: price_unit || null,
         capacity: capacity || 1,
         images: images || [],
         ota_product_ids: ota_product_ids || {},
@@ -107,7 +108,7 @@ async function updateUnit(req, res, next) {
 
     const {
       name, description, unit_type, base_price, capacity, images, status, ota_product_ids,
-      duration_minutes, languages_offered, lat, lng,
+      duration_minutes, languages_offered, lat, lng, price_unit,
     } = req.body;
 
     const updates = {};
@@ -118,6 +119,7 @@ async function updateUnit(req, res, next) {
       updates.category_id = await resolveCategoryId(unit_type);
     }
     if (base_price !== undefined) updates.base_price = Number(base_price);
+    if (price_unit !== undefined) updates.price_unit = price_unit || null;
     if (capacity !== undefined) updates.capacity = capacity;
     if (images !== undefined) updates.images = images;
     if (status !== undefined) updates.status = status;

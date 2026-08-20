@@ -1054,6 +1054,23 @@ export default function ServiceDetail() {
               </div>
             )}
 
+            {/* ── O que está incluído (menu de degustação) ── */}
+            {isRestaurant && unit.unit_type === 'tasting_menu' && unitMeta.items?.length > 0 && (
+              <div className="pb-10 border-b border-n-100">
+                <p className="text-xs font-body font-bold text-ocean-700 uppercase tracking-widest mb-4">
+                  {lang==='en'?'What\'s included':'O que está incluído'}
+                </p>
+                <div className="space-y-2">
+                  {unitMeta.items.map((it, i) => (
+                    <div key={i} className="flex items-center gap-2.5 p-3 rounded-xl border border-n-200 bg-n-50">
+                      <Check size={15} strokeWidth={2} className="text-ocean-600 flex-shrink-0"/>
+                      <span className="text-sm font-body font-medium text-n-700">{it.name_pt}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* ── Comodidades ── configurado pelo operador (UnitForm), nunca inventado */}
             {amenities.length > 0 && (
               <div className="pb-10 border-b border-n-100">
