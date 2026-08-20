@@ -861,6 +861,17 @@ function parseRestaurantMeta(r) {
   try { return JSON.parse(r?.notes_guest || '{}'); } catch { return {}; }
 }
 
+/* meta.turno so existe quando definido manualmente (RestaurantCreateModal,
+   notes_guest). Reservas com hora real (start_time -- publicas ou criadas
+   pelo staff a partir de agora) nunca o preenchem, por isso o filtro por
+   turno tem de derivar o mesmo bucket a partir da hora quando meta.turno
+   nao existir, senao ficam invisiveis ao filtrar por Almoco/Jantar. */
+function deriveTurno(r, meta) {
+  if (meta?.turno) return meta.turno;
+  if (r?.start_time) return Number(r.start_time.slice(0, 2)) < 17 ? 'almoco' : 'jantar';
+  return '';
+}
+
 function RestaurantCreateModal({ reservation, units, open, onClose, onDone }) {
   const prevMeta = parseRestaurantMeta(reservation);
   const [form, setForm] = useState({
@@ -1023,7 +1034,9 @@ function RestaurantTable({ reservations, units, onEdit, onDetails, onUpdate, onV
                   </td>
                   <td className="px-4 py-3">
                     <span className="text-xs font-mono text-n-700">
-                      {rcMeta.turno ? TURNO_LABELS[rcMeta.turno] || rcMeta.turno : '—'}
+                      {r.start_time
+                        ? r.start_time.slice(0, 5)
+                        : (rcMeta.turno ? TURNO_LABELS[rcMeta.turno] || rcMeta.turno : '—')}
                     </span>
                   </td>
                   <td className="px-4 py-3 text-center">
@@ -1130,7 +1143,7 @@ export default function Reservations() {
       if (isRestaurant && turnoFilter) {
         let meta = {};
         try { meta = JSON.parse(r.notes_guest || '{}'); } catch {}
-        if ((meta.turno || '') !== turnoFilter) return false;
+        if (deriveTurno(r, meta) !== turnoFilter) return false;
       }
       return true;
     });
