@@ -4,6 +4,18 @@ function getOperatorId(req) {
   return req.operator?.id || req.staff?.operator_id;
 }
 
+/* requireOperatorOrStaff so confirma que existe ALGUM operador/staff autenticado --
+   nunca que o :id de RH pedido no URL pertence a esse operador. Sem isto, qualquer
+   operador autenticado que soubesse/adivinhasse o UUID de um colaborador de OUTRA
+   empresa conseguia ler ferias/documentos/certificacoes alheios e ate criar pedidos
+   de ferias ja aprovados que bloqueavam a disponibilidade real desse colaborador. */
+async function staffPertenceAoOperador(staffId, operatorId) {
+  if (!staffId || !operatorId) return false;
+  const { data } = await supabaseAdmin
+    .from('staff').select('id').eq('id', staffId).eq('operator_id', operatorId).maybeSingle();
+  return !!data;
+}
+
 /* Sugestao de dias de ferias a partir da data de admissao, seguindo a
    proporcao legal cabo-verdiana (22 dias / 12 meses trabalhados, ~1.83
    dias/mes) -- e so uma sugestao para pre-preencher o formulario, nunca
@@ -25,10 +37,15 @@ async function listarFerias(req, res, next) {
     if (req.staff && req.staff.id !== req.params.id) {
       return res.status(403).json({ error: 'Acesso não autorizado', code: 'FORBIDDEN' });
     }
+    const operatorId = getOperatorId(req);
+    if (!(await staffPertenceAoOperador(req.params.id, operatorId))) {
+      return res.status(404).json({ error: 'Colaborador não encontrado', code: 'NOT_FOUND' });
+    }
     const { data, error } = await supabaseAdmin
       .from('staff_leave')
       .select('*')
       .eq('staff_id', req.params.id)
+      .eq('operator_id', operatorId)
       .order('start_date', { ascending: false });
     if (error) throw error;
     return res.json({ data, message: 'Ferias listadas' });
@@ -40,6 +57,10 @@ async function criarFerias(req, res, next) {
     if (req.staff && req.staff.id !== req.params.id) {
       return res.status(403).json({ error: 'Acesso não autorizado', code: 'FORBIDDEN' });
     }
+    const operatorId = getOperatorId(req);
+    if (!(await staffPertenceAoOperador(req.params.id, operatorId))) {
+      return res.status(404).json({ error: 'Colaborador não encontrado', code: 'NOT_FOUND' });
+    }
     const { type, start_date, end_date, notes } = req.body;
     if (!start_date || !end_date) {
       return res.status(400).json({ error: 'start_date e end_date sao obrigatorios', code: 'MISSING_FIELDS' });
@@ -47,7 +68,6 @@ async function criarFerias(req, res, next) {
     if (end_date < start_date) {
       return res.status(400).json({ error: 'end_date deve ser posterior a start_date', code: 'INVALID_DATES' });
     }
-    const operatorId = getOperatorId(req);
     const { data, error } = await supabaseAdmin
       .from('staff_leave')
       .insert({
@@ -118,15 +138,19 @@ async function obterSaldoFerias(req, res, next) {
     if (req.staff && req.staff.id !== req.params.id) {
       return res.status(403).json({ error: 'Acesso não autorizado', code: 'FORBIDDEN' });
     }
+    const operatorId = getOperatorId(req);
+    if (!(await staffPertenceAoOperador(req.params.id, operatorId))) {
+      return res.status(404).json({ error: 'Colaborador não encontrado', code: 'NOT_FOUND' });
+    }
     const year = parseInt(req.query.year) || new Date().getFullYear();
 
     const [{ data: balance }, { data: approved }, { data: staffRow }] = await Promise.all([
       supabaseAdmin.from('staff_leave_balance').select('*')
-        .eq('staff_id', req.params.id).eq('year', year).maybeSingle(),
+        .eq('staff_id', req.params.id).eq('operator_id', operatorId).eq('year', year).maybeSingle(),
       supabaseAdmin.from('staff_leave').select('start_date, end_date')
-        .eq('staff_id', req.params.id).eq('status', 'approved')
+        .eq('staff_id', req.params.id).eq('operator_id', operatorId).eq('status', 'approved')
         .gte('start_date', `${year}-01-01`).lte('start_date', `${year}-12-31`),
-      supabaseAdmin.from('staff').select('hire_date').eq('id', req.params.id).maybeSingle(),
+      supabaseAdmin.from('staff').select('hire_date').eq('id', req.params.id).eq('operator_id', operatorId).maybeSingle(),
     ]);
 
     const usedDays = (approved || []).reduce((sum, l) => {
@@ -176,10 +200,15 @@ async function listarDocumentos(req, res, next) {
     if (req.staff && req.staff.id !== req.params.id) {
       return res.status(403).json({ error: 'Acesso não autorizado', code: 'FORBIDDEN' });
     }
+    const operatorId = getOperatorId(req);
+    if (!(await staffPertenceAoOperador(req.params.id, operatorId))) {
+      return res.status(404).json({ error: 'Colaborador não encontrado', code: 'NOT_FOUND' });
+    }
     const { data, error } = await supabaseAdmin
       .from('staff_documents')
       .select('*')
       .eq('staff_id', req.params.id)
+      .eq('operator_id', operatorId)
       .order('created_at', { ascending: false });
     if (error) throw error;
     return res.json({ data, message: 'Documentos listados' });
@@ -188,6 +217,9 @@ async function listarDocumentos(req, res, next) {
 
 async function criarDocumento(req, res, next) {
   try {
+    if (!(await staffPertenceAoOperador(req.params.id, req.operator.id))) {
+      return res.status(404).json({ error: 'Colaborador não encontrado', code: 'NOT_FOUND' });
+    }
     const { type, name, file_url, expiry_date } = req.body;
     if (!name || !file_url) {
       return res.status(400).json({ error: 'name e file_url sao obrigatorios', code: 'MISSING_FIELDS' });
@@ -228,10 +260,15 @@ async function listarCertificacoes(req, res, next) {
     if (req.staff && req.staff.id !== req.params.id) {
       return res.status(403).json({ error: 'Acesso não autorizado', code: 'FORBIDDEN' });
     }
+    const operatorId = getOperatorId(req);
+    if (!(await staffPertenceAoOperador(req.params.id, operatorId))) {
+      return res.status(404).json({ error: 'Colaborador não encontrado', code: 'NOT_FOUND' });
+    }
     const { data, error } = await supabaseAdmin
       .from('staff_certifications')
       .select('*')
       .eq('staff_id', req.params.id)
+      .eq('operator_id', operatorId)
       .order('expiry_date', { ascending: true, nullsFirst: false });
     if (error) throw error;
     return res.json({ data, message: 'Certificacoes listadas' });
@@ -240,6 +277,9 @@ async function listarCertificacoes(req, res, next) {
 
 async function criarCertificacao(req, res, next) {
   try {
+    if (!(await staffPertenceAoOperador(req.params.id, req.operator.id))) {
+      return res.status(404).json({ error: 'Colaborador não encontrado', code: 'NOT_FOUND' });
+    }
     const { name, issuer, issued_date, expiry_date, file_url } = req.body;
     if (!name) return res.status(400).json({ error: 'name e obrigatorio', code: 'MISSING_FIELDS' });
     const { data, error } = await supabaseAdmin
