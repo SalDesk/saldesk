@@ -868,6 +868,141 @@ function LiveAvailabilitySection({ slug, units, lang, opType, currency, opCurren
   );
 }
 
+/* ── RestaurantMenuSection ───────────────────────────
+   Lista só informativa dos pratos/menus de degustação geridos no Menu
+   Digital (unit_type 'menu_item'/'tasting_menu') -- nunca um botão de
+   reservar por prato, isso não faz sentido (reserva-se uma mesa, não um
+   prato). Corrige a regressão introduzida ao tirar as mesas da grelha de
+   "produtos": os pratos deixaram de aparecer publicamente também. ── */
+const MENU_CATEGORY_LABELS = {
+  entradas:           { pt: 'Entradas',          en: 'Starters' },
+  pratos_principais:  { pt: 'Pratos Principais',  en: 'Main Courses' },
+  sobremesas:         { pt: 'Sobremesas',         en: 'Desserts' },
+  bebidas:            { pt: 'Bebidas',            en: 'Drinks' },
+  outros:             { pt: 'Outros',             en: 'Others' },
+};
+const MENU_ALLERGEN_LABELS = {
+  gluten: { pt: 'Glúten', en: 'Gluten' }, lactose: { pt: 'Lactose', en: 'Lactose' },
+  frutos_secos: { pt: 'Frutos secos', en: 'Nuts' }, marisco: { pt: 'Marisco', en: 'Shellfish' },
+  ovos: { pt: 'Ovos', en: 'Eggs' }, soja: { pt: 'Soja', en: 'Soy' },
+  peixe: { pt: 'Peixe', en: 'Fish' }, amendoim: { pt: 'Amendoim', en: 'Peanuts' },
+};
+const MENU_DIET_LABELS = {
+  vegetariano: { pt: 'Vegetariano', en: 'Vegetarian' }, vegan: { pt: 'Vegan', en: 'Vegan' },
+  sem_gluten: { pt: 'Sem glúten', en: 'Gluten-free' }, halal: { pt: 'Halal', en: 'Halal' },
+};
+
+function parseMenuMeta(unit) {
+  try { return JSON.parse(unit?.description || '{}'); } catch { return {}; }
+}
+
+function RestaurantMenuSection({ units, lang, opCurrency, currency }) {
+  const today = String(new Date().getDay());
+  const dishes   = units.filter(u => u.unit_type === 'menu_item' && u.status !== 'inactive');
+  const tastings = units.filter(u => u.unit_type === 'tasting_menu' && u.status !== 'inactive');
+
+  if (dishes.length === 0 && tastings.length === 0) return null;
+
+  const byCategory = {};
+  dishes.forEach(d => {
+    const meta = parseMenuMeta(d);
+    const cat = meta.category || 'outros';
+    if (!byCategory[cat]) byCategory[cat] = [];
+    byCategory[cat].push({ unit: d, meta });
+  });
+  const categoryOrder = Object.keys(MENU_CATEGORY_LABELS).filter(c => byCategory[c]?.length);
+
+  return (
+    <section id="menu" className="max-w-5xl mx-auto px-4 sm:px-6 py-12 sm:py-16">
+      <p className="text-xs font-body font-bold text-ocean-700 uppercase tracking-widest mb-1">
+        {lang === 'en' ? 'Menu' : 'Menu'}
+      </p>
+      <h2 className="font-display font-bold text-2xl sm:text-3xl text-n-900 mb-8">
+        {lang === 'en' ? 'Our Menu' : 'O Nosso Menu'}
+      </h2>
+
+      {categoryOrder.map(cat => (
+        <div key={cat} className="mb-10 last:mb-0">
+          <h3 className="font-display font-bold text-lg text-n-900 mb-4 pb-2 border-b border-n-100">
+            {lang === 'en' ? MENU_CATEGORY_LABELS[cat].en : MENU_CATEGORY_LABELS[cat].pt}
+          </h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {byCategory[cat].map(({ unit, meta }) => {
+              const isToday = !!meta.daily_special?.[today];
+              const name = lang === 'en' && meta.name_en ? meta.name_en : unit.name;
+              const desc = lang === 'en' && meta.desc_en ? meta.desc_en : meta.desc_pt;
+              return (
+                <div key={unit.id} className="flex gap-3 bg-white rounded-xl border border-n-100 p-3">
+                  {unit.images?.[0] && (
+                    <img src={unit.images[0]} alt={name} className="w-16 h-16 rounded-lg object-cover shrink-0" />
+                  )}
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-start justify-between gap-2">
+                      <p className="font-display font-semibold text-sm text-n-900">{name}</p>
+                      <span className="font-display font-bold text-sm text-ocean-700 shrink-0">
+                        {fmtPrice(unit.base_price, 'person', opCurrency, currency, lang)}
+                      </span>
+                    </div>
+                    {desc && <p className="text-xs font-body text-n-500 mt-0.5 leading-relaxed">{desc}</p>}
+                    {(meta.diets?.length > 0 || meta.allergens?.length > 0 || isToday) && (
+                      <div className="flex flex-wrap gap-1 mt-1.5">
+                        {isToday && (
+                          <span className="text-[9px] font-mono uppercase tracking-wide px-1.5 py-0.5 rounded bg-ocean-50 text-ocean-700">
+                            {lang === 'en' ? "Today's special" : 'Prato do dia'}
+                          </span>
+                        )}
+                        {meta.diets?.map(d => (
+                          <span key={d} className="text-[9px] font-mono uppercase tracking-wide px-1.5 py-0.5 rounded bg-[#ECFDF5] text-[#1A7A4A]">
+                            {lang === 'en' ? MENU_DIET_LABELS[d]?.en || d : MENU_DIET_LABELS[d]?.pt || d}
+                          </span>
+                        ))}
+                        {meta.allergens?.map(a => (
+                          <span key={a} className="text-[9px] font-mono uppercase tracking-wide px-1.5 py-0.5 rounded bg-[#FEF2F2] text-error">
+                            {lang === 'en' ? MENU_ALLERGEN_LABELS[a]?.en || a : MENU_ALLERGEN_LABELS[a]?.pt || a}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      ))}
+
+      {tastings.length > 0 && (
+        <div>
+          <h3 className="font-display font-bold text-lg text-n-900 mb-4 pb-2 border-b border-n-100">
+            {lang === 'en' ? 'Tasting Menus' : 'Menus de Degustação'}
+          </h3>
+          <div className="space-y-3">
+            {tastings.map(t => {
+              const meta = parseMenuMeta(t);
+              const desc = lang === 'en' && meta.desc_en ? meta.desc_en : meta.desc_pt;
+              const items = meta.items || [];
+              return (
+                <div key={t.id} className="bg-white rounded-xl border border-n-100 p-4">
+                  <div className="flex items-baseline justify-between gap-3">
+                    <p className="font-display font-bold text-n-900">{t.name}</p>
+                    <span className="font-display font-bold text-ocean-700">
+                      {fmtPrice(t.base_price, 'person', opCurrency, currency, lang)}
+                    </span>
+                  </div>
+                  {desc && <p className="text-xs font-body text-n-500 mt-1">{desc}</p>}
+                  {items.length > 0 && (
+                    <p className="text-xs font-body text-n-400 mt-1.5">{items.map(i => i.name_pt).join(' · ')}</p>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </section>
+  );
+}
+
 /* ── RestaurantReservationSection ────────────────────
    Substitui a grelha de mesas-como-produtos: o cliente escolhe data/hora/
    pessoas/zona, a mesa é sempre atribuída internamente (nunca escolhida
@@ -1609,6 +1744,7 @@ export default function PublicBooking() {
       {/* ── Serviços (restaurante: formulário de reserva real, nunca a grelha de mesas) ── */}
       {isRestaurant ? (
         <div style={{ order: sectionOrder('services') }}>
+          <RestaurantMenuSection units={units} lang={lang} opCurrency={op.currency} currency={currency} />
           <RestaurantReservationSection slug={slug} lang={lang} />
         </div>
       ) : (
