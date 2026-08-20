@@ -18,25 +18,25 @@ function initSocket(server) {
     },
   });
 
-  /* Auth middleware — decode JWT server-side instead of trusting client-supplied operatorId */
+  /* Auth middleware — supabaseAdmin.auth.getUser() valida o token de verdade contra a
+     Supabase (mesmo padrao de auth.js). O papel FUNDADOR nunca vem do handshake do cliente
+     (era possivel entrar em admin:fundador so dizendo role:'FUNDADOR', sem token nenhum) --
+     deriva-se sempre do user_metadata do proprio token verificado. */
   io.use(async (socket, next) => {
-    const { token, role } = socket.handshake.auth;
-
-    if (role === 'FUNDADOR') {
-      socket.data.role = 'FUNDADOR';
-      return next();
-    }
+    const { token } = socket.handshake.auth;
 
     if (!token) return next(new Error('Unauthorized'));
 
     try {
-      const jwt = require('jsonwebtoken');
-      let user;
-      try {
-        const decoded = jwt.decode(token);
-        if (!decoded || !decoded.sub) return next(new Error('Unauthorized'));
-        user = { id: decoded.sub, user_metadata: decoded.user_metadata || {} };
-      } catch(e) { return next(new Error('Unauthorized')); }
+      const { data, error } = await supabaseAdmin.auth.getUser(token);
+      if (error || !data?.user) return next(new Error('Unauthorized'));
+      const user = data.user;
+
+      if (user.user_metadata?.role === 'FUNDADOR') {
+        socket.data.role   = 'FUNDADOR';
+        socket.data.userId = user.id;
+        return next();
+      }
 
       let operatorId = null;
 
@@ -79,8 +79,12 @@ function initSocket(server) {
     onlineOperators.get(operatorId).add(socket.id);
     io.to('admin:fundador').emit('admin:operator:online', { operatorId });
 
-    socket.on('join:room',  (room) => socket.join(room));
-    socket.on('leave:room', (room) => socket.leave(room));
+    /* join:room aceitava qualquer string do cliente -- um socket ligado como operador A
+       conseguia entrar em operator:{B} ou admin:fundador so pedindo. So sao permitidas as
+       salas a que este socket tem mesmo direito. */
+    const allowedRooms = new Set([`operator:${operatorId}`, ...(userId ? [`user:${userId}`] : [])]);
+    socket.on('join:room',  (room) => { if (allowedRooms.has(room)) socket.join(room); });
+    socket.on('leave:room', (room) => { if (allowedRooms.has(room)) socket.leave(room); });
 
     socket.on('typing:start', ({ to }) => socket.to(`user:${to}`).emit('typing:start', { from: userId }));
     socket.on('typing:stop',  ({ to }) => socket.to(`user:${to}`).emit('typing:stop',  { from: userId }));

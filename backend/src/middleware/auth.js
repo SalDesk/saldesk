@@ -36,30 +36,27 @@ async function authMiddleware(req, res, next) {
   }
 
   const token = authHeader.split(' ')[1];
-  let user;
-  try {
-    const jwt = require('jsonwebtoken');
-    const decoded = jwt.decode(token);
-    if (!decoded || !decoded.sub || decoded.exp < Math.floor(Date.now() / 1000)) {
-      return res.status(401).json({ error: 'Token invalido ou expirado', code: 'INVALID_TOKEN' });
-    }
-    user = { id: decoded.sub, email: decoded.email, user_metadata: decoded.user_metadata || {}, role: decoded.role };
-  } catch(e) {
+  /* jwt.decode() SO le o payload -- nunca confirma a assinatura da Supabase.
+     supabaseAdmin.auth.getUser() valida o token de verdade contra a Supabase,
+     mesmo padrao ja usado (correctamente) em travelerAuthController.js. */
+  const { data, error } = await supabaseAdmin.auth.getUser(token);
+  if (error || !data?.user) {
     return res.status(401).json({ error: 'Token invalido ou expirado', code: 'INVALID_TOKEN' });
   }
-  req.user = user;
+  const supaUser = data.user;
+  req.user = { id: supaUser.id, email: supaUser.email, user_metadata: supaUser.user_metadata || {}, role: supaUser.role };
 
-  const operator = await supabaseGet('operators', { user_id: user.id });
+  const operator = await supabaseGet('operators', { user_id: supaUser.id });
   req.operator = operator || null;
   req.staff = null;
-  if (!req.operator && user.user_metadata?.staff_id) {
-    const staff = await supabaseGet('staff', { id: user.user_metadata.staff_id, status: 'active' });
+  if (!req.operator && supaUser.user_metadata?.staff_id) {
+    const staff = await supabaseGet('staff', { id: supaUser.user_metadata.staff_id, status: 'active' });
     req.staff = staff || null;
   }
 
   req.traveler = null;
   if (!req.operator && !req.staff) {
-    const traveler = await supabaseGet('travelers', { user_id: user.id });
+    const traveler = await supabaseGet('travelers', { user_id: supaUser.id });
     req.traveler = traveler || null;
   }
 
