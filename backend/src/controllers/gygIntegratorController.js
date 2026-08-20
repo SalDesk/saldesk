@@ -229,7 +229,22 @@ async function createReservation(req, res, next) {
     const diaSeguinte = new Date(dataPedida); diaSeguinte.setDate(diaSeguinte.getDate() + 1);
     const dateTo = diaSeguinte.toISOString().split('T')[0];
 
-    const disponivel = await verificarDisponibilidade(supabaseAdmin, unit.id, dateFrom, dateTo);
+    /* "Change ticket quantities on existing Booking" -- a GYG reserva de novo
+       (novo hold) com o MESMO gygBookingReference de uma reserva ja
+       confirmada, para depois chamar /book outra vez com a quantidade
+       actualizada. Sem excluir a reserva actual dessa mesma referencia da
+       verificacao de disponibilidade, isto colidia sempre consigo mesmo
+       (NO_AVAILABILITY) -- confirmado pelo self-testing tool (2026-08-20). */
+    const { data: holdExistente } = await supabaseAdmin
+      .from('ota_reservation_holds')
+      .select('reservation_id')
+      .eq('channel', 'getyourguide')
+      .eq('external_ref', gygBookingReference)
+      .eq('status', 'booked')
+      .not('reservation_id', 'is', null)
+      .maybeSingle();
+
+    const disponivel = await verificarDisponibilidade(supabaseAdmin, unit.id, dateFrom, dateTo, holdExistente?.reservation_id || null);
     if (!disponivel) {
       return erro(res, 'NO_AVAILABILITY', 'This activity is sold out for the requested date.');
     }
@@ -389,6 +404,30 @@ async function createBooking(req, res, next) {
       .from('ota_reservation_holds')
       .update({ status: 'booked', reservation_id: reserva.id, updated_at: new Date().toISOString() })
       .eq('id', hold.id);
+
+    /* Se ja existia uma reserva confirmada com este MESMO gygBookingReference
+       (fluxo "mudar quantidade de bilhetes"), esta nova reserva substitui-a --
+       cancela a antiga para nao ficar duplicada nem a ocupar a mesma data
+       desnecessariamente (reservations nao tem estado "superseded", so
+       "cancelled", que reflecte com precisao suficiente o resultado real). */
+    const { data: holdAntigo } = await supabaseAdmin
+      .from('ota_reservation_holds')
+      .select('id, reservation_id')
+      .eq('channel', 'getyourguide')
+      .eq('external_ref', gygBookingReference)
+      .eq('status', 'booked')
+      .neq('id', hold.id)
+      .not('reservation_id', 'is', null)
+      .maybeSingle();
+
+    if (holdAntigo?.reservation_id) {
+      await supabaseAdmin.from('reservations')
+        .update({ status: 'cancelled', updated_at: new Date().toISOString() })
+        .eq('id', holdAntigo.reservation_id);
+      await supabaseAdmin.from('ota_reservation_holds')
+        .update({ status: 'cancelled', updated_at: new Date().toISOString() })
+        .eq('id', holdAntigo.id);
+    }
 
     notifyAvailabilityChanged(hold.unit_id).catch(() => {});
     /* So dispara se o email da reserva GYG coincidir com uma conta de
