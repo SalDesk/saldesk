@@ -238,7 +238,13 @@ async function createReservation(req, res, next) {
        aqui, tal como no resto da app). */
     const { total: precoDia } = calcularPreco(unit, dateFrom, dateTo);
     const total = Math.round(precoDia * totalParticipantes * 100) / 100;
-    const expiresAt = new Date(Date.now() + HOLD_MINUTES * 60 * 1000).toISOString();
+    /* .toISOString() traz milissegundos (".388Z"); a BD depois devolve isto
+       reformatado como "+00:00" em vez de "Z" ao ler de volta -- o self-testing
+       tool da GYG rejeitou esse formato como "Invalid datetime string" para
+       reservationExpiration. Corta os milissegundos aqui e usa este MESMO
+       valor (nunca o devolvido pela BD) tanto para gravar como para responder,
+       igual ao formato ja aceite pela GYG em queryAvailability's dateTime. */
+    const expiresAt = new Date(Date.now() + HOLD_MINUTES * 60 * 1000).toISOString().replace(/\.\d{3}Z$/, 'Z');
 
     const { data: hold, error } = await supabaseAdmin
       .from('ota_reservation_holds')
@@ -263,7 +269,7 @@ async function createReservation(req, res, next) {
     return res.status(200).json({
       data: {
         reservationReference:  hold.id,
-        reservationExpiration: hold.expires_at,
+        reservationExpiration: expiresAt,
       },
     });
   } catch (err) {
