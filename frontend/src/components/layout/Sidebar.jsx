@@ -131,9 +131,9 @@ export default function Sidebar({ onClose }) {
 
   function handleLogout() { logout(); navigate('/login'); }
 
-  const opType   = operator?.operator_type || 'hotel'; console.log('DEBUG operator completo:', operator); console.log('DEBUG plan:', operator?.plan);
+  const opType   = operator?.operator_type || 'hotel';
   const navItems = TYPE_NAV[opType] || TYPE_NAV.hotel;
-  const slug     = operator?.booking_link_slug;
+  const slug     = operator?.slug;
   const lang     = operator?.language || 'pt';
   const siteLabel = lang === 'en' ? 'View my site' : 'Ver o meu site';
 

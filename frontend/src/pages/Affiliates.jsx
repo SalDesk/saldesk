@@ -189,8 +189,8 @@ export default function Affiliates() {
   }, []);
 
   useEffect(() => {
-    if (operator?.booking_link_slug) {
-      setSlug(operator.booking_link_slug);
+    if (operator?.slug) {
+      setSlug(operator.slug);
     } else {
       getBookingLink()
         .then(d => {

@@ -377,7 +377,7 @@ function DishCard({ dish, onEdit, onDelete, onToggleAvailable }) {
 
 export default function MenuDigital() {
   const { operator } = useAuthStore();
-  const slug         = operator?.booking_link_slug;
+  const slug         = operator?.slug;
 
   const [units,       setUnits]       = useState([]);
   const [loading,     setLoading]     = useState(true);

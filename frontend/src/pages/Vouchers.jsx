@@ -268,7 +268,7 @@ export default function Vouchers() {
     listUnits().then(d => setUnits(d || [])).catch(() => {});
     getBookingLink()
       .then(d => setBookingLink(d?.url || d || ''))
-      .catch(() => setBookingLink(operator?.booking_link_slug ? `https://saldesk.cv/book/${operator.booking_link_slug}` : ''));
+      .catch(() => setBookingLink(operator?.slug ? `https://saldesk.cv/book/${operator.slug}` : ''));
   }, []);
 
   async function handleSave(id, payload) {

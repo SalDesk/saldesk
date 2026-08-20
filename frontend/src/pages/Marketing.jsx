@@ -709,7 +709,7 @@ function StatsTab({ stats, statsLoading, posts, bookingLink }) {
 /* ─────────────────────── Main ─────────────────────── */
 export default function Marketing() {
   const { operator } = useAuthStore();
-  const slug = operator?.booking_link_slug;
+  const slug = operator?.slug;
 
   const [activeTab,   setActiveTab]   = useState('planeador');
   const [bookingLink, setBookingLink] = useState('');
