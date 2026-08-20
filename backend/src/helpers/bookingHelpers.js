@@ -105,10 +105,11 @@ async function verificarDisponibilidadeMesa(supabase, unitId, date, startTime, d
   return !(bloqueadas?.length > 0);
 }
 
-// Encontra a melhor mesa livre para operator_id/date/time/partySize(+zone).
-// Nunca inventa uma mesa fallback -- devolve null quando nao ha nenhuma.
+// Lista as mesas livres para operator_id/date/time/partySize(+zona preferida).
+// O cliente escolhe a mesa exacta a partir desta lista -- nunca inventa nem
+// esconde nenhuma candidata, so filtra por capacidade e ordena por zona.
 // Combinação de mesas (units.description.combinable) fica fora desta fase.
-async function atribuirMesaAutomaticamente(supabase, operatorId, { date, startTime, durationMinutes = DEFAULT_SEATING_MINUTES, partySize, zone = null, excluirReservaId = null }) {
+async function listarMesasDisponiveis(supabase, operatorId, { date, startTime, durationMinutes = DEFAULT_SEATING_MINUTES, partySize, zone = null, excluirReservaId = null }) {
   const { data: mesas } = await supabase
     .from('units')
     .select('*')
@@ -117,9 +118,9 @@ async function atribuirMesaAutomaticamente(supabase, operatorId, { date, startTi
 
   /* O Menu Digital (MenuDigital.jsx) tambem grava pratos/menus de degustacao
      como "units" do mesmo operador (unit_type 'menu_item'/'tasting_menu'),
-     com capacity=1 -- sem este filtro, um prato podia ser "atribuido" como
-     mesa a um cliente que reservasse para 1 pessoa. Mesmo filtro ja usado
-     em Reservations.jsx para o dropdown de mesas do staff. */
+     com capacity=1 -- sem este filtro, um prato podia aparecer como mesa
+     a um cliente que reservasse para 1 pessoa. Mesmo filtro ja usado em
+     Reservations.jsx para o dropdown de mesas do staff. */
   const candidatas = (mesas || [])
     .filter((unit) => unit.unit_type !== 'menu_item' && unit.unit_type !== 'tasting_menu')
     .map((unit) => ({ unit, meta: parseUnitMeta(unit) }))
@@ -139,15 +140,23 @@ async function atribuirMesaAutomaticamente(supabase, operatorId, { date, startTi
       return maxA - maxB;
     });
 
-  for (const { unit } of candidatas) {
+  const disponiveis = [];
+  for (const { unit, meta } of candidatas) {
     if (await verificarDisponibilidadeMesa(supabase, unit.id, date, startTime, durationMinutes, excluirReservaId)) {
-      return unit;
+      disponiveis.push({
+        id: unit.id,
+        name: unit.name,
+        zone: meta.zone || null,
+        capacity_min: meta.capacity_min ?? 1,
+        capacity_max: meta.capacity_max ?? unit.capacity ?? 1,
+        images: unit.images || [],
+      });
     }
   }
-  return null;
+  return disponiveis;
 }
 
 module.exports = {
   verificarDisponibilidade, calcularPreco,
-  verificarDisponibilidadeMesa, atribuirMesaAutomaticamente, DEFAULT_SEATING_MINUTES,
+  verificarDisponibilidadeMesa, listarMesasDisponiveis, DEFAULT_SEATING_MINUTES, parseUnitMeta,
 };

@@ -26,23 +26,26 @@ async function getDiscoverCatalog({ type } = {}) {
   operators.forEach((o) => { operatorMap[o.id] = o; });
   const ids = operators.map((o) => o.id);
 
-  /* Mesas de restaurante nunca sao "produtos" navegaveis no catalogo agregado
-     -- sao inventario interno, reservadas via o formulario proprio na pagina
-     do restaurante (/book/{slug}), nao um card individual no Conect. Um
-     filtro type='restaurant' devolve correctamente um catalogo vazio. */
-  const bookableUnitOperatorIds = operators
-    .filter((o) => o.operator_type !== 'restaurant')
-    .map((o) => o.id);
-  if (!bookableUnitOperatorIds.length) return [];
-
-  const { data: units, error: unitsErr } = await supabaseAdmin
+  const { data: allUnits, error: unitsErr } = await supabaseAdmin
     .from('units')
-    .select('id, operator_id, name, description, base_price, images, created_at, duration_minutes, languages_offered, lat, lng, category_id, experience_categories(label_pt, label_en)')
-    .in('operator_id', bookableUnitOperatorIds)
+    .select('id, operator_id, unit_type, name, description, base_price, images, created_at, duration_minutes, languages_offered, lat, lng, category_id, experience_categories(label_pt, label_en)')
+    .in('operator_id', ids)
     .eq('status', 'active')
     .eq('conect_status', 'published');
   if (unitsErr) throw unitsErr;
-  if (!units?.length) return [];
+  if (!allUnits?.length) return [];
+
+  /* Mesas de restaurante nunca sao "produtos" navegaveis no catalogo agregado
+     -- sao inventario interno, reservadas via o formulario proprio na pagina
+     do restaurante (/book/{slug}), nao um card individual no Conect. Pratos e
+     menus de degustacao (unit_type 'menu_item'/'tasting_menu') SAO elegiveis
+     -- ficam reservaveis a partir do proprio card, ligando de volta ao
+     formulario de reserva do restaurante com o prato pre-seleccionado. */
+  const units = allUnits.filter((u) => {
+    const op = operatorMap[u.operator_id];
+    return op.operator_type !== 'restaurant' || ['menu_item', 'tasting_menu'].includes(u.unit_type);
+  });
+  if (!units.length) return [];
 
   // Ratings agregadas por operador -- reviews nao sao por unidade
   const { data: ratings } = await supabaseAdmin
@@ -74,10 +77,38 @@ async function getDiscoverCatalog({ type } = {}) {
     bookingMap[r.unit_id] = (bookingMap[r.unit_id] || 0) + 1;
   });
 
+  /* Pratos/menus de degustacao nunca tem reservas contra o proprio unit_id
+     (reservas de restaurante sao sempre contra uma MESA) -- reaproveitar
+     cegamente o next_available por unidade daria sempre "hoje", o que e
+     enganoso. Para estes, next_available reflecte a disponibilidade das
+     mesas do proprio operador: um dia conta como livre para o prato se
+     pelo menos uma mesa desse operador estiver livre nesse dia. */
+  const restaurantOperatorIds = [...new Set(
+    units.filter((u) => operatorMap[u.operator_id].operator_type === 'restaurant').map((u) => u.operator_id)
+  )];
+  let tableIdsByOperator = {};
+  let tableIds = [];
+  if (restaurantOperatorIds.length) {
+    const { data: tables } = await supabaseAdmin
+      .from('units')
+      .select('id, operator_id, unit_type')
+      .in('operator_id', restaurantOperatorIds)
+      .eq('status', 'active')
+      .not('unit_type', 'in', '(menu_item,tasting_menu)');
+    (tables || []).forEach((t) => {
+      if (!tableIdsByOperator[t.operator_id]) tableIdsByOperator[t.operator_id] = [];
+      tableIdsByOperator[t.operator_id].push(t.id);
+    });
+    tableIds = (tables || []).map((t) => t.id);
+  }
+
   // Proximo dia livre nos proximos 14 dias, em lote para todas as unidades --
   // mesma regra binaria de verificarDisponibilidade() (bookingHelpers.js): uma
   // reserva pending/confirmed/checked_in sobreposta OU um blocked_dates nesse
   // dia bloqueia. Nao considera units.capacity (nada no codigo considera).
+  // Inclui tambem as mesas dos operadores de restaurante (tableIds) -- so
+  // usadas para calcular next_available dos pratos desse operador, nunca
+  // devolvidas como itens do catalogo.
   const fmtDate = (d) => d.toISOString().split('T')[0];
   const today = new Date();
   today.setUTCHours(0, 0, 0, 0);
@@ -85,11 +116,12 @@ async function getDiscoverCatalog({ type } = {}) {
   const windowEnd = new Date(today.getTime() + AVAIL_WINDOW_DAYS * 86400000);
   const windowStartStr = fmtDate(today);
   const windowEndStr = fmtDate(windowEnd);
+  const allUnitIds = [...new Set([...unitIds, ...tableIds])];
 
   const { data: upcomingRes } = await supabaseAdmin
     .from('reservations')
     .select('unit_id, check_in, check_out')
-    .in('unit_id', unitIds)
+    .in('unit_id', allUnitIds)
     .in('status', ['pending', 'confirmed', 'checked_in'])
     .lt('check_in', windowEndStr)
     .gt('check_out', windowStartStr);
@@ -97,7 +129,7 @@ async function getDiscoverCatalog({ type } = {}) {
   const { data: blockedRows } = await supabaseAdmin
     .from('blocked_dates')
     .select('unit_id, date')
-    .in('unit_id', unitIds)
+    .in('unit_id', allUnitIds)
     .gte('date', windowStartStr)
     .lte('date', windowEndStr);
 
@@ -121,6 +153,18 @@ async function getDiscoverCatalog({ type } = {}) {
     for (let i = 0; i < AVAIL_WINDOW_DAYS; i++) {
       const ds = fmtDate(new Date(today.getTime() + i * 86400000));
       if (!blocked || !blocked.has(ds)) return ds;
+    }
+    return null;
+  }
+
+  // Um dia conta como disponivel para um prato se PELO MENOS UMA mesa do
+  // operador estiver livre nesse dia (OR entre mesas, nao AND).
+  function nextAvailableForOperator(operatorId) {
+    const tables = tableIdsByOperator[operatorId];
+    if (!tables?.length) return null;
+    for (let i = 0; i < AVAIL_WINDOW_DAYS; i++) {
+      const ds = fmtDate(new Date(today.getTime() + i * 86400000));
+      if (tables.some((tId) => !blockedByUnit[tId]?.has(ds))) return ds;
     }
     return null;
   }
@@ -155,7 +199,7 @@ async function getDiscoverCatalog({ type } = {}) {
         : null,
       review_count:    opRatings.length || 0,
       recent_bookings: bookingMap[u.id] || 0,
-      next_available:  nextAvailable(u.id),
+      next_available:  op.operator_type === 'restaurant' ? nextAvailableForOperator(op.id) : nextAvailable(u.id),
       created_at:      u.created_at,
     };
   });

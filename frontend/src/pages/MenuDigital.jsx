@@ -3,7 +3,7 @@ import {
   Plus, Pencil, Trash2, Star, ChefHat, X,
   QrCode, Link, CheckCircle, Image as ImageIcon, Copy,
 } from 'lucide-react';
-import { listUnits, createUnit, updateUnit, deleteUnit } from '../services/unitsService';
+import { listUnits, createUnit, updateUnit, deleteUnit, updateConectStatus } from '../services/unitsService';
 import api from '../services/api';
 import useAuthStore from '../store/authStore';
 import PageHeader from '../components/layout/PageHeader';
@@ -12,6 +12,7 @@ import Modal from '../components/ui/Modal';
 import LoadingSpinner from '../components/shared/LoadingSpinner';
 import Input, { Textarea, Select } from '../components/ui/Input';
 import ImageUploader from '../components/shared/ImageUploader';
+import ConectRow from '../components/shared/ConectRow';
 
 const CATEGORIES = [
   { key: 'entradas',         label: 'Entradas'          },
@@ -306,7 +307,7 @@ function TastingMenuForm({ menu, onSave, onCancel, loading }) {
   );
 }
 
-function DishCard({ dish, onEdit, onDelete, onToggleAvailable }) {
+function DishCard({ dish, onEdit, onDelete, onToggleAvailable, onSubmitConect }) {
   const meta     = parseDishMeta(dish);
   const photo    = dish.images?.[0];
   const catLabel = CATEGORIES.find(c => c.key === meta.category)?.label || meta.category || '';
@@ -370,6 +371,7 @@ function DishCard({ dish, onEdit, onDelete, onToggleAvailable }) {
             </button>
           </div>
         </div>
+        <ConectRow unit={dish} onSubmitConect={onSubmitConect} />
       </div>
     </div>
   );
@@ -422,6 +424,14 @@ export default function MenuDigital() {
       setModal(null);
     } catch (err) { setFormError(err.response?.data?.error || 'Erro ao guardar'); }
     finally { setFormLoading(false); }
+  }
+
+  async function handleSubmitConect(unit) {
+    const next = ['published', 'paused'].includes(unit.conect_status) ? 'draft' : 'pending_review';
+    try {
+      const updated = await updateConectStatus(unit.id, next);
+      setUnits(prev => prev.map(u => (u.id === updated.id ? updated : u)));
+    } catch (err) { console.error(err); }
   }
 
   async function handleDelete() {
@@ -524,6 +534,7 @@ export default function MenuDigital() {
               onEdit={d => { setModalType('dish'); setModal(d); }}
               onDelete={setDeleteTarget}
               onToggleAvailable={handleToggleAvailable}
+              onSubmitConect={handleSubmitConect}
             />
           ))}
         </div>
@@ -554,6 +565,7 @@ export default function MenuDigital() {
                     {items.length > 0 && (
                       <p className="text-xs font-body text-n-400 mt-1">{items.map(i => i.name_pt).join(' · ')}</p>
                     )}
+                    <ConectRow unit={t} onSubmitConect={handleSubmitConect} />
                   </div>
                   <div className="flex gap-1 shrink-0">
                     <button onClick={() => { setModalType('tasting'); setModal(t); }}

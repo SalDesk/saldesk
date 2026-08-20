@@ -556,10 +556,17 @@ function availabilityLabel(item) {
   const days = Math.round((target - today) / 86400000);
   if (days < 0 || days > 3) return '';
   const lang = L();
-  let txt;
-  if (days === 0) txt = lang === 'pt' ? 'Hoje' : 'Today';
-  else if (days === 1) txt = lang === 'pt' ? 'Amanha' : 'Tomorrow';
-  else txt = lang === 'pt' ? `Em ${days} dias` : `In ${days} days`;
+  /* Para um prato, next_available reflecte a disponibilidade das MESAS do
+     restaurante -- nunca um horario marcado do proprio prato. O rotulo
+     deixa isso explicito, em vez de sugerir que o prato tem um "slot". */
+  const isDish = item.operator_type === 'restaurant';
+  let when;
+  if (days === 0) when = lang === 'pt' ? 'hoje' : 'today';
+  else if (days === 1) when = lang === 'pt' ? 'amanha' : 'tomorrow';
+  else when = lang === 'pt' ? `em ${days} dias` : `in ${days} days`;
+  const txt = isDish
+    ? (lang === 'pt' ? `Mesa disponivel ${when}` : `Table available ${when}`)
+    : (when.charAt(0).toUpperCase() + when.slice(1));
   return `<span class="avail-badge"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>${txt}</span>`;
 }
 
@@ -803,7 +810,13 @@ function renderActCard(item) {
   const wished = isWished(item);
   const priceVal = fmtPrice(item.base_price, item.currency);
   const hasPrice = !!item.base_price;
-  const bookHref = `${APP}/book/${esc(item.operator_slug)}/servico/${esc(item.unit_id)}`;
+  /* Prato de restaurante nao tem "ficha de produto" propria (getUnit devolve
+     404 para qualquer unidade de restaurante) -- o CTA liga de volta a
+     propria pagina do restaurante, com o prato pre-seleccionado no
+     pre-pedido da seccao de reserva. */
+  const bookHref = item.operator_type === 'restaurant'
+    ? `${APP}/book/${esc(item.operator_slug)}?prato=${esc(item.unit_id)}`
+    : `${APP}/book/${esc(item.operator_slug)}/servico/${esc(item.unit_id)}`;
 
   return `
     <div class="act-card card fade-up">

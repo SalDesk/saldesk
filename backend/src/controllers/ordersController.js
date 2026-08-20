@@ -17,7 +17,7 @@ async function listar(req, res, next) {
     const { status, unit_id, date } = req.query;
     let q = supabaseAdmin
       .from('orders')
-      .select('*, units(name, description), order_items(*)')
+      .select('*, units(name, description), order_items(*), reservations(check_in, start_time, party_size:guests)')
       .eq('operator_id', getOperatorId(req))
       .order('created_at', { ascending: false })
       .limit(200);
@@ -56,7 +56,7 @@ async function mudarStatus(req, res, next) {
       .update({ status, updated_at: new Date().toISOString() })
       .eq('id', req.params.id)
       .eq('operator_id', getOperatorId(req))
-      .select('*, units(name, description), order_items(*)')
+      .select('*, units(name, description), order_items(*), reservations(check_in, start_time, party_size:guests)')
       .single();
     if (error) throw error;
 

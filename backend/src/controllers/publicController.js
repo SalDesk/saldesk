@@ -1,5 +1,5 @@
 const { supabaseAdmin } = require('../config/supabase');
-const { verificarDisponibilidade, calcularPreco, atribuirMesaAutomaticamente, DEFAULT_SEATING_MINUTES } = require('../helpers/bookingHelpers');
+const { verificarDisponibilidade, calcularPreco, verificarDisponibilidadeMesa, listarMesasDisponiveis, DEFAULT_SEATING_MINUTES, parseUnitMeta } = require('../helpers/bookingHelpers');
 const { obterOuCriarCliente } = require('../helpers/customerHelper');
 const { enviarEmail } = require('../helpers/emailHelper');
 const { detectarIdioma } = require('../helpers/languageHelper');
@@ -95,8 +95,9 @@ async function verificarDisponibilidadePublica(req, res, next) {
   }
 }
 
-/* ─── Disponibilidade de mesa (restaurante) — nunca devolve QUAL mesa,
-   só se há alguma disponível; a atribuição real só acontece em criarReserva ─── */
+/* ─── Disponibilidade de mesa (restaurante) — devolve a lista real de mesas
+   livres (nome, zona, capacidade, fotos); o cliente escolhe a mesa exacta
+   a partir daqui, validada de novo (contra corrida) em criarReserva ─── */
 async function verificarDisponibilidadeRestaurantePublica(req, res, next) {
   try {
     const { date, time, party_size, zone } = req.query;
@@ -116,17 +117,53 @@ async function verificarDisponibilidadeRestaurantePublica(req, res, next) {
       return res.status(400).json({ error: 'Operador não é um restaurante', code: 'INVALID_OPERATOR_TYPE' });
     }
 
-    const mesa = await atribuirMesaAutomaticamente(supabaseAdmin, operator.id, {
+    const tables = await listarMesasDisponiveis(supabaseAdmin, operator.id, {
       date, startTime: time, partySize: Number(party_size), zone: zone || null,
     });
 
     return res.json({
-      data: { available: !!mesa, date, time, party_size: Number(party_size) },
-      message: mesa ? 'Disponível' : 'Indisponível',
+      data: { tables, date, time, party_size: Number(party_size) },
+      message: tables.length ? 'Disponível' : 'Indisponível',
     });
   } catch (err) {
     next(err);
   }
+}
+
+/* Valida e monta os itens de um pedido de restaurante -- nunca confia no preco
+   enviado pelo cliente, vai sempre buscar base_price real dos pratos/menus a
+   BD no momento do pedido. Partilhado por createOrder (QR, mesa ja ocupada)
+   e criarReserva (pre-pedido ligado a uma reserva futura). */
+async function validarItensPedido(operatorId, items) {
+  if (!Array.isArray(items) || items.length === 0 || items.length > 50) {
+    return { error: { status: 400, body: { error: 'Pedido vazio ou inválido', code: 'INVALID_ITEMS' } } };
+  }
+  const cleanItems = items.map(i => ({
+    unit_id: i.unit_id,
+    quantity: Number.isInteger(i.quantity) ? i.quantity : 0,
+    notes: typeof i.notes === 'string' ? i.notes.slice(0, 200) : null,
+  }));
+  if (cleanItems.some(i => !i.unit_id || i.quantity < 1 || i.quantity > 20)) {
+    return { error: { status: 400, body: { error: 'Item de pedido inválido', code: 'INVALID_ITEM' } } };
+  }
+
+  const dishIds = [...new Set(cleanItems.map(i => i.unit_id))];
+  const { data: dishes } = await supabaseAdmin
+    .from('units')
+    .select('id, name, base_price, unit_type, status, operator_id')
+    .eq('operator_id', operatorId)
+    .in('id', dishIds);
+  const dishMap = new Map((dishes || []).map(d => [d.id, d]));
+  const algumInvalido = dishIds.some(id => {
+    const d = dishMap.get(id);
+    return !d || d.status !== 'active' || !['menu_item', 'tasting_menu'].includes(d.unit_type);
+  });
+  if (algumInvalido) {
+    return { error: { status: 400, body: { error: 'Um dos itens não está disponível', code: 'INVALID_ITEM' } } };
+  }
+
+  const totalPrice = cleanItems.reduce((sum, i) => sum + Number(dishMap.get(i.unit_id).base_price) * i.quantity, 0);
+  return { cleanItems, dishMap, totalPrice };
 }
 
 async function criarReserva(req, res, next) {
@@ -134,7 +171,7 @@ async function criarReserva(req, res, next) {
     const { unit_id, customer_name, customer_email, customer_phone,
             customer_country, check_in, check_out, guests, notes,
             party_size, tour_time, reservation_time, zone_preference,
-            voucher_code, ref_code } = req.body;
+            voucher_code, ref_code, items } = req.body;
 
     // check_out é opcional — activities/restaurants podem enviar só check_in (data do serviço)
     const effectiveCheckOut = check_out || check_in;
@@ -152,11 +189,13 @@ async function criarReserva(req, res, next) {
 
     const isRestaurant = operator.operator_type === 'restaurant';
 
-    /* Restaurante nunca recebe unit_id do cliente -- a mesa e sempre interna,
-       atribuida por tras via atribuirMesaAutomaticamente(). Os restantes tipos
-       mantem o fluxo actual de escolher uma unidade especifica. */
+    /* Restaurante: cliente escolhe a mesa exacta (unit_id obrigatorio, tal
+       como os restantes tipos ja exigem) a partir da lista devolvida por
+       verificarDisponibilidadeRestaurantePublica. Pode incluir um pre-pedido
+       opcional (items), validado e ligado a reservation_id depois de a
+       reserva ser criada. */
     if (isRestaurant) {
-      if (!customer_name || !customer_email || !check_in || !reservation_time) {
+      if (!unit_id || !customer_name || !customer_email || !check_in || !reservation_time) {
         return res.status(400).json({ error: 'Campos obrigatórios em falta', code: 'MISSING_FIELDS' });
       }
     } else if (!unit_id || !customer_name || !customer_email || !check_in) {
@@ -167,15 +206,40 @@ async function criarReserva(req, res, next) {
     }
 
     let unit;
+    let preOrderValidado = null;
     if (isRestaurant) {
-      unit = await atribuirMesaAutomaticamente(supabaseAdmin, operator.id, {
-        date: check_in,
-        startTime: reservation_time,
-        partySize: Number(party_size || guests || 1),
-        zone: zone_preference || null,
-      });
-      if (!unit) {
-        return res.status(409).json({ error: 'Sem mesas disponíveis para esta data/hora', code: 'UNAVAILABLE' });
+      const { data: mesaRow } = await supabaseAdmin
+        .from('units')
+        .select('*, pricing_rules(*)')
+        .eq('id', unit_id)
+        .eq('operator_id', operator.id)
+        .eq('status', 'active')
+        .single();
+      if (!mesaRow || mesaRow.unit_type === 'menu_item' || mesaRow.unit_type === 'tasting_menu') {
+        return res.status(404).json({ error: 'Mesa não encontrada', code: 'TABLE_NOT_FOUND' });
+      }
+
+      const partySize = Number(party_size || guests || 1);
+      const meta = parseUnitMeta(mesaRow);
+      const capMin = meta.capacity_min ?? 1;
+      const capMax = meta.capacity_max ?? mesaRow.capacity ?? 1;
+      if (partySize < capMin || partySize > capMax) {
+        return res.status(400).json({ error: 'Número de pessoas não cabe nesta mesa', code: 'PARTY_SIZE_MISMATCH' });
+      }
+
+      // Corrida: a lista de mesas foi buscada momentos antes -- confirmar de novo.
+      const disponivel = await verificarDisponibilidadeMesa(supabaseAdmin, unit_id, check_in, reservation_time, DEFAULT_SEATING_MINUTES);
+      if (!disponivel) {
+        return res.status(409).json({ error: 'Mesa indisponível nesse horário', code: 'UNAVAILABLE' });
+      }
+      unit = mesaRow;
+
+      // Valida o pre-pedido opcional ANTES de inserir a reserva -- falha cedo,
+      // nunca deixa uma reserva confirmada com um pre-pedido a meio-invalido.
+      if (Array.isArray(items) && items.length > 0) {
+        const validado = await validarItensPedido(operator.id, items);
+        if (validado.error) return res.status(validado.error.status).json(validado.error.body);
+        preOrderValidado = validado;
       }
     } else {
       const { data: unitRow } = await supabaseAdmin
@@ -282,6 +346,42 @@ async function criarReserva(req, res, next) {
       registarUsoVoucher(voucherId).catch(err => console.error('[Voucher] Erro ao registar uso:', err.message));
     }
 
+    /* Pre-pedido ligado a esta reserva -- ja validado (precos/quantidades)
+       antes do insert acima. Se falhar aqui (raro, ex. corrida rara), a
+       reserva mantem-se confirmada; a resposta sinaliza o pre-pedido
+       falhado em vez de fingir sucesso ou perder o pedido silenciosamente. */
+    let preOrder = null;
+    if (isRestaurant && preOrderValidado) {
+      const { cleanItems, dishMap, totalPrice } = preOrderValidado;
+      try {
+        const { data: order, error: orderErr } = await supabaseAdmin
+          .from('orders')
+          .insert({
+            operator_id: operator.id,
+            unit_id: unit.id,
+            reservation_id: data.id,
+            source: 'reservation',
+            total_price: totalPrice,
+          })
+          .select('*')
+          .single();
+        if (orderErr) throw orderErr;
+
+        const { error: itemsErr } = await supabaseAdmin
+          .from('order_items')
+          .insert(cleanItems.map(i => {
+            const d = dishMap.get(i.unit_id);
+            return { order_id: order.id, unit_id: d.id, unit_name: d.name, unit_price: d.base_price, quantity: i.quantity, notes: i.notes };
+          }));
+        if (itemsErr) throw itemsErr;
+
+        preOrder = { created: true, order_id: order.id };
+      } catch (preOrderErr) {
+        console.error('[Reserva] Reserva confirmada mas pré-pedido falhou:', preOrderErr.message);
+        preOrder = { created: false };
+      }
+    }
+
     supabaseAdmin.from('notifications').insert({
       operator_id:       operator.id,
       notification_type: 'new_booking',
@@ -296,16 +396,13 @@ async function criarReserva(req, res, next) {
     const idioma = detectarIdioma(customer_country);
     const currency = operator.currency || 'EUR';
 
-    /* Privacidade: a identidade exacta da mesa (ex. "Mesa 4 — Terraço") e sempre
-       interna -- o cliente nunca a ve, nem sequer no email de confirmacao. O
-       email do operador continua a mostrar unit.name (a mesa real), so o do
-       cliente troca para o nome do restaurante quando isRestaurant. */
-    const customerFacingName = isRestaurant ? operator.name : unit.name;
-
+    /* O cliente agora escolhe a mesa exacta explicitamente (deixou de ser um
+       detalhe interno escondido) -- o email de confirmacao mostra o nome real
+       da mesa/unidade, tal como ja acontecia para os restantes tipos. */
     const clienteEmail = confirmacaoClienteEmail({
       idioma,
       customerName: customer_name,
-      tourName: customerFacingName,
+      tourName: unit.name,
       checkIn: check_in,
       checkOut: effectiveCheckOut,
       guests: party_size || guests || 1,
@@ -347,6 +444,7 @@ async function criarReserva(req, res, next) {
 
     return res.status(201).json({
       data,
+      pre_order: preOrder,
       message: 'Reserva submetida com sucesso. Aguarde confirmação.'
     });
   } catch (err) {
@@ -692,8 +790,11 @@ async function getUnit(req, res, next) {
 
     /* Mesas de restaurante nunca sao individualmente consultaveis pela API
        publica -- sao inventario interno, so acessiveis via o fluxo de
-       reserva (atribuirMesaAutomaticamente em criarReserva), nunca como
-       "produto" navegavel/indexavel. */
+       reserva em criarReserva (a lista de mesas disponiveis vem de
+       verificarDisponibilidadeRestaurantePublica, nunca desta rota), nunca
+       como "produto" navegavel/indexavel. Pratos/menus de degustacao tambem
+       ficam de fora daqui -- a sua "ficha" e a propria pagina do restaurante
+       (/book/:slug), nunca uma ServiceDetail dedicada. */
     if (operator.operator_type === 'restaurant') {
       return res.status(404).json({ error: 'Serviço não encontrado', code: 'NOT_FOUND' });
     }
@@ -822,34 +923,9 @@ async function createOrder(req, res, next) {
       return res.status(404).json({ error: 'Mesa não encontrada', code: 'TABLE_NOT_FOUND' });
     }
 
-    if (!Array.isArray(items) || items.length === 0 || items.length > 50) {
-      return res.status(400).json({ error: 'Pedido vazio ou inválido', code: 'INVALID_ITEMS' });
-    }
-    const cleanItems = items.map(i => ({
-      unit_id: i.unit_id,
-      quantity: Number.isInteger(i.quantity) ? i.quantity : 0,
-      notes: typeof i.notes === 'string' ? i.notes.slice(0, 200) : null,
-    }));
-    if (cleanItems.some(i => !i.unit_id || i.quantity < 1 || i.quantity > 20)) {
-      return res.status(400).json({ error: 'Item de pedido inválido', code: 'INVALID_ITEM' });
-    }
-
-    /* Nunca confiar no preco enviado pelo cliente -- vai sempre buscar o
-       base_price real dos pratos/menus a BD no momento do pedido. */
-    const dishIds = [...new Set(cleanItems.map(i => i.unit_id))];
-    const { data: dishes } = await supabaseAdmin
-      .from('units')
-      .select('id, name, base_price, unit_type, status, operator_id')
-      .eq('operator_id', operator.id)
-      .in('id', dishIds);
-    const dishMap = new Map((dishes || []).map(d => [d.id, d]));
-    const algumInvalido = dishIds.some(id => {
-      const d = dishMap.get(id);
-      return !d || d.status !== 'active' || !['menu_item', 'tasting_menu'].includes(d.unit_type);
-    });
-    if (algumInvalido) return res.status(400).json({ error: 'Um dos itens não está disponível', code: 'INVALID_ITEM' });
-
-    const totalPrice = cleanItems.reduce((sum, i) => sum + Number(dishMap.get(i.unit_id).base_price) * i.quantity, 0);
+    const validado = await validarItensPedido(operator.id, items);
+    if (validado.error) return res.status(validado.error.status).json(validado.error.body);
+    const { cleanItems, dishMap, totalPrice } = validado;
 
     const { data: order, error: orderErr } = await supabaseAdmin
       .from('orders')
