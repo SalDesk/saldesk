@@ -909,47 +909,56 @@ function RestaurantMenuSection({ units, lang, opCurrency, currency, slug }) {
           <h3 className="font-display font-bold text-lg text-n-900 mb-4 pb-2 border-b border-n-100">
             {lang === 'en' ? MENU_CATEGORY_LABELS[cat].en : MENU_CATEGORY_LABELS[cat].pt}
           </h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
             {byCategory[cat].map(({ unit, meta }) => {
               const isToday = !!meta.daily_special?.[today];
               const name = lang === 'en' && meta.name_en ? meta.name_en : unit.name;
               const desc = lang === 'en' && meta.desc_en ? meta.desc_en : meta.desc_pt;
               return (
-                <div key={unit.id} className="flex gap-3 bg-white rounded-xl border border-n-100 p-3">
-                  {unit.images?.[0] && (
-                    <img src={unit.images[0]} alt={name} className="w-16 h-16 rounded-lg object-cover shrink-0" />
-                  )}
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-start justify-between gap-2">
-                      <p className="font-display font-semibold text-sm text-n-900">{name}</p>
-                      <span className="font-display font-bold text-sm text-ocean-700 shrink-0">
-                        {fmtPrice(unit.base_price, 'person', opCurrency, currency, lang)}
+                <div key={unit.id}
+                  className="group rounded-2xl overflow-hidden bg-white border border-n-200 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-200 flex flex-col">
+                  <div className="relative h-[180px] bg-n-100 shrink-0">
+                    {unit.images?.[0] ? (
+                      <img src={unit.images[0]} alt={name} className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-n-300">
+                        <Utensils size={28} strokeWidth={1.25} />
+                      </div>
+                    )}
+                    {isToday && (
+                      <span className="absolute bottom-2.5 right-2.5 bg-white/95 text-ocean-700 text-[11px] font-mono font-semibold px-2.5 py-1 rounded-md shadow-sm">
+                        {lang === 'en' ? "Today's special" : 'Prato do dia'}
                       </span>
-                    </div>
-                    {desc && <p className="text-xs font-body text-n-500 mt-0.5 leading-relaxed">{desc}</p>}
-                    {(meta.diets?.length > 0 || meta.allergens?.length > 0 || isToday) && (
-                      <div className="flex flex-wrap gap-1 mt-1.5">
-                        {isToday && (
-                          <span className="text-[9px] font-mono uppercase tracking-wide px-1.5 py-0.5 rounded bg-ocean-50 text-ocean-700">
-                            {lang === 'en' ? "Today's special" : 'Prato do dia'}
-                          </span>
-                        )}
+                    )}
+                  </div>
+                  <div className="p-4 flex-1 flex flex-col">
+                    <p className="font-display font-bold text-n-900 text-[15px] mb-1.5 tracking-tight">{name}</p>
+                    {desc && <p className="text-xs font-body text-n-500 leading-relaxed mb-3 line-clamp-2">{desc}</p>}
+                    <div className="flex-1" />
+                    {(meta.diets?.length > 0 || meta.allergens?.length > 0) && (
+                      <div className="flex flex-wrap gap-1.5 mb-3">
                         {meta.diets?.map(d => (
-                          <span key={d} className="text-[9px] font-mono uppercase tracking-wide px-1.5 py-0.5 rounded bg-[#ECFDF5] text-[#1A7A4A]">
+                          <span key={d} className="text-[10px] font-mono uppercase tracking-wide px-2 py-1 rounded-md bg-[#ECFDF5] text-[#1A7A4A]">
                             {lang === 'en' ? MENU_DIET_LABELS[d]?.en || d : MENU_DIET_LABELS[d]?.pt || d}
                           </span>
                         ))}
                         {meta.allergens?.map(a => (
-                          <span key={a} className="text-[9px] font-mono uppercase tracking-wide px-1.5 py-0.5 rounded bg-[#FEF2F2] text-error">
+                          <span key={a} className="text-[10px] font-mono uppercase tracking-wide px-2 py-1 rounded-md bg-[#FEF2F2] text-error">
                             {lang === 'en' ? MENU_ALLERGEN_LABELS[a]?.en || a : MENU_ALLERGEN_LABELS[a]?.pt || a}
                           </span>
                         ))}
                       </div>
                     )}
-                    <button onClick={() => navigate(`/book/${slug}/servico/${unit.id}`)}
-                      className="mt-2 text-xs font-body font-semibold text-ocean-700 hover:underline">
-                      {lang === 'en' ? 'Reserve →' : 'Reservar →'}
-                    </button>
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="font-mono font-bold text-base text-ocean-700">
+                        {fmtPrice(unit.base_price, 'person', opCurrency, currency, lang)}
+                      </span>
+                      <button onClick={() => navigate(`/book/${slug}/servico/${unit.id}`)}
+                        className="flex items-center gap-1.5 bg-ocean-700 text-white text-xs font-body font-bold px-3.5 py-2 rounded-lg hover:bg-ocean-600 transition-colors shrink-0">
+                        {lang === 'en' ? 'Reserve' : 'Reservar'}
+                        <ArrowRight size={12} strokeWidth={2} />
+                      </button>
+                    </div>
                   </div>
                 </div>
               );
