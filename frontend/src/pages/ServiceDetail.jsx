@@ -853,7 +853,7 @@ export default function ServiceDetail() {
         <div className="max-w-6xl mx-auto px-4 h-14 flex items-center justify-between gap-3">
           {/* Breadcrumb */}
           <div className="flex items-center gap-1.5 text-xs font-body text-n-400 min-w-0">
-            <button onClick={() => navigate('/discover')} className="text-ocean-600 hover:text-ocean-700 font-semibold flex-shrink-0 hidden sm:block">
+            <button onClick={() => { window.location.href = 'https://saldesk.cv/discover/'; }} className="text-ocean-600 hover:text-ocean-700 font-semibold flex-shrink-0 hidden sm:block">
               SalDesk Connect
             </button>
             <ChevronRight size={12} strokeWidth={2} className="text-n-300 flex-shrink-0 hidden sm:block"/>
