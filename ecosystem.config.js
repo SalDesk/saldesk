@@ -2,7 +2,12 @@ module.exports = {
   apps: [{
     name:    'saldesk-api',
     script:  './backend/server.js',
-    cwd:     '/var/www/saldesk',
+    /* O checkout git real e /var/www/saldesk/repo, nao /var/www/saldesk
+       directamente (esse e so o directorio pai, onde app/website/uploads
+       tambem vivem como pastas irmas separadas). Um cwd errado aqui nao
+       se nota em "pm2 restart" de um processo ja registado (reaproveita
+       o estado antigo), mas parte um "pm2 delete && pm2 start" a frio. */
+    cwd:     '/var/www/saldesk/repo',
     instances: 1,
     autorestart: true,
     watch:   false,
