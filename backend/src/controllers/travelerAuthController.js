@@ -33,6 +33,25 @@ function supabaseTokenRequest(grantType, body) {
   });
 }
 
+/* O refresh_token do Supabase e rotativo -- de uso unico, invalidado assim
+   que e trocado por um novo. O Discover (saldesk.cv) chama /session a cada
+   pagina carregada, e se o utilizador tiver varios separadores abertos ao
+   mesmo tempo, dois pedidos concorrentes tentam trocar o MESMO refresh_token
+   -- so um ganha, o outro recebe erro e limpa a cookie inteira
+   (clearTravelerSessionCookie), derrubando a sessao mesmo que a troca do
+   vencedor tenha sido valida. Partilhar a mesma promise entre pedidos
+   concorrentes com o mesmo token evita a corrida. */
+const inFlightRefresh = new Map(); // refreshToken -> Promise<authJson>
+function exchangeRefreshTokenOnce(refreshToken) {
+  let p = inFlightRefresh.get(refreshToken);
+  if (!p) {
+    p = supabaseTokenRequest('refresh_token', { refresh_token: refreshToken });
+    inFlightRefresh.set(refreshToken, p);
+    p.finally(() => inFlightRefresh.delete(refreshToken));
+  }
+  return p;
+}
+
 async function register(req, res, next) {
   try {
     const { email, password, name, phone } = req.body;
@@ -164,7 +183,11 @@ async function refresh(req, res, next) {
       return res.status(400).json({ error: 'refresh_token em falta', code: 'MISSING_FIELDS' });
     }
 
-    const authJson = await supabaseTokenRequest('refresh_token', { refresh_token });
+    /* Mesma protecao contra corrida de /session (ver exchangeRefreshTokenOnce)
+       -- este refresh_token e o mesmo que a cookie do Discover pode estar a
+       tentar usar ao mesmo tempo (ambos vem da mesma sessao Supabase), por
+       isso partilham o mesmo mapa de pedidos em curso. */
+    const authJson = await exchangeRefreshTokenOnce(refresh_token);
     if (!authJson.access_token || authJson.error) {
       return res.status(401).json({ error: 'Sessao expirada, faca login novamente', code: 'INVALID_REFRESH_TOKEN' });
     }
@@ -228,7 +251,7 @@ async function session(req, res, next) {
       return res.json({ data: null, message: 'Sem sessao activa' });
     }
 
-    const authJson = await supabaseTokenRequest('refresh_token', { refresh_token: refreshToken });
+    const authJson = await exchangeRefreshTokenOnce(refreshToken);
     if (!authJson.access_token || authJson.error) {
       clearTravelerSessionCookie(res); // token invalido/ja consumido -- parar de o tentar reusar
       return res.json({ data: null, message: 'Sessao expirada' });

@@ -120,7 +120,7 @@ function Lightbox({ images, idx, onClose, onMove }) {
 }
 
 /* ── Modal shell ─────────────────────────────────── */
-const IN  = 'w-full border border-n-300 rounded-xl px-4 py-2.5 font-body text-sm focus:outline-none focus:border-ocean-500 focus:ring-2 focus:ring-ocean-500/10 bg-white transition-all';
+const IN  = 'w-full border border-n-300 rounded-xl px-4 py-2.5 font-body text-sm focus:outline-none focus:border-ocean-500 focus:ring-2 focus:ring-ocean-500/10 bg-white transition-all disabled:bg-n-50 disabled:text-n-500 disabled:cursor-not-allowed';
 const LB  = 'block text-xs font-body font-semibold text-n-600 mb-1.5';
 const SH  = 'font-display font-semibold text-n-900 text-sm mb-4';
 const SEL = IN + ' appearance-none cursor-pointer';
@@ -138,12 +138,16 @@ function Cnt({ label, val, set, min=0, max=20 }) {
   );
 }
 
-function GF({ d, set, lang, children }) {
+function GF({ d, set, lang, children, emailLocked }) {
   const u = k => e => set(p=>({...p,[k]:e.target.value}));
   return (
     <div className="space-y-3">
       <div><label className={LB}>{lang==='en'?'Full name':'Nome completo'} *</label><input className={IN} value={d.name||''} onChange={u('name')} required placeholder={lang==='en'?'John Smith':'João Silva'}/></div>
-      <div><label className={LB}>Email *</label><input className={IN} type="email" value={d.email||''} onChange={u('email')} required placeholder="joao@email.com"/></div>
+      <div>
+        <label className={LB}>Email *</label>
+        <input className={IN} type="email" value={d.email||''} onChange={u('email')} required disabled={emailLocked} placeholder="joao@email.com"/>
+        {emailLocked && <p className="text-xs font-body text-n-400 mt-1">{lang==='en'?'Linked to your account':'Ligado à sua conta'}</p>}
+      </div>
       <div className="grid grid-cols-2 gap-3">
         <div><label className={LB}>{lang==='en'?'Phone / WhatsApp':'Telefone / WhatsApp'}</label><input className={IN} type="tel" value={d.phone||''} onChange={u('phone')} placeholder="+351 9XX XXX XXX"/></div>
         <div><label className={LB}>{lang==='en'?'Country':'País de origem'}</label><input className={IN} value={d.country||''} onChange={u('country')} placeholder="Portugal"/></div>
@@ -435,9 +439,9 @@ function PayPalButton({ slug, reservationId, amount, lang, onSuccess, onError })
 }
 
 /* ── HotelModal ───────────────────────────────────── */
-function HotelModal({ unit, op, slug, lang, onClose, refCode }) {
+function HotelModal({ unit, op, slug, lang, onClose, refCode, traveler }) {
   const [step,ss]=useState(1); const [ci,sci]=useState(''); const [co,sco]=useState(''); const [adults,sa]=useState(2); const [kids,sk]=useState(0);
-  const [info,si]=useState({name:'',email:'',phone:'',country:'',notes:''}); const [pay,sp]=useState('cash'); const [sub,ssub]=useState(false); const [resId,sr]=useState(null); const [pendingRes,spr]=useState(null); const [err,se]=useState(''); const [avail,sav]=useState(null); const [chk,sc]=useState(false);
+  const [info,si]=useState(()=>({name:traveler?.name||'',email:traveler?.email||'',phone:traveler?.phone||'',country:traveler?.country||'',notes:''})); const [pay,sp]=useState('cash'); const [sub,ssub]=useState(false); const [resId,sr]=useState(null); const [pendingRes,spr]=useState(null); const [err,se]=useState(''); const [avail,sav]=useState(null); const [chk,sc]=useState(false);
   const [voucherCode,svc]=useState(null);
   const nights=nts(ci,co); const rawTotal=nights*(unit.base_price||0); const total=nights>0&&unit.base_price?fmtPrice(rawTotal,null,op.currency||'EUR','EUR',lang):null;
   useEffect(()=>{ if (!ci||!co||co<=ci){sav(null);return;} const t=setTimeout(async()=>{ sc(true); try{sav((await(await fetch(`${API}/public/${slug}/availability?unitId=${unit.id}&checkIn=${ci}&checkOut=${co}`)).json()).data);}catch{sav(null);}finally{sc(false);} },700); return()=>clearTimeout(t); },[ci,co]);
@@ -467,7 +471,7 @@ function HotelModal({ unit, op, slug, lang, onClose, refCode }) {
         {(chk||avail)&&<div className={`rounded-xl px-4 py-3 flex items-center gap-2 text-sm font-body font-semibold ${chk?'bg-n-50 text-n-400':avail?.disponivel?'bg-green-50 text-green-700':'bg-red-50 text-red-700'}`}>{chk?<><div className="w-3.5 h-3.5 rounded-full border-2 border-ocean-300 border-t-ocean-700 animate-spin flex-shrink-0"/>{lang==='en'?'Checking...':'A verificar...'}</>:<>{avail?.disponivel?(lang==='en'?'Available':'Disponível'):(lang==='en'?'Not available':'Indisponível')}</>}</div>}
         <div className="grid grid-cols-2 gap-4"><Cnt label={lang==='en'?'Adults (1-10)':'Adultos (1-10)'} val={adults} set={sa} min={1} max={10}/><Cnt label={lang==='en'?'Children (0-5)':'Crianças (0-5)'} val={kids} set={sk} min={0} max={5}/></div>
       </div>
-      :step===2?<div className="p-5"><p className={SH}>{lang==='en'?'Guest details':'Dados do hóspede'}</p><GF d={info} set={si} lang={lang}><div><label className={LB}>{lang==='en'?'Special requests':'Pedidos especiais'}</label><textarea className={IN+' resize-none'} rows={3} value={info.notes} onChange={e=>si(i=>({...i,notes:e.target.value}))} placeholder={lang==='en'?'Early check-in, quiet room...':'Early check-in, quarto silencioso...'}/></div></GF></div>
+      :step===2?<div className="p-5"><p className={SH}>{lang==='en'?'Guest details':'Dados do hóspede'}</p><GF d={info} set={si} lang={lang} emailLocked={!!traveler}><div><label className={LB}>{lang==='en'?'Special requests':'Pedidos especiais'}</label><textarea className={IN+' resize-none'} rows={3} value={info.notes} onChange={e=>si(i=>({...i,notes:e.target.value}))} placeholder={lang==='en'?'Early check-in, quiet room...':'Early check-in, quarto silencioso...'}/></div></GF></div>
       :<div className="p-5 space-y-4"><p className={SH}>{lang==='en'?'Review & payment':'Resumo e pagamento'}</p><ST lines={sumL}/>
         {rawTotal>0&&<VoucherField slug={slug} unitId={unit.id} amount={rawTotal} lang={lang} onApplied={(c)=>svc(c)}/>}
         <p className="text-xs font-body font-semibold text-n-700">{lang==='en'?'Payment method':'Método de pagamento'}</p><PO lang={lang} v={pay} set={sp}/>
@@ -478,9 +482,9 @@ function HotelModal({ unit, op, slug, lang, onClose, refCode }) {
 }
 
 /* ── ActivityModal ────────────────────────────────── */
-function ActivityModal({ unit, op, slug, lang, onClose, refCode }) {
+function ActivityModal({ unit, op, slug, lang, onClose, refCode, traveler }) {
   const [step,ss]=useState(1); const [date,sd]=useState(''); const [time,st]=useState(''); const [adults,sa]=useState(2); const [kids,sk]=useState(0);
-  const [info,si]=useState({name:'',email:'',phone:'',country:'',needs:''}); const [pay,sp]=useState('cash'); const [sub,ssub]=useState(false); const [resId,sr]=useState(null); const [pendingRes,spr]=useState(null); const [err,se]=useState('');
+  const [info,si]=useState(()=>({name:traveler?.name||'',email:traveler?.email||'',phone:traveler?.phone||'',country:traveler?.country||'',needs:''})); const [pay,sp]=useState('cash'); const [sub,ssub]=useState(false); const [resId,sr]=useState(null); const [pendingRes,spr]=useState(null); const [err,se]=useState('');
   const [voucherCode,svc]=useState(null);
   const rawTotal=(adults+kids)*(unit.base_price||0); const total=unit.base_price?fmtPrice(rawTotal,'person',op.currency||'EUR','EUR',lang):null;
   function buildPayload(){ const notes=[`${lang==='en'?'Time':'Hora'}: ${time}`,`${adults} ${lang==='en'?'adults':'adultos'}, ${kids} ${lang==='en'?'children':'crianças'}`,info.needs?(lang==='en'?'Needs:':'Necessidades:')+' '+info.needs:''].filter(Boolean).join('. '); return {unit_id:unit.id,customer_name:info.name,customer_email:info.email,customer_phone:info.phone||null,customer_country:info.country||null,check_in:date,check_out:date,guests:adults+kids,notes,voucher_code:voucherCode||undefined,ref_code:refCode||undefined}; }
@@ -507,7 +511,7 @@ function ActivityModal({ unit, op, slug, lang, onClose, refCode }) {
         {total&&(date||adults)&&<div className="flex justify-between items-center bg-ocean-50 border border-ocean-100 rounded-xl px-4 py-2.5"><span className="text-xs font-body text-ocean-600">{adults+kids} {lang==='en'?'people':'pessoas'}</span><span className="font-display font-bold text-ocean-700 text-sm">{total}</span></div>}
         <div className="grid grid-cols-2 gap-4"><Cnt label={lang==='en'?'Adults (1-20)':'Adultos (1-20)'} val={adults} set={sa} min={1} max={20}/><Cnt label={lang==='en'?'Children (0-10)':'Crianças (0-10)'} val={kids} set={sk} min={0} max={10}/></div>
       </div>
-      :step===2?<div className="p-5"><p className={SH}>{lang==='en'?'Contact details':'Dados de contacto'}</p><GF d={info} set={si} lang={lang}><div><label className={LB}>{lang==='en'?'Special needs (optional)':'Necessidades especiais (opcional)'}</label><textarea className={IN+' resize-none'} rows={3} value={info.needs} onChange={e=>si(i=>({...i,needs:e.target.value}))} placeholder={lang==='en'?'Wheelchair, allergies...':'Cadeira de rodas, alergias...'}/></div></GF></div>
+      :step===2?<div className="p-5"><p className={SH}>{lang==='en'?'Contact details':'Dados de contacto'}</p><GF d={info} set={si} lang={lang} emailLocked={!!traveler}><div><label className={LB}>{lang==='en'?'Special needs (optional)':'Necessidades especiais (opcional)'}</label><textarea className={IN+' resize-none'} rows={3} value={info.needs} onChange={e=>si(i=>({...i,needs:e.target.value}))} placeholder={lang==='en'?'Wheelchair, allergies...':'Cadeira de rodas, alergias...'}/></div></GF></div>
       :<div className="p-5 space-y-4"><p className={SH}>{lang==='en'?'Review & payment':'Resumo e pagamento'}</p><ST lines={sumL}/>
         {rawTotal>0&&<VoucherField slug={slug} unitId={unit.id} amount={rawTotal} lang={lang} onApplied={(c)=>svc(c)}/>}
         <p className="text-xs font-body font-semibold text-n-700">{lang==='en'?'Payment method':'Método de pagamento'}</p><PO lang={lang} v={pay} set={sp}/>
@@ -518,9 +522,9 @@ function ActivityModal({ unit, op, slug, lang, onClose, refCode }) {
 }
 
 /* ── RentACarModal ────────────────────────────────── */
-function RentACarModal({ unit, op, slug, lang, onClose, refCode }) {
+function RentACarModal({ unit, op, slug, lang, onClose, refCode, traveler }) {
   const [step,ss]=useState(1); const [pu,spu]=useState({date:'',time:'09:00',loc:''}); const [re,sre]=useState({date:'',time:'09:00',loc:''});
-  const [drv,sd]=useState({name:'',email:'',phone:'',country:'',license:'',licCountry:'',age:''}); const [ext,sex]=useState({insurance:false,gps:false,baby_seat:false,extra_driver:false});
+  const [drv,sd]=useState(()=>({name:traveler?.name||'',email:traveler?.email||'',phone:traveler?.phone||'',country:traveler?.country||'',license:'',licCountry:'',age:''})); const [ext,sex]=useState({insurance:false,gps:false,baby_seat:false,extra_driver:false});
   const [pay,sp]=useState('cash'); const [sub,ssub]=useState(false); const [resId,sr]=useState(null); const [pendingRes,spr]=useState(null); const [err,se]=useState('');
   const [voucherCode,svc]=useState(null);
   const days=dys(pu.date,re.date); const rawTotal=days*(unit.base_price||0); const total=days>0&&unit.base_price?fmtPrice(rawTotal,'day',op.currency||'EUR','EUR',lang):null;
@@ -549,7 +553,7 @@ function RentACarModal({ unit, op, slug, lang, onClose, refCode }) {
         <div><p className="text-xs font-body font-bold text-ocean-700 uppercase tracking-widest mb-2">{lang==='en'?'Return':'Devolução'}</p><div className="grid grid-cols-2 gap-3 mb-2"><div><label className={LB}>{lang==='en'?'Date':'Data'} *</label><input type="date" className={IN} min={pu.date||TODAY()} value={re.date} onChange={e=>sre(p=>({...p,date:e.target.value}))}/></div><div><label className={LB}>{lang==='en'?'Time':'Hora'}</label><input type="time" className={IN} value={re.time} onChange={e=>sre(p=>({...p,time:e.target.value}))}/></div></div><select className={SEL} value={re.loc} onChange={e=>sre(p=>({...p,loc:e.target.value}))}><option value="">{lang==='en'?'Same as pickup':'Mesmo local'}</option>{locs.map(l=><option key={l} value={l}>{l}</option>)}</select></div>
         {days>0&&<div className="flex justify-between items-center bg-ocean-50 border border-ocean-100 rounded-xl px-4 py-2.5"><span className="text-sm font-body font-semibold text-ocean-700">{days} {lang==='en'?(days===1?'day':'days'):(days===1?'dia':'dias')}</span>{total&&<span className="font-display font-bold text-ocean-700 text-sm">{total}</span>}</div>}
       </div>
-      :step===2?<div className="p-5 space-y-4"><p className={SH}>{lang==='en'?'Driver details':'Dados do condutor'}</p><GF d={drv} set={sd} lang={lang}><div className="grid grid-cols-2 gap-3"><div><label className={LB}>{lang==='en'?'Licence no.':'Nº carta'} *</label><input className={IN} value={drv.license} onChange={e=>sd(d=>({...d,license:e.target.value}))} required placeholder="PT-123456"/></div><div><label className={LB}>{lang==='en'?'Issuing country':'País emissor'}</label><input className={IN} value={drv.licCountry} onChange={e=>sd(d=>({...d,licCountry:e.target.value}))} placeholder="Portugal"/></div></div><div><label className={LB}>{lang==='en'?'Driver age':'Idade do condutor'}</label><input className={IN} type="number" min={18} max={99} value={drv.age} onChange={e=>sd(d=>({...d,age:e.target.value}))} placeholder="28"/></div></GF>
+      :step===2?<div className="p-5 space-y-4"><p className={SH}>{lang==='en'?'Driver details':'Dados do condutor'}</p><GF d={drv} set={sd} lang={lang} emailLocked={!!traveler}><div className="grid grid-cols-2 gap-3"><div><label className={LB}>{lang==='en'?'Licence no.':'Nº carta'} *</label><input className={IN} value={drv.license} onChange={e=>sd(d=>({...d,license:e.target.value}))} required placeholder="PT-123456"/></div><div><label className={LB}>{lang==='en'?'Issuing country':'País emissor'}</label><input className={IN} value={drv.licCountry} onChange={e=>sd(d=>({...d,licCountry:e.target.value}))} placeholder="Portugal"/></div></div><div><label className={LB}>{lang==='en'?'Driver age':'Idade do condutor'}</label><input className={IN} type="number" min={18} max={99} value={drv.age} onChange={e=>sd(d=>({...d,age:e.target.value}))} placeholder="28"/></div></GF>
         <div><p className="text-xs font-body font-bold text-n-700 mb-3">{lang==='en'?'Extras (optional)':'Extras (opcional)'}</p><div className="grid grid-cols-2 gap-2.5">{CAR_EXTRAS.map(e=><button key={e.k} type="button" onClick={()=>sex(x=>({...x,[e.k]:!x[e.k]}))} className={`p-3 rounded-xl border-2 text-left transition-all ${ext[e.k]?'border-ocean-700 bg-ocean-50':'border-n-200 hover:border-n-300'}`}><div className="flex items-center gap-2"><div className={`w-4 h-4 rounded border-2 flex items-center justify-center flex-shrink-0 transition-all ${ext[e.k]?'border-ocean-700 bg-ocean-700':'border-n-300'}`}>{ext[e.k]&&<Check size={10} strokeWidth={3} className="text-white"/>}</div><span className={`text-xs font-body font-semibold ${ext[e.k]?'text-ocean-700':'text-n-700'}`}>{lang==='en'?e.en:e.pt}</span></div></button>)}</div></div>
       </div>
       :<div className="p-5 space-y-4"><p className={SH}>{lang==='en'?'Review & payment':'Resumo e pagamento'}</p><ST lines={sumL}/>
@@ -566,10 +570,10 @@ function RentACarModal({ unit, op, slug, lang, onClose, refCode }) {
    reservadas via o formulario proprio em PublicBooking.jsx). RestaurantModal,
    REST_SLOTS e OCCASIONS foram removidos por serem codigo morto: nunca sao
    alcançados, dado que este ecrã cai sempre no NotFoundPage para esse tipo. */
-function BookingModal({ unit, op, slug, lang, onClose, refCode }) {
+function BookingModal({ unit, op, slug, lang, onClose, refCode, traveler }) {
   if (!unit||!op) return null;
   const t=op.operator_type;
-  const props={unit,op,slug,lang,onClose,refCode};
+  const props={unit,op,slug,lang,onClose,refCode,traveler};
   if (t==='hotel') return <HotelModal {...props}/>;
   if (t==='activity') return <ActivityModal {...props}/>;
   if (t==='rentacar') return <RentACarModal {...props}/>;
@@ -723,6 +727,21 @@ export default function ServiceDetail() {
   const [wishlisted, setWishlisted]   = useState(false);
   const [copied, setCopied]           = useState(false);
   const [opUnits, setOpUnits]         = useState([]); // so para restaurante -- ver useEffect abaixo
+  const [traveler, setTraveler]       = useState(null); // sessao de viajante (cookie partilhada), ver useEffect abaixo
+
+  /* Bridge de sessao com a conta de viajante -- mesmo mecanismo do
+     Discover (bootstrapTravelerSession em website/discover/index.html):
+     le a cookie httpOnly partilhada sd_travel_rt (dominio .saldesk.cv)
+     via /traveler-auth/session, sem exigir login directo nesta app.
+     Usado para pre-preencher e bloquear o email no checkout, para a
+     reserva ficar sempre ligada a conta certa (GET /traveler/bookings
+     liga por email). Falha silenciosamente para o caminho anonimo. */
+  useEffect(() => {
+    fetch(`${API}/traveler-auth/session`, { credentials: 'include' })
+      .then(r => r.ok ? r.json() : null)
+      .then(j => { if (j?.data?.traveler) setTraveler(j.data.traveler); })
+      .catch(() => {});
+  }, []);
 
   /* ── Load data ── */
   useEffect(() => {
@@ -853,7 +872,7 @@ export default function ServiceDetail() {
         <div className="max-w-6xl mx-auto px-4 h-14 flex items-center justify-between gap-3">
           {/* Breadcrumb */}
           <div className="flex items-center gap-1.5 text-xs font-body text-n-400 min-w-0">
-            <button onClick={() => navigate('/discover')} className="text-ocean-600 hover:text-ocean-700 font-semibold flex-shrink-0 hidden sm:block">
+            <button onClick={() => { window.location.href = 'https://saldesk.cv/discover/'; }} className="text-ocean-600 hover:text-ocean-700 font-semibold flex-shrink-0 hidden sm:block">
               SalDesk Connect
             </button>
             <ChevronRight size={12} strokeWidth={2} className="text-n-300 flex-shrink-0 hidden sm:block"/>
@@ -1475,7 +1494,7 @@ export default function ServiceDetail() {
 
       {/* ── Booking Modal ── */}
       {bookOpen && (
-        <BookingModal unit={unit} op={op} slug={slug} lang={lang} onClose={() => setBookOpen(false)} refCode={refCode}/>
+        <BookingModal unit={unit} op={op} slug={slug} lang={lang} onClose={() => setBookOpen(false)} refCode={refCode} traveler={traveler}/>
       )}
 
       {/* ── Lightbox ── */}
