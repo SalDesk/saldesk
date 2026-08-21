@@ -571,7 +571,42 @@ async function forecast(req, res, next) {
   } catch (err) { next(err); }
 }
 
+/* Alimenta as tabs "Transacoes" e "Caixa" do frontend (Financial.jsx) --
+   ambas ja derivam tudo (filtro por metodo/estado, total em dinheiro, etc.)
+   a partir desta mesma lista plana, sem precisar de nenhum endpoint
+   separado para "Caixa". A rota nunca existiu -- as duas tabs ficavam
+   sempre vazias em silencio. */
+async function transacoes(req, res, next) {
+  try {
+    const { inicio, fim } = req.query;
+    if (!inicio || !fim) {
+      return res.status(400).json({ error: 'inicio e fim sao obrigatorios', code: 'MISSING_FIELDS' });
+    }
+
+    const { data, error } = await supabaseAdmin
+      .from('reservations')
+      .select('id, check_in, check_out, customer_name, source, payment_method, payment_status, total_price, units(name)')
+      .eq('operator_id', req.operator.id)
+      .neq('status', 'cancelled')
+      .lte('check_in', fim)
+      .order('check_in', { ascending: false })
+      .limit(500);
+    if (error) throw error;
+
+    /* Tours/actividades/restaurante sao reservas de um so dia (check_in ===
+       check_out) -- um filtro directo .gt('check_out', inicio) exclui essas
+       linhas sempre que o dia calha exactamente no limite do periodo (mesmo
+       bug ja corrigido em verificarDisponibilidade, bookingHelpers.js). */
+    const resultado = (data || []).filter((r) => {
+      const efectivo = r.check_out > r.check_in ? r.check_out : r.check_in;
+      return efectivo >= inicio;
+    });
+
+    return res.json({ data: resultado, message: 'Transacoes listadas' });
+  } catch (err) { next(err); }
+}
+
 module.exports = {
-  resumo, receita, unidades, topClientes, canais, exportExcel, exportPdf, forecast,
+  resumo, receita, unidades, topClientes, canais, exportExcel, exportPdf, forecast, transacoes,
   listarReceitasManuais, criarReceitaManual, actualizarReceitaManual, eliminarReceitaManual,
 };

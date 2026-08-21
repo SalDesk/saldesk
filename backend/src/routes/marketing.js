@@ -42,7 +42,7 @@ router.get('/qrcode', async (req, res, next) => {
       bookingPath += `/mesa/${unit.id}`;
     }
 
-    const url = encodeURIComponent(`${base}/${bookingPath}`);
+    const url = encodeURIComponent(`${base}/${bookingPath}?ref=qr`);
     const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${url}&format=png`;
     return res.redirect(qrUrl);
   } catch (err) { next(err); }
@@ -126,6 +126,44 @@ router.post('/lead', async (req, res, next) => {
       .select().single();
     if (error) throw error;
     return res.status(201).json({ data, message: 'Lead registado' });
+  } catch (err) { next(err); }
+});
+
+/* Alimenta a tab "Estatisticas" (frontend/src/pages/Marketing.jsx) -- a
+   rota nunca existiu, a tab ficava sempre a mostrar 0 em silencio.
+   profile_views/clicks vem da instrumentacao real de page_views (ver
+   trackView em publicController.js); bookings_direct/sources ja existiam
+   nas reservas, sem precisar de nenhuma instrumentacao nova. */
+router.get('/stats', async (req, res, next) => {
+  try {
+    const desde = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+
+    const [{ data: views }, { data: reservas }] = await Promise.all([
+      supabaseAdmin.from('page_views').select('ref').eq('operator_id', req.operator.id).gte('created_at', desde),
+      supabaseAdmin.from('reservations').select('source').eq('operator_id', req.operator.id).neq('status', 'cancelled').gte('created_at', desde),
+    ]);
+
+    const profileViews = (views || []).length;
+    const clicks = (views || []).filter((v) => v.ref === 'qr' || v.ref === 'widget').length;
+    const bookingsDirect = (reservas || []).filter((r) => ['direct', 'public', 'admin'].includes(r.source)).length;
+    const conversionRate = clicks > 0 ? Math.round((bookingsDirect / clicks) * 1000) / 10 : 0;
+
+    const sources = {};
+    for (const r of reservas || []) {
+      const key = r.source || 'manual';
+      sources[key] = (sources[key] || 0) + 1;
+    }
+
+    return res.json({
+      data: {
+        profile_views: profileViews,
+        clicks,
+        bookings_direct: bookingsDirect,
+        conversion_rate: conversionRate,
+        sources,
+      },
+      message: 'Estatisticas de marketing',
+    });
   } catch (err) { next(err); }
 });
 

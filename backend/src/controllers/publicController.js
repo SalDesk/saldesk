@@ -47,6 +47,24 @@ async function getOperador(req, res, next) {
   }
 }
 
+/* Alimenta "Visitas ao perfil"/"Cliques no link" na tab Estatisticas do
+   Marketing (frontend/src/pages/Marketing.jsx) -- nao existia nenhuma
+   instrumentacao de visitas em lado nenhum do codigo, a tab ficava sempre
+   a 0 em silencio. ref distingue trafego do QR code / widget embebivel
+   (ambos ja construidos) do trafego organico (sem ref). Nunca bloqueia nem
+   falha visivelmente ao cliente -- e so telemetria. */
+async function trackView(req, res) {
+  try {
+    const ref = typeof req.body?.ref === 'string' ? req.body.ref.slice(0, 20) : null;
+    const { data: operator } = await supabaseAdmin
+      .from('operators').select('id').eq('slug', req.params.slug).maybeSingle();
+    if (operator) {
+      supabaseAdmin.from('page_views').insert({ operator_id: operator.id, ref }).then(() => {});
+    }
+  } catch { /* telemetria -- nunca falha visivelmente */ }
+  return res.status(204).end();
+}
+
 async function verificarDisponibilidadePublica(req, res, next) {
   try {
     const { unitId, checkIn, checkOut, date } = req.query;
@@ -1254,6 +1272,7 @@ async function getExperienceCategories(req, res, next) {
 
 module.exports = {
   getOperador,
+  trackView,
   verificarDisponibilidadePublica,
   verificarDisponibilidadeRestaurantePublica,
   criarReserva,

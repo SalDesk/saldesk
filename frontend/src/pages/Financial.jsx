@@ -191,7 +191,7 @@ function TransacoesTable({ transacoes, currency, loading }) {
     if (filterStatus !== 'Todos' && t.payment_status !== filterStatus) return false;
     if (search) {
       const q = search.toLowerCase();
-      const name = `${t.customers?.first_name || ''} ${t.customers?.last_name || ''}`.toLowerCase();
+      const name = (t.customer_name || '').toLowerCase();
       if (!name.includes(q) && !(t.units?.name || '').toLowerCase().includes(q)) return false;
     }
     return true;
@@ -228,7 +228,7 @@ function TransacoesTable({ transacoes, currency, loading }) {
             <tbody>{rows.slice(0, 50).map(t => (
               <tr key={t.id} className="border-b border-n-100 hover:bg-n-50 transition-colors">
                 <td className="py-2.5 px-3 text-xs font-mono text-n-500 whitespace-nowrap">{fmtDate(t.check_in)}</td>
-                <td className="py-2.5 px-3 font-body text-n-800 whitespace-nowrap">{t.customers?.first_name} {t.customers?.last_name}</td>
+                <td className="py-2.5 px-3 font-body text-n-800 whitespace-nowrap">{t.customer_name || '—'}</td>
                 <td className="py-2.5 px-3 font-body text-n-700 max-w-[140px] truncate">{t.units?.name || '—'}</td>
                 <td className="py-2.5 px-3"><span className="text-xs font-mono text-n-500">{SRC_LABEL[t.source] || t.source || '—'}</span></td>
                 <td className="py-2.5 px-3"><span className="text-xs font-body text-n-600">{PM_LABEL[t.payment_method] || t.payment_method || '—'}</span></td>
@@ -385,7 +385,7 @@ function CaixaTab({ transacoes, currency, loading }) {
            <tbody>{cash.map(t => (
              <tr key={t.id} className="border-b border-n-100 hover:bg-n-50 transition-colors">
                <td className="py-2.5 px-3 text-xs font-mono text-n-500 whitespace-nowrap">{fmtDate(t.check_in)}</td>
-               <td className="py-2.5 px-3 font-body text-n-800 whitespace-nowrap">{t.customers?.first_name} {t.customers?.last_name}</td>
+               <td className="py-2.5 px-3 font-body text-n-800 whitespace-nowrap">{t.customer_name || '—'}</td>
                <td className="py-2.5 px-3 font-body text-n-700 max-w-[160px] truncate">{t.units?.name || '—'}</td>
                <td className="py-2.5 px-3 font-display font-bold text-ocean-700 whitespace-nowrap">{fmtMoney(t.total_price, currency)}</td>
                <td className="py-2.5 px-3"><span className={`text-xs font-mono px-1.5 py-0.5 rounded ${PS_COLOR[t.payment_status] || 'text-n-500 bg-n-100'}`}>{PS_LABEL[t.payment_status] || t.payment_status || '—'}</span></td>

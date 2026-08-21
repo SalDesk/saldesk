@@ -57,8 +57,12 @@ const STATUS_CONFIG = {
 const QR_COLORS     = ['#0D5470', '#062A38', '#D4A82A', '#1A7A4A', '#B91C1C', '#1A2332'];
 const WIDGET_COLORS = ['#0D5470', '#062A38', '#D4A82A', '#1A7A4A', '#1480A8', '#1A2332'];
 
+/* "Planeador" escondido por agora (2026-08-21) -- so guarda posts em
+   localStorage, nunca publica nada nem persiste no servidor; publicar a
+   serio exige integracao OAuth com cada rede social, fora do ambito de um
+   fix rapido. Codigo mantido, so a entrada de navegacao removida --
+   reactivar quando houver essa integracao real. */
 const MKTG_TABS = [
-  { key: 'planeador', label: 'Planeador',     Icon: Calendar  },
   { key: 'qrcode',    label: 'QR Code',       Icon: QrCode    },
   { key: 'widget',    label: 'Widget',        Icon: Code2     },
   { key: 'stats',     label: 'Estatisticas',  Icon: BarChart2 },
@@ -711,7 +715,7 @@ export default function Marketing() {
   const { operator } = useAuthStore();
   const slug = operator?.slug;
 
-  const [activeTab,   setActiveTab]   = useState('planeador');
+  const [activeTab,   setActiveTab]   = useState('qrcode');
   const [bookingLink, setBookingLink] = useState('');
   const [widgetCode,  setWidgetCode]  = useState('');
   const [units,       setUnits]       = useState([]);

@@ -2,6 +2,7 @@ const express = require('express');
 const router  = express.Router();
 const {
   getOperador,
+  trackView,
   verificarDisponibilidadePublica,
   verificarDisponibilidadeRestaurantePublica,
   criarReserva,
@@ -61,6 +62,7 @@ router.post('/:slug/units/:unitId/orders', publicLimiter, createOrder);
 
 /* ─── Operador individual ─── */
 router.get('/:slug',               getOperador);
+router.post('/:slug/track-view',   publicLimiter, trackView);
 router.get('/:slug/reviews',       slugReviews);
 router.get('/:slug/availability',  verificarDisponibilidadePublica);
 router.get('/:slug/restaurant-availability', verificarDisponibilidadeRestaurantePublica);
@@ -76,7 +78,7 @@ router.post('/:slug/payments/paypal/confirm',   publicConfirmPaypalPayment);
 /* ─── QR Code público — sem autenticação ─── */
 router.get('/:slug/qrcode', (req, res) => {
   const base = frontendBase();
-  const url  = encodeURIComponent(`${base}/book/${req.params.slug}`);
+  const url  = encodeURIComponent(`${base}/book/${req.params.slug}?ref=qr`);
   return res.redirect(`https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${url}&format=png`);
 });
 

@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const {
-  resumo, receita, unidades, topClientes, canais, exportExcel, exportPdf, forecast,
+  resumo, receita, unidades, topClientes, canais, exportExcel, exportPdf, forecast, transacoes,
   listarReceitasManuais, criarReceitaManual, actualizarReceitaManual, eliminarReceitaManual,
 } = require('../controllers/financeiroController');
 const authMiddleware = require('../middleware/auth');
@@ -20,6 +20,7 @@ router.get('/canais',   canais);
 router.get('/export',      exportExcel);
 router.get('/export-pdf',  exportPdf);
 router.get('/forecast',    forecast);
+router.get('/transacoes',  transacoes);
 
 router.get('/receitas-manuais',      listarReceitasManuais);
 router.post('/receitas-manuais',     criarReceitaManual);

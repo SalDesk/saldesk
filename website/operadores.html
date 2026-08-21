@@ -1486,7 +1486,11 @@
   /* ── HERO: imagem CMS + badge de operadores ─────────── */
   async function initHero() {
     try {
-      const res = await fetch(API_BASE + '/cms/banners?page=operadores');
+      /* ?page= nunca foi implementado no backend (cms_banners nao tem essa
+         coluna) -- o parametro era ignorado em silencio e todos os banners
+         activos vinham sempre, independentemente da pagina. Removido para
+         nao sugerir um filtro que nao existe. */
+      const res = await fetch(API_BASE + '/cms/banners');
       if (res.ok) {
         const json = await res.json();
         const banners = json.data || json.banners || [];

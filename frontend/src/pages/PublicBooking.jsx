@@ -1312,6 +1312,14 @@ export default function PublicBooking() {
       }
     }).catch(() => setNotFound(true))
       .finally(() => setLoading(false));
+
+    /* Telemetria para a tab "Estatisticas" do Marketing -- dispara e
+       esquece, nunca bloqueia a pagina nem mostra erro ao visitante. */
+    const ref = isWidget ? 'widget' : (searchParams.get('ref') || null);
+    fetch(`${API}/public/${slug}/track-view`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ref }),
+    }).catch(() => {});
+
     return removeSeo;
   }, [slug]);
 
