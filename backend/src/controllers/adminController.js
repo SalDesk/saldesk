@@ -1758,16 +1758,26 @@ async function blockIp(req, res, next) {
     if (!ip?.trim()) return res.status(400).json({ error: 'IP obrigatorio' });
     const cleanIp = ip.trim();
 
+    /* Agora que o bloqueio e mesmo aplicado (blockedIpMiddleware), bloquear
+       o proprio IP de quem pede tranca o fundador fora do painel -- e o
+       "Desbloquear" fica atras do mesmo bloqueio, sem forma de reverter
+       pela propria interface. Confirmado ao vivo: aconteceu numa sessao de
+       teste, so foi possivel destrancar via acesso directo a BD + restart. */
+    if (cleanIp === req.ip) {
+      return res.status(400).json({ error: 'Nao podes bloquear o teu proprio IP', code: 'SELF_BLOCK' });
+    }
+
     const { data: existing } = await supabaseAdmin
       .from('cms_settings').select('value').eq('key', 'sys_blocked_ips').maybeSingle();
     let blocked = [];
     try { blocked = JSON.parse(existing?.value || '[]'); } catch { /* */ }
     if (!blocked.includes(cleanIp)) blocked.push(cleanIp);
 
-    await supabaseAdmin.from('cms_settings').upsert(
+    const { error } = await supabaseAdmin.from('cms_settings').upsert(
       { key: 'sys_blocked_ips', value: JSON.stringify(blocked), updated_at: new Date().toISOString() },
       { onConflict: 'key' }
     );
+    if (error) throw error;
     /* Antes, isto so gravava a lista -- nenhum middleware a lia, por isso
        "bloquear" um IP nao bloqueava nada de verdade. setBlocked() actualiza
        a cache que blockedIpMiddleware (server.js) consulta em cada pedido. */
@@ -1788,10 +1798,11 @@ async function unblockIp(req, res, next) {
     try { blocked = JSON.parse(existing?.value || '[]'); } catch { /* */ }
     blocked = blocked.filter((b) => b !== cleanIp);
 
-    await supabaseAdmin.from('cms_settings').upsert(
+    const { error } = await supabaseAdmin.from('cms_settings').upsert(
       { key: 'sys_blocked_ips', value: JSON.stringify(blocked), updated_at: new Date().toISOString() },
       { onConflict: 'key' }
     );
+    if (error) throw error;
     ipBlockStore.setBlocked(blocked);
     return res.json({ data: blocked, message: `IP ${cleanIp} desbloqueado` });
   } catch (err) { next(err); }

@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, Shield, Key, ArrowRight, CheckCircle2 } from 'lucide-react';
 import useAuthStore from '../store/authStore';
 import { register, login, validateInvite } from '../services/authService';
+import { getSiteStatus } from '../services/publicService';
 import { useT } from '../i18n';
 import AuthLayout from '../components/auth/AuthLayout';
 import Input from '../components/ui/Input';
@@ -32,6 +33,19 @@ export default function Register() {
   const [showCnf, setShowCnf]         = useState(false);
 
   useEffect(() => { if (token) navigate('/'); }, [token, navigate]);
+
+  /* O toggle "Registo por convite" (Sistema -> Definicoes) so mudava
+     invite_only em cms_settings -- este gate lia so a flag de build
+     VITE_INVITE_REQUIRED, sem ligacao nenhuma ao painel. Desligar o
+     toggle nao tinha efeito nenhum aqui. Quando o pedido responde, a
+     definicao ao vivo manda; ate la, ou se falhar, mantem o default de
+     build (falha fechado -- mais seguro pedir o convite a mais do que
+     a menos). */
+  useEffect(() => {
+    getSiteStatus()
+      .then((status) => { if (status) setInviteValid(!status.invite_only); })
+      .catch(() => {});
+  }, []);
 
   async function handleInviteSubmit(e) {
     e.preventDefault();
