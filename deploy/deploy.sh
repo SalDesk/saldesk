@@ -25,6 +25,13 @@ WEBSITE_DIR="/var/www/saldesk/website"
 LOG_FILE="/var/log/saldesk/deploy.log"
 TIMESTAMP=$(date '+%Y-%m-%d %H:%M:%S')
 
+# Sem sudo, /var/log/saldesk pode nao existir ou nao ser escrevivel --
+# nesse caso usa um log local em vez de abortar o deploy inteiro.
+if ! mkdir -p "$(dirname "$LOG_FILE")" 2>/dev/null || ! touch "$LOG_FILE" 2>/dev/null; then
+    LOG_FILE="$REPO_DIR/deploy.log"
+    mkdir -p "$(dirname "$LOG_FILE")" 2>/dev/null || true
+fi
+
 log() {
     echo "[$TIMESTAMP] $1" | tee -a "$LOG_FILE"
 }
