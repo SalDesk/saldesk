@@ -145,8 +145,8 @@ function ChatTab({ socket }) {
                     <span className={`absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-white ${op.online ? 'bg-success' : 'bg-n-300'}`} />
                   </div>
                   <div className="min-w-0">
-                    <p className="text-sm font-medium text-n-900 truncate">{op.name || op.email}</p>
-                    <p className="text-xs text-n-400 truncate">{op.last_message?.content || 'Sem mensagens'}</p>
+                    <p className={`text-sm truncate ${op.unread_count > 0 ? 'font-bold text-n-900' : 'font-medium text-n-900'}`}>{op.name || op.email}</p>
+                    <p className={`text-xs truncate ${op.unread_count > 0 ? 'font-semibold text-n-700' : 'text-n-400'}`}>{op.last_message?.content || 'Sem mensagens'}</p>
                   </div>
                 </div>
                 <div className="flex flex-col items-end gap-1 flex-shrink-0">

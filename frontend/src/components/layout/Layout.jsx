@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
+import { io } from 'socket.io-client';
 import Sidebar from './Sidebar';
 import Topbar from './Topbar';
 import BottomNav from './BottomNav';
@@ -16,7 +17,25 @@ export default function Layout() {
   const [moreDrawerOpen, setMoreDrawerOpen] = useState(false);
   const sidebarOpen = useUiStore((s) => s.sidebarOpen);
   const setOperator = useAuthStore((s) => s.setOperator);
+  const token = useAuthStore((s) => s.token);
   const location = useLocation();
+
+  /* O "online" que o fundador ve em Comunicacao (AdminCommunications.jsx)
+     vem so de haver algum socket ligado com este operator_id -- e o
+     unico sitio que ligava um socket era Messages.jsx, so enquanto essa
+     pagina especifica estava aberta. Um operador que nunca visita
+     "Mensagens" aparecia sempre offline, em qualquer outra pagina.
+     Esta ligacao persiste por toda a sessao (Layout esta sempre montado),
+     so para presenca -- Messages.jsx continua com a sua propria ligacao
+     para os seus proprios eventos, as duas coexistem sem problema (o
+     backend so marca offline quando TODOS os sockets do operador
+     desligam). */
+  useEffect(() => {
+    if (!token) return;
+    const socketUrl = (import.meta.env.VITE_API_URL || 'http://localhost:3001/api/v1').replace(/\/api\/v1\/?$/, '');
+    const socket = io(socketUrl, { auth: { token } });
+    return () => socket.disconnect();
+  }, [token]);
 
   /* Alimenta a aba "Trafego" da Analytics do fundador (getAnalyticsTraffic
      em adminController.js) -- dispara a cada mudanca de rota dentro da app. */
