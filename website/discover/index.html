@@ -50,6 +50,14 @@
     .nav-profile{display:flex;align-items:center;gap:7px;border:1px solid var(--line);border-radius:var(--r10);padding:6px 12px 6px 6px;cursor:pointer;color:var(--tx-soft);transition:all .15s;font-size:.8125rem;font-weight:500}
     .nav-profile:hover{border-color:var(--teal7);color:var(--teal7)}
     .nav-profile-icon{width:26px;height:26px;background:var(--paper2);border-radius:8px;display:flex;align-items:center;justify-content:center}
+    .nav-profile-wrap{position:relative}
+    .nav-profile-dropdown{position:absolute;top:calc(100% + 8px);right:0;background:#fff;border:1px solid var(--line);border-radius:var(--r10);box-shadow:0 12px 32px rgba(11,18,32,.14);min-width:180px;padding:6px;opacity:0;visibility:hidden;transform:translateY(-6px);transition:opacity .18s,visibility .18s,transform .18s;z-index:60}
+    .nav-profile-wrap.logged-in:hover .nav-profile-dropdown,
+    .nav-profile-wrap.logged-in:focus-within .nav-profile-dropdown{opacity:1;visibility:visible;transform:translateY(0)}
+    .nav-profile-dropdown-item{display:flex;align-items:center;gap:9px;width:100%;background:none;border:none;text-align:left;padding:9px 10px;border-radius:8px;font-size:.8125rem;font-weight:500;color:var(--tx);cursor:pointer;transition:background .15s}
+    .nav-profile-dropdown-item:hover{background:var(--paper2);color:var(--teal7)}
+    .profile-row{font-size:.8125rem;color:var(--tx)}
+    .profile-row-label{color:var(--tx-soft)}
     @media(max-width:640px){.nav-island{display:none}}
 
     /* ── HERO ── */
@@ -239,6 +247,18 @@
   </div>
 </div>
 
+<div id="modal-profile" class="modal-overlay" onclick="if(event.target===this)closeProfileModal()">
+  <div class="wish-panel" style="max-width:400px">
+    <div class="wish-header">
+      <h3><span class="pt">O meu perfil</span><span class="en">My profile</span></h3>
+      <button class="modal-close" onclick="closeProfileModal()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div id="profile-body" style="padding:20px 22px 24px"></div>
+  </div>
+</div>
+
 <!-- NAV -->
 <nav id="navbar">
   <div class="container nav-inner">
@@ -256,12 +276,20 @@
         <span id="langPt" class="active">PT</span>
         <span id="langEn">EN</span>
       </button>
-      <a href="https://app.saldesk.cv/viajante/entrar" class="nav-profile" id="nav-profile-link">
-        <span class="nav-profile-icon">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-        </span>
-        <span class="pt">Perfil</span><span class="en">Profile</span>
-      </a>
+      <div class="nav-profile-wrap" id="nav-profile-wrap">
+        <a href="https://app.saldesk.cv/viajante/entrar" class="nav-profile" id="nav-profile-link">
+          <span class="nav-profile-icon">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          </span>
+          <span class="pt">Perfil</span><span class="en">Profile</span>
+        </a>
+        <div class="nav-profile-dropdown" id="nav-profile-dropdown">
+          <button type="button" class="nav-profile-dropdown-item" onclick="openProfileModal()">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8Z"/><circle cx="12" cy="12" r="3"/></svg>
+            <span class="pt">Ver perfil</span><span class="en">View profile</span>
+          </button>
+        </div>
+      </div>
     </div>
   </div>
 </nav>
@@ -1088,6 +1116,56 @@ function applyTravelerSession(session) {
   const pt = link.querySelector('.pt'), en = link.querySelector('.en');
   if (pt) pt.textContent = first;
   if (en) en.textContent = first;
+
+  /* Com sessao activa, a pill deixa de navegar para app.saldesk.cv --
+     abre o perfil em modal, sem sair do Discover (ver openProfileModal). */
+  document.getElementById('nav-profile-wrap')?.classList.add('logged-in');
+  link.addEventListener('click', (e) => {
+    if (!travelerSession) return;
+    e.preventDefault();
+    openProfileModal();
+  });
+}
+
+/* ── PERFIL (modal, sem sair do Discover) ── */
+function openProfileModal() {
+  if (!travelerSession) { window.location.href = `${APP}/login`; return; }
+  renderProfileModal();
+  document.getElementById('modal-profile').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeProfileModal() {
+  document.getElementById('modal-profile').classList.remove('open');
+  document.body.style.overflow = '';
+}
+function renderProfileModal() {
+  const t = travelerSession.traveler || {};
+  const initials = (t.name || '').trim().split(/\s+/).map(w => w[0]).slice(0, 2).join('').toUpperCase() || '?';
+  const memberSince = t.created_at
+    ? new Date(t.created_at).toLocaleDateString(L() === 'en' ? 'en-GB' : 'pt-PT', { year: 'numeric', month: 'long' })
+    : '';
+  const avatar = t.avatar_url
+    ? `<img src="${esc(t.avatar_url)}" alt="" style="width:56px;height:56px;border-radius:50%;object-fit:cover;flex-shrink:0" />`
+    : `<div style="width:56px;height:56px;border-radius:50%;background:var(--teal7);color:#fff;display:flex;align-items:center;justify-content:center;font-family:var(--fb);font-weight:700;font-size:1.0625rem;flex-shrink:0">${esc(initials)}</div>`;
+
+  document.getElementById('profile-body').innerHTML = `
+    <div style="display:flex;align-items:center;gap:14px;margin-bottom:20px">
+      ${avatar}
+      <div style="min-width:0">
+        <div style="font-family:var(--fb);font-weight:700;font-size:1rem;color:var(--tx);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(t.name || '')}</div>
+        <div style="font-size:.8125rem;color:var(--tx-soft);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(t.email || '')}</div>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:9px">
+      ${t.phone ? `<div class="profile-row"><span class="profile-row-label pt">Telefone: </span><span class="profile-row-label en">Phone: </span>${esc(t.phone)}</div>` : ''}
+      ${t.country ? `<div class="profile-row"><span class="profile-row-label pt">Pais: </span><span class="profile-row-label en">Country: </span>${esc(t.country)}</div>` : ''}
+      ${memberSince ? `<div class="profile-row profile-row-label"><span class="pt">Membro desde ${esc(memberSince)}</span><span class="en">Member since ${esc(memberSince)}</span></div>` : ''}
+    </div>
+    <a href="${APP}/viajante" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:5px;margin-top:20px;font-size:.8125rem;font-weight:600;color:var(--teal7)">
+      <span class="pt">Gerir conta</span><span class="en">Manage account</span> →
+    </a>
+  `;
+  if (L() === 'en') fixLang(document.getElementById('profile-body'));
 }
 
 /* Fusao unica da wishlist anonima para dentro da conta -- sd-wish ja guarda
@@ -1188,7 +1266,7 @@ document.getElementById('langToggle').addEventListener('click', () => {
 });
 
 document.getElementById('nav-search-input')?.addEventListener('keydown', e => { if (e.key === 'Enter') handleSearch(); });
-document.addEventListener('keydown', e => { if (e.key === 'Escape') closeWishlist(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeWishlist(); closeProfileModal(); } });
 
 /* ══════════════════════════════════════════
    INIT
