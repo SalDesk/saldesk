@@ -1089,12 +1089,13 @@ async function getSiteStatus(req, res, next) {
     const { data } = await supabaseAdmin
       .from('cms_settings')
       .select('key, value')
-      .in('key', ['coming_soon_mode', 'maintenance_message']);
+      .in('key', ['coming_soon_mode', 'maintenance_message', 'invite_only']);
     const map = Object.fromEntries((data || []).map((r) => [r.key, r.value]));
     return res.json({
       data: {
         maintenance_mode:    map.coming_soon_mode === 'true',
         maintenance_message: map.maintenance_message || '',
+        invite_only:         map.invite_only === 'true',
       },
     });
   } catch (err) { next(err); }

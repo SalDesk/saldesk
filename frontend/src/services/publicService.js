@@ -28,3 +28,12 @@ export async function discoverUnits(params) {
   const { data } = await publicApi.get('/discover-units', { params });
   return data.data;
 }
+
+/* Modo manutencao + registo por convite (Sistema -> Definicoes do fundador).
+   Sem auth -- consultado pelo Register.jsx ao carregar (o site estatico em
+   website/index.html chama o mesmo endpoint /public/site-status directo,
+   fora da SPA). */
+export async function getSiteStatus() {
+  const { data } = await publicApi.get('/site-status');
+  return data.data;
+}
