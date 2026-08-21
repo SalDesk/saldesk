@@ -1,7 +1,7 @@
 {
   "name": "SalDesk — Gestao Turistica",
   "short_name": "SalDesk",
-  "description": "Plataforma de gestao turistica para operadores da Ilha do Sal",
+  "description": "Plataforma de gestao turistica para operadores em Cabo Verde",
   "start_url": "/",
   "display": "standalone",
   "orientation": "portrait",

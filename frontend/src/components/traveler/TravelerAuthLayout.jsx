@@ -38,7 +38,7 @@ export default function TravelerAuthLayout({ children }) {
         <div className="absolute inset-0 bg-gradient-to-t from-ocean-900/60 via-ocean-900/5 to-transparent lg:bg-gradient-to-r lg:from-transparent lg:via-transparent lg:to-ocean-900/10" />
         <div className="absolute inset-x-0 bottom-0 p-6 lg:p-10 lg:bottom-10">
           <p className="font-display font-extrabold text-white text-2xl lg:text-4xl leading-tight max-w-xs drop-shadow">
-            A sua próxima aventura na Ilha do Sal
+            A sua próxima aventura em Cabo Verde
           </p>
           <p className="hidden lg:block text-white/80 text-sm font-body mt-3 max-w-xs">
             Reservas directas com quem conhece a ilha — sem intermediários.
@@ -65,7 +65,7 @@ export default function TravelerAuthLayout({ children }) {
 
         <div className="px-5 pb-6 lg:px-10">
           <p className="text-center lg:text-left text-[11px] font-body text-n-400">
-            © {new Date().getFullYear()} SalDesk — Ilha do Sal, Cabo Verde
+            © {new Date().getFullYear()} SalDesk — Cabo Verde
           </p>
         </div>
       </div>

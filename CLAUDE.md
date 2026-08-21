@@ -25,7 +25,7 @@ Adaptar exactamente esta linguagem para o SalDesk.
 
 ## O que é o SalDesk
 
-Plataforma SaaS de gestão turística para operadores da Ilha do Sal, Cabo Verde.
+Plataforma SaaS de gestão turística para operadores de Cabo Verde. Nascida na Ilha do Sal, a expandir para todo o país.
 - Hotéis, actividades/tours, rent-a-car, restaurantes
 - Reservas directas sem comissão OTA
 - CRM, financeiro, channel manager, automações
@@ -234,7 +234,7 @@ Inspiração: GoSaaS hero — texto esquerda, imagem produto direita com floatin
 - Direita: screenshot/mockup do dashboard com 2-3 floating cards animados (KPIs)
 - H1: "Gestão turística sem comissões OTA" com "comissões OTA" em ocean-700 ou sublinhado decorativo
 - CTAs: "Começar grátis — 30 dias" (sand, grande) + "Ver demonstração" (outline)
-- Social proof: avatares + "Já confiam em nós X operadores na Ilha do Sal"
+- Social proof: avatares + "Já confiam em nós X operadores em Cabo Verde"
 
 ### 3. Brand/Integrações strip
 Inspiração: GoSaaS "Already Join 15K+ Business".

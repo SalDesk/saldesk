@@ -87,7 +87,7 @@ const EMAIL_TEMPLATES = {
     subject: 'SalDesk — obrigado pelo seu interesse',
     body:
       'Ola {{nome}},\n\n' +
-      'Obrigado por se candidatar e querer conhecer a SalDesk. Vimos que tem um negocio de {{tipo}} na Ilha do Sal e ' +
+      'Obrigado por se candidatar e querer conhecer a SalDesk. Vimos que tem um negocio de {{tipo}} em Cabo Verde e ' +
       'gostariamos de mostrar como a nossa plataforma pode ajudar a centralizar reservas, equipa e pagamentos num unico lugar.\n\n' +
       'Em breve entraremos em contacto para combinar os proximos passos.\n\nCumprimentos,\nEquipa SalDesk',
   },

@@ -1,6 +1,6 @@
 # SalDesk
 
-Plataforma SaaS de gestão turística para operadores da Ilha do Sal, Cabo Verde.
+Plataforma SaaS de gestão turística para operadores de Cabo Verde. Nascida na Ilha do Sal, a expandir para todo o país.
 
 ## Módulos
 

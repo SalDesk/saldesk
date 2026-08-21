@@ -453,6 +453,9 @@ function buildNav(p) {
     <div class="breadcrumb">
       <a href="/discover/">SalDesk Connect</a>
       <span class="bc-sep">›</span>
+      <span class="pt">Cabo Verde</span>
+      <span class="en">Cabo Verde</span>
+      <span class="bc-sep">›</span>
       <span class="bc-cur pt">${esc(p.namePt)}</span>
       <span class="bc-cur en">${esc(p.nameEn)}</span>
     </div>
@@ -676,8 +679,8 @@ function buildFooter() {
     <div class="footer-grid">
       <div>
         <img src="/logo.png" alt="SalDesk" style="height:24px;width:auto;filter:brightness(0) invert(1)" />
-        <p class="footer-desc pt">SalDesk Connect — Descubra e reserve na Ilha do Sal, Cabo Verde.</p>
-        <p class="footer-desc en">SalDesk Connect — Discover and book in Ilha do Sal, Cape Verde.</p>
+        <p class="footer-desc pt">SalDesk Connect — Descubra e reserve em Cabo Verde.</p>
+        <p class="footer-desc en">SalDesk Connect — Discover and book across Cabo Verde.</p>
         <div class="social-icons">
           <a href="#" class="sicon" aria-label="Instagram"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg></a>
           <a href="#" class="sicon" aria-label="Facebook"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg></a>
@@ -713,7 +716,7 @@ function buildFooter() {
       </div>
     </div>
     <div class="footer-bottom">
-      <span style="color:rgba(255,255,255,.4)"><span class="pt">© 2026 SalDesk · Ilha do Sal, Cabo Verde</span><span class="en">© 2026 SalDesk · Ilha do Sal, Cape Verde</span></span>
+      <span style="color:rgba(255,255,255,.4)"><span class="pt">© 2026 SalDesk · Cabo Verde</span><span class="en">© 2026 SalDesk · Cape Verde</span></span>
       <span style="color:rgba(255,255,255,.3);font-size:.75rem"><span class="pt">Desenvolvido por </span><span class="en">Developed by </span><a href="https://wandr.cv" target="_blank" rel="noopener" style="color:rgba(255,255,255,.5);font-weight:600;transition:color .2s" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='rgba(255,255,255,.5)'">WANDR — Travel Technology</a></span>
     </div>
   </div>

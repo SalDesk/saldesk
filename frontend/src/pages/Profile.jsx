@@ -153,7 +153,7 @@ export default function Profile() {
                 <Input label="Nome legal" value={form.name} onChange={set('name')} required />
                 <Input label="Nome comercial" value={form.business_name} onChange={set('business_name')} placeholder="Ex: Zy Tours Sal" />
               </div>
-              <Input label="Tagline" value={form.tagline} onChange={set('tagline')} placeholder="Ex: A melhor experiencia na Ilha do Sal" />
+              <Input label="Tagline" value={form.tagline} onChange={set('tagline')} placeholder="Ex: A melhor experiencia em Cabo Verde" />
               <Textarea
                 label="Descricao"
                 value={form.description}

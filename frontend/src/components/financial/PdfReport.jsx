@@ -136,7 +136,7 @@ function RelatorioPDF({ operator, periodo, resumo, receitaDados, unidadesDados, 
         )}
 
         <Text style={s.footer}>
-          SalDesk · Gestão Turística · Ilha do Sal, Cabo Verde
+          SalDesk · Gestão Turística · Cabo Verde
         </Text>
       </Page>
     </Document>
