@@ -528,19 +528,19 @@ export default function AdminAnalytics() {
 
   const loadAll = useCallback(async () => {
     setLoading(true);
-    try {
-      const [t, f, c, g] = await Promise.all([
-        api.get('/admin/analytics/traffic'),
-        api.get('/admin/analytics/funnel'),
-        api.get('/admin/analytics/churn'),
-        api.get('/admin/analytics/geography'),
-      ]);
-      setTraffic(t.data.data);
-      setFunnel(f.data.data);
-      setChurn(c.data.data);
-      setGeo(g.data.data);
-    } catch { /* silencioso */ }
-    finally { setLoading(false); }
+    /* allSettled em vez de all: os 4 separadores sao independentes -- uma unica
+       falha nao pode deixar os outros tres presos em "a carregar" para sempre. */
+    const [t, f, c, g] = await Promise.allSettled([
+      api.get('/admin/analytics/traffic'),
+      api.get('/admin/analytics/funnel'),
+      api.get('/admin/analytics/churn'),
+      api.get('/admin/analytics/geography'),
+    ]);
+    if (t.status === 'fulfilled') setTraffic(t.value.data.data);
+    if (f.status === 'fulfilled') setFunnel(f.value.data.data);
+    if (c.status === 'fulfilled') setChurn(c.value.data.data);
+    if (g.status === 'fulfilled') setGeo(g.value.data.data);
+    setLoading(false);
   }, []);
 
   useEffect(() => { loadAll(); }, [loadAll]);

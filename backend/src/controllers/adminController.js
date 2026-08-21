@@ -1861,38 +1861,132 @@ function restartApi(req, res) {
 
 /* ─── Analytics ────────────────────────────────────────────── */
 
-function getAnalyticsTraffic(req, res) {
-  const days = [];
-  for (let i = 29; i >= 0; i--) {
-    const d = new Date();
-    d.setDate(d.getDate() - i);
-    const seed  = d.getDate() + d.getMonth() * 31;
-    const base  = 120 + Math.round(80 * Math.sin(seed * 0.4 + 1.2) + 40 * Math.sin(seed * 0.15));
-    days.push({
-      date:   d.toISOString().slice(0, 10),
-      label:  `${d.getDate().toString().padStart(2, '0')}/${(d.getMonth() + 1).toString().padStart(2, '0')}`,
-      visits: Math.max(30, base),
+const PAGE_LABELS = {
+  '/':              'Dashboard',
+  '/unidades':      'Unidades',
+  '/reservas':      'Reservas',
+  '/calendario':    'Calendario',
+  '/guias':         'Guias',
+  '/frota':         'Frota',
+  '/clientes':      'Clientes',
+  '/colaboradores': 'Colaboradores',
+  '/rh':            'RH',
+  '/financeiro':    'Financeiro',
+  '/analytics':     'Analytics',
+  '/meteorologia':  'Meteorologia',
+  '/previsao':      'Previsao',
+  '/avaliacoes':    'Avaliacoes',
+  '/ocorrencias':   'Ocorrencias',
+  '/feedback':      'Feedback',
+  '/mensagens':     'Mensagens',
+  '/integracoes':   'Channel Manager',
+  '/marketing':     'Marketing',
+  '/automacoes':    'Automacoes',
+  '/fidelidade':    'Fidelidade',
+  '/vouchers':      'Vouchers',
+  '/afiliados':     'Afiliados',
+  '/grupos':        'Grupos',
+  '/pacotes':       'Pacotes',
+  '/parcerias':     'Parcerias',
+  '/editor-pagina': 'Editor da Pagina',
+  '/definicoes':    'Definicoes',
+  '/housekeeping':  'Housekeeping',
+  '/manutencao':    'Manutencao',
+  '/menu-digital':  'Menu Digital',
+  '/pedidos':       'Pedidos',
+};
+const SOURCE_LABELS = { direct: 'Directo', organic: 'Organico', social: 'Social', referral: 'Referencia' };
+
+function fmtDuration(ms) {
+  const totalSec = Math.round(ms / 1000);
+  const min = Math.floor(totalSec / 60);
+  const sec = totalSec % 60;
+  return `${min}m ${sec.toString().padStart(2, '0')}s`;
+}
+
+/* Trafego real da SPA (app.saldesk.cv), agregado de app_page_views -- tabela
+   alimentada pelo frontend a cada mudanca de rota (ver utils/telemetry.js e
+   POST /telemetry/view). Antes disto a aba inteira era dados inventados
+   (visitas por formula de onda seno, lista de paginas fixa) -- so um KPI
+   tinha a nota "dados simulados", os outros 3 widgets pareciam reais.
+   "avg_time" e aproximado pelo intervalo ate a proxima pageview da mesma
+   sessao -- a ultima pagina de cada sessao fica sem duracao conhecida
+   (nunca ha um "proximo evento"), por isso e excluida da media. */
+async function getAnalyticsTraffic(req, res, next) {
+  try {
+    const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+    const { data: views, error } = await supabaseAdmin
+      .from('app_page_views')
+      .select('session_id, path, source, created_at')
+      .gte('created_at', since)
+      .order('created_at', { ascending: true });
+    if (error) throw error;
+
+    const rows = views || [];
+
+    /* Visitas por dia = sessoes distintas activas nesse dia */
+    const days = [];
+    const sessionsByDay = {};
+    rows.forEach((v) => {
+      const day = v.created_at.slice(0, 10);
+      if (!sessionsByDay[day]) sessionsByDay[day] = new Set();
+      sessionsByDay[day].add(v.session_id);
     });
-  }
+    for (let i = 29; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      const key = d.toISOString().slice(0, 10);
+      days.push({
+        date:   key,
+        label:  `${d.getDate().toString().padStart(2, '0')}/${(d.getMonth() + 1).toString().padStart(2, '0')}`,
+        visits: sessionsByDay[key]?.size || 0,
+      });
+    }
 
-  const pages = [
-    { path: '/dashboard',     label: 'Dashboard',      visits: 1240, avg_time: '4m 32s' },
-    { path: '/reservas',      label: 'Reservas',       visits: 980,  avg_time: '3m 15s' },
-    { path: '/clientes',      label: 'Clientes',       visits: 720,  avg_time: '2m 45s' },
-    { path: '/financeiro',    label: 'Financeiro',     visits: 510,  avg_time: '5m 12s' },
-    { path: '/calendario',    label: 'Calendario',     visits: 430,  avg_time: '2m 03s' },
-    { path: '/definicoes',    label: 'Definicoes',     visits: 280,  avg_time: '1m 55s' },
-    { path: '/colaboradores', label: 'Colaboradores',  visits: 190,  avg_time: '3m 28s' },
-  ];
+    /* Paginas mais visitadas + duracao media (por sessao, intervalo ate ao proximo evento) */
+    const bySession = {};
+    rows.forEach((v) => { (bySession[v.session_id] ||= []).push(v); });
 
-  const sources = [
-    { name: 'Directo',    value: 45 },
-    { name: 'Organico',   value: 28 },
-    { name: 'Social',     value: 17 },
-    { name: 'Referencia', value: 10 },
-  ];
+    const pageVisits   = {};
+    const pageDurations = {};
+    Object.values(bySession).forEach((events) => {
+      events.forEach((ev, i) => {
+        pageVisits[ev.path] = (pageVisits[ev.path] || 0) + 1;
+        const next = events[i + 1];
+        if (next) {
+          const delta = new Date(next.created_at) - new Date(ev.created_at);
+          (pageDurations[ev.path] ||= []).push(delta);
+        }
+      });
+    });
 
-  return res.json({ data: { days, pages, sources } });
+    const pages = Object.entries(pageVisits)
+      .map(([path, visits]) => {
+        const durations = pageDurations[path] || [];
+        const avgMs = durations.length ? durations.reduce((s, d) => s + d, 0) / durations.length : null;
+        return {
+          path,
+          label:    PAGE_LABELS[path] || path,
+          visits,
+          avg_time: avgMs != null ? fmtDuration(avgMs) : '—',
+        };
+      })
+      .sort((a, b) => b.visits - a.visits)
+      .slice(0, 10);
+
+    /* Origem do trafego */
+    const sourceCounts = {};
+    rows.forEach((v) => { sourceCounts[v.source] = (sourceCounts[v.source] || 0) + 1; });
+    const totalViews = rows.length;
+    const sources = Object.entries(sourceCounts)
+      .map(([key, count]) => ({
+        name:  SOURCE_LABELS[key] || key,
+        value: totalViews > 0 ? Math.round((count / totalViews) * 100) : 0,
+      }))
+      .sort((a, b) => b.value - a.value);
+
+    return res.json({ data: { days, pages, sources } });
+  } catch (err) { next(err); }
 }
 
 async function getAnalyticsFunnel(req, res, next) {
