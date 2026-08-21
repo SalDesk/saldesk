@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Outlet } from 'react-router-dom';
+import { Outlet, useLocation } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import Topbar from './Topbar';
 import BottomNav from './BottomNav';
@@ -8,6 +8,7 @@ import { ToastContainer } from '../ui/Toast';
 import useUiStore from '../../store/uiStore';
 import useAuthStore from '../../store/authStore';
 import { getMe } from '../../services/authService';
+import { trackPageView } from '../../utils/telemetry';
 
 const OPERATOR_REFRESH_MS = 60 * 1000;
 
@@ -15,6 +16,13 @@ export default function Layout() {
   const [moreDrawerOpen, setMoreDrawerOpen] = useState(false);
   const sidebarOpen = useUiStore((s) => s.sidebarOpen);
   const setOperator = useAuthStore((s) => s.setOperator);
+  const location = useLocation();
+
+  /* Alimenta a aba "Trafego" da Analytics do fundador (getAnalyticsTraffic
+     em adminController.js) -- dispara a cada mudanca de rota dentro da app. */
+  useEffect(() => {
+    trackPageView(location.pathname);
+  }, [location.pathname]);
 
   /* O fundador pode mudar o plano/estado de um operador no painel admin
      enquanto esse operador ja tem sessao aberta no browser -- o objecto
