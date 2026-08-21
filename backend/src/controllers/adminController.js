@@ -3,6 +3,7 @@ const { supabaseAdmin }  = require('../config/supabase');
 const { enviarEmail }    = require('../helpers/emailHelper');
 const { passwordResetEmail } = require('../helpers/emailTemplates');
 const { loadPriceMap }  = require('../helpers/pricing');
+const ipBlockStore      = require('../services/ipBlockStore');
 const ExcelJS           = require('exceljs');
 
 const TIPO_SCORE    = { hotel: 30, activity: 25, restaurant: 20, rentacar: 15 };
@@ -1755,18 +1756,44 @@ async function blockIp(req, res, next) {
   try {
     const { ip } = req.body;
     if (!ip?.trim()) return res.status(400).json({ error: 'IP obrigatorio' });
+    const cleanIp = ip.trim();
 
     const { data: existing } = await supabaseAdmin
       .from('cms_settings').select('value').eq('key', 'sys_blocked_ips').maybeSingle();
     let blocked = [];
     try { blocked = JSON.parse(existing?.value || '[]'); } catch { /* */ }
-    if (!blocked.includes(ip.trim())) blocked.push(ip.trim());
+    if (!blocked.includes(cleanIp)) blocked.push(cleanIp);
 
     await supabaseAdmin.from('cms_settings').upsert(
       { key: 'sys_blocked_ips', value: JSON.stringify(blocked), updated_at: new Date().toISOString() },
       { onConflict: 'key' }
     );
-    return res.json({ data: blocked, message: `IP ${ip.trim()} bloqueado` });
+    /* Antes, isto so gravava a lista -- nenhum middleware a lia, por isso
+       "bloquear" um IP nao bloqueava nada de verdade. setBlocked() actualiza
+       a cache que blockedIpMiddleware (server.js) consulta em cada pedido. */
+    ipBlockStore.setBlocked(blocked);
+    return res.json({ data: blocked, message: `IP ${cleanIp} bloqueado` });
+  } catch (err) { next(err); }
+}
+
+async function unblockIp(req, res, next) {
+  try {
+    const { ip } = req.body;
+    if (!ip?.trim()) return res.status(400).json({ error: 'IP obrigatorio' });
+    const cleanIp = ip.trim();
+
+    const { data: existing } = await supabaseAdmin
+      .from('cms_settings').select('value').eq('key', 'sys_blocked_ips').maybeSingle();
+    let blocked = [];
+    try { blocked = JSON.parse(existing?.value || '[]'); } catch { /* */ }
+    blocked = blocked.filter((b) => b !== cleanIp);
+
+    await supabaseAdmin.from('cms_settings').upsert(
+      { key: 'sys_blocked_ips', value: JSON.stringify(blocked), updated_at: new Date().toISOString() },
+      { onConflict: 'key' }
+    );
+    ipBlockStore.setBlocked(blocked);
+    return res.json({ data: blocked, message: `IP ${cleanIp} desbloqueado` });
   } catch (err) { next(err); }
 }
 
@@ -2257,7 +2284,7 @@ module.exports = {
   getAnalyticsTraffic, getAnalyticsFunnel, getAnalyticsChurn,
   getAnalyticsGeography, sendAnalyticsReport,
   getSystemStats, getApiLogs, deleteApiLogs,
-  getSystemSecurity, blockIp,
+  getSystemSecurity, blockIp, unblockIp,
   getSystemSettings, updateSystemSettings,
   triggerBackup, flushRedisCache, restartApi,
   listarPendentesConect, aprovarConect, rejeitarConect,

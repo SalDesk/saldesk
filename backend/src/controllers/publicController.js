@@ -1078,6 +1078,28 @@ async function getUnitReviews(req, res, next) {
   } catch (err) { next(err); }
 }
 
+/* ─── Estado do site publico (modo manutencao) ───
+   O toggle "Modo manutencao" (Sistema -> Definicoes, chave coming_soon_mode)
+   so gravava em cms_settings -- nada no site estatico alguma vez lia isto,
+   por isso liga-lo nao mostrava pagina nenhuma aos visitantes. website/index.html
+   consulta este endpoint (sem auth, tem de responder rapido e nunca bloquear
+   o site se falhar). */
+async function getSiteStatus(req, res, next) {
+  try {
+    const { data } = await supabaseAdmin
+      .from('cms_settings')
+      .select('key, value')
+      .in('key', ['coming_soon_mode', 'maintenance_message']);
+    const map = Object.fromEntries((data || []).map((r) => [r.key, r.value]));
+    return res.json({
+      data: {
+        maintenance_mode:    map.coming_soon_mode === 'true',
+        maintenance_message: map.maintenance_message || '',
+      },
+    });
+  } catch (err) { next(err); }
+}
+
 /* ─── Relatório de impacto público (sem auth) ─── */
 async function getImpact(req, res, next) {
   try {
@@ -1301,6 +1323,7 @@ module.exports = {
   getUnitReviews,
   submitLead,
   getImpact,
+  getSiteStatus,
   getExperienceCategories,
 };
 

@@ -4,7 +4,7 @@ import {
   Shield, AlertTriangle, XCircle, CheckCircle, Circle,
   RefreshCw, Trash2, Ban, LogOut, Save, RotateCcw,
   Archive, Zap, Settings, Activity, Lock, FileText,
-  ChevronRight, Terminal,
+  ChevronRight, Terminal, X,
 } from 'lucide-react';
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -304,6 +304,17 @@ function SecurityTab() {
     } finally { setBlocking(''); }
   };
 
+  const unblockIp = async (ip) => {
+    setBlocking(ip); setMsg('');
+    try {
+      await api.post('/admin/system/unblock-ip', { ip });
+      setMsg(`IP ${ip} desbloqueado`);
+      load();
+    } catch (e) {
+      setMsg(e.response?.data?.error || 'Erro');
+    } finally { setBlocking(''); }
+  };
+
   if (loading) return <div className="flex justify-center py-16"><LoadingSpinner size={28} /></div>;
   if (!data)   return <p className="text-sm text-n-400 text-center py-12">Nao foi possivel carregar dados de seguranca</p>;
 
@@ -396,7 +407,17 @@ function SecurityTab() {
             <p className="text-xs font-medium text-n-500 mb-2">IPs bloqueados ({blocked_ips.length})</p>
             <div className="flex flex-wrap gap-2">
               {blocked_ips.map(ip => (
-                <span key={ip} className="font-mono text-xs px-2 py-1 bg-[var(--error)]/10 text-[var(--error)] rounded border border-[var(--error)]/20">{ip}</span>
+                <span key={ip} className="flex items-center gap-1.5 font-mono text-xs pl-2 pr-1 py-1 bg-[var(--error)]/10 text-[var(--error)] rounded border border-[var(--error)]/20">
+                  {ip}
+                  <button
+                    className="p-0.5 rounded hover:bg-[var(--error)]/20 disabled:opacity-50"
+                    onClick={() => unblockIp(ip)}
+                    disabled={!!blocking}
+                    title="Desbloquear"
+                  >
+                    <X size={12} strokeWidth={2} />
+                  </button>
+                </span>
               ))}
             </div>
           </div>

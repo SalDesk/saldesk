@@ -23,7 +23,7 @@ const {
   getAnalyticsTraffic, getAnalyticsFunnel, getAnalyticsChurn,
   getAnalyticsGeography, sendAnalyticsReport,
   getSystemStats, getApiLogs, deleteApiLogs,
-  getSystemSecurity, blockIp,
+  getSystemSecurity, blockIp, unblockIp,
   getSystemSettings, updateSystemSettings,
   triggerBackup, flushRedisCache, restartApi,
   listarPendentesConect, aprovarConect, rejeitarConect,
@@ -142,6 +142,7 @@ router.get('/system/logs',           getApiLogs);
 router.delete('/system/logs',        deleteApiLogs);
 router.get('/system/security',       getSystemSecurity);
 router.post('/system/block-ip',      blockIp);
+router.post('/system/unblock-ip',    unblockIp);
 router.get('/system/settings',       getSystemSettings);
 router.put('/system/settings',       updateSystemSettings);
 router.post('/system/backup',        triggerBackup);

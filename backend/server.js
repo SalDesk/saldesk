@@ -48,9 +48,19 @@ const billingRoutes      = require('./src/routes/billing');
 const { iniciarCron }    = require('./src/services/cronService');
 const { initQueues }     = require('./src/queues/queueManager');
 const { initSocket }     = require('./src/services/socketService');
+const ipBlockStore       = require('./src/services/ipBlockStore');
+const blockedIpMiddleware = require('./src/middleware/blockedIp');
 
 const app    = express();
 const server = http.createServer(app);
+
+/* Em producao o Nginx fica a frente do Node -- sem isto, req.ip devolve
+   sempre o IP do proprio Nginx (nao o do visitante), o que tornaria o
+   bloqueio de IP (abaixo) perigoso: "bloquear" um atacante bloquearia o
+   proxy inteiro, ou seja, todo o trafego. '1' confia apenas no primeiro
+   hop (o Nginx imediatamente a frente), nao na cadeia X-Forwarded-For
+   inteira que um cliente poderia falsificar. */
+app.set('trust proxy', 1);
 
 /* Seguranca */
 app.use(helmet());
@@ -77,6 +87,10 @@ app.use(express.json({ limit: '5mb' }));
 app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok', version: '2.0.0', timestamp: new Date().toISOString() });
 });
+
+/* Bloqueio de IP (Sistema -> Seguranca) -- fora do /api/health para nao
+   arriscar tirar o monitor de uptime do ar por engano. */
+app.use(blockedIpMiddleware);
 
 /* Rotas API v1 */
 app.use('/api/v1/auth',          authLimiter,  authRoutes);
@@ -128,6 +142,7 @@ app.use(errorHandler);
 const PORT = process.env.PORT || 3001;
 server.listen(PORT, async () => {
   console.log(`SalDesk API v2 a correr na porta ${PORT} [${process.env.NODE_ENV}]`);
+  await ipBlockStore.refresh().catch((err) => console.error('[IPBlock] Falha ao carregar lista:', err.message));
   if (process.env.NODE_ENV !== 'test') {
     initSocket(server);
     await initQueues();
