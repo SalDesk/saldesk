@@ -56,7 +56,8 @@ const DEFAULT_SECTIONS = [
 
 /* ── SEO ─────────────────────────────────────────── */
 function injectSeo(op, slug) {
-  const desc = op.description || `Reserve directamente em ${op.name}, Ilha do Sal, Cabo Verde.`;
+  const locality = op.address || op.islands?.name || 'Cabo Verde';
+  const desc = op.description || `Reserve directamente em ${op.name}, ${locality}, Cabo Verde.`;
   document.title = `${op.business_name || op.name} — Reservar · SalDesk`;
   const TYPE_LD = { hotel: 'LodgingBusiness', activity: 'TouristAttraction', rentacar: 'RentAction', restaurant: 'Restaurant' };
   const meta = (n, c, prop = false) => {
@@ -75,7 +76,7 @@ function injectSeo(op, slug) {
   const ld = {
     '@context': 'https://schema.org', '@type': TYPE_LD[op.operator_type] || 'LocalBusiness',
     name: op.business_name || op.name, description: desc, url: window.location.href,
-    address: { '@type': 'PostalAddress', addressLocality: 'Santa Maria', addressCountry: 'CV' },
+    address: { '@type': 'PostalAddress', addressLocality: op.islands?.name || 'Cabo Verde', addressCountry: 'CV' },
     ...(op.phone ? { telephone: op.phone } : {}),
   };
   let ldEl = document.getElementById('sd-jsonld');

@@ -76,6 +76,8 @@
     "businessName": "Business name",
     "phone": "Phone",
     "whatsapp": "WhatsApp",
+    "island": "Island",
+    "selectIsland": "Select island...",
     "address": "Address",
     "description": "Short description",
     "logo": "Logo",
