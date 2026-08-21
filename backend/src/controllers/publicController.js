@@ -687,7 +687,11 @@ async function publicReviews(req, res, next) {
       custIds.length
         ? supabaseAdmin
             .from('customers')
-            .select('id, first_name, nationality')
+            /* "nationality" nunca existiu em customers (so country_code) --
+               o select falhava por inteiro, so `data` era lido (nunca
+               `error`), por isso author_name caia sempre no fallback
+               generico "Visitante" em vez do nome real do cliente. */
+            .select('id, first_name, country_code')
             .in('id', custIds)
         : Promise.resolve({ data: [] }),
     ]);
@@ -696,13 +700,13 @@ async function publicReviews(req, res, next) {
     const custMap = Object.fromEntries((customers || []).map((c) => [c.id, c]));
 
     const enriched = reviews.map((r) => ({
-      id:          r.id,
-      rating:      r.rating,
-      comment:     r.comment,
-      created_at:  r.created_at,
-      operator:    opMap[r.operator_id] || null,
-      author_name: custMap[r.customer_id]?.first_name || 'Visitante',
-      nationality: custMap[r.customer_id]?.nationality || null,
+      id:           r.id,
+      rating:       r.rating,
+      comment:      r.comment,
+      created_at:   r.created_at,
+      operator:     opMap[r.operator_id] || null,
+      author_name:  custMap[r.customer_id]?.first_name || 'Visitante',
+      country_code: custMap[r.customer_id]?.country_code || null,
     }));
 
     return res.json({ data: enriched });
@@ -763,20 +767,20 @@ async function slugReviews(req, res, next) {
     if (custIds.length) {
       const { data: customers } = await supabaseAdmin
         .from('customers')
-        .select('id, first_name, nationality')
+        .select('id, first_name, country_code')
         .in('id', custIds);
       (customers || []).forEach(c => { custMap[c.id] = c; });
     }
 
     const reviews = (data || []).map(r => ({
-      id:          r.id,
-      rating:      r.rating,
-      comment:     r.comment,
-      reply_text:  r.reply_text,
-      replied_at:  r.replied_at,
-      created_at:  r.created_at,
-      author_name: custMap[r.customer_id]?.first_name || 'Cliente',
-      nationality: custMap[r.customer_id]?.nationality || null,
+      id:           r.id,
+      rating:       r.rating,
+      comment:      r.comment,
+      reply_text:   r.reply_text,
+      replied_at:   r.replied_at,
+      created_at:   r.created_at,
+      author_name:  custMap[r.customer_id]?.first_name || 'Cliente',
+      country_code: custMap[r.customer_id]?.country_code || null,
     }));
 
     return res.json({ data: reviews });
@@ -1055,7 +1059,7 @@ async function getUnitReviews(req, res, next) {
     if (custIds.length) {
       const { data: customers } = await supabaseAdmin
         .from('customers')
-        .select('id, first_name, nationality')
+        .select('id, first_name, country_code')
         .in('id', custIds);
       (customers || []).forEach(c => { custMap[c.id] = c; });
     }
@@ -1067,7 +1071,7 @@ async function getUnitReviews(req, res, next) {
       reply_text: r.reply_text,
       created_at: r.created_at,
       author_name: custMap[r.customer_id]?.first_name || 'Cliente',
-      nationality: custMap[r.customer_id]?.nationality || null,
+      country_code: custMap[r.customer_id]?.country_code || null,
     }));
 
     return res.json({ data: enriched });
