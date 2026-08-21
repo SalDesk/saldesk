@@ -4,6 +4,7 @@ const { enviarEmail }    = require('../helpers/emailHelper');
 const { passwordResetEmail } = require('../helpers/emailTemplates');
 const { loadPriceMap }  = require('../helpers/pricing');
 const ipBlockStore      = require('../services/ipBlockStore');
+const { frontendBase }  = require('../utils/urls');
 const ExcelJS           = require('exceljs');
 
 const TIPO_SCORE    = { hotel: 30, activity: 25, restaurant: 20, rentacar: 15 };
@@ -431,9 +432,16 @@ async function impersonateOperator(req, res, next) {
     const { data: authUser, error: userErr } = await supabaseAdmin.auth.admin.getUserById(operator.user_id);
     if (userErr || !authUser?.user?.email) return res.status(404).json({ error: 'Utilizador nao encontrado' });
 
+    /* Sem redirectTo explicito, o link caia na Site URL por defeito da
+       Supabase -- que aponta para /reset-password (usado pelo fluxo real
+       de recuperacao de password). Essa pagina so aceita type=recovery no
+       hash e rejeitava um magiclink de imediato como "invalido", mesmo
+       recem-gerado. /impersonate-callback e a pagina nova que sabe
+       processar este tipo de link. */
     const { data: link, error: linkErr } = await supabaseAdmin.auth.admin.generateLink({
       type:  'magiclink',
       email: authUser.user.email,
+      options: { redirectTo: `${frontendBase()}/impersonate-callback` },
     });
     if (linkErr) throw linkErr;
 
