@@ -7,6 +7,8 @@ import {
 } from 'lucide-react';
 import { getWeatherForecast, weatherInfo, isBadWeather, dayLabel } from '../services/weatherService';
 import { listReservations } from '../services/reservationsService';
+import { listIslands } from '../services/islandsService';
+import useAuthStore from '../store/authStore';
 import PageHeader from '../components/layout/PageHeader';
 import Button from '../components/ui/Button';
 import Card from '../components/ui/Card';
@@ -82,11 +84,13 @@ function WeatherCard({ day, isToday, tours, onClick }) {
 /* ─────────────────────── Main ─────────────────────── */
 export default function Weather() {
   const navigate = useNavigate();
+  const { operator } = useAuthStore();
   const [forecast,    setForecast]    = useState([]);
   const [reservations, setReservations] = useState([]);
   const [loading,     setLoading]     = useState(true);
   const [error,       setError]       = useState('');
   const [selected,    setSelected]    = useState(null);
+  const [island,      setIsland]      = useState(null);
 
   const end7 = addDays(6);
 
@@ -94,8 +98,11 @@ export default function Weather() {
     setLoading(true);
     setError('');
     try {
+      const islands = await listIslands().catch(() => []);
+      const ilha = islands.find(i => i.id === operator?.island_id) || null;
+      setIsland(ilha);
       const [wx, res] = await Promise.all([
-        getWeatherForecast(),
+        getWeatherForecast(ilha?.lat, ilha?.lng),
         listReservations({ from: TODAY, to: end7 }).catch(() => []),
       ]);
       setForecast(wx);
@@ -135,8 +142,8 @@ export default function Weather() {
   return (
     <div>
       <PageHeader
-        title="Meteorologia — Ilha do Sal"
-        subtitle="Previsao a 7 dias · Open-Meteo · 16.7°N, 22.9°W"
+        title={`Meteorologia${island ? ` — ${island.name}` : ''}`}
+        subtitle="Previsao a 7 dias · Open-Meteo"
         actions={
           <Button variant="secondary" icon={RefreshCw} size="sm" onClick={carregar} loading={loading}>
             Actualizar

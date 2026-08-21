@@ -1,11 +1,16 @@
-const OPEN_METEO_URL =
-  'https://api.open-meteo.com/v1/forecast' +
-  '?latitude=16.7333&longitude=-22.9333' +
-  '&daily=temperature_2m_max,temperature_2m_min,precipitation_sum,weathercode' +
-  '&timezone=Atlantic/Cape_Verde';
+/* Coordenadas por omissao (Ilha do Sal) -- usadas quando o operador ainda
+   nao tem ilha definida (contas antigas, antes do onboarding gravar
+   island_id). */
+const DEFAULT_LAT = 16.7333;
+const DEFAULT_LNG = -22.9333;
 
-export async function getWeatherForecast() {
-  const res = await fetch(OPEN_METEO_URL);
+export async function getWeatherForecast(lat = DEFAULT_LAT, lng = DEFAULT_LNG) {
+  const url =
+    'https://api.open-meteo.com/v1/forecast' +
+    `?latitude=${lat}&longitude=${lng}` +
+    '&daily=temperature_2m_max,temperature_2m_min,precipitation_sum,weathercode' +
+    '&timezone=Atlantic/Cape_Verde';
+  const res = await fetch(url);
   if (!res.ok) throw new Error('Open-Meteo unavailable');
   const json = await res.json();
   const { time, temperature_2m_max, temperature_2m_min, precipitation_sum, weathercode } = json.daily;

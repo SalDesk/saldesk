@@ -14,7 +14,7 @@ async function getOperador(req, res, next) {
   try {
     const { data: operator, error } = await supabaseAdmin
       .from('operators')
-      .select('id, name, slug, operator_type, email, phone, whatsapp, address, logo_url, cover_images, business_name, tagline, description, onboarding_complete, currency, page_config')
+      .select('id, name, slug, operator_type, email, phone, whatsapp, address, logo_url, cover_images, business_name, tagline, description, onboarding_complete, currency, page_config, island_id, islands(name, slug, airport_code)')
       .eq('slug', req.params.slug)
       .eq('onboarding_complete', true)
       .single();
@@ -1114,6 +1114,13 @@ async function getImpact(req, res, next) {
       .select('operator_type')
       .eq('onboarding_complete', true);
 
+    const { data: opIslands } = await supabaseAdmin
+      .from('operators')
+      .select('island_id')
+      .eq('onboarding_complete', true)
+      .not('island_id', 'is', null);
+    const islandsCount = new Set((opIslands || []).map((o) => o.island_id)).size || 1;
+
     const typeMap = {};
     (opTypes || []).forEach((o) => {
       typeMap[o.operator_type] = (typeMap[o.operator_type] || 0) + 1;
@@ -1166,7 +1173,7 @@ async function getImpact(req, res, next) {
         operators_total:      operatorsTotal  || 0,
         reservations_total:   reservationsTotal || 0,
         clients_total:        clientsTotal    || 0,
-        islands_count:        1,
+        islands_count:        islandsCount,
         operator_types:       typeMap,
         monthly_operators:    aggregateByMonth(opMonthly),
         monthly_reservations: aggregateByMonth(resMonthly),
@@ -1303,8 +1310,22 @@ async function getExperienceCategories(req, res, next) {
   } catch (err) { next(err); }
 }
 
+/* Lista de ilhas de Cabo Verde -- usada no picker do onboarding, na
+   previsao meteorologica por operador e na lista de recolha do rent-a-car. */
+async function listIslands(req, res, next) {
+  try {
+    const { data, error } = await supabaseAdmin
+      .from('islands')
+      .select('id, name, slug, lat, lng, airport_code')
+      .order('name');
+    if (error) throw error;
+    return res.json({ data: data || [] });
+  } catch (err) { next(err); }
+}
+
 module.exports = {
   getOperador,
+  listIslands,
   trackView,
   verificarDisponibilidadePublica,
   verificarDisponibilidadeRestaurantePublica,

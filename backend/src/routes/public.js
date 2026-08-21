@@ -23,6 +23,7 @@ const {
   getExperienceCategories,
   callWaiter,
   createOrder,
+  listIslands,
 } = require('../controllers/publicController');
 const { publicInitSisp, publicPaypalClientId, publicCreatePaypalIntent, publicConfirmPaypalPayment } = require('../controllers/paymentController');
 const { validarVoucherPublico } = require('../controllers/vouchersController');
@@ -33,6 +34,7 @@ const { publicLimiter } = require('../middleware/rateLimiters');
 /* ─── Relatório de impacto público ─── */
 router.get('/impact',              getImpact);
 router.get('/site-status',         getSiteStatus);
+router.get('/islands',             listIslands);
 
 /* ─── Discover / directorio ─── */
 router.get('/discover',            discover);

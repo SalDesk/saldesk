@@ -1,9 +1,10 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Hotel, Waves, Car, UtensilsCrossed, Check, ArrowLeft, ArrowRight, Upload, ImageIcon } from 'lucide-react';
 import { createClient } from '@supabase/supabase-js';
 import useAuthStore from '../../store/authStore';
 import { createOperator, updateOperator } from '../../services/authService';
+import { listIslands } from '../../services/islandsService';
 import { useT } from '../../i18n';
 import Logo from '../shared/Logo';
 import Button from '../ui/Button';
@@ -34,7 +35,10 @@ export default function OnboardingWizard() {
   const [error, setError] = useState('');
   const [logoPreview, setLogoPreview] = useState(operator?.logo_url || null);
   const [uploadingLogo, setUploadingLogo] = useState(false);
+  const [islands, setIslands] = useState([]);
   const logoInputRef = useRef(null);
+
+  useEffect(() => { listIslands().then(setIslands).catch(() => {}); }, []);
 
   async function handleLogoUpload(e) {
     const file = e.target.files?.[0];
@@ -63,6 +67,7 @@ export default function OnboardingWizard() {
     phone:             operator?.phone || '',
     whatsapp:          operator?.whatsapp || '',
     address:           operator?.address || '',
+    island_id:         operator?.island_id || '',
     description:       operator?.description || '',
     language:          operator?.language || 'pt',
     currency:          operator?.currency || 'EUR',
@@ -186,6 +191,12 @@ export default function OnboardingWizard() {
                 <Input label={t('onboarding.phone')} value={data.phone} onChange={set('phone')} placeholder="+238 900 0000" type="tel" />
                 <Input label={t('onboarding.whatsapp')} value={data.whatsapp} onChange={set('whatsapp')} placeholder="+238 900 0000" type="tel" />
               </div>
+              <Select label={t('onboarding.island')} value={data.island_id} onChange={set('island_id')}>
+                <option value="">{t('onboarding.selectIsland')}</option>
+                {islands.map((i) => (
+                  <option key={i.id} value={i.id}>{i.name}</option>
+                ))}
+              </Select>
               <Input label={t('onboarding.address')} value={data.address} onChange={set('address')} placeholder="Santa Maria, Ilha do Sal" />
             </div>
           </div>

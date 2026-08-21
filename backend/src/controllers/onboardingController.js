@@ -29,7 +29,7 @@ async function createOperator(req, res, next) {
     }
 
     const { name, operator_type, phone, whatsapp, address, description,
-            slug, language, currency, timezone } = req.body;
+            slug, language, currency, timezone, island_id } = req.body;
 
     if (!name || !operator_type) {
       return res.status(400).json({ error: 'Nome e tipo sao obrigatorios', code: 'MISSING_FIELDS' });
@@ -55,6 +55,7 @@ async function createOperator(req, res, next) {
         language:            language || 'pt',
         currency:            currency || 'EUR',
         timezone:            timezone || 'Atlantic/Cape_Verde',
+        island_id:           island_id || null,
         onboarding_complete: false,
       })
       .select()
@@ -78,7 +79,7 @@ async function updateOperator(req, res, next) {
 
     const { name, operator_type, phone, whatsapp, address, description,
             slug, language, currency, timezone, onboarding_complete, logo_url, cover_images, business_name, tagline,
-            custom_faqs, page_config } = req.body;
+            custom_faqs, page_config, island_id } = req.body;
 
     const updates = { updated_at: new Date().toISOString() };
     if (name !== undefined)              updates.name = name;
@@ -90,6 +91,7 @@ async function updateOperator(req, res, next) {
     if (language !== undefined)          updates.language = language;
     if (currency !== undefined)          updates.currency = currency;
     if (timezone !== undefined)          updates.timezone = timezone;
+    if (island_id !== undefined)         updates.island_id = island_id || null;
     if (onboarding_complete !== undefined) updates.onboarding_complete = onboarding_complete;
     if (logo_url !== undefined)          updates.logo_url = logo_url;
     if (cover_images !== undefined)      updates.cover_images = cover_images;

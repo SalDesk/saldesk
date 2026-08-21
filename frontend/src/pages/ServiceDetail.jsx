@@ -24,8 +24,16 @@ const FALLBACK_IMGS = [
 ];
 
 const TOUR_SLOTS = ['07:00','08:00','09:00','10:00','11:00','12:00','13:00','14:00','15:00','16:00','17:00'];
-const CV_LOCS_PT = ['Aeroporto (SID)','Hotel / Alojamento','Escritório da empresa','Outro endereço'];
-const CV_LOCS_EN = ['Airport (SID)','Hotel / Accommodation','Company office','Other address'];
+/* Aeroporto so entra na lista se a ilha do operador tiver um -- Santo Antao
+   e Brava nao tem aeroporto comercial (ver database/053_islands_expand.sql). */
+function buildLocs(lang, airportCode) {
+  const base = lang === 'en'
+    ? ['Hotel / Accommodation', 'Company office', 'Other address']
+    : ['Hotel / Alojamento', 'Escritório da empresa', 'Outro endereço'];
+  if (!airportCode) return base;
+  const airport = lang === 'en' ? `Airport (${airportCode})` : `Aeroporto (${airportCode})`;
+  return [airport, ...base];
+}
 const CAR_EXTRAS = [
   { k:'insurance',    pt:'Seguro adicional',  en:'Additional insurance' },
   { k:'gps',          pt:'GPS incluído',       en:'GPS navigation' },
@@ -516,7 +524,7 @@ function RentACarModal({ unit, op, slug, lang, onClose, refCode }) {
   const [pay,sp]=useState('cash'); const [sub,ssub]=useState(false); const [resId,sr]=useState(null); const [pendingRes,spr]=useState(null); const [err,se]=useState('');
   const [voucherCode,svc]=useState(null);
   const days=dys(pu.date,re.date); const rawTotal=days*(unit.base_price||0); const total=days>0&&unit.base_price?fmtPrice(rawTotal,'day',op.currency||'EUR','EUR',lang):null;
-  const locs=lang==='en'?CV_LOCS_EN:CV_LOCS_PT; const extList=CAR_EXTRAS.filter(e=>ext[e.k]);
+  const locs=buildLocs(lang, op.islands?.airport_code); const extList=CAR_EXTRAS.filter(e=>ext[e.k]);
   function buildPayload(){ const notes=[`${lang==='en'?'Pickup':'Levantamento'}: ${pu.loc} ${pu.date} ${pu.time}`,`${lang==='en'?'Return':'Devolução'}: ${re.loc||pu.loc} ${re.date} ${re.time}`,extList.length?`Extras: ${extList.map(e=>lang==='en'?e.en:e.pt).join(', ')}`:''  ].filter(Boolean).join('. '); return {unit_id:unit.id,customer_name:drv.name,customer_email:drv.email,customer_phone:drv.phone||null,customer_country:drv.country||null,check_in:pu.date,check_out:re.date,guests:1,notes,voucher_code:voucherCode||undefined,ref_code:refCode||undefined}; }
   useEffect(()=>{ if(step===3&&pay==='paypal'&&!pendingRes&&!sub){ ssub(true); postReservation(slug,buildPayload()).then(spr).catch(e=>se(e.message)).finally(()=>ssub(false)); } },[step,pay]);
   function valid(){ if(step===1){if(!pu.date||!re.date){se(lang==='en'?'Select pickup and return dates':'Seleccione datas');return false;} if(re.date<=pu.date){se(lang==='en'?'Return after pickup':'Devolução após levantamento');return false;} if(!pu.loc){se(lang==='en'?'Select pickup location':'Seleccione o local');return false;}} if(step===2&&(!drv.name||!drv.email)){se(lang==='en'?'Name and email required':'Nome e email obrigatórios');return false;} if(step===2&&!drv.license){se(lang==='en'?'Driving licence required':'Carta de condução obrigatória');return false;} se('');return true; }
@@ -1226,13 +1234,13 @@ export default function ServiceDetail() {
                 {lang==='en'?'Location':'Localização'}
               </p>
               <div className="relative h-44 rounded-2xl overflow-hidden bg-ocean-50 border border-ocean-100 cursor-pointer group"
-                onClick={() => window.open(`https://maps.google.com?q=${encodeURIComponent((op.address||'Santa Maria Ilha do Sal')+' Cabo Verde')}`, '_blank')}>
+                onClick={() => window.open(`https://maps.google.com?q=${encodeURIComponent((op.address||op.islands?.name||'Cabo Verde')+' Cabo Verde')}`, '_blank')}>
                 <img src="https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=800&q=75" alt="Map" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"/>
                 <div className="absolute inset-0 bg-ocean-900/35"/>
                 <div className="absolute inset-0 flex items-center justify-center">
                   <div className="bg-white rounded-xl px-4 py-3 text-center shadow-xl">
                     <MapPin size={20} strokeWidth={1.75} className="text-ocean-700 mx-auto mb-1"/>
-                    <p className="font-display font-bold text-n-900 text-sm">{op.address||'Ilha do Sal, Cabo Verde'}</p>
+                    <p className="font-display font-bold text-n-900 text-sm">{op.address||(op.islands?.name ? `${op.islands.name}, Cabo Verde` : 'Cabo Verde')}</p>
                     <p className="text-xs font-body text-ocean-600 mt-1 flex items-center gap-1 justify-center">
                       <ExternalLink size={10} strokeWidth={1.75}/>
                       {lang==='en'?'Open in Google Maps':'Abrir no Google Maps'}
