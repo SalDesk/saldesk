@@ -36,6 +36,7 @@ const Reviews         = lazy(() => import('./pages/Reviews'));
 const Profile         = lazy(() => import('./pages/Profile'));
 const Fleet           = lazy(() => import('./pages/Fleet'));
 const Messages        = lazy(() => import('./pages/Messages'));
+const FounderChat      = lazy(() => import('./pages/FounderChat'));
 const Guides          = lazy(() => import('./pages/Guides'));
 const Marketing       = lazy(() => import('./pages/Marketing'));
 const Analytics       = lazy(() => import('./pages/Analytics'));
@@ -146,6 +147,7 @@ export default function App() {
           <Route path="pedidos"       element={<Pedidos />} />
           <Route path="frota"         element={<Fleet />} />
           <Route path="mensagens"     element={<Messages />} />
+          <Route path="mensagens-saldesk" element={<FounderChat />} />
           <Route path="avaliacoes"    element={<Reviews />} />
           <Route path="marketing"     element={<PlanGuard plan="business" feature="marketing">    <Marketing /></PlanGuard>} />
           <Route path="analytics"     element={<PlanGuard plan="business" feature="analytics">    <Analytics /></PlanGuard>} />
