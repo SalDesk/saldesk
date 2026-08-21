@@ -1168,11 +1168,17 @@ async function submitLead(req, res, next) {
       return res.status(400).json({ error: 'Deve aceitar os termos e condições', code: 'TERMS_REQUIRED' });
     }
 
+    /* operator_leads, nao leads -- e a tabela que TODO o painel de pipeline
+       do fundador (AdminPipeline.jsx/adminController.js) realmente le e
+       escreve. Gravar em "leads" (tabela diferente, nunca lida pelo painel)
+       deixava candidaturas reais de operadores completamente invisiveis ao
+       fundador -- confirmado ao vivo: operator_leads parada desde 2026-07-02,
+       leads a receber candidaturas reais ate hoje, sem ninguem dar por isso. */
     const { error } = await supabaseAdmin
-      .from('leads')
+      .from('operator_leads')
       .insert({
         email:               email.trim().toLowerCase(),
-        name:                nome,
+        nome:                nome,
         operator_type:       tipo_negocio || 'other',
         language:            'pt',
         source:              'operadores_form',

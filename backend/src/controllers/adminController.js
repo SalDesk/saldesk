@@ -1542,7 +1542,10 @@ async function sendMarketingEmail(req, res, next) {
 async function sendLaunchEmail(req, res, next) {
   try {
     const { subject, body } = req.body;
-    const { data: waitlist, error } = await supabaseAdmin.from('leads').select('email, nome, name');
+    /* "nome" nunca existiu em leads (so "name") -- PostgREST falha o select
+       inteiro quando uma coluna pedida nao existe, por isso este endpoint
+       dava sempre erro 500, mesmo antes de tentar enviar um unico email. */
+    const { data: waitlist, error } = await supabaseAdmin.from('leads').select('email, name');
     if (error) throw error;
     const list = (waitlist || []).filter(s => s.email);
     if (!list.length) return res.json({ data: { sent: 0, total: 0 }, message: 'Sem subscritores na waitlist' });
@@ -1554,7 +1557,7 @@ async function sendLaunchEmail(req, res, next) {
     let sent = 0;
     for (const sub of list) {
       try {
-        const nome = sub.nome || sub.name || '';
+        const nome = sub.name || '';
         await enviarEmail({
           to:      sub.email,
           subject: emailSubject,
