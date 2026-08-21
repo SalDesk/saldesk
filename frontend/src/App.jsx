@@ -10,6 +10,7 @@ import TravelerProtectedRoute from './components/traveler/TravelerProtectedRoute
 import Login from './pages/Login';
 import Register from './pages/Register';
 import ResetPassword from './pages/ResetPassword';
+import ImpersonateCallback from './pages/ImpersonateCallback';
 import PublicBooking from './pages/PublicBooking';
 import ServiceDetail from './pages/ServiceDetail';
 import BookingSuccess from './pages/BookingSuccess';
@@ -124,6 +125,7 @@ export default function App() {
         <Route path="/login"    element={<Login />} />
         <Route path="/register"       element={<Register />} />
         <Route path="/reset-password"  element={<ResetPassword />} />
+        <Route path="/impersonate-callback" element={<ImpersonateCallback />} />
         <Route path="/onboarding" element={<ProtectedRoute><Onboarding /></ProtectedRoute>} />
 
         {/* Dashboard do gestor */}
