@@ -1140,27 +1140,40 @@ function ObrigacoesTab({ currency }) {
 
 /* ─────────────────── RESULTADO ─────────────────── */
 
-function ResultadoTab({ resumo, currency, sazonal }) {
-  const [allExp,    setAllExp]    = useState([]);
-  const [salConfig, setSalConfig] = useState({});
-  const [loading,   setLoading]   = useState(true);
+function ResultadoTab({ resumo, currency, sazonal, periodo }) {
+  const [allExp,     setAllExp]     = useState([]);
+  const [salPayments, setSalPayments] = useState([]);
+  const [loading,    setLoading]    = useState(true);
+  const [exporting,  setExporting]  = useState(false);
 
   useEffect(() => {
     setLoading(true);
-    Promise.all([listExpenses(), getSalaryConfig()])
-      .then(([exp, cfg]) => { setAllExp(exp); setSalConfig(cfg); })
+    Promise.all([listExpenses(), getSalaryPayments()])
+      .then(([exp, pay]) => { setAllExp(exp); setSalPayments(pay || []); })
       .finally(() => setLoading(false));
   }, []);
 
-  const now     = new Date();
-  const month   = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-  const prevMonth = (() => { const d = new Date(now.getFullYear(), now.getMonth() - 1, 1); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`; })();
+  const now = new Date();
+  /* A receita ja respeitava o periodo seleccionado (resumo.atual), mas
+     despesas e folha salarial usavam sempre o mes calendario actual --
+     "Resultado liquido" ficava incoerente sempre que o periodo escolhido
+     no topo da pagina nao era o mes corrente. Filtra ambas pelo mesmo
+     periodo real (periodo.inicio/periodo.fim). */
+  const monthExp = allExp.filter(e => e.date && e.date >= periodo.inicio && e.date <= periodo.fim);
 
-  const monthExp = allExp.filter(e => (e.date || '').startsWith(month));
-  const prevExp  = allExp.filter(e => (e.date || '').startsWith(prevMonth));
-
-  const staffs     = Object.values(salConfig);
-  const totalSal   = staffs.reduce((s, c) => s + Number(c.base || 0) + Number(c.food || 0) + Number(c.transport || 0) + Number(c.base || 0) * (Number(c.inps_pct || 15) / 100), 0);
+  /* Folha salarial usa os pagamentos REAIS registados (salary_payments),
+     nao uma extrapolacao da configuracao actual -- essa configuracao
+     representa o custo mensal corrente, sem nocao nenhuma do periodo
+     historico seleccionado. Comparacao "YYYY-MM" e lexicograficamente
+     igual a cronologica. */
+  const startYM = periodo.inicio.slice(0, 7);
+  const endYM   = periodo.fim.slice(0, 7);
+  const totalSal = salPayments
+    .filter(p => {
+      const ym = `${p.year}-${String(p.month).padStart(2, '0')}`;
+      return ym >= startYM && ym <= endYM;
+    })
+    .reduce((s, p) => s + Number(p.amount || 0), 0);
 
   const receita   = Number(resumo?.atual?.receita || 0);
   const totalDespesas = monthExp.reduce((s, e) => s + Number(e.amount || 0), 0);
@@ -1173,8 +1186,17 @@ function ResultadoTab({ resumo, currency, sazonal }) {
     const m = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
     const rec = (sazonal || []).find(s => (s.date || '').startsWith(m));
     const dep = allExp.filter(e => (e.date || '').startsWith(m)).reduce((s, e) => s + Number(e.amount || 0), 0);
-    return { name: MONTHS_PT[d.getMonth()], receita: Math.round(rec?.value || rec?.total || 0), despesas: Math.round(dep + totalSal) };
+    const sal = salPayments.filter(p => `${p.year}-${String(p.month).padStart(2, '0')}` === m).reduce((s, p) => s + Number(p.amount || 0), 0);
+    return { name: MONTHS_PT[d.getMonth()], receita: Math.round(rec?.value || rec?.total || 0), despesas: Math.round(dep + sal) };
   });
+
+  async function handleExport(type) {
+    setExporting(true);
+    try {
+      if (type === 'excel') await exportExcel(periodo.inicio, periodo.fim);
+      else                  await exportPdf(periodo.inicio, periodo.fim);
+    } finally { setExporting(false); }
+  }
 
   if (loading) return <div className="flex justify-center py-16"><LoadingSpinner size={32} /></div>;
 
@@ -1235,10 +1257,10 @@ function ResultadoTab({ resumo, currency, sazonal }) {
 
       {/* Export */}
       <div className="flex gap-3">
-        <Button variant="secondary" icon={FileText} onClick={() => window.print()} className="flex-1">
+        <Button variant="secondary" icon={FileText} loading={exporting} onClick={() => handleExport('pdf')} className="flex-1">
           Exportar PDF
         </Button>
-        <Button variant="secondary" icon={FileSpreadsheet} className="flex-1">
+        <Button variant="secondary" icon={FileSpreadsheet} loading={exporting} onClick={() => handleExport('excel')} className="flex-1">
           Exportar Excel
         </Button>
       </div>
@@ -1483,7 +1505,7 @@ export default function Financial() {
       {activeSec === 'salarios'   && <PlanGuard plan="pro" feature="financeiro-completo"><SalariosTab   currency={currency} /></PlanGuard>}
       {activeSec === 'comissoes'  && <ComissoesTab  currency={currency} />}
       {activeSec === 'obrigacoes' && <PlanGuard plan="pro" feature="financeiro-completo"><ObrigacoesTab currency={currency} /></PlanGuard>}
-      {activeSec === 'resultado'  && <PlanGuard plan="pro" feature="financeiro-completo"><ResultadoTab  resumo={resumo} currency={currency} sazonal={sazonal} /></PlanGuard>}
+      {activeSec === 'resultado'  && <PlanGuard plan="pro" feature="financeiro-completo"><ResultadoTab  resumo={resumo} currency={currency} sazonal={sazonal} periodo={periodo} /></PlanGuard>}
 
       {/* CVE/EUR toggle for non-receitas sections */}
       {activeSec !== 'receitas' && (

@@ -1032,7 +1032,13 @@ export default function TravelerPortal() {
                 </a>
 
                 <button
-                  onClick={() => { window.installPwa?.(); setProfileMenuOpen(false); }}
+                  onClick={() => {
+                    const estado = window.installPwa?.();
+                    setProfileMenuOpen(false);
+                    if (estado === 'already-installed') window.alert('Ja tens a aplicacao instalada.');
+                    else if (estado === 'ios') window.alert('Para instalar: toca em Partilhar (o icone do quadrado com a seta) e depois em "Adicionar ao Ecra Principal".');
+                    else if (estado === 'unsupported') window.alert('O teu navegador nao suporta instalacao directa. Usa o menu do navegador para adicionar esta pagina ao ecra principal ou aos favoritos.');
+                  }}
                   className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm font-body text-n-700 dark:text-n-300 hover:bg-n-50 dark:hover:bg-n-700 transition-colors"
                 >
                   <Download size={16} strokeWidth={1.75} className="shrink-0" />

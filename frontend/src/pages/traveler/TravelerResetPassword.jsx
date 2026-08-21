@@ -73,7 +73,7 @@ export default function TravelerResetPassword() {
   }
 
   return (
-    <AuthLayout>
+    <TravelerAuthLayout>
       <div className="bg-white rounded-3xl shadow-xl shadow-ocean-900/10 p-7">
         <div className="flex items-center gap-3 mb-5">
           <div className="w-9 h-9 bg-ocean-50 rounded-sm flex items-center justify-center shrink-0">
@@ -144,6 +144,6 @@ export default function TravelerResetPassword() {
           </Button>
         </form>
       </div>
-    </AuthLayout>
+    </TravelerAuthLayout>
   );
 }

@@ -32,7 +32,19 @@
       if(localStorage.getItem('pwa-dismissed'))return;
       setTimeout(function(){var b=document.getElementById('pwa-banner');if(b)b.style.display='flex';},2000);
     });
-    function installPwa(){var b=document.getElementById('pwa-banner');if(b)b.style.display='none';if(!deferredPrompt)return;deferredPrompt.prompt();deferredPrompt.userChoice.then(function(){deferredPrompt=null;});}
+    /* Chamada tambem a partir do menu de perfil do Portal do Viajante
+       (window.installPwa?.()) -- sem deferredPrompt (iOS/Safari nunca dispara
+       beforeinstallprompt, ou o banner ja foi consumido) isto era um no-op
+       silencioso, sem feedback nenhum ao clicar. Devolve um estado para quem
+       chamar poder mostrar instrucoes/feedback apropriado. */
+    function installPwa(){
+      var b=document.getElementById('pwa-banner');if(b)b.style.display='none';
+      if(window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone){return 'already-installed';}
+      if(deferredPrompt){deferredPrompt.prompt();deferredPrompt.userChoice.then(function(){deferredPrompt=null;});return 'prompted';}
+      var isIOS=/iPad|iPhone|iPod/.test(window.navigator.userAgent);
+      if(isIOS)return 'ios';
+      return 'unsupported';
+    }
     function dismissPwa(){var b=document.getElementById('pwa-banner');if(b)b.style.display='none';localStorage.setItem('pwa-dismissed','1');}
     window.addEventListener('appinstalled',function(){var b=document.getElementById('pwa-banner');if(b)b.style.display='none';});
   </script>

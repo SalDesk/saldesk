@@ -732,8 +732,13 @@ const PLACEHOLDERS = { hotel:'1571003123894-1f0594d2b5d9', activity:'50692956287
 function imgOp(op) { return (op.cover_images && op.cover_images[0]) || op.logo_url || `${UNS}${PLACEHOLDERS[op.operator_type]||PLACEHOLDERS.default}?w=600&q=75`; }
 function tLabel(t) { const M={hotel:{pt:'Hotel',en:'Hotel'},activity:{pt:'Actividade',en:'Activity'},rentacar:{pt:'Rent-a-Car',en:'Rent-a-Car'},restaurant:{pt:'Restaurante',en:'Restaurant'}}; return (M[t]||{pt:t,en:t})[L()]; }
 
+/* Chave propria (sd-wish-operators), diferente de sd-wish (usada em
+   discover/index.html para guardar unit_id de servicos) -- guardavam-se
+   ambas na mesma chave por engano, misturando slugs de operador com
+   unit_ids no mesmo array e corrompendo o estado dos coracoes dos dois
+   lados. Aqui a wishlist e ao nivel do OPERADOR (negocio), nao do servico. */
 function renderOpCard(op) {
-  const wished = (JSON.parse(localStorage.getItem('sd-wish')||'[]')).includes(op.slug);
+  const wished = (JSON.parse(localStorage.getItem('sd-wish-operators')||'[]')).includes(op.slug);
   const heartColor = wished ? '#e00' : 'none';
   const heartStroke = wished ? '#e00' : 'currentColor';
   const heart = `<svg width="16" height="16" viewBox="0 0 24 24" fill="${heartColor}" stroke="${heartStroke}" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>`;
@@ -828,7 +833,7 @@ function fixLang(root) {
 }
 
 function toggleWish(slug) {
-  const w = JSON.parse(localStorage.getItem('sd-wish')||'[]');
+  const w = JSON.parse(localStorage.getItem('sd-wish-operators')||'[]');
   const i = w.indexOf(slug);
   if (i >= 0) w.splice(i, 1); else w.push(slug);
   localStorage.setItem('sd-wish', JSON.stringify(w));
@@ -840,7 +845,7 @@ function toggleWish(slug) {
   updateWishCount();
 }
 function updateWishCount() {
-  const n = JSON.parse(localStorage.getItem('sd-wish')||'[]').length;
+  const n = JSON.parse(localStorage.getItem('sd-wish-operators')||'[]').length;
   const el = document.getElementById('wish-count');
   if (el) { el.textContent = n; el.style.display = n > 0 ? '' : 'none'; }
 }
