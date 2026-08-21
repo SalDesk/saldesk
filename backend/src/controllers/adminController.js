@@ -1461,6 +1461,17 @@ async function sendConversationMessage(req, res, next) {
     if (error) throw error;
 
     emitToOperator(operatorId, 'admin:message:new', data);
+    /* Antes disto, o operador nao tinha forma nenhuma de saber que o
+       fundador lhe enviou uma mensagem -- nao havia UI nenhuma do lado
+       do operador a ouvir 'admin:message:new'. Reaproveita o sino de
+       notificacoes ja existente (Topbar.jsx) em vez de construir um
+       canal novo; "link" leva a pagina onde pode ler e responder. */
+    supabaseAdmin.from('notifications').insert({
+      operator_id:       operatorId,
+      notification_type: 'founder_message',
+      content:            content.trim().slice(0, 140),
+      link:               '/mensagens-saldesk',
+    }).then(() => {});
     return res.status(201).json({ data });
   } catch (err) { next(err); }
 }
@@ -1496,6 +1507,19 @@ async function sendBroadcast(req, res, next) {
     targets.forEach(o => {
       emitToOperator(o.id, 'admin:broadcast', { title, content });
     });
+
+    /* Mesmo problema do chat: nada do lado do operador ouvia
+       'admin:broadcast'. Reaproveita o sino de notificacoes existente. */
+    if (targets.length) {
+      supabaseAdmin.from('notifications').insert(
+        targets.map(o => ({
+          operator_id:       o.id,
+          notification_type: 'platform_broadcast',
+          content:            title.trim(),
+          link:               '/mensagens-saldesk',
+        }))
+      ).then(() => {});
+    }
 
     const { data, error } = await supabaseAdmin.from('admin_broadcasts').insert({
       title:          title.trim(),

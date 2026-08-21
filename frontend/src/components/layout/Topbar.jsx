@@ -22,6 +22,8 @@ const TYPE_ICON = {
   partnership_request:  { Icon: Handshake, color: 'text-ocean-700' },
   partnership_accepted: { Icon: Handshake, color: 'text-[#1A7A4A]' },
   partnership_rejected: { Icon: Handshake, color: 'text-error'     },
+  founder_message:      { Icon: MessageCircle, color: 'text-ocean-700' },
+  platform_broadcast:   { Icon: Bell,          color: 'text-sand-600'  },
 };
 
 const TYPE_LABEL = {
@@ -35,6 +37,8 @@ const TYPE_LABEL = {
   partnership_request:  'Pedido de parceria',
   partnership_accepted: 'Parceria aceite',
   partnership_rejected: 'Parceria recusada',
+  founder_message:      'Mensagem da SalDesk',
+  platform_broadcast:   'Anuncio da SalDesk',
 };
 
 function timeAgo(dateStr) {
@@ -115,6 +119,14 @@ export default function Topbar() {
     }
   }
 
+  function handleNotifClick(notif) {
+    markRead(notif);
+    if (notif.link) {
+      setOpen(false);
+      navigate(notif.link);
+    }
+  }
+
   function handleBellClick() {
     setOpen((v) => !v);
   }
@@ -172,7 +184,7 @@ export default function Topbar() {
                   return (
                     <button
                       key={n.id}
-                      onClick={() => markRead(n)}
+                      onClick={() => handleNotifClick(n)}
                       className={`w-full text-left flex items-start gap-3 px-4 py-3 hover:bg-n-50 transition-colors ${
                         !n.is_read ? 'bg-ocean-50' : ''
                       }`}
