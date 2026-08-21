@@ -179,7 +179,7 @@ export default function AdminImpact() {
           <div className="flex-1">
             <h3 className="font-display font-semibold text-n-900 mb-1">Relatorio para Ministerio do Turismo</h3>
             <p className="text-sm font-body text-n-500 leading-relaxed">
-              Estes dados reflectem o impacto directo da plataforma SalDesk no ecossistema turistico da Ilha do Sal.
+              Estes dados reflectem o impacto directo da plataforma SalDesk no ecossistema turistico de Cabo Verde.
               O link publico pode ser partilhado com entidades governamentais e parceiros institucionais.
             </p>
           </div>

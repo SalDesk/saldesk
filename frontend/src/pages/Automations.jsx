@@ -124,8 +124,8 @@ const SEQUENCES = [
       name: 'Newsletter D+30',
       subject_pt: 'Novidades e novos tours para si',
       subject_en: 'New tours and updates for you',
-      message_pt: 'Ola {nome_cliente},\n\nJa passou um mes desde o seu tour {nome_tour}! Temos novidades incriveis:\n\n- Novos tours disponiveis para esta epoca\n- Pacotes especiais de fim de semana\n- Experiencias exclusivas na Ilha do Sal\n\nVeja todas as novidades e reserve em: saldesk.cv\n\nAte breve!',
-      message_en: 'Hello {nome_cliente},\n\nA month has passed since your {nome_tour} tour! We have amazing news:\n\n- New tours available this season\n- Special weekend packages\n- Exclusive experiences on Sal Island\n\nCheck out everything at: saldesk.cv\n\nSee you soon!',
+      message_pt: 'Ola {nome_cliente},\n\nJa passou um mes desde o seu tour {nome_tour}! Temos novidades incriveis:\n\n- Novos tours disponiveis para esta epoca\n- Pacotes especiais de fim de semana\n- Experiencias exclusivas em Cabo Verde\n\nVeja todas as novidades e reserve em: saldesk.cv\n\nAte breve!',
+      message_en: 'Hello {nome_cliente},\n\nA month has passed since your {nome_tour} tour! We have amazing news:\n\n- New tours available this season\n- Special weekend packages\n- Exclusive experiences across Cabo Verde\n\nCheck out everything at: saldesk.cv\n\nSee you soon!',
     },
   },
 ];

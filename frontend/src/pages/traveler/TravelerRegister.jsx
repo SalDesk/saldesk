@@ -56,7 +56,7 @@ export default function TravelerRegister() {
         <p className="text-[11px] font-mono uppercase tracking-wider text-ocean-500 mb-2">Conta de viajante</p>
         <h1 className="font-display font-bold text-xl text-n-900 mb-1">Criar conta</h1>
         <p className="text-xs font-body text-n-500 mb-5">
-          Para gerir as suas reservas e guardar experiencias favoritas na Ilha do Sal.
+          Para gerir as suas reservas e guardar experiencias favoritas em Cabo Verde.
         </p>
 
         {serverError && (

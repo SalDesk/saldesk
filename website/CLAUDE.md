@@ -5,7 +5,8 @@
 O ficheiro `index-full.html` é o website de marketing de saldesk.cv — a landing page pública
 que converte visitantes em operadores registados. É a "montra" do produto.
 
-O produto em si (app.saldesk.cv) é um SaaS de gestão turística para a Ilha do Sal, Cabo Verde.
+O produto em si (app.saldesk.cv) é um SaaS de gestão turística para operadores de Cabo Verde.
+Nasceu na Ilha do Sal e está a expandir para todo o país.
 Operadores: hotéis, actividades/tours, rent-a-car, restaurantes.
 
 ---
@@ -209,7 +210,7 @@ Ao mudar idioma, re-render as secções dinâmicas (testimonials, faqs).
 - Carousel de 3 imagens: bg1.jpg, bg2.jpg, bg3.jpg (transition opacity 1.2s)
 - Overlay: `linear-gradient(135deg, rgba(6,42,56,.85) 0%, rgba(6,42,56,.6) 60%, rgba(10,63,85,.5) 100%)`
 - Layout: 2 colunas no desktop (texto esquerda, mockup direita)
-- Badge pill topo: "Primeira plataforma SaaS da Ilha do Sal"
+- Badge pill topo: "Nascida na Ilha do Sal, a expandir por Cabo Verde"
 - H1 bold com span sand no destaque
 - Parágrafo descritivo
 - 2 CTAs: "Começar grátis — 30 dias" (sand, grande) + "Ver directório" (ghost)
@@ -321,9 +322,9 @@ Instagram:      https://instagram.com/saldesk
 ## SEO e meta tags
 
 ```html
-<title>SalDesk — Gestão Turística · Ilha do Sal, Cabo Verde</title>
-<meta name="description" content="A primeira plataforma SaaS de gestão turística para operadores da Ilha do Sal. Reservas directas sem comissão, CRM, financeiro e channel manager." />
-<meta property="og:title" content="SalDesk — Gestão Turística · Ilha do Sal" />
+<title>SalDesk — Gestão Turística · Cabo Verde</title>
+<meta name="description" content="A plataforma de gestão turística nascida na Ilha do Sal, agora ao serviço de Cabo Verde. Reservas directas sem comissão, CRM, financeiro e channel manager." />
+<meta property="og:title" content="SalDesk — Gestão Turística · Cabo Verde" />
 <meta property="og:description" content="Reservas directas sem comissão OTA. CRM, financeiro e channel manager para hotéis, actividades, rent-a-car e restaurantes." />
 <meta property="og:image" content="https://saldesk.cv/logo.png" />
 <meta property="og:url" content="https://saldesk.cv" />

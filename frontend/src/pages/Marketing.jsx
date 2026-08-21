@@ -26,8 +26,8 @@ function savePosts(posts) { localStorage.setItem(STORAGE_KEY, JSON.stringify(pos
 /* ── Constants ── */
 const TEMPLATES = [
   { key: 'tour_disponivel', label: 'Tour disponivel',
-    text_pt: 'Novo tour disponivel! Reserve ja o seu lugar e viva uma experiencia unica na Ilha do Sal.',
-    text_en: 'New tour available! Book your spot now and live a unique experience on Sal Island.' },
+    text_pt: 'Novo tour disponivel! Reserve ja o seu lugar e viva uma experiencia unica em Cabo Verde.',
+    text_en: 'New tour available! Book your spot now and live a unique experience in Cabo Verde.' },
   { key: 'ultimas_vagas', label: 'Ultimas vagas',
     text_pt: 'Ultimas vagas para este tour! Nao perca a oportunidade de explorar a ilha connosco.',
     text_en: 'Last spots available for this tour! Do not miss the chance to explore the island with us.' },
@@ -38,8 +38,8 @@ const TEMPLATES = [
     text_pt: 'Promocao especial disponivel! Reserve agora e aproveite as nossas tarifas exclusivas.',
     text_en: 'Special offer available! Book now and enjoy our exclusive rates for this season.' },
   { key: 'foto_do_dia', label: 'Foto do dia',
-    text_pt: 'Mais um dia incrivel na Ilha do Sal. Venha conhecer a nossa ilha e as nossas experiencias!',
-    text_en: 'Another amazing day on Sal Island. Come discover our island and all it has to offer!' },
+    text_pt: 'Mais um dia incrivel em Cabo Verde. Venha conhecer a nossa ilha e as nossas experiencias!',
+    text_en: 'Another amazing day in Cabo Verde. Come discover our island and all it has to offer!' },
 ];
 
 const PLATFORMS = [
