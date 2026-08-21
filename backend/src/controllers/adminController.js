@@ -1,5 +1,7 @@
-const { supabaseAdmin } = require('../config/supabase');
-const { enviarEmail }   = require('../helpers/emailHelper');
+const crypto             = require('crypto');
+const { supabaseAdmin }  = require('../config/supabase');
+const { enviarEmail }    = require('../helpers/emailHelper');
+const { passwordResetEmail } = require('../helpers/emailTemplates');
 const { loadPriceMap }  = require('../helpers/pricing');
 const ExcelJS           = require('exceljs');
 
@@ -575,7 +577,23 @@ async function convertLead(req, res, next) {
     const trialEnd = new Date();
     trialEnd.setDate(trialEnd.getDate() + 30);
 
+    /* 'operators.user_id' e obrigatorio e referencia um utilizador real do Supabase Auth —
+       o lead ainda nao tem conta, por isso criamo-la aqui antes do operador. */
+    const { data: authData, error: authErr } = await supabaseAdmin.auth.admin.createUser({
+      email:         lead.email,
+      password:      crypto.randomBytes(24).toString('base64url'),
+      email_confirm: true,
+      user_metadata: { name: lead.nome_negocio || lead.nome },
+    });
+    if (authErr) {
+      if (authErr.message?.includes('already registered')) {
+        return res.status(409).json({ error: 'Ja existe uma conta com este email', code: 'EMAIL_EXISTS' });
+      }
+      throw authErr;
+    }
+
     const { data: operator, error: opErr } = await supabaseAdmin.from('operators').insert({
+      user_id:             authData.user.id,
       name:                lead.nome_negocio || lead.nome,
       operator_type:       operatorType,
       slug,
@@ -588,7 +606,23 @@ async function convertLead(req, res, next) {
       onboarding_complete: false,
       notes_internal:      `Convertido do lead #${lead.id} em ${new Date().toISOString().slice(0, 10)}`,
     }).select().single();
-    if (opErr) throw opErr;
+    if (opErr) {
+      await supabaseAdmin.auth.admin.deleteUser(authData.user.id).catch(() => {});
+      throw opErr;
+    }
+
+    /* Envia um link de definicao de password para o lead conseguir aceder pela primeira vez */
+    try {
+      const { data: link, error: linkErr } = await supabaseAdmin.auth.admin.generateLink({
+        type:    'recovery',
+        email:   lead.email,
+        options: { redirectTo: 'https://app.saldesk.cv/reset-password' },
+      });
+      if (!linkErr && link?.properties?.action_link) {
+        const { subject, html, text } = passwordResetEmail({ name: operator.name, link: link.properties.action_link });
+        await enviarEmail({ to: lead.email, subject, html, text });
+      }
+    } catch { /* nao bloquear a conversao se o email de acesso falhar */ }
 
     const { data: updatedLead, error: updErr } = await supabaseAdmin
       .from('operator_leads')
@@ -1440,6 +1474,13 @@ function buildOperatorFilter(operators, target, segmentPlan, segmentType) {
   return list;
 }
 
+function buildTargetFilters(segment_plan, segment_type) {
+  const filters = {};
+  if (segment_plan) filters.plan = segment_plan;
+  if (segment_type) filters.operator_type = segment_type;
+  return Object.keys(filters).length ? filters : null;
+}
+
 async function sendBroadcast(req, res, next) {
   try {
     const { title, content, target = 'all', segment_plan, segment_type } = req.body;
@@ -1456,14 +1497,14 @@ async function sendBroadcast(req, res, next) {
     });
 
     const { data, error } = await supabaseAdmin.from('admin_broadcasts').insert({
-      title:        title.trim(),
-      content:      content.trim(),
-      channel:      'app',
+      title:          title.trim(),
+      message:        content.trim(),
+      type:           'broadcast',
       target,
-      segment_plan: segment_plan || null,
-      segment_type: segment_type || null,
-      sent_count:   targets.length,
-      sent_at:      new Date().toISOString(),
+      target_filters: buildTargetFilters(segment_plan, segment_type),
+      status:         'sent',
+      sent_count:     targets.length,
+      sent_at:        new Date().toISOString(),
     }).select().single();
     if (error) throw error;
 
@@ -1471,15 +1512,47 @@ async function sendBroadcast(req, res, next) {
   } catch (err) { next(err); }
 }
 
+/* Une admin_broadcasts (in-app) e admin_email_campaigns (email/lancamento) num historico so,
+   normalizado para o formato que o frontend ja espera (title/content/channel/segment_*). */
 async function listBroadcasts(req, res, next) {
   try {
-    const { data, error } = await supabaseAdmin
-      .from('admin_broadcasts')
-      .select('*')
-      .order('created_at', { ascending: false })
-      .limit(50);
-    if (error) throw error;
-    return res.json({ data: data || [] });
+    const [{ data: broadcasts, error: bErr }, { data: campaigns, error: cErr }] = await Promise.all([
+      supabaseAdmin.from('admin_broadcasts').select('*').order('created_at', { ascending: false }).limit(50),
+      supabaseAdmin.from('admin_email_campaigns').select('*').order('created_at', { ascending: false }).limit(50),
+    ]);
+    if (bErr) throw bErr;
+    if (cErr) throw cErr;
+
+    const fromBroadcast = (b) => ({
+      id:            b.id,
+      title:         b.title,
+      content:       b.message,
+      channel:       'app',
+      target:        b.target,
+      segment_plan:  b.target_filters?.plan || null,
+      segment_type:  b.target_filters?.operator_type || null,
+      sent_count:    b.sent_count,
+      sent_at:       b.sent_at,
+      created_at:    b.created_at,
+    });
+    const fromCampaign = (c) => ({
+      id:            c.id,
+      title:         c.subject,
+      content:       c.body,
+      channel:       'email',
+      target:        c.target,
+      segment_plan:  c.target_filters?.plan || null,
+      segment_type:  c.target_filters?.operator_type || null,
+      sent_count:    c.sent_count,
+      sent_at:       c.sent_at,
+      created_at:    c.created_at,
+    });
+
+    const merged = [...(broadcasts || []).map(fromBroadcast), ...(campaigns || []).map(fromCampaign)]
+      .sort((a, b) => (b.created_at || '').localeCompare(a.created_at || ''))
+      .slice(0, 50);
+
+    return res.json({ data: merged });
   } catch (err) { next(err); }
 }
 
@@ -1522,16 +1595,14 @@ async function sendMarketingEmail(req, res, next) {
       } catch { /* continuar se um envio falhar */ }
     }
 
-    const { data, error } = await supabaseAdmin.from('admin_broadcasts').insert({
-      title:        subject.trim(),
-      content:      body.trim(),
-      channel:      'email',
-      subject:      subject.trim(),
+    const { data, error } = await supabaseAdmin.from('admin_email_campaigns').insert({
+      subject:        subject.trim(),
+      body:           body.trim(),
       target,
-      segment_plan: segment_plan || null,
-      segment_type: segment_type || null,
-      sent_count:   sent,
-      sent_at:      new Date().toISOString(),
+      target_filters: buildTargetFilters(segment_plan, segment_type),
+      status:         'sent',
+      sent_count:     sent,
+      sent_at:        new Date().toISOString(),
     }).select().single();
     if (error) throw error;
 
@@ -1567,15 +1638,15 @@ async function sendLaunchEmail(req, res, next) {
       } catch { /* continuar */ }
     }
 
-    await supabaseAdmin.from('admin_broadcasts').insert({
-      title:     emailSubject,
-      content:   emailBody,
-      channel:   'email',
-      subject:   emailSubject,
-      target:    'waitlist',
+    const { error: insErr } = await supabaseAdmin.from('admin_email_campaigns').insert({
+      subject:    emailSubject,
+      body:       emailBody,
+      target:     'waitlist',
+      status:     'sent',
       sent_count: sent,
-      sent_at:   new Date().toISOString(),
+      sent_at:    new Date().toISOString(),
     });
+    if (insErr) throw insErr;
 
     return res.json({ data: { sent, total: list.length }, message: `Email de lancamento enviado para ${sent} de ${list.length} subscritores` });
   } catch (err) { next(err); }
