@@ -194,6 +194,49 @@
     .wish-remove{background:none;border:none;cursor:pointer;color:var(--tx-faint);padding:6px;border-radius:6px;line-height:0}
     .wish-remove:hover{color:var(--err)}
 
+    /* ── PAINEL DE CONTA (drawer lateral, barra do Discover fica visivel por cima) ── */
+    .profile-drawer-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(11,18,32,.35);z-index:250;opacity:0;visibility:hidden;transition:opacity .22s,visibility .22s}
+    .profile-drawer-overlay.open{opacity:1;visibility:visible}
+    .profile-drawer{position:absolute;top:0;right:0;bottom:0;width:min(720px,100vw);background:#fff;box-shadow:-16px 0 48px rgba(11,18,32,.18);display:flex;transform:translateX(100%);transition:transform .3s cubic-bezier(.2,.8,.2,1)}
+    .profile-drawer-overlay.open .profile-drawer{transform:translateX(0)}
+    .profile-drawer-rail{width:212px;flex-shrink:0;border-right:1px solid var(--line);padding:18px 10px;overflow-y:auto;background:var(--paper2)}
+    .profile-drawer-group-label{font-family:var(--fm);font-size:.6875rem;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--tx-faint);padding:12px 10px 6px}
+    .profile-drawer-group-label:first-child{padding-top:2px}
+    .profile-drawer-item{display:flex;align-items:center;gap:9px;width:100%;background:none;border:none;text-align:left;padding:9px 10px;border-radius:8px;font-size:.8125rem;font-weight:500;color:var(--tx-soft);cursor:pointer;transition:all .15s}
+    .profile-drawer-item svg{flex-shrink:0}
+    .profile-drawer-item:hover{background:#fff;color:var(--tx)}
+    .profile-drawer-item.active{background:var(--teal7);color:#fff}
+    .profile-drawer-content{flex:1;min-width:0;overflow-y:auto;padding:26px 30px 30px}
+    .profile-drawer-close{position:absolute;top:14px;right:14px}
+    .profile-drawer-title{font-family:var(--fb);font-size:1.1875rem;font-weight:700;color:var(--tx);margin-bottom:20px}
+
+    .pf-field{margin-bottom:14px}
+    .pf-label{display:block;font-size:.75rem;font-weight:600;color:var(--tx-soft);margin-bottom:5px}
+    .pf-input,.pf-select{width:100%;border:1px solid var(--line);border-radius:var(--r10);padding:10px 12px;font-family:var(--fb);font-size:.875rem;color:var(--tx);background:#fff}
+    .pf-input:focus,.pf-select:focus{outline:none;border-color:var(--teal7)}
+    .pf-input:disabled{background:var(--paper2);color:var(--tx-faint)}
+    .pf-hint{font-size:.75rem;color:var(--tx-faint);margin-top:5px}
+    .pf-error{color:var(--err);font-size:.8125rem;margin-top:10px}
+    .pf-success{color:var(--ok);font-size:.8125rem;margin-top:10px}
+
+    .pf-avatar-row{display:flex;align-items:center;gap:16px;margin-bottom:22px}
+    .pf-avatar-preview{width:64px;height:64px;border-radius:50%;object-fit:cover;background:var(--teal7);color:#fff;display:flex;align-items:center;justify-content:center;font-family:var(--fb);font-weight:700;font-size:1.125rem;flex-shrink:0}
+
+    .pf-booking{display:flex;gap:12px;padding:12px;border:1px solid var(--line);border-radius:var(--r10);margin-bottom:10px}
+    .pf-booking-thumb{width:56px;height:56px;border-radius:8px;object-fit:cover;flex-shrink:0;background:var(--paper2);display:flex;align-items:center;justify-content:center;color:var(--tx-faint)}
+    .pf-booking-info{flex:1;min-width:0}
+    .pf-booking-name{font-family:var(--fb);font-size:.875rem;font-weight:700;color:var(--tx)}
+    .pf-booking-op{font-size:.75rem;color:var(--tx-soft);margin-top:1px}
+    .pf-booking-meta{font-size:.75rem;color:var(--tx-soft);margin-top:6px}
+    .pf-badge{display:inline-flex;font-family:var(--fm);font-size:.6875rem;font-weight:600;padding:3px 9px;border-radius:100px;margin-top:6px}
+
+    .pf-table{width:100%;border-collapse:collapse;font-size:.8125rem}
+    .pf-table th{text-align:left;font-family:var(--fm);font-size:.6875rem;text-transform:uppercase;letter-spacing:.05em;color:var(--tx-faint);padding:8px 10px;border-bottom:1px solid var(--line)}
+    .pf-table td{padding:10px;border-bottom:1px solid var(--line);color:var(--tx)}
+
+    .pf-stars{display:inline-flex;gap:3px;cursor:pointer}
+    .pf-stars svg{width:22px;height:22px}
+
     /* ── FOOTER ── */
     footer{background:var(--ink);color:rgba(255,255,255,.6);padding:52px 0 26px}
     .footer-grid{display:grid;grid-template-columns:2fr 1fr 1fr;gap:40px;margin-bottom:40px}
@@ -221,6 +264,11 @@
       .act-grid{grid-template-columns:1fr}
       .footer-grid{grid-template-columns:1fr 1fr}
       .perks-grid{grid-template-columns:1fr}
+      .profile-drawer{flex-direction:column}
+      .profile-drawer-rail{width:100%;display:flex;flex-wrap:nowrap;overflow-x:auto;gap:4px;border-right:none;border-bottom:1px solid var(--line);padding:12px}
+      .profile-drawer-group-label{display:none}
+      .profile-drawer-item{white-space:nowrap;width:auto}
+      .profile-drawer-content{padding:20px}
     }
     @media(max-width:500px){
       .section{padding:48px 0}
@@ -247,15 +295,13 @@
   </div>
 </div>
 
-<div id="modal-profile" class="modal-overlay" onclick="if(event.target===this)closeProfileModal()">
-  <div class="wish-panel" style="max-width:400px">
-    <div class="wish-header">
-      <h3><span class="pt">O meu perfil</span><span class="en">My profile</span></h3>
-      <button class="modal-close" onclick="closeProfileModal()">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-      </button>
-    </div>
-    <div id="profile-body" style="padding:20px 22px 24px"></div>
+<div id="profile-drawer-overlay" class="profile-drawer-overlay" onclick="if(event.target===this)closeProfileDrawer()">
+  <div class="profile-drawer" id="profile-drawer" style="position:relative">
+    <div class="profile-drawer-rail" id="profile-drawer-rail"></div>
+    <div class="profile-drawer-content" id="profile-drawer-content"></div>
+    <button class="modal-close profile-drawer-close" onclick="closeProfileDrawer()">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
   </div>
 </div>
 
@@ -283,10 +329,36 @@
           </span>
           <span class="pt">Perfil</span><span class="en">Profile</span>
         </a>
-        <div class="nav-profile-dropdown" id="nav-profile-dropdown">
-          <button type="button" class="nav-profile-dropdown-item" onclick="openProfileModal()">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8Z"/><circle cx="12" cy="12" r="3"/></svg>
-            <span class="pt">Ver perfil</span><span class="en">View profile</span>
+        <div class="nav-profile-dropdown" id="nav-profile-dropdown" style="min-width:220px">
+          <div class="profile-drawer-group-label"><span class="pt">A minha conta</span><span class="en">My account</span></div>
+          <button type="button" class="nav-profile-dropdown-item" onclick="openProfileDrawer('dashboard')">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>
+            <span class="pt">Dashboard</span><span class="en">Dashboard</span>
+          </button>
+          <button type="button" class="nav-profile-dropdown-item" onclick="openProfileDrawer('edit-profile')">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4Z"/></svg>
+            <span class="pt">Editar perfil</span><span class="en">Edit profile</span>
+          </button>
+          <button type="button" class="nav-profile-dropdown-item" onclick="openProfileDrawer('change-password')">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            <span class="pt">Alterar password</span><span class="en">Change password</span>
+          </button>
+          <div class="profile-drawer-group-label"><span class="pt">Reservas</span><span class="en">Bookings</span></div>
+          <button type="button" class="nav-profile-dropdown-item" onclick="openProfileDrawer('bookings')">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            <span class="pt">As minhas reservas</span><span class="en">My bookings</span>
+          </button>
+          <button type="button" class="nav-profile-dropdown-item" onclick="openProfileDrawer('invoices')">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/></svg>
+            <span class="pt">Facturas</span><span class="en">Invoices</span>
+          </button>
+          <button type="button" class="nav-profile-dropdown-item" onclick="openProfileDrawer('reviews')">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+            <span class="pt">Avaliações</span><span class="en">Reviews</span>
+          </button>
+          <button type="button" class="nav-profile-dropdown-item" onclick="openProfileDrawer('wishlist')">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+            <span class="pt">Wishlist</span><span class="en">Wishlist</span>
           </button>
         </div>
       </div>
@@ -1117,55 +1189,499 @@ function applyTravelerSession(session) {
   if (pt) pt.textContent = first;
   if (en) en.textContent = first;
 
-  /* Com sessao activa, a pill deixa de navegar para app.saldesk.cv --
-     abre o perfil em modal, sem sair do Discover (ver openProfileModal). */
+  /* Com sessao activa, a pill deixa de navegar para app.saldesk.cv -- abre
+     o painel de conta (drawer), sem sair do Discover. "Gerir conta" NAO
+     existe como link para app.saldesk.cv/viajante porque a app React nunca
+     le a cookie de sessao partilhada (sd_travel_rt) -- so o Discover a le
+     (ver bootstrapTravelerSession). Um viajante autenticado aqui apareceria
+     "deslogado" la, por isso as 7 seccoes sao construidas aqui mesmo. */
   document.getElementById('nav-profile-wrap')?.classList.add('logged-in');
   link.addEventListener('click', (e) => {
     if (!travelerSession) return;
     e.preventDefault();
-    openProfileModal();
+    openProfileDrawer('dashboard');
   });
 }
 
-/* ── PERFIL (modal, sem sair do Discover) ── */
-function openProfileModal() {
-  if (!travelerSession) { window.location.href = `${APP}/login`; return; }
-  renderProfileModal();
-  document.getElementById('modal-profile').classList.add('open');
+/* ══════════════════════════════════════════
+   PAINEL DE CONTA (drawer lateral, sem sair do Discover)
+   As 7 seccoes replicam TravelerPortal.jsx (app React) usando os MESMOS
+   endpoints /traveler/* e /traveler-auth/* -- "Dashboard", "Facturas" e
+   "Avaliacoes" nao tem endpoint proprio, sao todas derivadas do mesmo
+   GET /traveler/bookings (cacheado em myBookingsCache por abertura do
+   painel), exactamente como a app faz.
+══════════════════════════════════════════ */
+const PROFILE_SECTIONS = [
+  { group: { pt: 'A minha conta', en: 'My account' }, items: [
+    { key: 'dashboard',       icon: 'grid',     label: { pt: 'Dashboard',        en: 'Dashboard' } },
+    { key: 'edit-profile',    icon: 'edit',     label: { pt: 'Editar perfil',    en: 'Edit profile' } },
+    { key: 'change-password', icon: 'lock',     label: { pt: 'Alterar password', en: 'Change password' } },
+  ]},
+  { group: { pt: 'Reservas', en: 'Bookings' }, items: [
+    { key: 'bookings', icon: 'calendar', label: { pt: 'As minhas reservas', en: 'My bookings' } },
+    { key: 'invoices', icon: 'file',     label: { pt: 'Facturas',           en: 'Invoices' } },
+    { key: 'reviews',  icon: 'star',     label: { pt: 'Avaliações',         en: 'Reviews' } },
+    { key: 'wishlist', icon: 'heart',    label: { pt: 'Wishlist',           en: 'Wishlist' } },
+  ]},
+];
+const PROFILE_ICONS = {
+  grid:     '<rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/>',
+  edit:     '<path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4Z"/>',
+  lock:     '<rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>',
+  calendar: '<rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>',
+  file:     '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/>',
+  star:     '<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>',
+  heart:    '<path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>',
+};
+const STATUS_LABEL = {
+  pending:     { pt: 'Pendente',   en: 'Pending' },
+  confirmed:   { pt: 'Confirmada', en: 'Confirmed' },
+  checked_in:  { pt: 'Em curso',   en: 'Ongoing' },
+  checked_out: { pt: 'Concluída',  en: 'Completed' },
+  cancelled:   { pt: 'Cancelada',  en: 'Cancelled' },
+};
+const STATUS_COLOR = { pending:'#B7791F', confirmed:'#1480A8', checked_in:'#0D5470', checked_out:'#0F9D58', cancelled:'#9CA3AF' };
+const PAYMENT_LABEL = {
+  pending:  { pt: 'Pendente',    en: 'Pending' },
+  paid:     { pt: 'Paga',        en: 'Paid' },
+  partial:  { pt: 'Parcial',     en: 'Partial' },
+  refunded: { pt: 'Reembolsada', en: 'Refunded' },
+};
+const PAYMENT_COLOR = { pending:'#B7791F', paid:'#0F9D58', partial:'#1480A8', refunded:'#9CA3AF' };
+
+let profileActiveSection = 'dashboard';
+let myBookingsCache = null; // limpo a cada abertura do painel, ver openProfileDrawer
+const reviewStarsState = {};
+
+function openProfileDrawer(section) {
+  if (!travelerSession) { window.location.href = `${APP}/viajante/entrar`; return; }
+  myBookingsCache = null;
+  const overlay = document.getElementById('profile-drawer-overlay');
+  const navBottom = document.getElementById('navbar').getBoundingClientRect().bottom;
+  overlay.style.top = `${Math.max(0, navBottom)}px`;
+  overlay.classList.add('open');
   document.body.style.overflow = 'hidden';
+  renderProfileRail();
+  selectProfileSection(section || 'dashboard');
 }
-function closeProfileModal() {
-  document.getElementById('modal-profile').classList.remove('open');
+function closeProfileDrawer() {
+  document.getElementById('profile-drawer-overlay').classList.remove('open');
   document.body.style.overflow = '';
 }
-function renderProfileModal() {
+
+function renderProfileRail() {
+  const rail = document.getElementById('profile-drawer-rail');
+  rail.innerHTML = PROFILE_SECTIONS.map(g => `
+    <div class="profile-drawer-group-label"><span class="pt">${esc(g.group.pt)}</span><span class="en">${esc(g.group.en)}</span></div>
+    ${g.items.map(it => `
+      <button type="button" class="profile-drawer-item" data-section="${it.key}" onclick="selectProfileSection('${it.key}')">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">${PROFILE_ICONS[it.icon]}</svg>
+        <span class="pt">${esc(it.label.pt)}</span><span class="en">${esc(it.label.en)}</span>
+      </button>
+    `).join('')}
+  `).join('');
+  if (L() === 'en') fixLang(rail);
+}
+
+function drawerTitleHtml(key) {
+  const item = PROFILE_SECTIONS.flatMap(g => g.items).find(i => i.key === key);
+  if (!item) return '';
+  return `<div class="profile-drawer-title"><span class="pt">${esc(item.label.pt)}</span><span class="en">${esc(item.label.en)}</span></div>`;
+}
+function emptyStateHtml(pt, en) {
+  return `<p style="font-size:.8125rem;color:var(--tx-soft)"><span class="pt">${esc(pt)}</span><span class="en">${esc(en)}</span></p>`;
+}
+function bookingThumb(b) {
+  return b.unit_image
+    ? `<img src="${esc(b.unit_image)}" alt="" class="pf-booking-thumb" />`
+    : `<div class="pf-booking-thumb"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z"/><circle cx="12" cy="10" r="3"/></svg></div>`;
+}
+async function loadMyBookings() {
+  if (myBookingsCache) return myBookingsCache;
+  try {
+    const r = await travelerApiFetch('/bookings');
+    const j = await r.json();
+    myBookingsCache = j.data || [];
+  } catch { myBookingsCache = []; }
+  return myBookingsCache;
+}
+
+const PROFILE_RENDERERS = {
+  'dashboard':       renderDashboardSection,
+  'edit-profile':    renderEditProfileSection,
+  'change-password': renderChangePasswordSection,
+  'bookings':        renderBookingsSection,
+  'invoices':        renderInvoicesSection,
+  'reviews':         renderReviewsSection,
+  'wishlist':        renderWishlistSection,
+};
+function selectProfileSection(key) {
+  profileActiveSection = key;
+  document.querySelectorAll('.profile-drawer-item').forEach(b => b.classList.toggle('active', b.dataset.section === key));
+  const content = document.getElementById('profile-drawer-content');
+  content.innerHTML = `<div class="sk" style="height:120px;border-radius:12px"></div>`;
+  (PROFILE_RENDERERS[key] || renderDashboardSection)();
+}
+
+/* ── Dashboard ── */
+async function renderDashboardSection() {
   const t = travelerSession.traveler || {};
   const initials = (t.name || '').trim().split(/\s+/).map(w => w[0]).slice(0, 2).join('').toUpperCase() || '?';
   const memberSince = t.created_at
     ? new Date(t.created_at).toLocaleDateString(L() === 'en' ? 'en-GB' : 'pt-PT', { year: 'numeric', month: 'long' })
     : '';
   const avatar = t.avatar_url
-    ? `<img src="${esc(t.avatar_url)}" alt="" style="width:56px;height:56px;border-radius:50%;object-fit:cover;flex-shrink:0" />`
-    : `<div style="width:56px;height:56px;border-radius:50%;background:var(--teal7);color:#fff;display:flex;align-items:center;justify-content:center;font-family:var(--fb);font-weight:700;font-size:1.0625rem;flex-shrink:0">${esc(initials)}</div>`;
+    ? `<img src="${esc(t.avatar_url)}" alt="" class="pf-avatar-preview" />`
+    : `<div class="pf-avatar-preview">${esc(initials)}</div>`;
 
-  document.getElementById('profile-body').innerHTML = `
-    <div style="display:flex;align-items:center;gap:14px;margin-bottom:20px">
+  const bookings = await loadMyBookings();
+  if (profileActiveSection !== 'dashboard') return; // seccao ja mudou entretanto
+  const reviewsGiven = bookings.filter(b => b.review).length;
+
+  document.getElementById('profile-drawer-content').innerHTML = `
+    <div class="pf-avatar-row">
       ${avatar}
       <div style="min-width:0">
-        <div style="font-family:var(--fb);font-weight:700;font-size:1rem;color:var(--tx);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(t.name || '')}</div>
-        <div style="font-size:.8125rem;color:var(--tx-soft);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(t.email || '')}</div>
+        <div style="font-family:var(--fb);font-weight:700;font-size:1.0625rem;color:var(--tx)"><span class="pt">Ola, </span><span class="en">Hi, </span>${esc((t.name || '').trim().split(/\s+/)[0] || '')}</div>
+        <div style="font-size:.8125rem;color:var(--tx-soft)">${esc(t.email || '')}</div>
+        ${memberSince ? `<div style="font-size:.75rem;color:var(--tx-faint);margin-top:2px"><span class="pt">Membro desde ${esc(memberSince)}</span><span class="en">Member since ${esc(memberSince)}</span></div>` : ''}
       </div>
     </div>
-    <div style="display:flex;flex-direction:column;gap:9px">
-      ${t.phone ? `<div class="profile-row"><span class="profile-row-label pt">Telefone: </span><span class="profile-row-label en">Phone: </span>${esc(t.phone)}</div>` : ''}
-      ${t.country ? `<div class="profile-row"><span class="profile-row-label pt">Pais: </span><span class="profile-row-label en">Country: </span>${esc(t.country)}</div>` : ''}
-      ${memberSince ? `<div class="profile-row profile-row-label"><span class="pt">Membro desde ${esc(memberSince)}</span><span class="en">Member since ${esc(memberSince)}</span></div>` : ''}
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">
+      <div style="border:1px solid var(--line);border-radius:var(--r10);padding:14px;text-align:center">
+        <div style="font-family:var(--fm);font-size:1.375rem;font-weight:600;color:var(--teal7)">${bookings.length}</div>
+        <div style="font-size:.75rem;color:var(--tx-soft)"><span class="pt">Reservas</span><span class="en">Bookings</span></div>
+      </div>
+      <div style="border:1px solid var(--line);border-radius:var(--r10);padding:14px;text-align:center">
+        <div style="font-family:var(--fm);font-size:1.375rem;font-weight:600;color:var(--teal7)">${wishedUnitIds.size}</div>
+        <div style="font-size:.75rem;color:var(--tx-soft)"><span class="pt">Guardados</span><span class="en">Saved</span></div>
+      </div>
+      <div style="border:1px solid var(--line);border-radius:var(--r10);padding:14px;text-align:center">
+        <div style="font-family:var(--fm);font-size:1.375rem;font-weight:600;color:var(--teal7)">${reviewsGiven}</div>
+        <div style="font-size:.75rem;color:var(--tx-soft)"><span class="pt">Avaliações</span><span class="en">Reviews</span></div>
+      </div>
     </div>
-    <a href="${APP}/viajante" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:5px;margin-top:20px;font-size:.8125rem;font-weight:600;color:var(--teal7)">
-      <span class="pt">Gerir conta</span><span class="en">Manage account</span> →
-    </a>
   `;
-  if (L() === 'en') fixLang(document.getElementById('profile-body'));
+  if (L() === 'en') fixLang(document.getElementById('profile-drawer-content'));
+}
+
+/* ── Editar perfil ── */
+async function renderEditProfileSection() {
+  const t = travelerSession.traveler || {};
+  const initials = (t.name || '').trim().split(/\s+/).map(w => w[0]).slice(0, 2).join('').toUpperCase() || '?';
+  document.getElementById('profile-drawer-content').innerHTML = `
+    ${drawerTitleHtml('edit-profile')}
+    <div class="pf-avatar-row">
+      ${t.avatar_url ? `<img id="pf-avatar-img" src="${esc(t.avatar_url)}" alt="" class="pf-avatar-preview" />` : `<div id="pf-avatar-img" class="pf-avatar-preview">${esc(initials)}</div>`}
+      <div>
+        <label class="btn btn-ghost btn-sm" style="cursor:pointer">
+          <span class="pt">Trocar foto</span><span class="en">Change photo</span>
+          <input type="file" accept="image/png,image/jpeg,image/webp" style="display:none" onchange="uploadMyAvatar(this.files[0])" />
+        </label>
+        <div class="pf-hint"><span class="pt">JPG, PNG ou WebP, max 5MB</span><span class="en">JPG, PNG or WebP, max 5MB</span></div>
+      </div>
+    </div>
+    <div class="pf-field">
+      <label class="pf-label"><span class="pt">Nome</span><span class="en">Name</span></label>
+      <input class="pf-input" id="pf-name" value="${esc(t.name || '')}" />
+    </div>
+    <div class="pf-field">
+      <label class="pf-label">Email</label>
+      <input class="pf-input" value="${esc(t.email || '')}" disabled />
+    </div>
+    <div class="pf-field">
+      <label class="pf-label"><span class="pt">Telefone</span><span class="en">Phone</span></label>
+      <input class="pf-input" id="pf-phone" value="${esc(t.phone || '')}" />
+    </div>
+    <div class="pf-field">
+      <label class="pf-label"><span class="pt">Pais</span><span class="en">Country</span></label>
+      <input class="pf-input" id="pf-country" value="${esc(t.country || '')}" />
+    </div>
+    <div class="pf-field">
+      <label class="pf-label"><span class="pt">Idioma</span><span class="en">Language</span></label>
+      <select class="pf-select" id="pf-language">
+        <option value="pt" ${t.language === 'pt' ? 'selected' : ''}>Português</option>
+        <option value="en" ${t.language === 'en' ? 'selected' : ''}>English</option>
+      </select>
+    </div>
+    <button type="button" class="btn btn-primary" id="pf-save-btn" onclick="saveMyProfile()">
+      <span class="pt">Guardar</span><span class="en">Save</span>
+    </button>
+    <div id="pf-profile-msg"></div>
+  `;
+  if (L() === 'en') fixLang(document.getElementById('profile-drawer-content'));
+}
+async function saveMyProfile() {
+  const btn = document.getElementById('pf-save-btn');
+  const msg = document.getElementById('pf-profile-msg');
+  msg.className = ''; msg.textContent = '';
+  const name = document.getElementById('pf-name').value.trim();
+  if (!name) {
+    msg.className = 'pf-error'; msg.textContent = L() === 'en' ? 'Name is required.' : 'O nome é obrigatório.';
+    return;
+  }
+  btn.disabled = true;
+  try {
+    const r = await travelerApiFetch('/profile', { method: 'PUT', body: JSON.stringify({
+      name,
+      phone: document.getElementById('pf-phone').value.trim(),
+      country: document.getElementById('pf-country').value.trim(),
+      language: document.getElementById('pf-language').value,
+    }) });
+    if (!r.ok) throw new Error();
+    const j = await r.json();
+    travelerSession.traveler = j.data;
+    msg.className = 'pf-success'; msg.textContent = L() === 'en' ? 'Profile updated.' : 'Perfil actualizado.';
+  } catch {
+    msg.className = 'pf-error'; msg.textContent = L() === 'en' ? 'Could not save. Try again.' : 'Não foi possível guardar. Tente novamente.';
+  } finally {
+    btn.disabled = false;
+  }
+}
+async function uploadMyAvatar(file) {
+  if (!file) return;
+  const msg = document.getElementById('pf-profile-msg');
+  msg.className = ''; msg.textContent = '';
+  if (!['image/png', 'image/jpeg', 'image/webp'].includes(file.type)) {
+    msg.className = 'pf-error'; msg.textContent = L() === 'en' ? 'Use JPG, PNG or WebP.' : 'Use JPG, PNG ou WebP.';
+    return;
+  }
+  if (file.size > 5 * 1024 * 1024) {
+    msg.className = 'pf-error'; msg.textContent = L() === 'en' ? 'Image must be under 5MB.' : 'A imagem deve ter menos de 5MB.';
+    return;
+  }
+  const fd = new FormData();
+  fd.append('image', file);
+  try {
+    const upRes = await fetch('https://api.saldesk.cv/api/v1/upload/image', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${travelerSession.access_token}` },
+      body: fd,
+    });
+    if (!upRes.ok) throw new Error();
+    const upJson = await upRes.json();
+    const url = upJson.data?.url;
+    const r = await travelerApiFetch('/profile', { method: 'PUT', body: JSON.stringify({ avatar_url: url }) });
+    if (!r.ok) throw new Error();
+    const j = await r.json();
+    travelerSession.traveler = j.data;
+    await renderEditProfileSection();
+  } catch {
+    msg.className = 'pf-error'; msg.textContent = L() === 'en' ? 'Could not upload photo. Try again.' : 'Não foi possível carregar a foto. Tente novamente.';
+  }
+}
+
+/* ── Alterar password ── */
+async function renderChangePasswordSection() {
+  document.getElementById('profile-drawer-content').innerHTML = `
+    ${drawerTitleHtml('change-password')}
+    <div class="pf-field">
+      <label class="pf-label"><span class="pt">Nova password</span><span class="en">New password</span></label>
+      <input class="pf-input" type="password" id="pf-new-pw" />
+    </div>
+    <div class="pf-field">
+      <label class="pf-label"><span class="pt">Confirmar nova password</span><span class="en">Confirm new password</span></label>
+      <input class="pf-input" type="password" id="pf-confirm-pw" />
+    </div>
+    <button type="button" class="btn btn-primary" id="pf-pw-btn" onclick="saveMyPassword()">
+      <span class="pt">Alterar password</span><span class="en">Change password</span>
+    </button>
+    <div id="pf-pw-msg"></div>
+  `;
+  if (L() === 'en') fixLang(document.getElementById('profile-drawer-content'));
+}
+async function saveMyPassword() {
+  const btn = document.getElementById('pf-pw-btn');
+  const msg = document.getElementById('pf-pw-msg');
+  msg.className = ''; msg.textContent = '';
+  const pw = document.getElementById('pf-new-pw').value;
+  const confirmPw = document.getElementById('pf-confirm-pw').value;
+  if (pw.length < 8) {
+    msg.className = 'pf-error'; msg.textContent = L() === 'en' ? 'Password must be at least 8 characters.' : 'A password deve ter pelo menos 8 caracteres.';
+    return;
+  }
+  if (pw !== confirmPw) {
+    msg.className = 'pf-error'; msg.textContent = L() === 'en' ? 'Passwords do not match.' : 'As passwords não coincidem.';
+    return;
+  }
+  btn.disabled = true;
+  try {
+    const r = await fetch(`${API_TRAVELER_AUTH}/password`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${travelerSession.access_token}` },
+      body: JSON.stringify({ password: pw }),
+    });
+    if (!r.ok) throw new Error();
+    document.getElementById('pf-new-pw').value = '';
+    document.getElementById('pf-confirm-pw').value = '';
+    msg.className = 'pf-success'; msg.textContent = L() === 'en' ? 'Password changed.' : 'Password alterada.';
+  } catch {
+    msg.className = 'pf-error'; msg.textContent = L() === 'en' ? 'Could not change password. Try again.' : 'Não foi possível alterar a password. Tente novamente.';
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+/* ── As minhas reservas ── */
+async function renderBookingsSection() {
+  const bookings = await loadMyBookings();
+  if (profileActiveSection !== 'bookings') return;
+  const content = document.getElementById('profile-drawer-content');
+
+  if (!bookings.length) {
+    content.innerHTML = drawerTitleHtml('bookings') + emptyStateHtml('Ainda não tem reservas.', 'No bookings yet.');
+    if (L() === 'en') fixLang(content);
+    return;
+  }
+  content.innerHTML = drawerTitleHtml('bookings') + bookings.map(b => `
+    <div class="pf-booking">
+      ${bookingThumb(b)}
+      <div class="pf-booking-info">
+        <div class="pf-booking-name">${esc(b.unit_name || '')}</div>
+        <div class="pf-booking-op">${esc(b.operator_name || '')}</div>
+        <div class="pf-booking-meta">${esc(b.check_in || '')} → ${esc(b.check_out || '')} · ${esc(b.guests ?? '')} <span class="pt">pessoa(s)</span><span class="en">guest(s)</span> · €${esc(b.total_price ?? 0)}</div>
+        <span class="pf-badge" style="background:${(STATUS_COLOR[b.status] || '#9CA3AF')}22;color:${STATUS_COLOR[b.status] || '#6B7280'}">${esc((STATUS_LABEL[b.status] || {})[L()] || b.status || '')}</span>
+      </div>
+    </div>
+  `).join('');
+  if (L() === 'en') fixLang(content);
+}
+
+/* ── Facturas ── */
+async function renderInvoicesSection() {
+  const bookings = await loadMyBookings();
+  if (profileActiveSection !== 'invoices') return;
+  const content = document.getElementById('profile-drawer-content');
+
+  if (!bookings.length) {
+    content.innerHTML = drawerTitleHtml('invoices') + emptyStateHtml('Ainda não tem facturas.', 'No invoices yet.');
+    if (L() === 'en') fixLang(content);
+    return;
+  }
+  content.innerHTML = drawerTitleHtml('invoices') + `<div style="overflow-x:auto"><table class="pf-table"><thead><tr>
+    <th><span class="pt">Reserva</span><span class="en">Booking</span></th>
+    <th><span class="pt">Data</span><span class="en">Date</span></th>
+    <th><span class="pt">Total</span><span class="en">Total</span></th>
+    <th><span class="pt">Pago</span><span class="en">Paid</span></th>
+    <th><span class="pt">Estado</span><span class="en">Status</span></th>
+  </tr></thead><tbody>` + bookings.map(b => `
+    <tr>
+      <td>${esc(b.unit_name || '')}<div style="color:var(--tx-soft);font-size:.75rem">${esc(b.operator_name || '')}</div></td>
+      <td>${esc(b.check_in || '')}</td>
+      <td>€${esc(b.total_price ?? 0)}</td>
+      <td>€${esc(b.amount_paid ?? 0)}</td>
+      <td><span class="pf-badge" style="background:${(PAYMENT_COLOR[b.payment_status] || '#9CA3AF')}22;color:${PAYMENT_COLOR[b.payment_status] || '#6B7280'}">${esc((PAYMENT_LABEL[b.payment_status] || {})[L()] || b.payment_status || '')}</span></td>
+    </tr>
+  `).join('') + `</tbody></table></div>`;
+  if (L() === 'en') fixLang(content);
+}
+
+/* ── Avaliações ── */
+function starIconSvg(filled) {
+  return `<svg viewBox="0 0 24 24" fill="${filled ? 'var(--ochre)' : 'none'}" stroke="var(--ochre)" stroke-width="1.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`;
+}
+function pendingReviewCardHtml(b) {
+  return `
+    <div class="pf-booking" style="flex-direction:column;align-items:stretch">
+      <div style="display:flex;gap:12px">
+        ${bookingThumb(b)}
+        <div class="pf-booking-info">
+          <div class="pf-booking-name">${esc(b.unit_name || '')}</div>
+          <div class="pf-booking-op">${esc(b.operator_name || '')}</div>
+        </div>
+      </div>
+      <div class="pf-stars" data-reservation="${esc(b.id)}" style="margin-top:10px">
+        ${[1, 2, 3, 4, 5].map(n => `<span data-star="${n}" onclick="setReviewStars('${esc(b.id)}',${n})">${starIconSvg(false)}</span>`).join('')}
+      </div>
+      <textarea class="pf-input" rows="2" placeholder="${L() === 'en' ? 'Optional comment...' : 'Comentário opcional...'}" id="review-comment-${esc(b.id)}" style="margin-top:10px;resize:none"></textarea>
+      <button type="button" class="btn btn-primary btn-sm" style="margin-top:10px;align-self:flex-start" onclick="submitMyReview('${esc(b.id)}')">
+        <span class="pt">Enviar avaliação</span><span class="en">Submit review</span>
+      </button>
+      <div id="review-error-${esc(b.id)}" class="pf-error" style="display:none"></div>
+    </div>
+  `;
+}
+function givenReviewCardHtml(b) {
+  const r = b.review || {};
+  return `
+    <div class="pf-booking">
+      ${bookingThumb(b)}
+      <div class="pf-booking-info">
+        <div class="pf-booking-name">${esc(b.unit_name || '')}</div>
+        <div class="pf-booking-op">${esc(b.operator_name || '')}</div>
+        <div style="margin-top:6px">${[1, 2, 3, 4, 5].map(n => starIconSvg(n <= (r.rating || 0))).join('')}</div>
+        ${r.comment ? `<div style="font-size:.8125rem;color:var(--tx-soft);margin-top:6px">${esc(r.comment)}</div>` : ''}
+      </div>
+    </div>
+  `;
+}
+async function renderReviewsSection() {
+  const bookings = await loadMyBookings();
+  if (profileActiveSection !== 'reviews') return;
+  const content = document.getElementById('profile-drawer-content');
+  const pending = bookings.filter(b => b.can_review);
+  const given = bookings.filter(b => b.review);
+
+  if (!pending.length && !given.length) {
+    content.innerHTML = drawerTitleHtml('reviews') + emptyStateHtml('Ainda não tem avaliações para dar.', 'No reviews to give yet.');
+    if (L() === 'en') fixLang(content);
+    return;
+  }
+  content.innerHTML = drawerTitleHtml('reviews') +
+    (pending.length ? `<div class="profile-drawer-group-label" style="padding-left:0"><span class="pt">Por avaliar</span><span class="en">To review</span></div>${pending.map(pendingReviewCardHtml).join('')}` : '') +
+    (given.length ? `<div class="profile-drawer-group-label" style="padding-left:0"><span class="pt">Já avaliadas</span><span class="en">Already reviewed</span></div>${given.map(givenReviewCardHtml).join('')}` : '');
+  if (L() === 'en') fixLang(content);
+}
+function setReviewStars(reservationId, n) {
+  reviewStarsState[reservationId] = n;
+  const wrap = document.querySelector(`.pf-stars[data-reservation="${reservationId}"]`);
+  if (!wrap) return;
+  wrap.querySelectorAll('span').forEach(s => { s.innerHTML = starIconSvg(Number(s.dataset.star) <= n); });
+}
+async function submitMyReview(reservationId) {
+  const rating = reviewStarsState[reservationId];
+  const errEl = document.getElementById(`review-error-${reservationId}`);
+  if (!rating) {
+    errEl.textContent = L() === 'en' ? 'Choose a star rating.' : 'Escolha uma classificação.';
+    errEl.style.display = '';
+    return;
+  }
+  const comment = document.getElementById(`review-comment-${reservationId}`)?.value || '';
+  try {
+    const r = await travelerApiFetch(`/bookings/${reservationId}/review`, { method: 'POST', body: JSON.stringify({ rating, comment: comment || undefined }) });
+    if (!r.ok) throw new Error();
+    myBookingsCache = null; // forca reload para reflectir a avaliacao dada
+    delete reviewStarsState[reservationId];
+    await renderReviewsSection();
+  } catch {
+    errEl.textContent = L() === 'en' ? 'Could not submit review. Try again.' : 'Não foi possível enviar. Tente novamente.';
+    errEl.style.display = '';
+  }
+}
+
+/* ── Wishlist (reaproveita wishedUnitIds/operators ja carregados) ── */
+async function renderWishlistSection() {
+  const content = document.getElementById('profile-drawer-content');
+  const wishItems = operators.filter(o => wishedUnitIds.has(o.unit_id));
+
+  if (!wishItems.length) {
+    content.innerHTML = drawerTitleHtml('wishlist') + emptyStateHtml('A sua lista está vazia.', 'Your wishlist is empty.');
+    if (L() === 'en') fixLang(content);
+    return;
+  }
+  content.innerHTML = drawerTitleHtml('wishlist') + `<div style="display:flex;flex-direction:column;gap:10px">` + wishItems.map(item => `
+    <div class="wish-item">
+      <div style="width:56px;height:56px;border-radius:8px;overflow:hidden;flex-shrink:0">${imgBlock(item)}</div>
+      <div class="wish-item-info">
+        <div class="wish-item-name">${esc(item.unit_name)}</div>
+        <div class="wish-item-type">${esc(item.operator_name)}</div>
+      </div>
+      <a href="${APP}/book/${esc(item.operator_slug)}/servico/${esc(item.unit_id)}" class="btn btn-primary btn-sm">
+        <span class="pt">Reservar</span><span class="en">Book</span>
+      </a>
+    </div>
+  `).join('') + `</div>`;
+  if (L() === 'en') fixLang(content);
 }
 
 /* Fusao unica da wishlist anonima para dentro da conta -- sd-wish ja guarda
@@ -1266,7 +1782,7 @@ document.getElementById('langToggle').addEventListener('click', () => {
 });
 
 document.getElementById('nav-search-input')?.addEventListener('keydown', e => { if (e.key === 'Enter') handleSearch(); });
-document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeWishlist(); closeProfileModal(); } });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeWishlist(); closeProfileDrawer(); } });
 
 /* ══════════════════════════════════════════
    INIT
