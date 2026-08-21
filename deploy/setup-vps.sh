@@ -64,13 +64,21 @@ systemctl enable fail2ban
 systemctl start fail2ban
 
 # --- 9. Estrutura de diretorios ---
+# repo/    - checkout git (branch main); o backend corre directo daqui via PM2
+# app/     - build do frontend, servido por app.saldesk.cv
+# website/ - site estatico, servido por saldesk.cv
+# uploads/ - ficheiros enviados, servido por api.saldesk.cv/uploads/
+# app/ e website/ NAO sao o mesmo directorio que repo/frontend/dist e
+# repo/website -- deploy/deploy.sh publica explicitamente para aqui.
 echo "[9/10] A criar estrutura de diretorios..."
+mkdir -p /var/www/saldesk/repo
+mkdir -p /var/www/saldesk/app
 mkdir -p /var/www/saldesk/website/discover
-mkdir -p /var/www/saldesk/frontend
+mkdir -p /var/www/saldesk/uploads
 mkdir -p /var/log/saldesk
 
 # Permissoes
-chown -R www-data:www-data /var/www/saldesk
+chown -R saldesk:saldesk /var/www/saldesk
 chmod -R 755 /var/www/saldesk
 
 # --- 10. Clonar repositorio ---
@@ -79,9 +87,9 @@ echo ""
 echo "=============================================="
 echo " Setup concluido!"
 echo " Proximos passos:"
-echo " 1. cd /var/www/saldesk"
+echo " 1. cd /var/www/saldesk/repo"
 echo " 2. git clone <URL_DO_REPO> ."
-echo " 3. Criar /var/www/saldesk/backend/.env"
+echo " 3. Criar /var/www/saldesk/repo/backend/.env"
 echo " 4. cp deploy/nginx/saldesk.conf /etc/nginx/sites-available/saldesk"
 echo " 5. ln -s /etc/nginx/sites-available/saldesk /etc/nginx/sites-enabled/"
 echo " 6. nginx -t && systemctl reload nginx"

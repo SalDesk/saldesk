@@ -120,17 +120,28 @@ certbot --version  # certbot 2.x.x
 
 ## 4. Clonar repositorio
 
+> **Layout do servidor:** o checkout git vive em `/var/www/saldesk/repo` —
+> **não** directamente em `/var/www/saldesk`. `/var/www/saldesk/app`
+> (build do frontend), `/var/www/saldesk/website` (site estático) e
+> `/var/www/saldesk/uploads` são directórios irmãos, separados do
+> checkout, e é para lá que o `deploy/deploy.sh` publica depois de
+> compilar. O backend corre directamente de `repo/backend` via PM2 — não
+> precisa de cópia. Confirmado ao vivo em 2026-08-21; versões anteriores
+> deste documento assumiam (incorrectamente) que tudo vivia junto em
+> `/var/www/saldesk`.
+
 ```bash
 cd /var/www/saldesk
-git init
-git remote add origin https://github.com/SEU_USER/saldesk.git
+git init repo
+cd repo
+git remote add origin https://github.com/SalDesk/saldesk.git
 git pull origin main
 ```
 
 Ou clonar directamente:
 
 ```bash
-git clone https://github.com/SEU_USER/saldesk.git /var/www/saldesk
+git clone https://github.com/SalDesk/saldesk.git /var/www/saldesk/repo
 ```
 
 ---
@@ -140,8 +151,8 @@ git clone https://github.com/SEU_USER/saldesk.git /var/www/saldesk
 ### 5.1 Criar o ficheiro .env de producao
 
 ```bash
-cp /var/www/saldesk/deploy/.env.production /var/www/saldesk/backend/.env
-nano /var/www/saldesk/backend/.env
+cp /var/www/saldesk/repo/deploy/.env.production /var/www/saldesk/repo/backend/.env
+nano /var/www/saldesk/repo/backend/.env
 ```
 
 Preencher todos os valores (ver [deploy/.env.production](deploy/.env.production)).
@@ -149,7 +160,7 @@ Preencher todos os valores (ver [deploy/.env.production](deploy/.env.production)
 ### 5.2 Gerar chaves VAPID (push notifications)
 
 ```bash
-cd /var/www/saldesk/backend
+cd /var/www/saldesk/repo/backend
 node -e "
   const wp = require('web-push');
   const k = wp.generateVAPIDKeys();
@@ -175,7 +186,7 @@ openssl rand -hex 32
 ### 5.4 Verificar que o .env nao e commitable
 
 ```bash
-cat /var/www/saldesk/.gitignore | grep .env
+cat /var/www/saldesk/repo/.gitignore | grep .env
 # Deve aparecer: .env
 ```
 
@@ -187,7 +198,7 @@ cat /var/www/saldesk/.gitignore | grep .env
 
 ```bash
 # Copiar configuracao
-cp /var/www/saldesk/deploy/nginx/saldesk.conf /etc/nginx/sites-available/saldesk
+cp /var/www/saldesk/repo/deploy/nginx/saldesk.conf /etc/nginx/sites-available/saldesk
 
 # Activar (symlink)
 ln -s /etc/nginx/sites-available/saldesk /etc/nginx/sites-enabled/saldesk
@@ -249,18 +260,19 @@ systemctl status certbot.timer
 ## 8. Primeiro deploy
 
 ```bash
-cd /var/www/saldesk
+cd /var/www/saldesk/repo
 chmod +x deploy/deploy.sh
 bash deploy/deploy.sh
 ```
 
 O script faz:
-1. `git pull` — actualizar codigo
-2. `npm install + npm run build` — compilar frontend
-3. `npm install` — instalar dependencias backend
-4. Copiar website estatico
-5. `pm2 restart` — reiniciar API
-6. Verificar health endpoint
+1. `git pull` — actualizar codigo (em `repo/`)
+2. `npm install` (com devDependencies) `+ npm run build` — compilar frontend
+3. Publicar o build (`repo/frontend/dist`) em `/var/www/saldesk/app` via `rsync --delete`
+4. `npm install --omit=dev` — instalar dependencias backend (backend corre directo de `repo/backend`, sem cópia)
+5. Copiar o website estático (`repo/website`) para `/var/www/saldesk/website`
+6. `pm2 restart` — reiniciar API
+7. Verificar health endpoint
 
 ### 8.1 Verificar PM2
 
@@ -357,7 +369,7 @@ Para cada nova versao do codigo:
 
 ```bash
 ssh root@IP_DO_SERVIDOR
-cd /var/www/saldesk
+cd /var/www/saldesk/repo
 bash deploy/deploy.sh
 ```
 
@@ -370,7 +382,7 @@ Se houver novos ficheiros em `database/`, executar manualmente no SQL Editor do 
 ### 11.2 Rollback de emergencia
 
 ```bash
-cd /var/www/saldesk
+cd /var/www/saldesk/repo
 git log --oneline -5          # Ver commits recentes
 git checkout HASH_DO_COMMIT   # Voltar a versao anterior
 bash deploy/deploy.sh         # Redeploy
