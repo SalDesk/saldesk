@@ -1128,8 +1128,8 @@ function ObrigacoesTab({ currency }) {
         <div className="grid grid-cols-2 gap-3">
           <Select label="Plano actual" value={obl.saldesk_plan || 'starter'} onChange={e => saveObl({ ...obl, saldesk_plan: e.target.value })}>
             <option value="starter">Starter — €29/mes</option>
-            <option value="business">Business — €69/mes</option>
-            <option value="pro">Pro — €79/mes</option>
+            <option value="pro">Pro — €69/mes</option>
+            <option value="business">Business — €79/mes</option>
           </Select>
           <Input label="Data de renovacao" type="date" value={obl.saldesk_renewal || ''} onChange={e => saveObl({ ...obl, saldesk_renewal: e.target.value })} />
         </div>

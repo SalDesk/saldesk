@@ -511,8 +511,8 @@ export default function AdminOperators() {
         <div className="space-y-4">
           <Select label="Plano" value={editForm.plan} onChange={e => setEditForm({ ...editForm, plan: e.target.value })}>
             <option value="starter">Starter — €29/mes</option>
-            <option value="business">Business — €69/mes</option>
-            <option value="pro">Pro — €79/mes</option>
+            <option value="pro">Pro — €69/mes</option>
+            <option value="business">Business — €79/mes</option>
           </Select>
           <Select label="Estado" value={editForm.plan_status} onChange={e => setEditForm({ ...editForm, plan_status: e.target.value })}>
             <option value="trial">Trial</option>
