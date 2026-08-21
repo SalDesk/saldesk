@@ -875,6 +875,35 @@ section[id]{scroll-margin-top:80px}
 </footer>
 
 <script>
+/* — MODO MANUTENCAO ————————————————————————————————————
+   Le o toggle "Modo manutencao" do Sistema do fundador (falhava em
+   silencio antes -- gravava a flag mas nada a lia). Falha sempre aberto:
+   erro, timeout ou resposta invalida = site continua normal, nunca fica
+   bloqueado por causa disto. */
+(function(){
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 4000);
+  fetch('https://api.saldesk.cv/api/v1/public/site-status', { signal: controller.signal })
+    .then(r => r.ok ? r.json() : null)
+    .then(json => {
+      clearTimeout(timeout);
+      const data = json && json.data;
+      if (!data || !data.maintenance_mode) return;
+      const msg = (data.maintenance_message || '').trim() ||
+        'Estamos em manutenção. Voltamos em breve.\nWe are under maintenance. Back soon.';
+      document.body.innerHTML =
+        '<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;' +
+        'background:#062A38;color:#fff;text-align:center;padding:32px;font-family:\'DM Sans\',sans-serif">' +
+        '<div style="max-width:480px">' +
+        '<img src="/logo.png" alt="SalDesk" style="height:36px;margin-bottom:24px" onerror="this.style.display=\'none\'">' +
+        '<p style="font-family:Sora,sans-serif;font-weight:800;font-size:1.6rem;margin:0 0 16px;letter-spacing:-0.02em">' +
+        'Em manutenção · Under maintenance</p>' +
+        '<p style="font-size:1rem;line-height:1.7;color:#B9D4DF;white-space:pre-line">' + msg + '</p>' +
+        '</div></div>';
+    })
+    .catch(() => { clearTimeout(timeout); /* falha aberto -- site fica normal */ });
+})();
+
 /* — LANG ——————————————————————————————————————————————— */
 function setLang(lang) {
   document.documentElement.setAttribute('data-lang', lang);

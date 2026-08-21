@@ -48,6 +48,15 @@ async function register(req, res, next) {
         return res.status(400).json({ error: 'Codigo de convite invalido ou expirado', code: 'INVALID_INVITE' });
       }
       invite = inviteRow;
+    } else {
+      /* O toggle "Registo por convite" (Sistema -> Definicoes) so gravava a
+         flag -- nada aqui alguma vez a lia, por isso liga-la nao impedia
+         ninguem de se registar sem codigo. */
+      const { data: settingRow } = await supabaseAdmin
+        .from('cms_settings').select('value').eq('key', 'invite_only').maybeSingle();
+      if (settingRow?.value === 'true') {
+        return res.status(403).json({ error: 'Registo disponivel apenas por convite', code: 'INVITE_REQUIRED' });
+      }
     }
 
     const { data, error } = await supabaseAdmin.auth.admin.createUser({

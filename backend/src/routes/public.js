@@ -18,6 +18,7 @@ const {
   getUnitReviews,
   submitLead,
   getImpact,
+  getSiteStatus,
   discoverUnits,
   getExperienceCategories,
   callWaiter,
@@ -31,6 +32,7 @@ const { publicLimiter } = require('../middleware/rateLimiters');
 
 /* ─── Relatório de impacto público ─── */
 router.get('/impact',              getImpact);
+router.get('/site-status',         getSiteStatus);
 
 /* ─── Discover / directorio ─── */
 router.get('/discover',            discover);
