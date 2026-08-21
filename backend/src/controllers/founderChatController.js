@@ -22,6 +22,17 @@ async function getConversation(req, res, next) {
       .eq('sender_type', 'admin')
       .eq('is_read', false);
 
+    /* sendConversationMessage tambem grava uma notification (founder_message)
+       para o sino do Topbar -- sem isto, abrir a conversa por aqui (sidebar,
+       link directo) limpa admin_messages mas deixa a notificacao por ler
+       para sempre, so o clique no proprio sino a limpava. */
+    await supabaseAdmin
+      .from('notifications')
+      .update({ is_read: true })
+      .eq('operator_id', req.operator.id)
+      .eq('notification_type', 'founder_message')
+      .eq('is_read', false);
+
     return res.json({ data: data || [] });
   } catch (err) { next(err); }
 }
