@@ -570,7 +570,7 @@ function RentACarModal({ unit, op, slug, lang, onClose, refCode, traveler }) {
                   <div className={`w-4 h-4 rounded border-2 flex items-center justify-center flex-shrink-0 transition-all ${driverIncluded?'border-ocean-700 bg-ocean-700':'border-n-300'}`}>{driverIncluded&&<Check size={10} strokeWidth={3} className="text-white"/>}</div>
                   <span className={`text-xs font-body font-semibold ${driverIncluded?'text-ocean-700':'text-n-700'}`}>{lang==='en'?'Chauffeur included':'Motorista incluído'}</span>
                 </div>
-                <span className="text-xs font-mono text-n-500">+{fmtPrice(chauffeurRate,'day',op.currency||'EUR','EUR',lang)}/{lang==='en'?'day':'dia'}</span>
+                <span className="text-xs font-mono text-n-500">+{fmtPrice(chauffeurRate,'day',op.currency||'EUR','EUR',lang)}</span>
               </div>
             </button>
             <p className="text-xs font-body text-n-500 mt-2">{lang==='en'?'This vehicle also includes a waived insurance deductible.':'Este veículo inclui também seguro sem franquia.'}</p>
