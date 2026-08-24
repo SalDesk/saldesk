@@ -63,7 +63,7 @@ create index availability_staff_date_idx on staff_availability(staff_id, date);
 create table if not exists job_assignments (
   id              uuid primary key default gen_random_uuid(),
   reservation_id  uuid references reservations(id) on delete cascade not null,
-  staff_id        uuid references staff(id) on delete cascade not null,
+  staff_id        uuid references staff(id) on delete cascade,
   operator_id     uuid references operators(id) on delete cascade not null,
   status          text default 'pending' check (
                     status in ('pending','confirmed','in_progress','completed','cancelled')

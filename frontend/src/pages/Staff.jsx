@@ -503,7 +503,10 @@ function KanbanBoard({ staffList }) {
       else if (newStatus === 'completed')   await completeAssignment(task.id);
       else if (newStatus === 'cancelled')   await cancelAssignment(task.id);
       setTasks(p => p.map(t => t.id === task.id ? { ...t, status: newStatus } : t));
-    } catch (err) { console.error(err); }
+    } catch (err) {
+      console.error(err);
+      toast.error(err.response?.data?.error || 'Erro ao actualizar tarefa');
+    }
   }
 
   async function handleCreateTask(e) {
@@ -531,6 +534,7 @@ function KanbanBoard({ staffList }) {
       setTaskModal(false);
       setTaskForm({ title: '', desc: '', priority: 'medium', due: '', staff_id: '', reservation_id: '', checklist: '' });
     } catch (err) {
+      console.error(err);
       toast.error(err.response?.data?.error || 'Erro ao criar tarefa');
     } finally { setSaving(false); }
   }

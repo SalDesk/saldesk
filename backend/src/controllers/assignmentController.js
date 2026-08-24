@@ -31,18 +31,22 @@ async function listar(req, res, next) {
 async function criar(req, res, next) {
   try {
     const { reservation_id, staff_id, earnings_amount, notes_manager } = req.body;
-    if (!reservation_id || !staff_id) return res.status(400).json({ error: 'reservation_id e staff_id sao obrigatorios', code: 'MISSING_FIELDS' });
+    if (!reservation_id) return res.status(400).json({ error: 'reservation_id e obrigatorio', code: 'MISSING_FIELDS' });
 
-    const [resRes, staffRes] = await Promise.all([
-      supabaseAdmin.from('reservations').select('id, check_in, check_out, customer_name, units(name)').eq('id', reservation_id).eq('operator_id', req.operator.id).single(),
-      supabaseAdmin.from('staff').select('*').eq('id', staff_id).eq('operator_id', req.operator.id).single(),
-    ]);
-    if (!resRes.data) return res.status(404).json({ error: 'Reserva nao encontrada', code: 'NOT_FOUND' });
-    if (!staffRes.data) return res.status(404).json({ error: 'Colaborador nao encontrado', code: 'NOT_FOUND' });
+    let staff = null;
+
+    const { data: reservation } = await supabaseAdmin.from('reservations').select('id, check_in, check_out, customer_name, units(name)').eq('id', reservation_id).eq('operator_id', req.operator.id).single();
+    if (!reservation) return res.status(404).json({ error: 'Reserva nao encontrada', code: 'NOT_FOUND' });
+
+    if (staff_id) {
+      const { data } = await supabaseAdmin.from('staff').select('*').eq('id', staff_id).eq('operator_id', req.operator.id).single();
+      if (!data) return res.status(404).json({ error: 'Colaborador nao encontrado', code: 'NOT_FOUND' });
+      staff = data;
+    }
 
     const { data, error } = await supabaseAdmin
       .from('job_assignments')
-      .insert({ reservation_id, staff_id, operator_id: req.operator.id, earnings_amount: earnings_amount || 0, notes_manager: notes_manager || null })
+      .insert({ reservation_id, staff_id: staff_id || null, operator_id: req.operator.id, earnings_amount: earnings_amount || 0, notes_manager: notes_manager || null })
       .select('*, staff(name, role), reservations(check_in, check_out, customer_name, units(name))')
       .single();
     if (error) throw error;
@@ -50,14 +54,15 @@ async function criar(req, res, next) {
     /* Emitir via Socket.io */
     emitToOperator(req.operator.id, 'assignment:new', data);
 
-    /* Push notification ao colaborador */
-    const res_ = resRes.data;
-    await notifyStaff(staffRes.data, {
-      title: 'Novo trabalho atribuido',
-      body:  `${res_.units?.name} — ${res_.customer_name} (${res_.check_in})`,
-      tag:   'new_assignment',
-      url:   '/staff/jobs',
-    });
+    /* Push notification ao colaborador, se atribuida */
+    if (staff) {
+      await notifyStaff(staff, {
+        title: 'Novo trabalho atribuido',
+        body:  `${reservation.units?.name} — ${reservation.customer_name} (${reservation.check_in})`,
+        tag:   'new_assignment',
+        url:   '/staff/jobs',
+      });
+    }
 
     return res.status(201).json({ data, message: 'Atribuicao criada' });
   } catch (err) { next(err); }
