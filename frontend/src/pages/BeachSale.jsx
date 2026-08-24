@@ -11,6 +11,7 @@ import FleetSelector from '../components/fleet/FleetSelector';
 import {
   getSellerCommissionPct, getSellerMeta,
 } from '../services/sellerService';
+import { getMyProfile } from '../services/staffService';
 import useAuthStore from '../store/authStore';
 import Logo from '../components/shared/Logo';
 import { buildWhatsAppLink } from '../utils/whatsapp';
@@ -63,7 +64,18 @@ export default function BeachSale() {
   const sellerId   = user?.user_metadata?.staff_id || user?.id;
   const sellerName = user?.user_metadata?.name || user?.email || 'Vendedor';
   const sellerMeta = getSellerMeta(sellerId);
-  const commPct    = getSellerCommissionPct(sellerId, 10);
+
+  const [profile, setProfile] = useState(null);
+  /* commission_pct real vem do proprio perfil (GET /staff/me) -- o
+     mecanismo antigo (getSellerCommissionPct/localStorage) nunca era
+     preenchido em lado nenhum do codigo, por isso mostrava sempre o
+     valor por omissao (10%) em vez da percentagem real configurada
+     pelo operador. Fica so como ultimo recurso se o perfil falhar. */
+  const commPct = profile?.commission_pct ?? getSellerCommissionPct(sellerId, 10);
+
+  useEffect(() => {
+    getMyProfile().then(setProfile).catch(() => {});
+  }, []);
 
   const [step,    setStep]    = useState(1);
   const [tours,   setTours]   = useState([]);
