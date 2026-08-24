@@ -998,7 +998,7 @@ export default function ServiceDetail() {
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {[
               { icon:<RotateCcw size={18} strokeWidth={1.75}/>, pt:'Cancelamento gratuito', en:'Free cancellation', sub_pt:'Até 24h antes', sub_en:'Up to 24h before' },
-              ...(unitMeta.duration ? [{ icon:<Clock size={18} strokeWidth={1.75}/>, pt:'Duração', en:'Duration', sub_pt:unitMeta.duration>=60?`${(unitMeta.duration/60).toFixed(unitMeta.duration%60?1:0)}h`:`${unitMeta.duration} min`, sub_en:unitMeta.duration>=60?`${(unitMeta.duration/60).toFixed(unitMeta.duration%60?1:0)}h`:`${unitMeta.duration} min` }] : []),
+              ...(unitMeta.duration ? [{ icon:<Clock size={18} strokeWidth={1.75}/>, pt:'Duração', en:'Duration', sub_pt:`${unitMeta.duration}h`, sub_en:`${unitMeta.duration}h` }] : []),
               ...(unitMeta.tour_type ? [{ icon:<Users size={18} strokeWidth={1.75}/>, pt:'Modalidade', en:'Group type', sub_pt:{grupo:'Guia partilhado',privado:'Guia privado',ambos:'Grupo ou privado'}[unitMeta.tour_type]||unitMeta.tour_type, sub_en:{grupo:'Shared guide',privado:'Private guide',ambos:'Group or private'}[unitMeta.tour_type]||unitMeta.tour_type }] : []),
               ...(Array.isArray(unitMeta.languages) && unitMeta.languages.length ? [{ icon:<Languages size={18} strokeWidth={1.75}/>, pt:'Idiomas', en:'Languages', sub_pt:unitMeta.languages.join(' · '), sub_en:unitMeta.languages.join(' · ') }] : []),
             ].map((c,i) => (
