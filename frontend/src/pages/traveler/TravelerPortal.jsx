@@ -33,9 +33,12 @@ const STATUS_BADGE = {
 const PAYMENT_LABEL = { pending: 'Pendente', paid: 'Pago', partial: 'Parcial', refunded: 'Reembolsado' };
 const PAYMENT_BADGE = { pending: 'pending', paid: 'confirmed', partial: 'info', refunded: 'cancelled' };
 
+/* timeZone:'UTC' e deliberado -- check_in/check_out sao colunas `date` puras
+   (sem hora), e sem forcar UTC o fuso horario do browser desloca a data
+   exibida um dia para tras quando o visitante esta a oeste de UTC. */
 function fmtDate(iso) {
   if (!iso) return '—';
-  return new Date(iso).toLocaleDateString('pt-PT', { day: '2-digit', month: 'short', year: 'numeric' });
+  return new Date(iso).toLocaleDateString('pt-PT', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'UTC' });
 }
 
 function fmtRelative(iso) {
