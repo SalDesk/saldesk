@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Plus, QrCode, Link as LinkIcon, Copy, CheckCircle } from 'lucide-react';
+import { Plus, QrCode, Link as LinkIcon, Copy, CheckCircle, Sparkles } from 'lucide-react';
 import { listUnits, createUnit, updateUnit, deleteUnit, toggleUnitStatus, updateConectStatus } from '../services/unitsService';
 import { getQrCode } from '../services/marketingService';
 import useAuthStore from '../store/authStore';
@@ -179,6 +179,15 @@ export default function Units() {
     inactive: units.filter(u => u.status === 'inactive').length,
   }), [units]);
 
+  /* Recomendacoes e o "eyebrow" de coordenadas no SalDesk Conect dependem
+     de category_id/lat/lng -- so ficam mudos sem isto preenchido (nunca
+     inventamos categoria/coordenadas). Mesas de restaurante nunca sao
+     elegiveis para o Conect (so os pratos, geridos no Menu Digital), por
+     isso o lembrete nao se aplica a elas. */
+  const incompleteUnits = opType === 'restaurant' ? [] : units.filter(
+    (u) => u.status !== 'inactive' && (!u.category_id || u.lat == null || u.lng == null)
+  );
+
   const modalTitle = modal === 'create'
     ? lbl.newBtn
     : modal ? `${lbl.editPrefix}: ${modal.name}` : '';
@@ -213,6 +222,17 @@ export default function Units() {
               <span className="font-display font-bold text-sm text-n-500">{stats.inactive}</span>
             </div>
           )}
+        </div>
+      )}
+
+      {!loading && incompleteUnits.length > 0 && (
+        <div className="mb-6 px-4 py-3 bg-sand-50 border border-sand-200 rounded-md flex items-start gap-3">
+          <Sparkles size={16} strokeWidth={1.75} className="text-sand-600 shrink-0 mt-0.5" />
+          <p className="text-sm font-body text-n-700">
+            <span className="font-semibold">{incompleteUnits.length}</span>
+            {incompleteUnits.length === 1 ? ' unidade está' : ' unidades estão'} sem categoria e/ou coordenadas —
+            estes dados ajudam o SalDesk Conect a recomendar e a localizar os teus serviços. Edita cada unidade para os preencher.
+          </p>
         </div>
       )}
 
