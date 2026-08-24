@@ -1,9 +1,25 @@
 const path = require('path');
+const axios = require('axios');
+const sharp = require('sharp');
 const { supabaseAdmin } = require('../config/supabase');
 const { getDiscoverCatalog } = require('../services/discoverCatalogService');
 const PDFDocument = require('pdfkit');
 
 const LOGO_WHITE_PATH = path.join(__dirname, '../assets/logo-white.png');
+
+/* pdfkit so desenha JPEG/PNG -- logos de operador sao sempre gravados como
+   .webp (upload.js), por isso tem de se converter antes de doc.image(),
+   senao rebenta a geracao do recibo inteiro. Falha silenciosamente (devolve
+   null) para nunca deixar um logo em falta/inacessivel partir o download. */
+async function fetchOperatorLogoPng(url) {
+  if (!url) return null;
+  try {
+    const resp = await axios.get(url, { responseType: 'arraybuffer', timeout: 5000 });
+    return await sharp(Buffer.from(resp.data)).resize({ height: 120, withoutEnlargement: true }).png().toBuffer();
+  } catch {
+    return null;
+  }
+}
 
 async function getProfile(req, res) {
   return res.json({ data: req.traveler, message: 'Perfil do viajante' });
@@ -384,12 +400,14 @@ async function getBookingInvoice(req, res, next) {
     const email = req.traveler.email.trim().toLowerCase();
     const { data: reserva, error } = await supabaseAdmin
       .from('reservations')
-      .select('*, units(name), operators(name, address, email, currency)')
+      .select('*, units(name), operators(name, address, email, currency, logo_url)')
       .eq('id', req.params.id)
       .ilike('customer_email', email)
       .maybeSingle();
     if (error) throw error;
     if (!reserva) return res.status(404).json({ error: 'Reserva não encontrada', code: 'NOT_FOUND' });
+
+    const operatorLogoBuffer = await fetchOperatorLogoPng(reserva.operators?.logo_url);
 
     const OCEAN_800 = '#0A3F55';
     const OCEAN_700 = '#0D5470';
@@ -429,7 +447,7 @@ async function getBookingInvoice(req, res, next) {
     /* Faixa de topo -- identidade SalDesk, nunca do operador (o recibo e
        emitido PELA plataforma em nome do operador, nao pelo operador). */
     doc.rect(0, 0, PAGE_W, 108).fill(OCEAN_800);
-    doc.image(LOGO_WHITE_PATH, MARGIN, 30, { height: 46 });
+    doc.image(LOGO_WHITE_PATH, MARGIN, 24, { height: 60 });
     doc.font('Helvetica-Bold').fontSize(20).fillColor('#FFFFFF')
       .text('RECIBO', MARGIN, 34, { width: CONTENT_W, align: 'right' });
     doc.font('Helvetica').fontSize(9).fillColor(OCEAN_100)
@@ -450,11 +468,19 @@ async function getBookingInvoice(req, res, next) {
     doc.font('Helvetica-Bold').fontSize(9).fillColor(OCEAN_700).text('CLIENTE', COL_R_X, y);
     y += 16;
 
-    const opNameH = doc.font('Helvetica-Bold').fontSize(11).heightOfString(reserva.operators?.name || '—', { width: COL_W });
+    const LOGO_BOX = 34;
+    const opNameOffsetX = operatorLogoBuffer ? LOGO_BOX + 10 : 0;
+    const opNameW = COL_W - opNameOffsetX;
+    const opNameH = doc.font('Helvetica-Bold').fontSize(11).heightOfString(reserva.operators?.name || '—', { width: opNameW });
     const custNameH = doc.font('Helvetica-Bold').fontSize(11).heightOfString(reserva.customer_name || '—', { width: COL_W });
-    doc.font('Helvetica-Bold').fontSize(11).fillColor(N900).text(reserva.operators?.name || '—', COL_L_X, y, { width: COL_W });
+
+    if (operatorLogoBuffer) {
+      doc.image(operatorLogoBuffer, COL_L_X, y, { fit: [LOGO_BOX, LOGO_BOX] });
+    }
+    doc.font('Helvetica-Bold').fontSize(11).fillColor(N900)
+      .text(reserva.operators?.name || '—', COL_L_X + opNameOffsetX, operatorLogoBuffer ? y + Math.max(0, (LOGO_BOX - opNameH) / 2) : y, { width: opNameW });
     doc.font('Helvetica-Bold').fontSize(11).fillColor(N900).text(reserva.customer_name || '—', COL_R_X, y, { width: COL_W });
-    y += Math.max(opNameH, custNameH) + 4;
+    y += Math.max(operatorLogoBuffer ? LOGO_BOX : opNameH, custNameH) + 4;
 
     const enderecoH = reserva.operators?.address
       ? doc.font('Helvetica').fontSize(9).heightOfString(reserva.operators.address, { width: COL_W })
