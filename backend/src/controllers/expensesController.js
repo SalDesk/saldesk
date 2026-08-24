@@ -4,6 +4,18 @@ function getOperatorId(req) {
   return req.operator?.id || req.staff?.operator_id;
 }
 
+/* actualizarSalaryConfig/criarSalaryPayment aceitavam staffId do pedido sem
+   confirmar que pertencia ao proprio operador -- um operador conseguia
+   criar config/pagamento de salario referenciando o staff_id de OUTRO
+   operador (poluicao de dados) e, via o join staff(name) ja usado em
+   listarSalaryPayments, aprender o nome de um colaborador alheio. */
+async function staffPertenceAoOperador(staffId, operatorId) {
+  if (!staffId || !operatorId) return false;
+  const { data } = await supabaseAdmin
+    .from('staff').select('id').eq('id', staffId).eq('operator_id', operatorId).maybeSingle();
+  return !!data;
+}
+
 /* ── Despesas ── */
 
 async function listarDespesas(req, res, next) {
@@ -102,11 +114,15 @@ async function listarSalaryConfigs(req, res, next) {
 async function actualizarSalaryConfig(req, res, next) {
   try {
     const { staffId } = req.params;
+    const operatorId = getOperatorId(req);
+    if (!(await staffPertenceAoOperador(staffId, operatorId))) {
+      return res.status(404).json({ error: 'Colaborador nao encontrado', code: 'NOT_FOUND' });
+    }
     const { base, food, transport, inps_pct } = req.body;
     const { data, error } = await supabaseAdmin
       .from('salary_configs')
       .upsert({
-        operator_id: getOperatorId(req),
+        operator_id: operatorId,
         staff_id:    staffId,
         base:        Number(base) || 0,
         food:        Number(food) || 0,
@@ -144,9 +160,13 @@ async function criarSalaryPayment(req, res, next) {
     if (!staffId || !month || !year || amount === undefined) {
       return res.status(400).json({ error: 'staffId, month, year e amount sao obrigatorios', code: 'MISSING_FIELDS' });
     }
+    const operatorId = getOperatorId(req);
+    if (!(await staffPertenceAoOperador(staffId, operatorId))) {
+      return res.status(404).json({ error: 'Colaborador nao encontrado', code: 'NOT_FOUND' });
+    }
     const { data, error } = await supabaseAdmin
       .from('salary_payments')
-      .insert({ operator_id: getOperatorId(req), staff_id: staffId, month: Number(month), year: Number(year), amount: Number(amount) })
+      .insert({ operator_id: operatorId, staff_id: staffId, month: Number(month), year: Number(year), amount: Number(amount) })
       .select('*, staff(name)')
       .single();
     if (error) throw error;

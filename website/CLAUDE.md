@@ -2,8 +2,11 @@
 
 ## O que é este projecto
 
-O ficheiro `index-full.html` é o website de marketing de saldesk.cv — a landing page pública
-que converte visitantes em operadores registados. É a "montra" do produto.
+O ficheiro `index.html` é o website de marketing de saldesk.cv — a landing page pública
+que converte visitantes em operadores registados. É a "montra" do produto. (Confirmado ao vivo
+via nginx: `root /var/www/saldesk/website; index index.html;`. `index-full.html` e
+`index-old.html` são versões antigas/de referência, não editar — este documento chegou a
+apontar para `index-full.html` por engano.)
 
 O produto em si (app.saldesk.cv) é um SaaS de gestão turística para operadores de Cabo Verde.
 Nasceu na Ilha do Sal e está a expandir para todo o país.

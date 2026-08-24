@@ -731,8 +731,15 @@ function buildFooter() {
 }
 
 /* ── Operator card ───────────────────────────────────────── */
-const PLACEHOLDERS = { hotel:'1571003123894-1f0594d2b5d9', activity:'506929562872-bb421503ef21', rentacar:'494976388531-d1058494cdd8', restaurant:'414235077428-338989a2e8c0', default:'1507525428034-b723cf961d3e' };
-function imgOp(op) { return (op.cover_images && op.cover_images[0]) || op.logo_url || `${UNS}${PLACEHOLDERS[op.operator_type]||PLACEHOLDERS.default}?w=600&q=75`; }
+/* Nunca imagem de stock externa (regra do website/CLAUDE.md) -- quando o
+   operador nao tem cover_images/logo_url, mostra um gradiente neutro em
+   vez de uma foto generica do Unsplash, mesmo principio ja usado no
+   catalogo Conect (discover/index.html). */
+function placeholderGradient() {
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="600" height="400"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#0F7B8A"/><stop offset="1" stop-color="#062A38"/></linearGradient></defs><rect width="600" height="400" fill="url(#g)"/></svg>`;
+  return `data:image/svg+xml,${encodeURIComponent(svg)}`;
+}
+function imgOp(op) { return (op.cover_images && op.cover_images[0]) || op.logo_url || placeholderGradient(); }
 function tLabel(t) { const M={hotel:{pt:'Hotel',en:'Hotel'},activity:{pt:'Actividade',en:'Activity'},rentacar:{pt:'Rent-a-Car',en:'Rent-a-Car'},restaurant:{pt:'Restaurante',en:'Restaurant'}}; return (M[t]||{pt:t,en:t})[L()]; }
 
 /* Chave propria (sd-wish-operators), diferente de sd-wish (usada em
@@ -754,7 +761,7 @@ function renderOpCard(op) {
   return `
     <div class="op-card fade-up">
       <div class="op-img">
-        <img src="${esc(imgOp(op))}" alt="${esc(op.name)}" loading="lazy" onerror="this.src='${UNS}${PLACEHOLDERS.default}?w=600&q=75'" />
+        <img src="${esc(imgOp(op))}" alt="${esc(op.name)}" loading="lazy" onerror="this.src='${placeholderGradient()}'" />
         <div class="op-img-ov"></div>
         <button class="op-wish ${wished?'active':''}" data-wish="${esc(op.slug)}" onclick="toggleWish('${esc(op.slug)}')" aria-label="Wishlist">${heart}</button>
         <span class="tb tb-${op.operator_type}" style="position:absolute;bottom:10px;left:10px">${tLabel(op.operator_type)}</span>

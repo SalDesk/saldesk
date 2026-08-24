@@ -24,6 +24,7 @@ const {
   callWaiter,
   createOrder,
   listIslands,
+  getCmsPublic,
 } = require('../controllers/publicController');
 const { publicInitSisp, publicPaypalClientId, publicCreatePaypalIntent, publicConfirmPaypalPayment } = require('../controllers/paymentController');
 const { validarVoucherPublico } = require('../controllers/vouchersController');
@@ -56,7 +57,7 @@ router.post('/contact',            publicContact);
 router.post('/leads',              submitLead);
 
 /* ─── CMS website público ─── */
-router.get('/cms', require('../controllers/publicController').getCmsPublic);
+router.get('/cms', getCmsPublic);
 
 /* ─── Unidade individual ─── */
 router.get('/:slug/units/:unitId',         getUnit);
@@ -85,7 +86,5 @@ router.get('/:slug/qrcode', (req, res) => {
   const url  = encodeURIComponent(`${base}/book/${req.params.slug}?ref=qr`);
   return res.redirect(`https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${url}&format=png`);
 });
-
-router.get('/cms', require('../controllers/publicController').getCmsPublic);
 
 module.exports = router;
