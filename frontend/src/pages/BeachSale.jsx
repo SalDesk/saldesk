@@ -96,6 +96,8 @@ export default function BeachSale() {
   const [clientName,   setClientName]   = useState('');
   const [clientEmail,  setClientEmail]  = useState('');
   const [clientPhone,  setClientPhone]  = useState('');
+  const [clientHotel,  setClientHotel]  = useState('');
+  const [clientRoom,   setClientRoom]   = useState('');
   const [notes,        setNotes]        = useState('');
 
   /* Fleet state */
@@ -148,6 +150,8 @@ export default function BeachSale() {
         notes_internal:   `Vendedor: ${sellerName} (${sellerId}) | Hora: ${selectedTime}`,
         notes_guest:      JSON.stringify({
           phone:         clientPhone,
+          hotel:         clientHotel,
+          room:          clientRoom,
           special_requirements: notes,
         }),
         customer_name:    clientName,
@@ -168,6 +172,8 @@ export default function BeachSale() {
         total:      totalPrice,
         clientName,
         clientPhone,
+        clientHotel,
+        clientRoom,
       });
       setStep(4);
     } catch (err) {
@@ -180,7 +186,8 @@ export default function BeachSale() {
   function resetForm() {
     setSelectedTour(null); setSelectedDate(TODAY); setSelectedTime('');
     setAdults(1); setKids(0); setClientName(''); setClientEmail('');
-    setClientPhone(''); setNotes(''); setSuccessData(null);
+    setClientPhone(''); setClientHotel(''); setClientRoom('');
+    setNotes(''); setSuccessData(null);
     setAvailableFleet([]); setSelectedFleetId(null);
     setError(''); setStep(1);
   }
@@ -500,6 +507,29 @@ export default function BeachSale() {
                 />
               </div>
 
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="flex items-center gap-1.5 text-sm font-body font-semibold text-n-700 mb-2">
+                    <MapPin size={14} strokeWidth={1.75} />Hotel
+                  </label>
+                  <input
+                    type="text" value={clientHotel} onChange={e => setClientHotel(e.target.value)}
+                    placeholder="Ex: Hotel Morabeza"
+                    className="w-full h-12 px-4 rounded-2xl border-2 border-n-200 text-base font-body bg-white focus:outline-none focus:border-turquoise-500 transition-colors"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-body font-semibold text-n-700 mb-2 block">
+                    Quarto / Apartamento
+                  </label>
+                  <input
+                    type="text" value={clientRoom} onChange={e => setClientRoom(e.target.value)}
+                    placeholder="Ex: 204"
+                    className="w-full h-12 px-4 rounded-2xl border-2 border-n-200 text-base font-body bg-white focus:outline-none focus:border-turquoise-500 transition-colors"
+                  />
+                </div>
+              </div>
+
               <div>
                 <label className="text-sm font-body font-semibold text-n-700 mb-2 block">
                   Notas especiais (opcional)
@@ -567,6 +597,14 @@ export default function BeachSale() {
                 <span className="text-n-500">Total cobrado</span>
                 <span className="font-display font-bold text-ocean-700">€{successData.total.toFixed(0)}</span>
               </div>
+              {successData.clientHotel && (
+                <div className="flex justify-between text-sm">
+                  <span className="text-n-500">Hotel</span>
+                  <span className="font-body font-semibold text-n-800">
+                    {successData.clientHotel}{successData.clientRoom ? ` — Quarto ${successData.clientRoom}` : ''}
+                  </span>
+                </div>
+              )}
             </div>
 
             <div className="flex flex-col gap-3 w-full">

@@ -331,12 +331,13 @@ function ManifestoModal({ open, onClose, reservations, units }) {
               <p className="text-sm font-body text-n-500 text-center py-6">Nenhum participante encontrado.</p>
             ) : (
               <div className="border border-n-200 rounded-sm overflow-hidden overflow-x-auto">
-                <table className="w-full text-sm" style={{ minWidth: 700 }}>
+                <table className="w-full text-sm" style={{ minWidth: 820 }}>
                   <thead>
                     <tr className="bg-n-50 border-b border-n-200">
                       <th className="text-left px-3 py-2.5 text-xs font-body font-bold uppercase tracking-wide text-n-500">#</th>
                       <th className="text-left px-3 py-2.5 text-xs font-body font-bold uppercase tracking-wide text-n-500">Nome</th>
                       <th className="text-left px-3 py-2.5 text-xs font-body font-bold uppercase tracking-wide text-n-500">Telefone</th>
+                      <th className="text-left px-3 py-2.5 text-xs font-body font-bold uppercase tracking-wide text-n-500">Hotel / Quarto</th>
                       <th className="text-left px-3 py-2.5 text-xs font-body font-bold uppercase tracking-wide text-n-500">Contacto emergencia</th>
                       <th className="text-left px-3 py-2.5 text-xs font-body font-bold uppercase tracking-wide text-n-500">Req. especiais</th>
                       <th className="text-center px-3 py-2.5 text-xs font-body font-bold uppercase tracking-wide text-n-500">Pax</th>
@@ -356,6 +357,9 @@ function ManifestoModal({ open, onClose, reservations, units }) {
                             <p className="text-xs font-body text-n-400">{r.customer_country || ''}</p>
                           </td>
                           <td className="px-3 py-2.5 text-xs font-body text-n-600">{r.customer_phone || extra.phone || '—'}</td>
+                          <td className="px-3 py-2.5 text-xs font-body text-n-600">
+                            {extra.hotel ? `${extra.hotel}${extra.room ? ` — ${extra.room}` : ''}` : '—'}
+                          </td>
                           <td className="px-3 py-2.5 text-xs font-body text-n-600">{extra.emergency_contact || '—'}</td>
                           <td className="px-3 py-2.5 text-xs font-body text-n-600 max-w-[120px] truncate">{extra.special_requirements || r.notes_guest || '—'}</td>
                           <td className="px-3 py-2.5 text-center font-body font-semibold text-sm text-n-900">{r.guests}</td>
@@ -373,7 +377,7 @@ function ManifestoModal({ open, onClose, reservations, units }) {
                   </tbody>
                   <tfoot>
                     <tr className="bg-n-50 border-t border-n-200">
-                      <td colSpan={5} className="px-3 py-2.5 text-xs font-body font-bold text-n-700 uppercase tracking-wide">Total</td>
+                      <td colSpan={6} className="px-3 py-2.5 text-xs font-body font-bold text-n-700 uppercase tracking-wide">Total</td>
                       <td className="px-3 py-2.5 text-center font-display font-bold text-sm text-n-900">{totalPax}</td>
                       <td />
                       <td className="px-3 py-2.5 text-right font-display font-bold text-sm text-ocean-700">
