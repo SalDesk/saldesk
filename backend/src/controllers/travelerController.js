@@ -7,15 +7,25 @@ const PDFDocument = require('pdfkit');
 
 const LOGO_WHITE_PATH = path.join(__dirname, '../assets/logo-white.png');
 
-/* pdfkit so desenha JPEG/PNG -- logos de operador sao sempre gravados como
-   .webp (upload.js), por isso tem de se converter antes de doc.image(),
-   senao rebenta a geracao do recibo inteiro. Falha silenciosamente (devolve
-   null) para nunca deixar um logo em falta/inacessivel partir o download. */
+/* pdfkit so desenha JPEG/PNG -- logo_url em producao tem 2 formatos reais
+   (confirmado ao vivo via Supabase): uploads recentes sao URL http para um
+   ficheiro .webp (upload.js), mas operadores mais antigos tem o logo
+   gravado directamente como data URI base64 -- um `axios.get` a um `data:`
+   falharia sempre, por isso os dois casos tem de ser tratados aqui. Falha
+   silenciosamente (devolve null) para nunca deixar um logo em falta ou
+   inacessivel partir a geracao do recibo. */
 async function fetchOperatorLogoPng(url) {
   if (!url) return null;
   try {
-    const resp = await axios.get(url, { responseType: 'arraybuffer', timeout: 5000 });
-    return await sharp(Buffer.from(resp.data)).resize({ height: 120, withoutEnlargement: true }).png().toBuffer();
+    let raw;
+    if (url.startsWith('data:')) {
+      const base64 = url.split(',')[1] || '';
+      raw = Buffer.from(base64, 'base64');
+    } else {
+      const resp = await axios.get(url, { responseType: 'arraybuffer', timeout: 5000 });
+      raw = Buffer.from(resp.data);
+    }
+    return await sharp(raw).resize({ height: 120, withoutEnlargement: true }).png().toBuffer();
   } catch {
     return null;
   }
