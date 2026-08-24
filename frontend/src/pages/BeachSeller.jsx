@@ -203,101 +203,114 @@ export default function BeachSeller() {
   function handleLogout() { logout(); navigate('/login'); }
 
   return (
-    <div className="min-h-screen bg-n-50 flex flex-col max-w-md md:max-w-2xl lg:max-w-4xl xl:max-w-5xl mx-auto md:my-8 md:rounded-3xl md:shadow-xl md:border md:border-n-200 md:overflow-hidden">
-      {/* Header */}
-      <header className="bg-gradient-to-br from-ocean-900 to-ocean-700 px-5 pt-6 pb-6 rounded-b-3xl shadow-lg">
-        <div className="flex items-center justify-between mb-5">
-          <Logo white size="sm" />
-          <div className="flex items-center gap-1">
-            <button onClick={() => navigate('/vendedor/perfil')}
-              className="w-10 h-10 rounded-full flex items-center justify-center hover:bg-white/10 active:scale-95 transition-all">
-              <User size={18} strokeWidth={1.75} className="text-ocean-200" />
-            </button>
-            <button onClick={handleLogout}
-              className="w-10 h-10 rounded-full flex items-center justify-center hover:bg-white/10 active:scale-95 transition-all">
-              <LogOut size={18} strokeWidth={1.75} className="text-ocean-200" />
-            </button>
+    <div className="min-h-screen bg-n-50 flex flex-col">
+      {/* Header — fundo a toda a largura, conteudo centrado numa coluna legivel */}
+      <header className="bg-gradient-to-br from-ocean-900 to-ocean-700 shadow-lg rounded-b-3xl md:rounded-none">
+        <div className="max-w-6xl mx-auto px-5 md:px-8 lg:px-12 pt-6 pb-6 md:pb-8">
+          <div className="flex items-center justify-between mb-5">
+            <Logo white size="sm" />
+            <div className="flex items-center gap-1">
+              <button onClick={() => navigate('/vendedor/perfil')}
+                className="w-10 h-10 rounded-full flex items-center justify-center hover:bg-white/10 active:scale-95 transition-all">
+                <User size={18} strokeWidth={1.75} className="text-ocean-200" />
+              </button>
+              <button onClick={handleLogout}
+                className="w-10 h-10 rounded-full flex items-center justify-center hover:bg-white/10 active:scale-95 transition-all">
+                <LogOut size={18} strokeWidth={1.75} className="text-ocean-200" />
+              </button>
+            </div>
           </div>
-        </div>
 
-        <div className="flex items-center justify-between gap-2 mb-1">
-          <div className="flex items-center gap-2">
-            <Sun size={20} strokeWidth={1.75} className="text-sand-400" />
-            <p className="font-display font-bold text-2xl text-white">Olá, {sellerName}</p>
+          <div className="flex items-center justify-between gap-2 mb-1">
+            <div className="flex items-center gap-2">
+              <Sun size={20} strokeWidth={1.75} className="text-sand-400" />
+              <p className="font-display font-bold text-2xl text-white">Olá, {sellerName}</p>
+            </div>
+            <div className="flex items-center gap-2 shrink-0">
+              <button
+                onClick={() => setShowShiftSummary(true)}
+                className="flex items-center gap-2 px-3 py-2 bg-white/10 rounded-xl text-white text-xs font-body font-semibold hover:bg-white/20 transition-colors"
+              >
+                <ClipboardCheck size={15} strokeWidth={1.75} />
+                Fim de Turno
+              </button>
+              <button
+                onClick={() => navigate('/vendedor/nova-reserva')}
+                className="hidden md:flex items-center gap-2 px-4 py-2 bg-sand-500 text-ocean-900 rounded-xl text-xs font-body font-bold hover:bg-sand-600 transition-colors"
+              >
+                <Plus size={15} strokeWidth={2.5} />
+                Nova Reserva
+              </button>
+            </div>
           </div>
-          <button
-            onClick={() => setShowShiftSummary(true)}
-            className="flex items-center gap-2 px-3 py-2 bg-white/10 rounded-xl text-white text-xs font-body font-semibold hover:bg-white/20 transition-colors shrink-0"
-          >
-            <ClipboardCheck size={15} strokeWidth={1.75} />
-            Fim de Turno
-          </button>
-        </div>
-        <p className="text-ocean-300 text-sm font-body">Pronto para a próxima venda?</p>
+          <p className="text-ocean-300 text-sm font-body">Pronto para a próxima venda?</p>
 
-        {/* Stats cards */}
-        <div className="grid grid-cols-2 gap-3 mt-5">
-          <div className="bg-sand-500 rounded-3xl p-4">
-            <TrendingUp size={20} strokeWidth={1.75} className="text-ocean-900 mb-2" />
-            <p className="font-display font-bold text-3xl text-ocean-900 leading-none">{fmtMoney(totalToday)}</p>
-            <p className="text-ocean-900/70 text-xs font-body font-semibold mt-1.5">
-              Hoje · {todayReservations.length} reserva(s)
-            </p>
-          </div>
-          <div className="bg-gradient-to-br from-turquoise-600 to-turquoise-400 rounded-3xl p-4">
-            <Euro size={20} strokeWidth={1.75} className="text-white mb-2" />
-            <p className="font-display font-bold text-3xl text-white leading-none">{fmtMoney(totalCurrentMonth)}</p>
-            <p className="text-white/80 text-xs font-body font-semibold mt-1.5">Comissão este mês</p>
+          {/* Stats cards */}
+          <div className="grid grid-cols-2 gap-3 mt-5 max-w-xl">
+            <div className="bg-sand-500 rounded-3xl p-4">
+              <TrendingUp size={20} strokeWidth={1.75} className="text-ocean-900 mb-2" />
+              <p className="font-display font-bold text-3xl text-ocean-900 leading-none">{fmtMoney(totalToday)}</p>
+              <p className="text-ocean-900/70 text-xs font-body font-semibold mt-1.5">
+                Hoje · {todayReservations.length} reserva(s)
+              </p>
+            </div>
+            <div className="bg-gradient-to-br from-turquoise-600 to-turquoise-400 rounded-3xl p-4">
+              <Euro size={20} strokeWidth={1.75} className="text-white mb-2" />
+              <p className="font-display font-bold text-3xl text-white leading-none">{fmtMoney(totalCurrentMonth)}</p>
+              <p className="text-white/80 text-xs font-body font-semibold mt-1.5">Comissão este mês</p>
+            </div>
           </div>
         </div>
       </header>
 
-      {/* Meta pessoal */}
-      {recordCountDay.day ? (
-        <div className="mx-4 mt-3 bg-gradient-to-r from-turquoise-500 to-turquoise-700 rounded-2xl p-4 text-white">
-          <div className="flex items-center gap-2 mb-2">
-            <Trophy size={18} strokeWidth={1.75} />
-            <p className="font-display font-bold text-sm">Meta Pessoal</p>
+      <div className="max-w-6xl mx-auto w-full px-4 md:px-8 lg:px-12">
+        {/* Meta pessoal */}
+        {recordCountDay.day ? (
+          <div className="mt-3 bg-gradient-to-r from-turquoise-500 to-turquoise-700 rounded-2xl p-4 text-white">
+            <div className="flex items-center gap-2 mb-2">
+              <Trophy size={18} strokeWidth={1.75} />
+              <p className="font-display font-bold text-sm">Meta Pessoal</p>
+            </div>
+            <p className="text-sm font-body opacity-90">{getMotivationMessage()}</p>
+            <div className="flex items-center gap-4 mt-3 pt-3 border-t border-white/20">
+              <div>
+                <p className="text-[10px] font-mono uppercase tracking-wide opacity-70">Recorde vendas/dia</p>
+                <p className="font-display font-bold text-lg">{recordCountDay.count}</p>
+              </div>
+              <div>
+                <p className="text-[10px] font-mono uppercase tracking-wide opacity-70">Recorde valor/dia</p>
+                <p className="font-display font-bold text-lg">{fmtMoney(recordDay.total)}</p>
+              </div>
+              <div>
+                <p className="text-[10px] font-mono uppercase tracking-wide opacity-70">Hoje</p>
+                <p className="font-display font-bold text-lg">{todayStats.count} · {fmtMoney(todayStats.total)}</p>
+              </div>
+            </div>
           </div>
-          <p className="text-sm font-body opacity-90">{getMotivationMessage()}</p>
-          <div className="flex items-center gap-4 mt-3 pt-3 border-t border-white/20">
-            <div>
-              <p className="text-[10px] font-mono uppercase tracking-wide opacity-70">Recorde vendas/dia</p>
-              <p className="font-display font-bold text-lg">{recordCountDay.count}</p>
-            </div>
-            <div>
-              <p className="text-[10px] font-mono uppercase tracking-wide opacity-70">Recorde valor/dia</p>
-              <p className="font-display font-bold text-lg">{fmtMoney(recordDay.total)}</p>
-            </div>
-            <div>
-              <p className="text-[10px] font-mono uppercase tracking-wide opacity-70">Hoje</p>
-              <p className="font-display font-bold text-lg">{todayStats.count} · {fmtMoney(todayStats.total)}</p>
-            </div>
+        ) : (
+          <div className="mt-3 bg-gradient-to-r from-turquoise-500 to-turquoise-700 rounded-2xl p-4 text-white flex items-center gap-3">
+            <Trophy size={20} strokeWidth={1.75} className="shrink-0" />
+            <p className="text-sm font-body font-semibold">Ainda sem vendas — hoje pode ser o teu primeiro recorde!</p>
           </div>
-        </div>
-      ) : (
-        <div className="mx-4 mt-3 bg-gradient-to-r from-turquoise-500 to-turquoise-700 rounded-2xl p-4 text-white flex items-center gap-3">
-          <Trophy size={20} strokeWidth={1.75} className="shrink-0" />
-          <p className="text-sm font-body font-semibold">Ainda sem vendas — hoje pode ser o teu primeiro recorde!</p>
-        </div>
-      )}
+        )}
 
-      {/* Tabs */}
-      <div className="flex mx-4 mt-5 gap-1 bg-n-100 rounded-2xl p-1">
-        {[
-          { key: 'hoje',      label: 'Hoje'            },
-          { key: 'comissoes', label: 'Minhas Comissoes' },
-        ].map(t => (
-          <button key={t.key} onClick={() => setActiveTab(t.key)}
-            className={`flex-1 py-3 rounded-xl text-sm font-body font-semibold transition-colors ${
-              activeTab === t.key ? 'bg-white text-ocean-700 shadow-sm' : 'text-n-500'
-            }`}>
-            {t.label}
-          </button>
-        ))}
+        {/* Tabs */}
+        <div className="flex mt-5 gap-1 bg-n-100 rounded-2xl p-1 max-w-md">
+          {[
+            { key: 'hoje',      label: 'Hoje'            },
+            { key: 'comissoes', label: 'Minhas Comissoes' },
+          ].map(t => (
+            <button key={t.key} onClick={() => setActiveTab(t.key)}
+              className={`flex-1 py-3 rounded-xl text-sm font-body font-semibold transition-colors ${
+                activeTab === t.key ? 'bg-white text-ocean-700 shadow-sm' : 'text-n-500'
+              }`}>
+              {t.label}
+            </button>
+          ))}
+        </div>
       </div>
 
-      <main className="flex-1 px-4 py-4 space-y-3 pb-28">
+      <main className="flex-1 max-w-6xl mx-auto w-full px-4 md:px-8 lg:px-12 py-4 space-y-3 pb-28 md:pb-10">
         {loading ? (
           <div className="flex justify-center py-16">
             <div className="w-8 h-8 border-3 border-ocean-200 border-t-ocean-700 rounded-full animate-spin" />
@@ -531,16 +544,14 @@ export default function BeachSeller() {
         )}
       </main>
 
-      {/* Floating CTA */}
-      <div className="fixed bottom-0 inset-x-0 z-20 px-4 pb-5 pt-6 bg-gradient-to-t from-n-50 via-n-50/90 to-transparent">
-        <div className="max-w-md md:max-w-2xl lg:max-w-4xl xl:max-w-5xl mx-auto">
-          <button
-            onClick={() => navigate('/vendedor/nova-reserva')}
-            className="w-full h-16 bg-sand-500 text-ocean-900 rounded-full font-display font-bold text-lg flex items-center justify-center gap-2 shadow-2xl shadow-sand-500/30 active:scale-95 transition-all hover:bg-sand-600">
-            <Plus size={24} strokeWidth={2.5} />
-            Nova Reserva
-          </button>
-        </div>
+      {/* Floating CTA — so mobile, o botao equivalente ja vive no cabecalho em desktop */}
+      <div className="md:hidden fixed bottom-0 inset-x-0 z-20 px-4 pb-5 pt-6 bg-gradient-to-t from-n-50 via-n-50/90 to-transparent">
+        <button
+          onClick={() => navigate('/vendedor/nova-reserva')}
+          className="w-full h-16 bg-sand-500 text-ocean-900 rounded-full font-display font-bold text-lg flex items-center justify-center gap-2 shadow-2xl shadow-sand-500/30 active:scale-95 transition-all hover:bg-sand-600">
+          <Plus size={24} strokeWidth={2.5} />
+          Nova Reserva
+        </button>
       </div>
 
       {/* Fim de Turno — bottom sheet */}
@@ -550,8 +561,10 @@ export default function BeachSeller() {
             className="fixed inset-0 bg-ocean-900/50 z-40"
             onClick={() => setShowShiftSummary(false)}
           />
-          <div className="fixed bottom-0 inset-x-0 z-50 bg-white rounded-t-3xl shadow-xl max-h-[85vh] overflow-y-auto max-w-md md:max-w-2xl lg:max-w-4xl xl:max-w-5xl mx-auto">
-            <div className="flex justify-center pt-3 pb-1">
+          <div className="fixed z-50 bg-white shadow-xl max-h-[85vh] overflow-y-auto w-full
+            bottom-0 inset-x-0 rounded-t-3xl
+            md:bottom-auto md:inset-x-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-full md:max-w-lg md:rounded-3xl">
+            <div className="flex justify-center pt-3 pb-1 md:hidden">
               <span className="w-10 h-1.5 rounded-full bg-n-300" />
             </div>
             <div className="px-5 py-4 space-y-4">
