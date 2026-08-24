@@ -1,5 +1,5 @@
 const { supabaseAdmin } = require('../config/supabase');
-const { verificarDisponibilidade, calcularPreco, verificarDisponibilidadeMesa, DEFAULT_SEATING_MINUTES } = require('../helpers/bookingHelpers');
+const { verificarDisponibilidade, calcularPreco, verificarDisponibilidadeMesa, DEFAULT_SEATING_MINUTES, parseUnitMeta } = require('../helpers/bookingHelpers');
 const { obterOuCriarCliente, actualizarStatsCheckout } = require('../helpers/customerHelper');
 const { enviarEmail } = require('../helpers/emailHelper');
 const { confirmacaoClienteEmail, notificacaoOperadorEmail } = require('../helpers/emailTemplates');
@@ -59,7 +59,7 @@ async function criar(req, res, next) {
     const { unit_id, customer_name, customer_email, customer_phone, customer_country,
             check_in, check_out, guests, notes, notes_internal, notes_guest,
             total_amount, source, payment_method, payment_status, fleet_id,
-            start_time, duration_minutes } = req.body;
+            start_time, duration_minutes, driver_included } = req.body;
 
     if (!unit_id || !customer_name || !customer_email || !check_in || !check_out) {
       return res.status(400).json({ error: 'Campos obrigatórios em falta', code: 'MISSING_FIELDS' });
@@ -92,6 +92,7 @@ async function criar(req, res, next) {
        automatica do cliente podia reservar a mesma mesa por cima sem
        detectar conflito. Staff continua a escolher a mesa directamente. */
     const isRestaurant = unit.operators?.operator_type === 'restaurant';
+    const isRentacar   = unit.operators?.operator_type === 'rentacar';
     if (isRestaurant && !start_time) {
       return res.status(400).json({ error: 'Hora da reserva é obrigatória', code: 'MISSING_FIELDS' });
     }
@@ -110,9 +111,28 @@ async function criar(req, res, next) {
     // publicController.criarReserva, para o motor de precos nao divergir consoante
     // quem cria a reserva).
     const numPessoas = guests || 1;
-    const total = check_out === check_in
-      ? Math.round(Number(unit.base_price || 0) * numPessoas * 100) / 100
-      : calcularPreco(unit, check_in, check_out).total;
+    let dias = 0;
+    let total;
+    if (check_out === check_in) {
+      total = Math.round(Number(unit.base_price || 0) * numPessoas * 100) / 100;
+    } else {
+      const calc = calcularPreco(unit, check_in, check_out);
+      total = calc.total;
+      dias = calc.dias;
+    }
+
+    /* Motorista incluido -- mesma sobretaxa real do lado publico
+       (publicController.criarReserva), para o preco nao divergir consoante
+       quem cria a reserva. */
+    let chauffeurPrice = 0;
+    if (isRentacar && driver_included && dias > 0) {
+      const vehicleMeta = parseUnitMeta(unit);
+      if (vehicleMeta.chauffeur_daily_rate) {
+        chauffeurPrice = Math.round(Number(vehicleMeta.chauffeur_daily_rate) * dias * 100) / 100;
+        total = Math.round((total + chauffeurPrice) * 100) / 100;
+      }
+    }
+
     const finalPrice = (total_amount !== undefined && total_amount !== null) ? Number(total_amount) : total;
     const finalSource = source || 'admin';
 
@@ -147,6 +167,8 @@ async function criar(req, res, next) {
         seller_id: req.staff?.id || null,
         start_time: isRestaurant ? start_time : null,
         duration_minutes: finalDuration,
+        driver_included: isRentacar ? !!driver_included && chauffeurPrice > 0 : false,
+        chauffeur_price: chauffeurPrice,
       })
       .select('*, units(name, unit_type), fleet(name, capacity)')
       .single();

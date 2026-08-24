@@ -189,7 +189,7 @@ async function criarReserva(req, res, next) {
     const { unit_id, customer_name, customer_email, customer_phone,
             customer_country, check_in, check_out, guests, notes,
             party_size, tour_time, reservation_time, zone_preference,
-            voucher_code, ref_code, items } = req.body;
+            voucher_code, ref_code, items, driver_included } = req.body;
 
     // check_out é opcional — activities/restaurants podem enviar só check_in (data do serviço)
     const effectiveCheckOut = check_out || check_in;
@@ -206,6 +206,7 @@ async function criarReserva(req, res, next) {
     }
 
     const isRestaurant = operator.operator_type === 'restaurant';
+    const isRentacar   = operator.operator_type === 'rentacar';
 
     /* Restaurante: cliente escolhe a mesa exacta (unit_id obrigatorio, tal
        como os restantes tipos ja exigem) a partir da lista devolvida por
@@ -292,11 +293,30 @@ async function criarReserva(req, res, next) {
     // sao sempre criadas com base_price:0 (RestaurantTableForm) -- a propria
     // reserva de mesa nao tem preco fixo, so o pre-pedido (se existir) tem.
     const numPessoas = party_size || guests || 1;
-    const total = isRestaurant
-      ? (preOrderValidado?.totalPrice || 0)
-      : (effectiveCheckOut === check_in
-          ? Math.round(Number(unit.base_price || 0) * numPessoas * 100) / 100
-          : calcularPreco(unit, check_in, effectiveCheckOut).total);
+    let dias = 0;
+    let total;
+    if (isRestaurant) {
+      total = preOrderValidado?.totalPrice || 0;
+    } else if (effectiveCheckOut === check_in) {
+      total = Math.round(Number(unit.base_price || 0) * numPessoas * 100) / 100;
+    } else {
+      const calc = calcularPreco(unit, check_in, effectiveCheckOut);
+      total = calc.total;
+      dias = calc.dias;
+    }
+
+    /* Motorista incluido -- extra real de rent-a-car "Executivo" (ao
+       contrario dos extras cosmeticos de CAR_EXTRAS, que so caem em notes).
+       chauffeur_daily_rate vem da propria viatura (meta), nunca inventado;
+       sem esse campo preenchido, driver_included e ignorado. */
+    let chauffeurPrice = 0;
+    if (isRentacar && driver_included && dias > 0) {
+      const vehicleMeta = parseUnitMeta(unit);
+      if (vehicleMeta.chauffeur_daily_rate) {
+        chauffeurPrice = Math.round(Number(vehicleMeta.chauffeur_daily_rate) * dias * 100) / 100;
+        total = Math.round((total + chauffeurPrice) * 100) / 100;
+      }
+    }
 
     let finalTotal = total;
     let voucherId = null;
@@ -356,6 +376,8 @@ async function criarReserva(req, res, next) {
         affiliate_id: affiliateId,
         start_time: isRestaurant ? reservation_time : null,
         duration_minutes: isRestaurant ? DEFAULT_SEATING_MINUTES : null,
+        driver_included: isRentacar ? !!driver_included && chauffeurPrice > 0 : false,
+        chauffeur_price: chauffeurPrice,
       })
       .select()
       .single();
@@ -414,7 +436,9 @@ async function criarReserva(req, res, next) {
     supabaseAdmin.from('notifications').insert({
       operator_id:       operator.id,
       notification_type: 'new_booking',
-      content:            `Nova reserva de ${customer_name} — ${unit.name}`,
+      content:            data.driver_included
+        ? `Nova reserva EXECUTIVO com motorista de ${customer_name} — ${unit.name} (atribuir condutor)`
+        : `Nova reserva de ${customer_name} — ${unit.name}`,
       link:               `/reservas/${data.id}`,
     }).then(({ error: notifErr }) => {
       if (notifErr) console.error('[Notificacao] Erro ao criar notificacao:', notifErr.message);

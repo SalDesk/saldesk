@@ -525,11 +525,18 @@ function ActivityModal({ unit, op, slug, lang, onClose, refCode, traveler }) {
 function RentACarModal({ unit, op, slug, lang, onClose, refCode, traveler }) {
   const [step,ss]=useState(1); const [pu,spu]=useState({date:'',time:'09:00',loc:''}); const [re,sre]=useState({date:'',time:'09:00',loc:''});
   const [drv,sd]=useState(()=>({name:traveler?.name||'',email:traveler?.email||'',phone:traveler?.phone||'',country:traveler?.country||'',license:'',licCountry:'',age:''})); const [ext,sex]=useState({insurance:false,gps:false,baby_seat:false,extra_driver:false});
+  const [driverIncluded,setDriverIncluded]=useState(false);
   const [pay,sp]=useState('cash'); const [sub,ssub]=useState(false); const [resId,sr]=useState(null); const [pendingRes,spr]=useState(null); const [err,se]=useState('');
   const [voucherCode,svc]=useState(null);
-  const days=dys(pu.date,re.date); const rawTotal=days*(unit.base_price||0); const total=days>0&&unit.base_price?fmtPrice(rawTotal,'day',op.currency||'EUR','EUR',lang):null;
+  /* "Executivo" -- categoria de viatura com motorista incluido opcional
+     (extra real, com preco) e sem franquia (beneficio automatico, sem
+     toggle). chauffeur_daily_rate vem da propria viatura, nunca inventado. */
+  const isExecutivo=unit.unit_type==='Executivo';
+  const chauffeurRate=isExecutivo?Number(getUnitMeta(unit).chauffeur_daily_rate||0):0;
+  const days=dys(pu.date,re.date); const chauffeurTotal=driverIncluded&&chauffeurRate>0?days*chauffeurRate:0;
+  const rawTotal=days*(unit.base_price||0)+chauffeurTotal; const total=days>0&&unit.base_price?fmtPrice(rawTotal,'day',op.currency||'EUR','EUR',lang):null;
   const locs=buildLocs(lang, op.islands?.airport_code); const extList=CAR_EXTRAS.filter(e=>ext[e.k]);
-  function buildPayload(){ const notes=[`${lang==='en'?'Pickup':'Levantamento'}: ${pu.loc} ${pu.date} ${pu.time}`,`${lang==='en'?'Return':'Devolução'}: ${re.loc||pu.loc} ${re.date} ${re.time}`,extList.length?`Extras: ${extList.map(e=>lang==='en'?e.en:e.pt).join(', ')}`:''  ].filter(Boolean).join('. '); return {unit_id:unit.id,customer_name:drv.name,customer_email:drv.email,customer_phone:drv.phone||null,customer_country:drv.country||null,check_in:pu.date,check_out:re.date,guests:1,notes,voucher_code:voucherCode||undefined,ref_code:refCode||undefined}; }
+  function buildPayload(){ const notes=[`${lang==='en'?'Pickup':'Levantamento'}: ${pu.loc} ${pu.date} ${pu.time}`,`${lang==='en'?'Return':'Devolução'}: ${re.loc||pu.loc} ${re.date} ${re.time}`,extList.length?`Extras: ${extList.map(e=>lang==='en'?e.en:e.pt).join(', ')}`:'',driverIncluded&&chauffeurRate>0?(lang==='en'?'Chauffeur included':'Motorista incluído'):'' ].filter(Boolean).join('. '); return {unit_id:unit.id,customer_name:drv.name,customer_email:drv.email,customer_phone:drv.phone||null,customer_country:drv.country||null,check_in:pu.date,check_out:re.date,guests:1,notes,driver_included:driverIncluded&&chauffeurRate>0,voucher_code:voucherCode||undefined,ref_code:refCode||undefined}; }
   useEffect(()=>{ if(step===3&&pay==='paypal'&&!pendingRes&&!sub){ ssub(true); postReservation(slug,buildPayload()).then(spr).catch(e=>se(e.message)).finally(()=>ssub(false)); } },[step,pay]);
   function valid(){ if(step===1){if(!pu.date||!re.date){se(lang==='en'?'Select pickup and return dates':'Seleccione datas');return false;} if(re.date<=pu.date){se(lang==='en'?'Return after pickup':'Devolução após levantamento');return false;} if(!pu.loc){se(lang==='en'?'Select pickup location':'Seleccione o local');return false;}} if(step===2&&(!drv.name||!drv.email)){se(lang==='en'?'Name and email required':'Nome e email obrigatórios');return false;} if(step===2&&!drv.license){se(lang==='en'?'Driving licence required':'Carta de condução obrigatória');return false;} se('');return true; }
   async function submit(){
@@ -544,7 +551,7 @@ function RentACarModal({ unit, op, slug, lang, onClose, refCode, traveler }) {
     }catch(e){se(e.message);}finally{ssub(false);}
   }
   function next(){ if(!valid())return; step<3?ss(s=>s+1):submit(); }
-  const sumL=[{label:lang==='en'?'Vehicle':'Viatura',value:unit.name},{label:lang==='en'?'Pickup':'Levantamento',value:`${pu.date} ${pu.time} · ${pu.loc}`},{label:lang==='en'?'Return':'Devolução',value:`${re.date} ${re.time} · ${re.loc||pu.loc}`},{label:lang==='en'?'Duration':'Duração',value:`${days} ${lang==='en'?(days===1?'day':'days'):(days===1?'dia':'dias')}`},...(extList.length?[{label:'Extras',value:extList.map(e=>lang==='en'?e.en:e.pt).join(' · ')}]:[]),...(total?[{label:'Total',value:total,hi:true}]:[])];
+  const sumL=[{label:lang==='en'?'Vehicle':'Viatura',value:unit.name},{label:lang==='en'?'Pickup':'Levantamento',value:`${pu.date} ${pu.time} · ${pu.loc}`},{label:lang==='en'?'Return':'Devolução',value:`${re.date} ${re.time} · ${re.loc||pu.loc}`},{label:lang==='en'?'Duration':'Duração',value:`${days} ${lang==='en'?(days===1?'day':'days'):(days===1?'dia':'dias')}`},...(extList.length?[{label:'Extras',value:extList.map(e=>lang==='en'?e.en:e.pt).join(' · ')}]:[]),...(driverIncluded&&chauffeurTotal>0?[{label:lang==='en'?'Chauffeur':'Motorista',value:fmtPrice(chauffeurTotal,'day',op.currency||'EUR','EUR',lang)}]:[]),...(isExecutivo?[{label:lang==='en'?'Deductible':'Franquia',value:lang==='en'?'Waived':'Sem franquia'}]:[]),...(total?[{label:'Total',value:total,hi:true}]:[])];
   return (
     <MS icon={<Car size={18} strokeWidth={1.75}/>} title={lang==='en'?'Book vehicle':'Reservar viatura'} step={step} lang={lang} onClose={onClose} onPrev={()=>ss(s=>s-1)} onNext={next} nextLabel={step<3?(lang==='en'?'Continue':'Continuar'):(lang==='en'?'Confirm booking':'Confirmar reserva')} nextDis={step===1&&(!pu.date||!re.date||!pu.loc)} sub={sub} err={err} ok={!!resId} hideNext={step===3&&pay==='paypal'}>
       {resId?<div className="p-5"><BS resId={resId} lang={lang} type="rentacar" onClose={onClose}/></div>
@@ -555,6 +562,20 @@ function RentACarModal({ unit, op, slug, lang, onClose, refCode, traveler }) {
       </div>
       :step===2?<div className="p-5 space-y-4"><p className={SH}>{lang==='en'?'Driver details':'Dados do condutor'}</p><GF d={drv} set={sd} lang={lang} emailLocked={!!traveler}><div className="grid grid-cols-2 gap-3"><div><label className={LB}>{lang==='en'?'Licence no.':'Nº carta'} *</label><input className={IN} value={drv.license} onChange={e=>sd(d=>({...d,license:e.target.value}))} required placeholder="PT-123456"/></div><div><label className={LB}>{lang==='en'?'Issuing country':'País emissor'}</label><input className={IN} value={drv.licCountry} onChange={e=>sd(d=>({...d,licCountry:e.target.value}))} placeholder="Portugal"/></div></div><div><label className={LB}>{lang==='en'?'Driver age':'Idade do condutor'}</label><input className={IN} type="number" min={18} max={99} value={drv.age} onChange={e=>sd(d=>({...d,age:e.target.value}))} placeholder="28"/></div></GF>
         <div><p className="text-xs font-body font-bold text-n-700 mb-3">{lang==='en'?'Extras (optional)':'Extras (opcional)'}</p><div className="grid grid-cols-2 gap-2.5">{CAR_EXTRAS.map(e=><button key={e.k} type="button" onClick={()=>sex(x=>({...x,[e.k]:!x[e.k]}))} className={`p-3 rounded-xl border-2 text-left transition-all ${ext[e.k]?'border-ocean-700 bg-ocean-50':'border-n-200 hover:border-n-300'}`}><div className="flex items-center gap-2"><div className={`w-4 h-4 rounded border-2 flex items-center justify-center flex-shrink-0 transition-all ${ext[e.k]?'border-ocean-700 bg-ocean-700':'border-n-300'}`}>{ext[e.k]&&<Check size={10} strokeWidth={3} className="text-white"/>}</div><span className={`text-xs font-body font-semibold ${ext[e.k]?'text-ocean-700':'text-n-700'}`}>{lang==='en'?e.en:e.pt}</span></div></button>)}</div></div>
+        {isExecutivo&&chauffeurRate>0&&(
+          <div>
+            <button type="button" onClick={()=>setDriverIncluded(v=>!v)} className={`w-full p-3 rounded-xl border-2 text-left transition-all ${driverIncluded?'border-ocean-700 bg-ocean-50':'border-n-200 hover:border-n-300'}`}>
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <div className={`w-4 h-4 rounded border-2 flex items-center justify-center flex-shrink-0 transition-all ${driverIncluded?'border-ocean-700 bg-ocean-700':'border-n-300'}`}>{driverIncluded&&<Check size={10} strokeWidth={3} className="text-white"/>}</div>
+                  <span className={`text-xs font-body font-semibold ${driverIncluded?'text-ocean-700':'text-n-700'}`}>{lang==='en'?'Chauffeur included':'Motorista incluído'}</span>
+                </div>
+                <span className="text-xs font-mono text-n-500">+{fmtPrice(chauffeurRate,'day',op.currency||'EUR','EUR',lang)}/{lang==='en'?'day':'dia'}</span>
+              </div>
+            </button>
+            <p className="text-xs font-body text-n-500 mt-2">{lang==='en'?'This vehicle also includes a waived insurance deductible.':'Este veículo inclui também seguro sem franquia.'}</p>
+          </div>
+        )}
       </div>
       :<div className="p-5 space-y-4"><p className={SH}>{lang==='en'?'Review & payment':'Resumo e pagamento'}</p><ST lines={sumL}/>
         {rawTotal>0&&<VoucherField slug={slug} unitId={unit.id} amount={rawTotal} lang={lang} onApplied={(c)=>svc(c)}/>}

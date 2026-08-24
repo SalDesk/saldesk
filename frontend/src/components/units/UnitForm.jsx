@@ -73,7 +73,7 @@ function IncludedItemsEditor({ items, onChange }) {
 const UNIT_TYPES_BY_OPERATOR = {
   hotel:      ['Quarto Standard', 'Quarto Double', 'Suite', 'Apartamento', 'Villa', 'Bungalow'],
   activity:   ['Mergulho', 'Kitesurf', 'Snorkeling', 'Passeio de Barco', 'Quad / Buggy', 'Pesca', 'Surf', 'Windsurf', 'Tour', 'Sessao'],
-  rentacar:   ['Economico', 'Compacto', 'SUV', 'Pickup', 'Moto', 'Van'],
+  rentacar:   ['Economico', 'Compacto', 'SUV', 'Pickup', 'Moto', 'Van', 'Executivo'],
   restaurant: ['Mesa Interior', 'Mesa Exterior', 'Mesa VIP', 'Terraco'],
 };
 
@@ -700,6 +700,7 @@ function RentacarVehicleForm({ unit, onSave, onCancel, loading, error }) {
     discount_month:  meta.discount_month!= null ? String(meta.discount_month) : '',
     km_included:     meta.km_included   != null ? String(meta.km_included) : '',
     km_extra_cost:   meta.km_extra_cost != null ? String(meta.km_extra_cost) : '',
+    chauffeur_daily_rate: meta.chauffeur_daily_rate != null ? String(meta.chauffeur_daily_rate) : '',
     min_age:         meta.min_age       != null ? String(meta.min_age) : '21',
     license_years:   meta.license_years != null ? String(meta.license_years) : '1',
     seguro_expiry:   meta.seguro_expiry   || '',
@@ -743,6 +744,7 @@ function RentacarVehicleForm({ unit, onSave, onCancel, loading, error }) {
       discount_month:  form.discount_month  ? Number(form.discount_month)  : null,
       km_included:     form.km_included     ? Number(form.km_included)     : null,
       km_extra_cost:   form.km_extra_cost   ? Number(form.km_extra_cost)   : null,
+      chauffeur_daily_rate: form.unit_type === 'Executivo' && form.chauffeur_daily_rate ? Number(form.chauffeur_daily_rate) : null,
       min_age:         form.min_age         ? Number(form.min_age)         : null,
       license_years:   form.license_years   ? Number(form.license_years)   : null,
       seguro_expiry:   form.seguro_expiry   || null,
@@ -803,6 +805,20 @@ function RentacarVehicleForm({ unit, onSave, onCancel, loading, error }) {
             <option value="hibrido">Hibrido</option>
           </Select>
         </div>
+        {form.unit_type === 'Executivo' && (
+          <div className="mt-3">
+            <Input
+              label="Tarifa de motorista (por dia)"
+              type="number"
+              value={form.chauffeur_daily_rate}
+              onChange={set('chauffeur_daily_rate')}
+              min="0"
+              step="0.01"
+              placeholder="30"
+            />
+            <p className="text-xs text-n-500 mt-1">Cobrada por dia quando o cliente escolhe "motorista incluido" na reserva.</p>
+          </div>
+        )}
       </div>
 
       <div>
