@@ -1,6 +1,9 @@
+const path = require('path');
 const { supabaseAdmin } = require('../config/supabase');
 const { getDiscoverCatalog } = require('../services/discoverCatalogService');
 const PDFDocument = require('pdfkit');
+
+const LOGO_WHITE_PATH = path.join(__dirname, '../assets/logo-white.png');
 
 async function getProfile(req, res) {
   return res.json({ data: req.traveler, message: 'Perfil do viajante' });
@@ -360,7 +363,21 @@ async function markNotificationRead(req, res, next) {
    do operador (financeiroController.js). ilike('customer_email', email) --
    mesmo filtro ja usado em getBookings, para nunca deixar um viajante
    descarregar o recibo de uma reserva que nao e dele. */
-const PAYMENT_LABEL_PT = { pending: 'Pendente', paid: 'Pago', partial: 'Parcial', refunded: 'Reembolsado' };
+const PAYMENT_LABEL_PT        = { pending: 'Pendente', paid: 'Pago', partial: 'Parcial', refunded: 'Reembolsado' };
+const PAYMENT_METHOD_LABEL_PT = { paypal: 'PayPal', sisp: 'SISP Vinti4', cash: 'Dinheiro', transfer: 'Transferência bancária' };
+const PAYMENT_STATUS_COLOR    = { paid: '#1A7A4A', pending: '#BE941C', partial: '#BE941C', refunded: '#6B7280' };
+
+/* timeZone:'UTC' e deliberado -- check_in/check_out sao colunas `date` puras
+   (sem hora), e sem forcar UTC o fuso horario do servidor desloca a data
+   exibida um dia para tras quando o servidor corre a oeste de UTC. */
+function fmtDatePt(value) {
+  if (!value) return null;
+  return new Date(value).toLocaleDateString('pt-PT', { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'UTC' });
+}
+
+function fmtMoneyPt(value, moeda) {
+  return `${moeda} ${Number(value || 0).toLocaleString('pt-PT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+}
 
 async function getBookingInvoice(req, res, next) {
   try {
@@ -374,60 +391,163 @@ async function getBookingInvoice(req, res, next) {
     if (error) throw error;
     if (!reserva) return res.status(404).json({ error: 'Reserva não encontrada', code: 'NOT_FOUND' });
 
-    const OCEAN = '#0D5470';
-    const N900  = '#1A2332';
-    const N500  = '#6B7280';
-    const N200  = '#E5E8EC';
-    const moeda = reserva.operators?.currency || 'EUR';
+    const OCEAN_800 = '#0A3F55';
+    const OCEAN_700 = '#0D5470';
+    const OCEAN_100 = '#D6EEF5';
+    const N900 = '#1A2332';
+    const N600 = '#4B5563';
+    const N500 = '#6B7280';
+    const N200 = '#E5E8EC';
+    const N50  = '#F9FAFB';
+
+    const moeda   = reserva.operators?.currency || 'EUR';
+    const ref      = reserva.id.slice(0, 8).toUpperCase();
+    const nights   = reserva.check_out && reserva.check_out !== reserva.check_in
+      ? Math.round((new Date(reserva.check_out) - new Date(reserva.check_in)) / 86400000)
+      : null;
+    const total          = Number(reserva.total_price || 0);
+    const pago           = Number(reserva.amount_paid || 0);
+    const saldoPendente  = Math.max(total - pago, 0);
+    const statusColor    = PAYMENT_STATUS_COLOR[reserva.payment_status] || N500;
+    const statusLabel    = PAYMENT_LABEL_PT[reserva.payment_status] || reserva.payment_status || '—';
+    const metodoLabel    = PAYMENT_METHOD_LABEL_PT[reserva.payment_method] || reserva.payment_method || '—';
 
     res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', `attachment; filename="recibo-${reserva.id.slice(0, 8)}.pdf"`);
+    res.setHeader('Content-Disposition', `attachment; filename="recibo-${ref}.pdf"`);
 
-    const doc = new PDFDocument({ margin: 40, size: 'A4' });
+    const doc = new PDFDocument({ margin: 0, size: 'A4' });
     doc.pipe(res);
 
-    doc.font('Helvetica-Bold').fontSize(18).fillColor(OCEAN).text('SalDesk', 40, 40);
-    doc.font('Helvetica').fontSize(9).fillColor(N500).text('Recibo de reserva', 40, 62);
-    doc.font('Helvetica').fontSize(8).fillColor(N500)
-      .text(`Emitido em ${new Date().toLocaleDateString('pt-PT')}`, 40, 76);
-    doc.moveTo(40, 98).lineTo(555, 98).strokeColor(N200).stroke();
+    const PAGE_W    = doc.page.width;
+    const MARGIN    = 40;
+    const CONTENT_W = PAGE_W - MARGIN * 2;
+    const COL_GAP   = 30;
+    const COL_W     = (CONTENT_W - COL_GAP) / 2;
+    const COL_L_X   = MARGIN;
+    const COL_R_X   = MARGIN + COL_W + COL_GAP;
 
-    let y = 116;
-    const linha = (label, value) => {
-      doc.font('Helvetica').fontSize(10).fillColor(N500).text(label, 40, y);
-      doc.font('Helvetica-Bold').fontSize(10).fillColor(N900).text(value || '—', 220, y, { width: 335 });
-      y += 20;
+    /* Faixa de topo -- identidade SalDesk, nunca do operador (o recibo e
+       emitido PELA plataforma em nome do operador, nao pelo operador). */
+    doc.rect(0, 0, PAGE_W, 108).fill(OCEAN_800);
+    doc.image(LOGO_WHITE_PATH, MARGIN, 30, { height: 46 });
+    doc.font('Helvetica-Bold').fontSize(20).fillColor('#FFFFFF')
+      .text('RECIBO', MARGIN, 34, { width: CONTENT_W, align: 'right' });
+    doc.font('Helvetica').fontSize(9).fillColor(OCEAN_100)
+      .text(`Nº ${ref}  ·  Emitido em ${fmtDatePt(new Date())}`, MARGIN, 60, { width: CONTENT_W, align: 'right' });
+
+    /* Faixa de estado -- pilula colorida consoante o estado do pagamento,
+       primeira coisa que os olhos encontram abaixo do cabecalho. */
+    const pillLabel = statusLabel.toUpperCase();
+    const pillW = doc.font('Helvetica-Bold').fontSize(9).widthOfString(pillLabel) + 22;
+    doc.roundedRect(PAGE_W - MARGIN - pillW, 78, pillW, 18, 9).fill(statusColor);
+    doc.font('Helvetica-Bold').fontSize(9).fillColor('#FFFFFF')
+      .text(pillLabel, PAGE_W - MARGIN - pillW, 83, { width: pillW, align: 'center' });
+
+    let y = 140;
+
+    /* Prestador do servico | Cliente -- duas colunas lado a lado. */
+    doc.font('Helvetica-Bold').fontSize(9).fillColor(OCEAN_700).text('PRESTADOR DO SERVIÇO', COL_L_X, y);
+    doc.font('Helvetica-Bold').fontSize(9).fillColor(OCEAN_700).text('CLIENTE', COL_R_X, y);
+    y += 16;
+
+    const opNameH = doc.font('Helvetica-Bold').fontSize(11).heightOfString(reserva.operators?.name || '—', { width: COL_W });
+    const custNameH = doc.font('Helvetica-Bold').fontSize(11).heightOfString(reserva.customer_name || '—', { width: COL_W });
+    doc.font('Helvetica-Bold').fontSize(11).fillColor(N900).text(reserva.operators?.name || '—', COL_L_X, y, { width: COL_W });
+    doc.font('Helvetica-Bold').fontSize(11).fillColor(N900).text(reserva.customer_name || '—', COL_R_X, y, { width: COL_W });
+    y += Math.max(opNameH, custNameH) + 4;
+
+    const enderecoH = reserva.operators?.address
+      ? doc.font('Helvetica').fontSize(9).heightOfString(reserva.operators.address, { width: COL_W })
+      : 0;
+    if (reserva.operators?.address) {
+      doc.font('Helvetica').fontSize(9).fillColor(N600).text(reserva.operators.address, COL_L_X, y, { width: COL_W });
+    }
+    if (reserva.customer_country) {
+      doc.font('Helvetica').fontSize(9).fillColor(N600).text(reserva.customer_country, COL_R_X, y, { width: COL_W });
+    }
+    y += Math.max(enderecoH, reserva.customer_country ? 12 : 0) + 4;
+
+    if (reserva.operators?.email) doc.font('Helvetica').fontSize(9).fillColor(N600).text(reserva.operators.email, COL_L_X, y, { width: COL_W });
+    if (reserva.customer_email)   doc.font('Helvetica').fontSize(9).fillColor(N600).text(reserva.customer_email, COL_R_X, y, { width: COL_W });
+    y += 14;
+
+    if (reserva.customer_phone) {
+      doc.font('Helvetica').fontSize(9).fillColor(N600).text(reserva.customer_phone, COL_R_X, y, { width: COL_W });
+      y += 14;
+    }
+
+    y += 14;
+    doc.moveTo(MARGIN, y).lineTo(PAGE_W - MARGIN, y).strokeColor(N200).stroke();
+    y += 22;
+
+    /* Tabela de detalhes da reserva -- uma so linha (o recibo cobre sempre
+       uma reserva), mas com a estrutura visual de uma factura a serio. */
+    doc.font('Helvetica-Bold').fontSize(9).fillColor(OCEAN_700).text('DETALHES DA RESERVA', MARGIN, y);
+    y += 18;
+
+    const TBL_X = MARGIN;
+    const TBL_W = CONTENT_W;
+    const COL_SERVICO_X = TBL_X + 10;
+    const COL_SERVICO_W = 195;
+    const COL_DATAS_X   = TBL_X + 210;
+    const COL_DATAS_W   = 140;
+    const COL_PESSOAS_X = TBL_X + 355;
+    const COL_PESSOAS_W = 50;
+    const COL_TOTAL_X   = TBL_X + 410;
+    const COL_TOTAL_W   = TBL_W - 420;
+
+    const HEADER_H = 24;
+    doc.rect(TBL_X, y, TBL_W, HEADER_H).fill(N50);
+    doc.font('Helvetica-Bold').fontSize(8).fillColor(N500);
+    doc.text('SERVIÇO', COL_SERVICO_X, y + 8);
+    doc.text('DATA', COL_DATAS_X, y + 8);
+    doc.text('PESSOAS', COL_PESSOAS_X, y + 8);
+    doc.text('TOTAL', COL_TOTAL_X, y + 8, { width: COL_TOTAL_W, align: 'right' });
+    y += HEADER_H;
+
+    const datasTexto = nights
+      ? `${fmtDatePt(reserva.check_in)} – ${fmtDatePt(reserva.check_out)} (${nights} noite${nights > 1 ? 's' : ''})`
+      : fmtDatePt(reserva.check_in);
+    const servicoH = doc.font('Helvetica-Bold').fontSize(10).heightOfString(reserva.units?.name || '—', { width: COL_SERVICO_W });
+    const ROW_H = Math.max(30, servicoH + 16);
+
+    doc.rect(TBL_X, y, TBL_W, ROW_H).strokeColor(N200).stroke();
+    doc.font('Helvetica-Bold').fontSize(10).fillColor(N900).text(reserva.units?.name || '—', COL_SERVICO_X, y + 9, { width: COL_SERVICO_W });
+    doc.font('Helvetica').fontSize(9).fillColor(N600).text(datasTexto, COL_DATAS_X, y + 10, { width: COL_DATAS_W });
+    doc.font('Helvetica').fontSize(9).fillColor(N600).text(String(reserva.guests || 1), COL_PESSOAS_X, y + 10, { width: COL_PESSOAS_W });
+    doc.font('Helvetica-Bold').fontSize(10).fillColor(N900).text(fmtMoneyPt(total, moeda), COL_TOTAL_X, y + 9, { width: COL_TOTAL_W, align: 'right' });
+    y += ROW_H + 24;
+
+    /* Resumo de pagamento -- caixa alinhada a direita, mesmo padrao visual
+       de uma factura real (total sempre a fila mais destacada). */
+    const BOX_W = 240;
+    const BOX_X = PAGE_W - MARGIN - BOX_W;
+    let by = y;
+
+    const resumoLinha = (label, value, opts = {}) => {
+      doc.font('Helvetica').fontSize(9.5).fillColor(N600).text(label, BOX_X, by, { width: BOX_W - 90 });
+      doc.font(opts.bold ? 'Helvetica-Bold' : 'Helvetica').fontSize(opts.bold ? 11 : 9.5)
+        .fillColor(opts.color || N900).text(value, BOX_X + BOX_W - 90, by, { width: 90, align: 'right' });
+      by += opts.bold ? 20 : 16;
     };
 
-    doc.font('Helvetica-Bold').fontSize(11).fillColor(OCEAN).text('Prestador do serviço', 40, y);
-    y += 18;
-    linha('Operador', reserva.operators?.name);
-    linha('Morada', reserva.operators?.address);
-    linha('Contacto', reserva.operators?.email);
+    resumoLinha('Total da reserva', fmtMoneyPt(total, moeda));
+    resumoLinha('Valor pago', fmtMoneyPt(pago, moeda));
+    if (saldoPendente > 0.005) resumoLinha('Saldo pendente', fmtMoneyPt(saldoPendente, moeda), { color: PAYMENT_STATUS_COLOR.pending });
+    doc.moveTo(BOX_X, by + 2).lineTo(BOX_X + BOX_W, by + 2).strokeColor(N200).stroke();
+    by += 10;
+    resumoLinha('Método de pagamento', metodoLabel);
 
-    y += 8;
-    doc.font('Helvetica-Bold').fontSize(11).fillColor(OCEAN).text('Detalhes da reserva', 40, y);
-    y += 18;
-    linha('Referência', reserva.id);
-    linha('Serviço', reserva.units?.name);
-    linha('Cliente', reserva.customer_name);
-    linha('Check-in', reserva.check_in);
-    if (reserva.check_out && reserva.check_out !== reserva.check_in) linha('Check-out', reserva.check_out);
-    linha('Pessoas', String(reserva.guests || 1));
+    y = by + 30;
 
-    y += 8;
-    doc.font('Helvetica-Bold').fontSize(11).fillColor(OCEAN).text('Pagamento', 40, y);
-    y += 18;
-    linha('Total', `${moeda} ${Number(reserva.total_price || 0).toLocaleString('pt-PT')}`);
-    linha('Pago', `${moeda} ${Number(reserva.amount_paid || 0).toLocaleString('pt-PT')}`);
-    linha('Estado', PAYMENT_LABEL_PT[reserva.payment_status] || reserva.payment_status);
-    linha('Método', reserva.payment_method);
-
-    y += 20;
-    doc.moveTo(40, y).lineTo(555, y).strokeColor(N200).stroke();
+    /* Rodape */
+    doc.moveTo(MARGIN, y).lineTo(PAGE_W - MARGIN, y).strokeColor(N200).stroke();
     y += 14;
     doc.font('Helvetica').fontSize(8).fillColor(N500)
-      .text('Este documento é um recibo informativo da reserva, emitido pela plataforma SalDesk em nome do operador indicado.', 40, y, { width: 515 });
+      .text('Este documento é um recibo informativo da reserva, emitido pela plataforma SalDesk em nome do operador indicado. Não substitui factura fiscal quando esta seja legalmente exigida.', MARGIN, y, { width: CONTENT_W });
+    y += 28;
+    doc.font('Helvetica-Bold').fontSize(8).fillColor(OCEAN_700).text('SalDesk', MARGIN, y, { continued: true });
+    doc.font('Helvetica').fontSize(8).fillColor(N500).text('  ·  saldesk.cv  ·  hello@saldesk.cv');
 
     doc.end();
   } catch (err) { next(err); }
