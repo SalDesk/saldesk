@@ -6,6 +6,7 @@ import {
   ExternalLink, ChevronDown, ChevronUp, Copy, Send, Award, Share2,
   Heart, Compass, Car, Utensils, Clock, AlertCircle, RotateCcw,
   CreditCard, Lock, Building, Camera, ThumbsUp, Languages,
+  ShoppingBag, User,
 } from 'lucide-react';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
@@ -937,28 +938,44 @@ export default function ServiceDetail() {
       {!isWidget && (
       <nav className={`fixed top-0 left-0 right-0 z-40 transition-all duration-300 ${navScrolled ? 'bg-white shadow-md' : 'bg-white/95 backdrop-blur-sm border-b border-n-100'}`}>
         <div className="max-w-6xl mx-auto px-4 h-14 flex items-center justify-between gap-3">
-          {/* Breadcrumb */}
-          <div className="flex items-center gap-1.5 text-xs font-body text-n-400 min-w-0">
-            <button onClick={() => { window.location.href = 'https://saldesk.cv/discover/'; }} className="text-ocean-600 hover:text-ocean-700 font-semibold flex-shrink-0 hidden sm:block">
-              SalDesk Connect
+          {/* Logo + breadcrumb — mesmo logo do Conect, breadcrumb mantido
+              (util nesta pagina de detalhe, ausente no Conect por nao ter
+              para onde recuar). */}
+          <div className="flex items-center gap-2.5 min-w-0">
+            <button onClick={() => { window.location.href = 'https://saldesk.cv/discover/'; }} className="flex-shrink-0">
+              <Logo size="sm"/>
             </button>
-            <ChevronRight size={12} strokeWidth={2} className="text-n-300 flex-shrink-0 hidden sm:block"/>
-            <button onClick={() => navigate(`/book/${slug}`)} className="text-ocean-600 hover:text-ocean-700 font-semibold truncate max-w-[120px]">
-              {op.name}
-            </button>
-            <ChevronRight size={12} strokeWidth={2} className="text-n-300 flex-shrink-0"/>
-            <span className="text-n-500 truncate max-w-[120px]">{unit.name}</span>
+            <div className="hidden sm:flex items-center gap-1.5 text-xs font-body text-n-400 min-w-0 border-l border-n-200 pl-2.5">
+              <button onClick={() => navigate(`/book/${slug}`)} className="text-ocean-600 hover:text-ocean-700 font-semibold truncate max-w-[120px]">
+                {op.name}
+              </button>
+              <ChevronRight size={12} strokeWidth={2} className="text-n-300 flex-shrink-0"/>
+              <span className="text-n-500 truncate max-w-[120px]">{unit.name}</span>
+            </div>
           </div>
 
-          {/* Right actions */}
+          {/* Right actions — mesmo conjunto do Conect (moeda / idioma / as
+              minhas reservas / perfil), so acrescentado ao que ja existia. */}
           <div className="flex items-center gap-2 flex-shrink-0">
+            <button onClick={() => setCur(c => c==='EUR'?'CVE':'EUR')}
+              className="hidden sm:block text-xs font-body font-bold border border-n-200 text-n-600 rounded-full px-3 py-1.5 hover:border-ocean-700 hover:text-ocean-700 transition-all">
+              {currency}
+            </button>
             <button onClick={toggleLang}
               className="hidden sm:flex items-center gap-1 text-xs font-body font-bold border border-n-200 text-n-600 rounded-full px-3 py-1.5 hover:border-ocean-700 hover:text-ocean-700 transition-all">
               <Globe size={12} strokeWidth={1.75}/>
               {lang === 'pt' ? 'EN' : 'PT'}
             </button>
+            <button onClick={() => navigate('/viajante')} title={lang==='en'?'My bookings':'As minhas reservas'}
+              className="w-9 h-9 rounded-full border border-n-200 text-n-500 flex items-center justify-center hover:border-ocean-700 hover:text-ocean-700 transition-all">
+              <ShoppingBag size={16} strokeWidth={1.75}/>
+            </button>
+            <button onClick={() => navigate(traveler ? '/viajante' : '/viajante/entrar')} title={lang==='en'?'Profile':'Perfil'}
+              className="w-9 h-9 rounded-full border border-n-200 text-n-500 flex items-center justify-center hover:border-ocean-700 hover:text-ocean-700 transition-all">
+              <User size={16} strokeWidth={1.75}/>
+            </button>
             <button onClick={handleReservarClick}
-              className="flex items-center gap-1.5 bg-ocean-700 text-white text-sm font-body font-semibold px-4 py-2 rounded-full hover:bg-ocean-500 transition-colors">
+              className="hidden sm:flex items-center gap-1.5 bg-ocean-700 text-white text-sm font-body font-semibold px-4 py-2 rounded-full hover:bg-ocean-500 transition-colors">
               <Calendar size={14} strokeWidth={1.75}/>
               {lang === 'en' ? 'Book Now' : 'Reservar'}
             </button>
