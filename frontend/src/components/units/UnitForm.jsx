@@ -70,6 +70,61 @@ function IncludedItemsEditor({ items, onChange }) {
   );
 }
 
+/* Itinerario -- lista ordenada de paragens de um tour, cada uma com nome
+   e coordenadas opcionais (so ganha pin no mapa publico se preenchidas --
+   nunca inventamos uma coordenada em falta). Mesmo padrao de lista
+   repetivel do IncludedItemsEditor acima. */
+function StopsEditor({ stops, onChange }) {
+  function addStop() { onChange([...stops, { name: '', desc: '', lat: '', lng: '' }]); }
+  function updateStop(i, patch) { onChange(stops.map((s, idx) => idx === i ? { ...s, ...patch } : s)); }
+  function removeStop(i) { onChange(stops.filter((_, idx) => idx !== i)); }
+  return (
+    <div className="space-y-3">
+      {stops.map((s, i) => (
+        <div key={i} className="border border-n-200 rounded-sm p-3">
+          <div className="flex items-center gap-2 mb-2">
+            <span className="shrink-0 w-6 h-6 rounded-full bg-ocean-700 text-white text-xs font-body font-bold flex items-center justify-center">{i + 1}</span>
+            <input
+              value={s.name}
+              onChange={e => updateStop(i, { name: e.target.value })}
+              placeholder="Ex: Templo do Amanhecer"
+              className="flex-1 h-8 px-2.5 text-sm font-body border border-n-200 rounded-sm focus:outline-none focus:border-ocean-700"
+            />
+            <button type="button" onClick={() => removeStop(i)} className="shrink-0 p-1.5 rounded-sm text-n-400 hover:text-error transition-colors">
+              <Trash2 size={14} />
+            </button>
+          </div>
+          <textarea
+            value={s.desc}
+            onChange={e => updateStop(i, { desc: e.target.value })}
+            placeholder="Descrição curta (opcional)"
+            rows={2}
+            className="w-full px-2.5 py-1.5 text-sm font-body border border-n-200 rounded-sm focus:outline-none focus:border-ocean-700 resize-none mb-2"
+          />
+          <div className="grid grid-cols-2 gap-2">
+            <input
+              value={s.lat}
+              onChange={e => updateStop(i, { lat: e.target.value })}
+              placeholder="Latitude (opcional)"
+              className="h-8 px-2.5 text-xs font-body border border-n-200 rounded-sm focus:outline-none focus:border-ocean-700"
+            />
+            <input
+              value={s.lng}
+              onChange={e => updateStop(i, { lng: e.target.value })}
+              placeholder="Longitude (opcional)"
+              className="h-8 px-2.5 text-xs font-body border border-n-200 rounded-sm focus:outline-none focus:border-ocean-700"
+            />
+          </div>
+        </div>
+      ))}
+      <button type="button" onClick={addStop} className="flex items-center gap-1 text-xs font-body font-semibold text-ocean-700 hover:text-ocean-500 transition-colors">
+        <Plus size={13} strokeWidth={2.5} /> Adicionar paragem
+      </button>
+      <p className="text-xs text-n-500">Sem coordenadas, a paragem aparece na lista mas sem marcador no mapa. Google Maps: botão direito no local → copiar coordenadas.</p>
+    </div>
+  );
+}
+
 const UNIT_TYPES_BY_OPERATOR = {
   hotel:      ['Quarto Standard', 'Quarto Double', 'Suite', 'Apartamento', 'Villa', 'Bungalow'],
   activity:   ['Mergulho', 'Kitesurf', 'Snorkeling', 'Passeio de Barco', 'Quad / Buggy', 'Pesca', 'Surf', 'Windsurf', 'Tour', 'Sessao'],
@@ -189,6 +244,7 @@ function TourForm({ unit, onSave, onCancel, loading, error }) {
     amenities:      meta.amenities      || [],
     included_items: meta.included_items || [],
     important_info: meta.important_info || '',
+    stops:          meta.stops          || [],
     status:   unit?.status  || 'active',
     images:   unit?.images  || [],
     ota_viator_id: unit?.ota_product_ids?.viator       || '',
@@ -234,6 +290,14 @@ function TourForm({ unit, onSave, onCancel, loading, error }) {
       amenities:      form.amenities,
       included_items: form.included_items.filter(it => it.label.trim()),
       important_info: form.important_info || null,
+      stops: form.stops
+        .filter(s => s.name.trim())
+        .map(s => ({
+          name: s.name,
+          desc: s.desc || null,
+          lat: s.lat !== '' ? Number(s.lat) : null,
+          lng: s.lng !== '' ? Number(s.lng) : null,
+        })),
     };
     onSave({
       name:        form.name,
@@ -427,6 +491,11 @@ function TourForm({ unit, onSave, onCancel, loading, error }) {
       <div>
         <SectionLabel>O que está incluído</SectionLabel>
         <IncludedItemsEditor items={form.included_items} onChange={items => setForm(f => ({ ...f, included_items: items }))} />
+      </div>
+
+      <div>
+        <SectionLabel>Itinerário (opcional)</SectionLabel>
+        <StopsEditor stops={form.stops} onChange={stops => setForm(f => ({ ...f, stops }))} />
       </div>
 
       <div>

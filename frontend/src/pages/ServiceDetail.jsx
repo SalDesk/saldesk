@@ -5,13 +5,39 @@ import {
   Menu, X, Globe, Mail, Calendar, Users, Check, ArrowRight, Shield,
   ExternalLink, ChevronDown, ChevronUp, Copy, Send, Award, Share2,
   Heart, Compass, Car, Utensils, Clock, AlertCircle, RotateCcw,
-  CreditCard, Lock, Building, Camera,
+  CreditCard, Lock, Building, Camera, ThumbsUp, Languages,
 } from 'lucide-react';
+import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
 import Logo from '../components/shared/Logo';
 import { useIsWidget, useWidgetResize } from '../utils/widgetMode';
 import {
   MENU_CATEGORY_LABELS, MENU_ALLERGEN_LABELS, MENU_DIET_LABELS, RestaurantReservationSection,
 } from '../components/restaurant/RestaurantReservationWidget';
+
+/* Icone numerado para as paragens do itinerario -- SVG inline (nunca
+   bitmap), substitui o icone PNG por defeito do Leaflet (que nem sequer
+   resolve bem com bundlers Vite). */
+function stopDivIcon(n) {
+  return L.divIcon({
+    className: '',
+    html: `<div style="background:#0D5470;color:#fff;width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:sans-serif;font-weight:700;font-size:12px;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.35)">${n}</div>`,
+    iconSize: [26, 26],
+    iconAnchor: [13, 13],
+  });
+}
+
+const REVIEWS_VOTED_KEY = 'sd-reviews-voted';
+function hasVotedReview(id) {
+  try { return JSON.parse(localStorage.getItem(REVIEWS_VOTED_KEY) || '[]').includes(id); } catch { return false; }
+}
+function markReviewVoted(id) {
+  try {
+    const voted = JSON.parse(localStorage.getItem(REVIEWS_VOTED_KEY) || '[]');
+    if (!voted.includes(id)) localStorage.setItem(REVIEWS_VOTED_KEY, JSON.stringify([...voted, id]));
+  } catch {}
+}
 
 const API     = import.meta.env.VITE_API_URL || 'http://localhost:3001/api/v1';
 const EUR_CVE = 110;
@@ -482,12 +508,14 @@ function HotelModal({ unit, op, slug, lang, onClose, refCode, traveler }) {
 }
 
 /* ── ActivityModal ────────────────────────────────── */
-function ActivityModal({ unit, op, slug, lang, onClose, refCode, traveler }) {
-  const [step,ss]=useState(1); const [date,sd]=useState(''); const [time,st]=useState(''); const [adults,sa]=useState(2); const [kids,sk]=useState(0);
+function ActivityModal({ unit, op, slug, lang, onClose, refCode, traveler, initialDate, initialAdults, initialKids, initialLanguage }) {
+  const [step,ss]=useState(1); const [date,sd]=useState(initialDate||''); const [time,st]=useState(''); const [adults,sa]=useState(initialAdults||2); const [kids,sk]=useState(initialKids||0);
+  const [tourLang,stl]=useState(initialLanguage||'');
   const [info,si]=useState(()=>({name:traveler?.name||'',email:traveler?.email||'',phone:traveler?.phone||'',country:traveler?.country||'',needs:''})); const [pay,sp]=useState('cash'); const [sub,ssub]=useState(false); const [resId,sr]=useState(null); const [pendingRes,spr]=useState(null); const [err,se]=useState('');
   const [voucherCode,svc]=useState(null);
   const rawTotal=(adults+kids)*(unit.base_price||0); const total=unit.base_price?fmtPrice(rawTotal,'person',op.currency||'EUR','EUR',lang):null;
-  function buildPayload(){ const notes=[`${lang==='en'?'Time':'Hora'}: ${time}`,`${adults} ${lang==='en'?'adults':'adultos'}, ${kids} ${lang==='en'?'children':'crianças'}`,info.needs?(lang==='en'?'Needs:':'Necessidades:')+' '+info.needs:''].filter(Boolean).join('. '); return {unit_id:unit.id,customer_name:info.name,customer_email:info.email,customer_phone:info.phone||null,customer_country:info.country||null,check_in:date,check_out:date,guests:adults+kids,notes,voucher_code:voucherCode||undefined,ref_code:refCode||undefined}; }
+  const tourLanguages=Array.isArray(getUnitMeta(unit).languages)?getUnitMeta(unit).languages:[];
+  function buildPayload(){ const notes=[`${lang==='en'?'Time':'Hora'}: ${time}`,`${adults} ${lang==='en'?'adults':'adultos'}, ${kids} ${lang==='en'?'children':'crianças'}`,tourLang?(lang==='en'?'Language: ':'Idioma: ')+tourLang:'',info.needs?(lang==='en'?'Needs:':'Necessidades:')+' '+info.needs:''].filter(Boolean).join('. '); return {unit_id:unit.id,customer_name:info.name,customer_email:info.email,customer_phone:info.phone||null,customer_country:info.country||null,check_in:date,check_out:date,guests:adults+kids,notes,voucher_code:voucherCode||undefined,ref_code:refCode||undefined}; }
   useEffect(()=>{ if(step===3&&pay==='paypal'&&!pendingRes&&!sub){ ssub(true); postReservation(slug,buildPayload()).then(spr).catch(e=>se(e.message)).finally(()=>ssub(false)); } },[step,pay]);
   function valid(){ if(step===1){if(!date){se(lang==='en'?'Select a date':'Seleccione uma data');return false;} if(!time){se(lang==='en'?'Select a time slot':'Seleccione um horário');return false;} if(adults<1){se(lang==='en'?'At least 1 adult required':'Mínimo 1 adulto');return false;}} if(step===2&&(!info.name||!info.email)){se(lang==='en'?'Name and email required':'Nome e email obrigatórios');return false;} se('');return true; }
   async function submit(){
@@ -502,7 +530,7 @@ function ActivityModal({ unit, op, slug, lang, onClose, refCode, traveler }) {
     }catch(e){se(e.message);}finally{ssub(false);}
   }
   function next(){ if(!valid())return; step<3?ss(s=>s+1):submit(); }
-  const sumL=[{label:lang==='en'?'Tour / Activity':'Tour / Actividade',value:unit.name},{label:lang==='en'?'Date':'Data',value:date},{label:lang==='en'?'Time':'Horário',value:time},{label:lang==='en'?'Group':'Grupo',value:`${adults} ${lang==='en'?'adults':'adultos'}${kids>0?` + ${kids} ${lang==='en'?'children':'crianças'}`:''}`},...(total?[{label:'Total',value:total,hi:true}]:[])];
+  const sumL=[{label:lang==='en'?'Tour / Activity':'Tour / Actividade',value:unit.name},{label:lang==='en'?'Date':'Data',value:date},{label:lang==='en'?'Time':'Horário',value:time},{label:lang==='en'?'Group':'Grupo',value:`${adults} ${lang==='en'?'adults':'adultos'}${kids>0?` + ${kids} ${lang==='en'?'children':'crianças'}`:''}`},...(tourLang?[{label:lang==='en'?'Language':'Idioma',value:tourLang}]:[]),...(total?[{label:'Total',value:total,hi:true}]:[])];
   return (
     <MS icon={<Compass size={18} strokeWidth={1.75}/>} title={lang==='en'?'Book tour':'Reservar tour'} step={step} lang={lang} onClose={onClose} onPrev={()=>ss(s=>s-1)} onNext={next} nextLabel={step<3?(lang==='en'?'Continue':'Continuar'):(lang==='en'?'Confirm booking':'Confirmar reserva')} nextDis={step===1&&(!date||!time)} sub={sub} err={err} ok={!!resId} hideNext={step===3&&pay==='paypal'}>
       {resId?<div className="p-5"><BS resId={resId} lang={lang} type="activity" onClose={onClose}/></div>
@@ -510,6 +538,7 @@ function ActivityModal({ unit, op, slug, lang, onClose, refCode, traveler }) {
         <div className="grid grid-cols-2 gap-3"><div><label className={LB}>{lang==='en'?'Date':'Data'} *</label><input type="date" className={IN} min={TODAY()} value={date} onChange={e=>sd(e.target.value)}/></div><div><label className={LB}>{lang==='en'?'Time slot':'Horário'} *</label><select className={SEL} value={time} onChange={e=>st(e.target.value)}><option value="">{lang==='en'?'-- Select --':'-- Seleccionar --'}</option>{TOUR_SLOTS.map(h=><option key={h} value={h}>{h}</option>)}</select></div></div>
         {total&&(date||adults)&&<div className="flex justify-between items-center bg-ocean-50 border border-ocean-100 rounded-xl px-4 py-2.5"><span className="text-xs font-body text-ocean-600">{adults+kids} {lang==='en'?'people':'pessoas'}</span><span className="font-display font-bold text-ocean-700 text-sm">{total}</span></div>}
         <div className="grid grid-cols-2 gap-4"><Cnt label={lang==='en'?'Adults (1-20)':'Adultos (1-20)'} val={adults} set={sa} min={1} max={20}/><Cnt label={lang==='en'?'Children (0-10)':'Crianças (0-10)'} val={kids} set={sk} min={0} max={10}/></div>
+        {tourLanguages.length>0&&<div><label className={LB}>{lang==='en'?'Tour language':'Idioma do tour'}</label><select className={SEL} value={tourLang} onChange={e=>stl(e.target.value)}><option value="">{lang==='en'?'-- Select --':'-- Seleccionar --'}</option>{tourLanguages.map(l=><option key={l} value={l}>{l}</option>)}</select></div>}
       </div>
       :step===2?<div className="p-5"><p className={SH}>{lang==='en'?'Contact details':'Dados de contacto'}</p><GF d={info} set={si} lang={lang} emailLocked={!!traveler}><div><label className={LB}>{lang==='en'?'Special needs (optional)':'Necessidades especiais (opcional)'}</label><textarea className={IN+' resize-none'} rows={3} value={info.needs} onChange={e=>si(i=>({...i,needs:e.target.value}))} placeholder={lang==='en'?'Wheelchair, allergies...':'Cadeira de rodas, alergias...'}/></div></GF></div>
       :<div className="p-5 space-y-4"><p className={SH}>{lang==='en'?'Review & payment':'Resumo e pagamento'}</p><ST lines={sumL}/>
@@ -591,10 +620,10 @@ function RentACarModal({ unit, op, slug, lang, onClose, refCode, traveler }) {
    reservadas via o formulario proprio em PublicBooking.jsx). RestaurantModal,
    REST_SLOTS e OCCASIONS foram removidos por serem codigo morto: nunca sao
    alcançados, dado que este ecrã cai sempre no NotFoundPage para esse tipo. */
-function BookingModal({ unit, op, slug, lang, onClose, refCode, traveler }) {
+function BookingModal({ unit, op, slug, lang, onClose, refCode, traveler, initialDate, initialAdults, initialKids, initialLanguage }) {
   if (!unit||!op) return null;
   const t=op.operator_type;
-  const props={unit,op,slug,lang,onClose,refCode,traveler};
+  const props={unit,op,slug,lang,onClose,refCode,traveler,initialDate,initialAdults,initialKids,initialLanguage};
   if (t==='hotel') return <HotelModal {...props}/>;
   if (t==='activity') return <ActivityModal {...props}/>;
   if (t==='rentacar') return <RentACarModal {...props}/>;
@@ -748,6 +777,13 @@ export default function ServiceDetail() {
   const [wishlisted, setWishlisted]   = useState(false);
   const [copied, setCopied]           = useState(false);
   const [opUnits, setOpUnits]         = useState([]); // so para restaurante -- ver useEffect abaixo
+  /* Pre-preenchimento da sidebar de actividade -- so inicializa o
+     ActivityModal (que continua a ser a unica fonte de verdade do
+     preco/disponibilidade), nunca substitui a logica do modal. */
+  const [sbDate, setSbDate]           = useState('');
+  const [sbAdults, setSbAdults]       = useState(2);
+  const [sbKids, setSbKids]           = useState(0);
+  const [sbLanguage, setSbLanguage]   = useState('');
   const [traveler, setTraveler]       = useState(null); // sessao de viajante (cookie partilhada), ver useEffect abaixo
 
   /* Bridge de sessao com a conta de viajante -- mesmo mecanismo do
@@ -812,6 +848,16 @@ export default function ServiceDetail() {
     navigator.clipboard.writeText(window.location.href).then(() => {
       setCopied(true); setTimeout(() => setCopied(false), 2500);
     });
+  }
+
+  /* Visitante anonimo (sem conta) -- um voto por browser via localStorage,
+     mesmo padrao ja usado pela wishlist anonima do Conect. Actualiza o
+     numero optimisticamente, sem esperar pela resposta do servidor. */
+  function handleVoteHelpful(reviewId) {
+    if (hasVotedReview(reviewId)) return;
+    markReviewVoted(reviewId);
+    setReviews(rs => rs.map(r => r.id === reviewId ? { ...r, helpful_count: (r.helpful_count || 0) + 1 } : r));
+    fetch(`${API}/public/${slug}/units/${id}/reviews/${reviewId}/helpful`, { method: 'POST' }).catch(() => {});
   }
 
   if (loading)  return <SkeletonPage/>;
@@ -925,6 +971,31 @@ export default function ServiceDetail() {
       <div className={isWidget ? '' : 'pt-14'}>
         <HeroGallery images={imgs} unitName={unit.name} onOpen={i => setLbIdx(i)}/>
       </div>
+
+      {/* ── Fila de informação rápida (so actividade) — so mostra o que o
+          operador de facto preencheu no TourForm, nunca inventa duracao/
+          modalidade/idiomas em falta. Cancelamento gratuito e' sempre
+          verdade (mesma politica fixa da seccao mais abaixo). */}
+      {isActivity && (
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 pt-6">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            {[
+              { icon:<RotateCcw size={18} strokeWidth={1.75}/>, pt:'Cancelamento gratuito', en:'Free cancellation', sub_pt:'Até 24h antes', sub_en:'Up to 24h before' },
+              ...(unitMeta.duration ? [{ icon:<Clock size={18} strokeWidth={1.75}/>, pt:'Duração', en:'Duration', sub_pt:unitMeta.duration>=60?`${(unitMeta.duration/60).toFixed(unitMeta.duration%60?1:0)}h`:`${unitMeta.duration} min`, sub_en:unitMeta.duration>=60?`${(unitMeta.duration/60).toFixed(unitMeta.duration%60?1:0)}h`:`${unitMeta.duration} min` }] : []),
+              ...(unitMeta.tour_type ? [{ icon:<Users size={18} strokeWidth={1.75}/>, pt:'Modalidade', en:'Group type', sub_pt:{grupo:'Guia partilhado',privado:'Guia privado',ambos:'Grupo ou privado'}[unitMeta.tour_type]||unitMeta.tour_type, sub_en:{grupo:'Shared guide',privado:'Private guide',ambos:'Group or private'}[unitMeta.tour_type]||unitMeta.tour_type }] : []),
+              ...(Array.isArray(unitMeta.languages) && unitMeta.languages.length ? [{ icon:<Languages size={18} strokeWidth={1.75}/>, pt:'Idiomas', en:'Languages', sub_pt:unitMeta.languages.join(' · '), sub_en:unitMeta.languages.join(' · ') }] : []),
+            ].map((c,i) => (
+              <div key={i} className="flex items-start gap-2.5 p-3 rounded-xl border border-n-200 bg-n-50">
+                <div className="w-8 h-8 rounded-lg bg-white border border-n-200 flex items-center justify-center text-ocean-700 flex-shrink-0">{c.icon}</div>
+                <div>
+                  <p className="text-xs font-body font-bold text-n-800 leading-tight">{lang==='en'?c.en:c.pt}</p>
+                  <p className="text-xs font-body text-n-500 leading-tight mt-0.5">{lang==='en'?c.sub_en:c.sub_pt}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* ── Main layout ── */}
       <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8">
@@ -1102,6 +1173,49 @@ export default function ServiceDetail() {
               </div>
             )}
 
+            {/* ── O que os viajantes adoraram (itinerário + mapa) — so
+                actividade, so se o operador configurou paragens reais no
+                TourForm. Paragens sem coordenadas ficam so na lista, nunca
+                ganham um pin inventado. Sem NENHUMA paragem com coordenadas,
+                mostra so a lista, sem mapa vazio. ── */}
+            {isActivity && Array.isArray(unitMeta.stops) && unitMeta.stops.length > 0 && (() => {
+              const stopsWithCoords = unitMeta.stops.filter(s => s.lat != null && s.lng != null);
+              return (
+                <div className="pb-10 border-b border-n-100">
+                  <p className="text-xs font-body font-bold text-ocean-700 uppercase tracking-widest mb-4">
+                    {lang==='en'?'What travelers loved':'O que os viajantes adoraram'}
+                  </p>
+                  <div className={`grid grid-cols-1 ${stopsWithCoords.length>0?'lg:grid-cols-2':''} gap-6`}>
+                    <div className="space-y-3">
+                      {unitMeta.stops.map((s, i) => (
+                        <div key={i} className="flex items-start gap-3">
+                          <span className="shrink-0 w-7 h-7 rounded-full bg-ocean-700 text-white text-xs font-body font-bold flex items-center justify-center mt-0.5">{i+1}</span>
+                          <div>
+                            <p className="font-body font-semibold text-n-800 text-sm">{lang==='en'&&s.name_en?s.name_en:s.name}</p>
+                            {(lang==='en'&&s.desc_en?s.desc_en:s.desc) && (
+                              <p className="text-xs font-body text-n-500 mt-0.5 leading-relaxed">{lang==='en'&&s.desc_en?s.desc_en:s.desc}</p>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    {stopsWithCoords.length > 0 && (
+                      <div className="h-72 rounded-2xl overflow-hidden border border-n-200">
+                        <MapContainer center={[stopsWithCoords[0].lat, stopsWithCoords[0].lng]} zoom={12} style={{ height:'100%', width:'100%' }} scrollWheelZoom={false}>
+                          <TileLayer attribution='&copy; OpenStreetMap contributors' url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"/>
+                          {stopsWithCoords.map((s, i) => (
+                            <Marker key={i} position={[s.lat, s.lng]} icon={stopDivIcon(unitMeta.stops.indexOf(s)+1)}>
+                              <Popup>{lang==='en'&&s.name_en?s.name_en:s.name}</Popup>
+                            </Marker>
+                          ))}
+                        </MapContainer>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })()}
+
             {/* ── O que está incluído (menu de degustação) ── */}
             {isRestaurant && unit.unit_type === 'tasting_menu' && unitMeta.items?.length > 0 && (
               <div className="pb-10 border-b border-n-100">
@@ -1217,6 +1331,11 @@ export default function ServiceDetail() {
                             <p className="text-xs font-body text-n-600">{r.reply_text}</p>
                           </div>
                         )}
+                        <button onClick={() => handleVoteHelpful(r.id)} disabled={hasVotedReview(r.id)}
+                          className={`mt-3 flex items-center gap-1.5 text-xs font-body font-semibold transition-colors ${hasVotedReview(r.id)?'text-ocean-700 cursor-default':'text-n-400 hover:text-ocean-700'}`}>
+                          <ThumbsUp size={13} strokeWidth={1.75} className={hasVotedReview(r.id)?'fill-ocean-100':''}/>
+                          {lang==='en'?'Helpful':'Útil'}{r.helpful_count>0?` (${r.helpful_count})`:''}
+                        </button>
                       </div>
                     ))}
                   </div>
@@ -1394,12 +1513,39 @@ export default function ServiceDetail() {
                   </div>
                 )}
 
+                {/* Selectores inline (so actividade) -- pre-preenchem o
+                    ActivityModal ao abrir; o modal continua a ser a unica
+                    fonte de verdade do preco/disponibilidade/submissao. */}
+                {isActivity && (
+                  <div className="px-5 pt-5 space-y-3 border-b border-n-100 pb-5">
+                    <div>
+                      <label className="text-xs font-body font-bold text-n-600 uppercase tracking-wide mb-1 block">{lang==='en'?'Date':'Data'}</label>
+                      <input type="date" value={sbDate} onChange={e=>setSbDate(e.target.value)} min={new Date().toISOString().split('T')[0]}
+                        className="w-full h-9 px-3 text-sm font-body border border-n-300 rounded-lg focus:outline-none focus:border-ocean-700"/>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <Cnt label={lang==='en'?'Adults':'Adultos'} val={sbAdults} set={setSbAdults} min={1} max={20}/>
+                      <Cnt label={lang==='en'?'Children':'Crianças'} val={sbKids} set={setSbKids} min={0} max={10}/>
+                    </div>
+                    {Array.isArray(unitMeta.languages) && unitMeta.languages.length > 0 && (
+                      <div>
+                        <label className="text-xs font-body font-bold text-n-600 uppercase tracking-wide mb-1 block">{lang==='en'?'Language':'Idioma'}</label>
+                        <select value={sbLanguage} onChange={e=>setSbLanguage(e.target.value)}
+                          className="w-full h-9 px-3 text-sm font-body border border-n-300 rounded-lg focus:outline-none focus:border-ocean-700 bg-white">
+                          <option value="">{lang==='en'?'-- Select --':'-- Seleccionar --'}</option>
+                          {unitMeta.languages.map(l => <option key={l} value={l}>{l}</option>)}
+                        </select>
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 {/* CTA buttons */}
                 <div className="px-5 py-5 space-y-3">
                   <button onClick={handleReservarClick}
                     className="w-full bg-ocean-700 text-white font-body font-bold py-4 rounded-xl flex items-center justify-center gap-2 hover:bg-ocean-500 transition-colors text-base shadow-sm hover:shadow-md">
                     <Calendar size={18} strokeWidth={1.75}/>
-                    {lang==='en'?'Book Now':'Reservar Agora'}
+                    {isActivity ? (lang==='en'?'Check availability':'Ver disponibilidade') : (lang==='en'?'Book Now':'Reservar Agora')}
                   </button>
                   <p className="text-center text-xs font-body text-n-400">
                     {lang==='en'?'No charge now — confirm details first':'Sem cobrança agora — confirme os detalhes'}
@@ -1515,7 +1661,8 @@ export default function ServiceDetail() {
 
       {/* ── Booking Modal ── */}
       {bookOpen && (
-        <BookingModal unit={unit} op={op} slug={slug} lang={lang} onClose={() => setBookOpen(false)} refCode={refCode} traveler={traveler}/>
+        <BookingModal unit={unit} op={op} slug={slug} lang={lang} onClose={() => setBookOpen(false)} refCode={refCode} traveler={traveler}
+          initialDate={sbDate} initialAdults={sbAdults} initialKids={sbKids} initialLanguage={sbLanguage}/>
       )}
 
       {/* ── Lightbox ── */}

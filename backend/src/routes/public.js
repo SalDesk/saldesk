@@ -16,6 +16,7 @@ const {
   slugContact,
   getUnit,
   getUnitReviews,
+  marcarReviewUtil,
   submitLead,
   getImpact,
   getSiteStatus,
@@ -62,6 +63,7 @@ router.get('/cms', getCmsPublic);
 /* ─── Unidade individual ─── */
 router.get('/:slug/units/:unitId',         getUnit);
 router.get('/:slug/units/:unitId/reviews', getUnitReviews);
+router.post('/:slug/units/:unitId/reviews/:reviewId/helpful', publicLimiter, marcarReviewUtil);
 router.post('/:slug/units/:unitId/call-waiter', publicLimiter, callWaiter);
 router.post('/:slug/units/:unitId/orders', publicLimiter, createOrder);
 

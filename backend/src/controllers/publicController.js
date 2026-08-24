@@ -1077,7 +1077,7 @@ async function getUnitReviews(req, res, next) {
     if (resIds.length > 0) {
       const { data: unitReviews } = await supabaseAdmin
         .from('reviews')
-        .select('id, rating, comment, reply_text, created_at, customer_id')
+        .select('id, rating, comment, reply_text, created_at, customer_id, helpful_count')
         .in('reservation_id', resIds)
         .eq('is_public', true)
         .order('created_at', { ascending: false })
@@ -1088,7 +1088,7 @@ async function getUnitReviews(req, res, next) {
     if (reviews.length === 0) {
       const { data: opReviews } = await supabaseAdmin
         .from('reviews')
-        .select('id, rating, comment, reply_text, created_at, customer_id')
+        .select('id, rating, comment, reply_text, created_at, customer_id, helpful_count')
         .eq('operator_id', operator.id)
         .eq('is_public', true)
         .order('created_at', { ascending: false })
@@ -1114,9 +1114,48 @@ async function getUnitReviews(req, res, next) {
       created_at: r.created_at,
       author_name: custMap[r.customer_id]?.first_name || 'Cliente',
       country_code: custMap[r.customer_id]?.country_code || null,
+      helpful_count: r.helpful_count || 0,
     }));
 
     return res.json({ data: enriched });
+  } catch (err) { next(err); }
+}
+
+/* ─── Marcar avaliacao como util (visitante anonimo) ───
+   Sem conta necessaria -- o frontend impede votos repetidos no mesmo
+   browser via localStorage (mesmo padrao ja usado pela wishlist anonima
+   do Conect). Aqui so confirmamos que a avaliacao pertence mesmo ao
+   operador/unidade do slug antes de incrementar, nunca um id solto. */
+async function marcarReviewUtil(req, res, next) {
+  try {
+    const { slug, unitId, reviewId } = req.params;
+
+    const { data: operator } = await supabaseAdmin
+      .from('operators')
+      .select('id')
+      .eq('slug', slug)
+      .eq('onboarding_complete', true)
+      .single();
+    if (!operator) return res.status(404).json({ error: 'Operador não encontrado', code: 'NOT_FOUND' });
+
+    const { data: review } = await supabaseAdmin
+      .from('reviews')
+      .select('id, helpful_count, reservation_id, operator_id')
+      .eq('id', reviewId)
+      .eq('operator_id', operator.id)
+      .eq('is_public', true)
+      .maybeSingle();
+    if (!review) return res.status(404).json({ error: 'Avaliação não encontrada', code: 'NOT_FOUND' });
+
+    const { data: updated, error } = await supabaseAdmin
+      .from('reviews')
+      .update({ helpful_count: (review.helpful_count || 0) + 1 })
+      .eq('id', reviewId)
+      .select('helpful_count')
+      .single();
+    if (error) throw error;
+
+    return res.json({ data: { helpful_count: updated.helpful_count } });
   } catch (err) { next(err); }
 }
 
@@ -1385,6 +1424,7 @@ module.exports = {
   callWaiter,
   createOrder,
   getUnitReviews,
+  marcarReviewUtil,
   submitLead,
   getImpact,
   getSiteStatus,
