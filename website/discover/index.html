@@ -142,6 +142,9 @@
     .act-rating-row{display:flex;align-items:center;gap:6px;margin-bottom:8px}
     .act-name{font-family:var(--fb);font-size:1rem;font-weight:700;color:var(--tx);margin-bottom:6px;letter-spacing:-.01em}
     .act-desc{font-size:.8125rem;color:var(--tx-soft);line-height:1.55;margin-bottom:11px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+    .vehicle-specs{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:11px}
+    .vspec{display:inline-flex;align-items:center;gap:4px;font-family:var(--fm);font-size:.6875rem;font-weight:600;color:var(--tx-soft)}
+    .vspec svg{flex-shrink:0;color:var(--tx-faint)}
     .act-meta-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:14px;flex:1}
     .act-price-row{display:flex;align-items:baseline;gap:5px;margin-bottom:14px}
     .act-price-from{font-size:.6875rem;color:var(--tx-faint)}
@@ -631,6 +634,46 @@ function getUnitDescription(item, lang) {
   return raw;
 }
 
+/* unit.description de uma viatura guarda a mesma estrutura ja usada em
+   RentacarVehicleForm (frontend React) -- transmission/fuel/seats. So
+   mostra o que existir de facto, nunca inventa um valor por omissao. */
+function parseVehicleMeta(item) {
+  if (item.operator_type !== 'rentacar' || !item.description?.startsWith('{')) return {};
+  try { return JSON.parse(item.description); } catch { return {}; }
+}
+
+const TRANSMISSION_LABEL = { manual: { pt: 'Manual', en: 'Manual' }, automatico: { pt: 'Automático', en: 'Automatic' } };
+const FUEL_LABEL = {
+  gasolina: { pt: 'Gasolina', en: 'Petrol' }, diesel: { pt: 'Diesel', en: 'Diesel' },
+  electrico: { pt: 'Eléctrico', en: 'Electric' }, hibrido: { pt: 'Híbrido', en: 'Hybrid' },
+};
+const ICON_TRANSMISSION = '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>';
+const ICON_FUEL = '<line x1="3" y1="22" x2="15" y2="22"/><line x1="4" y1="9" x2="14" y2="9"/><path d="M14 22V4a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v18"/><path d="M14 13h2a2 2 0 0 1 2 2v2a2 2 0 0 0 2 2 2 2 0 0 0 2-2V9.83a2 2 0 0 0-.59-1.42L18.41 6H14"/>';
+const ICON_SEATS = '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>';
+
+function vspec(icon, text) {
+  return `<span class="vspec"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${icon}</svg>${esc(text)}</span>`;
+}
+
+/* Linha de especificacoes rapidas -- so aparece para viaturas (rentacar),
+   e so mostra cada campo se o operador o tiver mesmo preenchido no
+   RentacarVehicleForm. Nunca inventa transmissao/combustivel/lugares. */
+function vehicleSpecsRow(item) {
+  const meta = parseVehicleMeta(item);
+  const lang = L();
+  const parts = [];
+  if (meta.transmission && TRANSMISSION_LABEL[meta.transmission]) {
+    parts.push(vspec(ICON_TRANSMISSION, TRANSMISSION_LABEL[meta.transmission][lang]));
+  }
+  if (meta.fuel && FUEL_LABEL[meta.fuel]) {
+    parts.push(vspec(ICON_FUEL, FUEL_LABEL[meta.fuel][lang]));
+  }
+  if (meta.seats != null) {
+    parts.push(vspec(ICON_SEATS, `${meta.seats} ${lang === 'pt' ? 'lugares' : 'seats'}`));
+  }
+  return parts.length ? `<div class="vehicle-specs">${parts.join('')}</div>` : '';
+}
+
 function renderStars(r) {
   if (!r) return '';
   const f = Math.floor(r), e = 5 - f;
@@ -939,6 +982,7 @@ function renderActCard(item) {
         ${coordEyebrow(item)}
         <div class="act-rating-row">${ratingLine(item)}</div>
         <div class="act-name">${name}</div>
+        ${vehicleSpecsRow(item)}
         ${desc ? `<p class="act-desc">${desc}</p>` : ''}
         <div class="act-meta-row">
           <span class="tb">${categoryLabel(item)}</span>
