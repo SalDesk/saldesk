@@ -717,11 +717,22 @@ function isWished(item) {
   return travelerSession ? wishedUnitIds.has(item.unit_id) : getWishlist().includes(item.unit_id);
 }
 
+/* access_token dura tipicamente ~1h; numa visita longa a esta pagina
+   (sem reload) as chamadas comecavam a falhar em silencio a meio dessa
+   janela, sem nenhuma tentativa de renovar. bootstrapTravelerSession() ja
+   sabe renovar via a cookie httpOnly (sd_travel_rt) -- so faltava chamar
+   de novo quando um 401 aparece, em vez de so no carregamento inicial. */
 async function travelerApiFetch(path, opts = {}) {
-  return fetch(API_TRAVELER + path, {
+  const doFetch = () => fetch(API_TRAVELER + path, {
     ...opts,
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${travelerSession.access_token}`, ...(opts.headers || {}) },
   });
+  let r = await doFetch();
+  if (r.status === 401) {
+    const renovado = await bootstrapTravelerSession();
+    if (renovado) { applyTravelerSession(renovado); r = await doFetch(); }
+  }
+  return r;
 }
 
 async function toggleWishlist(slug, unitId) {
