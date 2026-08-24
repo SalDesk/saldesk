@@ -794,6 +794,11 @@ async function slugContact(req, res, next) {
     if (!email || !message) {
       return res.status(400).json({ error: 'Email e mensagem são obrigatórios', code: 'MISSING_FIELDS' });
     }
+
+    const { data: operator } = await supabaseAdmin
+      .from('operators').select('name, email').eq('slug', req.params.slug).eq('onboarding_complete', true).maybeSingle();
+    if (!operator) return res.status(404).json({ error: 'Operador não encontrado', code: 'NOT_FOUND' });
+
     await supabaseAdmin
       .from('leads')
       .upsert({
@@ -802,6 +807,19 @@ async function slugContact(req, res, next) {
         language:      'pt',
         operator_type: 'other',
       }, { onConflict: 'email', ignoreDuplicates: false });
+
+    /* A propria mensagem (nome/telefone/conteudo) nunca chegava ao operador
+       -- so ficava um registo generico de "lead" (so email), sem o
+       conteudo real do que o visitante queria dizer. O operador nunca via
+       nada. Envia agora um email real, mesmo helper ja usado para as
+       notificacoes de reserva. */
+    if (operator.email) {
+      enviarEmail({
+        to: operator.email,
+        subject: `Nova mensagem de ${name || email} — via a sua página SalDesk`,
+        text: `Nome: ${name || 'Não indicado'}\nEmail: ${email}\nTelefone: ${phone || 'Não indicado'}\n\nMensagem:\n${message}`,
+      }).catch((err) => console.error('[Contacto] Erro ao enviar email ao operador:', err.message));
+    }
 
     return res.json({ message: 'Mensagem recebida com sucesso' });
   } catch (err) { next(err); }
