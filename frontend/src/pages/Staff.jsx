@@ -19,6 +19,7 @@ import {
   listAssignments, startAssignment, completeAssignment,
   cancelAssignment, createAssignment,
 } from '../services/assignmentService';
+import { listReservations } from '../services/reservationsService';
 import {
   listMessages, sendMessage, getUnreadCount, listGroups, createGroup,
 } from '../services/messageService';
@@ -478,16 +479,22 @@ function TaskCard({ task, staffList, onMove, onOpen }) {
 
 /* ── Kanban Board ── */
 function KanbanBoard({ staffList }) {
+  const toast = useToast();
   const [tasks, setTasks]         = useState([]);
+  const [reservations, setReservations] = useState([]);
   const [loading, setLoading]     = useState(true);
   const [selected, setSelected]   = useState(null);
   const [taskModal, setTaskModal] = useState(false);
-  const [taskForm, setTaskForm]   = useState({ title: '', desc: '', priority: 'medium', due: '', staff_id: '', checklist: '' });
+  const [taskForm, setTaskForm]   = useState({ title: '', desc: '', priority: 'medium', due: '', staff_id: '', reservation_id: '', checklist: '' });
   const [saving, setSaving]       = useState(false);
   const [filterStaff, setFilter]  = useState('');
 
   useEffect(() => {
     listAssignments().then(setTasks).finally(() => setLoading(false));
+    /* Tarefas sao sempre job_assignments (reservation_id obrigatorio na BD)
+       -- precisamos da lista de reservas para o operador escolher a que a
+       tarefa pertence, nunca so titulo/prazo soltos. */
+    listReservations().then(rows => setReservations(rows.filter(r => r.status !== 'cancelled'))).catch(() => {});
   }, []);
 
   async function moveTask(task, newStatus) {
@@ -500,7 +507,12 @@ function KanbanBoard({ staffList }) {
   }
 
   async function handleCreateTask(e) {
-    e.preventDefault(); setSaving(true);
+    e.preventDefault();
+    if (!taskForm.reservation_id) {
+      toast.error('Escolha a reserva a que esta tarefa pertence');
+      return;
+    }
+    setSaving(true);
     try {
       const meta = {
         title: taskForm.title,
@@ -510,15 +522,16 @@ function KanbanBoard({ staffList }) {
         checklist: taskForm.checklist.split('\n').filter(Boolean),
       };
       const payload = {
+        reservation_id: taskForm.reservation_id,
         staff_id: taskForm.staff_id || null,
         notes_manager: JSON.stringify(meta),
       };
       const created = await createAssignment(payload);
       setTasks(p => [created, ...p]);
       setTaskModal(false);
-      setTaskForm({ title: '', desc: '', priority: 'medium', due: '', staff_id: '', checklist: '' });
+      setTaskForm({ title: '', desc: '', priority: 'medium', due: '', staff_id: '', reservation_id: '', checklist: '' });
     } catch (err) {
-      console.error(err);
+      toast.error(err.response?.data?.error || 'Erro ao criar tarefa');
     } finally { setSaving(false); }
   }
 
@@ -642,6 +655,14 @@ function KanbanBoard({ staffList }) {
       <Modal open={taskModal} onClose={() => setTaskModal(false)} title="Nova tarefa" size="md">
         <form onSubmit={handleCreateTask} className="space-y-4">
           <Input label="Titulo" value={taskForm.title} onChange={e => setTaskForm(p => ({ ...p, title: e.target.value }))} required placeholder="Titulo da tarefa" />
+          <Select label="Reserva" value={taskForm.reservation_id} onChange={e => setTaskForm(p => ({ ...p, reservation_id: e.target.value }))} required>
+            <option value="">Escolha a reserva...</option>
+            {reservations.map(r => (
+              <option key={r.id} value={r.id}>
+                {r.customer_name} — {r.units?.name || 'Servico'} ({r.check_in})
+              </option>
+            ))}
+          </Select>
           <Textarea label="Descricao" value={taskForm.desc} onChange={e => setTaskForm(p => ({ ...p, desc: e.target.value }))} placeholder="Descricao opcional" rows={2} />
           <div className="grid grid-cols-2 gap-3">
             <Select label="Prioridade" value={taskForm.priority} onChange={e => setTaskForm(p => ({ ...p, priority: e.target.value }))}>
