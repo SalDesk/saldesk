@@ -196,7 +196,7 @@ export default function BeachSale() {
   const STEPS = ['Tour', 'Data e Grupo', 'Cliente'];
 
   return (
-    <div className="min-h-screen bg-n-50 flex flex-col max-w-md md:max-w-2xl lg:max-w-3xl mx-auto">
+    <div className="min-h-screen bg-n-50 flex flex-col max-w-md md:max-w-2xl lg:max-w-3xl xl:max-w-4xl mx-auto">
       {/* Header */}
       <header className="bg-gradient-to-br from-ocean-900 to-ocean-700 px-4 py-4 flex items-center gap-3 sticky top-0 z-10 rounded-b-3xl shadow-md">
         {step < 4 && (

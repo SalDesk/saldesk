@@ -203,7 +203,7 @@ export default function BeachSeller() {
   function handleLogout() { logout(); navigate('/login'); }
 
   return (
-    <div className="min-h-screen bg-n-50 flex flex-col max-w-md md:max-w-2xl lg:max-w-3xl mx-auto">
+    <div className="min-h-screen bg-n-50 flex flex-col max-w-md md:max-w-2xl lg:max-w-4xl xl:max-w-5xl mx-auto">
       {/* Header */}
       <header className="bg-gradient-to-br from-ocean-900 to-ocean-700 px-5 pt-6 pb-6 rounded-b-3xl shadow-lg">
         <div className="flex items-center justify-between mb-5">
@@ -375,6 +375,7 @@ export default function BeachSeller() {
                 <p className="text-xs font-mono uppercase tracking-wider text-n-500 mb-2">
                   {reservationsFiltered.length} reserva(s) {reservMode === 'hoje' ? 'hoje' : `em ${MONTHS_PT[reservViewMonth.month]}`}
                 </p>
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
                 {reservationsFiltered.map((r, i) => {
                 const sc  = STATUS_CFG[r.status] || STATUS_CFG.pending;
                 const val = Number(r.total_price || 0);
@@ -425,6 +426,7 @@ export default function BeachSeller() {
                   </div>
                 );
                 })}
+                </div>
               </>
             )}
           </>
@@ -491,6 +493,7 @@ export default function BeachSeller() {
                 <p className="text-xs font-mono uppercase tracking-wider text-n-500">
                   Historico — {MONTHS_PT[viewMonth.month]}
                 </p>
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-2">
                 {[...monthComms].sort((a, b) => b.created_at.localeCompare(a.created_at)).map(c => (
                   <div key={c.id} className="bg-white rounded-2xl border border-n-200 px-4 py-3">
                     <div className="flex items-center justify-between gap-2">
@@ -521,6 +524,7 @@ export default function BeachSeller() {
                     </div>
                   </div>
                 ))}
+                </div>
               </div>
             )}
           </div>
@@ -529,7 +533,7 @@ export default function BeachSeller() {
 
       {/* Floating CTA */}
       <div className="fixed bottom-0 inset-x-0 z-20 px-4 pb-5 pt-6 bg-gradient-to-t from-n-50 via-n-50/90 to-transparent">
-        <div className="max-w-md md:max-w-2xl lg:max-w-3xl mx-auto">
+        <div className="max-w-md md:max-w-2xl lg:max-w-4xl xl:max-w-5xl mx-auto">
           <button
             onClick={() => navigate('/vendedor/nova-reserva')}
             className="w-full h-16 bg-sand-500 text-ocean-900 rounded-full font-display font-bold text-lg flex items-center justify-center gap-2 shadow-2xl shadow-sand-500/30 active:scale-95 transition-all hover:bg-sand-600">
@@ -546,7 +550,7 @@ export default function BeachSeller() {
             className="fixed inset-0 bg-ocean-900/50 z-40"
             onClick={() => setShowShiftSummary(false)}
           />
-          <div className="fixed bottom-0 inset-x-0 z-50 bg-white rounded-t-3xl shadow-xl max-h-[85vh] overflow-y-auto max-w-md md:max-w-2xl lg:max-w-3xl mx-auto">
+          <div className="fixed bottom-0 inset-x-0 z-50 bg-white rounded-t-3xl shadow-xl max-h-[85vh] overflow-y-auto max-w-md md:max-w-2xl lg:max-w-4xl xl:max-w-5xl mx-auto">
             <div className="flex justify-center pt-3 pb-1">
               <span className="w-10 h-1.5 rounded-full bg-n-300" />
             </div>
