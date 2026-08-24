@@ -1370,7 +1370,7 @@ function ActivityDashboard() {
               const toursOnDay = weekRes.filter(r => r.check_in === wx.date && ['confirmed', 'pending'].includes(r.status));
               return (
                 <p key={wx.date} className="text-xs font-body text-red-600">
-                  {new Date(wx.date + 'T00:00:00Z').toLocaleDateString('pt-PT', { weekday: 'short', day: '2-digit', month: 'short' })}
+                  {new Date(wx.date + 'T00:00:00Z').toLocaleDateString('pt-PT', { weekday: 'short', day: '2-digit', month: 'short', timeZone: 'UTC' })}
                   {' — '}{info.label}{wx.precipitation > 0 ? ` (${wx.precipitation}mm)` : ''}
                   {' · '}{toursOnDay.length} tour(s) agendado(s)
                 </p>

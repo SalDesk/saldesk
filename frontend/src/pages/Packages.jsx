@@ -20,7 +20,7 @@ const STATUS_CFG = {
 
 function fmtDate(d) {
   if (!d) return '—';
-  return new Date(d + 'T00:00:00Z').toLocaleDateString('pt-PT', { day: '2-digit', month: 'short', year: 'numeric' });
+  return new Date(d + 'T00:00:00Z').toLocaleDateString('pt-PT', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'UTC' });
 }
 
 /* ── PackageModal ── */

@@ -24,7 +24,7 @@ function addDays(n) {
 }
 
 function fmtDate(dateStr) {
-  return new Date(dateStr + 'T00:00:00Z').toLocaleDateString('pt-PT', { weekday: 'long', day: '2-digit', month: 'long' });
+  return new Date(dateStr + 'T00:00:00Z').toLocaleDateString('pt-PT', { weekday: 'long', day: '2-digit', month: 'long', timeZone: 'UTC' });
 }
 
 /* ── WeatherCard ── */
@@ -49,7 +49,7 @@ function WeatherCard({ day, isToday, tours, onClick }) {
         {dayLabel(day.date)}
       </p>
       <p className="text-[10px] font-mono text-n-400">
-        {new Date(day.date + 'T00:00:00Z').toLocaleDateString('pt-PT', { day: '2-digit', month: 'short' })}
+        {new Date(day.date + 'T00:00:00Z').toLocaleDateString('pt-PT', { day: '2-digit', month: 'short', timeZone: 'UTC' })}
       </p>
 
       <Icon size={26} strokeWidth={1.5} style={{ color: info.color }} />

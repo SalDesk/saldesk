@@ -460,7 +460,7 @@ function TaskCard({ task, staffList, onMove, onOpen }) {
         {dueDate && (
           <span className={`text-xs font-mono ${isOverdue ? 'text-error' : 'text-n-400'}`}>
             <Clock size={10} strokeWidth={1.75} className="inline mr-0.5" />
-            {dueDate.toLocaleDateString('pt-PT', { day: '2-digit', month: 'short' })}
+            {dueDate.toLocaleDateString('pt-PT', { day: '2-digit', month: 'short', timeZone: 'UTC' })}
           </span>
         )}
       </div>
@@ -595,7 +595,7 @@ function KanbanBoard({ staffList }) {
               {meta?.desc && <p className="text-sm font-body text-n-600">{meta.desc}</p>}
               <div className="flex gap-2 text-xs font-body text-n-500 flex-wrap">
                 {meta?.priority && <span className={`px-2 py-0.5 rounded font-mono ${PRIO_COLORS[meta.priority]}`}>{PRIO[meta.priority]}</span>}
-                {meta?.due && <span className="flex items-center gap-1"><Clock size={11} strokeWidth={1.75} />{new Date(meta.due).toLocaleDateString('pt-PT')}</span>}
+                {meta?.due && <span className="flex items-center gap-1"><Clock size={11} strokeWidth={1.75} />{new Date(meta.due).toLocaleDateString('pt-PT', { timeZone: 'UTC' })}</span>}
                 {staffMember && (
                   <span className="flex items-center gap-1.5">
                     <StaffAvatar member={staffMember} size={16} showStatus={false} />

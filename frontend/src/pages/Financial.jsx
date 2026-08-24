@@ -132,7 +132,7 @@ function ultimos30() {
 
 function fmtDate(d) {
   if (!d) return '—';
-  return new Date(d + 'T00:00:00Z').toLocaleDateString('pt-PT', { day: '2-digit', month: 'short' });
+  return new Date(d + 'T00:00:00Z').toLocaleDateString('pt-PT', { day: '2-digit', month: 'short', timeZone: 'UTC' });
 }
 function fmtMoney(v, currency) {
   const n = Number(v || 0);

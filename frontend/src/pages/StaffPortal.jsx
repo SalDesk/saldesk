@@ -32,7 +32,7 @@ const MONTHS_PT = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','
 const DAYS_PT   = ['Dom','Seg','Ter','Qua','Qui','Sex','Sab'];
 const TODAY = new Date().toISOString().slice(0, 10);
 
-function formatDate(d) { if (!d) return '—'; const dt = new Date(d+'T00:00:00Z'); return dt.toLocaleDateString('pt-PT',{day:'2-digit',month:'short',year:'numeric'}); }
+function formatDate(d) { if (!d) return '—'; const dt = new Date(d+'T00:00:00Z'); return dt.toLocaleDateString('pt-PT',{day:'2-digit',month:'short',year:'numeric',timeZone:'UTC'}); }
 
 function StatusBadge({ status }) {
   const sc = STATUS_CFG[status] || STATUS_CFG.pending;

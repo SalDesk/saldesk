@@ -168,7 +168,7 @@ function PointsModal({ customer, config, onClose, onAdjust, onRedeem }) {
                 {copied ? <CheckIcon size={14} strokeWidth={2} className="text-[#1A7A4A]" /> : <Copy size={14} strokeWidth={1.75} />}
               </button>
             </div>
-            <p className="text-xs font-body text-n-500">Uso unico, valido ate {new Date(redeemedVoucher.expires_at).toLocaleDateString('pt-PT')}.</p>
+            <p className="text-xs font-body text-n-500">Uso unico, valido ate {new Date(redeemedVoucher.expires_at).toLocaleDateString('pt-PT', { timeZone: 'UTC' })}.</p>
           </div>
         ) : (
           <div className="p-3 bg-sand-50 border border-sand-100 rounded-sm">

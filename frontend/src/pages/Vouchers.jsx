@@ -192,7 +192,7 @@ function VoucherModal({ voucher, units, onSave, onClose }) {
 function ShareModal({ voucher, bookingLink, onClose }) {
   if (!voucher) return null;
   const discount = fmtDiscount(voucher);
-  const expires  = voucher.expires_at ? ` Valido ate ${new Date(voucher.expires_at).toLocaleDateString('pt-PT')}.` : '';
+  const expires  = voucher.expires_at ? ` Valido ate ${new Date(voucher.expires_at).toLocaleDateString('pt-PT', { timeZone: 'UTC' })}.` : '';
 
   const msgPt = `Use o codigo *${voucher.code}* para obter ${discount} de desconto na sua proxima reserva.${expires} Reserve em: ${bookingLink}`;
   const msgEn = `Use code *${voucher.code}* to get ${discount} off your next booking.${expires} Book at: ${bookingLink}`;
@@ -394,7 +394,7 @@ export default function Vouchers() {
                       <td className="py-3 px-4 text-xs font-mono text-n-500 whitespace-nowrap">
                         <div className="flex items-center gap-1.5">
                           {isExpiringSoon && <AlertTriangle size={12} strokeWidth={1.75} className="text-yellow-600 shrink-0" />}
-                          {v.expires_at ? new Date(v.expires_at).toLocaleDateString('pt-PT') : '—'}
+                          {v.expires_at ? new Date(v.expires_at).toLocaleDateString('pt-PT', { timeZone: 'UTC' }) : '—'}
                         </div>
                       </td>
                       <td className="py-3 px-4 font-mono text-n-700">

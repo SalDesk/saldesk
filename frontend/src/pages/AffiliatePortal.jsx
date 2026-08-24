@@ -150,7 +150,7 @@ export default function AffiliatePortal() {
                   {affiliate.payments.map((p, i) => (
                     <div key={i} className="flex items-center justify-between py-2 border-b border-n-100 last:border-0">
                       <div>
-                        <p className="text-xs font-mono text-n-500">{p.payment_date ? new Date(p.payment_date + 'T00:00:00Z').toLocaleDateString('pt-PT') : '—'}</p>
+                        <p className="text-xs font-mono text-n-500">{p.payment_date ? new Date(p.payment_date + 'T00:00:00Z').toLocaleDateString('pt-PT', { timeZone: 'UTC' }) : '—'}</p>
                         {p.note && <p className="text-xs font-body text-n-400">{p.note}</p>}
                       </div>
                       <p className="font-display font-bold text-sm text-[#1A7A4A]">€{Number(p.amount).toFixed(2)}</p>

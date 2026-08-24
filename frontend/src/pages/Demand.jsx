@@ -396,7 +396,7 @@ export default function Demand() {
                   .map(({ date, count }) => (
                     <div key={date} className="flex items-center gap-3">
                       <span className="text-xs font-mono text-n-500 w-28 shrink-0">
-                        {new Date(date + 'T00:00:00Z').toLocaleDateString('pt-PT', { weekday: 'short', day: '2-digit', month: 'short' })}
+                        {new Date(date + 'T00:00:00Z').toLocaleDateString('pt-PT', { weekday: 'short', day: '2-digit', month: 'short', timeZone: 'UTC' })}
                       </span>
                       <div className="flex-1 h-2 bg-n-100 rounded-full overflow-hidden">
                         <div className="h-full rounded-full bg-ocean-500 transition-all"
