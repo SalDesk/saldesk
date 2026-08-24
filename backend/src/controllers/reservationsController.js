@@ -236,7 +236,7 @@ async function criar(req, res, next) {
           phone: customer_phone,
           country: customer_country,
         },
-        notes: finalNotes,
+        notes: notes || null,
         sellerName,
       });
       enviarEmail({
