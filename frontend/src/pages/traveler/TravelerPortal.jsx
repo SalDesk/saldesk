@@ -380,12 +380,24 @@ function BookingsTab({ onNavigate }) {
 
 /* ─── Facturas ─── */
 function InvoicesTab() {
-  const [bookings, setBookings] = useState([]);
-  const [loading, setLoading]   = useState(true);
+  const [bookings, setBookings]     = useState([]);
+  const [loading, setLoading]       = useState(true);
+  const [downloadingId, setDownloadingId] = useState(null);
 
   useEffect(() => {
     travelerService.getBookings().then(setBookings).catch(() => {}).finally(() => setLoading(false));
   }, []);
+
+  async function handleDownload(id) {
+    setDownloadingId(id);
+    try {
+      await travelerService.downloadInvoice(id);
+    } catch {
+      window.alert('Nao foi possivel descarregar o recibo. Tenta novamente.');
+    } finally {
+      setDownloadingId(null);
+    }
+  }
 
   if (loading) return <div className="flex justify-center py-16"><LoadingSpinner /></div>;
 
@@ -411,6 +423,7 @@ function InvoicesTab() {
               <th className="px-4 py-3 text-left text-xs font-body font-bold uppercase tracking-wide text-n-500 dark:text-n-400">Total</th>
               <th className="px-4 py-3 text-left text-xs font-body font-bold uppercase tracking-wide text-n-500 dark:text-n-400">Pago</th>
               <th className="px-4 py-3 text-left text-xs font-body font-bold uppercase tracking-wide text-n-500 dark:text-n-400">Estado</th>
+              <th className="px-4 py-3 text-left text-xs font-body font-bold uppercase tracking-wide text-n-500 dark:text-n-400"></th>
             </tr>
           </thead>
           <tbody>
@@ -425,6 +438,16 @@ function InvoicesTab() {
                 <td className="px-4 py-3 font-mono text-xs text-n-600 dark:text-n-400">€{b.amount_paid ?? 0}</td>
                 <td className="px-4 py-3">
                   <Badge variant={PAYMENT_BADGE[b.payment_status] || 'default'}>{PAYMENT_LABEL[b.payment_status] || b.payment_status || '—'}</Badge>
+                </td>
+                <td className="px-4 py-3">
+                  <button
+                    onClick={() => handleDownload(b.id)}
+                    disabled={downloadingId === b.id}
+                    title="Descarregar recibo"
+                    className="p-1.5 rounded text-n-400 hover:text-ocean-700 dark:hover:text-ocean-300 hover:bg-ocean-50 dark:hover:bg-n-700 transition-colors disabled:opacity-50"
+                  >
+                    <Download size={14} strokeWidth={1.75} />
+                  </button>
                 </td>
               </tr>
             ))}

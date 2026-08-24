@@ -1,5 +1,6 @@
 const { supabaseAdmin } = require('../config/supabase');
 const { getDiscoverCatalog } = require('../services/discoverCatalogService');
+const PDFDocument = require('pdfkit');
 
 async function getProfile(req, res) {
   return res.json({ data: req.traveler, message: 'Perfil do viajante' });
@@ -353,7 +354,86 @@ async function markNotificationRead(req, res, next) {
   }
 }
 
+/* Recibo real por reserva -- a tab "Facturas" do portal (TravelerPortal.jsx)
+   so mostrava a lista de reservas reaproveitada, sem nenhum documento
+   descarregavel. Mesmo padrao visual/pdfkit ja usado no export financeiro
+   do operador (financeiroController.js). ilike('customer_email', email) --
+   mesmo filtro ja usado em getBookings, para nunca deixar um viajante
+   descarregar o recibo de uma reserva que nao e dele. */
+const PAYMENT_LABEL_PT = { pending: 'Pendente', paid: 'Pago', partial: 'Parcial', refunded: 'Reembolsado' };
+
+async function getBookingInvoice(req, res, next) {
+  try {
+    const email = req.traveler.email.trim().toLowerCase();
+    const { data: reserva, error } = await supabaseAdmin
+      .from('reservations')
+      .select('*, units(name), operators(name, address, email, currency)')
+      .eq('id', req.params.id)
+      .ilike('customer_email', email)
+      .maybeSingle();
+    if (error) throw error;
+    if (!reserva) return res.status(404).json({ error: 'Reserva não encontrada', code: 'NOT_FOUND' });
+
+    const OCEAN = '#0D5470';
+    const N900  = '#1A2332';
+    const N500  = '#6B7280';
+    const N200  = '#E5E8EC';
+    const moeda = reserva.operators?.currency || 'EUR';
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="recibo-${reserva.id.slice(0, 8)}.pdf"`);
+
+    const doc = new PDFDocument({ margin: 40, size: 'A4' });
+    doc.pipe(res);
+
+    doc.font('Helvetica-Bold').fontSize(18).fillColor(OCEAN).text('SalDesk', 40, 40);
+    doc.font('Helvetica').fontSize(9).fillColor(N500).text('Recibo de reserva', 40, 62);
+    doc.font('Helvetica').fontSize(8).fillColor(N500)
+      .text(`Emitido em ${new Date().toLocaleDateString('pt-PT')}`, 40, 76);
+    doc.moveTo(40, 98).lineTo(555, 98).strokeColor(N200).stroke();
+
+    let y = 116;
+    const linha = (label, value) => {
+      doc.font('Helvetica').fontSize(10).fillColor(N500).text(label, 40, y);
+      doc.font('Helvetica-Bold').fontSize(10).fillColor(N900).text(value || '—', 220, y, { width: 335 });
+      y += 20;
+    };
+
+    doc.font('Helvetica-Bold').fontSize(11).fillColor(OCEAN).text('Prestador do serviço', 40, y);
+    y += 18;
+    linha('Operador', reserva.operators?.name);
+    linha('Morada', reserva.operators?.address);
+    linha('Contacto', reserva.operators?.email);
+
+    y += 8;
+    doc.font('Helvetica-Bold').fontSize(11).fillColor(OCEAN).text('Detalhes da reserva', 40, y);
+    y += 18;
+    linha('Referência', reserva.id);
+    linha('Serviço', reserva.units?.name);
+    linha('Cliente', reserva.customer_name);
+    linha('Check-in', reserva.check_in);
+    if (reserva.check_out && reserva.check_out !== reserva.check_in) linha('Check-out', reserva.check_out);
+    linha('Pessoas', String(reserva.guests || 1));
+
+    y += 8;
+    doc.font('Helvetica-Bold').fontSize(11).fillColor(OCEAN).text('Pagamento', 40, y);
+    y += 18;
+    linha('Total', `${moeda} ${Number(reserva.total_price || 0).toLocaleString('pt-PT')}`);
+    linha('Pago', `${moeda} ${Number(reserva.amount_paid || 0).toLocaleString('pt-PT')}`);
+    linha('Estado', PAYMENT_LABEL_PT[reserva.payment_status] || reserva.payment_status);
+    linha('Método', reserva.payment_method);
+
+    y += 20;
+    doc.moveTo(40, y).lineTo(555, y).strokeColor(N200).stroke();
+    y += 14;
+    doc.font('Helvetica').fontSize(8).fillColor(N500)
+      .text('Este documento é um recibo informativo da reserva, emitido pela plataforma SalDesk em nome do operador indicado.', 40, y, { width: 515 });
+
+    doc.end();
+  } catch (err) { next(err); }
+}
+
 module.exports = {
-  getProfile, updateProfile, getBookings, getWishlist, addWishlist, removeWishlist, submitReview,
+  getProfile, updateProfile, getBookings, getBookingInvoice, getWishlist, addWishlist, removeWishlist, submitReview,
   getRecommendations, getNotifications, markNotificationRead,
 };

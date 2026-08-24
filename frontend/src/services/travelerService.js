@@ -29,6 +29,16 @@ export async function removeFromWishlist(unitId) {
   await travelerApi.delete(`/traveler/wishlist/${unitId}`);
 }
 
+export async function downloadInvoice(reservationId) {
+  const response = await travelerApi.get(`/traveler/bookings/${reservationId}/invoice`, { responseType: 'blob' });
+  const url = URL.createObjectURL(response.data);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `recibo-${reservationId.slice(0, 8)}.pdf`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
 export async function submitReview(reservationId, rating, comment) {
   const { data } = await travelerApi.post(`/traveler/bookings/${reservationId}/review`, { rating, comment });
   return data.data;
