@@ -1,4 +1,4 @@
-/* API "Reservation System" da GetYourGuide -- os 6 endpoints obrigatorios
+/* API "Supplier API" (fornecedor unico) da GetYourGuide -- os 6 endpoints obrigatorios
    listados no FAQ publico deles (Availability Query, Reservation,
    Reservation Cancellation, Booking, Booking Cancellation, Notify
    Availability). Regras de contrato confirmadas na documentacao oficial
@@ -24,15 +24,30 @@
    "availability" (singular) e invalido e a causa exacta da rejeicao. Corrigido
    de volta para "availabilities".
 
-   Integrator Portal, "Set up your testing configuration" (confirmado por
-   email, Ahmed, Equipe de Conectividade, 2026-08-25): System Type deve ser
-   "We are a custom system build for a single supplier" (nao "Reservation
-   System" nem "Attraction Ticketing System"). Das 4 configuracoes de
-   produto, so "Time period for Individuals" reflecte o que o codigo
-   implementa de facto -- "Time point for Individuals/Groups" e "Time
-   period for Groups" devem ficar desmarcadas: nao ha slots de hora (so dia
-   inteiro, ver queryAvailability) nem conceito de groupSize/preco fixo por
-   grupo (cada participante e contado e recebe bilhete individual).
+   Integrator Portal, "Set up your testing configuration" -- decisao final
+   confirmada por dois emails do Ahmed (Equipe de Conectividade GYG):
+   - 2026-08-25 (1o email): sugeriu System Type = "custom system build for
+     a single supplier" em vez de "Reservation System".
+   - Questionamos: o SalDesk serve VARIOS operadores reais (Zy Tours,
+     Global Africa, etc.), todos atras de uma UNICA ligacao/credencial do
+     Integrator Portal (ver verifyGygIntegrator.js) -- nao pareceria mais
+     correcto "Reservation System" (multiplos operadores)?
+   - 2026-08-25 (2o email, resposta): "Reservation System" OBRIGA a passar
+     o self-testing tool do Sandbox para os 4 tipos de disponibilidade
+     (Time point/Time period x Individuals/Groups); se nao suportar todos,
+     tem de mudar para "Supplier API". Ou seja, a classificacao da GYG e
+     sobre CAPACIDADE TECNICA da integracao, nao sobre a estrutura do
+     negocio por tras -- um sistema pode servir varios operadores reais e
+     ainda assim ser "Supplier API" se so implementar um subconjunto dos
+     4 tipos.
+   - Como o codigo so implementa "Time period for Individuals" (sem slots
+     de hora, sem groupSize/preco fixo por grupo -- ver comentarios
+     abaixo), o SalDesk falharia os testes de Sandbox dos outros 3 tipos
+     se ficasse em "Reservation System". Decisao final: System Type =
+     "Supplier API" (custom system build for a single supplier), e das 4
+     configuracoes de produto so "Time period for Individuals" fica
+     marcada. Reavaliar para "Reservation System" se um dia houver slots
+     de hora ou preco por grupo implementados a serio.
 
    reserve/cancel-reservation/book/cancel-booking: ainda NAO exercitados
    individualmente pelo self-testing tool. Reescritos em 2026-08-18 a partir
