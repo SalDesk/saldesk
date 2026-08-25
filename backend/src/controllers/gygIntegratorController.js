@@ -24,6 +24,16 @@
    "availability" (singular) e invalido e a causa exacta da rejeicao. Corrigido
    de volta para "availabilities".
 
+   Integrator Portal, "Set up your testing configuration" (confirmado por
+   email, Ahmed, Equipe de Conectividade, 2026-08-25): System Type deve ser
+   "We are a custom system build for a single supplier" (nao "Reservation
+   System" nem "Attraction Ticketing System"). Das 4 configuracoes de
+   produto, so "Time period for Individuals" reflecte o que o codigo
+   implementa de facto -- "Time point for Individuals/Groups" e "Time
+   period for Groups" devem ficar desmarcadas: nao ha slots de hora (so dia
+   inteiro, ver queryAvailability) nem conceito de groupSize/preco fixo por
+   grupo (cada participante e contado e recebe bilhete individual).
+
    reserve/cancel-reservation/book/cancel-booking: ainda NAO exercitados
    individualmente pelo self-testing tool. Reescritos em 2026-08-18 a partir
    do spec OpenAPI publico e oficial da GYG (nao um resumo nem um PDF --
