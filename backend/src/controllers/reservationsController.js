@@ -222,6 +222,17 @@ async function criar(req, res, next) {
     const idioma = operatorData?.language || 'pt';
     const currency = operatorData?.currency || 'EUR';
 
+    /* Local/hora de recolha -- so faz sentido para actividades (passeios com
+       recolha no alojamento), e so quando o hotel foi mesmo recolhido (ex.
+       BeachSale, que pergunta hotel/quarto ao cliente) -- nunca inventado
+       para outros tipos de operador ou quando o campo nao foi preenchido. */
+    let guestMeta = {};
+    try { guestMeta = JSON.parse(notes_guest || '{}'); } catch { /* texto livre antigo, ignora */ }
+    const isActivity = unit.operators?.operator_type === 'activity';
+    const pickupLocation = (isActivity && guestMeta.hotel)
+      ? `${guestMeta.hotel}${guestMeta.room ? ` — Quarto/Apto ${guestMeta.room}` : ''}`
+      : undefined;
+
     // Email de confirmacao ao cliente
     const clienteEmail = confirmacaoClienteEmail({
       idioma,
@@ -233,6 +244,8 @@ async function criar(req, res, next) {
       total: finalPrice,
       currency,
       operator: operatorData,
+      status: data.status,
+      pickupLocation,
     });
     enviarEmail({
       to: customer_email,

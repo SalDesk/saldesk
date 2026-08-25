@@ -123,6 +123,14 @@ function wrapEmail({ title, introHtml, bodyHtml, ctaUrl, ctaLabel }) {
 
 /* ── a) Confirmacao ao cliente ── */
 
+/* Janela de recolha por omissao para actividades com recolha no
+   alojamento (buggy/passeios) -- pedido explicito do utilizador, nao
+   inventado: e o horario real que estes operadores usam na pratica.
+   So aparece quando ha um local de recolha real (pickupLocation),
+   nunca e mostrada sozinha. */
+const DEFAULT_PICKUP_WINDOW_PT = '09:00 — 09:30';
+const DEFAULT_PICKUP_WINDOW_EN = '9:00 AM — 9:30 AM';
+
 function confirmacaoClienteEmail({
   idioma = 'pt',
   customerName,
@@ -133,23 +141,40 @@ function confirmacaoClienteEmail({
   total,
   currency = 'EUR',
   operator,
+  status = 'pending',
+  pickupLocation,
+  pickupTime,
 }) {
   const en = idioma === 'en';
-  const subject = en ? `Booking received — ${tourName}` : `Reserva recebida — ${tourName}`;
+  const confirmed = status === 'confirmed';
+
+  const subject = confirmed
+    ? (en ? `Booking confirmed — ${tourName}` : `Reserva confirmada — ${tourName}`)
+    : (en ? `Booking received — ${tourName}`  : `Reserva recebida — ${tourName}`);
 
   const dateLabel = (checkOut && checkOut !== checkIn)
     ? `${formatDate(checkIn, idioma)} → ${formatDate(checkOut, idioma)}`
     : formatDate(checkIn, idioma);
 
-  const intro = en
+  const introConfirmed = en
+    ? `<p style="margin:0 0 20px;font-family:${FONT};font-size:14px;line-height:1.6;color:${MUTED};">Hello ${customerName}, your reservation is confirmed. Here is your summary.</p>`
+    : `<p style="margin:0 0 20px;font-family:${FONT};font-size:14px;line-height:1.6;color:${MUTED};">Olá ${customerName}, a sua reserva está confirmada. Aqui fica o resumo.</p>`;
+  const introPending = en
     ? `<p style="margin:0 0 20px;font-family:${FONT};font-size:14px;line-height:1.6;color:${MUTED};">Hello ${customerName}, we received your reservation request. Here is a summary — our team will confirm availability shortly.</p>`
     : `<p style="margin:0 0 20px;font-family:${FONT};font-size:14px;line-height:1.6;color:${MUTED};">Olá ${customerName}, recebemos o seu pedido de reserva. Aqui fica um resumo — a nossa equipa vai confirmar a disponibilidade em breve.</p>`;
+  const intro = confirmed ? introConfirmed : introPending;
+
+  const resolvedPickupTime = pickupLocation
+    ? (pickupTime || (en ? DEFAULT_PICKUP_WINDOW_EN : DEFAULT_PICKUP_WINDOW_PT))
+    : null;
 
   const details = detailsTable([
-    detailRow(en ? 'Service'  : 'Serviço',  tourName),
-    detailRow(en ? 'Date'     : 'Data',     dateLabel),
-    detailRow(en ? 'Guests'   : 'Pessoas',  guests),
-    detailRow(en ? 'Total'    : 'Total',    formatMoney(total, currency)),
+    detailRow(en ? 'Service'         : 'Serviço',         tourName),
+    detailRow(en ? 'Date'            : 'Data',            dateLabel),
+    detailRow(en ? 'Pick-up location': 'Local de recolha', pickupLocation),
+    detailRow(en ? 'Pick-up time'    : 'Hora de recolha',  resolvedPickupTime),
+    detailRow(en ? 'Guests'          : 'Pessoas',          guests),
+    detailRow(en ? 'Total'           : 'Total',            formatMoney(total, currency)),
   ].join(''));
 
   const operatorName = operator?.name || (en ? 'the operator' : 'o operador');
@@ -158,40 +183,57 @@ function confirmacaoClienteEmail({
   if (operator?.phone) contactBits.push(operator.phone);
   const contact = contactBits.length ? ` (${contactBits.join(' · ')})` : '';
 
-  const nextSteps = en
+  const nextStepsConfirmed = en
+    ? paragraph(`<strong>Good to know:</strong> ${pickupLocation ? 'our team will pick you up at the location and time above — ' : ''}for any questions, contact ${operatorName}${contact}.`)
+    : paragraph(`<strong>A saber:</strong> ${pickupLocation ? 'a nossa equipa vai recolhê-lo(a) no local e hora acima — ' : ''}para qualquer questão, contacte ${operatorName}${contact}.`);
+  const nextStepsPending = en
     ? paragraph(`<strong>Next steps:</strong> our team will review your request and confirm by email. For any questions, contact ${operatorName}${contact}.`)
     : paragraph(`<strong>Próximos passos:</strong> a nossa equipa vai analisar o seu pedido e confirmar por email. Para qualquer questão, contacte ${operatorName}${contact}.`);
+  const nextSteps = confirmed ? nextStepsConfirmed : nextStepsPending;
 
   const html = wrapEmail({
-    title: en ? 'Booking received' : 'Reserva recebida',
+    title: confirmed ? (en ? 'Booking confirmed' : 'Reserva confirmada') : (en ? 'Booking received' : 'Reserva recebida'),
     introHtml: intro,
     bodyHtml: details + nextSteps,
     ctaUrl: operator?.slug ? `https://saldesk.cv/book/${operator.slug}` : undefined,
     ctaLabel: en ? 'View booking details' : 'Ver detalhes da reserva',
   });
 
+  const summaryLine = en
+    ? (confirmed ? 'Your reservation is confirmed. Summary:' : 'We received your reservation request. Summary:')
+    : (confirmed ? 'A sua reserva está confirmada. Resumo:' : 'Recebemos o seu pedido de reserva. Resumo:');
+  const closingLine = en
+    ? (confirmed
+        ? `${pickupLocation ? 'Our team will pick you up at the location and time above. ' : ''}Questions? Contact ${operatorName}${operator?.email ? ` (${operator.email})` : ''}.`
+        : `Our team will confirm availability shortly. Questions? Contact ${operatorName}${operator?.email ? ` (${operator.email})` : ''}.`)
+    : (confirmed
+        ? `${pickupLocation ? 'A nossa equipa vai recolhê-lo(a) no local e hora acima. ' : ''}Duvidas? Contacte ${operatorName}${operator?.email ? ` (${operator.email})` : ''}.`
+        : `A nossa equipa vai confirmar a disponibilidade em breve. Duvidas? Contacte ${operatorName}${operator?.email ? ` (${operator.email})` : ''}.`);
+
   const textLines = en
     ? [
         `Hello ${customerName},`,
         '',
-        'We received your reservation request. Summary:',
+        summaryLine,
         `- Service: ${tourName}`,
         `- Date: ${dateLabel}`,
+        ...(pickupLocation ? [`- Pick-up location: ${pickupLocation}`, `- Pick-up time: ${resolvedPickupTime}`] : []),
         `- Guests: ${guests}`,
         `- Total: ${formatMoney(total, currency)}`,
         '',
-        `Our team will confirm availability shortly. Questions? Contact ${operatorName}${operator?.email ? ` (${operator.email})` : ''}.`,
+        closingLine,
       ]
     : [
         `Olá ${customerName},`,
         '',
-        'Recebemos o seu pedido de reserva. Resumo:',
+        summaryLine,
         `- Serviço: ${tourName}`,
         `- Data: ${dateLabel}`,
+        ...(pickupLocation ? [`- Local de recolha: ${pickupLocation}`, `- Hora de recolha: ${resolvedPickupTime}`] : []),
         `- Pessoas: ${guests}`,
         `- Total: ${formatMoney(total, currency)}`,
         '',
-        `A nossa equipa vai confirmar a disponibilidade em breve. Duvidas? Contacte ${operatorName}${operator?.email ? ` (${operator.email})` : ''}.`,
+        closingLine,
       ];
 
   return { subject, html, text: textLines.join('\n') };

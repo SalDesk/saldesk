@@ -461,7 +461,8 @@ async function criarReserva(req, res, next) {
       guests: party_size || guests || 1,
       total: finalTotal,
       currency,
-      operator
+      operator,
+      status: data.status,
     });
     enviarEmail({
       to: customer_email,
