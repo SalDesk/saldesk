@@ -1712,12 +1712,49 @@ function getPm2Status() {
   }
 }
 
+/* Verificacao real do SendGrid -- a versao anterior so confirmava que a
+   API key estava configurada (comprimento > 10), por isso continuava a
+   mostrar "OK" mesmo com a conta bloqueada por "Maximum credits exceeded"
+   (falha real descoberta em producao, silenciosa ate se ir aos logs do
+   servidor). /v3/scopes e o endpoint mais leve que ainda exige a key
+   estar de facto activa -- devolve 401 exactamente no mesmo cenario em
+   que o envio real falhava. */
+async function checkSendgridReal() {
+  if (!(process.env.SENDGRID_API_KEY?.length > 10)) {
+    return { ok: false, error: 'SENDGRID_API_KEY nao configurada' };
+  }
+  try {
+    const axios = require('axios');
+    await axios.get('https://api.sendgrid.com/v3/scopes', {
+      headers: { Authorization: `Bearer ${process.env.SENDGRID_API_KEY}` },
+      timeout: 5000,
+    });
+    return { ok: true };
+  } catch (err) {
+    const detalhe = err.response?.data?.errors?.map((e) => e.message).join('; ');
+    return { ok: false, error: detalhe || err.message };
+  }
+}
+
 async function getSystemStats(req, res, next) {
   try {
     const { isRedisAvailable } = require('../queues/queueManager');
     const { getCpuPercent: cpuPct, getCpuHistory: cpuHist } = require('../services/cpuSampler');
     const mem = process.memoryUsage();
-    const { error: dbErr } = await supabaseAdmin.from('operators').select('id').limit(1);
+    const desde24h = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+
+    const [{ error: dbErr }, sendgridCheck, { count: emailFailures24h }] = await Promise.all([
+      supabaseAdmin.from('operators').select('id').limit(1),
+      checkSendgridReal(),
+      supabaseAdmin.from('email_failures').select('id', { count: 'exact', head: true }).gte('created_at', desde24h),
+    ]);
+
+    let sendgridError = sendgridCheck.error;
+    if (sendgridCheck.ok && emailFailures24h > 0) {
+      sendgridError = `Recuperado, mas ${emailFailures24h} email(s) falharam nas últimas 24h — confirma se foram reenviados.`;
+    } else if (!sendgridCheck.ok && emailFailures24h > 0) {
+      sendgridError = `${sendgridCheck.error} — ${emailFailures24h} email(s) falharam nas últimas 24h.`;
+    }
 
     return res.json({
       data: {
@@ -1735,7 +1772,7 @@ async function getSystemStats(req, res, next) {
           api:      { ok: true,        label: 'API' },
           database: { ok: !dbErr,      label: 'Supabase', error: dbErr?.message },
           redis:    { ok: isRedisAvailable(), label: 'Redis' },
-          sendgrid: { ok: !!(process.env.SENDGRID_API_KEY?.length > 10), label: 'SendGrid' },
+          sendgrid: { ok: sendgridCheck.ok, label: 'SendGrid', error: sendgridError },
           pm2:      { ...getPm2Status(), label: 'PM2' },
         },
       },

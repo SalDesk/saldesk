@@ -1,4 +1,5 @@
 const sgMail = require('@sendgrid/mail');
+const { supabaseAdmin } = require('../config/supabase');
 
 sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
@@ -24,6 +25,20 @@ async function enviarEmail({ to, subject, html, text }) {
        cada callsite. */
     const detalhe = err.response?.body?.errors?.map((e) => e.message).join('; ');
     if (detalhe) err.message = `${err.message}: ${detalhe}`;
+
+    /* Registo interno da falha -- ate agora isto so existia em
+       console.error, invisivel ao founder ate ele ir aos logs do servidor.
+       Ponto unico (todos os ~20 callers deste helper ganham isto de
+       graca). Nunca deixa uma falha a registar a falha derrubar o
+       comportamento existente do caller. */
+    supabaseAdmin.from('email_failures').insert({
+      context: subject || null,
+      to_email: to || null,
+      error_message: err.message,
+    }).then(({ error: logErr }) => {
+      if (logErr) console.error('[EmailFailureLog] Erro ao registar falha de email:', logErr.message);
+    });
+
     throw err;
   }
 }
