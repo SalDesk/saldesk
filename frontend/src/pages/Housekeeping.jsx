@@ -12,7 +12,8 @@ import Badge from '../components/ui/Badge';
 import LoadingSpinner from '../components/shared/LoadingSpinner';
 import Button from '../components/ui/Button';
 
-const TODAY = new Date().toISOString().slice(0, 10);
+/* Data local do dispositivo, nao UTC -- ver nota em BeachSeller.jsx */
+const TODAY = new Date().toLocaleDateString('en-CA');
 
 const HK = {
   clean:      { label: 'Limpo',      badge: 'confirmed', dot: 'bg-[#1A7A4A]', bg: 'bg-[#ECFDF5]' },

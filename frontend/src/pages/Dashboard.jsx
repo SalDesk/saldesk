@@ -20,7 +20,8 @@ import KpiCard from '../components/financial/KpiCard';
 import Badge from '../components/ui/Badge';
 import LoadingSpinner from '../components/shared/LoadingSpinner';
 
-const TODAY = new Date().toISOString().slice(0, 10);
+/* Data local do dispositivo, nao UTC -- ver nota em BeachSeller.jsx */
+const TODAY = new Date().toLocaleDateString('en-CA');
 
 function mesAtual() {
   const n = new Date(), y = n.getFullYear(), m = String(n.getMonth() + 1).padStart(2, '0');

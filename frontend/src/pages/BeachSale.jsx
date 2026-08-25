@@ -18,7 +18,8 @@ import { buildWhatsAppLink } from '../utils/whatsapp';
 import { getMonthGrid } from '../utils/calendar';
 
 /* ── helpers ── */
-const TODAY = new Date().toISOString().slice(0, 10);
+/* Data local do dispositivo, nao UTC -- ver nota em BeachSeller.jsx */
+const TODAY = new Date().toLocaleDateString('en-CA');
 const MONTHS_PT = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
 const DAYS_PT   = ['Dom','Seg','Ter','Qua','Qui','Sex','Sab'];
 const TOUR_ICON_BG = ['bg-turquoise-100 text-turquoise-700', 'bg-sand-100 text-sand-600', 'bg-ocean-100 text-ocean-700'];

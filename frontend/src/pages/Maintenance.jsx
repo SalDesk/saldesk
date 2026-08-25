@@ -9,7 +9,8 @@ import Button from '../components/ui/Button';
 import Modal from '../components/ui/Modal';
 import LoadingSpinner from '../components/shared/LoadingSpinner';
 
-const TODAY = new Date().toISOString().slice(0, 10);
+/* Data local do dispositivo, nao UTC -- ver nota em BeachSeller.jsx */
+const TODAY = new Date().toLocaleDateString('en-CA');
 
 function parseVehicleMeta(unit) {
   try { return JSON.parse(unit?.description || '{}'); } catch { return {}; }

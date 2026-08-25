@@ -16,7 +16,8 @@ import LoadingSpinner from '../components/shared/LoadingSpinner';
 
 const ICON_MAP = { Sun, Cloud, CloudFog, CloudDrizzle, CloudRain, CloudLightning };
 
-const TODAY = new Date().toISOString().slice(0, 10);
+/* Data local do dispositivo, nao UTC -- ver nota em BeachSeller.jsx */
+const TODAY = new Date().toLocaleDateString('en-CA');
 
 function addDays(n) {
   const d = new Date(); d.setDate(d.getDate() + n);

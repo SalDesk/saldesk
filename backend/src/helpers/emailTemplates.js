@@ -147,9 +147,10 @@ function confirmacaoClienteEmail({
 }) {
   const en = idioma === 'en';
   const confirmed = status === 'confirmed';
+  const operatorName = operator?.name || (en ? 'the operator' : 'o operador');
 
   const subject = confirmed
-    ? (en ? `Booking confirmed — ${tourName}` : `Reserva confirmada — ${tourName}`)
+    ? (en ? `Booking confirmed with ${operatorName} — ${tourName}` : `Reserva confirmada com ${operatorName} — ${tourName}`)
     : (en ? `Booking received — ${tourName}`  : `Reserva recebida — ${tourName}`);
 
   const dateLabel = (checkOut && checkOut !== checkIn)
@@ -157,11 +158,11 @@ function confirmacaoClienteEmail({
     : formatDate(checkIn, idioma);
 
   const introConfirmed = en
-    ? `<p style="margin:0 0 20px;font-family:${FONT};font-size:14px;line-height:1.6;color:${MUTED};">Hello ${customerName}, your reservation is confirmed. Here is your summary.</p>`
-    : `<p style="margin:0 0 20px;font-family:${FONT};font-size:14px;line-height:1.6;color:${MUTED};">Olá ${customerName}, a sua reserva está confirmada. Aqui fica o resumo.</p>`;
+    ? `<p style="margin:0 0 20px;font-family:${FONT};font-size:14px;line-height:1.6;color:${MUTED};">Hello ${customerName}, your reservation with <strong>${operatorName}</strong> is confirmed. Here is your summary.</p>`
+    : `<p style="margin:0 0 20px;font-family:${FONT};font-size:14px;line-height:1.6;color:${MUTED};">Olá ${customerName}, a sua reserva com <strong>${operatorName}</strong> está confirmada. Aqui fica o resumo.</p>`;
   const introPending = en
-    ? `<p style="margin:0 0 20px;font-family:${FONT};font-size:14px;line-height:1.6;color:${MUTED};">Hello ${customerName}, we received your reservation request. Here is a summary — our team will confirm availability shortly.</p>`
-    : `<p style="margin:0 0 20px;font-family:${FONT};font-size:14px;line-height:1.6;color:${MUTED};">Olá ${customerName}, recebemos o seu pedido de reserva. Aqui fica um resumo — a nossa equipa vai confirmar a disponibilidade em breve.</p>`;
+    ? `<p style="margin:0 0 20px;font-family:${FONT};font-size:14px;line-height:1.6;color:${MUTED};">Hello ${customerName}, we received your reservation request with <strong>${operatorName}</strong>. Here is a summary — our team will confirm availability shortly.</p>`
+    : `<p style="margin:0 0 20px;font-family:${FONT};font-size:14px;line-height:1.6;color:${MUTED};">Olá ${customerName}, recebemos o seu pedido de reserva com <strong>${operatorName}</strong>. Aqui fica um resumo — a nossa equipa vai confirmar a disponibilidade em breve.</p>`;
   const intro = confirmed ? introConfirmed : introPending;
 
   const resolvedPickupTime = pickupLocation
@@ -177,7 +178,6 @@ function confirmacaoClienteEmail({
     detailRow(en ? 'Total'           : 'Total',            formatMoney(total, currency)),
   ].join(''));
 
-  const operatorName = operator?.name || (en ? 'the operator' : 'o operador');
   const contactBits = [];
   if (operator?.email) contactBits.push(`<a href="mailto:${operator.email}" style="color:${OCEAN};">${operator.email}</a>`);
   if (operator?.phone) contactBits.push(operator.phone);
@@ -200,8 +200,8 @@ function confirmacaoClienteEmail({
   });
 
   const summaryLine = en
-    ? (confirmed ? 'Your reservation is confirmed. Summary:' : 'We received your reservation request. Summary:')
-    : (confirmed ? 'A sua reserva está confirmada. Resumo:' : 'Recebemos o seu pedido de reserva. Resumo:');
+    ? (confirmed ? `Your reservation with ${operatorName} is confirmed. Summary:` : `We received your reservation request with ${operatorName}. Summary:`)
+    : (confirmed ? `A sua reserva com ${operatorName} está confirmada. Resumo:` : `Recebemos o seu pedido de reserva com ${operatorName}. Resumo:`);
   const closingLine = en
     ? (confirmed
         ? `${pickupLocation ? 'Our team will pick you up at the location and time above. ' : ''}Questions? Contact ${operatorName}${operator?.email ? ` (${operator.email})` : ''}.`
