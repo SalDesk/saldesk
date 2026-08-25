@@ -279,25 +279,38 @@ async function listarSlotsComDisponibilidade(supabase, unitId, date, slots) {
 // (gygIntegratorController.js), so que por slot em vez de por dia inteiro.
 // Devolve { "YYYY-MM-DD": { "HH:MM": ocupados, ... }, ... }.
 async function ocupacaoSlotsEmLote(supabase, unitId, dataInicio, dataFimExclusiva) {
-  const { data } = await supabase
-    .from('reservations')
-    .select('check_in, start_time, guests, is_group_booking')
-    .eq('unit_id', unitId)
-    .in('status', ['pending', 'confirmed', 'checked_in'])
-    .gte('check_in', dataInicio)
-    .lt('check_in', dataFimExclusiva)
-    .not('start_time', 'is', null);
+  /* Inclui tambem HOLDS activos (ota_reservation_holds, status='held', ainda
+     nao expirados) -- so reservations confirmadas deixava a disponibilidade
+     desactualizada logo a seguir a um reserve() da GYG (o hold ainda nao
+     virou reservation, so acontece em book()), mostrando um slot como livre
+     quando ja tinha um hold pendente a ocupa-lo. Bug real encontrado a
+     testar reserve() seguido de get-availabilities directamente (2026-08-25).
+     Mesmo principio ja usado em ocupacaoSlotComHolds (gygIntegratorController.js),
+     agora tambem na versao em lote/intervalo. */
+  const agora = new Date().toISOString();
+  const [resReservas, resHolds] = await Promise.all([
+    supabase.from('reservations').select('check_in, start_time, guests, is_group_booking')
+      .eq('unit_id', unitId).in('status', ['pending', 'confirmed', 'checked_in'])
+      .gte('check_in', dataInicio).lt('check_in', dataFimExclusiva)
+      .not('start_time', 'is', null),
+    supabase.from('ota_reservation_holds').select('check_in, start_time, participants, is_group_booking')
+      .eq('unit_id', unitId).eq('status', 'held').gt('expires_at', agora)
+      .gte('check_in', dataInicio).lt('check_in', dataFimExclusiva)
+      .not('start_time', 'is', null),
+  ]);
 
   const mapa = {};
-  (data || []).forEach((r) => {
+  const acumula = (r, guests) => {
     const hora = normalizarHora(r.start_time);
     if (!hora) return;
     if (!mapa[r.check_in]) mapa[r.check_in] = {};
     if (r.is_group_booking) { mapa[r.check_in][hora] = Infinity; return; }
     if (mapa[r.check_in][hora] !== Infinity) {
-      mapa[r.check_in][hora] = (mapa[r.check_in][hora] || 0) + (r.guests || 0);
+      mapa[r.check_in][hora] = (mapa[r.check_in][hora] || 0) + (guests || 0);
     }
-  });
+  };
+  (resReservas.data || []).forEach((r) => acumula(r, r.guests));
+  (resHolds.data || []).forEach((h) => acumula(h, h.participants));
   return mapa;
 }
 
