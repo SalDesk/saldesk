@@ -49,8 +49,8 @@ self.addEventListener('push', (e) => {
   const title = data.title || 'SalDesk';
   const options = {
     body:    data.body || '',
-    icon:    '/icon-192.png',
-    badge:   '/icon-192.png',
+    icon:    '/android-chrome-192x192.png',
+    badge:   '/android-chrome-192x192.png',
     tag:     data.tag || 'saldesk',
     data:    data.url ? { url: data.url } : {},
     vibrate: [200, 100, 200],
