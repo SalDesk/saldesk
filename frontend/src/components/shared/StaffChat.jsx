@@ -90,8 +90,11 @@ export default function StaffChat({ staffId, height = 'calc(100vh - 13rem)' }) {
       : { content, recipient_id: selectedContact.id, recipient_type: 'staff', message_type: 'direct' };
     try {
       const msg = await sendMessage(payload);
+      /* O servidor tambem reenvia esta mensagem ao proprio remetente via
+         socket ("message:new") -- sem este dedup, ficava duplicada no ecra
+         de quem envia (o handler do socket ja tem a mesma protecao). */
       if (msg) {
-        setMessages(prev => [...prev, msg]);
+        setMessages(prev => prev.find(m => m.id === msg.id) ? prev : [...prev, msg]);
         setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: 'smooth' }), 50);
       }
     } catch {
