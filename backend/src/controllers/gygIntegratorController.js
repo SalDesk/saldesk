@@ -66,15 +66,33 @@
    capacidade, ja que a reservation definitiva so nasce em book(). Corrigido
    com ocupacaoSlotComHolds(), que soma tambem holds 'held' ainda nao
    expirados do mesmo unit_id/dia/hora antes de aceitar um novo reserve.
-   CONFIRMADO pelo self-testing tool do Sandbox (2026-08-25, apos o fix
-   acima): "Success -- 17/23 success, 6/23 skipped, 0/23 failed. You have
-   successfully passed all test cases for the selected product." Os 6
-   skipped correspondem aos casos de "Groups" (groupSize/preco fixo por
-   grupo), que continuam por implementar -- nao afectam "Time point for
-   Individuals". Com isto, "Time point for Individuals" pode ficar
-   marcado no Integrator Portal a par de "Time period for Individuals"
-   (que continua correcta para unidades sem slots -- os dois coexistem,
-   cada unidade usa o que tiver configurado).
+   Certificacao no Sandbox, sequencia real (2026-08-25):
+   1. Primeira corrida (config ainda "Time period" no ecra de teste, antes
+      deste trabalho): 17/23 success, 6/23 skipped (casos de "Groups", por
+      implementar), 0/23 failed -- OK, mas nao testava Time point nenhum.
+   2. Mudado o ecra de teste para "Time point": falhou (produto respondia
+      Time Period, tinha sido apanhado sem slots configurados na unidade
+      real de certificacao "SALDESK-GYG-CERT-1").
+   3. Configurados slots nessa MESMA unidade -- novo falhou, agora ao
+      contrario ("expected Period, got Point"): confirmado que o Integrator
+      Portal so permite declarar UM tipo por productId (radio, nao
+      checkbox) -- um so produto nao pode certificar os dois em simultaneo,
+      mesmo o SalDesk suportando ambos por unidade.
+   4. Solucao: segundo productId dedicado. "SALDESK-GYG-CERT-1" reposto sem
+      slots (Time Period, como na 1a corrida); nova unidade "SALDESK-GYG-
+      CERT-2" criada com slots, dedicada a certificar "Time point".
+   5. Corrida contra CERT-2: falhou o caso "Get-Availabilities for dates
+      with no vacancies" -- bug real encontrado: um dia bloqueado
+      (blocked_dates) nunca zerava os slots, so a ocupacao de reservations
+      confirmadas era considerada. Corrigido (ver bookingHelpers.js:
+      verificarDisponibilidadeSlot/listarSlotsComDisponibilidade/
+      diasBloqueadosEmLote) e replicado em queryAvailability/
+      notifyAvailabilityChanged/createReservation.
+   6. Corrida final contra CERT-2, apos o fix: "Success -- 23/23 success,
+      0/23 skipped, 0/23 failed." CONFIRMADO -- "Time point for
+      Individuals" pode ficar marcado no Integrator Portal (usando
+      CERT-2), a par de "Time period for Individuals" (CERT-1) -- os dois
+      coexistem, cada unidade real usa o que tiver configurado.
 
    reserve/cancel-reservation/book/cancel-booking: ainda NAO exercitados
    individualmente pelo self-testing tool. Reescritos em 2026-08-18 a partir
