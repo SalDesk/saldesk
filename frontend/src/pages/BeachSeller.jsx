@@ -13,6 +13,7 @@ import {
 import { getMyProfile } from '../services/staffService';
 import useAuthStore from '../store/authStore';
 import Logo from '../components/shared/Logo';
+import StaffChat from '../components/shared/StaffChat';
 import { buildWhatsAppLink } from '../utils/whatsapp';
 
 /* ── helpers ── */
@@ -312,10 +313,11 @@ export default function BeachSeller() {
         )}
 
         {/* Tabs */}
-        <div className="flex mt-5 gap-1 bg-n-100 rounded-2xl p-1 max-w-md">
+        <div className="flex mt-5 gap-1 bg-n-100 rounded-2xl p-1 max-w-lg">
           {[
             { key: 'hoje',      label: 'Hoje'            },
             { key: 'comissoes', label: 'Minhas Comissoes' },
+            { key: 'chat',      label: 'Chat'             },
           ].map(t => (
             <button key={t.key} onClick={() => setActiveTab(t.key)}
               className={`flex-1 py-3 rounded-xl text-sm font-body font-semibold transition-colors ${
@@ -460,7 +462,7 @@ export default function BeachSeller() {
               </>
             )}
           </>
-        ) : (
+        ) : activeTab === 'comissoes' ? (
           /* Tab comissoes */
           <div className="space-y-4">
             {/* Navegacao de mes */}
@@ -557,6 +559,11 @@ export default function BeachSeller() {
                 </div>
               </div>
             )}
+          </div>
+        ) : (
+          /* Tab chat — mesmo componente partilhado com o portal geral de staff */
+          <div className="bg-white rounded-3xl border border-n-200 shadow-sm overflow-hidden">
+            <StaffChat staffId={sellerId} height="70vh" />
           </div>
         )}
       </main>
