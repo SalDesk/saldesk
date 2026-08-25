@@ -43,11 +43,31 @@
    - Como o codigo so implementa "Time period for Individuals" (sem slots
      de hora, sem groupSize/preco fixo por grupo -- ver comentarios
      abaixo), o SalDesk falharia os testes de Sandbox dos outros 3 tipos
-     se ficasse em "Reservation System". Decisao final: System Type =
-     "Supplier API" (custom system build for a single supplier), e das 4
-     configuracoes de produto so "Time period for Individuals" fica
-     marcada. Reavaliar para "Reservation System" se um dia houver slots
-     de hora ou preco por grupo implementados a serio.
+     se ficasse em "Reservation System". Decisao final (nessa altura):
+     System Type = "Supplier API" (custom system build for a single
+     supplier), e das 4 configuracoes de produto so "Time period for
+     Individuals" ficou marcada.
+
+   2026-08-25 (mais tarde, mesmo dia): "Time point for Individuals" foi
+   implementado a serio (ver TourForm's TimeSlotsEditor, units.description
+   ganha time_slots:[{time,capacity}], reservations.start_time passa a ser
+   preenchido para actividades com slot escolhido). queryAvailability/
+   createReservation/createBooking/notifyAvailabilityChanged ramificam
+   agora consoante a unidade ligada ao productId TEM ou NAO time_slots
+   configurado -- sem nenhum slot, o caminho "Time period" mantem-se
+   byte-a-byte igual ao que ja estava confirmado pelo self-testing tool;
+   com slots, entra o caminho novo "Time point" (uma entrada de
+   disponibilidade por slot, dateTime com a hora real, sem openingTimes --
+   confirmado no spec publico OpenAPI, nao no self-testing tool).
+   IMPORTANTE -- isto AINDA NAO foi exercitado pelo self-testing tool do
+   Sandbox (ao contrario do resto deste ficheiro, que so foi corrigido
+   depois de testado ao vivo): antes de qualquer unidade real usar slots
+   em produtos ligados ao GYG, correr o self-testing tool contra este
+   caminho novo e, so depois de confirmado (ou corrigido, mesma
+   metodologia ja usada no resto do ficheiro), voltar ao Integrator Portal
+   e marcar tambem "Time point for Individuals" (a par de "Time period for
+   Individuals", que continua correcta para unidades sem slots -- os dois
+   coexistem, cada unidade usa o que tiver configurado).
 
    reserve/cancel-reservation/book/cancel-booking: ainda NAO exercitados
    individualmente pelo self-testing tool. Reescritos em 2026-08-18 a partir
@@ -72,12 +92,28 @@
 
 const axios = require('axios');
 const { supabaseAdmin } = require('../config/supabase');
-const { verificarDisponibilidade, calcularPreco } = require('../helpers/bookingHelpers');
+const {
+  verificarDisponibilidade, calcularPreco, parseUnitMeta,
+  verificarDisponibilidadeSlot, normalizarHora, ocupacaoSlotsEmLote,
+} = require('../helpers/bookingHelpers');
 const { obterOuCriarCliente } = require('../helpers/customerHelper');
 const { criarNotificacaoViajante } = require('../helpers/travelerNotificationHelper');
 const { frontendBase } = require('../utils/urls');
 
 const HOLD_MINUTES = 60;
+
+/* Extrai data+hora LOCAL directamente da string "YYYY-MM-DDTHH:MM..." sem
+   passar por new Date()/.toISOString() -- essa conversao normaliza para
+   UTC, e como o offset que sempre usamos e -01:00 (Ilha do Sal, sem
+   horario de verao), um slot perto da meia-noite (ex. 23:30) podia
+   atravessar para o dia seguinte em UTC e devolver a data errada. Como o
+   dateTime que recebemos em reserve/book e sempre o MESMO valor que nos
+   proprios geramos em queryAvailability, parse-lo como string simples e
+   sempre fiavel, nunca precisa de conversao de fuso. */
+function extrairDataHoraLocal(dateTimeStr) {
+  const m = /^(\d{4}-\d{2}-\d{2})T(\d{2}:\d{2})/.exec(String(dateTimeStr || ''));
+  return m ? { date: m[1], time: m[2] } : { date: null, time: null };
+}
 
 /* Categorias de bilhete que o SalDesk aceita hoje -- confirmado ao operador
    no formulario de configuracao do Integrator Portal (suporta CHILD alem
@@ -169,30 +205,56 @@ async function queryAvailability(req, res, next) {
     const dataInicio = cur.toISOString().split('T')[0];
     const proximoDiaFim = new Date(fim); proximoDiaFim.setDate(proximoDiaFim.getDate() + 1);
     const dataFimExclusiva = proximoDiaFim.toISOString().split('T')[0];
-    const indisponiveis = await diasIndisponiveisEmLote(unit.id, dataInicio, dataFimExclusiva);
 
-    /* productId vai DENTRO de cada item (nao uma vez so no topo), e produtos
-       "Time Period" (o unico tipo que o SalDesk suporta hoje) tem de incluir
-       openingTimes por item -- confirmado ao vivo pelo self-testing tool
-       (2026-08-18). O SalDesk nao guarda horario de funcionamento por
-       unidade, por isso usa-se sempre o dia inteiro (00:00-23:59), tal como
-       a propria documentacao descreve para "opening times spanning the full
-       day". O nome do campo e "availabilities" (plural) -- ver comentario
-       do topo do ficheiro. openingTimes e um ARRAY de intervalos (nao um
-       objecto unico) -- confirmado pelo erro exacto de desserializacao
-       Jackson do self-testing tool (2026-08-20): DTO real e
-       ArrayList<SupplierApiAvailabilityOpeningTimesDTO>. */
+    /* Unidade com horarios configurados (TourForm's TimeSlotsEditor) --
+       produto "Time point": uma entrada por (dia x slot), dateTime com a
+       HORA especifica do slot (nao meia-noite), sem openingTimes (essa
+       chave e exclusiva de "Time Period" -- confirmado no spec publico da
+       GYG, ver comentario no topo do ficheiro). Sem nenhum horario
+       configurado, mantem-se o caminho antigo "Time Period" inalterado. */
+    const unitMetaAvail = parseUnitMeta(unit);
+    const activitySlots = Array.isArray(unitMetaAvail.time_slots) ? unitMetaAvail.time_slots : [];
     const availabilities = [];
     const diaCorrente = new Date(cur);
-    while (diaCorrente <= fim) {
-      const dataStr = diaCorrente.toISOString().split('T')[0];
-      availabilities.push({
-        productId,
-        dateTime:     `${dataStr}T00:00:00-01:00`,
-        vacancies:    indisponiveis.has(dataStr) ? 0 : (unit.capacity || 1),
-        openingTimes: [{ fromTime: '00:00', toTime: '23:59' }],
-      });
-      diaCorrente.setDate(diaCorrente.getDate() + 1);
+
+    if (activitySlots.length > 0) {
+      const ocupacao = await ocupacaoSlotsEmLote(supabaseAdmin, unit.id, dataInicio, dataFimExclusiva);
+      while (diaCorrente <= fim) {
+        const dataStr = diaCorrente.toISOString().split('T')[0];
+        const ocupadosPorHora = ocupacao[dataStr] || {};
+        for (const slot of activitySlots) {
+          const ocupados = ocupadosPorHora[normalizarHora(slot.time)] || 0;
+          availabilities.push({
+            productId,
+            dateTime:  `${dataStr}T${slot.time}:00-01:00`,
+            vacancies: Math.max(0, (Number(slot.capacity) || 0) - ocupados),
+          });
+        }
+        diaCorrente.setDate(diaCorrente.getDate() + 1);
+      }
+    } else {
+      const indisponiveis = await diasIndisponiveisEmLote(unit.id, dataInicio, dataFimExclusiva);
+      /* productId vai DENTRO de cada item (nao uma vez so no topo), e produtos
+         "Time Period" tem de incluir openingTimes por item -- confirmado ao
+         vivo pelo self-testing tool (2026-08-18). O SalDesk nao guarda
+         horario de funcionamento por unidade, por isso usa-se sempre o dia
+         inteiro (00:00-23:59), tal como a propria documentacao descreve
+         para "opening times spanning the full day". O nome do campo e
+         "availabilities" (plural) -- ver comentario do topo do ficheiro.
+         openingTimes e um ARRAY de intervalos (nao um objecto unico) --
+         confirmado pelo erro exacto de desserializacao Jackson do
+         self-testing tool (2026-08-20): DTO real e
+         ArrayList<SupplierApiAvailabilityOpeningTimesDTO>. */
+      while (diaCorrente <= fim) {
+        const dataStr = diaCorrente.toISOString().split('T')[0];
+        availabilities.push({
+          productId,
+          dateTime:     `${dataStr}T00:00:00-01:00`,
+          vacancies:    indisponiveis.has(dataStr) ? 0 : (unit.capacity || 1),
+          openingTimes: [{ fromTime: '00:00', toTime: '23:59' }],
+        });
+        diaCorrente.setDate(diaCorrente.getDate() + 1);
+      }
     }
 
     return res.status(200).json({ data: { availabilities } });
@@ -243,15 +305,16 @@ async function createReservation(req, res, next) {
       return erro(res, 'INVALID_PRODUCT', 'This product does not exist or is not sellable.');
     }
 
-    /* Produto "Time Period" -- a data pedida representa sempre um dia
-       inteiro (00:00-23:59, ver queryAvailability), por isso check_in e
-       check_out sao o mesmo dia e o dia seguinte, respectivamente. */
-    const dataPedida = new Date(dateTime);
-    if (isNaN(dataPedida)) {
+    /* dateTime chega como string, ex. "2026-09-01T00:00:00-01:00" (Time
+       Period, sempre meia-noite) ou "2026-09-01T14:00:00-01:00" (Time
+       point, hora real do slot). Extraido directamente da string (ver
+       extrairDataHoraLocal) -- nunca via new Date().toISOString(), que
+       normaliza para UTC e podia devolver o dia errado perto da meia-noite. */
+    const { date: dateFrom, time: horaPedida } = extrairDataHoraLocal(dateTime);
+    if (!dateFrom) {
       return erro(res, 'VALIDATION_FAILURE', 'dateTime must be a valid ISO 8601 datetime.');
     }
-    const dateFrom = dataPedida.toISOString().split('T')[0];
-    const diaSeguinte = new Date(dataPedida); diaSeguinte.setDate(diaSeguinte.getDate() + 1);
+    const diaSeguinte = new Date(dateFrom + 'T00:00:00Z'); diaSeguinte.setUTCDate(diaSeguinte.getUTCDate() + 1);
     const dateTo = diaSeguinte.toISOString().split('T')[0];
 
     /* "Change ticket quantities on existing Booking" -- a GYG reserva de novo
@@ -269,9 +332,28 @@ async function createReservation(req, res, next) {
       .not('reservation_id', 'is', null)
       .maybeSingle();
 
-    const disponivel = await verificarDisponibilidade(supabaseAdmin, unit.id, dateFrom, dateTo, holdExistente?.reservation_id || null);
-    if (!disponivel) {
-      return erro(res, 'NO_AVAILABILITY', 'This activity is sold out for the requested date.');
+    /* Time point -- o slot pedido tem de bater certo com um dos horarios
+       configurados da unidade, com capacidade partilhada (varias reservas
+       cabem ate ao limite do slot), mesma logica ja usada no motor interno
+       (publicController.criarReserva) e no booking do staff. */
+    const unitMetaReserve = parseUnitMeta(unit);
+    const activitySlotsReserve = Array.isArray(unitMetaReserve.time_slots) ? unitMetaReserve.time_slots : [];
+    let holdStartTime = null;
+    if (activitySlotsReserve.length > 0) {
+      const slotEscolhido = activitySlotsReserve.find((s) => normalizarHora(s.time) === normalizarHora(horaPedida));
+      if (!slotEscolhido) {
+        return erro(res, 'NO_AVAILABILITY', 'This time slot is not available for this activity.');
+      }
+      holdStartTime = slotEscolhido.time;
+      const cabe = await verificarDisponibilidadeSlot(supabaseAdmin, unit.id, dateFrom, slotEscolhido.time, totalParticipantes, Number(slotEscolhido.capacity) || 0, holdExistente?.reservation_id || null);
+      if (!cabe) {
+        return erro(res, 'NO_AVAILABILITY', 'This activity is sold out for the requested date.');
+      }
+    } else {
+      const disponivel = await verificarDisponibilidade(supabaseAdmin, unit.id, dateFrom, dateTo, holdExistente?.reservation_id || null);
+      if (!disponivel) {
+        return erro(res, 'NO_AVAILABILITY', 'This activity is sold out for the requested date.');
+      }
     }
 
     /* calcularPreco devolve o preco de UM dia para a unidade (nao multiplica
@@ -299,6 +381,7 @@ async function createReservation(req, res, next) {
         external_ref: gygBookingReference,
         check_in:     dateFrom,
         check_out:    dateTo,
+        start_time:   holdStartTime,
         participants: totalParticipantes,
         total_price:  total,
         currency:     unit.operators?.currency || 'EUR',
@@ -433,6 +516,7 @@ async function createBooking(req, res, next) {
         customer_phone: traveller.phoneNumber || null,
         check_in:       hold.check_in,
         check_out:      hold.check_out,
+        start_time:     hold.start_time,
         guests:         hold.participants,
         total_price:    hold.total_price,
         status:         'confirmed',
@@ -548,7 +632,7 @@ async function notifyAvailabilityChanged(unitId) {
 
   const { data: unit } = await supabaseAdmin
     .from('units')
-    .select('capacity, ota_product_ids')
+    .select('capacity, ota_product_ids, description')
     .eq('id', unitId)
     .maybeSingle();
 
@@ -557,18 +641,36 @@ async function notifyAvailabilityChanged(unitId) {
 
   const hoje = new Date();
   const dataInicio = hoje.toISOString().split('T')[0];
-  const dataFimExclusiva = new Date(hoje); dataFimExclusiva.setDate(dataFimExclusiva.getDate() + 90);
-  const indisponiveis = await diasIndisponiveisEmLote(unitId, dataInicio, dataFimExclusiva.toISOString().split('T')[0]);
+  const dataFimExclusivaStr = new Date(hoje.getTime() + 90 * 86400000).toISOString().split('T')[0];
 
+  const unitMetaNotify = parseUnitMeta(unit);
+  const activitySlots = Array.isArray(unitMetaNotify.time_slots) ? unitMetaNotify.time_slots : [];
   const availabilities = [];
-  for (let i = 0; i < 90; i++) {
-    const dia = new Date(hoje);
-    dia.setDate(dia.getDate() + i);
-    const dataStr = dia.toISOString().split('T')[0];
-    availabilities.push({
-      dateTime:  `${dataStr}T00:00:00-01:00`,
-      vacancies: indisponiveis.has(dataStr) ? 0 : (unit.capacity || 1),
-    });
+
+  if (activitySlots.length > 0) {
+    const ocupacao = await ocupacaoSlotsEmLote(supabaseAdmin, unitId, dataInicio, dataFimExclusivaStr);
+    for (let i = 0; i < 90; i++) {
+      const dia = new Date(hoje.getTime() + i * 86400000);
+      const dataStr = dia.toISOString().split('T')[0];
+      const ocupadosPorHora = ocupacao[dataStr] || {};
+      for (const slot of activitySlots) {
+        const ocupados = ocupadosPorHora[normalizarHora(slot.time)] || 0;
+        availabilities.push({
+          dateTime:  `${dataStr}T${slot.time}:00-01:00`,
+          vacancies: Math.max(0, (Number(slot.capacity) || 0) - ocupados),
+        });
+      }
+    }
+  } else {
+    const indisponiveis = await diasIndisponiveisEmLote(unitId, dataInicio, dataFimExclusivaStr);
+    for (let i = 0; i < 90; i++) {
+      const dia = new Date(hoje.getTime() + i * 86400000);
+      const dataStr = dia.toISOString().split('T')[0];
+      availabilities.push({
+        dateTime:  `${dataStr}T00:00:00-01:00`,
+        vacancies: indisponiveis.has(dataStr) ? 0 : (unit.capacity || 1),
+      });
+    }
   }
 
   await axios.post(url, { data: { productId, availabilities } }, { auth: { username, password } });

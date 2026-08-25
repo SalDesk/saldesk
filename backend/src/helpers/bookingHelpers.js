@@ -236,8 +236,35 @@ async function listarSlotsComDisponibilidade(supabase, unitId, date, slots) {
   });
 }
 
+// Ocupacao de cada slot de uma unidade, para um INTERVALO de dias -- uma so
+// consulta a BD para o intervalo inteiro (nao uma por dia), reduzida em JS.
+// Usado pela GetYourGuide (queryAvailability), que pede disponibilidade de
+// varios dias de uma vez -- mesmo principio de diasIndisponiveisEmLote
+// (gygIntegratorController.js), so que por slot em vez de por dia inteiro.
+// Devolve { "YYYY-MM-DD": { "HH:MM": ocupados, ... }, ... }.
+async function ocupacaoSlotsEmLote(supabase, unitId, dataInicio, dataFimExclusiva) {
+  const { data } = await supabase
+    .from('reservations')
+    .select('check_in, start_time, guests')
+    .eq('unit_id', unitId)
+    .in('status', ['pending', 'confirmed', 'checked_in'])
+    .gte('check_in', dataInicio)
+    .lt('check_in', dataFimExclusiva)
+    .not('start_time', 'is', null);
+
+  const mapa = {};
+  (data || []).forEach((r) => {
+    const hora = normalizarHora(r.start_time);
+    if (!hora) return;
+    if (!mapa[r.check_in]) mapa[r.check_in] = {};
+    mapa[r.check_in][hora] = (mapa[r.check_in][hora] || 0) + (r.guests || 0);
+  });
+  return mapa;
+}
+
 module.exports = {
   verificarDisponibilidade, calcularPreco,
   verificarDisponibilidadeMesa, listarMesasDisponiveis, DEFAULT_SEATING_MINUTES, parseUnitMeta,
   verificarDisponibilidadeSlot, listarSlotsComDisponibilidade,
+  normalizarHora, ocupacaoSlotsEmLote,
 };
