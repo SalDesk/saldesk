@@ -1716,16 +1716,25 @@ function getPm2Status() {
    API key estava configurada (comprimento > 10), por isso continuava a
    mostrar "OK" mesmo com a conta bloqueada por "Maximum credits exceeded"
    (falha real descoberta em producao, silenciosa ate se ir aos logs do
-   servidor). /v3/scopes e o endpoint mais leve que ainda exige a key
-   estar de facto activa -- devolve 401 exactamente no mesmo cenario em
-   que o envio real falhava. */
+   servidor). Testado ao vivo: GET /v3/scopes so confirma que a key tem
+   permissoes, mas devolve 200 mesmo com a conta sem credito -- o bloqueio
+   de credito so e aplicado no proprio endpoint de envio. Por isso o
+   "health check" tem de ser um POST /v3/mail/send real, com
+   sandbox_mode activo (valida tudo, incluindo o credito da conta, mas
+   nunca chega a entregar nem a gastar um envio a serio). */
 async function checkSendgridReal() {
-  if (!(process.env.SENDGRID_API_KEY?.length > 10)) {
-    return { ok: false, error: 'SENDGRID_API_KEY nao configurada' };
+  if (!(process.env.SENDGRID_API_KEY?.length > 10) || !process.env.SENDGRID_FROM_EMAIL) {
+    return { ok: false, error: 'SendGrid nao configurado (API key ou email de origem em falta)' };
   }
   try {
     const axios = require('axios');
-    await axios.get('https://api.sendgrid.com/v3/scopes', {
+    await axios.post('https://api.sendgrid.com/v3/mail/send', {
+      personalizations: [{ to: [{ email: process.env.SENDGRID_FROM_EMAIL }] }],
+      from: { email: process.env.SENDGRID_FROM_EMAIL, name: 'SalDesk' },
+      subject: 'SalDesk health check',
+      content: [{ type: 'text/plain', value: 'health check' }],
+      mail_settings: { sandbox_mode: { enable: true } },
+    }, {
       headers: { Authorization: `Bearer ${process.env.SENDGRID_API_KEY}` },
       timeout: 5000,
     });
