@@ -59,7 +59,7 @@ async function criar(req, res, next) {
     const { unit_id, customer_name, customer_email, customer_phone, customer_country,
             check_in, check_out, guests, notes, notes_internal, notes_guest,
             total_amount, source, payment_method, payment_status, fleet_id,
-            start_time, duration_minutes, driver_included } = req.body;
+            start_time, duration_minutes, driver_included, booking_mode } = req.body;
 
     if (!unit_id || !customer_name || !customer_email || !check_in || !check_out) {
       return res.status(400).json({ error: 'Campos obrigatórios em falta', code: 'MISSING_FIELDS' });
@@ -104,6 +104,19 @@ async function criar(req, res, next) {
        mesma capacidade em vez de o staff conseguir sobrepor-se ao limite. */
     const unitMetaCriar = parseUnitMeta(unit);
     const activitySlots = Array.isArray(unitMetaCriar.time_slots) ? unitMetaCriar.time_slots : [];
+
+    /* Reserva de grupo/privada -- preco fixo (unitMeta.price_private), ocupa
+       o slot/dia inteiro em exclusivo. Mesmo mecanismo do lado publico
+       (publicController.criarReserva) -- so permitido se a unidade tiver
+       mesmo um preco privado configurado. */
+    let isGroupBooking = false;
+    if (!isRestaurant && booking_mode === 'private') {
+      if (!unitMetaCriar.price_private) {
+        return res.status(400).json({ error: 'Esta actividade não tem reserva privada disponível', code: 'INVALID_BOOKING_MODE' });
+      }
+      isGroupBooking = true;
+    }
+
     let activitySlotTime = null;
     let disponivel;
     if (isRestaurant) {
@@ -114,7 +127,7 @@ async function criar(req, res, next) {
         return res.status(400).json({ error: 'Horário inválido para esta actividade', code: 'INVALID_TIME_SLOT' });
       }
       activitySlotTime = slotEscolhido.time;
-      disponivel = await verificarDisponibilidadeSlot(supabaseAdmin, unit_id, check_in, slotEscolhido.time, Number(guests || 1), Number(slotEscolhido.capacity) || 0);
+      disponivel = await verificarDisponibilidadeSlot(supabaseAdmin, unit_id, check_in, slotEscolhido.time, Number(guests || 1), Number(slotEscolhido.capacity) || 0, null, isGroupBooking);
     } else {
       disponivel = await verificarDisponibilidade(supabaseAdmin, unit_id, check_in, check_out);
     }
@@ -130,7 +143,9 @@ async function criar(req, res, next) {
     const numPessoas = guests || 1;
     let dias = 0;
     let total;
-    if (check_out === check_in) {
+    if (isGroupBooking) {
+      total = Number(unitMetaCriar.price_private);
+    } else if (check_out === check_in) {
       total = Math.round(Number(unit.base_price || 0) * numPessoas * 100) / 100;
     } else {
       const calc = calcularPreco(unit, check_in, check_out);
@@ -186,6 +201,7 @@ async function criar(req, res, next) {
         duration_minutes: finalDuration,
         driver_included: isRentacar ? !!driver_included && chauffeurPrice > 0 : false,
         chauffeur_price: chauffeurPrice,
+        is_group_booking: isGroupBooking,
       })
       .select('*, units(name, unit_type), fleet(name, capacity)')
       .single();

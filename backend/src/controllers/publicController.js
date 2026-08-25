@@ -224,7 +224,7 @@ async function criarReserva(req, res, next) {
     const { unit_id, customer_name, customer_email, customer_phone,
             customer_country, check_in, check_out, guests, notes,
             party_size, tour_time, reservation_time, zone_preference,
-            voucher_code, ref_code, items, driver_included } = req.body;
+            voucher_code, ref_code, items, driver_included, booking_mode } = req.body;
 
     // check_out é opcional — activities/restaurants podem enviar só check_in (data do serviço)
     const effectiveCheckOut = check_out || check_in;
@@ -269,6 +269,7 @@ async function criarReserva(req, res, next) {
     let unit;
     let preOrderValidado = null;
     let activitySlotTime = null;
+    let isGroupBooking = false;
     if (isRestaurant) {
       const { data: mesaRow } = await supabaseAdmin
         .from('units')
@@ -325,13 +326,25 @@ async function criarReserva(req, res, next) {
          partilham o mesmo dia/hora ate ao limite configurado desse slot. */
       const unitMeta = parseUnitMeta(unitRow);
       const activitySlots = Array.isArray(unitMeta.time_slots) ? unitMeta.time_slots : [];
+
+      /* Reserva de grupo/privada -- preco fixo (unitMeta.price_private, ate
+         agora recolhido no TourForm mas nunca ligado a nada real), ocupa o
+         slot/dia INTEIRO em exclusivo. So permitido se a unidade tiver
+         mesmo um preco privado configurado -- nunca inventar um preco. */
+      if (booking_mode === 'private') {
+        if (!unitMeta.price_private) {
+          return res.status(400).json({ error: 'Esta actividade não tem reserva privada disponível', code: 'INVALID_BOOKING_MODE' });
+        }
+        isGroupBooking = true;
+      }
+
       if (activitySlots.length > 0) {
         const slotEscolhido = activitySlots.find((s) => String(s.time).slice(0, 5) === String(tour_time || '').slice(0, 5));
         if (!slotEscolhido) {
           return res.status(400).json({ error: 'Horário inválido para esta actividade', code: 'INVALID_TIME_SLOT' });
         }
         activitySlotTime = slotEscolhido.time;
-        const cabe = await verificarDisponibilidadeSlot(supabaseAdmin, unit_id, check_in, slotEscolhido.time, Number(party_size || guests || 1), Number(slotEscolhido.capacity) || 0);
+        const cabe = await verificarDisponibilidadeSlot(supabaseAdmin, unit_id, check_in, slotEscolhido.time, Number(party_size || guests || 1), Number(slotEscolhido.capacity) || 0, null, isGroupBooking);
         if (!cabe) {
           return res.status(409).json({ error: 'Sem vagas neste horário', code: 'UNAVAILABLE' });
         }
@@ -353,6 +366,9 @@ async function criarReserva(req, res, next) {
     let total;
     if (isRestaurant) {
       total = preOrderValidado?.totalPrice || 0;
+    } else if (isGroupBooking) {
+      // Preco fixo por grupo -- ja validado acima que unitMeta.price_private existe.
+      total = Number(parseUnitMeta(unit).price_private);
     } else if (effectiveCheckOut === check_in) {
       total = Math.round(Number(unit.base_price || 0) * numPessoas * 100) / 100;
     } else {
@@ -444,6 +460,7 @@ async function criarReserva(req, res, next) {
         duration_minutes: isRestaurant ? DEFAULT_SEATING_MINUTES : null,
         driver_included: isRentacar ? !!driver_included && chauffeurPrice > 0 : false,
         chauffeur_price: chauffeurPrice,
+        is_group_booking: isGroupBooking,
       })
       .select()
       .single();

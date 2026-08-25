@@ -188,19 +188,25 @@ function normalizarHora(t) {
 // fica reservada a mesas de restaurante) -- ver comentario em
 // publicController.criarReserva sobre nao gravar duration_minutes para
 // actividades, precisamente para essa constraint nunca se aplicar aqui.
+// Devolve Infinity quando ha uma reserva de GRUPO nesse slot -- uma reserva
+// de grupo ocupa o slot inteiro em exclusivo (preco fixo, tour privado),
+// nunca partilha capacidade com outras reservas, individuais ou de grupo.
+// Math.max(0, capacidade - Infinity) da sempre 0, por isso o resto do
+// codigo (listarSlotsComDisponibilidade, etc.) nao precisa de tratamento
+// especial para este caso.
 async function ocupacaoDoSlot(supabase, unitId, date, time, excluirReservaId = null) {
   let query = supabase
     .from('reservations')
-    .select('id, start_time, guests')
+    .select('id, start_time, guests, is_group_booking')
     .eq('unit_id', unitId)
     .eq('check_in', date)
     .in('status', ['pending', 'confirmed', 'checked_in']);
   if (excluirReservaId) query = query.neq('id', excluirReservaId);
 
   const { data } = await query;
-  return (data || [])
-    .filter((r) => normalizarHora(r.start_time) === normalizarHora(time))
-    .reduce((soma, r) => soma + (r.guests || 0), 0);
+  const doSlot = (data || []).filter((r) => normalizarHora(r.start_time) === normalizarHora(time));
+  if (doSlot.some((r) => r.is_group_booking)) return Infinity;
+  return doSlot.reduce((soma, r) => soma + (r.guests || 0), 0);
 }
 
 // Um dia bloqueado pelo operador (ferias, manutencao, etc. -- blocked_dates)
@@ -219,24 +225,29 @@ async function diaBloqueado(supabase, unitId, date) {
 
 // Confirma se `partySize` pessoas ainda cabem num slot (hora) de uma
 // actividade nesse dia, dada a capacidade configurada desse slot.
-async function verificarDisponibilidadeSlot(supabase, unitId, date, time, partySize, capacidade, excluirReservaId = null) {
+// isGroupBooking=true ignora partySize/capacidade -- uma reserva de grupo
+// (preco fixo, tour privado) so cabe se o slot estiver COMPLETAMENTE livre
+// (0 ocupados), independentemente do numero de pessoas do grupo.
+async function verificarDisponibilidadeSlot(supabase, unitId, date, time, partySize, capacidade, excluirReservaId = null, isGroupBooking = false) {
   if (await diaBloqueado(supabase, unitId, date)) return false;
   const ocupados = await ocupacaoDoSlot(supabase, unitId, date, time, excluirReservaId);
+  if (isGroupBooking) return ocupados === 0;
   return ocupados + partySize <= capacidade;
 }
 
 // Lugares restantes em cada slot configurado de uma unidade, para um dia --
 // uma so consulta a BD (nao uma por slot), usada pelo selector de hora no
 // booking publico para desactivar slots ja esgotados sem inventar/assumir
-// disponibilidade.
+// disponibilidade. `privateAvailable` indica se o slot esta completamente
+// livre (necessario para oferecer a opcao de reserva privada/grupo).
 async function listarSlotsComDisponibilidade(supabase, unitId, date, slots) {
   if (await diaBloqueado(supabase, unitId, date)) {
-    return (slots || []).map((s) => ({ time: s.time, capacity: Number(s.capacity) || 0, remaining: 0 }));
+    return (slots || []).map((s) => ({ time: s.time, capacity: Number(s.capacity) || 0, remaining: 0, privateAvailable: false }));
   }
 
   let query = supabase
     .from('reservations')
-    .select('start_time, guests')
+    .select('start_time, guests, is_group_booking')
     .eq('unit_id', unitId)
     .eq('check_in', date)
     .in('status', ['pending', 'confirmed', 'checked_in']);
@@ -245,13 +256,19 @@ async function listarSlotsComDisponibilidade(supabase, unitId, date, slots) {
   const ocupadosPorHora = {};
   (data || []).forEach((r) => {
     const h = normalizarHora(r.start_time);
-    if (h) ocupadosPorHora[h] = (ocupadosPorHora[h] || 0) + (r.guests || 0);
+    if (!h) return;
+    if (r.is_group_booking) { ocupadosPorHora[h] = Infinity; return; }
+    if (ocupadosPorHora[h] !== Infinity) ocupadosPorHora[h] = (ocupadosPorHora[h] || 0) + (r.guests || 0);
   });
 
   return (slots || []).map((s) => {
     const capacidade = Number(s.capacity) || 0;
     const ocupados = ocupadosPorHora[normalizarHora(s.time)] || 0;
-    return { time: s.time, capacity: capacidade, remaining: Math.max(0, capacidade - ocupados) };
+    return {
+      time: s.time, capacity: capacidade,
+      remaining: Math.max(0, capacidade - ocupados),
+      privateAvailable: ocupados === 0,
+    };
   });
 }
 
@@ -264,7 +281,7 @@ async function listarSlotsComDisponibilidade(supabase, unitId, date, slots) {
 async function ocupacaoSlotsEmLote(supabase, unitId, dataInicio, dataFimExclusiva) {
   const { data } = await supabase
     .from('reservations')
-    .select('check_in, start_time, guests')
+    .select('check_in, start_time, guests, is_group_booking')
     .eq('unit_id', unitId)
     .in('status', ['pending', 'confirmed', 'checked_in'])
     .gte('check_in', dataInicio)
@@ -276,7 +293,10 @@ async function ocupacaoSlotsEmLote(supabase, unitId, dataInicio, dataFimExclusiv
     const hora = normalizarHora(r.start_time);
     if (!hora) return;
     if (!mapa[r.check_in]) mapa[r.check_in] = {};
-    mapa[r.check_in][hora] = (mapa[r.check_in][hora] || 0) + (r.guests || 0);
+    if (r.is_group_booking) { mapa[r.check_in][hora] = Infinity; return; }
+    if (mapa[r.check_in][hora] !== Infinity) {
+      mapa[r.check_in][hora] = (mapa[r.check_in][hora] || 0) + (r.guests || 0);
+    }
   });
   return mapa;
 }

@@ -94,6 +94,26 @@
       CERT-2), a par de "Time period for Individuals" (CERT-1) -- os dois
       coexistem, cada unidade real usa o que tiver configurado.
 
+   2026-08-25 (mais tarde, mesmo dia): "Groups" (preco fixo por grupo, os
+   2 combos que faltavam na tabela de testes -- Time point for Groups e
+   Time period for Groups) tambem implementado a serio, reaproveitando
+   unitMeta.price_private (TourForm, ate agora so recolhido e nunca usado
+   em lado nenhum) como o preco fixo. Confirmado no spec publico OpenAPI:
+   bookingItems de grupo levam sempre {category:"GROUP", count:1,
+   groupSize:N} (groupSize a par de category/count, nunca em vez deles);
+   vacancies para um produto de grupo representa GRUPOS disponiveis (0 ou
+   1), nao lugares individuais. Uma reserva de grupo ocupa o slot/dia
+   inteiro em exclusivo -- nova coluna reservations.is_group_booking (e
+   ota_reservation_holds.is_group_booking para o hold transportar a flag
+   ate ao booking definitivo, migracao 059). Sinal de "este productId e
+   de grupo": unitMeta.tour_type==='privado' + price_private configurado
+   -- mesma logica de "um so tipo por productId" ja confirmada para Time
+   Period/Time point (o ecra de teste tem tambem um radio exclusivo
+   "Price per individual"/"Price per group"). AINDA NAO exercitado pelo
+   self-testing tool do Sandbox -- correr contra um 3o productId dedicado
+   (unidade com tour_type:'privado' + price_private + time_slots) antes
+   de marcar "Groups" como certificado no Integrator Portal.
+
    reserve/cancel-reservation/book/cancel-booking: ainda NAO exercitados
    individualmente pelo self-testing tool. Reescritos em 2026-08-18 a partir
    do spec OpenAPI publico e oficial da GYG (nao um resumo nem um PDF --
@@ -239,6 +259,17 @@ async function queryAvailability(req, res, next) {
        configurado, mantem-se o caminho antigo "Time Period" inalterado. */
     const unitMetaAvail = parseUnitMeta(unit);
     const activitySlots = Array.isArray(unitMetaAvail.time_slots) ? unitMetaAvail.time_slots : [];
+    /* "Groups" -- confirmado no spec publico OpenAPI (2026-08-25): vacancies
+       para um produto de grupo representa o numero de GRUPOS disponiveis,
+       nao lugares individuais ("total number of available groups, not the
+       total number of individual vacancies"). Como uma reserva de grupo
+       ocupa sempre o slot/dia inteiro em exclusivo, so ha 0 ou 1 grupo
+       disponivel de cada vez. Sinal: tour_type==='privado' com
+       price_private configurado (o mesmo par ja usado pelo motor interno) --
+       um productId so pode ser um tipo (Individual OU Group), tal como
+       Time Period/Time point (confirmado no Integrator Portal, radio
+       exclusivo "Price per individual"/"Price per group"). */
+    const isGroupsProduct = unitMetaAvail.tour_type === 'privado' && !!unitMetaAvail.price_private;
     const availabilities = [];
     const diaCorrente = new Date(cur);
 
@@ -259,10 +290,13 @@ async function queryAvailability(req, res, next) {
         const ocupadosPorHora = ocupacao[dataStr] || {};
         for (const slot of activitySlots) {
           const ocupados = ocupadosPorHora[normalizarHora(slot.time)] || 0;
+          const vacancies = diaEstaBloqueado ? 0
+            : isGroupsProduct ? (ocupados === 0 ? 1 : 0)
+            : Math.max(0, (Number(slot.capacity) || 0) - ocupados);
           availabilities.push({
             productId,
             dateTime:  `${dataStr}T${slot.time}:00-01:00`,
-            vacancies: diaEstaBloqueado ? 0 : Math.max(0, (Number(slot.capacity) || 0) - ocupados),
+            vacancies,
           });
         }
         diaCorrente.setDate(diaCorrente.getDate() + 1);
@@ -285,7 +319,7 @@ async function queryAvailability(req, res, next) {
         availabilities.push({
           productId,
           dateTime:     `${dataStr}T00:00:00-01:00`,
-          vacancies:    indisponiveis.has(dataStr) ? 0 : (unit.capacity || 1),
+          vacancies:    indisponiveis.has(dataStr) ? 0 : (isGroupsProduct ? 1 : (unit.capacity || 1)),
           openingTimes: [{ fromTime: '00:00', toTime: '23:59' }],
         });
         diaCorrente.setDate(diaCorrente.getDate() + 1);
@@ -317,32 +351,51 @@ async function queryAvailability(req, res, next) {
 async function ocupacaoSlotComHolds(unitId, date, time) {
   const agora = new Date().toISOString();
   const [resReservas, resHolds] = await Promise.all([
-    supabaseAdmin.from('reservations').select('start_time, guests')
+    supabaseAdmin.from('reservations').select('start_time, guests, is_group_booking')
       .eq('unit_id', unitId).eq('check_in', date)
       .in('status', ['pending', 'confirmed', 'checked_in']),
-    supabaseAdmin.from('ota_reservation_holds').select('start_time, participants')
+    supabaseAdmin.from('ota_reservation_holds').select('start_time, participants, is_group_booking')
       .eq('unit_id', unitId).eq('check_in', date)
       .eq('status', 'held').gt('expires_at', agora),
   ]);
+  /* Uma reserva/hold de GRUPO ocupa o slot inteiro em exclusivo -- Infinity
+     bloqueia qualquer reserva nova (individual ou de grupo) nesse slot,
+     mesmo padrao de ocupacaoDoSlot (bookingHelpers.js). */
+  const doSlot = (r) => normalizarHora(r.start_time) === normalizarHora(time);
+  if ((resReservas.data || []).some((r) => doSlot(r) && r.is_group_booking)) return Infinity;
+  if ((resHolds.data || []).some((h) => doSlot(h) && h.is_group_booking)) return Infinity;
+
   let ocupados = 0;
-  (resReservas.data || []).forEach((r) => {
-    if (normalizarHora(r.start_time) === normalizarHora(time)) ocupados += r.guests || 0;
-  });
-  (resHolds.data || []).forEach((h) => {
-    if (normalizarHora(h.start_time) === normalizarHora(time)) ocupados += h.participants || 0;
-  });
+  (resReservas.data || []).forEach((r) => { if (doSlot(r)) ocupados += r.guests || 0; });
+  (resHolds.data || []).forEach((h) => { if (doSlot(h)) ocupados += h.participants || 0; });
   return ocupados;
 }
 
+/* "Groups" -- confirmado no spec publico OpenAPI (2026-08-25): bookingItems
+   leva sempre category:"GROUP", count:1 (sempre 1, nunca o tamanho do
+   grupo), e groupSize:N A PAR desses dois campos, nao em vez deles.
+   Uma reserva de grupo e sempre UMA so linha (nao faz sentido "2 grupos"
+   na mesma chamada, dado que o slot fica exclusivo para um so grupo). */
 function validarBookingItems(bookingItems) {
-  if (!Array.isArray(bookingItems) || bookingItems.length === 0) return { total: null, invalidCategory: null };
+  if (!Array.isArray(bookingItems) || bookingItems.length === 0) {
+    return { total: null, invalidCategory: null, isGroup: false, groupSize: null };
+  }
+
+  const temGrupo = bookingItems.some((item) => item.category === 'GROUP');
+  if (temGrupo) {
+    if (bookingItems.length !== 1) return { total: null, invalidCategory: 'GROUP', isGroup: true, groupSize: null };
+    const groupSize = Number(bookingItems[0].groupSize) || 0;
+    if (groupSize <= 0) return { total: null, invalidCategory: 'GROUP', isGroup: true, groupSize: null };
+    return { total: groupSize, invalidCategory: null, isGroup: true, groupSize };
+  }
+
   let total = 0;
   for (const item of bookingItems) {
-    if (!SUPPORTED_TICKET_CATEGORIES.includes(item.category)) return { total: null, invalidCategory: item.category };
+    if (!SUPPORTED_TICKET_CATEGORIES.includes(item.category)) return { total: null, invalidCategory: item.category, isGroup: false, groupSize: null };
     total += Number(item.count) || 0;
   }
-  if (total <= 0) return { total: null, invalidCategory: null };
-  return { total, invalidCategory: null };
+  if (total <= 0) return { total: null, invalidCategory: null, isGroup: false, groupSize: null };
+  return { total, invalidCategory: null, isGroup: false, groupSize: null };
 }
 
 /* 2. Reservation ("reserve") -- retencao temporaria antes do booking final.
@@ -358,7 +411,7 @@ async function createReservation(req, res, next) {
       return erro(res, 'VALIDATION_FAILURE', 'productId, dateTime and gygBookingReference are required.');
     }
 
-    const { total: totalParticipantes, invalidCategory } = validarBookingItems(bookingItems);
+    const { total: totalParticipantes, invalidCategory, isGroup, groupSize } = validarBookingItems(bookingItems);
     if (totalParticipantes === null) {
       return erro(res, 'INVALID_TICKET_CATEGORY', 'One or more requested ticket categories are not sellable.',
         invalidCategory ? { ticketCategory: invalidCategory } : {});
@@ -367,6 +420,13 @@ async function createReservation(req, res, next) {
     const unit = await encontrarUnidadePorProduto(productId);
     if (!unit) {
       return erro(res, 'INVALID_PRODUCT', 'This product does not exist or is not sellable.');
+    }
+
+    /* "Groups" so e valido para unidades com preco privado configurado
+       (unitMeta.price_private, TourForm) -- nunca inventar um preco fixo. */
+    const unitMetaGroup = parseUnitMeta(unit);
+    if (isGroup && !unitMetaGroup.price_private) {
+      return erro(res, 'INVALID_PRODUCT', 'This product does not support group bookings.');
     }
 
     /* dateTime chega como string, ex. "2026-09-01T00:00:00-01:00" (Time
@@ -400,8 +460,7 @@ async function createReservation(req, res, next) {
        configurados da unidade, com capacidade partilhada (varias reservas
        cabem ate ao limite do slot), mesma logica ja usada no motor interno
        (publicController.criarReserva) e no booking do staff. */
-    const unitMetaReserve = parseUnitMeta(unit);
-    const activitySlotsReserve = Array.isArray(unitMetaReserve.time_slots) ? unitMetaReserve.time_slots : [];
+    const activitySlotsReserve = Array.isArray(unitMetaGroup.time_slots) ? unitMetaGroup.time_slots : [];
     let holdStartTime = null;
     if (activitySlotsReserve.length > 0) {
       const slotEscolhido = activitySlotsReserve.find((s) => normalizarHora(s.time) === normalizarHora(horaPedida));
@@ -417,25 +476,33 @@ async function createReservation(req, res, next) {
       if (bloqueadosReserve.has(dateFrom)) {
         return erro(res, 'NO_AVAILABILITY', 'This activity is sold out for the requested date.');
       }
+      /* Reserva de grupo -- ocupa o slot inteiro em exclusivo (Infinity
+         bloqueia individuais; ocupados>0 bloqueia outro grupo). */
       const ocupados = await ocupacaoSlotComHolds(unit.id, dateFrom, slotEscolhido.time);
-      if (ocupados + totalParticipantes > (Number(slotEscolhido.capacity) || 0)) {
+      if (isGroup) {
+        if (ocupados > 0) {
+          return erro(res, 'NO_AVAILABILITY', 'This activity is sold out for the requested date.');
+        }
+      } else if (ocupados + totalParticipantes > (Number(slotEscolhido.capacity) || 0)) {
         return erro(res, 'NO_AVAILABILITY', 'This activity is sold out for the requested date.');
       }
     } else {
+      /* Sem slots (Time Period): ja e totalmente exclusiva por dia (uma so
+         reserva bloqueia o dia inteiro, independentemente de individual ou
+         grupo) -- nada a mudar aqui para "Groups", so o preco abaixo. */
       const disponivel = await verificarDisponibilidade(supabaseAdmin, unit.id, dateFrom, dateTo, holdExistente?.reservation_id || null);
       if (!disponivel) {
         return erro(res, 'NO_AVAILABILITY', 'This activity is sold out for the requested date.');
       }
     }
 
-    /* calcularPreco devolve o preco de UM dia para a unidade (nao multiplica
+    /* Grupo: preco fixo (unitMetaGroup.price_private, ja validado acima).
+       calcularPreco devolve o preco de UM dia para a unidade (nao multiplica
        por pessoas) -- mesma convencao ja usada em publicController.criarReserva
-       e reservationsController.criar (nao ha ainda preco diferenciado por
-       categoria de bilhete em lado nenhum do motor de precos, so um
-       base_price por unidade, por isso ADULT e CHILD contam da mesma forma
-       aqui, tal como no resto da app). */
-    const { total: precoDia } = calcularPreco(unit, dateFrom, dateTo);
-    const total = Math.round(precoDia * totalParticipantes * 100) / 100;
+       e reservationsController.criar. */
+    const total = isGroup
+      ? Number(unitMetaGroup.price_private)
+      : Math.round(calcularPreco(unit, dateFrom, dateTo).total * totalParticipantes * 100) / 100;
     /* .toISOString() traz milissegundos (".388Z"); a BD depois devolve isto
        reformatado como "+00:00" em vez de "Z" ao ler de volta -- o self-testing
        tool da GYG rejeitou esse formato como "Invalid datetime string" para
@@ -459,6 +526,7 @@ async function createReservation(req, res, next) {
         currency:     unit.operators?.currency || 'EUR',
         status:       'held',
         expires_at:   expiresAt,
+        is_group_booking: isGroup,
       })
       .select()
       .single();
@@ -594,6 +662,7 @@ async function createBooking(req, res, next) {
         status:         'confirmed',
         source:         'getyourguide',
         notes:          `GYG booking ref: ${gygBookingReference}. Comment: ${comment}`,
+        is_group_booking: hold.is_group_booking,
       })
       .select()
       .single();
@@ -717,6 +786,7 @@ async function notifyAvailabilityChanged(unitId) {
 
   const unitMetaNotify = parseUnitMeta(unit);
   const activitySlots = Array.isArray(unitMetaNotify.time_slots) ? unitMetaNotify.time_slots : [];
+  const isGroupsProduct = unitMetaNotify.tour_type === 'privado' && !!unitMetaNotify.price_private;
   const availabilities = [];
 
   if (activitySlots.length > 0) {
@@ -731,9 +801,12 @@ async function notifyAvailabilityChanged(unitId) {
       const ocupadosPorHora = ocupacao[dataStr] || {};
       for (const slot of activitySlots) {
         const ocupados = ocupadosPorHora[normalizarHora(slot.time)] || 0;
+        const vacancies = diaEstaBloqueado ? 0
+          : isGroupsProduct ? (ocupados === 0 ? 1 : 0)
+          : Math.max(0, (Number(slot.capacity) || 0) - ocupados);
         availabilities.push({
           dateTime:  `${dataStr}T${slot.time}:00-01:00`,
-          vacancies: diaEstaBloqueado ? 0 : Math.max(0, (Number(slot.capacity) || 0) - ocupados),
+          vacancies,
         });
       }
     }
@@ -744,7 +817,7 @@ async function notifyAvailabilityChanged(unitId) {
       const dataStr = dia.toISOString().split('T')[0];
       availabilities.push({
         dateTime:  `${dataStr}T00:00:00-01:00`,
-        vacancies: indisponiveis.has(dataStr) ? 0 : (unit.capacity || 1),
+        vacancies: indisponiveis.has(dataStr) ? 0 : (isGroupsProduct ? 1 : (unit.capacity || 1)),
       });
     }
   }
