@@ -46,7 +46,8 @@ function getWeekRange() {
   const mondayOffset = day === 0 ? -6 : 1 - day;
   const monday = new Date(now); monday.setDate(now.getDate() + mondayOffset);
   const sunday = new Date(monday); sunday.setDate(monday.getDate() + 6);
-  return { monday: monday.toISOString().slice(0, 10), sunday: sunday.toISOString().slice(0, 10) };
+  /* Data local do dispositivo, nao UTC -- ver nota junto de TODAY. */
+  return { monday: monday.toLocaleDateString('en-CA'), sunday: sunday.toLocaleDateString('en-CA') };
 }
 
 /* ─── Vista: Lista de trabalhos ─── */

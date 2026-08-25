@@ -1223,10 +1223,12 @@ const STATUS_PT = {
 };
 
 function weekDays() {
+  /* Data local do dispositivo, nao UTC -- ver nota junto de TODAY no
+     topo do ficheiro. next7[0] tem de bater certo com TODAY. */
   return Array.from({ length: 7 }, (_, i) => {
     const d = new Date();
     d.setDate(d.getDate() + i);
-    return d.toISOString().slice(0, 10);
+    return d.toLocaleDateString('en-CA');
   });
 }
 

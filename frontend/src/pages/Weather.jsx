@@ -20,8 +20,9 @@ const ICON_MAP = { Sun, Cloud, CloudFog, CloudDrizzle, CloudRain, CloudLightning
 const TODAY = new Date().toLocaleDateString('en-CA');
 
 function addDays(n) {
+  /* Data local do dispositivo, nao UTC -- ver nota junto de TODAY. */
   const d = new Date(); d.setDate(d.getDate() + n);
-  return d.toISOString().slice(0, 10);
+  return d.toLocaleDateString('en-CA');
 }
 
 function fmtDate(dateStr) {
