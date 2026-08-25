@@ -38,6 +38,18 @@ function fmtMoney(v) {
   return `€${Number(v || 0).toFixed(0)}`;
 }
 
+/* Data LOCAL (nao UTC) em que a venda foi feita, a partir de created_at.
+   "Hoje"/"Meta Pessoal" tem de reflectir quando o vendedor VENDEU, nao a
+   data do passeio (check_in) -- um vendedor de praia vende constantemente
+   tours para dias futuros, por isso filtrar por check_in escondia quase
+   todas as vendas reais do dia. As comissoes (seller_commissions) ja
+   sempre usaram created_at; esta funcao alinha as reservas com o mesmo
+   criterio. */
+function saleDateLocal(createdAt) {
+  if (!createdAt) return null;
+  return new Date(createdAt).toLocaleDateString('en-CA');
+}
+
 function buildShiftSummaryText({ sellerName, date, reservations, commission }) {
   const lines = [
     `*Resumo do Turno — ${sellerName}*`,
@@ -132,9 +144,11 @@ export default function BeachSeller() {
   const totalPaid    = monthComms.filter(c => c.status === 'paid').reduce((s, c) => s + c.amount, 0);
   const totalPending = monthComms.filter(c => c.status === 'pending').reduce((s, c) => s + c.amount, 0);
 
-  /* Reservas de hoje — fixo, usado no card do cabecalho independentemente do modo da aba */
+  /* Reservas de hoje — fixo, usado no card do cabecalho independentemente do modo da aba.
+     Filtra por quando a venda foi feita (created_at), nao pela data do
+     passeio (check_in) -- ver nota junto de saleDateLocal(). */
   const todayReservations = useMemo(() =>
-    reservations.filter(r => r.check_in === TODAY),
+    reservations.filter(r => saleDateLocal(r.created_at) === TODAY),
     [reservations],
   );
   const totalToday = todayReservations.reduce((s, r) => s + Number(r.total_price || 0), 0);
@@ -143,15 +157,15 @@ export default function BeachSeller() {
   const reservMonthKey = `${reservViewMonth.year}-${String(reservViewMonth.month + 1).padStart(2, '0')}`;
   const isReservCurrentMonth = reservViewMonth.year === now.getFullYear() && reservViewMonth.month === now.getMonth();
   const reservationsFiltered = useMemo(() => {
-    if (reservMode === 'hoje') return reservations.filter(r => r.check_in === TODAY);
-    return reservations.filter(r => r.check_in?.startsWith(reservMonthKey));
+    if (reservMode === 'hoje') return reservations.filter(r => saleDateLocal(r.created_at) === TODAY);
+    return reservations.filter(r => saleDateLocal(r.created_at)?.startsWith(reservMonthKey));
   }, [reservations, reservMode, reservMonthKey]);
 
-  /* Meta pessoal — recordes historicos por dia (reservations ja vem filtrado por vendedor) */
+  /* Meta pessoal — recordes historicos por dia de VENDA (reservations ja vem filtrado por vendedor) */
   const dailyStats = useMemo(() => {
     const byDay = {};
     reservations.forEach(r => {
-      const day = r.check_in;
+      const day = saleDateLocal(r.created_at);
       if (!byDay[day]) byDay[day] = { count: 0, total: 0 };
       byDay[day].count += 1;
       byDay[day].total += Number(r.total_price || 0);
@@ -432,7 +446,7 @@ export default function BeachSeller() {
                     <div className="flex items-center justify-between pt-3 border-t border-n-100">
                       <div className="flex items-center gap-1 text-n-500">
                         <Clock size={13} strokeWidth={1.75} />
-                        <span className="text-sm font-body">{r.check_in}</span>
+                        <span className="text-sm font-body">Passeio: {r.check_in}</span>
                       </div>
                       <div className="text-right">
                         <p className="font-display font-bold text-lg text-ocean-700">{fmtMoney(val)}</p>
