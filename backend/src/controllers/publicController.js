@@ -9,6 +9,7 @@ const { encontrarAfiliadoActivo } = require('./affiliatesController');
 const { dispararSyncImediato } = require('../helpers/otaSyncHelper');
 const { getDiscoverCatalog } = require('../services/discoverCatalogService');
 const { notifyOperator } = require('../services/pushService');
+const { emitToOperator } = require('../services/socketService');
 
 async function getOperador(req, res, next) {
   try {
@@ -850,6 +851,122 @@ async function slugContact(req, res, next) {
   } catch (err) { next(err); }
 }
 
+/* ─── Chat publico a serio (widget da pagina do operador) ───
+   Ao contrario de slugContact (formulario de contacto de uma via, so gera
+   um lead/email), isto e uma conversa real guardada em messages, com o
+   mesmo mecanismo ja usado por staff/gestor -- entrega imediata via
+   emitToOperator para quem ja estiver com o painel de Mensagens aberto,
+   e visivel no historico completo mesmo sem essa entrega em directo
+   (o widget publico faz polling do historico, nao tem socket autenticado). */
+async function sendGuestChatMessage(req, res, next) {
+  try {
+    const { slug } = req.params;
+    const { customer_id, name, email, phone, content } = req.body;
+    const trimmedContent = String(content || '').trim();
+    if (!trimmedContent) return res.status(400).json({ error: 'Mensagem obrigatoria', code: 'MISSING_FIELDS' });
+    if (trimmedContent.length > 4000) return res.status(400).json({ error: 'Mensagem demasiado longa', code: 'TOO_LONG' });
+
+    const { data: operator } = await supabaseAdmin
+      .from('operators')
+      .select('id, name, business_name, push_subscription')
+      .eq('slug', slug)
+      .eq('onboarding_complete', true)
+      .maybeSingle();
+    if (!operator) return res.status(404).json({ error: 'Operador não encontrado', code: 'NOT_FOUND' });
+
+    let customer;
+    if (customer_id) {
+      const { data: existente } = await supabaseAdmin
+        .from('customers').select('*').eq('id', customer_id).eq('operator_id', operator.id).maybeSingle();
+      if (!existente) return res.status(404).json({ error: 'Conversa não encontrada', code: 'NOT_FOUND' });
+      customer = existente;
+    } else {
+      if (!email || !String(email).trim()) {
+        return res.status(400).json({ error: 'Email obrigatorio', code: 'MISSING_FIELDS' });
+      }
+      customer = await obterOuCriarCliente(operator.id, {
+        name: (name || '').trim() || email.trim(),
+        email: email.trim(),
+        phone: phone || null,
+      });
+    }
+
+    const { data: msg, error } = await supabaseAdmin
+      .from('messages')
+      .insert({
+        operator_id:    operator.id,
+        sender_id:      customer.id,
+        sender_type:    'guest',
+        recipient_id:   operator.id,
+        recipient_type: 'manager',
+        content:        trimmedContent,
+        message_type:   'direct',
+        channel:        'internal',
+      })
+      .select('id, sender_type, content, channel, delivery_status, created_at')
+      .single();
+    if (error) throw error;
+
+    emitToOperator(operator.id, 'message:new', { ...msg, sender_id: customer.id, recipient_id: operator.id, recipient_type: 'manager', operator_id: operator.id });
+
+    /* Deduplicacao simples (mesmo padrao de callWaiter) -- evita uma
+       notificacao/push por cada mensagem numa rajada da mesma conversa. */
+    const { data: recent } = await supabaseAdmin
+      .from('notifications')
+      .select('id')
+      .eq('operator_id', operator.id)
+      .eq('notification_type', 'new_message')
+      .eq('link', '/mensagens')
+      .gte('created_at', new Date(Date.now() - 60_000).toISOString())
+      .limit(1);
+    if (!recent?.length) {
+      await supabaseAdmin.from('notifications').insert({
+        operator_id: operator.id,
+        notification_type: 'new_message',
+        content: `${customer.name} enviou uma mensagem pelo chat do site`,
+        link: '/mensagens',
+      });
+      if (operator.push_subscription) {
+        notifyOperator(operator, {
+          title: 'Nova mensagem',
+          body: `${customer.name}: ${trimmedContent.slice(0, 80)}`,
+          tag: 'guest-chat',
+          url: '/mensagens',
+        }).catch(() => {});
+      }
+    }
+
+    return res.status(201).json({ data: { message: msg, customer_id: customer.id }, message: 'Mensagem enviada' });
+  } catch (err) { next(err); }
+}
+
+async function getGuestChatHistory(req, res, next) {
+  try {
+    const { slug } = req.params;
+    const { customer_id } = req.query;
+    if (!customer_id) return res.json({ data: [] });
+
+    const { data: operator } = await supabaseAdmin
+      .from('operators').select('id').eq('slug', slug).eq('onboarding_complete', true).maybeSingle();
+    if (!operator) return res.status(404).json({ error: 'Operador não encontrado', code: 'NOT_FOUND' });
+
+    const { data: customer } = await supabaseAdmin
+      .from('customers').select('id').eq('id', customer_id).eq('operator_id', operator.id).maybeSingle();
+    if (!customer) return res.json({ data: [] });
+
+    const { data, error } = await supabaseAdmin
+      .from('messages')
+      .select('id, sender_type, content, channel, delivery_status, created_at')
+      .eq('operator_id', operator.id)
+      .or(`sender_id.eq.${customer_id},recipient_id.eq.${customer_id}`)
+      .order('created_at', { ascending: true })
+      .limit(200);
+    if (error) throw error;
+
+    return res.json({ data: data || [] });
+  } catch (err) { next(err); }
+}
+
 /* ─── Unidade específica por slug + unitId ─── */
 async function getUnit(req, res, next) {
   try {
@@ -1421,6 +1538,8 @@ module.exports = {
   publicContact,
   slugReviews,
   slugContact,
+  sendGuestChatMessage,
+  getGuestChatHistory,
   getUnit,
   callWaiter,
   createOrder,

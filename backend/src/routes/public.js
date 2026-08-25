@@ -14,6 +14,8 @@ const {
   publicContact,
   slugReviews,
   slugContact,
+  sendGuestChatMessage,
+  getGuestChatHistory,
   getUnit,
   getUnitReviews,
   marcarReviewUtil,
@@ -31,7 +33,7 @@ const { publicInitSisp, publicPaypalClientId, publicCreatePaypalIntent, publicCo
 const { validarVoucherPublico } = require('../controllers/vouchersController');
 const { portalLogin: affiliatePortalLogin } = require('../controllers/affiliatesController');
 const { frontendBase } = require('../utils/urls');
-const { publicLimiter } = require('../middleware/rateLimiters');
+const { publicLimiter, chatLimiter } = require('../middleware/rateLimiters');
 
 /* ─── Relatório de impacto público ─── */
 router.get('/impact',              getImpact);
@@ -77,6 +79,8 @@ router.post('/:slug/reservations', criarReserva);
 router.post('/:slug/vouchers/validate', validarVoucherPublico);
 router.post('/affiliates/login', affiliatePortalLogin);
 router.post('/:slug/contact',      slugContact);
+router.post('/:slug/chat/send',    chatLimiter, sendGuestChatMessage);
+router.get('/:slug/chat/history',  chatLimiter, getGuestChatHistory);
 router.post('/:slug/payments/sisp/init', publicInitSisp);
 router.get('/:slug/payments/paypal/client-id',  publicPaypalClientId);
 router.post('/:slug/payments/paypal/create-intent', publicCreatePaypalIntent);

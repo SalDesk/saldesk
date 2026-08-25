@@ -92,8 +92,10 @@ export default function Messages() {
   const typingTimerRef     = useRef(null);
   const isTypingRef        = useRef(false);
   const selectedContactRef = useRef(null);
+  const customersRef       = useRef([]);
 
   useEffect(() => { selectedContactRef.current = selectedContact; }, [selectedContact]);
+  useEffect(() => { customersRef.current = customers; }, [customers]);
 
   useEffect(() => {
     Promise.all([listStaff({ status: 'active' }), listGroups()])
@@ -115,8 +117,18 @@ export default function Messages() {
       const isCurrent = cur && (
         (cur.type === 'staff' && msg.sender_id === cur.id) ||
         (cur.type === 'group' && msg.group_id === cur.id) ||
-        (cur.type === 'guest' && msg.recipient_type === 'guest' && msg.recipient_id === cur.id)
+        (cur.type === 'guest' && msg.recipient_type === 'guest' && msg.recipient_id === cur.id) ||
+        (cur.type === 'guest' && msg.sender_type === 'guest' && msg.sender_id === cur.id)
       );
+
+      /* Uma conversa nova do chat publico traz um cliente que ainda nao
+         estava na lista carregada no arranque da pagina -- sem isto, a
+         mensagem incrementava um contador para um contacto que nunca
+         aparecia na barra lateral, ficando invisivel ate a proxima
+         actualizacao manual da pagina. */
+      if (msg.sender_type === 'guest' && !customersRef.current.some(c => c.id === msg.sender_id)) {
+        listCustomers().then(c => setCustomers(c || [])).catch(() => {});
+      }
 
       if (isCurrent) {
         setMessages(prev => prev.find(m => m.id === msg.id) ? prev : [...prev, msg]);

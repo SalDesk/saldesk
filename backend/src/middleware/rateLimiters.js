@@ -16,4 +16,15 @@ const authLimiter = rateLimit({
   message: { error: 'Demasiadas tentativas de autenticacao.', code: 'RATE_LIMIT' },
 });
 
-module.exports = { publicLimiter, authLimiter };
+/* O widget de chat da pagina publica faz polling do historico enquanto o
+   painel esta aberto -- o publicLimiter (100/15min, partilhado por TODAS as
+   rotas publicas do mesmo IP) esgotava-se em minutos so com isto, bloqueando
+   o resto da pagina para esse visitante. Limite proprio, generoso o
+   suficiente para um poll de poucos segundos sem abrir a porta a abuso. */
+const chatLimiter = rateLimit({
+  windowMs: 60 * 1000, max: 60,
+  standardHeaders: true, legacyHeaders: false,
+  message: { error: 'Demasiadas tentativas.', code: 'RATE_LIMIT' },
+});
+
+module.exports = { publicLimiter, authLimiter, chatLimiter };

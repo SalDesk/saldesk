@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   MapPin, Phone, Star, ChevronLeft, ChevronRight, MessageCircle,
@@ -299,60 +299,129 @@ function Lightbox({ images, idx, onClose, onMove }) {
 }
 
 /* ── ChatWidget ───────────────────────────────────── */
+function chatFmtTime(d) {
+  if (!d) return '';
+  return new Date(d).toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' });
+}
+
 function ChatWidget({ slug, opName, lang }) {
-  const [open, setOpen]       = useState(false);
-  const [message, setMessage] = useState('');
-  const [email, setEmail]     = useState('');
-  const [sent, setSent]       = useState(false);
-  const [sending, setSending] = useState(false);
+  const storageKey = `sd-chat-${slug}`;
+  const [open, setOpen]         = useState(false);
+  const [session, setSession]   = useState(null); // { customer_id, name, email }
+  const [messages, setMessages] = useState([]);
+  const [name, setName]         = useState('');
+  const [email, setEmail]       = useState('');
+  const [text, setText]         = useState('');
+  const [sending, setSending]   = useState(false);
+  const [unread, setUnread]     = useState(0);
+
+  const listRef      = useRef(null);
+  const seenIdsRef    = useRef(new Set());
+  const firstLoadRef  = useRef(true);
+  const pollRef       = useRef(null);
+
+  useEffect(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem(storageKey) || 'null');
+      if (saved?.customer_id) setSession(saved);
+    } catch { /* localStorage indisponivel -- widget continua a funcionar sem persistencia */ }
+  }, [storageKey]);
+
+  async function fetchHistory(customerId, panelOpen) {
+    try {
+      const res  = await fetch(`${API}/public/${slug}/chat/history?customer_id=${customerId}`);
+      const json = await res.json();
+      const list = json?.data || [];
+      setMessages(list);
+
+      if (firstLoadRef.current) {
+        list.forEach(m => seenIdsRef.current.add(m.id));
+        firstLoadRef.current = false;
+      } else {
+        const novas = list.filter(m => m.sender_type !== 'guest' && !seenIdsRef.current.has(m.id));
+        list.forEach(m => seenIdsRef.current.add(m.id));
+        if (novas.length && !panelOpen) setUnread(u => u + novas.length);
+      }
+    } catch { /* poll falhado -- tenta de novo no proximo ciclo, sem UI de erro */ }
+  }
+
+  useEffect(() => {
+    if (!session?.customer_id) return;
+    fetchHistory(session.customer_id, open);
+    pollRef.current = setInterval(() => fetchHistory(session.customer_id, open), open ? 5000 : 20000);
+    return () => clearInterval(pollRef.current);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session?.customer_id, open]);
+
+  useEffect(() => {
+    if (open) {
+      setUnread(0);
+      listRef.current?.scrollTo({ top: listRef.current.scrollHeight, behavior: 'smooth' });
+    }
+  }, [open, messages]);
 
   async function send(e) {
     e.preventDefault();
-    if (!message.trim() || !email.trim()) return;
+    const content = text.trim();
+    if (!content) return;
+    if (!session?.customer_id && !email.trim()) return;
     setSending(true);
     try {
-      await fetch(`${API}/public/${slug}/contact`, {
+      const res = await fetch(`${API}/public/${slug}/chat/send`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, message, name: '' }),
+        body: JSON.stringify({
+          customer_id: session?.customer_id || undefined,
+          name:  session ? undefined : name,
+          email: session ? undefined : email,
+          content,
+        }),
       });
-      setSent(true);
-    } catch {
-      setSent(true);
-    } finally { setSending(false); }
+      const json = await res.json();
+      if (!res.ok) throw new Error(json?.error || 'Falha ao enviar');
+
+      if (!session?.customer_id && json?.data?.customer_id) {
+        const newSession = { customer_id: json.data.customer_id, name: name.trim() || email.trim(), email: email.trim() };
+        setSession(newSession);
+        localStorage.setItem(storageKey, JSON.stringify(newSession));
+      }
+      if (json?.data?.message) {
+        const sentMsg = json.data.message;
+        seenIdsRef.current.add(sentMsg.id);
+        setMessages(prev => prev.find(m => m.id === sentMsg.id) ? prev : [...prev, sentMsg]);
+      }
+      setText('');
+    } catch { /* silencioso -- widget publico, sem UI de erro tecnico */ }
+    finally { setSending(false); }
   }
+
+  const hasSession = !!session?.customer_id;
 
   return (
     <div className="fixed bottom-20 left-4 z-30">
       {open && (
-        <div className="absolute bottom-14 left-0 w-72 bg-white rounded-2xl shadow-2xl border border-n-200 overflow-hidden">
-          <div className="bg-ocean-700 px-4 py-3 flex items-center justify-between">
+        <div className="absolute bottom-14 left-0 w-80 h-[26rem] max-h-[70vh] bg-white rounded-2xl shadow-2xl border border-n-200 overflow-hidden flex flex-col">
+          <div className="bg-ocean-700 px-4 py-3 flex items-center justify-between shrink-0">
             <div className="flex items-center gap-2 text-white">
               <MessageCircle size={16} strokeWidth={1.75} />
-              <span className="font-body font-semibold text-sm">{opName}</span>
+              <span className="font-body font-semibold text-sm truncate">{opName}</span>
             </div>
-            <div className="flex items-center gap-1.5 text-white/70">
+            <div className="flex items-center gap-1.5 text-white/70 shrink-0">
               <div className="w-2 h-2 rounded-full bg-green-400" />
               <span className="text-xs font-body">Online</span>
             </div>
           </div>
-          {sent ? (
-            <div className="p-4 text-center">
-              <Check size={24} strokeWidth={1.75} className="text-success mx-auto mb-2" />
-              <p className="text-sm font-body text-n-700 font-semibold">
-                {lang === 'en' ? 'Message sent!' : 'Mensagem enviada!'}
-              </p>
-              <p className="text-xs font-body text-n-400 mt-1">
-                {lang === 'en' ? 'We\'ll reply shortly.' : 'Respondemos em breve.'}
-              </p>
-            </div>
-          ) : (
-            <form onSubmit={send} className="p-4 space-y-2">
+
+          {!hasSession ? (
+            <form onSubmit={send} className="p-4 space-y-2 flex-1 overflow-y-auto">
               <div className="bg-n-50 rounded-xl px-3 py-2.5 text-xs font-body text-n-600 leading-relaxed mb-3">
                 {lang === 'en' ? 'Hello! How can I help you?' : 'Olá! Como posso ajudar?'}
               </div>
+              <input type="text" value={name} onChange={e => setName(e.target.value)}
+                placeholder={lang === 'en' ? 'Name (optional)' : 'Nome (opcional)'}
+                className="w-full border border-n-200 rounded-lg px-3 py-2 text-xs font-body focus:outline-none focus:border-ocean-500" />
               <input type="email" required value={email} onChange={e => setEmail(e.target.value)}
                 placeholder="Email" className="w-full border border-n-200 rounded-lg px-3 py-2 text-xs font-body focus:outline-none focus:border-ocean-500" />
-              <textarea rows={2} required value={message} onChange={e => setMessage(e.target.value)}
+              <textarea rows={3} required value={text} onChange={e => setText(e.target.value)}
                 placeholder={lang === 'en' ? 'Write your message...' : 'Escreva a sua mensagem...'}
                 className="w-full border border-n-200 rounded-lg px-3 py-2 text-xs font-body resize-none focus:outline-none focus:border-ocean-500" />
               <button type="submit" disabled={sending}
@@ -361,13 +430,47 @@ function ChatWidget({ slug, opName, lang }) {
                 {lang === 'en' ? 'Send' : 'Enviar'}
               </button>
             </form>
+          ) : (
+            <>
+              <div ref={listRef} className="flex-1 overflow-y-auto px-3 py-3 space-y-2 bg-n-50">
+                {messages.length === 0 ? (
+                  <p className="text-xs font-body text-n-400 text-center py-6">
+                    {lang === 'en' ? 'No messages yet.' : 'Sem mensagens ainda.'}
+                  </p>
+                ) : messages.map(m => {
+                  const isMe = m.sender_type === 'guest';
+                  return (
+                    <div key={m.id} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
+                      <div className={`max-w-[80%] px-3 py-2 rounded-xl text-xs font-body leading-relaxed whitespace-pre-wrap break-words ${isMe ? 'bg-ocean-700 text-white' : 'bg-white text-n-800 border border-n-200'}`}>
+                        {m.content}
+                        <div className={`text-[10px] mt-1 ${isMe ? 'text-white/60' : 'text-n-400'}`}>{chatFmtTime(m.created_at)}</div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+              <form onSubmit={send} className="p-2.5 border-t border-n-200 flex items-center gap-2 shrink-0 bg-white">
+                <input value={text} onChange={e => setText(e.target.value)}
+                  placeholder={lang === 'en' ? 'Write a message...' : 'Escreva uma mensagem...'}
+                  className="flex-1 h-9 px-3 rounded-lg border border-n-200 text-xs font-body focus:outline-none focus:border-ocean-500" />
+                <button type="submit" disabled={sending || !text.trim()}
+                  className="w-9 h-9 shrink-0 bg-ocean-700 text-white rounded-lg flex items-center justify-center hover:bg-ocean-500 transition-colors disabled:opacity-40">
+                  <Send size={14} strokeWidth={1.75} />
+                </button>
+              </form>
+            </>
           )}
         </div>
       )}
       <button onClick={() => setOpen(o => !o)}
         className="w-12 h-12 rounded-full bg-ocean-700 text-white shadow-lg hover:bg-ocean-500 transition-all flex items-center justify-center relative">
         {open ? <X size={20} strokeWidth={2} /> : <MessageCircle size={20} strokeWidth={1.75} />}
-        {!open && <div className="absolute -top-0.5 -right-0.5 w-3 h-3 bg-green-400 rounded-full border-2 border-white" />}
+        {!open && unread > 0 && (
+          <div className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 bg-error text-white rounded-full border-2 border-white flex items-center justify-center text-[10px] font-bold">
+            {unread > 9 ? '9+' : unread}
+          </div>
+        )}
+        {!open && unread === 0 && <div className="absolute -top-0.5 -right-0.5 w-3 h-3 bg-green-400 rounded-full border-2 border-white" />}
       </button>
     </div>
   );
