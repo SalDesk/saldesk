@@ -66,15 +66,15 @@
    capacidade, ja que a reservation definitiva so nasce em book(). Corrigido
    com ocupacaoSlotComHolds(), que soma tambem holds 'held' ainda nao
    expirados do mesmo unit_id/dia/hora antes de aceitar um novo reserve.
-   IMPORTANTE -- isto AINDA NAO foi exercitado pelo self-testing tool do
-   Sandbox (ao contrario do resto deste ficheiro, que so foi corrigido
-   depois de testado ao vivo): antes de qualquer unidade real usar slots
-   em produtos ligados ao GYG, correr o self-testing tool contra este
-   caminho novo e, so depois de confirmado (ou corrigido, mesma
-   metodologia ja usada no resto do ficheiro), voltar ao Integrator Portal
-   e marcar tambem "Time point for Individuals" (a par de "Time period for
-   Individuals", que continua correcta para unidades sem slots -- os dois
-   coexistem, cada unidade usa o que tiver configurado).
+   CONFIRMADO pelo self-testing tool do Sandbox (2026-08-25, apos o fix
+   acima): "Success -- 17/23 success, 6/23 skipped, 0/23 failed. You have
+   successfully passed all test cases for the selected product." Os 6
+   skipped correspondem aos casos de "Groups" (groupSize/preco fixo por
+   grupo), que continuam por implementar -- nao afectam "Time point for
+   Individuals". Com isto, "Time point for Individuals" pode ficar
+   marcado no Integrator Portal a par de "Time period for Individuals"
+   (que continua correcta para unidades sem slots -- os dois coexistem,
+   cada unidade usa o que tiver configurado).
 
    reserve/cancel-reservation/book/cancel-booking: ainda NAO exercitados
    individualmente pelo self-testing tool. Reescritos em 2026-08-18 a partir
