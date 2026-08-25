@@ -203,9 +203,24 @@ async function ocupacaoDoSlot(supabase, unitId, date, time, excluirReservaId = n
     .reduce((soma, r) => soma + (r.guests || 0), 0);
 }
 
+// Um dia bloqueado pelo operador (ferias, manutencao, etc. -- blocked_dates)
+// zera TODOS os slots desse dia, independentemente de quantas reservas ja
+// existem -- ao contrario da ocupacao por reserva, isto e um UNICO dia, nao
+// um intervalo, por isso uma consulta pequena e directa.
+async function diaBloqueado(supabase, unitId, date) {
+  const { data } = await supabase
+    .from('blocked_dates')
+    .select('id')
+    .eq('unit_id', unitId)
+    .eq('date', date)
+    .limit(1);
+  return (data?.length || 0) > 0;
+}
+
 // Confirma se `partySize` pessoas ainda cabem num slot (hora) de uma
 // actividade nesse dia, dada a capacidade configurada desse slot.
 async function verificarDisponibilidadeSlot(supabase, unitId, date, time, partySize, capacidade, excluirReservaId = null) {
+  if (await diaBloqueado(supabase, unitId, date)) return false;
   const ocupados = await ocupacaoDoSlot(supabase, unitId, date, time, excluirReservaId);
   return ocupados + partySize <= capacidade;
 }
@@ -215,6 +230,10 @@ async function verificarDisponibilidadeSlot(supabase, unitId, date, time, partyS
 // booking publico para desactivar slots ja esgotados sem inventar/assumir
 // disponibilidade.
 async function listarSlotsComDisponibilidade(supabase, unitId, date, slots) {
+  if (await diaBloqueado(supabase, unitId, date)) {
+    return (slots || []).map((s) => ({ time: s.time, capacity: Number(s.capacity) || 0, remaining: 0 }));
+  }
+
   let query = supabase
     .from('reservations')
     .select('start_time, guests')
@@ -262,9 +281,24 @@ async function ocupacaoSlotsEmLote(supabase, unitId, dataInicio, dataFimExclusiv
   return mapa;
 }
 
+// Dias bloqueados (blocked_dates) de uma unidade, para um INTERVALO -- uma
+// so consulta para o intervalo inteiro, devolve um Set de strings
+// "YYYY-MM-DD". Usado pela GYG (queryAvailability/notifyAvailabilityChanged)
+// para zerar TODOS os slots de um dia bloqueado, mesmo intervalo que
+// ocupacaoSlotsEmLote ja cobre para reservas.
+async function diasBloqueadosEmLote(supabase, unitId, dataInicio, dataFimExclusiva) {
+  const { data } = await supabase
+    .from('blocked_dates')
+    .select('date')
+    .eq('unit_id', unitId)
+    .gte('date', dataInicio)
+    .lt('date', dataFimExclusiva);
+  return new Set((data || []).map((b) => b.date));
+}
+
 module.exports = {
   verificarDisponibilidade, calcularPreco,
   verificarDisponibilidadeMesa, listarMesasDisponiveis, DEFAULT_SEATING_MINUTES, parseUnitMeta,
   verificarDisponibilidadeSlot, listarSlotsComDisponibilidade,
-  normalizarHora, ocupacaoSlotsEmLote,
+  normalizarHora, ocupacaoSlotsEmLote, diasBloqueadosEmLote,
 };

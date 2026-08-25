@@ -101,7 +101,7 @@ const axios = require('axios');
 const { supabaseAdmin } = require('../config/supabase');
 const {
   verificarDisponibilidade, calcularPreco, parseUnitMeta,
-  normalizarHora, ocupacaoSlotsEmLote,
+  normalizarHora, ocupacaoSlotsEmLote, diasBloqueadosEmLote,
 } = require('../helpers/bookingHelpers');
 const { obterOuCriarCliente } = require('../helpers/customerHelper');
 const { criarNotificacaoViajante } = require('../helpers/travelerNotificationHelper');
@@ -225,16 +225,26 @@ async function queryAvailability(req, res, next) {
     const diaCorrente = new Date(cur);
 
     if (activitySlots.length > 0) {
-      const ocupacao = await ocupacaoSlotsEmLote(supabaseAdmin, unit.id, dataInicio, dataFimExclusiva);
+      /* Bug real encontrado pelo self-testing tool do Sandbox (2026-08-25,
+         teste "Get-Availabilities for dates with no vacancies"): um dia
+         bloqueado pelo operador (blocked_dates -- ferias, manutencao, etc.)
+         nunca zerava os slots, so a ocupacao vinda de reservations era
+         considerada. Um dia bloqueado zera TODOS os slots desse dia,
+         independentemente de quantas reservas ja existem. */
+      const [ocupacao, bloqueados] = await Promise.all([
+        ocupacaoSlotsEmLote(supabaseAdmin, unit.id, dataInicio, dataFimExclusiva),
+        diasBloqueadosEmLote(supabaseAdmin, unit.id, dataInicio, dataFimExclusiva),
+      ]);
       while (diaCorrente <= fim) {
         const dataStr = diaCorrente.toISOString().split('T')[0];
+        const diaEstaBloqueado = bloqueados.has(dataStr);
         const ocupadosPorHora = ocupacao[dataStr] || {};
         for (const slot of activitySlots) {
           const ocupados = ocupadosPorHora[normalizarHora(slot.time)] || 0;
           availabilities.push({
             productId,
             dateTime:  `${dataStr}T${slot.time}:00-01:00`,
-            vacancies: Math.max(0, (Number(slot.capacity) || 0) - ocupados),
+            vacancies: diaEstaBloqueado ? 0 : Math.max(0, (Number(slot.capacity) || 0) - ocupados),
           });
         }
         diaCorrente.setDate(diaCorrente.getDate() + 1);
@@ -381,6 +391,14 @@ async function createReservation(req, res, next) {
         return erro(res, 'NO_AVAILABILITY', 'This time slot is not available for this activity.');
       }
       holdStartTime = slotEscolhido.time;
+      /* Dia bloqueado pelo operador (blocked_dates) -- mesmo bug do
+         self-testing tool corrigido em queryAvailability, aplicado tambem
+         aqui: um dia bloqueado nunca deve aceitar reserva, independentemente
+         de quantos lugares o slot ainda teria por ocupacao. */
+      const bloqueadosReserve = await diasBloqueadosEmLote(supabaseAdmin, unit.id, dateFrom, dateTo);
+      if (bloqueadosReserve.has(dateFrom)) {
+        return erro(res, 'NO_AVAILABILITY', 'This activity is sold out for the requested date.');
+      }
       const ocupados = await ocupacaoSlotComHolds(unit.id, dateFrom, slotEscolhido.time);
       if (ocupados + totalParticipantes > (Number(slotEscolhido.capacity) || 0)) {
         return erro(res, 'NO_AVAILABILITY', 'This activity is sold out for the requested date.');
@@ -684,16 +702,20 @@ async function notifyAvailabilityChanged(unitId) {
   const availabilities = [];
 
   if (activitySlots.length > 0) {
-    const ocupacao = await ocupacaoSlotsEmLote(supabaseAdmin, unitId, dataInicio, dataFimExclusivaStr);
+    const [ocupacao, bloqueados] = await Promise.all([
+      ocupacaoSlotsEmLote(supabaseAdmin, unitId, dataInicio, dataFimExclusivaStr),
+      diasBloqueadosEmLote(supabaseAdmin, unitId, dataInicio, dataFimExclusivaStr),
+    ]);
     for (let i = 0; i < 90; i++) {
       const dia = new Date(hoje.getTime() + i * 86400000);
       const dataStr = dia.toISOString().split('T')[0];
+      const diaEstaBloqueado = bloqueados.has(dataStr);
       const ocupadosPorHora = ocupacao[dataStr] || {};
       for (const slot of activitySlots) {
         const ocupados = ocupadosPorHora[normalizarHora(slot.time)] || 0;
         availabilities.push({
           dateTime:  `${dataStr}T${slot.time}:00-01:00`,
-          vacancies: Math.max(0, (Number(slot.capacity) || 0) - ocupados),
+          vacancies: diaEstaBloqueado ? 0 : Math.max(0, (Number(slot.capacity) || 0) - ocupados),
         });
       }
     }
