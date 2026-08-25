@@ -7,7 +7,7 @@ import {
   Plus, Pencil, Trash2, Star, Briefcase, Phone, Mail, MessageSquare,
   Users, CheckSquare, AlertTriangle, Camera, Send, Upload, Shield,
   Search, MoreVertical, CheckCircle2, XCircle, Clock, X, Tag,
-  Circle, ChevronRight, ArrowRight, Hash, Volume2,
+  Circle, ChevronRight, ArrowRight, Hash,
   Pin, CornerUpLeft, Megaphone, ClipboardCheck, Mic, MicOff, Settings2,
 } from 'lucide-react';
 import {
@@ -886,7 +886,7 @@ function MessageBubble({ msg, isOwn, staffList, pinnedIds, onPin, onReply, allMe
 
 /* ── Chat Tab ── */
 function ChatTab({ staffList }) {
-  const { user }  = useAuthStore();
+  const { operator }  = useAuthStore();
   const [groups,       setGroups]      = useState([]);
   const [messages,     setMessages]    = useState([]);
   const [conversation, setConvo]       = useState(null);
@@ -899,9 +899,12 @@ function ChatTab({ staffList }) {
   const [broadcastModal, setBroadcast] = useState(false);
   const [broadcastText,  setBroadcastText] = useState('');
   const [broadcasting,   setBroadcasting]  = useState(false);
-  const socketRef = useRef(null);
-  const endRef    = useRef(null);
-  const inputRef  = useRef(null);
+  const socketRef      = useRef(null);
+  const endRef         = useRef(null);
+  const inputRef       = useRef(null);
+  const conversationRef = useRef(null);
+
+  useEffect(() => { conversationRef.current = conversation; }, [conversation]);
 
   useEffect(() => {
     listGroups().then(setGroups).catch(() => {});
@@ -912,8 +915,18 @@ function ChatTab({ staffList }) {
       reconnectionAttempts: 3,
     });
     socketRef.current = sock;
-    sock.on('new_message', msg => {
-      setMessages(p => [...p, msg]);
+    sock.on('message:new', msg => {
+      const cur = conversationRef.current;
+      if (!cur) return;
+      const operatorId = useAuthStore.getState().operator?.id;
+      const isRelevant =
+        (cur.type === 'group' && msg.group_id === cur.id) ||
+        (cur.type === 'direct' && !msg.group_id && (
+          msg.sender_id === cur.id ||
+          (msg.sender_id === operatorId && msg.recipient_id === cur.id)
+        ));
+      if (!isRelevant) return;
+      setMessages(p => p.find(m => m.id === msg.id) ? p : [...p, msg]);
       endRef.current?.scrollIntoView({ behavior: 'smooth' });
     });
     return () => sock.disconnect();
@@ -967,7 +980,9 @@ function ChatTab({ staffList }) {
     };
     try {
       const msg = await sendMessage(payload);
-      setMessages(p => [...p, msg]);
+      /* O servidor tambem reenvia esta mensagem ao proprio remetente via
+         socket ("message:new") -- sem este dedup, ficava duplicada. */
+      setMessages(p => p.find(m => m.id === msg.id) ? p : [...p, msg]);
       setInput('');
       setReplyTo(null);
       endRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -1006,7 +1021,6 @@ function ChatTab({ staffList }) {
     finally { setBroadcasting(false); }
   }
 
-  const isAnnouncements = conversation?.type === 'group' && conversation?.isAnnouncements;
   const pinnedMsgs = messages.filter(m => pinnedIds.has(m.id));
 
   return (
@@ -1027,15 +1041,6 @@ function ChatTab({ staffList }) {
           </div>
         </div>
         <div className="flex-1 overflow-y-auto">
-          <button
-            onClick={() => setConvo({ type: 'group', id: 'announcements', name: 'Anuncios', isAnnouncements: true })}
-            className={`w-full flex items-center gap-2.5 px-3 py-2.5 hover:bg-white transition-colors ${conversation?.id === 'announcements' ? 'bg-white border-r-2 border-ocean-700' : ''}`}>
-            <div className="w-7 h-7 rounded-full bg-sand-300 flex items-center justify-center shrink-0">
-              <Volume2 size={12} strokeWidth={1.75} className="text-sand-500" />
-            </div>
-            <span className="text-sm font-body text-n-800 truncate">Anuncios</span>
-          </button>
-
           {groups.length > 0 && (
             <>
               <div className="px-3 pt-3 pb-1">
@@ -1103,7 +1108,7 @@ function ChatTab({ staffList }) {
                 ? <p className="text-xs font-body text-n-400 text-center pt-8">Sem mensagens ainda</p>
                 : messages.map(msg => (
                   <MessageBubble key={msg.id} msg={msg}
-                    isOwn={msg.sender_id === user?.id}
+                    isOwn={msg.sender_id === operator?.id}
                     staffList={staffList}
                     pinnedIds={pinnedIds}
                     onPin={handlePin}
@@ -1126,29 +1131,16 @@ function ChatTab({ staffList }) {
             </div>
           )}
 
-          {!isAnnouncements ? (
-            <form onSubmit={handleSend} className="p-3 border-t border-n-200 bg-white flex gap-2 shrink-0">
-              <input ref={inputRef} value={input} onChange={e => setInput(e.target.value)}
-                placeholder="Escrever mensagem..."
-                className="flex-1 h-9 px-3 rounded-sm border border-n-200 text-sm font-body bg-n-100 text-n-900 placeholder:text-n-400 focus:outline-none focus:border-ocean-700 focus:bg-white"
-              />
-              <button type="submit" disabled={!input.trim()}
-                className="px-3 bg-ocean-700 text-white rounded-sm hover:bg-ocean-500 disabled:opacity-40 transition-colors">
-                <Send size={15} strokeWidth={1.75} />
-              </button>
-            </form>
-          ) : (
-            <form onSubmit={handleSend} className="p-3 border-t border-n-200 bg-white flex gap-2 shrink-0">
-              <input ref={inputRef} value={input} onChange={e => setInput(e.target.value)}
-                placeholder="Escrever anuncio..."
-                className="flex-1 h-9 px-3 rounded-sm border border-n-200 text-sm font-body bg-n-100 text-n-900 placeholder:text-n-400 focus:outline-none focus:border-ocean-700 focus:bg-white"
-              />
-              <button type="submit" disabled={!input.trim()}
-                className="px-3 bg-sand-500 text-white rounded-sm hover:bg-sand-400 disabled:opacity-40 transition-colors">
-                <Megaphone size={15} strokeWidth={1.75} />
-              </button>
-            </form>
-          )}
+          <form onSubmit={handleSend} className="p-3 border-t border-n-200 bg-white flex gap-2 shrink-0">
+            <input ref={inputRef} value={input} onChange={e => setInput(e.target.value)}
+              placeholder="Escrever mensagem..."
+              className="flex-1 h-9 px-3 rounded-sm border border-n-200 text-sm font-body bg-n-100 text-n-900 placeholder:text-n-400 focus:outline-none focus:border-ocean-700 focus:bg-white"
+            />
+            <button type="submit" disabled={!input.trim()}
+              className="px-3 bg-ocean-700 text-white rounded-sm hover:bg-ocean-500 disabled:opacity-40 transition-colors">
+              <Send size={15} strokeWidth={1.75} />
+            </button>
+          </form>
         </div>
       ) : (
         <div className="flex-1 flex items-center justify-center bg-n-50">

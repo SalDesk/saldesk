@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
-import { MessageCircle, Users, User, ChevronRight, ChevronLeft, Send } from 'lucide-react';
+import { MessageCircle, Users, User, Briefcase, ChevronRight, ChevronLeft, Send } from 'lucide-react';
 import { io } from 'socket.io-client';
-import { listStaff } from '../../services/staffService';
+import { listStaff, getMyProfile } from '../../services/staffService';
 import { listGroups, listMessages, sendMessage } from '../../services/messageService';
 import useAuthStore from '../../store/authStore';
 import LoadingSpinner from './LoadingSpinner';
@@ -19,6 +19,7 @@ export default function StaffChat({ staffId, height = 'calc(100vh - 13rem)' }) {
   const [selectedContact, setSelected]  = useState(null);  // { id, name, type:'group'|'dm', ... }
   const [groups,      setGroups]     = useState([]);
   const [colleagues,  setColleagues] = useState([]);
+  const [manager,     setManager]    = useState(null); // { id: operatorId, name }
   const [messages,    setMessages]   = useState([]);
   const [text,        setText]       = useState('');
   const [loading,     setLoading]    = useState(true);
@@ -29,12 +30,18 @@ export default function StaffChat({ staffId, height = 'calc(100vh - 13rem)' }) {
 
   useEffect(() => { selectedRef.current = selectedContact; }, [selectedContact]);
 
-  /* Carregar grupos + colegas ao montar */
+  /* Carregar grupos + colegas + gestor ao montar. O gestor (operador) nunca
+     aparecia como contacto possivel -- por isso as suas mensagens directas
+     nao tinham para onde ir na UI e ficavam invisiveis ao colaborador,
+     mesmo chegando correctamente ao servidor/socket. */
   useEffect(() => {
-    Promise.all([listGroups(), listStaff({ status: 'active' })])
-      .then(([g, s]) => {
+    Promise.all([listGroups(), listStaff({ status: 'active' }), getMyProfile()])
+      .then(([g, s, profile]) => {
         setGroups(g || []);
         setColleagues((s || []).filter(m => m.id !== staffId));
+        if (profile?.operator_id) {
+          setManager({ id: profile.operator_id, name: profile.operator_name || 'Gestor' });
+        }
       })
       .catch(() => {})
       .finally(() => setLoading(false));
@@ -51,7 +58,7 @@ export default function StaffChat({ staffId, height = 'calc(100vh - 13rem)' }) {
       if (!cur) return;
       const isRelevant =
         (cur.type === 'group' && msg.group_id === cur.id) ||
-        (cur.type === 'dm' && !msg.group_id && (
+        ((cur.type === 'dm' || cur.type === 'manager') && !msg.group_id && (
           msg.sender_id === cur.id ||
           (msg.sender_id === staffId && msg.recipient_id === cur.id)
         ));
@@ -87,7 +94,7 @@ export default function StaffChat({ staffId, height = 'calc(100vh - 13rem)' }) {
     setText('');
     const payload = selectedContact.type === 'group'
       ? { content, group_id: selectedContact.id, message_type: 'group', recipient_type: 'group' }
-      : { content, recipient_id: selectedContact.id, recipient_type: 'staff', message_type: 'direct' };
+      : { content, recipient_id: selectedContact.id, recipient_type: selectedContact.type === 'manager' ? 'manager' : 'staff', message_type: 'direct' };
     try {
       const msg = await sendMessage(payload);
       /* O servidor tambem reenvia esta mensagem ao proprio remetente via
@@ -106,7 +113,7 @@ export default function StaffChat({ staffId, height = 'calc(100vh - 13rem)' }) {
 
   /* === Vista: lista de contactos === */
   if (view === 'list') {
-    const hasAnything = groups.length > 0 || colleagues.length > 0;
+    const hasAnything = !!manager || groups.length > 0 || colleagues.length > 0;
     return (
       <div className="px-4 py-4 space-y-5">
         {!hasAnything && (
@@ -114,6 +121,24 @@ export default function StaffChat({ staffId, height = 'calc(100vh - 13rem)' }) {
             <MessageCircle size={40} strokeWidth={1} className="text-n-300 mb-3"/>
             <p className="font-display font-bold text-n-700">Sem conversas</p>
             <p className="text-sm font-body text-n-400 mt-2">Ainda nao existem grupos nem colaboradores associados.</p>
+          </div>
+        )}
+
+        {manager && (
+          <div>
+            <p className="text-xs font-mono font-bold uppercase tracking-wide text-n-500 mb-3">Gestão</p>
+            <button
+              onClick={() => openConversation({ id: manager.id, name: manager.name, type: 'manager' })}
+              className="w-full bg-white rounded-2xl border border-n-200 shadow-sm px-4 py-3 mb-2 flex items-center gap-3 text-left hover:border-turquoise-300 transition-colors">
+              <div className="w-10 h-10 rounded-xl bg-ocean-100 flex items-center justify-center shrink-0">
+                <Briefcase size={16} strokeWidth={1.75} className="text-ocean-700"/>
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-display font-bold text-sm text-n-900">{manager.name}</p>
+                <p className="text-xs font-body text-n-400 mt-0.5">Gestor</p>
+              </div>
+              <ChevronRight size={16} strokeWidth={1.75} className="text-n-300 shrink-0"/>
+            </button>
           </div>
         )}
 
@@ -169,9 +194,13 @@ export default function StaffChat({ staffId, height = 'calc(100vh - 13rem)' }) {
           className="w-8 h-8 rounded-xl flex items-center justify-center text-n-500 hover:bg-n-100 transition-colors shrink-0">
           <ChevronLeft size={18} strokeWidth={2}/>
         </button>
-        <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${selectedContact.type === 'group' ? 'bg-sand-100' : 'bg-turquoise-100'}`}>
+        <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
+          selectedContact.type === 'group' ? 'bg-sand-100' : selectedContact.type === 'manager' ? 'bg-ocean-100' : 'bg-turquoise-100'
+        }`}>
           {selectedContact.type === 'group'
             ? <Users size={16} strokeWidth={1.75} className="text-sand-600"/>
+            : selectedContact.type === 'manager'
+            ? <Briefcase size={16} strokeWidth={1.75} className="text-ocean-700"/>
             : <User  size={16} strokeWidth={1.75} className="text-turquoise-700"/>}
         </div>
         <div className="min-w-0 flex-1">
@@ -179,6 +208,8 @@ export default function StaffChat({ staffId, height = 'calc(100vh - 13rem)' }) {
           <p className="text-xs font-body text-n-400">
             {selectedContact.type === 'group'
               ? `${selectedContact.memberCount} membros`
+              : selectedContact.type === 'manager'
+              ? 'Gestor'
               : selectedContact.role || 'Colaborador'}
           </p>
         </div>

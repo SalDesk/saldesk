@@ -208,7 +208,16 @@ async function obterPerfilProprio(req, res, next) {
     if (!req.staff) {
       return res.status(403).json({ error: 'Apenas colaboradores podem ver o proprio perfil', code: 'STAFF_ONLY' });
     }
-    return res.json({ data: req.staff, message: 'Perfil encontrado' });
+    /* Nome do operador (gestor) -- usado pelo StaffChat para identificar a
+       conversa com o gestor, que ate agora nao existia como contacto
+       possivel do lado do colaborador (mensagens do gestor nunca tinham
+       para onde ir na UI, ficavam invisiveis). */
+    const { data: operador } = await supabaseAdmin
+      .from('operators').select('name, business_name').eq('id', req.staff.operator_id).maybeSingle();
+    return res.json({
+      data: { ...req.staff, operator_name: operador?.business_name || operador?.name || null },
+      message: 'Perfil encontrado',
+    });
   } catch (err) { next(err); }
 }
 
