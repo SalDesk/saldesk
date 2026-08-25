@@ -188,12 +188,26 @@ async function encontrarUnidadePorProduto(productId) {
    intervalo). Mesmo padrao ja usado em syncWorker.js, so que para uma
    unidade em vez de todas as unidades de um operador. */
 async function diasIndisponiveisEmLote(unitId, dataInicio, dataFim) {
-  const [reservasRes, bloqueiosRes] = await Promise.all([
+  /* Inclui tambem HOLDS activos (ota_reservation_holds, status='held', ainda
+     nao expirados) -- mesmo bug encontrado a testar o caminho "Time point"
+     (ver ocupacaoSlotsEmLote, bookingHelpers.js), tambem presente aqui: logo
+     apos um reserve() da GYG, o dia continuava a aparecer livre em
+     get-availabilities ate ao book(), porque so reservations confirmadas
+     eram consideradas. */
+  const agora = new Date().toISOString();
+  const [reservasRes, holdsRes, bloqueiosRes] = await Promise.all([
     supabaseAdmin
       .from('reservations')
       .select('check_in, check_out')
       .eq('unit_id', unitId)
       .in('status', ['pending', 'confirmed', 'checked_in'])
+      .lt('check_in', dataFim),
+    supabaseAdmin
+      .from('ota_reservation_holds')
+      .select('check_in, check_out')
+      .eq('unit_id', unitId)
+      .eq('status', 'held')
+      .gt('expires_at', agora)
       .lt('check_in', dataFim),
     supabaseAdmin
       .from('blocked_dates')
@@ -205,7 +219,7 @@ async function diasIndisponiveisEmLote(unitId, dataInicio, dataFim) {
 
   const inicioJanela = new Date(dataInicio + 'T00:00:00Z');
   const indisponiveis = new Set();
-  for (const r of reservasRes.data || []) {
+  for (const r of [...(reservasRes.data || []), ...(holdsRes.data || [])]) {
     const cur = new Date(r.check_in + 'T00:00:00Z');
     const fimBruto = new Date(r.check_out + 'T00:00:00Z');
     /* Tours/actividades sao reservas de um so dia (check_in === check_out) --
