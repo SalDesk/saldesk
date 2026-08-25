@@ -448,8 +448,20 @@ async function createReservation(req, res, next) {
     /* "Groups" so e valido para unidades com preco privado configurado
        (unitMeta.price_private, TourForm) -- nunca inventar um preco fixo. */
     const unitMetaGroup = parseUnitMeta(unit);
-    if (isGroup && !unitMetaGroup.price_private) {
+    const isGroupsProductReserve = unitMetaGroup.tour_type === 'privado' && !!unitMetaGroup.price_private;
+    if (isGroup && !isGroupsProductReserve) {
       return erro(res, 'INVALID_PRODUCT', 'This product does not support group bookings.');
+    }
+    /* Simetrico ao caso acima: um productId "Groups" (Price per group, radio
+       exclusivo do Integrator Portal) so aceita bookingItems no formato
+       {category:"GROUP", ...} -- enviar ADULT/CHILD contra ele tem de ser
+       rejeitado como categoria invalida, nao aceite silenciosamente. Achado
+       real pelo self-testing tool (CERT-4, 2026-08-25): reserve com
+       category:"ADULT" contra um produto de grupo devolvia 200 em vez de
+       INVALID_TICKET_CATEGORY. */
+    if (isGroupsProductReserve && !isGroup) {
+      return erro(res, 'INVALID_TICKET_CATEGORY', 'This product only accepts GROUP booking items.',
+        { ticketCategory: bookingItems?.[0]?.category });
     }
 
     /* dateTime chega como string, ex. "2026-09-01T00:00:00-01:00" (Time
