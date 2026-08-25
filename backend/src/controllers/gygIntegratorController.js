@@ -109,10 +109,19 @@
    de grupo": unitMeta.tour_type==='privado' + price_private configurado
    -- mesma logica de "um so tipo por productId" ja confirmada para Time
    Period/Time point (o ecra de teste tem tambem um radio exclusivo
-   "Price per individual"/"Price per group"). AINDA NAO exercitado pelo
-   self-testing tool do Sandbox -- correr contra um 3o productId dedicado
-   (unidade com tour_type:'privado' + price_private + time_slots) antes
-   de marcar "Groups" como certificado no Integrator Portal.
+   "Price per individual"/"Price per group"). Testado via curl directo
+   contra os 2 productIds dedicados (CERT-3: Time point+Groups, CERT-4:
+   Time Period+Groups) -- get-availabilities, reserve (exclusividade e
+   bloqueio cruzado com individuais), book, cancel-booking, todos OK.
+   Dado real encontrado e corrigido nesta ronda: get-availabilities NAO
+   reflectia um hold pendente (ota_reservation_holds) logo a seguir a um
+   reserve() -- bug universal (afecta tambem Individuals, nao so Groups),
+   corrigido em ocupacaoSlotsEmLote (bookingHelpers.js) e
+   diasIndisponiveisEmLote (Time Period) para tambem somarem holds activos
+   (status='held', expires_at no futuro). AINDA NAO exercitado pelo
+   self-testing tool oficial do Sandbox -- correr esse teste contra
+   CERT-3/CERT-4 antes de marcar "Time point for Groups"/"Time period for
+   Groups" como certificado no Integrator Portal.
 
    reserve/cancel-reservation/book/cancel-booking: ainda NAO exercitados
    individualmente pelo self-testing tool. Reescritos em 2026-08-18 a partir
