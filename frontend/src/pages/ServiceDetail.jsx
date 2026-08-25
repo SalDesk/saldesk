@@ -50,7 +50,6 @@ const FALLBACK_IMGS = [
   'https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?w=800&q=75',
 ];
 
-const TOUR_SLOTS = ['07:00','08:00','09:00','10:00','11:00','12:00','13:00','14:00','15:00','16:00','17:00'];
 /* Aeroporto so entra na lista se a ilha do operador tiver um -- Santo Antao
    e Brava nao tem aeroporto comercial (ver database/053_islands_expand.sql). */
 function buildLocs(lang, airportCode) {
@@ -282,6 +281,17 @@ async function postReservation(slug, payload) {
   const j = await r.json();
   if (!r.ok) throw new Error(j.error||'Erro ao submeter reserva');
   return j.data || { id: 'ok' };
+}
+
+/* Lugares restantes em cada horario configurado da actividade, para uma
+   data -- so devolve algo se a unidade tiver time_slots definido
+   (TourForm's TimeSlotsEditor); caso contrario devolve [] e o modal cai no
+   fluxo antigo (sem horario, reserva por dia inteiro). */
+async function getSlotAvailability(slug, unitId, date) {
+  const r = await fetch(`${API}/public/${slug}/units/${unitId}/slot-availability?date=${date}`);
+  const j = await r.json();
+  if (!r.ok) return [];
+  return j.data || [];
 }
 
 /* Verifica um codigo de voucher e devolve o desconto (sem o aplicar ainda —
@@ -516,9 +526,18 @@ function ActivityModal({ unit, op, slug, lang, onClose, refCode, traveler, initi
   const [voucherCode,svc]=useState(null);
   const rawTotal=(adults+kids)*(unit.base_price||0); const total=unit.base_price?fmtPrice(rawTotal,'person',op.currency||'EUR','EUR',lang):null;
   const tourLanguages=Array.isArray(getUnitMeta(unit).languages)?getUnitMeta(unit).languages:[];
-  function buildPayload(){ const notes=[`${lang==='en'?'Time':'Hora'}: ${time}`,`${adults} ${lang==='en'?'adults':'adultos'}, ${kids} ${lang==='en'?'children':'crianças'}`,tourLang?(lang==='en'?'Language: ':'Idioma: ')+tourLang:'',info.needs?(lang==='en'?'Needs:':'Necessidades:')+' '+info.needs:''].filter(Boolean).join('. '); return {unit_id:unit.id,customer_name:info.name,customer_email:info.email,customer_phone:info.phone||null,customer_country:info.country||null,check_in:date,check_out:date,guests:adults+kids,notes,voucher_code:voucherCode||undefined,ref_code:refCode||undefined}; }
+  /* Horarios com capacidade real (TourForm's TimeSlotsEditor) -- so activo
+     quando a unidade tem meta.time_slots configurado. Sem isso, a reserva
+     continua exactamente como sempre foi (sem selector de hora nenhum --
+     o antigo TOUR_SLOTS fixo era so decorativo, nunca validado a serio
+     contra disponibilidade, por isso foi removido em vez de mantido). */
+  const configuredSlots=Array.isArray(getUnitMeta(unit).time_slots)?getUnitMeta(unit).time_slots:[];
+  const hasSlots=configuredSlots.length>0;
+  const [slotAvail,ssa]=useState([]); const [loadingSlots,sls]=useState(false);
+  useEffect(()=>{ if(!hasSlots||!date){ssa([]);return;} sls(true); st(''); getSlotAvailability(slug,unit.id,date).then(ssa).finally(()=>sls(false)); },[date,hasSlots,slug,unit.id]);
+  function buildPayload(){ const notes=[time?`${lang==='en'?'Time':'Hora'}: ${time}`:'',`${adults} ${lang==='en'?'adults':'adultos'}, ${kids} ${lang==='en'?'children':'crianças'}`,tourLang?(lang==='en'?'Language: ':'Idioma: ')+tourLang:'',info.needs?(lang==='en'?'Needs:':'Necessidades:')+' '+info.needs:''].filter(Boolean).join('. '); return {unit_id:unit.id,customer_name:info.name,customer_email:info.email,customer_phone:info.phone||null,customer_country:info.country||null,check_in:date,check_out:date,guests:adults+kids,notes,tour_time:hasSlots?time:undefined,voucher_code:voucherCode||undefined,ref_code:refCode||undefined}; }
   useEffect(()=>{ if(step===3&&pay==='paypal'&&!pendingRes&&!sub){ ssub(true); postReservation(slug,buildPayload()).then(spr).catch(e=>se(e.message)).finally(()=>ssub(false)); } },[step,pay]);
-  function valid(){ if(step===1){if(!date){se(lang==='en'?'Select a date':'Seleccione uma data');return false;} if(!time){se(lang==='en'?'Select a time slot':'Seleccione um horário');return false;} if(adults<1){se(lang==='en'?'At least 1 adult required':'Mínimo 1 adulto');return false;}} if(step===2&&(!info.name||!info.email)){se(lang==='en'?'Name and email required':'Nome e email obrigatórios');return false;} se('');return true; }
+  function valid(){ if(step===1){if(!date){se(lang==='en'?'Select a date':'Seleccione uma data');return false;} if(hasSlots&&!time){se(lang==='en'?'Select a time slot':'Seleccione um horário');return false;} if(adults<1){se(lang==='en'?'At least 1 adult required':'Mínimo 1 adulto');return false;}} if(step===2&&(!info.name||!info.email)){se(lang==='en'?'Name and email required':'Nome e email obrigatórios');return false;} se('');return true; }
   async function submit(){
     ssub(true);se('');
     try{
@@ -531,12 +550,13 @@ function ActivityModal({ unit, op, slug, lang, onClose, refCode, traveler, initi
     }catch(e){se(e.message);}finally{ssub(false);}
   }
   function next(){ if(!valid())return; step<3?ss(s=>s+1):submit(); }
-  const sumL=[{label:lang==='en'?'Tour / Activity':'Tour / Actividade',value:unit.name},{label:lang==='en'?'Date':'Data',value:date},{label:lang==='en'?'Time':'Horário',value:time},{label:lang==='en'?'Group':'Grupo',value:`${adults} ${lang==='en'?'adults':'adultos'}${kids>0?` + ${kids} ${lang==='en'?'children':'crianças'}`:''}`},...(tourLang?[{label:lang==='en'?'Language':'Idioma',value:tourLang}]:[]),...(total?[{label:'Total',value:total,hi:true}]:[])];
+  const sumL=[{label:lang==='en'?'Tour / Activity':'Tour / Actividade',value:unit.name},{label:lang==='en'?'Date':'Data',value:date},...(time?[{label:lang==='en'?'Time':'Horário',value:time}]:[]),{label:lang==='en'?'Group':'Grupo',value:`${adults} ${lang==='en'?'adults':'adultos'}${kids>0?` + ${kids} ${lang==='en'?'children':'crianças'}`:''}`},...(tourLang?[{label:lang==='en'?'Language':'Idioma',value:tourLang}]:[]),...(total?[{label:'Total',value:total,hi:true}]:[])];
   return (
-    <MS icon={<Compass size={18} strokeWidth={1.75}/>} title={lang==='en'?'Book tour':'Reservar tour'} step={step} lang={lang} onClose={onClose} onPrev={()=>ss(s=>s-1)} onNext={next} nextLabel={step<3?(lang==='en'?'Continue':'Continuar'):(lang==='en'?'Confirm booking':'Confirmar reserva')} nextDis={step===1&&(!date||!time)} sub={sub} err={err} ok={!!resId} hideNext={step===3&&pay==='paypal'}>
+    <MS icon={<Compass size={18} strokeWidth={1.75}/>} title={lang==='en'?'Book tour':'Reservar tour'} step={step} lang={lang} onClose={onClose} onPrev={()=>ss(s=>s-1)} onNext={next} nextLabel={step<3?(lang==='en'?'Continue':'Continuar'):(lang==='en'?'Confirm booking':'Confirmar reserva')} nextDis={step===1&&(!date||(hasSlots&&!time))} sub={sub} err={err} ok={!!resId} hideNext={step===3&&pay==='paypal'}>
       {resId?<div className="p-5"><BS resId={resId} lang={lang} type="activity" onClose={onClose}/></div>
       :step===1?<div className="p-5 space-y-4"><p className={SH}>{lang==='en'?'Select date, time & group':'Data, horário e grupo'}</p>
-        <div className="grid grid-cols-2 gap-3"><div><label className={LB}>{lang==='en'?'Date':'Data'} *</label><input type="date" className={IN} min={TODAY()} value={date} onChange={e=>sd(e.target.value)}/></div><div><label className={LB}>{lang==='en'?'Time slot':'Horário'} *</label><select className={SEL} value={time} onChange={e=>st(e.target.value)}><option value="">{lang==='en'?'-- Select --':'-- Seleccionar --'}</option>{TOUR_SLOTS.map(h=><option key={h} value={h}>{h}</option>)}</select></div></div>
+        <div className={hasSlots?"grid grid-cols-2 gap-3":""}><div><label className={LB}>{lang==='en'?'Date':'Data'} *</label><input type="date" className={IN} min={TODAY()} value={date} onChange={e=>sd(e.target.value)}/></div>
+        {hasSlots&&<div><label className={LB}>{lang==='en'?'Time slot':'Horário'} *</label><select className={SEL} value={time} onChange={e=>st(e.target.value)} disabled={loadingSlots||!date}><option value="">{loadingSlots?(lang==='en'?'Loading...':'A carregar...'):lang==='en'?'-- Select --':'-- Seleccionar --'}</option>{slotAvail.map(s=><option key={s.time} value={s.time} disabled={s.remaining<=0}>{s.time} {s.remaining<=0?(lang==='en'?'(full)':'(esgotado)'):`(${s.remaining} ${lang==='en'?'left':'lugares'})`}</option>)}</select></div>}</div>
         {total&&(date||adults)&&<div className="flex justify-between items-center bg-ocean-50 border border-ocean-100 rounded-xl px-4 py-2.5"><span className="text-xs font-body text-ocean-600">{adults+kids} {lang==='en'?'people':'pessoas'}</span><span className="font-display font-bold text-ocean-700 text-sm">{total}</span></div>}
         <div className="grid grid-cols-2 gap-4"><Cnt label={lang==='en'?'Adults (1-20)':'Adultos (1-20)'} val={adults} set={sa} min={1} max={20}/><Cnt label={lang==='en'?'Children (0-10)':'Crianças (0-10)'} val={kids} set={sk} min={0} max={10}/></div>
         {tourLanguages.length>0&&<div><label className={LB}>{lang==='en'?'Tour language':'Idioma do tour'}</label><select className={SEL} value={tourLang} onChange={e=>stl(e.target.value)}><option value="">{lang==='en'?'-- Select --':'-- Seleccionar --'}</option>{tourLanguages.map(l=><option key={l} value={l}>{l}</option>)}</select></div>}

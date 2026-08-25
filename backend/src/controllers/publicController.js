@@ -1,5 +1,5 @@
 const { supabaseAdmin } = require('../config/supabase');
-const { verificarDisponibilidade, calcularPreco, verificarDisponibilidadeMesa, listarMesasDisponiveis, DEFAULT_SEATING_MINUTES, parseUnitMeta } = require('../helpers/bookingHelpers');
+const { verificarDisponibilidade, calcularPreco, verificarDisponibilidadeMesa, listarMesasDisponiveis, DEFAULT_SEATING_MINUTES, parseUnitMeta, verificarDisponibilidadeSlot, listarSlotsComDisponibilidade } = require('../helpers/bookingHelpers');
 const { obterOuCriarCliente } = require('../helpers/customerHelper');
 const { enviarEmail } = require('../helpers/emailHelper');
 const { detectarIdioma } = require('../helpers/languageHelper');
@@ -109,6 +109,40 @@ async function verificarDisponibilidadePublica(req, res, next) {
       data: { disponivel, total_price: total, dias: dias || 1 },
       message: disponivel ? 'Disponível' : 'Indisponível'
     });
+  } catch (err) {
+    next(err);
+  }
+}
+
+/* ─── Disponibilidade por slot de hora (actividades/tours com horarios
+   configurados, TourForm's TimeSlotsEditor) — devolve lugares restantes em
+   cada slot, nunca so um booleano, para o selector desactivar slots ja
+   esgotados sem inventar disponibilidade. Unidades sem time_slots definido
+   continuam com o fluxo antigo (verificarDisponibilidadePublica). ─── */
+async function getSlotAvailability(req, res, next) {
+  try {
+    const { unitId } = req.params;
+    const { date } = req.query;
+    if (!date) {
+      return res.status(400).json({ error: 'Data é obrigatória', code: 'MISSING_FIELDS' });
+    }
+
+    const { data: unit } = await supabaseAdmin
+      .from('units')
+      .select('id, description')
+      .eq('id', unitId)
+      .eq('status', 'active')
+      .maybeSingle();
+    if (!unit) {
+      return res.status(404).json({ error: 'Unidade não encontrada', code: 'NOT_FOUND' });
+    }
+
+    const meta = parseUnitMeta(unit);
+    const slots = Array.isArray(meta.time_slots) ? meta.time_slots : [];
+    if (!slots.length) return res.json({ data: [] });
+
+    const disponiveis = await listarSlotsComDisponibilidade(supabaseAdmin, unitId, date, slots);
+    return res.json({ data: disponiveis });
   } catch (err) {
     next(err);
   }
@@ -234,6 +268,7 @@ async function criarReserva(req, res, next) {
 
     let unit;
     let preOrderValidado = null;
+    let activitySlotTime = null;
     if (isRestaurant) {
       const { data: mesaRow } = await supabaseAdmin
         .from('units')
@@ -282,9 +317,29 @@ async function criarReserva(req, res, next) {
       }
       unit = unitRow;
 
-      const disponivel = await verificarDisponibilidade(supabaseAdmin, unit_id, check_in, effectiveCheckOut);
-      if (!disponivel) {
-        return res.status(409).json({ error: 'Unidade indisponível nas datas seleccionadas', code: 'UNAVAILABLE' });
+      /* Slots de hora com capacidade propria (TourForm's TimeSlotsEditor) --
+         opcional, so activa quando a unidade tem meta.time_slots definido.
+         Substitui por completo o bloqueio binario de verificarDisponibilidade
+         (que bloqueia o unit_id inteiro nesse dia perante QUALQUER reserva
+         existente, ignorando capacidade) -- com slots, varias reservas
+         partilham o mesmo dia/hora ate ao limite configurado desse slot. */
+      const unitMeta = parseUnitMeta(unitRow);
+      const activitySlots = Array.isArray(unitMeta.time_slots) ? unitMeta.time_slots : [];
+      if (activitySlots.length > 0) {
+        const slotEscolhido = activitySlots.find((s) => String(s.time).slice(0, 5) === String(tour_time || '').slice(0, 5));
+        if (!slotEscolhido) {
+          return res.status(400).json({ error: 'Horário inválido para esta actividade', code: 'INVALID_TIME_SLOT' });
+        }
+        activitySlotTime = slotEscolhido.time;
+        const cabe = await verificarDisponibilidadeSlot(supabaseAdmin, unit_id, check_in, slotEscolhido.time, Number(party_size || guests || 1), Number(slotEscolhido.capacity) || 0);
+        if (!cabe) {
+          return res.status(409).json({ error: 'Sem vagas neste horário', code: 'UNAVAILABLE' });
+        }
+      } else {
+        const disponivel = await verificarDisponibilidade(supabaseAdmin, unit_id, check_in, effectiveCheckOut);
+        if (!disponivel) {
+          return res.status(409).json({ error: 'Unidade indisponível nas datas seleccionadas', code: 'UNAVAILABLE' });
+        }
       }
     }
 
@@ -375,7 +430,17 @@ async function criarReserva(req, res, next) {
         source: 'public',
         notes: finalNotes,
         affiliate_id: affiliateId,
-        start_time: isRestaurant ? reservation_time : null,
+        start_time: isRestaurant ? reservation_time : activitySlotTime,
+        /* duration_minutes fica sempre null para actividades, mesmo com
+           slot escolhido -- reservations_no_overlap_time (048) so se aplica
+           quando AMBOS start_time e duration_minutes estao preenchidos, e
+           essa constraint é exclusiva (uma so reserva por intervalo), o que
+           está certo para uma mesa mas errado para um slot de tour com
+           capacidade partilhada. A verificacao de capacidade do slot ja foi
+           feita acima (verificarDisponibilidadeSlot); nao ha protecao extra
+           ao nivel da BD para actividades, mesmo perfil de risco de corrida
+           que ja existia antes disto (verificarDisponibilidade tambem nunca
+           teve rede de seguranca na BD). */
         duration_minutes: isRestaurant ? DEFAULT_SEATING_MINUTES : null,
         driver_included: isRentacar ? !!driver_included && chauffeurPrice > 0 : false,
         chauffeur_price: chauffeurPrice,
@@ -1527,6 +1592,7 @@ module.exports = {
   listIslands,
   trackView,
   verificarDisponibilidadePublica,
+  getSlotAvailability,
   verificarDisponibilidadeRestaurantePublica,
   criarReserva,
   discover,

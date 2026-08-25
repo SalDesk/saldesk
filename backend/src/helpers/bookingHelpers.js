@@ -173,7 +173,71 @@ async function listarMesasDisponiveis(supabase, operatorId, { date, startTime, d
   return disponiveis;
 }
 
+// Normaliza "HH:MM" ou "HH:MM:SS" (formato devolvido pela coluna `time` do
+// Postgres) para "HH:MM", para comparar de forma fiavel um horario guardado
+// em reservations.start_time com um horario definido em units.description.
+function normalizarHora(t) {
+  return typeof t === 'string' ? t.slice(0, 5) : t;
+}
+
+// Soma os `guests` de reservas activas que ja ocupam um slot especifico
+// (unidade+dia+hora) -- ao contrario de verificarDisponibilidadeMesa (uma
+// mesa e exclusiva, so uma reserva de cada vez), um slot de tour tem
+// capacidade partilhada: varias reservas podem coexistir ate ao limite do
+// slot. Nunca usa a exclusion constraint reservations_no_overlap_time (essa
+// fica reservada a mesas de restaurante) -- ver comentario em
+// publicController.criarReserva sobre nao gravar duration_minutes para
+// actividades, precisamente para essa constraint nunca se aplicar aqui.
+async function ocupacaoDoSlot(supabase, unitId, date, time, excluirReservaId = null) {
+  let query = supabase
+    .from('reservations')
+    .select('id, start_time, guests')
+    .eq('unit_id', unitId)
+    .eq('check_in', date)
+    .in('status', ['pending', 'confirmed', 'checked_in']);
+  if (excluirReservaId) query = query.neq('id', excluirReservaId);
+
+  const { data } = await query;
+  return (data || [])
+    .filter((r) => normalizarHora(r.start_time) === normalizarHora(time))
+    .reduce((soma, r) => soma + (r.guests || 0), 0);
+}
+
+// Confirma se `partySize` pessoas ainda cabem num slot (hora) de uma
+// actividade nesse dia, dada a capacidade configurada desse slot.
+async function verificarDisponibilidadeSlot(supabase, unitId, date, time, partySize, capacidade, excluirReservaId = null) {
+  const ocupados = await ocupacaoDoSlot(supabase, unitId, date, time, excluirReservaId);
+  return ocupados + partySize <= capacidade;
+}
+
+// Lugares restantes em cada slot configurado de uma unidade, para um dia --
+// uma so consulta a BD (nao uma por slot), usada pelo selector de hora no
+// booking publico para desactivar slots ja esgotados sem inventar/assumir
+// disponibilidade.
+async function listarSlotsComDisponibilidade(supabase, unitId, date, slots) {
+  let query = supabase
+    .from('reservations')
+    .select('start_time, guests')
+    .eq('unit_id', unitId)
+    .eq('check_in', date)
+    .in('status', ['pending', 'confirmed', 'checked_in']);
+
+  const { data } = await query;
+  const ocupadosPorHora = {};
+  (data || []).forEach((r) => {
+    const h = normalizarHora(r.start_time);
+    if (h) ocupadosPorHora[h] = (ocupadosPorHora[h] || 0) + (r.guests || 0);
+  });
+
+  return (slots || []).map((s) => {
+    const capacidade = Number(s.capacity) || 0;
+    const ocupados = ocupadosPorHora[normalizarHora(s.time)] || 0;
+    return { time: s.time, capacity: capacidade, remaining: Math.max(0, capacidade - ocupados) };
+  });
+}
+
 module.exports = {
   verificarDisponibilidade, calcularPreco,
   verificarDisponibilidadeMesa, listarMesasDisponiveis, DEFAULT_SEATING_MINUTES, parseUnitMeta,
+  verificarDisponibilidadeSlot, listarSlotsComDisponibilidade,
 };

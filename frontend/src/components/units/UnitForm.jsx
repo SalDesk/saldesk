@@ -125,6 +125,47 @@ function StopsEditor({ stops, onChange }) {
   );
 }
 
+/* Horarios com capacidade propria -- opcional. Sem nenhum slot definido, o
+   tour continua a funcionar exactamente como sempre (reserva por dia,
+   bloqueio binario) -- so ao definir slots aqui e que a disponibilidade
+   passa a ser calculada por horario (varias reservas partilham o mesmo
+   slot ate ao limite de capacidade indicado). Mesmo padrao de lista
+   repetivel do StopsEditor acima. */
+function TimeSlotsEditor({ slots, onChange }) {
+  function addSlot() { onChange([...slots, { time: '', capacity: '' }]); }
+  function updateSlot(i, patch) { onChange(slots.map((s, idx) => idx === i ? { ...s, ...patch } : s)); }
+  function removeSlot(i) { onChange(slots.filter((_, idx) => idx !== i)); }
+  return (
+    <div className="space-y-2">
+      {slots.map((s, i) => (
+        <div key={i} className="flex items-center gap-2">
+          <input
+            type="time"
+            value={s.time}
+            onChange={e => updateSlot(i, { time: e.target.value })}
+            className="h-8 px-2.5 text-sm font-body border border-n-200 rounded-sm focus:outline-none focus:border-ocean-700"
+          />
+          <input
+            type="number"
+            min="1"
+            value={s.capacity}
+            onChange={e => updateSlot(i, { capacity: e.target.value })}
+            placeholder="Lugares"
+            className="w-28 h-8 px-2.5 text-sm font-body border border-n-200 rounded-sm focus:outline-none focus:border-ocean-700"
+          />
+          <button type="button" onClick={() => removeSlot(i)} className="shrink-0 p-1.5 rounded-sm text-n-400 hover:text-error transition-colors">
+            <Trash2 size={14} />
+          </button>
+        </div>
+      ))}
+      <button type="button" onClick={addSlot} className="flex items-center gap-1 text-xs font-body font-semibold text-ocean-700 hover:text-ocean-500 transition-colors">
+        <Plus size={13} strokeWidth={2.5} /> Adicionar horário
+      </button>
+      <p className="text-xs text-n-500">Sem horários aqui, a reserva continua a funcionar por dia inteiro (como hoje). Ao adicionar um horário, o cliente escolhe entre eles e cada um só aceita reservas até ao número de lugares indicado.</p>
+    </div>
+  );
+}
+
 const UNIT_TYPES_BY_OPERATOR = {
   hotel:      ['Quarto Standard', 'Quarto Double', 'Suite', 'Apartamento', 'Villa', 'Bungalow'],
   activity:   ['Mergulho', 'Kitesurf', 'Snorkeling', 'Passeio de Barco', 'Quad / Buggy', 'Pesca', 'Surf', 'Windsurf', 'Tour', 'Sessao'],
@@ -245,6 +286,7 @@ function TourForm({ unit, onSave, onCancel, loading, error }) {
     included_items: meta.included_items || [],
     important_info: meta.important_info || '',
     stops:          meta.stops          || [],
+    time_slots:     meta.time_slots     || [],
     status:   unit?.status  || 'active',
     images:   unit?.images  || [],
     ota_viator_id: unit?.ota_product_ids?.viator       || '',
@@ -298,6 +340,9 @@ function TourForm({ unit, onSave, onCancel, loading, error }) {
           lat: s.lat !== '' ? Number(s.lat) : null,
           lng: s.lng !== '' ? Number(s.lng) : null,
         })),
+      time_slots: form.time_slots
+        .filter(s => s.time && s.capacity)
+        .map(s => ({ time: s.time, capacity: Number(s.capacity) })),
     };
     onSave({
       name:        form.name,
@@ -491,6 +536,11 @@ function TourForm({ unit, onSave, onCancel, loading, error }) {
       <div>
         <SectionLabel>O que está incluído</SectionLabel>
         <IncludedItemsEditor items={form.included_items} onChange={items => setForm(f => ({ ...f, included_items: items }))} />
+      </div>
+
+      <div>
+        <SectionLabel>Horários com lugares limitados (opcional)</SectionLabel>
+        <TimeSlotsEditor slots={form.time_slots} onChange={time_slots => setForm(f => ({ ...f, time_slots }))} />
       </div>
 
       <div>

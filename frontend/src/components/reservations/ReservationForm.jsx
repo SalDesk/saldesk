@@ -3,6 +3,7 @@ import { useT } from '../../i18n';
 import Input, { Textarea, Select } from '../ui/Input';
 import Button from '../ui/Button';
 import FleetSelector from '../fleet/FleetSelector';
+import { parseTourMeta } from '../units/UnitForm';
 
 const SOURCES = ['direct', 'booking_com', 'airbnb', 'viator', 'getyourguide', 'manual'];
 
@@ -26,6 +27,13 @@ export default function ReservationForm({ reservation, units, operatorType, onSa
   const [pricePreview, setPricePreview] = useState(null);
 
   const set = (field) => (e) => setForm({ ...form, [field]: e.target.value });
+
+  /* Horarios com capacidade propria (TourForm's TimeSlotsEditor) -- so
+     activo quando a unidade tem meta.time_slots configurado. Sem isso, o
+     campo "Hora" continua livre e so cai em notes, tal como sempre foi. */
+  const selectedUnit = units.find((u) => u.id === form.unit_id);
+  const selectedUnitMeta = operatorType === 'activity' ? parseTourMeta(selectedUnit?.description) : {};
+  const unitSlots = Array.isArray(selectedUnitMeta.time_slots) ? selectedUnitMeta.time_slots : [];
 
   useEffect(() => {
     const unit = units.find((u) => u.id === form.unit_id);
@@ -58,7 +66,7 @@ export default function ReservationForm({ reservation, units, operatorType, onSa
       ...form,
       guests:   Number(form.guests),
       fleet_id: fleetId || null,
-      start_time: operatorType === 'restaurant' ? form.start_time : null,
+      start_time: operatorType === 'restaurant' ? form.start_time : (unitSlots.length > 0 ? form.tour_time : null),
       notes: operatorType === 'activity' && form.tour_time
         ? `Hora: ${form.tour_time}${form.notes ? ' | ' + form.notes : ''}`
         : form.notes,
@@ -83,7 +91,16 @@ export default function ReservationForm({ reservation, units, operatorType, onSa
             onChange={e => setForm(f => ({ ...f, check_in: e.target.value, check_out: e.target.value }))}
             required
           />
-          <Input label="Hora" type="time" value={form.tour_time} onChange={set('tour_time')} />
+          {unitSlots.length > 0 ? (
+            <Select label="Horário" value={form.tour_time} onChange={set('tour_time')} required>
+              <option value="">Seleccionar horário...</option>
+              {unitSlots.map((s) => (
+                <option key={s.time} value={s.time}>{s.time} ({s.capacity} lugares)</option>
+              ))}
+            </Select>
+          ) : (
+            <Input label="Hora" type="time" value={form.tour_time} onChange={set('tour_time')} />
+          )}
         </div>
       ) : operatorType === 'restaurant' ? (
         <div className="grid grid-cols-2 gap-3">

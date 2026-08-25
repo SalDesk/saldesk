@@ -1,5 +1,5 @@
 const { supabaseAdmin } = require('../config/supabase');
-const { verificarDisponibilidade, calcularPreco, verificarDisponibilidadeMesa, DEFAULT_SEATING_MINUTES, parseUnitMeta } = require('../helpers/bookingHelpers');
+const { verificarDisponibilidade, calcularPreco, verificarDisponibilidadeMesa, DEFAULT_SEATING_MINUTES, parseUnitMeta, verificarDisponibilidadeSlot } = require('../helpers/bookingHelpers');
 const { obterOuCriarCliente, actualizarStatsCheckout } = require('../helpers/customerHelper');
 const { enviarEmail } = require('../helpers/emailHelper');
 const { confirmacaoClienteEmail, notificacaoOperadorEmail } = require('../helpers/emailTemplates');
@@ -98,11 +98,28 @@ async function criar(req, res, next) {
     }
     const finalDuration = isRestaurant ? (Number(duration_minutes) || DEFAULT_SEATING_MINUTES) : null;
 
-    const disponivel = isRestaurant
-      ? await verificarDisponibilidadeMesa(supabaseAdmin, unit_id, check_in, start_time, finalDuration)
-      : await verificarDisponibilidade(supabaseAdmin, unit_id, check_in, check_out);
+    /* Actividade com slots de hora configurados (TourForm's TimeSlotsEditor)
+       -- staff tem de escolher um slot real, tal como o fluxo publico
+       (publicController.criarReserva), para as duas vias competirem pela
+       mesma capacidade em vez de o staff conseguir sobrepor-se ao limite. */
+    const unitMetaCriar = parseUnitMeta(unit);
+    const activitySlots = Array.isArray(unitMetaCriar.time_slots) ? unitMetaCriar.time_slots : [];
+    let activitySlotTime = null;
+    let disponivel;
+    if (isRestaurant) {
+      disponivel = await verificarDisponibilidadeMesa(supabaseAdmin, unit_id, check_in, start_time, finalDuration);
+    } else if (activitySlots.length > 0) {
+      const slotEscolhido = activitySlots.find((s) => String(s.time).slice(0, 5) === String(start_time || '').slice(0, 5));
+      if (!slotEscolhido) {
+        return res.status(400).json({ error: 'Horário inválido para esta actividade', code: 'INVALID_TIME_SLOT' });
+      }
+      activitySlotTime = slotEscolhido.time;
+      disponivel = await verificarDisponibilidadeSlot(supabaseAdmin, unit_id, check_in, slotEscolhido.time, Number(guests || 1), Number(slotEscolhido.capacity) || 0);
+    } else {
+      disponivel = await verificarDisponibilidade(supabaseAdmin, unit_id, check_in, check_out);
+    }
     if (!disponivel) {
-      return res.status(409).json({ error: isRestaurant ? 'Mesa indisponível nesse horário' : 'Unidade indisponível nas datas seleccionadas', code: 'UNAVAILABLE' });
+      return res.status(409).json({ error: isRestaurant ? 'Mesa indisponível nesse horário' : activitySlots.length ? 'Sem vagas neste horário' : 'Unidade indisponível nas datas seleccionadas', code: 'UNAVAILABLE' });
     }
 
     // calcularPreco e por noite/dia (hotel, rent-a-car) — reservas de um so dia
@@ -165,7 +182,7 @@ async function criar(req, res, next) {
         notes_guest: notes_guest || null,
         fleet_id: fleet_id || null,
         seller_id: req.staff?.id || null,
-        start_time: isRestaurant ? start_time : null,
+        start_time: isRestaurant ? start_time : activitySlotTime,
         duration_minutes: finalDuration,
         driver_included: isRentacar ? !!driver_included && chauffeurPrice > 0 : false,
         chauffeur_price: chauffeurPrice,
