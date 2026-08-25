@@ -4,7 +4,7 @@ import {
   Check, CheckCheck, ArrowLeft, MessageCircle, Mail, MessageSquare, AlertTriangle,
 } from 'lucide-react';
 import { io } from 'socket.io-client';
-import { listMessages, sendMessage, markRead, listGroups, createGroup } from '../services/messageService';
+import { listMessages, sendMessage, markRead, listGroups, createGroup, getLastActivity } from '../services/messageService';
 import { listStaff } from '../services/staffService';
 import { listCustomers } from '../services/customersService';
 import api from '../services/api';
@@ -19,6 +19,26 @@ import LoadingSpinner from '../components/shared/LoadingSpinner';
 function formatTime(d) {
   if (!d) return '';
   return new Date(d).toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' });
+}
+
+/* Toque curto de notificacao -- gerado via Web Audio, sem precisar de
+   nenhum ficheiro de audio para hospedar. */
+function playNotificationSound() {
+  try {
+    const Ctx = window.AudioContext || window.webkitAudioContext;
+    if (!Ctx) return;
+    const ctx  = new Ctx();
+    const osc  = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(880, ctx.currentTime);
+    gain.gain.setValueAtTime(0.16, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.35);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start();
+    osc.stop(ctx.currentTime + 0.35);
+  } catch { /* autoplay bloqueado ou API indisponivel -- silencioso */ }
 }
 
 function ContactAvatar({ contact, online = false, size = 36 }) {
@@ -44,6 +64,33 @@ function ContactAvatar({ contact, online = false, size = 36 }) {
         <span className={`absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-white ${online ? 'bg-green-500' : 'bg-n-300'}`} />
       )}
     </div>
+  );
+}
+
+function ContactRow({ contact, isOnline, unread, isActive, onClick }) {
+  const hasUnread = unread > 0;
+  return (
+    <button
+      onClick={onClick}
+      className={`w-full flex items-center gap-3 px-3 py-3 text-left hover:bg-n-50 transition-colors border-b border-n-100 ${isActive ? 'bg-ocean-50' : ''}`}
+    >
+      <ContactAvatar contact={contact} online={isOnline} />
+      <div className="min-w-0 flex-1">
+        <div className="flex items-center justify-between gap-1">
+          <p className={`text-sm font-body truncate ${hasUnread ? 'font-bold text-n-900' : 'font-semibold text-n-900'}`}>{contact.label}</p>
+          {hasUnread && (
+            <span className="shrink-0 w-5 h-5 rounded-full bg-ocean-700 text-white text-xs font-body font-bold flex items-center justify-center">
+              {unread > 9 ? '9+' : unread}
+            </span>
+          )}
+        </div>
+        <p className={`text-xs font-body truncate mt-0.5 ${hasUnread ? 'font-bold text-n-700' : 'text-n-400'}`}>
+          {contact.type === 'staff' && isOnline ? (
+            <span className="text-green-600">Online</span>
+          ) : contact.sublabel}
+        </p>
+      </div>
+    </button>
   );
 }
 
@@ -73,7 +120,8 @@ export default function Messages() {
   const [customers,       setCustomers]        = useState([]);
   const [search,          setSearch]           = useState('');
   const [selectedContact, setSelectedContact]  = useState(null);
-  const [guestChannel,    setGuestChannel]     = useState('email');
+  const [guestChannel,    setGuestChannel]     = useState('internal');
+  const [lastActivity,    setLastActivity]     = useState({});
   const [messages,        setMessages]         = useState([]);
   const [loadingMsgs,     setLoadingMsgs]      = useState(false);
   const [text,            setText]             = useState('');
@@ -103,6 +151,7 @@ export default function Messages() {
       .catch(() => {});
     /* So operadores (nao staff) gerem clientes -- falha em silencio para staff */
     listCustomers().then(c => setCustomers(c || [])).catch(() => {});
+    getLastActivity().then(a => setLastActivity(a || {})).catch(() => {});
     registerPushNotifications();
   }, []);
 
@@ -130,12 +179,18 @@ export default function Messages() {
         listCustomers().then(c => setCustomers(c || [])).catch(() => {});
       }
 
+      /* Ordenar a barra lateral por ordem de chegada -- mesmo calculo de
+         "quem e o outro lado da conversa" usado no endpoint last-activity. */
+      const cid = msg.group_id || (msg.sender_id === operator?.id ? msg.recipient_id : msg.sender_id);
+      if (cid) setLastActivity(prev => ({ ...prev, [cid]: msg.created_at }));
+
+      if (msg.sender_type !== 'manager') playNotificationSound();
+
       if (isCurrent) {
         setMessages(prev => prev.find(m => m.id === msg.id) ? prev : [...prev, msg]);
         markRead(msg.id).catch(() => {});
-      } else {
-        const cid = msg.group_id || msg.sender_id;
-        if (cid) setUnreadCounts(prev => ({ ...prev, [cid]: (prev[cid] || 0) + 1 }));
+      } else if (cid) {
+        setUnreadCounts(prev => ({ ...prev, [cid]: (prev[cid] || 0) + 1 }));
       }
     });
 
@@ -178,7 +233,7 @@ export default function Messages() {
 
   async function loadMessages(contact) {
     setSelectedContact(contact);
-    if (contact.type === 'guest') setGuestChannel(contact.email ? 'email' : 'whatsapp');
+    if (contact.type === 'guest') setGuestChannel('internal');
     setShowChat(true);
     setUnreadCounts(prev => ({ ...prev, [contact.id]: 0 }));
     setLoadingMsgs(true);
@@ -220,7 +275,10 @@ export default function Messages() {
         ),
       };
       const msg = await sendMessage(payload);
-      if (msg) setMessages(prev => [...prev, msg]);
+      if (msg) {
+        setMessages(prev => prev.find(m => m.id === msg.id) ? prev : [...prev, msg]);
+        setLastActivity(prev => ({ ...prev, [selectedContact.id]: msg.created_at }));
+      }
       setText('');
       setAttachment(null);
     } finally {
@@ -244,15 +302,29 @@ export default function Messages() {
     e.target.value = '';
   }
 
-  const contacts = [
-    ...staff.map(s     => ({ ...s, type: 'staff', label: s.name, sublabel: s.role })),
+  const staffContacts = staff.map(s => ({ ...s, type: 'staff', label: s.name, sublabel: s.role }));
+  const otherContacts = [
     ...groups.map(g    => ({ ...g, type: 'group', label: g.name, sublabel: `Grupo · ${(g.members || []).length} membros` })),
     ...customers.map(c => ({ ...c, type: 'guest', label: c.name, sublabel: c.email || c.phone || 'Cliente' })),
   ];
 
-  const filteredContacts = search.trim()
-    ? contacts.filter(c => c.label.toLowerCase().includes(search.toLowerCase()))
-    : contacts;
+  /* Ordem de chegada -- conversa com actividade mais recente primeiro.
+     Sort e estavel, por isso quem nao tem nenhuma actividade registada
+     (lastActivity[id] undefined) mantem a ordem original, no fim. */
+  function byRecency(list) {
+    return [...list].sort((a, b) => {
+      const ta = lastActivity[a.id] ? new Date(lastActivity[a.id]).getTime() : 0;
+      const tb = lastActivity[b.id] ? new Date(lastActivity[b.id]).getTime() : 0;
+      return tb - ta;
+    });
+  }
+
+  function filterBySearch(list) {
+    return search.trim() ? list.filter(c => c.label.toLowerCase().includes(search.toLowerCase())) : list;
+  }
+
+  const filteredStaff = filterBySearch(byRecency(staffContacts));
+  const filteredOther = filterBySearch(byRecency(otherContacts));
 
   const totalUnread = Object.values(unreadCounts).reduce((a, b) => a + b, 0);
 
@@ -287,39 +359,44 @@ export default function Messages() {
           </div>
 
           <div className="flex-1 overflow-y-auto">
-            {filteredContacts.length === 0 ? (
+            {filteredStaff.length === 0 && filteredOther.length === 0 ? (
               <p className="p-4 text-xs font-body text-n-400 text-center">
                 {search ? 'Sem resultados' : 'Sem colaboradores, grupos ou clientes'}
               </p>
-            ) : filteredContacts.map(c => {
-              const isOnline  = c.type === 'staff' && onlineUsers.has(c.id);
-              const unread    = unreadCounts[c.id] || 0;
-              const isActive  = selectedContact?.id === c.id;
-              return (
-                <button
-                  key={c.id}
-                  onClick={() => loadMessages(c)}
-                  className={`w-full flex items-center gap-3 px-3 py-3 text-left hover:bg-n-50 transition-colors border-b border-n-100 ${isActive ? 'bg-ocean-50' : ''}`}
-                >
-                  <ContactAvatar contact={c} online={isOnline} />
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center justify-between gap-1">
-                      <p className="text-sm font-body font-semibold text-n-900 truncate">{c.label}</p>
-                      {unread > 0 && (
-                        <span className="shrink-0 w-5 h-5 rounded-full bg-ocean-700 text-white text-xs font-body font-bold flex items-center justify-center">
-                          {unread > 9 ? '9+' : unread}
-                        </span>
-                      )}
-                    </div>
-                    <p className="text-xs font-body text-n-400 truncate mt-0.5">
-                      {c.type === 'staff' && isOnline ? (
-                        <span className="text-green-600">Online</span>
-                      ) : c.sublabel}
-                    </p>
-                  </div>
-                </button>
-              );
-            })}
+            ) : (
+              <>
+                {filteredStaff.length > 0 && (
+                  <>
+                    <p className="px-3 pt-2.5 pb-1 text-xs font-body font-bold uppercase tracking-wide text-n-400">Colaboradores</p>
+                    {filteredStaff.map(c => (
+                      <ContactRow
+                        key={c.id}
+                        contact={c}
+                        isOnline={onlineUsers.has(c.id)}
+                        unread={unreadCounts[c.id] || 0}
+                        isActive={selectedContact?.id === c.id}
+                        onClick={() => loadMessages(c)}
+                      />
+                    ))}
+                  </>
+                )}
+                {filteredOther.length > 0 && (
+                  <>
+                    <p className="px-3 pt-2.5 pb-1 text-xs font-body font-bold uppercase tracking-wide text-n-400">Conversas</p>
+                    {filteredOther.map(c => (
+                      <ContactRow
+                        key={c.id}
+                        contact={c}
+                        isOnline={false}
+                        unread={unreadCounts[c.id] || 0}
+                        isActive={selectedContact?.id === c.id}
+                        onClick={() => loadMessages(c)}
+                      />
+                    ))}
+                  </>
+                )}
+              </>
+            )}
           </div>
         </div>
 
@@ -357,6 +434,14 @@ export default function Messages() {
                 </div>
                 {selectedContact.type === 'guest' && (
                   <div className="flex items-center gap-1 shrink-0 bg-n-100 rounded-sm p-0.5">
+                    <button
+                      type="button"
+                      onClick={() => setGuestChannel('internal')}
+                      title="Conversa do chat do site"
+                      className={`flex items-center gap-1 px-2 py-1 rounded-xs text-xs font-body font-semibold transition-colors ${guestChannel === 'internal' ? 'bg-white text-ocean-700 shadow-sm' : 'text-n-500 hover:text-n-700'}`}
+                    >
+                      <MessageCircle size={13} strokeWidth={1.75} /> Chat
+                    </button>
                     <button
                       type="button"
                       disabled={!selectedContact.email}
@@ -456,13 +541,20 @@ export default function Messages() {
                     className="flex-1 h-9 px-3 rounded-sm border border-n-300 text-sm font-body bg-n-50 focus:outline-none focus:ring-2 focus:ring-ocean-300 focus:border-ocean-700 focus:bg-white transition-colors"
                     value={text}
                     onChange={handleTextChange}
-                    placeholder={selectedContact.type === 'guest' ? `Escrever mensagem por ${guestChannel === 'email' ? 'email' : 'WhatsApp'}...` : 'Escrever mensagem...'}
+                    placeholder={
+                      selectedContact.type === 'guest' && guestChannel !== 'internal'
+                        ? `Escrever mensagem por ${guestChannel === 'email' ? 'email' : 'WhatsApp'}...`
+                        : 'Escrever mensagem...'
+                    }
                   />
                   <Button
                     type="submit"
                     loading={sending}
                     icon={Send}
-                    disabled={(!text.trim() && !attachment) || (selectedContact.type === 'guest' && !selectedContact[guestChannel === 'email' ? 'email' : 'phone'])}
+                    disabled={
+                      (!text.trim() && !attachment) ||
+                      (selectedContact.type === 'guest' && guestChannel !== 'internal' && !selectedContact[guestChannel === 'email' ? 'email' : 'phone'])
+                    }
                     size="sm"
                   >
                     Enviar

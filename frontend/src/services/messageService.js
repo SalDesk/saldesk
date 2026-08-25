@@ -7,3 +7,4 @@ export const getUnreadCount  = ()       => api.get('/messages/unread-count').the
 export const listGroups      = ()       => api.get('/messages/groups').then(r => r.data.data);
 export const createGroup     = (d)      => api.post('/messages/groups', d).then(r => r.data.data);
 export const addGroupMember  = (id, d)  => api.post(`/messages/groups/${id}/members`, d).then(r => r.data.data);
+export const getLastActivity = ()       => api.get('/messages/last-activity').then(r => r.data.data);

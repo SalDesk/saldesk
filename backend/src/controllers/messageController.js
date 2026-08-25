@@ -54,9 +54,15 @@ async function enviar(req, res, next) {
       }
     }
 
-    /* Hospede (cliente real) nao tem inbox interna -- a mensagem so chega
-       se for de facto despachada por email/WhatsApp, usando os mesmos
-       helpers ja provados em producao pelas Automacoes. */
+    /* Hospede (cliente real) do chat publico ja recebe a mensagem a serio
+       via o historico/polling do proprio widget (ver sendGuestChatMessage/
+       getGuestChatHistory em publicController.js) -- isso NAO depende de
+       email/WhatsApp. So quando o operador escolhe explicitamente um desses
+       canais (para alcancar um cliente que nao esta com a pagina aberta)
+       e que se tenta a entrega externa a serio, e so essa tentativa pode
+       falhar -- antes disto, uma mensagem 'internal' era sempre forcada a
+       email e aparecia com "Falha ao entregar" mesmo tendo chegado bem ao
+       widget, o que era enganoso. */
     let effectiveChannel = 'internal';
     let deliveryStatus   = null;
     if (recipient_type === 'guest') {
@@ -65,17 +71,19 @@ async function enviar(req, res, next) {
         .from('customers').select('name, email, phone').eq('id', recipient_id).eq('operator_id', operatorId).single();
       if (!cliente) return res.status(404).json({ error: 'Cliente nao encontrado', code: 'NOT_FOUND' });
 
-      effectiveChannel = channel === 'whatsapp' ? 'whatsapp' : 'email';
-      try {
-        if (effectiveChannel === 'whatsapp') {
-          await enviarWhatsApp({ to: cliente.phone, body: content });
-        } else {
-          await enviarEmail({ to: cliente.email, subject: `Nova mensagem de ${req.operator?.name || 'a equipa'}`, text: content });
+      if (channel === 'email' || channel === 'whatsapp') {
+        effectiveChannel = channel;
+        try {
+          if (effectiveChannel === 'whatsapp') {
+            await enviarWhatsApp({ to: cliente.phone, body: content });
+          } else {
+            await enviarEmail({ to: cliente.email, subject: `Nova mensagem de ${req.operator?.name || 'a equipa'}`, text: content });
+          }
+          deliveryStatus = 'sent';
+        } catch (err) {
+          console.error('[Messages] Falha ao entregar mensagem ao cliente:', err.message);
+          deliveryStatus = 'failed';
         }
-        deliveryStatus = 'sent';
-      } catch (err) {
-        console.error('[Messages] Falha ao entregar mensagem ao cliente:', err.message);
-        deliveryStatus = 'failed';
       }
     }
 
@@ -98,6 +106,35 @@ async function enviar(req, res, next) {
 
     emitToOperator(operatorId, 'message:new', data);
     return res.status(201).json({ data, message: 'Mensagem enviada' });
+  } catch (err) { next(err); }
+}
+
+/* Ultima mensagem de cada conversa (staff, grupo ou hospede), para a
+   barra lateral poder ordenar por ordem de chegada em vez de uma ordem
+   fixa. Reduzido em JS a partir das mensagens mais recentes do operador
+   -- uma conversa sem nenhuma mensagem nos ultimos 500 registos so fica
+   de fora do mapa (sobe para o fim da lista, comportamento aceitavel:
+   500 mensagens cobrem largamente a actividade recente de qualquer
+   operador real). */
+async function listarUltimaActividade(req, res, next) {
+  try {
+    const operatorId = getOperatorId(req);
+    const currentId  = getSenderId(req);
+
+    const { data, error } = await supabaseAdmin
+      .from('messages')
+      .select('sender_id, recipient_id, group_id, created_at')
+      .eq('operator_id', operatorId)
+      .order('created_at', { ascending: false })
+      .limit(500);
+    if (error) throw error;
+
+    const ultima = {};
+    for (const m of (data || [])) {
+      const cid = m.group_id || (m.sender_id === currentId ? m.recipient_id : m.sender_id);
+      if (cid && !ultima[cid]) ultima[cid] = m.created_at;
+    }
+    return res.json({ data: ultima, message: 'Actividade recente' });
   } catch (err) { next(err); }
 }
 
@@ -161,4 +198,4 @@ async function adicionarMembro(req, res, next) {
   } catch (err) { next(err); }
 }
 
-module.exports = { listar, enviar, marcarLida, unreadCount, listarGrupos, criarGrupo, adicionarMembro };
+module.exports = { listar, enviar, marcarLida, unreadCount, listarGrupos, criarGrupo, adicionarMembro, listarUltimaActividade };
