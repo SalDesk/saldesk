@@ -304,6 +304,37 @@ function chatFmtTime(d) {
   return new Date(d).toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' });
 }
 
+/* Toque curto quando o operador responde -- mesmo mecanismo usado em
+   Messages.jsx (Web Audio, sem ficheiro de audio), destravado pelo
+   proprio clique do visitante ao abrir/enviar no widget (o widget publico
+   nunca pede permissao de notificacao do browser a um visitante anonimo --
+   so isto, discreto, sem popup nenhum). */
+let chatAudioCtx = null;
+function unlockChatAudio() {
+  try {
+    const Ctx = window.AudioContext || window.webkitAudioContext;
+    if (!Ctx) return;
+    if (!chatAudioCtx) chatAudioCtx = new Ctx();
+    if (chatAudioCtx.state === 'suspended') chatAudioCtx.resume().catch(() => {});
+  } catch { /* silencioso */ }
+}
+function playChatPing() {
+  try {
+    if (!chatAudioCtx) return;
+    if (chatAudioCtx.state === 'suspended') chatAudioCtx.resume().catch(() => {});
+    const osc  = chatAudioCtx.createOscillator();
+    const gain = chatAudioCtx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(880, chatAudioCtx.currentTime);
+    gain.gain.setValueAtTime(0.16, chatAudioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, chatAudioCtx.currentTime + 0.35);
+    osc.connect(gain);
+    gain.connect(chatAudioCtx.destination);
+    osc.start();
+    osc.stop(chatAudioCtx.currentTime + 0.35);
+  } catch { /* silencioso */ }
+}
+
 function ChatWidget({ slug, opName, lang }) {
   const storageKey = `sd-chat-${slug}`;
   const [open, setOpen]         = useState(false);
@@ -340,7 +371,10 @@ function ChatWidget({ slug, opName, lang }) {
       } else {
         const novas = list.filter(m => m.sender_type !== 'guest' && !seenIdsRef.current.has(m.id));
         list.forEach(m => seenIdsRef.current.add(m.id));
-        if (novas.length && !panelOpen) setUnread(u => u + novas.length);
+        if (novas.length) {
+          playChatPing();
+          if (!panelOpen) setUnread(u => u + novas.length);
+        }
       }
     } catch { /* poll falhado -- tenta de novo no proximo ciclo, sem UI de erro */ }
   }
@@ -362,6 +396,7 @@ function ChatWidget({ slug, opName, lang }) {
 
   async function send(e) {
     e.preventDefault();
+    unlockChatAudio();
     const content = text.trim();
     if (!content) return;
     if (!session?.customer_id && !email.trim()) return;
@@ -462,7 +497,7 @@ function ChatWidget({ slug, opName, lang }) {
           )}
         </div>
       )}
-      <button onClick={() => setOpen(o => !o)}
+      <button onClick={() => { unlockChatAudio(); setOpen(o => !o); }}
         className="w-12 h-12 rounded-full bg-ocean-700 text-white shadow-lg hover:bg-ocean-500 transition-all flex items-center justify-center relative">
         {open ? <X size={20} strokeWidth={2} /> : <MessageCircle size={20} strokeWidth={1.75} />}
         {!open && unread > 0 && (

@@ -22,23 +22,55 @@ function formatTime(d) {
 }
 
 /* Toque curto de notificacao -- gerado via Web Audio, sem precisar de
-   nenhum ficheiro de audio para hospedar. */
-function playNotificationSound() {
+   nenhum ficheiro de audio para hospedar.
+
+   Um AudioContext criado de raiz FORA de um gesto directo do utilizador
+   arranca suspenso na maioria dos browsers -- como a mensagem chega de
+   forma assincrona via socket, nunca havia nenhum clique a acontecer
+   nesse preciso instante, por isso o som nunca soava (silencioso, sem
+   erro nenhum). A correcao: um UNICO AudioContext partilhado, destravado
+   (resume()) no primeiro clique/tecla do operador na pagina -- suficiente
+   para os toques seguintes, accionados por eventos assincronos, tocarem
+   normalmente. */
+let sharedAudioCtx = null;
+
+function unlockAudioContext() {
   try {
     const Ctx = window.AudioContext || window.webkitAudioContext;
     if (!Ctx) return;
-    const ctx  = new Ctx();
-    const osc  = ctx.createOscillator();
-    const gain = ctx.createGain();
+    if (!sharedAudioCtx) sharedAudioCtx = new Ctx();
+    if (sharedAudioCtx.state === 'suspended') sharedAudioCtx.resume().catch(() => {});
+  } catch { /* API indisponivel -- silencioso */ }
+}
+
+function playNotificationSound() {
+  try {
+    if (!sharedAudioCtx) return; // ainda sem nenhuma interaccao do utilizador nesta pagina
+    if (sharedAudioCtx.state === 'suspended') sharedAudioCtx.resume().catch(() => {});
+    const osc  = sharedAudioCtx.createOscillator();
+    const gain = sharedAudioCtx.createGain();
     osc.type = 'sine';
-    osc.frequency.setValueAtTime(880, ctx.currentTime);
-    gain.gain.setValueAtTime(0.16, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.35);
+    osc.frequency.setValueAtTime(880, sharedAudioCtx.currentTime);
+    gain.gain.setValueAtTime(0.16, sharedAudioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, sharedAudioCtx.currentTime + 0.35);
     osc.connect(gain);
-    gain.connect(ctx.destination);
+    gain.connect(sharedAudioCtx.destination);
     osc.start();
-    osc.stop(ctx.currentTime + 0.35);
+    osc.stop(sharedAudioCtx.currentTime + 0.35);
   } catch { /* autoplay bloqueado ou API indisponivel -- silencioso */ }
+}
+
+/* Notificacao desktop real (fora da aba/minimizado) -- so quando a
+   permissao ja foi concedida (pedida por registerPushNotifications no
+   arranque da pagina) e a aba nao esta em foco, para nao duplicar o aviso
+   com o que ja se ve directamente no ecra. */
+function showDesktopNotification(title, body) {
+  try {
+    if (!('Notification' in window)) return;
+    if (Notification.permission !== 'granted') return;
+    if (!document.hidden) return;
+    new Notification(title, { body, icon: '/android-chrome-192x192.png', tag: 'saldesk-message' });
+  } catch { /* silencioso */ }
 }
 
 function ContactAvatar({ contact, online = false, size = 36 }) {
@@ -153,6 +185,15 @@ export default function Messages() {
     listCustomers().then(c => setCustomers(c || [])).catch(() => {});
     getLastActivity().then(a => setLastActivity(a || {})).catch(() => {});
     registerPushNotifications();
+
+    /* Destrava o toque de notificacao no primeiro clique/tecla do operador
+       nesta pagina -- ver comentario junto a unlockAudioContext(). */
+    window.addEventListener('pointerdown', unlockAudioContext, { once: true });
+    window.addEventListener('keydown', unlockAudioContext, { once: true });
+    return () => {
+      window.removeEventListener('pointerdown', unlockAudioContext);
+      window.removeEventListener('keydown', unlockAudioContext);
+    };
   }, []);
 
   useEffect(() => {
@@ -184,7 +225,11 @@ export default function Messages() {
       const cid = msg.group_id || (msg.sender_id === operator?.id ? msg.recipient_id : msg.sender_id);
       if (cid) setLastActivity(prev => ({ ...prev, [cid]: msg.created_at }));
 
-      if (msg.sender_type !== 'manager') playNotificationSound();
+      if (msg.sender_type !== 'manager') {
+        playNotificationSound();
+        const origem = msg.group_id ? 'Nova mensagem num grupo' : msg.sender_type === 'guest' ? 'Nova mensagem de um visitante' : 'Nova mensagem de um colaborador';
+        showDesktopNotification(origem, msg.content?.slice(0, 120) || '');
+      }
 
       if (isCurrent) {
         setMessages(prev => prev.find(m => m.id === msg.id) ? prev : [...prev, msg]);
