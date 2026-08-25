@@ -33,7 +33,7 @@ const { publicInitSisp, publicPaypalClientId, publicCreatePaypalIntent, publicCo
 const { validarVoucherPublico } = require('../controllers/vouchersController');
 const { portalLogin: affiliatePortalLogin } = require('../controllers/affiliatesController');
 const { frontendBase } = require('../utils/urls');
-const { publicLimiter, chatLimiter } = require('../middleware/rateLimiters');
+const { publicLimiter, authLimiter, chatLimiter } = require('../middleware/rateLimiters');
 
 /* ─── Relatório de impacto público ─── */
 router.get('/impact',              getImpact);
@@ -54,10 +54,10 @@ router.get('/cms/banners',         cmsBanners);
 router.get('/reviews',             publicReviews);
 
 /* ─── Formulário de contacto / newsletter ─── */
-router.post('/contact',            publicContact);
+router.post('/contact',            publicLimiter, publicContact);
 
 /* ─── Candidatura de operador (website /operadores) ─── */
-router.post('/leads',              submitLead);
+router.post('/leads',              publicLimiter, submitLead);
 
 /* ─── CMS website público ─── */
 router.get('/cms', getCmsPublic);
@@ -75,16 +75,16 @@ router.post('/:slug/track-view',   publicLimiter, trackView);
 router.get('/:slug/reviews',       slugReviews);
 router.get('/:slug/availability',  verificarDisponibilidadePublica);
 router.get('/:slug/restaurant-availability', verificarDisponibilidadeRestaurantePublica);
-router.post('/:slug/reservations', criarReserva);
-router.post('/:slug/vouchers/validate', validarVoucherPublico);
-router.post('/affiliates/login', affiliatePortalLogin);
-router.post('/:slug/contact',      slugContact);
+router.post('/:slug/reservations', publicLimiter, criarReserva);
+router.post('/:slug/vouchers/validate', publicLimiter, validarVoucherPublico);
+router.post('/affiliates/login', authLimiter, affiliatePortalLogin);
+router.post('/:slug/contact',      publicLimiter, slugContact);
 router.post('/:slug/chat/send',    chatLimiter, sendGuestChatMessage);
 router.get('/:slug/chat/history',  chatLimiter, getGuestChatHistory);
-router.post('/:slug/payments/sisp/init', publicInitSisp);
+router.post('/:slug/payments/sisp/init', publicLimiter, publicInitSisp);
 router.get('/:slug/payments/paypal/client-id',  publicPaypalClientId);
-router.post('/:slug/payments/paypal/create-intent', publicCreatePaypalIntent);
-router.post('/:slug/payments/paypal/confirm',   publicConfirmPaypalPayment);
+router.post('/:slug/payments/paypal/create-intent', publicLimiter, publicCreatePaypalIntent);
+router.post('/:slug/payments/paypal/confirm',   publicLimiter, publicConfirmPaypalPayment);
 
 /* ─── QR Code público — sem autenticação ─── */
 router.get('/:slug/qrcode', (req, res) => {

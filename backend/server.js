@@ -5,7 +5,7 @@ const express = require('express');
 const cors    = require('cors');
 const helmet  = require('helmet');
 const cookieParser = require('cookie-parser');
-const { publicLimiter, authLimiter } = require('./src/middleware/rateLimiters');
+const { authLimiter } = require('./src/middleware/rateLimiters');
 
 const authRoutes         = require('./src/routes/auth');
 const travelerAuthRoutes = require('./src/routes/travelerAuth');
@@ -105,7 +105,15 @@ app.use('/api/v1/calendar',      calendarRoutes);
 app.use('/api/v1/customers',     customersRoutes);
 app.use('/api/v1/automations',   automationsRoutes);
 app.use('/api/v1/financial',     financeiroRoutes);
-app.use('/api/v1/public',        publicLimiter, publicRoutes);
+/* publicLimiter deixou de ser aplicado aqui, ao router inteiro -- um so
+   limite de 100/15min partilhado por TODA a navegacao publica (catalogo,
+   pagina do operador, disponibilidade, e agora tambem o polling do chat
+   publico) esgotava-se em minutos com uso legitimo normal, deixando o
+   /discover/ e o resto do site publico "vazios" para esse visitante ate o
+   limite libertar. Cada rota de escrita/abuso-sensivel aplica agora o seu
+   proprio limiter directamente em routes/public.js; leitura de catalogo
+   fica sem limite (mesmo padrao de qualquer storefront publico real). */
+app.use('/api/v1/public',        publicRoutes);
 app.use('/api/v1/integrations',  integrationRoutes);
 app.use('/api/v1/gyg-integrator', gygIntegratorRoutes);
 app.use('/api/v1/staff',         staffRoutes);
