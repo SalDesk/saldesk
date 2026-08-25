@@ -59,6 +59,13 @@
    com slots, entra o caminho novo "Time point" (uma entrada de
    disponibilidade por slot, dateTime com a hora real, sem openingTimes --
    confirmado no spec publico OpenAPI, nao no self-testing tool).
+   Bug real encontrado a testar directamente contra este endpoint (curl
+   com as credenciais reais do integrador, 2026-08-25): reserve() so
+   verificava reservations CONFIRMADAS antes de criar o hold -- dois
+   reserve concorrentes para o mesmo slot podiam juntos exceder a
+   capacidade, ja que a reservation definitiva so nasce em book(). Corrigido
+   com ocupacaoSlotComHolds(), que soma tambem holds 'held' ainda nao
+   expirados do mesmo unit_id/dia/hora antes de aceitar um novo reserve.
    IMPORTANTE -- isto AINDA NAO foi exercitado pelo self-testing tool do
    Sandbox (ao contrario do resto deste ficheiro, que so foi corrigido
    depois de testado ao vivo): antes de qualquer unidade real usar slots
@@ -94,7 +101,7 @@ const axios = require('axios');
 const { supabaseAdmin } = require('../config/supabase');
 const {
   verificarDisponibilidade, calcularPreco, parseUnitMeta,
-  verificarDisponibilidadeSlot, normalizarHora, ocupacaoSlotsEmLote,
+  normalizarHora, ocupacaoSlotsEmLote,
 } = require('../helpers/bookingHelpers');
 const { obterOuCriarCliente } = require('../helpers/customerHelper');
 const { criarNotificacaoViajante } = require('../helpers/travelerNotificationHelper');
@@ -270,6 +277,35 @@ async function queryAvailability(req, res, next) {
    qual categoria foi rejeitada -- o self-testing tool da GYG (2026-08-20)
    confirmou que a resposta INVALID_TICKET_CATEGORY exige um campo
    "ticketCategory" com esse valor, nao so o errorCode/errorMessage. */
+/* verificarDisponibilidadeSlot (bookingHelpers.js) so soma reservations
+   CONFIRMADAS -- certo para o motor interno (que insere directo em
+   reservations, sem fase de hold), mas errado aqui: reserve() so cria um
+   HOLD (ota_reservation_holds), a reservation definitiva so nasce em
+   book(). Sem contar os holds activos de OUTRAS referencias, dois reserve
+   concorrentes para o mesmo slot podiam juntos exceder a capacidade (bug
+   real, encontrado a testar ao vivo em 2026-08-25: 2 pessoas + 1 pessoa
+   num slot de capacidade 2 foram ambos aceites). Soma tambem holds com
+   status='held' e ainda nao expirados do MESMO unit_id/dia/hora. */
+async function ocupacaoSlotComHolds(unitId, date, time) {
+  const agora = new Date().toISOString();
+  const [resReservas, resHolds] = await Promise.all([
+    supabaseAdmin.from('reservations').select('start_time, guests')
+      .eq('unit_id', unitId).eq('check_in', date)
+      .in('status', ['pending', 'confirmed', 'checked_in']),
+    supabaseAdmin.from('ota_reservation_holds').select('start_time, participants')
+      .eq('unit_id', unitId).eq('check_in', date)
+      .eq('status', 'held').gt('expires_at', agora),
+  ]);
+  let ocupados = 0;
+  (resReservas.data || []).forEach((r) => {
+    if (normalizarHora(r.start_time) === normalizarHora(time)) ocupados += r.guests || 0;
+  });
+  (resHolds.data || []).forEach((h) => {
+    if (normalizarHora(h.start_time) === normalizarHora(time)) ocupados += h.participants || 0;
+  });
+  return ocupados;
+}
+
 function validarBookingItems(bookingItems) {
   if (!Array.isArray(bookingItems) || bookingItems.length === 0) return { total: null, invalidCategory: null };
   let total = 0;
@@ -345,8 +381,8 @@ async function createReservation(req, res, next) {
         return erro(res, 'NO_AVAILABILITY', 'This time slot is not available for this activity.');
       }
       holdStartTime = slotEscolhido.time;
-      const cabe = await verificarDisponibilidadeSlot(supabaseAdmin, unit.id, dateFrom, slotEscolhido.time, totalParticipantes, Number(slotEscolhido.capacity) || 0, holdExistente?.reservation_id || null);
-      if (!cabe) {
+      const ocupados = await ocupacaoSlotComHolds(unit.id, dateFrom, slotEscolhido.time);
+      if (ocupados + totalParticipantes > (Number(slotEscolhido.capacity) || 0)) {
         return erro(res, 'NO_AVAILABILITY', 'This activity is sold out for the requested date.');
       }
     } else {
