@@ -30,6 +30,10 @@ router.get('/sitemap.xml', async (_req, res) => {
     const urls = [
       { loc: publicBase, priority: '1.0' },
       { loc: `${publicBase}/discover/`, priority: '0.9' },
+      { loc: `${publicBase}/operadores.html`, priority: '0.8' },
+      { loc: `${publicBase}/planos.html`, priority: '0.8' },
+      { loc: `${publicBase}/impacto.html`, priority: '0.6' },
+      { loc: `${publicBase}/sobre.html`, priority: '0.5' },
       ...( ops || []).map(op => ({
         loc: `${base}/book/${op.slug}`,
         lastmod: op.updated_at?.split('T')[0],
