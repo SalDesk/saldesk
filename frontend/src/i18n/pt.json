@@ -139,10 +139,13 @@
     },
     "source": {
       "direct": "Directa",
+      "public": "Pagina publica",
+      "admin": "Manual",
       "booking_com": "Booking.com",
       "airbnb": "Airbnb",
       "viator": "Viator",
       "getyourguide": "GetYourGuide",
+      "conect": "SalDesk Conect",
       "manual": "Manual"
     },
     "checkIn": "Check-in",
