@@ -1542,6 +1542,12 @@
     } catch (_) { /* badge não aparece */ }
   }
 
+  /* ── REFERRAL (programa de indicacao entre operadores) ──
+     ?ref={slug do operador} -- capturado uma vez ao carregar a pagina,
+     enviado tal e qual no payload da candidatura (submitForm). O backend
+     resolve o slug e ignora silenciosamente se nao existir. */
+  const referralRef = new URLSearchParams(window.location.search).get('ref') || null;
+
   /* ── LANG ───────────────────────────────────────────── */
   let currentLang = 'pt';
 
@@ -1712,6 +1718,7 @@
       comentarios:         getVal('comentarios'),
       aceita_termos:       document.getElementById('aceita_termos').checked,
       aceita_comunicacoes: document.getElementById('aceita_comunicacoes').checked,
+      ref:                 referralRef,
     };
 
     try {

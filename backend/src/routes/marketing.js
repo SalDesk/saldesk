@@ -167,4 +167,35 @@ router.get('/stats', async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
+/* Programa de referencia entre operadores -- cada operador tem um link
+   proprio (usa o slug, ja unico) que, quando alguem se candidata a partir
+   dele, grava referred_by_operator_id em operator_leads (submitLead,
+   publicController.js). Devolve o link + as candidaturas ja indicadas por
+   este operador, para ele acompanhar o proprio progresso -- a recompensa
+   em si (ex. 1 mes gratis) continua manual do lado do fundador por agora,
+   sem facturacao automatica montada ainda. */
+router.get('/referrals', async (req, res, next) => {
+  try {
+    const base = 'https://saldesk.cv';
+    const referralLink = `${base}/operadores.html?ref=${req.operator.slug}`;
+
+    const { data: referred, error } = await supabaseAdmin
+      .from('operator_leads')
+      .select('id, nome_negocio, nome, tipo_negocio, status, created_at, converted_at')
+      .eq('referred_by_operator_id', req.operator.id)
+      .order('created_at', { ascending: false });
+    if (error) throw error;
+
+    return res.json({
+      data: {
+        referral_link: referralLink,
+        referred: referred || [],
+        total: (referred || []).length,
+        convertidos: (referred || []).filter(l => l.status === 'convertido').length,
+      },
+      message: 'Indicacoes',
+    });
+  } catch (err) { next(err); }
+});
+
 module.exports = router;

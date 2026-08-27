@@ -486,9 +486,23 @@ async function listLeads(req, res, next) {
     const { data, error } = await q;
     if (error) throw error;
 
+    /* Nome de quem indicou (programa de referencia entre operadores) --
+       so uma lookup em lote dos poucos operators referidos, nao um join
+       SQL (Supabase JS nao suporta bem FK opcional para a mesma tabela
+       sem alias explicito no schema cache). */
+    const referrerIds = [...new Set((data || []).map(l => l.referred_by_operator_id).filter(Boolean))];
+    let referrerNames = {};
+    if (referrerIds.length > 0) {
+      const { data: referrers } = await supabaseAdmin.from('operators').select('id, name, slug').in('id', referrerIds);
+      referrerNames = Object.fromEntries((referrers || []).map(o => [o.id, o]));
+    }
+
     let scored = (data || []).map(lead => {
       const { score, breakdown } = computeLeadScore(lead);
-      return { ...lead, score, score_breakdown: breakdown, computed_status: computeLeadStatus(lead) };
+      return {
+        ...lead, score, score_breakdown: breakdown, computed_status: computeLeadStatus(lead),
+        referred_by: lead.referred_by_operator_id ? (referrerNames[lead.referred_by_operator_id] || null) : null,
+      };
     });
 
     if (search) {

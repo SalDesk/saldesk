@@ -1473,7 +1473,7 @@ async function submitLead(req, res, next) {
       nome_negocio, tipo_negocio, localizacao, anos_operacao, clientes_mes,
       tem_site, url_site, como_gere_reservas, desafios, num_funcionarios, otas, volume_mensal,
       plano_interesse, quando_comecar, como_soube, disponivel_demo, horario_contacto,
-      comentarios, aceita_termos, aceita_comunicacoes,
+      comentarios, aceita_termos, aceita_comunicacoes, ref,
     } = req.body;
 
     if (!nome || !email || !email.includes('@')) {
@@ -1481,6 +1481,22 @@ async function submitLead(req, res, next) {
     }
     if (!aceita_termos) {
       return res.status(400).json({ error: 'Deve aceitar os termos e condições', code: 'TERMS_REQUIRED' });
+    }
+
+    /* Programa de referencia entre operadores -- "ref" e o slug do operador
+       que partilhou o link (saldesk.cv/operadores.html?ref={slug}), nunca
+       o proprio slug de quem se candidata (nao faz sentido um operador
+       "indicar-se a si proprio"). Falha silenciosa se o slug nao existir --
+       nunca bloquear a candidatura por causa de um link de indicacao
+       invalido/copiado errado. */
+    let referredByOperatorId = null;
+    if (ref && typeof ref === 'string') {
+      const { data: referrer } = await supabaseAdmin
+        .from('operators')
+        .select('id')
+        .eq('slug', ref.trim().toLowerCase())
+        .maybeSingle();
+      if (referrer) referredByOperatorId = referrer.id;
     }
 
     /* operator_leads, nao leads -- e a tabela que TODO o painel de pipeline
@@ -1521,6 +1537,7 @@ async function submitLead(req, res, next) {
         aceita_termos:       !!aceita_termos,
         aceita_comunicacoes: !!aceita_comunicacoes,
         status:              'novo',
+        referred_by_operator_id: referredByOperatorId,
       });
 
     if (error) throw error;

@@ -167,6 +167,11 @@ function LeadCard({ lead, onOpen, onDragStart }) {
           <Clock size={11} strokeWidth={1.75} /> {daysInPipeline(lead)}d
         </span>
       </div>
+      {lead.referred_by && (
+        <p className="text-xs font-body text-ocean-700 truncate" title={`Indicado por ${lead.referred_by.name}`}>
+          Indicado por {lead.referred_by.name}
+        </p>
+      )}
     </div>
   );
 }
@@ -582,6 +587,9 @@ export default function AdminLeads() {
                 <DetailRow label="Plano de interesse"   value={selectedLead.plano_interesse} />
                 <DetailRow label="Quando comecar"       value={selectedLead.quando_comecar} />
                 <DetailRow label="Como soube da SalDesk" value={selectedLead.como_soube} />
+                {selectedLead.referred_by && (
+                  <DetailRow label="Indicado por" value={`${selectedLead.referred_by.name} (recompensar ao converter)`} />
+                )}
                 <DetailRow label="Disponivel p/ demo"   value={selectedLead.disponivel_demo ? 'Sim' : 'Nao'} />
                 <DetailRow label="Horario de contacto"  value={selectedLead.horario_contacto} />
                 {selectedLead.comentarios && (
