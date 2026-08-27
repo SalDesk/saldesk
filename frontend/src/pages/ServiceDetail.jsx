@@ -524,7 +524,7 @@ function ActivityModal({ unit, op, slug, lang, onClose, refCode, traveler, initi
   const [tourLang,stl]=useState(initialLanguage||'');
   const [info,si]=useState(()=>({name:traveler?.name||'',email:traveler?.email||'',phone:traveler?.phone||'',country:traveler?.country||'',needs:''})); const [pay,sp]=useState('cash'); const [sub,ssub]=useState(false); const [resId,sr]=useState(null); const [pendingRes,spr]=useState(null); const [err,se]=useState('');
   const [voucherCode,svc]=useState(null);
-  const rawTotal=(adults+kids)*(unit.base_price||0); const total=unit.base_price?fmtPrice(rawTotal,'person',op.currency||'EUR','EUR',lang):null;
+  const rawTotal=(adults+kids)*(unit.base_price||0); const total=unit.base_price?fmtPrice(rawTotal,null,op.currency||'EUR','EUR',lang):null;
   const tourLanguages=Array.isArray(getUnitMeta(unit).languages)?getUnitMeta(unit).languages:[];
   /* Horarios com capacidade real (TourForm's TimeSlotsEditor) -- so activo
      quando a unidade tem meta.time_slots configurado. Sem isso, a reserva
@@ -584,7 +584,7 @@ function RentACarModal({ unit, op, slug, lang, onClose, refCode, traveler }) {
   const isExecutivo=unit.unit_type==='Executivo';
   const chauffeurRate=isExecutivo?Number(getUnitMeta(unit).chauffeur_daily_rate||0):0;
   const days=dys(pu.date,re.date); const chauffeurTotal=driverIncluded&&chauffeurRate>0?days*chauffeurRate:0;
-  const rawTotal=days*(unit.base_price||0)+chauffeurTotal; const total=days>0&&unit.base_price?fmtPrice(rawTotal,'day',op.currency||'EUR','EUR',lang):null;
+  const rawTotal=days*(unit.base_price||0)+chauffeurTotal; const total=days>0&&unit.base_price?fmtPrice(rawTotal,null,op.currency||'EUR','EUR',lang):null;
   const locs=buildLocs(lang, op.islands?.airport_code); const extList=CAR_EXTRAS.filter(e=>ext[e.k]);
   function buildPayload(){ const notes=[`${lang==='en'?'Pickup':'Levantamento'}: ${pu.loc} ${pu.date} ${pu.time}`,`${lang==='en'?'Return':'Devolução'}: ${re.loc||pu.loc} ${re.date} ${re.time}`,extList.length?`Extras: ${extList.map(e=>lang==='en'?e.en:e.pt).join(', ')}`:'',driverIncluded&&chauffeurRate>0?(lang==='en'?'Chauffeur included':'Motorista incluído'):'' ].filter(Boolean).join('. '); return {unit_id:unit.id,customer_name:drv.name,customer_email:drv.email,customer_phone:drv.phone||null,customer_country:drv.country||null,check_in:pu.date,check_out:re.date,guests:1,notes,driver_included:driverIncluded&&chauffeurRate>0,voucher_code:voucherCode||undefined,ref_code:refCode||undefined}; }
   useEffect(()=>{ if(step===3&&pay==='paypal'&&!pendingRes&&!sub){ ssub(true); postReservation(slug,buildPayload()).then(spr).catch(e=>se(e.message)).finally(()=>ssub(false)); } },[step,pay]);
@@ -601,7 +601,7 @@ function RentACarModal({ unit, op, slug, lang, onClose, refCode, traveler }) {
     }catch(e){se(e.message);}finally{ssub(false);}
   }
   function next(){ if(!valid())return; step<3?ss(s=>s+1):submit(); }
-  const sumL=[{label:lang==='en'?'Vehicle':'Viatura',value:unit.name},{label:lang==='en'?'Pickup':'Levantamento',value:`${pu.date} ${pu.time} · ${pu.loc}`},{label:lang==='en'?'Return':'Devolução',value:`${re.date} ${re.time} · ${re.loc||pu.loc}`},{label:lang==='en'?'Duration':'Duração',value:`${days} ${lang==='en'?(days===1?'day':'days'):(days===1?'dia':'dias')}`},...(extList.length?[{label:'Extras',value:extList.map(e=>lang==='en'?e.en:e.pt).join(' · ')}]:[]),...(driverIncluded&&chauffeurTotal>0?[{label:lang==='en'?'Chauffeur':'Motorista',value:fmtPrice(chauffeurTotal,'day',op.currency||'EUR','EUR',lang)}]:[]),...(isExecutivo?[{label:lang==='en'?'Deductible':'Franquia',value:lang==='en'?'Waived':'Sem franquia'}]:[]),...(total?[{label:'Total',value:total,hi:true}]:[])];
+  const sumL=[{label:lang==='en'?'Vehicle':'Viatura',value:unit.name},{label:lang==='en'?'Pickup':'Levantamento',value:`${pu.date} ${pu.time} · ${pu.loc}`},{label:lang==='en'?'Return':'Devolução',value:`${re.date} ${re.time} · ${re.loc||pu.loc}`},{label:lang==='en'?'Duration':'Duração',value:`${days} ${lang==='en'?(days===1?'day':'days'):(days===1?'dia':'dias')}`},...(extList.length?[{label:'Extras',value:extList.map(e=>lang==='en'?e.en:e.pt).join(' · ')}]:[]),...(driverIncluded&&chauffeurTotal>0?[{label:lang==='en'?'Chauffeur':'Motorista',value:fmtPrice(chauffeurTotal,null,op.currency||'EUR','EUR',lang)}]:[]),...(isExecutivo?[{label:lang==='en'?'Deductible':'Franquia',value:lang==='en'?'Waived':'Sem franquia'}]:[]),...(total?[{label:'Total',value:total,hi:true}]:[])];
   return (
     <MS icon={<Car size={18} strokeWidth={1.75}/>} title={lang==='en'?'Book vehicle':'Reservar viatura'} step={step} lang={lang} onClose={onClose} onPrev={()=>ss(s=>s-1)} onNext={next} nextLabel={step<3?(lang==='en'?'Continue':'Continuar'):(lang==='en'?'Confirm booking':'Confirmar reserva')} nextDis={step===1&&(!pu.date||!re.date||!pu.loc)} sub={sub} err={err} ok={!!resId} hideNext={step===3&&pay==='paypal'}>
       {resId?<div className="p-5"><BS resId={resId} lang={lang} type="rentacar" onClose={onClose}/></div>
