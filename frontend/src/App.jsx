@@ -17,6 +17,7 @@ import BookingSuccess from './pages/BookingSuccess';
 import BookingCancel from './pages/BookingCancel';
 import BillingSuccess from './pages/BillingSuccess';
 import BillingCancel from './pages/BillingCancel';
+import DemoEntry from './pages/DemoEntry';
 
 // Lazy — dashboard pages
 const Onboarding      = lazy(() => import('./pages/Onboarding'));
@@ -129,6 +130,7 @@ export default function App() {
       <Suspense fallback={<AppLoader />}>
       <Routes>
         <Route path="/login"    element={<Login />} />
+        <Route path="/demo"     element={<DemoEntry />} />
         <Route path="/register"       element={<Register />} />
         <Route path="/reset-password"  element={<ResetPassword />} />
         <Route path="/impersonate-callback" element={<ImpersonateCallback />} />

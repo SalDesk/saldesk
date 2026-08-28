@@ -12,7 +12,8 @@ async function getDiscoverCatalog({ type } = {}) {
   let q = supabaseAdmin
     .from('operators')
     .select('id, name, slug, operator_type, address, currency, island_id, islands(name, slug)')
-    .eq('onboarding_complete', true);
+    .eq('onboarding_complete', true)
+    .eq('is_demo', false);
 
   if (type && ['hotel', 'activity', 'rentacar', 'restaurant'].includes(type)) {
     q = q.eq('operator_type', type);

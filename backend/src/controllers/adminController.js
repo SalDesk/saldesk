@@ -48,7 +48,7 @@ async function getStats(req, res, next) {
 
     const [opsRes, resRes, leads24hRes, trialsRes, newLeadsRes, allLeadsRes, priceMap] = await Promise.all([
       supabaseAdmin.from('operators')
-        .select('id, name, email, plan, plan_status, operator_type, trial_ends_at, created_at'),
+        .select('id, name, email, plan, plan_status, operator_type, trial_ends_at, created_at, is_demo'),
       supabaseAdmin.from('reservations')
         .select('id, operator_id, total_price, status, created_at'),
       supabaseAdmin.from('operator_leads')
@@ -67,8 +67,11 @@ async function getStats(req, res, next) {
       loadPriceMap(),
     ]);
 
-    const operators = opsRes.data || [];
-    const reservas  = resRes.data || [];
+    /* Operadores de demonstracao nunca contam para as metricas reais (MRR, crescimento,
+       ocupacao) mostradas ao fundador -- sao dados fabricados para visitantes experimentarem. */
+    const operators = (opsRes.data || []).filter(o => !o.is_demo);
+    const demoOperatorIds = new Set((opsRes.data || []).filter(o => o.is_demo).map(o => o.id));
+    const reservas  = (resRes.data || []).filter(r => !demoOperatorIds.has(r.operator_id));
     const allLeads  = allLeadsRes.data || [];
 
     const mrr = operators

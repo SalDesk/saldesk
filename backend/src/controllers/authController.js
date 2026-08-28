@@ -292,4 +292,42 @@ async function forgotPassword(req, res, next) {
   }
 }
 
-module.exports = { register, login, refresh, getMe, logout, changePassword, validateInvite, resetPassword, forgotPassword };
+async function demoLogin(req, res, next) {
+  try {
+    const email = process.env.DEMO_OPERATOR_EMAIL;
+    const password = process.env.DEMO_OPERATOR_PASSWORD;
+    if (!email || !password) {
+      return res.status(503).json({ error: 'Conta de demonstracao nao configurada', code: 'DEMO_UNAVAILABLE' });
+    }
+
+    const authJson = await supabaseTokenRequest('password', { email, password });
+    if (!authJson.access_token || authJson.error) {
+      return res.status(503).json({ error: 'Conta de demonstracao indisponivel', code: 'DEMO_UNAVAILABLE' });
+    }
+
+    const { data: operator } = await supabaseAdmin
+      .from('operators')
+      .select('*')
+      .eq('user_id', authJson.user.id)
+      .eq('is_demo', true)
+      .single();
+
+    if (!operator) {
+      return res.status(503).json({ error: 'Conta de demonstracao mal configurada', code: 'DEMO_UNAVAILABLE' });
+    }
+
+    return res.json({
+      data: {
+        access_token: authJson.access_token,
+        refresh_token: authJson.refresh_token,
+        user: authJson.user,
+        operator,
+      },
+      message: 'Sessao de demonstracao iniciada',
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
+module.exports = { register, login, refresh, getMe, logout, changePassword, validateInvite, resetPassword, forgotPassword, demoLogin };

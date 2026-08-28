@@ -1385,20 +1385,30 @@ async function getSiteStatus(req, res, next) {
 /* ─── Relatório de impacto público (sem auth) ─── */
 async function getImpact(req, res, next) {
   try {
+    /* Operadores de demonstracao (dados fabricados para visitantes experimentarem)
+       nunca podem entrar nestas estatisticas -- partilhadas publicamente, incluindo
+       com o Ministerio do Turismo. */
+    const { data: demoOps } = await supabaseAdmin.from('operators').select('id').eq('is_demo', true);
+    const demoIds = (demoOps || []).map((o) => o.id);
+    const excludeDemo = (query) => (demoIds.length ? query.not('operator_id', 'in', `(${demoIds.join(',')})`) : query);
+
     const { count: operatorsTotal } = await supabaseAdmin
       .from('operators')
       .select('*', { count: 'exact', head: true })
-      .eq('onboarding_complete', true);
+      .eq('onboarding_complete', true)
+      .eq('is_demo', false);
 
     const { data: opTypes } = await supabaseAdmin
       .from('operators')
       .select('operator_type')
-      .eq('onboarding_complete', true);
+      .eq('onboarding_complete', true)
+      .eq('is_demo', false);
 
     const { data: opIslands } = await supabaseAdmin
       .from('operators')
       .select('island_id')
       .eq('onboarding_complete', true)
+      .eq('is_demo', false)
       .not('island_id', 'is', null);
     const islandsCount = new Set((opIslands || []).map((o) => o.island_id)).size || 1;
 
@@ -1407,14 +1417,18 @@ async function getImpact(req, res, next) {
       typeMap[o.operator_type] = (typeMap[o.operator_type] || 0) + 1;
     });
 
-    const { count: reservationsTotal } = await supabaseAdmin
-      .from('reservations')
-      .select('*', { count: 'exact', head: true })
-      .in('status', ['confirmed', 'checked_in', 'checked_out', 'cancelled']);
+    const { count: reservationsTotal } = await excludeDemo(
+      supabaseAdmin
+        .from('reservations')
+        .select('*', { count: 'exact', head: true })
+        .in('status', ['confirmed', 'checked_in', 'checked_out', 'cancelled'])
+    );
 
-    const { count: clientsTotal } = await supabaseAdmin
-      .from('customers')
-      .select('*', { count: 'exact', head: true });
+    const { count: clientsTotal } = await excludeDemo(
+      supabaseAdmin
+        .from('customers')
+        .select('*', { count: 'exact', head: true })
+    );
 
     const sixMonthsAgo = new Date();
     sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
@@ -1424,13 +1438,16 @@ async function getImpact(req, res, next) {
       .from('operators')
       .select('created_at')
       .eq('onboarding_complete', true)
+      .eq('is_demo', false)
       .gte('created_at', cutoff);
 
-    const { data: resMonthly } = await supabaseAdmin
-      .from('reservations')
-      .select('created_at')
-      .gte('created_at', cutoff)
-      .in('status', ['confirmed', 'checked_in', 'checked_out']);
+    const { data: resMonthly } = await excludeDemo(
+      supabaseAdmin
+        .from('reservations')
+        .select('created_at, operator_id')
+        .gte('created_at', cutoff)
+        .in('status', ['confirmed', 'checked_in', 'checked_out'])
+    );
 
     function aggregateByMonth(rows) {
       const map = {};

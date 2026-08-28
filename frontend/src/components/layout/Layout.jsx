@@ -18,6 +18,7 @@ export default function Layout() {
   const sidebarOpen = useUiStore((s) => s.sidebarOpen);
   const setOperator = useAuthStore((s) => s.setOperator);
   const token = useAuthStore((s) => s.token);
+  const isDemo = useAuthStore((s) => s.operator?.is_demo);
   const location = useLocation();
 
   /* O "online" que o fundador ve em Comunicacao (AdminCommunications.jsx)
@@ -84,6 +85,11 @@ export default function Layout() {
 
       {/* Area principal */}
       <div className="flex-1 flex flex-col min-w-0">
+        {isDemo && (
+          <div className="bg-sand-500 text-ocean-900 text-xs font-display font-bold uppercase tracking-wide text-center py-1.5 px-3 shrink-0">
+            Modo demonstração — dados fictícios, alterações não são guardadas
+          </div>
+        )}
         <Topbar />
         <main className="flex-1 overflow-auto p-5 pb-20 md:p-8">
           <Outlet />

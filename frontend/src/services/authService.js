@@ -5,6 +5,11 @@ export async function login(email, password) {
   return data.data;
 }
 
+export async function demoLogin() {
+  const { data } = await api.post('/auth/demo-login');
+  return data.data;
+}
+
 export async function register(name, email, password, inviteCode) {
   const { data } = await api.post('/auth/register', { name, email, password, invite_code: inviteCode });
   return data.data;

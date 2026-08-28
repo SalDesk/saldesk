@@ -48,6 +48,14 @@ async function authMiddleware(req, res, next) {
 
   const operator = await supabaseGet('operators', { user_id: supaUser.id });
   req.operator = operator || null;
+
+  if (req.operator?.is_demo && req.method !== 'GET' && req.method !== 'HEAD' && req.method !== 'OPTIONS') {
+    return res.status(403).json({
+      error: 'Esta e uma conta de demonstracao — apenas leitura, sem alteracoes permitidas.',
+      code: 'DEMO_READ_ONLY',
+    });
+  }
+
   req.staff = null;
   if (!req.operator && supaUser.user_metadata?.staff_id) {
     const staff = await supabaseGet('staff', { id: supaUser.user_metadata.staff_id, status: 'active' });

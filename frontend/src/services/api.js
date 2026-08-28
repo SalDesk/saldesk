@@ -1,5 +1,6 @@
 import axios from 'axios';
 import useAuthStore from '../store/authStore';
+import useToastStore from '../store/toastStore';
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || 'http://localhost:3001/api/v1',
@@ -37,6 +38,14 @@ api.interceptors.response.use(
   async (err) => {
     const originalRequest = err.config;
     const status = err.response?.status;
+
+    if (status === 403 && err.response?.data?.code === 'DEMO_READ_ONLY') {
+      useToastStore.getState().addToast({
+        type: 'info',
+        message: 'Conta de demonstração — apenas leitura, esta alteração não foi guardada.',
+      });
+      return Promise.reject(err);
+    }
 
     if (status !== 401 || !originalRequest || isAuthEndpoint(originalRequest.url)) {
       return Promise.reject(err);
