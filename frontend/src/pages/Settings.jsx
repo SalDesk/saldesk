@@ -1,17 +1,18 @@
 import { useState, useEffect, useRef } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Copy, Check, Download, CreditCard, Globe, User, Bell,
   Shield, ExternalLink,
   Eye, EyeOff, CheckCircle2, XCircle, Upload,
   Camera, ChevronUp, ChevronDown, X, Plus, ArrowUpRight,
-  Lock, Wallet,
+  Lock, Wallet, Compass,
 } from 'lucide-react';
 import api from '../services/api';
 import { updateOperator, changePassword } from '../services/authService';
 import { createSubscription, cancelSubscription, getBillingHistory } from '../services/billingService';
 import PasswordStrength, { getPasswordStrength } from '../components/auth/PasswordStrength';
 import useAuthStore from '../store/authStore';
+import useUiStore from '../store/uiStore';
 import usePlan, { PLAN_PRICES } from '../hooks/usePlan';
 import PageHeader from '../components/layout/PageHeader';
 import Card from '../components/ui/Card';
@@ -54,6 +55,8 @@ const LANGS      = ['pt', 'en', 'de', 'nl', 'fr', 'es'];
 
 function ContaTab({ operator, onSaved }) {
   const { setOperator } = useAuthStore();
+  const startTour = useUiStore((s) => s.startTour);
+  const navigate  = useNavigate();
   const [form, setForm] = useState({
     name:      operator?.name      || '',
     email:     operator?.email     || '',
@@ -114,6 +117,23 @@ function ContaTab({ operator, onSaved }) {
         <Button type="submit" loading={saving}>Guardar alteracoes</Button>
         <SaveBanner saved={saved} />
       </div>
+
+      <Card header={<h3 className="font-display font-semibold text-sm text-n-700">Ajuda</h3>}>
+        <div className="flex items-center justify-between gap-4">
+          <div>
+            <p className="text-sm font-body font-medium text-n-800">Tour de boas-vindas</p>
+            <p className="text-xs font-body text-n-500 mt-0.5">Revê rapidamente onde encontrar cada secção principal.</p>
+          </div>
+          <Button
+            type="button"
+            variant="secondary"
+            icon={Compass}
+            onClick={() => { startTour(); navigate('/'); }}
+          >
+            Rever tour
+          </Button>
+        </div>
+      </Card>
     </form>
   );
 }

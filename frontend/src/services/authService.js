@@ -58,3 +58,8 @@ export async function getOnboardingStatus() {
   const { data } = await api.get('/onboarding/status');
   return data.data;
 }
+
+export async function markTourSeen() {
+  const { data } = await api.put('/onboarding/tour-seen');
+  return data.data;
+}

@@ -151,6 +151,7 @@ export default function Topbar() {
         <div className="relative" ref={panelRef}>
           <button
             onClick={handleBellClick}
+            data-tour="topbar-bell"
             className="relative p-2 rounded-md text-n-500 hover:text-ocean-700 hover:bg-ocean-50 transition-colors"
             aria-label="Notificacoes"
           >

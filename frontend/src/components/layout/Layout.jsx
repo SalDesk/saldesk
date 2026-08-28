@@ -6,6 +6,7 @@ import Topbar from './Topbar';
 import BottomNav from './BottomNav';
 import MoreDrawer from './MoreDrawer';
 import { ToastContainer } from '../ui/Toast';
+import WelcomeTour from '../tour/WelcomeTour';
 import useUiStore from '../../store/uiStore';
 import useAuthStore from '../../store/authStore';
 import { getMe } from '../../services/authService';
@@ -100,6 +101,7 @@ export default function Layout() {
       <MoreDrawer open={moreDrawerOpen} onClose={() => setMoreDrawerOpen(false)} />
 
       <ToastContainer />
+      <WelcomeTour />
     </div>
   );
 }

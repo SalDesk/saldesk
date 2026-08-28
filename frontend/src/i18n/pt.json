@@ -278,6 +278,32 @@
       "resShort": "res."
     }
   },
+  "tour": {
+    "welcomeTitle": "Bem-vindo(a) a SalDesk!",
+    "welcomeBody": "Vamos mostrar-te rapidamente onde encontrar tudo. Leva menos de um minuto.",
+    "dashTitle": "O teu Dashboard",
+    "dashBody": "Aqui ves um resumo do dia: reservas, receita e o que precisa da tua atencao.",
+    "unitsTitle": "O que vendes",
+    "unitsBody": "Aqui geres {{unit}}.",
+    "unitLabelHotel": "os teus quartos",
+    "unitLabelActivity": "os teus tours e actividades",
+    "unitLabelRentacar": "a tua frota",
+    "unitLabelRestaurant": "as tuas mesas",
+    "resTitle": "Reservas",
+    "resBody": "Todas as reservas num so sitio — directas ou vindas de canais externos.",
+    "financeTitle": "Financeiro",
+    "financeBody": "Acompanha a tua receita, exporta relatorios e ve para onde vai o dinheiro.",
+    "siteTitle": "A tua pagina publica",
+    "siteBody": "Ja tens uma pagina de reservas pronta a partilhar com clientes — sem comissoes.",
+    "bellTitle": "Notificacoes",
+    "bellBody": "Aqui aparecem novas reservas, mensagens e avaliacoes em tempo real.",
+    "doneTitle": "Pronto a comecar!",
+    "doneBody": "Se tiveres duvidas, fala connosco a qualquer momento pelo WhatsApp.",
+    "next": "Seguinte",
+    "back": "Voltar",
+    "finish": "Concluir",
+    "skip": "Saltar tour"
+  },
   "reservations": {
     "title": "Reservas",
     "new": "Nova Reserva",

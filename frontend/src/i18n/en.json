@@ -278,6 +278,32 @@
       "resShort": "res."
     }
   },
+  "tour": {
+    "welcomeTitle": "Welcome to SalDesk!",
+    "welcomeBody": "Let's quickly show you where to find everything. It takes less than a minute.",
+    "dashTitle": "Your Dashboard",
+    "dashBody": "Here you see a summary of the day: bookings, revenue and what needs your attention.",
+    "unitsTitle": "What you sell",
+    "unitsBody": "Here you manage {{unit}}.",
+    "unitLabelHotel": "your rooms",
+    "unitLabelActivity": "your tours and activities",
+    "unitLabelRentacar": "your fleet",
+    "unitLabelRestaurant": "your tables",
+    "resTitle": "Reservations",
+    "resBody": "All reservations in one place — direct or from external channels.",
+    "financeTitle": "Financial",
+    "financeBody": "Track your revenue, export reports and see where the money goes.",
+    "siteTitle": "Your public page",
+    "siteBody": "You already have a booking page ready to share with customers — no commissions.",
+    "bellTitle": "Notifications",
+    "bellBody": "New bookings, messages and reviews appear here in real time.",
+    "doneTitle": "Ready to get started!",
+    "doneBody": "If you have questions, reach us anytime on WhatsApp.",
+    "next": "Next",
+    "back": "Back",
+    "finish": "Finish",
+    "skip": "Skip tour"
+  },
   "reservations": {
     "title": "Reservations",
     "new": "New Reservation",

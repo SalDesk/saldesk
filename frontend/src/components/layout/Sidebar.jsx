@@ -128,6 +128,17 @@ export const PLAN_BADGE = {
   pro:      { label: 'Pro',      cls: 'bg-sand-500 text-white'   },
 };
 
+/* Ancoras para o WelcomeTour (ver components/tour/WelcomeTour.jsx) --
+   so os 4 routes partilhados por TODOS os tipos de operador entram aqui,
+   nunca algo especifico de um so tipo. */
+const TOUR_ANCHOR = {
+  '/':           'nav-dashboard',
+  '/unidades':   'nav-unidades',
+  '/reservas':   'nav-reservas',
+  '/financeiro': 'nav-financeiro',
+  '/definicoes': 'nav-definicoes',
+};
+
 export default function Sidebar({ onClose }) {
   const { operator, logout } = useAuthStore();
   const navigate = useNavigate();
@@ -202,6 +213,7 @@ export default function Sidebar({ onClose }) {
               key={`${to}-${label}`}
               to={to}
               end={end}
+              data-tour={TOUR_ANCHOR[to]}
               className={({ isActive }) =>
                 `flex items-center gap-3 pl-3 pr-3 py-2.5 rounded-r-md border-l-[3px] text-sm font-body font-medium transition-colors ${
                   isActive
@@ -233,6 +245,7 @@ export default function Sidebar({ onClose }) {
             href={`https://app.saldesk.cv/book/${slug}`}
             target="_blank"
             rel="noreferrer"
+            data-tour="nav-site"
             className="flex items-center gap-3 pl-3 pr-3 py-2.5 rounded-r-md border-l-[3px] border-transparent text-sm font-body font-medium text-sand-300 hover:bg-ocean-800/60 hover:border-sand-500/40 transition-colors"
           >
             <ExternalLink size={17} strokeWidth={1.75} className="shrink-0" />

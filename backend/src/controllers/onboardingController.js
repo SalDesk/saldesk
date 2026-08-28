@@ -132,4 +132,24 @@ async function getStatus(req, res) {
   });
 }
 
-module.exports = { createOperator, updateOperator, getStatus };
+async function markTourSeen(req, res, next) {
+  try {
+    if (!req.operator) {
+      return res.status(404).json({ error: 'Perfil de operador nao encontrado', code: 'NOT_FOUND' });
+    }
+    /* Sempre now() no servidor -- nunca aceitar um timestamp vindo do
+       cliente para este tipo de flag "vista/nao vista". */
+    const { data, error } = await supabaseAdmin
+      .from('operators')
+      .update({ tour_completed_at: new Date().toISOString() })
+      .eq('id', req.operator.id)
+      .select()
+      .single();
+    if (error) throw error;
+    return res.json({ data, message: 'Tour marcado como concluido' });
+  } catch (err) {
+    next(err);
+  }
+}
+
+module.exports = { createOperator, updateOperator, getStatus, markTourSeen };
