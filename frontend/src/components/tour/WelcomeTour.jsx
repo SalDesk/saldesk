@@ -222,10 +222,23 @@ export default function WelcomeTour() {
 
 /* Decide o lado do cartao consoante a ancora -- itens da sidebar (esquerda)
    abrem o cartao a direita; o sino do topbar (direita) abre por baixo. */
+/* Altura maxima estimada do cartao (titulo + 2-3 linhas de texto + rodape
+   de botoes) -- usada so para nunca deixar o cartao sair do ecra por
+   baixo quando a ancora fica perto do fundo (ex: "Ver o meu site", ultimo
+   item da sidebar, em janelas mais baixas). */
+const CARD_MAX_HEIGHT = 210;
+
 function cardPosition(rect, anchor) {
   if (!rect) return { top: '50%', left: '50%', transform: 'translate(-50%, -50%)' };
+  const maxTop = Math.max(16, window.innerHeight - CARD_MAX_HEIGHT - 16);
   if (anchor === 'topbar-bell') {
-    return { top: rect.top + rect.height + 16, right: Math.max(16, window.innerWidth - rect.left - rect.width) };
+    return {
+      top: Math.min(rect.top + rect.height + 16, maxTop),
+      right: Math.max(16, window.innerWidth - rect.left - rect.width),
+    };
   }
-  return { top: Math.max(16, rect.top - 8), left: rect.left + rect.width + 16 };
+  return {
+    top: Math.min(Math.max(16, rect.top - 8), maxTop),
+    left: rect.left + rect.width + 16,
+  };
 }
