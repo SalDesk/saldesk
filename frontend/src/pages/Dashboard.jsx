@@ -15,6 +15,7 @@ import { getWeatherForecast, weatherInfo, isBadWeather } from '../services/weath
 import api from '../services/api';
 import useAuthStore from '../store/authStore';
 import { useT } from '../i18n';
+import useUiStore from '../store/uiStore';
 import PageHeader from '../components/layout/PageHeader';
 import KpiCard from '../components/financial/KpiCard';
 import Badge from '../components/ui/Badge';
@@ -1245,10 +1246,12 @@ function weekDays() {
   });
 }
 
-function formatDayShort(dateStr) {
+const DATE_LOCALE = { pt: 'pt-PT', en: 'en-GB', de: 'de-DE', nl: 'nl-NL' };
+
+function formatDayShort(dateStr, lang) {
   const d = new Date(dateStr + 'T00:00:00Z');
   return {
-    weekday: ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sab'][d.getUTCDay()],
+    weekday: d.toLocaleDateString(DATE_LOCALE[lang] || 'pt-PT', { weekday: 'short', timeZone: 'UTC' }).replace('.', '').toUpperCase(),
     day: d.getUTCDate(),
   };
 }
@@ -1260,6 +1263,7 @@ function parseTourMeta(description) {
 
 function ActivityDashboard() {
   const t        = useT();
+  const lang     = useUiStore((s) => s.lang);
   const navigate = useNavigate();
   const periodo  = mesAtual();
   const next7    = useMemo(() => weekDays(), []);
@@ -1387,7 +1391,7 @@ function ActivityDashboard() {
               const toursOnDay = weekRes.filter(r => r.check_in === wx.date && ['confirmed', 'pending'].includes(r.status));
               return (
                 <p key={wx.date} className="text-xs font-body text-red-600">
-                  {new Date(wx.date + 'T00:00:00Z').toLocaleDateString('pt-PT', { weekday: 'short', day: '2-digit', month: 'short', timeZone: 'UTC' })}
+                  {new Date(wx.date + 'T00:00:00Z').toLocaleDateString(DATE_LOCALE[lang] || 'pt-PT', { weekday: 'short', day: '2-digit', month: 'short', timeZone: 'UTC' })}
                   {' — '}{info.label}{wx.precipitation > 0 ? ` (${wx.precipitation}mm)` : ''}
                   {' · '}{t('dashboard.activity.toursScheduled', { n: toursOnDay.length })}
                 </p>
@@ -1556,7 +1560,7 @@ function ActivityDashboard() {
         </div>
         <div className="grid grid-cols-7 gap-2">
           {next7.map(dateStr => {
-            const { weekday, day } = formatDayShort(dateStr);
+            const { weekday, day } = formatDayShort(dateStr, lang);
             const count   = weekCountMap[dateStr] || 0;
             const isToday = dateStr === TODAY;
             return (
