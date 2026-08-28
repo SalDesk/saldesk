@@ -5,7 +5,6 @@ const express = require('express');
 const cors    = require('cors');
 const helmet  = require('helmet');
 const cookieParser = require('cookie-parser');
-const { authLimiter } = require('./src/middleware/rateLimiters');
 
 const authRoutes         = require('./src/routes/auth');
 const travelerAuthRoutes = require('./src/routes/travelerAuth');
@@ -94,7 +93,7 @@ app.get('/api/health', (_req, res) => {
 app.use(blockedIpMiddleware);
 
 /* Rotas API v1 */
-app.use('/api/v1/auth',          authLimiter,  authRoutes);
+app.use('/api/v1/auth',          authRoutes);
 app.use('/api/v1/traveler-auth', travelerAuthRoutes);
 app.use('/api/v1/traveler',      travelerRoutes);
 app.use('/api/v1/onboarding',    onboardingRoutes);
