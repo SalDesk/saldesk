@@ -31,14 +31,14 @@ function mesAtual() {
 /* ─── Shared helpers ─────────────────────────────────────────── */
 
 const CELL = {
-  available:   { bg: 'bg-[#ECFDF5]', text: 'text-[#1A7A4A]',  dot: 'bg-[#1A7A4A]',  label: 'Disponivel' },
-  occupied:    { bg: 'bg-ocean-50',  text: 'text-ocean-700',   dot: 'bg-ocean-500',   label: 'Ocupado'    },
-  checkin:     { bg: 'bg-[#FFFBEB]', text: 'text-[#92400E]',   dot: 'bg-[#F59E0B]',   label: 'Check-in'   },
-  checkout:    { bg: 'bg-[#FEF3C7]', text: 'text-[#78350F]',   dot: 'bg-[#D97706]',   label: 'Check-out'  },
-  cleaning:    { bg: 'bg-orange-50', text: 'text-orange-700',  dot: 'bg-orange-400',  label: 'Limpeza'    },
-  maintenance: { bg: 'bg-[#FEF2F2]', text: 'text-error',       dot: 'bg-error',       label: 'Manutencao' },
-  breakdown:   { bg: 'bg-red-100',   text: 'text-red-700',     dot: 'bg-red-600',     label: 'Avaria'     },
-  inactive:    { bg: 'bg-n-50',      text: 'text-n-400',       dot: 'bg-n-300',       label: 'Inactivo'   },
+  available:   { bg: 'bg-[#ECFDF5]', text: 'text-[#1A7A4A]',  dot: 'bg-[#1A7A4A]' },
+  occupied:    { bg: 'bg-ocean-50',  text: 'text-ocean-700',   dot: 'bg-ocean-500' },
+  checkin:     { bg: 'bg-[#FFFBEB]', text: 'text-[#92400E]',   dot: 'bg-[#F59E0B]' },
+  checkout:    { bg: 'bg-[#FEF3C7]', text: 'text-[#78350F]',   dot: 'bg-[#D97706]' },
+  cleaning:    { bg: 'bg-orange-50', text: 'text-orange-700',  dot: 'bg-orange-400' },
+  maintenance: { bg: 'bg-[#FEF2F2]', text: 'text-error',       dot: 'bg-error' },
+  breakdown:   { bg: 'bg-red-100',   text: 'text-red-700',     dot: 'bg-red-600' },
+  inactive:    { bg: 'bg-n-50',      text: 'text-n-400',       dot: 'bg-n-300' },
 };
 
 function unitStatus(unit) {
@@ -54,25 +54,27 @@ function parseVehicleMeta(unit) {
 }
 
 function StatusCell({ name, status }) {
+  const t = useT();
   const s = CELL[status] || CELL.available;
   return (
     <div className={`rounded-sm border border-n-100 px-2 py-2 flex flex-col gap-0.5 ${s.bg}`}>
       <span className={`text-xs font-display font-semibold truncate leading-snug ${s.text}`}>{name}</span>
       <div className="flex items-center gap-1 mt-0.5">
         <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${s.dot}`} />
-        <span className={`text-[10px] font-mono uppercase tracking-wide ${s.text}`}>{s.label}</span>
+        <span className={`text-[10px] font-mono uppercase tracking-wide ${s.text}`}>{t(`dashboard.map.${status}`)}</span>
       </div>
     </div>
   );
 }
 
 function MapLegend({ keys }) {
+  const t = useT();
   return (
     <div className="flex flex-wrap gap-4 mt-4 pt-3 border-t border-n-100">
       {keys.map(k => (
         <div key={k} className="flex items-center gap-1.5">
           <span className={`w-2 h-2 rounded-full shrink-0 ${CELL[k].dot}`} />
-          <span className="text-xs font-body text-n-500">{CELL[k].label}</span>
+          <span className="text-xs font-body text-n-500">{t(`dashboard.map.${k}`)}</span>
         </div>
       ))}
     </div>
@@ -82,6 +84,7 @@ function MapLegend({ keys }) {
 /* ─── Type-specific map components ──────────────────────────── */
 
 function HotelMap({ units, todayRes, onSelect }) {
+  const t = useT();
   const statusMap = useMemo(() => {
     const m = {};
     todayRes.forEach(r => {
@@ -93,7 +96,7 @@ function HotelMap({ units, todayRes, onSelect }) {
   }, [todayRes]);
 
   if (!units.length)
-    return <p className="text-sm font-body text-n-400 py-4">Sem unidades registadas.</p>;
+    return <p className="text-sm font-body text-n-400 py-4">{t('dashboard.hotel.noRoomsRegistered')}</p>;
 
   return (
     <>
@@ -121,6 +124,7 @@ function HotelMap({ units, todayRes, onSelect }) {
 }
 
 function FleetGrid({ units, todayRes }) {
+  const t = useT();
   const occupiedIds = useMemo(() => {
     const s = new Set();
     todayRes.filter(r => ['confirmed', 'checked_in'].includes(r.status)).forEach(r => s.add(r.unit_id));
@@ -128,7 +132,7 @@ function FleetGrid({ units, todayRes }) {
   }, [todayRes]);
 
   if (!units.length)
-    return <p className="text-sm font-body text-n-400 py-4">Sem veiculos registados.</p>;
+    return <p className="text-sm font-body text-n-400 py-4">{t('dashboard.rentacar.noVehiclesRegistered')}</p>;
   return (
     <>
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
@@ -143,7 +147,7 @@ function FleetGrid({ units, todayRes }) {
               </div>
               <p className={`text-sm font-display font-semibold truncate ${s.text}`}>{u.name}</p>
               <p className="text-[10px] font-body text-n-500 truncate mt-0.5">{u.unit_type}</p>
-              <p className={`text-[10px] font-mono uppercase tracking-wide mt-1 ${s.text}`}>{s.label}</p>
+              <p className={`text-[10px] font-mono uppercase tracking-wide mt-1 ${s.text}`}>{t(`dashboard.map.${st}`)}</p>
             </div>
           );
         })}
@@ -154,6 +158,7 @@ function FleetGrid({ units, todayRes }) {
 }
 
 function TableCell({ unit, status }) {
+  const t    = useT();
   const s    = CELL[status] || CELL.available;
   const meta = parseVehicleMeta(unit);
   const num  = meta.number ? `M${meta.number}` : unit.name;
@@ -161,19 +166,20 @@ function TableCell({ unit, status }) {
   return (
     <div className={`rounded-sm border border-n-100 px-2 py-2.5 flex flex-col gap-0.5 ${s.bg}`}>
       <span className={`text-sm font-display font-bold leading-snug ${s.text}`}>{num}</span>
-      {cap ? <span className="text-[10px] font-body text-n-400">{cap} pax</span> : null}
+      {cap ? <span className="text-[10px] font-body text-n-400">{cap} {t('dashboard.common.pax')}</span> : null}
       <div className="flex items-center gap-1 mt-0.5">
         <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${s.dot}`} />
-        <span className={`text-[10px] font-mono uppercase tracking-wide ${s.text}`}>{s.label}</span>
+        <span className={`text-[10px] font-mono uppercase tracking-wide ${s.text}`}>{t(`dashboard.map.${status}`)}</span>
       </div>
     </div>
   );
 }
 
-const ZONE_LABELS = { interior: 'Interior', esplanada: 'Esplanada', terraco: 'Terraco', vip: 'VIP', privado: 'Privado' };
-const ZONE_ORDER  = ['interior', 'esplanada', 'terraco', 'vip', 'privado'];
+const ZONE_KEYS  = { interior: 'interior', esplanada: 'esplanada', terraco: 'terraco', vip: 'vip', privado: 'privado' };
+const ZONE_ORDER = ['interior', 'esplanada', 'terraco', 'vip', 'privado'];
 
 function TableMap({ units, todayRes, onSelect }) {
+  const t = useT();
   const statusMap = useMemo(() => {
     const m = {};
     todayRes.forEach(r => {
@@ -194,7 +200,7 @@ function TableMap({ units, todayRes, onSelect }) {
   }, [units]);
 
   if (!units.length)
-    return <p className="text-sm font-body text-n-400 py-4">Sem mesas registadas.</p>;
+    return <p className="text-sm font-body text-n-400 py-4">{t('dashboard.restaurant.noTablesRegistered')}</p>;
 
   const zoneKeys = ZONE_ORDER.filter(z => zones[z]).concat(Object.keys(zones).filter(z => !ZONE_ORDER.includes(z)));
 
@@ -203,7 +209,7 @@ function TableMap({ units, todayRes, onSelect }) {
       {zoneKeys.map(zone => (
         <div key={zone} className="mb-5 last:mb-0">
           <p className="text-[10px] font-mono font-semibold text-n-500 uppercase tracking-widest mb-2">
-            {ZONE_LABELS[zone] || zone}
+            {ZONE_KEYS[zone] ? t(`dashboard.zones.${zone}`) : zone}
           </p>
           <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-2">
             {zones[zone].map(u => {
@@ -232,12 +238,13 @@ const STATUS_BADGE_MAP_H = {
   pending: 'pending', confirmed: 'confirmed',
   checked_in: 'info', checked_out: 'default', cancelled: 'cancelled',
 };
-const STATUS_PT_H = {
-  pending: 'Pendente', confirmed: 'Confirmado',
-  checked_in: 'Activo', checked_out: 'Concluido', cancelled: 'Cancelado',
+const STATUS_KEY_H = {
+  pending: 'pending', confirmed: 'confirmed',
+  checked_in: 'active', checked_out: 'completed', cancelled: 'cancelled',
 };
 
 function HotelDashboard() {
+  const t        = useT();
   const navigate = useNavigate();
   const periodo  = mesAtual();
 
@@ -313,7 +320,7 @@ function HotelDashboard() {
             <div className="flex items-start gap-3 px-4 py-3 bg-[#FEF2F2] border border-[#FCA5A5] rounded-md">
               <Wrench size={15} strokeWidth={1.75} className="text-error shrink-0 mt-0.5" />
               <p className="text-sm font-body text-error flex-1">
-                <span className="font-semibold">{alertas.manutencao.length} quarto(s) em manutencao:</span>{' '}
+                <span className="font-semibold">{t('dashboard.hotel.maintenanceAlert', { n: alertas.manutencao.length })}</span>{' '}
                 {alertas.manutencao.map(u => u.name).join(', ')}
               </p>
             </div>
@@ -322,13 +329,13 @@ function HotelDashboard() {
             <div className="flex items-center gap-3 px-4 py-3 bg-[#FFF7ED] border border-[#FDBA74] rounded-md">
               <AlertTriangle size={15} strokeWidth={1.75} className="text-[#B45309] shrink-0" />
               <p className="text-sm font-body text-[#B45309] flex-1">
-                <span className="font-semibold">{alertas.semConfirmacao.length} check-in(s) hoje sem confirmacao</span>
+                <span className="font-semibold">{t('dashboard.hotel.noConfirmationAlert', { n: alertas.semConfirmacao.length })}</span>
               </p>
               <button
                 onClick={() => navigate('/reservas')}
                 className="text-xs font-semibold text-[#B45309] underline whitespace-nowrap shrink-0"
               >
-                Ver reservas
+                {t('dashboard.common.viewReservations')}
               </button>
             </div>
           )}
@@ -336,13 +343,13 @@ function HotelDashboard() {
             <div className="flex items-center gap-3 px-4 py-3 bg-orange-50 border border-orange-200 rounded-md">
               <Sparkles size={15} strokeWidth={1.75} className="text-orange-600 shrink-0" />
               <p className="text-sm font-body text-orange-700 flex-1">
-                <span className="font-semibold">{alertas.limpeza} quarto(s) com limpeza em curso</span>
+                <span className="font-semibold">{t('dashboard.hotel.cleaningAlert', { n: alertas.limpeza })}</span>
               </p>
               <button
                 onClick={() => navigate('/housekeeping')}
                 className="text-xs font-semibold text-orange-700 underline whitespace-nowrap shrink-0"
               >
-                Housekeeping
+                {t('dashboard.hotel.housekeeping')}
               </button>
             </div>
           )}
@@ -351,11 +358,11 @@ function HotelDashboard() {
 
       {/* KPIs */}
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
-        <KpiCard label="Ocupacao hoje"      value={kpis.ocupacao}  format="percent" icon={BarChart2}  />
-        <KpiCard label="Receita mes"        value={kpis.receita}   format="euro"    icon={Euro}       />
-        <KpiCard label="Check-ins hoje"     value={kpis.checkins}  icon={MoveRight}                   />
-        <KpiCard label="Check-outs hoje"    value={kpis.checkouts} icon={MoveLeft}                    />
-        <KpiCard label="Reservas pendentes" value={kpis.pendentes} icon={Clock}                       />
+        <KpiCard label={t('dashboard.hotel.occupancyToday')}      value={kpis.ocupacao}  format="percent" icon={BarChart2}  />
+        <KpiCard label={t('dashboard.hotel.revenueMonth')}        value={kpis.receita}   format="euro"    icon={Euro}       />
+        <KpiCard label={t('dashboard.hotel.checkinsToday')}       value={kpis.checkins}  icon={MoveRight}                   />
+        <KpiCard label={t('dashboard.hotel.checkoutsToday')}      value={kpis.checkouts} icon={MoveLeft}                    />
+        <KpiCard label={t('dashboard.hotel.pendingReservations')} value={kpis.pendentes} icon={Clock}                       />
       </div>
 
       {/* Mapa de quartos */}
@@ -363,14 +370,14 @@ function HotelDashboard() {
         <div className="flex items-center gap-2 mb-4">
           <BedDouble size={15} strokeWidth={1.75} className="text-n-500" />
           <h2 className="font-display font-semibold text-sm text-n-700 uppercase tracking-wide">
-            Mapa de Quartos — Hoje
+            {t('dashboard.hotel.roomMap')}
           </h2>
           <button
             onClick={() => navigate('/housekeeping')}
             className="ml-auto text-xs font-body text-ocean-700 hover:underline flex items-center gap-1"
           >
             <Sparkles size={11} strokeWidth={1.75} />
-            Housekeeping
+            {t('dashboard.hotel.housekeeping')}
           </button>
         </div>
         <HotelMap units={units} todayRes={todayRes} onSelect={setSelected} />
@@ -381,11 +388,11 @@ function HotelDashboard() {
         <div className="bg-white rounded-lg border border-n-200 shadow-sm">
           <div className="px-5 py-4 border-b border-n-100 flex items-center gap-2">
             <MoveRight size={14} strokeWidth={1.75} className="text-[#1A7A4A]" />
-            <h2 className="font-display font-semibold text-sm text-n-700">Check-ins hoje</h2>
+            <h2 className="font-display font-semibold text-sm text-n-700">{t('dashboard.hotel.checkinsToday')}</h2>
             <span className="ml-auto text-xs font-body text-n-400">{checkinsHoje.length}</span>
           </div>
           {checkinsHoje.length === 0 ? (
-            <p className="px-5 py-6 text-center text-xs font-body text-n-400">Nenhum check-in agendado para hoje</p>
+            <p className="px-5 py-6 text-center text-xs font-body text-n-400">{t('dashboard.hotel.noCheckinToday')}</p>
           ) : (
             <div className="divide-y divide-n-100">
               {checkinsHoje.map(r => (
@@ -393,11 +400,11 @@ function HotelDashboard() {
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-display font-semibold text-n-900 truncate">{r.customer_name || '—'}</p>
                     <p className="text-xs font-body text-n-400">
-                      {units.find(u => u.id === r.unit_id)?.name || '—'} · {r.guests || 1} hospede(s)
+                      {units.find(u => u.id === r.unit_id)?.name || '—'} · {r.guests || 1} {t('dashboard.common.guestsSuffix')}
                     </p>
                   </div>
                   <Badge variant={r.status === 'confirmed' ? 'confirmed' : 'pending'}>
-                    {r.status === 'confirmed' ? 'Confirmado' : 'Pendente'}
+                    {r.status === 'confirmed' ? t('dashboard.status.confirmed') : t('dashboard.status.pending')}
                   </Badge>
                 </div>
               ))}
@@ -408,11 +415,11 @@ function HotelDashboard() {
         <div className="bg-white rounded-lg border border-n-200 shadow-sm">
           <div className="px-5 py-4 border-b border-n-100 flex items-center gap-2">
             <MoveLeft size={14} strokeWidth={1.75} className="text-n-500" />
-            <h2 className="font-display font-semibold text-sm text-n-700">Check-outs hoje</h2>
+            <h2 className="font-display font-semibold text-sm text-n-700">{t('dashboard.hotel.checkoutsToday')}</h2>
             <span className="ml-auto text-xs font-body text-n-400">{checkoutsHoje.length}</span>
           </div>
           {checkoutsHoje.length === 0 ? (
-            <p className="px-5 py-6 text-center text-xs font-body text-n-400">Nenhum check-out agendado para hoje</p>
+            <p className="px-5 py-6 text-center text-xs font-body text-n-400">{t('dashboard.hotel.noCheckoutToday')}</p>
           ) : (
             <div className="divide-y divide-n-100">
               {checkoutsHoje.map(r => (
@@ -420,10 +427,10 @@ function HotelDashboard() {
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-display font-semibold text-n-900 truncate">{r.customer_name || '—'}</p>
                     <p className="text-xs font-body text-n-400">
-                      {units.find(u => u.id === r.unit_id)?.name || '—'} · {r.guests || 1} hospede(s)
+                      {units.find(u => u.id === r.unit_id)?.name || '—'} · {r.guests || 1} {t('dashboard.common.guestsSuffix')}
                     </p>
                   </div>
-                  <Badge variant="info">Check-out</Badge>
+                  <Badge variant="info">{t('dashboard.map.checkout')}</Badge>
                 </div>
               ))}
             </div>
@@ -443,7 +450,7 @@ function HotelDashboard() {
                 <h3 className="font-display font-bold text-base text-n-900">{selected.name}</h3>
                 <p className="text-xs font-body text-n-500 mt-0.5">
                   {selected.unit_type || '—'}
-                  {(() => { try { const m = JSON.parse(selected.description || '{}'); return m.floor ? ` · Andar ${m.floor}` : ''; } catch { return ''; } })()}
+                  {(() => { try { const m = JSON.parse(selected.description || '{}'); return m.floor ? ` · ${t('dashboard.hotel.floor', { n: m.floor })}` : ''; } catch { return ''; } })()}
                 </p>
               </div>
               <button onClick={() => setSelected(null)} className="p-1 text-n-400 hover:text-n-700 rounded">
@@ -455,17 +462,17 @@ function HotelDashboard() {
               <div className="bg-n-50 rounded-md p-3 mb-4 space-y-1">
                 <p className="text-sm font-display font-semibold text-n-900">{roomRes.customer_name || '—'}</p>
                 <p className="text-xs font-body text-n-500">
-                  Entrada: {roomRes.check_in} · Saida: {roomRes.check_out}
+                  {t('dashboard.hotel.checkIn')}: {roomRes.check_in} · {t('dashboard.hotel.checkOut')}: {roomRes.check_out}
                 </p>
-                <p className="text-xs font-body text-n-500">{roomRes.guests || 1} hospede(s)</p>
+                <p className="text-xs font-body text-n-500">{roomRes.guests || 1} {t('dashboard.common.guestsSuffix')}</p>
                 <div className="pt-1">
                   <Badge variant={STATUS_BADGE_MAP_H[roomRes.status] || 'default'}>
-                    {STATUS_PT_H[roomRes.status] || roomRes.status}
+                    {STATUS_KEY_H[roomRes.status] ? t(`dashboard.status.${STATUS_KEY_H[roomRes.status]}`) : roomRes.status}
                   </Badge>
                 </div>
               </div>
             ) : (
-              <p className="text-sm font-body text-n-400 mb-4">Sem reserva activa para hoje.</p>
+              <p className="text-sm font-body text-n-400 mb-4">{t('dashboard.hotel.noActiveReservation')}</p>
             )}
 
             <div className="flex gap-2">
@@ -473,14 +480,14 @@ function HotelDashboard() {
                 onClick={() => setSelected(null)}
                 className="flex-1 h-9 rounded-md border border-n-200 text-sm font-body text-n-700 hover:bg-n-50 transition-colors"
               >
-                Fechar
+                {t('dashboard.common.close')}
               </button>
               <button
                 onClick={() => { navigate('/reservas'); setSelected(null); }}
                 className="flex-1 h-9 rounded-md bg-ocean-700 text-white text-sm font-body font-medium hover:bg-ocean-500 transition-colors flex items-center justify-center gap-1.5"
               >
                 <BookOpen size={13} strokeWidth={1.75} />
-                Ver reservas
+                {t('dashboard.common.viewReservations')}
               </button>
             </div>
           </div>
@@ -493,8 +500,9 @@ function HotelDashboard() {
 /* ─── Rentacar dashboard ─────────────────────────────────────── */
 
 function VehicleFleet({ units, getState, onSelect }) {
+  const t = useT();
   if (!units.length)
-    return <p className="text-sm font-body text-n-400 py-4">Sem viaturas registadas.</p>;
+    return <p className="text-sm font-body text-n-400 py-4">{t('dashboard.rentacar.noVehiclesRegistered')}</p>;
   return (
     <>
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
@@ -528,7 +536,7 @@ function VehicleFleet({ units, getState, onSelect }) {
                 )}
                 <div className="flex items-center gap-1 mt-1.5">
                   <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${s.dot}`} />
-                  <span className={`text-[10px] font-mono uppercase tracking-wide ${s.text}`}>{s.label}</span>
+                  <span className={`text-[10px] font-mono uppercase tracking-wide ${s.text}`}>{t(`dashboard.map.${st}`)}</span>
                 </div>
               </div>
             </button>
@@ -541,6 +549,7 @@ function VehicleFleet({ units, getState, onSelect }) {
 }
 
 function VehicleDetailCard({ unit, state, reservation, onClose, onNavigate }) {
+  const t    = useT();
   const s    = CELL[state] || CELL.available;
   const meta = parseVehicleMeta(unit);
   const photo = unit.images?.[0];
@@ -568,21 +577,21 @@ function VehicleDetailCard({ unit, state, reservation, onClose, onNavigate }) {
 
         <div className={`flex items-center gap-2 px-2.5 py-2 rounded-md mb-4 ${s.bg}`}>
           <span className={`w-2 h-2 rounded-full ${s.dot}`} />
-          <span className={`text-xs font-mono font-bold uppercase tracking-wide ${s.text}`}>{s.label}</span>
+          <span className={`text-xs font-mono font-bold uppercase tracking-wide ${s.text}`}>{t(`dashboard.map.${state}`)}</span>
         </div>
 
         {reservation ? (
           <div className="bg-n-50 rounded-md p-3 mb-4 space-y-1">
             <p className="text-sm font-display font-semibold text-n-900">{reservation.customer_name || '—'}</p>
             <p className="text-xs font-body text-n-500">
-              Levantamento: {reservation.check_in} · Devolucao: {reservation.check_out}
+              {t('dashboard.rentacar.pickup')}: {reservation.check_in} · {t('dashboard.rentacar.return')}: {reservation.check_out}
             </p>
             <p className="text-xs font-body text-n-500">
               €{Number(reservation.total_price || 0).toFixed(0)}
             </p>
           </div>
         ) : (
-          <p className="text-sm font-body text-n-400 mb-4">Viatura disponivel.</p>
+          <p className="text-sm font-body text-n-400 mb-4">{t('dashboard.rentacar.vehicleAvailable')}</p>
         )}
 
         <div className="flex gap-2">
@@ -590,14 +599,14 @@ function VehicleDetailCard({ unit, state, reservation, onClose, onNavigate }) {
             onClick={onClose}
             className="flex-1 h-9 rounded-md border border-n-200 text-sm font-body text-n-700 hover:bg-n-50 transition-colors"
           >
-            Fechar
+            {t('dashboard.common.close')}
           </button>
           <button
             onClick={onNavigate}
             className="flex-1 h-9 rounded-md bg-ocean-700 text-white text-sm font-body font-medium hover:bg-ocean-500 transition-colors flex items-center justify-center gap-1.5"
           >
             <BookOpen size={13} strokeWidth={1.75} />
-            Ver reservas
+            {t('dashboard.common.viewReservations')}
           </button>
         </div>
       </div>
@@ -605,7 +614,7 @@ function VehicleDetailCard({ unit, state, reservation, onClose, onNavigate }) {
   );
 }
 
-function computeDocAlerts(units) {
+function computeDocAlerts(units, t) {
   const alerts = [];
   const now = new Date();
   units.forEach(u => {
@@ -615,22 +624,23 @@ function computeDocAlerts(units) {
       if (!expiry) return;
       const d    = new Date(expiry);
       const days = Math.ceil((d - now) / 86400000);
-      if (days <= 0)  alerts.push({ type: 'expired', msg: `${label}: ${name} expirado`,         unit: u });
-      else if (days <= 30) alerts.push({ type: 'warning', msg: `${label}: ${name} expira em ${days}d`, unit: u });
+      if (days <= 0)  alerts.push({ type: 'expired', msg: t('dashboard.rentacar.expired', { label, name }),                unit: u });
+      else if (days <= 30) alerts.push({ type: 'warning', msg: t('dashboard.rentacar.expiresIn', { label, name, days }),   unit: u });
     };
-    check(meta.seguro_expiry,   'Seguro');
-    check(meta.iuc_expiry,      'IUC');
-    check(meta.inspecao_expiry, 'Inspecao');
+    check(meta.seguro_expiry,   t('dashboard.rentacar.insurance'));
+    check(meta.iuc_expiry,      t('dashboard.rentacar.roadTax'));
+    check(meta.inspecao_expiry, t('dashboard.rentacar.inspection'));
     if (meta.next_revision_km && meta.current_km) {
       const kmLeft = Number(meta.next_revision_km) - Number(meta.current_km);
-      if (kmLeft <= 0)   alerts.push({ type: 'expired', msg: `${label}: Revisao atrasada (${Math.abs(kmLeft)}km)`,   unit: u });
-      else if (kmLeft <= 500) alerts.push({ type: 'warning', msg: `${label}: Revisao em ${kmLeft}km`,                unit: u });
+      if (kmLeft <= 0)   alerts.push({ type: 'expired', msg: t('dashboard.rentacar.revisionOverdue', { label, km: Math.abs(kmLeft) }), unit: u });
+      else if (kmLeft <= 500) alerts.push({ type: 'warning', msg: t('dashboard.rentacar.revisionIn', { label, km: kmLeft }),           unit: u });
     }
   });
   return alerts;
 }
 
 function RentacarDashboard() {
+  const t        = useT();
   const navigate = useNavigate();
   const periodo  = mesAtual();
 
@@ -695,7 +705,7 @@ function RentacarDashboard() {
     [todayRes]
   );
 
-  const docAlerts = useMemo(() => computeDocAlerts(units), [units]);
+  const docAlerts = useMemo(() => computeDocAlerts(units, t), [units, t]);
 
   const vehicleRes = useMemo(() => {
     if (!selected) return null;
@@ -717,7 +727,7 @@ function RentacarDashboard() {
               <AlertTriangle size={15} strokeWidth={1.75} className="text-error shrink-0" />
               <p className="text-sm font-body text-error flex-1 font-medium">{a.msg}</p>
               <button onClick={() => navigate('/manutencao')} className="text-xs font-semibold text-error underline shrink-0 whitespace-nowrap">
-                Manutencao
+                {t('dashboard.common.maintenance')}
               </button>
             </div>
           ))}
@@ -726,7 +736,7 @@ function RentacarDashboard() {
               <AlertTriangle size={15} strokeWidth={1.75} className="text-[#B45309] shrink-0" />
               <p className="text-sm font-body text-[#B45309] flex-1">{a.msg}</p>
               <button onClick={() => navigate('/manutencao')} className="text-xs font-semibold text-[#B45309] underline shrink-0 whitespace-nowrap">
-                Manutencao
+                {t('dashboard.common.maintenance')}
               </button>
             </div>
           ))}
@@ -735,10 +745,10 @@ function RentacarDashboard() {
 
       {/* KPIs */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <KpiCard label="Viaturas disponiveis" value={kpis.available}   icon={Car}      />
-        <KpiCard label="Receita mes"          value={kpis.receita}     icon={Euro}     format="euro" />
-        <KpiCard label="Alugueres activos"    value={kpis.alugados}    icon={BarChart2}/>
-        <KpiCard label="Em manutencao"        value={kpis.manutencao}  icon={Wrench}   />
+        <KpiCard label={t('dashboard.rentacar.availableVehicles')} value={kpis.available}   icon={Car}      />
+        <KpiCard label={t('dashboard.rentacar.revenueMonth')}      value={kpis.receita}     icon={Euro}     format="euro" />
+        <KpiCard label={t('dashboard.rentacar.activeRentals')}     value={kpis.alugados}    icon={BarChart2}/>
+        <KpiCard label={t('dashboard.rentacar.inMaintenance')}     value={kpis.manutencao}  icon={Wrench}   />
       </div>
 
       {/* Fleet map */}
@@ -746,14 +756,14 @@ function RentacarDashboard() {
         <div className="flex items-center gap-2 mb-4">
           <Car size={15} strokeWidth={1.75} className="text-n-500" />
           <h2 className="font-display font-semibold text-sm text-n-700 uppercase tracking-wide">
-            Frota — Estado Actual
+            {t('dashboard.rentacar.fleetStatus')}
           </h2>
           <button
             onClick={() => navigate('/manutencao')}
             className="ml-auto text-xs font-body text-ocean-700 hover:underline flex items-center gap-1"
           >
             <Wrench size={11} strokeWidth={1.75} />
-            Manutencao
+            {t('dashboard.common.maintenance')}
           </button>
         </div>
         <VehicleFleet units={units} getState={getVehicleState} onSelect={setSelected} />
@@ -764,11 +774,11 @@ function RentacarDashboard() {
         <div className="bg-white rounded-lg border border-n-200 shadow-sm">
           <div className="px-5 py-4 border-b border-n-100 flex items-center gap-2">
             <MoveRight size={14} strokeWidth={1.75} className="text-[#1A7A4A]" />
-            <h2 className="font-display font-semibold text-sm text-n-700">Levantamentos hoje</h2>
+            <h2 className="font-display font-semibold text-sm text-n-700">{t('dashboard.rentacar.pickupsToday')}</h2>
             <span className="ml-auto text-xs font-body text-n-400">{levantamentos.length}</span>
           </div>
           {levantamentos.length === 0 ? (
-            <p className="px-5 py-6 text-center text-xs font-body text-n-400">Nenhum levantamento agendado para hoje</p>
+            <p className="px-5 py-6 text-center text-xs font-body text-n-400">{t('dashboard.rentacar.noPickupToday')}</p>
           ) : (
             <div className="divide-y divide-n-100">
               {levantamentos.map(r => {
@@ -783,7 +793,7 @@ function RentacarDashboard() {
                       </p>
                     </div>
                     <Badge variant={r.status === 'confirmed' ? 'confirmed' : 'pending'}>
-                      {r.status === 'confirmed' ? 'Confirmado' : 'Pendente'}
+                      {r.status === 'confirmed' ? t('dashboard.status.confirmed') : t('dashboard.status.pending')}
                     </Badge>
                   </div>
                 );
@@ -795,11 +805,11 @@ function RentacarDashboard() {
         <div className="bg-white rounded-lg border border-n-200 shadow-sm">
           <div className="px-5 py-4 border-b border-n-100 flex items-center gap-2">
             <MoveLeft size={14} strokeWidth={1.75} className="text-n-500" />
-            <h2 className="font-display font-semibold text-sm text-n-700">Devolucoes hoje</h2>
+            <h2 className="font-display font-semibold text-sm text-n-700">{t('dashboard.rentacar.returnsToday')}</h2>
             <span className="ml-auto text-xs font-body text-n-400">{devolucoes.length}</span>
           </div>
           {devolucoes.length === 0 ? (
-            <p className="px-5 py-6 text-center text-xs font-body text-n-400">Nenhuma devolucao agendada para hoje</p>
+            <p className="px-5 py-6 text-center text-xs font-body text-n-400">{t('dashboard.rentacar.noReturnToday')}</p>
           ) : (
             <div className="divide-y divide-n-100">
               {devolucoes.map(r => {
@@ -810,10 +820,10 @@ function RentacarDashboard() {
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-display font-semibold text-n-900 truncate">{r.customer_name || '—'}</p>
                       <p className="text-xs font-body text-n-400">
-                        {u?.name || '—'}{meta.plate ? ` · ${meta.plate}` : ''} · desde {r.check_in}
+                        {u?.name || '—'}{meta.plate ? ` · ${meta.plate}` : ''} · {t('dashboard.rentacar.since', { date: r.check_in })}
                       </p>
                     </div>
-                    <Badge variant="info">Devolucao</Badge>
+                    <Badge variant="info">{t('dashboard.status.return')}</Badge>
                   </div>
                 );
               })}
@@ -844,6 +854,7 @@ function RentacarDashboard() {
 /* ─── Restaurant dashboard ──────────────────────────────────── */
 
 function TurnoSection({ label, reservations, units, emptyMsg }) {
+  const t = useT();
   return (
     <div className="bg-white rounded-lg border border-n-200 shadow-sm">
       <div className="px-5 py-4 border-b border-n-100 flex items-center gap-2">
@@ -858,7 +869,7 @@ function TurnoSection({ label, reservations, units, emptyMsg }) {
           {reservations.map(r => {
             const unit  = units.find(u => u.id === r.unit_id);
             const umeta = unit ? parseVehicleMeta(unit) : {};
-            const tbl   = unit ? (umeta.number ? `Mesa ${umeta.number}` : unit.name) : 'Sem mesa';
+            const tbl   = unit ? (umeta.number ? t('dashboard.restaurant.table', { n: umeta.number }) : unit.name) : t('dashboard.restaurant.noTable');
             let gm = {};
             try { gm = JSON.parse(r.notes_guest || '{}'); } catch {}
             return (
@@ -866,11 +877,11 @@ function TurnoSection({ label, reservations, units, emptyMsg }) {
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-display font-semibold text-n-900 truncate">{r.customer_name || '—'}</p>
                   <p className="text-xs font-body text-n-400">
-                    {tbl} · {r.guests} pax{gm.ocasiao ? ` · ${gm.ocasiao}` : ''}
+                    {tbl} · {r.guests} {t('dashboard.common.pax')}{gm.ocasiao ? ` · ${gm.ocasiao}` : ''}
                   </p>
                 </div>
                 <Badge variant={r.status === 'checked_in' ? 'info' : r.status === 'confirmed' ? 'confirmed' : 'pending'}>
-                  {r.status === 'checked_in' ? 'Sentados' : r.status === 'confirmed' ? 'Confirmado' : 'Pendente'}
+                  {r.status === 'checked_in' ? t('dashboard.status.seated') : r.status === 'confirmed' ? t('dashboard.status.confirmed') : t('dashboard.status.pending')}
                 </Badge>
               </div>
             );
@@ -882,10 +893,11 @@ function TurnoSection({ label, reservations, units, emptyMsg }) {
 }
 
 function TableDetailCard({ unit, state, reservation, onClose, onNavigate }) {
+  const t    = useT();
   const s    = CELL[state] || CELL.available;
   const meta = parseVehicleMeta(unit);
-  const tbl  = meta.number ? `Mesa ${meta.number}` : unit.name;
-  const zone = ZONE_LABELS[meta.zone] || meta.zone || '';
+  const tbl  = meta.number ? t('dashboard.restaurant.table', { n: meta.number }) : unit.name;
+  const zone = ZONE_KEYS[meta.zone] ? t(`dashboard.zones.${meta.zone}`) : (meta.zone || '');
   const cap  = meta.capacity_max || unit.capacity;
   let gm = {};
   if (reservation) { try { gm = JSON.parse(reservation.notes_guest || '{}'); } catch {} }
@@ -897,7 +909,7 @@ function TableDetailCard({ unit, state, reservation, onClose, onNavigate }) {
           <div>
             <h3 className="font-display font-bold text-base text-n-900">{tbl}</h3>
             <p className="text-xs font-body text-n-500 mt-0.5">
-              {[zone, cap ? `${cap} pax` : null].filter(Boolean).join(' · ')}
+              {[zone, cap ? `${cap} ${t('dashboard.common.pax')}` : null].filter(Boolean).join(' · ')}
             </p>
           </div>
           <button onClick={onClose} className="p-1 text-n-400 hover:text-n-700 rounded">
@@ -907,31 +919,31 @@ function TableDetailCard({ unit, state, reservation, onClose, onNavigate }) {
 
         <div className={`flex items-center gap-2 px-2.5 py-2 rounded-md mb-4 ${s.bg}`}>
           <span className={`w-2 h-2 rounded-full ${s.dot}`} />
-          <span className={`text-xs font-mono font-bold uppercase tracking-wide ${s.text}`}>{s.label}</span>
+          <span className={`text-xs font-mono font-bold uppercase tracking-wide ${s.text}`}>{t(`dashboard.map.${state}`)}</span>
         </div>
 
         {reservation ? (
           <div className="bg-n-50 rounded-md p-3 mb-4 space-y-1">
             <p className="text-sm font-display font-semibold text-n-900">{reservation.customer_name || '—'}</p>
             <p className="text-xs font-body text-n-500">
-              {reservation.guests} pessoas{gm.turno ? ` · Turno ${gm.turno}` : ''}
+              {reservation.guests} {t('dashboard.restaurant.people')}{gm.turno ? ` · ${t('dashboard.restaurant.shift', { turno: gm.turno })}` : ''}
             </p>
             {gm.ocasiao && <p className="text-xs font-body text-n-400">{gm.ocasiao}</p>}
             {gm.pedidos_especiais && <p className="text-xs font-body text-n-400 italic">{gm.pedidos_especiais}</p>}
           </div>
         ) : (
-          <p className="text-sm font-body text-n-400 mb-4">Mesa disponivel.</p>
+          <p className="text-sm font-body text-n-400 mb-4">{t('dashboard.restaurant.tableAvailable')}</p>
         )}
 
         <div className="flex gap-2">
           <button onClick={onClose}
             className="flex-1 h-9 rounded-md border border-n-200 text-sm font-body text-n-700 hover:bg-n-50 transition-colors">
-            Fechar
+            {t('dashboard.common.close')}
           </button>
           <button onClick={onNavigate}
             className="flex-1 h-9 rounded-md bg-ocean-700 text-white text-sm font-body font-medium hover:bg-ocean-500 transition-colors flex items-center justify-center gap-1.5">
             <BookOpen size={13} strokeWidth={1.75} />
-            Ver reservas
+            {t('dashboard.common.viewReservations')}
           </button>
         </div>
       </div>
@@ -940,6 +952,7 @@ function TableDetailCard({ unit, state, reservation, onClose, onNavigate }) {
 }
 
 function RestaurantDashboard() {
+  const t        = useT();
   const navigate = useNavigate();
   const periodo  = mesAtual();
 
@@ -993,9 +1006,9 @@ function RestaurantDashboard() {
     const out = [];
     const pendentes = todayRes.filter(r => r.status === 'pending');
     if (pendentes.length > 0)
-      out.push({ msg: `${pendentes.length} reserva(s) sem confirmacao hoje` });
+      out.push({ msg: t('dashboard.restaurant.noConfirmationAlert', { n: pendentes.length }) });
     return out;
-  }, [todayRes]);
+  }, [todayRes, t]);
 
   const shifts = useMemo(() => {
     const a = [], j = [], o = [];
@@ -1030,7 +1043,7 @@ function RestaurantDashboard() {
               <p className="text-sm font-body text-[#B45309] flex-1">{a.msg}</p>
               <button onClick={() => navigate('/reservas')}
                 className="text-xs font-semibold text-[#B45309] underline shrink-0 whitespace-nowrap">
-                Ver reservas
+                {t('dashboard.common.viewReservations')}
               </button>
             </div>
           ))}
@@ -1039,10 +1052,10 @@ function RestaurantDashboard() {
 
       {/* KPIs */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <KpiCard label="Reservas hoje"    value={kpis.reservasHoje}                             icon={CalendarDays} />
-        <KpiCard label="Covers do mes"    value={kpis.coversMes}                                icon={Users}        />
-        <KpiCard label="Receita estimada" value={kpis.receita}                                  icon={Euro}         format="euro" />
-        <KpiCard label="Avaliacao media"  value={kpis.rating ? kpis.rating.toFixed(1) : '—'}   icon={Star}         />
+        <KpiCard label={t('dashboard.restaurant.reservationsToday')} value={kpis.reservasHoje}                            icon={CalendarDays} />
+        <KpiCard label={t('dashboard.restaurant.coversMonth')}       value={kpis.coversMes}                               icon={Users}        />
+        <KpiCard label={t('dashboard.restaurant.revenueEstimated')}  value={kpis.receita}                                 icon={Euro}         format="euro" />
+        <KpiCard label={t('dashboard.restaurant.avgRating')}         value={kpis.rating ? kpis.rating.toFixed(1) : '—'}  icon={Star}         />
       </div>
 
       {/* Table map */}
@@ -1050,11 +1063,11 @@ function RestaurantDashboard() {
         <div className="flex items-center gap-2 mb-4">
           <UtensilsCrossed size={15} strokeWidth={1.75} className="text-n-500" />
           <h2 className="font-display font-semibold text-sm text-n-700 uppercase tracking-wide">
-            Mapa de Mesas — Hoje
+            {t('dashboard.restaurant.tableMap')}
           </h2>
           <button onClick={() => navigate('/unidades')}
             className="ml-auto text-xs font-body text-ocean-700 hover:underline">
-            Gerir mesas
+            {t('dashboard.restaurant.manageTables')}
           </button>
         </div>
         <TableMap units={units} todayRes={todayRes} onSelect={setSelected} />
@@ -1062,12 +1075,12 @@ function RestaurantDashboard() {
 
       {/* Turnos */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <TurnoSection label="Almoco · 12h–15h" reservations={shifts.almoco} units={units} emptyMsg="Sem reservas de almoco" />
-        <TurnoSection label="Jantar · 19h–23h"  reservations={shifts.jantar} units={units} emptyMsg="Sem reservas de jantar"  />
+        <TurnoSection label={t('dashboard.restaurant.lunch')}  reservations={shifts.almoco} units={units} emptyMsg={t('dashboard.restaurant.noLunchReservations')} />
+        <TurnoSection label={t('dashboard.restaurant.dinner')} reservations={shifts.jantar} units={units} emptyMsg={t('dashboard.restaurant.noDinnerReservations')} />
       </div>
 
       {shifts.outros.length > 0 && (
-        <TurnoSection label="Sem turno definido" reservations={shifts.outros} units={units} emptyMsg="" />
+        <TurnoSection label={t('dashboard.restaurant.noShiftDefined')} reservations={shifts.outros} units={units} emptyMsg="" />
       )}
 
       {/* Table detail overlay */}
@@ -1217,9 +1230,9 @@ const STATUS_BADGE_MAP = {
   pending: 'pending', confirmed: 'confirmed',
   checked_in: 'info', checked_out: 'default', cancelled: 'cancelled',
 };
-const STATUS_PT = {
-  pending: 'Pendente', confirmed: 'Confirmado',
-  checked_in: 'Activo', checked_out: 'Concluido', cancelled: 'Cancelado',
+const STATUS_KEY = {
+  pending: 'pending', confirmed: 'confirmed',
+  checked_in: 'active', checked_out: 'completed', cancelled: 'cancelled',
 };
 
 function weekDays() {
@@ -1246,6 +1259,7 @@ function parseTourMeta(description) {
 }
 
 function ActivityDashboard() {
+  const t        = useT();
   const navigate = useNavigate();
   const periodo  = mesAtual();
   const next7    = useMemo(() => weekDays(), []);
@@ -1269,8 +1283,8 @@ function ActivityDashboard() {
       getResumo(periodo.inicio, periodo.fim),
       api.get('/reviews/stats').then(r => r.data?.data?.average_rating ?? null).catch(() => null),
     ])
-      .then(([t, tRes, mRes, wRes, res, avgR]) => {
-        setTours(t || []);
+      .then(([toursData, tRes, mRes, wRes, res, avgR]) => {
+        setTours(toursData || []);
         setTodayRes(tRes || []);
         setMonthRes(mRes || []);
         setWeekRes(wRes || []);
@@ -1366,7 +1380,7 @@ function ActivityDashboard() {
           <CloudRain size={16} strokeWidth={1.75} className="text-error shrink-0 mt-0.5" />
           <div className="flex-1">
             <p className="text-sm font-body font-semibold text-error mb-1">
-              Mau tempo previsto em dias com tours agendados
+              {t('dashboard.activity.badWeatherAlert')}
             </p>
             {wxAlerts.map(wx => {
               const info     = weatherInfo(wx.code);
@@ -1375,7 +1389,7 @@ function ActivityDashboard() {
                 <p key={wx.date} className="text-xs font-body text-red-600">
                   {new Date(wx.date + 'T00:00:00Z').toLocaleDateString('pt-PT', { weekday: 'short', day: '2-digit', month: 'short', timeZone: 'UTC' })}
                   {' — '}{info.label}{wx.precipitation > 0 ? ` (${wx.precipitation}mm)` : ''}
-                  {' · '}{toursOnDay.length} tour(s) agendado(s)
+                  {' · '}{t('dashboard.activity.toursScheduled', { n: toursOnDay.length })}
                 </p>
               );
             })}
@@ -1383,7 +1397,7 @@ function ActivityDashboard() {
           <div className="flex items-center gap-2 shrink-0">
             <button onClick={() => navigate('/meteorologia')}
               className="text-xs font-body font-semibold text-error hover:underline whitespace-nowrap">
-              Ver detalhes
+              {t('dashboard.activity.viewDetails')}
             </button>
             <button onClick={() => setWxDismissed(true)}
               className="p-1 rounded text-error hover:bg-red-100 transition-colors">
@@ -1395,11 +1409,11 @@ function ActivityDashboard() {
 
       {/* KPIs */}
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
-        <KpiCard label="Tours hoje"        value={kpis.toursHoje}     icon={Compass} />
-        <KpiCard label="Participantes mes" value={kpis.participantes} icon={Users} />
-        <KpiCard label="Taxa ocupacao"     value={kpis.ocupacao}      icon={BarChart2} format="percent" />
-        <KpiCard label="Receita mes"       value={kpis.receita}       icon={Euro}     format="euro" />
-        <KpiCard label="Avaliacao media"   value={kpis.rating != null ? Number(kpis.rating).toFixed(1) : '—'} icon={Star} />
+        <KpiCard label={t('dashboard.activity.toursToday')}        value={kpis.toursHoje}     icon={Compass} />
+        <KpiCard label={t('dashboard.activity.participantsMonth')} value={kpis.participantes} icon={Users} />
+        <KpiCard label={t('dashboard.activity.occupancyRate')}     value={kpis.ocupacao}      icon={BarChart2} format="percent" />
+        <KpiCard label={t('dashboard.activity.revenueMonth')}      value={kpis.receita}       icon={Euro}     format="euro" />
+        <KpiCard label={t('dashboard.restaurant.avgRating')}       value={kpis.rating != null ? Number(kpis.rating).toFixed(1) : '—'} icon={Star} />
       </div>
 
       {/* Vista do dia + Alertas */}
@@ -1410,9 +1424,9 @@ function ActivityDashboard() {
               <Clock size={14} strokeWidth={1.75} className="text-ocean-700" />
             </div>
             <h2 className="font-display font-semibold text-sm text-n-700 uppercase tracking-wide">
-              Tours hoje — {TODAY.split('-').reverse().join('/')}
+              {t('dashboard.activity.toursTodayHeading', { date: TODAY.split('-').reverse().join('/') })}
             </h2>
-            <span className="ml-auto text-xs font-body text-n-400">{todayByTour.length} activo(s)</span>
+            <span className="ml-auto text-xs font-body text-n-400">{t('dashboard.activity.activeCount', { n: todayByTour.length })}</span>
           </div>
 
           {todayByTour.length === 0 ? (
@@ -1420,14 +1434,14 @@ function ActivityDashboard() {
               <div className="w-16 h-16 rounded-full bg-ocean-50 flex items-center justify-center mb-4">
                 <Compass size={28} strokeWidth={1.5} className="text-ocean-300" />
               </div>
-              <p className="text-sm font-display font-semibold text-n-600 mb-1">Nenhum tour agendado para hoje</p>
-              <p className="text-xs font-body text-n-400 mb-4">Aproveita para planear o dia ou criar uma nova reserva.</p>
+              <p className="text-sm font-display font-semibold text-n-600 mb-1">{t('dashboard.activity.noToursToday')}</p>
+              <p className="text-xs font-body text-n-400 mb-4">{t('dashboard.activity.planYourDay')}</p>
               <button
                 onClick={() => navigate('/reservas')}
                 className="inline-flex items-center gap-1.5 h-9 px-4 rounded-md bg-ocean-700 text-white text-xs font-body font-semibold hover:bg-ocean-500 transition-colors"
               >
                 <BookOpen size={13} strokeWidth={1.75} />
-                Nova reserva
+                {t('dashboard.activity.newReservation')}
               </button>
             </div>
           ) : (
@@ -1448,12 +1462,12 @@ function ActivityDashboard() {
                     </div>
                     <div className="text-right shrink-0">
                       <p className="text-sm font-display font-bold text-ocean-700">
-                        {guests}/{tour.capacity || '—'} <span className="text-xs font-body font-normal text-n-500">pax</span>
+                        {guests}/{tour.capacity || '—'} <span className="text-xs font-body font-normal text-n-500">{t('dashboard.common.pax')}</span>
                       </p>
-                      <p className="text-[10px] font-body text-n-400">{reservations.length} reserva(s)</p>
+                      <p className="text-[10px] font-body text-n-400">{reservations.length} {t('dashboard.common.reservationsSuffix')}</p>
                     </div>
                     <Badge variant={hasActive ? 'confirmed' : hasPending ? 'pending' : 'info'}>
-                      {hasActive ? 'Em curso' : hasPending ? 'Pendente' : 'Confirmado'}
+                      {hasActive ? t('dashboard.status.inProgress') : hasPending ? t('dashboard.status.pending') : t('dashboard.status.confirmed')}
                     </Badge>
                   </div>
                 );
@@ -1468,7 +1482,7 @@ function ActivityDashboard() {
             <div className="bg-[var(--warning-light)] border border-[var(--warning)] rounded-lg p-4">
               <div className="flex items-center gap-2 mb-2">
                 <Clock size={14} strokeWidth={1.75} className="text-[var(--warning)]" />
-                <p className="text-sm font-body font-semibold text-[var(--warning)]">Reservas pendentes</p>
+                <p className="text-sm font-body font-semibold text-[var(--warning)]">{t('dashboard.activity.pendingReservations')}</p>
                 <span className="ml-auto font-bold text-sm text-[var(--warning)]">{alertas.pendentes.length}</span>
               </div>
               {alertas.pendentes.slice(0, 3).map(r => (
@@ -1478,7 +1492,7 @@ function ActivityDashboard() {
                 </p>
               ))}
               <button onClick={() => navigate('/reservas')} className="mt-2 text-xs font-semibold text-[var(--warning)] underline">
-                Ver todas
+                {t('dashboard.common.viewAll')}
               </button>
             </div>
           )}
@@ -1487,12 +1501,12 @@ function ActivityDashboard() {
             <div className="bg-ocean-50 border border-ocean-200 rounded-lg p-4">
               <div className="flex items-center gap-2 mb-2">
                 <AlertTriangle size={14} strokeWidth={1.75} className="text-ocean-700" />
-                <p className="text-sm font-body font-semibold text-ocean-700">Quase esgotados</p>
+                <p className="text-sm font-body font-semibold text-ocean-700">{t('dashboard.activity.almostFull')}</p>
                 <span className="ml-auto font-bold text-sm text-ocean-700">{alertas.quaseEsgotados.length}</span>
               </div>
               {alertas.quaseEsgotados.slice(0, 3).map(g => (
                 <p key={g.tour.id} className="text-xs font-body text-ocean-600 truncate">
-                  {g.tour.name} · {g.guests}/{g.tour.capacity} pax
+                  {g.tour.name} · {g.guests}/{g.tour.capacity} {t('dashboard.common.pax')}
                 </p>
               ))}
             </div>
@@ -1504,19 +1518,19 @@ function ActivityDashboard() {
                 <CheckCircle size={16} strokeWidth={1.75} className="text-[var(--success)]" />
               </div>
               <div>
-                <p className="text-sm font-display font-semibold text-[var(--success)]">Tudo em ordem</p>
-                <p className="text-xs font-body text-[var(--success)] opacity-70">Sem pendencias para hoje</p>
+                <p className="text-sm font-display font-semibold text-[var(--success)]">{t('dashboard.activity.allGood')}</p>
+                <p className="text-xs font-body text-[var(--success)] opacity-70">{t('dashboard.activity.noPendingToday')}</p>
               </div>
             </div>
           )}
 
           <div className="bg-white rounded-lg border border-n-200 shadow-sm p-4">
-            <p className="text-xs font-body font-semibold text-n-500 uppercase tracking-wide mb-3">Accoes rapidas</p>
+            <p className="text-xs font-body font-semibold text-n-500 uppercase tracking-wide mb-3">{t('dashboard.activity.quickActions')}</p>
             <div className="space-y-1.5">
               {[
-                { label: 'Nova reserva',    icon: BookOpen,     to: '/reservas'   },
-                { label: 'Ver calendario',  icon: CalendarDays, to: '/calendario' },
-                { label: 'Gerir tours',     icon: Compass,      to: '/unidades'   },
+                { label: t('dashboard.activity.newReservation'), icon: BookOpen,     to: '/reservas'   },
+                { label: t('dashboard.activity.viewCalendar'),   icon: CalendarDays, to: '/calendario' },
+                { label: t('dashboard.activity.manageTours'),    icon: Compass,      to: '/unidades'   },
               ].map(({ label, icon: Icon, to }) => (
                 <button
                   key={to}
@@ -1538,7 +1552,7 @@ function ActivityDashboard() {
       <div className="bg-white rounded-lg border border-n-200 shadow-sm p-5">
         <div className="flex items-center gap-2 mb-4">
           <CalendarDays size={15} strokeWidth={1.75} className="text-n-500" />
-          <h2 className="font-display font-semibold text-sm text-n-700 uppercase tracking-wide">Proximos 7 dias</h2>
+          <h2 className="font-display font-semibold text-sm text-n-700 uppercase tracking-wide">{t('dashboard.activity.next7Days')}</h2>
         </div>
         <div className="grid grid-cols-7 gap-2">
           {next7.map(dateStr => {
@@ -1560,7 +1574,7 @@ function ActivityDashboard() {
                 <span className={`text-[10px] font-mono uppercase tracking-wide ${isToday ? 'text-ocean-200' : 'text-n-400'}`}>{weekday}</span>
                 <span className="font-display font-bold text-sm">{day}</span>
                 {count > 0
-                  ? <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${isToday ? 'bg-white/20 text-white' : 'bg-ocean-100 text-ocean-700'}`}>{count} res.</span>
+                  ? <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${isToday ? 'bg-white/20 text-white' : 'bg-ocean-100 text-ocean-700'}`}>{count} {t('dashboard.activity.resShort')}</span>
                   : <span className="text-[10px] text-n-300">—</span>
                 }
               </button>
@@ -1574,9 +1588,9 @@ function ActivityDashboard() {
         <div className="bg-white rounded-lg border border-n-200 shadow-sm">
           <div className="px-5 py-4 border-b border-n-100 flex items-center gap-2">
             <BookOpen size={14} strokeWidth={1.75} className="text-n-500" />
-            <h2 className="font-display font-semibold text-sm text-n-700">Reservas recentes</h2>
+            <h2 className="font-display font-semibold text-sm text-n-700">{t('dashboard.activity.recentReservations')}</h2>
             <button onClick={() => navigate('/reservas')} className="ml-auto text-xs font-body text-ocean-700 hover:underline">
-              Ver todas
+              {t('dashboard.common.viewAll')}
             </button>
           </div>
           {recentRes.length === 0 ? (
@@ -1584,7 +1598,7 @@ function ActivityDashboard() {
               <div className="w-12 h-12 rounded-full bg-n-50 flex items-center justify-center mb-3">
                 <BookOpen size={20} strokeWidth={1.5} className="text-n-300" />
               </div>
-              <p className="text-xs font-body text-n-400">Sem reservas este mes</p>
+              <p className="text-xs font-body text-n-400">{t('dashboard.activity.noReservationsMonth')}</p>
             </div>
           ) : (
             <div className="divide-y divide-n-100">
@@ -1599,8 +1613,8 @@ function ActivityDashboard() {
                     </p>
                   </div>
                   <div className="text-right shrink-0">
-                    <Badge variant={STATUS_BADGE_MAP[r.status] || 'default'}>{STATUS_PT[r.status] || r.status}</Badge>
-                    <p className="text-xs font-body text-n-400 mt-0.5">{r.guests || 1} pax</p>
+                    <Badge variant={STATUS_BADGE_MAP[r.status] || 'default'}>{STATUS_KEY[r.status] ? t(`dashboard.status.${STATUS_KEY[r.status]}`) : r.status}</Badge>
+                    <p className="text-xs font-body text-n-400 mt-0.5">{r.guests || 1} {t('dashboard.common.pax')}</p>
                   </div>
                 </div>
               ))}
@@ -1611,14 +1625,14 @@ function ActivityDashboard() {
         <div className="bg-white rounded-lg border border-n-200 shadow-sm">
           <div className="px-5 py-4 border-b border-n-100 flex items-center gap-2">
             <TrendingUp size={14} strokeWidth={1.75} className="text-n-500" />
-            <h2 className="font-display font-semibold text-sm text-n-700">Top tours do mes</h2>
+            <h2 className="font-display font-semibold text-sm text-n-700">{t('dashboard.activity.topToursMonth')}</h2>
           </div>
           {topTours.length === 0 ? (
             <div className="flex flex-col items-center py-10 px-4 text-center">
               <div className="w-12 h-12 rounded-full bg-n-50 flex items-center justify-center mb-3">
                 <TrendingUp size={20} strokeWidth={1.5} className="text-n-300" />
               </div>
-              <p className="text-xs font-body text-n-400">Sem dados este mes</p>
+              <p className="text-xs font-body text-n-400">{t('dashboard.activity.noDataMonth')}</p>
             </div>
           ) : (
             <div className="divide-y divide-n-100">
@@ -1637,7 +1651,7 @@ function ActivityDashboard() {
                     </div>
                     <div className="text-right shrink-0">
                       <p className="text-sm font-display font-bold text-ocean-700">{count}</p>
-                      <p className="text-[10px] font-body text-n-400">reservas</p>
+                      <p className="text-[10px] font-body text-n-400">{t('dashboard.activity.reservationsSuffix')}</p>
                     </div>
                   </div>
                 );
@@ -1653,6 +1667,7 @@ function ActivityDashboard() {
 /* ─── Trial banner ───────────────────────────────────────────── */
 
 function TrialBanner() {
+  const t        = useT();
   const navigate = useNavigate();
   const { isInTrial, isTrialExpired, trialDaysLeft } = usePlan();
 
@@ -1661,14 +1676,14 @@ function TrialBanner() {
       <div className="mb-6 flex flex-wrap items-center gap-3 px-4 py-3 bg-[#FEF2F2] border border-[#FCA5A5] rounded-md">
         <AlertTriangle size={16} strokeWidth={1.75} className="text-error shrink-0" />
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-body font-semibold text-error">Periodo de avaliacao expirado</p>
-          <p className="text-xs font-body text-red-600">O teu acesso esta limitado. Subscreve um plano para continuar.</p>
+          <p className="text-sm font-body font-semibold text-error">{t('dashboard.trial.expiredTitle')}</p>
+          <p className="text-xs font-body text-red-600">{t('dashboard.trial.expiredBody')}</p>
         </div>
         <button
           onClick={() => navigate('/definicoes?tab=facturacao')}
           className="flex items-center gap-1.5 h-8 px-3 rounded-md bg-error text-white text-xs font-body font-semibold hover:bg-red-700 transition-colors shrink-0"
         >
-          Ver planos
+          {t('dashboard.trial.viewPlans')}
           <ArrowRight size={13} strokeWidth={1.75} />
         </button>
       </div>
@@ -1687,12 +1702,10 @@ function TrialBanner() {
       <Clock size={16} strokeWidth={1.75} className={`shrink-0 ${urgent ? 'text-[#B45309]' : 'text-ocean-600'}`} />
       <div className="flex-1 min-w-0">
         <p className={`text-sm font-body font-semibold ${urgent ? 'text-[#B45309]' : 'text-ocean-700'}`}>
-          {days === 0
-            ? 'Ultimo dia do periodo de avaliacao'
-            : `${days} dia${days !== 1 ? 's' : ''} restante${days !== 1 ? 's' : ''} no periodo de avaliacao`}
+          {days === 0 ? t('dashboard.trial.lastDay') : t('dashboard.trial.daysLeft', { days })}
         </p>
         <p className={`text-xs font-body ${urgent ? 'text-orange-600' : 'text-ocean-600'}`}>
-          Faz upgrade para continuar a usar todas as funcionalidades sem interrupcoes.
+          {t('dashboard.trial.upgradeBody')}
         </p>
       </div>
       <button
@@ -1703,7 +1716,7 @@ function TrialBanner() {
             : 'bg-ocean-700 text-white hover:bg-ocean-500'
         }`}
       >
-        Ver planos
+        {t('dashboard.trial.viewPlans')}
         <ArrowRight size={13} strokeWidth={1.75} />
       </button>
     </div>
@@ -1712,21 +1725,17 @@ function TrialBanner() {
 
 /* ─── Main export ────────────────────────────────────────────── */
 
-const TYPE_LABEL = {
-  hotel: 'Hotel / Alojamento', activity: 'Actividade Turistica',
-  rentacar: 'Rent-a-Car',      restaurant: 'Restaurante / Bar',
-};
-
 export default function Dashboard() {
-  const { operator } = useAuthStore();
-  const opType       = operator?.operator_type;
-  const periodo      = mesAtual();
+  const t             = useT();
+  const { operator }  = useAuthStore();
+  const opType        = operator?.operator_type;
+  const periodo       = mesAtual();
 
   return (
     <div>
       <PageHeader
-        title={`Bem-vindo, ${operator?.name || ''}`}
-        subtitle={`${TYPE_LABEL[opType] || ''} · ${periodo.inicio.slice(0, 7)}`}
+        title={t('dashboard.welcome', { name: operator?.name || '' })}
+        subtitle={`${opType ? t(`dashboard.typeLabel.${opType}`) : ''} · ${periodo.inicio.slice(0, 7)}`}
       />
       <TrialBanner />
       {opType === 'activity'
