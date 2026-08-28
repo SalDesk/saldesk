@@ -43,7 +43,18 @@
     "emailSentBody": "If the email {{email}} exists on our platform, you'll receive a recovery link shortly.",
     "checkSpam": "Also check your spam folder. The link expires in 1 hour.",
     "footerCredit": "System developed by",
-    "footerOrigin": "Proudly Cape Verdean"
+    "footerOrigin": "Proudly Cape Verdean",
+    "brandHeadline": "Tourism management without OTA commissions",
+    "brandSub": "The platform born on Sal Island, now serving operators across Cape Verde.",
+    "brandPoint1": "Direct bookings, no middleman commission",
+    "brandPoint2": "CRM, finance and channel manager in one place",
+    "brandPoint3": "Support in Portuguese, built for Cape Verde",
+    "brandStat1Value": "0%",
+    "brandStat1Label": "OTA commission",
+    "brandStat2Value": "4",
+    "brandStat2Label": "Operator types",
+    "brandStat3Value": "30d",
+    "brandStat3Label": "Free trial"
   },
   "onboarding": {
     "title": "Welcome to SalDesk",

@@ -43,7 +43,18 @@
     "emailSentBody": "Se o email {{email}} existir na nossa plataforma, recebes um link de recuperacao em breve.",
     "checkSpam": "Verifica tambem a pasta de spam. O link expira em 1 hora.",
     "footerCredit": "Sistema desenvolvido por",
-    "footerOrigin": "Orgulhosamente cabo-verdiano"
+    "footerOrigin": "Orgulhosamente cabo-verdiano",
+    "brandHeadline": "Gestao turistica sem comissoes OTA",
+    "brandSub": "A plataforma nascida na Ilha do Sal, hoje ao servico de operadores em todo o Cabo Verde.",
+    "brandPoint1": "Reservas directas, sem comissao a intermediarios",
+    "brandPoint2": "CRM, financeiro e channel manager num so sitio",
+    "brandPoint3": "Suporte em portugues, pensado para Cabo Verde",
+    "brandStat1Value": "0%",
+    "brandStat1Label": "Comissao OTA",
+    "brandStat2Value": "4",
+    "brandStat2Label": "Tipos de operador",
+    "brandStat3Value": "30d",
+    "brandStat3Label": "Trial gratuito"
   },
   "onboarding": {
     "title": "Bem-vindo ao SalDesk",

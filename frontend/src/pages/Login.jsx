@@ -8,7 +8,6 @@ import { useT } from '../i18n';
 import AuthLayout from '../components/auth/AuthLayout';
 import Input from '../components/ui/Input';
 import Button from '../components/ui/Button';
-import Logo from '../components/shared/Logo';
 
 /* ── Bloqueio de conta ──
    O bloqueio real agora vive no servidor (authController.js) -- este
@@ -29,19 +28,13 @@ function remainingSeconds(state) {
   return Math.max(0, Math.ceil((state.lockedUntil - Date.now()) / 1000));
 }
 
-/* Cartao base reutilizado nos 3 modos (login / forgot / forgot-sent) */
+/* Cartao base reutilizado nos 3 modos (login / forgot / forgot-sent) --
+   o logo proprio e a barra decorativa foram removidos: no layout novo
+   (AuthLayout.jsx com painel dividido), a marca ja aparece no painel
+   esquerdo (desktop) ou no cabecalho (mobile), repeti-la aqui ficava
+   redundante numa pagina que agora assenta em fundo branco simples. */
 function AuthCard({ children }) {
-  return (
-    <div className="relative bg-white rounded-2xl shadow-lg shadow-ocean-900/25 border border-n-100 overflow-hidden">
-      <div className="h-1 w-full bg-gradient-to-r from-sand-500 via-sand-400 to-sand-500" />
-      <div className="p-7">
-        <div className="flex justify-center mb-5">
-          <Logo size="xl" dark />
-        </div>
-        {children}
-      </div>
-    </div>
-  );
+  return <div>{children}</div>;
 }
 
 /* ─────────────────────── Login ─────────────────────── */
