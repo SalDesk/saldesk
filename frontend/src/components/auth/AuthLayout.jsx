@@ -37,7 +37,7 @@ export default function AuthLayout({ children }) {
         ))}
         <div className="absolute inset-0 bg-gradient-to-t from-ocean-900/95 via-ocean-900/55 to-ocean-900/30" />
 
-        <div className="relative z-10 flex flex-col justify-between p-12 xl:p-14 w-full">
+        <div className="relative z-10 flex flex-col items-start justify-between p-12 xl:p-14 w-full h-full">
           <Logo size="lg" white />
 
           <div className="max-w-md space-y-7">
