@@ -72,16 +72,47 @@ export default function AuthLayout({ children }) {
 
       {/* ── Painel direito — formulario ── */}
       <div className="flex-1 flex flex-col min-h-screen">
-        <div className="flex items-center justify-between px-6 sm:px-10 py-6">
-          <div className="lg:hidden">
-            <Logo size="md" />
+        {/* Hero compacto — so mobile/tablet (em lg+ o painel esquerdo ja cobre isto).
+            Substitui o antigo cabecalho vazio (so logo + toggle, muito espaco em
+            branco por baixo) por uma faixa com foto real + tagline + stats, para
+            o mobile nao ficar visualmente pobre comparado ao desktop. */}
+        <div className="lg:hidden relative h-56 sm:h-64 overflow-hidden bg-ocean-900 shrink-0">
+          {BEACH_IMAGES.map((src, i) => (
+            <div
+              key={src}
+              className="absolute inset-0 bg-cover bg-center transition-opacity duration-1000"
+              style={{ backgroundImage: `url(${src})`, opacity: i === imgIdx ? 1 : 0 }}
+            />
+          ))}
+          <div className="absolute inset-0 bg-gradient-to-b from-ocean-900/75 via-ocean-900/45 to-ocean-900/95" />
+          <div className="relative z-10 flex flex-col justify-between h-full p-5 sm:p-6">
+            <div className="flex items-center justify-between">
+              <Logo size="sm" white />
+              <LanguageToggle authMode variant="white" />
+            </div>
+            <div>
+              <p className="font-display font-bold text-lg sm:text-xl text-white leading-tight tracking-tight max-w-[15rem]">
+                {t('auth.brandHeadline')}
+              </p>
+              <div className="flex items-center gap-5 mt-3">
+                {[['brandStat1Value', 'brandStat1Label'], ['brandStat2Value', 'brandStat2Label'], ['brandStat3Value', 'brandStat3Label']].map(([vKey, lKey]) => (
+                  <div key={vKey}>
+                    <p className="font-display font-bold text-sm text-white">{t(`auth.${vKey}`)}</p>
+                    <p className="text-[9px] font-body text-white/60 uppercase tracking-wide">{t(`auth.${lKey}`)}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
-          <div className="hidden lg:block" />
+        </div>
+
+        {/* Cabecalho — so desktop (mobile ja tem logo+toggle no hero acima) */}
+        <div className="hidden lg:flex items-center justify-end px-10 py-6">
           <LanguageToggle authMode />
         </div>
 
-        <div className="flex-1 flex flex-col items-center justify-center px-6 py-6">
-          <div className="w-full max-w-sm">
+        <div className="flex-1 flex flex-col items-center justify-start lg:justify-center px-6 pb-6 pt-7 lg:py-6">
+          <div className="w-full max-w-sm -mt-9 sm:-mt-10 lg:mt-0 bg-white rounded-2xl lg:rounded-none lg:bg-transparent shadow-lg lg:shadow-none p-6 lg:p-0">
             {children}
           </div>
         </div>
