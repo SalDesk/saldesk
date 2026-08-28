@@ -28,6 +28,7 @@ const {
   callWaiter,
   createOrder,
   listIslands,
+  listLandmarks,
   getCmsPublic,
 } = require('../controllers/publicController');
 const { publicInitSisp, publicPaypalClientId, publicCreatePaypalIntent, publicConfirmPaypalPayment } = require('../controllers/paymentController');
@@ -40,6 +41,7 @@ const { publicLimiter, authLimiter, chatLimiter } = require('../middleware/rateL
 router.get('/impact',              getImpact);
 router.get('/site-status',         getSiteStatus);
 router.get('/islands',             listIslands);
+router.get('/landmarks',           listLandmarks);
 
 /* ─── Discover / directorio ─── */
 router.get('/discover',            discover);

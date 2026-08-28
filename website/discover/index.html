@@ -161,6 +161,13 @@
     .act-footer{display:flex;gap:8px;align-items:center}
     .act-footer .btn-book{flex:1}
 
+    /* ── PONTOS TURÍSTICOS ── */
+    .poi-related{border-top:1px solid var(--line);padding-top:10px;margin-top:auto}
+    .poi-related-label{display:block;font-family:var(--fm);font-size:.625rem;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--tx-faint);margin-bottom:6px}
+    .poi-related-list{display:flex;flex-wrap:wrap;gap:6px}
+    .poi-related-list a{font-family:var(--fb);font-size:.75rem;font-weight:600;color:var(--teal7);text-decoration:none;background:var(--teal0);border-radius:8px;padding:4px 9px}
+    .poi-related-list a:hover{background:var(--teal1)}
+
     #load-more-wrap{text-align:center;margin-top:36px}
 
     /* ── SKELETON ── */
@@ -514,6 +521,22 @@
   </div>
 </section>
 
+<!-- PONTOS TURÍSTICOS — conteúdo editorial, sem reserva, cobre as 9 ilhas de
+     Cabo Verde. Fica escondida por omissão e só aparece se a API devolver
+     dados reais (loadPois()) -- nunca mostra uma secção vazia. -->
+<section class="section fade-up" id="poi-section" style="display:none">
+  <div class="container">
+    <div class="act-header fade-up">
+      <div>
+        <div class="sl"><span class="pt">Descobrir Cabo Verde</span><span class="en">Discover Cabo Verde</span></div>
+        <h2 class="st"><span class="pt">Pontos Turísticos</span><span class="en">Points of Interest</span></h2>
+      </div>
+    </div>
+    <div class="chips-wrap" id="poi-chips-grid" style="margin-bottom:24px"></div>
+    <div class="act-grid" id="poi-grid"></div>
+  </div>
+</section>
+
 <!-- FOOTER -->
 <footer>
   <div class="container">
@@ -533,6 +556,7 @@
           <li><a href="/"><span class="pt">Inicio</span><span class="en">Home</span></a></li>
           <li><a href="#featured-section"><span class="pt">Destaques</span><span class="en">Featured</span></a></li>
           <li><a href="#activities-section"><span class="pt">Directorio</span><span class="en">Directory</span></a></li>
+          <li><a href="#poi-section"><span class="pt">Pontos Turísticos</span><span class="en">Points of Interest</span></a></li>
         </ul>
       </div>
       <div class="footer-col">
@@ -597,6 +621,12 @@ let featuredItems = [];
 let visible    = PER_PAGE;
 let currency   = 'EUR';
 let activeFilter = ''; // chave estavel (label PT da categoria, ou tipo)
+
+/* Pontos turisticos (cms_landmarks) -- conteudo editorial independente dos
+   servicos reservaveis acima, com o seu proprio filtro por ilha. */
+let poiItems       = [];
+let poiFiltered    = [];
+let poiActiveIsland = '';
 
 /* Ponte de sessao com a conta de viajante (app.saldesk.cv) -- ver
    bootstrapTravelerSession(). null enquanto anonimo ou nao verificado
@@ -741,6 +771,164 @@ function imgBlock(item) {
   }
   const icon = TYPE_ICON[item.operator_type] || TYPE_ICON.activity;
   return `<div class="img-mono"><svg width="46" height="46" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">${icon}</svg></div>`;
+}
+
+/* ══════════════════════════════════════════
+   PONTOS TURÍSTICOS — Conteúdo editorial (cms_landmarks), sem preço,
+   sem reserva, cobre as 9 ilhas de Cabo Verde.
+══════════════════════════════════════════ */
+const POI_TYPE_LABEL = {
+  praia:     { pt: 'Praia',     en: 'Beach' },
+  natureza:  { pt: 'Natureza',  en: 'Nature' },
+  historico: { pt: 'Histórico', en: 'Historic' },
+  miradouro: { pt: 'Miradouro', en: 'Viewpoint' },
+  cultura:   { pt: 'Cultura',   en: 'Culture' },
+};
+const POI_TYPE_ICON = {
+  praia:     '<path d="M2 21c2-2 4-2 6 0s4 2 6 0 4-2 6 0"/><path d="M2 16c2-2 4-2 6 0s4 2 6 0 4-2 6 0"/><line x1="12" y1="3" x2="12" y2="12"/><path d="M8 6l4-3 4 3"/>',
+  natureza:  '<path d="M12 2 3 14h6l-3 8 12-14h-6z"/>',
+  historico: '<path d="M3 21h18"/><path d="M5 21V9l7-5 7 5v12"/><line x1="9" y1="21" x2="9" y2="12"/><line x1="15" y1="21" x2="15" y2="12"/>',
+  miradouro: '<circle cx="12" cy="12" r="3"/><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7-10-7-10-7z"/>',
+  cultura:   '<path d="M4 22V8l8-5 8 5v14"/><path d="M9 22v-8h6v8"/>',
+};
+/* 9 ilhas fixas -- mesma lista ja seedada em islands (database/053_islands_expand.sql),
+   hardcoded aqui tal como TYPE_ICON/TRANSMISSION_LABEL acima, para evitar um
+   pedido de rede extra so para nomes que nunca mudam. */
+const ISLAND_LABEL = {
+  'sal':          { pt: 'Ilha do Sal',  en: 'Sal Island' },
+  'santiago':     { pt: 'Santiago',     en: 'Santiago' },
+  'sao-vicente':  { pt: 'São Vicente',  en: 'São Vicente' },
+  'santo-antao':  { pt: 'Santo Antão',  en: 'Santo Antão' },
+  'fogo':         { pt: 'Fogo',         en: 'Fogo' },
+  'brava':        { pt: 'Brava',        en: 'Brava' },
+  'maio':         { pt: 'Maio',         en: 'Maio' },
+  'boa-vista':    { pt: 'Boa Vista',    en: 'Boa Vista' },
+  'sao-nicolau':  { pt: 'São Nicolau',  en: 'São Nicolau' },
+};
+
+function poiImgBlock(item) {
+  if (item.image_url) {
+    return `<img src="${esc(item.image_url)}" alt="${esc(item.name_pt)}" loading="lazy" />`;
+  }
+  const icon = POI_TYPE_ICON[item.type] || POI_TYPE_ICON.natureza;
+  return `<div class="img-mono"><svg width="46" height="46" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">${icon}</svg></div>`;
+}
+
+function namesMatch(a, b) {
+  if (!a || !b) return false;
+  a = a.toLowerCase().trim(); b = b.toLowerCase().trim();
+  return !!a && !!b && (a.includes(b) || b.includes(a));
+}
+
+/* Operadores relacionados com um ponto turistico -- SEM pedido novo ao
+   backend, calculado a partir dos dados de /discover-units ja carregados
+   (variavel "operators"). Prioridade 1: unidades cujo itinerario (stops,
+   ver ServiceDetail.jsx) mencione este local pelo nome -- correspondencia
+   real e especifica. Sem nenhuma, cai no fallback honesto: ate 3
+   operadores da mesma ilha, nunca inventa uma relacao que nao existe. */
+function relatedOperatorsFor(poi) {
+  const seen = new Set();
+  const stopMatches = [];
+  operators.forEach(item => {
+    if (seen.has(item.operator_slug) || !item.description || item.description[0] !== '{') return;
+    let meta;
+    try { meta = JSON.parse(item.description); } catch { return; }
+    const stops = Array.isArray(meta.stops) ? meta.stops : [];
+    const hit = stops.some(s =>
+      namesMatch(s.name, poi.name_pt) || namesMatch(s.name_en, poi.name_en) ||
+      namesMatch(s.name, poi.name_en) || namesMatch(s.name_en, poi.name_pt));
+    if (hit) { seen.add(item.operator_slug); stopMatches.push(item); }
+  });
+  if (stopMatches.length) return stopMatches.slice(0, 3);
+
+  const sameIsland = [];
+  operators.forEach(item => {
+    if (seen.has(item.operator_slug) || item.island_slug !== poi.island_slug) return;
+    seen.add(item.operator_slug);
+    sameIsland.push(item);
+  });
+  sameIsland.sort((a, b) => (b.avg_rating || 0) - (a.avg_rating || 0) || (b.recent_bookings || 0) - (a.recent_bookings || 0));
+  return sameIsland.slice(0, 3);
+}
+
+function renderPoiCard(item) {
+  const lang    = L();
+  const name    = esc(lang === 'en' && item.name_en ? item.name_en : item.name_pt);
+  const desc    = esc(truncate(lang === 'en' && item.description_en ? item.description_en : item.description_pt, 130));
+  const howTo   = lang === 'en' && item.how_to_get_en ? item.how_to_get_en : item.how_to_get_pt;
+  const island  = ISLAND_LABEL[item.island_slug]?.[lang] || '';
+  const typeLbl = (POI_TYPE_LABEL[item.type] || {})[lang] || item.type || '';
+  const related = relatedOperatorsFor(item);
+
+  const relatedHtml = related.length ? `
+    <div class="poi-related">
+      <span class="poi-related-label"><span class="pt">Operadores nesta zona</span><span class="en">Operators in this area</span></span>
+      <div class="poi-related-list">
+        ${related.map(op => `<a href="${APP}/book/${esc(op.operator_slug)}" target="_blank" rel="noopener">${esc(op.operator_name)}</a>`).join('')}
+      </div>
+    </div>` : '';
+
+  return `
+    <div class="act-card card fade-up">
+      <div class="act-img img-block">${poiImgBlock(item)}</div>
+      <div class="act-body">
+        <div class="act-rating-row" style="justify-content:space-between">
+          <span class="tb">${esc(typeLbl)}</span>
+          ${island ? `<span style="font-family:var(--fm);font-size:.6875rem;color:var(--tx-faint);text-transform:uppercase;letter-spacing:.04em">${esc(island)}</span>` : ''}
+        </div>
+        <div class="act-name">${name}</div>
+        ${desc ? `<p class="act-desc" style="-webkit-line-clamp:3">${desc}</p>` : ''}
+        ${howTo ? `<p style="font-size:.75rem;color:var(--tx-faint);margin-bottom:12px">${esc(howTo)}</p>` : ''}
+        ${relatedHtml}
+      </div>
+    </div>`;
+}
+
+function setPoiFilter(slug) {
+  poiActiveIsland = slug;
+  renderPoiChips();
+  applyPoiFilters();
+}
+
+function renderPoiChips() {
+  const grid = document.getElementById('poi-chips-grid');
+  if (!grid) return;
+  const counts = {};
+  poiItems.forEach(item => { counts[item.island_slug] = (counts[item.island_slug] || 0) + 1; });
+  const islands = Object.keys(counts).sort((a, b) =>
+    (ISLAND_LABEL[a]?.pt || a).localeCompare(ISLAND_LABEL[b]?.pt || b));
+
+  const allChip = `<button class="chip ${!poiActiveIsland ? 'active' : ''}" onclick="setPoiFilter('')">
+    <span class="pt">Todas as ilhas</span><span class="en">All islands</span> <span class="chip-count">${poiItems.length}</span>
+  </button>`;
+  grid.innerHTML = allChip + islands.map(slug => `
+    <button class="chip ${poiActiveIsland === slug ? 'active' : ''}" onclick="setPoiFilter('${slug}')">
+      ${esc(ISLAND_LABEL[slug]?.[L()] || slug)} <span class="chip-count">${counts[slug]}</span>
+    </button>`).join('');
+  if (L() === 'en') fixLang(grid);
+}
+
+function applyPoiFilters() {
+  poiFiltered = poiActiveIsland ? poiItems.filter(i => i.island_slug === poiActiveIsland) : poiItems;
+  renderPoiGrid();
+}
+
+function renderPoiGrid() {
+  const grid = document.getElementById('poi-grid');
+  if (!grid) return;
+  grid.innerHTML = poiFiltered.map(renderPoiCard).join('');
+  if (L() === 'en') fixLang(grid);
+}
+
+async function loadPois() {
+  const data = await apiFetch('/landmarks');
+  if (!data || !data.length) return; // secção fica escondida (display:none já no HTML)
+  poiItems    = data;
+  poiFiltered = [...poiItems];
+  const section = document.getElementById('poi-section');
+  if (section) section.style.display = '';
+  renderPoiChips();
+  renderPoiGrid();
 }
 
 function fmtPrice(price, opCur) {
@@ -1859,6 +2047,7 @@ async function init() {
 
   await loadServices();
   await loadFeatured();
+  await loadPois();
 
   const session = await sessionPromise;
   if (session) {

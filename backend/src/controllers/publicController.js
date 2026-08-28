@@ -1638,9 +1638,22 @@ async function listIslands(req, res, next) {
   } catch (err) { next(err); }
 }
 
+/* Pontos turisticos de Cabo Verde (cms_landmarks) -- conteudo editorial,
+   sem ligacao a operador/reserva. ?island=<slug> filtra por ilha. */
+async function listLandmarks(req, res, next) {
+  try {
+    let q = supabaseAdmin.from('cms_landmarks').select('*').order('name_pt');
+    if (req.query.island) q = q.eq('island_slug', req.query.island);
+    const { data, error } = await q;
+    if (error) throw error;
+    return res.json({ data: data || [] });
+  } catch (err) { next(err); }
+}
+
 module.exports = {
   getOperador,
   listIslands,
+  listLandmarks,
   trackView,
   verificarDisponibilidadePublica,
   getSlotAvailability,
