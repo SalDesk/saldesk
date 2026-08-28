@@ -1,6 +1,9 @@
 const { supabaseAdmin } = require('../config/supabase');
 const https = require('https');
-const { addFailedLogin } = require('../services/logStore');
+const {
+  addFailedLogin, MAX_LOGIN_ATTEMPTS,
+  recordFailedLoginAttempt, getLoginLockState, clearLoginLock,
+} = require('../services/logStore');
 const { enviarEmail } = require('../helpers/emailHelper');
 const { passwordResetEmail } = require('../helpers/emailTemplates');
 const { COOKIE_NAME, setTravelerSessionCookie, clearTravelerSessionCookie } = require('../helpers/travelerSessionCookie');
@@ -96,11 +99,39 @@ async function login(req, res, next) {
   try {
     const { email, password } = req.body;
 
+    /* Mesmo bloqueio real de conta usado em authController.js -- ver
+       comentario la para o porque (o "bloqueio" so existia no frontend
+       da app do operador; o login de viajante nao tinha sequer essa
+       versao falsa). Partilha o mesmo Map em logStore.js por email,
+       nao por tipo de conta -- coerente, ja que ambos vivem na mesma
+       pool de utilizadores Supabase Auth. */
+    const lockState = getLoginLockState(email);
+    if (lockState.lockedUntil > Date.now()) {
+      return res.status(423).json({
+        error: 'Conta temporariamente bloqueada por demasiadas tentativas falhadas',
+        code: 'ACCOUNT_LOCKED',
+        retry_after_seconds: Math.ceil((lockState.lockedUntil - Date.now()) / 1000),
+      });
+    }
+
     const authJson = await supabaseTokenRequest('password', { email, password });
     if (!authJson.access_token || authJson.error) {
       addFailedLogin({ ip: req.ip || '', email: email || '' });
-      return res.status(401).json({ error: 'Credenciais invalidas', code: 'INVALID_CREDENTIALS' });
+      const newState = recordFailedLoginAttempt(email);
+      if (newState.lockedUntil > Date.now()) {
+        return res.status(423).json({
+          error: 'Conta temporariamente bloqueada por demasiadas tentativas falhadas',
+          code: 'ACCOUNT_LOCKED',
+          retry_after_seconds: Math.ceil((newState.lockedUntil - Date.now()) / 1000),
+        });
+      }
+      return res.status(401).json({
+        error: 'Credenciais invalidas',
+        code: 'INVALID_CREDENTIALS',
+        attempts_remaining: Math.max(0, MAX_LOGIN_ATTEMPTS - newState.count),
+      });
     }
+    clearLoginLock(email);
 
     const { data: traveler } = await supabaseAdmin
       .from('travelers')

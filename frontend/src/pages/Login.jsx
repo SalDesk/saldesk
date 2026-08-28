@@ -10,27 +10,16 @@ import Input from '../components/ui/Input';
 import Button from '../components/ui/Button';
 import Logo from '../components/shared/Logo';
 
-/* ── Rate limiting (localStorage) ── */
-const MAX_ATTEMPTS     = 5;
-const LOCKOUT_MINUTES  = 15;
-const WARN_AFTER       = 3;
-
-function rateLimitKey(email) { return `saldesk_login_attempts_${email.toLowerCase().trim()}`; }
-
-function getRateState(email) {
-  if (!email) return { count: 0, lockedUntil: 0 };
-  try {
-    return JSON.parse(localStorage.getItem(rateLimitKey(email)) || '{"count":0,"lockedUntil":0}');
-  } catch { return { count: 0, lockedUntil: 0 }; }
-}
-
-function setRateState(email, state) {
-  localStorage.setItem(rateLimitKey(email), JSON.stringify(state));
-}
-
-function clearRateState(email) {
-  localStorage.removeItem(rateLimitKey(email));
-}
+/* ── Bloqueio de conta ──
+   O bloqueio real agora vive no servidor (authController.js) -- este
+   ficheiro so reflecte o que a API responde (423 ACCOUNT_LOCKED /
+   401 com attempts_remaining), nunca decide sozinho. Antes disto, todo
+   o "bloqueio" vivia so aqui em localStorage e dava para contornar com
+   um pedido directo a API (curl, Postman, etc.). MAX_ATTEMPTS/WARN_AFTER
+   ficam so como constantes de apresentacao, espelhando o que o backend
+   usa (logStore.js), para a mensagem de aviso bater certo. */
+const MAX_ATTEMPTS = 5;
+const WARN_AFTER    = 3;
 
 function isLocked(state) {
   return state.lockedUntil > Date.now();
@@ -38,19 +27,6 @@ function isLocked(state) {
 
 function remainingSeconds(state) {
   return Math.max(0, Math.ceil((state.lockedUntil - Date.now()) / 1000));
-}
-
-function recordFailedAttempt(email) {
-  const state = getRateState(email);
-  const newCount = state.count + 1;
-  const newState = {
-    count: newCount,
-    lockedUntil: newCount >= MAX_ATTEMPTS
-      ? Date.now() + LOCKOUT_MINUTES * 60 * 1000
-      : 0,
-  };
-  setRateState(email, newState);
-  return newState;
 }
 
 /* Cartao base reutilizado nos 3 modos (login / forgot / forgot-sent) */
@@ -100,24 +76,16 @@ export default function Login() {
     }
   }, [token, navigate]);
 
-  /* Update rate state when email changes */
-  useEffect(() => {
-    if (!form.email) return;
-    const state = getRateState(form.email);
+  function startCountdown(lockedUntil) {
+    const state = { count: MAX_ATTEMPTS, lockedUntil };
     setRateStateLocal(state);
-    if (isLocked(state)) startCountdown(state);
-  }, [form.email]);
-
-  function startCountdown(state) {
-    const secs = remainingSeconds(state);
-    setCountdown(secs);
+    setCountdown(remainingSeconds(state));
     if (countdownRef.current) clearInterval(countdownRef.current);
     countdownRef.current = setInterval(() => {
       setCountdown(prev => {
         if (prev <= 1) {
           clearInterval(countdownRef.current);
           setRateStateLocal({ count: 0, lockedUntil: 0 });
-          clearRateState(form.email);
           return 0;
         }
         return prev - 1;
@@ -137,13 +105,12 @@ export default function Login() {
     e.preventDefault();
     setError('');
 
-    const state = getRateState(form.email);
-    if (isLocked(state)) return;
+    if (isLocked(rateState)) return;
 
     setLoading(true);
     try {
       const result = await login(form.email, form.password);
-      clearRateState(form.email);
+      setRateStateLocal({ count: 0, lockedUntil: 0 });
       setRememberDevice(remember);
       setAuth(result.access_token, result.user, result.operator, result.refresh_token);
       if (result.user?.user_metadata?.role === 'FUNDADOR') {
@@ -155,16 +122,19 @@ export default function Login() {
       } else {
         navigate(result.operator?.onboarding_complete ? '/dashboard' : '/onboarding');
       }
-    } catch {
-      /* Always show a generic message — never reveal if email exists */
-      const newState = recordFailedAttempt(form.email);
-      setRateStateLocal(newState);
-      if (isLocked(newState)) {
-        startCountdown(newState);
-        setError(t('auth.accountLocked', { min: LOCKOUT_MINUTES }));
+    } catch (err) {
+      /* O bloqueio real vem sempre do servidor (authController.js) --
+         nunca decidido so no browser, para nao ser contornavel com um
+         pedido directo a API. */
+      const body = err?.response?.data;
+      if (body?.code === 'ACCOUNT_LOCKED') {
+        const lockedUntil = Date.now() + (body.retry_after_seconds || 0) * 1000;
+        startCountdown(lockedUntil);
+        setError(t('auth.accountLocked', { min: Math.ceil((body.retry_after_seconds || 0) / 60) }));
       } else {
-        const remaining = MAX_ATTEMPTS - newState.count;
-        setError(`${t('auth.invalidCredentials')}${remaining <= (MAX_ATTEMPTS - WARN_AFTER) ? ` ${t('auth.attemptsRemaining', { n: remaining })}` : ''}`);
+        const remaining = body?.attempts_remaining;
+        setRateStateLocal({ count: remaining != null ? MAX_ATTEMPTS - remaining : 0, lockedUntil: 0 });
+        setError(`${t('auth.invalidCredentials')}${remaining != null && remaining <= (MAX_ATTEMPTS - WARN_AFTER) ? ` ${t('auth.attemptsRemaining', { n: remaining })}` : ''}`);
       }
     } finally {
       setLoading(false);

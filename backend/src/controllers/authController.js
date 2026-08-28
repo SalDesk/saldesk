@@ -1,6 +1,9 @@
 const { supabaseAdmin, supabaseAnon } = require('../config/supabase');
 const https = require('https');
-const { addFailedLogin } = require('../services/logStore');
+const {
+  addFailedLogin, MAX_LOGIN_ATTEMPTS,
+  recordFailedLoginAttempt, getLoginLockState, clearLoginLock,
+} = require('../services/logStore');
 const { enviarEmail } = require('../helpers/emailHelper');
 const { passwordResetEmail } = require('../helpers/emailTemplates');
 
@@ -114,11 +117,37 @@ async function login(req, res, next) {
   try {
     const { email, password } = req.body;
 
+    /* Bloqueio real de conta -- antes disto so existia no frontend
+       (localStorage), contornavel com um pedido directo a esta rota.
+       Verificado ANTES de chamar o Supabase, para nao gastar tentativas
+       de autenticacao contra uma conta ja bloqueada. */
+    const lockState = getLoginLockState(email);
+    if (lockState.lockedUntil > Date.now()) {
+      return res.status(423).json({
+        error: 'Conta temporariamente bloqueada por demasiadas tentativas falhadas',
+        code: 'ACCOUNT_LOCKED',
+        retry_after_seconds: Math.ceil((lockState.lockedUntil - Date.now()) / 1000),
+      });
+    }
+
     const authJson = await supabaseTokenRequest('password', { email, password });
     if (!authJson.access_token || authJson.error) {
       addFailedLogin({ ip: req.ip || '', email: email || '' });
-      return res.status(401).json({ error: 'Credenciais invalidas', code: 'INVALID_CREDENTIALS' });
+      const newState = recordFailedLoginAttempt(email);
+      if (newState.lockedUntil > Date.now()) {
+        return res.status(423).json({
+          error: 'Conta temporariamente bloqueada por demasiadas tentativas falhadas',
+          code: 'ACCOUNT_LOCKED',
+          retry_after_seconds: Math.ceil((newState.lockedUntil - Date.now()) / 1000),
+        });
+      }
+      return res.status(401).json({
+        error: 'Credenciais invalidas',
+        code: 'INVALID_CREDENTIALS',
+        attempts_remaining: Math.max(0, MAX_LOGIN_ATTEMPTS - newState.count),
+      });
     }
+    clearLoginLock(email);
     const data = {
       session: { access_token: authJson.access_token, refresh_token: authJson.refresh_token },
       user: authJson.user,

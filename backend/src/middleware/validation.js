@@ -12,11 +12,26 @@ function validate(schema) {
   };
 }
 
+/* Mesma regra ja mostrada (so visualmente, ate agora) em
+   PasswordStrength.jsx: 8+ caracteres, 1 maiuscula, 1 numero,
+   1 caracter especial. O backend so exigia min(6) sem mais nada --
+   o ecra prometia uma politica que a API nunca aplicava a serio. */
+const strongPassword = Joi.string()
+  .min(8)
+  .pattern(/[A-Z]/, 'letra maiuscula')
+  .pattern(/[0-9]/, 'numero')
+  .pattern(/[^A-Za-z0-9]/, 'caracter especial')
+  .required()
+  .messages({
+    'string.min': '"password" deve ter pelo menos 8 caracteres',
+    'string.pattern.name': '"password" deve conter pelo menos 1 {#name}',
+  });
+
 const schemas = {
   register: Joi.object({
     name:        Joi.string().min(2).max(100).required(),
     email:       Joi.string().email().required(),
-    password:    Joi.string().min(6).required(),
+    password:    strongPassword,
     invite_code: Joi.string().trim().optional().allow(''),
   }),
   login: Joi.object({
@@ -27,12 +42,16 @@ const schemas = {
     code: Joi.string().trim().required(),
   }),
   changePassword: Joi.object({
-    password: Joi.string().min(6).required(),
+    password: strongPassword,
+  }),
+  resetPassword: Joi.object({
+    token:    Joi.string().required(),
+    password: strongPassword,
   }),
   travelerRegister: Joi.object({
     name:     Joi.string().min(2).max(100).required(),
     email:    Joi.string().email().required(),
-    password: Joi.string().min(6).required(),
+    password: strongPassword,
     phone:    Joi.string().trim().optional().allow(''),
   }),
   travelerProfile: Joi.object({

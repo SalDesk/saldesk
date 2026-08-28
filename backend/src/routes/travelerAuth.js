@@ -9,7 +9,7 @@ router.post('/register', authLimiter, validate(schemas.travelerRegister), regist
 router.post('/login',    authLimiter, login);
 router.post('/oauth-complete', authLimiter, oauthComplete);
 router.post('/refresh',  authLimiter, refresh);
-router.post('/reset-password', authLimiter, resetPassword);
+router.post('/reset-password', authLimiter, validate(schemas.resetPassword), resetPassword);
 router.post('/forgot-password', authLimiter, forgotPassword);
 router.get('/me',        authLimiter, authMiddleware, getMe);
 router.post('/logout',   authLimiter, authMiddleware, logout);

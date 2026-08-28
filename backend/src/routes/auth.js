@@ -8,7 +8,7 @@ router.post('/register', validate(schemas.register), register);
 router.post('/login',    login);
 router.post('/refresh',  refresh);
 router.post('/validate-invite', validate(schemas.validateInvite), validateInvite);
-router.post('/reset-password', resetPassword);
+router.post('/reset-password', validate(schemas.resetPassword), resetPassword);
 router.post('/forgot-password', forgotPassword);
 router.get('/me',        authMiddleware, getMe);
 router.post('/logout',   authMiddleware, logout);
