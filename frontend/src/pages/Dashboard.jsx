@@ -1248,10 +1248,20 @@ function weekDays() {
 
 const DATE_LOCALE = { pt: 'pt-PT', en: 'en-GB', de: 'de-DE', nl: 'nl-NL' };
 
+/* Abreviaturas fixas por idioma, em vez de Intl -- o formato 'short' do
+   Intl para pt-PT devolve nomes completos ("SEXTA", "SABADO"), grandes
+   demais para a celula compacta do dia; isto garante sempre 3 letras. */
+const WEEKDAY_ABBR = {
+  pt: ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sab'],
+  en: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
+  de: ['So',  'Mo',  'Di',  'Mi',  'Do',  'Fr',  'Sa'],
+  nl: ['Zo',  'Ma',  'Di',  'Wo',  'Do',  'Vr',  'Za'],
+};
+
 function formatDayShort(dateStr, lang) {
   const d = new Date(dateStr + 'T00:00:00Z');
   return {
-    weekday: d.toLocaleDateString(DATE_LOCALE[lang] || 'pt-PT', { weekday: 'short', timeZone: 'UTC' }).replace('.', '').toUpperCase(),
+    weekday: (WEEKDAY_ABBR[lang] || WEEKDAY_ABBR.pt)[d.getUTCDay()],
     day: d.getUTCDate(),
   };
 }
