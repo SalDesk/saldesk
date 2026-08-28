@@ -3,7 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import useAuthStore from './store/authStore';
 import Layout from './components/layout/Layout';
 import PlanGuard from './components/PlanGuard';
-import { isVendedor, isStaff } from './utils/userRoles';
+import { isVendedor, isStaff, isFounder } from './utils/userRoles';
 import TravelerProtectedRoute from './components/traveler/TravelerProtectedRoute';
 
 // Eager — critical path, must load instantly
@@ -97,6 +97,12 @@ function ProtectedRoute({ children }) {
 function OnboardingGuard({ children }) {
   const { token, operator, user } = useAuthStore();
   if (!token) return <Navigate to="/login" replace />;
+  /* Um utilizador com role FUNDADOR pode tambem ter uma linha propria em
+     operators (ex. usada como conta de demo/teste) -- sem esta verificacao,
+     aceder a "/" directamente (sessao ja persistida, sem passar pelo
+     formulario de Login.jsx que ja tem este mesmo check) caia sempre no
+     Dashboard normal do operador em vez do painel /admin. */
+  if (isFounder(user)) return <Navigate to="/admin" replace />;
   if (isVendedor(user)) return <Navigate to="/vendedor" replace />;
   if (isStaff(user)) return <Navigate to="/staff" replace />;
   if (!operator?.onboarding_complete) return <Navigate to="/onboarding" replace />;
