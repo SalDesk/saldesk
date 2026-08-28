@@ -83,8 +83,19 @@ const AdminSystem     = lazy(() => import('./pages/admin/AdminSystem'));
 
 function AppLoader() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-n-50">
-      <div className="w-8 h-8 border-2 border-ocean-700 border-t-transparent rounded-full animate-spin" />
+    <div className="min-h-screen flex flex-col items-center justify-center gap-8 bg-ocean-900">
+      <div className="splash-mark flex flex-col items-center">
+        <div className="flex items-end gap-1">
+          <span className="font-display font-extrabold text-4xl leading-none tracking-tight text-white">SAL</span>
+          <span className="splash-dot w-2.5 h-2.5 mb-1 bg-sand-400 rounded-[2px]" />
+        </div>
+        <span className="font-display font-extrabold text-4xl leading-none tracking-tight text-white -mt-1">DESK</span>
+      </div>
+      <div className="splash-beat flex items-center gap-1.5" role="status" aria-label="A carregar">
+        <span className="w-1.5 h-1.5 rounded-full bg-sand-400" />
+        <span className="w-1.5 h-1.5 rounded-full bg-sand-400" />
+        <span className="w-1.5 h-1.5 rounded-full bg-sand-400" />
+      </div>
     </div>
   );
 }

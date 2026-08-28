@@ -54,3 +54,35 @@
 .sidebar-scroll::-webkit-scrollbar-thumb:hover {
   background-color: rgba(255, 255, 255, 0.32);
 }
+
+/* Splash de arranque (AppLoader, App.jsx) — entrada da marca ao abrir a app,
+   sobretudo notavel no lançamento do PWA instalado (ecra cheio, sem chrome
+   de browser a esconder o instante). Sem @media abaixo, os elementos
+   ficariam presos no estado inicial (opacity:0) -- por isso a animacao
+   corre sempre que o utilizador nao pediu movimento reduzido. */
+@media (prefers-reduced-motion: no-preference) {
+  .splash-mark {
+    animation: splash-rise 560ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+  .splash-dot {
+    animation: splash-pop 420ms cubic-bezier(0.34, 1.56, 0.64, 1) 340ms both;
+  }
+  .splash-beat > span {
+    animation: splash-beat 1200ms ease-in-out infinite both;
+  }
+  .splash-beat > span:nth-child(2) { animation-delay: 150ms; }
+  .splash-beat > span:nth-child(3) { animation-delay: 300ms; }
+}
+@keyframes splash-rise {
+  from { opacity: 0; transform: translateY(10px) scale(.95); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes splash-pop {
+  0%   { opacity: 0; transform: scale(0); }
+  60%  { opacity: 1; transform: scale(1.25); }
+  100% { opacity: 1; transform: scale(1); }
+}
+@keyframes splash-beat {
+  0%, 80%, 100% { opacity: .3; transform: translateY(0); }
+  40%           { opacity: 1;  transform: translateY(-3px); }
+}
