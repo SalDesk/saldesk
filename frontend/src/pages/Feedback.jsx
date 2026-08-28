@@ -257,7 +257,7 @@ export default function Feedback() {
                         return (
                           <tr key={r.id} className="hover:bg-n-50 transition-colors">
                             <td className="py-3 px-4 font-body font-semibold text-n-900 whitespace-nowrap">
-                              {r.customers?.first_name || r.customer_name || '—'} {r.customers?.last_name || ''}
+                              {r.customers?.name || r.customer_name || '—'}
                             </td>
                             <td className="py-3 px-4 font-body text-n-600 max-w-[160px] truncate">
                               {r.units?.name || r.unit_name || '—'}

@@ -239,9 +239,7 @@ export default function Weather() {
                             {r.units?.name || r.unit_name || 'Tour'}
                           </p>
                           <p className="text-xs font-body text-n-500 mt-0.5">
-                            {r.customers
-                              ? `${r.customers.first_name} ${r.customers.last_name}`
-                              : r.customer_name || '—'}
+                            {r.customers?.name || r.customer_name || '—'}
                           </p>
                         </div>
                         <div className="flex items-center gap-1 shrink-0">

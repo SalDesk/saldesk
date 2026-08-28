@@ -62,7 +62,7 @@ function StarBreakdown({ distribution, total }) {
 /* ── Review card ── */
 function ReviewCard({ review, onReply }) {
   const unitName = review.reservations?.units?.name || review.units?.name;
-  const customer = [review.customers?.first_name, review.customers?.last_name].filter(Boolean).join(' ');
+  const customer = review.customers?.name || '';
   const country  = review.customers?.country_code;
 
   return (
@@ -175,7 +175,7 @@ export default function Reviews() {
       const q = search.toLowerCase();
       list = list.filter(r =>
         (r.comment || '').toLowerCase().includes(q) ||
-        (`${r.customers?.first_name || ''} ${r.customers?.last_name || ''}`).toLowerCase().includes(q)
+        (r.customers?.name || '').toLowerCase().includes(q)
       );
     }
 

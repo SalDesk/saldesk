@@ -41,7 +41,7 @@ async function listar(req, res, next) {
     const { is_public, min_rating } = req.query;
     let q = supabaseAdmin
       .from('reviews')
-      .select('*, reservations(check_in, check_out, units(name)), customers(first_name, last_name, country_code)')
+      .select('*, reservations(check_in, check_out, units(name)), customers(name, country_code)')
       .eq('operator_id', req.operator.id)
       .order('created_at', { ascending: false });
     if (is_public !== undefined) q = q.eq('is_public', is_public === 'true');
@@ -172,7 +172,7 @@ async function publicReviews(req, res, next) {
     if (!op) return res.status(404).json({ error: 'Operador nao encontrado', code: 'NOT_FOUND' });
     const { data, error } = await supabaseAdmin
       .from('reviews')
-      .select('rating, comment, reply_text, replied_at, created_at, customers(first_name, country_code)')
+      .select('rating, comment, reply_text, replied_at, created_at, customers(name, country_code)')
       .eq('operator_id', op.id).eq('is_public', true).not('rating', 'is', null).not('review_token', 'not.is', null)
       .order('created_at', { ascending: false }).limit(20);
     if (error) throw error;
