@@ -27,9 +27,15 @@ function useIsDesktop() {
   );
   useEffect(() => {
     const mql = window.matchMedia('(min-width: 1024px)');
+    /* Confirma outra vez logo apos montar -- o valor lido no useState acima
+       pode estar desactualizado se o viewport ainda estiver a estabilizar
+       no exacto instante do primeiro render (ex: troca rapida de tamanho
+       de janela mesmo antes da navegacao). */
+    if (mql.matches !== isDesktop) setIsDesktop(mql.matches);
     const onChange = (e) => setIsDesktop(e.matches);
     mql.addEventListener('change', onChange);
     return () => mql.removeEventListener('change', onChange);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   return isDesktop;
 }
