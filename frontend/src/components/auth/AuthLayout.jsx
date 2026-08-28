@@ -15,8 +15,28 @@ const BEACH_IMAGES = [
   '/images/hero-buracona.jpg',
 ];
 
+/* min-width:1024px == breakpoint "lg" do Tailwind -- tem de bater certo
+   com as classes lg: usadas neste ficheiro. Le com matchMedia em vez de
+   depender so de CSS porque o carrossel de imagens (painel esquerdo vs.
+   faixa movel) so deve montar UM dos dois -- com "hidden"/"lg:hidden"
+   os dois ficam sempre no DOM e o browser pede as 5 fotos em duplicado
+   (10 pedidos) em todos os carregamentos, mesmo so um estar visivel. */
+function useIsDesktop() {
+  const [isDesktop, setIsDesktop] = useState(
+    () => typeof window !== 'undefined' && window.matchMedia('(min-width: 1024px)').matches
+  );
+  useEffect(() => {
+    const mql = window.matchMedia('(min-width: 1024px)');
+    const onChange = (e) => setIsDesktop(e.matches);
+    mql.addEventListener('change', onChange);
+    return () => mql.removeEventListener('change', onChange);
+  }, []);
+  return isDesktop;
+}
+
 export default function AuthLayout({ children }) {
   const t = useT();
+  const isDesktop = useIsDesktop();
   const [imgIdx, setImgIdx] = useState(0);
 
   useEffect(() => {
@@ -26,7 +46,8 @@ export default function AuthLayout({ children }) {
 
   return (
     <div className="min-h-screen flex bg-white">
-      {/* ── Painel esquerdo — marca + fotos reais (escondido em mobile) ── */}
+      {/* ── Painel esquerdo — marca + fotos reais (so desktop, ver useIsDesktop) ── */}
+      {isDesktop && (
       <div className="hidden lg:flex lg:w-[46%] xl:w-1/2 relative overflow-hidden bg-ocean-900 shrink-0">
         {BEACH_IMAGES.map((src, i) => (
           <div
@@ -69,13 +90,16 @@ export default function AuthLayout({ children }) {
           </div>
         </div>
       </div>
+      )}
 
       {/* ── Painel direito — formulario ── */}
       <div className="flex-1 flex flex-col min-h-screen">
-        {/* Hero compacto — so mobile/tablet (em lg+ o painel esquerdo ja cobre isto).
-            Substitui o antigo cabecalho vazio (so logo + toggle, muito espaco em
-            branco por baixo) por uma faixa com foto real + tagline + stats, para
-            o mobile nao ficar visualmente pobre comparado ao desktop. */}
+        {/* Hero compacto — so mobile/tablet (em lg+ o painel esquerdo ja cobre isto,
+            ver useIsDesktop acima). Substitui o antigo cabecalho vazio (so logo +
+            toggle, muito espaco em branco por baixo) por uma faixa com foto real +
+            tagline + stats, para o mobile nao ficar visualmente pobre comparado ao
+            desktop. */}
+        {!isDesktop && (
         <div className="lg:hidden relative h-56 sm:h-64 overflow-hidden bg-ocean-900 shrink-0">
           {BEACH_IMAGES.map((src, i) => (
             <div
@@ -105,6 +129,7 @@ export default function AuthLayout({ children }) {
             </div>
           </div>
         </div>
+        )}
 
         {/* Cabecalho — so desktop (mobile ja tem logo+toggle no hero acima) */}
         <div className="hidden lg:flex items-center justify-end px-10 py-6">
