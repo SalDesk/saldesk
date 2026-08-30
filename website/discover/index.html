@@ -2026,6 +2026,10 @@ function setLang(lang) {
     updateActCount();
   }
   renderFeatured();
+  if (poiItems.length) {
+    renderPoiChips();
+    renderPoiGrid();
+  }
 }
 
 document.getElementById('langToggle').addEventListener('click', () => {
