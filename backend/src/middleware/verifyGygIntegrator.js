@@ -53,8 +53,7 @@ function verifyGygIntegrator(req, res, next) {
 
   const valido =
     matchesPair(providedUser, providedPass, 'GYG_INTEGRATOR_SANDBOX_USERNAME',    'GYG_INTEGRATOR_SANDBOX_PASSWORD') ||
-    matchesPair(providedUser, providedPass, 'GYG_INTEGRATOR_PRODUCTION_USERNAME', 'GYG_INTEGRATOR_PRODUCTION_PASSWORD') ||
-    matchesPair(providedUser, providedPass, 'GYG_INTEGRATOR_USERNAME',            'GYG_INTEGRATOR_PASSWORD');
+    matchesPair(providedUser, providedPass, 'GYG_INTEGRATOR_PRODUCTION_USERNAME', 'GYG_INTEGRATOR_PRODUCTION_PASSWORD');
 
   if (!valido) {
     return res.status(200).json({ errorCode: 'AUTHORIZATION_FAILURE', errorMessage: 'The provided authentication credentials are not valid.' });
