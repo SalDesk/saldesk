@@ -429,6 +429,22 @@ section[id]{scroll-margin-top:80px}
   transition:background .15s;
 }
 .footer-wa:hover{background:rgba(37,211,102,.15)}
+/* Logos reais das marcas de pagamento aceites (fornecidos pela SISP,
+   Pacote de desenvolvimento 4.6) -- exigido pelo checklist de validacao
+   de site da SISP. Mesma logica ja usada em discover/index.html: chip
+   branco por baixo do Vinti4/Visa/Amex (ficheiros com fundo branco
+   solido, o .jpg da Amex nem sequer suporta transparencia), Mastercard
+   sem chip e maior porque o seu "ID Check" vem em branco (pensado para
+   fundo escuro, invisivel dentro de um chip branco). */
+.payment-logos{
+  max-width:1100px;margin:0 auto;padding:24px 24px 0;
+  border-top:1px solid rgba(255,255,255,.06);
+  display:flex;align-items:center;gap:14px;flex-wrap:wrap;
+}
+.payment-logos span{font-size:.78rem;color:rgba(255,255,255,.35);white-space:nowrap;margin-right:2px}
+.payment-logos .plogo{background:#fff;border-radius:6px;padding:5px 9px;display:flex;align-items:center}
+.payment-logos img{height:16px;width:auto;display:block}
+.payment-logos .plogo-mc img{height:22px}
 @media (max-width:800px){
   .footer-inner{grid-template-columns:1fr 1fr;}
 }
@@ -871,6 +887,13 @@ section[id]{scroll-margin-top:80px}
         </a>
       </div>
     </div>
+  </div>
+  <div class="payment-logos">
+    <span class="pt">Pagamentos aceites:</span><span class="en">Accepted payments:</span>
+    <span class="plogo"><img src="/payment-logos/vinti4.png" alt="SISP Vinti4"></span>
+    <span class="plogo-mc"><img src="/payment-logos/mastercard.png" alt="Mastercard ID Check"></span>
+    <span class="plogo"><img src="/payment-logos/visa.png" alt="Visa"></span>
+    <span class="plogo"><img src="/payment-logos/amex.jpg" alt="American Express"></span>
   </div>
   <div class="footer-bottom">
     <span class="footer-copy pt">© 2026 SalDesk · Cabo Verde</span>
