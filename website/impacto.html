@@ -798,6 +798,24 @@
 
     .footer-inner a:hover { color: #fff; }
 
+    /* Logos reais das marcas de pagamento aceites (fornecidos pela SISP,
+       Pacote de desenvolvimento 4.6) -- exigido pelo checklist de
+       validacao de site da SISP. Mesma logica ja usada nas outras
+       paginas: chip branco para Vinti4/Visa/Amex (fundo branco solido
+       nos ficheiros), Mastercard sem chip e maior porque o seu
+       "ID Check" vem em branco (invisivel dentro de um chip branco). */
+    .payment-logos {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
+    .payment-logos span { font-size: 12px; color: rgba(255,255,255,.5); white-space: nowrap; }
+    .payment-logos .plogo { background: #fff; border-radius: 6px; padding: 5px 9px; display: flex; align-items: center; }
+    .payment-logos img { height: 16px; width: auto; display: block; }
+    .payment-logos .plogo-mc img { height: 22px; }
+
     .footer-wandr {
       font-size: 12px;
       color: rgba(255,255,255,.35);
@@ -1256,6 +1274,13 @@
     <p data-pt="Ilha do Sal · Cabo Verde" data-en="Ilha do Sal · Cape Verde">Ilha do Sal · Cabo Verde</p>
     <a href="mailto:hello@saldesk.cv">hello@saldesk.cv</a>
     <div class="footer-divider"></div>
+    <div class="payment-logos">
+      <span data-pt="Pagamentos aceites:" data-en="Accepted payments:">Pagamentos aceites:</span>
+      <span class="plogo"><img src="/payment-logos/vinti4.png" alt="SISP Vinti4"></span>
+      <span class="plogo-mc"><img src="/payment-logos/mastercard.png" alt="Mastercard ID Check"></span>
+      <span class="plogo"><img src="/payment-logos/visa.png" alt="Visa"></span>
+      <span class="plogo"><img src="/payment-logos/amex.jpg" alt="American Express"></span>
+    </div>
     <p class="footer-wandr">Sistema Desenvolvido por <strong style="color:rgba(255,255,255,.55)">WANDR — Travel Technology Company</strong></p>
     <p style="font-size:12px;color:rgba(255,255,255,.25)">&copy; 2026 SalDesk. <span data-pt="Todos os direitos reservados." data-en="All rights reserved.">Todos os direitos reservados.</span></p>
   </div>

@@ -98,6 +98,17 @@ a{color:var(--ocean-700);text-decoration:underline}
 .footer p{color:rgba(255,255,255,.35);font-size:.78rem}
 .footer a{color:rgba(255,255,255,.5);text-decoration:none}
 .footer a:hover{color:#fff}
+/* Logos reais das marcas de pagamento aceites (fornecidos pela SISP,
+   Pacote de desenvolvimento 4.6) -- exigido pelo checklist de validacao
+   de site da SISP. Mesma logica ja usada nas outras paginas: chip
+   branco para Vinti4/Visa/Amex (fundo branco solido nos ficheiros),
+   Mastercard sem chip e maior porque o seu "ID Check" vem em branco
+   (invisivel dentro de um chip branco). */
+.payment-logos{display:flex;align-items:center;justify-content:center;gap:14px;flex-wrap:wrap;margin-bottom:16px}
+.payment-logos span{font-size:.78rem;color:rgba(255,255,255,.35)}
+.payment-logos .plogo{background:#fff;border-radius:6px;padding:5px 9px;display:flex;align-items:center}
+.payment-logos img{height:16px;width:auto;display:block}
+.payment-logos .plogo-mc img{height:22px}
 </style>
 </head>
 <body>
@@ -278,6 +289,13 @@ a{color:var(--ocean-700);text-decoration:underline}
 </div>
 
 <footer class="footer">
+  <div class="payment-logos">
+    <span class="pt">Pagamentos aceites:</span><span class="en">Accepted payments:</span>
+    <span class="plogo"><img src="/payment-logos/vinti4.png" alt="SISP Vinti4"></span>
+    <span class="plogo-mc"><img src="/payment-logos/mastercard.png" alt="Mastercard ID Check"></span>
+    <span class="plogo"><img src="/payment-logos/visa.png" alt="Visa"></span>
+    <span class="plogo"><img src="/payment-logos/amex.jpg" alt="American Express"></span>
+  </div>
   <p class="pt">© 2026 SalDesk · Desenvolvido por <a href="https://www.wandrtech.cv" target="_blank" rel="noreferrer">Wandr</a></p>
   <p class="en">© 2026 SalDesk · Built by <a href="https://www.wandrtech.cv" target="_blank" rel="noreferrer">Wandr</a></p>
 </footer>
