@@ -6,6 +6,31 @@ const { emitToOperator } = require('../services/socketService');
 const { notifyOperator } = require('../services/pushService');
 const { frontendBase } = require('../utils/urls');
 const { criarNotificacaoViajante } = require('../helpers/travelerNotificationHelper');
+const { gerarReciboBuffer } = require('../helpers/receiptPdf');
+const { enviarEmail } = require('../helpers/emailHelper');
+
+/* Envia o recibo real ao cliente no momento exacto da confirmacao do
+   pagamento -- ate agora nenhum email era enviado nesse instante (so um
+   email de "pedido recebido" antes de pagar, sem referencia unica nem
+   dados completos do comerciante). Exigido pelo checklist de validacao
+   de site da SISP ("recibo/voucher"). Nunca bloqueia a confirmacao do
+   pagamento em si -- falha silenciosamente (so regista no log). */
+async function enviarReciboPagamento(reserva) {
+  if (!reserva?.customer_email) return;
+  try {
+    const bookingUrl = reserva.operators?.slug ? `${frontendBase()}/book/${reserva.operators.slug}` : undefined;
+    const buffer = await gerarReciboBuffer(reserva, bookingUrl);
+    const ref = reserva.id.slice(0, 8).toUpperCase();
+    await enviarEmail({
+      to: reserva.customer_email,
+      subject: `Recibo — reserva com ${reserva.operators?.name || 'o operador'} (Nº ${ref})`,
+      text: `Olá ${reserva.customer_name || ''},\n\nO seu pagamento foi confirmado. Em anexo fica o recibo da sua reserva com ${reserva.operators?.name || 'o operador'} (referência ${ref}).\n\nObrigado por usar a SalDesk.`,
+      attachments: [{ filename: `recibo-${ref}.pdf`, content: buffer, contentType: 'application/pdf' }],
+    });
+  } catch (err) {
+    console.error('[Recibo] Falha ao gerar/enviar recibo de pagamento:', err.message);
+  }
+}
 
 /* ─── PayPal ─────────────────────────────────────────────── */
 
@@ -88,7 +113,7 @@ async function confirmarCapturaPaypal(operatorId, orderId, reservationId) {
       status: 'confirmed', updated_at: new Date().toISOString(),
     })
     .eq('id', reservationId)
-    .select('*, operators(name, push_subscription)')
+    .select('*, units(name), operators(name, slug, address, email, phone, currency, logo_url, push_subscription)')
     .single();
 
   if (error) throw error;
@@ -102,6 +127,7 @@ async function confirmarCapturaPaypal(operatorId, orderId, reservationId) {
     `A sua reserva com ${data.operators?.name || 'o operador'} foi confirmada.`,
     `${frontendBase()}/viajante`,
   ).catch(() => {});
+  enviarReciboPagamento(data).catch(() => {});
 
   return data;
 }
@@ -263,7 +289,7 @@ async function sispCallback(req, res, next) {
   try {
     const { data: reserva } = await supabaseAdmin
       .from('reservations')
-      .select('id, operator_id, customer_email, operators(name)')
+      .select('id, operator_id, customer_email, operators(name, slug, address, email, phone, currency, logo_url)')
       .eq('id', reservationId)
       .single();
 
@@ -279,19 +305,22 @@ async function sispCallback(req, res, next) {
     const resultado = posAutCode ? validarResposta(posAutCode, req.body) : { status: 'error' };
 
     if (resultado.status === 'paid') {
-      await supabaseAdmin
+      const { data: reservaPaga } = await supabaseAdmin
         .from('reservations')
         .update({
           payment_status: 'paid', payment_method: 'sisp',
-          sisp_transaction_id: resultado.transactionID,
+          sisp_transaction_id: resultado.transactionID, amount_paid: resultado.amount || null,
           status: 'confirmed', updated_at: new Date().toISOString(),
         })
-        .eq('id', reservationId);
+        .eq('id', reservationId)
+        .select('*, units(name), operators(name, slug, address, email, phone, currency, logo_url)')
+        .single();
       criarNotificacaoViajante(
         reserva.customer_email, 'booking_confirmed',
         `A sua reserva com ${reserva.operators?.name || 'o operador'} foi confirmada.`,
         `${frontBase}/viajante`,
       ).catch(() => {});
+      if (reservaPaga) enviarReciboPagamento(reservaPaga).catch(() => {});
       return res.redirect(`${frontBase}/book/success?res=${reservationId}`);
     }
 

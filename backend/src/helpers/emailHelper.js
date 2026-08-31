@@ -3,7 +3,10 @@ const { supabaseAdmin } = require('../config/supabase');
 
 sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
-async function enviarEmail({ to, subject, html, text }) {
+/* attachments: [{ filename, content: Buffer, contentType }] -- callers
+   passam sempre um Buffer real (nunca base64 pre-codificado), a conversao
+   para o formato que o SendGrid exige fica so aqui, num sitio unico. */
+async function enviarEmail({ to, subject, html, text, attachments }) {
   const finalHtml = html || `<p style="font-family:Arial,sans-serif;line-height:1.6">${(text || '').replace(/\n/g, '<br>')}</p>`;
   const finalText = text || (html ? html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim() : '');
 
@@ -13,7 +16,15 @@ async function enviarEmail({ to, subject, html, text }) {
       from: { email: process.env.SENDGRID_FROM_EMAIL, name: 'SalDesk' },
       subject,
       text: finalText,
-      html: finalHtml
+      html: finalHtml,
+      ...(Array.isArray(attachments) && attachments.length ? {
+        attachments: attachments.map((a) => ({
+          filename: a.filename,
+          type: a.contentType || 'application/octet-stream',
+          content: a.content.toString('base64'),
+          disposition: 'attachment',
+        })),
+      } : {}),
     });
   } catch (err) {
     /* err.message do @sendgrid/mail e so o texto generico do status HTTP

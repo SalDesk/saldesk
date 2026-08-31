@@ -6,9 +6,24 @@ const {
 const { construirPedidoPagamento, validarResposta, CVE_PER_EUR } = require('../services/sispService');
 const { loadPriceMap } = require('../helpers/pricing');
 const { enviarEmail } = require('../helpers/emailHelper');
+const { gerarReciboFacturacaoBuffer } = require('../helpers/receiptPdf');
 const { frontendBase } = require('../utils/urls');
 
 const PLANS = ['starter', 'business', 'pro'];
+
+/* Recibo real anexado ao email de confirmacao -- ate agora so havia texto
+   simples, sem referencia unica nem dados completos (exigido pelo
+   checklist de validacao de site da SISP). Nunca bloqueia a activacao do
+   pagamento em si -- falha silenciosamente (so regista no log). */
+async function gerarAnexoRecibo(payment, operator) {
+  try {
+    const buffer = await gerarReciboFacturacaoBuffer(payment, operator);
+    return [{ filename: `recibo-${payment.id.slice(0, 8).toUpperCase()}.pdf`, content: buffer, contentType: 'application/pdf' }];
+  } catch (err) {
+    console.error('[Billing] Falha ao gerar recibo de facturacao:', err.message);
+    return undefined;
+  }
+}
 
 /* Erros da PayPal (ex: 401 por credenciais invalidas/em falta) tem o seu
    proprio .status vindo do axios -- nunca deixar isso propagar tal e qual
@@ -147,7 +162,7 @@ async function activarSubscricaoConfirmada(payment, subscriptionId, nextBillingT
     .eq('id', payment.id);
 
   const { data: current } = await supabaseAdmin
-    .from('operators').select('name, email, notes_log').eq('id', payment.operator_id).single();
+    .from('operators').select('name, email, phone, address, notes_log').eq('id', payment.operator_id).single();
   const log = Array.isArray(current?.notes_log) ? current.notes_log : [];
 
   await supabaseAdmin.from('operators').update({
@@ -160,10 +175,12 @@ async function activarSubscricaoConfirmada(payment, subscriptionId, nextBillingT
   }).eq('id', payment.operator_id);
 
   if (current?.email) {
+    const attachments = await gerarAnexoRecibo({ ...payment, completed_at: nowIso }, current);
     enviarEmail({
       to: current.email,
       subject: 'Subscricao activa — SalDesk',
-      text: `Ola ${current.name},\n\nA tua subscricao SalDesk (plano ${payment.plan}, €${payment.amount_eur}/mes) esta activa e renova automaticamente.\n\nProxima cobranca: ${paidUntil.split('T')[0]}.\n\nObrigado por usares a SalDesk.`,
+      text: `Ola ${current.name},\n\nA tua subscricao SalDesk (plano ${payment.plan}, €${payment.amount_eur}/mes) esta activa e renova automaticamente.\n\nEm anexo fica o recibo deste pagamento.\n\nProxima cobranca: ${paidUntil.split('T')[0]}.\n\nObrigado por usares a SalDesk.`,
+      attachments,
     }).catch(() => {});
   }
 }
@@ -175,21 +192,23 @@ async function registarRenovacao(operatorId, plan, amountEur, nextBillingTime) {
   const nowIso = new Date().toISOString();
   const paidUntil = nextBillingTime || new Date(Date.now() + 30 * 86400000).toISOString();
 
-  await supabaseAdmin.from('platform_payments').insert({
+  const { data: pagamento } = await supabaseAdmin.from('platform_payments').insert({
     operator_id: operatorId, plan, amount_eur: amountEur,
     gateway: 'paypal', status: 'completed', completed_at: nowIso,
-  });
+  }).select().single();
 
   await supabaseAdmin.from('operators').update({
     plan_paid_until: paidUntil, plan_status: 'active', updated_at: nowIso,
   }).eq('id', operatorId);
 
-  const { data: op } = await supabaseAdmin.from('operators').select('name, email').eq('id', operatorId).single();
+  const { data: op } = await supabaseAdmin.from('operators').select('name, email, phone, address').eq('id', operatorId).single();
   if (op?.email) {
+    const attachments = pagamento ? await gerarAnexoRecibo(pagamento, op) : undefined;
     enviarEmail({
       to: op.email,
       subject: 'Pagamento confirmado — SalDesk',
-      text: `Ola ${op.name},\n\nO teu pagamento de €${amountEur} para o plano ${plan} foi confirmado.\n\nA tua subscricao renova automaticamente. Proxima cobranca: ${paidUntil.split('T')[0]}.\n\nObrigado por usares a SalDesk.`,
+      text: `Ola ${op.name},\n\nO teu pagamento de €${amountEur} para o plano ${plan} foi confirmado.\n\nEm anexo fica o recibo deste pagamento.\n\nA tua subscricao renova automaticamente. Proxima cobranca: ${paidUntil.split('T')[0]}.\n\nObrigado por usares a SalDesk.`,
+      attachments,
     }).catch(() => {});
   }
 }
@@ -381,7 +400,7 @@ async function activarPagamentoSisp(payment, transactionID) {
     .eq('id', payment.id);
 
   const { data: current } = await supabaseAdmin
-    .from('operators').select('name, email, notes_log').eq('id', payment.operator_id).single();
+    .from('operators').select('name, email, phone, address, notes_log').eq('id', payment.operator_id).single();
   const log = Array.isArray(current?.notes_log) ? current.notes_log : [];
 
   await supabaseAdmin.from('operators').update({
@@ -393,10 +412,12 @@ async function activarPagamentoSisp(payment, transactionID) {
   }).eq('id', payment.operator_id);
 
   if (current?.email) {
+    const attachments = await gerarAnexoRecibo({ ...payment, completed_at: nowIso }, current);
     enviarEmail({
       to: current.email,
       subject: 'Pagamento confirmado — SalDesk',
-      text: `Ola ${current.name},\n\nO teu pagamento de €${payment.amount_eur} (plano ${payment.plan}) via SISP foi confirmado.\n\nA tua conta esta activa ate ${paidUntil.split('T')[0]}. Ao contrario do PayPal, o SISP nao renova automaticamente -- volta a Definicoes > Facturacao para pagar novamente antes dessa data.\n\nObrigado por usares a SalDesk.`,
+      text: `Ola ${current.name},\n\nO teu pagamento de €${payment.amount_eur} (plano ${payment.plan}) via SISP foi confirmado.\n\nEm anexo fica o recibo deste pagamento.\n\nA tua conta esta activa ate ${paidUntil.split('T')[0]}. Ao contrario do PayPal, o SISP nao renova automaticamente -- volta a Definicoes > Facturacao para pagar novamente antes dessa data.\n\nObrigado por usares a SalDesk.`,
+      attachments,
     }).catch(() => {});
   }
 }

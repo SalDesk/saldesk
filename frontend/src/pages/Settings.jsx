@@ -150,6 +150,8 @@ function PerfilPublicoTab({ operator }) {
   const [covers, setCovers]         = useState([]);
   const [descPt,  setDescPt]        = useState(operator?.description_pt || '');
   const [descEn,  setDescEn]        = useState(operator?.description_en || '');
+  const [cancelPolicyPt, setCancelPolicyPt] = useState(operator?.cancellation_policy_pt || '');
+  const [cancelPolicyEn, setCancelPolicyEn] = useState(operator?.cancellation_policy_en || '');
   const [faqs, setFaqs] = useState(operator?.custom_faqs || []);
 
   /* marketing — loaded separately */
@@ -218,6 +220,8 @@ function PerfilPublicoTab({ operator }) {
         logo_url:       logoPreview,
         description_pt: descPt,
         description_en: descEn,
+        cancellation_policy_pt: cancelPolicyPt,
+        cancellation_policy_en: cancelPolicyEn,
         custom_faqs: faqs.filter(f => f.question_pt || f.question_en),
       };
       const updated = await updateOperator(payload);
@@ -297,6 +301,22 @@ function PerfilPublicoTab({ operator }) {
             rows={4} placeholder="Descricao do operador em portugues..." />
           <Textarea label="Ingles (EN)" value={descEn} onChange={e => setDescEn(e.target.value)}
             rows={4} placeholder="Operator description in English..." />
+        </div>
+      </Card>
+
+      {/* Politica de cancelamento -- mostrada na pagina publica antes do
+          pagamento (checkbox obrigatorio), exigida pela SISP no checklist
+          de validacao de site. Sem isto configurado, a pagina publica avisa
+          que ainda nao foi definida em vez de inventar uma politica. */}
+      <Card header={<h3 className="font-display font-semibold text-sm text-n-700">Politica de cancelamento</h3>}>
+        <div className="space-y-3">
+          <p className="text-xs font-body text-n-400">
+            Mostrada na pagina publica de reserva. O cliente tem de aceitar esta politica antes de pagar.
+          </p>
+          <Textarea label="Portugues" value={cancelPolicyPt} onChange={e => setCancelPolicyPt(e.target.value)}
+            rows={4} placeholder="Ex: Cancelamento gratuito ate 48h antes. Apos esse prazo, 50% do valor e retido..." />
+          <Textarea label="Ingles (EN)" value={cancelPolicyEn} onChange={e => setCancelPolicyEn(e.target.value)}
+            rows={4} placeholder="Ex: Free cancellation up to 48h before. After that, 50% of the value is retained..." />
         </div>
       </Card>
 
@@ -516,6 +536,9 @@ function PagamentosTab() {
    pagamento acima, que sao para o operador cobrar OS SEUS clientes)
 ───────────────────────────────────────────────────────── */
 const PLAN_LABEL = { starter: 'Starter', business: 'Business', pro: 'Pro' };
+/* Mesmo cambio fixo confirmado no backend (sispService.js's CVE_PER_EUR),
+   exigido pelo checklist da SISP (preco expresso tambem em CVE). */
+const CVE_PER_EUR = 110.265;
 const STATUS_LABEL = { trial: 'Periodo de avaliacao', active: 'Activo', suspended: 'Suspenso', cancelled: 'Cancelado' };
 const STATUS_TONE  = { trial: 'text-ocean-700 bg-ocean-50', active: 'text-green-700 bg-green-50', suspended: 'text-error bg-red-50', cancelled: 'text-n-500 bg-n-100' };
 
@@ -527,6 +550,7 @@ function FacturacaoTab() {
   const [cancelling, setCancelling] = useState(false);
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [paymentMethodPlan, setPaymentMethodPlan] = useState(null); // plano escolhido, a aguardar metodo de pagamento
+  const [billingPolicyOk, setBillingPolicyOk] = useState(false);
   const [error, setError] = useState('');
 
   useEffect(() => { getBillingHistory().then(setHistory); }, []);
@@ -632,7 +656,7 @@ function FacturacaoTab() {
                   loading={subscribingPlan === plan}
                   disabled={isCurrent}
                   icon={Wallet}
-                  onClick={() => setPaymentMethodPlan(plan)}
+                  onClick={() => { setBillingPolicyOk(false); setPaymentMethodPlan(plan); }}
                 >
                   {isCurrent ? 'Plano actual' : 'Subscrever'}
                 </Button>
@@ -665,12 +689,14 @@ function FacturacaoTab() {
       <Modal open={!!paymentMethodPlan} onClose={() => setPaymentMethodPlan(null)} title="Como quer pagar?">
         <div className="space-y-4">
           <p className="text-sm font-body text-n-600">
-            Plano <strong>{PLAN_LABEL[paymentMethodPlan] || paymentMethodPlan}</strong> — €{PLAN_PRICES[paymentMethodPlan]}/mes.
+            Plano <strong>{PLAN_LABEL[paymentMethodPlan] || paymentMethodPlan}</strong> — €{PLAN_PRICES[paymentMethodPlan]}/mes
+            <span className="text-n-400"> (≈ {Math.round((PLAN_PRICES[paymentMethodPlan] || 0) * CVE_PER_EUR).toLocaleString('pt-PT')} CVE)</span>.
           </p>
           <button
             type="button"
             onClick={() => handleSubscribe(paymentMethodPlan)}
-            className="w-full flex items-center gap-3 p-4 rounded-xl border border-n-200 hover:border-ocean-700 hover:bg-ocean-50 transition text-left"
+            className="w-full flex items-center gap-3 p-4 rounded-xl border border-n-200 hover:border-ocean-700 hover:bg-ocean-50 transition text-left disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:border-n-200 disabled:hover:bg-transparent"
+            disabled={!billingPolicyOk}
           >
             <div className="w-10 h-10 rounded-full bg-ocean-50 flex items-center justify-center shrink-0">
               <Wallet size={18} strokeWidth={2} className="text-ocean-700" />
@@ -683,7 +709,8 @@ function FacturacaoTab() {
           <button
             type="button"
             onClick={() => handleSisp(paymentMethodPlan)}
-            className="w-full flex items-center gap-3 p-4 rounded-xl border border-n-200 hover:border-ocean-700 hover:bg-ocean-50 transition text-left"
+            className="w-full flex items-center gap-3 p-4 rounded-xl border border-n-200 hover:border-ocean-700 hover:bg-ocean-50 transition text-left disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:border-n-200 disabled:hover:bg-transparent"
+            disabled={!billingPolicyOk}
           >
             <div className="w-10 h-10 rounded-full bg-ocean-50 flex items-center justify-center shrink-0">
               <Landmark size={18} strokeWidth={2} className="text-ocean-700" />
@@ -693,6 +720,15 @@ function FacturacaoTab() {
               <p className="text-xs font-body text-n-500">Pagamento em escudos, manual todos os meses (sem renovacao automatica)</p>
             </div>
           </button>
+          <label className="flex items-start gap-2 text-xs font-body text-n-700 cursor-pointer border-t border-n-100 pt-3">
+            <input type="checkbox" className="mt-0.5" checked={billingPolicyOk} onChange={(e) => setBillingPolicyOk(e.target.checked)} />
+            <span>
+              Li e aceito a{' '}
+              <a href="https://saldesk.cv/termos.html#s6" target="_blank" rel="noreferrer" className="text-ocean-700 font-semibold hover:underline">
+                política de cancelamento e reembolsos
+              </a>{' '}da subscrição SalDesk.
+            </span>
+          </label>
         </div>
       </Modal>
 

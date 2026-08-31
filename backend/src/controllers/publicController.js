@@ -15,7 +15,7 @@ async function getOperador(req, res, next) {
   try {
     const { data: operator, error } = await supabaseAdmin
       .from('operators')
-      .select('id, name, slug, operator_type, email, phone, whatsapp, address, logo_url, cover_images, business_name, tagline, description, onboarding_complete, currency, page_config, island_id, islands(name, slug, airport_code)')
+      .select('id, name, slug, operator_type, email, phone, whatsapp, address, logo_url, cover_images, business_name, tagline, description, onboarding_complete, currency, page_config, island_id, islands(name, slug, airport_code), cancellation_policy_pt, cancellation_policy_en')
       .eq('slug', req.params.slug)
       .eq('onboarding_complete', true)
       .single();
