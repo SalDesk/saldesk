@@ -273,6 +273,18 @@
     .sicon{width:32px;height:32px;border-radius:8px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.5);transition:all .15s}
     .sicon:hover{background:rgba(255,255,255,.12);color:#fff}
     .footer-bottom{display:flex;align-items:center;justify-content:space-between;padding-top:20px;border-top:1px solid rgba(255,255,255,.1);font-size:.75rem;flex-wrap:wrap;gap:8px}
+    /* Logos reais das marcas de pagamento aceites (fornecidos pela SISP,
+       Pacote de desenvolvimento 4.6) -- exigido pelo checklist de
+       validacao de site da SISP. Chip branco por baixo de cada logo:
+       o .jpg da Amex e' sempre opaco (formato sem canal alfa) e o .png
+       da Visa tem fundo branco solido -- um chip uniforme para os 4
+       evita mostrar um rectangulo branco "acidental" sobre o rodape
+       escuro, e fica consistente mesmo sem saber a transparencia exacta
+       de cada ficheiro. */
+    .payment-logos{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:20px 0;border-top:1px solid rgba(255,255,255,.1);margin-top:4px}
+    .payment-logos span{font-size:.7rem;color:rgba(255,255,255,.38);white-space:nowrap;margin-right:4px}
+    .payment-logos .plogo{background:#fff;border-radius:6px;padding:5px 9px;display:flex;align-items:center}
+    .payment-logos img{height:16px;width:auto;display:block}
 
     /* ── FADE ── */
     .fade-up{opacity:0;transform:translateY(16px);transition:opacity .5s,transform .5s}
@@ -581,6 +593,13 @@
           <li><a href="mailto:hello@saldesk.cv">hello@saldesk.cv</a></li>
         </ul>
       </div>
+    </div>
+    <div class="payment-logos">
+      <span class="pt">Pagamentos aceites:</span><span class="en">Accepted payments:</span>
+      <span class="plogo"><img src="/payment-logos/vinti4.png" alt="SISP Vinti4"></span>
+      <span class="plogo"><img src="/payment-logos/mastercard.png" alt="Mastercard"></span>
+      <span class="plogo"><img src="/payment-logos/visa.png" alt="Visa"></span>
+      <span class="plogo"><img src="/payment-logos/amex.jpg" alt="American Express"></span>
     </div>
     <div class="footer-bottom">
       <span style="color:rgba(255,255,255,.38)">
