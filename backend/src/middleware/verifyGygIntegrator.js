@@ -8,12 +8,13 @@
    Sandbox e Producao ("Voce deve fornecer credenciais unicas para seus
    ambientes de teste e producao", bloqueia o guardar da config de Teste
    enquanto o username for igual ao de Producao) -- deixou de chegar uma
-   unica combinacao. Aceita agora QUALQUER par valido entre os dois
-   ambientes (GYG nunca diz de qual ambiente o pedido vem, so o par de
-   credenciais permite distinguir). GYG_INTEGRATOR_USERNAME/PASSWORD
-   (par antigo, unico) mantido como terceiro fallback so durante a
-   transicao -- remover assim que o Integrator Portal confirmar as novas
-   credenciais gravadas nos dois ambientes (Sandbox e Producao). */
+   unica combinacao. Aceita QUALQUER par valido entre os dois ambientes
+   (GYG nunca diz de qual ambiente o pedido vem, so o par de credenciais
+   permite distinguir). Confirmado ao vivo no mesmo dia: as 4 combinacoes
+   de certificacao (Time point/Time period x Individuals/Groups) correram
+   com sucesso em Producao usando as novas credenciais -- removido o par
+   antigo unico (GYG_INTEGRATOR_USERNAME/PASSWORD) que so servia de
+   fallback durante a transicao. */
 
 const crypto = require('crypto');
 
