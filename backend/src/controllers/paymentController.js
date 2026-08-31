@@ -193,7 +193,9 @@ async function paypalWebhook(req, res, next) {
    depois via POST directo a /payments/sisp/callback. */
 
 /* Partilhado entre a rota autenticada (operador) e a publica (cliente
-   na pagina de reserva) — so muda de onde vem o operatorId. */
+   na pagina de reserva) — so muda de onde vem o operatorId. Busca tambem os
+   dados do cliente da propria reserva (email/telefone/pais) para alimentar
+   o purchaseRequest -- nunca inventado, so o que a reserva ja tiver. */
 async function prepararPagamentoSisp(operatorId, reservationId, amount) {
   const { data: operatorRow } = await supabaseAdmin
     .from('operators')
@@ -211,9 +213,20 @@ async function prepararPagamentoSisp(operatorId, reservationId, amount) {
   const posAutCode = decrypt(operatorRow.sisp_api_key_enc);
   const apiBase = process.env.API_URL || 'http://localhost:3001';
 
+  const { data: reserva } = await supabaseAdmin
+    .from('reservations')
+    .select('customer_email, customer_phone, customer_country')
+    .eq('id', reservationId)
+    .maybeSingle();
+
   return construirPedidoPagamento({
     posID, posAutCode, amount,
     urlMerchantResponse: `${apiBase}/api/v1/payments/sisp/callback?res=${reservationId}`,
+    customer: {
+      email: reserva?.customer_email,
+      phone: reserva?.customer_phone,
+      countryAlpha2: reserva?.customer_country,
+    },
   });
 }
 

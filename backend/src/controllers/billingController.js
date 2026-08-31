@@ -3,18 +3,12 @@ const {
   createProduct, createPlan, createSubscription, getSubscription, cancelSubscription,
   verifyWebhookSignature,
 } = require('../services/platformPaypalService');
-const { construirPedidoPagamento, validarResposta } = require('../services/sispService');
+const { construirPedidoPagamento, validarResposta, CVE_PER_EUR } = require('../services/sispService');
 const { loadPriceMap } = require('../helpers/pricing');
 const { enviarEmail } = require('../helpers/emailHelper');
 const { frontendBase } = require('../utils/urls');
 
 const PLANS = ['starter', 'business', 'pro'];
-
-/* Mesma taxa fixa ja usada em todo o resto do frontend (Financial.jsx,
-   ServiceDetail.jsx, PublicBooking.jsx, etc.) para converter EUR->CVE --
-   nunca uma taxa de cambio em tempo real, por consistencia com o resto
-   da app. SISP so aceita escudos (currency code 132, ver sispService.js). */
-const EUR_CVE = 110;
 
 /* Erros da PayPal (ex: 401 por credenciais invalidas/em falta) tem o seu
    proprio .status vindo do axios -- nunca deixar isso propagar tal e qual
@@ -341,13 +335,21 @@ async function createSispCheckout(req, res, next) {
     if (!amountEur) {
       return res.status(400).json({ error: 'Preco nao configurado para este plano', code: 'PRICE_NOT_FOUND' });
     }
-    const amountCve = Math.round(amountEur * EUR_CVE);
+    const amountCve = Math.round(amountEur * CVE_PER_EUR);
 
-    const base = frontendBase();
+    /* "Cliente" do purchaseRequest e o proprio operador -- todos os
+       operadores SalDesk estao em Cabo Verde, por isso o pais e sempre CV,
+       sem precisar de nenhum campo novo. */
+    const { data: op } = await supabaseAdmin
+      .from('operators').select('email, phone, address').eq('id', req.operator.id).single();
+
     const apiBase = process.env.API_URL || 'http://localhost:3001';
     const pedido = construirPedidoPagamento({
       posID, posAutCode, amount: amountCve,
       urlMerchantResponse: `${apiBase}/api/v1/billing/sisp-callback`,
+      customer: {
+        email: op?.email, phone: op?.phone, address: op?.address, countryAlpha2: 'CV',
+      },
     });
 
     const { error: insertError } = await supabaseAdmin.from('platform_payments').insert({
