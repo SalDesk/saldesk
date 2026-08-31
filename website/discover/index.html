@@ -167,6 +167,13 @@
     .poi-related-list{display:flex;flex-wrap:wrap;gap:6px}
     .poi-related-list a{font-family:var(--fb);font-size:.75rem;font-weight:600;color:var(--teal7);text-decoration:none;background:var(--teal0);border-radius:8px;padding:4px 9px}
     .poi-related-list a:hover{background:var(--teal1)}
+    .poi-slider{display:flex;gap:20px;overflow-x:auto;scroll-snap-type:x mandatory;scroll-behavior:smooth;padding-bottom:4px;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+    .poi-slider::-webkit-scrollbar{display:none}
+    .poi-slider > .card{scroll-snap-align:start;flex:0 0 calc((100% - 60px)/4);min-width:260px}
+    .slider-arrow{width:40px;height:40px;border-radius:50%;border:1px solid var(--line);background:#fff;color:var(--tx);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background .15s;flex-shrink:0}
+    .slider-arrow:hover{background:var(--paper2)}
+    @media(max-width:900px){.poi-slider > .card{flex:0 0 calc((100% - 20px)/2);min-width:220px}}
+    @media(max-width:560px){.poi-slider > .card{flex:0 0 85%;min-width:0}}
 
     #load-more-wrap{text-align:center;margin-top:36px}
 
@@ -447,6 +454,31 @@
   </div>
 </section>
 
+<!-- PONTOS TURISTICOS -- slide de destaque, logo abaixo das categorias.
+     Fica escondida ate loadPois() confirmar que ha dados reais (mesmo
+     principio "fallback honesto" do resto da pagina). Reaproveita
+     renderPoiCard() -- a versao completa e filtravel por ilha continua
+     mais abaixo, junto ao directorio de servicos. -->
+<section class="section fade-up" id="poi-slider-section" style="display:none">
+  <div class="container">
+    <div style="margin-bottom:26px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap">
+      <div>
+        <div class="sl"><span class="pt">Descobrir Cabo Verde</span><span class="en">Discover Cabo Verde</span></div>
+        <h2 class="st"><span class="pt">Pontos Turísticos</span><span class="en">Points of Interest</span></h2>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button onclick="poiSliderScroll(-1)" class="slider-arrow" aria-label="Anterior">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
+        <button onclick="poiSliderScroll(1)" class="slider-arrow" aria-label="Seguinte">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+        </button>
+      </div>
+    </div>
+    <div class="poi-slider" id="poi-slider-track"></div>
+  </div>
+</section>
+
 <!-- EM DESTAQUE -->
 <section class="section fade-up" id="featured-section">
   <div class="container">
@@ -528,8 +560,8 @@
   <div class="container">
     <div class="act-header fade-up">
       <div>
-        <div class="sl"><span class="pt">Descobrir Cabo Verde</span><span class="en">Discover Cabo Verde</span></div>
-        <h2 class="st"><span class="pt">Pontos Turísticos</span><span class="en">Points of Interest</span></h2>
+        <div class="sl"><span class="pt">Ilha a ilha</span><span class="en">Island by island</span></div>
+        <h2 class="st"><span class="pt">Explorar todos os Pontos Turísticos</span><span class="en">Explore all Points of Interest</span></h2>
       </div>
     </div>
     <div class="chips-wrap" id="poi-chips-grid" style="margin-bottom:24px"></div>
@@ -938,6 +970,30 @@ function poiLoadMore() {
   renderPoiGrid();
 }
 
+/* Slide de destaque (4 cartoes visiveis em desktop), logo abaixo de
+   "Explorar por categoria" -- scroll horizontal com scroll-snap, sem
+   dependencia de nenhuma biblioteca de carousel. Mostra todos os pontos
+   (a versao filtravel por ilha fica na seccao completa mais abaixo). */
+function poiSliderScroll(dir) {
+  const track = document.getElementById('poi-slider-track');
+  if (!track) return;
+  const card = track.querySelector(':scope > *');
+  const gap = 20;
+  const amount = card ? card.getBoundingClientRect().width + gap : 300;
+  track.scrollBy({ left: dir * amount, behavior: 'smooth' });
+}
+
+function renderPoiSlider() {
+  const section = document.getElementById('poi-slider-section');
+  const track = document.getElementById('poi-slider-track');
+  if (!track) return;
+  if (!poiItems.length) { if (section) section.style.display = 'none'; return; }
+  track.innerHTML = poiItems.map(renderPoiCard).join('');
+  observeFadeUp(track);
+  if (L() === 'en') fixLang(track);
+  if (section) section.style.display = '';
+}
+
 async function loadPois() {
   const data = await apiFetch('/landmarks');
   if (!data || !data.length) return; // secção fica escondida (display:none já no HTML)
@@ -947,6 +1003,7 @@ async function loadPois() {
   if (section) section.style.display = '';
   renderPoiChips();
   renderPoiGrid();
+  renderPoiSlider();
 }
 
 function fmtPrice(price, opCur) {
@@ -2047,6 +2104,7 @@ function setLang(lang) {
   if (poiItems.length) {
     renderPoiChips();
     renderPoiGrid();
+    renderPoiSlider();
   }
 }
 
