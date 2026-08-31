@@ -275,16 +275,21 @@
     .footer-bottom{display:flex;align-items:center;justify-content:space-between;padding-top:20px;border-top:1px solid rgba(255,255,255,.1);font-size:.75rem;flex-wrap:wrap;gap:8px}
     /* Logos reais das marcas de pagamento aceites (fornecidos pela SISP,
        Pacote de desenvolvimento 4.6) -- exigido pelo checklist de
-       validacao de site da SISP. Chip branco por baixo de cada logo:
-       o .jpg da Amex e' sempre opaco (formato sem canal alfa) e o .png
-       da Visa tem fundo branco solido -- um chip uniforme para os 4
-       evita mostrar um rectangulo branco "acidental" sobre o rodape
-       escuro, e fica consistente mesmo sem saber a transparencia exacta
-       de cada ficheiro. */
-    .payment-logos{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:20px 0;border-top:1px solid rgba(255,255,255,.1);margin-top:4px}
+       validacao de site da SISP. Chip branco por baixo do logo da Amex/
+       Visa/Vinti4: os ficheiros tem fundo branco solido (o .jpg da Amex
+       nem sequer suporta transparencia), por isso precisam do chip para
+       nao mostrar um rectangulo branco "acidental" sobre o rodape escuro.
+       O logo do Mastercard e' a excepcao deliberada -- o texto "ID Check"
+       vem em branco (pensado para fundo escuro), por isso fica SEM chip,
+       directamente sobre o proprio rodape (ja escuro) e maior, para o
+       texto ficar legivel -- num chip branco o "ID Check" desaparecia por
+       completo, so os circulos ficavam visiveis (confirmado visualmente,
+       feedback do utilizador 2026-08-31). */
+    .payment-logos{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:20px 0;border-top:1px solid rgba(255,255,255,.1);margin-top:4px}
     .payment-logos span{font-size:.7rem;color:rgba(255,255,255,.38);white-space:nowrap;margin-right:4px}
     .payment-logos .plogo{background:#fff;border-radius:6px;padding:5px 9px;display:flex;align-items:center}
     .payment-logos img{height:16px;width:auto;display:block}
+    .payment-logos .plogo-mc img{height:22px}
 
     /* ── FADE ── */
     .fade-up{opacity:0;transform:translateY(16px);transition:opacity .5s,transform .5s}
@@ -597,7 +602,7 @@
     <div class="payment-logos">
       <span class="pt">Pagamentos aceites:</span><span class="en">Accepted payments:</span>
       <span class="plogo"><img src="/payment-logos/vinti4.png" alt="SISP Vinti4"></span>
-      <span class="plogo"><img src="/payment-logos/mastercard.png" alt="Mastercard"></span>
+      <span class="plogo-mc"><img src="/payment-logos/mastercard.png" alt="Mastercard ID Check"></span>
       <span class="plogo"><img src="/payment-logos/visa.png" alt="Visa"></span>
       <span class="plogo"><img src="/payment-logos/amex.jpg" alt="American Express"></span>
     </div>
