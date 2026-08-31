@@ -53,7 +53,16 @@ function verifyGygIntegrator(req, res, next) {
 
   const valido =
     matchesPair(providedUser, providedPass, 'GYG_INTEGRATOR_SANDBOX_USERNAME',    'GYG_INTEGRATOR_SANDBOX_PASSWORD') ||
-    matchesPair(providedUser, providedPass, 'GYG_INTEGRATOR_PRODUCTION_USERNAME', 'GYG_INTEGRATOR_PRODUCTION_PASSWORD');
+    matchesPair(providedUser, providedPass, 'GYG_INTEGRATOR_PRODUCTION_USERNAME', 'GYG_INTEGRATOR_PRODUCTION_PASSWORD') ||
+    /* 2026-08-31 09:53 -- REPOSTO DE URGENCIA: tinha sido removido (ver git
+       log), mas o trafego REAL de producao da GYG (IPs okhttp confirmados
+       nos logs do pm2) comecou a falhar AUTHORIZATION_FAILURE no minuto
+       exacto da remocao -- confirmado que o par antigo e DIFERENTE dos
+       pares Sandbox/Producao novos, ou seja a GYG ainda esta a autenticar
+       com este par antigo do lado de Producao, apesar do portal supostamente
+       ja ter as credenciais novas gravadas. Manter ate confirmar com a GYG
+       porque o portal nao esta a usar o par novo, so depois remover. */
+    matchesPair(providedUser, providedPass, 'GYG_INTEGRATOR_USERNAME',            'GYG_INTEGRATOR_PASSWORD');
 
   if (!valido) {
     return res.status(200).json({ errorCode: 'AUTHORIZATION_FAILURE', errorMessage: 'The provided authentication credentials are not valid.' });
