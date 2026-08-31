@@ -551,27 +551,6 @@
   </div>
 </section>
 
-<!-- PONTOS TURÍSTICOS — conteúdo editorial, sem reserva, cobre as 9 ilhas de
-     Cabo Verde. Fica escondida por omissão e só aparece se a API devolver
-     dados reais (loadPois()) -- nunca mostra uma secção vazia. -->
-<section class="section fade-up" id="poi-section" style="display:none">
-  <div class="container">
-    <div class="act-header fade-up">
-      <div>
-        <div class="sl"><span class="pt">Ilha a ilha</span><span class="en">Island by island</span></div>
-        <h2 class="st"><span class="pt">Explorar todos os Pontos Turísticos</span><span class="en">Explore all Points of Interest</span></h2>
-      </div>
-    </div>
-    <div class="chips-wrap" id="poi-chips-grid" style="margin-bottom:24px"></div>
-    <div class="act-grid" id="poi-grid"></div>
-    <div id="poi-load-more-wrap" style="display:none;text-align:center;margin-top:36px">
-      <button onclick="poiLoadMore()" class="btn btn-ghost" style="padding:12px 32px">
-        <span class="pt">Ver mais</span><span class="en">Load more</span>
-      </button>
-    </div>
-  </div>
-</section>
-
 <!-- FOOTER -->
 <footer>
   <div class="container">
@@ -591,7 +570,7 @@
           <li><a href="/"><span class="pt">Inicio</span><span class="en">Home</span></a></li>
           <li><a href="#featured-section"><span class="pt">Destaques</span><span class="en">Featured</span></a></li>
           <li><a href="#activities-section"><span class="pt">Directorio</span><span class="en">Directory</span></a></li>
-          <li><a href="#poi-section"><span class="pt">Pontos Turísticos</span><span class="en">Points of Interest</span></a></li>
+          <li><a href="#poi-slider-section"><span class="pt">Pontos Turísticos</span><span class="en">Points of Interest</span></a></li>
         </ul>
       </div>
       <div class="footer-col">
@@ -658,12 +637,8 @@ let currency   = 'EUR';
 let activeFilter = ''; // chave estavel (label PT da categoria, ou tipo)
 
 /* Pontos turisticos (cms_landmarks) -- conteudo editorial independente dos
-   servicos reservaveis acima, com o seu proprio filtro por ilha. */
-const POI_PER_PAGE = 6;
-let poiItems       = [];
-let poiFiltered    = [];
-let poiActiveIsland = '';
-let poiVisible      = POI_PER_PAGE;
+   servicos reservaveis acima, mostrados so no slide de destaque. */
+let poiItems = [];
 
 /* Ponte de sessao com a conta de viajante (app.saldesk.cv) -- ver
    bootstrapTravelerSession(). null enquanto anonimo ou nao verificado
@@ -877,57 +852,10 @@ function renderPoiCard(item) {
     </div>`;
 }
 
-function setPoiFilter(slug) {
-  poiActiveIsland = slug;
-  renderPoiChips();
-  applyPoiFilters();
-}
-
-function renderPoiChips() {
-  const grid = document.getElementById('poi-chips-grid');
-  if (!grid) return;
-  const counts = {};
-  poiItems.forEach(item => { counts[item.island_slug] = (counts[item.island_slug] || 0) + 1; });
-  const islands = Object.keys(counts).sort((a, b) =>
-    (ISLAND_LABEL[a]?.pt || a).localeCompare(ISLAND_LABEL[b]?.pt || b));
-
-  const allChip = `<button class="chip ${!poiActiveIsland ? 'active' : ''}" onclick="setPoiFilter('')">
-    <span class="pt">Todas as ilhas</span><span class="en">All islands</span> <span class="chip-count">${poiItems.length}</span>
-  </button>`;
-  grid.innerHTML = allChip + islands.map(slug => `
-    <button class="chip ${poiActiveIsland === slug ? 'active' : ''}" onclick="setPoiFilter('${slug}')">
-      ${esc(ISLAND_LABEL[slug]?.[L()] || slug)} <span class="chip-count">${counts[slug]}</span>
-    </button>`).join('');
-  if (L() === 'en') fixLang(grid);
-}
-
-function applyPoiFilters() {
-  poiFiltered = poiActiveIsland ? poiItems.filter(i => i.island_slug === poiActiveIsland) : poiItems;
-  poiVisible = POI_PER_PAGE;
-  renderPoiGrid();
-}
-
-function renderPoiGrid() {
-  const grid = document.getElementById('poi-grid');
-  if (!grid) return;
-  const slice = poiFiltered.slice(0, poiVisible);
-  grid.innerHTML = slice.map(renderPoiCard).join('');
-  observeFadeUp(grid);
-  if (L() === 'en') fixLang(grid);
-
-  const wrap = document.getElementById('poi-load-more-wrap');
-  if (wrap) wrap.style.display = poiVisible < poiFiltered.length ? 'block' : 'none';
-}
-
-function poiLoadMore() {
-  poiVisible += POI_PER_PAGE;
-  renderPoiGrid();
-}
-
 /* Slide de destaque (4 cartoes visiveis em desktop), logo abaixo de
    "Explorar por categoria" -- scroll horizontal com scroll-snap, sem
-   dependencia de nenhuma biblioteca de carousel. Mostra todos os pontos
-   (a versao filtravel por ilha fica na seccao completa mais abaixo). */
+   dependencia de nenhuma biblioteca de carousel. E a unica apresentacao
+   dos pontos turisticos na pagina (sem seccao completa/filtravel). */
 function poiSliderScroll(dir) {
   const track = document.getElementById('poi-slider-track');
   if (!track) return;
@@ -951,12 +879,7 @@ function renderPoiSlider() {
 async function loadPois() {
   const data = await apiFetch('/landmarks');
   if (!data || !data.length) return; // secção fica escondida (display:none já no HTML)
-  poiItems    = data;
-  poiFiltered = [...poiItems];
-  const section = document.getElementById('poi-section');
-  if (section) section.style.display = '';
-  renderPoiChips();
-  renderPoiGrid();
+  poiItems = data;
   renderPoiSlider();
 }
 
@@ -2055,11 +1978,7 @@ function setLang(lang) {
     updateActCount();
   }
   renderFeatured();
-  if (poiItems.length) {
-    renderPoiChips();
-    renderPoiGrid();
-    renderPoiSlider();
-  }
+  if (poiItems.length) renderPoiSlider();
 }
 
 document.getElementById('langToggle').addEventListener('click', () => {
