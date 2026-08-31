@@ -353,6 +353,21 @@ table.compare-table{width:100%;border-collapse:collapse;min-width:640px;backgrou
   color:#25D366;font-family:'Sora',sans-serif;font-size:.8rem;font-weight:600;transition:background .15s;
 }
 .footer-wa:hover{background:rgba(37,211,102,.15)}
+/* Logos reais das marcas de pagamento aceites (fornecidos pela SISP,
+   Pacote de desenvolvimento 4.6) -- exigido pelo checklist de validacao
+   de site da SISP. Mesma logica ja usada em index.html: chip branco para
+   Vinti4/Visa/Amex (fundo branco solido nos ficheiros), Mastercard sem
+   chip e maior porque o seu "ID Check" vem em branco (invisivel dentro
+   de um chip branco). */
+.payment-logos{
+  max-width:1100px;margin:0 auto;padding:24px 24px 0;
+  border-top:1px solid rgba(255,255,255,.06);
+  display:flex;align-items:center;gap:14px;flex-wrap:wrap;
+}
+.payment-logos span{font-size:.78rem;color:rgba(255,255,255,.35);white-space:nowrap;margin-right:2px}
+.payment-logos .plogo{background:#fff;border-radius:6px;padding:5px 9px;display:flex;align-items:center}
+.payment-logos img{height:16px;width:auto;display:block}
+.payment-logos .plogo-mc img{height:22px}
 @media (max-width:800px){.footer-inner{grid-template-columns:1fr 1fr}}
 @media (max-width:520px){
   .footer-inner{grid-template-columns:1fr}
@@ -670,6 +685,13 @@ table.compare-table{width:100%;border-collapse:collapse;min-width:640px;backgrou
         </a>
       </div>
     </div>
+  </div>
+  <div class="payment-logos">
+    <span class="pt">Pagamentos aceites:</span><span class="en">Accepted payments:</span>
+    <span class="plogo"><img src="/payment-logos/vinti4.png" alt="SISP Vinti4"></span>
+    <span class="plogo-mc"><img src="/payment-logos/mastercard.png" alt="Mastercard ID Check"></span>
+    <span class="plogo"><img src="/payment-logos/visa.png" alt="Visa"></span>
+    <span class="plogo"><img src="/payment-logos/amex.jpg" alt="American Express"></span>
   </div>
   <div class="footer-bottom">
     <span class="footer-copy pt">© 2026 SalDesk · Cabo Verde</span>
