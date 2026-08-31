@@ -379,30 +379,42 @@ function passwordResetEmail({ name, link }) {
    pela equipa SalDesk, nunca passou pelo /register) ── */
 
 function operatorFirstAccessEmail({ name, operatorName, link }) {
-  const subject = `O seu painel SalDesk já está pronto, ${operatorName}`;
+  const subject = `Bem-vindo à SalDesk, ${operatorName}`;
 
-  const intro = `<p style="margin:0 0 20px;font-family:${FONT};font-size:14px;line-height:1.6;color:${MUTED};">Olá ${name || ''}, a equipa da SalDesk já configurou o painel de <strong>${operatorName}</strong>. Defina a sua password para aceder pela primeira vez ao seu dashboard.</p>`;
+  const intro = `<p style="margin:0 0 20px;font-family:${FONT};font-size:14px;line-height:1.6;color:${MUTED};">Olá! Sou o Rits, fundador da SalDesk. Configurei pessoalmente o seu painel — é um prazer genuíno ter a <strong>${operatorName}</strong> entre os primeiros operadores na plataforma.</p>`;
 
-  const body = paragraph('Depois de definir a password, pode entrar em app.saldesk.cv sempre que quiser, com o seu email.');
+  const body = paragraph('A ideia da SalDesk nasceu aqui na Ilha do Sal, com um objectivo simples: dar aos operadores turísticos de Cabo Verde uma forma de receber reservas directas, sem pagar comissão a nenhuma OTA. Estou muito contente por poder incluir o seu negócio nesta fase.')
+    + paragraph('Só falta um passo para começar — definir a sua password de acesso.');
+
+  const signOff = paragraph('Qualquer dúvida, mesmo a mais simples, responda directamente a este email. Vou ler e responder pessoalmente.')
+    + `<p style="margin:24px 0 0;font-family:${FONT};font-size:14px;line-height:1.6;color:${INK};">Um abraço,<br>Rits Delgado<br><span style="color:${MUTED};font-size:12px;">Fundador, SalDesk</span></p>`;
 
   const html = wrapEmail({
-    title: 'O seu painel está pronto',
+    title: 'Bem-vindo à SalDesk',
     introHtml: intro,
     bodyHtml: body,
     ctaUrl: link,
     ctaLabel: 'Aceder ao meu painel',
   });
+  const htmlComSignOff = html.replace(ctaButton(link, 'Aceder ao meu painel'), ctaButton(link, 'Aceder ao meu painel') + signOff);
 
   const text = [
-    `Olá ${name || ''},`,
+    'Olá!',
     '',
-    `A equipa da SalDesk já configurou o painel de ${operatorName}.`,
-    `Defina a sua password para aceder pela primeira vez: ${link}`,
+    `Sou o Rits, fundador da SalDesk. Configurei pessoalmente o seu painel — é um prazer genuíno ter a ${operatorName} entre os primeiros operadores na plataforma.`,
     '',
-    'Depois faça login em https://app.saldesk.cv/login',
+    'A ideia da SalDesk nasceu aqui na Ilha do Sal, com um objectivo simples: dar aos operadores turísticos de Cabo Verde uma forma de receber reservas directas, sem pagar comissão a nenhuma OTA.',
+    '',
+    `Definir password de acesso: ${link}`,
+    '',
+    'Qualquer dúvida, responda directamente a este email — vou ler e responder pessoalmente.',
+    '',
+    'Um abraço,',
+    'Rits Delgado',
+    'Fundador, SalDesk',
   ].join('\n');
 
-  return { subject, html, text };
+  return { subject, html: htmlComSignOff, text };
 }
 
 module.exports = {
