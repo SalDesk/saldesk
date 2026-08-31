@@ -50,11 +50,29 @@ router.use(verifyGygIntegrator);
    camelCase. Os outros 4 paths abaixo tem o mesmo prefixo "/1/{verbo-
    kebab-case}" e agora seguem o spec OpenAPI publico oficial da GYG
    (ver comentario detalhado no controller), mas ainda nao foram exercitados
-   individualmente pelo self-testing tool -- ajustar assim que o forem. */
+   individualmente pelo self-testing tool -- ajustar assim que o forem.
+
+   2026-08-30 (email de Ahmed, Equipe de Conectividade GYG): o pedido REAL
+   de producao chegou a "/1/1/get-availabilities" (um segmento a mais que o
+   confirmado em sandbox) e recebeu 404 -- a rota so existia com um
+   segmento. O controller nunca le req.params (so query string), por isso
+   o(s) segmento(s) antes do verbo sao so uma convencao de URL da GYG, nunca
+   interpretados pela logica de negocio -- acrescentar o alias com dois
+   segmentos e uma alteracao aditiva e segura, sem tocar em nada que ja
+   estava certificado em sandbox. Ainda por resolver do lado deles (fora do
+   nosso alcance, so no Integrator Portal): o URL base registado para
+   Sandbox e Producao esta identico -- Ahmed pediu para diferenciar os
+   dois no portal. */
 router.get('/1/get-availabilities',   queryAvailability);
 router.post('/1/reserve',             createReservation);
 router.post('/1/cancel-reservation',  cancelReservation);
 router.post('/1/book',                createBooking);
 router.post('/1/cancel-booking',      cancelBooking);
+
+router.get('/1/1/get-availabilities',   queryAvailability);
+router.post('/1/1/reserve',             createReservation);
+router.post('/1/1/cancel-reservation',  cancelReservation);
+router.post('/1/1/book',                createBooking);
+router.post('/1/1/cancel-booking',      cancelBooking);
 
 module.exports = router;
