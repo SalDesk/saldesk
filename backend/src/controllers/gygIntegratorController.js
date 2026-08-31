@@ -320,6 +320,13 @@ async function queryAvailability(req, res, next) {
             productId,
             dateTime:  `${dataStr}T${slot.time}:00-01:00`,
             vacancies,
+            /* CUT_OFF_OVER_API (Integrator Portal, "Test additional features") --
+               falhou pelo self-testing tool (2026-08-31): "Cut off information
+               is missing in get-availabilities response". Campo confirmado no
+               spec publico OpenAPI: cutoffSeconds (inteiro, pode ser 0). O
+               SalDesk nao impoe nenhuma antecedencia minima de reserva em
+               lado nenhum do codigo -- 0 e o valor honesto, nunca inventado. */
+            cutoffSeconds: 0,
           });
         }
         diaCorrente.setDate(diaCorrente.getDate() + 1);
@@ -344,6 +351,7 @@ async function queryAvailability(req, res, next) {
           dateTime:     `${dataStr}T00:00:00-01:00`,
           vacancies:    indisponiveis.has(dataStr) ? 0 : (isGroupsProduct ? 1 : (unit.capacity || 1)),
           openingTimes: [{ fromTime: '00:00', toTime: '23:59' }],
+          cutoffSeconds: 0,
         });
         diaCorrente.setDate(diaCorrente.getDate() + 1);
       }
