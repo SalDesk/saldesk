@@ -926,6 +926,7 @@ function renderPoiGrid() {
   if (!grid) return;
   const slice = poiFiltered.slice(0, poiVisible);
   grid.innerHTML = slice.map(renderPoiCard).join('');
+  observeFadeUp(grid);
   if (L() === 'en') fixLang(grid);
 
   const wrap = document.getElementById('poi-load-more-wrap');
