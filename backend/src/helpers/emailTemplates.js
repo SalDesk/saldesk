@@ -375,9 +375,40 @@ function passwordResetEmail({ name, link }) {
   return { subject, html, text };
 }
 
+/* ── e) Primeiro acesso ao painel (operador configurado directamente
+   pela equipa SalDesk, nunca passou pelo /register) ── */
+
+function operatorFirstAccessEmail({ name, operatorName, link }) {
+  const subject = `O seu painel SalDesk já está pronto, ${operatorName}`;
+
+  const intro = `<p style="margin:0 0 20px;font-family:${FONT};font-size:14px;line-height:1.6;color:${MUTED};">Olá ${name || ''}, a equipa da SalDesk já configurou o painel de <strong>${operatorName}</strong>. Defina a sua password para aceder pela primeira vez ao seu dashboard.</p>`;
+
+  const body = paragraph('Depois de definir a password, pode entrar em app.saldesk.cv sempre que quiser, com o seu email.');
+
+  const html = wrapEmail({
+    title: 'O seu painel está pronto',
+    introHtml: intro,
+    bodyHtml: body,
+    ctaUrl: link,
+    ctaLabel: 'Aceder ao meu painel',
+  });
+
+  const text = [
+    `Olá ${name || ''},`,
+    '',
+    `A equipa da SalDesk já configurou o painel de ${operatorName}.`,
+    `Defina a sua password para aceder pela primeira vez: ${link}`,
+    '',
+    'Depois faça login em https://app.saldesk.cv/login',
+  ].join('\n');
+
+  return { subject, html, text };
+}
+
 module.exports = {
   confirmacaoClienteEmail,
   notificacaoOperadorEmail,
   staffInviteEmail,
   passwordResetEmail,
+  operatorFirstAccessEmail,
 };

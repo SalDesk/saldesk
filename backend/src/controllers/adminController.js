@@ -1,7 +1,7 @@
 const crypto             = require('crypto');
 const { supabaseAdmin }  = require('../config/supabase');
 const { enviarEmail }    = require('../helpers/emailHelper');
-const { passwordResetEmail } = require('../helpers/emailTemplates');
+const { passwordResetEmail, operatorFirstAccessEmail } = require('../helpers/emailTemplates');
 const { loadPriceMap }  = require('../helpers/pricing');
 const ipBlockStore      = require('../services/ipBlockStore');
 const { frontendBase }  = require('../utils/urls');
@@ -458,6 +458,44 @@ async function impersonateOperator(req, res, next) {
   } catch (err) { next(err); }
 }
 
+/* Envia o email de "primeiro acesso" (nunca "reposicao de password") a um
+   operador ja existente na BD (ex. configurado directamente pela equipa,
+   nunca passou pelo /register nem pela conversao de lead). Reaproveita o
+   mesmo mecanismo generateLink(type:'recovery') ja usado no resto do
+   ficheiro -- gera um novo token de uso unico e invalida qualquer link
+   anterior ainda por usar para este email, por isso so deve ser chamado
+   uma vez por operador e o resultado entregue de imediato. */
+async function sendOperatorFirstAccess(req, res, next) {
+  try {
+    const id = req.params.id;
+    const { data: operator, error } = await supabaseAdmin
+      .from('operators').select('id, name, email, user_id, notes_log').eq('id', id).single();
+    if (error) throw error;
+    if (!operator) return res.status(404).json({ error: 'Operador nao encontrado' });
+    if (!operator.user_id) return res.status(400).json({ error: 'Operador sem conta de utilizador associada' });
+    if (!operator.email) return res.status(400).json({ error: 'Operador sem email definido' });
+
+    const { data: link, error: linkErr } = await supabaseAdmin.auth.admin.generateLink({
+      type:    'recovery',
+      email:   operator.email,
+      options: { redirectTo: 'https://app.saldesk.cv/reset-password' },
+    });
+    if (linkErr) throw linkErr;
+    if (!link?.properties?.action_link) return res.status(500).json({ error: 'Nao foi possivel gerar o link de acesso' });
+
+    const { subject, html, text } = operatorFirstAccessEmail({
+      name: operator.name, operatorName: operator.name, link: link.properties.action_link,
+    });
+    await enviarEmail({ to: operator.email, subject, html, text });
+
+    const log   = Array.isArray(operator.notes_log) ? operator.notes_log : [];
+    const entry = { text: 'Email de primeiro acesso ao painel enviado', at: new Date().toISOString(), type: 'first_access' };
+    await supabaseAdmin.from('operators').update({ notes_log: [...log, entry] }).eq('id', id);
+
+    return res.json({ message: `Email de primeiro acesso enviado para ${operator.email}` });
+  } catch (err) { next(err); }
+}
+
 /* ─── Leads (operator_leads — candidaturas de operadores) ────── */
 function computeLeadScore(lead) {
   const breakdown = {};
@@ -645,7 +683,7 @@ async function convertLead(req, res, next) {
         options: { redirectTo: 'https://app.saldesk.cv/reset-password' },
       });
       if (!linkErr && link?.properties?.action_link) {
-        const { subject, html, text } = passwordResetEmail({ name: operator.name, link: link.properties.action_link });
+        const { subject, html, text } = operatorFirstAccessEmail({ name: operator.name, operatorName: operator.name, link: link.properties.action_link });
         await enviarEmail({ to: lead.email, subject, html, text });
       }
     } catch { /* nao bloquear a conversao se o email de acesso falhar */ }
@@ -2370,7 +2408,7 @@ async function rejeitarConect(req, res, next) {
 module.exports = {
   getStats, getActivity,
   listOperators, getOperatorDetail, updateOperator, updateOperatorStatus,
-  extendOperatorTrial, messageOperator, impersonateOperator,
+  extendOperatorTrial, messageOperator, impersonateOperator, sendOperatorFirstAccess,
   listLeads, updateLead, sendLeadEmail, convertLead,
   updateLeadStage, addLeadNote, addLeadContact, getPipelineStats,
   getWaitlist, sendWaitlistEmail,

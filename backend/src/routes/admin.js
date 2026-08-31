@@ -3,7 +3,7 @@ const router  = express.Router();
 const {
   getStats, getActivity,
   listOperators, getOperatorDetail, updateOperator, updateOperatorStatus,
-  extendOperatorTrial, messageOperator, impersonateOperator,
+  extendOperatorTrial, messageOperator, impersonateOperator, sendOperatorFirstAccess,
   listLeads, updateLead, sendLeadEmail, convertLead,
   updateLeadStage, addLeadNote, addLeadContact, getPipelineStats,
   getWaitlist, sendWaitlistEmail,
@@ -51,6 +51,7 @@ router.put('/operators/:id/status',     updateOperatorStatus);  /* compat */
 router.post('/operators/:id/extend-trial', extendOperatorTrial);
 router.post('/operators/:id/message',      messageOperator);
 router.post('/operators/:id/impersonate',  impersonateOperator);
+router.post('/operators/:id/first-access', sendOperatorFirstAccess);
 
 /* Pipeline comercial */
 router.get('/pipeline/stats',            getPipelineStats);
