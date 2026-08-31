@@ -1644,6 +1644,7 @@ async function listLandmarks(req, res, next) {
   try {
     let q = supabaseAdmin.from('cms_landmarks').select('*').order('name_pt');
     if (req.query.island) q = q.eq('island_slug', req.query.island);
+    if (req.query.slug) q = q.eq('slug', req.query.slug);
     const { data, error } = await q;
     if (error) throw error;
     return res.json({ data: data || [] });

@@ -103,6 +103,8 @@ const CMS_CONFIG = {
       { key: 'how_to_get_pt',  label: 'Como chegar PT', type: 'textarea' },
       { key: 'how_to_get_en',  label: 'Como chegar EN', type: 'textarea' },
       { key: 'image_url',      label: 'URL da foto (opcional — deixar vazio se não houver foto real)' },
+      { key: 'fun_fact_pt',    label: 'Você Sabia? PT', type: 'textarea' },
+      { key: 'fun_fact_en',    label: 'Você Sabia? EN', type: 'textarea' },
     ],
   },
 };

@@ -162,11 +162,9 @@
     .act-footer .btn-book{flex:1}
 
     /* ── PONTOS TURÍSTICOS ── */
-    .poi-related{border-top:1px solid var(--line);padding-top:10px;margin-top:auto}
-    .poi-related-label{display:block;font-family:var(--fm);font-size:.625rem;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--tx-faint);margin-bottom:6px}
-    .poi-related-list{display:flex;flex-wrap:wrap;gap:6px}
-    .poi-related-list a{font-family:var(--fb);font-size:.75rem;font-weight:600;color:var(--teal7);text-decoration:none;background:var(--teal0);border-radius:8px;padding:4px 9px}
-    .poi-related-list a:hover{background:var(--teal1)}
+    .poi-card-compact{display:flex;flex-direction:column}
+    .poi-more-link{display:inline-flex;align-items:center;gap:5px;font-family:var(--fb);font-size:.75rem;font-weight:600;color:var(--teal7);margin-top:auto}
+    .poi-more-link:hover{color:var(--teal6)}
     .poi-slider{display:flex;gap:20px;overflow-x:auto;scroll-snap-type:x mandatory;scroll-behavior:smooth;padding-bottom:4px;-webkit-overflow-scrolling:touch;scrollbar-width:none}
     .poi-slider::-webkit-scrollbar{display:none}
     .poi-slider > .card{scroll-snap-align:start;flex:0 0 calc((100% - 60px)/4);min-width:260px}
@@ -853,72 +851,28 @@ function poiImgBlock(item) {
   return `<div class="img-mono"><svg width="46" height="46" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">${icon}</svg></div>`;
 }
 
-function namesMatch(a, b) {
-  if (!a || !b) return false;
-  a = a.toLowerCase().trim(); b = b.toLowerCase().trim();
-  return !!a && !!b && (a.includes(b) || b.includes(a));
-}
-
-/* Operadores relacionados com um ponto turistico -- SEM pedido novo ao
-   backend, calculado a partir dos dados de /discover-units ja carregados
-   (variavel "operators"). Prioridade 1: unidades cujo itinerario (stops,
-   ver ServiceDetail.jsx) mencione este local pelo nome -- correspondencia
-   real e especifica. Sem nenhuma, cai no fallback honesto: ate 3
-   operadores da mesma ilha, nunca inventa uma relacao que nao existe. */
-function relatedOperatorsFor(poi) {
-  const seen = new Set();
-  const stopMatches = [];
-  operators.forEach(item => {
-    if (seen.has(item.operator_slug) || !item.description || item.description[0] !== '{') return;
-    let meta;
-    try { meta = JSON.parse(item.description); } catch { return; }
-    const stops = Array.isArray(meta.stops) ? meta.stops : [];
-    const hit = stops.some(s =>
-      namesMatch(s.name, poi.name_pt) || namesMatch(s.name_en, poi.name_en) ||
-      namesMatch(s.name, poi.name_en) || namesMatch(s.name_en, poi.name_pt));
-    if (hit) { seen.add(item.operator_slug); stopMatches.push(item); }
-  });
-  if (stopMatches.length) return stopMatches.slice(0, 3);
-
-  const sameIsland = [];
-  operators.forEach(item => {
-    if (seen.has(item.operator_slug) || item.island_slug !== poi.island_slug) return;
-    seen.add(item.operator_slug);
-    sameIsland.push(item);
-  });
-  sameIsland.sort((a, b) => (b.avg_rating || 0) - (a.avg_rating || 0) || (b.recent_bookings || 0) - (a.recent_bookings || 0));
-  return sameIsland.slice(0, 3);
-}
-
 function renderPoiCard(item) {
   const lang    = L();
   const name    = esc(lang === 'en' && item.name_en ? item.name_en : item.name_pt);
-  const desc    = esc(truncate(lang === 'en' && item.description_en ? item.description_en : item.description_pt, 130));
-  const howTo   = lang === 'en' && item.how_to_get_en ? item.how_to_get_en : item.how_to_get_pt;
+  const desc    = esc(truncate(lang === 'en' && item.description_en ? item.description_en : item.description_pt, 80));
   const island  = ISLAND_LABEL[item.island_slug]?.[lang] || '';
   const typeLbl = (POI_TYPE_LABEL[item.type] || {})[lang] || item.type || '';
-  const related = relatedOperatorsFor(item);
-
-  const relatedHtml = related.length ? `
-    <div class="poi-related">
-      <span class="poi-related-label"><span class="pt">Operadores nesta zona</span><span class="en">Operators in this area</span></span>
-      <div class="poi-related-list">
-        ${related.map(op => `<a href="${APP}/book/${esc(op.operator_slug)}" target="_blank" rel="noopener">${esc(op.operator_name)}</a>`).join('')}
-      </div>
-    </div>` : '';
+  const href    = `ponto.html?slug=${encodeURIComponent(item.slug)}`;
 
   return `
-    <div class="act-card card fade-up">
-      <div class="act-img img-block">${poiImgBlock(item)}</div>
-      <div class="act-body">
-        <div class="act-rating-row" style="justify-content:space-between">
+    <div class="act-card card fade-up poi-card-compact">
+      <a href="${href}" class="act-img img-block" style="height:120px">${poiImgBlock(item)}</a>
+      <div class="act-body" style="padding:14px 16px">
+        <div class="act-rating-row" style="justify-content:space-between;margin-bottom:6px">
           <span class="tb">${esc(typeLbl)}</span>
-          ${island ? `<span style="font-family:var(--fm);font-size:.6875rem;color:var(--tx-faint);text-transform:uppercase;letter-spacing:.04em">${esc(island)}</span>` : ''}
+          ${island ? `<span style="font-family:var(--fm);font-size:.625rem;color:var(--tx-faint);text-transform:uppercase;letter-spacing:.04em">${esc(island)}</span>` : ''}
         </div>
-        <div class="act-name">${name}</div>
-        ${desc ? `<p class="act-desc" style="-webkit-line-clamp:3">${desc}</p>` : ''}
-        ${howTo ? `<p style="font-size:.75rem;color:var(--tx-faint);margin-bottom:12px">${esc(howTo)}</p>` : ''}
-        ${relatedHtml}
+        <a href="${href}" class="act-name" style="display:block;margin-bottom:4px">${name}</a>
+        ${desc ? `<p class="act-desc" style="-webkit-line-clamp:2;margin-bottom:10px">${desc}</p>` : ''}
+        <a href="${href}" class="poi-more-link">
+          <span class="pt">Saber mais</span><span class="en">Learn more</span>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+        </a>
       </div>
     </div>`;
 }
