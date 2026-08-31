@@ -3,11 +3,18 @@ const {
   createProduct, createPlan, createSubscription, getSubscription, cancelSubscription,
   verifyWebhookSignature,
 } = require('../services/platformPaypalService');
+const { construirPedidoPagamento, validarResposta } = require('../services/sispService');
 const { loadPriceMap } = require('../helpers/pricing');
 const { enviarEmail } = require('../helpers/emailHelper');
 const { frontendBase } = require('../utils/urls');
 
 const PLANS = ['starter', 'business', 'pro'];
+
+/* Mesma taxa fixa ja usada em todo o resto do frontend (Financial.jsx,
+   ServiceDetail.jsx, PublicBooking.jsx, etc.) para converter EUR->CVE --
+   nunca uma taxa de cambio em tempo real, por consistencia com o resto
+   da app. SISP so aceita escudos (currency code 132, ver sispService.js). */
+const EUR_CVE = 110;
 
 /* Erros da PayPal (ex: 401 por credenciais invalidas/em falta) tem o seu
    proprio .status vindo do axios -- nunca deixar isso propagar tal e qual
@@ -306,7 +313,128 @@ async function getBillingHistory(req, res, next) {
   } catch (err) { next(err); }
 }
 
+/* ─── SISP Vinti4 (alternativa ao PayPal, pagamento manual mensal) ───
+   Ao contrario da PayPal, o SISP nao tem API de subscricao recorrente --
+   e sempre um redirect unico do browser do operador para a Vinti4 (ver
+   sispService.js). Por isso esta via NUNCA marca paypal_subscription_id
+   nem promete renovacao automatica: so estende plan_paid_until +30 dias,
+   tal como uma renovacao normal, mas o operador tem de voltar a pagar
+   manualmente no mes seguinte. Usa credenciais PROPRIAS da SalDesk
+   (PLATFORM_SISP_POS_ID/POS_AUTH_CODE), nunca as de nenhum operador --
+   essas continuam reservadas a paymentController.js, para os operadores
+   cobrarem os SEUS clientes. */
+async function createSispCheckout(req, res, next) {
+  try {
+    const { plan } = req.body;
+    if (!PLANS.includes(plan)) {
+      return res.status(400).json({ error: 'Plano invalido', code: 'INVALID_PLAN' });
+    }
+
+    const posID = process.env.PLATFORM_SISP_POS_ID;
+    const posAutCode = process.env.PLATFORM_SISP_POS_AUTH_CODE;
+    if (!posID || !posAutCode) {
+      return res.status(503).json({ error: 'Pagamento SISP ainda nao esta disponivel para a subscricao SalDesk.', code: 'SISP_NOT_CONFIGURED' });
+    }
+
+    const priceMap = await loadPriceMap();
+    const amountEur = priceMap[plan];
+    if (!amountEur) {
+      return res.status(400).json({ error: 'Preco nao configurado para este plano', code: 'PRICE_NOT_FOUND' });
+    }
+    const amountCve = Math.round(amountEur * EUR_CVE);
+
+    const base = frontendBase();
+    const apiBase = process.env.API_URL || 'http://localhost:3001';
+    const pedido = construirPedidoPagamento({
+      posID, posAutCode, amount: amountCve,
+      urlMerchantResponse: `${apiBase}/api/v1/billing/sisp-callback`,
+    });
+
+    const { error: insertError } = await supabaseAdmin.from('platform_payments').insert({
+      operator_id: req.operator.id,
+      plan,
+      amount_eur: amountEur,
+      gateway: 'sisp',
+      gateway_order_id: pedido.merchantRef,
+      status: 'pending',
+    });
+    if (insertError) throw insertError;
+
+    return res.json({
+      data: { postUrl: pedido.postUrl, fields: pedido.fields },
+      message: 'Pedido SISP preparado',
+    });
+  } catch (err) { next(err); }
+}
+
+/* Confirma um pagamento SISP -- NUNCA activa renovacao automatica (ver
+   comentario acima). Reutilizavel se um dia a subscricao ja estiver
+   activa e o operador simplesmente pagar mais um mes via SISP. */
+async function activarPagamentoSisp(payment, transactionID) {
+  const nowIso = new Date().toISOString();
+  const paidUntil = new Date(Date.now() + 30 * 86400000).toISOString();
+
+  await supabaseAdmin.from('platform_payments')
+    .update({ status: 'completed', completed_at: nowIso })
+    .eq('id', payment.id);
+
+  const { data: current } = await supabaseAdmin
+    .from('operators').select('name, email, notes_log').eq('id', payment.operator_id).single();
+  const log = Array.isArray(current?.notes_log) ? current.notes_log : [];
+
+  await supabaseAdmin.from('operators').update({
+    plan: payment.plan,
+    plan_status: 'active',
+    plan_paid_until: paidUntil,
+    notes_log: [...log, { text: `Pagamento SISP confirmado — plano "${payment.plan}", €${payment.amount_eur} (ref. ${transactionID})`, at: nowIso, type: 'payment' }],
+    updated_at: nowIso,
+  }).eq('id', payment.operator_id);
+
+  if (current?.email) {
+    enviarEmail({
+      to: current.email,
+      subject: 'Pagamento confirmado — SalDesk',
+      text: `Ola ${current.name},\n\nO teu pagamento de €${payment.amount_eur} (plano ${payment.plan}) via SISP foi confirmado.\n\nA tua conta esta activa ate ${paidUntil.split('T')[0]}. Ao contrario do PayPal, o SISP nao renova automaticamente -- volta a Definicoes > Facturacao para pagar novamente antes dessa data.\n\nObrigado por usares a SalDesk.`,
+    }).catch(() => {});
+  }
+}
+
+/* Callback publico -- a Vinti4 faz POST DIRECTO para aqui apos o 3D
+   Secure, no browser do proprio operador (nao servidor-a-servidor, ver
+   sispService.js). Por isso responde sempre com um redirect, nunca JSON --
+   mesmo padrao ja usado em paymentController.js's sispCallback. */
+async function sispCallback(req, res, next) {
+  const base = frontendBase();
+  try {
+    const merchantRef = req.body.merchantRespMerchantRef;
+    const { data: payment } = await supabaseAdmin
+      .from('platform_payments').select('*')
+      .eq('gateway_order_id', merchantRef).eq('gateway', 'sisp').eq('status', 'pending')
+      .maybeSingle();
+
+    if (!payment) return res.redirect(`${base}/definicoes/facturacao/cancelado`);
+
+    const resultado = validarResposta(process.env.PLATFORM_SISP_POS_AUTH_CODE, req.body);
+
+    if (resultado.status === 'paid') {
+      await activarPagamentoSisp(payment, resultado.transactionID);
+      return res.redirect(`${base}/definicoes/facturacao/sucesso?gateway=sisp`);
+    }
+
+    if (resultado.status === 'cancelled') {
+      return res.redirect(`${base}/definicoes/facturacao/cancelado`);
+    }
+
+    console.error('[Billing SISP Callback] Pagamento nao validado:', resultado.status, resultado.errorDescription || '');
+    return res.redirect(`${base}/definicoes/facturacao/cancelado?erro=${resultado.status}`);
+  } catch (err) {
+    console.error('[Billing SISP Callback] Erro:', err.message);
+    return res.redirect(`${base}/definicoes/facturacao/cancelado`);
+  }
+}
+
 module.exports = {
   createSubscriptionCheckout, confirmSubscription, cancelMySubscription,
   webhookPaypal, getBillingHistory,
+  createSispCheckout, sispCallback,
 };

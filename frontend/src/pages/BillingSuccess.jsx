@@ -10,15 +10,26 @@ export default function BillingSuccess() {
   const setOperator = useAuthStore((s) => s.setOperator);
   const lang = localStorage.getItem('sd-lang') || 'pt';
   const subscriptionId = searchParams.get('subscription_id');
+  const gateway = searchParams.get('gateway');
   const [status, setStatus] = useState('confirming');
 
   useEffect(() => {
+    /* SISP ja confirmou e activou o pagamento no proprio callback do
+       backend (redirect directo da Vinti4, sem passar por aqui antes) --
+       so falta ir buscar o operador actualizado, nunca chamar
+       confirmSubscription (isso e so para o fluxo PayPal). */
+    if (gateway === 'sisp') {
+      api.get('/auth/me')
+        .then(({ data }) => { setOperator(data.data.operator); setStatus('done'); })
+        .catch(() => setStatus('error'));
+      return;
+    }
     if (!subscriptionId) { setStatus('error'); return; }
     confirmSubscription(subscriptionId)
       .then(() => api.get('/auth/me'))
       .then(({ data }) => { setOperator(data.data.operator); setStatus('done'); })
       .catch(() => setStatus('error'));
-  }, [subscriptionId]);
+  }, [subscriptionId, gateway]);
 
   return (
     <div className="min-h-screen bg-n-50 flex items-center justify-center p-4">

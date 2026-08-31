@@ -5,11 +5,11 @@ import {
   Shield, ExternalLink,
   Eye, EyeOff, CheckCircle2, XCircle, Upload,
   Camera, ChevronUp, ChevronDown, X, Plus, ArrowUpRight,
-  Lock, Wallet, Compass,
+  Lock, Wallet, Compass, Landmark,
 } from 'lucide-react';
 import api from '../services/api';
 import { updateOperator, changePassword } from '../services/authService';
-import { createSubscription, cancelSubscription, getBillingHistory } from '../services/billingService';
+import { createSubscription, cancelSubscription, getBillingHistory, createSispCheckout } from '../services/billingService';
 import PasswordStrength, { getPasswordStrength } from '../components/auth/PasswordStrength';
 import useAuthStore from '../store/authStore';
 import useUiStore from '../store/uiStore';
@@ -526,18 +526,48 @@ function FacturacaoTab() {
   const [subscribingPlan, setSubscribingPlan] = useState(null);
   const [cancelling, setCancelling] = useState(false);
   const [showCancelModal, setShowCancelModal] = useState(false);
+  const [paymentMethodPlan, setPaymentMethodPlan] = useState(null); // plano escolhido, a aguardar metodo de pagamento
   const [error, setError] = useState('');
 
   useEffect(() => { getBillingHistory().then(setHistory); }, []);
 
   async function handleSubscribe(plan) {
     setError('');
+    setPaymentMethodPlan(null);
     setSubscribingPlan(plan);
     try {
       const { approval_url } = await createSubscription(plan);
       window.location.href = approval_url;
     } catch {
       setError('Nao foi possivel iniciar a subscricao. Tenta novamente.');
+      setSubscribingPlan(null);
+    }
+  }
+
+  /* SISP e sempre um redirect: pede os campos a Vinti4 e auto-submete um
+     formulario para la, mesma tecnica ja usada nas paginas publicas de
+     reserva (ServiceDetail.jsx/PublicBooking.jsx) -- nao ha JSON de
+     resposta para seguir, o browser sai mesmo do nosso site. */
+  async function handleSisp(plan) {
+    setError('');
+    setPaymentMethodPlan(null);
+    setSubscribingPlan(plan);
+    try {
+      const { postUrl, fields } = await createSispCheckout(plan);
+      const form = document.createElement('form');
+      form.method = 'POST';
+      form.action = postUrl;
+      Object.entries(fields).forEach(([k, v]) => {
+        const input = document.createElement('input');
+        input.type = 'hidden'; input.name = k; input.value = v;
+        form.appendChild(input);
+      });
+      document.body.appendChild(form);
+      form.submit();
+    } catch (err) {
+      setError(err?.response?.data?.code === 'SISP_NOT_CONFIGURED'
+        ? 'O pagamento por SISP ainda nao esta disponivel para a subscricao SalDesk.'
+        : 'Nao foi possivel iniciar o pagamento SISP. Tenta novamente.');
       setSubscribingPlan(null);
     }
   }
@@ -602,7 +632,7 @@ function FacturacaoTab() {
                   loading={subscribingPlan === plan}
                   disabled={isCurrent}
                   icon={Wallet}
-                  onClick={() => handleSubscribe(plan)}
+                  onClick={() => setPaymentMethodPlan(plan)}
                 >
                   {isCurrent ? 'Plano actual' : 'Subscrever'}
                 </Button>
@@ -631,6 +661,40 @@ function FacturacaoTab() {
           ))}
         </div>
       </Card>
+
+      <Modal open={!!paymentMethodPlan} onClose={() => setPaymentMethodPlan(null)} title="Como quer pagar?">
+        <div className="space-y-4">
+          <p className="text-sm font-body text-n-600">
+            Plano <strong>{PLAN_LABEL[paymentMethodPlan] || paymentMethodPlan}</strong> — €{PLAN_PRICES[paymentMethodPlan]}/mes.
+          </p>
+          <button
+            type="button"
+            onClick={() => handleSubscribe(paymentMethodPlan)}
+            className="w-full flex items-center gap-3 p-4 rounded-xl border border-n-200 hover:border-ocean-700 hover:bg-ocean-50 transition text-left"
+          >
+            <div className="w-10 h-10 rounded-full bg-ocean-50 flex items-center justify-center shrink-0">
+              <Wallet size={18} strokeWidth={2} className="text-ocean-700" />
+            </div>
+            <div>
+              <p className="font-display font-semibold text-sm text-n-900">PayPal</p>
+              <p className="text-xs font-body text-n-500">Renova automaticamente todos os meses</p>
+            </div>
+          </button>
+          <button
+            type="button"
+            onClick={() => handleSisp(paymentMethodPlan)}
+            className="w-full flex items-center gap-3 p-4 rounded-xl border border-n-200 hover:border-ocean-700 hover:bg-ocean-50 transition text-left"
+          >
+            <div className="w-10 h-10 rounded-full bg-ocean-50 flex items-center justify-center shrink-0">
+              <Landmark size={18} strokeWidth={2} className="text-ocean-700" />
+            </div>
+            <div>
+              <p className="font-display font-semibold text-sm text-n-900">SISP Vinti4</p>
+              <p className="text-xs font-body text-n-500">Pagamento em escudos, manual todos os meses (sem renovacao automatica)</p>
+            </div>
+          </button>
+        </div>
+      </Modal>
 
       <Modal open={showCancelModal} onClose={() => setShowCancelModal(false)} title="Cancelar subscricao">
         <div className="space-y-4">

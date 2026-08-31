@@ -5,6 +5,11 @@ export async function createSubscription(plan) {
   return data.data;
 }
 
+export async function createSispCheckout(plan) {
+  const { data } = await api.post('/billing/sisp-checkout', { plan });
+  return data.data;
+}
+
 export async function confirmSubscription(subscriptionId) {
   const { data } = await api.post('/billing/subscription/confirm', { subscription_id: subscriptionId });
   return data.data;
