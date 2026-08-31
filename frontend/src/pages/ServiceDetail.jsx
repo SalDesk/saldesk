@@ -12,6 +12,14 @@ import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import Logo from '../components/shared/Logo';
+/* Logos oficiais fornecidos pela SISP (Pacote de desenvolvimento 4.6,
+   "g. Logo das marcas aceites") -- exigido pelo checklist de validacao de
+   site da SISP ("logos das marcas aceites visiveis"). Nunca modificados/
+   recortados, mostrados tal como fornecidos. */
+import visaLogo from '../assets/payment-logos/visa.png';
+import mastercardLogo from '../assets/payment-logos/mastercard.png';
+import amexLogo from '../assets/payment-logos/amex.jpg';
+import vinti4Logo from '../assets/payment-logos/vinti4.png';
 import { useIsWidget, useWidgetResize } from '../utils/widgetMode';
 import {
   MENU_CATEGORY_LABELS, MENU_ALLERGEN_LABELS, MENU_DIET_LABELS, RestaurantReservationSection,
@@ -210,19 +218,26 @@ function ST({ lines }) {
 }
 
 function PO({ lang, v, set }) {
+  const options = [
+    { k:'paypal', l:lang==='en'?'International card (PayPal)':'Cartão internacional (PayPal)', logos:[visaLogo, mastercardLogo, amexLogo] },
+    { k:'sisp',   l:lang==='en'?'Cape Verdean card (Vinti4)':'Cartão cabo-verdiano (Vinti4)',  logos:[vinti4Logo, mastercardLogo] },
+    { k:'cash',   l:lang==='en'?'Pay on arrival':'Pagar presencialmente', s:lang==='en'?'Cash or card on site':'Dinheiro ou cartão no local' },
+  ];
   return (
     <div className="space-y-2.5">
-      {[
-        { k:'paypal', l:lang==='en'?'International card (PayPal)':'Cartão internacional (PayPal)', s:'Visa · Mastercard · American Express' },
-        { k:'sisp',   l:lang==='en'?'Cape Verdean card (Vinti4)':'Cartão cabo-verdiano (Vinti4)',  s:'SISP Vinti4 · MasterCard local' },
-        { k:'cash',   l:lang==='en'?'Pay on arrival':'Pagar presencialmente', s:lang==='en'?'Cash or card on site':'Dinheiro ou cartão no local' },
-      ].map(o=>(
+      {options.map(o=>(
         <button key={o.k} type="button" onClick={()=>set(o.k)}
           className={`w-full text-left p-3.5 rounded-xl border-2 transition-all ${v===o.k?'border-ocean-700 bg-ocean-50':'border-n-200 hover:border-n-300'}`}>
           <div className="flex items-center justify-between gap-3">
             <div>
               <p className={`text-sm font-body font-semibold ${v===o.k?'text-ocean-700':'text-n-800'}`}>{o.l}</p>
-              <p className="text-xs font-body text-n-400 mt-0.5">{o.s}</p>
+              {o.logos ? (
+                <div className="flex items-center gap-2.5 mt-1.5">
+                  {o.logos.map((src,i)=><img key={i} src={src} alt="" className="h-5 w-auto object-contain" />)}
+                </div>
+              ) : (
+                <p className="text-xs font-body text-n-400 mt-0.5">{o.s}</p>
+              )}
             </div>
             <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${v===o.k?'border-ocean-700 bg-ocean-700':'border-n-300'}`}>
               {v===o.k&&<div className="w-2 h-2 bg-white rounded-full"/>}
