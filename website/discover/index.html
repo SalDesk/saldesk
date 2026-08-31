@@ -534,6 +534,11 @@
     </div>
     <div class="chips-wrap" id="poi-chips-grid" style="margin-bottom:24px"></div>
     <div class="act-grid" id="poi-grid"></div>
+    <div id="poi-load-more-wrap" style="display:none;text-align:center;margin-top:36px">
+      <button onclick="poiLoadMore()" class="btn btn-ghost" style="padding:12px 32px">
+        <span class="pt">Ver mais</span><span class="en">Load more</span>
+      </button>
+    </div>
   </div>
 </section>
 
@@ -624,9 +629,11 @@ let activeFilter = ''; // chave estavel (label PT da categoria, ou tipo)
 
 /* Pontos turisticos (cms_landmarks) -- conteudo editorial independente dos
    servicos reservaveis acima, com o seu proprio filtro por ilha. */
+const POI_PER_PAGE = 6;
 let poiItems       = [];
 let poiFiltered    = [];
 let poiActiveIsland = '';
+let poiVisible      = POI_PER_PAGE;
 
 /* Ponte de sessao com a conta de viajante (app.saldesk.cv) -- ver
    bootstrapTravelerSession(). null enquanto anonimo ou nao verificado
@@ -910,14 +917,24 @@ function renderPoiChips() {
 
 function applyPoiFilters() {
   poiFiltered = poiActiveIsland ? poiItems.filter(i => i.island_slug === poiActiveIsland) : poiItems;
+  poiVisible = POI_PER_PAGE;
   renderPoiGrid();
 }
 
 function renderPoiGrid() {
   const grid = document.getElementById('poi-grid');
   if (!grid) return;
-  grid.innerHTML = poiFiltered.map(renderPoiCard).join('');
+  const slice = poiFiltered.slice(0, poiVisible);
+  grid.innerHTML = slice.map(renderPoiCard).join('');
   if (L() === 'en') fixLang(grid);
+
+  const wrap = document.getElementById('poi-load-more-wrap');
+  if (wrap) wrap.style.display = poiVisible < poiFiltered.length ? 'block' : 'none';
+}
+
+function poiLoadMore() {
+  poiVisible += POI_PER_PAGE;
+  renderPoiGrid();
 }
 
 async function loadPois() {
