@@ -86,6 +86,7 @@ export default function Register() {
       await register(form.name, form.email, form.password, inviteCode.trim().toUpperCase() || undefined);
       const { access_token, refresh_token, user, operator } = await login(form.email, form.password);
       setAuth(access_token, user, operator, refresh_token);
+      if (typeof window.gtag === 'function') window.gtag('event', 'sign_up', { method: 'register' });
       navigate('/onboarding');
     } catch (err) {
       setServerError(err.response?.data?.error || t('errors.generic'));
