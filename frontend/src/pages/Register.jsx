@@ -89,7 +89,7 @@ export default function Register() {
       if (typeof window.gtag === 'function') {
         window.gtag('event', 'sign_up', { method: 'register' });
         window.gtag('event', 'conversion', {
-          send_to: 'AW-18422573567/nmrOCKvl--scEP_TyNBE',
+          send_to: 'AW-18425133239/W8ziCJqQy-wcELfx5NFE',
           value: 1.0,
           currency: 'USD',
         });
