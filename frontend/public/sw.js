@@ -1,5 +1,5 @@
 /* SalDesk Service Worker */
-const CACHE = 'saldesk-v2';
+const CACHE = 'saldesk-v3';
 const PRECACHE = ['/', '/index.html'];
 
 self.addEventListener('install', (e) => {
