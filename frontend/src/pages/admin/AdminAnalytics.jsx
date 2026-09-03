@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import {
   BarChart2, TrendingUp, TrendingDown, Users, UserX,
   Globe, AlertTriangle, Mail, FileText, ArrowRight,
-  ChevronUp, ChevronDown, RefreshCw, Printer,
+  ChevronUp, ChevronDown, RefreshCw, Printer, PlayCircle,
 } from 'lucide-react';
 import {
   BarChart, Bar, PieChart, Pie, Cell,
@@ -143,7 +143,41 @@ function TrafficTab({ data }) {
           </ResponsiveContainer>
         </SectionCard>
       </div>
+
+      <DemoUsageCard />
     </div>
+  );
+}
+
+/* Sessoes reais na conta de demonstracao partilhada (demo@saldesk.cv) --
+   reaproveita o mesmo tracker de app_page_views ja usado acima, filtrado
+   pelo operador is_demo=true. Nao ha identidade por visitante (a conta e
+   partilhada por todos que clicam "Ver demo"), so contagem de sessoes. */
+function DemoUsageCard() {
+  const [data, setData] = useState(null);
+
+  useEffect(() => {
+    api.get('/admin/analytics/demo-usage').then((res) => setData(res.data.data)).catch(() => setData({ total_sessions: 0, last_30_days: 0, days: [] }));
+  }, []);
+
+  if (!data) return null;
+
+  return (
+    <SectionCard title="Utilização do demo">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+        <KpiCard icon={PlayCircle} label="Sessões de demo (total)" value={data.total_sessions} sub="conta partilhada — sem identidade por visitante" />
+        <KpiCard icon={PlayCircle} label="Sessões (últimos 30 dias)" value={data.last_30_days} />
+      </div>
+      <ResponsiveContainer width="100%" height={160}>
+        <BarChart data={data.days} margin={{ top: 4, right: 8, left: -12, bottom: 0 }}>
+          <CartesianGrid strokeDasharray="3 3" stroke="#E5E8EC" />
+          <XAxis dataKey="label" tick={AXIS_TICK} interval={4} />
+          <YAxis tick={AXIS_TICK} allowDecimals={false} />
+          <Tooltip contentStyle={TOOLTIP_CSS} />
+          <Bar dataKey="count" name="Sessões de demo" fill="#D4A82A" radius={[3, 3, 0, 0]} />
+        </BarChart>
+      </ResponsiveContainer>
+    </SectionCard>
   );
 }
 

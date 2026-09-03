@@ -2166,6 +2166,59 @@ async function getAnalyticsTraffic(req, res, next) {
   } catch (err) { next(err); }
 }
 
+/* Utilizacao do demo -- reaproveita o mesmo tracker real de app_page_views
+   ja usado pelo separador Trafego (Layout.jsx dispara em toda navegacao
+   autenticada), so filtrado pelo operador com is_demo=true. Nao ha
+   identidade por visitante (a conta demo e partilhada por todos que clicam
+   "Ver demo"), mas sessoes distintas dao uma contagem real de utilizacoes
+   sem inventar nem guardar dados pessoais novos. */
+async function getDemoUsage(req, res, next) {
+  try {
+    const { data: demoOp } = await supabaseAdmin
+      .from('operators').select('id').eq('is_demo', true).limit(1).maybeSingle();
+    if (!demoOp) return res.json({ data: { total_sessions: 0, last_30_days: 0, days: [] } });
+
+    const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+    const { data: views, error } = await supabaseAdmin
+      .from('app_page_views')
+      .select('session_id, created_at')
+      .eq('operator_id', demoOp.id)
+      .gte('created_at', since)
+      .order('created_at', { ascending: true });
+    if (error) throw error;
+
+    const rows = views || [];
+    const sessionsByDay = {};
+    const allSessions = new Set();
+    rows.forEach((v) => {
+      const day = v.created_at.slice(0, 10);
+      (sessionsByDay[day] ||= new Set()).add(v.session_id);
+      allSessions.add(v.session_id);
+    });
+
+    const days = [];
+    for (let i = 29; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      const key = d.toISOString().slice(0, 10);
+      days.push({
+        date:  key,
+        label: `${d.getDate().toString().padStart(2, '0')}/${(d.getMonth() + 1).toString().padStart(2, '0')}`,
+        count: sessionsByDay[key]?.size || 0,
+      });
+    }
+
+    /* Total desde sempre (nao so os ultimos 30 dias) -- volume baixo o
+       suficiente (uma so conta demo) para calcular sessoes distintas em JS
+       sem precisar de SQL bruto. */
+    const { data: allViews } = await supabaseAdmin
+      .from('app_page_views').select('session_id').eq('operator_id', demoOp.id);
+    const totalSessions = new Set((allViews || []).map(v => v.session_id)).size;
+
+    return res.json({ data: { total_sessions: totalSessions, last_30_days: allSessions.size, days } });
+  } catch (err) { next(err); }
+}
+
 async function getAnalyticsFunnel(req, res, next) {
   try {
     const now             = new Date();
@@ -2431,7 +2484,7 @@ module.exports = {
   listConversations, getConversation, sendConversationMessage,
   sendBroadcast, listBroadcasts,
   sendMarketingEmail, sendLaunchEmail,
-  getAnalyticsTraffic, getAnalyticsFunnel, getAnalyticsChurn,
+  getAnalyticsTraffic, getDemoUsage, getAnalyticsFunnel, getAnalyticsChurn,
   getAnalyticsGeography, sendAnalyticsReport,
   getSystemStats, getApiLogs, deleteApiLogs,
   getSystemSecurity, blockIp, unblockIp,

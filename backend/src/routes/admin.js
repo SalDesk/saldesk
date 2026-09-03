@@ -20,7 +20,7 @@ const {
   listConversations, getConversation, sendConversationMessage,
   sendBroadcast, listBroadcasts,
   sendMarketingEmail, sendLaunchEmail,
-  getAnalyticsTraffic, getAnalyticsFunnel, getAnalyticsChurn,
+  getAnalyticsTraffic, getDemoUsage, getAnalyticsFunnel, getAnalyticsChurn,
   getAnalyticsGeography, sendAnalyticsReport,
   getSystemStats, getApiLogs, deleteApiLogs,
   getSystemSecurity, blockIp, unblockIp,
@@ -152,6 +152,7 @@ router.post('/system/restart',       restartApi);
 
 /* Analytics */
 router.get('/analytics/traffic',     getAnalyticsTraffic);
+router.get('/analytics/demo-usage',  getDemoUsage);
 router.get('/analytics/funnel',      getAnalyticsFunnel);
 router.get('/analytics/churn',       getAnalyticsChurn);
 router.get('/analytics/geography',   getAnalyticsGeography);
