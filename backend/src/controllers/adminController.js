@@ -8,8 +8,8 @@ const { frontendBase }  = require('../utils/urls');
 const ExcelJS           = require('exceljs');
 
 const TIPO_SCORE    = { hotel: 30, activity: 25, restaurant: 20, rentacar: 15 };
-const LEAD_STATUSES = ['novo', 'contactado', 'demo_agendada', 'proposta_enviada', 'convertido', 'descartado'];
-const STAGE_LABELS  = { novo: 'Novo', contactado: 'Contactado', demo_agendada: 'Demo agendada', proposta_enviada: 'Proposta enviada', convertido: 'Convertido', descartado: 'Descartado' };
+const LEAD_STATUSES = ['prospeccao', 'novo', 'contactado', 'demo_agendada', 'proposta_enviada', 'convertido', 'descartado'];
+const STAGE_LABELS  = { prospeccao: 'Prospecção', novo: 'Novo', contactado: 'Contactado', demo_agendada: 'Demo agendada', proposta_enviada: 'Proposta enviada', convertido: 'Convertido', descartado: 'Descartado' };
 const CONTACT_TYPES = ['email', 'telefone', 'reuniao', 'demo'];
 const MONTH_NAMES   = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
 
@@ -798,8 +798,14 @@ async function getPipelineStats(req, res, next) {
     /* tempo medio (dias) passado em cada fase, a partir do stage_history */
     const durations = Object.fromEntries(LEAD_STATUSES.map(s => [s, []]));
     leads.forEach(l => {
+      /* A fase inicial do lead nem sempre e 'novo' -- leads importados em
+         massa (ex: lista_operadores_cv) entram directamente em 'prospeccao'.
+         O primeiro "from" do historico (se existir) ou o proprio status
+         actual (se nunca mudou de fase) reflecte a fase real de entrada,
+         em vez de assumir sempre 'novo'. */
       const hist    = Array.isArray(l.stage_history) ? l.stage_history : [];
-      const entries = [{ to: 'novo', at: l.created_at }, ...hist];
+      const fase_inicial = hist[0]?.from || l.status || 'novo';
+      const entries = [{ to: fase_inicial, at: l.created_at }, ...hist];
       entries.forEach((entry, i) => {
         if (!LEAD_STATUSES.includes(entry.to)) return;
         const enteredAt = new Date(entry.at).getTime();
@@ -818,7 +824,7 @@ async function getPipelineStats(req, res, next) {
     const conversionByStage = order.map((stage, idx) => {
       const reached = leads.filter(l => {
         const hist    = Array.isArray(l.stage_history) ? l.stage_history : [];
-        const visited = new Set(['novo', ...hist.map(h => h.to)]);
+        const visited = new Set([hist[0]?.from || l.status || 'novo', ...hist.map(h => h.to)]);
         return [...visited].some(v => (stageIndex[v] ?? -1) >= idx);
       }).length;
       return { stage, label: STAGE_LABELS[stage], count: reached, rate: total ? Math.round((reached / total) * 1000) / 10 : 0 };

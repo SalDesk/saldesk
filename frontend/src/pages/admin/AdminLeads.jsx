@@ -14,6 +14,7 @@ import Table from '../../components/ui/Table';
 import Modal from '../../components/ui/Modal';
 
 const STATUS_CONFIG = {
+  prospeccao:        { label: 'Prospecção',        badge: 'default'   },
   novo:              { label: 'Novo',              badge: 'pending'   },
   contactado:        { label: 'Contactado',        badge: 'info'      },
   demo_agendada:     { label: 'Demo agendada',     badge: 'pending'   },

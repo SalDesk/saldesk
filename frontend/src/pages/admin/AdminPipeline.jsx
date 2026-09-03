@@ -11,6 +11,7 @@ import Input, { Select } from '../../components/ui/Input';
 import LoadingSpinner from '../../components/shared/LoadingSpinner';
 
 const STAGE_LABELS = {
+  prospeccao:        'Prospecção',
   novo:              'Novo',
   contactado:        'Contactado',
   demo_agendada:     'Demo agendada',
@@ -19,10 +20,10 @@ const STAGE_LABELS = {
   descartado:        'Descartado',
 };
 const STAGE_BADGE = {
-  novo: 'pending', contactado: 'info', demo_agendada: 'pending',
+  prospeccao: 'default', novo: 'pending', contactado: 'info', demo_agendada: 'pending',
   proposta_enviada: 'info', convertido: 'confirmed', descartado: 'cancelled',
 };
-const FUNNEL_ORDER = ['novo', 'contactado', 'demo_agendada', 'proposta_enviada', 'convertido'];
+const FUNNEL_ORDER = ['prospeccao', 'novo', 'contactado', 'demo_agendada', 'proposta_enviada', 'convertido'];
 const TYPE_LABELS  = { activity: 'Actividade', hotel: 'Hotel', rentacar: 'Rent-a-car', restaurant: 'Restaurante' };
 
 function scoreColor(score) {
