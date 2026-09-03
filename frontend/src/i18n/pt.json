@@ -32,6 +32,7 @@
     "invalidCredentials": "Email ou password incorrectos.",
     "attemptsRemaining": "Ainda tem {{n}} tentativa(s).",
     "attemptsWarning": "{{n}} tentativa(s) restante(s) antes do bloqueio.",
+    "rateLimit": "Demasiadas tentativas de acesso a partir da tua rede. Aguarda alguns minutos e tenta novamente.",
     "accessBlocked": "Acesso bloqueado",
     "tryAgainIn": "Tenta novamente em",
     "forgotEyebrow": "SalDesk · Recuperacao de acesso",

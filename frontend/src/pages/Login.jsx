@@ -124,6 +124,14 @@ export default function Login() {
         const lockedUntil = Date.now() + (body.retry_after_seconds || 0) * 1000;
         startCountdown(lockedUntil);
         setError(t('auth.accountLocked', { min: Math.ceil((body.retry_after_seconds || 0) / 60) }));
+      } else if (body?.code === 'RATE_LIMIT') {
+        /* Distinto de credenciais erradas -- isto e o authLimiter do IP
+           (partilhado por varios utilizadores atras do mesmo NAT/operadora
+           movel), nao uma tentativa falhada desta conta. Mostrar
+           "invalidCredentials" aqui enganava fundador/operadores reais a
+           pensar que a password estava errada quando o problema era so
+           demasiados pedidos vindos da mesma rede. */
+        setError(t('auth.rateLimit'));
       } else {
         const remaining = body?.attempts_remaining;
         setRateStateLocal({ count: remaining != null ? MAX_ATTEMPTS - remaining : 0, lockedUntil: 0 });

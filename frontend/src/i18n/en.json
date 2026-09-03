@@ -32,6 +32,7 @@
     "invalidCredentials": "Incorrect email or password.",
     "attemptsRemaining": "You have {{n}} attempt(s) left.",
     "attemptsWarning": "{{n}} attempt(s) remaining before lockout.",
+    "rateLimit": "Too many attempts from your network. Wait a few minutes and try again.",
     "accessBlocked": "Access blocked",
     "tryAgainIn": "Try again in",
     "forgotEyebrow": "SalDesk · Account recovery",
