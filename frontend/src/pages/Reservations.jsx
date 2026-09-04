@@ -59,7 +59,7 @@ function SourceBadge({ source }) {
   );
 }
 
-function ActivityTable({ reservations, units, guides, onEdit, onUpdate, onReschedule, onNoShow, onVoucher, voucherLoading, onView }) {
+function ActivityTable({ reservations, units, guides, onEdit, onDelete, onUpdate, onReschedule, onNoShow, onVoucher, voucherLoading, onView }) {
   const t = useT();
   const [actionLoading, setActionLoading] = useState(null);
   const [assignRes, setAssignRes] = useState(null);
@@ -151,6 +151,7 @@ function ActivityTable({ reservations, units, guides, onEdit, onUpdate, onResche
                 )}
                 <Button variant="ghost" size="sm" icon={Eye} onClick={() => onView(r)} aria-label={t('reservations.view')} />
                 <Button variant="ghost" size="sm" icon={Pencil} onClick={() => onEdit(r)} aria-label="Editar" />
+                <Button variant="ghost" size="sm" icon={Trash2} onClick={() => onDelete(r)} aria-label="Eliminar" className="hover:text-error" />
               </div>
             </div>
           );
@@ -247,6 +248,7 @@ function ActivityTable({ reservations, units, guides, onEdit, onUpdate, onResche
                       )}
                       <Button variant="ghost" size="sm" icon={Eye} onClick={() => onView(r)} aria-label={t('reservations.view')} />
                       <Button variant="ghost" size="sm" icon={Pencil} onClick={() => onEdit(r)} aria-label="Editar" />
+                      <Button variant="ghost" size="sm" icon={Trash2} onClick={() => onDelete(r)} aria-label="Eliminar" className="hover:text-error" />
                     </div>
                   </td>
                 </tr>
@@ -746,7 +748,7 @@ function DevolucaoModal({ reservation, units, open, onClose, onDone }) {
   );
 }
 
-function RentacarTable({ reservations, units, onEdit, onLevantamento, onDevolucao, onUpdate, onView }) {
+function RentacarTable({ reservations, units, onEdit, onDelete, onLevantamento, onDevolucao, onUpdate, onView }) {
   const t = useT();
   const [actionLoading, setActionLoading] = useState(null);
 
@@ -844,6 +846,7 @@ function RentacarTable({ reservations, units, onEdit, onLevantamento, onDevoluca
                       )}
                       <Button variant="ghost" size="sm" icon={Eye} onClick={() => onView(r)} aria-label={t('reservations.view')} />
                       <Button variant="ghost" size="sm" icon={Pencil} onClick={() => onEdit(r)} aria-label="Editar" />
+                      <Button variant="ghost" size="sm" icon={Trash2} onClick={() => onDelete(r)} aria-label="Eliminar" className="hover:text-error" />
                     </div>
                   </td>
                 </tr>
@@ -972,7 +975,7 @@ function RestaurantCreateModal({ reservation, units, open, onClose, onDone }) {
   );
 }
 
-function RestaurantTable({ reservations, units, onEdit, onDetails, onUpdate, onView }) {
+function RestaurantTable({ reservations, units, onEdit, onDelete, onDetails, onUpdate, onView }) {
   const t = useT();
   const [actionLoading, setActionLoading] = useState(null);
 
@@ -1073,6 +1076,7 @@ function RestaurantTable({ reservations, units, onEdit, onDetails, onUpdate, onV
                       </button>
                       <Button variant="ghost" size="sm" icon={Eye} onClick={() => onView(r)} aria-label={t('reservations.view')} />
                       <Button variant="ghost" size="sm" icon={Pencil} onClick={() => onEdit(r)} aria-label="Editar" />
+                      <Button variant="ghost" size="sm" icon={Trash2} onClick={() => onDelete(r)} aria-label="Eliminar" className="hover:text-error" />
                     </div>
                   </td>
                 </tr>
@@ -1187,6 +1191,17 @@ export default function Reservations() {
     } else {
       setReservations(reservations.map(r => (r.id === updated.id ? updated : r)));
     }
+  }
+
+  /* Pedido real de um operador (Logan Tours): nao havia nenhuma forma de
+     eliminar uma reserva de teste -- o endpoint DELETE ja existia no
+     backend, so faltava o botao. Eliminar e irreversivel, por isso pede
+     sempre confirmacao (mesmo padrao ja usado noutras paginas, ex:
+     Partners.jsx). */
+  async function handleDelete(r) {
+    if (!window.confirm('Eliminar esta reserva? Esta acção não pode ser desfeita.')) return;
+    await deleteReservation(r.id);
+    handleUpdate(null, r.id);
   }
 
   async function handleSendVoucher(r) {
@@ -1322,6 +1337,7 @@ export default function Reservations() {
           units={units}
           guides={guides}
           onEdit={r => { setFormError(''); setModal(r); }}
+          onDelete={handleDelete}
           onUpdate={handleUpdate}
           onReschedule={setRescheduleRes}
           onNoShow={setNoShowRes}
@@ -1334,6 +1350,7 @@ export default function Reservations() {
           reservations={filtered}
           units={units}
           onEdit={r => { setFormError(''); setModal(r); }}
+          onDelete={handleDelete}
           onLevantamento={setLevantamentoRes}
           onDevolucao={setDevolucaoRes}
           onUpdate={u => handleUpdate(u)}
@@ -1344,6 +1361,7 @@ export default function Reservations() {
           reservations={filtered}
           units={units}
           onEdit={r => { setFormError(''); setModal(r); }}
+          onDelete={handleDelete}
           onDetails={setDetailsRes}
           onUpdate={u => handleUpdate(u)}
           onView={r => setViewResId(r.id)}
