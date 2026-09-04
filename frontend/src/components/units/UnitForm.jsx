@@ -406,7 +406,7 @@ function TourForm({ unit, onSave, onCancel, loading, error }) {
       name:        form.name,
       description: JSON.stringify(tourMeta),
       unit_type:   form.unit_type,
-      base_price:  Number(form.base_price),
+      base_price:  form.base_price ? Number(form.base_price) : 0,
       price_unit:  'person',
       capacity:    Number(form.capacity),
       status:      form.status,
@@ -556,13 +556,12 @@ function TourForm({ unit, onSave, onCancel, loading, error }) {
         <SectionLabel>Precos (€ por pessoa)</SectionLabel>
         <div className="grid grid-cols-3 gap-3">
           <Input
-            label="Preco adulto"
+            label="Preco adulto (opcional se usar Preço privado/Escalões)"
             type="number"
             value={form.base_price}
             onChange={set('base_price')}
             min="0"
             step="0.01"
-            required
             placeholder="0.00"
           />
           <Input

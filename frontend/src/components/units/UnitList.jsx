@@ -125,38 +125,59 @@ function TourCard({ unit, onEdit, onDelete, onToggle, onSubmitConect }) {
         )}
 
         {/* Prices + actions */}
-        <div className="flex items-end justify-between mt-auto pt-2 border-t border-n-100">
-          <div>
-            <p className="font-display font-bold text-base text-ocean-700">
-              €{Number(unit.base_price).toFixed(0)}<span className="text-xs font-body font-normal text-n-500">/adulto</span>
-            </p>
-            {meta.price_child && (
-              <p className="text-xs font-body text-n-500">
-                €{Number(meta.price_child).toFixed(0)} crianca
-                {meta.price_private && ` · €${Number(meta.price_private).toFixed(0)} privado`}
-              </p>
-            )}
-          </div>
-          <div className="flex gap-1">
-            <Button
-              variant="ghost"
-              size="sm"
-              icon={Power}
-              onClick={() => onToggle?.(unit)}
-              aria-label={isActive ? 'Desactivar' : 'Activar'}
-              className={isActive ? 'hover:text-error hover:bg-[var(--error-light)]' : 'hover:text-[var(--success)] hover:bg-[#ECFDF5]'}
-            />
-            <Button variant="ghost" size="sm" icon={Pencil} onClick={() => onEdit(unit)} aria-label="Editar" />
-            <Button
-              variant="ghost"
-              size="sm"
-              icon={Trash2}
-              onClick={() => onDelete(unit)}
-              className="hover:text-error hover:bg-[var(--error-light)]"
-              aria-label="Eliminar"
-            />
-          </div>
-        </div>
+        {(() => {
+          /* Preco por pessoa deixou de ser obrigatorio (pedido real de um
+             operador -- Logan Tours -- cujo preco real e so por escalao/
+             privado, nunca por pessoa). Sem base_price preenchido, mostra
+             "A partir de" com o valor mais baixo entre os escaloes/preco
+             privado configurados, em vez de "€0/adulto" enganoso. */
+          const tiers = Array.isArray(meta.price_tiers) ? meta.price_tiers : [];
+          const tierMin = tiers.length ? Math.min(...tiers.map(t => Number(t.price) || 0)) : null;
+          const startingFrom = tierMin ?? (meta.price_private ? Number(meta.price_private) : null);
+          const hasBasePrice = Number(unit.base_price) > 0;
+          return (
+            <div className="flex items-end justify-between mt-auto pt-2 border-t border-n-100">
+              <div>
+                {hasBasePrice ? (
+                  <p className="font-display font-bold text-base text-ocean-700">
+                    €{Number(unit.base_price).toFixed(0)}<span className="text-xs font-body font-normal text-n-500">/adulto</span>
+                  </p>
+                ) : startingFrom != null ? (
+                  <p className="font-display font-bold text-base text-ocean-700">
+                    <span className="text-xs font-body font-normal text-n-500">A partir de </span>€{startingFrom.toFixed(0)}
+                  </p>
+                ) : (
+                  <p className="text-xs font-body text-n-400">Sem preço definido</p>
+                )}
+                {meta.price_child && (
+                  <p className="text-xs font-body text-n-500">
+                    €{Number(meta.price_child).toFixed(0)} crianca
+                    {hasBasePrice && meta.price_private && ` · €${Number(meta.price_private).toFixed(0)} privado`}
+                  </p>
+                )}
+              </div>
+              <div className="flex gap-1">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  icon={Power}
+                  onClick={() => onToggle?.(unit)}
+                  aria-label={isActive ? 'Desactivar' : 'Activar'}
+                  className={isActive ? 'hover:text-error hover:bg-[var(--error-light)]' : 'hover:text-[var(--success)] hover:bg-[#ECFDF5]'}
+                />
+                <Button variant="ghost" size="sm" icon={Pencil} onClick={() => onEdit(unit)} aria-label="Editar" />
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  icon={Trash2}
+                  onClick={() => onDelete(unit)}
+                  className="hover:text-error hover:bg-[var(--error-light)]"
+                  aria-label="Eliminar"
+                />
+              </div>
+            </div>
+          );
+        })()}
         <ConectRow unit={unit} onSubmitConect={onSubmitConect} />
       </div>
     </div>
