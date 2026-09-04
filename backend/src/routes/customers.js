@@ -1,7 +1,7 @@
 const express = require('express');
 const multer  = require('multer');
 const router = express.Router();
-const { listar, obter, actualizar, segmentos, exportCsv, importarCsv } = require('../controllers/customersController');
+const { listar, obter, criar, actualizar, segmentos, exportCsv, importarCsv } = require('../controllers/customersController');
 const authMiddleware = require('../middleware/auth');
 const requireOperatorOrStaff = require('../middleware/requireOperatorOrStaff');
 const requirePlanActive = require('../middleware/requirePlanActive');
@@ -28,6 +28,7 @@ router.get('/export',   exportCsv);
 router.post('/import',  upload.single('file'), importarCsv);
 
 router.get('/',    listar);
+router.post('/',   criar);
 router.get('/:id', obter);
 router.put('/:id', actualizar);
 

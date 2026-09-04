@@ -69,6 +69,52 @@ async function obter(req, res, next) {
   }
 }
 
+/* Ate agora so existia CSV import para adicionar clientes -- confirmado
+   pela propria Nerita (Satur) na comunidade de WhatsApp: "so vejo o botao
+   para importar, tem que ser adicionado atraves do importe?". Um operador
+   com poucos clientes e precos negociados individualmente nao devia ter de
+   montar um CSV so para adicionar um. Mesmo formato/validacao do
+   importarCsv (nome+email obrigatorios, upsert por operator_id+email para
+   nunca duplicar se o operador tentar adicionar o mesmo cliente duas
+   vezes). */
+async function criar(req, res, next) {
+  try {
+    if (!req.operator) {
+      return res.status(403).json({ error: 'Apenas operadores podem gerir clientes', code: 'OPERATOR_ONLY' });
+    }
+
+    const { name, email, phone, country_code, notes } = req.body;
+    const emailNorm = (email || '').trim().toLowerCase();
+    const nameNorm  = (name || '').trim();
+    if (!emailNorm || !nameNorm) {
+      return res.status(400).json({ error: 'Nome e email sao obrigatorios', code: 'MISSING_FIELDS' });
+    }
+
+    const countryNorm = (country_code || '').trim().toUpperCase() || null;
+    const language = detectarIdioma(countryNorm) || 'pt';
+
+    const { data, error } = await supabaseAdmin
+      .from('customers')
+      .upsert({
+        operator_id:  getOperatorId(req),
+        name:         nameNorm,
+        email:        emailNorm,
+        phone:        (phone || '').trim() || null,
+        country_code: countryNorm,
+        language,
+        notes:        notes?.trim() || null,
+        updated_at:   new Date().toISOString(),
+      }, { onConflict: 'operator_id,email' })
+      .select()
+      .single();
+    if (error) throw error;
+
+    return res.status(201).json({ data, message: 'Cliente criado' });
+  } catch (err) {
+    next(err);
+  }
+}
+
 async function actualizar(req, res, next) {
   try {
     if (!req.operator) {
@@ -247,4 +293,4 @@ async function importarCsv(req, res, next) {
   }
 }
 
-module.exports = { listar, obter, actualizar, segmentos, exportCsv, importarCsv };
+module.exports = { listar, obter, criar, actualizar, segmentos, exportCsv, importarCsv };

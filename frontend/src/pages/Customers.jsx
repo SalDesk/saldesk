@@ -1,13 +1,13 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import {
   Search, Download, Users, Globe, TrendingUp, Star,
-  Upload, Tag, Crown, Building2, UserCheck, Plane,
+  Upload, Tag, Crown, Building2, UserCheck, Plane, Plus,
 } from 'lucide-react';
-import { listCustomers, exportCustomersCsv } from '../services/customersService';
+import { listCustomers, exportCustomersCsv, createCustomer } from '../services/customersService';
 import { useT } from '../i18n';
 import PageHeader from '../components/layout/PageHeader';
 import Button from '../components/ui/Button';
-import Input from '../components/ui/Input';
+import Input, { Textarea } from '../components/ui/Input';
 import Card from '../components/ui/Card';
 import Table from '../components/ui/Table';
 import Modal from '../components/ui/Modal';
@@ -68,6 +68,55 @@ const COLUMNS = (t, onSelect) => [
     width: '70px',
   },
 ];
+
+/* Ate agora so existia importacao CSV para adicionar clientes -- um
+   operador com poucos clientes (ex: precos negociados individualmente,
+   sem sentido montar um ficheiro) nao tinha forma nenhuma de os adicionar
+   um a um. Confirmado por uma operadora real na comunidade de WhatsApp. */
+function NewCustomerModal({ open, onClose, onCreated }) {
+  const [form,    setForm]    = useState({ name: '', email: '', phone: '', country_code: '', notes: '' });
+  const [loading, setLoading] = useState(false);
+  const [error,   setError]   = useState('');
+
+  function update(field, value) { setForm(prev => ({ ...prev, [field]: value })); }
+
+  async function handleCreate() {
+    if (!form.name.trim() || !form.email.trim()) {
+      setError('Nome e email sao obrigatorios');
+      return;
+    }
+    setLoading(true); setError('');
+    try {
+      const created = await createCustomer(form);
+      onCreated(created);
+      setForm({ name: '', email: '', phone: '', country_code: '', notes: '' });
+      onClose();
+    } catch (err) {
+      setError(err.response?.data?.error || 'Erro ao criar cliente');
+    } finally { setLoading(false); }
+  }
+
+  return (
+    <Modal open={open} onClose={onClose} title="Novo cliente" size="md">
+      <div className="space-y-4">
+        <Input label="Nome *" value={form.name} onChange={(e) => update('name', e.target.value)} placeholder="Nome do cliente" />
+        <Input label="Email *" type="email" value={form.email} onChange={(e) => update('email', e.target.value)} placeholder="cliente@email.com" />
+        <div className="grid grid-cols-2 gap-3">
+          <Input label="Telefone" value={form.phone} onChange={(e) => update('phone', e.target.value)} placeholder="+238..." />
+          <Input label="Pais (codigo)" value={form.country_code} onChange={(e) => update('country_code', e.target.value)} placeholder="Ex: CV, PT" maxLength={2} />
+        </div>
+        <Textarea label="Notas" value={form.notes} onChange={(e) => update('notes', e.target.value)} rows={3} placeholder="Preco negociado, preferencias, etc." />
+
+        {error && <p className="text-xs font-body text-error">{error}</p>}
+
+        <div className="flex gap-3">
+          <Button variant="secondary" onClick={onClose} className="flex-1">Cancelar</Button>
+          <Button onClick={handleCreate} loading={loading} icon={Plus} className="flex-1">Criar cliente</Button>
+        </div>
+      </div>
+    </Modal>
+  );
+}
 
 function CsvImportModal({ open, onClose, onImported }) {
   const [file,     setFile]    = useState(null);
@@ -159,6 +208,7 @@ export default function Customers() {
   const [selectedId,   setSelectedId] = useState(null);
   const [exporting,    setExporting]  = useState(false);
   const [csvModal,     setCsvModal]   = useState(false);
+  const [newModal,     setNewModal]   = useState(false);
   const [importMsg,    setImportMsg]  = useState('');
 
   const carregar = useCallback(async (q = search, country = countryFilter) => {
@@ -197,6 +247,12 @@ export default function Customers() {
     setTimeout(() => setImportMsg(''), 4000);
   }
 
+  function handleCreated() {
+    setImportMsg('Cliente criado com sucesso.');
+    carregar('', '');
+    setTimeout(() => setImportMsg(''), 4000);
+  }
+
   // Local segmentation based on tags / nationality / visits
   const segmented = customers.filter(c => {
     if (!segment) return true;
@@ -221,6 +277,9 @@ export default function Customers() {
         subtitle={`${customers.length} cliente(s) registado(s)`}
         actions={
           <div className="flex gap-2">
+            <Button icon={Plus} onClick={() => setNewModal(true)}>
+              Novo Cliente
+            </Button>
             <Button variant="secondary" icon={Upload} onClick={() => setCsvModal(true)}>
               Importar CSV
             </Button>
@@ -294,6 +353,7 @@ export default function Customers() {
       )}
 
       <CsvImportModal open={csvModal} onClose={() => setCsvModal(false)} onImported={handleImported} />
+      <NewCustomerModal open={newModal} onClose={() => setNewModal(false)} onCreated={handleCreated} />
     </div>
   );
 }

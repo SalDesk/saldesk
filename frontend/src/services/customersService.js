@@ -5,6 +5,11 @@ export async function listCustomers(filtros = {}) {
   return data.data;
 }
 
+export async function createCustomer(dados) {
+  const { data } = await api.post('/customers', dados);
+  return data.data;
+}
+
 export async function getCustomer(id) {
   const { data } = await api.get(`/customers/${id}`);
   return data.data;
