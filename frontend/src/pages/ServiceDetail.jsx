@@ -107,6 +107,28 @@ function getUnitMeta(unit) {
   try { return JSON.parse(raw); } catch { return {}; }
 }
 
+/* Preco de tour privado/em grupo -- por escaloes de numero de pessoas
+   (price_tiers) ou valor fixo unico (price_private). Espelha exactamente
+   calcularPrecoPrivado() do backend (bookingHelpers.js) para o preview do
+   cliente nunca divergir do que e realmente cobrado na submissao. */
+function calcPrivatePrice(unitMeta, numPessoas) {
+  const tiers = Array.isArray(unitMeta.price_tiers) ? unitMeta.price_tiers : [];
+  const tier = tiers.find(t => numPessoas >= Number(t.pax_min) && numPessoas <= Number(t.pax_max));
+  if (tier) return Number(tier.price) || 0;
+  return Number(unitMeta.price_private) || 0;
+}
+function temPrecoPrivado(unitMeta) {
+  return !!unitMeta.price_private || (Array.isArray(unitMeta.price_tiers) && unitMeta.price_tiers.length > 0);
+}
+/* "A partir de EUR X" -- usado quando o tour nao tem preco por pessoa
+   (base_price), so privado/escaloes. Mesma prioridade do backend: o
+   escalao mais barato tem prioridade sobre o preco privado fixo. */
+function startingFromPrice(unitMeta) {
+  const tiers = Array.isArray(unitMeta.price_tiers) ? unitMeta.price_tiers : [];
+  const tierMin = tiers.length ? Math.min(...tiers.map(t => Number(t.price) || 0)) : null;
+  return tierMin || (Number(unitMeta.price_private) || null);
+}
+
 function fmtPrice(price, priceUnit, opCurrency, viewCurrency, lang) {
   if (!price) return lang === 'en' ? 'On request' : 'Consultar';
   const labels = { night:lang==='en'?'/night':'/noite', day:lang==='en'?'/day':'/dia', hour:lang==='en'?'/hour':'/hora', session:lang==='en'?'/session':'/sessão', person:lang==='en'?'/person':'/pessoa' };
@@ -567,29 +589,41 @@ function HotelModal({ unit, op, slug, lang, onClose, refCode, traveler }) {
 
 /* ── ActivityModal ────────────────────────────────── */
 function ActivityModal({ unit, op, slug, lang, onClose, refCode, traveler, initialDate, initialAdults, initialKids, initialLanguage }) {
+  const unitMeta=getUnitMeta(unit);
+  const hasPerPerson=!!unit.base_price;
+  const hasPrivate=temPrecoPrivado(unitMeta);
+  const priceTiers=Array.isArray(unitMeta.price_tiers)?unitMeta.price_tiers:[];
   const [step,ss]=useState(1); const [date,sd]=useState(initialDate||''); const [time,st]=useState(''); const [adults,sa]=useState(initialAdults||2); const [kids,sk]=useState(initialKids||0);
   const [tourLang,stl]=useState(initialLanguage||'');
+  /* Modo de reserva -- so relevante quando o tour tem AMBOS preco por
+     pessoa e preco privado/escaloes configurados (pedido real da Logan
+     Tours: preco privado nao pode continuar a ser forcado por pessoa).
+     Sem preco por pessoa, cai automaticamente para privado, sem toggle. */
+  const [bookingMode,setBookingMode]=useState(hasPerPerson?'per_person':'private');
   const [info,si]=useState(()=>({name:traveler?.name||'',email:traveler?.email||'',phone:traveler?.phone||'',country:traveler?.country||'',needs:''})); const [pay,sp]=useState('cash'); const [sub,ssub]=useState(false); const [resId,sr]=useState(null); const [pendingRes,spr]=useState(null); const [err,se]=useState('');
   const [voucherCode,svc]=useState(null); const [policyOk,setPolicyOk]=useState(false);
-  const rawTotal=(adults+kids)*(unit.base_price||0); const total=unit.base_price?fmtPrice(rawTotal,null,op.currency||'EUR','EUR',lang):null;
-  const tourLanguages=Array.isArray(getUnitMeta(unit).languages)?getUnitMeta(unit).languages:[];
+  const numPessoas=adults+kids;
+  const isPrivateMode=hasPrivate&&(bookingMode==='private'||!hasPerPerson);
+  const rawTotal=isPrivateMode?calcPrivatePrice(unitMeta,numPessoas):numPessoas*(unit.base_price||0);
+  const total=rawTotal?fmtPrice(rawTotal,null,op.currency||'EUR','EUR',lang):null;
+  const tourLanguages=Array.isArray(unitMeta.languages)?unitMeta.languages:[];
   /* Horarios com capacidade real (TourForm's TimeSlotsEditor) -- so activo
      quando a unidade tem meta.time_slots configurado. Sem isso, a reserva
      continua exactamente como sempre foi (sem selector de hora nenhum --
      o antigo TOUR_SLOTS fixo era so decorativo, nunca validado a serio
      contra disponibilidade, por isso foi removido em vez de mantido). */
-  const configuredSlots=Array.isArray(getUnitMeta(unit).time_slots)?getUnitMeta(unit).time_slots:[];
+  const configuredSlots=Array.isArray(unitMeta.time_slots)?unitMeta.time_slots:[];
   const hasSlots=configuredSlots.length>0;
   const [slotAvail,ssa]=useState([]); const [loadingSlots,sls]=useState(false);
   useEffect(()=>{ if(!hasSlots||!date){ssa([]);return;} sls(true); st(''); getSlotAvailability(slug,unit.id,date).then(ssa).finally(()=>sls(false)); },[date,hasSlots,slug,unit.id]);
-  function buildPayload(){ const notes=[time?`${lang==='en'?'Time':'Hora'}: ${time}`:'',`${adults} ${lang==='en'?'adults':'adultos'}, ${kids} ${lang==='en'?'children':'crianças'}`,tourLang?(lang==='en'?'Language: ':'Idioma: ')+tourLang:'',info.needs?(lang==='en'?'Needs:':'Necessidades:')+' '+info.needs:''].filter(Boolean).join('. '); return {unit_id:unit.id,customer_name:info.name,customer_email:info.email,customer_phone:info.phone||null,customer_country:info.country||null,check_in:date,check_out:date,guests:adults+kids,notes,tour_time:hasSlots?time:undefined,voucher_code:voucherCode||undefined,ref_code:refCode||undefined}; }
+  function buildPayload(){ const notes=[time?`${lang==='en'?'Time':'Hora'}: ${time}`:'',`${adults} ${lang==='en'?'adults':'adultos'}, ${kids} ${lang==='en'?'children':'crianças'}`,tourLang?(lang==='en'?'Language: ':'Idioma: ')+tourLang:'',info.needs?(lang==='en'?'Needs:':'Necessidades:')+' '+info.needs:''].filter(Boolean).join('. '); return {unit_id:unit.id,customer_name:info.name,customer_email:info.email,customer_phone:info.phone||null,customer_country:info.country||null,check_in:date,check_out:date,guests:adults+kids,notes,tour_time:hasSlots?time:undefined,voucher_code:voucherCode||undefined,ref_code:refCode||undefined,booking_mode:isPrivateMode?'private':undefined}; }
   useEffect(()=>{ if(step===3&&pay==='paypal'&&!pendingRes&&!sub){ ssub(true); postReservation(slug,buildPayload()).then(spr).catch(e=>se(e.message)).finally(()=>ssub(false)); } },[step,pay]);
   function valid(){ if(step===1){if(!date){se(lang==='en'?'Select a date':'Seleccione uma data');return false;} if(hasSlots&&!time){se(lang==='en'?'Select a time slot':'Seleccione um horário');return false;} if(adults<1){se(lang==='en'?'At least 1 adult required':'Mínimo 1 adulto');return false;}} if(step===2&&(!info.name||!info.email)){se(lang==='en'?'Name and email required':'Nome e email obrigatórios');return false;} se('');return true; }
   async function submit(){
     ssub(true);se('');
     try{
       const newRes = await postReservation(slug,buildPayload());
-      if (pay==='sisp' && unit.base_price) {
+      if (pay==='sisp' && rawTotal>0) {
         await iniciarPagamentoSisp(slug, newRes.id, toCVE(newRes.total_price ?? rawTotal, op.currency));
         return;
       }
@@ -597,15 +631,41 @@ function ActivityModal({ unit, op, slug, lang, onClose, refCode, traveler, initi
     }catch(e){se(e.message);}finally{ssub(false);}
   }
   function next(){ if(!valid())return; step<3?ss(s=>s+1):submit(); }
-  const sumL=[{label:lang==='en'?'Tour / Activity':'Tour / Actividade',value:unit.name},{label:lang==='en'?'Date':'Data',value:date},...(time?[{label:lang==='en'?'Time':'Horário',value:time}]:[]),{label:lang==='en'?'Group':'Grupo',value:`${adults} ${lang==='en'?'adults':'adultos'}${kids>0?` + ${kids} ${lang==='en'?'children':'crianças'}`:''}`},...(tourLang?[{label:lang==='en'?'Language':'Idioma',value:tourLang}]:[]),...(total?[{label:'Total',value:fmtTotalBoth(rawTotal,op.currency,lang),hi:true}]:[])];
+  const sumL=[{label:lang==='en'?'Tour / Activity':'Tour / Actividade',value:unit.name},{label:lang==='en'?'Date':'Data',value:date},...(time?[{label:lang==='en'?'Time':'Horário',value:time}]:[]),{label:lang==='en'?'Group':'Grupo',value:`${adults} ${lang==='en'?'adults':'adultos'}${kids>0?` + ${kids} ${lang==='en'?'children':'crianças'}`:''}`},...(tourLang?[{label:lang==='en'?'Language':'Idioma',value:tourLang}]:[]),...(hasPerPerson&&hasPrivate?[{label:lang==='en'?'Booking type':'Tipo de reserva',value:isPrivateMode?(lang==='en'?'Private / group':'Privado / grupo'):(lang==='en'?'Per person':'Por pessoa')}]:[]),...(total?[{label:'Total',value:fmtTotalBoth(rawTotal,op.currency,lang),hi:true}]:[])];
   return (
     <MS icon={<Compass size={18} strokeWidth={1.75}/>} title={lang==='en'?'Book tour':'Reservar tour'} step={step} lang={lang} onClose={onClose} onPrev={()=>ss(s=>s-1)} onNext={next} nextLabel={step<3?(lang==='en'?'Continue':'Continuar'):(lang==='en'?'Confirm booking':'Confirmar reserva')} nextDis={(step===1&&(!date||(hasSlots&&!time)))||(step===3&&!policyOk)} sub={sub} err={err} ok={!!resId} hideNext={step===3&&pay==='paypal'}>
       {resId?<div className="p-5"><BS resId={resId} lang={lang} type="activity" onClose={onClose}/></div>
       :step===1?<div className="p-5 space-y-4"><p className={SH}>{lang==='en'?'Select date, time & group':'Data, horário e grupo'}</p>
+        {hasPerPerson&&hasPrivate&&(
+          <div className="flex gap-1 p-1 bg-n-100 rounded-xl">
+            <button type="button" onClick={()=>setBookingMode('per_person')}
+              className={`flex-1 text-xs font-body font-semibold py-2 rounded-lg transition-all ${bookingMode==='per_person'?'bg-white text-ocean-700 shadow-sm':'text-n-500'}`}>
+              {lang==='en'?'Per person':'Por pessoa'}
+            </button>
+            <button type="button" onClick={()=>setBookingMode('private')}
+              className={`flex-1 text-xs font-body font-semibold py-2 rounded-lg transition-all ${bookingMode==='private'?'bg-white text-ocean-700 shadow-sm':'text-n-500'}`}>
+              {lang==='en'?'Private / group':'Privado / grupo'}
+            </button>
+          </div>
+        )}
         <div className={hasSlots?"grid grid-cols-2 gap-3":""}><div><label className={LB}>{lang==='en'?'Date':'Data'} *</label><input type="date" className={IN} min={TODAY()} value={date} onChange={e=>sd(e.target.value)}/></div>
         {hasSlots&&<div><label className={LB}>{lang==='en'?'Time slot':'Horário'} *</label><select className={SEL} value={time} onChange={e=>st(e.target.value)} disabled={loadingSlots||!date}><option value="">{loadingSlots?(lang==='en'?'Loading...':'A carregar...'):lang==='en'?'-- Select --':'-- Seleccionar --'}</option>{slotAvail.map(s=><option key={s.time} value={s.time} disabled={s.remaining<=0}>{s.time} {s.remaining<=0?(lang==='en'?'(full)':'(esgotado)'):`(${s.remaining} ${lang==='en'?'left':'lugares'})`}</option>)}</select></div>}</div>
         {total&&(date||adults)&&<div className="flex justify-between items-center bg-ocean-50 border border-ocean-100 rounded-xl px-4 py-2.5"><span className="text-xs font-body text-ocean-600">{adults+kids} {lang==='en'?'people':'pessoas'}</span><span className="font-display font-bold text-ocean-700 text-sm">{total}</span></div>}
         <div className="grid grid-cols-2 gap-4"><Cnt label={lang==='en'?'Adults (1-20)':'Adultos (1-20)'} val={adults} set={sa} min={1} max={20}/><Cnt label={lang==='en'?'Children (0-10)':'Crianças (0-10)'} val={kids} set={sk} min={0} max={10}/></div>
+        {isPrivateMode&&priceTiers.length>0&&(
+          <div className="bg-n-50 border border-n-200 rounded-xl p-3 space-y-1.5">
+            <p className="text-xs font-body font-semibold text-n-600">{lang==='en'?'Group pricing':'Preços por grupo'}</p>
+            {priceTiers.map((t,i)=>{
+              const activeTier=numPessoas>=Number(t.pax_min)&&numPessoas<=Number(t.pax_max);
+              return (
+                <div key={i} className={`flex justify-between text-xs font-body ${activeTier?'text-ocean-700 font-bold':'text-n-500'}`}>
+                  <span>{t.pax_min}-{t.pax_max} {lang==='en'?'people':'pessoas'}</span>
+                  <span>{fmtPrice(Number(t.price)||0,null,op.currency||'EUR','EUR',lang)}</span>
+                </div>
+              );
+            })}
+          </div>
+        )}
         {tourLanguages.length>0&&<div><label className={LB}>{lang==='en'?'Tour language':'Idioma do tour'}</label><select className={SEL} value={tourLang} onChange={e=>stl(e.target.value)}><option value="">{lang==='en'?'-- Select --':'-- Seleccionar --'}</option>{tourLanguages.map(l=><option key={l} value={l}>{l}</option>)}</select></div>}
       </div>
       :step===2?<div className="p-5"><p className={SH}>{lang==='en'?'Contact details':'Dados de contacto'}</p><GF d={info} set={si} lang={lang} emailLocked={!!traveler}><div><label className={LB}>{lang==='en'?'Special needs (optional)':'Necessidades especiais (opcional)'}</label><textarea className={IN+' resize-none'} rows={3} value={info.needs} onChange={e=>si(i=>({...i,needs:e.target.value}))} placeholder={lang==='en'?'Wheelchair, allergies...':'Cadeira de rodas, alergias...'}/></div></GF></div>
@@ -763,11 +823,18 @@ function SimilarServices({ units, slug, lang, currency, opCurrency }) {
               style={{ backgroundImage: u.images?.[0] ? `url(${u.images[0]})` : `url(${FALLBACK_IMGS[0]})` }}/>
             <div className="p-3">
               <p className="font-display font-bold text-n-900 text-sm mb-1 line-clamp-1">{u.name}</p>
-              {u.base_price && (
+              {u.base_price ? (
                 <p className="font-display font-bold text-ocean-700 text-sm">
                   {fmtPrice(u.base_price, u.price_unit, opCurrency, currency, lang)}
                 </p>
-              )}
+              ) : (() => {
+                const startingFrom = startingFromPrice(getUnitMeta(u));
+                return startingFrom ? (
+                  <p className="font-display font-bold text-ocean-700 text-sm">
+                    {lang==='en'?'From ':'A partir de '}{fmtPrice(startingFrom, null, opCurrency, currency, lang)}
+                  </p>
+                ) : null;
+              })()}
             </div>
           </div>
         ))}
@@ -986,7 +1053,14 @@ export default function ServiceDetail() {
     person:  lang==='en'?'/person':'/pessoa',
   }[unit.price_unit] || '';
 
-  const displayPrice = unit.base_price ? fmtPrice(unit.base_price, unit.price_unit, op.currency||'EUR', currency, lang) : null;
+  /* Sem preco por pessoa (base_price), um tour pode ainda ter preco
+     privado/por escaloes configurado -- mostra "A partir de EUR X" em vez
+     de "Consultar", pedido real de um operador (Logan Tours) cujo preco e
+     so por escalao/privado, nunca por pessoa. */
+  const startingFrom = isActivity && !unit.base_price ? startingFromPrice(unitMeta) : null;
+  const displayPrice = unit.base_price
+    ? fmtPrice(unit.base_price, unit.price_unit, op.currency||'EUR', currency, lang)
+    : (startingFrom ? `${lang==='en'?'From ':'A partir de '}${fmtPrice(startingFrom, null, op.currency||'EUR', currency, lang)}` : null);
   const rawPrice     = fmtRaw(unit.base_price, op.currency||'EUR', currency);
   const currSymbol   = currency === 'CVE' ? 'CVE' : '€';
 
