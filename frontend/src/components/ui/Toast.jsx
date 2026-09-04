@@ -1,10 +1,15 @@
 import { useEffect } from 'react';
 import useToastStore from '../../store/toastStore';
 
+/* "info" usava bg-primary-500 -- classe que nunca existiu neste projecto
+   (nao ha nenhuma cor "primary" no tailwind.config.js), por isso ficava
+   sem fundo nenhum, transparente, texto branco invisivel. So nunca foi
+   notado porque nada usava "info" de forma visivel antes da notificacao
+   de mensagens. bg-ocean-700 e a cor de marca ja usada em toda a app. */
 const CONFIG = {
   success: { bg: 'bg-green-500', icon: '✓' },
   error:   { bg: 'bg-red-500',   icon: '✕' },
-  info:    { bg: 'bg-primary-500', icon: 'ℹ' }
+  info:    { bg: 'bg-ocean-700', icon: 'ℹ' }
 };
 
 function ToastItem({ toast, onRemove }) {
