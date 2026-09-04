@@ -83,7 +83,7 @@ async function criar(req, res, next) {
       return res.status(403).json({ error: 'Apenas operadores podem gerir clientes', code: 'OPERATOR_ONLY' });
     }
 
-    const { name, email, phone, country_code, notes } = req.body;
+    const { name, email, phone, country_code, notes, tags } = req.body;
     const emailNorm = (email || '').trim().toLowerCase();
     const nameNorm  = (name || '').trim();
     if (!emailNorm || !nameNorm) {
@@ -92,6 +92,7 @@ async function criar(req, res, next) {
 
     const countryNorm = (country_code || '').trim().toUpperCase() || null;
     const language = detectarIdioma(countryNorm) || 'pt';
+    const tagsNorm = Array.isArray(tags) ? tags.filter(Boolean) : [];
 
     const { data, error } = await supabaseAdmin
       .from('customers')
@@ -103,6 +104,7 @@ async function criar(req, res, next) {
         country_code: countryNorm,
         language,
         notes:        notes?.trim() || null,
+        tags:         tagsNorm,
         updated_at:   new Date().toISOString(),
       }, { onConflict: 'operator_id,email' })
       .select()
@@ -121,7 +123,7 @@ async function actualizar(req, res, next) {
       return res.status(403).json({ error: 'Apenas operadores podem gerir clientes', code: 'OPERATOR_ONLY' });
     }
 
-    const { name, phone, country_code, notes } = req.body;
+    const { name, phone, country_code, notes, tags } = req.body;
 
     const updates = { updated_at: new Date().toISOString() };
     if (name !== undefined) updates.name = name;
@@ -131,6 +133,7 @@ async function actualizar(req, res, next) {
       updates.language = detectarIdioma(country_code);
     }
     if (notes !== undefined) updates.notes = notes;
+    if (tags !== undefined) updates.tags = Array.isArray(tags) ? tags.filter(Boolean) : [];
 
     const { data, error } = await supabaseAdmin
       .from('customers')

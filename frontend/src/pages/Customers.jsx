@@ -73,12 +73,28 @@ const COLUMNS = (t, onSelect) => [
    operador com poucos clientes (ex: precos negociados individualmente,
    sem sentido montar um ficheiro) nao tinha forma nenhuma de os adicionar
    um a um. Confirmado por uma operadora real na comunidade de WhatsApp. */
+/* Turistas/Locais ja sao derivados automaticamente do country_code (ver
+   "segmented" abaixo) -- so Grupo/Corporativo/VIP precisam de tag manual,
+   porque nao ha nenhum dado automatico que os distinga. */
+const TAG_OPTIONS = [
+  { key: 'VIP',          label: 'VIP',          Icon: Crown },
+  { key: 'grupo',        label: 'Grupo',        Icon: Users },
+  { key: 'corporativo',  label: 'Corporativo',  Icon: Building2 },
+];
+
 function NewCustomerModal({ open, onClose, onCreated }) {
-  const [form,    setForm]    = useState({ name: '', email: '', phone: '', country_code: '', notes: '' });
+  const [form,    setForm]    = useState({ name: '', email: '', phone: '', country_code: '', notes: '', tags: [] });
   const [loading, setLoading] = useState(false);
   const [error,   setError]   = useState('');
 
   function update(field, value) { setForm(prev => ({ ...prev, [field]: value })); }
+
+  function toggleTag(tag) {
+    setForm(prev => ({
+      ...prev,
+      tags: prev.tags.includes(tag) ? prev.tags.filter(t => t !== tag) : [...prev.tags, tag],
+    }));
+  }
 
   async function handleCreate() {
     if (!form.name.trim() || !form.email.trim()) {
@@ -89,7 +105,7 @@ function NewCustomerModal({ open, onClose, onCreated }) {
     try {
       const created = await createCustomer(form);
       onCreated(created);
-      setForm({ name: '', email: '', phone: '', country_code: '', notes: '' });
+      setForm({ name: '', email: '', phone: '', country_code: '', notes: '', tags: [] });
       onClose();
     } catch (err) {
       setError(err.response?.data?.error || 'Erro ao criar cliente');
@@ -105,6 +121,29 @@ function NewCustomerModal({ open, onClose, onCreated }) {
           <Input label="Telefone" value={form.phone} onChange={(e) => update('phone', e.target.value)} placeholder="+238..." />
           <Input label="Pais (codigo)" value={form.country_code} onChange={(e) => update('country_code', e.target.value)} placeholder="Ex: CV, PT" maxLength={2} />
         </div>
+
+        <div>
+          <label className="block text-xs font-body font-medium text-n-500 uppercase tracking-wide mb-2">Categoria (opcional)</label>
+          <div className="flex flex-wrap gap-2">
+            {TAG_OPTIONS.map(({ key, label, Icon }) => {
+              const active = form.tags.includes(key);
+              return (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => toggleTag(key)}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-body font-medium border transition-colors ${
+                    active ? 'bg-ocean-700 border-ocean-700 text-white' : 'bg-white border-n-200 text-n-600 hover:border-ocean-300'
+                  }`}
+                >
+                  <Icon size={14} strokeWidth={1.75} />
+                  {label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
         <Textarea label="Notas" value={form.notes} onChange={(e) => update('notes', e.target.value)} rows={3} placeholder="Preco negociado, preferencias, etc." />
 
         {error && <p className="text-xs font-body text-error">{error}</p>}
