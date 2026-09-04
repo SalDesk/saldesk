@@ -67,6 +67,12 @@ const COLUMNS = (t, onSelect) => [
     render: (c) => <span className="text-n-500 text-xs uppercase">{c.language}</span>,
     width: '70px',
   },
+  {
+    key: 'custom_price',
+    label: 'Preço acordado',
+    render: (c) => c.custom_price != null ? <span className="font-display font-semibold text-n-700">€{Number(c.custom_price).toFixed(2)}</span> : <span className="text-n-300">—</span>,
+    width: '110px',
+  },
 ];
 
 /* Ate agora so existia importacao CSV para adicionar clientes -- um
@@ -87,7 +93,7 @@ const TAG_OPTIONS = [
 ];
 
 function NewCustomerModal({ open, onClose, onCreated }) {
-  const [form,    setForm]    = useState({ name: '', email: '', phone: '', country_code: '', notes: '', tags: [] });
+  const [form,    setForm]    = useState({ name: '', email: '', phone: '', country_code: '', notes: '', tags: [], custom_price: '' });
   const [loading, setLoading] = useState(false);
   const [error,   setError]   = useState('');
 
@@ -109,7 +115,7 @@ function NewCustomerModal({ open, onClose, onCreated }) {
     try {
       const created = await createCustomer(form);
       onCreated(created);
-      setForm({ name: '', email: '', phone: '', country_code: '', notes: '', tags: [] });
+      setForm({ name: '', email: '', phone: '', country_code: '', notes: '', tags: [], custom_price: '' });
       onClose();
     } catch (err) {
       setError(err.response?.data?.error || 'Erro ao criar cliente');
@@ -148,7 +154,17 @@ function NewCustomerModal({ open, onClose, onCreated }) {
           </div>
         </div>
 
-        <Textarea label="Notas" value={form.notes} onChange={(e) => update('notes', e.target.value)} rows={3} placeholder="Preco negociado, preferencias, etc." />
+        <Input
+          label="Preço acordado (opcional)"
+          type="number"
+          step="0.01"
+          min="0"
+          value={form.custom_price}
+          onChange={(e) => update('custom_price', e.target.value)}
+          placeholder="Ex: 45.00"
+        />
+
+        <Textarea label="Notas" value={form.notes} onChange={(e) => update('notes', e.target.value)} rows={3} placeholder="Preferencias, contexto adicional, etc." />
 
         {error && <p className="text-xs font-body text-error">{error}</p>}
 
