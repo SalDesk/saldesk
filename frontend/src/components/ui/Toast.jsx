@@ -15,12 +15,22 @@ function ToastItem({ toast, onRemove }) {
 
   const { bg, icon } = CONFIG[toast.type] || CONFIG.info;
 
+  function handleClick() {
+    if (toast.onClick) { toast.onClick(); onRemove(toast.id); }
+  }
+
   return (
-    <div className={`flex items-center gap-3 px-4 py-3 rounded-xl shadow-lg text-white text-sm min-w-[280px] max-w-sm ${bg} animate-fade-in`}>
+    <div
+      onClick={handleClick}
+      className={`flex items-center gap-3 px-4 py-3 rounded-xl shadow-lg text-white text-sm min-w-[280px] max-w-sm ${bg} animate-fade-in ${toast.onClick ? 'cursor-pointer' : ''}`}
+    >
       <span className="text-base font-bold shrink-0">{icon}</span>
-      <span className="flex-1">{toast.message}</span>
+      <span className="flex-1 min-w-0">
+        {toast.title && <span className="block font-semibold mb-0.5">{toast.title}</span>}
+        <span className="block truncate">{toast.message}</span>
+      </span>
       <button
-        onClick={() => onRemove(toast.id)}
+        onClick={(e) => { e.stopPropagation(); onRemove(toast.id); }}
         className="shrink-0 opacity-60 hover:opacity-100 text-lg leading-none ml-1"
         aria-label="Fechar"
       >

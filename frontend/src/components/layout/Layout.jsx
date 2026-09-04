@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Outlet, useLocation } from 'react-router-dom';
+import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { io } from 'socket.io-client';
 import Sidebar from './Sidebar';
 import Topbar from './Topbar';
@@ -9,8 +9,10 @@ import { ToastContainer } from '../ui/Toast';
 import WelcomeTour from '../tour/WelcomeTour';
 import useUiStore from '../../store/uiStore';
 import useAuthStore from '../../store/authStore';
+import { useToast } from '../../store/toastStore';
 import { getMe } from '../../services/authService';
 import { trackPageView } from '../../utils/telemetry';
+import { playNotificationSound } from '../../utils/notificationSound';
 
 const OPERATOR_REFRESH_MS = 60 * 1000;
 
@@ -19,8 +21,11 @@ export default function Layout() {
   const sidebarOpen = useUiStore((s) => s.sidebarOpen);
   const setOperator = useAuthStore((s) => s.setOperator);
   const token = useAuthStore((s) => s.token);
+  const operatorId = useAuthStore((s) => s.operator?.id);
   const isDemo = useAuthStore((s) => s.operator?.is_demo);
   const location = useLocation();
+  const navigate = useNavigate();
+  const toast = useToast();
 
   /* O "online" que o fundador ve em Comunicacao (AdminCommunications.jsx)
      vem so de haver algum socket ligado com este operator_id -- e o
@@ -36,8 +41,21 @@ export default function Layout() {
     if (!token) return;
     const socketUrl = (import.meta.env.VITE_API_URL || 'http://localhost:3001/api/v1').replace(/\/api\/v1\/?$/, '');
     const socket = io(socketUrl, { auth: { token } });
+
+    /* Popup + som no canto para qualquer mensagem nova, em qualquer pagina
+       da app (nao so quando "Mensagens" esta aberta -- Messages.jsx tem a
+       sua propria ligacao/listener so para essa pagina, isto e app-wide).
+       Ignora mensagens enviadas pelo proprio operador (ex: outra aba/
+       dispositivo) para nao notificar de volta o que ele acabou de mandar. */
+    socket.on('message:new', (msg) => {
+      if (msg.sender_type === 'manager' && msg.sender_id === operatorId) return;
+      playNotificationSound();
+      const title = msg.sender_type === 'guest' ? 'Novo cliente' : 'Mensagem da equipa';
+      toast.notify(title, msg.content, () => navigate('/mensagens'));
+    });
+
     return () => socket.disconnect();
-  }, [token]);
+  }, [token, operatorId]);
 
   /* Alimenta a aba "Trafego" da Analytics do fundador (getAnalyticsTraffic
      em adminController.js) -- dispara a cada mudanca de rota dentro da app. */

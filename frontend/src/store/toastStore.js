@@ -15,7 +15,10 @@ export function useToast() {
   return {
     success: (message) => addToast({ type: 'success', message }),
     error: (message) => addToast({ type: 'error', message }),
-    info: (message) => addToast({ type: 'info', message })
+    info: (message) => addToast({ type: 'info', message }),
+    /* title + onClick (ex: navegar para /mensagens ao clicar) -- usado
+       pela notificacao de nova mensagem em Layout.jsx. */
+    notify: (title, message, onClick) => addToast({ type: 'info', title, message, onClick }),
   };
 }
 
