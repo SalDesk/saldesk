@@ -166,6 +166,60 @@ function TimeSlotsEditor({ slots, onChange }) {
   );
 }
 
+/* Escaloes de preco para reserva privada/grupo, por numero de pessoas (ex:
+   1-2 PAX, 3-4 PAX) -- pedido real de um operador (Logan Tours) cujos
+   precos privados nao sao um valor unico nem linear por pessoa, mas em
+   patamares. Se configurado, tem prioridade sobre "Preço privado" (que
+   continua a funcionar como reserva/fallback quando nenhum escalao cobre o
+   numero de pessoas da reserva). Mesmo padrao de lista repetivel do
+   TimeSlotsEditor acima. */
+function PriceTiersEditor({ tiers, onChange }) {
+  function addTier() { onChange([...tiers, { pax_min: '', pax_max: '', price: '' }]); }
+  function updateTier(i, patch) { onChange(tiers.map((t, idx) => idx === i ? { ...t, ...patch } : t)); }
+  function removeTier(i) { onChange(tiers.filter((_, idx) => idx !== i)); }
+  return (
+    <div className="space-y-2">
+      {tiers.map((t, i) => (
+        <div key={i} className="flex items-center gap-2">
+          <input
+            type="number"
+            min="1"
+            value={t.pax_min}
+            onChange={e => updateTier(i, { pax_min: e.target.value })}
+            placeholder="Mín PAX"
+            className="w-24 h-8 px-2.5 text-sm font-body border border-n-200 rounded-sm focus:outline-none focus:border-ocean-700"
+          />
+          <span className="text-n-400 text-sm">–</span>
+          <input
+            type="number"
+            min="1"
+            value={t.pax_max}
+            onChange={e => updateTier(i, { pax_max: e.target.value })}
+            placeholder="Máx PAX"
+            className="w-24 h-8 px-2.5 text-sm font-body border border-n-200 rounded-sm focus:outline-none focus:border-ocean-700"
+          />
+          <input
+            type="number"
+            min="0"
+            step="0.01"
+            value={t.price}
+            onChange={e => updateTier(i, { price: e.target.value })}
+            placeholder="Preço (€)"
+            className="flex-1 h-8 px-2.5 text-sm font-body border border-n-200 rounded-sm focus:outline-none focus:border-ocean-700"
+          />
+          <button type="button" onClick={() => removeTier(i)} className="shrink-0 p-1.5 rounded-sm text-n-400 hover:text-error transition-colors">
+            <Trash2 size={14} />
+          </button>
+        </div>
+      ))}
+      <button type="button" onClick={addTier} className="flex items-center gap-1 text-xs font-body font-semibold text-ocean-700 hover:text-ocean-500 transition-colors">
+        <Plus size={13} strokeWidth={2.5} /> Adicionar escalão
+      </button>
+      <p className="text-xs text-n-500">Ex: 1–2 PAX a 80€, 3–4 PAX a 140€. Se configurado, substitui o "Preço privado" único de abaixo para o número de pessoas coberto por um escalão.</p>
+    </div>
+  );
+}
+
 const UNIT_TYPES_BY_OPERATOR = {
   hotel:      ['Quarto Standard', 'Quarto Double', 'Suite', 'Apartamento', 'Villa', 'Bungalow'],
   activity:   ['Mergulho', 'Kitesurf', 'Snorkeling', 'Passeio de Barco', 'Quad / Buggy', 'Pesca', 'Surf', 'Windsurf', 'Tour', 'Sessao'],
@@ -282,6 +336,7 @@ function TourForm({ unit, onSave, onCancel, loading, error }) {
     base_price:    unit?.base_price    != null ? String(unit.base_price) : '',
     price_child:   meta.price_child    != null ? String(meta.price_child) : '',
     price_private: meta.price_private  != null ? String(meta.price_private) : '',
+    price_tiers:    (meta.price_tiers || []).map(t => ({ pax_min: String(t.pax_min ?? ''), pax_max: String(t.pax_max ?? ''), price: String(t.price ?? '') })),
     amenities:      meta.amenities      || [],
     included_items: meta.included_items || [],
     important_info: meta.important_info || '',
@@ -329,6 +384,9 @@ function TourForm({ unit, onSave, onCancel, loading, error }) {
       start_time:    form.start_time    || null,
       price_child:   form.price_child   ? Number(form.price_child)   : null,
       price_private: form.price_private ? Number(form.price_private) : null,
+      price_tiers: form.price_tiers
+        .filter(t => t.pax_min !== '' && t.pax_max !== '' && t.price !== '')
+        .map(t => ({ pax_min: Number(t.pax_min), pax_max: Number(t.pax_max), price: Number(t.price) })),
       amenities:      form.amenities,
       included_items: form.included_items.filter(it => it.label.trim()),
       important_info: form.important_info || null,
@@ -526,6 +584,11 @@ function TourForm({ unit, onSave, onCancel, loading, error }) {
             placeholder="0.00"
           />
         </div>
+      </div>
+
+      <div>
+        <SectionLabel>Escalões de preço privado por nº de pessoas (opcional)</SectionLabel>
+        <PriceTiersEditor tiers={form.price_tiers} onChange={price_tiers => setForm(f => ({ ...f, price_tiers }))} />
       </div>
 
       <div>

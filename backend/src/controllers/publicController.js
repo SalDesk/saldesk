@@ -1,5 +1,5 @@
 const { supabaseAdmin } = require('../config/supabase');
-const { verificarDisponibilidade, calcularPreco, verificarDisponibilidadeMesa, listarMesasDisponiveis, DEFAULT_SEATING_MINUTES, parseUnitMeta, verificarDisponibilidadeSlot, listarSlotsComDisponibilidade } = require('../helpers/bookingHelpers');
+const { verificarDisponibilidade, calcularPreco, verificarDisponibilidadeMesa, listarMesasDisponiveis, DEFAULT_SEATING_MINUTES, parseUnitMeta, verificarDisponibilidadeSlot, listarSlotsComDisponibilidade, calcularPrecoPrivado, temPrecoPrivadoConfigurado } = require('../helpers/bookingHelpers');
 const { obterOuCriarCliente } = require('../helpers/customerHelper');
 const { enviarEmail } = require('../helpers/emailHelper');
 const { detectarIdioma } = require('../helpers/languageHelper');
@@ -327,12 +327,12 @@ async function criarReserva(req, res, next) {
       const unitMeta = parseUnitMeta(unitRow);
       const activitySlots = Array.isArray(unitMeta.time_slots) ? unitMeta.time_slots : [];
 
-      /* Reserva de grupo/privada -- preco fixo (unitMeta.price_private, ate
-         agora recolhido no TourForm mas nunca ligado a nada real), ocupa o
+      /* Reserva de grupo/privada -- preco fixo (unitMeta.price_private) ou por
+         escaloes de numero de pessoas (unitMeta.price_tiers), ocupa o
          slot/dia INTEIRO em exclusivo. So permitido se a unidade tiver
-         mesmo um preco privado configurado -- nunca inventar um preco. */
+         mesmo algum preco privado configurado -- nunca inventar um preco. */
       if (booking_mode === 'private') {
-        if (!unitMeta.price_private) {
+        if (!temPrecoPrivadoConfigurado(unitMeta)) {
           return res.status(400).json({ error: 'Esta actividade não tem reserva privada disponível', code: 'INVALID_BOOKING_MODE' });
         }
         isGroupBooking = true;
@@ -367,8 +367,11 @@ async function criarReserva(req, res, next) {
     if (isRestaurant) {
       total = preOrderValidado?.totalPrice || 0;
     } else if (isGroupBooking) {
-      // Preco fixo por grupo -- ja validado acima que unitMeta.price_private existe.
-      total = Number(parseUnitMeta(unit).price_private);
+      // Preco fixo por grupo ou por escalao de pessoas -- ja validado acima
+      // que a unidade tem algum preco privado configurado. unitMeta (linha
+      // 327) esta dentro do bloco else acima, fora de scope aqui -- reparte
+      // o mesmo parseUnitMeta(unit), tal como o codigo original ja fazia.
+      total = calcularPrecoPrivado(parseUnitMeta(unit), numPessoas);
     } else if (effectiveCheckOut === check_in) {
       total = Math.round(Number(unit.base_price || 0) * numPessoas * 100) / 100;
     } else {

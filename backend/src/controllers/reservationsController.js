@@ -1,5 +1,5 @@
 const { supabaseAdmin } = require('../config/supabase');
-const { verificarDisponibilidade, calcularPreco, verificarDisponibilidadeMesa, DEFAULT_SEATING_MINUTES, parseUnitMeta, verificarDisponibilidadeSlot } = require('../helpers/bookingHelpers');
+const { verificarDisponibilidade, calcularPreco, verificarDisponibilidadeMesa, DEFAULT_SEATING_MINUTES, parseUnitMeta, verificarDisponibilidadeSlot, calcularPrecoPrivado, temPrecoPrivadoConfigurado } = require('../helpers/bookingHelpers');
 const { obterOuCriarCliente, actualizarStatsCheckout } = require('../helpers/customerHelper');
 const { enviarEmail } = require('../helpers/emailHelper');
 const { confirmacaoClienteEmail, notificacaoOperadorEmail } = require('../helpers/emailTemplates');
@@ -105,13 +105,14 @@ async function criar(req, res, next) {
     const unitMetaCriar = parseUnitMeta(unit);
     const activitySlots = Array.isArray(unitMetaCriar.time_slots) ? unitMetaCriar.time_slots : [];
 
-    /* Reserva de grupo/privada -- preco fixo (unitMeta.price_private), ocupa
-       o slot/dia inteiro em exclusivo. Mesmo mecanismo do lado publico
+    /* Reserva de grupo/privada -- preco fixo (unitMeta.price_private) ou por
+       escaloes de numero de pessoas (unitMeta.price_tiers), ocupa o slot/dia
+       inteiro em exclusivo. Mesmo mecanismo do lado publico
        (publicController.criarReserva) -- so permitido se a unidade tiver
-       mesmo um preco privado configurado. */
+       mesmo algum preco privado configurado. */
     let isGroupBooking = false;
     if (!isRestaurant && booking_mode === 'private') {
-      if (!unitMetaCriar.price_private) {
+      if (!temPrecoPrivadoConfigurado(unitMetaCriar)) {
         return res.status(400).json({ error: 'Esta actividade não tem reserva privada disponível', code: 'INVALID_BOOKING_MODE' });
       }
       isGroupBooking = true;
@@ -144,7 +145,7 @@ async function criar(req, res, next) {
     let dias = 0;
     let total;
     if (isGroupBooking) {
-      total = Number(unitMetaCriar.price_private);
+      total = calcularPrecoPrivado(unitMetaCriar, numPessoas);
     } else if (check_out === check_in) {
       total = Math.round(Number(unit.base_price || 0) * numPessoas * 100) / 100;
     } else {

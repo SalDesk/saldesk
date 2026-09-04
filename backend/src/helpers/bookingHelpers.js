@@ -87,6 +87,26 @@ function parseUnitMeta(unit) {
   try { return JSON.parse(raw); } catch { return {}; }
 }
 
+/* Preco de tour privado/grupo -- ate agora so existia um valor fixo unico
+   (price_private), independente do numero de pessoas. Pedido real de um
+   operador (Logan Tours): precos em escaloes por numero de pessoas (1-2
+   PAX, 3-4 PAX, etc.), nao um valor unico nem preco linear por pessoa.
+   price_tiers (se configurado) tem prioridade; cai para price_private
+   (comportamento antigo, continua a funcionar sem alteracao) quando nao
+   ha nenhum escalao a cobrir o numero de pessoas da reserva. Partilhada
+   entre publicController.js e reservationsController.js para os dois
+   caminhos de reserva nunca poderem divergir no preco cobrado. */
+function calcularPrecoPrivado(unitMeta, numPessoas) {
+  const tiers = Array.isArray(unitMeta.price_tiers) ? unitMeta.price_tiers : [];
+  const tier = tiers.find((t) => numPessoas >= Number(t.pax_min) && numPessoas <= Number(t.pax_max));
+  if (tier) return Number(tier.price) || 0;
+  return Number(unitMeta.price_private) || 0;
+}
+
+function temPrecoPrivadoConfigurado(unitMeta) {
+  return !!unitMeta.price_private || (Array.isArray(unitMeta.price_tiers) && unitMeta.price_tiers.length > 0);
+}
+
 // Verifica conflito de horario para UMA mesa candidata, num dia especifico --
 // reservations_no_overlap_time (048) é a rede de segurança ao nível da BD;
 // esta função decide qual mesa oferecer antes de tentar o insert.
@@ -334,4 +354,5 @@ module.exports = {
   verificarDisponibilidadeMesa, listarMesasDisponiveis, DEFAULT_SEATING_MINUTES, parseUnitMeta,
   verificarDisponibilidadeSlot, listarSlotsComDisponibilidade,
   normalizarHora, ocupacaoSlotsEmLote, diasBloqueadosEmLote,
+  calcularPrecoPrivado, temPrecoPrivadoConfigurado,
 };
