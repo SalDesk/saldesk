@@ -73,10 +73,14 @@ const COLUMNS = (t, onSelect) => [
    operador com poucos clientes (ex: precos negociados individualmente,
    sem sentido montar um ficheiro) nao tinha forma nenhuma de os adicionar
    um a um. Confirmado por uma operadora real na comunidade de WhatsApp. */
-/* Turistas/Locais ja sao derivados automaticamente do country_code (ver
-   "segmented" abaixo) -- so Grupo/Corporativo/VIP precisam de tag manual,
-   porque nao ha nenhum dado automatico que os distinga. */
+/* Turista/Local ja tinham deteccao automatica pelo country_code (ver
+   "segmented" abaixo), mas o operador pode querer corrigir/forcar (ex:
+   cabo-verdiano da diaspora que e cliente turista, nao local) -- a tag
+   manual passa a complementar essa deteccao, nunca a substitui.
+   Grupo/Corporativo/VIP nao tem nenhum dado automatico, dependem so da tag. */
 const TAG_OPTIONS = [
+  { key: 'turista',      label: 'Turista',      Icon: Plane },
+  { key: 'local',        label: 'Local',        Icon: UserCheck },
   { key: 'VIP',          label: 'VIP',          Icon: Crown },
   { key: 'grupo',        label: 'Grupo',        Icon: Users },
   { key: 'corporativo',  label: 'Corporativo',  Icon: Building2 },
@@ -297,8 +301,8 @@ export default function Customers() {
     if (!segment) return true;
     const tags = c.tags || [];
     if (segment === 'vip')       return tags.includes('VIP') || Number(c.total_spent) > 500;
-    if (segment === 'tourist')   return c.nationality !== 'CV' && c.country_code !== 'CV';
-    if (segment === 'local')     return c.country_code === 'CV';
+    if (segment === 'tourist')   return tags.includes('turista') || (c.nationality !== 'CV' && c.country_code !== 'CV');
+    if (segment === 'local')     return tags.includes('local') || c.country_code === 'CV';
     if (segment === 'group')     return tags.includes('grupo') || Number(c.total_visits) >= 5;
     if (segment === 'corporate') return tags.includes('corporativo') || tags.includes('empresa');
     return true;
