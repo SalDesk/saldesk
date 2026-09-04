@@ -49,7 +49,14 @@ async function authMiddleware(req, res, next) {
   const operator = await supabaseGet('operators', { user_id: supaUser.id });
   req.operator = operator || null;
 
-  if (req.operator?.is_demo && req.method !== 'GET' && req.method !== 'HEAD' && req.method !== 'OPTIONS') {
+  /* /telemetry/view fica de fora do bloqueio -- nao altera nenhum dado do
+     operador demo em si, so alimenta as estatisticas de trafego/utilizacao
+     do fundador (getAnalyticsTraffic/getDemoUsage). Sem esta excepcao, a
+     propria navegacao da conta demo nunca ficava registada -- "Utilizacao
+     do demo" no Analytics do fundador ficava sempre a 0, mesmo com
+     utilizacao real, silenciosamente bloqueada por este 403. */
+  const isTelemetryView = req.originalUrl.startsWith('/api/v1/telemetry');
+  if (req.operator?.is_demo && !isTelemetryView && req.method !== 'GET' && req.method !== 'HEAD' && req.method !== 'OPTIONS') {
     return res.status(403).json({
       error: 'Esta e uma conta de demonstracao — apenas leitura, sem alteracoes permitidas.',
       code: 'DEMO_READ_ONLY',
