@@ -54,6 +54,15 @@ export default function Layout() {
       toast.notify(title, msg.content, () => navigate('/mensagens'));
     });
 
+    /* Canal separado -- mensagens do fundador para o operador ("Mensagens
+       SalDesk") usam admin_messages/admin:message:new, nunca messages/
+       message:new. So existia o sino de notificacoes (Topbar.jsx) para
+       isto ate agora, sem popup nem som. */
+    socket.on('admin:message:new', (msg) => {
+      playNotificationSound();
+      toast.notify('Mensagem do SalDesk', msg.content, () => navigate('/mensagens-saldesk'));
+    });
+
     return () => socket.disconnect();
   }, [token, operatorId]);
 
