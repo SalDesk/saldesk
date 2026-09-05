@@ -7,6 +7,7 @@ import {
   Compass, Car, Utensils, Lock, RotateCcw, CheckCircle, Clock, Filter, Bell,
 } from 'lucide-react';
 import Logo from '../components/shared/Logo';
+import SiteComplianceFooter from '../components/shared/SiteComplianceFooter';
 import QRCode from 'qrcode';
 import { useIsWidget, useWidgetResize } from '../utils/widgetMode';
 import {
@@ -2457,6 +2458,9 @@ export default function PublicBooking() {
                 </a>
               )}
             </div>
+          </div>
+          <div className="border-t border-white/10 pt-6 mb-6">
+            <SiteComplianceFooter op={op} lang={lang} />
           </div>
           <div className="border-t border-white/10 pt-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs font-body">
             <p className="text-white/40">© 2026 {op.name} · Ilha do Sal, Cabo Verde</p>

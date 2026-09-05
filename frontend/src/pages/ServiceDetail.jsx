@@ -24,6 +24,7 @@ import { useIsWidget, useWidgetResize } from '../utils/widgetMode';
 import {
   MENU_CATEGORY_LABELS, MENU_ALLERGEN_LABELS, MENU_DIET_LABELS, RestaurantReservationSection,
 } from '../components/restaurant/RestaurantReservationWidget';
+import SiteComplianceFooter from '../components/shared/SiteComplianceFooter';
 
 /* Icone numerado para as paragens do itinerario -- SVG inline (nunca
    bitmap), substitui o icone PNG por defeito do Leaflet (que nem sequer
@@ -1779,6 +1780,9 @@ export default function ServiceDetail() {
               {' '}&middot;{' '}
               <a href="https://wandr.cv" className="text-white/55 hover:text-white font-semibold transition-colors">WANDR</a>
             </p>
+          </div>
+          <div className="border-t border-white/10 pt-5 mt-5">
+            <SiteComplianceFooter op={op} lang={lang} />
           </div>
         </div>
       </footer>
