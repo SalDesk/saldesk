@@ -33,6 +33,7 @@ const marketingRoutes    = require('./src/routes/marketing');
 const telemetryRoutes    = require('./src/routes/telemetry');
 const founderChatRoutes  = require('./src/routes/founderChat');
 const seoRoutes          = require('./src/routes/seo');
+const socialPreviewRoutes = require('./src/routes/socialPreview');
 const voucherRoutes      = require('./src/routes/vouchers');
 const loyaltyRoutes      = require('./src/routes/loyalty');
 const affiliateRoutes    = require('./src/routes/affiliates');
@@ -139,6 +140,7 @@ app.use('/api/v1/occurrences',  occurrencesRoutes);
 app.use('/api/v1/expenses',     expensesRoutes);
 app.use('/api/v1/billing',      billingRoutes);
 app.use('/',                    seoRoutes);
+app.use('/social-preview',      socialPreviewRoutes);
 
 /* Em producao o Nginx serve /uploads/ directamente (alias estatico); em dev
    nao ha Nginx a frente, por isso o proprio Node serve os ficheiros aqui. */
