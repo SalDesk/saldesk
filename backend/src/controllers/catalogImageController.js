@@ -28,6 +28,39 @@ function cacheDir() {
   return path.join(process.env.UPLOADS_DIR || '/var/www/saldesk/uploads', 'catalog-images');
 }
 
+function truncate(str, max) {
+  if (!str) return '';
+  return str.length > max ? `${str.slice(0, max - 1).trimEnd()}…` : str;
+}
+
+function fmtDuration(minutes) {
+  if (!minutes) return null;
+  const h = Math.floor(minutes / 60);
+  const m = minutes % 60;
+  if (h === 0) return `${m}min`;
+  return m === 0 ? `${h}h` : `${h}h${m}`;
+}
+
+/* Mesma prioridade ja usada em calcularPrecoPrivado() (bookingHelpers.js) e
+   em unitDisplayPrice() (seo.js) -- escalao mais barato > preco privado
+   fixo > preco por pessoa. Nunca deve divergir do preco que o feed ja
+   mostra para o mesmo item. */
+function displayPrice(unit) {
+  if (Number(unit.base_price) > 0) return Number(unit.base_price);
+  if (!unit.description?.startsWith('{')) return null;
+  try {
+    const meta = JSON.parse(unit.description);
+    const tiers = Array.isArray(meta.price_tiers) ? meta.price_tiers : [];
+    const tierMin = tiers.length ? Math.min(...tiers.map((t) => Number(t.price) || 0)) : null;
+    return tierMin || (Number(meta.price_private) || null);
+  } catch { return null; }
+}
+
+function fmtPrice(price, currency) {
+  if (!price) return null;
+  return currency === 'CVE' ? `${Math.round(price)} CVE` : `€${price % 1 ? price.toFixed(2) : price.toFixed(0)}`;
+}
+
 async function getCatalogImage(req, res, next) {
   try {
     const unitId = req.params.unitId;
@@ -47,7 +80,7 @@ async function getCatalogImage(req, res, next) {
 
     const { data: unit } = await supabaseAdmin
       .from('units')
-      .select('id, images, operator_id')
+      .select('id, name, images, operator_id, base_price, description, duration_minutes')
       .eq('id', unitId)
       .maybeSingle();
     if (!unit || !Array.isArray(unit.images) || !unit.images[0]) {
@@ -56,7 +89,7 @@ async function getCatalogImage(req, res, next) {
 
     const { data: op } = await supabaseAdmin
       .from('operators')
-      .select('id, address, islands(name)')
+      .select('id, name, currency, address, islands(name)')
       .eq('id', unit.operator_id)
       .maybeSingle();
 
@@ -77,17 +110,24 @@ async function getCatalogImage(req, res, next) {
       .gte('created_at', thirtyDaysAgo)
       .in('status', ['confirmed', 'checked_in', 'checked_out']);
 
-    const location = (op?.islands?.name || op?.address || 'Cabo Verde').toUpperCase();
+    const location = truncate((op?.islands?.name || op?.address || 'Cabo Verde').toUpperCase(), 30);
     const showUrgency = (recentBookings || 0) >= URGENCY_THRESHOLD;
     const showRating = !!avgRating && ratings.length > 0;
+
+    const price = displayPrice(unit);
+    const priceLabel = fmtPrice(price, op?.currency);
+    const durationLabel = fmtDuration(unit.duration_minutes);
+    const title = truncate(`${unit.name} — ${op?.name || ''}`, 52);
+    const subtitleParts = [location, durationLabel, priceLabel ? `A partir de ${priceLabel}` : null].filter(Boolean);
+    const subtitle = subtitleParts.join('   ·   ');
 
     const imgRes = await axios.get(unit.images[0], { responseType: 'arraybuffer', timeout: 10000 });
     const base = await sharp(Buffer.from(imgRes.data)).resize(W, H, { fit: 'cover' }).toBuffer();
 
     const parts = [];
     parts.push(`<defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="60%" stop-color="black" stop-opacity="0"/>
-      <stop offset="100%" stop-color="black" stop-opacity="0.55"/>
+      <stop offset="45%" stop-color="black" stop-opacity="0"/>
+      <stop offset="100%" stop-color="black" stop-opacity="0.65"/>
     </linearGradient></defs>`);
     parts.push(`<rect x="0" y="0" width="${W}" height="${H}" fill="url(#g)"/>`);
 
@@ -105,8 +145,12 @@ async function getCatalogImage(req, res, next) {
         <text x="${W - boxW - 12}" y="63" font-family="Arial, sans-serif" font-size="24" font-weight="700" fill="#1A2332" text-anchor="end">${xmlEscape(label)}</text>
       `);
     }
+    // Bloco inferior: nome + operador (linha grande), depois localizacao ·
+    // duracao · preco (linha pequena) -- so mostra o que existir de facto,
+    // nunca inventa duracao/preco quando a unidade nao os tem definidos.
     parts.push(`
-      <text x="32" y="${H - 40}" font-family="Arial, sans-serif" font-size="26" font-weight="700" fill="white" letter-spacing="1">${xmlEscape(location)}</text>
+      <text x="32" y="${H - 76}" font-family="Arial, sans-serif" font-size="34" font-weight="700" fill="white">${xmlEscape(title)}</text>
+      <text x="32" y="${H - 36}" font-family="Arial, sans-serif" font-size="22" font-weight="600" fill="white" fill-opacity="0.92" letter-spacing="0.3">${xmlEscape(subtitle)}</text>
     `);
 
     const svg = `<svg width="${W}" height="${H}" xmlns="http://www.w3.org/2000/svg">${parts.join('')}</svg>`;
