@@ -426,6 +426,25 @@ function PerfilPublicoTab({ operator }) {
         </div>
       </Card>
 
+      {/* Programa de indicacao -- 1 mes gratis para ti e para o operador que
+          indicares, aplicado automaticamente quando ele se tornar cliente
+          pagante (ver aplicarRecompensaReferencia em billingController.js). */}
+      {operator?.slug && (
+        <Card header={<h3 className="font-display font-semibold text-sm text-n-700">Indique um operador</h3>}>
+          <div className="space-y-3">
+            <p className="text-sm font-body text-n-600">
+              Partilhe este link com outro operador turístico. Quando ele se tornar cliente pagante, ganham os dois <strong>1 mês grátis</strong> — aplicado automaticamente, sem precisar de pedir nada.
+            </p>
+            <div className="flex items-center gap-2">
+              <code className="flex-1 bg-n-50 border border-n-200 rounded px-3 py-2 text-sm font-mono text-ocean-700 truncate">
+                {`https://saldesk.cv/operadores.html?ref=${operator.slug}`}
+              </code>
+              <CopyButton text={`https://saldesk.cv/operadores.html?ref=${operator.slug}`} />
+            </div>
+          </div>
+        </Card>
+      )}
+
       <div className="flex items-center gap-3">
         <Button type="submit" loading={saving}>Guardar perfil</Button>
         <SaveBanner saved={saved} />

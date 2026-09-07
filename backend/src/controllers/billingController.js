@@ -183,6 +183,57 @@ async function activarSubscricaoConfirmada(payment, subscriptionId, nextBillingT
       attachments,
     }).catch(() => {});
   }
+
+  await aplicarRecompensaReferencia(payment.operator_id).catch((e) => console.error('[Billing] Recompensa de indicacao:', e.message));
+}
+
+/* Programa de indicacao entre operadores -- 1 mes gratis para o indicador e
+   para o indicado, aplicado exactamente uma vez, quando o indicado se torna
+   cliente pagante pela primeira vez (nunca em renovacoes). Chamado a partir
+   de activarSubscricaoConfirmada e activarPagamentoSisp -- qualquer um dos
+   dois pode ser genuinamente o "primeiro pagamento" consoante o gateway
+   escolhido; referral_reward_granted_at garante que so dispara uma vez por
+   operador indicado, independentemente de qual dos dois chegar primeiro. */
+async function aplicarRecompensaReferencia(operatorId) {
+  const { data: referido } = await supabaseAdmin
+    .from('operators')
+    .select('id, name, referred_by_operator_id, referral_reward_granted_at, plan_paid_until, notes_log')
+    .eq('id', operatorId).maybeSingle();
+  if (!referido?.referred_by_operator_id || referido.referral_reward_granted_at) return;
+
+  const { data: indicador } = await supabaseAdmin
+    .from('operators')
+    .select('id, name, email, plan_paid_until, notes_log')
+    .eq('id', referido.referred_by_operator_id).maybeSingle();
+  if (!indicador) return;
+
+  const nowIso = new Date().toISOString();
+  const estenderUmMes = (actual) => {
+    const base = actual && new Date(actual) > new Date() ? new Date(actual) : new Date();
+    return new Date(base.getTime() + 30 * 86400000).toISOString();
+  };
+
+  const logReferido  = Array.isArray(referido.notes_log) ? referido.notes_log : [];
+  const logIndicador = Array.isArray(indicador.notes_log) ? indicador.notes_log : [];
+
+  await supabaseAdmin.from('operators').update({
+    referral_reward_granted_at: nowIso,
+    plan_paid_until: estenderUmMes(referido.plan_paid_until),
+    notes_log: [...logReferido, { text: `Mes gratis de indicacao aplicado (indicado por ${indicador.name})`, at: nowIso, type: 'referral' }],
+  }).eq('id', referido.id);
+
+  await supabaseAdmin.from('operators').update({
+    plan_paid_until: estenderUmMes(indicador.plan_paid_until),
+    notes_log: [...logIndicador, { text: `Mes gratis de indicacao ganho (${referido.name} tornou-se cliente pagante)`, at: nowIso, type: 'referral' }],
+  }).eq('id', indicador.id);
+
+  if (indicador.email) {
+    enviarEmail({
+      to: indicador.email,
+      subject: 'Ganhaste um mes gratis na SalDesk!',
+      text: `Ola ${indicador.name},\n\nBoas noticias: ${referido.name}, que indicaste para a SalDesk, tornou-se cliente pagante -- por isso ganhaste um mes gratis de subscricao, ja aplicado automaticamente a tua conta.\n\nObrigado por espalhares a palavra!\n\nEquipa SalDesk`,
+    }).catch(() => {});
+  }
 }
 
 /* Renovacoes (2a cobranca em diante) -- ja nao ha pending platform_payments
@@ -420,6 +471,8 @@ async function activarPagamentoSisp(payment, transactionID) {
       attachments,
     }).catch(() => {});
   }
+
+  await aplicarRecompensaReferencia(payment.operator_id).catch((e) => console.error('[Billing] Recompensa de indicacao:', e.message));
 }
 
 /* Callback publico -- a Vinti4 faz POST DIRECTO para aqui apos o 3D

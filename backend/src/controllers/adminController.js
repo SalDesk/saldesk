@@ -668,6 +668,7 @@ async function convertLead(req, res, next) {
       plan_status:         'trial',
       trial_ends_at:       trialEnd.toISOString(),
       onboarding_complete: false,
+      referred_by_operator_id: lead.referred_by_operator_id || null,
       notes_internal:      `Convertido do lead #${lead.id} em ${new Date().toISOString().slice(0, 10)}`,
     }).select().single();
     if (opErr) {
