@@ -3,6 +3,12 @@ const router  = express.Router();
 const { supabaseAdmin } = require('../config/supabase');
 const { frontendBase } = require('../utils/urls');
 const { getDiscoverCatalog } = require('../services/discoverCatalogService');
+const { getCatalogImage } = require('../controllers/catalogImageController');
+
+/* Imagem "estilizada" do catalogo (selo de procura/nota/localizacao
+   sobrepostos na foto real) -- ver catalogImageController.js. Publica,
+   sem auth, so alcancada pelo crawler do Meta/Google ao processar o feed. */
+router.get('/catalog-image/:unitId.jpg', getCatalogImage);
 
 /* robots.txt */
 router.get('/robots.txt', (_req, res) => {
@@ -112,15 +118,16 @@ router.get('/catalog-feed.xml', async (_req, res) => {
   try {
     const catalog = await getDiscoverCatalog();
     const base = frontendBase();
+    const apiBase = process.env.API_URL || 'https://api.saldesk.cv';
 
     const items = catalog
       .map((u) => {
         const price = unitDisplayPrice(u);
-        const image = Array.isArray(u.images) && u.images[0] ? u.images[0] : null;
+        const rawImage = Array.isArray(u.images) && u.images[0] ? u.images[0] : null;
         // Meta exige preco e imagem -- sem qualquer um dos dois, o item nunca
         // seria aprovado no Commerce Manager; melhor omitir do que enviar
         // um item garantido a ser rejeitado.
-        if (!price || !image) return null;
+        if (!price || !rawImage) return null;
 
         const title = `${u.unit_name} — ${u.operator_name}`;
         const description = unitDescriptionText(u.description)
@@ -128,7 +135,11 @@ router.get('/catalog-feed.xml', async (_req, res) => {
         const link = `${base}/book/${u.operator_slug}/servico/${u.unit_id}`;
         const availability = u.next_available ? 'in stock' : 'out of stock';
         const currency = u.currency || 'EUR';
-        const extraImages = Array.isArray(u.images) ? u.images.slice(1, 10) : [];
+        // Imagem estilizada (selo/nota/localizacao) em vez da foto em bruto --
+        // ver catalogImageController.js. A foto original continua disponivel
+        // como additional_image_link (u.images[0] fica em extraImages).
+        const image = `${apiBase}/catalog-image/${u.unit_id}.jpg`;
+        const extraImages = Array.isArray(u.images) ? u.images.slice(0, 10) : [];
         const fbCategory = FB_CATEGORY_BY_TYPE[u.operator_type];
 
         return `  <item>
