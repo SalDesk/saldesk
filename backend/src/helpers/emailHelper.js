@@ -13,6 +13,11 @@ async function enviarEmail({ to, subject, html, text, attachments }) {
   try {
     await sgMail.send({
       to,
+      /* BCC para a propria caixa de envio -- sem isto, nenhum email enviado
+         via API ficava visivel em lado nenhum que o founder pudesse
+         consultar directamente (o envio nunca passa pelo cliente de email
+         da caixa real, so pela API do SendGrid). */
+      bcc: process.env.SENDGRID_FROM_EMAIL,
       from: { email: process.env.SENDGRID_FROM_EMAIL, name: 'SalDesk' },
       subject,
       text: finalText,
