@@ -24,15 +24,13 @@ function sample() {
   if (cpuHistory.length > HISTORY_SIZE) cpuHistory.shift();
 }
 
-/* Seed histórico inicial para que o gráfico não apareça vazio */
-(function seedHistory() {
-  const now = Date.now();
-  for (let i = HISTORY_SIZE - 1; i >= 1; i--) {
-    const d = new Date(now - i * 60000);
-    cpuHistory.push({ label: `${pad(d.getHours())}:${pad(d.getMinutes())}`, cpu: Math.round(3 + Math.random() * 12) });
-  }
-})();
-
+/* Sem seed de historico com valores inventados -- havia um preenchimento
+   de 29 pontos aleatorios "so para o grafico nao aparecer vazio", mas sem
+   nenhuma flag a distinguir do ponto real (ao contrario de getDiskInfo(),
+   que ja marca simulated:true/false). Como o servidor reinicia com
+   frequencia, o founder via quase sempre 29 valores fabricados sem aviso.
+   Preferimos um grafico honesto que comeca com 1 ponto real e cresce a
+   cada minuto, a inventar historico que nunca aconteceu. */
 sample(); // ponto inicial real
 setInterval(sample, 60000);
 
