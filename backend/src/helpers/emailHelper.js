@@ -10,14 +10,21 @@ async function enviarEmail({ to, subject, html, text, attachments }) {
   const finalHtml = html || `<p style="font-family:Arial,sans-serif;line-height:1.6">${(text || '').replace(/\n/g, '<br>')}</p>`;
   const finalText = text || (html ? html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim() : '');
 
+  /* BCC para a propria caixa de envio -- sem isto, nenhum email enviado via
+     API ficava visivel em lado nenhum que o founder pudesse consultar
+     directamente. O SendGrid rejeita o pedido inteiro (erro 400) se o mesmo
+     endereco aparecer em "to" e "bcc" ao mesmo tempo -- ja aconteceu com
+     notificacoes internas enviadas para a propria contacto@saldesk.cv (ex.
+     "Nova candidatura"). So adiciona o BCC quando o destinatario ainda nao
+     o inclui. */
+  const bccEmail = process.env.SENDGRID_FROM_EMAIL;
+  const toList = Array.isArray(to) ? to : [to];
+  const jaIncluido = toList.some((t) => t?.toLowerCase() === bccEmail?.toLowerCase());
+
   try {
     await sgMail.send({
       to,
-      /* BCC para a propria caixa de envio -- sem isto, nenhum email enviado
-         via API ficava visivel em lado nenhum que o founder pudesse
-         consultar directamente (o envio nunca passa pelo cliente de email
-         da caixa real, so pela API do SendGrid). */
-      bcc: process.env.SENDGRID_FROM_EMAIL,
+      ...(jaIncluido ? {} : { bcc: bccEmail }),
       from: { email: process.env.SENDGRID_FROM_EMAIL, name: 'SalDesk' },
       subject,
       text: finalText,
