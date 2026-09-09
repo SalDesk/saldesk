@@ -929,14 +929,23 @@ async function updateInviteCode(req, res, next) {
 /* ─── Impact — métricas públicas ────────────────────────────── */
 async function getImpact(req, res, next) {
   try {
-    const [opsRes, resRes, cusRes] = await Promise.all([
-      supabaseAdmin.from('operators').select('id, operator_type, created_at').eq('plan_status', 'active'),
-      supabaseAdmin.from('reservations').select('total_price, status, created_at', { count: 'exact' }),
-      supabaseAdmin.from('customers').select('id', { count: 'exact' }),
+    const [opsAllRes, resRes, cusRes] = await Promise.all([
+      supabaseAdmin.from('operators').select('id, operator_type, created_at, is_demo'),
+      supabaseAdmin.from('reservations').select('operator_id, total_price, status, created_at'),
+      supabaseAdmin.from('customers').select('id, operator_id'),
     ]);
 
-    const ops      = opsRes.data  || [];
-    const reservas = resRes.data  || [];
+    /* Operadores de demonstracao nunca contam para as metricas reais
+       mostradas ao fundador -- mesmo principio ja usado no resto do painel
+       (getFounderDashboard, getAnalyticsGeography). Confirmado ao vivo: a
+       conta demo tinha 7 reservas fictícias com €325 em "receita" contra
+       €0 de receita real -- a receita total mostrada no Impacto era 100%
+       inventada, sem nenhum aviso disso. */
+    const allOps = opsAllRes.data || [];
+    const demoOperatorIds = new Set(allOps.filter(o => o.is_demo).map(o => o.id));
+    const ops      = allOps.filter(o => !o.is_demo);
+    const reservas = (resRes.data || []).filter(r => !demoOperatorIds.has(r.operator_id));
+    const clientes = (cusRes.data || []).filter(c => !demoOperatorIds.has(c.operator_id));
     const receita  = reservas.filter(r => r.status === 'checked_out').reduce((s, r) => s + Number(r.total_price || 0), 0);
 
     const byTypeMap = {};
@@ -956,8 +965,8 @@ async function getImpact(req, res, next) {
     return res.json({
       data: {
         operators_total:    ops.length,
-        reservations_total: resRes.count || 0,
-        customers_total:    cusRes.count  || 0,
+        reservations_total: reservas.length,
+        customers_total:    clientes.length,
         revenue_total:      Math.round(receita),
         operators_by_type:  Object.entries(byTypeMap).map(([name, value]) => ({ name, value })),
         growth,
