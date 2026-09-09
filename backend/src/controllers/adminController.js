@@ -1760,17 +1760,44 @@ function getDiskInfo() {
   return { total_gb: 40.0, used_gb: 12.4, free_gb: 27.6, simulated: true };
 }
 
+/* pm2 e instalado via nvm, cuja pasta bin so entra no PATH em shells
+   interactivos (.bashrc) -- um execSync/exec aqui nunca a ve, mesmo o
+   proprio processo tendo sido arrancado pelo pm2 (confirmado ao vivo: "pm2
+   jlist" e "pm2 restart" falhavam ambos com "pm2: not found" em producao,
+   nunca era so um artefacto do ambiente de desenvolvimento). Tambem
+   confirmado que process.execPath NAO ajuda aqui -- o proprio pm2 arranca
+   o processo com exec_interpreter:"node" resolvido contra um PATH sem nvm
+   nenhum, por isso o node em execucao ja nao e o node do nvm. Em vez de
+   hardcodar uma versao fixa (parte na proxima actualizacao do nvm),
+   procura o pm2 mais recente instalado em qualquer versao de node dentro
+   de ~/.nvm/versions/node/; PM2_BIN no .env pode sobrepor isto directamente
+   se preciso. */
+function pm2Bin() {
+  if (process.env.PM2_BIN) return process.env.PM2_BIN;
+  const fs = require('fs');
+  const path = require('path');
+  try {
+    const nvmDir = path.join(require('os').homedir(), '.nvm', 'versions', 'node');
+    const versoes = fs.readdirSync(nvmDir).sort().reverse();
+    for (const v of versoes) {
+      const candidato = path.join(nvmDir, v, 'bin', 'pm2');
+      if (fs.existsSync(candidato)) return candidato;
+    }
+  } catch { /* cai para o fallback abaixo */ }
+  return 'pm2';
+}
+
 function getPm2Status() {
   try {
     const { execSync } = require('child_process');
-    const out   = execSync('pm2 jlist', { timeout: 5000 }).toString();
+    const out   = execSync(`"${pm2Bin()}" jlist`, { timeout: 5000 }).toString();
     const procs = JSON.parse(out);
     return {
       ok: true, simulated: false,
       processes: procs.map(p => ({ name: p.name, status: p.pm2_env?.status || 'unknown', pid: p.pid })),
     };
-  } catch {
-    return { ok: false, simulated: true, processes: [], error: 'PM2 nao disponivel neste ambiente' };
+  } catch (err) {
+    return { ok: false, simulated: true, processes: [], error: `PM2 nao disponivel: ${err.message}` };
   }
 }
 
@@ -2030,7 +2057,7 @@ function restartApi(req, res) {
   res.json({ message: 'Comando de restart enviado. O servidor ficara indisponivel alguns segundos.' });
   setTimeout(() => {
     const { exec } = require('child_process');
-    exec('pm2 restart saldesk-api', (err) => {
+    exec(`"${pm2Bin()}" restart saldesk-api`, (err) => {
       if (err) console.error('[Restart] Falha PM2:', err.message);
       else     console.log('[Restart] API reiniciada via PM2');
     });
