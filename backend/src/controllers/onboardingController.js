@@ -1,4 +1,6 @@
 const { supabaseAdmin } = require('../config/supabase');
+const { enviarEmail } = require('../helpers/emailHelper');
+const { operatorWelcomeEmail } = require('../helpers/emailTemplates');
 
 const VALID_TYPES = ['hotel', 'activity', 'rentacar', 'restaurant'];
 
@@ -63,6 +65,17 @@ async function createOperator(req, res, next) {
 
     if (error) {
       return res.status(500).json({ error: 'Erro ao criar operador', code: 'DB_ERROR' });
+    }
+
+    /* Boas-vindas automaticas -- pedido real do fundador, que ate agora
+       enviava isto manualmente a cada novo operador. Nunca bloqueia a
+       criacao do perfil se o envio falhar (mesmo padrao ja usado em todo
+       o resto do codigo para emails "de cortesia", nao criticos ao fluxo). */
+    if (data.email) {
+      enviarEmail({
+        to: data.email,
+        ...operatorWelcomeEmail({ operatorName: data.name }),
+      }).catch((e) => console.error('[Onboarding] Falha ao enviar boas-vindas:', e.message));
     }
 
     return res.status(201).json({ data, message: 'Perfil criado com sucesso' });

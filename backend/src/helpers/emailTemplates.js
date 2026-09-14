@@ -417,10 +417,62 @@ function operatorFirstAccessEmail({ name, operatorName, link }) {
   return { subject, html: htmlComSignOff, text };
 }
 
+/* ── f) Boas-vindas automaticas ao concluir o primeiro passo do onboarding
+   (createOperator em onboardingController.js) -- pedido real do fundador,
+   que ate agora enviava isto manualmente a cada novo operador (ex. Soares
+   Holiday Tours). Ao contrario de operatorFirstAccessEmail (operador
+   configurado directamente pela equipa, sem password ainda), aqui o
+   operador ja tem sessao propria iniciada -- so falta configurar o
+   primeiro servico, sem nenhum link magico envolvido. */
+function operatorWelcomeEmail({ operatorName }) {
+  const subject = `Bem-vindo à SalDesk, ${operatorName}!`;
+  const ctaUrl = 'https://app.saldesk.cv/unidades';
+  const ctaLabel = 'Adicionar o meu primeiro tour';
+
+  /* operatorName vem directamente do nome de negocio escolhido no onboarding
+     (texto livre do utilizador) -- escapar antes de interpolar em HTML,
+     nomes reais ja incluem "&" (ex. "Silva & Santos"). */
+  const operatorNameHtml = String(operatorName ?? '').replace(/[&<>"']/g, (c) => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+  }[c]));
+
+  const intro = `<p style="margin:0 0 20px;font-family:${FONT};font-size:14px;line-height:1.6;color:${MUTED};">Olá! Bem-vindo à SalDesk — fico contente por ter a <strong>${operatorNameHtml}</strong> na plataforma.</p>`;
+
+  const body = paragraph('Falta só um passo para começarem a receber reservas directas, sem pagar comissão nenhuma: adicionar o vosso primeiro tour/actividade no painel, em "Tours &amp; Actividades".')
+    + paragraph('Leva menos de 5 minutos — nome, foto, preço, e já está pronto para partilhar o link de reserva directa com os vossos clientes.');
+
+  const signOff = paragraph('Se preferirem, posso ajudar a configurar por WhatsApp ou vídeo-chamada — é só responder a este email a dizer que dia/hora vos dá jeito.')
+    + `<p style="margin:24px 0 0;font-family:${FONT};font-size:14px;line-height:1.6;color:${INK};">Um abraço,<br>Rits Delgado<br><span style="color:${MUTED};font-size:12px;">Fundador, SalDesk</span></p>`;
+
+  const html = wrapEmail({ title: 'Bem-vindo à SalDesk', introHtml: intro, bodyHtml: body, ctaUrl, ctaLabel });
+  const htmlComSignOff = html.replace(ctaButton(ctaUrl, ctaLabel), ctaButton(ctaUrl, ctaLabel) + signOff);
+
+  const text = [
+    'Olá!',
+    '',
+    `Bem-vindo à SalDesk — fico contente por ter a ${operatorName} na plataforma.`,
+    '',
+    'Falta só um passo para começarem a receber reservas directas, sem pagar comissão nenhuma: adicionar o vosso primeiro tour/actividade no painel, em "Tours & Actividades".',
+    '',
+    'Leva menos de 5 minutos — nome, foto, preço, e já está pronto para partilhar o link de reserva directa com os vossos clientes.',
+    '',
+    `Painel: ${ctaUrl}`,
+    '',
+    'Se preferirem, posso ajudar a configurar por WhatsApp ou vídeo-chamada — é só responder a este email.',
+    '',
+    'Um abraço,',
+    'Rits Delgado',
+    'Fundador, SalDesk',
+  ].join('\n');
+
+  return { subject, html: htmlComSignOff, text };
+}
+
 module.exports = {
   confirmacaoClienteEmail,
   notificacaoOperadorEmail,
   staffInviteEmail,
   passwordResetEmail,
+  operatorWelcomeEmail,
   operatorFirstAccessEmail,
 };
