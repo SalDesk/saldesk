@@ -7,7 +7,7 @@ import { useT } from '../../i18n';
 /* Fotos reais da Ilha do Sal (Santa Maria, gruta azul, mergulho, tubaroes, Buracona) --
    mesmo conjunto usado no hero do site publico, ja convertido para o
    painel esquerdo em vez do fundo full-bleed anterior. */
-const BEACH_IMAGES = [
+export const BEACH_IMAGES = [
   '/images/hero-santa-maria.jpg',
   '/images/hero-shark.jpg',
   '/images/hero-blue-cave.jpg',
@@ -142,13 +142,13 @@ export default function AuthLayout({ children }) {
           <LanguageToggle authMode />
         </div>
 
-        <div className="flex-1 flex flex-col items-center justify-start lg:justify-center px-6 pb-6 pt-7 lg:py-6">
-          <div className="w-full max-w-sm -mt-9 sm:-mt-10 lg:mt-0 bg-white rounded-2xl lg:rounded-none lg:bg-transparent shadow-lg lg:shadow-none p-6 lg:p-0">
+        <div className="flex-1 flex flex-col items-center justify-start lg:justify-center px-6 pb-6 pt-7 lg:py-10">
+          <div className="w-full max-w-[440px] -mt-9 sm:-mt-10 lg:mt-0 bg-white rounded-2xl shadow-lg lg:shadow-[0_1px_2px_rgba(6,42,56,0.04),0_12px_32px_rgba(6,42,56,0.08)] border border-transparent lg:border-n-100 p-6 sm:p-7 lg:p-10">
             {children}
           </div>
         </div>
 
-        <div className="pb-6 px-6">
+        <div className="pb-8 px-6">
           <div className="text-center space-y-1">
             <p className="text-xs text-n-400">
               {t('auth.footerCredit')}{' '}

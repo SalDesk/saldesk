@@ -5,6 +5,10 @@ const variants = {
   secondary: 'bg-white hover:bg-n-50 text-n-700 border border-n-300 dark:bg-n-800 dark:hover:bg-n-700 dark:text-n-200 dark:border-n-600',
   ghost:     'bg-transparent hover:bg-ocean-50 text-ocean-700 border border-transparent dark:text-ocean-300 dark:hover:bg-n-800',
   danger:    'bg-error hover:bg-red-700 text-white border border-transparent',
+  /* CTA de destaque sobre fundos escuros/foto -- ex. login em vidro fosco,
+     onde o azul ocean do "primary" nao contrasta o suficiente com o resto
+     em tons translucidos. */
+  accent:    'bg-sand-500 hover:bg-sand-400 text-ocean-900 border border-transparent font-bold',
 };
 
 const sizes = {
