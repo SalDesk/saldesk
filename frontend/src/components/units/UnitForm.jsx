@@ -35,7 +35,7 @@ function AmenitiesPicker({ options, selected, onToggle }) {
    incluidos ou nao incluidos no preco. Mostrado tal e qual na pagina
    publica; secção fica escondida la se ficar vazia (nunca inventa). */
 function IncludedItemsEditor({ items, onChange }) {
-  function addItem() { onChange([...items, { label: '', included: true }]); }
+  function addItem(included) { onChange([...items, { label: '', included }]); }
   function updateItem(i, patch) { onChange(items.map((it, idx) => idx === i ? { ...it, ...patch } : it)); }
   function removeItem(i) { onChange(items.filter((_, idx) => idx !== i)); }
   return (
@@ -45,17 +45,18 @@ function IncludedItemsEditor({ items, onChange }) {
           <button
             type="button"
             onClick={() => updateItem(i, { included: !it.included })}
-            title={it.included ? 'Incluído' : 'Não incluído'}
-            className={`shrink-0 w-8 h-8 rounded-sm flex items-center justify-center border transition-colors ${
-              it.included ? 'bg-green-50 border-green-200 text-green-600' : 'bg-n-50 border-n-200 text-n-400'
+            title="Clique para alternar entre incluído e não incluído"
+            className={`shrink-0 h-8 px-2 rounded-sm flex items-center gap-1 border text-xs font-body font-semibold transition-colors ${
+              it.included ? 'bg-green-50 border-green-200 text-green-700' : 'bg-red-50 border-red-200 text-red-600'
             }`}
           >
-            {it.included ? <Check size={14} strokeWidth={2.5} /> : <X size={14} strokeWidth={2.5} />}
+            {it.included ? <Check size={13} strokeWidth={2.5} /> : <X size={13} strokeWidth={2.5} />}
+            {it.included ? 'Incluído' : 'Não incluído'}
           </button>
           <input
             value={it.label}
             onChange={e => updateItem(i, { label: e.target.value })}
-            placeholder="Ex: Pequeno-almoço"
+            placeholder={it.included ? 'Ex: Pequeno-almoço' : 'Ex: Entradas (€5/pessoa), almoço'}
             className="flex-1 h-8 px-2.5 text-sm font-body border border-n-200 rounded-sm focus:outline-none focus:border-ocean-700"
           />
           <button type="button" onClick={() => removeItem(i)} className="shrink-0 p-1.5 rounded-sm text-n-400 hover:text-error transition-colors">
@@ -63,9 +64,14 @@ function IncludedItemsEditor({ items, onChange }) {
           </button>
         </div>
       ))}
-      <button type="button" onClick={addItem} className="flex items-center gap-1 text-xs font-body font-semibold text-ocean-700 hover:text-ocean-500 transition-colors">
-        <Plus size={13} strokeWidth={2.5} /> Adicionar item
-      </button>
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
+        <button type="button" onClick={() => addItem(true)} className="flex items-center gap-1 text-xs font-body font-semibold text-ocean-700 hover:text-ocean-500 transition-colors">
+          <Plus size={13} strokeWidth={2.5} /> Adicionar item incluído
+        </button>
+        <button type="button" onClick={() => addItem(false)} className="flex items-center gap-1 text-xs font-body font-semibold text-red-600 hover:text-red-500 transition-colors">
+          <Plus size={13} strokeWidth={2.5} /> Adicionar item não incluído
+        </button>
+      </div>
     </div>
   );
 }

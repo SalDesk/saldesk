@@ -224,7 +224,7 @@ async function criarReserva(req, res, next) {
     const { unit_id, customer_name, customer_email, customer_phone,
             customer_country, check_in, check_out, guests, notes,
             party_size, tour_time, reservation_time, zone_preference,
-            voucher_code, ref_code, items, driver_included, booking_mode } = req.body;
+            voucher_code, ref_code, referred_by, items, driver_included, booking_mode } = req.body;
 
     // check_out é opcional — activities/restaurants podem enviar só check_in (data do serviço)
     const effectiveCheckOut = check_out || check_in;
@@ -406,12 +406,24 @@ async function criarReserva(req, res, next) {
     }
 
     let affiliateId = null;
-    if (ref_code) {
+    /* "Indicado por" e texto livre escrito pelo cliente (ex: "o Carlos da
+       praia"), por isso nunca pode falhar a reserva: se coincidir com o
+       codigo de um afiliado activo liga a comissao, senao fica so como nota
+       para o operador ligar a mao. */
+    const referredBy = typeof referred_by === 'string' ? referred_by.trim().slice(0, 100) : '';
+    let referredByNote = null;
+    if (ref_code || referredBy) {
       const { data: affConfig } = await supabaseAdmin
         .from('affiliate_config').select('active, min_booking_value').eq('operator_id', operator.id).maybeSingle();
-      if (affConfig?.active && finalTotal >= Number(affConfig.min_booking_value || 0)) {
+      const afiliadosActivos = !!affConfig?.active && finalTotal >= Number(affConfig.min_booking_value || 0);
+      if (ref_code && afiliadosActivos) {
         const afiliado = await encontrarAfiliadoActivo(operator.id, ref_code);
         if (afiliado) affiliateId = afiliado.id;
+      }
+      if (!affiliateId && referredBy) {
+        const afiliado = afiliadosActivos ? await encontrarAfiliadoActivo(operator.id, referredBy) : null;
+        if (afiliado) affiliateId = afiliado.id;
+        else referredByNote = referredBy;
       }
     }
 
@@ -429,6 +441,7 @@ async function criarReserva(req, res, next) {
     if (isRestaurant && zone_preference) notesLines.push(`Zona preferida: ${zone_preference}`);
     if (party_size) notesLines.push(`Pessoas: ${party_size}`);
     if (notes) notesLines.push(notes);
+    if (referredByNote) notesLines.push(`Indicado por: ${referredByNote}`);
     const finalNotes = notesLines.join(' | ') || null;
 
     const { data, error } = await supabaseAdmin

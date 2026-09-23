@@ -1,3 +1,4 @@
+import initialLang from '../utils/initialLang';
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import {
@@ -601,7 +602,7 @@ function ActivityModal({ unit, op, slug, lang, onClose, refCode, traveler, initi
      Tours: preco privado nao pode continuar a ser forcado por pessoa).
      Sem preco por pessoa, cai automaticamente para privado, sem toggle. */
   const [bookingMode,setBookingMode]=useState(hasPerPerson?'per_person':'private');
-  const [info,si]=useState(()=>({name:traveler?.name||'',email:traveler?.email||'',phone:traveler?.phone||'',country:traveler?.country||'',needs:''})); const [pay,sp]=useState('cash'); const [sub,ssub]=useState(false); const [resId,sr]=useState(null); const [pendingRes,spr]=useState(null); const [err,se]=useState('');
+  const [info,si]=useState(()=>({name:traveler?.name||'',email:traveler?.email||'',phone:traveler?.phone||'',country:traveler?.country||'',needs:'',hotel:'',arrival:'',departure:'',referredBy:refCode||''})); const [pay,sp]=useState('cash'); const [sub,ssub]=useState(false); const [resId,sr]=useState(null); const [pendingRes,spr]=useState(null); const [err,se]=useState('');
   const [voucherCode,svc]=useState(null); const [policyOk,setPolicyOk]=useState(false);
   const numPessoas=adults+kids;
   const isPrivateMode=hasPrivate&&(bookingMode==='private'||!hasPerPerson);
@@ -617,9 +618,12 @@ function ActivityModal({ unit, op, slug, lang, onClose, refCode, traveler, initi
   const hasSlots=configuredSlots.length>0;
   const [slotAvail,ssa]=useState([]); const [loadingSlots,sls]=useState(false);
   useEffect(()=>{ if(!hasSlots||!date){ssa([]);return;} sls(true); st(''); getSlotAvailability(slug,unit.id,date).then(ssa).finally(()=>sls(false)); },[date,hasSlots,slug,unit.id]);
-  function buildPayload(){ const notes=[time?`${lang==='en'?'Time':'Hora'}: ${time}`:'',`${adults} ${lang==='en'?'adults':'adultos'}, ${kids} ${lang==='en'?'children':'crianças'}`,tourLang?(lang==='en'?'Language: ':'Idioma: ')+tourLang:'',info.needs?(lang==='en'?'Needs:':'Necessidades:')+' '+info.needs:''].filter(Boolean).join('. '); return {unit_id:unit.id,customer_name:info.name,customer_email:info.email,customer_phone:info.phone||null,customer_country:info.country||null,check_in:date,check_out:date,guests:adults+kids,notes,tour_time:hasSlots?time:undefined,voucher_code:voucherCode||undefined,ref_code:refCode||undefined,booking_mode:isPrivateMode?'private':undefined}; }
+  /* Alojamento e datas de estadia (pedido real da Logan Tours: precisam de
+     saber onde recolher e quando o turista chega/parte). Tudo opcional. */
+  const stayLine=[info.hotel.trim()?`${lang==='en'?'Accommodation':'Alojamento'}: ${info.hotel.trim()}`:'',info.arrival?`${lang==='en'?'arrival':'chegada'} ${info.arrival}`:'',info.departure?`${lang==='en'?'departure':'partida'} ${info.departure}`:''].filter(Boolean).join(', ');
+  function buildPayload(){ const notes=[time?`${lang==='en'?'Time':'Hora'}: ${time}`:'',`${adults} ${lang==='en'?'adults':'adultos'}, ${kids} ${lang==='en'?'children':'crianças'}`,tourLang?(lang==='en'?'Language: ':'Idioma: ')+tourLang:'',stayLine,info.needs?(lang==='en'?'Additional request:':'Pedido adicional:')+' '+info.needs:''].filter(Boolean).join('. '); return {unit_id:unit.id,customer_name:info.name,customer_email:info.email,customer_phone:info.phone||null,customer_country:info.country||null,check_in:date,check_out:date,guests:adults+kids,notes,tour_time:hasSlots?time:undefined,voucher_code:voucherCode||undefined,ref_code:refCode||undefined,referred_by:info.referredBy.trim()||undefined,booking_mode:isPrivateMode?'private':undefined}; }
   useEffect(()=>{ if(step===3&&pay==='paypal'&&!pendingRes&&!sub){ ssub(true); postReservation(slug,buildPayload()).then(spr).catch(e=>se(e.message)).finally(()=>ssub(false)); } },[step,pay]);
-  function valid(){ if(step===1){if(!date){se(lang==='en'?'Select a date':'Seleccione uma data');return false;} if(hasSlots&&!time){se(lang==='en'?'Select a time slot':'Seleccione um horário');return false;} if(adults<1){se(lang==='en'?'At least 1 adult required':'Mínimo 1 adulto');return false;}} if(step===2&&(!info.name||!info.email)){se(lang==='en'?'Name and email required':'Nome e email obrigatórios');return false;} se('');return true; }
+  function valid(){ if(step===1){if(!date){se(lang==='en'?'Select a date':'Seleccione uma data');return false;} if(hasSlots&&!time){se(lang==='en'?'Select a time slot':'Seleccione um horário');return false;} if(adults<1){se(lang==='en'?'At least 1 adult required':'Mínimo 1 adulto');return false;}} if(step===2&&(!info.name||!info.email)){se(lang==='en'?'Name and email required':'Nome e email obrigatórios');return false;} if(step===2&&info.arrival&&info.departure&&info.departure<info.arrival){se(lang==='en'?'Departure date must be after arrival':'A data de partida deve ser depois da chegada');return false;} se('');return true; }
   async function submit(){
     ssub(true);se('');
     try{
@@ -632,7 +636,7 @@ function ActivityModal({ unit, op, slug, lang, onClose, refCode, traveler, initi
     }catch(e){se(e.message);}finally{ssub(false);}
   }
   function next(){ if(!valid())return; step<3?ss(s=>s+1):submit(); }
-  const sumL=[{label:lang==='en'?'Tour / Activity':'Tour / Actividade',value:unit.name},{label:lang==='en'?'Date':'Data',value:date},...(time?[{label:lang==='en'?'Time':'Horário',value:time}]:[]),{label:lang==='en'?'Group':'Grupo',value:`${adults} ${lang==='en'?'adults':'adultos'}${kids>0?` + ${kids} ${lang==='en'?'children':'crianças'}`:''}`},...(tourLang?[{label:lang==='en'?'Language':'Idioma',value:tourLang}]:[]),...(hasPerPerson&&hasPrivate?[{label:lang==='en'?'Booking type':'Tipo de reserva',value:isPrivateMode?(lang==='en'?'Private / group':'Privado / grupo'):(lang==='en'?'Per person':'Por pessoa')}]:[]),...(total?[{label:'Total',value:fmtTotalBoth(rawTotal,op.currency,lang),hi:true}]:[])];
+  const sumL=[{label:lang==='en'?'Tour / Activity':'Tour / Actividade',value:unit.name},{label:lang==='en'?'Date':'Data',value:date},...(time?[{label:lang==='en'?'Time':'Horário',value:time}]:[]),{label:lang==='en'?'Group':'Grupo',value:`${adults} ${lang==='en'?'adults':'adultos'}${kids>0?` + ${kids} ${lang==='en'?'children':'crianças'}`:''}`},...(tourLang?[{label:lang==='en'?'Language':'Idioma',value:tourLang}]:[]),...(info.hotel.trim()?[{label:lang==='en'?'Accommodation':'Alojamento',value:info.hotel.trim()}]:[]),...(hasPerPerson&&hasPrivate?[{label:lang==='en'?'Booking type':'Tipo de reserva',value:isPrivateMode?(lang==='en'?'Private / group':'Privado / grupo'):(lang==='en'?'Per person':'Por pessoa')}]:[]),...(total?[{label:'Total',value:fmtTotalBoth(rawTotal,op.currency,lang),hi:true}]:[])];
   return (
     <MS icon={<Compass size={18} strokeWidth={1.75}/>} title={lang==='en'?'Book tour':'Reservar tour'} step={step} lang={lang} onClose={onClose} onPrev={()=>ss(s=>s-1)} onNext={next} nextLabel={step<3?(lang==='en'?'Continue':'Continuar'):(lang==='en'?'Confirm booking':'Confirmar reserva')} nextDis={(step===1&&(!date||(hasSlots&&!time)))||(step===3&&!policyOk)} sub={sub} err={err} ok={!!resId} hideNext={step===3&&pay==='paypal'}>
       {resId?<div className="p-5"><BS resId={resId} lang={lang} type="activity" onClose={onClose}/></div>
@@ -669,7 +673,15 @@ function ActivityModal({ unit, op, slug, lang, onClose, refCode, traveler, initi
         )}
         {tourLanguages.length>0&&<div><label className={LB}>{lang==='en'?'Tour language':'Idioma do tour'}</label><select className={SEL} value={tourLang} onChange={e=>stl(e.target.value)}><option value="">{lang==='en'?'-- Select --':'-- Seleccionar --'}</option>{tourLanguages.map(l=><option key={l} value={l}>{l}</option>)}</select></div>}
       </div>
-      :step===2?<div className="p-5"><p className={SH}>{lang==='en'?'Contact details':'Dados de contacto'}</p><GF d={info} set={si} lang={lang} emailLocked={!!traveler}><div><label className={LB}>{lang==='en'?'Special needs (optional)':'Necessidades especiais (opcional)'}</label><textarea className={IN+' resize-none'} rows={3} value={info.needs} onChange={e=>si(i=>({...i,needs:e.target.value}))} placeholder={lang==='en'?'Wheelchair, allergies...':'Cadeira de rodas, alergias...'}/></div></GF></div>
+      :step===2?<div className="p-5"><p className={SH}>{lang==='en'?'Contact details':'Dados de contacto'}</p><GF d={info} set={si} lang={lang} emailLocked={!!traveler}>
+        <div><label className={LB}>{lang==='en'?'Where are you staying? (optional)':'Onde vai ficar hospedado? (opcional)'}</label><input className={IN} value={info.hotel} onChange={e=>si(i=>({...i,hotel:e.target.value}))} placeholder={lang==='en'?'Hotel or accommodation name':'Nome do hotel ou alojamento'}/></div>
+        <div className="grid grid-cols-2 gap-3">
+          <div><label className={LB}>{lang==='en'?'Arrival date':'Data de chegada'}</label><input type="date" className={IN} value={info.arrival} onChange={e=>si(i=>({...i,arrival:e.target.value}))}/></div>
+          <div><label className={LB}>{lang==='en'?'Departure date':'Data de partida'}</label><input type="date" className={IN} min={info.arrival||undefined} value={info.departure} onChange={e=>si(i=>({...i,departure:e.target.value}))}/></div>
+        </div>
+        <div><label className={LB}>{lang==='en'?'Additional request (optional)':'Pedido adicional (opcional)'}</label><textarea className={IN+' resize-none'} rows={3} value={info.needs} onChange={e=>si(i=>({...i,needs:e.target.value}))} placeholder={lang==='en'?'Wheelchair, birthday, allergies...':'Cadeira de rodas, aniversário, alergias...'}/></div>
+        <div><label className={LB}>{lang==='en'?'Referred by (optional)':'Indicado por (opcional)'}</label><input className={IN} value={info.referredBy} onChange={e=>si(i=>({...i,referredBy:e.target.value}))} maxLength={100} placeholder={lang==='en'?'Name or code of who recommended us':'Nome ou código de quem nos indicou'}/></div>
+      </GF></div>
       :<div className="p-5 space-y-4"><p className={SH}>{lang==='en'?'Review & payment':'Resumo e pagamento'}</p><ST lines={sumL}/>
         {rawTotal>0&&<VoucherField slug={slug} unitId={unit.id} amount={rawTotal} lang={lang} onApplied={(c)=>svc(c)}/>}
         <p className="text-xs font-body font-semibold text-n-700">{lang==='en'?'Payment method':'Método de pagamento'}</p><PO lang={lang} v={pay} set={sp}/>
@@ -906,7 +918,7 @@ export default function ServiceDetail() {
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
 
-  const [lang, setLang]       = useState(() => localStorage.getItem('sd-lang') || 'pt');
+  const [lang, setLang]       = useState(initialLang);
   const [currency, setCur]    = useState('EUR');
   const [bookOpen, setBookOpen] = useState(false);
   const [lbIdx, setLbIdx]     = useState(null);
@@ -1414,25 +1426,31 @@ export default function ServiceDetail() {
             {/* ── O que está incluído ── configurado pelo operador (UnitForm);
                 secção fica escondida se nada foi configurado, nunca mostra
                 uma lista generica que pode nao corresponder ao servico real. */}
-            {includedItems.length > 0 && (
-              <div className="pb-10 border-b border-n-100">
-                <p className="text-xs font-body font-bold text-ocean-700 uppercase tracking-widest mb-4">
-                  {lang==='en'?'What\'s included':'O que está incluído'}
-                </p>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {includedItems.map((item, i) => (
-                    <div key={i} className={`flex items-center gap-3 p-3 rounded-xl border ${item.included?'bg-green-50 border-green-100':'bg-n-50 border-n-200'}`}>
-                      {item.included
-                        ? <Check size={16} strokeWidth={2} className="text-green-600 flex-shrink-0"/>
-                        : <X size={16} strokeWidth={2} className="text-n-400 flex-shrink-0"/>}
-                      <span className={`text-sm font-body font-medium ${item.included?'text-green-800':'text-n-500'}`}>
-                        {item.label}
-                      </span>
-                    </div>
-                  ))}
+            {/* Incluido e nao incluido em blocos separados (pedido real da
+                Logan Tours: entradas e almoco costumam ficar fora do preco e
+                precisam de estar claros). Cada bloco so aparece se tiver itens. */}
+            {[{ inc: true,  title: lang==='en'?'What\'s included':'O que está incluído' },
+              { inc: false, title: lang==='en'?'Not included':'Não incluído' }].map(({ inc, title }) => {
+              const group = includedItems.filter(it => !!it.included === inc);
+              if (group.length === 0) return null;
+              return (
+                <div key={String(inc)} className="pb-10 border-b border-n-100">
+                  <p className="text-xs font-body font-bold text-ocean-700 uppercase tracking-widest mb-4">{title}</p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {group.map((item, i) => (
+                      <div key={i} className={`flex items-center gap-3 p-3 rounded-xl border ${inc?'bg-green-50 border-green-100':'bg-n-50 border-n-200'}`}>
+                        {inc
+                          ? <Check size={16} strokeWidth={2} className="text-green-600 flex-shrink-0"/>
+                          : <X size={16} strokeWidth={2} className="text-n-400 flex-shrink-0"/>}
+                        <span className={`text-sm font-body font-medium ${inc?'text-green-800':'text-n-500'}`}>
+                          {item.label}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            )}
+              );
+            })}
 
             {/* ── Informação importante ── texto livre do operador (UnitForm) */}
             {importantInfo && (

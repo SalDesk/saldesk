@@ -1,9 +1,10 @@
+import initialLang from '../utils/initialLang';
 import { useSearchParams } from 'react-router-dom';
 import { CheckCircle } from 'lucide-react';
 
 export default function BookingSuccess() {
   const [searchParams] = useSearchParams();
-  const lang = localStorage.getItem('sd-lang') || 'pt';
+  const lang = initialLang();
   const res = searchParams.get('res');
 
   return (

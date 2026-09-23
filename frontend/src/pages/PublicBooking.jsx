@@ -1,3 +1,4 @@
+import initialLang from '../utils/initialLang';
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import {
@@ -1418,7 +1419,7 @@ export default function PublicBooking() {
   const [reviews, setReviews]   = useState([]);
   const [loading, setLoading]   = useState(true);
   const [notFound, setNotFound] = useState(false);
-  const [lang, setLang]         = useState(() => localStorage.getItem('sd-lang') || 'pt');
+  const [lang, setLang]         = useState(initialLang);
   const [currency, setCur]      = useState('EUR');
   const [lbIdx, setLbIdx]       = useState(null);
   const [navScrolled, setNavScrolled] = useState(false);
