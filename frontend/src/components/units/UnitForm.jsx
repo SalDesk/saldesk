@@ -328,6 +328,8 @@ function TourForm({ unit, onSave, onCancel, loading, error }) {
   const [form, setForm] = useState({
     name:          unit?.name          || '',
     name_en:       meta.name_en        || '',
+    short_pt:      meta.short_pt       || '',
+    short_en:      meta.short_en       || '',
     desc_pt:       meta.desc_pt        || '',
     desc_en:       meta.desc_en        || '',
     unit_type:     unit?.unit_type     || 'Tour',
@@ -379,6 +381,8 @@ function TourForm({ unit, onSave, onCancel, loading, error }) {
     const images = form.images || [];
     const tourMeta = {
       name_en:       form.name_en       || null,
+      short_pt:      form.short_pt.trim() || null,
+      short_en:      form.short_en.trim() || null,
       desc_pt:       form.desc_pt       || null,
       desc_en:       form.desc_en       || null,
       tour_type:     form.tour_type,
@@ -465,18 +469,36 @@ function TourForm({ unit, onSave, onCancel, loading, error }) {
         <SectionLabel>Descricao</SectionLabel>
         <div className="space-y-3">
           <Textarea
-            label="Descricao PT"
-            value={form.desc_pt}
-            onChange={set('desc_pt')}
-            placeholder="Descricao em portugues..."
+            label="Descricao curta PT"
+            value={form.short_pt}
+            onChange={set('short_pt')}
+            placeholder="Resumo numa frase, mostrado logo abaixo do titulo..."
             rows={2}
+            maxLength={160}
+            hint={`${form.short_pt.length}/160 caracteres`}
           />
           <Textarea
-            label="Descricao EN"
+            label="Descricao curta EN"
+            value={form.short_en}
+            onChange={set('short_en')}
+            placeholder="One-sentence summary, shown right below the title..."
+            rows={2}
+            maxLength={160}
+            hint={`${form.short_en.length}/160 characters`}
+          />
+          <Textarea
+            label="Descricao longa PT"
+            value={form.desc_pt}
+            onChange={set('desc_pt')}
+            placeholder="Descricao completa em portugues. Pode usar varios paragrafos (Enter)..."
+            rows={6}
+          />
+          <Textarea
+            label="Descricao longa EN"
             value={form.desc_en}
             onChange={set('desc_en')}
-            placeholder="Description in English..."
-            rows={2}
+            placeholder="Full description in English. You can use several paragraphs (Enter)..."
+            rows={6}
           />
         </div>
       </div>

@@ -24,7 +24,7 @@ function unitDescriptionText(unit) {
   if (raw.startsWith('{')) {
     try {
       const meta = JSON.parse(raw);
-      return meta.desc_pt || meta.description || '';
+      return meta.short_pt || meta.desc_pt || meta.description || '';
     } catch { return ''; }
   }
   return raw;

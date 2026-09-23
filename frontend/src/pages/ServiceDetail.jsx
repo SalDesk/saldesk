@@ -84,6 +84,19 @@ const TODAY = () => new Date().toISOString().split('T')[0];
 function nts(a, b) { return a && b && b > a ? Math.round((new Date(b) - new Date(a)) / 864e5) : 0; }
 function dys(a, b) { return a && b && b > a ? Math.max(1, Math.ceil((new Date(b) - new Date(a)) / 864e5)) : 0; }
 
+/* Descricao curta (so actividades, campo short_pt/short_en do TourForm) --
+   opcional; sem ela a ficha fica exactamente como antes. */
+function getUnitShortDescription(unit, lang) {
+  const raw = unit?.description;
+  if (!raw || !raw.startsWith('{')) return '';
+  try {
+    const meta = JSON.parse(raw);
+    return ((lang === 'en' ? meta.short_en : meta.short_pt) || '').trim();
+  } catch {
+    return '';
+  }
+}
+
 /* unit.description guarda metadados JSON (tour/quarto/viatura/mesa) — extrair o texto legível */
 function getUnitDescription(unit, lang) {
   const raw = unit?.description;
@@ -1209,6 +1222,11 @@ export default function ServiceDetail() {
               <h1 className="font-display font-extrabold text-3xl sm:text-4xl text-n-900 tracking-tight mb-3 leading-tight">
                 {unit.name}
               </h1>
+              {getUnitShortDescription(unit, lang) && (
+                <p className="font-body text-n-600 text-base sm:text-lg leading-relaxed mb-4 max-w-2xl">
+                  {getUnitShortDescription(unit, lang)}
+                </p>
+              )}
 
               {/* Rating + location */}
               <div className="flex flex-wrap items-center gap-4 mb-4">
@@ -1298,7 +1316,7 @@ export default function ServiceDetail() {
                 <p className="text-xs font-body font-bold text-ocean-700 uppercase tracking-widest mb-3">
                   {lang==='en'?'About this service':'Sobre este serviço'}
                 </p>
-                <p className="font-body text-n-600 leading-relaxed text-base">{getUnitDescription(unit, lang)}</p>
+                <p className="font-body text-n-600 leading-relaxed text-base whitespace-pre-line">{getUnitDescription(unit, lang)}</p>
 
                 {/* Highlights grid — type-specific */}
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-6">
