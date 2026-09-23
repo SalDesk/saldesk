@@ -90,7 +90,16 @@ async function publicCreatePaypalIntent(req, res, next) {
     if (!reserva) return res.status(404).json({ error: 'Reserva nao encontrada', code: 'NOT_FOUND' });
 
     const { clientId, clientSecret } = await obterCredenciaisPaypal(reserva.operator_id);
-    const order = await createOrder(clientId, clientSecret, amount, currency, `Reserva SalDesk ${reservation_id}`);
+    let order;
+    try {
+      order = await createOrder(clientId, clientSecret, amount, currency, `Reserva SalDesk ${reservation_id}`);
+    } catch (paypalErr) {
+      /* O errorHandler generico nao sabe a que operador/reserva um erro
+         pertence -- sem isto, um 401 da PayPal (ex: credenciais invalidas
+         desse operador) fica irrastreavel nos logs. */
+      console.error(`[PayPal] Falha ao criar order — operator_id=${reserva.operator_id} reservation_id=${reservation_id}:`, paypalErr.message);
+      throw paypalErr;
+    }
     return res.json({ data: { order_id: order.id, status: order.status }, message: 'Order PayPal criada' });
   } catch (err) { next(err); }
 }
@@ -154,7 +163,13 @@ async function publicConfirmPaypalPayment(req, res, next) {
       .from('reservations').select('id, operator_id').eq('id', reservation_id).single();
     if (!reserva) return res.status(404).json({ error: 'Reserva nao encontrada', code: 'NOT_FOUND' });
 
-    const data = await confirmarCapturaPaypal(reserva.operator_id, order_id, reservation_id);
+    let data;
+    try {
+      data = await confirmarCapturaPaypal(reserva.operator_id, order_id, reservation_id);
+    } catch (paypalErr) {
+      console.error(`[PayPal] Falha ao confirmar captura — operator_id=${reserva.operator_id} reservation_id=${reservation_id} order_id=${order_id}:`, paypalErr.message);
+      throw paypalErr;
+    }
     return res.json({ data, message: 'Pagamento PayPal confirmado' });
   } catch (err) { next(err); }
 }
