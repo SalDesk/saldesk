@@ -15,6 +15,57 @@ Isto bloqueia **todos** os emails transaccionais em produção: recuperação de
 
 ---
 
+## Bugs reais corrigidos — 21 de Agosto de 2026 (Comunicação)
+
+Retomei o teste ao painel do fundador pela secção **Comunicação**. Desta vez fui direto à base de
+dados de produção verificar se as tabelas/colunas que o controller usa existem mesmo (ver
+[[feedback-verify-schema-before-trusting]]), em vez de confiar na leitura do código — e encontrei
+uma discrepância de esquema completa, não só um bug pontual:
+
+1. **Chat directo — 100% partido.** O controller lê/escreve na tabela `admin_messages`, que
+   **não existe** na base de dados. Todas as chamadas falhavam com "relation does not exist";
+   o frontend engole o erro silenciosamente, então a aba parecia só "sem conversas" para sempre.
+   Corrigido: criei a tabela (`operator_id`, `sender_type`, `content`, `is_read`, `read_at`,
+   `created_at`), com RLS activo e sem policies (mesmo padrão de `admin_broadcasts`/`leads`).
+
+2. **Broadcasts, Email marketing e Lançamento gravavam nas colunas erradas.** O código inseria
+   `content`/`channel`/`subject`/`segment_plan`/`segment_type` em `admin_broadcasts`; a tabela real
+   tem `message`/`type`/`target`/`target_filters`(jsonb)/`status` — nenhuma correspondência directa.
+   Consequências reais antes da correcção:
+   - **Broadcast in-app**: era mesmo enviado via websocket, mas o insert a seguir falhava sempre →
+     admin via "Erro ao enviar" e o histórico nunca ficava gravado.
+   - **Email marketing**: os emails eram mesmo enviados a todos os operadores-alvo **antes** do
+     insert falhar → admin via erro e podia clicar "Enviar" outra vez, duplicando o envio a toda a
+     audiência.
+   - **Email de lançamento**: mesmo problema, mas sem `try/catch` no insert — o erro era engolido
+     silenciosamente. Os emails à waitlist eram mesmo enviados, mas o histórico ficava sempre vazio.
+
+   Corrigido: `admin_broadcasts` passou a receber as colunas certas para broadcasts in-app;
+   `sendMarketingEmail` e `sendLaunchEmail` passaram a gravar em `admin_email_campaigns` (tabela já
+   existente, vazia, com o esquema `subject`/`body`/`target`/`status` claramente feita para isto,
+   mas nunca usada). Adicionei a coluna `target_filters` (jsonb) a essa tabela para não perder a
+   segmentação por plano/tipo. `listBroadcasts` agora une as duas tabelas e normaliza para o
+   formato que o frontend já espera, sem alterar nada no frontend.
+
+3. **`sendLaunchEmail` também tinha um `select('email, nome, name')` na tabela `leads`**, mas a
+   coluna `nome` não existe (só `name`) — a query falhava sempre, **antes** de qualquer email ser
+   enviado. Ou seja, esta aba estava bloqueada por um erro imediato (o que, por acidente, evitava o
+   problema de duplicação de envio acima até ser corrigido). Corrigido para `select('email, name')`.
+
+Migração aplicada directamente à base de produção (Supabase project `qicqyqcnmlpynkuwkbpw`) e
+verificada com um smoke test transaccional (insert + rollback nas 3 tabelas, confirmando que os
+inserts do controller corrigido batem certo com o esquema real).
+
+**Nota:** o envio real de emails (marketing/lançamento) continua sujeito ao bloqueio de quota da
+SendGrid já reportado acima — a correcção de hoje garante que o histórico fica correcto e que não
+há mais duplicação por retry, mas não desbloqueia o envio em si.
+
+**Por confirmar ao vivo:** não consegui autenticar-me como fundador nesta ronda (mesmo bloqueio de
+sessão expirada da ronda anterior). A correcção foi verificada por leitura de esquema + smoke test
+SQL, não por clique no browser — falta o teste visual em como as 4 abas se comportam depois disto.
+
+---
+
 ## Bugs reais corrigidos e já em produção
 
 ### Encontrados nesta ronda de testes ao painel do fundador
