@@ -3,16 +3,8 @@ const { supabaseAdmin } = require('../config/supabase');
 const { enviarEmail } = require('../helpers/emailHelper');
 const { enviarWhatsApp } = require('../helpers/whatsappHelper');
 
-// Substitui variáveis no template: {{nome}}, {{unidade}}, {{check_in}}, {{check_out}}, {{total}}
-function renderTemplate(template, dados) {
-  return template
-    .replace(/\{\{nome\}\}/g, dados.customer_name || '')
-    .replace(/\{\{unidade\}\}/g, dados.unit_name || '')
-    .replace(/\{\{check_in\}\}/g, dados.check_in || '')
-    .replace(/\{\{check_out\}\}/g, dados.check_out || '')
-    .replace(/\{\{total\}\}/g, dados.total_price ? `${Number(dados.total_price).toFixed(2)} €` : '')
-    .replace(/\{\{operador\}\}/g, dados.operator_name || '');
-}
+// Variáveis das mensagens (modelos prontos e formulário manual): ver helpers/automationTemplate.js
+const { renderTemplate } = require('../helpers/automationTemplate');
 
 function addDias(dataStr, dias) {
   const d = new Date(dataStr + 'T00:00:00Z');
@@ -49,7 +41,7 @@ async function processarAutomacoes() {
 async function processarUmaAutomacao(auto, hoje) {
   let q = supabaseAdmin
     .from('reservations')
-    .select('id, customer_id, customer_name, customer_email, customer_phone, check_in, check_out, total_price, customers(language), units(name)')
+    .select('id, customer_id, customer_name, customer_email, customer_phone, check_in, check_out, start_time, total_price, customers(language), units(name)')
     .eq('operator_id', auto.operators.id)
     .neq('status', 'cancelled');
 
@@ -97,25 +89,46 @@ async function processarUmaAutomacao(auto, hoje) {
   }
 }
 
+/* Nome do guia atribuido a esta reserva (job_assignments, papel "guide").
+   Se nao houver, ou a consulta falhar, devolve '' e a frase do guia sai da mensagem. */
+async function nomeDoGuia(reservaId) {
+  try {
+    const { data } = await supabaseAdmin
+      .from('job_assignments')
+      .select('staff(name)')
+      .eq('reservation_id', reservaId)
+      .eq('role', 'guide')
+      .order('assigned_at', { ascending: true })
+      .limit(1);
+    return data?.[0]?.staff?.name || '';
+  } catch (_) {
+    return '';
+  }
+}
+
 async function enviarMensagem(auto, reserva) {
   const idioma = reserva.customers?.language || 'pt';
-  const mensagem = renderTemplate(idioma === 'en' ? auto.message_en : auto.message_pt, {
+  const dados = {
     customer_name: reserva.customer_name,
     unit_name: reserva.units?.name,
     check_in: reserva.check_in,
     check_out: reserva.check_out,
+    start_time: reserva.start_time,
     total_price: reserva.total_price,
-    operator_name: reserva.operators?.name
-  });
+    // a consulta das reservas nao traz o operador: vem da propria automacao
+    operator_name: auto.operators?.name,
+    guide_name: await nomeDoGuia(reserva.id),
+  };
+  const mensagem = renderTemplate(idioma === 'en' ? auto.message_en : auto.message_pt, dados);
 
   let status = 'sent';
   let errorMessage = null;
 
   try {
     if (auto.channel === 'email') {
-      const subject = idioma === 'en'
+      const subject = renderTemplate(idioma === 'en'
         ? (auto.subject?.replace('(PT)', '').trim() || 'Message from SalDesk')
-        : (auto.subject || 'Mensagem SalDesk');
+        : (auto.subject || 'Mensagem SalDesk'), dados);
 
       await enviarEmail({ to: reserva.customer_email, subject, text: mensagem });
     } else if (auto.channel === 'whatsapp') {
