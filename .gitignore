@@ -11,3 +11,6 @@ Thumbs.db
 /var/log/saldesk/
 *.bak
 .claude/*.lock
+
+# Ficheiros temporarios e de trabalho (podem ter credenciais): nunca vao para o git
+scratchpad/
