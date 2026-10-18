@@ -228,6 +228,37 @@ section[id]{scroll-margin-top:80px}
   .btn-primary,.btn-ghost{width:100%;justify-content:center}
 }
 
+/* — OPERATORS MARQUEE ——————————————————————————————————— */
+.operators-strip{
+  background:var(--white);border-top:1px solid var(--n200);border-bottom:1px solid var(--n200);
+  padding:48px 0;
+}
+.operators-strip-label{
+  text-align:center;font-family:'Sora',sans-serif;font-size:.72rem;font-weight:700;
+  text-transform:uppercase;letter-spacing:.1em;color:var(--n500);margin-bottom:28px;
+}
+.operators-marquee{
+  overflow:hidden;-webkit-mask-image:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent);
+  mask-image:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent);
+}
+.operators-marquee-track{
+  display:flex;align-items:center;gap:64px;width:max-content;
+  animation:operators-scroll 32s linear infinite;
+}
+.operators-marquee:hover .operators-marquee-track{animation-play-state:paused}
+.operators-logo{
+  flex-shrink:0;height:40px;width:auto;max-width:140px;object-fit:contain;
+  filter:grayscale(1);opacity:.55;transition:filter .25s,opacity .25s;
+}
+.operators-logo:hover{filter:grayscale(0);opacity:1}
+@keyframes operators-scroll{
+  from{transform:translateX(0)}
+  to{transform:translateX(-50%)}
+}
+@media(prefers-reduced-motion:reduce){
+  .operators-marquee-track{animation:none}
+}
+
 /* — PROBLEM ————————————————————————————————————————————— */
 .problem{
   background:var(--n50);padding:100px 0;
@@ -539,6 +570,15 @@ section[id]{scroll-margin-top:80px}
         <div class="hero-stat-label en">Days free trial</div>
       </div>
     </div>
+  </div>
+</section>
+
+<!-- OPERATORS MARQUEE -->
+<section class="operators-strip" id="operators-strip" style="display:none" aria-hidden="true">
+  <div class="operators-strip-label pt">Operadores que já confiam na SalDesk</div>
+  <div class="operators-strip-label en">Operators who already trust SalDesk</div>
+  <div class="operators-marquee">
+    <div class="operators-marquee-track" id="operators-marquee-track"></div>
   </div>
 </section>
 
@@ -934,6 +974,66 @@ section[id]{scroll-margin-top:80px}
         '</div></div>';
     })
     .catch(() => { clearTimeout(timeout); /* falha aberto -- site fica normal */ });
+})();
+
+/* — OPERATORS MARQUEE ——————————————————————————————————
+   Marcas reais dos operadores inscritos (nome+logo, so quem tem
+   onboarding completo, sem contas de teste/demo). Secao fica escondida
+   se a API falhar ou nao houver nenhum logo ainda -- nunca inventar
+   marcas nem mostrar a secao vazia. */
+(function(){
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 5000);
+  const PX_PER_SECOND = 40; // velocidade visual constante, independente de quantos operadores existem
+  let baseHtml = '';
+
+  function renderSet(ops) {
+    return ops.map(op =>
+      '<img class="operators-logo" src="' + op.logo_url + '" alt="' + op.name.trim().replace(/"/g,'&quot;') + '" loading="lazy">'
+    ).join('');
+  }
+
+  /* Um so conjunto pode ser mais estreito que o ecra (poucos operadores
+     inscritos, ecra desktop largo) -- nesse caso translateX(-50%) mostraria
+     um vazio a meio do loop. Repete o conjunto o quanto for preciso para
+     cobrir a largura da janela antes de duplicar para o loop continuo. */
+  function rebuild() {
+    const track = document.getElementById('operators-marquee-track');
+    if (!track || !baseHtml) return;
+    track.style.animation = 'none';
+    track.innerHTML = baseHtml;
+    const oneSetWidth = track.scrollWidth || 1;
+    const copies = Math.max(1, Math.ceil(window.innerWidth / oneSetWidth) + 1);
+    const blockHtml = baseHtml.repeat(copies);
+    track.innerHTML = blockHtml + blockHtml;
+    const blockWidth = track.scrollWidth / 2;
+    const duration = Math.max(12, blockWidth / PX_PER_SECOND);
+    // Forca reflow antes de reaplicar a animacao, senao o browser ignora a mudanca.
+    void track.offsetWidth;
+    track.style.animation = 'operators-scroll ' + duration.toFixed(1) + 's linear infinite';
+  }
+
+  let resizeTimer;
+  window.addEventListener('resize', () => {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(rebuild, 200);
+  });
+
+  fetch('https://api.saldesk.cv/api/v1/public/operator-logos', { signal: controller.signal })
+    .then(r => r.ok ? r.json() : null)
+    .then(json => {
+      clearTimeout(timeout);
+      const ops = (json && json.data) || [];
+      if (!ops.length) return;
+      const track = document.getElementById('operators-marquee-track');
+      const section = document.getElementById('operators-strip');
+      if (!track || !section) return;
+      baseHtml = renderSet(ops);
+      section.style.display = '';
+      section.removeAttribute('aria-hidden');
+      rebuild();
+    })
+    .catch(() => { clearTimeout(timeout); /* falha aberto -- secao fica escondida */ });
 })();
 
 /* — LANG ——————————————————————————————————————————————— */

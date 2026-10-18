@@ -25,6 +25,7 @@ const {
   getSiteStatus,
   discoverUnits,
   getExperienceCategories,
+  operatorLogos,
   callWaiter,
   createOrder,
   listIslands,
@@ -47,6 +48,7 @@ router.get('/landmarks',           listLandmarks);
 router.get('/discover',            discover);
 router.get('/discover-units',      discoverUnits);
 router.get('/experience-categories', getExperienceCategories);
+router.get('/operator-logos',      operatorLogos);
 
 /* ─── CMS público ─── */
 router.get('/cms/experiences',     cmsExperiences);

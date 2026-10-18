@@ -614,6 +614,7 @@ async function discover(req, res, next) {
       .from('operators')
       .select('id, name, slug, operator_type, description, address, phone, logo_url, cover_images, business_name, tagline, currency, created_at')
       .eq('onboarding_complete', true)
+      .not('is_demo', 'is', true)
       .order('name');
 
     if (type && ['hotel', 'activity', 'rentacar', 'restaurant'].includes(type)) {
@@ -706,6 +707,28 @@ async function discover(req, res, next) {
 
     const limited = limit ? enriched.slice(0, Math.min(parseInt(limit) || 9, 50)) : enriched;
     return res.json({ data: limited, message: 'Operadores listados' });
+  } catch (err) {
+    next(err);
+  }
+}
+
+/* ─── Marcas dos operadores inscritos (marquee do site publico) ───
+   Endpoint proprio e minimo (so name/slug/logo) em vez de reaproveitar
+   discover() -- esse devolve morada/telefone/descricao (mais do que um
+   marquee de logos precisa) e so inclui quem tem servicos reservaveis,
+   o que excluiria operadores reais ja inscritos mas ainda sem unidades
+   publicadas (a maioria, confirmado ao vivo nesta sessao). */
+async function operatorLogos(req, res, next) {
+  try {
+    const { data, error } = await supabaseAdmin
+      .from('operators')
+      .select('name, slug, logo_url')
+      .eq('onboarding_complete', true)
+      .not('is_demo', 'is', true)
+      .not('logo_url', 'is', null)
+      .order('name');
+    if (error) throw error;
+    return res.json({ data: (data || []).filter((o) => o.logo_url) });
   } catch (err) {
     next(err);
   }
@@ -1678,6 +1701,7 @@ module.exports = {
   criarReserva,
   discover,
   discoverUnits,
+  operatorLogos,
   cmsExperiences,
   cmsEvents,
   cmsBanners,
