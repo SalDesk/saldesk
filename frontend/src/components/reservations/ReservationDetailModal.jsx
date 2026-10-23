@@ -5,6 +5,7 @@ import { useT } from '../../i18n';
 import Modal from '../ui/Modal';
 import Badge from '../ui/Badge';
 import LoadingSpinner from '../shared/LoadingSpinner';
+import WhatsAppSend from '../messaging/WhatsAppSend';
 
 const SOURCE_LABEL = {
   direct:       'Directo',
@@ -142,6 +143,12 @@ export default function ReservationDetailModal({ reservationId, open, onClose })
             <Row icon={Phone} label="Telefone" value={reservation.customer_phone} />
             <Row icon={Globe} label="País" value={reservation.customer_country} />
           </div>
+
+          <WhatsAppSend
+            reservationId={reservation.id}
+            status={reservation.status}
+            hasPhone={!!reservation.customer_phone}
+          />
 
           {reservation.fleet?.name && (
             <div className="pt-4 border-t border-n-100">

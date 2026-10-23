@@ -20,6 +20,7 @@ import PageHeader from '../components/layout/PageHeader';
 import KpiCard from '../components/financial/KpiCard';
 import Badge from '../components/ui/Badge';
 import LoadingSpinner from '../components/shared/LoadingSpinner';
+import WhatsAppPendentes from '../components/messaging/WhatsAppPendentes';
 
 /* Data local do dispositivo, nao UTC -- ver nota em BeachSeller.jsx */
 const TODAY = new Date().toLocaleDateString('en-CA');
@@ -1752,6 +1753,7 @@ export default function Dashboard() {
         subtitle={`${opType ? t(`dashboard.typeLabel.${opType}`) : ''} · ${periodo.inicio.slice(0, 7)}`}
       />
       <TrialBanner />
+      <WhatsAppPendentes />
       {opType === 'activity'
         ? <ActivityDashboard />
         : opType === 'hotel'

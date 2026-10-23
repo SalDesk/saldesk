@@ -18,6 +18,7 @@ import { useToast } from '../store/toastStore';
 import Button from '../components/ui/Button';
 import LoadingSpinner from '../components/shared/LoadingSpinner';
 import Logo from '../components/shared/Logo';
+import WhatsAppSend from '../components/messaging/WhatsAppSend';
 
 const STATUS_CFG = {
   pending:     { label: 'Pendente',   cls: 'bg-sand-100 text-sand-600' },
@@ -197,6 +198,8 @@ function JobDetail({ staffId }) {
           {job.fleet?.name && <InfoRow icon={Car} label="Viatura" value={job.fleet.name} />}
           {job.earnings_amount > 0 && <InfoRow icon={Euro} label="Ganho" value={`€${Number(job.earnings_amount).toFixed(2)}`} />}
         </div>
+
+        <WhatsAppSend reservationId={job.reservation_id} status={r?.status} />
 
         {job.notes_manager && (
           <div className="bg-n-50 rounded-xl px-3 py-2">
