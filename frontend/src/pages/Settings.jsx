@@ -5,7 +5,7 @@ import {
   Shield, ExternalLink,
   Eye, EyeOff, CheckCircle2, XCircle, Upload,
   Camera, ChevronUp, ChevronDown, X, Plus, ArrowUpRight,
-  Lock, Wallet, Compass, Landmark,
+  Lock, Wallet, Compass, Landmark, MessageCircle,
 } from 'lucide-react';
 import api from '../services/api';
 import { updateOperator, changePassword } from '../services/authService';
@@ -20,6 +20,7 @@ import Button from '../components/ui/Button';
 import Input, { Select, Textarea } from '../components/ui/Input';
 import Modal from '../components/ui/Modal';
 import Toggle from '../components/ui/Toggle';
+import TemplatesEditor from '../components/messaging/TemplatesEditor';
 
 /* ── helpers ── */
 function CopyButton({ text }) {
@@ -919,6 +920,7 @@ const TABS = [
   { id: 'pagamentos', label: 'Pagamentos',      Icon: CreditCard },
   { id: 'facturacao', label: 'Facturacao',      Icon: Wallet },
   { id: 'notificacoes', label: 'Notificacoes', Icon: Bell },
+  { id: 'mensagens',    label: 'Mensagens',    Icon: MessageCircle },
   { id: 'seguranca',    label: 'Seguranca',    Icon: Shield },
 ];
 
@@ -948,6 +950,7 @@ export default function Settings() {
       {tab === 'pagamentos'   && <PagamentosTab />}
       {tab === 'facturacao'   && <FacturacaoTab />}
       {tab === 'notificacoes' && <NotificacoesTab />}
+      {tab === 'mensagens'    && <TemplatesEditor />}
       {tab === 'seguranca'    && <SegurancaTab />}
     </div>
   );

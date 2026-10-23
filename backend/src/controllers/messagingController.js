@@ -5,6 +5,7 @@ const { supabaseAdmin } = require('../config/supabase');
 const service = require('../messaging/service');
 const outbox = require('../messaging/outbox');
 const templates = require('../messaging/templates');
+const { renderTemplate, variaveisDesconhecidas } = require('../helpers/automationTemplate');
 
 function getOperatorId(req) {
   return req.operator?.id || req.staff?.operator_id;
@@ -93,4 +94,38 @@ async function guardarTemplate(req, res, next) {
   } catch (err) { next(err); }
 }
 
-module.exports = { enviarParaReserva, marcarAberto, listar, listarTemplates, guardarTemplate };
+/* Dados de exemplo da pre-visualizacao. Sem ponto de encontro (a plataforma ainda nao o guarda),
+   para o operador ver exactamente o que o cliente recebe: essa linha desaparece. */
+function dadosDeExemplo(operatorName, locale) {
+  return {
+    customer_name: 'Maria Silva',
+    unit_name: locale === 'en' ? 'Sunset Boat Trip' : 'Passeio de Barco ao Pôr do Sol',
+    check_in: '2026-12-15',
+    start_time: '17:30:00',
+    guide_name: 'João',
+    meeting_point: '',
+    operator_name: operatorName || 'a sua empresa',
+    review_link: 'https://app.saldesk.cv/review/exemplo',
+  };
+}
+
+/* POST /messaging/templates/preview  { body, locale } */
+async function previewTemplate(req, res, next) {
+  try {
+    const { body, locale } = req.body || {};
+    const texto = String(body || '');
+    if (texto.length > 2000) {
+      return res.status(400).json({ error: 'Mensagem demasiado longa', code: 'TEMPLATE_TOO_LONG' });
+    }
+    const idioma = templates.idiomaValido(locale);
+    return res.json({
+      data: {
+        text: renderTemplate(texto, dadosDeExemplo(req.operator.name, idioma)),
+        unknown_variables: variaveisDesconhecidas(texto),
+      },
+      message: 'Pre-visualizacao',
+    });
+  } catch (err) { next(err); }
+}
+
+module.exports = { enviarParaReserva, marcarAberto, listar, listarTemplates, guardarTemplate, previewTemplate };

@@ -9,6 +9,7 @@
    Fase 1: so PT e EN. DE e NL entram quando customers.language os aceitar. */
 
 const { supabaseAdmin } = require('../config/supabase');
+const { variaveisDesconhecidas, usaVariavel } = require('../helpers/automationTemplate');
 
 const GATILHOS = ['booking_confirmed', 'reminder_d1', 'review_request'];
 const IDIOMAS = ['pt', 'en'];
@@ -72,6 +73,25 @@ async function listarTemplates(operatorId) {
   return out;
 }
 
+/* Recusa o que chegaria ao cliente estragado: variaveis que nao existem, ou um pedido de
+   avaliacao sem o link (a mensagem perderia o sentido). */
+function validarTexto(gatilho, texto) {
+  const desconhecidas = variaveisDesconhecidas(texto);
+  if (desconhecidas.length) {
+    const err = new Error(`Variavel desconhecida: ${desconhecidas.join(', ')}`);
+    err.status = 400;
+    err.code = 'UNKNOWN_VARIABLE';
+    err.variables = desconhecidas;
+    throw err;
+  }
+  if (gatilho === 'review_request' && !usaVariavel(texto, 'link_avaliacao')) {
+    const err = new Error('O pedido de avaliacao tem de incluir {link_avaliacao}');
+    err.status = 400;
+    err.code = 'MISSING_REVIEW_LINK';
+    throw err;
+  }
+}
+
 /* body vazio = volta ao texto por omissao. */
 async function guardarTemplate(operatorId, gatilho, idioma, body) {
   if (!GATILHOS.includes(gatilho) || !IDIOMAS.includes(idioma)) {
@@ -92,6 +112,7 @@ async function guardarTemplate(operatorId, gatilho, idioma, body) {
     err.code = 'TEMPLATE_TOO_LONG';
     throw err;
   }
+  validarTexto(gatilho, texto);
   const { error } = await supabaseAdmin.from('message_templates').upsert({
     operator_id: operatorId, trigger: gatilho, locale: idioma, body: texto, updated_at: new Date().toISOString(),
   }, { onConflict: 'operator_id,trigger,locale' });
@@ -99,4 +120,4 @@ async function guardarTemplate(operatorId, gatilho, idioma, body) {
   return { custom: true, body: texto };
 }
 
-module.exports = { GATILHOS, IDIOMAS, ESTADOS_PERMITIDOS, POR_OMISSAO, idiomaValido, corpoPorOmissao, obterCorpo, listarTemplates, guardarTemplate };
+module.exports = { GATILHOS, IDIOMAS, ESTADOS_PERMITIDOS, POR_OMISSAO, idiomaValido, corpoPorOmissao, obterCorpo, listarTemplates, guardarTemplate, validarTexto };

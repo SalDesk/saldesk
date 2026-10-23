@@ -66,4 +66,25 @@ function renderTemplate(template, dados) {
   }).trim();
 }
 
-module.exports = { renderTemplate, formatarData, formatarHora };
+/* Nomes de variaveis que o sistema sabe preencher (os dois vocabularios). */
+const VARIAVEIS_CONHECIDAS = Object.keys(construirVariaveis({}));
+
+/* Variaveis usadas no texto que nao existem (ex.: {nome_clinte}): chegariam ao cliente por preencher. */
+function variaveisDesconhecidas(template) {
+  const vistas = new Set();
+  for (const m of String(template || '').matchAll(TOKEN)) {
+    const nome = (m[1] || m[2]).toLowerCase();
+    if (!VARIAVEIS_CONHECIDAS.includes(nome)) vistas.add(m[0]);
+  }
+  return [...vistas];
+}
+
+/* Usa a variavel? (qualquer das duas formas, {nome} ou {{nome}}) */
+function usaVariavel(template, nome) {
+  for (const m of String(template || '').matchAll(TOKEN)) {
+    if ((m[1] || m[2]).toLowerCase() === nome) return true;
+  }
+  return false;
+}
+
+module.exports = { renderTemplate, formatarData, formatarHora, VARIAVEIS_CONHECIDAS, variaveisDesconhecidas, usaVariavel };

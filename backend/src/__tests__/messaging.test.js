@@ -7,8 +7,8 @@ const { emHorasSilenciosas, proximoEnvioPermitido, quandoEnviar } = require('../
 const wame = require('../messaging/providers/wame');
 const { resolveProvider } = require('../messaging/router');
 const { planoParaResultado, MAX_TENTATIVAS } = require('../messaging/outbox');
-const { POR_OMISSAO, GATILHOS, ESTADOS_PERMITIDOS, idiomaValido } = require('../messaging/templates');
-const { renderTemplate } = require('../helpers/automationTemplate');
+const { POR_OMISSAO, GATILHOS, ESTADOS_PERMITIDOS, idiomaValido, validarTexto } = require('../messaging/templates');
+const { renderTemplate, variaveisDesconhecidas, usaVariavel, VARIAVEIS_CONHECIDAS } = require('../helpers/automationTemplate');
 
 describe('paraE164', () => {
   test('aceita E.164 e formatos livres com indicativo', () => {
@@ -208,5 +208,51 @@ describe('templates por omissao', () => {
   test('idiomaValido cai em PT para o que nao suportamos ainda', () => {
     expect(idiomaValido('en')).toBe('en');
     for (const l of ['de', 'nl', 'fr', undefined, null, '']) expect(idiomaValido(l)).toBe('pt');
+  });
+});
+
+describe('validacao dos templates do operador', () => {
+  test('os textos por omissao passam a validacao', () => {
+    for (const g of GATILHOS) {
+      for (const l of ['pt', 'en']) expect(() => validarTexto(g, POR_OMISSAO[g][l])).not.toThrow();
+    }
+  });
+
+  test('variavel com erro de escrita e recusada (nao chega ao cliente por preencher)', () => {
+    expect(variaveisDesconhecidas('Ola {nome_clinte}, {nome_tour} {{xpto}}')).toEqual(['{nome_clinte}', '{{xpto}}']);
+    try {
+      validarTexto('booking_confirmed', 'Ola {nome_clinte}!');
+      throw new Error('devia recusar');
+    } catch (e) {
+      expect(e.status).toBe(400);
+      expect(e.code).toBe('UNKNOWN_VARIABLE');
+      expect(e.variables).toEqual(['{nome_clinte}']);
+    }
+  });
+
+  test('aceita as variaveis dos dois vocabularios, em qualquer caixa e com espacos', () => {
+    expect(variaveisDesconhecidas('{nome_cliente} {NOME_TOUR} {{ nome }} {{unidade}} {check_in} {operador}')).toEqual([]);
+    expect(VARIAVEIS_CONHECIDAS).toEqual(expect.arrayContaining(['nome_cliente', 'nome_tour', 'data', 'hora', 'guia', 'ponto_encontro', 'operador', 'link_avaliacao']));
+  });
+
+  test('texto sem chavetas e valido', () => {
+    expect(variaveisDesconhecidas('Obrigado pela visita!')).toEqual([]);
+    expect(variaveisDesconhecidas('')).toEqual([]);
+    expect(variaveisDesconhecidas(null)).toEqual([]);
+  });
+
+  test('o pedido de avaliacao tem de incluir o link', () => {
+    expect(() => validarTexto('review_request', 'Obrigado {nome_cliente}!')).toThrow('link_avaliacao');
+    try { validarTexto('review_request', 'Obrigado!'); } catch (e) { expect(e.code).toBe('MISSING_REVIEW_LINK'); }
+    expect(() => validarTexto('review_request', 'Avalie: {link_avaliacao}')).not.toThrow();
+    expect(() => validarTexto('review_request', 'Avalie: {{link_avaliacao}}')).not.toThrow();
+    // os outros gatilhos nao precisam de link
+    expect(() => validarTexto('booking_confirmed', 'Ola!')).not.toThrow();
+  });
+
+  test('usaVariavel reconhece as duas formas', () => {
+    expect(usaVariavel('a {guia} b', 'guia')).toBe(true);
+    expect(usaVariavel('a {{ guia }} b', 'guia')).toBe(true);
+    expect(usaVariavel('a b', 'guia')).toBe(false);
   });
 });

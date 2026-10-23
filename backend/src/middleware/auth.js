@@ -56,7 +56,10 @@ async function authMiddleware(req, res, next) {
      do demo" no Analytics do fundador ficava sempre a 0, mesmo com
      utilizacao real, silenciosamente bloqueada por este 403. */
   const isTelemetryView = req.originalUrl.startsWith('/api/v1/telemetry');
-  if (req.operator?.is_demo && !isTelemetryView && req.method !== 'GET' && req.method !== 'HEAD' && req.method !== 'OPTIONS') {
+  /* A pre-visualizacao dos templates de mensagens e um POST que so le (nao grava nada):
+     deixa a demo mostrar o editor a funcionar. */
+  const isReadOnlyPreview = req.originalUrl.startsWith('/api/v1/messaging/templates/preview');
+  if (req.operator?.is_demo && !isTelemetryView && !isReadOnlyPreview && req.method !== 'GET' && req.method !== 'HEAD' && req.method !== 'OPTIONS') {
     return res.status(403).json({
       error: 'Esta e uma conta de demonstracao — apenas leitura, sem alteracoes permitidas.',
       code: 'DEMO_READ_ONLY',

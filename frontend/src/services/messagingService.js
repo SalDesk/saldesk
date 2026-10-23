@@ -14,3 +14,7 @@ export const listMessageTemplates = () => api.get('/messaging/templates').then((
 
 export const saveMessageTemplate = (trigger, locale, body) =>
   api.put(`/messaging/templates/${trigger}/${locale}`, { body }).then((r) => r.data.data);
+
+// Pre-visualizacao com dados de exemplo, gerada pelo servidor (a mesma logica das mensagens reais).
+export const previewMessageTemplate = (body, locale) =>
+  api.post('/messaging/templates/preview', { body, locale }).then((r) => r.data.data);
