@@ -47,6 +47,7 @@ const uploadRoutes       = require('./src/routes/upload');
 const uploadDocumentRoutes = require('./src/routes/uploadDocument');
 const billingRoutes      = require('./src/routes/billing');
 const wandrSyncRoutes    = require('./src/routes/wandrSync');
+const messagingRoutes    = require('./src/routes/messaging');
 const { iniciarCron }    = require('./src/services/cronService');
 const { initQueues }     = require('./src/queues/queueManager');
 const { initSocket }     = require('./src/services/socketService');
@@ -141,6 +142,7 @@ app.use('/api/v1/occurrences',  occurrencesRoutes);
 app.use('/api/v1/expenses',     expensesRoutes);
 app.use('/api/v1/billing',      billingRoutes);
 app.use('/api/v1/wandr-sync',   wandrSyncRoutes);
+app.use('/api/v1/messaging',    messagingRoutes);
 app.use('/',                    seoRoutes);
 app.use('/social-preview',      socialPreviewRoutes);
 

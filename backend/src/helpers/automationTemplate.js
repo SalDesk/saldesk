@@ -26,6 +26,7 @@ function construirVariaveis(d) {
     hora: formatarHora(d.start_time),
     guia: d.guide_name || '',
     ponto_encontro: d.meeting_point || '',
+    link_avaliacao: d.review_link || '',
     // formulario manual (legado: mantem a data em AAAA-MM-DD como ate aqui)
     nome: d.customer_name || '',
     unidade: d.unit_name || '',

@@ -27,5 +27,21 @@ module.exports = {
     // Reiniciar com backoff exponencial
     exp_backoff_restart_delay: 100,
     max_restarts: 10,
+  }, {
+    /* Worker da outbox de mensagens (camada MessagingProvider): processo proprio,
+       nunca dentro do servidor web. Le o .env do backend pelo caminho do ficheiro. */
+    name:    'saldesk-messaging-worker',
+    script:  './backend/src/messaging/messagingWorker.js',
+    cwd:     '/var/www/saldesk/repo',
+    instances: 1,
+    autorestart: true,
+    watch:   false,
+    max_memory_restart: '300M',
+    env_production: { NODE_ENV: 'production' },
+    // Logs nos locais de origem do PM2 (~/.pm2/logs), como o saldesk-api no servidor.
+    log_date_format: 'YYYY-MM-DD HH:mm:ss',
+    merge_logs: true,
+    exp_backoff_restart_delay: 100,
+    max_restarts: 10,
   }]
 };

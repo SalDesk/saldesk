@@ -1,7 +1,10 @@
 const cron = require('node-cron');
 const { supabaseAdmin } = require('../config/supabase');
 const { enviarEmail } = require('../helpers/emailHelper');
-const { enviarWhatsApp } = require('../helpers/whatsappHelper');
+// WhatsApp: as automacoes entram na outbox da camada de mensagens (wa.me: o humano abre o link).
+// O helpers/whatsappHelper.js (Cloud API directa, numero global) fica so para o chat do painel.
+const { enfileirarAutomacao } = require('../messaging/service');
+const { nomeDoGuia } = require('../messaging/context');
 
 // Variáveis das mensagens (modelos prontos e formulário manual): ver helpers/automationTemplate.js
 const { renderTemplate } = require('../helpers/automationTemplate');
@@ -89,23 +92,6 @@ async function processarUmaAutomacao(auto, hoje) {
   }
 }
 
-/* Nome do guia atribuido a esta reserva (job_assignments, papel "guide").
-   Se nao houver, ou a consulta falhar, devolve '' e a frase do guia sai da mensagem. */
-async function nomeDoGuia(reservaId) {
-  try {
-    const { data } = await supabaseAdmin
-      .from('job_assignments')
-      .select('staff(name)')
-      .eq('reservation_id', reservaId)
-      .eq('role', 'guide')
-      .order('assigned_at', { ascending: true })
-      .limit(1);
-    return data?.[0]?.staff?.name || '';
-  } catch (_) {
-    return '';
-  }
-}
-
 async function enviarMensagem(auto, reserva) {
   const idioma = reserva.customers?.language || 'pt';
   const dados = {
@@ -132,8 +118,16 @@ async function enviarMensagem(auto, reserva) {
 
       await enviarEmail({ to: reserva.customer_email, subject, text: mensagem });
     } else if (auto.channel === 'whatsapp') {
-      const telefone = reserva.customer_phone;
-      await enviarWhatsApp({ to: telefone, body: mensagem });
+      // Fica na outbox ate alguem abrir o link no painel (status 'sent' aqui = preparada).
+      await enfileirarAutomacao({
+        operatorId: auto.operators.id,
+        reservationId: reserva.id,
+        automationId: auto.id,
+        to: reserva.customer_phone,
+        locale: idioma,
+        text: mensagem,
+        display: { customerName: reserva.customer_name, tourName: reserva.units?.name || null, date: reserva.check_in },
+      });
     }
   } catch (err) {
     status = 'failed';

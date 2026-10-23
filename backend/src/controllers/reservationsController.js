@@ -1,4 +1,5 @@
 const { supabaseAdmin } = require('../config/supabase');
+const { cancelarPorReserva: cancelarMensagensDaReserva } = require('../messaging/outbox');
 const { verificarDisponibilidade, calcularPreco, verificarDisponibilidadeMesa, DEFAULT_SEATING_MINUTES, parseUnitMeta, verificarDisponibilidadeSlot, calcularPrecoPrivado, temPrecoPrivadoConfigurado } = require('../helpers/bookingHelpers');
 const { obterOuCriarCliente, actualizarStatsCheckout } = require('../helpers/customerHelper');
 const { enviarEmail } = require('../helpers/emailHelper');
@@ -468,7 +469,12 @@ async function mudarStatus(req, res, next) {
     }
 
     // Cancelar liberta a unidade nas datas -- disponibilidade mudou
-    if (status === 'cancelled') dispararSyncImediato(getOperatorId(req));
+    if (status === 'cancelled') {
+      dispararSyncImediato(getOperatorId(req));
+      // Mensagens de WhatsApp ainda por enviar desta reserva deixam de fazer sentido
+      cancelarMensagensDaReserva(getOperatorId(req), req.params.id)
+        .catch((err) => console.error('[Messaging] Falha a cancelar mensagens da reserva:', err.message));
+    }
 
     if (STATUS_NOTIFICACAO[status]) {
       criarNotificacaoViajante(
