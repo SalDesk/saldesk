@@ -12,6 +12,7 @@ const { supabaseAdmin } = require('../config/supabase');
 const { resolveProvider } = require('./router');
 const { paraE164 } = require('./phone');
 const { quandoEnviar } = require('./quietHours');
+const wame = require('./providers/wame');
 
 const MAX_TENTATIVAS = 6;
 
@@ -51,6 +52,17 @@ function planoParaResultado(row, providerId, r, { agora = new Date(), maxTentati
   }
 }
 
+/* Regras de decisao para a Cloud API (as unicas que podem mudar o adapter ja escolhido pelo router):
+   - sem consentimento (opt-in) da reserva, so o wa.me, em que e a pessoa que inicia a conversa;
+   - mensagens de automacoes (texto livre do operador) nao tem template aprovado: so o wa.me, ate haver. */
+function escolherProvider(provider, { trigger, optIn }) {
+  if (provider.id === 'cloud_api') {
+    if (trigger === 'automation') return { provider: wame, motivo: 'automacao_sem_template' };
+    if (optIn !== true) return { provider: wame, motivo: 'sem_opt_in' };
+  }
+  return { provider, motivo: null };
+}
+
 async function obterConfig(operatorId) {
   const { data } = await supabaseAdmin.from('messaging_config').select('*').eq('operator_id', operatorId).maybeSingle();
   return data || { operator_id: operatorId, provider: 'wame', cloud_status: 'none' };
@@ -58,17 +70,18 @@ async function obterConfig(operatorId) {
 
 /* Enfileira uma mensagem ja renderizada.
    manual = true: accao de uma pessoa no painel, nao espera pelas horas silenciosas. */
-async function enfileirar({ operatorId, bookingId = null, trigger, to, locale = 'pt', text, display = {}, dedupeKey, manual = false, agora = new Date() }) {
+async function enfileirar({ operatorId, bookingId = null, trigger, to, locale = 'pt', text, display = {}, dedupeKey, manual = false, optIn = false, templateParams = null, agora = new Date() }) {
   const e164 = paraE164(to);
   if (!e164) throw erro(400, 'NO_PHONE', 'O cliente nao tem um numero de telefone valido');
   if (!text || !String(text).trim()) throw erro(400, 'EMPTY_MESSAGE', 'Mensagem vazia');
 
   const cfg = await obterConfig(operatorId);
-  const provider = resolveProvider({ ...cfg, operator_id: operatorId });
+  const { provider } = escolherProvider(resolveProvider({ ...cfg, operator_id: operatorId }), { trigger, optIn });
   const payload = {
     operatorId, to: e164, kind: 'text', locale, text,
     context: { bookingId, trigger },
     display, // so para o painel (nome do cliente, tour, data)
+    ...(templateParams ? { templateParams } : {}), // valores ordenados do template da Meta (Cloud API, fora da janela de 24 h)
   };
   const { data, error } = await supabaseAdmin.rpc('messaging_enqueue', {
     p_operator_id: operatorId,
@@ -89,7 +102,9 @@ async function enfileirar({ operatorId, bookingId = null, trigger, to, locale = 
 /* Processa uma linha ja reclamada (status 'sending'). */
 async function processarLinha(row) {
   const cfg = await obterConfig(row.operator_id);
-  const provider = resolveProvider({ ...cfg, operator_id: row.operator_id });
+  // O adapter gravado na linha e o pretendido (o consentimento e as automacoes ja foram decididos ao enfileirar);
+  // o router continua a mandar: OpenWA so para o operador interno, Cloud API so se o canal estiver activo.
+  const provider = resolveProvider({ ...cfg, provider: row.provider, operator_id: row.operator_id });
   let resultado;
   try {
     resultado = await provider.send({ ...row.payload, id: row.id }); // id da outbox = chave de idempotencia
@@ -159,6 +174,6 @@ async function listar(operatorId, { status, bookingId, bookingIds, limit = 50 } 
 }
 
 module.exports = {
-  MAX_TENTATIVAS, backoffMs, erro, planoParaResultado,
+  MAX_TENTATIVAS, backoffMs, erro, planoParaResultado, escolherProvider,
   obterConfig, enfileirar, processarLinha, resolverAgora, cancelarPorReserva, marcarAberto, listar,
 };

@@ -60,7 +60,7 @@ async function criar(req, res, next) {
     const { unit_id, customer_name, customer_email, customer_phone, customer_country,
             check_in, check_out, guests, notes, notes_internal, notes_guest,
             total_amount, source, payment_method, payment_status, fleet_id,
-            start_time, duration_minutes, driver_included, booking_mode } = req.body;
+            start_time, duration_minutes, driver_included, booking_mode, whatsapp_opt_in } = req.body;
 
     if (!unit_id || !customer_name || !customer_email || !check_in || !check_out) {
       return res.status(400).json({ error: 'Campos obrigatórios em falta', code: 'MISSING_FIELDS' });
@@ -204,6 +204,10 @@ async function criar(req, res, next) {
         driver_included: isRentacar ? !!driver_included && chauffeurPrice > 0 : false,
         chauffeur_price: chauffeurPrice,
         is_group_booking: isGroupBooking,
+        // O operador regista que o cliente aceitou receber mensagens automaticas por WhatsApp
+        whatsapp_opt_in: whatsapp_opt_in === true,
+        whatsapp_opt_in_source: whatsapp_opt_in === true ? 'operator' : null,
+        whatsapp_opt_in_at: whatsapp_opt_in === true ? new Date().toISOString() : null,
       })
       .select('*, units(name, unit_type), fleet(name, capacity)')
       .single();

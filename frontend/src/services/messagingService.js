@@ -10,6 +10,8 @@ export const markMessageOpened = (id) => api.post(`/messaging/outbox/${id}/opene
 
 export const listOutbox = (params = {}) => api.get('/messaging/outbox', { params }).then((r) => r.data.data);
 
+export const getMessagingChannel = () => api.get('/messaging/channel').then((r) => r.data.data);
+
 export const listMessageTemplates = () => api.get('/messaging/templates').then((r) => r.data.data);
 
 export const saveMessageTemplate = (trigger, locale, body) =>

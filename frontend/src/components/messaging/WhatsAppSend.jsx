@@ -30,6 +30,12 @@ export default function WhatsAppSend({ reservationId, status, hasPhone }) {
     const janela = window.open('', '_blank');
     try {
       const msg = await sendReservationMessage(reservationId, accao.trigger);
+      if (msg.automatico) {
+        // Canal automatico (Cloud API): o SalDesk envia sozinho, nao ha nada para abrir.
+        if (janela) janela.close();
+        toast.success(`${accao.label}: a enviar por WhatsApp`);
+        return;
+      }
       if (!msg.url) throw new Error('Sem ligação');
       if (janela) {
         janela.opener = null;

@@ -224,7 +224,7 @@ async function criarReserva(req, res, next) {
     const { unit_id, customer_name, customer_email, customer_phone,
             customer_country, check_in, check_out, guests, notes,
             party_size, tour_time, reservation_time, zone_preference,
-            voucher_code, ref_code, referred_by, items, driver_included, booking_mode } = req.body;
+            voucher_code, ref_code, referred_by, items, driver_included, booking_mode, whatsapp_opt_in } = req.body;
 
     // check_out é opcional — activities/restaurants podem enviar só check_in (data do serviço)
     const effectiveCheckOut = check_out || check_in;
@@ -477,6 +477,10 @@ async function criarReserva(req, res, next) {
         driver_included: isRentacar ? !!driver_included && chauffeurPrice > 0 : false,
         chauffeur_price: chauffeurPrice,
         is_group_booking: isGroupBooking,
+        // Consentimento para mensagens automaticas por WhatsApp: so com a caixa marcada pelo proprio cliente
+        whatsapp_opt_in: whatsapp_opt_in === true,
+        whatsapp_opt_in_source: whatsapp_opt_in === true ? 'form' : null,
+        whatsapp_opt_in_at: whatsapp_opt_in === true ? new Date().toISOString() : null,
       })
       .select()
       .single();

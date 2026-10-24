@@ -149,6 +149,10 @@ app.use('/api/v1/billing',      billingRoutes);
 app.use('/api/v1/wandr-sync',   wandrSyncRoutes);
 app.use('/api/v1/messaging',    messagingRoutes);
 app.post('/webhooks/whatsapp/openwa', require('./src/controllers/messagingWebhookController').openwaWebhook);
+/* WhatsApp Cloud API (Meta): publico, protegido pela assinatura X-Hub-Signature-256 e pelo token de verificacao. */
+const messagingCloudWebhook = require('./src/controllers/messagingCloudWebhookController');
+app.get('/webhooks/whatsapp/cloud',  messagingCloudWebhook.verificar);
+app.post('/webhooks/whatsapp/cloud', messagingCloudWebhook.receber);
 app.use('/',                    seoRoutes);
 app.use('/social-preview',      socialPreviewRoutes);
 

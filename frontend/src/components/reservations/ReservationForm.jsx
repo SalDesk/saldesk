@@ -23,6 +23,7 @@ export default function ReservationForm({ reservation, units, operatorType, onSa
     start_time:       reservation?.start_time?.slice(0, 5) || '19:00',
     source:           reservation?.source || 'manual',
     notes:            reservation?.notes || '',
+    whatsapp_opt_in:  reservation?.whatsapp_opt_in === true,
   });
   const [pricePreview, setPricePreview] = useState(null);
 
@@ -150,6 +151,19 @@ export default function ReservationForm({ reservation, units, operatorType, onSa
         <Input label={t('customers.nationality')} value={form.customer_country} onChange={set('customer_country')} placeholder="PT, DE, GB..." hint="Codigo ISO 2" />
         <Input label={t('reservations.guests')} type="number" value={form.guests} onChange={set('guests')} min="1" />
       </div>
+
+      {/* Consentimento: so marcar se o cliente aceitou. Sem isto, as mensagens por WhatsApp abrem no telemovel (wa.me),
+            nunca saem sozinhas pela Cloud API. */}
+      {!reservation && (
+        <label className="flex items-start gap-2 text-sm font-body text-n-700 cursor-pointer">
+          <input
+            type="checkbox" className="mt-0.5 h-4 w-4 rounded border-n-300 text-ocean-700 focus:ring-ocean-300"
+            checked={form.whatsapp_opt_in}
+            onChange={(e) => setForm((f) => ({ ...f, whatsapp_opt_in: e.target.checked }))}
+          />
+          <span>O cliente aceitou receber mensagens sobre esta reserva por WhatsApp</span>
+        </label>
+      )}
 
       <Select label="Fonte" value={form.source} onChange={set('source')}>
         {SOURCES.map((s) => (

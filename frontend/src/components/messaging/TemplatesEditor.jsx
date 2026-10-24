@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { MessageCircle, RotateCcw, Check } from 'lucide-react';
 import {
-  listMessageTemplates, saveMessageTemplate, previewMessageTemplate,
+  listMessageTemplates, saveMessageTemplate, previewMessageTemplate, getMessagingChannel,
 } from '../../services/messagingService';
 import { useToast } from '../../store/toastStore';
 import Card from '../ui/Card';
@@ -222,6 +222,58 @@ function TemplateCard({ gatilho, dados, onGuardado }) {
   );
 }
 
+const ESTADO_MODELO = {
+  approved: { texto: 'Aprovado', classe: 'bg-turquoise-50 text-turquoise-700' },
+  pending: { texto: 'Em análise na Meta', classe: 'bg-sand-100 text-sand-700' },
+  rejected: { texto: 'Rejeitado', classe: 'bg-red-50 text-error' },
+  paused: { texto: 'Em pausa', classe: 'bg-red-50 text-error' },
+  disabled: { texto: 'Desactivado', classe: 'bg-red-50 text-error' },
+};
+const NOME_GATILHO = { booking_confirmed: 'Confirmação', reminder_d1: 'Lembrete', review_request: 'Pedido de avaliação' };
+
+/* Que canal esta a enviar as mensagens (wa.me manual ou Cloud API automatica) e como estao os modelos da Meta. */
+function CanalCartao() {
+  const [canal, setCanal] = useState(null);
+  useEffect(() => { getMessagingChannel().then(setCanal).catch(() => setCanal(null)); }, []);
+  if (!canal) return null;
+  const automatico = canal.canal === 'cloud_api';
+  return (
+    <Card padding="p-5">
+      <div className="flex flex-wrap items-center gap-2 mb-2">
+        <h3 className="font-display font-bold text-base text-n-900 dark:text-n-100">Como as mensagens são enviadas</h3>
+        <span className={`text-[11px] font-body font-semibold px-2 py-1 rounded-full ${automatico ? 'bg-turquoise-50 text-turquoise-700' : 'bg-n-100 text-n-600'}`}>
+          {automatico ? 'Automático (WhatsApp Cloud API)' : 'Manual (WhatsApp no telemóvel)'}
+        </span>
+        {automatico && canal.quality_rating && (
+          <span className="text-[11px] font-body text-n-500">Qualidade do número: <strong>{canal.quality_rating}</strong></span>
+        )}
+        {canal.cloud_status === 'suspended' && (
+          <span className="text-[11px] font-body font-semibold px-2 py-1 rounded-full bg-red-50 text-error">Envio automático suspenso</span>
+        )}
+      </div>
+      <p className="text-sm font-body text-n-600">
+        {automatico
+          ? 'Para clientes que aceitaram receber mensagens, o SalDesk envia sozinho. Fora das 24 horas a seguir à última mensagem do cliente, o WhatsApp só permite modelos pré-aprovados pela Meta: esses são fixos e não mudam com os textos abaixo. Os textos abaixo valem quando o cliente escreveu há menos de 24 horas e no envio manual.'
+          : 'O SalDesk prepara o texto e o WhatsApp abre no telemóvel, pronto a enviar com um toque. Para o envio automático é preciso ligar a conta WhatsApp Business do operador (a Wandr faz esta ligação).'}
+      </p>
+      {canal.modelos.length > 0 && (
+        <ul className="mt-3 flex flex-col gap-1.5">
+          {canal.modelos.map((m) => {
+            const e = ESTADO_MODELO[m.meta_status] || ESTADO_MODELO.pending;
+            return (
+              <li key={`${m.trigger}:${m.locale}`} className="flex flex-wrap items-center gap-2 text-sm font-body text-n-700">
+                <span>{NOME_GATILHO[m.trigger] || m.trigger} ({m.locale.toUpperCase()})</span>
+                <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${e.classe}`}>{e.texto}</span>
+                {m.meta_reason && <span className="text-xs text-n-500">{m.meta_reason}</span>}
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </Card>
+  );
+}
+
 export default function TemplatesEditor() {
   const [lista, setLista] = useState(null);
   const [erro, setErro] = useState('');
@@ -241,6 +293,7 @@ export default function TemplatesEditor() {
 
   return (
     <div className="space-y-4 max-w-5xl">
+      <CanalCartao />
       <div className="text-sm font-body text-n-600">
         <p>
           Estes são os textos que o SalDesk prepara quando carrega em <strong>WhatsApp</strong> numa reserva.

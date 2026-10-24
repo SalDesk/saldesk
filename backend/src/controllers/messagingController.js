@@ -128,4 +128,25 @@ async function previewTemplate(req, res, next) {
   } catch (err) { next(err); }
 }
 
-module.exports = { enviarParaReserva, marcarAberto, listar, listarTemplates, guardarTemplate, previewTemplate };
+/* GET /messaging/channel: canal de envio activo e estado dos modelos da Meta (so leitura). */
+async function canal(req, res, next) {
+  try {
+    const cfg = await outbox.obterConfig(req.operator.id);
+    const automatico = cfg.provider === 'cloud_api' && cfg.cloud_status === 'active';
+    const { data: modelos } = await supabaseAdmin
+      .from('message_meta_templates')
+      .select('trigger, locale, meta_status, meta_reason')
+      .eq('operator_id', req.operator.id).order('trigger');
+    return res.json({
+      data: {
+        canal: automatico ? 'cloud_api' : 'wame',
+        cloud_status: cfg.cloud_status || 'none',
+        quality_rating: cfg.quality_rating || null,
+        modelos: modelos || [],
+      },
+      message: 'Canal',
+    });
+  } catch (err) { next(err); }
+}
+
+module.exports = { enviarParaReserva, marcarAberto, listar, listarTemplates, guardarTemplate, previewTemplate, canal };
