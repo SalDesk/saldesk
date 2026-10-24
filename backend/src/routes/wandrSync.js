@@ -37,6 +37,7 @@ router.get('/subscriptions', limiter, requireSyncToken, async (req, res) => {
         .from('operators')
         .select('id, name, business_name, email, phone, plan, plan_status, trial_ends_at, plan_paid_until, paypal_subscription_id, created_at, is_demo')
         .not('is_demo', 'is', true)
+        .neq('slug', 'wandr-interno') // operador interno da Wandr (OpenWA): nunca e cliente
         .order('created_at'),
       loadPriceMap(),
     ]);

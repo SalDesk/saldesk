@@ -85,7 +85,12 @@ app.use(cors({
 }));
 
 app.use(cookieParser());
-app.use(express.json({ limit: '5mb' }));
+/* rawBody so para os webhooks do WhatsApp: a assinatura HMAC e calculada sobre os bytes em bruto
+   e falha sempre se for verificada sobre o JSON re-serializado. */
+app.use(express.json({
+  limit: '5mb',
+  verify: (req, res, buf) => { if (req.originalUrl.startsWith('/webhooks/whatsapp/')) req.rawBody = buf; },
+}));
 
 app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok', version: '2.0.0', timestamp: new Date().toISOString() });
@@ -143,6 +148,7 @@ app.use('/api/v1/expenses',     expensesRoutes);
 app.use('/api/v1/billing',      billingRoutes);
 app.use('/api/v1/wandr-sync',   wandrSyncRoutes);
 app.use('/api/v1/messaging',    messagingRoutes);
+app.post('/webhooks/whatsapp/openwa', require('./src/controllers/messagingWebhookController').openwaWebhook);
 app.use('/',                    seoRoutes);
 app.use('/social-preview',      socialPreviewRoutes);
 

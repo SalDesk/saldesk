@@ -1,0 +1,38 @@
+# OpenWA: gateway de WhatsApp NAO OFICIAL, so para uso interno da Wandr (camada de mensagens, fase 2).
+# Nunca activavel por um operador cliente: o router do SalDesk recusa-o (backend/src/messaging/router.js).
+#
+# Isolamento:
+#   - porta so em 127.0.0.1 (sem exposicao no Nginx);
+#   - SEM acesso ao socket do Docker (nao ha /var/run/docker.sock nem docker-proxy; o OpenWA nao precisa);
+#   - limites de memoria, CPU e processos; sem novos privilegios;
+#   - numero de WhatsApp dedicado e descartavel, nunca o comercial da Wandr nem o do fundador.
+# A sessao fica no volume openwa-data (/app/data); perde-la obriga a ler outro QR.
+#
+# Imagem fixada pelo digest (versao 0.25.0): o servidor nao muda de versao sozinho.
+# Para actualizar: docker pull, escolher o novo digest, testar e so depois alterar aqui.
+services:
+  openwa:
+    image: ghcr.io/rmyndharis/openwa@sha256:bb883bd67101b9c985649ebd4e7677dc7ecd9db034c2d164a8f3d522fdd4311d
+    container_name: openwa
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:2785:2785"
+    volumes:
+      - openwa-data:/app/data
+    environment:
+      NODE_ENV: production
+      ENABLE_SWAGGER: "false"
+      SEND_PACING_ENABLED: "true"   # espaca os envios: menos risco de banimento do numero
+      # O guarda anti-SSRF do OpenWA bloqueia destinos internos. Autoriza so este nome (o anfitriao,
+      # onde corre o webhook do SalDesk); a protecao continua ligada para todo o resto.
+      SSRF_ALLOWED_HOSTS: "host.docker.internal"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"   # o OpenWA chama o webhook do SalDesk no anfitriao
+    mem_limit: 1g
+    memswap_limit: 1g
+    cpus: 1.0
+    pids_limit: 512
+    security_opt:
+      - no-new-privileges:true
+volumes:
+  openwa-data:

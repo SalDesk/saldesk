@@ -6,6 +6,9 @@
 
 const { supabaseAdmin } = require('../config/supabase');
 const { processarLinha } = require('./outbox');
+const { processarPendentes } = require('./inbound');
+const { obterRegisto } = require('./router');
+const { accaoParaEstado } = require('./providers/openwa');
 
 const LOTE = 20;
 const ATRASO_ALERTA_MIN = 10;
@@ -30,7 +33,31 @@ async function tick({ limite = LOTE } = {}) {
       console.error(`[Messaging] Erro a processar ${row.id}:`, err.message);
     }
   }
-  return { reclamadas: linhas.length, ok, falhas, reaped: reaped || 0 };
+  // Estados de entrega e eventos de sessao recebidos por webhook (OpenWA)
+  let eventos = { lidos: 0, estados: 0 };
+  try {
+    eventos = await processarPendentes();
+  } catch (err) {
+    console.error('[Messaging] Falha a processar eventos recebidos:', err.message);
+  }
+  return { reclamadas: linhas.length, ok, falhas, reaped: reaped || 0, eventos };
+}
+
+/* Sessao do OpenWA ligada? Se nao, alerta (no maximo um email por hora). Sem OpenWA configurado nao faz nada. */
+async function verificarSessao() {
+  const provider = obterRegisto().openwa;
+  if (!provider) return null;
+  const s = await provider.estadoSessao();
+  const accao = accaoParaEstado(s.status);
+  const detalhe = `estado: ${s.status || 'sem resposta'}${s.lastError ? `, ${s.lastError}` : ''}`;
+  if (accao === 'reiniciar') {
+    // Tipico depois de reiniciar o contentor ou o servidor: volta a ligar sozinha, sem QR.
+    const r = await provider.iniciarSessao();
+    await provider.alertar(`A sessao do OpenWA estava desligada (${detalhe}); a reiniciar sozinha (${r.ok ? 'pedido aceite' : `falhou, HTTP ${r.httpStatus}`}).`);
+  } else if (accao === 'humano') {
+    await provider.alertar(`A sessao do OpenWA precisa de atencao (${detalhe}). Pode ser preciso ligar outra vez o telemovel.`);
+  }
+  return { ...s, accao };
 }
 
 /* Mensagens que deviam ja ter saido ha mais de ATRASO_ALERTA_MIN minutos. */
@@ -47,4 +74,4 @@ async function verificarAtraso() {
   return count || 0;
 }
 
-module.exports = { tick, verificarAtraso, LOTE, ATRASO_ALERTA_MIN };
+module.exports = { tick, verificarAtraso, verificarSessao, LOTE, ATRASO_ALERTA_MIN };
