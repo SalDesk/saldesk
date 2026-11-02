@@ -14,3 +14,6 @@ Thumbs.db
 
 # Ficheiros temporarios e de trabalho (podem ter credenciais): nunca vao para o git
 scratchpad/
+
+# Maquetes do brainstorming (visual companion)
+.superpowers/
