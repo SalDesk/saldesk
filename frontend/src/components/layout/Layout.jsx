@@ -105,7 +105,7 @@ export default function Layout() {
       <div
         className={[
           'hidden md:relative md:block',
-          sidebarOpen ? 'md:w-64' : 'md:w-0 md:overflow-hidden',
+          sidebarOpen ? 'md:w-60' : 'md:w-0 md:overflow-hidden',
         ].join(' ')}
       >
         <Sidebar />

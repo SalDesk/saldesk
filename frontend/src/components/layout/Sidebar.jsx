@@ -1,135 +1,16 @@
 import { useState } from 'react';
-import { NavLink, useNavigate } from 'react-router-dom';
-import {
-  LayoutDashboard, Calendar, CalendarDays,
-  Users, UserCheck, UsersRound, BarChart2,
-  Star, MessageCircle, MessageSquare, Globe, Megaphone, Settings,
-  LogOut, X, ExternalLink, User, Lock, Zap,
-  Compass, Hotel, Car, Truck, UtensilsCrossed, ChefHat, Wrench,
-  Activity, Award, Tag, FileWarning, ThumbsUp, CloudSun, LineChart,
-  UserPlus, Users2, Package, Handshake, Sparkles, Layers, ClipboardList, ClipboardCheck,
-} from 'lucide-react';
+import { NavLink, useLocation } from 'react-router-dom';
+import { X, ExternalLink, Lock, ChevronDown } from 'lucide-react';
 import useAuthStore from '../../store/authStore';
+import useUiStore from '../../store/uiStore';
 import usePlan from '../../hooks/usePlan';
+import { useNavCounters } from '../../hooks/useNavCounters';
 import { UpgradeModal } from '../PlanGuard';
 import Logo from '../shared/Logo';
-
-/* requiredPlan: plan gate | feature: key for UpgradeModal description */
-export const TYPE_NAV = {
-  activity: [
-    { to: '/',              icon: LayoutDashboard, label: 'Dashboard',         end: true },
-    { to: '/unidades',      icon: Compass,         label: 'Tours & Actividades'          },
-    { to: '/reservas',      icon: Calendar,        label: 'Reservas'                     },
-    { to: '/calendario',    icon: CalendarDays,    label: 'Calendario'                   },
-    { to: '/guias',         icon: Users,           label: 'Guias',            requiredPlan: 'business', feature: 'guias'          },
-    { to: '/frota',         icon: Car,             label: 'Frota'                                                                       },
-    { to: '/clientes',      icon: UserCheck,       label: 'Clientes'                     },
-    { to: '/colaboradores', icon: UsersRound,      label: 'Colaboradores',    requiredPlan: 'business', feature: 'colaboradores'  },
-    { to: '/rh',            icon: ClipboardList,   label: 'RH',               requiredPlan: 'business', feature: 'colaboradores'  },
-    { to: '/financeiro',    icon: BarChart2,       label: 'Financeiro'                   },
-    { to: '/analytics',     icon: Activity,        label: 'Analytics',        requiredPlan: 'business', feature: 'analytics'      },
-    { to: '/meteorologia',  icon: CloudSun,        label: 'Meteorologia',     requiredPlan: 'business', feature: 'meteorologia'   },
-    { to: '/previsao',      icon: LineChart,       label: 'Previsao',         requiredPlan: 'pro',      feature: 'previsao'       },
-    { to: '/avaliacoes',    icon: Star,            label: 'Avaliacoes'                   },
-    { to: '/ocorrencias',   icon: FileWarning,     label: 'Ocorrencias'                  },
-    { to: '/feedback',      icon: ThumbsUp,        label: 'Feedback'                     },
-    { to: '/mensagens',     icon: MessageCircle,   label: 'Mensagens'                    },
-    { to: '/mensagens-saldesk', icon: MessageSquare, label: 'Mensagens SalDesk'           },
-    { to: '/integracoes',   icon: Globe,           label: 'Channel Manager',  requiredPlan: 'pro',      feature: 'integracoes'    },
-    { to: '/marketing',     icon: Megaphone,       label: 'Marketing',        requiredPlan: 'business', feature: 'marketing'      },
-    { to: '/automacoes',    icon: Zap,             label: 'Automacoes',       requiredPlan: 'pro',      feature: 'automacoes'     },
-    { to: '/fidelidade',    icon: Award,           label: 'Fidelidade',       requiredPlan: 'pro',      feature: 'fidelidade'     },
-    { to: '/vouchers',      icon: Tag,             label: 'Vouchers',         requiredPlan: 'business', feature: 'vouchers'       },
-    { to: '/afiliados',     icon: UserPlus,        label: 'Afiliados',        requiredPlan: 'business', feature: 'afiliados'      },
-    { to: '/grupos',        icon: Users2,          label: 'Grupos',           requiredPlan: 'pro',      feature: 'grupos'         },
-    { to: '/pacotes',       icon: Package,         label: 'Pacotes',          requiredPlan: 'pro',      feature: 'pacotes'        },
-    { to: '/parcerias',     icon: Handshake,       label: 'Parcerias',        requiredPlan: 'pro',      feature: 'parcerias'      },
-    { to: '/editor-pagina', icon: Layers,          label: 'Editor da Pagina'             },
-    { to: '/definicoes',    icon: Settings,        label: 'Definicoes'                   },
-  ],
-  hotel: [
-    { to: '/',              icon: LayoutDashboard, label: 'Dashboard',    end: true },
-    { to: '/unidades',      icon: Hotel,           label: 'Quartos'                 },
-    { to: '/reservas',      icon: Calendar,        label: 'Reservas'                },
-    { to: '/calendario',    icon: CalendarDays,    label: 'Calendario'              },
-    { to: '/housekeeping',  icon: Sparkles,        label: 'Housekeeping'            },
-    { to: '/clientes',      icon: UserCheck,       label: 'Clientes'                },
-    { to: '/colaboradores', icon: UsersRound,      label: 'Colaboradores',  requiredPlan: 'business', feature: 'colaboradores' },
-    { to: '/rh',            icon: ClipboardList,   label: 'RH',             requiredPlan: 'business', feature: 'colaboradores' },
-    { to: '/financeiro',    icon: BarChart2,       label: 'Financeiro'              },
-    { to: '/avaliacoes',    icon: Star,            label: 'Avaliacoes'              },
-    { to: '/mensagens',     icon: MessageCircle,   label: 'Mensagens'               },
-    { to: '/mensagens-saldesk', icon: MessageSquare, label: 'Mensagens SalDesk'    },
-    { to: '/marketing',     icon: Megaphone,       label: 'Marketing',      requiredPlan: 'business', feature: 'marketing'     },
-    { to: '/analytics',     icon: Activity,        label: 'Analytics',      requiredPlan: 'business', feature: 'analytics'     },
-    { to: '/vouchers',      icon: Tag,             label: 'Vouchers',       requiredPlan: 'business', feature: 'vouchers'      },
-    { to: '/afiliados',     icon: UserPlus,        label: 'Afiliados',      requiredPlan: 'business', feature: 'afiliados'     },
-    { to: '/automacoes',    icon: Zap,             label: 'Automacoes',     requiredPlan: 'pro',      feature: 'automacoes'    },
-    { to: '/fidelidade',    icon: Award,           label: 'Fidelidade',     requiredPlan: 'pro',      feature: 'fidelidade'    },
-    { to: '/grupos',        icon: Users2,          label: 'Grupos',         requiredPlan: 'pro',      feature: 'grupos'        },
-    { to: '/pacotes',       icon: Package,         label: 'Pacotes',        requiredPlan: 'pro',      feature: 'pacotes'       },
-    { to: '/parcerias',     icon: Handshake,       label: 'Parcerias',      requiredPlan: 'pro',      feature: 'parcerias'     },
-    { to: '/editor-pagina', icon: Layers,          label: 'Editor da Pagina'        },
-    { to: '/definicoes',    icon: Settings,        label: 'Definicoes'              },
-  ],
-  rentacar: [
-    { to: '/',              icon: LayoutDashboard, label: 'Dashboard',    end: true },
-    { to: '/unidades',      icon: Car,             label: 'Frota'                   },
-    { to: '/reservas',      icon: Calendar,        label: 'Reservas'                },
-    { to: '/calendario',    icon: CalendarDays,    label: 'Calendario'              },
-    { to: '/manutencao',    icon: Wrench,          label: 'Manutencao'              },
-    { to: '/clientes',      icon: UserCheck,       label: 'Clientes'                },
-    { to: '/colaboradores', icon: UsersRound,      label: 'Colaboradores',  requiredPlan: 'business', feature: 'colaboradores' },
-    { to: '/rh',            icon: ClipboardList,   label: 'RH',             requiredPlan: 'business', feature: 'colaboradores' },
-    { to: '/financeiro',    icon: BarChart2,       label: 'Financeiro'              },
-    { to: '/analytics',     icon: Activity,        label: 'Analytics',      requiredPlan: 'business', feature: 'analytics'     },
-    { to: '/avaliacoes',    icon: Star,            label: 'Avaliacoes'              },
-    { to: '/ocorrencias',   icon: FileWarning,     label: 'Ocorrencias'             },
-    { to: '/mensagens',     icon: MessageCircle,   label: 'Mensagens'               },
-    { to: '/mensagens-saldesk', icon: MessageSquare, label: 'Mensagens SalDesk'    },
-    { to: '/marketing',     icon: Megaphone,       label: 'Marketing',      requiredPlan: 'business', feature: 'marketing'     },
-    { to: '/automacoes',    icon: Zap,             label: 'Automacoes',     requiredPlan: 'pro',      feature: 'automacoes'    },
-    { to: '/fidelidade',    icon: Award,           label: 'Fidelidade',     requiredPlan: 'pro',      feature: 'fidelidade'    },
-    { to: '/vouchers',      icon: Tag,             label: 'Vouchers',       requiredPlan: 'business', feature: 'vouchers'      },
-    { to: '/afiliados',     icon: UserPlus,        label: 'Afiliados',      requiredPlan: 'business', feature: 'afiliados'     },
-    { to: '/grupos',        icon: Users2,          label: 'Grupos',         requiredPlan: 'pro',      feature: 'grupos'        },
-    { to: '/pacotes',       icon: Package,         label: 'Pacotes',        requiredPlan: 'pro',      feature: 'pacotes'       },
-    { to: '/parcerias',     icon: Handshake,       label: 'Parcerias',      requiredPlan: 'pro',      feature: 'parcerias'     },
-    { to: '/editor-pagina', icon: Layers,          label: 'Editor da Pagina'        },
-    { to: '/definicoes',    icon: Settings,        label: 'Definicoes'              },
-  ],
-  restaurant: [
-    { to: '/',              icon: LayoutDashboard, label: 'Dashboard',    end: true },
-    { to: '/unidades',      icon: UtensilsCrossed, label: 'Mesas'                   },
-    { to: '/menu-digital',  icon: ChefHat,         label: 'Menu'                    },
-    { to: '/pedidos',       icon: ClipboardCheck,  label: 'Pedidos'                 },
-    { to: '/reservas',      icon: Calendar,        label: 'Reservas'                },
-    { to: '/calendario',    icon: CalendarDays,    label: 'Calendario'              },
-    { to: '/clientes',      icon: UserCheck,       label: 'Clientes'                },
-    { to: '/colaboradores', icon: UsersRound,      label: 'Colaboradores',  requiredPlan: 'business', feature: 'colaboradores' },
-    { to: '/rh',            icon: ClipboardList,   label: 'RH',             requiredPlan: 'business', feature: 'colaboradores' },
-    { to: '/financeiro',    icon: BarChart2,       label: 'Financeiro'              },
-    { to: '/avaliacoes',    icon: Star,            label: 'Avaliacoes'              },
-    { to: '/mensagens',     icon: MessageCircle,   label: 'Mensagens'               },
-    { to: '/mensagens-saldesk', icon: MessageSquare, label: 'Mensagens SalDesk'    },
-    { to: '/marketing',     icon: Megaphone,       label: 'Marketing',      requiredPlan: 'business', feature: 'marketing'     },
-    { to: '/analytics',     icon: Activity,        label: 'Analytics',      requiredPlan: 'business', feature: 'analytics'     },
-    { to: '/automacoes',    icon: Zap,             label: 'Automacoes',     requiredPlan: 'pro',      feature: 'automacoes'    },
-    { to: '/fidelidade',    icon: Award,           label: 'Fidelidade',     requiredPlan: 'pro',      feature: 'fidelidade'    },
-    { to: '/vouchers',      icon: Tag,             label: 'Vouchers',       requiredPlan: 'business', feature: 'vouchers'      },
-    { to: '/parcerias',     icon: Handshake,       label: 'Parcerias',      requiredPlan: 'pro',      feature: 'parcerias'     },
-    { to: '/editor-pagina', icon: Layers,          label: 'Editor da Pagina'        },
-    { to: '/definicoes',    icon: Settings,        label: 'Definicoes'              },
-  ],
-};
-
-export const PLAN_BADGE = {
-  business: { label: 'Business', cls: 'bg-ocean-600 text-white' },
-  pro:      { label: 'Pro',      cls: 'bg-sand-500 text-white'   },
-};
+import { PLAN_BADGE, getNavSections, isLocked, sectionIdOfPath } from './navConfig';
 
 /* Ancoras para o WelcomeTour (ver components/tour/WelcomeTour.jsx) --
-   so os 4 routes partilhados por TODOS os tipos de operador entram aqui,
+   so os 5 routes partilhados por TODOS os tipos de operador entram aqui,
    nunca algo especifico de um so tipo. */
 const TOUR_ANCHOR = {
   '/':           'nav-dashboard',
@@ -139,24 +20,87 @@ const TOUR_ANCHOR = {
   '/definicoes': 'nav-definicoes',
 };
 
+/* Pilula vermelha do contador (9+ acima de 9) */
+function CounterPill({ value }) {
+  return (
+    <span className="min-w-[18px] h-[18px] px-1 rounded-full bg-error text-white text-[10px] font-body font-bold leading-[18px] text-center shrink-0">
+      {value > 9 ? '9+' : value}
+    </span>
+  );
+}
+
 export default function Sidebar({ onClose }) {
-  const { operator, logout } = useAuthStore();
-  const navigate = useNavigate();
+  const operator = useAuthStore((s) => s.operator);
+  const navCollapsed = useUiStore((s) => s.navCollapsed);
+  const setNavSectionCollapsed = useUiStore((s) => s.setNavSectionCollapsed);
   const { canAccess } = usePlan();
+  const { pathname } = useLocation();
+  const counters = useNavCounters();
   const [upgradeModal, setUpgradeModal] = useState(null); // { plan, feature }
 
-  function handleLogout() { logout(); navigate('/login'); }
-
-  const opType   = operator?.operator_type || 'hotel';
-  const navItems = TYPE_NAV[opType] || TYPE_NAV.hotel;
-  const slug     = operator?.slug;
-  const lang     = operator?.language || 'pt';
+  const opType    = operator?.operator_type || 'hotel';
+  const sections  = getNavSections(opType);
+  const slug      = operator?.slug;
+  const lang      = operator?.language || 'pt';
   const siteLabel = lang === 'en' ? 'View my site' : 'Ver o meu site';
+  const activeSectionId = sectionIdOfPath(sections, pathname);
+
+  /* Estado efetivo: substituicao explicita ou defaultCollapsed; a seccao da rota ativa abre sempre */
+  function isCollapsed(section) {
+    if (section.id === activeSectionId) return false;
+    return navCollapsed[section.id] ?? section.defaultCollapsed;
+  }
+
+  function renderItem(item) {
+    const { to, icon: Icon, label, end, requiredPlan, feature } = item;
+    const count = counters?.[to] || 0;
+
+    if (isLocked(item, canAccess)) {
+      const badge = PLAN_BADGE[requiredPlan];
+      return (
+        <button
+          key={to}
+          type="button"
+          onClick={() => setUpgradeModal({ plan: requiredPlan, feature })}
+          className="w-full flex items-center gap-3 pl-3 pr-3 py-2 rounded-r-md border-l-[3px] border-transparent text-sm font-body font-medium text-ocean-300/70 hover:bg-ocean-700/50 hover:text-ocean-200 transition-colors"
+        >
+          <Icon size={17} strokeWidth={1.75} className="shrink-0" />
+          <span className="truncate flex-1 text-left">{label}</span>
+          {badge && (
+            <span className={`text-[9px] font-mono font-bold px-1.5 py-0.5 rounded uppercase tracking-wide shrink-0 ${badge.cls}`}>
+              {badge.label}
+            </span>
+          )}
+          <Lock size={12} strokeWidth={1.75} className="shrink-0" aria-hidden="true" />
+        </button>
+      );
+    }
+
+    return (
+      <NavLink
+        key={to}
+        to={to}
+        end={end}
+        data-tour={TOUR_ANCHOR[to]}
+        className={({ isActive }) =>
+          `flex items-center gap-3 pl-3 pr-3 py-2 rounded-r-md border-l-[3px] text-sm font-body font-medium transition-colors ${
+            isActive
+              ? 'bg-ocean-600 text-white border-sand-500'
+              : 'text-ocean-200 border-transparent hover:bg-ocean-700/60 hover:text-white'
+          }`
+        }
+      >
+        <Icon size={17} strokeWidth={1.75} className="shrink-0" />
+        <span className="truncate flex-1">{label}</span>
+        {count > 0 && <CounterPill value={count} />}
+      </NavLink>
+    );
+  }
 
   return (
-    <aside className="w-64 bg-ocean-900 text-white flex flex-col h-full shrink-0">
+    <aside className="w-60 bg-ocean-800 text-white flex flex-col h-full shrink-0">
       {/* Logo */}
-      <div className="flex items-center justify-between px-5 py-5 border-b border-ocean-800">
+      <div className="flex items-center justify-between px-5 py-5 border-b border-ocean-700">
         <Logo white size="lg" />
         {onClose && (
           <button onClick={onClose} className="md:hidden text-ocean-300 hover:text-white p-1" aria-label="Fechar">
@@ -167,69 +111,54 @@ export default function Sidebar({ onClose }) {
 
       {/* Info operador */}
       {operator?.name && (
-        <div className="px-4 py-3 border-b border-ocean-800 flex items-center gap-3">
+        <div className="px-4 py-3 border-b border-ocean-700 flex items-center gap-3">
           {operator.logo_url ? (
-            <img src={operator.logo_url} alt={operator.name} className="w-8 h-8 rounded-full object-cover shrink-0 bg-ocean-800" />
+            <img src={operator.logo_url} alt={operator.name} className="w-8 h-8 rounded-full object-cover shrink-0 bg-ocean-700" />
           ) : (
-            <div className="w-8 h-8 rounded-full bg-ocean-700 flex items-center justify-center shrink-0 text-xs font-display font-bold">
+            <div className="w-8 h-8 rounded-full bg-ocean-600 flex items-center justify-center shrink-0 text-xs font-display font-bold">
               {operator.name[0]}
             </div>
           )}
           <div className="min-w-0">
             <p className="text-sm font-display font-semibold text-white truncate">{operator.name}</p>
-            <p className="text-[10px] text-ocean-400 uppercase tracking-wide">{opType}</p>
+            <p className="text-[10px] text-ocean-300 uppercase tracking-wide">{opType}</p>
           </div>
         </div>
       )}
 
-      {/* Nav */}
-      <nav className="flex-1 overflow-y-auto py-3 px-3 space-y-1 sidebar-scroll">
-        {navItems.map(({ to, icon: Icon, label, end, requiredPlan, feature }) => {
-          const locked = requiredPlan && !canAccess(feature || requiredPlan);
-          const badge  = locked ? PLAN_BADGE[requiredPlan] : null;
-
-          if (locked) {
-            return (
-              <button
-                key={`${to}-${label}`}
-                type="button"
-                onClick={() => setUpgradeModal({ plan: requiredPlan, feature })}
-                className="w-full flex items-center gap-3 pl-3 pr-3 py-2.5 rounded-r-md border-l-[3px] border-transparent text-sm font-body font-medium text-ocean-600 hover:bg-ocean-800/50 hover:text-ocean-400 transition-colors"
-              >
-                <Icon size={17} strokeWidth={1.75} className="shrink-0" />
-                <span className="truncate flex-1 text-left">{label}</span>
-                {badge && (
-                  <span className={`text-[9px] font-mono font-bold px-1.5 py-0.5 rounded uppercase tracking-wide shrink-0 ${badge.cls}`}>
-                    {badge.label}
-                  </span>
-                )}
-                <Lock size={12} strokeWidth={1.75} className="shrink-0 text-ocean-600" />
-              </button>
-            );
-          }
-
+      {/* Nav agrupada por seccoes */}
+      <nav className="flex-1 overflow-y-auto py-3 px-3 sidebar-scroll">
+        {sections.map((section) => {
+          const collapsed = isCollapsed(section);
+          const listId = `nav-sec-${section.id}`;
           return (
-            <NavLink
-              key={`${to}-${label}`}
-              to={to}
-              end={end}
-              data-tour={TOUR_ANCHOR[to]}
-              className={({ isActive }) =>
-                `flex items-center gap-3 pl-3 pr-3 py-2.5 rounded-r-md border-l-[3px] text-sm font-body font-medium transition-colors ${
-                  isActive
-                    ? 'bg-ocean-800 text-white border-sand-500'
-                    : 'text-ocean-200 border-transparent hover:bg-ocean-800/60 hover:text-white'
-                }`
-              }
-            >
-              <Icon size={17} strokeWidth={1.75} className="shrink-0" />
-              <span className="truncate flex-1">{label}</span>
-            </NavLink>
+            <div key={section.id} className="mb-2">
+              <button
+                type="button"
+                aria-expanded={!collapsed}
+                aria-controls={listId}
+                onClick={() => setNavSectionCollapsed(section.id, !collapsed)}
+                className="w-full flex items-center justify-between px-3 py-1.5 text-[11px] font-display font-semibold tracking-wide text-ocean-300 hover:text-white transition-colors"
+              >
+                <span>{section.label}</span>
+                <ChevronDown
+                  size={14}
+                  strokeWidth={1.75}
+                  aria-hidden="true"
+                  className={`shrink-0 transition-transform ${collapsed ? '-rotate-90' : ''}`}
+                />
+              </button>
+              {!collapsed && (
+                <div id={listId} className="mt-0.5 space-y-0.5">
+                  {section.items.map(renderItem)}
+                </div>
+              )}
+            </div>
           );
         })}
       </nav>
 
-      {/* Upgrade modal (triggered from locked items) */}
+      {/* Upgrade modal (aberto a partir dos itens bloqueados) */}
       {upgradeModal && (
         <UpgradeModal
           plan={upgradeModal.plan}
@@ -238,41 +167,21 @@ export default function Sidebar({ onClose }) {
         />
       )}
 
-      {/* Footer */}
-      <div className="px-2 py-3 border-t border-ocean-800 space-y-0.5">
-        {slug && (
+      {/* Rodape */}
+      {slug && (
+        <div className="px-2 py-3 border-t border-ocean-700">
           <a
             href={`https://app.saldesk.cv/book/${slug}`}
             target="_blank"
             rel="noreferrer"
             data-tour="nav-site"
-            className="flex items-center gap-3 pl-3 pr-3 py-2.5 rounded-r-md border-l-[3px] border-transparent text-sm font-body font-medium text-sand-300 hover:bg-ocean-800/60 hover:border-sand-500/40 transition-colors"
+            className="flex items-center gap-3 pl-3 pr-3 py-2 rounded-r-md border-l-[3px] border-transparent text-sm font-body font-medium text-sand-300 hover:bg-ocean-700/60 hover:border-sand-500/40 transition-colors"
           >
             <ExternalLink size={17} strokeWidth={1.75} className="shrink-0" />
             <span>{siteLabel}</span>
           </a>
-        )}
-        <NavLink
-          to="/perfil"
-          className={({ isActive }) =>
-            `flex items-center gap-3 pl-3 pr-3 py-2.5 rounded-r-md border-l-[3px] text-sm font-body font-medium transition-colors ${
-              isActive
-                ? 'bg-ocean-800 text-white border-sand-500'
-                : 'text-ocean-300 border-transparent hover:bg-ocean-800/60 hover:text-white'
-            }`
-          }
-        >
-          <User size={17} strokeWidth={1.75} className="shrink-0" />
-          Perfil
-        </NavLink>
-        <button
-          onClick={handleLogout}
-          className="w-full flex items-center gap-3 pl-3 pr-3 py-2.5 rounded-r-md border-l-[3px] border-transparent text-sm font-body font-medium text-ocean-400 hover:bg-ocean-800/60 hover:text-white transition-colors"
-        >
-          <LogOut size={17} strokeWidth={1.75} className="shrink-0" />
-          Sair
-        </button>
-      </div>
+        </div>
+      )}
     </aside>
   );
 }

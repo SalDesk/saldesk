@@ -4,7 +4,7 @@ import { Lock, LogOut } from 'lucide-react';
 import useAuthStore from '../../store/authStore';
 import usePlan from '../../hooks/usePlan';
 import { UpgradeModal } from '../PlanGuard';
-import { TYPE_NAV, PLAN_BADGE } from './Sidebar';
+import { PLAN_BADGE, getNavSections } from './navConfig';
 
 const HIDDEN_IN_DRAWER = ['/', '/reservas', '/mensagens'];
 
@@ -15,7 +15,8 @@ export default function MoreDrawer({ open, onClose }) {
   const [upgradeModal, setUpgradeModal] = useState(null);
 
   const opType   = operator?.operator_type || 'hotel';
-  const navItems = (TYPE_NAV[opType] || TYPE_NAV.hotel)
+  const navItems = getNavSections(opType)
+    .flatMap(s => s.items)
     .filter(item => !HIDDEN_IN_DRAWER.includes(item.to));
 
   function handleItemClick(item) {
