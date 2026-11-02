@@ -130,6 +130,8 @@ export default function Sidebar({ onClose }) {
       <nav className="flex-1 overflow-y-auto py-3 px-3 sidebar-scroll">
         {sections.map((section) => {
           const collapsed = isCollapsed(section);
+          /* Seccao da rota ativa fica fixa aberta: o cabecalho nao grava estado */
+          const pinned = section.id === activeSectionId;
           const listId = `nav-sec-${section.id}`;
           return (
             <div key={section.id} className="mb-2">
@@ -137,8 +139,9 @@ export default function Sidebar({ onClose }) {
                 type="button"
                 aria-expanded={!collapsed}
                 aria-controls={listId}
-                onClick={() => setNavSectionCollapsed(section.id, !collapsed)}
-                className="w-full flex items-center justify-between px-3 py-1.5 text-[11px] font-display font-semibold tracking-wide text-ocean-300 hover:text-white transition-colors"
+                aria-disabled={pinned ? 'true' : undefined}
+                onClick={() => { if (!pinned) setNavSectionCollapsed(section.id, !collapsed); }}
+                className={`w-full flex items-center justify-between px-3 py-1.5 text-[11px] font-display font-semibold tracking-wide text-ocean-300 transition-colors ${pinned ? 'cursor-default' : 'hover:text-white'}`}
               >
                 <span>{section.label}</span>
                 <ChevronDown

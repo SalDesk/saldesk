@@ -60,6 +60,30 @@ describe('Sidebar agrupada', () => {
     expect(screen.getByText('Automações')).toBeInTheDocument();
   });
 
+  it('cabecalho da seccao ativa nao grava estado', () => {
+    renderSidebar('/reservas');
+    const cabecalho = screen.getByRole('button', { name: 'Operação' });
+    expect(cabecalho).toHaveAttribute('aria-disabled', 'true');
+
+    fireEvent.click(cabecalho);
+
+    expect(useUiStore.getState().navCollapsed.operacao).toBeUndefined();
+    expect(screen.getByRole('link', { name: /Reservas/ })).toBeInTheDocument();
+    expect(cabecalho).toHaveAttribute('aria-expanded', 'true');
+  });
+
+  it('cabecalho de seccao nao ativa recolhe e grava', () => {
+    renderSidebar('/reservas');
+    const cabecalho = screen.getByRole('button', { name: 'Clientes' });
+    expect(cabecalho).not.toHaveAttribute('aria-disabled', 'true');
+
+    fireEvent.click(cabecalho);
+
+    expect(useUiStore.getState().navCollapsed.clientes).toBe(true);
+    expect(cabecalho).toHaveAttribute('aria-expanded', 'false');
+    expect(screen.queryByText('Mensagens')).not.toBeInTheDocument();
+  });
+
   it('item bloqueado', () => {
     renderSidebar('/automacoes');
 
