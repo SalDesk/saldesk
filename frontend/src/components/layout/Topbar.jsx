@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  ChevronDown, Bell,
+  ChevronDown, Bell, Search,
   Calendar, XCircle, Star, MessageCircle, AlertTriangle, Utensils, Handshake,
   User, LogOut,
 } from 'lucide-react';
@@ -9,6 +9,7 @@ import useAuthStore from '../../store/authStore';
 import useUiStore from '../../store/uiStore';
 import LanguageToggle from '../shared/LanguageToggle';
 import Logo from '../shared/Logo';
+import CommandPalette from './CommandPalette';
 import api from '../../services/api';
 
 const TYPE_ICON = {
@@ -57,6 +58,7 @@ export default function Topbar() {
   const [profileOpen, setProfileOpen] = useState(false);
   const [notifs,      setNotifs]      = useState([]);
   const [loading,     setLoading]     = useState(false);
+  const [searchOpen,  setSearchOpen]  = useState(false);
   const panelRef    = useRef(null);
   const profileRef  = useRef(null);
 
@@ -102,6 +104,18 @@ export default function Topbar() {
     return () => document.removeEventListener('mousedown', handleClick);
   }, [profileOpen]);
 
+  /* Atalho Ctrl+K / Cmd+K abre a pesquisa */
+  useEffect(() => {
+    function handleKey(e) {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        setSearchOpen(true);
+      }
+    }
+    document.addEventListener('keydown', handleKey);
+    return () => document.removeEventListener('keydown', handleKey);
+  }, []);
+
   function handleLogout() {
     logout();
     navigate('/login');
@@ -141,8 +155,22 @@ export default function Topbar() {
     : '?';
 
   return (
-    <header className="h-16 bg-white border-b border-n-200 shadow-sm flex items-center justify-between px-6 shrink-0">
-      <div className="md:hidden"><Logo size="sm" /></div><div className="flex-1" />
+    <header className="h-14 bg-white border-b border-n-200 flex items-center justify-between gap-3 px-4 md:px-6 shrink-0">
+      <div className="md:hidden"><Logo size="sm" /></div>
+
+      {/* Pesquisa (Ctrl K): so o icone em ecras pequenos */}
+      <button
+        type="button"
+        onClick={() => setSearchOpen(true)}
+        aria-label="Pesquisar"
+        className="flex items-center gap-2 h-9 px-2.5 md:px-3 md:w-64 rounded-md text-n-500 md:border md:border-n-200 md:bg-n-50 hover:text-ocean-700 hover:bg-ocean-50 transition-colors"
+      >
+        <Search size={16} strokeWidth={1.75} aria-hidden="true" />
+        <span className="hidden md:block flex-1 text-left text-sm font-body text-n-400">Pesquisar…</span>
+        <kbd className="hidden md:block text-[10px] font-mono text-n-400 border border-n-200 rounded px-1.5 py-0.5 bg-white">Ctrl K</kbd>
+      </button>
+
+      <div className="flex-1" />
 
       <div className="flex items-center gap-3">
         <LanguageToggle />
@@ -255,6 +283,7 @@ export default function Topbar() {
           )}
         </div>
       </div>
+      <CommandPalette open={searchOpen} onClose={() => setSearchOpen(false)} />
     </header>
   );
 }
