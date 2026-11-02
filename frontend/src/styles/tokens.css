@@ -41,6 +41,9 @@
   --info:          #0D5470;
   --info-light:    #EBF7FB;
 
+  /* Superficie de fundo da app do operador */
+  --surface-app: #F1F4F6;
+
   /* Tipografia */
   --font-display: 'Sora', sans-serif;
   --font-body:    'DM Sans', sans-serif;

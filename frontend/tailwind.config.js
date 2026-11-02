@@ -1,3 +1,5 @@
+import plugin from 'tailwindcss/plugin';
+
 export default {
   content: ['./index.html', './src/**/*.{js,jsx}'],
   darkMode: 'class',
@@ -68,8 +70,13 @@ export default {
         sm: '0 1px 4px rgba(6,42,56,0.08)',
         md: '0 4px 16px rgba(6,42,56,0.10)',
         lg: '0 12px 40px rgba(6,42,56,0.14)',
+        'app-sm': '0 1px 2px rgba(6,42,56,0.06)',
       }
     }
   },
-  plugins: []
+  plugins: [
+    /* Variante app: -- so se aplica dentro do contentor data-ui="app" (ou no proprio),
+       para o redesenho da app do operador nao afectar os outros portais. */
+    plugin(({ addVariant }) => addVariant('app', '&:is([data-ui="app"], [data-ui="app"] *)')),
+  ]
 };
