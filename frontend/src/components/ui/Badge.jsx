@@ -19,6 +19,7 @@ export default function Badge({ variant = 'default', children, className = '' })
     <span
       className={[
         'inline-flex items-center px-2 py-0.5 rounded-xs text-xs font-body font-semibold uppercase tracking-wide',
+        'app:normal-case app:tracking-normal app:rounded-full app:px-2.5',
         variants[variant] ?? variants.default,
         className,
       ].join(' ')}

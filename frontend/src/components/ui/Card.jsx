@@ -4,6 +4,7 @@ export default function Card({ children, header, padding = 'p-6', className = ''
       className={[
         'bg-white dark:bg-n-800 rounded-md border border-n-200 dark:border-n-700',
         'shadow-sm',
+        'app:rounded-sm app:shadow-none app:border-n-200',
         className,
       ].join(' ')}
     >

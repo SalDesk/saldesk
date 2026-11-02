@@ -8,6 +8,7 @@ const Input = forwardRef(function Input(
     'w-full h-9 px-3 rounded-sm border text-sm font-body bg-n-100 text-n-900 dark:bg-n-800 dark:text-n-100',
     'placeholder:text-n-400 transition-colors',
     'focus:outline-none focus:ring-2 focus:ring-ocean-300 focus:border-ocean-700 focus:bg-white dark:focus:bg-n-800',
+    'app:bg-white app:text-[13px]',
     error ? 'border-error' : 'border-n-300 dark:border-n-600',
     props.disabled ? 'opacity-50 cursor-not-allowed' : '',
     className,
@@ -16,7 +17,7 @@ const Input = forwardRef(function Input(
   return (
     <div className="flex flex-col gap-1">
       {label && (
-        <label className="text-xs font-body font-bold uppercase tracking-wide text-n-600 dark:text-n-400">
+        <label className="text-xs font-body font-bold uppercase tracking-wide text-n-600 dark:text-n-400 app:normal-case app:tracking-normal app:text-[13px] app:text-n-700">
           {label}
           {required && <span className="text-error ml-0.5">*</span>}
         </label>
@@ -38,6 +39,7 @@ export const Textarea = forwardRef(function Textarea(
     'w-full px-3 py-2 rounded-sm border text-sm font-body bg-n-100 text-n-900 dark:bg-n-800 dark:text-n-100 resize-none',
     'placeholder:text-n-400 transition-colors',
     'focus:outline-none focus:ring-2 focus:ring-ocean-300 focus:border-ocean-700 focus:bg-white dark:focus:bg-n-800',
+    'app:bg-white app:text-[13px]',
     error ? 'border-error' : 'border-n-300 dark:border-n-600',
     props.disabled ? 'opacity-50 cursor-not-allowed' : '',
     className,
@@ -46,7 +48,7 @@ export const Textarea = forwardRef(function Textarea(
   return (
     <div className="flex flex-col gap-1">
       {label && (
-        <label className="text-xs font-body font-bold uppercase tracking-wide text-n-600 dark:text-n-400">
+        <label className="text-xs font-body font-bold uppercase tracking-wide text-n-600 dark:text-n-400 app:normal-case app:tracking-normal app:text-[13px] app:text-n-700">
           {label}
           {required && <span className="text-error ml-0.5">*</span>}
         </label>
@@ -65,6 +67,7 @@ export const Select = forwardRef(function Select(
   const baseClass = [
     'w-full h-9 px-3 rounded-sm border text-sm font-body bg-n-100 text-n-900 dark:bg-n-800 dark:text-n-100',
     'focus:outline-none focus:ring-2 focus:ring-ocean-300 focus:border-ocean-700 focus:bg-white dark:focus:bg-n-800',
+    'app:bg-white app:text-[13px]',
     error ? 'border-error' : 'border-n-300 dark:border-n-600',
     props.disabled ? 'opacity-50 cursor-not-allowed' : '',
     className,
@@ -73,7 +76,7 @@ export const Select = forwardRef(function Select(
   return (
     <div className="flex flex-col gap-1">
       {label && (
-        <label className="text-xs font-body font-bold uppercase tracking-wide text-n-600 dark:text-n-400">
+        <label className="text-xs font-body font-bold uppercase tracking-wide text-n-600 dark:text-n-400 app:normal-case app:tracking-normal app:text-[13px] app:text-n-700">
           {label}
           {required && <span className="text-error ml-0.5">*</span>}
         </label>

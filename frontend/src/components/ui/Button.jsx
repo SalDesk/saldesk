@@ -1,8 +1,8 @@
 import { Loader2 } from 'lucide-react';
 
 const variants = {
-  primary:   'bg-ocean-700 hover:bg-ocean-500 text-white border border-transparent',
-  secondary: 'bg-white hover:bg-n-50 text-n-700 border border-n-300 dark:bg-n-800 dark:hover:bg-n-700 dark:text-n-200 dark:border-n-600',
+  primary:   'bg-ocean-700 hover:bg-ocean-500 text-white border border-transparent app:bg-sand-500 app:text-ocean-900 app:hover:bg-sand-400',
+  secondary: 'bg-white hover:bg-n-50 text-n-700 border border-n-300 dark:bg-n-800 dark:hover:bg-n-700 dark:text-n-200 dark:border-n-600 app:border-n-300 app:text-n-800',
   ghost:     'bg-transparent hover:bg-ocean-50 text-ocean-700 border border-transparent dark:text-ocean-300 dark:hover:bg-n-800',
   danger:    'bg-error hover:bg-red-700 text-white border border-transparent',
   /* CTA de destaque sobre fundos escuros/foto -- ex. login em vidro fosco,
@@ -12,9 +12,9 @@ const variants = {
 };
 
 const sizes = {
-  sm: 'h-8 px-3 text-xs gap-1.5',
-  md: 'h-9 px-4 text-sm gap-2',
-  lg: 'h-11 px-6 text-sm gap-2',
+  sm: 'h-8 px-3 text-xs gap-1.5 app:rounded-[6px]',
+  md: 'h-9 px-4 text-sm gap-2 app:rounded-[6px]',
+  lg: 'h-11 px-6 text-sm gap-2 app:rounded-[6px]',
 };
 
 export default function Button({
