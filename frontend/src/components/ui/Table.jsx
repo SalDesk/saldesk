@@ -15,7 +15,7 @@ function compareValues(a, b) {
   return String(a ?? '').localeCompare(String(b ?? ''), undefined, { numeric: true, sensitivity: 'base' });
 }
 
-export default function Table({ columns, rows, loading, emptyMessage }) {
+export default function Table({ columns, rows, loading, emptyMessage, maxHeight }) {
   const t = useT();
   // Ordenacao local: coluna ativa e direcao ('asc' | 'desc'); sem coluna = ordem original
   const [sort, setSort] = useState({ key: null, dir: null });
@@ -46,7 +46,8 @@ export default function Table({ columns, rows, loading, emptyMessage }) {
   }
 
   return (
-    <div className="overflow-x-auto">
+    // maxHeight (classe Tailwind) da ao cabecalho fixo um contentor com scroll vertical
+    <div className={maxHeight ? `overflow-x-auto overflow-y-auto ${maxHeight}` : 'overflow-x-auto'}>
       <table className="w-full text-sm">
         <thead>
           <tr className="border-b border-n-200">
@@ -62,7 +63,7 @@ export default function Table({ columns, rows, loading, emptyMessage }) {
                 <th
                   key={col.key}
                   aria-sort={ariaSort}
-                  className={`sticky top-0 z-10 app:bg-white px-4 py-3 ${alignClass} text-xs font-body font-bold uppercase tracking-wide text-n-500 app:normal-case app:tracking-normal app:text-xs app:py-2`}
+                  className={`app:sticky app:top-0 app:z-10 app:bg-white px-4 py-3 ${alignClass} text-xs font-body font-bold uppercase tracking-wide text-n-500 app:normal-case app:tracking-normal app:text-xs app:py-2`}
                   style={{ width: col.width }}
                 >
                   {sortable ? (

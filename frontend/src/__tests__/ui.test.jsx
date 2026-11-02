@@ -92,9 +92,26 @@ describe('Table', () => {
     expect(screen.getByRole('columnheader').className).toContain('text-right');
   });
 
-  it('cabecalho fixo ao fazer scroll', () => {
+  it('cabecalho fixo so na app do operador', () => {
     render(<Table columns={cols} rows={rows} />);
-    expect(screen.getByRole('columnheader').className).toContain('sticky top-0');
+    const cls = screen.getByRole('columnheader').className;
+    expect(cls).toContain('app:sticky');
+    expect(cls).toContain('app:top-0');
+    expect(cls).not.toMatch(/(^|\s)sticky(\s|$)/);
+    expect(cls).not.toMatch(/(^|\s)top-0(\s|$)/);
+    expect(cls).not.toMatch(/(^|\s)z-10(\s|$)/);
+  });
+
+  it('maxHeight limita o wrapper e ativa o scroll vertical', () => {
+    const { container } = render(<Table columns={cols} rows={rows} maxHeight="max-h-40" />);
+    expect(container.firstChild.className).toContain('max-h-40');
+    expect(container.firstChild.className).toContain('overflow-y-auto');
+  });
+
+  it('sem maxHeight o wrapper nao tem overflow-y-auto', () => {
+    const { container } = render(<Table columns={cols} rows={rows} />);
+    expect(container.firstChild.className).not.toContain('overflow-y-auto');
+    expect(container.firstChild.className).toBe('overflow-x-auto');
   });
 
   it('vazia mostra emptyMessage', () => {
