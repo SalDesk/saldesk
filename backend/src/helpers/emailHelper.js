@@ -1,12 +1,16 @@
 const sgMail = require('@sendgrid/mail');
 const { supabaseAdmin } = require('../config/supabase');
+const {
+  classificarErro, proximaTentativa, serializarPayload, desserializarPayload, destinatarioEmTexto,
+} = require('./emailQueue');
 
 sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
-/* attachments: [{ filename, content: Buffer, contentType }] -- callers
+/* Pedido ao SendGrid a partir dos dados do email. Partilhado pelo envio normal e pelo reenvio automatico.
+   attachments: [{ filename, content: Buffer, contentType }] -- callers
    passam sempre um Buffer real (nunca base64 pre-codificado), a conversao
    para o formato que o SendGrid exige fica so aqui, num sitio unico. */
-async function enviarEmail({ to, subject, html, text, attachments }) {
+function montarMensagem({ to, subject, html, text, attachments }) {
   const finalHtml = html || `<p style="font-family:Arial,sans-serif;line-height:1.6">${(text || '').replace(/\n/g, '<br>')}</p>`;
   const finalText = text || (html ? html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim() : '');
 
@@ -24,49 +28,78 @@ async function enviarEmail({ to, subject, html, text, attachments }) {
   const toList = Array.isArray(to) ? to : [to];
   const jaIncluido = toList.some((t) => t?.toLowerCase() === bccEmail?.toLowerCase());
 
+  return {
+    to,
+    ...(jaIncluido ? {} : { bcc: bccEmail }),
+    from: { email: process.env.SENDGRID_FROM_EMAIL, name: 'SalDesk' },
+    subject,
+    text: finalText,
+    html: finalHtml,
+    ...(Array.isArray(attachments) && attachments.length ? {
+      attachments: attachments.map((a) => ({
+        filename: a.filename,
+        type: a.contentType || 'application/octet-stream',
+        content: a.content.toString('base64'),
+        disposition: 'attachment',
+      })),
+    } : {}),
+  };
+}
+
+/* err.message do @sendgrid/mail e so o texto generico do status HTTP
+   (ex. "Unauthorized" para um 401) -- o motivo real (ex. "Maximum
+   credits exceeded") so vem em err.response.body.errors, que nenhum
+   caller deste helper alguma vez logava. Reconstroi a mensagem para
+   que todo o "console.error(..., err.message)" ja existente no resto
+   do codigo passe a mostrar o motivo real sem precisar de tocar em
+   cada callsite. */
+function enriquecerErro(err) {
+  const detalhe = err.response?.body?.errors?.map((e) => e.message).join('; ');
+  if (detalhe && !String(err.message).includes(detalhe)) err.message = `${err.message}: ${detalhe}`;
+  return err;
+}
+
+/* Guarda o email que falhou, com o conteudo, para o worker o reenviar sozinho (ver services/emailRetryService.js).
+   Erros permanentes ficam registados mas nao se repetem. Nunca deixa uma falha a registar a falha derrubar o
+   comportamento existente do caller. */
+function registarFalha(args, kind, err) {
+  const { payload, anexosDescartados } = serializarPayload(args);
+  const classe = classificarErro(err);
+  const reenviavel = classe.retryable && !anexosDescartados;
+  supabaseAdmin.from('email_failures').insert({
+    context: args.subject || null,
+    to_email: destinatarioEmTexto(args.to),
+    error_message: err.message,
+    payload,
+    kind,
+    status: reenviavel ? 'pending' : 'permanent',
+    attempts: 1,
+    next_attempt_at: reenviavel ? proximaTentativa(1).toISOString() : null,
+    last_error: anexosDescartados ? 'anexos demasiado grandes para guardar: nao se reenvia' : err.message,
+  }).then(({ error: logErr }) => {
+    if (logErr) console.error('[EmailFailureLog] Erro ao registar falha de email:', logErr.message);
+  });
+}
+
+/* kind: 'transactional' (por omissao) ou 'alert' (alertas do proprio sistema: reenviam-se, mas nunca geram outro alerta). */
+async function enviarEmail({ to, subject, html, text, attachments, kind = 'transactional' }) {
+  const args = { to, subject, html, text, attachments };
   try {
-    await sgMail.send({
-      to,
-      ...(jaIncluido ? {} : { bcc: bccEmail }),
-      from: { email: process.env.SENDGRID_FROM_EMAIL, name: 'SalDesk' },
-      subject,
-      text: finalText,
-      html: finalHtml,
-      ...(Array.isArray(attachments) && attachments.length ? {
-        attachments: attachments.map((a) => ({
-          filename: a.filename,
-          type: a.contentType || 'application/octet-stream',
-          content: a.content.toString('base64'),
-          disposition: 'attachment',
-        })),
-      } : {}),
-    });
+    await sgMail.send(montarMensagem(args));
   } catch (err) {
-    /* err.message do @sendgrid/mail e so o texto generico do status HTTP
-       (ex. "Unauthorized" para um 401) -- o motivo real (ex. "Maximum
-       credits exceeded") so vem em err.response.body.errors, que nenhum
-       caller deste helper alguma vez logava. Reconstroi a mensagem para
-       que todo o "console.error(..., err.message)" ja existente no resto
-       do codigo passe a mostrar o motivo real sem precisar de tocar em
-       cada callsite. */
-    const detalhe = err.response?.body?.errors?.map((e) => e.message).join('; ');
-    if (detalhe) err.message = `${err.message}: ${detalhe}`;
-
-    /* Registo interno da falha -- ate agora isto so existia em
-       console.error, invisivel ao founder ate ele ir aos logs do servidor.
-       Ponto unico (todos os ~20 callers deste helper ganham isto de
-       graca). Nunca deixa uma falha a registar a falha derrubar o
-       comportamento existente do caller. */
-    supabaseAdmin.from('email_failures').insert({
-      context: subject || null,
-      to_email: to || null,
-      error_message: err.message,
-    }).then(({ error: logErr }) => {
-      if (logErr) console.error('[EmailFailureLog] Erro ao registar falha de email:', logErr.message);
-    });
-
+    enriquecerErro(err);
+    registarFalha(args, kind, err);
     throw err;
   }
 }
 
-module.exports = { enviarEmail };
+/* Reenvio a partir do conteudo guardado. Nao regista outra falha (quem chama actualiza a linha existente). */
+async function reenviarGuardado(payload) {
+  try {
+    await sgMail.send(montarMensagem(desserializarPayload(payload)));
+  } catch (err) {
+    throw enriquecerErro(err);
+  }
+}
+
+module.exports = { enviarEmail, reenviarGuardado, montarMensagem };

@@ -1850,18 +1850,23 @@ async function getSystemStats(req, res, next) {
     const mem = process.memoryUsage();
     const desde24h = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
 
-    const [{ error: dbErr }, sendgridCheck, { count: emailFailures24h }] = await Promise.all([
+    const emails = () => supabaseAdmin.from('email_failures').select('id', { count: 'exact', head: true }).eq('kind', 'transactional');
+    const [{ error: dbErr }, sendgridCheck, { count: emailsPendentes }, { count: emailsEsgotados }, { count: emailsRecuperados24h }] = await Promise.all([
       supabaseAdmin.from('operators').select('id').limit(1),
       checkSendgridReal(),
-      supabaseAdmin.from('email_failures').select('id', { count: 'exact', head: true }).gte('created_at', desde24h),
+      // Reenvio automatico (ver services/emailRetryService.js): por entregar, esgotados (sem alerta resolvido) e recuperados
+      emails().in('status', ['pending', 'sending']),
+      emails().in('status', ['abandoned', 'permanent']).gte('created_at', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()),
+      emails().eq('status', 'sent').gte('sent_at', desde24h),
     ]);
 
-    let sendgridError = sendgridCheck.error;
-    if (sendgridCheck.ok && emailFailures24h > 0) {
-      sendgridError = `Recuperado, mas ${emailFailures24h} email(s) falharam nas últimas 24h — confirma se foram reenviados.`;
-    } else if (!sendgridCheck.ok && emailFailures24h > 0) {
-      sendgridError = `${sendgridCheck.error} — ${emailFailures24h} email(s) falharam nas últimas 24h.`;
-    }
+    const partes = [];
+    if (!sendgridCheck.ok) partes.push(sendgridCheck.error);
+    if (emailsPendentes > 0) partes.push(`${emailsPendentes} email(s) por entregar: o sistema reenvia sozinho.`);
+    if (emailsEsgotados > 0) partes.push(`${emailsEsgotados} email(s) dos últimos 7 dias não foram entregues (tabela email_failures).`);
+    if (!partes.length && emailsRecuperados24h > 0) partes.push(`Recuperado: ${emailsRecuperados24h} email(s) tinham falhado e foram reenviados com sucesso nas últimas 24h.`);
+    const sendgridError = partes.join(' ') || sendgridCheck.error;
+    const sendgridOk = sendgridCheck.ok && !(emailsPendentes > 0) && !(emailsEsgotados > 0);
 
     return res.json({
       data: {
@@ -1879,7 +1884,7 @@ async function getSystemStats(req, res, next) {
           api:      { ok: true,        label: 'API' },
           database: { ok: !dbErr,      label: 'Supabase', error: dbErr?.message },
           redis:    { ok: isRedisAvailable(), label: 'Redis' },
-          sendgrid: { ok: sendgridCheck.ok, label: 'SendGrid', error: sendgridError },
+          sendgrid: { ok: sendgridOk, label: 'SendGrid', error: sendgridError },
           pm2:      { ...getPm2Status(), label: 'PM2' },
         },
       },
