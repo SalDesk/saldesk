@@ -1,9 +1,10 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { cleanup, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import Dashboard from '../pages/Dashboard';
 import useAuthStore from '../store/authStore';
+import useUiStore from '../store/uiStore';
 import { listUnits } from '../services/unitsService';
 import { listReservations } from '../services/reservationsService';
 import { getResumo } from '../services/financeiroService';
@@ -54,17 +55,33 @@ function servicosAFalhar() {
   api.get.mockReset().mockRejectedValue(erro);
 }
 
-async function renderDashboard(operator_type) {
+/* Texto que so o componente de cada tipo renderiza (pt, existente no codigo original) */
+const TEXTO_ACTIVITY   = 'Top tours do mes';
+const TEXTO_HOTEL      = 'Check-outs hoje';
+const TEXTO_RENTACAR   = 'Levantamentos hoje';
+const TEXTO_RESTAURANT = 'Covers do mes';
+const TEXTO_GENERICO   = 'Accoes Rapidas';
+const TODOS = [TEXTO_ACTIVITY, TEXTO_HOTEL, TEXTO_RENTACAR, TEXTO_RESTAURANT, TEXTO_GENERICO];
+
+function renderDashboard(operator_type) {
   useAuthStore.setState({ operator: { name: 'Teste', operator_type } });
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  render(
+  return render(
     <QueryClientProvider client={client}>
       <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <Dashboard />
       </MemoryRouter>
     </QueryClientProvider>
   );
-  return screen.findByText('Bem-vindo, Teste');
+}
+
+/* Espera o texto do tipo certo e confirma que nenhum dos outros aparece */
+async function esperaSoTipo(texto) {
+  expect(await screen.findByText('Bem-vindo, Teste')).toBeInTheDocument();
+  expect((await screen.findAllByText(texto)).length).toBeGreaterThan(0);
+  TODOS.filter((outro) => outro !== texto).forEach((outro) => {
+    expect(screen.queryByText(outro)).not.toBeInTheDocument();
+  });
 }
 
 describe('Dashboard (fumo por tipo de operador)', () => {
@@ -72,31 +89,44 @@ describe('Dashboard (fumo por tipo de operador)', () => {
     servicosVazios();
   });
 
-  it('activity mostra o titulo', async () => {
-    expect(await renderDashboard('activity')).toBeInTheDocument();
+  afterEach(() => {
+    /* desmonta antes de repor as stores, para nao haver rerender fora de act */
+    cleanup();
+    useAuthStore.setState({ operator: null });
+    useUiStore.setState({ lang: 'pt' });
   });
 
-  it('hotel mostra o titulo', async () => {
-    expect(await renderDashboard('hotel')).toBeInTheDocument();
+  it('activity mostra o dashboard de actividades', async () => {
+    renderDashboard('activity');
+    await esperaSoTipo(TEXTO_ACTIVITY);
   });
 
-  it('rentacar mostra o titulo', async () => {
-    expect(await renderDashboard('rentacar')).toBeInTheDocument();
+  it('hotel mostra o dashboard de hotel', async () => {
+    renderDashboard('hotel');
+    await esperaSoTipo(TEXTO_HOTEL);
   });
 
-  it('restaurant mostra o titulo', async () => {
-    expect(await renderDashboard('restaurant')).toBeInTheDocument();
+  it('rentacar mostra o dashboard de rent-a-car', async () => {
+    renderDashboard('rentacar');
+    await esperaSoTipo(TEXTO_RENTACAR);
+  });
+
+  it('restaurant mostra o dashboard de restaurante', async () => {
+    renderDashboard('restaurant');
+    await esperaSoTipo(TEXTO_RESTAURANT);
   });
 
   it('tipo em falta usa o generico', async () => {
-    expect(await renderDashboard(undefined)).toBeInTheDocument();
+    renderDashboard(undefined);
+    await esperaSoTipo(TEXTO_GENERICO);
   });
 
   it('servicos a falhar nao partem', async () => {
     servicosAFalhar();
-    expect(await renderDashboard('hotel')).toBeInTheDocument();
-    /* deixa assentar os pedidos falhados */
-    await new Promise((r) => setTimeout(r, 50));
-    expect(screen.getByText('Bem-vindo, Teste')).toBeInTheDocument();
+    renderDashboard('hotel');
+    await esperaSoTipo(TEXTO_HOTEL);
+    /* os pedidos rejeitados ja foram feitos e o componente continua a mostrar o seu texto */
+    await waitFor(() => expect(listUnits).toHaveBeenCalled());
+    await waitFor(() => expect(screen.getAllByText(TEXTO_HOTEL).length).toBeGreaterThan(0));
   });
 });
