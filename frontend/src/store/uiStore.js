@@ -12,6 +12,9 @@ const useUiStore = create(
          a pedido (botao "Rever tour" em Definicoes), independente do
          operators.tour_completed_at real. */
       tourForceStart: false,
+      /* Substituicoes explicitas do estado recolhido por id de seccao da
+         navegacao. undefined = usar o defaultCollapsed da seccao. */
+      navCollapsed: {},
       setLang: (lang) => set({ lang }),
       toggleSidebar: () => set((s) => ({ sidebarOpen: !s.sidebarOpen })),
       openModal: (id) => set({ activeModal: id }),
@@ -19,10 +22,12 @@ const useUiStore = create(
       setTheme: (theme) => set({ theme }),
       startTour: () => set({ tourForceStart: true }),
       clearTourForce: () => set({ tourForceStart: false }),
+      setNavSectionCollapsed: (id, collapsed) =>
+        set((s) => ({ navCollapsed: { ...s.navCollapsed, [id]: collapsed } })),
     }),
     {
       name: 'saldesk-ui',
-      partialize: (s) => ({ lang: s.lang, theme: s.theme }),
+      partialize: (s) => ({ lang: s.lang, theme: s.theme, navCollapsed: s.navCollapsed }),
     }
   )
 );
