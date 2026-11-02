@@ -332,12 +332,12 @@ export default function Login() {
         </div>
 
         {/* Lembrar e recuperar password: sempre na mesma linha */}
-        <div className="flex items-center justify-between gap-3 pt-0.5">
+        <div className="flex items-start justify-between gap-3 pt-0.5">
           {/* Remember me */}
-          <label className="flex items-center gap-2 cursor-pointer select-none min-w-0">
+          <label className="flex items-start gap-2 cursor-pointer select-none min-w-0">
             <input type="checkbox" checked={remember} onChange={e => setRemember(e.target.checked)}
-              className="w-4 h-4 accent-ocean-700 rounded-sm shrink-0" />
-            <span className="text-sm font-body text-n-700 truncate">{t('auth.rememberDevice')}</span>
+              className="w-4 h-4 mt-0.5 accent-ocean-700 rounded-sm shrink-0" />
+            <span className="text-sm font-body text-n-700 leading-snug">{t('auth.rememberDevice')}</span>
           </label>
 
           <button

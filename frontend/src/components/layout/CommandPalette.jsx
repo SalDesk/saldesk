@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { Search, Lock } from 'lucide-react';
 import useAuthStore from '../../store/authStore';
 import usePlan from '../../hooks/usePlan';
@@ -11,6 +11,7 @@ import { PLAN_BADGE, filterNavItems, getNavSections, isLocked } from './navConfi
 function PaletteBody({ onClose }) {
   const operator = useAuthStore((s) => s.operator);
   const navigate = useNavigate();
+  const location = useLocation();
   const { canAccess } = usePlan();
   const inputRef = useRef(null);
   const listRef = useRef(null);
@@ -25,6 +26,13 @@ function PaletteBody({ onClose }) {
     .map((section) => ({ ...section, items: filterNavItems(section.items, query) }))
     .filter((section) => section.items.length > 0);
   const flat = groups.flatMap((g) => g.items);
+
+  /* Se a navegacao mudar enquanto a palette esta aberta (ex.: "Ver planos" no
+     modal de upgrade), a palette fecha-se tambem */
+  const openKey = useRef(location.key);
+  useEffect(() => {
+    if (location.key !== openKey.current) onClose?.();
+  }, [location.key, onClose]);
 
   /* Foco automatico no campo ao abrir */
   useEffect(() => {
@@ -52,6 +60,7 @@ function PaletteBody({ onClose }) {
   }
 
   function handleKeyDown(e) {
+    /* Com o modal de upgrade aberto, e ele que trata do Esc (ouvinte no documento) */
     if (upgradeModal) return;
     if (e.key === 'Escape') {
       e.preventDefault();
@@ -86,6 +95,7 @@ function PaletteBody({ onClose }) {
       <div
         role="dialog"
         aria-modal="true"
+        data-command-palette
         aria-label="Pesquisar ecrãs"
         onKeyDown={handleKeyDown}
         className="w-full max-w-lg bg-white rounded-lg border border-n-200 shadow-xl overflow-hidden"

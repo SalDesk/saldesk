@@ -108,6 +108,11 @@ export default function Topbar() {
   useEffect(() => {
     function handleKey(e) {
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+        /* Com outro modal aberto (que nao a palette) o atalho nao faz nada */
+        const outroModal = Array.from(
+          document.querySelectorAll('[role="dialog"][aria-modal="true"]')
+        ).some((el) => !el.hasAttribute('data-command-palette'));
+        if (outroModal) return;
         e.preventDefault();
         setSearchOpen(true);
       }

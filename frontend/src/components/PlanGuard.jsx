@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Lock, ArrowRight, Zap } from 'lucide-react';
 import usePlan, { FEATURE_PLAN, FEATURE_DESCRIPTIONS, PLAN_LEVEL, PLAN_PRICES } from '../hooks/usePlan';
@@ -8,7 +9,9 @@ const PLAN_BADGE_CLASS = {
   pro:      'bg-sand-500',
 };
 
-function LockCard({ requiredPlan, feature, onVoltar }) {
+/* onNavigate (opcional): chamado ao seguir para os planos, para quem mostra o
+   cartao como sobreposicao o poder fechar. A guarda de rota nao o passa. */
+function LockCard({ requiredPlan, feature, onVoltar, onNavigate }) {
   const navigate = useNavigate();
   const label = PLAN_LABEL[requiredPlan] || requiredPlan;
   const desc  = FEATURE_DESCRIPTIONS[feature] || 'Funcionalidade disponivel num plano superior.';
@@ -40,7 +43,7 @@ function LockCard({ requiredPlan, feature, onVoltar }) {
 
       <div className="flex flex-col gap-2">
         <button
-          onClick={() => navigate('/definicoes?tab=facturacao')}
+          onClick={() => { navigate('/definicoes?tab=facturacao'); onNavigate?.(); }}
           className="flex items-center justify-center gap-2 w-full h-10 px-4 rounded-md bg-ocean-700 text-white text-sm font-body font-semibold hover:bg-ocean-500 transition-colors"
         >
           Ver planos de subscricao
@@ -59,12 +62,24 @@ function LockCard({ requiredPlan, feature, onVoltar }) {
 
 /* ── UpgradeModal — floating modal for Sidebar click ── */
 export function UpgradeModal({ plan: requiredPlan, feature, onClose }) {
+  /* Esc fecha o modal; a ref evita voltar a registar o ouvinte a cada render */
+  const onCloseRef = useRef(onClose);
+  useEffect(() => { onCloseRef.current = onClose; });
+
+  useEffect(() => {
+    function handleKey(e) {
+      if (e.key === 'Escape') onCloseRef.current?.();
+    }
+    document.addEventListener('keydown', handleKey);
+    return () => document.removeEventListener('keydown', handleKey);
+  }, []);
+
   return (
     <div
       className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
       onClick={(e) => { if (e.target === e.currentTarget) onClose?.(); }}
     >
-      <LockCard requiredPlan={requiredPlan} feature={feature} onVoltar={onClose} />
+      <LockCard requiredPlan={requiredPlan} feature={feature} onVoltar={onClose} onNavigate={onClose} />
     </div>
   );
 }

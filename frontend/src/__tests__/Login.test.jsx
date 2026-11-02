@@ -78,6 +78,20 @@ describe('Login', () => {
     expect(screen.getByText(t('auth.brandHeadline'))).toBeInTheDocument();
   });
 
+  it('o rotulo de lembrar dispositivo nao e truncado e fica na mesma linha do link', () => {
+    renderLogin();
+
+    const texto = screen.getByText(t('auth.rememberDevice'));
+    expect(texto.className).not.toContain('truncate');
+    expect(texto.className).toContain('leading-snug');
+
+    const linha = texto.closest('label').parentElement;
+    const esqueci = screen.getByRole('button', { name: t('auth.forgotPassword') });
+    expect(linha).toContainElement(esqueci);
+    expect(linha.className).toContain('items-start');
+    expect(esqueci.className).toContain('shrink-0');
+  });
+
   it('o botao de mostrar password tem nome acessivel e alterna o tipo', () => {
     renderLogin();
 

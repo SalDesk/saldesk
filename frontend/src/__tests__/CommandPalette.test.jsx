@@ -8,7 +8,14 @@ const navigate = vi.fn();
 
 vi.mock('react-router-dom', async (importOriginal) => {
   const actual = await importOriginal();
-  return { ...actual, useNavigate: () => navigate };
+  /* Regista a chamada mas navega mesmo, para o router mudar de local */
+  return {
+    ...actual,
+    useNavigate: () => {
+      const real = actual.useNavigate();
+      return (...args) => { navigate(...args); return real(...args); };
+    },
+  };
 });
 
 function renderPalette({ open = true, onClose = vi.fn() } = {}) {
@@ -88,6 +95,42 @@ describe('CommandPalette', () => {
     fireEvent.keyDown(campo(), { key: 'Enter' });
     expect(screen.getByText('Funcionalidade Pro')).toBeInTheDocument();
     expect(navigate).not.toHaveBeenCalled();
+  });
+
+  describe('ecra bloqueado (modal de upgrade)', () => {
+    beforeEach(() => {
+      useAuthStore.setState({ operator: { operator_type: 'activity', plan: 'starter' } });
+    });
+
+    function abrirBloqueado() {
+      const onClose = renderPalette();
+      escrever('automacoes');
+      fireEvent.keyDown(campo(), { key: 'Enter' });
+      expect(screen.getByText('Funcionalidade Pro')).toBeInTheDocument();
+      return onClose;
+    }
+
+    it('Ver planos fecha o modal e a palette', () => {
+      const onClose = abrirBloqueado();
+      fireEvent.click(screen.getByRole('button', { name: /Ver planos de subscricao/ }));
+
+      expect(navigate).toHaveBeenCalledWith('/definicoes?tab=facturacao');
+      expect(screen.queryByText('Funcionalidade Pro')).not.toBeInTheDocument();
+      expect(onClose).toHaveBeenCalled();
+    });
+
+    it('Esc fecha primeiro o modal e so depois a palette', () => {
+      const onClose = abrirBloqueado();
+
+      fireEvent.keyDown(campo(), { key: 'Escape' });
+      expect(screen.queryByText('Funcionalidade Pro')).not.toBeInTheDocument();
+      expect(screen.getByRole('dialog')).toBeInTheDocument();
+      expect(onClose).not.toHaveBeenCalled();
+      expect(campo()).toHaveFocus();
+
+      fireEvent.keyDown(campo(), { key: 'Escape' });
+      expect(onClose).toHaveBeenCalledTimes(1);
+    });
   });
 
   it('sem resultados', () => {
