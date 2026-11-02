@@ -33,7 +33,7 @@
 - Operador com tipo de operador desconhecido ou em falta: usa a navegacao de `hotel`, como hoje (testado na Tarefa 2).
 - Seccao recolhida que contem a rota ativa: abre sozinha, para o item ativo nunca ficar escondido (Tarefa 5).
 - Item bloqueado por plano (ex.: Automacoes no plano starter): continua visivel com selo e abre o `UpgradeModal`, nunca navega (Tarefa 5 e 6).
-- Pesquisa Ctrl K com acentos e maiusculas ("calendario", "FINANCEIRO", "gestao"): encontra "Calendário", "Financeiro" e itens da seccao Gestão (Tarefa 2).
+- Pesquisa Ctrl K com acentos e maiusculas ("calendario", "FINANCEIRO", "gestao"): encontra "Calendário" e "Financeiro"; a pesquisa e so por rotulo, por isso "gestao" nao devolve nada (Tarefa 2).
 - Falha das chamadas dos contadores (rede em baixo): a barra lateral renderiza sem contadores e sem erro na consola (Tarefa 4).
 - Login com bloqueio de conta ou erro de credenciais: as mensagens continuam visiveis e legiveis no fundo claro (Tarefa 8).
 
@@ -48,9 +48,9 @@
 - Modify: `src/components/layout/Layout.jsx` (atributo no contentor)
 
 **Interfaces:**
-- Produces: variante Tailwind `app:` = `[data-ui="app"] &`; atributo `data-ui="app"` no elemento raiz do `Layout`; tokens CSS `--surface-app: #F1F4F6` e os existentes `--success/--warning/--error/--info` (+ `-light`).
+- Produces: variante Tailwind `app:` = `&:is([data-ui="app"], [data-ui="app"] *)` (casa o proprio elemento com `data-ui` e os descendentes); atributo `data-ui="app"` no elemento raiz do `Layout`; tokens CSS `--surface-app: #F1F4F6` e os existentes `--success/--warning/--error/--info` (+ `-light`).
 
-- [ ] **Step 1: Registar a variante.** Em `tailwind.config.js` importar `plugin from 'tailwindcss/plugin'` e em `plugins` registar `plugin(({ addVariant }) => addVariant('app', '[data-ui="app"] &'))`.
+- [ ] **Step 1: Registar a variante.** Em `tailwind.config.js` importar `plugin from 'tailwindcss/plugin'` e em `plugins` registar `plugin(({ addVariant }) => addVariant('app', '&:is([data-ui="app"], [data-ui="app"] *)'))` (a forma `[data-ui="app"] &` nao serve: nao casa o proprio `Layout`, que leva o atributo e a classe `app:bg-...`).
 - [ ] **Step 2: Contentor.** No `Layout.jsx`, o `div` raiz passa a `data-ui="app"` e o fundo a `bg-n-50 app:bg-[var(--surface-app)]` (valor `#F1F4F6` do mockup aprovado).
 - [ ] **Step 3: Tokens.** Em `tokens.css` acrescentar `--surface-app: #F1F4F6;` em `:root`; `global.css` define `[data-ui="app"] { font-size: 14px; }` e `[data-ui="app"] table { font-variant-numeric: tabular-nums; }`.
 - [ ] **Step 4: Verificar.** Run: `npm run build`, depois `grep -c 'data-ui' dist/assets/*.css`. Expected: build sem erros e contagem maior que 0 num dos ficheiros CSS.
@@ -135,7 +135,7 @@ Comportamento: logo; cartao do operador (nome e tipo); por seccao, um cabecalho 
   - `mostra as cinco seccoes`: os cabecalhos Operação, Clientes, Gestão, Crescimento, Configuração existem.
   - `crescimento e configuracao comecam recolhidas`: `Marketing` nao esta no documento; apos clicar no cabecalho Crescimento, aparece; `useUiStore.getState().navCollapsed.crescimento === false`.
   - `seccao da rota ativa abre sozinha`: com `initialEntries={['/automacoes']}`, o item Automações esta visivel sem clicar.
-  - `item bloqueado`: no plano `starter`, Automações mostra o selo `Pro` e, ao clicar, aparece o `UpgradeModal` e a rota nao muda.
+  - `item bloqueado`: no plano `starter`, depois de expandir a seccao Crescimento (ou com `initialEntries={['/automacoes']}`), Automações mostra o selo `Pro` e, ao clicar, aparece o `UpgradeModal` e a rota nao muda.
   - `rodape`: existe o link `Ver o meu site` com `href` `https://app.saldesk.cv/book/kawa`; nao existem `Perfil` nem `Sair`.
   - `contador`: com `useNavCounters` mockado a devolver `{'/reservas': 12}`, o item Reservas mostra `9+`.
   - `tipo restaurante`: o item `/unidades` mostra `Mesas`.
