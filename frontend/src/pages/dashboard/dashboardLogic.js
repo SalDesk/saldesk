@@ -11,6 +11,23 @@ function asList(value) {
   return Array.isArray(value) ? value : [];
 }
 
+/* Entrada valida = objeto nao nulo */
+function isObject(value) {
+  return value !== null && typeof value === 'object';
+}
+
+/* Texto nao vazio ou '' */
+function textOf(value) {
+  return typeof value === 'string' ? value.trim() : '';
+}
+
+/* Numero finito ou NaN (null, '' e undefined contam como em falta) */
+function numberOf(value) {
+  if (value === null || value === undefined || value === '') return NaN;
+  const n = Number(value);
+  return Number.isFinite(n) ? n : NaN;
+}
+
 /* Reservas ja iniciadas (check_in <= hoje) com pagamento por regularizar */
 export function unpaidReservations(reservations, today) {
   return asList(reservations).filter(
@@ -25,27 +42,36 @@ export function unpaidReservations(reservations, today) {
 /* Constroi a lista ordenada de itens de atencao (critical, warning, info) */
 export function buildAttentionItems(input, t) {
   const src = input || {};
-  const weather = asList(src.weather);
+  const weather = asList(src.weather).filter(isObject);
   const docAlerts = asList(src.docAlerts);
   const maintenance = asList(src.maintenance);
   const unconfirmed = asList(src.unconfirmed);
   const pendingToday = asList(src.pendingToday);
   const unpaid = asList(src.unpaid);
-  const nearlyFull = asList(src.nearlyFull);
+  /* Datas quase cheias: so entradas com nome e capacidade; guests em falta conta como 0 */
+  const nearlyFull = asList(src.nearlyFull)
+    .filter((n) => isObject(n) && textOf(n.name) && !Number.isNaN(numberOf(n.capacity)))
+    .map((n) => ({
+      name: textOf(n.name),
+      guests: Number.isNaN(numberOf(n.guests)) ? 0 : numberOf(n.guests),
+      capacity: numberOf(n.capacity),
+    }));
   const cleaning = Number(src.cleaning) || 0;
 
   const items = [];
 
   /* Meteorologia: tours afectados */
   if (weather.length > 0) {
-    const first = weather[0] || {};
-    items.push({
+    const first = weather[0];
+    const detail = [textOf(first.date), textOf(first.label)].filter(Boolean).join(' ');
+    const item = {
       id: 'weather',
       severity: 'critical',
       title: t('dashboard.attention.weather', { n: weather.length }),
-      detail: `${first.date} ${first.label}`,
       to: '/meteorologia',
-    });
+    };
+    if (detail) item.detail = detail;
+    items.push(item);
   }
 
   /* Documentos expirados: um item por alerta */
@@ -66,13 +92,15 @@ export function buildAttentionItems(input, t) {
 
   /* Unidades em manutencao */
   if (maintenance.length > 0) {
-    items.push({
+    const names = maintenance.map((m) => textOf(m && m.name)).filter(Boolean).join(', ');
+    const item = {
       id: 'maintenance',
       severity: 'warning',
       title: t('dashboard.attention.maintenance', { n: maintenance.length }),
-      detail: maintenance.map((m) => (m && m.name) || '').join(', '),
       to: '/unidades',
-    });
+    };
+    if (names) item.detail = names;
+    items.push(item);
   }
 
   /* Reservas por confirmar */
@@ -115,13 +143,13 @@ export function buildAttentionItems(input, t) {
     });
   }
 
-  /* Datas quase cheias */
+  /* Datas quase cheias (so entradas validas, ver acima) */
   if (nearlyFull.length > 0) {
     items.push({
       id: 'nearly-full',
       severity: 'info',
       title: t('dashboard.attention.nearlyFull', { n: nearlyFull.length }),
-      detail: nearlyFull.map((n) => `${(n && n.name) || ''} ${n ? n.guests : ''}/${n ? n.capacity : ''}`).join('; '),
+      detail: nearlyFull.map((n) => `${n.name} ${n.guests}/${n.capacity}`).join('; '),
       to: '/calendario',
     });
   }

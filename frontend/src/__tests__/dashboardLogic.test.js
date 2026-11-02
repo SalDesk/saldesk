@@ -175,6 +175,100 @@ describe('buildAttentionItems', () => {
     ]);
   });
 
+  it('nearlyFull sem capacity nao gera item', () => {
+    expect(buildAttentionItems({ nearlyFull: [{ name: 'Tour A' }] }, t)).toEqual([]);
+  });
+
+  it('nearlyFull sem guests conta como 0', () => {
+    const items = buildAttentionItems({ nearlyFull: [{ name: 'Tour A', capacity: 10 }] }, t);
+    expect(items).toHaveLength(1);
+    expect(items[0].title).toBe('dashboard.attention.nearlyFull{"n":1}');
+    expect(items[0].detail).toBe('Tour A 0/10');
+  });
+
+  it('nearlyFull ignora entradas nulas, sem nome ou com NaN', () => {
+    const items = buildAttentionItems(
+      {
+        nearlyFull: [
+          null,
+          { guests: 5, capacity: 10 },
+          { name: '', guests: 5, capacity: 10 },
+          { name: 'C', guests: 5, capacity: NaN },
+          { name: 'D', guests: NaN, capacity: 6 },
+          { name: 'B', guests: 8, capacity: 10 },
+        ],
+      },
+      t
+    );
+    expect(items).toHaveLength(1);
+    expect(items[0].title).toBe('dashboard.attention.nearlyFull{"n":2}');
+    expect(items[0].detail).toBe('D 0/6; B 8/10');
+  });
+
+  it('nearlyFull [null, valida] tem n 1 e detalhe so da valida', () => {
+    const items = buildAttentionItems({ nearlyFull: [null, { name: 'B', guests: 8, capacity: 10 }] }, t);
+    expect(items[0].title).toBe('dashboard.attention.nearlyFull{"n":1}');
+    expect(items[0].detail).toBe('B 8/10');
+  });
+
+  it('weather so com date usa so a data no detalhe', () => {
+    const items = buildAttentionItems({ weather: [{ date: '2026-11-03' }] }, t);
+    expect(items[0].detail).toBe('2026-11-03');
+  });
+
+  it('weather so com label usa so a etiqueta no detalhe', () => {
+    const items = buildAttentionItems({ weather: [{ label: 'Chuva' }] }, t);
+    expect(items[0].detail).toBe('Chuva');
+  });
+
+  it('weather [{}] gera item sem a chave detail', () => {
+    const items = buildAttentionItems({ weather: [{}] }, t);
+    expect(items).toHaveLength(1);
+    expect(items[0].title).toBe('dashboard.attention.weather{"n":1}');
+    expect(items[0]).not.toHaveProperty('detail');
+  });
+
+  it('weather [null] nao gera item', () => {
+    expect(buildAttentionItems({ weather: [null] }, t)).toEqual([]);
+  });
+
+  it('weather ignora nulos: n conta so as entradas validas e detalhe vem da primeira valida', () => {
+    const items = buildAttentionItems(
+      { weather: [null, { date: '2026-11-05', label: 'Vento', toursCount: 1 }, { date: '2026-11-06', label: 'Chuva' }] },
+      t
+    );
+    expect(items[0].title).toBe('dashboard.attention.weather{"n":2}');
+    expect(items[0].detail).toBe('2026-11-05 Vento');
+  });
+
+  it('maintenance [{ name }, {}] tem detalhe exatamente igual ao nome e n 2', () => {
+    const items = buildAttentionItems({ maintenance: [{ name: 'Q1' }, {}] }, t);
+    expect(items[0].title).toBe('dashboard.attention.maintenance{"n":2}');
+    expect(items[0].detail).toBe('Q1');
+  });
+
+  it('maintenance sem nomes nao tem a chave detail', () => {
+    const items = buildAttentionItems({ maintenance: [{}, null] }, t);
+    expect(items).toHaveLength(1);
+    expect(items[0]).not.toHaveProperty('detail');
+  });
+
+  it('docAlerts mistos [warning, expired] usam o indice original nos ids', () => {
+    const items = buildAttentionItems(
+      { docAlerts: [{ type: 'warning', msg: 'W' }, { type: 'expired', msg: 'E' }] },
+      t
+    );
+    expect(items.map((i) => i.id)).toEqual(['doc-expired-1', 'doc-warning-0']);
+  });
+
+  it('docAlerts expired seguido de 4 warning: avisos com ids 1, 2, 3 (limite de 3)', () => {
+    const docAlerts = [{ type: 'expired', msg: 'E' }].concat(
+      Array.from({ length: 4 }, (_, i) => ({ type: 'warning', msg: 'W' + i }))
+    );
+    const items = buildAttentionItems({ docAlerts }, t);
+    expect(items.map((i) => i.id)).toEqual(['doc-expired-0', 'doc-warning-1', 'doc-warning-2', 'doc-warning-3']);
+  });
+
   it('reservas incompletas: pendingToday [{}] gera item com n 1 e nao lanca', () => {
     let items;
     expect(() => {
