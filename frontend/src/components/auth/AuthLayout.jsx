@@ -51,7 +51,7 @@ export default function AuthLayout({ children }) {
   }, []);
 
   return (
-    <div className="min-h-screen flex bg-white">
+    <div data-ui="app" className="min-h-screen flex bg-white">
       {/* ── Painel esquerdo — marca + fotos reais (so desktop, ver useIsDesktop) ── */}
       {isDesktop && (
       <div className="hidden lg:flex lg:w-[46%] xl:w-1/2 relative overflow-hidden bg-ocean-900 shrink-0">
@@ -143,7 +143,7 @@ export default function AuthLayout({ children }) {
         </div>
 
         <div className="flex-1 flex flex-col items-center justify-start lg:justify-center px-6 pb-6 pt-7 lg:py-10">
-          <div className="w-full max-w-[440px] -mt-9 sm:-mt-10 lg:mt-0 bg-white rounded-2xl shadow-lg lg:shadow-[0_1px_2px_rgba(6,42,56,0.04),0_12px_32px_rgba(6,42,56,0.08)] border border-transparent lg:border-n-100 p-6 sm:p-7 lg:p-10">
+          <div className="w-full max-w-[440px] -mt-9 sm:-mt-10 lg:mt-0 bg-white rounded-sm shadow-md lg:shadow-sm border border-transparent lg:border-n-200 p-6 sm:p-7 lg:p-10">
             {children}
           </div>
         </div>
