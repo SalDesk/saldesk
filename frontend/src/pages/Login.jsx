@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useId } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Shield, AlertTriangle, Lock, Eye, EyeOff, Mail, ArrowRight } from 'lucide-react';
 import useAuthStore, { setRememberDevice } from '../store/authStore';
@@ -51,9 +51,9 @@ function AuthField({ icon: Icon, right, error, className = '', ...props }) {
   );
 }
 
-function FieldLabel({ children }) {
+function FieldLabel({ htmlFor, children }) {
   return (
-    <label className="text-sm font-body font-medium text-n-700 mb-1.5 block">
+    <label htmlFor={htmlFor} className="text-sm font-body font-medium text-n-700 mb-1.5 block">
       {children}
     </label>
   );
@@ -77,6 +77,10 @@ export default function Login() {
   const [countdown,    setCountdown]    = useState(0);
   const [rateState,    setRateStateLocal] = useState({ count: 0, lockedUntil: 0 });
   const countdownRef = useRef(null);
+  /* ids que ligam cada etiqueta ao seu campo (nome acessivel) */
+  const emailId       = useId();
+  const passwordId    = useId();
+  const forgotEmailId = useId();
 
   const registeredOk = searchParams.get('registered') === '1';
   const resetOk      = searchParams.get('reset') === '1';
@@ -192,8 +196,9 @@ export default function Login() {
         </p>
         <form onSubmit={handleForgot} className="space-y-5">
           <div>
-            <FieldLabel>{t('auth.email')}</FieldLabel>
+            <FieldLabel htmlFor={forgotEmailId}>{t('auth.email')}</FieldLabel>
             <AuthField
+              id={forgotEmailId}
               icon={Mail} type="email" placeholder="nome@email.com"
               value={forgotEmail} onChange={e => setForgotEmail(e.target.value)}
               required autoComplete="email"
@@ -287,8 +292,9 @@ export default function Login() {
 
       <form onSubmit={handleLogin} className="space-y-5">
         <div>
-          <FieldLabel>{t('auth.email')}</FieldLabel>
+          <FieldLabel htmlFor={emailId}>{t('auth.email')}</FieldLabel>
           <AuthField
+            id={emailId}
             icon={Mail} type="email" placeholder="nome@email.com"
             value={form.email}
             onChange={e => setForm(p => ({ ...p, email: e.target.value }))}
@@ -299,8 +305,9 @@ export default function Login() {
 
         {/* Password with show/hide */}
         <div>
-          <FieldLabel>{t('auth.password')}</FieldLabel>
+          <FieldLabel htmlFor={passwordId}>{t('auth.password')}</FieldLabel>
           <AuthField
+            id={passwordId}
             icon={Lock}
             type={showPw ? 'text' : 'password'}
             placeholder="••••••••"
@@ -313,6 +320,8 @@ export default function Login() {
               <button
                 type="button"
                 onClick={() => setShowPw(p => !p)}
+                aria-label={showPw ? 'Ocultar password' : 'Mostrar password'}
+                aria-pressed={showPw}
                 className="absolute right-3.5 top-1/2 -translate-y-1/2 text-n-400 hover:text-ocean-700 transition-colors">
                 {showPw
                   ? <EyeOff size={16} strokeWidth={1.75} />

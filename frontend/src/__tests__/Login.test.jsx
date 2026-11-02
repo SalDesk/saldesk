@@ -43,8 +43,8 @@ function renderLogin(rota = '/login') {
 }
 
 function preencher(email = 'ana@hotel.cv', password = 'segredo123') {
-  fireEvent.change(screen.getByPlaceholderText('nome@email.com'), { target: { value: email } });
-  fireEvent.change(screen.getByPlaceholderText('••••••••'), { target: { value: password } });
+  fireEvent.change(screen.getByLabelText(t('auth.email')), { target: { value: email } });
+  fireEvent.change(screen.getByLabelText(t('auth.password')), { target: { value: password } });
 }
 
 function submeterLogin() {
@@ -64,8 +64,8 @@ describe('Login', () => {
   it('mostra os campos e as opcoes', () => {
     renderLogin();
 
-    expect(screen.getByPlaceholderText('nome@email.com')).toBeInTheDocument();
-    expect(screen.getByPlaceholderText('••••••••')).toBeInTheDocument();
+    expect(screen.getByLabelText(t('auth.email'))).toBeInTheDocument();
+    expect(screen.getByLabelText(t('auth.password'))).toBeInTheDocument();
     expect(screen.getByLabelText(t('auth.rememberDevice'))).toBeInTheDocument();
     expect(screen.getByRole('button', { name: t('auth.forgotPassword') })).toBeInTheDocument();
   });
@@ -78,14 +78,32 @@ describe('Login', () => {
     expect(screen.getByText(t('auth.brandHeadline'))).toBeInTheDocument();
   });
 
+  it('o botao de mostrar password tem nome acessivel e alterna o tipo', () => {
+    renderLogin();
+
+    const campo = screen.getByLabelText(t('auth.password'));
+    expect(campo).toHaveAttribute('type', 'password');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Mostrar password' }));
+    expect(campo).toHaveAttribute('type', 'text');
+
+    const ocultar = screen.getByRole('button', { name: 'Ocultar password' });
+    expect(ocultar).toHaveAttribute('aria-pressed', 'true');
+    fireEvent.click(ocultar);
+    expect(campo).toHaveAttribute('type', 'password');
+    expect(screen.getByRole('button', { name: 'Mostrar password' })).toHaveAttribute('aria-pressed', 'false');
+  });
+
   it('recuperar password', async () => {
     forgotPassword.mockResolvedValue({});
     renderLogin();
 
-    fireEvent.change(screen.getByPlaceholderText('nome@email.com'), { target: { value: 'ana@hotel.cv' } });
+    fireEvent.change(screen.getByLabelText(t('auth.email')), { target: { value: 'ana@hotel.cv' } });
     fireEvent.click(screen.getByRole('button', { name: t('auth.forgotPassword') }));
 
     expect(screen.getByText(t('auth.forgotTitle'))).toBeInTheDocument();
+    /* O campo de recuperacao tambem tem nome acessivel e vem preenchido */
+    expect(screen.getByLabelText(t('auth.email'))).toHaveValue('ana@hotel.cv');
     fireEvent.click(screen.getByRole('button', { name: t('auth.sendRecoveryLink') }));
 
     await waitFor(() => expect(forgotPassword).toHaveBeenCalledWith('ana@hotel.cv'));
