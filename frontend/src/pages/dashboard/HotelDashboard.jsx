@@ -1,16 +1,19 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  Euro, BookOpen, BarChart2, AlertTriangle, Clock, X as XIcon, Wrench, MoveRight, MoveLeft, BedDouble, Sparkles,
+  Euro, BookOpen, BarChart2, Clock, X as XIcon, MoveRight, MoveLeft, BedDouble, Sparkles,
 } from 'lucide-react';
 import { getResumo } from '../../services/financeiroService';
 import { listUnits } from '../../services/unitsService';
 import { listReservations } from '../../services/reservationsService';
 import { useT } from '../../i18n';
 import KpiCard from '../../components/financial/KpiCard';
+import AttentionPanel from '../../components/dashboard/AttentionPanel';
 import Badge from '../../components/ui/Badge';
+import EmptyState from '../../components/ui/EmptyState';
 import LoadingSpinner from '../../components/shared/LoadingSpinner';
 import { TODAY, mesAtual, HotelMap } from './shared';
+import { buildAttentionItems } from './dashboardLogic';
 
 /* ─── Hotel dashboard ───────────────────────────────────────── */
 
@@ -88,53 +91,17 @@ export default function HotelDashboard() {
     ) || null;
   }, [selected, todayRes]);
 
+  /* Itens do painel "Requer atencao" (manutencao, por confirmar, limpezas) */
+  const attentionItems = useMemo(() => buildAttentionItems({
+    maintenance: alertas.manutencao,
+    unconfirmed: alertas.semConfirmacao,
+    cleaning:    alertas.limpeza,
+  }, t), [alertas, t]);
+
   if (loading) return <div className="flex justify-center py-20"><LoadingSpinner size={32} /></div>;
 
   return (
-    <div className="space-y-6">
-
-      {/* Alertas */}
-      {(alertas.manutencao.length > 0 || alertas.semConfirmacao.length > 0 || alertas.limpeza > 0) && (
-        <div className="space-y-2">
-          {alertas.manutencao.length > 0 && (
-            <div className="flex items-start gap-3 px-4 py-3 bg-[#FEF2F2] border border-[#FCA5A5] rounded-md">
-              <Wrench size={15} strokeWidth={1.75} className="text-error shrink-0 mt-0.5" />
-              <p className="text-sm font-body text-error flex-1">
-                <span className="font-semibold">{t('dashboard.hotel.maintenanceAlert', { n: alertas.manutencao.length })}</span>{' '}
-                {alertas.manutencao.map(u => u.name).join(', ')}
-              </p>
-            </div>
-          )}
-          {alertas.semConfirmacao.length > 0 && (
-            <div className="flex items-center gap-3 px-4 py-3 bg-[#FFF7ED] border border-[#FDBA74] rounded-md">
-              <AlertTriangle size={15} strokeWidth={1.75} className="text-[#B45309] shrink-0" />
-              <p className="text-sm font-body text-[#B45309] flex-1">
-                <span className="font-semibold">{t('dashboard.hotel.noConfirmationAlert', { n: alertas.semConfirmacao.length })}</span>
-              </p>
-              <button
-                onClick={() => navigate('/reservas')}
-                className="text-xs font-semibold text-[#B45309] underline whitespace-nowrap shrink-0"
-              >
-                {t('dashboard.common.viewReservations')}
-              </button>
-            </div>
-          )}
-          {alertas.limpeza > 0 && (
-            <div className="flex items-center gap-3 px-4 py-3 bg-orange-50 border border-orange-200 rounded-md">
-              <Sparkles size={15} strokeWidth={1.75} className="text-orange-600 shrink-0" />
-              <p className="text-sm font-body text-orange-700 flex-1">
-                <span className="font-semibold">{t('dashboard.hotel.cleaningAlert', { n: alertas.limpeza })}</span>
-              </p>
-              <button
-                onClick={() => navigate('/housekeeping')}
-                className="text-xs font-semibold text-orange-700 underline whitespace-nowrap shrink-0"
-              >
-                {t('dashboard.hotel.housekeeping')}
-              </button>
-            </div>
-          )}
-        </div>
-      )}
+    <div className="space-y-4">
 
       {/* KPIs */}
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
@@ -145,41 +112,46 @@ export default function HotelDashboard() {
         <KpiCard label={t('dashboard.hotel.pendingReservations')} value={kpis.pendentes} icon={Clock}                       />
       </div>
 
-      {/* Mapa de quartos */}
-      <div className="bg-white rounded-lg border border-n-200 shadow-sm p-5">
-        <div className="flex items-center gap-2 mb-4">
-          <BedDouble size={15} strokeWidth={1.75} className="text-n-500" />
-          <h2 className="font-display font-semibold text-sm text-n-700 uppercase tracking-wide">
-            {t('dashboard.hotel.roomMap')}
-          </h2>
-          <button
-            onClick={() => navigate('/housekeeping')}
-            className="ml-auto text-xs font-body text-ocean-700 hover:underline flex items-center gap-1"
-          >
-            <Sparkles size={11} strokeWidth={1.75} />
-            {t('dashboard.hotel.housekeeping')}
-          </button>
-        </div>
-        <HotelMap units={units} todayRes={todayRes} onSelect={setSelected} />
+      {/* Mapa de quartos + Requer atencao */}
+      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)] gap-4 items-start">
+        <section className="bg-white border border-n-200 rounded-sm">
+          <header className="flex items-center gap-2 px-4 py-3 border-b border-n-200">
+            <BedDouble size={14} strokeWidth={1.75} className="text-n-500" aria-hidden="true" />
+            <h2 className="font-display font-semibold text-sm text-n-900">{t('dashboard.hotel.roomMap')}</h2>
+            <button
+              type="button"
+              onClick={() => navigate('/housekeeping')}
+              className="ml-auto text-xs font-body text-ocean-700 hover:underline flex items-center gap-1"
+            >
+              <Sparkles size={11} strokeWidth={1.75} aria-hidden="true" />
+              {t('dashboard.hotel.housekeeping')}
+            </button>
+          </header>
+          <div className="p-4">
+            <HotelMap units={units} todayRes={todayRes} onSelect={setSelected} />
+          </div>
+        </section>
+
+        <AttentionPanel items={attentionItems} />
       </div>
 
       {/* Check-ins + Check-outs */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <div className="bg-white rounded-lg border border-n-200 shadow-sm">
-          <div className="px-5 py-4 border-b border-n-100 flex items-center gap-2">
-            <MoveRight size={14} strokeWidth={1.75} className="text-[#1A7A4A]" />
-            <h2 className="font-display font-semibold text-sm text-n-700">{t('dashboard.hotel.checkinsToday')}</h2>
-            <span className="ml-auto text-xs font-body text-n-400">{checkinsHoje.length}</span>
-          </div>
+        <section className="bg-white border border-n-200 rounded-sm">
+          <header className="flex items-center gap-2 px-4 py-3 border-b border-n-200">
+            <MoveRight size={14} strokeWidth={1.75} className="text-[#1A7A4A]" aria-hidden="true" />
+            <h2 className="font-display font-semibold text-sm text-n-900">{t('dashboard.hotel.checkinsToday')}</h2>
+            <span className="ml-auto text-xs font-body text-n-500 tabular-nums">{checkinsHoje.length}</span>
+          </header>
           {checkinsHoje.length === 0 ? (
-            <p className="px-5 py-6 text-center text-xs font-body text-n-400">{t('dashboard.hotel.noCheckinToday')}</p>
+            <EmptyState icon={MoveRight} title={t('dashboard.hotel.noCheckinToday')} />
           ) : (
             <div className="divide-y divide-n-100">
               {checkinsHoje.map(r => (
-                <div key={r.id} className="px-5 py-3 flex items-center gap-3">
+                <div key={r.id} className="px-4 py-2.5 flex items-center gap-3">
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-display font-semibold text-n-900 truncate">{r.customer_name || '—'}</p>
-                    <p className="text-xs font-body text-n-400">
+                    <p className="text-[13px] font-display font-semibold text-n-900 truncate">{r.customer_name || '—'}</p>
+                    <p className="text-xs font-body text-n-500">
                       {units.find(u => u.id === r.unit_id)?.name || '—'} · {r.guests || 1} {t('dashboard.common.guestsSuffix')}
                     </p>
                   </div>
@@ -190,23 +162,23 @@ export default function HotelDashboard() {
               ))}
             </div>
           )}
-        </div>
+        </section>
 
-        <div className="bg-white rounded-lg border border-n-200 shadow-sm">
-          <div className="px-5 py-4 border-b border-n-100 flex items-center gap-2">
-            <MoveLeft size={14} strokeWidth={1.75} className="text-n-500" />
-            <h2 className="font-display font-semibold text-sm text-n-700">{t('dashboard.hotel.checkoutsToday')}</h2>
-            <span className="ml-auto text-xs font-body text-n-400">{checkoutsHoje.length}</span>
-          </div>
+        <section className="bg-white border border-n-200 rounded-sm">
+          <header className="flex items-center gap-2 px-4 py-3 border-b border-n-200">
+            <MoveLeft size={14} strokeWidth={1.75} className="text-n-500" aria-hidden="true" />
+            <h2 className="font-display font-semibold text-sm text-n-900">{t('dashboard.hotel.checkoutsToday')}</h2>
+            <span className="ml-auto text-xs font-body text-n-500 tabular-nums">{checkoutsHoje.length}</span>
+          </header>
           {checkoutsHoje.length === 0 ? (
-            <p className="px-5 py-6 text-center text-xs font-body text-n-400">{t('dashboard.hotel.noCheckoutToday')}</p>
+            <EmptyState icon={MoveLeft} title={t('dashboard.hotel.noCheckoutToday')} />
           ) : (
             <div className="divide-y divide-n-100">
               {checkoutsHoje.map(r => (
-                <div key={r.id} className="px-5 py-3 flex items-center gap-3">
+                <div key={r.id} className="px-4 py-2.5 flex items-center gap-3">
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-display font-semibold text-n-900 truncate">{r.customer_name || '—'}</p>
-                    <p className="text-xs font-body text-n-400">
+                    <p className="text-[13px] font-display font-semibold text-n-900 truncate">{r.customer_name || '—'}</p>
+                    <p className="text-xs font-body text-n-500">
                       {units.find(u => u.id === r.unit_id)?.name || '—'} · {r.guests || 1} {t('dashboard.common.guestsSuffix')}
                     </p>
                   </div>
@@ -215,7 +187,7 @@ export default function HotelDashboard() {
               ))}
             </div>
           )}
-        </div>
+        </section>
       </div>
 
       {/* Room detail overlay */}
