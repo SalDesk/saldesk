@@ -125,6 +125,22 @@
     "optional": "Opcional"
   },
   "dashboard": {
+    "attention": {
+      "title": "Requer atenção",
+      "allClear": "Tudo em ordem",
+      "open": "Abrir",
+      "weather": "{{n}} tour(s) afectado(s) pela meteorologia",
+      "maintenance": "{{n}} unidade(s) em manutenção",
+      "unconfirmed": "{{n}} reserva(s) por confirmar",
+      "pending": "{{n}} reserva(s) pendente(s) para hoje",
+      "unpaid": "{{n}} pagamento(s) por regularizar",
+      "cleaning": "{{n}} limpeza(s) por fazer",
+      "nearlyFull": "{{n}} data(s) quase cheia(s)"
+    },
+    "view": {
+      "today": "Hoje",
+      "summary": "Resumo"
+    },
     "title": "Dashboard",
     "revenue": "Receita",
     "occupancy": "Ocupacao",

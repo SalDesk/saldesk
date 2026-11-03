@@ -26,16 +26,16 @@ export default function KpiCard({
   const DeltaIcon  = isNeutral ? Minus : isPositive ? TrendingUp : TrendingDown;
   const deltaColor = isNeutral ? 'text-n-400' : isPositive ? 'text-[#1A7A4A]' : 'text-error';
   return (
-    <div className="bg-white rounded-lg border border-n-200 shadow-sm px-5 py-4 transition-all duration-200 hover:shadow-md hover:-translate-y-0.5">
+    <div className="bg-white rounded-lg border border-n-200 shadow-sm px-5 py-4 transition-all duration-200 hover:shadow-md hover:-translate-y-0.5 app:rounded-sm app:hover:translate-y-0 app:hover:shadow-sm">
       <div className="flex items-start justify-between gap-2 mb-3">
-        <p className="text-xs font-body font-bold uppercase tracking-wide text-n-500 leading-tight">{label}</p>
+        <p className="text-xs font-body font-bold uppercase tracking-wide text-n-500 leading-tight app:normal-case app:tracking-normal app:text-[13px] app:font-medium">{label}</p>
         {Icon && (
           <div className="w-9 h-9 rounded-md bg-ocean-50 flex items-center justify-center shrink-0">
             <Icon size={16} strokeWidth={1.75} className="text-ocean-700" />
           </div>
         )}
       </div>
-      <p className="font-display font-bold text-2xl tracking-tight text-n-900 mb-1 leading-tight">{formatted}</p>
+      <p className="font-display font-bold text-2xl tracking-tight text-n-900 mb-1 leading-tight app:tabular-nums">{formatted}</p>
       {sub && <p className="text-xs font-body text-n-400 mb-1">{sub}</p>}
       {delta != null && (
         <div className={`flex items-center gap-1 text-xs font-body ${deltaColor}`}>

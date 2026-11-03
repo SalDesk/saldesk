@@ -125,6 +125,22 @@
     "optional": "Optional"
   },
   "dashboard": {
+    "attention": {
+      "title": "Needs attention",
+      "allClear": "All clear",
+      "open": "Open",
+      "weather": "{{n}} tour(s) affected by weather",
+      "maintenance": "{{n}} unit(s) under maintenance",
+      "unconfirmed": "{{n}} booking(s) to confirm",
+      "pending": "{{n}} pending booking(s) today",
+      "unpaid": "{{n}} payment(s) outstanding",
+      "cleaning": "{{n}} cleaning(s) to do",
+      "nearlyFull": "{{n}} date(s) nearly full"
+    },
+    "view": {
+      "today": "Today",
+      "summary": "Summary"
+    },
     "title": "Dashboard",
     "revenue": "Revenue",
     "occupancy": "Occupancy",
