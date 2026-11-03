@@ -5,7 +5,7 @@ import de from '../i18n/de.json';
 import nl from '../i18n/nl.json';
 
 const LANGS = { pt, en, de, nl };
-const NAMESPACES = ['attention', 'view', 'summary'];
+const NAMESPACES = ['attention', 'view', 'summary', 'generic'];
 
 /* Lista os caminhos das folhas de um objeto (ex.: "a.b.c") */
 function leaves(node, prefix = '') {
@@ -35,6 +35,15 @@ describe('i18n dashboard', () => {
       'attention.unpaid', 'attention.cleaning', 'attention.nearlyFull',
       'view.today', 'view.summary',
     ].forEach((k) => expect(keys).toContain(k));
+  });
+
+  it('dashboard.generic tem as chaves do dashboard generico nas quatro linguas', () => {
+    const esperadas = ['coversToday', 'customersDesc', 'automationsDesc', 'financialDesc', 'unitsDesc'];
+    Object.entries(LANGS).forEach(([lang, dict]) => {
+      esperadas.forEach((k) => {
+        expect(typeof (dict.dashboard.generic || {})[k], `${lang} generic.${k}`).toBe('string');
+      });
+    });
   });
 
   NAMESPACES.forEach((ns) => {

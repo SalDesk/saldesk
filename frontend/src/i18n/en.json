@@ -277,6 +277,13 @@
       "tableAvailable": "Table available.",
       "noTablesRegistered": "No tables registered."
     },
+    "generic": {
+      "coversToday": "Covers today",
+      "customersDesc": "CRM with history and statistics",
+      "automationsDesc": "Automatic emails and WhatsApp",
+      "financialDesc": "Reports and exports",
+      "unitsDesc": "Manage rooms, activities, etc."
+    },
     "activity": {
       "badWeatherAlert": "Bad weather forecast on days with scheduled tours",
       "viewDetails": "View details",

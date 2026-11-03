@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  Euro, BookOpen, CalendarDays, Users, UtensilsCrossed, Star, AlertTriangle, Clock, X as XIcon,
+  Euro, BookOpen, CalendarDays, Users, UtensilsCrossed, Star, Clock, X as XIcon,
 } from 'lucide-react';
 import { getResumo } from '../../services/financeiroService';
 import { listUnits } from '../../services/unitsService';
@@ -9,23 +9,26 @@ import { listReservations } from '../../services/reservationsService';
 import api from '../../services/api';
 import { useT } from '../../i18n';
 import KpiCard from '../../components/financial/KpiCard';
+import AttentionPanel from '../../components/dashboard/AttentionPanel';
 import Badge from '../../components/ui/Badge';
+import EmptyState from '../../components/ui/EmptyState';
 import LoadingSpinner from '../../components/shared/LoadingSpinner';
 import { TODAY, mesAtual, CELL, unitStatus, parseVehicleMeta, TableMap, ZONE_KEYS } from './shared';
+import { buildAttentionItems } from './dashboardLogic';
 
 /* ─── Restaurant dashboard ──────────────────────────────────── */
 
 function TurnoSection({ label, reservations, units, emptyMsg }) {
   const t = useT();
   return (
-    <div className="bg-white rounded-lg border border-n-200 shadow-sm">
-      <div className="px-5 py-4 border-b border-n-100 flex items-center gap-2">
-        <Clock size={14} strokeWidth={1.75} className="text-n-500" />
-        <h2 className="font-display font-semibold text-sm text-n-700">{label}</h2>
-        <span className="ml-auto text-xs font-body text-n-400">{reservations.length}</span>
-      </div>
+    <section className="bg-white border border-n-200 rounded-sm">
+      <header className="flex items-center gap-2 px-4 py-3 border-b border-n-200">
+        <Clock size={14} strokeWidth={1.75} className="text-n-500" aria-hidden="true" />
+        <h2 className="font-display font-semibold text-sm text-n-900">{label}</h2>
+        <span className="ml-auto text-xs font-body text-n-500 tabular-nums">{reservations.length}</span>
+      </header>
       {reservations.length === 0 ? (
-        <p className="px-5 py-6 text-center text-xs font-body text-n-400">{emptyMsg}</p>
+        <EmptyState icon={Clock} title={emptyMsg} />
       ) : (
         <div className="divide-y divide-n-100">
           {reservations.map(r => {
@@ -35,10 +38,10 @@ function TurnoSection({ label, reservations, units, emptyMsg }) {
             let gm = {};
             try { gm = JSON.parse(r.notes_guest || '{}'); } catch {}
             return (
-              <div key={r.id} className="px-5 py-3 flex items-center gap-3">
+              <div key={r.id} className="px-4 py-2.5 flex items-center gap-3">
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-display font-semibold text-n-900 truncate">{r.customer_name || '—'}</p>
-                  <p className="text-xs font-body text-n-400">
+                  <p className="text-[13px] font-display font-semibold text-n-900 truncate">{r.customer_name || '—'}</p>
+                  <p className="text-xs font-body text-n-500">
                     {tbl} · {r.guests} {t('dashboard.common.pax')}{gm.ocasiao ? ` · ${gm.ocasiao}` : ''}
                   </p>
                 </div>
@@ -50,7 +53,7 @@ function TurnoSection({ label, reservations, units, emptyMsg }) {
           })}
         </div>
       )}
-    </div>
+    </section>
   );
 }
 
@@ -164,13 +167,11 @@ export default function RestaurantDashboard() {
     rating:       avgRating,
   }), [todayRes, monthRes, resumo, avgRating]);
 
-  const alerts = useMemo(() => {
-    const out = [];
-    const pendentes = todayRes.filter(r => r.status === 'pending');
-    if (pendentes.length > 0)
-      out.push({ msg: t('dashboard.restaurant.noConfirmationAlert', { n: pendentes.length }) });
-    return out;
-  }, [todayRes, t]);
+  /* Itens do painel "Requer atencao" (reservas pendentes de hoje) */
+  const attentionItems = useMemo(
+    () => buildAttentionItems({ pendingToday: todayRes.filter(r => r.status === 'pending') }, t),
+    [todayRes, t]
+  );
 
   const shifts = useMemo(() => {
     const a = [], j = [], o = [];
@@ -194,23 +195,7 @@ export default function RestaurantDashboard() {
   if (loading) return <div className="flex justify-center py-20"><LoadingSpinner size={32} /></div>;
 
   return (
-    <div className="space-y-6">
-
-      {/* Alerts */}
-      {alerts.length > 0 && (
-        <div className="space-y-2">
-          {alerts.map((a, i) => (
-            <div key={i} className="flex items-center gap-3 px-4 py-3 bg-[#FFF7ED] border border-[#FDBA74] rounded-md">
-              <AlertTriangle size={15} strokeWidth={1.75} className="text-[#B45309] shrink-0" />
-              <p className="text-sm font-body text-[#B45309] flex-1">{a.msg}</p>
-              <button onClick={() => navigate('/reservas')}
-                className="text-xs font-semibold text-[#B45309] underline shrink-0 whitespace-nowrap">
-                {t('dashboard.common.viewReservations')}
-              </button>
-            </div>
-          ))}
-        </div>
-      )}
+    <div className="space-y-4">
 
       {/* KPIs */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
@@ -220,19 +205,28 @@ export default function RestaurantDashboard() {
         <KpiCard label={t('dashboard.restaurant.avgRating')}         value={kpis.rating ? kpis.rating.toFixed(1) : '—'}  icon={Star}         />
       </div>
 
-      {/* Table map */}
-      <div className="bg-white rounded-lg border border-n-200 shadow-sm p-5">
-        <div className="flex items-center gap-2 mb-4">
-          <UtensilsCrossed size={15} strokeWidth={1.75} className="text-n-500" />
-          <h2 className="font-display font-semibold text-sm text-n-700 uppercase tracking-wide">
-            {t('dashboard.restaurant.tableMap')}
-          </h2>
-          <button onClick={() => navigate('/unidades')}
-            className="ml-auto text-xs font-body text-ocean-700 hover:underline">
-            {t('dashboard.restaurant.manageTables')}
-          </button>
-        </div>
-        <TableMap units={units} todayRes={todayRes} onSelect={setSelected} />
+      {/* Mapa de mesas + Requer atencao */}
+      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)] gap-4 items-start">
+        <section className="bg-white border border-n-200 rounded-sm">
+          <header className="flex items-center gap-2 px-4 py-3 border-b border-n-200">
+            <UtensilsCrossed size={14} strokeWidth={1.75} className="text-n-500" aria-hidden="true" />
+            <h2 className="font-display font-semibold text-sm text-n-900">
+              {t('dashboard.restaurant.tableMap')}
+            </h2>
+            <button
+              type="button"
+              onClick={() => navigate('/unidades')}
+              className="ml-auto text-xs font-body text-ocean-700 hover:underline"
+            >
+              {t('dashboard.restaurant.manageTables')}
+            </button>
+          </header>
+          <div className="p-4">
+            <TableMap units={units} todayRes={todayRes} onSelect={setSelected} />
+          </div>
+        </section>
+
+        <AttentionPanel items={attentionItems} />
       </div>
 
       {/* Turnos */}

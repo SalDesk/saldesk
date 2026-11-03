@@ -277,6 +277,13 @@
       "tableAvailable": "Mesa disponivel.",
       "noTablesRegistered": "Sem mesas registadas."
     },
+    "generic": {
+      "coversToday": "Covers hoje",
+      "customersDesc": "CRM com histórico e estatísticas",
+      "automationsDesc": "Emails e WhatsApp automáticos",
+      "financialDesc": "Relatórios e exportações",
+      "unitsDesc": "Gerir quartos, actividades, etc."
+    },
     "activity": {
       "badWeatherAlert": "Mau tempo previsto em dias com tours agendados",
       "viewDetails": "Ver detalhes",
