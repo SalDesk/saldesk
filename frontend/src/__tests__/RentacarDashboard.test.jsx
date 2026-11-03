@@ -43,10 +43,10 @@ function dataEmDias(dias) {
 }
 
 const ZERO = { receita: 0, num_reservas: 0, valor_medio: 0, taxa_ocupacao: 0 };
-function resumo(atual = {}) {
+function resumo(atual = {}, anterior = {}) {
   return {
     atual: { ...ZERO, ...atual },
-    anterior: { ...ZERO },
+    anterior: { ...ZERO, ...anterior },
     variacao: { ...ZERO },
   };
 }
@@ -207,6 +207,36 @@ describe('RentacarDashboard (Hoje)', () => {
     expect(screen.getByText('Em manutencao')).toBeInTheDocument();
     expect(screen.getByText('Levantamentos hoje')).toBeInTheDocument();
     expect(screen.getByText('Devolucoes hoje')).toBeInTheDocument();
+  });
+
+  it('a receita mostra a variacao face ao mes anterior', async () => {
+    carregaServicos({ res: resumo({ receita: 1200 }, { receita: 1000 }) });
+    renderRentacar();
+    expect(await screen.findByText(/^€1\s?200$/)).toBeInTheDocument();
+    expect(screen.getByText('+€200')).toBeInTheDocument();
+    expect(screen.getByText('face ao mês anterior')).toBeInTheDocument();
+  });
+
+  it('sem mes anterior a receita nao mostra variacao', async () => {
+    carregaServicos({ res: { atual: { receita: 500 } } });
+    renderRentacar();
+    expect(await screen.findByText('€500')).toBeInTheDocument();
+    expect(screen.queryByText('face ao mês anterior')).not.toBeInTheDocument();
+  });
+
+  it('uma chamada a falhar nao apaga os dados das outras', async () => {
+    const unidades = [viatura({ plate: 'E-11-AB', seguro_expiry: dataEmDias(-1) })];
+    const levanta = reserva({ id: 'c1', status: 'confirmed', customer_name: 'Ana Levanta' });
+    carregaServicos({ units: unidades, hoje: [levanta] });
+    /* so a lista do mes falha */
+    listReservations.mockReset().mockImplementation(async ({ from, to }) => {
+      if (from === HOJE && to === HOJE) return [levanta];
+      throw new Error('falha de rede');
+    });
+    renderRentacar();
+    expect(await screen.findByText('Ana Levanta')).toBeInTheDocument();
+    expect(screen.getByText('E-11-AB: Seguro expirado')).toBeInTheDocument();
+    expect(screen.queryByText('Tudo em ordem')).not.toBeInTheDocument();
   });
 
   it('servicos a falhar mostram estados vazios sem erro', async () => {

@@ -53,10 +53,10 @@ function normalizaResumo(r) {
 /* Cartao com titulo, usado nos tres blocos da vista */
 function Bloco({ icon: Icon, title, action, children }) {
   return (
-    <section className="bg-white rounded-lg border border-n-200 shadow-sm">
-      <div className="px-5 py-4 border-b border-n-100 flex items-center gap-2">
+    <section className="bg-white border border-n-200 rounded-sm">
+      <div className="px-4 py-3 border-b border-n-200 flex items-center gap-2">
         <Icon size={14} strokeWidth={1.75} className="text-n-500" />
-        <h2 className="font-display font-semibold text-sm text-n-700">{title}</h2>
+        <h2 className="font-display font-semibold text-sm text-n-900">{title}</h2>
         {action}
       </div>
       {children}
@@ -178,7 +178,7 @@ export default function ResumoView() {
               {topServicos.map((s, idx) => (
                 <div key={`${s.name}-${idx}`} className="px-5 py-3 flex items-center gap-3">
                   <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-display font-bold shrink-0 ${
-                    idx === 0 ? 'bg-sand-300 text-sand-700' : idx === 1 ? 'bg-n-100 text-n-600' : 'bg-n-50 text-n-400'
+                    idx === 0 ? 'bg-sand-300 text-sand-600' : idx === 1 ? 'bg-n-100 text-n-600' : 'bg-n-50 text-n-400'
                   }`}>{idx + 1}</span>
                   <div className="flex-1 min-w-0">
                     <p className="text-xs font-display font-semibold text-n-900 truncate">{s.name}</p>

@@ -47,7 +47,11 @@ export default function GenericDashboard() {
   }, []);
 
   useEffect(() => {
-    Promise.all([listUnits(), listReservations({ from: TODAY, to: TODAY })])
+    /* Cada chamada falha para o seu valor vazio: uma falha nao apaga as outras */
+    Promise.all([
+      listUnits().catch(() => []),
+      listReservations({ from: TODAY, to: TODAY }).catch(() => []),
+    ])
       .then(([u, r]) => { setUnits(u || []); setTodayRes(r || []); })
       .catch(() => {})
       .finally(() => setMapLoading(false));
@@ -69,6 +73,7 @@ export default function GenericDashboard() {
       const n = todayRes.filter(r => ['pending', 'confirmed', 'checked_in'].includes(r.status)).length;
       return { label: t('dashboard.restaurant.reservationsToday'), value: n, icon: Utensils };
     }
+    /* Formato numero: o traco como texto e aceite quando ainda nao ha dados */
     return { label: t('dashboard.reservations'), value: atual?.num_reservas ?? '—', icon: BookOpen };
   }, [opType, todayRes, atual, t]);
 
@@ -87,8 +92,14 @@ export default function GenericDashboard() {
       const covers = todayRes.filter(r => ['confirmed', 'checked_in'].includes(r.status)).reduce((s, r) => s + (r.guests || 0), 0);
       return { label: t('dashboard.generic.coversToday'), value: covers, icon: Users };
     }
-    return { label: t('dashboard.occupancy'), value: atual?.taxa_ocupacao ?? '—', format: 'percent', icon: BarChart2, delta: v?.taxa_ocupacao };
+    return { label: t('dashboard.occupancy'), value: atual?.taxa_ocupacao ?? null, format: 'percent', icon: BarChart2, delta: v?.taxa_ocupacao };
   }, [opType, units, todayRes, atual, v, t]);
+
+  /* Variacao da receita em euros (atual - anterior); sem mes anterior nao ha variacao.
+     variacao.receita do backend e uma percentagem, por isso nao serve aqui */
+  const receitaDelta = resumo?.atual && resumo?.anterior
+    ? Number(resumo.atual.receita || 0) - Number(resumo.anterior.receita || 0)
+    : undefined;
 
   const mapSection = opType ? MAP_SECTIONS[opType] : null;
   const MapComp    = mapSection?.Component ?? null;
@@ -98,7 +109,7 @@ export default function GenericDashboard() {
 
       {/* KPIs */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <KpiCard label={t('dashboard.revenue')} value={atual?.receita ?? '—'} delta={v?.receita} deltaLabel={t('dashboard.vsLastMonth')} icon={Euro} format="euro" />
+        <KpiCard label={t('dashboard.revenue')} value={atual?.receita ?? null} delta={receitaDelta} deltaLabel={t('dashboard.vsLastMonth')} icon={Euro} format="euro" />
         <KpiCard label={kpi2.label} value={kpi2.value} icon={kpi2.icon} />
         <KpiCard label={kpi3.label} value={kpi3.value} delta={kpi3.delta} icon={kpi3.icon} format={kpi3.format} />
       </div>

@@ -53,11 +53,12 @@ describe('buildAttentionItems', () => {
       { weather: [{ date: '2026-11-03', label: 'Vento forte', toursCount: 2 }, { date: '2026-11-04', label: 'Chuva', toursCount: 1 }] },
       t
     );
+    /* n e o total de tours afectados (2 + 1), nao o numero de dias */
     expect(items).toEqual([
       {
         id: 'weather',
         severity: 'critical',
-        title: 'dashboard.attention.weather{"n":2}',
+        title: 'dashboard.attention.weather{"n":3}',
         detail: '2026-11-03 Vento forte',
         to: '/meteorologia',
       },
@@ -232,13 +233,43 @@ describe('buildAttentionItems', () => {
     expect(buildAttentionItems({ weather: [null] }, t)).toEqual([]);
   });
 
-  it('weather ignora nulos: n conta so as entradas validas e detalhe vem da primeira valida', () => {
+  it('weather ignora nulos: n soma os tours das entradas validas e detalhe vem da primeira valida', () => {
     const items = buildAttentionItems(
       { weather: [null, { date: '2026-11-05', label: 'Vento', toursCount: 1 }, { date: '2026-11-06', label: 'Chuva' }] },
       t
     );
-    expect(items[0].title).toBe('dashboard.attention.weather{"n":2}');
+    expect(items[0].title).toBe('dashboard.attention.weather{"n":1}');
     expect(items[0].detail).toBe('2026-11-05 Vento');
+  });
+
+  it('weather sem toursCount em nenhuma entrada conta as entradas validas', () => {
+    const items = buildAttentionItems(
+      { weather: [null, { date: '2026-11-05', label: 'Vento' }, { date: '2026-11-06', label: 'Chuva' }] },
+      t
+    );
+    expect(items[0].title).toBe('dashboard.attention.weather{"n":2}');
+  });
+
+  it('weather com toursCount misto soma so os numeros finitos nao negativos', () => {
+    const items = buildAttentionItems(
+      {
+        weather: [
+          { date: '2026-11-05', toursCount: 2 },
+          { date: '2026-11-06', toursCount: '3' },
+          { date: '2026-11-07', toursCount: -4 },
+          { date: '2026-11-08', toursCount: NaN },
+          { date: '2026-11-09', toursCount: 'abc' },
+          { date: '2026-11-10' },
+        ],
+      },
+      t
+    );
+    expect(items[0].title).toBe('dashboard.attention.weather{"n":5}');
+  });
+
+  it('weather com toursCount zero em todas as entradas mostra n 0', () => {
+    const items = buildAttentionItems({ weather: [{ date: '2026-11-05', toursCount: 0 }] }, t);
+    expect(items[0].title).toBe('dashboard.attention.weather{"n":0}');
   });
 
   it('maintenance [{ name }, {}] tem detalhe exatamente igual ao nome e n 2', () => {

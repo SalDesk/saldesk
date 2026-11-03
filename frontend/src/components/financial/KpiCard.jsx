@@ -5,10 +5,24 @@ function fmtMoney(value, currency) {
   if (currency === 'CVE') return `${Math.round(n * EUR_CVE).toLocaleString('pt-PT')} CVE`;
   return `€${Math.round(n).toLocaleString('pt-PT')}`;
 }
+/* Numero finito ou null (null, undefined, texto como '—' e NaN contam como em falta) */
+function toFinite(value) {
+  if (value == null) return null;
+  const n = Number(value);
+  return Number.isFinite(n) ? n : null;
+}
 function fmtDelta(delta, format, currency) {
   if (delta == null) return '';
   const prefix = delta > 0 ? '+' : '';
-  if (format === 'euro') return `${prefix}${fmtMoney(delta, currency)}`;
+  if (format === 'euro') {
+    /* Em euro o sinal vai antes do simbolo: +€10 / -€10 */
+    if (currency !== 'CVE') {
+      const n = Math.round(Number(delta || 0));
+      const sinal = n > 0 ? '+' : n < 0 ? '-' : '';
+      return `${sinal}${fmtMoney(Math.abs(n), currency)}`;
+    }
+    return `${prefix}${fmtMoney(delta, currency)}`;
+  }
   if (format === 'percent') return `${prefix}${Number(delta).toFixed(1)} p.p.`;
   return `${prefix}${Number(delta).toFixed(0)}`;
 }
@@ -17,9 +31,11 @@ export default function KpiCard({
   icon: Icon, format = 'number', currency = 'EUR',
   sub,
 }) {
+  /* Valor em falta (null, undefined, '—', NaN) mostra o traco em euro e percentagem */
+  const finite = toFinite(value);
   const formatted =
-    format === 'euro'    ? fmtMoney(value, currency) :
-    format === 'percent' ? `${Number(value || 0).toFixed(1)}%` :
+    format === 'euro'    ? (finite == null ? '—' : fmtMoney(finite, currency)) :
+    format === 'percent' ? (finite == null ? '—' : `${finite.toFixed(1)}%`) :
                            String(value ?? 0);
   const isPositive = delta > 0;
   const isNeutral  = delta === 0 || delta == null;

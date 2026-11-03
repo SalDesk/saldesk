@@ -60,14 +60,20 @@ export function buildAttentionItems(input, t) {
 
   const items = [];
 
-  /* Meteorologia: tours afectados */
+  /* Meteorologia: tours afectados.
+     n e a soma dos toursCount validos (negativos e NaN contam 0); sem nenhum
+     toursCount valido, cai para o numero de entradas */
   if (weather.length > 0) {
     const first = weather[0];
+    const counts = weather.map((w) => numberOf(w.toursCount)).filter((c) => !Number.isNaN(c));
+    const toursAffected = counts.length > 0
+      ? counts.reduce((sum, c) => sum + Math.max(0, c), 0)
+      : weather.length;
     const detail = [textOf(first.date), textOf(first.label)].filter(Boolean).join(' ');
     const item = {
       id: 'weather',
       severity: 'critical',
-      title: t('dashboard.attention.weather', { n: weather.length }),
+      title: t('dashboard.attention.weather', { n: toursAffected }),
       to: '/meteorologia',
     };
     if (detail) item.detail = detail;

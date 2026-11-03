@@ -39,11 +39,12 @@ export default function HotelDashboard() {
   const [selected, setSelected] = useState(null);
 
   useEffect(() => {
+    /* Cada chamada falha para o seu valor vazio: uma falha nao apaga as outras */
     Promise.all([
-      listUnits(),
-      listReservations({ from: TODAY, to: TODAY }),
-      listReservations({ from: periodo.inicio, to: periodo.fim }),
-      getResumo(periodo.inicio, periodo.fim),
+      listUnits().catch(() => []),
+      listReservations({ from: TODAY, to: TODAY }).catch(() => []),
+      listReservations({ from: periodo.inicio, to: periodo.fim }).catch(() => []),
+      getResumo(periodo.inicio, periodo.fim).catch(() => null),
     ])
       .then(([u, tRes, mRes, res]) => {
         setUnits(u || []);
@@ -63,6 +64,10 @@ export default function HotelDashboard() {
     return {
       ocupacao:  pct,
       receita:   resumo?.atual?.receita ?? 0,
+      /* Sem mes anterior na resposta nao ha variacao a mostrar */
+      receitaDelta: resumo?.atual && resumo?.anterior
+        ? Number(resumo.atual.receita || 0) - Number(resumo.anterior.receita || 0)
+        : undefined,
       checkins:  todayRes.filter(r => r.check_in  === TODAY && ['pending', 'confirmed'].includes(r.status)).length,
       checkouts: todayRes.filter(r => r.check_out === TODAY && r.status === 'checked_in').length,
       pendentes: monthRes.filter(r => r.status === 'pending').length,
@@ -106,7 +111,7 @@ export default function HotelDashboard() {
       {/* KPIs */}
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
         <KpiCard label={t('dashboard.hotel.occupancyToday')}      value={kpis.ocupacao}  format="percent" icon={BarChart2}  />
-        <KpiCard label={t('dashboard.hotel.revenueMonth')}        value={kpis.receita}   format="euro"    icon={Euro}       />
+        <KpiCard label={t('dashboard.hotel.revenueMonth')}        value={kpis.receita}   delta={kpis.receitaDelta} deltaLabel={t('dashboard.summary.vsPrevMonth')} format="euro" icon={Euro} />
         <KpiCard label={t('dashboard.hotel.checkinsToday')}       value={kpis.checkins}  icon={MoveRight}                   />
         <KpiCard label={t('dashboard.hotel.checkoutsToday')}      value={kpis.checkouts} icon={MoveLeft}                    />
         <KpiCard label={t('dashboard.hotel.pendingReservations')} value={kpis.pendentes} icon={Clock}                       />

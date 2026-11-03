@@ -80,13 +80,21 @@ export default function ActivityDashboard() {
   const [wxAlerts,     setWxAlerts]     = useState([]);
 
   useEffect(() => {
+    /* Cada chamada falha para o seu valor vazio: uma falha nao apaga as outras.
+       /reviews/stats devolve { total, average, distribution }; sem avaliacoes
+       (total 0) a media nao existe */
     Promise.all([
-      listUnits(),
-      listReservations({ from: TODAY, to: TODAY }),
-      listReservations({ from: periodo.inicio, to: periodo.fim }),
-      listReservations({ from: TODAY, to: next7[6] }),
-      getResumo(periodo.inicio, periodo.fim),
-      api.get('/reviews/stats').then(r => r.data?.data?.average_rating ?? null).catch(() => null),
+      listUnits().catch(() => []),
+      listReservations({ from: TODAY, to: TODAY }).catch(() => []),
+      listReservations({ from: periodo.inicio, to: periodo.fim }).catch(() => []),
+      listReservations({ from: TODAY, to: next7[6] }).catch(() => []),
+      getResumo(periodo.inicio, periodo.fim).catch(() => null),
+      api.get('/reviews/stats')
+        .then(r => {
+          const s = r.data?.data;
+          return Number(s?.total) > 0 ? (s.average ?? null) : null;
+        })
+        .catch(() => null),
     ])
       .then(([toursData, tRes, mRes, wRes, res, avgR]) => {
         setTours(toursData || []);

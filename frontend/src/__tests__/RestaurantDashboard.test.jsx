@@ -40,10 +40,10 @@ const MES_FIM = (() => {
 })();
 
 const ZERO = { receita: 0, num_reservas: 0, valor_medio: 0, taxa_ocupacao: 0 };
-function resumo(atual = {}) {
+function resumo(atual = {}, anterior = {}) {
   return {
     atual: { ...ZERO, ...atual },
-    anterior: { ...ZERO },
+    anterior: { ...ZERO, ...anterior },
     variacao: { ...ZERO },
   };
 }
@@ -63,7 +63,7 @@ function reserva(over, turno) {
 }
 
 /* Responde a cada pedido conforme o par (from, to): hoje ou mes */
-function carregaServicos({ units = [mesa()], hoje = [], mes = [], res = resumo(), rating = null } = {}) {
+function carregaServicos({ units = [mesa()], hoje = [], mes = [], res = resumo(), rating = null, ratingTotal = 3 } = {}) {
   listUnits.mockReset().mockResolvedValue(units);
   listReservations.mockReset().mockImplementation(async ({ from, to }) => {
     /* O dia 1 pode ser igual a hoje: so o par (from, to) separa os pedidos */
@@ -72,7 +72,10 @@ function carregaServicos({ units = [mesa()], hoje = [], mes = [], res = resumo()
     throw new Error(`pedido inesperado ${from} ${to}`);
   });
   getResumo.mockReset().mockResolvedValue(res);
-  api.get.mockReset().mockResolvedValue({ data: { data: { average_rating: rating } } });
+  /* Forma real de GET /reviews/stats: { total, average, distribution } */
+  api.get.mockReset().mockResolvedValue({
+    data: { data: { total: rating == null ? 0 : ratingTotal, average: rating ?? 0, distribution: {} } },
+  });
 }
 
 function servicosAFalhar() {
@@ -197,6 +200,47 @@ describe('RestaurantDashboard (Hoje)', () => {
     expect(screen.getByText('4.5')).toBeInTheDocument();
     expect(screen.getByText('Receita estimada')).toBeInTheDocument();
     expect(screen.getByText('Avaliação média')).toBeInTheDocument();
+  });
+
+  it('a avaliacao media vem de average quando ha avaliacoes', async () => {
+    carregaServicos({ rating: 4.7, ratingTotal: 3 });
+    renderRestaurant();
+    expect(await screen.findByText('4.7')).toBeInTheDocument();
+  });
+
+  it('sem avaliacoes (total 0) a avaliacao media mostra o traco', async () => {
+    carregaServicos({ rating: 0, ratingTotal: 0 });
+    renderRestaurant();
+    const rotulo = await screen.findByText('Avaliação média');
+    expect(rotulo.parentElement.nextElementSibling).toHaveTextContent(/^—$/);
+  });
+
+  it('a receita mostra a variacao face ao mes anterior', async () => {
+    carregaServicos({ res: resumo({ receita: 1200 }, { receita: 1000 }) });
+    renderRestaurant();
+    expect(await screen.findByText(/^€1\s?200$/)).toBeInTheDocument();
+    expect(screen.getByText('+€200')).toBeInTheDocument();
+    expect(screen.getByText('face ao mês anterior')).toBeInTheDocument();
+  });
+
+  it('sem mes anterior a receita nao mostra variacao', async () => {
+    carregaServicos({ res: { atual: { receita: 500 } } });
+    renderRestaurant();
+    expect(await screen.findByText('€500')).toBeInTheDocument();
+    expect(screen.queryByText('face ao mês anterior')).not.toBeInTheDocument();
+  });
+
+  it('uma chamada a falhar nao apaga os dados das outras', async () => {
+    carregaServicos({ hoje: [reserva({ id: 'p1', status: 'pending' })] });
+    /* so a lista do mes falha */
+    listReservations.mockReset().mockImplementation(async ({ from, to }) => {
+      if (from === HOJE && to === HOJE) return [reserva({ id: 'p1', status: 'pending' })];
+      throw new Error('falha de rede');
+    });
+    renderRestaurant();
+    expect(await screen.findByText('Mesa 1')).toBeInTheDocument();
+    expect(screen.getByText('1 reserva(s) pendente(s) para hoje')).toBeInTheDocument();
+    expect(screen.queryByText('Tudo em ordem')).not.toBeInTheDocument();
   });
 
   it('servicos a falhar mostram estados vazios sem erro', async () => {

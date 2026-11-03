@@ -170,11 +170,12 @@ export default function RentacarDashboard() {
   const [selected, setSelected] = useState(null);
 
   useEffect(() => {
+    /* Cada chamada falha para o seu valor vazio: uma falha nao apaga as outras */
     Promise.all([
-      listUnits(),
-      listReservations({ from: TODAY, to: TODAY }),
-      listReservations({ from: periodo.inicio, to: periodo.fim }),
-      getResumo(periodo.inicio, periodo.fim),
+      listUnits().catch(() => []),
+      listReservations({ from: TODAY, to: TODAY }).catch(() => []),
+      listReservations({ from: periodo.inicio, to: periodo.fim }).catch(() => []),
+      getResumo(periodo.inicio, periodo.fim).catch(() => null),
     ])
       .then(([u, tRes, mRes, res]) => {
         setUnits(u || []);
@@ -209,6 +210,10 @@ export default function RentacarDashboard() {
     return {
       available,
       receita:   resumo?.atual?.receita ?? 0,
+      /* Sem mes anterior na resposta nao ha variacao a mostrar */
+      receitaDelta: resumo?.atual && resumo?.anterior
+        ? Number(resumo.atual.receita || 0) - Number(resumo.anterior.receita || 0)
+        : undefined,
       alugados:  rented,
       manutencao: inMaint,
     };
@@ -244,7 +249,7 @@ export default function RentacarDashboard() {
       {/* KPIs */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <KpiCard label={t('dashboard.rentacar.availableVehicles')} value={kpis.available}   icon={Car}      />
-        <KpiCard label={t('dashboard.rentacar.revenueMonth')}      value={kpis.receita}     icon={Euro}     format="euro" />
+        <KpiCard label={t('dashboard.rentacar.revenueMonth')}      value={kpis.receita}     delta={kpis.receitaDelta} deltaLabel={t('dashboard.summary.vsPrevMonth')} icon={Euro} format="euro" />
         <KpiCard label={t('dashboard.rentacar.activeRentals')}     value={kpis.alugados}    icon={BarChart2}/>
         <KpiCard label={t('dashboard.rentacar.inMaintenance')}     value={kpis.manutencao}  icon={Wrench}   />
       </div>

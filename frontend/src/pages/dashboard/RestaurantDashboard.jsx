@@ -130,12 +130,20 @@ export default function RestaurantDashboard() {
   const [selected,  setSelected]  = useState(null);
 
   useEffect(() => {
+    /* Cada chamada falha para o seu valor vazio: uma falha nao apaga as outras.
+       /reviews/stats devolve { total, average, distribution }; sem avaliacoes
+       (total 0) a media nao existe */
     Promise.all([
-      listUnits(),
-      listReservations({ from: TODAY, to: TODAY }),
-      listReservations({ from: periodo.inicio, to: periodo.fim }),
-      getResumo(periodo.inicio, periodo.fim),
-      api.get('/reviews/stats').then(r => r.data?.data?.average_rating ?? null).catch(() => null),
+      listUnits().catch(() => []),
+      listReservations({ from: TODAY, to: TODAY }).catch(() => []),
+      listReservations({ from: periodo.inicio, to: periodo.fim }).catch(() => []),
+      getResumo(periodo.inicio, periodo.fim).catch(() => null),
+      api.get('/reviews/stats')
+        .then(r => {
+          const s = r.data?.data;
+          return Number(s?.total) > 0 ? (s.average ?? null) : null;
+        })
+        .catch(() => null),
     ])
       .then(([u, tRes, mRes, res, avgR]) => {
         setUnits((u || []).filter(x => x.unit_type !== 'menu_item' && x.unit_type !== 'tasting_menu'));
@@ -164,6 +172,10 @@ export default function RestaurantDashboard() {
     reservasHoje: todayRes.filter(r => ['pending', 'confirmed', 'checked_in'].includes(r.status)).length,
     coversMes:    monthRes.filter(r => ['confirmed', 'checked_in', 'checked_out'].includes(r.status)).reduce((s, r) => s + (r.guests || 0), 0),
     receita:      resumo?.atual?.receita ?? 0,
+    /* Sem mes anterior na resposta nao ha variacao a mostrar */
+    receitaDelta: resumo?.atual && resumo?.anterior
+      ? Number(resumo.atual.receita || 0) - Number(resumo.anterior.receita || 0)
+      : undefined,
     rating:       avgRating,
   }), [todayRes, monthRes, resumo, avgRating]);
 
@@ -201,7 +213,7 @@ export default function RestaurantDashboard() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <KpiCard label={t('dashboard.restaurant.reservationsToday')} value={kpis.reservasHoje}                            icon={CalendarDays} />
         <KpiCard label={t('dashboard.restaurant.coversMonth')}       value={kpis.coversMes}                               icon={Users}        />
-        <KpiCard label={t('dashboard.restaurant.revenueEstimated')}  value={kpis.receita}                                 icon={Euro}         format="euro" />
+        <KpiCard label={t('dashboard.restaurant.revenueEstimated')}  value={kpis.receita} delta={kpis.receitaDelta} deltaLabel={t('dashboard.summary.vsPrevMonth')} icon={Euro} format="euro" />
         <KpiCard label={t('dashboard.restaurant.avgRating')}         value={kpis.rating ? kpis.rating.toFixed(1) : '—'}  icon={Star}         />
       </div>
 

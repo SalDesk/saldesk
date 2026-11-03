@@ -102,8 +102,8 @@ describe('ResumoView', () => {
     expect(screen.getByText('+4')).toBeInTheDocument();
     /* valor medio: diferenca absoluta em euros (90 - 100) */
     expect(screen.getByText('€90')).toBeInTheDocument();
-    /* KpiCard formata o euro negativo como "€-10" (comportamento existente) */
-    expect(screen.getByText('€-10')).toBeInTheDocument();
+    /* KpiCard formata o euro negativo com o sinal antes do simbolo */
+    expect(screen.getByText('-€10')).toBeInTheDocument();
     /* ocupacao: pontos percentuais */
     expect(screen.getByText('62.5%')).toBeInTheDocument();
     expect(screen.getByText('+12.5 p.p.')).toBeInTheDocument();
@@ -126,6 +126,25 @@ describe('ResumoView', () => {
     const nomes = within(bloco).getAllByText(/^Servico /).map((el) => el.textContent);
     expect(nomes).toEqual(['Servico B', 'Servico D', 'Servico E', 'Servico C', 'Servico A']);
     expect(within(bloco).queryByText('Servico F')).not.toBeInTheDocument();
+  });
+
+  it('os blocos usam o mesmo aspeto dos cartoes do Hoje', async () => {
+    getUnidades.mockResolvedValue([
+      { name: 'Servico A', unit_type: 'tour', num_reservas: 2, receita: 100 },
+    ]);
+    renderResumo();
+    const titulo = await screen.findByText('Serviços mais vendidos');
+    const bloco = titulo.closest('section');
+    /* cantos de 8px, contorno e titulo n-900, como o painel de atencao */
+    expect(bloco.className).toContain('rounded-sm');
+    expect(bloco.className).toContain('border-n-200');
+    expect(bloco.className).not.toContain('rounded-lg');
+    expect(bloco.className).not.toContain('shadow-sm');
+    expect(titulo.className).toContain('text-n-900');
+    /* o primeiro lugar usa uma cor que existe na paleta */
+    await within(bloco).findByText('Servico A');
+    expect(within(bloco).getByText('1').className).not.toContain('sand-700');
+    expect(within(bloco).getByText('1').className).toContain('text-sand-600');
   });
 
   it('mostra as reservas mais recentes', async () => {

@@ -153,4 +153,64 @@ describe('KpiCard', () => {
     expect(screen.getByText('Receita').className).toContain('app:normal-case');
     expect(screen.getByText('10').className).toContain('app:tabular-nums');
   });
+
+  /* Texto do valor principal do cartao (o paragrafo a seguir ao rotulo) */
+  function valorDe(label) {
+    return screen.getByText(label).parentElement.nextElementSibling;
+  }
+
+  it('valor em falta em euro mostra o traco e nunca NaN', () => {
+    [null, undefined, '—', NaN, Infinity].forEach((v, i) => {
+      const label = `Euro ${i}`;
+      render(<KpiCard label={label} value={v} format="euro" />);
+      expect(valorDe(label)).toHaveTextContent(/^—$/);
+    });
+    expect(document.body.textContent).not.toContain('NaN');
+  });
+
+  it('valor em falta em percentagem mostra o traco e nunca NaN', () => {
+    [null, undefined, '—', NaN, Infinity].forEach((v, i) => {
+      const label = `Pct ${i}`;
+      render(<KpiCard label={label} value={v} format="percent" />);
+      expect(valorDe(label)).toHaveTextContent(/^—$/);
+    });
+    expect(document.body.textContent).not.toContain('NaN');
+  });
+
+  it('o zero verdadeiro continua a aparecer como zero', () => {
+    render(<KpiCard label="Eur" value={0} format="euro" />);
+    render(<KpiCard label="Pct" value={0} format="percent" />);
+    render(<KpiCard label="Num" value={0} />);
+    expect(valorDe('Eur')).toHaveTextContent(/^€0$/);
+    expect(valorDe('Pct')).toHaveTextContent(/^0\.0%$/);
+    expect(valorDe('Num')).toHaveTextContent(/^0$/);
+  });
+
+  it('o formato numero nao muda para valores em falta', () => {
+    render(<KpiCard label="Nulo" value={null} />);
+    render(<KpiCard label="Texto" value="—" />);
+    expect(valorDe('Nulo')).toHaveTextContent(/^0$/);
+    expect(valorDe('Texto')).toHaveTextContent(/^—$/);
+  });
+
+  it('a variacao em euro leva o sinal antes do simbolo', () => {
+    render(<KpiCard label="Neg" value={100} delta={-10} format="euro" />);
+    render(<KpiCard label="Pos" value={100} delta={10} format="euro" />);
+    render(<KpiCard label="Zero" value={100} delta={0} format="euro" />);
+    expect(screen.getByText('-€10')).toBeInTheDocument();
+    expect(screen.getByText('+€10')).toBeInTheDocument();
+    expect(screen.queryByText('€-10')).not.toBeInTheDocument();
+    expect(screen.getByText('€0')).toBeInTheDocument();
+  });
+
+  it('a variacao em percentagem e em numero mantem o formato', () => {
+    render(<KpiCard label="PctPos" value={50} delta={2} format="percent" />);
+    render(<KpiCard label="PctNeg" value={50} delta={-3} format="percent" />);
+    render(<KpiCard label="NumNeg" value={5} delta={-3} />);
+    render(<KpiCard label="NumPos" value={5} delta={4} />);
+    expect(screen.getByText('+2.0 p.p.')).toBeInTheDocument();
+    expect(screen.getByText('-3.0 p.p.')).toBeInTheDocument();
+    expect(screen.getByText('-3')).toBeInTheDocument();
+    expect(screen.getByText('+4')).toBeInTheDocument();
+  });
 });

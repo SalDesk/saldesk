@@ -135,6 +135,53 @@ describe('GenericDashboard (Hoje)', () => {
     await esperaCarregar();
   });
 
+  /* Valor principal do cartao com este rotulo */
+  function valorDe(label) {
+    return screen.getByText(label).parentElement.nextElementSibling;
+  }
+
+  it('antes de getResumo responder mostra o traco e nunca NaN', async () => {
+    /* Nenhum servico responde: o primeiro desenho nao pode ter NaN */
+    const pendente = () => new Promise(() => {});
+    listUnits.mockReset().mockImplementation(pendente);
+    listReservations.mockReset().mockImplementation(pendente);
+    getResumo.mockReset().mockImplementation(pendente);
+    const { container } = renderGenerico(undefined);
+    expect(valorDe('Receita')).toHaveTextContent(/^—$/);
+    expect(valorDe('Ocupacao')).toHaveTextContent(/^—$/);
+    expect(container.textContent).not.toContain('NaN');
+  });
+
+  it('getResumo a falhar mostra o traco sem NaN', async () => {
+    servicosAFalhar();
+    const { container } = renderGenerico(undefined);
+    await esperaCarregar();
+    expect(valorDe('Receita')).toHaveTextContent(/^—$/);
+    expect(valorDe('Ocupacao')).toHaveTextContent(/^—$/);
+    expect(container.textContent).not.toContain('NaN');
+  });
+
+  it('a variacao da receita e a diferenca em euros face ao mes anterior', async () => {
+    carregaServicos({
+      res: {
+        atual: { ...ZERO, receita: 1200 },
+        anterior: { ...ZERO, receita: 1000 },
+        /* variacao do backend e uma percentagem (+20%), nao euros */
+        variacao: { ...ZERO, receita: 20 },
+      },
+    });
+    renderGenerico(undefined);
+    expect(await screen.findByText('+€200')).toBeInTheDocument();
+    expect(screen.queryByText('+€20')).not.toBeInTheDocument();
+  });
+
+  it('sem mes anterior a receita nao mostra variacao', async () => {
+    carregaServicos({ res: { atual: { ...ZERO, receita: 500 } } });
+    renderGenerico(undefined);
+    expect(await screen.findByText('€500')).toBeInTheDocument();
+    expect(screen.queryByText('vs mes anterior')).not.toBeInTheDocument();
+  });
+
   it('as accoes rapidas nao repetem as do cabecalho', async () => {
     renderGenerico(undefined);
     expect(await screen.findByText('Accoes Rapidas')).toBeInTheDocument();
@@ -239,6 +286,14 @@ describe('GenericDashboard (Hoje)', () => {
     expect(screen.getByText('Covers hoje')).toBeInTheDocument();
     expect(screen.getByText('Accoes Rapidas')).toBeInTheDocument();
     await esperaCarregar();
+  });
+
+  it('uma chamada a falhar nao apaga os dados das outras', async () => {
+    carregaServicos({ units: [{ id: 'u1', name: 'Quarto 1', unit_type: 'double', status: 'available', is_active: true }] });
+    listReservations.mockReset().mockRejectedValue(new Error('falha de rede'));
+    renderGenerico('hotel');
+    expect(await screen.findByText('Quarto 1')).toBeInTheDocument();
+    expect(screen.queryByText('Sem unidades registadas.')).not.toBeInTheDocument();
   });
 
   it('reservas sem campos nao rebentam', async () => {

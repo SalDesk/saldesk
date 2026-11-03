@@ -86,7 +86,7 @@ const RES_POR_PAGAR = reserva({ id: 'm1', check_in: ONTEM, payment_status: 'pend
 const RES_AMANHA = reserva({ id: 'w1', check_in: AMANHA });
 
 /* Responde a cada pedido conforme o intervalo pedido: hoje, mes ou semana */
-function carregaServicos({ hoje = [], mes = [], semana = [], res = resumo(), tours = [TOUR_A, TOUR_B], meteo = [], rating = null } = {}) {
+function carregaServicos({ hoje = [], mes = [], semana = [], res = resumo(), tours = [TOUR_A, TOUR_B], meteo = [], rating = null, ratingTotal = 3 } = {}) {
   listUnits.mockReset().mockResolvedValue(tours);
   listReservations.mockReset().mockImplementation(async ({ from, to }) => {
     if (from === HOJE && to === HOJE) return hoje;
@@ -97,7 +97,10 @@ function carregaServicos({ hoje = [], mes = [], semana = [], res = resumo(), tou
   });
   getResumo.mockReset().mockResolvedValue(res);
   getWeatherForecast.mockReset().mockResolvedValue(meteo);
-  api.get.mockReset().mockResolvedValue({ data: { data: rating == null ? null : { average_rating: rating } } });
+  /* Forma real de GET /reviews/stats: { total, average, distribution } */
+  api.get.mockReset().mockResolvedValue({
+    data: { data: rating == null ? null : { total: ratingTotal, average: rating, distribution: {} } },
+  });
 }
 
 function servicosAFalhar() {
@@ -255,6 +258,36 @@ describe('ActivityDashboard (Hoje)', () => {
     renderActivity();
     expect(await screen.findByText('1 reserva(s) pendente(s) para hoje')).toBeInTheDocument();
     expect(screen.getByText('Tours hoje')).toBeInTheDocument();
+  });
+
+  it('a avaliacao media vem de average quando ha avaliacoes', async () => {
+    carregaServicos({ rating: 4.7, ratingTotal: 3 });
+    renderActivity();
+    expect(await screen.findByText('4.7')).toBeInTheDocument();
+  });
+
+  it('sem avaliacoes (total 0) a avaliacao media mostra o traco', async () => {
+    carregaServicos({ rating: 0, ratingTotal: 0 });
+    renderActivity();
+    const rotulo = await screen.findByText('Avaliação média');
+    expect(rotulo.parentElement.nextElementSibling).toHaveTextContent(/^—$/);
+    expect(screen.queryByText('0.0')).not.toBeInTheDocument();
+  });
+
+  it('uma chamada a falhar nao apaga os dados das outras', async () => {
+    carregaServicos({ hoje: RES_HOJE });
+    /* so a lista do mes falha; hoje, tours e resumo respondem */
+    listReservations.mockReset().mockImplementation(async ({ from, to }) => {
+      if (from === HOJE && to === HOJE) return RES_HOJE;
+      if (from === HOJE && to === SEMANA_FIM) return [];
+      throw new Error('falha de rede');
+    });
+    renderActivity();
+    const celula = await screen.findByText('8/10');
+    expect(within(celula.closest('tr')).getByText('Tour Teste')).toBeInTheDocument();
+    expect(screen.getByText('1 reserva(s) pendente(s) para hoje')).toBeInTheDocument();
+    expect(screen.queryByText('Tudo em ordem')).not.toBeInTheDocument();
+    expect(screen.queryByText('Nenhum tour agendado para hoje')).not.toBeInTheDocument();
   });
 
   it('servicos a falhar mostram estados vazios sem erro', async () => {

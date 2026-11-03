@@ -45,10 +45,10 @@ const MES_FIM = (() => {
 })();
 
 const ZERO = { receita: 0, num_reservas: 0, valor_medio: 0, taxa_ocupacao: 0 };
-function resumo(atual = {}) {
+function resumo(atual = {}, anterior = {}) {
   return {
     atual: { ...ZERO, ...atual },
-    anterior: { ...ZERO },
+    anterior: { ...ZERO, ...anterior },
     variacao: { ...ZERO },
   };
 }
@@ -170,6 +170,35 @@ describe('HotelDashboard (Hoje)', () => {
     expect(screen.getByText('Reservas pendentes')).toBeInTheDocument();
     expect(screen.getAllByText('Check-ins hoje').length).toBeGreaterThan(0);
     expect(screen.getAllByText('Check-outs hoje').length).toBeGreaterThan(0);
+  });
+
+  it('a receita mostra a variacao face ao mes anterior', async () => {
+    carregaServicos({ res: resumo({ receita: 1200 }, { receita: 1000 }) });
+    renderHotel();
+    expect(await screen.findByText(/^€1\s?200$/)).toBeInTheDocument();
+    expect(screen.getByText('+€200')).toBeInTheDocument();
+    expect(screen.getByText('face ao mês anterior')).toBeInTheDocument();
+  });
+
+  it('sem mes anterior a receita nao mostra variacao', async () => {
+    carregaServicos({ res: { atual: { receita: 500 } } });
+    renderHotel();
+    expect(await screen.findByText('€500')).toBeInTheDocument();
+    expect(screen.queryByText('face ao mês anterior')).not.toBeInTheDocument();
+  });
+
+  it('uma chamada a falhar nao apaga os dados das outras', async () => {
+    const pendente = reserva({ id: 'p1', status: 'pending' });
+    carregaServicos({ hoje: [pendente] });
+    /* so a lista do mes falha */
+    listReservations.mockReset().mockImplementation(async ({ from, to }) => {
+      if (from === HOJE && to === HOJE) return [pendente];
+      throw new Error('falha de rede');
+    });
+    renderHotel();
+    expect(await screen.findByText('Quarto 101')).toBeInTheDocument();
+    expect(screen.getByText('1 reserva(s) por confirmar')).toBeInTheDocument();
+    expect(screen.queryByText('Tudo em ordem')).not.toBeInTheDocument();
   });
 
   it('servicos a falhar mostram estados vazios sem erro', async () => {
