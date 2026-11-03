@@ -1,16 +1,19 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  Euro, BookOpen, BarChart2, Car, AlertTriangle, X as XIcon, Wrench, MoveRight, MoveLeft,
+  Euro, BookOpen, BarChart2, Car, X as XIcon, Wrench, MoveRight, MoveLeft,
 } from 'lucide-react';
 import { getResumo } from '../../services/financeiroService';
 import { listUnits } from '../../services/unitsService';
 import { listReservations } from '../../services/reservationsService';
 import { useT } from '../../i18n';
 import KpiCard from '../../components/financial/KpiCard';
+import AttentionPanel from '../../components/dashboard/AttentionPanel';
 import Badge from '../../components/ui/Badge';
+import EmptyState from '../../components/ui/EmptyState';
 import LoadingSpinner from '../../components/shared/LoadingSpinner';
 import { TODAY, mesAtual, CELL, unitStatus, parseVehicleMeta, MapLegend } from './shared';
+import { buildAttentionItems } from './dashboardLogic';
 
 /* ─── Rentacar dashboard ─────────────────────────────────────── */
 
@@ -220,7 +223,11 @@ export default function RentacarDashboard() {
     [todayRes]
   );
 
-  const docAlerts = useMemo(() => computeDocAlerts(units, t), [units, t]);
+  /* Itens do painel "Requer atencao" (documentos expirados ou a expirar, revisoes) */
+  const attentionItems = useMemo(
+    () => buildAttentionItems({ docAlerts: computeDocAlerts(units, t) }, t),
+    [units, t]
+  );
 
   const vehicleRes = useMemo(() => {
     if (!selected) return null;
@@ -232,31 +239,7 @@ export default function RentacarDashboard() {
   if (loading) return <div className="flex justify-center py-20"><LoadingSpinner size={32} /></div>;
 
   return (
-    <div className="space-y-6">
-
-      {/* Document alerts */}
-      {docAlerts.length > 0 && (
-        <div className="space-y-2">
-          {docAlerts.filter(a => a.type === 'expired').map((a, i) => (
-            <div key={i} className="flex items-center gap-3 px-4 py-3 bg-[#FEF2F2] border border-[#FCA5A5] rounded-md">
-              <AlertTriangle size={15} strokeWidth={1.75} className="text-error shrink-0" />
-              <p className="text-sm font-body text-error flex-1 font-medium">{a.msg}</p>
-              <button onClick={() => navigate('/manutencao')} className="text-xs font-semibold text-error underline shrink-0 whitespace-nowrap">
-                {t('dashboard.common.maintenance')}
-              </button>
-            </div>
-          ))}
-          {docAlerts.filter(a => a.type === 'warning').slice(0, 3).map((a, i) => (
-            <div key={i} className="flex items-center gap-3 px-4 py-3 bg-[#FFF7ED] border border-[#FDBA74] rounded-md">
-              <AlertTriangle size={15} strokeWidth={1.75} className="text-[#B45309] shrink-0" />
-              <p className="text-sm font-body text-[#B45309] flex-1">{a.msg}</p>
-              <button onClick={() => navigate('/manutencao')} className="text-xs font-semibold text-[#B45309] underline shrink-0 whitespace-nowrap">
-                {t('dashboard.common.maintenance')}
-              </button>
-            </div>
-          ))}
-        </div>
-      )}
+    <div className="space-y-4">
 
       {/* KPIs */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
@@ -266,44 +249,51 @@ export default function RentacarDashboard() {
         <KpiCard label={t('dashboard.rentacar.inMaintenance')}     value={kpis.manutencao}  icon={Wrench}   />
       </div>
 
-      {/* Fleet map */}
-      <div className="bg-white rounded-lg border border-n-200 shadow-sm p-5">
-        <div className="flex items-center gap-2 mb-4">
-          <Car size={15} strokeWidth={1.75} className="text-n-500" />
-          <h2 className="font-display font-semibold text-sm text-n-700 uppercase tracking-wide">
-            {t('dashboard.rentacar.fleetStatus')}
-          </h2>
-          <button
-            onClick={() => navigate('/manutencao')}
-            className="ml-auto text-xs font-body text-ocean-700 hover:underline flex items-center gap-1"
-          >
-            <Wrench size={11} strokeWidth={1.75} />
-            {t('dashboard.common.maintenance')}
-          </button>
-        </div>
-        <VehicleFleet units={units} getState={getVehicleState} onSelect={setSelected} />
+      {/* Frota + Requer atencao */}
+      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)] gap-4 items-start">
+        <section className="bg-white border border-n-200 rounded-sm">
+          <header className="flex items-center gap-2 px-4 py-3 border-b border-n-200">
+            <Car size={14} strokeWidth={1.75} className="text-n-500" aria-hidden="true" />
+            <h2 className="font-display font-semibold text-sm text-n-900">
+              {t('dashboard.rentacar.fleetStatus')}
+            </h2>
+            <button
+              type="button"
+              onClick={() => navigate('/manutencao')}
+              className="ml-auto text-xs font-body text-ocean-700 hover:underline flex items-center gap-1"
+            >
+              <Wrench size={11} strokeWidth={1.75} aria-hidden="true" />
+              {t('dashboard.common.maintenance')}
+            </button>
+          </header>
+          <div className="p-4">
+            <VehicleFleet units={units} getState={getVehicleState} onSelect={setSelected} />
+          </div>
+        </section>
+
+        <AttentionPanel items={attentionItems} />
       </div>
 
-      {/* Levantamentos + Devoluções */}
+      {/* Levantamentos + Devolucoes */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <div className="bg-white rounded-lg border border-n-200 shadow-sm">
-          <div className="px-5 py-4 border-b border-n-100 flex items-center gap-2">
-            <MoveRight size={14} strokeWidth={1.75} className="text-[#1A7A4A]" />
-            <h2 className="font-display font-semibold text-sm text-n-700">{t('dashboard.rentacar.pickupsToday')}</h2>
-            <span className="ml-auto text-xs font-body text-n-400">{levantamentos.length}</span>
-          </div>
+        <section className="bg-white border border-n-200 rounded-sm">
+          <header className="flex items-center gap-2 px-4 py-3 border-b border-n-200">
+            <MoveRight size={14} strokeWidth={1.75} className="text-[#1A7A4A]" aria-hidden="true" />
+            <h2 className="font-display font-semibold text-sm text-n-900">{t('dashboard.rentacar.pickupsToday')}</h2>
+            <span className="ml-auto text-xs font-body text-n-500 tabular-nums">{levantamentos.length}</span>
+          </header>
           {levantamentos.length === 0 ? (
-            <p className="px-5 py-6 text-center text-xs font-body text-n-400">{t('dashboard.rentacar.noPickupToday')}</p>
+            <EmptyState icon={MoveRight} title={t('dashboard.rentacar.noPickupToday')} />
           ) : (
             <div className="divide-y divide-n-100">
               {levantamentos.map(r => {
                 const u    = units.find(x => x.id === r.unit_id);
                 const meta = u ? parseVehicleMeta(u) : {};
                 return (
-                  <div key={r.id} className="px-5 py-3 flex items-center gap-3">
+                  <div key={r.id} className="px-4 py-2.5 flex items-center gap-3">
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-display font-semibold text-n-900 truncate">{r.customer_name || '—'}</p>
-                      <p className="text-xs font-body text-n-400">
+                      <p className="text-[13px] font-display font-semibold text-n-900 truncate">{r.customer_name || '—'}</p>
+                      <p className="text-xs font-body text-n-500">
                         {u?.name || '—'}{meta.plate ? ` · ${meta.plate}` : ''}
                       </p>
                     </div>
@@ -315,26 +305,26 @@ export default function RentacarDashboard() {
               })}
             </div>
           )}
-        </div>
+        </section>
 
-        <div className="bg-white rounded-lg border border-n-200 shadow-sm">
-          <div className="px-5 py-4 border-b border-n-100 flex items-center gap-2">
-            <MoveLeft size={14} strokeWidth={1.75} className="text-n-500" />
-            <h2 className="font-display font-semibold text-sm text-n-700">{t('dashboard.rentacar.returnsToday')}</h2>
-            <span className="ml-auto text-xs font-body text-n-400">{devolucoes.length}</span>
-          </div>
+        <section className="bg-white border border-n-200 rounded-sm">
+          <header className="flex items-center gap-2 px-4 py-3 border-b border-n-200">
+            <MoveLeft size={14} strokeWidth={1.75} className="text-n-500" aria-hidden="true" />
+            <h2 className="font-display font-semibold text-sm text-n-900">{t('dashboard.rentacar.returnsToday')}</h2>
+            <span className="ml-auto text-xs font-body text-n-500 tabular-nums">{devolucoes.length}</span>
+          </header>
           {devolucoes.length === 0 ? (
-            <p className="px-5 py-6 text-center text-xs font-body text-n-400">{t('dashboard.rentacar.noReturnToday')}</p>
+            <EmptyState icon={MoveLeft} title={t('dashboard.rentacar.noReturnToday')} />
           ) : (
             <div className="divide-y divide-n-100">
               {devolucoes.map(r => {
                 const u    = units.find(x => x.id === r.unit_id);
                 const meta = u ? parseVehicleMeta(u) : {};
                 return (
-                  <div key={r.id} className="px-5 py-3 flex items-center gap-3">
+                  <div key={r.id} className="px-4 py-2.5 flex items-center gap-3">
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-display font-semibold text-n-900 truncate">{r.customer_name || '—'}</p>
-                      <p className="text-xs font-body text-n-400">
+                      <p className="text-[13px] font-display font-semibold text-n-900 truncate">{r.customer_name || '—'}</p>
+                      <p className="text-xs font-body text-n-500">
                         {u?.name || '—'}{meta.plate ? ` · ${meta.plate}` : ''} · {t('dashboard.rentacar.since', { date: r.check_in })}
                       </p>
                     </div>
@@ -344,7 +334,7 @@ export default function RentacarDashboard() {
               })}
             </div>
           )}
-        </div>
+        </section>
       </div>
 
       {/* Vehicle detail overlay */}
