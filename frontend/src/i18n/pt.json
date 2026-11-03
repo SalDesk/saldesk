@@ -303,7 +303,11 @@
       "noReservationsMonth": "Sem reservas este mes",
       "noDataMonth": "Sem dados este mes",
       "reservationsSuffix": "reservas",
-      "resShort": "res."
+      "resShort": "res.",
+      "toursTodayTitle": "Tours de hoje",
+      "colTour": "Tour",
+      "colCapacity": "Lotação",
+      "colReservations": "Reservas"
     }
   },
   "tour": {

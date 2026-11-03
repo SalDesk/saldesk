@@ -65,7 +65,7 @@ function servicosAFalhar() {
 }
 
 /* Texto que so o componente de cada tipo renderiza (pt, existente no codigo original) */
-const TEXTO_ACTIVITY   = 'Top tours do mes';
+const TEXTO_ACTIVITY   = 'Tours de hoje';
 const TEXTO_HOTEL      = 'Check-outs hoje';
 const TEXTO_RENTACAR   = 'Levantamentos hoje';
 const TEXTO_RESTAURANT = 'Covers do mes';
@@ -172,6 +172,23 @@ describe('Dashboard (fumo por tipo de operador)', () => {
   it('as acoes do cabecalho navegam', async () => {
     renderDashboard('hotel');
     await esperaSoTipo(TEXTO_HOTEL);
+    fireEvent.click(screen.getByRole('button', { name: 'Nova reserva' }));
+    expect(navigateMock).toHaveBeenLastCalledWith('/reservas');
+    fireEvent.click(screen.getByRole('button', { name: 'Ver calendario' }));
+    expect(navigateMock).toHaveBeenLastCalledWith('/calendario');
+  });
+
+  it('activity: as acoes do cabecalho navegam e a nova reserva e unica', async () => {
+    /* com um tour hoje nao ha estado vazio, logo so o cabecalho tem "Nova reserva" */
+    const hoje = new Date().toLocaleDateString('en-CA');
+    listUnits.mockResolvedValue([{ id: 't1', name: 'Tour Teste', capacity: 10, status: 'active' }]);
+    listReservations.mockImplementation(async ({ from, to }) => (
+      from === hoje && to === hoje
+        ? [{ id: 'r1', unit_id: 't1', status: 'confirmed', guests: 2, check_in: hoje }]
+        : []
+    ));
+    renderDashboard('activity');
+    await esperaSoTipo(TEXTO_ACTIVITY);
     fireEvent.click(screen.getByRole('button', { name: 'Nova reserva' }));
     expect(navigateMock).toHaveBeenLastCalledWith('/reservas');
     fireEvent.click(screen.getByRole('button', { name: 'Ver calendario' }));
