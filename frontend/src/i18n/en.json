@@ -141,6 +141,17 @@
       "today": "Today",
       "summary": "Summary"
     },
+    "summary": {
+      "kpiRevenue": "Revenue this month",
+      "kpiBookings": "Bookings",
+      "kpiAvgValue": "Average value",
+      "kpiOccupancy": "Occupancy",
+      "vsPrevMonth": "vs previous month",
+      "chartTitle": "Revenue, last 30 days",
+      "chartEmpty": "No revenue in the last 30 days",
+      "topServices": "Top-selling services",
+      "topServicesEmpty": "No sales this month"
+    },
     "title": "Dashboard",
     "revenue": "Revenue",
     "occupancy": "Occupancy",

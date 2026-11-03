@@ -141,6 +141,17 @@
       "today": "Hoje",
       "summary": "Resumo"
     },
+    "summary": {
+      "kpiRevenue": "Receita do mês",
+      "kpiBookings": "Reservas",
+      "kpiAvgValue": "Valor médio",
+      "kpiOccupancy": "Ocupação",
+      "vsPrevMonth": "face ao mês anterior",
+      "chartTitle": "Receita dos últimos 30 dias",
+      "chartEmpty": "Sem receita nos últimos 30 dias",
+      "topServices": "Serviços mais vendidos",
+      "topServicesEmpty": "Sem vendas este mês"
+    },
     "title": "Dashboard",
     "revenue": "Receita",
     "occupancy": "Ocupacao",

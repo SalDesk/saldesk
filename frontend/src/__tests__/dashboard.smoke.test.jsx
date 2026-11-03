@@ -20,6 +20,8 @@ vi.mock('../services/reservationsService', () => ({
 }));
 vi.mock('../services/financeiroService', () => ({
   getResumo: vi.fn(),
+  getReceita: vi.fn().mockResolvedValue([]),
+  getUnidades: vi.fn().mockResolvedValue([]),
 }));
 vi.mock('../services/weatherService', async (importOriginal) => {
   const real = await importOriginal();
