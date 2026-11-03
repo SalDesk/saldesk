@@ -36,7 +36,7 @@ function weekDays() {
    Intl para pt-PT devolve nomes completos ("SEXTA", "SABADO"), grandes
    demais para a celula compacta do dia; isto garante sempre 3 letras. */
 const WEEKDAY_ABBR = {
-  pt: ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sab'],
+  pt: ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'],
   en: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
   de: ['So',  'Mo',  'Di',  'Mi',  'Do',  'Fr',  'Sa'],
   nl: ['Zo',  'Ma',  'Di',  'Wo',  'Do',  'Vr',  'Za'],

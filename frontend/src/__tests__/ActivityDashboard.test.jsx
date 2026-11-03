@@ -45,6 +45,12 @@ function diaLocal(deslocamento) {
 const HOJE = diaLocal(0);
 const ONTEM = diaLocal(-1);
 const AMANHA = diaLocal(1);
+const SEMANA_FIM = diaLocal(6);
+const MES_INICIO = HOJE.slice(0, 8) + '01';
+const MES_FIM = (() => {
+  const n = new Date();
+  return new Date(n.getFullYear(), n.getMonth() + 1, 0).toLocaleDateString('en-CA');
+})();
 
 const ZERO = { receita: 0, num_reservas: 0, valor_medio: 0, taxa_ocupacao: 0 };
 function resumo(atual = {}, anterior = {}) {
@@ -84,8 +90,10 @@ function carregaServicos({ hoje = [], mes = [], semana = [], res = resumo(), tou
   listUnits.mockReset().mockResolvedValue(tours);
   listReservations.mockReset().mockImplementation(async ({ from, to }) => {
     if (from === HOJE && to === HOJE) return hoje;
-    if (from.endsWith('-01')) return mes;
-    return semana;
+    /* O dia 1 e o mesmo `from` para semana e mes: so o par (from, to) os separa */
+    if (from === HOJE && to === SEMANA_FIM) return semana;
+    if (from === MES_INICIO && to === MES_FIM) return mes;
+    throw new Error(`pedido inesperado ${from} ${to}`);
   });
   getResumo.mockReset().mockResolvedValue(res);
   getWeatherForecast.mockReset().mockResolvedValue(meteo);
@@ -214,10 +222,10 @@ describe('ActivityDashboard (Hoje)', () => {
     });
     renderActivity();
     expect(await screen.findByText('Tours hoje')).toBeInTheDocument();
-    expect(screen.getByText('Participantes mes')).toBeInTheDocument();
-    expect(screen.getByText('Taxa ocupacao')).toBeInTheDocument();
-    expect(screen.getByText('Receita mes')).toBeInTheDocument();
-    expect(screen.getByText('Avaliacao media')).toBeInTheDocument();
+    expect(screen.getByText('Participantes do mês')).toBeInTheDocument();
+    expect(screen.getByText('Taxa de ocupação')).toBeInTheDocument();
+    expect(screen.getByText('Receita do mês')).toBeInTheDocument();
+    expect(screen.getByText('Avaliação média')).toBeInTheDocument();
     expect(screen.getByText('€500')).toBeInTheDocument();
     expect(screen.getByText('+€200')).toBeInTheDocument();
     expect(screen.getByText('face ao mês anterior')).toBeInTheDocument();
@@ -234,7 +242,7 @@ describe('ActivityDashboard (Hoje)', () => {
   it('a faixa de 7 dias so mostra contagem quando ha reservas', async () => {
     carregaServicos({ hoje: RES_HOJE, semana: [...RES_HOJE, RES_AMANHA] });
     renderActivity();
-    expect(await screen.findByText('Proximos 7 dias')).toBeInTheDocument();
+    expect(await screen.findByText('Próximos 7 dias')).toBeInTheDocument();
     /* hoje: 4 reservas activas; amanha: 1; os outros cinco dias sem contagem */
     expect(screen.getByText('4 res.')).toBeInTheDocument();
     expect(screen.getByText('1 res.')).toBeInTheDocument();
