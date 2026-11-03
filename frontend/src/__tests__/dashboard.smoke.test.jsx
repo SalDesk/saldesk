@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, render, screen, waitFor } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import Dashboard from '../pages/Dashboard';
@@ -30,6 +30,13 @@ vi.mock('../services/api', () => ({
 }));
 vi.mock('../components/messaging/WhatsAppPendentes', () => ({
   default: () => <div data-testid="whatsapp-pendentes" />,
+}));
+
+/* Navegacao simulada, para verificar as acoes do cabecalho */
+const navigateMock = vi.hoisted(() => vi.fn());
+vi.mock('react-router-dom', async (importOriginal) => ({
+  ...(await importOriginal()),
+  useNavigate: () => navigateMock,
 }));
 
 const RESUMO_VAZIO = {
@@ -87,13 +94,14 @@ async function esperaSoTipo(texto) {
 describe('Dashboard (fumo por tipo de operador)', () => {
   beforeEach(() => {
     servicosVazios();
+    navigateMock.mockReset();
   });
 
   afterEach(() => {
     /* desmonta antes de repor as stores, para nao haver rerender fora de act */
     cleanup();
     useAuthStore.setState({ operator: null });
-    useUiStore.setState({ lang: 'pt' });
+    useUiStore.setState({ lang: 'pt', dashboardView: 'hoje' });
   });
 
   it('activity mostra o dashboard de actividades', async () => {
@@ -128,5 +136,43 @@ describe('Dashboard (fumo por tipo de operador)', () => {
     /* os pedidos rejeitados ja foram feitos e o componente continua a mostrar o seu texto */
     await waitFor(() => expect(listUnits).toHaveBeenCalled());
     await waitFor(() => expect(screen.getAllByText(TEXTO_HOTEL).length).toBeGreaterThan(0));
+  });
+
+  it('interruptor mostra hoje por omissao', async () => {
+    renderDashboard('hotel');
+    await esperaSoTipo(TEXTO_HOTEL);
+    expect(screen.getByRole('tab', { name: 'Hoje' })).toHaveAttribute('aria-selected', 'true');
+    expect(screen.getByRole('tab', { name: 'Resumo' })).toHaveAttribute('aria-selected', 'false');
+  });
+
+  it('trocar para resumo', async () => {
+    renderDashboard('hotel');
+    await esperaSoTipo(TEXTO_HOTEL);
+    fireEvent.click(screen.getByRole('tab', { name: 'Resumo' }));
+    expect(useUiStore.getState().dashboardView).toBe('resumo');
+    expect(screen.getByRole('tab', { name: 'Resumo' })).toHaveAttribute('aria-selected', 'true');
+    expect(screen.queryByText(TEXTO_HOTEL)).not.toBeInTheDocument();
+    /* o cabecalho e a lista de WhatsApp pendentes continuam montados */
+    expect(screen.getByText('Bem-vindo, Teste')).toBeInTheDocument();
+    expect(screen.getByTestId('whatsapp-pendentes')).toBeInTheDocument();
+  });
+
+  it('volta a hoje', async () => {
+    renderDashboard('hotel');
+    await esperaSoTipo(TEXTO_HOTEL);
+    fireEvent.click(screen.getByRole('tab', { name: 'Resumo' }));
+    fireEvent.click(screen.getByRole('tab', { name: 'Hoje' }));
+    expect(useUiStore.getState().dashboardView).toBe('hoje');
+    expect(screen.getByRole('tab', { name: 'Hoje' })).toHaveAttribute('aria-selected', 'true');
+    expect((await screen.findAllByText(TEXTO_HOTEL)).length).toBeGreaterThan(0);
+  });
+
+  it('as acoes do cabecalho navegam', async () => {
+    renderDashboard('hotel');
+    await esperaSoTipo(TEXTO_HOTEL);
+    fireEvent.click(screen.getByRole('button', { name: 'Nova reserva' }));
+    expect(navigateMock).toHaveBeenLastCalledWith('/reservas');
+    fireEvent.click(screen.getByRole('button', { name: 'Ver calendario' }));
+    expect(navigateMock).toHaveBeenLastCalledWith('/calendario');
   });
 });

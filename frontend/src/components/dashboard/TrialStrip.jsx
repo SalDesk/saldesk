@@ -3,7 +3,7 @@ import { ArrowRight, AlertTriangle, Clock } from 'lucide-react';
 import usePlan from '../../hooks/usePlan';
 import { useT } from '../../i18n';
 
-/* Faixa de uma linha com o estado da avaliacao (mesma logica do TrialBanner) */
+/* Faixa de uma linha com o estado da avaliacao */
 export default function TrialStrip() {
   const t = useT();
   const navigate = useNavigate();
