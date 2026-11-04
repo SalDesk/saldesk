@@ -7,6 +7,7 @@ const { confirmacaoClienteEmail, notificacaoOperadorEmail } = require('../helper
 const { dispararSyncImediato } = require('../helpers/otaSyncHelper');
 const { criarNotificacaoViajante } = require('../helpers/travelerNotificationHelper');
 const { frontendBase } = require('../utils/urls');
+const { lerFiltrosDeData, aplicarFiltrosDeData } = require('../helpers/reservationFilters');
 
 const STATUS_NOTIFICACAO = {
   confirmed:   (opName) => `A sua reserva com ${opName} foi confirmada.`,
@@ -30,7 +31,8 @@ const TRANSICOES = {
 
 async function listar(req, res, next) {
   try {
-    const { status, unit_id, check_in_from, check_in_to, seller_id } = req.query;
+    const { status, unit_id, seller_id } = req.query;
+    const filtros = lerFiltrosDeData(req.query);
 
     let q = supabaseAdmin
       .from('reservations')
@@ -40,8 +42,7 @@ async function listar(req, res, next) {
 
     if (status) q = q.eq('status', status);
     if (unit_id) q = q.eq('unit_id', unit_id);
-    if (check_in_from) q = q.gte('check_in', check_in_from);
-    if (check_in_to) q = q.lte('check_in', check_in_to);
+    q = aplicarFiltrosDeData(q, filtros);
     // Vendedor so pode ver as suas proprias reservas; operador pode filtrar por qualquer vendedor
     if (req.staff && !req.operator) q = q.eq('seller_id', req.staff.id);
     else if (seller_id) q = q.eq('seller_id', seller_id);
@@ -51,6 +52,9 @@ async function listar(req, res, next) {
 
     return res.json({ data, message: 'Reservas listadas' });
   } catch (err) {
+    if (err.status === 400 && (err.code === 'INVALID_DATE' || err.code === 'INVALID_RANGE')) {
+      return res.status(400).json({ error: err.message, code: err.code });
+    }
     next(err);
   }
 }
