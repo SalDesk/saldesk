@@ -3,7 +3,7 @@ import PlanGuard from '../components/PlanGuard';
 import {
   Plus, Pencil, Trash2, Star, Camera, Upload, X, Tag,
   Phone, Mail, Award, Globe2, Clock, Briefcase, Search,
-  UserCheck, Users, Shield, CalendarDays, UserPlus,
+  UserCheck, Users, Shield, UserPlus,
 } from 'lucide-react';
 import {
   listStaff, createStaff, updateStaff, deleteStaff,
@@ -19,6 +19,11 @@ import Button from '../components/ui/Button';
 import Modal from '../components/ui/Modal';
 import Input, { Textarea, Select } from '../components/ui/Input';
 import Badge from '../components/ui/Badge';
+import Card from '../components/ui/Card';
+import EmptyState from '../components/ui/EmptyState';
+import FilterChips from '../components/ui/FilterChips';
+import Tabs from '../components/ui/Tabs';
+import Table from '../components/ui/Table';
 import LoadingSpinner from '../components/shared/LoadingSpinner';
 
 const LANGUAGES   = ['PT', 'EN', 'DE', 'NL', 'FR', 'ES'];
@@ -30,15 +35,22 @@ const PRESET_CERTS = [
   'Primeiros Socorros', 'CPR / DAE', 'Guia Turistico Certificado',
 ];
 
+/* Cada estado do guia usa uma variante do Badge do sistema */
 const STATUS_META = {
-  active:    { label: 'Disponivel', cls: 'bg-[#ECFDF5] text-[#1A7A4A] border border-green-200'  },
-  busy:      { label: 'Ocupado',    cls: 'bg-ocean-50 text-ocean-700 border border-ocean-200'    },
-  day_off:   { label: 'Folga',      cls: 'bg-n-100 text-n-500 border border-n-200'              },
-  inactive:  { label: 'Inactivo',   cls: 'bg-red-50 text-error border border-red-200'           },
+  active:    { label: 'Disponivel', variant: 'confirmed'  },
+  busy:      { label: 'Ocupado',    variant: 'checked_in' },
+  day_off:   { label: 'Folga',      variant: 'direct'     },
+  inactive:  { label: 'Inactivo',   variant: 'cancelled'  },
 };
 
+/* Etiqueta de grupo de campos: igual a etiqueta dos campos do sistema */
+const GROUP_LABEL = 'text-xs font-body font-bold uppercase tracking-wide text-n-600 mb-2 app:normal-case app:tracking-normal app:text-[13px] app:text-n-700';
+
+/* Botoes so com icone: o realce ao passar o rato */
+const DELETE_HOVER = 'hover:text-error hover:bg-[var(--error-light)]';
+
 const DOT_META = {
-  active:   'bg-green-500',
+  active:   'bg-[var(--success)]',
   busy:     'bg-ocean-500',
   day_off:  'bg-sand-500',
   inactive: 'bg-n-300',
@@ -72,7 +84,7 @@ function GuideCard({ guide, units, onEdit, onDelete, onHistory, onAssign }) {
   const statusMeta = STATUS_META[guide.status] || STATUS_META.inactive;
 
   return (
-    <div className="bg-white rounded-md border border-n-200 shadow-sm overflow-hidden flex flex-col">
+    <Card padding="p-0 flex flex-col flex-1" className="flex flex-col overflow-hidden">
       <div className="p-4 flex items-start gap-3">
         <GuideAvatar guide={guide} size={52} />
         <div className="flex-1 min-w-0">
@@ -80,33 +92,27 @@ function GuideCard({ guide, units, onEdit, onDelete, onHistory, onAssign }) {
           <p className="text-xs font-body text-n-500 mt-0.5">{guide.role}</p>
           <div className="flex items-center gap-2 mt-1.5">
             {rating > 0 && (
-              <span className="flex items-center gap-1 text-xs font-body text-n-700">
+              <span className="flex items-center gap-1 text-xs font-body text-n-700 tabular-nums">
                 <Star size={11} strokeWidth={0} className="fill-sand-500 text-sand-500" />
                 {rating.toFixed(1)}
               </span>
             )}
-            <span className="flex items-center gap-1 text-xs font-body text-n-500">
+            <span className="flex items-center gap-1 text-xs font-body text-n-500 tabular-nums">
               <Briefcase size={11} strokeWidth={1.75} className="text-n-400" />
               {guide.total_jobs_completed || 0} tours
             </span>
           </div>
         </div>
         <div className="flex gap-0.5 shrink-0">
-          <button onClick={() => onEdit(guide)}
-            className="p-1.5 rounded text-n-400 hover:text-ocean-700 hover:bg-ocean-50 transition-colors">
-            <Pencil size={14} strokeWidth={1.75} />
-          </button>
-          <button onClick={() => onDelete(guide)}
-            className="p-1.5 rounded text-n-400 hover:text-error hover:bg-red-50 transition-colors">
-            <Trash2 size={14} strokeWidth={1.75} />
-          </button>
+          <Button variant="ghost" size="sm" icon={Pencil} onClick={() => onEdit(guide)} aria-label="Editar" />
+          <Button variant="ghost" size="sm" icon={Trash2} onClick={() => onDelete(guide)} className={DELETE_HOVER} aria-label="Eliminar" />
         </div>
       </div>
 
       <div className="px-4 pb-3 flex-1 space-y-3">
         {langs.length > 0 && (
           <div>
-            <p className="text-[10px] font-mono uppercase tracking-wider text-n-400 mb-1.5">Idiomas</p>
+            <p className="text-xs font-body font-medium text-n-500 mb-1.5">Idiomas</p>
             <div className="flex flex-wrap gap-1">
               {langs.map(l => (
                 <span key={l}
@@ -119,7 +125,7 @@ function GuideCard({ guide, units, onEdit, onDelete, onHistory, onAssign }) {
         )}
         {certs.length > 0 && (
           <div>
-            <p className="text-[10px] font-mono uppercase tracking-wider text-n-400 mb-1.5">Certificacoes</p>
+            <p className="text-xs font-body font-medium text-n-500 mb-1.5">Certificacoes</p>
             <div className="flex flex-wrap gap-1">
               {certs.slice(0, 3).map(c => (
                 <span key={c}
@@ -141,9 +147,7 @@ function GuideCard({ guide, units, onEdit, onDelete, onHistory, onAssign }) {
       </div>
 
       <div className="px-4 py-3 border-t border-n-100 flex items-center justify-between gap-2">
-        <span className={`text-xs font-mono px-2 py-0.5 rounded-xs uppercase tracking-wide whitespace-nowrap ${statusMeta.cls}`}>
-          {statusMeta.label}
-        </span>
+        <Badge variant={statusMeta.variant} className="whitespace-nowrap">{statusMeta.label}</Badge>
         <div className="flex gap-1.5">
           <Button variant="secondary" size="sm" onClick={() => onAssign(guide)}>
             <UserPlus size={12} strokeWidth={1.75} className="mr-1" />
@@ -154,7 +158,7 @@ function GuideCard({ guide, units, onEdit, onDelete, onHistory, onAssign }) {
           </Button>
         </div>
       </div>
-    </div>
+    </Card>
   );
 }
 
@@ -230,7 +234,7 @@ function GuideForm({ guide, units, onSave, onCancel, loading, error }) {
               ? <img src={photoPreview} alt="" className="w-full h-full object-cover" />
               : <Camera size={20} strokeWidth={1.75} className="text-n-400" />}
           </div>
-          <button type="button" onClick={() => fileRef.current?.click()}
+          <button type="button" onClick={() => fileRef.current?.click()} aria-label="Carregar foto"
             className="absolute -bottom-1 -right-1 w-6 h-6 bg-ocean-700 text-white rounded-full flex items-center justify-center hover:bg-ocean-500 transition-colors">
             <Upload size={10} strokeWidth={2} />
           </button>
@@ -257,7 +261,7 @@ function GuideForm({ guide, units, onSave, onCancel, loading, error }) {
 
       {/* Languages */}
       <div>
-        <p className="text-xs font-body font-bold uppercase tracking-wide text-n-600 mb-2">Idiomas</p>
+        <p className={GROUP_LABEL}>Idiomas</p>
         <div className="flex gap-2 flex-wrap">
           {LANGUAGES.map(l => (
             <label key={l} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-sm border text-xs font-body font-medium cursor-pointer transition-colors select-none ${
@@ -272,7 +276,7 @@ function GuideForm({ guide, units, onSave, onCancel, loading, error }) {
 
       {/* Certifications */}
       <div>
-        <p className="text-xs font-body font-bold uppercase tracking-wide text-n-600 mb-2">Certificacoes</p>
+        <p className={GROUP_LABEL}>Certificacoes</p>
         <div className="flex flex-wrap gap-1.5 mb-2">
           {PRESET_CERTS.map(c => (
             <button key={c} type="button" onClick={() => toggleCert(c)}
@@ -286,18 +290,17 @@ function GuideForm({ guide, units, onSave, onCancel, loading, error }) {
         {certs.filter(c => !PRESET_CERTS.includes(c)).map(c => (
           <span key={c} className="inline-flex items-center gap-1 mr-1.5 mb-1.5 px-2 py-0.5 bg-sand-50 text-sand-600 border border-sand-200 rounded-xs text-xs font-body">
             <Tag size={9} strokeWidth={1.75} />{c}
-            <button type="button" onClick={() => setCerts(p => p.filter(x => x !== c))}><X size={9} strokeWidth={2} /></button>
+            <button type="button" onClick={() => setCerts(p => p.filter(x => x !== c))} aria-label="Remover"><X size={9} strokeWidth={2} /></button>
           </span>
         ))}
-        <input type="text" value={certInput} onChange={e => setCertInput(e.target.value)} onKeyDown={addCustomCert}
-          placeholder="Outra certificacao + Enter"
-          className="w-full h-8 px-3 rounded-sm border border-n-300 text-sm font-body bg-n-100 text-n-900 placeholder:text-n-400 focus:outline-none focus:ring-2 focus:ring-ocean-300 focus:border-ocean-700 focus:bg-white" />
+        <Input type="text" value={certInput} onChange={e => setCertInput(e.target.value)} onKeyDown={addCustomCert}
+          placeholder="Outra certificacao + Enter" />
       </div>
 
       {/* Tours */}
       {units.length > 0 && (
         <div>
-          <p className="text-xs font-body font-bold uppercase tracking-wide text-n-600 mb-2">Tours que pode conduzir</p>
+          <p className={GROUP_LABEL}>Tours que pode conduzir</p>
           <div className="flex flex-col gap-1.5 max-h-36 overflow-y-auto">
             {units.map(u => (
               <label key={u.id} className={`flex items-center gap-2.5 px-3 py-2 rounded-sm border cursor-pointer transition-colors ${
@@ -313,7 +316,7 @@ function GuideForm({ guide, units, onSave, onCancel, loading, error }) {
 
       {/* Schedule */}
       <div>
-        <p className="text-xs font-body font-bold uppercase tracking-wide text-n-600 mb-2">Dias disponiveis</p>
+        <p className={GROUP_LABEL}>Dias disponiveis</p>
         <div className="flex gap-1.5 flex-wrap">
           {DAYS.map(d => (
             <button key={d} type="button" onClick={() => toggleDay(d)}
@@ -346,7 +349,7 @@ function GuideForm({ guide, units, onSave, onCancel, loading, error }) {
               <Shield size={15} strokeWidth={1.75} className="text-ocean-700" />
               <span className="text-sm font-display font-semibold text-n-800">Criar conta /staff</span>
             </div>
-            <button type="button" onClick={() => setCreateAccess(!createAccess)}
+            <button type="button" onClick={() => setCreateAccess(!createAccess)} aria-label="Criar conta /staff"
               className={`w-10 h-5 rounded-full transition-colors relative ${createAccess ? 'bg-ocean-700' : 'bg-n-300'}`}>
               <span className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-all ${createAccess ? 'left-[22px]' : 'left-0.5'}`} />
             </button>
@@ -359,7 +362,7 @@ function GuideForm({ guide, units, onSave, onCancel, loading, error }) {
         </div>
       )}
 
-      {error && <p className="text-sm font-body px-3 py-2 rounded-sm bg-red-50 text-error">{error}</p>}
+      {error && <p className="text-sm font-body px-3 py-2 rounded-sm bg-[var(--error-light)] text-[var(--error)]">{error}</p>}
 
       <div className="flex gap-3 pt-1">
         <Button type="button" variant="secondary" onClick={onCancel} className="flex-1">Cancelar</Button>
@@ -385,12 +388,12 @@ function HistoryModal({ guide, onClose }) {
   }, [guide?.id]);
 
   const STATUS_LABEL = { pending: 'Pendente', confirmed: 'Confirmado', in_progress: 'Em progresso', completed: 'Concluido', cancelled: 'Cancelado' };
-  const STATUS_COLOR = {
-    completed: 'bg-[#ECFDF5] text-[#1A7A4A]',
-    cancelled: 'bg-red-50 text-error',
-    pending:   'bg-yellow-50 text-yellow-700',
-    confirmed: 'bg-ocean-50 text-ocean-700',
-    in_progress: 'bg-ocean-50 text-ocean-700',
+  const STATUS_VARIANT = {
+    completed: 'confirmed',
+    cancelled: 'cancelled',
+    pending:   'pending',
+    confirmed: 'checked_in',
+    in_progress: 'checked_in',
   };
 
   const totalEarned = jobs.filter(j => j.status === 'completed').reduce((s, j) => s + Number(j.earnings_amount || 0), 0);
@@ -400,16 +403,13 @@ function HistoryModal({ guide, onClose }) {
       {loading ? (
         <div className="flex justify-center py-10"><LoadingSpinner size={24} /></div>
       ) : jobs.length === 0 ? (
-        <div className="flex flex-col items-center py-12 text-n-400">
-          <Briefcase size={32} strokeWidth={1.25} className="mb-2" />
-          <p className="text-sm font-body">Sem tours registados</p>
-        </div>
+        <EmptyState icon={Briefcase} title="Sem tours registados" />
       ) : (
         <>
           {totalEarned > 0 && (
             <div className="mb-4 px-4 py-3 bg-ocean-50 border border-ocean-100 rounded-sm flex items-center justify-between">
-              <span className="text-xs font-mono uppercase tracking-wide text-ocean-600">Total ganho</span>
-              <span className="font-display font-bold text-ocean-700">€{totalEarned.toFixed(2)}</span>
+              <span className="text-xs font-body font-medium text-ocean-600">Total ganho</span>
+              <span className="font-display font-bold text-ocean-700 tabular-nums">€{totalEarned.toFixed(2)}</span>
             </div>
           )}
           <div className="space-y-2">
@@ -426,9 +426,9 @@ function HistoryModal({ guide, onClose }) {
                     <p className="text-xs font-body text-ocean-700 mt-0.5">€{Number(job.earnings_amount).toFixed(2)}</p>
                   )}
                 </div>
-                <span className={`text-xs font-mono px-2 py-0.5 rounded-xs uppercase tracking-wide whitespace-nowrap shrink-0 ${STATUS_COLOR[job.status] || 'bg-n-100 text-n-500'}`}>
+                <Badge variant={STATUS_VARIANT[job.status] || 'default'} className="whitespace-nowrap shrink-0">
                   {STATUS_LABEL[job.status] || job.status}
-                </span>
+                </Badge>
               </div>
             ))}
           </div>
@@ -533,74 +533,74 @@ function AvailabilityTab({ guides }) {
 
   if (guides.length === 0) {
     return (
-      <div className="flex flex-col items-center py-16 text-n-400">
-        <Users size={36} strokeWidth={1.25} className="mb-3" />
-        <p className="text-sm font-body">Sem guias para mostrar disponibilidade</p>
-      </div>
+      <Card padding="p-0">
+        <EmptyState icon={Users} title="Sem guias para mostrar disponibilidade" />
+      </Card>
     );
   }
 
+  /* Colunas: o guia e um dia da semana cada; as celulas de disponibilidade sao botoes proprios */
+  const columns = [
+    {
+      key: 'guia',
+      label: 'Guia',
+      width: 160,
+      render: (g) => (
+        <div className="flex items-center gap-2.5">
+          <GuideAvatar guide={g} size={28} />
+          <div>
+            <p className="font-body font-semibold text-n-800 text-xs truncate max-w-[90px]">{g.name.split(' ')[0]}</p>
+            <p className="font-body text-n-400 text-xs">{g.role}</p>
+          </div>
+        </div>
+      ),
+    },
+    ...weekDates.map((d, i) => {
+      const isToday = d === todayStr;
+      const dayNum  = parseInt(d.slice(8), 10);
+      return {
+        key: d,
+        label: (
+          <div className="flex flex-col items-center">
+            <span className={isToday
+              ? 'inline-flex items-center justify-center min-w-[22px] h-[22px] px-1 rounded-full bg-ocean-700 text-white font-display font-semibold tabular-nums'
+              : 'font-display font-semibold text-n-700 tabular-nums'}>{dayNum}</span>
+            <span className="font-body text-n-400 font-normal">{DAY_LABELS[i]}</span>
+          </div>
+        ),
+        align: 'center',
+        width: 72,
+        render: (g) => {
+          const key  = `${g.id}_${d}`;
+          const isAv = avail[key] ?? true;
+          const isSaving = savingId === key;
+          return (
+            <button
+              onClick={() => toggle(g.id, d)}
+              disabled={isSaving}
+              title={isAv ? 'Disponivel — clicar para marcar indisponivel' : 'Indisponivel — clicar para marcar disponivel'}
+              className={`w-8 h-8 mx-auto rounded-sm flex items-center justify-center transition-colors ${
+                isAv
+                  ? 'bg-[var(--success-light)] text-[var(--success)] hover:brightness-95'
+                  : 'bg-n-100 text-n-400 hover:bg-n-200'
+              } ${isSaving ? 'opacity-50' : ''}`}
+            >
+              <span className={`w-2.5 h-2.5 rounded-full ${isAv ? 'bg-[var(--success)]' : 'bg-n-300'}`} />
+            </button>
+          );
+        },
+      };
+    }),
+  ];
+
   return (
-    <div className="bg-white border border-n-200 rounded-md overflow-x-auto">
-      <table className="w-full text-xs" style={{ minWidth: 540 }}>
-        <thead>
-          <tr className="bg-n-50 border-b border-n-200">
-            <th className="text-left px-4 py-3 text-xs font-body font-bold uppercase tracking-wide text-n-500 min-w-[140px]">
-              Guia
-            </th>
-            {weekDates.map((d, i) => {
-              const isToday = d === todayStr;
-              const dayNum  = parseInt(d.slice(8), 10);
-              return (
-                <th key={d} className={`px-3 py-3 text-center min-w-[72px] ${isToday ? 'bg-ocean-50' : ''}`}>
-                  <div className={`font-display font-semibold ${isToday ? 'text-ocean-700' : 'text-n-700'}`}>{dayNum}</div>
-                  <div className="font-body text-n-400 font-normal">{DAY_LABELS[i]}</div>
-                </th>
-              );
-            })}
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-n-100">
-          {guides.map(g => (
-            <tr key={g.id} className="hover:bg-n-50/50">
-              <td className="px-4 py-3">
-                <div className="flex items-center gap-2.5">
-                  <GuideAvatar guide={g} size={28} />
-                  <div>
-                    <p className="font-body font-semibold text-n-800 text-xs truncate max-w-[90px]">{g.name.split(' ')[0]}</p>
-                    <p className="font-body text-n-400 text-xs">{g.role}</p>
-                  </div>
-                </div>
-              </td>
-              {weekDates.map(d => {
-                const key  = `${g.id}_${d}`;
-                const isAv = avail[key] ?? true;
-                const isSaving = savingId === key;
-                const isToday  = d === todayStr;
-                return (
-                  <td key={d} className={`px-3 py-3 text-center ${isToday ? 'bg-ocean-50/40' : ''}`}>
-                    <button
-                      onClick={() => toggle(g.id, d)}
-                      disabled={isSaving}
-                      title={isAv ? 'Disponivel — clicar para marcar indisponivel' : 'Indisponivel — clicar para marcar disponivel'}
-                      className={`w-8 h-8 mx-auto rounded-sm flex items-center justify-center transition-colors ${
-                        isAv
-                          ? 'bg-[#ECFDF5] text-[#1A7A4A] hover:bg-green-100'
-                          : 'bg-n-100 text-n-400 hover:bg-n-200'
-                      } ${isSaving ? 'opacity-50' : ''}`}
-                    >
-                      <span className={`w-2.5 h-2.5 rounded-full ${isAv ? 'bg-[#1A7A4A]' : 'bg-n-300'}`} />
-                    </button>
-                  </td>
-                );
-              })}
-            </tr>
-          ))}
-        </tbody>
-      </table>
+    <Card padding="p-0" className="overflow-x-auto">
+      <div style={{ minWidth: 540 }}>
+        <Table columns={columns} rows={guides} />
+      </div>
       <div className="flex items-center gap-4 px-4 py-2.5 border-t border-n-100 bg-n-50">
         <div className="flex items-center gap-1.5">
-          <span className="w-3 h-3 rounded-sm bg-[#ECFDF5] border border-green-200 inline-block" />
+          <span className="w-3 h-3 rounded-sm bg-[var(--success-light)] border border-[var(--success)] inline-block" />
           <span className="text-xs font-body text-n-500">Disponivel</span>
         </div>
         <div className="flex items-center gap-1.5">
@@ -609,7 +609,7 @@ function AvailabilityTab({ guides }) {
         </div>
         <span className="text-xs font-body text-n-400 ml-auto">Clicar para alternar</span>
       </div>
-    </div>
+    </Card>
   );
 }
 
@@ -675,9 +675,15 @@ export default function Guides() {
   const active = guides.filter(g => g.status === 'active').length;
 
   const TABS = [
-    { key: 'lista',        label: 'Guias',         Icon: Users },
-    { key: 'disponibilidade', label: 'Disponibilidade', Icon: CalendarDays },
+    { id: 'lista',           label: 'Guias' },
+    { id: 'disponibilidade', label: 'Disponibilidade' },
   ];
+
+  /* Chips de estado: Todos primeiro, depois um por estado do guia */
+  const STATUS_OPTIONS = ['', 'active', 'busy', 'day_off', 'inactive'].map(s => ({
+    value: s,
+    label: s === '' ? 'Todos' : STATUS_META[s]?.label || s,
+  }));
 
   return (
     <div>
@@ -694,16 +700,8 @@ export default function Guides() {
       />
 
       {/* Tab bar */}
-      <div className="flex gap-0.5 mb-5 bg-n-100 p-1 rounded-md w-fit">
-        {TABS.map(({ key, label, Icon }) => (
-          <button key={key} onClick={() => setTab(key)}
-            className={`flex items-center gap-2 px-4 py-2 rounded text-sm font-display font-medium transition-colors ${
-              tab === key ? 'bg-white text-ocean-700 shadow-sm' : 'text-n-500 hover:text-n-700'
-            }`}>
-            <Icon size={15} strokeWidth={1.75} />
-            {label}
-          </button>
-        ))}
+      <div className="mb-5">
+        <Tabs tabs={TABS} value={tab} onChange={setTab} />
       </div>
 
       {tab === 'lista' && (
@@ -712,30 +710,22 @@ export default function Guides() {
           <div className="flex flex-wrap gap-2 mb-5 items-center">
             <div className="relative">
               <Search size={14} strokeWidth={1.75} className="absolute left-3 top-1/2 -translate-y-1/2 text-n-400" />
-              <input value={search} onChange={e => setSearch(e.target.value)}
-                placeholder="Pesquisar guia..."
-                className="h-9 pl-8 pr-3 rounded-sm border border-n-200 text-sm font-body bg-white placeholder:text-n-400 focus:outline-none focus:border-ocean-700" />
+              <Input value={search} onChange={e => setSearch(e.target.value)}
+                placeholder="Pesquisar guia..." className="pl-8 w-56" />
             </div>
-            {['', 'active', 'busy', 'day_off', 'inactive'].map(s => (
-              <button key={s} onClick={() => setStatusFilter(s)}
-                className={`px-3 py-1.5 rounded-sm text-xs font-body font-semibold transition-colors ${
-                  statusFilter === s ? 'bg-ocean-700 text-white' : 'bg-white border border-n-200 text-n-600 hover:border-ocean-300'
-                }`}>
-                {s === '' ? 'Todos' : STATUS_META[s]?.label || s}
-              </button>
-            ))}
+            <FilterChips options={STATUS_OPTIONS} value={statusFilter} onChange={setStatusFilter} />
           </div>
 
           {loading ? (
             <div className="flex justify-center py-20"><LoadingSpinner size={32} /></div>
           ) : filtered.length === 0 && !search && !statusFilter ? (
-            <div className="bg-white border border-n-200 rounded-md flex flex-col items-center py-16 text-n-400">
-              <Users size={40} strokeWidth={1.25} className="mb-3" />
-              <p className="font-body text-sm">Sem guias registados</p>
-              <p className="font-body text-xs mt-1 text-center max-w-xs">
-                Adicione os guias da sua equipa e associe-os aos tours que conduzem
-              </p>
-            </div>
+            <Card padding="p-0">
+              <EmptyState
+                icon={Users}
+                title="Sem guias registados"
+                description="Adicione os guias da sua equipa e associe-os aos tours que conduzem"
+              />
+            </Card>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {filtered.map(g => (
