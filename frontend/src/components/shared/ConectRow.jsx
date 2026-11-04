@@ -1,7 +1,10 @@
 import { Globe2 } from 'lucide-react';
+import Badge from '../ui/Badge';
+import Button from '../ui/Button';
 
 const CONECT_STATUS_LABEL = { draft: 'Nao submetido', pending_review: 'Em revisao', published: 'Publicado no Conect', paused: 'Pausado' };
-const CONECT_STATUS_TONE  = { draft: 'text-n-400 bg-n-100', pending_review: 'text-ocean-700 bg-ocean-50', published: 'text-[#1A7A4A] bg-[#ECFDF5]', paused: 'text-[#B45309] bg-[#FFF7E6]' };
+/* Variante do Badge do sistema para cada estado do Conect */
+const CONECT_STATUS_VARIANT = { draft: 'default', pending_review: 'info', published: 'confirmed', paused: 'pending' };
 
 export default function ConectRow({ unit, onSubmitConect }) {
   if (!onSubmitConect) return null;
@@ -10,17 +13,18 @@ export default function ConectRow({ unit, onSubmitConect }) {
   const canWithdraw = status === 'published' || status === 'paused';
   return (
     <div className="flex items-center justify-between gap-2 pt-2 border-t border-n-100">
-      <span className={`text-[11px] font-body font-semibold px-2 py-0.5 rounded-full ${CONECT_STATUS_TONE[status] || CONECT_STATUS_TONE.draft}`}>
+      <Badge variant={CONECT_STATUS_VARIANT[status] || 'default'}>
         {CONECT_STATUS_LABEL[status] || status}
-      </span>
+      </Badge>
       {(canSubmit || canWithdraw) && (
-        <button
+        <Button
+          variant="ghost"
+          size="sm"
+          icon={Globe2}
           onClick={() => onSubmitConect(unit)}
-          className="flex items-center gap-1 text-xs font-body font-semibold text-ocean-700 hover:underline"
         >
-          <Globe2 size={12} strokeWidth={2} />
           {canSubmit ? 'Submeter ao Conect' : 'Retirar do Conect'}
-        </button>
+        </Button>
       )}
     </div>
   );

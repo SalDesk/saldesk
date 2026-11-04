@@ -395,6 +395,7 @@
     "description": "Descricao",
     "active": "Activa",
     "inactive": "Inactiva",
+    "copyLink": "Copiar link",
     "priceUnits": {
       "night": "por noite",
       "hour": "por hora",

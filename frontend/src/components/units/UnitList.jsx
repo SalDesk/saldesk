@@ -1,7 +1,9 @@
-import { Building2, Compass, Pencil, Trash2, Power, ImageOff, Clock, MapPin, Users, QrCode } from 'lucide-react';
+import { Building2, Compass, Pencil, Trash2, Power, ImageOff, Clock, MapPin, Users, QrCode, Plus } from 'lucide-react';
 import { useT } from '../../i18n';
 import Badge from '../ui/Badge';
 import Button from '../ui/Button';
+import Card from '../ui/Card';
+import EmptyState from '../ui/EmptyState';
 import { parseTourMeta } from './UnitForm';
 import ConectRow from '../shared/ConectRow';
 
@@ -10,13 +12,31 @@ function formatPrice(unit) {
   return `€${Number(unit.base_price).toFixed(2)}${labels[unit.price_unit] || ''}`;
 }
 
-const DIFFICULTY_COLOR = {
-  Facil:    'bg-[#ECFDF5] text-[#1A7A4A] border-[#BBF7D0]',
-  Moderado: 'bg-[#FFF7E6] text-[#B45309] border-[#FDE68A]',
-  Dificil:  'bg-[#FEF2F2] text-[#B91C1C] border-[#FECACA]',
+/* Variante do Badge do sistema para cada dificuldade */
+const DIFFICULTY_VARIANT = {
+  Facil:    'confirmed',
+  Moderado: 'pending',
+  Dificil:  'cancelled',
 };
 
+/* Botoes so com icone: o realce ao passar o rato depende do estado */
+const TOGGLE_HOVER_ACTIVE   = 'hover:text-error hover:bg-[var(--error-light)]';
+const TOGGLE_HOVER_INACTIVE = 'hover:text-[var(--success)] hover:bg-[var(--success-light)]';
+const DELETE_HOVER          = 'hover:text-error hover:bg-[var(--error-light)]';
+
 const TOUR_TYPE_LABEL = { grupo: 'Grupo', privado: 'Privado', ambos: 'Grupo / Privado' };
+
+/* Cartao de unidade: o cartao do sistema, em coluna, com a miniatura a toda a largura */
+function UnitCard({ isActive, children }) {
+  return (
+    <Card
+      padding="p-0 flex flex-col flex-1"
+      className={`flex flex-col overflow-hidden transition-opacity ${isActive ? '' : 'opacity-70'}`}
+    >
+      {children}
+    </Card>
+  );
+}
 
 function TourCard({ unit, onEdit, onDelete, onToggle, onSubmitConect }) {
   const isActive = unit.status !== 'inactive';
@@ -24,11 +44,7 @@ function TourCard({ unit, onEdit, onDelete, onToggle, onSubmitConect }) {
   const thumb    = unit.images?.[0];
 
   return (
-    <div
-      className={`bg-white rounded-md border shadow-sm flex flex-col overflow-hidden transition-opacity ${
-        isActive ? 'border-n-200' : 'border-n-150 opacity-70'
-      }`}
-    >
+    <UnitCard isActive={isActive}>
       {thumb ? (
         <div className="h-36 overflow-hidden bg-n-100 shrink-0">
           <img
@@ -62,7 +78,7 @@ function TourCard({ unit, onEdit, onDelete, onToggle, onSubmitConect }) {
         </div>
 
         {/* Tags row */}
-        <div className="flex flex-wrap gap-1.5">
+        <div className="flex flex-wrap items-center gap-1.5">
           <span className="text-xs font-body px-2 py-0.5 bg-ocean-50 text-ocean-700 border border-ocean-100 rounded-xs">
             {unit.unit_type}
           </span>
@@ -72,9 +88,9 @@ function TourCard({ unit, onEdit, onDelete, onToggle, onSubmitConect }) {
             </span>
           )}
           {meta.difficulty && (
-            <span className={`text-xs font-body px-2 py-0.5 border rounded-xs ${DIFFICULTY_COLOR[meta.difficulty] || 'bg-n-50 text-n-600 border-n-200'}`}>
+            <Badge variant={DIFFICULTY_VARIANT[meta.difficulty] || 'default'}>
               {meta.difficulty}
-            </span>
+            </Badge>
           )}
         </div>
 
@@ -139,18 +155,18 @@ function TourCard({ unit, onEdit, onDelete, onToggle, onSubmitConect }) {
             <div className="flex items-end justify-between mt-auto pt-2 border-t border-n-100">
               <div>
                 {hasBasePrice ? (
-                  <p className="font-display font-bold text-base text-ocean-700">
+                  <p className="font-display font-bold text-base text-ocean-700 tabular-nums">
                     €{Number(unit.base_price).toFixed(0)}<span className="text-xs font-body font-normal text-n-500">/adulto</span>
                   </p>
                 ) : startingFrom != null ? (
-                  <p className="font-display font-bold text-base text-ocean-700">
+                  <p className="font-display font-bold text-base text-ocean-700 tabular-nums">
                     <span className="text-xs font-body font-normal text-n-500">A partir de </span>€{startingFrom.toFixed(0)}
                   </p>
                 ) : (
                   <p className="text-xs font-body text-n-400">Sem preço definido</p>
                 )}
                 {meta.price_child && (
-                  <p className="text-xs font-body text-n-500">
+                  <p className="text-xs font-body text-n-500 tabular-nums">
                     €{Number(meta.price_child).toFixed(0)} crianca
                     {hasBasePrice && meta.price_private && ` · €${Number(meta.price_private).toFixed(0)} privado`}
                   </p>
@@ -163,7 +179,7 @@ function TourCard({ unit, onEdit, onDelete, onToggle, onSubmitConect }) {
                   icon={Power}
                   onClick={() => onToggle?.(unit)}
                   aria-label={isActive ? 'Desactivar' : 'Activar'}
-                  className={isActive ? 'hover:text-error hover:bg-[var(--error-light)]' : 'hover:text-[var(--success)] hover:bg-[#ECFDF5]'}
+                  className={isActive ? TOGGLE_HOVER_ACTIVE : TOGGLE_HOVER_INACTIVE}
                 />
                 <Button variant="ghost" size="sm" icon={Pencil} onClick={() => onEdit(unit)} aria-label="Editar" />
                 <Button
@@ -171,7 +187,7 @@ function TourCard({ unit, onEdit, onDelete, onToggle, onSubmitConect }) {
                   size="sm"
                   icon={Trash2}
                   onClick={() => onDelete(unit)}
-                  className="hover:text-error hover:bg-[var(--error-light)]"
+                  className={DELETE_HOVER}
                   aria-label="Eliminar"
                 />
               </div>
@@ -180,26 +196,29 @@ function TourCard({ unit, onEdit, onDelete, onToggle, onSubmitConect }) {
         })()}
         <ConectRow unit={unit} onSubmitConect={onSubmitConect} />
       </div>
-    </div>
+    </UnitCard>
   );
 }
 
-export default function UnitList({ units, onEdit, onDelete, onToggle, onSubmitConect, onViewQr, operatorType }) {
+/* onCreate e createLabel sao opcionais: com onCreate o vazio traz o botao de criar */
+export default function UnitList({ units, onEdit, onDelete, onToggle, onSubmitConect, onViewQr, operatorType, onCreate, createLabel }) {
   const t = useT();
   const isTour = operatorType === 'activity';
 
   if (!units.length) {
     return (
-      <div className="flex flex-col items-center justify-center py-20 text-n-400">
-        {isTour
-          ? <Compass size={40} strokeWidth={1.25} className="mb-3" />
-          : <Building2 size={40} strokeWidth={1.25} className="mb-3" />
-        }
-        <p className="font-body text-sm">{t('common.noResults')}</p>
-        <p className="font-body text-xs mt-1">
-          {isTour ? 'Crie o seu primeiro tour' : 'Crie a sua primeira unidade'}
-        </p>
-      </div>
+      <Card padding="p-0">
+        <EmptyState
+          icon={isTour ? Compass : Building2}
+          title={t('common.noResults')}
+          description={isTour ? 'Crie o seu primeiro tour' : 'Crie a sua primeira unidade'}
+          action={onCreate && (
+            <Button icon={Plus} onClick={onCreate}>
+              {createLabel || (isTour ? 'Novo Tour' : 'Nova Unidade')}
+            </Button>
+          )}
+        />
+      </Card>
     );
   }
 
@@ -227,12 +246,7 @@ export default function UnitList({ units, onEdit, onDelete, onToggle, onSubmitCo
         const thumb    = unit.images?.[0];
 
         return (
-          <div
-            key={unit.id}
-            className={`bg-white rounded-md border shadow-sm flex flex-col overflow-hidden transition-opacity ${
-              isActive ? 'border-n-200' : 'border-n-150 opacity-70'
-            }`}
-          >
+          <UnitCard key={unit.id} isActive={isActive}>
             {thumb ? (
               <div className="h-36 overflow-hidden bg-n-100 shrink-0">
                 <img
@@ -267,7 +281,7 @@ export default function UnitList({ units, onEdit, onDelete, onToggle, onSubmitCo
 
               <div className="flex items-center justify-between mt-auto pt-2 border-t border-n-100">
                 <div>
-                  <p className="font-display font-bold text-base text-ocean-700">{formatPrice(unit)}</p>
+                  <p className="font-display font-bold text-base text-ocean-700 tabular-nums">{formatPrice(unit)}</p>
                   <p className="text-xs font-body text-n-400">Cap. {unit.capacity}</p>
                 </div>
                 <div className="flex gap-1">
@@ -286,7 +300,7 @@ export default function UnitList({ units, onEdit, onDelete, onToggle, onSubmitCo
                     icon={Power}
                     onClick={() => onToggle?.(unit)}
                     aria-label={isActive ? 'Desactivar' : 'Activar'}
-                    className={isActive ? 'hover:text-error hover:bg-[var(--error-light)]' : 'hover:text-[var(--success)] hover:bg-[#ECFDF5]'}
+                    className={isActive ? TOGGLE_HOVER_ACTIVE : TOGGLE_HOVER_INACTIVE}
                   />
                   <Button variant="ghost" size="sm" icon={Pencil} onClick={() => onEdit(unit)} aria-label="Editar" />
                   <Button
@@ -294,7 +308,7 @@ export default function UnitList({ units, onEdit, onDelete, onToggle, onSubmitCo
                     size="sm"
                     icon={Trash2}
                     onClick={() => onDelete(unit)}
-                    className="hover:text-error hover:bg-[var(--error-light)]"
+                    className={DELETE_HOVER}
                     aria-label="Eliminar"
                   />
                 </div>
@@ -311,7 +325,7 @@ export default function UnitList({ units, onEdit, onDelete, onToggle, onSubmitCo
               )}
               <ConectRow unit={unit} onSubmitConect={onSubmitConect} />
             </div>
-          </div>
+          </UnitCard>
         );
       })}
     </div>
