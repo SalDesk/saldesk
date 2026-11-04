@@ -146,7 +146,8 @@ describe('Reservations', () => {
       expect(await screen.findByText('Viatura')).toBeInTheDocument();
       expect(screen.getByText('Devolucao')).toBeInTheDocument();
       expect(screen.getByText('Fiat Panda')).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: 'Levantamento' })).toBeInTheDocument();
+      /* o cabecalho Levantamento tambem e um botao (ordenacao): a accao procura-se na linha */
+      expect(within(screen.getAllByRole('row')[1]).getByRole('button', { name: 'Levantamento' })).toBeInTheDocument();
       expect(screen.queryByRole('button', { name: 'Manifesto' })).not.toBeInTheDocument();
     });
 
@@ -395,7 +396,8 @@ describe('Reservations', () => {
         units: [unidade({ name: 'Carro 1', unit_type: 'vehicle', description: '{}' })],
       });
       renderPagina('rentacar');
-      fireEvent.click(await screen.findByRole('button', { name: 'Levantamento' }));
+      await screen.findByText('Viatura');
+      fireEvent.click(within(screen.getAllByRole('row')[1]).getByRole('button', { name: 'Levantamento' }));
       expect(await screen.findByRole('dialog')).toBeInTheDocument();
     });
   });
