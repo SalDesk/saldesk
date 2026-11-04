@@ -14,6 +14,24 @@ function mesAtual() {
 
 /* ─── Shared helpers ─────────────────────────────────────────── */
 
+/* Junta listas de reservas por ordem e tira repetidos pelo id (fica a primeira ocorrencia).
+   Entradas que nao sao listas ignoram-se; itens sem id mantem-se sempre. */
+function uniaoPorId(...listas) {
+  const vistos = new Set();
+  const out = [];
+  listas.forEach(lista => {
+    if (!Array.isArray(lista)) return;
+    lista.forEach(item => {
+      const id = item?.id;
+      if (id === undefined || id === null) { out.push(item); return; }
+      if (vistos.has(id)) return;
+      vistos.add(id);
+      out.push(item);
+    });
+  });
+  return out;
+}
+
 const CELL = {
   available:   { bg: 'bg-[#ECFDF5]', text: 'text-[#1A7A4A]',  dot: 'bg-[#1A7A4A]' },
   occupied:    { bg: 'bg-ocean-50',  text: 'text-ocean-700',   dot: 'bg-ocean-500' },
@@ -216,4 +234,4 @@ function TableMap({ units, todayRes, onSelect }) {
   );
 }
 
-export { TODAY, mesAtual, CELL, unitStatus, parseVehicleMeta, StatusCell, MapLegend, HotelMap, FleetGrid, TableMap, ZONE_KEYS };
+export { TODAY, mesAtual, uniaoPorId, CELL, unitStatus, parseVehicleMeta, StatusCell, MapLegend, HotelMap, FleetGrid, TableMap, ZONE_KEYS };

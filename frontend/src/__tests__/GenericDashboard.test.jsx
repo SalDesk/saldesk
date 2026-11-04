@@ -67,11 +67,14 @@ const INGLES_POR_TIPO = {
   restaurant: ['Reservations today', 'Covers today', 'Table Map — Today'],
 };
 
-function carregaServicos({ units = [], hoje = [], res = resumo() } = {}) {
+function carregaServicos({ units = [], hoje = [], checkedIn = [], res = resumo() } = {}) {
   listUnits.mockReset().mockResolvedValue(units);
-  /* Responde so ao par exato (stay_from, stay_to) de hoje; qualquer outra forma de argumentos
-     (por exemplo from/to) lanca, para apanhar pedidos perdidos */
+  /* Responde so ao par exato (stay_from, stay_to) de hoje e ao pedido exato { status: 'checked_in' };
+     qualquer outra forma de argumentos (por exemplo from/to) lanca, para apanhar pedidos perdidos */
   listReservations.mockReset().mockImplementation(async (params) => {
+    if (Object.keys(params || {}).join(',') === 'status' && params.status === 'checked_in') {
+      return checkedIn;
+    }
     if (Object.keys(params || {}).sort().join(',') !== 'stay_from,stay_to') {
       throw new Error(`pedido inesperado ${JSON.stringify(params)}`);
     }
@@ -287,15 +290,78 @@ describe('GenericDashboard (Hoje)', () => {
   it('os pedidos usam stay_from e stay_to', async () => {
     renderGenerico('hotel');
     await esperaCarregar();
-    await waitFor(() => expect(listReservations).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(listReservations).toHaveBeenCalledTimes(2));
     const pedidos = listReservations.mock.calls.map(([params]) => params);
     /* nenhuma chamada recebe as chaves antigas from/to */
     pedidos.forEach((p) => {
       expect(p).not.toHaveProperty('from');
       expect(p).not.toHaveProperty('to');
     });
-    /* so o dia de hoje */
-    expect(pedidos).toEqual([{ stay_from: HOJE, stay_to: HOJE }]);
+    /* hotel: o dia de hoje e os hospedes ja instalados */
+    expect(pedidos).toEqual(expect.arrayContaining([
+      { stay_from: HOJE, stay_to: HOJE },
+      { status: 'checked_in' },
+    ]));
+  });
+
+  ['restaurant', undefined].forEach((tipo) => {
+    it(`${tipo ?? 'sem tipo'}: nao pede as reservas com check-in feito`, async () => {
+      renderGenerico(tipo);
+      await esperaCarregar();
+      await waitFor(() => expect(listReservations).toHaveBeenCalledTimes(1));
+      const pedidos = listReservations.mock.calls.map(([params]) => params);
+      /* so a sobreposicao de hoje: uma saida ultrapassada nao e relevante aqui */
+      expect(pedidos).toEqual([{ stay_from: HOJE, stay_to: HOJE }]);
+    });
+  });
+
+  it('hotel: check-in feito com saida ultrapassada conta na ocupacao', async () => {
+    const ontem = new Date();
+    ontem.setDate(ontem.getDate() - 1);
+    carregaServicos({
+      units: [
+        { id: 'u1', name: 'Quarto 1', unit_type: 'double', status: 'available', is_active: true },
+        { id: 'u2', name: 'Quarto 2', unit_type: 'double', status: 'available', is_active: true },
+      ],
+      /* so o pedido dos check-ins feitos devolve esta reserva (saida ontem) */
+      checkedIn: [{
+        id: 'o', unit_id: 'u1', status: 'checked_in', check_in: '2020-01-01',
+        check_out: ontem.toLocaleDateString('en-CA'), guests: 2,
+      }],
+    });
+    renderGenerico('hotel');
+    /* 1 de 2 quartos ocupados = 50% */
+    expect(await screen.findByText('50.0%')).toBeInTheDocument();
+    expect(screen.getByText('Quarto 1').parentElement).toHaveTextContent('Ocupado');
+  });
+
+  it('rentacar: devolucao ultrapassada continua a contar nos alugueres activos e fora das viaturas disponiveis', async () => {
+    const ontem = new Date();
+    ontem.setDate(ontem.getDate() - 1);
+    carregaServicos({
+      units: [{ id: 'v1', name: 'Viatura 1', unit_type: 'car', status: 'available', is_active: true }],
+      checkedIn: [{
+        id: 'o', unit_id: 'v1', status: 'checked_in', check_in: '2020-01-01',
+        check_out: ontem.toLocaleDateString('en-CA'),
+      }],
+    });
+    renderGenerico('rentacar');
+    await screen.findByText('Viatura 1');
+    await waitFor(() => expect(screen.getByText('Alugueres activos').parentElement.nextElementSibling).toHaveTextContent('1'));
+    expect(screen.getByText('Viaturas disponiveis').parentElement.nextElementSibling).toHaveTextContent('0');
+  });
+
+  it('rentacar: o mesmo aluguer devolvido pelos dois pedidos conta uma so vez', async () => {
+    const aluguer = { id: 'r1', unit_id: 'v1', status: 'checked_in', check_in: HOJE, check_out: HOJE };
+    carregaServicos({
+      units: [{ id: 'v1', name: 'Viatura 1', unit_type: 'car', status: 'available', is_active: true }],
+      hoje: [aluguer],
+      checkedIn: [aluguer],
+    });
+    renderGenerico('rentacar');
+    await screen.findByText('Viatura 1');
+    /* sem deduplicacao os alugueres activos seriam 2 */
+    await waitFor(() => expect(screen.getByText('Alugueres activos').parentElement.nextElementSibling).toHaveTextContent('1'));
   });
 
   it('rentacar: um aluguer em curso (comecou antes de hoje) conta nos alugueres activos', async () => {

@@ -12,7 +12,7 @@ import { useT } from '../../i18n';
 import KpiCard from '../../components/financial/KpiCard';
 import EmptyState from '../../components/ui/EmptyState';
 import LoadingSpinner from '../../components/shared/LoadingSpinner';
-import { TODAY, mesAtual, HotelMap, FleetGrid, TableMap } from './shared';
+import { TODAY, mesAtual, uniaoPorId, HotelMap, FleetGrid, TableMap } from './shared';
 
 /* ─── Generic dashboard (hotel / rentacar / restaurant) ─────── */
 
@@ -49,11 +49,15 @@ export default function GenericDashboard() {
 
   useEffect(() => {
     /* Cada chamada falha para o seu valor vazio: uma falha nao apaga as outras */
+    /* So hotel e rent-a-car: quem ja fez check-in e passou a data de saida nao sobrepoe hoje,
+       mas continua a ocupar o quarto ou a viatura */
+    const incluiCheckedIn = opType === 'hotel' || opType === 'rentacar';
     Promise.all([
       listUnits().catch(() => []),
       listReservations(estadiaEm(TODAY)).catch(() => []),
+      incluiCheckedIn ? listReservations({ status: 'checked_in' }).catch(() => []) : Promise.resolve([]),
     ])
-      .then(([u, r]) => { setUnits(u || []); setTodayRes(r || []); })
+      .then(([u, r, ciRes]) => { setUnits(u || []); setTodayRes(uniaoPorId(r, ciRes)); })
       .catch(() => {})
       .finally(() => setMapLoading(false));
   }, []);

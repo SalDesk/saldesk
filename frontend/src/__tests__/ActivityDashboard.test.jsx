@@ -313,6 +313,8 @@ describe('ActivityDashboard (Hoje)', () => {
       expect(p).not.toHaveProperty('from');
       expect(p).not.toHaveProperty('to');
     });
+    /* uma saida ultrapassada nao e relevante aqui: nunca se pedem os check-ins feitos */
+    expect(pedidos).not.toContainEqual({ status: 'checked_in' });
     /* hoje, mes e semana (hoje..hoje+6) */
     expect(pedidos).toEqual(expect.arrayContaining([
       { stay_from: HOJE, stay_to: HOJE },

@@ -71,9 +71,13 @@ function reserva(over) {
   };
 }
 
-/* Responde conforme o par exato (stay_from, stay_to): hoje ou mes. Qualquer outra forma de
-   argumentos (por exemplo from/to) lanca, para apanhar pedidos perdidos. */
-function respostaPorPar(params, { hoje, mes }) {
+/* Responde conforme o par exato (stay_from, stay_to): hoje ou mes, ou ao pedido exato
+   { status: 'checked_in' } (hospedes que ja entraram). Qualquer outra forma de argumentos
+   (por exemplo from/to) lanca, para apanhar pedidos perdidos. */
+function respostaPorPar(params, { hoje, mes, checkedIn = [] }) {
+  if (Object.keys(params || {}).join(',') === 'status' && params.status === 'checked_in') {
+    return checkedIn;
+  }
   if (Object.keys(params || {}).sort().join(',') !== 'stay_from,stay_to') {
     throw new Error(`pedido inesperado ${JSON.stringify(params)}`);
   }
@@ -90,10 +94,10 @@ function valorKpi(rotulo) {
   return el.parentElement.nextElementSibling.textContent;
 }
 
-function carregaServicos({ units = [unidade()], hoje = [], mes = [], res = resumo() } = {}) {
+function carregaServicos({ units = [unidade()], hoje = [], mes = [], checkedIn = [], res = resumo() } = {}) {
   listUnits.mockReset().mockResolvedValue(units);
   listReservations.mockReset().mockImplementation(async (params) => (
-    respostaPorPar(params, { hoje, mes })
+    respostaPorPar(params, { hoje, mes, checkedIn })
   ));
   getResumo.mockReset().mockResolvedValue(res);
   getWeatherForecast.mockReset().mockResolvedValue([]);
@@ -227,7 +231,7 @@ describe('HotelDashboard (Hoje)', () => {
   it('os pedidos usam stay_from e stay_to', async () => {
     renderHotel();
     expect(await screen.findByText('Tudo em ordem')).toBeInTheDocument();
-    await waitFor(() => expect(listReservations).toHaveBeenCalledTimes(2));
+    await waitFor(() => expect(listReservations).toHaveBeenCalledTimes(3));
     const pedidos = listReservations.mock.calls.map(([params]) => params);
     /* nenhuma chamada recebe as chaves antigas from/to */
     pedidos.forEach((p) => {
@@ -239,6 +243,38 @@ describe('HotelDashboard (Hoje)', () => {
       { stay_from: HOJE, stay_to: HOJE },
       { stay_from: MES_INICIO, stay_to: MES_FIM },
     ]));
+    /* e os hospedes ja instalados, que a sobreposicao de hoje pode nao devolver */
+    expect(pedidos).toContainEqual({ status: 'checked_in' });
+  });
+
+  it('check-in feito com saida ultrapassada mantem o quarto ocupado e conta na ocupacao', async () => {
+    /* o hospede nao fez check-out: a saida foi ontem, logo a sobreposicao de hoje nao o devolve;
+       so o pedido dos check-ins feitos o traz */
+    carregaServicos({
+      units: [
+        unidade({ id: 'u1', name: 'Quarto 101' }),
+        unidade({ id: 'u2', name: 'Quarto 102' }),
+      ],
+      checkedIn: [
+        reserva({ id: 'o', unit_id: 'u1', status: 'checked_in', check_in: diaLocal(-5), check_out: diaLocal(-1), customer_name: 'Hospede Atrasado' }),
+      ],
+    });
+    renderHotel();
+    const celula = async (nome) => (await screen.findByText(nome)).parentElement;
+    await waitFor(async () => expect(within(await celula('Quarto 101')).getByText('Ocupado')).toBeInTheDocument());
+    expect(within(await celula('Quarto 102')).getByText('Disponivel')).toBeInTheDocument();
+    /* 1 de 2 quartos ocupados */
+    expect(valorKpi('Ocupacao hoje')).toBe('50.0%');
+  });
+
+  it('a mesma reserva devolvida pelos dois pedidos aparece uma so vez', async () => {
+    const saida = reserva({ id: 'b', unit_id: 'u1', status: 'checked_in', check_in: diaLocal(-3), check_out: HOJE, customer_name: 'Rui Saida' });
+    carregaServicos({ hoje: [saida], checkedIn: [saida] });
+    renderHotel();
+    const checkouts = (await screen.findByRole('heading', { name: 'Check-outs hoje' })).closest('section');
+    /* sem deduplicacao a lista e o contador de saidas contariam 2 */
+    await waitFor(() => expect(within(checkouts).getAllByText('Rui Saida')).toHaveLength(1));
+    expect(valorKpi('Check-outs hoje')).toBe('1');
   });
 
   it('estadia a meio, check-out e check-in de hoje entram no mapa, nas listas e nos contadores', async () => {

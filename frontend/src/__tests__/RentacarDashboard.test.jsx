@@ -68,9 +68,13 @@ function reserva(over) {
   };
 }
 
-/* Responde conforme o par exato (stay_from, stay_to): hoje ou mes. Qualquer outra forma de
-   argumentos (por exemplo from/to) lanca, para apanhar pedidos perdidos. */
-function respostaPorPar(params, { hoje, mes }) {
+/* Responde conforme o par exato (stay_from, stay_to): hoje ou mes, ou ao pedido exato
+   { status: 'checked_in' } (alugueres ja levantados). Qualquer outra forma de argumentos
+   (por exemplo from/to) lanca, para apanhar pedidos perdidos. */
+function respostaPorPar(params, { hoje, mes, checkedIn = [] }) {
+  if (Object.keys(params || {}).join(',') === 'status' && params.status === 'checked_in') {
+    return checkedIn;
+  }
   if (Object.keys(params || {}).sort().join(',') !== 'stay_from,stay_to') {
     throw new Error(`pedido inesperado ${JSON.stringify(params)}`);
   }
@@ -87,10 +91,10 @@ function valorKpi(rotulo) {
   return el.parentElement.nextElementSibling.textContent;
 }
 
-function carregaServicos({ units = [viatura({ plate: 'AA-00-AA' })], hoje = [], mes = [], res = resumo() } = {}) {
+function carregaServicos({ units = [viatura({ plate: 'AA-00-AA' })], hoje = [], mes = [], checkedIn = [], res = resumo() } = {}) {
   listUnits.mockReset().mockResolvedValue(units);
   listReservations.mockReset().mockImplementation(async (params) => (
-    respostaPorPar(params, { hoje, mes })
+    respostaPorPar(params, { hoje, mes, checkedIn })
   ));
   getResumo.mockReset().mockResolvedValue(res);
 }
@@ -260,7 +264,7 @@ describe('RentacarDashboard (Hoje)', () => {
   it('os pedidos usam stay_from e stay_to', async () => {
     renderRentacar();
     expect(await screen.findByText('Tudo em ordem')).toBeInTheDocument();
-    await waitFor(() => expect(listReservations).toHaveBeenCalledTimes(2));
+    await waitFor(() => expect(listReservations).toHaveBeenCalledTimes(3));
     const pedidos = listReservations.mock.calls.map(([params]) => params);
     /* nenhuma chamada recebe as chaves antigas from/to */
     pedidos.forEach((p) => {
@@ -272,6 +276,38 @@ describe('RentacarDashboard (Hoje)', () => {
       { stay_from: HOJE, stay_to: HOJE },
       { stay_from: MES_INICIO, stay_to: MES_FIM },
     ]));
+    /* e os alugueres ja levantados, que a sobreposicao de hoje pode nao devolver */
+    expect(pedidos).toContainEqual({ status: 'checked_in' });
+  });
+
+  it('aluguer levantado com devolucao ultrapassada mantem a viatura alugada e conta nos alugueres activos', async () => {
+    /* a viatura nao foi devolvida: a devolucao era ontem, logo a sobreposicao de hoje nao a devolve;
+       so o pedido dos levantamentos feitos a traz */
+    carregaServicos({
+      units: [
+        viatura({ plate: 'AA-11-AA' }, { id: 'v1', name: 'Viatura 1' }),
+        viatura({ plate: 'BB-22-BB' }, { id: 'v2', name: 'Viatura 2' }),
+      ],
+      checkedIn: [
+        reserva({ id: 'o', unit_id: 'v1', status: 'checked_in', check_in: dataEmDias(-5), check_out: dataEmDias(-1), customer_name: 'Cliente Atrasado' }),
+      ],
+    });
+    renderRentacar();
+    const cartao = async (matricula) => (await screen.findByText(matricula)).closest('button');
+    await waitFor(async () => expect(within(await cartao('AA-11-AA')).getByText('Ocupado')).toBeInTheDocument());
+    expect(within(await cartao('BB-22-BB')).getByText('Disponivel')).toBeInTheDocument();
+    expect(valorKpi('Alugueres activos')).toBe('1');
+    expect(valorKpi('Viaturas disponiveis')).toBe('1');
+  });
+
+  it('o mesmo aluguer devolvido pelos dois pedidos aparece uma so vez', async () => {
+    const devolve = reserva({ id: 'b', unit_id: 'v1', status: 'checked_in', check_in: dataEmDias(-4), check_out: HOJE, customer_name: 'Rui Devolve' });
+    carregaServicos({ units: [viatura({ plate: 'AA-11-AA' })], hoje: [devolve], checkedIn: [devolve] });
+    renderRentacar();
+    const devolucoes = (await screen.findByRole('heading', { name: 'Devolucoes hoje' })).closest('section');
+    /* sem deduplicacao a lista de devolucoes mostraria o cliente duas vezes */
+    await waitFor(() => expect(within(devolucoes).getAllByText('Rui Devolve')).toHaveLength(1));
+    expect(valorKpi('Alugueres activos')).toBe('1');
   });
 
   it('aluguer em curso, devolucao e levantamento de hoje entram na frota, nas listas e nos contadores', async () => {

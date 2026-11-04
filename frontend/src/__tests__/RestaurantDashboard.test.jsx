@@ -265,6 +265,8 @@ describe('RestaurantDashboard (Hoje)', () => {
       expect(p).not.toHaveProperty('from');
       expect(p).not.toHaveProperty('to');
     });
+    /* uma saida ultrapassada nao e relevante aqui: nunca se pedem os check-ins feitos */
+    expect(pedidos).not.toContainEqual({ status: 'checked_in' });
     /* hoje e o mes atual */
     expect(pedidos).toEqual(expect.arrayContaining([
       { stay_from: HOJE, stay_to: HOJE },

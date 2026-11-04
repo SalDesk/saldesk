@@ -13,7 +13,7 @@ import AttentionPanel from '../../components/dashboard/AttentionPanel';
 import Badge from '../../components/ui/Badge';
 import EmptyState from '../../components/ui/EmptyState';
 import LoadingSpinner from '../../components/shared/LoadingSpinner';
-import { TODAY, mesAtual, HotelMap } from './shared';
+import { TODAY, mesAtual, uniaoPorId, HotelMap } from './shared';
 import { buildAttentionItems } from './dashboardLogic';
 
 /* ─── Hotel dashboard ───────────────────────────────────────── */
@@ -46,10 +46,12 @@ export default function HotelDashboard() {
       listReservations(estadiaEm(TODAY)).catch(() => []),
       listReservations(estadiaNoMes()).catch(() => []),
       getResumo(periodo.inicio, periodo.fim).catch(() => null),
+      /* Quem ja fez check-in e passou a data de saida nao sobrepoe hoje, mas continua a ocupar */
+      listReservations({ status: 'checked_in' }).catch(() => []),
     ])
-      .then(([u, tRes, mRes, res]) => {
+      .then(([u, tRes, mRes, res, ciRes]) => {
         setUnits(u || []);
-        setTodayRes(tRes || []);
+        setTodayRes(uniaoPorId(tRes, ciRes));
         setMonthRes(mRes || []);
         setResumo(res);
       })
