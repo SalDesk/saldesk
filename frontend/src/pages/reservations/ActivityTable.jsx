@@ -47,7 +47,7 @@ export default function ActivityTable({ reservations, units, guides, onEdit, onD
       key: 'tour',
       label: 'Tour',
       render: (r) => (
-        <p className="font-display font-semibold text-sm text-n-900 truncate max-w-[140px]">
+        <p className="font-display font-semibold text-sm text-n-900 truncate max-w-[104px]">
           {r.units?.name || units.find(u => u.id === r.unit_id)?.name || '—'}
         </p>
       ),
@@ -63,7 +63,7 @@ export default function ActivityTable({ reservations, units, guides, onEdit, onD
       label: 'Cliente',
       render: (r) => (
         <div className="min-w-0">
-          <p className="text-sm font-body text-n-900 truncate max-w-[140px]">{r.customer_name || '—'}</p>
+          <p className="text-sm font-body text-n-900 truncate max-w-[104px]">{r.customer_name || '—'}</p>
           {r.customer_country && (
             <p className="text-xs font-body text-n-400">{r.customer_country}</p>
           )}
@@ -166,7 +166,7 @@ export default function ActivityTable({ reservations, units, guides, onEdit, onD
               </div>
               <div className="flex items-center gap-3 text-xs font-body text-n-600 flex-wrap">
                 <span>{formatDate(r.check_in)}</span>
-                {r.customer_name && <span className="truncate max-w-[140px]">{r.customer_name}</span>}
+                {r.customer_name && <span className="truncate max-w-[104px]">{r.customer_name}</span>}
                 {r.customer_country && <span className="text-n-400">{r.customer_country}</span>}
                 {r.guests && <span>{r.guests} pax</span>}
               </div>
