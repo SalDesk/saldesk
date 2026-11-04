@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import RentacarDashboard from '../pages/dashboard/RentacarDashboard';
 import useUiStore from '../store/uiStore';
@@ -68,15 +68,30 @@ function reserva(over) {
   };
 }
 
-/* Responde a cada pedido conforme o par (from, to): hoje ou mes */
+/* Responde conforme o par exato (stay_from, stay_to): hoje ou mes. Qualquer outra forma de
+   argumentos (por exemplo from/to) lanca, para apanhar pedidos perdidos. */
+function respostaPorPar(params, { hoje, mes }) {
+  if (Object.keys(params || {}).sort().join(',') !== 'stay_from,stay_to') {
+    throw new Error(`pedido inesperado ${JSON.stringify(params)}`);
+  }
+  const { stay_from: de, stay_to: ate } = params;
+  /* O dia 1 pode ser igual a hoje: so o par completo separa os pedidos */
+  if (de === HOJE && ate === HOJE) return hoje;
+  if (de === MES_INICIO && ate === MES_FIM) return mes;
+  throw new Error(`pedido inesperado ${de} ${ate}`);
+}
+
+/* Valor de um indicador pelo seu rotulo (o <p> do cartao; os titulos das listas sao <h2>) */
+function valorKpi(rotulo) {
+  const el = screen.getAllByText(rotulo).find((e) => e.tagName === 'P');
+  return el.parentElement.nextElementSibling.textContent;
+}
+
 function carregaServicos({ units = [viatura({ plate: 'AA-00-AA' })], hoje = [], mes = [], res = resumo() } = {}) {
   listUnits.mockReset().mockResolvedValue(units);
-  listReservations.mockReset().mockImplementation(async ({ from, to }) => {
-    /* O dia 1 pode ser igual a hoje: so o par (from, to) separa os pedidos */
-    if (from === HOJE && to === HOJE) return hoje;
-    if (from === MES_INICIO && to === MES_FIM) return mes;
-    throw new Error(`pedido inesperado ${from} ${to}`);
-  });
+  listReservations.mockReset().mockImplementation(async (params) => (
+    respostaPorPar(params, { hoje, mes })
+  ));
   getResumo.mockReset().mockResolvedValue(res);
 }
 
@@ -229,14 +244,69 @@ describe('RentacarDashboard (Hoje)', () => {
     const levanta = reserva({ id: 'c1', status: 'confirmed', customer_name: 'Ana Levanta' });
     carregaServicos({ units: unidades, hoje: [levanta] });
     /* so a lista do mes falha */
-    listReservations.mockReset().mockImplementation(async ({ from, to }) => {
-      if (from === HOJE && to === HOJE) return [levanta];
-      throw new Error('falha de rede');
+    listReservations.mockReset().mockImplementation(async (params) => {
+      /* o pedido do mes falha; o de hoje responde (e formas inesperadas lancam) */
+      if (params.stay_from === MES_INICIO && params.stay_to === MES_FIM) {
+        throw new Error('falha de rede');
+      }
+      return respostaPorPar(params, { hoje: [levanta], mes: [] });
     });
     renderRentacar();
     expect(await screen.findByText('Ana Levanta')).toBeInTheDocument();
     expect(screen.getByText('E-11-AB: Seguro expirado')).toBeInTheDocument();
     expect(screen.queryByText('Tudo em ordem')).not.toBeInTheDocument();
+  });
+
+  it('os pedidos usam stay_from e stay_to', async () => {
+    renderRentacar();
+    expect(await screen.findByText('Tudo em ordem')).toBeInTheDocument();
+    await waitFor(() => expect(listReservations).toHaveBeenCalledTimes(2));
+    const pedidos = listReservations.mock.calls.map(([params]) => params);
+    /* nenhuma chamada recebe as chaves antigas from/to */
+    pedidos.forEach((p) => {
+      expect(p).not.toHaveProperty('from');
+      expect(p).not.toHaveProperty('to');
+    });
+    /* hoje e o mes atual */
+    expect(pedidos).toEqual(expect.arrayContaining([
+      { stay_from: HOJE, stay_to: HOJE },
+      { stay_from: MES_INICIO, stay_to: MES_FIM },
+    ]));
+  });
+
+  it('aluguer em curso, devolucao e levantamento de hoje entram na frota, nas listas e nos contadores', async () => {
+    /* o servidor devolve tambem os alugueres que apenas sobrepoem hoje */
+    carregaServicos({
+      units: [
+        viatura({ plate: 'AA-11-AA' }, { id: 'v1', name: 'Viatura 1' }),
+        viatura({ plate: 'BB-22-BB' }, { id: 'v2', name: 'Viatura 2' }),
+        viatura({ plate: 'CC-33-CC' }, { id: 'v3', name: 'Viatura 3' }),
+      ],
+      hoje: [
+        /* comecou ha 2 dias e devolve daqui a 3: sem levantamento nem devolucao hoje */
+        reserva({ id: 'a', unit_id: 'v1', status: 'checked_in', check_in: dataEmDias(-2), check_out: dataEmDias(3), customer_name: 'Cliente Em Curso' }),
+        /* devolve hoje */
+        reserva({ id: 'b', unit_id: 'v2', status: 'checked_in', check_in: dataEmDias(-4), check_out: HOJE, customer_name: 'Rui Devolve' }),
+        /* levanta hoje */
+        reserva({ id: 'c', unit_id: 'v3', status: 'confirmed', check_in: HOJE, check_out: dataEmDias(2), customer_name: 'Ana Levanta' }),
+      ],
+    });
+    renderRentacar();
+    const levantamentos = (await screen.findByRole('heading', { name: 'Levantamentos hoje' })).closest('section');
+    const devolucoes = screen.getByRole('heading', { name: 'Devolucoes hoje' }).closest('section');
+    const cartao = (matricula) => screen.getByText(matricula).closest('button');
+    /* o aluguer em curso mantem o veiculo alugado */
+    expect(within(cartao('AA-11-AA')).getByText('Ocupado')).toBeInTheDocument();
+    expect(within(cartao('BB-22-BB')).getByText('Ocupado')).toBeInTheDocument();
+    expect(within(cartao('CC-33-CC')).getByText('Disponivel')).toBeInTheDocument();
+    /* listas de hoje */
+    expect(within(levantamentos).getByText('Ana Levanta')).toBeInTheDocument();
+    expect(within(levantamentos).queryByText('Cliente Em Curso')).not.toBeInTheDocument();
+    expect(within(devolucoes).getByText('Rui Devolve')).toBeInTheDocument();
+    expect(within(devolucoes).queryByText('Cliente Em Curso')).not.toBeInTheDocument();
+    /* contadores: 2 alugados, 1 disponivel */
+    expect(valorKpi('Alugueres activos')).toBe('2');
+    expect(valorKpi('Viaturas disponiveis')).toBe('1');
   });
 
   it('servicos a falhar mostram estados vazios sem erro', async () => {
