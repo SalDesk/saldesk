@@ -4,6 +4,7 @@ import { changeStatus } from '../../services/reservationsService';
 import { useT } from '../../i18n';
 import Button from '../../components/ui/Button';
 import Badge from '../../components/ui/Badge';
+import Table from '../../components/ui/Table';
 import AssignCompositeModal from '../../components/assignments/AssignCompositeModal';
 import { STATUS_NEXT, STATUS_NEXT_LABEL, formatDate, SourceBadge } from './shared';
 
@@ -34,6 +35,116 @@ export default function ActivityTable({ reservations, units, guides, onEdit, onD
       </div>
     );
   }
+
+  // Colunas da tabela do ecra largo; Data, Pax e Total sao ordenaveis
+  const columns = [
+    {
+      key: 'ref',
+      label: 'Ref',
+      render: (r) => <span className="text-xs font-mono text-n-400">{r.id?.slice(0, 8)}</span>,
+    },
+    {
+      key: 'tour',
+      label: 'Tour',
+      render: (r) => (
+        <p className="font-display font-semibold text-sm text-n-900 truncate max-w-[140px]">
+          {r.units?.name || units.find(u => u.id === r.unit_id)?.name || '—'}
+        </p>
+      ),
+    },
+    {
+      key: 'data',
+      label: 'Data',
+      sortValue: (r) => r.check_in || '',
+      render: (r) => <span className="text-sm font-body text-n-700 whitespace-nowrap">{formatDate(r.check_in)}</span>,
+    },
+    {
+      key: 'cliente',
+      label: 'Cliente',
+      render: (r) => (
+        <div className="min-w-0">
+          <p className="text-sm font-body text-n-900 truncate max-w-[140px]">{r.customer_name || '—'}</p>
+          {r.customer_country && (
+            <p className="text-xs font-body text-n-400">{r.customer_country}</p>
+          )}
+        </div>
+      ),
+    },
+    {
+      key: 'pax',
+      label: 'Pax',
+      align: 'center',
+      sortValue: (r) => Number(r.guests) || 0,
+      render: (r) => <span className="text-sm font-body font-semibold text-n-900">{r.guests}</span>,
+    },
+    {
+      key: 'origem',
+      label: 'Origem',
+      render: (r) => <SourceBadge source={r.source} />,
+    },
+    {
+      key: 'estado',
+      label: 'Estado',
+      render: (r) => <Badge variant={r.status}>{t(`reservations.status.${r.status}`)}</Badge>,
+    },
+    {
+      key: 'total',
+      label: 'Total',
+      align: 'right',
+      sortValue: (r) => Number(r.total_price || r.total_amount || 0),
+      render: (r) => (
+        <span className="font-display font-bold text-sm text-ocean-700 whitespace-nowrap">
+          €{Number(r.total_price || r.total_amount || 0).toFixed(0)}
+        </span>
+      ),
+    },
+    {
+      key: 'acoes',
+      label: '',
+      render: (r) => {
+        const canAdvance = !!STATUS_NEXT[r.status];
+        const isLoading  = actionLoading === r.id;
+        return (
+          <div className="flex items-center gap-1 justify-end flex-wrap">
+            {canAdvance && (
+              <button
+                onClick={() => handleNextStatus(r)}
+                disabled={isLoading}
+                className="flex items-center gap-1 px-2 py-1 rounded-xs bg-ocean-700 text-white text-xs font-body font-medium hover:bg-ocean-500 transition-colors disabled:opacity-50 whitespace-nowrap"
+              >
+                {STATUS_NEXT_LABEL[r.status]}
+                <ChevronRight size={11} strokeWidth={2} />
+              </button>
+            )}
+            <button onClick={() => onReschedule(r)} title="Reagendar"
+              className="p-1.5 rounded text-n-400 hover:text-ocean-700 hover:bg-ocean-50 transition-colors">
+              <CalendarDays size={13} strokeWidth={1.75} />
+            </button>
+            <button onClick={() => onVoucher(r)} title="Enviar voucher"
+              disabled={voucherLoading === r.id}
+              className="p-1.5 rounded text-n-400 hover:text-ocean-700 hover:bg-ocean-50 transition-colors disabled:opacity-40">
+              <Mail size={13} strokeWidth={1.75} />
+            </button>
+            {!['cancelled','no_show','checked_out'].includes(r.status) && (
+              <button onClick={() => onNoShow(r)} title="No-show"
+                className="p-1.5 rounded text-n-400 hover:text-error hover:bg-red-50 transition-colors">
+                <UserX size={13} strokeWidth={1.75} />
+              </button>
+            )}
+            {!['cancelled','no_show'].includes(r.status) && (
+              <button onClick={() => setAssignRes(r)} title="Atribuir equipa"
+                className="p-1.5 rounded text-n-400 hover:text-ocean-700 hover:bg-ocean-50 transition-colors">
+                <Users size={13} strokeWidth={1.75} />
+              </button>
+            )}
+            <Button variant="ghost" size="sm" icon={Eye} onClick={() => onView(r)} aria-label={t('reservations.view')} />
+            <Button variant="ghost" size="sm" icon={Pencil} onClick={() => onEdit(r)} aria-label="Editar" />
+            <Button variant="ghost" size="sm" icon={Trash2} onClick={() => onDelete(r)} aria-label="Eliminar" className="hover:text-error" />
+          </div>
+        );
+      },
+    },
+  ];
 
   return (
     <div className="bg-white rounded-md border border-n-200 shadow-sm overflow-hidden">
@@ -107,103 +218,8 @@ export default function ActivityTable({ reservations, units, guides, onEdit, onD
       </div>
 
       {/* Desktop table view */}
-      <div className="overflow-x-auto hidden md:block">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-n-200 bg-n-50">
-              <th className="text-left px-4 py-3 text-xs font-body font-bold uppercase tracking-wide text-n-500 whitespace-nowrap">Ref</th>
-              <th className="text-left px-4 py-3 text-xs font-body font-bold uppercase tracking-wide text-n-500 whitespace-nowrap">Tour</th>
-              <th className="text-left px-4 py-3 text-xs font-body font-bold uppercase tracking-wide text-n-500 whitespace-nowrap">Data</th>
-              <th className="text-left px-4 py-3 text-xs font-body font-bold uppercase tracking-wide text-n-500 whitespace-nowrap">Cliente</th>
-              <th className="text-center px-4 py-3 text-xs font-body font-bold uppercase tracking-wide text-n-500">Pax</th>
-              <th className="text-left px-4 py-3 text-xs font-body font-bold uppercase tracking-wide text-n-500 whitespace-nowrap">Origem</th>
-              <th className="text-left px-4 py-3 text-xs font-body font-bold uppercase tracking-wide text-n-500 whitespace-nowrap">Estado</th>
-              <th className="text-right px-4 py-3 text-xs font-body font-bold uppercase tracking-wide text-n-500 whitespace-nowrap">Total</th>
-              <th className="px-4 py-3" />
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-n-100">
-            {reservations.map((r) => {
-              const canAdvance = !!STATUS_NEXT[r.status];
-              const isLoading  = actionLoading === r.id;
-              return (
-                <tr key={r.id} className="hover:bg-n-50 transition-colors">
-                  <td className="px-4 py-3">
-                    <span className="text-xs font-mono text-n-400">{r.id?.slice(0, 8)}</span>
-                  </td>
-                  <td className="px-4 py-3">
-                    <p className="font-display font-semibold text-sm text-n-900 truncate max-w-[140px]">
-                      {r.units?.name || units.find(u => u.id === r.unit_id)?.name || '—'}
-                    </p>
-                  </td>
-                  <td className="px-4 py-3 whitespace-nowrap">
-                    <span className="text-sm font-body text-n-700">{formatDate(r.check_in)}</span>
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="min-w-0">
-                      <p className="text-sm font-body text-n-900 truncate max-w-[140px]">{r.customer_name || '—'}</p>
-                      {r.customer_country && (
-                        <p className="text-xs font-body text-n-400">{r.customer_country}</p>
-                      )}
-                    </div>
-                  </td>
-                  <td className="px-4 py-3 text-center">
-                    <span className="text-sm font-body font-semibold text-n-900">{r.guests}</span>
-                  </td>
-                  <td className="px-4 py-3">
-                    <SourceBadge source={r.source} />
-                  </td>
-                  <td className="px-4 py-3">
-                    <Badge variant={r.status}>{t(`reservations.status.${r.status}`)}</Badge>
-                  </td>
-                  <td className="px-4 py-3 text-right whitespace-nowrap">
-                    <span className="font-display font-bold text-sm text-ocean-700">
-                      €{Number(r.total_price || r.total_amount || 0).toFixed(0)}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="flex items-center gap-1 justify-end flex-wrap">
-                      {canAdvance && (
-                        <button
-                          onClick={() => handleNextStatus(r)}
-                          disabled={isLoading}
-                          className="flex items-center gap-1 px-2 py-1 rounded-xs bg-ocean-700 text-white text-xs font-body font-medium hover:bg-ocean-500 transition-colors disabled:opacity-50 whitespace-nowrap"
-                        >
-                          {STATUS_NEXT_LABEL[r.status]}
-                          <ChevronRight size={11} strokeWidth={2} />
-                        </button>
-                      )}
-                      <button onClick={() => onReschedule(r)} title="Reagendar"
-                        className="p-1.5 rounded text-n-400 hover:text-ocean-700 hover:bg-ocean-50 transition-colors">
-                        <CalendarDays size={13} strokeWidth={1.75} />
-                      </button>
-                      <button onClick={() => onVoucher(r)} title="Enviar voucher"
-                        disabled={voucherLoading === r.id}
-                        className="p-1.5 rounded text-n-400 hover:text-ocean-700 hover:bg-ocean-50 transition-colors disabled:opacity-40">
-                        <Mail size={13} strokeWidth={1.75} />
-                      </button>
-                      {!['cancelled','no_show','checked_out'].includes(r.status) && (
-                        <button onClick={() => onNoShow(r)} title="No-show"
-                          className="p-1.5 rounded text-n-400 hover:text-error hover:bg-red-50 transition-colors">
-                          <UserX size={13} strokeWidth={1.75} />
-                        </button>
-                      )}
-                      {!['cancelled','no_show'].includes(r.status) && (
-                        <button onClick={() => setAssignRes(r)} title="Atribuir equipa"
-                          className="p-1.5 rounded text-n-400 hover:text-ocean-700 hover:bg-ocean-50 transition-colors">
-                          <Users size={13} strokeWidth={1.75} />
-                        </button>
-                      )}
-                      <Button variant="ghost" size="sm" icon={Eye} onClick={() => onView(r)} aria-label={t('reservations.view')} />
-                      <Button variant="ghost" size="sm" icon={Pencil} onClick={() => onEdit(r)} aria-label="Editar" />
-                      <Button variant="ghost" size="sm" icon={Trash2} onClick={() => onDelete(r)} aria-label="Eliminar" className="hover:text-error" />
-                    </div>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+      <div className="hidden md:block">
+        <Table columns={columns} rows={reservations} />
       </div>
 
       {assignRes && (
