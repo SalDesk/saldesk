@@ -9,11 +9,13 @@ import Modal from '../components/ui/Modal';
 import Card from '../components/ui/Card';
 import Input, { Select, Textarea } from '../components/ui/Input';
 import Badge from '../components/ui/Badge';
+import EmptyState from '../components/ui/EmptyState';
 import LoadingSpinner from '../components/shared/LoadingSpinner';
 
 const TYPE_ICONS = { vehicle: Car, equipment: Wrench, gear: Package };
 const TYPE_LABELS = { vehicle: 'Viatura', equipment: 'Equipamento', gear: 'Material' };
-const STATUS_BADGE = { available: 'confirmed', in_use: 'pending', maintenance: 'warning', retired: 'cancelled' };
+/* Variantes do Badge do sistema: disponivel verde, em uso azul, manutencao ambar, retirado neutro */
+const STATUS_BADGE = { available: 'confirmed', in_use: 'checked_in', maintenance: 'pending', retired: 'no_show' };
 const STATUS_LABELS = { available: 'Disponivel', in_use: 'Em uso', maintenance: 'Manutencao', retired: 'Retirado' };
 
 function FleetForm({ item, units, onSave, onCancel, loading, error }) {
@@ -80,11 +82,12 @@ function FleetForm({ item, units, onSave, onCancel, loading, error }) {
         <Input label="Proxima manutencao" type="date" value={form.next_maintenance_at} onChange={set('next_maintenance_at')} />
       </div>
       <div>
-        <label className="block text-sm font-body font-semibold text-n-700 mb-2">Foto da viatura</label>
+        <label htmlFor="fleet-foto" className="block text-xs font-body font-bold uppercase tracking-wide text-n-600 mb-1 app:normal-case app:tracking-normal app:text-[13px] app:text-n-700">Foto da viatura</label>
         {form.photo && (
-          <img src={form.photo} alt="Viatura" className="w-full h-40 object-cover rounded-xl mb-2 border border-n-200" />
+          <img src={form.photo} alt="Viatura" className="w-full h-40 object-cover rounded-sm mb-2 border border-n-200" />
         )}
         <input
+          id="fleet-foto"
           type="file"
           accept="image/*"
           onChange={e => {
@@ -154,14 +157,14 @@ export default function Fleet() {
       {loading ? (
         <div className="flex justify-center py-20"><LoadingSpinner size={32} /></div>
       ) : items.length === 0 ? (
-        <Card><div className="flex flex-col items-center py-10 text-n-400"><Car size={36} strokeWidth={1.25} className="mb-3"/><p className="font-body text-sm">Sem itens de frota registados</p></div></Card>
+        <Card padding="p-0"><EmptyState icon={Car} title="Sem itens de frota registados" /></Card>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {items.map((item) => {
             const Icon = TYPE_ICONS[item.type] || Package;
             const manutencaoAtrasada = item.next_maintenance_at && new Date(item.next_maintenance_at) < new Date();
             return (
-              <div key={item.id} className="bg-white rounded-xl border border-n-200 shadow-sm overflow-hidden flex flex-col">
+              <Card key={item.id} padding="p-0 flex flex-col flex-1" className="flex flex-col overflow-hidden">
                 {/* Photo / placeholder */}
                 {item.images?.[0] ? (
                   <img src={item.images[0]} alt={item.name} className="w-full h-36 object-cover" />
@@ -197,7 +200,7 @@ export default function Fleet() {
                   </div>
 
                   {item.next_maintenance_at && (
-                    <p className={`text-xs font-body flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg ${manutencaoAtrasada ? 'bg-red-50 text-error' : 'bg-n-50 text-n-500'}`}>
+                    <p className={`text-xs font-body flex items-center gap-1.5 px-2.5 py-1.5 rounded-sm ${manutencaoAtrasada ? 'bg-[var(--error-light)] text-[var(--error)]' : 'bg-n-50 text-n-500'}`}>
                       <Wrench size={11} strokeWidth={1.75} />
                       {manutencaoAtrasada ? 'Manutencao atrasada: ' : 'Manutencao: '}
                       {item.next_maintenance_at.split('T')[0]}
@@ -210,7 +213,7 @@ export default function Fleet() {
                     <Button variant="ghost" size="sm" icon={Trash2} onClick={() => setDeleteTarget(item)} className="hover:text-error hover:bg-[var(--error-light)]" aria-label="Eliminar" />
                   </div>
                 </div>
-              </div>
+              </Card>
             );
           })}
         </div>
