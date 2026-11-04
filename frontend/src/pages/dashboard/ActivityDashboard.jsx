@@ -6,6 +6,7 @@ import {
 import { getResumo } from '../../services/financeiroService';
 import { listUnits } from '../../services/unitsService';
 import { listReservations } from '../../services/reservationsService';
+import { estadiaEm, estadiaNoMes, estadiaProximosDias } from '../../services/reservationRanges';
 import { getWeatherForecast, weatherInfo, isBadWeather } from '../../services/weatherService';
 import api from '../../services/api';
 import { useT } from '../../i18n';
@@ -85,9 +86,9 @@ export default function ActivityDashboard() {
        (total 0) a media nao existe */
     Promise.all([
       listUnits().catch(() => []),
-      listReservations({ from: TODAY, to: TODAY }).catch(() => []),
-      listReservations({ from: periodo.inicio, to: periodo.fim }).catch(() => []),
-      listReservations({ from: TODAY, to: next7[6] }).catch(() => []),
+      listReservations(estadiaEm(TODAY)).catch(() => []),
+      listReservations(estadiaNoMes()).catch(() => []),
+      listReservations(estadiaProximosDias(7)).catch(() => []),
       getResumo(periodo.inicio, periodo.fim).catch(() => null),
       api.get('/reviews/stats')
         .then(r => {

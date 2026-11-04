@@ -182,8 +182,8 @@ describe('Dashboard (fumo por tipo de operador)', () => {
     /* com um tour hoje nao ha estado vazio, logo so o cabecalho tem "Nova reserva" */
     const hoje = new Date().toLocaleDateString('en-CA');
     listUnits.mockResolvedValue([{ id: 't1', name: 'Tour Teste', capacity: 10, status: 'active' }]);
-    listReservations.mockImplementation(async ({ from, to }) => (
-      from === hoje && to === hoje
+    listReservations.mockImplementation(async ({ stay_from, stay_to }) => (
+      stay_from === hoje && stay_to === hoje
         ? [{ id: 'r1', unit_id: 't1', status: 'confirmed', guests: 2, check_in: hoje }]
         : []
     ));

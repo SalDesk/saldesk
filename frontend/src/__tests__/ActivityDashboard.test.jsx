@@ -85,16 +85,27 @@ const RES_POR_PAGAR = reserva({ id: 'm1', check_in: ONTEM, payment_status: 'pend
 /* Reserva de amanha (para a faixa de 7 dias e para o aviso de mau tempo) */
 const RES_AMANHA = reserva({ id: 'w1', check_in: AMANHA });
 
+/* Responde conforme o par exato (stay_from, stay_to) pedido: hoje, mes ou semana.
+   Qualquer outra forma de argumentos (por exemplo from/to) lanca, para apanhar pedidos perdidos. */
+function respostaPorPar(params, { hoje, semana, mes }) {
+  const chaves = Object.keys(params || {}).sort().join(',');
+  if (chaves !== 'stay_from,stay_to') {
+    throw new Error(`pedido inesperado ${JSON.stringify(params)}`);
+  }
+  const { stay_from: de, stay_to: ate } = params;
+  if (de === HOJE && ate === HOJE) return hoje;
+  /* O dia 1 e o mesmo inicio para semana e mes: so o par completo os separa */
+  if (de === HOJE && ate === SEMANA_FIM) return semana;
+  if (de === MES_INICIO && ate === MES_FIM) return mes;
+  throw new Error(`pedido inesperado ${de} ${ate}`);
+}
+
 /* Responde a cada pedido conforme o intervalo pedido: hoje, mes ou semana */
 function carregaServicos({ hoje = [], mes = [], semana = [], res = resumo(), tours = [TOUR_A, TOUR_B], meteo = [], rating = null, ratingTotal = 3 } = {}) {
   listUnits.mockReset().mockResolvedValue(tours);
-  listReservations.mockReset().mockImplementation(async ({ from, to }) => {
-    if (from === HOJE && to === HOJE) return hoje;
-    /* O dia 1 e o mesmo `from` para semana e mes: so o par (from, to) os separa */
-    if (from === HOJE && to === SEMANA_FIM) return semana;
-    if (from === MES_INICIO && to === MES_FIM) return mes;
-    throw new Error(`pedido inesperado ${from} ${to}`);
-  });
+  listReservations.mockReset().mockImplementation(async (params) => (
+    respostaPorPar(params, { hoje, semana, mes })
+  ));
   getResumo.mockReset().mockResolvedValue(res);
   getWeatherForecast.mockReset().mockResolvedValue(meteo);
   /* Forma real de GET /reviews/stats: { total, average, distribution } */
@@ -277,10 +288,12 @@ describe('ActivityDashboard (Hoje)', () => {
   it('uma chamada a falhar nao apaga os dados das outras', async () => {
     carregaServicos({ hoje: RES_HOJE });
     /* so a lista do mes falha; hoje, tours e resumo respondem */
-    listReservations.mockReset().mockImplementation(async ({ from, to }) => {
-      if (from === HOJE && to === HOJE) return RES_HOJE;
-      if (from === HOJE && to === SEMANA_FIM) return [];
-      throw new Error('falha de rede');
+    listReservations.mockReset().mockImplementation(async (params) => {
+      /* hoje e semana respondem (e rejeitam formas inesperadas); o mes falha */
+      if (params.stay_from === MES_INICIO && params.stay_to === MES_FIM) {
+        throw new Error('falha de rede');
+      }
+      return respostaPorPar(params, { hoje: RES_HOJE, semana: [], mes: [] });
     });
     renderActivity();
     const celula = await screen.findByText('8/10');
@@ -288,6 +301,24 @@ describe('ActivityDashboard (Hoje)', () => {
     expect(screen.getByText('1 reserva(s) pendente(s) para hoje')).toBeInTheDocument();
     expect(screen.queryByText('Tudo em ordem')).not.toBeInTheDocument();
     expect(screen.queryByText('Nenhum tour agendado para hoje')).not.toBeInTheDocument();
+  });
+
+  it('os pedidos usam stay_from e stay_to', async () => {
+    renderActivity();
+    expect(await screen.findByText('Nenhum tour agendado para hoje')).toBeInTheDocument();
+    await waitFor(() => expect(listReservations).toHaveBeenCalledTimes(3));
+    const pedidos = listReservations.mock.calls.map(([params]) => params);
+    /* nenhuma chamada recebe as chaves antigas from/to */
+    pedidos.forEach((p) => {
+      expect(p).not.toHaveProperty('from');
+      expect(p).not.toHaveProperty('to');
+    });
+    /* hoje, mes e semana (hoje..hoje+6) */
+    expect(pedidos).toEqual(expect.arrayContaining([
+      { stay_from: HOJE, stay_to: HOJE },
+      { stay_from: MES_INICIO, stay_to: MES_FIM },
+      { stay_from: HOJE, stay_to: SEMANA_FIM },
+    ]));
   });
 
   it('servicos a falhar mostram estados vazios sem erro', async () => {

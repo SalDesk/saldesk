@@ -50,15 +50,20 @@ function reserva(over) {
   };
 }
 
-/* Os tres pedidos distinguem-se pelo par (from, to). No dia 1 o pedido da semana e o do mes
-   partilham o `from`, so o `to` os separa. */
+/* Os tres pedidos distinguem-se pelo par exato (stay_from, stay_to). No dia 1 o pedido da
+   semana e o do mes partilham o stay_from, so o stay_to os separa. Qualquer outra forma
+   de argumentos (por exemplo from/to) lanca. */
 function carrega({ hoje = [], semana = [], mes = [], meteo = [] }) {
   listUnits.mockReset().mockResolvedValue([TOUR]);
-  listReservations.mockReset().mockImplementation(async ({ from, to }) => {
-    if (from === HOJE && to === HOJE) return hoje;
-    if (from === HOJE && to === SEMANA_FIM) return semana;
-    if (from === MES_INICIO && to === MES_FIM) return mes;
-    throw new Error(`pedido inesperado ${from} ${to}`);
+  listReservations.mockReset().mockImplementation(async (params) => {
+    if (Object.keys(params || {}).sort().join(',') !== 'stay_from,stay_to') {
+      throw new Error(`pedido inesperado ${JSON.stringify(params)}`);
+    }
+    const { stay_from: de, stay_to: ate } = params;
+    if (de === HOJE && ate === HOJE) return hoje;
+    if (de === HOJE && ate === SEMANA_FIM) return semana;
+    if (de === MES_INICIO && ate === MES_FIM) return mes;
+    throw new Error(`pedido inesperado ${de} ${ate}`);
   });
   getResumo.mockReset().mockResolvedValue({ atual: ZERO, anterior: ZERO, variacao: ZERO });
   getWeatherForecast.mockReset().mockResolvedValue(meteo);
@@ -112,6 +117,24 @@ describe('ActivityDashboard no primeiro dia do mes', () => {
     expect(screen.queryByText('3 res.')).not.toBeInTheDocument();
     /* os pagamentos por regularizar vem do mes */
     expect(screen.getByText('3 pagamento(s) por regularizar')).toBeInTheDocument();
+  });
+
+  it('os pedidos usam stay_from e stay_to', async () => {
+    carrega({});
+    renderActivity();
+    expect(await screen.findByText('Próximos 7 dias')).toBeInTheDocument();
+    const pedidos = listReservations.mock.calls.map(([params]) => params);
+    expect(pedidos).toHaveLength(3);
+    pedidos.forEach((p) => {
+      expect(p).not.toHaveProperty('from');
+      expect(p).not.toHaveProperty('to');
+    });
+    /* no dia 1, semana e mes partilham o stay_from e separam-se pelo stay_to */
+    expect(pedidos).toEqual(expect.arrayContaining([
+      { stay_from: HOJE, stay_to: HOJE },
+      { stay_from: MES_INICIO, stay_to: MES_FIM },
+      { stay_from: HOJE, stay_to: SEMANA_FIM },
+    ]));
   });
 
   it('o aviso de mau tempo cruza com as reservas da semana', async () => {
