@@ -153,7 +153,7 @@ export default function RentacarVehicleForm({ unit, onSave, onCancel, loading, e
               step="0.01"
               placeholder="30"
             />
-            <p className="text-xs text-n-500 mt-1">Cobrada por dia quando o cliente escolhe "motorista incluido" na reserva.</p>
+            <p className="text-xs font-body text-n-500 mt-1">Cobrada por dia quando o cliente escolhe "motorista incluido" na reserva.</p>
           </div>
         )}
       </div>

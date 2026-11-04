@@ -1911,3 +1911,116 @@ describe('TourForm com o design system', () => {
     expect(onSave).not.toHaveBeenCalled();
   });
 });
+
+describe('HotelRoomForm com o design system', () => {
+  it('os campos tem a etiqueta por cima', () => {
+    renderForm('hotel');
+    temEtiquetaPorCima([
+      'Numero', 'Nome', 'Tipo', 'Andar', 'Vista', 'Adultos', 'Criancas', 'Preco base', 'Epoca baixa',
+      'Epoca media', 'Epoca alta', 'Pico', 'ID produto GetYourGuide',
+    ]);
+  });
+
+  it('o editor de itens incluidos usa botoes com nome e a descricao continua em JSON', () => {
+    const { onSave } = renderForm('hotel');
+    escrever(campo('Nome'), 'Suite');
+    escrever(campo('Preco base'), '90');
+    escrever(campo('Epoca alta'), '120');
+    fireEvent.click(botao('Adicionar item incluído'));
+    fireEvent.click(botao('Adicionar item incluído'));
+    escrever(screen.getByLabelText('Item 1'), 'Pequeno-almoco');
+    escrever(screen.getByLabelText('Item 2'), 'Parking');
+    fireEvent.click(botao('Remover item 2'));
+    fireEvent.click(screen.getByLabelText('Jacuzzi'));
+    fireEvent.click(screen.getByLabelText('WiFi'));
+    fireEvent.click(botao('Criar quarto'));
+    const gravado = guardar(onSave);
+    expect(typeof gravado.description).toBe('string');
+    const meta = JSON.parse(gravado.description);
+    expect(meta.included_items).toEqual([{ label: 'Pequeno-almoco', included: true }]);
+    expect(meta.amenities).toEqual(['Jacuzzi', 'WiFi']);
+    expect(meta.price_high).toBe(120);
+    expect(gravado.base_price).toBe(90);
+  });
+});
+
+describe('RentacarVehicleForm com o design system', () => {
+  it('os campos tem a etiqueta por cima, incluindo documentos e quilometragem', () => {
+    renderForm('rentacar');
+    temEtiquetaPorCima([
+      'Marca', 'Modelo', 'Ano', 'Matricula', 'Cor', 'Categoria', 'Lugares', 'Bagagens', 'Transmissao',
+      'Combustivel', 'Preco base / dia', 'Idade minima', 'Seguro ate', 'IUC ate', 'Inspecao ate',
+      'Km actuais', 'Proxima revisao (km)',
+    ]);
+  });
+
+  it('os campos de documentos sao de data e os de quilometragem numericos', () => {
+    renderForm('rentacar');
+    ['Seguro ate', 'IUC ate', 'Inspecao ate'].forEach(t => expect(campo(t).type).toBe('date'));
+    ['Km actuais', 'Proxima revisao (km)'].forEach(t => expect(campo(t).type).toBe('number'));
+  });
+
+  it('o editor de itens incluidos remove pelo botao com nome e a tarifa de motorista so aparece em Executivo', () => {
+    const { onSave } = renderForm('rentacar');
+    expect(screen.queryByText('Tarifa de motorista (por dia)')).toBeNull();
+    fireEvent.change(campo('Categoria'), { target: { value: 'Executivo' } });
+    expect(campo('Tarifa de motorista (por dia)')).toBeInTheDocument();
+    escrever(campo('Preco base / dia'), '55');
+    escrever(campo('Seguro ate'), '2027-01-31');
+    escrever(campo('Km actuais'), '12000');
+    fireEvent.click(botao('Adicionar item não incluído'));
+    escrever(screen.getByLabelText('Item 1'), 'Combustivel');
+    fireEvent.click(botao('Registar viatura'));
+    const gravado = guardar(onSave);
+    const meta = JSON.parse(gravado.description);
+    expect(meta.included_items).toEqual([{ label: 'Combustivel', included: false }]);
+    expect(meta.seguro_expiry).toBe('2027-01-31');
+    expect(meta.current_km).toBe(12000);
+    expect(gravado.base_price).toBe(55);
+    expect(gravado.unit_type).toBe('Executivo');
+  });
+});
+
+describe('RestaurantTableForm com o design system', () => {
+  it('os campos tem a etiqueta por cima', () => {
+    renderForm('restaurant');
+    temEtiquetaPorCima([
+      'Numero', 'Nome / descricao (opcional)', 'Zona', 'Minimo (pessoas)', 'Maximo (pessoas)',
+      'ID produto Viator', 'Latitude',
+    ]);
+  });
+
+  it('a opcao combinavel continua a ser uma caixa de verificacao e as comodidades de selecao multipla', () => {
+    const { onSave } = renderForm('restaurant');
+    const caixa = screen.getByLabelText('Mesa combinavel com outras');
+    expect(caixa.type).toBe('checkbox');
+    fireEvent.click(caixa);
+    fireEvent.click(screen.getByLabelText('Terraço'));
+    fireEvent.click(screen.getByLabelText('WiFi'));
+    fireEvent.click(botao('Adicionar item incluído'));
+    escrever(screen.getByLabelText('Item 1'), 'Pao');
+    fireEvent.click(botao('Criar mesa'));
+    const meta = JSON.parse(guardar(onSave).description);
+    expect(meta.combinable).toBe(true);
+    expect(meta.amenities).toEqual(['Terraço', 'WiFi']);
+    expect(meta.included_items).toEqual([{ label: 'Pao', included: true }]);
+  });
+});
+
+describe('formulario generico com o design system', () => {
+  it('os campos tem a etiqueta por cima', () => {
+    renderForm('transfer');
+    temEtiquetaPorCima(['Nome', 'Tipo', 'Preco base (€)', 'ID produto Viator', 'Latitude']);
+  });
+
+  it('o rodape tem Cancelar e o botao de gravar, e submeter grava o mesmo objeto', () => {
+    const { onSave, onCancel } = renderForm('transfer');
+    escrever(campo('Nome'), 'Transfer');
+    escrever(campo('Preco base (€)'), '20');
+    fireEvent.click(botao('Nova Unidade'));
+    expect(guardar(onSave).name).toBe('Transfer');
+    expect(guardar(onSave).base_price).toBe(20);
+    fireEvent.click(botao('Cancelar'));
+    expect(onCancel).toHaveBeenCalledTimes(1);
+  });
+});
