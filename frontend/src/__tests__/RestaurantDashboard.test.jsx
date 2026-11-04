@@ -62,15 +62,24 @@ function reserva(over, turno) {
   };
 }
 
-/* Responde a cada pedido conforme o par (from, to): hoje ou mes */
+/* Responde conforme o par exato (stay_from, stay_to): hoje ou mes. Qualquer outra forma de
+   argumentos (por exemplo from/to) lanca, para apanhar pedidos perdidos. */
+function respostaPorPar(params, { hoje, mes }) {
+  if (Object.keys(params || {}).sort().join(',') !== 'stay_from,stay_to') {
+    throw new Error(`pedido inesperado ${JSON.stringify(params)}`);
+  }
+  const { stay_from: de, stay_to: ate } = params;
+  /* O dia 1 pode ser igual a hoje: so o par completo separa os pedidos */
+  if (de === HOJE && ate === HOJE) return hoje;
+  if (de === MES_INICIO && ate === MES_FIM) return mes;
+  throw new Error(`pedido inesperado ${de} ${ate}`);
+}
+
 function carregaServicos({ units = [mesa()], hoje = [], mes = [], res = resumo(), rating = null, ratingTotal = 3 } = {}) {
   listUnits.mockReset().mockResolvedValue(units);
-  listReservations.mockReset().mockImplementation(async ({ from, to }) => {
-    /* O dia 1 pode ser igual a hoje: so o par (from, to) separa os pedidos */
-    if (from === HOJE && to === HOJE) return hoje;
-    if (from === MES_INICIO && to === MES_FIM) return mes;
-    throw new Error(`pedido inesperado ${from} ${to}`);
-  });
+  listReservations.mockReset().mockImplementation(async (params) => (
+    respostaPorPar(params, { hoje, mes })
+  ));
   getResumo.mockReset().mockResolvedValue(res);
   /* Forma real de GET /reviews/stats: { total, average, distribution } */
   api.get.mockReset().mockResolvedValue({
@@ -233,14 +242,51 @@ describe('RestaurantDashboard (Hoje)', () => {
   it('uma chamada a falhar nao apaga os dados das outras', async () => {
     carregaServicos({ hoje: [reserva({ id: 'p1', status: 'pending' })] });
     /* so a lista do mes falha */
-    listReservations.mockReset().mockImplementation(async ({ from, to }) => {
-      if (from === HOJE && to === HOJE) return [reserva({ id: 'p1', status: 'pending' })];
-      throw new Error('falha de rede');
+    listReservations.mockReset().mockImplementation(async (params) => {
+      /* o pedido do mes falha; o de hoje responde (e formas inesperadas lancam) */
+      if (params.stay_from === MES_INICIO && params.stay_to === MES_FIM) {
+        throw new Error('falha de rede');
+      }
+      return respostaPorPar(params, { hoje: [reserva({ id: 'p1', status: 'pending' })], mes: [] });
     });
     renderRestaurant();
     expect(await screen.findByText('Mesa 1')).toBeInTheDocument();
     expect(screen.getByText('1 reserva(s) pendente(s) para hoje')).toBeInTheDocument();
     expect(screen.queryByText('Tudo em ordem')).not.toBeInTheDocument();
+  });
+
+  it('os pedidos usam stay_from e stay_to', async () => {
+    renderRestaurant();
+    expect(await screen.findByText('Tudo em ordem')).toBeInTheDocument();
+    await waitFor(() => expect(listReservations).toHaveBeenCalledTimes(2));
+    const pedidos = listReservations.mock.calls.map(([params]) => params);
+    /* nenhuma chamada recebe as chaves antigas from/to */
+    pedidos.forEach((p) => {
+      expect(p).not.toHaveProperty('from');
+      expect(p).not.toHaveProperty('to');
+    });
+    /* hoje e o mes atual */
+    expect(pedidos).toEqual(expect.arrayContaining([
+      { stay_from: HOJE, stay_to: HOJE },
+      { stay_from: MES_INICIO, stay_to: MES_FIM },
+    ]));
+  });
+
+  it('so a reserva pendente de hoje entra no painel de atencao', async () => {
+    /* o servidor entrega as reservas de hoje; so a pendente pede atencao */
+    carregaServicos({
+      hoje: [
+        reserva({ id: 'p1', status: 'pending', customer_name: 'Eva Pendente' }, 'jantar'),
+        reserva({ id: 'c1', status: 'confirmed', customer_name: 'Ana Confirmada' }, 'almoco'),
+        reserva({ id: 'x1', status: 'cancelled', customer_name: 'Zé Cancelado' }, 'almoco'),
+      ],
+    });
+    renderRestaurant();
+    const item = await screen.findByText('1 reserva(s) pendente(s) para hoje');
+    expect(item.closest('li').querySelector('[data-severity="warning"]')).not.toBeNull();
+    expect(screen.queryByText('Tudo em ordem')).not.toBeInTheDocument();
+    /* a reserva pendente e a confirmada contam como reservas de hoje; a cancelada nao */
+    expect(screen.getByText('Reservas hoje').parentElement.nextElementSibling).toHaveTextContent('2');
   });
 
   it('servicos a falhar mostram estados vazios sem erro', async () => {

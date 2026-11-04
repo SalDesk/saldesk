@@ -6,6 +6,7 @@ import {
 import { getResumo } from '../../services/financeiroService';
 import { listUnits } from '../../services/unitsService';
 import { listReservations } from '../../services/reservationsService';
+import { estadiaEm, estadiaNoMes } from '../../services/reservationRanges';
 import api from '../../services/api';
 import { useT } from '../../i18n';
 import KpiCard from '../../components/financial/KpiCard';
@@ -135,8 +136,8 @@ export default function RestaurantDashboard() {
        (total 0) a media nao existe */
     Promise.all([
       listUnits().catch(() => []),
-      listReservations({ from: TODAY, to: TODAY }).catch(() => []),
-      listReservations({ from: periodo.inicio, to: periodo.fim }).catch(() => []),
+      listReservations(estadiaEm(TODAY)).catch(() => []),
+      listReservations(estadiaNoMes()).catch(() => []),
       getResumo(periodo.inicio, periodo.fim).catch(() => null),
       api.get('/reviews/stats')
         .then(r => {
