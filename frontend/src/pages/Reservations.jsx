@@ -9,6 +9,8 @@ import { useT } from '../i18n';
 import PageHeader from '../components/layout/PageHeader';
 import Button from '../components/ui/Button';
 import Modal from '../components/ui/Modal';
+import FilterChips from '../components/ui/FilterChips';
+import Input, { Select } from '../components/ui/Input';
 import ReservationCard from '../components/reservations/ReservationCard';
 import ReservationForm from '../components/reservations/ReservationForm';
 import ReservationDetailModal from '../components/reservations/ReservationDetailModal';
@@ -25,6 +27,7 @@ import RestaurantCreateModal from './reservations/RestaurantCreateModal';
 import { SOURCE_LABEL } from './reservations/shared';
 
 const STATUS_FILTERS = ['', 'pending', 'confirmed', 'checked_in', 'checked_out', 'cancelled'];
+const TURNO_FILTERS = [{ value: '', label: 'Todos turnos' }, { value: 'almoco', label: 'Almoco' }, { value: 'jantar', label: 'Jantar' }];
 
 /* meta.turno so existe quando definido manualmente (RestaurantCreateModal,
    notes_guest). Reservas com hora real (start_time -- publicas ou criadas
@@ -107,6 +110,9 @@ export default function Reservations() {
 
   const hasFilters = statusFilter || tourFilter || dateFilter || sourceFilter;
 
+  /* Chips de estado: '' = Todas, os restantes vem das traducoes */
+  const statusOptions = STATUS_FILTERS.map(s => ({ value: s, label: s ? t(`reservations.status.${s}`) : 'Todas' }));
+
   function clearFilters() {
     setStatusFilter('');
     setTourFilter('');
@@ -183,52 +189,37 @@ export default function Reservations() {
       {isActivity ? (
         <div className="flex flex-wrap gap-2 mb-6 items-center">
           {/* Status */}
-          <div className="flex flex-wrap gap-1">
-            {STATUS_FILTERS.map(s => (
-              <button
-                key={s}
-                onClick={() => setStatusFilter(s)}
-                className={[
-                  'px-3 py-1.5 rounded-sm text-xs font-body font-semibold transition-colors',
-                  statusFilter === s
-                    ? 'bg-ocean-700 text-white'
-                    : 'bg-white border border-n-200 text-n-600 hover:border-ocean-300',
-                ].join(' ')}
-              >
-                {s ? t(`reservations.status.${s}`) : 'Todas'}
-              </button>
-            ))}
-          </div>
+          <FilterChips options={statusOptions} value={statusFilter} onChange={setStatusFilter} />
 
           {/* Tour */}
-          <select
+          <Select
             value={tourFilter}
             onChange={e => setTourFilter(e.target.value)}
-            className="h-8 px-3 rounded-sm border border-n-200 text-xs font-body bg-white text-n-700 focus:outline-none focus:ring-2 focus:ring-ocean-300 focus:border-ocean-700"
+            className="w-44"
           >
             <option value="">Todos os tours</option>
             {units.map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
-          </select>
+          </Select>
 
           {/* Data */}
-          <input
+          <Input
             type="date"
             value={dateFilter}
             onChange={e => setDateFilter(e.target.value)}
-            className="h-8 px-3 rounded-sm border border-n-200 text-xs font-body bg-white text-n-700 focus:outline-none focus:ring-2 focus:ring-ocean-300 focus:border-ocean-700"
+            className="w-40"
           />
 
           {/* Origem */}
-          <select
+          <Select
             value={sourceFilter}
             onChange={e => setSourceFilter(e.target.value)}
-            className="h-8 px-3 rounded-sm border border-n-200 text-xs font-body bg-white text-n-700 focus:outline-none focus:ring-2 focus:ring-ocean-300 focus:border-ocean-700"
+            className="w-44"
           >
             <option value="">Todas as origens</option>
             {Object.entries(SOURCE_LABEL).map(([v, l]) => (
               <option key={v} value={v}>{l}</option>
             ))}
-          </select>
+          </Select>
 
           {hasFilters && (
             <button
@@ -241,35 +232,12 @@ export default function Reservations() {
           )}
         </div>
       ) : (
-        <div className="flex gap-2 flex-wrap mb-6">
-          {STATUS_FILTERS.map(s => (
-            <button
-              key={s}
-              onClick={() => setStatusFilter(s)}
-              className={[
-                'px-3 py-1.5 rounded-sm text-xs font-body font-semibold transition-colors',
-                statusFilter === s
-                  ? 'bg-ocean-700 text-white'
-                  : 'bg-white border border-n-200 text-n-600 hover:border-ocean-300',
-              ].join(' ')}
-            >
-              {s ? t(`reservations.status.${s}`) : 'Todas'}
-            </button>
-          ))}
+        <div className="flex gap-2 flex-wrap items-center mb-6">
+          <FilterChips options={statusOptions} value={statusFilter} onChange={setStatusFilter} />
           {isRestaurant && (
             <>
               <div className="w-px bg-n-200 self-stretch mx-1" />
-              {[{ v: '', l: 'Todos turnos' }, { v: 'almoco', l: 'Almoco' }, { v: 'jantar', l: 'Jantar' }].map(o => (
-                <button key={o.v} onClick={() => setTurnoFilter(o.v)}
-                  className={[
-                    'px-3 py-1.5 rounded-sm text-xs font-body font-semibold transition-colors',
-                    turnoFilter === o.v
-                      ? 'bg-ocean-700 text-white'
-                      : 'bg-white border border-n-200 text-n-600 hover:border-ocean-300',
-                  ].join(' ')}>
-                  {o.l}
-                </button>
-              ))}
+              <FilterChips options={TURNO_FILTERS} value={turnoFilter} onChange={setTurnoFilter} />
             </>
           )}
         </div>

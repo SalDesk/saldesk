@@ -217,6 +217,136 @@ describe('Reservations', () => {
     });
   });
 
+  describe('barra de filtros', () => {
+    const TRES = [
+      reserva({ id: 'aaaaaaaa-0001', unit_id: 'u1', status: 'confirmed', source: 'direct', check_in: HOJE, customer_name: 'Cliente Alfa' }),
+      reserva({ id: 'bbbbbbbb-0002', unit_id: 'u2', status: 'pending', source: 'viator', check_in: AMANHA, customer_name: 'Cliente Beta', units: { name: 'Tour Salinas' } }),
+      reserva({ id: 'cccccccc-0003', unit_id: 'u1', status: 'cancelled', source: 'viator', check_in: AMANHA, customer_name: 'Cliente Gama' }),
+    ];
+    const DUAS_UNIDADES = [unidade(), unidade({ id: 'u2', name: 'Tour Salinas' })];
+
+    function carregaTres() {
+      carregaServicos({ reservas: TRES, units: DUAS_UNIDADES });
+    }
+
+    function campoData(container) {
+      return container.querySelector('input[type="date"]');
+    }
+
+    it('o estado e um grupo de botoes aria-pressed, com Todas seleccionada por defeito', async () => {
+      carregaTres();
+      renderPagina('activity');
+      await screen.findByText('Tour');
+      /* so os chips tem aria-pressed (a tabela tem outros botoes, p.ex. a accao Check-in) */
+      const chips = screen.getAllByRole('button').filter(b => b.hasAttribute('aria-pressed'));
+      expect(chips.map(b => b.textContent)).toEqual(['Todas', 'Pendente', 'Confirmada', 'Check-in', 'Check-out', 'Cancelada']);
+      expect(screen.getByRole('button', { name: 'Todas' })).toHaveAttribute('aria-pressed', 'true');
+      expect(screen.getByRole('button', { name: 'Confirmada' })).toHaveAttribute('aria-pressed', 'false');
+
+      fireEvent.click(screen.getByRole('button', { name: 'Confirmada' }));
+      expect(screen.getByRole('button', { name: 'Confirmada' })).toHaveAttribute('aria-pressed', 'true');
+      expect(screen.getByRole('button', { name: 'Todas' })).toHaveAttribute('aria-pressed', 'false');
+    });
+
+    it('atividade: o selector de tour filtra por unit_id e a contagem acompanha', async () => {
+      carregaTres();
+      renderPagina('activity');
+      await screen.findByText('Tour');
+      expect(screen.getByText('3 resultado(s)')).toBeInTheDocument();
+
+      fireEvent.change(screen.getByDisplayValue('Todos os tours'), { target: { value: 'u2' } });
+      expect(screen.getAllByText('Cliente Beta').length).toBeGreaterThan(0);
+      expect(screen.queryByText('Cliente Alfa')).not.toBeInTheDocument();
+      expect(screen.queryByText('Cliente Gama')).not.toBeInTheDocument();
+      expect(screen.getByText('1 resultado(s)')).toBeInTheDocument();
+    });
+
+    it('atividade: o campo de data filtra por check_in (data local) e a contagem acompanha', async () => {
+      carregaTres();
+      const { container } = renderPagina('activity');
+      await screen.findByText('Tour');
+
+      fireEvent.change(campoData(container), { target: { value: AMANHA } });
+      expect(campoData(container)).toHaveValue(AMANHA);
+      expect(screen.queryByText('Cliente Alfa')).not.toBeInTheDocument();
+      expect(screen.getAllByText('Cliente Beta').length).toBeGreaterThan(0);
+      expect(screen.getAllByText('Cliente Gama').length).toBeGreaterThan(0);
+      expect(screen.getByText('2 resultado(s)')).toBeInTheDocument();
+    });
+
+    it('atividade: o selector de origem filtra por source', async () => {
+      carregaTres();
+      renderPagina('activity');
+      await screen.findByText('Tour');
+
+      fireEvent.change(screen.getByDisplayValue('Todas as origens'), { target: { value: 'viator' } });
+      expect(screen.queryByText('Cliente Alfa')).not.toBeInTheDocument();
+      expect(screen.getByText('2 resultado(s)')).toBeInTheDocument();
+    });
+
+    it('atividade: os filtros combinam-se e Limpar repoe todos', async () => {
+      carregaTres();
+      const { container } = renderPagina('activity');
+      await screen.findByText('Tour');
+      expect(screen.queryByRole('button', { name: 'Limpar' })).not.toBeInTheDocument();
+
+      fireEvent.click(screen.getByRole('button', { name: 'Cancelada' }));
+      fireEvent.change(screen.getByDisplayValue('Todos os tours'), { target: { value: 'u1' } });
+      fireEvent.change(campoData(container), { target: { value: AMANHA } });
+      fireEvent.change(screen.getByDisplayValue('Todas as origens'), { target: { value: 'viator' } });
+      expect(screen.getByText('1 resultado(s)')).toBeInTheDocument();
+      expect(screen.getAllByText('Cliente Gama').length).toBeGreaterThan(0);
+
+      fireEvent.click(screen.getByRole('button', { name: 'Limpar' }));
+      expect(screen.getByText('3 resultado(s)')).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Todas' })).toHaveAttribute('aria-pressed', 'true');
+      expect(screen.getByDisplayValue('Todos os tours')).toBeInTheDocument();
+      expect(screen.getByDisplayValue('Todas as origens')).toBeInTheDocument();
+      expect(campoData(container)).toHaveValue('');
+      expect(screen.queryByRole('button', { name: 'Limpar' })).not.toBeInTheDocument();
+    });
+
+    it('hotel: o segundo bloco de estado tambem e aria-pressed e filtra', async () => {
+      carregaTres();
+      renderPagina('hotel');
+      await screen.findByText('Cliente Alfa');
+      expect(screen.getByRole('button', { name: 'Todas' })).toHaveAttribute('aria-pressed', 'true');
+      expect(screen.getByText('3 resultado(s)')).toBeInTheDocument();
+      /* o layout nao-actividade nao tem selectores nem data */
+      expect(screen.queryByRole('combobox')).not.toBeInTheDocument();
+
+      fireEvent.click(screen.getByRole('button', { name: 'Cancelada' }));
+      expect(screen.getByRole('button', { name: 'Cancelada' })).toHaveAttribute('aria-pressed', 'true');
+      expect(screen.getByRole('button', { name: 'Todas' })).toHaveAttribute('aria-pressed', 'false');
+      expect(screen.getByText('Cliente Gama')).toBeInTheDocument();
+      expect(screen.queryByText('Cliente Alfa')).not.toBeInTheDocument();
+      expect(screen.getByText('1 resultado(s)')).toBeInTheDocument();
+    });
+
+    it('restaurante: estado e turno sao grupos de botoes aria-pressed independentes', async () => {
+      carregaServicos({
+        reservas: [
+          reserva({ id: 'aaaaaaaa-0001', status: 'confirmed', start_time: '13:00:00', customer_name: 'Cliente Alfa' }),
+          reserva({ id: 'bbbbbbbb-0002', status: 'confirmed', start_time: '20:30:00', customer_name: 'Cliente Beta' }),
+        ],
+        units: [unidade({ name: 'M1', unit_type: 'table', description: '{"number":1}' })],
+      });
+      renderPagina('restaurant');
+      await screen.findByText('Mesa');
+      expect(screen.getByRole('button', { name: 'Todos turnos' })).toHaveAttribute('aria-pressed', 'true');
+
+      fireEvent.click(screen.getByRole('button', { name: 'Jantar' }));
+      expect(screen.getByRole('button', { name: 'Jantar' })).toHaveAttribute('aria-pressed', 'true');
+      expect(screen.getByRole('button', { name: 'Todas' })).toHaveAttribute('aria-pressed', 'true');
+      expect(screen.queryByText('Cliente Alfa')).not.toBeInTheDocument();
+      expect(screen.getAllByText('Cliente Beta').length).toBeGreaterThan(0);
+
+      fireEvent.click(screen.getByRole('button', { name: 'Pendente' }));
+      await waitFor(() => expect(screen.queryByText('Cliente Beta')).not.toBeInTheDocument());
+      expect(screen.getByText('0 resultado(s)')).toBeInTheDocument();
+    });
+  });
+
   describe('accoes', () => {
     it('Nova reserva abre o formulario', async () => {
       renderPagina('activity');
