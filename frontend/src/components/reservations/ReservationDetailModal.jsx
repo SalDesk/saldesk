@@ -93,9 +93,7 @@ export default function ReservationDetailModal({ reservationId, open, onClose })
             <div>
               <div className="flex items-center gap-2 flex-wrap">
                 <Badge variant={reservation.status}>{t(`reservations.status.${reservation.status}`)}</Badge>
-                <span className="text-[10px] font-mono font-medium px-1.5 py-0.5 rounded-xs uppercase tracking-wide bg-n-50 text-n-600 border border-n-200">
-                  {SOURCE_LABEL[reservation.source] || reservation.source}
-                </span>
+                <Badge>{SOURCE_LABEL[reservation.source] || reservation.source}</Badge>
                 <span className="text-xs font-mono text-n-400">#{reservation.id?.slice(0, 8)}</span>
               </div>
               <p className="font-display font-bold text-lg text-n-900 mt-2">
