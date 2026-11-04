@@ -47,7 +47,7 @@ export default function ActivityTable({ reservations, units, guides, onEdit, onD
       key: 'tour',
       label: 'Tour',
       render: (r) => (
-        <p className="font-display font-semibold text-sm text-n-900 truncate max-w-[96px]">
+        <p className="font-display font-semibold text-sm text-n-900 truncate max-w-[140px]">
           {r.units?.name || units.find(u => u.id === r.unit_id)?.name || '—'}
         </p>
       ),
@@ -63,7 +63,7 @@ export default function ActivityTable({ reservations, units, guides, onEdit, onD
       label: 'Cliente',
       render: (r) => (
         <div className="min-w-0">
-          <p className="text-sm font-body text-n-900 truncate max-w-[96px]">{r.customer_name || '—'}</p>
+          <p className="text-sm font-body text-n-900 truncate max-w-[140px]">{r.customer_name || '—'}</p>
           {r.customer_country && (
             <p className="text-xs font-body text-n-400">{r.customer_country}</p>
           )}
@@ -105,7 +105,7 @@ export default function ActivityTable({ reservations, units, guides, onEdit, onD
         const canAdvance = !!STATUS_NEXT[r.status];
         const isLoading  = actionLoading === r.id;
         return (
-          <div className="flex items-center gap-0.5 justify-end flex-nowrap">
+          <div className="flex flex-wrap items-center gap-0.5 justify-end max-w-[170px] ml-auto">
             {canAdvance && (
               <button
                 onClick={() => handleNextStatus(r)}
