@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { BookOpen, Euro, Percent, Receipt, TrendingUp, BarChart2 } from 'lucide-react';
 import { getResumo, getReceita, getUnidades } from '../../services/financeiroService';
 import { listReservations } from '../../services/reservationsService';
+import { estadiaNoMes } from '../../services/reservationRanges';
 import { useT } from '../../i18n';
 import KpiCard from '../../components/financial/KpiCard';
 import RevenueChart from '../../components/financial/RevenueChart';
@@ -83,7 +84,7 @@ export default function ResumoView() {
       getResumo(periodo.inicio, periodo.fim).catch(() => null),
       getReceita(janela.inicio, janela.fim, 'day').catch(() => []),
       getUnidades(periodo.inicio, periodo.fim).catch(() => []),
-      listReservations({ from: periodo.inicio, to: periodo.fim }).catch(() => []),
+      listReservations(estadiaNoMes()).catch(() => []),
     ]).then(([res, rec, uni, rsv]) => {
       if (!ativo) return;
       setResumo(normalizaResumo(res));

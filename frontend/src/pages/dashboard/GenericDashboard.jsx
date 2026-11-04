@@ -6,6 +6,7 @@ import {
 import { getResumo } from '../../services/financeiroService';
 import { listUnits } from '../../services/unitsService';
 import { listReservations } from '../../services/reservationsService';
+import { estadiaEm } from '../../services/reservationRanges';
 import useAuthStore from '../../store/authStore';
 import { useT } from '../../i18n';
 import KpiCard from '../../components/financial/KpiCard';
@@ -50,7 +51,7 @@ export default function GenericDashboard() {
     /* Cada chamada falha para o seu valor vazio: uma falha nao apaga as outras */
     Promise.all([
       listUnits().catch(() => []),
-      listReservations({ from: TODAY, to: TODAY }).catch(() => []),
+      listReservations(estadiaEm(TODAY)).catch(() => []),
     ])
       .then(([u, r]) => { setUnits(u || []); setTodayRes(r || []); })
       .catch(() => {})

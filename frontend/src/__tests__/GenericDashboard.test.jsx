@@ -69,9 +69,14 @@ const INGLES_POR_TIPO = {
 
 function carregaServicos({ units = [], hoje = [], res = resumo() } = {}) {
   listUnits.mockReset().mockResolvedValue(units);
-  listReservations.mockReset().mockImplementation(async ({ from, to }) => {
-    if (from === HOJE && to === HOJE) return hoje;
-    throw new Error(`pedido inesperado ${from} ${to}`);
+  /* Responde so ao par exato (stay_from, stay_to) de hoje; qualquer outra forma de argumentos
+     (por exemplo from/to) lanca, para apanhar pedidos perdidos */
+  listReservations.mockReset().mockImplementation(async (params) => {
+    if (Object.keys(params || {}).sort().join(',') !== 'stay_from,stay_to') {
+      throw new Error(`pedido inesperado ${JSON.stringify(params)}`);
+    }
+    if (params.stay_from === HOJE && params.stay_to === HOJE) return hoje;
+    throw new Error(`pedido inesperado ${params.stay_from} ${params.stay_to}`);
   });
   getResumo.mockReset().mockResolvedValue(res);
 }
@@ -277,6 +282,38 @@ describe('GenericDashboard (Hoje)', () => {
     /* 1 check-in confirmado hoje e 1 de 2 quartos ocupados = 50% */
     expect(await screen.findByText('50.0%')).toBeInTheDocument();
     expect(screen.getByText('Check-ins hoje').parentElement.nextElementSibling).toHaveTextContent('1');
+  });
+
+  it('os pedidos usam stay_from e stay_to', async () => {
+    renderGenerico('hotel');
+    await esperaCarregar();
+    await waitFor(() => expect(listReservations).toHaveBeenCalledTimes(1));
+    const pedidos = listReservations.mock.calls.map(([params]) => params);
+    /* nenhuma chamada recebe as chaves antigas from/to */
+    pedidos.forEach((p) => {
+      expect(p).not.toHaveProperty('from');
+      expect(p).not.toHaveProperty('to');
+    });
+    /* so o dia de hoje */
+    expect(pedidos).toEqual([{ stay_from: HOJE, stay_to: HOJE }]);
+  });
+
+  it('rentacar: um aluguer em curso (comecou antes de hoje) conta nos alugueres activos', async () => {
+    const antesDeOntem = new Date();
+    antesDeOntem.setDate(antesDeOntem.getDate() - 2);
+    const depois = new Date();
+    depois.setDate(depois.getDate() + 3);
+    carregaServicos({
+      units: [{ id: 'v1', name: 'Viatura 1', unit_type: 'car', status: 'available', is_active: true }],
+      hoje: [{
+        id: 'r1', unit_id: 'v1', status: 'checked_in',
+        check_in: antesDeOntem.toLocaleDateString('en-CA'),
+        check_out: depois.toLocaleDateString('en-CA'),
+      }],
+    });
+    renderGenerico('rentacar');
+    await screen.findByText('Viatura 1');
+    expect(screen.getByText('Alugueres activos').parentElement.nextElementSibling).toHaveTextContent('1');
   });
 
   it('servicos a falhar nao rebentam', async () => {

@@ -74,7 +74,7 @@ describe('ResumoView', () => {
     const { inicio, fim } = primeiroEUltimoDoMes();
     await waitFor(() => expect(getResumo).toHaveBeenCalledWith(inicio, fim));
     expect(getUnidades).toHaveBeenCalledWith(inicio, fim);
-    expect(listReservations).toHaveBeenCalledWith({ from: inicio, to: fim });
+    expect(listReservations).toHaveBeenCalledWith({ stay_from: inicio, stay_to: fim });
     /* grafico: ultimos 30 dias, por dia, a acabar hoje */
     await waitFor(() => expect(getReceita).toHaveBeenCalled());
     const [ini30, fim30, gran] = getReceita.mock.calls[0];
@@ -85,6 +85,20 @@ describe('ResumoView', () => {
     const dias = Math.round((new Date(`${fim30}T00:00:00`) - new Date(`${ini30}T00:00:00`)) / 86400000);
     expect(dias).toBe(29);
     await screen.findByText('Receita do mês');
+  });
+
+  it('os pedidos usam stay_from e stay_to', async () => {
+    renderResumo();
+    await screen.findByText('Receita do mês');
+    const { inicio, fim } = primeiroEUltimoDoMes();
+    const pedidos = listReservations.mock.calls.map(([params]) => params);
+    /* nenhuma chamada recebe as chaves antigas from/to */
+    pedidos.forEach((p) => {
+      expect(p).not.toHaveProperty('from');
+      expect(p).not.toHaveProperty('to');
+    });
+    /* primeiro e ultimo dia do mes atual */
+    expect(pedidos).toEqual([{ stay_from: inicio, stay_to: fim }]);
   });
 
   it('mostra receita e variacao', async () => {
