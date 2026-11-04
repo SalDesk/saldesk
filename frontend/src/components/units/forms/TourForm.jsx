@@ -4,7 +4,7 @@ import Button from '../../ui/Button';
 import ImageUploader from '../../shared/ImageUploader';
 import {
   AmenitiesPicker, IncludedItemsEditor, StopsEditor, TimeSlotsEditor, PriceTiersEditor,
-  SectionLabel, OtaFields, ConectFields, buildOtaProductIds, LANGUAGES, UNIT_TYPES_BY_OPERATOR,
+  SectionLabel, ChipToggle, OtaFields, ConectFields, buildOtaProductIds, LANGUAGES, UNIT_TYPES_BY_OPERATOR,
 } from './editors';
 
 const ACTIVITY_AMENS   = ['Equipamento incluído', 'Instrutor certificado', 'Seguro', 'Fotografias/Vídeo', 'Transporte', 'Snacks e água', 'Vestiário', 'Toalhas'];
@@ -252,22 +252,12 @@ export default function TourForm({ unit, onSave, onCancel, loading, error }) {
         <SectionLabel>Idiomas</SectionLabel>
         <div className="flex flex-wrap gap-2 mt-1">
           {LANGUAGES.map(lang => (
-            <label
+            <ChipToggle
               key={lang}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-sm border text-xs font-body font-medium cursor-pointer transition-colors select-none ${
-                form.languages.includes(lang)
-                  ? 'bg-ocean-700 border-ocean-700 text-white'
-                  : 'bg-n-50 border-n-300 text-n-600 hover:border-ocean-500'
-              }`}
-            >
-              <input
-                type="checkbox"
-                className="sr-only"
-                checked={form.languages.includes(lang)}
-                onChange={() => toggleLang(lang)}
-              />
-              {lang}
-            </label>
+              label={lang}
+              checked={form.languages.includes(lang)}
+              onChange={() => toggleLang(lang)}
+            />
           ))}
         </div>
       </div>

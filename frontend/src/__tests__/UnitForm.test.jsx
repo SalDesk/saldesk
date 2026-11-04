@@ -60,9 +60,14 @@ function porPlaceholder(texto) {
   return screen.getByPlaceholderText(texto);
 }
 
-/* O botao de remover de uma linha dos editores e o ultimo filho do bloco do campo */
+/* O botao de remover de uma linha dos editores: o primeiro ascendente do campo que
+   contem um botao "Remover ..." (aria-label) e a linha; o botao e esse */
 function removerDe(input) {
-  return input.parentElement.lastElementChild;
+  for (let el = input.parentElement; el; el = el.parentElement) {
+    const botaoRemover = el.querySelector('button[aria-label^="Remover"]');
+    if (botaoRemover) return botaoRemover;
+  }
+  throw new Error('Botao de remover nao encontrado');
 }
 
 /* O selector de estado nao tem etiqueta: e o que tem a opcao "inactive" */
@@ -1778,5 +1783,131 @@ describe('formulario generico', () => {
     renderForm('transfer');
     expect(screen.queryByText('Preco base (€)')).toBeNull();
     expect(screen.getByRole('button', { name: 'Cancel' })).toBeInTheDocument();
+  });
+});
+
+/* ---------- Design system: etiquetas e editores do formulario de tours ---------- */
+
+/* O Input/Select/Textarea do design system poe a etiqueta como irmao anterior do campo,
+   sem htmlFor/id; e isso que se afirma (divida conhecida), nao getByLabelText */
+function temEtiquetaPorCima(textos) {
+  for (const texto of textos) {
+    const etiqueta = screen.getByText(texto);
+    expect(etiqueta.tagName).toBe('LABEL');
+    expect(etiqueta.nextElementSibling).toBe(campo(texto));
+  }
+}
+
+describe('TourForm com o design system', () => {
+  function preencherMinimo() {
+    const r = renderForm('activity');
+    escrever(campo('Nome PT'), 'Tour');
+    escrever(campo('Capacidade maxima'), '4');
+    return r;
+  }
+
+  function metaGravada(onSave) {
+    return JSON.parse(guardar(onSave).description);
+  }
+
+  it('os campos principais tem a etiqueta por cima', () => {
+    renderForm('activity');
+    temEtiquetaPorCima([
+      'Nome PT', 'Nome EN', 'Categoria', 'Modalidade', 'Descricao curta PT', 'Descricao longa EN',
+      'Duracao (horas)', 'Dificuldade', 'Capacidade maxima', 'Hora de inicio', 'Preco crianca',
+      'ID produto Viator', 'Latitude', 'Longitude',
+    ]);
+  });
+
+  it('os titulos de seccao existem', () => {
+    renderForm('activity');
+    ['Identificacao', 'Descricao', 'Idiomas', 'Comodidades', 'O que está incluído', 'Fotos'].forEach(t => {
+      expect(screen.getAllByText((_, el) => el.tagName === 'P' && el.textContent === t)).toHaveLength(1);
+    });
+  });
+
+  it('idiomas e comodidades continuam a ser de selecao multipla', () => {
+    const { onSave } = preencherMinimo();
+    fireEvent.click(screen.getByLabelText('DE'));
+    fireEvent.click(screen.getByLabelText('PT'));
+    fireEvent.click(screen.getByLabelText('Seguro'));
+    fireEvent.click(screen.getByLabelText('Toalhas'));
+    expect(screen.getByLabelText('DE').checked).toBe(true);
+    expect(screen.getByLabelText('PT').checked).toBe(false);
+    fireEvent.click(botao('Criar tour'));
+    const meta = metaGravada(onSave);
+    expect(meta.languages).toEqual(['EN', 'DE']);
+    expect(meta.amenities).toEqual(['Seguro', 'Toalhas']);
+  });
+
+  it('item incluido: adicionar, editar e remover pelo botao com nome', () => {
+    const { onSave } = preencherMinimo();
+    fireEvent.click(botao('Adicionar item incluído'));
+    fireEvent.click(botao('Adicionar item não incluído'));
+    escrever(screen.getByLabelText('Item 1'), 'Agua');
+    escrever(screen.getByLabelText('Item 2'), 'Almoco');
+    fireEvent.click(botao('Remover item 1'));
+    expect(screen.queryByLabelText('Item 2')).toBeNull();
+    expect(screen.getByLabelText('Item 1').value).toBe('Almoco');
+    fireEvent.click(botao('Criar tour'));
+    expect(metaGravada(onSave).included_items).toEqual([{ label: 'Almoco', included: false }]);
+  });
+
+  it('paragem: adicionar, editar e remover pelo botao com nome', () => {
+    const { onSave } = preencherMinimo();
+    fireEvent.click(botao('Adicionar paragem'));
+    fireEvent.click(botao('Adicionar paragem'));
+    escrever(screen.getByLabelText('Nome da paragem 1'), 'A');
+    escrever(screen.getByLabelText('Descrição da paragem 1'), 'Desc A');
+    escrever(screen.getByLabelText('Latitude da paragem 1'), '16.5');
+    escrever(screen.getByLabelText('Longitude da paragem 1'), '-22.9');
+    escrever(screen.getByLabelText('Nome da paragem 2'), 'B');
+    fireEvent.click(botao('Remover paragem 2'));
+    expect(screen.queryByLabelText('Nome da paragem 2')).toBeNull();
+    fireEvent.click(botao('Criar tour'));
+    expect(metaGravada(onSave).stops).toEqual([{ name: 'A', desc: 'Desc A', lat: 16.5, lng: -22.9 }]);
+  });
+
+  it('horario: adicionar, editar e remover pelo botao com nome', () => {
+    const { onSave } = preencherMinimo();
+    fireEvent.click(botao('Adicionar horário'));
+    fireEvent.click(botao('Adicionar horário'));
+    escrever(screen.getByLabelText('Hora do horário 1'), '09:00');
+    escrever(screen.getByLabelText('Lugares do horário 1'), '8');
+    escrever(screen.getByLabelText('Hora do horário 2'), '11:00');
+    escrever(screen.getByLabelText('Lugares do horário 2'), '5');
+    fireEvent.click(botao('Remover horário 1'));
+    expect(screen.queryByLabelText('Hora do horário 2')).toBeNull();
+    fireEvent.click(botao('Criar tour'));
+    expect(metaGravada(onSave).time_slots).toEqual([{ time: '11:00', capacity: 5 }]);
+  });
+
+  it('escalao: adicionar, editar e remover pelo botao com nome', () => {
+    const { onSave } = preencherMinimo();
+    fireEvent.click(botao('Adicionar escalão'));
+    fireEvent.click(botao('Adicionar escalão'));
+    escrever(screen.getByLabelText('Mínimo de pessoas do escalão 1'), '1');
+    escrever(screen.getByLabelText('Máximo de pessoas do escalão 1'), '2');
+    escrever(screen.getByLabelText('Preço do escalão 1'), '80');
+    escrever(screen.getByLabelText('Mínimo de pessoas do escalão 2'), '3');
+    escrever(screen.getByLabelText('Máximo de pessoas do escalão 2'), '4');
+    escrever(screen.getByLabelText('Preço do escalão 2'), '140.5');
+    fireEvent.click(botao('Remover escalão 1'));
+    expect(screen.queryByLabelText('Preço do escalão 2')).toBeNull();
+    fireEvent.click(botao('Criar tour'));
+    expect(metaGravada(onSave).price_tiers).toEqual([{ pax_min: 3, pax_max: 4, price: 140.5 }]);
+  });
+
+  it('os botoes de adicionar e remover nao submetem o formulario', () => {
+    const { onSave } = preencherMinimo();
+    fireEvent.click(botao('Adicionar item incluído'));
+    fireEvent.click(botao('Adicionar paragem'));
+    fireEvent.click(botao('Adicionar horário'));
+    fireEvent.click(botao('Adicionar escalão'));
+    fireEvent.click(botao('Remover item 1'));
+    fireEvent.click(botao('Remover paragem 1'));
+    fireEvent.click(botao('Remover horário 1'));
+    fireEvent.click(botao('Remover escalão 1'));
+    expect(onSave).not.toHaveBeenCalled();
   });
 });

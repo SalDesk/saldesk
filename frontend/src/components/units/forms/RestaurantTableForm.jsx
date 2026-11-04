@@ -121,7 +121,7 @@ export default function RestaurantTableForm({ unit, onSave, onCancel, loading, e
             onChange={e => setForm(f => ({ ...f, combinable: e.target.checked }))}
             className="w-4 h-4 accent-ocean-700"
           />
-          <span className="text-sm font-body text-n-700">Mesa combinavel com outras</span>
+          <span className="text-sm font-body text-n-700 app:text-[13px]">Mesa combinavel com outras</span>
         </label>
       </div>
 
