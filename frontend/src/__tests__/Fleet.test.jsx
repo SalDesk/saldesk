@@ -814,6 +814,54 @@ describe('Frota (desenho do sistema)', () => {
     expect(classe('Kia Sportage', 'Disponivel')).toContain('--success');
     expect(classe('Prancha Kite 12m', 'Em uso')).toContain('ocean');
     expect(classe('Colete Salva-vidas', 'Manutencao')).toContain('--warning');
-    expect(classe('Quad Velho', 'Retirado')).toContain('n-100');
+    /* text-n-500 so existe na variante no_show (default, checked_out e delivered usam n-600) */
+    expect(classe('Quad Velho', 'Retirado')).toContain('text-n-500');
+    expect(classe('Quad Velho', 'Retirado')).not.toContain('text-n-600');
+  });
+  it('FleetSelector: fora da app a base e a de sempre (turquoise, rounded-2xl) e o aspecto novo vem so em variantes app:', async () => {
+    getFleetAvailability.mockReset().mockResolvedValue([
+      { id: 'v1', name: 'Buggy 1', capacity: 4, available: true },
+      { id: 'v2', name: 'Buggy 2', capacity: 2, available: false },
+    ]);
+    const espera = adiado();
+    getFleetAvailability.mockReturnValueOnce(espera.promise);
+    const onLoad = vi.fn();
+    render(<FleetSelector unitId="t1" date="2099-01-15" value={null} onChange={() => {}} onLoad={onLoad} />);
+    /* aviso de espera */
+    const aviso = screen.getByText('A verificar disponibilidade de buggys...');
+    const roda = aviso.querySelector('span');
+    expect(roda.className).toContain('border-t-turquoise-500');
+    expect(roda.className).toContain('app:border-t-ocean-700');
+    espera.resolve([
+      { id: 'v1', name: 'Buggy 1', capacity: 4, available: true },
+      { id: 'v2', name: 'Buggy 2', capacity: 2, available: false },
+    ]);
+    const titulo = await screen.findByText('Escolha o buggy');
+    expect(titulo.className).toContain('font-mono');
+    expect(titulo.className).toContain('uppercase');
+    expect(titulo.className).toContain('app:normal-case');
+    const livre = screen.getByRole('button', { name: /Buggy 1/ });
+    expect(livre.className).toContain('rounded-2xl');
+    expect(livre.className).toContain('border-2');
+    expect(livre.className).toContain('app:rounded-md');
+    expect(livre.className).toContain('app:border');
+    const caixa = livre.querySelector('svg').parentElement;
+    expect(caixa.className).toContain('bg-turquoise-50');
+    expect(caixa.className).toContain('app:bg-ocean-50');
+    expect(livre.querySelector('svg').getAttribute('class')).toContain('text-turquoise-600');
+    expect(livre.querySelector('svg').getAttribute('class')).toContain('app:text-ocean-700');
+    const pilula = within(livre).getByText('Livre');
+    expect(pilula.className).toContain('bg-turquoise-50');
+    expect(pilula.className).toContain('rounded-lg');
+    expect(pilula.className).toContain('app:bg-[var(--success-light)]');
+    expect(pilula.className).toContain('app:rounded-full');
+    /* cada texto aparece uma so vez (nao ha dois elementos, um por visibilidade) */
+    expect(screen.getAllByText('Livre')).toHaveLength(1);
+    expect(screen.getAllByText('Ocupado')).toHaveLength(1);
+    /* sem classes do aspecto novo fora de uma variante app: */
+    for (const el of [livre, caixa, pilula, titulo]) {
+      const soltas = el.className.split(/\s+/).filter((c) => c && !c.startsWith('app:'));
+      expect(soltas.join(' ')).not.toMatch(/rounded-md|rounded-sm|ring-ocean-700|tabular-nums/);
+    }
   });
 });

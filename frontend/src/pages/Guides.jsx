@@ -595,7 +595,7 @@ function AvailabilityTab({ guides }) {
 
   return (
     <Card padding="p-0" className="overflow-x-auto">
-      <div style={{ minWidth: 540 }}>
+      <div style={{ minWidth: 620 }}>
         <Table columns={columns} rows={guides} />
       </div>
       <div className="flex items-center gap-4 px-4 py-2.5 border-t border-n-100 bg-n-50">
@@ -711,7 +711,7 @@ export default function Guides() {
             <div className="relative">
               <Search size={14} strokeWidth={1.75} className="absolute left-3 top-1/2 -translate-y-1/2 text-n-400" />
               <Input value={search} onChange={e => setSearch(e.target.value)}
-                placeholder="Pesquisar guia..." className="pl-8 w-56" />
+                placeholder="Pesquisar guia..." className="pl-8" />
             </div>
             <FilterChips options={STATUS_OPTIONS} value={statusFilter} onChange={setStatusFilter} />
           </div>
