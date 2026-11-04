@@ -110,7 +110,7 @@ export default function RentacarTable({ reservations, units, onEdit, onDelete, o
           {['pending', 'confirmed'].includes(r.status) && (
             <button
               onClick={() => onLevantamento(r)}
-              className="flex items-center gap-1 px-2 py-1 rounded-xs bg-[#1A7A4A] text-white text-xs font-body font-medium hover:bg-[#15623C] transition-colors whitespace-nowrap"
+              className="flex items-center gap-1 px-2 py-1 rounded-xs bg-[var(--success)] text-white text-xs font-body font-medium hover:brightness-90 transition-colors whitespace-nowrap"
             >
               <MoveRight size={11} strokeWidth={2} />
               Levantamento

@@ -47,7 +47,7 @@ export default function ActivityTable({ reservations, units, guides, onEdit, onD
       key: 'tour',
       label: 'Tour',
       render: (r) => (
-        <p className="font-display font-semibold text-sm text-n-900 truncate max-w-[140px]">
+        <p className="font-display font-semibold text-sm text-n-900 truncate max-w-[96px]">
           {r.units?.name || units.find(u => u.id === r.unit_id)?.name || '—'}
         </p>
       ),
@@ -63,7 +63,7 @@ export default function ActivityTable({ reservations, units, guides, onEdit, onD
       label: 'Cliente',
       render: (r) => (
         <div className="min-w-0">
-          <p className="text-sm font-body text-n-900 truncate max-w-[140px]">{r.customer_name || '—'}</p>
+          <p className="text-sm font-body text-n-900 truncate max-w-[96px]">{r.customer_name || '—'}</p>
           {r.customer_country && (
             <p className="text-xs font-body text-n-400">{r.customer_country}</p>
           )}
@@ -105,7 +105,7 @@ export default function ActivityTable({ reservations, units, guides, onEdit, onD
         const canAdvance = !!STATUS_NEXT[r.status];
         const isLoading  = actionLoading === r.id;
         return (
-          <div className="flex items-center gap-1 justify-end flex-wrap">
+          <div className="flex items-center gap-0.5 justify-end flex-nowrap">
             {canAdvance && (
               <button
                 onClick={() => handleNextStatus(r)}
@@ -117,29 +117,29 @@ export default function ActivityTable({ reservations, units, guides, onEdit, onD
               </button>
             )}
             <button onClick={() => onReschedule(r)} title="Reagendar"
-              className="p-1.5 rounded text-n-400 hover:text-ocean-700 hover:bg-ocean-50 transition-colors">
+              className="p-1 rounded text-n-400 hover:text-ocean-700 hover:bg-ocean-50 transition-colors">
               <CalendarDays size={13} strokeWidth={1.75} />
             </button>
             <button onClick={() => onVoucher(r)} title="Enviar voucher"
               disabled={voucherLoading === r.id}
-              className="p-1.5 rounded text-n-400 hover:text-ocean-700 hover:bg-ocean-50 transition-colors disabled:opacity-40">
+              className="p-1 rounded text-n-400 hover:text-ocean-700 hover:bg-ocean-50 transition-colors disabled:opacity-40">
               <Mail size={13} strokeWidth={1.75} />
             </button>
             {!['cancelled','no_show','checked_out'].includes(r.status) && (
               <button onClick={() => onNoShow(r)} title="No-show"
-                className="p-1.5 rounded text-n-400 hover:text-error hover:bg-red-50 transition-colors">
+                className="p-1 rounded text-n-400 hover:text-error hover:bg-red-50 transition-colors">
                 <UserX size={13} strokeWidth={1.75} />
               </button>
             )}
             {!['cancelled','no_show'].includes(r.status) && (
               <button onClick={() => setAssignRes(r)} title="Atribuir equipa"
-                className="p-1.5 rounded text-n-400 hover:text-ocean-700 hover:bg-ocean-50 transition-colors">
+                className="p-1 rounded text-n-400 hover:text-ocean-700 hover:bg-ocean-50 transition-colors">
                 <Users size={13} strokeWidth={1.75} />
               </button>
             )}
-            <Button variant="ghost" size="sm" icon={Eye} onClick={() => onView(r)} aria-label={t('reservations.view')} />
-            <Button variant="ghost" size="sm" icon={Pencil} onClick={() => onEdit(r)} aria-label="Editar" />
-            <Button variant="ghost" size="sm" icon={Trash2} onClick={() => onDelete(r)} aria-label="Eliminar" className="hover:text-error" />
+            <Button variant="ghost" size="sm" icon={Eye} onClick={() => onView(r)} aria-label={t('reservations.view')} className="!px-1" />
+            <Button variant="ghost" size="sm" icon={Pencil} onClick={() => onEdit(r)} aria-label="Editar" className="!px-1" />
+            <Button variant="ghost" size="sm" icon={Trash2} onClick={() => onDelete(r)} aria-label="Eliminar" className="!px-1 hover:text-error" />
           </div>
         );
       },

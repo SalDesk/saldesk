@@ -23,7 +23,7 @@ function RemoveRowButton({ label, onClick }) {
       icon={Trash2}
       onClick={onClick}
       aria-label={label}
-      className="shrink-0 hover:text-error"
+      className="shrink-0 !text-n-400 hover:!text-error hover:!bg-[var(--error-light)]"
     />
   );
 }
@@ -215,7 +215,7 @@ export function PriceTiersEditor({ tiers, onChange }) {
   return (
     <div className="space-y-2">
       {tiers.map((t, i) => (
-        <div key={i} className="flex items-center gap-2">
+        <div key={i} className="flex flex-wrap items-center gap-2">
           <div className="w-24 shrink-0">
             <Input
               type="number"
@@ -237,7 +237,7 @@ export function PriceTiersEditor({ tiers, onChange }) {
               aria-label={`Máximo de pessoas do escalão ${i + 1}`}
             />
           </div>
-          <div className="flex-1 min-w-0">
+          <div className="flex-1 min-w-[110px]">
             <Input
               type="number"
               min="0"

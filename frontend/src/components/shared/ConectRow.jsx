@@ -12,8 +12,8 @@ export default function ConectRow({ unit, onSubmitConect }) {
   const canSubmit = status === 'draft';
   const canWithdraw = status === 'published' || status === 'paused';
   return (
-    <div className="flex items-center justify-between gap-2 pt-2 border-t border-n-100">
-      <Badge variant={CONECT_STATUS_VARIANT[status] || 'default'}>
+    <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-n-100">
+      <Badge variant={CONECT_STATUS_VARIANT[status] || 'default'} className="whitespace-nowrap">
         {CONECT_STATUS_LABEL[status] || status}
       </Badge>
       {(canSubmit || canWithdraw) && (
@@ -21,6 +21,7 @@ export default function ConectRow({ unit, onSubmitConect }) {
           variant="ghost"
           size="sm"
           icon={Globe2}
+          className="whitespace-nowrap"
           onClick={() => onSubmitConect(unit)}
         >
           {canSubmit ? 'Submeter ao Conect' : 'Retirar do Conect'}

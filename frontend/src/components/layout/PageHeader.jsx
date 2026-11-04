@@ -8,7 +8,7 @@ export default function PageHeader({ title, subtitle, actions }) {
         )}
       </div>
       {actions && (
-        <div className="flex items-center gap-2.5 ml-4 shrink-0">{actions}</div>
+        <div className="flex items-center gap-2.5 ml-4 shrink-0 max-w-[calc(100%-1rem)]">{actions}</div>
       )}
     </div>
   );
