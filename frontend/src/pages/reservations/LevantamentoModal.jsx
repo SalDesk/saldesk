@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
 import { Car, MoveRight } from 'lucide-react';
 import { updateReservation, changeStatus } from '../../services/reservationsService';
+import Button from '../../components/ui/Button';
+import Input, { Textarea } from '../../components/ui/Input';
 import Modal from '../../components/ui/Modal';
-import { parseRentacarMeta, FuelSelector } from './shared';
+import { parseRentacarMeta, FuelSelector, GROUP_LABEL_CLASS } from './shared';
 
 export default function LevantamentoModal({ reservation, units, open, onClose, onDone }) {
   const unit = units.find(u => u.id === reservation?.unit_id);
@@ -69,42 +71,30 @@ export default function LevantamentoModal({ reservation, units, open, onClose, o
         </div>
 
         <div>
-          <label className="block text-xs font-mono text-n-500 uppercase tracking-wide mb-2">Nivel combustivel (saida)</label>
+          <p className={`${GROUP_LABEL_CLASS} mb-2`}>Nivel combustivel (saida)</p>
           <FuelSelector value={form.fuel_out} onChange={v => set('fuel_out', v)} />
         </div>
 
-        <div>
-          <label className="block text-xs font-mono text-n-500 uppercase tracking-wide mb-1.5">Km na saida</label>
-          <input type="number" value={form.km_out} onChange={e => set('km_out', e.target.value)} placeholder="0"
-            className="w-full h-9 rounded-md border border-n-200 bg-n-50 px-3 text-sm font-body text-n-900 focus:outline-none focus:ring-2 focus:ring-ocean-700" />
-        </div>
+        <Input label="Km na saida" type="number" value={form.km_out} onChange={e => set('km_out', e.target.value)} placeholder="0" />
 
-        <div>
-          <label className="block text-xs font-mono text-n-500 uppercase tracking-wide mb-1.5">Danos existentes (registo)</label>
-          <textarea value={form.damages_out} onChange={e => set('damages_out', e.target.value)} rows={2}
-            placeholder="Descrever danos pre-existentes..."
-            className="w-full rounded-md border border-n-200 bg-n-50 px-3 py-2 text-sm font-body text-n-900 focus:outline-none focus:ring-2 focus:ring-ocean-700 resize-none" />
-        </div>
+        <Textarea label="Danos existentes (registo)" value={form.damages_out} onChange={e => set('damages_out', e.target.value)} rows={2}
+          placeholder="Descrever danos pre-existentes..." />
 
-        <div>
-          <label className="block text-xs font-mono text-n-500 uppercase tracking-wide mb-1.5">Caucao (€)</label>
-          <div className="flex gap-3">
-            <input type="number" value={form.caucao} onChange={e => set('caucao', e.target.value)} placeholder="0.00" step="0.01"
-              className="flex-1 h-9 rounded-md border border-n-200 bg-n-50 px-3 text-sm font-body text-n-900 focus:outline-none focus:ring-2 focus:ring-ocean-700" />
-            <label className="flex items-center gap-2 text-sm font-body text-n-700 cursor-pointer">
-              <input type="checkbox" checked={form.caucao_paid} onChange={e => set('caucao_paid', e.target.checked)} className="w-4 h-4 accent-ocean-700" />
-              Paga
-            </label>
+        <div className="flex items-end gap-3">
+          <div className="flex-1">
+            <Input label="Caucao (€)" type="number" value={form.caucao} onChange={e => set('caucao', e.target.value)} placeholder="0.00" step="0.01" />
           </div>
+          <label className="flex items-center gap-2 h-9 text-sm font-body text-n-700 cursor-pointer">
+            <input type="checkbox" checked={form.caucao_paid} onChange={e => set('caucao_paid', e.target.checked)} className="w-4 h-4 accent-ocean-700" />
+            Paga
+          </label>
         </div>
 
         <div className="flex gap-3 pt-1">
-          <button type="button" onClick={onClose} className="flex-1 h-9 rounded-md border border-n-200 text-sm font-body text-n-700 hover:bg-n-50 transition-colors">Cancelar</button>
-          <button type="button" onClick={handleSave} disabled={saving}
-            className="flex-1 h-9 rounded-md bg-ocean-700 text-white text-sm font-body font-medium hover:bg-ocean-500 transition-colors flex items-center justify-center gap-1.5 disabled:opacity-60">
-            <MoveRight size={13} strokeWidth={1.75} />
+          <Button type="button" variant="secondary" onClick={onClose} className="flex-1">Cancelar</Button>
+          <Button type="button" loading={saving} onClick={handleSave} icon={MoveRight} className="flex-1">
             {saving ? 'A processar...' : 'Confirmar levantamento'}
-          </button>
+          </Button>
         </div>
       </div>
     </Modal>

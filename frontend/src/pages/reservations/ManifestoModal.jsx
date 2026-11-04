@@ -1,5 +1,7 @@
 import { useState, useMemo } from 'react';
 import { FileText } from 'lucide-react';
+import Button from '../../components/ui/Button';
+import Input, { Select } from '../../components/ui/Input';
 import Modal from '../../components/ui/Modal';
 import { formatDate } from './shared';
 
@@ -29,18 +31,13 @@ export default function ManifestoModal({ open, onClose, reservations, units }) {
       <div className="space-y-4">
         <div className="flex gap-3">
           <div className="flex-1">
-            <label className="text-xs font-body font-bold uppercase tracking-wide text-n-600 block mb-1">Tour</label>
-            <select value={tourId} onChange={e => setTourId(e.target.value)}
-              className="w-full h-9 px-3 rounded-sm border border-n-300 text-sm font-body bg-n-100 text-n-900 focus:outline-none focus:ring-2 focus:ring-ocean-300 focus:border-ocean-700 focus:bg-white">
+            <Select label="Tour" value={tourId} onChange={e => setTourId(e.target.value)}>
               <option value="">Todos os tours</option>
               {units.map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
-            </select>
+            </Select>
           </div>
           <div className="flex-1">
-            <label className="text-xs font-body font-bold uppercase tracking-wide text-n-600 block mb-1">Data</label>
-            <input type="date" value={date} onChange={e => setDate(e.target.value)}
-              className="w-full h-9 px-3 rounded-sm border border-n-300 text-sm font-body bg-n-100 text-n-900 focus:outline-none focus:ring-2 focus:ring-ocean-300 focus:border-ocean-700 focus:bg-white"
-            />
+            <Input label="Data" type="date" value={date} onChange={e => setDate(e.target.value)} />
           </div>
         </div>
 
@@ -54,11 +51,7 @@ export default function ManifestoModal({ open, onClose, reservations, units }) {
                 <p className="text-xs font-body text-ocean-600 mt-0.5">{participants.length} reservas · {totalPax} participantes</p>
               </div>
               {participants.length > 0 && (
-                <button onClick={handlePrintPdf}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-sm border border-ocean-200 bg-white text-xs font-body text-ocean-700 hover:bg-ocean-100 transition-colors">
-                  <FileText size={13} strokeWidth={1.75} />
-                  Exportar PDF
-                </button>
+                <Button variant="secondary" size="sm" icon={FileText} onClick={handlePrintPdf}>Exportar PDF</Button>
               )}
             </div>
 

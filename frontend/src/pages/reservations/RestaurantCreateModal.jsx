@@ -1,8 +1,11 @@
 import { useState, useEffect } from 'react';
 import { Utensils } from 'lucide-react';
 import { updateReservation } from '../../services/reservationsService';
+import Button from '../../components/ui/Button';
+import FilterChips from '../../components/ui/FilterChips';
+import { Select, Textarea } from '../../components/ui/Input';
 import Modal from '../../components/ui/Modal';
-import { parseRestaurantMeta } from './shared';
+import { parseRestaurantMeta, GROUP_LABEL_CLASS } from './shared';
 
 export default function RestaurantCreateModal({ reservation, units, open, onClose, onDone }) {
   const prevMeta = parseRestaurantMeta(reservation);
@@ -51,37 +54,24 @@ export default function RestaurantCreateModal({ reservation, units, open, onClos
         )}
 
         <div>
-          <label className="block text-xs font-mono text-n-500 uppercase tracking-wide mb-2">Turno</label>
-          <div className="flex flex-wrap gap-2">
-            {[{ v: 'almoco', l: 'Almoco · 12h-15h' }, { v: 'jantar', l: 'Jantar · 19h-23h' }].map(o => (
-              <button key={o.v} type="button" onClick={() => set('turno', o.v)}
-                className={`flex-1 py-2 rounded-md border text-sm font-body font-medium transition-colors ${
-                  form.turno === o.v ? 'bg-ocean-700 border-ocean-700 text-white' : 'bg-n-50 border-n-200 text-n-700 hover:border-ocean-400'
-                }`}>
-                {o.l}
-              </button>
-            ))}
-          </div>
+          <p className={`${GROUP_LABEL_CLASS} mb-2`}>Turno</p>
+          <FilterChips
+            options={[{ value: 'almoco', label: 'Almoco · 12h-15h' }, { value: 'jantar', label: 'Jantar · 19h-23h' }]}
+            value={form.turno}
+            onChange={v => set('turno', v)}
+          />
         </div>
 
-        <div>
-          <label className="block text-xs font-mono text-n-500 uppercase tracking-wide mb-1.5">Ocasiao especial</label>
-          <select value={form.ocasiao} onChange={e => set('ocasiao', e.target.value)}
-            className="w-full h-9 rounded-md border border-n-200 bg-n-50 px-3 text-sm font-body text-n-900 focus:outline-none focus:ring-2 focus:ring-ocean-700">
-            <option value="">Nenhuma</option>
-            <option value="aniversario">Aniversario</option>
-            <option value="lua_de_mel">Lua-de-mel</option>
-            <option value="negocios">Negocios</option>
-            <option value="outro">Outro</option>
-          </select>
-        </div>
+        <Select label="Ocasiao especial" value={form.ocasiao} onChange={e => set('ocasiao', e.target.value)}>
+          <option value="">Nenhuma</option>
+          <option value="aniversario">Aniversario</option>
+          <option value="lua_de_mel">Lua-de-mel</option>
+          <option value="negocios">Negocios</option>
+          <option value="outro">Outro</option>
+        </Select>
 
-        <div>
-          <label className="block text-xs font-mono text-n-500 uppercase tracking-wide mb-1.5">Pedidos especiais</label>
-          <textarea value={form.pedidos_especiais} onChange={e => set('pedidos_especiais', e.target.value)} rows={2}
-            placeholder="Alergias, decoracao, menu vegetariano..."
-            className="w-full rounded-md border border-n-200 bg-n-50 px-3 py-2 text-sm font-body text-n-900 focus:outline-none focus:ring-2 focus:ring-ocean-700 resize-none" />
-        </div>
+        <Textarea label="Pedidos especiais" value={form.pedidos_especiais} onChange={e => set('pedidos_especiais', e.target.value)} rows={2}
+          placeholder="Alergias, decoracao, menu vegetariano..." />
 
         <label className="flex items-center gap-2 cursor-pointer">
           <input type="checkbox" checked={form.lista_espera} onChange={e => set('lista_espera', e.target.checked)} className="w-4 h-4 accent-ocean-700" />
@@ -89,11 +79,10 @@ export default function RestaurantCreateModal({ reservation, units, open, onClos
         </label>
 
         <div className="flex gap-3 pt-1">
-          <button type="button" onClick={onClose} className="flex-1 h-9 rounded-md border border-n-200 text-sm font-body text-n-700 hover:bg-n-50 transition-colors">Cancelar</button>
-          <button type="button" onClick={handleSave} disabled={saving}
-            className="flex-1 h-9 rounded-md bg-ocean-700 text-white text-sm font-body font-medium hover:bg-ocean-500 transition-colors disabled:opacity-60">
+          <Button type="button" variant="secondary" onClick={onClose} className="flex-1">Cancelar</Button>
+          <Button type="button" loading={saving} onClick={handleSave} className="flex-1">
             {saving ? 'A guardar...' : 'Guardar detalhes'}
-          </button>
+          </Button>
         </div>
       </div>
     </Modal>

@@ -1,4 +1,5 @@
 /* Helpers partilhados pelas tabelas e modais de Reservas */
+import FilterChips from '../../components/ui/FilterChips';
 
 export const SOURCE_LABEL = {
   direct:       'Directo',
@@ -19,6 +20,10 @@ export const SOURCE_CLASS = {
   getyourguide: 'bg-[#ECFDF5] text-[#1A7A4A] border border-[#BBF7D0]',
   manual:       'bg-n-50 text-n-600 border border-n-200',
 };
+
+/* Titulo de um grupo de controlos (chips) sem campo proprio: igual a etiqueta dos campos */
+export const GROUP_LABEL_CLASS =
+  'text-xs font-body font-bold uppercase tracking-wide text-n-600 dark:text-n-400 app:normal-case app:tracking-normal app:text-[13px] app:text-n-700';
 
 export const STATUS_NEXT  = { pending: 'confirmed', confirmed: 'checked_in', checked_in: 'checked_out' };
 export const STATUS_NEXT_LABEL = { pending: 'Confirmar', confirmed: 'Check-in', checked_in: 'Check-out' };
@@ -50,24 +55,7 @@ export const FUEL_LEVELS = [
 ];
 
 export function FuelSelector({ value, onChange }) {
-  return (
-    <div className="flex flex-wrap gap-1">
-      {FUEL_LEVELS.map(f => (
-        <button
-          key={f.value}
-          type="button"
-          onClick={() => onChange(f.value)}
-          className={`px-2.5 py-1.5 rounded-sm border text-xs font-mono font-medium transition-colors ${
-            value === f.value
-              ? 'bg-ocean-700 border-ocean-700 text-white'
-              : 'bg-n-50 border-n-200 text-n-600 hover:border-ocean-400'
-          }`}
-        >
-          {f.label}
-        </button>
-      ))}
-    </div>
-  );
+  return <FilterChips options={FUEL_LEVELS} value={value} onChange={onChange} />;
 }
 
 export function parseRestaurantMeta(r) {
