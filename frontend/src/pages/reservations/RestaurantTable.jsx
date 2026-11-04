@@ -4,6 +4,7 @@ import { changeStatus } from '../../services/reservationsService';
 import { useT } from '../../i18n';
 import Button from '../../components/ui/Button';
 import Badge from '../../components/ui/Badge';
+import Table from '../../components/ui/Table';
 import { formatDate, parseRestaurantMeta } from './shared';
 
 const TURNO_LABELS = { almoco: 'Almoco', jantar: 'Jantar' };
@@ -38,89 +39,109 @@ export default function RestaurantTable({ reservations, units, onEdit, onDelete,
     );
   }
 
+  // Colunas da tabela; so o numero de pessoas e ordenavel
+  const columns = [
+    {
+      key: 'ref',
+      label: 'Ref',
+      render: (r) => <span className="text-xs font-mono text-n-400">{r.id?.slice(0, 8)}</span>,
+    },
+    {
+      key: 'mesa',
+      label: 'Mesa',
+      render: (r) => {
+        const unit    = units.find(u => u.id === r.unit_id);
+        let umeta = {};
+        try { umeta = JSON.parse(unit?.description || '{}'); } catch {}
+        const tbl    = unit ? (umeta.number ? `Mesa ${umeta.number}` : unit.name) : '—';
+        const rcMeta = parseRestaurantMeta(r);
+        return (
+          <>
+            <p className="font-display font-semibold text-sm text-n-900">{tbl}</p>
+            {rcMeta.lista_espera && (
+              <span className="text-[9px] font-mono uppercase tracking-wide text-[#B45309] bg-[#FFF7ED] px-1.5 py-0.5 rounded">Lista espera</span>
+            )}
+          </>
+        );
+      },
+    },
+    {
+      key: 'turno',
+      label: 'Turno',
+      render: (r) => {
+        const rcMeta = parseRestaurantMeta(r);
+        return (
+          <span className="text-xs font-mono text-n-700">
+            {r.start_time
+              ? r.start_time.slice(0, 5)
+              : (rcMeta.turno ? TURNO_LABELS[rcMeta.turno] || rcMeta.turno : '—')}
+          </span>
+        );
+      },
+    },
+    {
+      key: 'pax',
+      label: 'Pax',
+      align: 'center',
+      sortValue: (r) => Number(r.guests) || 0,
+      render: (r) => <span className="text-sm font-body font-semibold text-n-900">{r.guests}</span>,
+    },
+    {
+      key: 'cliente',
+      label: 'Cliente',
+      render: (r) => (
+        <>
+          <p className="text-sm font-body text-n-900 truncate max-w-[120px]">{r.customer_name || '—'}</p>
+          <p className="text-xs font-body text-n-400">{formatDate(r.check_in)}</p>
+        </>
+      ),
+    },
+    {
+      key: 'ocasiao',
+      label: 'Ocasiao',
+      render: (r) => {
+        const rcMeta = parseRestaurantMeta(r);
+        return rcMeta.ocasiao ? (
+          <span className="text-xs font-body text-n-600">{OCASIAO_LABELS[rcMeta.ocasiao] || rcMeta.ocasiao}</span>
+        ) : <span className="text-n-300">—</span>;
+      },
+    },
+    {
+      key: 'estado',
+      label: 'Estado',
+      render: (r) => <Badge variant={r.status}>{t(`reservations.status.${r.status}`)}</Badge>,
+    },
+    {
+      key: 'acoes',
+      label: '',
+      render: (r) => {
+        const isLoading = actionLoading === r.id;
+        const canNext   = !!STATUS_NEXT_R[r.status];
+        return (
+          <div className="flex items-center gap-1 justify-end flex-wrap">
+            {canNext && (
+              <button onClick={() => handleNext(r)} disabled={isLoading}
+                className="flex items-center gap-1 px-2 py-1 rounded-xs bg-ocean-700 text-white text-xs font-body font-medium hover:bg-ocean-500 transition-colors disabled:opacity-50 whitespace-nowrap">
+                {STATUS_BTN_R[r.status]}
+                <ChevronRight size={11} strokeWidth={2} />
+              </button>
+            )}
+            <button onClick={() => onDetails(r)} title="Turno / pedidos especiais"
+              className="p-1.5 rounded text-n-400 hover:text-ocean-700 hover:bg-ocean-50 transition-colors">
+              <Utensils size={13} strokeWidth={1.75} />
+            </button>
+            <Button variant="ghost" size="sm" icon={Eye} onClick={() => onView(r)} aria-label={t('reservations.view')} />
+            <Button variant="ghost" size="sm" icon={Pencil} onClick={() => onEdit(r)} aria-label="Editar" />
+            <Button variant="ghost" size="sm" icon={Trash2} onClick={() => onDelete(r)} aria-label="Eliminar" className="hover:text-error" />
+          </div>
+        );
+      },
+    },
+  ];
+
   return (
     <div className="bg-white rounded-md border border-n-200 shadow-sm overflow-hidden">
-      <div className="overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-n-200 bg-n-50">
-              <th className="text-left px-4 py-3 text-xs font-body font-bold uppercase tracking-wide text-n-500 whitespace-nowrap">Ref</th>
-              <th className="text-left px-4 py-3 text-xs font-body font-bold uppercase tracking-wide text-n-500 whitespace-nowrap">Mesa</th>
-              <th className="text-left px-4 py-3 text-xs font-body font-bold uppercase tracking-wide text-n-500 whitespace-nowrap">Turno</th>
-              <th className="text-center px-4 py-3 text-xs font-body font-bold uppercase tracking-wide text-n-500">Pax</th>
-              <th className="text-left px-4 py-3 text-xs font-body font-bold uppercase tracking-wide text-n-500 whitespace-nowrap">Cliente</th>
-              <th className="text-left px-4 py-3 text-xs font-body font-bold uppercase tracking-wide text-n-500 whitespace-nowrap">Ocasiao</th>
-              <th className="text-left px-4 py-3 text-xs font-body font-bold uppercase tracking-wide text-n-500 whitespace-nowrap">Estado</th>
-              <th className="px-4 py-3" />
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-n-100">
-            {reservations.map(r => {
-              const unit    = units.find(u => u.id === r.unit_id);
-              let umeta = {};
-              try { umeta = JSON.parse(unit?.description || '{}'); } catch {}
-              const tbl    = unit ? (umeta.number ? `Mesa ${umeta.number}` : unit.name) : '—';
-              const rcMeta = parseRestaurantMeta(r);
-              const isLoading = actionLoading === r.id;
-              const canNext   = !!STATUS_NEXT_R[r.status];
-
-              return (
-                <tr key={r.id} className="hover:bg-n-50 transition-colors">
-                  <td className="px-4 py-3">
-                    <span className="text-xs font-mono text-n-400">{r.id?.slice(0, 8)}</span>
-                  </td>
-                  <td className="px-4 py-3">
-                    <p className="font-display font-semibold text-sm text-n-900">{tbl}</p>
-                    {rcMeta.lista_espera && (
-                      <span className="text-[9px] font-mono uppercase tracking-wide text-[#B45309] bg-[#FFF7ED] px-1.5 py-0.5 rounded">Lista espera</span>
-                    )}
-                  </td>
-                  <td className="px-4 py-3">
-                    <span className="text-xs font-mono text-n-700">
-                      {r.start_time
-                        ? r.start_time.slice(0, 5)
-                        : (rcMeta.turno ? TURNO_LABELS[rcMeta.turno] || rcMeta.turno : '—')}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 text-center">
-                    <span className="text-sm font-body font-semibold text-n-900">{r.guests}</span>
-                  </td>
-                  <td className="px-4 py-3">
-                    <p className="text-sm font-body text-n-900 truncate max-w-[120px]">{r.customer_name || '—'}</p>
-                    <p className="text-xs font-body text-n-400">{formatDate(r.check_in)}</p>
-                  </td>
-                  <td className="px-4 py-3">
-                    {rcMeta.ocasiao ? (
-                      <span className="text-xs font-body text-n-600">{OCASIAO_LABELS[rcMeta.ocasiao] || rcMeta.ocasiao}</span>
-                    ) : <span className="text-n-300">—</span>}
-                  </td>
-                  <td className="px-4 py-3">
-                    <Badge variant={r.status}>{t(`reservations.status.${r.status}`)}</Badge>
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="flex items-center gap-1 justify-end flex-wrap">
-                      {canNext && (
-                        <button onClick={() => handleNext(r)} disabled={isLoading}
-                          className="flex items-center gap-1 px-2 py-1 rounded-xs bg-ocean-700 text-white text-xs font-body font-medium hover:bg-ocean-500 transition-colors disabled:opacity-50 whitespace-nowrap">
-                          {STATUS_BTN_R[r.status]}
-                          <ChevronRight size={11} strokeWidth={2} />
-                        </button>
-                      )}
-                      <button onClick={() => onDetails(r)} title="Turno / pedidos especiais"
-                        className="p-1.5 rounded text-n-400 hover:text-ocean-700 hover:bg-ocean-50 transition-colors">
-                        <Utensils size={13} strokeWidth={1.75} />
-                      </button>
-                      <Button variant="ghost" size="sm" icon={Eye} onClick={() => onView(r)} aria-label={t('reservations.view')} />
-                      <Button variant="ghost" size="sm" icon={Pencil} onClick={() => onEdit(r)} aria-label="Editar" />
-                      <Button variant="ghost" size="sm" icon={Trash2} onClick={() => onDelete(r)} aria-label="Eliminar" className="hover:text-error" />
-                    </div>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
+      <Table columns={columns} rows={reservations} />
     </div>
   );
 }
