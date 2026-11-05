@@ -130,8 +130,13 @@ export default function BeachSale() {
   const commission  = (totalPrice * commPct) / 100;
 
   const meta = selectedTour ? parseMeta(selectedTour.description) : {};
+  /* O TourForm grava os horarios como { time, capacity }; descricoes antigas
+     podem ter texto simples. Aqui so interessa a hora (sem repeticoes). */
+  const extraSlots = (Array.isArray(meta.time_slots) ? meta.time_slots : [])
+    .map(s => (typeof s === 'string' ? s : s?.time))
+    .filter(t => typeof t === 'string' && t);
   const timeSlots = meta.start_time
-    ? [meta.start_time, ...(meta.time_slots || [])]
+    ? [...new Set([meta.start_time, ...extraSlots])]
     : ['09:00', '11:00', '14:00', '16:00'];
 
   async function handleConfirm() {
