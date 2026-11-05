@@ -58,7 +58,7 @@ export default function ReservationCard({ reservation: r, onUpdate, onEdit, onVi
 
   return (
     <>
-      <div className="bg-white rounded-md border border-n-200 shadow-sm p-4 flex flex-col gap-3">
+      <div className="bg-white rounded-sm border border-n-200 shadow-sm p-4 flex flex-col gap-3">
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0">
             <div className="flex items-center gap-2 flex-wrap">

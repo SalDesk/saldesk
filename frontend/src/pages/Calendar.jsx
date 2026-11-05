@@ -11,7 +11,7 @@ import { useT } from '../i18n';
 import PageHeader from '../components/layout/PageHeader';
 import Button from '../components/ui/Button';
 import Modal from '../components/ui/Modal';
-import Input from '../components/ui/Input';
+import Input, { Select } from '../components/ui/Input';
 import CalendarView from '../components/calendar/CalendarView';
 import LoadingSpinner from '../components/shared/LoadingSpinner';
 
@@ -265,11 +265,11 @@ export default function Calendar() {
   /* ---- WEEK VIEW ---- */
   function renderWeekView() {
     return (
-      <div className="overflow-x-auto rounded-md border border-n-200">
+      <div className="overflow-x-auto rounded-sm border border-n-200 bg-white">
         <table className="w-full text-xs border-collapse" style={{ minWidth: Math.max(480, visibleUnits.length * 90 + 120) }}>
           <thead>
             <tr className="bg-n-50">
-              <th className="sticky left-0 z-10 bg-n-50 border-b border-r border-n-200 px-3 py-2.5 text-left text-n-500 font-body font-bold uppercase tracking-wide min-w-[112px]">
+              <th className="sticky left-0 z-10 bg-n-50 border-b border-r border-n-200 px-3 py-2.5 text-left text-n-500 font-body font-semibold min-w-[112px]">
                 Unidade
               </th>
               {weekDays.map(d => {
@@ -385,7 +385,7 @@ export default function Calendar() {
           const res       = getResForCell(unit.id, dayStr);
           const isBlocked = blockedByUnit[unit.id]?.has(dayStr);
           return (
-            <div key={unit.id} className="bg-white border border-n-200 rounded-md p-4">
+            <div key={unit.id} className="bg-white border border-n-200 rounded-sm p-4">
               <div className="flex items-center justify-between mb-3">
                 <div>
                   <p className="font-display font-semibold text-sm text-n-900">{unit.name}</p>
@@ -451,7 +451,7 @@ export default function Calendar() {
         actions={
           <div className="flex items-center gap-2 flex-wrap">
             {/* View toggle */}
-            <div className="flex rounded-sm border border-n-200 overflow-hidden">
+            <div className="flex rounded-sm border border-n-300 overflow-hidden bg-white">
               {[
                 { id: 'month', label: 'Mes' },
                 { id: 'week',  label: 'Semana' },
@@ -459,8 +459,9 @@ export default function Calendar() {
               ].map(v => (
                 <button
                   key={v.id}
+                  type="button"
                   onClick={() => setView(v.id)}
-                  className={`px-3 py-1.5 text-xs font-body font-semibold transition-colors ${view === v.id ? 'bg-ocean-700 text-white' : 'bg-white text-n-600 hover:bg-n-50'}`}
+                  className={`h-8 px-3 text-xs font-body font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ocean-300 ${view === v.id ? 'bg-ocean-700 text-white' : 'bg-white text-n-700 hover:bg-n-50'}`}
                 >
                   {v.label}
                 </button>
@@ -469,44 +470,47 @@ export default function Calendar() {
 
             {/* Navigation */}
             <div className="flex items-center gap-1">
-              <Button variant="ghost" size="sm" icon={ChevronLeft} onClick={() => navigate(-1)} />
+              <Button variant="secondary" size="sm" icon={ChevronLeft} onClick={() => navigate(-1)} />
               <span className="font-display font-semibold text-sm text-n-800 min-w-[160px] text-center">
                 {getNavLabel()}
               </span>
-              <Button variant="ghost" size="sm" icon={ChevronRight} onClick={() => navigate(1)} />
+              <Button variant="secondary" size="sm" icon={ChevronRight} onClick={() => navigate(1)} />
             </div>
-
-            {/* Unit filter */}
-            {(dados.units || []).length > 1 && (
-              <select value={filterUnit} onChange={e => setFilterUnit(e.target.value)}
-                className="h-8 px-2 rounded-sm border border-n-200 text-xs font-body text-n-700 bg-white focus:outline-none focus:ring-1 focus:ring-ocean-300">
-                <option value="">Todas as unidades</option>
-                {(dados.units || []).map(u => (
-                  <option key={u.id} value={u.id}>{u.name}</option>
-                ))}
-              </select>
-            )}
-
-            {/* Guide filter */}
-            {guides.length > 0 && (
-              <select value={filterGuide} onChange={e => setFilterGuide(e.target.value)}
-                className="h-8 px-2 rounded-sm border border-n-200 text-xs font-body text-n-700 bg-white focus:outline-none focus:ring-1 focus:ring-ocean-300">
-                <option value="">Todos os guias</option>
-                {guides.map(g => (
-                  <option key={g.id} value={g.id}>{g.name}</option>
-                ))}
-              </select>
-            )}
           </div>
         }
       />
 
+      {/* Filter bar */}
+      {((dados.units || []).length > 1 || guides.length > 0) && (
+        <div className="flex flex-wrap items-end gap-3 mb-4">
+          {/* Unit filter */}
+          {(dados.units || []).length > 1 && (
+            <Select label="Por unidade" value={filterUnit} onChange={e => setFilterUnit(e.target.value)} className="w-48">
+              <option value="">Todas as unidades</option>
+              {(dados.units || []).map(u => (
+                <option key={u.id} value={u.id}>{u.name}</option>
+              ))}
+            </Select>
+          )}
+
+          {/* Guide filter */}
+          {guides.length > 0 && (
+            <Select label="Por guia" value={filterGuide} onChange={e => setFilterGuide(e.target.value)} className="w-48">
+              <option value="">Todos os guias</option>
+              {guides.map(g => (
+                <option key={g.id} value={g.id}>{g.name}</option>
+              ))}
+            </Select>
+          )}
+        </div>
+      )}
+
       {/* Legend */}
-      <div className="flex flex-wrap gap-3 mb-4">
+      <div className="flex flex-wrap gap-x-4 gap-y-2 mb-4 px-3 py-2 bg-white border border-n-200 rounded-sm">
         {LEGEND.map(l => (
           <div key={l.label} className="flex items-center gap-1.5">
             <span className={`w-3 h-3 rounded-xs ${l.cls}`} />
-            <span className="text-xs font-body text-n-500">{l.label}</span>
+            <span className="text-xs font-body text-n-600">{l.label}</span>
           </div>
         ))}
       </div>

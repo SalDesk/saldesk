@@ -95,11 +95,11 @@ export default function CalendarView({
   }
 
   return (
-    <div className="overflow-x-auto rounded-md border border-n-200">
+    <div className="overflow-x-auto rounded-sm border border-n-200 bg-white">
       <table className="w-full text-xs border-collapse" style={{ minWidth: visibleUnits.length * 130 + 80 }}>
         <thead>
           <tr className="bg-n-50">
-            <th className="sticky left-0 z-10 bg-n-50 border-b border-r border-n-200 px-3 py-2.5 text-left text-n-500 font-body font-bold uppercase tracking-wide w-20 min-w-[80px]">
+            <th className="sticky left-0 z-10 bg-n-50 border-b border-r border-n-200 px-3 py-2.5 text-left text-n-500 font-body font-semibold w-20 min-w-[80px]">
               Dia
             </th>
             {visibleUnits.map((u) => (

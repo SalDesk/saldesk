@@ -12,6 +12,7 @@ import UnitForm, { parseTourMeta } from '../components/units/UnitForm';
 import LoadingSpinner from '../components/shared/LoadingSpinner';
 
 function TableQrModal({ unit, onClose }) {
+  const t = useT();
   const { operator } = useAuthStore();
   const meta = parseTourMeta(unit?.description);
   const [blobUrl, setBlobUrl] = useState(null);
@@ -52,8 +53,8 @@ function TableQrModal({ unit, onClose }) {
       <div className="flex items-center gap-2 bg-n-50 border border-n-200 rounded-md px-3 py-2 mb-3">
         <LinkIcon size={12} strokeWidth={1.75} className="text-n-400 shrink-0" />
         <span className="text-xs font-mono text-n-700 truncate flex-1">{url}</span>
-        <button onClick={copyLink} className="p-1 text-n-400 hover:text-ocean-700 transition-colors shrink-0">
-          {copied ? <CheckCircle size={13} strokeWidth={1.75} className="text-[#1A7A4A]" /> : <Copy size={13} strokeWidth={1.75} />}
+        <button onClick={copyLink} aria-label={t('units.copyLink')} className="p-1 text-n-400 hover:text-ocean-700 transition-colors shrink-0">
+          {copied ? <CheckCircle size={13} strokeWidth={1.75} className="text-[var(--success)]" /> : <Copy size={13} strokeWidth={1.75} />}
         </button>
       </div>
       <Button onClick={download} className="w-full" icon={QrCode}>Descarregar QR Code</Button>
@@ -188,6 +189,11 @@ export default function Units() {
     (u) => u.status !== 'inactive' && (!u.category_id || u.lat == null || u.lng == null)
   );
 
+  function abrirCriar() {
+    setFormError('');
+    setModal('create');
+  }
+
   const modalTitle = modal === 'create'
     ? lbl.newBtn
     : modal ? `${lbl.editPrefix}: ${modal.name}` : '';
@@ -198,7 +204,7 @@ export default function Units() {
         title={lbl.title}
         subtitle={lbl.subtitle(stats.total)}
         actions={
-          <Button icon={Plus} onClick={() => { setFormError(''); setModal('create'); }}>
+          <Button icon={Plus} onClick={abrirCriar}>
             {lbl.newBtn}
           </Button>
         }
@@ -208,25 +214,25 @@ export default function Units() {
         <div className="flex gap-4 mb-6">
           <div className="bg-white rounded-sm border border-n-200 px-4 py-2.5 flex items-center gap-2">
             <span className="text-xs font-body text-n-500">Total</span>
-            <span className="font-display font-bold text-sm text-n-900">{stats.total}</span>
+            <span className="font-display font-bold text-sm text-n-900 tabular-nums">{stats.total}</span>
           </div>
-          <div className="bg-[#ECFDF5] rounded-sm border border-[#BBF7D0] px-4 py-2.5 flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-[#1A7A4A]" />
-            <span className="text-xs font-body text-[#1A7A4A]">Activos</span>
-            <span className="font-display font-bold text-sm text-[#1A7A4A]">{stats.active}</span>
+          <div className="bg-[var(--success-light)] rounded-sm border border-n-200 px-4 py-2.5 flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-[var(--success)]" />
+            <span className="text-xs font-body text-[var(--success)]">Activos</span>
+            <span className="font-display font-bold text-sm text-[var(--success)] tabular-nums">{stats.active}</span>
           </div>
           {stats.inactive > 0 && (
             <div className="bg-n-50 rounded-sm border border-n-200 px-4 py-2.5 flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-n-300" />
               <span className="text-xs font-body text-n-500">Inactivos</span>
-              <span className="font-display font-bold text-sm text-n-500">{stats.inactive}</span>
+              <span className="font-display font-bold text-sm text-n-500 tabular-nums">{stats.inactive}</span>
             </div>
           )}
         </div>
       )}
 
       {!loading && incompleteUnits.length > 0 && (
-        <div className="mb-6 px-4 py-3 bg-sand-50 border border-sand-200 rounded-md flex items-start gap-3">
+        <div className="mb-6 px-4 py-3 bg-sand-50 border border-sand-100 rounded-sm flex items-start gap-3">
           <Sparkles size={16} strokeWidth={1.75} className="text-sand-600 shrink-0 mt-0.5" />
           <p className="text-sm font-body text-n-700">
             <span className="font-semibold">{incompleteUnits.length}</span>
@@ -249,6 +255,8 @@ export default function Units() {
           onToggle={handleToggle}
           onSubmitConect={handleSubmitConect}
           onViewQr={opType === 'restaurant' ? setQrTarget : undefined}
+          onCreate={abrirCriar}
+          createLabel={lbl.newBtn}
         />
       )}
 

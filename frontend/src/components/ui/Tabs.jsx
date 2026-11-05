@@ -1,7 +1,7 @@
 // Separadores horizontais com contador opcional (uso exclusivo da app do operador)
 export default function Tabs({ tabs, value, onChange }) {
   return (
-    <div role="tablist" className="flex items-center gap-1 border-b border-n-200 overflow-x-auto">
+    <div role="tablist" className="flex items-center gap-1 border-b border-n-200 overflow-x-auto overflow-y-hidden">
       {tabs.map((tab) => {
         const active = tab.id === value;
         return (
