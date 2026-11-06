@@ -8,6 +8,9 @@ import { listReservations } from '../services/reservationsService';
 import PageHeader from '../components/layout/PageHeader';
 import Button from '../components/ui/Button';
 import Card from '../components/ui/Card';
+import Tabs from '../components/ui/Tabs';
+import Table from '../components/ui/Table';
+import EmptyState from '../components/ui/EmptyState';
 import Input, { Textarea } from '../components/ui/Input';
 import LoadingSpinner from '../components/shared/LoadingSpinner';
 
@@ -129,9 +132,60 @@ export default function Feedback() {
     : 0;
 
   const TABS = [
-    { key: 'tours',   label: 'Por Tour',  Icon: BarChart2  },
-    { key: 'pending', label: `Pendentes (${pendingReview.length})`, Icon: Send },
-    { key: 'template', label: 'Template', Icon: ThumbsUp },
+    { id: 'tours',    label: 'Por Tour' },
+    { id: 'pending',  label: `Pendentes (${pendingReview.length})` },
+    { id: 'template', label: 'Template' },
+  ];
+
+  // Colunas da lista de reservas sem avaliacao
+  const pendingColumns = [
+    {
+      key: 'cliente',
+      label: 'Cliente',
+      render: (r) => <span className="font-body font-semibold text-n-900 whitespace-nowrap">{r.customers?.name || r.customer_name || '—'}</span>,
+    },
+    {
+      key: 'tour',
+      label: 'Tour',
+      render: (r) => <span className="block font-body text-n-600 max-w-[160px] truncate">{r.units?.name || r.unit_name || '—'}</span>,
+    },
+    {
+      key: 'checkout',
+      label: 'Checkout',
+      render: (r) => <span className="text-xs font-mono text-n-500 whitespace-nowrap">{fmtDate(r.check_out)}</span>,
+    },
+    {
+      key: 'dias',
+      label: 'Dias desde checkout',
+      render: (r) => {
+        const days = r.check_out
+          ? Math.floor((Date.now() - new Date(r.check_out + 'T00:00:00Z').getTime()) / (1000 * 60 * 60 * 24))
+          : null;
+        return days != null ? (
+          <span className={`text-xs font-mono font-semibold ${days > 7 ? 'text-[var(--error)]' : days > 3 ? 'text-[var(--warning)]' : 'text-n-600'}`}>
+            {days}d
+          </span>
+        ) : '—';
+      },
+    },
+    {
+      key: 'acoes',
+      label: '',
+      render: (r) => {
+        const isSending = sending[r.id];
+        return (
+          <Button
+            size="sm"
+            variant="secondary"
+            icon={isSending ? RefreshCw : Send}
+            loading={isSending}
+            onClick={() => handleResend(r.id)}
+          >
+            Reenviar pedido
+          </Button>
+        );
+      },
+    },
   ];
 
   return (
@@ -153,7 +207,7 @@ export default function Feedback() {
           { label: 'Tours realizados',  value: totalCompleted,               icon: CheckCircle2, color: 'text-n-900'     },
           { label: 'Avaliacoes recebidas', value: totalReviews,              icon: Star,         color: 'text-sand-500'  },
           { label: 'Taxa de resposta',  value: `${globalRate}%`,             icon: TrendingUp,   color: 'text-ocean-700' },
-          { label: 'Media geral',       value: globalAvg > 0 ? globalAvg.toFixed(1) + ' / 5' : '—', icon: BarChart2, color: 'text-[#1A7A4A]' },
+          { label: 'Media geral',       value: globalAvg > 0 ? globalAvg.toFixed(1) + ' / 5' : '—', icon: BarChart2, color: 'text-[var(--success)]' },
         ].map(m => (
           <div key={m.label} className="bg-white rounded-md border border-n-200 px-4 py-3 flex items-center gap-3">
             <div className="w-8 h-8 rounded-sm bg-ocean-50 flex items-center justify-center shrink-0">
@@ -168,15 +222,8 @@ export default function Feedback() {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1 border-b border-n-200 mb-5">
-        {TABS.map(({ key, label, Icon }) => (
-          <button key={key} onClick={() => setActiveTab(key)}
-            className={`flex items-center gap-2 px-4 py-2.5 text-sm font-body font-semibold border-b-2 -mb-px transition-colors ${
-              activeTab === key ? 'border-ocean-700 text-ocean-700' : 'border-transparent text-n-500 hover:text-n-700'
-            }`}>
-            <Icon size={15} strokeWidth={1.75} />{label}
-          </button>
-        ))}
+      <div className="mb-5">
+        <Tabs tabs={TABS} value={activeTab} onChange={setActiveTab} />
       </div>
 
       {loading ? (
@@ -184,11 +231,8 @@ export default function Feedback() {
       ) : activeTab === 'tours' ? (
         <div className="space-y-3">
           {tourStats.length === 0 ? (
-            <Card>
-              <div className="text-center py-12">
-                <BarChart2 size={32} strokeWidth={1.25} className="mx-auto mb-3 text-n-300" />
-                <p className="font-body text-n-500">Sem tours com checkout registado.</p>
-              </div>
+            <Card padding="p-0">
+              <EmptyState icon={BarChart2} title="Sem tours com checkout registado." />
             </Card>
           ) : tourStats.map(t => (
             <Card key={t.unit_id} padding="px-5 py-4">
@@ -206,7 +250,7 @@ export default function Feedback() {
                   </div>
                 </div>
                 <div className="shrink-0 text-right">
-                  <p className={`font-display font-bold text-2xl ${t.rate >= 50 ? 'text-[#1A7A4A]' : t.rate >= 25 ? 'text-yellow-700' : 'text-error'}`}>
+                  <p className={`font-display font-bold text-2xl ${t.rate >= 50 ? 'text-[var(--success)]' : t.rate >= 25 ? 'text-[var(--warning)]' : 'text-[var(--error)]'}`}>
                     {t.rate}%
                   </p>
                   <p className="text-xs font-body text-n-400">taxa resposta</p>
@@ -214,11 +258,8 @@ export default function Feedback() {
               </div>
               {/* Rate bar */}
               <div className="mt-3 h-1.5 bg-n-100 rounded-full overflow-hidden">
-                <div className="h-full rounded-full transition-all duration-500"
-                  style={{
-                    width: `${t.rate}%`,
-                    backgroundColor: t.rate >= 50 ? '#1A7A4A' : t.rate >= 25 ? '#D97706' : '#B91C1C',
-                  }} />
+                <div className={`h-full rounded-full transition-all duration-500 ${t.rate >= 50 ? 'bg-[var(--success)]' : t.rate >= 25 ? 'bg-[var(--warning)]' : 'bg-[var(--error)]'}`}
+                  style={{ width: `${t.rate}%` }} />
               </div>
             </Card>
           ))}
@@ -227,11 +268,8 @@ export default function Feedback() {
       ) : activeTab === 'pending' ? (
         <div className="space-y-3">
           {pendingReview.length === 0 ? (
-            <Card>
-              <div className="text-center py-12">
-                <CheckCircle2 size={32} strokeWidth={1.25} className="mx-auto mb-3 text-[#1A7A4A]" />
-                <p className="font-body text-n-500">Todos os tours tem avaliacao solicitada.</p>
-              </div>
+            <Card padding="p-0">
+              <EmptyState icon={CheckCircle2} title="Todos os tours tem avaliacao solicitada." />
             </Card>
           ) : (
             <>
@@ -239,59 +277,10 @@ export default function Feedback() {
                 {pendingReview.length} reserva(s) sem pedido de avaliacao enviado.
               </p>
               <Card padding="p-0">
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="border-b border-n-200">
-                        {['Cliente', 'Tour', 'Checkout', 'Dias desde checkout', ''].map(h => (
-                          <th key={h} className="text-left py-2.5 px-4 text-xs font-mono uppercase tracking-wider text-n-500 whitespace-nowrap">{h}</th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-n-100">
-                      {pendingReview.slice(0, 50).map(r => {
-                        const days = r.check_out
-                          ? Math.floor((Date.now() - new Date(r.check_out + 'T00:00:00Z').getTime()) / (1000 * 60 * 60 * 24))
-                          : null;
-                        const isSending = sending[r.id];
-                        return (
-                          <tr key={r.id} className="hover:bg-n-50 transition-colors">
-                            <td className="py-3 px-4 font-body font-semibold text-n-900 whitespace-nowrap">
-                              {r.customers?.name || r.customer_name || '—'}
-                            </td>
-                            <td className="py-3 px-4 font-body text-n-600 max-w-[160px] truncate">
-                              {r.units?.name || r.unit_name || '—'}
-                            </td>
-                            <td className="py-3 px-4 text-xs font-mono text-n-500 whitespace-nowrap">
-                              {fmtDate(r.check_out)}
-                            </td>
-                            <td className="py-3 px-4">
-                              {days != null ? (
-                                <span className={`text-xs font-mono font-semibold ${days > 7 ? 'text-error' : days > 3 ? 'text-yellow-700' : 'text-n-600'}`}>
-                                  {days}d
-                                </span>
-                              ) : '—'}
-                            </td>
-                            <td className="py-3 px-4">
-                              <Button
-                                size="sm"
-                                variant="secondary"
-                                icon={isSending ? RefreshCw : Send}
-                                loading={isSending}
-                                onClick={() => handleResend(r.id)}
-                              >
-                                Reenviar pedido
-                              </Button>
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                  {pendingReview.length > 50 && (
-                    <p className="text-xs font-body text-n-400 text-center py-3">A mostrar 50 de {pendingReview.length}</p>
-                  )}
-                </div>
+                <Table columns={pendingColumns} rows={pendingReview.slice(0, 50)} />
+                {pendingReview.length > 50 && (
+                  <p className="text-xs font-body text-n-400 text-center py-3">A mostrar 50 de {pendingReview.length}</p>
+                )}
               </Card>
             </>
           )}
@@ -328,7 +317,7 @@ export default function Feedback() {
                 <Textarea label="Corpo EN" value={template.body_en} rows={8}
                   onChange={e => setTemplate(p => ({ ...p, body_en: e.target.value }))} />
                 <Button icon={tplSaved ? CheckCircle2 : Save} onClick={handleSaveTemplate} loading={tplSaving}
-                  className={tplSaved ? 'bg-[#1A7A4A] hover:bg-[#15623c]' : ''}>
+                  className={tplSaved ? '!bg-[var(--success)] !text-white' : ''}>
                   {tplSaved ? 'Guardado' : 'Guardar template'}
                 </Button>
               </div>
