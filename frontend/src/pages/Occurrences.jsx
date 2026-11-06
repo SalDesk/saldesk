@@ -13,22 +13,25 @@ import Card from '../components/ui/Card';
 import Modal from '../components/ui/Modal';
 import Input, { Textarea, Select } from '../components/ui/Input';
 import LoadingSpinner from '../components/shared/LoadingSpinner';
+import Table from '../components/ui/Table';
+import FilterChips from '../components/ui/FilterChips';
+import EmptyState from '../components/ui/EmptyState';
 
 /* ── Constants ── */
 const TYPES = [
-  { value: 'acidente',   label: 'Acidente',   Icon: AlertTriangle, color: '#B91C1C' },
-  { value: 'atraso',     label: 'Atraso',     Icon: Clock,         color: '#D97706' },
-  { value: 'reclamacao', label: 'Reclamacao', Icon: MessageSquare, color: '#7C3AED' },
-  { value: 'incidente',  label: 'Incidente',  Icon: Zap,           color: '#0D5470' },
-  { value: 'mau_tempo',  label: 'Mau tempo',  Icon: CloudRain,     color: '#1480A8' },
-  { value: 'outro',      label: 'Outro',      Icon: MoreHorizontal, color: '#6B7280' },
+  { value: 'acidente',   label: 'Acidente',   Icon: AlertTriangle,  cls: 'text-[var(--error)]'   },
+  { value: 'atraso',     label: 'Atraso',     Icon: Clock,          cls: 'text-[var(--warning)]' },
+  { value: 'reclamacao', label: 'Reclamacao', Icon: MessageSquare,  cls: 'text-[var(--info)]'    },
+  { value: 'incidente',  label: 'Incidente',  Icon: Zap,            cls: 'text-ocean-700'        },
+  { value: 'mau_tempo',  label: 'Mau tempo',  Icon: CloudRain,      cls: 'text-ocean-500'        },
+  { value: 'outro',      label: 'Outro',      Icon: MoreHorizontal, cls: 'text-n-500'            },
 ];
 
 const SEVERITIES = [
-  { value: 'baixa',   label: 'Baixa',   cls: 'text-[#1A7A4A] bg-[#ECFDF5] border-[#BBF7D0]'   },
-  { value: 'media',   label: 'Media',   cls: 'text-yellow-700 bg-yellow-50 border-yellow-200'  },
-  { value: 'alta',    label: 'Alta',    cls: 'text-orange-700 bg-orange-50 border-orange-200'  },
-  { value: 'critica', label: 'Critica', cls: 'text-error bg-red-50 border-red-200'             },
+  { value: 'baixa',   label: 'Baixa',   cls: 'text-[var(--success)] bg-[var(--success-light)] border-n-200' },
+  { value: 'media',   label: 'Media',   cls: 'text-[var(--info)] bg-[var(--info-light)] border-n-200'       },
+  { value: 'alta',    label: 'Alta',    cls: 'text-[var(--warning)] bg-[var(--warning-light)] border-n-200' },
+  { value: 'critica', label: 'Critica', cls: 'text-[var(--error)] bg-[var(--error-light)] border-n-200'     },
 ];
 
 const MONTHS_PT = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
@@ -42,7 +45,7 @@ function TypeBadge({ typeKey }) {
   const t = TYPES.find(x => x.value === typeKey);
   if (!t) return <span className="text-xs font-mono text-n-500">{typeKey}</span>;
   return (
-    <span className="flex items-center gap-1 text-xs font-body font-semibold" style={{ color: t.color }}>
+    <span className={`flex items-center gap-1 text-xs font-body font-semibold ${t.cls}`}>
       <t.Icon size={11} strokeWidth={1.75} />
       {t.label}
     </span>
@@ -174,7 +177,7 @@ function MonthlyReport({ occurrences }) {
             <div className="space-y-2">
               {byType.map(t => (
                 <div key={t.value} className="flex items-center gap-3">
-                  <t.Icon size={13} strokeWidth={1.75} style={{ color: t.color }} className="shrink-0" />
+                  <t.Icon size={13} strokeWidth={1.75} className={`${t.cls} shrink-0`} />
                   <span className="text-xs font-body text-n-600 flex-1">{t.label}</span>
                   <span className="font-mono font-semibold text-xs text-n-800">{t.count}</span>
                 </div>
@@ -269,6 +272,55 @@ export default function Occurrences() {
     }).length,
   };
 
+  // Colunas da tabela; a severidade critica ja se distingue pelo selo
+  const columns = [
+    {
+      key: 'data',
+      label: 'Data',
+      render: (o) => <span className="text-xs font-mono text-n-500 whitespace-nowrap">{fmtDate(o.date || o.created_at)}</span>,
+    },
+    { key: 'tipo', label: 'Tipo', render: (o) => <TypeBadge typeKey={o.type} /> },
+    { key: 'severidade', label: 'Severidade', render: (o) => <SeverityBadge sev={o.severity} /> },
+    {
+      key: 'tour',
+      label: 'Tour',
+      render: (o) => <span className="block text-xs font-body text-n-600 max-w-[120px] truncate">{o.unit_name || '—'}</span>,
+    },
+    {
+      key: 'colaborador',
+      label: 'Colaborador',
+      render: (o) => <span className="text-xs font-body text-n-600 whitespace-nowrap">{o.staff_name || '—'}</span>,
+    },
+    {
+      key: 'descricao',
+      label: 'Descricao',
+      render: (o) => <p className="text-xs font-body text-n-700 line-clamp-2 max-w-[200px]">{o.description}</p>,
+    },
+    {
+      key: 'accoes',
+      label: 'Accoes tomadas',
+      render: (o) => o.actions_taken
+        ? <p className="text-xs font-body text-n-500 line-clamp-2 max-w-[160px]">{o.actions_taken}</p>
+        : <span className="text-xs font-body text-n-300">Nao registadas</span>,
+    },
+    {
+      key: 'acoes',
+      label: '',
+      render: (o) => (
+        <div className="flex gap-0.5">
+          <button onClick={() => setModal(o)} aria-label="Editar"
+            className="p-1.5 rounded text-n-400 hover:text-ocean-700 hover:bg-ocean-50 transition-colors">
+            <Pencil size={13} strokeWidth={1.75} />
+          </button>
+          <button onClick={() => handleDelete(o.id)} aria-label="Eliminar"
+            className="p-1.5 rounded text-n-400 hover:text-error hover:bg-[var(--error-light)] transition-colors">
+            <Trash2 size={13} strokeWidth={1.75} />
+          </button>
+        </div>
+      ),
+    },
+  ];
+
   if (loading) {
     return (
       <div>
@@ -290,13 +342,13 @@ export default function Occurrences() {
 
       {/* Critical alert */}
       {criticals.length > 0 && (
-        <div className="flex items-start gap-3 px-4 py-3 bg-red-50 border border-red-200 rounded-md mb-5">
+        <div className="flex items-start gap-3 px-4 py-3 bg-[var(--error-light)] border border-n-200 rounded-md mb-5">
           <AlertTriangle size={16} strokeWidth={1.75} className="text-error shrink-0 mt-0.5" />
           <div>
             <p className="text-sm font-body font-semibold text-error">
               {criticals.length} ocorrencia(s) critica(s) nao resolvida(s)
             </p>
-            <p className="text-xs font-body text-red-600 mt-0.5">
+            <p className="text-xs font-body text-[var(--error)] mt-0.5">
               {criticals.map(o => o.description?.slice(0, 60) || o.type).join(' · ')}
             </p>
           </div>
@@ -308,7 +360,7 @@ export default function Occurrences() {
         {[
           { label: 'Total registadas',  value: kpis.total,  color: 'text-n-900'   },
           { label: 'Este mes',          value: kpis.month,  color: 'text-ocean-700' },
-          { label: 'Alta / Critica',    value: kpis.alta,   color: 'text-orange-700' },
+          { label: 'Alta / Critica',    value: kpis.alta,   color: 'text-[var(--warning)]' },
           { label: 'Criticas',          value: kpis.critica, color: 'text-error' },
         ].map(m => (
           <div key={m.label} className="bg-white rounded-md border border-n-200 px-4 py-3 flex items-center gap-3">
@@ -327,96 +379,42 @@ export default function Occurrences() {
       </div>
 
       {/* Filters */}
-      <div className="flex flex-wrap gap-3 mb-4">
-        <input
-          value={search} onChange={e => setSearch(e.target.value)}
-          placeholder="Pesquisar descricao, tour, colaborador..."
-          className="h-9 px-3 text-sm font-body border border-n-200 rounded-sm bg-white placeholder:text-n-400 focus:outline-none focus:border-ocean-700 flex-1 min-w-[200px]"
+      <div className="flex flex-wrap gap-3 mb-4 items-center">
+        <div className="flex-1 min-w-[200px]">
+          <Input
+            value={search} onChange={e => setSearch(e.target.value)}
+            placeholder="Pesquisar descricao, tour, colaborador..."
+          />
+        </div>
+        <FilterChips
+          options={[{ value: '', label: 'Todos' }, ...TYPES.map(t => ({ value: t.value, label: t.label }))]}
+          value={filterType}
+          onChange={setFilterType}
         />
-        <div className="flex gap-1 flex-wrap">
-          <button onClick={() => setFilterType('')}
-            className={`px-3 py-1.5 rounded-sm text-xs font-body font-semibold transition-colors ${!filterType ? 'bg-ocean-700 text-white' : 'bg-white border border-n-200 text-n-600 hover:border-ocean-300'}`}>
-            Todos
-          </button>
-          {TYPES.map(t => (
-            <button key={t.value} onClick={() => setFilterType(t.value)}
-              className={`px-3 py-1.5 rounded-sm text-xs font-body font-semibold transition-colors ${filterType === t.value ? 'bg-ocean-700 text-white' : 'bg-white border border-n-200 text-n-600 hover:border-ocean-300'}`}>
-              {t.label}
-            </button>
-          ))}
-        </div>
-        <div className="flex gap-1">
-          {SEVERITIES.map(s => (
-            <button key={s.value} onClick={() => setFilterSev(filterSev === s.value ? '' : s.value)}
-              className={`px-3 py-1.5 rounded-sm text-xs font-body font-semibold border transition-colors ${filterSev === s.value ? s.cls + ' border-current' : 'bg-white border-n-200 text-n-600 hover:border-ocean-300'}`}>
-              {s.label}
-            </button>
-          ))}
-        </div>
+        <FilterChips
+          options={SEVERITIES.map(s => ({ value: s.value, label: s.label }))}
+          value={filterSev}
+          onChange={v => setFilterSev(filterSev === v ? '' : v)}
+        />
       </div>
 
       {/* List */}
       {filtered.length === 0 ? (
-        <Card>
-          <div className="text-center py-12">
-            <FileWarning size={36} strokeWidth={1.25} className="mx-auto mb-3 text-n-300" />
-            <p className="font-display font-semibold text-n-700 mb-1">Sem ocorrencias</p>
-            <p className="text-sm font-body text-n-400 mb-4">
-              {occurrences.length === 0
-                ? 'Registe a primeira ocorrencia quando necessario.'
-                : 'Nenhuma ocorrencia corresponde aos filtros aplicados.'}
-            </p>
-            {occurrences.length === 0 && (
+        <Card padding="p-0">
+          <EmptyState
+            icon={FileWarning}
+            title="Sem ocorrencias"
+            description={occurrences.length === 0
+              ? 'Registe a primeira ocorrencia quando necessario.'
+              : 'Nenhuma ocorrencia corresponde aos filtros aplicados.'}
+            action={occurrences.length === 0 && (
               <Button icon={Plus} onClick={() => setModal({ _new: true })}>Registar ocorrencia</Button>
             )}
-          </div>
+          />
         </Card>
       ) : (
         <Card padding="p-0">
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-n-200">
-                  {['Data', 'Tipo', 'Severidade', 'Tour', 'Colaborador', 'Descricao', 'Accoes tomadas', ''].map(h => (
-                    <th key={h} className="text-left py-2.5 px-4 text-xs font-mono uppercase tracking-wider text-n-500 whitespace-nowrap">{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-n-100">
-                {filtered.map(o => (
-                  <tr key={o.id} className={`hover:bg-n-50 transition-colors ${o.severity === 'critica' ? 'bg-red-50/40' : ''}`}>
-                    <td className="py-3 px-4 text-xs font-mono text-n-500 whitespace-nowrap">
-                      {fmtDate(o.date || o.created_at)}
-                    </td>
-                    <td className="py-3 px-4 whitespace-nowrap"><TypeBadge typeKey={o.type} /></td>
-                    <td className="py-3 px-4"><SeverityBadge sev={o.severity} /></td>
-                    <td className="py-3 px-4 text-xs font-body text-n-600 max-w-[120px] truncate">{o.unit_name || '—'}</td>
-                    <td className="py-3 px-4 text-xs font-body text-n-600 whitespace-nowrap">{o.staff_name || '—'}</td>
-                    <td className="py-3 px-4 max-w-[200px]">
-                      <p className="text-xs font-body text-n-700 line-clamp-2">{o.description}</p>
-                    </td>
-                    <td className="py-3 px-4 max-w-[160px]">
-                      {o.actions_taken
-                        ? <p className="text-xs font-body text-n-500 line-clamp-2">{o.actions_taken}</p>
-                        : <span className="text-xs font-body text-n-300">Nao registadas</span>}
-                    </td>
-                    <td className="py-3 px-4">
-                      <div className="flex gap-0.5">
-                        <button onClick={() => setModal(o)}
-                          className="p-1.5 rounded text-n-400 hover:text-ocean-700 hover:bg-ocean-50 transition-colors">
-                          <Pencil size={13} strokeWidth={1.75} />
-                        </button>
-                        <button onClick={() => handleDelete(o.id)}
-                          className="p-1.5 rounded text-n-400 hover:text-error hover:bg-red-50 transition-colors">
-                          <Trash2 size={13} strokeWidth={1.75} />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <Table columns={columns} rows={filtered} compact />
         </Card>
       )}
 
