@@ -343,6 +343,8 @@ describe('Demand', () => {
     expect(grafico('CartesianGrid')[0].getAttribute('data-stroke')).toBe('var(--n200)');
     expect(grafico('ReferenceLine')[0].getAttribute('data-stroke')).toBe('var(--sand-500)');
     expect(grafico('Bar')[0].getAttribute('data-fill')).toBe('var(--n200)');
+    /* a barra do ano actual tem a cor normal por omissao: e a que a legenda mostra */
+    expect(grafico('Bar')[1].getAttribute('data-fill')).toBe('var(--ocean-400)');
     const celulas = grafico('Cell');
     expect(celulas[6].getAttribute('data-fill')).toBe('var(--success)');
     expect(celulas[7].getAttribute('data-fill')).toBe('var(--ocean-700)');

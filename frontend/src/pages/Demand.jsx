@@ -275,7 +275,7 @@ export default function Demand() {
                       label={{ value: 'Media', position: 'insideTopRight', fontSize: 10, fill: 'var(--sand-500)', fontFamily: 'DM Mono' }} />
                   )}
                   <Bar dataKey="prevValue" name={String(py)} fill="var(--n200)" radius={[2, 2, 0, 0]} />
-                  <Bar dataKey="curValue"  name={String(yr)} radius={[2, 2, 0, 0]}>
+                  <Bar dataKey="curValue"  name={String(yr)} fill="var(--ocean-400)" radius={[2, 2, 0, 0]}>
                     {chartData.map((d, i) => (
                       <Cell key={i} fill={
                         highMonths.some(h => h.name === d.name)  ? 'var(--success)' :
@@ -393,7 +393,7 @@ export default function Demand() {
                         <div className="h-full rounded-full bg-ocean-500 transition-all"
                           style={{ width: `${(count / maxDayCount) * 100}%` }} />
                       </div>
-                      <span className="text-xs font-mono font-semibold text-ocean-700 w-16 text-right shrink-0">
+                      <span className="text-xs font-mono font-semibold text-ocean-700 w-24 text-right shrink-0 whitespace-nowrap">
                         {count} reserva(s)
                       </span>
                     </div>
