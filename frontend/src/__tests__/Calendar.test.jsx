@@ -269,6 +269,15 @@ describe('Calendar', () => {
       expect(screen.getAllByTitle('Beta Costa · Pendente')).toHaveLength(1);
     });
 
+    it('uma reserva de um so dia (entrada = saida) ocupa so essa celula e nao se repete', async () => {
+      const umDia = reserva({ id: 'r9', unit_id: 'u1', customer_name: 'Delta Pires', check_in: somaDias(seg, 2), check_out: somaDias(seg, 2) });
+      carregaServicos({ dados: { units: UNIDADES, reservations: [umDia], blocked_dates: [] } });
+      await abreSemana();
+      /* quarta-feira: so o nome; quinta a domingo continuam livres (antes repetia-se com '·') */
+      expect(celulas('Quarto Azul')).toEqual(['', '', 'Delta', '', '', '', '']);
+      expect(screen.getAllByTitle('Delta Pires · Confirmada')).toHaveLength(1);
+    });
+
     it('as celulas bloqueadas mostram "Bloq."', async () => {
       carregaServicos({ dados: dadosDaSemana(seg, { blocked_dates: [{ id: 'b1', unit_id: 'u1', date: somaDias(seg, 5) }] }) });
       await abreSemana();
@@ -474,6 +483,20 @@ describe('Calendar', () => {
       await accaoQueRecarrega(() => fireEvent.click(anterior));
       expect(screen.getByText('Dezembro 2026')).toBeInTheDocument();
       expect(getCalendar).toHaveBeenLastCalledWith('2026-12-01', '2026-12-31');
+    });
+
+    it('vista de mes: uma reserva de um so dia aparece so nesse dia', async () => {
+      fixaHoje(2026, 3, 10);
+      const umDia = reserva({ id: 'r9', unit_id: 'u1', customer_name: 'Delta Pires', check_in: '2026-03-12', check_out: '2026-03-12' });
+      carregaServicos({ dados: { units: UNIDADES, reservations: [umDia], blocked_dates: [] } });
+      await abrePagina();
+      /* uma linha por dia; a coluna 1 e o dia, a 2 e Quarto Azul */
+      const linhas = [...document.querySelectorAll('tbody tr')];
+      const celulaAzul = (dia) => linhas[dia - 1].querySelectorAll('td')[1].textContent;
+      expect(celulaAzul(11)).toBe('');
+      expect(celulaAzul(12)).toBe('Delta Pires');
+      for (const dia of [13, 14, 20, 31]) expect(celulaAzul(dia)).toBe('');
+      expect(screen.getAllByTitle('Delta Pires · confirmed')).toHaveLength(1);
     });
 
     it('vista de mes em Marco: anterior vai a Fevereiro com 28 dias', async () => {
