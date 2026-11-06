@@ -66,10 +66,13 @@ describe('MenuDigital', () => {
 
   afterEach(() => {
     cleanup();
-    vi.restoreAllMocks();
     useAuthStore.setState({ operator: null });
-    expect(errSpy).not.toHaveBeenCalled();
-    expect(warnSpy).not.toHaveBeenCalled();
+    /* a guarda de consola tem de correr ANTES de restaurar os espioes: restaurar limpa os registos de chamadas */
+    const erros = errSpy.mock.calls.length;
+    const avisos = warnSpy.mock.calls.length;
+    vi.restoreAllMocks();
+    expect(erros).toBe(0);
+    expect(avisos).toBe(0);
   });
 
   async function abre() {
