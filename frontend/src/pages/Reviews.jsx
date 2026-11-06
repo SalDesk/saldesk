@@ -273,7 +273,7 @@ export default function Reviews() {
       {/* Filters */}
       <div className="flex flex-wrap gap-2 items-center mb-4">
         {/* Search */}
-        <div className="w-44">
+        <div className="w-36">
           <Input value={search} onChange={e => { setSearch(e.target.value); setPage(1); }} placeholder="Pesquisar..." />
         </div>
 
@@ -286,7 +286,7 @@ export default function Reviews() {
 
         {/* Unit filter */}
         {units.length > 0 && (
-          <div className="w-48">
+          <div className="w-40">
             <Select value={filterUnit} onChange={e => { setFilterUnit(e.target.value); setPage(1); }}>
               <option value="">Todos os servicos</option>
               {units.map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
@@ -295,7 +295,7 @@ export default function Reviews() {
         )}
 
         {/* Reply filter */}
-        <div className="w-36">
+        <div className="w-32">
           <Select value={filterReply} onChange={e => { setFilterReply(e.target.value); setPage(1); }}>
             <option value="all">Todas</option>
             <option value="pending">Sem resposta</option>
@@ -304,7 +304,7 @@ export default function Reviews() {
         </div>
 
         {/* Sort */}
-        <div className="w-36 ml-auto">
+        <div className="w-32">
           <Select value={filterSort} onChange={e => setFilterSort(e.target.value)}>
             <option value="recent">Mais recentes</option>
             <option value="oldest">Mais antigas</option>
@@ -313,7 +313,7 @@ export default function Reviews() {
           </Select>
         </div>
 
-        <span className="text-xs font-body text-n-400">{filtered.length} resultado(s)</span>
+        <span className="text-xs font-body text-n-400 ml-auto">{filtered.length} resultado(s)</span>
       </div>
 
       {/* List */}
