@@ -15,8 +15,10 @@ function compareValues(a, b) {
   return String(a ?? '').localeCompare(String(b ?? ''), undefined, { numeric: true, sensitivity: 'base' });
 }
 
-export default function Table({ columns, rows, loading, emptyMessage, maxHeight }) {
+// compact: menos espaco lateral nas celulas, para tabelas largas caberem sem scroll horizontal
+export default function Table({ columns, rows, loading, emptyMessage, maxHeight, compact = false }) {
   const t = useT();
+  const padX = compact ? 'px-2.5' : 'px-4';
   // Ordenacao local: coluna ativa e direcao ('asc' | 'desc'); sem coluna = ordem original
   const [sort, setSort] = useState({ key: null, dir: null });
 
@@ -63,7 +65,7 @@ export default function Table({ columns, rows, loading, emptyMessage, maxHeight 
                 <th
                   key={col.key}
                   aria-sort={ariaSort}
-                  className={`app:sticky app:top-0 app:z-10 app:bg-white px-4 py-3 ${alignClass} text-xs font-body font-bold uppercase tracking-wide text-n-500 app:normal-case app:tracking-normal app:text-xs app:py-2`}
+                  className={`app:sticky app:top-0 app:z-10 app:bg-white ${padX} py-3 ${alignClass} text-xs font-body font-bold uppercase tracking-wide text-n-500 app:normal-case app:tracking-normal app:text-xs app:py-2`}
                   style={{ width: col.width }}
                 >
                   {sortable ? (
@@ -99,7 +101,7 @@ export default function Table({ columns, rows, loading, emptyMessage, maxHeight 
                 {columns.map((col) => (
                   <td
                     key={col.key}
-                    className={`px-4 py-3 ${ALIGN_CLASS[col.align] || ''} text-n-700 app:py-2`}
+                    className={`${padX} py-3 ${ALIGN_CLASS[col.align] || ''} text-n-700 app:py-2`}
                   >
                     {col.render ? col.render(row) : row[col.key]}
                   </td>

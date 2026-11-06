@@ -5,6 +5,7 @@ import { useT } from '../../i18n';
 import Button from '../../components/ui/Button';
 import Badge from '../../components/ui/Badge';
 import Table from '../../components/ui/Table';
+import RowMenu from '../../components/ui/RowMenu';
 import AssignCompositeModal from '../../components/assignments/AssignCompositeModal';
 import { STATUS_NEXT, STATUS_NEXT_LABEL, formatDate, SourceBadge } from './shared';
 
@@ -47,7 +48,8 @@ export default function ActivityTable({ reservations, units, guides, onEdit, onD
       key: 'tour',
       label: 'Tour',
       render: (r) => (
-        <p className="font-display font-semibold text-sm text-n-900 truncate max-w-[104px]">
+        <p className="font-display font-semibold text-sm text-n-900 truncate max-w-[104px]"
+          title={r.units?.name || units.find(u => u.id === r.unit_id)?.name || undefined}>
           {r.units?.name || units.find(u => u.id === r.unit_id)?.name || '—'}
         </p>
       ),
@@ -63,7 +65,7 @@ export default function ActivityTable({ reservations, units, guides, onEdit, onD
       label: 'Cliente',
       render: (r) => (
         <div className="min-w-0">
-          <p className="text-sm font-body text-n-900 truncate max-w-[104px]">{r.customer_name || '—'}</p>
+          <p className="text-sm font-body text-n-900 truncate max-w-[104px]" title={r.customer_name || undefined}>{r.customer_name || '—'}</p>
           {r.customer_country && (
             <p className="text-xs font-body text-n-400">{r.customer_country}</p>
           )}
@@ -104,8 +106,20 @@ export default function ActivityTable({ reservations, units, guides, onEdit, onD
       render: (r) => {
         const canAdvance = !!STATUS_NEXT[r.status];
         const isLoading  = actionLoading === r.id;
+        // Acoes frequentes a vista; as secundarias ficam no menu "..." para a linha caber no ecra
+        const menuItems = [
+          { key: 'reagendar', label: 'Reagendar', icon: CalendarDays, onClick: () => onReschedule(r) },
+          { key: 'voucher', label: 'Enviar voucher', icon: Mail, onClick: () => onVoucher(r), disabled: voucherLoading === r.id },
+          ...(!['cancelled', 'no_show', 'checked_out'].includes(r.status)
+            ? [{ key: 'no-show', label: 'No-show', icon: UserX, onClick: () => onNoShow(r) }]
+            : []),
+          ...(!['cancelled', 'no_show'].includes(r.status)
+            ? [{ key: 'equipa', label: 'Atribuir equipa', icon: Users, onClick: () => setAssignRes(r) }]
+            : []),
+          { key: 'eliminar', label: 'Eliminar', icon: Trash2, onClick: () => onDelete(r), danger: true },
+        ];
         return (
-          <div className="flex flex-wrap items-center gap-0.5 justify-end max-w-[170px] ml-auto">
+          <div className="flex items-center gap-0.5 justify-end">
             {canAdvance && (
               <button
                 onClick={() => handleNextStatus(r)}
@@ -116,30 +130,9 @@ export default function ActivityTable({ reservations, units, guides, onEdit, onD
                 <ChevronRight size={11} strokeWidth={2} />
               </button>
             )}
-            <button onClick={() => onReschedule(r)} title="Reagendar"
-              className="p-1 rounded text-n-400 hover:text-ocean-700 hover:bg-ocean-50 transition-colors">
-              <CalendarDays size={13} strokeWidth={1.75} />
-            </button>
-            <button onClick={() => onVoucher(r)} title="Enviar voucher"
-              disabled={voucherLoading === r.id}
-              className="p-1 rounded text-n-400 hover:text-ocean-700 hover:bg-ocean-50 transition-colors disabled:opacity-40">
-              <Mail size={13} strokeWidth={1.75} />
-            </button>
-            {!['cancelled','no_show','checked_out'].includes(r.status) && (
-              <button onClick={() => onNoShow(r)} title="No-show"
-                className="p-1 rounded text-n-400 hover:text-error hover:bg-red-50 transition-colors">
-                <UserX size={13} strokeWidth={1.75} />
-              </button>
-            )}
-            {!['cancelled','no_show'].includes(r.status) && (
-              <button onClick={() => setAssignRes(r)} title="Atribuir equipa"
-                className="p-1 rounded text-n-400 hover:text-ocean-700 hover:bg-ocean-50 transition-colors">
-                <Users size={13} strokeWidth={1.75} />
-              </button>
-            )}
             <Button variant="ghost" size="sm" icon={Eye} onClick={() => onView(r)} aria-label={t('reservations.view')} className="!px-1" />
             <Button variant="ghost" size="sm" icon={Pencil} onClick={() => onEdit(r)} aria-label="Editar" className="!px-1" />
-            <Button variant="ghost" size="sm" icon={Trash2} onClick={() => onDelete(r)} aria-label="Eliminar" className="!px-1 hover:text-error" />
+            <RowMenu label={t('reservations.moreActions')} items={menuItems} />
           </div>
         );
       },
@@ -219,7 +212,7 @@ export default function ActivityTable({ reservations, units, guides, onEdit, onD
 
       {/* Desktop table view */}
       <div className="hidden md:block">
-        <Table columns={columns} rows={reservations} />
+        <Table columns={columns} rows={reservations} compact />
       </div>
 
       {assignRes && (

@@ -104,6 +104,15 @@ describe('ActivityTable (tabela de reservas de atividades)', () => {
   function semBotao(linha, nome) {
     return within(linha).queryByRole('button', { name: nome });
   }
+  /* As accoes secundarias vivem no menu "..." da linha, que abre num portal */
+  function abrirMenu(linha) {
+    fireEvent.click(botao(linha, 'Mais acções'));
+    return screen.getByRole('menu');
+  }
+  function acao(linha, nome) {
+    abrirMenu(linha);
+    return screen.getByRole('menuitem', { name: nome });
+  }
 
   describe('conteudo (comportamento actual)', () => {
     it('mostra as nove colunas pela ordem de hoje', () => {
@@ -170,7 +179,15 @@ describe('ActivityTable (tabela de reservas de atividades)', () => {
     });
   });
 
-  describe('accoes (comportamento actual)', () => {
+  describe('accoes', () => {
+    it('a coluna de accoes mostra so avancar, Ver, Editar e o menu; o resto fica escondido', () => {
+      renderTabela({ reservations: [reserva({ status: 'pending' })] });
+      const linha = linhas()[0];
+      const nomes = within(linha).getAllByRole('button').map(b => b.getAttribute('aria-label') || b.textContent.trim());
+      expect(nomes).toEqual(['Confirmar', 'Ver', 'Editar', 'Mais acções']);
+      expect(screen.queryByRole('menu')).not.toBeInTheDocument();
+    });
+
     it('Ver, Editar e Eliminar chamam o handler com a reserva da linha', () => {
       const r1 = reserva({ id: 'aaaaaaaa-0001' });
       const r2 = reserva({ id: 'bbbbbbbb-0002', customer_name: 'Cliente Beta' });
@@ -185,7 +202,7 @@ describe('ActivityTable (tabela de reservas de atividades)', () => {
       expect(props.onEdit).toHaveBeenCalledTimes(1);
       expect(props.onEdit).toHaveBeenCalledWith(r1);
 
-      fireEvent.click(botao(l2, 'Eliminar'));
+      fireEvent.click(acao(l2, 'Eliminar'));
       expect(props.onDelete).toHaveBeenCalledTimes(1);
       expect(props.onDelete).toHaveBeenCalledWith(r2);
     });
@@ -196,11 +213,11 @@ describe('ActivityTable (tabela de reservas de atividades)', () => {
       renderTabela({ reservations: [r1, r2] });
       const [l1, l2] = linhas();
 
-      fireEvent.click(botao(l2, 'Reagendar'));
+      fireEvent.click(acao(l2, 'Reagendar'));
       expect(props.onReschedule).toHaveBeenCalledTimes(1);
       expect(props.onReschedule).toHaveBeenCalledWith(r2);
 
-      fireEvent.click(botao(l1, 'Enviar voucher'));
+      fireEvent.click(acao(l1, 'Enviar voucher'));
       expect(props.onVoucher).toHaveBeenCalledTimes(1);
       expect(props.onVoucher).toHaveBeenCalledWith(r1);
     });
@@ -211,14 +228,15 @@ describe('ActivityTable (tabela de reservas de atividades)', () => {
         voucherLoading: 'bbbbbbbb-0002',
       });
       const [l1, l2] = linhas();
-      expect(botao(l1, 'Enviar voucher')).not.toBeDisabled();
-      expect(botao(l2, 'Enviar voucher')).toBeDisabled();
+      expect(acao(l1, 'Enviar voucher')).not.toBeDisabled();
+      fireEvent.keyDown(screen.getByRole('menu'), { key: 'Escape' });
+      expect(acao(l2, 'Enviar voucher')).toBeDisabled();
     });
 
     it('No-show chama o handler com a reserva da linha', () => {
       const r = reserva({ status: 'pending' });
       renderTabela({ reservations: [r] });
-      fireEvent.click(botao(linhas()[0], 'No-show'));
+      fireEvent.click(acao(linhas()[0], 'No-show'));
       expect(props.onNoShow).toHaveBeenCalledTimes(1);
       expect(props.onNoShow).toHaveBeenCalledWith(r);
     });
@@ -231,7 +249,7 @@ describe('ActivityTable (tabela de reservas de atividades)', () => {
         ],
       });
       expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
-      fireEvent.click(botao(linhas()[1], 'Atribuir equipa'));
+      fireEvent.click(acao(linhas()[1], 'Atribuir equipa'));
       const dialogo = await screen.findByRole('dialog');
       expect(within(dialogo).getByText(new RegExp(`${HOJE} · 7 pax · Cliente Beta`))).toBeInTheDocument();
       /* espera o fim do carregamento das viaturas para nao deixar estado por assentar */
@@ -295,11 +313,16 @@ describe('ActivityTable (tabela de reservas de atividades)', () => {
         if (rotulo === rotuloAvancar) expect(semBotao(linha, rotulo)).toBeInTheDocument();
         else expect(semBotao(linha, rotulo)).not.toBeInTheDocument();
       }
-      expect(!!semBotao(linha, 'No-show')).toBe(noShow);
-      expect(!!semBotao(linha, 'Atribuir equipa')).toBe(equipa);
-      /* estas estao sempre presentes, em qualquer estado */
-      for (const nome of ['Reagendar', 'Enviar voucher', 'Ver', 'Editar', 'Eliminar']) {
+      /* Ver e Editar estao sempre a vista; as outras accoes estao no menu */
+      for (const nome of ['Ver', 'Editar']) {
         expect(botao(linha, nome)).toBeInTheDocument();
+      }
+      const menu = abrirMenu(linha);
+      expect(!!within(menu).queryByRole('menuitem', { name: 'No-show' })).toBe(noShow);
+      expect(!!within(menu).queryByRole('menuitem', { name: 'Atribuir equipa' })).toBe(equipa);
+      /* estas estao sempre presentes no menu, em qualquer estado */
+      for (const nome of ['Reagendar', 'Enviar voucher', 'Eliminar']) {
+        expect(within(menu).getByRole('menuitem', { name: nome })).toBeInTheDocument();
       }
     });
   });

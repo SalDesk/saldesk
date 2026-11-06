@@ -378,6 +378,7 @@
     "guestNotes": "Guest notes",
     "confirmDelete": "Are you sure you want to delete this reservation?",
     "view": "View",
+    "moreActions": "More actions",
     "details": "Reservation details",
     "paymentStatus": "Payment status",
     "paymentMethod": "Payment method",
