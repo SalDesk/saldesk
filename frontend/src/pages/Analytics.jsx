@@ -16,6 +16,9 @@ import { listUnits } from '../services/unitsService';
 import PageHeader from '../components/layout/PageHeader';
 import Button from '../components/ui/Button';
 import Card from '../components/ui/Card';
+import Table from '../components/ui/Table';
+import Input from '../components/ui/Input';
+import EmptyState from '../components/ui/EmptyState';
 import LoadingSpinner from '../components/shared/LoadingSpinner';
 
 const COMP_KEY = 'saldesk_competition_v1';
@@ -42,8 +45,8 @@ const COUNTRY_NAMES = {
 };
 
 const CHART_COLORS = [
-  '#0D5470', '#1480A8', '#3BA7CB', '#6DC4E0',
-  '#D4A82A', '#EAD08A', '#9BCFE0', '#B0D9E8',
+  'var(--ocean-700)', 'var(--ocean-500)', 'var(--ocean-400)', 'var(--ocean-300)',
+  'var(--sand-500)', 'var(--sand-300)', 'var(--ocean-200)', 'var(--ocean-100)',
 ];
 
 /* ── Health Score computation ── */
@@ -110,13 +113,13 @@ function HealthGauge({ score }) {
   const r     = 60;
   const circ  = 2 * Math.PI * r;
   const filled = (score / 100) * circ;
-  const color  = score >= 70 ? '#1A7A4A' : score >= 50 ? '#D4A82A' : '#B91C1C';
+  const color  = score >= 70 ? 'var(--success)' : score >= 50 ? 'var(--sand-500)' : 'var(--error)';
   const label  = score >= 70 ? 'Bom' : score >= 50 ? 'Moderado' : 'Critico';
 
   return (
     <div className="flex flex-col items-center gap-2">
       <svg viewBox="0 0 160 160" className="w-40 h-40">
-        <circle cx="80" cy="80" r={r} fill="none" stroke="#E5E8EC" strokeWidth="12" />
+        <circle cx="80" cy="80" r={r} fill="none" stroke="var(--n200)" strokeWidth="12" />
         <circle
           cx="80" cy="80" r={r} fill="none"
           stroke={color} strokeWidth="12"
@@ -124,11 +127,11 @@ function HealthGauge({ score }) {
           strokeLinecap="round"
           transform="rotate(-90 80 80)"
         />
-        <text x="80" y="78" textAnchor="middle" fill="#1A2332"
+        <text x="80" y="78" textAnchor="middle" fill="var(--n900)"
           style={{ fontSize: '30px', fontWeight: '700', fontFamily: 'Sora' }}>
           {score}
         </text>
-        <text x="80" y="98" textAnchor="middle" fill="#6B7280"
+        <text x="80" y="98" textAnchor="middle" fill="var(--n500)"
           style={{ fontSize: '11px', fontFamily: 'DM Mono', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
           /100
         </text>
@@ -141,7 +144,7 @@ function HealthGauge({ score }) {
 }
 
 /* ── ScoreBar ── */
-function ScoreBar({ label, value, max = 25, color = '#0D5470' }) {
+function ScoreBar({ label, value, max = 25, color = 'var(--ocean-700)' }) {
   const pct = max > 0 ? Math.min(100, (value / max) * 100) : 0;
   return (
     <div>
@@ -192,24 +195,37 @@ function WeeklyMetric({ label, value, delta, icon: Icon }) {
   const up      = delta > 0;
   const neutral = delta == null || delta === 0;
   const DIcon   = neutral ? Minus : up ? ArrowUpRight : ArrowDownRight;
-  const dColor  = neutral ? 'text-n-400' : up ? 'text-[#1A7A4A]' : 'text-error';
+  const dColor  = neutral ? 'text-n-400' : up ? 'text-[var(--success)]' : 'text-[var(--error)]';
   return (
-    <div className="bg-white rounded-md border border-n-200 px-4 py-3 flex items-center gap-3">
-      <div className="w-9 h-9 rounded-sm bg-ocean-50 flex items-center justify-center shrink-0">
-        <Icon size={18} strokeWidth={1.75} className="text-ocean-700" />
+    <Card padding="px-4 py-3">
+      <div className="flex items-center gap-3">
+        <div className="w-9 h-9 rounded-sm bg-ocean-50 flex items-center justify-center shrink-0">
+          <Icon size={18} strokeWidth={1.75} className="text-ocean-700" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="font-display font-bold text-lg text-n-900 leading-none">{value}</p>
+          <p className="text-xs font-body text-n-500 mt-0.5">{label}</p>
+        </div>
+        {delta != null && (
+          <span className={`flex items-center gap-0.5 text-xs font-body ${dColor}`}>
+            <DIcon size={12} strokeWidth={2} />
+            {!neutral && `${up ? '+' : ''}${delta}%`}
+          </span>
+        )}
       </div>
-      <div className="flex-1 min-w-0">
-        <p className="font-display font-bold text-lg text-n-900 leading-none">{value}</p>
-        <p className="text-xs font-body text-n-500 mt-0.5">{label}</p>
-      </div>
-      {delta != null && (
-        <span className={`flex items-center gap-0.5 text-xs font-body ${dColor}`}>
-          <DIcon size={12} strokeWidth={2} />
-          {!neutral && `${up ? '+' : ''}${delta}%`}
-        </span>
-      )}
-    </div>
+    </Card>
   );
+}
+
+/* ── Posicao do preco face ao concorrente (limiares 5 e 20) ── */
+function competitionPosition(ownPrice, compPrice) {
+  if (!(ownPrice > 0 && compPrice > 0)) return { position: null, label: '—', color: 'text-n-400' };
+  const diff = ((ownPrice - compPrice) / compPrice) * 100;
+  if (diff > 20)  return { position: 'high',   label: `+${Math.round(diff)}% acima`, color: 'text-[var(--error)]' };
+  if (diff > 5)   return { position: 'slight', label: `+${Math.round(diff)}% acima`, color: 'text-[var(--warning)]' };
+  if (diff < -20) return { position: 'low',    label: `${Math.round(diff)}% abaixo`,  color: 'text-[var(--success)]' };
+  if (diff < -5)  return { position: 'slight', label: `${Math.round(diff)}% abaixo`,  color: 'text-ocean-700' };
+  return { position: null, label: 'Na media', color: 'text-[var(--success)]' };
 }
 
 /* ── Main Analytics ── */
@@ -278,10 +294,97 @@ export default function Analytics() {
   const ratingNum = Number(reviews?.average_rating || 0);
 
   const SCORE_COMPONENTS = [
-    { label: 'Crescimento de receita', value: components.crescimento ?? 0, max: 25, color: '#0D5470' },
-    { label: 'Taxa de ocupacao',       value: components.ocupacao    ?? 0, max: 25, color: '#1480A8' },
-    { label: 'Avaliacoes',             value: components.avaliacoes  ?? 0, max: 25, color: '#D4A82A' },
-    { label: 'Fidelizacao',            value: components.fidelizacao ?? 0, max: 25, color: '#3BA7CB' },
+    { label: 'Crescimento de receita', value: components.crescimento ?? 0, max: 25, color: 'var(--ocean-700)' },
+    { label: 'Taxa de ocupacao',       value: components.ocupacao    ?? 0, max: 25, color: 'var(--ocean-500)' },
+    { label: 'Avaliacoes',             value: components.avaliacoes  ?? 0, max: 25, color: 'var(--sand-500)' },
+    { label: 'Fidelizacao',            value: components.fidelizacao ?? 0, max: 25, color: 'var(--ocean-400)' },
+  ];
+
+  /* Concorrencia: o preco do concorrente edita-se na propria celula */
+  function guardarPreco(u, c) {
+    const updated = { ...comp, [u.id]: { ...c, price: Number(compDraft[u.id] || 0) } };
+    setComp(updated); saveComp(updated);
+    setEditComp(null); setCompDraft({});
+  }
+
+  const compColumns = [
+    {
+      key: 'name', label: 'Tour',
+      render: u => <span className="block max-w-[160px] truncate font-body font-semibold text-n-800">{u.name}</span>,
+    },
+    {
+      key: 'own', label: 'Preco SalDesk',
+      render: u => (
+        <span className="font-display font-bold text-ocean-700">
+          {Number(u.base_price || 0) > 0 ? `€${Number(u.base_price || 0)}` : '—'}
+        </span>
+      ),
+    },
+    {
+      key: 'comp', label: 'Preco Viator/GYG',
+      render: u => {
+        const c = comp[u.id] || {};
+        const compPrice = Number(c.price || 0);
+        if (editComp === u.id) {
+          return (
+            <div className="w-28">
+              <Input
+                type="number" min="0" step="1"
+                aria-label="Preco do concorrente"
+                value={compDraft[u.id] ?? c.price ?? ''}
+                onChange={e => setCompDraft(p => ({ ...p, [u.id]: e.target.value }))}
+                className="font-mono"
+                placeholder="Ex: 45"
+                autoFocus
+              />
+            </div>
+          );
+        }
+        return (
+          <span className="font-mono text-n-700">
+            {compPrice > 0 ? `€${compPrice}` : <span className="text-n-300 text-xs">Nao definido</span>}
+          </span>
+        );
+      },
+    },
+    {
+      key: 'position', label: 'Posicao no mercado',
+      render: u => {
+        const c = comp[u.id] || {};
+        const pos = competitionPosition(Number(u.base_price || 0), Number(c.price || 0));
+        return (
+          <>
+            <span className={`text-xs font-mono font-semibold ${pos.color}`}>{pos.label}</span>
+            {pos.position === 'high' && (
+              <p className="text-[10px] font-body text-n-400">Considera reduzir para aumentar conversao</p>
+            )}
+          </>
+        );
+      },
+    },
+    {
+      key: 'acoes', label: '',
+      render: u => {
+        const c = comp[u.id] || {};
+        return editComp === u.id ? (
+          <button
+            aria-label="Guardar preco"
+            onClick={() => guardarPreco(u, c)}
+            className="p-1.5 rounded text-[var(--success)] hover:bg-[var(--success-light)] transition-colors"
+          >
+            <Check size={13} strokeWidth={2} />
+          </button>
+        ) : (
+          <button
+            aria-label="Editar preco"
+            onClick={() => { setEditComp(u.id); setCompDraft(p => ({ ...p, [u.id]: c.price || '' })); }}
+            className="p-1.5 rounded text-n-400 hover:text-ocean-700 hover:bg-ocean-50 transition-colors"
+          >
+            <Edit2 size={13} strokeWidth={1.75} />
+          </button>
+        );
+      },
+    },
   ];
 
   return (
@@ -363,10 +466,7 @@ export default function Analytics() {
             <Card padding="px-6 py-5">
               <h3 className="font-display font-semibold text-sm text-n-700 mb-4">Origem de Clientes</h3>
               {origins.length === 0 ? (
-                <div className="text-center py-8">
-                  <Globe size={28} strokeWidth={1.25} className="mx-auto mb-2 text-n-300" />
-                  <p className="text-sm font-body text-n-400">Sem dados de origem disponíveis.</p>
-                </div>
+                <EmptyState icon={Globe} title="Sem dados de origem disponíveis." />
               ) : (
                 <div className="space-y-2.5">
                   {origins.slice(0, 8).map((o, i) => (
@@ -393,18 +493,15 @@ export default function Analytics() {
             <Card padding="px-6 py-5">
               <h3 className="font-display font-semibold text-sm text-n-700 mb-4">Distribuicao por Pais</h3>
               {origins.length === 0 ? (
-                <div className="text-center py-8">
-                  <BarChart2 size={28} strokeWidth={1.25} className="mx-auto mb-2 text-n-300" />
-                  <p className="text-sm font-body text-n-400">Sem dados disponiveis.</p>
-                </div>
+                <EmptyState icon={BarChart2} title="Sem dados disponiveis." />
               ) : (
                 <ResponsiveContainer width="100%" height={220}>
                   <BarChart data={origins.slice(0, 8)} layout="vertical" margin={{ left: 4, right: 16, top: 0, bottom: 0 }}>
-                    <XAxis type="number" tick={{ fontSize: 10, fontFamily: 'DM Mono', fill: '#6B7280' }} tickLine={false} axisLine={false} />
-                    <YAxis type="category" dataKey="country_code" width={28} tick={{ fontSize: 10, fontFamily: 'DM Mono', fill: '#6B7280' }} tickLine={false} axisLine={false} />
+                    <XAxis type="number" tick={{ fontSize: 10, fontFamily: 'DM Mono', fill: 'var(--n500)' }} tickLine={false} axisLine={false} />
+                    <YAxis type="category" dataKey="country_code" width={28} tick={{ fontSize: 10, fontFamily: 'DM Mono', fill: 'var(--n500)' }} tickLine={false} axisLine={false} />
                     <Tooltip
-                      cursor={{ fill: '#EBF7FB' }}
-                      contentStyle={{ fontSize: 11, fontFamily: 'DM Sans', border: '1px solid #E5E8EC', borderRadius: 4 }}
+                      cursor={{ fill: 'var(--ocean-50)' }}
+                      contentStyle={{ fontSize: 11, fontFamily: 'DM Sans', border: '1px solid var(--n200)', borderRadius: 4 }}
                       formatter={(v, _n, p) => [`${v} clientes (${p.payload.pct.toFixed(1)}%)`, p.payload.country_code]}
                     />
                     <Bar dataKey="count" radius={[0, 3, 3, 0]}>
@@ -422,20 +519,18 @@ export default function Analytics() {
           <Card padding="px-6 py-5">
             <h3 className="font-display font-semibold text-sm text-n-700 mb-5">Funil de Conversao</h3>
             {!funnel ? (
-              <div className="text-center py-8">
-                <Activity size={28} strokeWidth={1.25} className="mx-auto mb-2 text-n-300" />
-                <p className="text-sm font-body text-n-400">Dados do funil nao disponiveis.</p>
-                <p className="text-xs font-body text-n-400 mt-1">
-                  Implemente <span className="font-mono">/marketing/stats</span> com campo <span className="font-mono">funnel</span>.
-                </p>
-              </div>
+              <EmptyState
+                icon={Activity}
+                title="Dados do funil nao disponiveis."
+                description={<>Implemente <span className="font-mono">/marketing/stats</span> com campo <span className="font-mono">funnel</span>.</>}
+              />
             ) : (
               <div className="space-y-3 max-w-2xl">
                 {[
-                  { label: 'Visitas pagina publica', key: 'page_views',          color: '#0D5470' },
-                  { label: 'Reserva iniciada',       key: 'booking_started',     color: '#1480A8' },
-                  { label: 'Reserva concluida',      key: 'booking_completed',   color: '#3BA7CB' },
-                  { label: 'Pagamento confirmado',   key: 'payment_confirmed',   color: '#D4A82A' },
+                  { label: 'Visitas pagina publica', key: 'page_views',          color: 'var(--ocean-700)' },
+                  { label: 'Reserva iniciada',       key: 'booking_started',     color: 'var(--ocean-500)' },
+                  { label: 'Reserva concluida',      key: 'booking_completed',   color: 'var(--ocean-400)' },
+                  { label: 'Pagamento confirmado',   key: 'payment_confirmed',   color: 'var(--sand-500)' },
                 ].map((step, i, arr) => {
                   const value = funnel[step.key] || 0;
                   const max   = funnel[arr[0].key] || 1;
@@ -488,7 +583,7 @@ export default function Analytics() {
 
             <div className="mt-4 grid grid-cols-2 lg:grid-cols-4 gap-3">
               {[
-                { label: 'Score de saude',  value: score != null ? `${score}/100` : '—',                       color: score >= 70 ? 'text-[#1A7A4A]' : score >= 50 ? 'text-yellow-700' : 'text-error' },
+                { label: 'Score de saude',  value: score != null ? `${score}/100` : '—',                       color: score >= 70 ? 'text-[var(--success)]' : score >= 50 ? 'text-[var(--warning)]' : 'text-[var(--error)]' },
                 { label: 'Receita',         value: weekly.revenue  != null ? fmtMoney(weekly.revenue) : '—',   color: 'text-ocean-700' },
                 { label: 'Reservas',        value: weekly.reservas != null ? String(weekly.reservas) : '—',    color: 'text-n-900' },
                 { label: 'Rating',          value: ratingNum > 0 ? `${ratingNum.toFixed(1)} / 5.0` : '—',       color: 'text-sand-500' },
@@ -517,7 +612,7 @@ export default function Analytics() {
                       {
                         label: 'Taxa de abandono',
                         value: abandonment != null ? `${abandonment}%` : '—',
-                        color: abandonment == null ? 'text-n-400' : abandonment > 80 ? 'text-error' : abandonment > 60 ? 'text-yellow-700' : 'text-[#1A7A4A]',
+                        color: abandonment == null ? 'text-n-400' : abandonment > 80 ? 'text-[var(--error)]' : abandonment > 60 ? 'text-[var(--warning)]' : 'text-[var(--success)]',
                       },
                     ].map(m => (
                       <div key={m.label} className="bg-n-50 rounded-sm px-4 py-3 border border-n-200">
@@ -528,9 +623,9 @@ export default function Analytics() {
                   </div>
 
                   {abandonment != null && abandonment > 70 && (
-                    <div className="flex items-start gap-2 px-3 py-2.5 bg-yellow-50 border border-yellow-200 rounded-sm">
-                      <MousePointerClick size={14} strokeWidth={1.75} className="text-yellow-700 shrink-0 mt-0.5" />
-                      <p className="text-xs font-body text-yellow-700">
+                    <div className="flex items-start gap-2 px-3 py-2.5 bg-[var(--warning-light)] border border-[var(--warning)] rounded-sm">
+                      <MousePointerClick size={14} strokeWidth={1.75} className="text-[var(--warning)] shrink-0 mt-0.5" />
+                      <p className="text-xs font-body text-[var(--warning)]">
                         <span className="font-semibold">Alta taxa de abandono ({abandonment}%).</span>{' '}
                         Muitos visitantes nao completam a reserva. Verifica as fotos e descricoes dos tours, simplifica o processo de reserva, ou considera reduzir o preco de entrada.
                       </p>
@@ -549,13 +644,13 @@ export default function Analytics() {
                               <span className="text-xs font-body text-n-700 w-40 truncate shrink-0">{u.name}</span>
                               <div className="flex-1 h-2 bg-n-100 rounded-full overflow-hidden">
                                 <div className="h-full rounded-full transition-all"
-                                  style={{ width: `${popularity}%`, backgroundColor: needsAttention ? '#B91C1C' : '#0D5470' }} />
+                                  style={{ width: `${popularity}%`, backgroundColor: needsAttention ? 'var(--error)' : 'var(--ocean-700)' }} />
                               </div>
-                              <span className={`text-xs font-mono font-semibold w-10 text-right shrink-0 ${needsAttention ? 'text-error' : 'text-ocean-700'}`}>
+                              <span className={`text-xs font-mono font-semibold w-10 text-right shrink-0 ${needsAttention ? 'text-[var(--error)]' : 'text-ocean-700'}`}>
                                 {popularity}%
                               </span>
                               {needsAttention && (
-                                <span className="text-[10px] font-body text-error shrink-0">melhora fotos</span>
+                                <span className="text-[10px] font-body text-[var(--error)] shrink-0">melhora fotos</span>
                               )}
                             </div>
                           );
@@ -584,86 +679,9 @@ export default function Analytics() {
             </div>
 
             {units.length === 0 ? (
-              <p className="text-xs font-body text-n-400">Sem tours registados para comparar.</p>
+              <EmptyState icon={Building2} title="Sem tours registados para comparar." />
             ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-n-200">
-                      {['Tour', 'Preco SalDesk', 'Preco Viator/GYG', 'Posicao no mercado', ''].map(h => (
-                        <th key={h} className="text-left py-2 px-3 text-xs font-mono uppercase tracking-wider text-n-500 whitespace-nowrap">{h}</th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-n-100">
-                    {units.slice(0, 8).map(u => {
-                      const c = comp[u.id] || {};
-                      const ownPrice  = Number(u.base_price || 0);
-                      const compPrice = Number(c.price || 0);
-                      const isEditing = editComp === u.id;
-
-                      let position = null, positionLabel = '—', positionColor = 'text-n-400';
-                      if (ownPrice > 0 && compPrice > 0) {
-                        const diff = ((ownPrice - compPrice) / compPrice) * 100;
-                        if (diff > 20)       { position = 'high';   positionLabel = `+${Math.round(diff)}% acima`;  positionColor = 'text-error'; }
-                        else if (diff > 5)   { position = 'slight'; positionLabel = `+${Math.round(diff)}% acima`;  positionColor = 'text-yellow-700'; }
-                        else if (diff < -20) { position = 'low';    positionLabel = `${Math.round(diff)}% abaixo`; positionColor = 'text-[#1A7A4A]'; }
-                        else if (diff < -5)  { position = 'slight'; positionLabel = `${Math.round(diff)}% abaixo`; positionColor = 'text-ocean-700'; }
-                        else                 { positionLabel = 'Na media';  positionColor = 'text-[#1A7A4A]'; }
-                      }
-
-                      return (
-                        <tr key={u.id} className="hover:bg-n-50 transition-colors">
-                          <td className="py-2.5 px-3 font-body font-semibold text-n-800 max-w-[160px] truncate">{u.name}</td>
-                          <td className="py-2.5 px-3 font-display font-bold text-ocean-700">
-                            {ownPrice > 0 ? `€${ownPrice}` : '—'}
-                          </td>
-                          <td className="py-2.5 px-3">
-                            {isEditing ? (
-                              <input
-                                type="number" min="0" step="1"
-                                value={compDraft[u.id] ?? c.price ?? ''}
-                                onChange={e => setCompDraft(p => ({ ...p, [u.id]: e.target.value }))}
-                                className="w-24 h-7 px-2 text-xs font-mono border border-n-200 rounded focus:outline-none focus:border-ocean-700"
-                                placeholder="Ex: 45"
-                                autoFocus
-                              />
-                            ) : (
-                              <span className="font-mono text-n-700">
-                                {compPrice > 0 ? `€${compPrice}` : <span className="text-n-300 text-xs">Nao definido</span>}
-                              </span>
-                            )}
-                          </td>
-                          <td className="py-2.5 px-3">
-                            <span className={`text-xs font-mono font-semibold ${positionColor}`}>{positionLabel}</span>
-                            {position === 'high' && (
-                              <p className="text-[10px] font-body text-n-400">Considera reduzir para aumentar conversao</p>
-                            )}
-                          </td>
-                          <td className="py-2.5 px-3">
-                            {isEditing ? (
-                              <div className="flex gap-1">
-                                <button onClick={() => {
-                                  const updated = { ...comp, [u.id]: { ...c, price: Number(compDraft[u.id] || 0) } };
-                                  setComp(updated); saveComp(updated);
-                                  setEditComp(null); setCompDraft({});
-                                }} className="p-1.5 rounded text-[#1A7A4A] hover:bg-[#ECFDF5] transition-colors">
-                                  <Check size={13} strokeWidth={2} />
-                                </button>
-                              </div>
-                            ) : (
-                              <button onClick={() => { setEditComp(u.id); setCompDraft(p => ({ ...p, [u.id]: c.price || '' })); }}
-                                className="p-1.5 rounded text-n-400 hover:text-ocean-700 hover:bg-ocean-50 transition-colors">
-                                <Edit2 size={13} strokeWidth={1.75} />
-                              </button>
-                            )}
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
+              <Table columns={compColumns} rows={units.slice(0, 8)} compact />
             )}
             <p className="text-[10px] font-mono text-n-400 mt-3">
               Introduz o preco do concorrente mais proximo (Viator, GYG ou operador local) para ver o comparativo. Guardado localmente.
