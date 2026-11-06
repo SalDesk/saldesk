@@ -51,6 +51,7 @@ describe('Feedback', () => {
 
   afterEach(() => {
     cleanup();
+    vi.useRealTimers();
     /* a guarda conta ANTES de restaurar os espioes */
     const erros = errSpy.mock.calls.length;
     const avisos = warnSpy.mock.calls.length;
@@ -143,10 +144,17 @@ describe('Feedback', () => {
   });
 
   it('os dias desde o checkout mudam de cor aos 3 e aos 7 dias', async () => {
+    /* 23:30 locais: num fuso com offset negativo (Cabo Verde, UTC-1) a data UTC ja rodou para o dia seguinte */
+    const noite = new Date();
+    noite.setHours(23, 30, 0, 0);
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(noite);
     await abre();
     separador('Pendentes (9)');
     const dias = linhas().slice(0, 4).map(l => within(l).getAllByRole('cell')[3].querySelector('span'));
-    expect(dias.map(d => d.textContent)).toEqual([expect.stringMatching(/^[01]d$/), expect.stringMatching(/^[12]d$/), expect.stringMatching(/^[45]d$/), expect.stringMatching(/^(9|10)d$/)]);
+    /* os dias contam-se a partir da meia-noite UTC da data de checkout, como na pagina */
+    const esperados = [-1, -2, -5, -10].map(n => `${Math.floor((Date.now() - Date.parse(`${dia(n)}T00:00:00Z`)) / 86400000)}d`);
+    expect(dias.map(d => d.textContent)).toEqual(esperados);
     expect(dias[0].className).toBe(dias[1].className);
     expect(new Set([dias[1].className, dias[2].className, dias[3].className]).size).toBe(3);
   });
