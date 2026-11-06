@@ -12,6 +12,7 @@ import useAuthStore from '../store/authStore';
 import PageHeader from '../components/layout/PageHeader';
 import Button from '../components/ui/Button';
 import Card from '../components/ui/Card';
+import EmptyState from '../components/ui/EmptyState';
 import LoadingSpinner from '../components/shared/LoadingSpinner';
 
 const ICON_MAP = { Sun, Cloud, CloudFog, CloudDrizzle, CloudRain, CloudLightning };
@@ -41,9 +42,9 @@ function WeatherCard({ day, isToday, tours, onClick }) {
       onClick={onClick}
       className={`rounded-md border px-3 py-4 flex flex-col items-center gap-2 transition-colors w-full text-left ${
         hasConflict
-          ? 'bg-red-50 border-red-300 hover:bg-red-100'
+          ? 'bg-[var(--error-light)] border-[var(--error)] hover:brightness-95'
           : isBad
-          ? 'bg-blue-50 border-blue-200 hover:bg-blue-100'
+          ? 'bg-[var(--info-light)] border-ocean-100 hover:brightness-95'
           : 'bg-white border-n-200 hover:border-ocean-200 hover:bg-ocean-50'
       } ${isToday ? 'ring-2 ring-ocean-700' : ''}`}
     >
@@ -65,8 +66,8 @@ function WeatherCard({ day, isToday, tours, onClick }) {
 
       {day.precipitation > 0 && (
         <div className="flex items-center gap-1">
-          <CloudRain size={10} strokeWidth={1.75} className={isBad ? 'text-error' : 'text-ocean-500'} />
-          <span className={`text-[10px] font-mono font-semibold ${isBad ? 'text-error' : 'text-ocean-600'}`}>
+          <CloudRain size={10} strokeWidth={1.75} className={isBad ? 'text-[var(--error)]' : 'text-ocean-500'} />
+          <span className={`text-[10px] font-mono font-semibold ${isBad ? 'text-[var(--error)]' : 'text-ocean-600'}`}>
             {day.precipitation} mm
           </span>
         </div>
@@ -74,7 +75,7 @@ function WeatherCard({ day, isToday, tours, onClick }) {
 
       {tours.length > 0 && (
         <div className={`w-full text-center px-2 py-0.5 rounded-xs text-[10px] font-mono font-semibold ${
-          hasConflict ? 'bg-error text-white' : 'bg-ocean-100 text-ocean-700'
+          hasConflict ? 'bg-[var(--error)] text-white' : 'bg-ocean-100 text-ocean-700'
         }`}>
           {tours.length} tour(s)
         </div>
@@ -159,20 +160,20 @@ export default function Weather() {
           {conflicts.map(c => {
             const tours = resByDate[c.date] || [];
             return (
-              <div key={c.date} className="flex items-start gap-3 px-4 py-3 bg-red-50 border border-red-200 rounded-md">
-                <AlertTriangle size={16} strokeWidth={1.75} className="text-error shrink-0 mt-0.5" />
+              <div key={c.date} className="flex items-start gap-3 px-4 py-3 bg-[var(--error-light)] border border-[var(--error)] rounded-md">
+                <AlertTriangle size={16} strokeWidth={1.75} className="text-[var(--error)] shrink-0 mt-0.5" />
                 <div className="flex-1">
-                  <p className="text-sm font-body font-semibold text-error">
+                  <p className="text-sm font-body font-semibold text-[var(--error)]">
                     Mau tempo previsto para {fmtDate(c.date)}
                   </p>
-                  <p className="text-xs font-body text-red-600 mt-0.5">
+                  <p className="text-xs font-body text-[var(--error)] mt-0.5">
                     {weatherInfo(c.code).label} · {c.precipitation > 0 ? `${c.precipitation}mm precipitacao · ` : ''}
                     {tours.length} tour(s) agendado(s) com {tours.reduce((s, r) => s + (r.guests || 1), 0)} participante(s)
                   </p>
                 </div>
                 <Button size="sm" variant="secondary"
                   onClick={() => navigate(`/reservas?date=${c.date}`)}
-                  className="shrink-0 text-error border-red-200 hover:bg-red-100">
+                  className="shrink-0 text-[var(--error)] border-[var(--error)] hover:bg-[var(--error-light)]">
                   Contactar clientes
                 </Button>
               </div>
@@ -184,12 +185,12 @@ export default function Weather() {
       {loading ? (
         <div className="flex justify-center py-24"><LoadingSpinner size={36} /></div>
       ) : error ? (
-        <Card>
-          <div className="text-center py-12">
-            <CloudRain size={36} strokeWidth={1.25} className="mx-auto mb-3 text-n-300" />
-            <p className="font-body text-n-500 mb-4">{error}</p>
-            <Button variant="secondary" icon={RefreshCw} onClick={carregar}>Tentar novamente</Button>
-          </div>
+        <Card padding="p-0">
+          <EmptyState
+            icon={CloudRain}
+            title={error}
+            action={<Button variant="secondary" icon={RefreshCw} onClick={carregar}>Tentar novamente</Button>}
+          />
         </Card>
       ) : (
         <div className="space-y-5">
@@ -232,7 +233,7 @@ export default function Weather() {
                   <div className="space-y-2">
                     {selectedTours.map(r => (
                       <div key={r.id} className={`flex items-center gap-3 px-3 py-2.5 rounded-sm border ${
-                        isBadWeather(selectedDay) ? 'bg-red-50 border-red-100' : 'bg-n-50 border-n-200'
+                        isBadWeather(selectedDay) ? 'bg-[var(--error-light)] border-[var(--error-light)]' : 'bg-n-50 border-n-200'
                       }`}>
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-body font-semibold text-n-900 truncate">
@@ -250,7 +251,7 @@ export default function Weather() {
                           <a
                             href={`https://wa.me/${(r.customers.whatsapp || r.customers.phone).replace(/\D/g, '')}`}
                             target="_blank" rel="noreferrer"
-                            className="text-xs font-body px-2 py-1 bg-[#25D366] text-white rounded-xs hover:bg-[#1ebe5a] transition-colors shrink-0"
+                            className="text-xs font-body px-2 py-1 bg-[var(--success)] text-white rounded-xs hover:opacity-90 transition-opacity shrink-0"
                           >
                             WhatsApp
                           </a>
@@ -265,29 +266,29 @@ export default function Weather() {
 
           {/* Summary row */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-            <div className="bg-white border border-n-200 rounded-md px-4 py-3">
+            <Card padding="px-4 py-3">
               <p className="font-display font-bold text-xl text-n-900">
                 {forecast[0]?.tempMax ?? '—'}°
               </p>
               <p className="text-xs font-body text-n-500">Max. hoje</p>
-            </div>
-            <div className="bg-white border border-n-200 rounded-md px-4 py-3">
+            </Card>
+            <Card padding="px-4 py-3">
               <p className="font-display font-bold text-xl text-n-900">
                 {Math.round(forecast.reduce((s, d) => s + d.precipitation, 0) * 10) / 10} mm
               </p>
               <p className="text-xs font-body text-n-500">Precipitacao total 7 dias</p>
-            </div>
-            <div className="bg-white border border-n-200 rounded-md px-4 py-3">
+            </Card>
+            <Card padding="px-4 py-3">
               <p className="font-display font-bold text-xl text-n-900">
                 {forecast.filter(d => !isBadWeather(d)).length}
               </p>
               <p className="text-xs font-body text-n-500">Dias sem mau tempo</p>
-            </div>
-            <div className={`border rounded-md px-4 py-3 ${conflicts.length > 0 ? 'bg-red-50 border-red-200' : 'bg-[#ECFDF5] border-green-200'}`}>
-              <p className={`font-display font-bold text-xl ${conflicts.length > 0 ? 'text-error' : 'text-[#1A7A4A]'}`}>
+            </Card>
+            <div className={`border rounded-md px-4 py-3 ${conflicts.length > 0 ? 'bg-[var(--error-light)] border-[var(--error)]' : 'bg-[var(--success-light)] border-[var(--success)]'}`}>
+              <p className={`font-display font-bold text-xl ${conflicts.length > 0 ? 'text-[var(--error)]' : 'text-[var(--success)]'}`}>
                 {conflicts.length}
               </p>
-              <p className={`text-xs font-body ${conflicts.length > 0 ? 'text-red-600' : 'text-[#1A7A4A]'}`}>
+              <p className={`text-xs font-body ${conflicts.length > 0 ? 'text-[var(--error)]' : 'text-[var(--success)]'}`}>
                 {conflicts.length === 0 ? 'Sem conflitos meteorologicos' : 'Conflito(s) com tours'}
               </p>
             </div>

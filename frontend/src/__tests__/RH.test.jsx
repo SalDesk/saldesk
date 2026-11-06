@@ -217,7 +217,7 @@ describe('RH', () => {
     const html = container.cloneNode(true);
     html.querySelectorAll('span.inline-flex').forEach(n => n.remove());
     expect(html.innerHTML).not.toMatch(/amber-/);
-    expect(html.innerHTML).not.toMatch(/#[0-9a-fA-F]{3,8}/);
+    expect(html.innerHTML).not.toMatch(/#[0-9a-fA-F]{3,8}/);
   });
 
   it('sem_itens_a_expirar_nenhuma_classe_amber_na_pagina', async () => {
