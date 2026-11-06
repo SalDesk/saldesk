@@ -13,6 +13,8 @@ import LoadingSpinner from '../components/shared/LoadingSpinner';
 import Input, { Textarea, Select } from '../components/ui/Input';
 import ImageUploader from '../components/shared/ImageUploader';
 import ConectRow from '../components/shared/ConectRow';
+import FilterChips from '../components/ui/FilterChips';
+import EmptyState from '../components/ui/EmptyState';
 
 const CATEGORIES = [
   { key: 'entradas',         label: 'Entradas'          },
@@ -154,7 +156,7 @@ function DishForm({ dish, onSave, onCancel, loading, error }) {
         <div className="flex flex-wrap gap-2">
           {ALLERGENS.map(a => (
             <label key={a.key} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-sm border text-xs font-body font-medium cursor-pointer transition-colors select-none ${
-              form.allergens.includes(a.key) ? 'bg-[#FEF2F2] border-[#FCA5A5] text-error' : 'bg-n-50 border-n-300 text-n-600 hover:border-n-400'
+              form.allergens.includes(a.key) ? 'bg-[var(--error-light)] border-n-300 text-[var(--error)]' : 'bg-n-50 border-n-300 text-n-600 hover:border-n-400'
             }`}>
               <input type="checkbox" className="sr-only" checked={form.allergens.includes(a.key)} onChange={() => toggle('allergens', a.key)} />
               {a.label}
@@ -169,7 +171,7 @@ function DishForm({ dish, onSave, onCancel, loading, error }) {
         <div className="flex flex-wrap gap-2">
           {DIETS.map(d => (
             <label key={d.key} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-sm border text-xs font-body font-medium cursor-pointer transition-colors select-none ${
-              form.diets.includes(d.key) ? 'bg-[#ECFDF5] border-[#BBF7D0] text-[#1A7A4A]' : 'bg-n-50 border-n-300 text-n-600 hover:border-n-400'
+              form.diets.includes(d.key) ? 'bg-[var(--success-light)] border-n-300 text-[var(--success)]' : 'bg-n-50 border-n-300 text-n-600 hover:border-n-400'
             }`}>
               <input type="checkbox" className="sr-only" checked={form.diets.includes(d.key)} onChange={() => toggle('diets', d.key)} />
               {d.label}
@@ -283,9 +285,9 @@ function TastingMenuForm({ menu, onSave, onCancel, loading }) {
         <div className="space-y-2">
           {form.items.map((item, i) => (
             <div key={i} className="flex gap-2 items-center">
-              <input type="text" value={item.name_pt} onChange={e => setItem(i, 'name_pt', e.target.value)}
-                placeholder="Nome do prato"
-                className="flex-1 h-8 rounded-md border border-n-200 bg-n-50 px-3 text-sm font-body text-n-900 focus:outline-none focus:ring-2 focus:ring-ocean-700" />
+              <div className="flex-1">
+                <Input type="text" value={item.name_pt} onChange={e => setItem(i, 'name_pt', e.target.value)} placeholder="Nome do prato" />
+              </div>
               <button type="button" onClick={() => removeItem(i)} className="p-1 text-n-400 hover:text-error">
                 <X size={14} strokeWidth={1.75} />
               </button>
@@ -337,12 +339,12 @@ function DishCard({ dish, onEdit, onDelete, onToggleAvailable, onSubmitConect })
         {(meta.allergens?.length > 0 || meta.diets?.length > 0) && (
           <div className="flex flex-wrap gap-1 mb-2">
             {meta.diets?.slice(0, 2).map(d => (
-              <span key={d} className="text-[9px] font-mono uppercase tracking-wide px-1.5 py-0.5 rounded bg-[#ECFDF5] text-[#1A7A4A]">
+              <span key={d} className="text-[9px] font-mono uppercase tracking-wide px-1.5 py-0.5 rounded bg-[var(--success-light)] text-[var(--success)]">
                 {DIETS.find(x => x.key === d)?.label || d}
               </span>
             ))}
             {meta.allergens?.slice(0, 2).map(a => (
-              <span key={a} className="text-[9px] font-mono uppercase tracking-wide px-1.5 py-0.5 rounded bg-[#FEF2F2] text-error">
+              <span key={a} className="text-[9px] font-mono uppercase tracking-wide px-1.5 py-0.5 rounded bg-[var(--error-light)] text-[var(--error)]">
                 {ALLERGENS.find(x => x.key === a)?.label || a}
               </span>
             ))}
@@ -359,14 +361,15 @@ function DishCard({ dish, onEdit, onDelete, onToggleAvailable, onSubmitConect })
           <span className="font-display font-bold text-sm text-ocean-700">€{Number(dish.base_price || 0).toFixed(2)}</span>
           <div className="flex items-center gap-1">
             <button onClick={() => onToggleAvailable(dish)}
-              className={`p-1.5 rounded transition-colors ${available ? 'text-[#1A7A4A] hover:bg-[#ECFDF5]' : 'text-n-400 hover:bg-n-100'}`}
+              aria-label="Alternar disponibilidade"
+              className={`p-1.5 rounded transition-colors ${available ? 'text-[var(--success)] hover:bg-[var(--success-light)]' : 'text-n-400 hover:bg-n-100'}`}
               title={available ? 'Disponivel — clique para desactivar' : 'Indisponivel — clique para activar'}>
               <CheckCircle size={13} strokeWidth={1.75} />
             </button>
-            <button onClick={() => onEdit(dish)} className="p-1.5 rounded text-n-400 hover:text-ocean-700 hover:bg-ocean-50 transition-colors">
+            <button onClick={() => onEdit(dish)} aria-label="Editar" className="p-1.5 rounded text-n-400 hover:text-ocean-700 hover:bg-ocean-50 transition-colors">
               <Pencil size={13} strokeWidth={1.75} />
             </button>
-            <button onClick={() => onDelete(dish)} className="p-1.5 rounded text-n-400 hover:text-error hover:bg-red-50 transition-colors">
+            <button onClick={() => onDelete(dish)} aria-label="Eliminar" className="p-1.5 rounded text-n-400 hover:text-error hover:bg-[var(--error-light)] transition-colors">
               <Trash2 size={13} strokeWidth={1.75} />
             </button>
           </div>
@@ -491,39 +494,30 @@ export default function MenuDigital() {
       />
 
       {/* Category tabs */}
-      <div className="flex gap-1 mb-6 overflow-x-auto pb-1">
-        <button
-          onClick={() => setActiveTab('all')}
-          className={`px-3 py-1.5 rounded-full text-xs font-mono font-medium transition-colors whitespace-nowrap ${
-            activeTab === 'all' ? 'bg-ocean-700 text-white' : 'bg-n-100 text-n-600 hover:bg-n-200'
-          }`}
-        >
-          Todos ({dishes.length})
-        </button>
-        {CATEGORIES.map(c => {
-          const count = dishes.filter(u => parseDishMeta(u).category === c.key).length;
-          return (
-            <button
-              key={c.key}
-              onClick={() => setActiveTab(c.key)}
-              className={`px-3 py-1.5 rounded-full text-xs font-mono font-medium transition-colors whitespace-nowrap ${
-                activeTab === c.key ? 'bg-ocean-700 text-white' : 'bg-n-100 text-n-600 hover:bg-n-200'
-              }`}
-            >
-              {c.label} ({count})
-            </button>
-          );
-        })}
+      <div className="mb-6">
+        <FilterChips
+          options={[
+            { value: 'all', label: `Todos (${dishes.length})` },
+            ...CATEGORIES.map(c => ({
+              value: c.key,
+              label: `${c.label} (${dishes.filter(u => parseDishMeta(u).category === c.key).length})`,
+            })),
+          ]}
+          value={activeTab}
+          onChange={setActiveTab}
+        />
       </div>
 
       {/* Dishes grid */}
       {loading ? (
         <div className="flex justify-center py-20"><LoadingSpinner size={32} /></div>
       ) : filtered.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-20 text-n-400">
-          <ChefHat size={40} strokeWidth={1.25} className="mb-3" />
-          <p className="font-body text-sm">Nenhum prato nesta categoria.</p>
-          <Button icon={Plus} className="mt-4" onClick={() => { setModalType('dish'); setModal('create'); }}>Adicionar prato</Button>
+        <div className="bg-white rounded-md border border-n-200 shadow-sm mb-8">
+          <EmptyState
+            icon={ChefHat}
+            title="Nenhum prato nesta categoria."
+            action={<Button icon={Plus} onClick={() => { setModalType('dish'); setModal('create'); }}>Adicionar prato</Button>}
+          />
         </div>
       ) : (
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 mb-8">
@@ -569,11 +563,13 @@ export default function MenuDigital() {
                   </div>
                   <div className="flex gap-1 shrink-0">
                     <button onClick={() => { setModalType('tasting'); setModal(t); }}
+                      aria-label="Editar menu"
                       className="p-1.5 rounded text-n-400 hover:text-ocean-700 hover:bg-ocean-50 transition-colors">
                       <Pencil size={13} strokeWidth={1.75} />
                     </button>
                     <button onClick={() => setDeleteTarget(t)}
-                      className="p-1.5 rounded text-n-400 hover:text-error hover:bg-red-50 transition-colors">
+                      aria-label="Eliminar menu"
+                      className="p-1.5 rounded text-n-400 hover:text-error hover:bg-[var(--error-light)] transition-colors">
                       <Trash2 size={13} strokeWidth={1.75} />
                     </button>
                   </div>
@@ -597,18 +593,14 @@ export default function MenuDigital() {
               <div className="flex items-center gap-2 bg-n-50 border border-n-200 rounded-md px-3 py-2">
                 <Link size={12} strokeWidth={1.75} className="text-n-400 shrink-0" />
                 <span className="text-xs font-mono text-n-700 truncate flex-1">{menuUrl}</span>
-                <button onClick={copyMenuUrl} className="p-1 text-n-400 hover:text-ocean-700 transition-colors shrink-0">
-                  {copied ? <CheckCircle size={13} strokeWidth={1.75} className="text-[#1A7A4A]" /> : <Copy size={13} strokeWidth={1.75} />}
+                <button onClick={copyMenuUrl} aria-label="Copiar ligacao" className="p-1 text-n-400 hover:text-ocean-700 transition-colors shrink-0">
+                  {copied ? <CheckCircle size={13} strokeWidth={1.75} className="text-[var(--success)]" /> : <Copy size={13} strokeWidth={1.75} />}
                 </button>
               </div>
             </div>
-            <button
-              onClick={downloadQrCode}
-              className="flex items-center gap-2 px-4 py-2 rounded-md bg-ocean-700 text-white text-sm font-body hover:bg-ocean-500 transition-colors whitespace-nowrap shrink-0"
-            >
-              <QrCode size={14} strokeWidth={1.75} />
+            <Button icon={QrCode} onClick={downloadQrCode} className="shrink-0">
               Descarregar QR Code
-            </button>
+            </Button>
           </div>
         ) : (
           <p className="text-sm font-body text-n-400">Configure o link do restaurante nas Definicoes para gerar o QR Code.</p>
