@@ -1,4 +1,5 @@
 import { useMemo, useRef } from 'react';
+import reservationCoversDay from './reservationCoversDay';
 
 const STATUS_COLORS = {
   confirmed:   'bg-ocean-700 text-white',
@@ -129,7 +130,7 @@ export default function CalendarView({
                 {visibleUnits.map((unit) => {
                   const isBlocked   = blockedByUnit[unit.id]?.has(dateStr);
                   const reservation = reservationsByUnit[unit.id]?.find(
-                    (r) => r.check_in <= dateStr && (r.check_out > dateStr || r.check_in === r.check_out)
+                    (r) => reservationCoversDay(r, dateStr)
                   );
                   const isDragging = reservation?.id === draggingId;
 

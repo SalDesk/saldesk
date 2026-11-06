@@ -13,6 +13,7 @@ import Button from '../components/ui/Button';
 import Modal from '../components/ui/Modal';
 import Input, { Select } from '../components/ui/Input';
 import CalendarView from '../components/calendar/CalendarView';
+import reservationCoversDay from '../components/calendar/reservationCoversDay';
 import LoadingSpinner from '../components/shared/LoadingSpinner';
 
 const MESES_PT = ['Janeiro','Fevereiro','Marco','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
@@ -250,7 +251,7 @@ export default function Calendar() {
   const weekDays = useMemo(() => getWeekDays(weekStr), [weekStr]);
 
   function getResForCell(unitId, dateStr) {
-    return resByUnit[unitId]?.find(r => r.check_in <= dateStr && (r.check_out > dateStr || r.check_in === r.check_out));
+    return resByUnit[unitId]?.find(r => reservationCoversDay(r, dateStr));
   }
 
   function getSlotsForCell(unit, dateStr) {
