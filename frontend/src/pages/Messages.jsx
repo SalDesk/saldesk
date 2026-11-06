@@ -15,6 +15,7 @@ import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
 import Modal from '../components/ui/Modal';
 import LoadingSpinner from '../components/shared/LoadingSpinner';
+import EmptyState from '../components/ui/EmptyState';
 
 function formatTime(d) {
   if (!d) return '';
@@ -93,7 +94,7 @@ function ContactAvatar({ contact, online = false, size = 36 }) {
         </div>
       )}
       {contact.type === 'staff' && (
-        <span className={`absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-white ${online ? 'bg-green-500' : 'bg-n-300'}`} />
+        <span className={`absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-white ${online ? 'bg-[var(--success)]' : 'bg-n-300'}`} />
       )}
     </div>
   );
@@ -118,7 +119,7 @@ function ContactRow({ contact, isOnline, unread, isActive, onClick }) {
         </div>
         <p className={`text-xs font-body truncate mt-0.5 ${hasUnread ? 'font-bold text-n-700' : 'text-n-400'}`}>
           {contact.type === 'staff' && isOnline ? (
-            <span className="text-green-600">Online</span>
+            <span className="text-[var(--success)]">Online</span>
           ) : contact.sublabel}
         </p>
       </div>
@@ -393,12 +394,12 @@ export default function Messages() {
           <div className="px-3 py-2.5 border-b border-n-100">
             <div className="relative">
               <Search size={13} strokeWidth={1.75} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-n-400 pointer-events-none" />
-              <input
+              <Input
                 type="text"
                 value={search}
                 onChange={e => setSearch(e.target.value)}
                 placeholder="Pesquisar..."
-                className="w-full h-8 pl-8 pr-3 rounded-sm border border-n-200 text-xs font-body bg-n-50 focus:outline-none focus:bg-white focus:ring-1 focus:ring-ocean-300 transition-colors"
+                className="pl-8"
               />
             </div>
           </div>
@@ -448,11 +449,8 @@ export default function Messages() {
         {/* Chat panel */}
         <div className={`flex-1 flex-col overflow-hidden ${showChat ? 'flex' : 'hidden md:flex'}`}>
           {!selectedContact ? (
-            <div className="flex-1 flex items-center justify-center text-n-400">
-              <div className="text-center">
-                <MessageCircle size={36} strokeWidth={1.25} className="mx-auto mb-2 text-n-300" />
-                <p className="text-sm font-body">Seleccione uma conversa</p>
-              </div>
+            <div className="flex-1 flex items-center justify-center">
+              <EmptyState icon={MessageCircle} title="Seleccione uma conversa" />
             </div>
           ) : (
             <>
@@ -481,6 +479,7 @@ export default function Messages() {
                   <div className="flex items-center gap-1 shrink-0 bg-n-100 rounded-sm p-0.5">
                     <button
                       type="button"
+                      aria-pressed={guestChannel === 'internal'}
                       onClick={() => setGuestChannel('internal')}
                       title="Conversa do chat do site"
                       className={`flex items-center gap-1 px-2 py-1 rounded-xs text-xs font-body font-semibold transition-colors ${guestChannel === 'internal' ? 'bg-white text-ocean-700 shadow-sm' : 'text-n-500 hover:text-n-700'}`}
@@ -490,6 +489,7 @@ export default function Messages() {
                     <button
                       type="button"
                       disabled={!selectedContact.email}
+                      aria-pressed={guestChannel === 'email'}
                       onClick={() => setGuestChannel('email')}
                       title={selectedContact.email || 'Sem email'}
                       className={`flex items-center gap-1 px-2 py-1 rounded-xs text-xs font-body font-semibold transition-colors disabled:opacity-30 disabled:cursor-not-allowed ${guestChannel === 'email' ? 'bg-white text-ocean-700 shadow-sm' : 'text-n-500 hover:text-n-700'}`}
@@ -499,6 +499,7 @@ export default function Messages() {
                     <button
                       type="button"
                       disabled={!selectedContact.phone}
+                      aria-pressed={guestChannel === 'whatsapp'}
                       onClick={() => setGuestChannel('whatsapp')}
                       title={selectedContact.phone || 'Sem telefone'}
                       className={`flex items-center gap-1 px-2 py-1 rounded-xs text-xs font-body font-semibold transition-colors disabled:opacity-30 disabled:cursor-not-allowed ${guestChannel === 'whatsapp' ? 'bg-white text-ocean-700 shadow-sm' : 'text-n-500 hover:text-n-700'}`}
@@ -527,7 +528,7 @@ export default function Messages() {
                         )}
                         <p className="leading-relaxed whitespace-pre-wrap break-words">{msg.content}</p>
                         {msg.channel && msg.channel !== 'internal' && (
-                          <p className={`flex items-center gap-1 text-xs mt-1 ${msg.delivery_status === 'failed' ? 'text-red-300' : 'opacity-60'}`}>
+                          <p className={`flex items-center gap-1 text-xs mt-1 ${msg.delivery_status === 'failed' ? 'text-[var(--error-light)]' : 'opacity-60'}`}>
                             {msg.channel === 'email' ? <Mail size={11} strokeWidth={1.75} /> : <MessageSquare size={11} strokeWidth={1.75} />}
                             {msg.delivery_status === 'failed' ? (
                               <span className="flex items-center gap-1"><AlertTriangle size={11} strokeWidth={2} /> Falha ao entregar</span>
@@ -582,16 +583,17 @@ export default function Messages() {
                       </button>
                     </>
                   )}
-                  <input
-                    className="flex-1 h-9 px-3 rounded-sm border border-n-300 text-sm font-body bg-n-50 focus:outline-none focus:ring-2 focus:ring-ocean-300 focus:border-ocean-700 focus:bg-white transition-colors"
-                    value={text}
-                    onChange={handleTextChange}
-                    placeholder={
-                      selectedContact.type === 'guest' && guestChannel !== 'internal'
-                        ? `Escrever mensagem por ${guestChannel === 'email' ? 'email' : 'WhatsApp'}...`
-                        : 'Escrever mensagem...'
-                    }
-                  />
+                  <div className="flex-1">
+                    <Input
+                      value={text}
+                      onChange={handleTextChange}
+                      placeholder={
+                        selectedContact.type === 'guest' && guestChannel !== 'internal'
+                          ? `Escrever mensagem por ${guestChannel === 'email' ? 'email' : 'WhatsApp'}...`
+                          : 'Escrever mensagem...'
+                      }
+                    />
+                  </div>
                   <Button
                     type="submit"
                     loading={sending}

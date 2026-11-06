@@ -8,6 +8,8 @@ import Button from '../components/ui/Button';
 import Modal from '../components/ui/Modal';
 import Input, { Select, Textarea } from '../components/ui/Input';
 import LoadingSpinner from '../components/shared/LoadingSpinner';
+import FilterChips from '../components/ui/FilterChips';
+import EmptyState from '../components/ui/EmptyState';
 
 const PAGE_SIZE = 10;
 
@@ -271,63 +273,62 @@ export default function Reviews() {
       {/* Filters */}
       <div className="flex flex-wrap gap-2 items-center mb-4">
         {/* Search */}
-        <div className="relative">
-          <Search size={13} strokeWidth={1.75} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-n-400" />
-          <input value={search} onChange={e => { setSearch(e.target.value); setPage(1); }}
-            placeholder="Pesquisar..."
-            className="h-8 pl-8 pr-3 text-sm font-body border border-n-200 rounded bg-white placeholder:text-n-400 focus:outline-none focus:border-ocean-700 w-44" />
+        <div className="w-36">
+          <Input value={search} onChange={e => { setSearch(e.target.value); setPage(1); }} placeholder="Pesquisar..." />
         </div>
 
         {/* Star filter */}
-        <div className="flex gap-0.5 bg-n-100 rounded p-0.5">
-          {[0, 5, 4, 3, 2, 1].map(s => (
-            <button key={s} onClick={() => { setFilterStar(s); setPage(1); }}
-              className={`px-2.5 py-1 rounded text-xs font-mono font-semibold transition-colors ${filterStar === s ? 'bg-white text-ocean-700 shadow-sm' : 'text-n-500 hover:text-n-700'}`}>
-              {s === 0 ? 'Todas' : `${s}★`}
-            </button>
-          ))}
-        </div>
+        <FilterChips
+          options={[0, 5, 4, 3, 2, 1].map(s => ({ value: s, label: s === 0 ? 'Todas' : `${s}★` }))}
+          value={filterStar}
+          onChange={s => { setFilterStar(s); setPage(1); }}
+        />
 
         {/* Unit filter */}
         {units.length > 0 && (
-          <select value={filterUnit} onChange={e => { setFilterUnit(e.target.value); setPage(1); }}
-            className="h-8 px-2 text-xs font-body border border-n-200 rounded bg-white text-n-700 focus:outline-none">
-            <option value="">Todos os servicos</option>
-            {units.map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
-          </select>
+          <div className="w-40">
+            <Select value={filterUnit} onChange={e => { setFilterUnit(e.target.value); setPage(1); }}>
+              <option value="">Todos os servicos</option>
+              {units.map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
+            </Select>
+          </div>
         )}
 
         {/* Reply filter */}
-        <select value={filterReply} onChange={e => { setFilterReply(e.target.value); setPage(1); }}
-          className="h-8 px-2 text-xs font-body border border-n-200 rounded bg-white text-n-700 focus:outline-none">
-          <option value="all">Todas</option>
-          <option value="pending">Sem resposta</option>
-          <option value="replied">Respondidas</option>
-        </select>
+        <div className="w-32">
+          <Select value={filterReply} onChange={e => { setFilterReply(e.target.value); setPage(1); }}>
+            <option value="all">Todas</option>
+            <option value="pending">Sem resposta</option>
+            <option value="replied">Respondidas</option>
+          </Select>
+        </div>
 
         {/* Sort */}
-        <select value={filterSort} onChange={e => setFilterSort(e.target.value)}
-          className="h-8 px-2 text-xs font-body border border-n-200 rounded bg-white text-n-700 focus:outline-none ml-auto">
-          <option value="recent">Mais recentes</option>
-          <option value="oldest">Mais antigas</option>
-          <option value="best">Melhor nota</option>
-          <option value="worst">Pior nota</option>
-        </select>
+        <div className="w-32">
+          <Select value={filterSort} onChange={e => setFilterSort(e.target.value)}>
+            <option value="recent">Mais recentes</option>
+            <option value="oldest">Mais antigas</option>
+            <option value="best">Melhor nota</option>
+            <option value="worst">Pior nota</option>
+          </Select>
+        </div>
 
-        <span className="text-xs font-body text-n-400">{filtered.length} resultado(s)</span>
+        <span className="text-xs font-body text-n-400 ml-auto">{filtered.length} resultado(s)</span>
       </div>
 
       {/* List */}
       {filtered.length === 0 ? (
-        <div className="bg-white border border-n-200 rounded-md flex flex-col items-center py-14 text-n-400">
-          <Star size={36} strokeWidth={1.25} className="mb-3" />
-          <p className="font-body text-sm">Nenhuma avaliacao encontrada</p>
-          {(filterStar > 0 || filterUnit || filterReply !== 'all' || search) && (
-            <button onClick={() => { setFilterStar(0); setFilterUnit(''); setFilterReply('all'); setSearch(''); setPage(1); }}
-              className="text-xs font-body text-ocean-700 hover:underline mt-2">
-              Limpar filtros
-            </button>
-          )}
+        <div className="bg-white border border-n-200 rounded-md">
+          <EmptyState
+            icon={Star}
+            title="Nenhuma avaliacao encontrada"
+            action={(filterStar > 0 || filterUnit || filterReply !== 'all' || search) && (
+              <Button variant="ghost" size="sm"
+                onClick={() => { setFilterStar(0); setFilterUnit(''); setFilterReply('all'); setSearch(''); setPage(1); }}>
+                Limpar filtros
+              </Button>
+            )}
+          />
         </div>
       ) : (
         <div className="space-y-3">
