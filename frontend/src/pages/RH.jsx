@@ -4,6 +4,7 @@ import { Check, X, Calendar, FileText, Award, Users, AlertTriangle } from 'lucid
 import { getHrOverview, updateLeaveStatus } from '../services/staffService';
 import { useToast } from '../store/toastStore';
 import PageHeader from '../components/layout/PageHeader';
+import Card from '../components/ui/Card';
 import LoadingSpinner from '../components/shared/LoadingSpinner';
 import ExpiryBadge from '../components/shared/ExpiryBadge';
 
@@ -18,15 +19,17 @@ function daysBetween(a, b) {
 
 function StatCard({ Icon, value, label, tone }) {
   return (
-    <div className="bg-white border border-n-200 rounded-md p-4 flex items-center gap-3">
-      <div className={`w-10 h-10 rounded-md flex items-center justify-center shrink-0 ${tone === 'warn' ? 'bg-amber-50 text-amber-600' : 'bg-ocean-50 text-ocean-700'}`}>
-        <Icon size={18} strokeWidth={1.75} />
+    <Card padding="p-4">
+      <div className="flex items-center gap-3">
+        <div className={`w-10 h-10 rounded-md flex items-center justify-center shrink-0 ${tone === 'warn' ? 'bg-[var(--warning-light)] text-[var(--warning)]' : 'bg-ocean-50 text-ocean-700'}`}>
+          <Icon size={18} strokeWidth={1.75} />
+        </div>
+        <div>
+          <p className="font-display font-bold text-xl text-n-900">{value}</p>
+          <p className="text-xs font-body text-n-500">{label}</p>
+        </div>
       </div>
-      <div>
-        <p className="font-display font-bold text-xl text-n-900">{value}</p>
-        <p className="text-xs font-body text-n-500">{label}</p>
-      </div>
-    </div>
+    </Card>
   );
 }
 
@@ -81,19 +84,21 @@ export default function RH() {
           {!pending.length && <p className="text-sm font-body text-n-500">Sem pedidos pendentes.</p>}
           <div className="space-y-2">
             {pending.map(l => (
-              <div key={l.id} className="flex items-center justify-between gap-3 bg-white border border-n-200 rounded-md px-4 py-3">
-                <div className="min-w-0">
-                  <p className="font-body font-semibold text-sm text-n-900 truncate">{l.staff_name}</p>
-                  <p className="text-xs font-body text-n-500">
-                    {LEAVE_TYPE_LABEL[l.type] || l.type} · {l.start_date} → {l.end_date}
-                    <span className="text-n-400"> ({daysBetween(l.start_date, l.end_date)} dias)</span>
-                  </p>
+              <Card key={l.id} padding="px-4 py-3">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="font-body font-semibold text-sm text-n-900 truncate">{l.staff_name}</p>
+                    <p className="text-xs font-body text-n-500">
+                      {LEAVE_TYPE_LABEL[l.type] || l.type} · {l.start_date} → {l.end_date}
+                      <span className="text-n-400"> ({daysBetween(l.start_date, l.end_date)} dias)</span>
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <button onClick={() => changeStatus(l.staff_id, l.id, 'approved')} className="text-ocean-700 hover:text-ocean-500" aria-label="Aprovar"><Check size={16} strokeWidth={2} /></button>
+                    <button onClick={() => changeStatus(l.staff_id, l.id, 'rejected')} className="text-[var(--error)] hover:opacity-70" aria-label="Rejeitar"><X size={16} strokeWidth={2} /></button>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2 shrink-0">
-                  <button onClick={() => changeStatus(l.staff_id, l.id, 'approved')} className="text-ocean-700 hover:text-ocean-500" aria-label="Aprovar"><Check size={16} strokeWidth={2} /></button>
-                  <button onClick={() => changeStatus(l.staff_id, l.id, 'rejected')} className="text-error hover:opacity-70" aria-label="Rejeitar"><X size={16} strokeWidth={2} /></button>
-                </div>
-              </div>
+              </Card>
             ))}
           </div>
         </section>
@@ -103,16 +108,18 @@ export default function RH() {
           {!expiring.length && <p className="text-sm font-body text-n-500">Nada a expirar nos proximos 30 dias.</p>}
           <div className="space-y-2">
             {expiring.map(item => (
-              <div key={`${item.kind}-${item.id}`} className="flex items-center justify-between gap-3 bg-white border border-n-200 rounded-md px-4 py-3">
-                <div className="flex items-center gap-3 min-w-0">
-                  {item.kind === 'document' ? <FileText size={16} strokeWidth={1.75} className="text-ocean-700 shrink-0" /> : <Award size={16} strokeWidth={1.75} className="text-sand-600 shrink-0" />}
-                  <div className="min-w-0">
-                    <p className="font-body font-semibold text-sm text-n-900 truncate">{item.name}</p>
-                    <p className="text-xs font-body text-n-500 truncate">{item.staff_name}</p>
+              <Card key={`${item.kind}-${item.id}`} padding="px-4 py-3">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-3 min-w-0">
+                    {item.kind === 'document' ? <FileText size={16} strokeWidth={1.75} className="text-ocean-700 shrink-0" /> : <Award size={16} strokeWidth={1.75} className="text-[var(--sand-600)] shrink-0" />}
+                    <div className="min-w-0">
+                      <p className="font-body font-semibold text-sm text-n-900 truncate">{item.name}</p>
+                      <p className="text-xs font-body text-n-500 truncate">{item.staff_name}</p>
+                    </div>
                   </div>
+                  <ExpiryBadge date={item.expiry_date} />
                 </div>
-                <ExpiryBadge date={item.expiry_date} />
-              </div>
+              </Card>
             ))}
           </div>
         </section>
