@@ -11,6 +11,7 @@ import Input, { Textarea } from '../components/ui/Input';
 import Card from '../components/ui/Card';
 import Table from '../components/ui/Table';
 import Modal from '../components/ui/Modal';
+import FilterChips from '../components/ui/FilterChips';
 import CustomerDetail from '../components/crm/CustomerDetail';
 import LoadingSpinner from '../components/shared/LoadingSpinner';
 
@@ -350,7 +351,7 @@ export default function Customers() {
       />
 
       {importMsg && (
-        <div className="mb-4 px-4 py-2.5 bg-[#ECFDF5] border border-green-200 rounded-md text-sm font-body text-[#1A7A4A]">
+        <div className="mb-4 px-4 py-2.5 bg-[var(--success-light)] border border-n-200 rounded-md text-sm font-body text-[var(--success)]">
           {importMsg}
         </div>
       )}
@@ -365,16 +366,12 @@ export default function Customers() {
       </div>
 
       {/* Segmentacao */}
-      <div className="flex gap-2 flex-wrap mb-4">
-        {SEGMENTS.map(({ key, label, Icon }) => (
-          <button key={key} onClick={() => setSegment(key)}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-sm text-xs font-body font-semibold transition-colors ${
-              segment === key ? 'bg-ocean-700 text-white' : 'bg-white border border-n-200 text-n-600 hover:border-ocean-300'
-            }`}>
-            <Icon size={12} strokeWidth={1.75} />
-            {label}
-          </button>
-        ))}
+      <div className="mb-4">
+        <FilterChips
+          options={SEGMENTS.map(({ key, label }) => ({ value: key, label }))}
+          value={segment}
+          onChange={setSegment}
+        />
       </div>
 
       {/* Pesquisa e paises */}
@@ -386,18 +383,11 @@ export default function Customers() {
           <Button type="submit" icon={Search} variant="secondary" size="md" />
         </form>
         {countries.length > 0 && (
-          <div className="flex gap-2 flex-wrap items-center">
-            <button onClick={() => handleCountryFilter('')}
-              className={`px-3 py-1.5 rounded-sm text-xs font-body font-semibold transition-colors ${!countryFilter ? 'bg-ocean-700 text-white' : 'bg-white border border-n-200 text-n-600 hover:border-ocean-300'}`}>
-              Todos
-            </button>
-            {countries.slice(0, 8).map(c => (
-              <button key={c} onClick={() => handleCountryFilter(c)}
-                className={`px-3 py-1.5 rounded-sm text-xs font-body font-semibold transition-colors ${countryFilter === c ? 'bg-ocean-700 text-white' : 'bg-white border border-n-200 text-n-600 hover:border-ocean-300'}`}>
-                {c}
-              </button>
-            ))}
-          </div>
+          <FilterChips
+            options={[{ value: '', label: 'Todos' }, ...countries.slice(0, 8).map(c => ({ value: c, label: c }))]}
+            value={countryFilter}
+            onChange={handleCountryFilter}
+          />
         )}
       </div>
 
