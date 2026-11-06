@@ -11,16 +11,20 @@ import PageHeader from '../components/layout/PageHeader';
 import Badge from '../components/ui/Badge';
 import LoadingSpinner from '../components/shared/LoadingSpinner';
 import Button from '../components/ui/Button';
+import Modal from '../components/ui/Modal';
+import FilterChips from '../components/ui/FilterChips';
+import EmptyState from '../components/ui/EmptyState';
+import { Select } from '../components/ui/Input';
 
 /* Data local do dispositivo, nao UTC -- ver nota em BeachSeller.jsx */
 const TODAY = new Date().toLocaleDateString('en-CA');
 
 const HK = {
-  clean:      { label: 'Limpo',      badge: 'confirmed', dot: 'bg-[#1A7A4A]', bg: 'bg-[#ECFDF5]' },
-  dirty:      { label: 'Sujo',       badge: 'cancelled', dot: 'bg-error',     bg: 'bg-[#FEF2F2]' },
-  cleaning:   { label: 'Em limpeza', badge: 'info',      dot: 'bg-ocean-500', bg: 'bg-ocean-50'   },
-  inspection: { label: 'Inspeccao',  badge: 'pending',   dot: 'bg-[#F59E0B]', bg: 'bg-[#FFFBEB]' },
-  blocked:    { label: 'Bloqueado',  badge: 'default',   dot: 'bg-n-300',     bg: 'bg-n-50'       },
+  clean:      { label: 'Limpo',      badge: 'confirmed', dot: 'bg-[var(--success)]', bg: 'bg-[var(--success-light)]' },
+  dirty:      { label: 'Sujo',       badge: 'cancelled', dot: 'bg-[var(--error)]',   bg: 'bg-[var(--error-light)]'   },
+  cleaning:   { label: 'Em limpeza', badge: 'info',      dot: 'bg-ocean-500',        bg: 'bg-ocean-50'               },
+  inspection: { label: 'Inspeccao',  badge: 'pending',   dot: 'bg-[var(--warning)]', bg: 'bg-[var(--warning-light)]' },
+  blocked:    { label: 'Bloqueado',  badge: 'default',   dot: 'bg-n-300',            bg: 'bg-n-50'                   },
 };
 
 const CHECKLIST_DEFAULT = [
@@ -60,7 +64,7 @@ const PRIORITY_SORT = { double: 0, urgent: 1, occupied: 2, vacant: 3 };
 const PRIORITY_LABEL = { double: 'Saida + Entrada', urgent: 'Urgente', occupied: 'Ocupado', vacant: 'Vago' };
 const PRIORITY_CLS   = {
   double:   'text-error font-semibold',
-  urgent:   'text-[#B45309] font-medium',
+  urgent:   'text-[var(--warning)] font-medium',
   occupied: 'text-n-500',
   vacant:   'text-n-400',
 };
@@ -187,36 +191,27 @@ export default function Housekeeping() {
       />
 
       {/* Summary chips */}
-      <div className="flex flex-wrap gap-2 mb-6">
-        {[
-          { key: 'all',        label: `Todos (${enriched.length})`, dot: 'bg-n-400'        },
-          { key: 'dirty',      label: `Sujos (${summary.dirty})`,   dot: 'bg-error'        },
-          { key: 'cleaning',   label: `Limpeza (${summary.cleaning})`, dot: 'bg-ocean-500' },
-          { key: 'inspection', label: `Inspeccao (${summary.inspection})`, dot: 'bg-[#F59E0B]' },
-          { key: 'clean',      label: `Limpos (${summary.clean})`,  dot: 'bg-[#1A7A4A]'   },
-        ].map(({ key, label, dot }) => (
-          <button
-            key={key}
-            onClick={() => setFilterState(key)}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-body font-medium transition-colors ${
-              filterState === key
-                ? 'bg-ocean-700 border-ocean-700 text-white'
-                : 'bg-white border-n-200 text-n-600 hover:border-ocean-400'
-            }`}
-          >
-            <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${filterState === key ? 'bg-white' : dot}`} />
-            {label}
-          </button>
-        ))}
+      <div className="mb-6">
+        <FilterChips
+          options={[
+            { value: 'all',        label: `Todos (${enriched.length})` },
+            { value: 'dirty',      label: `Sujos (${summary.dirty})` },
+            { value: 'cleaning',   label: `Limpeza (${summary.cleaning})` },
+            { value: 'inspection', label: `Inspeccao (${summary.inspection})` },
+            { value: 'clean',      label: `Limpos (${summary.clean})` },
+          ]}
+          value={filterState}
+          onChange={setFilterState}
+        />
       </div>
 
       {/* Urgent alerts */}
       {enriched.filter(r => r.priority === 'double').length > 0 && (
-        <div className="flex items-start gap-3 px-4 py-3 bg-[#FEF2F2] border border-[#FCA5A5] rounded-md mb-4">
+        <div className="flex items-start gap-3 px-4 py-3 bg-[var(--error-light)] border border-n-200 rounded-md mb-4">
           <AlertTriangle size={15} strokeWidth={1.75} className="text-error shrink-0 mt-0.5" />
           <div>
             <p className="text-sm font-body font-semibold text-error">Quartos com saida e entrada no mesmo dia:</p>
-            <p className="text-xs font-body text-red-600">
+            <p className="text-xs font-body text-[var(--error)]">
               {enriched.filter(r => r.priority === 'double').map(r => r.unit.name).join(', ')}
             </p>
           </div>
@@ -275,28 +270,24 @@ export default function Housekeeping() {
                         </p>
 
                         {/* State selector */}
-                        <select
-                          value={hkState}
-                          onChange={e => changeState(u.id, e.target.value)}
-                          className="w-full text-xs font-body border border-n-200 rounded-sm px-2 py-1.5 bg-white text-n-700 mb-2 focus:outline-none focus:border-ocean-500"
-                        >
-                          {Object.entries(HK).map(([k, v]) => (
-                            <option key={k} value={k}>{v.label}</option>
-                          ))}
-                        </select>
+                        <div className="mb-2">
+                          <Select value={hkState} onChange={e => changeState(u.id, e.target.value)}>
+                            {Object.entries(HK).map(([k, v]) => (
+                              <option key={k} value={k}>{v.label}</option>
+                            ))}
+                          </Select>
+                        </div>
 
                         {/* Staff assignment */}
                         {staffList.length > 0 && (
-                          <select
-                            value={staff || ''}
-                            onChange={e => assignStaff(u.id, e.target.value || null)}
-                            className="w-full text-xs font-body border border-n-200 rounded-sm px-2 py-1.5 bg-white text-n-500 mb-2 focus:outline-none focus:border-ocean-500"
-                          >
-                            <option value="">Atribuir colaborador...</option>
-                            {staffList.map(s => (
-                              <option key={s.id} value={s.id}>{s.name}</option>
-                            ))}
-                          </select>
+                          <div className="mb-2">
+                            <Select value={staff || ''} onChange={e => assignStaff(u.id, e.target.value || null)}>
+                              <option value="">Atribuir colaborador...</option>
+                              {staffList.map(s => (
+                                <option key={s.id} value={s.id}>{s.name}</option>
+                              ))}
+                            </Select>
+                          </div>
                         )}
 
                         {/* Checklist progress */}
@@ -324,65 +315,51 @@ export default function Housekeeping() {
         })}
 
         {floors.length === 0 && (
-          <div className="flex flex-col items-center py-16 text-n-300">
-            <Sparkles size={32} strokeWidth={1.25} className="mb-3" />
-            <p className="text-sm font-body">Nenhum quarto encontrado</p>
+          <div className="bg-white rounded-md border border-n-200 shadow-sm">
+            <EmptyState icon={Sparkles} title="Nenhum quarto encontrado" />
           </div>
         )}
       </div>
 
       {/* Checklist modal */}
-      {checklistRoom && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
-          onClick={e => { if (e.target === e.currentTarget) setChecklistRoom(null); }}
-        >
-          <div className="bg-white rounded-xl border border-n-200 shadow-2xl w-full max-w-sm">
-            <div className="flex items-center gap-3 px-5 py-4 border-b border-n-100">
-              <Sparkles size={16} strokeWidth={1.75} className="text-ocean-700 shrink-0" />
-              <div className="flex-1 min-w-0">
-                <p className="font-display font-semibold text-sm text-n-900">{checklistRoom.name}</p>
-                <p className="text-xs font-body text-n-400">{checklistRoom.unit_type || '—'}</p>
-              </div>
-              <button onClick={() => setChecklistRoom(null)} className="p-1 text-n-400 hover:text-n-700 rounded">
-                <X size={16} strokeWidth={1.75} />
-              </button>
-            </div>
-
-            <div className="px-5 py-4 space-y-2">
-              {CHECKLIST_DEFAULT.map(item => {
-                const done = (checklists[checklistRoom.id] || []).includes(item);
-                return (
-                  <label key={item} className="flex items-center gap-3 cursor-pointer group">
-                    <button
-                      type="button"
-                      onClick={() => toggleChecklist(checklistRoom.id, item)}
-                      className="shrink-0 text-n-300 group-hover:text-ocean-700 transition-colors"
-                    >
-                      {done
-                        ? <CheckSquare size={18} strokeWidth={1.75} className="text-[#1A7A4A]" />
-                        : <Square      size={18} strokeWidth={1.75} />
-                      }
-                    </button>
-                    <span className={`text-sm font-body ${done ? 'line-through text-n-300' : 'text-n-700'}`}>
-                      {item}
-                    </span>
-                  </label>
-                );
-              })}
-            </div>
-
-            <div className="px-5 py-4 border-t border-n-100 flex gap-2">
-              <Button variant="secondary" className="flex-1" onClick={() => setChecklistRoom(null)}>
-                Fechar
-              </Button>
-              <Button className="flex-1" onClick={() => markComplete(checklistRoom)}>
-                Marcar como Limpo
-              </Button>
-            </div>
+      <Modal
+        open={!!checklistRoom}
+        onClose={() => setChecklistRoom(null)}
+        title={checklistRoom?.name || ''}
+        size="sm"
+        footer={
+          <>
+            <Button variant="secondary" onClick={() => setChecklistRoom(null)}>Fechar</Button>
+            <Button onClick={() => markComplete(checklistRoom)}>Marcar como Limpo</Button>
+          </>
+        }
+      >
+        {checklistRoom && (
+          <div className="space-y-2">
+            <p className="text-xs font-body text-n-400 mb-1">{checklistRoom.unit_type || '—'}</p>
+            {CHECKLIST_DEFAULT.map(item => {
+              const done = (checklists[checklistRoom.id] || []).includes(item);
+              return (
+                <label key={item} className="flex items-center gap-3 cursor-pointer group">
+                  <button
+                    type="button"
+                    onClick={() => toggleChecklist(checklistRoom.id, item)}
+                    className="shrink-0 text-n-300 group-hover:text-ocean-700 transition-colors"
+                  >
+                    {done
+                      ? <CheckSquare size={18} strokeWidth={1.75} className="text-[var(--success)]" />
+                      : <Square      size={18} strokeWidth={1.75} />
+                    }
+                  </button>
+                  <span className={`text-sm font-body ${done ? 'line-through text-n-300' : 'text-n-700'}`}>
+                    {item}
+                  </span>
+                </label>
+              );
+            })}
           </div>
-        </div>
-      )}
+        )}
+      </Modal>
     </div>
   );
 }

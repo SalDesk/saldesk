@@ -7,6 +7,10 @@ import { listUnits, updateUnit } from '../services/unitsService';
 import PageHeader from '../components/layout/PageHeader';
 import Button from '../components/ui/Button';
 import Modal from '../components/ui/Modal';
+import FilterChips from '../components/ui/FilterChips';
+import Table from '../components/ui/Table';
+import EmptyState from '../components/ui/EmptyState';
+import Input, { Textarea, Select } from '../components/ui/Input';
 import LoadingSpinner from '../components/shared/LoadingSpinner';
 
 /* Data local do dispositivo, nao UTC -- ver nota em BeachSeller.jsx */
@@ -30,9 +34,9 @@ function alertSeverity(days) {
 }
 
 const SEV_STYLE = {
-  expired:  { bg: 'bg-[#FEF2F2]', border: 'border-[#FCA5A5]', text: 'text-error',       label: 'Expirado'  },
-  critical: { bg: 'bg-[#FEF2F2]', border: 'border-[#FCA5A5]', text: 'text-error',       label: 'Urgente'   },
-  warning:  { bg: 'bg-[#FFF7ED]', border: 'border-[#FDBA74]', text: 'text-[#B45309]',   label: 'Atencao'   },
+  expired:  { bg: 'bg-[var(--error-light)]',   text: 'text-[var(--error)]',   label: 'Expirado'  },
+  critical: { bg: 'bg-[var(--error-light)]',   text: 'text-[var(--error)]',   label: 'Urgente'   },
+  warning:  { bg: 'bg-[var(--warning-light)]', text: 'text-[var(--warning)]', label: 'Atencao'   },
 };
 
 function computeAlerts(units) {
@@ -58,6 +62,15 @@ function computeAlerts(units) {
     const order = { expired: 0, critical: 1, warning: 2 };
     return order[a.sev] - order[b.sev];
   });
+}
+
+/* Celula de documento: data a verde, ou a cor da gravidade com os dias que faltam */
+function DocCell({ dateStr }) {
+  const days = daysUntil(dateStr);
+  const sev  = alertSeverity(days);
+  if (!dateStr) return <span className="text-n-300">—</span>;
+  const cls = sev ? SEV_STYLE[sev].text : 'text-[var(--success)]';
+  return <span className={`font-mono text-xs ${cls}`}>{dateStr}{sev && ` (${days}d)`}</span>;
 }
 
 const MAINT_TYPES = ['Revisao', 'Seguro', 'IUC', 'Inspecao', 'Reparacao', 'Pneus', 'Oleo', 'Outro'];
@@ -109,119 +122,63 @@ function MaintenanceModal({ units, record, onSave, onClose }) {
 
   return (
     <div className="space-y-5">
-      {/* Viatura */}
-      <div>
-        <label className="block text-xs font-mono text-n-500 uppercase tracking-wide mb-1.5">Viatura</label>
-        <select
-          value={form.unit_id}
-          onChange={e => set('unit_id', e.target.value)}
-          className="w-full h-9 rounded-md border border-n-200 bg-n-50 px-3 text-sm font-body text-n-900 focus:outline-none focus:ring-2 focus:ring-ocean-700"
-        >
-          <option value="">Seleccionar viatura...</option>
-          {units.map(u => {
-            const m = parseVehicleMeta(u);
-            return (
-              <option key={u.id} value={u.id}>
-                {m.brand ? `${m.brand} ${m.model || ''}`.trim() : u.name}{m.plate ? ` — ${m.plate}` : ''}
-              </option>
-            );
-          })}
-        </select>
-      </div>
+      <Select label="Viatura" value={form.unit_id} onChange={e => set('unit_id', e.target.value)}>
+        <option value="">Seleccionar viatura...</option>
+        {units.map(u => {
+          const m = parseVehicleMeta(u);
+          return (
+            <option key={u.id} value={u.id}>
+              {m.brand ? `${m.brand} ${m.model || ''}`.trim() : u.name}{m.plate ? ` — ${m.plate}` : ''}
+            </option>
+          );
+        })}
+      </Select>
 
-      {/* Tipo + Data */}
       <div className="grid grid-cols-2 gap-4">
-        <div>
-          <label className="block text-xs font-mono text-n-500 uppercase tracking-wide mb-1.5">Tipo</label>
-          <select
-            value={form.tipo}
-            onChange={e => set('tipo', e.target.value)}
-            className="w-full h-9 rounded-md border border-n-200 bg-n-50 px-3 text-sm font-body text-n-900 focus:outline-none focus:ring-2 focus:ring-ocean-700"
-          >
-            {MAINT_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
-          </select>
-        </div>
-        <div>
-          <label className="block text-xs font-mono text-n-500 uppercase tracking-wide mb-1.5">Data realizacao</label>
-          <input
-            type="date"
-            value={form.date}
-            onChange={e => set('date', e.target.value)}
-            className="w-full h-9 rounded-md border border-n-200 bg-n-50 px-3 text-sm font-body text-n-900 focus:outline-none focus:ring-2 focus:ring-ocean-700"
-          />
-        </div>
+        <Select label="Tipo" value={form.tipo} onChange={e => set('tipo', e.target.value)}>
+          {MAINT_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+        </Select>
+        <Input label="Data realizacao" type="date" value={form.date} onChange={e => set('date', e.target.value)} />
       </div>
 
-      {/* km + custo */}
       <div className="grid grid-cols-2 gap-4">
-        <div>
-          <label className="block text-xs font-mono text-n-500 uppercase tracking-wide mb-1.5">Km actuais</label>
-          <input
-            type="number"
-            value={form.km}
-            onChange={e => set('km', e.target.value)}
-            placeholder={unitMeta.current_km || '0'}
-            className="w-full h-9 rounded-md border border-n-200 bg-n-50 px-3 text-sm font-body text-n-900 focus:outline-none focus:ring-2 focus:ring-ocean-700"
-          />
-        </div>
-        <div>
-          <label className="block text-xs font-mono text-n-500 uppercase tracking-wide mb-1.5">Custo (EUR)</label>
-          <input
-            type="number"
-            step="0.01"
-            value={form.cost}
-            onChange={e => set('cost', e.target.value)}
-            placeholder="0.00"
-            className="w-full h-9 rounded-md border border-n-200 bg-n-50 px-3 text-sm font-body text-n-900 focus:outline-none focus:ring-2 focus:ring-ocean-700"
-          />
-        </div>
-      </div>
-
-      {/* Proxima interveção */}
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <label className="block text-xs font-mono text-n-500 uppercase tracking-wide mb-1.5">Proxima data</label>
-          <input
-            type="date"
-            value={form.next_date}
-            onChange={e => set('next_date', e.target.value)}
-            className="w-full h-9 rounded-md border border-n-200 bg-n-50 px-3 text-sm font-body text-n-900 focus:outline-none focus:ring-2 focus:ring-ocean-700"
-          />
-        </div>
-        <div>
-          <label className="block text-xs font-mono text-n-500 uppercase tracking-wide mb-1.5">Proxima revisao (km)</label>
-          <input
-            type="number"
-            value={form.next_km}
-            onChange={e => set('next_km', e.target.value)}
-            placeholder="—"
-            className="w-full h-9 rounded-md border border-n-200 bg-n-50 px-3 text-sm font-body text-n-900 focus:outline-none focus:ring-2 focus:ring-ocean-700"
-          />
-        </div>
-      </div>
-
-      {/* Viatura substituicao */}
-      <div>
-        <label className="block text-xs font-mono text-n-500 uppercase tracking-wide mb-1.5">Viatura substituta (matricula)</label>
-        <input
-          type="text"
-          value={form.replacement}
-          onChange={e => set('replacement', e.target.value)}
-          placeholder="Opcional"
-          className="w-full h-9 rounded-md border border-n-200 bg-n-50 px-3 text-sm font-body text-n-900 focus:outline-none focus:ring-2 focus:ring-ocean-700"
+        <Input
+          label="Km actuais"
+          type="number"
+          value={form.km}
+          onChange={e => set('km', e.target.value)}
+          placeholder={unitMeta.current_km || '0'}
+        />
+        <Input
+          label="Custo (EUR)"
+          type="number"
+          step="0.01"
+          value={form.cost}
+          onChange={e => set('cost', e.target.value)}
+          placeholder="0.00"
         />
       </div>
 
-      {/* Notas */}
-      <div>
-        <label className="block text-xs font-mono text-n-500 uppercase tracking-wide mb-1.5">Notas</label>
-        <textarea
-          value={form.notes}
-          onChange={e => set('notes', e.target.value)}
-          rows={3}
-          className="w-full rounded-md border border-n-200 bg-n-50 px-3 py-2 text-sm font-body text-n-900 focus:outline-none focus:ring-2 focus:ring-ocean-700 resize-none"
+      <div className="grid grid-cols-2 gap-4">
+        <Input label="Proxima data" type="date" value={form.next_date} onChange={e => set('next_date', e.target.value)} />
+        <Input
+          label="Proxima revisao (km)"
+          type="number"
+          value={form.next_km}
+          onChange={e => set('next_km', e.target.value)}
+          placeholder="—"
         />
       </div>
+
+      <Input
+        label="Viatura substituta (matricula)"
+        type="text"
+        value={form.replacement}
+        onChange={e => set('replacement', e.target.value)}
+        placeholder="Opcional"
+      />
+
+      <Textarea label="Notas" value={form.notes} onChange={e => set('notes', e.target.value)} rows={3} />
 
       <div className="flex gap-3 pt-2">
         <Button variant="secondary" onClick={onClose} className="flex-1">Cancelar</Button>
@@ -278,6 +235,52 @@ export default function Maintenance() {
     );
   }, [alerts, filter]);
 
+  // Colunas da tabela de documentacao da frota
+  const docColumns = [
+    {
+      key: 'viatura',
+      label: 'Viatura',
+      render: (u) => {
+        const meta = parseVehicleMeta(u);
+        return (
+          <div>
+            <p className="font-display font-semibold text-n-900">
+              {meta.brand ? `${meta.brand} ${meta.model || ''}`.trim() : u.name}
+            </p>
+            {meta.plate && <p className="text-xs font-mono text-n-400">{meta.plate}</p>}
+          </div>
+        );
+      },
+    },
+    { key: 'seguro',   label: 'Seguro',   render: (u) => <DocCell dateStr={parseVehicleMeta(u).seguro_expiry} /> },
+    { key: 'iuc',      label: 'IUC',      render: (u) => <DocCell dateStr={parseVehicleMeta(u).iuc_expiry} /> },
+    { key: 'inspecao', label: 'Inspecao', render: (u) => <DocCell dateStr={parseVehicleMeta(u).inspecao_expiry} /> },
+    {
+      key: 'km',
+      label: 'Km actual',
+      render: (u) => {
+        const meta = parseVehicleMeta(u);
+        return <span className="font-mono text-xs text-n-700">{meta.current_km ? `${Number(meta.current_km).toLocaleString()} km` : '—'}</span>;
+      },
+    },
+    {
+      key: 'revisao',
+      label: 'Prox. revisao',
+      render: (u) => {
+        const meta = parseVehicleMeta(u);
+        const kmLeft = meta.next_revision_km && meta.current_km
+          ? Number(meta.next_revision_km) - Number(meta.current_km)
+          : null;
+        if (kmLeft === null) return <span className="text-n-300 text-xs font-mono">—</span>;
+        return (
+          <span className={`font-mono text-xs ${kmLeft <= 0 ? 'text-[var(--error)]' : kmLeft <= 500 ? 'text-[var(--warning)]' : 'text-n-700'}`}>
+            {kmLeft <= 0 ? `Atrasada ${Math.abs(kmLeft)}km` : `${kmLeft}km`}
+          </span>
+        );
+      },
+    },
+  ];
+
   if (loading) return <div className="flex justify-center py-20"><LoadingSpinner size={32} /></div>;
 
   return (
@@ -290,24 +293,16 @@ export default function Maintenance() {
 
       {/* Alert filters */}
       {alerts.length > 0 && (
-        <div className="flex gap-2 mb-5">
-          {[
-            { key: 'all',     label: `Todos (${alerts.length})` },
-            { key: 'expired', label: `Urgentes (${alerts.filter(a => ['expired','critical'].includes(a.sev)).length})` },
-            { key: 'warning', label: `Atencao (${alerts.filter(a => a.sev === 'warning').length})` },
-          ].map(f => (
-            <button
-              key={f.key}
-              onClick={() => setFilter(f.key)}
-              className={`px-3 py-1.5 rounded-full text-xs font-mono font-medium transition-colors ${
-                filter === f.key
-                  ? 'bg-ocean-700 text-white'
-                  : 'bg-n-100 text-n-600 hover:bg-n-200'
-              }`}
-            >
-              {f.label}
-            </button>
-          ))}
+        <div className="mb-5">
+          <FilterChips
+            options={[
+              { value: 'all',     label: `Todos (${alerts.length})` },
+              { value: 'expired', label: `Urgentes (${alerts.filter(a => ['expired','critical'].includes(a.sev)).length})` },
+              { value: 'warning', label: `Atencao (${alerts.filter(a => a.sev === 'warning').length})` },
+            ]}
+            value={filter}
+            onChange={setFilter}
+          />
         </div>
       )}
 
@@ -317,7 +312,7 @@ export default function Maintenance() {
           {filteredAlerts.map((a, i) => {
             const s = SEV_STYLE[a.sev];
             return (
-              <div key={i} className={`flex items-start gap-3 px-4 py-3 rounded-md border ${s.bg} ${s.border}`}>
+              <div key={i} className={`flex items-start gap-3 px-4 py-3 rounded-md border border-n-200 ${s.bg}`}>
                 <AlertTriangle size={15} strokeWidth={1.75} className={`${s.text} shrink-0 mt-0.5`} />
                 <div className="flex-1 min-w-0">
                   <p className={`text-sm font-body font-medium ${s.text}`}>{a.label}</p>
@@ -335,7 +330,7 @@ export default function Maintenance() {
                     }
                   </p>
                 </div>
-                <span className={`text-[10px] font-mono font-bold uppercase tracking-wide px-2 py-0.5 rounded ${s.text} border ${s.border} shrink-0`}>
+                <span className={`text-[10px] font-mono font-bold uppercase tracking-wide px-2 py-0.5 rounded bg-white ${s.text} shrink-0`}>
                   {s.label}
                 </span>
               </div>
@@ -343,9 +338,9 @@ export default function Maintenance() {
           })}
         </div>
       ) : (
-        <div className="flex items-center gap-3 px-4 py-3 rounded-md bg-[#ECFDF5] border border-[#BBF7D0] mb-8">
-          <CheckCircle size={15} strokeWidth={1.75} className="text-[#1A7A4A] shrink-0" />
-          <p className="text-sm font-body text-[#1A7A4A]">Sem alertas de documentacao. Toda a frota em dia.</p>
+        <div className="flex items-center gap-3 px-4 py-3 rounded-md bg-[var(--success-light)] border border-n-200 mb-8">
+          <CheckCircle size={15} strokeWidth={1.75} className="text-[var(--success)] shrink-0" />
+          <p className="text-sm font-body text-[var(--success)]">Sem alertas de documentacao. Toda a frota em dia.</p>
         </div>
       )}
 
@@ -355,58 +350,7 @@ export default function Maintenance() {
           <Car size={14} strokeWidth={1.75} className="text-n-500" />
           <h2 className="font-display font-semibold text-sm text-n-700">Estado documentacao — frota</h2>
         </div>
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm font-body">
-            <thead>
-              <tr className="border-b border-n-100 bg-n-50">
-                <th className="px-5 py-2.5 text-left text-xs font-mono text-n-500 uppercase tracking-wide">Viatura</th>
-                <th className="px-4 py-2.5 text-left text-xs font-mono text-n-500 uppercase tracking-wide">Seguro</th>
-                <th className="px-4 py-2.5 text-left text-xs font-mono text-n-500 uppercase tracking-wide">IUC</th>
-                <th className="px-4 py-2.5 text-left text-xs font-mono text-n-500 uppercase tracking-wide">Inspecao</th>
-                <th className="px-4 py-2.5 text-left text-xs font-mono text-n-500 uppercase tracking-wide">Km actual</th>
-                <th className="px-4 py-2.5 text-left text-xs font-mono text-n-500 uppercase tracking-wide">Prox. revisao</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-n-100">
-              {units.map(u => {
-                const meta = parseVehicleMeta(u);
-                function DocCell({ dateStr }) {
-                  const days = daysUntil(dateStr);
-                  const sev  = alertSeverity(days);
-                  if (!dateStr) return <span className="text-n-300">—</span>;
-                  const cls = sev ? SEV_STYLE[sev].text : 'text-[#1A7A4A]';
-                  return <span className={`font-mono text-xs ${cls}`}>{dateStr}{sev && ` (${days}d)`}</span>;
-                }
-                const kmLeft = meta.next_revision_km && meta.current_km
-                  ? Number(meta.next_revision_km) - Number(meta.current_km)
-                  : null;
-                return (
-                  <tr key={u.id} className="hover:bg-n-50 transition-colors">
-                    <td className="px-5 py-3">
-                      <p className="font-display font-semibold text-n-900">
-                        {meta.brand ? `${meta.brand} ${meta.model || ''}`.trim() : u.name}
-                      </p>
-                      {meta.plate && <p className="text-xs font-mono text-n-400">{meta.plate}</p>}
-                    </td>
-                    <td className="px-4 py-3"><DocCell dateStr={meta.seguro_expiry} /></td>
-                    <td className="px-4 py-3"><DocCell dateStr={meta.iuc_expiry} /></td>
-                    <td className="px-4 py-3"><DocCell dateStr={meta.inspecao_expiry} /></td>
-                    <td className="px-4 py-3 font-mono text-xs text-n-700">{meta.current_km ? `${Number(meta.current_km).toLocaleString()} km` : '—'}</td>
-                    <td className="px-4 py-3">
-                      {kmLeft !== null ? (
-                        <span className={`font-mono text-xs ${kmLeft <= 0 ? 'text-error' : kmLeft <= 500 ? 'text-[#B45309]' : 'text-n-700'}`}>
-                          {kmLeft <= 0 ? `Atrasada ${Math.abs(kmLeft)}km` : `${kmLeft}km`}
-                        </span>
-                      ) : (
-                        <span className="text-n-300 text-xs font-mono">—</span>
-                      )}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+        <Table columns={docColumns} rows={units} />
       </div>
 
       {/* Maintenance history */}
@@ -421,7 +365,7 @@ export default function Maintenance() {
           )}
         </div>
         {history.length === 0 ? (
-          <p className="px-5 py-8 text-center text-xs font-body text-n-400">Nenhuma intervencao registada.</p>
+          <EmptyState icon={Wrench} title="Nenhuma intervencao registada." />
         ) : (
           <div className="divide-y divide-n-100">
             {history.map((h, i) => {
@@ -441,7 +385,7 @@ export default function Maintenance() {
                     <div className="flex gap-3 mt-0.5 flex-wrap">
                       <span className="text-xs font-mono text-n-500">{h.date}</span>
                       {h.km    && <span className="text-xs font-mono text-n-400">{Number(h.km).toLocaleString()} km</span>}
-                      {h.cost  && <span className="text-xs font-mono text-[#1A7A4A]">€{Number(h.cost).toFixed(2)}</span>}
+                      {h.cost  && <span className="text-xs font-mono text-[var(--success)]">€{Number(h.cost).toFixed(2)}</span>}
                       {h.next_date && <span className="text-xs font-mono text-ocean-700">Prox: {h.next_date}</span>}
                     </div>
                     {h.notes && <p className="text-xs font-body text-n-500 mt-0.5">{h.notes}</p>}
