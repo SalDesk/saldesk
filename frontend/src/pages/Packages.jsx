@@ -8,14 +8,16 @@ import { listPackages, createPackage, updatePackage, deletePackage } from '../se
 import PageHeader from '../components/layout/PageHeader';
 import Button from '../components/ui/Button';
 import Card from '../components/ui/Card';
+import Badge from '../components/ui/Badge';
+import EmptyState from '../components/ui/EmptyState';
 import Modal from '../components/ui/Modal';
 import Input, { Textarea, Select } from '../components/ui/Input';
 import LoadingSpinner from '../components/shared/LoadingSpinner';
 
 const STATUS_CFG = {
-  activo:   { label: 'Activo',   cls: 'bg-[#ECFDF5] text-[#1A7A4A] border-[#BBF7D0]'  },
-  inactivo: { label: 'Inactivo', cls: 'bg-n-100 text-n-500 border-n-200'              },
-  esgotado: { label: 'Esgotado', cls: 'bg-yellow-50 text-yellow-700 border-yellow-200' },
+  activo:   { label: 'Activo',   variant: 'confirmed' },
+  inactivo: { label: 'Inactivo', variant: 'default'   },
+  esgotado: { label: 'Esgotado', variant: 'pending'   },
 };
 
 function fmtDate(d) {
@@ -86,12 +88,12 @@ function PackageModal({ pkg, units, onSave, onClose }) {
     <Modal open onClose={onClose} title={isNew ? 'Novo pacote' : 'Editar pacote'} size="lg">
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <Input label="Nome PT" value={form.name_pt} onChange={set('name_pt')} required placeholder="Ex: Pacote Kite + Mergulho" />
-          <Input label="Nome EN" value={form.name_en} onChange={set('name_en')} placeholder="Ex: Kite + Diving Package" />
+          <Input label="Nome PT" aria-label="Nome PT" value={form.name_pt} onChange={set('name_pt')} required placeholder="Ex: Pacote Kite + Mergulho" />
+          <Input label="Nome EN" aria-label="Nome EN" value={form.name_en} onChange={set('name_en')} placeholder="Ex: Kite + Diving Package" />
         </div>
 
-        <Textarea label="Descricao PT" value={form.description_pt} onChange={set('description_pt')} rows={2} />
-        <Textarea label="Descricao EN" value={form.description_en} onChange={set('description_en')} rows={2} />
+        <Textarea label="Descricao PT" aria-label="Descricao PT" value={form.description_pt} onChange={set('description_pt')} rows={2} />
+        <Textarea label="Descricao EN" aria-label="Descricao EN" value={form.description_en} onChange={set('description_en')} rows={2} />
 
         {/* Tour selection */}
         <div>
@@ -124,32 +126,32 @@ function PackageModal({ pkg, units, onSave, onClose }) {
 
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <Input label="Preco do pacote (€)" type="number" min="0" step="0.01"
+            <Input label="Preco do pacote (€)" aria-label="Preco do pacote (€)" type="number" min="0" step="0.01"
               value={form.price} onChange={set('price')} required placeholder="Ex: 85.00" />
             {savings > 0 && (
-              <p className="text-xs font-body text-[#1A7A4A] mt-1">
+              <p className="text-xs font-body text-[var(--success)] mt-1">
                 Cliente poupa €{savings.toFixed(0)} vs compra individual
               </p>
             )}
           </div>
-          <Input label="Limite de vendas (0 = ilimitado)" type="number" min="0"
+          <Input label="Limite de vendas (0 = ilimitado)" aria-label="Limite de vendas (0 = ilimitado)" type="number" min="0"
             value={form.limit} onChange={set('limit')} placeholder="0" />
         </div>
 
         <div className="grid grid-cols-2 gap-3">
-          <Input label="Valido de" type="date" value={form.valid_from} onChange={set('valid_from')} />
-          <Input label="Valido ate" type="date" value={form.valid_to} onChange={set('valid_to')} />
+          <Input label="Valido de" aria-label="Valido de" type="date" value={form.valid_from} onChange={set('valid_from')} />
+          <Input label="Valido ate" aria-label="Valido ate" type="date" value={form.valid_to} onChange={set('valid_to')} />
         </div>
 
-        <Input label="Foto (URL)" value={form.photo_url} onChange={set('photo_url')} placeholder="https://exemplo.com/foto.jpg" />
+        <Input label="Foto (URL)" aria-label="Foto (URL)" value={form.photo_url} onChange={set('photo_url')} placeholder="https://exemplo.com/foto.jpg" />
 
         {!isNew && (
-          <Select label="Estado" value={form.status} onChange={set('status')}>
+          <Select label="Estado" aria-label="Estado" value={form.status} onChange={set('status')}>
             {Object.entries(STATUS_CFG).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
           </Select>
         )}
 
-        {error && <p className="text-xs text-error">{error}</p>}
+        {error && <p className="text-xs text-[var(--error)]">{error}</p>}
 
         <div className="flex gap-3 pt-1">
           <Button type="button" variant="secondary" onClick={onClose} className="flex-1">Cancelar</Button>
@@ -218,33 +220,32 @@ export default function Packages() {
         {[
           { label: 'Pacotes activos',   value: activeCount,                            color: 'text-n-900'     },
           { label: 'Reservas por pacotes', value: totalBookings,                       color: 'text-ocean-700' },
-          { label: 'Receita gerada',    value: `€${Math.round(totalRevenue).toLocaleString('pt-PT')}`, color: 'text-[#1A7A4A]' },
+          { label: 'Receita gerada',    value: `€${Math.round(totalRevenue).toLocaleString('pt-PT')}`, color: 'text-[var(--success)]' },
         ].map(m => (
-          <div key={m.label} className="bg-white border border-n-200 rounded-md px-4 py-3 flex items-center gap-3">
-            <Package size={16} strokeWidth={1.75} className="text-n-300 shrink-0" />
-            <div>
-              <p className={`font-display font-bold text-xl ${m.color}`}>{m.value}</p>
-              <p className="text-xs font-body text-n-500">{m.label}</p>
+          <Card key={m.label} padding="px-4 py-3">
+            <div className="flex items-center gap-3">
+              <Package size={16} strokeWidth={1.75} className="text-n-300 shrink-0" />
+              <div>
+                <p className={`font-display font-bold text-xl ${m.color}`}>{m.value}</p>
+                <p className="text-xs font-body text-n-500">{m.label}</p>
+              </div>
             </div>
-          </div>
+          </Card>
         ))}
       </div>
 
       {/* Note about public visibility */}
-      <div className="mb-4 px-4 py-2.5 bg-ocean-50 border border-ocean-100 rounded-sm">
-        <p className="text-xs font-body text-ocean-700">
+      <div className="mb-4 px-4 py-2.5 bg-[var(--info-light)] border border-[var(--info)] rounded-sm">
+        <p className="text-xs font-body text-[var(--info)]">
           Os pacotes activos aparecem automaticamente na pagina publica de reservas quando o backend implementar o endpoint <span className="font-mono">/public/:slug/packages</span>.
         </p>
       </div>
 
       {packages.length === 0 ? (
-        <Card>
-          <div className="text-center py-14">
-            <Package size={36} strokeWidth={1.25} className="mx-auto mb-3 text-n-300" />
-            <p className="font-display font-semibold text-n-700 mb-1">Sem pacotes criados</p>
-            <p className="text-sm font-body text-n-400 mb-4">Cria o primeiro pacote combinando tours com preco especial.</p>
-            <Button icon={Plus} onClick={() => setModal({ _new: true })}>Criar pacote</Button>
-          </div>
+        <Card padding="p-0">
+          <EmptyState icon={Package} title="Sem pacotes criados"
+            description="Cria o primeiro pacote combinando tours com preco especial."
+            action={<Button icon={Plus} onClick={() => setModal({ _new: true })}>Criar pacote</Button>} />
         </Card>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -256,7 +257,7 @@ export default function Packages() {
             const isFull = pkg.limit > 0 && pkg.bookings_count >= pkg.limit;
 
             return (
-              <div key={pkg.id} className={`bg-white border rounded-md overflow-hidden ${pkg.status !== 'activo' ? 'opacity-70' : 'border-n-200'}`}>
+              <Card key={pkg.id} padding="p-0" className={`overflow-hidden ${pkg.status !== 'activo' ? 'opacity-70' : ''}`}>
                 {/* Photo */}
                 <div className="h-32 bg-n-100 relative overflow-hidden">
                   {pkg.photo_url ? (
@@ -268,9 +269,9 @@ export default function Packages() {
                       <ImageIcon size={28} strokeWidth={1.25} className="text-n-300" />
                     </div>
                   )}
-                  <span className={`absolute top-2 right-2 text-xs font-mono px-2 py-0.5 rounded-xs border ${cfg.cls}`}>
+                  <Badge className="absolute top-2 right-2" variant={isFull ? 'pending' : isExpired ? 'default' : cfg.variant}>
                     {isFull ? 'Esgotado' : isExpired ? 'Expirado' : cfg.label}
-                  </span>
+                  </Badge>
                 </div>
 
                 <div className="p-4 space-y-3">
@@ -302,7 +303,7 @@ export default function Packages() {
                       )}
                     </div>
                     {savings > 0 && (
-                      <span className="text-xs font-body font-semibold text-[#1A7A4A] bg-[#ECFDF5] px-1.5 py-0.5 rounded-xs">
+                      <span className="text-xs font-body font-semibold text-[var(--success)] bg-[var(--success-light)] px-1.5 py-0.5 rounded-xs">
                         Poupa €{savings.toFixed(0)}
                       </span>
                     )}
@@ -327,22 +328,25 @@ export default function Packages() {
                     )}
                     <div className="ml-auto flex gap-1">
                       <button onClick={() => handleToggleStatus(pkg)}
+                        aria-label={`${pkg.status === 'activo' ? 'Desactivar' : 'Activar'} ${pkg.name_pt}`}
                         className="p-1.5 rounded text-n-400 hover:text-ocean-700 hover:bg-ocean-50 transition-colors"
                         title={pkg.status === 'activo' ? 'Desactivar' : 'Activar'}>
                         {pkg.status === 'activo' ? <EyeOff size={13} strokeWidth={1.75} /> : <Eye size={13} strokeWidth={1.75} />}
                       </button>
                       <button onClick={() => setModal(pkg)}
+                        aria-label={`Editar ${pkg.name_pt}`}
                         className="p-1.5 rounded text-n-400 hover:text-ocean-700 hover:bg-ocean-50 transition-colors">
                         <Pencil size={13} strokeWidth={1.75} />
                       </button>
                       <button onClick={() => handleDelete(pkg.id)}
-                        className="p-1.5 rounded text-n-400 hover:text-error hover:bg-red-50 transition-colors">
+                        aria-label={`Eliminar ${pkg.name_pt}`}
+                        className="p-1.5 rounded text-n-400 hover:text-[var(--error)] hover:bg-[var(--error-light)] transition-colors">
                         <Trash2 size={13} strokeWidth={1.75} />
                       </button>
                     </div>
                   </div>
                 </div>
-              </div>
+              </Card>
             );
           })}
         </div>

@@ -13,6 +13,10 @@ import PageHeader from '../components/layout/PageHeader';
 import Button from '../components/ui/Button';
 import Card from '../components/ui/Card';
 import Modal from '../components/ui/Modal';
+import Table from '../components/ui/Table';
+import FilterChips from '../components/ui/FilterChips';
+import Badge from '../components/ui/Badge';
+import EmptyState from '../components/ui/EmptyState';
 import Input, { Select } from '../components/ui/Input';
 
 /* ── Helpers ── */
@@ -31,10 +35,10 @@ function voucherStatus(v) {
 }
 
 const STATUS_CFG = {
-  activo:   { label: 'Activo',   cls: 'bg-[#ECFDF5] text-[#1A7A4A] border-[#BBF7D0]' },
-  expirado: { label: 'Expirado', cls: 'bg-n-100 text-n-500 border-n-200'             },
-  esgotado: { label: 'Esgotado', cls: 'bg-yellow-50 text-yellow-700 border-yellow-200' },
-  inactivo: { label: 'Inactivo', cls: 'bg-red-50 text-error border-red-100'           },
+  activo:   { label: 'Activo',   variant: 'confirmed' },
+  expirado: { label: 'Expirado', variant: 'default'   },
+  esgotado: { label: 'Esgotado', variant: 'pending'   },
+  inactivo: { label: 'Inactivo', variant: 'cancelled' },
 };
 
 function fmtDiscount(v) {
@@ -49,7 +53,7 @@ function CopyBtn({ text }) {
   }
   return (
     <button onClick={copy}
-      className={`flex items-center gap-1.5 text-xs px-2 py-1 rounded-xs font-body font-medium transition-colors ${copied ? 'text-[#1A7A4A] bg-[#ECFDF5]' : 'text-ocean-700 bg-ocean-50 hover:bg-ocean-100'}`}>
+      className={`flex items-center gap-1.5 text-xs px-2 py-1 rounded-xs font-body font-medium transition-colors ${copied ? 'text-[var(--success)] bg-[var(--success-light)]' : 'text-ocean-700 bg-ocean-50 hover:bg-ocean-100'}`}>
       {copied ? <Check size={11} strokeWidth={2} /> : <Copy size={11} strokeWidth={1.75} />}
       {copied ? 'Copiado' : 'Copiar'}
     </button>
@@ -110,7 +114,7 @@ function VoucherModal({ voucher, units, onSave, onClose }) {
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="flex gap-3 items-end">
           <div className="flex-1">
-            <Input label="Codigo" value={form.code} onChange={set('code')} required
+            <Input label="Codigo" aria-label="Codigo" value={form.code} onChange={set('code')} required
               className="font-mono uppercase" placeholder="Ex: VERAO2025" />
           </div>
           <Button type="button" variant="secondary" size="sm"
@@ -120,12 +124,13 @@ function VoucherModal({ voucher, units, onSave, onClose }) {
         </div>
 
         <div className="grid grid-cols-2 gap-3">
-          <Select label="Tipo de desconto" value={form.type} onChange={set('type')}>
+          <Select label="Tipo de desconto" aria-label="Tipo de desconto" value={form.type} onChange={set('type')}>
             <option value="percent">Percentagem (%)</option>
             <option value="fixed">Valor fixo (€)</option>
           </Select>
           <Input
             label={form.type === 'percent' ? 'Desconto (%)' : 'Desconto (€)'}
+            aria-label={form.type === 'percent' ? 'Desconto (%)' : 'Desconto (€)'}
             type="number" min={form.type === 'percent' ? '1' : '0.01'} step={form.type === 'percent' ? '1' : '0.01'}
             max={form.type === 'percent' ? '100' : undefined}
             value={form.value} onChange={set('value')} required
@@ -136,12 +141,14 @@ function VoucherModal({ voucher, units, onSave, onClose }) {
         <div className="grid grid-cols-2 gap-3">
           <Input
             label="Minimo de reserva (€)"
+            aria-label="Minimo de reserva (€)"
             type="number" min="0" step="1"
             value={form.min_amount} onChange={set('min_amount')}
             placeholder="0 = sem minimo"
           />
           <Input
             label="Limite de usos"
+            aria-label="Limite de usos"
             type="number" min="0" step="1"
             value={form.max_uses} onChange={set('max_uses')}
             placeholder="0 = ilimitado"
@@ -150,6 +157,7 @@ function VoucherModal({ voucher, units, onSave, onClose }) {
 
         <Input
           label="Valido ate"
+          aria-label="Valido ate"
           type="date"
           value={form.expires_at} onChange={set('expires_at')}
         />
@@ -177,7 +185,7 @@ function VoucherModal({ voucher, units, onSave, onClose }) {
           </div>
         )}
 
-        {error && <p className="text-xs text-error">{error}</p>}
+        {error && <p className="text-xs text-[var(--error)]">{error}</p>}
 
         <div className="flex gap-3 pt-1">
           <Button type="button" variant="secondary" onClick={onClose} className="flex-1">Cancelar</Button>
@@ -213,7 +221,7 @@ function ShareModal({ voucher, bookingLink, onClose }) {
               <CopyBtn text={msgPt} />
               <button
                 onClick={() => window.open(`https://wa.me/?text=${encodeURIComponent(msgPt)}`, '_blank', 'noopener')}
-                className="flex items-center gap-1.5 text-xs px-2 py-1 rounded-xs bg-[#25D366] text-white font-body font-medium hover:bg-[#1ebe5a] transition-colors">
+                className="flex items-center gap-1.5 text-xs px-2 py-1 rounded-xs bg-[var(--success)] text-white font-body font-medium hover:opacity-90 transition-opacity">
                 <Share2 size={11} strokeWidth={1.75} />Enviar
               </button>
             </div>
@@ -222,7 +230,7 @@ function ShareModal({ voucher, bookingLink, onClose }) {
               <CopyBtn text={msgEn} />
               <button
                 onClick={() => window.open(`https://wa.me/?text=${encodeURIComponent(msgEn)}`, '_blank', 'noopener')}
-                className="flex items-center gap-1.5 text-xs px-2 py-1 rounded-xs bg-[#25D366] text-white font-body font-medium hover:bg-[#1ebe5a] transition-colors">
+                className="flex items-center gap-1.5 text-xs px-2 py-1 rounded-xs bg-[var(--success)] text-white font-body font-medium hover:opacity-90 transition-opacity">
                 <Share2 size={11} strokeWidth={1.75} />Enviar
               </button>
             </div>
@@ -303,6 +311,70 @@ export default function Vouchers() {
   const expired = vouchers.filter(v => voucherStatus(v) === 'expirado').length;
   const totalUses = vouchers.reduce((s, v) => s + (v.uses_count || 0), 0);
 
+  const columns = [
+    {
+      key: 'codigo', label: 'Codigo',
+      render: v => (
+        <div className={`flex items-center gap-2 ${!v.active ? 'opacity-60' : ''}`}>
+          <span className="font-mono font-bold text-n-900 tracking-wider">{v.code}</span>
+          <CopyBtn text={v.code} />
+        </div>
+      ),
+    },
+    { key: 'desconto', label: 'Desconto', render: v => <span className="font-display font-bold text-ocean-700">{fmtDiscount(v)}</span> },
+    { key: 'minimo', label: 'Minimo', render: v => <span className="text-xs font-body text-n-500">{v.min_amount > 0 ? `€${v.min_amount}` : '—'}</span> },
+    {
+      key: 'validade', label: 'Validade',
+      render: v => {
+        const st = voucherStatus(v);
+        const isExpiringSoon = v.expires_at && st === 'activo' &&
+          (new Date(v.expires_at) - new Date()) < 7 * 24 * 60 * 60 * 1000;
+        return (
+          <div className="flex items-center gap-1.5 text-xs font-mono text-n-500 whitespace-nowrap">
+            {isExpiringSoon && <AlertTriangle size={12} strokeWidth={1.75} className="text-[var(--warning)] shrink-0" />}
+            {v.expires_at ? new Date(v.expires_at).toLocaleDateString('pt-PT', { timeZone: 'UTC' }) : '—'}
+          </div>
+        );
+      },
+    },
+    { key: 'usos', label: 'Usos', render: v => <span className="font-mono text-n-700">{v.uses_count || 0}{v.max_uses > 0 ? `/${v.max_uses}` : ''}</span> },
+    {
+      key: 'tours', label: 'Tours',
+      render: v => (
+        <span className="text-xs font-body text-n-500">
+          {v.unit_ids?.length > 0 ? `${v.unit_ids.length} tour(s)` : <span className="text-n-400">Todos</span>}
+        </span>
+      ),
+    },
+    {
+      key: 'estado', label: 'Estado',
+      render: v => { const cfg = STATUS_CFG[voucherStatus(v)]; return <Badge variant={cfg.variant}>{cfg.label}</Badge>; },
+    },
+    {
+      key: 'acoes', label: '',
+      render: v => (
+        <div className="flex items-center gap-0.5">
+          <button onClick={() => setShareModal(v)} aria-label={`Partilhar ${v.code}`}
+            className="p-1.5 rounded text-n-400 hover:text-[var(--success)] hover:bg-n-100 transition-colors" title="Partilhar">
+            <Share2 size={13} strokeWidth={1.75} />
+          </button>
+          <button onClick={() => setModal(v)} aria-label={`Editar ${v.code}`}
+            className="p-1.5 rounded text-n-400 hover:text-ocean-700 hover:bg-ocean-50 transition-colors" title="Editar">
+            <Pencil size={13} strokeWidth={1.75} />
+          </button>
+          <button onClick={() => handleToggleActive(v)} aria-label={`${v.active ? 'Desactivar' : 'Activar'} ${v.code}`}
+            className="p-1.5 rounded text-n-400 hover:text-n-700 hover:bg-n-100 transition-colors" title={v.active ? 'Desactivar' : 'Activar'}>
+            <RefreshCw size={13} strokeWidth={1.75} />
+          </button>
+          <button onClick={() => handleDelete(v.id)} aria-label={`Eliminar ${v.code}`}
+            className="p-1.5 rounded text-n-400 hover:text-[var(--error)] hover:bg-[var(--error-light)] transition-colors" title="Eliminar">
+            <Trash2 size={13} strokeWidth={1.75} />
+          </button>
+        </div>
+      ),
+    },
+  ];
+
   return (
     <div>
       <PageHeader
@@ -321,119 +393,45 @@ export default function Vouchers() {
           { label: 'Expirados',       value: expired,   icon: Calendar },
           { label: 'Total utilizacoes', value: totalUses, icon: BarChart2 },
         ].map(m => (
-          <div key={m.label} className="bg-white rounded-md border border-n-200 px-4 py-3 flex items-center gap-3">
-            <div className="w-8 h-8 rounded-sm bg-ocean-50 flex items-center justify-center shrink-0">
-              <m.icon size={16} strokeWidth={1.75} className="text-ocean-700" />
+          <Card key={m.label} padding="px-4 py-3">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-sm bg-ocean-50 flex items-center justify-center shrink-0">
+                <m.icon size={16} strokeWidth={1.75} className="text-ocean-700" />
+              </div>
+              <div>
+                <p className="font-display font-bold text-xl text-n-900">{m.value}</p>
+                <p className="text-xs font-body text-n-500">{m.label}</p>
+              </div>
             </div>
-            <div>
-              <p className="font-display font-bold text-xl text-n-900">{m.value}</p>
-              <p className="text-xs font-body text-n-500">{m.label}</p>
-            </div>
-          </div>
+          </Card>
         ))}
       </div>
 
       {/* Filters */}
       <div className="flex flex-wrap gap-3 mb-4">
-        <input
-          value={search} onChange={e => setSearch(e.target.value)}
-          placeholder="Pesquisar codigo..."
-          className="h-9 px-3 text-sm font-body border border-n-200 rounded-sm bg-white placeholder:text-n-400 focus:outline-none focus:border-ocean-700 flex-1 min-w-[160px] max-w-xs font-mono"
-        />
-        <div className="flex gap-1">
-          {[{ v: '', l: 'Todos' }, { v: 'activo', l: 'Activos' }, { v: 'expirado', l: 'Expirados' }, { v: 'esgotado', l: 'Esgotados' }].map(o => (
-            <button key={o.v} onClick={() => setFilterStatus(o.v)}
-              className={`px-3 py-1.5 rounded-sm text-xs font-body font-semibold transition-colors ${filterStatus === o.v ? 'bg-ocean-700 text-white' : 'bg-white border border-n-200 text-n-600 hover:border-ocean-300'}`}>
-              {o.l}
-            </button>
-          ))}
+        <div className="flex-1 min-w-[160px] max-w-xs">
+          <Input aria-label="Pesquisar codigo" value={search} onChange={e => setSearch(e.target.value)}
+            placeholder="Pesquisar codigo..." className="font-mono" />
         </div>
+        <FilterChips
+          options={[{ value: '', label: 'Todos' }, { value: 'activo', label: 'Activos' }, { value: 'expirado', label: 'Expirados' }, { value: 'esgotado', label: 'Esgotados' }]}
+          value={filterStatus}
+          onChange={setFilterStatus}
+        />
       </div>
 
       {/* List */}
       {loading ? (
         <Card><div className="text-center py-14 text-n-400 text-sm font-body">A carregar...</div></Card>
       ) : sorted.length === 0 ? (
-        <Card>
-          <div className="text-center py-14">
-            <Tag size={36} strokeWidth={1.25} className="mx-auto mb-3 text-n-300" />
-            <p className="font-display font-semibold text-n-700 mb-1">Sem vouchers</p>
-            <p className="text-sm font-body text-n-400 mb-4">Crie o primeiro codigo de desconto para os seus clientes.</p>
-            <Button icon={Plus} onClick={() => setModal({ _new: true })}>Criar voucher</Button>
-          </div>
+        <Card padding="p-0">
+          <EmptyState icon={Tag} title="Sem vouchers"
+            description="Crie o primeiro codigo de desconto para os seus clientes."
+            action={<Button icon={Plus} onClick={() => setModal({ _new: true })}>Criar voucher</Button>} />
         </Card>
       ) : (
         <Card padding="p-0">
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-n-200">
-                  {['Codigo', 'Desconto', 'Minimo', 'Validade', 'Usos', 'Tours', 'Estado', ''].map(h => (
-                    <th key={h} className="text-left py-2.5 px-4 text-xs font-mono uppercase tracking-wider text-n-500 whitespace-nowrap">{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-n-100">
-                {sorted.map(v => {
-                  const st  = voucherStatus(v);
-                  const cfg = STATUS_CFG[st];
-                  const isExpiringSoon = v.expires_at && st === 'activo' &&
-                    (new Date(v.expires_at) - new Date()) < 7 * 24 * 60 * 60 * 1000;
-                  return (
-                    <tr key={v.id} className={`hover:bg-n-50 transition-colors ${!v.active ? 'opacity-60' : ''}`}>
-                      <td className="py-3 px-4">
-                        <div className="flex items-center gap-2">
-                          <span className="font-mono font-bold text-n-900 tracking-wider">{v.code}</span>
-                          <CopyBtn text={v.code} />
-                        </div>
-                      </td>
-                      <td className="py-3 px-4 font-display font-bold text-ocean-700">{fmtDiscount(v)}</td>
-                      <td className="py-3 px-4 text-xs font-body text-n-500">
-                        {v.min_amount > 0 ? `€${v.min_amount}` : '—'}
-                      </td>
-                      <td className="py-3 px-4 text-xs font-mono text-n-500 whitespace-nowrap">
-                        <div className="flex items-center gap-1.5">
-                          {isExpiringSoon && <AlertTriangle size={12} strokeWidth={1.75} className="text-yellow-600 shrink-0" />}
-                          {v.expires_at ? new Date(v.expires_at).toLocaleDateString('pt-PT', { timeZone: 'UTC' }) : '—'}
-                        </div>
-                      </td>
-                      <td className="py-3 px-4 font-mono text-n-700">
-                        {v.uses_count || 0}{v.max_uses > 0 ? `/${v.max_uses}` : ''}
-                      </td>
-                      <td className="py-3 px-4 text-xs font-body text-n-500">
-                        {v.unit_ids?.length > 0
-                          ? `${v.unit_ids.length} tour(s)`
-                          : <span className="text-n-400">Todos</span>}
-                      </td>
-                      <td className="py-3 px-4">
-                        <span className={`text-xs font-mono px-2 py-0.5 rounded-xs border ${cfg.cls}`}>{cfg.label}</span>
-                      </td>
-                      <td className="py-3 px-4">
-                        <div className="flex items-center gap-0.5">
-                          <button onClick={() => setShareModal(v)}
-                            className="p-1.5 rounded text-n-400 hover:text-[#25D366] hover:bg-n-100 transition-colors" title="Partilhar">
-                            <Share2 size={13} strokeWidth={1.75} />
-                          </button>
-                          <button onClick={() => setModal(v)}
-                            className="p-1.5 rounded text-n-400 hover:text-ocean-700 hover:bg-ocean-50 transition-colors" title="Editar">
-                            <Pencil size={13} strokeWidth={1.75} />
-                          </button>
-                          <button onClick={() => handleToggleActive(v)}
-                            className="p-1.5 rounded text-n-400 hover:text-n-700 hover:bg-n-100 transition-colors" title={v.active ? 'Desactivar' : 'Activar'}>
-                            <RefreshCw size={13} strokeWidth={1.75} />
-                          </button>
-                          <button onClick={() => handleDelete(v.id)}
-                            className="p-1.5 rounded text-n-400 hover:text-error hover:bg-red-50 transition-colors" title="Eliminar">
-                            <Trash2 size={13} strokeWidth={1.75} />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+          <Table columns={columns} rows={sorted} compact />
         </Card>
       )}
 
