@@ -12,12 +12,15 @@ import {
   ClipboardCheck,
 } from 'lucide-react';
 import { StaffAvatar } from './shared';
+import Card from '../../components/ui/Card';
+import Badge from '../../components/ui/Badge';
 
 /* ── StaffCard ── */
 function StaffCard({ member, onEdit, onDelete, onCreateAccount, creatingAccountId }) {
   const navigate = useNavigate();
   return (
-    <div className="bg-white rounded-md border border-n-200 shadow-sm p-4 flex flex-col gap-3">
+    <Card padding="p-4">
+    <div className="flex flex-col gap-3">
       <div className="flex items-start justify-between">
         <div className="flex items-center gap-3">
           <StaffAvatar member={member} size={44} />
@@ -25,9 +28,7 @@ function StaffCard({ member, onEdit, onDelete, onCreateAccount, creatingAccountI
             <div className="flex items-center gap-2">
               <p className="font-display font-semibold text-sm text-n-900">{member.name}</p>
               {member.role === 'Vendedor de Praia' && (
-                <span className="text-[9px] font-mono font-semibold px-1.5 py-0.5 bg-sand-300 text-sand-700 rounded-xs uppercase tracking-wide">
-                  Vendedor
-                </span>
+                <Badge variant="direct">Vendedor</Badge>
               )}
             </div>
             <p className="text-xs font-body text-n-500">{member.role}</p>
@@ -36,15 +37,18 @@ function StaffCard({ member, onEdit, onDelete, onCreateAccount, creatingAccountI
         <div className="flex gap-0.5">
           <button onClick={() => navigate(`/colaboradores/${member.id}`)}
             title="Ferias, documentos e certificacoes"
+            aria-label={`Ferias, documentos e certificacoes de ${member.name}`}
             className="p-1.5 rounded text-n-400 hover:text-ocean-700 hover:bg-ocean-50 transition-colors">
             <ClipboardCheck size={14} strokeWidth={1.75} />
           </button>
           <button onClick={() => onEdit(member)}
+            aria-label={`Editar ${member.name}`}
             className="p-1.5 rounded text-n-400 hover:text-ocean-700 hover:bg-ocean-50 transition-colors">
             <Pencil size={14} strokeWidth={1.75} />
           </button>
           <button onClick={() => onDelete(member)}
-            className="p-1.5 rounded text-n-400 hover:text-error hover:bg-red-50 transition-colors">
+            aria-label={`Eliminar ${member.name}`}
+            className="p-1.5 rounded text-n-400 hover:text-[var(--error)] hover:bg-[var(--error-light)] transition-colors">
             <Trash2 size={14} strokeWidth={1.75} />
           </button>
         </div>
@@ -62,7 +66,7 @@ function StaffCard({ member, onEdit, onDelete, onCreateAccount, creatingAccountI
         )}
         {member.email && (
           member.user_id ? (
-            <p className="text-xs font-body text-green-600 flex items-center gap-1.5">
+            <p className="text-xs font-body text-[var(--success)] flex items-center gap-1.5">
               <CheckCircle2 size={11} strokeWidth={1.75} />Conta activa
             </p>
           ) : (
@@ -85,12 +89,13 @@ function StaffCard({ member, onEdit, onDelete, onCreateAccount, creatingAccountI
             {Number(member.average_rating).toFixed(1)}
           </span>
         )}
-        <span className={`flex items-center gap-1 ${member.status === 'active' ? 'text-green-600' : 'text-n-400'}`}>
-          <Circle size={7} strokeWidth={0} className={member.status === 'active' ? 'fill-green-500' : 'fill-n-300'} />
+        <span className={`flex items-center gap-1 ${member.status === 'active' ? 'text-[var(--success)]' : 'text-n-400'}`}>
+          <Circle size={7} strokeWidth={0} className={member.status === 'active' ? 'fill-[var(--success)]' : 'fill-n-300'} />
           {member.status === 'active' ? 'Activo' : 'Inactivo'}
         </span>
       </div>
     </div>
+    </Card>
   );
 }
 

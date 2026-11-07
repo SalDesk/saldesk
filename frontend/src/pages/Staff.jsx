@@ -4,11 +4,7 @@ import usePlan from '../hooks/usePlan';
 import {
   Plus,
   Briefcase,
-  MessageSquare,
-  Users,
-  CheckSquare,
   Search,
-  ClipboardCheck,
 } from 'lucide-react';
 import { listStaff, createStaff, updateStaff, deleteStaff, createStaffAccount } from '../services/staffService';
 import { listSellerCommissions, markCommissionPaid } from '../services/sellerService';
@@ -25,6 +21,11 @@ import StaffForm from './staff/StaffForm';
 import KanbanBoard from './staff/KanbanBoard';
 import ChecklistTab from './staff/ChecklistTab';
 import ChatTab from './staff/ChatTab';
+import Card from '../components/ui/Card';
+import Tabs from '../components/ui/Tabs';
+import EmptyState from '../components/ui/EmptyState';
+import Badge from '../components/ui/Badge';
+import Input from '../components/ui/Input';
 
 /* ── Main Staff Page ── */
 export default function Staff() {
@@ -108,10 +109,10 @@ export default function Staff() {
     : staffList;
 
   const TABS = [
-    { key: 'staff',     label: 'Colaboradores', Icon: Users },
-    { key: 'checklist', label: 'Checklist',      Icon: ClipboardCheck },
-    { key: 'tasks',     label: 'Tarefas',        Icon: CheckSquare },
-    { key: 'chat',      label: 'Chat',           Icon: MessageSquare, badge: unread },
+    { id: 'staff',     label: 'Colaboradores' },
+    { id: 'checklist', label: 'Checklist' },
+    { id: 'tasks',     label: 'Tarefas' },
+    { id: 'chat',      label: 'Chat', count: unread > 0 ? (unread > 9 ? '9+' : unread) : undefined },
   ];
 
   return (
@@ -139,7 +140,7 @@ export default function Staff() {
       />
 
       {atStarterLimit && (
-        <div className="mb-5 px-4 py-3 rounded-md bg-sand-50 border border-sand-200 text-sm font-body text-sand-700 flex items-center justify-between gap-3">
+        <div className="mb-5 px-4 py-3 rounded-sm bg-[var(--sand-50)] border border-[var(--sand-300)] text-sm font-body text-n-800 flex items-center justify-between gap-3">
           <span>Atingiu o limite de {STARTER_STAFF_LIMIT} colaboradores do plano Starter.</span>
           <button onClick={() => setShowUpgrade(true)} className="font-semibold underline shrink-0">
             Fazer upgrade
@@ -148,19 +149,8 @@ export default function Staff() {
       )}
 
       {/* Tab bar */}
-      <div className="flex gap-0.5 mb-5 bg-n-100 p-1 rounded-md w-fit">
-        {TABS.map(({ key, label, Icon, badge }) => (
-          <button key={key} onClick={() => setTab(key)}
-            className={`relative flex items-center gap-2 px-4 py-2 rounded text-sm font-display font-medium transition-colors ${tab === key ? 'bg-white text-ocean-700 shadow-sm' : 'text-n-500 hover:text-n-700'}`}>
-            <Icon size={15} strokeWidth={1.75} />
-            {label}
-            {badge > 0 && (
-              <span className="absolute -top-1 -right-1 w-4 h-4 bg-error text-white text-xs rounded-full flex items-center justify-center font-mono leading-none">
-                {badge > 9 ? '9+' : badge}
-              </span>
-            )}
-          </button>
-        ))}
+      <div className="mb-5">
+        <Tabs tabs={TABS} value={tab} onChange={setTab} />
       </div>
 
       {/* Colaboradores tab */}
@@ -168,25 +158,19 @@ export default function Staff() {
         <div>
           {/* Search */}
           {staffList.length > 3 && (
-            <div className="relative mb-4 max-w-xs">
-              <Search size={14} strokeWidth={1.75} className="absolute left-3 top-1/2 -translate-y-1/2 text-n-400" />
-              <input value={search} onChange={e => setSearch(e.target.value)}
-                placeholder="Pesquisar..."
-                className="w-full h-9 pl-8 pr-3 rounded-sm border border-n-200 text-sm font-body bg-white placeholder:text-n-400 focus:outline-none focus:border-ocean-700"
-              />
+            <div className="mb-4 max-w-xs">
+              <Input aria-label="Pesquisar colaboradores" value={search} onChange={e => setSearch(e.target.value)}
+                placeholder="Pesquisar..." />
             </div>
           )}
 
           {loading ? (
             <div className="flex justify-center py-20"><LoadingSpinner size={32} /></div>
           ) : filtered.length === 0 && !search ? (
-            <div className="bg-white border border-n-200 rounded-md flex flex-col items-center py-14 text-n-400">
-              <Briefcase size={36} strokeWidth={1.25} className="mb-3" />
-              <p className="font-body text-sm">Sem colaboradores registados</p>
-              <p className="font-body text-xs mt-1 text-center max-w-xs">
-                Adicione guias, instrutores e motoristas para atribuir trabalhos
-              </p>
-            </div>
+            <Card padding="p-0">
+              <EmptyState icon={Briefcase} title="Sem colaboradores registados"
+                description="Adicione guias, instrutores e motoristas para atribuir trabalhos" />
+            </Card>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {filtered.map(m => (
@@ -220,7 +204,8 @@ export default function Staff() {
                 const totalMonth   = monthComms.reduce((sum, c) => sum + (c.amount || 0), 0);
                 const totalPending = monthComms.filter(c => c.status === 'pending').reduce((sum, c) => sum + (c.amount || 0), 0);
                 return (
-                  <div key={s.id} className="bg-white rounded-md border border-sand-200 shadow-sm p-4 space-y-3">
+                  <Card key={s.id} padding="p-4">
+                  <div className="space-y-3">
                     <div className="flex items-start justify-between">
                       <div className="flex items-center gap-3">
                         <StaffAvatar member={s} size={40} />
@@ -229,17 +214,15 @@ export default function Staff() {
                           <p className="text-xs font-body text-n-500">{s.seller_zone || 'Sem zona definida'}</p>
                         </div>
                       </div>
-                      <span className="text-[9px] font-mono font-semibold px-1.5 py-0.5 bg-sand-300 text-sand-700 rounded-xs uppercase tracking-wide shrink-0">
-                        Vendedor
-                      </span>
+                      <Badge variant="direct">Vendedor</Badge>
                     </div>
                     <div className="grid grid-cols-2 gap-2">
                       <div className="bg-n-50 rounded-sm px-2.5 py-2">
                         <p className="font-display font-bold text-sm text-ocean-700">€{Math.round(totalMonth)}</p>
                         <p className="text-[10px] font-body text-n-400">Comissoes mes</p>
                       </div>
-                      <div className="bg-yellow-50 rounded-sm px-2.5 py-2">
-                        <p className="font-display font-bold text-sm text-yellow-700">€{Math.round(totalPending)}</p>
+                      <div className="bg-[var(--warning-light)] rounded-sm px-2.5 py-2">
+                        <p className="font-display font-bold text-sm text-[var(--warning)]">€{Math.round(totalPending)}</p>
                         <p className="text-[10px] font-body text-n-400">Por pagar</p>
                       </div>
                     </div>
@@ -260,6 +243,7 @@ export default function Staff() {
                       )}
                     </div>
                   </div>
+                  </Card>
                 );
               })}
             </div>

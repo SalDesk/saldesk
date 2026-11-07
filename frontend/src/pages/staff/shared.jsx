@@ -51,7 +51,7 @@ export function StaffAvatar({ member, size = 40, showStatus = true }) {
         </div>
       )}
       {showStatus && (
-        <span className={`absolute bottom-0 right-0 rounded-full border-2 border-white ${size >= 36 ? 'w-3 h-3' : 'w-2.5 h-2.5'} ${member.status === 'active' ? 'bg-green-500' : 'bg-n-300'}`} />
+        <span className={`absolute bottom-0 right-0 rounded-full border-2 border-white ${size >= 36 ? 'w-3 h-3' : 'w-2.5 h-2.5'} ${member.status === 'active' ? 'bg-[var(--success)]' : 'bg-n-300'}`} />
       )}
     </div>
   );
