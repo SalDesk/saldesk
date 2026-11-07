@@ -40,7 +40,7 @@ export default function KpiCard({
   const isPositive = delta > 0;
   const isNeutral  = delta === 0 || delta == null;
   const DeltaIcon  = isNeutral ? Minus : isPositive ? TrendingUp : TrendingDown;
-  const deltaColor = isNeutral ? 'text-n-400' : isPositive ? 'text-[#1A7A4A]' : 'text-error';
+  const deltaColor = isNeutral ? 'text-n-400' : isPositive ? 'text-[var(--success)]' : 'text-error';
   return (
     <div className="bg-white rounded-lg border border-n-200 shadow-sm px-5 py-4 transition-all duration-200 hover:shadow-md hover:-translate-y-0.5 app:rounded-sm app:hover:translate-y-0 app:hover:shadow-sm">
       <div className="flex items-start justify-between gap-2 mb-3">

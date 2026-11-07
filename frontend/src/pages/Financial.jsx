@@ -261,7 +261,7 @@ export default function Financial() {
                 <Card header={<h3 className="font-display font-semibold text-sm text-n-700">Top clientes</h3>}><TopCustomersList data={clientes} /></Card>
               </div>
               {resumo?.anterior && <Card header={<h3 className="font-display font-semibold text-sm text-n-700">Comparativo com periodo anterior</h3>}><Comparativo resumo={resumo} currency={currency} /></Card>}
-              <Card header={<div className="flex items-center justify-between"><h3 className="font-display font-semibold text-sm text-n-700">Transacoes</h3><button onClick={() => carregarTx(periodo)} className="p-1 rounded text-n-400 hover:text-ocean-700 hover:bg-ocean-50 transition-colors"><RefreshCw size={13} strokeWidth={1.75} /></button></div>}>
+              <Card header={<div className="flex items-center justify-between"><h3 className="font-display font-semibold text-sm text-n-700">Transacoes</h3><button aria-label="Actualizar transacoes" onClick={() => carregarTx(periodo)} className="p-1 rounded text-n-400 hover:text-ocean-700 hover:bg-ocean-50 transition-colors"><RefreshCw size={13} strokeWidth={1.75} /></button></div>}>
                 <TransacoesTable transacoes={transacoes} currency={currency} loading={loadingTx} />
               </Card>
             </div>

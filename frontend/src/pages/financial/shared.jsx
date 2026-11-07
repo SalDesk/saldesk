@@ -7,7 +7,7 @@ export const PAYMENT_METHODS = ['Todos', 'paypal', 'sisp', 'cash', 'transfer'];
 export const PAYMENT_STATUS  = ['Todos', 'paid', 'pending', 'partial', 'refunded'];
 export const PM_LABEL  = { paypal: 'PayPal', sisp: 'SISP', cash: 'Dinheiro', transfer: 'Transferencia' };
 export const PS_LABEL  = { paid: 'Pago', pending: 'Pendente', partial: 'Parcial', refunded: 'Reembolsado' };
-export const PS_COLOR  = { paid: 'text-green-700 bg-green-50', pending: 'text-yellow-700 bg-yellow-50', partial: 'text-blue-700 bg-blue-50', refunded: 'text-n-500 bg-n-100' };
+export const PS_COLOR  = { paid: 'text-[var(--success)] bg-[var(--success-light)]', pending: 'text-[var(--warning)] bg-[var(--warning-light)]', partial: 'text-[var(--info)] bg-[var(--info-light)]', refunded: 'text-n-500 bg-n-100' };
 export const SRC_LABEL = { direct: 'Directa', public: 'Directa', manual: 'Manual', booking_com: 'Booking', airbnb: 'Airbnb', viator: 'Viator', getyourguide: 'GYG' };
 
 export const COST_FIELDS = [

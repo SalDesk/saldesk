@@ -59,34 +59,34 @@ export default function RevenueChart({ data, granularidade, currency = 'EUR' }) 
       <AreaChart data={chartData} margin={{ top: 8, right: 12, left: 0, bottom: 0 }}>
         <defs>
           <linearGradient id="gradReceita" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%"   stopColor="#0D5470" stopOpacity={0.18} />
-            <stop offset="100%" stopColor="#0D5470" stopOpacity={0} />
+            <stop offset="0%"   stopColor="var(--ocean-700)" stopOpacity={0.18} />
+            <stop offset="100%" stopColor="var(--ocean-700)" stopOpacity={0} />
           </linearGradient>
         </defs>
-        <CartesianGrid strokeDasharray="3 3" stroke="#E5E8EC" vertical={false} />
+        <CartesianGrid strokeDasharray="3 3" stroke="var(--n200)" vertical={false} />
         <XAxis
           dataKey="label"
-          tick={{ fontSize: 11, fontFamily: 'DM Sans', fill: '#6B7280' }}
+          tick={{ fontSize: 11, fontFamily: 'DM Sans', fill: 'var(--n500)' }}
           axisLine={false} tickLine={false}
         />
         <YAxis
-          tick={{ fontSize: 11, fontFamily: 'DM Sans', fill: '#6B7280' }}
+          tick={{ fontSize: 11, fontFamily: 'DM Sans', fill: 'var(--n500)' }}
           axisLine={false} tickLine={false}
           tickFormatter={tickFmt}
           width={currency === 'CVE' ? 72 : 52}
         />
         <Tooltip
           content={<CustomTooltip currency={currency} />}
-          cursor={{ stroke: '#0D5470', strokeWidth: 1, strokeDasharray: '4 4' }}
+          cursor={{ stroke: 'var(--ocean-700)', strokeWidth: 1, strokeDasharray: '4 4' }}
         />
         <Area
           type="monotone"
           dataKey="receita"
-          stroke="#0D5470"
+          stroke="var(--ocean-700)"
           strokeWidth={2}
           fill="url(#gradReceita)"
           dot={false}
-          activeDot={{ r: 4, fill: '#0D5470', strokeWidth: 0 }}
+          activeDot={{ r: 4, fill: 'var(--ocean-700)', strokeWidth: 0 }}
         />
       </AreaChart>
     </ResponsiveContainer>
