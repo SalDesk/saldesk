@@ -3,17 +3,10 @@ import {
   Euro,
   BarChart2,
   TrendingUp,
-  TrendingDown,
   FileSpreadsheet,
   FileText,
   Receipt,
   RefreshCw,
-  Wallet,
-  AlertTriangle,
-  Layers,
-  Users,
-  Percent,
-  Calculator,
   Lock,
 } from 'lucide-react';
 import { getResumo, getReceita, getUnidades, getTopClientes, getCanais, exportExcel, getTransacoes, exportPdf, getForecast } from '../services/financeiroService';
@@ -24,6 +17,8 @@ import PlanGuard from '../components/PlanGuard';
 import PageHeader from '../components/layout/PageHeader';
 import Button from '../components/ui/Button';
 import Card from '../components/ui/Card';
+import Tabs from '../components/ui/Tabs';
+import FilterChips from '../components/ui/FilterChips';
 import KpiCard from '../components/financial/KpiCard';
 import RevenueChart from '../components/financial/RevenueChart';
 import ChannelChart from '../components/financial/ChannelChart';
@@ -46,20 +41,20 @@ import ResultadoTab from './financial/ResultadoTab';
 
 /* ── constants ── */
 const SECTIONS = [
-  { key: 'receitas',   label: 'Receitas',   Icon: TrendingUp,   pro: false },
-  { key: 'despesas',   label: 'Despesas',   Icon: TrendingDown,  pro: true  },
-  { key: 'salarios',   label: 'Salarios',   Icon: Users,         pro: true  },
-  { key: 'comissoes',  label: 'Comissoes',  Icon: Percent,       pro: false },
-  { key: 'obrigacoes', label: 'Obrigacoes', Icon: AlertTriangle,  pro: true  },
-  { key: 'resultado',  label: 'Resultado',  Icon: Calculator,    pro: true  },
+  { id: 'receitas',   label: 'Receitas',   pro: false },
+  { id: 'despesas',   label: 'Despesas',   pro: true  },
+  { id: 'salarios',   label: 'Salarios',   pro: true  },
+  { id: 'comissoes',  label: 'Comissoes',  pro: false },
+  { id: 'obrigacoes', label: 'Obrigacoes', pro: true  },
+  { id: 'resultado',  label: 'Resultado',  pro: true  },
 ];
 
 const RECEITAS_TABS = [
-  { key: 'geral',    label: 'Visao Geral',      Icon: BarChart2  },
-  { key: 'portour',  label: 'Por Tour',         Icon: Layers     },
-  { key: 'previsao', label: 'Previsao',         Icon: TrendingUp },
-  { key: 'caixa',    label: 'Caixa',            Icon: Wallet     },
-  { key: 'manuais',  label: 'Receitas Manuais', Icon: Receipt    },
+  { id: 'geral',    label: 'Visao Geral' },
+  { id: 'portour',  label: 'Por Tour' },
+  { id: 'previsao', label: 'Previsao' },
+  { id: 'caixa',    label: 'Caixa' },
+  { id: 'manuais',  label: 'Receitas Manuais' },
 ];
 
 const PRESETS = [
@@ -67,6 +62,10 @@ const PRESETS = [
   { label: 'Este mes',        fn: mesAtual },
   { label: 'Mes anterior',    fn: mesAnterior },
   { label: 'Este ano',        fn: esteAno },
+];
+const MOEDAS = [
+  { value: 'EUR', label: 'EUR' },
+  { value: 'CVE', label: 'CVE' },
 ];
 const GRANULARIDADES = [
   { value: 'day',   label: 'Dia' },
@@ -203,19 +202,17 @@ export default function Financial() {
       />
 
       {/* Section tabs (top level) */}
-      <div className="flex gap-0.5 overflow-x-auto border-b border-n-200 mb-5">
-        {SECTIONS.map(({ key, label, Icon, pro }) => {
-          const locked = pro && !canAccess('financeiro-completo');
-          return (
-            <button key={key} onClick={() => setActiveSec(key)}
-              className={`flex items-center gap-2 px-4 py-2.5 text-sm font-body font-semibold border-b-2 -mb-px transition-colors whitespace-nowrap ${
-                activeSec === key ? 'border-ocean-700 text-ocean-700' : 'border-transparent text-n-500 hover:text-n-700'
-              }`}>
-              <Icon size={15} strokeWidth={1.75} />{label}
-              {locked && <Lock size={11} strokeWidth={1.75} className="text-n-300 shrink-0" />}
-            </button>
-          );
-        })}
+      <div className="mb-5">
+        <Tabs
+          tabs={SECTIONS.map(({ id, label, pro }) => ({
+            id,
+            label: pro && !canAccess('financeiro-completo')
+              ? <span className="inline-flex items-center gap-1.5">{label}<Lock size={11} strokeWidth={1.75} className="text-n-300 shrink-0" /></span>
+              : label,
+          }))}
+          value={activeSec}
+          onChange={setActiveSec}
+        />
       </div>
 
       {/* ── RECEITAS section ── */}
@@ -223,42 +220,16 @@ export default function Financial() {
         <>
           {/* Toolbar */}
           <div className="flex flex-wrap items-center gap-3 mb-5">
-            <div className="flex gap-0.5 bg-n-100 rounded-sm p-0.5">
-              {PRESETS.map((p, i) => (
-                <button key={p.label} onClick={() => selectPreset(i)}
-                  className={`px-3 py-1.5 rounded-xs text-xs font-body font-semibold transition-colors whitespace-nowrap ${presetAtivo === i ? 'bg-white text-ocean-700 shadow-sm' : 'text-n-500 hover:text-n-700'}`}>
-                  {p.label}
-                </button>
-              ))}
-            </div>
-            <div className="flex gap-0.5 bg-n-100 rounded-sm p-0.5">
-              {GRANULARIDADES.map(g => (
-                <button key={g.value} onClick={() => setGran(g.value)}
-                  className={`px-3 py-1.5 rounded-xs text-xs font-body font-semibold transition-colors ${granularidade === g.value ? 'bg-white text-ocean-700 shadow-sm' : 'text-n-500 hover:text-n-700'}`}>
-                  {g.label}
-                </button>
-              ))}
-            </div>
-            <div className="flex gap-0.5 bg-n-100 rounded-sm p-0.5 ml-auto">
-              {['EUR', 'CVE'].map(c => (
-                <button key={c} onClick={() => setCurrency(c)}
-                  className={`px-3 py-1.5 rounded-xs text-xs font-mono font-semibold transition-colors ${currency === c ? 'bg-ocean-700 text-white shadow-sm' : 'text-n-500 hover:text-n-700'}`}>
-                  {c}
-                </button>
-              ))}
+            <FilterChips options={PRESETS.map((p, i) => ({ value: i, label: p.label }))} value={presetAtivo} onChange={selectPreset} />
+            <FilterChips options={GRANULARIDADES} value={granularidade} onChange={setGran} />
+            <div className="ml-auto">
+              <FilterChips options={MOEDAS} value={currency} onChange={setCurrency} />
             </div>
           </div>
 
           {/* Receitas sub-tabs */}
-          <div className="flex gap-1 border-b border-n-200 mb-5">
-            {RECEITAS_TABS.map(({ key, label, Icon }) => (
-              <button key={key} onClick={() => setActiveTab(key)}
-                className={`flex items-center gap-2 px-4 py-2.5 text-sm font-body font-semibold border-b-2 -mb-px transition-colors ${
-                  activeTab === key ? 'border-ocean-700 text-ocean-700' : 'border-transparent text-n-500 hover:text-n-700'
-                }`}>
-                <Icon size={15} strokeWidth={1.75} />{label}
-              </button>
-            ))}
+          <div className="mb-5">
+            <Tabs tabs={RECEITAS_TABS} value={activeTab} onChange={setActiveTab} />
           </div>
 
           {/* Receitas tab content */}

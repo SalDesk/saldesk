@@ -304,3 +304,116 @@ describe('Financeiro: pagina inteira', () => {
     expect(screen.getByRole('heading', { name: 'Financeiro' })).toBeInTheDocument();
   });
 });
+
+/* ── Tarefa 2: estrutura (separadores, periodo, granularidade, moeda) ── */
+/* funcionam antes (classes) e depois (aria-pressed) da migracao */
+function estaActivo(el) {
+  if (el.hasAttribute('aria-pressed')) return el.getAttribute('aria-pressed') === 'true';
+  return /(^|\s)bg-white(\s|$)/.test(el.className) || /(^|\s)bg-ocean-700(\s|$)/.test(el.className);
+}
+function mesAtual() {
+  const n = new Date(), y = n.getFullYear(), m = String(n.getMonth() + 1).padStart(2, '0');
+  return { inicio: `${y}-${m}-01`, fim: `${y}-${m}-${new Date(y, n.getMonth() + 1, 0).getDate()}` };
+}
+function mesAnterior() {
+  const n = new Date(), mo = n.getMonth() === 0 ? 11 : n.getMonth() - 1;
+  const y = n.getMonth() === 0 ? n.getFullYear() - 1 : n.getFullYear();
+  const ms = String(mo + 1).padStart(2, '0');
+  return { inicio: `${y}-${ms}-01`, fim: `${y}-${ms}-${new Date(y, mo + 1, 0).getDate()}` };
+}
+
+describe('Financeiro: estrutura da pagina', () => {
+  it('mudar_de_preset_repete_os_pedidos_com_as_datas_do_preset', async () => {
+    montar();
+    await prontaVisaoGeral();
+    for (const [rotulo, { inicio, fim }] of [
+      ['Este mes', mesAtual()],
+      ['Mes anterior', mesAnterior()],
+      ['Este ano', { inicio: `${ANO}-01-01`, fim: `${ANO}-12-31` }],
+    ]) {
+      fireEvent.click(screen.getByText(rotulo));
+      await waitFor(() => expect(fin.getResumo).toHaveBeenLastCalledWith(inicio, fim));
+      expect(fin.getReceita).toHaveBeenCalledWith(inicio, fim, 'day');
+      await waitFor(() => expect(fin.getTransacoes).toHaveBeenLastCalledWith(inicio, fim));
+    }
+  });
+
+  it('mudar_a_granularidade_repete_getReceita', async () => {
+    montar();
+    await prontaVisaoGeral();
+    const { inicio, fim } = ultimos30();
+    fireEvent.click(screen.getByText('Semana'));
+    await waitFor(() => expect(fin.getReceita).toHaveBeenCalledWith(inicio, fim, 'week'));
+    await screen.findByText('Receita total');
+    fireEvent.click(screen.getByText('Mes'));
+    await waitFor(() => expect(fin.getReceita).toHaveBeenCalledWith(inicio, fim, 'month'));
+    await screen.findByText('Receita total');
+  });
+
+  it('o_botao_do_preset_activo_e_o_unico_destacado', async () => {
+    montar();
+    await prontaVisaoGeral();
+    const rotulos = ['Ultimos 30 dias', 'Este mes', 'Mes anterior', 'Este ano'];
+    const activos = () => rotulos.filter(r => estaActivo(screen.getByText(r).closest('button')));
+    expect(activos()).toEqual(['Ultimos 30 dias']);
+    fireEvent.click(screen.getByText('Mes anterior'));
+    expect(activos()).toEqual(['Mes anterior']);
+    await screen.findByText('Carla Dias'); /* espera o recarregamento terminar */
+    /* granularidade e moeda */
+    expect(estaActivo(screen.getByText('Dia').closest('button'))).toBe(true);
+    expect(estaActivo(screen.getByText('Semana').closest('button'))).toBe(false);
+    expect(estaActivo(screen.getByRole('button', { name: 'EUR' }))).toBe(true);
+    expect(estaActivo(screen.getByRole('button', { name: 'CVE' }))).toBe(false);
+  });
+
+});
+
+describe('Financeiro: estrutura com o design system', () => {
+  it('separadores_de_topo_e_de_receitas_sao_tabs_com_aria_selected', async () => {
+    montar();
+    await prontaVisaoGeral();
+    expect(screen.getAllByRole('tablist')).toHaveLength(2);
+    expect(screen.getByRole('tab', { name: 'Receitas' })).toHaveAttribute('aria-selected', 'true');
+    expect(screen.getByRole('tab', { name: 'Visao Geral' })).toHaveAttribute('aria-selected', 'true');
+    fireEvent.click(screen.getByRole('tab', { name: 'Caixa' }));
+    expect(await screen.findByText('Pagamentos em dinheiro')).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: 'Caixa' })).toHaveAttribute('aria-selected', 'true');
+    expect(screen.getByRole('tab', { name: 'Visao Geral' })).toHaveAttribute('aria-selected', 'false');
+    fireEvent.click(screen.getByRole('tab', { name: 'Despesas' }));
+    expect(await screen.findByText('Registar despesa')).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: 'Despesas' })).toHaveAttribute('aria-selected', 'true');
+    expect(screen.getAllByRole('tablist')).toHaveLength(1); /* os sub-separadores so existem em Receitas */
+  });
+
+  it('periodo_granularidade_e_moeda_sao_chips_com_aria_pressed', async () => {
+    montar();
+    await prontaVisaoGeral();
+    expect(screen.getByRole('button', { name: 'Ultimos 30 dias', pressed: true })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Este mes', pressed: false })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Dia', pressed: true })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Semana', pressed: false })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'EUR', pressed: true })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'CVE' }));
+    expect(screen.getByRole('button', { name: 'CVE', pressed: true })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'EUR', pressed: false })).toBeInTheDocument();
+  });
+
+  it('sem_as_caixas_cinzentas_antigas_dos_grupos_de_botoes', async () => {
+    montar();
+    await prontaVisaoGeral();
+    const antigas = [...document.querySelectorAll('div')].filter(d => d.className.split(/\s+/).includes('bg-n-100') && d.className.split(/\s+/).includes('p-0.5'));
+    expect(antigas).toHaveLength(0);
+  });
+
+  it('separador_bloqueado_mantem_o_nome_e_leva_o_cadeado', async () => {
+    PLANO = 'starter';
+    montar();
+    await prontaVisaoGeral();
+    for (const nome of ['Despesas', 'Salarios', 'Obrigacoes', 'Resultado']) {
+      expect(screen.getByRole('tab', { name: nome }).querySelector('svg.lucide-lock')).not.toBeNull();
+    }
+    for (const nome of ['Receitas', 'Comissoes']) {
+      expect(screen.getByRole('tab', { name: nome }).querySelector('svg.lucide-lock')).toBeNull();
+    }
+  });
+});
