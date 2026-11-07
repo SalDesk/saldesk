@@ -415,7 +415,7 @@ export default function Affiliates() {
 
             <Button icon={confSaved ? Check : Save}
               loading={confSaving}
-              className={confSaved ? 'bg-[var(--success)] app:bg-[var(--success)] app:text-white hover:opacity-90' : ''}
+              className={confSaved ? '!bg-[var(--success)] !text-white hover:!opacity-90' : ''}
               onClick={handleSaveConfig}>
               {confSaved ? 'Guardado' : 'Guardar configuracao'}
             </Button>
