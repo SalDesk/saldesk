@@ -18,6 +18,7 @@ import Modal from '../../components/ui/Modal';
 import Input from '../../components/ui/Input';
 import LoadingSpinner from '../../components/shared/LoadingSpinner';
 import { StaffAvatar } from './shared';
+import EmptyState from '../../components/ui/EmptyState';
 
 /* ── Chat Message ── */
 function MessageBubble({ msg, isOwn, staffList, pinnedIds, onPin, onReply, allMessages }) {
@@ -57,11 +58,11 @@ function MessageBubble({ msg, isOwn, staffList, pinnedIds, onPin, onReply, allMe
       </div>
       {/* Action buttons on hover */}
       <div className={`flex flex-col gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity ${isOwn ? 'order-first' : ''}`}>
-        <button onClick={() => onReply?.(msg)} title="Responder"
+        <button onClick={() => onReply?.(msg)} title="Responder" aria-label="Responder"
           className="p-1 rounded text-n-400 hover:text-ocean-700 hover:bg-ocean-50 transition-colors">
           <CornerUpLeft size={12} strokeWidth={1.75} />
         </button>
-        <button onClick={() => onPin?.(msg.id)} title={isPinned ? 'Desafixar' : 'Fixar'}
+        <button onClick={() => onPin?.(msg.id)} title={isPinned ? 'Desafixar' : 'Fixar'} aria-label={isPinned ? 'Desafixar' : 'Fixar'}
           className={`p-1 rounded transition-colors ${isPinned ? 'text-ocean-700 bg-ocean-50' : 'text-n-400 hover:text-ocean-700 hover:bg-ocean-50'}`}>
           <Pin size={12} strokeWidth={1.75} />
         </button>
@@ -216,11 +217,11 @@ function ChatTab({ staffList }) {
         <div className="px-3 py-2.5 border-b border-n-200 flex items-center justify-between">
           <span className="text-xs font-mono uppercase tracking-wider text-n-500">Mensagens</span>
           <div className="flex items-center gap-0.5">
-            <button onClick={() => setBroadcast(true)} title="Broadcast"
+            <button onClick={() => setBroadcast(true)} title="Broadcast" aria-label="Broadcast"
               className="p-1 rounded text-n-400 hover:text-sand-500 hover:bg-sand-50 transition-colors">
               <Megaphone size={13} strokeWidth={1.75} />
             </button>
-            <button onClick={() => setGroupModal(true)} title="Novo grupo"
+            <button onClick={() => setGroupModal(true)} title="Novo grupo" aria-label="Novo grupo"
               className="p-1 rounded text-n-400 hover:text-ocean-700 hover:bg-ocean-50 transition-colors">
               <Plus size={13} strokeWidth={1.75} />
             </button>
@@ -279,7 +280,7 @@ function ChatTab({ staffList }) {
                 <div key={m.id} className="flex items-center gap-2 text-xs font-body text-ocean-700">
                   <Pin size={10} strokeWidth={1.75} className="shrink-0" />
                   <span className="truncate">{m.content}</span>
-                  <button onClick={() => handlePin(m.id)} className="ml-auto text-ocean-400 hover:text-ocean-700">
+                  <button onClick={() => handlePin(m.id)} aria-label="Desafixar mensagem fixada" className="ml-auto text-ocean-400 hover:text-ocean-700">
                     <X size={10} strokeWidth={2} />
                   </button>
                 </div>
@@ -311,36 +312,31 @@ function ChatTab({ staffList }) {
             <div className="flex items-center gap-2 px-3 py-2 bg-ocean-50 border-t border-ocean-100 shrink-0">
               <CornerUpLeft size={12} strokeWidth={1.75} className="text-ocean-600 shrink-0" />
               <span className="text-xs font-body text-ocean-700 truncate flex-1">{replyTo.content?.slice(0, 80)}</span>
-              <button onClick={() => setReplyTo(null)} className="text-ocean-400 hover:text-ocean-700">
+              <button onClick={() => setReplyTo(null)} aria-label="Cancelar resposta" className="text-ocean-400 hover:text-ocean-700">
                 <X size={12} strokeWidth={2} />
               </button>
             </div>
           )}
 
           <form onSubmit={handleSend} className="p-3 border-t border-n-200 bg-white flex gap-2 shrink-0">
-            <input ref={inputRef} value={input} onChange={e => setInput(e.target.value)}
-              placeholder="Escrever mensagem..."
-              className="flex-1 h-9 px-3 rounded-sm border border-n-200 text-sm font-body bg-n-100 text-n-900 placeholder:text-n-400 focus:outline-none focus:border-ocean-700 focus:bg-white"
-            />
-            <button type="submit" disabled={!input.trim()}
-              className="px-3 bg-ocean-700 text-white rounded-sm hover:bg-ocean-500 disabled:opacity-40 transition-colors">
-              <Send size={15} strokeWidth={1.75} />
-            </button>
+            <div className="flex-1">
+              <Input ref={inputRef} aria-label="Escrever mensagem" value={input} onChange={e => setInput(e.target.value)}
+                placeholder="Escrever mensagem..."
+              />
+            </div>
+            <Button type="submit" aria-label="Enviar" icon={Send} disabled={!input.trim()} />
           </form>
         </div>
       ) : (
         <div className="flex-1 flex items-center justify-center bg-n-50">
-          <div className="text-center text-n-400">
-            <MessageSquare size={32} strokeWidth={1.25} className="mx-auto mb-2" />
-            <p className="text-sm font-body">Seleccionar uma conversa</p>
-          </div>
+          <EmptyState icon={MessageSquare} title="Seleccionar uma conversa" />
         </div>
       )}
 
       {/* Create group modal */}
       <Modal open={groupModal} onClose={() => setGroupModal(false)} title="Novo grupo" size="sm">
         <form onSubmit={handleCreateGroup} className="space-y-4">
-          <Input label="Nome do grupo" value={groupName} onChange={e => setGroupName(e.target.value)} required placeholder="Ex: Equipa de campo" />
+          <Input label="Nome do grupo" aria-label="Nome do grupo" value={groupName} onChange={e => setGroupName(e.target.value)} required placeholder="Ex: Equipa de campo" />
           <div className="flex gap-3">
             <Button type="button" variant="secondary" onClick={() => setGroupModal(false)} className="flex-1">Cancelar</Button>
             <Button type="submit" className="flex-1">Criar grupo</Button>
@@ -351,13 +347,14 @@ function ChatTab({ staffList }) {
       {/* Broadcast modal */}
       <Modal open={broadcastModal} onClose={() => setBroadcast(false)} title="Broadcast — enviar a todos" size="sm">
         <form onSubmit={handleBroadcast} className="space-y-4">
-          <div className="px-3 py-2.5 bg-sand-50 border border-sand-200 rounded-sm">
-            <p className="text-xs font-body text-sand-600">
+          <div className="px-3 py-2.5 bg-[var(--sand-50)] border border-[var(--sand-300)] rounded-sm">
+            <p className="text-xs font-body text-n-800">
               Esta mensagem sera enviada individualmente para {staffList.length} colaborador(es) activo(s).
             </p>
           </div>
           <Input
             label="Mensagem"
+            aria-label="Mensagem"
             value={broadcastText}
             onChange={e => setBroadcastText(e.target.value)}
             required
