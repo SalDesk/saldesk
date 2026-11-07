@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import PlanGuard from '../components/PlanGuard';
 import {
   TrendingUp, TrendingDown, Gift, AlertTriangle,
-  BarChart2, RefreshCw, Calendar, Zap, Minus,
+  BarChart2, RefreshCw, Calendar, Minus,
 } from 'lucide-react';
 import {
   BarChart, Bar, LineChart, Line, XAxis, YAxis, Tooltip,
@@ -14,6 +14,8 @@ import { listReservations } from '../services/reservationsService';
 import PageHeader from '../components/layout/PageHeader';
 import Button from '../components/ui/Button';
 import Card from '../components/ui/Card';
+import Tabs from '../components/ui/Tabs';
+import EmptyState from '../components/ui/EmptyState';
 import LoadingSpinner from '../components/shared/LoadingSpinner';
 
 /* ── helpers ── */
@@ -57,12 +59,12 @@ function SuggestionCard({ type, month, text }) {
   const isHigh = type === 'high';
   return (
     <div className={`flex items-start gap-3 px-4 py-3 rounded-md border ${
-      isHigh ? 'bg-[#ECFDF5] border-green-200' : 'bg-ocean-50 border-ocean-200'
+      isHigh ? 'bg-[var(--success-light)] border-[var(--success)]' : 'bg-ocean-50 border-ocean-200'
     }`}>
       {isHigh
-        ? <TrendingUp size={15} strokeWidth={1.75} className="text-[#1A7A4A] shrink-0 mt-0.5" />
+        ? <TrendingUp size={15} strokeWidth={1.75} className="text-[var(--success)] shrink-0 mt-0.5" />
         : <Gift size={15} strokeWidth={1.75} className="text-ocean-700 shrink-0 mt-0.5" />}
-      <p className={`text-xs font-body ${isHigh ? 'text-[#1A7A4A]' : 'text-ocean-700'}`}>{text}</p>
+      <p className={`text-xs font-body ${isHigh ? 'text-[var(--success)]' : 'text-ocean-700'}`}>{text}</p>
     </div>
   );
 }
@@ -179,9 +181,9 @@ export default function Demand() {
   const yoyDelta  = prevTotal > 0 ? Math.round(((curTotal - prevTotal) / prevTotal) * 100) : null;
 
   const TABS = [
-    { key: 'historico',  label: 'Historico',      Icon: BarChart2 },
-    { key: 'proximo30',  label: 'Proximos 30 dias', Icon: Calendar  },
-    { key: 'sugestoes',  label: 'Sugestoes',       Icon: Zap        },
+    { id: 'historico', label: 'Historico' },
+    { id: 'proximo30', label: 'Proximos 30 dias' },
+    { id: 'sugestoes', label: 'Sugestoes' },
   ];
 
   return (
@@ -208,13 +210,13 @@ export default function Demand() {
           {
             label:  'Var. vs ano anterior',
             value:  yoyDelta != null ? `${yoyDelta > 0 ? '+' : ''}${yoyDelta}%` : '—',
-            color:  yoyDelta == null ? 'text-n-400' : yoyDelta >= 0 ? 'text-[#1A7A4A]' : 'text-error',
+            color:  yoyDelta == null ? 'text-n-400' : yoyDelta >= 0 ? 'text-[var(--success)]' : 'text-[var(--error)]',
             icon:   yoyDelta == null ? Minus : yoyDelta >= 0 ? TrendingUp : TrendingDown,
           },
           {
             label:  'Melhor mes',
             value:  bestMonth?.curValue > 0 ? bestMonth.name : '—',
-            color:  'text-[#1A7A4A]',
+            color:  'text-[var(--success)]',
             icon:   BarChart2,
           },
           {
@@ -224,28 +226,23 @@ export default function Demand() {
             icon:   Calendar,
           },
         ].map(m => (
-          <div key={m.label} className="bg-white border border-n-200 rounded-md px-4 py-3 flex items-center gap-3">
-            <div className="w-8 h-8 rounded-sm bg-ocean-50 flex items-center justify-center shrink-0">
-              <m.icon size={16} strokeWidth={1.75} className="text-ocean-700" />
+          <Card key={m.label} padding="px-4 py-3">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-sm bg-ocean-50 flex items-center justify-center shrink-0">
+                <m.icon size={16} strokeWidth={1.75} className="text-ocean-700" />
+              </div>
+              <div>
+                <p className={`font-display font-bold text-xl ${m.color}`}>{m.value}</p>
+                <p className="text-xs font-body text-n-500">{m.label}</p>
+              </div>
             </div>
-            <div>
-              <p className={`font-display font-bold text-xl ${m.color}`}>{m.value}</p>
-              <p className="text-xs font-body text-n-500">{m.label}</p>
-            </div>
-          </div>
+          </Card>
         ))}
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1 border-b border-n-200 mb-5">
-        {TABS.map(({ key, label, Icon }) => (
-          <button key={key} onClick={() => setActiveTab(key)}
-            className={`flex items-center gap-2 px-4 py-2.5 text-sm font-body font-semibold border-b-2 -mb-px transition-colors ${
-              activeTab === key ? 'border-ocean-700 text-ocean-700' : 'border-transparent text-n-500 hover:text-n-700'
-            }`}>
-            <Icon size={15} strokeWidth={1.75} />{label}
-          </button>
-        ))}
+      <div className="mb-5">
+        <Tabs tabs={TABS} value={activeTab} onChange={setActiveTab} />
       </div>
 
       {loading ? (
@@ -263,30 +260,27 @@ export default function Demand() {
             padding="px-5 pb-5 pt-2"
           >
             {chartData.every(d => d.curValue === 0 && d.prevValue === 0) ? (
-              <div className="text-center py-10">
-                <BarChart2 size={28} strokeWidth={1.25} className="mx-auto mb-2 text-n-300" />
-                <p className="text-sm font-body text-n-400">Sem dados financeiros disponiveis para o periodo.</p>
-              </div>
+              <EmptyState icon={BarChart2} title="Sem dados financeiros disponiveis para o periodo." />
             ) : (
               <ResponsiveContainer width="100%" height={260}>
                 <BarChart data={chartData} margin={{ left: 0, right: 8, top: 8, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#E5E8EC" vertical={false} />
-                  <XAxis dataKey="name" tick={{ fontSize: 10, fontFamily: 'DM Mono', fill: '#6B7280' }} tickLine={false} axisLine={false} />
-                  <YAxis tick={{ fontSize: 10, fontFamily: 'DM Mono', fill: '#6B7280' }} tickLine={false} axisLine={false}
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--n200)" vertical={false} />
+                  <XAxis dataKey="name" tick={{ fontSize: 10, fontFamily: 'DM Mono', fill: 'var(--n500)' }} tickLine={false} axisLine={false} />
+                  <YAxis tick={{ fontSize: 10, fontFamily: 'DM Mono', fill: 'var(--n500)' }} tickLine={false} axisLine={false}
                     tickFormatter={v => v > 999 ? `€${Math.round(v / 1000)}k` : `€${v}`} />
                   <Tooltip content={<ChartTooltip />} />
                   <Legend wrapperStyle={{ fontSize: 11, fontFamily: 'DM Mono' }} />
                   {average > 0 && (
-                    <ReferenceLine y={average} stroke="#D4A82A" strokeDasharray="4 4"
-                      label={{ value: 'Media', position: 'insideTopRight', fontSize: 10, fill: '#D4A82A', fontFamily: 'DM Mono' }} />
+                    <ReferenceLine y={average} stroke="var(--sand-500)" strokeDasharray="4 4"
+                      label={{ value: 'Media', position: 'insideTopRight', fontSize: 10, fill: 'var(--sand-500)', fontFamily: 'DM Mono' }} />
                   )}
-                  <Bar dataKey="prevValue" name={String(py)} fill="#E5E8EC" radius={[2, 2, 0, 0]} />
-                  <Bar dataKey="curValue"  name={String(yr)} radius={[2, 2, 0, 0]}>
+                  <Bar dataKey="prevValue" name={String(py)} fill="var(--n200)" radius={[2, 2, 0, 0]} />
+                  <Bar dataKey="curValue"  name={String(yr)} fill="var(--ocean-400)" radius={[2, 2, 0, 0]}>
                     {chartData.map((d, i) => (
                       <Cell key={i} fill={
-                        highMonths.some(h => h.name === d.name)  ? '#1A7A4A' :
-                        lowMonths.some(l => l.name === d.name)   ? '#0D5470' :
-                        '#3BA7CB'
+                        highMonths.some(h => h.name === d.name)  ? 'var(--success)' :
+                        lowMonths.some(l => l.name === d.name)   ? 'var(--ocean-700)' :
+                        'var(--ocean-400)'
                       } />
                     ))}
                   </Bar>
@@ -304,7 +298,7 @@ export default function Demand() {
               ) : (
                 <div className="flex flex-wrap gap-2">
                   {highMonths.map(m => (
-                    <span key={m.name} className="flex items-center gap-1.5 px-3 py-1.5 bg-[#ECFDF5] border border-green-200 rounded-sm text-xs font-body font-semibold text-[#1A7A4A]">
+                    <span key={m.name} className="flex items-center gap-1.5 px-3 py-1.5 bg-[var(--success-light)] border border-[var(--success)] rounded-sm text-xs font-body font-semibold text-[var(--success)]">
                       <TrendingUp size={11} strokeWidth={2} />
                       {m.name} · €{Math.round(m.curValue).toLocaleString('pt-PT')}
                     </span>
@@ -337,10 +331,7 @@ export default function Demand() {
               Reservas confirmadas — proximos 30 dias
             </h3>
             {next30Res.length === 0 ? (
-              <div className="text-center py-8">
-                <Calendar size={28} strokeWidth={1.25} className="mx-auto mb-2 text-n-300" />
-                <p className="text-sm font-body text-n-400">Sem reservas confirmadas para os proximos 30 dias.</p>
-              </div>
+              <EmptyState icon={Calendar} title="Sem reservas confirmadas para os proximos 30 dias." />
             ) : (
               <>
                 <div className="grid grid-cols-7 sm:grid-cols-10 gap-1 mb-4">
@@ -357,17 +348,17 @@ export default function Demand() {
                           isToday
                             ? 'border-ocean-700 bg-ocean-700'
                             : isHigh
-                            ? 'border-[#1A7A4A] bg-[#ECFDF5]'
+                            ? 'border-[var(--success)] bg-[var(--success-light)]'
                             : count > 0
                             ? 'border-ocean-200 bg-ocean-50'
                             : 'border-n-100 bg-white'
                         }`}>
                         <span className={`text-[9px] font-mono ${isToday ? 'text-white' : 'text-n-400'}`}>{monthAbbr}</span>
-                        <span className={`text-xs font-display font-bold ${isToday ? 'text-white' : isHigh ? 'text-[#1A7A4A]' : count > 0 ? 'text-ocean-700' : 'text-n-400'}`}>
+                        <span className={`text-xs font-display font-bold ${isToday ? 'text-white' : isHigh ? 'text-[var(--success)]' : count > 0 ? 'text-ocean-700' : 'text-n-400'}`}>
                           {dayNum}
                         </span>
                         {count > 0 && (
-                          <span className={`text-[9px] font-mono font-semibold ${isToday ? 'text-ocean-200' : isHigh ? 'text-[#1A7A4A]' : 'text-ocean-500'}`}>
+                          <span className={`text-[9px] font-mono font-semibold ${isToday ? 'text-ocean-200' : isHigh ? 'text-[var(--success)]' : 'text-ocean-500'}`}>
                             {count}
                           </span>
                         )}
@@ -376,7 +367,7 @@ export default function Demand() {
                   })}
                 </div>
                 <div className="flex items-center gap-4 text-[10px] font-mono text-n-400">
-                  <span className="flex items-center gap-1"><span className="w-3 h-3 bg-[#1A7A4A] rounded-xs" /> Alta procura (3+)</span>
+                  <span className="flex items-center gap-1"><span className="w-3 h-3 bg-[var(--success)] rounded-xs" /> Alta procura (3+)</span>
                   <span className="flex items-center gap-1"><span className="w-3 h-3 bg-ocean-100 rounded-xs border border-ocean-200" /> Reservas</span>
                   <span className="flex items-center gap-1"><span className="w-3 h-3 bg-white rounded-xs border border-n-200" /> Livre</span>
                 </div>
@@ -402,7 +393,7 @@ export default function Demand() {
                         <div className="h-full rounded-full bg-ocean-500 transition-all"
                           style={{ width: `${(count / maxDayCount) * 100}%` }} />
                       </div>
-                      <span className="text-xs font-mono font-semibold text-ocean-700 w-16 text-right shrink-0">
+                      <span className="text-xs font-mono font-semibold text-ocean-700 w-24 text-right shrink-0 whitespace-nowrap">
                         {count} reserva(s)
                       </span>
                     </div>
@@ -440,7 +431,7 @@ export default function Demand() {
                 </div>
                 <div>
                   <p className="text-xs font-body text-n-500">Variacao</p>
-                  <p className={`font-display font-bold text-lg ${yoyDelta == null ? 'text-n-400' : yoyDelta >= 0 ? 'text-[#1A7A4A]' : 'text-error'}`}>
+                  <p className={`font-display font-bold text-lg ${yoyDelta == null ? 'text-n-400' : yoyDelta >= 0 ? 'text-[var(--success)]' : 'text-[var(--error)]'}`}>
                     {yoyDelta != null ? `${yoyDelta > 0 ? '+' : ''}${yoyDelta}%` : '—'}
                   </p>
                 </div>

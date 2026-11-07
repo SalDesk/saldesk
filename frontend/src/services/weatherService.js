@@ -25,15 +25,15 @@ export async function getWeatherForecast(lat = DEFAULT_LAT, lng = DEFAULT_LNG) {
 
 /* WMO code → display info */
 export function weatherInfo(code) {
-  if (code === 0)  return { label: 'Ceu limpo',             iconName: 'Sun',            color: '#D4A82A', bg: '#FFF7E6' };
-  if (code <= 2)   return { label: 'Maioritariamente limpo', iconName: 'Sun',            color: '#D4A82A', bg: '#FFF7E6' };
-  if (code === 3)  return { label: 'Nublado',                iconName: 'Cloud',          color: '#6B7280', bg: '#F9FAFB' };
-  if (code <= 48)  return { label: 'Nevoeiro',               iconName: 'CloudFog',       color: '#64748B', bg: '#F1F5F9' };
-  if (code <= 55)  return { label: 'Garoa',                  iconName: 'CloudDrizzle',   color: '#1480A8', bg: '#EFF6FF' };
-  if (code <= 65)  return { label: 'Chuva',                  iconName: 'CloudRain',      color: '#0D5470', bg: '#DBEAFE' };
-  if (code <= 75)  return { label: 'Neve',                   iconName: 'Cloud',          color: '#9BA3AF', bg: '#F8FAFC' };
-  if (code <= 82)  return { label: 'Aguaceiros',             iconName: 'CloudRain',      color: '#0D5470', bg: '#DBEAFE' };
-  return                  { label: 'Trovoada',               iconName: 'CloudLightning', color: '#B91C1C', bg: '#FEF2F2' };
+  if (code === 0)  return { label: 'Ceu limpo',             iconName: 'Sun',            color: 'var(--sand-500)', bg: '#FFF7E6' };
+  if (code <= 2)   return { label: 'Maioritariamente limpo', iconName: 'Sun',            color: 'var(--sand-500)', bg: '#FFF7E6' };
+  if (code === 3)  return { label: 'Nublado',                iconName: 'Cloud',          color: 'var(--n500)', bg: '#F9FAFB' };
+  if (code <= 48)  return { label: 'Nevoeiro',               iconName: 'CloudFog',       color: 'var(--n500)', bg: '#F1F5F9' };
+  if (code <= 55)  return { label: 'Garoa',                  iconName: 'CloudDrizzle',   color: 'var(--ocean-500)', bg: '#EFF6FF' };
+  if (code <= 65)  return { label: 'Chuva',                  iconName: 'CloudRain',      color: 'var(--ocean-700)', bg: '#DBEAFE' };
+  if (code <= 75)  return { label: 'Neve',                   iconName: 'Cloud',          color: 'var(--n400)', bg: '#F8FAFC' };
+  if (code <= 82)  return { label: 'Aguaceiros',             iconName: 'CloudRain',      color: 'var(--ocean-700)', bg: '#DBEAFE' };
+  return                  { label: 'Trovoada',               iconName: 'CloudLightning', color: 'var(--error)', bg: '#FEF2F2' };
 }
 
 export function isBadWeather(day) {
