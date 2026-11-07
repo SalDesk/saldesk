@@ -1,7 +1,10 @@
 import { useState, useEffect } from 'react';
 import Button from '../../components/ui/Button';
 import Modal from '../../components/ui/Modal';
+import Input from '../../components/ui/Input';
 import { COST_FIELDS } from './shared';
+
+/* ─────────────────── RECEITAS TAB COMPONENTS ─────────────────── */
 
 function CostEditModal({ open, onClose, unitId, unitName, costs, onSave }) {
   const [fields, setFields] = useState({ guide: 0, transport: 0, tickets: 0, meals: 0, other: 0 });
@@ -10,17 +13,13 @@ function CostEditModal({ open, onClose, unitId, unitName, costs, onSave }) {
   return (
     <Modal open={open} onClose={onClose} title={`Custos — ${unitName}`} size="sm">
       <div className="space-y-3">
-        {COST_FIELDS.map(f => (
-          <div key={f.key} className="flex items-center gap-3">
-            <label className="text-xs font-body text-n-600 w-36 shrink-0">{f.label}</label>
-            <div className="flex items-center gap-1 flex-1">
-              <span className="text-xs font-mono text-n-400">€</span>
-              <input type="number" min="0" step="0.01" value={fields[f.key]}
-                onChange={e => setFields(p => ({ ...p, [f.key]: e.target.value }))}
-                className="flex-1 h-8 px-2 text-sm font-mono border border-n-200 rounded focus:outline-none focus:border-ocean-700" />
-            </div>
-          </div>
-        ))}
+        <div className="grid grid-cols-2 gap-3">
+          {COST_FIELDS.map(f => (
+            <Input key={f.key} label={f.label} aria-label={f.label} type="number" min="0" step="0.01" value={fields[f.key]}
+              onChange={e => setFields(p => ({ ...p, [f.key]: e.target.value }))}
+              className="font-mono" />
+          ))}
+        </div>
         <div className="pt-2 border-t border-n-100 flex items-center justify-between">
           <span className="text-xs font-body text-n-500">Total custo operacional</span>
           <span className="font-display font-bold text-n-800">€{total.toFixed(2)}</span>
