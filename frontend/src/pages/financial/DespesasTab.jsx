@@ -16,6 +16,9 @@ import {
 import { listExpenses, addExpenseLocal, updateExpenseLocal, deleteExpenseLocal } from '../../services/expensesService';
 import Button from '../../components/ui/Button';
 import Card from '../../components/ui/Card';
+import Table from '../../components/ui/Table';
+import Toggle from '../../components/ui/Toggle';
+import EmptyState from '../../components/ui/EmptyState';
 import Modal from '../../components/ui/Modal';
 import Input, { Textarea, Select } from '../../components/ui/Input';
 import LoadingSpinner from '../../components/shared/LoadingSpinner';
@@ -45,33 +48,27 @@ function ExpenseModal({ expense, staff, onSave, onClose }) {
     <Modal open onClose={onClose} title={isNew ? 'Registar despesa' : 'Editar despesa'} size="md">
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="grid grid-cols-2 gap-3">
-          <Select label="Categoria" value={form.category} onChange={set('category')}>
+          <Select label="Categoria" aria-label="Categoria" value={form.category} onChange={set('category')}>
             {EXPENSE_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
           </Select>
-          <Select label="Moeda" value={form.currency} onChange={set('currency')}>
+          <Select label="Moeda" aria-label="Moeda" value={form.currency} onChange={set('currency')}>
             <option value="EUR">EUR (€)</option>
             <option value="CVE">CVE</option>
           </Select>
         </div>
         <div className="grid grid-cols-2 gap-3">
-          <Input label="Valor" type="number" min="0" step="0.01" value={form.amount} onChange={set('amount')} required placeholder="0.00" />
-          <Input label="Data" type="date" value={form.date} onChange={set('date')} required />
+          <Input label="Valor" aria-label="Valor" type="number" min="0" step="0.01" value={form.amount} onChange={set('amount')} required placeholder="0.00" />
+          <Input label="Data" aria-label="Data" type="date" value={form.date} onChange={set('date')} required />
         </div>
         {['Salarios', 'Comissoes vendedores'].includes(form.category) && staff.length > 0 && (
-          <Select label="Colaborador" value={form.staff_id} onChange={set('staff_id')}>
+          <Select label="Colaborador" aria-label="Colaborador" value={form.staff_id} onChange={set('staff_id')}>
             <option value="">Nenhum especifico</option>
             {staff.map(s => <option key={s.id} value={s.id}>{s.name} ({s.role})</option>)}
           </Select>
         )}
-        <div className="flex items-center gap-3">
-          <button type="button" onClick={() => setForm(p => ({ ...p, is_recurring: !p.is_recurring }))}
-            className={`relative w-10 h-5 rounded-full border-2 border-transparent transition-colors ${form.is_recurring ? 'bg-ocean-700' : 'bg-n-300'}`}>
-            <span className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-all ${form.is_recurring ? 'left-[22px]' : 'left-0.5'}`} />
-          </button>
-          <span className="text-xs font-body text-n-600">Despesa recorrente mensal</span>
-        </div>
-        <Textarea label="Notas" value={form.notes} onChange={set('notes')} rows={2} />
-        <Input label="URL do comprovativo" value={form.receipt_url} onChange={set('receipt_url')} placeholder="https://..." />
+        <Toggle checked={form.is_recurring} onChange={v => setForm(p => ({ ...p, is_recurring: v }))} label="Despesa recorrente mensal" />
+        <Textarea label="Notas" aria-label="Notas" value={form.notes} onChange={set('notes')} rows={2} />
+        <Input label="URL do comprovativo" aria-label="URL do comprovativo" value={form.receipt_url} onChange={set('receipt_url')} placeholder="https://..." />
         <div className="flex gap-3 pt-1">
           <Button type="button" variant="secondary" onClick={onClose} className="flex-1">Cancelar</Button>
           <Button type="submit" className="flex-1">{isNew ? 'Registar' : 'Guardar'}</Button>
@@ -140,28 +137,48 @@ function DespesasTab({ currency, staff }) {
     return <div className="bg-white border border-n-200 rounded-sm shadow-sm px-3 py-2 text-xs font-body"><p className="font-semibold text-n-700">{payload[0].name}</p><p style={{ color: payload[0].payload.fill }}>€{Math.round(payload[0].value).toLocaleString('pt-PT')}</p></div>;
   };
 
+  const columns = [
+    { key: 'data', label: 'Data', render: e => <span className="text-xs font-mono text-n-500 whitespace-nowrap">{fmtDate(e.date)}</span> },
+    { key: 'categoria', label: 'Categoria', render: e => <span className="font-body font-semibold text-n-800">{e.category}</span> },
+    { key: 'colaborador', label: 'Colaborador', render: e => <span className="text-xs font-body text-n-500">{e.staff_id ? (staff.find(s => s.id === e.staff_id)?.name || '—') : '—'}</span> },
+    { key: 'valor', label: 'Valor', render: e => <span className="font-display font-bold text-[var(--error)] whitespace-nowrap">- {fmtMoney(e.amount, currency)}</span> },
+    { key: 'recorrente', label: 'Recorrente', render: e => (e.is_recurring ? <span className="text-xs font-mono text-ocean-700 bg-ocean-50 px-1.5 py-0.5 rounded-xs">Recorrente</span> : '—') },
+    { key: 'notas', label: 'Notas', render: e => <span className="block max-w-[150px] truncate text-xs font-body text-n-500">{e.notes || '—'}</span> },
+    {
+      key: 'acoes', label: '',
+      render: e => (
+        <div className="flex gap-0.5">
+          <button aria-label={`Editar despesa - ${e.category}`} onClick={() => setModal(e)} className="p-1.5 rounded text-n-400 hover:text-ocean-700 hover:bg-ocean-50 transition-colors"><Edit2 size={13} strokeWidth={1.75} /></button>
+          <button aria-label={`Eliminar despesa - ${e.category}`} onClick={() => handleDelete(e.id)} className="p-1.5 rounded text-n-400 hover:text-[var(--error)] hover:bg-[var(--error-light)] transition-colors"><Trash2 size={13} strokeWidth={1.75} /></button>
+        </div>
+      ),
+    },
+  ];
+
   return (
     <div className="space-y-5">
       {/* Alerts */}
       {missingRecurring.length > 0 && (
-        <div className="flex items-start gap-3 px-4 py-3 bg-yellow-50 border border-yellow-200 rounded-md">
-          <AlertTriangle size={15} strokeWidth={1.75} className="text-yellow-600 shrink-0 mt-0.5" />
+        <div className="flex items-start gap-3 px-4 py-3 bg-[var(--warning-light)] border border-[var(--warning)] rounded-sm">
+          <AlertTriangle size={15} strokeWidth={1.75} className="text-[var(--warning)] shrink-0 mt-0.5" />
           <div className="flex-1">
-            <p className="text-sm font-body font-semibold text-yellow-700">Despesas recorrentes em falta este mes</p>
-            <p className="text-xs font-body text-yellow-600 mt-0.5">{missingRecurring.slice(0, 3).map(r => r.category).join(' · ')}</p>
+            <p className="text-sm font-body font-semibold text-[var(--warning)]">Despesas recorrentes em falta este mes</p>
+            <p className="text-xs font-body text-[var(--warning)] mt-0.5">{missingRecurring.slice(0, 3).map(r => r.category).join(' · ')}</p>
           </div>
         </div>
       )}
 
       {/* Filters + Add */}
       <div className="flex flex-wrap items-center gap-3">
-        <input type="month" value={filterMonth} onChange={e => setFilterMonth(e.target.value)}
-          className="h-9 px-3 text-sm font-body border border-n-200 rounded-sm bg-white focus:outline-none focus:border-ocean-700" />
-        <select value={filterCat} onChange={e => setFilterCat(e.target.value)}
-          className="h-9 px-3 text-sm font-body border border-n-200 rounded-sm bg-white focus:outline-none focus:border-ocean-700">
-          <option value="">Todas as categorias</option>
-          {EXPENSE_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
-        </select>
+        <div className="w-44">
+          <Input type="month" aria-label="Mes" value={filterMonth} onChange={e => setFilterMonth(e.target.value)} />
+        </div>
+        <div className="w-56">
+          <Select aria-label="Categoria" value={filterCat} onChange={e => setFilterCat(e.target.value)}>
+            <option value="">Todas as categorias</option>
+            {EXPENSE_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+          </Select>
+        </div>
         <div className="ml-auto flex items-center gap-3">
           <span className="text-xs font-mono text-n-500">Total: <span className="font-bold text-n-800">€{Math.round(totalPeriod).toLocaleString('pt-PT')}</span></span>
           <Button icon={Plus} size="sm" onClick={() => setModal({ _new: true })}>Registar despesa</Button>
@@ -172,13 +189,13 @@ function DespesasTab({ currency, staff }) {
       {byCat.length > 0 && (
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
           {byCat.slice(0, 4).map((c, i) => (
-            <div key={c.name} className="bg-white border border-n-200 rounded-md px-4 py-3">
+            <Card key={c.name} padding="px-4 py-3">
               <div className="flex items-center gap-2 mb-1">
                 <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: CAT_COLORS[i] }} />
                 <p className="text-xs font-body text-n-500 truncate">{c.name}</p>
               </div>
               <p className="font-display font-bold text-lg text-n-900">€{Math.round(c.total).toLocaleString('pt-PT')}</p>
-            </div>
+            </Card>
           ))}
         </div>
       )}
@@ -214,30 +231,10 @@ function DespesasTab({ currency, staff }) {
       {/* List */}
       {loading ? <div className="flex justify-center py-12"><LoadingSpinner size={32} /></div> :
        periodExp.length === 0 ? (
-        <Card><div className="text-center py-12"><TrendingDown size={32} strokeWidth={1.25} className="mx-auto mb-3 text-n-300" /><p className="font-body text-n-500">Sem despesas no periodo seleccionado.</p></div></Card>
+        <Card padding="p-0"><EmptyState icon={TrendingDown} title="Sem despesas no periodo seleccionado." /></Card>
       ) : (
         <Card padding="p-0">
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead><tr className="border-b border-n-200">{['Data','Categoria','Colaborador','Valor','Recorrente','Notas',''].map(h => <th key={h} className="text-left py-2.5 px-4 text-xs font-mono uppercase tracking-wider text-n-500 whitespace-nowrap">{h}</th>)}</tr></thead>
-              <tbody className="divide-y divide-n-100">
-                {[...periodExp].sort((a, b) => (b.date || '').localeCompare(a.date || '')).map(e => (
-                  <tr key={e.id} className="hover:bg-n-50 transition-colors">
-                    <td className="py-3 px-4 text-xs font-mono text-n-500 whitespace-nowrap">{fmtDate(e.date)}</td>
-                    <td className="py-3 px-4 font-body font-semibold text-n-800">{e.category}</td>
-                    <td className="py-3 px-4 text-xs font-body text-n-500">{e.staff_id ? (staff.find(s => s.id === e.staff_id)?.name || '—') : '—'}</td>
-                    <td className="py-3 px-4 font-display font-bold text-error whitespace-nowrap">- {fmtMoney(e.amount, currency)}</td>
-                    <td className="py-3 px-4">{e.is_recurring ? <span className="text-xs font-mono text-ocean-700 bg-ocean-50 px-1.5 py-0.5 rounded-xs">Recorrente</span> : '—'}</td>
-                    <td className="py-3 px-4 text-xs font-body text-n-500 max-w-[150px] truncate">{e.notes || '—'}</td>
-                    <td className="py-3 px-4"><div className="flex gap-0.5">
-                      <button onClick={() => setModal(e)} className="p-1.5 rounded text-n-400 hover:text-ocean-700 hover:bg-ocean-50 transition-colors"><Edit2 size={13} strokeWidth={1.75} /></button>
-                      <button onClick={() => handleDelete(e.id)} className="p-1.5 rounded text-n-400 hover:text-error hover:bg-red-50 transition-colors"><Trash2 size={13} strokeWidth={1.75} /></button>
-                    </div></td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <Table columns={columns} rows={[...periodExp].sort((a, b) => (b.date || '').localeCompare(a.date || ''))} compact />
         </Card>
       )}
 

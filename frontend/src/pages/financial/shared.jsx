@@ -31,9 +31,9 @@ export const MANUAL_REVENUE_CATEGORIES = [
 ];
 
 export const CAT_COLORS = [
-  '#0D5470','#1480A8','#3BA7CB','#6DC4E0','#9BCFE0',
-  '#D4A82A','#EAD08A','#1A7A4A','#B91C1C','#7C3AED',
-  '#D97706','#374151','#6B7280','#9BA3AF',
+  'var(--ocean-700)','var(--ocean-500)','var(--ocean-400)','var(--ocean-300)','var(--ocean-200)',
+  'var(--sand-500)','var(--sand-300)','var(--success)','var(--error)','var(--sand-600)',
+  'var(--warning)','var(--n700)','var(--n500)','var(--n400)',
 ];
 
 export const MONTHS_PT = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
