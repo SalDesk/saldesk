@@ -197,3 +197,56 @@ describe('Staff: pagina inteira', () => {
     await waitFor(() => expect(sock.disconnect).toHaveBeenCalledTimes(1));
   });
 });
+
+describe('Staff: criar colaborador com conta de acesso', () => {
+  const interruptor = () => screen.getByText('Criar conta /staff').parentElement.parentElement.querySelector('button');
+  async function abrirFormulario(email) {
+    await montar();
+    fireEvent.click(screen.getByRole('button', { name: /Novo colaborador/ }));
+    fireEvent.change(screen.getByPlaceholderText('Nome e apelido'), { target: { value: 'Novo Guia' } });
+    if (email) fireEvent.change(screen.getByPlaceholderText('nome@email.com'), { target: { value: email } });
+    fireEvent.click(interruptor());
+  }
+
+  it('com_email_cria_a_conta_avisa_e_o_cartao_mostra_Conta_activa', async () => {
+    createStaff.mockResolvedValue({ id: 's9', name: 'Novo Guia', role: 'Guia', status: 'active', email: 'n@x.cv' });
+    createStaffAccount.mockResolvedValue({ user_id: 'u9' });
+    await abrirFormulario('n@x.cv');
+    fireEvent.click(screen.getByRole('button', { name: 'Criar colaborador' }));
+    await waitFor(() => expect(createStaffAccount).toHaveBeenCalledWith('s9'));
+    expect(createStaff).toHaveBeenCalledWith(expect.objectContaining({ create_access: true, email: 'n@x.cv' }));
+    await waitFor(() => expect(toasts()).toContain('success:Colaborador criado e conta de acesso enviada por email'));
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+    expect(within(cartao('Novo Guia')).getByText('Conta activa')).toBeInTheDocument();
+  });
+
+  it('a_conta_a_falhar_avisa_mas_o_colaborador_fica_criado', async () => {
+    createStaff.mockResolvedValue({ id: 's9', name: 'Novo Guia', role: 'Guia', status: 'active', email: 'n@x.cv' });
+    createStaffAccount.mockRejectedValue(new Error('x'));
+    await abrirFormulario('n@x.cv');
+    fireEvent.click(screen.getByRole('button', { name: 'Criar colaborador' }));
+    await waitFor(() => expect(toasts()).toContain('error:Colaborador criado, mas a conta de acesso falhou — tente novamente no cartao do colaborador'));
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+    expect(within(cartao('Novo Guia')).getByText('Criar conta')).toBeInTheDocument(); /* sem user_id */
+  });
+
+  it('sem_email_o_interruptor_nao_cria_conta', async () => {
+    createStaff.mockResolvedValue({ id: 's9', name: 'Novo Guia', role: 'Guia', status: 'active' });
+    await abrirFormulario(null);
+    fireEvent.click(screen.getByRole('button', { name: 'Criar colaborador' }));
+    await waitFor(() => expect(createStaff).toHaveBeenCalledWith(expect.objectContaining({ create_access: true })));
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+    expect(createStaffAccount).not.toHaveBeenCalled();
+    expect(toasts()).toEqual([]);
+  });
+
+  it('erro_do_servidor_aparece_no_formulario_que_fica_aberto', async () => {
+    createStaff.mockRejectedValueOnce({ response: { data: { error: 'Nome duplicado' } } });
+    await abrirFormulario(null);
+    fireEvent.click(screen.getByRole('button', { name: 'Criar colaborador' }));
+    expect(await within(screen.getByRole('dialog')).findByText('Nome duplicado')).toBeInTheDocument();
+    createStaff.mockRejectedValueOnce(new Error('x'));
+    fireEvent.click(screen.getByRole('button', { name: 'Criar colaborador' }));
+    expect(await within(screen.getByRole('dialog')).findByText('Erro ao guardar')).toBeInTheDocument();
+  });
+});
