@@ -88,16 +88,16 @@ function ResultadoTab({ resumo, currency, sazonal, periodo }) {
       <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
         {[
           { label: 'Receita bruta',         value: fmtMoney(receita, currency),        color: 'text-ocean-700'  },
-          { label: 'Despesas operacionais', value: fmtMoney(totalDespesas, currency),   color: 'text-error'      },
-          { label: 'Folha salarial',        value: fmtMoney(totalSal, currency),        color: 'text-error'      },
-          { label: 'Resultado liquido',     value: fmtMoney(resultado, currency),       color: resultado >= 0 ? 'text-[#1A7A4A]' : 'text-error' },
-          { label: 'Margem',                value: `${margem.toFixed(1)}%`,             color: margem >= 20 ? 'text-[#1A7A4A]' : margem >= 0 ? 'text-yellow-700' : 'text-error' },
+          { label: 'Despesas operacionais', value: fmtMoney(totalDespesas, currency),   color: 'text-[var(--error)]' },
+          { label: 'Folha salarial',        value: fmtMoney(totalSal, currency),        color: 'text-[var(--error)]' },
+          { label: 'Resultado liquido',     value: fmtMoney(resultado, currency),       color: resultado >= 0 ? 'text-[var(--success)]' : 'text-[var(--error)]' },
+          { label: 'Margem',                value: `${margem.toFixed(1)}%`,             color: margem >= 20 ? 'text-[var(--success)]' : margem >= 0 ? 'text-[var(--warning)]' : 'text-[var(--error)]' },
           { label: 'Reservas no periodo',   value: resumo?.atual?.num_reservas ?? '—',   color: 'text-n-900'      },
         ].map(m => (
-          <div key={m.label} className="bg-white border border-n-200 rounded-md px-4 py-3">
+          <Card key={m.label} padding="px-4 py-3">
             <p className={`font-display font-bold text-xl ${m.color}`}>{m.value}</p>
             <p className="text-xs font-body text-n-500 mt-0.5">{m.label}</p>
-          </div>
+          </Card>
         ))}
       </div>
 
@@ -105,13 +105,13 @@ function ResultadoTab({ resumo, currency, sazonal, periodo }) {
       <Card padding="px-5 pb-5 pt-3" header={<h3 className="font-display font-semibold text-sm text-n-700">Receitas vs Despesas — ultimos 6 meses</h3>}>
         <ResponsiveContainer width="100%" height={240}>
           <BarChart data={chartData} margin={{ left: 0, right: 8, top: 8, bottom: 0 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#E5E8EC" vertical={false} />
-            <XAxis dataKey="name" tick={{ fontSize: 10, fontFamily: 'DM Mono', fill: '#6B7280' }} tickLine={false} axisLine={false} />
-            <YAxis tick={{ fontSize: 10, fontFamily: 'DM Mono', fill: '#6B7280' }} tickLine={false} axisLine={false} tickFormatter={v => v > 999 ? `€${Math.round(v / 1000)}k` : `€${v}`} />
-            <ChartTooltip contentStyle={{ fontSize: 11, fontFamily: 'DM Sans', border: '1px solid #E5E8EC', borderRadius: 4 }} formatter={v => `€${Math.round(v).toLocaleString('pt-PT')}`} />
+            <CartesianGrid strokeDasharray="3 3" stroke="var(--n200)" vertical={false} />
+            <XAxis dataKey="name" tick={{ fontSize: 10, fontFamily: 'DM Mono', fill: 'var(--n500)' }} tickLine={false} axisLine={false} />
+            <YAxis tick={{ fontSize: 10, fontFamily: 'DM Mono', fill: 'var(--n500)' }} tickLine={false} axisLine={false} tickFormatter={v => v > 999 ? `€${Math.round(v / 1000)}k` : `€${v}`} />
+            <ChartTooltip contentStyle={{ fontSize: 11, fontFamily: 'DM Sans', border: '1px solid var(--n200)', borderRadius: 4 }} formatter={v => `€${Math.round(v).toLocaleString('pt-PT')}`} />
             <Legend wrapperStyle={{ fontSize: 11, fontFamily: 'DM Mono' }} />
-            <Bar dataKey="receita"  name="Receita"  fill="#0D5470" radius={[2,2,0,0]} />
-            <Bar dataKey="despesas" name="Despesas" fill="#B91C1C" radius={[2,2,0,0]} />
+            <Bar dataKey="receita"  name="Receita"  fill="var(--ocean-700)" radius={[2,2,0,0]} />
+            <Bar dataKey="despesas" name="Despesas" fill="var(--error)" radius={[2,2,0,0]} />
           </BarChart>
         </ResponsiveContainer>
       </Card>
@@ -122,8 +122,8 @@ function ResultadoTab({ resumo, currency, sazonal, periodo }) {
         <div className="space-y-2">
           {[
             { label: 'Receita bruta',     value: receita,        sign: '+', color: 'text-ocean-700' },
-            { label: 'Despesas operac.',  value: totalDespesas,  sign: '−', color: 'text-error'     },
-            { label: 'Folha salarial',    value: totalSal,       sign: '−', color: 'text-error'     },
+            { label: 'Despesas operac.',  value: totalDespesas,  sign: '−', color: 'text-[var(--error)]' },
+            { label: 'Folha salarial',    value: totalSal,       sign: '−', color: 'text-[var(--error)]' },
           ].map(r => (
             <div key={r.label} className="flex items-center justify-between py-2 border-b border-n-100 last:border-0">
               <span className="text-sm font-body text-n-700">{r.label}</span>
@@ -132,7 +132,7 @@ function ResultadoTab({ resumo, currency, sazonal, periodo }) {
           ))}
           <div className="flex items-center justify-between py-2 pt-3 border-t-2 border-n-300">
             <span className="text-sm font-body font-bold text-n-800">Resultado liquido</span>
-            <span className={`font-display font-bold text-base ${resultado >= 0 ? 'text-[#1A7A4A]' : 'text-error'}`}>{resultado >= 0 ? '+' : '−'} {fmtMoney(Math.abs(resultado), currency)}</span>
+            <span className={`font-display font-bold text-base ${resultado >= 0 ? 'text-[var(--success)]' : 'text-[var(--error)]'}`}>{resultado >= 0 ? '+' : '−'} {fmtMoney(Math.abs(resultado), currency)}</span>
           </div>
         </div>
       </Card>
