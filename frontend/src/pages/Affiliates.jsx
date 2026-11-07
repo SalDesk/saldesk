@@ -13,6 +13,8 @@ import PageHeader from '../components/layout/PageHeader';
 import Button from '../components/ui/Button';
 import Card from '../components/ui/Card';
 import Modal from '../components/ui/Modal';
+import Tabs from '../components/ui/Tabs';
+import EmptyState from '../components/ui/EmptyState';
 import Input from '../components/ui/Input';
 import LoadingSpinner from '../components/shared/LoadingSpinner';
 
@@ -33,7 +35,7 @@ function CopyBtn({ text, small }) {
   }
   return (
     <button onClick={copy}
-      className={`flex items-center gap-1 transition-colors font-body font-medium ${small ? 'text-xs px-2 py-1 rounded-xs' : 'text-sm px-3 py-2 rounded-sm'} ${copied ? 'text-[#1A7A4A] bg-[#ECFDF5]' : 'text-ocean-700 bg-ocean-50 hover:bg-ocean-100'}`}>
+      className={`flex items-center gap-1 transition-colors font-body font-medium ${small ? 'text-xs px-2 py-1 rounded-xs' : 'text-sm px-3 py-2 rounded-sm'} ${copied ? 'text-[var(--success)] bg-[var(--success-light)]' : 'text-ocean-700 bg-ocean-50 hover:bg-ocean-100'}`}>
       {copied ? <Check size={small ? 10 : 13} strokeWidth={2} /> : <Copy size={small ? 10 : 13} strokeWidth={1.75} />}
       {copied ? 'Copiado' : 'Copiar'}
     </button>
@@ -87,19 +89,19 @@ function AffiliateModal({ affiliate, config, onSave, onClose }) {
   return (
     <Modal open onClose={onClose} title={isNew ? 'Novo afiliado' : 'Editar afiliado'} size="sm">
       <form onSubmit={handleSubmit} className="space-y-4">
-        <Input label="Nome" value={form.name} onChange={set('name')} required placeholder="Ex: Joao Silva" />
-        <Input label="Email" type="email" value={form.email} onChange={set('email')} required placeholder="joao@exemplo.com" />
+        <Input label="Nome" aria-label="Nome" value={form.name} onChange={set('name')} required placeholder="Ex: Joao Silva" />
+        <Input label="Email" aria-label="Email" type="email" value={form.email} onChange={set('email')} required placeholder="joao@exemplo.com" />
 
         <div className="grid grid-cols-2 gap-3">
-          <Input label="Comissao (%)" type="number" min="0" max="50" step="0.5"
+          <Input label="Comissao (%)" aria-label="Comissao (%)" type="number" min="0" max="50" step="0.5"
             value={form.commission_pct} onChange={set('commission_pct')} required />
           <div>
-            <Input label="Codigo de afiliado" value={form.code} onChange={set('code')} required
+            <Input label="Codigo de afiliado" aria-label="Codigo de afiliado" value={form.code} onChange={set('code')} required
               className="font-mono uppercase" placeholder="Ex: JOA3K9" />
           </div>
         </div>
 
-        {error && <p className="text-xs text-error">{error}</p>}
+        {error && <p className="text-xs text-[var(--error)]">{error}</p>}
 
         <div className="flex gap-3 pt-1">
           <Button type="button" variant="secondary" onClick={onClose} className="flex-1">Cancelar</Button>
@@ -140,16 +142,16 @@ function PaymentModal({ affiliate, onSave, onClose }) {
             <p className="text-[10px] font-mono text-n-400">TOTAL PAGO</p>
             <p className="font-display font-bold text-sm text-n-700">€{totalPaid.toFixed(2)}</p>
           </div>
-          <div className="px-3 py-2 bg-yellow-50 border border-yellow-200 rounded-sm">
-            <p className="text-[10px] font-mono text-yellow-600">PENDENTE</p>
-            <p className="font-display font-bold text-sm text-yellow-700">€{pending.toFixed(2)}</p>
+          <div className="px-3 py-2 bg-[var(--warning-light)] border border-[var(--warning)] rounded-sm">
+            <p className="text-[10px] font-mono text-[var(--warning)]">PENDENTE</p>
+            <p className="font-display font-bold text-sm text-[var(--warning)]">€{pending.toFixed(2)}</p>
           </div>
         </div>
-        <Input label="Montante a pagar (€)" type="number" min="0.01" step="0.01"
+        <Input label="Montante a pagar (€)" aria-label="Montante a pagar (€)" type="number" min="0.01" step="0.01"
           value={amount} onChange={e => setAmount(e.target.value)} required />
-        <Input label="Data do pagamento" type="date" value={date} onChange={e => setDate(e.target.value)} />
-        <Input label="Nota" value={note} onChange={e => setNote(e.target.value)} />
-        {error && <p className="text-xs text-error">{error}</p>}
+        <Input label="Data do pagamento" aria-label="Data do pagamento" type="date" value={date} onChange={e => setDate(e.target.value)} />
+        <Input label="Nota" aria-label="Nota" value={note} onChange={e => setNote(e.target.value)} />
+        {error && <p className="text-xs text-[var(--error)]">{error}</p>}
         <div className="flex gap-3">
           <Button variant="secondary" onClick={onClose} className="flex-1">Cancelar</Button>
           <Button loading={saving} onClick={handleSave} className="flex-1">Registar pagamento</Button>
@@ -259,9 +261,9 @@ export default function Affiliates() {
   const totalPending  = affiliates.reduce((s, a) => s + Number(a.commission_pending || 0), 0);
 
   const TABS = [
-    { key: 'afiliados',  label: 'Afiliados'      },
-    { key: 'config',     label: 'Configuracao'   },
-    { key: 'analytics',  label: 'Analytics'      },
+    { id: 'afiliados',  label: 'Afiliados'      },
+    { id: 'config',     label: 'Configuracao'   },
+    { id: 'analytics',  label: 'Analytics'      },
   ];
 
   const topAff = [...affiliates].sort((a, b) => (b.bookings_count || 0) - (a.bookings_count || 0));
@@ -273,9 +275,9 @@ export default function Affiliates() {
         subtitle="Gere afiliados e comissoes por reservas referenciadas"
         actions={
           <div className="flex items-center gap-2">
-            <button onClick={toggleProgramActive}
+            <button onClick={toggleProgramActive} aria-pressed={!!config.active}
               className={`flex items-center gap-2 px-3 py-1.5 rounded-sm border text-xs font-body font-semibold transition-colors ${
-                config.active ? 'bg-[#ECFDF5] text-[#1A7A4A] border-green-200' : 'bg-n-100 text-n-600 border-n-200'
+                config.active ? 'bg-[var(--success-light)] text-[var(--success)] border-[var(--success)]' : 'bg-n-100 text-n-600 border-n-200'
               }`}>
               {config.active
                 ? <ToggleRight size={16} strokeWidth={1.5} />
@@ -292,47 +294,39 @@ export default function Affiliates() {
         {[
           { label: 'Afiliados activos',   value: affiliates.filter(a => a.active !== false).length, color: 'text-n-900' },
           { label: 'Reservas geradas',    value: totalBookings,                                       color: 'text-ocean-700' },
-          { label: 'Comissao paga',       value: `€${totalPaid.toFixed(0)}`,                         color: 'text-[#1A7A4A]' },
-          { label: 'Comissao pendente',   value: `€${totalPending.toFixed(0)}`,                      color: 'text-yellow-700' },
+          { label: 'Comissao paga',       value: `€${totalPaid.toFixed(0)}`,                         color: 'text-[var(--success)]' },
+          { label: 'Comissao pendente',   value: `€${totalPending.toFixed(0)}`,                      color: 'text-[var(--warning)]' },
         ].map(m => (
-          <div key={m.label} className="bg-white border border-n-200 rounded-md px-4 py-3 flex items-center gap-3">
-            <UserPlus size={16} strokeWidth={1.75} className="text-n-300 shrink-0" />
-            <div>
-              <p className={`font-display font-bold text-xl ${m.color}`}>{m.value}</p>
-              <p className="text-xs font-body text-n-500">{m.label}</p>
+          <Card key={m.label} padding="px-4 py-3">
+            <div className="flex items-center gap-3">
+              <UserPlus size={16} strokeWidth={1.75} className="text-n-300 shrink-0" />
+              <div>
+                <p className={`font-display font-bold text-xl ${m.color}`}>{m.value}</p>
+                <p className="text-xs font-body text-n-500">{m.label}</p>
+              </div>
             </div>
-          </div>
+          </Card>
         ))}
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1 border-b border-n-200 mb-5">
-        {TABS.map(({ key, label }) => (
-          <button key={key} onClick={() => setActiveTab(key)}
-            className={`px-4 py-2.5 text-sm font-body font-semibold border-b-2 -mb-px transition-colors ${
-              activeTab === key ? 'border-ocean-700 text-ocean-700' : 'border-transparent text-n-500 hover:text-n-700'
-            }`}>
-            {label}
-          </button>
-        ))}
+      <div className="mb-5">
+        <Tabs tabs={TABS} value={activeTab} onChange={setActiveTab} />
       </div>
 
       {activeTab === 'afiliados' && (
         affiliates.length === 0 ? (
-          <Card>
-            <div className="text-center py-14">
-              <UserPlus size={36} strokeWidth={1.25} className="mx-auto mb-3 text-n-300" />
-              <p className="font-display font-semibold text-n-700 mb-1">Sem afiliados registados</p>
-              <p className="text-sm font-body text-n-400 mb-4">Cria o primeiro afiliado e partilha o link de afiliado.</p>
-              <Button icon={Plus} onClick={() => setModal({ _new: true })}>Novo afiliado</Button>
-            </div>
+          <Card padding="p-0">
+            <EmptyState icon={UserPlus} title="Sem afiliados registados"
+              description="Cria o primeiro afiliado e partilha o link de afiliado."
+              action={<Button icon={Plus} onClick={() => setModal({ _new: true })}>Novo afiliado</Button>} />
           </Card>
         ) : (
           <div className="space-y-3">
             {affiliates.map(a => {
               const link = affiliateLink(a);
               return (
-                <div key={a.id} className={`bg-white border border-n-200 rounded-md px-4 py-4 ${a.active === false ? 'opacity-60' : ''}`}>
+                <Card key={a.id} padding="px-4 py-4" className={a.active === false ? 'opacity-60' : ''}>
                   <div className="flex items-start gap-3">
                     <div className="w-9 h-9 rounded-full bg-ocean-100 flex items-center justify-center shrink-0">
                       <span className="font-display font-bold text-xs text-ocean-700">{a.name?.[0]?.toUpperCase() || '?'}</span>
@@ -344,22 +338,22 @@ export default function Affiliates() {
                           <p className="text-xs font-body text-n-500">{a.email} · <span className="font-mono">{a.code}</span> · {a.commission_pct || 0}% comissao</p>
                         </div>
                         <div className="flex gap-1 shrink-0">
-                          <button onClick={() => setPayModal(a)}
+                          <button onClick={() => setPayModal(a)} aria-label={`Registar pagamento ${a.name}`}
                             className="p-1.5 rounded text-n-400 hover:text-ocean-700 hover:bg-ocean-50 transition-colors" title="Registar pagamento">
                             <Euro size={13} strokeWidth={1.75} />
                           </button>
-                          <button onClick={() => handleToggle(a)}
+                          <button onClick={() => handleToggle(a)} aria-label={`${a.active !== false ? 'Desactivar' : 'Activar'} ${a.name}`}
                             className="p-1.5 rounded text-n-400 hover:text-n-700 hover:bg-n-100 transition-colors">
                             {a.active !== false
                               ? <ToggleRight size={13} strokeWidth={1.75} className="text-ocean-700" />
                               : <ToggleLeft size={13} strokeWidth={1.75} />}
                           </button>
-                          <button onClick={() => setModal(a)}
+                          <button onClick={() => setModal(a)} aria-label={`Editar ${a.name}`}
                             className="p-1.5 rounded text-n-400 hover:text-ocean-700 hover:bg-ocean-50 transition-colors">
                             <Pencil size={13} strokeWidth={1.75} />
                           </button>
-                          <button onClick={() => handleDelete(a.id)}
-                            className="p-1.5 rounded text-n-400 hover:text-error hover:bg-red-50 transition-colors">
+                          <button onClick={() => handleDelete(a.id)} aria-label={`Eliminar ${a.name}`}
+                            className="p-1.5 rounded text-n-400 hover:text-[var(--error)] hover:bg-[var(--error-light)] transition-colors">
                             <Trash2 size={13} strokeWidth={1.75} />
                           </button>
                         </div>
@@ -369,8 +363,8 @@ export default function Affiliates() {
                       <div className="flex gap-4 text-center mb-3">
                         {[
                           { label: 'Reservas', value: a.bookings_count || 0, color: 'text-ocean-700' },
-                          { label: 'Pago',     value: `€${Number(a.commission_paid || 0).toFixed(0)}`,    color: 'text-[#1A7A4A]' },
-                          { label: 'Pendente', value: `€${Number(a.commission_pending || 0).toFixed(0)}`, color: 'text-yellow-700' },
+                          { label: 'Pago',     value: `€${Number(a.commission_paid || 0).toFixed(0)}`,    color: 'text-[var(--success)]' },
+                          { label: 'Pendente', value: `€${Number(a.commission_pending || 0).toFixed(0)}`, color: 'text-[var(--warning)]' },
                         ].map(m => (
                           <div key={m.label}>
                             <p className={`font-display font-bold text-sm ${m.color}`}>{m.value}</p>
@@ -387,14 +381,14 @@ export default function Affiliates() {
                         <CopyBtn text={link} small />
                         <button
                           onClick={() => window.open(`https://wa.me/?text=${encodeURIComponent(`Reserve o seu tour: ${link}`)}`, '_blank', 'noopener')}
-                          className="flex items-center gap-1 text-xs px-2 py-1 rounded-xs bg-[#25D366] text-white font-body font-medium hover:bg-[#1ebe5a] transition-colors">
+                          className="flex items-center gap-1 text-xs px-2 py-1 rounded-xs bg-[var(--success)] text-white font-body font-medium hover:opacity-90 transition-opacity">
                           <Share2 size={10} strokeWidth={1.75} />
                           WA
                         </button>
                       </div>
                     </div>
                   </div>
-                </div>
+                </Card>
               );
             })}
           </div>
