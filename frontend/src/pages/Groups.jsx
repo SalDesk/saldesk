@@ -9,6 +9,9 @@ import PageHeader from '../components/layout/PageHeader';
 import Button from '../components/ui/Button';
 import Card from '../components/ui/Card';
 import Modal from '../components/ui/Modal';
+import Badge from '../components/ui/Badge';
+import FilterChips from '../components/ui/FilterChips';
+import EmptyState from '../components/ui/EmptyState';
 import Input, { Textarea, Select } from '../components/ui/Input';
 import LoadingSpinner from '../components/shared/LoadingSpinner';
 
@@ -21,12 +24,12 @@ const EVENT_TYPES = [
 ];
 
 const STATUSES = [
-  { value: 'pedido',           label: 'Pedido',           cls: 'bg-n-100 text-n-600 border-n-200'                },
-  { value: 'em_analise',       label: 'Em analise',       cls: 'bg-yellow-50 text-yellow-700 border-yellow-200'  },
-  { value: 'proposta_enviada', label: 'Proposta enviada', cls: 'bg-ocean-50 text-ocean-700 border-ocean-100'     },
-  { value: 'confirmado',       label: 'Confirmado',       cls: 'bg-[#ECFDF5] text-[#1A7A4A] border-[#BBF7D0]'   },
-  { value: 'concluido',        label: 'Concluido',        cls: 'bg-n-100 text-n-500 border-n-200'                },
-  { value: 'cancelado',        label: 'Cancelado',        cls: 'bg-red-50 text-error border-red-100'             },
+  { value: 'pedido',           label: 'Pedido',           variant: 'default'   },
+  { value: 'em_analise',       label: 'Em analise',       variant: 'pending'   },
+  { value: 'proposta_enviada', label: 'Proposta enviada', variant: 'info'      },
+  { value: 'confirmado',       label: 'Confirmado',       variant: 'confirmed' },
+  { value: 'concluido',        label: 'Concluido',        variant: 'default'   },
+  { value: 'cancelado',        label: 'Cancelado',        variant: 'cancelled' },
 ];
 
 function fmtDate(d) {
@@ -100,15 +103,15 @@ function GroupModal({ group, units, onSave, onClose }) {
     <Modal open onClose={onClose} title={isNew ? 'Nova cotacao de grupo' : 'Editar cotacao'} size="lg">
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <Input label="Empresa / Grupo" value={form.company} onChange={set('company')} required placeholder="Ex: Empresa ABC" />
-          <Select label="Tipo de evento" value={form.event_type} onChange={set('event_type')}>
+          <Input label="Empresa / Grupo" aria-label="Empresa / Grupo" value={form.company} onChange={set('company')} required placeholder="Ex: Empresa ABC" />
+          <Select label="Tipo de evento" aria-label="Tipo de evento" value={form.event_type} onChange={set('event_type')}>
             {EVENT_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
           </Select>
         </div>
 
         <div className="grid grid-cols-2 gap-3">
-          <Input label="Data pretendida" type="date" value={form.date} onChange={set('date')} required />
-          <Input label="Numero de pessoas" type="number" min="1" value={form.guests} onChange={set('guests')} required placeholder="Ex: 20" />
+          <Input label="Data pretendida" aria-label="Data pretendida" type="date" value={form.date} onChange={set('date')} required />
+          <Input label="Numero de pessoas" aria-label="Numero de pessoas" type="number" min="1" value={form.guests} onChange={set('guests')} required placeholder="Ex: 20" />
         </div>
 
         {/* Tours */}
@@ -135,9 +138,9 @@ function GroupModal({ group, units, onSave, onClose }) {
         </div>
 
         <div className="grid grid-cols-2 gap-3">
-          <Input label="Desconto de grupo (%)" type="number" min="0" max="50" step="1"
+          <Input label="Desconto de grupo (%)" aria-label="Desconto de grupo (%)" type="number" min="0" max="50" step="1"
             value={form.discount_pct} onChange={set('discount_pct')} placeholder="Ex: 15" />
-          <Input label="Orcamento estimado (€)" type="number" min="0"
+          <Input label="Orcamento estimado (€)" aria-label="Orcamento estimado (€)" type="number" min="0"
             value={form.budget} onChange={set('budget')} placeholder="Orcamento do cliente" />
         </div>
 
@@ -152,24 +155,24 @@ function GroupModal({ group, units, onSave, onClose }) {
 
         {/* Payment conditions */}
         <div className="grid grid-cols-2 gap-3">
-          <Input label="Sinal (%)" type="number" min="0" max="100"
+          <Input label="Sinal (%)" aria-label="Sinal (%)" type="number" min="0" max="100"
             value={form.signal_pct} onChange={set('signal_pct')} hint="Percentagem a pagar como sinal" />
-          <Input label="Restante X dias antes" type="number" min="1"
+          <Input label="Restante X dias antes" aria-label="Restante X dias antes" type="number" min="1"
             value={form.days_before} onChange={set('days_before')} hint="Dias antes do evento para pagamento" />
         </div>
 
-        <Input label="Validade da proposta" type="date" value={form.proposal_expires} onChange={set('proposal_expires')} />
+        <Input label="Validade da proposta" aria-label="Validade da proposta" type="date" value={form.proposal_expires} onChange={set('proposal_expires')} />
 
-        <Textarea label="Notas especiais" value={form.notes} onChange={set('notes')} rows={3}
+        <Textarea label="Notas especiais" aria-label="Notas especiais" value={form.notes} onChange={set('notes')} rows={3}
           placeholder="Necessidades especiais, alergias, preferencias do grupo..." />
 
         {!isNew && (
-          <Select label="Estado" value={form.status} onChange={set('status')}>
+          <Select label="Estado" aria-label="Estado" value={form.status} onChange={set('status')}>
             {STATUSES.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
           </Select>
         )}
 
-        {error && <p className="text-xs text-error">{error}</p>}
+        {error && <p className="text-xs text-[var(--error)]">{error}</p>}
 
         <div className="flex gap-3 pt-1">
           <Button type="button" variant="secondary" onClick={onClose} className="flex-1">Cancelar</Button>
@@ -206,10 +209,10 @@ function PaymentModal({ group, onSave, onClose }) {
         <div className="px-3 py-2 bg-n-50 border border-n-200 rounded-sm">
           <p className="text-xs font-body text-n-500">Total pago ate agora: <span className="font-bold text-n-700">€{totalPaid.toFixed(2)}</span></p>
         </div>
-        <Input label="Montante recebido (€)" type="number" min="0.01" step="0.01"
+        <Input label="Montante recebido (€)" aria-label="Montante recebido (€)" type="number" min="0.01" step="0.01"
           value={amount} onChange={e => setAmount(e.target.value)} required />
-        <Input label="Data" type="date" value={date} onChange={e => setDate(e.target.value)} />
-        <Input label="Descricao" value={note} onChange={e => setNote(e.target.value)} placeholder="Ex: Sinal, Pagamento final..." />
+        <Input label="Data" aria-label="Data" type="date" value={date} onChange={e => setDate(e.target.value)} />
+        <Input label="Descricao" aria-label="Descricao" value={note} onChange={e => setNote(e.target.value)} placeholder="Ex: Sinal, Pagamento final..." />
         <div className="flex gap-3">
           <Button variant="secondary" onClick={onClose} className="flex-1">Cancelar</Button>
           <Button loading={saving} onClick={handleSave} className="flex-1">Registar</Button>
@@ -234,8 +237,10 @@ function GroupCard({ group, units, onEdit, onDelete, onPayment, onStatusChange }
   }[group.status];
 
   return (
-    <div className="bg-white border border-n-200 rounded-md overflow-hidden">
-      <div className="px-4 py-3 flex items-start gap-3 cursor-pointer" onClick={() => setOpen(p => !p)}>
+    <Card padding="p-0" className="overflow-hidden">
+      <div className="px-4 py-3 flex items-start gap-3 cursor-pointer" onClick={() => setOpen(p => !p)}
+        role="button" tabIndex={0} aria-expanded={open}
+        onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setOpen(p => !p); } }}>
         <Building2 size={16} strokeWidth={1.75} className="text-n-400 shrink-0 mt-0.5" />
         <div className="flex-1 min-w-0">
           <p className="font-display font-semibold text-sm text-n-900 truncate">{group.company}</p>
@@ -246,7 +251,7 @@ function GroupCard({ group, units, onEdit, onDelete, onPayment, onStatusChange }
           </p>
         </div>
         <div className="flex items-center gap-2 shrink-0">
-          <span className={`text-xs font-mono px-2 py-0.5 rounded-xs border ${sc.cls}`}>{sc.label}</span>
+          <Badge variant={sc.variant}>{sc.label}</Badge>
           {open ? <ChevronUp size={14} strokeWidth={1.75} className="text-n-400" /> : <ChevronDown size={14} strokeWidth={1.75} className="text-n-400" />}
         </div>
       </div>
@@ -299,7 +304,7 @@ function GroupCard({ group, units, onEdit, onDelete, onPayment, onStatusChange }
                 {group.payments.map((p, i) => (
                   <div key={i} className="flex justify-between text-xs">
                     <span className="font-body text-n-500">{fmtDate(p.date)} · {p.note}</span>
-                    <span className="font-mono font-semibold text-[#1A7A4A]">€{Number(p.amount).toFixed(2)}</span>
+                    <span className="font-mono font-semibold text-[var(--success)]">€{Number(p.amount).toFixed(2)}</span>
                   </div>
                 ))}
                 <div className="flex justify-between text-xs pt-1 border-t border-n-200 mt-1">
@@ -326,18 +331,18 @@ function GroupCard({ group, units, onEdit, onDelete, onPayment, onStatusChange }
               onClick={() => window.print()}>
               Imprimir proposta
             </Button>
-            <button onClick={() => onEdit(group)}
+            <button onClick={() => onEdit(group)} aria-label={`Editar ${group.company}`}
               className="p-1.5 rounded text-n-400 hover:text-ocean-700 hover:bg-ocean-50 transition-colors">
               <Pencil size={13} strokeWidth={1.75} />
             </button>
-            <button onClick={() => onDelete(group.id)}
-              className="p-1.5 rounded text-n-400 hover:text-error hover:bg-red-50 transition-colors">
+            <button onClick={() => onDelete(group.id)} aria-label={`Eliminar ${group.company}`}
+              className="p-1.5 rounded text-n-400 hover:text-[var(--error)] hover:bg-[var(--error-light)] transition-colors">
               <Trash2 size={13} strokeWidth={1.75} />
             </button>
           </div>
         </div>
       )}
-    </div>
+    </Card>
   );
 }
 
@@ -413,51 +418,41 @@ export default function Groups() {
       <div className="grid grid-cols-3 gap-3 mb-5">
         {[
           { label: 'Total cotacoes',   value: kpis.total,       color: 'text-n-900'     },
-          { label: 'Confirmados',      value: kpis.confirmados, color: 'text-[#1A7A4A]' },
+          { label: 'Confirmados',      value: kpis.confirmados, color: 'text-[var(--success)]' },
           { label: 'Pax confirmados',  value: kpis.pax,         color: 'text-ocean-700' },
         ].map(m => (
-          <div key={m.label} className="bg-white border border-n-200 rounded-md px-4 py-3 flex items-center gap-3">
-            <Users2 size={16} strokeWidth={1.75} className="text-n-300 shrink-0" />
-            <div>
-              <p className={`font-display font-bold text-xl ${m.color}`}>{m.value}</p>
-              <p className="text-xs font-body text-n-500">{m.label}</p>
+          <Card key={m.label} padding="px-4 py-3">
+            <div className="flex items-center gap-3">
+              <Users2 size={16} strokeWidth={1.75} className="text-n-300 shrink-0" />
+              <div>
+                <p className={`font-display font-bold text-xl ${m.color}`}>{m.value}</p>
+                <p className="text-xs font-body text-n-500">{m.label}</p>
+              </div>
             </div>
-          </div>
+          </Card>
         ))}
       </div>
 
       {/* Filters */}
       <div className="flex flex-wrap gap-3 mb-4">
-        <input value={search} onChange={e => setSearch(e.target.value)}
-          placeholder="Pesquisar empresa ou grupo..."
-          className="h-9 px-3 text-sm font-body border border-n-200 rounded-sm bg-white placeholder:text-n-400 focus:outline-none focus:border-ocean-700 flex-1 min-w-[200px]"
-        />
-        <div className="flex gap-1 flex-wrap">
-          <button onClick={() => setFilterStatus('')}
-            className={`px-3 py-1.5 rounded-sm text-xs font-body font-semibold transition-colors ${!filterStatus ? 'bg-ocean-700 text-white' : 'bg-white border border-n-200 text-n-600 hover:border-ocean-300'}`}>
-            Todos
-          </button>
-          {STATUSES.map(s => (
-            <button key={s.value} onClick={() => setFilterStatus(s.value)}
-              className={`px-3 py-1.5 rounded-sm text-xs font-body font-semibold border transition-colors ${filterStatus === s.value ? s.cls + ' border-current' : 'bg-white border-n-200 text-n-600 hover:border-ocean-300'}`}>
-              {s.label}
-            </button>
-          ))}
+        <div className="flex-1 min-w-[200px]">
+          <Input aria-label="Pesquisar empresa ou grupo" value={search} onChange={e => setSearch(e.target.value)}
+            placeholder="Pesquisar empresa ou grupo..." />
         </div>
+        <FilterChips
+          options={[{ value: '', label: 'Todos' }, ...STATUSES.map(st => ({ value: st.value, label: st.label }))]}
+          value={filterStatus}
+          onChange={setFilterStatus}
+        />
       </div>
 
       {sorted.length === 0 ? (
-        <Card>
-          <div className="text-center py-14">
-            <Users2 size={36} strokeWidth={1.25} className="mx-auto mb-3 text-n-300" />
-            <p className="font-display font-semibold text-n-700 mb-1">Sem cotacoes</p>
-            <p className="text-sm font-body text-n-400 mb-4">
-              {groups.length === 0
-                ? 'Regista a primeira cotacao para grupo ou evento corporativo.'
-                : 'Nenhuma cotacao corresponde aos filtros.'}
-            </p>
-            {groups.length === 0 && <Button icon={Plus} onClick={() => setModal({ _new: true })}>Nova cotacao</Button>}
-          </div>
+        <Card padding="p-0">
+          <EmptyState icon={Users2} title="Sem cotacoes"
+            description={groups.length === 0
+              ? 'Regista a primeira cotacao para grupo ou evento corporativo.'
+              : 'Nenhuma cotacao corresponde aos filtros.'}
+            action={groups.length === 0 ? <Button icon={Plus} onClick={() => setModal({ _new: true })}>Nova cotacao</Button> : undefined} />
         </Card>
       ) : (
         <div className="space-y-3">
