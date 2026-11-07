@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import {
-  ArrowLeft, Plus, Trash2, Check, X, FileText, Award, Calendar, Upload, Loader2, Wallet,
+  ArrowLeft, Plus, Trash2, Check, X, FileText, Award, Upload, Loader2,
 } from 'lucide-react';
 import {
   getStaff, listLeave, createLeave, updateLeaveStatus, getLeaveBalance, setLeaveBalance,
@@ -14,16 +14,19 @@ import { useToast } from '../store/toastStore';
 import PageHeader from '../components/layout/PageHeader';
 import Button from '../components/ui/Button';
 import Modal from '../components/ui/Modal';
+import Card from '../components/ui/Card';
+import Tabs from '../components/ui/Tabs';
+import EmptyState from '../components/ui/EmptyState';
 import Input, { Select, Textarea } from '../components/ui/Input';
 import Badge from '../components/ui/Badge';
 import LoadingSpinner from '../components/shared/LoadingSpinner';
 import ExpiryBadge from '../components/shared/ExpiryBadge';
 
 const TABS = [
-  { key: 'ferias',        label: 'Ferias',        Icon: Calendar },
-  { key: 'salario',       label: 'Salario',       Icon: Wallet },
-  { key: 'documentos',    label: 'Documentos',    Icon: FileText },
-  { key: 'certificacoes', label: 'Certificacoes', Icon: Award },
+  { id: 'ferias',        label: 'Ferias' },
+  { id: 'salario',       label: 'Salario' },
+  { id: 'documentos',    label: 'Documentos' },
+  { id: 'certificacoes', label: 'Certificacoes' },
 ];
 
 const MONTH_LABEL = ['', 'Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
@@ -125,7 +128,8 @@ function FeriasTab({ staffId }) {
 
   return (
     <div className="space-y-5">
-      <div className="bg-white border border-n-200 rounded-md p-5 flex flex-wrap items-center justify-between gap-4">
+      <Card padding="p-5">
+      <div className="flex flex-wrap items-center justify-between gap-4">
         <div className="flex gap-8">
           <div>
             <p className="text-xs font-body font-bold uppercase tracking-wide text-n-500">Direito ({year})</p>
@@ -146,9 +150,10 @@ function FeriasTab({ staffId }) {
         </div>
         <Button variant="secondary" size="sm" onClick={() => setShowBalanceForm(true)}>Configurar direito</Button>
       </div>
+      </Card>
 
       {balance?.entitled_days == null && (
-        <p className="text-xs font-body text-n-500 bg-amber-50 border border-amber-200 rounded-md px-3 py-2">
+        <p className="text-xs font-body text-n-700 bg-[var(--warning-light)] border border-[var(--warning)] rounded-sm px-3 py-2">
           {balance?.suggested_days != null
             ? `O direito a ferias ainda nao foi configurado. Sugestao com base na data de admissao (22 dias/12 meses, proporcional): ${balance.suggested_days} dias — confirma ou ajusta em "Configurar direito".`
             : 'O numero de dias de ferias ainda nao esta configurado — define o direito anual deste colaborador acima (adiciona a data de admissao no perfil do colaborador para receberes uma sugestao automatica).'}
@@ -160,11 +165,12 @@ function FeriasTab({ staffId }) {
         <Button size="sm" icon={Plus} onClick={() => setShowForm(true)}>Novo pedido</Button>
       </div>
 
-      {!leave.length && <p className="text-sm font-body text-n-500">Sem pedidos registados.</p>}
+      {!leave.length && <Card padding="p-0"><EmptyState title="Sem pedidos registados." /></Card>}
 
       <div className="space-y-2">
         {leave.map(l => (
-          <div key={l.id} className="flex items-center justify-between gap-3 bg-white border border-n-200 rounded-md px-4 py-3">
+          <Card key={l.id} padding="px-4 py-3">
+          <div className="flex items-center justify-between gap-3">
             <div>
               <p className="font-body font-semibold text-sm text-n-900">
                 {LEAVE_TYPE_LABEL[l.type] || l.type} · {l.start_date} → {l.end_date}
@@ -177,24 +183,25 @@ function FeriasTab({ staffId }) {
               {l.status === 'pending' && (
                 <>
                   <button onClick={() => changeStatus(l.id, 'approved')} className="text-ocean-700 hover:text-ocean-500" aria-label="Aprovar"><Check size={16} strokeWidth={2} /></button>
-                  <button onClick={() => changeStatus(l.id, 'rejected')} className="text-error hover:opacity-70" aria-label="Rejeitar"><X size={16} strokeWidth={2} /></button>
+                  <button onClick={() => changeStatus(l.id, 'rejected')} className="text-[var(--error)] hover:opacity-70" aria-label="Rejeitar"><X size={16} strokeWidth={2} /></button>
                 </>
               )}
             </div>
           </div>
+          </Card>
         ))}
       </div>
 
       <Modal open={showForm} onClose={() => setShowForm(false)} title="Novo pedido de ferias">
         <form onSubmit={submitLeave} className="space-y-4">
-          <Select label="Tipo" required value={form.type} onChange={e => setForm(f => ({ ...f, type: e.target.value }))}>
+          <Select label="Tipo" aria-label="Tipo" required value={form.type} onChange={e => setForm(f => ({ ...f, type: e.target.value }))}>
             {LEAVE_TYPES.map(t => <option key={t.v} value={t.v}>{t.l}</option>)}
           </Select>
           <div className="grid grid-cols-2 gap-3">
-            <Input label="Inicio" type="date" required value={form.start_date} onChange={e => setForm(f => ({ ...f, start_date: e.target.value }))} />
-            <Input label="Fim" type="date" required value={form.end_date} min={form.start_date} onChange={e => setForm(f => ({ ...f, end_date: e.target.value }))} />
+            <Input label="Inicio" aria-label="Inicio" type="date" required value={form.start_date} onChange={e => setForm(f => ({ ...f, start_date: e.target.value }))} />
+            <Input label="Fim" aria-label="Fim" type="date" required value={form.end_date} min={form.start_date} onChange={e => setForm(f => ({ ...f, end_date: e.target.value }))} />
           </div>
-          <Textarea label="Notas" value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} />
+          <Textarea label="Notas" aria-label="Notas" value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} />
           <Button type="submit" loading={saving} className="w-full">Criar pedido</Button>
         </form>
       </Modal>
@@ -202,7 +209,7 @@ function FeriasTab({ staffId }) {
       <Modal open={showBalanceForm} onClose={() => setShowBalanceForm(false)} title={`Direito a ferias — ${year}`}>
         <form onSubmit={saveBalance} className="space-y-4">
           <Input
-            label="Dias de ferias por ano" type="number" min="0" step="0.5" required
+            label="Dias de ferias por ano" aria-label="Dias de ferias por ano" type="number" min="0" step="0.5" required
             value={entitledInput} onChange={e => setEntitledInput(e.target.value)}
             hint={balance?.suggested_days != null
               ? `Pre-preenchido com a sugestao proporcional (22 dias/12 meses) a partir da data de admissao — ajusta se o contrato definir outro valor.`
@@ -298,11 +305,12 @@ function DocumentosTab({ staffId }) {
         <Button size="sm" icon={Plus} onClick={() => setShowForm(true)}>Adicionar</Button>
       </div>
 
-      {!docs.length && <p className="text-sm font-body text-n-500">Sem documentos guardados.</p>}
+      {!docs.length && <Card padding="p-0"><EmptyState title="Sem documentos guardados." /></Card>}
 
       <div className="space-y-2">
         {docs.map(d => (
-          <div key={d.id} className="flex items-center justify-between gap-3 bg-white border border-n-200 rounded-md px-4 py-3">
+          <Card key={d.id} padding="px-4 py-3">
+          <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-3 min-w-0">
               <FileText size={18} strokeWidth={1.75} className="text-ocean-700 shrink-0" />
               <div className="min-w-0">
@@ -310,24 +318,25 @@ function DocumentosTab({ staffId }) {
                 <ExpiryBadge date={d.expiry_date} />
               </div>
             </div>
-            <button onClick={() => remove(d.id)} className="text-n-400 hover:text-error shrink-0" aria-label="Eliminar"><Trash2 size={16} strokeWidth={1.75} /></button>
+            <button onClick={() => remove(d.id)} className="text-n-400 hover:text-[var(--error)] shrink-0" aria-label={`Eliminar documento - ${d.name}`}><Trash2 size={16} strokeWidth={1.75} /></button>
           </div>
+          </Card>
         ))}
       </div>
 
       <Modal open={showForm} onClose={() => setShowForm(false)} title="Novo documento">
         <form onSubmit={submit} className="space-y-4">
-          <Select label="Tipo" value={form.type} onChange={e => setForm(f => ({ ...f, type: e.target.value }))}>
+          <Select label="Tipo" aria-label="Tipo" value={form.type} onChange={e => setForm(f => ({ ...f, type: e.target.value }))}>
             <option value="contract">Contrato</option>
             <option value="id_document">Documento de identificacao</option>
             <option value="other">Outro</option>
           </Select>
-          <Input label="Nome" required value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} placeholder="Ex: Contrato de trabalho 2026" />
+          <Input label="Nome" aria-label="Nome" required value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} placeholder="Ex: Contrato de trabalho 2026" />
           <div>
             <UploadButton onUploaded={(url, filename) => setForm(f => ({ ...f, file_url: url, name: f.name || filename }))} />
             {form.file_url && <p className="text-xs font-body text-ocean-700 mt-2">Ficheiro carregado.</p>}
           </div>
-          <Input label="Data de validade (opcional)" type="date" value={form.expiry_date} onChange={e => setForm(f => ({ ...f, expiry_date: e.target.value }))} />
+          <Input label="Data de validade (opcional)" aria-label="Data de validade (opcional)" type="date" value={form.expiry_date} onChange={e => setForm(f => ({ ...f, expiry_date: e.target.value }))} />
           <Button type="submit" loading={saving} className="w-full">Guardar documento</Button>
         </form>
       </Modal>
@@ -386,11 +395,12 @@ function CertificacoesTab({ staffId }) {
         <Button size="sm" icon={Plus} onClick={() => setShowForm(true)}>Adicionar</Button>
       </div>
 
-      {!certs.length && <p className="text-sm font-body text-n-500">Sem certificacoes registadas.</p>}
+      {!certs.length && <Card padding="p-0"><EmptyState title="Sem certificacoes registadas." /></Card>}
 
       <div className="space-y-2">
         {certs.map(c => (
-          <div key={c.id} className="flex items-center justify-between gap-3 bg-white border border-n-200 rounded-md px-4 py-3">
+          <Card key={c.id} padding="px-4 py-3">
+          <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-3 min-w-0">
               <Award size={18} strokeWidth={1.75} className="text-sand-600 shrink-0" />
               <div className="min-w-0">
@@ -398,18 +408,19 @@ function CertificacoesTab({ staffId }) {
                 <ExpiryBadge date={c.expiry_date} />
               </div>
             </div>
-            <button onClick={() => remove(c.id)} className="text-n-400 hover:text-error shrink-0" aria-label="Eliminar"><Trash2 size={16} strokeWidth={1.75} /></button>
+            <button onClick={() => remove(c.id)} className="text-n-400 hover:text-[var(--error)] shrink-0" aria-label={`Eliminar certificacao - ${c.name}`}><Trash2 size={16} strokeWidth={1.75} /></button>
           </div>
+          </Card>
         ))}
       </div>
 
       <Modal open={showForm} onClose={() => setShowForm(false)} title="Nova certificacao">
         <form onSubmit={submit} className="space-y-4">
-          <Input label="Nome" required value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} placeholder="Ex: PADI Open Water" />
-          <Input label="Emitido por" value={form.issuer} onChange={e => setForm(f => ({ ...f, issuer: e.target.value }))} placeholder="Ex: PADI" />
+          <Input label="Nome" aria-label="Nome" required value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} placeholder="Ex: PADI Open Water" />
+          <Input label="Emitido por" aria-label="Emitido por" value={form.issuer} onChange={e => setForm(f => ({ ...f, issuer: e.target.value }))} placeholder="Ex: PADI" />
           <div className="grid grid-cols-2 gap-3">
-            <Input label="Data de emissao" type="date" value={form.issued_date} onChange={e => setForm(f => ({ ...f, issued_date: e.target.value }))} />
-            <Input label="Validade (opcional)" type="date" value={form.expiry_date} onChange={e => setForm(f => ({ ...f, expiry_date: e.target.value }))} />
+            <Input label="Data de emissao" aria-label="Data de emissao" type="date" value={form.issued_date} onChange={e => setForm(f => ({ ...f, issued_date: e.target.value }))} />
+            <Input label="Validade (opcional)" aria-label="Validade (opcional)" type="date" value={form.expiry_date} onChange={e => setForm(f => ({ ...f, expiry_date: e.target.value }))} />
           </div>
           <div>
             <UploadButton onUploaded={(url) => setForm(f => ({ ...f, file_url: url }))} />
@@ -461,12 +472,13 @@ function SalarioTab({ staffId }) {
   return (
     <div className="space-y-5">
       {!cfg ? (
-        <p className="text-sm font-body text-n-500 bg-amber-50 border border-amber-200 rounded-md px-3 py-2">
+        <p className="text-sm font-body text-n-700 bg-[var(--warning-light)] border border-[var(--warning)] rounded-sm px-3 py-2">
           Configuracao salarial ainda nao definida. Define o salario base, subsidios e INPS em{' '}
           <Link to="/financeiro" className="font-semibold text-ocean-700 hover:underline">Financeiro → Salarios</Link>.
         </p>
       ) : (
-        <div className="bg-white border border-n-200 rounded-md p-5 flex flex-wrap items-center justify-between gap-4">
+        <Card padding="p-5">
+        <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="flex flex-wrap gap-8">
             <div>
               <p className="text-xs font-body font-bold uppercase tracking-wide text-n-500">Salario base</p>
@@ -487,27 +499,30 @@ function SalarioTab({ staffId }) {
           </div>
           <Link to="/financeiro" className="text-xs font-body font-semibold text-ocean-700 hover:underline whitespace-nowrap">Editar em Financeiro →</Link>
         </div>
+        </Card>
       )}
 
       <div className="grid grid-cols-2 gap-3">
-        <div className="bg-white border border-n-200 rounded-md px-4 py-3">
+        <Card padding="px-4 py-3">
           <p className="font-display font-bold text-xl text-n-900">{fmtMoney(paidThisYear)}</p>
           <p className="text-xs font-body text-n-500">Pago em {year}</p>
-        </div>
-        <div className="bg-white border border-n-200 rounded-md px-4 py-3">
+        </Card>
+        <Card padding="px-4 py-3">
           <p className="font-display font-bold text-xl text-n-900">{inpsThisYear != null ? fmtMoney(inpsThisYear) : '—'}</p>
           <p className="text-xs font-body text-n-500">Contribuicoes INPS estimadas em {year}</p>
-        </div>
+        </Card>
       </div>
 
       <h3 className="font-display font-semibold text-sm text-n-900">Historico de pagamentos</h3>
-      {!payments.length && <p className="text-sm font-body text-n-500">Sem pagamentos registados.</p>}
+      {!payments.length && <Card padding="p-0"><EmptyState title="Sem pagamentos registados." /></Card>}
       <div className="space-y-2">
         {payments.map(p => (
-          <div key={p.id} className="flex items-center justify-between gap-3 bg-white border border-n-200 rounded-md px-4 py-3">
+          <Card key={p.id} padding="px-4 py-3">
+          <div className="flex items-center justify-between gap-3">
             <p className="font-body font-semibold text-sm text-n-900">{MONTH_LABEL[p.month]} {p.year}</p>
             <p className="font-display font-bold text-sm text-n-900">{fmtMoney(p.amount)}</p>
           </div>
+          </Card>
         ))}
       </div>
     </div>
@@ -534,15 +549,8 @@ export default function StaffDetail() {
       </button>
       <PageHeader title={staff?.name || 'Colaborador'} subtitle={staff?.role} />
 
-      <div className="flex gap-0.5 overflow-x-auto border-b border-n-200 mb-5">
-        {TABS.map(({ key, label, Icon }) => (
-          <button key={key} onClick={() => setActiveTab(key)}
-            className={`flex items-center gap-2 px-4 py-2.5 text-sm font-body font-semibold border-b-2 -mb-px transition-colors whitespace-nowrap ${
-              activeTab === key ? 'border-ocean-700 text-ocean-700' : 'border-transparent text-n-500 hover:text-n-700'
-            }`}>
-            <Icon size={15} strokeWidth={1.75} />{label}
-          </button>
-        ))}
+      <div className="mb-5">
+        <Tabs tabs={TABS} value={activeTab} onChange={setActiveTab} />
       </div>
 
       {activeTab === 'ferias' && <FeriasTab staffId={staffId} />}
