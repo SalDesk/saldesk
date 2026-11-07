@@ -4,7 +4,7 @@ import {
 } from 'recharts';
 
 const EUR_CVE = 110;
-const COLORS  = ['#0D5470','#1480A8','#3A9BBF','#71BDD4','#A8D8E8'];
+const COLORS  = ['var(--ocean-700)','var(--ocean-500)','var(--ocean-400)','var(--ocean-300)','var(--ocean-200)'];
 
 function CustomTooltip({ active, payload, currency }) {
   if (!active || !payload?.length) return null;
@@ -55,10 +55,10 @@ export default function ServiceBarChart({ data, currency = 'EUR' }) {
         layout="vertical"
         margin={{ top: 4, right: 20, left: 4, bottom: 0 }}
       >
-        <CartesianGrid horizontal={false} strokeDasharray="3 3" stroke="#E5E8EC" />
+        <CartesianGrid horizontal={false} strokeDasharray="3 3" stroke="var(--n200)" />
         <XAxis
           type="number"
-          tick={{ fontSize: 11, fontFamily: 'DM Sans', fill: '#6B7280' }}
+          tick={{ fontSize: 11, fontFamily: 'DM Sans', fill: 'var(--n500)' }}
           axisLine={false} tickLine={false}
           tickFormatter={tickFmt}
         />
@@ -66,10 +66,10 @@ export default function ServiceBarChart({ data, currency = 'EUR' }) {
           type="category"
           dataKey="name"
           width={100}
-          tick={{ fontSize: 11, fontFamily: 'DM Sans', fill: '#6B7280' }}
+          tick={{ fontSize: 11, fontFamily: 'DM Sans', fill: 'var(--n500)' }}
           axisLine={false} tickLine={false}
         />
-        <Tooltip content={<CustomTooltip currency={currency} />} cursor={{ fill: '#EBF7FB' }} />
+        <Tooltip content={<CustomTooltip currency={currency} />} cursor={{ fill: 'var(--ocean-50)' }} />
         <Bar dataKey="receita" radius={[0, 3, 3, 0]} maxBarSize={22}>
           {top5.map((_, i) => (
             <Cell key={i} fill={COLORS[i % COLORS.length]} />

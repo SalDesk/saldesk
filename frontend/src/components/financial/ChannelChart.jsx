@@ -11,7 +11,7 @@ const SOURCE_LABELS = {
   getyourguide: 'GetYourGuide',
 };
 
-const COLORS = ['#0D5470','#D4A82A','#3A9BBF','#1A7A4A','#B45309','#E0BF5A','#71BDD4','#9CA3AF'];
+const COLORS = ['var(--ocean-700)','var(--sand-500)','var(--ocean-400)','var(--success)','var(--warning)','var(--sand-400)','var(--ocean-300)','var(--n400)'];
 
 const CustomTooltip = ({ active, payload }) => {
   if (!active || !payload?.length) return null;
