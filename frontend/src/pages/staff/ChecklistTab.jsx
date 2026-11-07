@@ -8,6 +8,8 @@ import {
 } from 'lucide-react';
 import Button from '../../components/ui/Button';
 import { CHECKLIST_KEY, DEFAULT_TASKS } from './shared';
+import Card from '../../components/ui/Card';
+import Input from '../../components/ui/Input';
 
 /* ── Checklist Tab ── */
 function ChecklistTab() {
@@ -62,7 +64,7 @@ function ChecklistTab() {
     <div className="space-y-4">
       {/* Alert */}
       {isLate && !allDone && (
-        <div className="flex items-center gap-2 px-4 py-3 bg-yellow-50 border border-yellow-200 rounded-md text-sm font-body text-yellow-800">
+        <div className="flex items-center gap-2 px-4 py-3 bg-[var(--warning-light)] border border-[var(--warning)] rounded-sm text-sm font-body text-[var(--warning)]">
           <AlertTriangle size={16} strokeWidth={1.75} className="shrink-0" />
           <span>{incomplete} tarefa(s) por completar — verifique antes do tour</span>
         </div>
@@ -77,12 +79,12 @@ function ChecklistTab() {
         </div>
         <div className="flex items-center gap-2">
           {allDone && (
-            <span className="flex items-center gap-1.5 text-xs font-body text-[#1A7A4A] bg-[#ECFDF5] px-3 py-1.5 rounded-sm border border-green-200">
+            <span className="flex items-center gap-1.5 text-xs font-body text-[var(--success)] bg-[var(--success-light)] px-3 py-1.5 rounded-sm border border-[var(--success)]">
               <CheckCircle2 size={13} strokeWidth={1.75} />
               Tudo concluido
             </span>
           )}
-          <button onClick={() => setConfig(v => !v)}
+          <button onClick={() => setConfig(v => !v)} aria-label="Configurar checklist"
             className="p-2 rounded-sm text-n-500 hover:text-ocean-700 hover:bg-ocean-50 transition-colors" title="Configurar checklist">
             <Settings2 size={16} strokeWidth={1.75} />
           </button>
@@ -95,7 +97,8 @@ function ChecklistTab() {
       </div>
 
       {/* Task list */}
-      <div className="bg-white border border-n-200 rounded-md divide-y divide-n-100">
+      <Card padding="p-0">
+      <div className="divide-y divide-n-100">
         {tasks.map((task, idx) => {
           const done = !!todayCompletions[idx];
           const at   = todayCompletions[idx]?.at;
@@ -112,7 +115,7 @@ function ChecklistTab() {
                   </p>
                 )}
               </div>
-              {done && <CheckCircle2 size={16} strokeWidth={1.75} className="text-[#1A7A4A] shrink-0 mt-0.5" />}
+              {done && <CheckCircle2 size={16} strokeWidth={1.75} className="text-[var(--success)] shrink-0 mt-0.5" />}
             </label>
           );
         })}
@@ -122,6 +125,7 @@ function ChecklistTab() {
           </div>
         )}
       </div>
+      </Card>
 
       {/* Config panel */}
       {configOpen && (
@@ -131,18 +135,19 @@ function ChecklistTab() {
             {tasks.map((task, idx) => (
               <div key={idx} className="flex items-center gap-2">
                 <span className="flex-1 text-sm font-body text-n-800 px-3 py-1.5 bg-white border border-n-200 rounded-sm">{task}</span>
-                <button onClick={() => removeTask(idx)}
-                  className="p-1.5 rounded text-n-400 hover:text-error hover:bg-red-50 transition-colors">
+                <button onClick={() => removeTask(idx)} aria-label={`Remover tarefa - ${task}`}
+                  className="p-1.5 rounded text-n-400 hover:text-[var(--error)] hover:bg-[var(--error-light)] transition-colors">
                   <X size={13} strokeWidth={2} />
                 </button>
               </div>
             ))}
           </div>
           <div className="flex gap-2">
-            <input value={newTask} onChange={e => setNewTask(e.target.value)}
-              onKeyDown={e => e.key === 'Enter' && addTask()}
-              placeholder="Nova tarefa + Enter"
-              className="flex-1 h-9 px-3 rounded-sm border border-n-300 text-sm font-body bg-white placeholder:text-n-400 focus:outline-none focus:border-ocean-700" />
+            <div className="flex-1">
+              <Input aria-label="Nova tarefa" value={newTask} onChange={e => setNewTask(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && addTask()}
+                placeholder="Nova tarefa + Enter" />
+            </div>
             <Button size="sm" onClick={addTask} icon={Plus}>Adicionar</Button>
           </div>
         </div>
