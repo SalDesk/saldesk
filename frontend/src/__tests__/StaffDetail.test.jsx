@@ -333,3 +333,236 @@ describe('Detalhe do colaborador com o design system (estrutura, Ferias e Salari
     expect(html.replace(/text-error ml-0[.]5/g, '')).not.toMatch(/(?:text|bg|border)-error/);
   });
 });
+
+/* ───────────────────────── Tarefa 8: Documentos e Certificacoes ───────────────────────── */
+
+const DOCS = [
+  { id: 'd1', name: 'Contrato 2026', file_url: 'http://x.test/c.pdf', expiry_date: dia(10) },
+  { id: 'd2', name: 'Bilhete de identidade', file_url: 'http://x.test/bi.pdf', expiry_date: dia(-10) },
+  { id: 'd3', name: 'Seguro', file_url: 'http://x.test/s.pdf', expiry_date: dia(200) },
+  { id: 'd4', name: 'Sem data', file_url: 'http://x.test/n.pdf', expiry_date: null },
+];
+const CERTS = [
+  { id: 'c1', name: 'PADI Open Water', issuer: 'PADI', expiry_date: dia(-3) },
+  { id: 'c2', name: 'Primeiros socorros', issuer: null, expiry_date: null },
+];
+const ficheiro = () => new File(['x'], 'contrato.pdf', { type: 'application/pdf' });
+const campoFicheiro = () => document.querySelector('input[type="file"]');
+const botaoAdicionar = () => screen.getByRole('button', { name: /Adicionar/ });
+const linhaDe = (texto) => screen.getByText(texto, { exact: false }).closest('div.justify-between');
+
+describe('Detalhe do colaborador: Documentos', () => {
+  beforeEach(() => {
+    listDocuments.mockResolvedValue(DOCS);
+    createDocument.mockReset().mockResolvedValue({});
+    deleteDocument.mockReset().mockResolvedValue({});
+    validateDocumentFile.mockReset().mockReturnValue(null);
+    uploadDocument.mockReset().mockResolvedValue({ url: 'http://up/x.pdf' });
+  });
+  const abrirDocumentos = async () => { await montar(); abrir('Documentos'); await screen.findByText('Contrato 2026'); };
+
+  it('lista_com_ligacao_e_validade', async () => {
+    await abrirDocumentos();
+    expect(listDocuments).toHaveBeenCalledWith('s1');
+    expect(screen.getByRole('link', { name: 'Contrato 2026' })).toHaveAttribute('href', 'http://x.test/c.pdf');
+    expect(screen.getByRole('link', { name: 'Contrato 2026' })).toHaveAttribute('target', '_blank');
+    expect(linhaDe('Contrato 2026')).toHaveTextContent(`${dia(10)} (expira em breve)`);
+    expect(linhaDe('Bilhete de identidade')).toHaveTextContent(`${dia(-10)} (expirado)`);
+    expect(linhaDe('Seguro')).toHaveTextContent(dia(200));
+    expect(linhaDe('Seguro')).not.toHaveTextContent('(');
+    expect(linhaDe('Sem data')).not.toHaveTextContent(/\d{4}-/);
+  });
+
+  it('novo_documento_exige_nome_e_ficheiro_senao_toast', async () => {
+    await abrirDocumentos();
+    fireEvent.click(botaoAdicionar());
+    const dlg = screen.getByRole('dialog');
+    expect(dlg).toHaveTextContent('Novo documento');
+    fireEvent.submit(dlg.querySelector('form'));
+    expect(toasts()).toContain('error:Carrega um ficheiro e da um nome ao documento');
+    expect(createDocument).not.toHaveBeenCalled();
+    expect(Array.from(within(dlg).getByRole('combobox').options).map(o => o.textContent)).toEqual(['Contrato', 'Documento de identificacao', 'Outro']);
+  });
+
+  it('carregar_ficheiro_valida_chama_uploadDocument_e_preenche_o_nome_e_guardar_cria', async () => {
+    await abrirDocumentos();
+    fireEvent.click(botaoAdicionar());
+    fireEvent.change(campoFicheiro(), { target: { files: [ficheiro()] } });
+    expect(await screen.findByText('Ficheiro carregado.')).toBeInTheDocument();
+    expect(validateDocumentFile).toHaveBeenCalled();
+    expect(uploadDocument).toHaveBeenCalledTimes(1);
+    const dlg = screen.getByRole('dialog');
+    expect(within(dlg).getByPlaceholderText('Ex: Contrato de trabalho 2026')).toHaveValue('contrato.pdf');
+    fireEvent.change(within(dlg).getByRole('combobox'), { target: { value: 'other' } });
+    fireEvent.change(dlg.querySelector('input[type="date"]'), { target: { value: '2027-05-01' } });
+    fireEvent.click(within(dlg).getByRole('button', { name: 'Guardar documento' }));
+    await waitFor(() => expect(createDocument).toHaveBeenCalledWith('s1', { type: 'other', name: 'contrato.pdf', file_url: 'http://up/x.pdf', expiry_date: '2027-05-01' }));
+    await waitFor(() => expect(toasts()).toContain('success:Documento guardado'));
+    await waitFor(() => expect(listDocuments).toHaveBeenCalledTimes(2));
+  });
+
+  it('ficheiro_invalido_ou_upload_a_falhar_mostram_o_toast', async () => {
+    await abrirDocumentos();
+    fireEvent.click(botaoAdicionar());
+    validateDocumentFile.mockReturnValueOnce('Ficheiro demasiado grande');
+    fireEvent.change(campoFicheiro(), { target: { files: [ficheiro()] } });
+    await waitFor(() => expect(toasts()).toContain('error:Ficheiro demasiado grande'));
+    expect(uploadDocument).not.toHaveBeenCalled();
+    uploadDocument.mockRejectedValueOnce(new Error('x'));
+    fireEvent.change(campoFicheiro(), { target: { files: [ficheiro()] } });
+    await waitFor(() => expect(toasts()).toContain('error:Erro ao carregar ficheiro'));
+  });
+
+  it('falha_ao_guardar_e_ao_eliminar_e_ao_carregar_mostram_os_toasts', async () => {
+    createDocument.mockRejectedValue(new Error('x'));
+    deleteDocument.mockRejectedValue(new Error('x'));
+    await abrirDocumentos();
+    fireEvent.click(botaoAdicionar());
+    fireEvent.change(campoFicheiro(), { target: { files: [ficheiro()] } });
+    await screen.findByText('Ficheiro carregado.');
+    fireEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Guardar documento' }));
+    await waitFor(() => expect(toasts()).toContain('error:Erro ao guardar documento'));
+    fireEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Fechar' }));
+    fireEvent.click(within(linhaDe('Contrato 2026')).getByRole('button'));
+    await waitFor(() => expect(toasts()).toContain('error:Erro ao eliminar'));
+    cleanup();
+    listDocuments.mockRejectedValue(new Error('x'));
+    await montar();
+    abrir('Documentos');
+    await waitFor(() => expect(toasts()).toContain('error:Erro ao carregar documentos'));
+  });
+
+  it('eliminar_chama_deleteDocument_e_avisa', async () => {
+    await abrirDocumentos();
+    fireEvent.click(within(linhaDe('Contrato 2026')).getByRole('button'));
+    await waitFor(() => expect(deleteDocument).toHaveBeenCalledWith('s1', 'd1'));
+    await waitFor(() => expect(toasts()).toContain('success:Documento eliminado'));
+  });
+
+  it('sem_documentos_mostra_o_vazio', async () => {
+    listDocuments.mockResolvedValue([]);
+    await montar();
+    abrir('Documentos');
+    expect(await screen.findByText('Sem documentos guardados.')).toBeInTheDocument();
+  });
+});
+
+describe('Detalhe do colaborador: Certificacoes', () => {
+  beforeEach(() => {
+    listCertifications.mockResolvedValue(CERTS);
+    createCertification.mockReset().mockResolvedValue({});
+    deleteCertification.mockReset().mockResolvedValue({});
+    validateDocumentFile.mockReset().mockReturnValue(null);
+    uploadDocument.mockReset().mockResolvedValue({ url: 'http://up/cert.pdf' });
+  });
+  const abrirCerts = async () => { await montar(); abrir('Certificacoes'); await screen.findByText(/PADI Open Water/); };
+
+  it('lista_nome_emissor_e_validade', async () => {
+    await abrirCerts();
+    expect(listCertifications).toHaveBeenCalledWith('s1');
+    expect(linhaDe('PADI Open Water')).toHaveTextContent('PADI Open Water · PADI');
+    expect(linhaDe('PADI Open Water')).toHaveTextContent(`${dia(-3)} (expirado)`);
+    expect(linhaDe('Primeiros socorros')).not.toHaveTextContent('·');
+  });
+
+  it('nova_certificacao_exige_nome_e_chama_createCertification', async () => {
+    await abrirCerts();
+    fireEvent.click(botaoAdicionar());
+    const dlg = screen.getByRole('dialog');
+    expect(dlg).toHaveTextContent('Nova certificacao');
+    fireEvent.submit(dlg.querySelector('form'));
+    expect(toasts()).toContain('error:Da um nome a certificacao');
+    expect(createCertification).not.toHaveBeenCalled();
+    fireEvent.change(within(dlg).getByPlaceholderText('Ex: PADI Open Water'), { target: { value: 'CPR' } });
+    fireEvent.change(within(dlg).getByPlaceholderText('Ex: PADI'), { target: { value: 'Cruz Vermelha' } });
+    const [emissao, validade] = dlg.querySelectorAll('input[type="date"]');
+    fireEvent.change(emissao, { target: { value: '2026-01-10' } });
+    fireEvent.change(validade, { target: { value: '2028-01-10' } });
+    fireEvent.change(campoFicheiro(), { target: { files: [ficheiro()] } });
+    expect(await screen.findByText('Certificado carregado.')).toBeInTheDocument();
+    fireEvent.click(within(dlg).getByRole('button', { name: 'Guardar certificacao' }));
+    await waitFor(() => expect(createCertification).toHaveBeenCalledWith('s1', { name: 'CPR', issuer: 'Cruz Vermelha', issued_date: '2026-01-10', expiry_date: '2028-01-10', file_url: 'http://up/cert.pdf' }));
+    await waitFor(() => expect(toasts()).toContain('success:Certificacao guardada'));
+    await waitFor(() => expect(listCertifications).toHaveBeenCalledTimes(2));
+  });
+
+  it('eliminar_chama_deleteCertification_e_falhas_mostram_os_toasts', async () => {
+    await abrirCerts();
+    fireEvent.click(within(linhaDe('PADI Open Water')).getByRole('button'));
+    await waitFor(() => expect(deleteCertification).toHaveBeenCalledWith('s1', 'c1'));
+    await waitFor(() => expect(toasts()).toContain('success:Certificacao eliminada'));
+    deleteCertification.mockRejectedValueOnce(new Error('x'));
+    fireEvent.click(within(linhaDe('Primeiros socorros')).getByRole('button'));
+    await waitFor(() => expect(toasts()).toContain('error:Erro ao eliminar'));
+    createCertification.mockRejectedValue(new Error('x'));
+    fireEvent.click(botaoAdicionar());
+    fireEvent.change(screen.getByPlaceholderText('Ex: PADI Open Water'), { target: { value: 'X' } });
+    fireEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Guardar certificacao' }));
+    await waitFor(() => expect(toasts()).toContain('error:Erro ao guardar certificacao'));
+    cleanup();
+    listCertifications.mockRejectedValue(new Error('x'));
+    await montar();
+    abrir('Certificacoes');
+    await waitFor(() => expect(toasts()).toContain('error:Erro ao carregar certificacoes'));
+  });
+
+  it('sem_certificacoes_mostra_o_vazio', async () => {
+    listCertifications.mockResolvedValue([]);
+    await montar();
+    abrir('Certificacoes');
+    expect(await screen.findByText('Sem certificacoes registadas.')).toBeInTheDocument();
+  });
+});
+
+describe('Detalhe do colaborador com o design system (Documentos e Certificacoes)', () => {
+  beforeEach(() => {
+    listDocuments.mockResolvedValue(DOCS);
+    listCertifications.mockResolvedValue(CERTS);
+  });
+
+  it('os_vazios_usam_EmptyState', async () => {
+    listDocuments.mockResolvedValue([]);
+    listCertifications.mockResolvedValue([]);
+    await montar();
+    abrir('Documentos');
+    expect(await screen.findByText('Sem documentos guardados.')).toHaveClass('font-display');
+    abrir('Certificacoes');
+    expect(await screen.findByText('Sem certificacoes registadas.')).toHaveClass('font-display');
+  });
+
+  it('os_botoes_eliminar_e_os_campos_dos_modais_tem_nome_acessivel', async () => {
+    await montar();
+    abrir('Documentos');
+    await screen.findByText('Contrato 2026');
+    expect(screen.getByRole('button', { name: 'Eliminar documento - Contrato 2026' })).toBeInTheDocument();
+    expect(screen.getAllByRole('button', { name: /^Eliminar documento - / })).toHaveLength(4);
+    fireEvent.click(botaoAdicionar());
+    let modal = within(screen.getByRole('dialog'));
+    ['Tipo', 'Nome', 'Data de validade (opcional)'].forEach(r => expect(modal.getByLabelText(r)).toBeInTheDocument());
+    fireEvent.click(modal.getByRole('button', { name: 'Fechar' }));
+    abrir('Certificacoes');
+    await screen.findByText(/PADI Open Water/);
+    expect(screen.getByRole('button', { name: 'Eliminar certificacao - PADI Open Water' })).toBeInTheDocument();
+    fireEvent.click(botaoAdicionar());
+    modal = within(screen.getByRole('dialog'));
+    ['Nome', 'Emitido por', 'Data de emissao', 'Validade (opcional)'].forEach(r => expect(modal.getByLabelText(r)).toBeInTheDocument());
+  });
+
+  it('sem_hexadecimais_cores_nomeadas_ou_text_error_com_o_modal_aberto', async () => {
+    const { container } = await montar();
+    abrir('Documentos');
+    await screen.findByText('Contrato 2026');
+    fireEvent.click(botaoAdicionar());
+    let html = container.innerHTML;
+    fireEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Fechar' }));
+    abrir('Certificacoes');
+    await screen.findByText(/PADI Open Water/);
+    fireEvent.click(botaoAdicionar());
+    html += container.innerHTML;
+    /* o ExpiryBadge (partilhado com o portal da equipa) mantem text-error e amber: ver decisao 7e do plano */
+    const semBadge = html.replace(/<span class="inline-flex items-center gap-1 text-xs font-body font-semibold [^"]*">/g, '<span>');
+    expect(semBadge).not.toMatch(HEX);
+    expect(semBadge).not.toMatch(NOMEADAS);
+    expect(semBadge.replace(/text-error ml-0[.]5/g, '')).not.toMatch(/(?:text|bg|border)-error/);
+  });
+});

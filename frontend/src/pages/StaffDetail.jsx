@@ -305,11 +305,12 @@ function DocumentosTab({ staffId }) {
         <Button size="sm" icon={Plus} onClick={() => setShowForm(true)}>Adicionar</Button>
       </div>
 
-      {!docs.length && <p className="text-sm font-body text-n-500">Sem documentos guardados.</p>}
+      {!docs.length && <Card padding="p-0"><EmptyState title="Sem documentos guardados." /></Card>}
 
       <div className="space-y-2">
         {docs.map(d => (
-          <div key={d.id} className="flex items-center justify-between gap-3 bg-white border border-n-200 rounded-md px-4 py-3">
+          <Card key={d.id} padding="px-4 py-3">
+          <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-3 min-w-0">
               <FileText size={18} strokeWidth={1.75} className="text-ocean-700 shrink-0" />
               <div className="min-w-0">
@@ -317,24 +318,25 @@ function DocumentosTab({ staffId }) {
                 <ExpiryBadge date={d.expiry_date} />
               </div>
             </div>
-            <button onClick={() => remove(d.id)} className="text-n-400 hover:text-error shrink-0" aria-label="Eliminar"><Trash2 size={16} strokeWidth={1.75} /></button>
+            <button onClick={() => remove(d.id)} className="text-n-400 hover:text-[var(--error)] shrink-0" aria-label={`Eliminar documento - ${d.name}`}><Trash2 size={16} strokeWidth={1.75} /></button>
           </div>
+          </Card>
         ))}
       </div>
 
       <Modal open={showForm} onClose={() => setShowForm(false)} title="Novo documento">
         <form onSubmit={submit} className="space-y-4">
-          <Select label="Tipo" value={form.type} onChange={e => setForm(f => ({ ...f, type: e.target.value }))}>
+          <Select label="Tipo" aria-label="Tipo" value={form.type} onChange={e => setForm(f => ({ ...f, type: e.target.value }))}>
             <option value="contract">Contrato</option>
             <option value="id_document">Documento de identificacao</option>
             <option value="other">Outro</option>
           </Select>
-          <Input label="Nome" required value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} placeholder="Ex: Contrato de trabalho 2026" />
+          <Input label="Nome" aria-label="Nome" required value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} placeholder="Ex: Contrato de trabalho 2026" />
           <div>
             <UploadButton onUploaded={(url, filename) => setForm(f => ({ ...f, file_url: url, name: f.name || filename }))} />
             {form.file_url && <p className="text-xs font-body text-ocean-700 mt-2">Ficheiro carregado.</p>}
           </div>
-          <Input label="Data de validade (opcional)" type="date" value={form.expiry_date} onChange={e => setForm(f => ({ ...f, expiry_date: e.target.value }))} />
+          <Input label="Data de validade (opcional)" aria-label="Data de validade (opcional)" type="date" value={form.expiry_date} onChange={e => setForm(f => ({ ...f, expiry_date: e.target.value }))} />
           <Button type="submit" loading={saving} className="w-full">Guardar documento</Button>
         </form>
       </Modal>
@@ -393,11 +395,12 @@ function CertificacoesTab({ staffId }) {
         <Button size="sm" icon={Plus} onClick={() => setShowForm(true)}>Adicionar</Button>
       </div>
 
-      {!certs.length && <p className="text-sm font-body text-n-500">Sem certificacoes registadas.</p>}
+      {!certs.length && <Card padding="p-0"><EmptyState title="Sem certificacoes registadas." /></Card>}
 
       <div className="space-y-2">
         {certs.map(c => (
-          <div key={c.id} className="flex items-center justify-between gap-3 bg-white border border-n-200 rounded-md px-4 py-3">
+          <Card key={c.id} padding="px-4 py-3">
+          <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-3 min-w-0">
               <Award size={18} strokeWidth={1.75} className="text-sand-600 shrink-0" />
               <div className="min-w-0">
@@ -405,18 +408,19 @@ function CertificacoesTab({ staffId }) {
                 <ExpiryBadge date={c.expiry_date} />
               </div>
             </div>
-            <button onClick={() => remove(c.id)} className="text-n-400 hover:text-error shrink-0" aria-label="Eliminar"><Trash2 size={16} strokeWidth={1.75} /></button>
+            <button onClick={() => remove(c.id)} className="text-n-400 hover:text-[var(--error)] shrink-0" aria-label={`Eliminar certificacao - ${c.name}`}><Trash2 size={16} strokeWidth={1.75} /></button>
           </div>
+          </Card>
         ))}
       </div>
 
       <Modal open={showForm} onClose={() => setShowForm(false)} title="Nova certificacao">
         <form onSubmit={submit} className="space-y-4">
-          <Input label="Nome" required value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} placeholder="Ex: PADI Open Water" />
-          <Input label="Emitido por" value={form.issuer} onChange={e => setForm(f => ({ ...f, issuer: e.target.value }))} placeholder="Ex: PADI" />
+          <Input label="Nome" aria-label="Nome" required value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} placeholder="Ex: PADI Open Water" />
+          <Input label="Emitido por" aria-label="Emitido por" value={form.issuer} onChange={e => setForm(f => ({ ...f, issuer: e.target.value }))} placeholder="Ex: PADI" />
           <div className="grid grid-cols-2 gap-3">
-            <Input label="Data de emissao" type="date" value={form.issued_date} onChange={e => setForm(f => ({ ...f, issued_date: e.target.value }))} />
-            <Input label="Validade (opcional)" type="date" value={form.expiry_date} onChange={e => setForm(f => ({ ...f, expiry_date: e.target.value }))} />
+            <Input label="Data de emissao" aria-label="Data de emissao" type="date" value={form.issued_date} onChange={e => setForm(f => ({ ...f, issued_date: e.target.value }))} />
+            <Input label="Validade (opcional)" aria-label="Validade (opcional)" type="date" value={form.expiry_date} onChange={e => setForm(f => ({ ...f, expiry_date: e.target.value }))} />
           </div>
           <div>
             <UploadButton onUploaded={(url) => setForm(f => ({ ...f, file_url: url }))} />
