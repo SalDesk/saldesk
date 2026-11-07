@@ -304,3 +304,119 @@ describe('Afiliados com o design system (estrutura, lista e modais)', () => {
     expect(html.replace(/text-error ml-0[.]5/g, '')).not.toMatch(/(?:text|bg|border)-error/);
   });
 });
+
+/* ───────────────────────── Tarefa 5: configuracao e analytics ───────────────────────── */
+
+describe('Afiliados: configuracao', () => {
+  const abrirConfig = async () => { await montar(); fireEvent.click(separador('Configuracao')); await screen.findByText('Configuracao global do programa'); };
+
+  it('mostra_os_valores_e_alterar_actualiza_como_numero', async () => {
+    await abrirConfig();
+    const [comissao, minimo] = screen.getAllByRole('spinbutton');
+    expect(comissao).toHaveValue(15);
+    expect(minimo).toHaveValue(30);
+    fireEvent.change(comissao, { target: { value: '20' } });
+    expect(comissao).toHaveValue(20);
+    expect(screen.getByText('Percentagem padrao para novos afiliados. Pode ser sobreposta por afiliado.')).toBeInTheDocument();
+    expect(screen.getByText('Valor minimo da reserva para a comissao ser aplicada. 0 = sem minimo.')).toBeInTheDocument();
+  });
+
+  it('guardar_chama_updateAffiliateConfig_e_mostra_Guardado_2s', async () => {
+    updateAffiliateConfig.mockResolvedValue({});
+    await abrirConfig();
+    fireEvent.change(screen.getAllByRole('spinbutton')[1], { target: { value: '45' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Guardar configuracao' }));
+    await waitFor(() => expect(updateAffiliateConfig).toHaveBeenCalledWith({ active: true, commission_pct: 15, min_booking_value: 45 }));
+    expect(await screen.findByRole('button', { name: 'Guardado' })).toBeInTheDocument();
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Guardar configuracao' })).toBeInTheDocument(), { timeout: 3500 });
+  });
+
+  it('mostra_o_texto_do_portal_do_afiliado', async () => {
+    await abrirConfig();
+    expect(screen.getByText('Portal do afiliado:')).toBeInTheDocument();
+    expect(screen.getByText('saldesk.cv/afiliado/[CODIGO]')).toBeInTheDocument();
+    expect(screen.getByText('?ref=CODIGO')).toBeInTheDocument();
+  });
+});
+
+describe('Afiliados: analytics', () => {
+  const abrirAnalytics = async () => { await montar(); fireEvent.click(separador('Analytics')); await screen.findByText('Top afiliados por reservas'); };
+
+  it('ranking_ordena_por_reservas_com_barra_proporcional_e_pago', async () => {
+    const { container } = await montar();
+    fireEvent.click(separador('Analytics'));
+    await screen.findByText('Top afiliados por reservas');
+    const nomes = [...container.querySelectorAll('p.truncate')].map(p => p.textContent);
+    expect(nomes).toEqual(['Joao Silva', 'Maria Lopes', '']);
+    expect(screen.getByText('10 reservas · €100 pago')).toBeInTheDocument();
+    expect(screen.getByText('4 reservas · €20 pago')).toBeInTheDocument();
+    const barras = [...container.querySelectorAll('div[style*="width"]')].map(b => b.style.width);
+    expect(barras).toEqual(['100%', '40%', '0%']);
+    const medalhas = [...container.querySelectorAll('span.rounded-full.shrink-0')].map(m => m.textContent);
+    expect(medalhas).toEqual(['1', '2', '3']);
+  });
+
+  it('sem_reservas_a_barra_fica_a_zero_e_sem_afiliados_mostra_o_vazio', async () => {
+    listAffiliates.mockResolvedValue([{ id: 'z', name: 'Zero', email: 'z@x.cv', code: 'Z', commission_pct: 1 }]);
+    const { container } = await montar('Zero');
+    fireEvent.click(separador('Analytics'));
+    await screen.findByText('Top afiliados por reservas');
+    expect(container.querySelector('div[style*="width"]').style.width).toBe('0%');
+    cleanup();
+    listAffiliates.mockResolvedValue([]);
+    render(<Affiliates />);
+    await screen.findByText('Sem afiliados registados');
+    fireEvent.click(separador('Analytics'));
+    expect(await screen.findByText('Sem dados de afiliados ainda.')).toBeInTheDocument();
+  });
+});
+
+describe('Afiliados com o design system (configuracao e analytics)', () => {
+  it('os_dois_campos_da_configuracao_sao_Input_com_nome_acessivel', async () => {
+    await montar();
+    fireEvent.click(screen.getByRole('tab', { name: 'Configuracao' }));
+    expect(await screen.findByLabelText('Comissao global (%)')).toHaveValue(15);
+    expect(screen.getByLabelText('Minimo de reserva (€)')).toHaveValue(30);
+  });
+
+  it('o_botao_guardado_usa_o_token_de_sucesso', async () => {
+    updateAffiliateConfig.mockResolvedValue({});
+    await montar();
+    fireEvent.click(screen.getByRole('tab', { name: 'Configuracao' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Guardar configuracao' }));
+    const guardado = await screen.findByRole('button', { name: 'Guardado' });
+    expect(guardado.className).toContain('var(--success)');
+    expect(guardado.className).not.toMatch(HEX);
+  });
+
+  it('as_medalhas_usam_tokens_que_existem_e_o_vazio_e_EmptyState', async () => {
+    const { container } = await montar();
+    fireEvent.click(screen.getByRole('tab', { name: 'Analytics' }));
+    await screen.findByText('Top afiliados por reservas');
+    const medalhas = [...container.querySelectorAll('span.rounded-full.shrink-0')];
+    expect(medalhas[0].className).toContain('var(--sand-300)');
+    expect(container.innerHTML).not.toMatch(/sand-(?:700|200)/);
+    cleanup();
+    listAffiliates.mockResolvedValue([]);
+    render(<Affiliates />);
+    await screen.findByText('Sem afiliados registados');
+    fireEvent.click(screen.getByRole('tab', { name: 'Analytics' }));
+    expect(await screen.findByText('Sem dados de afiliados ainda.')).toHaveClass('font-display');
+  });
+
+  it('sem_hexadecimais_cores_nomeadas_ou_text_error_nos_tres_separadores', async () => {
+    updateAffiliateConfig.mockResolvedValue({});
+    const { container } = await montar();
+    let html = container.innerHTML;
+    fireEvent.click(screen.getByRole('tab', { name: 'Configuracao' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Guardar configuracao' }));
+    await screen.findByRole('button', { name: 'Guardado' });
+    html += container.innerHTML;
+    fireEvent.click(screen.getByRole('tab', { name: 'Analytics' }));
+    await screen.findByText('Top afiliados por reservas');
+    html += container.innerHTML;
+    expect(html).not.toMatch(HEX);
+    expect(html).not.toMatch(NOMEADAS);
+    expect(html.replace(/text-error ml-0[.]5/g, '')).not.toMatch(/(?:text|bg|border)-error/);
+  });
+});

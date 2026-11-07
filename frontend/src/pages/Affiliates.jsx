@@ -399,37 +399,23 @@ export default function Affiliates() {
         <Card padding="px-6 py-5">
           <h3 className="font-display font-semibold text-sm text-n-700 mb-5">Configuracao global do programa</h3>
           <div className="space-y-4 max-w-sm">
-            <div>
-              <label className="text-xs font-body font-bold uppercase tracking-wide text-n-600 block mb-1">
-                Comissao global (%)
-              </label>
-              <input type="number" min="0" max="50" step="0.5"
-                value={config.commission_pct}
-                onChange={e => setConfig(p => ({ ...p, commission_pct: Number(e.target.value) }))}
-                className="w-full h-9 px-3 rounded-sm border border-n-300 text-sm font-mono bg-n-100 focus:outline-none focus:border-ocean-700 focus:bg-white"
-              />
-              <p className="text-xs font-body text-n-400 mt-1">
-                Percentagem padrao para novos afiliados. Pode ser sobreposta por afiliado.
-              </p>
-            </div>
+            <Input label="Comissao global (%)" aria-label="Comissao global (%)" type="number" min="0" max="50" step="0.5"
+              value={config.commission_pct}
+              onChange={e => setConfig(p => ({ ...p, commission_pct: Number(e.target.value) }))}
+              className="font-mono"
+              hint="Percentagem padrao para novos afiliados. Pode ser sobreposta por afiliado."
+            />
 
-            <div>
-              <label className="text-xs font-body font-bold uppercase tracking-wide text-n-600 block mb-1">
-                Minimo de reserva (€)
-              </label>
-              <input type="number" min="0" step="1"
-                value={config.min_booking_value}
-                onChange={e => setConfig(p => ({ ...p, min_booking_value: Number(e.target.value) }))}
-                className="w-full h-9 px-3 rounded-sm border border-n-300 text-sm font-mono bg-n-100 focus:outline-none focus:border-ocean-700 focus:bg-white"
-              />
-              <p className="text-xs font-body text-n-400 mt-1">
-                Valor minimo da reserva para a comissao ser aplicada. 0 = sem minimo.
-              </p>
-            </div>
+            <Input label="Minimo de reserva (€)" aria-label="Minimo de reserva (€)" type="number" min="0" step="1"
+              value={config.min_booking_value}
+              onChange={e => setConfig(p => ({ ...p, min_booking_value: Number(e.target.value) }))}
+              className="font-mono"
+              hint="Valor minimo da reserva para a comissao ser aplicada. 0 = sem minimo."
+            />
 
             <Button icon={confSaved ? Check : Save}
               loading={confSaving}
-              className={confSaved ? 'bg-[#1A7A4A] hover:bg-[#15623c]' : ''}
+              className={confSaved ? 'bg-[var(--success)] app:bg-[var(--success)] app:text-white hover:opacity-90' : ''}
               onClick={handleSaveConfig}>
               {confSaved ? 'Guardado' : 'Guardar configuracao'}
             </Button>
@@ -449,11 +435,8 @@ export default function Affiliates() {
       {activeTab === 'analytics' && (
         <div className="space-y-4">
           {topAff.length === 0 ? (
-            <Card>
-              <div className="text-center py-12">
-                <BarChart2 size={32} strokeWidth={1.25} className="mx-auto mb-3 text-n-300" />
-                <p className="font-body text-n-500">Sem dados de afiliados ainda.</p>
-              </div>
+            <Card padding="p-0">
+              <EmptyState icon={BarChart2} title="Sem dados de afiliados ainda." />
             </Card>
           ) : (
             <Card padding="px-5 py-5">
@@ -465,7 +448,7 @@ export default function Affiliates() {
                   return (
                     <div key={a.id} className="flex items-center gap-3">
                       <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-display font-bold shrink-0 ${
-                        i === 0 ? 'bg-sand-300 text-sand-700' : i === 1 ? 'bg-n-200 text-n-600' : 'bg-n-100 text-n-500'
+                        i === 0 ? 'bg-[var(--sand-300)] text-[var(--sand-600)]' : i === 1 ? 'bg-n-200 text-n-600' : 'bg-n-100 text-n-500'
                       }`}>{i + 1}</span>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between mb-1">
