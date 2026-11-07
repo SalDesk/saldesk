@@ -11,9 +11,9 @@ export const DAYS  = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sab', 'Dom'];
 export const PRIO  = { low: 'Baixa', medium: 'Media', high: 'Alta', urgent: 'Urgente' };
 export const PRIO_COLORS = {
   low:    'text-n-500 bg-n-100',
-  medium: 'text-[var(--warning)] bg-yellow-50',
-  high:   'text-error bg-red-50',
-  urgent: 'text-white bg-error',
+  medium: 'text-[var(--warning)] bg-[var(--warning-light)]',
+  high:   'text-[var(--error)] bg-[var(--error-light)]',
+  urgent: 'text-white bg-[var(--error)]',
 };
 export const CHECKLIST_KEY = 'saldesk_checklist_v1';
 export const STARTER_STAFF_LIMIT = 2;
@@ -26,10 +26,10 @@ export const DEFAULT_TASKS = [
 ];
 
 export const KANBAN_COLS = [
-  { key: 'pending',     label: 'Pendente',    color: 'border-yellow-300 text-yellow-800 bg-yellow-50' },
+  { key: 'pending',     label: 'Pendente',    color: 'border-[var(--warning)] text-[var(--warning)] bg-[var(--warning-light)]' },
   { key: 'in_progress', label: 'Em Progresso', color: 'border-ocean-300 text-ocean-700 bg-ocean-50' },
-  { key: 'completed',   label: 'Concluida',   color: 'border-green-300 text-green-800 bg-green-50' },
-  { key: 'cancelled',   label: 'Bloqueada',   color: 'border-red-300 text-error bg-red-50' },
+  { key: 'completed',   label: 'Concluida',   color: 'border-[var(--success)] text-[var(--success)] bg-[var(--success-light)]' },
+  { key: 'cancelled',   label: 'Bloqueada',   color: 'border-[var(--error)] text-[var(--error)] bg-[var(--error-light)]' },
 ];
 
 export function tryParseNotes(str) {

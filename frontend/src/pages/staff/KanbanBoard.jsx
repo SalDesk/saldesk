@@ -31,9 +31,9 @@ function TaskCard({ task, staffList, onMove, onOpen }) {
 
   return (
     <div onClick={() => onOpen(task)}
-      className={`bg-white border rounded-md p-3 cursor-pointer hover:shadow-md transition-all ${isOverdue ? 'border-error' : 'border-n-200'}`}>
+      className={`bg-white border rounded-md p-3 cursor-pointer hover:shadow-md transition-all ${isOverdue ? 'border-[var(--error)]' : 'border-n-200'}`}>
       {isOverdue && (
-        <div className="flex items-center gap-1 mb-1.5 text-error text-xs font-body">
+        <div className="flex items-center gap-1 mb-1.5 text-[var(--error)] text-xs font-body">
           <AlertTriangle size={11} strokeWidth={1.75} />
           <span>Atrasada</span>
         </div>
@@ -58,7 +58,7 @@ function TaskCard({ task, staffList, onMove, onOpen }) {
           </div>
         ) : <span />}
         {dueDate && (
-          <span className={`text-xs font-mono ${isOverdue ? 'text-error' : 'text-n-400'}`}>
+          <span className={`text-xs font-mono ${isOverdue ? 'text-[var(--error)]' : 'text-n-400'}`}>
             <Clock size={10} strokeWidth={1.75} className="inline mr-0.5" />
             {dueDate.toLocaleDateString('pt-PT', { day: '2-digit', month: 'short', timeZone: 'UTC' })}
           </span>
@@ -149,13 +149,12 @@ function KanbanBoard({ staffList }) {
       {/* Toolbar */}
       <div className="flex items-center justify-between mb-4 gap-3 flex-wrap">
         <div className="flex items-center gap-2">
-          <select
-            value={filterStaff}
-            onChange={e => setFilter(e.target.value)}
-            className="h-8 px-2 text-xs font-body border border-n-200 rounded bg-white text-n-700 focus:outline-none">
-            <option value="">Todos os colaboradores</option>
-            {staffList.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-          </select>
+          <div className="w-56">
+            <Select aria-label="Filtrar por colaborador" value={filterStaff} onChange={e => setFilter(e.target.value)}>
+              <option value="">Todos os colaboradores</option>
+              {staffList.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+            </Select>
+          </div>
           <span className="text-xs font-body text-n-400">{filtered.length} tarefa(s)</span>
         </div>
         <Button icon={Plus} size="sm" onClick={() => setTaskModal(true)}>Nova tarefa</Button>
@@ -166,7 +165,7 @@ function KanbanBoard({ staffList }) {
         const m = tryParseNotes(t.notes_manager);
         return m?.due && new Date(m.due) < new Date() && !['completed','cancelled'].includes(t.status);
       }) && (
-        <div className="flex items-center gap-2 mb-4 px-3 py-2 bg-red-50 border border-red-200 rounded-md text-xs font-body text-error">
+        <div className="flex items-center gap-2 mb-4 px-3 py-2 bg-[var(--error-light)] border border-[var(--error)] rounded-sm text-xs font-body text-[var(--error)]">
           <AlertTriangle size={14} strokeWidth={1.75} />
           Existem tarefas com prazo ultrapassado
         </div>
@@ -257,8 +256,8 @@ function KanbanBoard({ staffList }) {
       {/* Create task modal */}
       <Modal open={taskModal} onClose={() => setTaskModal(false)} title="Nova tarefa" size="md">
         <form onSubmit={handleCreateTask} className="space-y-4">
-          <Input label="Titulo" value={taskForm.title} onChange={e => setTaskForm(p => ({ ...p, title: e.target.value }))} required placeholder="Titulo da tarefa" />
-          <Select label="Reserva" value={taskForm.reservation_id} onChange={e => setTaskForm(p => ({ ...p, reservation_id: e.target.value }))} required>
+          <Input label="Titulo" aria-label="Titulo" value={taskForm.title} onChange={e => setTaskForm(p => ({ ...p, title: e.target.value }))} required placeholder="Titulo da tarefa" />
+          <Select label="Reserva" aria-label="Reserva" value={taskForm.reservation_id} onChange={e => setTaskForm(p => ({ ...p, reservation_id: e.target.value }))} required>
             <option value="">Escolha a reserva...</option>
             {reservations.map(r => (
               <option key={r.id} value={r.id}>
@@ -266,20 +265,20 @@ function KanbanBoard({ staffList }) {
               </option>
             ))}
           </Select>
-          <Textarea label="Descricao" value={taskForm.desc} onChange={e => setTaskForm(p => ({ ...p, desc: e.target.value }))} placeholder="Descricao opcional" rows={2} />
+          <Textarea label="Descricao" aria-label="Descricao" value={taskForm.desc} onChange={e => setTaskForm(p => ({ ...p, desc: e.target.value }))} placeholder="Descricao opcional" rows={2} />
           <div className="grid grid-cols-2 gap-3">
-            <Select label="Prioridade" value={taskForm.priority} onChange={e => setTaskForm(p => ({ ...p, priority: e.target.value }))}>
+            <Select label="Prioridade" aria-label="Prioridade" value={taskForm.priority} onChange={e => setTaskForm(p => ({ ...p, priority: e.target.value }))}>
               {Object.entries(PRIO).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
             </Select>
-            <Input label="Data limite" type="date" value={taskForm.due} onChange={e => setTaskForm(p => ({ ...p, due: e.target.value }))} />
+            <Input label="Data limite" aria-label="Data limite" type="date" value={taskForm.due} onChange={e => setTaskForm(p => ({ ...p, due: e.target.value }))} />
           </div>
-          <Select label="Colaborador" value={taskForm.staff_id} onChange={e => setTaskForm(p => ({ ...p, staff_id: e.target.value }))}>
+          <Select label="Colaborador" aria-label="Colaborador" value={taskForm.staff_id} onChange={e => setTaskForm(p => ({ ...p, staff_id: e.target.value }))}>
             <option value="">Sem atribuicao</option>
             {staffList.filter(s => s.status === 'active').map(s => (
               <option key={s.id} value={s.id}>{s.name}</option>
             ))}
           </Select>
-          <Textarea label="Checklist (uma por linha)" value={taskForm.checklist} onChange={e => setTaskForm(p => ({ ...p, checklist: e.target.value }))} placeholder={"Item 1\nItem 2\nItem 3"} rows={3} />
+          <Textarea label="Checklist (uma por linha)" aria-label="Checklist (uma por linha)" value={taskForm.checklist} onChange={e => setTaskForm(p => ({ ...p, checklist: e.target.value }))} placeholder={"Item 1\nItem 2\nItem 3"} rows={3} />
           <div className="flex gap-3 pt-1">
             <Button type="button" variant="secondary" onClick={() => setTaskModal(false)} className="flex-1">Cancelar</Button>
             <Button type="submit" loading={saving} className="flex-1">Criar tarefa</Button>
