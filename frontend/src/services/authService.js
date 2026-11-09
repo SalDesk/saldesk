@@ -24,8 +24,8 @@ export async function logout() {
   await api.post('/auth/logout').catch(() => {});
 }
 
-export async function changePassword(password) {
-  const { data } = await api.put('/auth/password', { password });
+export async function changePassword(currentPassword, password) {
+  const { data } = await api.put('/auth/password', { current_password: currentPassword, password });
   return data;
 }
 

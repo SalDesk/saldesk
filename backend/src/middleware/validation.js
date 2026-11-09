@@ -42,6 +42,7 @@ const schemas = {
     code: Joi.string().trim().required(),
   }),
   changePassword: Joi.object({
+    current_password: Joi.string().required(),
     password: strongPassword,
   }),
   resetPassword: Joi.object({

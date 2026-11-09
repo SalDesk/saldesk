@@ -38,8 +38,8 @@ export async function logout() {
   await travelerApi.post('/traveler-auth/logout').catch(() => {});
 }
 
-export async function changePassword(password) {
-  const { data } = await travelerApi.put('/traveler-auth/password', { password });
+export async function changePassword(currentPassword, password) {
+  const { data } = await travelerApi.put('/traveler-auth/password', { current_password: currentPassword, password });
   return data;
 }
 

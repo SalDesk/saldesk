@@ -26,7 +26,7 @@ export default function SegurancaTab() {
     if (pwForm.newPw !== pwForm.confirm) { setPwError('As passwords nao coincidem.'); return; }
     setPwSave(true);
     try {
-      await changePassword(pwForm.newPw);
+      await changePassword(pwForm.current, pwForm.newPw);
       setPwForm({ current: '', newPw: '', confirm: '' });
       setPwSaved(true); setTimeout(() => setPwSaved(false), 3000);
     } catch (err) {
