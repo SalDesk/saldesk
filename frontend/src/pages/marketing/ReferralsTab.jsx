@@ -1,18 +1,43 @@
 import { Gift, UserPlus, CheckCircle2 } from 'lucide-react';
+import Card from '../../components/ui/Card';
+import Badge from '../../components/ui/Badge';
+import Table from '../../components/ui/Table';
+import EmptyState from '../../components/ui/EmptyState';
 import { CopyBtn, KpiCard } from './shared';
 
 const REFERRAL_STATUS_LABEL = {
   novo: 'Novo', contactado: 'Contactado', demo_agendada: 'Demo agendada',
   proposta_enviada: 'Proposta enviada', convertido: 'Convertido', descartado: 'Descartado',
 };
-const REFERRAL_STATUS_CLS = {
-  novo: 'bg-ocean-50 text-ocean-700 border-ocean-100',
-  contactado: 'bg-sand-50 text-sand-600 border-sand-100',
-  demo_agendada: 'bg-sand-50 text-sand-600 border-sand-100',
-  proposta_enviada: 'bg-sand-50 text-sand-600 border-sand-100',
-  convertido: 'bg-[#ECFDF5] text-[#1A7A4A] border-[#BBF7D0]',
-  descartado: 'bg-n-100 text-n-500 border-n-200',
+/* variante do Badge por estado da indicacao (desconhecido cai em novo) */
+const REFERRAL_STATUS_VARIANT = {
+  novo: 'info',
+  contactado: 'direct',
+  demo_agendada: 'direct',
+  proposta_enviada: 'direct',
+  convertido: 'confirmed',
+  descartado: 'default',
 };
+
+const REFERRAL_COLUMNS = [
+  { key: 'negocio', label: 'Negocio', render: l => <span className="font-body text-n-900">{l.nome_negocio || l.nome}</span> },
+  {
+    key: 'data', label: 'Data',
+    render: l => (
+      <span className="text-xs font-mono text-n-600 whitespace-nowrap">
+        {l.created_at ? new Date(l.created_at).toLocaleDateString('pt-PT') : '—'}
+      </span>
+    ),
+  },
+  {
+    key: 'estado', label: 'Estado',
+    render: l => (
+      <Badge variant={REFERRAL_STATUS_VARIANT[l.status] || REFERRAL_STATUS_VARIANT.novo}>
+        {REFERRAL_STATUS_LABEL[l.status] || l.status}
+      </Badge>
+    ),
+  },
+];
 
 /* ── ReferralsTab ── */
 export default function ReferralsTab({ referrals, loading }) {
@@ -33,7 +58,7 @@ export default function ReferralsTab({ referrals, loading }) {
         </div>
       </div>
 
-      <div className="bg-white rounded-md border border-n-200 p-5">
+      <Card padding="p-5">
         <p className="text-xs font-body font-bold uppercase tracking-wide text-n-600 mb-2">O seu link de indicacao</p>
         <div className="flex items-center gap-3 flex-wrap">
           <div className="bg-n-50 border border-n-200 rounded-sm px-3 py-2 flex-1 min-w-0">
@@ -41,7 +66,7 @@ export default function ReferralsTab({ referrals, loading }) {
           </div>
           <CopyBtn text={link} />
         </div>
-      </div>
+      </Card>
 
       <div className="grid grid-cols-2 gap-4">
         <KpiCard icon={UserPlus} label="Indicacoes enviadas" value={referrals?.total ?? 0} loading={loading} />
@@ -51,37 +76,13 @@ export default function ReferralsTab({ referrals, loading }) {
       <div>
         <p className="text-xs font-mono uppercase tracking-wider text-n-500 mb-3">As suas indicacoes ({list.length})</p>
         {list.length === 0 ? (
-          <div className="bg-white rounded-md border border-n-200 flex flex-col items-center py-10 text-n-400">
-            <UserPlus size={28} strokeWidth={1.25} className="mb-2" />
-            <p className="text-xs font-body text-center">Ainda nao indicou nenhum operador.</p>
-          </div>
+          <Card padding="p-0">
+            <EmptyState icon={UserPlus} title="Ainda nao indicou nenhum operador." />
+          </Card>
         ) : (
-          <div className="bg-white rounded-md border border-n-200 overflow-hidden">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-n-200 bg-n-50">
-                  {['Negocio', 'Data', 'Estado'].map(h => (
-                    <th key={h} className="text-left px-4 py-2.5 text-xs font-mono uppercase tracking-wider text-n-500 whitespace-nowrap">{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-n-100">
-                {list.map(l => (
-                  <tr key={l.id} className="hover:bg-n-50">
-                    <td className="px-4 py-2.5 text-sm font-body text-n-900">{l.nome_negocio || l.nome}</td>
-                    <td className="px-4 py-2.5 text-xs font-mono text-n-600 whitespace-nowrap">
-                      {l.created_at ? new Date(l.created_at).toLocaleDateString('pt-PT') : '—'}
-                    </td>
-                    <td className="px-4 py-2.5">
-                      <span className={`text-xs font-mono px-2 py-0.5 rounded-xs border uppercase tracking-wide ${REFERRAL_STATUS_CLS[l.status] || REFERRAL_STATUS_CLS.novo}`}>
-                        {REFERRAL_STATUS_LABEL[l.status] || l.status}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <Card padding="p-0">
+            <Table columns={REFERRAL_COLUMNS} rows={list} />
+          </Card>
         )}
       </div>
     </div>

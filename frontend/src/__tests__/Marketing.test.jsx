@@ -542,3 +542,71 @@ describe('Marketing: design system (estrutura, QR e Widget)', () => {
     semCoresForaDosTokens(html);
   });
 });
+
+/* ───────────────────────── design system: Indicacoes e Estatisticas ───────────────────────── */
+
+const ehCard = (el) => el.closest('[class*="app:rounded-sm"]') !== null;
+
+describe('Marketing: design system (Indicacoes e Estatisticas)', () => {
+  it('a_tabela_de_indicacoes_e_Table_com_as_tres_colunas', async () => {
+    await montar();
+    await abrir('Indicacoes', 'O seu link de indicacao');
+    expect(screen.getByRole('table')).toBeInTheDocument();
+    expect(screen.getAllByRole('columnheader').map(h => h.textContent)).toEqual(['Negocio', 'Data', 'Estado']);
+    expect(ehCard(screen.getByText('O seu link de indicacao'))).toBe(true);
+  });
+
+  it('o_estado_da_indicacao_e_Badge_com_a_variante_certa', async () => {
+    getReferrals.mockResolvedValue({
+      referral_link: 'x', total: 5, convertidos: 1,
+      referred: [
+        { id: '1', nome: 'N', status: 'novo' }, { id: '2', nome: 'P', status: 'proposta_enviada' },
+        { id: '3', nome: 'C', status: 'convertido' }, { id: '4', nome: 'D', status: 'descartado' }, { id: '5', nome: 'X', status: 'xyz' },
+      ],
+    });
+    await montar();
+    await abrir('Indicacoes', 'O seu link de indicacao');
+    expect(screen.getByText('Novo').className).toContain('var(--info-light)');
+    expect(screen.getByText('Proposta enviada').className).toContain('bg-sand-50');
+    expect(screen.getByText('Convertido').className).toContain('var(--success-light)');
+    expect(screen.getByText('Descartado').className).toContain('bg-n-100');
+    expect(screen.getByText('xyz').className).toContain('var(--info-light)');
+  });
+
+  it('o_vazio_das_indicacoes_e_EmptyState', async () => {
+    getReferrals.mockResolvedValue({ referral_link: 'x', referred: [] });
+    await montar();
+    await abrir('Indicacoes', 'O seu link de indicacao');
+    expect(screen.getByText('Ainda nao indicou nenhum operador.')).toHaveClass('font-display');
+  });
+
+  it('os_blocos_das_estatisticas_sao_Card_e_os_numeros_dos_posts_usam_tokens', async () => {
+    const d = new Date();
+    const mes = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+    localStorage.setItem(STORAGE_KEY, JSON.stringify([
+      { id: 'a', scheduled_at: `${mes}-10T10:00`, status: 'agendado', text_pt: 'A' },
+      { id: 'c', scheduled_at: `${mes}-14T10:00`, status: 'publicado', text_pt: 'C' },
+      { id: 'e', scheduled_at: `${mes}-20T10:00`, status: 'cancelado', text_pt: 'E' },
+    ]));
+    await montar();
+    await abrir('Estatisticas', 'Origem das reservas');
+    expect(ehCard(screen.getByText('Origem das reservas'))).toBe(true);
+    expect(ehCard(screen.getByText('Link de reserva directa'))).toBe(true);
+    expect(ehCard(screen.getByText(`Posts — ${MONTHS_PT[d.getMonth()]}`))).toBe(true);
+    expect(screen.getByText('Publicados').previousSibling.className).toContain('var(--success)');
+    expect(screen.getByText('Agendados').previousSibling.className).toContain('text-ocean-500');
+    expect(screen.getByText('Cancelados').previousSibling.className).toContain('var(--error)');
+  });
+
+  it('sem_hexadecimais_cores_nomeadas_ou_text_error_em_classes_nos_separadores_Indicacoes_e_Estatisticas', async () => {
+    const d = new Date();
+    const mes = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+    localStorage.setItem(STORAGE_KEY, JSON.stringify([{ id: 'e', scheduled_at: `${mes}-20T10:00`, status: 'cancelado', text_pt: 'E' }]));
+    const { container } = await montar();
+    await abrir('Indicacoes', 'O seu link de indicacao');
+    let html = classes(container);
+    await abrir('Estatisticas', 'Origem das reservas');
+    html += classes(container);
+    semCoresForaDosTokens(html);
+  });
+});

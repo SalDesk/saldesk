@@ -1,4 +1,5 @@
 import { Eye, MousePointerClick, TrendingUp, BarChart2, ExternalLink } from 'lucide-react';
+import Card from '../../components/ui/Card';
 import { CopyBtn, KpiCard, MONTHS_PT, postDateKey } from './shared';
 
 const SRC_LABEL = { direct: 'Directa', public: 'Directa', manual: 'Manual', booking_com: 'Booking', airbnb: 'Airbnb', viator: 'Viator', getyourguide: 'GYG', social: 'Social' };
@@ -29,7 +30,7 @@ export default function StatsTab({ stats, statsLoading, posts, bookingLink }) {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Posts this month */}
-        <div className="bg-white rounded-md border border-n-200 p-5">
+        <Card padding="p-5">
           <h3 className="font-display font-semibold text-sm text-n-700 mb-4">Posts — {MONTHS_PT[now.getMonth()]}</h3>
           <div className="flex gap-6">
             <div>
@@ -37,7 +38,7 @@ export default function StatsTab({ stats, statsLoading, posts, bookingLink }) {
               <p className="text-xs font-body text-n-500 mt-0.5">Total</p>
             </div>
             <div>
-              <p className="font-display font-bold text-3xl text-[#1A7A4A]">{publicados}</p>
+              <p className="font-display font-bold text-3xl text-[var(--success)]">{publicados}</p>
               <p className="text-xs font-body text-n-500 mt-0.5">Publicados</p>
             </div>
             <div>
@@ -46,15 +47,15 @@ export default function StatsTab({ stats, statsLoading, posts, bookingLink }) {
             </div>
             {cancelados > 0 && (
               <div>
-                <p className="font-display font-bold text-3xl text-error">{cancelados}</p>
+                <p className="font-display font-bold text-3xl text-[var(--error)]">{cancelados}</p>
                 <p className="text-xs font-body text-n-500 mt-0.5">Cancelados</p>
               </div>
             )}
           </div>
-        </div>
+        </Card>
 
         {/* Origin */}
-        <div className="bg-white rounded-md border border-n-200 p-5">
+        <Card padding="p-5">
           <h3 className="font-display font-semibold text-sm text-n-700 mb-4">Origem das reservas</h3>
           {sources ? (
             <div className="space-y-2.5">
@@ -73,12 +74,12 @@ export default function StatsTab({ stats, statsLoading, posts, bookingLink }) {
               Dados de origem nao disponiveis. Configure o endpoint <span className="font-mono">/marketing/stats</span> com campo <span className="font-mono">sources</span>.
             </p>
           )}
-        </div>
+        </Card>
       </div>
 
       {/* Booking link */}
       {bookingLink && (
-        <div className="bg-white rounded-md border border-n-200 p-5">
+        <Card padding="p-5">
           <h3 className="font-display font-semibold text-sm text-n-700 mb-3">Link de reserva directa</h3>
           <div className="flex items-center gap-3 flex-wrap">
             <div className="bg-n-50 border border-n-200 rounded-sm px-3 py-2 flex-1 min-w-0">
@@ -90,7 +91,7 @@ export default function StatsTab({ stats, statsLoading, posts, bookingLink }) {
               <ExternalLink size={14} strokeWidth={1.75} />Abrir
             </a>
           </div>
-        </div>
+        </Card>
       )}
     </div>
   );
