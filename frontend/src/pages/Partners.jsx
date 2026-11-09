@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import {
   Handshake, Plus, Pencil, Trash2, ArrowUpRight, ArrowDownRight,
-  Hotel, Car, Utensils, Compass, ToggleLeft, ToggleRight, Search, Check, X, Clock,
+  Hotel, Car, Utensils, Compass, ToggleLeft, ToggleRight, Check, X, Clock,
 } from 'lucide-react';
 import {
   listPartners, createPartner, updatePartner, deletePartner, registerPartnerBooking,
@@ -68,14 +68,10 @@ function OperatorPicker({ selected, onSelect }) {
 
   return (
     <div className="relative">
-      <div className="relative">
-        <Search size={14} strokeWidth={1.75} className="absolute left-3 top-1/2 -translate-y-1/2 text-n-400" />
-        <input
-          value={query} onChange={e => setQuery(e.target.value)}
-          placeholder="Pesquisar operador pelo nome..."
-          className="w-full h-9 pl-9 pr-3 rounded-sm border border-n-300 text-sm font-body bg-white text-n-900 focus:outline-none focus:ring-2 focus:ring-ocean-300 focus:border-ocean-700"
-        />
-      </div>
+      <Input
+        value={query} onChange={e => setQuery(e.target.value)}
+        placeholder="Pesquisar operador pelo nome..." aria-label="Pesquisar operador pelo nome"
+      />
       {query.trim().length >= 2 && (
         <div className="mt-1 border border-n-200 rounded-sm bg-white shadow-sm max-h-48 overflow-y-auto">
           {searching && <p className="text-xs font-body text-n-400 px-3 py-2">A pesquisar...</p>}
@@ -168,7 +164,7 @@ function PartnerModal({ partner, onSave, onRequest, onClose }) {
         {isNew && (
           <div className="flex gap-1 bg-n-100 rounded-sm p-0.5">
             {[{ v: 'manual', l: 'Parceiro externo' }, { v: 'real', l: 'Operador SalDesk' }].map(o => (
-              <button key={o.v} type="button" onClick={() => setMode(o.v)}
+              <button key={o.v} type="button" aria-pressed={mode === o.v} onClick={() => setMode(o.v)}
                 className={`flex-1 py-1.5 text-xs font-body font-semibold rounded-xs transition-colors ${mode === o.v ? 'bg-white text-ocean-700 shadow-sm' : 'text-n-500 hover:text-n-700'}`}>
                 {o.l}
               </button>
@@ -178,8 +174,8 @@ function PartnerModal({ partner, onSave, onRequest, onClose }) {
 
         {mode === 'manual' && (
           <>
-            <Input label="Nome do parceiro" value={form.name} onChange={set('name')} required placeholder="Ex: Hotel Morabeza" />
-            <Select label="Tipo de parceiro" value={form.partner_type} onChange={set('partner_type')}>
+            <Input label="Nome do parceiro" aria-label="Nome do parceiro" value={form.name} onChange={set('name')} required placeholder="Ex: Hotel Morabeza" />
+            <Select label="Tipo de parceiro" aria-label="Tipo de parceiro" value={form.partner_type} onChange={set('partner_type')}>
               {PARTNER_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
             </Select>
           </>
@@ -201,21 +197,21 @@ function PartnerModal({ partner, onSave, onRequest, onClose }) {
           </div>
         )}
 
-        <Select label="Tipo de parceria" value={form.partnership_type} onChange={set('partnership_type')}>
+        <Select label="Tipo de parceria" aria-label="Tipo de parceria" value={form.partnership_type} onChange={set('partnership_type')}>
           {PARTNERSHIP_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
         </Select>
 
         {needsCommission && (
           <div className="grid grid-cols-2 gap-3">
             <Input
-              label="Comissao (%)"
+              label="Comissao (%)" aria-label="Comissao (%)"
               type="number" min="0" max="50" step="0.5"
               value={form.commission_pct} onChange={set('commission_pct')}
               placeholder="Ex: 10"
               hint="Percentagem da reserva paga ao parceiro que a referenciou"
             />
             <Input
-              label="Preco medio da reserva (€)"
+              label="Preco medio da reserva (€)" aria-label="Preco medio da reserva (€)"
               type="number" min="0" step="1"
               value={form.avg_booking_value} onChange={set('avg_booking_value')}
               placeholder="Ex: 80"
@@ -226,14 +222,14 @@ function PartnerModal({ partner, onSave, onRequest, onClose }) {
 
         {needsMessage && (
           <>
-            <Textarea label="Mensagem de recomendacao PT" value={form.message_pt} onChange={set('message_pt')} rows={3}
+            <Textarea label="Mensagem de recomendacao PT" aria-label="Mensagem de recomendacao PT" value={form.message_pt} onChange={set('message_pt')} rows={3}
               placeholder="Ex: Para o seu alojamento em Sal, recomendamos o nosso parceiro Hotel Morabeza." />
-            <Textarea label="Mensagem de recomendacao EN" value={form.message_en} onChange={set('message_en')} rows={3}
+            <Textarea label="Mensagem de recomendacao EN" aria-label="Mensagem de recomendacao EN" value={form.message_en} onChange={set('message_en')} rows={3}
               placeholder="Ex: For your accommodation in Sal, we recommend our partner Hotel Morabeza." />
           </>
         )}
 
-        {error && <p className="text-xs text-error">{error}</p>}
+        {error && <p className="text-xs text-[var(--error)]">{error}</p>}
 
         <div className="flex gap-3 pt-1">
           <Button type="button" variant="secondary" onClick={onClose} className="flex-1">Cancelar</Button>
@@ -268,13 +264,13 @@ function BookingLogModal({ partner, onSave, onClose }) {
       <div className="space-y-4">
         <div className="flex gap-1 bg-n-100 rounded-sm p-0.5">
           {[{ v: 'sent', l: 'Reserva enviada ao parceiro' }, { v: 'received', l: 'Reserva recebida do parceiro' }].map(o => (
-            <button key={o.v} onClick={() => setDirection(o.v)}
+            <button key={o.v} type="button" aria-pressed={direction === o.v} onClick={() => setDirection(o.v)}
               className={`flex-1 py-1.5 text-xs font-body font-semibold rounded-xs transition-colors ${direction === o.v ? 'bg-white text-ocean-700 shadow-sm' : 'text-n-500 hover:text-n-700'}`}>
               {o.l}
             </button>
           ))}
         </div>
-        <Input label="Numero de reservas" type="number" min="1" step="1" value={count} onChange={e => setCount(e.target.value)} />
+        <Input label="Numero de reservas" aria-label="Numero de reservas" type="number" min="1" step="1" value={count} onChange={e => setCount(e.target.value)} />
         <div className="flex gap-3">
           <Button variant="secondary" onClick={onClose} className="flex-1">Cancelar</Button>
           <Button loading={saving} onClick={handleSave} className="flex-1">Registar</Button>
