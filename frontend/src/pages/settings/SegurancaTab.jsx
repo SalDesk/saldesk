@@ -52,10 +52,10 @@ export default function SegurancaTab() {
                     type={showPw[field] ? 'text' : 'password'}
                     value={pwForm[field]}
                     onChange={e => setPwForm(p => ({ ...p, [field]: e.target.value }))}
-                    required autoComplete={ac}
+                    required autoComplete={ac} aria-label={label}
                     className="w-full h-9 px-3 pr-10 rounded-sm border border-n-300 text-sm font-body bg-n-100 text-n-900 placeholder:text-n-400 focus:outline-none focus:ring-2 focus:ring-ocean-300 focus:border-ocean-700 focus:bg-white transition-colors"
                   />
-                  <button type="button"
+                  <button type="button" aria-label={`Mostrar ${label.toLowerCase()}`} aria-pressed={showPw[field]}
                     onClick={() => setShowPw(p => ({ ...p, [field]: !p[field] }))}
                     className="absolute right-2.5 top-1/2 -translate-y-1/2 text-n-400 hover:text-n-600 transition-colors">
                     {showPw[field] ? <EyeOff size={14} strokeWidth={1.75} /> : <Eye size={14} strokeWidth={1.75} />}
@@ -63,11 +63,11 @@ export default function SegurancaTab() {
                 </div>
                 {field === 'newPw' && pwForm.newPw && <PasswordStrength password={pwForm.newPw} />}
                 {field === 'confirm' && pwForm.confirm && pwForm.newPw !== pwForm.confirm && (
-                  <p className="text-xs text-error">As passwords nao coincidem.</p>
+                  <p className="text-xs text-[var(--error)]">As passwords nao coincidem.</p>
                 )}
               </div>
             ))}
-            {pwError && <p className="text-sm font-body px-3 py-2 rounded bg-red-50 text-error">{pwError}</p>}
+            {pwError && <p className="text-sm font-body px-3 py-2 rounded bg-[var(--error-light)] text-[var(--error)]">{pwError}</p>}
             <div className="flex items-center gap-3 pt-1">
               <Button type="submit" loading={pwSaving} icon={Lock}>Alterar password</Button>
               <SaveBanner saved={pwSaved} />

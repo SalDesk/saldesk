@@ -51,31 +51,31 @@ export default function ContaTab({ operator, onSaved }) {
     <form onSubmit={handleSubmit} className="space-y-5 max-w-2xl">
       <Card header={<h3 className="font-display font-semibold text-sm text-n-700">Dados da empresa</h3>}>
         <div className="space-y-4">
-          <Input label="Nome da empresa" value={form.name} onChange={set('name')} required />
-          <Input label="Email" type="email" value={form.email} onChange={set('email')} required />
+          <Input label="Nome da empresa" aria-label="Nome da empresa" value={form.name} onChange={set('name')} required />
+          <Input label="Email" aria-label="Email" type="email" value={form.email} onChange={set('email')} required />
           <div className="grid grid-cols-2 gap-3">
-            <Input label="Telefone" type="tel" value={form.phone} onChange={set('phone')} placeholder="+238 900 0000" />
-            <Input label="WhatsApp" type="tel" value={form.whatsapp} onChange={set('whatsapp')} placeholder="+238 900 0000" />
+            <Input label="Telefone" aria-label="Telefone" type="tel" value={form.phone} onChange={set('phone')} placeholder="+238 900 0000" />
+            <Input label="WhatsApp" aria-label="WhatsApp" type="tel" value={form.whatsapp} onChange={set('whatsapp')} placeholder="+238 900 0000" />
           </div>
-          <Input label="Morada" value={form.address} onChange={set('address')} placeholder="Rua, localidade" />
+          <Input label="Morada" aria-label="Morada" value={form.address} onChange={set('address')} placeholder="Rua, localidade" />
         </div>
       </Card>
 
       <Card header={<h3 className="font-display font-semibold text-sm text-n-700">Preferencias</h3>}>
         <div className="grid grid-cols-3 gap-3">
-          <Select label="Idioma" value={form.language} onChange={set('language')}>
+          <Select label="Idioma" aria-label="Idioma" value={form.language} onChange={set('language')}>
             {LANGS.map(l => <option key={l} value={l}>{l.toUpperCase()}</option>)}
           </Select>
-          <Select label="Moeda" value={form.currency} onChange={set('currency')}>
+          <Select label="Moeda" aria-label="Moeda" value={form.currency} onChange={set('currency')}>
             {CURRENCIES.map(c => <option key={c} value={c}>{c}</option>)}
           </Select>
-          <Select label="Fuso horario" value={form.timezone} onChange={set('timezone')}>
+          <Select label="Fuso horario" aria-label="Fuso horario" value={form.timezone} onChange={set('timezone')}>
             {TIMEZONES.map(tz => <option key={tz} value={tz}>{tz.replace('_', ' ')}</option>)}
           </Select>
         </div>
       </Card>
 
-      {error && <p className="text-sm font-body px-3 py-2 rounded bg-red-50 text-error">{error}</p>}
+      {error && <p className="text-sm font-body px-3 py-2 rounded bg-[var(--error-light)] text-[var(--error)]">{error}</p>}
       <div className="flex items-center gap-3">
         <Button type="submit" loading={saving}>Guardar alteracoes</Button>
         <SaveBanner saved={saved} />

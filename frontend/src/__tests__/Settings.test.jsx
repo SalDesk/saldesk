@@ -626,3 +626,100 @@ describe('Definicoes: Seguranca', () => {
     expect(await screen.findByText('Erro ao alterar password.')).toBeInTheDocument();
   });
 });
+
+/* ───────────────────────── design system: estrutura, Conta, Notificacoes e Seguranca ───────────────────────── */
+
+const HEX = /#[0-9A-Fa-f]{3,8}(?![0-9A-Za-z])/;
+const NOMEADAS = /(?:^|[\s"'])(?:[a-z-]+:)?(?:text|bg|border|fill|ring)-(?:green|yellow|blue|red|amber)-\d/;
+const classes = (root) => [...root.querySelectorAll('[class]')].map(e => e.getAttribute('class')).join(' ');
+const semCoresForaDosTokens = (html) => {
+  expect(html).not.toMatch(HEX);
+  expect(html).not.toMatch(NOMEADAS);
+  expect(html.replace(/text-error ml-0[.]5/g, '')).not.toMatch(/(?:text|bg|border)-error/);
+  expect(html).not.toMatch(/bg-red-/);
+  expect(html).not.toMatch(/bg-error/);
+};
+
+describe('Definicoes: design system (estrutura, Conta, Notificacoes e Seguranca)', () => {
+  it('os_sete_separadores_sao_Tabs_sem_icones_e_o_query_string_escolhe_o_inicial', async () => {
+    montar();
+    expect(screen.getByRole('tablist')).toBeInTheDocument();
+    const nomes = ['Conta', 'Perfil Publico', 'Pagamentos', 'Facturacao', 'Notificacoes', 'Mensagens', 'Seguranca'];
+    nomes.forEach(n => expect(screen.getByRole('tab', { name: n })).toBeInTheDocument());
+    expect(screen.getAllByRole('tab')).toHaveLength(7);
+    expect(screen.getByRole('tab', { name: 'Conta' })).toHaveAttribute('aria-selected', 'true');
+    expect(screen.getByRole('tab', { name: 'Conta' }).querySelector('svg')).toBeNull();
+    fireEvent.click(screen.getByRole('tab', { name: 'Seguranca' }));
+    expect(screen.getByRole('tab', { name: 'Seguranca' })).toHaveAttribute('aria-selected', 'true');
+    cleanup();
+    montar('/definicoes?tab=facturacao');
+    expect(screen.getByRole('tab', { name: 'Facturacao' })).toHaveAttribute('aria-selected', 'true');
+    await screen.findByText('Pago');
+  });
+
+  it('o_aviso_de_guardado_tem_role_status_e_tokens', async () => {
+    montar();
+    fireEvent.click(botao('Guardar alteracoes'));
+    const aviso = await screen.findByRole('status');
+    expect(aviso).toHaveTextContent('Guardado com sucesso');
+    expect(aviso.className).toContain('var(--success-light)');
+    expect(aviso.className).toContain('var(--success)');
+  });
+
+  it('os_campos_de_Conta_tem_nome_acessivel_e_o_erro_usa_tokens', async () => {
+    montar();
+    ['Nome da empresa', 'Email', 'Telefone', 'WhatsApp', 'Morada', 'Idioma', 'Moeda', 'Fuso horario'].forEach(e => expect(screen.getByLabelText(e)).toBeInTheDocument());
+    updateOperator.mockRejectedValueOnce({ response: { data: { error: 'Email invalido' } } });
+    fireEvent.click(botao('Guardar alteracoes'));
+    const erro = await screen.findByText('Email invalido');
+    expect(erro.className).toContain('var(--error-light)');
+    expect(erro.className).toContain('var(--error)');
+  });
+
+  it('o_canal_de_notificacoes_e_um_radiogroup_com_aria_checked', () => {
+    montar('/definicoes?tab=notificacoes');
+    expect(screen.getByRole('radiogroup')).toBeInTheDocument();
+    expect(screen.getByRole('radio', { name: 'Push (PWA)', checked: true })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('radio', { name: 'Email' }));
+    expect(screen.getByRole('radio', { name: 'Email', checked: true })).toBeInTheDocument();
+    expect(screen.getByRole('radio', { name: 'Push (PWA)', checked: false })).toBeInTheDocument();
+  });
+
+  it('os_campos_de_password_tem_nome_e_os_botoes_de_mostrar_aria_pressed', () => {
+    montar('/definicoes?tab=seguranca');
+    ['Password actual', 'Nova password', 'Confirmar nova password'].forEach(e => expect(screen.getByLabelText(e)).toBeInTheDocument());
+    const botaoMostrar = screen.getByRole('button', { name: 'Mostrar password actual', pressed: false });
+    fireEvent.click(botaoMostrar);
+    expect(screen.getByRole('button', { name: 'Mostrar password actual', pressed: true })).toBeInTheDocument();
+    expect(screen.getByLabelText('Password actual')).toHaveAttribute('type', 'text');
+  });
+
+  it('os_erros_de_Seguranca_usam_tokens', () => {
+    montar('/definicoes?tab=seguranca');
+    fireEvent.change(pw('Confirmar nova password'), { target: { value: 'x' } });
+    const inline = screen.getByText('As passwords nao coincidem.');
+    expect(inline.className).toContain('var(--error)');
+    fireEvent.submit(formPw());
+    const erro = screen.getByText('A password deve ser forte: 8+ caracteres, maiuscula, numero e especial.');
+    expect(erro.className).toContain('var(--error-light)');
+  });
+
+  it('sem_cores_nomeadas_text_error_bg_red_ou_hexadecimais_em_classes_em_Conta_Notificacoes_e_Seguranca', async () => {
+    const { container } = montar();
+    let html = classes(container);
+    updateOperator.mockRejectedValueOnce(new Error('x'));
+    fireEvent.click(botao('Guardar alteracoes'));
+    await screen.findByText('Erro ao guardar');
+    html += classes(container);
+    fireEvent.click(botao('Guardar alteracoes'));
+    await screen.findByRole('status');
+    html += classes(container);
+    fireEvent.click(screen.getByRole('tab', { name: 'Notificacoes' }));
+    html += classes(container);
+    fireEvent.click(screen.getByRole('tab', { name: 'Seguranca' }));
+    fireEvent.change(pw('Confirmar nova password'), { target: { value: 'x' } });
+    fireEvent.submit(formPw());
+    html += classes(container);
+    semCoresForaDosTokens(html);
+  });
+});

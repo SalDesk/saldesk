@@ -46,12 +46,12 @@ export default function NotificacoesTab() {
   return (
     <form onSubmit={handleSave} className="space-y-5 max-w-2xl">
       <Card header={<h3 className="font-display font-semibold text-sm text-n-700">Canal de notificacoes</h3>}>
-        <div className="grid grid-cols-3 gap-2">
+        <div role="radiogroup" aria-label="Canal de notificacoes" className="grid grid-cols-3 gap-2">
           {[['email', 'Email'], ['push', 'Push (PWA)'], ['both', 'Ambos']].map(([v, l]) => (
-            <label key={v} className={`flex items-center justify-center gap-2 px-3 py-2.5 rounded border cursor-pointer text-sm font-body transition-colors ${channel === v ? 'bg-ocean-700 text-white border-ocean-700' : 'bg-n-50 text-n-700 border-n-200 hover:border-n-300'}`}>
-              <input type="radio" value={v} checked={channel === v} onChange={() => setChannel(v)} className="hidden" />
+            <button key={v} type="button" role="radio" aria-checked={channel === v} onClick={() => setChannel(v)}
+              className={`flex items-center justify-center gap-2 px-3 py-2.5 rounded border cursor-pointer text-sm font-body transition-colors ${channel === v ? 'bg-ocean-700 text-white border-ocean-700' : 'bg-n-50 text-n-700 border-n-200 hover:border-n-300'}`}>
               {l}
-            </label>
+            </button>
           ))}
         </div>
       </Card>
