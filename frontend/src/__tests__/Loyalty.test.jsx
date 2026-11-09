@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import Loyalty from '../pages/Loyalty';
 import { listCustomers } from '../services/customersService';
 import {
@@ -259,5 +259,366 @@ describe('Fidelidade: design system (estrutura e niveis)', () => {
     expect(html).not.toMatch(NOMEADAS);
     expect(html.replace(/text-error ml-0[.]5/g, '')).not.toMatch(/(?:text|bg|border)-error/);
     expect(container.querySelectorAll('[style]')).toHaveLength(0);
+  });
+});
+
+/* ───────────────────────── caracterizacao: clientes e modal de pontos ───────────────────────── */
+
+const norm = (t) => t.replace(/\s/g, ' ');
+const CLIENTES = [
+  { id: 'c3', name: 'Carla Lopes', email: null, loyalty_points: 40 },
+  { id: 'c1', name: 'Ana Silva', email: 'ana@x.test', total_visits: 5, loyalty_points: 1500 },
+  { id: 'c4', name: 'Diogo Zero', email: 'd@x.test', total_visits: 1, loyalty_points: null },
+  { id: 'c2', name: 'Bruno Dias', email: 'bruno@x.test', total_visits: 2, loyalty_points: '150' },
+];
+const linha = (nome) => screen.getByText(nome).closest('tr');
+const nomesPorOrdem = () => screen.getAllByRole('row').slice(1).map(r => r.querySelector('td').textContent);
+const chip = (rotulo) => screen.getAllByText(rotulo).find(e => e.closest('button')).closest('button');
+const cartaoNivel = (rotulo) => screen.getAllByText(rotulo).find(e => e.tagName === 'P').previousSibling.textContent;
+const visitas = (tr) => tr.querySelectorAll('td')[2].textContent;
+async function abrirClientes(lista = CLIENTES) {
+  listCustomers.mockResolvedValue(lista);
+  const r = await montar();
+  fireEvent.click(separador('Clientes'));
+  await screen.findByText(lista[0].name);
+  return r;
+}
+const ajustar = (nome) => fireEvent.click(linha(nome).querySelector('button'));
+const modo = (rotulo) => screen.getAllByText(rotulo).find(e => e.closest('button')).closest('button');
+
+describe('Fidelidade: clientes', () => {
+  it('ordena_por_pontos_decrescentes_e_mostra_nome_email_visitas_pontos_nivel_e_recompensa', async () => {
+    await abrirClientes();
+    expect(nomesPorOrdem()).toEqual(['Ana Silva', 'Bruno Dias', 'Carla Lopes', 'Diogo Zero']);
+    const t = norm(linha('Ana Silva').textContent);
+    expect(t).toContain('ana@x.test');
+    expect(t).toContain(norm(`${(1500).toLocaleString('pt-PT')} pts`));
+    expect(t).toContain('Ouro');
+    expect(t).toContain('15% desconto + tour gratuito por ano');
+    expect(visitas(linha('Ana Silva'))).toBe('5');
+    expect(norm(linha('Bruno Dias').textContent)).toContain('Prata');
+  });
+
+  it('o_nivel_e_o_maior_min_atingido_e_pontos_em_falta_sao_zero', async () => {
+    await abrirClientes([
+      { id: 'a', name: 'P100', loyalty_points: 100 }, { id: 'b', name: 'P101', loyalty_points: 101 },
+      { id: 'c', name: 'P499', loyalty_points: 499 }, { id: 'd', name: 'P500', loyalty_points: 500 },
+      { id: 'e', name: 'PNulo', loyalty_points: null }, { id: 'f', name: 'PEmFalta' },
+    ]);
+    const nivel = (n) => ['Bronze', 'Prata', 'Ouro'].find(l => norm(linha(n).textContent).includes(l));
+    expect(nivel('P100')).toBe('Bronze');
+    expect(nivel('P101')).toBe('Prata');
+    expect(nivel('P499')).toBe('Prata');
+    expect(nivel('P500')).toBe('Ouro');
+    expect(nivel('PNulo')).toBe('Bronze');
+    expect(norm(linha('PEmFalta').textContent)).toContain('0 pts');
+  });
+
+  it('email_e_visitas_em_falta_mostram_travessao_e_zero', async () => {
+    await abrirClientes();
+    const celulas = [...linha('Carla Lopes').querySelectorAll('td')].map(td => td.textContent);
+    expect(celulas[1]).toBe('—');
+    expect(celulas[2]).toBe('0');
+  });
+
+  it('so_o_primeiro_com_pontos_leva_a_estrela', async () => {
+    await abrirClientes();
+    expect(linha('Ana Silva').querySelector('svg.lucide-star')).toBeInTheDocument();
+    expect(linha('Bruno Dias').querySelector('svg.lucide-star')).not.toBeInTheDocument();
+    cleanup();
+    await abrirClientes([{ id: 'z', name: 'Zero', loyalty_points: 0 }]);
+    expect(linha('Zero').querySelector('svg.lucide-star')).not.toBeInTheDocument();
+  });
+
+  it('cartoes_total_e_clientes_por_nivel', async () => {
+    await abrirClientes();
+    expect(cartaoNivel('Total clientes')).toBe('4');
+    expect(cartaoNivel('Bronze')).toBe('2');
+    expect(cartaoNivel('Prata')).toBe('1');
+    expect(cartaoNivel('Ouro')).toBe('1');
+  });
+
+  it('pesquisa_por_nome_ou_email_e_filtro_por_nivel_e_vazio_com_filtros', async () => {
+    await abrirClientes();
+    const pesquisa = screen.getByPlaceholderText('Pesquisar cliente...');
+    fireEvent.change(pesquisa, { target: { value: 'BRUNO' } });
+    expect(nomesPorOrdem()).toEqual(['Bruno Dias']);
+    fireEvent.change(pesquisa, { target: { value: 'x.test' } });
+    expect(nomesPorOrdem()).toEqual(['Ana Silva', 'Bruno Dias', 'Diogo Zero']);
+    fireEvent.change(pesquisa, { target: { value: '' } });
+    fireEvent.click(chip('Prata'));
+    expect(nomesPorOrdem()).toEqual(['Bruno Dias']);
+    fireEvent.click(chip('Bronze'));
+    expect(nomesPorOrdem()).toEqual(['Carla Lopes', 'Diogo Zero']);
+    fireEvent.change(pesquisa, { target: { value: 'ana' } });
+    expect(screen.getByText('Sem clientes encontrados.')).toBeInTheDocument();
+    fireEvent.click(chip('Todos'));
+    expect(nomesPorOrdem()).toEqual(['Ana Silva']);
+  });
+
+  it('sem_clientes_mostra_o_vazio', async () => {
+    listCustomers.mockResolvedValue([]);
+    await montar();
+    fireEvent.click(separador('Clientes'));
+    expect(await screen.findByText('Sem clientes encontrados.')).toBeInTheDocument();
+    expect(cartaoNivel('Total clientes')).toBe('0');
+  });
+
+  it('listCustomers_a_falhar_ou_nulo_nao_rebenta', async () => {
+    listCustomers.mockRejectedValue(new Error('x'));
+    await montar();
+    fireEvent.click(separador('Clientes'));
+    expect(await screen.findByText('Sem clientes encontrados.')).toBeInTheDocument();
+    cleanup();
+    listCustomers.mockResolvedValue(null);
+    await montar();
+    fireEvent.click(separador('Clientes'));
+    expect(await screen.findByText('Sem clientes encontrados.')).toBeInTheDocument();
+  });
+
+  it('em_carga_mostra_o_spinner_e_nao_a_tabela', async () => {
+    listCustomers.mockReturnValue(new Promise(() => {}));
+    const { container } = await montar();
+    fireEvent.click(separador('Clientes'));
+    await waitFor(() => expect(container.querySelector('.animate-spin')).toBeInTheDocument());
+    expect(screen.queryByRole('table')).not.toBeInTheDocument();
+    expect(screen.queryByText('Sem clientes encontrados.')).not.toBeInTheDocument();
+  });
+});
+
+describe('Fidelidade: modal de pontos', () => {
+  it('abrir_o_modal_mostra_pontos_actuais_nivel_e_o_resgate_do_nivel', async () => {
+    await abrirClientes();
+    ajustar('Carla Lopes');
+    expect(await screen.findByText('Pontos — Carla Lopes')).toBeInTheDocument();
+    expect(screen.getByText('Pontos actuais').nextSibling.textContent).toBe('40');
+    expect(screen.getByText('Resgatar nivel Bronze')).toBeInTheDocument();
+    expect(screen.getByText('Troca todo o saldo por um voucher de 5% (uso unico).')).toBeInTheDocument();
+    await waitFor(() => expect(getCustomerLoyaltyHistory).toHaveBeenCalledWith('c3'));
+  });
+
+  it('ajustar_adicionar_e_remover_chama_adjustCustomerPoints_com_delta_com_sinal_e_motivo_e_limpa_os_campos', async () => {
+    adjustCustomerPoints.mockResolvedValue({ loyalty_points: 90 });
+    await abrirClientes();
+    ajustar('Carla Lopes');
+    await screen.findByText('Pontos — Carla Lopes');
+    fireEvent.change(campo('Quantidade de pontos'), { target: { value: '50' } });
+    fireEvent.change(campo('Motivo'), { target: { value: 'Brinde' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Guardar ajuste' }));
+    await waitFor(() => expect(adjustCustomerPoints).toHaveBeenCalledWith('c3', 50, 'Brinde'));
+    await waitFor(() => expect(campo('Quantidade de pontos')).toHaveValue(null));
+    expect(campo('Motivo')).toHaveValue('');
+    expect(screen.getByText('Pontos actuais').nextSibling.textContent).toBe('90');
+    expect(norm(linha('Carla Lopes').textContent)).toContain('90 pts');
+    await waitFor(() => expect(getCustomerLoyaltyHistory).toHaveBeenCalledTimes(2));
+    adjustCustomerPoints.mockResolvedValue({ loyalty_points: 80 });
+    fireEvent.click(modo('Remover'));
+    fireEvent.change(campo('Quantidade de pontos'), { target: { value: '10' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Guardar ajuste' }));
+    await waitFor(() => expect(adjustCustomerPoints).toHaveBeenLastCalledWith('c3', -10, ''));
+  });
+
+  it('valor_invalido_mostra_Introduza um valor valido.', async () => {
+    await abrirClientes();
+    ajustar('Carla Lopes');
+    await screen.findByText('Pontos — Carla Lopes');
+    fireEvent.click(screen.getByRole('button', { name: 'Guardar ajuste' }));
+    expect(screen.getByText('Introduza um valor valido.')).toBeInTheDocument();
+    fireEvent.change(campo('Quantidade de pontos'), { target: { value: '-5' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Guardar ajuste' }));
+    expect(screen.getByText('Introduza um valor valido.')).toBeInTheDocument();
+    expect(adjustCustomerPoints).not.toHaveBeenCalled();
+  });
+
+  it('falha_ao_ajustar_mostra_Erro ao actualizar pontos.', async () => {
+    adjustCustomerPoints.mockRejectedValue(new Error('x'));
+    await abrirClientes();
+    ajustar('Carla Lopes');
+    await screen.findByText('Pontos — Carla Lopes');
+    fireEvent.change(campo('Quantidade de pontos'), { target: { value: '5' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Guardar ajuste' }));
+    expect(await screen.findByText('Erro ao actualizar pontos.')).toBeInTheDocument();
+  });
+
+  it('resultado_previsto_nunca_negativo_e_mostra_o_novo_nivel_so_se_muda', async () => {
+    await abrirClientes();
+    ajustar('Carla Lopes');
+    await screen.findByText('Pontos — Carla Lopes');
+    expect(screen.queryByText('Resultado')).not.toBeInTheDocument();
+    fireEvent.change(campo('Quantidade de pontos'), { target: { value: '70' } });
+    let caixa = screen.getByText('Resultado').parentElement;
+    expect(norm(caixa.textContent)).toContain('110 pts');
+    expect(caixa).toHaveTextContent('Prata');
+    fireEvent.click(modo('Remover'));
+    fireEvent.change(campo('Quantidade de pontos'), { target: { value: '100' } });
+    caixa = screen.getByText('Resultado').parentElement;
+    expect(norm(caixa.textContent)).toContain('0 pts');
+    expect(caixa).not.toHaveTextContent('Prata');
+    expect(caixa).not.toHaveTextContent('Bronze');
+  });
+
+  it('resgatar_chama_redeemCustomerPoints_mostra_voucher_codigo_e_validade_em_UTC', async () => {
+    redeemCustomerPoints.mockResolvedValue({ voucher: { code: 'FID-AB12', value: 5, expires_at: '2027-01-15T00:00:00Z' }, loyalty_points: 0 });
+    await abrirClientes();
+    ajustar('Carla Lopes');
+    await screen.findByText('Pontos — Carla Lopes');
+    fireEvent.click(screen.getByRole('button', { name: 'Resgatar' }));
+    expect(await screen.findByText('Voucher gerado — 5% de desconto')).toBeInTheDocument();
+    expect(redeemCustomerPoints).toHaveBeenCalledWith('c3');
+    expect(screen.getByText('FID-AB12')).toBeInTheDocument();
+    expect(screen.getByText(`Uso unico, valido ate ${new Date('2027-01-15T00:00:00Z').toLocaleDateString('pt-PT', { timeZone: 'UTC' })}.`)).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Resgatar' })).not.toBeInTheDocument();
+    expect(screen.getByText('Pontos actuais').nextSibling.textContent).toBe('0');
+    expect(norm(linha('Carla Lopes').textContent)).toContain('0 pts');
+    await waitFor(() => expect(getCustomerLoyaltyHistory).toHaveBeenCalledTimes(2));
+  });
+
+  it('resgatar_fica_desactivado_sem_pontos_e_erro_do_servidor_ou_generico', async () => {
+    await abrirClientes();
+    ajustar('Diogo Zero');
+    await screen.findByText('Pontos — Diogo Zero');
+    expect(screen.getByRole('button', { name: 'Resgatar' })).toBeDisabled();
+    cleanup();
+    redeemCustomerPoints.mockRejectedValueOnce({ response: { data: { error: 'Saldo insuficiente' } } });
+    await abrirClientes();
+    ajustar('Carla Lopes');
+    await screen.findByText('Pontos — Carla Lopes');
+    fireEvent.click(screen.getByRole('button', { name: 'Resgatar' }));
+    expect(await screen.findByText('Saldo insuficiente')).toBeInTheDocument();
+    redeemCustomerPoints.mockRejectedValueOnce(new Error('x'));
+    fireEvent.click(screen.getByRole('button', { name: 'Resgatar' }));
+    expect(await screen.findByText('Erro ao resgatar pontos.')).toBeInTheDocument();
+  });
+
+  it('copiar_codigo_chama_clipboard_e_mostra_o_visto_1500ms', async () => {
+    const writeText = vi.fn().mockResolvedValue();
+    Object.defineProperty(navigator, 'clipboard', { value: { writeText }, configurable: true });
+    redeemCustomerPoints.mockResolvedValue({ voucher: { code: 'FID-AB12', value: 5, expires_at: '2027-01-15T00:00:00Z' }, loyalty_points: 0 });
+    await abrirClientes();
+    ajustar('Carla Lopes');
+    await screen.findByText('Pontos — Carla Lopes');
+    fireEvent.click(screen.getByRole('button', { name: 'Resgatar' }));
+    await screen.findByText('FID-AB12');
+    const copiar = screen.getByTitle('Copiar codigo');
+    fireEvent.click(copiar);
+    expect(writeText).toHaveBeenCalledWith('FID-AB12');
+    await waitFor(() => expect(copiar.querySelector('svg.lucide-check')).toBeInTheDocument());
+    await waitFor(() => expect(copiar.querySelector('svg.lucide-check')).not.toBeInTheDocument(), { timeout: 3000 });
+  });
+
+  it('historico_lista_movimentos_com_sinal_e_o_vazio_diz_Sem movimentos ainda.', async () => {
+    getCustomerLoyaltyHistory.mockResolvedValue([
+      { id: 'h1', type: 'earn', points: 50, reason: 'Reserva', created_at: '2026-11-01T12:00:00Z' },
+      { id: 'h2', type: 'redeem', points: -30, created_at: '2026-11-02T12:00:00Z' },
+      { id: 'h3', type: 'manual_adjust', points: 10, reason: '', created_at: '2026-11-03T12:00:00Z' },
+      { id: 'h4', type: 'outro', points: -1, created_at: '2026-11-04T12:00:00Z' },
+    ]);
+    await abrirClientes();
+    ajustar('Carla Lopes');
+    expect(await screen.findByText('Ganho')).toBeInTheDocument();
+    expect(screen.getByText('Resgate')).toBeInTheDocument();
+    expect(screen.getByText('Ajuste manual')).toBeInTheDocument();
+    expect(screen.getByText('outro')).toBeInTheDocument();
+    expect(screen.getByText('+50')).toBeInTheDocument();
+    expect(screen.getByText('-30')).toBeInTheDocument();
+    expect(screen.getByText('+10')).toBeInTheDocument();
+    expect(screen.getByText(/· Reserva/)).toBeInTheDocument();
+    expect(screen.getByText(new Date('2026-11-01T12:00:00Z').toLocaleDateString('pt-PT'))).toBeInTheDocument();
+    cleanup();
+    getCustomerLoyaltyHistory.mockRejectedValue(new Error('x'));
+    await abrirClientes();
+    ajustar('Carla Lopes');
+    expect(await screen.findByText('Sem movimentos ainda.')).toBeInTheDocument();
+  });
+
+  it('fechar_fecha_o_modal', async () => {
+    await abrirClientes();
+    ajustar('Carla Lopes');
+    await screen.findByText('Pontos — Carla Lopes');
+    fireEvent.click(screen.getAllByRole('button', { name: 'Fechar' })[0]);
+    expect(screen.queryByText('Pontos — Carla Lopes')).not.toBeInTheDocument();
+  });
+});
+
+/* ───────────────────────── design system: clientes e modal de pontos ───────────────────────── */
+
+describe('Fidelidade: design system (clientes e modal)', () => {
+  it('a_tabela_e_Table_com_as_sete_colunas', async () => {
+    await abrirClientes();
+    expect(screen.getByRole('table')).toBeInTheDocument();
+    const cab = screen.getAllByRole('columnheader').map(h => h.textContent);
+    expect(cab).toEqual(['Cliente', 'Email', 'Visitas', 'Pontos', 'Nivel', 'Recompensa', '']);
+  });
+
+  it('o_nivel_na_tabela_e_Badge_e_os_chips_tem_aria_pressed', async () => {
+    await abrirClientes();
+    const selo = within(linha('Ana Silva')).getByText('Ouro');
+    expect(selo.className).toContain('bg-sand-50');
+    expect(screen.getByRole('button', { name: 'Todos', pressed: true })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Prata' }));
+    expect(screen.getByRole('button', { name: 'Prata', pressed: true })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Todos', pressed: false })).toBeInTheDocument();
+  });
+
+  it('pesquisa_e_botao_de_icone_tem_nome_acessivel', async () => {
+    await abrirClientes();
+    expect(screen.getByLabelText('Pesquisar cliente')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Ajustar pontos Ana Silva' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Ajustar pontos Diogo Zero' })).toBeInTheDocument();
+  });
+
+  it('os_campos_e_o_seletor_do_modal_tem_nome_e_aria_pressed', async () => {
+    await abrirClientes();
+    ajustar('Carla Lopes');
+    await screen.findByText('Pontos — Carla Lopes');
+    expect(screen.getByLabelText('Quantidade de pontos')).toBeInTheDocument();
+    expect(screen.getByLabelText('Motivo')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Adicionar', pressed: true })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Remover' }));
+    expect(screen.getByRole('button', { name: 'Remover', pressed: true })).toBeInTheDocument();
+  });
+
+  it('o_botao_de_copiar_tem_nome_acessivel', async () => {
+    redeemCustomerPoints.mockResolvedValue({ voucher: { code: 'FID-AB12', value: 5, expires_at: '2027-01-15T00:00:00Z' }, loyalty_points: 0 });
+    await abrirClientes();
+    ajustar('Carla Lopes');
+    await screen.findByText('Pontos — Carla Lopes');
+    fireEvent.click(screen.getByRole('button', { name: 'Resgatar' }));
+    await screen.findByText('FID-AB12');
+    expect(screen.getByRole('button', { name: 'Copiar codigo' })).toBeInTheDocument();
+  });
+
+  it('o_vazio_e_EmptyState', async () => {
+    listCustomers.mockResolvedValue([]);
+    await montar();
+    fireEvent.click(separador('Clientes'));
+    expect(await screen.findByText('Sem clientes encontrados.')).toHaveClass('font-display');
+  });
+
+  it('sem_hexadecimais_cores_nomeadas_text_error_nem_style_de_cor_nos_dois_separadores_e_no_modal', async () => {
+    adjustCustomerPoints.mockRejectedValue(new Error('x'));
+    redeemCustomerPoints.mockResolvedValue({ voucher: { code: 'FID-AB12', value: 5, expires_at: '2027-01-15T00:00:00Z' }, loyalty_points: 0 });
+    getCustomerLoyaltyHistory.mockResolvedValue([
+      { id: 'h1', type: 'earn', points: 50, created_at: '2026-11-01T12:00:00Z' },
+      { id: 'h2', type: 'redeem', points: -30, created_at: '2026-11-02T12:00:00Z' },
+      { id: 'h3', type: 'manual_adjust', points: 10, created_at: '2026-11-03T12:00:00Z' },
+    ]);
+    getLoyaltyConfig.mockResolvedValue({ active: true });
+    await abrirClientes();
+    let html = document.body.innerHTML;
+    ajustar('Carla Lopes');
+    await screen.findByText('Ganho');
+    fireEvent.change(campo('Quantidade de pontos'), { target: { value: '70' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Guardar ajuste' }));
+    await screen.findByText('Erro ao actualizar pontos.');
+    html += document.body.innerHTML;
+    fireEvent.click(screen.getByRole('button', { name: 'Resgatar' }));
+    await screen.findByText('FID-AB12');
+    html += document.body.innerHTML;
+    expect(html).not.toMatch(HEX);
+    expect(html).not.toMatch(NOMEADAS);
+    expect(html.replace(/text-error ml-0[.]5/g, '')).not.toMatch(/(?:text|bg|border)-error/);
+    const comCor = [...document.body.querySelectorAll('[style]')].filter(e => /color|background/.test(e.getAttribute('style')));
+    expect(comCor).toHaveLength(0);
   });
 });
