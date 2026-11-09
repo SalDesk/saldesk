@@ -12,6 +12,8 @@ import {
 import PageHeader from '../components/layout/PageHeader';
 import Button from '../components/ui/Button';
 import Card from '../components/ui/Card';
+import Badge from '../components/ui/Badge';
+import Tabs from '../components/ui/Tabs';
 import Modal from '../components/ui/Modal';
 import Input, { Select } from '../components/ui/Input';
 import LoadingSpinner from '../components/shared/LoadingSpinner';
@@ -26,10 +28,11 @@ const DEFAULT_CONFIG = {
   ],
 };
 
-const LEVEL_COLORS = {
-  Bronze: { bg: '#FDF3E7', text: '#92400E', border: '#FCD5A1' },
-  Prata:  { bg: '#F1F5F9', text: '#475569', border: '#CBD5E1' },
-  Ouro:   { bg: '#FFF7E6', text: '#92400E', border: '#FCD34D' },
+/* estilo por nivel: variante do Badge, circulo do icone e cor do numero (nome desconhecido = Bronze) */
+const LEVEL_STYLE = {
+  Bronze: { variant: 'pending', icon: 'bg-[var(--warning-light)] text-[var(--warning)]', text: 'text-[var(--warning)]' },
+  Prata:  { variant: 'default', icon: 'bg-n-100 text-n-600',                              text: 'text-n-600'          },
+  Ouro:   { variant: 'direct',  icon: 'bg-sand-50 text-sand-600',                         text: 'text-sand-600'       },
 };
 
 /* ── Helpers ── */
@@ -39,13 +42,8 @@ function getLevel(points, levels) {
 }
 
 function LevelBadge({ name }) {
-  const c = LEVEL_COLORS[name] || LEVEL_COLORS.Bronze;
-  return (
-    <span className="text-xs font-mono font-semibold px-2 py-0.5 rounded-xs border"
-      style={{ color: c.text, backgroundColor: c.bg, borderColor: c.border }}>
-      {name}
-    </span>
-  );
+  const s = LEVEL_STYLE[name] || LEVEL_STYLE.Bronze;
+  return <Badge variant={s.variant}>{name}</Badge>;
 }
 
 /* ── Historico de pontos ── */
@@ -248,7 +246,7 @@ function PointsModal({ customer, config, onClose, onAdjust, onRedeem }) {
 function LevelCard({ level, index, onUpdate, totalCustomers }) {
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState({ ...level });
-  const c = LEVEL_COLORS[level.name] || LEVEL_COLORS.Bronze;
+  const s = LEVEL_STYLE[level.name] || LEVEL_STYLE.Bronze;
 
   function handleSave() {
     onUpdate(index, draft);
@@ -256,10 +254,18 @@ function LevelCard({ level, index, onUpdate, totalCustomers }) {
   }
 
   return (
-    <div className="bg-white rounded-md border border-n-200 overflow-hidden">
-      <div className="flex items-center gap-4 px-4 py-3 cursor-pointer select-none" onClick={() => setOpen(p => !p)}>
-        <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0" style={{ backgroundColor: c.bg, border: `1px solid ${c.border}` }}>
-          <Award size={16} strokeWidth={1.75} style={{ color: c.text }} />
+    <Card padding="p-0" className="overflow-hidden">
+      <div
+        role="button" tabIndex={0} aria-expanded={open}
+        className="flex items-center gap-4 px-4 py-3 cursor-pointer select-none"
+        onClick={() => setOpen(p => !p)}
+        onKeyDown={e => {
+          if (e.target !== e.currentTarget) return;
+          if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setOpen(p => !p); }
+        }}
+      >
+        <div className={`w-8 h-8 rounded-full border border-n-200 flex items-center justify-center shrink-0 ${s.icon}`}>
+          <Award size={16} strokeWidth={1.75} />
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
@@ -276,19 +282,19 @@ function LevelCard({ level, index, onUpdate, totalCustomers }) {
       {open && (
         <div className="border-t border-n-100 px-4 py-4 space-y-3 bg-n-50">
           <Input
-            label="Desconto (%)"
+            label="Desconto (%)" aria-label="Desconto (%)"
             type="number" min="0" max="100" step="1"
             value={draft.discount_pct}
             onChange={e => setDraft(p => ({ ...p, discount_pct: Number(e.target.value) }))}
           />
           <Input
-            label="Descricao da recompensa"
+            label="Descricao da recompensa" aria-label="Descricao da recompensa"
             value={draft.reward}
             onChange={e => setDraft(p => ({ ...p, reward: e.target.value }))}
           />
           {index < 2 && (
             <Input
-              label={`Pontos maximo (nivel ${level.name})`}
+              label={`Pontos maximo (nivel ${level.name})`} aria-label={`Pontos maximo (nivel ${level.name})`}
               type="number" min="1"
               value={draft.max ?? ''}
               onChange={e => setDraft(p => ({ ...p, max: e.target.value ? Number(e.target.value) : null }))}
@@ -304,7 +310,7 @@ function LevelCard({ level, index, onUpdate, totalCustomers }) {
           </div>
         </div>
       )}
-    </div>
+    </Card>
   );
 }
 
@@ -401,14 +407,14 @@ export default function Loyalty() {
       />
 
       {/* Active toggle */}
-      <div className={`flex items-center gap-4 px-4 py-3 rounded-md border mb-6 ${config.active ? 'bg-[#ECFDF5] border-green-200' : 'bg-n-50 border-n-200'}`}>
-        <button onClick={toggleActive} className="shrink-0">
+      <div className={`flex items-center gap-4 px-4 py-3 rounded-md border border-n-200 mb-6 ${config.active ? 'bg-[var(--success-light)]' : 'bg-n-50'}`}>
+        <button type="button" onClick={toggleActive} aria-pressed={config.active} aria-label="Programa de fidelidade" className="shrink-0">
           {config.active
-            ? <ToggleRight size={28} strokeWidth={1.5} className="text-[#1A7A4A]" />
+            ? <ToggleRight size={28} strokeWidth={1.5} className="text-[var(--success)]" />
             : <ToggleLeft  size={28} strokeWidth={1.5} className="text-n-400" />}
         </button>
         <div>
-          <p className={`text-sm font-body font-semibold ${config.active ? 'text-[#1A7A4A]' : 'text-n-600'}`}>
+          <p className={`text-sm font-body font-semibold ${config.active ? 'text-[var(--success)]' : 'text-n-600'}`}>
             Programa {config.active ? 'activo' : 'inactivo'}
           </p>
           <p className="text-xs font-body text-n-400">
@@ -420,15 +426,12 @@ export default function Loyalty() {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1 border-b border-n-200 mb-6">
-        {[{ key: 'config', label: 'Configuracao', Icon: Award }, { key: 'clientes', label: 'Clientes', Icon: Users }].map(({ key, label, Icon }) => (
-          <button key={key} onClick={() => setActiveTab(key)}
-            className={`flex items-center gap-2 px-4 py-2.5 text-sm font-body font-semibold border-b-2 -mb-px transition-colors ${
-              activeTab === key ? 'border-ocean-700 text-ocean-700' : 'border-transparent text-n-500 hover:text-n-700'
-            }`}>
-            <Icon size={15} strokeWidth={1.75} />{label}
-          </button>
-        ))}
+      <div className="mb-6">
+        <Tabs
+          tabs={[{ id: 'config', label: 'Configuracao' }, { id: 'clientes', label: 'Clientes' }]}
+          value={activeTab}
+          onChange={setActiveTab}
+        />
       </div>
 
       {activeTab === 'config' && (
@@ -438,7 +441,7 @@ export default function Loyalty() {
             <h3 className="font-display font-semibold text-sm text-n-700 mb-4">Regra de acumulacao</h3>
             <div className="flex items-end gap-4 max-w-xs">
               <Input
-                label="Pontos por Euro gasto"
+                label="Pontos por Euro gasto" aria-label="Pontos por Euro gasto"
                 type="number" min="0.1" step="0.1"
                 value={config.points_per_euro}
                 onChange={e => persistConfig({ ...config, points_per_euro: Number(e.target.value) })}
