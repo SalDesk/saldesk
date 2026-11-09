@@ -16,9 +16,9 @@ export const PLATFORMS = [
 ];
 
 export const STATUS_CONFIG = {
-  agendado:  { label: 'Agendado',  cls: 'bg-ocean-50 text-ocean-700 border-ocean-100'    },
-  publicado: { label: 'Publicado', cls: 'bg-[#ECFDF5] text-[#1A7A4A] border-[#BBF7D0]' },
-  cancelado: { label: 'Cancelado', cls: 'bg-red-50 text-error border-red-100'           },
+  agendado:  { label: 'Agendado',  variant: 'info'      },
+  publicado: { label: 'Publicado', variant: 'confirmed' },
+  cancelado: { label: 'Cancelado', variant: 'cancelled' },
 };
 
 /* ── Calendar helpers (partilhados) ── */

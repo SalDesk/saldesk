@@ -59,7 +59,7 @@ function FacebookPreview({ text, photoUrl, username }) {
   return (
     <div className="w-full max-w-[240px] rounded-md overflow-hidden border border-n-200 shadow-sm bg-white text-left">
       <div className="flex items-center gap-2 px-3 py-2.5 border-b border-n-100">
-        <div className="w-8 h-8 rounded-full bg-[#1877F2] flex items-center justify-center shrink-0">
+        <div className="w-8 h-8 rounded-full bg-[var(--info)] flex items-center justify-center shrink-0">
           <User size={13} strokeWidth={1.75} className="text-white" />
         </div>
         <div>
@@ -120,7 +120,7 @@ export default function PostModal({ post, onSave, onClose, operatorName }) {
             <p className="text-xs font-body font-bold uppercase tracking-wide text-n-600 mb-2">Template</p>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
               {TEMPLATES.map(t => (
-                <button key={t.key} type="button" onClick={() => applyTemplate(t.key)}
+                <button key={t.key} type="button" aria-pressed={selectedTemplate === t.key} onClick={() => applyTemplate(t.key)}
                   className={`text-left px-3 py-2 rounded-sm border text-xs font-body transition-colors ${selectedTemplate === t.key ? 'bg-ocean-50 border-ocean-300 text-ocean-700' : 'bg-n-50 border-n-200 text-n-600 hover:border-n-400'}`}>
                   {t.label}
                 </button>
@@ -128,19 +128,19 @@ export default function PostModal({ post, onSave, onClose, operatorName }) {
             </div>
           </div>
 
-          <Textarea label="Texto PT" value={form.text_pt} onChange={set('text_pt')} rows={3} required placeholder="Texto para publicar em portugues..." />
-          <Textarea label="Texto EN" value={form.text_en} onChange={set('text_en')} rows={2} placeholder="Text to post in English..." />
-          <Input label="Foto (URL)" value={form.photo_url} onChange={set('photo_url')} placeholder="https://exemplo.com/imagem.jpg" />
+          <Textarea label="Texto PT" aria-label="Texto PT" value={form.text_pt} onChange={set('text_pt')} rows={3} required placeholder="Texto para publicar em portugues..." />
+          <Textarea label="Texto EN" aria-label="Texto EN" value={form.text_en} onChange={set('text_en')} rows={2} placeholder="Text to post in English..." />
+          <Input label="Foto (URL)" aria-label="Foto (URL)" value={form.photo_url} onChange={set('photo_url')} placeholder="https://exemplo.com/imagem.jpg" />
 
           <div className="grid grid-cols-2 gap-3">
-            <Select label="Plataforma" value={form.platform} onChange={set('platform')}>
+            <Select label="Plataforma" aria-label="Plataforma" value={form.platform} onChange={set('platform')}>
               {PLATFORMS.map(p => <option key={p.value} value={p.value}>{p.label}</option>)}
             </Select>
-            <Input label="Data e hora" type="datetime-local" value={form.scheduled_at} onChange={set('scheduled_at')} required />
+            <Input label="Data e hora" aria-label="Data e hora" type="datetime-local" value={form.scheduled_at} onChange={set('scheduled_at')} required />
           </div>
 
           {!isNew && (
-            <Select label="Estado" value={form.status} onChange={set('status')}>
+            <Select label="Estado" aria-label="Estado" value={form.status} onChange={set('status')}>
               {Object.entries(STATUS_CONFIG).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
             </Select>
           )}
@@ -156,7 +156,7 @@ export default function PostModal({ post, onSave, onClose, operatorName }) {
           <p className="text-xs font-mono uppercase tracking-wider text-n-500">Preview</p>
           <div className="flex gap-1 mb-1">
             {['instagram', 'facebook'].map(pl => (
-              <button key={pl} onClick={() => setPreviewPlatform(pl)}
+              <button key={pl} type="button" aria-pressed={previewPlatform === pl} onClick={() => setPreviewPlatform(pl)}
                 className={`text-xs px-2 py-1 rounded-xs font-body transition-colors capitalize ${previewPlatform === pl ? 'bg-ocean-700 text-white' : 'bg-n-100 text-n-600 hover:bg-n-200'}`}>
                 {pl === 'instagram' ? 'Instagram' : 'Facebook'}
               </button>
