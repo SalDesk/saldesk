@@ -59,7 +59,7 @@ const SPOKEN_LANGS = ['PT', 'EN', 'FR', 'ES', 'DE', 'NL', 'IT'];
 function SaveBanner({ saved }) {
   if (!saved) return null;
   return (
-    <div className="flex items-center gap-2 text-sm font-body text-green-700 bg-green-50 border border-green-200 rounded px-3 py-2">
+    <div role="status" className="flex items-center gap-2 text-sm font-body text-[var(--success)] bg-[var(--success-light)] border border-n-200 rounded px-3 py-2">
       Guardado com sucesso
     </div>
   );
@@ -178,11 +178,11 @@ export default function PageEditor() {
                 return (
                   <div key={s.key} className="flex items-center gap-3 py-2 border-b border-n-100 last:border-0">
                     <div className="flex flex-col shrink-0">
-                      <button type="button" onClick={() => moveSection(i, -1)} disabled={i === 0}
+                      <button type="button" aria-label={`Mover ${meta.label} para cima`} onClick={() => moveSection(i, -1)} disabled={i === 0}
                         className="w-5 h-4 flex items-center justify-center text-n-400 disabled:opacity-20 hover:text-ocean-700">
                         <ChevronUp size={12} strokeWidth={2} />
                       </button>
-                      <button type="button" onClick={() => moveSection(i, 1)} disabled={i === sections.length - 1}
+                      <button type="button" aria-label={`Mover ${meta.label} para baixo`} onClick={() => moveSection(i, 1)} disabled={i === sections.length - 1}
                         className="w-5 h-4 flex items-center justify-center text-n-400 disabled:opacity-20 hover:text-ocean-700">
                         <ChevronDown size={12} strokeWidth={2} />
                       </button>
@@ -206,23 +206,23 @@ export default function PageEditor() {
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-body font-bold uppercase tracking-wide text-n-500">Parceiro {i + 1}</span>
                     <div className="flex gap-1">
-                      <button type="button" onClick={() => moveItem(setPartners, i, -1)} disabled={i === 0}
+                      <button type="button" aria-label={`Mover parceiro ${i + 1} para cima`} onClick={() => moveItem(setPartners, i, -1)} disabled={i === 0}
                         className="w-6 h-6 flex items-center justify-center rounded bg-n-100 text-n-500 disabled:opacity-30">
                         <ChevronUp size={12} strokeWidth={2} />
                       </button>
-                      <button type="button" onClick={() => moveItem(setPartners, i, 1)} disabled={i === partners.length - 1}
+                      <button type="button" aria-label={`Mover parceiro ${i + 1} para baixo`} onClick={() => moveItem(setPartners, i, 1)} disabled={i === partners.length - 1}
                         className="w-6 h-6 flex items-center justify-center rounded bg-n-100 text-n-500 disabled:opacity-30">
                         <ChevronDown size={12} strokeWidth={2} />
                       </button>
-                      <button type="button" onClick={() => removeItem(setPartners, i)}
-                        className="w-6 h-6 flex items-center justify-center rounded bg-error/10 text-error">
+                      <button type="button" aria-label={`Remover parceiro ${i + 1}`} onClick={() => removeItem(setPartners, i)}
+                        className="w-6 h-6 flex items-center justify-center rounded bg-[var(--error-light)] text-[var(--error)]">
                         <X size={12} strokeWidth={2} />
                       </button>
                     </div>
                   </div>
-                  <Input label="Nome" value={p.name || ''} onChange={e => updateItem(setPartners, i, 'name', e.target.value)} />
-                  <Input label="URL do logótipo" value={p.logo_url || ''} onChange={e => updateItem(setPartners, i, 'logo_url', e.target.value)} placeholder="https://..." />
-                  <Input label="Link (opcional)" value={p.url || ''} onChange={e => updateItem(setPartners, i, 'url', e.target.value)} placeholder="https://..." />
+                  <Input label="Nome" aria-label={`Nome do parceiro ${i + 1}`} value={p.name || ''} onChange={e => updateItem(setPartners, i, 'name', e.target.value)} />
+                  <Input label="URL do logótipo" aria-label={`URL do logótipo do parceiro ${i + 1}`} value={p.logo_url || ''} onChange={e => updateItem(setPartners, i, 'logo_url', e.target.value)} placeholder="https://..." />
+                  <Input label="Link (opcional)" aria-label={`Link do parceiro ${i + 1}`} value={p.url || ''} onChange={e => updateItem(setPartners, i, 'url', e.target.value)} placeholder="https://..." />
                 </div>
               ))}
               <Button type="button" variant="secondary" icon={Plus} size="sm"
@@ -240,22 +240,22 @@ export default function PageEditor() {
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-body font-bold uppercase tracking-wide text-n-500">Vídeo {i + 1}</span>
                     <div className="flex gap-1">
-                      <button type="button" onClick={() => moveItem(setVideos, i, -1)} disabled={i === 0}
+                      <button type="button" aria-label={`Mover vídeo ${i + 1} para cima`} onClick={() => moveItem(setVideos, i, -1)} disabled={i === 0}
                         className="w-6 h-6 flex items-center justify-center rounded bg-n-100 text-n-500 disabled:opacity-30">
                         <ChevronUp size={12} strokeWidth={2} />
                       </button>
-                      <button type="button" onClick={() => moveItem(setVideos, i, 1)} disabled={i === videos.length - 1}
+                      <button type="button" aria-label={`Mover vídeo ${i + 1} para baixo`} onClick={() => moveItem(setVideos, i, 1)} disabled={i === videos.length - 1}
                         className="w-6 h-6 flex items-center justify-center rounded bg-n-100 text-n-500 disabled:opacity-30">
                         <ChevronDown size={12} strokeWidth={2} />
                       </button>
-                      <button type="button" onClick={() => removeItem(setVideos, i)}
-                        className="w-6 h-6 flex items-center justify-center rounded bg-error/10 text-error">
+                      <button type="button" aria-label={`Remover vídeo ${i + 1}`} onClick={() => removeItem(setVideos, i)}
+                        className="w-6 h-6 flex items-center justify-center rounded bg-[var(--error-light)] text-[var(--error)]">
                         <X size={12} strokeWidth={2} />
                       </button>
                     </div>
                   </div>
-                  <Input label="URL do vídeo" value={v.url || ''} onChange={e => updateItem(setVideos, i, 'url', e.target.value)} placeholder="https://..." />
-                  <Input label="URL da miniatura (opcional)" value={v.thumbnail_url || ''} onChange={e => updateItem(setVideos, i, 'thumbnail_url', e.target.value)} placeholder="https://..." />
+                  <Input label="URL do vídeo" aria-label={`URL do vídeo ${i + 1}`} value={v.url || ''} onChange={e => updateItem(setVideos, i, 'url', e.target.value)} placeholder="https://..." />
+                  <Input label="URL da miniatura (opcional)" aria-label={`URL da miniatura do vídeo ${i + 1}`} value={v.thumbnail_url || ''} onChange={e => updateItem(setVideos, i, 'thumbnail_url', e.target.value)} placeholder="https://..." />
                 </div>
               ))}
               <Button type="button" variant="secondary" icon={Plus} size="sm"
@@ -273,23 +273,23 @@ export default function PageEditor() {
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-body font-bold uppercase tracking-wide text-n-500">Avaliação {i + 1}</span>
                     <div className="flex gap-1">
-                      <button type="button" onClick={() => moveItem(setGReviews, i, -1)} disabled={i === 0}
+                      <button type="button" aria-label={`Mover avaliação ${i + 1} para cima`} onClick={() => moveItem(setGReviews, i, -1)} disabled={i === 0}
                         className="w-6 h-6 flex items-center justify-center rounded bg-n-100 text-n-500 disabled:opacity-30">
                         <ChevronUp size={12} strokeWidth={2} />
                       </button>
-                      <button type="button" onClick={() => moveItem(setGReviews, i, 1)} disabled={i === gReviews.length - 1}
+                      <button type="button" aria-label={`Mover avaliação ${i + 1} para baixo`} onClick={() => moveItem(setGReviews, i, 1)} disabled={i === gReviews.length - 1}
                         className="w-6 h-6 flex items-center justify-center rounded bg-n-100 text-n-500 disabled:opacity-30">
                         <ChevronDown size={12} strokeWidth={2} />
                       </button>
-                      <button type="button" onClick={() => removeItem(setGReviews, i)}
-                        className="w-6 h-6 flex items-center justify-center rounded bg-error/10 text-error">
+                      <button type="button" aria-label={`Remover avaliação ${i + 1}`} onClick={() => removeItem(setGReviews, i)}
+                        className="w-6 h-6 flex items-center justify-center rounded bg-[var(--error-light)] text-[var(--error)]">
                         <X size={12} strokeWidth={2} />
                       </button>
                     </div>
                   </div>
-                  <Input label="Nome do autor" value={r.author_name || ''} onChange={e => updateItem(setGReviews, i, 'author_name', e.target.value)} />
-                  <Input label="URL da foto (opcional)" value={r.author_photo || ''} onChange={e => updateItem(setGReviews, i, 'author_photo', e.target.value)} placeholder="https://..." />
-                  <Input label="Texto da avaliação" value={r.text || ''} onChange={e => updateItem(setGReviews, i, 'text', e.target.value)} />
+                  <Input label="Nome do autor" aria-label={`Nome do autor da avaliação ${i + 1}`} value={r.author_name || ''} onChange={e => updateItem(setGReviews, i, 'author_name', e.target.value)} />
+                  <Input label="URL da foto (opcional)" aria-label={`URL da foto da avaliação ${i + 1}`} value={r.author_photo || ''} onChange={e => updateItem(setGReviews, i, 'author_photo', e.target.value)} placeholder="https://..." />
+                  <Input label="Texto da avaliação" aria-label={`Texto da avaliação ${i + 1}`} value={r.text || ''} onChange={e => updateItem(setGReviews, i, 'text', e.target.value)} />
                 </div>
               ))}
               <Button type="button" variant="secondary" icon={Plus} size="sm"
@@ -312,7 +312,7 @@ export default function PageEditor() {
                 <div key={key} className="flex items-start gap-2">
                   <Icon size={16} strokeWidth={1.75} className="text-n-400 shrink-0 mt-7" />
                   <div className="flex-1">
-                    <Input label={label} value={social[key]} placeholder={ph}
+                    <Input label={label} aria-label={label} value={social[key]} placeholder={ph}
                       onChange={e => setSocial(p => ({ ...p, [key]: e.target.value }))} />
                   </div>
                 </div>
@@ -325,18 +325,19 @@ export default function PageEditor() {
             <div className="space-y-2">
               {WEEK_DAYS.map(d => (
                 <div key={d.key} className="flex items-center gap-3">
-                  <button type="button" onClick={() => setHourField(d.key, 'open', !hours[d.key].open)}
+                  <button type="button" role="switch" aria-checked={hours[d.key].open} aria-label={`Aberto ${d.label}`}
+                    onClick={() => setHourField(d.key, 'open', !hours[d.key].open)}
                     className={`w-8 h-4 rounded-full transition-colors relative shrink-0 ${hours[d.key].open ? 'bg-ocean-700' : 'bg-n-300'}`}>
-                    <span className={`absolute top-0.5 w-3 h-3 bg-white rounded-full shadow transition-all ${hours[d.key].open ? 'left-4.5' : 'left-0.5'}`} />
+                    <span className={`absolute top-0.5 w-3 h-3 bg-white rounded-full shadow transition-all ${hours[d.key].open ? 'left-[18px]' : 'left-0.5'}`} />
                   </button>
                   <span className="text-sm font-body text-n-700 w-16 shrink-0">{d.label}</span>
                   {hours[d.key].open ? (
                     <div className="flex items-center gap-2">
-                      <input type="time" value={hours[d.key].start}
+                      <input type="time" aria-label={`Abertura de ${d.label}`} value={hours[d.key].start}
                         onChange={e => setHourField(d.key, 'start', e.target.value)}
                         className="h-8 px-2 border border-n-200 rounded text-sm font-mono text-n-800 bg-n-50 focus:outline-none focus:border-ocean-700" />
                       <span className="text-xs text-n-400">até</span>
-                      <input type="time" value={hours[d.key].end}
+                      <input type="time" aria-label={`Fecho de ${d.label}`} value={hours[d.key].end}
                         onChange={e => setHourField(d.key, 'end', e.target.value)}
                         className="h-8 px-2 border border-n-200 rounded text-sm font-mono text-n-800 bg-n-50 focus:outline-none focus:border-ocean-700" />
                     </div>
@@ -352,7 +353,7 @@ export default function PageEditor() {
           <Card header={<h3 className="font-display font-semibold text-sm text-n-700">Idiomas falados</h3>}>
             <div className="flex gap-2 flex-wrap">
               {SPOKEN_LANGS.map(l => (
-                <button key={l} type="button" onClick={() => toggleSpokenLang(l)}
+                <button key={l} type="button" aria-pressed={spokenLangs.includes(l)} onClick={() => toggleSpokenLang(l)}
                   className={`px-3 py-1.5 rounded text-sm font-mono font-medium transition-colors ${spokenLangs.includes(l) ? 'bg-ocean-700 text-white' : 'bg-n-100 text-n-600 hover:bg-n-200'}`}>
                   {l}
                 </button>
@@ -362,8 +363,8 @@ export default function PageEditor() {
 
           <Card header={<h3 className="font-display font-semibold text-sm text-n-700">Localização (coordenadas GPS)</h3>}>
             <div className="grid grid-cols-2 gap-3">
-              <Input label="Latitude" value={lat} onChange={e => setLat(e.target.value)} placeholder="16.8948" />
-              <Input label="Longitude" value={lng} onChange={e => setLng(e.target.value)} placeholder="-22.9144" />
+              <Input label="Latitude" aria-label="Latitude" value={lat} onChange={e => setLat(e.target.value)} placeholder="16.8948" />
+              <Input label="Longitude" aria-label="Longitude" value={lng} onChange={e => setLng(e.target.value)} placeholder="-22.9144" />
             </div>
             <p className="text-xs font-body text-n-400 mt-2">
               Encontrar coordenadas em <strong>maps.google.com</strong> → clique direito → "What's here?"
