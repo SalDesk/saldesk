@@ -219,12 +219,25 @@ describe('Channel Manager: ligar um canal', () => {
 });
 
 describe('Channel Manager: webhooks e logs', () => {
-  it('webhooks_mostram_os_dois_urls_com_a_origem_com_5173_trocada_por_3001', async () => {
+  it('webhooks_mostram_os_dois_urls_da_API_configurada_e_nao_o_endereco_da_app', async () => {
+    vi.stubEnv('VITE_API_URL', 'https://api.saldesk.cv/api/v1');
     await montar();
     expect(screen.getByText('URLs de webhook para configurar nas plataformas:')).toBeInTheDocument();
-    const origem = window.location.origin.replace('5173', '3001');
-    expect(screen.getByText(`${origem}/api/v1/integrations/webhooks/viator`)).toBeInTheDocument();
-    expect(screen.getByText(`${origem}/api/v1/integrations/webhooks/getyourguide`)).toBeInTheDocument();
+    expect(screen.getByText('https://api.saldesk.cv/api/v1/integrations/webhooks/viator')).toBeInTheDocument();
+    expect(screen.getByText('https://api.saldesk.cv/api/v1/integrations/webhooks/getyourguide')).toBeInTheDocument();
+    expect(document.body.textContent).not.toContain('localhost');
+    vi.unstubAllEnvs();
+  });
+
+  it('webhooks_sem_VITE_API_URL_usam_a_API_local_por_omissao_e_ignoram_a_barra_final', async () => {
+    vi.stubEnv('VITE_API_URL', '');
+    await montar();
+    expect(screen.getByText('http://localhost:3001/api/v1/integrations/webhooks/viator')).toBeInTheDocument();
+    cleanup();
+    vi.stubEnv('VITE_API_URL', 'https://api.saldesk.cv/api/v1/');
+    await montar();
+    expect(screen.getByText('https://api.saldesk.cv/api/v1/integrations/webhooks/getyourguide')).toBeInTheDocument();
+    vi.unstubAllEnvs();
   });
 
   it('tabela_de_logs_com_data_canal_evento_estado_ref_e_erro_e_contagem', async () => {

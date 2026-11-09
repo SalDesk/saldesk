@@ -39,6 +39,11 @@ const STATUS_BADGE = {
   failed:    'cancelled',
 };
 
+/* Base da API (a mesma que o cliente HTTP usa): os webhooks das plataformas chegam ao backend, nao a esta app. */
+function apiBaseUrl() {
+  return (import.meta.env.VITE_API_URL || 'http://localhost:3001/api/v1').replace(/\/+$/, '');
+}
+
 function formatDate(d) {
   if (!d) return '—';
   return new Date(d).toLocaleString('pt-PT', { dateStyle: 'short', timeStyle: 'short' });
@@ -244,7 +249,7 @@ export default function Integrations() {
               {['viator', 'getyourguide'].map((ch) => (
                 <p key={ch} className="text-xs font-mono text-ocean-600">
                   {ch === 'viator' ? 'Viator' : 'GetYourGuide'}:{' '}
-                  <span className="text-ocean-800">{window.location.origin.replace('5173', '3001')}/api/v1/integrations/webhooks/{ch}</span>
+                  <span className="text-ocean-800">{`${apiBaseUrl()}/integrations/webhooks/${ch}`}</span>
                 </p>
               ))}
             </div>
