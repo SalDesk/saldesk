@@ -232,9 +232,9 @@ function EditProfileTab({ traveler, onUpdate }) {
 }
 
 /* ─── Alterar password ─── */
-function ChangePasswordTab() {
-  const [form, setForm]       = useState({ newPw: '', confirm: '' });
-  const [show, setShow]       = useState({ newPw: false, confirm: false });
+export function ChangePasswordTab() {
+  const [form, setForm]       = useState({ current: '', newPw: '', confirm: '' });
+  const [show, setShow]       = useState({ current: false, newPw: false, confirm: false });
   const [saving, setSaving]   = useState(false);
   const [savedOk, setSavedOk] = useState(false);
   const [error, setError]     = useState('');
@@ -252,8 +252,8 @@ function ChangePasswordTab() {
     }
     setSaving(true);
     try {
-      await changePassword(form.newPw);
-      setForm({ newPw: '', confirm: '' });
+      await changePassword(form.current, form.newPw);
+      setForm({ current: '', newPw: '', confirm: '' });
       setSavedOk(true);
       setTimeout(() => setSavedOk(false), 3000);
     } catch (err) {
@@ -267,9 +267,10 @@ function ChangePasswordTab() {
     <Card header={<h3 className="font-display font-semibold text-sm text-n-700 dark:text-n-300 flex items-center gap-1.5"><ShieldCheck size={14} strokeWidth={1.75} /> Seguranca</h3>}>
       <form onSubmit={handleSubmit} className="space-y-3 max-w-md">
         {[
-          { field: 'newPw',   label: 'Nova password' },
-          { field: 'confirm', label: 'Confirmar nova password' },
-        ].map(({ field, label }) => (
+          { field: 'current', label: 'Password actual',         ac: 'current-password' },
+          { field: 'newPw',   label: 'Nova password',           ac: 'new-password' },
+          { field: 'confirm', label: 'Confirmar nova password', ac: 'new-password' },
+        ].map(({ field, label, ac }) => (
           <div key={field} className="flex flex-col gap-1">
             <label className="text-xs font-body font-bold uppercase tracking-wide text-n-600 dark:text-n-400">{label}</label>
             <div className="relative">
@@ -277,7 +278,7 @@ function ChangePasswordTab() {
                 type={show[field] ? 'text' : 'password'}
                 value={form[field]}
                 onChange={e => setForm(p => ({ ...p, [field]: e.target.value }))}
-                required autoComplete="new-password"
+                required autoComplete={ac}
                 className="w-full h-9 px-3 pr-10 rounded-sm border border-n-300 dark:border-n-600 text-sm font-body bg-n-100 dark:bg-n-800 text-n-900 dark:text-n-100 placeholder:text-n-400 focus:outline-none focus:ring-2 focus:ring-ocean-300 focus:border-ocean-700 focus:bg-white dark:focus:bg-n-800 transition-colors"
               />
               <button type="button"

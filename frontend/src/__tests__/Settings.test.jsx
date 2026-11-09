@@ -589,17 +589,33 @@ describe('Definicoes: Seguranca', () => {
     expect(changePassword).not.toHaveBeenCalled();
   });
 
-  it('chama_changePassword_so_com_a_nova_e_a_actual_e_obrigatoria_mas_nao_vai_no_pedido', async () => {
+  it('chama_changePassword_com_a_password_actual_e_a_nova_e_limpa_os_tres_campos', async () => {
     montar('/definicoes?tab=seguranca');
     expect(pw('Password actual')).toBeRequired();
+    fireEvent.change(pw('Password actual'), { target: { value: 'Actual1!x' } });
     fireEvent.change(pw('Nova password'), { target: { value: 'Abcdef1!' } });
     fireEvent.change(pw('Confirmar nova password'), { target: { value: 'Abcdef1!' } });
     fireEvent.submit(formPw());
     await waitFor(() => expect(changePassword).toHaveBeenCalledTimes(1));
-    expect(changePassword.mock.calls[0]).toEqual(['Abcdef1!']);
+    expect(changePassword.mock.calls[0]).toEqual(['Actual1!x', 'Abcdef1!']);
     expect(await screen.findByText('Guardado com sucesso')).toBeInTheDocument();
+    expect(pw('Password actual')).toHaveValue('');
     expect(pw('Nova password')).toHaveValue('');
     expect(pw('Confirmar nova password')).toHaveValue('');
+  });
+
+  it('password_actual_incorrecta_ou_conta_bloqueada_mostram_a_mensagem_do_servidor_e_nao_limpam_os_campos', async () => {
+    montar('/definicoes?tab=seguranca');
+    fireEvent.change(pw('Password actual'), { target: { value: 'errada' } });
+    fireEvent.change(pw('Nova password'), { target: { value: 'Abcdef1!' } });
+    fireEvent.change(pw('Confirmar nova password'), { target: { value: 'Abcdef1!' } });
+    changePassword.mockRejectedValueOnce({ response: { status: 403, data: { error: 'Password actual incorrecta', code: 'INVALID_CURRENT_PASSWORD' } } });
+    fireEvent.submit(formPw());
+    expect(await screen.findByText('Password actual incorrecta')).toBeInTheDocument();
+    expect(pw('Password actual')).toHaveValue('errada');
+    changePassword.mockRejectedValueOnce({ response: { status: 423, data: { error: 'Conta temporariamente bloqueada por demasiadas tentativas falhadas', code: 'ACCOUNT_LOCKED' } } });
+    fireEvent.submit(formPw());
+    expect(await screen.findByText('Conta temporariamente bloqueada por demasiadas tentativas falhadas')).toBeInTheDocument();
   });
 
   it('mostrar_e_esconder_cada_campo', () => {

@@ -6,6 +6,7 @@ const {
 } = require('../services/logStore');
 const { enviarEmail } = require('../helpers/emailHelper');
 const { passwordResetEmail } = require('../helpers/emailTemplates');
+const { verificarPasswordActual } = require('../helpers/passwordAtual');
 
 /* Chama o endpoint de token do Supabase Auth (password ou refresh_token grant) */
 function supabaseTokenRequest(grantType, body) {
@@ -226,7 +227,13 @@ async function logout(req, res, next) {
 
 async function changePassword(req, res, next) {
   try {
-    const { password } = req.body;
+    const { password, current_password } = req.body;
+    /* A password actual e verificada (com bloqueio por tentativas) ANTES de alterar nada: sem isto,
+       uma sessao aberta ou um token roubado mudava a password sem a saber. */
+    const verificacao = await verificarPasswordActual({
+      email: req.user.email, password: current_password, ip: req.ip || '', tokenRequest: supabaseTokenRequest,
+    });
+    if (!verificacao.ok) return res.status(verificacao.status).json(verificacao.body);
     const { error } = await supabaseAdmin.auth.admin.updateUserById(req.user.id, { password });
     if (error) {
       return res.status(400).json({ error: error.message, code: 'PASSWORD_ERROR' });

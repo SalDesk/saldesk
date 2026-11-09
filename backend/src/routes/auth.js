@@ -14,6 +14,6 @@ router.post('/forgot-password', authLimiter, forgotPassword);
 router.post('/demo-login', demoLimiter, demoLogin);
 router.get('/me',        authMiddleware, getMe);
 router.post('/logout',   authMiddleware, logout);
-router.put('/password',  authMiddleware, validate(schemas.changePassword), changePassword);
+router.put('/password',  authLimiter, authMiddleware, validate(schemas.changePassword), changePassword);
 
 module.exports = router;
