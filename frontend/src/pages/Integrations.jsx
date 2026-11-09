@@ -16,7 +16,7 @@ const CHANNEL_CONFIG = {
   viator: {
     name:        'Viator',
     description: 'Plataforma de experiencias da TripAdvisor',
-    color:       'bg-[#FF6600]',
+    color:       'bg-ocean-700',
     fields: [
       { key: 'api_key',     label: 'API Key',      type: 'password', required: true },
       { key: 'supplier_id', label: 'Supplier ID',  type: 'text',     required: true },
@@ -25,7 +25,7 @@ const CHANNEL_CONFIG = {
   getyourguide: {
     name:        'GetYourGuide',
     description: 'Plataforma global de actividades e tours',
-    color:       'bg-[#FF5534]',
+    color:       'bg-sand-600',
     fields: [
       { key: 'api_key',    label: 'API Key',     type: 'password', required: true },
       { key: 'product_ids', label: 'Product IDs (separados por virgula)', type: 'text', required: false },
@@ -49,7 +49,7 @@ function ChannelCard({ channel, onConnect, onDisconnect, onSync, syncing }) {
   const connected = channel.is_active && channel.configured !== false;
 
   return (
-    <div className={`bg-white rounded-md border shadow-sm p-5 flex flex-col gap-4 ${connected ? 'border-n-200' : 'border-n-100 opacity-80'}`}>
+    <Card padding="p-5 flex flex-col gap-4" className={connected ? '' : 'opacity-80'}>
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-center gap-3">
           <div className={`w-10 h-10 rounded-sm ${cfg?.color || 'bg-n-200'} flex items-center justify-center text-white font-display font-bold text-sm shrink-0`}>
@@ -102,7 +102,7 @@ function ChannelCard({ channel, onConnect, onDisconnect, onSync, syncing }) {
             <Button
               size="sm" variant="ghost" icon={Link2Off}
               onClick={() => onDisconnect(channel.channel)}
-              className="hover:text-error hover:bg-[var(--error-light)]"
+              className="hover:text-[var(--error)] hover:bg-[var(--error-light)]"
             >
               Desligar
             </Button>
@@ -113,7 +113,7 @@ function ChannelCard({ channel, onConnect, onDisconnect, onSync, syncing }) {
           </Button>
         )}
       </div>
-    </div>
+    </Card>
   );
 }
 
@@ -286,6 +286,7 @@ export default function Integrations() {
             <Input
               key={f.key}
               label={f.label}
+              aria-label={f.label}
               type={f.type}
               value={connectForm[f.key] || ''}
               onChange={(e) => setConnectForm({ ...connectForm, [f.key]: e.target.value })}
