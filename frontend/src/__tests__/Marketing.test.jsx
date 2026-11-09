@@ -456,3 +456,89 @@ describe('Marketing: Estatisticas', () => {
     expect(screen.getByText('https://saldesk.cv/book/outro')).toBeInTheDocument();
   });
 });
+
+/* ───────────────────────── design system: estrutura, Codigo QR e Widget ───────────────────────── */
+
+const HEX = /#[0-9A-Fa-f]{3,8}(?![0-9A-Za-z])/;
+const NOMEADAS = /(?:^|[\s"'])(?:[a-z-]+:)?(?:text|bg|border|fill|ring)-(?:green|yellow|blue|red|amber)-\d/;
+/* so os atributos class: as cores escolhidas (style, value, texto) sao dados funcionais */
+const classes = (root) => [...root.querySelectorAll('[class]')].map(e => e.getAttribute('class')).join(' ');
+const semCoresForaDosTokens = (html) => {
+  expect(html).not.toMatch(HEX);
+  expect(html).not.toMatch(NOMEADAS);
+  expect(html.replace(/text-error ml-0[.]5/g, '')).not.toMatch(/(?:text|bg|border)-error/);
+  expect(html).not.toMatch(/bg-red-/);
+};
+
+describe('Marketing: design system (estrutura, QR e Widget)', () => {
+  it('separadores_sao_Tabs_sem_icones', async () => {
+    await montar();
+    expect(screen.getByRole('tablist')).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: 'QR Code' })).toHaveAttribute('aria-selected', 'true');
+    expect(screen.getByRole('tab', { name: 'Widget' })).toHaveAttribute('aria-selected', 'false');
+    expect(screen.getByRole('tab', { name: 'Indicacoes' })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: 'Estatisticas' })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: 'QR Code' }).querySelector('svg')).toBeNull();
+    fireEvent.click(screen.getByRole('tab', { name: 'Widget' }));
+    expect(screen.getByRole('tab', { name: 'Widget' })).toHaveAttribute('aria-selected', 'true');
+  });
+
+  it('as_amostras_de_cor_do_QR_tem_nome_e_aria_pressed', async () => {
+    await montar();
+    expect(screen.getByRole('button', { name: 'Cor #0D5470', pressed: true })).toBeInTheDocument();
+    const outra = screen.getByRole('button', { name: 'Cor #062A38', pressed: false });
+    fireEvent.click(outra);
+    expect(screen.getByRole('button', { name: 'Cor #062A38', pressed: true })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Cor #0D5470', pressed: false })).toBeInTheDocument();
+  });
+
+  it('os_campos_do_QR_tem_nome_acessivel', async () => {
+    await montar();
+    expect(screen.getByLabelText('QR Code para')).toBeInTheDocument();
+    expect(screen.getByLabelText('Cor personalizada')).toHaveAttribute('type', 'color');
+    expect(screen.getByLabelText('Tamanho do QR code')).toHaveAttribute('type', 'range');
+  });
+
+  it('o_widget_tem_amostras_com_nome_Codigo_Preview_com_aria_pressed_e_cor_personalizada', async () => {
+    await montar();
+    await abrir('Widget', 'Cor primaria');
+    expect(screen.getByRole('button', { name: 'Cor #0D5470', pressed: true })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Cor #1480A8' }));
+    expect(screen.getByRole('button', { name: 'Cor #1480A8', pressed: true })).toBeInTheDocument();
+    expect(screen.getByLabelText('Cor personalizada')).toHaveAttribute('type', 'color');
+    expect(screen.getByRole('button', { name: 'Codigo', pressed: true })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Preview' }));
+    expect(screen.getByRole('button', { name: 'Preview', pressed: true })).toBeInTheDocument();
+  });
+
+  it('o_botao_Copiar_e_type_button_e_copiado_usa_o_token_de_sucesso', async () => {
+    await montar();
+    await abrir('Widget', 'Cor primaria');
+    const b = screen.getByRole('button', { name: 'Copiar' });
+    expect(b).toHaveAttribute('type', 'button');
+    expect(b.className).toContain('bg-ocean-50');
+    fireEvent.click(b);
+    const copiado = await screen.findByRole('button', { name: 'Copiado' });
+    expect(copiado.className).toContain('var(--success-light)');
+    expect(copiado.className).toContain('var(--success)');
+  });
+
+  it('o_cartao_KPI_e_Card', async () => {
+    await montar();
+    await abrir('Estatisticas', 'Visitas ao perfil');
+    expect(screen.getByText('Visitas ao perfil').closest('[class*="app:rounded-sm"]')).not.toBeNull();
+  });
+
+  it('sem_hexadecimais_cores_nomeadas_ou_text_error_em_classes_nos_separadores_QR_e_Widget', async () => {
+    const { container } = await montar();
+    let html = classes(container);
+    await abrir('Widget', 'Cor primaria');
+    html += classes(container);
+    fireEvent.click(screen.getByRole('button', { name: 'Preview' }));
+    html += classes(container);
+    fireEvent.click(screen.getByRole('button', { name: 'Copiar' }));
+    await screen.findByRole('button', { name: 'Copiado' });
+    html += classes(container);
+    semCoresForaDosTokens(html);
+  });
+});

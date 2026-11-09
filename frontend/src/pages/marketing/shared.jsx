@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Check, Copy, ExternalLink, Share2, Globe2 } from 'lucide-react';
+import Card from '../../components/ui/Card';
 
 /* ── Social planner localStorage ── */
 const STORAGE_KEY = 'saldesk_social_posts_v1';
@@ -31,8 +32,8 @@ export function CopyBtn({ text, small }) {
     navigator.clipboard.writeText(text).then(() => { setCopied(true); setTimeout(() => setCopied(false), 2000); });
   }
   return (
-    <button onClick={copy}
-      className={`flex items-center gap-1.5 transition-colors font-body font-medium ${small ? 'text-xs px-2 py-1 rounded-xs' : 'text-sm px-3 py-2 rounded-sm'} ${copied ? 'text-[#1A7A4A] bg-[#ECFDF5]' : 'text-ocean-700 bg-ocean-50 hover:bg-ocean-100'}`}>
+    <button type="button" onClick={copy}
+      className={`flex items-center gap-1.5 transition-colors font-body font-medium ${small ? 'text-xs px-2 py-1 rounded-xs' : 'text-sm px-3 py-2 rounded-sm'} ${copied ? 'text-[var(--success)] bg-[var(--success-light)]' : 'text-ocean-700 bg-ocean-50 hover:bg-ocean-100'}`}>
       {copied ? <Check size={small ? 11 : 14} strokeWidth={2} /> : <Copy size={small ? 11 : 14} strokeWidth={1.75} />}
       {copied ? 'Copiado' : 'Copiar'}
     </button>
@@ -42,7 +43,7 @@ export function CopyBtn({ text, small }) {
 /* ── KpiCard ── */
 export function KpiCard({ icon: Icon, label, value, sub, loading }) {
   return (
-    <div className="bg-white rounded-md border border-n-200 p-4 flex items-start gap-3">
+    <Card padding="p-4 flex items-start gap-3">
       <div className="w-9 h-9 rounded-sm bg-ocean-50 flex items-center justify-center shrink-0">
         <Icon size={18} strokeWidth={1.75} className="text-ocean-700" />
       </div>
@@ -53,6 +54,6 @@ export function KpiCard({ icon: Icon, label, value, sub, loading }) {
         <p className="text-xs font-body text-n-500 mt-0.5">{label}</p>
         {sub && <p className="text-xs font-body text-n-400 mt-0.5">{sub}</p>}
       </div>
-    </div>
+    </Card>
   );
 }

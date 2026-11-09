@@ -1,10 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
 import PlanGuard from '../components/PlanGuard';
-import { QrCode, Code2, UserPlus, BarChart2 } from 'lucide-react';
 import { getBookingLink, getMarketingStats, getWidgetCode, getReferrals } from '../services/marketingService';
 import { listUnits } from '../services/unitsService';
 import useAuthStore from '../store/authStore';
 import PageHeader from '../components/layout/PageHeader';
+import Tabs from '../components/ui/Tabs';
 import { loadPosts, savePosts } from './marketing/shared';
 import QrCodeTab from './marketing/QrCodeTab';
 import WidgetTab from './marketing/WidgetTab';
@@ -19,10 +19,10 @@ import PostModal from './marketing/PostModal';
    fix rapido. Codigo mantido, so a entrada de navegacao removida --
    reactivar quando houver essa integracao real. */
 const MKTG_TABS = [
-  { key: 'qrcode',     label: 'QR Code',       Icon: QrCode    },
-  { key: 'widget',     label: 'Widget',        Icon: Code2     },
-  { key: 'referrals',  label: 'Indicacoes',    Icon: UserPlus  },
-  { key: 'stats',      label: 'Estatisticas',  Icon: BarChart2 },
+  { id: 'qrcode',    label: 'QR Code' },
+  { id: 'widget',    label: 'Widget' },
+  { id: 'referrals', label: 'Indicacoes' },
+  { id: 'stats',     label: 'Estatisticas' },
 ];
 
 /* ─────────────────────── Main ─────────────────────── */
@@ -87,16 +87,8 @@ export default function Marketing() {
       <PageHeader title="Marketing" subtitle="Ferramentas de divulgacao e planeador de conteudos" />
 
       {/* Tabs */}
-      <div className="flex gap-1 border-b border-n-200 mb-6">
-        {MKTG_TABS.map(({ key, label, Icon }) => (
-          <button key={key} onClick={() => setActiveTab(key)}
-            className={`flex items-center gap-2 px-4 py-2.5 text-sm font-body font-semibold border-b-2 -mb-px transition-colors ${
-              activeTab === key ? 'border-ocean-700 text-ocean-700' : 'border-transparent text-n-500 hover:text-n-700'
-            }`}>
-            <Icon size={15} strokeWidth={1.75} />
-            {label}
-          </button>
-        ))}
+      <div className="mb-6">
+        <Tabs tabs={MKTG_TABS} value={activeTab} onChange={setActiveTab} />
       </div>
 
       {activeTab === 'planeador' && (

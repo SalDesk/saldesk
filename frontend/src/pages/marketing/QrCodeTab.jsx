@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { QrCode, RefreshCw, Download } from 'lucide-react';
 import { getQrCode } from '../../services/marketingService';
 import Button from '../../components/ui/Button';
+import Card from '../../components/ui/Card';
 import { Select } from '../../components/ui/Input';
 import LoadingSpinner from '../../components/shared/LoadingSpinner';
 
@@ -59,7 +60,7 @@ export default function QrCodeTab({ slug, units }) {
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
       {/* Controls */}
       <div className="space-y-5">
-        <Select label="QR Code para" value={selectedUnit} onChange={e => setSelectedUnit(e.target.value)}>
+        <Select label="QR Code para" aria-label="QR Code para" value={selectedUnit} onChange={e => setSelectedUnit(e.target.value)}>
           <option value="">Perfil publico — link de reserva</option>
           {units.map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
         </Select>
@@ -68,11 +69,11 @@ export default function QrCodeTab({ slug, units }) {
           <label className="text-xs font-body font-bold uppercase tracking-wide text-n-600 block mb-2">Cor</label>
           <div className="flex items-center gap-2 flex-wrap">
             {QR_COLORS.map(c => (
-              <button key={c} onClick={() => setQrColor(c)}
+              <button key={c} type="button" aria-label={`Cor ${c}`} aria-pressed={qrColor === c} onClick={() => setQrColor(c)}
                 className={`w-7 h-7 rounded-sm border-2 transition-all ${qrColor === c ? 'border-n-700 scale-110' : 'border-transparent hover:scale-105'}`}
                 style={{ backgroundColor: c }} />
             ))}
-            <input type="color" value={qrColor} onChange={e => setQrColor(e.target.value)}
+            <input type="color" aria-label="Cor personalizada" value={qrColor} onChange={e => setQrColor(e.target.value)}
               className="w-7 h-7 rounded-sm cursor-pointer border border-n-300" />
             <span className="text-xs font-mono text-n-500">{qrColor}</span>
           </div>
@@ -82,7 +83,7 @@ export default function QrCodeTab({ slug, units }) {
           <label className="text-xs font-body font-bold uppercase tracking-wide text-n-600 block mb-2">
             Tamanho — {qrSize}px
           </label>
-          <input type="range" min="200" max="600" step="50" value={qrSize}
+          <input type="range" aria-label="Tamanho do QR code" min="200" max="600" step="50" value={qrSize}
             onChange={e => setQrSize(e.target.value)}
             className="w-full accent-ocean-700" />
           <div className="flex justify-between text-[10px] font-mono text-n-400 mt-1">
@@ -107,7 +108,7 @@ export default function QrCodeTab({ slug, units }) {
       {/* Preview */}
       <div className="flex flex-col items-center gap-4">
         <p className="text-xs font-mono uppercase tracking-wider text-n-500 self-start">Preview</p>
-        <div className="bg-white border border-n-200 rounded-md p-8 flex items-center justify-center w-full min-h-56">
+        <Card padding="p-8 flex items-center justify-center min-h-56" className="w-full">
           {loading ? (
             <LoadingSpinner size={32} />
           ) : qrUrl ? (
@@ -115,7 +116,7 @@ export default function QrCodeTab({ slug, units }) {
           ) : (
             <QrCode size={64} strokeWidth={0.75} className="text-n-200" />
           )}
-        </div>
+        </Card>
         <div className="bg-n-50 border border-n-200 rounded-sm px-3 py-2 w-full">
           <p className="text-xs font-mono text-n-600 break-all text-center">
             {selectedUnit

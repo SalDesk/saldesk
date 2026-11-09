@@ -20,11 +20,11 @@ export default function WidgetTab({ widgetCode, slug }) {
         <label className="text-xs font-body font-bold uppercase tracking-wide text-n-600 block mb-2">Cor primaria</label>
         <div className="flex items-center gap-2 flex-wrap">
           {WIDGET_COLORS.map(c => (
-            <button key={c} onClick={() => setColor(c)}
+            <button key={c} type="button" aria-label={`Cor ${c}`} aria-pressed={color === c} onClick={() => setColor(c)}
               className={`w-7 h-7 rounded-sm border-2 transition-all ${color === c ? 'border-n-700 scale-110' : 'border-transparent hover:scale-105'}`}
               style={{ backgroundColor: c }} />
           ))}
-          <input type="color" value={color} onChange={e => setColor(e.target.value)}
+          <input type="color" aria-label="Cor personalizada" value={color} onChange={e => setColor(e.target.value)}
             className="w-7 h-7 rounded-sm cursor-pointer border border-n-300" />
           <span className="text-xs font-mono text-n-500">{color}</span>
         </div>
@@ -35,7 +35,7 @@ export default function WidgetTab({ widgetCode, slug }) {
           <label className="text-xs font-body font-bold uppercase tracking-wide text-n-600">Codigo HTML</label>
           <div className="flex gap-0.5 bg-n-100 rounded-xs p-0.5">
             {['Codigo', 'Preview'].map(m => (
-              <button key={m} onClick={() => setPreviewMode(m === 'Preview')}
+              <button key={m} type="button" aria-pressed={(previewMode ? 'Preview' : 'Codigo') === m} onClick={() => setPreviewMode(m === 'Preview')}
                 className={`text-xs px-3 py-1 rounded-xs font-body transition-colors ${(previewMode ? 'Preview' : 'Codigo') === m ? 'bg-white text-ocean-700 shadow-sm' : 'text-n-500 hover:text-n-700'}`}>
                 {m}
               </button>
@@ -57,7 +57,7 @@ export default function WidgetTab({ widgetCode, slug }) {
           </div>
         ) : (
           <div className="bg-n-900 rounded-md p-4 overflow-auto">
-            <pre className="text-xs font-mono text-green-400 whitespace-pre-wrap break-all">{finalCode}</pre>
+            <pre className="text-xs font-mono text-ocean-300 whitespace-pre-wrap break-all">{finalCode}</pre>
           </div>
         )}
       </div>
