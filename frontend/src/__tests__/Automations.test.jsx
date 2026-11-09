@@ -367,3 +367,123 @@ describe('Automacoes: design system (estrutura e sequencias)', () => {
     expect(html.replace(/text-error ml-0[.]5/g, '')).not.toMatch(/(?:text|bg|border)-error/);
   });
 });
+
+/* ───────────────────────── caracterizacao: historico de envios ───────────────────────── */
+
+const fmtData = (d) => new Date(d).toLocaleDateString('pt-PT', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
+const LOGS = [
+  { id: 'l1', created_at: '2026-11-05T10:30:00Z', automation_name: 'Lembrete 7 dias', recipient_name: 'Maria', channel: 'email', status: 'sent' },
+  { id: 'l2', created_at: '2026-11-04T08:00:00Z', automation: { name: 'Via objecto' }, customer_name: 'Joao', channel: 'whatsapp', status: 'failed' },
+  { id: 'l3', channel: 'email', status: 'pending' },
+  { id: 'l4', channel: 'whatsapp', status: 'queued' },
+  { id: 'l5', channel: 'email' },
+];
+const celulas = (tr) => [...tr.querySelectorAll('td')].map(td => td.textContent);
+const linhas = () => screen.getAllByRole('row').slice(1);
+async function abrirHistorico(logs = LOGS) {
+  getLogsAll.mockResolvedValue(logs);
+  const r = await montar();
+  fireEvent.click(separador('Historico de envios'));
+  await waitFor(() => expect(getLogsAll).toHaveBeenCalled());
+  return r;
+}
+
+describe('Automacoes: historico', () => {
+  it('lista_data_automacao_cliente_canal_e_estado_com_alternativas_e_travessoes', async () => {
+    await abrirHistorico();
+    await screen.findByText('Lembrete 7 dias');
+    const r = linhas();
+    expect(r).toHaveLength(5);
+    expect(celulas(r[0]).map(t => t.replace(/\s/g, ' '))).toEqual([fmtData('2026-11-05T10:30:00Z').replace(/\s/g, ' '), 'Lembrete 7 dias', 'Maria', 'Email', 'Enviado']);
+    expect(celulas(r[1]).slice(1)).toEqual(['Via objecto', 'Joao', 'WhatsApp', 'Falhou']);
+    expect(celulas(r[2])).toEqual(['—', '—', '—', 'Email', 'pending']);
+    expect(celulas(r[3])).toEqual(['—', '—', '—', 'WhatsApp', 'queued']);
+    expect(celulas(r[4])).toEqual(['—', '—', '—', 'Email', '—']);
+  });
+
+  it('o_historico_so_carrega_ao_abrir_o_separador_e_uma_vez', async () => {
+    await montar();
+    expect(getLogsAll).not.toHaveBeenCalled();
+    fireEvent.click(separador('Historico de envios'));
+    await screen.findByText('Sem historico de envios.');
+    fireEvent.click(separador('Sequencias'));
+    fireEvent.click(separador('Historico de envios'));
+    expect(getLogsAll).toHaveBeenCalledTimes(1);
+  });
+
+  it('mostra_no_maximo_100_linhas_e_o_aviso_com_o_total', async () => {
+    const muitos = Array.from({ length: 120 }, (_, i) => ({ id: `m${i}`, channel: 'email', status: 'sent', recipient_name: `C${i}` }));
+    await abrirHistorico(muitos);
+    await screen.findByText('C0');
+    expect(linhas()).toHaveLength(100);
+    expect(screen.getByText('A mostrar 100 de 120 registos')).toBeInTheDocument();
+    cleanup();
+    getLogsAll.mockReset();
+    await abrirHistorico(muitos.slice(0, 100));
+    await screen.findByText('C0');
+    expect(screen.queryByText(/A mostrar/)).not.toBeInTheDocument();
+  });
+
+  it('sem_registos_mostra_o_vazio_com_a_descricao', async () => {
+    await abrirHistorico([]);
+    expect(await screen.findByText('Sem historico de envios.')).toBeInTheDocument();
+    expect(screen.getByText('Os envios aparecerao aqui apos as primeiras automacoes serem disparadas.')).toBeInTheDocument();
+  });
+
+  it('em_carga_mostra_o_spinner', async () => {
+    getLogsAll.mockReturnValue(new Promise(() => {}));
+    const { container } = await montar();
+    fireEvent.click(separador('Historico de envios'));
+    await waitFor(() => expect(container.querySelector('.animate-spin')).toBeInTheDocument());
+    expect(screen.queryByText('Sem historico de envios.')).not.toBeInTheDocument();
+  });
+
+  it('getLogsAll_a_falhar_ou_nulo_mostra_o_vazio_e_nao_volta_a_tentar', async () => {
+    getLogsAll.mockRejectedValue(new Error('x'));
+    await montar();
+    fireEvent.click(separador('Historico de envios'));
+    expect(await screen.findByText('Sem historico de envios.')).toBeInTheDocument();
+    fireEvent.click(separador('Sequencias'));
+    fireEvent.click(separador('Historico de envios'));
+    expect(getLogsAll).toHaveBeenCalledTimes(1);
+    cleanup();
+    getLogsAll.mockReset().mockResolvedValue(null);
+    await montar();
+    fireEvent.click(separador('Historico de envios'));
+    expect(await screen.findByText('Sem historico de envios.')).toBeInTheDocument();
+  });
+});
+
+/* ───────────────────────── design system: historico ───────────────────────── */
+
+describe('Automacoes: design system (historico)', () => {
+  it('a_tabela_e_Table_com_as_cinco_colunas', async () => {
+    await abrirHistorico();
+    await screen.findByText('Lembrete 7 dias');
+    expect(screen.getByRole('table')).toBeInTheDocument();
+    expect(screen.getAllByRole('columnheader').map(h => h.textContent)).toEqual(['Data', 'Automacao', 'Cliente', 'Canal', 'Estado']);
+  });
+
+  it('o_estado_e_Badge_com_a_variante_certa', async () => {
+    await abrirHistorico();
+    await screen.findByText('Lembrete 7 dias');
+    expect(screen.getByText('Enviado').className).toContain('var(--success-light)');
+    expect(screen.getByText('Falhou').className).toContain('var(--error-light)');
+    expect(screen.getByText('pending').className).toContain('var(--warning-light)');
+    expect(screen.getByText('queued').className).toContain('bg-n-100');
+  });
+
+  it('o_vazio_e_EmptyState', async () => {
+    await abrirHistorico([]);
+    expect(await screen.findByText('Sem historico de envios.')).toHaveClass('font-display');
+  });
+
+  it('sem_hexadecimais_cores_nomeadas_ou_text_error_no_historico', async () => {
+    const { container } = await abrirHistorico();
+    await screen.findByText('Lembrete 7 dias');
+    const html = container.innerHTML;
+    expect(html).not.toMatch(HEX);
+    expect(html).not.toMatch(NOMEADAS);
+    expect(html.replace(/text-error ml-0[.]5/g, '')).not.toMatch(/(?:text|bg|border)-error/);
+  });
+});

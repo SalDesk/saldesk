@@ -14,6 +14,9 @@ import PageHeader from '../components/layout/PageHeader';
 import Button from '../components/ui/Button';
 import Card from '../components/ui/Card';
 import Tabs from '../components/ui/Tabs';
+import Badge from '../components/ui/Badge';
+import Table from '../components/ui/Table';
+import EmptyState from '../components/ui/EmptyState';
 import Input, { Textarea } from '../components/ui/Input';
 import LoadingSpinner from '../components/shared/LoadingSpinner';
 
@@ -443,67 +446,67 @@ function SequenceCard({ seq, automation, onSaved }) {
 }
 
 /* ── LogsTab ── */
+const STATUS_BADGE = { sent: 'confirmed', failed: 'cancelled', pending: 'pending' };
+
+const LOG_COLUMNS = [
+  {
+    key: 'created_at', label: 'Data',
+    render: l => (
+      <span className="text-xs font-mono text-n-500 whitespace-nowrap">
+        {l.created_at ? new Date(l.created_at).toLocaleDateString('pt-PT', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) : '—'}
+      </span>
+    ),
+  },
+  {
+    key: 'automation', label: 'Automacao',
+    render: l => <span className="font-body text-n-700 block max-w-[180px] truncate">{l.automation_name || l.automation?.name || '—'}</span>,
+  },
+  {
+    key: 'customer', label: 'Cliente',
+    render: l => <span className="font-body text-n-800 whitespace-nowrap">{l.recipient_name || l.customer_name || '—'}</span>,
+  },
+  {
+    key: 'channel', label: 'Canal',
+    render: l => (
+      <span className="flex items-center gap-1 text-xs font-body text-n-600">
+        {l.channel === 'email'
+          ? <Mail size={11} strokeWidth={1.75} />
+          : <MessageCircle size={11} strokeWidth={1.75} />}
+        {l.channel === 'email' ? 'Email' : 'WhatsApp'}
+      </span>
+    ),
+  },
+  {
+    key: 'status', label: 'Estado',
+    render: l => (
+      <Badge variant={STATUS_BADGE[l.status] || 'default'}>
+        {l.status === 'sent' ? 'Enviado' : l.status === 'failed' ? 'Falhou' : l.status || '—'}
+      </Badge>
+    ),
+  },
+];
+
 function LogsTab({ logs, loading }) {
   if (loading) return <div className="flex justify-center py-16"><LoadingSpinner size={32} /></div>;
 
   if (!logs || logs.length === 0) {
     return (
-      <Card>
-        <div className="text-center py-12">
-          <History size={32} strokeWidth={1.25} className="mx-auto mb-3 text-n-300" />
-          <p className="font-body text-n-500">Sem historico de envios.</p>
-          <p className="text-xs font-body text-n-400 mt-1">Os envios aparecerao aqui apos as primeiras automacoes serem disparadas.</p>
-        </div>
+      <Card padding="p-0">
+        <EmptyState
+          icon={History}
+          title="Sem historico de envios."
+          description="Os envios aparecerao aqui apos as primeiras automacoes serem disparadas."
+        />
       </Card>
     );
   }
 
-  const STATUS_CLS = {
-    sent:    'text-[#1A7A4A] bg-[#ECFDF5]',
-    failed:  'text-error bg-red-50',
-    pending: 'text-yellow-700 bg-yellow-50',
-  };
-
   return (
     <Card padding="p-0">
-      <div className="overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-n-200">
-              {['Data', 'Automacao', 'Cliente', 'Canal', 'Estado'].map(h => (
-                <th key={h} className="text-left py-2.5 px-4 text-xs font-mono uppercase tracking-wider text-n-500 whitespace-nowrap">{h}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-n-100">
-            {logs.slice(0, 100).map((l, i) => (
-              <tr key={l.id || i} className="hover:bg-n-50 transition-colors">
-                <td className="py-2.5 px-4 text-xs font-mono text-n-500 whitespace-nowrap">
-                  {l.created_at ? new Date(l.created_at).toLocaleDateString('pt-PT', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) : '—'}
-                </td>
-                <td className="py-2.5 px-4 font-body text-n-700 max-w-[180px] truncate">{l.automation_name || l.automation?.name || '—'}</td>
-                <td className="py-2.5 px-4 font-body text-n-800 whitespace-nowrap">{l.recipient_name || l.customer_name || '—'}</td>
-                <td className="py-2.5 px-4">
-                  <span className="flex items-center gap-1 text-xs font-body text-n-600">
-                    {l.channel === 'email'
-                      ? <Mail size={11} strokeWidth={1.75} />
-                      : <MessageCircle size={11} strokeWidth={1.75} />}
-                    {l.channel === 'email' ? 'Email' : 'WhatsApp'}
-                  </span>
-                </td>
-                <td className="py-2.5 px-4">
-                  <span className={`text-xs font-mono px-2 py-0.5 rounded-xs ${STATUS_CLS[l.status] || 'text-n-500 bg-n-100'}`}>
-                    {l.status === 'sent' ? 'Enviado' : l.status === 'failed' ? 'Falhou' : l.status || '—'}
-                  </span>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        {logs.length > 100 && (
-          <p className="text-xs font-body text-n-400 text-center py-3">A mostrar 100 de {logs.length} registos</p>
-        )}
-      </div>
+      <Table columns={LOG_COLUMNS} rows={logs.slice(0, 100)} />
+      {logs.length > 100 && (
+        <p className="text-xs font-body text-n-400 text-center py-3">A mostrar 100 de {logs.length} registos</p>
+      )}
     </Card>
   );
 }
