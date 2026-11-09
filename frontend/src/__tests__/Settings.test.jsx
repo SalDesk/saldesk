@@ -723,3 +723,45 @@ describe('Definicoes: design system (estrutura, Conta, Notificacoes e Seguranca)
     semCoresForaDosTokens(html);
   });
 });
+
+/* ───────────────────────── design system: Perfil Publico ───────────────────────── */
+
+describe('Definicoes: design system (Perfil Publico)', () => {
+  it('os_campos_tem_nome_acessivel_incluindo_os_pares_PT_EN_com_contexto', async () => {
+    const { container } = await abrirPerfil();
+    ['Descricao em Portugues', 'Descricao em Ingles', 'Politica de cancelamento em Portugues', 'Politica de cancelamento em Ingles',
+      'Pergunta 1 PT', 'Pergunta 1 EN', 'Resposta 1 PT', 'Resposta 1 EN', 'Pergunta 2 PT'].forEach(e => expect(screen.getByLabelText(e)).toBeInTheDocument());
+    expect(screen.getByLabelText('Ficheiro do logo')).toHaveAttribute('type', 'file');
+    expect(screen.getByLabelText('Ficheiros das fotos de capa')).toHaveAttribute('multiple');
+    expect(container.querySelectorAll('input[type="file"]')).toHaveLength(2);
+  });
+
+  it('os_botoes_de_icone_das_fotos_e_das_faq_tem_nome', async () => {
+    const { container } = await abrirPerfil();
+    expect(screen.getByRole('button', { name: 'Adicionar foto de capa' })).toBeInTheDocument();
+    fireEvent.change(container.querySelector('input[type="file"][multiple]'), { target: { files: [arquivo('a.png', 'a'), arquivo('b.png', 'b')] } });
+    await waitFor(() => expect(container.querySelectorAll('div.group img')).toHaveLength(2));
+    expect(screen.getByRole('button', { name: 'Mover foto 1 para baixo' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Mover foto 2 para cima' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Remover foto 1' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Remover foto 2' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Mover pergunta 1 para baixo' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Mover pergunta 2 para cima' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Remover pergunta 2' })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Remover foto 1' }));
+    expect(container.querySelectorAll('div.group img')).toHaveLength(1);
+  });
+
+  it('sem_cores_nomeadas_text_error_bg_error_bg_red_ou_hexadecimais_em_classes', async () => {
+    const { container } = await abrirPerfil();
+    fireEvent.change(container.querySelector('input[type="file"][multiple]'), { target: { files: [arquivo('a.png', 'a'), arquivo('b.png', 'b')] } });
+    await waitFor(() => expect(container.querySelectorAll('div.group img')).toHaveLength(2));
+    updateOperator.mockRejectedValueOnce(new Error('x'));
+    fireEvent.click(botao('Guardar perfil'));
+    await waitFor(() => expect(spyErr).toHaveBeenCalled());
+    spyErr.mockClear();
+    fireEvent.click(botao('Guardar perfil'));
+    await screen.findByRole('status');
+    semCoresForaDosTokens(classes(container));
+  });
+});

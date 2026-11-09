@@ -119,7 +119,7 @@ export default function PerfilPublicoTab({ operator }) {
             <Button type="button" variant="secondary" icon={Upload} size="sm" onClick={() => logoRef.current?.click()}>
               Escolher logo
             </Button>
-            <input ref={logoRef} type="file" accept="image/*" onChange={handleLogo} className="hidden" />
+            <input ref={logoRef} type="file" accept="image/*" aria-label="Ficheiro do logo" onChange={handleLogo} className="hidden" />
             <p className="text-xs font-body text-n-400">PNG ou SVG · fundo transparente recomendado</p>
           </div>
         </div>
@@ -134,19 +134,19 @@ export default function PerfilPublicoTab({ operator }) {
                 <img src={c.preview} alt="" className="w-full h-full object-cover" />
                 <div className="absolute inset-0 bg-ocean-900/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1">
                   {i > 0 && (
-                    <button type="button" onClick={() => moveCover(i, -1)}
+                    <button type="button" aria-label={`Mover foto ${i + 1} para cima`} onClick={() => moveCover(i, -1)}
                       className="w-6 h-6 bg-white/90 rounded flex items-center justify-center">
                       <ChevronUp size={12} strokeWidth={2} />
                     </button>
                   )}
                   {i < covers.length - 1 && (
-                    <button type="button" onClick={() => moveCover(i, 1)}
+                    <button type="button" aria-label={`Mover foto ${i + 1} para baixo`} onClick={() => moveCover(i, 1)}
                       className="w-6 h-6 bg-white/90 rounded flex items-center justify-center">
                       <ChevronDown size={12} strokeWidth={2} />
                     </button>
                   )}
-                  <button type="button" onClick={() => setCovers(p => p.filter((_, j) => j !== i))}
-                    className="w-6 h-6 bg-error/90 rounded flex items-center justify-center">
+                  <button type="button" aria-label={`Remover foto ${i + 1}`} onClick={() => setCovers(p => p.filter((_, j) => j !== i))}
+                    className="w-6 h-6 bg-[var(--error)] rounded flex items-center justify-center">
                     <X size={11} strokeWidth={2} className="text-white" />
                   </button>
                 </div>
@@ -157,12 +157,12 @@ export default function PerfilPublicoTab({ operator }) {
                 )}
               </div>
             ))}
-            <button type="button" onClick={() => coverRef.current?.click()}
+            <button type="button" aria-label="Adicionar foto de capa" onClick={() => coverRef.current?.click()}
               className="w-28 h-20 rounded border-2 border-dashed border-n-200 bg-n-50 flex flex-col items-center justify-center gap-1 text-n-400 hover:border-ocean-300 hover:text-ocean-700 transition-colors">
               <Plus size={18} strokeWidth={1.75} />
               <span className="text-xs font-body">Adicionar</span>
             </button>
-            <input ref={coverRef} type="file" accept="image/*" multiple onChange={handleCovers} className="hidden" />
+            <input ref={coverRef} type="file" accept="image/*" multiple aria-label="Ficheiros das fotos de capa" onChange={handleCovers} className="hidden" />
           </div>
           <p className="text-xs font-body text-n-400">A primeira foto e a capa principal · arrastar para reordenar</p>
         </div>
@@ -171,9 +171,9 @@ export default function PerfilPublicoTab({ operator }) {
       {/* Description */}
       <Card header={<h3 className="font-display font-semibold text-sm text-n-700">Descricao</h3>}>
         <div className="space-y-3">
-          <Textarea label="Portugues" value={descPt} onChange={e => setDescPt(e.target.value)}
+          <Textarea label="Portugues" aria-label="Descricao em Portugues" value={descPt} onChange={e => setDescPt(e.target.value)}
             rows={4} placeholder="Descricao do operador em portugues..." />
-          <Textarea label="Ingles (EN)" value={descEn} onChange={e => setDescEn(e.target.value)}
+          <Textarea label="Ingles (EN)" aria-label="Descricao em Ingles" value={descEn} onChange={e => setDescEn(e.target.value)}
             rows={4} placeholder="Operator description in English..." />
         </div>
       </Card>
@@ -187,9 +187,9 @@ export default function PerfilPublicoTab({ operator }) {
           <p className="text-xs font-body text-n-400">
             Mostrada na pagina publica de reserva. O cliente tem de aceitar esta politica antes de pagar.
           </p>
-          <Textarea label="Portugues" value={cancelPolicyPt} onChange={e => setCancelPolicyPt(e.target.value)}
+          <Textarea label="Portugues" aria-label="Politica de cancelamento em Portugues" value={cancelPolicyPt} onChange={e => setCancelPolicyPt(e.target.value)}
             rows={4} placeholder="Ex: Cancelamento gratuito ate 48h antes. Apos esse prazo, 50% do valor e retido..." />
-          <Textarea label="Ingles (EN)" value={cancelPolicyEn} onChange={e => setCancelPolicyEn(e.target.value)}
+          <Textarea label="Ingles (EN)" aria-label="Politica de cancelamento em Ingles" value={cancelPolicyEn} onChange={e => setCancelPolicyEn(e.target.value)}
             rows={4} placeholder="Ex: Free cancellation up to 48h before. After that, 50% of the value is retained..." />
         </div>
       </Card>
@@ -205,27 +205,27 @@ export default function PerfilPublicoTab({ operator }) {
               <div className="flex items-center justify-between">
                 <span className="text-xs font-body font-bold uppercase tracking-wide text-n-500">Pergunta {i + 1}</span>
                 <div className="flex gap-1">
-                  <button type="button" onClick={() => moveFaq(i, -1)} disabled={i === 0}
+                  <button type="button" aria-label={`Mover pergunta ${i + 1} para cima`} onClick={() => moveFaq(i, -1)} disabled={i === 0}
                     className="w-6 h-6 flex items-center justify-center rounded bg-n-100 text-n-500 disabled:opacity-30">
                     <ChevronUp size={12} strokeWidth={2} />
                   </button>
-                  <button type="button" onClick={() => moveFaq(i, 1)} disabled={i === faqs.length - 1}
+                  <button type="button" aria-label={`Mover pergunta ${i + 1} para baixo`} onClick={() => moveFaq(i, 1)} disabled={i === faqs.length - 1}
                     className="w-6 h-6 flex items-center justify-center rounded bg-n-100 text-n-500 disabled:opacity-30">
                     <ChevronDown size={12} strokeWidth={2} />
                   </button>
-                  <button type="button" onClick={() => removeFaq(i)}
-                    className="w-6 h-6 flex items-center justify-center rounded bg-error/10 text-error">
+                  <button type="button" aria-label={`Remover pergunta ${i + 1}`} onClick={() => removeFaq(i)}
+                    className="w-6 h-6 flex items-center justify-center rounded bg-[var(--error-light)] text-[var(--error)]">
                     <X size={12} strokeWidth={2} />
                   </button>
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-2">
-                <Input label="Pergunta PT" value={f.question_pt} onChange={e => updateFaq(i, 'question_pt', e.target.value)} />
-                <Input label="Pergunta EN" value={f.question_en} onChange={e => updateFaq(i, 'question_en', e.target.value)} />
+                <Input label="Pergunta PT" aria-label={`Pergunta ${i + 1} PT`} value={f.question_pt} onChange={e => updateFaq(i, 'question_pt', e.target.value)} />
+                <Input label="Pergunta EN" aria-label={`Pergunta ${i + 1} EN`} value={f.question_en} onChange={e => updateFaq(i, 'question_en', e.target.value)} />
               </div>
               <div className="grid grid-cols-2 gap-2">
-                <Textarea label="Resposta PT" rows={2} value={f.answer_pt} onChange={e => updateFaq(i, 'answer_pt', e.target.value)} />
-                <Textarea label="Resposta EN" rows={2} value={f.answer_en} onChange={e => updateFaq(i, 'answer_en', e.target.value)} />
+                <Textarea label="Resposta PT" aria-label={`Resposta ${i + 1} PT`} rows={2} value={f.answer_pt} onChange={e => updateFaq(i, 'answer_pt', e.target.value)} />
+                <Textarea label="Resposta EN" aria-label={`Resposta ${i + 1} EN`} rows={2} value={f.answer_en} onChange={e => updateFaq(i, 'answer_en', e.target.value)} />
               </div>
             </div>
           ))}
