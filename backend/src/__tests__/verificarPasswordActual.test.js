@@ -58,6 +58,15 @@ describe('verificarPasswordActual', () => {
     }
   });
 
+  test('o email com maiusculas e espacos cai no mesmo bloqueio que o login normalizado', async () => {
+    for (let i = 0; i < logStore.MAX_LOGIN_ATTEMPTS; i += 1) {
+      await verificarPasswordActual({ email: '  OP@Example.TEST ', password: 'errada', ip: '', tokenRequest: falha() });
+    }
+    expect(logStore.getLoginLockState(EMAIL).lockedUntil).toBeGreaterThan(Date.now());
+    const r = await verificarPasswordActual({ email: EMAIL, password: 'Certa1!x', ip: '', tokenRequest: ok() });
+    expect(r.status).toBe(423);
+  });
+
   test('um erro de rede propaga-se (o controlador devolve 500 pelo errorHandler)', async () => {
     await expect(verificarPasswordActual({ email: EMAIL, password: 'x', ip: '', tokenRequest: jest.fn().mockRejectedValue(new Error('ECONNRESET')) })).rejects.toThrow('ECONNRESET');
   });

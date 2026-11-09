@@ -78,6 +78,16 @@ describe('schema e rotas', () => {
     expect(schemas.changePassword.validate({ current_password: 'x', password: 'Nova1234!' }).error).toBeUndefined();
   });
 
+  test.each([[['a']], [{ a: 1 }], [123], [null], [true]])('o schema recusa current_password que nao seja texto (%j)', (valor) => {
+    expect(schemas.changePassword.validate({ current_password: valor, password: 'Nova1234!' }).error).toBeTruthy();
+  });
+
+  test('campos a mais (ex.: email) sao descartados e so current_password e password chegam ao controlador', () => {
+    const { error, value } = schemas.changePassword.validate({ current_password: 'x', password: 'Nova1234!', email: 'outro@x.test', user_id: 'u9' }, { stripUnknown: true });
+    expect(error).toBeUndefined();
+    expect(value).toEqual({ current_password: 'x', password: 'Nova1234!' });
+  });
+
   test.each([['operador', operadorRoutes], ['viajante', viajanteRoutes]])('a rota PUT /password do %s leva o authLimiter primeiro', (_, router) => {
     const camada = router.stack.find(l => l.route && l.route.path === '/password' && l.route.methods.put);
     expect(camada).toBeTruthy();
