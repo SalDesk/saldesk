@@ -5,6 +5,8 @@ import {
 } from '../../services/messagingService';
 import { useToast } from '../../store/toastStore';
 import Card from '../ui/Card';
+import Badge from '../ui/Badge';
+import { Textarea } from '../ui/Input';
 import Button from '../ui/Button';
 import LoadingSpinner from '../shared/LoadingSpinner';
 
@@ -132,10 +134,10 @@ function TemplateCard({ gatilho, dados, onGuardado }) {
   }
 
   const estado = alterado
-    ? { texto: 'Alterações por guardar', classe: 'bg-sand-100 text-sand-700' }
+    ? { texto: 'Alterações por guardar', variant: 'pending' }
     : servidor.custom
-      ? { texto: 'Personalizado', classe: 'bg-ocean-50 text-ocean-700' }
-      : { texto: 'Texto original', classe: 'bg-n-100 text-n-600' };
+      ? { texto: 'Personalizado', variant: 'info' }
+      : { texto: 'Texto original', variant: 'default' };
 
   const vazio = texto.trim() === '';
   const semLink = gatilho.id === 'review_request' && !/\{\{?\s*link_avaliacao\s*\}?\}/i.test(texto);
@@ -148,7 +150,7 @@ function TemplateCard({ gatilho, dados, onGuardado }) {
           <h3 className="font-display font-bold text-base text-n-900 dark:text-n-100">{gatilho.titulo}</h3>
           <p className="text-xs font-body text-n-500 mt-0.5">{gatilho.quando}</p>
         </div>
-        <span className={`text-[11px] font-body font-semibold px-2 py-1 rounded-full ${estado.classe}`}>{estado.texto}</span>
+        <Badge variant={estado.variant}>{estado.texto}</Badge>
       </div>
 
       <div className="flex gap-1 mb-3 bg-n-100 p-1 rounded-md w-fit">
@@ -164,17 +166,17 @@ function TemplateCard({ gatilho, dados, onGuardado }) {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <div className="flex flex-col gap-2">
-          <textarea
+          <Textarea
             ref={textareaRef}
             value={texto}
             onChange={(e) => editar(e.target.value)}
             rows={9}
             aria-label={`${gatilho.titulo} (${idioma.toUpperCase()})`}
-            className="w-full px-3 py-2 rounded-sm border border-n-300 text-sm font-body bg-n-100 text-n-900 resize-y focus:outline-none focus:ring-2 focus:ring-ocean-300 focus:border-ocean-700 focus:bg-white"
+            className="!resize-y"
           />
           <div className="flex items-center justify-between text-xs font-body text-n-500">
             <span>Clique numa variável para a inserir no cursor</span>
-            <span className={texto.length > MAX ? 'text-error font-semibold' : ''}>{texto.length}/{MAX}</span>
+            <span className={texto.length > MAX ? 'text-[var(--error)] font-semibold' : ''}>{texto.length}/{MAX}</span>
           </div>
           <div className="flex flex-wrap gap-1.5">
             {VARIAVEIS.map((v) => (
@@ -199,14 +201,14 @@ function TemplateCard({ gatilho, dados, onGuardado }) {
       </div>
 
       {desconhecidas.length > 0 && (
-        <p className="text-xs font-body text-error mt-3">
+        <p className="text-xs font-body text-[var(--error)] mt-3">
           Variável desconhecida: {desconhecidas.join(', ')}. Use as variáveis da lista, senão o cliente recebe o texto por preencher.
         </p>
       )}
       {semLink && !vazio && (
-        <p className="text-xs font-body text-error mt-3">O pedido de avaliação tem de incluir {'{link_avaliacao}'}, senão o cliente não tem como avaliar.</p>
+        <p className="text-xs font-body text-[var(--error)] mt-3">O pedido de avaliação tem de incluir {'{link_avaliacao}'}, senão o cliente não tem como avaliar.</p>
       )}
-      {erro && <p className="text-xs font-body text-error mt-3">{erro}</p>}
+      {erro && <p className="text-xs font-body text-[var(--error)] mt-3">{erro}</p>}
 
       <div className="flex flex-wrap items-center gap-2 mt-4">
         <Button icon={Check} loading={aGuardar} disabled={!alterado || bloqueado} onClick={guardar}>
@@ -223,11 +225,11 @@ function TemplateCard({ gatilho, dados, onGuardado }) {
 }
 
 const ESTADO_MODELO = {
-  approved: { texto: 'Aprovado', classe: 'bg-turquoise-50 text-turquoise-700' },
-  pending: { texto: 'Em análise na Meta', classe: 'bg-sand-100 text-sand-700' },
-  rejected: { texto: 'Rejeitado', classe: 'bg-red-50 text-error' },
-  paused: { texto: 'Em pausa', classe: 'bg-red-50 text-error' },
-  disabled: { texto: 'Desactivado', classe: 'bg-red-50 text-error' },
+  approved: { texto: 'Aprovado', variant: 'confirmed' },
+  pending: { texto: 'Em análise na Meta', variant: 'pending' },
+  rejected: { texto: 'Rejeitado', variant: 'cancelled' },
+  paused: { texto: 'Em pausa', variant: 'cancelled' },
+  disabled: { texto: 'Desactivado', variant: 'cancelled' },
 };
 const NOME_GATILHO = { booking_confirmed: 'Confirmação', reminder_d1: 'Lembrete', review_request: 'Pedido de avaliação' };
 
@@ -241,14 +243,14 @@ function CanalCartao() {
     <Card padding="p-5">
       <div className="flex flex-wrap items-center gap-2 mb-2">
         <h3 className="font-display font-bold text-base text-n-900 dark:text-n-100">Como as mensagens são enviadas</h3>
-        <span className={`text-[11px] font-body font-semibold px-2 py-1 rounded-full ${automatico ? 'bg-turquoise-50 text-turquoise-700' : 'bg-n-100 text-n-600'}`}>
+        <Badge variant={automatico ? 'confirmed' : 'default'}>
           {automatico ? 'Automático (WhatsApp Cloud API)' : 'Manual (WhatsApp no telemóvel)'}
-        </span>
+        </Badge>
         {automatico && canal.quality_rating && (
           <span className="text-[11px] font-body text-n-500">Qualidade do número: <strong>{canal.quality_rating}</strong></span>
         )}
         {canal.cloud_status === 'suspended' && (
-          <span className="text-[11px] font-body font-semibold px-2 py-1 rounded-full bg-red-50 text-error">Envio automático suspenso</span>
+          <Badge variant="cancelled">Envio automático suspenso</Badge>
         )}
       </div>
       <p className="text-sm font-body text-n-600">
@@ -263,7 +265,7 @@ function CanalCartao() {
             return (
               <li key={`${m.trigger}:${m.locale}`} className="flex flex-wrap items-center gap-2 text-sm font-body text-n-700">
                 <span>{NOME_GATILHO[m.trigger] || m.trigger} ({m.locale.toUpperCase()})</span>
-                <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${e.classe}`}>{e.texto}</span>
+                <Badge variant={e.variant}>{e.texto}</Badge>
                 {m.meta_reason && <span className="text-xs text-n-500">{m.meta_reason}</span>}
               </li>
             );
@@ -288,7 +290,7 @@ export default function TemplatesEditor() {
     setLista((atual) => atual.map((t) => (t.trigger === trigger && t.locale === locale ? { ...t, ...novo } : t)));
   }
 
-  if (erro) return <p className="text-sm font-body text-error">{erro}</p>;
+  if (erro) return <p className="text-sm font-body text-[var(--error)]">{erro}</p>;
   if (!lista) return <div className="flex justify-center py-12"><LoadingSpinner size={24} /></div>;
 
   return (
