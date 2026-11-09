@@ -12,6 +12,11 @@ import {
 import PageHeader from '../components/layout/PageHeader';
 import Button from '../components/ui/Button';
 import Card from '../components/ui/Card';
+import Badge from '../components/ui/Badge';
+import Tabs from '../components/ui/Tabs';
+import Table from '../components/ui/Table';
+import FilterChips from '../components/ui/FilterChips';
+import EmptyState from '../components/ui/EmptyState';
 import Modal from '../components/ui/Modal';
 import Input, { Select } from '../components/ui/Input';
 import LoadingSpinner from '../components/shared/LoadingSpinner';
@@ -26,10 +31,11 @@ const DEFAULT_CONFIG = {
   ],
 };
 
-const LEVEL_COLORS = {
-  Bronze: { bg: '#FDF3E7', text: '#92400E', border: '#FCD5A1' },
-  Prata:  { bg: '#F1F5F9', text: '#475569', border: '#CBD5E1' },
-  Ouro:   { bg: '#FFF7E6', text: '#92400E', border: '#FCD34D' },
+/* estilo por nivel: variante do Badge, circulo do icone e cor do numero (nome desconhecido = Bronze) */
+const LEVEL_STYLE = {
+  Bronze: { variant: 'pending', icon: 'bg-[var(--warning-light)] text-[var(--warning)]', text: 'text-[var(--warning)]' },
+  Prata:  { variant: 'default', icon: 'bg-n-100 text-n-600',                              text: 'text-n-600'          },
+  Ouro:   { variant: 'direct',  icon: 'bg-sand-50 text-sand-600',                         text: 'text-sand-600'       },
 };
 
 /* ── Helpers ── */
@@ -39,18 +45,13 @@ function getLevel(points, levels) {
 }
 
 function LevelBadge({ name }) {
-  const c = LEVEL_COLORS[name] || LEVEL_COLORS.Bronze;
-  return (
-    <span className="text-xs font-mono font-semibold px-2 py-0.5 rounded-xs border"
-      style={{ color: c.text, backgroundColor: c.bg, borderColor: c.border }}>
-      {name}
-    </span>
-  );
+  const s = LEVEL_STYLE[name] || LEVEL_STYLE.Bronze;
+  return <Badge variant={s.variant}>{name}</Badge>;
 }
 
 /* ── Historico de pontos ── */
 const LEDGER_LABELS = {
-  earn:          { label: 'Ganho',        color: 'text-[#1A7A4A]' },
+  earn:          { label: 'Ganho',        color: 'text-[var(--success)]' },
   manual_adjust: { label: 'Ajuste manual', color: 'text-ocean-700' },
   redeem:        { label: 'Resgate',      color: 'text-sand-600' },
 };
@@ -83,7 +84,7 @@ function HistoryList({ customerId, refreshKey }) {
             {h.reason && <span className="text-n-400 truncate"> · {h.reason}</span>}
             <p className="text-n-400">{new Date(h.created_at).toLocaleDateString('pt-PT')}</p>
           </div>
-          <span className={`font-mono font-semibold shrink-0 ${h.points > 0 ? 'text-[#1A7A4A]' : 'text-error'}`}>
+          <span className={`font-mono font-semibold shrink-0 ${h.points > 0 ? 'text-[var(--success)]' : 'text-[var(--error)]'}`}>
             {h.points > 0 ? '+' : ''}{h.points}
           </span>
         </div>
@@ -158,14 +159,14 @@ function PointsModal({ customer, config, onClose, onAdjust, onRedeem }) {
 
         {/* Resgate */}
         {redeemedVoucher ? (
-          <div className="p-3 bg-[#ECFDF5] border border-green-200 rounded-sm space-y-2">
-            <p className="text-xs font-body font-semibold text-[#1A7A4A]">Voucher gerado — {redeemedVoucher.value}% de desconto</p>
+          <div className="p-3 bg-[var(--success-light)] border border-n-200 rounded-sm space-y-2">
+            <p className="text-xs font-body font-semibold text-[var(--success)]">Voucher gerado — {redeemedVoucher.value}% de desconto</p>
             <div className="flex items-center gap-2">
-              <code className="flex-1 font-mono text-sm font-bold text-n-900 bg-white border border-green-200 rounded-xs px-2 py-1.5">
+              <code className="flex-1 font-mono text-sm font-bold text-n-900 bg-white border border-n-200 rounded-xs px-2 py-1.5">
                 {redeemedVoucher.code}
               </code>
-              <button onClick={copyCode} className="p-1.5 rounded text-n-500 hover:text-ocean-700 hover:bg-white transition-colors" title="Copiar codigo">
-                {copied ? <CheckIcon size={14} strokeWidth={2} className="text-[#1A7A4A]" /> : <Copy size={14} strokeWidth={1.75} />}
+              <button type="button" onClick={copyCode} className="p-1.5 rounded text-n-500 hover:text-ocean-700 hover:bg-white transition-colors" title="Copiar codigo" aria-label="Copiar codigo">
+                {copied ? <CheckIcon size={14} strokeWidth={2} className="text-[var(--success)]" /> : <Copy size={14} strokeWidth={1.75} />}
               </button>
             </div>
             <p className="text-xs font-body text-n-500">Uso unico, valido ate {new Date(redeemedVoucher.expires_at).toLocaleDateString('pt-PT', { timeZone: 'UTC' })}.</p>
@@ -188,7 +189,7 @@ function PointsModal({ customer, config, onClose, onAdjust, onRedeem }) {
 
         <div className="flex gap-1 bg-n-100 rounded-sm p-0.5">
           {[{ v: 'add', l: 'Adicionar' }, { v: 'remove', l: 'Remover' }].map(o => (
-            <button key={o.v} onClick={() => setMode(o.v)}
+            <button key={o.v} type="button" aria-pressed={mode === o.v} onClick={() => setMode(o.v)}
               className={`flex-1 py-1.5 text-xs font-body font-semibold rounded-xs transition-colors ${mode === o.v ? 'bg-white text-ocean-700 shadow-sm' : 'text-n-500 hover:text-n-700'}`}>
               {o.l}
             </button>
@@ -196,7 +197,7 @@ function PointsModal({ customer, config, onClose, onAdjust, onRedeem }) {
         </div>
 
         <Input
-          label="Quantidade de pontos"
+          label="Quantidade de pontos" aria-label="Quantidade de pontos"
           type="number" min="1" step="1"
           value={amount}
           onChange={e => setAmount(e.target.value)}
@@ -204,7 +205,7 @@ function PointsModal({ customer, config, onClose, onAdjust, onRedeem }) {
         />
 
         <Input
-          label="Motivo"
+          label="Motivo" aria-label="Motivo"
           value={reason}
           onChange={e => setReason(e.target.value)}
           placeholder="Ex: reserva especial, ajuste manual..."
@@ -225,7 +226,7 @@ function PointsModal({ customer, config, onClose, onAdjust, onRedeem }) {
         )}
 
         {error && (
-          <p className="text-xs text-error flex items-center gap-1"><AlertCircle size={12} strokeWidth={2} /> {error}</p>
+          <p className="text-xs text-[var(--error)] flex items-center gap-1"><AlertCircle size={12} strokeWidth={2} /> {error}</p>
         )}
 
         <div className="flex gap-3">
@@ -248,7 +249,7 @@ function PointsModal({ customer, config, onClose, onAdjust, onRedeem }) {
 function LevelCard({ level, index, onUpdate, totalCustomers }) {
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState({ ...level });
-  const c = LEVEL_COLORS[level.name] || LEVEL_COLORS.Bronze;
+  const s = LEVEL_STYLE[level.name] || LEVEL_STYLE.Bronze;
 
   function handleSave() {
     onUpdate(index, draft);
@@ -256,10 +257,18 @@ function LevelCard({ level, index, onUpdate, totalCustomers }) {
   }
 
   return (
-    <div className="bg-white rounded-md border border-n-200 overflow-hidden">
-      <div className="flex items-center gap-4 px-4 py-3 cursor-pointer select-none" onClick={() => setOpen(p => !p)}>
-        <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0" style={{ backgroundColor: c.bg, border: `1px solid ${c.border}` }}>
-          <Award size={16} strokeWidth={1.75} style={{ color: c.text }} />
+    <Card padding="p-0" className="overflow-hidden">
+      <div
+        role="button" tabIndex={0} aria-expanded={open}
+        className="flex items-center gap-4 px-4 py-3 cursor-pointer select-none"
+        onClick={() => setOpen(p => !p)}
+        onKeyDown={e => {
+          if (e.target !== e.currentTarget) return;
+          if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setOpen(p => !p); }
+        }}
+      >
+        <div className={`w-8 h-8 rounded-full border border-n-200 flex items-center justify-center shrink-0 ${s.icon}`}>
+          <Award size={16} strokeWidth={1.75} />
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
@@ -276,19 +285,19 @@ function LevelCard({ level, index, onUpdate, totalCustomers }) {
       {open && (
         <div className="border-t border-n-100 px-4 py-4 space-y-3 bg-n-50">
           <Input
-            label="Desconto (%)"
+            label="Desconto (%)" aria-label="Desconto (%)"
             type="number" min="0" max="100" step="1"
             value={draft.discount_pct}
             onChange={e => setDraft(p => ({ ...p, discount_pct: Number(e.target.value) }))}
           />
           <Input
-            label="Descricao da recompensa"
+            label="Descricao da recompensa" aria-label="Descricao da recompensa"
             value={draft.reward}
             onChange={e => setDraft(p => ({ ...p, reward: e.target.value }))}
           />
           {index < 2 && (
             <Input
-              label={`Pontos maximo (nivel ${level.name})`}
+              label={`Pontos maximo (nivel ${level.name})`} aria-label={`Pontos maximo (nivel ${level.name})`}
               type="number" min="1"
               value={draft.max ?? ''}
               onChange={e => setDraft(p => ({ ...p, max: e.target.value ? Number(e.target.value) : null }))}
@@ -304,7 +313,7 @@ function LevelCard({ level, index, onUpdate, totalCustomers }) {
           </div>
         </div>
       )}
-    </div>
+    </Card>
   );
 }
 
@@ -384,6 +393,45 @@ export default function Loyalty() {
     ouro:   customers.filter(c => getLevel(c.loyalty_points, config.levels).name === 'Ouro').length,
   };
 
+  /* colunas da tabela de clientes; o destaque (estrela) e do primeiro com pontos */
+  const columns = [
+    {
+      key: 'name', label: 'Cliente',
+      render: c => (
+        <span className="font-body font-semibold text-n-900 whitespace-nowrap">
+          {c.name}
+          {c === sorted[0] && Number(c.loyalty_points || 0) > 0 && (
+            <Star size={11} strokeWidth={2} className="inline ml-1 text-sand-500 fill-sand-400" />
+          )}
+        </span>
+      ),
+    },
+    { key: 'email', label: 'Email', render: c => <span className="text-xs text-n-500">{c.email || '—'}</span> },
+    { key: 'visits', label: 'Visitas', align: 'center', render: c => <span className="font-mono text-n-600">{c.total_visits ?? 0}</span> },
+    {
+      key: 'points', label: 'Pontos',
+      render: c => (
+        <span className="font-display font-bold text-ocean-700 whitespace-nowrap">
+          {Number(c.loyalty_points || 0).toLocaleString('pt-PT')} pts
+        </span>
+      ),
+    },
+    { key: 'level', label: 'Nivel', render: c => <LevelBadge name={getLevel(c.loyalty_points, config.levels).name} /> },
+    {
+      key: 'reward', label: 'Recompensa',
+      render: c => <span className="text-xs font-body text-n-500 max-w-[160px] truncate block">{getLevel(c.loyalty_points, config.levels).reward}</span>,
+    },
+    {
+      key: 'acoes', label: '',
+      render: c => (
+        <button type="button" onClick={() => setEditingCustomer(c)} aria-label={`Ajustar pontos ${c.name}`}
+          className="p-1.5 rounded text-n-400 hover:text-ocean-700 hover:bg-ocean-50 transition-colors">
+          <Edit2 size={13} strokeWidth={1.75} />
+        </button>
+      ),
+    },
+  ];
+
   if (configLoading) {
     return (
       <div>
@@ -401,14 +449,14 @@ export default function Loyalty() {
       />
 
       {/* Active toggle */}
-      <div className={`flex items-center gap-4 px-4 py-3 rounded-md border mb-6 ${config.active ? 'bg-[#ECFDF5] border-green-200' : 'bg-n-50 border-n-200'}`}>
-        <button onClick={toggleActive} className="shrink-0">
+      <div className={`flex items-center gap-4 px-4 py-3 rounded-md border border-n-200 mb-6 ${config.active ? 'bg-[var(--success-light)]' : 'bg-n-50'}`}>
+        <button type="button" onClick={toggleActive} aria-pressed={config.active} aria-label="Programa de fidelidade" className="shrink-0">
           {config.active
-            ? <ToggleRight size={28} strokeWidth={1.5} className="text-[#1A7A4A]" />
+            ? <ToggleRight size={28} strokeWidth={1.5} className="text-[var(--success)]" />
             : <ToggleLeft  size={28} strokeWidth={1.5} className="text-n-400" />}
         </button>
         <div>
-          <p className={`text-sm font-body font-semibold ${config.active ? 'text-[#1A7A4A]' : 'text-n-600'}`}>
+          <p className={`text-sm font-body font-semibold ${config.active ? 'text-[var(--success)]' : 'text-n-600'}`}>
             Programa {config.active ? 'activo' : 'inactivo'}
           </p>
           <p className="text-xs font-body text-n-400">
@@ -420,15 +468,12 @@ export default function Loyalty() {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1 border-b border-n-200 mb-6">
-        {[{ key: 'config', label: 'Configuracao', Icon: Award }, { key: 'clientes', label: 'Clientes', Icon: Users }].map(({ key, label, Icon }) => (
-          <button key={key} onClick={() => setActiveTab(key)}
-            className={`flex items-center gap-2 px-4 py-2.5 text-sm font-body font-semibold border-b-2 -mb-px transition-colors ${
-              activeTab === key ? 'border-ocean-700 text-ocean-700' : 'border-transparent text-n-500 hover:text-n-700'
-            }`}>
-            <Icon size={15} strokeWidth={1.75} />{label}
-          </button>
-        ))}
+      <div className="mb-6">
+        <Tabs
+          tabs={[{ id: 'config', label: 'Configuracao' }, { id: 'clientes', label: 'Clientes' }]}
+          value={activeTab}
+          onChange={setActiveTab}
+        />
       </div>
 
       {activeTab === 'config' && (
@@ -438,7 +483,7 @@ export default function Loyalty() {
             <h3 className="font-display font-semibold text-sm text-n-700 mb-4">Regra de acumulacao</h3>
             <div className="flex items-end gap-4 max-w-xs">
               <Input
-                label="Pontos por Euro gasto"
+                label="Pontos por Euro gasto" aria-label="Pontos por Euro gasto"
                 type="number" min="0.1" step="0.1"
                 value={config.points_per_euro}
                 onChange={e => persistConfig({ ...config, points_per_euro: Number(e.target.value) })}
@@ -470,36 +515,36 @@ export default function Loyalty() {
           {/* Summary */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
             {[
-              { label: 'Total clientes',   value: stats.total,  color: 'text-n-900'         },
-              { label: 'Bronze',           value: stats.bronze, color: 'text-[#92400E]'     },
-              { label: 'Prata',            value: stats.prata,  color: 'text-[#475569]'     },
-              { label: 'Ouro',             value: stats.ouro,   color: 'text-[#D4A82A]'     },
+              { label: 'Total clientes',   value: stats.total,  color: 'text-n-900'               },
+              { label: 'Bronze',           value: stats.bronze, color: LEVEL_STYLE.Bronze.text    },
+              { label: 'Prata',            value: stats.prata,  color: LEVEL_STYLE.Prata.text     },
+              { label: 'Ouro',             value: stats.ouro,   color: LEVEL_STYLE.Ouro.text      },
             ].map(m => (
-              <div key={m.label} className="bg-white rounded-md border border-n-200 px-4 py-3 flex items-center gap-3">
-                <Award size={18} strokeWidth={1.75} className="text-n-300 shrink-0" />
-                <div>
-                  <p className={`font-display font-bold text-xl ${m.color}`}>{m.value}</p>
-                  <p className="text-xs font-body text-n-500">{m.label}</p>
+              <Card key={m.label} padding="px-4 py-3">
+                <div className="flex items-center gap-3">
+                  <Award size={18} strokeWidth={1.75} className="text-n-300 shrink-0" />
+                  <div>
+                    <p className={`font-display font-bold text-xl ${m.color}`}>{m.value}</p>
+                    <p className="text-xs font-body text-n-500">{m.label}</p>
+                  </div>
                 </div>
-              </div>
+              </Card>
             ))}
           </div>
 
           {/* Search + filter */}
-          <div className="flex flex-wrap gap-3">
-            <input
-              value={search} onChange={e => setSearch(e.target.value)}
-              placeholder="Pesquisar cliente..."
-              className="h-9 px-3 text-sm font-body border border-n-200 rounded-sm bg-white placeholder:text-n-400 focus:outline-none focus:border-ocean-700 flex-1 min-w-[180px]"
-            />
-            <div className="flex gap-1">
-              {['', 'Bronze', 'Prata', 'Ouro'].map(l => (
-                <button key={l} onClick={() => setFilterLevel(l)}
-                  className={`px-3 py-1.5 rounded-sm text-xs font-body font-semibold transition-colors ${filterLevel === l ? 'bg-ocean-700 text-white' : 'bg-white border border-n-200 text-n-600 hover:border-ocean-300'}`}>
-                  {l || 'Todos'}
-                </button>
-              ))}
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="flex-1 min-w-[180px]">
+              <Input
+                value={search} onChange={e => setSearch(e.target.value)}
+                placeholder="Pesquisar cliente..." aria-label="Pesquisar cliente"
+              />
             </div>
+            <FilterChips
+              options={[{ value: '', label: 'Todos' }, { value: 'Bronze', label: 'Bronze' }, { value: 'Prata', label: 'Prata' }, { value: 'Ouro', label: 'Ouro' }]}
+              value={filterLevel}
+              onChange={setFilterLevel}
+            />
           </div>
 
           {/* Table */}
@@ -508,50 +553,9 @@ export default function Loyalty() {
           ) : (
             <Card padding="p-0">
               {sorted.length === 0 ? (
-                <div className="text-center py-12">
-                  <Users size={32} strokeWidth={1.25} className="mx-auto mb-3 text-n-300" />
-                  <p className="text-sm font-body text-n-400">Sem clientes encontrados.</p>
-                </div>
+                <EmptyState icon={Users} title="Sem clientes encontrados." />
               ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="border-b border-n-200">
-                        {['Cliente', 'Email', 'Visitas', 'Pontos', 'Nivel', 'Recompensa', ''].map(h => (
-                          <th key={h} className="text-left py-2.5 px-4 text-xs font-mono uppercase tracking-wider text-n-500 whitespace-nowrap">{h}</th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-n-100">
-                      {sorted.map((c, i) => {
-                        const level = getLevel(c.loyalty_points, config.levels);
-                        const pts   = Number(c.loyalty_points || 0);
-                        const isTop = i === 0 && pts > 0;
-                        return (
-                          <tr key={c.id} className={`hover:bg-n-50 transition-colors ${isTop ? 'bg-[#FFF7E6]' : ''}`}>
-                            <td className="py-3 px-4 font-body font-semibold text-n-900 whitespace-nowrap">
-                              {c.name}
-                              {isTop && <Star size={11} strokeWidth={2} className="inline ml-1 text-sand-500 fill-sand-400" />}
-                            </td>
-                            <td className="py-3 px-4 text-n-500 text-xs">{c.email || '—'}</td>
-                            <td className="py-3 px-4 font-mono text-n-600 text-center">{c.total_visits ?? 0}</td>
-                            <td className="py-3 px-4 font-display font-bold text-ocean-700 whitespace-nowrap">
-                              {pts.toLocaleString('pt-PT')} pts
-                            </td>
-                            <td className="py-3 px-4"><LevelBadge name={level.name} /></td>
-                            <td className="py-3 px-4 text-xs font-body text-n-500 max-w-[160px] truncate">{level.reward}</td>
-                            <td className="py-3 px-4">
-                              <button onClick={() => setEditingCustomer(c)}
-                                className="p-1.5 rounded text-n-400 hover:text-ocean-700 hover:bg-ocean-50 transition-colors">
-                                <Edit2 size={13} strokeWidth={1.75} />
-                              </button>
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
+                <Table columns={columns} rows={sorted} />
               )}
             </Card>
           )}

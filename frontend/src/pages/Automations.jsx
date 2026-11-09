@@ -3,7 +3,7 @@ import PlanGuard from '../components/PlanGuard';
 import {
   Mail, MessageCircle, Calendar, Star, Gift, Newspaper,
   ChevronDown, ChevronUp, Eye, Edit2, Save, X as XIcon,
-  History, Zap, Check,
+  History, Check,
 } from 'lucide-react';
 import {
   listAutomations, createAutomation, updateAutomation,
@@ -13,6 +13,10 @@ import useAuthStore from '../store/authStore';
 import PageHeader from '../components/layout/PageHeader';
 import Button from '../components/ui/Button';
 import Card from '../components/ui/Card';
+import Tabs from '../components/ui/Tabs';
+import Badge from '../components/ui/Badge';
+import Table from '../components/ui/Table';
+import EmptyState from '../components/ui/EmptyState';
 import Input, { Textarea } from '../components/ui/Input';
 import LoadingSpinner from '../components/shared/LoadingSpinner';
 
@@ -37,7 +41,7 @@ const SEQUENCES = [
     trigger_type: 'booking_confirmed', trigger_days: null, channel: 'whatsapp',
     title: 'Nova reserva — WhatsApp de boas-vindas',
     subtitle: 'Mensagem imediata ao cliente via WhatsApp',
-    Icon: MessageCircle, iconColor: 'text-[#25D366]', iconBg: 'bg-[#F0FFF4]',
+    Icon: MessageCircle, iconColor: 'text-[var(--success)]', iconBg: 'bg-[var(--success-light)]',
     defaults: {
       name: 'Boas-vindas WhatsApp',
       subject_pt: '', subject_en: '',
@@ -64,7 +68,7 @@ const SEQUENCES = [
     trigger_type: 'days_before_checkin', trigger_days: 3, channel: 'email',
     title: 'D-3 — Email com instrucoes',
     subtitle: '3 dias antes do tour',
-    Icon: Calendar, iconColor: 'text-sand-500', iconBg: 'bg-[#FFF7E6]',
+    Icon: Calendar, iconColor: 'text-sand-600', iconBg: 'bg-sand-50',
     defaults: {
       name: 'Instrucoes D-3',
       subject_pt: 'Instrucoes finais para o seu tour — {nome_tour}',
@@ -78,7 +82,7 @@ const SEQUENCES = [
     trigger_type: 'days_before_checkin', trigger_days: 1, channel: 'whatsapp',
     title: 'D-1 — WhatsApp de lembrete',
     subtitle: 'Mensagem um dia antes do tour',
-    Icon: MessageCircle, iconColor: 'text-[#25D366]', iconBg: 'bg-[#F0FFF4]',
+    Icon: MessageCircle, iconColor: 'text-[var(--success)]', iconBg: 'bg-[var(--success-light)]',
     defaults: {
       name: 'Lembrete D-1',
       subject_pt: '', subject_en: '',
@@ -91,7 +95,7 @@ const SEQUENCES = [
     trigger_type: 'days_after_checkout', trigger_days: 1, channel: 'email',
     title: 'D+1 — Pedido de avaliacao',
     subtitle: '1 dia apos o tour',
-    Icon: Star, iconColor: 'text-sand-500', iconBg: 'bg-[#FFF7E6]',
+    Icon: Star, iconColor: 'text-sand-600', iconBg: 'bg-sand-50',
     defaults: {
       name: 'Pedido de avaliacao',
       subject_pt: 'Como correu o seu tour? — {nome_tour}',
@@ -105,7 +109,7 @@ const SEQUENCES = [
     trigger_type: 'days_after_checkout', trigger_days: 7, channel: 'email',
     title: 'D+7 — Desconto proxima reserva',
     subtitle: '7 dias apos o tour',
-    Icon: Gift, iconColor: 'text-[#1A7A4A]', iconBg: 'bg-[#ECFDF5]',
+    Icon: Gift, iconColor: 'text-[var(--success)]', iconBg: 'bg-[var(--success-light)]',
     defaults: {
       name: 'Desconto fidelidade D+7',
       subject_pt: 'Um presente especial para si — {nome_tour}',
@@ -173,11 +177,11 @@ function EmailPreview({ subject, body, isWhatsApp }) {
   if (isWhatsApp) {
     return (
       <div className="border border-n-200 rounded-md overflow-hidden">
-        <div className="bg-[#128C7E] px-3 py-2 flex items-center gap-2">
+        <div className="bg-[var(--success)] px-3 py-2 flex items-center gap-2">
           <MessageCircle size={13} strokeWidth={1.75} className="text-white shrink-0" />
           <p className="text-white text-xs font-body font-semibold">WhatsApp Preview</p>
         </div>
-        <div className="bg-[#ECE5DD] p-3">
+        <div className="bg-n-100 p-3">
           <div className="bg-white rounded-lg px-3 py-2 max-w-xs shadow-sm">
             <pre className="text-xs font-body text-n-800 whitespace-pre-wrap leading-relaxed">{pb || '(sem conteudo)'}</pre>
             <p className="text-[10px] font-mono text-n-400 text-right mt-1">09:00</p>
@@ -292,15 +296,26 @@ function SequenceCard({ seq, automation, onSaved }) {
     setForm(p => ({ ...p, message_pt: p.message_pt + v }));
   }
 
+  function toggleOpen() {
+    setOpen(p => !p);
+    setEditing(false);
+    setPreview(false);
+  }
+
   const previewSubject = previewLang === 'en' ? form.subject_en : form.subject_pt;
   const previewBody    = previewLang === 'en' ? form.message_en : form.message_pt;
 
   return (
-    <div className={`bg-white rounded-md border overflow-hidden transition-opacity ${isActive ? 'border-n-200' : 'border-n-100 opacity-70'}`}>
+    <Card padding="p-0" className={`overflow-hidden transition-opacity ${isActive ? '' : 'opacity-70'}`}>
       {/* Header */}
       <div
+        role="button" tabIndex={0} aria-expanded={open}
         className="flex items-center gap-3 px-4 py-3.5 cursor-pointer select-none"
-        onClick={() => { setOpen(p => !p); setEditing(false); setPreview(false); }}
+        onClick={toggleOpen}
+        onKeyDown={e => {
+          if (e.target !== e.currentTarget) return;
+          if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleOpen(); }
+        }}
       >
         <div className={`w-8 h-8 rounded-sm flex items-center justify-center shrink-0 ${seq.iconBg}`}>
           <seq.Icon size={16} strokeWidth={1.75} className={seq.iconColor} />
@@ -316,9 +331,11 @@ function SequenceCard({ seq, automation, onSaved }) {
           {hasEmail ? 'Email' : 'WhatsApp'}
         </span>
         <button
+          type="button"
           onClick={handleToggle}
           disabled={toggling}
-          aria-label={isActive ? 'Desactivar' : 'Activar'}
+          aria-pressed={isActive}
+          aria-label={`${isActive ? 'Desactivar' : 'Activar'} ${seq.title}`}
           className={`relative inline-flex h-5 w-9 shrink-0 rounded-full border-2 border-transparent transition-colors focus:outline-none ${toggling ? 'opacity-50' : ''} ${isActive ? 'bg-ocean-700' : 'bg-n-300'}`}
         >
           <span className={`inline-block h-4 w-4 rounded-full bg-white shadow transition-transform ${isActive ? 'translate-x-4' : 'translate-x-0'}`} />
@@ -356,7 +373,7 @@ function SequenceCard({ seq, automation, onSaved }) {
                 <>
                   <div className="flex gap-1">
                     {['pt', 'en'].map(l => (
-                      <button key={l} onClick={() => setPreviewLang(l)}
+                      <button key={l} type="button" aria-pressed={previewLang === l} onClick={() => setPreviewLang(l)}
                         className={`text-xs px-2.5 py-1 rounded-xs font-mono transition-colors ${previewLang === l ? 'bg-ocean-700 text-white' : 'bg-n-200 text-n-600 hover:bg-n-300'}`}>
                         {l.toUpperCase()}
                       </button>
@@ -384,12 +401,12 @@ function SequenceCard({ seq, automation, onSaved }) {
 
               {hasEmail && (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <Input label="Assunto PT" value={form.subject_pt} onChange={e => setForm(p => ({ ...p, subject_pt: e.target.value }))} />
-                  <Input label="Assunto EN" value={form.subject_en} onChange={e => setForm(p => ({ ...p, subject_en: e.target.value }))} />
+                  <Input label="Assunto PT" aria-label="Assunto PT" value={form.subject_pt} onChange={e => setForm(p => ({ ...p, subject_pt: e.target.value }))} />
+                  <Input label="Assunto EN" aria-label="Assunto EN" value={form.subject_en} onChange={e => setForm(p => ({ ...p, subject_en: e.target.value }))} />
                 </div>
               )}
-              <Textarea label="Mensagem PT" value={form.message_pt} rows={5} onChange={e => setForm(p => ({ ...p, message_pt: e.target.value }))} />
-              <Textarea label="Mensagem EN" value={form.message_en} rows={5} onChange={e => setForm(p => ({ ...p, message_en: e.target.value }))} />
+              <Textarea label="Mensagem PT" aria-label="Mensagem PT" value={form.message_pt} rows={5} onChange={e => setForm(p => ({ ...p, message_pt: e.target.value }))} />
+              <Textarea label="Mensagem EN" aria-label="Mensagem EN" value={form.message_en} rows={5} onChange={e => setForm(p => ({ ...p, message_en: e.target.value }))} />
 
               <div className="flex items-center justify-between">
                 <button type="button" onClick={() => setPreview(p => !p)}
@@ -400,7 +417,7 @@ function SequenceCard({ seq, automation, onSaved }) {
                 {preview && (
                   <div className="flex gap-1">
                     {['pt', 'en'].map(l => (
-                      <button key={l} onClick={() => setPreviewLang(l)}
+                      <button key={l} type="button" aria-pressed={previewLang === l} onClick={() => setPreviewLang(l)}
                         className={`text-xs px-2.5 py-1 rounded-xs font-mono transition-colors ${previewLang === l ? 'bg-ocean-700 text-white' : 'bg-n-200 text-n-600'}`}>
                         {l.toUpperCase()}
                       </button>
@@ -424,72 +441,72 @@ function SequenceCard({ seq, automation, onSaved }) {
           )}
         </div>
       )}
-    </div>
+    </Card>
   );
 }
 
 /* ── LogsTab ── */
+const STATUS_BADGE = { sent: 'confirmed', failed: 'cancelled', pending: 'pending' };
+
+const LOG_COLUMNS = [
+  {
+    key: 'created_at', label: 'Data',
+    render: l => (
+      <span className="text-xs font-mono text-n-500 whitespace-nowrap">
+        {l.created_at ? new Date(l.created_at).toLocaleDateString('pt-PT', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) : '—'}
+      </span>
+    ),
+  },
+  {
+    key: 'automation', label: 'Automacao',
+    render: l => <span className="font-body text-n-700 block max-w-[180px] truncate">{l.automation_name || l.automation?.name || '—'}</span>,
+  },
+  {
+    key: 'customer', label: 'Cliente',
+    render: l => <span className="font-body text-n-800 whitespace-nowrap">{l.recipient_name || l.customer_name || '—'}</span>,
+  },
+  {
+    key: 'channel', label: 'Canal',
+    render: l => (
+      <span className="flex items-center gap-1 text-xs font-body text-n-600">
+        {l.channel === 'email'
+          ? <Mail size={11} strokeWidth={1.75} />
+          : <MessageCircle size={11} strokeWidth={1.75} />}
+        {l.channel === 'email' ? 'Email' : 'WhatsApp'}
+      </span>
+    ),
+  },
+  {
+    key: 'status', label: 'Estado',
+    render: l => (
+      <Badge variant={STATUS_BADGE[l.status] || 'default'}>
+        {l.status === 'sent' ? 'Enviado' : l.status === 'failed' ? 'Falhou' : l.status || '—'}
+      </Badge>
+    ),
+  },
+];
+
 function LogsTab({ logs, loading }) {
   if (loading) return <div className="flex justify-center py-16"><LoadingSpinner size={32} /></div>;
 
   if (!logs || logs.length === 0) {
     return (
-      <Card>
-        <div className="text-center py-12">
-          <History size={32} strokeWidth={1.25} className="mx-auto mb-3 text-n-300" />
-          <p className="font-body text-n-500">Sem historico de envios.</p>
-          <p className="text-xs font-body text-n-400 mt-1">Os envios aparecerao aqui apos as primeiras automacoes serem disparadas.</p>
-        </div>
+      <Card padding="p-0">
+        <EmptyState
+          icon={History}
+          title="Sem historico de envios."
+          description="Os envios aparecerao aqui apos as primeiras automacoes serem disparadas."
+        />
       </Card>
     );
   }
 
-  const STATUS_CLS = {
-    sent:    'text-[#1A7A4A] bg-[#ECFDF5]',
-    failed:  'text-error bg-red-50',
-    pending: 'text-yellow-700 bg-yellow-50',
-  };
-
   return (
     <Card padding="p-0">
-      <div className="overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-n-200">
-              {['Data', 'Automacao', 'Cliente', 'Canal', 'Estado'].map(h => (
-                <th key={h} className="text-left py-2.5 px-4 text-xs font-mono uppercase tracking-wider text-n-500 whitespace-nowrap">{h}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-n-100">
-            {logs.slice(0, 100).map((l, i) => (
-              <tr key={l.id || i} className="hover:bg-n-50 transition-colors">
-                <td className="py-2.5 px-4 text-xs font-mono text-n-500 whitespace-nowrap">
-                  {l.created_at ? new Date(l.created_at).toLocaleDateString('pt-PT', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) : '—'}
-                </td>
-                <td className="py-2.5 px-4 font-body text-n-700 max-w-[180px] truncate">{l.automation_name || l.automation?.name || '—'}</td>
-                <td className="py-2.5 px-4 font-body text-n-800 whitespace-nowrap">{l.recipient_name || l.customer_name || '—'}</td>
-                <td className="py-2.5 px-4">
-                  <span className="flex items-center gap-1 text-xs font-body text-n-600">
-                    {l.channel === 'email'
-                      ? <Mail size={11} strokeWidth={1.75} />
-                      : <MessageCircle size={11} strokeWidth={1.75} />}
-                    {l.channel === 'email' ? 'Email' : 'WhatsApp'}
-                  </span>
-                </td>
-                <td className="py-2.5 px-4">
-                  <span className={`text-xs font-mono px-2 py-0.5 rounded-xs ${STATUS_CLS[l.status] || 'text-n-500 bg-n-100'}`}>
-                    {l.status === 'sent' ? 'Enviado' : l.status === 'failed' ? 'Falhou' : l.status || '—'}
-                  </span>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        {logs.length > 100 && (
-          <p className="text-xs font-body text-n-400 text-center py-3">A mostrar 100 de {logs.length} registos</p>
-        )}
-      </div>
+      <Table columns={LOG_COLUMNS} rows={logs.slice(0, 100)} />
+      {logs.length > 100 && (
+        <p className="text-xs font-body text-n-400 text-center py-3">A mostrar 100 de {logs.length} registos</p>
+      )}
     </Card>
   );
 }
@@ -536,26 +553,20 @@ export default function Automations() {
       />
 
       {/* Info */}
-      <div className="bg-ocean-50 border border-ocean-100 rounded-sm px-4 py-3 mb-5">
-        <p className="text-xs font-body text-ocean-700">
+      <div className="bg-[var(--info-light)] border border-n-200 rounded-sm px-4 py-3 mb-5">
+        <p className="text-xs font-body text-[var(--info)]">
           <span className="font-semibold">Variaveis disponiveis:</span>{' '}
           {VARS.map(v => v.key).join(' · ')}
         </p>
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1 border-b border-n-200 mb-5">
-        {[
-          { key: 'sequencias', label: 'Sequencias', Icon: Zap },
-          { key: 'historico',  label: 'Historico de envios', Icon: History },
-        ].map(({ key, label, Icon }) => (
-          <button key={key} onClick={() => setActiveTab(key)}
-            className={`flex items-center gap-2 px-4 py-2.5 text-sm font-body font-semibold border-b-2 -mb-px transition-colors ${
-              activeTab === key ? 'border-ocean-700 text-ocean-700' : 'border-transparent text-n-500 hover:text-n-700'
-            }`}>
-            <Icon size={15} strokeWidth={1.75} />{label}
-          </button>
-        ))}
+      <div className="mb-5">
+        <Tabs
+          tabs={[{ id: 'sequencias', label: 'Sequencias' }, { id: 'historico', label: 'Historico de envios' }]}
+          value={activeTab}
+          onChange={setActiveTab}
+        />
       </div>
 
       {activeTab === 'sequencias' && (

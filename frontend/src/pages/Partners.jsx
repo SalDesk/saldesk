@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import {
   Handshake, Plus, Pencil, Trash2, ArrowUpRight, ArrowDownRight,
-  Hotel, Car, Utensils, Compass, ToggleLeft, ToggleRight, Search, Check, X, Clock,
+  Hotel, Car, Utensils, Compass, ToggleLeft, ToggleRight, Check, X, Clock,
 } from 'lucide-react';
 import {
   listPartners, createPartner, updatePartner, deletePartner, registerPartnerBooking,
@@ -11,6 +11,9 @@ import useAuthStore from '../store/authStore';
 import PageHeader from '../components/layout/PageHeader';
 import Button from '../components/ui/Button';
 import Card from '../components/ui/Card';
+import Badge from '../components/ui/Badge';
+import Tabs from '../components/ui/Tabs';
+import EmptyState from '../components/ui/EmptyState';
 import Modal from '../components/ui/Modal';
 import Input, { Textarea, Select } from '../components/ui/Input';
 import LoadingSpinner from '../components/shared/LoadingSpinner';
@@ -65,14 +68,10 @@ function OperatorPicker({ selected, onSelect }) {
 
   return (
     <div className="relative">
-      <div className="relative">
-        <Search size={14} strokeWidth={1.75} className="absolute left-3 top-1/2 -translate-y-1/2 text-n-400" />
-        <input
-          value={query} onChange={e => setQuery(e.target.value)}
-          placeholder="Pesquisar operador pelo nome..."
-          className="w-full h-9 pl-9 pr-3 rounded-sm border border-n-300 text-sm font-body bg-white text-n-900 focus:outline-none focus:ring-2 focus:ring-ocean-300 focus:border-ocean-700"
-        />
-      </div>
+      <Input
+        value={query} onChange={e => setQuery(e.target.value)}
+        placeholder="Pesquisar operador pelo nome..." aria-label="Pesquisar operador pelo nome"
+      />
       {query.trim().length >= 2 && (
         <div className="mt-1 border border-n-200 rounded-sm bg-white shadow-sm max-h-48 overflow-y-auto">
           {searching && <p className="text-xs font-body text-n-400 px-3 py-2">A pesquisar...</p>}
@@ -165,7 +164,7 @@ function PartnerModal({ partner, onSave, onRequest, onClose }) {
         {isNew && (
           <div className="flex gap-1 bg-n-100 rounded-sm p-0.5">
             {[{ v: 'manual', l: 'Parceiro externo' }, { v: 'real', l: 'Operador SalDesk' }].map(o => (
-              <button key={o.v} type="button" onClick={() => setMode(o.v)}
+              <button key={o.v} type="button" aria-pressed={mode === o.v} onClick={() => setMode(o.v)}
                 className={`flex-1 py-1.5 text-xs font-body font-semibold rounded-xs transition-colors ${mode === o.v ? 'bg-white text-ocean-700 shadow-sm' : 'text-n-500 hover:text-n-700'}`}>
                 {o.l}
               </button>
@@ -175,8 +174,8 @@ function PartnerModal({ partner, onSave, onRequest, onClose }) {
 
         {mode === 'manual' && (
           <>
-            <Input label="Nome do parceiro" value={form.name} onChange={set('name')} required placeholder="Ex: Hotel Morabeza" />
-            <Select label="Tipo de parceiro" value={form.partner_type} onChange={set('partner_type')}>
+            <Input label="Nome do parceiro" aria-label="Nome do parceiro" value={form.name} onChange={set('name')} required placeholder="Ex: Hotel Morabeza" />
+            <Select label="Tipo de parceiro" aria-label="Tipo de parceiro" value={form.partner_type} onChange={set('partner_type')}>
               {PARTNER_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
             </Select>
           </>
@@ -198,21 +197,21 @@ function PartnerModal({ partner, onSave, onRequest, onClose }) {
           </div>
         )}
 
-        <Select label="Tipo de parceria" value={form.partnership_type} onChange={set('partnership_type')}>
+        <Select label="Tipo de parceria" aria-label="Tipo de parceria" value={form.partnership_type} onChange={set('partnership_type')}>
           {PARTNERSHIP_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
         </Select>
 
         {needsCommission && (
           <div className="grid grid-cols-2 gap-3">
             <Input
-              label="Comissao (%)"
+              label="Comissao (%)" aria-label="Comissao (%)"
               type="number" min="0" max="50" step="0.5"
               value={form.commission_pct} onChange={set('commission_pct')}
               placeholder="Ex: 10"
               hint="Percentagem da reserva paga ao parceiro que a referenciou"
             />
             <Input
-              label="Preco medio da reserva (€)"
+              label="Preco medio da reserva (€)" aria-label="Preco medio da reserva (€)"
               type="number" min="0" step="1"
               value={form.avg_booking_value} onChange={set('avg_booking_value')}
               placeholder="Ex: 80"
@@ -223,14 +222,14 @@ function PartnerModal({ partner, onSave, onRequest, onClose }) {
 
         {needsMessage && (
           <>
-            <Textarea label="Mensagem de recomendacao PT" value={form.message_pt} onChange={set('message_pt')} rows={3}
+            <Textarea label="Mensagem de recomendacao PT" aria-label="Mensagem de recomendacao PT" value={form.message_pt} onChange={set('message_pt')} rows={3}
               placeholder="Ex: Para o seu alojamento em Sal, recomendamos o nosso parceiro Hotel Morabeza." />
-            <Textarea label="Mensagem de recomendacao EN" value={form.message_en} onChange={set('message_en')} rows={3}
+            <Textarea label="Mensagem de recomendacao EN" aria-label="Mensagem de recomendacao EN" value={form.message_en} onChange={set('message_en')} rows={3}
               placeholder="Ex: For your accommodation in Sal, we recommend our partner Hotel Morabeza." />
           </>
         )}
 
-        {error && <p className="text-xs text-error">{error}</p>}
+        {error && <p className="text-xs text-[var(--error)]">{error}</p>}
 
         <div className="flex gap-3 pt-1">
           <Button type="button" variant="secondary" onClick={onClose} className="flex-1">Cancelar</Button>
@@ -265,13 +264,13 @@ function BookingLogModal({ partner, onSave, onClose }) {
       <div className="space-y-4">
         <div className="flex gap-1 bg-n-100 rounded-sm p-0.5">
           {[{ v: 'sent', l: 'Reserva enviada ao parceiro' }, { v: 'received', l: 'Reserva recebida do parceiro' }].map(o => (
-            <button key={o.v} onClick={() => setDirection(o.v)}
+            <button key={o.v} type="button" aria-pressed={direction === o.v} onClick={() => setDirection(o.v)}
               className={`flex-1 py-1.5 text-xs font-body font-semibold rounded-xs transition-colors ${direction === o.v ? 'bg-white text-ocean-700 shadow-sm' : 'text-n-500 hover:text-n-700'}`}>
               {o.l}
             </button>
           ))}
         </div>
-        <Input label="Numero de reservas" type="number" min="1" step="1" value={count} onChange={e => setCount(e.target.value)} />
+        <Input label="Numero de reservas" aria-label="Numero de reservas" type="number" min="1" step="1" value={count} onChange={e => setCount(e.target.value)} />
         <div className="flex gap-3">
           <Button variant="secondary" onClick={onClose} className="flex-1">Cancelar</Button>
           <Button loading={saving} onClick={handleSave} className="flex-1">Registar</Button>
@@ -349,9 +348,9 @@ export default function Partners() {
     .reduce((s, p) => s + (p.bookings_received || 0) * (p.avg_booking_value || 0) * (p.commission_pct / 100), 0);
 
   const TABS = [
-    { key: 'parceiros',  label: 'Parceiros'          },
-    { key: 'pedidos',    label: `Pedidos${pendingReceived.length > 0 ? ` (${pendingReceived.length})` : ''}` },
-    { key: 'dashboard',  label: 'Dashboard'          },
+    { id: 'parceiros', label: 'Parceiros' },
+    { id: 'pedidos',   label: 'Pedidos', count: pendingReceived.length > 0 ? pendingReceived.length : undefined },
+    { id: 'dashboard', label: 'Dashboard' },
   ];
 
   if (loading) {
@@ -373,28 +372,19 @@ export default function Partners() {
         }
       />
 
-      <div className="flex gap-1 border-b border-n-200 mb-5">
-        {TABS.map(({ key, label }) => (
-          <button key={key} onClick={() => setActiveTab(key)}
-            className={`px-4 py-2.5 text-sm font-body font-semibold border-b-2 -mb-px transition-colors ${
-              activeTab === key ? 'border-ocean-700 text-ocean-700' : 'border-transparent text-n-500 hover:text-n-700'
-            }`}>
-            {label}
-          </button>
-        ))}
+      <div className="mb-5">
+        <Tabs tabs={TABS} value={activeTab} onChange={setActiveTab} />
       </div>
 
       {activeTab === 'parceiros' && (
         activePartners.length === 0 ? (
-          <Card>
-            <div className="text-center py-14">
-              <Handshake size={36} strokeWidth={1.25} className="mx-auto mb-3 text-n-300" />
-              <p className="font-display font-semibold text-n-700 mb-1">Sem parceiros configurados</p>
-              <p className="text-sm font-body text-n-400 mb-4">
-                Adiciona operadores SalDesk parceiros para comecar a fazer cross-selling.
-              </p>
-              <Button icon={Plus} onClick={() => setModal({ _new: true })}>Adicionar parceiro</Button>
-            </div>
+          <Card padding="p-0">
+            <EmptyState
+              icon={Handshake}
+              title="Sem parceiros configurados"
+              description="Adiciona operadores SalDesk parceiros para comecar a fazer cross-selling."
+              action={<Button icon={Plus} onClick={() => setModal({ _new: true })}>Adicionar parceiro</Button>}
+            />
           </Card>
         ) : (
           <div className="space-y-3">
@@ -403,7 +393,7 @@ export default function Partners() {
               const pshipType = PARTNERSHIP_TYPES.find(t => t.value === p.partnership_type) || PARTNERSHIP_TYPES[0];
               const isRejected = p.status === 'rejected';
               return (
-                <div key={p.id} className={`bg-white border border-n-200 rounded-md px-4 py-4 flex items-start gap-4 ${(!p.active || isRejected) ? 'opacity-60' : ''}`}>
+                <Card key={p.id} padding="px-4 py-4 flex items-start gap-4" className={(!p.active || isRejected) ? 'opacity-60' : ''}>
                   <div className="w-9 h-9 rounded-sm bg-ocean-50 flex items-center justify-center shrink-0">
                     <typeInfo.Icon size={18} strokeWidth={1.75} className="text-ocean-700" />
                   </div>
@@ -412,12 +402,8 @@ export default function Partners() {
                       <div>
                         <p className="font-display font-semibold text-sm text-n-900 flex items-center gap-1.5">
                           {p.name}
-                          {p.partner_operator_id && (
-                            <span className="text-[9px] font-mono uppercase tracking-wide text-ocean-700 bg-ocean-50 px-1.5 py-0.5 rounded-xs">SalDesk</span>
-                          )}
-                          {isRejected && (
-                            <span className="text-[9px] font-mono uppercase tracking-wide text-error bg-red-50 px-1.5 py-0.5 rounded-xs">Recusado</span>
-                          )}
+                          {p.partner_operator_id && <Badge variant="info">SalDesk</Badge>}
+                          {isRejected && <Badge variant="cancelled">Recusado</Badge>}
                         </p>
                         <p className="text-xs font-body text-n-500 mt-0.5">{typeInfo.label} · {pshipType.label}</p>
                         {p.commission_pct > 0 && (
@@ -432,7 +418,7 @@ export default function Partners() {
                           <p className="text-[9px] font-mono text-n-400">enviadas</p>
                         </div>
                         <div>
-                          <p className="font-display font-bold text-sm text-[#1A7A4A]">{p.bookings_received || 0}</p>
+                          <p className="font-display font-bold text-sm text-[var(--success)]">{p.bookings_received || 0}</p>
                           <p className="text-[9px] font-mono text-n-400">recebidas</p>
                         </div>
                       </div>
@@ -442,26 +428,26 @@ export default function Partners() {
                     )}
                   </div>
                   <div className="flex gap-1 shrink-0">
-                    <button onClick={() => setLogModal(p)}
+                    <button type="button" onClick={() => setLogModal(p)} aria-label={`Registar reservas ${p.name}`}
                       className="p-1.5 rounded text-n-400 hover:text-ocean-700 hover:bg-ocean-50 transition-colors" title="Registar reservas">
                       <Handshake size={13} strokeWidth={1.75} />
                     </button>
-                    <button onClick={() => handleToggle(p)}
+                    <button type="button" onClick={() => handleToggle(p)} aria-label={`${p.active ? 'Desactivar' : 'Activar'} ${p.name}`}
                       className="p-1.5 rounded text-n-400 hover:text-n-700 hover:bg-n-100 transition-colors">
                       {p.active
                         ? <ToggleRight size={13} strokeWidth={1.75} className="text-ocean-700" />
                         : <ToggleLeft size={13} strokeWidth={1.75} />}
                     </button>
-                    <button onClick={() => setModal(p)}
+                    <button type="button" onClick={() => setModal(p)} aria-label={`Editar ${p.name}`}
                       className="p-1.5 rounded text-n-400 hover:text-ocean-700 hover:bg-ocean-50 transition-colors">
                       <Pencil size={13} strokeWidth={1.75} />
                     </button>
-                    <button onClick={() => handleDelete(p.id)}
-                      className="p-1.5 rounded text-n-400 hover:text-error hover:bg-red-50 transition-colors">
+                    <button type="button" onClick={() => handleDelete(p.id)} aria-label={`Eliminar ${p.name}`}
+                      className="p-1.5 rounded text-n-400 hover:text-[var(--error)] hover:bg-[var(--error-light)] transition-colors">
                       <Trash2 size={13} strokeWidth={1.75} />
                     </button>
                   </div>
-                </div>
+                </Card>
               );
             })}
           </div>
@@ -477,7 +463,7 @@ export default function Partners() {
             ) : (
               <div className="space-y-2">
                 {pendingReceived.map(p => (
-                  <div key={p.id} className="bg-white border border-n-200 rounded-md px-4 py-3 flex items-center gap-3">
+                  <Card key={p.id} padding="px-4 py-3 flex items-center gap-3">
                     <div className="w-9 h-9 rounded-sm bg-ocean-50 flex items-center justify-center shrink-0">
                       <Handshake size={16} strokeWidth={1.75} className="text-ocean-700" />
                     </div>
@@ -490,7 +476,7 @@ export default function Partners() {
                     </div>
                     <Button size="sm" icon={Check} loading={responding === p.id} onClick={() => handleRespond(p.id, 'accepted')}>Aceitar</Button>
                     <Button size="sm" variant="secondary" icon={X} loading={responding === p.id} onClick={() => handleRespond(p.id, 'rejected')}>Recusar</Button>
-                  </div>
+                  </Card>
                 ))}
               </div>
             )}
@@ -503,7 +489,7 @@ export default function Partners() {
             ) : (
               <div className="space-y-2">
                 {pendingSent.map(p => (
-                  <div key={p.id} className="bg-white border border-n-200 rounded-md px-4 py-3 flex items-center gap-3">
+                  <Card key={p.id} padding="px-4 py-3 flex items-center gap-3">
                     <div className="w-9 h-9 rounded-sm bg-n-100 flex items-center justify-center shrink-0">
                       <Clock size={16} strokeWidth={1.75} className="text-n-500" />
                     </div>
@@ -511,11 +497,11 @@ export default function Partners() {
                       <p className="font-display font-semibold text-sm text-n-900">{p.name}</p>
                       <p className="text-xs font-body text-n-500">A aguardar resposta</p>
                     </div>
-                    <button onClick={() => handleDelete(p.id)}
-                      className="p-1.5 rounded text-n-400 hover:text-error hover:bg-red-50 transition-colors" title="Cancelar pedido">
+                    <button type="button" onClick={() => handleDelete(p.id)} aria-label={`Cancelar pedido ${p.name}`}
+                      className="p-1.5 rounded text-n-400 hover:text-[var(--error)] hover:bg-[var(--error-light)] transition-colors" title="Cancelar pedido">
                       <Trash2 size={14} strokeWidth={1.75} />
                     </button>
-                  </div>
+                  </Card>
                 ))}
               </div>
             )}
@@ -529,13 +515,13 @@ export default function Partners() {
             {[
               { label: 'Parceiros activos',     value: activePartners.filter(p => p.active && p.status !== 'rejected').length, color: 'text-n-900' },
               { label: 'Reservas enviadas',      value: totalSent,                             color: 'text-ocean-700', Icon: ArrowUpRight },
-              { label: 'Reservas recebidas',     value: totalReceived,                         color: 'text-[#1A7A4A]', Icon: ArrowDownRight },
-              { label: 'Balanco (recebidas - enviadas)', value: totalReceived - totalSent,     color: (totalReceived - totalSent) >= 0 ? 'text-[#1A7A4A]' : 'text-error' },
+              { label: 'Reservas recebidas',     value: totalReceived,                         color: 'text-[var(--success)]', Icon: ArrowDownRight },
+              { label: 'Balanco (recebidas - enviadas)', value: totalReceived - totalSent,     color: (totalReceived - totalSent) >= 0 ? 'text-[var(--success)]' : 'text-[var(--error)]' },
             ].map(m => (
-              <div key={m.label} className="bg-white border border-n-200 rounded-md px-4 py-3">
+              <Card key={m.label} padding="px-4 py-3">
                 <p className={`font-display font-bold text-xl ${m.color}`}>{m.value}</p>
                 <p className="text-xs font-body text-n-500 mt-0.5">{m.label}</p>
-              </div>
+              </Card>
             ))}
           </div>
 
@@ -543,7 +529,7 @@ export default function Partners() {
             <div className="grid grid-cols-2 gap-4">
               <Card padding="px-5 py-4">
                 <h3 className="font-display font-semibold text-sm text-n-700 mb-3">Comissoes a pagar</h3>
-                <p className="font-display font-bold text-2xl text-error">€{commPayable.toFixed(0)}</p>
+                <p className="font-display font-bold text-2xl text-[var(--error)]">€{commPayable.toFixed(0)}</p>
                 <p className="text-xs font-body text-n-400 mt-0.5">
                   Por reservas que enviaste aos parceiros com comissao.
                   <br />Requer precos medios configurados por parceiro.
@@ -551,7 +537,7 @@ export default function Partners() {
               </Card>
               <Card padding="px-5 py-4">
                 <h3 className="font-display font-semibold text-sm text-n-700 mb-3">Comissoes a receber</h3>
-                <p className="font-display font-bold text-2xl text-[#1A7A4A]">€{commReceivable.toFixed(0)}</p>
+                <p className="font-display font-bold text-2xl text-[var(--success)]">€{commReceivable.toFixed(0)}</p>
                 <p className="text-xs font-body text-n-400 mt-0.5">
                   Por reservas que os parceiros te enviaram.
                   <br />Requer precos medios configurados por parceiro.
@@ -560,8 +546,8 @@ export default function Partners() {
             </div>
           )}
 
-          <div className="px-4 py-3 bg-ocean-50 border border-ocean-100 rounded-sm">
-            <p className="text-xs font-body text-ocean-700">
+          <div className="px-4 py-3 bg-[var(--info-light)] border border-n-200 rounded-sm">
+            <p className="text-xs font-body text-[var(--info)]">
               <span className="font-semibold">Nota:</span> Para activar as recomendacoes automaticas (email apos tour confirmado, etc.), configura as automacoes correspondentes em <span className="font-mono">Automacoes de Comunicacao</span>.
             </p>
           </div>
