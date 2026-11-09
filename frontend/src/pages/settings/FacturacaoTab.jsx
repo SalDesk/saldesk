@@ -6,6 +6,7 @@ import useAuthStore from '../../store/authStore';
 import usePlan, { PLAN_PRICES } from '../../hooks/usePlan';
 import Card from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
+import Badge from '../../components/ui/Badge';
 import Modal from '../../components/ui/Modal';
 
 /* ─────────────────────────────────────────────────────────
@@ -17,7 +18,7 @@ const PLAN_LABEL = { starter: 'Starter', business: 'Business', pro: 'Pro' };
    exigido pelo checklist da SISP (preco expresso tambem em CVE). */
 const CVE_PER_EUR = 110.265;
 const STATUS_LABEL = { trial: 'Periodo de avaliacao', active: 'Activo', suspended: 'Suspenso', cancelled: 'Cancelado' };
-const STATUS_TONE  = { trial: 'text-ocean-700 bg-ocean-50', active: 'text-green-700 bg-green-50', suspended: 'text-error bg-red-50', cancelled: 'text-n-500 bg-n-100' };
+const STATUS_VARIANT = { trial: 'info', active: 'confirmed', suspended: 'cancelled', cancelled: 'default' };
 
 export default function FacturacaoTab() {
   const { operator, setOperator } = useAuthStore();
@@ -97,7 +98,7 @@ export default function FacturacaoTab() {
           <div>
             <p className="font-display font-bold text-lg text-n-900">{PLAN_LABEL[operator?.plan] || operator?.plan}</p>
             {isInTrial() && <p className="text-xs font-body text-n-500 mt-1">{trialDaysLeft()} dias restantes no periodo de avaliacao</p>}
-            {isTrialExpired() && <p className="text-xs font-body text-error mt-1">Periodo de avaliacao terminado</p>}
+            {isTrialExpired() && <p className="text-xs font-body text-[var(--error)] mt-1">Periodo de avaliacao terminado</p>}
             {hasActiveSubscription && paidUntil && (
               <p className="text-xs font-body text-n-500 mt-1">Renova automaticamente a {paidUntil.toLocaleDateString('pt-PT')}</p>
             )}
@@ -105,18 +106,18 @@ export default function FacturacaoTab() {
               <p className="text-xs font-body text-n-500 mt-1">Pago ate {paidUntil.toLocaleDateString('pt-PT')}</p>
             )}
           </div>
-          <span className={`text-xs font-body font-semibold px-3 py-1.5 rounded-full ${STATUS_TONE[operator?.plan_status] || 'text-n-500 bg-n-100'}`}>
+          <Badge variant={STATUS_VARIANT[operator?.plan_status] || 'default'}>
             {STATUS_LABEL[operator?.plan_status] || operator?.plan_status}
-          </span>
+          </Badge>
         </div>
         {hasActiveSubscription && (
-          <button onClick={() => setShowCancelModal(true)} className="text-xs font-body font-semibold text-error hover:underline mt-3">
+          <button type="button" onClick={() => setShowCancelModal(true)} className="text-xs font-body font-semibold text-[var(--error)] hover:underline mt-3">
             Cancelar subscricao
           </button>
         )}
       </Card>
 
-      {error && <p className="text-sm font-body text-error bg-red-50 border border-red-200 rounded px-3 py-2">{error}</p>}
+      {error && <p className="text-sm font-body text-[var(--error)] bg-[var(--error-light)] border border-n-200 rounded px-3 py-2">{error}</p>}
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         {['starter', 'business', 'pro'].map((plan) => {
@@ -154,7 +155,7 @@ export default function FacturacaoTab() {
               </div>
               <div className="text-right">
                 <p className="font-semibold text-n-900">€{Number(p.amount_eur).toFixed(2)}</p>
-                <p className={`text-xs ${p.status === 'completed' ? 'text-green-700' : p.status === 'failed' ? 'text-error' : 'text-n-500'}`}>
+                <p className={`text-xs ${p.status === 'completed' ? 'text-[var(--success)]' : p.status === 'failed' ? 'text-[var(--error)]' : 'text-n-500'}`}>
                   {p.status === 'completed' ? 'Pago' : p.status === 'failed' ? 'Falhou' : 'Pendente'}
                 </p>
               </div>

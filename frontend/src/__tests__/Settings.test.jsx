@@ -765,3 +765,68 @@ describe('Definicoes: design system (Perfil Publico)', () => {
     semCoresForaDosTokens(classes(container));
   });
 });
+
+/* ───────────────────────── design system: Pagamentos e Facturacao ───────────────────────── */
+
+describe('Definicoes: design system (Pagamentos e Facturacao)', () => {
+  it('os_estados_de_Pagamentos_tem_role_status_e_tokens_e_os_campos_tem_nome', async () => {
+    montar();
+    await abrir('Pagamentos', 'Webhook PayPal');
+    const estados = screen.getAllByRole('status');
+    expect(estados).toHaveLength(3);
+    expect(estados[0].className).toContain('var(--success-light)');
+    expect(estados[1].className).toContain('bg-n-50');
+    ['Client ID', 'Client Secret', 'Webhook ID', 'POS ID', 'POS Auth Code'].forEach(e => expect(screen.getByLabelText(e)).toBeInTheDocument());
+    expect(screen.getByLabelText('Client ID')).toHaveAttribute('type', 'password');
+  });
+
+  it('o_estado_da_subscricao_e_Badge_com_a_variante_certa', async () => {
+    const estado = async (op, texto) => {
+      await abrirFacturacao(op);
+      const e = within(cartao('Subscricao actual')).getByText(texto);
+      cleanup();
+      return e.className;
+    };
+    expect(await estado(OPERADOR, 'Activo')).toContain('var(--success-light)');
+    expect(await estado({ ...OPERADOR, plan_status: 'trial', trial_ends_at: dia(5) }, 'Periodo de avaliacao')).toContain('var(--info-light)');
+    expect(await estado({ ...OPERADOR, plan_status: 'suspended', paypal_subscription_id: null }, 'Suspenso')).toContain('var(--error-light)');
+    expect(await estado({ ...OPERADOR, plan_status: 'cancelled', paypal_subscription_id: null }, 'Cancelado')).toContain('bg-n-100');
+    expect(await estado({ ...OPERADOR, plan_status: 'xyz', paypal_subscription_id: null }, 'xyz')).toContain('bg-n-100');
+  });
+
+  it('o_historico_e_os_erros_usam_tokens', async () => {
+    createSubscription.mockRejectedValueOnce(new Error('x'));
+    await abrirFacturacao();
+    const h = within(cartao('Historico de pagamentos'));
+    expect(h.getByText('Pago').className).toContain('var(--success)');
+    expect(h.getByText('Falhou').className).toContain('var(--error)');
+    escolher('Starter');
+    fireEvent.click(modalPagamento().getByRole('checkbox'));
+    fireEvent.click(modalPagamento().getByRole('button', { name: /^PayPal/ }));
+    const erro = await screen.findByText('Nao foi possivel iniciar a subscricao. Tenta novamente.');
+    expect(erro.className).toContain('var(--error-light)');
+    expect(erro.className).toContain('var(--error)');
+  });
+
+  it('sem_cores_nomeadas_text_error_bg_red_ou_hexadecimais_em_classes_em_Pagamentos_e_Facturacao', async () => {
+    /* o botao "Confirmar cancelamento" e um ui/Button variant=danger (bg-error): o modal de cancelamento fica de fora */
+    const { container } = montar();
+    await abrir('Pagamentos', 'Webhook PayPal');
+    let html = classes(container);
+    fireEvent.click(separador('Facturacao'));
+    await screen.findByText('Historico de pagamentos');
+    await screen.findByText('Pago');
+    html += classes(container);
+    cleanup();
+    createSubscription.mockRejectedValueOnce(new Error('x'));
+    const r = montar('/definicoes?tab=facturacao', { ...OPERADOR, plan_status: 'trial', trial_ends_at: dia(-1) });
+    await screen.findByText('Pago');
+    escolher('Starter');
+    html += classes(r.container);
+    fireEvent.click(modalPagamento().getByRole('checkbox'));
+    fireEvent.click(modalPagamento().getByRole('button', { name: /^PayPal/ }));
+    await screen.findByText('Nao foi possivel iniciar a subscricao. Tenta novamente.');
+    html += classes(r.container);
+    semCoresForaDosTokens(html);
+  });
+});
