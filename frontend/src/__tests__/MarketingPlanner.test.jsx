@@ -384,3 +384,14 @@ describe('Planeador: design system', () => {
     semCoresForaDosTokens(html);
   });
 });
+
+describe('Planeador: dados em falta', () => {
+  it('um_post_sem_text_pt_no_historico_mostra_a_celula_vazia_e_nao_rebenta', () => {
+    const p = { id: 'x', scheduled_at: '2026-11-10T10:00', status: 'publicado', platform: 'instagram' };
+    const { h } = planner([p]);
+    const linha = screen.getAllByRole('row')[1];
+    expect(linha.querySelector('td').textContent).toBe('');
+    fireEvent.click(within(linha).getAllByRole('button')[0]);
+    expect(h.onEdit).toHaveBeenCalledWith(p);
+  });
+});

@@ -80,8 +80,8 @@ export default function SocialPlanner({ posts, onAdd, onEdit, onDelete, onMarkPu
       key: 'acoes', label: '',
       render: p => (
         <div className="flex gap-1 justify-end">
-          <button type="button" aria-label={`Editar post ${p.text_pt.slice(0, 30)}`} onClick={() => onEdit(p)} className="p-1 text-n-400 hover:text-ocean-700 transition-colors"><Pencil size={13} strokeWidth={1.75} /></button>
-          <button type="button" aria-label={`Eliminar post ${p.text_pt.slice(0, 30)}`} onClick={() => onDelete(p.id)} className="p-1 text-n-400 hover:text-[var(--error)] transition-colors"><Trash2 size={13} strokeWidth={1.75} /></button>
+          <button type="button" aria-label={`Editar post ${(p.text_pt || '').slice(0, 30)}`} onClick={() => onEdit(p)} className="p-1 text-n-400 hover:text-ocean-700 transition-colors"><Pencil size={13} strokeWidth={1.75} /></button>
+          <button type="button" aria-label={`Eliminar post ${(p.text_pt || '').slice(0, 30)}`} onClick={() => onDelete(p.id)} className="p-1 text-n-400 hover:text-[var(--error)] transition-colors"><Trash2 size={13} strokeWidth={1.75} /></button>
         </div>
       ),
     },
