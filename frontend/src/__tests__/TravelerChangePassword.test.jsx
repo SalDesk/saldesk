@@ -2,15 +2,18 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { ChangePasswordTab } from '../pages/traveler/TravelerPortal';
-import { changePassword } from '../services/travelerAuthService';
+import { changePassword, forgotPassword } from '../services/travelerAuthService';
+import useTravelerAuthStore from '../store/travelerAuthStore';
 
-vi.mock('../services/travelerAuthService', () => ({ logout: vi.fn(), changePassword: vi.fn() }));
+vi.mock('../services/travelerAuthService', () => ({ logout: vi.fn(), changePassword: vi.fn(), forgotPassword: vi.fn() }));
 
 let spyErr; let spyWarn;
 beforeEach(() => {
   spyErr = vi.spyOn(console, 'error').mockImplementation(() => {});
   spyWarn = vi.spyOn(console, 'warn').mockImplementation(() => {});
   changePassword.mockReset().mockResolvedValue({});
+  forgotPassword.mockReset().mockResolvedValue({});
+  useTravelerAuthStore.setState({ token: 'tok', traveler: { id: 't1', name: 'Viajante', email: 'v@x.test' } });
 });
 afterEach(() => {
   /* ler as contagens ANTES de restaurar os espioes */
@@ -18,6 +21,7 @@ afterEach(() => {
   const avisos = spyWarn.mock.calls.map(c => String(c[0]).slice(0, 200));
   cleanup();
   vi.restoreAllMocks();
+  useTravelerAuthStore.setState({ token: null, traveler: null });
   expect(erros).toEqual([]);
   expect(avisos).toEqual([]);
 });
@@ -81,5 +85,30 @@ describe('Portal do viajante: alterar password', () => {
       fireEvent.click(input.parentElement.querySelector('button'));
       expect(input).toHaveAttribute('type', 'text');
     }
+  });
+
+  it('contas sem password (Google ou Apple) tem o caminho de definir a password por email', async () => {
+    montar();
+    expect(screen.getByText(/Entrou com Google ou Apple/)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Enviar link para definir a password' }));
+    await waitFor(() => expect(forgotPassword).toHaveBeenCalledWith('v@x.test'));
+    expect(await screen.findByText(/Enviamos um email para v@x\.test/)).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Enviar link para definir a password' })).not.toBeInTheDocument();
+  });
+
+  it('falha ao enviar o email mostra o erro e permite tentar de novo', async () => {
+    forgotPassword.mockRejectedValueOnce(new Error('x'));
+    montar();
+    fireEvent.click(screen.getByRole('button', { name: 'Enviar link para definir a password' }));
+    expect(await screen.findByText('Nao foi possivel enviar o email. Tente novamente.')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Enviar link para definir a password' }));
+    await waitFor(() => expect(forgotPassword).toHaveBeenCalledTimes(2));
+    expect(await screen.findByText(/Enviamos um email para v@x\.test/)).toBeInTheDocument();
+  });
+
+  it('sem email do viajante nao mostra o botao', () => {
+    useTravelerAuthStore.setState({ traveler: { id: 't1', name: 'Viajante' } });
+    montar();
+    expect(screen.queryByRole('button', { name: 'Enviar link para definir a password' })).not.toBeInTheDocument();
   });
 });

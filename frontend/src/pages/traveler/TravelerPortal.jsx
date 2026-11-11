@@ -9,7 +9,7 @@ import useTravelerAuthStore from '../../store/travelerAuthStore';
 import useUiStore from '../../store/uiStore';
 import { useThemeEffect } from '../../hooks/useThemeEffect';
 import * as travelerService from '../../services/travelerService';
-import { logout as apiLogout, changePassword } from '../../services/travelerAuthService';
+import { logout as apiLogout, changePassword, forgotPassword } from '../../services/travelerAuthService';
 import { discoverUnits } from '../../services/publicService';
 import { validateImageFile } from '../../services/uploadService';
 import Logo from '../../components/shared/Logo';
@@ -233,6 +233,8 @@ function EditProfileTab({ traveler, onUpdate }) {
 
 /* ─── Alterar password ─── */
 export function ChangePasswordTab() {
+  const { traveler } = useTravelerAuthStore();
+  const [linkEstado, setLinkEstado] = useState('idle'); // idle | sending | sent | error
   const [form, setForm]       = useState({ current: '', newPw: '', confirm: '' });
   const [show, setShow]       = useState({ current: false, newPw: false, confirm: false });
   const [saving, setSaving]   = useState(false);
@@ -260,6 +262,18 @@ export function ChangePasswordTab() {
       setError(err?.response?.data?.error || 'Nao foi possivel alterar a password.');
     } finally {
       setSaving(false);
+    }
+  }
+
+  /* Contas criadas com Google ou Apple nunca definiram uma password, por isso nao ha password actual
+     para preencher: o caminho e receber por email o link para a definir (o mesmo da recuperacao). */
+  async function enviarLinkDefinirPassword() {
+    setLinkEstado('sending');
+    try {
+      await forgotPassword(traveler.email);
+      setLinkEstado('sent');
+    } catch {
+      setLinkEstado('error');
     }
   }
 
@@ -297,6 +311,28 @@ export function ChangePasswordTab() {
           {savedOk ? 'Password alterada' : 'Alterar password'}
         </Button>
       </form>
+
+      {traveler?.email && (
+        <div className="mt-5 pt-4 border-t border-n-100 dark:border-n-700 max-w-md">
+          <p className="text-xs font-body text-n-500 dark:text-n-400 mb-2">
+            Entrou com Google ou Apple e nunca definiu uma password? Nesse caso nao tem password actual: pode definir uma por email.
+          </p>
+          {linkEstado === 'sent' ? (
+            <p className="text-xs font-body text-n-700 dark:text-n-300">
+              Enviamos um email para {traveler.email} com o link para definir a password.
+            </p>
+          ) : (
+            <>
+              <Button type="button" variant="secondary" size="sm" loading={linkEstado === 'sending'} onClick={enviarLinkDefinirPassword}>
+                Enviar link para definir a password
+              </Button>
+              {linkEstado === 'error' && (
+                <p className="text-xs text-error mt-2">Nao foi possivel enviar o email. Tente novamente.</p>
+              )}
+            </>
+          )}
+        </div>
+      )}
     </Card>
   );
 }
