@@ -13,7 +13,7 @@ import {
   CartesianGrid,
   Legend,
 } from 'recharts';
-import { exportExcel, exportPdf } from '../../services/financeiroService';
+import { exportExcel, exportPdf, getReceita } from '../../services/financeiroService';
 import { listExpenses, getSalaryPayments } from '../../services/expensesService';
 import Button from '../../components/ui/Button';
 import Card from '../../components/ui/Card';
@@ -22,16 +22,27 @@ import { MONTHS_PT, fmtMoney } from './shared';
 
 /* ─────────────────── RESULTADO ─────────────────── */
 
-function ResultadoTab({ resumo, currency, sazonal, periodo }) {
+/* AAAA-MM-DD em hora local */
+function ymd(d) {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+function ResultadoTab({ resumo, currency, periodo }) {
   const [allExp,     setAllExp]     = useState([]);
+  const [mensal,     setMensal]     = useState([]);
   const [salPayments, setSalPayments] = useState([]);
   const [loading,    setLoading]    = useState(true);
   const [exporting,  setExporting]  = useState(false);
 
   useEffect(() => {
     setLoading(true);
-    Promise.all([listExpenses(), getSalaryPayments()])
-      .then(([exp, pay]) => { setAllExp(exp); setSalPayments(pay || []); })
+    /* Receita mensal dos ultimos 6 meses (o grafico), pedida aqui para nao depender do ano corrente:
+       GET /financial/receita devolve { periodo: 'AAAA-MM', receita, num_reservas } por mes. */
+    const hoje = new Date();
+    const inicio6 = ymd(new Date(hoje.getFullYear(), hoje.getMonth() - 5, 1));
+    const fim6 = ymd(new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0));
+    Promise.all([listExpenses(), getSalaryPayments(), getReceita(inicio6, fim6, 'month').catch(() => [])])
+      .then(([exp, pay, rec]) => { setAllExp(exp); setSalPayments(pay || []); setMensal(rec || []); })
       .finally(() => setLoading(false));
   }, []);
 
@@ -66,10 +77,10 @@ function ResultadoTab({ resumo, currency, sazonal, periodo }) {
   const chartData = Array.from({ length: 6 }, (_, i) => {
     const d = new Date(now.getFullYear(), now.getMonth() - (5 - i), 1);
     const m = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-    const rec = (sazonal || []).find(s => (s.date || '').startsWith(m));
+    const rec = mensal.find(s => s.periodo === m);
     const dep = allExp.filter(e => (e.date || '').startsWith(m)).reduce((s, e) => s + Number(e.amount || 0), 0);
     const sal = salPayments.filter(p => `${p.year}-${String(p.month).padStart(2, '0')}` === m).reduce((s, p) => s + Number(p.amount || 0), 0);
-    return { name: MONTHS_PT[d.getMonth()], receita: Math.round(rec?.value || rec?.total || 0), despesas: Math.round(dep + sal) };
+    return { name: MONTHS_PT[d.getMonth()], receita: Math.round(Number(rec?.receita || 0)), despesas: Math.round(dep + sal) };
   });
 
   async function handleExport(type) {

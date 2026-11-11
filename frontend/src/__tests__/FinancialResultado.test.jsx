@@ -1,12 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import ResultadoTab from '../pages/financial/ResultadoTab';
-import { exportExcel, exportPdf } from '../services/financeiroService';
+import { exportExcel, exportPdf, getReceita } from '../services/financeiroService';
 import { listExpenses, getSalaryPayments } from '../services/expensesService';
 import { coresDosGraficos, dadosDoGrafico } from './helpers/rechartsMock';
 import { MES, norm, eur, cve } from './helpers/financeFixtures';
 
-vi.mock('../services/financeiroService', () => ({ exportExcel: vi.fn(), exportPdf: vi.fn() }));
+vi.mock('../services/financeiroService', () => ({ exportExcel: vi.fn(), exportPdf: vi.fn(), getReceita: vi.fn() }));
 vi.mock('../services/expensesService', () => ({ listExpenses: vi.fn(), getSalaryPayments: vi.fn() }));
 vi.mock('recharts', async () => (await import('./helpers/rechartsMock')).makeRechartsMock());
 
@@ -29,11 +29,12 @@ const PAGAMENTOS = [
   { staffId: 's1', month: MES_NUM, year: ANO_NUM, amount: 200 },
   { staffId: 's1', month: MES_ANT_D.getMonth() + 1, year: MES_ANT_D.getFullYear(), amount: 50 },
 ];
-const SAZONAL = [
-  { date: `${MES}-01`, value: 700 },
-  { date: `${MES_ANT}-01`, total: 500 },
-  { periodo: MES, receita: 999 }, /* a forma real da API: a pagina nao a le (ver decisao 8a do plano) */
+/* a forma real da API: GET /financial/receita?granularidade=month devolve { periodo: 'YYYY-MM', receita, num_reservas } */
+const MENSAL = [
+  { periodo: MES, receita: 700, num_reservas: 7 },
+  { periodo: MES_ANT, receita: 500.4, num_reservas: 5 },
 ];
+const ymd = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 
 let spyErr; let spyWarn;
 beforeEach(() => {
@@ -43,6 +44,7 @@ beforeEach(() => {
   getSalaryPayments.mockResolvedValue(PAGAMENTOS);
   exportExcel.mockResolvedValue();
   exportPdf.mockResolvedValue();
+  getReceita.mockResolvedValue(MENSAL);
 });
 afterEach(() => {
   /* ler as contagens ANTES de restaurar os espioes */
@@ -56,7 +58,7 @@ afterEach(() => {
 });
 
 async function montar(props = {}) {
-  const r = render(<ResultadoTab resumo={RESUMO} currency="EUR" sazonal={SAZONAL} periodo={PERIODO} {...props} />);
+  const r = render(<ResultadoTab resumo={RESUMO} currency="EUR" periodo={PERIODO} {...props} />);
   await screen.findByText('Decomposicao do resultado');
   return r;
 }
@@ -155,13 +157,34 @@ describe('Resultado', () => {
     expect(screen.getByText('Receitas vs Despesas — ultimos 6 meses')).toBeInTheDocument();
   });
 
-  it('receita_do_grafico_le_date_e_value_ou_total_e_ignora_a_forma_real_da_api', async () => {
+  it('receita_do_grafico_vem_da_API_mensal_dos_ultimos_6_meses_com_a_forma_real_periodo_receita', async () => {
     await montar();
     const d = dadosDoGrafico('bar');
     expect(d[5].receita).toBe(700);
     expect(d[4].receita).toBe(500);
+    expect(d.slice(0, 4).map(x => x.receita)).toEqual([0, 0, 0, 0]);
+    const inicio = ymd(new Date(ANO_NUM, AGORA.getMonth() - 5, 1));
+    const fim = ymd(new Date(ANO_NUM, AGORA.getMonth() + 1, 0));
+    expect(getReceita).toHaveBeenCalledTimes(1);
+    expect(getReceita).toHaveBeenCalledWith(inicio, fim, 'month');
+  });
+
+  it('o_intervalo_pedido_atravessa_a_viragem_do_ano_sem_ficar_limitado_ao_ano_corrente', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date(2027, 1, 10, 12, 0, 0));
+    try {
+      await montar();
+      expect(getReceita).toHaveBeenCalledWith('2026-09-01', '2027-02-28', 'month');
+    } finally { vi.useRealTimers(); }
+  });
+
+  it('getReceita_a_falhar_ou_nulo_deixa_o_grafico_a_zero_sem_rebentar', async () => {
+    getReceita.mockRejectedValue(new Error('x'));
+    await montar();
+    expect(dadosDoGrafico('bar').map(x => x.receita)).toEqual([0, 0, 0, 0, 0, 0]);
     cleanup();
-    await montar({ sazonal: [{ periodo: MES, receita: 999 }] });
+    getReceita.mockResolvedValue(null);
+    await montar();
     expect(dadosDoGrafico('bar').map(x => x.receita)).toEqual([0, 0, 0, 0, 0, 0]);
   });
 
@@ -182,7 +205,7 @@ describe('Resultado', () => {
 
   it('em_carga_mostra_o_spinner', () => {
     listExpenses.mockReturnValue(new Promise(() => {}));
-    render(<ResultadoTab resumo={RESUMO} currency="EUR" sazonal={SAZONAL} periodo={PERIODO} />);
+    render(<ResultadoTab resumo={RESUMO} currency="EUR" periodo={PERIODO} />);
     expect(screen.queryByText('Decomposicao do resultado')).toBeNull();
   });
 });
