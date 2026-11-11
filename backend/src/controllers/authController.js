@@ -7,6 +7,7 @@ const {
 const { enviarEmail } = require('../helpers/emailHelper');
 const { passwordResetEmail } = require('../helpers/emailTemplates');
 const { verificarPasswordActual } = require('../helpers/passwordAtual');
+const { revogarOutrasSessoes } = require('../helpers/sessoes');
 
 /* Chama o endpoint de token do Supabase Auth (password ou refresh_token grant) */
 function supabaseTokenRequest(grantType, body) {
@@ -238,7 +239,10 @@ async function changePassword(req, res, next) {
     if (error) {
       return res.status(400).json({ error: error.message, code: 'PASSWORD_ERROR' });
     }
-    return res.json({ data: null, message: 'Password alterada com sucesso' });
+    /* Termina as outras sessoes (a deste pedido mantem-se). Melhor esforco: ver helpers/sessoes.js. */
+    const token = req.headers.authorization?.split(' ')[1];
+    const outrasSessoesRevogadas = await revogarOutrasSessoes(supabaseAdmin, token);
+    return res.json({ data: { outras_sessoes_revogadas: outrasSessoesRevogadas }, message: 'Password alterada com sucesso' });
   } catch (err) {
     next(err);
   }

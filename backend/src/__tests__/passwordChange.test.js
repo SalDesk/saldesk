@@ -1,14 +1,16 @@
 /* PUT /auth/password e PUT /traveler-auth/password: exigem e verificam a password actual. Sem rede nem base de dados. */
 
 jest.mock('../config/supabase', () => ({
-  supabaseAdmin: { auth: { admin: { updateUserById: jest.fn() } } },
+  supabaseAdmin: { auth: { admin: { updateUserById: jest.fn(), signOut: jest.fn() } } },
   supabaseAnon: {},
 }));
 jest.mock('../helpers/passwordAtual', () => ({ verificarPasswordActual: jest.fn() }));
+jest.mock('../helpers/sessoes', () => ({ revogarOutrasSessoes: jest.fn() }));
 jest.mock('../helpers/emailHelper', () => ({ enviarEmail: jest.fn() }));
 
 const { supabaseAdmin } = require('../config/supabase');
 const { verificarPasswordActual } = require('../helpers/passwordAtual');
+const { revogarOutrasSessoes } = require('../helpers/sessoes');
 const { schemas } = require('../middleware/validation');
 const { authLimiter } = require('../middleware/rateLimiters');
 const operadorCtrl = require('../controllers/authController');
@@ -18,11 +20,12 @@ const viajanteRoutes = require('../routes/travelerAuth');
 
 const updateUserById = supabaseAdmin.auth.admin.updateUserById;
 const resMock = () => { const r = {}; r.status = jest.fn(() => r); r.json = jest.fn(() => r); return r; };
-const pedido = () => ({ user: { id: 'u1', email: 'a@x.test' }, ip: '9.9.9.9', body: { current_password: 'Actual1!x', password: 'Nova1234!' } });
+const pedido = () => ({ user: { id: 'u1', email: 'a@x.test' }, ip: '9.9.9.9', headers: { authorization: 'Bearer jwt-do-pedido' }, body: { current_password: 'Actual1!x', password: 'Nova1234!' } });
 
 beforeEach(() => {
   verificarPasswordActual.mockReset();
   updateUserById.mockReset();
+  revogarOutrasSessoes.mockReset().mockResolvedValue(true);
 });
 
 describe.each([['operador', operadorCtrl], ['viajante', viajanteCtrl]])('changePassword (%s)', (_, ctrl) => {
@@ -33,8 +36,19 @@ describe.each([['operador', operadorCtrl], ['viajante', viajanteCtrl]])('changeP
     await ctrl.changePassword(pedido(), res, next);
     expect(verificarPasswordActual).toHaveBeenCalledWith({ email: 'a@x.test', password: 'Actual1!x', ip: '9.9.9.9', tokenRequest: expect.any(Function) });
     expect(updateUserById).toHaveBeenCalledWith('u1', { password: 'Nova1234!' });
-    expect(res.json).toHaveBeenCalledWith({ data: null, message: 'Password alterada com sucesso' });
+    expect(revogarOutrasSessoes).toHaveBeenCalledWith(supabaseAdmin, 'jwt-do-pedido');
+    expect(res.json).toHaveBeenCalledWith({ data: { outras_sessoes_revogadas: true }, message: 'Password alterada com sucesso' });
     expect(next).not.toHaveBeenCalled();
+  });
+
+  test('se a revogacao das outras sessoes falhar a password fica mudada e a resposta avisa', async () => {
+    verificarPasswordActual.mockResolvedValue({ ok: true });
+    updateUserById.mockResolvedValue({ error: null });
+    revogarOutrasSessoes.mockResolvedValue(false);
+    const res = resMock();
+    await ctrl.changePassword(pedido(), res, jest.fn());
+    expect(res.status).not.toHaveBeenCalled();
+    expect(res.json).toHaveBeenCalledWith({ data: { outras_sessoes_revogadas: false }, message: 'Password alterada com sucesso' });
   });
 
   test('password actual errada ou conta bloqueada: devolve o estado e o corpo da verificacao e NAO altera nada', async () => {
@@ -44,6 +58,7 @@ describe.each([['operador', operadorCtrl], ['viajante', viajanteCtrl]])('changeP
     expect(res.status).toHaveBeenCalledWith(403);
     expect(res.json).toHaveBeenCalledWith({ error: 'Password actual incorrecta', code: 'INVALID_CURRENT_PASSWORD' });
     expect(updateUserById).not.toHaveBeenCalled();
+    expect(revogarOutrasSessoes).not.toHaveBeenCalled();
     verificarPasswordActual.mockResolvedValue({ ok: false, status: 423, body: { code: 'ACCOUNT_LOCKED' } });
     const res2 = resMock();
     await ctrl.changePassword(pedido(), res2, jest.fn());
@@ -58,6 +73,7 @@ describe.each([['operador', operadorCtrl], ['viajante', viajanteCtrl]])('changeP
     await ctrl.changePassword(pedido(), res, jest.fn());
     expect(res.status).toHaveBeenCalledWith(400);
     expect(res.json).toHaveBeenCalledWith({ error: 'fraca', code: 'PASSWORD_ERROR' });
+    expect(revogarOutrasSessoes).not.toHaveBeenCalled();
   });
 
   test('erro de rede na verificacao vai para o errorHandler e nao altera nada', async () => {
