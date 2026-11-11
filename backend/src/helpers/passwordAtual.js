@@ -9,7 +9,7 @@
 
 const {
   addFailedLogin, MAX_LOGIN_ATTEMPTS,
-  recordFailedLoginAttempt, getLoginLockState, clearLoginLock,
+  recordFailedLoginAttempt, getLoginLockState, clearLoginLock, reverterTentativa,
 } = require('../services/logStore');
 
 function bloqueada(lockedUntil) {
@@ -32,18 +32,29 @@ async function verificarPasswordActual({ email, password, ip = '', tokenRequest 
     return { ok: false, status: 403, body: { error: 'Password actual incorrecta', code: 'INVALID_CURRENT_PASSWORD' } };
   }
 
-  const authJson = await tokenRequest('password', { email, password });
+  /* A tentativa e RESERVADA antes do pedido ao Supabase: sem isto, N pedidos em paralelo liam todos
+     "0 tentativas" e chegavam todos ao Supabase antes de qualquer falha ser registada. */
+  recordFailedLoginAttempt(email);
+
+  let authJson;
+  try {
+    authJson = await tokenRequest('password', { email, password });
+  } catch (err) {
+    reverterTentativa(email); // falha de rede: nao gasta a tentativa de quem escreveu a password
+    throw err;
+  }
+
   if (!authJson || !authJson.access_token || authJson.error) {
     addFailedLogin({ ip, email: email || '' });
-    const novo = recordFailedLoginAttempt(email);
-    if (novo.lockedUntil > Date.now()) return bloqueada(novo.lockedUntil);
+    const estado = getLoginLockState(email);
+    if (estado.lockedUntil > Date.now()) return bloqueada(estado.lockedUntil);
     return {
       ok: false,
       status: 403,
       body: {
         error: 'Password actual incorrecta',
         code: 'INVALID_CURRENT_PASSWORD',
-        attempts_remaining: Math.max(0, MAX_LOGIN_ATTEMPTS - novo.count),
+        attempts_remaining: Math.max(0, MAX_LOGIN_ATTEMPTS - estado.count),
       },
     };
   }

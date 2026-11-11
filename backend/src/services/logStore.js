@@ -69,9 +69,21 @@ function clearLoginLock(email) {
   loginLocks.delete(normEmail(email));
 }
 
+/* Desfaz UMA tentativa reservada (ex.: falha de rede do pedido ao Supabase, que nao e culpa de quem
+   escreveu a password). Nunca fica abaixo de zero e levanta o bloqueio se a contagem voltar a ficar
+   abaixo do limite. */
+function reverterTentativa(email) {
+  const key = normEmail(email);
+  const cur = loginLocks.get(key);
+  if (!cur) return;
+  const count = Math.max(0, cur.count - 1);
+  if (count === 0) { loginLocks.delete(key); return; }
+  loginLocks.set(key, { count, lockedUntil: count >= MAX_LOGIN_ATTEMPTS ? cur.lockedUntil : 0 });
+}
+
 module.exports = {
   addLog, getLogs, clearLogs,
   addSecurityEvent, getSecurityLogs,
   addFailedLogin, getFailedLogins,
-  MAX_LOGIN_ATTEMPTS, recordFailedLoginAttempt, getLoginLockState, clearLoginLock,
+  MAX_LOGIN_ATTEMPTS, recordFailedLoginAttempt, getLoginLockState, clearLoginLock, reverterTentativa,
 };

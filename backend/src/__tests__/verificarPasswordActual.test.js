@@ -67,6 +67,24 @@ describe('verificarPasswordActual', () => {
     expect(r.status).toBe(423);
   });
 
+  test('pedidos em paralelo: so MAX tentativas chegam ao Supabase (a tentativa e reservada antes do pedido)', async () => {
+    const resolvers = [];
+    const tokenRequest = jest.fn(() => new Promise((resolve) => { resolvers.push(resolve); }));
+    const pedidos = Array.from({ length: 20 }, (_, i) => verificarPasswordActual({ email: EMAIL, password: `palpite${i}`, ip: '', tokenRequest }));
+    await Promise.resolve();
+    expect(tokenRequest).toHaveBeenCalledTimes(logStore.MAX_LOGIN_ATTEMPTS);
+    resolvers.forEach((resolve) => resolve({ error: 'invalid_grant' }));
+    const resultados = await Promise.all(pedidos);
+    expect(resultados.filter(r => r.status === 423)).toHaveLength(20);
+    expect(logStore.getLoginLockState(EMAIL).lockedUntil).toBeGreaterThan(Date.now());
+  });
+
+  test('uma falha de rede nao gasta a tentativa do utilizador', async () => {
+    logStore.recordFailedLoginAttempt(EMAIL);
+    await expect(verificarPasswordActual({ email: EMAIL, password: 'x', ip: '', tokenRequest: jest.fn().mockRejectedValue(new Error('ECONNRESET')) })).rejects.toThrow('ECONNRESET');
+    expect(logStore.getLoginLockState(EMAIL).count).toBe(1);
+  });
+
   test('um erro de rede propaga-se (o controlador devolve 500 pelo errorHandler)', async () => {
     await expect(verificarPasswordActual({ email: EMAIL, password: 'x', ip: '', tokenRequest: jest.fn().mockRejectedValue(new Error('ECONNRESET')) })).rejects.toThrow('ECONNRESET');
   });
