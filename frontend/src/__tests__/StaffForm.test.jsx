@@ -127,11 +127,32 @@ describe('StaffForm', () => {
     expect(onSave).toHaveBeenCalledWith(expect.objectContaining({ schedule: ['Seg', 'Sex'] }));
   });
 
-  it('ao_editar_skills_e_schedule_arrancam_vazios', () => {
-    const { onSave } = montar({ member: { ...COLABORADORES[0], skills: ['PADI'], schedule: ['Seg'] } });
-    expect(screen.queryByText('PADI')).toBeNull();
+  it('ao_editar_skills_e_schedule_arrancam_com_os_do_colaborador_e_voltam_no_pedido', () => {
+    const { onSave } = montar({ member: { ...COLABORADORES[0], skills: ['PADI', 'CPR'], schedule: ['Seg', 'Qua'] } });
+    expect(screen.getByText('PADI')).toBeInTheDocument();
+    expect(screen.getByText('CPR')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Seg' }).className).toContain('bg-ocean-700');
+    expect(screen.getByRole('button', { name: 'Ter' }).className).not.toContain('bg-ocean-700');
     submeter('Guardar alteracoes');
-    expect(onSave).toHaveBeenCalledWith(expect.objectContaining({ skills: [], schedule: [] }));
+    expect(onSave).toHaveBeenCalledWith(expect.objectContaining({ skills: ['PADI', 'CPR'], schedule: ['Seg', 'Qua'] }));
+  });
+
+  it('ao_editar_da_para_remover_uma_competencia_e_alternar_dias_sem_perder_o_resto', () => {
+    const { onSave } = montar({ member: { ...COLABORADORES[0], skills: ['PADI', 'CPR'], schedule: ['Seg'] } });
+    fireEvent.click(screen.getByRole('button', { name: 'Remover competencia - PADI' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Sex' }));
+    submeter('Guardar alteracoes');
+    expect(onSave).toHaveBeenCalledWith(expect.objectContaining({ skills: ['CPR'], schedule: ['Seg', 'Sex'] }));
+  });
+
+  it('valores_guardados_que_nao_sao_listas_caem_em_lista_vazia', () => {
+    for (const valor of [null, undefined, 'Seg', 5, { a: 1 }]) {
+      const { onSave, unmount } = montar({ member: { ...COLABORADORES[0], skills: valor, schedule: valor } });
+      submeter('Guardar alteracoes');
+      expect(onSave).toHaveBeenCalledWith(expect.objectContaining({ skills: [], schedule: [] }));
+      unmount?.();
+      cleanup();
+    }
   });
 
   it('vendedor_mostra_comissao_zona_e_os_tours_e_envia_os_valores', async () => {
