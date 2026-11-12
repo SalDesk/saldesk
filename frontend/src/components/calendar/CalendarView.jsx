@@ -129,35 +129,40 @@ export default function CalendarView({
 
                 {visibleUnits.map((unit) => {
                   const isBlocked   = blockedByUnit[unit.id]?.has(dateStr);
-                  const reservation = reservationsByUnit[unit.id]?.find(
-                    (r) => reservationCoversDay(r, dateStr)
-                  );
-                  const isDragging = reservation?.id === draggingId;
+                  /* todas as reservas do dia nesta unidade (varias no mesmo dia e comum); canceladas por ultimo */
+                  const lista = (reservationsByUnit[unit.id] || [])
+                    .filter((r) => reservationCoversDay(r, dateStr))
+                    .sort((a, b) => (a.status === 'cancelled') - (b.status === 'cancelled'));
 
                   return (
                     <td
                       key={unit.id}
                       className="border-r border-n-100 px-1.5 py-1 cursor-pointer"
-                      onClick={() => !reservation && !isBlocked && onDayClick?.(dateStr, unit, null)}
+                      onClick={() => !lista.length && !isBlocked && onDayClick?.(dateStr, unit, null)}
                       onDragOver={handleDragOver}
                       onDrop={(e) => handleDrop(e, dateStr, unit)}
                     >
-                      {reservation ? (
-                        <div
-                          draggable
-                          onDragStart={(e) => handleDragStart(e, reservation)}
-                          onClick={(e) => { e.stopPropagation(); onEventClick?.(reservation); }}
-                          className={`relative rounded-xs px-2 py-0.5 truncate font-body font-medium cursor-grab active:cursor-grabbing select-none transition-opacity ${STATUS_COLORS[reservation.status] || 'bg-n-100 text-n-600'} ${isDragging ? 'opacity-30' : ''} ${isFromSeller(reservation) ? 'border-l-[3px] border-l-sand-500' : ''}`}
-                          title={
-                            isFromSeller(reservation)
-                              ? `${reservation.customer_name} · ${reservation.status} · Vendido por ${getSellerName(reservation)}`
-                              : `${reservation.customer_name} · ${reservation.status}`
-                          }
-                        >
-                          {isFromSeller(reservation) && (
-                            <span className="inline-block w-1.5 h-1.5 rounded-full bg-sand-500 mr-1 shrink-0" aria-hidden="true" />
-                          )}
-                          {reservation.check_in === dateStr ? reservation.customer_name : '·'}
+                      {lista.length > 0 ? (
+                        <div className="space-y-0.5">
+                          {lista.map((reservation) => (
+                            <div
+                              key={reservation.id}
+                              draggable
+                              onDragStart={(e) => handleDragStart(e, reservation)}
+                              onClick={(e) => { e.stopPropagation(); onEventClick?.(reservation); }}
+                              className={`relative rounded-xs px-2 py-0.5 truncate font-body font-medium cursor-grab active:cursor-grabbing select-none transition-opacity ${STATUS_COLORS[reservation.status] || 'bg-n-100 text-n-600'} ${reservation.id === draggingId ? 'opacity-30' : ''} ${isFromSeller(reservation) ? 'border-l-[3px] border-l-sand-500' : ''}`}
+                              title={
+                                isFromSeller(reservation)
+                                  ? `${reservation.customer_name} · ${reservation.status} · Vendido por ${getSellerName(reservation)}`
+                                  : `${reservation.customer_name} · ${reservation.status}`
+                              }
+                            >
+                              {isFromSeller(reservation) && (
+                                <span className="inline-block w-1.5 h-1.5 rounded-full bg-sand-500 mr-1 shrink-0" aria-hidden="true" />
+                              )}
+                              {reservation.check_in === dateStr ? reservation.customer_name : '·'}
+                            </div>
+                          ))}
                         </div>
                       ) : isBlocked ? (
                         <div className="rounded-xs px-2 py-0.5 bg-n-200 text-n-400 font-body">

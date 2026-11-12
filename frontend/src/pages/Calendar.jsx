@@ -250,8 +250,12 @@ export default function Calendar() {
 
   const weekDays = useMemo(() => getWeekDays(weekStr), [weekStr]);
 
+  /* TODAS as reservas que ocupam a celula (varias no mesmo dia e comum, por exemplo tours com varios
+     horarios; antes so aparecia a primeira). As canceladas ficam por ultimo para nao taparem as activas. */
   function getResForCell(unitId, dateStr) {
-    return resByUnit[unitId]?.find(r => reservationCoversDay(r, dateStr));
+    return (resByUnit[unitId] || [])
+      .filter(r => reservationCoversDay(r, dateStr))
+      .sort((a, b) => (a.status === 'cancelled') - (b.status === 'cancelled'));
   }
 
   function getSlotsForCell(unit, dateStr) {
@@ -295,15 +299,14 @@ export default function Calendar() {
                 </td>
                 {weekDays.map(d => {
                   const isBlocked = blockedByUnit[unit.id]?.has(d);
-                  const res       = getResForCell(unit.id, d);
+                  const lista     = getResForCell(unit.id, d);
                   const isToday   = d === todayStr;
-                  const isDragging = res?.id === draggingId;
 
                   return (
                     <td
                       key={d}
                       className={`border-r border-n-100 px-1.5 py-1.5 cursor-pointer ${isToday ? 'bg-ocean-50/40' : ''}`}
-                      onClick={() => !res && !isBlocked && handleDayClick(d, unit, null)}
+                      onClick={() => !lista.length && !isBlocked && handleDayClick(d, unit, null)}
                       onDragOver={e => e.preventDefault()}
                       onDrop={e => {
                         e.preventDefault();
@@ -314,25 +317,28 @@ export default function Calendar() {
                         } catch {}
                       }}
                     >
-                      {res ? (
+                      {lista.length > 0 ? (
                         <div className="space-y-0.5">
-                          <div
-                            draggable
-                            onDragStart={e => {
-                              const dur = Math.max(1, Math.round((new Date(res.check_out) - new Date(res.check_in)) / 86400000));
-                              const payload = { reservationId: res.id, duration: dur, unitId: res.unit_id };
-                              dragPayloadRef.current = payload;
-                              e.dataTransfer.setData('text/plain', JSON.stringify(payload));
-                            }}
-                            onClick={e => { e.stopPropagation(); setSelectedEvent(res); }}
-                            className={`rounded-xs px-2 py-0.5 truncate font-body font-medium cursor-grab active:cursor-grabbing select-none transition-opacity ${STATUS_COLORS[res.status] || 'bg-n-100 text-n-600'} ${isDragging ? 'opacity-30' : ''}`}
-                            title={`${res.customer_name} · ${STATUS_LABELS[res.status]}`}
-                          >
-                            {res.check_in === d ? res.customer_name.split(' ')[0] : '·'}
-                          </div>
+                          {lista.map(res => (
+                            <div
+                              key={res.id}
+                              draggable
+                              onDragStart={e => {
+                                const dur = Math.max(1, Math.round((new Date(res.check_out) - new Date(res.check_in)) / 86400000));
+                                const payload = { reservationId: res.id, duration: dur, unitId: res.unit_id };
+                                dragPayloadRef.current = payload;
+                                e.dataTransfer.setData('text/plain', JSON.stringify(payload));
+                              }}
+                              onClick={e => { e.stopPropagation(); setSelectedEvent(res); }}
+                              className={`rounded-xs px-2 py-0.5 truncate font-body font-medium cursor-grab active:cursor-grabbing select-none transition-opacity ${STATUS_COLORS[res.status] || 'bg-n-100 text-n-600'} ${res.id === draggingId ? 'opacity-30' : ''}`}
+                              title={`${res.customer_name} · ${STATUS_LABELS[res.status]}`}
+                            >
+                              {res.check_in === d ? res.customer_name.split(' ')[0] : '·'}
+                            </div>
+                          ))}
                           {(() => {
                             const slots = getSlotsForCell(unit, d);
-                            return slots && res.check_in === d ? (
+                            return slots && lista.some(r => r.check_in === d) ? (
                               <div className={`text-[9px] font-mono text-center ${slots.available === 0 ? 'text-error' : 'text-n-400'}`}>
                                 {slots.available}/{slots.total} vagas
                               </div>
@@ -383,7 +389,7 @@ export default function Calendar() {
           <div className="text-center py-12 text-n-400 text-sm font-body">Sem unidades activas.</div>
         )}
         {visibleUnits.map(unit => {
-          const res       = getResForCell(unit.id, dayStr);
+          const lista     = getResForCell(unit.id, dayStr);
           const isBlocked = blockedByUnit[unit.id]?.has(dayStr);
           return (
             <div key={unit.id} className="bg-white border border-n-200 rounded-sm p-4">
@@ -392,7 +398,7 @@ export default function Calendar() {
                   <p className="font-display font-semibold text-sm text-n-900">{unit.name}</p>
                   <p className="text-xs font-body text-n-400">{unit.unit_type}</p>
                 </div>
-                {!res && !isBlocked && (
+                {!lista.length && !isBlocked && (
                   <Button variant="ghost" size="sm" icon={Lock} onClick={() => {
                     setBlockReason(''); setBlockEnd(dayStr);
                     setBlockModal({ date: dayStr, unit });
@@ -402,21 +408,26 @@ export default function Calendar() {
                 )}
               </div>
 
-              {res ? (
-                <button
-                  onClick={() => setSelectedEvent(res)}
-                  className={`w-full text-left rounded-sm px-3 py-2.5 transition-opacity hover:opacity-90 ${STATUS_COLORS[res.status] || 'bg-n-100 text-n-600'}`}
-                >
-                  <p className="font-display font-semibold text-sm">{res.customer_name}</p>
-                  <p className="text-xs opacity-80 mt-0.5">
-                    {STATUS_LABELS[res.status]} · {res.guests || 1} pax
-                    {res.total_price ? ` · €${Number(res.total_price).toLocaleString('pt-PT')}` : ''}
-                    {(() => {
-                      const slots = getSlotsForCell(unit, dayStr);
-                      return slots ? ` · ${slots.available} vagas restantes` : '';
-                    })()}
-                  </p>
-                </button>
+              {lista.length > 0 ? (
+                <div className="space-y-2">
+                  {lista.map(res => (
+                    <button
+                      key={res.id}
+                      onClick={() => setSelectedEvent(res)}
+                      className={`w-full text-left rounded-sm px-3 py-2.5 transition-opacity hover:opacity-90 ${STATUS_COLORS[res.status] || 'bg-n-100 text-n-600'}`}
+                    >
+                      <p className="font-display font-semibold text-sm">{res.customer_name}</p>
+                      <p className="text-xs opacity-80 mt-0.5">
+                        {STATUS_LABELS[res.status]} · {res.guests || 1} pax
+                        {res.total_price ? ` · €${Number(res.total_price).toLocaleString('pt-PT')}` : ''}
+                        {(() => {
+                          const slots = getSlotsForCell(unit, dayStr);
+                          return slots ? ` · ${slots.available} vagas restantes` : '';
+                        })()}
+                      </p>
+                    </button>
+                  ))}
+                </div>
               ) : isBlocked ? (
                 <div className="flex items-center justify-between bg-n-100 rounded-sm px-3 py-2">
                   <span className="text-xs font-body text-n-500">Bloqueado</span>

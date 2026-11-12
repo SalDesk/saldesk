@@ -278,6 +278,34 @@ describe('Calendar', () => {
       expect(screen.getAllByTitle('Delta Pires · Confirmada')).toHaveLength(1);
     });
 
+    it('varias_reservas_da_mesma_unidade_no_mesmo_dia_aparecem_todas', async () => {
+      const dia = somaDias(seg, 2);
+      const duas = [
+        reserva({ id: 'r8', unit_id: 'u1', customer_name: 'Delta Pires', check_in: dia, check_out: dia }),
+        reserva({ id: 'r9', unit_id: 'u1', customer_name: 'Omega Lopes', check_in: dia, check_out: dia, status: 'pending' }),
+      ];
+      carregaServicos({ dados: { units: UNIDADES, reservations: duas, blocked_dates: [] } });
+      await abreSemana();
+      expect(screen.getAllByTitle('Delta Pires · Confirmada')).toHaveLength(1);
+      expect(screen.getAllByTitle('Omega Lopes · Pendente')).toHaveLength(1);
+      expect(celulas('Quarto Azul')[2]).toBe('DeltaOmega');
+      /* cada uma abre o seu detalhe */
+      fireEvent.click(screen.getByTitle('Omega Lopes · Pendente'));
+      expect(await screen.findByText('Detalhe da reserva')).toBeInTheDocument();
+      expect(screen.getByText('Omega Lopes')).toBeInTheDocument();
+    });
+
+    it('uma_reserva_cancelada_nao_esconde_a_activa_do_mesmo_dia_e_fica_por_ultimo', async () => {
+      const dia = somaDias(seg, 3);
+      const duas = [
+        reserva({ id: 'r8', unit_id: 'u1', customer_name: 'Cancelada Cruz', check_in: dia, check_out: dia, status: 'cancelled' }),
+        reserva({ id: 'r9', unit_id: 'u1', customer_name: 'Activa Alves', check_in: dia, check_out: dia }),
+      ];
+      carregaServicos({ dados: { units: UNIDADES, reservations: duas, blocked_dates: [] } });
+      await abreSemana();
+      expect(celulas('Quarto Azul')[3]).toBe('ActivaCancelada');
+    });
+
     it('as celulas bloqueadas mostram "Bloq."', async () => {
       carregaServicos({ dados: dadosDaSemana(seg, { blocked_dates: [{ id: 'b1', unit_id: 'u1', date: somaDias(seg, 5) }] }) });
       await abreSemana();
@@ -389,6 +417,27 @@ describe('Calendar', () => {
       expect(rosa.getByRole('button', { name: 'Bloquear' })).toBeInTheDocument();
     });
 
+    it('a vista de dia lista todas as reservas da unidade nesse dia', async () => {
+      const hoje = hojeDaPagina();
+      carregaServicos({
+        dados: {
+          units: UNIDADES,
+          reservations: [
+            reserva({ id: 'r1', unit_id: 'u1', customer_name: 'Alfa Silva', check_in: hoje, check_out: hoje }),
+            reserva({ id: 'r2', unit_id: 'u1', customer_name: 'Beta Costa', check_in: hoje, check_out: hoje, status: 'pending' }),
+          ],
+          blocked_dates: [],
+        },
+      });
+      await abrePagina();
+      await accaoQueRecarrega(() => fireEvent.click(screen.getByRole('button', { name: 'Dia' })));
+      const azul = within(cartaoDoDia('Quarto Azul'));
+      expect(azul.getByText('Alfa Silva')).toBeInTheDocument();
+      expect(azul.getByText('Beta Costa')).toBeInTheDocument();
+      expect(azul.queryByText('Disponivel')).not.toBeInTheDocument();
+      expect(azul.queryByRole('button', { name: 'Bloquear' })).not.toBeInTheDocument();
+    });
+
     it('servicos a falhar nao rebentam: a vista de mes mostra o vazio', async () => {
       esperaErros = true;
       getCalendar.mockReset().mockRejectedValue(new Error('falha de rede'));
@@ -497,6 +546,20 @@ describe('Calendar', () => {
       expect(celulaAzul(12)).toBe('Delta Pires');
       for (const dia of [13, 14, 20, 31]) expect(celulaAzul(dia)).toBe('');
       expect(screen.getAllByTitle('Delta Pires · confirmed')).toHaveLength(1);
+    });
+
+    it('vista de mes: varias reservas da mesma unidade no mesmo dia aparecem todas', async () => {
+      fixaHoje(2026, 3, 10);
+      const duas = [
+        reserva({ id: 'r8', unit_id: 'u1', customer_name: 'Delta Pires', check_in: '2026-03-12', check_out: '2026-03-12' }),
+        reserva({ id: 'r9', unit_id: 'u1', customer_name: 'Omega Lopes', check_in: '2026-03-12', check_out: '2026-03-12' }),
+      ];
+      carregaServicos({ dados: { units: UNIDADES, reservations: duas, blocked_dates: [] } });
+      await abrePagina();
+      const linhas = [...document.querySelectorAll('tbody tr')];
+      expect(linhas[11].querySelectorAll('td')[1].textContent).toBe('Delta PiresOmega Lopes');
+      expect(screen.getAllByTitle('Delta Pires · confirmed')).toHaveLength(1);
+      expect(screen.getAllByTitle('Omega Lopes · confirmed')).toHaveLength(1);
     });
 
     it('vista de mes em Marco: anterior vai a Fevereiro com 28 dias', async () => {
