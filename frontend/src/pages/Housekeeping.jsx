@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { listUnits, updateUnit } from '../services/unitsService';
 import { listReservations } from '../services/reservationsService';
+import { estadiaEm } from '../services/reservationRanges';
 import api from '../services/api';
 import PageHeader from '../components/layout/PageHeader';
 import Badge from '../components/ui/Badge';
@@ -105,7 +106,14 @@ export default function Housekeeping() {
   useEffect(() => {
     Promise.all([
       listUnits(),
-      listReservations({ from: TODAY, to: TODAY }),
+      /* estadias que tocam hoje (saidas, entradas, ocupadas) + todos os checked_in (inclui quem ficou alem da saida);
+         o backend nao conhece from/to, que devolvia todas as reservas */
+      Promise.all([listReservations(estadiaEm(TODAY)), listReservations({ status: 'checked_in' })])
+        .then(([hoje, ocupadas]) => {
+          const porId = new Map();
+          [...(hoje || []), ...(ocupadas || [])].forEach(r => porId.set(r.id, r));
+          return [...porId.values()];
+        }),
       api.get('/staff').then(r => r.data?.data || []).catch(() => []),
     ])
       .then(([u, tRes, staff]) => {

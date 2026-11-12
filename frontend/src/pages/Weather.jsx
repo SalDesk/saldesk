@@ -106,11 +106,15 @@ export default function Weather() {
       setIsland(ilha);
       const [wx, res] = await Promise.all([
         getWeatherForecast(ilha?.lat, ilha?.lng),
-        listReservations({ from: TODAY, to: end7 }).catch(() => []),
+        /* o backend filtra por check_in_from/check_in_to (nao conhece from/to) */
+        listReservations({ check_in_from: TODAY, check_in_to: end7 }).catch(() => []),
       ]);
       setForecast(wx);
       setReservations(res || []);
     } catch {
+      /* sem previsao nova nao se mantem a antiga (os alertas de conflito vivem fora do ecra de erro) */
+      setForecast([]);
+      setReservations([]);
       setError('Nao foi possivel carregar a previsao meteorologica. Verifique a ligacao a internet.');
     } finally {
       setLoading(false);
