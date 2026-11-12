@@ -5,6 +5,7 @@ import Settings from '../pages/Settings';
 import api from '../services/api';
 import { updateOperator, changePassword } from '../services/authService';
 import { createSubscription, cancelSubscription, getBillingHistory, createSispCheckout } from '../services/billingService';
+import { uploadImage, validateImageFile } from '../services/uploadService';
 import useAuthStore from '../store/authStore';
 import useUiStore from '../store/uiStore';
 
@@ -12,6 +13,9 @@ vi.mock('../services/api', () => ({ default: { get: vi.fn(), put: vi.fn() } }));
 vi.mock('../services/authService', () => ({ updateOperator: vi.fn(), changePassword: vi.fn() }));
 vi.mock('../services/billingService', () => ({
   createSubscription: vi.fn(), cancelSubscription: vi.fn(), getBillingHistory: vi.fn(), createSispCheckout: vi.fn(),
+}));
+vi.mock('../services/uploadService', () => ({
+  uploadImage: vi.fn(), validateImageFile: vi.fn(), ALLOWED_IMAGE_TYPES: ['image/jpeg', 'image/png', 'image/webp'],
 }));
 vi.mock('../components/messaging/TemplatesEditor', () => ({ default: () => <div>EDITOR MENSAGENS</div> }));
 
@@ -37,11 +41,16 @@ const HISTORICO = [
 ];
 const apiBase = (import.meta.env.VITE_API_URL || 'http://localhost:3001/api/v1').replace('/api/v1', '');
 
-let spyErr; let spyWarn; let writeText; let respostas;
+let spyErr; let spyWarn; let writeText; let respostas; let origCreate; let origRevoke;
 beforeEach(() => {
   spyErr = vi.spyOn(console, 'error').mockImplementation(() => {});
   spyWarn = vi.spyOn(console, 'warn').mockImplementation(() => {});
   writeText = vi.fn().mockResolvedValue();
+  uploadImage.mockReset().mockImplementation(async (file) => ({ url: `https://cdn.test/${file.name}` }));
+  validateImageFile.mockReset().mockReturnValue(null);
+  origCreate = URL.createObjectURL; origRevoke = URL.revokeObjectURL;
+  URL.createObjectURL = vi.fn(() => 'blob:preview');
+  URL.revokeObjectURL = vi.fn();
   Object.defineProperty(navigator, 'clipboard', { value: { writeText }, configurable: true });
   respostas = {
     '/marketing/booking-link': { data: { data: { url: 'https://saldesk.cv/book/demo' } } },
@@ -66,6 +75,7 @@ afterEach(() => {
   document.querySelectorAll('form[data-sisp]').forEach(f => f.remove());
   vi.unstubAllGlobals();
   vi.restoreAllMocks();
+  URL.createObjectURL = origCreate; URL.revokeObjectURL = origRevoke;
   useAuthStore.setState({ token: null, operator: null });
   useUiStore.setState({ tourForceStart: false });
   expect(erros).toEqual([]);
@@ -217,28 +227,70 @@ describe('Definicoes: Perfil Publico', () => {
     expect(campoFaq(2, 'Pergunta EN')).toHaveValue('');
   });
 
-  it('escolher_logo_mostra_a_pre_visualizacao', async () => {
+  it('escolher_o_logo_faz_upload_mostra_a_pre_visualizacao_e_guarda_o_url_e_nao_um_data_url', async () => {
     const { container } = await abrirPerfil();
     expect(screen.queryByAltText('Logo')).not.toBeInTheDocument();
-    fireEvent.change(container.querySelector('input[type="file"]:not([multiple])'), { target: { files: [arquivo('l.png', 'a')] } });
-    expect(await screen.findByAltText('Logo')).toHaveAttribute('src', 'data:image/png;base64,YQ==');
-  });
-
-  it('fotos_de_capa_adicionar_mover_e_remover_so_em_memoria', async () => {
-    const { container } = await abrirPerfil();
-    fireEvent.change(container.querySelector('input[type="file"][multiple]'), { target: { files: [arquivo('a.png', 'a'), arquivo('b.png', 'b')] } });
-    await waitFor(() => expect(container.querySelectorAll('div.group img')).toHaveLength(2));
-    const fotos = () => [...container.querySelectorAll('div.group img')].map(i => i.getAttribute('src'));
-    const ordem = fotos();
-    expect(screen.getAllByText('Capa')).toHaveLength(1);
-    const segundo = container.querySelectorAll('div.group')[1];
-    fireEvent.click(segundo.querySelectorAll('button')[0]);
-    expect(fotos()).toEqual([ordem[1], ordem[0]]);
-    fireEvent.click(container.querySelectorAll('div.group')[0].querySelectorAll('button')[1]);
-    expect(container.querySelectorAll('div.group img')).toHaveLength(1);
+    const ficheiro = arquivo('l.png', 'a');
+    fireEvent.change(container.querySelector('input[type="file"]:not([multiple])'), { target: { files: [ficheiro] } });
+    expect(await screen.findByAltText('Logo')).toHaveAttribute('src', 'https://cdn.test/l.png');
+    expect(uploadImage).toHaveBeenCalledWith(ficheiro, expect.any(Function));
     fireEvent.click(botao('Guardar perfil'));
     await waitFor(() => expect(updateOperator).toHaveBeenCalled());
-    expect(Object.keys(ultimoPut())).not.toContain('covers');
+    expect(ultimoPut().logo_url).toBe('https://cdn.test/l.png');
+  });
+
+  it('logo_invalido_ou_upload_falhado_mostra_o_erro_e_nao_altera_o_logo', async () => {
+    const { container } = await abrirPerfil();
+    const entrada = () => container.querySelector('input[type="file"]:not([multiple])');
+    validateImageFile.mockReturnValueOnce('Formato invalido: l.gif. Usa JPG, PNG ou WebP.');
+    fireEvent.change(entrada(), { target: { files: [arquivo('l.gif', 'a')] } });
+    expect(await screen.findByText('Formato invalido: l.gif. Usa JPG, PNG ou WebP.')).toBeInTheDocument();
+    expect(uploadImage).not.toHaveBeenCalled();
+    uploadImage.mockRejectedValueOnce(new Error('x'));
+    fireEvent.change(entrada(), { target: { files: [arquivo('l.png', 'a')] } });
+    expect(await screen.findByText('Erro ao carregar logo. Tenta novamente.')).toBeInTheDocument();
+    expect(screen.queryByAltText('Logo')).not.toBeInTheDocument();
+  });
+
+  it('as_fotos_de_capa_arrancam_com_as_do_operador_e_a_primeira_e_a_principal', async () => {
+    const { container } = await abrirPerfil({ ...OPERADOR, cover_images: ['https://cdn.test/a.jpg', 'https://cdn.test/b.jpg'] });
+    expect([...container.querySelectorAll('div.group img')].map(i => i.getAttribute('src'))).toEqual(['https://cdn.test/a.jpg', 'https://cdn.test/b.jpg']);
+    expect(screen.getAllByText('Principal')).toHaveLength(1);
+  });
+
+  it('guardar_envia_cover_images_com_as_urls_actuais_e_sem_capas_envia_lista_vazia', async () => {
+    await abrirPerfil({ ...OPERADOR, cover_images: ['https://cdn.test/a.jpg', 'https://cdn.test/b.jpg'] });
+    fireEvent.click(botao('Guardar perfil'));
+    await waitFor(() => expect(updateOperator).toHaveBeenCalledTimes(1));
+    expect(ultimoPut().cover_images).toEqual(['https://cdn.test/a.jpg', 'https://cdn.test/b.jpg']);
+    cleanup();
+    await abrirPerfil({ ...OPERADOR, cover_images: undefined });
+    fireEvent.click(botao('Guardar perfil'));
+    await waitFor(() => expect(updateOperator).toHaveBeenCalledTimes(2));
+    expect(ultimoPut().cover_images).toEqual([]);
+  });
+
+  it('acrescentar_uma_foto_faz_upload_e_o_url_novo_vai_no_pedido', async () => {
+    const { container } = await abrirPerfil({ ...OPERADOR, cover_images: ['https://cdn.test/a.jpg'] });
+    const ficheiro = arquivo('nova.png', 'n');
+    fireEvent.change(container.querySelector('input[type="file"][multiple]'), { target: { files: [ficheiro] } });
+    await waitFor(() => expect(uploadImage).toHaveBeenCalledWith(ficheiro, expect.any(Function)));
+    await waitFor(() => expect([...container.querySelectorAll('div.group img')].map(i => i.getAttribute('src'))).toEqual(['https://cdn.test/a.jpg', 'https://cdn.test/nova.png']));
+    /* O ImageUploader (componente partilhado) chama o onChange dentro de um updater do setState e o React avisa
+       "Cannot update a component while rendering a different component". E um aviso existente do componente, nao deste ecra. */
+    spyErr.mockClear();
+    fireEvent.click(botao('Guardar perfil'));
+    await waitFor(() => expect(updateOperator).toHaveBeenCalled());
+    expect(ultimoPut().cover_images).toEqual(['https://cdn.test/a.jpg', 'https://cdn.test/nova.png']);
+  });
+
+  it('mover_e_remover_fotos_actualizam_a_ordem_enviada', async () => {
+    const { container } = await abrirPerfil({ ...OPERADOR, cover_images: ['https://cdn.test/a.jpg', 'https://cdn.test/b.jpg', 'https://cdn.test/c.jpg'] });
+    fireEvent.click(screen.getAllByTitle('Mover para baixo')[0]);
+    fireEvent.click(container.querySelectorAll('div.group')[2].querySelector('button[title="Remover foto"]'));
+    fireEvent.click(botao('Guardar perfil'));
+    await waitFor(() => expect(updateOperator).toHaveBeenCalled());
+    expect(ultimoPut().cover_images).toEqual(['https://cdn.test/b.jpg', 'https://cdn.test/a.jpg']);
   });
 
   it('faq_adicionar_mover_remover_com_as_setas_desactivadas_nos_extremos', async () => {
@@ -265,7 +317,7 @@ describe('Definicoes: Perfil Publico', () => {
     await waitFor(() => expect(updateOperator).toHaveBeenCalledWith({
       logo_url: null, description_pt: 'Nova desc', description_en: 'Desc EN',
       cancellation_policy_pt: 'CP PT', cancellation_policy_en: 'CP EN',
-      custom_faqs: OPERADOR.custom_faqs,
+      custom_faqs: OPERADOR.custom_faqs, cover_images: [],
     }));
     expect(await screen.findByText('Guardado com sucesso')).toBeInTheDocument();
     expect(useAuthStore.getState().operator.description_pt).toBe('Nova desc');
@@ -748,37 +800,29 @@ describe('Definicoes: design system (Perfil Publico)', () => {
     ['Descricao em Portugues', 'Descricao em Ingles', 'Politica de cancelamento em Portugues', 'Politica de cancelamento em Ingles',
       'Pergunta 1 PT', 'Pergunta 1 EN', 'Resposta 1 PT', 'Resposta 1 EN', 'Pergunta 2 PT'].forEach(e => expect(screen.getByLabelText(e)).toBeInTheDocument());
     expect(screen.getByLabelText('Ficheiro do logo')).toHaveAttribute('type', 'file');
-    expect(screen.getByLabelText('Ficheiros das fotos de capa')).toHaveAttribute('multiple');
     expect(container.querySelectorAll('input[type="file"]')).toHaveLength(2);
   });
 
-  it('os_botoes_de_icone_das_fotos_e_das_faq_tem_nome', async () => {
-    const { container } = await abrirPerfil();
-    expect(screen.getByRole('button', { name: 'Adicionar foto de capa' })).toBeInTheDocument();
-    fireEvent.change(container.querySelector('input[type="file"][multiple]'), { target: { files: [arquivo('a.png', 'a'), arquivo('b.png', 'b')] } });
-    await waitFor(() => expect(container.querySelectorAll('div.group img')).toHaveLength(2));
-    expect(screen.getByRole('button', { name: 'Mover foto 1 para baixo' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Mover foto 2 para cima' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Remover foto 1' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Remover foto 2' })).toBeInTheDocument();
+  it('os_botoes_de_icone_das_faq_tem_nome', async () => {
+    await abrirPerfil();
     expect(screen.getByRole('button', { name: 'Mover pergunta 1 para baixo' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Mover pergunta 2 para cima' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Remover pergunta 2' })).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'Remover foto 1' }));
-    expect(container.querySelectorAll('div.group img')).toHaveLength(1);
   });
 
   it('sem_cores_nomeadas_text_error_bg_error_bg_red_ou_hexadecimais_em_classes', async () => {
-    const { container } = await abrirPerfil();
-    fireEvent.change(container.querySelector('input[type="file"][multiple]'), { target: { files: [arquivo('a.png', 'a'), arquivo('b.png', 'b')] } });
-    await waitFor(() => expect(container.querySelectorAll('div.group img')).toHaveLength(2));
+    const { container } = await abrirPerfil({ ...OPERADOR, cover_images: ['https://cdn.test/a.jpg', 'https://cdn.test/b.jpg'] });
+    expect(container.querySelectorAll('div.group img')).toHaveLength(2);
     updateOperator.mockRejectedValueOnce(new Error('x'));
     fireEvent.click(botao('Guardar perfil'));
     await waitFor(() => expect(spyErr).toHaveBeenCalled());
     spyErr.mockClear();
     fireEvent.click(botao('Guardar perfil'));
     await screen.findByRole('status');
-    semCoresForaDosTokens(classes(container));
+    /* as fotos sao do ImageUploader (partilhado, com o botao de remover em bg-error): so se verifica o resto do ecra */
+    const sem = container.cloneNode(true);
+    sem.querySelectorAll('div.group').forEach(n => n.remove());
+    semCoresForaDosTokens(classes(sem));
   });
 });
 

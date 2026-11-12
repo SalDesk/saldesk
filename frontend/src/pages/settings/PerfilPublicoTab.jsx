@@ -9,6 +9,8 @@ import useAuthStore from '../../store/authStore';
 import Card from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
 import Input, { Textarea } from '../../components/ui/Input';
+import ImageUploader from '../../components/shared/ImageUploader';
+import { uploadImage, validateImageFile } from '../../services/uploadService';
 import { CopyButton, SaveBanner } from './shared';
 
 /* ─────────────────────────────────────────────────────────
@@ -21,7 +23,9 @@ export default function PerfilPublicoTab({ operator }) {
   const [saving, setSaving]         = useState(false);
   const [saved, setSaved]           = useState(false);
   const [logoPreview, setLogoPreview] = useState(operator?.logo_url || null);
-  const [covers, setCovers]         = useState([]);
+  /* Fotos de capa: os URLs guardados no operador (cover_images); o ImageUploader trata do upload, da ordem e da remocao. */
+  const [covers, setCovers]         = useState(() => (Array.isArray(operator?.cover_images) ? operator.cover_images.filter(Boolean) : []));
+  const [logoError, setLogoError]    = useState('');
   const [descPt,  setDescPt]        = useState(operator?.description_pt || '');
   const [descEn,  setDescEn]        = useState(operator?.description_en || '');
   const [cancelPolicyPt, setCancelPolicyPt] = useState(operator?.cancellation_policy_pt || '');
@@ -35,35 +39,25 @@ export default function PerfilPublicoTab({ operator }) {
   const qrcodeUrl = operator?.booking_link_slug || operator?.slug ? `${apiBase}/api/v1/public/${operator.booking_link_slug || operator.slug}/qrcode` : null;
 
   const logoRef  = useRef(null);
-  const coverRef = useRef(null);
 
   useEffect(() => {
     api.get('/marketing/booking-link').then(r => setBookingLink(r.data?.data?.url || '')).catch(() => {});
     api.get('/marketing/widget-code').then(r => setWidget(r.data?.data?.html || '')).catch(() => {});
   }, []);
 
-  function handleLogo(e) {
-    const file = e.target.files[0]; if (!file) return;
-    const reader = new FileReader();
-    reader.onloadend = () => setLogoPreview(reader.result);
-    reader.readAsDataURL(file);
-  }
-
-  function handleCovers(e) {
-    [...e.target.files].forEach(file => {
-      const reader = new FileReader();
-      reader.onloadend = () => setCovers(p => [...p, { id: Date.now() + Math.random(), preview: reader.result }]);
-      reader.readAsDataURL(file);
-    });
-  }
-
-  function moveCover(idx, dir) {
-    setCovers(p => {
-      const arr = [...p];
-      const [item] = arr.splice(idx, 1);
-      arr.splice(idx + dir, 0, item);
-      return arr;
-    });
+  /* O logo e enviado para o servidor e guarda-se o URL (antes guardava-se o ficheiro inteiro em base64). */
+  async function handleLogo(e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const erro = validateImageFile(file);
+    if (erro) { setLogoError(erro); return; }
+    setLogoError('');
+    try {
+      const result = await uploadImage(file, () => {});
+      setLogoPreview(result.url);
+    } catch {
+      setLogoError('Erro ao carregar logo. Tenta novamente.');
+    }
   }
 
   function addFaq() {
@@ -92,6 +86,7 @@ export default function PerfilPublicoTab({ operator }) {
     try {
       const payload = {
         logo_url:       logoPreview,
+        cover_images:   covers,
         description_pt: descPt,
         description_en: descEn,
         cancellation_policy_pt: cancelPolicyPt,
@@ -119,53 +114,23 @@ export default function PerfilPublicoTab({ operator }) {
             <Button type="button" variant="secondary" icon={Upload} size="sm" onClick={() => logoRef.current?.click()}>
               Escolher logo
             </Button>
-            <input ref={logoRef} type="file" accept="image/*" aria-label="Ficheiro do logo" onChange={handleLogo} className="hidden" />
-            <p className="text-xs font-body text-n-400">PNG ou SVG · fundo transparente recomendado</p>
+            <input ref={logoRef} type="file" accept="image/jpeg,image/png,image/webp" aria-label="Ficheiro do logo" onChange={handleLogo} className="hidden" />
+            {logoError
+              ? <p className="text-xs font-body text-[var(--error)]">{logoError}</p>
+              : <p className="text-xs font-body text-n-400">JPG, PNG ou WebP · fundo transparente recomendado</p>}
           </div>
         </div>
       </Card>
 
       {/* Cover photos */}
       <Card header={<h3 className="font-display font-semibold text-sm text-n-700">Fotos de capa</h3>}>
-        <div className="space-y-3">
-          <div className="flex flex-wrap gap-3">
-            {covers.map((c, i) => (
-              <div key={c.id} className="relative w-28 h-20 rounded border border-n-200 overflow-hidden group">
-                <img src={c.preview} alt="" className="w-full h-full object-cover" />
-                <div className="absolute inset-0 bg-ocean-900/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1">
-                  {i > 0 && (
-                    <button type="button" aria-label={`Mover foto ${i + 1} para cima`} onClick={() => moveCover(i, -1)}
-                      className="w-6 h-6 bg-white/90 rounded flex items-center justify-center">
-                      <ChevronUp size={12} strokeWidth={2} />
-                    </button>
-                  )}
-                  {i < covers.length - 1 && (
-                    <button type="button" aria-label={`Mover foto ${i + 1} para baixo`} onClick={() => moveCover(i, 1)}
-                      className="w-6 h-6 bg-white/90 rounded flex items-center justify-center">
-                      <ChevronDown size={12} strokeWidth={2} />
-                    </button>
-                  )}
-                  <button type="button" aria-label={`Remover foto ${i + 1}`} onClick={() => setCovers(p => p.filter((_, j) => j !== i))}
-                    className="w-6 h-6 bg-[var(--error)] rounded flex items-center justify-center">
-                    <X size={11} strokeWidth={2} className="text-white" />
-                  </button>
-                </div>
-                {i === 0 && (
-                  <span className="absolute top-1 left-1 bg-ocean-700 text-white text-xs font-mono px-1.5 py-0.5 rounded">
-                    Capa
-                  </span>
-                )}
-              </div>
-            ))}
-            <button type="button" aria-label="Adicionar foto de capa" onClick={() => coverRef.current?.click()}
-              className="w-28 h-20 rounded border-2 border-dashed border-n-200 bg-n-50 flex flex-col items-center justify-center gap-1 text-n-400 hover:border-ocean-300 hover:text-ocean-700 transition-colors">
-              <Plus size={18} strokeWidth={1.75} />
-              <span className="text-xs font-body">Adicionar</span>
-            </button>
-            <input ref={coverRef} type="file" accept="image/*" multiple aria-label="Ficheiros das fotos de capa" onChange={handleCovers} className="hidden" />
-          </div>
-          <p className="text-xs font-body text-n-400">A primeira foto e a capa principal · arrastar para reordenar</p>
-        </div>
+        <ImageUploader
+          value={covers}
+          onChange={setCovers}
+          maxImages={5}
+          label="Fotos"
+          hint="Aparecem no carousel da pagina publica · ate 5 fotos · a primeira e a principal · JPG, PNG, WebP · max 5MB cada"
+        />
       </Card>
 
       {/* Description */}
