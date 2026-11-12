@@ -282,7 +282,7 @@ export default function Financial() {
       {activeSec === 'salarios'   && <PlanGuard plan="pro" feature="financeiro-completo"><SalariosTab   currency={currency} /></PlanGuard>}
       {activeSec === 'comissoes'  && <ComissoesTab  currency={currency} />}
       {activeSec === 'obrigacoes' && <PlanGuard plan="pro" feature="financeiro-completo"><ObrigacoesTab currency={currency} /></PlanGuard>}
-      {activeSec === 'resultado'  && <PlanGuard plan="pro" feature="financeiro-completo"><ResultadoTab  resumo={resumo} currency={currency} sazonal={sazonal} periodo={periodo} /></PlanGuard>}
+      {activeSec === 'resultado'  && <PlanGuard plan="pro" feature="financeiro-completo"><ResultadoTab  resumo={resumo} currency={currency} periodo={periodo} /></PlanGuard>}
 
       {/* CVE/EUR toggle for non-receitas sections */}
       {activeSec !== 'receitas' && (
