@@ -11,7 +11,7 @@ import {
 } from 'recharts';
 import { getAnalyticsStats, getReviewsStats, getMarketingStats } from '../services/analyticsService';
 import { listCustomers } from '../services/customersService';
-import { getResumo } from '../services/financeiroService';
+import { getResumo, getUnidades } from '../services/financeiroService';
 import { listUnits } from '../services/unitsService';
 import PageHeader from '../components/layout/PageHeader';
 import Button from '../components/ui/Button';
@@ -31,6 +31,13 @@ function ultimos30() {
   const inicio = new Date(); inicio.setDate(inicio.getDate() - 29);
   const fmt = d => d.toISOString().slice(0, 10);
   return { inicio: fmt(inicio), fim: fmt(fim) };
+}
+
+/* GET /reviews/stats devolve { total, average, distribution }; "average_rating" nunca existiu no endpoint
+   (antes o rating ficava sempre vazio e o score usava o valor por omissao). */
+function ratingDe(stats) {
+  const n = Number(stats?.average ?? stats?.average_rating ?? 0);
+  return Number.isFinite(n) ? n : 0;
 }
 
 function fmtMoney(v) {
@@ -82,7 +89,7 @@ function computeHealthScore(resumo, reviewsStats, stats) {
     components.ocupacao = 12;
   }
 
-  const rating = Number(reviewsStats?.average_rating);
+  const rating = ratingDe(reviewsStats);
   if (rating > 0) {
     if      (rating >= 4.8) components.avaliacoes = 25;
     else if (rating >= 4.5) components.avaliacoes = 21;
@@ -237,6 +244,7 @@ export default function Analytics() {
   const [mktg,    setMktg]    = useState(null);
   const [origins, setOrigins] = useState([]);
   const [units,   setUnits]   = useState([]);
+  const [desempenho, setDesempenho] = useState([]);
   const [comp,    setComp]    = useState(loadComp);
   const [editComp, setEditComp] = useState(null);
   const [compDraft, setCompDraft] = useState({});
@@ -245,19 +253,21 @@ export default function Analytics() {
     setLoading(true);
     try {
       const p = ultimos30();
-      const [r, rv, st, mk, customers, un] = await Promise.all([
+      const [r, rv, st, mk, customers, un, des] = await Promise.all([
         getResumo(p.inicio, p.fim).catch(() => null),
         getReviewsStats().catch(() => null),
         getAnalyticsStats().catch(() => null),
         getMarketingStats().catch(() => null),
         listCustomers({}).catch(() => []),
         listUnits().catch(() => []),
+        getUnidades(p.inicio, p.fim).catch(() => []),
       ]);
       setResumo(r);
       setReviews(rv);
       setStats(st);
       setMktg(mk);
       setUnits(un || []);
+      setDesempenho(Array.isArray(des) ? des : []);
 
       const source = st?.customer_origins || buildOrigins(customers);
       setOrigins(source);
@@ -284,14 +294,21 @@ export default function Analytics() {
 
   const funnel = stats?.conversion_funnel || mktg?.funnel || null;
 
+  /* Popularidade por tour: reservas dos ultimos 30 dias (GET /financial/unidades) relativas ao tour mais
+     reservado, que fica a 100%. Antes era um indice inventado com Math.random(). */
+  const maisReservados = [...desempenho]
+    .sort((a, b) => Number(b.num_reservas || 0) - Number(a.num_reservas || 0))
+    .slice(0, 5);
+  const maxReservas = Number(maisReservados[0]?.num_reservas || 0);
+
   const weekly = stats?.weekly_summary || {
     revenue:       resumo?.atual?.receita       || null,
     reservas:      resumo?.atual?.num_reservas  || null,
     novos_clientes: null,
-    rating_medio:  reviews?.average_rating      || null,
+    rating_medio:  ratingDe(reviews) || null,
   };
 
-  const ratingNum = Number(reviews?.average_rating || 0);
+  const ratingNum = ratingDe(reviews);
 
   const SCORE_COMPONENTS = [
     { label: 'Crescimento de receita', value: components.crescimento ?? 0, max: 25, color: 'var(--ocean-700)' },
@@ -632,13 +649,13 @@ export default function Analytics() {
                     </div>
                   )}
 
-                  {units.length > 0 && (
+                  {maisReservados.length > 0 && (
                     <div>
-                      <p className="text-xs font-mono uppercase tracking-wider text-n-500 mb-2">Por tour (estimativa baseada em actividade)</p>
+                      <p className="text-xs font-mono uppercase tracking-wider text-n-500 mb-2">Por tour (reservas dos ultimos 30 dias)</p>
                       <div className="space-y-2">
-                        {units.slice(0, 5).map((u, i) => {
-                          const popularity = Math.max(0, 100 - i * 18 - Math.floor(Math.random() * 5));
-                          const needsAttention = popularity < 50;
+                        {maisReservados.map((u) => {
+                          const popularity = maxReservas > 0 ? Math.round((Number(u.num_reservas || 0) / maxReservas) * 100) : 0;
+                          const needsAttention = maxReservas > 0 && popularity < 50;
                           return (
                             <div key={u.id} className="flex items-center gap-3">
                               <span className="text-xs font-body text-n-700 w-40 truncate shrink-0">{u.name}</span>
@@ -657,7 +674,7 @@ export default function Analytics() {
                         })}
                       </div>
                       <p className="text-[10px] font-mono text-n-400 mt-2">
-                        Indice de popularidade estimado. Para dados precisos, active o tracking de visitas por tour no backend.
+                        Percentagem das reservas do tour mais reservado nos ultimos 30 dias (canceladas nao contam).
                       </p>
                     </div>
                   )}

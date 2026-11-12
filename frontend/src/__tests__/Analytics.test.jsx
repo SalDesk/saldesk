@@ -4,7 +4,7 @@ import { MemoryRouter } from 'react-router-dom';
 import Analytics from '../pages/Analytics';
 import { getAnalyticsStats, getReviewsStats, getMarketingStats } from '../services/analyticsService';
 import { listCustomers } from '../services/customersService';
-import { getResumo } from '../services/financeiroService';
+import { getResumo, getUnidades } from '../services/financeiroService';
 import { listUnits } from '../services/unitsService';
 
 /* Sem rede: so os servicos da pagina sao simulados */
@@ -14,7 +14,7 @@ vi.mock('../services/analyticsService', () => ({
   getMarketingStats: vi.fn(),
 }));
 vi.mock('../services/customersService', () => ({ listCustomers: vi.fn() }));
-vi.mock('../services/financeiroService', () => ({ getResumo: vi.fn() }));
+vi.mock('../services/financeiroService', () => ({ getResumo: vi.fn(), getUnidades: vi.fn() }));
 vi.mock('../services/unitsService', () => ({ listUnits: vi.fn() }));
 
 /* O ResponsiveContainer real nao desenha nada no jsdom: os componentes do recharts sao simulados por
@@ -51,7 +51,7 @@ function intervalo() {
 }
 function eur(v) { return `€${Math.round(Number(v || 0)).toLocaleString('pt-PT')}`; }
 
-/* crescimento 25 (var 25,4 > 20) + ocupacao 20 (70 > 60) + avaliacoes 12 (sem rating valido) + fidelizacao 15 = 72 */
+/* crescimento 25 (var 25,4 > 20) + ocupacao 20 (70 > 60) + avaliacoes 16 (rating 4,2 >= 4,0) + fidelizacao 15 = 76 */
 const RESUMO = { atual: { receita: 1234, num_reservas: 18, taxa_ocupacao: 70 }, variacao: { receita: 25.4, num_reservas: -8.2 } };
 
 const UNIDADES = [
@@ -64,6 +64,17 @@ const UNIDADES = [
   { id: 'u7', name: 'Snorkel', base_price: 25 },
   { id: 'u8', name: 'Pesca', base_price: 80 },
   { id: 'u9', name: 'Extra nono', base_price: 99 },
+];
+
+/* GET /financial/unidades: reservas dos ultimos 30 dias por tour (so os 5 mais reservados aparecem) */
+const DESEMPENHO = [
+  { id: 'u1', name: 'Buggy Tour', num_reservas: 20, receita: 900, taxa_ocupacao: 40 },
+  { id: 'u2', name: 'Mergulho', num_reservas: 15, receita: 600, taxa_ocupacao: 30 },
+  { id: 'u3', name: 'Kitesurf', num_reservas: 10, receita: 300, taxa_ocupacao: 20 },
+  { id: 'u4', name: 'Barco', num_reservas: 5, receita: 100, taxa_ocupacao: 10 },
+  { id: 'u5', name: 'Quad', num_reservas: 2, receita: 0, taxa_ocupacao: 5 },
+  { id: 'u6', name: 'Passeio', num_reservas: 25, receita: 1200, taxa_ocupacao: 50 },
+  { id: 'u7', name: 'Snorkel', num_reservas: 1, receita: 0, taxa_ocupacao: 1 },
 ];
 
 const CLIENTES = [
@@ -85,11 +96,12 @@ describe('Analytics', () => {
   let errSpy;
   let warnSpy;
   let abrir;
+  let aleatorio;
 
   beforeEach(() => {
     errSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
-    vi.spyOn(Math, 'random').mockReturnValue(0.5);
+    aleatorio = vi.spyOn(Math, 'random').mockReturnValue(0.5);
     abrir = vi.spyOn(window, 'open').mockImplementation(() => null);
     localStorage.clear();
     getResumo.mockReset().mockResolvedValue(RESUMO);
@@ -98,6 +110,7 @@ describe('Analytics', () => {
     getMarketingStats.mockReset().mockResolvedValue({});
     listCustomers.mockReset().mockResolvedValue(CLIENTES);
     listUnits.mockReset().mockResolvedValue(UNIDADES);
+    getUnidades.mockReset().mockResolvedValue(DESEMPENHO);
   });
 
   afterEach(() => {
@@ -151,14 +164,16 @@ describe('Analytics', () => {
     expect(getMarketingStats).toHaveBeenCalledTimes(1);
     expect(listCustomers).toHaveBeenCalledWith({});
     expect(listUnits).toHaveBeenCalledTimes(1);
+    expect(getUnidades).toHaveBeenCalledWith(inicio, fim);
   });
 
   it('todos_os_servicos_a_falhar_dao_a_pagina_com_valores_por_omissao', async () => {
-    [getResumo, getReviewsStats, getAnalyticsStats, getMarketingStats, listCustomers, listUnits]
+    [getResumo, getReviewsStats, getAnalyticsStats, getMarketingStats, listCustomers, listUnits, getUnidades]
       .forEach(f => f.mockRejectedValue(new Error('x')));
     await abre();
     /* 12 + 12 + 12 + 15 = 51 -> Moderado */
     expect(screen.getByText('Moderado')).toBeTruthy();
+    expect(screen.queryByText(/Por tour/)).toBeNull();
     expect(valor(resumo(), 'Receita').textContent).toBe('—');
     expect(screen.getByText('Sem dados de origem disponíveis.')).toBeTruthy();
     expect(screen.getByText('Dados do funil nao disponiveis.')).toBeTruthy();
@@ -178,12 +193,12 @@ describe('Analytics', () => {
 
   it('score_calculado_a_partir_de_receita_ocupacao_e_avaliacoes', async () => {
     await abre();
-    expect(within(document.querySelector('svg[viewBox="0 0 160 160"]')).getByText('72')).toBeTruthy();
+    expect(within(document.querySelector('svg[viewBox="0 0 160 160"]')).getByText('76')).toBeTruthy();
     const barra = (rotulo) => screen.getByText(rotulo).parentElement.textContent;
     expect(barra('Crescimento de receita')).toBe('Crescimento de receita25/25');
     expect(barra('Taxa de ocupacao')).toBe('Taxa de ocupacao20/25');
-    /* o rating le average_rating, que o endpoint nao devolve (devolve average): fica no valor por omissao */
-    expect(barra('Avaliacoes')).toBe('Avaliacoes12/25');
+    /* o endpoint /reviews/stats devolve `average` (4,2 -> 16 pontos) */
+    expect(barra('Avaliacoes')).toBe('Avaliacoes16/25');
     expect(barra('Fidelizacao')).toBe('Fidelizacao15/25');
   });
 
@@ -202,8 +217,8 @@ describe('Analytics', () => {
     }
   });
 
-  it('o_rating_le_average_rating_e_so_entao_conta_para_o_score', async () => {
-    getReviewsStats.mockResolvedValue({ average_rating: 4.9 });
+  it('o_rating_le_average_do_endpoint_e_conta_para_o_score', async () => {
+    getReviewsStats.mockResolvedValue({ average: 4.9, total: 3 });
     await abre();
     expect(screen.getByText('Avaliacoes').parentElement.textContent).toBe('Avaliacoes25/25');
     expect(valor(resumo(), 'Rating medio').textContent).toBe('4.9');
@@ -227,7 +242,7 @@ describe('Analytics', () => {
     expect(valor(r, 'Reservas').textContent).toBe('18');
     expect(valor(r, 'Reservas').parentElement.parentElement.textContent).toContain('-8%');
     expect(valor(r, 'Novos clientes').textContent).toBe('—');
-    expect(valor(r, 'Rating medio').textContent).toBe('—');
+    expect(valor(r, 'Rating medio').textContent).toBe('4.2');
   });
 
   it('o_resumo_semanal_do_servidor_tem_prioridade', async () => {
@@ -309,17 +324,17 @@ describe('Analytics', () => {
     expect(url.startsWith(`mailto:?subject=${encodeURIComponent('SalDesk — Relatorio Mensal')}&body=`)).toBe(true);
     const corpo = decodeURIComponent(url.split('&body=')[1]);
     expect(corpo).toBe(
-      'Score de Saude: 72/100\n' +
+      'Score de Saude: 76/100\n' +
       `Receita: ${eur(1234)}\n` +
       'Reservas: 18\n' +
-      'Rating medio: —\n\n' +
+      'Rating medio: 4.2\n\n' +
       `Gerado em SalDesk — ${new Date().toLocaleDateString('pt-PT')}`
     );
   });
 
   it('o_relatorio_mostra_quatro_numeros_com_o_score_pela_cor', async () => {
     getAnalyticsStats.mockResolvedValue({ health_score: 72 });
-    getReviewsStats.mockResolvedValue({ average_rating: 4.5 });
+    getReviewsStats.mockResolvedValue({ average: 4.5, total: 8 });
     await abre();
     const c = cartao('Relatorio Semanal');
     expect(valor(c, 'Score de saude').textContent).toBe('72/100');
@@ -376,26 +391,38 @@ describe('Analytics', () => {
     expect(valor(d, 'Taxa de abandono').textContent).toBe('—');
   });
 
-  it('popularidade_por_tour_usa_Math.random_fixado_e_marca_abaixo_de_50', async () => {
+  it('popularidade_por_tour_vem_das_reservas_reais_relativas_ao_tour_mais_reservado', async () => {
     await abre();
     const c = cartao('Taxa de Abandono');
     const linha = (nome) => within(c).getByText(nome).closest('div.flex.items-center');
-    /* 100 - i*18 - floor(0.5*5) = 98, 80, 62, 44, 26: so os 5 primeiros tours */
-    expect(linha('Buggy Tour').textContent).toContain('98%');
-    expect(linha('Mergulho').textContent).toContain('80%');
-    expect(linha('Kitesurf').textContent).toContain('62%');
-    expect(linha('Barco').textContent).toContain('44%');
-    expect(linha('Quad').textContent).toContain('26%');
-    expect(within(c).queryByText('Passeio')).toBeNull();
-    /* abaixo de 50: aviso "melhora fotos" */
+    /* 25, 20, 15, 10, 5 reservas sobre o maximo (25): 100, 80, 60, 40, 20; so os 5 mais reservados */
+    expect(linha('Passeio').textContent).toContain('100%');
+    expect(linha('Buggy Tour').textContent).toContain('80%');
+    expect(linha('Mergulho').textContent).toContain('60%');
+    expect(linha('Kitesurf').textContent).toContain('40%');
+    expect(linha('Barco').textContent).toContain('20%');
+    expect(within(c).queryByText('Quad')).toBeNull();
+    const ordem = [...c.querySelectorAll('span.truncate')].map(e => e.textContent);
+    expect(ordem).toEqual(['Passeio', 'Buggy Tour', 'Mergulho', 'Kitesurf', 'Barco']);
+    /* abaixo de 50%: aviso "melhora fotos" */
     expect(within(c).getAllByText('melhora fotos')).toHaveLength(2);
     expect(linha('Barco').textContent).toContain('melhora fotos');
-    expect(linha('Kitesurf').textContent).not.toContain('melhora fotos');
-    expect(within(c).getByText(/Indice de popularidade estimado/)).toBeTruthy();
+    expect(linha('Mergulho').textContent).not.toContain('melhora fotos');
+    expect(within(c).getByText(/Por tour \(reservas dos ultimos 30 dias\)/)).toBeTruthy();
+    expect(within(c).queryByText(/estimad/)).toBeNull();
+    expect(aleatorio).not.toHaveBeenCalled();
+  });
+
+  it('sem_reservas_em_nenhum_tour_mostra_zero_e_nao_aconselha_melhorar_fotos', async () => {
+    getUnidades.mockResolvedValue([{ id: 'u1', name: 'Buggy Tour', num_reservas: 0 }, { id: 'u2', name: 'Mergulho', num_reservas: 0 }]);
+    await abre();
+    const c = cartao('Taxa de Abandono');
+    expect(within(c).getByText('Buggy Tour').closest('div.flex.items-center').textContent).toContain('0%');
+    expect(within(c).queryByText('melhora fotos')).toBeNull();
   });
 
   it('sem_tours_nao_ha_popularidade', async () => {
-    listUnits.mockResolvedValue([]);
+    getUnidades.mockResolvedValue([]);
     await abre();
     expect(within(cartao('Taxa de Abandono')).queryByText(/Por tour/)).toBeNull();
   });
