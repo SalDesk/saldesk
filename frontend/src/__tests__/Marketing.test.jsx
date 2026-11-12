@@ -15,7 +15,7 @@ const MONTHS_PT = ['Janeiro', 'Fevereiro', 'Marco', 'Abril', 'Maio', 'Junho', 'J
 const STORAGE_KEY = 'saldesk_social_posts_v1';
 
 const UNIDADES = [{ id: 'u1', name: 'Buggy Tour' }, { id: 'u2', name: 'Kite Aula' }];
-const WIDGET_SERVIDOR = '<script src="https://saldesk.cv/widget.js" data-slug="demo" data-color="#000000"></script>';
+const WIDGET_SERVIDOR = '<!-- SalDesk Widget — Sal Aventura -->\n<iframe id="saldesk-widget-demo" src="https://app.saldesk.cv/book/demo?widget=1" width="100%" height="500" frameborder="0" title="Reservar em Sal Aventura"></iframe>';
 const STATS = { profile_views: 120, clicks: 45, bookings_direct: 9, conversion_rate: 20, sources: { direct: 5, booking_com: 3, viator: 1, outro: 2 } };
 const INDICACOES = {
   referral_link: 'https://saldesk.cv/operadores.html?ref=demo', total: 3, convertidos: 1,
@@ -132,8 +132,9 @@ describe('Marketing: montagem', () => {
     listUnits.mockRejectedValue(new Error('x'));
     await montar();
     expect([...campo('QR Code para', 'select').options].map(o => o.textContent)).toEqual(['Perfil publico — link de reserva']);
-    await abrir('Widget', 'Cor primaria');
-    expect(document.querySelector('pre').textContent).toBe('<script src="https://saldesk.cv/widget.js" data-slug="demo" data-color="#0D5470"></script>');
+    await abrir('Widget', 'Codigo HTML');
+    expect(document.querySelector('pre')).toBeNull();
+    expect(screen.getByText('Nao foi possivel gerar o codigo do widget. Recarrega a pagina e tenta de novo.')).toBeInTheDocument();
   });
 
   it('listUnits_nulo_nao_rebenta', async () => {
@@ -262,50 +263,72 @@ describe('Marketing: Codigo QR', () => {
 /* ───────────────────────── caracterizacao: Widget ───────────────────────── */
 
 describe('Marketing: Widget', () => {
-  it('codigo_do_servidor_leva_data_color_substituido_e_o_por_omissao_leva_slug_e_cor', async () => {
+  it('o_codigo_do_servidor_aparece_tal_como_vem_sem_seletor_de_cor', async () => {
     await montar();
-    await abrir('Widget', 'Cor primaria');
-    expect(document.querySelector('pre').textContent).toBe('<script src="https://saldesk.cv/widget.js" data-slug="demo" data-color="#0D5470"></script>');
-    cleanup();
-    getWidgetCode.mockResolvedValue('');
-    await montar();
-    await abrir('Widget', 'Cor primaria');
-    expect(document.querySelector('pre').textContent).toBe('<script src="https://saldesk.cv/widget.js" data-slug="demo" data-color="#0D5470"></script>');
+    await abrir('Widget', 'Codigo HTML');
+    expect(document.querySelector('pre').textContent).toBe(WIDGET_SERVIDOR);
+    /* a cor nunca fez nada no codigo real (nao tem data-color): o seletor foi retirado */
+    expect(screen.queryByText('Cor primaria')).toBeNull();
+    expect(screen.queryByLabelText('Cor personalizada')).toBeNull();
   });
 
-  it('mudar_a_cor_actualiza_o_codigo_e_o_preview_e_alterna_Codigo_Preview', async () => {
-    const { container } = await montar();
-    await abrir('Widget', 'Cor primaria');
-    fireEvent.click(amostras(container)[1]);
-    expect(document.querySelector('pre').textContent).toContain('data-color="#062A38"');
+  it('sem_codigo_do_servidor_mostra_o_aviso_e_nao_oferece_copiar_nem_um_script_inexistente', async () => {
+    getWidgetCode.mockResolvedValue('');
+    await montar();
+    await abrir('Widget', 'Codigo HTML');
+    expect(document.querySelector('pre')).toBeNull();
+    expect(screen.getByText('Nao foi possivel gerar o codigo do widget. Recarrega a pagina e tenta de novo.')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Copiar' })).toBeNull();
+    expect(document.body.textContent).not.toContain('widget.js');
+  });
+
+  it('alternar_Codigo_Preview_mostra_o_widget_real_num_iframe_da_pagina_publica', async () => {
+    await montar();
+    await abrir('Widget', 'Codigo HTML');
+    expect(document.querySelector('iframe')).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: 'Preview' }));
     expect(document.querySelector('pre')).toBeNull();
-    expect(screen.getByText('O widget de reservas aparecera aqui quando incorporado no seu website.')).toBeInTheDocument();
-    expect(screen.getByText('Cor primaria:').textContent).toBe('Cor primaria: #062A38');
+    const quadro = screen.getByTitle('Pre-visualizacao do widget');
+    expect(quadro.tagName).toBe('IFRAME');
+    /* preview=1: abrir o preview nao conta como visita nas Estatisticas */
+    expect(quadro.getAttribute('src')).toBe('/book/demo?widget=1&preview=1');
     fireEvent.click(screen.getByRole('button', { name: 'Codigo' }));
+    expect(document.querySelector('iframe')).toBeNull();
     expect(document.querySelector('pre')).not.toBeNull();
   });
 
-  it('o_seletor_de_cor_do_widget_actualiza_o_codigo', async () => {
-    const { container } = await montar();
-    await abrir('Widget', 'Cor primaria');
-    fireEvent.change(container.querySelector('input[type="color"]'), { target: { value: '#abcdef' } });
-    expect(document.querySelector('pre').textContent).toContain('data-color="#abcdef"');
+  it('o_iframe_do_preview_ajusta_a_altura_a_mensagem_do_widget_e_ignora_outras_origens', async () => {
+    await montar();
+    await abrir('Widget', 'Codigo HTML');
+    fireEvent.click(screen.getByRole('button', { name: 'Preview' }));
+    const quadro = screen.getByTitle('Pre-visualizacao do widget');
+    const mensagem = (data, source) => act(() => { window.dispatchEvent(new MessageEvent('message', { data, source })); });
+    mensagem({ type: 'saldesk-widget-resize', height: 812 }, quadro.contentWindow);
+    expect(quadro.style.height).toBe('812px');
+    mensagem({ type: 'saldesk-widget-resize', height: 1500 }, window);
+    mensagem({ type: 'outra-coisa', height: 2000 }, quadro.contentWindow);
+    expect(quadro.style.height).toBe('812px');
   });
 
-  it('copiar_chama_clipboard_com_o_codigo_final_e_mostra_Copiado_2s', async () => {
+  it('copiar_chama_clipboard_com_o_codigo_do_servidor_e_mostra_Copiado_2s', async () => {
     await montar();
-    await abrir('Widget', 'Cor primaria');
+    await abrir('Widget', 'Codigo HTML');
     vi.useFakeTimers();
     fireEvent.click(screen.getByRole('button', { name: 'Copiar' }));
     await act(async () => { await vi.advanceTimersByTimeAsync(0); });
-    expect(writeText).toHaveBeenCalledWith('<script src="https://saldesk.cv/widget.js" data-slug="demo" data-color="#0D5470"></script>');
+    expect(writeText).toHaveBeenCalledWith(WIDGET_SERVIDOR);
     expect(screen.getByRole('button', { name: 'Copiado' })).toBeInTheDocument();
     await act(async () => { await vi.advanceTimersByTimeAsync(1999); });
     expect(screen.getByRole('button', { name: 'Copiado' })).toBeInTheDocument();
     await act(async () => { await vi.advanceTimersByTimeAsync(1); });
     expect(screen.getByRole('button', { name: 'Copiar' })).toBeInTheDocument();
     expect(screen.getByText('Cole este codigo no HTML do seu website onde quer que o formulario apareca.')).toBeInTheDocument();
+  });
+
+  it('avisa_que_o_pagamento_SISP_abre_em_ecra_inteiro_fora_do_site_do_operador', async () => {
+    await montar();
+    await abrir('Widget', 'Codigo HTML');
+    expect(screen.getByText(/pagamento com cartao cabo-verdiano \(SISP\) abre em ecra inteiro/i)).toBeInTheDocument();
   });
 });
 
@@ -499,13 +522,9 @@ describe('Marketing: design system (estrutura, QR e Widget)', () => {
     expect(screen.getByLabelText('Tamanho do QR code')).toHaveAttribute('type', 'range');
   });
 
-  it('o_widget_tem_amostras_com_nome_Codigo_Preview_com_aria_pressed_e_cor_personalizada', async () => {
+  it('o_widget_tem_Codigo_Preview_com_aria_pressed', async () => {
     await montar();
-    await abrir('Widget', 'Cor primaria');
-    expect(screen.getByRole('button', { name: 'Cor #0D5470', pressed: true })).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'Cor #1480A8' }));
-    expect(screen.getByRole('button', { name: 'Cor #1480A8', pressed: true })).toBeInTheDocument();
-    expect(screen.getByLabelText('Cor personalizada')).toHaveAttribute('type', 'color');
+    await abrir('Widget', 'Codigo HTML');
     expect(screen.getByRole('button', { name: 'Codigo', pressed: true })).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Preview' }));
     expect(screen.getByRole('button', { name: 'Preview', pressed: true })).toBeInTheDocument();
@@ -513,7 +532,7 @@ describe('Marketing: design system (estrutura, QR e Widget)', () => {
 
   it('o_botao_Copiar_e_type_button_e_copiado_usa_o_token_de_sucesso', async () => {
     await montar();
-    await abrir('Widget', 'Cor primaria');
+    await abrir('Widget', 'Codigo HTML');
     const b = screen.getByRole('button', { name: 'Copiar' });
     expect(b).toHaveAttribute('type', 'button');
     expect(b.className).toContain('bg-ocean-50');
@@ -532,7 +551,7 @@ describe('Marketing: design system (estrutura, QR e Widget)', () => {
   it('sem_hexadecimais_cores_nomeadas_ou_text_error_em_classes_nos_separadores_QR_e_Widget', async () => {
     const { container } = await montar();
     let html = classes(container);
-    await abrir('Widget', 'Cor primaria');
+    await abrir('Widget', 'Codigo HTML');
     html += classes(container);
     fireEvent.click(screen.getByRole('button', { name: 'Preview' }));
     html += classes(container);

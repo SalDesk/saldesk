@@ -21,7 +21,7 @@ import visaLogo from '../assets/payment-logos/visa.png';
 import mastercardLogo from '../assets/payment-logos/mastercard.png';
 import amexLogo from '../assets/payment-logos/amex.jpg';
 import vinti4Logo from '../assets/payment-logos/vinti4.png';
-import { useIsWidget, useWidgetResize } from '../utils/widgetMode';
+import { useIsWidget, useWidgetResize, alvoDoPagamento } from '../utils/widgetMode';
 import {
   MENU_CATEGORY_LABELS, MENU_ALLERGEN_LABELS, MENU_DIET_LABELS, RestaurantReservationSection,
 } from '../components/restaurant/RestaurantReservationWidget';
@@ -455,6 +455,7 @@ async function iniciarPagamentoSisp(slug, reservationId, amountCve) {
   const form = document.createElement('form');
   form.method = 'POST';
   form.action = postUrl;
+  form.target = alvoDoPagamento(); /* '_top' num widget: o banco nao abre dentro de um iframe */
   Object.entries(fields).forEach(([k, v]) => {
     const input = document.createElement('input');
     input.type = 'hidden'; input.name = k; input.value = v;
