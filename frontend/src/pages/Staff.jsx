@@ -7,7 +7,6 @@ import {
   Search,
 } from 'lucide-react';
 import { listStaff, createStaff, updateStaff, deleteStaff, createStaffAccount } from '../services/staffService';
-import { listSellerCommissions, markCommissionPaid } from '../services/sellerService';
 import { getUnreadCount } from '../services/messageService';
 import { useToast } from '../store/toastStore';
 import useAuthStore from '../store/authStore';
@@ -15,8 +14,9 @@ import PageHeader from '../components/layout/PageHeader';
 import Button from '../components/ui/Button';
 import Modal from '../components/ui/Modal';
 import LoadingSpinner from '../components/shared/LoadingSpinner';
-import { ROLES_BY_TYPE, ROLES_DEFAULT, STARTER_STAFF_LIMIT, StaffAvatar } from './staff/shared';
+import { ROLES_BY_TYPE, ROLES_DEFAULT, STARTER_STAFF_LIMIT } from './staff/shared';
 import StaffCard from './staff/StaffCard';
+import SellerCard from './staff/SellerCard';
 import StaffForm from './staff/StaffForm';
 import KanbanBoard from './staff/KanbanBoard';
 import ChecklistTab from './staff/ChecklistTab';
@@ -24,7 +24,6 @@ import ChatTab from './staff/ChatTab';
 import Card from '../components/ui/Card';
 import Tabs from '../components/ui/Tabs';
 import EmptyState from '../components/ui/EmptyState';
-import Badge from '../components/ui/Badge';
 import Input from '../components/ui/Input';
 
 /* ── Main Staff Page ── */
@@ -189,7 +188,6 @@ export default function Staff() {
       {tab === 'staff' && (() => {
         const sellers = staffList.filter(s => s.role === 'Vendedor de Praia');
         if (sellers.length === 0) return null;
-        const month = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}`;
         return (
           <div className="mt-6">
             <div className="flex items-center gap-2 mb-4">
@@ -198,54 +196,7 @@ export default function Staff() {
               <div className="flex-1 h-px bg-n-200" />
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {sellers.map(s => {
-                const comms = listSellerCommissions(s.id);
-                const monthComms = typeof comms?.then === 'function' ? [] : comms.filter(c => c.created_at?.startsWith(month));
-                const totalMonth   = monthComms.reduce((sum, c) => sum + (c.amount || 0), 0);
-                const totalPending = monthComms.filter(c => c.status === 'pending').reduce((sum, c) => sum + (c.amount || 0), 0);
-                return (
-                  <Card key={s.id} padding="p-4">
-                  <div className="space-y-3">
-                    <div className="flex items-start justify-between">
-                      <div className="flex items-center gap-3">
-                        <StaffAvatar member={s} size={40} />
-                        <div>
-                          <p className="font-display font-semibold text-sm text-n-900">{s.name}</p>
-                          <p className="text-xs font-body text-n-500">{s.seller_zone || 'Sem zona definida'}</p>
-                        </div>
-                      </div>
-                      <Badge variant="direct">Vendedor</Badge>
-                    </div>
-                    <div className="grid grid-cols-2 gap-2">
-                      <div className="bg-n-50 rounded-sm px-2.5 py-2">
-                        <p className="font-display font-bold text-sm text-ocean-700">€{Math.round(totalMonth)}</p>
-                        <p className="text-[10px] font-body text-n-400">Comissoes mes</p>
-                      </div>
-                      <div className="bg-[var(--warning-light)] rounded-sm px-2.5 py-2">
-                        <p className="font-display font-bold text-sm text-[var(--warning)]">€{Math.round(totalPending)}</p>
-                        <p className="text-[10px] font-body text-n-400">Por pagar</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center justify-between text-xs font-body text-n-500 pt-1 border-t border-n-100">
-                      <span>{s.commission_pct || 10}% comissao</span>
-                      {totalPending > 0 && (
-                        <button
-                          onClick={() => {
-                            if (!window.confirm(`Registar pagamento de €${Math.round(totalPending)} ao vendedor ${s.name}?`)) return;
-                            const comms = listSellerCommissions(s.id);
-                            if (typeof comms?.then !== 'function') {
-                              comms.filter(c => c.status === 'pending').forEach(c => markCommissionPaid(c.id));
-                            }
-                          }}
-                          className="text-xs font-body font-semibold text-ocean-700 hover:underline">
-                          Registar pagamento
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                  </Card>
-                );
-              })}
+              {sellers.map(s => <SellerCard key={s.id} seller={s} />)}
             </div>
           </div>
         );

@@ -5,7 +5,7 @@ import Staff from '../pages/Staff';
 import useAuthStore from '../store/authStore';
 import useToastStore from '../store/toastStore';
 import { listStaff, createStaffAccount, deleteStaff } from '../services/staffService';
-import { listSellerCommissions } from '../services/sellerService';
+import { listSellerCommissions, markCommissionPaid } from '../services/sellerService';
 import { listAssignments } from '../services/assignmentService';
 import { listReservations } from '../services/reservationsService';
 import { listGroups, getUnreadCount } from '../services/messageService';
@@ -148,7 +148,7 @@ describe('Colaboradores: lista', () => {
     expect(deleteStaff).not.toHaveBeenCalled();
   });
 
-  it('vendedores_mostram_zona_percentagem_e_os_totais_a_zero', async () => {
+  it('vendedores_mostram_zona_percentagem_e_sem_comissoes_os_totais_a_zero', async () => {
     listStaff.mockResolvedValue([...COLABORADORES, { id: 's5', name: 'Zeca Praia', role: 'Vendedor de Praia', status: 'active' }]);
     await montar();
     const seccao = screen.getByText('Vendedores de Praia').closest('div.mt-6');
@@ -156,10 +156,66 @@ describe('Colaboradores: lista', () => {
     expect(within(seccao).getByText('Sem zona definida')).toBeInTheDocument();
     expect(within(seccao).getByText('12% comissao')).toBeInTheDocument();
     expect(within(seccao).getByText('10% comissao')).toBeInTheDocument(); /* por omissao */
-    expect(within(seccao).getAllByText('€0')).toHaveLength(4); /* mes e por pagar, dois vendedores (decisao 7a) */
+    await waitFor(() => expect(listSellerCommissions).toHaveBeenCalledTimes(2));
+    expect(within(seccao).getAllByText('€0')).toHaveLength(4); /* mes e por pagar, dois vendedores */
     expect(within(seccao).queryByText('Registar pagamento')).toBeNull();
     expect(listSellerCommissions).toHaveBeenCalledWith('s3');
     expect(listSellerCommissions).toHaveBeenCalledWith('s5');
+  });
+
+  it('o_pedido_das_comissoes_e_feito_uma_vez_por_vendedor_e_nao_a_cada_render', async () => {
+    listStaff.mockResolvedValue([...COLABORADORES, { id: 's4', name: 'Pedro Praia', role: 'Guia', status: 'active' }]);
+    await montar();
+    await waitFor(() => expect(listSellerCommissions).toHaveBeenCalledTimes(1));
+    fireEvent.change(screen.getByPlaceholderText('Pesquisar...'), { target: { value: 'Rui' } });
+    fireEvent.change(screen.getByPlaceholderText('Pesquisar...'), { target: { value: '' } });
+    await new Promise(r => setTimeout(r, 20));
+    expect(listSellerCommissions).toHaveBeenCalledTimes(1);
+  });
+
+  it('os_totais_do_mes_e_por_pagar_vem_das_comissoes_do_vendedor', async () => {
+    const agora = new Date().toISOString();
+    listSellerCommissions.mockResolvedValue([
+      { id: 'c1', amount: 30.4, status: 'pending', created_at: agora },
+      { id: 'c2', amount: 20, status: 'paid', created_at: agora },
+      { id: 'c3', amount: 100, status: 'pending', created_at: '2020-01-15T10:00:00Z' }, /* outro mes: nao conta */
+    ]);
+    await montar();
+    const seccao = screen.getByText('Vendedores de Praia').closest('div.mt-6');
+    await waitFor(() => expect(within(seccao).getByText('€50').nextSibling.textContent).toBe('Comissoes mes'));
+    expect(within(seccao).getByText('€30').nextSibling.textContent).toBe('Por pagar');
+    expect(within(seccao).getByText('Registar pagamento')).toBeInTheDocument();
+  });
+
+  it('registar_pagamento_pede_confirmacao_e_paga_so_as_pendentes_do_mes', async () => {
+    const agora = new Date().toISOString();
+    listSellerCommissions.mockResolvedValue([
+      { id: 'c1', amount: 30, status: 'pending', created_at: agora },
+      { id: 'c2', amount: 20, status: 'paid', created_at: agora },
+      { id: 'c3', amount: 100, status: 'pending', created_at: '2020-01-15T10:00:00Z' },
+    ]);
+    markCommissionPaid.mockResolvedValue({});
+    const confirmar = vi.spyOn(window, 'confirm').mockReturnValueOnce(false).mockReturnValue(true);
+    await montar();
+    const seccao = screen.getByText('Vendedores de Praia').closest('div.mt-6');
+    const botao = await within(seccao).findByText('Registar pagamento');
+    fireEvent.click(botao);
+    expect(confirmar).toHaveBeenCalledWith('Registar pagamento de €30 ao vendedor Vera Mendes?');
+    expect(markCommissionPaid).not.toHaveBeenCalled();
+    fireEvent.click(within(seccao).getByText('Registar pagamento'));
+    await waitFor(() => expect(markCommissionPaid).toHaveBeenCalledTimes(1));
+    expect(markCommissionPaid).toHaveBeenCalledWith('c1');
+    await waitFor(() => expect(within(seccao).queryByText('Registar pagamento')).toBeNull());
+    expect(within(seccao).getByText('€50').nextSibling.textContent).toBe('Comissoes mes');
+    expect(within(seccao).getByText('€0').nextSibling.textContent).toBe('Por pagar');
+  });
+
+  it('listSellerCommissions_a_falhar_deixa_os_totais_a_zero_sem_rebentar', async () => {
+    listSellerCommissions.mockRejectedValue(new Error('x'));
+    await montar();
+    const seccao = screen.getByText('Vendedores de Praia').closest('div.mt-6');
+    await waitFor(() => expect(listSellerCommissions).toHaveBeenCalled());
+    expect(within(seccao).getAllByText('€0')).toHaveLength(2);
   });
 
   it('getUnreadCount_a_falhar_nao_rebenta', async () => {
