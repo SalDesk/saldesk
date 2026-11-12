@@ -49,13 +49,13 @@ const MESES = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'O
 
 /* receita do ano: media dos meses com receita = 620/6 = 103,33 -> alto > 129,17 (Jul) e baixo < 77,5 (Ago) */
 const ATUAL = [
-  { date: `${ANO}-01-01`, value: 100 }, { date: `${ANO}-02-01`, total: 100 }, { date: `${ANO}-03`, value: 100 },
-  { date: `${ANO}-06-01`, value: 100 }, { date: `${ANO}-07-01`, value: 200 }, { date: `${ANO}-08-01`, total: 20 },
+  { periodo: `${ANO}-01`, receita: 100 }, { periodo: `${ANO}-02`, receita: 100 }, { periodo: `${ANO}-03`, receita: 100 },
+  { periodo: `${ANO}-06`, receita: 100 }, { periodo: `${ANO}-07`, receita: 200 }, { periodo: `${ANO}-08`, receita: 20 },
 ];
-const PASSADO = [{ date: `${ANTERIOR}-01-01`, value: 300 }, { date: `${ANTERIOR}-07-01`, value: 300 }];
+const PASSADO = [{ periodo: `${ANTERIOR}-01`, receita: 300 }, { periodo: `${ANTERIOR}-07`, receita: 300 }];
 
 /* reservas: hoje 1, hoje+3 tres (alta procura), hoje+5 duas */
-function reserva(id, dias) { return { id, check_in: somaDias(HOJE, dias) }; }
+function reserva(id, dias, status = 'confirmed') { return { id, check_in: somaDias(HOJE, dias), status }; }
 const RESERVAS = [reserva('a', 0), reserva('b', 3), reserva('c', 3), reserva('d', 3), reserva('e', 5), reserva('f', 5)];
 
 function recebe(atual, passado) {
@@ -111,7 +111,16 @@ describe('Demand', () => {
     await abre();
     expect(getReceita).toHaveBeenCalledWith(`${ANO}-01-01`, `${ANO}-12-31`, 'month');
     expect(getReceita).toHaveBeenCalledWith(`${ANTERIOR}-01-01`, `${ANTERIOR}-12-31`, 'month');
-    expect(listReservations).toHaveBeenCalledWith({ from: HOJE, to: somaDias(HOJE, 29), status: 'confirmed,pending' });
+    expect(listReservations).toHaveBeenCalledWith({ check_in_from: HOJE, check_in_to: somaDias(HOJE, 29) });
+  });
+
+  it('so_conta_reservas_confirmadas_ou_pendentes_nos_proximos_30_dias', async () => {
+    listReservations.mockResolvedValue([
+      reserva('a', 1, 'confirmed'), reserva('b', 1, 'pending'), reserva('c', 2, 'cancelled'),
+      reserva('d', 2, 'no_show'), reserva('e', 3, 'checked_in'), reserva('f', 4, 'confirmed'),
+    ]);
+    await abre();
+    expect(kpi('Reservas proximos 30d').textContent).toBe('3');
   });
 
   it('kpis_receita_acumulada_variacao_melhor_mes_e_reservas_30d', async () => {
@@ -124,7 +133,7 @@ describe('Demand', () => {
   });
 
   it('variacao_negativa_e_sem_ano_anterior_mostra_travessao', async () => {
-    recebe(ATUAL, [{ date: `${ANTERIOR}-01-01`, value: 1000 }]);
+    recebe(ATUAL, [{ periodo: `${ANTERIOR}-01`, receita: 1000 }]);
     await abre();
     /* (620 - 1000) / 1000 = -38% */
     expect(kpi('Var. vs ano anterior').textContent).toBe('-38%');
@@ -146,7 +155,7 @@ describe('Demand', () => {
   });
 
   it('sem_epocas_mostra_os_textos_vazios', async () => {
-    recebe(Array.from({ length: 12 }, (_, i) => ({ date: `${ANO}-${String(i + 1).padStart(2, '0')}-01`, value: 100 })), []);
+    recebe(Array.from({ length: 12 }, (_, i) => ({ periodo: `${ANO}-${String(i + 1).padStart(2, '0')}`, receita: 100 })), []);
     await abre();
     expect(screen.getByText('Sem dados suficientes para identificar epocas altas.')).toBeTruthy();
     expect(screen.getByText('Sem epocas baixas identificadas — bom desempenho anual!')).toBeTruthy();
@@ -254,8 +263,8 @@ describe('Demand', () => {
 
   it('as_sugestoes_ficam_limitadas_a_6', async () => {
     /* um mes enorme e oito meses pequenos: 1 alta + 8 baixas = 9, cortadas em 6 */
-    const dados = [{ date: `${ANO}-01-01`, value: 1000 }];
-    for (let m = 2; m <= 9; m++) dados.push({ date: `${ANO}-${String(m).padStart(2, '0')}-01`, value: 100 });
+    const dados = [{ periodo: `${ANO}-01`, receita: 1000 }];
+    for (let m = 2; m <= 9; m++) dados.push({ periodo: `${ANO}-${String(m).padStart(2, '0')}`, receita: 100 });
     recebe(dados, []);
     await abre();
     await vaiPara('Sugestoes');
