@@ -18,7 +18,7 @@ import { listExpenses, getSalaryPayments } from '../../services/expensesService'
 import Button from '../../components/ui/Button';
 import Card from '../../components/ui/Card';
 import LoadingSpinner from '../../components/shared/LoadingSpinner';
-import { MONTHS_PT, fmtMoney } from './shared';
+import { MONTHS_PT, EUR_CVE, fmtMoney, fmtEixo, fmtDica } from './shared';
 
 /* ─────────────────── RESULTADO ─────────────────── */
 
@@ -73,14 +73,15 @@ function ResultadoTab({ resumo, currency, periodo }) {
   const resultado = receita - totalDespesas - totalSal;
   const margem    = receita > 0 ? (resultado / receita) * 100 : 0;
 
-  /* Chart: last 6 months */
+  /* Chart: last 6 months (os valores sao convertidos para a moeda escolhida, como os cartoes) */
+  const taxa = currency === 'CVE' ? EUR_CVE : 1;
   const chartData = Array.from({ length: 6 }, (_, i) => {
     const d = new Date(now.getFullYear(), now.getMonth() - (5 - i), 1);
     const m = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
     const rec = mensal.find(s => s.periodo === m);
     const dep = allExp.filter(e => (e.date || '').startsWith(m)).reduce((s, e) => s + Number(e.amount || 0), 0);
     const sal = salPayments.filter(p => `${p.year}-${String(p.month).padStart(2, '0')}` === m).reduce((s, p) => s + Number(p.amount || 0), 0);
-    return { name: MONTHS_PT[d.getMonth()], receita: Math.round(Number(rec?.receita || 0)), despesas: Math.round(dep + sal) };
+    return { name: MONTHS_PT[d.getMonth()], receita: Math.round(Number(rec?.receita || 0) * taxa), despesas: Math.round((dep + sal) * taxa) };
   });
 
   async function handleExport(type) {
@@ -118,8 +119,8 @@ function ResultadoTab({ resumo, currency, periodo }) {
           <BarChart data={chartData} margin={{ left: 0, right: 8, top: 8, bottom: 0 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="var(--n200)" vertical={false} />
             <XAxis dataKey="name" tick={{ fontSize: 10, fontFamily: 'DM Mono', fill: 'var(--n500)' }} tickLine={false} axisLine={false} />
-            <YAxis tick={{ fontSize: 10, fontFamily: 'DM Mono', fill: 'var(--n500)' }} tickLine={false} axisLine={false} tickFormatter={v => v > 999 ? `€${Math.round(v / 1000)}k` : `€${v}`} />
-            <ChartTooltip contentStyle={{ fontSize: 11, fontFamily: 'DM Sans', border: '1px solid var(--n200)', borderRadius: 4 }} formatter={v => `€${Math.round(v).toLocaleString('pt-PT')}`} />
+            <YAxis tick={{ fontSize: 10, fontFamily: 'DM Mono', fill: 'var(--n500)' }} tickLine={false} axisLine={false} tickFormatter={v => fmtEixo(v, currency)} />
+            <ChartTooltip contentStyle={{ fontSize: 11, fontFamily: 'DM Sans', border: '1px solid var(--n200)', borderRadius: 4 }} formatter={v => fmtDica(v, currency)} />
             <Legend wrapperStyle={{ fontSize: 11, fontFamily: 'DM Mono' }} />
             <Bar dataKey="receita"  name="Receita"  fill="var(--ocean-700)" radius={[2,2,0,0]} />
             <Bar dataKey="despesas" name="Despesas" fill="var(--error)" radius={[2,2,0,0]} />

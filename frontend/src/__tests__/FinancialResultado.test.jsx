@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import ResultadoTab from '../pages/financial/ResultadoTab';
+import { fmtEixo, fmtDica } from '../pages/financial/shared';
 import { exportExcel, exportPdf, getReceita } from '../services/financeiroService';
 import { listExpenses, getSalaryPayments } from '../services/expensesService';
 import { coresDosGraficos, dadosDoGrafico } from './helpers/rechartsMock';
@@ -196,11 +197,26 @@ describe('Resultado', () => {
     await waitFor(() => expect(exportExcel).toHaveBeenCalledWith(PERIODO.inicio, PERIODO.fim));
   });
 
-  it('moeda_cve_converte_os_cartoes_mas_nao_o_grafico', async () => {
+  it('moeda_cve_converte_os_cartoes_e_tambem_o_grafico', async () => {
+    const { unmount } = await montar();
+    const eur = dadosDoGrafico('bar');
+    unmount();
     await montar({ currency: 'CVE' });
     expect(valor('Receita bruta')).toBe(cve(1000));
     expect(valor('Resultado liquido')).toBe(cve(400));
-    expect(dadosDoGrafico('bar')[5].receita).toBe(700);
+    const emCve = dadosDoGrafico('bar');
+    expect(eur[5].receita).toBe(700);
+    expect(emCve[5].receita).toBe(700 * 110);
+    emCve.forEach((m, i) => expect(m.despesas).toBe(eur[i].despesas * 110));
+  });
+
+  it('os_eixos_e_a_dica_do_grafico_seguem_a_moeda', () => {
+    expect(fmtEixo(77000, 'CVE')).toBe('77k CVE');
+    expect(fmtEixo(500, 'CVE')).toBe('500 CVE');
+    expect(fmtEixo(7000, 'EUR')).toBe('€7k');
+    expect(fmtEixo(500, 'EUR')).toBe('€500');
+    expect(fmtDica(77000, 'CVE')).toBe(`${(77000).toLocaleString('pt-PT')} CVE`);
+    expect(fmtDica(700, 'EUR')).toBe('€700');
   });
 
   it('em_carga_mostra_o_spinner', () => {

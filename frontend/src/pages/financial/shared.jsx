@@ -69,6 +69,17 @@ export function fmtMoney(v, currency) {
   return `€${Math.round(n).toLocaleString('pt-PT')}`;
 }
 
+/* Formatos dos graficos: recebem valores JA na moeda escolhida (o grafico converte os dados antes). */
+export function fmtEixo(v, currency) {
+  const n = Math.round(Number(v || 0));
+  const curto = n >= 1000 ? `${Math.round(n / 1000)}k` : `${n}`;
+  return currency === 'CVE' ? `${curto} CVE` : `€${curto}`;
+}
+export function fmtDica(v, currency) {
+  const n = Math.round(Number(v || 0));
+  return currency === 'CVE' ? `${n.toLocaleString('pt-PT')} CVE` : `€${n.toLocaleString('pt-PT')}`;
+}
+
 export function loadCosts() {
   try { return JSON.parse(localStorage.getItem(TOUR_COSTS_KEY) || '{}'); } catch { return {}; }
 }
