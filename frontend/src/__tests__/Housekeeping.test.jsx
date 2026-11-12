@@ -245,9 +245,22 @@ describe('Housekeeping', () => {
     expect(screen.getAllByRole('combobox')).toHaveLength(5);
   });
 
-  it('o pedido de reservas de hoje e feito uma vez', async () => {
+  it('pede_as_estadias_de_hoje_e_as_ocupadas_e_nao_repete_reservas_comuns_aos_dois_pedidos', async () => {
     await abre();
-    expect(listReservations).toHaveBeenCalledTimes(1);
+    /* o backend nao conhece from/to (devolvia TODAS as reservas): estadias que tocam hoje + checked_in */
+    expect(listReservations).toHaveBeenCalledTimes(2);
+    expect(listReservations).toHaveBeenCalledWith({ stay_from: HOJE, stay_to: HOJE });
+    expect(listReservations).toHaveBeenCalledWith({ status: 'checked_in' });
+    /* a mesma reserva nos dois pedidos conta uma so vez: 'Saida + Entrada' do h2 (r1 e r2) aparece uma vez */
+    expect(screen.getAllByText('Saida + Entrada')).toHaveLength(1);
+  });
+
+  it('um_hospede_que_ficou_alem_da_saida_continua_a_contar_como_ocupado', async () => {
+    listReservations.mockImplementation(async (f) => (f.status === 'checked_in'
+      ? [{ id: 'atrasada', unit_id: 'h1', status: 'checked_in', check_in: dia(-5), check_out: dia(-1) }]
+      : []));
+    await abre();
+    expect(screen.getAllByText('Ocupado').length).toBeGreaterThan(0);
   });
 
   it('sem quartos mostra o vazio', async () => {

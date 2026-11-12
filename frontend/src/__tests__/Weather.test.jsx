@@ -100,7 +100,8 @@ describe('Weather', () => {
     await abre();
     expect(screen.getByRole('heading', { name: 'Meteorologia — Sal' })).toBeTruthy();
     expect(getWeatherForecast).toHaveBeenCalledWith(16.73, -22.93);
-    expect(listReservations).toHaveBeenCalledWith({ from: dia(0), to: dia(6) });
+    /* o backend filtra por check_in_from/check_in_to (nao conhece from/to) */
+    expect(listReservations).toHaveBeenCalledWith({ check_in_from: dia(0), check_in_to: dia(6) });
   });
 
   it('sem_ilha_a_previsao_pede_sem_coordenadas', async () => {
@@ -245,6 +246,16 @@ describe('Weather', () => {
     fireEvent.click(screen.getByRole('button', { name: /Actualizar/ }));
     await waitFor(() => expect(getWeatherForecast).toHaveBeenCalledTimes(2));
     expect(listReservations).toHaveBeenCalledTimes(2);
+  });
+
+  it('se_a_recarga_da_previsao_falha_nao_ficam_alertas_nem_cartoes_antigos', async () => {
+    const r = await abre();
+    expect(screen.getAllByText(/Mau tempo previsto para/)).toHaveLength(1);
+    getWeatherForecast.mockRejectedValue(new Error('x'));
+    fireEvent.click(screen.getByRole('button', { name: /Actualizar/ }));
+    await screen.findByText(/Nao foi possivel carregar a previsao meteorologica/);
+    expect(screen.queryByText(/Mau tempo previsto para/)).toBeNull();
+    expect(cartoes(r)).toHaveLength(0);
   });
 
   it('falha_nas_reservas_nao_rebenta', async () => {
