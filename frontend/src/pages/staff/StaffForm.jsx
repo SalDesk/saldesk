@@ -29,8 +29,9 @@ function StaffForm({ member, onSave, onCancel, loading, error, roles }) {
   const [photoPreview, setPhotoPreview] = useState(member?.photo_url || null);
   const [createAccess, setCreateAccess]  = useState(false);
   const [skillInput, setSkillInput]      = useState('');
-  const [skills,  setSkills]   = useState([]);
-  const [schedule, setSchedule] = useState([]);
+  /* Ao editar, arrancam com o que o colaborador ja tem (antes arrancavam vazios e guardar apagava-os). */
+  const [skills,  setSkills]   = useState(() => (Array.isArray(member?.skills) ? member.skills : []));
+  const [schedule, setSchedule] = useState(() => (Array.isArray(member?.schedule) ? member.schedule : []));
   const fileRef = useRef(null);
 
   const set = f => e => setForm(p => ({ ...p, [f]: e.target.value }));
