@@ -88,11 +88,14 @@ export default function Demand() {
       const [cur, prev, upcoming] = await Promise.all([
         getReceita(`${yr}-01-01`, `${yr}-12-31`, 'month').catch(() => []),
         getReceita(`${py}-01-01`, `${py}-12-31`, 'month').catch(() => []),
-        listReservations({ from: today, to: end30, status: 'confirmed,pending' }).catch(() => []),
+        /* O backend filtra por check_in_from/check_in_to (nao conhece from/to) e `status` aceita UM valor
+           (antes 'confirmed,pending' nao coincidia com nenhuma reserva e o contador dava sempre 0):
+           pedem-se as reservas do intervalo e filtram-se aqui as confirmadas e pendentes. */
+        listReservations({ check_in_from: today, check_in_to: end30 }).catch(() => []),
       ]);
       setCurData(cur || []);
       setPrevData(prev || []);
-      setNext30Res(upcoming || []);
+      setNext30Res((Array.isArray(upcoming) ? upcoming : []).filter(r => r.status === 'confirmed' || r.status === 'pending'));
     } finally {
       setLoading(false);
     }
@@ -104,12 +107,13 @@ export default function Demand() {
   const chartData = useMemo(() => {
     return MONTHS_PT.map((name, idx) => {
       const month = String(idx + 1).padStart(2, '0');
-      const curPt  = curData.find(d  => d.date?.slice(5, 7) === month || d.date?.slice(0, 7) === `${yr}-${month}`);
-      const prevPt = prevData.find(d => d.date?.slice(5, 7) === month || d.date?.slice(0, 7) === `${py}-${month}`);
+      /* GET /financial/receita devolve { periodo: 'AAAA-MM', receita, num_reservas } por mes */
+      const curPt  = curData.find(d  => d.periodo === `${yr}-${month}`);
+      const prevPt = prevData.find(d => d.periodo === `${py}-${month}`);
       return {
         name,
-        curValue:  Math.round(curPt?.value  || curPt?.total  || 0),
-        prevValue: Math.round(prevPt?.value || prevPt?.total || 0),
+        curValue:  Math.round(Number(curPt?.receita  || 0)),
+        prevValue: Math.round(Number(prevPt?.receita || 0)),
         month: idx + 1,
       };
     });
