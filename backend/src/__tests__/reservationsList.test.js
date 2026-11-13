@@ -14,7 +14,7 @@ jest.mock('../config/supabase', () => {
     from: jest.fn(() => builder),
     then: (resolve, reject) => Promise.resolve({ data: [], error: null }).then(resolve, reject),
   };
-  ['select', 'eq', 'order', 'gte', 'lte'].forEach((m) => {
+  ['select', 'eq', 'order', 'gte', 'lte', 'in'].forEach((m) => {
     builder[m] = jest.fn(() => builder);
   });
   return { supabaseAdmin: builder };
@@ -48,6 +48,33 @@ describe('GET /reservations (listar)', () => {
     expect(supabaseAdmin.lte).toHaveBeenCalledWith('check_in', '2026-11-05');
     expect(supabaseAdmin.gte).toHaveBeenCalledWith('check_out', '2026-11-03');
     expect(res.json).toHaveBeenCalledWith({ data: [], message: 'Reservas listadas' });
+  });
+
+  it('payment_status aceita uma lista separada por virgulas e chega ao builder como in()', async () => {
+    const { res } = await chamar({ payment_status: 'pending,partial' });
+    expect(supabaseAdmin.in).toHaveBeenCalledWith('payment_status', ['pending', 'partial']);
+    expect(res.json).toHaveBeenCalledWith({ data: [], message: 'Reservas listadas' });
+  });
+
+  it('payment_status com um so valor (e espacos a volta) tambem funciona', async () => {
+    await chamar({ payment_status: ' paid ' });
+    expect(supabaseAdmin.in).toHaveBeenCalledWith('payment_status', ['paid']);
+  });
+
+  it('sem payment_status nao ha filtro de pagamento', async () => {
+    await chamar({ status: 'confirmed' });
+    expect(supabaseAdmin.in).not.toHaveBeenCalled();
+  });
+
+  it('payment_status invalido responde 400 INVALID_PAYMENT_STATUS sem chamar a base de dados', async () => {
+    for (const valor of ['pending;drop', 'pending,', 'a b', "x'y", ',,']) {
+      jest.clearAllMocks();
+      const { res, next } = await chamar({ payment_status: valor });
+      expect(res.status).toHaveBeenCalledWith(400);
+      expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ code: 'INVALID_PAYMENT_STATUS' }));
+      expect(supabaseAdmin.from).not.toHaveBeenCalled();
+      expect(next).not.toHaveBeenCalled();
+    }
   });
 
   it('data invalida responde 400 INVALID_DATE sem chamar a base de dados', async () => {

@@ -31,8 +31,19 @@ const TRANSICOES = {
 
 async function listar(req, res, next) {
   try {
-    const { status, unit_id, seller_id } = req.query;
+    const { status, unit_id, seller_id, payment_status } = req.query;
     const filtros = lerFiltrosDeData(req.query);
+
+    /* payment_status: um valor ou varios separados por virgula (ex.: 'pending,partial' = por regularizar) */
+    let estadosPagamento = null;
+    if (payment_status !== undefined && payment_status !== '') {
+      estadosPagamento = typeof payment_status === 'string'
+        ? payment_status.split(',').map((v) => v.trim())
+        : [];
+      if (!estadosPagamento.length || !estadosPagamento.every((v) => /^[a-z_]+$/.test(v))) {
+        return res.status(400).json({ error: `payment_status invalido: ${String(payment_status).slice(0, 60)}`, code: 'INVALID_PAYMENT_STATUS' });
+      }
+    }
 
     let q = supabaseAdmin
       .from('reservations')
@@ -41,6 +52,7 @@ async function listar(req, res, next) {
       .order('check_in', { ascending: false });
 
     if (status) q = q.eq('status', status);
+    if (estadosPagamento) q = q.in('payment_status', estadosPagamento);
     if (unit_id) q = q.eq('unit_id', unit_id);
     q = aplicarFiltrosDeData(q, filtros);
     // Vendedor so pode ver as suas proprias reservas; operador pode filtrar por qualquer vendedor
