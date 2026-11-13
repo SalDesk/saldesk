@@ -74,7 +74,8 @@ describe('ResumoView', () => {
     const { inicio, fim } = primeiroEUltimoDoMes();
     await waitFor(() => expect(getResumo).toHaveBeenCalledWith(inicio, fim));
     expect(getUnidades).toHaveBeenCalledWith(inicio, fim);
-    expect(listReservations).toHaveBeenCalledWith({ stay_from: inicio, stay_to: fim });
+    /* as reservas recentes sao as 5 criadas mais recentemente, de qualquer mes */
+    expect(listReservations).toHaveBeenCalledWith({ order_by: 'created_at', limit: 5 });
     /* grafico: ultimos 30 dias, por dia, a acabar hoje */
     await waitFor(() => expect(getReceita).toHaveBeenCalled());
     const [ini30, fim30, gran] = getReceita.mock.calls[0];
@@ -87,18 +88,26 @@ describe('ResumoView', () => {
     await screen.findByText('Receita do mês');
   });
 
-  it('os pedidos usam stay_from e stay_to', async () => {
+  it('o pedido das reservas recentes nao usa from/to nem se limita ao mes', async () => {
     renderResumo();
     await screen.findByText('Receita do mês');
-    const { inicio, fim } = primeiroEUltimoDoMes();
     const pedidos = listReservations.mock.calls.map(([params]) => params);
-    /* nenhuma chamada recebe as chaves antigas from/to */
     pedidos.forEach((p) => {
       expect(p).not.toHaveProperty('from');
       expect(p).not.toHaveProperty('to');
+      expect(p).not.toHaveProperty('stay_from');
+      expect(p).not.toHaveProperty('stay_to');
     });
-    /* primeiro e ultimo dia do mes atual */
-    expect(pedidos).toEqual([{ stay_from: inicio, stay_to: fim }]);
+    expect(pedidos).toEqual([{ order_by: 'created_at', limit: 5 }]);
+  });
+
+  it('uma reserva criada hoje para um mes futuro aparece nas recentes', async () => {
+    listReservations.mockResolvedValue([
+      { id: 'f1', created_at: '2026-11-13T09:00:00Z', status: 'pending', customer_name: 'Cliente Dezembro', check_in: '2026-12-20', guests: 2, units: { name: 'Tour X' } },
+    ]);
+    renderResumo();
+    const bloco = (await screen.findByText('Reservas recentes')).closest('section');
+    expect(await within(bloco).findByText(/Cliente Dezembro/)).toBeInTheDocument();
   });
 
   it('mostra receita e variacao', async () => {
@@ -185,7 +194,7 @@ describe('ResumoView', () => {
     renderResumo();
     expect(await screen.findByText('Sem receita nos últimos 30 dias')).toBeInTheDocument();
     expect(screen.getByText('Sem vendas este mês')).toBeInTheDocument();
-    expect(screen.getByText('Sem reservas este mes')).toBeInTheDocument();
+    expect(screen.getByText('Sem reservas recentes')).toBeInTheDocument();
     expect(screen.queryByTestId('grafico')).not.toBeInTheDocument();
     /* os quatro KPIs aparecem a zero */
     expect(screen.getByText('Receita do mês')).toBeInTheDocument();

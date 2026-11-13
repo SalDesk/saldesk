@@ -14,7 +14,7 @@ jest.mock('../config/supabase', () => {
     from: jest.fn(() => builder),
     then: (resolve, reject) => Promise.resolve({ data: [], error: null }).then(resolve, reject),
   };
-  ['select', 'eq', 'order', 'gte', 'lte', 'in'].forEach((m) => {
+  ['select', 'eq', 'order', 'gte', 'lte', 'in', 'limit'].forEach((m) => {
     builder[m] = jest.fn(() => builder);
   });
   return { supabaseAdmin: builder };
@@ -72,6 +72,40 @@ describe('GET /reservations (listar)', () => {
       const { res, next } = await chamar({ payment_status: valor });
       expect(res.status).toHaveBeenCalledWith(400);
       expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ code: 'INVALID_PAYMENT_STATUS' }));
+      expect(supabaseAdmin.from).not.toHaveBeenCalled();
+      expect(next).not.toHaveBeenCalled();
+    }
+  });
+
+  it('por omissao ordena por check_in decrescente e nao limita', async () => {
+    await chamar({});
+    expect(supabaseAdmin.order).toHaveBeenCalledWith('check_in', { ascending: false });
+    expect(supabaseAdmin.limit).not.toHaveBeenCalled();
+  });
+
+  it('order_by=created_at ordena pelas mais recentemente criadas', async () => {
+    await chamar({ order_by: 'created_at' });
+    expect(supabaseAdmin.order).toHaveBeenCalledWith('created_at', { ascending: false });
+    expect(supabaseAdmin.order).not.toHaveBeenCalledWith('check_in', expect.anything());
+  });
+
+  it('limit chega ao builder como numero', async () => {
+    await chamar({ order_by: 'created_at', limit: '5' });
+    expect(supabaseAdmin.limit).toHaveBeenCalledWith(5);
+  });
+
+  it('order_by ou limit invalidos respondem 400 sem chamar a base de dados', async () => {
+    const casos = [
+      [{ order_by: 'customer_email' }, 'INVALID_ORDER_BY'],
+      [{ order_by: 'created_at;drop' }, 'INVALID_ORDER_BY'],
+      [{ limit: '0' }, 'INVALID_LIMIT'], [{ limit: '-3' }, 'INVALID_LIMIT'], [{ limit: 'abc' }, 'INVALID_LIMIT'],
+      [{ limit: '5.5' }, 'INVALID_LIMIT'], [{ limit: '1000' }, 'INVALID_LIMIT'],
+    ];
+    for (const [query, codigo] of casos) {
+      jest.clearAllMocks();
+      const { res, next } = await chamar(query);
+      expect(res.status).toHaveBeenCalledWith(400);
+      expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ code: codigo }));
       expect(supabaseAdmin.from).not.toHaveBeenCalled();
       expect(next).not.toHaveBeenCalled();
     }

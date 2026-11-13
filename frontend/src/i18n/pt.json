@@ -307,7 +307,7 @@
       "next7Days": "Próximos 7 dias",
       "recentReservations": "Reservas recentes",
       "topToursMonth": "Top tours do mes",
-      "noReservationsMonth": "Sem reservas este mes",
+      "noRecentReservations": "Sem reservas recentes",
       "noDataMonth": "Sem dados este mes",
       "reservationsSuffix": "reservas",
       "resShort": "res.",
