@@ -10,6 +10,7 @@ const { dispararSyncImediato } = require('../helpers/otaSyncHelper');
 const { getDiscoverCatalog } = require('../services/discoverCatalogService');
 const { notifyOperator } = require('../services/pushService');
 const { emitToOperator } = require('../services/socketService');
+const { validarConfig, deveResponder, textoDaResposta, JANELA_SILENCIO_HORAS } = require('../helpers/chatAutoReply');
 
 async function getOperador(req, res, next) {
   try {
@@ -983,17 +984,62 @@ async function slugContact(req, res, next) {
    emitToOperator para quem ja estiver com o painel de Mensagens aberto,
    e visivel no historico completo mesmo sem essa entrega em directo
    (o widget publico faz polling do historico, nao tem socket autenticado). */
+/* Resposta automatica fora de horas (Definicoes > Perfil Publico). So responde se o operador a ligou, se agora
+   esta fora do horario dele e se ele (ou o sistema) ainda nao falou com este hospede nas ultimas
+   JANELA_SILENCIO_HORAS. Nunca deixa uma falha aqui afectar a mensagem do hospede. */
+async function enviarRespostaAutomatica(operator, customer, lang) {
+  try {
+    const config = operator.chat_auto_reply;
+    if (!config || config.enabled !== true) return null;
+
+    const desde = new Date(Date.now() - JANELA_SILENCIO_HORAS * 3600 * 1000).toISOString();
+    const { data: recentes } = await supabaseAdmin
+      .from('messages')
+      .select('id')
+      .eq('operator_id', operator.id)
+      .eq('recipient_id', customer.id)
+      .in('sender_type', ['manager', 'staff', 'system'])
+      .gte('created_at', desde)
+      .limit(1);
+    if (!deveResponder({ config, jaFalouRecentemente: (recentes || []).length > 0 })) return null;
+
+    const valida = validarConfig(config).config;
+    const { data: msg, error } = await supabaseAdmin
+      .from('messages')
+      .insert({
+        operator_id:    operator.id,
+        sender_id:      operator.id,
+        sender_type:    'system',
+        recipient_id:   customer.id,
+        recipient_type: 'guest',
+        content:        textoDaResposta(valida, lang),
+        message_type:   'direct',
+        channel:        'internal',
+      })
+      .select('id, sender_type, content, channel, delivery_status, created_at')
+      .single();
+    if (error) throw error;
+
+    emitToOperator(operator.id, 'message:new', { ...msg, sender_id: operator.id, recipient_id: customer.id, recipient_type: 'guest', operator_id: operator.id });
+    return msg;
+  } catch (err) {
+    console.error('[ChatAutoReply] Erro na resposta automatica:', err.message);
+    return null;
+  }
+}
+
 async function sendGuestChatMessage(req, res, next) {
   try {
     const { slug } = req.params;
     const { customer_id, name, email, phone, content } = req.body;
+    const lang = req.body.lang === 'en' ? 'en' : 'pt';
     const trimmedContent = String(content || '').trim();
     if (!trimmedContent) return res.status(400).json({ error: 'Mensagem obrigatoria', code: 'MISSING_FIELDS' });
     if (trimmedContent.length > 4000) return res.status(400).json({ error: 'Mensagem demasiado longa', code: 'TOO_LONG' });
 
     const { data: operator } = await supabaseAdmin
       .from('operators')
-      .select('id, name, business_name, push_subscription')
+      .select('id, name, business_name, push_subscription, chat_auto_reply')
       .eq('slug', slug)
       .eq('onboarding_complete', true)
       .maybeSingle();
@@ -1061,7 +1107,9 @@ async function sendGuestChatMessage(req, res, next) {
       }
     }
 
-    return res.status(201).json({ data: { message: msg, customer_id: customer.id }, message: 'Mensagem enviada' });
+    const autoReply = await enviarRespostaAutomatica(operator, customer, lang);
+
+    return res.status(201).json({ data: { message: msg, customer_id: customer.id, ...(autoReply ? { auto_reply: autoReply } : {}) }, message: 'Mensagem enviada' });
   } catch (err) { next(err); }
 }
 

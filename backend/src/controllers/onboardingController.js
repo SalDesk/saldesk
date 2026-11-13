@@ -1,6 +1,7 @@
 const { supabaseAdmin } = require('../config/supabase');
 const { enviarEmail } = require('../helpers/emailHelper');
 const { operatorWelcomeEmail } = require('../helpers/emailTemplates');
+const { validarConfig } = require('../helpers/chatAutoReply');
 
 const VALID_TYPES = ['hotel', 'activity', 'rentacar', 'restaurant'];
 
@@ -93,7 +94,15 @@ async function updateOperator(req, res, next) {
     const { name, operator_type, phone, whatsapp, address, description,
             slug, language, currency, timezone, onboarding_complete, logo_url, cover_images, business_name, tagline,
             custom_faqs, page_config, island_id,
-            cancellation_policy_pt, cancellation_policy_en } = req.body;
+            cancellation_policy_pt, cancellation_policy_en, chat_auto_reply } = req.body;
+
+    /* Resposta automatica do chat do site: valida e normaliza antes de gravar (null desliga) */
+    let chatAutoReply;
+    if (chat_auto_reply !== undefined) {
+      const v = validarConfig(chat_auto_reply);
+      if (!v.ok) return res.status(400).json({ error: v.error, code: 'INVALID_CHAT_AUTO_REPLY' });
+      chatAutoReply = v.config;
+    }
 
     const updates = { updated_at: new Date().toISOString() };
     if (name !== undefined)              updates.name = name;
@@ -114,6 +123,7 @@ async function updateOperator(req, res, next) {
     if (custom_faqs !== undefined && Array.isArray(custom_faqs)) updates.custom_faqs = custom_faqs;
     if (cancellation_policy_pt !== undefined) updates.cancellation_policy_pt = cancellation_policy_pt;
     if (cancellation_policy_en !== undefined) updates.cancellation_policy_en = cancellation_policy_en;
+    if (chat_auto_reply !== undefined)   updates.chat_auto_reply = chatAutoReply;
     if (page_config !== undefined && typeof page_config === 'object' && page_config !== null && !Array.isArray(page_config)) {
       updates.page_config = page_config;
     }

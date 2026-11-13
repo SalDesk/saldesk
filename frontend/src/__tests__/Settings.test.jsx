@@ -317,10 +317,86 @@ describe('Definicoes: Perfil Publico', () => {
     await waitFor(() => expect(updateOperator).toHaveBeenCalledWith({
       logo_url: null, description_pt: 'Nova desc', description_en: 'Desc EN',
       cancellation_policy_pt: 'CP PT', cancellation_policy_en: 'CP EN',
-      custom_faqs: OPERADOR.custom_faqs, cover_images: [],
+      custom_faqs: OPERADOR.custom_faqs, cover_images: [], chat_auto_reply: null,
     }));
     expect(await screen.findByText('Guardado com sucesso')).toBeInTheDocument();
     expect(useAuthStore.getState().operator.description_pt).toBe('Nova desc');
+  });
+
+  it('o_cartao_do_chat_comeca_desligado_sem_campos_e_ligar_mostra_dias_horas_e_textos', async () => {
+    await abrirPerfil();
+    const cartaoChat = cartao('Chat do site: resposta automatica');
+    const ligar = within(cartaoChat).getByRole('checkbox', { name: 'Responder automaticamente fora do horario' });
+    expect(ligar).not.toBeChecked();
+    expect(within(cartaoChat).queryByLabelText('Abre as')).toBeNull();
+    fireEvent.click(ligar);
+    expect(ligar).toBeChecked();
+    /* por omissao: dias uteis, 09:00 a 18:00 */
+    ['Seg', 'Ter', 'Qua', 'Qui', 'Sex'].forEach(d => expect(within(cartaoChat).getByRole('checkbox', { name: d })).toBeChecked());
+    ['Sab', 'Dom'].forEach(d => expect(within(cartaoChat).getByRole('checkbox', { name: d })).not.toBeChecked());
+    expect(within(cartaoChat).getByLabelText('Abre as')).toHaveValue('09:00');
+    expect(within(cartaoChat).getByLabelText('Fecha as')).toHaveValue('18:00');
+    expect(within(cartaoChat).getByLabelText('Mensagem em Portugues')).toHaveValue('');
+    expect(within(cartaoChat).getByLabelText('Mensagem em Ingles')).toHaveValue('');
+    /* o texto por omissao aparece como sugestao */
+    expect(within(cartaoChat).getByLabelText('Mensagem em Portugues')).toHaveAttribute('placeholder', expect.stringContaining('fora do horario de atendimento'));
+  });
+
+  it('guardar_com_o_chat_ligado_envia_a_configuracao_com_as_alteracoes', async () => {
+    await abrirPerfil();
+    const cartaoChat = cartao('Chat do site: resposta automatica');
+    fireEvent.click(within(cartaoChat).getByRole('checkbox', { name: 'Responder automaticamente fora do horario' }));
+    fireEvent.click(within(cartaoChat).getByRole('checkbox', { name: 'Sab' }));
+    fireEvent.click(within(cartaoChat).getByRole('checkbox', { name: 'Qua' }));
+    fireEvent.change(within(cartaoChat).getByLabelText('Abre as'), { target: { value: '08:30' } });
+    fireEvent.change(within(cartaoChat).getByLabelText('Fecha as'), { target: { value: '17:00' } });
+    fireEvent.change(within(cartaoChat).getByLabelText('Mensagem em Portugues'), { target: { value: 'Voltamos segunda.' } });
+    fireEvent.change(within(cartaoChat).getByLabelText('Mensagem em Ingles'), { target: { value: 'Back Monday.' } });
+    fireEvent.click(botao('Guardar perfil'));
+    await waitFor(() => expect(updateOperator).toHaveBeenCalled());
+    expect(ultimoPut().chat_auto_reply).toEqual({
+      enabled: true, days: [1, 2, 4, 5, 6], from: '08:30', to: '17:00', message_pt: 'Voltamos segunda.', message_en: 'Back Monday.',
+    });
+  });
+
+  it('arranca_com_a_configuracao_guardada_no_operador_e_desligar_mantem_os_valores', async () => {
+    await abrirPerfil({ ...OPERADOR, chat_auto_reply: { enabled: true, days: [0, 6], from: '10:00', to: '14:00', message_pt: 'PT guardado', message_en: 'EN saved' } });
+    const cartaoChat = cartao('Chat do site: resposta automatica');
+    const ligar = within(cartaoChat).getByRole('checkbox', { name: 'Responder automaticamente fora do horario' });
+    expect(ligar).toBeChecked();
+    expect(within(cartaoChat).getByRole('checkbox', { name: 'Dom' })).toBeChecked();
+    expect(within(cartaoChat).getByRole('checkbox', { name: 'Sab' })).toBeChecked();
+    expect(within(cartaoChat).getByRole('checkbox', { name: 'Seg' })).not.toBeChecked();
+    expect(within(cartaoChat).getByLabelText('Abre as')).toHaveValue('10:00');
+    expect(within(cartaoChat).getByLabelText('Mensagem em Portugues')).toHaveValue('PT guardado');
+    fireEvent.click(ligar);
+    fireEvent.click(botao('Guardar perfil'));
+    await waitFor(() => expect(updateOperator).toHaveBeenCalled());
+    expect(ultimoPut().chat_auto_reply).toEqual({
+      enabled: false, days: [0, 6], from: '10:00', to: '14:00', message_pt: 'PT guardado', message_en: 'EN saved',
+    });
+  });
+
+  it('um_horario_em_que_o_fim_nao_e_posterior_ao_inicio_avisa_e_nao_guarda', async () => {
+    await abrirPerfil();
+    const cartaoChat = cartao('Chat do site: resposta automatica');
+    fireEvent.click(within(cartaoChat).getByRole('checkbox', { name: 'Responder automaticamente fora do horario' }));
+    fireEvent.change(within(cartaoChat).getByLabelText('Fecha as'), { target: { value: '09:00' } });
+    expect(within(cartaoChat).getByRole('alert')).toHaveTextContent('A hora de fecho tem de ser posterior a hora de abertura.');
+    fireEvent.click(botao('Guardar perfil'));
+    expect(updateOperator).not.toHaveBeenCalled();
+    fireEvent.change(within(cartaoChat).getByLabelText('Fecha as'), { target: { value: '18:00' } });
+    expect(within(cartaoChat).queryByRole('alert')).toBeNull();
+  });
+
+  it('ligado_sem_nenhum_dia_avisa_e_nao_guarda', async () => {
+    await abrirPerfil();
+    const cartaoChat = cartao('Chat do site: resposta automatica');
+    fireEvent.click(within(cartaoChat).getByRole('checkbox', { name: 'Responder automaticamente fora do horario' }));
+    ['Seg', 'Ter', 'Qua', 'Qui', 'Sex'].forEach(d => fireEvent.click(within(cartaoChat).getByRole('checkbox', { name: d })));
+    expect(within(cartaoChat).getByRole('alert')).toHaveTextContent('Escolhe pelo menos um dia de atendimento.');
+    fireEvent.click(botao('Guardar perfil'));
+    expect(updateOperator).not.toHaveBeenCalled();
   });
 
   it('falha_ao_guardar_regista_console.error_e_nao_mostra_o_aviso', async () => {

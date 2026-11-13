@@ -411,6 +411,7 @@ function ChatWidget({ slug, opName, lang }) {
           name:  session ? undefined : name,
           email: session ? undefined : email,
           content,
+          lang, /* idioma da resposta automatica fora de horas */
         }),
       });
       const json = await res.json();
@@ -425,6 +426,12 @@ function ChatWidget({ slug, opName, lang }) {
         const sentMsg = json.data.message;
         seenIdsRef.current.add(sentMsg.id);
         setMessages(prev => prev.find(m => m.id === sentMsg.id) ? prev : [...prev, sentMsg]);
+      }
+      /* Resposta automatica fora de horas: aparece logo, sem esperar pelo proximo poll (e sem o ping) */
+      const auto = json?.data?.auto_reply;
+      if (auto?.id) {
+        seenIdsRef.current.add(auto.id);
+        setMessages(prev => prev.find(m => m.id === auto.id) ? prev : [...prev, auto]);
       }
       setText('');
     } catch { /* silencioso -- widget publico, sem UI de erro tecnico */ }
