@@ -43,7 +43,6 @@ function diaLocal(deslocamento) {
   return d.toLocaleDateString('en-CA');
 }
 const HOJE = diaLocal(0);
-const MES_INICIO = HOJE.slice(0, 8) + '01';
 const MES_FIM = (() => {
   const n = new Date();
   return new Date(n.getFullYear(), n.getMonth() + 1, 0).toLocaleDateString('en-CA');
@@ -71,20 +70,22 @@ function reserva(over) {
   };
 }
 
-/* Responde conforme o par exato (stay_from, stay_to): hoje ou mes, ou ao pedido exato
-   { status: 'checked_in' } (hospedes que ja entraram). Qualquer outra forma de argumentos
+/* Responde conforme o par exato (stay_from, stay_to) de hoje, ou aos pedidos exatos
+   { status: 'checked_in' } (hospedes que ja entraram) e { status: 'pending' }. Qualquer outra forma de argumentos
    (por exemplo from/to) lanca, para apanhar pedidos perdidos. */
-function respostaPorPar(params, { hoje, mes, checkedIn = [] }) {
+function respostaPorPar(params, { hoje, checkedIn = [], pendentes = [] }) {
   if (Object.keys(params || {}).join(',') === 'status' && params.status === 'checked_in') {
     return checkedIn;
+  }
+  /* todas as pendentes, de qualquer mes (como o contador da barra lateral) */
+  if (Object.keys(params || {}).join(',') === 'status' && params.status === 'pending') {
+    return pendentes;
   }
   if (Object.keys(params || {}).sort().join(',') !== 'stay_from,stay_to') {
     throw new Error(`pedido inesperado ${JSON.stringify(params)}`);
   }
   const { stay_from: de, stay_to: ate } = params;
-  /* O dia 1 pode ser igual a hoje: so o par completo separa os pedidos */
   if (de === HOJE && ate === HOJE) return hoje;
-  if (de === MES_INICIO && ate === MES_FIM) return mes;
   throw new Error(`pedido inesperado ${de} ${ate}`);
 }
 
@@ -94,10 +95,10 @@ function valorKpi(rotulo) {
   return el.parentElement.nextElementSibling.textContent;
 }
 
-function carregaServicos({ units = [unidade()], hoje = [], mes = [], checkedIn = [], res = resumo() } = {}) {
+function carregaServicos({ units = [unidade()], hoje = [], checkedIn = [], pendentes = [], res = resumo() } = {}) {
   listUnits.mockReset().mockResolvedValue(units);
   listReservations.mockReset().mockImplementation(async (params) => (
-    respostaPorPar(params, { hoje, mes, checkedIn })
+    respostaPorPar(params, { hoje, checkedIn, pendentes })
   ));
   getResumo.mockReset().mockResolvedValue(res);
   getWeatherForecast.mockReset().mockResolvedValue([]);
@@ -214,13 +215,11 @@ describe('HotelDashboard (Hoje)', () => {
   it('uma chamada a falhar nao apaga os dados das outras', async () => {
     const pendente = reserva({ id: 'p1', status: 'pending' });
     carregaServicos({ hoje: [pendente] });
-    /* so a lista do mes falha */
+    /* so o pedido das pendentes falha */
     listReservations.mockReset().mockImplementation(async (params) => {
-      /* o pedido do mes falha; o de hoje responde (e formas inesperadas lancam) */
-      if (params.stay_from === MES_INICIO && params.stay_to === MES_FIM) {
-        throw new Error('falha de rede');
-      }
-      return respostaPorPar(params, { hoje: [pendente], mes: [] });
+      /* o pedido das pendentes falha; o de hoje responde (e formas inesperadas lancam) */
+      if (params.status === 'pending') throw new Error('falha de rede');
+      return respostaPorPar(params, { hoje: [pendente] });
     });
     renderHotel();
     expect(await screen.findByText('Quarto 101')).toBeInTheDocument();
@@ -238,13 +237,37 @@ describe('HotelDashboard (Hoje)', () => {
       expect(p).not.toHaveProperty('from');
       expect(p).not.toHaveProperty('to');
     });
-    /* hoje e o mes atual */
-    expect(pedidos).toEqual(expect.arrayContaining([
-      { stay_from: HOJE, stay_to: HOJE },
-      { stay_from: MES_INICIO, stay_to: MES_FIM },
-    ]));
+    /* hoje (o mes ja nao e pedido: so servia para contar as pendentes) */
+    expect(pedidos).toContainEqual({ stay_from: HOJE, stay_to: HOJE });
     /* e os hospedes ja instalados, que a sobreposicao de hoje pode nao devolver */
     expect(pedidos).toContainEqual({ status: 'checked_in' });
+    /* e todas as pendentes, de qualquer mes */
+    expect(pedidos).toContainEqual({ status: 'pending' });
+  });
+
+  it('reservas pendentes conta as de qualquer mes e nao so as que tocam o mes actual', async () => {
+    /* nada no mes actual, mas ha duas pendentes (uma do mes seguinte): a barra lateral ja contava as duas */
+    carregaServicos({
+      pendentes: [
+        reserva({ id: 'p1', status: 'pending', check_in: diaLocal(45), check_out: diaLocal(48) }),
+        reserva({ id: 'p2', status: 'pending', check_in: diaLocal(70), check_out: diaLocal(72) }),
+      ],
+    });
+    renderHotel();
+    await screen.findByText('Quarto 101');
+    expect(valorKpi('Reservas pendentes')).toBe('2');
+  });
+
+  it('se o pedido das pendentes falha o contador mostra 0 e o resto do painel carrega', async () => {
+    carregaServicos({ hoje: [reserva({ id: 'a', status: 'confirmed', check_in: HOJE })] });
+    const base = listReservations.getMockImplementation();
+    listReservations.mockImplementation(async (params) => {
+      if (params.status === 'pending') throw new Error('falha de rede');
+      return base(params);
+    });
+    renderHotel();
+    await screen.findByText('Quarto 101');
+    expect(valorKpi('Reservas pendentes')).toBe('0');
   });
 
   it('check-in feito com saida ultrapassada mantem o quarto ocupado e conta na ocupacao', async () => {
@@ -294,7 +317,7 @@ describe('HotelDashboard (Hoje)', () => {
         /* entra hoje */
         reserva({ id: 'c', unit_id: 'u3', status: 'confirmed', check_in: HOJE, check_out: diaLocal(3), customer_name: 'Ana Entrada' }),
       ],
-      mes: [reserva({ id: 'p', unit_id: 'u4', status: 'pending', check_in: diaLocal(1) })],
+      pendentes: [reserva({ id: 'p', unit_id: 'u4', status: 'pending', check_in: diaLocal(1) })],
     });
     renderHotel();
     const checkins = (await screen.findByRole('heading', { name: 'Check-ins hoje' })).closest('section');
@@ -311,7 +334,7 @@ describe('HotelDashboard (Hoje)', () => {
     expect(within(checkins).queryByText('Maria Estadia')).not.toBeInTheDocument();
     expect(within(checkouts).getByText('Rui Saida')).toBeInTheDocument();
     expect(within(checkouts).queryByText('Maria Estadia')).not.toBeInTheDocument();
-    /* contadores: 2 de 4 quartos ocupados, 1 check-in, 1 check-out, 1 pendente do mes */
+    /* contadores: 2 de 4 quartos ocupados, 1 check-in, 1 check-out, 1 pendente */
     expect(valorKpi('Ocupacao hoje')).toBe('50.0%');
     expect(valorKpi('Check-ins hoje')).toBe('1');
     expect(valorKpi('Check-outs hoje')).toBe('1');
@@ -329,7 +352,7 @@ describe('HotelDashboard (Hoje)', () => {
 
   it('reservas sem campos nao rebentam', async () => {
     const vazia = { id: 'x', status: 'pending' };
-    carregaServicos({ units: [{ id: 'u9', name: 'Quarto 9' }], hoje: [vazia], mes: [vazia] });
+    carregaServicos({ units: [{ id: 'u9', name: 'Quarto 9' }], hoje: [vazia] });
     renderHotel();
     expect(await screen.findByText('Quarto 9')).toBeInTheDocument();
     expect(screen.getByText('Tudo em ordem')).toBeInTheDocument();

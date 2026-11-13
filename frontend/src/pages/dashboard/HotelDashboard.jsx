@@ -6,7 +6,7 @@ import {
 import { getResumo } from '../../services/financeiroService';
 import { listUnits } from '../../services/unitsService';
 import { listReservations } from '../../services/reservationsService';
-import { estadiaEm, estadiaNoMes } from '../../services/reservationRanges';
+import { estadiaEm } from '../../services/reservationRanges';
 import { useT } from '../../i18n';
 import KpiCard from '../../components/financial/KpiCard';
 import AttentionPanel from '../../components/dashboard/AttentionPanel';
@@ -34,7 +34,7 @@ export default function HotelDashboard() {
 
   const [units,    setUnits]    = useState([]);
   const [todayRes, setTodayRes] = useState([]);
-  const [monthRes, setMonthRes] = useState([]);
+  const [pendingRes, setPendingRes] = useState([]);
   const [resumo,   setResumo]   = useState(null);
   const [loading,  setLoading]  = useState(true);
   const [selected, setSelected] = useState(null);
@@ -44,15 +44,17 @@ export default function HotelDashboard() {
     Promise.all([
       listUnits().catch(() => []),
       listReservations(estadiaEm(TODAY)).catch(() => []),
-      listReservations(estadiaNoMes()).catch(() => []),
       getResumo(periodo.inicio, periodo.fim).catch(() => null),
       /* Quem ja fez check-in e passou a data de saida nao sobrepoe hoje, mas continua a ocupar */
       listReservations({ status: 'checked_in' }).catch(() => []),
+      /* Todas as pendentes, de qualquer mes (a barra lateral ja conta assim): o contador so com as do mes
+         escondia as reservas por confirmar dos meses seguintes */
+      listReservations({ status: 'pending' }).catch(() => []),
     ])
-      .then(([u, tRes, mRes, res, ciRes]) => {
+      .then(([u, tRes, res, ciRes, pRes]) => {
         setUnits(u || []);
         setTodayRes(uniaoPorId(tRes, ciRes));
-        setMonthRes(mRes || []);
+        setPendingRes(Array.isArray(pRes) ? pRes : []);
         setResumo(res);
       })
       .catch(() => {})
@@ -73,9 +75,9 @@ export default function HotelDashboard() {
         : undefined,
       checkins:  todayRes.filter(r => r.check_in  === TODAY && ['pending', 'confirmed'].includes(r.status)).length,
       checkouts: todayRes.filter(r => r.check_out === TODAY && r.status === 'checked_in').length,
-      pendentes: monthRes.filter(r => r.status === 'pending').length,
+      pendentes: pendingRes.filter(r => r.status === 'pending').length,
     };
-  }, [units, todayRes, monthRes, resumo]);
+  }, [units, todayRes, pendingRes, resumo]);
 
   const checkinsHoje  = useMemo(() =>
     todayRes.filter(r => r.check_in === TODAY && ['pending', 'confirmed'].includes(r.status)),
