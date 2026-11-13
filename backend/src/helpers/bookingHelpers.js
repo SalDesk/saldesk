@@ -53,7 +53,7 @@ function calcularPreco(unit, checkIn, checkOut) {
 
   while (cur < dtOut) {
     let precoDia = Number(unit.base_price);
-    const diaSemana = cur.getDay();
+    const diaSemana = cur.getUTCDay(); // as datas sao UTC: getDay() (hora local) deslocava o dia no fuso do servidor
     const dataStr = cur.toISOString().split('T')[0];
 
     for (const r of regras) {
@@ -72,7 +72,7 @@ function calcularPreco(unit, checkIn, checkOut) {
     }
 
     total += Math.max(0, precoDia);
-    cur.setDate(cur.getDate() + 1);
+    cur.setUTCDate(cur.getUTCDate() + 1);
   }
 
   const dias = Math.ceil((dtOut - dtIn) / (1000 * 60 * 60 * 24));

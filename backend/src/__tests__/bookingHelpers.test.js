@@ -121,6 +121,23 @@ describe('calcularPreco', () => {
       expect(total).toBe(350);
     });
 
+    it('o dia da semana das regras nao depende do fuso horario do servidor', () => {
+      const unit = {
+        base_price: 100,
+        pricing_rules: [{ active: true, modifier_type: 'fixed', price_modifier: 50, start_date: null, end_date: null, days_of_week: [0, 6] }],
+      };
+      const tzAntes = process.env.TZ;
+      try {
+        /* Cabo Verde (UTC-1), UTC, e um fuso adiantado: Qui 100 + Sex 100 + Sab 150 = 350 em todos */
+        for (const tz of ['Atlantic/Cape_Verde', 'UTC', 'Pacific/Auckland', 'America/Los_Angeles']) {
+          process.env.TZ = tz;
+          expect({ tz, total: calcularPreco(unit, '2026-01-01', '2026-01-04').total }).toEqual({ tz, total: 350 });
+        }
+      } finally {
+        if (tzAntes === undefined) delete process.env.TZ; else process.env.TZ = tzAntes;
+      }
+    });
+
     it('não aplica preço negativo (mínimo 0)', () => {
       const unit = {
         base_price: 100,
