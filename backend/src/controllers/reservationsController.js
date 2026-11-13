@@ -31,7 +31,7 @@ const TRANSICOES = {
 
 async function listar(req, res, next) {
   try {
-    const { status, unit_id, seller_id, payment_status } = req.query;
+    const { status, unit_id, seller_id, payment_status, order_by, limit } = req.query;
     const filtros = lerFiltrosDeData(req.query);
 
     /* payment_status: um valor ou varios separados por virgula (ex.: 'pending,partial' = por regularizar) */
@@ -45,11 +45,24 @@ async function listar(req, res, next) {
       }
     }
 
+    /* order_by: 'check_in' (omissao) ou 'created_at' (as criadas mais recentemente, ex.: "Reservas recentes");
+       limit: inteiro 1-500 (sem limit devolve tudo, como antes) */
+    if (order_by !== undefined && order_by !== '' && !['check_in', 'created_at'].includes(order_by)) {
+      return res.status(400).json({ error: 'order_by invalido (check_in ou created_at)', code: 'INVALID_ORDER_BY' });
+    }
+    let limite = null;
+    if (limit !== undefined && limit !== '') {
+      limite = typeof limit === 'string' && /^\d+$/.test(limit) ? Number(limit) : NaN;
+      if (!Number.isInteger(limite) || limite < 1 || limite > 500) {
+        return res.status(400).json({ error: 'limit invalido (inteiro entre 1 e 500)', code: 'INVALID_LIMIT' });
+      }
+    }
+
     let q = supabaseAdmin
       .from('reservations')
       .select('*, units(name, unit_type), fleet(name, capacity)')
       .eq('operator_id', getOperatorId(req))
-      .order('check_in', { ascending: false });
+      .order(order_by === 'created_at' ? 'created_at' : 'check_in', { ascending: false });
 
     if (status) q = q.eq('status', status);
     if (estadosPagamento) q = q.in('payment_status', estadosPagamento);
@@ -58,6 +71,7 @@ async function listar(req, res, next) {
     // Vendedor so pode ver as suas proprias reservas; operador pode filtrar por qualquer vendedor
     if (req.staff && !req.operator) q = q.eq('seller_id', req.staff.id);
     else if (seller_id) q = q.eq('seller_id', seller_id);
+    if (limite) q = q.limit(limite);
 
     const { data, error } = await q;
     if (error) throw error;

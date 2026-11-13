@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { BookOpen, Euro, Percent, Receipt, TrendingUp, BarChart2 } from 'lucide-react';
 import { getResumo, getReceita, getUnidades } from '../../services/financeiroService';
 import { listReservations } from '../../services/reservationsService';
-import { estadiaNoMes } from '../../services/reservationRanges';
 import { useT } from '../../i18n';
 import KpiCard from '../../components/financial/KpiCard';
 import RevenueChart from '../../components/financial/RevenueChart';
@@ -84,7 +83,9 @@ export default function ResumoView() {
       getResumo(periodo.inicio, periodo.fim).catch(() => null),
       getReceita(janela.inicio, janela.fim, 'day').catch(() => []),
       getUnidades(periodo.inicio, periodo.fim).catch(() => []),
-      listReservations(estadiaNoMes()).catch(() => []),
+      /* as 5 criadas mais recentemente, de qualquer mes (antes: so estadias do mes, e uma reserva
+         feita hoje para um mes futuro nunca aparecia) */
+      listReservations({ order_by: 'created_at', limit: 5 }).catch(() => []),
     ]).then(([res, rec, uni, rsv]) => {
       if (!ativo) return;
       setResumo(normalizaResumo(res));
@@ -102,7 +103,7 @@ export default function ResumoView() {
     [unidades]
   );
 
-  /* Reservas recentes: as 5 mais recentes do mes */
+  /* Reservas recentes: as 5 criadas mais recentemente */
   const recentes = useMemo(() =>
     [...reservas].sort((a, b) => new Date(b.created_at) - new Date(a.created_at)).slice(0, 5),
     [reservas]
@@ -206,7 +207,7 @@ export default function ResumoView() {
           )}
         >
           {recentes.length === 0 ? (
-            <EmptyState icon={BookOpen} title={t('dashboard.activity.noReservationsMonth')} />
+            <EmptyState icon={BookOpen} title={t('dashboard.activity.noRecentReservations')} />
           ) : (
             <div className="divide-y divide-n-100">
               {recentes.map((r) => (
