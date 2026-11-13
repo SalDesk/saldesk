@@ -77,6 +77,7 @@ export default function ActivityDashboard() {
   const [weekRes,      setWeekRes]      = useState([]);
   const [resumo,       setResumo]       = useState(null);
   const [avgRating,    setAvgRating]    = useState(null);
+  const [unpaidRes,    setUnpaidRes]    = useState([]);
   const [loading,      setLoading]      = useState(true);
   const [wxAlerts,     setWxAlerts]     = useState([]);
 
@@ -89,6 +90,9 @@ export default function ActivityDashboard() {
       listReservations(estadiaEm(TODAY)).catch(() => []),
       listReservations(estadiaNoMes()).catch(() => []),
       listReservations(estadiaProximosDias(7)).catch(() => []),
+      /* Pagamentos por regularizar de QUALQUER mes: com so as reservas do mes, uma divida de um mes
+         anterior nunca aparecia em "Requer atencao" */
+      listReservations({ payment_status: 'pending,partial' }).catch(() => []),
       getResumo(periodo.inicio, periodo.fim).catch(() => null),
       api.get('/reviews/stats')
         .then(r => {
@@ -97,11 +101,12 @@ export default function ActivityDashboard() {
         })
         .catch(() => null),
     ])
-      .then(([toursData, tRes, mRes, wRes, res, avgR]) => {
+      .then(([toursData, tRes, mRes, wRes, uRes, res, avgR]) => {
         setTours(toursData || []);
         setTodayRes(tRes || []);
         setMonthRes(mRes || []);
         setWeekRes(wRes || []);
+        setUnpaidRes(Array.isArray(uRes) ? uRes : []);
         setResumo(res);
         setAvgRating(avgR);
 
@@ -174,7 +179,7 @@ export default function ActivityDashboard() {
   /* Itens do painel "Requer atencao" (meteorologia, pendentes, por pagar, quase cheios) */
   const attentionItems = useMemo(() => buildAttentionItems({
     pendingToday: alertas.pendentes,
-    unpaid:       unpaidReservations(monthRes, TODAY),
+    unpaid:       unpaidReservations(unpaidRes, TODAY),
     nearlyFull:   alertas.quaseEsgotados.map(g => ({
       name: g.tour.name, guests: g.guests, capacity: g.tour.capacity,
     })),
@@ -183,7 +188,7 @@ export default function ActivityDashboard() {
       label:      weatherInfo(wx.code).label,
       toursCount: weekRes.filter(r => r.check_in === wx.date && ['confirmed', 'pending'].includes(r.status)).length,
     })),
-  }, t), [alertas, monthRes, wxAlerts, weekRes, t]);
+  }, t), [alertas, unpaidRes, wxAlerts, weekRes, t]);
 
   /* Linhas da tabela "Tours de hoje" (a tabela usa o id como chave) */
   const tourRows = useMemo(() => todayByTour.map(g => ({ id: g.tour.id, ...g })), [todayByTour]);

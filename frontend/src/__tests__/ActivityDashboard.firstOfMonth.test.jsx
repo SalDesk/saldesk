@@ -53,9 +53,10 @@ function reserva(over) {
 /* Os tres pedidos distinguem-se pelo par exato (stay_from, stay_to). No dia 1 o pedido da
    semana e o do mes partilham o stay_from, so o stay_to os separa. Qualquer outra forma
    de argumentos (por exemplo from/to) lanca. */
-function carrega({ hoje = [], semana = [], mes = [], meteo = [] }) {
+function carrega({ hoje = [], semana = [], mes = [], porPagar = [], meteo = [] }) {
   listUnits.mockReset().mockResolvedValue([TOUR]);
   listReservations.mockReset().mockImplementation(async (params) => {
+    if (Object.keys(params || {}).join(',') === 'payment_status' && params.payment_status === 'pending,partial') return porPagar;
     if (Object.keys(params || {}).sort().join(',') !== 'stay_from,stay_to') {
       throw new Error(`pedido inesperado ${JSON.stringify(params)}`);
     }
@@ -110,12 +111,13 @@ describe('ActivityDashboard no primeiro dia do mes', () => {
       semana: [reserva({ id: 'w1' }), reserva({ id: 'w2', check_in: AMANHA })],
       /* dados do mes diferentes: 3 por pagar hoje */
       mes: [1, 2, 3].map((n) => reserva({ id: `m${n}`, payment_status: 'pending' })),
+      porPagar: [1, 2, 3].map((n) => reserva({ id: `m${n}`, payment_status: 'pending' })),
     });
     renderActivity();
     expect(await screen.findByText('Próximos 7 dias')).toBeInTheDocument();
     expect(screen.getAllByText('1 res.')).toHaveLength(2);
     expect(screen.queryByText('3 res.')).not.toBeInTheDocument();
-    /* os pagamentos por regularizar vem do mes */
+    /* os pagamentos por regularizar vem do pedido proprio (qualquer mes) */
     expect(screen.getByText('3 pagamento(s) por regularizar')).toBeInTheDocument();
   });
 
@@ -124,7 +126,7 @@ describe('ActivityDashboard no primeiro dia do mes', () => {
     renderActivity();
     expect(await screen.findByText('Próximos 7 dias')).toBeInTheDocument();
     const pedidos = listReservations.mock.calls.map(([params]) => params);
-    expect(pedidos).toHaveLength(3);
+    expect(pedidos).toHaveLength(4);
     pedidos.forEach((p) => {
       expect(p).not.toHaveProperty('from');
       expect(p).not.toHaveProperty('to');

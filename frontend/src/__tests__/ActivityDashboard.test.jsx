@@ -87,8 +87,10 @@ const RES_AMANHA = reserva({ id: 'w1', check_in: AMANHA });
 
 /* Responde conforme o par exato (stay_from, stay_to) pedido: hoje, mes ou semana.
    Qualquer outra forma de argumentos (por exemplo from/to) lanca, para apanhar pedidos perdidos. */
-function respostaPorPar(params, { hoje, semana, mes }) {
+function respostaPorPar(params, { hoje, semana, mes, porPagar = [] }) {
   const chaves = Object.keys(params || {}).sort().join(',');
+  /* pagamentos por regularizar, de qualquer mes: { payment_status: 'pending,partial' } */
+  if (chaves === 'payment_status' && params.payment_status === 'pending,partial') return porPagar;
   if (chaves !== 'stay_from,stay_to') {
     throw new Error(`pedido inesperado ${JSON.stringify(params)}`);
   }
@@ -101,10 +103,10 @@ function respostaPorPar(params, { hoje, semana, mes }) {
 }
 
 /* Responde a cada pedido conforme o intervalo pedido: hoje, mes ou semana */
-function carregaServicos({ hoje = [], mes = [], semana = [], res = resumo(), tours = [TOUR_A, TOUR_B], meteo = [], rating = null, ratingTotal = 3 } = {}) {
+function carregaServicos({ hoje = [], mes = [], semana = [], porPagar = [], res = resumo(), tours = [TOUR_A, TOUR_B], meteo = [], rating = null, ratingTotal = 3 } = {}) {
   listUnits.mockReset().mockResolvedValue(tours);
   listReservations.mockReset().mockImplementation(async (params) => (
-    respostaPorPar(params, { hoje, semana, mes })
+    respostaPorPar(params, { hoje, semana, mes, porPagar })
   ));
   getResumo.mockReset().mockResolvedValue(res);
   getWeatherForecast.mockReset().mockResolvedValue(meteo);
@@ -189,10 +191,39 @@ describe('ActivityDashboard (Hoje)', () => {
   });
 
   it('pendentes e por pagar na atencao', async () => {
-    carregaServicos({ hoje: RES_HOJE, mes: [RES_POR_PAGAR, ...RES_HOJE] });
+    carregaServicos({ hoje: RES_HOJE, mes: [RES_POR_PAGAR, ...RES_HOJE], porPagar: [RES_POR_PAGAR] });
     renderActivity();
     expect(await screen.findByText('1 reserva(s) pendente(s) para hoje')).toBeInTheDocument();
     expect(screen.getByText('1 pagamento(s) por regularizar')).toBeInTheDocument();
+  });
+
+  it('um pagamento por regularizar de meses anteriores tambem aparece (nao so os do mes actual)', async () => {
+    const antiga = reserva({ id: 'old', check_in: '2026-01-05', check_out: '2026-01-05', status: 'checked_out', payment_status: 'partial' });
+    carregaServicos({ mes: [], porPagar: [antiga, RES_POR_PAGAR] });
+    renderActivity();
+    expect(await screen.findByText('2 pagamento(s) por regularizar')).toBeInTheDocument();
+  });
+
+  it('so conta como por regularizar o que ja comecou e esta confirmado ou concluido', async () => {
+    carregaServicos({ porPagar: [
+      reserva({ id: 'futura', check_in: AMANHA, payment_status: 'pending' }),
+      reserva({ id: 'cancelada', status: 'cancelled', check_in: ONTEM, payment_status: 'pending' }),
+      RES_POR_PAGAR,
+    ] });
+    renderActivity();
+    expect(await screen.findByText('1 pagamento(s) por regularizar')).toBeInTheDocument();
+  });
+
+  it('se o pedido dos pagamentos por regularizar falha o resto do painel carrega', async () => {
+    carregaServicos({ hoje: RES_HOJE });
+    const base = listReservations.getMockImplementation();
+    listReservations.mockImplementation(async (params) => {
+      if (params.payment_status) throw new Error('falha de rede');
+      return base(params);
+    });
+    renderActivity();
+    expect(await screen.findByText('1 reserva(s) pendente(s) para hoje')).toBeInTheDocument();
+    expect(screen.queryByText(/por regularizar/)).not.toBeInTheDocument();
   });
 
   it('o mau tempo e um item da atencao e nao ha faixa vermelha', async () => {
@@ -306,7 +337,7 @@ describe('ActivityDashboard (Hoje)', () => {
   it('os pedidos usam stay_from e stay_to', async () => {
     renderActivity();
     expect(await screen.findByText('Nenhum tour agendado para hoje')).toBeInTheDocument();
-    await waitFor(() => expect(listReservations).toHaveBeenCalledTimes(3));
+    await waitFor(() => expect(listReservations).toHaveBeenCalledTimes(4));
     const pedidos = listReservations.mock.calls.map(([params]) => params);
     /* nenhuma chamada recebe as chaves antigas from/to */
     pedidos.forEach((p) => {
@@ -321,6 +352,8 @@ describe('ActivityDashboard (Hoje)', () => {
       { stay_from: MES_INICIO, stay_to: MES_FIM },
       { stay_from: HOJE, stay_to: SEMANA_FIM },
     ]));
+    /* e os pagamentos por regularizar de qualquer mes */
+    expect(pedidos).toContainEqual({ payment_status: 'pending,partial' });
   });
 
   it('servicos a falhar mostram estados vazios sem erro', async () => {
