@@ -56,7 +56,7 @@ describe('calcularMetricas', () => {
 
     it('exclui checked_out fora do período', () => {
       const reservas = [
-        { unit_id: 'u1', status: 'checked_out', total_price: 500, check_in: '2025-12-28', check_out: '2026-01-02' },
+        { unit_id: 'u1', status: 'checked_out', total_price: 500, check_in: '2025-12-25', check_out: '2025-12-30' },
         { unit_id: 'u1', status: 'checked_out', total_price: 200, check_in: '2026-01-10', check_out: '2026-01-15' }
       ];
       // Apenas a segunda tem check_out em Jan
