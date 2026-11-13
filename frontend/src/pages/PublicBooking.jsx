@@ -337,7 +337,7 @@ function playChatPing() {
   } catch { /* silencioso */ }
 }
 
-function ChatWidget({ slug, opName, lang }) {
+export function ChatWidget({ slug, opName, lang }) {
   const storageKey = `sd-chat-${slug}`;
   const [open, setOpen]         = useState(false);
   const [session, setSession]   = useState(null); // { customer_id, name, email }
