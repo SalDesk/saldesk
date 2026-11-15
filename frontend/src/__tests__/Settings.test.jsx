@@ -317,7 +317,7 @@ describe('Definicoes: Perfil Publico', () => {
     await waitFor(() => expect(updateOperator).toHaveBeenCalledWith({
       logo_url: null, description_pt: 'Nova desc', description_en: 'Desc EN',
       cancellation_policy_pt: 'CP PT', cancellation_policy_en: 'CP EN',
-      custom_faqs: OPERADOR.custom_faqs, cover_images: [], chat_auto_reply: null,
+      custom_faqs: OPERADOR.custom_faqs, cover_images: [], chat_auto_reply: null, brand_color: null,
     }));
     expect(await screen.findByText('Guardado com sucesso')).toBeInTheDocument();
     expect(useAuthStore.getState().operator.description_pt).toBe('Nova desc');
@@ -397,6 +397,76 @@ describe('Definicoes: Perfil Publico', () => {
     expect(within(cartaoChat).getByRole('alert')).toHaveTextContent('Escolhe pelo menos um dia de atendimento.');
     fireEvent.click(botao('Guardar perfil'));
     expect(updateOperator).not.toHaveBeenCalled();
+  });
+
+  describe('cor da pagina publica', () => {
+    const TITULO = 'Cor da pagina publica e do widget';
+    const hex = () => within(cartao(TITULO)).getByLabelText('Cor em hexadecimal');
+
+    it('comeca_sem_cor_escolhida_com_a_cor_original_na_previa_e_guardar_envia_null', async () => {
+      await abrirPerfil();
+      const c = within(cartao(TITULO));
+      expect(hex()).toHaveValue('');
+      expect(hex()).toHaveAttribute('placeholder', '#0d5470');
+      expect(c.queryByRole('button', { name: 'Repor cor original' })).toBeNull();
+      expect(c.getByTestId('previa-cor')).toHaveStyle({ backgroundColor: 'rgb(13, 84, 112)' });
+      fireEvent.click(botao('Guardar perfil'));
+      await waitFor(() => expect(updateOperator).toHaveBeenCalled());
+      expect(ultimoPut().brand_color).toBeNull();
+    });
+
+    it('escolher_uma_cor_sugerida_preenche_o_campo_muda_a_previa_e_guarda_a_cor', async () => {
+      await abrirPerfil();
+      const c = within(cartao(TITULO));
+      fireEvent.click(c.getByRole('button', { name: 'Usar cor #c2410c' }));
+      expect(hex()).toHaveValue('#c2410c');
+      expect(c.getByTestId('previa-cor')).toHaveStyle({ backgroundColor: 'rgb(194, 65, 12)' });
+      expect(c.getByRole('button', { name: 'Repor cor original' })).toBeInTheDocument();
+      fireEvent.click(botao('Guardar perfil'));
+      await waitFor(() => expect(updateOperator).toHaveBeenCalled());
+      expect(ultimoPut().brand_color).toBe('#c2410c');
+    });
+
+    it('escrever_o_hex_ou_usar_o_seletor_normaliza_para_minusculas_ao_guardar', async () => {
+      await abrirPerfil();
+      fireEvent.change(hex(), { target: { value: ' #1F6F43 ' } });
+      expect(within(cartao(TITULO)).queryByRole('alert')).toBeNull();
+      fireEvent.click(botao('Guardar perfil'));
+      await waitFor(() => expect(updateOperator).toHaveBeenCalled());
+      expect(ultimoPut().brand_color).toBe('#1f6f43');
+      updateOperator.mockClear();
+      fireEvent.change(within(cartao(TITULO)).getByLabelText('Escolher cor'), { target: { value: '#6d28d9' } });
+      expect(hex()).toHaveValue('#6d28d9');
+    });
+
+    it('um_formato_invalido_avisa_e_nao_guarda', async () => {
+      await abrirPerfil();
+      fireEvent.change(hex(), { target: { value: 'azul' } });
+      expect(within(cartao(TITULO)).getByRole('alert')).toHaveTextContent('Use o formato #rrggbb');
+      fireEvent.click(botao('Guardar perfil'));
+      expect(updateOperator).not.toHaveBeenCalled();
+      fireEvent.change(hex(), { target: { value: '#0d5470' } });
+      expect(within(cartao(TITULO)).queryByRole('alert')).toBeNull();
+    });
+
+    it('uma_cor_demasiado_clara_avisa_do_contraste_e_nao_guarda', async () => {
+      await abrirPerfil();
+      fireEvent.change(hex(), { target: { value: '#ffe680' } });
+      expect(within(cartao(TITULO)).getByRole('alert')).toHaveTextContent('demasiado clara');
+      fireEvent.click(botao('Guardar perfil'));
+      expect(updateOperator).not.toHaveBeenCalled();
+    });
+
+    it('arranca_com_a_cor_guardada_e_repor_a_original_envia_null', async () => {
+      await abrirPerfil({ ...OPERADOR, brand_color: '#9f1239' });
+      const c = within(cartao(TITULO));
+      expect(hex()).toHaveValue('#9f1239');
+      fireEvent.click(c.getByRole('button', { name: 'Repor cor original' }));
+      expect(hex()).toHaveValue('');
+      fireEvent.click(botao('Guardar perfil'));
+      await waitFor(() => expect(updateOperator).toHaveBeenCalled());
+      expect(ultimoPut().brand_color).toBeNull();
+    });
   });
 
   it('falha_ao_guardar_regista_console.error_e_nao_mostra_o_aviso', async () => {

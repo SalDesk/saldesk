@@ -22,6 +22,7 @@ import mastercardLogo from '../assets/payment-logos/mastercard.png';
 import amexLogo from '../assets/payment-logos/amex.jpg';
 import vinti4Logo from '../assets/payment-logos/vinti4.png';
 import { useIsWidget, useWidgetResize, alvoDoPagamento } from '../utils/widgetMode';
+import { useBrandColor } from '../utils/brandPalette';
 import {
   MENU_CATEGORY_LABELS, MENU_ALLERGEN_LABELS, MENU_DIET_LABELS, RestaurantReservationSection,
 } from '../components/restaurant/RestaurantReservationWidget';
@@ -204,7 +205,7 @@ function Lightbox({ images, idx, onClose, onMove }) {
 }
 
 /* ── Modal shell ─────────────────────────────────── */
-const IN  = 'w-full border border-n-300 rounded-xl px-4 py-2.5 font-body text-sm focus:outline-none focus:border-ocean-500 focus:ring-2 focus:ring-ocean-500/10 bg-white transition-all disabled:bg-n-50 disabled:text-n-500 disabled:cursor-not-allowed';
+const IN  = 'w-full border border-n-300 rounded-xl px-4 py-2.5 font-body text-sm focus:outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/10 bg-white transition-all disabled:bg-n-50 disabled:text-n-500 disabled:cursor-not-allowed';
 const LB  = 'block text-xs font-body font-semibold text-n-600 mb-1.5';
 const SH  = 'font-display font-semibold text-n-900 text-sm mb-4';
 const SEL = IN + ' appearance-none cursor-pointer';
@@ -214,9 +215,9 @@ function Cnt({ label, val, set, min=0, max=20 }) {
     <div>
       <label className={LB}>{label}</label>
       <div className="flex items-center gap-3">
-        <button type="button" onClick={()=>set(Math.max(min,val-1))} className="w-9 h-9 rounded-full border border-n-300 flex items-center justify-center text-n-500 hover:border-ocean-700 hover:text-ocean-700 transition-all select-none text-xl font-light leading-none">−</button>
+        <button type="button" onClick={()=>set(Math.max(min,val-1))} className="w-9 h-9 rounded-full border border-n-300 flex items-center justify-center text-n-500 hover:border-brand-700 hover:text-brand-700 transition-all select-none text-xl font-light leading-none">−</button>
         <span className="flex-1 text-center font-display font-bold text-n-900 text-lg tabular-nums">{val}</span>
-        <button type="button" onClick={()=>set(Math.min(max,val+1))} className="w-9 h-9 rounded-full border border-n-300 flex items-center justify-center text-n-500 hover:border-ocean-700 hover:text-ocean-700 transition-all select-none text-xl font-light leading-none">+</button>
+        <button type="button" onClick={()=>set(Math.min(max,val+1))} className="w-9 h-9 rounded-full border border-n-300 flex items-center justify-center text-n-500 hover:border-brand-700 hover:text-brand-700 transition-all select-none text-xl font-light leading-none">+</button>
       </div>
     </div>
   );
@@ -243,11 +244,11 @@ function GF({ d, set, lang, children, emailLocked }) {
 
 function ST({ lines }) {
   return (
-    <div className="bg-ocean-50 border border-ocean-100 rounded-xl p-4 space-y-2.5">
+    <div className="bg-brand-50 border border-brand-100 rounded-xl p-4 space-y-2.5">
       {lines.map((l,i)=>(
         <div key={i} className="flex items-start justify-between gap-3">
           <span className="text-xs font-body text-n-500 leading-relaxed flex-shrink-0">{l.label}</span>
-          <span className={`text-xs font-body text-right ${l.hi?'text-ocean-700 text-sm font-bold':'text-n-800 font-semibold'}`}>{l.value}</span>
+          <span className={`text-xs font-body text-right ${l.hi?'text-brand-700 text-sm font-bold':'text-n-800 font-semibold'}`}>{l.value}</span>
         </div>
       ))}
     </div>
@@ -264,10 +265,10 @@ function PO({ lang, v, set }) {
     <div className="space-y-2.5">
       {options.map(o=>(
         <button key={o.k} type="button" onClick={()=>set(o.k)}
-          className={`w-full text-left p-3.5 rounded-xl border-2 transition-all ${v===o.k?'border-ocean-700 bg-ocean-50':'border-n-200 hover:border-n-300'}`}>
+          className={`w-full text-left p-3.5 rounded-xl border-2 transition-all ${v===o.k?'border-brand-700 bg-brand-50':'border-n-200 hover:border-n-300'}`}>
           <div className="flex items-center justify-between gap-3">
             <div>
-              <p className={`text-sm font-body font-semibold ${v===o.k?'text-ocean-700':'text-n-800'}`}>{o.l}</p>
+              <p className={`text-sm font-body font-semibold ${v===o.k?'text-brand-700':'text-n-800'}`}>{o.l}</p>
               {o.logos ? (
                 <div className="flex items-center gap-2.5 mt-1.5">
                   {o.logos.map((src,i)=><img key={i} src={src} alt="" className="h-5 w-auto object-contain" />)}
@@ -276,7 +277,7 @@ function PO({ lang, v, set }) {
                 <p className="text-xs font-body text-n-400 mt-0.5">{o.s}</p>
               )}
             </div>
-            <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${v===o.k?'border-ocean-700 bg-ocean-700':'border-n-300'}`}>
+            <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${v===o.k?'border-brand-700 bg-brand-700':'border-n-300'}`}>
               {v===o.k&&<div className="w-2 h-2 bg-white rounded-full"/>}
             </div>
           </div>
@@ -317,20 +318,20 @@ function BS({ resId, lang, type, onClose }) {
         {lang==='en'?'You will receive a confirmation email shortly. The operator will confirm within 24h.':'Receberá um email de confirmação em breve. O operador confirmará a sua reserva em 24h.'}
       </p>
       {resId&&<div className="bg-n-50 border border-n-200 rounded-xl px-4 py-3 inline-block mb-6"><p className="text-xs text-n-400 font-body mb-1">{lang==='en'?'Booking reference':'Referência da reserva'}</p><p className="font-mono font-bold text-n-800 text-sm tracking-widest">{resId.slice(0,8).toUpperCase()}</p></div>}
-      <button onClick={onClose} className="border-2 border-n-200 text-n-700 font-body font-semibold py-3 px-8 rounded-xl hover:border-ocean-700 hover:text-ocean-700 transition-all">{lang==='en'?'Close':'Fechar'}</button>
+      <button onClick={onClose} className="border-2 border-n-200 text-n-700 font-body font-semibold py-3 px-8 rounded-xl hover:border-brand-700 hover:text-brand-700 transition-all">{lang==='en'?'Close':'Fechar'}</button>
     </div>
   );
 }
 
 function MS({ icon, title, step, lang, onClose, children, onPrev, onNext, nextLabel, nextDis, sub, err, ok, hideNext }) {
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-ocean-900/60 backdrop-blur-sm p-0 sm:p-4">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-brand-900/60 backdrop-blur-sm p-0 sm:p-4">
       <div className="bg-white w-full sm:max-w-[480px] rounded-t-2xl sm:rounded-2xl shadow-2xl max-h-[92vh] flex flex-col overflow-hidden">
         {!ok&&(
           <div className="flex-shrink-0 px-5 pt-5 pb-4 border-b border-n-100">
             <div className="flex items-start justify-between mb-4">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-ocean-50 flex items-center justify-center text-ocean-700 flex-shrink-0">{icon}</div>
+                <div className="w-10 h-10 rounded-xl bg-brand-50 flex items-center justify-center text-brand-700 flex-shrink-0">{icon}</div>
                 <div>
                   <p className="font-display font-bold text-n-900 text-sm leading-snug">{title}</p>
                   <p className="text-xs font-body text-n-400 mt-0.5">{lang==='en'?`Step ${step} of 3`:`Passo ${step} de 3`}</p>
@@ -338,7 +339,7 @@ function MS({ icon, title, step, lang, onClose, children, onPrev, onNext, nextLa
               </div>
               <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-full text-n-400 hover:text-n-700 hover:bg-n-100 transition-all flex-shrink-0"><X size={16} strokeWidth={2.5}/></button>
             </div>
-            <div className="flex gap-1.5">{[1,2,3].map(s=><div key={s} className={`h-1.5 flex-1 rounded-full transition-all duration-300 ${s<=step?'bg-ocean-700':'bg-n-200'}`}/>)}</div>
+            <div className="flex gap-1.5">{[1,2,3].map(s=><div key={s} className={`h-1.5 flex-1 rounded-full transition-all duration-300 ${s<=step?'bg-brand-700':'bg-n-200'}`}/>)}</div>
           </div>
         )}
         <div className="flex-1 overflow-y-auto">{children}</div>
@@ -346,9 +347,9 @@ function MS({ icon, title, step, lang, onClose, children, onPrev, onNext, nextLa
           <div className="flex-shrink-0 px-5 py-4 border-t border-n-100">
             {err&&<p className="text-xs text-red-600 font-body text-center mb-3 bg-red-50 rounded-lg px-3 py-2">{err}</p>}
             <div className="flex gap-3">
-              {step>1&&<button type="button" onClick={onPrev} className="flex-1 border-2 border-n-200 text-n-700 font-body font-semibold py-3 rounded-xl text-sm flex items-center justify-center gap-1.5 hover:border-ocean-700 hover:text-ocean-700 transition-all"><ChevronLeft size={15} strokeWidth={2.5}/>{lang==='en'?'Back':'Anterior'}</button>}
+              {step>1&&<button type="button" onClick={onPrev} className="flex-1 border-2 border-n-200 text-n-700 font-body font-semibold py-3 rounded-xl text-sm flex items-center justify-center gap-1.5 hover:border-brand-700 hover:text-brand-700 transition-all"><ChevronLeft size={15} strokeWidth={2.5}/>{lang==='en'?'Back':'Anterior'}</button>}
               {!hideNext&&<button type="button" onClick={onNext} disabled={nextDis||sub}
-                className={`font-body font-semibold py-3 rounded-xl text-sm flex items-center justify-center gap-2 transition-all disabled:opacity-40 disabled:cursor-not-allowed bg-ocean-700 text-white hover:bg-ocean-500 ${step===1?'w-full':'flex-[2]'}`}>
+                className={`font-body font-semibold py-3 rounded-xl text-sm flex items-center justify-center gap-2 transition-all disabled:opacity-40 disabled:cursor-not-allowed bg-brand-700 text-white hover:bg-brand-500 ${step===1?'w-full':'flex-[2]'}`}>
                 {sub?<><div className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin"/>{lang==='en'?'Please wait...':'A aguardar...'}</>:<>{nextLabel}<ArrowRight size={15} strokeWidth={2.5}/></>}
               </button>}
             </div>
@@ -428,7 +429,7 @@ function VoucherField({ slug, unitId, amount, lang, onApplied }) {
           placeholder="Ex: VERAO2025" disabled={result?.ok} />
         {result?.ok
           ? <button type="button" onClick={clear} className="px-4 rounded-xl border-2 border-n-200 text-n-600 text-xs font-body font-semibold hover:border-red-300 hover:text-red-600 transition-all">{lang === 'en' ? 'Remove' : 'Remover'}</button>
-          : <button type="button" onClick={apply} disabled={checking || !code.trim()} className="px-4 rounded-xl bg-ocean-700 text-white text-xs font-body font-semibold disabled:opacity-40 hover:bg-ocean-500 transition-all">{checking ? '...' : (lang === 'en' ? 'Apply' : 'Aplicar')}</button>}
+          : <button type="button" onClick={apply} disabled={checking || !code.trim()} className="px-4 rounded-xl bg-brand-700 text-white text-xs font-body font-semibold disabled:opacity-40 hover:bg-brand-500 transition-all">{checking ? '...' : (lang === 'en' ? 'Apply' : 'Aplicar')}</button>}
       </div>
       {result?.ok && <p className="text-xs font-body font-semibold text-green-700 mt-1.5">{lang === 'en' ? `Discount applied: -€${result.discount.toFixed(2)}` : `Desconto aplicado: -€${result.discount.toFixed(2)}`}</p>}
       {result && !result.ok && <p className="text-xs font-body text-red-600 mt-1.5">{result.error}</p>}
@@ -551,7 +552,7 @@ function PayPalButton({ slug, reservationId, amount, lang, onSuccess, onError })
   if (!clientId || !reservationId) {
     return (
       <div className="flex items-center justify-center gap-2 py-4 text-n-400 text-xs font-body">
-        <div className="w-3.5 h-3.5 rounded-full border-2 border-n-300 border-t-ocean-700 animate-spin" />
+        <div className="w-3.5 h-3.5 rounded-full border-2 border-n-300 border-t-brand-700 animate-spin" />
         {lang === 'en' ? 'Preparing payment...' : 'A preparar pagamento...'}
       </div>
     );
@@ -588,8 +589,8 @@ function HotelModal({ unit, op, slug, lang, onClose, refCode, traveler }) {
       {resId?<div className="p-5"><BS resId={resId} lang={lang} type="hotel" onClose={onClose}/></div>
       :step===1?<div className="p-5 space-y-4"><p className={SH}>{lang==='en'?'Select dates & guests':'Seleccione datas e hóspedes'}</p>
         <div className="grid grid-cols-2 gap-3"><div><label className={LB}>Check-in *</label><input type="date" className={IN} min={TODAY()} value={ci} onChange={e=>sci(e.target.value)}/></div><div><label className={LB}>Check-out *</label><input type="date" className={IN} min={ci||TODAY()} value={co} onChange={e=>sco(e.target.value)}/></div></div>
-        {nights>0&&<div className="flex justify-between items-center bg-ocean-50 border border-ocean-100 rounded-xl px-4 py-2.5"><span className="text-sm font-body font-semibold text-ocean-700">{nights} {lang==='en'?(nights===1?'night':'nights'):(nights===1?'noite':'noites')}</span>{total&&<span className="font-display font-bold text-ocean-700 text-sm">{total}</span>}</div>}
-        {(chk||avail)&&<div className={`rounded-xl px-4 py-3 flex items-center gap-2 text-sm font-body font-semibold ${chk?'bg-n-50 text-n-400':avail?.disponivel?'bg-green-50 text-green-700':'bg-red-50 text-red-700'}`}>{chk?<><div className="w-3.5 h-3.5 rounded-full border-2 border-ocean-300 border-t-ocean-700 animate-spin flex-shrink-0"/>{lang==='en'?'Checking...':'A verificar...'}</>:<>{avail?.disponivel?(lang==='en'?'Available':'Disponível'):(lang==='en'?'Not available':'Indisponível')}</>}</div>}
+        {nights>0&&<div className="flex justify-between items-center bg-brand-50 border border-brand-100 rounded-xl px-4 py-2.5"><span className="text-sm font-body font-semibold text-brand-700">{nights} {lang==='en'?(nights===1?'night':'nights'):(nights===1?'noite':'noites')}</span>{total&&<span className="font-display font-bold text-brand-700 text-sm">{total}</span>}</div>}
+        {(chk||avail)&&<div className={`rounded-xl px-4 py-3 flex items-center gap-2 text-sm font-body font-semibold ${chk?'bg-n-50 text-n-400':avail?.disponivel?'bg-green-50 text-green-700':'bg-red-50 text-red-700'}`}>{chk?<><div className="w-3.5 h-3.5 rounded-full border-2 border-brand-300 border-t-brand-700 animate-spin flex-shrink-0"/>{lang==='en'?'Checking...':'A verificar...'}</>:<>{avail?.disponivel?(lang==='en'?'Available':'Disponível'):(lang==='en'?'Not available':'Indisponível')}</>}</div>}
         <div className="grid grid-cols-2 gap-4"><Cnt label={lang==='en'?'Adults (1-10)':'Adultos (1-10)'} val={adults} set={sa} min={1} max={10}/><Cnt label={lang==='en'?'Children (0-5)':'Crianças (0-5)'} val={kids} set={sk} min={0} max={5}/></div>
       </div>
       :step===2?<div className="p-5"><p className={SH}>{lang==='en'?'Guest details':'Dados do hóspede'}</p><GF d={info} set={si} lang={lang} emailLocked={!!traveler}><div><label className={LB}>{lang==='en'?'Special requests':'Pedidos especiais'}</label><textarea className={IN+' resize-none'} rows={3} value={info.notes} onChange={e=>si(i=>({...i,notes:e.target.value}))} placeholder={lang==='en'?'Early check-in, quiet room...':'Early check-in, quarto silencioso...'}/></div></GF></div>
@@ -658,18 +659,18 @@ function ActivityModal({ unit, op, slug, lang, onClose, refCode, traveler, initi
         {hasPerPerson&&hasPrivate&&(
           <div className="flex gap-1 p-1 bg-n-100 rounded-xl">
             <button type="button" onClick={()=>setBookingMode('per_person')}
-              className={`flex-1 text-xs font-body font-semibold py-2 rounded-lg transition-all ${bookingMode==='per_person'?'bg-white text-ocean-700 shadow-sm':'text-n-500'}`}>
+              className={`flex-1 text-xs font-body font-semibold py-2 rounded-lg transition-all ${bookingMode==='per_person'?'bg-white text-brand-700 shadow-sm':'text-n-500'}`}>
               {lang==='en'?'Per person':'Por pessoa'}
             </button>
             <button type="button" onClick={()=>setBookingMode('private')}
-              className={`flex-1 text-xs font-body font-semibold py-2 rounded-lg transition-all ${bookingMode==='private'?'bg-white text-ocean-700 shadow-sm':'text-n-500'}`}>
+              className={`flex-1 text-xs font-body font-semibold py-2 rounded-lg transition-all ${bookingMode==='private'?'bg-white text-brand-700 shadow-sm':'text-n-500'}`}>
               {lang==='en'?'Private / group':'Privado / grupo'}
             </button>
           </div>
         )}
         <div className={hasSlots?"grid grid-cols-2 gap-3":""}><div><label className={LB}>{lang==='en'?'Date':'Data'} *</label><input type="date" className={IN} min={TODAY()} value={date} onChange={e=>sd(e.target.value)}/></div>
         {hasSlots&&<div><label className={LB}>{lang==='en'?'Time slot':'Horário'} *</label><select className={SEL} value={time} onChange={e=>st(e.target.value)} disabled={loadingSlots||!date}><option value="">{loadingSlots?(lang==='en'?'Loading...':'A carregar...'):lang==='en'?'-- Select --':'-- Seleccionar --'}</option>{slotAvail.map(s=><option key={s.time} value={s.time} disabled={s.remaining<=0}>{s.time} {s.remaining<=0?(lang==='en'?'(full)':'(esgotado)'):`(${s.remaining} ${lang==='en'?'left':'lugares'})`}</option>)}</select></div>}</div>
-        {total&&(date||adults)&&<div className="flex justify-between items-center bg-ocean-50 border border-ocean-100 rounded-xl px-4 py-2.5"><span className="text-xs font-body text-ocean-600">{adults+kids} {lang==='en'?'people':'pessoas'}</span><span className="font-display font-bold text-ocean-700 text-sm">{total}</span></div>}
+        {total&&(date||adults)&&<div className="flex justify-between items-center bg-brand-50 border border-brand-100 rounded-xl px-4 py-2.5"><span className="text-xs font-body text-brand-600">{adults+kids} {lang==='en'?'people':'pessoas'}</span><span className="font-display font-bold text-brand-700 text-sm">{total}</span></div>}
         <div className="grid grid-cols-2 gap-4"><Cnt label={lang==='en'?'Adults (1-20)':'Adultos (1-20)'} val={adults} set={sa} min={1} max={20}/><Cnt label={lang==='en'?'Children (0-10)':'Crianças (0-10)'} val={kids} set={sk} min={0} max={10}/></div>
         {isPrivateMode&&priceTiers.length>0&&(
           <div className="bg-n-50 border border-n-200 rounded-xl p-3 space-y-1.5">
@@ -677,7 +678,7 @@ function ActivityModal({ unit, op, slug, lang, onClose, refCode, traveler, initi
             {priceTiers.map((t,i)=>{
               const activeTier=numPessoas>=Number(t.pax_min)&&numPessoas<=Number(t.pax_max);
               return (
-                <div key={i} className={`flex justify-between text-xs font-body ${activeTier?'text-ocean-700 font-bold':'text-n-500'}`}>
+                <div key={i} className={`flex justify-between text-xs font-body ${activeTier?'text-brand-700 font-bold':'text-n-500'}`}>
                   <span>{t.pax_min}-{t.pax_max} {lang==='en'?'people':'pessoas'}</span>
                   <span>{fmtPrice(Number(t.price)||0,null,op.currency||'EUR','EUR',lang)}</span>
                 </div>
@@ -742,19 +743,19 @@ function RentACarModal({ unit, op, slug, lang, onClose, refCode, traveler }) {
     <MS icon={<Car size={18} strokeWidth={1.75}/>} title={lang==='en'?'Book vehicle':'Reservar viatura'} step={step} lang={lang} onClose={onClose} onPrev={()=>ss(s=>s-1)} onNext={next} nextLabel={step<3?(lang==='en'?'Continue':'Continuar'):(lang==='en'?'Confirm booking':'Confirmar reserva')} nextDis={(step===1&&(!pu.date||!re.date||!pu.loc))||(step===3&&!policyOk)} sub={sub} err={err} ok={!!resId} hideNext={step===3&&pay==='paypal'}>
       {resId?<div className="p-5"><BS resId={resId} lang={lang} type="rentacar" onClose={onClose}/></div>
       :step===1?<div className="p-5 space-y-4"><p className={SH}>{lang==='en'?'Pickup & return':'Levantamento e devolução'}</p>
-        <div><p className="text-xs font-body font-bold text-ocean-700 uppercase tracking-widest mb-2">{lang==='en'?'Pickup':'Levantamento'}</p><div className="grid grid-cols-2 gap-3 mb-2"><div><label className={LB}>{lang==='en'?'Date':'Data'} *</label><input type="date" className={IN} min={TODAY()} value={pu.date} onChange={e=>spu(p=>({...p,date:e.target.value}))}/></div><div><label className={LB}>{lang==='en'?'Time':'Hora'}</label><input type="time" className={IN} value={pu.time} onChange={e=>spu(p=>({...p,time:e.target.value}))}/></div></div><select className={SEL} value={pu.loc} onChange={e=>spu(p=>({...p,loc:e.target.value}))}><option value="">{lang==='en'?'-- Select location --':'-- Seleccionar local --'}</option>{locs.map(l=><option key={l} value={l}>{l}</option>)}</select></div>
-        <div><p className="text-xs font-body font-bold text-ocean-700 uppercase tracking-widest mb-2">{lang==='en'?'Return':'Devolução'}</p><div className="grid grid-cols-2 gap-3 mb-2"><div><label className={LB}>{lang==='en'?'Date':'Data'} *</label><input type="date" className={IN} min={pu.date||TODAY()} value={re.date} onChange={e=>sre(p=>({...p,date:e.target.value}))}/></div><div><label className={LB}>{lang==='en'?'Time':'Hora'}</label><input type="time" className={IN} value={re.time} onChange={e=>sre(p=>({...p,time:e.target.value}))}/></div></div><select className={SEL} value={re.loc} onChange={e=>sre(p=>({...p,loc:e.target.value}))}><option value="">{lang==='en'?'Same as pickup':'Mesmo local'}</option>{locs.map(l=><option key={l} value={l}>{l}</option>)}</select></div>
-        {days>0&&<div className="flex justify-between items-center bg-ocean-50 border border-ocean-100 rounded-xl px-4 py-2.5"><span className="text-sm font-body font-semibold text-ocean-700">{days} {lang==='en'?(days===1?'day':'days'):(days===1?'dia':'dias')}</span>{total&&<span className="font-display font-bold text-ocean-700 text-sm">{total}</span>}</div>}
+        <div><p className="text-xs font-body font-bold text-brand-700 uppercase tracking-widest mb-2">{lang==='en'?'Pickup':'Levantamento'}</p><div className="grid grid-cols-2 gap-3 mb-2"><div><label className={LB}>{lang==='en'?'Date':'Data'} *</label><input type="date" className={IN} min={TODAY()} value={pu.date} onChange={e=>spu(p=>({...p,date:e.target.value}))}/></div><div><label className={LB}>{lang==='en'?'Time':'Hora'}</label><input type="time" className={IN} value={pu.time} onChange={e=>spu(p=>({...p,time:e.target.value}))}/></div></div><select className={SEL} value={pu.loc} onChange={e=>spu(p=>({...p,loc:e.target.value}))}><option value="">{lang==='en'?'-- Select location --':'-- Seleccionar local --'}</option>{locs.map(l=><option key={l} value={l}>{l}</option>)}</select></div>
+        <div><p className="text-xs font-body font-bold text-brand-700 uppercase tracking-widest mb-2">{lang==='en'?'Return':'Devolução'}</p><div className="grid grid-cols-2 gap-3 mb-2"><div><label className={LB}>{lang==='en'?'Date':'Data'} *</label><input type="date" className={IN} min={pu.date||TODAY()} value={re.date} onChange={e=>sre(p=>({...p,date:e.target.value}))}/></div><div><label className={LB}>{lang==='en'?'Time':'Hora'}</label><input type="time" className={IN} value={re.time} onChange={e=>sre(p=>({...p,time:e.target.value}))}/></div></div><select className={SEL} value={re.loc} onChange={e=>sre(p=>({...p,loc:e.target.value}))}><option value="">{lang==='en'?'Same as pickup':'Mesmo local'}</option>{locs.map(l=><option key={l} value={l}>{l}</option>)}</select></div>
+        {days>0&&<div className="flex justify-between items-center bg-brand-50 border border-brand-100 rounded-xl px-4 py-2.5"><span className="text-sm font-body font-semibold text-brand-700">{days} {lang==='en'?(days===1?'day':'days'):(days===1?'dia':'dias')}</span>{total&&<span className="font-display font-bold text-brand-700 text-sm">{total}</span>}</div>}
       </div>
       :step===2?<div className="p-5 space-y-4"><p className={SH}>{lang==='en'?'Driver details':'Dados do condutor'}</p><GF d={drv} set={sd} lang={lang} emailLocked={!!traveler}><div className="grid grid-cols-2 gap-3"><div><label className={LB}>{lang==='en'?'Licence no.':'Nº carta'} *</label><input className={IN} value={drv.license} onChange={e=>sd(d=>({...d,license:e.target.value}))} required placeholder="PT-123456"/></div><div><label className={LB}>{lang==='en'?'Issuing country':'País emissor'}</label><input className={IN} value={drv.licCountry} onChange={e=>sd(d=>({...d,licCountry:e.target.value}))} placeholder="Portugal"/></div></div><div><label className={LB}>{lang==='en'?'Driver age':'Idade do condutor'}</label><input className={IN} type="number" min={18} max={99} value={drv.age} onChange={e=>sd(d=>({...d,age:e.target.value}))} placeholder="28"/></div></GF>
-        <div><p className="text-xs font-body font-bold text-n-700 mb-3">{lang==='en'?'Extras (optional)':'Extras (opcional)'}</p><div className="grid grid-cols-2 gap-2.5">{CAR_EXTRAS.map(e=><button key={e.k} type="button" onClick={()=>sex(x=>({...x,[e.k]:!x[e.k]}))} className={`p-3 rounded-xl border-2 text-left transition-all ${ext[e.k]?'border-ocean-700 bg-ocean-50':'border-n-200 hover:border-n-300'}`}><div className="flex items-center gap-2"><div className={`w-4 h-4 rounded border-2 flex items-center justify-center flex-shrink-0 transition-all ${ext[e.k]?'border-ocean-700 bg-ocean-700':'border-n-300'}`}>{ext[e.k]&&<Check size={10} strokeWidth={3} className="text-white"/>}</div><span className={`text-xs font-body font-semibold ${ext[e.k]?'text-ocean-700':'text-n-700'}`}>{lang==='en'?e.en:e.pt}</span></div></button>)}</div></div>
+        <div><p className="text-xs font-body font-bold text-n-700 mb-3">{lang==='en'?'Extras (optional)':'Extras (opcional)'}</p><div className="grid grid-cols-2 gap-2.5">{CAR_EXTRAS.map(e=><button key={e.k} type="button" onClick={()=>sex(x=>({...x,[e.k]:!x[e.k]}))} className={`p-3 rounded-xl border-2 text-left transition-all ${ext[e.k]?'border-brand-700 bg-brand-50':'border-n-200 hover:border-n-300'}`}><div className="flex items-center gap-2"><div className={`w-4 h-4 rounded border-2 flex items-center justify-center flex-shrink-0 transition-all ${ext[e.k]?'border-brand-700 bg-brand-700':'border-n-300'}`}>{ext[e.k]&&<Check size={10} strokeWidth={3} className="text-white"/>}</div><span className={`text-xs font-body font-semibold ${ext[e.k]?'text-brand-700':'text-n-700'}`}>{lang==='en'?e.en:e.pt}</span></div></button>)}</div></div>
         {isExecutivo&&chauffeurRate>0&&(
           <div>
-            <button type="button" onClick={()=>setDriverIncluded(v=>!v)} className={`w-full p-3 rounded-xl border-2 text-left transition-all ${driverIncluded?'border-ocean-700 bg-ocean-50':'border-n-200 hover:border-n-300'}`}>
+            <button type="button" onClick={()=>setDriverIncluded(v=>!v)} className={`w-full p-3 rounded-xl border-2 text-left transition-all ${driverIncluded?'border-brand-700 bg-brand-50':'border-n-200 hover:border-n-300'}`}>
               <div className="flex items-center justify-between gap-2">
                 <div className="flex items-center gap-2">
-                  <div className={`w-4 h-4 rounded border-2 flex items-center justify-center flex-shrink-0 transition-all ${driverIncluded?'border-ocean-700 bg-ocean-700':'border-n-300'}`}>{driverIncluded&&<Check size={10} strokeWidth={3} className="text-white"/>}</div>
-                  <span className={`text-xs font-body font-semibold ${driverIncluded?'text-ocean-700':'text-n-700'}`}>{lang==='en'?'Chauffeur included':'Motorista incluído'}</span>
+                  <div className={`w-4 h-4 rounded border-2 flex items-center justify-center flex-shrink-0 transition-all ${driverIncluded?'border-brand-700 bg-brand-700':'border-n-300'}`}>{driverIncluded&&<Check size={10} strokeWidth={3} className="text-white"/>}</div>
+                  <span className={`text-xs font-body font-semibold ${driverIncluded?'text-brand-700':'text-n-700'}`}>{lang==='en'?'Chauffeur included':'Motorista incluído'}</span>
                 </div>
                 <span className="text-xs font-mono text-n-500">+{fmtPrice(chauffeurRate,'day',op.currency||'EUR','EUR',lang)}</span>
               </div>
@@ -852,13 +853,13 @@ function SimilarServices({ units, slug, lang, currency, opCurrency }) {
             <div className="p-3">
               <p className="font-display font-bold text-n-900 text-sm mb-1 line-clamp-1">{u.name}</p>
               {u.base_price ? (
-                <p className="font-display font-bold text-ocean-700 text-sm">
+                <p className="font-display font-bold text-brand-700 text-sm">
                   {fmtPrice(u.base_price, u.price_unit, opCurrency, currency, lang)}
                 </p>
               ) : (() => {
                 const startingFrom = startingFromPrice(getUnitMeta(u));
                 return startingFrom ? (
-                  <p className="font-display font-bold text-ocean-700 text-sm">
+                  <p className="font-display font-bold text-brand-700 text-sm">
                     {lang==='en'?'From ':'A partir de '}{fmtPrice(startingFrom, null, opCurrency, currency, lang)}
                   </p>
                 ) : null;
@@ -905,7 +906,7 @@ function NotFoundPage({ slug, lang }) {
           {lang === 'en' ? 'This service does not exist or is no longer available.' : 'Este serviço não existe ou já não está disponível.'}
         </p>
         <button onClick={() => navigate(slug ? `/book/${slug}` : '/')}
-          className="inline-flex items-center gap-2 bg-ocean-700 text-white font-body font-semibold px-6 py-3 rounded-xl hover:bg-ocean-500 transition-colors text-sm">
+          className="inline-flex items-center gap-2 bg-brand-700 text-white font-body font-semibold px-6 py-3 rounded-xl hover:bg-brand-500 transition-colors text-sm">
           <ChevronLeft size={16} strokeWidth={2}/>
           {lang === 'en' ? 'Back to operator' : 'Voltar ao operador'}
         </button>
@@ -926,6 +927,7 @@ export default function ServiceDetail() {
   const refCode      = searchParams.get('ref') || null;
 
   const [op, setOp]           = useState(null);
+  useBrandColor(op?.brand_color); /* cor da marca do operador (tailwind brand-*) */
   const [unit, setUnit]       = useState(null);
   const [related, setRelated] = useState([]);
   const [reviews, setReviews] = useState([]);
@@ -1117,7 +1119,7 @@ export default function ServiceDetail() {
               <Logo size="sm"/>
             </button>
             <div className="hidden sm:flex items-center gap-1.5 text-xs font-body text-n-400 min-w-0 border-l border-n-200 pl-2.5">
-              <button onClick={() => navigate(`/book/${slug}`)} className="text-ocean-600 hover:text-ocean-700 font-semibold truncate max-w-[120px]">
+              <button onClick={() => navigate(`/book/${slug}`)} className="text-brand-600 hover:text-brand-700 font-semibold truncate max-w-[120px]">
                 {op.name}
               </button>
               <ChevronRight size={12} strokeWidth={2} className="text-n-300 flex-shrink-0"/>
@@ -1129,24 +1131,24 @@ export default function ServiceDetail() {
               minhas reservas / perfil), so acrescentado ao que ja existia. */}
           <div className="flex items-center gap-2 flex-shrink-0">
             <button onClick={() => setCur(c => c==='EUR'?'CVE':'EUR')}
-              className="hidden sm:block text-xs font-body font-bold border border-n-200 text-n-600 rounded-full px-3 py-1.5 hover:border-ocean-700 hover:text-ocean-700 transition-all">
+              className="hidden sm:block text-xs font-body font-bold border border-n-200 text-n-600 rounded-full px-3 py-1.5 hover:border-brand-700 hover:text-brand-700 transition-all">
               {currency}
             </button>
             <button onClick={toggleLang}
-              className="hidden sm:flex items-center gap-1 text-xs font-body font-bold border border-n-200 text-n-600 rounded-full px-3 py-1.5 hover:border-ocean-700 hover:text-ocean-700 transition-all">
+              className="hidden sm:flex items-center gap-1 text-xs font-body font-bold border border-n-200 text-n-600 rounded-full px-3 py-1.5 hover:border-brand-700 hover:text-brand-700 transition-all">
               <Globe size={12} strokeWidth={1.75}/>
               {lang === 'pt' ? 'EN' : 'PT'}
             </button>
             <button onClick={() => navigate('/viajante')} title={lang==='en'?'My bookings':'As minhas reservas'}
-              className="w-9 h-9 rounded-full border border-n-200 text-n-500 flex items-center justify-center hover:border-ocean-700 hover:text-ocean-700 transition-all">
+              className="w-9 h-9 rounded-full border border-n-200 text-n-500 flex items-center justify-center hover:border-brand-700 hover:text-brand-700 transition-all">
               <ShoppingBag size={16} strokeWidth={1.75}/>
             </button>
             <button onClick={() => navigate(traveler ? '/viajante' : '/viajante/entrar')} title={lang==='en'?'Profile':'Perfil'}
-              className="w-9 h-9 rounded-full border border-n-200 text-n-500 flex items-center justify-center hover:border-ocean-700 hover:text-ocean-700 transition-all">
+              className="w-9 h-9 rounded-full border border-n-200 text-n-500 flex items-center justify-center hover:border-brand-700 hover:text-brand-700 transition-all">
               <User size={16} strokeWidth={1.75}/>
             </button>
             <button onClick={handleReservarClick}
-              className="hidden sm:flex items-center gap-1.5 bg-ocean-700 text-white text-sm font-body font-semibold px-4 py-2 rounded-full hover:bg-ocean-500 transition-colors">
+              className="hidden sm:flex items-center gap-1.5 bg-brand-700 text-white text-sm font-body font-semibold px-4 py-2 rounded-full hover:bg-brand-500 transition-colors">
               <Calendar size={14} strokeWidth={1.75}/>
               {lang === 'en' ? 'Book Now' : 'Reservar'}
             </button>
@@ -1174,7 +1176,7 @@ export default function ServiceDetail() {
               ...(Array.isArray(unitMeta.languages) && unitMeta.languages.length ? [{ icon:<Languages size={18} strokeWidth={1.75}/>, pt:'Idiomas', en:'Languages', sub_pt:unitMeta.languages.join(' · '), sub_en:unitMeta.languages.join(' · ') }] : []),
             ].map((c,i) => (
               <div key={i} className="flex items-start gap-2.5 p-3 rounded-xl border border-n-200 bg-n-50">
-                <div className="w-8 h-8 rounded-lg bg-white border border-n-200 flex items-center justify-center text-ocean-700 flex-shrink-0">{c.icon}</div>
+                <div className="w-8 h-8 rounded-lg bg-white border border-n-200 flex items-center justify-center text-brand-700 flex-shrink-0">{c.icon}</div>
                 <div>
                   <p className="text-xs font-body font-bold text-n-800 leading-tight">{lang==='en'?c.en:c.pt}</p>
                   <p className="text-xs font-body text-n-500 leading-tight mt-0.5">{lang==='en'?c.sub_en:c.sub_pt}</p>
@@ -1197,7 +1199,7 @@ export default function ServiceDetail() {
               {/* Type badge + actions */}
               <div className="flex items-start justify-between gap-4 mb-3">
                 <div className="flex flex-wrap gap-2">
-                  <span className="flex items-center gap-1.5 bg-ocean-50 text-ocean-700 text-xs font-body font-bold px-3 py-1 rounded-full border border-ocean-100">
+                  <span className="flex items-center gap-1.5 bg-brand-50 text-brand-700 text-xs font-body font-bold px-3 py-1 rounded-full border border-brand-100">
                     {typeBadge.icon}
                     {lang === 'en' ? typeBadge.en : typeBadge.pt}
                   </span>
@@ -1243,12 +1245,12 @@ export default function ServiceDetail() {
                 )}
                 {op.address && (
                   <div className="flex items-center gap-1.5 text-n-500 text-sm font-body">
-                    <MapPin size={14} strokeWidth={1.75} className="text-ocean-500"/>
+                    <MapPin size={14} strokeWidth={1.75} className="text-brand-500"/>
                     {op.address}
                   </div>
                 )}
                 <div className="flex items-center gap-1.5 text-n-500 text-sm font-body">
-                  <Globe size={14} strokeWidth={1.75} className="text-ocean-500"/>
+                  <Globe size={14} strokeWidth={1.75} className="text-brand-500"/>
                   PT · EN
                 </div>
               </div>
@@ -1271,18 +1273,18 @@ export default function ServiceDetail() {
                   </span>
                 )}
                 {op.operator_type === 'activity' && (
-                  <span className="flex items-center gap-1.5 bg-ocean-50 border border-ocean-100 text-ocean-700 text-xs font-body font-semibold px-3 py-1.5 rounded-full">
+                  <span className="flex items-center gap-1.5 bg-brand-50 border border-brand-100 text-brand-700 text-xs font-body font-semibold px-3 py-1.5 rounded-full">
                     <Shield size={12} strokeWidth={1.75}/>
                     {lang==='en'?'Safe & Certified':'Certificado'}
                   </span>
                 )}
                 {isRestaurant && unitMeta.category && MENU_CATEGORY_LABELS[unitMeta.category] && (
-                  <span className="flex items-center gap-1.5 bg-ocean-50 border border-ocean-100 text-ocean-700 text-xs font-body font-semibold px-3 py-1.5 rounded-full">
+                  <span className="flex items-center gap-1.5 bg-brand-50 border border-brand-100 text-brand-700 text-xs font-body font-semibold px-3 py-1.5 rounded-full">
                     {lang==='en'?MENU_CATEGORY_LABELS[unitMeta.category].en:MENU_CATEGORY_LABELS[unitMeta.category].pt}
                   </span>
                 )}
                 {isRestaurant && !!unitMeta.daily_special?.[String(new Date().getDay())] && (
-                  <span className="flex items-center gap-1.5 bg-ocean-50 border border-ocean-100 text-ocean-700 text-xs font-body font-semibold px-3 py-1.5 rounded-full">
+                  <span className="flex items-center gap-1.5 bg-brand-50 border border-brand-100 text-brand-700 text-xs font-body font-semibold px-3 py-1.5 rounded-full">
                     {lang==='en'?"Today's special":'Prato do dia'}
                   </span>
                 )}
@@ -1304,7 +1306,7 @@ export default function ServiceDetail() {
                   ecra visivel — sem isto o botao de reserva fica inalcancavel. */}
               {isWidget && (
                 <button onClick={handleReservarClick}
-                  className="w-full mt-5 bg-ocean-700 text-white font-body font-bold py-3.5 rounded-xl flex items-center justify-center gap-2 hover:bg-ocean-500 transition-colors text-sm shadow-sm">
+                  className="w-full mt-5 bg-brand-700 text-white font-body font-bold py-3.5 rounded-xl flex items-center justify-center gap-2 hover:bg-brand-500 transition-colors text-sm shadow-sm">
                   <Calendar size={16} strokeWidth={1.75}/>
                   {lang==='en'?'Book Now':'Reservar Agora'}
                   {displayPrice && <span className="opacity-90 font-semibold">· {displayPrice}</span>}
@@ -1315,7 +1317,7 @@ export default function ServiceDetail() {
             {/* ── Sobre este serviço ── */}
             {getUnitDescription(unit, lang) && (
               <div className="pb-10 border-b border-n-100">
-                <p className="text-xs font-body font-bold text-ocean-700 uppercase tracking-widest mb-3">
+                <p className="text-xs font-body font-bold text-brand-700 uppercase tracking-widest mb-3">
                   {lang==='en'?'About this service':'Sobre este serviço'}
                 </p>
                 <p className="font-body text-n-600 leading-relaxed text-base whitespace-pre-line">{getUnitDescription(unit, lang)}</p>
@@ -1327,8 +1329,8 @@ export default function ServiceDetail() {
                     { icon:<Users size={20} strokeWidth={1.75}/>, pt:'Grupos pequenos', en:'Small groups' },
                     { icon:<Shield size={20} strokeWidth={1.75}/>, pt:'Equipamento incluído', en:'Equipment included' },
                   ].map((h,i) => (
-                    <div key={i} className="flex items-start gap-3 p-4 bg-ocean-50 rounded-xl border border-ocean-100">
-                      <div className="w-9 h-9 bg-ocean-100 rounded-lg flex items-center justify-center text-ocean-700 flex-shrink-0">{h.icon}</div>
+                    <div key={i} className="flex items-start gap-3 p-4 bg-brand-50 rounded-xl border border-brand-100">
+                      <div className="w-9 h-9 bg-brand-100 rounded-lg flex items-center justify-center text-brand-700 flex-shrink-0">{h.icon}</div>
                       <p className="font-body font-semibold text-n-800 text-sm leading-snug mt-1">{lang==='en'?h.en:h.pt}</p>
                     </div>
                   ))}
@@ -1337,8 +1339,8 @@ export default function ServiceDetail() {
                     { icon:<Globe size={20} strokeWidth={1.75}/>, pt:'Wi-Fi incluído', en:'Wi-Fi included' },
                     { icon:<Check size={20} strokeWidth={1.75}/>, pt:'Check-in flexível', en:'Flexible check-in' },
                   ].map((h,i) => (
-                    <div key={i} className="flex items-start gap-3 p-4 bg-ocean-50 rounded-xl border border-ocean-100">
-                      <div className="w-9 h-9 bg-ocean-100 rounded-lg flex items-center justify-center text-ocean-700 flex-shrink-0">{h.icon}</div>
+                    <div key={i} className="flex items-start gap-3 p-4 bg-brand-50 rounded-xl border border-brand-100">
+                      <div className="w-9 h-9 bg-brand-100 rounded-lg flex items-center justify-center text-brand-700 flex-shrink-0">{h.icon}</div>
                       <p className="font-body font-semibold text-n-800 text-sm leading-snug mt-1">{lang==='en'?h.en:h.pt}</p>
                     </div>
                   ))}
@@ -1347,8 +1349,8 @@ export default function ServiceDetail() {
                     { icon:<MapPin size={20} strokeWidth={1.75}/>, pt:'Entrega em qualquer local', en:'Delivery anywhere' },
                     { icon:<Clock size={20} strokeWidth={1.75}/>, pt:'Disponível 24h', en:'Available 24h' },
                   ].map((h,i) => (
-                    <div key={i} className="flex items-start gap-3 p-4 bg-ocean-50 rounded-xl border border-ocean-100">
-                      <div className="w-9 h-9 bg-ocean-100 rounded-lg flex items-center justify-center text-ocean-700 flex-shrink-0">{h.icon}</div>
+                    <div key={i} className="flex items-start gap-3 p-4 bg-brand-50 rounded-xl border border-brand-100">
+                      <div className="w-9 h-9 bg-brand-100 rounded-lg flex items-center justify-center text-brand-700 flex-shrink-0">{h.icon}</div>
                       <p className="font-body font-semibold text-n-800 text-sm leading-snug mt-1">{lang==='en'?h.en:h.pt}</p>
                     </div>
                   ))}
@@ -1357,8 +1359,8 @@ export default function ServiceDetail() {
                     { icon:<Users size={20} strokeWidth={1.75}/>, pt:'Grupos e eventos', en:'Groups & events' },
                     { icon:<Shield size={20} strokeWidth={1.75}/>, pt:'Reserva confirmada', en:'Confirmed booking' },
                   ].map((h,i) => (
-                    <div key={i} className="flex items-start gap-3 p-4 bg-ocean-50 rounded-xl border border-ocean-100">
-                      <div className="w-9 h-9 bg-ocean-100 rounded-lg flex items-center justify-center text-ocean-700 flex-shrink-0">{h.icon}</div>
+                    <div key={i} className="flex items-start gap-3 p-4 bg-brand-50 rounded-xl border border-brand-100">
+                      <div className="w-9 h-9 bg-brand-100 rounded-lg flex items-center justify-center text-brand-700 flex-shrink-0">{h.icon}</div>
                       <p className="font-body font-semibold text-n-800 text-sm leading-snug mt-1">{lang==='en'?h.en:h.pt}</p>
                     </div>
                   ))}
@@ -1375,14 +1377,14 @@ export default function ServiceDetail() {
               const stopsWithCoords = unitMeta.stops.filter(s => s.lat != null && s.lng != null);
               return (
                 <div className="pb-10 border-b border-n-100">
-                  <p className="text-xs font-body font-bold text-ocean-700 uppercase tracking-widest mb-4">
+                  <p className="text-xs font-body font-bold text-brand-700 uppercase tracking-widest mb-4">
                     {lang==='en'?'What travelers loved':'O que os viajantes adoraram'}
                   </p>
                   <div className={`grid grid-cols-1 ${stopsWithCoords.length>0?'lg:grid-cols-2':''} gap-6`}>
                     <div className="space-y-3">
                       {unitMeta.stops.map((s, i) => (
                         <div key={i} className="flex items-start gap-3">
-                          <span className="shrink-0 w-7 h-7 rounded-full bg-ocean-700 text-white text-xs font-body font-bold flex items-center justify-center mt-0.5">{i+1}</span>
+                          <span className="shrink-0 w-7 h-7 rounded-full bg-brand-700 text-white text-xs font-body font-bold flex items-center justify-center mt-0.5">{i+1}</span>
                           <div>
                             <p className="font-body font-semibold text-n-800 text-sm">{lang==='en'&&s.name_en?s.name_en:s.name}</p>
                             {(lang==='en'&&s.desc_en?s.desc_en:s.desc) && (
@@ -1412,13 +1414,13 @@ export default function ServiceDetail() {
             {/* ── O que está incluído (menu de degustação) ── */}
             {isRestaurant && unit.unit_type === 'tasting_menu' && unitMeta.items?.length > 0 && (
               <div className="pb-10 border-b border-n-100">
-                <p className="text-xs font-body font-bold text-ocean-700 uppercase tracking-widest mb-4">
+                <p className="text-xs font-body font-bold text-brand-700 uppercase tracking-widest mb-4">
                   {lang==='en'?'What\'s included':'O que está incluído'}
                 </p>
                 <div className="space-y-2">
                   {unitMeta.items.map((it, i) => (
                     <div key={i} className="flex items-center gap-2.5 p-3 rounded-xl border border-n-200 bg-n-50">
-                      <Check size={15} strokeWidth={2} className="text-ocean-600 flex-shrink-0"/>
+                      <Check size={15} strokeWidth={2} className="text-brand-600 flex-shrink-0"/>
                       <span className="text-sm font-body font-medium text-n-700">{it.name_pt}</span>
                     </div>
                   ))}
@@ -1429,13 +1431,13 @@ export default function ServiceDetail() {
             {/* ── Comodidades ── configurado pelo operador (UnitForm), nunca inventado */}
             {amenities.length > 0 && (
               <div className="pb-10 border-b border-n-100">
-                <p className="text-xs font-body font-bold text-ocean-700 uppercase tracking-widest mb-4">
+                <p className="text-xs font-body font-bold text-brand-700 uppercase tracking-widest mb-4">
                   {lang==='en'?'Amenities':'Comodidades'}
                 </p>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                   {amenities.map((a, i) => (
                     <div key={i} className="flex items-center gap-2.5 p-3 rounded-xl border border-n-200 bg-n-50">
-                      <Check size={15} strokeWidth={2} className="text-ocean-600 flex-shrink-0"/>
+                      <Check size={15} strokeWidth={2} className="text-brand-600 flex-shrink-0"/>
                       <span className="text-sm font-body font-medium text-n-700">{a}</span>
                     </div>
                   ))}
@@ -1455,7 +1457,7 @@ export default function ServiceDetail() {
               if (group.length === 0) return null;
               return (
                 <div key={String(inc)} className="pb-10 border-b border-n-100">
-                  <p className="text-xs font-body font-bold text-ocean-700 uppercase tracking-widest mb-4">{title}</p>
+                  <p className="text-xs font-body font-bold text-brand-700 uppercase tracking-widest mb-4">{title}</p>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     {group.map((item, i) => (
                       <div key={i} className={`flex items-center gap-3 p-3 rounded-xl border ${inc?'bg-green-50 border-green-100':'bg-n-50 border-n-200'}`}>
@@ -1485,7 +1487,7 @@ export default function ServiceDetail() {
             {/* ── Avaliações ── */}
             {reviews.length > 0 && (
               <div className="pb-10 border-b border-n-100">
-                <p className="text-xs font-body font-bold text-ocean-700 uppercase tracking-widest mb-4">
+                <p className="text-xs font-body font-bold text-brand-700 uppercase tracking-widest mb-4">
                   {lang==='en'?'Customer reviews':'Avaliações dos clientes'}
                 </p>
                 <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 mb-6">
@@ -1513,7 +1515,7 @@ export default function ServiceDetail() {
                       <div key={i} className="bg-white border border-n-200 rounded-xl p-4 shadow-sm">
                         <div className="flex items-start justify-between mb-2">
                           <div className="flex items-center gap-2.5">
-                            <div className="w-9 h-9 rounded-full bg-ocean-100 flex items-center justify-center font-display font-bold text-ocean-700 text-sm flex-shrink-0">
+                            <div className="w-9 h-9 rounded-full bg-brand-100 flex items-center justify-center font-display font-bold text-brand-700 text-sm flex-shrink-0">
                               {(r.author_name||'C').charAt(0).toUpperCase()}
                             </div>
                             <div>
@@ -1525,14 +1527,14 @@ export default function ServiceDetail() {
                         </div>
                         {r.comment && <p className="text-sm font-body text-n-600 leading-relaxed">{r.comment}</p>}
                         {r.reply_text && (
-                          <div className="mt-3 bg-ocean-50 border border-ocean-100 rounded-xl px-3 py-2.5">
-                            <p className="text-xs font-body font-bold text-ocean-700 mb-1">{op.name}</p>
+                          <div className="mt-3 bg-brand-50 border border-brand-100 rounded-xl px-3 py-2.5">
+                            <p className="text-xs font-body font-bold text-brand-700 mb-1">{op.name}</p>
                             <p className="text-xs font-body text-n-600">{r.reply_text}</p>
                           </div>
                         )}
                         <button onClick={() => handleVoteHelpful(r.id)} disabled={hasVotedReview(r.id)}
-                          className={`mt-3 flex items-center gap-1.5 text-xs font-body font-semibold transition-colors ${hasVotedReview(r.id)?'text-ocean-700 cursor-default':'text-n-400 hover:text-ocean-700'}`}>
-                          <ThumbsUp size={13} strokeWidth={1.75} className={hasVotedReview(r.id)?'fill-ocean-100':''}/>
+                          className={`mt-3 flex items-center gap-1.5 text-xs font-body font-semibold transition-colors ${hasVotedReview(r.id)?'text-brand-700 cursor-default':'text-n-400 hover:text-brand-700'}`}>
+                          <ThumbsUp size={13} strokeWidth={1.75} className={hasVotedReview(r.id)?'fill-brand-100':''}/>
                           {lang==='en'?'Helpful':'Útil'}{r.helpful_count>0?` (${r.helpful_count})`:''}
                         </button>
                       </div>
@@ -1549,12 +1551,12 @@ export default function ServiceDetail() {
                 site da SISP). Sem nada configurado, mostra um aviso honesto
                 em vez de inventar uma politica. */}
             <div className="pb-10 border-b border-n-100">
-              <p className="text-xs font-body font-bold text-ocean-700 uppercase tracking-widest mb-4">
+              <p className="text-xs font-body font-bold text-brand-700 uppercase tracking-widest mb-4">
                 {lang==='en'?'Cancellation policy':'Política de cancelamento'}
               </p>
               {(lang==='en' ? op.cancellation_policy_en : op.cancellation_policy_pt) ? (
                 <div className="flex items-start gap-3 p-4 bg-n-50 border border-n-200 rounded-xl">
-                  <RotateCcw size={18} strokeWidth={1.75} className="text-ocean-700 flex-shrink-0 mt-0.5"/>
+                  <RotateCcw size={18} strokeWidth={1.75} className="text-brand-700 flex-shrink-0 mt-0.5"/>
                   <p className="font-body text-sm text-n-700 whitespace-pre-wrap">
                     {lang==='en' ? op.cancellation_policy_en : op.cancellation_policy_pt}
                   </p>
@@ -1573,18 +1575,18 @@ export default function ServiceDetail() {
 
             {/* ── Localização ── */}
             <div className="pb-10 border-b border-n-100">
-              <p className="text-xs font-body font-bold text-ocean-700 uppercase tracking-widest mb-4">
+              <p className="text-xs font-body font-bold text-brand-700 uppercase tracking-widest mb-4">
                 {lang==='en'?'Location':'Localização'}
               </p>
-              <div className="relative h-44 rounded-2xl overflow-hidden bg-ocean-50 border border-ocean-100 cursor-pointer group"
+              <div className="relative h-44 rounded-2xl overflow-hidden bg-brand-50 border border-brand-100 cursor-pointer group"
                 onClick={() => window.open(`https://maps.google.com?q=${encodeURIComponent((op.address||op.islands?.name||'Cabo Verde')+' Cabo Verde')}`, '_blank')}>
                 <img src="https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=800&q=75" alt="Map" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"/>
-                <div className="absolute inset-0 bg-ocean-900/35"/>
+                <div className="absolute inset-0 bg-brand-900/35"/>
                 <div className="absolute inset-0 flex items-center justify-center">
                   <div className="bg-white rounded-xl px-4 py-3 text-center shadow-xl">
-                    <MapPin size={20} strokeWidth={1.75} className="text-ocean-700 mx-auto mb-1"/>
+                    <MapPin size={20} strokeWidth={1.75} className="text-brand-700 mx-auto mb-1"/>
                     <p className="font-display font-bold text-n-900 text-sm">{op.address||(op.islands?.name ? `${op.islands.name}, Cabo Verde` : 'Cabo Verde')}</p>
-                    <p className="text-xs font-body text-ocean-600 mt-1 flex items-center gap-1 justify-center">
+                    <p className="text-xs font-body text-brand-600 mt-1 flex items-center gap-1 justify-center">
                       <ExternalLink size={10} strokeWidth={1.75}/>
                       {lang==='en'?'Open in Google Maps':'Abrir no Google Maps'}
                     </p>
@@ -1595,7 +1597,7 @@ export default function ServiceDetail() {
 
             {/* ── Partilhar ── */}
             <div className="pb-10 border-b border-n-100">
-              <p className="text-xs font-body font-bold text-ocean-700 uppercase tracking-widest mb-4">
+              <p className="text-xs font-body font-bold text-brand-700 uppercase tracking-widest mb-4">
                 {lang==='en'?'Share this service':'Partilhar este serviço'}
               </p>
               <div className="flex flex-wrap gap-3">
@@ -1614,7 +1616,7 @@ export default function ServiceDetail() {
                   Facebook
                 </a>
                 <button onClick={copyLink}
-                  className="flex items-center gap-2 border-2 border-n-200 text-n-700 text-sm font-body font-semibold px-5 py-2.5 rounded-xl hover:border-ocean-700 hover:text-ocean-700 transition-all">
+                  className="flex items-center gap-2 border-2 border-n-200 text-n-700 text-sm font-body font-semibold px-5 py-2.5 rounded-xl hover:border-brand-700 hover:text-brand-700 transition-all">
                   {copied ? <Check size={16} strokeWidth={2} className="text-green-600"/> : <Copy size={16} strokeWidth={1.75}/>}
                   {copied ? (lang==='en'?'Copied!':'Copiado!') : (lang==='en'?'Copy link':'Copiar link')}
                 </button>
@@ -1635,7 +1637,7 @@ export default function ServiceDetail() {
                   <div className="flex items-end justify-between mb-2">
                     <div>
                       {displayPrice ? (
-                        <p className="font-display font-extrabold text-2xl text-ocean-700 leading-none">
+                        <p className="font-display font-extrabold text-2xl text-brand-700 leading-none">
                           {displayPrice}
                         </p>
                       ) : (
@@ -1644,8 +1646,8 @@ export default function ServiceDetail() {
                     </div>
                     {/* CVE/EUR toggle */}
                     <div className="flex items-center gap-1 bg-n-100 rounded-full p-0.5">
-                      <button onClick={() => setCur('EUR')} className={`text-xs font-body font-bold px-3 py-1 rounded-full transition-all ${currency==='EUR'?'bg-ocean-700 text-white':'text-n-500'}`}>EUR</button>
-                      <button onClick={() => setCur('CVE')} className={`text-xs font-body font-bold px-3 py-1 rounded-full transition-all ${currency==='CVE'?'bg-ocean-700 text-white':'text-n-500'}`}>CVE</button>
+                      <button onClick={() => setCur('EUR')} className={`text-xs font-body font-bold px-3 py-1 rounded-full transition-all ${currency==='EUR'?'bg-brand-700 text-white':'text-n-500'}`}>EUR</button>
+                      <button onClick={() => setCur('CVE')} className={`text-xs font-body font-bold px-3 py-1 rounded-full transition-all ${currency==='CVE'?'bg-brand-700 text-white':'text-n-500'}`}>CVE</button>
                     </div>
                   </div>
                   {avgRating > 0 && (
@@ -1660,26 +1662,26 @@ export default function ServiceDetail() {
                 <div className="px-5 py-4 border-b border-n-100 space-y-2.5">
                   {unit.capacity && !isRestaurant && (
                     <div className="flex items-center justify-between text-sm font-body">
-                      <span className="text-n-500 flex items-center gap-2"><Users size={14} strokeWidth={1.75} className="text-ocean-500"/>{lang==='en'?'Capacity':'Capacidade'}</span>
+                      <span className="text-n-500 flex items-center gap-2"><Users size={14} strokeWidth={1.75} className="text-brand-500"/>{lang==='en'?'Capacity':'Capacidade'}</span>
                       <span className="font-semibold text-n-800">{lang==='en'?`Up to ${unit.capacity} people`:`Até ${unit.capacity} pessoas`}</span>
                     </div>
                   )}
                   {isHotel && (
                     <div className="flex items-center justify-between text-sm font-body">
-                      <span className="text-n-500 flex items-center gap-2"><Clock size={14} strokeWidth={1.75} className="text-ocean-500"/>Check-in</span>
+                      <span className="text-n-500 flex items-center gap-2"><Clock size={14} strokeWidth={1.75} className="text-brand-500"/>Check-in</span>
                       <span className="font-semibold text-n-800">14:00</span>
                     </div>
                   )}
                   {(isActivity||isRentaCar) && (
                     <div className="flex items-center justify-between text-sm font-body">
-                      <span className="text-n-500 flex items-center gap-2"><MapPin size={14} strokeWidth={1.75} className="text-ocean-500"/>{lang==='en'?'Pickup':'Levantamento'}</span>
+                      <span className="text-n-500 flex items-center gap-2"><MapPin size={14} strokeWidth={1.75} className="text-brand-500"/>{lang==='en'?'Pickup':'Levantamento'}</span>
                       <span className="font-semibold text-n-800">{lang==='en'?'On request':'A combinar'}</span>
                     </div>
                   )}
                   {op.phone && (
                     <div className="flex items-center justify-between text-sm font-body">
-                      <span className="text-n-500 flex items-center gap-2"><Phone size={14} strokeWidth={1.75} className="text-ocean-500"/>{lang==='en'?'Contact':'Contacto'}</span>
-                      <a href={`tel:${op.phone}`} className="font-semibold text-ocean-700 hover:underline">{op.phone}</a>
+                      <span className="text-n-500 flex items-center gap-2"><Phone size={14} strokeWidth={1.75} className="text-brand-500"/>{lang==='en'?'Contact':'Contacto'}</span>
+                      <a href={`tel:${op.phone}`} className="font-semibold text-brand-700 hover:underline">{op.phone}</a>
                     </div>
                   )}
                 </div>
@@ -1705,7 +1707,7 @@ export default function ServiceDetail() {
                     <div>
                       <label className="text-xs font-body font-bold text-n-600 uppercase tracking-wide mb-1 block">{lang==='en'?'Date':'Data'}</label>
                       <input type="date" value={sbDate} onChange={e=>setSbDate(e.target.value)} min={new Date().toISOString().split('T')[0]}
-                        className="w-full h-9 px-3 text-sm font-body border border-n-300 rounded-lg focus:outline-none focus:border-ocean-700"/>
+                        className="w-full h-9 px-3 text-sm font-body border border-n-300 rounded-lg focus:outline-none focus:border-brand-700"/>
                     </div>
                     <div className="grid grid-cols-2 gap-3">
                       <Cnt label={lang==='en'?'Adults':'Adultos'} val={sbAdults} set={setSbAdults} min={1} max={20}/>
@@ -1715,7 +1717,7 @@ export default function ServiceDetail() {
                       <div>
                         <label className="text-xs font-body font-bold text-n-600 uppercase tracking-wide mb-1 block">{lang==='en'?'Language':'Idioma'}</label>
                         <select value={sbLanguage} onChange={e=>setSbLanguage(e.target.value)}
-                          className="w-full h-9 px-3 text-sm font-body border border-n-300 rounded-lg focus:outline-none focus:border-ocean-700 bg-white">
+                          className="w-full h-9 px-3 text-sm font-body border border-n-300 rounded-lg focus:outline-none focus:border-brand-700 bg-white">
                           <option value="">{lang==='en'?'-- Select --':'-- Seleccionar --'}</option>
                           {unitMeta.languages.map(l => <option key={l} value={l}>{l}</option>)}
                         </select>
@@ -1727,7 +1729,7 @@ export default function ServiceDetail() {
                 {/* CTA buttons */}
                 <div className="px-5 py-5 space-y-3">
                   <button onClick={handleReservarClick}
-                    className="w-full bg-ocean-700 text-white font-body font-bold py-4 rounded-xl flex items-center justify-center gap-2 hover:bg-ocean-500 transition-colors text-base shadow-sm hover:shadow-md">
+                    className="w-full bg-brand-700 text-white font-body font-bold py-4 rounded-xl flex items-center justify-center gap-2 hover:bg-brand-500 transition-colors text-base shadow-sm hover:shadow-md">
                     <Calendar size={18} strokeWidth={1.75}/>
                     {isActivity ? (lang==='en'?'Check availability':'Ver disponibilidade') : (lang==='en'?'Book Now':'Reservar Agora')}
                   </button>
@@ -1736,7 +1738,7 @@ export default function ServiceDetail() {
                   </p>
                   {whatsappUrl && (
                     <a href={whatsappUrl} target="_blank" rel="noopener noreferrer"
-                      className="w-full border-2 border-n-200 text-n-700 font-body font-semibold py-3 rounded-xl flex items-center justify-center gap-2 hover:border-ocean-700 hover:text-ocean-700 transition-all text-sm">
+                      className="w-full border-2 border-n-200 text-n-700 font-body font-semibold py-3 rounded-xl flex items-center justify-center gap-2 hover:border-brand-700 hover:text-brand-700 transition-all text-sm">
                       <MessageCircle size={16} strokeWidth={1.75}/>
                       {lang==='en'?'Contact operator':'Contactar operador'}
                     </a>
@@ -1751,7 +1753,7 @@ export default function ServiceDetail() {
                     { icon:<RotateCcw size={14} strokeWidth={1.75}/>, pt:'Cancelamento', en:'Free cancel' },
                   ].map((b,i) => (
                     <div key={i} className="flex flex-col items-center gap-1 text-center">
-                      <div className="w-7 h-7 rounded-full bg-ocean-50 flex items-center justify-center text-ocean-700">{b.icon}</div>
+                      <div className="w-7 h-7 rounded-full bg-brand-50 flex items-center justify-center text-brand-700">{b.icon}</div>
                       <p className="text-xs font-body text-n-400 leading-tight">{lang==='en'?b.en:b.pt}</p>
                     </div>
                   ))}
@@ -1764,7 +1766,7 @@ export default function ServiceDetail() {
                   {op.logo_url ? (
                     <img src={op.logo_url} alt={op.name} className="w-10 h-10 rounded-full object-cover border border-n-200"/>
                   ) : (
-                    <div className="w-10 h-10 rounded-full bg-ocean-100 flex items-center justify-center font-display font-bold text-ocean-700 text-sm flex-shrink-0">
+                    <div className="w-10 h-10 rounded-full bg-brand-100 flex items-center justify-center font-display font-bold text-brand-700 text-sm flex-shrink-0">
                       {op.name.charAt(0)}
                     </div>
                   )}
@@ -1774,7 +1776,7 @@ export default function ServiceDetail() {
                   </div>
                 </div>
                 <button onClick={() => navigate(`/book/${slug}`)}
-                  className="w-full text-xs font-body font-semibold text-ocean-700 border border-ocean-200 py-2 rounded-lg hover:bg-ocean-50 transition-colors flex items-center justify-center gap-1.5">
+                  className="w-full text-xs font-body font-semibold text-brand-700 border border-brand-200 py-2 rounded-lg hover:bg-brand-50 transition-colors flex items-center justify-center gap-1.5">
                   <ExternalLink size={12} strokeWidth={1.75}/>
                   {lang==='en'?'View all services':'Ver todos os serviços'}
                 </button>
@@ -1798,10 +1800,10 @@ export default function ServiceDetail() {
       {isWidget ? (
         <div className="text-center py-3 text-[11px] font-body text-n-400 border-t border-n-100">
           {lang === 'en' ? 'Powered by' : 'Tecnologia'}{' '}
-          <a href="https://saldesk.cv" target="_blank" rel="noopener noreferrer" className="font-semibold text-n-500 hover:text-ocean-600 transition-colors">SalDesk</a>
+          <a href="https://saldesk.cv" target="_blank" rel="noopener noreferrer" className="font-semibold text-n-500 hover:text-brand-600 transition-colors">SalDesk</a>
         </div>
       ) : (
-      <footer className="bg-ocean-900 text-white/70 mt-16">
+      <footer className="bg-brand-900 text-white/70 mt-16">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 py-10">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-3">
@@ -1830,11 +1832,11 @@ export default function ServiceDetail() {
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-n-200 px-4 py-3 flex gap-3 z-30 lg:hidden shadow-lg">
         {displayPrice && (
           <div className="flex flex-col justify-center mr-2">
-            <p className="font-display font-bold text-ocean-700 text-base leading-tight">{displayPrice}</p>
+            <p className="font-display font-bold text-brand-700 text-base leading-tight">{displayPrice}</p>
           </div>
         )}
         <button onClick={handleReservarClick}
-          className="flex-1 bg-ocean-700 text-white font-body font-semibold py-3 rounded-xl flex items-center justify-center gap-2 hover:bg-ocean-500 transition-colors text-sm">
+          className="flex-1 bg-brand-700 text-white font-body font-semibold py-3 rounded-xl flex items-center justify-center gap-2 hover:bg-brand-500 transition-colors text-sm">
           <Calendar size={16} strokeWidth={1.75}/>
           {lang==='en'?'Book Now':'Reservar Agora'}
         </button>

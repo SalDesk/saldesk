@@ -11,6 +11,7 @@ import Logo from '../components/shared/Logo';
 import SiteComplianceFooter from '../components/shared/SiteComplianceFooter';
 import QRCode from 'qrcode';
 import { useIsWidget, useWidgetResize } from '../utils/widgetMode';
+import { useBrandColor } from '../utils/brandPalette';
 import {
   parseMenuMeta, MENU_CATEGORY_LABELS, MENU_ALLERGEN_LABELS, MENU_DIET_LABELS, ZONE_LABELS,
   fmtMoney, MenuCartPicker, RestaurantReservationSection,
@@ -137,7 +138,7 @@ function HeroCarousel({ images }) {
         <div key={i} className="absolute inset-0 transition-opacity duration-1000 bg-cover bg-center"
           style={{ backgroundImage: `url(${src})`, opacity: i === idx ? 1 : 0 }} />
       ))}
-      <div className="absolute inset-0 bg-gradient-to-t from-ocean-900/75 via-ocean-900/20 to-transparent" />
+      <div className="absolute inset-0 bg-gradient-to-t from-brand-900/75 via-brand-900/20 to-transparent" />
       {imgs.length > 1 && (
         <>
           <button onClick={() => setIdx(i => (i - 1 + imgs.length) % imgs.length)}
@@ -200,8 +201,8 @@ function ServiceCard({ unit, slug, currency, lang, opCurrency, isFirst }) {
         {unit.images?.[0] ? (
           <div className="h-44 bg-cover bg-center" style={{ backgroundImage: `url(${unit.images[0]})` }} />
         ) : (
-          <div className="h-44 bg-gradient-to-br from-ocean-100 to-ocean-50 flex items-center justify-center">
-            <Calendar size={32} strokeWidth={1.25} className="text-ocean-300" />
+          <div className="h-44 bg-gradient-to-br from-brand-100 to-brand-50 flex items-center justify-center">
+            <Calendar size={32} strokeWidth={1.25} className="text-brand-300" />
           </div>
         )}
         {(isFirst || isNew) && (
@@ -213,19 +214,19 @@ function ServiceCard({ unit, slug, currency, lang, opCurrency, isFirst }) {
               </span>
             )}
             {isNew && (
-              <span className="flex items-center gap-1 bg-ocean-700 text-white text-xs font-body font-bold px-2.5 py-1 rounded-full shadow-sm">
+              <span className="flex items-center gap-1 bg-brand-700 text-white text-xs font-body font-bold px-2.5 py-1 rounded-full shadow-sm">
                 {lang === 'en' ? 'New' : 'Novo'}
               </span>
             )}
           </div>
         )}
         <div className="absolute bottom-3 right-3 bg-white rounded-xl px-3 py-1.5 shadow-md">
-          <span className="font-display font-bold text-ocean-700 text-sm">{price}</span>
+          <span className="font-display font-bold text-brand-700 text-sm">{price}</span>
         </div>
       </div>
       <div className="p-4">
         {unit.unit_type && (
-          <p className="text-[11px] font-body font-bold text-ocean-500 uppercase tracking-wide mb-1">
+          <p className="text-[11px] font-body font-bold text-brand-500 uppercase tracking-wide mb-1">
             {formatUnitType(unit.unit_type)}
           </p>
         )}
@@ -251,7 +252,7 @@ function ServiceCard({ unit, slug, currency, lang, opCurrency, isFirst }) {
         )}
         <div className="flex items-center gap-2 pt-1">
           <button onClick={e => { e.stopPropagation(); goDetails(); }}
-            className="flex-1 flex items-center justify-center gap-1.5 border border-n-300 text-n-700 text-xs font-body font-semibold px-3 py-2 rounded-lg hover:border-ocean-700 hover:text-ocean-700 transition-colors">
+            className="flex-1 flex items-center justify-center gap-1.5 border border-n-300 text-n-700 text-xs font-body font-semibold px-3 py-2 rounded-lg hover:border-brand-700 hover:text-brand-700 transition-colors">
             {lang === 'en' ? 'View details' : 'Ver detalhes'}
           </button>
           <button onClick={e => { e.stopPropagation(); goDetails(); }}
@@ -444,7 +445,7 @@ export function ChatWidget({ slug, opName, lang }) {
     <div className="fixed bottom-20 left-4 z-30">
       {open && (
         <div className="absolute bottom-14 left-0 w-80 h-[26rem] max-h-[70vh] bg-white rounded-2xl shadow-2xl border border-n-200 overflow-hidden flex flex-col">
-          <div className="bg-ocean-700 px-4 py-3 flex items-center justify-between shrink-0">
+          <div className="bg-brand-700 px-4 py-3 flex items-center justify-between shrink-0">
             <div className="flex items-center gap-2 text-white">
               <MessageCircle size={16} strokeWidth={1.75} />
               <span className="font-body font-semibold text-sm truncate">{opName}</span>
@@ -462,14 +463,14 @@ export function ChatWidget({ slug, opName, lang }) {
               </div>
               <input type="text" value={name} onChange={e => setName(e.target.value)}
                 placeholder={lang === 'en' ? 'Name (optional)' : 'Nome (opcional)'}
-                className="w-full border border-n-200 rounded-lg px-3 py-2 text-xs font-body focus:outline-none focus:border-ocean-500" />
+                className="w-full border border-n-200 rounded-lg px-3 py-2 text-xs font-body focus:outline-none focus:border-brand-500" />
               <input type="email" required value={email} onChange={e => setEmail(e.target.value)}
-                placeholder="Email" className="w-full border border-n-200 rounded-lg px-3 py-2 text-xs font-body focus:outline-none focus:border-ocean-500" />
+                placeholder="Email" className="w-full border border-n-200 rounded-lg px-3 py-2 text-xs font-body focus:outline-none focus:border-brand-500" />
               <textarea rows={3} required value={text} onChange={e => setText(e.target.value)}
                 placeholder={lang === 'en' ? 'Write your message...' : 'Escreva a sua mensagem...'}
-                className="w-full border border-n-200 rounded-lg px-3 py-2 text-xs font-body resize-none focus:outline-none focus:border-ocean-500" />
+                className="w-full border border-n-200 rounded-lg px-3 py-2 text-xs font-body resize-none focus:outline-none focus:border-brand-500" />
               <button type="submit" disabled={sending}
-                className="w-full bg-ocean-700 text-white text-xs font-body font-semibold py-2 rounded-lg flex items-center justify-center gap-1.5 hover:bg-ocean-500 transition-colors disabled:opacity-50">
+                className="w-full bg-brand-700 text-white text-xs font-body font-semibold py-2 rounded-lg flex items-center justify-center gap-1.5 hover:bg-brand-500 transition-colors disabled:opacity-50">
                 <Send size={12} strokeWidth={1.75} />
                 {lang === 'en' ? 'Send' : 'Enviar'}
               </button>
@@ -485,7 +486,7 @@ export function ChatWidget({ slug, opName, lang }) {
                   const isMe = m.sender_type === 'guest';
                   return (
                     <div key={m.id} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
-                      <div className={`max-w-[80%] px-3 py-2 rounded-xl text-xs font-body leading-relaxed whitespace-pre-wrap break-words ${isMe ? 'bg-ocean-700 text-white' : 'bg-white text-n-800 border border-n-200'}`}>
+                      <div className={`max-w-[80%] px-3 py-2 rounded-xl text-xs font-body leading-relaxed whitespace-pre-wrap break-words ${isMe ? 'bg-brand-700 text-white' : 'bg-white text-n-800 border border-n-200'}`}>
                         {m.content}
                         <div className={`text-[10px] mt-1 ${isMe ? 'text-white/60' : 'text-n-400'}`}>{chatFmtTime(m.created_at)}</div>
                       </div>
@@ -496,9 +497,9 @@ export function ChatWidget({ slug, opName, lang }) {
               <form onSubmit={send} className="p-2.5 border-t border-n-200 flex items-center gap-2 shrink-0 bg-white">
                 <input value={text} onChange={e => setText(e.target.value)}
                   placeholder={lang === 'en' ? 'Write a message...' : 'Escreva uma mensagem...'}
-                  className="flex-1 h-9 px-3 rounded-lg border border-n-200 text-xs font-body focus:outline-none focus:border-ocean-500" />
+                  className="flex-1 h-9 px-3 rounded-lg border border-n-200 text-xs font-body focus:outline-none focus:border-brand-500" />
                 <button type="submit" disabled={sending || !text.trim()}
-                  className="w-9 h-9 shrink-0 bg-ocean-700 text-white rounded-lg flex items-center justify-center hover:bg-ocean-500 transition-colors disabled:opacity-40">
+                  className="w-9 h-9 shrink-0 bg-brand-700 text-white rounded-lg flex items-center justify-center hover:bg-brand-500 transition-colors disabled:opacity-40">
                   <Send size={14} strokeWidth={1.75} />
                 </button>
               </form>
@@ -507,7 +508,7 @@ export function ChatWidget({ slug, opName, lang }) {
         </div>
       )}
       <button onClick={() => { unlockChatAudio(); setOpen(o => !o); }}
-        className="w-12 h-12 rounded-full bg-ocean-700 text-white shadow-lg hover:bg-ocean-500 transition-all flex items-center justify-center relative">
+        className="w-12 h-12 rounded-full bg-brand-700 text-white shadow-lg hover:bg-brand-500 transition-all flex items-center justify-center relative">
         {open ? <X size={20} strokeWidth={2} /> : <MessageCircle size={20} strokeWidth={1.75} />}
         {!open && unread > 0 && (
           <div className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 bg-error text-white rounded-full border-2 border-white flex items-center justify-center text-[10px] font-bold">
@@ -531,7 +532,7 @@ function NotFoundPage() {
           Este link de reserva não existe ou o operador ainda não está activo na plataforma.
         </p>
         <a href="https://saldesk.cv/discover/"
-          className="inline-flex items-center gap-2 bg-ocean-700 text-white font-body font-semibold px-6 py-3 rounded-xl hover:bg-ocean-500 transition-colors text-sm">
+          className="inline-flex items-center gap-2 bg-brand-700 text-white font-body font-semibold px-6 py-3 rounded-xl hover:bg-brand-500 transition-colors text-sm">
           Explorar operadores
         </a>
       </div>
@@ -631,7 +632,7 @@ function InstagramSection({ op, lang }) {
   if (!instagramUrl) return null;
   return (
     <section className="max-w-5xl mx-auto px-4 sm:px-6 py-12 sm:py-16 border-t border-n-100 text-center">
-      <div className="w-14 h-14 rounded-full bg-gradient-to-tr from-sand-500 via-error to-ocean-700 flex items-center justify-center mx-auto mb-4">
+      <div className="w-14 h-14 rounded-full bg-gradient-to-tr from-sand-500 via-error to-brand-700 flex items-center justify-center mx-auto mb-4">
         <Globe size={24} strokeWidth={1.75} className="text-white" />
       </div>
       <h2 className="font-display font-bold text-2xl sm:text-3xl text-n-900 mb-3">
@@ -641,7 +642,7 @@ function InstagramSection({ op, lang }) {
         {lang === 'en' ? 'See more photos and updates from our experiences.' : 'Vê mais fotos e novidades das nossas experiências.'}
       </p>
       <a href={instagramUrl} target="_blank" rel="noopener noreferrer"
-        className="inline-flex items-center gap-2 bg-ocean-700 text-white text-sm font-body font-semibold px-6 py-3 rounded-full hover:bg-ocean-500 transition-colors">
+        className="inline-flex items-center gap-2 bg-brand-700 text-white text-sm font-body font-semibold px-6 py-3 rounded-full hover:bg-brand-500 transition-colors">
         {lang === 'en' ? 'Visit Instagram' : 'Ver Instagram'}
       </a>
     </section>
@@ -698,7 +699,7 @@ function ExperienceTimelineSection({ op, units, lang }) {
         <div className="grid grid-cols-1 sm:grid-cols-4 gap-8 sm:gap-4">
           {steps.map((s, i) => (
             <div key={i} className="relative flex flex-col items-center text-center">
-              <div className="w-12 h-12 rounded-full bg-ocean-700 text-white flex items-center justify-center font-display font-bold text-lg mb-4 relative z-10">
+              <div className="w-12 h-12 rounded-full bg-brand-700 text-white flex items-center justify-center font-display font-bold text-lg mb-4 relative z-10">
                 {i + 1}
               </div>
               <p className="font-display font-bold text-n-900 text-sm mb-1">{lang === 'en' ? s.en : s.pt}</p>
@@ -810,7 +811,7 @@ function FeaturedSection({ units, slug, currency, lang, opType, opCurrency }) {
         {units.length > 3 && (
           <button
             onClick={() => document.getElementById('servicos')?.scrollIntoView({ behavior: 'smooth' })}
-            className="flex items-center gap-1 text-sm font-body font-semibold text-ocean-700 hover:text-ocean-500 transition-colors flex-shrink-0"
+            className="flex items-center gap-1 text-sm font-body font-semibold text-brand-700 hover:text-brand-500 transition-colors flex-shrink-0"
           >
             {lang === 'en' ? 'View all' : 'Ver todos'}
             <ArrowRight size={14} strokeWidth={1.75} />
@@ -832,8 +833,8 @@ function FeaturedSection({ units, slug, currency, lang, opType, opCurrency }) {
                   <img src={unit.images[0]} alt={unit.name}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                 ) : (
-                  <div className="w-full h-full bg-gradient-to-br from-ocean-100 to-ocean-50 flex items-center justify-center">
-                    <Calendar size={36} strokeWidth={1.25} className="text-ocean-300" />
+                  <div className="w-full h-full bg-gradient-to-br from-brand-100 to-brand-50 flex items-center justify-center">
+                    <Calendar size={36} strokeWidth={1.25} className="text-brand-300" />
                   </div>
                 )}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
@@ -844,12 +845,12 @@ function FeaturedSection({ units, slug, currency, lang, opType, opCurrency }) {
                   </span>
                 )}
                 <div className="absolute bottom-3 right-3 bg-white rounded-xl px-3 py-1.5 shadow-md">
-                  <span className="font-display font-bold text-ocean-700 text-sm">{price}</span>
+                  <span className="font-display font-bold text-brand-700 text-sm">{price}</span>
                 </div>
               </div>
               <div className="p-4">
                 {unit.unit_type && (
-                  <p className="text-[10px] font-body font-bold text-ocean-500 uppercase tracking-wide mb-1">
+                  <p className="text-[10px] font-body font-bold text-brand-500 uppercase tracking-wide mb-1">
                     {formatUnitType(unit.unit_type)}
                   </p>
                 )}
@@ -871,7 +872,7 @@ function FeaturedSection({ units, slug, currency, lang, opType, opCurrency }) {
                     </span>
                   )}
                 </div>
-                <button className="w-full flex items-center justify-center gap-1.5 bg-ocean-700 text-white text-xs font-body font-semibold px-3 py-2.5 rounded-xl hover:bg-ocean-500 transition-colors">
+                <button className="w-full flex items-center justify-center gap-1.5 bg-brand-700 text-white text-xs font-body font-semibold px-3 py-2.5 rounded-xl hover:bg-brand-500 transition-colors">
                   <ArrowRight size={13} strokeWidth={1.75} />
                   {lang === 'en' ? 'Book now' : 'Reservar agora'}
                 </button>
@@ -927,7 +928,7 @@ function LiveAvailabilitySection({ slug, units, lang, opType, currency, opCurren
   const totalChecked   = checked ? Object.keys(avail).length : 0;
 
   return (
-    <section className="bg-ocean-900 text-white">
+    <section className="bg-brand-900 text-white">
       <div className="max-w-5xl mx-auto px-4 sm:px-6 py-12 sm:py-16">
         <p className="text-xs font-body font-bold text-sand-400 uppercase tracking-widest mb-2">
           {lang === 'en' ? 'Live Availability' : 'Disponibilidade em Tempo Real'}
@@ -955,10 +956,10 @@ function LiveAvailabilitySection({ slug, units, lang, opType, currency, opCurren
           <button
             onClick={checkAvailability}
             disabled={!date || loading}
-            className="flex items-center gap-2 bg-sand-500 text-ocean-900 font-body font-bold text-sm px-6 py-3 rounded-xl hover:bg-sand-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex items-center gap-2 bg-sand-500 text-brand-900 font-body font-bold text-sm px-6 py-3 rounded-xl hover:bg-sand-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {loading
-              ? <span className="w-4 h-4 border-2 border-ocean-900/30 border-t-ocean-900 rounded-full animate-spin" />
+              ? <span className="w-4 h-4 border-2 border-brand-900/30 border-t-brand-900 rounded-full animate-spin" />
               : <Check size={16} strokeWidth={2} />}
             {lang === 'en' ? 'Check availability' : 'Verificar disponibilidade'}
           </button>
@@ -1003,7 +1004,7 @@ function LiveAvailabilitySection({ slug, units, lang, opType, currency, opCurren
                     {isAvail && (
                       <button
                         onClick={() => navigate(`/book/${slug}/servico/${u.id}`)}
-                        className="w-full flex items-center justify-center gap-1.5 bg-sand-500 text-ocean-900 text-xs font-body font-bold px-3 py-2 rounded-lg hover:bg-sand-400 transition-colors"
+                        className="w-full flex items-center justify-center gap-1.5 bg-sand-500 text-brand-900 text-xs font-body font-bold px-3 py-2 rounded-lg hover:bg-sand-400 transition-colors"
                       >
                         <ArrowRight size={12} strokeWidth={2} />
                         {lang === 'en' ? 'Book now' : 'Reservar agora'}
@@ -1045,7 +1046,7 @@ function RestaurantMenuSection({ units, lang, opCurrency, currency, slug }) {
 
   return (
     <section id="menu" className="max-w-5xl mx-auto px-4 sm:px-6 py-12 sm:py-16">
-      <p className="text-xs font-body font-bold text-ocean-700 uppercase tracking-widest mb-1">
+      <p className="text-xs font-body font-bold text-brand-700 uppercase tracking-widest mb-1">
         {lang === 'en' ? 'Menu' : 'Menu'}
       </p>
       <h2 className="font-display font-bold text-2xl sm:text-3xl text-n-900 mb-8">
@@ -1074,7 +1075,7 @@ function RestaurantMenuSection({ units, lang, opCurrency, currency, slug }) {
                       </div>
                     )}
                     {isToday && (
-                      <span className="absolute bottom-2.5 right-2.5 bg-white/95 text-ocean-700 text-[11px] font-mono font-semibold px-2.5 py-1 rounded-md shadow-sm">
+                      <span className="absolute bottom-2.5 right-2.5 bg-white/95 text-brand-700 text-[11px] font-mono font-semibold px-2.5 py-1 rounded-md shadow-sm">
                         {lang === 'en' ? "Today's special" : 'Prato do dia'}
                       </span>
                     )}
@@ -1098,11 +1099,11 @@ function RestaurantMenuSection({ units, lang, opCurrency, currency, slug }) {
                       </div>
                     )}
                     <div className="flex items-center justify-between gap-3">
-                      <span className="font-mono font-bold text-base text-ocean-700">
+                      <span className="font-mono font-bold text-base text-brand-700">
                         {fmtPrice(unit.base_price, 'person', opCurrency, currency, lang)}
                       </span>
                       <button onClick={() => navigate(`/book/${slug}/servico/${unit.id}`)}
-                        className="flex items-center gap-1.5 bg-ocean-700 text-white text-xs font-body font-bold px-3.5 py-2 rounded-lg hover:bg-ocean-600 transition-colors shrink-0">
+                        className="flex items-center gap-1.5 bg-brand-700 text-white text-xs font-body font-bold px-3.5 py-2 rounded-lg hover:bg-brand-600 transition-colors shrink-0">
                         {lang === 'en' ? 'Reserve' : 'Reservar'}
                         <ArrowRight size={12} strokeWidth={2} />
                       </button>
@@ -1129,7 +1130,7 @@ function RestaurantMenuSection({ units, lang, opCurrency, currency, slug }) {
                 <div key={t.id} className="bg-white rounded-xl border border-n-100 p-4">
                   <div className="flex items-baseline justify-between gap-3">
                     <p className="font-display font-bold text-n-900">{t.name}</p>
-                    <span className="font-display font-bold text-ocean-700">
+                    <span className="font-display font-bold text-brand-700">
                       {fmtPrice(t.base_price, 'person', opCurrency, currency, lang)}
                     </span>
                   </div>
@@ -1138,7 +1139,7 @@ function RestaurantMenuSection({ units, lang, opCurrency, currency, slug }) {
                     <p className="text-xs font-body text-n-400 mt-1.5">{items.map(i => i.name_pt).join(' · ')}</p>
                   )}
                   <button onClick={() => navigate(`/book/${slug}/servico/${t.id}`)}
-                    className="mt-2 text-xs font-body font-semibold text-ocean-700 hover:underline">
+                    className="mt-2 text-xs font-body font-semibold text-brand-700 hover:underline">
                     {lang === 'en' ? 'Reserve →' : 'Reservar →'}
                   </button>
                 </div>
@@ -1226,7 +1227,7 @@ function RestaurantOrderSection({ slug, table, units, lang, opCurrency, currency
             {lang === 'en' ? 'The kitchen has been notified.' : 'A cozinha já foi notificada.'}
           </p>
           <button onClick={novoPedido}
-            className="inline-flex items-center gap-2 bg-ocean-700 text-white font-body font-semibold text-sm px-6 py-3 rounded-xl hover:bg-ocean-500 transition-colors">
+            className="inline-flex items-center gap-2 bg-brand-700 text-white font-body font-semibold text-sm px-6 py-3 rounded-xl hover:bg-brand-500 transition-colors">
             {lang === 'en' ? 'Place another order' : 'Fazer novo pedido'}
           </button>
         </div>
@@ -1236,7 +1237,7 @@ function RestaurantOrderSection({ slug, table, units, lang, opCurrency, currency
 
   return (
     <section id="menu" className="max-w-5xl mx-auto px-4 sm:px-6 py-12 sm:py-16">
-      <p className="text-xs font-body font-bold text-ocean-700 uppercase tracking-widest mb-1">
+      <p className="text-xs font-body font-bold text-brand-700 uppercase tracking-widest mb-1">
         {lang === 'en' ? 'Menu' : 'Menu'}
       </p>
       <h2 className="font-display font-bold text-2xl sm:text-3xl text-n-900 mb-8">
@@ -1249,7 +1250,7 @@ function RestaurantOrderSection({ slug, table, units, lang, opCurrency, currency
       />
 
       {/* Carrinho */}
-      <div className="bg-ocean-900 text-white rounded-2xl p-5 sm:p-6 sticky bottom-4">
+      <div className="bg-brand-900 text-white rounded-2xl p-5 sm:p-6 sticky bottom-4">
         {cartCount === 0 ? (
           <p className="text-sm font-body text-white/60 text-center">
             {lang === 'en' ? 'Add items above to place an order.' : 'Adicione itens acima para fazer um pedido.'}
@@ -1274,10 +1275,10 @@ function RestaurantOrderSection({ slug, table, units, lang, opCurrency, currency
               <button
                 onClick={submitOrder}
                 disabled={state === 'submitting'}
-                className="flex items-center gap-2 bg-sand-500 text-ocean-900 font-body font-bold text-sm px-6 py-3 rounded-xl hover:bg-sand-400 transition-colors disabled:opacity-50"
+                className="flex items-center gap-2 bg-sand-500 text-brand-900 font-body font-bold text-sm px-6 py-3 rounded-xl hover:bg-sand-400 transition-colors disabled:opacity-50"
               >
                 {state === 'submitting'
-                  ? <span className="w-4 h-4 border-2 border-ocean-900/30 border-t-ocean-900 rounded-full animate-spin" />
+                  ? <span className="w-4 h-4 border-2 border-brand-900/30 border-t-brand-900 rounded-full animate-spin" />
                   : <ArrowRight size={16} strokeWidth={2} />}
                 {lang === 'en' ? 'Send order' : 'Enviar pedido'}
               </button>
@@ -1329,7 +1330,7 @@ function CallWaiterSection({ slug, table, lang }) {
   }
 
   return (
-    <section id="servicos" className="bg-ocean-900 text-white">
+    <section id="servicos" className="bg-brand-900 text-white">
       <div className="max-w-2xl mx-auto px-4 sm:px-6 py-12 sm:py-16 text-center">
         <p className="text-xs font-body font-bold text-sand-400 uppercase tracking-widest mb-2">
           {lang === 'en' ? 'You are seated' : 'Está sentado'}
@@ -1338,10 +1339,10 @@ function CallWaiterSection({ slug, table, lang }) {
         <button
           onClick={callWaiter}
           disabled={state === 'sending' || cooling}
-          className="inline-flex items-center gap-2 bg-sand-500 text-ocean-900 font-body font-bold text-sm px-8 py-4 rounded-xl hover:bg-sand-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed mx-auto"
+          className="inline-flex items-center gap-2 bg-sand-500 text-brand-900 font-body font-bold text-sm px-8 py-4 rounded-xl hover:bg-sand-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed mx-auto"
         >
           {state === 'sending'
-            ? <span className="w-4 h-4 border-2 border-ocean-900/30 border-t-ocean-900 rounded-full animate-spin" />
+            ? <span className="w-4 h-4 border-2 border-brand-900/30 border-t-brand-900 rounded-full animate-spin" />
             : <Bell size={16} strokeWidth={2} />}
           {cooling
             ? (lang === 'en' ? 'Waiter called' : 'Empregado chamado')
@@ -1367,7 +1368,7 @@ function SpecialOfferSection({ lang, goBook }) {
   return (
     <section className="bg-sand-50 border-t border-sand-100">
       <div className="max-w-5xl mx-auto px-4 sm:px-6 py-12 sm:py-16">
-        <div className="bg-gradient-to-br from-ocean-800 to-ocean-900 rounded-2xl p-8 sm:p-12 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-8">
+        <div className="bg-gradient-to-br from-brand-800 to-brand-900 rounded-2xl p-8 sm:p-12 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-8">
           <div className="flex-1">
             <p className="text-xs font-body font-bold text-sand-400 uppercase tracking-widest mb-3">
               {lang === 'en' ? 'Special offer' : 'Oferta especial'}
@@ -1396,7 +1397,7 @@ function SpecialOfferSection({ lang, goBook }) {
           <div className="flex flex-col gap-3 flex-shrink-0 w-full sm:w-auto">
             <button
               onClick={goBook}
-              className="flex items-center justify-center gap-2 bg-sand-500 text-ocean-900 font-body font-bold text-sm px-8 py-4 rounded-xl hover:bg-sand-400 transition-colors shadow-lg whitespace-nowrap"
+              className="flex items-center justify-center gap-2 bg-sand-500 text-brand-900 font-body font-bold text-sm px-8 py-4 rounded-xl hover:bg-sand-400 transition-colors shadow-lg whitespace-nowrap"
             >
               <Calendar size={16} strokeWidth={1.75} />
               {lang === 'en' ? 'Book now — best price' : 'Reservar agora — melhor preço'}
@@ -1422,6 +1423,7 @@ export default function PublicBooking() {
   useWidgetResize(isWidget);
 
   const [op, setOp]             = useState(null);
+  useBrandColor(op?.brand_color); /* cor da marca do operador (tailwind brand-*) */
   const [units, setUnits]       = useState([]);
   const [reviews, setReviews]   = useState([]);
   const [loading, setLoading]   = useState(true);
@@ -1664,7 +1666,7 @@ export default function PublicBooking() {
           <div className="hidden md:flex items-center gap-6">
             {navLinks.map(l => (
               <button key={l.id} onClick={() => scrollTo(l.id)}
-                className={`text-sm font-body font-medium transition-colors ${navScrolled ? 'text-n-600 hover:text-ocean-700' : 'text-white/85 hover:text-white'}`}>
+                className={`text-sm font-body font-medium transition-colors ${navScrolled ? 'text-n-600 hover:text-brand-700' : 'text-white/85 hover:text-white'}`}>
                 {lang === 'pt' ? l.pt : l.en}
               </button>
             ))}
@@ -1672,12 +1674,12 @@ export default function PublicBooking() {
 
           <div className="flex items-center gap-2">
             <button onClick={toggleLang}
-              className={`hidden sm:flex items-center gap-1 text-xs font-body font-bold border rounded-full px-3 py-1.5 transition-all ${navScrolled ? 'border-n-200 text-n-600 hover:border-ocean-700 hover:text-ocean-700' : 'border-white/30 text-white/80 hover:border-white hover:text-white'}`}>
+              className={`hidden sm:flex items-center gap-1 text-xs font-body font-bold border rounded-full px-3 py-1.5 transition-all ${navScrolled ? 'border-n-200 text-n-600 hover:border-brand-700 hover:text-brand-700' : 'border-white/30 text-white/80 hover:border-white hover:text-white'}`}>
               <Globe size={12} strokeWidth={1.75} />
               {lang === 'pt' ? 'EN' : 'PT'}
             </button>
             <button onClick={goBook}
-              className="flex items-center gap-1.5 bg-ocean-700 text-white text-sm font-body font-semibold px-4 py-2 rounded-full shadow-sm hover:bg-ocean-500 transition-colors">
+              className="flex items-center gap-1.5 bg-brand-700 text-white text-sm font-body font-semibold px-4 py-2 rounded-full shadow-sm hover:bg-brand-500 transition-colors">
               <Calendar size={14} strokeWidth={1.75} />
               {lang === 'en' ? 'Book Now' : 'Reservar'}
             </button>
@@ -1692,7 +1694,7 @@ export default function PublicBooking() {
           <div className="md:hidden bg-white border-t border-n-200 shadow-lg">
             {navLinks.map(l => (
               <button key={l.id} onClick={() => scrollTo(l.id)}
-                className="w-full text-left px-5 py-3.5 text-sm font-body font-medium text-n-700 hover:bg-n-50 hover:text-ocean-700 border-b border-n-100 last:border-0 transition-colors">
+                className="w-full text-left px-5 py-3.5 text-sm font-body font-medium text-n-700 hover:bg-n-50 hover:text-brand-700 border-b border-n-100 last:border-0 transition-colors">
                 {lang === 'pt' ? l.pt : l.en}
               </button>
             ))}
@@ -1794,7 +1796,7 @@ export default function PublicBooking() {
       </section>
 
       {/* ── Urgency strip ── */}
-      <div className="bg-ocean-700 text-white text-center py-2.5 px-4">
+      <div className="bg-brand-700 text-white text-center py-2.5 px-4">
         <p className="text-xs font-body font-semibold flex items-center justify-center gap-3 flex-wrap">
           <span>
             <span className="text-sand-400 font-bold">{viewerCount}</span>
@@ -1826,13 +1828,13 @@ export default function PublicBooking() {
         <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6">
           <div className="flex flex-wrap items-center justify-center gap-x-8 gap-y-4 sm:gap-x-12 text-center">
             <div className="px-2 sm:border-l sm:border-n-200 sm:first:border-0 sm:pl-8 sm:first:pl-0">
-              <p className="font-display font-extrabold text-2xl text-ocean-700">{units.length}</p>
+              <p className="font-display font-extrabold text-2xl text-brand-700">{units.length}</p>
               <p className="text-xs font-body text-n-500 mt-0.5">
                 {lang === 'en' ? (units.length === 1 ? 'service available' : 'services available') : (units.length === 1 ? 'serviço disponível' : 'serviços disponíveis')}
               </p>
             </div>
             <div className="px-2 sm:border-l sm:border-n-200 sm:pl-8">
-              <p className="font-display font-extrabold text-2xl text-ocean-700">
+              <p className="font-display font-extrabold text-2xl text-brand-700">
                 {avgRating > 0 ? avgRating.toFixed(1) : (lang === 'en' ? 'New' : 'Novo')}
               </p>
               <p className="text-xs font-body text-n-500 mt-0.5">
@@ -1842,11 +1844,11 @@ export default function PublicBooking() {
               </p>
             </div>
             <div className="px-2 sm:border-l sm:border-n-200 sm:pl-8">
-              <p className="font-display font-extrabold text-2xl text-ocean-700">0%</p>
+              <p className="font-display font-extrabold text-2xl text-brand-700">0%</p>
               <p className="text-xs font-body text-n-500 mt-0.5">{lang === 'en' ? 'OTA commission' : 'comissão OTA'}</p>
             </div>
             <div className="px-2 sm:border-l sm:border-n-200 sm:pl-8">
-              <p className="font-display font-extrabold text-2xl text-ocean-700">24h</p>
+              <p className="font-display font-extrabold text-2xl text-brand-700">24h</p>
               <p className="text-xs font-body text-n-500 mt-0.5">{lang === 'en' ? 'response time' : 'tempo de resposta'}</p>
             </div>
           </div>
@@ -1865,7 +1867,7 @@ export default function PublicBooking() {
             ].map(({ Icon, pt, en, subPt, subEn }, i) => (
               <div key={i} className="flex flex-col items-center text-center gap-2">
                 <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center mb-1">
-                  <Icon size={22} strokeWidth={1.75} className="text-ocean-700" />
+                  <Icon size={22} strokeWidth={1.75} className="text-brand-700" />
                 </div>
                 <p className="font-display font-bold text-n-900 text-sm">{lang === 'en' ? en : pt}</p>
                 <p className="text-xs font-body text-n-500 leading-relaxed">{lang === 'en' ? subEn : subPt}</p>
@@ -1912,7 +1914,7 @@ export default function PublicBooking() {
           <section id="servicos" className="py-12 sm:py-16">
             <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
               <div>
-                <p className="text-xs font-body font-bold text-ocean-700 uppercase tracking-widest mb-1">
+                <p className="text-xs font-body font-bold text-brand-700 uppercase tracking-widest mb-1">
                   {lang === 'en' ? 'What we offer' : 'O que oferecemos'}
                 </p>
                 <h2 className="font-display font-bold text-2xl sm:text-3xl text-n-900">
@@ -1921,9 +1923,9 @@ export default function PublicBooking() {
               </div>
               <div className="flex items-center gap-1 bg-n-100 rounded-full p-1">
                 <button onClick={() => setCur('EUR')}
-                  className={`text-xs font-body font-bold px-4 py-1.5 rounded-full transition-all ${currency === 'EUR' ? 'bg-ocean-700 text-white' : 'text-n-500'}`}>EUR</button>
+                  className={`text-xs font-body font-bold px-4 py-1.5 rounded-full transition-all ${currency === 'EUR' ? 'bg-brand-700 text-white' : 'text-n-500'}`}>EUR</button>
                 <button onClick={() => setCur('CVE')}
-                  className={`text-xs font-body font-bold px-4 py-1.5 rounded-full transition-all ${currency === 'CVE' ? 'bg-ocean-700 text-white' : 'text-n-500'}`}>CVE</button>
+                  className={`text-xs font-body font-bold px-4 py-1.5 rounded-full transition-all ${currency === 'CVE' ? 'bg-brand-700 text-white' : 'text-n-500'}`}>CVE</button>
               </div>
             </div>
 
@@ -1936,12 +1938,12 @@ export default function PublicBooking() {
               {unitCategories.length > 1 && (
                 <div className="flex items-center gap-1 bg-n-100 rounded-full p-1 flex-wrap">
                   <button onClick={() => setCategoryFilter('all')}
-                    className={`text-xs font-body font-semibold px-3 py-1.5 rounded-full transition-all ${categoryFilter === 'all' ? 'bg-ocean-700 text-white' : 'text-n-500'}`}>
+                    className={`text-xs font-body font-semibold px-3 py-1.5 rounded-full transition-all ${categoryFilter === 'all' ? 'bg-brand-700 text-white' : 'text-n-500'}`}>
                     {lang === 'en' ? 'All' : 'Todas'}
                   </button>
                   {unitCategories.map(c => (
                     <button key={c} onClick={() => setCategoryFilter(c)}
-                      className={`text-xs font-body font-semibold px-3 py-1.5 rounded-full transition-all ${categoryFilter === c ? 'bg-ocean-700 text-white' : 'text-n-500'}`}>
+                      className={`text-xs font-body font-semibold px-3 py-1.5 rounded-full transition-all ${categoryFilter === c ? 'bg-brand-700 text-white' : 'text-n-500'}`}>
                       {formatUnitType(c)}
                     </button>
                   ))}
@@ -1949,12 +1951,12 @@ export default function PublicBooking() {
               )}
               <div className="flex items-center gap-1 bg-n-100 rounded-full p-1 flex-wrap">
                 <button onClick={() => setPriceFilter('all')}
-                  className={`text-xs font-body font-semibold px-3 py-1.5 rounded-full transition-all ${priceFilter === 'all' ? 'bg-ocean-700 text-white' : 'text-n-500'}`}>
+                  className={`text-xs font-body font-semibold px-3 py-1.5 rounded-full transition-all ${priceFilter === 'all' ? 'bg-brand-700 text-white' : 'text-n-500'}`}>
                   {lang === 'en' ? 'Any price' : 'Qualquer preço'}
                 </button>
                 {PRICE_RANGES.map(r => (
                   <button key={r.id} onClick={() => setPriceFilter(r.id)}
-                    className={`text-xs font-body font-semibold px-3 py-1.5 rounded-full transition-all ${priceFilter === r.id ? 'bg-ocean-700 text-white' : 'text-n-500'}`}>
+                    className={`text-xs font-body font-semibold px-3 py-1.5 rounded-full transition-all ${priceFilter === r.id ? 'bg-brand-700 text-white' : 'text-n-500'}`}>
                     {lang === 'en' ? r.en : r.pt}
                   </button>
                 ))}
@@ -1962,12 +1964,12 @@ export default function PublicBooking() {
               {hasDuration && (
                 <div className="flex items-center gap-1 bg-n-100 rounded-full p-1 flex-wrap">
                   <button onClick={() => setDurationFilter('all')}
-                    className={`text-xs font-body font-semibold px-3 py-1.5 rounded-full transition-all ${durationFilter === 'all' ? 'bg-ocean-700 text-white' : 'text-n-500'}`}>
+                    className={`text-xs font-body font-semibold px-3 py-1.5 rounded-full transition-all ${durationFilter === 'all' ? 'bg-brand-700 text-white' : 'text-n-500'}`}>
                     {lang === 'en' ? 'Any duration' : 'Qualquer duração'}
                   </button>
                   {DURATION_RANGES.map(r => (
                     <button key={r.id} onClick={() => setDurationFilter(r.id)}
-                      className={`text-xs font-body font-semibold px-3 py-1.5 rounded-full transition-all ${durationFilter === r.id ? 'bg-ocean-700 text-white' : 'text-n-500'}`}>
+                      className={`text-xs font-body font-semibold px-3 py-1.5 rounded-full transition-all ${durationFilter === r.id ? 'bg-brand-700 text-white' : 'text-n-500'}`}>
                       {lang === 'en' ? r.en : r.pt}
                     </button>
                   ))}
@@ -2001,7 +2003,7 @@ export default function PublicBooking() {
               </div>
             )}
             <div className={op.logo_url ? '' : 'lg:col-span-2'}>
-              <p className="text-xs font-body font-bold text-ocean-700 uppercase tracking-widest mb-2">
+              <p className="text-xs font-body font-bold text-brand-700 uppercase tracking-widest mb-2">
                 {lang === 'en' ? 'About us' : 'Sobre nós'}
               </p>
               <h2 className="font-display font-bold text-2xl sm:text-3xl text-n-900 mb-4">{op.business_name || op.name}</h2>
@@ -2016,7 +2018,7 @@ export default function PublicBooking() {
                   { icon: <Star size={18} strokeWidth={1.75} />, label: lang === 'en' ? 'Rating' : 'Avaliação', value: avgRating > 0 ? `${avgRating.toFixed(1)}/5` : (lang === 'en' ? 'New' : 'Novo') },
                 ].map((item, i) => (
                   <div key={i} className="bg-white border border-n-200 rounded-xl p-3 text-center">
-                    <div className="w-8 h-8 rounded-full bg-ocean-50 flex items-center justify-center mx-auto mb-2 text-ocean-700">
+                    <div className="w-8 h-8 rounded-full bg-brand-50 flex items-center justify-center mx-auto mb-2 text-brand-700">
                       {item.icon}
                     </div>
                     <p className="text-xs font-body text-n-400 mb-0.5">{item.label}</p>
@@ -2026,11 +2028,11 @@ export default function PublicBooking() {
               </div>
               {op.phone && (
                 <div className="flex flex-wrap gap-3 mt-5">
-                  <a href={`tel:${op.phone}`} className="flex items-center gap-2 border border-n-300 text-n-700 text-sm font-body font-medium px-4 py-2 rounded-full hover:border-ocean-700 hover:text-ocean-700 transition-colors">
+                  <a href={`tel:${op.phone}`} className="flex items-center gap-2 border border-n-300 text-n-700 text-sm font-body font-medium px-4 py-2 rounded-full hover:border-brand-700 hover:text-brand-700 transition-colors">
                     <Phone size={14} strokeWidth={1.75} /> {op.phone}
                   </a>
                   {op.email && (
-                    <a href={`mailto:${op.email}`} className="flex items-center gap-2 border border-n-300 text-n-700 text-sm font-body font-medium px-4 py-2 rounded-full hover:border-ocean-700 hover:text-ocean-700 transition-colors">
+                    <a href={`mailto:${op.email}`} className="flex items-center gap-2 border border-n-300 text-n-700 text-sm font-body font-medium px-4 py-2 rounded-full hover:border-brand-700 hover:text-brand-700 transition-colors">
                       <Mail size={14} strokeWidth={1.75} /> {op.email}
                     </a>
                   )}
@@ -2051,7 +2053,7 @@ export default function PublicBooking() {
           <section id="galeria" className="py-12 sm:py-16">
             <div className="flex items-end justify-between mb-6 gap-4">
               <div>
-                <p className="text-xs font-body font-bold text-ocean-700 uppercase tracking-widest mb-2">
+                <p className="text-xs font-body font-bold text-brand-700 uppercase tracking-widest mb-2">
                   {lang === 'en' ? 'Gallery' : 'Galeria'}
                 </p>
                 <h2 className="font-display font-bold text-2xl sm:text-3xl text-n-900">
@@ -2060,7 +2062,7 @@ export default function PublicBooking() {
               </div>
               {galleryImgs.length > 1 && (
                 <button onClick={() => setLbIdx(0)}
-                  className="flex items-center gap-2 text-sm font-body font-semibold text-ocean-700 hover:text-ocean-500 transition-colors flex-shrink-0">
+                  className="flex items-center gap-2 text-sm font-body font-semibold text-brand-700 hover:text-brand-500 transition-colors flex-shrink-0">
                   {lang === 'en' ? `View all ${galleryImgs.length} photos` : `Ver todas (${galleryImgs.length})`}
                 </button>
               )}
@@ -2072,9 +2074,9 @@ export default function PublicBooking() {
                   style={{ height: i === 0 ? 340 : 163 }}
                   onClick={() => setLbIdx(i)}>
                   <img src={src} alt={`Foto ${i + 1}`} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                  <div className="absolute inset-0 bg-ocean-900/0 group-hover:bg-ocean-900/25 transition-colors duration-300" />
+                  <div className="absolute inset-0 bg-brand-900/0 group-hover:bg-brand-900/25 transition-colors duration-300" />
                   {i === 4 && galleryImgs.length > 5 && (
-                    <div className="absolute inset-0 bg-ocean-900/55 flex items-center justify-center">
+                    <div className="absolute inset-0 bg-brand-900/55 flex items-center justify-center">
                       <div className="text-center">
                         <p className="font-display font-extrabold text-white text-2xl">+{galleryImgs.length - 5}</p>
                         <p className="text-white/80 text-xs font-body">{lang === 'en' ? 'photos' : 'fotos'}</p>
@@ -2092,7 +2094,7 @@ export default function PublicBooking() {
         {/* ── Avaliações ── */}
         {reviews.length > 0 && (
           <section id="avaliacoes" className="py-12 sm:py-16 border-t border-n-100">
-            <p className="text-xs font-body font-bold text-ocean-700 uppercase tracking-widest mb-2">
+            <p className="text-xs font-body font-bold text-brand-700 uppercase tracking-widest mb-2">
               {lang === 'en' ? 'Customer reviews' : 'Clientes'}
             </p>
             <h2 className="font-display font-bold text-2xl sm:text-3xl text-n-900 mb-8">
@@ -2108,7 +2110,7 @@ export default function PublicBooking() {
                 <div className="space-y-2">
                   {ratingBreakdown.map(({ r, count, pct }) => (
                     <button key={r} onClick={() => setReviewFilter(reviewFilter === r ? null : r)}
-                      className={`flex items-center gap-2 w-full rounded-lg px-1.5 py-0.5 transition-colors ${reviewFilter === r ? 'bg-ocean-100' : 'hover:bg-n-100'}`}>
+                      className={`flex items-center gap-2 w-full rounded-lg px-1.5 py-0.5 transition-colors ${reviewFilter === r ? 'bg-brand-100' : 'hover:bg-n-100'}`}>
                       <span className="text-xs font-body font-semibold text-n-600 w-3">{r}</span>
                       <Star size={11} strokeWidth={1.75} className="text-sand-400 fill-sand-400 flex-shrink-0" />
                       <div className="flex-1 bg-n-200 rounded-full h-1.5">
@@ -2120,7 +2122,7 @@ export default function PublicBooking() {
                 </div>
                 {reviewFilter && (
                   <button onClick={() => setReviewFilter(null)}
-                    className="mt-3 text-xs font-body font-semibold text-ocean-700 hover:underline">
+                    className="mt-3 text-xs font-body font-semibold text-brand-700 hover:underline">
                     {lang === 'en' ? 'Clear filter' : 'Limpar filtro'}
                   </button>
                 )}
@@ -2135,13 +2137,13 @@ export default function PublicBooking() {
                   <div key={i} className="bg-white border border-n-200 rounded-xl p-5 shadow-sm">
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-ocean-100 flex items-center justify-center font-display font-bold text-ocean-700 text-sm flex-shrink-0">
+                        <div className="w-10 h-10 rounded-full bg-brand-100 flex items-center justify-center font-display font-bold text-brand-700 text-sm flex-shrink-0">
                           {(r.author_name || 'C').charAt(0).toUpperCase()}
                         </div>
                         <div>
                           <div className="flex items-center gap-2">
                             <p className="font-body font-semibold text-n-900 text-sm">{r.author_name || 'Cliente'}</p>
-                            <span className="flex items-center gap-0.5 bg-ocean-50 text-ocean-700 text-[10px] font-body font-bold px-1.5 py-0.5 rounded-full">
+                            <span className="flex items-center gap-0.5 bg-brand-50 text-brand-700 text-[10px] font-body font-bold px-1.5 py-0.5 rounded-full">
                               <Check size={9} strokeWidth={2.5} />
                               {lang === 'en' ? 'Verified' : 'Verificado'}
                             </span>
@@ -2158,8 +2160,8 @@ export default function PublicBooking() {
                       <p className="text-sm font-body text-n-600 leading-relaxed">{r.comment}</p>
                     )}
                     {r.reply_text && (
-                      <div className="mt-3 bg-ocean-50 border border-ocean-100 rounded-xl px-4 py-3">
-                        <p className="text-xs font-body font-bold text-ocean-700 mb-1">{op.name}</p>
+                      <div className="mt-3 bg-brand-50 border border-brand-100 rounded-xl px-4 py-3">
+                        <p className="text-xs font-body font-bold text-brand-700 mb-1">{op.name}</p>
                         <p className="text-xs font-body text-n-600">{r.reply_text}</p>
                       </div>
                     )}
@@ -2167,14 +2169,14 @@ export default function PublicBooking() {
                 ))}
                 {!reviewsExpanded && filteredReviews.length > 4 && (
                   <button onClick={() => setReviewsExpanded(true)}
-                    className="w-full flex items-center justify-center gap-1.5 border border-n-200 text-n-600 text-sm font-body font-semibold py-2.5 rounded-lg hover:border-ocean-700 hover:text-ocean-700 transition-colors">
+                    className="w-full flex items-center justify-center gap-1.5 border border-n-200 text-n-600 text-sm font-body font-semibold py-2.5 rounded-lg hover:border-brand-700 hover:text-brand-700 transition-colors">
                     {lang === 'en' ? 'Show more' : 'Ver mais'}
                     <ChevronDown size={16} strokeWidth={1.75} />
                   </button>
                 )}
                 {reviewsExpanded && filteredReviews.length > 4 && (
                   <button onClick={() => setReviewsExpanded(false)}
-                    className="w-full flex items-center justify-center gap-1.5 border border-n-200 text-n-600 text-sm font-body font-semibold py-2.5 rounded-lg hover:border-ocean-700 hover:text-ocean-700 transition-colors">
+                    className="w-full flex items-center justify-center gap-1.5 border border-n-200 text-n-600 text-sm font-body font-semibold py-2.5 rounded-lg hover:border-brand-700 hover:text-brand-700 transition-colors">
                     {lang === 'en' ? 'Show less' : 'Ver menos'}
                     <ChevronUp size={16} strokeWidth={1.75} />
                   </button>
@@ -2208,7 +2210,7 @@ export default function PublicBooking() {
 
         {/* ── Localização + Contacto ── */}
         <section id="contacto" className="py-12 sm:py-16">
-          <p className="text-xs font-body font-bold text-ocean-700 uppercase tracking-widest mb-2">
+          <p className="text-xs font-body font-bold text-brand-700 uppercase tracking-widest mb-2">
             {lang === 'en' ? 'Get in touch' : 'Entre em contacto'}
           </p>
           <h2 className="font-display font-bold text-2xl sm:text-3xl text-n-900 mb-4">
@@ -2239,7 +2241,7 @@ export default function PublicBooking() {
                       href={`https://www.google.com/maps/search/${encodeURIComponent((op.business_name || op.name) + ' ' + op.address + ' Cabo Verde')}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="ml-auto flex items-center gap-1 text-xs font-body font-semibold text-ocean-700 hover:text-ocean-500 transition-colors flex-shrink-0"
+                      className="ml-auto flex items-center gap-1 text-xs font-body font-semibold text-brand-700 hover:text-brand-500 transition-colors flex-shrink-0"
                     >
                       <ExternalLink size={12} strokeWidth={1.75} />
                       {lang === 'en' ? 'Open in Google Maps' : 'Abrir no Google Maps'}
@@ -2248,19 +2250,19 @@ export default function PublicBooking() {
                 </>
               )}
               <div className="space-y-3">
-                {op.phone && <div className="flex items-center gap-3 text-sm font-body text-n-600"><Phone size={16} strokeWidth={1.75} className="text-ocean-400" />{op.phone}</div>}
-                {op.email && <div className="flex items-center gap-3 text-sm font-body text-n-600"><Mail size={16} strokeWidth={1.75} className="text-ocean-400" />{op.email}</div>}
+                {op.phone && <div className="flex items-center gap-3 text-sm font-body text-n-600"><Phone size={16} strokeWidth={1.75} className="text-brand-400" />{op.phone}</div>}
+                {op.email && <div className="flex items-center gap-3 text-sm font-body text-n-600"><Mail size={16} strokeWidth={1.75} className="text-brand-400" />{op.email}</div>}
               </div>
               <div className="flex items-center gap-3 mt-6 flex-wrap">
                 {typeof navigator !== 'undefined' && navigator.share && (
                   <button onClick={() => navigator.share({ title: op.business_name || op.name, url: window.location.href })}
-                    className="flex items-center gap-1.5 border border-n-300 text-n-600 text-xs font-body font-semibold px-4 py-2 rounded-full hover:border-ocean-700 hover:text-ocean-700 transition-colors">
+                    className="flex items-center gap-1.5 border border-n-300 text-n-600 text-xs font-body font-semibold px-4 py-2 rounded-full hover:border-brand-700 hover:text-brand-700 transition-colors">
                     <Share2 size={12} strokeWidth={1.75} />
                     {lang === 'en' ? 'Share' : 'Partilhar'}
                   </button>
                 )}
                 <button onClick={copyLink}
-                  className="flex items-center gap-1.5 border border-n-300 text-n-600 text-xs font-body font-semibold px-4 py-2 rounded-full hover:border-ocean-700 hover:text-ocean-700 transition-colors">
+                  className="flex items-center gap-1.5 border border-n-300 text-n-600 text-xs font-body font-semibold px-4 py-2 rounded-full hover:border-brand-700 hover:text-brand-700 transition-colors">
                   {copied ? <Check size={12} strokeWidth={2} /> : <Copy size={12} strokeWidth={1.75} />}
                   {copied ? (lang === 'en' ? 'Copied!' : 'Copiado!') : (lang === 'en' ? 'Copy link' : 'Copiar link')}
                 </button>
@@ -2272,7 +2274,7 @@ export default function PublicBooking() {
                 )}
                 {qrUrl && (
                   <button onClick={() => setShowQr(o => !o)}
-                    className="flex items-center gap-1.5 border border-n-300 text-n-600 text-xs font-body font-semibold px-4 py-2 rounded-full hover:border-ocean-700 hover:text-ocean-700 transition-colors">
+                    className="flex items-center gap-1.5 border border-n-300 text-n-600 text-xs font-body font-semibold px-4 py-2 rounded-full hover:border-brand-700 hover:text-brand-700 transition-colors">
                     <Share2 size={12} strokeWidth={1.75} />QR Code
                   </button>
                 )}
@@ -2282,7 +2284,7 @@ export default function PublicBooking() {
                   <img src={qrUrl} alt="QR Code" className="w-32 h-32 rounded-xl border border-n-200 shadow-sm" />
                   <p className="text-xs font-body text-n-400">{lang === 'en' ? 'Scan to open this page' : 'Scannear para abrir esta pagina'}</p>
                   <a href={qrUrl} download={`qr-${slug}.png`}
-                    className="text-xs font-body font-semibold text-ocean-700 hover:text-ocean-500 transition-colors">
+                    className="text-xs font-body font-semibold text-brand-700 hover:text-brand-500 transition-colors">
                     {lang === 'en' ? 'Download QR Code' : 'Descarregar QR Code'}
                   </a>
                 </div>
@@ -2302,22 +2304,22 @@ export default function PublicBooking() {
                   <div>
                     <label className="text-xs font-body font-semibold text-n-600 mb-1 block">{lang === 'en' ? 'Name' : 'Nome'}</label>
                     <input value={contactForm.name} onChange={e => setContactForm(f => ({ ...f, name: e.target.value }))}
-                      className="w-full border border-n-300 rounded-xl px-4 py-3 font-body text-sm focus:outline-none focus:border-ocean-500 focus:ring-2 focus:ring-ocean-500/10 bg-white" />
+                      className="w-full border border-n-300 rounded-xl px-4 py-3 font-body text-sm focus:outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/10 bg-white" />
                   </div>
                   <div>
                     <label className="text-xs font-body font-semibold text-n-600 mb-1 block">Email *</label>
                     <input required type="email" value={contactForm.email} onChange={e => setContactForm(f => ({ ...f, email: e.target.value }))}
-                      className="w-full border border-n-300 rounded-xl px-4 py-3 font-body text-sm focus:outline-none focus:border-ocean-500 focus:ring-2 focus:ring-ocean-500/10 bg-white" />
+                      className="w-full border border-n-300 rounded-xl px-4 py-3 font-body text-sm focus:outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/10 bg-white" />
                   </div>
                   <div>
                     <label className="text-xs font-body font-semibold text-n-600 mb-1 block">
                       {lang === 'en' ? 'Message' : 'Mensagem'} *
                     </label>
                     <textarea required rows={4} value={contactForm.message} onChange={e => setContactForm(f => ({ ...f, message: e.target.value }))}
-                      className="w-full border border-n-300 rounded-xl px-4 py-3 font-body text-sm resize-none focus:outline-none focus:border-ocean-500 focus:ring-2 focus:ring-ocean-500/10 bg-white" />
+                      className="w-full border border-n-300 rounded-xl px-4 py-3 font-body text-sm resize-none focus:outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/10 bg-white" />
                   </div>
                   <button type="submit"
-                    className="w-full bg-ocean-700 text-white font-body font-semibold py-3 rounded-xl flex items-center justify-center gap-2 hover:bg-ocean-500 transition-colors">
+                    className="w-full bg-brand-700 text-white font-body font-semibold py-3 rounded-xl flex items-center justify-center gap-2 hover:bg-brand-500 transition-colors">
                     <Send size={14} strokeWidth={1.75} />
                     {lang === 'en' ? 'Send message' : 'Enviar mensagem'}
                   </button>
@@ -2331,7 +2333,7 @@ export default function PublicBooking() {
       <div className="max-w-5xl mx-auto px-4 sm:px-6" style={{ order: sectionOrder('faq') }}>
         {/* ── FAQ ── */}
         <section className="py-12 sm:py-16 border-t border-n-100">
-          <p className="text-xs font-body font-bold text-ocean-700 uppercase tracking-widest mb-2">FAQ</p>
+          <p className="text-xs font-body font-bold text-brand-700 uppercase tracking-widest mb-2">FAQ</p>
           <h2 className="font-display font-bold text-2xl sm:text-3xl text-n-900 mb-6">
             {lang === 'en' ? 'Frequently Asked Questions' : 'Perguntas Frequentes'}
           </h2>
@@ -2379,10 +2381,10 @@ export default function PublicBooking() {
       {isWidget ? (
         <div className="text-center py-3 text-[11px] font-body text-n-400 border-t border-n-100">
           {lang === 'en' ? 'Powered by' : 'Tecnologia'}{' '}
-          <a href="https://saldesk.cv" target="_blank" rel="noopener noreferrer" className="font-semibold text-n-500 hover:text-ocean-600 transition-colors">SalDesk</a>
+          <a href="https://saldesk.cv" target="_blank" rel="noopener noreferrer" className="font-semibold text-n-500 hover:text-brand-600 transition-colors">SalDesk</a>
         </div>
       ) : (
-      <footer className="bg-ocean-900 text-white/70 mt-16">
+      <footer className="bg-brand-900 text-white/70 mt-16">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 py-12">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 mb-8">
             <div className="sm:col-span-2 lg:col-span-1">
@@ -2490,7 +2492,7 @@ export default function PublicBooking() {
       {units.length > 0 && (
         <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-n-200 px-4 py-3 flex gap-3 z-30 sm:hidden shadow-lg">
           <button onClick={goBook}
-            className="flex-1 bg-ocean-700 text-white font-body font-semibold py-3 rounded-xl flex items-center justify-center gap-2 hover:bg-ocean-500 transition-colors text-sm">
+            className="flex-1 bg-brand-700 text-white font-body font-semibold py-3 rounded-xl flex items-center justify-center gap-2 hover:bg-brand-500 transition-colors text-sm">
             <Calendar size={16} strokeWidth={1.75} />
             {lang === 'en' ? 'Book Now' : 'Reservar Agora'}
           </button>
