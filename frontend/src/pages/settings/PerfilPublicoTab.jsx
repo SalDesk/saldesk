@@ -12,6 +12,7 @@ import Input, { Textarea } from '../../components/ui/Input';
 import ImageUploader from '../../components/shared/ImageUploader';
 import { uploadImage, validateImageFile } from '../../services/uploadService';
 import { CopyButton, SaveBanner } from './shared';
+import { COR_ORIGINAL, corValida } from '../../utils/brandPalette';
 
 /* ─────────────────────────────────────────────────────────
    TAB 2 — PERFIL PUBLICO
@@ -25,6 +26,12 @@ const DIAS_CHAT = [
 const CHAT_PADRAO = { enabled: false, days: [1, 2, 3, 4, 5], from: '09:00', to: '18:00', message_pt: '', message_en: '' };
 const TEXTO_CHAT_PT = 'Obrigado pela sua mensagem. De momento estamos fora do horario de atendimento; responderemos assim que possivel.';
 const TEXTO_CHAT_EN = 'Thank you for your message. We are currently outside our opening hours and will reply as soon as we can.';
+
+/* Cor da pagina publica e do widget: sugestoes todas com texto branco legivel (contraste >= 4.5) */
+const CORES_SUGERIDAS = [
+  { nome: 'Oceano', hex: '#0d5470' }, { nome: 'Esmeralda', hex: '#1f6f43' }, { nome: 'Laranja', hex: '#c2410c' },
+  { nome: 'Roxo', hex: '#6d28d9' }, { nome: 'Bordeaux', hex: '#9f1239' }, { nome: 'Ardosia', hex: '#334155' },
+];
 
 function chatInicial(operator) {
   const c = operator?.chat_auto_reply;
@@ -54,6 +61,7 @@ export default function PerfilPublicoTab({ operator }) {
   const [cancelPolicyEn, setCancelPolicyEn] = useState(operator?.cancellation_policy_en || '');
   const [faqs, setFaqs] = useState(operator?.custom_faqs || []);
   const [chatAuto, setChatAuto] = useState(() => chatInicial(operator));
+  const [corMarca, setCorMarca] = useState(operator?.brand_color || '');
 
   /* marketing — loaded separately */
   const [bookingLink, setBookingLink] = useState('');
@@ -110,13 +118,21 @@ export default function PerfilPublicoTab({ operator }) {
     : chatAuto.to <= chatAuto.from ? 'A hora de fecho tem de ser posterior a hora de abertura.'
     : '';
 
+  /* Cor da marca: vazio = cor original; o backend volta a validar (formato e contraste) */
+  const corNormal = corMarca.trim().toLowerCase();
+  const validacaoCor = corNormal === '' ? { ok: true } : corValida(corNormal);
+  const erroCor = validacaoCor.ok ? ''
+    : validacaoCor.motivo === 'clara' ? 'Esta cor e demasiado clara: o texto branco nao se leria bem. Escolha uma cor mais escura.'
+    : 'Use o formato #rrggbb (por exemplo #0d5470).';
+  const corEmUso = validacaoCor.ok && corNormal ? corNormal : COR_ORIGINAL;
+
   function alternarDia(dia) {
     setChatAuto(c => ({ ...c, days: c.days.includes(dia) ? c.days.filter(d => d !== dia) : [...c.days, dia].sort((a, b) => a - b) }));
   }
 
   async function handleSave(e) {
     e.preventDefault();
-    if (erroChat) return;
+    if (erroChat || erroCor) return;
     setSaving(true);
     try {
       const payload = {
@@ -129,6 +145,8 @@ export default function PerfilPublicoTab({ operator }) {
         custom_faqs: faqs.filter(f => f.question_pt || f.question_en),
         /* null quando nunca foi configurado e esta desligado (nao escreve valores por omissao) */
         chat_auto_reply: chatAuto.enabled || operator?.chat_auto_reply ? chatAuto : null,
+        /* null repoe a cor original */
+        brand_color: corNormal || null,
       };
       const updated = await updateOperator(payload);
       setOperator(updated);
@@ -193,6 +211,37 @@ export default function PerfilPublicoTab({ operator }) {
             rows={4} placeholder="Ex: Cancelamento gratuito ate 48h antes. Apos esse prazo, 50% do valor e retido..." />
           <Textarea label="Ingles (EN)" aria-label="Politica de cancelamento em Ingles" value={cancelPolicyEn} onChange={e => setCancelPolicyEn(e.target.value)}
             rows={4} placeholder="Ex: Free cancellation up to 48h before. After that, 50% of the value is retained..." />
+        </div>
+      </Card>
+
+      {/* Cor da pagina publica e do widget */}
+      <Card header={<h3 className="font-display font-semibold text-sm text-n-700">Cor da pagina publica e do widget</h3>}>
+        <div className="space-y-3">
+          <p className="text-xs font-body text-n-400">
+            Escolha a cor principal dos botoes e destaques da sua pagina de reservas. O widget embebido no seu site usa a mesma cor.
+            Sem cor escolhida, usa-se o azul original do SalDesk.
+          </p>
+          <div className="flex flex-wrap items-end gap-3">
+            <input type="color" aria-label="Escolher cor" value={corEmUso} onChange={e => setCorMarca(e.target.value)}
+              className="h-10 w-12 cursor-pointer rounded-sm border border-n-200 bg-white p-1" />
+            <div className="w-36">
+              <Input label="Cor (hex)" aria-label="Cor em hexadecimal" value={corMarca} placeholder={COR_ORIGINAL} maxLength={9}
+                onChange={e => setCorMarca(e.target.value)} />
+            </div>
+            <div data-testid="previa-cor" style={{ backgroundColor: corEmUso }}
+              className="h-10 px-5 rounded-md text-white text-sm font-body font-semibold flex items-center">Reservar</div>
+            {corNormal && (
+              <Button type="button" variant="ghost" size="sm" onClick={() => setCorMarca('')}>Repor cor original</Button>
+            )}
+          </div>
+          <div className="flex flex-wrap gap-2" role="group" aria-label="Cores sugeridas">
+            {CORES_SUGERIDAS.map(c => (
+              <button key={c.hex} type="button" title={c.nome} aria-label={`Usar cor ${c.hex}`} onClick={() => setCorMarca(c.hex)}
+                style={{ backgroundColor: c.hex }}
+                className={`h-8 w-8 rounded-full border-2 ${corNormal === c.hex ? 'border-n-900' : 'border-white shadow-sm'}`} />
+            ))}
+          </div>
+          {erroCor && <p role="alert" className="text-xs font-body text-[var(--error)]">{erroCor}</p>}
         </div>
       </Card>
 

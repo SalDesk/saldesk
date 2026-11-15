@@ -88,13 +88,13 @@ export function MenuCartPicker({ units, lang, opCurrency, currency, cart, setQty
   const descCls      = dark ? 'text-white/60' : 'text-n-500';
   const mutedCls      = dark ? 'text-white/40' : 'text-n-400';
   const headingCls  = dark ? 'text-white border-white/10' : 'text-n-900 border-n-100';
-  const priceCls    = dark ? 'text-sand-400' : 'text-ocean-700';
+  const priceCls    = dark ? 'text-sand-400' : 'text-brand-700';
   const stepperBtn  = dark
     ? 'border-white/30 text-white hover:border-sand-400 hover:text-sand-400'
-    : 'border-n-300 text-n-500 hover:border-ocean-700 hover:text-ocean-700';
+    : 'border-n-300 text-n-500 hover:border-brand-700 hover:text-brand-700';
   const noteInputCls = dark
     ? 'bg-white/10 border-white/20 text-white placeholder-white/40 focus:border-sand-400'
-    : 'border-n-200 focus:border-ocean-500';
+    : 'border-n-200 focus:border-brand-500';
 
   function Stepper({ unitId }) {
     const qty = cart[unitId] || 0;
@@ -139,7 +139,7 @@ export function MenuCartPicker({ units, lang, opCurrency, currency, cart, setQty
                     {(meta.diets?.length > 0 || meta.allergens?.length > 0 || isToday) && (
                       <div className="flex flex-wrap gap-1 mt-1.5">
                         {isToday && (
-                          <span className="text-[9px] font-mono uppercase tracking-wide px-1.5 py-0.5 rounded bg-ocean-50 text-ocean-700">
+                          <span className="text-[9px] font-mono uppercase tracking-wide px-1.5 py-0.5 rounded bg-brand-50 text-brand-700">
                             {lang === 'en' ? "Today's special" : 'Prato do dia'}
                           </span>
                         )}
@@ -317,7 +317,7 @@ export function RestaurantReservationSection({ slug, lang, units, opCurrency, cu
   }
 
   return (
-    <section id="servicos" className="bg-ocean-900 text-white">
+    <section id="servicos" className="bg-brand-900 text-white">
       <div className="max-w-2xl mx-auto px-4 sm:px-6 py-12 sm:py-16">
         <p className="text-xs font-body font-bold text-sand-400 uppercase tracking-widest mb-2">
           {lang === 'en' ? 'Reservations' : 'Reservas'}
@@ -334,7 +334,7 @@ export function RestaurantReservationSection({ slug, lang, units, opCurrency, cu
         {resId ? (
           <div className="bg-white/10 border border-white/20 rounded-2xl p-6 flex items-start gap-4">
             <div className="w-10 h-10 rounded-full bg-sand-500 flex items-center justify-center flex-shrink-0">
-              <Check size={20} strokeWidth={2.5} className="text-ocean-900" />
+              <Check size={20} strokeWidth={2.5} className="text-brand-900" />
             </div>
             <div>
               <p className="font-display font-bold text-white mb-1">
@@ -416,10 +416,10 @@ export function RestaurantReservationSection({ slug, lang, units, opCurrency, cu
               <button
                 onClick={checkAvailability}
                 disabled={!date || !time || checking}
-                className="flex items-center gap-2 bg-sand-500 text-ocean-900 font-body font-bold text-sm px-6 py-3 rounded-xl hover:bg-sand-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex items-center gap-2 bg-sand-500 text-brand-900 font-body font-bold text-sm px-6 py-3 rounded-xl hover:bg-sand-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {checking
-                  ? <span className="w-4 h-4 border-2 border-ocean-900/30 border-t-ocean-900 rounded-full animate-spin" />
+                  ? <span className="w-4 h-4 border-2 border-brand-900/30 border-t-brand-900 rounded-full animate-spin" />
                   : <Check size={16} strokeWidth={2} />}
                 {lang === 'en' ? 'Check availability' : 'Verificar disponibilidade'}
               </button>
@@ -514,9 +514,9 @@ export function RestaurantReservationSection({ slug, lang, units, opCurrency, cu
                     className="bg-white/10 border border-white/20 text-white placeholder-white/40 rounded-xl px-4 py-3 font-body text-sm focus:outline-none focus:border-sand-400 focus:ring-1 focus:ring-sand-400" />
                 </div>
                 <button type="submit" disabled={submitting}
-                  className="w-full flex items-center justify-center gap-2 bg-sand-500 text-ocean-900 font-body font-bold text-sm px-6 py-3 rounded-xl hover:bg-sand-400 transition-colors disabled:opacity-50">
+                  className="w-full flex items-center justify-center gap-2 bg-sand-500 text-brand-900 font-body font-bold text-sm px-6 py-3 rounded-xl hover:bg-sand-400 transition-colors disabled:opacity-50">
                   {submitting
-                    ? <span className="w-4 h-4 border-2 border-ocean-900/30 border-t-ocean-900 rounded-full animate-spin" />
+                    ? <span className="w-4 h-4 border-2 border-brand-900/30 border-t-brand-900 rounded-full animate-spin" />
                     : <ArrowRight size={16} strokeWidth={2} />}
                   {lang === 'en' ? 'Confirm reservation' : 'Confirmar reserva'}
                 </button>

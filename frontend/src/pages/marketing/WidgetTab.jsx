@@ -2,9 +2,9 @@ import { useState, useEffect, useRef } from 'react';
 import { CopyBtn } from './shared';
 
 /* O codigo vem do servidor (GET /marketing/widget-code): um iframe da pagina publica do operador
-   (/book/<slug>?widget=1) com um pequeno script que ajusta a altura do iframe. A cor nao e
-   configuravel (o codigo nao tem data-color e a pagina publica nao aceita cor): o seletor de cor
-   que existia aqui nunca alterava nada e foi retirado, tal como o script widget.js, que nao existe. */
+   (/book/<slug>?widget=1) com um pequeno script que ajusta a altura do iframe. A cor do widget e a
+   cor da pagina publica do operador (Definicoes > Perfil Publico, brand_color): nao ha seletor aqui,
+   o codigo nao leva a cor. O script widget.js nunca existiu. */
 
 /* ── Pre-visualizacao: o widget real, com a altura a seguir a mensagem do proprio widget ── */
 function PreviewWidget({ slug }) {
@@ -77,6 +77,11 @@ export default function WidgetTab({ widgetCode, slug }) {
           </p>
         </div>
       )}
+
+      <p className="text-xs font-body text-n-500">
+        A cor do widget e a da sua pagina publica. Defina-a em{' '}
+        <a href="/definicoes?tab=perfil" className="font-semibold text-ocean-700 hover:underline">Definicoes &gt; Perfil Publico</a>.
+      </p>
 
       <p className="text-xs font-body text-n-500">
         O pagamento com cartao cabo-verdiano (SISP) abre em ecra inteiro, fora do seu site, porque o banco nao aceita ser aberto dentro de outra pagina. As restantes reservas e o PayPal ficam no seu site.

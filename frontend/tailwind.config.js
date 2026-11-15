@@ -18,6 +18,20 @@ export default {
           100: '#D6EEF5',
           50:  '#EBF7FB',
         },
+        /* Cor da marca do operador na pagina publica (/book/*): variaveis --brand-<tom>-rgb definidas por
+           utils/brandPalette.js; sem elas, os valores por omissao sao os do ocean (aspecto de sempre) */
+        brand: {
+          900: 'rgb(var(--brand-900-rgb, 6 42 56) / <alpha-value>)',
+          800: 'rgb(var(--brand-800-rgb, 10 63 85) / <alpha-value>)',
+          700: 'rgb(var(--brand-700-rgb, 13 84 112) / <alpha-value>)',
+          600: 'rgb(var(--brand-600-rgb, 16 105 140) / <alpha-value>)',
+          500: 'rgb(var(--brand-500-rgb, 20 128 168) / <alpha-value>)',
+          400: 'rgb(var(--brand-400-rgb, 58 155 191) / <alpha-value>)',
+          300: 'rgb(var(--brand-300-rgb, 113 189 212) / <alpha-value>)',
+          200: 'rgb(var(--brand-200-rgb, 168 217 232) / <alpha-value>)',
+          100: 'rgb(var(--brand-100-rgb, 214 238 245) / <alpha-value>)',
+          50: 'rgb(var(--brand-50-rgb, 235 247 251) / <alpha-value>)',
+        },
         sand: {
           600: '#BE941C',
           500: '#D4A82A',

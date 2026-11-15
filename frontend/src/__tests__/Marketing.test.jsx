@@ -272,6 +272,13 @@ describe('Marketing: Widget', () => {
     expect(screen.queryByLabelText('Cor personalizada')).toBeNull();
   });
 
+  it('diz_que_a_cor_do_widget_e_a_da_pagina_publica_e_aponta_para_o_Perfil_Publico', async () => {
+    await montar();
+    await abrir('Widget', 'Codigo HTML');
+    expect(screen.getByText(/A cor do widget e a da sua pagina publica/)).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Definicoes > Perfil Publico' })).toHaveAttribute('href', '/definicoes?tab=perfil');
+  });
+
   it('sem_codigo_do_servidor_mostra_o_aviso_e_nao_oferece_copiar_nem_um_script_inexistente', async () => {
     getWidgetCode.mockResolvedValue('');
     await montar();
