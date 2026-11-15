@@ -266,6 +266,58 @@ function ServiceCard({ unit, slug, currency, lang, opCurrency, isFirst }) {
   );
 }
 
+/* ── Widget embebido (?widget=1) ───────────────────── */
+/* Versao curta da pagina publica para o iframe no site do operador: so o nome, a lista de servicos
+   com "Reservar" (que abre o fluxo normal, ja em modo widget) e, num restaurante, o formulario de
+   reserva de mesa. Sem hero, galeria, avaliacoes, contacto, FAQ, chat nem botoes flutuantes. */
+function WidgetCompacto({ op, units, slug, lang, currency, setCur, toggleLang, isRestaurant }) {
+  return (
+    <div className="bg-white">
+      <header className="px-4 sm:px-6 pt-5 pb-3 flex flex-wrap items-center justify-between gap-3">
+        <div className="min-w-0">
+          <h1 className="font-display font-bold text-xl text-n-900">{op.name}</h1>
+          {op.tagline && <p className="text-xs font-body text-n-500 mt-0.5">{op.tagline}</p>}
+        </div>
+        <div className="flex items-center gap-2 shrink-0">
+          {!isRestaurant && (
+            <div className="flex items-center gap-1 bg-n-100 rounded-full p-1">
+              {['EUR', 'CVE'].map(c => (
+                <button key={c} type="button" onClick={() => setCur(c)} aria-pressed={currency === c}
+                  className={`text-xs font-body font-bold px-3 py-1 rounded-full transition-all ${currency === c ? 'bg-brand-700 text-white' : 'text-n-500'}`}>{c}</button>
+              ))}
+            </div>
+          )}
+          <button type="button" onClick={toggleLang}
+            className="text-xs font-body font-bold text-n-600 border border-n-200 rounded-full px-3 py-1.5 hover:border-brand-700 hover:text-brand-700 transition-colors">
+            {lang === 'pt' ? 'EN' : 'PT'}
+          </button>
+        </div>
+      </header>
+
+      <div className="px-4 sm:px-6 pb-6">
+        {isRestaurant ? (
+          <RestaurantReservationSection slug={slug} lang={lang} units={units} opCurrency={op.currency} currency={currency} />
+        ) : units.length > 0 ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {units.map(unit => (
+              <ServiceCard key={unit.id} unit={unit} slug={slug} currency={currency} lang={lang} opCurrency={op.currency} isFirst={false} />
+            ))}
+          </div>
+        ) : (
+          <p className="text-sm font-body text-n-400 text-center py-10">
+            {lang === 'en' ? 'No services available at the moment.' : 'De momento não há serviços disponíveis.'}
+          </p>
+        )}
+      </div>
+
+      <div className="text-center py-3 text-[11px] font-body text-n-400 border-t border-n-100">
+        {lang === 'en' ? 'Powered by' : 'Tecnologia'}{' '}
+        <a href="https://saldesk.cv" target="_blank" rel="noopener noreferrer" className="font-semibold text-n-500 hover:text-brand-600 transition-colors">SalDesk</a>
+      </div>
+    </div>
+  );
+}
+
 /* ── Lightbox ─────────────────────────────────────── */
 function Lightbox({ images, idx, onClose, onMove }) {
   useEffect(() => {
@@ -1541,6 +1593,14 @@ export default function PublicBooking() {
     ? units.find(u => u.id === tableId && u.unit_type !== 'menu_item' && u.unit_type !== 'tasting_menu' && u.status !== 'inactive')
     : null;
   const tableMode = isRestaurant && !!table;
+
+  /* Widget embebido: versao curta (o QR de mesa de um restaurante mantem o fluxo completo) */
+  if (isWidget && !tableMode) {
+    return (
+      <WidgetCompacto op={op} units={units} slug={slug} lang={lang} currency={currency} setCur={setCur}
+        toggleLang={toggleLang} isRestaurant={isRestaurant} />
+    );
+  }
 
   const galleryImgs = [
     ...(op.cover_images?.filter(Boolean) || []),

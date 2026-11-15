@@ -15,11 +15,11 @@ function operador(extra = {}) {
   };
 }
 
-function simularRede(op) {
+function simularRede(op, units = []) {
   global.fetch = vi.fn((url) => {
     const u = String(url);
     if (u.endsWith('/public/demo')) {
-      return Promise.resolve({ ok: true, json: () => Promise.resolve({ data: { operator: op, units: [] } }) });
+      return Promise.resolve({ ok: true, json: () => Promise.resolve({ data: { operator: op, units } }) });
     }
     return Promise.resolve({ ok: true, json: () => Promise.resolve({ data: [] }) });
   });
@@ -52,6 +52,19 @@ describe('PublicBooking: cor da marca', () => {
     await waitFor(() => expect(raiz().style.getPropertyValue('--brand-700-rgb')).toBe('194 65 12'));
     unmount();
     expect(raiz().style.getPropertyValue('--brand-700-rgb')).toBe('');
+  });
+
+  it('sem ?widget=1 a pagina continua completa (nav, servicos com filtros, rodape e chat)', async () => {
+    localStorage.setItem('sd-lang', 'pt');
+    simularRede(operador({ brand_color: null }), [
+      { id: 'u1', name: 'Passeio de buggy', description: 'x', unit_type: 'tour', base_price: 45, capacity: 8, images: [], pricing_rules: [], created_at: '2020-01-01T00:00:00Z' },
+    ]);
+    montar();
+    expect(await screen.findByText('Os Nossos Serviços')).toBeInTheDocument();
+    expect(document.querySelector('nav')).not.toBeNull();
+    expect(document.querySelector('footer')).not.toBeNull();
+    expect(screen.getByText('Filtrar')).toBeInTheDocument();
+    expect(document.querySelector('button.rounded-full')).not.toBeNull(); // chat
   });
 
   it('sem cor definida nao define variaveis (a pagina fica com a cor original)', async () => {
