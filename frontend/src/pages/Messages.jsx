@@ -16,6 +16,7 @@ import Input from '../components/ui/Input';
 import Modal from '../components/ui/Modal';
 import LoadingSpinner from '../components/shared/LoadingSpinner';
 import EmptyState from '../components/ui/EmptyState';
+import { ehDoOperador } from '../utils/mensagens';
 
 function formatTime(d) {
   if (!d) return '';
@@ -226,7 +227,7 @@ export default function Messages() {
       const cid = msg.group_id || (msg.sender_id === operator?.id ? msg.recipient_id : msg.sender_id);
       if (cid) setLastActivity(prev => ({ ...prev, [cid]: msg.created_at }));
 
-      if (msg.sender_type !== 'manager') {
+      if (!ehDoOperador(msg)) {
         playNotificationSound();
         const origem = msg.group_id ? 'Nova mensagem num grupo' : msg.sender_type === 'guest' ? 'Nova mensagem de um visitante' : 'Nova mensagem de um colaborador';
         showDesktopNotification(origem, msg.content?.slice(0, 120) || '');
@@ -234,8 +235,8 @@ export default function Messages() {
 
       if (isCurrent) {
         setMessages(prev => prev.find(m => m.id === msg.id) ? prev : [...prev, msg]);
-        markRead(msg.id).catch(() => {});
-      } else if (cid) {
+        if (!ehDoOperador(msg)) markRead(msg.id).catch(() => {});
+      } else if (cid && !ehDoOperador(msg)) {
         setUnreadCounts(prev => ({ ...prev, [cid]: (prev[cid] || 0) + 1 }));
       }
     });
@@ -290,7 +291,7 @@ export default function Messages() {
       const result = await listMessages(params);
       const msgs   = Array.isArray(result) ? result : (result?.data || []);
       setMessages(msgs);
-      const unread = msgs.filter(m => !m.is_read && m.sender_type !== 'manager');
+      const unread = msgs.filter(m => !m.is_read && !ehDoOperador(m));
       unread.forEach(m => markRead(m.id).catch(() => {}));
     } finally {
       setLoadingMsgs(false);
@@ -519,12 +520,15 @@ export default function Messages() {
                     <p className="text-xs font-body text-n-400">Sem mensagens ainda. Comece a conversa.</p>
                   </div>
                 ) : messages.map(msg => {
-                  const isMe = msg.sender_type === 'manager';
+                  const isMe = ehDoOperador(msg);
                   return (
                     <div key={msg.id} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
                       <div className={`max-w-[72%] px-3 py-2 rounded-md text-sm font-body ${isMe ? 'bg-ocean-700 text-white' : 'bg-n-100 text-n-800'}`}>
                         {!isMe && (
                           <p className="text-xs font-semibold mb-1 opacity-60 capitalize">{msg.sender_name || msg.sender_type}</p>
+                        )}
+                        {msg.sender_type === 'system' && (
+                          <p className="text-xs font-semibold mb-1 opacity-70">Resposta automatica</p>
                         )}
                         <p className="leading-relaxed whitespace-pre-wrap break-words">{msg.content}</p>
                         {msg.channel && msg.channel !== 'internal' && (
@@ -537,7 +541,7 @@ export default function Messages() {
                         )}
                         <div className={`flex items-center justify-end gap-1 mt-1 ${isMe ? 'opacity-60' : ''}`}>
                           <span className="text-xs">{formatTime(msg.created_at)}</span>
-                          {isMe && msg.channel === 'internal' && (
+                          {msg.sender_type === 'manager' && msg.channel === 'internal' && (
                             msg.is_read
                               ? <CheckCheck size={12} strokeWidth={2} className="text-sand-300" />
                               : <Check size={12} strokeWidth={2} />

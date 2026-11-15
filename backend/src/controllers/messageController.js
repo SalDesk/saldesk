@@ -154,7 +154,7 @@ async function unreadCount(req, res, next) {
   try {
     const { count, error } = await supabaseAdmin
       .from('messages').select('*', { count: 'exact', head: true })
-      .eq('operator_id', req.operator.id).eq('is_read', false).neq('sender_type', 'manager');
+      .eq('operator_id', req.operator.id).eq('is_read', false).not('sender_type', 'in', '(manager,system)');
     if (error) throw error;
     return res.json({ data: { count: count || 0 }, message: 'Contagem de nao lidas' });
   } catch (err) { next(err); }
