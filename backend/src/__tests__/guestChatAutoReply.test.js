@@ -13,24 +13,35 @@ jest.mock('../services/pushService', () => ({ notifyOperator: jest.fn(() => Prom
 jest.mock('../services/socketService', () => ({ emitToOperator: jest.fn() }));
 
 /* Estado do falso: o que cada tabela devolve e o que foi inserido */
-const estado = { operador: null, recentes: [], falhaNaRespostaAutomatica: false, inseridas: [], consultasRecentes: 0, seq: 0 };
+const estado = { operador: null, recentes: [], recentesDinamicos: false, falhaNaRespostaAutomatica: false, falhasPorInserir: 0, tentativasSistema: 0, inseridas: [], consultasRecentes: 0, seq: 0 };
 
 jest.mock('../config/supabase', () => {
   function construir(tabela) {
-    const b = { tabela, op: 'select', linha: null };
-    ['select', 'eq', 'in', 'gte', 'order', 'limit', 'or'].forEach((m) => {
+    const b = { tabela, op: 'select', linha: null, filtros: {} };
+    ['select', 'in', 'gte', 'order', 'limit', 'or'].forEach((m) => {
       b[m] = jest.fn(() => b);
     });
+    b.eq = jest.fn((col, v) => { b.filtros[col] = v; return b; });
     b.insert = jest.fn((linha) => { b.op = 'insert'; b.linha = linha; return b; });
     const resolver = () => {
       if (tabela === 'operators') return { data: estado.operador, error: null };
       if (tabela === 'messages' && b.op === 'insert') {
+        if (b.linha.sender_type === 'system') estado.tentativasSistema += 1;
+        /* uma insercao que falha nao fica guardada */
+        if (b.linha.sender_type === 'system' && (estado.falhaNaRespostaAutomatica || estado.falhasPorInserir > 0)) {
+          if (estado.falhasPorInserir > 0) estado.falhasPorInserir -= 1;
+          return { data: null, error: new Error('falha na base de dados') };
+        }
         estado.inseridas.push(b.linha);
-        if (b.linha.sender_type === 'system' && estado.falhaNaRespostaAutomatica) return { data: null, error: new Error('falha na base de dados') };
         estado.seq += 1;
         return { data: { id: `m${estado.seq}`, sender_type: b.linha.sender_type, content: b.linha.content, channel: 'internal', created_at: 't' }, error: null };
       }
-      if (tabela === 'messages') { estado.consultasRecentes += 1; return { data: estado.recentes, error: null }; }
+      if (tabela === 'messages') {
+        estado.consultasRecentes += 1;
+        /* dinamico: o que ja foi inserido para este hospede conta como "o sistema ja falou" */
+        if (estado.recentesDinamicos) return { data: estado.inseridas.filter((l) => l.sender_type === 'system' && l.recipient_id === b.filtros.recipient_id), error: null };
+        return { data: estado.recentes, error: null };
+      }
       return { data: [], error: null };
     };
     b.maybeSingle = jest.fn(() => Promise.resolve(resolver()));
@@ -73,6 +84,9 @@ beforeEach(() => {
   jest.setSystemTime(FORA);
   estado.operador = { id: 'op1', name: 'Sal Aventura', business_name: null, push_subscription: null, chat_auto_reply: CONFIG };
   estado.recentes = [];
+  estado.recentesDinamicos = false;
+  estado.falhasPorInserir = 0;
+  estado.tentativasSistema = 0;
   estado.falhaNaRespostaAutomatica = false;
   estado.inseridas = [];
   estado.consultasRecentes = 0;
@@ -143,6 +157,44 @@ describe('sendGuestChatMessage: resposta automatica', () => {
     expect(res.status).toHaveBeenCalledWith(201);
     expect(res.json.mock.calls[0][0].data.auto_reply).toBeUndefined();
     expect(res.json.mock.calls[0][0].data.message.sender_type).toBe('guest');
+  });
+
+  describe('mensagens simultaneas', () => {
+    beforeEach(() => { estado.recentesDinamicos = true; });
+
+    it('duas mensagens do mesmo hospede ao mesmo tempo geram uma so resposta automatica', async () => {
+      const [a, b] = await Promise.all([enviar(), enviar({ content: 'Ola outra vez' })]);
+      expect(respostasAutomaticas()).toHaveLength(1);
+      /* as duas mensagens do hospede seguem na mesma */
+      expect(estado.inseridas.filter((l) => l.sender_type === 'guest')).toHaveLength(2);
+      const comAuto = [a, b].filter(({ res }) => res.json.mock.calls[0][0].data.auto_reply);
+      expect(comAuto).toHaveLength(1);
+    });
+
+    it('varias mensagens seguidas em simultaneo continuam a dar uma so resposta', async () => {
+      await Promise.all([enviar(), enviar(), enviar(), enviar()]);
+      expect(respostasAutomaticas()).toHaveLength(1);
+    });
+
+    it('hospedes diferentes ao mesmo tempo recebem cada um a sua resposta', async () => {
+      obterOuCriarCliente.mockReset()
+        .mockResolvedValueOnce({ id: 'c1', name: 'Ana' })
+        .mockResolvedValueOnce({ id: 'c2', name: 'Rui' });
+      await Promise.all([enviar(), enviar({ email: 'rui@example.com', name: 'Rui' })]);
+      expect(respostasAutomaticas().map((l) => l.recipient_id).sort()).toEqual(['c1', 'c2']);
+    });
+
+    it('se a primeira falha ao gravar, a seguinte (em simultaneo) ainda responde', async () => {
+      estado.falhasPorInserir = 1;
+      const errSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+      const resultados = await Promise.all([enviar(), enviar()]);
+      errSpy.mockRestore();
+      resultados.forEach(({ res, next }) => { expect(next).not.toHaveBeenCalled(); expect(res.status).toHaveBeenCalledWith(201); });
+      expect(estado.tentativasSistema).toBe(2); /* 1 tentativa falhada + 1 gravada */
+      expect(respostasAutomaticas()).toHaveLength(1);
+      const comAuto = resultados.filter(({ res }) => res.json.mock.calls[0][0].data.auto_reply);
+      expect(comAuto).toHaveLength(1);
+    });
   });
 
   it('a mensagem do hospede e sempre a primeira a ser guardada', async () => {
