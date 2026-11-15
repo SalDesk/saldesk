@@ -328,6 +328,61 @@ describe('Messages', () => {
     limpo();
   });
 
+  describe('resposta automatica do chat do site (sender_type system)', () => {
+    const AUTO = { id: 'au1', sender_type: 'system', sender_id: 'op1', recipient_id: 'c1', recipient_type: 'guest', content: 'Estamos fora do horario.', channel: 'internal', is_read: false, created_at: AGORA };
+
+    it('na conversa aberta aparece do lado do operador, identificada, sem etiqueta de remetente de visitante', async () => {
+      await abre();
+      await abreConversa('Maria Cliente', [
+        { id: 'g1m', sender_type: 'guest', sender_id: 'c1', recipient_id: 'op1', content: 'Ola', created_at: AGORA, is_read: true },
+        AUTO,
+      ]);
+      const bolha = screen.getByText('Estamos fora do horario.').closest('div.max-w-\\[72\\%\\]');
+      expect(bolha.parentElement).toHaveClass('justify-end');
+      expect(within(bolha).getByText('Resposta automatica')).toBeInTheDocument();
+      expect(within(bolha).queryByText('system')).not.toBeInTheDocument();
+      /* nao e uma mensagem recebida: nao se marca como lida nem se mostra o visto de leitura */
+      expect(markRead).not.toHaveBeenCalledWith('au1');
+      expect(bolha.querySelector('svg')).toBeNull();
+    });
+
+    it('a chegar em directo com a conversa aberta aparece sem ser marcada como lida', async () => {
+      await abre();
+      await abreConversa('Maria Cliente');
+      evento('message:new', AUTO);
+      expect(screen.getByText('Estamos fora do horario.')).toBeInTheDocument();
+      expect(markRead).not.toHaveBeenCalled();
+    });
+
+    it('com outra conversa aberta nao conta como mensagem nao lida', async () => {
+      await abre();
+      evento('message:new', AUTO);
+      expect(within(contacto('Maria Cliente')).queryByText('1')).not.toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: 'Mensagens' })).toBeInTheDocument();
+    });
+
+    it('nao dispara notificacao do browser ("nova mensagem de um colaborador")', async () => {
+      const Antiga = window.Notification;
+      const criadas = [];
+      window.Notification = function (titulo) { criadas.push(titulo); };
+      window.Notification.permission = 'granted';
+      const oculto = Object.getOwnPropertyDescriptor(Document.prototype, 'hidden');
+      Object.defineProperty(document, 'hidden', { configurable: true, get: () => true });
+      try {
+        await abre();
+        evento('message:new', AUTO);
+        expect(criadas).toEqual([]);
+        /* controlo: uma mensagem de colaborador continua a notificar */
+        evento('message:new', { id: 'x1', sender_type: 'staff', sender_id: 's2', recipient_id: 'op1', content: 'Oi', created_at: AGORA });
+        expect(criadas).toHaveLength(1);
+      } finally {
+        window.Notification = Antiga;
+        delete document.hidden;
+        if (oculto) Object.defineProperty(Document.prototype, 'hidden', oculto);
+      }
+    });
+  });
+
   it('desliga o socket ao sair', async () => {
     await abre();
     cleanup();

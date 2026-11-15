@@ -13,6 +13,7 @@ import { useToast } from '../../store/toastStore';
 import { getMe } from '../../services/authService';
 import { trackPageView } from '../../utils/telemetry';
 import { playNotificationSound } from '../../utils/notificationSound';
+import { ehDoOperador } from '../../utils/mensagens';
 
 const OPERATOR_REFRESH_MS = 60 * 1000;
 
@@ -48,7 +49,7 @@ export default function Layout() {
        Ignora mensagens enviadas pelo proprio operador (ex: outra aba/
        dispositivo) para nao notificar de volta o que ele acabou de mandar. */
     socket.on('message:new', (msg) => {
-      if (msg.sender_type === 'manager' && msg.sender_id === operatorId) return;
+      if (ehDoOperador(msg) && msg.sender_id === operatorId) return;
       playNotificationSound();
       const title = msg.sender_type === 'guest' ? 'Novo cliente' : 'Mensagem da equipa';
       toast.notify(title, msg.content, () => navigate('/mensagens'));
