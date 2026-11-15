@@ -987,7 +987,27 @@ async function slugContact(req, res, next) {
 /* Resposta automatica fora de horas (Definicoes > Perfil Publico). So responde se o operador a ligou, se agora
    esta fora do horario dele e se ele (ou o sistema) ainda nao falou com este hospede nas ultimas
    JANELA_SILENCIO_HORAS. Nunca deixa uma falha aqui afectar a mensagem do hospede. */
-async function enviarRespostaAutomatica(operator, customer, lang) {
+
+/* Duas mensagens do mesmo hospede em simultaneo liam "o sistema ainda nao falou" ao mesmo tempo e
+   gravavam duas respostas. Por isso as respostas da mesma conversa (operador + hospede) correm em fila,
+   uma de cada vez: a segunda ja ve a primeira. A API corre num so processo (pm2 em modo fork); com
+   varias instancias isto teria de passar para a base de dados. */
+const filaRespostaAutomatica = new Map();
+function emFila(chave, tarefa) {
+  const anterior = filaRespostaAutomatica.get(chave) || Promise.resolve();
+  const atual = anterior.then(tarefa);
+  /* a fila nunca fica presa: o que vem a seguir corre mesmo que esta tarefa falhe (nao falha: apanha tudo) */
+  const fim = atual.catch(() => {});
+  filaRespostaAutomatica.set(chave, fim);
+  fim.then(() => { if (filaRespostaAutomatica.get(chave) === fim) filaRespostaAutomatica.delete(chave); });
+  return atual;
+}
+
+function enviarRespostaAutomatica(operator, customer, lang) {
+  return emFila(`${operator.id}:${customer.id}`, () => responderAutomaticamente(operator, customer, lang));
+}
+
+async function responderAutomaticamente(operator, customer, lang) {
   try {
     const config = operator.chat_auto_reply;
     if (!config || config.enabled !== true) return null;
