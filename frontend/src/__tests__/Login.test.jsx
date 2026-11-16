@@ -92,6 +92,19 @@ describe('Login', () => {
     expect(esqueci.className).toContain('shrink-0');
   });
 
+  it.each([
+    ['en', 'Show password', 'Hide password'],
+    ['de', 'Passwort anzeigen', 'Passwort verbergen'],
+    ['nl', 'Wachtwoord tonen', 'Wachtwoord verbergen'],
+  ])('o botao de mostrar password segue o idioma (%s)', (lang, mostrar, ocultar) => {
+    useUiStore.setState({ lang });
+    renderLogin();
+    const botao = screen.getByRole('button', { name: mostrar });
+    expect(botao).toHaveAttribute('aria-pressed', 'false');
+    fireEvent.click(botao);
+    expect(screen.getByRole('button', { name: ocultar })).toHaveAttribute('aria-pressed', 'true');
+  });
+
   it('o botao de mostrar password tem nome acessivel e alterna o tipo', () => {
     renderLogin();
 

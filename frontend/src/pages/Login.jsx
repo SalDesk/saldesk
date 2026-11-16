@@ -320,7 +320,7 @@ export default function Login() {
               <button
                 type="button"
                 onClick={() => setShowPw(p => !p)}
-                aria-label={showPw ? 'Ocultar password' : 'Mostrar password'}
+                aria-label={showPw ? t('auth.hidePassword') : t('auth.showPassword')}
                 aria-pressed={showPw}
                 className="absolute right-3.5 top-1/2 -translate-y-1/2 text-n-400 hover:text-ocean-700 transition-colors">
                 {showPw
