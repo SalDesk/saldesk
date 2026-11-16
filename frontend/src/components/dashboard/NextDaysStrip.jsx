@@ -40,7 +40,7 @@ export default function NextDaysStrip({ dias, contagens, hoje, lang, onAbrir }) 
             >
               <span>{nomes[d.getUTCDay()]}</span>
               <span className={`font-display font-semibold text-[13px] tabular-nums ${eHoje ? 'text-white' : 'text-n-900'}`}>{d.getUTCDate()}</span>
-              {n > 0 && <span className="tabular-nums font-semibold">{n}</span>}
+              {n > 0 && <span className="tabular-nums font-semibold">{`${n} ${t('dashboard.activity.resShort')}`}</span>}
             </button>
           );
         })}

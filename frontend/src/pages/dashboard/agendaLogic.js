@@ -172,6 +172,12 @@ export function porReceber(reservas) {
   ), 0);
 }
 
+/* Locale das datas por idioma da app */
+const LOCALES = { pt: 'pt-PT', en: 'en-GB', de: 'de-DE', nl: 'nl-NL' };
+export function localeDe(lang) {
+  return LOCALES[lang] || LOCALES.pt;
+}
+
 /* Chave da saudacao pela hora local: 5-11 manha, 12-18 tarde, resto noite */
 export function saudacao(hora) {
   if (hora >= 5 && hora <= 11) return 'morning';

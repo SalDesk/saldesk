@@ -19,7 +19,8 @@ import api from '../services/api';
 
 vi.mock('../services/unitsService', () => ({ listUnits: vi.fn() }));
 vi.mock('../services/reservationsService', () => ({ listReservations: vi.fn() }));
-vi.mock('../services/financeiroService', () => ({ getResumo: vi.fn() }));
+vi.mock('../services/financeiroService', () => ({ getResumo: vi.fn(), getReceita: vi.fn().mockResolvedValue([]) }));
+vi.mock('../services/assignmentService', () => ({ listAssignments: vi.fn().mockResolvedValue([]) }));
 vi.mock('../services/weatherService', async (importOriginal) => {
   const real = await importOriginal();
   return { ...real, getWeatherForecast: vi.fn() };

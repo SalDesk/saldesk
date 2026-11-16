@@ -65,7 +65,7 @@ function servicosAFalhar() {
 }
 
 /* Texto que so o componente de cada tipo renderiza (pt, existente no codigo original) */
-const TEXTO_ACTIVITY   = 'Tours de hoje';
+const TEXTO_ACTIVITY   = 'Agenda de hoje';
 const TEXTO_HOTEL      = 'Check-outs hoje';
 const TEXTO_RENTACAR   = 'Levantamentos hoje';
 const TEXTO_RESTAURANT = 'Covers do mes';
