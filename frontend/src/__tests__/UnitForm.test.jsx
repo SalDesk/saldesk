@@ -247,26 +247,17 @@ describe('TourForm', () => {
     ]);
   });
 
-  it('os campos obrigatorios so mostram o asterisco: o campo nao leva o atributo required e nada os impede', () => {
+  it('os campos obrigatorios (Nome PT, Capacidade maxima) levam required e o navegador impede gravar vazio', () => {
     const { onSave } = renderForm('activity');
-    expect(campo('Nome PT')).not.toBeRequired();
-    expect(campo('Capacidade maxima')).not.toBeRequired();
+    expect(campo('Nome PT')).toBeRequired();
+    expect(campo('Capacidade maxima')).toBeRequired();
     expect(screen.getAllByText((_, el) => el.tagName === 'LABEL' && el.textContent === 'Nome PT*')).toHaveLength(1);
     fireEvent.click(botao('Criar tour'));
-    /* vazio continua a ser o que era: nome '' e capacidade Number('') = 0 */
-    expect(guardar(onSave)).toStrictEqual({
-      name: '',
-      description: JSON.stringify(META_VAZIA),
-      unit_type: 'Tour',
-      base_price: 0,
-      price_unit: 'person',
-      capacity: 0,
-      status: 'active',
-      images: [],
-      ota_product_ids: OTA_VAZIO,
-      lat: null,
-      lng: null,
-    });
+    expect(onSave).not.toHaveBeenCalled();
+    escrever(campo('Nome PT'), 'Tour do Sal');
+    escrever(campo('Capacidade maxima'), '8');
+    fireEvent.click(botao('Criar tour'));
+    expect(guardar(onSave)).toMatchObject({ name: 'Tour do Sal', capacity: 8, unit_type: 'Tour', price_unit: 'person' });
   });
 
   it('a capacidade abaixo do minimo (min=1) e travada pelo navegador, mas o submit direto passa', () => {
@@ -768,24 +759,16 @@ describe('HotelRoomForm', () => {
     }
   });
 
-  it('os campos obrigatorios so mostram o asterisco: nada impede gravar vazio (nome "", preco 0)', () => {
+  it('o nome e o preco base levam required e o navegador impede gravar vazio', () => {
     const { onSave } = renderForm('hotel');
-    expect(campo('Nome')).not.toBeRequired();
-    expect(campo('Preco base')).not.toBeRequired();
+    expect(campo('Nome')).toBeRequired();
+    expect(campo('Preco base')).toBeRequired();
     fireEvent.click(botao('Criar quarto'));
-    expect(guardar(onSave)).toStrictEqual({
-      name: '',
-      description: JSON.stringify({ ...META_QUARTO_VAZIA, name: null }),
-      unit_type: 'Double',
-      base_price: 0,
-      price_unit: 'night',
-      capacity: 2,
-      status: 'active',
-      images: [],
-      ota_product_ids: OTA_VAZIO,
-      lat: null,
-      lng: null,
-    });
+    expect(onSave).not.toHaveBeenCalled();
+    escrever(campo('Nome'), 'Quarto Azul');
+    escrever(campo('Preco base'), '80');
+    fireEvent.click(botao('Criar quarto'));
+    expect(guardar(onSave)).toMatchObject({ name: 'Quarto Azul', base_price: 80, unit_type: 'Double', price_unit: 'night', capacity: 2 });
   });
 
   it('adultos abaixo do minimo (min=1) sao travados pelo navegador', () => {
@@ -1077,12 +1060,15 @@ describe('RentacarVehicleForm', () => {
     expect(screen.queryByText('Tarifa de motorista (por dia)')).toBeNull();
   });
 
-  it('o preco base so mostra o asterisco: nada impede gravar vazio (preco 0)', () => {
+  it('o preco base leva required e o navegador impede gravar sem preco', () => {
     const { onSave } = renderForm('rentacar');
-    expect(campo('Preco base / dia')).not.toBeRequired();
+    expect(campo('Preco base / dia')).toBeRequired();
+    fireEvent.click(botao('Registar viatura'));
+    expect(onSave).not.toHaveBeenCalled();
+    escrever(campo('Preco base / dia'), '45');
     fireEvent.click(botao('Registar viatura'));
     const v = guardar(onSave);
-    expect(v.base_price).toBe(0);
+    expect(v.base_price).toBe(45);
     expect(v.name).toBe('Viatura');
   });
 
@@ -1418,13 +1404,15 @@ describe('RestaurantTableForm', () => {
     expect(screen.queryByText('Fotos')).toBeNull();
   });
 
-  it('capacidade minima ou maxima vazia (so asterisco) cai para 1 e 4', () => {
-    const { onSave } = renderForm('restaurant');
-    expect(campo('Minimo (pessoas)')).not.toBeRequired();
-    expect(campo('Maximo (pessoas)')).not.toBeRequired();
+  it('capacidade minima ou maxima vazia: o navegador impede; num submit directo cai para 1 e 4', () => {
+    const { onSave, container } = renderForm('restaurant');
+    expect(campo('Minimo (pessoas)')).toBeRequired();
+    expect(campo('Maximo (pessoas)')).toBeRequired();
     escrever(campo('Minimo (pessoas)'), '');
     escrever(campo('Maximo (pessoas)'), '');
     fireEvent.click(botao('Criar mesa'));
+    expect(onSave).not.toHaveBeenCalled();
+    fireEvent.submit(container.querySelector('form'));
     const v = guardar(onSave);
     expect(v.capacity).toBe(4);
     expect(JSON.parse(v.description)).toMatchObject({ capacity_min: 1, capacity_max: 4 });
@@ -1721,23 +1709,15 @@ describe('formulario generico', () => {
     expect(campo('Capacidade').value).toBe('1');
   });
 
-  it('os campos obrigatorios so mostram o asterisco: nada impede gravar vazio', () => {
+  it('o nome leva required e o navegador impede gravar vazio', () => {
     const { onSave } = renderForm('transfer');
-    expect(campo('Nome')).not.toBeRequired();
+    expect(campo('Nome')).toBeRequired();
     fireEvent.click(botao('Nova Unidade'));
-    expect(guardar(onSave)).toStrictEqual({
-      name: '',
-      description: '',
-      unit_type: '',
-      base_price: 0,
-      price_unit: 'day',
-      capacity: 1,
-      status: 'active',
-      images: [],
-      ota_product_ids: OTA_VAZIO,
-      lat: null,
-      lng: null,
-    });
+    expect(onSave).not.toHaveBeenCalled();
+    escrever(campo('Nome'), 'Transfer aeroporto');
+    escrever(campo('Preco base (€)'), '25');
+    fireEvent.click(botao('Nova Unidade'));
+    expect(guardar(onSave)).toMatchObject({ name: 'Transfer aeroporto', base_price: 25, price_unit: 'day', capacity: 1 });
   });
 
   it('capacidade abaixo do minimo (min=1) e travada pelo navegador', () => {

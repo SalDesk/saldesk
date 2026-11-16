@@ -341,11 +341,15 @@ describe('Frota', () => {
       expect(typeof createFleet.mock.calls[0][0].capacity).toBe('number');
     });
 
-    it('sem validacao nativa: nome vazio tambem se envia (como hoje)', async () => {
+    it('o nome e obrigatorio: vazio o navegador impede o envio, preenchido envia', async () => {
       await abrirCriar();
+      expect(campo('Nome')).toBeRequired();
+      fireEvent.click(botaoDoDialogo('Criar item'));
+      expect(createFleet).not.toHaveBeenCalled();
+      fireEvent.change(campo('Nome'), { target: { value: 'Jimny 2' } });
       fireEvent.click(botaoDoDialogo('Criar item'));
       await waitFor(() => expect(createFleet).toHaveBeenCalledTimes(1));
-      expect(createFleet.mock.calls[0][0].name).toBe('');
+      expect(createFleet.mock.calls[0][0].name).toBe('Jimny 2');
     });
 
     it('foto: o ficheiro escolhido aparece na pre-visualizacao e segue em photo e images', async () => {
@@ -399,6 +403,7 @@ describe('Frota', () => {
     it('erro sem mensagem usa "Erro ao guardar" e reabrir limpa o erro', async () => {
       await abrirCriar();
       createFleet.mockReset().mockRejectedValue(new Error('rede'));
+      fireEvent.change(campo('Nome'), { target: { value: 'Jimny 2' } });
       fireEvent.click(botaoDoDialogo('Criar item'));
       expect(await screen.findByText('Erro ao guardar')).toBeInTheDocument();
       fireEvent.click(botaoDoDialogo('Cancelar'));

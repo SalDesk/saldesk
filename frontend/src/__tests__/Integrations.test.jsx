@@ -179,10 +179,11 @@ describe('Channel Manager: ligar um canal', () => {
     getStatus.mockResolvedValue([{ channel: 'viator', is_active: false }, GYG]);
     await montar();
     fireEvent.click(within(cartao('Viator')).getByRole('button', { name: 'Configurar' }));
-    /* o ui/Input so usa required para o asterisco da etiqueta: o campo nao leva o atributo (comportamento existente) */
     expect(within(dialogo()).getByText('API Key').textContent).toBe('API Key*');
     expect(within(dialogo()).getByText('Supplier ID').textContent).toBe('Supplier ID*');
-    expect(campo('API Key')).not.toBeRequired();
+    /* o campo leva o atributo required: o navegador impede ligar sem preencher */
+    expect(campo('API Key')).toBeRequired();
+    expect(campo('Supplier ID')).toBeRequired();
   });
 
   it('ligar_envia_os_campos_e_product_ids_como_lista_sem_vazios_e_fecha_e_recarrega', async () => {

@@ -184,6 +184,8 @@ describe('MenuDigital', () => {
     await abre();
     fireEvent.click(screen.getByRole('button', { name: 'Novo Prato' }));
     const dialogo = await screen.findByRole('dialog');
+    fireEvent.change(campo(dialogo, 'Nome PT'), { target: { value: 'Bacalhau' } });
+    fireEvent.change(campo(dialogo, 'Preco (€)'), { target: { value: '9.9' } });
     fireEvent.click(within(dialogo).getByRole('button', { name: 'Adicionar prato' }));
     expect(await within(dialogo).findByText('Nome invalido')).toBeInTheDocument();
     createUnit.mockRejectedValueOnce(new Error('rede'));

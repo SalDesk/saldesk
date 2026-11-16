@@ -265,13 +265,13 @@ describe('Planeador: PostModal', () => {
     expect(h.onSave).toHaveBeenCalledWith({ ...EXISTENTE, extra: 'x', status: 'cancelado', id: 'p1' });
   });
 
-  it('os_campos_obrigatorios_so_mostram_o_asterisco_e_nao_impedem_guardar_vazio', () => {
+  it('os_campos_obrigatorios_tem_asterisco_e_required_e_o_navegador_impede_guardar_vazio', () => {
     const { h } = modal(null);
     expect(screen.getByText('Texto PT').textContent).toBe('Texto PT*');
     expect(screen.getByText('Data e hora').textContent).toBe('Data e hora*');
-    expect(campo('Texto PT', 'textarea')).not.toBeRequired();
-    fireEvent.submit(screen.getByRole('button', { name: 'Agendar post' }).closest('form'));
-    expect(h.onSave).toHaveBeenCalledTimes(1);
+    expect(campo('Texto PT', 'textarea')).toBeRequired();
+    fireEvent.click(screen.getByRole('button', { name: 'Agendar post' }));
+    expect(h.onSave).not.toHaveBeenCalled();
   });
 
   it('o_preview_do_Instagram_mostra_nome_texto_e_foto_e_alterna_para_o_Facebook', () => {
