@@ -37,10 +37,10 @@ describe('MoreDrawer: acessibilidade', () => {
   it('fechado nao expoe os botoes ao teclado nem a leitores de ecra', () => {
     render(<Harness />);
     expect(screen.queryByRole('dialog')).toBeNull();
-    /* os botoes do menu existem no DOM mas estao escondidos (nao focaveis) */
+    /* os botoes do menu existem no DOM mas estao inertes: nao focaveis e fora da arvore de acessibilidade */
     const sheet = document.querySelector('[aria-hidden="true"]');
     expect(sheet).not.toBeNull();
-    expect(sheet.className).toMatch(/invisible/);
+    expect(sheet.hasAttribute('inert')).toBe(true);
   });
 
   it('aberto e um dialogo modal com nome', () => {
@@ -48,7 +48,8 @@ describe('MoreDrawer: acessibilidade', () => {
     abrir();
     const dialogo = screen.getByRole('dialog', { name: 'Mais opcoes' });
     expect(dialogo).toHaveAttribute('aria-modal', 'true');
-    expect(dialogo.className).not.toMatch(/invisible/);
+    expect(dialogo.hasAttribute('inert')).toBe(false);
+    expect(dialogo).not.toHaveAttribute('aria-hidden');
   });
 
   it('ao abrir o foco vai para dentro do menu', () => {

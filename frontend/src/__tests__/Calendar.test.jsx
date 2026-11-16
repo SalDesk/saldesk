@@ -617,6 +617,9 @@ describe('Calendar', () => {
       expect(campo('Unidade', 'select')).toHaveValue('u1');
       expect(campo('Check-in')).toHaveValue(DIA15);
       expect(campo('Check-out')).toHaveValue(DIA16);
+      /* as unidades do calendario nao trazem preco: a previsao de preco fica escondida em vez de "€NaN" */
+      expect(document.body.textContent).not.toContain('NaN');
+      expect(screen.queryByText(/noite\(s\)/)).toBeNull();
 
       fireEvent.change(campo('Cliente'), { target: { value: 'Maria Teste' } });
       fireEvent.change(campo('Email'), { target: { value: 'maria@teste.cv' } });

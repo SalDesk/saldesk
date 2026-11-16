@@ -66,15 +66,16 @@ export default function MoreDrawer({ open, onClose }) {
         />
       )}
 
-      {/* Fechado: invisible (sem foco nem leitura por leitores de ecra); a visibilidade muda no fim da animacao */}
+      {/* Fechado: inert (sem foco nem leitura por leitores de ecra), sem depender de transicoes CSS que atrasariam o foco */}
       <div
         ref={folhaRef}
         role={open ? 'dialog' : undefined}
         aria-modal={open ? 'true' : undefined}
         aria-label={open ? 'Mais opcoes' : undefined}
         aria-hidden={open ? undefined : 'true'}
-        className={`md:hidden fixed bottom-0 inset-x-0 z-50 bg-white rounded-t-2xl shadow-xl max-h-[80vh] overflow-y-auto transition-[transform,visibility] duration-250 ease-out ${
-          open ? 'translate-y-0 visible' : 'translate-y-full invisible'
+        inert={open ? undefined : ''}
+        className={`md:hidden fixed bottom-0 inset-x-0 z-50 bg-white rounded-t-2xl shadow-xl max-h-[80vh] overflow-y-auto transition-transform duration-250 ease-out ${
+          open ? 'translate-y-0' : 'translate-y-full'
         }`}
       >
         <div className="flex justify-center pt-2.5 pb-1">

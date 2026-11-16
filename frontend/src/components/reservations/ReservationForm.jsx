@@ -47,8 +47,10 @@ export default function ReservationForm({ reservation, initial, units, operatorT
       // Mesas nao tem preco por reserva (base_price e sempre 0) -- sem pre-visualizacao.
       setPricePreview(null);
     } else if (operatorType === 'activity') {
-      if (form.check_in && form.guests) {
-        setPricePreview({ total: Number(unit.base_price) * Number(form.guests), tipo: 'activity' });
+      const total = Number(unit.base_price) * Number(form.guests);
+      /* unidades sem preco (ex: as do calendario) nao dao previsao, em vez de "€NaN" */
+      if (form.check_in && form.guests && Number.isFinite(total)) {
+        setPricePreview({ total, tipo: 'activity' });
       } else {
         setPricePreview(null);
       }
@@ -57,7 +59,8 @@ export default function ReservationForm({ reservation, initial, units, operatorT
         const dias = Math.ceil(
           (new Date(form.check_out) - new Date(form.check_in)) / (1000 * 60 * 60 * 24)
         );
-        setPricePreview({ total: Number(unit.base_price) * dias, dias, tipo: 'hotel' });
+        const total = Number(unit.base_price) * dias;
+        setPricePreview(Number.isFinite(total) ? { total, dias, tipo: 'hotel' } : null);
       } else {
         setPricePreview(null);
       }
