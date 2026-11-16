@@ -1,15 +1,13 @@
 import { useState, useEffect } from 'react';
-import PlanGuard from '../components/PlanGuard';
 import {
   Mail, MessageCircle, Calendar, Star, Gift, Newspaper,
   ChevronDown, ChevronUp, Eye, Edit2, Save, X as XIcon,
-  History, Check,
+  History,
 } from 'lucide-react';
 import {
   listAutomations, createAutomation, updateAutomation,
   toggleAutomation, getLogsAll,
 } from '../services/automationsService';
-import useAuthStore from '../store/authStore';
 import PageHeader from '../components/layout/PageHeader';
 import Button from '../components/ui/Button';
 import Card from '../components/ui/Card';

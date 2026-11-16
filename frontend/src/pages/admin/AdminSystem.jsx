@@ -1,10 +1,10 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import {
   Server, Database, Cpu, HardDrive, Clock, Wifi,
-  Shield, AlertTriangle, XCircle, CheckCircle, Circle,
-  RefreshCw, Trash2, Ban, LogOut, Save, RotateCcw,
+  Shield, AlertTriangle, XCircle, Circle,
+  RefreshCw, Trash2, Ban, Save, RotateCcw,
   Archive, Zap, Settings, Activity, Lock, FileText,
-  ChevronRight, Terminal, X,
+  Terminal, X,
 } from 'lucide-react';
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,

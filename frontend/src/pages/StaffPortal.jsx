@@ -1,12 +1,12 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { useParams, useNavigate, Route, Routes, NavLink } from 'react-router-dom';
 import {
-  Briefcase, Euro, LogOut, CheckCircle, PlayCircle, Clock, MapPin, User, Users, ChevronRight, ChevronLeft, Car, AlertTriangle,
-  Calendar, CalendarCheck, MessageCircle, Camera, Upload, Phone, Lock, Mail, Sun, Send, FileText, Award, Plus, X,
+  Briefcase, Euro, LogOut, CheckCircle, PlayCircle, Clock, MapPin, User, ChevronRight, ChevronLeft, Car, AlertTriangle,
+  Calendar, CalendarCheck, MessageCircle, Camera, Upload, Phone, Lock, Mail, Sun, FileText, Award, Plus, X,
 } from 'lucide-react';
 import api from '../services/api';
 import {
-  getMyProfile, updateMyProfile, setAvailability, listStaff,
+  getMyProfile, updateMyProfile, setAvailability,
   listLeave, createLeave, getLeaveBalance, listDocuments, listCertifications,
 } from '../services/staffService';
 import ExpiryBadge from '../components/shared/ExpiryBadge';

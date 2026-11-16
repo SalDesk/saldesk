@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Mail, MessageCircle, Pencil, Trash2, Zap } from 'lucide-react';
+import { Mail, MessageCircle, Pencil, Trash2 } from 'lucide-react';
 import { toggleAutomation, deleteAutomation } from '../../services/automationsService';
 import { useT } from '../../i18n';
 import Badge from '../ui/Badge';

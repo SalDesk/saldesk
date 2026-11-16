@@ -1,9 +1,8 @@
 import { useState, useEffect, useMemo } from 'react';
-import PlanGuard from '../components/PlanGuard';
 import { useNavigate } from 'react-router-dom';
 import {
   Sun, Cloud, CloudFog, CloudDrizzle, CloudRain, CloudLightning,
-  AlertTriangle, RefreshCw, Users, CalendarDays, MapPin,
+  AlertTriangle, RefreshCw, Users,
 } from 'lucide-react';
 import { getWeatherForecast, weatherInfo, isBadWeather, dayLabel } from '../services/weatherService';
 import { listReservations } from '../services/reservationsService';

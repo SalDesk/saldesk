@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import {
   X, ArrowRight, Pencil, Check, Tag, Mail, MessageCircle,
-  Phone, Globe, Calendar, Crown, Send, Clock, ChevronDown, Plus,
+  Crown, Send,
 } from 'lucide-react';
 import { getCustomer, updateCustomer } from '../../services/customersService';
 import api from '../../services/api';
@@ -9,7 +9,7 @@ import { useT } from '../../i18n';
 import Badge from '../ui/Badge';
 import Button from '../ui/Button';
 import Tabs from '../ui/Tabs';
-import Input, { Textarea, Select } from '../ui/Input';
+import Input, { Textarea } from '../ui/Input';
 import LoadingSpinner from '../shared/LoadingSpinner';
 
 function formatDate(d) {

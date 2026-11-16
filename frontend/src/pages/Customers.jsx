@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import {
   Search, Download, Users, Globe, TrendingUp, Star,
-  Upload, Tag, Crown, Building2, UserCheck, Plane, Plus,
+  Upload, Crown, Building2, UserCheck, Plane, Plus,
 } from 'lucide-react';
 import { listCustomers, exportCustomersCsv, createCustomer } from '../services/customersService';
 import { useT } from '../i18n';
@@ -13,7 +13,6 @@ import Table from '../components/ui/Table';
 import Modal from '../components/ui/Modal';
 import FilterChips from '../components/ui/FilterChips';
 import CustomerDetail from '../components/crm/CustomerDetail';
-import LoadingSpinner from '../components/shared/LoadingSpinner';
 
 const SEGMENTS = [
   { key: '',           label: 'Todos',       Icon: Users },

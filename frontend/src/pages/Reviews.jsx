@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Star, MessageCircle, Send, Filter, ChevronDown, Search } from 'lucide-react';
+import { Star, MessageCircle, Send, Search } from 'lucide-react';
 import api from '../services/api';
 import PageHeader from '../components/layout/PageHeader';
 import Card from '../components/ui/Card';

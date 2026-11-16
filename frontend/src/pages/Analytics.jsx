@@ -1,10 +1,9 @@
 import { useState, useEffect } from 'react';
-import PlanGuard from '../components/PlanGuard';
 import {
-  Activity, TrendingUp, TrendingDown, Star,
+  Activity, TrendingUp, Star,
   Users, Globe, BarChart2, RefreshCw, Mail,
   ArrowUpRight, ArrowDownRight, Minus,
-  MousePointerClick, Building2, Edit2, Save, Check,
+  MousePointerClick, Building2, Edit2, Check,
 } from 'lucide-react';
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell,

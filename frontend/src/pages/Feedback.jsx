@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import {
-  ThumbsUp, Star, Send, RefreshCw, Save,
-  BarChart2, Clock, TrendingUp, CheckCircle2,
+  Star, Send, RefreshCw, Save,
+  BarChart2, TrendingUp, CheckCircle2,
 } from 'lucide-react';
 import api from '../services/api';
 import { listReservations } from '../services/reservationsService';

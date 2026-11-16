@@ -1,10 +1,10 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  Sparkles, User, CheckSquare, Square, AlertTriangle,
-  Clock, RefreshCw, X, ChevronDown, ChevronUp, BarChart2,
+  Sparkles, CheckSquare, Square, AlertTriangle,
+  RefreshCw, ChevronDown, ChevronUp,
 } from 'lucide-react';
-import { listUnits, updateUnit } from '../services/unitsService';
+import { listUnits } from '../services/unitsService';
 import { listReservations } from '../services/reservationsService';
 import { estadiaEm } from '../services/reservationRanges';
 import api from '../services/api';

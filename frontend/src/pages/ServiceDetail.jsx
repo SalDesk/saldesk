@@ -3,10 +3,10 @@ import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   MapPin, Phone, Star, ChevronLeft, ChevronRight, MessageCircle,
-  Menu, X, Globe, Mail, Calendar, Users, Check, ArrowRight, Shield,
-  ExternalLink, ChevronDown, ChevronUp, Copy, Send, Award, Share2,
+  Menu, X, Globe, Calendar, Users, Check, ArrowRight, Shield,
+  ExternalLink, Copy, Share2,
   Heart, Compass, Car, Utensils, Clock, AlertCircle, RotateCcw,
-  CreditCard, Lock, Building, Camera, ThumbsUp, Languages,
+  CreditCard, Building, Camera, ThumbsUp, Languages,
   ShoppingBag, User,
 } from 'lucide-react';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';

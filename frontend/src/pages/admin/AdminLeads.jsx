@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect } from 'react';
 import {
   Download, Search, ChevronUp, Mail, ArrowRightCircle, Send, Check,
   LayoutGrid, List, Plus, Phone, Users as UsersIcon, Video, MessageSquare,
-  Clock, FileText,
+  Clock,
 } from 'lucide-react';
 import api from '../../services/api';
 import PageHeader from '../../components/layout/PageHeader';
