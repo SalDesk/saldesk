@@ -377,12 +377,25 @@ describe('Definicoes: Perfil Publico', () => {
     });
   });
 
-  it('um_horario_em_que_o_fim_nao_e_posterior_ao_inicio_avisa_e_nao_guarda', async () => {
+  it('um_horario_que_atravessa_a_meia_noite_e_aceite_e_guardado', async () => {
+    await abrirPerfil();
+    const cartaoChat = cartao('Chat do site: resposta automatica');
+    fireEvent.click(within(cartaoChat).getByRole('checkbox', { name: 'Responder automaticamente fora do horario' }));
+    fireEvent.change(within(cartaoChat).getByLabelText('Abre as'), { target: { value: '22:00' } });
+    fireEvent.change(within(cartaoChat).getByLabelText('Fecha as'), { target: { value: '06:00' } });
+    expect(within(cartaoChat).queryByRole('alert')).toBeNull();
+    expect(within(cartaoChat).getByText(/atravessa a meia-noite/)).toBeInTheDocument();
+    fireEvent.click(botao('Guardar perfil'));
+    await waitFor(() => expect(updateOperator).toHaveBeenCalled());
+    expect(ultimoPut().chat_auto_reply).toMatchObject({ enabled: true, from: '22:00', to: '06:00' });
+  });
+
+  it('um_horario_em_que_o_fim_e_igual_ao_inicio_avisa_e_nao_guarda', async () => {
     await abrirPerfil();
     const cartaoChat = cartao('Chat do site: resposta automatica');
     fireEvent.click(within(cartaoChat).getByRole('checkbox', { name: 'Responder automaticamente fora do horario' }));
     fireEvent.change(within(cartaoChat).getByLabelText('Fecha as'), { target: { value: '09:00' } });
-    expect(within(cartaoChat).getByRole('alert')).toHaveTextContent('A hora de fecho tem de ser posterior a hora de abertura.');
+    expect(within(cartaoChat).getByRole('alert')).toHaveTextContent('A hora de fecho tem de ser diferente da hora de abertura.');
     fireEvent.click(botao('Guardar perfil'));
     expect(updateOperator).not.toHaveBeenCalled();
     fireEvent.change(within(cartaoChat).getByLabelText('Fecha as'), { target: { value: '18:00' } });

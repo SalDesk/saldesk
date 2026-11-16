@@ -115,7 +115,7 @@ export default function PerfilPublicoTab({ operator }) {
   /* Validacao do cartao do chat (so conta quando esta ligado); o backend volta a validar */
   const erroChat = !chatAuto.enabled ? ''
     : chatAuto.days.length === 0 ? 'Escolhe pelo menos um dia de atendimento.'
-    : chatAuto.to <= chatAuto.from ? 'A hora de fecho tem de ser posterior a hora de abertura.'
+    : chatAuto.to === chatAuto.from ? 'A hora de fecho tem de ser diferente da hora de abertura.'
     : '';
 
   /* Cor da marca: vazio = cor original; o backend volta a validar (formato e contraste) */
@@ -277,6 +277,11 @@ export default function PerfilPublicoTab({ operator }) {
                 <Input label="Fecha as" aria-label="Fecha as" type="time" value={chatAuto.to} onChange={e => setChatAuto(c => ({ ...c, to: e.target.value }))} />
               </div>
               {erroChat && <p role="alert" className="text-xs font-body text-[var(--error)]">{erroChat}</p>}
+              {!erroChat && chatAuto.to < chatAuto.from && (
+                <p className="text-xs font-body text-n-400">
+                  Este horario atravessa a meia-noite: o dia escolhido conta pelo inicio do turno (ex: o turno de segunda acaba na madrugada de terca).
+                </p>
+              )}
               <Textarea label="Portugues" aria-label="Mensagem em Portugues" value={chatAuto.message_pt}
                 onChange={e => setChatAuto(c => ({ ...c, message_pt: e.target.value }))} rows={3} maxLength={500} placeholder={TEXTO_CHAT_PT} />
               <Textarea label="Ingles (EN)" aria-label="Mensagem em Ingles" value={chatAuto.message_en}

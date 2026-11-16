@@ -44,6 +44,12 @@ describe('updateOperator: chat_auto_reply', () => {
     expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ message: 'Perfil actualizado com sucesso' }));
   });
 
+  it('guarda um horario que atravessa a meia-noite', async () => {
+    const { res } = await guardar({ chat_auto_reply: { enabled: true, days: [1, 2], from: '22:00', to: '06:00' } });
+    expect(res.status).not.toHaveBeenCalled();
+    expect(estado.atualizacao.chat_auto_reply).toMatchObject({ days: [1, 2], from: '22:00', to: '06:00' });
+  });
+
   it('null desliga e limpa a configuracao', async () => {
     await guardar({ chat_auto_reply: null });
     expect(estado.atualizacao).toHaveProperty('chat_auto_reply', null);
@@ -55,7 +61,7 @@ describe('updateOperator: chat_auto_reply', () => {
   });
 
   it.each([
-    ['horario invertido', { enabled: true, days: [1], from: '18:00', to: '09:00' }],
+    ['inicio igual ao fim', { enabled: true, days: [1], from: '09:00', to: '09:00' }],
     ['dia invalido', { enabled: true, days: [9], from: '09:00', to: '18:00' }],
     ['ligada sem dias', { enabled: true, days: [], from: '09:00', to: '18:00' }],
     ['texto demasiado longo', { enabled: true, days: [1], from: '09:00', to: '18:00', message_pt: 'x'.repeat(501) }],
