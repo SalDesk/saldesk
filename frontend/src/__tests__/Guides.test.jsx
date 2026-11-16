@@ -507,11 +507,15 @@ describe('Guias', () => {
       }]);
     });
 
-    it('sem validacao nativa: nome vazio tambem se envia (como hoje)', async () => {
+    it('o nome e obrigatorio: vazio o navegador impede o envio, preenchido envia', async () => {
       await abrirCriar();
+      expect(campo('Nome completo')).toBeRequired();
+      fireEvent.click(botaoDoDialogo('Adicionar guia'));
+      expect(createStaff).not.toHaveBeenCalled();
+      fireEvent.change(campo('Nome completo'), { target: { value: 'Novo Guia' } });
       fireEvent.click(botaoDoDialogo('Adicionar guia'));
       await waitFor(() => expect(createStaff).toHaveBeenCalledTimes(1));
-      expect(createStaff.mock.calls[0][0].name).toBe('');
+      expect(createStaff.mock.calls[0][0].name).toBe('Novo Guia');
     });
 
     it('sucesso: fecha o modal e o guia novo fica no topo da lista', async () => {
@@ -548,6 +552,7 @@ describe('Guias', () => {
     it('erro sem mensagem usa "Erro ao guardar" e reabrir limpa o erro', async () => {
       await abrirCriar();
       createStaff.mockReset().mockRejectedValue(new Error('rede'));
+      fireEvent.change(campo('Nome completo'), { target: { value: 'Novo Guia' } });
       fireEvent.click(botaoDoDialogo('Adicionar guia'));
       expect(await screen.findByText('Erro ao guardar')).toBeInTheDocument();
       fireEvent.click(botaoDoDialogo('Cancelar'));

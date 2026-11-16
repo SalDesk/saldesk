@@ -1,6 +1,7 @@
 const variants = {
   confirmed:   'bg-[var(--success-light)] text-[var(--success)]',
   pending:     'bg-[var(--warning-light)] text-[var(--warning)]',
+  warning:     'bg-[var(--warning-light)] text-[var(--warning)]',
   cancelled:   'bg-[var(--error-light)] text-[var(--error)]',
   info:        'bg-[var(--info-light)] text-[var(--info)]',
   checked_in:  'bg-ocean-50 text-ocean-700 dark:bg-ocean-900 dark:text-ocean-200',

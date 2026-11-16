@@ -191,7 +191,7 @@ export default function PageEditor() {
                       <Icon size={15} strokeWidth={1.75} />
                     </div>
                     <p className="text-sm font-display font-semibold text-n-800 flex-1">{meta.label}</p>
-                    <Toggle checked={s.enabled} onChange={() => toggleSection(s.key)} />
+                    <Toggle checked={s.enabled} onChange={() => toggleSection(s.key)} aria-label={`Mostrar ${meta.label}`} />
                   </div>
                 );
               })}

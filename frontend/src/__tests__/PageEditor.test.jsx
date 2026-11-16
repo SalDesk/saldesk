@@ -305,6 +305,16 @@ describe('Editor da pagina: design system', () => {
       'Instagram', 'Facebook', 'TripAdvisor', 'Google Maps', 'LinkedIn (opcional)', 'Latitude', 'Longitude'].forEach(n => expect(screen.getByLabelText(n)).toBeInTheDocument());
   });
 
+  it('cada_seccao_tem_um_interruptor_com_nome_e_estado', () => {
+    montar();
+    ROTULOS.forEach((r, i) => {
+      const sw = screen.getByRole('switch', { name: `Mostrar ${r}` });
+      expect(sw).toHaveAttribute('aria-checked', i < 10 ? 'true' : 'false');
+    });
+    fireEvent.click(screen.getByRole('switch', { name: 'Mostrar Galeria' }));
+    expect(screen.getByRole('switch', { name: 'Mostrar Galeria' })).toHaveAttribute('aria-checked', 'false');
+  });
+
   it('o_interruptor_do_horario_e_um_switch_com_a_bola_na_posicao_certa_e_as_horas_tem_nome', () => {
     montar();
     const seg = screen.getByRole('switch', { name: 'Aberto Segunda' });
