@@ -1,0 +1,117 @@
+/* Ficha de um servico na pagina publica (/book/:slug/servico/:id): carrega o servico, mostra o
+   "nao encontrado", muda o titulo do separador e aplica a cor da marca do operador.
+   O modo widget tem o seu ficheiro (ServiceDetailWidget.test.jsx): fica guardado no modulo. */
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { render, screen, waitFor, cleanup } from '@testing-library/react';
+import { MemoryRouter, Routes, Route } from 'react-router-dom';
+import ServiceDetail from '../pages/ServiceDetail';
+import { TONS } from '../utils/brandPalette';
+
+const FUTURE = { v7_startTransition: true, v7_relativeSplatPath: true };
+const raiz = () => document.documentElement;
+
+const UNIDADE = {
+  id: 'u1', name: 'Passeio de buggy', description: 'Descubra a ilha de buggy.', unit_type: 'tour', base_price: 45, capacity: 8,
+  images: [], pricing_rules: [], created_at: '2020-01-01T00:00:00Z', status: 'active',
+};
+function operador(extra = {}) {
+  return {
+    id: 'op1', name: 'Sal Aventura', slug: 'demo', operator_type: 'activity', business_name: 'Sal Aventura', currency: 'EUR',
+    cover_images: [], page_config: {}, ...extra,
+  };
+}
+
+function resposta(corpo, ok = true) { return Promise.resolve({ ok, json: () => Promise.resolve(corpo) }); }
+
+/* Rede falsa: a ficha, as avaliacoes e a sessao de viajante (sem sessao). */
+function simularRede({ op = operador(), unit = UNIDADE, ficha } = {}) {
+  global.fetch = vi.fn((url) => {
+    const u = String(url);
+    if (u.includes('/traveler-auth/session')) return resposta({}, false);
+    if (u.endsWith('/units/u1/reviews')) return resposta({ data: [] });
+    if (u.endsWith('/units/u1')) return resposta(ficha ?? { data: { unit, operator: op, related: [], recent_bookings: 0 } });
+    return resposta({ data: [] });
+  });
+}
+
+function montar() {
+  return render(
+    <MemoryRouter initialEntries={['/book/demo/servico/u1']} future={FUTURE}>
+      <Routes><Route path="/book/:slug/servico/:id" element={<ServiceDetail />} /></Routes>
+    </MemoryRouter>
+  );
+}
+
+beforeEach(() => {
+  localStorage.clear();
+  localStorage.setItem('sd-lang', 'pt');
+  Element.prototype.scrollTo = vi.fn();
+  window.scrollTo = vi.fn();
+  vi.spyOn(console, 'error').mockImplementation(() => {});
+});
+afterEach(() => {
+  cleanup();
+  TONS.forEach((t) => raiz().style.removeProperty(`--brand-${t}-rgb`));
+  vi.restoreAllMocks();
+});
+
+describe('ServiceDetail: carregamento', () => {
+  it('pede o servico e as avaliacoes certos e mostra o nome do servico', async () => {
+    simularRede();
+    montar();
+    expect((await screen.findAllByText('Passeio de buggy')).length).toBeGreaterThan(0);
+    const urls = global.fetch.mock.calls.map((c) => String(c[0]));
+    expect(urls.some((u) => u.endsWith('/public/demo/units/u1'))).toBe(true);
+    expect(urls.some((u) => u.endsWith('/public/demo/units/u1/reviews'))).toBe(true);
+  });
+
+  it('o titulo do separador e "servico — operador · SalDesk"', async () => {
+    simularRede();
+    montar();
+    await waitFor(() => expect(document.title).toBe('Passeio de buggy — Sal Aventura · SalDesk'));
+  });
+
+  it('um servico que nao existe mostra "Serviço não encontrado"', async () => {
+    simularRede({ ficha: { data: {} } });
+    montar();
+    expect(await screen.findByText('Serviço não encontrado')).toBeInTheDocument();
+  });
+
+  it('se o pedido falhar tambem mostra "Serviço não encontrado" (sem rebentar)', async () => {
+    global.fetch = vi.fn((url) => String(url).includes('/traveler-auth/session') ? resposta({}, false) : Promise.reject(new Error('sem rede')));
+    montar();
+    expect(await screen.findByText('Serviço não encontrado')).toBeInTheDocument();
+  });
+
+  it('na versao inglesa o "nao encontrado" fica em ingles', async () => {
+    localStorage.setItem('sd-lang', 'en');
+    simularRede({ ficha: { data: {} } });
+    montar();
+    expect(await screen.findByText('Service not found')).toBeInTheDocument();
+  });
+
+  it('fora do modo widget a ficha tem barra de navegacao e rodape', async () => {
+    simularRede();
+    montar();
+    await screen.findAllByText('Passeio de buggy');
+    expect(document.querySelector('nav')).not.toBeNull();
+    expect(document.querySelector('footer')).not.toBeNull();
+  });
+});
+
+describe('ServiceDetail: cor da marca', () => {
+  it('aplica a cor do operador e remove-a ao sair da pagina', async () => {
+    simularRede({ op: operador({ brand_color: '#c2410c' }) });
+    const { unmount } = montar();
+    await waitFor(() => expect(raiz().style.getPropertyValue('--brand-700-rgb')).toBe('194 65 12'));
+    unmount();
+    expect(raiz().style.getPropertyValue('--brand-700-rgb')).toBe('');
+  });
+
+  it('sem cor definida nao mexe nas variaveis', async () => {
+    simularRede({ op: operador({ brand_color: null }) });
+    montar();
+    await screen.findAllByText('Passeio de buggy');
+    expect(raiz().style.getPropertyValue('--brand-700-rgb')).toBe('');
+  });
+});
