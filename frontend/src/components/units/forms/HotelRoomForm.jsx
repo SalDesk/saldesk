@@ -105,13 +105,13 @@ export default function HotelRoomForm({ unit, onSave, onCancel, loading, error }
 
       <div>
         <SectionLabel>Identificacao</SectionLabel>
-        <div className="grid grid-cols-3 gap-3 mb-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-3">
           <Input label="Numero" value={form.number} onChange={set('number')} placeholder="101" />
           <div className="col-span-2">
             <Input label="Nome" value={form.name} onChange={set('name')} required autoFocus placeholder="Ocean View Suite" />
           </div>
         </div>
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
           <Select label="Tipo" value={form.unit_type} onChange={set('unit_type')} required>
             {ROOM_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
           </Select>
@@ -141,7 +141,7 @@ export default function HotelRoomForm({ unit, onSave, onCancel, loading, error }
           <Input label="Preco base"   type="number" value={form.base_price} onChange={set('base_price')} min="0" step="0.01" required placeholder="0.00" />
           <Input label="Epoca baixa"  type="number" value={form.price_low}  onChange={set('price_low')}  min="0" step="0.01" placeholder="0.00" />
         </div>
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
           <Input label="Epoca media"  type="number" value={form.price_mid}  onChange={set('price_mid')}  min="0" step="0.01" placeholder="0.00" />
           <Input label="Epoca alta"   type="number" value={form.price_high} onChange={set('price_high')} min="0" step="0.01" placeholder="0.00" />
           <Input label="Pico"         type="number" value={form.price_peak} onChange={set('price_peak')} min="0" step="0.01" placeholder="0.00" />
