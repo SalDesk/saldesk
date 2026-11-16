@@ -1,11 +1,10 @@
 import { useState, useEffect, useMemo } from 'react';
-import PlanGuard from '../components/PlanGuard';
 import {
-  TrendingUp, TrendingDown, Gift, AlertTriangle,
+  TrendingUp, TrendingDown, Gift,
   BarChart2, RefreshCw, Calendar, Minus,
 } from 'lucide-react';
 import {
-  BarChart, Bar, LineChart, Line, XAxis, YAxis, Tooltip,
+  BarChart, Bar, XAxis, YAxis, Tooltip,
   ResponsiveContainer, CartesianGrid, Legend, ReferenceLine,
   Cell,
 } from 'recharts';

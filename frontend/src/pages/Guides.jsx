@@ -1,9 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
-import PlanGuard from '../components/PlanGuard';
 import {
   Plus, Pencil, Trash2, Star, Camera, Upload, X, Tag,
-  Phone, Mail, Award, Globe2, Clock, Briefcase, Search,
-  UserCheck, Users, Shield, UserPlus,
+  Briefcase, Search,
+  Users, Shield, UserPlus,
 } from 'lucide-react';
 import {
   listStaff, createStaff, updateStaff, deleteStaff,

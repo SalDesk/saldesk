@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback } from 'react';
-import PlanGuard from '../components/PlanGuard';
 import { getBookingLink, getMarketingStats, getWidgetCode, getReferrals } from '../services/marketingService';
 import { listUnits } from '../services/unitsService';
 import useAuthStore from '../store/authStore';

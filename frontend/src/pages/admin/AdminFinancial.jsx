@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import {
-  Euro, TrendingUp, Users, UserX, BarChart2, TrendingDown,
-  Download, Save, ChevronUp, ChevronDown,
+  Euro, TrendingUp, Users, UserX, BarChart2,
+  Download, Save,
 } from 'lucide-react';
 import {
   AreaChart, Area, LineChart, Line, BarChart, Bar,

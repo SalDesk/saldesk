@@ -5,7 +5,7 @@ import {
   MapPin, Phone, Star, ChevronLeft, ChevronRight, MessageCircle,
   Menu, X, Globe, Mail, Calendar, Users, Check, ArrowRight, Shield,
   ExternalLink, ChevronDown, ChevronUp, Copy, Send, Award, Share2,
-  Compass, Car, Utensils, Lock, RotateCcw, CheckCircle, Clock, Filter, Bell,
+  Car, Utensils, Lock, RotateCcw, CheckCircle, Clock, Filter, Bell,
 } from 'lucide-react';
 import Logo from '../components/shared/Logo';
 import SiteComplianceFooter from '../components/shared/SiteComplianceFooter';

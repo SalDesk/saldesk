@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { CalendarDays, User, ArrowRight, Pencil, Trash2, ChevronDown, Car, Eye } from 'lucide-react';
+import { CalendarDays, User, ArrowRight, Pencil, Trash2, Car, Eye } from 'lucide-react';
 import { changeStatus, deleteReservation } from '../../services/reservationsService';
 import { useT } from '../../i18n';
 import Badge from '../ui/Badge';

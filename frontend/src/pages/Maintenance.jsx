@@ -1,7 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import {
-  Wrench, AlertTriangle, CheckCircle, Plus, X, Car,
-  Calendar, DollarSign, FileText, ArrowRight,
+  Wrench, AlertTriangle, CheckCircle, Plus, Car,
 } from 'lucide-react';
 import { listUnits, updateUnit } from '../services/unitsService';
 import PageHeader from '../components/layout/PageHeader';

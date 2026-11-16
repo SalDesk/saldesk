@@ -1,8 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
-import PlanGuard from '../components/PlanGuard';
 import {
   Award, Users, Gift, Edit2, Save, ToggleLeft, ToggleRight,
-  Plus, Minus, ChevronDown, ChevronUp, Star, Clock, Copy, Check as CheckIcon, AlertCircle,
+  ChevronDown, ChevronUp, Star, Clock, Copy, Check as CheckIcon, AlertCircle,
 } from 'lucide-react';
 import { listCustomers } from '../services/customersService';
 import {
@@ -18,7 +17,7 @@ import Table from '../components/ui/Table';
 import FilterChips from '../components/ui/FilterChips';
 import EmptyState from '../components/ui/EmptyState';
 import Modal from '../components/ui/Modal';
-import Input, { Select } from '../components/ui/Input';
+import Input from '../components/ui/Input';
 import LoadingSpinner from '../components/shared/LoadingSpinner';
 
 const DEFAULT_CONFIG = {

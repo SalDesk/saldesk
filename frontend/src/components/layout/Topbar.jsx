@@ -6,7 +6,6 @@ import {
   User, LogOut,
 } from 'lucide-react';
 import useAuthStore from '../../store/authStore';
-import useUiStore from '../../store/uiStore';
 import LanguageToggle from '../shared/LanguageToggle';
 import Logo from '../shared/Logo';
 import CommandPalette from './CommandPalette';

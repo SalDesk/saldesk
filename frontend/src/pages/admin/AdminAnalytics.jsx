@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import {
   BarChart2, TrendingUp, TrendingDown, Users, UserX,
-  Globe, AlertTriangle, Mail, FileText, ArrowRight,
+  Globe, AlertTriangle, Mail, ArrowRight,
   ChevronUp, ChevronDown, RefreshCw, Printer, PlayCircle,
 } from 'lucide-react';
 import {
@@ -10,7 +10,6 @@ import {
   ResponsiveContainer, Legend,
 } from 'recharts';
 import api from '../../services/api';
-import PageHeader from '../../components/layout/PageHeader';
 import LoadingSpinner from '../../components/shared/LoadingSpinner';
 
 /* ─── Design constants ──────────────────────────────────────── */

@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import {
   Plus, Pencil, Trash2, Star, ChefHat, X,
-  QrCode, Link, CheckCircle, Image as ImageIcon, Copy,
+  QrCode, Link, CheckCircle, Copy,
 } from 'lucide-react';
 import { listUnits, createUnit, updateUnit, deleteUnit, updateConectStatus } from '../services/unitsService';
 import api from '../services/api';

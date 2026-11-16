@@ -4,7 +4,6 @@ import usePlan from '../hooks/usePlan';
 import {
   Plus,
   Briefcase,
-  Search,
 } from 'lucide-react';
 import { listStaff, createStaff, updateStaff, deleteStaff, createStaffAccount } from '../services/staffService';
 import { getUnreadCount } from '../services/messageService';

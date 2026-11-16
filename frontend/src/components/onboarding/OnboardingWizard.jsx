@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Hotel, Waves, Car, UtensilsCrossed, Check, ArrowLeft, ArrowRight, Upload, ImageIcon } from 'lucide-react';
+import { Hotel, Waves, Car, UtensilsCrossed, Check, ArrowLeft, ArrowRight, ImageIcon } from 'lucide-react';
 import { createClient } from '@supabase/supabase-js';
 import useAuthStore from '../../store/authStore';
 import { createOperator, updateOperator } from '../../services/authService';

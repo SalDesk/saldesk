@@ -1,4 +1,3 @@
-import { User } from 'lucide-react';
 
 export default function TopCustomersList({ data }) {
   if (!data?.length) {

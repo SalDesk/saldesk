@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import {
   ChevronLeft, ChevronRight, Lock, Plus,
-  CheckCircle, LogIn, LogOut, XCircle, X, Users,
+  CheckCircle, LogIn, LogOut, XCircle, X,
 } from 'lucide-react';
 import {
   getCalendar, createBlockedDates, deleteBlockedDate, updateReservation,
