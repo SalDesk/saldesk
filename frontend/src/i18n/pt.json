@@ -396,14 +396,7 @@
     "description": "Descricao",
     "active": "Activa",
     "inactive": "Inactiva",
-    "copyLink": "Copiar link",
-    "priceUnits": {
-      "night": "por noite",
-      "hour": "por hora",
-      "day": "por dia",
-      "session": "por sessao",
-      "person": "por pessoa"
-    }
+    "copyLink": "Copiar link"
   },
   "customers": {
     "title": "Clientes",
@@ -417,18 +410,6 @@
     "lastVisit": "Ultima visita",
     "notes": "Notas",
     "tags": "Tags"
-  },
-  "financial": {
-    "title": "Financeiro",
-    "revenue": "Receita",
-    "occupancy": "Ocupacao",
-    "commissionsSaved": "Poupanca em comissoes",
-    "byChannel": "Por canal",
-    "byUnit": "Por unidade",
-    "period": "Periodo",
-    "export": "Exportar relatorio",
-    "exportPdf": "Exportar PDF",
-    "exportExcel": "Exportar Excel"
   },
   "errors": {
     "generic": "Ocorreu um erro. Tente novamente.",

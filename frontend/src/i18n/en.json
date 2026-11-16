@@ -396,14 +396,7 @@
     "description": "Description",
     "active": "Active",
     "inactive": "Inactive",
-    "copyLink": "Copy link",
-    "priceUnits": {
-      "night": "per night",
-      "hour": "per hour",
-      "day": "per day",
-      "session": "per session",
-      "person": "per person"
-    }
+    "copyLink": "Copy link"
   },
   "customers": {
     "title": "Customers",
@@ -417,18 +410,6 @@
     "lastVisit": "Last visit",
     "notes": "Notes",
     "tags": "Tags"
-  },
-  "financial": {
-    "title": "Financial",
-    "revenue": "Revenue",
-    "occupancy": "Occupancy",
-    "commissionsSaved": "Commissions saved",
-    "byChannel": "By channel",
-    "byUnit": "By unit",
-    "period": "Period",
-    "export": "Export report",
-    "exportPdf": "Export PDF",
-    "exportExcel": "Export Excel"
   },
   "errors": {
     "generic": "An error occurred. Please try again.",
