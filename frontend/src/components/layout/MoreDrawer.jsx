@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Lock, LogOut } from 'lucide-react';
 import useAuthStore from '../../store/authStore';
@@ -13,6 +13,28 @@ export default function MoreDrawer({ open, onClose }) {
   const navigate = useNavigate();
   const { canAccess } = usePlan();
   const [upgradeModal, setUpgradeModal] = useState(null);
+  const folhaRef = useRef(null);
+  const abertoPorRef = useRef(null);
+  /* o pai pode passar um onClose novo a cada render: guarda-se numa ref para o efeito so correr ao abrir/fechar */
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
+
+  /* Teclado: ao abrir, o foco entra no menu; Escape fecha; ao fechar, o foco volta ao botao que o abriu */
+  useEffect(() => {
+    if (!open) return undefined;
+    abertoPorRef.current = document.activeElement;
+    folhaRef.current?.querySelector('button')?.focus();
+    function aoCarregarTecla(e) {
+      if (e.key === 'Escape') onCloseRef.current?.();
+    }
+    document.addEventListener('keydown', aoCarregarTecla);
+    return () => {
+      document.removeEventListener('keydown', aoCarregarTecla);
+      const origem = abertoPorRef.current;
+      abertoPorRef.current = null;
+      if (origem && typeof origem.focus === 'function') origem.focus();
+    };
+  }, [open]);
 
   const opType   = operator?.operator_type || 'hotel';
   /* Seccoes sem os itens que ja estao na barra inferior */
@@ -44,9 +66,15 @@ export default function MoreDrawer({ open, onClose }) {
         />
       )}
 
+      {/* Fechado: invisible (sem foco nem leitura por leitores de ecra); a visibilidade muda no fim da animacao */}
       <div
-        className={`md:hidden fixed bottom-0 inset-x-0 z-50 bg-white rounded-t-2xl shadow-xl max-h-[80vh] overflow-y-auto transition-transform duration-250 ease-out ${
-          open ? 'translate-y-0' : 'translate-y-full'
+        ref={folhaRef}
+        role={open ? 'dialog' : undefined}
+        aria-modal={open ? 'true' : undefined}
+        aria-label={open ? 'Mais opcoes' : undefined}
+        aria-hidden={open ? undefined : 'true'}
+        className={`md:hidden fixed bottom-0 inset-x-0 z-50 bg-white rounded-t-2xl shadow-xl max-h-[80vh] overflow-y-auto transition-[transform,visibility] duration-250 ease-out ${
+          open ? 'translate-y-0 visible' : 'translate-y-full invisible'
         }`}
       >
         <div className="flex justify-center pt-2.5 pb-1">

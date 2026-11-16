@@ -757,6 +757,51 @@ describe('Definicoes: Notificacoes', () => {
     expect(ligado('Lembrete de check-in')).toBe(false);
   });
 
+  describe('canal_de_notificacoes_com_teclado (grupo de radio)', () => {
+    const radios = () => screen.getAllByRole('radio');           // Email, Push (PWA), Ambos
+    const marcado = () => radios().map(r => r.getAttribute('aria-checked') === 'true');
+    const tecla = (indice, key) => fireEvent.keyDown(radios()[indice], { key });
+
+    beforeEach(() => { montar('/definicoes?tab=notificacoes'); });
+
+    it('so_o_canal_marcado_entra_na_ordem_do_Tab', () => {
+      expect(radios().map(r => r.getAttribute('tabindex'))).toEqual(['-1', '0', '-1']);
+    });
+
+    it('setas_direita_e_baixo_marcam_o_seguinte_e_passam_o_foco', () => {
+      tecla(1, 'ArrowRight');
+      expect(marcado()).toEqual([false, false, true]);
+      expect(document.activeElement).toBe(radios()[2]);
+      expect(radios().map(r => r.getAttribute('tabindex'))).toEqual(['-1', '-1', '0']);
+      tecla(2, 'ArrowDown');
+      expect(marcado()).toEqual([true, false, false]); // volta ao principio
+      expect(document.activeElement).toBe(radios()[0]);
+    });
+
+    it('setas_esquerda_e_cima_marcam_o_anterior_com_volta_ao_fim', () => {
+      tecla(1, 'ArrowLeft');
+      expect(marcado()).toEqual([true, false, false]);
+      tecla(0, 'ArrowUp');
+      expect(marcado()).toEqual([false, false, true]);
+      expect(document.activeElement).toBe(radios()[2]);
+    });
+
+    it('Home_e_End_vao_ao_primeiro_e_ao_ultimo', () => {
+      tecla(1, 'End');
+      expect(marcado()).toEqual([false, false, true]);
+      tecla(2, 'Home');
+      expect(marcado()).toEqual([true, false, false]);
+    });
+
+    it('outras_teclas_nao_mudam_nada_e_o_valor_escolhido_e_o_que_se_guarda', async () => {
+      tecla(1, 'a');
+      expect(marcado()).toEqual([false, true, false]);
+      tecla(1, 'ArrowLeft'); // email
+      fireEvent.click(botao('Guardar preferencias'));
+      await waitFor(() => expect(updateOperator).toHaveBeenCalledWith(expect.objectContaining({ notif_channel: 'email' })));
+    });
+  });
+
   it('guardar_chama_updateOperator_com_notification_prefs_e_notif_channel', async () => {
     montar('/definicoes?tab=notificacoes');
     fireEvent.click(canal('Email'));
@@ -988,10 +1033,12 @@ describe('Definicoes: design system (Perfil Publico)', () => {
 /* ───────────────────────── design system: Pagamentos e Facturacao ───────────────────────── */
 
 describe('Definicoes: design system (Pagamentos e Facturacao)', () => {
-  it('os_estados_de_Pagamentos_tem_role_status_e_tokens_e_os_campos_tem_nome', async () => {
+  it('os_estados_de_Pagamentos_sao_cartoes_estaticos_sem_role_status_com_tokens_e_os_campos_tem_nome', async () => {
     montar();
     await abrir('Pagamentos', 'Webhook PayPal');
-    const estados = screen.getAllByRole('status');
+    /* nao mudam em directo, por isso nao sao uma "live region" (role=status) */
+    expect(screen.queryAllByRole('status')).toHaveLength(0);
+    const estados = screen.getAllByText(/^(Configurado|Nao configurado)$/).map(p => p.parentElement.parentElement);
     expect(estados).toHaveLength(3);
     expect(estados[0].className).toContain('var(--success-light)');
     expect(estados[1].className).toContain('bg-n-50');
