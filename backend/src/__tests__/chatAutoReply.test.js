@@ -32,7 +32,6 @@ describe('validarConfig', () => {
     ['hora mal formada', { ...BASE, from: '9:00' }],
     ['hora impossivel', { ...BASE, to: '24:30' }],
     ['minutos impossiveis', { ...BASE, from: '09:60' }],
-    ['fim nao posterior ao inicio', { ...BASE, from: '18:00', to: '09:00' }],
     ['fim igual ao inicio', { ...BASE, from: '09:00', to: '09:00' }],
     ['mensagem PT demasiado longa', { ...BASE, message_pt: 'x'.repeat(501) }],
     ['mensagem EN que nao e texto', { ...BASE, message_en: 42 }],
@@ -40,6 +39,12 @@ describe('validarConfig', () => {
     const r = validarConfig(entrada);
     expect(r.ok).toBe(false);
     expect(typeof r.error).toBe('string');
+  });
+
+  it('aceita um horario que atravessa a meia-noite (fecho anterior a abertura)', () => {
+    const r = validarConfig({ ...BASE, from: '22:00', to: '06:00' });
+    expect(r.ok).toBe(true);
+    expect(r.config).toMatchObject({ from: '22:00', to: '06:00' });
   });
 
   it('sem dias escolhidos e invalido quando ligada (nunca estaria disponivel e responderia sempre)', () => {
@@ -88,6 +93,50 @@ describe('foraDeHoras (hora de Cabo Verde, UTC-1)', () => {
     } finally {
       if (antes === undefined) delete process.env.TZ; else process.env.TZ = antes;
     }
+  });
+});
+
+describe('foraDeHoras: horario que atravessa a meia-noite (o dia conta pelo inicio do turno)', () => {
+  /* turno de segunda a sexta das 22:00 as 06:00 (hora de Cabo Verde, UTC-1) */
+  const NOITE = { enabled: true, days: [1, 2, 3, 4, 5], from: '22:00', to: '06:00', message_pt: '', message_en: '' };
+
+  it('a noite de um dia de atendimento: aberto antes e depois da meia-noite', () => {
+    expect(foraDeHoras(NOITE, utc('2026-11-09T23:00:00Z'))).toBe(false); // seg 22:00 CV
+    expect(foraDeHoras(NOITE, utc('2026-11-10T00:30:00Z'))).toBe(false); // seg 23:30 CV
+    expect(foraDeHoras(NOITE, utc('2026-11-10T04:00:00Z'))).toBe(false); // ter 03:00 CV (turno de segunda)
+  });
+
+  it('os limites: abre as 22:00, fecha as 06:00 (exclusivo)', () => {
+    expect(foraDeHoras(NOITE, utc('2026-11-09T22:59:00Z'))).toBe(true);  // seg 21:59 CV
+    expect(foraDeHoras(NOITE, utc('2026-11-09T23:00:00Z'))).toBe(false); // seg 22:00 CV
+    expect(foraDeHoras(NOITE, utc('2026-11-10T06:59:00Z'))).toBe(false); // ter 05:59 CV
+    expect(foraDeHoras(NOITE, utc('2026-11-10T07:00:00Z'))).toBe(true);  // ter 06:00 CV
+  });
+
+  it('de dia (entre as 06:00 e as 22:00) esta sempre fora de horas', () => {
+    expect(foraDeHoras(NOITE, utc('2026-11-11T13:00:00Z'))).toBe(true); // qua 12:00 CV
+  });
+
+  it('a madrugada pertence ao turno do dia anterior: sabado de madrugada ainda e turno de sexta', () => {
+    expect(foraDeHoras(NOITE, utc('2026-11-14T04:00:00Z'))).toBe(false); // sab 03:00 CV (turno de sexta)
+    expect(foraDeHoras(NOITE, utc('2026-11-14T00:00:00Z'))).toBe(false); // sex 23:00 CV
+  });
+
+  it('sabado a noite e a madrugada de domingo e a de segunda ficam fora (sab e dom nao atendem)', () => {
+    expect(foraDeHoras(NOITE, utc('2026-11-15T00:00:00Z'))).toBe(true); // sab 23:00 CV
+    expect(foraDeHoras(NOITE, utc('2026-11-15T04:00:00Z'))).toBe(true); // dom 03:00 CV (turno de sabado)
+    expect(foraDeHoras(NOITE, utc('2026-11-16T04:00:00Z'))).toBe(true); // seg 03:00 CV (turno de domingo)
+  });
+
+  it('um turno so de domingo atravessa para segunda de madrugada', () => {
+    const DOMINGO = { ...NOITE, days: [0] };
+    expect(foraDeHoras(DOMINGO, utc('2026-11-16T04:00:00Z'))).toBe(false); // seg 03:00 CV
+    expect(foraDeHoras(DOMINGO, utc('2026-11-17T04:00:00Z'))).toBe(true);  // ter 03:00 CV
+  });
+
+  it('deveResponder respeita o turno nocturno', () => {
+    expect(deveResponder({ config: NOITE, agora: utc('2026-11-10T04:00:00Z'), jaFalouRecentemente: false })).toBe(false);
+    expect(deveResponder({ config: NOITE, agora: utc('2026-11-11T13:00:00Z'), jaFalouRecentemente: false })).toBe(true);
   });
 });
 

@@ -1,12 +1,15 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import {
-  ChevronLeft, ChevronRight, Lock,
+  ChevronLeft, ChevronRight, Lock, Plus,
   CheckCircle, LogIn, LogOut, XCircle, X, Users,
 } from 'lucide-react';
 import {
   getCalendar, createBlockedDates, deleteBlockedDate, updateReservation,
 } from '../services/calendarService';
 import { listStaff } from '../services/staffService';
+import { createReservation } from '../services/reservationsService';
+import useAuthStore from '../store/authStore';
+import ReservationForm from '../components/reservations/ReservationForm';
 import { useT } from '../i18n';
 import PageHeader from '../components/layout/PageHeader';
 import Button from '../components/ui/Button';
@@ -88,6 +91,14 @@ export default function Calendar() {
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [actionLoading, setActionLoading] = useState(false);
 
+  /* Dia livre: escolher entre criar uma reserva e bloquear datas */
+  const { operator } = useAuthStore();
+  const opType = operator?.operator_type || 'hotel';
+  const [escolha,       setEscolha]       = useState(null); // { date, unit }
+  const [novaReserva,   setNovaReserva]   = useState(null); // { date, unit }
+  const [novaLoading,   setNovaLoading]   = useState(false);
+  const [novaErro,      setNovaErro]      = useState('');
+
   const dragPayloadRef = useRef(null);
 
   async function carregar() {
@@ -152,9 +163,34 @@ export default function Calendar() {
 
   function handleDayClick(dateStr, unit, reservation) {
     if (reservation) { setSelectedEvent(reservation); return; }
+    setEscolha({ date: dateStr, unit });
+  }
+
+  function abrirBloqueio({ date, unit }) {
+    setEscolha(null);
     setBlockReason('');
-    setBlockEnd(dateStr);
-    setBlockModal({ date: dateStr, unit });
+    setBlockEnd(date);
+    setBlockModal({ date, unit });
+  }
+
+  function abrirNovaReserva(alvo) {
+    setEscolha(null);
+    setNovaErro('');
+    setNovaReserva(alvo);
+  }
+
+  async function handleCriarReserva(dadosForm) {
+    setNovaErro('');
+    setNovaLoading(true);
+    try {
+      await createReservation(dadosForm);
+      setNovaReserva(null);
+      await carregar();
+    } catch (err) {
+      setNovaErro(err.response?.data?.error || t('errors.generic'));
+    } finally {
+      setNovaLoading(false);
+    }
   }
 
   async function handleDrop(dateStr, unitId, dragData) {
@@ -399,12 +435,14 @@ export default function Calendar() {
                   <p className="text-xs font-body text-n-400">{unit.unit_type}</p>
                 </div>
                 {!lista.length && !isBlocked && (
-                  <Button variant="ghost" size="sm" icon={Lock} onClick={() => {
-                    setBlockReason(''); setBlockEnd(dayStr);
-                    setBlockModal({ date: dayStr, unit });
-                  }}>
-                    Bloquear
-                  </Button>
+                  <div className="flex items-center gap-1">
+                    <Button variant="secondary" size="sm" icon={Plus} onClick={() => abrirNovaReserva({ date: dayStr, unit })}>
+                      Nova reserva
+                    </Button>
+                    <Button variant="ghost" size="sm" icon={Lock} onClick={() => abrirBloqueio({ date: dayStr, unit })}>
+                      Bloquear
+                    </Button>
+                  </div>
                 )}
               </div>
 
@@ -543,6 +581,41 @@ export default function Calendar() {
           draggingId={draggingId}
         />
       ) : view === 'week' ? renderWeekView() : renderDayView()}
+
+      {/* Dia livre: criar reserva ou bloquear datas */}
+      <Modal open={!!escolha} onClose={() => setEscolha(null)} title="Dia livre" size="sm">
+        {escolha && (
+          <div className="space-y-4">
+            <p className="text-sm font-body text-n-600">
+              O que quer fazer em {escolha.unit.name}, {escolha.date}?
+            </p>
+            <div className="flex flex-col gap-2">
+              <Button icon={Plus} onClick={() => abrirNovaReserva(escolha)}>Criar reserva</Button>
+              <Button variant="secondary" icon={Lock} onClick={() => abrirBloqueio(escolha)}>Bloquear datas</Button>
+            </div>
+          </div>
+        )}
+      </Modal>
+
+      {/* Nova reserva a partir do dia/unidade clicados */}
+      <Modal open={!!novaReserva} onClose={() => setNovaReserva(null)} title={t('reservations.new')} size="md">
+        {novaReserva && (
+          <ReservationForm
+            initial={{
+              unit_id: novaReserva.unit.id,
+              check_in: novaReserva.date,
+              /* tours e restaurantes sao de um dia; as restantes unidades, uma noite por omissao */
+              check_out: opType === 'activity' || opType === 'restaurant' ? novaReserva.date : addDays(novaReserva.date, 1),
+            }}
+            units={dados.units || []}
+            operatorType={opType}
+            onSave={handleCriarReserva}
+            onCancel={() => setNovaReserva(null)}
+            loading={novaLoading}
+            error={novaErro}
+          />
+        )}
+      </Modal>
 
       {/* Block modal */}
       <Modal

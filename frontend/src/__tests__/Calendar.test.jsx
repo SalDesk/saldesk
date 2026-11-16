@@ -5,6 +5,8 @@ import Calendar from '../pages/Calendar';
 import useUiStore from '../store/uiStore';
 import { getCalendar } from '../services/calendarService';
 import { listStaff } from '../services/staffService';
+import { createReservation } from '../services/reservationsService';
+import { getFleetAvailability } from '../services/fleetService';
 
 /* Sem rede: os servicos da pagina sao simulados e rejeitam formas de argumentos desconhecidas */
 vi.mock('../services/calendarService', () => ({
@@ -16,6 +18,8 @@ vi.mock('../services/calendarService', () => ({
 vi.mock('../services/staffService', () => ({
   listStaff: vi.fn(),
 }));
+vi.mock('../services/reservationsService', () => ({ createReservation: vi.fn() }));
+vi.mock('../services/fleetService', () => ({ getFleetAvailability: vi.fn() }));
 
 const FUTURE = { v7_startTransition: true, v7_relativeSplatPath: true };
 const ISO = /^\d{4}-\d{2}-\d{2}$/;
@@ -574,6 +578,114 @@ describe('Calendar', () => {
       expect(screen.getByText('Fevereiro 2026')).toBeInTheDocument();
       expect(getCalendar).toHaveBeenLastCalledWith('2026-02-01', '2026-02-28');
       expect(document.querySelectorAll('tbody tr')).toHaveLength(28);
+    });
+  });
+
+  describe('criar reserva a partir do calendario', () => {
+    const pad = (n) => String(n).padStart(2, '0');
+    const agora = new Date();
+    const mesAtual = `${agora.getFullYear()}-${pad(agora.getMonth() + 1)}`;
+    const DIA15 = `${mesAtual}-15`;
+    const DIA16 = `${mesAtual}-16`;
+
+    beforeEach(() => {
+      createReservation.mockReset().mockResolvedValue({ id: 'nova' });
+      getFleetAvailability.mockReset().mockResolvedValue([]);
+      carregaServicos({ dados: { units: UNIDADES, reservations: [], blocked_dates: [] } });
+    });
+
+    /* Celula (dia 15, unidade 1) da vista de mes */
+    function celulaVazia() {
+      return document.querySelectorAll('tbody tr')[14].querySelectorAll('td')[1];
+    }
+    const campo = (etiqueta, tag = 'input') => screen.getByText(etiqueta, { selector: 'label' }).parentElement.querySelector(tag);
+
+    it('clicar numa celula vazia pergunta o que fazer: criar reserva ou bloquear datas', async () => {
+      await abrePagina();
+      fireEvent.click(celulaVazia());
+      expect(await screen.findByText(/O que quer fazer em Quarto Azul/)).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Criar reserva' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Bloquear datas' })).toBeInTheDocument();
+      expect(createReservation).not.toHaveBeenCalled();
+    });
+
+    it('Criar reserva abre o formulario com a unidade e a data preenchidas e grava a reserva', async () => {
+      await abrePagina();
+      fireEvent.click(celulaVazia());
+      fireEvent.click(await screen.findByRole('button', { name: 'Criar reserva' }));
+      expect(await screen.findByRole('heading', { name: 'Nova Reserva' })).toBeInTheDocument();
+      expect(campo('Unidade', 'select')).toHaveValue('u1');
+      expect(campo('Check-in')).toHaveValue(DIA15);
+      expect(campo('Check-out')).toHaveValue(DIA16);
+      /* as unidades do calendario nao trazem preco: a previsao de preco fica escondida em vez de "€NaN" */
+      expect(document.body.textContent).not.toContain('NaN');
+      expect(screen.queryByText(/noite\(s\)/)).toBeNull();
+
+      fireEvent.change(campo('Cliente'), { target: { value: 'Maria Teste' } });
+      fireEvent.change(campo('Email'), { target: { value: 'maria@teste.cv' } });
+      const antes = getCalendar.mock.calls.length;
+      fireEvent.click(screen.getByRole('button', { name: 'Nova Reserva' }));
+
+      await waitFor(() => expect(createReservation).toHaveBeenCalledTimes(1));
+      expect(createReservation).toHaveBeenCalledWith(expect.objectContaining({
+        unit_id: 'u1', check_in: DIA15, check_out: DIA16, customer_name: 'Maria Teste', customer_email: 'maria@teste.cv',
+      }));
+      /* o calendario recarrega e o formulario fecha */
+      await waitFor(() => expect(getCalendar.mock.calls.length).toBe(antes + 1));
+      await waitFor(() => expect(screen.queryByRole('heading', { name: 'Nova Reserva' })).not.toBeInTheDocument());
+    });
+
+    it('um erro ao gravar mostra a mensagem e mantem o formulario aberto sem recarregar', async () => {
+      createReservation.mockRejectedValue({ response: { data: { error: 'Unidade indisponivel nessas datas' } } });
+      await abrePagina();
+      fireEvent.click(celulaVazia());
+      fireEvent.click(await screen.findByRole('button', { name: 'Criar reserva' }));
+      await screen.findByRole('heading', { name: 'Nova Reserva' });
+      fireEvent.change(campo('Cliente'), { target: { value: 'Maria Teste' } });
+      fireEvent.change(campo('Email'), { target: { value: 'maria@teste.cv' } });
+      const antes = getCalendar.mock.calls.length;
+      fireEvent.click(screen.getByRole('button', { name: 'Nova Reserva' }));
+      expect(await screen.findByText('Unidade indisponivel nessas datas')).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: 'Nova Reserva' })).toBeInTheDocument();
+      expect(getCalendar.mock.calls.length).toBe(antes);
+    });
+
+    it('Cancelar fecha o formulario sem criar nada', async () => {
+      await abrePagina();
+      fireEvent.click(celulaVazia());
+      fireEvent.click(await screen.findByRole('button', { name: 'Criar reserva' }));
+      await screen.findByRole('heading', { name: 'Nova Reserva' });
+      fireEvent.click(screen.getByRole('button', { name: 'Cancelar' }));
+      await waitFor(() => expect(screen.queryByRole('heading', { name: 'Nova Reserva' })).not.toBeInTheDocument());
+      expect(createReservation).not.toHaveBeenCalled();
+    });
+
+    it('Bloquear datas continua a funcionar a partir da pergunta', async () => {
+      await abrePagina();
+      fireEvent.click(celulaVazia());
+      fireEvent.click(await screen.findByRole('button', { name: 'Bloquear datas' }));
+      expect(await screen.findByRole('heading', { name: 'Bloquear datas' })).toBeInTheDocument();
+      expect(screen.queryByText(/O que quer fazer em/)).not.toBeInTheDocument();
+    });
+
+    it('uma celula com reserva nao faz a pergunta', async () => {
+      carregaServicos({ dados: { units: UNIDADES, reservations: [reserva({ id: 'r1', check_in: DIA15, check_out: DIA16, customer_name: 'Alfa Silva' })], blocked_dates: [] } });
+      await abrePagina();
+      fireEvent.click(celulaVazia());
+      expect(screen.queryByText(/O que quer fazer em/)).not.toBeInTheDocument();
+      expect(createReservation).not.toHaveBeenCalled();
+    });
+
+    it('na vista de dia, uma unidade livre tem o botao Nova reserva, que abre o formulario desse dia', async () => {
+      const hoje = hojeDaPagina();
+      await abrePagina();
+      await accaoQueRecarrega(() => fireEvent.click(screen.getByRole('button', { name: 'Dia' })));
+      const azul = within(cartaoDoDia('Quarto Azul'));
+      fireEvent.click(azul.getByRole('button', { name: 'Nova reserva' }));
+      await screen.findByRole('heading', { name: 'Nova Reserva' });
+      expect(campo('Unidade', 'select')).toHaveValue('u1');
+      expect(campo('Check-in')).toHaveValue(hoje);
+      expect(campo('Check-out')).toHaveValue(somaDias(hoje, 1));
     });
   });
 });

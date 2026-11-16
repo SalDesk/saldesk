@@ -198,7 +198,7 @@ export default function TourForm({ unit, onSave, onCancel, loading, error }) {
       <div>
         <SectionLabel>Detalhes Operacionais</SectionLabel>
         <div className="space-y-3">
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
             <Input
               label="Duracao (horas)"
               type="number"
@@ -222,7 +222,7 @@ export default function TourForm({ unit, onSave, onCancel, loading, error }) {
               placeholder="Ex: 8"
             />
           </div>
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
             <Input
               label="Capacidade maxima"
               type="number"
@@ -264,7 +264,7 @@ export default function TourForm({ unit, onSave, onCancel, loading, error }) {
 
       <div>
         <SectionLabel>Precos (€ por pessoa)</SectionLabel>
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
           <Input
             label="Preco adulto (opcional se usar Preço privado/Escalões)"
             type="number"

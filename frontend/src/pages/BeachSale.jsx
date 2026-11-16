@@ -135,9 +135,9 @@ export default function BeachSale() {
   const extraSlots = (Array.isArray(meta.time_slots) ? meta.time_slots : [])
     .map(s => (typeof s === 'string' ? s : s?.time))
     .filter(t => typeof t === 'string' && t);
-  const timeSlots = meta.start_time
-    ? [...new Set([meta.start_time, ...extraSlots])]
-    : ['09:00', '11:00', '14:00', '16:00'];
+  /* Horarios do tour (hora de inicio + time_slots); so sem nenhum configurado se usam os por omissao */
+  const horariosDoTour = [...new Set([meta.start_time, ...extraSlots].filter(t => typeof t === 'string' && t))];
+  const timeSlots = horariosDoTour.length ? horariosDoTour : ['09:00', '11:00', '14:00', '16:00'];
 
   async function handleConfirm() {
     if (!clientName.trim()) { setError('Nome do cliente obrigatorio.'); return; }

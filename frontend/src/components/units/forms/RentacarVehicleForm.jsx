@@ -112,12 +112,12 @@ export default function RentacarVehicleForm({ unit, onSave, onCancel, loading, e
 
       <div>
         <SectionLabel>Identificacao</SectionLabel>
-        <div className="grid grid-cols-3 gap-3 mb-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-3">
           <Input label="Marca" value={form.brand} onChange={set('brand')} placeholder="Toyota" autoFocus />
           <Input label="Modelo" value={form.model} onChange={set('model')} placeholder="Hilux" />
           <Input label="Ano" type="number" value={form.year} onChange={set('year')} placeholder="2022" min="1990" max="2030" />
         </div>
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
           <Input label="Matricula" value={form.plate} onChange={set('plate')} placeholder="AA-00-AA" />
           <Input label="Cor" value={form.color} onChange={set('color')} placeholder="Branco" />
           <Select label="Categoria" value={form.unit_type} onChange={set('unit_type')} required>
@@ -128,7 +128,7 @@ export default function RentacarVehicleForm({ unit, onSave, onCancel, loading, e
 
       <div>
         <SectionLabel>Especificacoes</SectionLabel>
-        <div className="grid grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           <Input label="Lugares" type="number" value={form.seats} onChange={set('seats')} min="1" max="20" />
           <Input label="Bagagens" type="number" value={form.luggage} onChange={set('luggage')} min="0" placeholder="2" />
           <Select label="Transmissao" value={form.transmission} onChange={set('transmission')}>
@@ -169,7 +169,7 @@ export default function RentacarVehicleForm({ unit, onSave, onCancel, loading, e
           <Input label="Preco base / dia" type="number" value={form.base_price} onChange={set('base_price')} min="0" step="0.01" required placeholder="0.00" />
           <Input label="Km incluidos / dia" type="number" value={form.km_included} onChange={set('km_included')} min="0" placeholder="200" />
         </div>
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
           <Input label="Custo km extra (€)" type="number" value={form.km_extra_cost} onChange={set('km_extra_cost')} min="0" step="0.01" placeholder="0.30" />
           <Input label="Desc. semana (%)" type="number" value={form.discount_week} onChange={set('discount_week')} min="0" max="100" placeholder="10" />
           <Input label="Desc. mes (%)" type="number" value={form.discount_month} onChange={set('discount_month')} min="0" max="100" placeholder="20" />
@@ -186,7 +186,7 @@ export default function RentacarVehicleForm({ unit, onSave, onCancel, loading, e
 
       <div>
         <SectionLabel>Documentos — validades</SectionLabel>
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
           <Input label="Seguro ate" type="date" value={form.seguro_expiry} onChange={set('seguro_expiry')} />
           <Input label="IUC ate" type="date" value={form.iuc_expiry} onChange={set('iuc_expiry')} />
           <Input label="Inspecao ate" type="date" value={form.inspecao_expiry} onChange={set('inspecao_expiry')} />

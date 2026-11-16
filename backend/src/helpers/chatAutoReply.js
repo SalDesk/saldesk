@@ -4,7 +4,8 @@
 
    Configuracao: { enabled, days: [0-6] (0 = domingo), from: 'HH:MM', to: 'HH:MM', message_pt, message_en }.
    O horario e na hora de Cabo Verde (UTC-1, sem horario de verao), calculada com Intl para nao depender do
-   fuso do servidor. O intervalo [from, to) tem de ser no mesmo dia (nao atravessa a meia-noite). */
+   fuso do servidor. O intervalo e [from, to). Se to < from o turno atravessa a meia-noite (ex: 22:00 a 06:00):
+   o dia da semana conta pelo INICIO do turno, por isso a madrugada de terca pertence ao turno de segunda. */
 
 const FUSO = 'Atlantic/Cape_Verde';
 const JANELA_SILENCIO_HORAS = 12;
@@ -40,7 +41,7 @@ function validarConfig(raw) {
   if (typeof from !== 'string' || !HORA_RE.test(from) || typeof to !== 'string' || !HORA_RE.test(to)) {
     return { ok: false, error: 'from e to tem de estar no formato HH:MM' };
   }
-  if (minutos(to) <= minutos(from)) return { ok: false, error: 'to tem de ser posterior a from (o horario nao atravessa a meia-noite)' };
+  if (minutos(to) === minutos(from)) return { ok: false, error: 'to tem de ser diferente de from (se for anterior, o horario atravessa a meia-noite)' };
 
   const textos = {};
   for (const chave of ['message_pt', 'message_en']) {
@@ -70,8 +71,17 @@ function agoraEmCaboVerde(agora) {
 /* true se NAO ha atendimento neste momento (config ja validada) */
 function foraDeHoras(config, agora = new Date()) {
   const { dia, min } = agoraEmCaboVerde(agora);
-  if (!config.days.includes(dia)) return true;
-  return min < minutos(config.from) || min >= minutos(config.to);
+  const abre = minutos(config.from);
+  const fecha = minutos(config.to);
+  if (abre < fecha) {
+    if (!config.days.includes(dia)) return true;
+    return min < abre || min >= fecha;
+  }
+  /* atravessa a meia-noite: aberto desde a abertura ate ao fim do dia (se este dia atende) e desde a
+     meia-noite ate ao fecho (se o dia anterior atende, que e onde o turno comecou) */
+  const diaAnterior = (dia + 6) % 7;
+  const aberto = (config.days.includes(dia) && min >= abre) || (config.days.includes(diaAnterior) && min < fecha);
+  return !aberto;
 }
 
 function textoDaResposta(config, lang) {

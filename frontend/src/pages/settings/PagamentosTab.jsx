@@ -12,7 +12,7 @@ import { SaveBanner } from './shared';
 /* cartao de estado (configurado / nao configurado) */
 function EstadoCartao({ active, label }) {
   return (
-    <div role="status" className={`flex items-center gap-2 px-4 py-3 rounded border text-sm font-body ${active ? 'bg-[var(--success-light)] border-n-200 text-[var(--success)]' : 'bg-n-50 border-n-200 text-n-500'}`}>
+    <div className={`flex items-center gap-2 px-4 py-3 rounded border text-sm font-body ${active ? 'bg-[var(--success-light)] border-n-200 text-[var(--success)]' : 'bg-n-50 border-n-200 text-n-500'}`}>
       {active ? <CheckCircle2 size={14} strokeWidth={1.75} /> : <XCircle size={14} strokeWidth={1.75} />}
       <div>
         <p className="font-semibold">{label}</p>

@@ -91,7 +91,7 @@ export default function RestaurantTableForm({ unit, onSave, onCancel, loading, e
 
       <div>
         <SectionLabel>Identificacao</SectionLabel>
-        <div className="grid grid-cols-3 gap-3 mb-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-3">
           <Input label="Numero" value={form.number} onChange={set('number')} placeholder="1" autoFocus />
           <div className="col-span-2">
             <Input label="Nome / descricao (opcional)" value={form.name} onChange={set('name')} placeholder="Ex: Terraco Vista Mar" />
