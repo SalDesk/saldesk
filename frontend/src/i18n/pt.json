@@ -18,6 +18,8 @@
     "password": "Password",
     "confirmPassword": "Confirmar password",
     "forgotPassword": "Esqueci a password",
+    "showPassword": "Mostrar password",
+    "hidePassword": "Ocultar password",
     "noAccount": "Ainda nao tem conta?",
     "hasAccount": "Ja tem conta?",
     "loginTitle": "Entrar na conta",
