@@ -127,6 +127,11 @@
     "optional": "Opcional"
   },
   "dashboard": {
+    "greeting": {"morning": "Bom dia, {{name}}", "afternoon": "Boa tarde, {{name}}", "evening": "Boa noite, {{name}}"},
+    "agenda": {"title": "Agenda de hoje", "summary": "{{tours}} tours · {{people}} pessoas", "noTime": "Sem hora marcada", "done": "Concluído", "now": "A decorrer, termina às {{time}}", "toConfirm": "{{n}} por confirmar", "nearlyFull": "Quase cheio", "guide": "guia {{name}}"},
+    "hero": {"revenue": "Receita de {{month}}", "vsPrev": "{{pct}}% vs mês anterior", "occupancy": "Ocupação do mês", "today": "Hoje", "peopleToday": "{{n}} pessoas", "inTours": "em {{n}} tours · {{p}} por confirmar", "participants": "{{n}} participantes"},
+    "tiles": {"reservations": "Reservas no mês", "rating": "Avaliação média", "avgValue": "Valor médio por reserva", "toReceive": "Por receber"},
+    "shortcuts": {"title": "Atalhos", "checkin": "Check-in", "blockDay": "Bloquear dia", "message": "Enviar mensagem", "payment": "Registar pagamento"},
     "attention": {
       "title": "Requer atenção",
       "allClear": "Tudo em ordem",

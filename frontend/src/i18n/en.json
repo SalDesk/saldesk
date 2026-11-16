@@ -127,6 +127,11 @@
     "optional": "Optional"
   },
   "dashboard": {
+    "greeting": {"morning": "Good morning, {{name}}", "afternoon": "Good afternoon, {{name}}", "evening": "Good evening, {{name}}"},
+    "agenda": {"title": "Today's schedule", "summary": "{{tours}} tours · {{people}} people", "noTime": "No time set", "done": "Done", "now": "In progress, ends at {{time}}", "toConfirm": "{{n}} to confirm", "nearlyFull": "Nearly full", "guide": "guide {{name}}"},
+    "hero": {"revenue": "{{month}} revenue", "vsPrev": "{{pct}}% vs last month", "occupancy": "Monthly occupancy", "today": "Today", "peopleToday": "{{n}} people", "inTours": "in {{n}} tours · {{p}} to confirm", "participants": "{{n}} participants"},
+    "tiles": {"reservations": "Bookings this month", "rating": "Average rating", "avgValue": "Average booking value", "toReceive": "To receive"},
+    "shortcuts": {"title": "Shortcuts", "checkin": "Check-in", "blockDay": "Block a day", "message": "Send message", "payment": "Record payment"},
     "attention": {
       "title": "Needs attention",
       "allClear": "All clear",
