@@ -64,7 +64,8 @@ export function eventosAtividades({ reservas, tours, atribuicoes } = {}) {
   const guiasPorReserva = new Map();
   (Array.isArray(atribuicoes) ? atribuicoes : []).forEach((a) => {
     const nome = a?.staff?.name;
-    if (!a || a.status === 'cancelled' || !a.reservation_id || !nome) return;
+    /* condutores (role 'driver' nas atribuicoes compostas) nao sao guias */
+    if (!a || a.status === 'cancelled' || a.role === 'driver' || !a.reservation_id || !nome) return;
     if (!guiasPorReserva.has(a.reservation_id)) guiasPorReserva.set(a.reservation_id, []);
     guiasPorReserva.get(a.reservation_id).push(nome);
   });

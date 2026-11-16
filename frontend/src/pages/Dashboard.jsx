@@ -5,7 +5,10 @@ import { useT } from '../i18n';
 import Button from '../components/ui/Button';
 import DashboardHeader from '../components/dashboard/DashboardHeader';
 import TrialStrip from '../components/dashboard/TrialStrip';
+import { useEffect } from 'react';
 import useAgora from '../hooks/useAgora';
+import { TODAY } from './dashboard/shared';
+import { recarregarPagina } from '../utils/recarregar';
 import { saudacao, localeDe } from './dashboard/agendaLogic';
 import WhatsAppPendentes from '../components/messaging/WhatsAppPendentes';
 import HotelDashboard from './dashboard/HotelDashboard';
@@ -33,6 +36,13 @@ export default function Dashboard() {
   const opType        = operator?.operator_type;
   const lang          = useUiStore((s) => s.lang);
   const agora         = useAgora();
+
+  /* Os dados do "Hoje" sao do dia em que a pagina abriu (TODAY e fixo): se o ecra ficar aberto
+     depois da meia-noite, a agenda mostraria o dia anterior. Recarrega para trazer o dia novo. */
+  const diaAtual = agora.toLocaleDateString('en-CA');
+  useEffect(() => {
+    if (diaAtual !== TODAY) recarregarPagina();
+  }, [diaAtual]);
 
   return (
     <div>

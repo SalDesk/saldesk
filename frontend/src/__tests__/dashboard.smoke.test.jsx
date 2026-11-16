@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import Dashboard from '../pages/Dashboard';
@@ -10,6 +10,7 @@ import { listReservations } from '../services/reservationsService';
 import { getResumo } from '../services/financeiroService';
 import { getWeatherForecast } from '../services/weatherService';
 import api from '../services/api';
+import { recarregarPagina } from '../utils/recarregar';
 
 /* Sem rede: todos os servicos usados pelos dashboards sao simulados */
 vi.mock('../services/unitsService', () => ({
@@ -30,6 +31,7 @@ vi.mock('../services/weatherService', async (importOriginal) => {
 vi.mock('../services/api', () => ({
   default: { get: vi.fn() },
 }));
+vi.mock('../utils/recarregar', () => ({ recarregarPagina: vi.fn() }));
 vi.mock('../components/messaging/WhatsAppPendentes', () => ({
   default: () => <div data-testid="whatsapp-pendentes" />,
 }));
@@ -260,5 +262,41 @@ describe('Dashboard: cabecalho com saudacao, data e hora', () => {
     useAuthStore.setState({ operator: { name: 'Zy Tours', operator_type: 'activity' } });
     renderDashboardSemReset();
     expect(await screen.findByRole('heading', { name: 'Boa noite, Zy Tours' })).toBeInTheDocument();
+  });
+});
+
+describe('Dashboard: virar o dia com o ecra aberto', () => {
+  beforeEach(() => {
+    servicosVazios();
+    recarregarPagina.mockReset();
+    vi.useFakeTimers({ toFake: ['Date', 'setInterval', 'clearInterval'] });
+  });
+
+  afterEach(() => {
+    cleanup();
+    vi.useRealTimers();
+    useAuthStore.setState({ operator: null });
+    useUiStore.setState({ lang: 'pt', dashboardView: 'hoje' });
+  });
+
+  it('recarrega_a_pagina_quando_passa_a_meia_noite', async () => {
+    /* TODAY (shared.jsx) e calculado ao importar, com o relogio real: usar o dia de hoje */
+    const h = new Date();
+    vi.setSystemTime(new Date(h.getFullYear(), h.getMonth(), h.getDate(), 23, 59, 30));
+    useAuthStore.setState({ operator: { name: 'Zy Tours', operator_type: 'activity' } });
+    renderDashboardSemReset();
+    await screen.findByRole('heading', { name: 'Boa noite, Zy Tours' });
+    act(() => { vi.advanceTimersByTime(60 * 1000); });
+    expect(recarregarPagina).toHaveBeenCalledTimes(1);
+  });
+
+  it('no_mesmo_dia_nao_recarrega', async () => {
+    const h = new Date();
+    vi.setSystemTime(new Date(h.getFullYear(), h.getMonth(), h.getDate(), 10, 0, 0));
+    useAuthStore.setState({ operator: { name: 'Zy Tours', operator_type: 'activity' } });
+    renderDashboardSemReset();
+    await screen.findByRole('heading', { name: 'Bom dia, Zy Tours' });
+    act(() => { vi.advanceTimersByTime(5 * 60 * 1000); });
+    expect(recarregarPagina).not.toHaveBeenCalled();
   });
 });

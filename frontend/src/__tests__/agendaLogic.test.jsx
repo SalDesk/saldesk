@@ -59,6 +59,16 @@ describe('agendaLogic: eventos de atividades', () => {
     expect(eventosAtividades({ reservas: [a, b], tours: [TOUR], atribuicoes: atr })[0].guias).toEqual(['Djo']);
   });
 
+  it('condutores_nao_aparecem_como_guias', () => {
+    const a = r({ id: 'ra' });
+    const atr = [
+      { reservation_id: 'ra', status: 'pending', role: 'driver', staff: { name: 'Kiko' } },
+      { reservation_id: 'ra', status: 'pending', role: 'guide', staff: { name: 'Djo' } },
+      { reservation_id: 'ra', status: 'pending', staff: { name: 'Neusa' } },
+    ];
+    expect(eventosAtividades({ reservas: [a], tours: [TOUR], atribuicoes: atr })[0].guias).toEqual(['Djo', 'Neusa']);
+  });
+
   it('clientes_pela_ordem_das_reservas', () => {
     const ev = eventosAtividades({ reservas: [r({ customer_name: 'Ana Silva' }), r({ customer_name: 'Rui Costa' })], tours: [TOUR], atribuicoes: [] });
     expect(ev[0].clientes).toEqual(['Ana Silva', 'Rui Costa']);
