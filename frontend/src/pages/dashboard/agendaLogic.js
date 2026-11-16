@@ -123,3 +123,58 @@ export function ordenarAgenda(eventos) {
       .sort((a, b) => (a.inicioMin - b.inicioMin) || porTitulo(a, b)),
   };
 }
+
+/* ── Metricas da moldura ─────────────────────────────────────── */
+
+function numeroOuZero(valor) {
+  const n = Number(valor);
+  return Number.isFinite(n) ? n : 0;
+}
+
+/* Receita acumulada por dia, de inicioMes ate hoje (inclusive); dias sem entrada somam 0 */
+export function serieReceitaAcumulada(serie, inicioMes, hoje) {
+  const porDia = new Map();
+  (Array.isArray(serie) ? serie : []).forEach((p) => {
+    if (p && typeof p.periodo === 'string') porDia.set(p.periodo, (porDia.get(p.periodo) || 0) + numeroOuZero(p.receita));
+  });
+  const valores = [];
+  const d = new Date(`${inicioMes}T00:00:00Z`);
+  const fim = new Date(`${hoje}T00:00:00Z`);
+  if (Number.isNaN(d.getTime()) || Number.isNaN(fim.getTime())) return valores;
+  let acumulado = 0;
+  while (d <= fim) {
+    acumulado += porDia.get(d.toISOString().slice(0, 10)) || 0;
+    valores.push(Math.round(acumulado * 100) / 100);
+    d.setUTCDate(d.getUTCDate() + 1);
+  }
+  return valores;
+}
+
+/* Variacao percentual arredondada; sem base (anterior <= 0) ou valores invalidos -> null */
+export function variacaoPercentual(atual, anterior) {
+  const a = Number(atual);
+  const b = Number(anterior);
+  if (!Number.isFinite(a) || !Number.isFinite(b) || b <= 0) return null;
+  return Math.round(((a - b) / b) * 100);
+}
+
+/* Receita / numero de reservas; sem reservas -> null */
+export function valorMedio(receita, numReservas) {
+  const n = Number(numReservas);
+  if (!Number.isFinite(n) || n <= 0) return null;
+  return numeroOuZero(receita) / n;
+}
+
+/* Soma do que falta pagar (nunca negativo por reserva) */
+export function porReceber(reservas) {
+  return (Array.isArray(reservas) ? reservas : []).reduce((soma, r) => (
+    soma + Math.max(0, numeroOuZero(r?.total_price) - numeroOuZero(r?.amount_paid))
+  ), 0);
+}
+
+/* Chave da saudacao pela hora local: 5-11 manha, 12-18 tarde, resto noite */
+export function saudacao(hora) {
+  if (hora >= 5 && hora <= 11) return 'morning';
+  if (hora >= 12 && hora <= 18) return 'afternoon';
+  return 'evening';
+}

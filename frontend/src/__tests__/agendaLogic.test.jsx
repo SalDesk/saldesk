@@ -1,6 +1,12 @@
 /* Logica pura da agenda do dia do dashboard (eventos de atividades, estados, ordenacao). */
 import { describe, expect, it } from 'vitest';
-import { paraMinutos, eventosAtividades, estadoDoEvento, ordenarAgenda } from '../pages/dashboard/agendaLogic';
+import { render, screen, act } from '@testing-library/react';
+import { afterEach, vi } from 'vitest';
+import {
+  paraMinutos, eventosAtividades, estadoDoEvento, ordenarAgenda,
+  serieReceitaAcumulada, variacaoPercentual, valorMedio, porReceber, saudacao,
+} from '../pages/dashboard/agendaLogic';
+import useAgora from '../hooks/useAgora';
 
 const TOUR = { id: 't1', name: 'Buggy', capacity: 16, description: JSON.stringify({ start_time: '09:00', duration: 2, meeting_point: 'Santa Maria' }) };
 const SLOTS = { id: 't2', name: 'Mergulho', capacity: 20, description: JSON.stringify({ duration: 1.5, time_slots: [{ time: '09:00', capacity: 8 }, { time: '15:00', capacity: '6' }] }) };
@@ -84,5 +90,52 @@ describe('agendaLogic: eventos de atividades', () => {
   it('reserva_de_tour_desconhecido_e_ficha_com_json_invalido_nao_rebentam', () => {
     const t = { ...SEM, description: '{nao e json' };
     expect(eventosAtividades({ reservas: [r({ unit_id: 'x' }), r({ unit_id: 't3' })], tours: [t], atribuicoes: undefined })).toHaveLength(1);
+  });
+});
+
+describe('agendaLogic: metricas', () => {
+  it('serie_acumulada_por_dia', () => {
+    expect(serieReceitaAcumulada([{ periodo: '2026-11-02', receita: 100 }, { periodo: '2026-11-04', receita: 50 }, { periodo: '2026-10-31', receita: 999 }], '2026-11-01', '2026-11-05'))
+      .toEqual([0, 100, 100, 150, 150]);
+  });
+
+  it('serie_sem_dados_da_zeros', () => {
+    expect(serieReceitaAcumulada(undefined, '2026-11-01', '2026-11-03')).toEqual([0, 0, 0]);
+  });
+
+  it('variacao_percentual', () => {
+    expect(variacaoPercentual(1120, 1000)).toBe(12);
+    expect(variacaoPercentual(500, 0)).toBeNull();
+    expect(variacaoPercentual(NaN, 10)).toBeNull();
+  });
+
+  it('valor_medio_e_por_receber', () => {
+    expect(valorMedio(920, 20)).toBe(46);
+    expect(valorMedio(920, 0)).toBeNull();
+    expect(porReceber([{ total_price: 200, amount_paid: 20 }, { total_price: 50 }, { total_price: 10, amount_paid: 30 }])).toBe(230);
+  });
+
+  it('saudacao_pela_hora', () => {
+    expect([4, 5, 11, 12, 18, 19].map(saudacao)).toEqual(['evening', 'morning', 'morning', 'afternoon', 'afternoon', 'evening']);
+  });
+});
+
+describe('useAgora', () => {
+  afterEach(() => { vi.useRealTimers(); });
+
+  function Relogio() {
+    const agora = useAgora();
+    return <p>{agora.getMinutes()}</p>;
+  }
+
+  it('atualiza_a_cada_minuto_e_limpa_ao_desmontar', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(2026, 10, 20, 11, 42, 0));
+    const { unmount } = render(<Relogio />);
+    expect(screen.getByText('42')).toBeInTheDocument();
+    act(() => { vi.advanceTimersByTime(60 * 1000); });
+    expect(screen.getByText('43')).toBeInTheDocument();
+    unmount();
+    expect(vi.getTimerCount()).toBe(0);
   });
 });
