@@ -5,11 +5,14 @@ import { useT } from '../../i18n';
 import Button from '../../components/ui/Button';
 import Badge from '../../components/ui/Badge';
 import Table from '../../components/ui/Table';
+import useMediaQuery from '../../hooks/useMediaQuery';
+import ColumnCards from './ColumnCards';
 import { formatDate, parseRentacarMeta } from './shared';
 
 export default function RentacarTable({ reservations, units, onEdit, onDelete, onLevantamento, onDevolucao, onUpdate, onView }) {
   const t = useT();
   const [actionLoading, setActionLoading] = useState(null);
+  const movel = useMediaQuery('(max-width: 767px)');
 
   async function handleCancel(r) {
     setActionLoading(r.id);
@@ -132,6 +135,9 @@ export default function RentacarTable({ reservations, units, onEdit, onDelete, o
       ),
     },
   ];
+
+  /* Telemovel: cartoes (as mesmas colunas e accoes) em vez de uma tabela que nao cabe no ecra */
+  if (movel) return <ColumnCards columns={columns} rows={reservations} />;
 
   return (
     <div className="bg-white rounded-md border border-n-200 shadow-sm overflow-hidden">

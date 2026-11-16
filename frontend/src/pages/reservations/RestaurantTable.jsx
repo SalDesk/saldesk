@@ -5,6 +5,8 @@ import { useT } from '../../i18n';
 import Button from '../../components/ui/Button';
 import Badge from '../../components/ui/Badge';
 import Table from '../../components/ui/Table';
+import useMediaQuery from '../../hooks/useMediaQuery';
+import ColumnCards from './ColumnCards';
 import { formatDate, parseRestaurantMeta } from './shared';
 
 const TURNO_LABELS = { almoco: 'Almoco', jantar: 'Jantar' };
@@ -15,6 +17,7 @@ const OCASIAO_LABELS = {
 export default function RestaurantTable({ reservations, units, onEdit, onDelete, onDetails, onUpdate, onView }) {
   const t = useT();
   const [actionLoading, setActionLoading] = useState(null);
+  const movel = useMediaQuery('(max-width: 767px)');
 
   const STATUS_NEXT_R = { pending: 'confirmed', confirmed: 'checked_in', checked_in: 'checked_out' };
   const STATUS_BTN_R  = { pending: 'Confirmar', confirmed: 'Sentar', checked_in: 'Liberar mesa' };
@@ -138,6 +141,9 @@ export default function RestaurantTable({ reservations, units, onEdit, onDelete,
       },
     },
   ];
+
+  /* Telemovel: cartoes (as mesmas colunas e accoes) em vez de uma tabela que nao cabe no ecra */
+  if (movel) return <ColumnCards columns={columns} rows={reservations} />;
 
   return (
     <div className="bg-white rounded-md border border-n-200 shadow-sm overflow-hidden">
