@@ -14,13 +14,22 @@
  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
 <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
 <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
-    <script async src="https://www.googletagmanager.com/gtag/js?id=AW-18425133239"></script>
     <script>
+      /* Google Analytics/Ads: so se carrega fora de localhost (verificar em local nao envia eventos para a conta real).
+         gtag() existe sempre, para o codigo da app (ex: conversao no registo) nao rebentar. */
       window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
-      gtag('js', new Date());
-      gtag('config', 'G-SMH9BH7V1E');
-      gtag('config', 'AW-18425133239');
+      window.gtag = function gtag(){ window.dataLayer.push(arguments); };
+      (function () {
+        var h = location.hostname;
+        if (h === 'localhost' || h === '127.0.0.1' || h === '[::1]' || /\.localhost$/.test(h)) return;
+        var s = document.createElement('script');
+        s.async = true;
+        s.src = 'https://www.googletagmanager.com/gtag/js?id=AW-18425133239';
+        document.head.appendChild(s);
+        window.gtag('js', new Date());
+        window.gtag('config', 'G-SMH9BH7V1E');
+        window.gtag('config', 'AW-18425133239');
+      })();
     </script>
     <style>
     #pwa-banner{display:none;position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:9999;background:#062A38;color:#fff;border-radius:16px;padding:14px 20px;box-shadow:0 8px 32px rgba(6,42,56,.35);align-items:center;gap:14px;max-width:360px;width:calc(100% - 32px);font-family:'DM Sans',sans-serif;animation:slideUp .3s ease}
