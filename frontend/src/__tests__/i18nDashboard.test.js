@@ -5,7 +5,7 @@ import de from '../i18n/de.json';
 import nl from '../i18n/nl.json';
 
 const LANGS = { pt, en, de, nl };
-const NAMESPACES = ['attention', 'view', 'summary', 'generic'];
+const NAMESPACES = ['attention', 'view', 'summary', 'generic', 'greeting', 'agenda', 'hero', 'tiles', 'shortcuts'];
 
 /* Lista os caminhos das folhas de um objeto (ex.: "a.b.c") */
 function leaves(node, prefix = '') {
@@ -20,6 +20,21 @@ function folhas(dict, ns) {
 }
 
 describe('i18n dashboard', () => {
+  it('os grupos da moldura nova existem nas quatro linguas com as chaves do portugues', () => {
+    const esperado = {
+      greeting: ['morning', 'afternoon', 'evening'],
+      agenda: ['title', 'summary', 'noTime', 'done', 'now', 'toConfirm', 'nearlyFull', 'guide'],
+      hero: ['revenue', 'vsPrev', 'occupancy', 'today', 'peopleToday', 'inTours', 'participants'],
+      tiles: ['reservations', 'rating', 'avgValue', 'toReceive'],
+      shortcuts: ['title', 'checkin', 'blockDay', 'message', 'payment'],
+    };
+    Object.entries(LANGS).forEach(([lang, dict]) => {
+      Object.entries(esperado).forEach(([ns, chaves]) => {
+        chaves.forEach((k) => expect(typeof dict.dashboard?.[ns]?.[k], `${lang} dashboard.${ns}.${k}`).toBe('string'));
+      });
+    });
+  });
+
   it('attention e view existem nas quatro linguas', () => {
     Object.entries(LANGS).forEach(([lang, dict]) => {
       expect(dict.dashboard.attention, lang).toBeDefined();

@@ -5,7 +5,8 @@ import ActivityDashboard from '../pages/dashboard/ActivityDashboard';
 import useUiStore from '../store/uiStore';
 import { listUnits } from '../services/unitsService';
 import { listReservations } from '../services/reservationsService';
-import { getResumo } from '../services/financeiroService';
+import { getResumo, getReceita } from '../services/financeiroService';
+import { listAssignments } from '../services/assignmentService';
 import { getWeatherForecast } from '../services/weatherService';
 import api from '../services/api';
 
@@ -18,6 +19,10 @@ vi.mock('../services/reservationsService', () => ({
 }));
 vi.mock('../services/financeiroService', () => ({
   getResumo: vi.fn(),
+  getReceita: vi.fn(),
+}));
+vi.mock('../services/assignmentService', () => ({
+  listAssignments: vi.fn(),
 }));
 vi.mock('../services/weatherService', async (importOriginal) => {
   const real = await importOriginal();
@@ -103,8 +108,10 @@ function respostaPorPar(params, { hoje, semana, mes, porPagar = [] }) {
 }
 
 /* Responde a cada pedido conforme o intervalo pedido: hoje, mes ou semana */
-function carregaServicos({ hoje = [], mes = [], semana = [], porPagar = [], res = resumo(), tours = [TOUR_A, TOUR_B], meteo = [], rating = null, ratingTotal = 3 } = {}) {
+function carregaServicos({ hoje = [], mes = [], semana = [], porPagar = [], res = resumo(), tours = [TOUR_A, TOUR_B], meteo = [], rating = null, ratingTotal = 3, receitaDia = [], atribuicoes = [] } = {}) {
   listUnits.mockReset().mockResolvedValue(tours);
+  getReceita.mockReset().mockResolvedValue(receitaDia);
+  listAssignments.mockReset().mockResolvedValue(atribuicoes);
   listReservations.mockReset().mockImplementation(async (params) => (
     respostaPorPar(params, { hoje, semana, mes, porPagar })
   ));
@@ -121,6 +128,8 @@ function servicosAFalhar() {
   listUnits.mockReset().mockRejectedValue(erro);
   listReservations.mockReset().mockRejectedValue(erro);
   getResumo.mockReset().mockRejectedValue(erro);
+  getReceita.mockReset().mockRejectedValue(erro);
+  listAssignments.mockReset().mockRejectedValue(erro);
   getWeatherForecast.mockReset().mockRejectedValue(erro);
   api.get.mockReset().mockRejectedValue(erro);
 }
@@ -154,22 +163,40 @@ describe('ActivityDashboard (Hoje)', () => {
     warnSpy.mockRestore();
   });
 
-  it('mostra a tabela de tours de hoje', async () => {
-    carregaServicos({ hoje: RES_HOJE });
+  it('mostra_a_agenda_de_hoje_com_hora_guia_e_lotacao', async () => {
+    const comHora = { ...TOUR_A, description: JSON.stringify({ start_time: '09:00', meeting_point: 'Santa Maria' }) };
+    carregaServicos({
+      hoje: RES_HOJE,
+      tours: [comHora, TOUR_B],
+      atribuicoes: [{ reservation_id: 'h1', status: 'confirmed', staff: { name: 'Djo' } }],
+    });
     renderActivity();
-    expect(await screen.findByRole('heading', { name: 'Tours de hoje' })).toBeInTheDocument();
-    const celula = await screen.findByText('8/10');
-    const linha = celula.closest('tr');
-    expect(within(linha).getByText('Tour Teste')).toBeInTheDocument();
-    /* numero de reservas do tour e estado */
-    expect(within(linha).getByText('3')).toBeInTheDocument();
-    expect(within(linha).getByText('Confirmado')).toBeInTheDocument();
-    /* o segundo tour tem uma reserva pendente */
-    const linhaB = screen.getByText('Barco Azul').closest('tr');
-    expect(within(linhaB).getByText('Pendente')).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Agenda de hoje' })).toBeInTheDocument();
+    const tour = await screen.findByRole('button', { name: /Tour Teste/ });
+    expect(tour).toHaveTextContent('8/10 · guia Djo · Santa Maria');
+    expect(screen.getByText('09:00')).toBeInTheDocument();
+    /* o segundo tour nao tem hora: vai para "Sem hora marcada", com a reserva pendente */
+    expect(screen.getByText('Sem hora marcada')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Barco Azul/ })).toHaveTextContent('1 por confirmar');
+    expect(screen.queryByRole('table')).toBeNull();
   });
 
-  it('a barra de lotacao nunca passa dos 100% nem rebenta sem capacidade', async () => {
+  it('clicar_num_evento_abre_o_calendario', async () => {
+    carregaServicos({ hoje: RES_HOJE });
+    renderActivity();
+    fireEvent.click(await screen.findByRole('button', { name: /Tour Teste/ }));
+    expect(navigateMock).toHaveBeenLastCalledWith('/calendario');
+  });
+
+  it('pessoas_de_hoje_no_cartao_de_destaque', async () => {
+    carregaServicos({ hoje: RES_HOJE });
+    renderActivity();
+    /* 3+3+2 no tour A e 2 (pendente) no B */
+    expect(await screen.findByText('10 pessoas')).toBeInTheDocument();
+    expect(screen.getByText('em 2 tours · 1 por confirmar')).toBeInTheDocument();
+  });
+
+  it('a_lotacao_da_agenda_nunca_passa_dos_100_nem_rebenta_sem_capacidade', async () => {
     carregaServicos({
       hoje: [
         reserva({ id: 'a', guests: 15 }),
@@ -178,9 +205,10 @@ describe('ActivityDashboard (Hoje)', () => {
       tours: [TOUR_A, { id: 't3', name: 'Sem Capacidade' }],
     });
     renderActivity();
-    const barras = await screen.findAllByRole('progressbar');
-    const valores = barras.map((b) => b.getAttribute('aria-valuenow'));
-    expect(valores).toEqual(['100', '0']);
+    expect(await screen.findByRole('button', { name: /Sem Capacidade/ })).toHaveTextContent('4');
+    /* so o tour com capacidade tem barra, limitada a 100 */
+    const barras = screen.getAllByRole('progressbar');
+    expect(barras.map((b) => b.getAttribute('aria-valuenow'))).toEqual(['100']);
   });
 
   it('lotacao quase esgotada aparece na atencao', async () => {
@@ -258,30 +286,68 @@ describe('ActivityDashboard (Hoje)', () => {
     expect(screen.queryByText('Accoes rapidas')).not.toBeInTheDocument();
   });
 
-  it('mostra os cinco indicadores e a variacao da receita face ao mes anterior', async () => {
+  it('mostra_o_cartao_de_destaque_e_os_quatro_numeros', async () => {
     carregaServicos({
       hoje: RES_HOJE,
       mes: RES_HOJE,
-      res: resumo({ receita: 500 }, { receita: 300 }),
+      res: resumo({ receita: 1120 }, { receita: 1000 }),
       rating: 4.5,
     });
     renderActivity();
-    expect(await screen.findByText('Tours hoje')).toBeInTheDocument();
-    expect(screen.getByText('Participantes do mês')).toBeInTheDocument();
-    expect(screen.getByText('Taxa de ocupação')).toBeInTheDocument();
-    expect(screen.getByText('Receita do mês')).toBeInTheDocument();
-    expect(screen.getByText('Avaliação média')).toBeInTheDocument();
-    expect(screen.getByText('€500')).toBeInTheDocument();
-    expect(screen.getByText('+€200')).toBeInTheDocument();
-    expect(screen.getByText('face ao mês anterior')).toBeInTheDocument();
+    expect(await screen.findByText(`€${(1120).toLocaleString('pt-PT')}`)).toBeInTheDocument();
+    expect(screen.getByText('+12% vs mês anterior')).toBeInTheDocument();
+    expect(screen.getByText('Ocupação do mês')).toBeInTheDocument();
+    ['Reservas no mês', 'Avaliação média', 'Valor médio por reserva', 'Por receber']
+      .forEach((rotulo) => expect(screen.getByText(rotulo)).toBeInTheDocument());
+    /* reservas do mes nao canceladas: 4; avaliacao 4.5 */
+    expect(screen.getByText('Reservas no mês').previousElementSibling).toHaveTextContent(/^4$/);
     expect(screen.getByText('4.5')).toBeInTheDocument();
+    /* os indicadores antigos sairam */
+    expect(screen.queryByText('Tours hoje')).not.toBeInTheDocument();
+    expect(screen.queryByText('face ao mês anterior')).not.toBeInTheDocument();
   });
 
-  it('sem mes anterior nao mostra variacao', async () => {
+  it('sem_mes_anterior_sem_pilula', async () => {
     carregaServicos({ res: { atual: { receita: 500 } } });
     renderActivity();
     expect(await screen.findByText('€500')).toBeInTheDocument();
-    expect(screen.queryByText('face ao mês anterior')).not.toBeInTheDocument();
+    expect(screen.queryByText(/vs mês anterior/)).not.toBeInTheDocument();
+  });
+
+  it('valor_medio_divide_a_receita_pelas_reservas_confirmadas_do_mes', async () => {
+    /* RES_HOJE: 3 confirmadas e 1 pendente; 920 / 3 = 306,67 */
+    carregaServicos({ mes: RES_HOJE, res: resumo({ receita: 920 }) });
+    renderActivity();
+    const rotulo = await screen.findByText('Valor médio por reserva');
+    expect(rotulo.previousElementSibling).toHaveTextContent(/^€307$/);
+  });
+
+  it('sem_reservas_confirmadas_o_valor_medio_e_um_traco', async () => {
+    carregaServicos({ mes: [], res: resumo({ receita: 920 }) });
+    renderActivity();
+    const rotulo = await screen.findByText('Valor médio por reserva');
+    expect(rotulo.previousElementSibling).toHaveTextContent(/^—$/);
+  });
+
+  it('por_receber_soma_o_que_falta_pagar', async () => {
+    carregaServicos({ porPagar: [reserva({ id: 'p1', check_in: ONTEM, payment_status: 'partial', total_price: 200, amount_paid: 50 })] });
+    renderActivity();
+    const rotulo = await screen.findByText('Por receber');
+    await waitFor(() => expect(rotulo.previousElementSibling).toHaveTextContent(/^€150$/));
+  });
+
+  it('grafico_pede_a_receita_por_dia_do_mes_ate_hoje', async () => {
+    renderActivity();
+    await waitFor(() => expect(getReceita).toHaveBeenCalledWith(MES_INICIO, HOJE, 'day'));
+  });
+
+  it('falha_da_receita_por_dia_ou_das_atribuicoes_nao_apaga_o_resto', async () => {
+    carregaServicos({ hoje: RES_HOJE, res: resumo({ receita: 500 }) });
+    getReceita.mockReset().mockRejectedValue(new Error('falha de rede'));
+    listAssignments.mockReset().mockRejectedValue(new Error('falha de rede'));
+    renderActivity();
+    expect(await screen.findByRole('button', { name: /Tour Teste/ })).toHaveTextContent('8/10');
+    expect(screen.getByText('€500')).toBeInTheDocument();
   });
 
   it('a faixa de 7 dias so mostra contagem quando ha reservas', async () => {
@@ -299,7 +365,7 @@ describe('ActivityDashboard (Hoje)', () => {
     carregaServicos({ hoje: [vazia], mes: [vazia], semana: [vazia] });
     renderActivity();
     expect(await screen.findByText('1 reserva(s) pendente(s) para hoje')).toBeInTheDocument();
-    expect(screen.getByText('Tours hoje')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Agenda de hoje' })).toBeInTheDocument();
   });
 
   it('a avaliacao media vem de average quando ha avaliacoes', async () => {
@@ -312,7 +378,7 @@ describe('ActivityDashboard (Hoje)', () => {
     carregaServicos({ rating: 0, ratingTotal: 0 });
     renderActivity();
     const rotulo = await screen.findByText('Avaliação média');
-    expect(rotulo.parentElement.nextElementSibling).toHaveTextContent(/^—$/);
+    expect(rotulo.previousElementSibling).toHaveTextContent(/^—$/);
     expect(screen.queryByText('0.0')).not.toBeInTheDocument();
   });
 
@@ -327,8 +393,7 @@ describe('ActivityDashboard (Hoje)', () => {
       return respostaPorPar(params, { hoje: RES_HOJE, semana: [], mes: [] });
     });
     renderActivity();
-    const celula = await screen.findByText('8/10');
-    expect(within(celula.closest('tr')).getByText('Tour Teste')).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: /Tour Teste/ })).toHaveTextContent('8/10');
     expect(screen.getByText('1 reserva(s) pendente(s) para hoje')).toBeInTheDocument();
     expect(screen.queryByText('Tudo em ordem')).not.toBeInTheDocument();
     expect(screen.queryByText('Nenhum tour agendado para hoje')).not.toBeInTheDocument();

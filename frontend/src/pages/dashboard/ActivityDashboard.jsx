@@ -1,31 +1,39 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import {
-  Euro, BookOpen, BarChart2, CalendarDays, Users, Compass, Star,
-} from 'lucide-react';
-import { getResumo } from '../../services/financeiroService';
+import { BookOpen, Compass, Star, Euro, AlertTriangle } from 'lucide-react';
+import { getResumo, getReceita } from '../../services/financeiroService';
 import { listUnits } from '../../services/unitsService';
 import { listReservations } from '../../services/reservationsService';
+import { listAssignments } from '../../services/assignmentService';
 import { estadiaEm, estadiaNoMes, estadiaProximosDias } from '../../services/reservationRanges';
 import { getWeatherForecast, weatherInfo, isBadWeather } from '../../services/weatherService';
 import api from '../../services/api';
 import { useT } from '../../i18n';
 import useUiStore from '../../store/uiStore';
-import KpiCard from '../../components/financial/KpiCard';
+import useAgora from '../../hooks/useAgora';
 import AttentionPanel from '../../components/dashboard/AttentionPanel';
-import Badge from '../../components/ui/Badge';
+import DayAgenda from '../../components/dashboard/DayAgenda';
+import HeroCard from '../../components/dashboard/HeroCard';
+import StatTiles from '../../components/dashboard/StatTiles';
+import Shortcuts from '../../components/dashboard/Shortcuts';
+import NextDaysStrip from '../../components/dashboard/NextDaysStrip';
 import Button from '../../components/ui/Button';
 import EmptyState from '../../components/ui/EmptyState';
-import Table from '../../components/ui/Table';
 import LoadingSpinner from '../../components/shared/LoadingSpinner';
 import { TODAY, mesAtual } from './shared';
 import { buildAttentionItems, unpaidReservations } from './dashboardLogic';
+import {
+  eventosAtividades, serieReceitaAcumulada, variacaoPercentual, valorMedio, porReceber, localeDe,
+} from './agendaLogic';
 
 /* ─── Activity dashboard (vista "Hoje") ──────────────────────── */
 
+const ESTADOS_ATIVOS = ['pending', 'confirmed', 'checked_in'];
+const ESTADOS_CONFIRMADOS = ['confirmed', 'checked_in', 'checked_out'];
+
 function weekDays() {
-  /* Data local do dispositivo, nao UTC -- ver nota junto de TODAY no
-     topo do ficheiro. next7[0] tem de bater certo com TODAY. */
+  /* Data local do dispositivo, nao UTC -- ver nota junto de TODAY em shared.jsx.
+     next7[0] tem de bater certo com TODAY. */
   return Array.from({ length: 7 }, (_, i) => {
     const d = new Date();
     d.setDate(d.getDate() + i);
@@ -33,41 +41,15 @@ function weekDays() {
   });
 }
 
-/* Abreviaturas fixas por idioma, em vez de Intl -- o formato 'short' do
-   Intl para pt-PT devolve nomes completos ("SEXTA", "SABADO"), grandes
-   demais para a celula compacta do dia; isto garante sempre 3 letras. */
-const WEEKDAY_ABBR = {
-  pt: ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'],
-  en: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
-  de: ['So',  'Mo',  'Di',  'Mi',  'Do',  'Fr',  'Sa'],
-  nl: ['Zo',  'Ma',  'Di',  'Wo',  'Do',  'Vr',  'Za'],
-};
-
-function formatDayShort(dateStr, lang) {
-  const d = new Date(dateStr + 'T00:00:00Z');
-  return {
-    weekday: (WEEKDAY_ABBR[lang] || WEEKDAY_ABBR.pt)[d.getUTCDay()],
-    day: d.getUTCDate(),
-  };
-}
-
-function parseTourMeta(description) {
-  if (!description?.startsWith('{')) return {};
-  try { return JSON.parse(description); } catch { return {}; }
-}
-
-/* Percentagem de lotacao entre 0 e 100; capacidade em falta ou 0 conta como 0 */
-function fillPercent(guests, capacity) {
-  const cap = Number(capacity);
-  const n = Number(guests);
-  if (!(cap > 0) || !(n > 0)) return 0;
-  return Math.min(100, Math.round((n / cap) * 100));
+function euros(valor) {
+  return `€${Math.round(Number(valor) || 0).toLocaleString('pt-PT')}`;
 }
 
 export default function ActivityDashboard() {
   const t        = useT();
   const lang     = useUiStore((s) => s.lang);
   const navigate = useNavigate();
+  const agora    = useAgora();
   const periodo  = mesAtual();
   const next7    = useMemo(() => weekDays(), []);
 
@@ -78,6 +60,8 @@ export default function ActivityDashboard() {
   const [resumo,       setResumo]       = useState(null);
   const [avgRating,    setAvgRating]    = useState(null);
   const [unpaidRes,    setUnpaidRes]    = useState([]);
+  const [receitaDia,   setReceitaDia]   = useState([]);
+  const [atribuicoes,  setAtribuicoes]  = useState([]);
   const [loading,      setLoading]      = useState(true);
   const [wxAlerts,     setWxAlerts]     = useState([]);
 
@@ -100,8 +84,12 @@ export default function ActivityDashboard() {
           return Number(s?.total) > 0 ? (s.average ?? null) : null;
         })
         .catch(() => null),
+      /* Grafico do cartao de destaque: receita por dia, do dia 1 ate hoje */
+      getReceita(periodo.inicio, TODAY, 'day').catch(() => []),
+      /* Guias da agenda (cruzados no browser por reservation_id) */
+      listAssignments().catch(() => []),
     ])
-      .then(([toursData, tRes, mRes, wRes, uRes, res, avgR]) => {
+      .then(([toursData, tRes, mRes, wRes, uRes, res, avgR, rDia, atr]) => {
         setTours(toursData || []);
         setTodayRes(tRes || []);
         setMonthRes(mRes || []);
@@ -109,6 +97,8 @@ export default function ActivityDashboard() {
         setUnpaidRes(Array.isArray(uRes) ? uRes : []);
         setResumo(res);
         setAvgRating(avgR);
+        setReceitaDia(Array.isArray(rDia) ? rDia : []);
+        setAtribuicoes(Array.isArray(atr) ? atr : []);
 
         // Cross-reference weather with upcoming tours
         getWeatherForecast()
@@ -128,31 +118,39 @@ export default function ActivityDashboard() {
 
   const kpis = useMemo(() => {
     const active = tours.filter(t => t.status !== 'inactive' && t.is_active !== false);
-    const todayActive = todayRes.filter(r => ['pending', 'confirmed', 'checked_in'].includes(r.status));
-    const monthConf   = monthRes.filter(r => ['confirmed', 'checked_in', 'checked_out'].includes(r.status));
+    const monthConf   = monthRes.filter(r => ESTADOS_CONFIRMADOS.includes(r.status));
     const participants = monthConf.reduce((s, r) => s + (r.guests || 1), 0);
     const totalCap = active.reduce((s, t) => s + (t.capacity || 0), 0);
     const daysInMonth = new Date(periodo.fim).getDate();
     const ocupacao = totalCap > 0
       ? Math.min(100, Math.round((participants / (totalCap * daysInMonth)) * 100))
       : 0;
+    const receita = Number(resumo?.atual?.receita) || 0;
     return {
-      toursHoje:     todayActive.length,
       participantes: participants,
       ocupacao,
-      receita:       resumo?.atual?.receita ?? 0,
+      receita,
       /* Sem mes anterior na resposta nao ha variacao a mostrar */
-      receitaDelta:  resumo?.atual && resumo?.anterior
-        ? Number(resumo.atual.receita || 0) - Number(resumo.anterior.receita || 0)
-        : undefined,
-      rating:        avgRating,
+      variacao: resumo?.atual && resumo?.anterior
+        ? variacaoPercentual(resumo.atual.receita, resumo.anterior.receita)
+        : null,
+      reservasMes: monthRes.filter(r => r && r.status !== 'cancelled').length,
+      valorMedio: valorMedio(receita, monthConf.length),
+      rating: avgRating,
     };
-  }, [tours, todayRes, monthRes, resumo, avgRating, periodo.fim]);
+  }, [tours, monthRes, resumo, avgRating, periodo.fim]);
 
+  /* Agenda: um evento por (tour, horario) */
+  const eventos = useMemo(
+    () => eventosAtividades({ reservas: todayRes, tours, atribuicoes }),
+    [todayRes, tours, atribuicoes],
+  );
+
+  /* Reservas activas de hoje agrupadas por tour (para "quase cheio" em "Requer atencao") */
   const todayByTour = useMemo(() => {
     const map = {};
     todayRes
-      .filter(r => ['pending', 'confirmed', 'checked_in'].includes(r.status))
+      .filter(r => ESTADOS_ATIVOS.includes(r.status))
       .forEach(r => {
         if (!map[r.unit_id]) map[r.unit_id] = { reservations: [], guests: 0 };
         map[r.unit_id].reservations.push(r);
@@ -171,15 +169,17 @@ export default function ActivityDashboard() {
   const weekCountMap = useMemo(() => {
     const m = Object.fromEntries(next7.map(d => [d, 0]));
     weekRes
-      .filter(r => ['pending', 'confirmed', 'checked_in'].includes(r.status))
+      .filter(r => ESTADOS_ATIVOS.includes(r.status))
       .forEach(r => { if (m[r.check_in] !== undefined) m[r.check_in]++; });
     return m;
   }, [weekRes, next7]);
 
+  const porPagar = useMemo(() => unpaidReservations(unpaidRes, TODAY), [unpaidRes]);
+
   /* Itens do painel "Requer atencao" (meteorologia, pendentes, por pagar, quase cheios) */
   const attentionItems = useMemo(() => buildAttentionItems({
     pendingToday: alertas.pendentes,
-    unpaid:       unpaidReservations(unpaidRes, TODAY),
+    unpaid:       porPagar,
     nearlyFull:   alertas.quaseEsgotados.map(g => ({
       name: g.tour.name, guests: g.guests, capacity: g.tour.capacity,
     })),
@@ -188,104 +188,42 @@ export default function ActivityDashboard() {
       label:      weatherInfo(wx.code).label,
       toursCount: weekRes.filter(r => r.check_in === wx.date && ['confirmed', 'pending'].includes(r.status)).length,
     })),
-  }, t), [alertas, unpaidRes, wxAlerts, weekRes, t]);
-
-  /* Linhas da tabela "Tours de hoje" (a tabela usa o id como chave) */
-  const tourRows = useMemo(() => todayByTour.map(g => ({ id: g.tour.id, ...g })), [todayByTour]);
-
-  const tourColumns = useMemo(() => [
-    {
-      key: 'tour',
-      label: t('dashboard.activity.colTour'),
-      render: ({ tour }) => {
-        const meta = parseTourMeta(tour.description);
-        return (
-          <div className="min-w-0">
-            <p className="text-[13px] font-display font-semibold text-n-900 truncate">{tour.name}</p>
-            {(meta.start_time || meta.meeting_point) && (
-              <p className="text-xs font-body text-n-500 truncate">
-                {[meta.start_time, meta.meeting_point].filter(Boolean).join(' · ')}
-              </p>
-            )}
-          </div>
-        );
-      },
-    },
-    {
-      key: 'capacity',
-      label: t('dashboard.activity.colCapacity'),
-      width: '30%',
-      render: ({ tour, guests }) => {
-        const pct = fillPercent(guests, tour.capacity);
-        return (
-          <div className="flex items-center gap-2">
-            <span className="text-[13px] font-body font-medium text-n-900 tabular-nums">{guests}/{tour.capacity || '—'}</span>
-            <div
-              role="progressbar"
-              aria-label={t('dashboard.activity.colCapacity')}
-              aria-valuemin={0}
-              aria-valuemax={100}
-              aria-valuenow={pct}
-              className="h-1.5 w-16 rounded-full bg-n-100 overflow-hidden"
-            >
-              <div
-                className={`h-full rounded-full ${pct >= 80 ? 'bg-amber-500' : 'bg-ocean-500'}`}
-                style={{ width: `${pct}%` }}
-              />
-            </div>
-          </div>
-        );
-      },
-    },
-    {
-      key: 'reservations',
-      label: t('dashboard.activity.colReservations'),
-      align: 'right',
-      render: ({ reservations }) => <span className="text-[13px] font-body tabular-nums">{reservations.length}</span>,
-    },
-    {
-      key: 'status',
-      label: t('common.status'),
-      render: ({ reservations }) => {
-        const hasActive  = reservations.some(r => r.status === 'checked_in');
-        const hasPending = reservations.some(r => r.status === 'pending');
-        return (
-          <Badge variant={hasActive ? 'confirmed' : hasPending ? 'pending' : 'info'}>
-            {hasActive ? t('dashboard.status.inProgress') : hasPending ? t('dashboard.status.pending') : t('dashboard.status.confirmed')}
-          </Badge>
-        );
-      },
-    },
-  ], [t]);
+  }, t), [alertas, porPagar, wxAlerts, weekRes, t]);
 
   if (loading) return <div className="flex justify-center py-20"><LoadingSpinner size={32} /></div>;
 
+  const pessoasHoje = eventos.reduce((s, e) => s + e.pessoas, 0);
+  const pendentesHoje = eventos.reduce((s, e) => s + e.pendentes, 0);
+  const mesNome = new Date(`${periodo.inicio}T12:00:00`).toLocaleDateString(localeDe(lang), { month: 'long' });
+
+  const tiles = [
+    { id: 'reservas', icon: BookOpen, tone: 'ocean', label: t('dashboard.tiles.reservations'), value: String(kpis.reservasMes) },
+    { id: 'avaliacao', icon: Star, tone: 'sand', label: t('dashboard.tiles.rating'), value: kpis.rating != null ? Number(kpis.rating).toFixed(1) : '—' },
+    { id: 'medio', icon: Euro, tone: 'success', label: t('dashboard.tiles.avgValue'), value: kpis.valorMedio != null ? euros(kpis.valorMedio) : '—' },
+    { id: 'receber', icon: AlertTriangle, tone: 'warning', label: t('dashboard.tiles.toReceive'), value: euros(porReceber(porPagar)) },
+  ];
+
   return (
     <div className="space-y-4">
-      {/* KPIs */}
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
-        <KpiCard label={t('dashboard.activity.toursToday')}        value={kpis.toursHoje}     icon={Compass} />
-        <KpiCard label={t('dashboard.activity.participantsMonth')} value={kpis.participantes} icon={Users} />
-        <KpiCard label={t('dashboard.activity.occupancyRate')}     value={kpis.ocupacao}      icon={BarChart2} format="percent" />
-        <KpiCard
-          label={t('dashboard.activity.revenueMonth')}
-          value={kpis.receita}
-          delta={kpis.receitaDelta}
-          deltaLabel={t('dashboard.summary.vsPrevMonth')}
-          icon={Euro}
-          format="euro"
-        />
-        <KpiCard label={t('dashboard.restaurant.avgRating')}       value={kpis.rating != null ? Number(kpis.rating).toFixed(1) : '—'} icon={Star} />
-      </div>
+      <HeroCard
+        receita={kpis.receita}
+        variacao={kpis.variacao}
+        serie={serieReceitaAcumulada(receitaDia, periodo.inicio, TODAY)}
+        ocupacao={kpis.ocupacao}
+        volume={t('dashboard.hero.participants', { n: kpis.participantes })}
+        hojeValor={t('dashboard.hero.peopleToday', { n: pessoasHoje })}
+        hojeDetalhe={t('dashboard.hero.inTours', { n: eventos.length, p: pendentesHoje })}
+        mesNome={mesNome}
+      />
 
-      {/* Tours de hoje + Requer atencao */}
-      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)] gap-4 items-start">
-        <section className="bg-white border border-n-200 rounded-sm">
-          <header className="flex items-center gap-2 px-4 py-3 border-b border-n-200">
-            <h2 className="font-display font-semibold text-sm text-n-900">{t('dashboard.activity.toursTodayTitle')}</h2>
-            <span className="ml-auto text-xs font-body text-n-500 tabular-nums">{t('dashboard.activity.activeCount', { n: todayByTour.length })}</span>
-          </header>
-          {tourRows.length === 0 ? (
+      <StatTiles tiles={tiles} />
+
+      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1.7fr)_minmax(0,1fr)] gap-4 items-start">
+        <DayAgenda
+          eventos={eventos}
+          agoraMin={agora.getHours() * 60 + agora.getMinutes()}
+          onAbrir={() => navigate('/calendario')}
+          vazio={(
             <EmptyState
               icon={Compass}
               title={t('dashboard.activity.noToursToday')}
@@ -296,50 +234,21 @@ export default function ActivityDashboard() {
                 </Button>
               )}
             />
-          ) : (
-            <Table columns={tourColumns} rows={tourRows} />
           )}
-        </section>
+        />
 
-        <AttentionPanel items={attentionItems} />
-      </div>
-
-      {/* Proximos 7 dias */}
-      <section className="bg-white border border-n-200 rounded-sm">
-        <header className="flex items-center gap-2 px-4 py-3 border-b border-n-200">
-          <CalendarDays size={14} strokeWidth={1.75} className="text-n-500" aria-hidden="true" />
-          <h2 className="font-display font-semibold text-sm text-n-900">{t('dashboard.activity.next7Days')}</h2>
-        </header>
-        <div className="grid grid-cols-7 gap-1.5 p-3">
-          {next7.map(dateStr => {
-            const { weekday, day } = formatDayShort(dateStr, lang);
-            const count   = weekCountMap[dateStr] || 0;
-            const isToday = dateStr === TODAY;
-            return (
-              <button
-                key={dateStr}
-                type="button"
-                onClick={() => navigate('/calendario')}
-                className={`flex flex-col items-center gap-0.5 py-2 rounded-sm border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ocean-300 ${
-                  isToday
-                    ? 'bg-ocean-700 border-ocean-700 text-white'
-                    : count > 0
-                    ? 'bg-ocean-50 border-ocean-100 text-ocean-700 hover:bg-ocean-100'
-                    : 'bg-white border-n-200 text-n-500 hover:bg-n-50'
-                }`}
-              >
-                <span className={`text-[11px] font-body uppercase ${isToday ? 'text-ocean-100' : 'text-n-500'}`}>{weekday}</span>
-                <span className="font-display font-semibold text-sm tabular-nums">{day}</span>
-                <span className="h-4 flex items-center">
-                  {count > 0 && (
-                    <span className={`text-[10px] font-body font-semibold px-1.5 rounded-full tabular-nums ${isToday ? 'bg-white/20 text-white' : 'bg-ocean-100 text-ocean-700'}`}>{count} {t('dashboard.activity.resShort')}</span>
-                  )}
-                </span>
-              </button>
-            );
-          })}
+        <div className="space-y-4">
+          <AttentionPanel items={attentionItems} />
+          <Shortcuts />
+          <NextDaysStrip
+            dias={next7}
+            contagens={weekCountMap}
+            hoje={TODAY}
+            lang={lang}
+            onAbrir={() => navigate('/calendario')}
+          />
         </div>
-      </section>
+      </div>
     </div>
   );
 }
