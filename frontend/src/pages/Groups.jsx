@@ -110,7 +110,7 @@ function GroupModal({ group, units, onSave, onClose }) {
         </div>
 
         <div className="grid grid-cols-2 gap-3">
-          <Input label="Data pretendida" aria-label="Data pretendida" type="date" value={form.date} onChange={set('date')} required />
+          <Input label="Data pretendida" aria-label="Data pretendida" type="date" value={form.date} onChange={set('date')} />
           <Input label="Numero de pessoas" aria-label="Numero de pessoas" type="number" min="1" value={form.guests} onChange={set('guests')} required placeholder="Ex: 20" />
         </div>
 

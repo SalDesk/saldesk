@@ -235,6 +235,21 @@ describe('Grupos: formulario', () => {
     expect(await screen.findByText('Empresa Nova')).toBeInTheDocument();
   });
 
+  it('a_data_pretendida_e_opcional_mas_empresa_e_pessoas_continuam_obrigatorias', async () => {
+    createGroup.mockImplementation(async (d) => ({ id: 'gs', created_at: '2026-11-08T10:00:00Z', ...d }));
+    await montar();
+    fireEvent.click(novaCotacao());
+    const dlg = screen.getByRole('dialog');
+    expect(dlg.querySelector('input[type="date"]')).not.toBeRequired();
+    expect(within(dlg).getByPlaceholderText('Ex: Empresa ABC')).toBeRequired();
+    expect(within(dlg).getByPlaceholderText('Ex: 20')).toBeRequired();
+    fireEvent.change(within(dlg).getByPlaceholderText('Ex: Empresa ABC'), { target: { value: 'Sem Data Lda' } });
+    fireEvent.change(within(dlg).getByPlaceholderText('Ex: 20'), { target: { value: '12' } });
+    fireEvent.click(within(dlg).getByRole('button', { name: 'Criar cotacao' }));
+    await waitFor(() => expect(createGroup).toHaveBeenCalledTimes(1));
+    expect(createGroup).toHaveBeenCalledWith(expect.objectContaining({ company: 'Sem Data Lda', guests: 12, date: '' }));
+  });
+
   it('editar_mostra_o_estado_e_chama_updateGroup_com_o_id_e_a_falha_mostra_o_erro', async () => {
     updateGroup.mockRejectedValueOnce(new Error('x'));
     await montar();
