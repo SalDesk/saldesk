@@ -7,23 +7,26 @@ import { parseTourMeta } from '../units/UnitForm';
 
 const SOURCES = ['direct', 'booking_com', 'airbnb', 'viator', 'getyourguide', 'manual'];
 
-export default function ReservationForm({ reservation, units, operatorType, onSave, onCancel, loading, error }) {
+/* `initial`: valores de partida de uma reserva NOVA (ex: unidade e data clicadas no Calendario).
+   `reservation`: reserva existente a editar (activa o modo de edicao). */
+export default function ReservationForm({ reservation, initial, units, operatorType, onSave, onCancel, loading, error }) {
   const t = useT();
+  const origem = reservation || initial || null;
   const [fleetId, setFleetId] = useState(reservation?.fleet_id || null);
   const [form, setForm] = useState({
-    unit_id:          reservation?.unit_id || '',
-    customer_name:    reservation?.customer_name || '',
-    customer_email:   reservation?.customer_email || '',
-    customer_phone:   reservation?.customer_phone || '',
-    customer_country: reservation?.customer_country || '',
-    check_in:         reservation?.check_in || '',
-    check_out:        reservation?.check_out || '',
-    guests:           reservation?.guests || 1,
-    tour_time:        reservation?.tour_time || '09:00',
-    start_time:       reservation?.start_time?.slice(0, 5) || '19:00',
-    source:           reservation?.source || 'manual',
-    notes:            reservation?.notes || '',
-    whatsapp_opt_in:  reservation?.whatsapp_opt_in === true,
+    unit_id:          origem?.unit_id || '',
+    customer_name:    origem?.customer_name || '',
+    customer_email:   origem?.customer_email || '',
+    customer_phone:   origem?.customer_phone || '',
+    customer_country: origem?.customer_country || '',
+    check_in:         origem?.check_in || '',
+    check_out:        origem?.check_out || '',
+    guests:           origem?.guests || 1,
+    tour_time:        origem?.tour_time || '09:00',
+    start_time:       origem?.start_time?.slice(0, 5) || '19:00',
+    source:           origem?.source || 'manual',
+    notes:            origem?.notes || '',
+    whatsapp_opt_in:  origem?.whatsapp_opt_in === true,
   });
   const [pricePreview, setPricePreview] = useState(null);
 
