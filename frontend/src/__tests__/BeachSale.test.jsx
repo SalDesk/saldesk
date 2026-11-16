@@ -67,6 +67,23 @@ describe('BeachSale: horarios do tour', () => {
     }
   });
 
+  it('sem hora de inicio usa os horarios configurados (time_slots) em vez dos por omissao', async () => {
+    await abrirPassoDois(tour({ time_slots: [{ time: '10:00', capacity: 6 }, { time: '15:30', capacity: 4 }] }));
+    for (const hora of ['10:00', '15:30']) {
+      expect(screen.getByRole('button', { name: hora })).toBeTruthy();
+    }
+    for (const hora of ['09:00', '11:00', '14:00', '16:00']) {
+      expect(screen.queryByRole('button', { name: hora })).toBeNull();
+    }
+  });
+
+  it('time_slots sem nenhuma hora valida volta aos horarios por omissao', async () => {
+    await abrirPassoDois(tour({ time_slots: [{ capacity: 3 }, null, ''] }));
+    for (const hora of ['09:00', '11:00', '14:00', '16:00']) {
+      expect(screen.getByRole('button', { name: hora })).toBeTruthy();
+    }
+  });
+
   it('mostra a hora de inicio e os horarios em texto simples', async () => {
     await abrirPassoDois(tour({ start_time: '08:30', time_slots: ['10:00', '15:00'] }));
     for (const hora of ['08:30', '10:00', '15:00']) {
