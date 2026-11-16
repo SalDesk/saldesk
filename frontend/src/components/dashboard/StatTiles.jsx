@@ -17,7 +17,7 @@ export default function StatTiles({ tiles }) {
           </span>
           <div className="min-w-0">
             <p className="font-display font-bold text-lg text-n-900 tabular-nums leading-tight">{value}</p>
-            <p className="text-xs font-body text-n-500 truncate">{label}</p>
+            <p className="text-xs font-body text-n-500 leading-snug">{label}</p>
           </div>
         </div>
       ))}
