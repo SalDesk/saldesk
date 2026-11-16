@@ -5,7 +5,8 @@ import { useT } from '../i18n';
 import Button from '../components/ui/Button';
 import DashboardHeader from '../components/dashboard/DashboardHeader';
 import TrialStrip from '../components/dashboard/TrialStrip';
-import { mesAtual } from './dashboard/shared';
+import useAgora from '../hooks/useAgora';
+import { saudacao } from './dashboard/agendaLogic';
 import WhatsAppPendentes from '../components/messaging/WhatsAppPendentes';
 import HotelDashboard from './dashboard/HotelDashboard';
 import RentacarDashboard from './dashboard/RentacarDashboard';
@@ -13,6 +14,16 @@ import RestaurantDashboard from './dashboard/RestaurantDashboard';
 import GenericDashboard from './dashboard/GenericDashboard';
 import ActivityDashboard from './dashboard/ActivityDashboard';
 import ResumoView from './dashboard/ResumoView';
+
+/* Locale de datas por idioma da app */
+const LOCALE = { pt: 'pt-PT', en: 'en-GB', de: 'de-DE', nl: 'nl-NL' };
+
+/* "Sexta-feira, 20 de novembro · 11:42" na lingua da app */
+function dataEHora(agora, lang) {
+  const data = agora.toLocaleDateString(LOCALE[lang] || LOCALE.pt, { weekday: 'long', day: 'numeric', month: 'long' });
+  const hora = `${String(agora.getHours()).padStart(2, '0')}:${String(agora.getMinutes()).padStart(2, '0')}`;
+  return `${data.charAt(0).toUpperCase()}${data.slice(1)} · ${hora}`;
+}
 
 /* ─── Main export ────────────────────────────────────────────── */
 
@@ -23,13 +34,14 @@ export default function Dashboard() {
   const dashboardView = useUiStore((s) => s.dashboardView);
   const setDashboardView = useUiStore((s) => s.setDashboardView);
   const opType        = operator?.operator_type;
-  const periodo       = mesAtual();
+  const lang          = useUiStore((s) => s.lang);
+  const agora         = useAgora();
 
   return (
     <div>
       <DashboardHeader
-        title={t('dashboard.welcome', { name: operator?.name || '' })}
-        subtitle={`${opType ? t(`dashboard.typeLabel.${opType}`) : ''} · ${periodo.inicio.slice(0, 7)}`}
+        title={t(`dashboard.greeting.${saudacao(agora.getHours())}`, { name: operator?.name || '' })}
+        subtitle={dataEHora(agora, lang)}
         view={dashboardView}
         onViewChange={setDashboardView}
         actions={(

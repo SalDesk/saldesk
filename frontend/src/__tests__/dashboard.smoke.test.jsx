@@ -84,9 +84,21 @@ function renderDashboard(operator_type) {
   );
 }
 
+/* Igual a renderDashboard, mas mantem o operador ja definido no teste */
+function renderDashboardSemReset() {
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  return render(
+    <QueryClientProvider client={client}>
+      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+        <Dashboard />
+      </MemoryRouter>
+    </QueryClientProvider>
+  );
+}
+
 /* Espera o texto do tipo certo e confirma que nenhum dos outros aparece */
 async function esperaSoTipo(texto) {
-  expect(await screen.findByText('Bem-vindo, Teste')).toBeInTheDocument();
+  expect(await screen.findByText(/^(Bom dia|Boa tarde|Boa noite), Teste$/)).toBeInTheDocument();
   expect((await screen.findAllByText(texto)).length).toBeGreaterThan(0);
   TODOS.filter((outro) => outro !== texto).forEach((outro) => {
     expect(screen.queryByText(outro)).not.toBeInTheDocument();
@@ -155,7 +167,7 @@ describe('Dashboard (fumo por tipo de operador)', () => {
     expect(screen.getByRole('tab', { name: 'Resumo' })).toHaveAttribute('aria-selected', 'true');
     expect(screen.queryByText(TEXTO_HOTEL)).not.toBeInTheDocument();
     /* o cabecalho e a lista de WhatsApp pendentes continuam montados */
-    expect(screen.getByText('Bem-vindo, Teste')).toBeInTheDocument();
+    expect(screen.getByText(/^(Bom dia|Boa tarde|Boa noite), Teste$/)).toBeInTheDocument();
     expect(screen.getByTestId('whatsapp-pendentes')).toBeInTheDocument();
   });
 
@@ -193,5 +205,60 @@ describe('Dashboard (fumo por tipo de operador)', () => {
     expect(navigateMock).toHaveBeenLastCalledWith('/reservas');
     fireEvent.click(screen.getByRole('button', { name: 'Ver calendario' }));
     expect(navigateMock).toHaveBeenLastCalledWith('/calendario');
+  });
+});
+
+describe('Dashboard: cabecalho com saudacao, data e hora', () => {
+  beforeEach(() => {
+    servicosVazios();
+    navigateMock.mockReset();
+    vi.useFakeTimers({ toFake: ['Date'] });
+  });
+
+  afterEach(() => {
+    cleanup();
+    vi.useRealTimers();
+    useAuthStore.setState({ operator: null });
+    useUiStore.setState({ lang: 'pt', dashboardView: 'hoje' });
+  });
+
+  function dataEsperada(data, locale) {
+    const txt = data.toLocaleDateString(locale, { weekday: 'long', day: 'numeric', month: 'long' });
+    return txt.charAt(0).toUpperCase() + txt.slice(1);
+  }
+
+  it('cabecalho_saudacao_e_data_com_hora', async () => {
+    const agora = new Date(2026, 10, 20, 11, 42);
+    vi.setSystemTime(agora);
+    useAuthStore.setState({ operator: { name: 'Zy Tours', operator_type: 'hotel' } });
+    renderDashboardSemReset();
+    expect(await screen.findByRole('heading', { name: 'Bom dia, Zy Tours' })).toBeInTheDocument();
+    expect(screen.getByText(`${dataEsperada(agora, 'pt-PT')} · 11:42`)).toBeInTheDocument();
+  });
+
+  it('boa_tarde_as_15h', async () => {
+    vi.setSystemTime(new Date(2026, 10, 20, 15, 5));
+    useAuthStore.setState({ operator: { name: 'Zy Tours', operator_type: 'activity' } });
+    renderDashboardSemReset();
+    expect(await screen.findByRole('heading', { name: 'Boa tarde, Zy Tours' })).toBeInTheDocument();
+    expect(screen.getByText(/ · 15:05$/)).toBeInTheDocument();
+  });
+
+  it('em_ingles', async () => {
+    const agora = new Date(2026, 10, 20, 9, 7);
+    vi.setSystemTime(agora);
+    useUiStore.setState({ lang: 'en' });
+    useAuthStore.setState({ operator: { name: 'Zy Tours', operator_type: 'restaurant' } });
+    renderDashboardSemReset();
+    expect(await screen.findByRole('heading', { name: 'Good morning, Zy Tours' })).toBeInTheDocument();
+    expect(screen.getByText(`${dataEsperada(agora, 'en-GB')} · 09:07`)).toBeInTheDocument();
+  });
+
+  it('o_mesmo_cabecalho_na_vista_resumo', async () => {
+    vi.setSystemTime(new Date(2026, 10, 20, 20, 30));
+    useUiStore.setState({ dashboardView: 'resumo' });
+    useAuthStore.setState({ operator: { name: 'Zy Tours', operator_type: 'activity' } });
+    renderDashboardSemReset();
+    expect(await screen.findByRole('heading', { name: 'Boa noite, Zy Tours' })).toBeInTheDocument();
   });
 });
