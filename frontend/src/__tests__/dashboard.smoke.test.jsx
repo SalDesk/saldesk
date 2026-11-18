@@ -69,7 +69,7 @@ function servicosAFalhar() {
 /* Texto que so o componente de cada tipo renderiza (pt, existente no codigo original) */
 const TEXTO_ACTIVITY   = 'Ocupação do mês';
 const TEXTO_HOTEL      = 'Mapa de Quartos — Hoje';
-const TEXTO_RENTACAR   = 'Levantamentos hoje';
+const TEXTO_RENTACAR   = 'Frota — Estado Actual';
 const TEXTO_RESTAURANT = 'Covers do mes';
 const TEXTO_GENERICO   = 'Accoes Rapidas';
 const TODOS = [TEXTO_ACTIVITY, TEXTO_HOTEL, TEXTO_RENTACAR, TEXTO_RESTAURANT, TEXTO_GENERICO];
