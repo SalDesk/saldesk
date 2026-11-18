@@ -1,20 +1,42 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  Euro, BookOpen, BarChart2, Clock, X as XIcon, MoveRight, MoveLeft, BedDouble, Sparkles,
+  BookOpen, Clock, X as XIcon, BedDouble, Sparkles, Star, Euro, AlertTriangle,
 } from 'lucide-react';
-import { getResumo } from '../../services/financeiroService';
 import { listUnits } from '../../services/unitsService';
 import { listReservations } from '../../services/reservationsService';
 import { estadiaEm } from '../../services/reservationRanges';
 import { useT } from '../../i18n';
-import KpiCard from '../../components/financial/KpiCard';
+import useUiStore from '../../store/uiStore';
+import useAgora from '../../hooks/useAgora';
 import AttentionPanel from '../../components/dashboard/AttentionPanel';
+import DayAgenda from '../../components/dashboard/DayAgenda';
+import HeroCard from '../../components/dashboard/HeroCard';
+import StatTiles from '../../components/dashboard/StatTiles';
+import Shortcuts from '../../components/dashboard/Shortcuts';
+import NextDaysStrip from '../../components/dashboard/NextDaysStrip';
 import Badge from '../../components/ui/Badge';
 import EmptyState from '../../components/ui/EmptyState';
 import LoadingSpinner from '../../components/shared/LoadingSpinner';
 import { TODAY, mesAtual, uniaoPorId, HotelMap } from './shared';
 import { buildAttentionItems } from './dashboardLogic';
+import { serieReceitaAcumulada, variacaoPercentual, valorMedio, porReceber, localeDe } from './agendaLogic';
+import { eventosHotel } from './agendaTipos';
+import useMolduraComum from './useMolduraComum';
+
+const ESTADOS_CONFIRMADOS = ['confirmed', 'checked_in', 'checked_out'];
+
+function proximosDias() {
+  return Array.from({ length: 7 }, (_, i) => {
+    const d = new Date();
+    d.setDate(d.getDate() + i);
+    return d.toLocaleDateString('en-CA');
+  });
+}
+
+function euros(valor) {
+  return `€${Math.round(Number(valor) || 0).toLocaleString('pt-PT')}`;
+}
 
 /* ─── Hotel dashboard ───────────────────────────────────────── */
 
@@ -29,13 +51,16 @@ const STATUS_KEY_H = {
 
 export default function HotelDashboard() {
   const t        = useT();
+  const lang     = useUiStore((s) => s.lang);
   const navigate = useNavigate();
+  const agora    = useAgora();
   const periodo  = mesAtual();
+  const molde    = useMolduraComum();
+  const next7    = useMemo(() => proximosDias(), []);
 
   const [units,    setUnits]    = useState([]);
   const [todayRes, setTodayRes] = useState([]);
   const [pendingRes, setPendingRes] = useState([]);
-  const [resumo,   setResumo]   = useState(null);
   const [loading,  setLoading]  = useState(true);
   const [selected, setSelected] = useState(null);
 
@@ -44,18 +69,16 @@ export default function HotelDashboard() {
     Promise.all([
       listUnits().catch(() => []),
       listReservations(estadiaEm(TODAY)).catch(() => []),
-      getResumo(periodo.inicio, periodo.fim).catch(() => null),
       /* Quem ja fez check-in e passou a data de saida nao sobrepoe hoje, mas continua a ocupar */
       listReservations({ status: 'checked_in' }).catch(() => []),
       /* Todas as pendentes, de qualquer mes (a barra lateral ja conta assim): o contador so com as do mes
          escondia as reservas por confirmar dos meses seguintes */
       listReservations({ status: 'pending' }).catch(() => []),
     ])
-      .then(([u, tRes, res, ciRes, pRes]) => {
+      .then(([u, tRes, ciRes, pRes]) => {
         setUnits(u || []);
         setTodayRes(uniaoPorId(tRes, ciRes));
         setPendingRes(Array.isArray(pRes) ? pRes : []);
-        setResumo(res);
       })
       .catch(() => {})
       .finally(() => setLoading(false));
@@ -68,25 +91,28 @@ export default function HotelDashboard() {
     const pct      = active.length ? Math.round((occupied / active.length) * 100) : 0;
     return {
       ocupacao:  pct,
-      receita:   resumo?.atual?.receita ?? 0,
-      /* Sem mes anterior na resposta nao ha variacao a mostrar */
-      receitaDelta: resumo?.atual && resumo?.anterior
-        ? Number(resumo.atual.receita || 0) - Number(resumo.anterior.receita || 0)
-        : undefined,
+      ocupados:  occupied,
+      ativos:    active.length,
       checkins:  todayRes.filter(r => r.check_in  === TODAY && ['pending', 'confirmed'].includes(r.status)).length,
       checkouts: todayRes.filter(r => r.check_out === TODAY && r.status === 'checked_in').length,
       pendentes: pendingRes.filter(r => r.status === 'pending').length,
     };
-  }, [units, todayRes, pendingRes, resumo]);
+  }, [units, todayRes, pendingRes]);
 
-  const checkinsHoje  = useMemo(() =>
-    todayRes.filter(r => r.check_in === TODAY && ['pending', 'confirmed'].includes(r.status)),
-    [todayRes]
+  /* Agenda: partidas as 11:00 e chegadas as 14:00 (agendaTipos.js) */
+  const eventos = useMemo(
+    () => eventosHotel({ reservas: todayRes, unidades: units, hoje: TODAY, t }),
+    [todayRes, units, t],
   );
-  const checkoutsHoje = useMemo(() =>
-    todayRes.filter(r => r.check_out === TODAY && r.status === 'checked_in'),
-    [todayRes]
-  );
+
+  /* Proximos 7 dias: chegadas por dia */
+  const chegadasPorDia = useMemo(() => {
+    const m = Object.fromEntries(next7.map(d => [d, 0]));
+    molde.semana
+      .filter(r => ['pending', 'confirmed', 'checked_in'].includes(r.status))
+      .forEach(r => { if (m[r.check_in] !== undefined) m[r.check_in]++; });
+    return m;
+  }, [molde.semana, next7]);
 
   const alertas = useMemo(() => ({
     manutencao:      units.filter(u => u.status === 'maintenance'),
@@ -108,97 +134,73 @@ export default function HotelDashboard() {
     cleaning:    alertas.limpeza,
   }, t), [alertas, t]);
 
-  if (loading) return <div className="flex justify-center py-20"><LoadingSpinner size={32} /></div>;
+  if (loading || !molde.carregado) return <div className="flex justify-center py-20"><LoadingSpinner size={32} /></div>;
+
+  const resumo = molde.resumo;
+  const receita = Number(resumo?.atual?.receita) || 0;
+  const chegadas = eventos.filter(e => e.tipo === 'chegada');
+  const partidas = eventos.filter(e => e.tipo === 'partida');
+  const pendentesHoje = eventos.reduce((s, e) => s + e.pendentes, 0);
+  const confirmadasMes = molde.mes.filter(r => ESTADOS_CONFIRMADOS.includes(r.status)).length;
+  const medio = valorMedio(receita, confirmadasMes);
+  const mesNome = new Date(`${periodo.inicio}T12:00:00`).toLocaleDateString(localeDe(lang), { month: 'long' });
+
+  const tiles = [
+    { id: 'pendentes', icon: Clock, tone: 'ocean', label: t('dashboard.hotel.pendingReservations'), value: String(kpis.pendentes) },
+    { id: 'avaliacao', icon: Star, tone: 'sand', label: t('dashboard.tiles.rating'), value: molde.avaliacao != null ? Number(molde.avaliacao).toFixed(1) : '—' },
+    { id: 'medio', icon: Euro, tone: 'success', label: t('dashboard.tiles.avgValue'), value: medio != null ? euros(medio) : '—' },
+    { id: 'receber', icon: AlertTriangle, tone: 'warning', label: t('dashboard.tiles.toReceive'), value: euros(porReceber(molde.porPagar)) },
+  ];
 
   return (
     <div className="space-y-4">
+      <HeroCard
+        receita={receita}
+        variacao={resumo?.atual && resumo?.anterior ? variacaoPercentual(resumo.atual.receita, resumo.anterior.receita) : null}
+        serie={serieReceitaAcumulada(molde.receitaDia, periodo.inicio, TODAY)}
+        ocupacao={kpis.ocupacao}
+        rotuloOcupacao={t('dashboard.hero.occupancyToday')}
+        volume={t('dashboard.hero.roomsOccupied', { n: kpis.ocupados, total: kpis.ativos })}
+        hojeValor={t('dashboard.hero.arrivals', { n: chegadas.length })}
+        hojeDetalhe={t('dashboard.hero.departures', { n: partidas.length, p: pendentesHoje })}
+        mesNome={mesNome}
+      />
 
-      {/* KPIs */}
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
-        <KpiCard label={t('dashboard.hotel.occupancyToday')}      value={kpis.ocupacao}  format="percent" icon={BarChart2}  />
-        <KpiCard label={t('dashboard.hotel.revenueMonth')}        value={kpis.receita}   delta={kpis.receitaDelta} deltaLabel={t('dashboard.summary.vsPrevMonth')} format="euro" icon={Euro} />
-        <KpiCard label={t('dashboard.hotel.checkinsToday')}       value={kpis.checkins}  icon={MoveRight}                   />
-        <KpiCard label={t('dashboard.hotel.checkoutsToday')}      value={kpis.checkouts} icon={MoveLeft}                    />
-        <KpiCard label={t('dashboard.hotel.pendingReservations')} value={kpis.pendentes} icon={Clock}                       />
+      <StatTiles tiles={tiles} />
+
+      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1.7fr)_minmax(0,1fr)] gap-4 items-start">
+        <DayAgenda
+          eventos={eventos}
+          agoraMin={agora.getHours() * 60 + agora.getMinutes()}
+          onAbrir={() => navigate('/calendario')}
+          resumo={t('dashboard.agenda.summaryHotel', { a: chegadas.length, d: partidas.length })}
+          vazio={<EmptyState icon={BedDouble} title={t('dashboard.agenda.empty')} />}
+        />
+        <div className="space-y-4">
+          <AttentionPanel items={attentionItems} />
+          <Shortcuts />
+          <NextDaysStrip dias={next7} contagens={chegadasPorDia} hoje={TODAY} lang={lang} onAbrir={() => navigate('/calendario')} />
+        </div>
       </div>
 
-      {/* Mapa de quartos + Requer atencao */}
-      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)] gap-4 items-start">
-        <section className="bg-white border border-n-200 rounded-sm">
-          <header className="flex items-center gap-2 px-4 py-3 border-b border-n-200">
-            <BedDouble size={14} strokeWidth={1.75} className="text-n-500" aria-hidden="true" />
-            <h2 className="font-display font-semibold text-sm text-n-900">{t('dashboard.hotel.roomMap')}</h2>
-            <button
-              type="button"
-              onClick={() => navigate('/housekeeping')}
-              className="ml-auto text-xs font-body text-ocean-700 hover:underline flex items-center gap-1"
-            >
-              <Sparkles size={11} strokeWidth={1.75} aria-hidden="true" />
-              {t('dashboard.hotel.housekeeping')}
-            </button>
-          </header>
-          <div className="p-4">
-            <HotelMap units={units} todayRes={todayRes} onSelect={setSelected} />
-          </div>
-        </section>
-
-        <AttentionPanel items={attentionItems} />
-      </div>
-
-      {/* Check-ins + Check-outs */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <section className="bg-white border border-n-200 rounded-sm">
-          <header className="flex items-center gap-2 px-4 py-3 border-b border-n-200">
-            <MoveRight size={14} strokeWidth={1.75} className="text-[#1A7A4A]" aria-hidden="true" />
-            <h2 className="font-display font-semibold text-sm text-n-900">{t('dashboard.hotel.checkinsToday')}</h2>
-            <span className="ml-auto text-xs font-body text-n-500 tabular-nums">{checkinsHoje.length}</span>
-          </header>
-          {checkinsHoje.length === 0 ? (
-            <EmptyState icon={MoveRight} title={t('dashboard.hotel.noCheckinToday')} />
-          ) : (
-            <div className="divide-y divide-n-100">
-              {checkinsHoje.map(r => (
-                <div key={r.id} className="px-4 py-2.5 flex items-center gap-3">
-                  <div className="flex-1 min-w-0">
-                    <p className="text-[13px] font-display font-semibold text-n-900 truncate">{r.customer_name || '—'}</p>
-                    <p className="text-xs font-body text-n-500">
-                      {units.find(u => u.id === r.unit_id)?.name || '—'} · {r.guests || 1} {t('dashboard.common.guestsSuffix')}
-                    </p>
-                  </div>
-                  <Badge variant={r.status === 'confirmed' ? 'confirmed' : 'pending'}>
-                    {r.status === 'confirmed' ? t('dashboard.status.confirmed') : t('dashboard.status.pending')}
-                  </Badge>
-                </div>
-              ))}
-            </div>
-          )}
-        </section>
-
-        <section className="bg-white border border-n-200 rounded-sm">
-          <header className="flex items-center gap-2 px-4 py-3 border-b border-n-200">
-            <MoveLeft size={14} strokeWidth={1.75} className="text-n-500" aria-hidden="true" />
-            <h2 className="font-display font-semibold text-sm text-n-900">{t('dashboard.hotel.checkoutsToday')}</h2>
-            <span className="ml-auto text-xs font-body text-n-500 tabular-nums">{checkoutsHoje.length}</span>
-          </header>
-          {checkoutsHoje.length === 0 ? (
-            <EmptyState icon={MoveLeft} title={t('dashboard.hotel.noCheckoutToday')} />
-          ) : (
-            <div className="divide-y divide-n-100">
-              {checkoutsHoje.map(r => (
-                <div key={r.id} className="px-4 py-2.5 flex items-center gap-3">
-                  <div className="flex-1 min-w-0">
-                    <p className="text-[13px] font-display font-semibold text-n-900 truncate">{r.customer_name || '—'}</p>
-                    <p className="text-xs font-body text-n-500">
-                      {units.find(u => u.id === r.unit_id)?.name || '—'} · {r.guests || 1} {t('dashboard.common.guestsSuffix')}
-                    </p>
-                  </div>
-                  <Badge variant="info">{t('dashboard.map.checkout')}</Badge>
-                </div>
-              ))}
-            </div>
-          )}
-        </section>
-      </div>
+      {/* Mapa de quartos */}
+      <section className="bg-white border border-n-200 rounded-md">
+        <header className="flex items-center gap-2 px-4 py-3 border-b border-n-200">
+          <BedDouble size={14} strokeWidth={1.75} className="text-n-500" aria-hidden="true" />
+          <h2 className="font-display font-semibold text-sm text-n-900">{t('dashboard.hotel.roomMap')}</h2>
+          <button
+            type="button"
+            onClick={() => navigate('/housekeeping')}
+            className="ml-auto text-xs font-body text-ocean-700 hover:underline flex items-center gap-1"
+          >
+            <Sparkles size={11} strokeWidth={1.75} aria-hidden="true" />
+            {t('dashboard.hotel.housekeeping')}
+          </button>
+        </header>
+        <div className="p-4">
+          <HotelMap units={units} todayRes={todayRes} onSelect={setSelected} />
+        </div>
+      </section>
 
       {/* Room detail overlay */}
       {selected && (

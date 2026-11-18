@@ -45,7 +45,8 @@ function Evento({ evento, agoraMin, onAbrir }) {
   const guia = evento.guias.length > 0
     ? `${t('dashboard.agenda.guide', { name: evento.guias[0] })}${evento.guias.length > 1 ? ` +${evento.guias.length - 1}` : ''}`
     : '';
-  const detalhe = [
+  /* Hotel, rent-a-car e restaurante trazem a linha secundaria ja composta (agendaTipos.js) */
+  const detalhe = evento.detalhe || [
     evento.capacidade > 0 ? `${evento.pessoas}/${evento.capacidade}` : String(evento.pessoas),
     guia,
     evento.local,
@@ -121,7 +122,7 @@ function Evento({ evento, agoraMin, onAbrir }) {
 
 /* Agenda do dia: linha do tempo vertical de eventos ja normalizados (ver agendaLogic.js).
    Nao conhece tipos de operador. */
-export default function DayAgenda({ eventos, agoraMin, onAbrir, vazio }) {
+export default function DayAgenda({ eventos, agoraMin, onAbrir, vazio, resumo }) {
   const t = useT();
   const lista = Array.isArray(eventos) ? eventos : [];
   const { semHora, comHora } = ordenarAgenda(lista);
@@ -133,7 +134,7 @@ export default function DayAgenda({ eventos, agoraMin, onAbrir, vazio }) {
         <h2 className="font-display font-semibold text-sm text-n-900">{t('dashboard.agenda.title')}</h2>
         {lista.length > 0 && (
           <span className="ml-auto text-xs font-body text-n-500 tabular-nums">
-            {t('dashboard.agenda.summary', { tours: lista.length, people: pessoas })}
+            {resumo || t('dashboard.agenda.summary', { tours: lista.length, people: pessoas })}
           </span>
         )}
       </header>

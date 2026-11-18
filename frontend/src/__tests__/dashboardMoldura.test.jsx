@@ -97,6 +97,21 @@ describe('DayAgenda', () => {
     expect(screen.getByRole('progressbar')).toHaveAttribute('aria-valuenow', '100');
   });
 
+  it('detalhe_proprio_substitui_a_linha_composta', () => {
+    montar(<DayAgenda agoraMin={0} onAbrir={() => {}} vazio={null} eventos={[
+      evento({ titulo: 'Chegada · Ana', detalhe: 'Suite 12 · 2 pessoa(s)', pessoas: 2, capacidade: null, local: 'X' }),
+    ]} />);
+    expect(screen.getByText('Suite 12 · 2 pessoa(s)')).toBeInTheDocument();
+    expect(screen.queryByText(/· X/)).toBeNull();
+    expect(screen.queryByRole('progressbar')).toBeNull();
+  });
+
+  it('resumo_proprio_no_cabecalho', () => {
+    montar(<DayAgenda agoraMin={0} onAbrir={() => {}} vazio={null} resumo="2 chegadas · 1 partidas" eventos={[evento({})]} />);
+    expect(screen.getByText('2 chegadas · 1 partidas')).toBeInTheDocument();
+    expect(screen.queryByText(/tours/)).toBeNull();
+  });
+
   it('clicar_num_evento_chama_onAbrir', () => {
     const onAbrir = vi.fn();
     const e = evento({});
@@ -131,6 +146,12 @@ describe('HeroCard', () => {
   it('sem_mes_anterior_sem_pilula', () => {
     montar(<HeroCard {...base} variacao={null} />);
     expect(screen.queryByText(/vs mês anterior/)).toBeNull();
+  });
+
+  it('hero_rotulo_do_anel_proprio', () => {
+    montar(<HeroCard {...base} rotuloOcupacao="Ocupação hoje" />);
+    expect(screen.getByText('Ocupação hoje')).toBeInTheDocument();
+    expect(screen.queryByText('Ocupação do mês')).toBeNull();
   });
 
   it('anel_limita_a_ocupacao', () => {

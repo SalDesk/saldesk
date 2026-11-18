@@ -23,7 +23,7 @@ function caminhos(serie) {
 }
 
 /* Cartao de destaque do Dashboard: receita do mes com grafico, anel de ocupacao e o numero de hoje */
-export default function HeroCard({ receita, variacao, serie, ocupacao, volume, hojeValor, hojeDetalhe, mesNome }) {
+export default function HeroCard({ receita, variacao, serie, ocupacao, volume, hojeValor, hojeDetalhe, mesNome, rotuloOcupacao }) {
   const t = useT();
   const occ = Math.max(0, Math.min(100, Math.round(Number(ocupacao) || 0)));
   const temVariacao = variacao !== null && variacao !== undefined && Number.isFinite(Number(variacao));
@@ -55,7 +55,7 @@ export default function HeroCard({ receita, variacao, serie, ocupacao, volume, h
           </div>
         </div>
         <div className="min-w-0">
-          <p className="text-xs font-body text-ocean-100">{t('dashboard.hero.occupancy')}</p>
+          <p className="text-xs font-body text-ocean-100">{rotuloOcupacao || t('dashboard.hero.occupancy')}</p>
           <p className="font-display font-semibold text-sm mt-0.5">{volume}</p>
         </div>
       </div>
