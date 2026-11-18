@@ -23,8 +23,11 @@ describe('i18n dashboard', () => {
   it('os grupos da moldura nova existem nas quatro linguas com as chaves do portugues', () => {
     const esperado = {
       greeting: ['morning', 'afternoon', 'evening'],
-      agenda: ['title', 'summary', 'noTime', 'done', 'now', 'toConfirm', 'nearlyFull', 'guide'],
-      hero: ['revenue', 'vsPrev', 'occupancy', 'today', 'peopleToday', 'inTours', 'participants'],
+      agenda: ['title', 'summary', 'noTime', 'done', 'now', 'toConfirm', 'nearlyFull', 'guide',
+        'chegada', 'partida', 'levantamento', 'devolucao', 'mesa', 'guests', 'nights', 'preOrder', 'empty',
+        'summaryHotel', 'summaryRentacar', 'summaryRestaurant'],
+      hero: ['revenue', 'vsPrev', 'occupancy', 'today', 'peopleToday', 'inTours', 'participants',
+        'occupancyToday', 'roomsOccupied', 'vehiclesRented', 'tablesTaken', 'arrivals', 'departures', 'pickups', 'returns', 'peopleTables'],
       tiles: ['reservations', 'rating', 'avgValue', 'toReceive'],
       shortcuts: ['title', 'checkin', 'blockDay', 'message', 'payment'],
     };
