@@ -40,7 +40,7 @@ function semRepetidos(reservas) {
   });
 }
 
-function evento({ tipo, reserva, inicioMin, duracao, detalhe, t }) {
+function evento({ tipo, reserva, inicioMin, duracao, detalhe, t, acaoPendente = false }) {
   const temHora = inicioMin !== null && inicioMin !== undefined;
   return {
     id: `${tipo}|${reserva.id}`,
@@ -56,6 +56,8 @@ function evento({ tipo, reserva, inicioMin, duracao, detalhe, t }) {
     pendentes: reserva.status === 'pending' ? 1 : 0,
     guias: [],
     clientes: reserva.customer_name ? [reserva.customer_name] : [],
+    /* so entram chegadas/partidas/levantamentos/devolucoes ainda por fazer: nunca ficam "concluidas" pela hora */
+    acaoPendente,
   };
 }
 
@@ -74,10 +76,10 @@ export function eventosHotel({ reservas, unidades, hoje, t = (k) => k } = {}) {
     const quarto = porId.get(r.unit_id);
     const detalhe = [quarto?.name, t('dashboard.agenda.guests', { n: pessoasDe(r) }), t('dashboard.agenda.nights', { n: noites(r) })];
     if (r.check_out === hoje && r.status === 'checked_in') {
-      eventos.push(evento({ tipo: 'partida', reserva: r, inicioMin: paraMinutos(HORA_PARTIDA_HOTEL), duracao: DURACAO_POR_OMISSAO_MIN, detalhe, t }));
+      eventos.push(evento({ tipo: 'partida', reserva: r, inicioMin: paraMinutos(HORA_PARTIDA_HOTEL), duracao: DURACAO_POR_OMISSAO_MIN, detalhe, t, acaoPendente: true }));
     }
     if (r.check_in === hoje && ['pending', 'confirmed'].includes(r.status)) {
-      eventos.push(evento({ tipo: 'chegada', reserva: r, inicioMin: paraMinutos(HORA_CHEGADA_HOTEL), duracao: DURACAO_POR_OMISSAO_MIN, detalhe, t }));
+      eventos.push(evento({ tipo: 'chegada', reserva: r, inicioMin: paraMinutos(HORA_CHEGADA_HOTEL), duracao: DURACAO_POR_OMISSAO_MIN, detalhe, t, acaoPendente: true }));
     }
   });
   return eventos;
@@ -94,10 +96,10 @@ export function eventosRentacar({ reservas, unidades, hoje, t = (k) => k } = {})
     const detalhe = [nome, m.plate];
     const inicioMin = paraMinutos(r.start_time);
     if (r.check_in === hoje && ['pending', 'confirmed'].includes(r.status)) {
-      eventos.push(evento({ tipo: 'levantamento', reserva: r, inicioMin, duracao: DURACAO_POR_OMISSAO_MIN, detalhe, t }));
+      eventos.push(evento({ tipo: 'levantamento', reserva: r, inicioMin, duracao: DURACAO_POR_OMISSAO_MIN, detalhe, t, acaoPendente: true }));
     }
     if (r.check_out === hoje && r.status === 'checked_in') {
-      eventos.push(evento({ tipo: 'devolucao', reserva: r, inicioMin, duracao: DURACAO_POR_OMISSAO_MIN, detalhe, t }));
+      eventos.push(evento({ tipo: 'devolucao', reserva: r, inicioMin, duracao: DURACAO_POR_OMISSAO_MIN, detalhe, t, acaoPendente: true }));
     }
   });
   return eventos;

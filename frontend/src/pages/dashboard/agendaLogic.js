@@ -108,7 +108,8 @@ export function eventosAtividades({ reservas, tours, atribuicoes } = {}) {
 export function estadoDoEvento(evento, agoraMin) {
   if (!evento || evento.inicioMin === null || evento.inicioMin === undefined) return 'sem_hora';
   const fim = Math.min(evento.fimMin ?? evento.inicioMin + DURACAO_POR_OMISSAO_MIN, FIM_DO_DIA_MIN);
-  if (agoraMin >= fim) return 'concluido';
+  /* Chegadas, partidas, levantamentos e devolucoes por fazer: a hora passar nao as conclui */
+  if (agoraMin >= fim) return evento.acaoPendente ? 'a_seguir' : 'concluido';
   if (agoraMin >= evento.inicioMin) return 'a_decorrer';
   return 'a_seguir';
 }

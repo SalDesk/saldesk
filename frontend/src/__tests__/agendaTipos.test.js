@@ -1,5 +1,6 @@
 /* Eventos da agenda de hotel, rent-a-car e restaurante (funcoes puras). */
 import { describe, expect, it } from 'vitest';
+import { estadoDoEvento } from '../pages/dashboard/agendaLogic';
 import {
   eventosHotel, eventosRentacar, eventosRestaurante, HORA_CHEGADA_HOTEL, HORA_PARTIDA_HOTEL, DURACAO_MESA_MIN,
 } from '../pages/dashboard/agendaTipos';
@@ -32,6 +33,16 @@ describe('agendaTipos: hotel', () => {
     const ev = eventosHotel({ reservas: [sai, entra], unidades: [QUARTO], hoje: HOJE, t });
     expect(ev.map((e) => e.tipo).sort()).toEqual(['chegada', 'partida']);
     expect(new Set(ev.map((e) => e.id)).size).toBe(2);
+  });
+
+  it('chegadas_e_partidas_por_fazer_nunca_aparecem_como_concluidas', () => {
+    const [chegada] = eventosHotel({ reservas: [r({})], unidades: [QUARTO], hoje: HOJE, t });
+    expect(chegada.acaoPendente).toBe(true);
+    /* 17:31: ja passou da hora fixa, mas a chegada continua por fazer */
+    expect(estadoDoEvento(chegada, 17 * 60 + 31)).toBe('a_seguir');
+    expect(estadoDoEvento(chegada, 14 * 60 + 30)).toBe('a_decorrer');
+    const [lev] = eventosRentacar({ reservas: [r({ start_time: '09:00' })], unidades: [], hoje: HOJE, t });
+    expect(estadoDoEvento(lev, 12 * 60)).toBe('a_seguir');
   });
 
   it('hotel_detalhe_quarto_hospedes_noites', () => {
