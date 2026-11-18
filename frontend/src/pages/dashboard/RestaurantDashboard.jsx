@@ -1,62 +1,44 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  Euro, BookOpen, CalendarDays, Users, UtensilsCrossed, Star, Clock, X as XIcon,
+  Euro, BookOpen, Users, UtensilsCrossed, Star, X as XIcon, AlertTriangle,
 } from 'lucide-react';
-import { getResumo } from '../../services/financeiroService';
+import { listOrders } from '../../services/ordersService';
 import { listUnits } from '../../services/unitsService';
 import { listReservations } from '../../services/reservationsService';
-import { estadiaEm, estadiaNoMes } from '../../services/reservationRanges';
-import api from '../../services/api';
+import { estadiaEm } from '../../services/reservationRanges';
 import { useT } from '../../i18n';
-import KpiCard from '../../components/financial/KpiCard';
+import useUiStore from '../../store/uiStore';
+import useAgora from '../../hooks/useAgora';
 import AttentionPanel from '../../components/dashboard/AttentionPanel';
-import Badge from '../../components/ui/Badge';
+import DayAgenda from '../../components/dashboard/DayAgenda';
+import HeroCard from '../../components/dashboard/HeroCard';
+import StatTiles from '../../components/dashboard/StatTiles';
+import Shortcuts from '../../components/dashboard/Shortcuts';
+import NextDaysStrip from '../../components/dashboard/NextDaysStrip';
 import EmptyState from '../../components/ui/EmptyState';
 import LoadingSpinner from '../../components/shared/LoadingSpinner';
 import { TODAY, mesAtual, CELL, unitStatus, parseVehicleMeta, TableMap, ZONE_KEYS } from './shared';
 import { buildAttentionItems } from './dashboardLogic';
+import { serieReceitaAcumulada, variacaoPercentual, valorMedio, porReceber, localeDe } from './agendaLogic';
+import { eventosRestaurante } from './agendaTipos';
+import useMolduraComum from './useMolduraComum';
+
+const ESTADOS_CONFIRMADOS = ['confirmed', 'checked_in', 'checked_out'];
+
+function proximosDias() {
+  return Array.from({ length: 7 }, (_, i) => {
+    const d = new Date();
+    d.setDate(d.getDate() + i);
+    return d.toLocaleDateString('en-CA');
+  });
+}
+
+function euros(valor) {
+  return `€${Math.round(Number(valor) || 0).toLocaleString('pt-PT')}`;
+}
 
 /* ─── Restaurant dashboard ──────────────────────────────────── */
-
-function TurnoSection({ label, reservations, units, emptyMsg }) {
-  const t = useT();
-  return (
-    <section className="bg-white border border-n-200 rounded-sm">
-      <header className="flex items-center gap-2 px-4 py-3 border-b border-n-200">
-        <Clock size={14} strokeWidth={1.75} className="text-n-500" aria-hidden="true" />
-        <h2 className="font-display font-semibold text-sm text-n-900">{label}</h2>
-        <span className="ml-auto text-xs font-body text-n-500 tabular-nums">{reservations.length}</span>
-      </header>
-      {reservations.length === 0 ? (
-        <EmptyState icon={Clock} title={emptyMsg} />
-      ) : (
-        <div className="divide-y divide-n-100">
-          {reservations.map(r => {
-            const unit  = units.find(u => u.id === r.unit_id);
-            const umeta = unit ? parseVehicleMeta(unit) : {};
-            const tbl   = unit ? (umeta.number ? t('dashboard.restaurant.table', { n: umeta.number }) : unit.name) : t('dashboard.restaurant.noTable');
-            let gm = {};
-            try { gm = JSON.parse(r.notes_guest || '{}'); } catch {}
-            return (
-              <div key={r.id} className="px-4 py-2.5 flex items-center gap-3">
-                <div className="flex-1 min-w-0">
-                  <p className="text-[13px] font-display font-semibold text-n-900 truncate">{r.customer_name || '—'}</p>
-                  <p className="text-xs font-body text-n-500">
-                    {tbl} · {r.guests} {t('dashboard.common.pax')}{gm.ocasiao ? ` · ${gm.ocasiao}` : ''}
-                  </p>
-                </div>
-                <Badge variant={r.status === 'checked_in' ? 'info' : r.status === 'confirmed' ? 'confirmed' : 'pending'}>
-                  {r.status === 'checked_in' ? t('dashboard.status.seated') : r.status === 'confirmed' ? t('dashboard.status.confirmed') : t('dashboard.status.pending')}
-                </Badge>
-              </div>
-            );
-          })}
-        </div>
-      )}
-    </section>
-  );
-}
 
 function TableDetailCard({ unit, state, reservation, onClose, onNavigate }) {
   const t    = useT();
@@ -119,39 +101,32 @@ function TableDetailCard({ unit, state, reservation, onClose, onNavigate }) {
 
 export default function RestaurantDashboard() {
   const t        = useT();
+  const lang     = useUiStore((s) => s.lang);
   const navigate = useNavigate();
+  const agora    = useAgora();
   const periodo  = mesAtual();
+  const molde    = useMolduraComum();
+  const next7    = useMemo(() => proximosDias(), []);
 
   const [units,     setUnits]     = useState([]);
   const [todayRes,  setTodayRes]  = useState([]);
-  const [monthRes,  setMonthRes]  = useState([]);
-  const [resumo,    setResumo]    = useState(null);
-  const [avgRating, setAvgRating] = useState(null);
+  const [pedidos,   setPedidos]   = useState([]);
   const [loading,   setLoading]   = useState(true);
   const [selected,  setSelected]  = useState(null);
 
   useEffect(() => {
-    /* Cada chamada falha para o seu valor vazio: uma falha nao apaga as outras.
-       /reviews/stats devolve { total, average, distribution }; sem avaliacoes
-       (total 0) a media nao existe */
+    /* Cada chamada falha para o seu valor vazio: uma falha nao apaga as outras. O resumo, o mes, a
+       avaliacao e os 7 dias vem da moldura comum (useMolduraComum) */
     Promise.all([
       listUnits().catch(() => []),
       listReservations(estadiaEm(TODAY)).catch(() => []),
-      listReservations(estadiaNoMes()).catch(() => []),
-      getResumo(periodo.inicio, periodo.fim).catch(() => null),
-      api.get('/reviews/stats')
-        .then(r => {
-          const s = r.data?.data;
-          return Number(s?.total) > 0 ? (s.average ?? null) : null;
-        })
-        .catch(() => null),
+      /* pre-pedidos (ultimos 200), cruzados por reservation_id na agenda */
+      listOrders().catch(() => []),
     ])
-      .then(([u, tRes, mRes, res, avgR]) => {
+      .then(([u, tRes, ords]) => {
         setUnits((u || []).filter(x => x.unit_type !== 'menu_item' && x.unit_type !== 'tasting_menu'));
         setTodayRes(tRes || []);
-        setMonthRes(mRes || []);
-        setResumo(res);
-        setAvgRating(avgR);
+        setPedidos(Array.isArray(ords) ? ords : []);
       })
       .catch(() => {})
       .finally(() => setLoading(false));
@@ -169,34 +144,37 @@ export default function RestaurantDashboard() {
 
   function getTableState(unit) { return unitStatus(unit) || statusMap[unit.id] || 'available'; }
 
-  const kpis = useMemo(() => ({
-    reservasHoje: todayRes.filter(r => ['pending', 'confirmed', 'checked_in'].includes(r.status)).length,
-    coversMes:    monthRes.filter(r => ['confirmed', 'checked_in', 'checked_out'].includes(r.status)).reduce((s, r) => s + (r.guests || 0), 0),
-    receita:      resumo?.atual?.receita ?? 0,
-    /* Sem mes anterior na resposta nao ha variacao a mostrar */
-    receitaDelta: resumo?.atual && resumo?.anterior
-      ? Number(resumo.atual.receita || 0) - Number(resumo.anterior.receita || 0)
-      : undefined,
-    rating:       avgRating,
-  }), [todayRes, monthRes, resumo, avgRating]);
+  const kpis = useMemo(() => {
+    const ativas = units.filter(u => u.is_active !== false && u.status !== 'inactive');
+    const ocupadas = ativas.filter(u => statusMap[u.id]).length;
+    return {
+      ativas: ativas.length,
+      ocupadas,
+      ocupacao: ativas.length ? Math.min(100, Math.round((ocupadas / ativas.length) * 100)) : 0,
+      coversMes: molde.mes.filter(r => ESTADOS_CONFIRMADOS.includes(r.status)).reduce((s, r) => s + (r.guests || 0), 0),
+    };
+  }, [units, statusMap, molde.mes]);
+
+  /* Agenda: reservas de mesa por hora (agendaTipos.js) */
+  const eventos = useMemo(
+    () => eventosRestaurante({ reservas: todayRes, unidades: units, pedidos, hoje: TODAY, t }),
+    [todayRes, units, pedidos, t],
+  );
+
+  /* Proximos 7 dias: reservas por dia */
+  const reservasPorDia = useMemo(() => {
+    const m = Object.fromEntries(next7.map(d => [d, 0]));
+    molde.semana
+      .filter(r => ['pending', 'confirmed', 'checked_in'].includes(r.status))
+      .forEach(r => { if (m[r.check_in] !== undefined) m[r.check_in]++; });
+    return m;
+  }, [molde.semana, next7]);
 
   /* Itens do painel "Requer atencao" (reservas pendentes de hoje) */
   const attentionItems = useMemo(
     () => buildAttentionItems({ pendingToday: todayRes.filter(r => r.status === 'pending') }, t),
     [todayRes, t]
   );
-
-  const shifts = useMemo(() => {
-    const a = [], j = [], o = [];
-    todayRes.filter(r => ['pending', 'confirmed', 'checked_in'].includes(r.status)).forEach(r => {
-      let meta = {};
-      try { meta = JSON.parse(r.notes_guest || '{}'); } catch {}
-      if      (meta.turno === 'almoco') a.push(r);
-      else if (meta.turno === 'jantar') j.push(r);
-      else                              o.push(r);
-    });
-    return { almoco: a, jantar: j, outros: o };
-  }, [todayRes]);
 
   const tableRes = useMemo(() => {
     if (!selected) return null;
@@ -205,52 +183,73 @@ export default function RestaurantDashboard() {
     ) || null;
   }, [selected, todayRes]);
 
-  if (loading) return <div className="flex justify-center py-20"><LoadingSpinner size={32} /></div>;
+  if (loading || !molde.carregado) return <div className="flex justify-center py-20"><LoadingSpinner size={32} /></div>;
+
+  const resumo = molde.resumo;
+  const receita = Number(resumo?.atual?.receita) || 0;
+  const pessoasHoje = eventos.reduce((s, e) => s + e.pessoas, 0);
+  const pendentesHoje = eventos.reduce((s, e) => s + e.pendentes, 0);
+  const confirmadasMes = molde.mes.filter(r => ESTADOS_CONFIRMADOS.includes(r.status)).length;
+  const medio = valorMedio(receita, confirmadasMes);
+  const mesNome = new Date(`${periodo.inicio}T12:00:00`).toLocaleDateString(localeDe(lang), { month: 'long' });
+
+  const tiles = [
+    { id: 'covers', icon: Users, tone: 'ocean', label: t('dashboard.restaurant.coversMonth'), value: String(kpis.coversMes) },
+    { id: 'avaliacao', icon: Star, tone: 'sand', label: t('dashboard.tiles.rating'), value: molde.avaliacao != null ? Number(molde.avaliacao).toFixed(1) : '—' },
+    { id: 'medio', icon: Euro, tone: 'success', label: t('dashboard.tiles.avgValue'), value: medio != null ? euros(medio) : '—' },
+    { id: 'receber', icon: AlertTriangle, tone: 'warning', label: t('dashboard.tiles.toReceive'), value: euros(porReceber(molde.porPagar)) },
+  ];
 
   return (
     <div className="space-y-4">
+      <HeroCard
+        receita={receita}
+        variacao={resumo?.atual && resumo?.anterior ? variacaoPercentual(resumo.atual.receita, resumo.anterior.receita) : null}
+        serie={serieReceitaAcumulada(molde.receitaDia, periodo.inicio, TODAY)}
+        ocupacao={kpis.ocupacao}
+        rotuloOcupacao={t('dashboard.hero.occupancyToday')}
+        volume={t('dashboard.hero.tablesTaken', { n: kpis.ocupadas, total: kpis.ativas })}
+        hojeValor={t('dashboard.hero.peopleToday', { n: pessoasHoje })}
+        hojeDetalhe={t('dashboard.hero.peopleTables', { n: eventos.length, p: pendentesHoje })}
+        mesNome={mesNome}
+      />
 
-      {/* KPIs */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <KpiCard label={t('dashboard.restaurant.reservationsToday')} value={kpis.reservasHoje}                            icon={CalendarDays} />
-        <KpiCard label={t('dashboard.restaurant.coversMonth')}       value={kpis.coversMes}                               icon={Users}        />
-        <KpiCard label={t('dashboard.restaurant.revenueEstimated')}  value={kpis.receita} delta={kpis.receitaDelta} deltaLabel={t('dashboard.summary.vsPrevMonth')} icon={Euro} format="euro" />
-        <KpiCard label={t('dashboard.restaurant.avgRating')}         value={kpis.rating ? kpis.rating.toFixed(1) : '—'}  icon={Star}         />
+      <StatTiles tiles={tiles} />
+
+      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1.7fr)_minmax(0,1fr)] gap-4 items-start">
+        <DayAgenda
+          eventos={eventos}
+          agoraMin={agora.getHours() * 60 + agora.getMinutes()}
+          onAbrir={() => navigate('/calendario')}
+          resumo={t('dashboard.agenda.summaryRestaurant', { n: eventos.length, p: pessoasHoje })}
+          vazio={<EmptyState icon={UtensilsCrossed} title={t('dashboard.agenda.empty')} />}
+        />
+        <div className="space-y-4">
+          <AttentionPanel items={attentionItems} />
+          <Shortcuts />
+          <NextDaysStrip dias={next7} contagens={reservasPorDia} hoje={TODAY} lang={lang} onAbrir={() => navigate('/calendario')} />
+        </div>
       </div>
 
-      {/* Mapa de mesas + Requer atencao */}
-      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)] gap-4 items-start">
-        <section className="bg-white border border-n-200 rounded-sm">
-          <header className="flex items-center gap-2 px-4 py-3 border-b border-n-200">
-            <UtensilsCrossed size={14} strokeWidth={1.75} className="text-n-500" aria-hidden="true" />
-            <h2 className="font-display font-semibold text-sm text-n-900">
-              {t('dashboard.restaurant.tableMap')}
-            </h2>
-            <button
-              type="button"
-              onClick={() => navigate('/unidades')}
-              className="ml-auto text-xs font-body text-ocean-700 hover:underline"
-            >
-              {t('dashboard.restaurant.manageTables')}
-            </button>
-          </header>
-          <div className="p-4">
-            <TableMap units={units} todayRes={todayRes} onSelect={setSelected} />
-          </div>
-        </section>
-
-        <AttentionPanel items={attentionItems} />
-      </div>
-
-      {/* Turnos */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <TurnoSection label={t('dashboard.restaurant.lunch')}  reservations={shifts.almoco} units={units} emptyMsg={t('dashboard.restaurant.noLunchReservations')} />
-        <TurnoSection label={t('dashboard.restaurant.dinner')} reservations={shifts.jantar} units={units} emptyMsg={t('dashboard.restaurant.noDinnerReservations')} />
-      </div>
-
-      {shifts.outros.length > 0 && (
-        <TurnoSection label={t('dashboard.restaurant.noShiftDefined')} reservations={shifts.outros} units={units} emptyMsg="" />
-      )}
+      {/* Mapa de mesas */}
+      <section className="bg-white border border-n-200 rounded-md">
+        <header className="flex items-center gap-2 px-4 py-3 border-b border-n-200">
+          <UtensilsCrossed size={14} strokeWidth={1.75} className="text-n-500" aria-hidden="true" />
+          <h2 className="font-display font-semibold text-sm text-n-900">
+            {t('dashboard.restaurant.tableMap')}
+          </h2>
+          <button
+            type="button"
+            onClick={() => navigate('/unidades')}
+            className="ml-auto text-xs font-body text-ocean-700 hover:underline"
+          >
+            {t('dashboard.restaurant.manageTables')}
+          </button>
+        </header>
+        <div className="p-4">
+          <TableMap units={units} todayRes={todayRes} onSelect={setSelected} />
+        </div>
+      </section>
 
       {/* Table detail overlay */}
       {selected && (

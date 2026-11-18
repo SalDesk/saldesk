@@ -15,7 +15,6 @@ import HeroCard from '../../components/dashboard/HeroCard';
 import StatTiles from '../../components/dashboard/StatTiles';
 import Shortcuts from '../../components/dashboard/Shortcuts';
 import NextDaysStrip from '../../components/dashboard/NextDaysStrip';
-import Badge from '../../components/ui/Badge';
 import EmptyState from '../../components/ui/EmptyState';
 import LoadingSpinner from '../../components/shared/LoadingSpinner';
 import { TODAY, mesAtual, uniaoPorId, CELL, unitStatus, parseVehicleMeta, MapLegend } from './shared';

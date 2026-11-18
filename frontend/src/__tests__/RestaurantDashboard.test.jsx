@@ -5,7 +5,8 @@ import RestaurantDashboard from '../pages/dashboard/RestaurantDashboard';
 import useUiStore from '../store/uiStore';
 import { listUnits } from '../services/unitsService';
 import { listReservations } from '../services/reservationsService';
-import { getResumo } from '../services/financeiroService';
+import { getResumo, getReceita } from '../services/financeiroService';
+import { listOrders } from '../services/ordersService';
 import api from '../services/api';
 
 /* Sem rede: todos os servicos usados pelo dashboard sao simulados */
@@ -17,6 +18,10 @@ vi.mock('../services/reservationsService', () => ({
 }));
 vi.mock('../services/financeiroService', () => ({
   getResumo: vi.fn(),
+  getReceita: vi.fn(),
+}));
+vi.mock('../services/ordersService', () => ({
+  listOrders: vi.fn(),
 }));
 vi.mock('../services/api', () => ({
   default: { get: vi.fn() },
@@ -34,6 +39,7 @@ const FUTURE = { v7_startTransition: true, v7_relativeSplatPath: true };
 /* Datas locais calculadas aqui, sem reutilizar o codigo em teste */
 const HOJE = new Date().toLocaleDateString('en-CA');
 const MES_INICIO = HOJE.slice(0, 8) + '01';
+const SEMANA_FIM = (() => { const d = new Date(); d.setDate(d.getDate() + 6); return d.toLocaleDateString('en-CA'); })();
 const MES_FIM = (() => {
   const n = new Date();
   return new Date(n.getFullYear(), n.getMonth() + 1, 0).toLocaleDateString('en-CA');
@@ -65,6 +71,8 @@ function reserva(over, turno) {
 /* Responde conforme o par exato (stay_from, stay_to): hoje ou mes. Qualquer outra forma de
    argumentos (por exemplo from/to) lanca, para apanhar pedidos perdidos. */
 function respostaPorPar(params, { hoje, mes }) {
+  /* moldura comum: pagamentos por regularizar de qualquer mes */
+  if (Object.keys(params || {}).join(',') === 'payment_status' && params.payment_status === 'pending,partial') return [];
   if (Object.keys(params || {}).sort().join(',') !== 'stay_from,stay_to') {
     throw new Error(`pedido inesperado ${JSON.stringify(params)}`);
   }
@@ -72,11 +80,15 @@ function respostaPorPar(params, { hoje, mes }) {
   /* O dia 1 pode ser igual a hoje: so o par completo separa os pedidos */
   if (de === HOJE && ate === HOJE) return hoje;
   if (de === MES_INICIO && ate === MES_FIM) return mes;
+  /* moldura comum: proximos 7 dias */
+  if (de === HOJE && ate === SEMANA_FIM) return [];
   throw new Error(`pedido inesperado ${de} ${ate}`);
 }
 
-function carregaServicos({ units = [mesa()], hoje = [], mes = [], res = resumo(), rating = null, ratingTotal = 3 } = {}) {
+function carregaServicos({ units = [mesa()], hoje = [], mes = [], res = resumo(), rating = null, ratingTotal = 3, pedidos = [] } = {}) {
   listUnits.mockReset().mockResolvedValue(units);
+  getReceita.mockReset().mockResolvedValue([]);
+  listOrders.mockReset().mockResolvedValue(pedidos);
   listReservations.mockReset().mockImplementation(async (params) => (
     respostaPorPar(params, { hoje, mes })
   ));
@@ -92,6 +104,8 @@ function servicosAFalhar() {
   listUnits.mockReset().mockRejectedValue(erro);
   listReservations.mockReset().mockRejectedValue(erro);
   getResumo.mockReset().mockRejectedValue(erro);
+  getReceita.mockReset().mockRejectedValue(erro);
+  listOrders.mockReset().mockRejectedValue(erro);
   api.get.mockReset().mockRejectedValue(erro);
 }
 
@@ -169,46 +183,68 @@ describe('RestaurantDashboard (Hoje)', () => {
     expect(screen.queryByRole('button', { name: 'Ver calendario' })).not.toBeInTheDocument();
   });
 
-  it('sem reservas mostra estados vazios compactos', async () => {
+  it('sem reservas mostra o estado vazio da agenda', async () => {
     renderRestaurant();
-    const almoco = await screen.findByText('Sem reservas de almoco');
-    const jantar = screen.getByText('Sem reservas de jantar');
-    /* titulo do estado vazio compacto, nao o paragrafo pequeno antigo */
-    expect(almoco).toHaveClass('font-display');
-    expect(jantar).toHaveClass('font-display');
-    /* sem reservas sem turno nao ha terceira secao */
+    const vazio = await screen.findByText('Nada agendado para hoje');
+    expect(vazio).toHaveClass('font-display');
+    expect(screen.queryByText('Sem reservas de almoco')).not.toBeInTheDocument();
+  });
+
+  it('agenda_por_hora_com_mesa_e_pre_pedido', async () => {
+    carregaServicos({
+      units: [mesa({ id: 'm1', name: 'Mesa 1', description: JSON.stringify({ number: 4 }) })],
+      hoje: [
+        reserva({ id: 'j1', status: 'confirmed', customer_name: 'Rui Jantar', start_time: '20:30:00' }, 'jantar'),
+        reserva({ id: 'a1', status: 'confirmed', customer_name: 'Ana Almoco', start_time: '13:00:00' }, 'almoco'),
+        reserva({ id: 'o1', status: 'pending', customer_name: 'Eva Outros' }),
+      ],
+      pedidos: [{ id: 'ord1', reservation_id: 'j1' }],
+    });
+    renderRestaurant();
+    const jantar = await screen.findByRole('button', { name: /Rui Jantar/ });
+    const almoco = screen.getByRole('button', { name: /Ana Almoco/ });
+    expect(jantar).toHaveTextContent('Mesa 4 · 2 pessoa(s) · pré-pedido');
+    expect(almoco).not.toHaveTextContent('pré-pedido');
+    /* ordem por hora: almoco antes do jantar */
+    expect(almoco.compareDocumentPosition(jantar) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    /* sem hora: grupo proprio, com a pendente */
+    expect(screen.getByText('Sem hora marcada')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Eva Outros/ })).toHaveTextContent('1 por confirmar');
+    expect(screen.getByText('3 reservas · 6 pessoas')).toBeInTheDocument();
+    /* os turnos sairam; o mapa de mesas fica */
     expect(screen.queryByText('Sem turno definido')).not.toBeInTheDocument();
   });
 
-  it('mantem os indicadores e as reservas por turno', async () => {
+  it('cartao_mostra_mesas_ocupadas_e_pessoas_de_hoje', async () => {
     carregaServicos({
+      units: [mesa({ id: 'm1', name: 'Mesa 1' }), mesa({ id: 'm2', name: 'Mesa 2' }), { id: 'p1', name: 'Atum', unit_type: 'menu_item' }],
       hoje: [
-        reserva({ id: 'a1', status: 'confirmed', customer_name: 'Ana Almoco', guests: 4 }, 'almoco'),
-        reserva({ id: 'j1', status: 'checked_in', customer_name: 'Rui Jantar', guests: 2 }, 'jantar'),
-        reserva({ id: 'o1', status: 'pending', customer_name: 'Eva Outros', guests: 3 }),
-        reserva({ id: 'x1', status: 'cancelled', customer_name: 'Zé Cancelado', guests: 9 }, 'almoco'),
+        reserva({ id: 'a1', unit_id: 'm1', status: 'confirmed', guests: 4, start_time: '13:00' }),
+        reserva({ id: 'o1', unit_id: 'm1', status: 'pending', guests: 3, start_time: '20:00' }),
       ],
-      mes: [
-        reserva({ id: 'a1', status: 'confirmed', guests: 4 }),
-        reserva({ id: 'j1', status: 'checked_out', guests: 2 }),
-        reserva({ id: 'o1', status: 'pending', guests: 3 }),
-      ],
+      mes: [reserva({ id: 'a1', status: 'confirmed', guests: 4 }), reserva({ id: 'j1', status: 'checked_out', guests: 2 })],
       res: resumo({ receita: 750 }),
       rating: 4.5,
     });
     renderRestaurant();
-    expect(await screen.findByText('Ana Almoco')).toBeInTheDocument();
-    expect(screen.getByText('Rui Jantar')).toBeInTheDocument();
-    expect(screen.getByText('Eva Outros')).toBeInTheDocument();
-    expect(screen.queryByText('Zé Cancelado')).not.toBeInTheDocument();
-    expect(screen.getByText('Sem turno definido')).toBeInTheDocument();
-    /* reservas hoje (pendente + confirmada + sentada) e covers do mes (confirmada + concluida) */
-    expect(screen.getByText('Reservas hoje').parentElement.nextElementSibling).toHaveTextContent('3');
-    expect(screen.getByText('Covers do mes').parentElement.nextElementSibling).toHaveTextContent('6');
+    expect(await screen.findByText('7 pessoas')).toBeInTheDocument();
+    expect(screen.getByText('em 2 reservas · 1 por confirmar')).toBeInTheDocument();
+    /* 1 de 2 mesas (o prato nao conta como mesa) */
+    expect(screen.getByText('1 de 2 mesas')).toBeInTheDocument();
+    expect(screen.getByText('50%')).toBeInTheDocument();
+    expect(screen.getByText('Ocupação hoje')).toBeInTheDocument();
     expect(screen.getByText('€750')).toBeInTheDocument();
+    expect(screen.getByText('Covers do mes').previousElementSibling).toHaveTextContent(/^6$/);
     expect(screen.getByText('4.5')).toBeInTheDocument();
-    expect(screen.getByText('Receita estimada')).toBeInTheDocument();
-    expect(screen.getByText('Avaliação média')).toBeInTheDocument();
+    ['Avaliação média', 'Valor médio por reserva', 'Por receber']
+      .forEach((rotulo) => expect(screen.getByText(rotulo)).toBeInTheDocument());
+  });
+
+  it('molduras_sem_resumo_nao_rebentam', async () => {
+    carregaServicos({ res: null });
+    renderRestaurant();
+    expect((await screen.findAllByText('€0')).length).toBeGreaterThan(0);
+    expect(screen.queryByText(/vs mês anterior/)).toBeNull();
   });
 
   it('a avaliacao media vem de average quando ha avaliacoes', async () => {
@@ -221,22 +257,21 @@ describe('RestaurantDashboard (Hoje)', () => {
     carregaServicos({ rating: 0, ratingTotal: 0 });
     renderRestaurant();
     const rotulo = await screen.findByText('Avaliação média');
-    expect(rotulo.parentElement.nextElementSibling).toHaveTextContent(/^—$/);
+    expect(rotulo.previousElementSibling).toHaveTextContent(/^—$/);
   });
 
   it('a receita mostra a variacao face ao mes anterior', async () => {
     carregaServicos({ res: resumo({ receita: 1200 }, { receita: 1000 }) });
     renderRestaurant();
-    expect(await screen.findByText(/^€1\s?200$/)).toBeInTheDocument();
-    expect(screen.getByText('+€200')).toBeInTheDocument();
-    expect(screen.getByText('face ao mês anterior')).toBeInTheDocument();
+    expect(await screen.findByText(`€${(1200).toLocaleString('pt-PT')}`)).toBeInTheDocument();
+    expect(screen.getByText('+20% vs mês anterior')).toBeInTheDocument();
   });
 
   it('sem mes anterior a receita nao mostra variacao', async () => {
     carregaServicos({ res: { atual: { receita: 500 } } });
     renderRestaurant();
     expect(await screen.findByText('€500')).toBeInTheDocument();
-    expect(screen.queryByText('face ao mês anterior')).not.toBeInTheDocument();
+    expect(screen.queryByText(/vs mês anterior/)).not.toBeInTheDocument();
   });
 
   it('uma chamada a falhar nao apaga os dados das outras', async () => {
@@ -258,7 +293,7 @@ describe('RestaurantDashboard (Hoje)', () => {
   it('os pedidos usam stay_from e stay_to', async () => {
     renderRestaurant();
     expect(await screen.findByText('Tudo em ordem')).toBeInTheDocument();
-    await waitFor(() => expect(listReservations).toHaveBeenCalledTimes(2));
+    await waitFor(() => expect(listReservations).toHaveBeenCalledTimes(4));
     const pedidos = listReservations.mock.calls.map(([params]) => params);
     /* nenhuma chamada recebe as chaves antigas from/to */
     pedidos.forEach((p) => {
@@ -271,7 +306,11 @@ describe('RestaurantDashboard (Hoje)', () => {
     expect(pedidos).toEqual(expect.arrayContaining([
       { stay_from: HOJE, stay_to: HOJE },
       { stay_from: MES_INICIO, stay_to: MES_FIM },
+      { stay_from: HOJE, stay_to: SEMANA_FIM },
+      { payment_status: 'pending,partial' },
     ]));
+    /* o pre-pedido vem dos pedidos */
+    expect(listOrders).toHaveBeenCalled();
   });
 
   it('so a reserva pendente de hoje entra no painel de atencao', async () => {
@@ -288,7 +327,7 @@ describe('RestaurantDashboard (Hoje)', () => {
     expect(item.closest('li').querySelector('[data-severity="warning"]')).not.toBeNull();
     expect(screen.queryByText('Tudo em ordem')).not.toBeInTheDocument();
     /* a reserva pendente e a confirmada contam como reservas de hoje; a cancelada nao */
-    expect(screen.getByText('Reservas hoje').parentElement.nextElementSibling).toHaveTextContent('2');
+    expect(screen.getByText('em 2 reservas · 1 por confirmar')).toBeInTheDocument();
   });
 
   it('servicos a falhar mostram estados vazios sem erro', async () => {
@@ -296,8 +335,7 @@ describe('RestaurantDashboard (Hoje)', () => {
     renderRestaurant();
     expect(await screen.findByText('Tudo em ordem')).toBeInTheDocument();
     expect(screen.getByText('Sem mesas registadas.')).toBeInTheDocument();
-    expect(screen.getByText('Sem reservas de almoco')).toBeInTheDocument();
-    expect(screen.getByText('Sem reservas de jantar')).toBeInTheDocument();
+    expect(screen.getByText('Nada agendado para hoje')).toBeInTheDocument();
     await waitFor(() => expect(listUnits).toHaveBeenCalled());
   });
 
@@ -307,8 +345,7 @@ describe('RestaurantDashboard (Hoje)', () => {
     renderRestaurant();
     expect(await screen.findByText('Mesa 1')).toBeInTheDocument();
     expect(screen.getByText('1 reserva(s) pendente(s) para hoje')).toBeInTheDocument();
-    /* sem turno definido: cai na terceira secao, com mesa e cliente por omissao */
-    expect(screen.getByText('Sem turno definido')).toBeInTheDocument();
-    expect(screen.getByText('Sem mesa · pax')).toBeInTheDocument();
+    /* sem mesa a reserva nao entra na agenda, e nada rebenta */
+    expect(screen.getByText('Nada agendado para hoje')).toBeInTheDocument();
   });
 });
