@@ -83,7 +83,8 @@ test('hoje_e_o_dia_em_cabo_verde', () => {
 
 test('miniatura_wikimedia', () => {
   const orig = 'https://upload.wikimedia.org/wikipedia/commons/8/80/Cape_Verde_Sal_Buracona_2011.jpg';
-  assert.equal(C.miniaturaWikimedia(orig), 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/80/Cape_Verde_Sal_Buracona_2011.jpg/640px-Cape_Verde_Sal_Buracona_2011.jpg');
+  assert.equal(C.miniaturaWikimedia(orig), 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/80/Cape_Verde_Sal_Buracona_2011.jpg/500px-Cape_Verde_Sal_Buracona_2011.jpg');
+  /* a Wikimedia so serve larguras normalizadas (330, 500, 960...): 640 da erro 400 */
   const outra = 'https://api.saldesk.cv/uploads/operators/x/turtle.jpg';
   assert.equal(C.miniaturaWikimedia(outra), outra);
   const jaThumb = 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/80/A.jpg/640px-A.jpg';

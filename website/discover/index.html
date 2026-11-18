@@ -258,11 +258,43 @@
     .act-footer{display:flex;gap:8px;align-items:center}
     .act-footer .btn-book{flex:1}
 
+    /* ── OPERADORES LOCAIS VERIFICADOS ── */
+    .ops{display:grid;grid-template-columns:repeat(3,1fr);gap:22px}
+    .op{position:relative;background:#fff;border:1px solid var(--n200);border-radius:var(--r16);overflow:hidden;display:flex;flex-direction:column;transition:box-shadow .2s,transform .2s}
+    .op:hover{box-shadow:var(--sh2);transform:translateY(-2px)}
+    .op:focus-within{outline:2px solid var(--ocean-500);outline-offset:2px}
+    .op-cover{position:relative;height:150px;background:linear-gradient(135deg,var(--ocean-700),var(--ocean-900));overflow:hidden}
+    .op-cover img{width:100%;height:100%;object-fit:cover}
+    .op-cover .img-mono{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.24)}
+    .op-body{position:relative;padding:18px 20px 20px;display:flex;flex-direction:column;gap:10px;flex:1}
+    .op-mono{position:absolute;top:-28px;left:20px;width:56px;height:56px;border-radius:14px;background:var(--ocean-800);color:#fff;font-family:var(--fd);font-weight:700;font-size:1.05rem;display:flex;align-items:center;justify-content:center;border:3px solid #fff;box-shadow:var(--sh1);overflow:hidden}
+    .op-mono img{width:100%;height:100%;object-fit:cover;background:#fff}
+    .op-name{margin-top:26px;display:flex;align-items:center;gap:8px;min-width:0;font-family:var(--fd);font-weight:700;font-size:1.05rem;color:var(--ocean-900)}
+    .op-name a{color:inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+    .op-name a::after{content:'';position:absolute;inset:0;z-index:1}
+    .op-name a:focus-visible{outline:none}
+    .op-name svg{color:var(--ocean-500);flex-shrink:0}
+    .op-desc{font-size:.875rem;color:var(--n600);line-height:1.6;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:calc(2 * 1.6em)}
+    .op-foot{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:auto;font-size:.8125rem;color:var(--n500);padding-top:12px;border-top:1px solid var(--n100)}
+    .op-foot b{color:var(--ocean-700);font-weight:600;white-space:nowrap}
+    @media(max-width:1000px){.ops{grid-template-columns:repeat(2,1fr)}}
+    @media(max-width:600px){.ops{grid-template-columns:1fr}}
+
     /* ── PONTOS TURÍSTICOS ── */
+    .poi{position:relative;display:block;aspect-ratio:3/4;border-radius:var(--r16);overflow:hidden;background:linear-gradient(135deg,var(--ocean-700),var(--ocean-900));scroll-snap-align:start;flex:0 0 calc((100% - 5 * 18px) / 6)}
+    .poi img{width:100%;height:100%;object-fit:cover;transition:transform .6s ease}
+    .poi:hover img{transform:scale(1.04)}
+    .poi .img-mono{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.24)}
+    .poi::after{content:'';position:absolute;inset:0;background:linear-gradient(0deg,rgba(6,42,56,.85),transparent 55%)}
+    .poi-txt{position:absolute;left:14px;right:14px;bottom:14px;z-index:1;color:#fff}
+    .poi-txt small{display:block;font-family:var(--fd);font-size:.6875rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--sand-400)}
+    .poi-txt b{display:block;font-family:var(--fd);font-size:.95rem;font-weight:600;line-height:1.3;margin-top:2px}
+    @media(max-width:1000px){.poi{flex-basis:calc((100% - 3 * 18px) / 4)}}
+    @media(max-width:600px){.poi{flex-basis:46%}}
     .poi-card-compact{display:flex;flex-direction:column}
     .poi-more-link{display:inline-flex;align-items:center;gap:5px;font-family:var(--fb);font-size:.75rem;font-weight:600;color:var(--teal7);margin-top:auto}
     .poi-more-link:hover{color:var(--teal6)}
-    .poi-slider{display:flex;gap:20px;overflow-x:auto;scroll-snap-type:x mandatory;scroll-behavior:smooth;padding-bottom:4px;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+    .poi-slider{display:flex;gap:18px;overflow-x:auto;scroll-snap-type:x mandatory;scroll-behavior:smooth;padding-bottom:4px;-webkit-overflow-scrolling:touch;scrollbar-width:none}
     .poi-slider::-webkit-scrollbar{display:none}
     .poi-slider > .card{scroll-snap-align:start;flex:0 0 calc((100% - 60px)/4);min-width:260px}
     .slider-arrow{width:40px;height:40px;border-radius:50%;border:1px solid var(--line);background:#fff;color:var(--tx);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background .15s;flex-shrink:0}
@@ -593,7 +625,7 @@
         <p><span class="pt">Empresas de Cabo Verde, revistas uma a uma pela equipa SalDesk</span><span class="en">Cape Verdean companies, reviewed one by one by the SalDesk team</span></p>
       </div>
     </div>
-    <div class="featured-grid" id="featured-grid"></div>
+    <div class="ops" id="featured-grid"></div>
   </div>
 </section>
 
@@ -604,10 +636,10 @@
      mais abaixo, junto ao directorio de servicos. -->
 <section class="section" id="poi-slider-section" style="display:none">
   <div class="container">
-    <div style="margin-bottom:26px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap">
+    <div class="sec-head">
       <div>
-        <div class="sl"><span class="pt">Descobrir Cabo Verde</span><span class="en">Discover Cabo Verde</span></div>
-        <h2 class="st"><span class="pt">Pontos Turísticos</span><span class="en">Points of Interest</span></h2>
+        <h2><span class="pt">Lugares a não perder</span><span class="en">Places not to miss</span></h2>
+        <p id="poi-count"></p>
       </div>
       <div style="display:flex;gap:8px">
         <button onclick="poiSliderScroll(-1)" class="slider-arrow" aria-label="Anterior">
@@ -700,7 +732,7 @@
   </div>
 </footer>
 
-<script src="_cartao.js?v=20261118"></script>
+<script src="_cartao.js?v=20261118b"></script>
 <script>
 /* ══════════════════════════════════════════
    CONSTANTS
@@ -928,36 +960,24 @@ const ISLAND_LABEL = {
 
 function poiImgBlock(item) {
   if (item.image_url) {
-    return `<img src="${esc(item.image_url)}" alt="${esc(item.name_pt)}" loading="lazy" />`;
+    /* Miniatura da Wikimedia (as originais tem varios MB); se falhar, a original */
+    const thumb = CartaoDiscover.miniaturaWikimedia(item.image_url);
+    return `<img src="${esc(thumb)}" data-orig="${esc(item.image_url)}" onerror="this.onerror=null;this.src=this.dataset.orig" alt="" loading="lazy" decoding="async" />`;
   }
   const icon = POI_TYPE_ICON[item.type] || POI_TYPE_ICON.natureza;
-  return `<div class="img-mono"><svg width="46" height="46" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">${icon}</svg></div>`;
+  return `<div class="img-mono"><svg width="46" height="46" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${icon}</svg></div>`;
 }
 
 function renderPoiCard(item) {
-  const lang    = L();
-  const name    = esc(lang === 'en' && item.name_en ? item.name_en : item.name_pt);
-  const desc    = esc(truncate(lang === 'en' && item.description_en ? item.description_en : item.description_pt, 80));
-  const island  = ISLAND_LABEL[item.island_slug]?.[lang] || '';
-  const typeLbl = (POI_TYPE_LABEL[item.type] || {})[lang] || item.type || '';
-  const href    = `ponto.html?slug=${encodeURIComponent(item.slug)}`;
-
+  const lang   = L();
+  const name   = lang === 'en' && item.name_en ? item.name_en : item.name_pt;
+  const island = ISLAND_LABEL[item.island_slug]?.[lang] || '';
+  const href   = `ponto.html?slug=${encodeURIComponent(item.slug)}`;
   return `
-    <div class="act-card card poi-card-compact">
-      <a href="${href}" class="act-img img-block" style="height:120px">${poiImgBlock(item)}</a>
-      <div class="act-body" style="padding:14px 16px">
-        <div class="act-rating-row" style="justify-content:space-between;margin-bottom:6px">
-          <span class="tb">${esc(typeLbl)}</span>
-          ${island ? `<span style="font-family:var(--fm);font-size:.625rem;color:var(--tx-faint);text-transform:uppercase;letter-spacing:.04em">${esc(island)}</span>` : ''}
-        </div>
-        <a href="${href}" class="act-name" style="display:block;margin-bottom:4px">${name}</a>
-        ${desc ? `<p class="act-desc" style="-webkit-line-clamp:2;margin-bottom:10px">${desc}</p>` : ''}
-        <a href="${href}" class="poi-more-link">
-          <span class="pt">Saber mais</span><span class="en">Learn more</span>
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
-        </a>
-      </div>
-    </div>`;
+    <a class="poi" href="${href}">
+      ${poiImgBlock(item)}
+      <div class="poi-txt">${island ? `<small>${esc(island)}</small>` : ''}<b>${esc(name)}</b></div>
+    </a>`;
 }
 
 /* Slide de destaque (4 cartoes visiveis em desktop), logo abaixo de
@@ -980,6 +1000,13 @@ function renderPoiSlider() {
   if (!poiItems.length) { if (section) section.style.display = 'none'; return; }
   track.innerHTML = poiItems.map(renderPoiCard).join('');
   if (L() === 'en') fixLang(track);
+  const count = document.getElementById('poi-count');
+  if (count) {
+    const n = poiItems.length;
+    count.textContent = L() === 'en'
+      ? `${n} point${n !== 1 ? 's' : ''} of interest across the islands`
+      : `${n} ponto${n !== 1 ? 's' : ''} turístico${n !== 1 ? 's' : ''} em todas as ilhas`;
+  }
   if (section) section.style.display = '';
 }
 
@@ -1176,37 +1203,38 @@ function skCards(n, h = '200px') {
    (a wishlist e sempre ao nivel do servico, um operador nao se guarda).
 ══════════════════════════════════════════ */
 function opImgBlock(op) {
-  const img = (op.cover_images && op.cover_images[0]) || op.logo_url;
+  /* Capa do operador; senao a primeira foto de uma experiencia dele; senao gradiente */
+  const unit = operators.find(u => u.operator_id === op.id && u.images && u.images[0]);
+  const img = (op.cover_images && op.cover_images[0]) || (unit && unit.images[0]);
   if (img) {
-    return `<img src="${esc(img)}" alt="${esc(op.business_name || op.name)}" loading="lazy" />`;
+    return `<img src="${esc(img)}" alt="" loading="lazy" decoding="async" />`;
   }
   const icon = TYPE_ICON[op.operator_type] || TYPE_ICON.activity;
-  return `<div class="img-mono"><svg width="46" height="46" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">${icon}</svg></div>`;
+  return `<div class="img-mono"><svg width="46" height="46" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${icon}</svg></div>`;
 }
 
 function renderOperatorCard(op) {
-  const name    = esc(op.business_name || op.name);
-  const loc     = esc(op.address || 'Ilha do Sal');
-  const tagline = esc(op.tagline || truncate(op.description || '', 90));
-  const priceHtml = `<span class="pt">A partir de </span><span class="en">From </span><strong>${fmtPrice(op.base_price, op.currency)}</strong>`;
+  const lang  = L();
+  const name  = op.business_name || op.name || '';
+  const desc  = op.tagline || op.description || '';
+  const units = operators.filter(u => u.operator_id === op.id);
+  const ilha  = (units[0] && units[0].island_name) || op.address || '';
+  const n     = units.length;
+  const nTxt  = lang === 'en' ? `${n} experience${n !== 1 ? 's' : ''}` : `${n} experiência${n !== 1 ? 's' : ''}`;
+  const mono  = op.logo_url
+    ? `<img src="${esc(op.logo_url)}" alt="" loading="lazy" />`
+    : esc(CartaoDiscover.iniciais(name));
 
   return `
-    <div class="feat-card card">
-      <div class="feat-img img-block">
-        ${opImgBlock(op)}
-        <span class="verified-badge"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6 9 17l-5-5"/></svg><span class="pt">Verificado</span><span class="en">Verified</span></span>
+    <article class="op">
+      <div class="op-cover">${opImgBlock(op)}</div>
+      <div class="op-body">
+        <div class="op-mono" aria-hidden="true">${mono}</div>
+        <div class="op-name"><a href="${APP}/book/${esc(op.slug)}">${esc(name)}</a>${xpSvg('badge', 17, 2.2)}${ratingBadge(op.avg_rating, op.review_count)}</div>
+        ${desc ? `<p class="op-desc">${esc(desc)}</p>` : ''}
+        <div class="op-foot"><span>${esc(ilha)}</span>${n ? `<b>${nTxt}</b>` : ''}</div>
       </div>
-      <div class="feat-body">
-        <div class="feat-meta-label">${tLabel(op.operator_type)} · ${loc}</div>
-        <div class="feat-name">${name}</div>
-        <div class="feat-rating">${ratingLine(op)}</div>
-        ${tagline ? `<p class="act-desc">${tagline}</p>` : ''}
-        <div class="feat-price">${priceHtml}</div>
-        <a href="${APP}/book/${esc(op.slug)}" class="btn btn-primary" style="width:100%;justify-content:center">
-          <span class="pt">Ver operador</span><span class="en">View operator</span>
-        </a>
-      </div>
-    </div>`;
+    </article>`;
 }
 
 /* ══════════════════════════════════════════

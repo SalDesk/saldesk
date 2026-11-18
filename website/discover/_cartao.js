@@ -130,12 +130,13 @@
     return (lang === 'en' ? 'Next date: ' : 'Próxima data: ') + dia + ' ' + mes;
   }
 
-  /* Miniatura oficial da Wikimedia em vez do original (fotos de varios MB) */
+  /* Miniatura oficial da Wikimedia em vez do original (fotos de varios MB). So larguras
+     normalizadas da Wikimedia funcionam (330, 500, 960...): outras dao erro 400. */
   var WIKI = /^https:\/\/upload\.wikimedia\.org\/wikipedia\/commons\/([0-9a-f])\/([0-9a-f]{2})\/([^/?#]+)$/;
   function miniaturaWikimedia(url, largura) {
     var m = typeof url === 'string' ? url.match(WIKI) : null;
     if (!m) return url;
-    var w = largura || 640;
+    var w = largura || 500;
     return 'https://upload.wikimedia.org/wikipedia/commons/thumb/' + m[1] + '/' + m[2] + '/' + m[3] + '/' + w + 'px-' + m[3];
   }
 
