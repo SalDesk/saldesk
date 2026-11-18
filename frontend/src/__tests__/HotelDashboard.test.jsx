@@ -5,7 +5,7 @@ import HotelDashboard from '../pages/dashboard/HotelDashboard';
 import useUiStore from '../store/uiStore';
 import { listUnits } from '../services/unitsService';
 import { listReservations } from '../services/reservationsService';
-import { getResumo } from '../services/financeiroService';
+import { getResumo, getReceita } from '../services/financeiroService';
 import { getWeatherForecast } from '../services/weatherService';
 import api from '../services/api';
 
@@ -18,6 +18,7 @@ vi.mock('../services/reservationsService', () => ({
 }));
 vi.mock('../services/financeiroService', () => ({
   getResumo: vi.fn(),
+  getReceita: vi.fn(),
 }));
 vi.mock('../services/weatherService', async (importOriginal) => {
   const real = await importOriginal();
@@ -43,6 +44,7 @@ function diaLocal(deslocamento) {
   return d.toLocaleDateString('en-CA');
 }
 const HOJE = diaLocal(0);
+const MES_INICIO = HOJE.slice(0, 8) + '01';
 const MES_FIM = (() => {
   const n = new Date();
   return new Date(n.getFullYear(), n.getMonth() + 1, 0).toLocaleDateString('en-CA');
@@ -73,7 +75,11 @@ function reserva(over) {
 /* Responde conforme o par exato (stay_from, stay_to) de hoje, ou aos pedidos exatos
    { status: 'checked_in' } (hospedes que ja entraram) e { status: 'pending' }. Qualquer outra forma de argumentos
    (por exemplo from/to) lanca, para apanhar pedidos perdidos. */
-function respostaPorPar(params, { hoje, checkedIn = [], pendentes = [] }) {
+function respostaPorPar(params, { hoje, checkedIn = [], pendentes = [], porPagar = [] }) {
+  /* moldura comum: pagamentos por regularizar de qualquer mes */
+  if (Object.keys(params || {}).join(',') === 'payment_status' && params.payment_status === 'pending,partial') {
+    return porPagar;
+  }
   if (Object.keys(params || {}).join(',') === 'status' && params.status === 'checked_in') {
     return checkedIn;
   }
@@ -86,19 +92,22 @@ function respostaPorPar(params, { hoje, checkedIn = [], pendentes = [] }) {
   }
   const { stay_from: de, stay_to: ate } = params;
   if (de === HOJE && ate === HOJE) return hoje;
+  /* moldura comum: mes e proximos 7 dias */
+  if (de === MES_INICIO && ate === MES_FIM) return [];
+  if (de === HOJE && ate === diaLocal(6)) return [];
   throw new Error(`pedido inesperado ${de} ${ate}`);
 }
 
 /* Valor de um indicador pelo seu rotulo (o <p> do cartao; os titulos das listas sao <h2>) */
 function valorKpi(rotulo) {
-  const el = screen.getAllByText(rotulo).find((e) => e.tagName === 'P');
-  return el.parentElement.nextElementSibling.textContent;
+  return screen.getByText(rotulo).previousElementSibling.textContent;
 }
 
-function carregaServicos({ units = [unidade()], hoje = [], checkedIn = [], pendentes = [], res = resumo() } = {}) {
+function carregaServicos({ units = [unidade()], hoje = [], checkedIn = [], pendentes = [], porPagar = [], res = resumo() } = {}) {
   listUnits.mockReset().mockResolvedValue(units);
+  getReceita.mockReset().mockResolvedValue([]);
   listReservations.mockReset().mockImplementation(async (params) => (
-    respostaPorPar(params, { hoje, checkedIn, pendentes })
+    respostaPorPar(params, { hoje, checkedIn, pendentes, porPagar })
   ));
   getResumo.mockReset().mockResolvedValue(res);
   getWeatherForecast.mockReset().mockResolvedValue([]);
@@ -110,6 +119,7 @@ function servicosAFalhar() {
   listUnits.mockReset().mockRejectedValue(erro);
   listReservations.mockReset().mockRejectedValue(erro);
   getResumo.mockReset().mockRejectedValue(erro);
+  getReceita.mockReset().mockRejectedValue(erro);
   getWeatherForecast.mockReset().mockRejectedValue(erro);
   api.get.mockReset().mockRejectedValue(erro);
 }
@@ -167,9 +177,8 @@ describe('HotelDashboard (Hoje)', () => {
     renderHotel();
     expect(await screen.findByText('Tudo em ordem')).toBeInTheDocument();
     expect(screen.getByText('Requer atenção')).toBeInTheDocument();
-    /* sem check-ins nem check-outs: estados vazios compactos */
-    expect(screen.getByText('Nenhum check-in agendado para hoje')).toBeInTheDocument();
-    expect(screen.getByText('Nenhum check-out agendado para hoje')).toBeInTheDocument();
+    /* sem chegadas nem partidas: a agenda mostra o estado vazio */
+    expect(screen.getByText('Nada agendado para hoje')).toBeInTheDocument();
   });
 
   it('o mapa continua a mostrar as unidades', async () => {
@@ -178,7 +187,7 @@ describe('HotelDashboard (Hoje)', () => {
     expect(screen.getByText('Mapa de Quartos — Hoje')).toBeInTheDocument();
   });
 
-  it('mantem os cinco indicadores e os blocos de check-in e check-out', async () => {
+  it('agenda_com_partida_as_11_e_chegada_as_14_e_cartao_de_destaque', async () => {
     carregaServicos({
       hoje: [
         reserva({ id: 'c1', status: 'confirmed', customer_name: 'Ana Entrada' }),
@@ -187,29 +196,52 @@ describe('HotelDashboard (Hoje)', () => {
       res: resumo({ receita: 500 }),
     });
     renderHotel();
-    expect(await screen.findByText('Ana Entrada')).toBeInTheDocument();
-    expect(screen.getByText('Rui Saida')).toBeInTheDocument();
-    expect(screen.getByText('Ocupacao hoje')).toBeInTheDocument();
-    expect(screen.getByText('Receita do mês')).toBeInTheDocument();
+    const chegada = await screen.findByRole('button', { name: /Chegada · Ana Entrada/ });
+    const partida = screen.getByRole('button', { name: /Partida · Rui Saida/ });
+    expect(chegada).toHaveTextContent('Quarto 101 · 2 pessoa(s)');
+    expect(partida).toBeInTheDocument();
+    expect(screen.getByText('11:00')).toBeInTheDocument();
+    expect(screen.getByText('14:00')).toBeInTheDocument();
+    /* partida antes da chegada */
+    expect(partida.compareDocumentPosition(chegada) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(screen.getByText('1 chegadas · 1 partidas')).toBeInTheDocument();
+    expect(screen.getByText('Ocupação hoje')).toBeInTheDocument();
     expect(screen.getByText('€500')).toBeInTheDocument();
-    expect(screen.getByText('Reservas pendentes')).toBeInTheDocument();
-    expect(screen.getAllByText('Check-ins hoje').length).toBeGreaterThan(0);
-    expect(screen.getAllByText('Check-outs hoje').length).toBeGreaterThan(0);
+    expect(screen.getByText('1 chegadas')).toBeInTheDocument();
+    expect(screen.getByText('1 partidas · 0 por confirmar')).toBeInTheDocument();
+    ['Reservas pendentes', 'Avaliação média', 'Valor médio por reserva', 'Por receber']
+      .forEach((rotulo) => expect(screen.getByText(rotulo)).toBeInTheDocument());
+    /* as listas antigas sairam; o mapa fica */
+    expect(screen.queryByRole('heading', { name: 'Check-ins hoje' })).toBeNull();
+    expect(screen.getByText('Mapa de Quartos — Hoje')).toBeInTheDocument();
+  });
+
+  it('clicar_num_evento_abre_o_calendario', async () => {
+    carregaServicos({ hoje: [reserva({ id: 'c1', status: 'confirmed', customer_name: 'Ana Entrada' })] });
+    renderHotel();
+    fireEvent.click(await screen.findByRole('button', { name: /Chegada · Ana Entrada/ }));
+    expect(navigateMock).toHaveBeenLastCalledWith('/calendario');
+  });
+
+  it('molduras_sem_resumo_nao_rebentam', async () => {
+    carregaServicos({ res: null });
+    renderHotel();
+    expect((await screen.findAllByText('€0')).length).toBeGreaterThan(0);
+    expect(screen.queryByText(/vs mês anterior/)).toBeNull();
   });
 
   it('a receita mostra a variacao face ao mes anterior', async () => {
     carregaServicos({ res: resumo({ receita: 1200 }, { receita: 1000 }) });
     renderHotel();
-    expect(await screen.findByText(/^€1\s?200$/)).toBeInTheDocument();
-    expect(screen.getByText('+€200')).toBeInTheDocument();
-    expect(screen.getByText('face ao mês anterior')).toBeInTheDocument();
+    expect(await screen.findByText(`€${(1200).toLocaleString('pt-PT')}`)).toBeInTheDocument();
+    expect(screen.getByText('+20% vs mês anterior')).toBeInTheDocument();
   });
 
   it('sem mes anterior a receita nao mostra variacao', async () => {
     carregaServicos({ res: { atual: { receita: 500 } } });
     renderHotel();
     expect(await screen.findByText('€500')).toBeInTheDocument();
-    expect(screen.queryByText('face ao mês anterior')).not.toBeInTheDocument();
+    expect(screen.queryByText(/vs mês anterior/)).not.toBeInTheDocument();
   });
 
   it('uma chamada a falhar nao apaga os dados das outras', async () => {
@@ -230,7 +262,7 @@ describe('HotelDashboard (Hoje)', () => {
   it('os pedidos usam stay_from e stay_to', async () => {
     renderHotel();
     expect(await screen.findByText('Tudo em ordem')).toBeInTheDocument();
-    await waitFor(() => expect(listReservations).toHaveBeenCalledTimes(3));
+    await waitFor(() => expect(listReservations).toHaveBeenCalledTimes(6));
     const pedidos = listReservations.mock.calls.map(([params]) => params);
     /* nenhuma chamada recebe as chaves antigas from/to */
     pedidos.forEach((p) => {
@@ -243,6 +275,10 @@ describe('HotelDashboard (Hoje)', () => {
     expect(pedidos).toContainEqual({ status: 'checked_in' });
     /* e todas as pendentes, de qualquer mes */
     expect(pedidos).toContainEqual({ status: 'pending' });
+    /* moldura comum: mes, 7 dias e pagamentos por regularizar */
+    expect(pedidos).toContainEqual({ stay_from: MES_INICIO, stay_to: MES_FIM });
+    expect(pedidos).toContainEqual({ stay_from: HOJE, stay_to: diaLocal(6) });
+    expect(pedidos).toContainEqual({ payment_status: 'pending,partial' });
   });
 
   it('reservas pendentes conta as de qualquer mes e nao so as que tocam o mes actual', async () => {
@@ -287,17 +323,17 @@ describe('HotelDashboard (Hoje)', () => {
     await waitFor(async () => expect(within(await celula('Quarto 101')).getByText('Ocupado')).toBeInTheDocument());
     expect(within(await celula('Quarto 102')).getByText('Disponivel')).toBeInTheDocument();
     /* 1 de 2 quartos ocupados */
-    expect(valorKpi('Ocupacao hoje')).toBe('50.0%');
+    expect(screen.getByText('50%')).toBeInTheDocument();
+    expect(screen.getByText('1 de 2 quartos')).toBeInTheDocument();
   });
 
   it('a mesma reserva devolvida pelos dois pedidos aparece uma so vez', async () => {
     const saida = reserva({ id: 'b', unit_id: 'u1', status: 'checked_in', check_in: diaLocal(-3), check_out: HOJE, customer_name: 'Rui Saida' });
     carregaServicos({ hoje: [saida], checkedIn: [saida] });
     renderHotel();
-    const checkouts = (await screen.findByRole('heading', { name: 'Check-outs hoje' })).closest('section');
-    /* sem deduplicacao a lista e o contador de saidas contariam 2 */
-    await waitFor(() => expect(within(checkouts).getAllByText('Rui Saida')).toHaveLength(1));
-    expect(valorKpi('Check-outs hoje')).toBe('1');
+    /* sem deduplicacao a agenda e o contador de partidas contariam 2 */
+    await waitFor(() => expect(screen.getAllByRole('button', { name: /Partida · Rui Saida/ })).toHaveLength(1));
+    expect(screen.getByText('1 partidas · 0 por confirmar')).toBeInTheDocument();
   });
 
   it('estadia a meio, check-out e check-in de hoje entram no mapa, nas listas e nos contadores', async () => {
@@ -320,24 +356,23 @@ describe('HotelDashboard (Hoje)', () => {
       pendentes: [reserva({ id: 'p', unit_id: 'u4', status: 'pending', check_in: diaLocal(1) })],
     });
     renderHotel();
-    const checkins = (await screen.findByRole('heading', { name: 'Check-ins hoje' })).closest('section');
-    const checkouts = screen.getByRole('heading', { name: 'Check-outs hoje' }).closest('section');
+    const agenda = (await screen.findByRole('heading', { name: 'Agenda de hoje' })).closest('section');
+    await screen.findByRole('button', { name: /Chegada · Ana Entrada/ });
     const celula = (nome) => screen.getByText(nome).parentElement;
     /* a estadia a meio ocupa o quarto, apesar de nao ter check-in nem check-out hoje */
     expect(within(celula('Quarto 101')).getByText('Ocupado')).toBeInTheDocument();
     expect(within(celula('Quarto 102')).getByText('Ocupado')).toBeInTheDocument();
     expect(within(celula('Quarto 103')).getByText('Check-in')).toBeInTheDocument();
     expect(within(celula('Quarto 104')).getByText('Disponivel')).toBeInTheDocument();
-    /* listas de hoje */
-    expect(within(checkins).getByText('Ana Entrada')).toBeInTheDocument();
-    expect(within(checkins).queryByText('Rui Saida')).not.toBeInTheDocument();
-    expect(within(checkins).queryByText('Maria Estadia')).not.toBeInTheDocument();
-    expect(within(checkouts).getByText('Rui Saida')).toBeInTheDocument();
-    expect(within(checkouts).queryByText('Maria Estadia')).not.toBeInTheDocument();
-    /* contadores: 2 de 4 quartos ocupados, 1 check-in, 1 check-out, 1 pendente */
-    expect(valorKpi('Ocupacao hoje')).toBe('50.0%');
-    expect(valorKpi('Check-ins hoje')).toBe('1');
-    expect(valorKpi('Check-outs hoje')).toBe('1');
+    /* agenda de hoje: so a chegada e a partida; a estadia a meio nao */
+    expect(within(agenda).getByRole('button', { name: /Partida · Rui Saida/ })).toBeInTheDocument();
+    expect(within(agenda).queryByText(/Maria Estadia/)).not.toBeInTheDocument();
+    expect(within(agenda).queryByText(/Chegada · Rui Saida/)).not.toBeInTheDocument();
+    /* contadores: 2 de 4 quartos ocupados, 1 chegada, 1 partida, 1 pendente */
+    expect(screen.getByText('50%')).toBeInTheDocument();
+    expect(screen.getByText('2 de 4 quartos')).toBeInTheDocument();
+    expect(screen.getByText('1 chegadas')).toBeInTheDocument();
+    expect(screen.getByText('1 partidas · 0 por confirmar')).toBeInTheDocument();
     expect(valorKpi('Reservas pendentes')).toBe('1');
   });
 
@@ -345,7 +380,7 @@ describe('HotelDashboard (Hoje)', () => {
     servicosAFalhar();
     renderHotel();
     expect(await screen.findByText('Tudo em ordem')).toBeInTheDocument();
-    expect(screen.getByText('Nenhum check-in agendado para hoje')).toBeInTheDocument();
+    expect(screen.getByText('Nada agendado para hoje')).toBeInTheDocument();
     expect(screen.getByText('Sem unidades registadas.')).toBeInTheDocument();
     await waitFor(() => expect(listUnits).toHaveBeenCalled());
   });
