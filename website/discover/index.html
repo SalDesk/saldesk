@@ -197,26 +197,11 @@
     @media(max-width:600px){.xp-grid{grid-template-columns:1fr}.xp-img{aspect-ratio:16/10}}
 
     /* ── CARD SHARED ── */
-    .img-block{position:relative;width:100%;height:100%;overflow:hidden;background:linear-gradient(135deg,var(--teal9),var(--ink))}
-    .img-block img{width:100%;height:100%;object-fit:cover;transition:transform .4s}
-    .img-block .img-mono{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.18)}
-    .card:hover .img-block img{transform:scale(1.045)}
 
-    .eyebrow-coord{font-family:var(--fm);font-size:.6875rem;color:var(--tx-faint);letter-spacing:.02em;margin-bottom:6px;display:flex;align-items:center;gap:5px}
-    .eyebrow-coord svg{flex-shrink:0;opacity:.6}
 
-    .tb{display:inline-block;font-family:var(--fm);font-size:.625rem;font-weight:600;text-transform:uppercase;letter-spacing:.04em;padding:3px 9px;border-radius:5px;background:var(--paper2);color:var(--tx-soft)}
-    .direct-pill{display:inline-flex;align-items:center;gap:4px;font-size:.6875rem;font-weight:600;color:var(--ok)}
-    .direct-pill svg{flex-shrink:0}
 
-    .avail-badge{position:absolute;bottom:10px;right:10px;background:rgba(255,255,255,.96);color:var(--ok);font-family:var(--fm);font-size:.6875rem;font-weight:600;padding:4px 9px;border-radius:6px;display:flex;align-items:center;gap:4px;z-index:2}
-    .verified-badge{position:absolute;top:10px;left:10px;background:var(--teal7);color:#fff;font-family:var(--fm);font-size:.6875rem;font-weight:600;padding:4px 9px;border-radius:6px;display:flex;align-items:center;gap:5px;z-index:2}
 
-    .wish-btn{position:absolute;top:10px;right:10px;width:34px;height:34px;background:rgba(255,255,255,.92);border:none;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;z-index:2}
-    .wish-btn:hover{background:#fff}
-    .wish-btn.active svg{fill:#e00;stroke:#e00}
     @keyframes wish-pop{0%{transform:scale(1)}50%{transform:scale(1.3)}100%{transform:scale(1)}}
-    .wish-btn.pop{animation:wish-pop .3s ease}
 
     .btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;font-family:var(--fb);font-weight:600;font-size:.8125rem;border-radius:var(--r10);border:none;cursor:pointer;transition:all .15s;text-decoration:none;white-space:nowrap;padding:11px 18px}
     .btn-primary{background:var(--teal7);color:#fff}
@@ -225,38 +210,10 @@
     .btn-ghost:hover{border-color:var(--teal7);color:var(--teal7)}
     .btn-sm{padding:7px 13px;font-size:.75rem}
 
-    /* ── FEATURED ── */
-    .featured-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
-    .feat-card{border-radius:var(--r14);overflow:hidden;background:#fff;border:1px solid var(--line);transition:box-shadow .2s,transform .2s;position:relative;display:flex;flex-direction:column}
-    .feat-card:hover{box-shadow:var(--sh2);transform:translateY(-3px)}
-    .feat-img{position:relative;height:220px}
-    .feat-body{padding:18px 20px 20px}
-    .feat-meta-label{font-size:.75rem;color:var(--tx-faint);margin-bottom:5px}
-    .feat-name{font-family:var(--fb);font-size:1.0625rem;font-weight:700;color:var(--tx);margin-bottom:9px;letter-spacing:-.01em}
-    .feat-rating{display:flex;align-items:center;gap:6px;margin-bottom:9px}
-    .feat-price{font-size:.8125rem;color:var(--tx-soft);margin:10px 0 14px}
-    .feat-price strong{font-family:var(--fm);font-size:1.1875rem;font-weight:600;color:var(--teal7)}
-
-    /* ── SERVICE GRID ── */
-    .act-header{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:14px;margin-bottom:24px}
-    .act-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:20px}
-    .act-card{border-radius:var(--r14);overflow:hidden;background:#fff;border:1px solid var(--line);transition:box-shadow .2s,transform .2s;display:flex;flex-direction:column}
-    .act-card:hover{box-shadow:var(--sh2);transform:translateY(-3px)}
-    .act-img{position:relative;height:200px}
-    .act-body{padding:18px 20px;flex:1;display:flex;flex-direction:column}
-    .act-rating-row{display:flex;align-items:center;gap:6px;margin-bottom:8px}
-    .act-name{font-family:var(--fb);font-size:1rem;font-weight:700;color:var(--tx);margin-bottom:6px;letter-spacing:-.01em}
-    .act-desc{font-size:.8125rem;color:var(--tx-soft);line-height:1.55;margin-bottom:11px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+    /* ── ESPECIFICACOES DE VIATURA (rent-a-car) ── */
     .vehicle-specs{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:11px}
     .vspec{display:inline-flex;align-items:center;gap:4px;font-family:var(--fm);font-size:.6875rem;font-weight:600;color:var(--tx-soft)}
     .vspec svg{flex-shrink:0;color:var(--tx-faint)}
-    .act-meta-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:14px;flex:1}
-    .act-price-row{display:flex;align-items:baseline;gap:5px;margin-bottom:14px}
-    .act-price-from{font-size:.6875rem;color:var(--tx-faint)}
-    .act-price-val{font-family:var(--fm);font-size:1.1875rem;font-weight:600;color:var(--teal7)}
-    .act-price-unit{font-size:.6875rem;color:var(--tx-faint)}
-    .act-footer{display:flex;gap:8px;align-items:center}
-    .act-footer .btn-book{flex:1}
 
     /* ── OPERADORES LOCAIS VERIFICADOS ── */
     .ops{display:grid;grid-template-columns:repeat(3,1fr);gap:22px}
@@ -291,25 +248,18 @@
     .poi-txt b{display:block;font-family:var(--fd);font-size:.95rem;font-weight:600;line-height:1.3;margin-top:2px}
     @media(max-width:1000px){.poi{flex-basis:calc((100% - 3 * 18px) / 4)}}
     @media(max-width:600px){.poi{flex-basis:46%}}
-    .poi-card-compact{display:flex;flex-direction:column}
-    .poi-more-link{display:inline-flex;align-items:center;gap:5px;font-family:var(--fb);font-size:.75rem;font-weight:600;color:var(--teal7);margin-top:auto}
-    .poi-more-link:hover{color:var(--teal6)}
     .poi-slider{display:flex;gap:18px;overflow-x:auto;scroll-snap-type:x mandatory;scroll-behavior:smooth;padding-bottom:4px;-webkit-overflow-scrolling:touch;scrollbar-width:none}
     .poi-slider::-webkit-scrollbar{display:none}
-    .poi-slider > .card{scroll-snap-align:start;flex:0 0 calc((100% - 60px)/4);min-width:260px}
     .slider-arrow{width:40px;height:40px;border-radius:50%;border:1px solid var(--line);background:#fff;color:var(--tx);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background .15s;flex-shrink:0}
     .slider-arrow:hover{background:var(--paper2)}
-    @media(max-width:900px){.poi-slider > .card{flex:0 0 calc((100% - 20px)/2);min-width:220px}}
-    @media(max-width:560px){.poi-slider > .card{flex:0 0 85%;min-width:0}}
 
     #load-more-wrap{text-align:center;margin-top:36px}
 
     /* ── SKELETON ── */
     @keyframes shimmer{0%{background-position:-300% 0}100%{background-position:300% 0}}
     .sk{background:linear-gradient(90deg,var(--paper2) 25%,var(--line) 50%,var(--paper2) 75%);background-size:300% 100%;animation:shimmer 1.6s infinite;border-radius:6px}
-    .sk-card{background:#fff;border:1px solid var(--line);border-radius:var(--r14);overflow:hidden}
-    .sk-img{height:200px}
-    .sk-body{padding:16px;display:flex;flex-direction:column;gap:10px}
+    .sk-xp{pointer-events:none}
+    .sk-xp .xp-body{padding-bottom:16px}
     .sk-line{height:13px}.sk-wide{width:80%}.sk-mid{width:55%}.sk-short{width:35%}
 
     /* ── PORQUE RESERVAR DIRECTO ── */
@@ -426,12 +376,7 @@
     .payment-logos .plogo-mc img{height:22px}
 
     /* ── RESPONSIVE ── */
-    @media(max-width:1000px){
-      .featured-grid{grid-template-columns:repeat(2,1fr)}
-    }
     @media(max-width:768px){
-      .featured-grid{grid-template-columns:1fr}
-      .act-grid{grid-template-columns:1fr}
       .footer-grid{grid-template-columns:1fr 1fr}
       .profile-drawer{flex-direction:column}
       .profile-drawer-rail{width:100%;display:flex;flex-wrap:nowrap;overflow-x:auto;gap:4px;border-right:none;border-bottom:1px solid var(--line);padding:12px}
@@ -442,6 +387,13 @@
     @media(max-width:500px){
       .section{padding:48px 0}
       .footer-grid{grid-template-columns:1fr}
+    }
+    /* ── MOVIMENTO REDUZIDO ── */
+    @media (prefers-reduced-motion: reduce){
+      html{scroll-behavior:auto}
+      *,*::before,*::after{transition:none!important;animation:none!important}
+      .xp:hover,.op:hover{transform:none}
+      .xp:hover .xp-img img,.poi:hover img{transform:none}
     }
   </style>
 </head>
@@ -797,10 +749,6 @@ function esc(s) {
     .replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 }
 
-function truncate(s, n) {
-  if (!s) return '';
-  return s.length > n ? s.slice(0, n).trimEnd() + '…' : s;
-}
 
 function tLabel(t) { return (TLABELS[t] || { pt:t, en:t })[L()]; }
 
@@ -864,54 +812,8 @@ function vehicleSpecsRow(item) {
   return parts.length ? `<div class="vehicle-specs">${parts.join('')}</div>` : '';
 }
 
-function renderStars(r) {
-  if (!r) return '';
-  const f = Math.floor(r), e = 5 - f;
-  return '★'.repeat(f) + '☆'.repeat(e);
-}
 
-function ratingLine(item) {
-  if (!item.avg_rating) {
-    return `<span style="font-size:.8125rem;color:var(--tx-faint)"><span class="pt">Sem avaliacoes</span><span class="en">No reviews yet</span></span>`;
-  }
-  return `<svg width="13" height="13" viewBox="0 0 24 24" fill="var(--ochre)" stroke="var(--ochre)" stroke-width="1"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>` +
-    `<span style="font-family:var(--fm);font-size:.8125rem;font-weight:600;color:var(--tx)">${item.avg_rating}</span>` +
-    `<span style="font-size:.75rem;color:var(--tx-faint)">(${item.review_count})</span>`;
-}
 
-/* Badge de disponibilidade -- so mostra para os proximos 3 dias (0-3), fica
-   ausente se estiver mais longe ou se next_available for null. Nunca mostra
-   "Indisponivel" (ver plano SalDesk Conect / secção sinal de disponibilidade). */
-function availabilityLabel(item) {
-  if (!item.next_available) return '';
-  const today = new Date(); today.setHours(0, 0, 0, 0);
-  const target = new Date(item.next_available + 'T00:00:00');
-  const days = Math.round((target - today) / 86400000);
-  if (days < 0 || days > 3) return '';
-  const lang = L();
-  /* Para um prato, next_available reflecte a disponibilidade das MESAS do
-     restaurante -- nunca um horario marcado do proprio prato. O rotulo
-     deixa isso explicito, em vez de sugerir que o prato tem um "slot". */
-  const isDish = item.operator_type === 'restaurant';
-  let when;
-  if (days === 0) when = lang === 'pt' ? 'hoje' : 'today';
-  else if (days === 1) when = lang === 'pt' ? 'amanha' : 'tomorrow';
-  else when = lang === 'pt' ? `em ${days} dias` : `in ${days} days`;
-  const txt = isDish
-    ? (lang === 'pt' ? `Mesa disponivel ${when}` : `Table available ${when}`)
-    : (when.charAt(0).toUpperCase() + when.slice(1));
-  return `<span class="avail-badge"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>${txt}</span>`;
-}
-
-/* Eyebrow com coordenada real -- so aparece se a unidade tiver lat/lng
-   preenchidos pelo operador. Nunca inventa/arredonda uma coordenada falsa
-   (decisao explicita do plano SalDesk Conect). */
-function coordEyebrow(item) {
-  if (item.lat == null || item.lng == null) return '';
-  const lat = Math.abs(item.lat).toFixed(4) + '°N';
-  const lng = Math.abs(item.lng).toFixed(4) + '°W';
-  return `<div class="eyebrow-coord"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z"/><circle cx="12" cy="10" r="3"/></svg>${lat} · ${lng}</div>`;
-}
 
 /* Bloco de imagem partilhado pelos dois tipos de card -- foto real do
    operador (unit.images[0]) ou, na ausencia, gradiente neutro com o icone
@@ -1017,15 +919,6 @@ async function loadPois() {
   renderPoiSlider();
 }
 
-function fmtPrice(price, opCur) {
-  if (!price) return L() === 'pt' ? 'Consultar' : 'On request';
-  if (currency === 'EUR') {
-    const eur = opCur === 'CVE' ? price / EUR_CVE : price;
-    return '€' + (eur < 10 ? eur.toFixed(1) : Math.round(eur));
-  }
-  const cve = opCur === 'CVE' ? price : price * EUR_CVE;
-  return Math.round(cve).toLocaleString('pt-PT') + ' CVE';
-}
 
 /* ══════════════════════════════════════════
    WISHLIST
@@ -1186,11 +1079,12 @@ async function apiFetch(path) {
 /* ══════════════════════════════════════════
    SKELETONS
 ══════════════════════════════════════════ */
-function skCards(n, h = '200px') {
+function skCards(n) {
   return Array.from({ length:n }, () => `
-    <div class="sk-card">
-      <div class="sk sk-img" style="height:${h}"></div>
-      <div class="sk-body"><div class="sk sk-line sk-wide"></div><div class="sk sk-line sk-mid"></div><div class="sk sk-line sk-short"></div></div>
+    <div class="xp sk-xp" aria-hidden="true">
+      <div class="sk xp-img"></div>
+      <div class="xp-body"><div class="sk sk-line sk-short"></div><div class="sk sk-line sk-wide" style="margin-top:12px"></div><div class="sk sk-line sk-mid" style="margin-top:12px"></div></div>
+      <div class="xp-foot"><div class="sk sk-line sk-short"></div></div>
     </div>`).join('');
 }
 
@@ -1516,7 +1410,7 @@ async function loadServices() {
 
 async function loadFeatured() {
   const grid = document.getElementById('featured-grid');
-  grid.innerHTML = skCards(3, '220px');
+  grid.innerHTML = skCards(3);
 
   /* "Em destaque" mostra OPERADORES (nao servicos individuais) -- usa
      /discover, nao /discover-units. Sem entradas activas em cms_featured
