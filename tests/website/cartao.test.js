@@ -133,3 +133,30 @@ test('estado_do_lugar_distingue_falha_de_inexistente', () => {
   assert.deepEqual(C.estadoDoLugar([{ slug: 'buracona', name_pt: 'B' }], 'buracona'), { estado: 'ok', lugar: { slug: 'buracona', name_pt: 'B' } });
   assert.deepEqual(C.estadoDoLugar([{ slug: 'x' }], ''), { estado: 'nao_encontrado', lugar: null });
 });
+
+test('experiencias_do_lugar_pelo_itinerario_so_na_mesma_ilha', () => {
+  const lugar = { slug: 'santa-maria', name_pt: 'Santa Maria', name_en: 'Santa Maria', island_slug: 'sal' };
+  const u = (id, ilha, paragens, extra = {}) => ({ unit_id: id, island_slug: ilha, description: JSON.stringify({ stops: paragens }), ...extra });
+  const units = [
+    u('sal-1', 'sal', [{ name: 'Santa Maria' }]),
+    u('bv-1', 'boa-vista', [{ name: 'Cabo Santa Maria' }]),
+    u('sal-2', 'sal', [{ name: 'Espargos' }], { recent_bookings: 3 }),
+    { unit_id: 'sal-3', island_slug: 'sal', description: 'texto simples' },
+  ];
+  const r = C.experienciasDoLugar(lugar, units);
+  assert.equal(r.porItinerario, true);
+  assert.deepEqual(r.itens.map(i => i.unit_id), ['sal-1']);
+});
+
+test('experiencias_do_lugar_sem_itinerario_usa_a_ilha', () => {
+  const lugar = { slug: 'buracona', name_pt: 'Buracona', island_slug: 'sal' };
+  const units = [
+    { unit_id: 'a', island_slug: 'sal', recent_bookings: 0 },
+    { unit_id: 'b', island_slug: 'sal', recent_bookings: 2 },
+    { unit_id: 'c', island_slug: 'fogo', recent_bookings: 9 },
+  ];
+  const r = C.experienciasDoLugar(lugar, units);
+  assert.equal(r.porItinerario, false);
+  assert.deepEqual(r.itens.map(i => i.unit_id), ['b', 'a']);
+  assert.deepEqual(C.experienciasDoLugar(lugar, null), { porItinerario: false, itens: [] });
+});

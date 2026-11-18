@@ -173,6 +173,29 @@
     return lugar ? { estado: 'ok', lugar: lugar } : { estado: 'nao_encontrado', lugar: null };
   }
 
+  function nomesBatem(a, b) {
+    a = texto(a).toLowerCase(); b = texto(b).toLowerCase();
+    return !!a && !!b && (a.indexOf(b) !== -1 || b.indexOf(a) !== -1);
+  }
+
+  /* Experiencias para a pagina de um lugar: as da mesma ilha cujo itinerario (stops) passa
+     por ele; se nenhuma passa, as da mesma ilha, mais reservadas primeiro. Maximo 6. */
+  function experienciasDoLugar(lugar, units) {
+    var lista = Array.isArray(units) ? units.filter(function (u) { return u && lugar && u.island_slug === lugar.island_slug; }) : [];
+    var nomes = [lugar && lugar.name_pt, lugar && lugar.name_en];
+    var porParagem = lista.filter(function (u) {
+      var stops = lerMeta(u).stops;
+      return Array.isArray(stops) && stops.some(function (st) {
+        return st && nomes.some(function (n) { return nomesBatem(st.name, n) || nomesBatem(st.name_en, n); });
+      });
+    });
+    if (porParagem.length) return { porItinerario: true, itens: porParagem.slice(0, 6) };
+    var ordenadas = lista.slice().sort(function (a, b) {
+      return (Number(b.avg_rating) || 0) - (Number(a.avg_rating) || 0) || (Number(b.recent_bookings) || 0) - (Number(a.recent_bookings) || 0);
+    });
+    return { porItinerario: false, itens: ordenadas.slice(0, 6) };
+  }
+
   function ilhasDosItens(itens) {
     var cont = {};
     (Array.isArray(itens) ? itens : []).forEach(function (i) {
@@ -203,6 +226,7 @@
     nomeIlha: nomeIlha,
     outrosLugares: outrosLugares,
     estadoDoLugar: estadoDoLugar,
+    experienciasDoLugar: experienciasDoLugar,
   };
 
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
