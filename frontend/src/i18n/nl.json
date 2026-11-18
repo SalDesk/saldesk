@@ -8,5 +8,30 @@
   "units": { "title": "Eenheden", "new": "Nieuwe eenheid", "name": "Naam", "type": "Type", "capacity": "Capaciteit", "basePrice": "Basisprijs", "priceUnit": "Prijseenheid", "description": "Beschrijving", "active": "Actief", "inactive": "Inactief", "copyLink": "Link kopieren" },
   "customers": { "title": "Klanten", "name": "Naam", "email": "E-mail", "phone": "Telefoon", "nationality": "Nationaliteit", "visits": "Bezoeken", "totalSpent": "Totaal uitgegeven", "firstVisit": "Eerste bezoek", "lastVisit": "Laatste bezoek", "notes": "Notities", "tags": "Tags" },
   "errors": { "generic": "Er is een fout opgetreden. Probeer het opnieuw.", "network": "Verbindingsfout. Controleer uw internetverbinding.", "unauthorized": "Sessie verlopen. Meld u opnieuw aan.", "notFound": "Niet gevonden.", "validation": "Controleer de velden en probeer het opnieuw." },
-  "onboarding": { "title": "Welkom bij SalDesk", "subtitle": "Stel uw bedrijf in minder dan 5 minuten in", "step1Title": "Bedrijfstype", "step1Subtitle": "Wat voor soort bedrijf beheert u?", "step2Title": "Bedrijfsgegevens", "step2Subtitle": "Contact- en locatiegegevens", "step3Title": "Identiteit", "step3Subtitle": "Logo en bedrijfsbeschrijving", "step4Title": "Instellingen", "step4Subtitle": "Taal, valuta en boekingslink", "step5Title": "Alles klaar!", "step5Subtitle": "Uw bedrijf is geconfigureerd", "next": "Doorgaan", "back": "Terug", "finish": "Naar Dashboard", "operatorTypes": { "hotel": "Hotel / Pension", "activity": "Toeristische activiteit", "rentacar": "Autoverhuur", "restaurant": "Restaurant" }, "operatorDescriptions": { "hotel": "Kamers, suites, bungalows — check-in/check-out beheer", "activity": "Kitesurfen, duiken, tours — sessies en per-persoon boekingen", "rentacar": "Dagelijkse autohuur met aangepaste ophaallocaties", "restaurant": "Tafels, boekingen per uur, bezettingsbeheer" }, "businessName": "Bedrijfsnaam", "phone": "Telefoon", "whatsapp": "WhatsApp", "island": "Eiland", "selectIsland": "Eiland selecteren...", "address": "Adres", "description": "Korte beschrijving", "logo": "Logo", "language": "Standaardtaal", "currency": "Valuta", "timezone": "Tijdzone", "bookingSlug": "Boekingslink", "bookingSlugHint": "app.saldesk.cv/book/", "uploadLogo": "Logo uploaden", "dragDrop": "of hier slepen en neerzetten" }
+  "onboarding": { "title": "Welkom bij SalDesk", "subtitle": "Stel uw bedrijf in minder dan 5 minuten in", "step1Title": "Bedrijfstype", "step1Subtitle": "Wat voor soort bedrijf beheert u?", "step2Title": "Bedrijfsgegevens", "step2Subtitle": "Contact- en locatiegegevens", "step3Title": "Identiteit", "step3Subtitle": "Logo en bedrijfsbeschrijving", "step4Title": "Instellingen", "step4Subtitle": "Taal, valuta en boekingslink", "step5Title": "Alles klaar!", "step5Subtitle": "Uw bedrijf is geconfigureerd", "next": "Doorgaan", "back": "Terug", "finish": "Naar Dashboard", "operatorTypes": { "hotel": "Hotel / Pension", "activity": "Toeristische activiteit", "rentacar": "Autoverhuur", "restaurant": "Restaurant" }, "operatorDescriptions": { "hotel": "Kamers, suites, bungalows — check-in/check-out beheer", "activity": "Kitesurfen, duiken, tours — sessies en per-persoon boekingen", "rentacar": "Dagelijkse autohuur met aangepaste ophaallocaties", "restaurant": "Tafels, boekingen per uur, bezettingsbeheer" }, "businessName": "Bedrijfsnaam", "phone": "Telefoon", "whatsapp": "WhatsApp", "island": "Eiland", "selectIsland": "Eiland selecteren...", "address": "Adres", "description": "Korte beschrijving", "logo": "Logo", "language": "Standaardtaal", "currency": "Valuta", "timezone": "Tijdzone", "bookingSlug": "Boekingslink", "bookingSlugHint": "app.saldesk.cv/book/", "uploadLogo": "Logo uploaden", "dragDrop": "of hier slepen en neerzetten" },
+  "review": {
+    "loading": "Laden...",
+    "title": "Hoe was het?",
+    "intro": "Hallo {{name}}, vertel ons hoe {{unit}} met {{operator}} was.",
+    "introNoName": "Vertel ons hoe {{unit}} met {{operator}} was.",
+    "introNoUnit": "Vertel ons hoe uw ervaring met {{operator}} was.",
+    "starsLabel": "Uw beoordeling",
+    "star1": "1 ster",
+    "starN": "{{n}} sterren",
+    "commentLabel": "Opmerking (optioneel)",
+    "commentPlaceholder": "Wat vond u het leukst? Wat kan beter?",
+    "send": "Beoordeling versturen",
+    "sending": "Versturen...",
+    "thanksTitle": "Bedankt voor uw beoordeling!",
+    "thanksText": "Uw mening helpt {{operator}} en andere reizigers.",
+    "seeOperator": "Meer van {{operator}}",
+    "expiredTitle": "Deze link is verlopen",
+    "expiredText": "De termijn om te beoordelen is voorbij. U kunt rechtstreeks contact opnemen met {{operator}}.",
+    "invalid": "Deze link is niet meer actief. Als u al een beoordeling heeft achtergelaten: bedankt!",
+    "errorTitle": "Kon niet laden",
+    "errorText": "Controleer uw internetverbinding en probeer het opnieuw.",
+    "retry": "Opnieuw proberen",
+    "sendError": "Versturen mislukt. Probeer het opnieuw.",
+    "poweredBy": "Beoordelingen geverifieerd door SalDesk"
+  }
 }
