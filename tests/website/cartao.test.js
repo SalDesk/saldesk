@@ -124,3 +124,12 @@ test('outros_lugares_da_mesma_ilha_com_foto_primeiro', () => {
   assert.deepEqual(C.outrosLugares({ slug: 'x', island_slug: 'maio' }, todos), []);
   assert.deepEqual(C.outrosLugares(eu, null), []);
 });
+
+test('estado_do_lugar_distingue_falha_de_inexistente', () => {
+  /* null = a API falhou (rede/erro); [] = a API respondeu sem esse lugar */
+  assert.deepEqual(C.estadoDoLugar(null, 'buracona'), { estado: 'erro', lugar: null });
+  assert.deepEqual(C.estadoDoLugar([], 'buracona'), { estado: 'nao_encontrado', lugar: null });
+  assert.deepEqual(C.estadoDoLugar([{ slug: 'outro' }], 'buracona'), { estado: 'nao_encontrado', lugar: null });
+  assert.deepEqual(C.estadoDoLugar([{ slug: 'buracona', name_pt: 'B' }], 'buracona'), { estado: 'ok', lugar: { slug: 'buracona', name_pt: 'B' } });
+  assert.deepEqual(C.estadoDoLugar([{ slug: 'x' }], ''), { estado: 'nao_encontrado', lugar: null });
+});

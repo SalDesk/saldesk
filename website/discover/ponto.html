@@ -350,6 +350,12 @@
   </section>
 </main>
 
+<div id="place-error" class="state-empty" role="alert" hidden>
+  <h1><span class="pt">Não foi possível carregar este lugar</span><span class="en">This place could not be loaded</span></h1>
+  <p><span class="pt">Verifique a ligação à internet e tente de novo.</span><span class="en">Check your internet connection and try again.</span></p>
+  <a href="#" onclick="event.preventDefault();location.reload()"><span class="pt">Tentar de novo</span><span class="en">Try again</span></a>
+</div>
+
 <main id="place-notfound" class="state-empty" style="display:none">
   <h1><span class="pt">Ponto turístico não encontrado</span><span class="en">Place not found</span></h1>
   <p><span class="pt">O endereço pode estar errado ou o lugar já não existe.</span><span class="en">The address may be wrong or the place no longer exists.</span></p>
@@ -407,7 +413,7 @@
   </div>
 </footer>
 
-<script src="_cartao.js?v=20261118c"></script>
+<script src="_cartao.js?v=20261118d"></script>
 <script>
 /* ══════════════════════════════════════════
    PAGINA DE UM PONTO TURISTICO (ponto.html?slug=...)
@@ -673,19 +679,24 @@ async function init() {
   const naoEncontrado = () => { document.getElementById('place-notfound').style.display = ''; };
   if (!slug) { naoEncontrado(); return; }
 
-  const [encontrados, units, todos] = await Promise.all([
-    apiFetch(`/landmarks?slug=${encodeURIComponent(slug)}`),
-    apiFetch('/discover-units'),
-    apiFetch('/landmarks'),
-  ]);
-  /* a API filtra por slug; confirmar na mesma, para nunca mostrar o lugar errado */
-  const item = (encontrados || []).find(l => l.slug === slug);
-  if (!item) { naoEncontrado(); return; }
+  /* os tres pedidos partem juntos, mas o lugar mostra-se assim que o seu chega */
+  const lugarP = apiFetch(`/landmarks?slug=${encodeURIComponent(slug)}`);
+  const unitsP = apiFetch('/discover-units');
+  const todosP = apiFetch('/landmarks');
 
-  lugar = item;
-  todosLugares = Array.isArray(todos) ? todos : [];
-  relacionadas = relatedUnitsFor(item, Array.isArray(units) ? units : []);
+  /* null = a API falhou (nao dizer "nao existe"); a API filtra por slug, mas confirma-se o slug */
+  const r = C.estadoDoLugar(await lugarP, slug);
+  if (r.estado === 'erro') { document.getElementById('place-error').hidden = false; return; }
+  if (r.estado !== 'ok') { naoEncontrado(); return; }
+
+  lugar = r.lugar;
   renderLugar();
+
+  const [units, todos] = await Promise.all([unitsP, todosP]);
+  todosLugares = Array.isArray(todos) ? todos : [];
+  relacionadas = relatedUnitsFor(lugar, Array.isArray(units) ? units : []);
+  renderRelacionadas();
+  renderOutros();
 }
 
 document.addEventListener('DOMContentLoaded', init);

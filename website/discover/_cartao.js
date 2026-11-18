@@ -166,6 +166,13 @@
     return comFoto.concat(semFoto).slice(0, n);
   }
 
+  /* Resposta de /landmarks?slug=: null = a API falhou; lista sem o lugar = nao existe */
+  function estadoDoLugar(resposta, slug) {
+    if (resposta === null || resposta === undefined) return { estado: 'erro', lugar: null };
+    var lugar = (Array.isArray(resposta) && slug) ? resposta.filter(function (l) { return l && l.slug === slug; })[0] : null;
+    return lugar ? { estado: 'ok', lugar: lugar } : { estado: 'nao_encontrado', lugar: null };
+  }
+
   function ilhasDosItens(itens) {
     var cont = {};
     (Array.isArray(itens) ? itens : []).forEach(function (i) {
@@ -195,6 +202,7 @@
     ilhasDosItens: ilhasDosItens,
     nomeIlha: nomeIlha,
     outrosLugares: outrosLugares,
+    estadoDoLugar: estadoDoLugar,
   };
 
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
