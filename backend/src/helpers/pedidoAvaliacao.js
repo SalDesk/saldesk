@@ -5,7 +5,7 @@ const { isPlanActive } = require('./planoActivo');
 const VALIDADE_TOKEN_DIAS = 30;
 /* So reservas directas: as de OTAs (GetYourGuide, Viator...) tem e-mails do intermediario
    e as regras delas proibem contactar o cliente fora da plataforma. */
-const FONTES_DIRECTAS = ['public', 'manual', 'admin'];
+const FONTES_DIRECTAS = ['public', 'manual', 'admin', 'direct'];
 const ESTADOS_AVALIAVEIS = ['confirmed', 'checked_in', 'checked_out'];
 
 const DEFAULT_TEMPLATE = {

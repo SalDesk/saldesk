@@ -37,6 +37,8 @@ async function listar(req, res, next) {
       .from('reviews')
       .select('*, reservations(check_in, check_out, units(name)), customers(name, country_code)')
       .eq('operator_id', req.operator.id)
+      /* so avaliacoes dadas: os pedidos por responder (rating null) nao sao avaliacoes */
+      .not('rating', 'is', null)
       .order('created_at', { ascending: false });
     if (is_public !== undefined) q = q.eq('is_public', is_public === 'true');
     if (min_rating) q = q.gte('rating', parseInt(min_rating));
@@ -138,8 +140,19 @@ async function guardarDefinicoes(req, res, next) {
 
 async function submitReview(req, res, next) {
   try {
-    const { token, rating, comment, staff_id } = req.body;
-    if (!token || !rating) return res.status(400).json({ error: 'Token e rating obrigatorios', code: 'MISSING_FIELDS' });
+    /* staff_id nao vem do publico: quem tem o link so da a nota e o comentario */
+    const { token, rating, comment } = req.body;
+    if (!token || rating === undefined || rating === null || rating === '') {
+      return res.status(400).json({ error: 'Token e rating obrigatorios', code: 'MISSING_FIELDS' });
+    }
+    const nota = Number(rating);
+    if (!Number.isInteger(nota) || nota < 1 || nota > 5) {
+      return res.status(400).json({ error: 'A nota tem de ser de 1 a 5', code: 'INVALID_RATING' });
+    }
+    const texto = comment ? String(comment).trim() : '';
+    if (texto.length > 1000) {
+      return res.status(400).json({ error: 'Comentario demasiado longo (maximo 1000 caracteres)', code: 'COMMENT_TOO_LONG' });
+    }
 
     const { data: review } = await supabaseAdmin
       .from('reviews').select('id, token_expires_at').eq('review_token', token).single();
@@ -150,14 +163,14 @@ async function submitReview(req, res, next) {
 
     const { data, error } = await supabaseAdmin
       .from('reviews')
-      .update({ rating: parseInt(rating), comment: comment || null, staff_id: staff_id || null, review_token: null, token_expires_at: null, is_public: true })
+      .update({ rating: nota, comment: texto || null, review_token: null, token_expires_at: null, is_public: true })
       .eq('id', review.id).select().single();
     if (error) throw error;
 
     supabaseAdmin.from('notifications').insert({
       operator_id:        data.operator_id,
       notification_type:  'new_review',
-      content:             `Nova avaliacao de ${parseInt(rating)} estrelas recebida`,
+      content:             `Nova avaliacao de ${nota} estrelas recebida`,
       link:                '/avaliacoes',
     }).then(({ error: notifErr }) => {
       if (notifErr) console.error('[Notificacao] Erro ao criar notificacao:', notifErr.message);
@@ -167,7 +180,7 @@ async function submitReview(req, res, next) {
       const { data: staff } = await supabaseAdmin.from('staff').select('average_rating, total_jobs_completed').eq('id', data.staff_id).single();
       if (staff) {
         const n = staff.total_jobs_completed || 1;
-        const newAvg = ((staff.average_rating || 0) * (n - 1) + parseInt(rating)) / n;
+        const newAvg = ((staff.average_rating || 0) * (n - 1) + nota) / n;
         await supabaseAdmin.from('staff').update({ average_rating: Math.round(newAvg * 100) / 100 }).eq('id', data.staff_id);
       }
     }

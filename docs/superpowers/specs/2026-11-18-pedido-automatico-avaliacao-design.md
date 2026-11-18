@@ -48,7 +48,7 @@ Sucesso: dias depois de implantar, turistas de reservas directas recebem um e-ma
 Todas estas, avaliadas em hora de Cabo Verde (`Atlantic/Cape_Verde`):
 - `check_out` entre hoje-3 e hoje-1 (inclusive). A janela de 3 dias deixa recuperar um dia em que a tarefa ou o e-mail falharam, sem ir ao historico.
 - `status` em `confirmed`, `checked_in`, `checked_out` (nao `pending`, `cancelled`, `no_show`).
-- `source` em `public`, `manual`, `admin` ou vazio. Qualquer outro valor (OTA) fica de fora.
+- `source` em `public`, `manual`, `admin`, `direct` (a opcao "Directa" do formulario de reserva) ou vazio. Qualquer outro valor (OTA) fica de fora.
 - `customer_email` preenchido.
 - Ainda nao existe linha em `reviews` para essa reserva (ha UNIQUE em `reviews.reservation_id`).
 - O operador nao desligou o pedido automatico (`operators.review_auto_request` nao e `false`).

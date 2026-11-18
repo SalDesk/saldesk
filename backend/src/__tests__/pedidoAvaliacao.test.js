@@ -66,3 +66,8 @@ test('modelo_por_omissao_e_neutro_e_preenchido', () => {
   expect(R.preencherModelo('{nome_cliente}', {})).toBe('');
   expect(R.VALIDADE_TOKEN_DIAS).toBe(30);
 });
+
+test('reserva_marcada_directa_e_elegivel', () => {
+  /* 'direct' e a opcao "Directa" do formulario de reserva (ReservationForm) */
+  expect(R.reservaElegivel({ ...RES, source: 'direct' }, OP, JAN)).toBe(true);
+});
