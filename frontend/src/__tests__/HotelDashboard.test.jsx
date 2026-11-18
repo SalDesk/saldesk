@@ -208,7 +208,7 @@ describe('HotelDashboard (Hoje)', () => {
     expect(screen.getByText('Ocupação hoje')).toBeInTheDocument();
     expect(screen.getByText('€500')).toBeInTheDocument();
     expect(screen.getByText('1 chegadas')).toBeInTheDocument();
-    expect(screen.getByText('1 partidas · 0 por confirmar')).toBeInTheDocument();
+    expect(screen.getByText('1 partidas · 0 chegadas por confirmar')).toBeInTheDocument();
     ['Reservas pendentes', 'Avaliação média', 'Valor médio por reserva', 'Por receber']
       .forEach((rotulo) => expect(screen.getByText(rotulo)).toBeInTheDocument());
     /* as listas antigas sairam; o mapa fica */
@@ -221,6 +221,12 @@ describe('HotelDashboard (Hoje)', () => {
     renderHotel();
     fireEvent.click(await screen.findByRole('button', { name: /Chegada · Ana Entrada/ }));
     expect(navigateMock).toHaveBeenLastCalledWith('/calendario');
+  });
+
+  it('o_por_confirmar_do_cartao_diz_respeito_as_chegadas', async () => {
+    carregaServicos({ hoje: [reserva({ id: 'c1', status: 'pending', customer_name: 'Ana Entrada' })] });
+    renderHotel();
+    expect(await screen.findByText('0 partidas · 1 chegadas por confirmar')).toBeInTheDocument();
   });
 
   it('molduras_sem_resumo_nao_rebentam', async () => {
@@ -333,7 +339,7 @@ describe('HotelDashboard (Hoje)', () => {
     renderHotel();
     /* sem deduplicacao a agenda e o contador de partidas contariam 2 */
     await waitFor(() => expect(screen.getAllByRole('button', { name: /Partida · Rui Saida/ })).toHaveLength(1));
-    expect(screen.getByText('1 partidas · 0 por confirmar')).toBeInTheDocument();
+    expect(screen.getByText('1 partidas · 0 chegadas por confirmar')).toBeInTheDocument();
   });
 
   it('estadia a meio, check-out e check-in de hoje entram no mapa, nas listas e nos contadores', async () => {
@@ -372,7 +378,7 @@ describe('HotelDashboard (Hoje)', () => {
     expect(screen.getByText('50%')).toBeInTheDocument();
     expect(screen.getByText('2 de 4 quartos')).toBeInTheDocument();
     expect(screen.getByText('1 chegadas')).toBeInTheDocument();
-    expect(screen.getByText('1 partidas · 0 por confirmar')).toBeInTheDocument();
+    expect(screen.getByText('1 partidas · 0 chegadas por confirmar')).toBeInTheDocument();
     expect(valorKpi('Reservas pendentes')).toBe('1');
   });
 

@@ -110,6 +110,19 @@ describe('agendaTipos: restaurante', () => {
     expect(e.detalhe.endsWith('dashboard.agenda.preOrder')).toBe(true);
   });
 
+  it('restaurante_sem_mesas_carregadas_mantem_as_reservas', () => {
+    /* se /units falhar, as reservas do dia nao podem desaparecer da agenda */
+    const ev = eventosRestaurante({ reservas: [rr({})], unidades: [], pedidos: [], hoje: HOJE, t });
+    expect(ev).toHaveLength(1);
+    expect(ev[0].detalhe.startsWith('dashboard.restaurant.noTable')).toBe(true);
+  });
+
+  it('restaurante_pre_pedido_cancelado_nao_conta', () => {
+    const a = rr({ id: 'res-c' });
+    const [e] = eventosRestaurante({ reservas: [a], unidades: [MESA], pedidos: [{ id: 'o2', reservation_id: 'res-c', status: 'cancelled' }], hoje: HOJE, t });
+    expect(e.detalhe).not.toContain('preOrder');
+  });
+
   it('restaurante_ignora_pratos_e_menus', () => {
     const ev = eventosRestaurante({ reservas: [rr({ unit_id: 'p1' }), rr({ unit_id: 'p2' }), rr({})], unidades: [MESA, PRATO, MENU], pedidos: [], hoje: HOJE, t });
     expect(ev).toHaveLength(1);

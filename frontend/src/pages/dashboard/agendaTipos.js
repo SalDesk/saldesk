@@ -107,16 +107,18 @@ export function eventosRentacar({ reservas, unidades, hoje, t = (k) => k } = {})
 
 /* Restaurante: uma por reserva de mesa ativa hoje, a hora da reserva; marca o pre-pedido quando existe */
 export function eventosRestaurante({ reservas, unidades, pedidos, hoje, t = (k) => k } = {}) {
-  const mesas = new Map(lista(unidades).filter((u) => !PRATOS.includes(u.unit_type)).map((u) => [u.id, u]));
-  const comPedido = new Set(lista(pedidos).map((p) => p.reservation_id).filter(Boolean));
+  const porId = new Map(lista(unidades).map((u) => [u.id, u]));
+  /* pedidos cancelados ja nao sao pre-pedido */
+  const comPedido = new Set(lista(pedidos).filter((p) => p.status !== 'cancelled').map((p) => p.reservation_id).filter(Boolean));
   return semRepetidos(reservas)
-    .filter((r) => ESTADOS_RESTAURANTE.includes(r.status) && mesas.has(r.unit_id) && (!hoje || r.check_in === hoje))
+    /* so se excluem reservas em pratos/menus conhecidos: se as mesas nao carregarem, as reservas ficam */
+    .filter((r) => ESTADOS_RESTAURANTE.includes(r.status) && !PRATOS.includes(porId.get(r.unit_id)?.unit_type) && (!hoje || r.check_in === hoje))
     .map((r) => {
-      const mesa = mesas.get(r.unit_id);
+      const mesa = porId.get(r.unit_id);
       const m = meta(mesa);
       const duracao = Number(r.duration_minutes) > 0 ? Number(r.duration_minutes) : DURACAO_MESA_MIN;
       const detalhe = [
-        m.number ? t('dashboard.restaurant.table', { n: m.number }) : mesa.name,
+        mesa ? (m.number ? t('dashboard.restaurant.table', { n: m.number }) : mesa.name) : t('dashboard.restaurant.noTable'),
         t('dashboard.agenda.guests', { n: pessoasDe(r) }),
         comPedido.has(r.id) ? t('dashboard.agenda.preOrder') : '',
       ];
