@@ -1,15 +1,8 @@
 const { supabaseAdmin } = require('../config/supabase');
-const { enviarEmail } = require('../helpers/emailHelper');
-const { frontendBase } = require('../utils/urls');
-const { detectarIdioma } = require('../helpers/languageHelper');
-const crypto = require('crypto');
 
-const DEFAULT_TEMPLATE = {
-  subject_pt: 'Como correu o seu tour? Deixe a sua avaliacao',
-  subject_en: 'How was your tour? Leave your review',
-  body_pt:    'Ola {nome_cliente},\n\nEsperamos que tenha gostado do seu tour {nome_tour}!\n\nA sua opiniao e muito importante para nos e para futuros clientes.\nClique no link abaixo para deixar a sua avaliacao:\n\n-> {link_avaliacao}\n\nObrigado pela sua confianca!',
-  body_en:    'Hello {nome_cliente},\n\nWe hope you enjoyed your {nome_tour} tour!\n\nYour feedback is very important to us and future guests.\nClick the link below to leave your review:\n\n-> {link_avaliacao}\n\nThank you for your trust!',
-};
+/* Texto por omissao (neutro: serve actividades, hoteis, rent-a-car e restaurantes) */
+const { DEFAULT_TEMPLATE } = require('../helpers/pedidoAvaliacao');
+const { enviarPedido } = require('../services/pedidoAvaliacaoService');
 
 async function obterTemplate(req, res, next) {
   try {
@@ -75,41 +68,13 @@ async function requestReview(req, res, next) {
       .select('id, customer_name, customer_email, customer_id, customer_country, check_out, operator_id, units(name)')
       .eq('id', reservation_id).eq('operator_id', req.operator.id).single();
     if (!reserva) return res.status(404).json({ error: 'Reserva nao encontrada', code: 'NOT_FOUND' });
-    if (!reserva.customer_email) return res.status(400).json({ error: 'Cliente sem email', code: 'NO_EMAIL' });
 
-    const token = crypto.randomBytes(20).toString('hex');
-    const expires = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+    /* mesmo codigo da tarefa diaria; nunca substitui uma avaliacao ja dada */
+    const r = await enviarPedido(reserva, { operadorId: req.operator.id });
+    if (!r.ok && r.code === 'NO_EMAIL') return res.status(400).json({ error: 'Cliente sem email', code: 'NO_EMAIL' });
+    if (!r.ok && r.code === 'ALREADY_REVIEWED') return res.status(409).json({ error: 'Esta reserva ja foi avaliada', code: 'ALREADY_REVIEWED' });
 
-    /* rating fica null e is_public false ate o cliente submeter de facto
-       via submitReview() -- um pedido enviado nao e uma avaliacao real. */
-    const { error: upsertErr } = await supabaseAdmin.from('reviews').upsert({
-      operator_id: req.operator.id, reservation_id, customer_id: reserva.customer_id || null,
-      review_token: token, token_expires_at: expires, rating: null, is_public: false,
-    }, { onConflict: 'reservation_id' });
-    if (upsertErr) throw upsertErr;
-
-    const publicUrl = frontendBase();
-    const link = `${publicUrl}/review/${token}`;
-
-    const { data: tplRow } = await supabaseAdmin
-      .from('review_request_templates').select('*').eq('operator_id', req.operator.id).maybeSingle();
-    const tpl = tplRow || DEFAULT_TEMPLATE;
-    const lang = detectarIdioma(reserva.customer_country) === 'en' ? 'en' : 'pt';
-
-    function preencher(texto) {
-      return String(texto)
-        .replace(/{nome_cliente}/g, reserva.customer_name || '')
-        .replace(/{nome_tour}/g, reserva.units?.name || '')
-        .replace(/{link_avaliacao}/g, link);
-    }
-
-    await enviarEmail({
-      to: reserva.customer_email,
-      subject: preencher(lang === 'en' ? tpl.subject_en : tpl.subject_pt),
-      text: preencher(lang === 'en' ? tpl.body_en : tpl.body_pt),
-    }).catch(() => {});
-
-    return res.json({ data: { token, link }, message: 'Pedido de avaliacao enviado' });
+    return res.json({ data: { token: r.token, link: r.link }, message: 'Pedido de avaliacao enviado' });
   } catch (err) { next(err); }
 }
 
