@@ -18,80 +18,115 @@
   <meta property="og:description" content="Catalogo publico de operadores turisticos verificados. Reserva directa, sem comissao." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=swap" rel="stylesheet" />
   <style>
     :root{
-      --ink:#0B1220;--ink2:#152238;--paper:#FAFAF9;--paper2:#F2EFE7;
-      --teal9:#083942;--teal7:#0F7B8A;--teal6:#14919E;--teal5:#3AA9B4;--teal1:#E3F1F2;--teal0:#F1F8F8;
-      --ochre:#E8A33D;--ochre-d:#C77F1E;--ochre1:#FBEEDA;
-      --line:#E3E0D6;--line-strong:#CFCBBC;
-      --tx:#171E2B;--tx-soft:#5B6472;--tx-faint:#8A93A3;
-      --ok:#1A7A4A;--okl:#DFF3E7;--err:#B91C1C;--errl:#FBE4E4;
-      --fd:'Fraunces',serif;--fb:'Inter',sans-serif;--fm:'IBM Plex Mono',monospace;
-      --r6:6px;--r10:10px;--r14:14px;
-      --sh1:0 1px 3px rgba(11,18,32,.06);--sh2:0 6px 20px rgba(11,18,32,.09);--sh3:0 20px 48px rgba(11,18,32,.16);
+      /* Paleta SalDesk (website/CLAUDE.md) */
+      --ocean-900:#062A38;--ocean-800:#0A3F55;--ocean-700:#0D5470;--ocean-600:#10698C;--ocean-500:#1480A8;--ocean-400:#3A9BBF;--ocean-300:#71BDD4;--ocean-100:#D6EEF5;--ocean-50:#EBF7FB;
+      --sand-600:#BE941C;--sand-500:#D4A82A;--sand-400:#E0BF5A;--sand-100:#F8F0D8;--sand-50:#FDF8EE;
+      --n900:#1A2332;--n800:#1F2937;--n700:#374151;--n600:#4B5563;--n500:#6B7280;--n400:#9CA3AF;--n300:#D1D5DB;--n200:#E5E8EC;--n100:#F3F4F6;--n50:#F9FAFB;
+      /* Nomes antigos, apontados para a paleta SalDesk: o modal de favoritos e o painel de perfil herdam a identidade nova */
+      --ink:#062A38;--ink2:#0A3F55;--paper:#FFFFFF;--paper2:#F3F4F6;
+      --teal9:#062A38;--teal7:#0D5470;--teal6:#10698C;--teal5:#3A9BBF;--teal1:#D6EEF5;--teal0:#EBF7FB;
+      --ochre:#D4A82A;--ochre-d:#BE941C;--ochre1:#F8F0D8;
+      --line:#E5E8EC;--line-strong:#D1D5DB;
+      --tx:#1A2332;--tx-soft:#4B5563;--tx-faint:#9CA3AF;
+      --ok:#15803D;--okl:#DFF3E7;--err:#B91C1C;--errl:#FBE4E4;
+      --fd:'Sora',sans-serif;--fb:'DM Sans',sans-serif;--fm:'DM Sans',sans-serif;
+      --r6:6px;--r10:10px;--r14:14px;--r16:16px;--r24:24px;
+      --sh1:0 1px 4px rgba(6,42,56,.08);--sh2:0 4px 16px rgba(6,42,56,.12);--sh3:0 12px 40px rgba(6,42,56,.16);
     }
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
     html{scroll-behavior:smooth;-webkit-font-smoothing:antialiased}
-    body{font-family:var(--fb);color:var(--tx);background:var(--paper);line-height:1.6}
+    body{font-family:var(--fb);color:var(--tx);background:#fff;line-height:1.6}
     h1,h2,h3{line-height:1.15}
     a{color:inherit;text-decoration:none}
     img{max-width:100%;display:block}
-    .container{max-width:1160px;margin:0 auto;padding:0 24px}
-    .section{padding:72px 0}
+    .container{max-width:1200px;margin:0 auto;padding:0 24px}
+    .section{padding:64px 0}
+    :focus-visible{outline:2px solid var(--ocean-500);outline-offset:2px}
     [data-lang="pt"] .en{display:none}
     [data-lang="en"] .pt{display:none}
 
     /* ── NAV ── */
-    #navbar{position:sticky;top:0;z-index:300;background:var(--paper);border-bottom:1px solid var(--line)}
-    .nav-inner{display:flex;align-items:center;gap:16px;height:64px}
-    .nav-logo img{height:28px;width:auto}
-    .nav-island{font-family:var(--fm);font-size:.6875rem;color:var(--tx-faint);text-transform:uppercase;letter-spacing:.06em;border-left:1px solid var(--line);padding-left:14px;margin-left:2px}
+    #navbar{position:sticky;top:0;z-index:300;background:rgba(255,255,255,.96);backdrop-filter:blur(8px);border-bottom:1px solid var(--n200)}
+    .nav-inner{display:flex;align-items:center;gap:32px;height:68px}
+    .nav-logo img{height:30px;width:auto}
+    .nav-links{display:flex;gap:26px;font-family:var(--fd);font-size:.84rem;font-weight:500;color:var(--n600)}
+    .nav-links a{transition:color .15s}
+    .nav-links a:hover{color:var(--ocean-700)}
     .nav-actions{display:flex;align-items:center;gap:8px;margin-left:auto}
-    .nav-icon-btn{background:none;border:1px solid var(--line);border-radius:var(--r10);width:38px;height:38px;display:flex;align-items:center;justify-content:center;cursor:pointer;position:relative;color:var(--tx-soft);transition:all .15s}
-    .nav-icon-btn:hover{border-color:var(--teal7);color:var(--teal7)}
-    .wish-badge{position:absolute;top:-5px;right:-5px;background:var(--err);color:#fff;border-radius:100px;min-width:17px;height:17px;font-size:.625rem;font-weight:700;display:flex;align-items:center;justify-content:center;padding:0 4px;border:2px solid var(--paper)}
-    .cur-pill{background:var(--paper2);border:1px solid var(--line);border-radius:var(--r10);padding:8px 12px;font-family:var(--fm);font-size:.75rem;font-weight:600;cursor:pointer;color:var(--tx-soft);transition:all .15s}
-    .cur-pill:hover{border-color:var(--teal7);color:var(--teal7)}
-    .lang-btn{background:var(--paper2);border:none;border-radius:var(--r10);padding:2px;display:flex;gap:2px;cursor:pointer}
-    .lang-btn span{font-family:var(--fm);font-size:.6875rem;font-weight:600;padding:6px 9px;border-radius:8px;text-transform:uppercase;color:var(--tx-faint);transition:all .15s}
-    .lang-btn span.active{background:var(--paper);color:var(--teal7);box-shadow:var(--sh1)}
-    .nav-profile{display:flex;align-items:center;gap:7px;border:1px solid var(--line);border-radius:var(--r10);padding:6px 12px 6px 6px;cursor:pointer;color:var(--tx-soft);transition:all .15s;font-size:.8125rem;font-weight:500}
-    .nav-profile:hover{border-color:var(--teal7);color:var(--teal7)}
-    .nav-profile-icon{width:26px;height:26px;background:var(--paper2);border-radius:8px;display:flex;align-items:center;justify-content:center}
+    .nav-icon-btn{background:#fff;border:1px solid var(--n200);border-radius:100px;width:38px;height:38px;display:flex;align-items:center;justify-content:center;cursor:pointer;position:relative;color:var(--n700);transition:border-color .15s,color .15s}
+    .nav-icon-btn:hover{border-color:var(--ocean-300);color:var(--ocean-700)}
+    .wish-badge{position:absolute;top:-5px;right:-5px;background:var(--err);color:#fff;border-radius:100px;min-width:17px;height:17px;font-size:.625rem;font-weight:700;display:flex;align-items:center;justify-content:center;padding:0 4px;border:2px solid #fff}
+    .cur-pill{height:38px;padding:0 14px;background:#fff;border:1px solid var(--n200);border-radius:100px;font-family:var(--fd);font-size:.75rem;font-weight:600;cursor:pointer;color:var(--n700);transition:border-color .15s,color .15s}
+    .cur-pill:hover{border-color:var(--ocean-300);color:var(--ocean-700)}
+    .lang-btn{background:var(--n100);border:none;border-radius:100px;padding:3px;display:flex;gap:2px;cursor:pointer}
+    .lang-btn span{font-family:var(--fd);font-size:.6875rem;font-weight:600;padding:7px 10px;border-radius:100px;color:var(--n500);transition:all .15s}
+    .lang-btn span.active{background:#fff;color:var(--ocean-700);box-shadow:var(--sh1)}
+    .nav-profile{display:flex;align-items:center;gap:7px;height:38px;border-radius:100px;padding:0 16px 0 6px;cursor:pointer;background:var(--ocean-700);color:#fff;font-family:var(--fd);font-size:.8125rem;font-weight:600;transition:background .15s}
+    .nav-profile:hover{background:var(--ocean-800)}
+    .nav-profile-icon{width:26px;height:26px;background:rgba(255,255,255,.16);border-radius:50%;display:flex;align-items:center;justify-content:center}
     .nav-profile-wrap{position:relative}
-    .nav-profile-dropdown{position:absolute;top:calc(100% + 8px);right:0;background:#fff;border:1px solid var(--line);border-radius:var(--r10);box-shadow:0 12px 32px rgba(11,18,32,.14);min-width:180px;padding:6px;opacity:0;visibility:hidden;transform:translateY(-6px);transition:opacity .18s,visibility .18s,transform .18s;z-index:60}
+    .nav-profile-dropdown{position:absolute;top:calc(100% + 8px);right:0;background:#fff;border:1px solid var(--line);border-radius:var(--r10);box-shadow:0 12px 32px rgba(6,42,56,.14);min-width:180px;padding:6px;opacity:0;visibility:hidden;transform:translateY(-6px);transition:opacity .18s,visibility .18s,transform .18s;z-index:60}
     .nav-profile-wrap.logged-in:hover .nav-profile-dropdown,
     .nav-profile-wrap.logged-in:focus-within .nav-profile-dropdown{opacity:1;visibility:visible;transform:translateY(0)}
     .nav-profile-dropdown-item{display:flex;align-items:center;gap:9px;width:100%;background:none;border:none;text-align:left;padding:9px 10px;border-radius:8px;font-size:.8125rem;font-weight:500;color:var(--tx);cursor:pointer;transition:background .15s}
     .nav-profile-dropdown-item:hover{background:var(--paper2);color:var(--teal7)}
     .profile-row{font-size:.8125rem;color:var(--tx)}
     .profile-row-label{color:var(--tx-soft)}
-    @media(max-width:640px){.nav-island{display:none}}
+    @media(max-width:900px){.nav-links{display:none}}
+    @media(max-width:480px){
+      .nav-inner{gap:10px;height:62px}
+      .nav-logo img{height:26px}
+      .nav-actions{gap:6px}
+      .cur-pill{padding:0 10px}
+      .nav-profile{padding:0 6px}
+      .nav-profile > .pt,.nav-profile > .en{display:none!important}
+    }
 
     /* ── HERO ── */
-    .hero{position:relative;padding:76px 0 64px;overflow:hidden}
-    .hero-bg{position:absolute;inset:0;background-image:url('/images/hero-santa-maria.jpg');background-size:cover;background-position:center}
-    .hero-bg-overlay{position:absolute;inset:0;background:linear-gradient(150deg,rgba(11,18,32,.88) 0%,rgba(8,57,66,.82) 78%)}
-    .hero::after{content:'';position:absolute;inset:0;background-image:radial-gradient(rgba(255,255,255,.05) 1px,transparent 1px);background-size:22px 22px;opacity:.4;pointer-events:none}
-    .hero-content{position:relative;z-index:2;text-align:center;color:#fff;max-width:660px;margin:0 auto}
-    .hero-eyebrow{font-family:var(--fm);font-size:.6875rem;font-weight:500;letter-spacing:.12em;text-transform:uppercase;color:var(--ochre);margin-bottom:18px;display:flex;align-items:center;justify-content:center;gap:8px}
-    .hero-eyebrow::before,.hero-eyebrow::after{content:'';width:20px;height:1px;background:rgba(232,163,61,.4)}
-    .hero h1{font-family:var(--fd);font-size:clamp(2.25rem,4.6vw,3.5rem);font-weight:600;letter-spacing:-.015em;margin-bottom:14px}
-    .hero h1 em{font-style:italic;color:var(--teal5)}
-    .hero-sub{font-size:1.0625rem;color:rgba(255,255,255,.68);margin-bottom:30px;line-height:1.6}
+    .hero{position:relative;min-height:520px;display:flex;align-items:flex-end;color:#fff}
+    .hero-bg{position:absolute;inset:0;background:var(--ocean-800) url('/images/hero-buracona.jpg') center 55%/cover}
+    .hero-bg::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,rgba(6,42,56,.8) 0%,rgba(6,42,56,.48) 45%,rgba(6,42,56,.08) 78%),linear-gradient(0deg,rgba(6,42,56,.45),transparent 40%)}
+    .hero-in{position:relative;width:100%;padding-top:72px;padding-bottom:112px}
+    .hero-kicker{display:inline-flex;align-items:center;gap:8px;font-family:var(--fd);font-size:.8rem;font-weight:600;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.22);padding:6px 14px;border-radius:100px;margin-bottom:22px;backdrop-filter:blur(6px)}
+    .hero-kicker .dot{width:7px;height:7px;border-radius:50%;background:var(--sand-400)}
+    .hero h1{font-family:var(--fd);color:#fff;font-size:clamp(2.4rem,5vw,3.8rem);font-weight:800;letter-spacing:-.03em;line-height:1.08;max-width:760px;text-wrap:balance}
+    .hero h1 span{color:var(--sand-400)}
+    .hero-sub{margin-top:16px;font-size:1.05rem;line-height:1.7;color:rgba(255,255,255,.86);max-width:540px}
+    .search{position:absolute;left:24px;right:24px;bottom:-44px;max-width:760px;background:#fff;border-radius:var(--r16);box-shadow:var(--sh3);display:grid;grid-template-columns:1.7fr 1fr auto;padding:8px;color:var(--n900);z-index:2}
+    .search:focus-within{box-shadow:var(--sh3),0 0 0 3px rgba(20,128,168,.22)}
+    .s-field{display:flex;flex-direction:column;justify-content:center;gap:2px;padding:8px 18px;border-right:1px solid var(--n200);min-width:0}
+    .s-field + .s-field{border-right:none}
+    .s-label{font-family:var(--fd);font-size:.6875rem;font-weight:700;color:var(--n500);letter-spacing:.02em}
+    .s-input-wrap{display:flex;align-items:center;gap:8px;color:var(--n400)}
+    #nav-search-input{flex:1;min-width:0;border:none;outline:none;background:transparent;font-family:var(--fb);font-size:.95rem;color:var(--n900);height:26px}
+    #nav-search-input::placeholder{color:var(--n400)}
+    #hero-island{width:100%;border:none;outline:none;background:transparent;font-family:var(--fb);font-size:.95rem;color:var(--n900);height:26px;cursor:pointer}
+    .s-btn{display:flex;align-items:center;justify-content:center;gap:8px;border:none;background:var(--sand-500);color:var(--ocean-900);font-family:var(--fd);font-weight:700;font-size:.9rem;padding:0 26px;border-radius:var(--r10);cursor:pointer;transition:background .15s}
+    .s-btn:hover{background:var(--sand-400)}
+    @media(max-width:860px){
+      .hero{min-height:0}
+      .hero-in{padding-top:56px;padding-bottom:28px}
+      .search{position:relative;left:auto;right:auto;bottom:auto;margin-top:28px;grid-template-columns:1fr}
+      .s-field{border-right:none;border-bottom:1px solid var(--n200);padding:10px 14px}
+      .s-field + .s-field{border-bottom:none}
+      .s-btn{height:48px;margin-top:4px}
+    }
 
-    .hero-search-wrap{max-width:580px;margin:0 auto;display:flex;align-items:center;background:#fff;border-radius:100px;padding:6px 6px 6px 20px;gap:10px;box-shadow:var(--sh3)}
-    .hero-search-input{flex:1;min-width:0;border:none;background:transparent;font-family:var(--fb);font-size:.9375rem;color:var(--tx);outline:none;height:26px}
-    .hero-search-input::placeholder{color:var(--tx-faint)}
-    .hero-search-btn{background:var(--teal7);color:#fff;border:none;border-radius:100px;padding:12px 22px;cursor:pointer;display:flex;align-items:center;gap:8px;font-family:var(--fb);font-size:.875rem;font-weight:600;transition:background .15s;flex-shrink:0}
-    .hero-search-btn:hover{background:var(--teal6)}
-    @media(max-width:420px){.hero-search-btn span{display:none}.hero-search-btn{padding:12px 15px}}
+    /* ── CONFIANCA ── */
+    .trust{padding-top:80px}
+    .trust-row{display:flex;flex-wrap:wrap;gap:12px 36px;color:var(--n600);font-size:.9rem}
+    .trust-row > div{display:flex;align-items:center;gap:9px}
+    .trust-row svg{color:var(--ocean-600);flex-shrink:0}
+    @media(max-width:860px){.trust{padding-top:28px}.trust-row{flex-direction:column;gap:10px}}
 
-    .hero-floats{display:flex;gap:12px;justify-content:center;margin-top:32px;position:relative;z-index:2;flex-wrap:wrap}
-    .hero-stat-card{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:var(--r14);padding:12px 18px;min-width:150px;text-align:left}
-    .hero-stat-value{font-family:var(--fm);font-size:1.25rem;font-weight:600;color:#fff}
-    .hero-stat-label{font-size:.6875rem;color:rgba(255,255,255,.5);margin-top:1px}
+    /* ── CABECALHO DAS SECCOES ── */
+    .sec-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:22px}
+    .sec-head h2{font-family:var(--fd);font-size:clamp(1.5rem,2.4vw,2rem);font-weight:700;letter-spacing:-.02em;line-height:1.2;color:var(--ocean-900);text-wrap:balance}
+    .sec-head p{color:var(--n500);margin-top:4px;font-size:.95rem}
+    .band{background:var(--n50);border-top:1px solid var(--n200);border-bottom:1px solid var(--n200)}
 
     /* ── CATEGORY CHIPS ── */
     .chips-wrap{display:flex;flex-wrap:wrap;gap:8px}
@@ -184,12 +219,17 @@
     .sk-body{padding:16px;display:flex;flex-direction:column;gap:10px}
     .sk-line{height:13px}.sk-wide{width:80%}.sk-mid{width:55%}.sk-short{width:35%}
 
-    /* ── PERKS ── */
-    .perks-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;margin-top:28px}
-    .perk-card{background:#fff;border:1px solid var(--line);border-radius:var(--r14);padding:26px 22px}
-    .perk-icon{width:40px;height:40px;border-radius:var(--r10);background:var(--teal0);display:flex;align-items:center;justify-content:center;color:var(--teal7);margin-bottom:15px}
-    .perk-title{font-family:var(--fb);font-size:.9375rem;font-weight:700;color:var(--tx);margin-bottom:6px}
-    .perk-text{font-size:.8125rem;color:var(--tx-soft);line-height:1.55}
+    /* ── PORQUE RESERVAR DIRECTO ── */
+    .why-section{padding:16px 0 0}
+    .why{background:var(--ocean-900);color:#fff;border-radius:var(--r24);padding:44px;display:grid;grid-template-columns:1.1fr 2fr;gap:40px;align-items:center}
+    .why h2{font-family:var(--fd);color:#fff;font-size:clamp(1.5rem,2.4vw,2rem);font-weight:700;letter-spacing:-.02em;line-height:1.2;text-wrap:balance}
+    .why h2 em{font-style:normal;color:var(--sand-400)}
+    .why-items{display:grid;grid-template-columns:repeat(3,1fr);gap:24px}
+    .why-item svg{color:var(--sand-400);margin-bottom:12px}
+    .why-item b{display:block;font-family:var(--fd);font-weight:600;font-size:.95rem;margin-bottom:4px}
+    .why-item p{font-size:.875rem;color:rgba(255,255,255,.72);line-height:1.6}
+    @media(max-width:1000px){.why{grid-template-columns:1fr}}
+    @media(max-width:600px){.why{padding:28px 22px}.why-items{grid-template-columns:1fr}}
 
     /* ── EMPTY ── */
     .state-empty{text-align:center;padding:60px 20px;grid-column:1/-1}
@@ -198,7 +238,7 @@
 
     /* ── SECTION LABELS ── */
     .sl{font-family:var(--fm);font-size:.6875rem;font-weight:500;text-transform:uppercase;letter-spacing:.1em;color:var(--teal7);margin-bottom:8px}
-    .st{font-family:var(--fd);font-size:clamp(1.5rem,2.6vw,2.125rem);font-weight:600;color:var(--tx);margin-bottom:6px;letter-spacing:-.01em}
+    .st{font-family:var(--fd);font-size:clamp(1.5rem,2.4vw,2rem);font-weight:700;color:var(--ocean-900);margin-bottom:6px;letter-spacing:-.02em}
     .ss{font-size:.9375rem;color:var(--tx-soft)}
 
     /* ── WISHLIST MODAL ── */
@@ -262,13 +302,13 @@
     .pf-stars svg{width:22px;height:22px}
 
     /* ── FOOTER ── */
-    footer{background:var(--ink);color:rgba(255,255,255,.6);padding:52px 0 26px}
-    .footer-grid{display:grid;grid-template-columns:2fr 1fr 1fr;gap:40px;margin-bottom:40px}
-    .footer-desc{font-size:.8125rem;line-height:1.6;color:rgba(255,255,255,.42);margin-top:12px;max-width:260px}
-    .footer-col h4{font-family:var(--fb);font-weight:700;font-size:.8125rem;color:#fff;margin-bottom:12px}
+    footer{background:var(--n900);color:rgba(255,255,255,.6);padding:52px 0 26px;margin-top:64px}
+    .footer-grid{display:grid;grid-template-columns:2fr 1fr 1fr;gap:40px;margin-bottom:36px}
+    .footer-desc{font-size:.875rem;line-height:1.6;color:rgba(255,255,255,.55);margin-top:14px;max-width:300px}
+    .footer-col h4{font-family:var(--fd);font-weight:600;font-size:.8125rem;color:#fff;margin-bottom:12px}
     .footer-links{list-style:none}
     .footer-links li{margin-bottom:7px}
-    .footer-links a{font-size:.8125rem;color:rgba(255,255,255,.42);transition:color .15s}
+    .footer-links a{font-size:.875rem;color:rgba(255,255,255,.55);transition:color .15s}
     .footer-links a:hover{color:#fff}
     .social-icons{display:flex;gap:8px;margin-top:16px}
     .sicon{width:32px;height:32px;border-radius:8px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.5);transition:all .15s}
@@ -292,10 +332,6 @@
     .payment-logos img{height:16px;width:auto;display:block}
     .payment-logos .plogo-mc img{height:22px}
 
-    /* ── FADE ── */
-    .fade-up{opacity:0;transform:translateY(16px);transition:opacity .5s,transform .5s}
-    .fade-up.visible{opacity:1;transform:none}
-
     /* ── RESPONSIVE ── */
     @media(max-width:1000px){
       .featured-grid{grid-template-columns:repeat(2,1fr)}
@@ -304,7 +340,6 @@
       .featured-grid{grid-template-columns:1fr}
       .act-grid{grid-template-columns:1fr}
       .footer-grid{grid-template-columns:1fr 1fr}
-      .perks-grid{grid-template-columns:1fr}
       .profile-drawer{flex-direction:column}
       .profile-drawer-rail{width:100%;display:flex;flex-wrap:nowrap;overflow-x:auto;gap:4px;border-right:none;border-bottom:1px solid var(--line);padding:12px}
       .profile-drawer-group-label{display:none}
@@ -352,7 +387,12 @@
     <a href="/" class="nav-logo">
       <img src="/logo.png" alt="SalDesk" />
     </a>
-    <span class="nav-island">Cabo Verde</span>
+    <div class="nav-links">
+      <a href="#activities-section"><span class="pt">Experiências</span><span class="en">Experiences</span></a>
+      <a href="#poi-slider-section"><span class="pt">Pontos turísticos</span><span class="en">Places</span></a>
+      <a href="#operators-section"><span class="pt">Operadores</span><span class="en">Operators</span></a>
+      <a href="/operadores.html"><span class="pt">Para operadores</span><span class="en">For operators</span></a>
+    </div>
     <div class="nav-actions">
       <button class="nav-icon-btn" id="wish-nav-btn" onclick="openWishlist()" aria-label="Wishlist">
         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
@@ -408,65 +448,94 @@
 </nav>
 
 <!-- HERO -->
-<section class="hero" id="home">
-  <div class="hero-bg"></div>
-  <div class="hero-bg-overlay"></div>
-  <div class="container">
-    <div class="hero-content">
-      <div class="hero-eyebrow">
-        <span class="pt">Cabo Verde · a começar pela Ilha do Sal</span>
-        <span class="en">Cabo Verde · starting with Ilha do Sal</span>
-      </div>
-      <h1 class="pt">Experiências reais, <em>reserva directa</em></h1>
-      <h1 class="en">Real experiences, <em>direct booking</em></h1>
-      <p class="hero-sub pt">Operadores verificados em Cabo Verde, a começar pela Ilha do Sal. Sem comissao de intermediarios.</p>
-      <p class="hero-sub en">Verified operators across Cabo Verde, starting with Ilha do Sal. No intermediary commission.</p>
+<header class="hero" id="home">
+  <div class="hero-bg" aria-hidden="true"></div>
+  <div class="container hero-in">
+    <div class="hero-kicker"><span class="dot"></span><span id="hero-islands">Cabo Verde</span></div>
+    <h1 class="pt">Reserve directamente com quem <span>vive Cabo Verde</span></h1>
+    <h1 class="en">Book directly with the people who <span>live Cape Verde</span></h1>
+    <p class="hero-sub pt">Tours, transfers e experiências de operadores locais verificados. O preço que vê é o que o operador recebe.</p>
+    <p class="hero-sub en">Tours, transfers and experiences from verified local operators. The price you see is what the operator gets.</p>
 
-      <div class="hero-search-wrap">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8A93A3" stroke-width="2" style="flex-shrink:0;margin-left:2px"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-        <input class="hero-search-input" id="nav-search-input" type="text" autocomplete="off" />
-        <button class="hero-search-btn" onclick="handleSearch()">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-          <span class="pt">Pesquisar</span><span class="en">Search</span>
-        </button>
-      </div>
-
-      <div class="hero-floats" id="hero-floats">
-        <div class="hero-stat-card" id="hero-stat-rating" style="display:none">
-          <div class="hero-stat-value" id="hero-stat-rating-value"></div>
-          <div class="hero-stat-label"><span class="pt">avaliacao media</span><span class="en">average rating</span></div>
-        </div>
-        <div class="hero-stat-card" id="hero-stat-bookings" style="display:none">
-          <div class="hero-stat-value" id="hero-stat-bookings-value"></div>
-          <div class="hero-stat-label"><span class="pt">reservas / 30 dias</span><span class="en">bookings / 30 days</span></div>
-        </div>
-      </div>
-    </div>
+    <form class="search" role="search" onsubmit="event.preventDefault();handleSearch()">
+      <label class="s-field">
+        <span class="s-label"><span class="pt">O que procura</span><span class="en">What are you looking for</span></span>
+        <span class="s-input-wrap"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg><input id="nav-search-input" type="text" autocomplete="off" /></span>
+      </label>
+      <label class="s-field">
+        <span class="s-label"><span class="pt">Ilha</span><span class="en">Island</span></span>
+        <select id="hero-island"><option value="">Todas as ilhas</option></select>
+      </label>
+      <button class="s-btn" type="submit"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg><span class="pt">Pesquisar</span><span class="en">Search</span></button>
+    </form>
   </div>
-</section>
+</header>
+
+<!-- CONFIANCA -->
+<div class="container trust">
+  <div class="trust-row" id="trust-row">
+    <div><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></svg><span class="pt">Operadores verificados pela equipa SalDesk</span><span class="en">Operators verified by the SalDesk team</span></div>
+    <div><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M16 2v4"/><path d="M8 2v4"/><path d="M3 10h18"/><path d="m9 16 2 2 4-4"/></svg><span class="pt">Reserva confirmada directamente pelo operador</span><span class="en">Booking confirmed directly by the operator</span></div>
+    <div><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg><span class="pt">Fale directamente com o operador</span><span class="en">Talk directly to the operator</span></div>
+  </div>
+</div>
 
 <!-- RECOMENDADO -- so aparece com sessao de viajante activa (ver bootstrapTravelerSession) -->
-<section class="section fade-up" id="recommended-section" style="display:none">
+<section class="section" id="recommended-section" style="display:none">
   <div class="container">
-    <div style="margin-bottom:26px">
-      <div class="sl"><span class="pt">Para si</span><span class="en">For you</span></div>
-      <h2 class="st">
-        <span class="pt" id="recommended-heading-pt">Populares agora</span>
-        <span class="en" id="recommended-heading-en">Popular right now</span>
-      </h2>
+    <div class="sec-head">
+      <div>
+        <h2>
+          <span class="pt" id="recommended-heading-pt">Populares agora</span>
+          <span class="en" id="recommended-heading-en">Popular right now</span>
+        </h2>
+        <p><span class="pt">Escolhido para si</span><span class="en">Picked for you</span></p>
+      </div>
     </div>
     <div class="act-grid" id="recommended-grid"></div>
   </div>
 </section>
 
-<!-- CATEGORIAS -->
-<section class="section fade-up" id="categories-section" style="padding-bottom:0">
+<!-- TODOS OS SERVIÇOS -->
+<section class="section" id="activities-section">
   <div class="container">
-    <div style="margin-bottom:18px">
-      <div class="sl"><span class="pt">Categorias</span><span class="en">Categories</span></div>
-      <h2 class="st"><span class="pt">Explorar por categoria</span><span class="en">Explore by category</span></h2>
+    <div class="act-header">
+      <div>
+        <div class="sl"><span class="pt">Directorio completo</span><span class="en">Full directory</span></div>
+        <h2 class="st"><span class="pt">Todos os serviços</span><span class="en">All services</span></h2>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+        <span id="act-count" style="font-family:var(--fm);font-size:.8125rem;color:var(--tx-soft)"></span>
+        <button id="clear-filter-btn" onclick="clearFilters()" style="display:none" class="btn btn-ghost btn-sm">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          <span class="pt">Limpar filtro</span><span class="en">Clear filter</span>
+        </button>
+        <div style="background:#fff;border:1px solid var(--line);border-radius:var(--r10);padding:3px;display:flex;gap:2px">
+          <button id="btn-eur" onclick="setCurrency('EUR')" style="padding:6px 13px;border:none;border-radius:8px;font-family:var(--fm);font-size:.75rem;font-weight:600;cursor:pointer;background:var(--ink);color:#fff;transition:all .15s">EUR</button>
+          <button id="btn-cve" onclick="setCurrency('CVE')" style="padding:6px 13px;border:none;border-radius:8px;font-family:var(--fm);font-size:.75rem;font-weight:600;cursor:pointer;background:transparent;color:var(--tx-soft);transition:all .15s">CVE</button>
+        </div>
+      </div>
     </div>
     <div class="chips-wrap" id="chips-grid"></div>
+    <div class="act-grid" id="act-grid"></div>
+    <div id="load-more-wrap" style="display:none;text-align:center;margin-top:36px">
+      <button onclick="loadMore()" class="btn btn-ghost" style="padding:12px 32px">
+        <span class="pt">Ver mais</span><span class="en">Load more</span>
+      </button>
+    </div>
+  </div>
+</section>
+
+<!-- OPERADORES LOCAIS VERIFICADOS -->
+<section class="section band" id="operators-section">
+  <div class="container">
+    <div class="sec-head">
+      <div>
+        <h2><span class="pt">Operadores locais verificados</span><span class="en">Verified local operators</span></h2>
+        <p><span class="pt">Empresas de Cabo Verde, revistas uma a uma pela equipa SalDesk</span><span class="en">Cape Verdean companies, reviewed one by one by the SalDesk team</span></p>
+      </div>
+    </div>
+    <div class="featured-grid" id="featured-grid"></div>
   </div>
 </section>
 
@@ -475,7 +544,7 @@
      principio "fallback honesto" do resto da pagina). Reaproveita
      renderPoiCard() -- a versao completa e filtravel por ilha continua
      mais abaixo, junto ao directorio de servicos. -->
-<section class="section fade-up" id="poi-slider-section" style="display:none">
+<section class="section" id="poi-slider-section" style="display:none">
   <div class="container">
     <div style="margin-bottom:26px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap">
       <div>
@@ -495,76 +564,28 @@
   </div>
 </section>
 
-<!-- EM DESTAQUE -->
-<section class="section fade-up" id="featured-section">
-  <div class="container">
-    <div style="margin-bottom:26px">
-      <div class="sl"><span class="pt">Destaques</span><span class="en">Highlights</span></div>
-      <h2 class="st"><span class="pt">Em destaque</span><span class="en">Featured</span></h2>
-      <p class="ss"><span class="pt">Operadores verificados manualmente pela equipa SalDesk.</span><span class="en">Operators manually verified by the SalDesk team.</span></p>
-    </div>
-    <div class="featured-grid" id="featured-grid"></div>
-  </div>
-</section>
-
 <!-- PORQUE RESERVAR DIRECTO -->
-<section class="section" id="perks-section" style="background:#fff;border-top:1px solid var(--line);border-bottom:1px solid var(--line)">
+<section class="why-section" id="why-section">
   <div class="container">
-    <div class="fade-up" style="margin-bottom:0">
-      <div class="sl"><span class="pt">Vantagens</span><span class="en">Benefits</span></div>
-      <h2 class="st"><span class="pt">Porque reservar directo</span><span class="en">Why book direct</span></h2>
-    </div>
-    <div class="perks-grid">
-      <div class="perk-card fade-up">
-        <div class="perk-icon">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="5" x2="5" y2="19"/><circle cx="6.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/></svg>
+    <div class="why">
+      <h2><span class="pt">Porquê reservar <em>directamente</em>?</span><span class="en">Why book <em>direct</em>?</span></h2>
+      <div class="why-items">
+        <div class="why-item">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 5 5 19"/><circle cx="6.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/></svg>
+          <b><span class="pt">0% de comissão</span><span class="en">0% commission</span></b>
+          <p><span class="pt">O que paga é o que o operador recebe, sem taxas escondidas.</span><span class="en">What you pay is what the operator receives, with no hidden fees.</span></p>
         </div>
-        <div class="perk-title"><span class="pt">0% comissao</span><span class="en">0% commission</span></div>
-        <div class="perk-text"><span class="pt">O que paga e o que o operador recebe. Sem taxas escondidas de OTA.</span><span class="en">What you pay is what the operator receives. No hidden OTA fees.</span></div>
-      </div>
-      <div class="perk-card fade-up" style="transition-delay:.06s">
-        <div class="perk-icon">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 4 5v6c0 5.5 3.8 10.7 8 12 4.2-1.3 8-6.5 8-12V5z"/><path d="m9 12 2 2 4-4"/></svg>
+        <div class="why-item">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></svg>
+          <b><span class="pt">Operadores revistos</span><span class="en">Reviewed operators</span></b>
+          <p><span class="pt">Cada operador passa por revisão da equipa SalDesk antes de entrar no catálogo.</span><span class="en">Every operator is reviewed by the SalDesk team before joining the catalog.</span></p>
         </div>
-        <div class="perk-title"><span class="pt">Listagem revista</span><span class="en">Reviewed listing</span></div>
-        <div class="perk-text"><span class="pt">Cada listagem passa por revisao da equipa SalDesk antes de entrar no catalogo.</span><span class="en">Every listing is reviewed by the SalDesk team before entering the catalog.</span></div>
-      </div>
-      <div class="perk-card fade-up" style="transition-delay:.12s">
-        <div class="perk-icon">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
-        </div>
-        <div class="perk-title"><span class="pt">Suporte directo</span><span class="en">Direct support</span></div>
-        <div class="perk-text"><span class="pt">Fala directamente com quem vai receber-te na ilha, sem intermediarios.</span><span class="en">Talk directly to whoever will host you on the island, no middlemen.</span></div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- TODOS OS SERVIÇOS -->
-<section class="section" id="activities-section">
-  <div class="container">
-    <div class="act-header fade-up">
-      <div>
-        <div class="sl"><span class="pt">Directorio completo</span><span class="en">Full directory</span></div>
-        <h2 class="st"><span class="pt">Todos os serviços</span><span class="en">All services</span></h2>
-      </div>
-      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-        <span id="act-count" style="font-family:var(--fm);font-size:.8125rem;color:var(--tx-soft)"></span>
-        <button id="clear-filter-btn" onclick="clearFilters()" style="display:none" class="btn btn-ghost btn-sm">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-          <span class="pt">Limpar filtro</span><span class="en">Clear filter</span>
-        </button>
-        <div style="background:#fff;border:1px solid var(--line);border-radius:var(--r10);padding:3px;display:flex;gap:2px">
-          <button id="btn-eur" onclick="setCurrency('EUR')" style="padding:6px 13px;border:none;border-radius:8px;font-family:var(--fm);font-size:.75rem;font-weight:600;cursor:pointer;background:var(--ink);color:#fff;transition:all .15s">EUR</button>
-          <button id="btn-cve" onclick="setCurrency('CVE')" style="padding:6px 13px;border:none;border-radius:8px;font-family:var(--fm);font-size:.75rem;font-weight:600;cursor:pointer;background:transparent;color:var(--tx-soft);transition:all .15s">CVE</button>
+        <div class="why-item">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg>
+          <b><span class="pt">Contacto directo</span><span class="en">Direct contact</span></b>
+          <p><span class="pt">Fale com quem o vai receber na ilha, antes e durante a viagem.</span><span class="en">Talk to the people who will host you on the island, before and during your trip.</span></p>
         </div>
       </div>
-    </div>
-    <div class="act-grid" id="act-grid"></div>
-    <div id="load-more-wrap" style="display:none;text-align:center;margin-top:36px">
-      <button onclick="loadMore()" class="btn btn-ghost" style="padding:12px 32px">
-        <span class="pt">Ver mais</span><span class="en">Load more</span>
-      </button>
     </div>
   </div>
 </section>
@@ -574,29 +595,30 @@
   <div class="container">
     <div class="footer-grid">
       <div class="footer-col">
-        <img src="/logo.png" alt="SalDesk" style="height:24px;width:auto;filter:brightness(0) invert(1)" />
-        <p class="footer-desc pt">SalDesk Conect — catalogo publico de experiencias verificadas em Cabo Verde.</p>
-        <p class="footer-desc en">SalDesk Conect — public catalog of verified experiences across Cabo Verde.</p>
+        <img src="/logo.png" alt="SalDesk" style="height:28px;width:auto;filter:brightness(0) invert(1)" />
+        <p class="footer-desc pt">SalDesk Conect — catálogo de experiências de operadores verificados em Cabo Verde. Reserva directa, sem intermediários.</p>
+        <p class="footer-desc en">SalDesk Conect — catalog of experiences from verified operators across Cape Verde. Book direct, no middlemen.</p>
         <div class="social-icons">
           <a href="#" class="sicon" aria-label="Instagram"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg></a>
           <a href="mailto:hello@saldesk.cv" class="sicon" aria-label="Email"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M4 4h16v16H4z" opacity="0"/><path d="M22 6c0-1.1-.9-2-2-2H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V6z"/><path d="m22 6-10 7L2 6"/></svg></a>
         </div>
       </div>
       <div class="footer-col">
-        <h4 class="pt">Navegacao</h4><h4 class="en">Navigate</h4>
+        <h4 class="pt">Explorar</h4><h4 class="en">Explore</h4>
         <ul class="footer-links">
-          <li><a href="/"><span class="pt">Inicio</span><span class="en">Home</span></a></li>
-          <li><a href="#featured-section"><span class="pt">Destaques</span><span class="en">Featured</span></a></li>
-          <li><a href="#activities-section"><span class="pt">Directorio</span><span class="en">Directory</span></a></li>
-          <li><a href="#poi-slider-section"><span class="pt">Pontos Turísticos</span><span class="en">Points of Interest</span></a></li>
+          <li><a href="#activities-section"><span class="pt">Experiências</span><span class="en">Experiences</span></a></li>
+          <li><a href="#operators-section"><span class="pt">Operadores</span><span class="en">Operators</span></a></li>
+          <li><a href="#poi-slider-section"><span class="pt">Pontos turísticos</span><span class="en">Places</span></a></li>
+          <li><a href="/"><span class="pt">SalDesk para operadores</span><span class="en">SalDesk for operators</span></a></li>
         </ul>
       </div>
       <div class="footer-col">
         <h4 class="pt">Empresa</h4><h4 class="en">Company</h4>
         <ul class="footer-links">
-          <li><a href="https://saldesk.cv/operadores.html"><span class="pt">Listar negocio</span><span class="en">List your business</span></a></li>
+          <li><a href="https://saldesk.cv/operadores.html"><span class="pt">Listar negócio</span><span class="en">List your business</span></a></li>
           <li><a href="https://app.saldesk.cv/login"><span class="pt">Entrar</span><span class="en">Sign in</span></a></li>
           <li><a href="mailto:hello@saldesk.cv">hello@saldesk.cv</a></li>
+          <li><a href="/termos.html"><span class="pt">Termos</span><span class="en">Terms</span></a></li>
         </ul>
       </div>
     </div>
@@ -620,6 +642,7 @@
   </div>
 </footer>
 
+<script src="_cartao.js?v=20261118"></script>
 <script>
 /* ══════════════════════════════════════════
    CONSTANTS
@@ -860,7 +883,7 @@ function renderPoiCard(item) {
   const href    = `ponto.html?slug=${encodeURIComponent(item.slug)}`;
 
   return `
-    <div class="act-card card fade-up poi-card-compact">
+    <div class="act-card card poi-card-compact">
       <a href="${href}" class="act-img img-block" style="height:120px">${poiImgBlock(item)}</a>
       <div class="act-body" style="padding:14px 16px">
         <div class="act-rating-row" style="justify-content:space-between;margin-bottom:6px">
@@ -896,7 +919,6 @@ function renderPoiSlider() {
   if (!track) return;
   if (!poiItems.length) { if (section) section.style.display = 'none'; return; }
   track.innerHTML = poiItems.map(renderPoiCard).join('');
-  observeFadeUp(track);
   if (L() === 'en') fixLang(track);
   if (section) section.style.display = '';
 }
@@ -1109,7 +1131,7 @@ function renderOperatorCard(op) {
   const priceHtml = `<span class="pt">A partir de </span><span class="en">From </span><strong>${fmtPrice(op.base_price, op.currency)}</strong>`;
 
   return `
-    <div class="feat-card card fade-up">
+    <div class="feat-card card">
       <div class="feat-img img-block">
         ${opImgBlock(op)}
         <span class="verified-badge"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6 9 17l-5-5"/></svg><span class="pt">Verificado</span><span class="en">Verified</span></span>
@@ -1143,7 +1165,7 @@ function renderActCard(item) {
   const bookHref = `${APP}/book/${esc(item.operator_slug)}/servico/${esc(item.unit_id)}`;
 
   return `
-    <div class="act-card card fade-up">
+    <div class="act-card card">
       <div class="act-img img-block">
         ${imgBlock(item)}
         <button class="wish-btn ${wished?'active':''}" data-wish="${esc(item.operator_slug)}" data-wish-unit="${esc(item.unit_id)}" onclick="toggleWishlist('${esc(item.operator_slug)}','${esc(item.unit_id)}')" aria-label="Wishlist">
@@ -1252,7 +1274,6 @@ function renderGrid() {
   }
 
   grid.innerHTML = slice.map(renderActCard).join('');
-  observeFadeUp(grid);
   if (L() === 'en') fixLang(grid);
 
   const lmw = document.getElementById('load-more-wrap');
@@ -1333,36 +1354,6 @@ async function loadServices() {
   filtered  = [...operators];
   renderChips();
   applyFilters();
-  renderHeroStats();
-}
-
-/* Cards flutuantes do hero -- agregados a partir dos dados reais ja
-   carregados (avg_rating/review_count/recent_bookings vem da API).
-   Se o total for zero/insignificante, o card fica escondido em vez
-   de mostrar um numero pouco impressionante. */
-function renderHeroStats() {
-  const seenOps = new Set();
-  const uniqueOperators = operators.filter(o => {
-    if (seenOps.has(o.operator_id)) return false;
-    seenOps.add(o.operator_id);
-    return true;
-  });
-
-  const rated = uniqueOperators.filter(o => (o.review_count || 0) > 0);
-  const totalReviews = rated.reduce((s, o) => s + o.review_count, 0);
-  const ratingCard = document.getElementById('hero-stat-rating');
-  if (totalReviews > 0) {
-    const avg = rated.reduce((s, o) => s + o.avg_rating * o.review_count, 0) / totalReviews;
-    document.getElementById('hero-stat-rating-value').textContent = `★ ${avg.toFixed(1)}`;
-    ratingCard.style.display = '';
-  }
-
-  const totalBookings = operators.reduce((s, o) => s + (o.recent_bookings || 0), 0);
-  const bookingsCard = document.getElementById('hero-stat-bookings');
-  if (totalBookings > 0) {
-    document.getElementById('hero-stat-bookings-value').textContent = totalBookings;
-    bookingsCard.style.display = '';
-  }
 }
 
 async function loadFeatured() {
@@ -1376,7 +1367,7 @@ async function loadFeatured() {
   const ops = await apiFetch('/discover?featured=true&limit=3');
 
   if (!ops?.length) {
-    document.getElementById('featured-section').style.display = 'none';
+    document.getElementById('operators-section').style.display = 'none';
     return;
   }
 
@@ -1388,7 +1379,6 @@ function renderFeatured() {
   if (!featuredItems.length) return;
   const grid = document.getElementById('featured-grid');
   grid.innerHTML = featuredItems.map(renderOperatorCard).join('');
-  observeFadeUp(grid);
   if (L() === 'en') fixLang(grid);
 }
 
@@ -1962,22 +1952,8 @@ async function loadRecommendations() {
   document.getElementById('recommended-heading-en').textContent = json.personalized ? "Based on what you've viewed and booked" : 'Popular right now';
 
   grid.innerHTML = items.map(renderActCard).join('');
-  observeFadeUp(grid);
   if (L() === 'en') fixLang(grid);
 }
-
-/* ══════════════════════════════════════════
-   ANIMATIONS
-══════════════════════════════════════════ */
-const obs = new IntersectionObserver(entries => {
-  entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); obs.unobserve(e.target); } });
-}, { threshold: 0.08 });
-
-function observeFadeUp(root) {
-  root.querySelectorAll('.fade-up').forEach(el => obs.observe(el));
-}
-
-document.querySelectorAll('.fade-up').forEach(el => obs.observe(el));
 
 /* ══════════════════════════════════════════
    LANGUAGE
@@ -1995,7 +1971,7 @@ function setLang(lang) {
   localStorage.setItem('sd-lang', lang);
 
   const pn = document.getElementById('nav-search-input');
-  if (pn) pn.placeholder = lang === 'pt' ? 'Pesquisar...' : 'Search...';
+  if (pn) pn.placeholder = lang === 'pt' ? 'Tartarugas, buggy, catamarã...' : 'Turtles, buggy, catamaran...';
 
   if (operators.length) {
     renderChips();
@@ -2010,7 +1986,6 @@ document.getElementById('langToggle').addEventListener('click', () => {
   setLang(document.documentElement.dataset.lang === 'pt' ? 'en' : 'pt');
 });
 
-document.getElementById('nav-search-input')?.addEventListener('keydown', e => { if (e.key === 'Enter') handleSearch(); });
 document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeWishlist(); closeProfileDrawer(); } });
 
 /* ══════════════════════════════════════════
