@@ -17,7 +17,7 @@ export function paraMinutos(hora) {
 }
 
 /* minutos -> "HH:MM" */
-function paraHora(minutos) {
+export function paraHora(minutos) {
   const h = Math.floor(minutos / 60);
   const m = minutos % 60;
   return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
