@@ -128,12 +128,73 @@
     .sec-head p{color:var(--n500);margin-top:4px;font-size:.95rem}
     .band{background:var(--n50);border-top:1px solid var(--n200);border-bottom:1px solid var(--n200)}
 
-    /* ── CATEGORY CHIPS ── */
+    /* ── FILTROS: ILHA E CATEGORIA ── */
+    .filters{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-bottom:26px}
+    .seg{display:inline-flex;background:var(--n100);border-radius:100px;padding:4px}
+    .seg button{border:none;background:none;padding:8px 16px;border-radius:100px;font-family:var(--fd);font-size:.8125rem;font-weight:600;color:var(--n600);cursor:pointer;white-space:nowrap;transition:background .15s,color .15s}
+    .seg button.on{background:#fff;color:var(--ocean-800);box-shadow:var(--sh1)}
+    .seg .c{color:var(--n400);font-weight:500;margin-left:5px}
+    .filters-sep{width:1px;height:26px;background:var(--n200);margin:0 4px}
     .chips-wrap{display:flex;flex-wrap:wrap;gap:8px}
-    .chip{font-family:var(--fb);font-size:.8125rem;font-weight:500;padding:9px 16px;border-radius:100px;border:1px solid var(--line);background:#fff;color:var(--tx-soft);cursor:pointer;transition:all .15s;white-space:nowrap}
-    .chip:hover{border-color:var(--teal7);color:var(--teal7)}
-    .chip.active{background:var(--ink);border-color:var(--ink);color:#fff}
-    .chip-count{font-family:var(--fm);font-size:.6875rem;opacity:.6;margin-left:4px}
+    .chip{font-family:var(--fb);font-size:.84rem;font-weight:500;padding:8px 15px;border-radius:100px;border:1px solid var(--n200);background:#fff;color:var(--n700);cursor:pointer;transition:all .15s;white-space:nowrap}
+    .chip:hover{border-color:var(--ocean-300);color:var(--ocean-700)}
+    .chip.active{border-color:var(--ocean-700);background:var(--ocean-50);color:var(--ocean-800);font-weight:600}
+    .chip-count{font-size:.75rem;color:var(--n400);margin-left:4px}
+    @media(max-width:600px){
+      .filters{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;margin-right:-24px;padding-right:24px}
+      .filters::-webkit-scrollbar{display:none}
+      .filters .chips-wrap{flex-wrap:nowrap}
+      .seg,.chip,.filters-sep{flex-shrink:0}
+    }
+
+    /* ── CARTAO DE EXPERIENCIA ── */
+    .xp-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:28px 24px}
+    .xp{position:relative;display:flex;flex-direction:column;background:#fff;border:1px solid var(--n200);border-radius:var(--r16);overflow:hidden;transition:box-shadow .2s ease,border-color .2s ease,transform .2s ease}
+    .xp:hover{border-color:var(--n300);box-shadow:0 10px 28px rgba(6,42,56,.10);transform:translateY(-2px)}
+    .xp:focus-within{outline:2px solid var(--ocean-500);outline-offset:2px}
+    .xp-link{color:inherit}
+    .xp-link::after{content:'';position:absolute;inset:0;z-index:1}
+    .xp-link:focus-visible{outline:none}
+    .xp-img{position:relative;aspect-ratio:3/2;background:linear-gradient(135deg,var(--ocean-700),var(--ocean-900));overflow:hidden}
+    .xp-img img{width:100%;height:100%;object-fit:cover;transition:transform .6s ease}
+    .xp:hover .xp-img img{transform:scale(1.035)}
+    .xp-img .img-mono{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.24)}
+    .xp-heart{position:absolute;top:10px;right:10px;z-index:2;width:34px;height:34px;border-radius:50%;border:none;background:rgba(255,255,255,.95);color:var(--n800);display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 1px 3px rgba(6,42,56,.14)}
+    .xp-heart:hover{color:#BE123C}
+    .xp-heart.active svg{fill:#e00;stroke:#e00}
+    .xp-heart.pop{animation:wish-pop .3s ease}
+    .xp-photos{position:absolute;right:10px;bottom:10px;display:flex;align-items:center;gap:5px;background:rgba(6,42,56,.66);color:#fff;font-size:.72rem;font-weight:600;padding:3px 8px;border-radius:6px}
+    .xp-body{display:flex;flex-direction:column;padding:16px 16px 0;flex:1}
+    .xp-island{font-family:var(--fd);font-size:.6875rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--ocean-600)}
+    .xp h3{margin-top:6px;font-family:var(--fd);font-size:1rem;font-weight:600;line-height:1.35;letter-spacing:-.01em;color:var(--n900);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:calc(2 * 1.35em)}
+    .xp-op{display:flex;align-items:center;gap:7px;margin-top:8px;font-size:.8125rem;color:var(--n600);min-width:0}
+    .xp-op-name{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+    .xp-av{width:20px;height:20px;border-radius:6px;background:var(--ocean-800);color:#fff;font-family:var(--fd);font-size:.55rem;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+    .xp-ver{display:flex;color:var(--ocean-500);flex-shrink:0}
+    .xp-rating{display:inline-flex;align-items:center;gap:3px;flex-shrink:0;font-weight:600;color:var(--n800)}
+    .xp-rating svg{color:var(--sand-500)}
+    .xp-rating span{font-weight:400;color:var(--n500)}
+    .xp-attrs{list-style:none;display:flex;flex-wrap:wrap;gap:6px;margin-top:14px;min-height:27px}
+    .xp-attrs li{display:inline-flex;align-items:center;gap:5px;font-size:.78rem;font-weight:500;color:var(--n700);background:var(--n50);border:1px solid var(--n200);border-radius:6px;padding:3px 8px;white-space:nowrap}
+    .xp-attrs svg{color:var(--n500)}
+    .xp-attrs .vehicle-specs{margin-bottom:0}
+    .xp-inc{display:flex;align-items:center;gap:6px;margin-top:12px;font-size:.8125rem;color:var(--ok);min-height:20px}
+    .xp-inc svg{flex-shrink:0}
+    .xp-inc span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .xp-signal{margin-top:6px;font-size:.78rem;color:var(--n500);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .xp-foot{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;margin-top:16px;padding:14px 16px 16px;border-top:1px solid var(--n100)}
+    .xp-price{display:flex;flex-direction:column;line-height:1.25;min-width:0}
+    .xp-price small{font-size:.72rem;color:var(--n500)}
+    .xp-price > span{font-size:.8125rem;color:var(--n600)}
+    .xp-price b{font-family:var(--fd);font-size:1.19rem;font-weight:700;color:var(--n900);letter-spacing:-.01em}
+    .xp-price .xp-extra{font-size:.75rem;color:var(--n500);margin-top:2px}
+    .xp-price .xp-ask{font-size:.875rem;font-weight:500;color:var(--n600)}
+    .xp-go{width:36px;height:36px;border-radius:50%;background:var(--ocean-50);color:var(--ocean-700);display:flex;align-items:center;justify-content:center;transition:background .2s,color .2s;flex-shrink:0}
+    .xp:hover .xp-go{background:var(--ocean-700);color:#fff}
+    .btn-outline{display:inline-flex;align-items:center;gap:8px;height:46px;padding:0 24px;border:1.5px solid var(--n900);border-radius:100px;background:#fff;font-family:var(--fd);font-weight:600;font-size:.875rem;color:var(--n900);cursor:pointer;transition:background .15s,color .15s}
+    .btn-outline:hover{background:var(--n900);color:#fff}
+    @media(max-width:1000px){.xp-grid{grid-template-columns:repeat(2,1fr)}}
+    @media(max-width:600px){.xp-grid{grid-template-columns:1fr}.xp-img{aspect-ratio:16/10}}
 
     /* ── CARD SHARED ── */
     .img-block{position:relative;width:100%;height:100%;overflow:hidden;background:linear-gradient(135deg,var(--teal9),var(--ink))}
@@ -492,35 +553,32 @@
         <p><span class="pt">Escolhido para si</span><span class="en">Picked for you</span></p>
       </div>
     </div>
-    <div class="act-grid" id="recommended-grid"></div>
+    <div class="xp-grid" id="recommended-grid"></div>
   </div>
 </section>
 
-<!-- TODOS OS SERVIÇOS -->
+<!-- EXPERIENCIAS -->
 <section class="section" id="activities-section">
   <div class="container">
-    <div class="act-header">
+    <div class="sec-head">
       <div>
-        <div class="sl"><span class="pt">Directorio completo</span><span class="en">Full directory</span></div>
-        <h2 class="st"><span class="pt">Todos os serviços</span><span class="en">All services</span></h2>
+        <h2><span class="pt">Experiências em Cabo Verde</span><span class="en">Experiences in Cape Verde</span></h2>
+        <p id="act-count"></p>
       </div>
-      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-        <span id="act-count" style="font-family:var(--fm);font-size:.8125rem;color:var(--tx-soft)"></span>
-        <button id="clear-filter-btn" onclick="clearFilters()" style="display:none" class="btn btn-ghost btn-sm">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-          <span class="pt">Limpar filtro</span><span class="en">Clear filter</span>
-        </button>
-        <div style="background:#fff;border:1px solid var(--line);border-radius:var(--r10);padding:3px;display:flex;gap:2px">
-          <button id="btn-eur" onclick="setCurrency('EUR')" style="padding:6px 13px;border:none;border-radius:8px;font-family:var(--fm);font-size:.75rem;font-weight:600;cursor:pointer;background:var(--ink);color:#fff;transition:all .15s">EUR</button>
-          <button id="btn-cve" onclick="setCurrency('CVE')" style="padding:6px 13px;border:none;border-radius:8px;font-family:var(--fm);font-size:.75rem;font-weight:600;cursor:pointer;background:transparent;color:var(--tx-soft);transition:all .15s">CVE</button>
-        </div>
-      </div>
+      <button id="clear-filter-btn" type="button" onclick="clearFilters()" style="display:none" class="btn btn-ghost btn-sm">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        <span class="pt">Limpar filtros</span><span class="en">Clear filters</span>
+      </button>
     </div>
-    <div class="chips-wrap" id="chips-grid"></div>
-    <div class="act-grid" id="act-grid"></div>
-    <div id="load-more-wrap" style="display:none;text-align:center;margin-top:36px">
-      <button onclick="loadMore()" class="btn btn-ghost" style="padding:12px 32px">
-        <span class="pt">Ver mais</span><span class="en">Load more</span>
+    <div class="filters">
+      <div class="seg" id="island-seg" role="group" aria-label="Ilha"></div>
+      <span class="filters-sep" id="filters-sep" aria-hidden="true"></span>
+      <div class="chips-wrap" id="chips-grid"></div>
+    </div>
+    <div class="xp-grid" id="act-grid"></div>
+    <div id="load-more-wrap" style="display:none">
+      <button type="button" onclick="loadMore()" class="btn-outline">
+        <span class="pt">Ver mais experiências</span><span class="en">Show more experiences</span>
       </button>
     </div>
   </div>
@@ -652,7 +710,7 @@ const API_TRAVELER_AUTH = 'https://api.saldesk.cv/api/v1/traveler-auth';
 const API_TRAVELER = 'https://api.saldesk.cv/api/v1/traveler';
 const APP = 'https://app.saldesk.cv';
 const EUR_CVE = 110;
-const PER_PAGE = 6;
+const PER_PAGE = 9;
 
 const TLABELS = {
   hotel:      { pt:'Hotel',       en:'Hotel'       },
@@ -683,6 +741,8 @@ let featuredItems = [];
 let visible    = PER_PAGE;
 let currency   = 'EUR';
 let activeFilter = ''; // chave estavel (label PT da categoria, ou tipo)
+let activeIsland = ''; // island_name; '' = todas (partilhado com o campo Ilha do cabecalho)
+let recommendedItems = [];
 
 /* Pontos turisticos (cms_landmarks) -- conteudo editorial independente dos
    servicos reservaveis acima, mostrados so no slide de destaque. */
@@ -827,7 +887,7 @@ function coordEyebrow(item) {
 function imgBlock(item) {
   const img = item.images && item.images[0];
   if (img) {
-    return `<img src="${esc(img)}" alt="${esc(item.unit_name)}" loading="lazy" />`;
+    return `<img src="${esc(img)}" alt="${esc(item.unit_name)}" loading="lazy" decoding="async" />`;
   }
   const icon = TYPE_ICON[item.operator_type] || TYPE_ICON.activity;
   return `<div class="img-mono"><svg width="46" height="46" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">${icon}</svg></div>`;
@@ -1152,54 +1212,87 @@ function renderOperatorCard(op) {
 /* ══════════════════════════════════════════
    RENDER — SERVICE CARD
 ══════════════════════════════════════════ */
+/* Icones do cartao (traco, estilo Lucide) */
+const XP_ICON = {
+  clock:  '<circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>',
+  users:  '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
+  lang:   '<path d="m5 8 6 6"/><path d="m4 14 6-6 2-3"/><path d="M2 5h12"/><path d="M7 2h1"/><path d="m22 22-5-10-5 10"/><path d="M14 18h6"/>',
+  check:  '<path d="M20 6 9 17l-5-5"/>',
+  badge:  '<path d="M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.77 4.78 4 4 0 0 1-6.75 0 4 4 0 0 1-4.78-4.77 4 4 0 0 1 0-6.76Z"/><path d="m9 12 2 2 4-4"/>',
+  arrow:  '<path d="M5 12h14"/><path d="m12 5 7 7-7 7"/>',
+  photos: '<rect width="18" height="18" x="3" y="3" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/>',
+  heart:  '<path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>',
+  star:   '<path d="M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.123 2.123 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.123 2.123 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.122 2.122 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.122 2.122 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.122 2.122 0 0 0 1.597-1.16z"/>',
+};
+function xpSvg(nome, tamanho = 14, traco = 2) {
+  return `<svg width="${tamanho}" height="${tamanho}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${traco}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${XP_ICON[nome]}</svg>`;
+}
+
+/* Avaliacao do OPERADOR (o servidor calcula-a por operador): so com avaliacoes */
+function ratingBadge(rating, count) {
+  if (!(Number(count) > 0) || !rating) return '';
+  return `<span class="xp-rating">${xpSvg('star', 13, 0).replace('fill="none"', 'fill="currentColor"')}${Number(rating).toFixed(1)}<span>(${Number(count)})</span></span>`;
+}
+
+/* Cartao de experiencia -- ordem fixa do desenho (docs/superpowers/specs/2026-11-18-discover-redesenho-design.md):
+   foto, ilha, titulo, operador, caracteristicas, incluidos, procura/data, preco. So mostra o que o operador preencheu. */
 function renderActCard(item) {
-  const name   = esc(item.unit_name);
-  const loc    = esc(item.address || 'Ilha do Sal');
-  const desc   = esc(truncate(getUnitDescription(item, L()), 70));
+  const C      = window.CartaoDiscover;
+  const lang   = L();
+  const meta   = C.lerMeta(item);
+  const slug   = esc(item.operator_slug);
+  const unitId = esc(item.unit_id);
+  const href   = `${APP}/book/${slug}/servico/${unitId}`;
   const wished = isWished(item);
-  const priceVal = fmtPrice(item.base_price, item.currency);
-  const hasPrice = !!item.base_price;
-  /* Um prato/menu de degustacao de restaurante ja tem ficha propria em
-     ServiceDetail.jsx (getUnit ja nao bloqueia menu_item/tasting_menu, so
-     mesas) -- mesmo CTA que qualquer outro tipo de servico. */
-  const bookHref = `${APP}/book/${esc(item.operator_slug)}/servico/${esc(item.unit_id)}`;
+
+  const nFotos = Array.isArray(item.images) ? item.images.length : 0;
+  const fotos  = nFotos > 1 ? `<span class="xp-photos">${xpSvg('photos', 13)}${nFotos}</span>` : '';
+
+  let attrs;
+  if (item.operator_type === 'rentacar') {
+    attrs = `<div class="xp-attrs">${vehicleSpecsRow(item)}</div>`;
+  } else {
+    const lis = [['clock', C.duracaoTexto(item, meta)], ['users', C.formatoTexto(meta, lang)], ['lang', C.linguasTexto(meta)]]
+      .filter(([, t]) => t)
+      .map(([ic, t]) => `<li>${xpSvg(ic)}${esc(t)}</li>`).join('');
+    attrs = `<ul class="xp-attrs">${lis}</ul>`;
+  }
+
+  const inc = C.incluidosTexto(meta);
+  const sinal = [C.sinalProcura(item, lang), C.proximaData(item, C.hojeCaboVerde(), lang)].filter(Boolean).join(' · ');
+
+  const preco   = C.precoCartao(item, meta);
+  const crianca = C.precoCrianca(meta);
+  let precoHtml;
+  if (preco) {
+    const unidade = preco.unidade === 'pessoa' ? (lang === 'en' ? 'person' : 'pessoa') : (lang === 'en' ? 'group' : 'grupo');
+    precoHtml = `<small>${lang === 'en' ? 'From' : 'A partir de'}</small>`
+      + `<span><b>${esc(C.formatarPreco(preco.valor, item.currency, currency, EUR_CVE))}</b> / ${unidade}</span>`
+      + (crianca ? `<span class="xp-extra">${lang === 'en' ? 'Child' : 'Criança'} ${esc(C.formatarPreco(crianca, item.currency, currency, EUR_CVE))}</span>` : '');
+  } else {
+    precoHtml = `<span class="xp-ask">${lang === 'en' ? 'Price on request' : 'Preço sob consulta'}</span>`;
+  }
 
   return `
-    <div class="act-card card">
-      <div class="act-img img-block">
+    <article class="xp">
+      <div class="xp-img">
         ${imgBlock(item)}
-        <button class="wish-btn ${wished?'active':''}" data-wish="${esc(item.operator_slug)}" data-wish-unit="${esc(item.unit_id)}" onclick="toggleWishlist('${esc(item.operator_slug)}','${esc(item.unit_id)}')" aria-label="Wishlist">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="${wished?'#e00':'none'}" stroke="${wished?'#e00':'currentColor'}" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
-        </button>
-        ${availabilityLabel(item)}
+        ${fotos}
+        <button type="button" class="xp-heart ${wished ? 'active' : ''}" data-wish="${slug}" data-wish-unit="${unitId}" onclick="event.preventDefault();event.stopPropagation();toggleWishlist('${slug}','${unitId}')" aria-label="${lang === 'en' ? 'Save' : 'Guardar'}">${xpSvg('heart', 16)}</button>
       </div>
-      <div class="act-body">
-        ${coordEyebrow(item)}
-        <div class="act-rating-row">${ratingLine(item)}</div>
-        <div class="act-name">${name}</div>
-        ${vehicleSpecsRow(item)}
-        ${desc ? `<p class="act-desc">${desc}</p>` : ''}
-        <div class="act-meta-row">
-          <span class="tb">${categoryLabel(item)}</span>
-          <span class="direct-pill"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6 9 17l-5-5"/></svg><span class="pt">Reserva Directa</span><span class="en">Direct Booking</span></span>
-        </div>
-        <div class="act-price-row">
-          ${hasPrice
-            ? `<span class="act-price-from"><span class="pt">A partir de</span><span class="en">From</span></span>
-               <span class="act-price-val">${esc(priceVal)}</span>
-               <span class="act-price-unit"><span class="pt">/pessoa</span><span class="en">/person</span></span>`
-            : `<span class="act-price-val" style="font-size:.9375rem;color:var(--tx-soft)">${esc(priceVal)}</span>`}
-        </div>
-        <div class="act-footer">
-          <a href="${bookHref}" class="btn btn-primary btn-book">
-            <span class="pt">Reservar</span><span class="en">Book now</span>
-          </a>
-          <a href="${bookHref}" class="btn btn-ghost" style="padding:10px 12px" target="_blank" rel="noopener" title="${L()==='pt'?'Abrir em nova aba':'Open in new tab'}">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
-          </a>
-        </div>
+      <div class="xp-body">
+        ${item.island_name ? `<span class="xp-island">${esc(item.island_name)}</span>` : ''}
+        <h3><a class="xp-link" href="${href}">${esc(C.tituloCartao(item, meta, lang))}</a></h3>
+        <div class="xp-op"><span class="xp-av" aria-hidden="true">${esc(C.iniciais(item.operator_name))}</span><span class="xp-op-name">${esc(item.operator_name)}</span><span class="xp-ver" title="${lang === 'en' ? 'Verified operator' : 'Operador verificado'}">${xpSvg('badge', 14, 2.2)}</span>${ratingBadge(item.avg_rating, item.review_count)}</div>
+        ${attrs}
+        <p class="xp-inc">${inc ? `${xpSvg('check', 14, 2.4)}<span>${esc(inc)}</span>` : ''}</p>
+        ${sinal ? `<p class="xp-signal">${esc(sinal)}</p>` : ''}
       </div>
-    </div>`;
+      <div class="xp-foot">
+        <div class="xp-price">${precoHtml}</div>
+        <span class="xp-go" aria-hidden="true">${xpSvg('arrow', 16, 2.2)}</span>
+      </div>
+    </article>`;
 }
 
 /* ══════════════════════════════════════════
@@ -1239,18 +1332,52 @@ function applyFilters() {
 
   filtered = operators.filter(item => {
     const matchFilter = !activeFilter || categoryKey(item) === activeFilter;
+    const matchIsland = !activeIsland || item.island_name === activeIsland;
+    const titleEn = (CartaoDiscover.lerMeta(item).name_en || '').toLowerCase();
     const matchSearch = !search
       || (item.unit_name     || '').toLowerCase().includes(search)
+      || titleEn.includes(search)
       || (item.operator_name || '').toLowerCase().includes(search)
       || (getUnitDescription(item, L()) || '').toLowerCase().includes(search)
       || (item.address       || '').toLowerCase().includes(search);
-    return matchFilter && matchSearch;
+    return matchFilter && matchIsland && matchSearch;
   });
 
   visible = PER_PAGE;
   renderGrid();
   updateActCount();
   updateClearBtn();
+}
+
+/* Filtro por ilha: segmentado das Experiencias + campo Ilha do cabecalho (mesmo estado) */
+function renderIslandSeg() {
+  const seg = document.getElementById('island-seg');
+  const sep = document.getElementById('filters-sep');
+  const ilhas = CartaoDiscover.ilhasDosItens(operators);
+  const lang = L();
+  if (seg) {
+    const btn = (nome, rotulo, n) =>
+      `<button type="button" class="${activeIsland === nome ? 'on' : ''}" aria-pressed="${activeIsland === nome}" data-island="${esc(nome)}" onclick="setIsland(this.dataset.island)">${esc(rotulo)}<span class="c">${n}</span></button>`;
+    seg.innerHTML = btn('', lang === 'en' ? 'All' : 'Todas', operators.length) + ilhas.map(i => btn(i.nome, i.nome, i.n)).join('');
+    seg.style.display = ilhas.length > 1 ? '' : 'none';
+    if (sep) sep.style.display = ilhas.length > 1 ? '' : 'none';
+  }
+  const sel = document.getElementById('hero-island');
+  if (sel) {
+    sel.innerHTML = `<option value="">${lang === 'en' ? 'All islands' : 'Todas as ilhas'}</option>`
+      + ilhas.map(i => `<option value="${esc(i.nome)}">${esc(i.nome)}</option>`).join('');
+    sel.value = activeIsland;
+  }
+  const kicker = document.getElementById('hero-islands');
+  if (kicker && ilhas.length) {
+    kicker.textContent = ilhas.map(i => i.nome).join(' · ') + (lang === 'en' ? ' · and growing' : ' · e a crescer');
+  }
+}
+
+function setIsland(nome) {
+  activeIsland = nome || '';
+  renderIslandSeg();
+  applyFilters();
 }
 
 function renderGrid() {
@@ -1287,15 +1414,18 @@ function loadMore() {
 
 function updateActCount() {
   const el = document.getElementById('act-count');
-  const n  = filtered.length;
-  if (el) el.textContent = L() === 'pt'
-    ? `${n} resultado${n !== 1 ? 's' : ''}`
-    : `${n} result${n !== 1 ? 's' : ''}`;
+  if (!el) return;
+  const n = filtered.length;
+  const m = new Set(filtered.map(i => i.operator_id)).size;
+  el.textContent = L() === 'en'
+    ? `${n} experience${n !== 1 ? 's' : ''} from ${m} operator${m !== 1 ? 's' : ''}`
+    : `${n} experiência${n !== 1 ? 's' : ''} de ${m} operador${m !== 1 ? 'es' : ''}`;
 }
 
 function updateClearBtn() {
   const btn = document.getElementById('clear-filter-btn');
-  if (btn) btn.style.display = activeFilter ? '' : 'none';
+  const search = (document.getElementById('nav-search-input')?.value || '').trim();
+  if (btn) btn.style.display = (activeFilter || activeIsland || search) ? '' : 'none';
 }
 
 function setFilter(key) {
@@ -1307,8 +1437,10 @@ function setFilter(key) {
 
 function clearFilters() {
   activeFilter = '';
+  activeIsland = '';
   document.getElementById('nav-search-input').value = '';
   renderChips();
+  renderIslandSeg();
   applyFilters();
 }
 
@@ -1317,13 +1449,10 @@ function clearFilters() {
 ══════════════════════════════════════════ */
 function setCurrency(cur) {
   currency = cur;
-  const btnEur = document.getElementById('btn-eur');
-  const btnCve = document.getElementById('btn-cve');
-  const pill   = document.getElementById('cur-toggle');
-  if (btnEur) { btnEur.style.background = cur === 'EUR' ? 'var(--ink)' : 'transparent'; btnEur.style.color = cur === 'EUR' ? '#fff' : 'var(--tx-soft)'; }
-  if (btnCve) { btnCve.style.background = cur === 'CVE' ? 'var(--ink)' : 'transparent'; btnCve.style.color = cur === 'CVE' ? '#fff' : 'var(--tx-soft)'; }
-  if (pill)    pill.textContent = cur;
+  const pill = document.getElementById('cur-toggle');
+  if (pill) pill.textContent = cur;
   renderGrid();
+  renderRecommended();
 }
 
 function toggleCurrency() { setCurrency(currency === 'EUR' ? 'CVE' : 'EUR'); }
@@ -1353,6 +1482,7 @@ async function loadServices() {
   operators = data;
   filtered  = [...operators];
   renderChips();
+  renderIslandSeg();
   applyFilters();
 }
 
@@ -1951,7 +2081,14 @@ async function loadRecommendations() {
   document.getElementById('recommended-heading-pt').textContent = json.personalized ? 'Baseado no que já viu e reservou' : 'Populares agora';
   document.getElementById('recommended-heading-en').textContent = json.personalized ? "Based on what you've viewed and booked" : 'Popular right now';
 
-  grid.innerHTML = items.map(renderActCard).join('');
+  recommendedItems = items;
+  renderRecommended();
+}
+
+function renderRecommended() {
+  const grid = document.getElementById('recommended-grid');
+  if (!grid || !recommendedItems.length) return;
+  grid.innerHTML = recommendedItems.map(renderActCard).join('');
   if (L() === 'en') fixLang(grid);
 }
 
@@ -1975,9 +2112,11 @@ function setLang(lang) {
 
   if (operators.length) {
     renderChips();
+    renderIslandSeg();
     renderGrid();
     updateActCount();
   }
+  renderRecommended();
   renderFeatured();
   if (poiItems.length) renderPoiSlider();
 }
@@ -1987,6 +2126,7 @@ document.getElementById('langToggle').addEventListener('click', () => {
 });
 
 document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeWishlist(); closeProfileDrawer(); } });
+document.getElementById('hero-island')?.addEventListener('change', e => setIsland(e.target.value));
 
 /* ══════════════════════════════════════════
    INIT
