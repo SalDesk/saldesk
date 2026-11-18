@@ -8,5 +8,30 @@
   "units": { "title": "Einheiten", "new": "Neue Einheit", "name": "Name", "type": "Typ", "capacity": "Kapazitat", "basePrice": "Grundpreis", "priceUnit": "Preiseinheit", "description": "Beschreibung", "active": "Aktiv", "inactive": "Inaktiv", "copyLink": "Link kopieren" },
   "customers": { "title": "Kunden", "name": "Name", "email": "E-Mail", "phone": "Telefon", "nationality": "Nationalitat", "visits": "Besuche", "totalSpent": "Gesamtausgaben", "firstVisit": "Erster Besuch", "lastVisit": "Letzter Besuch", "notes": "Notizen", "tags": "Tags" },
   "errors": { "generic": "Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.", "network": "Verbindungsfehler. Uberprufung Sie Ihre Internetverbindung.", "unauthorized": "Sitzung abgelaufen. Bitte melden Sie sich erneut an.", "notFound": "Nicht gefunden.", "validation": "Bitte uberprufung Sie die Felder und versuchen Sie es erneut." },
-  "onboarding": { "title": "Willkommen bei SalDesk", "subtitle": "Richten Sie Ihr Unternehmen in weniger als 5 Minuten ein", "step1Title": "Unternehmenstyp", "step1Subtitle": "Welche Art von Betrieb fuhren Sie?", "step2Title": "Geschaftsdetails", "step2Subtitle": "Kontakt- und Standortinformationen", "step3Title": "Identitat", "step3Subtitle": "Logo und Unternehmensbeschreibung", "step4Title": "Einstellungen", "step4Subtitle": "Sprache, Wahrung und Buchungslink", "step5Title": "Alles bereit!", "step5Subtitle": "Ihr Unternehmen ist konfiguriert", "next": "Weiter", "back": "Zuruck", "finish": "Zum Dashboard", "operatorTypes": { "hotel": "Hotel / Pension", "activity": "Touristik-Aktivitat", "rentacar": "Autovermietung", "restaurant": "Restaurant" }, "operatorDescriptions": { "hotel": "Zimmer, Suiten, Bungalows — Check-in/Check-out-Verwaltung", "activity": "Kitesurfen, Tauchen, Touren — Sitzungen und Pro-Person-Buchungen", "rentacar": "Tagesmietwagen mit benutzerdefinierten Abholorten", "restaurant": "Tische, stundenweise Buchungen, Belegungsverwaltung" }, "businessName": "Unternehmensname", "phone": "Telefon", "whatsapp": "WhatsApp", "island": "Insel", "selectIsland": "Insel auswahlen...", "address": "Adresse", "description": "Kurzbeschreibung", "logo": "Logo", "language": "Standardsprache", "currency": "Wahrung", "timezone": "Zeitzone", "bookingSlug": "Buchungslink", "bookingSlugHint": "app.saldesk.cv/book/", "uploadLogo": "Logo hochladen", "dragDrop": "oder hierher ziehen und ablegen" }
+  "onboarding": { "title": "Willkommen bei SalDesk", "subtitle": "Richten Sie Ihr Unternehmen in weniger als 5 Minuten ein", "step1Title": "Unternehmenstyp", "step1Subtitle": "Welche Art von Betrieb fuhren Sie?", "step2Title": "Geschaftsdetails", "step2Subtitle": "Kontakt- und Standortinformationen", "step3Title": "Identitat", "step3Subtitle": "Logo und Unternehmensbeschreibung", "step4Title": "Einstellungen", "step4Subtitle": "Sprache, Wahrung und Buchungslink", "step5Title": "Alles bereit!", "step5Subtitle": "Ihr Unternehmen ist konfiguriert", "next": "Weiter", "back": "Zuruck", "finish": "Zum Dashboard", "operatorTypes": { "hotel": "Hotel / Pension", "activity": "Touristik-Aktivitat", "rentacar": "Autovermietung", "restaurant": "Restaurant" }, "operatorDescriptions": { "hotel": "Zimmer, Suiten, Bungalows — Check-in/Check-out-Verwaltung", "activity": "Kitesurfen, Tauchen, Touren — Sitzungen und Pro-Person-Buchungen", "rentacar": "Tagesmietwagen mit benutzerdefinierten Abholorten", "restaurant": "Tische, stundenweise Buchungen, Belegungsverwaltung" }, "businessName": "Unternehmensname", "phone": "Telefon", "whatsapp": "WhatsApp", "island": "Insel", "selectIsland": "Insel auswahlen...", "address": "Adresse", "description": "Kurzbeschreibung", "logo": "Logo", "language": "Standardsprache", "currency": "Wahrung", "timezone": "Zeitzone", "bookingSlug": "Buchungslink", "bookingSlugHint": "app.saldesk.cv/book/", "uploadLogo": "Logo hochladen", "dragDrop": "oder hierher ziehen und ablegen" },
+  "review": {
+    "loading": "Wird geladen...",
+    "title": "Wie war es?",
+    "intro": "Hallo {{name}}, erzählen Sie uns, wie {{unit}} mit {{operator}} war.",
+    "introNoName": "Erzählen Sie uns, wie {{unit}} mit {{operator}} war.",
+    "introNoUnit": "Erzählen Sie uns, wie Ihr Erlebnis mit {{operator}} war.",
+    "starsLabel": "Ihre Bewertung",
+    "star1": "1 Stern",
+    "starN": "{{n}} Sterne",
+    "commentLabel": "Kommentar (optional)",
+    "commentPlaceholder": "Was hat Ihnen am besten gefallen? Was könnte besser sein?",
+    "send": "Bewertung senden",
+    "sending": "Wird gesendet...",
+    "thanksTitle": "Vielen Dank für Ihre Bewertung!",
+    "thanksText": "Ihre Meinung hilft {{operator}} und anderen Reisenden.",
+    "seeOperator": "Mehr von {{operator}}",
+    "expiredTitle": "Dieser Link ist abgelaufen",
+    "expiredText": "Die Frist für die Bewertung ist abgelaufen. Sie können {{operator}} direkt kontaktieren.",
+    "invalid": "Dieser Link ist nicht mehr aktiv. Falls Sie bereits bewertet haben: vielen Dank!",
+    "errorTitle": "Laden nicht möglich",
+    "errorText": "Prüfen Sie Ihre Internetverbindung und versuchen Sie es erneut.",
+    "retry": "Erneut versuchen",
+    "sendError": "Senden fehlgeschlagen. Bitte erneut versuchen.",
+    "poweredBy": "Bewertungen verifiziert von SalDesk"
+  }
 }

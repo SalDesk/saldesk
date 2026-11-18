@@ -61,11 +61,12 @@ describe('Feedback', () => {
     expect(avisos).toBe(0);
   });
 
-  function servicos({ avaliacoes = AVALIACOES, template = null, falha = false } = {}) {
+  function servicos({ avaliacoes = AVALIACOES, template = null, falha = false, automatico = true } = {}) {
     api.get.mockReset().mockImplementation(async (url) => {
       if (falha) throw new Error('rede');
       if (url === '/reviews') return { data: { data: avaliacoes } };
       if (url === '/reviews/template') return { data: { data: template } };
+      if (url === '/reviews/settings') return { data: { data: { review_auto_request: automatico } } };
       throw new Error(`pedido inesperado: ${url}`);
     });
   }
@@ -195,7 +196,7 @@ describe('Feedback', () => {
     separador('Template');
     expect(screen.getByText('Template do pedido de avaliacao')).toBeInTheDocument();
     expect(campo('Assunto PT').value).toBe('Assunto do servidor');
-    expect(campo('Assunto EN').value).toBe('How was your tour? Leave your review');
+    expect(campo('Assunto EN').value).toBe('How was it? Leave your review');
     const antes = campo('Corpo PT').value;
     fireEvent.click(screen.getByRole('button', { name: '{nome_tour}' }));
     expect(campo('Corpo PT').value).toBe(`${antes}{nome_tour}`);
@@ -207,7 +208,36 @@ describe('Feedback', () => {
     await abre();
     expect(screen.getByText('Sem tours com checkout registado.')).toBeInTheDocument();
     separador('Template');
-    expect(campo('Assunto PT').value).toBe('Como correu o seu tour? Deixe a sua avaliacao');
+    /* modelo por omissao neutro: serve actividades, hoteis, rent-a-car e restaurantes */
+    expect(campo('Assunto PT').value).toBe('Como correu? Deixe a sua avaliacao');
+    expect(campo('Corpo PT').value).not.toMatch(/tour/i);
+    /* sem definicoes, o pedido automatico aparece ligado (a omissao do servidor) */
+    expect(screen.getByRole('switch', { name: 'Pedir avaliação automaticamente no dia a seguir' })).toHaveAttribute('aria-checked', 'true');
+  });
+
+  it('interruptor_do_pedido_automatico_le_e_grava', async () => {
+    servicos({ automatico: true });
+    api.put.mockReset().mockResolvedValue({ data: { data: { review_auto_request: false } } });
+    await abre();
+    separador('Template');
+    const interruptor = screen.getByRole('switch', { name: 'Pedir avaliação automaticamente no dia a seguir' });
+    expect(interruptor).toHaveAttribute('aria-checked', 'true');
+    fireEvent.click(interruptor);
+    await waitFor(() => expect(api.put).toHaveBeenCalledWith('/reviews/settings', { review_auto_request: false }));
+    expect(interruptor).toHaveAttribute('aria-checked', 'false');
+  });
+
+  it('interruptor_volta_atras_se_gravar_falhar', async () => {
+    servicos({ automatico: false });
+    api.put.mockReset().mockRejectedValue(new Error('rede'));
+    await abre();
+    separador('Template');
+    const interruptor = screen.getByRole('switch', { name: 'Pedir avaliação automaticamente no dia a seguir' });
+    expect(interruptor).toHaveAttribute('aria-checked', 'false');
+    fireEvent.click(interruptor);
+    await waitFor(() => expect(interruptor).toHaveAttribute('aria-checked', 'false'));
+    expect(api.put).toHaveBeenCalledWith('/reviews/settings', { review_auto_request: true });
+    expect(await screen.findByText('Não foi possível guardar. Tente de novo.')).toBeInTheDocument();
   });
 
   it('guardar o template envia o objeto e mostra "Guardado"', async () => {
@@ -230,7 +260,7 @@ describe('Feedback', () => {
     expect(screen.getByText(/Kitesurf Lesson/)).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'EN' }));
     expect(screen.getByText(/Hello Maria Santos/)).toBeInTheDocument();
-    expect(screen.getByText(/Assunto: How was your tour\? Leave your review/)).toBeInTheDocument();
+    expect(screen.getByText(/Assunto: How was it\? Leave your review/)).toBeInTheDocument();
   });
 
   it('os separadores tem role tab com aria-selected', async () => {

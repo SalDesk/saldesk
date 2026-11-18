@@ -1,20 +1,10 @@
 const { supabaseAdmin } = require('../config/supabase');
+const { isPlanActive } = require('../helpers/planoActivo');
 
 /* Corre depois de requireOperator/requireOperatorOrStaff (precisa de
    req.operator ou req.staff ja populado). Bloqueia acesso real -- ate
    agora so o frontend esbatia o conteudo, qualquer pedido directo a API
    funcionava na mesma com trial expirado ou conta suspensa. */
-function isPlanActive(operator) {
-  if (!operator) return true; // deixa requireOperator/requireOperatorOrStaff tratar a ausencia
-  if (operator.plan_status === 'suspended' || operator.plan_status === 'cancelled') return false;
-  if (operator.plan_status === 'trial') {
-    const trialExpired = operator.trial_ends_at && new Date(operator.trial_ends_at) <= new Date();
-    if (!trialExpired) return true;
-    const coveredByPayment = operator.plan_paid_until && new Date(operator.plan_paid_until) > new Date();
-    return !!coveredByPayment;
-  }
-  return true; // plan_status === 'active'
-}
 
 async function requirePlanActive(req, res, next) {
   try {

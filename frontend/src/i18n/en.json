@@ -424,5 +424,30 @@
     "unauthorized": "Session expired. Please sign in again.",
     "notFound": "Not found.",
     "validation": "Please check the fields and try again."
+  },
+  "review": {
+    "loading": "Loading...",
+    "title": "How was it?",
+    "intro": "Hi {{name}}, tell us how {{unit}} with {{operator}} went.",
+    "introNoName": "Tell us how {{unit}} with {{operator}} went.",
+    "introNoUnit": "Tell us how your experience with {{operator}} went.",
+    "starsLabel": "Your rating",
+    "star1": "1 star",
+    "starN": "{{n}} stars",
+    "commentLabel": "Comment (optional)",
+    "commentPlaceholder": "What did you like most? What could be better?",
+    "send": "Send review",
+    "sending": "Sending...",
+    "thanksTitle": "Thank you for your review!",
+    "thanksText": "Your opinion helps {{operator}} and other travellers.",
+    "seeOperator": "See more from {{operator}}",
+    "expiredTitle": "This link has expired",
+    "expiredText": "The time to review has ended. You can contact {{operator}} directly.",
+    "invalid": "This link is no longer active. If you have already left your review, thank you!",
+    "errorTitle": "Could not load",
+    "errorText": "Check your internet connection and try again.",
+    "retry": "Try again",
+    "sendError": "Could not send. Please try again.",
+    "poweredBy": "Reviews verified by SalDesk"
   }
 }

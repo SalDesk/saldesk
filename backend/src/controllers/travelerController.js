@@ -1,4 +1,5 @@
 const { supabaseAdmin } = require('../config/supabase');
+const { podeAvaliarViajante, hojeCaboVerde } = require('../helpers/pedidoAvaliacao');
 const { getDiscoverCatalog } = require('../services/discoverCatalogService');
 const PDFDocument = require('pdfkit');
 const { desenharRecibo } = require('../helpers/receiptPdf');
@@ -75,7 +76,7 @@ async function getBookings(req, res, next) {
       unit_name: unitMap[r.unit_id]?.name || null,
       unit_image: unitMap[r.unit_id]?.images?.[0] || null,
       review: reviewMap[r.id] || null,
-      can_review: r.status === 'checked_out' && !reviewMap[r.id],
+      can_review: podeAvaliarViajante(r, hojeCaboVerde(new Date())) && !reviewMap[r.id],
     }));
 
     return res.json({ data: enriched, message: 'Reservas listadas' });
@@ -84,7 +85,7 @@ async function getBookings(req, res, next) {
   }
 }
 
-/* So permite avaliar reservas ja concluidas (checked_out) e que pertencam
+/* So permite avaliar reservas ja terminadas (check_out passado, mesmo sem check-out marcado) e que pertencam
    mesmo ao viajante autenticado (por customer_email, mesma verificacao de
    getBookings) -- nunca confia no reservation_id vindo do cliente sem
    validar a posse. Reaproveita a mesma tabela reviews e o mesmo efeito
@@ -99,14 +100,14 @@ async function submitReview(req, res, next) {
 
     const { data: reservation } = await supabaseAdmin
       .from('reservations')
-      .select('id, operator_id, customer_email, status')
+      .select('id, operator_id, customer_email, status, check_out')
       .eq('id', reservationId)
       .maybeSingle();
 
     if (!reservation || reservation.customer_email.trim().toLowerCase() !== email) {
       return res.status(404).json({ error: 'Reserva não encontrada', code: 'NOT_FOUND' });
     }
-    if (reservation.status !== 'checked_out') {
+    if (!podeAvaliarViajante(reservation, hojeCaboVerde(new Date()))) {
       return res.status(400).json({ error: 'So pode avaliar reservas ja concluidas', code: 'INVALID_STATUS' });
     }
 

@@ -14,6 +14,7 @@ import ImpersonateCallback from './pages/ImpersonateCallback';
 import PublicBooking from './pages/PublicBooking';
 import ServiceDetail from './pages/ServiceDetail';
 import BookingSuccess from './pages/BookingSuccess';
+import ReviewPage from './pages/ReviewPage';
 import BookingCancel from './pages/BookingCancel';
 import BillingSuccess from './pages/BillingSuccess';
 import BillingCancel from './pages/BillingCancel';
@@ -221,6 +222,8 @@ export default function App() {
         <Route path="/vendedor/perfil" element={<BeachSellerGuard><VendedorPerfil /></BeachSellerGuard>} />
 
         {/* Motor de reserva publica */}
+        {/* Link publico de avaliacao enviado por e-mail/WhatsApp (sem conta) */}
+        <Route path="/review/:token" element={<ReviewPage />} />
         <Route path="/book/success" element={<BookingSuccess />} />
         <Route path="/book/cancel" element={<BookingCancel />} />
 

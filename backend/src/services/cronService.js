@@ -1,4 +1,5 @@
 const cron = require('node-cron');
+const { enviarPedidosAutomaticos } = require('./pedidoAvaliacaoService');
 const { supabaseAdmin } = require('../config/supabase');
 const { enviarEmail } = require('../helpers/emailHelper');
 // WhatsApp: as automacoes entram na outbox da camada de mensagens (wa.me: o humano abre o link).
@@ -246,11 +247,21 @@ async function sincronizarCanais() {
   }
 }
 
+/* Pedido automatico de avaliacao (e-mail), uma vez por dia */
+async function processarPedidosAvaliacao() {
+  try {
+    await enviarPedidosAutomaticos();
+  } catch (err) {
+    console.error('[Cron] Erro nos pedidos de avaliacao:', err.message);
+  }
+}
+
 function iniciarCron() {
   cron.schedule('0 * * * *', processarAutomacoes, { timezone: 'Atlantic/Cape_Verde' });
   cron.schedule('*/15 * * * *', sincronizarCanais, { timezone: 'Atlantic/Cape_Verde' });
   cron.schedule('0 8 * * *', processarAlertasExpiracaoRH, { timezone: 'Atlantic/Cape_Verde' });
-  console.log('[Cron] Servicos iniciados — automacoes (1h) + sync OTA (15min) + alertas RH (diario 08h)');
+  cron.schedule('0 10 * * *', processarPedidosAvaliacao, { timezone: 'Atlantic/Cape_Verde' });
+  console.log('[Cron] Servicos iniciados — automacoes (1h) + sync OTA (15min) + alertas RH (diario 08h) + pedidos de avaliacao (diario 10h)');
 }
 
-module.exports = { iniciarCron, processarAutomacoes, sincronizarCanais, processarAlertasExpiracaoRH };
+module.exports = { iniciarCron, processarAutomacoes, sincronizarCanais, processarAlertasExpiracaoRH, processarPedidosAvaliacao };

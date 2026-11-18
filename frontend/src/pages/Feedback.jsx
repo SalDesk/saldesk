@@ -12,13 +12,16 @@ import Tabs from '../components/ui/Tabs';
 import Table from '../components/ui/Table';
 import EmptyState from '../components/ui/EmptyState';
 import Input, { Textarea } from '../components/ui/Input';
+import Toggle from '../components/ui/Toggle';
 import LoadingSpinner from '../components/shared/LoadingSpinner';
 
+/* Igual ao DEFAULT_TEMPLATE do backend (helpers/pedidoAvaliacao.js): texto neutro, serve
+   actividades, hoteis, rent-a-car e restaurantes */
 const DEFAULT_TEMPLATE = {
-  subject_pt: 'Como correu o seu tour? Deixe a sua avaliacao',
-  subject_en: 'How was your tour? Leave your review',
-  body_pt:    'Ola {nome_cliente},\n\nEsperamos que tenha gostado do seu tour {nome_tour}!\n\nA sua opiniao e muito importante para nos e para futuros clientes.\nClique no link abaixo para deixar a sua avaliacao:\n\n→ {link_avaliacao}\n\nObrigado pela sua confianca!\n',
-  body_en:    'Hello {nome_cliente},\n\nWe hope you enjoyed your {nome_tour} tour!\n\nYour feedback is very important to us and future guests.\nClick the link below to leave your review:\n\n→ {link_avaliacao}\n\nThank you for your trust!\n',
+  subject_pt: 'Como correu? Deixe a sua avaliacao',
+  subject_en: 'How was it? Leave your review',
+  body_pt:    'Ola {nome_cliente},\n\nObrigado por ter escolhido {nome_tour}. Esperamos que tenha corrido bem!\n\nA sua opiniao ajuda-nos e ajuda outros viajantes a escolher. Demora menos de um minuto:\n\n{link_avaliacao}\n\nObrigado!',
+  body_en:    'Hello {nome_cliente},\n\nThank you for choosing {nome_tour}. We hope you had a great time!\n\nYour opinion helps us and helps other travellers choose. It takes less than a minute:\n\n{link_avaliacao}\n\nThank you!',
 };
 
 const TEMPLATE_VARS = [
@@ -57,6 +60,9 @@ export default function Feedback() {
   const [tplSaving,   setTplSaving]   = useState(false);
   const [tplSaved,    setTplSaved]    = useState(false);
   const [previewLang, setPreviewLang] = useState('pt');
+  /* pedido automatico de avaliacao (ligado por omissao no servidor) */
+  const [automatico,  setAutomatico]  = useState(true);
+  const [autoErro,    setAutoErro]    = useState(false);
 
   useEffect(() => {
     setLoading(true);
@@ -64,10 +70,12 @@ export default function Feedback() {
       listReservations({ status: 'checked_out' }).catch(() => []),
       api.get('/reviews').then(r => r.data.data || []).catch(() => []),
       api.get('/reviews/template').then(r => r.data.data).catch(() => DEFAULT_TEMPLATE),
-    ]).then(([res, rev, tpl]) => {
+      api.get('/reviews/settings').then(r => r.data.data?.review_auto_request !== false).catch(() => true),
+    ]).then(([res, rev, tpl, auto]) => {
       setReservations(res || []);
       setReviews(rev || []);
       setTemplate({ ...DEFAULT_TEMPLATE, ...tpl });
+      setAutomatico(auto);
     }).finally(() => setLoading(false));
   }, []);
 
@@ -110,6 +118,18 @@ export default function Feedback() {
       await api.post('/reviews/request', { reservation_id: reservationId });
     } catch (err) { console.error(err); }
     finally { setSending(p => ({ ...p, [reservationId]: false })); }
+  }
+
+  async function handleAutomatico(valor) {
+    const antes = automatico;
+    setAutomatico(valor);
+    setAutoErro(false);
+    try {
+      await api.put('/reviews/settings', { review_auto_request: valor });
+    } catch {
+      setAutomatico(antes);
+      setAutoErro(true);
+    }
   }
 
   async function handleSaveTemplate() {
@@ -288,6 +308,15 @@ export default function Feedback() {
 
       ) : activeTab === 'template' ? (
         <div className="space-y-5">
+          <Card padding="px-5 py-5">
+            <Toggle
+              checked={automatico}
+              onChange={handleAutomatico}
+              label="Pedir avaliação automaticamente no dia a seguir"
+              hint="Envia um e-mail no dia a seguir à actividade ou estadia, só a reservas directas e uma vez por reserva."
+            />
+            {autoErro && <p className="text-xs font-body text-red-600 mt-2" role="alert">Não foi possível guardar. Tente de novo.</p>}
+          </Card>
           <Card padding="px-5 py-5">
             <h3 className="font-display font-semibold text-sm text-n-700 mb-4">Template do pedido de avaliacao</h3>
 

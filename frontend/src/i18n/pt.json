@@ -424,5 +424,30 @@
     "unauthorized": "Sessao expirada. Faca login novamente.",
     "notFound": "Nao encontrado.",
     "validation": "Verifique os campos e tente novamente."
+  },
+  "review": {
+    "loading": "A carregar...",
+    "title": "Como correu?",
+    "intro": "Olá {{name}}, diga-nos como correu {{unit}} com {{operator}}.",
+    "introNoName": "Diga-nos como correu {{unit}} com {{operator}}.",
+    "introNoUnit": "Diga-nos como correu a sua experiência com {{operator}}.",
+    "starsLabel": "A sua nota",
+    "star1": "1 estrela",
+    "starN": "{{n}} estrelas",
+    "commentLabel": "Comentário (opcional)",
+    "commentPlaceholder": "O que gostou mais? O que podia ser melhor?",
+    "send": "Enviar avaliação",
+    "sending": "A enviar...",
+    "thanksTitle": "Obrigado pela sua avaliação!",
+    "thanksText": "A sua opinião ajuda {{operator}} e outros viajantes.",
+    "seeOperator": "Ver mais de {{operator}}",
+    "expiredTitle": "Este link expirou",
+    "expiredText": "O prazo para avaliar terminou. Se quiser, contacte {{operator}} directamente.",
+    "invalid": "Este link já não está activo. Se já deixou a sua avaliação, obrigado!",
+    "errorTitle": "Não foi possível carregar",
+    "errorText": "Verifique a ligação à internet e tente de novo.",
+    "retry": "Tentar de novo",
+    "sendError": "Não foi possível enviar. Tente de novo.",
+    "poweredBy": "Avaliações verificadas por SalDesk"
   }
 }

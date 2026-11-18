@@ -1,15 +1,9 @@
 const { supabaseAdmin } = require('../config/supabase');
-const { enviarEmail } = require('../helpers/emailHelper');
-const { frontendBase } = require('../utils/urls');
-const { detectarIdioma } = require('../helpers/languageHelper');
-const crypto = require('crypto');
 
-const DEFAULT_TEMPLATE = {
-  subject_pt: 'Como correu o seu tour? Deixe a sua avaliacao',
-  subject_en: 'How was your tour? Leave your review',
-  body_pt:    'Ola {nome_cliente},\n\nEsperamos que tenha gostado do seu tour {nome_tour}!\n\nA sua opiniao e muito importante para nos e para futuros clientes.\nClique no link abaixo para deixar a sua avaliacao:\n\n-> {link_avaliacao}\n\nObrigado pela sua confianca!',
-  body_en:    'Hello {nome_cliente},\n\nWe hope you enjoyed your {nome_tour} tour!\n\nYour feedback is very important to us and future guests.\nClick the link below to leave your review:\n\n-> {link_avaliacao}\n\nThank you for your trust!',
-};
+/* Texto por omissao (neutro: serve actividades, hoteis, rent-a-car e restaurantes) */
+const { DEFAULT_TEMPLATE, estadoDoToken } = require('../helpers/pedidoAvaliacao');
+const { detectarIdioma } = require('../helpers/languageHelper');
+const { enviarPedido } = require('../services/pedidoAvaliacaoService');
 
 async function obterTemplate(req, res, next) {
   try {
@@ -43,6 +37,8 @@ async function listar(req, res, next) {
       .from('reviews')
       .select('*, reservations(check_in, check_out, units(name)), customers(name, country_code)')
       .eq('operator_id', req.operator.id)
+      /* so avaliacoes dadas: os pedidos por responder (rating null) nao sao avaliacoes */
+      .not('rating', 'is', null)
       .order('created_at', { ascending: false });
     if (is_public !== undefined) q = q.eq('is_public', is_public === 'true');
     if (min_rating) q = q.gte('rating', parseInt(min_rating));
@@ -75,48 +71,88 @@ async function requestReview(req, res, next) {
       .select('id, customer_name, customer_email, customer_id, customer_country, check_out, operator_id, units(name)')
       .eq('id', reservation_id).eq('operator_id', req.operator.id).single();
     if (!reserva) return res.status(404).json({ error: 'Reserva nao encontrada', code: 'NOT_FOUND' });
-    if (!reserva.customer_email) return res.status(400).json({ error: 'Cliente sem email', code: 'NO_EMAIL' });
 
-    const token = crypto.randomBytes(20).toString('hex');
-    const expires = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+    /* mesmo codigo da tarefa diaria; nunca substitui uma avaliacao ja dada */
+    const r = await enviarPedido(reserva, { operadorId: req.operator.id });
+    if (!r.ok && r.code === 'NO_EMAIL') return res.status(400).json({ error: 'Cliente sem email', code: 'NO_EMAIL' });
+    if (!r.ok && r.code === 'ALREADY_REVIEWED') return res.status(409).json({ error: 'Esta reserva ja foi avaliada', code: 'ALREADY_REVIEWED' });
 
-    /* rating fica null e is_public false ate o cliente submeter de facto
-       via submitReview() -- um pedido enviado nao e uma avaliacao real. */
-    const { error: upsertErr } = await supabaseAdmin.from('reviews').upsert({
-      operator_id: req.operator.id, reservation_id, customer_id: reserva.customer_id || null,
-      review_token: token, token_expires_at: expires, rating: null, is_public: false,
-    }, { onConflict: 'reservation_id' });
-    if (upsertErr) throw upsertErr;
+    return res.json({ data: { token: r.token, link: r.link }, message: 'Pedido de avaliacao enviado' });
+  } catch (err) { next(err); }
+}
 
-    const publicUrl = frontendBase();
-    const link = `${publicUrl}/review/${token}`;
+/* GET /reviews/token/:token (publico): o minimo para a pagina de avaliacao mostrar o que se
+   avalia. Nunca devolve e-mail, telefone, precos nem ids internos. */
+async function tokenInfo(req, res, next) {
+  try {
+    const token = String(req.params.token || '');
+    if (!/^[a-f0-9]{40}$/.test(token)) return res.json({ data: { estado: 'invalido' } });
 
-    const { data: tplRow } = await supabaseAdmin
-      .from('review_request_templates').select('*').eq('operator_id', req.operator.id).maybeSingle();
-    const tpl = tplRow || DEFAULT_TEMPLATE;
-    const lang = detectarIdioma(reserva.customer_country) === 'en' ? 'en' : 'pt';
+    const { data: review } = await supabaseAdmin
+      .from('reviews').select('review_token, token_expires_at, operator_id, reservation_id')
+      .eq('review_token', token).maybeSingle();
+    const estado = estadoDoToken(review, new Date());
+    if (estado === 'invalido') return res.json({ data: { estado } });
 
-    function preencher(texto) {
-      return String(texto)
-        .replace(/{nome_cliente}/g, reserva.customer_name || '')
-        .replace(/{nome_tour}/g, reserva.units?.name || '')
-        .replace(/{link_avaliacao}/g, link);
+    const { data: op } = await supabaseAdmin
+      .from('operators').select('name, slug, brand_color').eq('id', review.operator_id).maybeSingle();
+    const operador = { name: op?.name || '', slug: op?.slug || '', brand_color: op?.brand_color || null };
+    if (estado === 'expirado') return res.json({ data: { estado, operador } });
+
+    const { data: reserva } = await supabaseAdmin
+      .from('reservations').select('customer_name, customer_country, check_in, units(name)')
+      .eq('id', review.reservation_id).maybeSingle();
+    const primeiroNome = String(reserva?.customer_name || '').trim().split(/\s+/)[0] || null;
+    return res.json({
+      data: {
+        estado,
+        operador,
+        unidade: reserva?.units?.name || null,
+        data: reserva?.check_in ? String(reserva.check_in).slice(0, 10) : null,
+        cliente: primeiroNome,
+        lingua: detectarIdioma(reserva?.customer_country) === 'en' ? 'en' : 'pt',
+      },
+    });
+  } catch (err) { next(err); }
+}
+
+/* GET/PUT /reviews/settings: o operador liga ou desliga o pedido automatico (ligado por omissao) */
+async function obterDefinicoes(req, res, next) {
+  try {
+    const { data } = await supabaseAdmin
+      .from('operators').select('review_auto_request').eq('id', req.operator.id).maybeSingle();
+    return res.json({ data: { review_auto_request: data?.review_auto_request !== false } });
+  } catch (err) { next(err); }
+}
+
+async function guardarDefinicoes(req, res, next) {
+  try {
+    const valor = req.body?.review_auto_request;
+    if (typeof valor !== 'boolean') {
+      return res.status(400).json({ error: 'review_auto_request tem de ser verdadeiro ou falso', code: 'INVALID_VALUE' });
     }
-
-    await enviarEmail({
-      to: reserva.customer_email,
-      subject: preencher(lang === 'en' ? tpl.subject_en : tpl.subject_pt),
-      text: preencher(lang === 'en' ? tpl.body_en : tpl.body_pt),
-    }).catch(() => {});
-
-    return res.json({ data: { token, link }, message: 'Pedido de avaliacao enviado' });
+    const { error } = await supabaseAdmin
+      .from('operators').update({ review_auto_request: valor }).eq('id', req.operator.id);
+    if (error) throw error;
+    return res.json({ data: { review_auto_request: valor }, message: 'Definicao guardada' });
   } catch (err) { next(err); }
 }
 
 async function submitReview(req, res, next) {
   try {
-    const { token, rating, comment, staff_id } = req.body;
-    if (!token || !rating) return res.status(400).json({ error: 'Token e rating obrigatorios', code: 'MISSING_FIELDS' });
+    /* staff_id nao vem do publico: quem tem o link so da a nota e o comentario */
+    const { token, rating, comment } = req.body;
+    if (!token || rating === undefined || rating === null || rating === '') {
+      return res.status(400).json({ error: 'Token e rating obrigatorios', code: 'MISSING_FIELDS' });
+    }
+    const nota = Number(rating);
+    if (!Number.isInteger(nota) || nota < 1 || nota > 5) {
+      return res.status(400).json({ error: 'A nota tem de ser de 1 a 5', code: 'INVALID_RATING' });
+    }
+    const texto = comment ? String(comment).trim() : '';
+    if (texto.length > 1000) {
+      return res.status(400).json({ error: 'Comentario demasiado longo (maximo 1000 caracteres)', code: 'COMMENT_TOO_LONG' });
+    }
 
     const { data: review } = await supabaseAdmin
       .from('reviews').select('id, token_expires_at').eq('review_token', token).single();
@@ -127,14 +163,14 @@ async function submitReview(req, res, next) {
 
     const { data, error } = await supabaseAdmin
       .from('reviews')
-      .update({ rating: parseInt(rating), comment: comment || null, staff_id: staff_id || null, review_token: null, token_expires_at: null, is_public: true })
+      .update({ rating: nota, comment: texto || null, review_token: null, token_expires_at: null, is_public: true })
       .eq('id', review.id).select().single();
     if (error) throw error;
 
     supabaseAdmin.from('notifications').insert({
       operator_id:        data.operator_id,
       notification_type:  'new_review',
-      content:             `Nova avaliacao de ${parseInt(rating)} estrelas recebida`,
+      content:             `Nova avaliacao de ${nota} estrelas recebida`,
       link:                '/avaliacoes',
     }).then(({ error: notifErr }) => {
       if (notifErr) console.error('[Notificacao] Erro ao criar notificacao:', notifErr.message);
@@ -144,7 +180,7 @@ async function submitReview(req, res, next) {
       const { data: staff } = await supabaseAdmin.from('staff').select('average_rating, total_jobs_completed').eq('id', data.staff_id).single();
       if (staff) {
         const n = staff.total_jobs_completed || 1;
-        const newAvg = ((staff.average_rating || 0) * (n - 1) + parseInt(rating)) / n;
+        const newAvg = ((staff.average_rating || 0) * (n - 1) + nota) / n;
         await supabaseAdmin.from('staff').update({ average_rating: Math.round(newAvg * 100) / 100 }).eq('id', data.staff_id);
       }
     }
@@ -180,4 +216,4 @@ async function publicReviews(req, res, next) {
   } catch (err) { next(err); }
 }
 
-module.exports = { listar, stats, requestReview, submitReview, reply, publicReviews, obterTemplate, actualizarTemplate };
+module.exports = { listar, stats, requestReview, submitReview, reply, publicReviews, obterTemplate, actualizarTemplate, tokenInfo, obterDefinicoes, guardarDefinicoes };
