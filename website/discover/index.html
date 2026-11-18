@@ -684,7 +684,7 @@
   </div>
 </footer>
 
-<script src="_cartao.js?v=20261118b"></script>
+<script src="_cartao.js?v=20261118c"></script>
 <script>
 /* ══════════════════════════════════════════
    CONSTANTS
@@ -1203,7 +1203,7 @@ function renderActCard(item) {
         <button type="button" class="xp-heart ${wished ? 'active' : ''}" data-wish="${slug}" data-wish-unit="${unitId}" onclick="event.preventDefault();event.stopPropagation();toggleWishlist('${slug}','${unitId}')" aria-label="${lang === 'en' ? 'Save' : 'Guardar'}">${xpSvg('heart', 16)}</button>
       </div>
       <div class="xp-body">
-        ${item.island_name ? `<span class="xp-island">${esc(item.island_name)}</span>` : ''}
+        ${item.island_name ? `<span class="xp-island">${esc(C.nomeIlha(item, lang))}</span>` : ''}
         <h3><a class="xp-link" href="${href}">${esc(C.tituloCartao(item, meta, lang))}</a></h3>
         <div class="xp-op"><span class="xp-av" aria-hidden="true">${esc(C.iniciais(item.operator_name))}</span><span class="xp-op-name">${esc(item.operator_name)}</span><span class="xp-ver" title="${lang === 'en' ? 'Verified operator' : 'Operador verificado'}">${xpSvg('badge', 14, 2.2)}</span>${ratingBadge(item.avg_rating, item.review_count)}</div>
         ${attrs}
@@ -1275,24 +1275,27 @@ function applyFilters() {
 function renderIslandSeg() {
   const seg = document.getElementById('island-seg');
   const sep = document.getElementById('filters-sep');
-  const ilhas = CartaoDiscover.ilhasDosItens(operators);
   const lang = L();
+  /* o filtro usa island_name; o que se mostra e o nome na lingua do visitante */
+  const ilhas = CartaoDiscover.ilhasDosItens(operators).map(i => ({
+    ...i, rotulo: CartaoDiscover.nomeIlha(operators.find(u => u.island_name === i.nome), lang) || i.nome,
+  }));
   if (seg) {
     const btn = (nome, rotulo, n) =>
       `<button type="button" class="${activeIsland === nome ? 'on' : ''}" aria-pressed="${activeIsland === nome}" data-island="${esc(nome)}" onclick="setIsland(this.dataset.island)">${esc(rotulo)}<span class="c">${n}</span></button>`;
-    seg.innerHTML = btn('', lang === 'en' ? 'All' : 'Todas', operators.length) + ilhas.map(i => btn(i.nome, i.nome, i.n)).join('');
+    seg.innerHTML = btn('', lang === 'en' ? 'All' : 'Todas', operators.length) + ilhas.map(i => btn(i.nome, i.rotulo, i.n)).join('');
     seg.style.display = ilhas.length > 1 ? '' : 'none';
     if (sep) sep.style.display = ilhas.length > 1 ? '' : 'none';
   }
   const sel = document.getElementById('hero-island');
   if (sel) {
     sel.innerHTML = `<option value="">${lang === 'en' ? 'All islands' : 'Todas as ilhas'}</option>`
-      + ilhas.map(i => `<option value="${esc(i.nome)}">${esc(i.nome)}</option>`).join('');
+      + ilhas.map(i => `<option value="${esc(i.nome)}">${esc(i.rotulo)}</option>`).join('');
     sel.value = activeIsland;
   }
   const kicker = document.getElementById('hero-islands');
   if (kicker && ilhas.length) {
-    kicker.textContent = ilhas.map(i => i.nome).join(' · ') + (lang === 'en' ? ' · and growing' : ' · e a crescer');
+    kicker.textContent = ilhas.map(i => i.rotulo).join(' · ') + (lang === 'en' ? ' · and growing' : ' · e a crescer');
   }
 }
 

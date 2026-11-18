@@ -145,6 +145,17 @@
     return palavras.slice(0, 2).map(function (p) { return p.charAt(0).toUpperCase(); }).join('');
   }
 
+  /* Nomes das ilhas em ingles (os mesmos de ISLAND_LABEL da pagina); em PT, o nome da API */
+  var ILHAS_EN = {
+    'sal': 'Sal Island', 'santiago': 'Santiago', 'sao-vicente': 'São Vicente', 'santo-antao': 'Santo Antão',
+    'fogo': 'Fogo', 'brava': 'Brava', 'maio': 'Maio', 'boa-vista': 'Boa Vista', 'sao-nicolau': 'São Nicolau',
+  };
+  function nomeIlha(item, lang) {
+    var nome = texto(item && item.island_name);
+    if (lang === 'en' && item && ILHAS_EN[item.island_slug]) return ILHAS_EN[item.island_slug];
+    return nome;
+  }
+
   function ilhasDosItens(itens) {
     var cont = {};
     (Array.isArray(itens) ? itens : []).forEach(function (i) {
@@ -172,6 +183,7 @@
     miniaturaWikimedia: miniaturaWikimedia,
     iniciais: iniciais,
     ilhasDosItens: ilhasDosItens,
+    nomeIlha: nomeIlha,
   };
 
   if (typeof module !== 'undefined' && module.exports) module.exports = api;

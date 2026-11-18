@@ -100,3 +100,12 @@ test('iniciais_e_ilhas', () => {
     [{ nome: 'Ilha do Sal', n: 2 }, { nome: 'Santo Antão', n: 1 }],
   );
 });
+
+test('nome_da_ilha_na_lingua_do_visitante', () => {
+  assert.equal(C.nomeIlha({ island_slug: 'sal', island_name: 'Ilha do Sal' }, 'en'), 'Sal Island');
+  assert.equal(C.nomeIlha({ island_slug: 'sal', island_name: 'Ilha do Sal' }, 'pt'), 'Ilha do Sal');
+  assert.equal(C.nomeIlha({ island_slug: 'santo-antao', island_name: 'Santo Antão' }, 'en'), 'Santo Antão');
+  /* ilha sem traducao conhecida: o nome que vem da API */
+  assert.equal(C.nomeIlha({ island_slug: 'nova', island_name: 'Ilha Nova' }, 'en'), 'Ilha Nova');
+  assert.equal(C.nomeIlha({}, 'en'), '');
+});
