@@ -156,6 +156,16 @@
     return nome;
   }
 
+  /* Outros pontos turisticos da mesma ilha (sem o proprio), os que tem foto primeiro */
+  function outrosLugares(item, todos, max) {
+    var n = max || 6;
+    if (!item || !Array.isArray(todos)) return [];
+    var mesmos = todos.filter(function (l) { return l && l.island_slug === item.island_slug && l.slug !== item.slug; });
+    var comFoto = mesmos.filter(function (l) { return !!l.image_url; });
+    var semFoto = mesmos.filter(function (l) { return !l.image_url; });
+    return comFoto.concat(semFoto).slice(0, n);
+  }
+
   function ilhasDosItens(itens) {
     var cont = {};
     (Array.isArray(itens) ? itens : []).forEach(function (i) {
@@ -184,6 +194,7 @@
     iniciais: iniciais,
     ilhasDosItens: ilhasDosItens,
     nomeIlha: nomeIlha,
+    outrosLugares: outrosLugares,
   };
 
   if (typeof module !== 'undefined' && module.exports) module.exports = api;

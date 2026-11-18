@@ -109,3 +109,18 @@ test('nome_da_ilha_na_lingua_do_visitante', () => {
   assert.equal(C.nomeIlha({ island_slug: 'nova', island_name: 'Ilha Nova' }, 'en'), 'Ilha Nova');
   assert.equal(C.nomeIlha({}, 'en'), '');
 });
+
+test('outros_lugares_da_mesma_ilha_com_foto_primeiro', () => {
+  const todos = [
+    { slug: 'a', island_slug: 'sal', image_url: null },
+    { slug: 'b', island_slug: 'sal', image_url: 'b.jpg' },
+    { slug: 'c', island_slug: 'fogo', image_url: 'c.jpg' },
+    { slug: 'eu', island_slug: 'sal', image_url: 'eu.jpg' },
+    { slug: 'd', island_slug: 'sal', image_url: 'd.jpg' },
+  ];
+  const eu = todos[3];
+  assert.deepEqual(C.outrosLugares(eu, todos).map(l => l.slug), ['b', 'd', 'a']);
+  assert.deepEqual(C.outrosLugares(eu, todos, 2).map(l => l.slug), ['b', 'd']);
+  assert.deepEqual(C.outrosLugares({ slug: 'x', island_slug: 'maio' }, todos), []);
+  assert.deepEqual(C.outrosLugares(eu, null), []);
+});
