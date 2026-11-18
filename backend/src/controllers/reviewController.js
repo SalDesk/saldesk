@@ -1,7 +1,8 @@
 const { supabaseAdmin } = require('../config/supabase');
 
 /* Texto por omissao (neutro: serve actividades, hoteis, rent-a-car e restaurantes) */
-const { DEFAULT_TEMPLATE } = require('../helpers/pedidoAvaliacao');
+const { DEFAULT_TEMPLATE, estadoDoToken } = require('../helpers/pedidoAvaliacao');
+const { detectarIdioma } = require('../helpers/languageHelper');
 const { enviarPedido } = require('../services/pedidoAvaliacaoService');
 
 async function obterTemplate(req, res, next) {
@@ -78,6 +79,63 @@ async function requestReview(req, res, next) {
   } catch (err) { next(err); }
 }
 
+/* GET /reviews/token/:token (publico): o minimo para a pagina de avaliacao mostrar o que se
+   avalia. Nunca devolve e-mail, telefone, precos nem ids internos. */
+async function tokenInfo(req, res, next) {
+  try {
+    const token = String(req.params.token || '');
+    if (!/^[a-f0-9]{40}$/.test(token)) return res.json({ data: { estado: 'invalido' } });
+
+    const { data: review } = await supabaseAdmin
+      .from('reviews').select('review_token, token_expires_at, operator_id, reservation_id')
+      .eq('review_token', token).maybeSingle();
+    const estado = estadoDoToken(review, new Date());
+    if (estado === 'invalido') return res.json({ data: { estado } });
+
+    const { data: op } = await supabaseAdmin
+      .from('operators').select('name, slug, brand_color').eq('id', review.operator_id).maybeSingle();
+    const operador = { name: op?.name || '', slug: op?.slug || '', brand_color: op?.brand_color || null };
+    if (estado === 'expirado') return res.json({ data: { estado, operador } });
+
+    const { data: reserva } = await supabaseAdmin
+      .from('reservations').select('customer_name, customer_country, check_in, units(name)')
+      .eq('id', review.reservation_id).maybeSingle();
+    const primeiroNome = String(reserva?.customer_name || '').trim().split(/\s+/)[0] || null;
+    return res.json({
+      data: {
+        estado,
+        operador,
+        unidade: reserva?.units?.name || null,
+        data: reserva?.check_in ? String(reserva.check_in).slice(0, 10) : null,
+        cliente: primeiroNome,
+        lingua: detectarIdioma(reserva?.customer_country) === 'en' ? 'en' : 'pt',
+      },
+    });
+  } catch (err) { next(err); }
+}
+
+/* GET/PUT /reviews/settings: o operador liga ou desliga o pedido automatico (ligado por omissao) */
+async function obterDefinicoes(req, res, next) {
+  try {
+    const { data } = await supabaseAdmin
+      .from('operators').select('review_auto_request').eq('id', req.operator.id).maybeSingle();
+    return res.json({ data: { review_auto_request: data?.review_auto_request !== false } });
+  } catch (err) { next(err); }
+}
+
+async function guardarDefinicoes(req, res, next) {
+  try {
+    const valor = req.body?.review_auto_request;
+    if (typeof valor !== 'boolean') {
+      return res.status(400).json({ error: 'review_auto_request tem de ser verdadeiro ou falso', code: 'INVALID_VALUE' });
+    }
+    const { error } = await supabaseAdmin
+      .from('operators').update({ review_auto_request: valor }).eq('id', req.operator.id);
+    if (error) throw error;
+    return res.json({ data: { review_auto_request: valor }, message: 'Definicao guardada' });
+  } catch (err) { next(err); }
+}
+
 async function submitReview(req, res, next) {
   try {
     const { token, rating, comment, staff_id } = req.body;
@@ -145,4 +203,4 @@ async function publicReviews(req, res, next) {
   } catch (err) { next(err); }
 }
 
-module.exports = { listar, stats, requestReview, submitReview, reply, publicReviews, obterTemplate, actualizarTemplate };
+module.exports = { listar, stats, requestReview, submitReview, reply, publicReviews, obterTemplate, actualizarTemplate, tokenInfo, obterDefinicoes, guardarDefinicoes };
