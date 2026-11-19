@@ -292,6 +292,8 @@ export function RestaurantReservationSection({ slug, lang, units, opCurrency, cu
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           unit_id: selectedTableId,
+          /* mesa: paga-se no restaurante (conta para a confirmacao automatica) */
+          payment_method: 'cash',
           customer_name: contact.name,
           customer_email: contact.email,
           customer_phone: contact.phone || null,

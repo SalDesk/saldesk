@@ -4,6 +4,7 @@ import visaLogo from '../../assets/payment-logos/visa.png';
 import mastercardLogo from '../../assets/payment-logos/mastercard.png';
 import amexLogo from '../../assets/payment-logos/amex.jpg';
 import vinti4Logo from '../../assets/payment-logos/vinti4.png';
+import { textoPoliticaCancelamento } from '../../utils/politicaCancelamento';
 
 /* Exigencias visiveis do checklist de validacao de site da SISP (logos das
    marcas aceites + politica de cancelamento) -- ja existiam dentro do modal
@@ -14,7 +15,7 @@ import vinti4Logo from '../../assets/payment-logos/vinti4.png';
    ja usado no checkout, para nunca divergir. */
 export default function SiteComplianceFooter({ op, lang }) {
   const [open, setOpen] = useState(false);
-  const policyText = (lang === 'en' ? op.cancellation_policy_en : op.cancellation_policy_pt)
+  const policyText = textoPoliticaCancelamento(op, lang)
     || (lang === 'en'
       ? 'This operator has not yet defined a cancellation policy. Contact them directly before booking.'
       : 'Este operador ainda não definiu uma política de cancelamento. Contacte-o directamente antes de reservar.');

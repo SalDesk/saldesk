@@ -27,6 +27,7 @@ import {
   MENU_CATEGORY_LABELS, MENU_ALLERGEN_LABELS, MENU_DIET_LABELS, RestaurantReservationSection,
 } from '../components/restaurant/RestaurantReservationWidget';
 import SiteComplianceFooter from '../components/shared/SiteComplianceFooter';
+import { textoPoliticaCancelamento } from '../utils/politicaCancelamento';
 
 /* Icone numerado para as paragens do itinerario -- SVG inline (nunca
    bitmap), substitui o icone PNG por defeito do Leaflet (que nem sequer
@@ -292,7 +293,7 @@ function PO({ lang, v, set }) {
    texto real (ou o aviso honesto de "ainda nao definida"), nunca so um
    link solto -- o cliente ve o texto exacto antes de aceitar. */
 function CancelPolicyCheck({ op, lang, checked, onChange }) {
-  const text = (lang==='en'?op.cancellation_policy_en:op.cancellation_policy_pt)
+  const text = textoPoliticaCancelamento(op, lang)
     || (lang==='en'?'This operator has not yet defined a cancellation policy. Contact them directly before booking.':'Este operador ainda não definiu uma política de cancelamento. Contacte-o directamente antes de reservar.');
   return (
     <div className="space-y-2">
@@ -567,7 +568,7 @@ function HotelModal({ unit, op, slug, lang, onClose, refCode, traveler }) {
   const [voucherCode,svc]=useState(null);
   const nights=nts(ci,co); const rawTotal=nights*(unit.base_price||0); const total=nights>0&&unit.base_price?fmtPrice(rawTotal,null,op.currency||'EUR','EUR',lang):null;
   useEffect(()=>{ if (!ci||!co||co<=ci){sav(null);return;} const t=setTimeout(async()=>{ sc(true); try{sav((await(await fetch(`${API}/public/${slug}/availability?unitId=${unit.id}&checkIn=${ci}&checkOut=${co}`)).json()).data);}catch{sav(null);}finally{sc(false);} },700); return()=>clearTimeout(t); },[ci,co]);
-  function buildPayload(){ const notes=[`${adults} ${lang==='en'?'adults':'adultos'}, ${kids} ${lang==='en'?'children':'crianças'}`,info.notes].filter(Boolean).join('. '); return {unit_id:unit.id,customer_name:info.name,customer_email:info.email,customer_phone:info.phone||null,customer_country:info.country||null,check_in:ci,check_out:co,guests:adults+kids,notes,voucher_code:voucherCode||undefined,ref_code:refCode||undefined}; }
+  function buildPayload(){ const notes=[`${adults} ${lang==='en'?'adults':'adultos'}, ${kids} ${lang==='en'?'children':'crianças'}`,info.notes].filter(Boolean).join('. '); return {unit_id:unit.id,customer_name:info.name,customer_email:info.email,customer_phone:info.phone||null,customer_country:info.country||null,check_in:ci,check_out:co,guests:adults+kids,notes,voucher_code:voucherCode||undefined,ref_code:refCode||undefined,payment_method:pay}; }
   useEffect(()=>{ if(step===3&&pay==='paypal'&&!pendingRes&&!sub){ ssub(true); postReservation(slug,buildPayload()).then(spr).catch(e=>se(e.message)).finally(()=>ssub(false)); } },[step,pay]);
   function valid(){ if(step===1){if(!ci||!co){se(lang==='en'?'Select both dates':'Seleccione ambas as datas');return false;} if(co<=ci){se(lang==='en'?'Check-out must be after check-in':'Check-out deve ser posterior ao check-in');return false;} if(!avail?.disponivel){se(lang==='en'?'Room unavailable for these dates':'Quarto indisponível nestas datas');return false;}} if(step===2&&(!info.name||!info.email)){se(lang==='en'?'Name and email required':'Nome e email obrigatórios');return false;} se('');return true; }
   async function submit(){
@@ -636,7 +637,7 @@ function ActivityModal({ unit, op, slug, lang, onClose, refCode, traveler, initi
   /* Alojamento e datas de estadia (pedido real da Logan Tours: precisam de
      saber onde recolher e quando o turista chega/parte). Tudo opcional. */
   const stayLine=[info.hotel.trim()?`${lang==='en'?'Accommodation':'Alojamento'}: ${info.hotel.trim()}`:'',info.arrival?`${lang==='en'?'arrival':'chegada'} ${info.arrival}`:'',info.departure?`${lang==='en'?'departure':'partida'} ${info.departure}`:''].filter(Boolean).join(', ');
-  function buildPayload(){ const notes=[time?`${lang==='en'?'Time':'Hora'}: ${time}`:'',`${adults} ${lang==='en'?'adults':'adultos'}, ${kids} ${lang==='en'?'children':'crianças'}`,tourLang?(lang==='en'?'Language: ':'Idioma: ')+tourLang:'',stayLine,info.needs?(lang==='en'?'Additional request:':'Pedido adicional:')+' '+info.needs:''].filter(Boolean).join('. '); return {unit_id:unit.id,customer_name:info.name,customer_email:info.email,customer_phone:info.phone||null,customer_country:info.country||null,check_in:date,check_out:date,guests:adults+kids,notes,tour_time:hasSlots?time:undefined,voucher_code:voucherCode||undefined,ref_code:refCode||undefined,referred_by:info.referredBy.trim()||undefined,whatsapp_opt_in:info.whatsappOptIn||undefined,booking_mode:isPrivateMode?'private':undefined}; }
+  function buildPayload(){ const notes=[time?`${lang==='en'?'Time':'Hora'}: ${time}`:'',`${adults} ${lang==='en'?'adults':'adultos'}, ${kids} ${lang==='en'?'children':'crianças'}`,tourLang?(lang==='en'?'Language: ':'Idioma: ')+tourLang:'',stayLine,info.needs?(lang==='en'?'Additional request:':'Pedido adicional:')+' '+info.needs:''].filter(Boolean).join('. '); return {unit_id:unit.id,customer_name:info.name,customer_email:info.email,customer_phone:info.phone||null,customer_country:info.country||null,check_in:date,check_out:date,guests:adults+kids,notes,tour_time:hasSlots?time:undefined,voucher_code:voucherCode||undefined,ref_code:refCode||undefined,referred_by:info.referredBy.trim()||undefined,whatsapp_opt_in:info.whatsappOptIn||undefined,booking_mode:isPrivateMode?'private':undefined,payment_method:pay}; }
   useEffect(()=>{ if(step===3&&pay==='paypal'&&!pendingRes&&!sub){ ssub(true); postReservation(slug,buildPayload()).then(spr).catch(e=>se(e.message)).finally(()=>ssub(false)); } },[step,pay]);
   function valid(){ if(step===1){if(!date){se(lang==='en'?'Select a date':'Seleccione uma data');return false;} if(hasSlots&&!time){se(lang==='en'?'Select a time slot':'Seleccione um horário');return false;} if(adults<1){se(lang==='en'?'At least 1 adult required':'Mínimo 1 adulto');return false;}} if(step===2&&(!info.name||!info.email)){se(lang==='en'?'Name and email required':'Nome e email obrigatórios');return false;} if(step===2&&info.arrival&&info.departure&&info.departure<info.arrival){se(lang==='en'?'Departure date must be after arrival':'A data de partida deve ser depois da chegada');return false;} se('');return true; }
   async function submit(){
@@ -723,7 +724,7 @@ function RentACarModal({ unit, op, slug, lang, onClose, refCode, traveler }) {
   const days=dys(pu.date,re.date); const chauffeurTotal=driverIncluded&&chauffeurRate>0?days*chauffeurRate:0;
   const rawTotal=days*(unit.base_price||0)+chauffeurTotal; const total=days>0&&unit.base_price?fmtPrice(rawTotal,null,op.currency||'EUR','EUR',lang):null;
   const locs=buildLocs(lang, op.islands?.airport_code); const extList=CAR_EXTRAS.filter(e=>ext[e.k]);
-  function buildPayload(){ const notes=[`${lang==='en'?'Pickup':'Levantamento'}: ${pu.loc} ${pu.date} ${pu.time}`,`${lang==='en'?'Return':'Devolução'}: ${re.loc||pu.loc} ${re.date} ${re.time}`,extList.length?`Extras: ${extList.map(e=>lang==='en'?e.en:e.pt).join(', ')}`:'',driverIncluded&&chauffeurRate>0?(lang==='en'?'Chauffeur included':'Motorista incluído'):'' ].filter(Boolean).join('. '); return {unit_id:unit.id,customer_name:drv.name,customer_email:drv.email,customer_phone:drv.phone||null,customer_country:drv.country||null,check_in:pu.date,check_out:re.date,guests:1,notes,driver_included:driverIncluded&&chauffeurRate>0,voucher_code:voucherCode||undefined,ref_code:refCode||undefined}; }
+  function buildPayload(){ const notes=[`${lang==='en'?'Pickup':'Levantamento'}: ${pu.loc} ${pu.date} ${pu.time}`,`${lang==='en'?'Return':'Devolução'}: ${re.loc||pu.loc} ${re.date} ${re.time}`,extList.length?`Extras: ${extList.map(e=>lang==='en'?e.en:e.pt).join(', ')}`:'',driverIncluded&&chauffeurRate>0?(lang==='en'?'Chauffeur included':'Motorista incluído'):'' ].filter(Boolean).join('. '); return {unit_id:unit.id,customer_name:drv.name,customer_email:drv.email,customer_phone:drv.phone||null,customer_country:drv.country||null,check_in:pu.date,check_out:re.date,guests:1,notes,driver_included:driverIncluded&&chauffeurRate>0,voucher_code:voucherCode||undefined,ref_code:refCode||undefined,payment_method:pay}; }
   useEffect(()=>{ if(step===3&&pay==='paypal'&&!pendingRes&&!sub){ ssub(true); postReservation(slug,buildPayload()).then(spr).catch(e=>se(e.message)).finally(()=>ssub(false)); } },[step,pay]);
   function valid(){ if(step===1){if(!pu.date||!re.date){se(lang==='en'?'Select pickup and return dates':'Seleccione datas');return false;} if(re.date<=pu.date){se(lang==='en'?'Return after pickup':'Devolução após levantamento');return false;} if(!pu.loc){se(lang==='en'?'Select pickup location':'Seleccione o local');return false;}} if(step===2&&(!drv.name||!drv.email)){se(lang==='en'?'Name and email required':'Nome e email obrigatórios');return false;} if(step===2&&!drv.license){se(lang==='en'?'Driving licence required':'Carta de condução obrigatória');return false;} se('');return true; }
   async function submit(){
@@ -1554,11 +1555,11 @@ export default function ServiceDetail() {
               <p className="text-xs font-body font-bold text-brand-700 uppercase tracking-widest mb-4">
                 {lang==='en'?'Cancellation policy':'Política de cancelamento'}
               </p>
-              {(lang==='en' ? op.cancellation_policy_en : op.cancellation_policy_pt) ? (
+              {textoPoliticaCancelamento(op, lang) ? (
                 <div className="flex items-start gap-3 p-4 bg-n-50 border border-n-200 rounded-xl">
                   <RotateCcw size={18} strokeWidth={1.75} className="text-brand-700 flex-shrink-0 mt-0.5"/>
                   <p className="font-body text-sm text-n-700 whitespace-pre-wrap">
-                    {lang==='en' ? op.cancellation_policy_en : op.cancellation_policy_pt}
+                    {textoPoliticaCancelamento(op, lang)}
                   </p>
                 </div>
               ) : (
