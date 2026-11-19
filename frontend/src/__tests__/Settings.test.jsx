@@ -441,6 +441,12 @@ describe('Definicoes: Perfil Publico', () => {
       expect(c2.queryByText(/Cancelamento gratuito até 48 horas/)).toBeNull();
     });
 
+    it('dica_da_confirmacao_explica_que_so_pagar_no_local_confirma_logo', async () => {
+      await abrirPerfil({ ...OPERADOR, auto_confirm_bookings: false });
+      expect(screen.getByText('As reservas da sua pagina publica com pagamento no local ficam logo confirmadas, sem precisar de as aceitar. '
+        + 'As pagas online ficam confirmadas quando o pagamento e feito. Os cartoes do catalogo mostram "Confirmacao imediata".')).toBeInTheDocument();
+    });
+
     it('sem_prazo_envia_null', async () => {
       await abrirPerfil({ ...OPERADOR, free_cancellation_hours: 24, auto_confirm_bookings: true });
       expect(prazo()).toHaveValue('24');

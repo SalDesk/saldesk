@@ -250,7 +250,8 @@ export default function PerfilPublicoTab({ operator }) {
           as pagas online ficam confirmadas quando o pagamento e capturado. */}
       <Card header={<h3 className="font-display font-semibold text-sm text-n-700">Confirmação das reservas</h3>}>
         <Toggle checked={autoConfirm} onChange={setAutoConfirm} label="Confirmar reservas automaticamente"
-          hint={'As reservas feitas na sua pagina publica ficam logo confirmadas, sem precisar de as aceitar. Os cartoes do catalogo mostram "Confirmacao imediata".'} />
+          hint={'As reservas da sua pagina publica com pagamento no local ficam logo confirmadas, sem precisar de as aceitar. '
+            + 'As pagas online ficam confirmadas quando o pagamento e feito. Os cartoes do catalogo mostram "Confirmacao imediata".'} />
       </Card>
 
       {/* Cor da pagina publica e do widget */}

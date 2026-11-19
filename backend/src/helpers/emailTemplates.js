@@ -252,8 +252,11 @@ function notificacaoOperadorEmail({
   customer = {},
   notes,
   sellerName,
+  confirmada = false,
 }) {
-  const subject = `Nova reserva — ${tourName} | ${formatDateShort(checkIn)}`;
+  /* Confirmacao automatica: a reserva paga no local ja chega confirmada, o operador nao a tem de aceitar */
+  const avisoConfirmada = 'Esta reserva ficou confirmada automaticamente (pagamento no local). Não precisa de a aceitar.';
+  const subject = `${confirmada ? 'Nova reserva confirmada' : 'Nova reserva'} — ${tourName} | ${formatDateShort(checkIn)}`;
 
   const dateLabel = (checkOut && checkOut !== checkIn)
     ? `${formatDate(checkIn, 'pt')} → ${formatDate(checkOut, 'pt')}`
@@ -262,7 +265,8 @@ function notificacaoOperadorEmail({
   const introText = sellerName
     ? `Olá ${operatorName}, o seu colaborador <strong>${sellerName}</strong> registou uma nova reserva.`
     : `Olá ${operatorName}, recebeu uma nova reserva através da SalDesk.`;
-  const intro = `<p style="margin:0 0 20px;font-family:${FONT};font-size:14px;line-height:1.6;color:${MUTED};">${introText}</p>`;
+  const intro = `<p style="margin:0 0 20px;font-family:${FONT};font-size:14px;line-height:1.6;color:${MUTED};">${introText}</p>`
+    + (confirmada ? `<p style="margin:0 0 20px;font-family:${FONT};font-size:14px;line-height:1.6;color:#15803d;font-weight:600;">${avisoConfirmada}</p>` : '');
 
   const reservaDetails = detailsTable([
     detailRow('Serviço',  tourName),
@@ -298,6 +302,7 @@ function notificacaoOperadorEmail({
     sellerName
       ? `O seu colaborador ${sellerName} registou uma nova reserva.`
       : 'Recebeu uma nova reserva através da SalDesk.',
+    ...(confirmada ? ['', avisoConfirmada] : []),
     '',
     'Detalhes da reserva:',
     `- Serviço: ${tourName}`,
