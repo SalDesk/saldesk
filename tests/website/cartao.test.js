@@ -284,3 +284,25 @@ test('contar_opcoes_respeita_os_outros_grupos', () => {
   assert.deepEqual(C.contarOpcoes(lista, 'preco', { ...SEM, beneficio: 'cancelamento' }, 110), { ate50: 1, '50a100': 0, mais100: 1 });
   assert.deepEqual(C.contarOpcoes(lista, 'beneficio', { ...SEM, beneficio: 'cancelamento' }, 110), { cancelamento: 2, confirmacao: 1, recolha: 1 });
 });
+
+test('jsonld_lugar_com_e_sem_coordenadas', () => {
+  const url = 'https://saldesk.cv/discover/ponto.html?slug=buracona';
+  const lugar = { slug: 'buracona', name_pt: 'Buracona', description_pt: 'Piscina natural.', image_url: 'https://x/b.jpg', lat: 16.82, lng: -22.98, island_slug: 'sal' };
+  assert.deepEqual(C.jsonLdLugar(lugar, url, 'Ilha do Sal'), {
+    '@context': 'https://schema.org',
+    '@type': 'TouristAttraction',
+    name: 'Buracona',
+    description: 'Piscina natural.',
+    image: 'https://x/b.jpg',
+    url,
+    geo: { '@type': 'GeoCoordinates', latitude: 16.82, longitude: -22.98 },
+    address: { '@type': 'PostalAddress', addressRegion: 'Ilha do Sal', addressCountry: 'CV' },
+  });
+  const semNada = C.jsonLdLugar({ slug: 'x', name_pt: 'X', lat: null, lng: -22 }, url, '');
+  assert.equal('geo' in semNada, false);
+  assert.equal('image' in semNada, false);
+  assert.equal('description' in semNada, false);
+  assert.deepEqual(semNada.address, { '@type': 'PostalAddress', addressCountry: 'CV' });
+  assert.equal(C.jsonLdLugar(null, url), null);
+  assert.equal(C.jsonLdLugar({ slug: 'x' }, url), null);
+});

@@ -28,6 +28,7 @@ import {
 } from '../components/restaurant/RestaurantReservationWidget';
 import SiteComplianceFooter from '../components/shared/SiteComplianceFooter';
 import { textoPoliticaCancelamento } from '../utils/politicaCancelamento';
+import { jsonLdExperiencia } from '../utils/dadosEstruturados';
 
 /* Icone numerado para as paragens do itinerario -- SVG inline (nunca
    bitmap), substitui o icone PNG por defeito do Leaflet (que nem sequer
@@ -989,6 +990,20 @@ export default function ServiceDetail() {
     }).catch(() => setNotFound(true))
       .finally(() => setLoading(false));
   }, [slug, id]);
+
+  /* Dados estruturados para o Google (Product + Offer + avaliacoes desta experiencia);
+     sai quando a pagina muda de servico ou fecha */
+  useEffect(() => {
+    if (!unit || !op) return undefined;
+    const dados = jsonLdExperiencia({ unit, op, reviews, url: `${window.location.origin}/book/${slug}/servico/${id}` });
+    if (!dados) return undefined;
+    const el = document.createElement('script');
+    el.type = 'application/ld+json';
+    el.id = 'sd-jsonld';
+    el.textContent = JSON.stringify(dados).replace(/</g, '\\u003c');
+    document.head.appendChild(el);
+    return () => { el.remove(); };
+  }, [unit, op, reviews, slug, id]);
 
   /* Prato/menu de degustação: o widget de reserva completo (escolha de mesa +
      pré-pedido) precisa da lista COMPLETA de unidades do operador (mesas +

@@ -56,6 +56,25 @@ afterEach(() => {
 });
 
 describe('ServiceDetail: carregamento', () => {
+  it('injecta_e_remove_jsonld', async () => {
+    simularRede();
+    const { unmount } = montar();
+    await waitFor(() => expect(document.getElementById('sd-jsonld')).not.toBeNull());
+    const j = JSON.parse(document.getElementById('sd-jsonld').textContent);
+    expect(j).toMatchObject({ '@type': 'Product', name: 'Passeio de buggy', offers: { price: 45, priceCurrency: 'EUR' } });
+    expect(j.url).toMatch(/\/book\/demo\/servico\/u1$/);
+    expect(j).not.toHaveProperty('aggregateRating');
+    unmount();
+    expect(document.getElementById('sd-jsonld')).toBeNull();
+  });
+
+  it('servico_inexistente_nao_deixa_jsonld', async () => {
+    simularRede({ ficha: { data: null } });
+    montar();
+    expect(await screen.findByText('Serviço não encontrado')).toBeInTheDocument();
+    expect(document.getElementById('sd-jsonld')).toBeNull();
+  });
+
   it('pede o servico e as avaliacoes certos e mostra o nome do servico', async () => {
     simularRede();
     montar();

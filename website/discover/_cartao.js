@@ -309,6 +309,25 @@
     return { porItinerario: false, itens: ordenadas.slice(0, 6) };
   }
 
+  /* Dados estruturados (schema.org) de um ponto turistico, para o Google: so o que existe */
+  function jsonLdLugar(lugar, url, regiao) {
+    var nome = texto(lugar && lugar.name_pt);
+    if (!nome) return null;
+    var j = { '@context': 'https://schema.org', '@type': 'TouristAttraction', name: nome };
+    var desc = texto(lugar.description_pt);
+    if (desc) j.description = desc.slice(0, 500);
+    if (texto(lugar.image_url)) j.image = lugar.image_url;
+    if (url) j.url = url;
+    var lat = Number(lugar.lat); var lng = Number(lugar.lng);
+    if (lugar.lat !== null && lugar.lat !== undefined && lugar.lng !== null && lugar.lng !== undefined && isFinite(lat) && isFinite(lng)) {
+      j.geo = { '@type': 'GeoCoordinates', latitude: lat, longitude: lng };
+    }
+    j.address = texto(regiao)
+      ? { '@type': 'PostalAddress', addressRegion: texto(regiao), addressCountry: 'CV' }
+      : { '@type': 'PostalAddress', addressCountry: 'CV' };
+    return j;
+  }
+
   function ilhasDosItens(itens) {
     var cont = {};
     (Array.isArray(itens) ? itens : []).forEach(function (i) {
@@ -333,6 +352,7 @@
     passaFiltrosExtra: passaFiltrosExtra,
     ordenarPorPreco: ordenarPorPreco,
     contarOpcoes: contarOpcoes,
+    jsonLdLugar: jsonLdLugar,
     precoCartao: precoCartao,
     precoCrianca: precoCrianca,
     formatarPreco: formatarPreco,
