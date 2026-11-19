@@ -37,6 +37,19 @@ router.get('/sitemap.xml', async (_req, res) => {
     const base = frontendBase();
     const publicBase = process.env.WEBSITE_URL || 'https://saldesk.cv';
 
+    /* Cada experiencia do catalogo (pagina de servico) e cada ponto turistico -- se uma das
+       fontes falhar, o sitemap continua com o resto em vez de devolver erro */
+    let experiencias = [];
+    try {
+      const catalogo = await getDiscoverCatalog();
+      experiencias = (catalogo || []).filter((u) => u && u.operator_slug && u.unit_id);
+    } catch { experiencias = []; }
+    let pontos = [];
+    try {
+      const { data: lm, error: lmErr } = await supabaseAdmin.from('cms_landmarks').select('slug, updated_at').order('name_pt');
+      if (!lmErr) pontos = (lm || []).filter((l) => l && l.slug);
+    } catch { pontos = []; }
+
     const urls = [
       { loc: publicBase, priority: '1.0' },
       { loc: `${publicBase}/discover/`, priority: '0.9' },
@@ -49,12 +62,21 @@ router.get('/sitemap.xml', async (_req, res) => {
         lastmod: op.updated_at?.split('T')[0],
         priority: '0.8',
       })),
+      ...experiencias.map((u) => ({
+        loc: `${base}/book/${u.operator_slug}/servico/${u.unit_id}`,
+        priority: '0.7',
+      })),
+      ...pontos.map((l) => ({
+        loc: `${publicBase}/discover/ponto.html?slug=${l.slug}`,
+        lastmod: l.updated_at ? String(l.updated_at).split('T')[0] : undefined,
+        priority: '0.6',
+      })),
     ];
 
     const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 ${urls.map(u => `  <url>
-    <loc>${u.loc}</loc>
+    <loc>${xmlEscape(u.loc)}</loc>
     ${u.lastmod ? `<lastmod>${u.lastmod}</lastmod>` : ''}
     <priority>${u.priority}</priority>
   </url>`).join('\n')}
