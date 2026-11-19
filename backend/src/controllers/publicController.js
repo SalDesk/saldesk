@@ -1,5 +1,7 @@
 const { supabaseAdmin } = require('../config/supabase');
 const { estadoInicialReserva } = require('../helpers/politicaOperador');
+const { criarNotificacaoViajante } = require('../helpers/travelerNotificationHelper');
+const { frontendBase } = require('../utils/urls');
 const { verificarDisponibilidade, calcularPreco, verificarDisponibilidadeMesa, listarMesasDisponiveis, DEFAULT_SEATING_MINUTES, parseUnitMeta, verificarDisponibilidadeSlot, listarSlotsComDisponibilidade, calcularPrecoPrivado, temPrecoPrivadoConfigurado } = require('../helpers/bookingHelpers');
 const { obterOuCriarCliente } = require('../helpers/customerHelper');
 const { enviarEmail } = require('../helpers/emailHelper');
@@ -540,12 +542,23 @@ async function criarReserva(req, res, next) {
       }
     }
 
+    /* Confirmacao automatica: a reserva ja nasceu confirmada -- o operador sabe que nao a tem de
+       aceitar e o viajante recebe o mesmo aviso que teria se o operador a confirmasse a mao */
+    const jaConfirmada = data.status === 'confirmed';
+    if (jaConfirmada) {
+      criarNotificacaoViajante(
+        customer_email, 'booking_confirmed',
+        `A sua reserva com ${operator.name || 'o operador'} foi confirmada.`,
+        `${frontendBase()}/viajante`,
+      ).catch(() => {});
+    }
+
     supabaseAdmin.from('notifications').insert({
       operator_id:       operator.id,
       notification_type: 'new_booking',
-      content:            data.driver_included
+      content:            (data.driver_included
         ? `Nova reserva EXECUTIVO com motorista de ${customer_name} — ${unit.name} (atribuir condutor)`
-        : `Nova reserva de ${customer_name} — ${unit.name}`,
+        : `Nova reserva de ${customer_name} — ${unit.name}`) + (jaConfirmada ? ' (já confirmada)' : ''),
       link:               `/reservas/${data.id}`,
     }).then(({ error: notifErr }) => {
       if (notifErr) console.error('[Notificacao] Erro ao criar notificacao:', notifErr.message);
@@ -593,7 +606,8 @@ async function criarReserva(req, res, next) {
           phone: customer_phone,
           country: customer_country
         },
-        notes: finalNotes
+        notes: finalNotes,
+        confirmada: jaConfirmada,
       });
       enviarEmail({
         to: operator.email,
@@ -606,7 +620,7 @@ async function criarReserva(req, res, next) {
     return res.status(201).json({
       data,
       pre_order: preOrder,
-      message: 'Reserva submetida com sucesso. Aguarde confirmação.'
+      message: jaConfirmada ? 'Reserva confirmada.' : 'Reserva submetida com sucesso. Aguarde confirmação.'
     });
   } catch (err) {
     next(err);

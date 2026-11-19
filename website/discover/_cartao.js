@@ -60,8 +60,10 @@
     return vistas.length ? vistas.join(', ') : null;
   }
 
-  /* Itens que falam de recolha: com pickup_included ja aparecem em "Recolha no hotel" */
-  var RECOLHA = /recolha|pick-?up/i;
+  /* Itens que falam de recolha: com pickup_included ja aparecem em "Recolha no hotel".
+     A recolha no aeroporto e outra coisa e fica na lista. */
+  var RECOLHA = /recolha|pick[- ]?up/i;
+  var AEROPORTO = /aeroporto|airport/i;
 
   /* O que inclui: objectos { label, included } marcados como incluidos e textos simples */
   function incluidosTexto(meta, max) {
@@ -73,7 +75,7 @@
       var t = '';
       if (typeof i === 'string') t = texto(i);
       else if (i && typeof i === 'object' && i.included === true) t = texto(i.label);
-      if (t && !(semRecolha && RECOLHA.test(t))) out.push(t);
+      if (t && !(semRecolha && RECOLHA.test(t) && !AEROPORTO.test(t))) out.push(t);
     });
     return out.length ? out.slice(0, n).join(' · ') : null;
   }

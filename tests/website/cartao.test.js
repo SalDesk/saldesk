@@ -193,3 +193,8 @@ test('recolha_nao_se_repete_nos_incluidos', () => {
   assert.equal(C.incluidosTexto({ included_items: itens }), 'Recolha no hotel · Hotel pick-up and drop-off · Guia');
   assert.equal(C.incluidosTexto({ pickup_included: true, included_items: ['RECOLHA'] }), null);
 });
+
+test('recolha_com_espaco_some_e_a_do_aeroporto_fica', () => {
+  const itens = ['Pick up at your hotel', 'Recolha no aeroporto', { label: 'Airport pickup', included: true }, 'Guia'];
+  assert.equal(C.incluidosTexto({ pickup_included: true, included_items: itens }), 'Recolha no aeroporto · Airport pickup · Guia');
+});
