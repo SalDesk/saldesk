@@ -178,6 +178,10 @@
     .xp-attrs li{display:inline-flex;align-items:center;gap:5px;font-size:.78rem;font-weight:500;color:var(--n700);background:var(--n50);border:1px solid var(--n200);border-radius:6px;padding:3px 8px;white-space:nowrap}
     .xp-attrs svg{color:var(--n500)}
     .xp-attrs .vehicle-specs{margin-bottom:0}
+    .xp-perks{display:flex;align-items:flex-start;gap:6px;margin-top:12px;font-size:.8125rem;line-height:1.45;font-weight:600;color:var(--ok);min-width:0}
+    .xp-perks svg{flex-shrink:0;margin-top:2px}
+    .xp-perks span{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-width:0}
+    .xp-perks + .xp-inc{margin-top:6px}
     .xp-inc{display:flex;align-items:center;gap:6px;margin-top:12px;font-size:.8125rem;color:var(--ok);min-height:20px}
     .xp-inc svg{flex-shrink:0}
     .xp-inc span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -684,7 +688,7 @@
   </div>
 </footer>
 
-<script src="_cartao.js?v=20261118c"></script>
+<script src="_cartao.js?v=20261119a"></script>
 <script>
 /* ══════════════════════════════════════════
    CONSTANTS
@@ -1181,6 +1185,7 @@ function renderActCard(item) {
   }
 
   const inc = C.incluidosTexto(meta);
+  const perks = C.beneficiosCartao(item, meta, lang).join(' · ');
   const sinal = [C.sinalProcura(item, lang), C.proximaData(item, C.hojeCaboVerde(), lang)].filter(Boolean).join(' · ');
 
   const preco   = C.precoCartao(item, meta);
@@ -1207,6 +1212,7 @@ function renderActCard(item) {
         <h3><a class="xp-link" href="${href}">${esc(C.tituloCartao(item, meta, lang))}</a></h3>
         <div class="xp-op"><span class="xp-av" aria-hidden="true">${esc(C.iniciais(item.operator_name))}</span><span class="xp-op-name">${esc(item.operator_name)}</span><span class="xp-ver" title="${lang === 'en' ? 'Verified operator' : 'Operador verificado'}">${xpSvg('badge', 14, 2.2)}</span>${ratingBadge(item.avg_rating, item.review_count)}</div>
         ${attrs}
+        ${perks ? `<p class="xp-perks">${xpSvg('check', 14, 2.4)}<span>${esc(perks)}</span></p>` : ''}
         <p class="xp-inc">${inc ? `${xpSvg('check', 14, 2.4)}<span>${esc(inc)}</span>` : ''}</p>
         ${sinal ? `<p class="xp-signal">${esc(sinal)}</p>` : ''}
       </div>
