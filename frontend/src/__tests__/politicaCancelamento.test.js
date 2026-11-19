@@ -33,3 +33,17 @@ describe('politicaCancelamento', () => {
     expect(textoPoliticaCancelamento({ cancellation_policy_pt: '  ', cancellation_policy_en: '' }, 'en')).toBeNull();
   });
 });
+
+/* Frase curta do prazo (cartoes e pagina publica do operador): so com prazo de cancelamento gratis */
+describe('textoBeneficioCancelamento', () => {
+  it('frase_curta_so_com_prazo_gratis', async () => {
+    const { textoBeneficioCancelamento } = await import('../utils/politicaCancelamento');
+    expect(textoBeneficioCancelamento(24, 'pt')).toBe('Cancelamento grátis até 24 h antes');
+    expect(textoBeneficioCancelamento(72, 'en')).toBe('Free cancellation up to 72 h before');
+    expect(textoBeneficioCancelamento(168, 'pt')).toBe('Cancelamento grátis até 7 dias antes');
+    expect(textoBeneficioCancelamento(168, 'en')).toBe('Free cancellation up to 7 days before');
+    expect(textoBeneficioCancelamento(0, 'pt')).toBeNull();
+    expect(textoBeneficioCancelamento(null, 'pt')).toBeNull();
+    expect(textoBeneficioCancelamento(36, 'en')).toBeNull();
+  });
+});

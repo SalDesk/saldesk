@@ -35,6 +35,19 @@ export const ZONE_LABELS = {
 };
 export const REST_SLOTS = ['12:00','12:30','13:00','13:30','14:00','14:30','19:00','19:30','20:00','20:30','21:00','21:30','22:00','22:30'];
 
+/* Texto depois de reservar mesa: com a confirmacao automatica do operador a reserva ja vem confirmada */
+export function textoReservaMesa(status, lang) {
+  const en = lang === 'en';
+  if (status === 'confirmed') {
+    return en
+      ? { titulo: 'Reservation confirmed!', texto: 'Your table is confirmed. You will receive an email shortly.' }
+      : { titulo: 'Reserva confirmada!', texto: 'A sua mesa está confirmada. Vai receber um email em breve.' };
+  }
+  return en
+    ? { titulo: 'Reservation submitted!', texto: 'Awaiting confirmation from the restaurant. You will receive an email shortly.' }
+    : { titulo: 'Reserva submetida!', texto: 'A aguardar confirmação do restaurante. Vai receber um email em breve.' };
+}
+
 export function parseMenuMeta(unit) {
   try { return JSON.parse(unit?.description || '{}'); } catch { return {}; }
 }
@@ -219,6 +232,7 @@ export function MenuCartPicker({ units, lang, opCurrency, currency, cart, setQty
    de um prato (ServiceDetail.jsx, com `preselectedDishId` fixo). ── */
 export function RestaurantReservationSection({ slug, lang, units, opCurrency, currency, preselectedDishId }) {
   const today = new Date().toISOString().split('T')[0];
+  const [resStatus, setResStatus] = useState(null);
   const [date, setDate]           = useState('');
   const [time, setTime]           = useState('');
   const [party, setParty]         = useState(2);
@@ -310,6 +324,7 @@ export function RestaurantReservationSection({ slug, lang, units, opCurrency, cu
       const j = await r.json();
       if (!r.ok) throw new Error(j.error || (lang === 'en' ? 'Could not submit reservation' : 'Erro ao submeter reserva'));
       if (cartEntries.length && j.pre_order?.created === false) setPreOrderFailed(true);
+      setResStatus(j.data?.status || null);
       setResId(j.data?.id || 'ok');
     } catch (err) {
       setError(err.message);
@@ -340,12 +355,10 @@ export function RestaurantReservationSection({ slug, lang, units, opCurrency, cu
             </div>
             <div>
               <p className="font-display font-bold text-white mb-1">
-                {lang === 'en' ? 'Reservation submitted!' : 'Reserva submetida!'}
+                {textoReservaMesa(resStatus, lang).titulo}
               </p>
               <p className="text-sm font-body text-white/70">
-                {lang === 'en'
-                  ? 'Awaiting confirmation from the restaurant. You will receive an email shortly.'
-                  : 'A aguardar confirmação do restaurante. Vai receber um email em breve.'}
+                {textoReservaMesa(resStatus, lang).texto}
               </p>
               {preOrderFailed && (
                 <p className="text-sm font-body text-red-300 mt-2">

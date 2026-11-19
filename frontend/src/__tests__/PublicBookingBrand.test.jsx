@@ -74,3 +74,24 @@ describe('PublicBooking: cor da marca', () => {
     expect(raiz().style.getPropertyValue('--brand-700-rgb')).toBe('');
   });
 });
+
+/* As promessas da pagina publica seguem o prazo de cancelamento e a confirmacao automatica do operador */
+describe('PublicBooking: promessas de cancelamento e confirmacao', () => {
+  it('sem_cancelamento_gratis_nao_promete_cancelamento_e_sem_auto_confirmacao_nao_promete_imediata', async () => {
+    localStorage.setItem('sd-lang', 'pt');
+    simularRede(operador({ free_cancellation_hours: 0, auto_confirm_bookings: false }));
+    montar();
+    expect(await screen.findByText('Sem cartão de crédito')).toBeInTheDocument();
+    expect(screen.queryByText(/Cancelamento gratuito|Cancelamento grátis/)).toBeNull();
+    expect(screen.queryByText('Confirmação Imediata')).toBeNull();
+    expect(screen.getByText('Confirmação Rápida')).toBeInTheDocument();
+  });
+
+  it('com_prazo_e_auto_confirmacao_mostra_as_duas_promessas', async () => {
+    localStorage.setItem('sd-lang', 'pt');
+    simularRede(operador({ free_cancellation_hours: 48, auto_confirm_bookings: true }));
+    montar();
+    expect(await screen.findByText('Cancelamento grátis até 48 h antes · Sem cartão de crédito')).toBeInTheDocument();
+    expect(screen.getByText('Confirmação Imediata')).toBeInTheDocument();
+  });
+});

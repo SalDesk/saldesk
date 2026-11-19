@@ -21,6 +21,14 @@ export function textoPoliticaGerada(horas, lang) {
   return null;
 }
 
+/* Frase curta do prazo de cancelamento gratis (igual a dos cartoes do Discover); null sem prazo gratis */
+export function textoBeneficioCancelamento(horas, lang) {
+  const en = lang === 'en';
+  if (horas === 168) return en ? 'Free cancellation up to 7 days before' : 'Cancelamento grátis até 7 dias antes';
+  if ([24, 48, 72].includes(horas)) return en ? `Free cancellation up to ${horas} h before` : `Cancelamento grátis até ${horas} h antes`;
+  return null;
+}
+
 function escrito(texto) {
   return typeof texto === 'string' && texto.trim() ? texto : null;
 }

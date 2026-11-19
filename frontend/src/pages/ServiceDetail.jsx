@@ -306,7 +306,7 @@ function CancelPolicyCheck({ op, lang, checked, onChange }) {
   );
 }
 
-function BS({ resId, lang, type, onClose }) {
+export function BS({ resId, lang, type, confirmed, onClose }) {
   const T = { hotel:{pt:'Quarto reservado!',en:'Room booked!'}, activity:{pt:'Tour reservado!',en:'Tour booked!'}, rentacar:{pt:'Viatura reservada!',en:'Vehicle reserved!'}, restaurant:{pt:'Mesa reservada!',en:'Table reserved!'} };
   const m = T[type]||T.activity;
   return (
@@ -316,7 +316,9 @@ function BS({ resId, lang, type, onClose }) {
       </div>
       <h3 className="font-display font-bold text-xl text-n-900 mb-3">{lang==='en'?m.en:m.pt}</h3>
       <p className="text-sm font-body text-n-500 leading-relaxed mb-6 max-w-xs mx-auto">
-        {lang==='en'?'You will receive a confirmation email shortly. The operator will confirm within 24h.':'Receberá um email de confirmação em breve. O operador confirmará a sua reserva em 24h.'}
+        {confirmed
+          ? (lang==='en'?'Your booking is confirmed. You will receive an email with the details shortly.':'A sua reserva está confirmada. Receberá um email com os detalhes em breve.')
+          : (lang==='en'?'You will receive a confirmation email shortly. The operator will confirm within 24h.':'Receberá um email de confirmação em breve. O operador confirmará a sua reserva em 24h.')}
       </p>
       {resId&&<div className="bg-n-50 border border-n-200 rounded-xl px-4 py-3 inline-block mb-6"><p className="text-xs text-n-400 font-body mb-1">{lang==='en'?'Booking reference':'Referência da reserva'}</p><p className="font-mono font-bold text-n-800 text-sm tracking-widest">{resId.slice(0,8).toUpperCase()}</p></div>}
       <button onClick={onClose} className="border-2 border-n-200 text-n-700 font-body font-semibold py-3 px-8 rounded-xl hover:border-brand-700 hover:text-brand-700 transition-all">{lang==='en'?'Close':'Fechar'}</button>
@@ -564,7 +566,7 @@ function PayPalButton({ slug, reservationId, amount, lang, onSuccess, onError })
 /* ── HotelModal ───────────────────────────────────── */
 function HotelModal({ unit, op, slug, lang, onClose, refCode, traveler }) {
   const [step,ss]=useState(1); const [ci,sci]=useState(''); const [co,sco]=useState(''); const [adults,sa]=useState(2); const [kids,sk]=useState(0);
-  const [info,si]=useState(()=>({name:traveler?.name||'',email:traveler?.email||'',phone:traveler?.phone||'',country:traveler?.country||'',notes:''})); const [pay,sp]=useState('cash'); const [sub,ssub]=useState(false); const [resId,sr]=useState(null); const [pendingRes,spr]=useState(null); const [err,se]=useState(''); const [avail,sav]=useState(null); const [chk,sc]=useState(false); const [policyOk,setPolicyOk]=useState(false);
+  const [info,si]=useState(()=>({name:traveler?.name||'',email:traveler?.email||'',phone:traveler?.phone||'',country:traveler?.country||'',notes:''})); const [pay,sp]=useState('cash'); const [sub,ssub]=useState(false); const [resId,sr]=useState(null); const [resOk,sro]=useState(false); const [pendingRes,spr]=useState(null); const [err,se]=useState(''); const [avail,sav]=useState(null); const [chk,sc]=useState(false); const [policyOk,setPolicyOk]=useState(false);
   const [voucherCode,svc]=useState(null);
   const nights=nts(ci,co); const rawTotal=nights*(unit.base_price||0); const total=nights>0&&unit.base_price?fmtPrice(rawTotal,null,op.currency||'EUR','EUR',lang):null;
   useEffect(()=>{ if (!ci||!co||co<=ci){sav(null);return;} const t=setTimeout(async()=>{ sc(true); try{sav((await(await fetch(`${API}/public/${slug}/availability?unitId=${unit.id}&checkIn=${ci}&checkOut=${co}`)).json()).data);}catch{sav(null);}finally{sc(false);} },700); return()=>clearTimeout(t); },[ci,co]);
@@ -579,7 +581,7 @@ function HotelModal({ unit, op, slug, lang, onClose, refCode, traveler }) {
         await iniciarPagamentoSisp(slug, newRes.id, toCVE(newRes.total_price ?? rawTotal, op.currency));
         return;
       }
-      sr(newRes.id);
+      sro(newRes.status==='confirmed'); sr(newRes.id);
     }catch(e){se(e.message);}finally{ssub(false);}
   }
   function next(){ if(!valid())return; step<3?ss(s=>s+1):submit(); }
@@ -587,7 +589,7 @@ function HotelModal({ unit, op, slug, lang, onClose, refCode, traveler }) {
   const icon=<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M2 22V10a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v12"/><path d="M2 22h20"/><path d="M7 22v-4h10v4"/><rect x="7" y="10" width="4" height="4" rx="1"/><rect x="13" y="10" width="4" height="4" rx="1"/></svg>;
   return (
     <MS icon={icon} title={lang==='en'?'Book room':'Reservar quarto'} step={step} lang={lang} onClose={onClose} onPrev={()=>ss(s=>s-1)} onNext={next} nextLabel={step<3?(lang==='en'?'Continue':'Continuar'):(lang==='en'?'Confirm booking':'Confirmar reserva')} nextDis={(step===1&&(!avail?.disponivel||chk))||(step===3&&!policyOk)} sub={sub} err={err} ok={!!resId} hideNext={step===3&&pay==='paypal'}>
-      {resId?<div className="p-5"><BS resId={resId} lang={lang} type="hotel" onClose={onClose}/></div>
+      {resId?<div className="p-5"><BS resId={resId} lang={lang} type="hotel" confirmed={resOk} onClose={onClose}/></div>
       :step===1?<div className="p-5 space-y-4"><p className={SH}>{lang==='en'?'Select dates & guests':'Seleccione datas e hóspedes'}</p>
         <div className="grid grid-cols-2 gap-3"><div><label className={LB}>Check-in *</label><input type="date" className={IN} min={TODAY()} value={ci} onChange={e=>sci(e.target.value)}/></div><div><label className={LB}>Check-out *</label><input type="date" className={IN} min={ci||TODAY()} value={co} onChange={e=>sco(e.target.value)}/></div></div>
         {nights>0&&<div className="flex justify-between items-center bg-brand-50 border border-brand-100 rounded-xl px-4 py-2.5"><span className="text-sm font-body font-semibold text-brand-700">{nights} {lang==='en'?(nights===1?'night':'nights'):(nights===1?'noite':'noites')}</span>{total&&<span className="font-display font-bold text-brand-700 text-sm">{total}</span>}</div>}
@@ -599,7 +601,7 @@ function HotelModal({ unit, op, slug, lang, onClose, refCode, traveler }) {
         {rawTotal>0&&<VoucherField slug={slug} unitId={unit.id} amount={rawTotal} lang={lang} onApplied={(c)=>svc(c)}/>}
         <p className="text-xs font-body font-semibold text-n-700">{lang==='en'?'Payment method':'Método de pagamento'}</p><PO lang={lang} v={pay} set={sp}/>
         <CancelPolicyCheck op={op} lang={lang} checked={policyOk} onChange={setPolicyOk}/>
-        {pay==='paypal'&&(policyOk?<PayPalButton slug={slug} reservationId={pendingRes?.id} amount={toEUR(pendingRes?.total_price ?? rawTotal,op.currency)} lang={lang} onSuccess={()=>sr(pendingRes?.id)} onError={se}/>:<p className="text-xs font-body text-amber-700 bg-amber-50 rounded-lg px-3 py-2">{lang==='en'?'Accept the cancellation policy above to pay.':'Aceite a política de cancelamento acima para pagar.'}</p>)}
+        {pay==='paypal'&&(policyOk?<PayPalButton slug={slug} reservationId={pendingRes?.id} amount={toEUR(pendingRes?.total_price ?? rawTotal,op.currency)} lang={lang} onSuccess={()=>{ sro(true); sr(pendingRes?.id); }} onError={se}/>:<p className="text-xs font-body text-amber-700 bg-amber-50 rounded-lg px-3 py-2">{lang==='en'?'Accept the cancellation policy above to pay.':'Aceite a política de cancelamento acima para pagar.'}</p>)}
       </div>}
     </MS>
   );
@@ -618,7 +620,7 @@ function ActivityModal({ unit, op, slug, lang, onClose, refCode, traveler, initi
      Tours: preco privado nao pode continuar a ser forcado por pessoa).
      Sem preco por pessoa, cai automaticamente para privado, sem toggle. */
   const [bookingMode,setBookingMode]=useState(hasPerPerson?'per_person':'private');
-  const [info,si]=useState(()=>({name:traveler?.name||'',email:traveler?.email||'',phone:traveler?.phone||'',country:traveler?.country||'',needs:'',hotel:'',arrival:'',departure:'',referredBy:refCode||'',whatsappOptIn:false})); const [pay,sp]=useState('cash'); const [sub,ssub]=useState(false); const [resId,sr]=useState(null); const [pendingRes,spr]=useState(null); const [err,se]=useState('');
+  const [info,si]=useState(()=>({name:traveler?.name||'',email:traveler?.email||'',phone:traveler?.phone||'',country:traveler?.country||'',needs:'',hotel:'',arrival:'',departure:'',referredBy:refCode||'',whatsappOptIn:false})); const [pay,sp]=useState('cash'); const [sub,ssub]=useState(false); const [resId,sr]=useState(null); const [resOk,sro]=useState(false); const [pendingRes,spr]=useState(null); const [err,se]=useState('');
   const [voucherCode,svc]=useState(null); const [policyOk,setPolicyOk]=useState(false);
   const numPessoas=adults+kids;
   const isPrivateMode=hasPrivate&&(bookingMode==='private'||!hasPerPerson);
@@ -648,14 +650,14 @@ function ActivityModal({ unit, op, slug, lang, onClose, refCode, traveler, initi
         await iniciarPagamentoSisp(slug, newRes.id, toCVE(newRes.total_price ?? rawTotal, op.currency));
         return;
       }
-      sr(newRes.id);
+      sro(newRes.status==='confirmed'); sr(newRes.id);
     }catch(e){se(e.message);}finally{ssub(false);}
   }
   function next(){ if(!valid())return; step<3?ss(s=>s+1):submit(); }
   const sumL=[{label:lang==='en'?'Tour / Activity':'Tour / Actividade',value:unit.name},{label:lang==='en'?'Date':'Data',value:date},...(time?[{label:lang==='en'?'Time':'Horário',value:time}]:[]),{label:lang==='en'?'Group':'Grupo',value:`${adults} ${lang==='en'?'adults':'adultos'}${kids>0?` + ${kids} ${lang==='en'?'children':'crianças'}`:''}`},...(tourLang?[{label:lang==='en'?'Language':'Idioma',value:tourLang}]:[]),...(info.hotel.trim()?[{label:lang==='en'?'Accommodation':'Alojamento',value:info.hotel.trim()}]:[]),...(hasPerPerson&&hasPrivate?[{label:lang==='en'?'Booking type':'Tipo de reserva',value:isPrivateMode?(lang==='en'?'Private / group':'Privado / grupo'):(lang==='en'?'Per person':'Por pessoa')}]:[]),...(total?[{label:'Total',value:fmtTotalBoth(rawTotal,op.currency,lang),hi:true}]:[])];
   return (
     <MS icon={<Compass size={18} strokeWidth={1.75}/>} title={lang==='en'?'Book tour':'Reservar tour'} step={step} lang={lang} onClose={onClose} onPrev={()=>ss(s=>s-1)} onNext={next} nextLabel={step<3?(lang==='en'?'Continue':'Continuar'):(lang==='en'?'Confirm booking':'Confirmar reserva')} nextDis={(step===1&&(!date||(hasSlots&&!time)))||(step===3&&!policyOk)} sub={sub} err={err} ok={!!resId} hideNext={step===3&&pay==='paypal'}>
-      {resId?<div className="p-5"><BS resId={resId} lang={lang} type="activity" onClose={onClose}/></div>
+      {resId?<div className="p-5"><BS resId={resId} lang={lang} type="activity" confirmed={resOk} onClose={onClose}/></div>
       :step===1?<div className="p-5 space-y-4"><p className={SH}>{lang==='en'?'Select date, time & group':'Data, horário e grupo'}</p>
         {hasPerPerson&&hasPrivate&&(
           <div className="flex gap-1 p-1 bg-n-100 rounded-xl">
@@ -703,7 +705,7 @@ function ActivityModal({ unit, op, slug, lang, onClose, refCode, traveler, initi
         {rawTotal>0&&<VoucherField slug={slug} unitId={unit.id} amount={rawTotal} lang={lang} onApplied={(c)=>svc(c)}/>}
         <p className="text-xs font-body font-semibold text-n-700">{lang==='en'?'Payment method':'Método de pagamento'}</p><PO lang={lang} v={pay} set={sp}/>
         <CancelPolicyCheck op={op} lang={lang} checked={policyOk} onChange={setPolicyOk}/>
-        {pay==='paypal'&&(policyOk?<PayPalButton slug={slug} reservationId={pendingRes?.id} amount={toEUR(pendingRes?.total_price ?? rawTotal,op.currency)} lang={lang} onSuccess={()=>sr(pendingRes?.id)} onError={se}/>:<p className="text-xs font-body text-amber-700 bg-amber-50 rounded-lg px-3 py-2">{lang==='en'?'Accept the cancellation policy above to pay.':'Aceite a política de cancelamento acima para pagar.'}</p>)}
+        {pay==='paypal'&&(policyOk?<PayPalButton slug={slug} reservationId={pendingRes?.id} amount={toEUR(pendingRes?.total_price ?? rawTotal,op.currency)} lang={lang} onSuccess={()=>{ sro(true); sr(pendingRes?.id); }} onError={se}/>:<p className="text-xs font-body text-amber-700 bg-amber-50 rounded-lg px-3 py-2">{lang==='en'?'Accept the cancellation policy above to pay.':'Aceite a política de cancelamento acima para pagar.'}</p>)}
       </div>}
     </MS>
   );
@@ -714,7 +716,7 @@ function RentACarModal({ unit, op, slug, lang, onClose, refCode, traveler }) {
   const [step,ss]=useState(1); const [pu,spu]=useState({date:'',time:'09:00',loc:''}); const [re,sre]=useState({date:'',time:'09:00',loc:''});
   const [drv,sd]=useState(()=>({name:traveler?.name||'',email:traveler?.email||'',phone:traveler?.phone||'',country:traveler?.country||'',license:'',licCountry:'',age:''})); const [ext,sex]=useState({insurance:false,gps:false,baby_seat:false,extra_driver:false});
   const [driverIncluded,setDriverIncluded]=useState(false);
-  const [pay,sp]=useState('cash'); const [sub,ssub]=useState(false); const [resId,sr]=useState(null); const [pendingRes,spr]=useState(null); const [err,se]=useState('');
+  const [pay,sp]=useState('cash'); const [sub,ssub]=useState(false); const [resId,sr]=useState(null); const [resOk,sro]=useState(false); const [pendingRes,spr]=useState(null); const [err,se]=useState('');
   const [voucherCode,svc]=useState(null); const [policyOk,setPolicyOk]=useState(false);
   /* "Executivo" -- categoria de viatura com motorista incluido opcional
      (extra real, com preco) e sem franquia (beneficio automatico, sem
@@ -735,14 +737,14 @@ function RentACarModal({ unit, op, slug, lang, onClose, refCode, traveler }) {
         await iniciarPagamentoSisp(slug, newRes.id, toCVE(newRes.total_price ?? rawTotal, op.currency));
         return;
       }
-      sr(newRes.id);
+      sro(newRes.status==='confirmed'); sr(newRes.id);
     }catch(e){se(e.message);}finally{ssub(false);}
   }
   function next(){ if(!valid())return; step<3?ss(s=>s+1):submit(); }
   const sumL=[{label:lang==='en'?'Vehicle':'Viatura',value:unit.name},{label:lang==='en'?'Pickup':'Levantamento',value:`${pu.date} ${pu.time} · ${pu.loc}`},{label:lang==='en'?'Return':'Devolução',value:`${re.date} ${re.time} · ${re.loc||pu.loc}`},{label:lang==='en'?'Duration':'Duração',value:`${days} ${lang==='en'?(days===1?'day':'days'):(days===1?'dia':'dias')}`},...(extList.length?[{label:'Extras',value:extList.map(e=>lang==='en'?e.en:e.pt).join(' · ')}]:[]),...(driverIncluded&&chauffeurTotal>0?[{label:lang==='en'?'Chauffeur':'Motorista',value:fmtPrice(chauffeurTotal,null,op.currency||'EUR','EUR',lang)}]:[]),...(isExecutivo?[{label:lang==='en'?'Deductible':'Franquia',value:lang==='en'?'Waived':'Sem franquia'}]:[]),...(total?[{label:'Total',value:fmtTotalBoth(rawTotal,op.currency,lang),hi:true}]:[])];
   return (
     <MS icon={<Car size={18} strokeWidth={1.75}/>} title={lang==='en'?'Book vehicle':'Reservar viatura'} step={step} lang={lang} onClose={onClose} onPrev={()=>ss(s=>s-1)} onNext={next} nextLabel={step<3?(lang==='en'?'Continue':'Continuar'):(lang==='en'?'Confirm booking':'Confirmar reserva')} nextDis={(step===1&&(!pu.date||!re.date||!pu.loc))||(step===3&&!policyOk)} sub={sub} err={err} ok={!!resId} hideNext={step===3&&pay==='paypal'}>
-      {resId?<div className="p-5"><BS resId={resId} lang={lang} type="rentacar" onClose={onClose}/></div>
+      {resId?<div className="p-5"><BS resId={resId} lang={lang} type="rentacar" confirmed={resOk} onClose={onClose}/></div>
       :step===1?<div className="p-5 space-y-4"><p className={SH}>{lang==='en'?'Pickup & return':'Levantamento e devolução'}</p>
         <div><p className="text-xs font-body font-bold text-brand-700 uppercase tracking-widest mb-2">{lang==='en'?'Pickup':'Levantamento'}</p><div className="grid grid-cols-2 gap-3 mb-2"><div><label className={LB}>{lang==='en'?'Date':'Data'} *</label><input type="date" className={IN} min={TODAY()} value={pu.date} onChange={e=>spu(p=>({...p,date:e.target.value}))}/></div><div><label className={LB}>{lang==='en'?'Time':'Hora'}</label><input type="time" className={IN} value={pu.time} onChange={e=>spu(p=>({...p,time:e.target.value}))}/></div></div><select className={SEL} value={pu.loc} onChange={e=>spu(p=>({...p,loc:e.target.value}))}><option value="">{lang==='en'?'-- Select location --':'-- Seleccionar local --'}</option>{locs.map(l=><option key={l} value={l}>{l}</option>)}</select></div>
         <div><p className="text-xs font-body font-bold text-brand-700 uppercase tracking-widest mb-2">{lang==='en'?'Return':'Devolução'}</p><div className="grid grid-cols-2 gap-3 mb-2"><div><label className={LB}>{lang==='en'?'Date':'Data'} *</label><input type="date" className={IN} min={pu.date||TODAY()} value={re.date} onChange={e=>sre(p=>({...p,date:e.target.value}))}/></div><div><label className={LB}>{lang==='en'?'Time':'Hora'}</label><input type="time" className={IN} value={re.time} onChange={e=>sre(p=>({...p,time:e.target.value}))}/></div></div><select className={SEL} value={re.loc} onChange={e=>sre(p=>({...p,loc:e.target.value}))}><option value="">{lang==='en'?'Same as pickup':'Mesmo local'}</option>{locs.map(l=><option key={l} value={l}>{l}</option>)}</select></div>
@@ -769,7 +771,7 @@ function RentACarModal({ unit, op, slug, lang, onClose, refCode, traveler }) {
         {rawTotal>0&&<VoucherField slug={slug} unitId={unit.id} amount={rawTotal} lang={lang} onApplied={(c)=>svc(c)}/>}
         <p className="text-xs font-body font-semibold text-n-700">{lang==='en'?'Payment method':'Método de pagamento'}</p><PO lang={lang} v={pay} set={sp}/>
         <CancelPolicyCheck op={op} lang={lang} checked={policyOk} onChange={setPolicyOk}/>
-        {pay==='paypal'&&(policyOk?<PayPalButton slug={slug} reservationId={pendingRes?.id} amount={toEUR(pendingRes?.total_price ?? rawTotal,op.currency)} lang={lang} onSuccess={()=>sr(pendingRes?.id)} onError={se}/>:<p className="text-xs font-body text-amber-700 bg-amber-50 rounded-lg px-3 py-2">{lang==='en'?'Accept the cancellation policy above to pay.':'Aceite a política de cancelamento acima para pagar.'}</p>)}
+        {pay==='paypal'&&(policyOk?<PayPalButton slug={slug} reservationId={pendingRes?.id} amount={toEUR(pendingRes?.total_price ?? rawTotal,op.currency)} lang={lang} onSuccess={()=>{ sro(true); sr(pendingRes?.id); }} onError={se}/>:<p className="text-xs font-body text-amber-700 bg-amber-50 rounded-lg px-3 py-2">{lang==='en'?'Accept the cancellation policy above to pay.':'Aceite a política de cancelamento acima para pagar.'}</p>)}
       </div>}
     </MS>
   );
