@@ -29,7 +29,9 @@ function preco(unit, meta) {
   return priv > 0 ? priv : null;
 }
 
-export function jsonLdExperiencia({ unit, op, reviews, url } = {}) {
+/* classificacao: { avg, count } calculada pelo servidor so com avaliacoes DESTA experiencia
+   (unit_rating de /units/:id/reviews); nunca a lista de avaliacoes, que pode ser a do operador */
+export function jsonLdExperiencia({ unit, op, classificacao, url } = {}) {
   const nome = typeof unit?.name === 'string' ? unit.name.trim() : '';
   if (!nome) return null;
   const meta = lerMeta(unit);
@@ -47,10 +49,10 @@ export function jsonLdExperiencia({ unit, op, reviews, url } = {}) {
       availability: 'https://schema.org/InStock', ...(url ? { url } : {}),
     };
   }
-  const notas = (Array.isArray(reviews) ? reviews : []).map((r) => Number(r?.rating)).filter((n) => n >= 1 && n <= 5);
-  if (notas.length) {
-    const media = notas.reduce((s, n) => s + n, 0) / notas.length;
-    j.aggregateRating = { '@type': 'AggregateRating', ratingValue: Math.round(media * 10) / 10, reviewCount: notas.length };
+  const media = Number(classificacao?.avg);
+  const total = Number(classificacao?.count);
+  if (total >= 1 && media >= 1 && media <= 5) {
+    j.aggregateRating = { '@type': 'AggregateRating', ratingValue: Math.round(media * 10) / 10, reviewCount: Math.round(total) };
   }
   return j;
 }

@@ -935,6 +935,8 @@ export default function ServiceDetail() {
   const [unit, setUnit]       = useState(null);
   const [related, setRelated] = useState([]);
   const [reviews, setReviews] = useState([]);
+  /* classificacao propria desta experiencia (so para o Google); null com avaliacoes do operador */
+  const [classificacao, setClassificacao] = useState(null);
   const [recentBookings, setRecentBookings] = useState(0);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
@@ -983,6 +985,7 @@ export default function ServiceDetail() {
         setRelated(unitData.data.related || []);
         setRecentBookings(unitData.data.recent_bookings || 0);
         setReviews(revData.data || []);
+        setClassificacao(revData.scope === 'unit' ? (revData.unit_rating || null) : null);
         document.title = `${unitData.data.unit.name} — ${unitData.data.operator.name} · SalDesk`;
       } else {
         setNotFound(true);
@@ -995,7 +998,7 @@ export default function ServiceDetail() {
      sai quando a pagina muda de servico ou fecha */
   useEffect(() => {
     if (!unit || !op) return undefined;
-    const dados = jsonLdExperiencia({ unit, op, reviews, url: `${window.location.origin}/book/${slug}/servico/${id}` });
+    const dados = jsonLdExperiencia({ unit, op, classificacao, url: `${window.location.origin}/book/${slug}/servico/${id}` });
     if (!dados) return undefined;
     const el = document.createElement('script');
     el.type = 'application/ld+json';
@@ -1003,7 +1006,7 @@ export default function ServiceDetail() {
     el.textContent = JSON.stringify(dados).replace(/</g, '\\u003c');
     document.head.appendChild(el);
     return () => { el.remove(); };
-  }, [unit, op, reviews, slug, id]);
+  }, [unit, op, classificacao, slug, id]);
 
   /* Prato/menu de degustação: o widget de reserva completo (escolha de mesa +
      pré-pedido) precisa da lista COMPLETA de unidades do operador (mesas +

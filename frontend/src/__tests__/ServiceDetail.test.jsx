@@ -68,6 +68,25 @@ describe('ServiceDetail: carregamento', () => {
     expect(document.getElementById('sd-jsonld')).toBeNull();
   });
 
+  it('jsonld_so_usa_a_classificacao_propria_da_experiencia', async () => {
+    simularRede();
+    const base = global.fetch;
+    /* avaliacoes de fallback do operador: ha lista, mas a experiencia nao tem classificacao propria */
+    global.fetch = vi.fn((url) => String(url).endsWith('/units/u1/reviews')
+      ? resposta({ data: [{ id: 'r1', rating: 5, comment: 'Otimo', created_at: '2026-11-01', author_name: 'Ana' }], scope: 'operator', unit_rating: null })
+      : base(url));
+    const { unmount } = montar();
+    await waitFor(() => expect(document.getElementById('sd-jsonld')).not.toBeNull());
+    expect(JSON.parse(document.getElementById('sd-jsonld').textContent)).not.toHaveProperty('aggregateRating');
+    unmount();
+    global.fetch = vi.fn((url) => String(url).endsWith('/units/u1/reviews')
+      ? resposta({ data: [], scope: 'unit', unit_rating: { avg: 4.6, count: 25 } })
+      : base(url));
+    montar();
+    await waitFor(() => expect(document.getElementById('sd-jsonld')).not.toBeNull());
+    expect(JSON.parse(document.getElementById('sd-jsonld').textContent).aggregateRating).toEqual({ '@type': 'AggregateRating', ratingValue: 4.6, reviewCount: 25 });
+  });
+
   it('servico_inexistente_nao_deixa_jsonld', async () => {
     simularRede({ ficha: { data: null } });
     montar();

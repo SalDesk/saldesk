@@ -9,7 +9,7 @@ const meta = (m) => JSON.stringify(m);
 describe('jsonLdExperiencia', () => {
   it('jsonld_experiencia_com_preco_e_avaliacoes', () => {
     const unit = { name: 'Volta a ilha', base_price: 45, images: ['https://x/a.jpg', 'https://x/b.jpg'], description: meta({ short_pt: 'Curto', desc_pt: 'Longo' }) };
-    const j = jsonLdExperiencia({ unit, op: OP, reviews: [{ rating: 5 }, { rating: 4 }, { rating: 4 }], url: URL });
+    const j = jsonLdExperiencia({ unit, op: OP, classificacao: { avg: 4.3, count: 3 }, url: URL });
     expect(j).toEqual({
       '@context': 'https://schema.org',
       '@type': 'Product',
@@ -24,14 +24,19 @@ describe('jsonLdExperiencia', () => {
   });
 
   it('sem_avaliacoes_nao_inventa_classificacao', () => {
-    const j = jsonLdExperiencia({ unit: { name: 'X', base_price: 10 }, op: { ...OP, avg_rating: 4.9 }, reviews: [], url: URL });
+    const j = jsonLdExperiencia({ unit: { name: 'X', base_price: 10 }, op: { ...OP, avg_rating: 4.9 }, classificacao: null, url: URL });
     expect(j).not.toHaveProperty('aggregateRating');
-    const k = jsonLdExperiencia({ unit: { name: 'X', base_price: 10 }, op: OP, reviews: undefined, url: URL });
+    const k = jsonLdExperiencia({ unit: { name: 'X', base_price: 10 }, op: OP, url: URL });
     expect(k).not.toHaveProperty('aggregateRating');
+    /* uma lista de avaliacoes (que pode ser o fallback do operador) nunca chega para classificar */
+    const l = jsonLdExperiencia({ unit: { name: 'X', base_price: 10 }, op: OP, reviews: [{ rating: 5 }], url: URL });
+    expect(l).not.toHaveProperty('aggregateRating');
+    const m = jsonLdExperiencia({ unit: { name: 'X', base_price: 10 }, op: OP, classificacao: { avg: 0, count: 0 }, url: URL });
+    expect(m).not.toHaveProperty('aggregateRating');
   });
 
   it('sem_preco_sem_oferta', () => {
-    const j = jsonLdExperiencia({ unit: { name: 'X', base_price: 0, description: meta({}) }, op: OP, reviews: [], url: URL });
+    const j = jsonLdExperiencia({ unit: { name: 'X', base_price: 0, description: meta({}) }, op: OP, url: URL });
     expect(j).not.toHaveProperty('offers');
     expect(j).not.toHaveProperty('image');
   });
