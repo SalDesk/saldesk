@@ -1,4 +1,5 @@
 const { supabaseAdmin } = require('../config/supabase');
+const { estadoInicialReserva } = require('../helpers/politicaOperador');
 const { verificarDisponibilidade, calcularPreco, verificarDisponibilidadeMesa, listarMesasDisponiveis, DEFAULT_SEATING_MINUTES, parseUnitMeta, verificarDisponibilidadeSlot, listarSlotsComDisponibilidade, calcularPrecoPrivado, temPrecoPrivadoConfigurado } = require('../helpers/bookingHelpers');
 const { obterOuCriarCliente } = require('../helpers/customerHelper');
 const { enviarEmail } = require('../helpers/emailHelper');
@@ -16,7 +17,7 @@ async function getOperador(req, res, next) {
   try {
     const { data: operator, error } = await supabaseAdmin
       .from('operators')
-      .select('id, name, slug, operator_type, email, phone, whatsapp, address, logo_url, cover_images, business_name, tagline, description, onboarding_complete, currency, page_config, island_id, islands(name, slug, airport_code), cancellation_policy_pt, cancellation_policy_en, brand_color')
+      .select('id, name, slug, operator_type, email, phone, whatsapp, address, logo_url, cover_images, business_name, tagline, description, onboarding_complete, currency, page_config, island_id, islands(name, slug, airport_code), cancellation_policy_pt, cancellation_policy_en, brand_color, free_cancellation_hours, auto_confirm_bookings')
       .eq('slug', req.params.slug)
       .eq('onboarding_complete', true)
       .single();
@@ -225,14 +226,15 @@ async function criarReserva(req, res, next) {
     const { unit_id, customer_name, customer_email, customer_phone,
             customer_country, check_in, check_out, guests, notes,
             party_size, tour_time, reservation_time, zone_preference,
-            voucher_code, ref_code, referred_by, items, driver_included, booking_mode, whatsapp_opt_in } = req.body;
+            voucher_code, ref_code, referred_by, items, driver_included, booking_mode, whatsapp_opt_in,
+            payment_method } = req.body;
 
     // check_out é opcional — activities/restaurants podem enviar só check_in (data do serviço)
     const effectiveCheckOut = check_out || check_in;
 
     const { data: operator } = await supabaseAdmin
       .from('operators')
-      .select('id, name, slug, email, phone, currency, language, operator_type')
+      .select('id, name, slug, email, phone, currency, language, operator_type, auto_confirm_bookings')
       .eq('slug', req.params.slug)
       .eq('onboarding_complete', true)
       .single();
@@ -459,7 +461,8 @@ async function criarReserva(req, res, next) {
         check_out: effectiveCheckOut,
         guests: party_size || guests || 1,
         total_price: finalTotal,
-        status: 'pending',
+        /* confirmacao automatica so para quem paga presencialmente (o pagamento online confirma ao capturar) */
+        status: estadoInicialReserva({ autoConfirm: operator.auto_confirm_bookings, paymentMethod: payment_method }),
         source: 'public',
         notes: finalNotes,
         affiliate_id: affiliateId,
@@ -1167,7 +1170,7 @@ async function getUnit(req, res, next) {
 
     const { data: operator } = await supabaseAdmin
       .from('operators')
-      .select('id, name, slug, operator_type, email, phone, whatsapp, address, logo_url, cover_images, business_name, tagline, currency, description, page_config, brand_color, island_id, islands(name, slug, airport_code)')
+      .select('id, name, slug, operator_type, email, phone, whatsapp, address, logo_url, cover_images, business_name, tagline, currency, description, page_config, brand_color, island_id, islands(name, slug, airport_code), cancellation_policy_pt, cancellation_policy_en, free_cancellation_hours, auto_confirm_bookings')
       .eq('slug', slug)
       .eq('onboarding_complete', true)
       .single();

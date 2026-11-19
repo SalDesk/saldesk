@@ -11,7 +11,7 @@ const { supabaseAdmin } = require('../config/supabase');
 async function getDiscoverCatalog({ type } = {}) {
   let q = supabaseAdmin
     .from('operators')
-    .select('id, name, slug, operator_type, address, currency, island_id, islands(name, slug)')
+    .select('id, name, slug, operator_type, address, currency, island_id, islands(name, slug), free_cancellation_hours, auto_confirm_bookings')
     .eq('onboarding_complete', true)
     .eq('is_demo', false);
 
@@ -185,6 +185,8 @@ async function getDiscoverCatalog({ type } = {}) {
       operator_id:     op.id,
       operator_slug:   op.slug,
       operator_name:   op.name,
+      free_cancellation_hours: op.free_cancellation_hours ?? null,
+      auto_confirm_bookings:   op.auto_confirm_bookings === true,
       operator_type:   op.operator_type,
       address:         op.address,
       currency:        op.currency,
