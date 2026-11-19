@@ -32,6 +32,7 @@ export default function TourForm({ unit, onSave, onCancel, loading, error }) {
     min_age:       meta.min_age        != null ? String(meta.min_age) : '',
     capacity:      unit?.capacity      != null ? String(unit.capacity) : '',
     meeting_point: meta.meeting_point  || '',
+    pickup_included: meta.pickup_included === true,
     start_time:    meta.start_time     || '',
     base_price:    unit?.base_price    != null ? String(unit.base_price) : '',
     price_child:   meta.price_child    != null ? String(meta.price_child) : '',
@@ -83,6 +84,7 @@ export default function TourForm({ unit, onSave, onCancel, loading, error }) {
       difficulty:    form.difficulty,
       min_age:       form.min_age       ? Number(form.min_age)       : null,
       meeting_point: form.meeting_point || null,
+      pickup_included: form.pickup_included === true,
       start_time:    form.start_time    || null,
       price_child:   form.price_child   ? Number(form.price_child)   : null,
       price_private: form.price_private ? Number(form.price_private) : null,
@@ -245,6 +247,13 @@ export default function TourForm({ unit, onSave, onCancel, loading, error }) {
               placeholder="Ex: Marina Santa Maria"
             />
           </div>
+          {/* Mostrado nos cartoes do catalogo como "Recolha no hotel" */}
+          <label className="mt-3 flex items-center gap-2 text-sm font-body text-n-700 cursor-pointer">
+            <input type="checkbox" checked={form.pickup_included}
+              onChange={e => setForm(f => ({ ...f, pickup_included: e.target.checked }))}
+              className="w-4 h-4 accent-[var(--ocean-700)]" />
+            Inclui recolha no hotel
+          </label>
         </div>
       </div>
 

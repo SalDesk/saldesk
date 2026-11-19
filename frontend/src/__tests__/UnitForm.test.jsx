@@ -208,7 +208,7 @@ describe('TourForm', () => {
   const META_VAZIA = {
     name_en: null, short_pt: null, short_en: null, desc_pt: null, desc_en: null,
     tour_type: 'grupo', duration: null, languages: ['PT', 'EN'], difficulty: 'Moderado',
-    min_age: null, meeting_point: null, start_time: null, price_child: null, price_private: null,
+    min_age: null, meeting_point: null, pickup_included: false, start_time: null, price_child: null, price_private: null,
     price_tiers: [], amenities: [], included_items: [], important_info: null, stops: [], time_slots: [],
   };
 
@@ -360,6 +360,7 @@ describe('TourForm', () => {
         difficulty: 'Dificil',
         min_age: 8,
         meeting_point: 'Marina Santa Maria',
+        pickup_included: false,
         start_time: '09:30',
         price_child: 25,
         price_private: 120,
@@ -405,6 +406,17 @@ describe('TourForm', () => {
     escrever(campo('Preco adulto (opcional se usar Preço privado/Escalões)'), '0');
     fireEvent.click(botao('Criar tour'));
     expect(guardar(onSave).base_price).toBe(0);
+  });
+
+  it('tour_grava_recolha_no_hotel', () => {
+    const { onSave } = renderForm('activity');
+    escrever(campo('Nome PT'), 'Volta a ilha');
+    escrever(campo('Capacidade maxima'), '8');
+    const caixa = screen.getByRole('checkbox', { name: 'Inclui recolha no hotel' });
+    expect(caixa).not.toBeChecked();
+    fireEvent.click(caixa);
+    fireEvent.click(botao('Criar tour'));
+    expect(JSON.parse(guardar(onSave).description).pickup_included).toBe(true);
   });
 
   describe('editores', () => {
@@ -611,6 +623,7 @@ describe('TourForm', () => {
           difficulty: 'Facil',
           min_age: 0,
           meeting_point: 'Hotel Riu',
+          pickup_included: false,
           start_time: '08:15',
           price_child: 15,
           price_private: 90,
