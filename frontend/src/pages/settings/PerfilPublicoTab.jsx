@@ -8,7 +8,9 @@ import { updateOperator } from '../../services/authService';
 import useAuthStore from '../../store/authStore';
 import Card from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
-import Input, { Textarea } from '../../components/ui/Input';
+import Input, { Textarea, Select } from '../../components/ui/Input';
+import Toggle from '../../components/ui/Toggle';
+import { textoPoliticaGerada } from '../../utils/politicaCancelamento';
 import ImageUploader from '../../components/shared/ImageUploader';
 import { uploadImage, validateImageFile } from '../../services/uploadService';
 import { CopyButton, SaveBanner } from './shared';
@@ -47,6 +49,16 @@ function chatInicial(operator) {
 }
 
 
+/* Prazos de cancelamento gratis (free_cancellation_hours): '' = sem prazo definido, 0 = sem cancelamento gratis */
+const PRAZOS_CANCELAMENTO = [
+  { valor: '',    nome: 'Sem prazo definido' },
+  { valor: '24',  nome: 'Cancelamento grátis até 24 h antes' },
+  { valor: '48',  nome: 'Cancelamento grátis até 48 h antes' },
+  { valor: '72',  nome: 'Cancelamento grátis até 72 h antes' },
+  { valor: '168', nome: 'Cancelamento grátis até 7 dias antes' },
+  { valor: '0',   nome: 'Sem cancelamento grátis' },
+];
+
 export default function PerfilPublicoTab({ operator }) {
   const { setOperator } = useAuthStore();
   const [saving, setSaving]         = useState(false);
@@ -59,6 +71,9 @@ export default function PerfilPublicoTab({ operator }) {
   const [descEn,  setDescEn]        = useState(operator?.description_en || '');
   const [cancelPolicyPt, setCancelPolicyPt] = useState(operator?.cancellation_policy_pt || '');
   const [cancelPolicyEn, setCancelPolicyEn] = useState(operator?.cancellation_policy_en || '');
+  /* prazo de cancelamento gratis em horas, como texto do select ('' = sem prazo definido) */
+  const [horasCancel, setHorasCancel] = useState(operator?.free_cancellation_hours != null ? String(operator.free_cancellation_hours) : '');
+  const [autoConfirm, setAutoConfirm] = useState(operator?.auto_confirm_bookings === true);
   const [faqs, setFaqs] = useState(operator?.custom_faqs || []);
   const [chatAuto, setChatAuto] = useState(() => chatInicial(operator));
   const [corMarca, setCorMarca] = useState(operator?.brand_color || '');
@@ -130,6 +145,8 @@ export default function PerfilPublicoTab({ operator }) {
     setChatAuto(c => ({ ...c, days: c.days.includes(dia) ? c.days.filter(d => d !== dia) : [...c.days, dia].sort((a, b) => a - b) }));
   }
 
+  const temPoliticaEscrita = !!(cancelPolicyPt.trim() || cancelPolicyEn.trim());
+
   async function handleSave(e) {
     e.preventDefault();
     if (erroChat || erroCor) return;
@@ -142,6 +159,8 @@ export default function PerfilPublicoTab({ operator }) {
         description_en: descEn,
         cancellation_policy_pt: cancelPolicyPt,
         cancellation_policy_en: cancelPolicyEn,
+        free_cancellation_hours: horasCancel === '' ? null : Number(horasCancel),
+        auto_confirm_bookings: autoConfirm,
         custom_faqs: faqs.filter(f => f.question_pt || f.question_en),
         /* null quando nunca foi configurado e esta desligado (nao escreve valores por omissao) */
         chat_auto_reply: chatAuto.enabled || operator?.chat_auto_reply ? chatAuto : null,
@@ -207,11 +226,31 @@ export default function PerfilPublicoTab({ operator }) {
           <p className="text-xs font-body text-n-400">
             Mostrada na pagina publica de reserva. O cliente tem de aceitar esta politica antes de pagar.
           </p>
+          <Select label="Cancelamento grátis" value={horasCancel} onChange={e => setHorasCancel(e.target.value)}
+            hint="Aparece nos cartoes do catalogo. Se nao escrever uma politica abaixo, usamos um texto simples com este prazo.">
+            {PRAZOS_CANCELAMENTO.map(p => <option key={p.valor} value={p.valor}>{p.nome}</option>)}
+          </Select>
+          {horasCancel !== '' && !temPoliticaEscrita && (
+            <div className="rounded-sm bg-n-50 border border-n-200 px-3 py-2">
+              <p className="text-xs font-body font-semibold text-n-600">Texto que os clientes vao ver:</p>
+              <p className="text-sm font-body text-n-700 mt-0.5">{textoPoliticaGerada(Number(horasCancel), 'pt')}</p>
+            </div>
+          )}
+          {horasCancel !== '' && temPoliticaEscrita && (
+            <p className="text-xs font-body text-n-600">Confirme que o texto abaixo diz o mesmo prazo.</p>
+          )}
           <Textarea label="Portugues" aria-label="Politica de cancelamento em Portugues" value={cancelPolicyPt} onChange={e => setCancelPolicyPt(e.target.value)}
             rows={4} placeholder="Ex: Cancelamento gratuito ate 48h antes. Apos esse prazo, 50% do valor e retido..." />
           <Textarea label="Ingles (EN)" aria-label="Politica de cancelamento em Ingles" value={cancelPolicyEn} onChange={e => setCancelPolicyEn(e.target.value)}
             rows={4} placeholder="Ex: Free cancellation up to 48h before. After that, 50% of the value is retained..." />
         </div>
+      </Card>
+
+      {/* Confirmacao automatica: so as reservas pagas presencialmente entram confirmadas;
+          as pagas online ficam confirmadas quando o pagamento e capturado. */}
+      <Card header={<h3 className="font-display font-semibold text-sm text-n-700">Confirmação das reservas</h3>}>
+        <Toggle checked={autoConfirm} onChange={setAutoConfirm} label="Confirmar reservas automaticamente"
+          hint={'As reservas feitas na sua pagina publica ficam logo confirmadas, sem precisar de as aceitar. Os cartoes do catalogo mostram "Confirmacao imediata".'} />
       </Card>
 
       {/* Cor da pagina publica e do widget */}

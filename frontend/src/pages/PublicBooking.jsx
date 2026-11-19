@@ -12,6 +12,7 @@ import SiteComplianceFooter from '../components/shared/SiteComplianceFooter';
 import QRCode from 'qrcode';
 import { useIsWidget, useWidgetResize } from '../utils/widgetMode';
 import { useBrandColor } from '../utils/brandPalette';
+import { textoBeneficioCancelamento } from '../utils/politicaCancelamento';
 import {
   parseMenuMeta, MENU_CATEGORY_LABELS, MENU_ALLERGEN_LABELS, MENU_DIET_LABELS, ZONE_LABELS,
   fmtMoney, MenuCartPicker, RestaurantReservationSection,
@@ -1416,7 +1417,7 @@ function CallWaiterSection({ slug, table, lang }) {
 }
 
 /* ── SpecialOfferSection ──────────────────────────── */
-function SpecialOfferSection({ lang, goBook }) {
+function SpecialOfferSection({ lang, goBook, horasCancelamento }) {
   return (
     <section className="bg-sand-50 border-t border-sand-100">
       <div className="max-w-5xl mx-auto px-4 sm:px-6 py-12 sm:py-16">
@@ -1455,7 +1456,7 @@ function SpecialOfferSection({ lang, goBook }) {
               {lang === 'en' ? 'Book now — best price' : 'Reservar agora — melhor preço'}
             </button>
             <p className="text-xs font-body text-white/40 text-center">
-              {lang === 'en' ? 'Free cancellation · No card required' : 'Cancelamento gratuito · Sem cartão de crédito'}
+              {[textoBeneficioCancelamento(horasCancelamento, lang), lang === 'en' ? 'No card required' : 'Sem cartão de crédito'].filter(Boolean).join(' · ')}
             </p>
           </div>
         </div>
@@ -1923,7 +1924,9 @@ export default function PublicBooking() {
               { Icon: Shield, pt: 'Reserva Directa', en: 'Direct Booking', subPt: 'Sem comissões de plataformas externas', subEn: 'No fees from external platforms' },
               { Icon: Lock, pt: 'Pagamento Seguro', en: 'Secure Payment', subPt: 'Dados protegidos em todas as transacções', subEn: 'Protected data on every transaction' },
               { Icon: RotateCcw, pt: 'Cancelamento', en: 'Cancellation', subPt: 'Política de cancelamento clara e simples', subEn: 'Clear and simple cancellation policy' },
-              { Icon: CheckCircle, pt: 'Confirmação Imediata', en: 'Instant Confirmation', subPt: 'Resposta rápida a cada pedido de reserva', subEn: 'Fast response to every booking request' },
+              op.auto_confirm_bookings === true
+                ? { Icon: CheckCircle, pt: 'Confirmação Imediata', en: 'Instant Confirmation', subPt: 'A reserva fica confirmada no momento', subEn: 'Your booking is confirmed right away' }
+                : { Icon: CheckCircle, pt: 'Confirmação Rápida', en: 'Fast Confirmation', subPt: 'Resposta rápida a cada pedido de reserva', subEn: 'Fast response to every booking request' },
             ].map(({ Icon, pt, en, subPt, subEn }, i) => (
               <div key={i} className="flex flex-col items-center text-center gap-2">
                 <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center mb-1">
@@ -2435,7 +2438,7 @@ export default function PublicBooking() {
 
       </div>
       {/* ── Special Offer (fixo, fora da zona reordenável) ── */}
-      <SpecialOfferSection lang={lang} goBook={goBook} />
+      <SpecialOfferSection lang={lang} goBook={goBook} horasCancelamento={op.free_cancellation_hours} />
 
       {/* ── Footer ── */}
       {isWidget ? (

@@ -318,6 +318,7 @@ describe('Definicoes: Perfil Publico', () => {
       logo_url: null, description_pt: 'Nova desc', description_en: 'Desc EN',
       cancellation_policy_pt: 'CP PT', cancellation_policy_en: 'CP EN',
       custom_faqs: OPERADOR.custom_faqs, cover_images: [], chat_auto_reply: null, brand_color: null,
+      free_cancellation_hours: null, auto_confirm_bookings: false,
     }));
     expect(await screen.findByText('Guardado com sucesso')).toBeInTheDocument();
     expect(useAuthStore.getState().operator.description_pt).toBe('Nova desc');
@@ -410,6 +411,45 @@ describe('Definicoes: Perfil Publico', () => {
     expect(within(cartaoChat).getByRole('alert')).toHaveTextContent('Escolhe pelo menos um dia de atendimento.');
     fireEvent.click(botao('Guardar perfil'));
     expect(updateOperator).not.toHaveBeenCalled();
+  });
+
+  describe('cancelamento gratis e confirmacao automatica', () => {
+    const POLITICA = 'Politica de cancelamento';
+    const prazo = () => within(cartao(POLITICA)).getByLabelText('Cancelamento grátis');
+
+    it('prazo_e_confirmacao_vao_no_guardar', async () => {
+      await abrirPerfil({ ...OPERADOR, free_cancellation_hours: null, auto_confirm_bookings: false });
+      expect(prazo()).toHaveValue('');
+      fireEvent.change(prazo(), { target: { value: '48' } });
+      const interruptor = screen.getByRole('switch', { name: 'Confirmar reservas automaticamente' });
+      expect(interruptor).toHaveAttribute('aria-checked', 'false');
+      fireEvent.click(interruptor);
+      fireEvent.click(botao('Guardar perfil'));
+      await waitFor(() => expect(updateOperator).toHaveBeenCalled());
+      expect(ultimoPut()).toMatchObject({ free_cancellation_hours: 48, auto_confirm_bookings: true });
+    });
+
+    it('previa_do_texto_gerado_so_sem_texto_escrito', async () => {
+      await abrirPerfil({ ...OPERADOR, cancellation_policy_pt: '', cancellation_policy_en: '', free_cancellation_hours: 48 });
+      const c = within(cartao(POLITICA));
+      expect(c.getByText('Cancelamento gratuito até 48 horas antes do início. Depois desse prazo, o valor pago não é reembolsado.')).toBeInTheDocument();
+      expect(c.queryByText('Confirme que o texto abaixo diz o mesmo prazo.')).toBeNull();
+      cleanup();
+      await abrirPerfil({ ...OPERADOR, free_cancellation_hours: 48 });
+      const c2 = within(cartao(POLITICA));
+      expect(c2.getByText('Confirme que o texto abaixo diz o mesmo prazo.')).toBeInTheDocument();
+      expect(c2.queryByText(/Cancelamento gratuito até 48 horas/)).toBeNull();
+    });
+
+    it('sem_prazo_envia_null', async () => {
+      await abrirPerfil({ ...OPERADOR, free_cancellation_hours: 24, auto_confirm_bookings: true });
+      expect(prazo()).toHaveValue('24');
+      expect(screen.getByRole('switch', { name: 'Confirmar reservas automaticamente' })).toHaveAttribute('aria-checked', 'true');
+      fireEvent.change(prazo(), { target: { value: '' } });
+      fireEvent.click(botao('Guardar perfil'));
+      await waitFor(() => expect(updateOperator).toHaveBeenCalled());
+      expect(ultimoPut()).toMatchObject({ free_cancellation_hours: null, auto_confirm_bookings: true });
+    });
   });
 
   describe('cor da pagina publica', () => {

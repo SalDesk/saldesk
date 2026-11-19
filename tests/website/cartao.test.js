@@ -160,3 +160,36 @@ test('experiencias_do_lugar_sem_itinerario_usa_a_ilha', () => {
   assert.deepEqual(r.itens.map(i => i.unit_id), ['b', 'a']);
   assert.deepEqual(C.experienciasDoLugar(lugar, null), { porItinerario: false, itens: [] });
 });
+
+/* Beneficios do operador e da actividade (prazo de cancelamento, confirmacao automatica, recolha) */
+test('beneficios_por_ordem_e_so_quando_verdade', () => {
+  assert.deepEqual(
+    C.beneficiosCartao({ free_cancellation_hours: 24, auto_confirm_bookings: true }, { pickup_included: true }, 'pt'),
+    ['Cancelamento grátis até 24 h antes', 'Confirmação imediata', 'Recolha no hotel'],
+  );
+  assert.deepEqual(
+    C.beneficiosCartao({ free_cancellation_hours: 24, auto_confirm_bookings: true }, { pickup_included: true }, 'en'),
+    ['Free cancellation up to 24 h before', 'Instant confirmation', 'Hotel pickup'],
+  );
+  assert.deepEqual(C.beneficiosCartao({ free_cancellation_hours: 168 }, {}, 'en'), ['Free cancellation up to 7 days before']);
+  assert.deepEqual(C.beneficiosCartao({ free_cancellation_hours: 168 }, {}, 'pt'), ['Cancelamento grátis até 7 dias antes']);
+  assert.deepEqual(C.beneficiosCartao({ free_cancellation_hours: 48 }, {}, 'pt'), ['Cancelamento grátis até 48 h antes']);
+  assert.deepEqual(C.beneficiosCartao({ free_cancellation_hours: 72 }, {}, 'pt'), ['Cancelamento grátis até 72 h antes']);
+});
+
+test('sem_prazo_ou_sem_cancelamento_gratis_nao_mostra', () => {
+  assert.deepEqual(C.beneficiosCartao({ free_cancellation_hours: null }, {}, 'pt'), []);
+  assert.deepEqual(C.beneficiosCartao({ free_cancellation_hours: 0 }, {}, 'pt'), []);
+  assert.deepEqual(C.beneficiosCartao({ free_cancellation_hours: 36 }, {}, 'pt'), []);
+  assert.deepEqual(C.beneficiosCartao({ auto_confirm_bookings: false }, { pickup_included: false }, 'pt'), []);
+  assert.deepEqual(C.beneficiosCartao({ auto_confirm_bookings: 'true' }, { pickup_included: 'true' }, 'pt'), []);
+  assert.deepEqual(C.beneficiosCartao({}, {}, 'pt'), []);
+  assert.deepEqual(C.beneficiosCartao(null, null, 'en'), []);
+});
+
+test('recolha_nao_se_repete_nos_incluidos', () => {
+  const itens = ['Recolha no hotel', { label: 'Hotel pick-up and drop-off', included: true }, 'Guia', 'Hotel Pickup'];
+  assert.equal(C.incluidosTexto({ pickup_included: true, included_items: itens }), 'Guia');
+  assert.equal(C.incluidosTexto({ included_items: itens }), 'Recolha no hotel · Hotel pick-up and drop-off · Guia');
+  assert.equal(C.incluidosTexto({ pickup_included: true, included_items: ['RECOLHA'] }), null);
+});

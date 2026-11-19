@@ -60,18 +60,41 @@
     return vistas.length ? vistas.join(', ') : null;
   }
 
+  /* Itens que falam de recolha: com pickup_included ja aparecem em "Recolha no hotel" */
+  var RECOLHA = /recolha|pick-?up/i;
+
   /* O que inclui: objectos { label, included } marcados como incluidos e textos simples */
   function incluidosTexto(meta, max) {
     var n = max || 3;
     var itens = Array.isArray(meta && meta.included_items) ? meta.included_items : [];
+    var semRecolha = !!(meta && meta.pickup_included === true);
     var out = [];
     itens.forEach(function (i) {
       var t = '';
       if (typeof i === 'string') t = texto(i);
       else if (i && typeof i === 'object' && i.included === true) t = texto(i.label);
-      if (t) out.push(t);
+      if (t && !(semRecolha && RECOLHA.test(t))) out.push(t);
     });
     return out.length ? out.slice(0, n).join(' · ') : null;
+  }
+
+  /* Beneficios do cartao, por esta ordem e so quando verdadeiros: prazo de cancelamento
+     gratis do operador (sem prazo ou 0 = nada), confirmacao automatica do operador e
+     recolha no hotel da actividade. */
+  var PRAZOS = {
+    24: { pt: '24 h', en: '24 h' },
+    48: { pt: '48 h', en: '48 h' },
+    72: { pt: '72 h', en: '72 h' },
+    168: { pt: '7 dias', en: '7 days' },
+  };
+  function beneficiosCartao(item, meta, lang) {
+    var en = lang === 'en';
+    var out = [];
+    var prazo = PRAZOS[item && item.free_cancellation_hours];
+    if (prazo) out.push(en ? 'Free cancellation up to ' + prazo.en + ' before' : 'Cancelamento grátis até ' + prazo.pt + ' antes');
+    if (item && item.auto_confirm_bookings === true) out.push(en ? 'Instant confirmation' : 'Confirmação imediata');
+    if (meta && meta.pickup_included === true) out.push(en ? 'Hotel pickup' : 'Recolha no hotel');
+    return out;
   }
 
   /* Mesma prioridade do servidor (displayPrice): por pessoa > escalao mais
@@ -213,6 +236,7 @@
     formatoTexto: formatoTexto,
     linguasTexto: linguasTexto,
     incluidosTexto: incluidosTexto,
+    beneficiosCartao: beneficiosCartao,
     precoCartao: precoCartao,
     precoCrianca: precoCrianca,
     formatarPreco: formatarPreco,

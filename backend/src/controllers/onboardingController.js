@@ -1,4 +1,5 @@
 const { supabaseAdmin } = require('../config/supabase');
+const { validarHorasCancelamento } = require('../helpers/politicaOperador');
 const { enviarEmail } = require('../helpers/emailHelper');
 const { operatorWelcomeEmail } = require('../helpers/emailTemplates');
 const { validarConfig } = require('../helpers/chatAutoReply');
@@ -95,7 +96,8 @@ async function updateOperator(req, res, next) {
     const { name, operator_type, phone, whatsapp, address, description,
             slug, language, currency, timezone, onboarding_complete, logo_url, cover_images, business_name, tagline,
             custom_faqs, page_config, island_id,
-            cancellation_policy_pt, cancellation_policy_en, chat_auto_reply, brand_color } = req.body;
+            cancellation_policy_pt, cancellation_policy_en, chat_auto_reply, brand_color,
+            free_cancellation_hours, auto_confirm_bookings } = req.body;
 
     /* Resposta automatica do chat do site: valida e normaliza antes de gravar (null desliga) */
     let chatAutoReply;
@@ -111,6 +113,17 @@ async function updateOperator(req, res, next) {
       const c = validarCor(brand_color);
       if (!c.ok) return res.status(400).json({ error: c.error, code: 'INVALID_BRAND_COLOR' });
       brandColor = c.cor;
+    }
+
+    /* Prazo de cancelamento gratis (null, 0, 24, 48, 72, 168) e confirmacao automatica (booleano) */
+    let horasCancelamento;
+    if (free_cancellation_hours !== undefined) {
+      const h = validarHorasCancelamento(free_cancellation_hours);
+      if (!h.ok) return res.status(400).json({ error: 'Prazo de cancelamento invalido', code: 'INVALID_FREE_CANCELLATION' });
+      horasCancelamento = h.valor;
+    }
+    if (auto_confirm_bookings !== undefined && typeof auto_confirm_bookings !== 'boolean') {
+      return res.status(400).json({ error: 'auto_confirm_bookings tem de ser verdadeiro ou falso', code: 'INVALID_AUTO_CONFIRM' });
     }
 
     const updates = { updated_at: new Date().toISOString() };
@@ -134,6 +147,8 @@ async function updateOperator(req, res, next) {
     if (cancellation_policy_en !== undefined) updates.cancellation_policy_en = cancellation_policy_en;
     if (chat_auto_reply !== undefined)   updates.chat_auto_reply = chatAutoReply;
     if (brand_color !== undefined)       updates.brand_color = brandColor;
+    if (free_cancellation_hours !== undefined) updates.free_cancellation_hours = horasCancelamento;
+    if (auto_confirm_bookings !== undefined)   updates.auto_confirm_bookings = auto_confirm_bookings;
     if (page_config !== undefined && typeof page_config === 'object' && page_config !== null && !Array.isArray(page_config)) {
       updates.page_config = page_config;
     }
