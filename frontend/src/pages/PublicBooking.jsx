@@ -1668,26 +1668,26 @@ export default function PublicBooking() {
 
   const FAQ_BY_TYPE = {
     hotel: [
-      { q: lang === 'en' ? 'What time is check-in and check-out?' : 'Qual o horario de check-in e check-out?', a: lang === 'en' ? 'Check-in from 14:00, check-out until 11:00. Early/late options on request.' : 'Check-in a partir das 14h00, check-out ate as 11h00. Opcoes antecipadas/tardias mediante pedido.' },
-      { q: lang === 'en' ? 'Is breakfast included?' : 'O pequeno-almoco esta incluido?', a: lang === 'en' ? 'Breakfast inclusion varies by room type. Check the room details when booking.' : 'A inclusao do pequeno-almoco varia consoante o tipo de quarto. Verifique os detalhes ao reservar.' },
+      { q: lang === 'en' ? 'What time is check-in and check-out?' : 'Qual o horário de check-in e check-out?', a: lang === 'en' ? 'Check-in from 14:00, check-out until 11:00. Early/late options on request.' : 'Check-in a partir das 14h00, check-out até às 11h00. Opções antecipadas/tardias mediante pedido.' },
+      { q: lang === 'en' ? 'Is breakfast included?' : 'O pequeno-almoço está incluído?', a: lang === 'en' ? 'Breakfast inclusion varies by room type. Check the room details when booking.' : 'A inclusão do pequeno-almoço varia consoante o tipo de quarto. Verifique os detalhes ao reservar.' },
     ],
     activity: [
-      { q: lang === 'en' ? 'What should I bring?' : 'O que devo trazer?', a: lang === 'en' ? 'Comfortable clothing, sunscreen, water and a camera. Requirements depend on the activity.' : 'Roupa confortavel, protector solar, agua e camara. Os requisitos dependem da actividade.' },
-      { q: lang === 'en' ? 'Is it suitable for children?' : 'E adequado para criancas?', a: lang === 'en' ? 'Most activities are family-friendly. Check service details or contact us.' : 'A maioria das actividades e adequada para familias. Consulte os detalhes ou contacte-nos.' },
+      { q: lang === 'en' ? 'What should I bring?' : 'O que devo trazer?', a: lang === 'en' ? 'Comfortable clothing, sunscreen, water and a camera. Requirements depend on the activity.' : 'Roupa confortável, protector solar, água e câmara. Os requisitos dependem da actividade.' },
+      { q: lang === 'en' ? 'Is it suitable for children?' : 'É adequado para crianças?', a: lang === 'en' ? 'Most activities are family-friendly. Check service details or contact us.' : 'A maioria das actividades é adequada para famílias. Consulte os detalhes ou contacte-nos.' },
     ],
     rentacar: [
-      { q: lang === 'en' ? 'What documents do I need?' : 'Que documentos preciso?', a: lang === 'en' ? 'Valid driving licence, passport or ID, and a credit/debit card for the deposit.' : 'Carta de conducao valida, passaporte ou BI, e cartao de credito/debito para o deposito.' },
-      { q: lang === 'en' ? 'Is insurance included?' : 'O seguro esta incluido?', a: lang === 'en' ? 'Basic insurance is included. Full coverage available at extra cost.' : 'O seguro basico esta incluido. Cobertura total disponivel com custo adicional.' },
+      { q: lang === 'en' ? 'What documents do I need?' : 'Que documentos preciso?', a: lang === 'en' ? 'Valid driving licence, passport or ID, and a credit/debit card for the deposit.' : 'Carta de condução válida, passaporte ou BI, e cartão de crédito/débito para o depósito.' },
+      { q: lang === 'en' ? 'Is insurance included?' : 'O seguro está incluído?', a: lang === 'en' ? 'Basic insurance is included. Full coverage available at extra cost.' : 'O seguro básico está incluído. Cobertura total disponível com custo adicional.' },
     ],
     restaurant: [
-      { q: lang === 'en' ? 'Do I need a reservation?' : 'Preciso de reserva?', a: lang === 'en' ? 'Reservations are recommended, especially for dinner and weekends.' : 'As reservas sao recomendadas, especialmente para jantar e fins de semana.' },
-      { q: lang === 'en' ? 'Do you have vegetarian options?' : 'Tem opcoes vegetarianas?', a: lang === 'en' ? 'Yes, we have vegetarian and vegan options. Inform us of dietary requirements when booking.' : 'Sim, temos opcoes vegetarianas e veganas. Informe-nos de requisitos dieteticos ao reservar.' },
+      { q: lang === 'en' ? 'Do I need a reservation?' : 'Preciso de reserva?', a: lang === 'en' ? 'Reservations are recommended, especially for dinner and weekends.' : 'As reservas são recomendadas, especialmente para jantar e fins de semana.' },
+      { q: lang === 'en' ? 'Do you have vegetarian options?' : 'Tem opções vegetarianas?', a: lang === 'en' ? 'Yes, we have vegetarian and vegan options. Inform us of dietary requirements when booking.' : 'Sim, temos opções vegetarianas e veganas. Informe-nos de requisitos dietéticos ao reservar.' },
     ],
   };
   const FAQ_COMMON = [
-    { q: lang === 'en' ? 'How do I book?' : 'Como faco uma reserva?', a: lang === 'en' ? 'Select a service, choose dates, fill in details and choose a payment method. You will receive a confirmation by email.' : 'Seleccione um servico, escolha as datas, preencha os dados e escolha o metodo de pagamento. Recebera uma confirmacao por email.' },
-    { q: lang === 'en' ? 'Can I cancel my booking?' : 'Posso cancelar a minha reserva?', a: lang === 'en' ? 'Contact us via WhatsApp or email to discuss cancellation options.' : 'Contacte-nos via WhatsApp ou email para discutir as opcoes de cancelamento.' },
-    { q: lang === 'en' ? 'What payment methods are accepted?' : 'Quais os metodos de pagamento aceites?', a: lang === 'en' ? 'International cards via PayPal, Cape Verdean cards via SISP Vinti4, and cash or card on arrival.' : 'Cartao internacional via PayPal, cartao cabo-verdiano via SISP Vinti4, e dinheiro ou cartao no local.' },
+    { q: lang === 'en' ? 'How do I book?' : 'Como faço uma reserva?', a: lang === 'en' ? 'Select a service, choose dates, fill in details and choose a payment method. You will receive a confirmation by email.' : 'Seleccione um serviço, escolha as datas, preencha os dados e escolha o método de pagamento. Receberá uma confirmação por email.' },
+    { q: lang === 'en' ? 'Can I cancel my booking?' : 'Posso cancelar a minha reserva?', a: lang === 'en' ? 'Contact us via WhatsApp or email to discuss cancellation options.' : 'Contacte-nos via WhatsApp ou email para discutir as opções de cancelamento.' },
+    { q: lang === 'en' ? 'What payment methods are accepted?' : 'Quais os métodos de pagamento aceites?', a: lang === 'en' ? 'International cards via PayPal, Cape Verdean cards via SISP Vinti4, and cash or card on arrival.' : 'Cartão internacional via PayPal, cartão cabo-verdiano via SISP Vinti4, e dinheiro ou cartão no local.' },
   ];
   const FAQ_ITEMS = op.custom_faqs?.length
     ? op.custom_faqs.map(f => ({
@@ -1861,7 +1861,7 @@ export default function PublicBooking() {
         <p className="text-xs font-body font-semibold flex items-center justify-center gap-3 flex-wrap">
           <span>
             <span className="text-sand-400 font-bold">{viewerCount}</span>
-            {lang === 'en' ? ' people viewed this page today' : ' pessoas viram esta pagina hoje'}
+            {lang === 'en' ? ' people viewed this page today' : ' pessoas viram esta página hoje'}
           </span>
           {units.length > 0 && (
             <span className="opacity-60">·</span>
@@ -1869,7 +1869,7 @@ export default function PublicBooking() {
           {units.length > 0 && (
             <span>
               <span className="text-sand-400 font-bold">{units.length}</span>
-              {lang === 'en' ? ' services available' : ' servicos disponiveis'}
+              {lang === 'en' ? ' services available' : ' serviços disponíveis'}
             </span>
           )}
           {isVerified && (
@@ -2345,7 +2345,7 @@ export default function PublicBooking() {
               {showQr && qrUrl && (
                 <div className="mt-4 flex flex-col items-start gap-2">
                   <img src={qrUrl} alt="QR Code" className="w-32 h-32 rounded-xl border border-n-200 shadow-sm" />
-                  <p className="text-xs font-body text-n-400">{lang === 'en' ? 'Scan to open this page' : 'Scannear para abrir esta pagina'}</p>
+                  <p className="text-xs font-body text-n-400">{lang === 'en' ? 'Scan to open this page' : 'Scannear para abrir esta página'}</p>
                   <a href={qrUrl} download={`qr-${slug}.png`}
                     className="text-xs font-body font-semibold text-brand-700 hover:text-brand-500 transition-colors">
                     {lang === 'en' ? 'Download QR Code' : 'Descarregar QR Code'}
