@@ -52,13 +52,16 @@ describe('sitemap.xml', () => {
     expect(xml).toMatch(/<loc>https:\/\/saldesk\.cv\/discover\/ponto\.html\?slug=buracona<\/loc>\s*\n?\s*<lastmod>2026-11-10<\/lastmod>\s*\n?\s*<priority>0\.6<\/priority>/);
   });
 
-  it('sitemap_escapa_urls', async () => {
-    estado.landmarks = [{ slug: 'a&b' }];
+  it('sitemap_codifica_cada_parte_do_endereco', async () => {
+    /* um & no nome partia o ?slug= em dois parametros; espacos e acentos tambem tem de ir codificados */
+    estado.landmarks = [{ slug: 'a&b' }, { slug: 'praia ção' }];
     getDiscoverCatalog.mockResolvedValue([{ operator_slug: 'x"y', unit_id: 'u<1' }]);
     const xml = await sitemap();
-    expect(xml).toContain('ponto.html?slug=a&amp;b</loc>');
-    expect(xml).toContain('/book/x&quot;y/servico/u&lt;1</loc>');
+    expect(xml).toContain('ponto.html?slug=a%26b</loc>');
+    expect(xml).toContain('ponto.html?slug=praia%20%C3%A7%C3%A3o</loc>');
+    expect(xml).toContain('/book/x%22y/servico/u%3C1</loc>');
     expect(xml).not.toContain('a&b');
+    expect(xml).not.toContain('a&amp;b');
   });
 
   it('sitemap_sem_catalogo_continua', async () => {

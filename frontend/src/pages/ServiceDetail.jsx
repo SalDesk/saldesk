@@ -48,7 +48,8 @@ const pontoEncontroIcon = L.divIcon({
   className: '',
   html: '<div style="background:#0D5470;width:24px;height:24px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.35)"></div>',
   iconSize: [24, 24],
-  iconAnchor: [12, 24],
+  /* quadrado rodado 45 graus: a ponta fica a 12 + 12*raiz(2) = 29 px do topo */
+  iconAnchor: [12, 29],
 });
 
 function stopDivIcon(n) {
@@ -1439,7 +1440,7 @@ function ServiceDetailPagina() {
                     {temPonto && (
                       <div className="h-56 rounded-2xl overflow-hidden border border-n-200">
                         <MapContainer center={[la, ln]} zoom={14} style={{ height:'100%', width:'100%' }} scrollWheelZoom={false}>
-                          <TileLayer attribution='&copy; OpenStreetMap contributors' url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"/>
+                          <TileLayer attribution='&copy; OpenStreetMap contributors' url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"/>
                           <Marker position={[la, ln]} icon={pontoEncontroIcon}>
                             <Popup>{texto || (lang==='en'?'Meeting point':'Ponto de encontro')}</Popup>
                           </Marker>
@@ -1482,7 +1483,7 @@ function ServiceDetailPagina() {
                     {stopsWithCoords.length > 0 && (
                       <div className="h-72 rounded-2xl overflow-hidden border border-n-200">
                         <MapContainer center={[stopsWithCoords[0].lat, stopsWithCoords[0].lng]} zoom={12} style={{ height:'100%', width:'100%' }} scrollWheelZoom={false}>
-                          <TileLayer attribution='&copy; OpenStreetMap contributors' url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"/>
+                          <TileLayer attribution='&copy; OpenStreetMap contributors' url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"/>
                           {stopsWithCoords.map((s, i) => (
                             <Marker key={i} position={[s.lat, s.lng]} icon={stopDivIcon(unitMeta.stops.indexOf(s)+1)}>
                               <Popup>{lang==='en'&&s.name_en?s.name_en:s.name}</Popup>

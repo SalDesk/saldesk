@@ -12,12 +12,20 @@ vi.mock('../services/uploadService', () => ({
 }));
 
 /* O mapa do ponto de encontro (react-leaflet) nao corre em jsdom: fica uma caixa simples */
-vi.mock('react-leaflet', () => ({
-  MapContainer: ({ children }) => <div data-testid="mapa">{children}</div>,
-  TileLayer: () => null,
-  Marker: () => <div data-testid="marcador" />,
-  useMapEvents: () => null,
-}));
+/* conta quantas vezes o mapa nasce (recarregar o mapa a cada tecla e lento e salta) */
+const mockMapa = { montagens: 0, centro: null };
+vi.mock('react-leaflet', async () => {
+  const { useEffect } = await import('react');
+  return {
+    MapContainer: ({ children, center }) => {
+      useEffect(() => { mockMapa.montagens += 1; mockMapa.centro = center; }, []);
+      return <div data-testid="mapa">{children}</div>;
+    },
+    TileLayer: ({ url }) => <span data-testid="azulejos" data-url={url} />,
+    Marker: () => <div data-testid="marcador" />,
+    useMapEvents: () => null,
+  };
+});
 vi.mock('leaflet', () => ({ default: { divIcon: () => ({}) }, divIcon: () => ({}) }));
 
 /* Saida limpa: nenhum teste deve disparar console.error nem console.warn.
@@ -448,6 +456,24 @@ describe('TourForm', () => {
       expect(screen.getByTestId('marcador')).toBeInTheDocument();
       expect(campo(COLAR).value).toBe('');
       expect(gravado(onSave)).toEqual({ lat: 16.7631, lng: -22.895 });
+    });
+
+    it('escrever_a_latitude_nao_recarrega_o_mapa_e_recentra_ao_sair_do_campo', () => {
+      novoTour();
+      const antes = mockMapa.montagens;
+      escrever(campo('Latitude'), '1');
+      escrever(campo('Latitude'), '16');
+      escrever(campo('Latitude'), '16.7');
+      escrever(campo('Longitude'), '-22.9');
+      expect(mockMapa.montagens).toBe(antes);
+      fireEvent.blur(campo('Longitude'));
+      expect(mockMapa.montagens).toBe(antes + 1);
+      expect(mockMapa.centro).toEqual([16.7, -22.9]);
+    });
+
+    it('os_azulejos_do_mapa_vem_do_endereco_actual_do_openstreetmap', () => {
+      novoTour();
+      expect(screen.getByTestId('azulejos').dataset.url).toBe('https://tile.openstreetmap.org/{z}/{x}/{y}.png');
     });
 
     it('colar_texto_invalido_avisa_e_nao_mexe', () => {

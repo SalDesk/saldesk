@@ -147,7 +147,8 @@
     .xp-map-title span{font-weight:500;color:var(--n500);margin-left:6px}
     .xp-map{position:relative;overflow:hidden;border-radius:16px;border:1px solid var(--n200);background:#dfe8ec}
     .xp-map img{position:absolute;width:256px;height:256px;max-width:none;user-select:none;pointer-events:none}
-    .xp-pin{position:absolute;width:30px;height:30px;margin:-30px 0 0 -15px;border:2px solid #fff;border-radius:50% 50% 50% 0;transform:rotate(-45deg);background:var(--ocean-700);box-shadow:0 2px 6px rgba(6,42,56,.35);cursor:pointer;padding:0;display:flex;align-items:center;justify-content:center}
+    /* quadrado de 30 px rodado 45 graus: a ponta fica a 15 + 15*raiz(2) = 36 px do topo */
+    .xp-pin{position:absolute;width:30px;height:30px;margin:-36px 0 0 -15px;border:2px solid #fff;border-radius:50% 50% 50% 0;transform:rotate(-45deg);background:var(--ocean-700);box-shadow:0 2px 6px rgba(6,42,56,.35);cursor:pointer;padding:0;display:flex;align-items:center;justify-content:center}
     .xp-pin span{transform:rotate(45deg);color:#fff;font-family:var(--fd);font-size:.72rem;font-weight:700}
     .xp-pin:hover,.xp-pin.on{background:var(--sand-500);z-index:2}
     .xp-pin.on span,.xp-pin:hover span{color:var(--ocean-900)}
@@ -743,7 +744,7 @@
   </div>
 </footer>
 
-<script src="_cartao.js?v=20261120f"></script>
+<script src="_cartao.js?v=20261120g"></script>
 <script>
 /* ══════════════════════════════════════════
    CONSTANTS
