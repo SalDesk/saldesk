@@ -1,4 +1,5 @@
 const { supabaseAdmin } = require('../config/supabase');
+const { classificacaoPorUnidade } = require('../helpers/classificacaoUnidade');
 
 /* Extraido de publicController.js (discoverUnits) para ser reutilizado
    tambem por getRecommendations (travelerController.js) -- mesma logica
@@ -48,10 +49,10 @@ async function getDiscoverCatalog({ type } = {}) {
   });
   if (!units.length) return [];
 
-  // Ratings agregadas por operador -- reviews nao sao por unidade
+  // Ratings agregadas por operador (seccao de operadores) e por experiencia (cartoes)
   const { data: ratings } = await supabaseAdmin
     .from('reviews')
-    .select('operator_id, rating')
+    .select('operator_id, rating, reservation_id')
     .in('operator_id', ids)
     .eq('is_public', true)
     .not('rating', 'is', null);
@@ -61,6 +62,19 @@ async function getDiscoverCatalog({ type } = {}) {
     if (!ratingMap[r.operator_id]) ratingMap[r.operator_id] = [];
     ratingMap[r.operator_id].push(r.rating);
   });
+
+  /* Classificacao propria de cada experiencia: avaliacoes das reservas dessa unidade.
+     Sem avaliacoes proprias, o cartao nao mostra estrelas (nunca as do operador). */
+  const reservasAvaliadas = [...new Set((ratings || []).map((r) => r.reservation_id).filter(Boolean))];
+  let reservasDasAvaliacoes = [];
+  if (reservasAvaliadas.length) {
+    const { data: rs } = await supabaseAdmin
+      .from('reservations')
+      .select('id, unit_id')
+      .in('id', reservasAvaliadas);
+    reservasDasAvaliacoes = rs || [];
+  }
+  const classificacaoUnidade = classificacaoPorUnidade(ratings, reservasDasAvaliacoes);
 
   // Reservas recentes (ultimos 30 dias) por UNIDADE -- sinal de popularidade
   // mais preciso que por operador, ja que reservations tem unit_id.
@@ -208,6 +222,8 @@ async function getDiscoverCatalog({ type } = {}) {
         ? parseFloat((opRatings.reduce((s, r) => s + r, 0) / opRatings.length).toFixed(1))
         : null,
       review_count:    opRatings.length || 0,
+      unit_avg_rating:   classificacaoUnidade[u.id]?.avg ?? null,
+      unit_review_count: classificacaoUnidade[u.id]?.count ?? 0,
       recent_bookings: bookingMap[u.id] || 0,
       next_available:  op.operator_type === 'restaurant' ? nextAvailableForOperator(op.id) : nextAvailable(u.id),
       created_at:      u.created_at,
