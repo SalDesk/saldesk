@@ -14,6 +14,14 @@ function mesmoEmail(emailReserva, email) {
   return typeof emailReserva === 'string' && emailReserva.trim().toLowerCase() === email;
 }
 
+/* Reservas, recibos e avaliacoes so com o email confirmado: sem isto, quem soubesse o email de
+   um turista criava uma conta com ele e via as reservas dele (helpers/verificacaoEmailViajante.js) */
+function exigirEmailConfirmado(req, res) {
+  if (req.traveler && req.traveler.email_verificado === true) return false;
+  res.status(403).json({ error: 'Confirme o seu email para ver as suas reservas', code: 'EMAIL_NOT_VERIFIED' });
+  return true;
+}
+
 async function getProfile(req, res) {
   return res.json({ data: req.traveler, message: 'Perfil do viajante' });
 }
@@ -36,7 +44,7 @@ async function updateProfile(req, res, next) {
       .single();
 
     if (error) throw error;
-    return res.json({ data, message: 'Perfil actualizado' });
+    return res.json({ data: { ...data, email_verificado: req.traveler.email_verificado }, message: 'Perfil actualizado' });
   } catch (err) {
     next(err);
   }
@@ -48,6 +56,7 @@ async function updateProfile(req, res, next) {
    formulario de reserva, sem normalizacao garantida. */
 async function getBookings(req, res, next) {
   try {
+    if (exigirEmailConfirmado(req, res)) return;
     const email = req.traveler.email.trim().toLowerCase();
 
     const { data: linhas, error } = await supabaseAdmin
@@ -104,6 +113,7 @@ async function getBookings(req, res, next) {
    ja esta autenticado. */
 async function submitReview(req, res, next) {
   try {
+    if (exigirEmailConfirmado(req, res)) return;
     const { reservationId } = req.params;
     const { rating, comment } = req.body;
     const email = req.traveler.email.trim().toLowerCase();
@@ -256,7 +266,7 @@ async function getRecommendations(req, res, next) {
 
     const historyIds = new Set([
       ...(wishRows || []).map(r => r.unit_id),
-      ...(bookingRows || []).filter(r => mesmoEmail(r.customer_email, email)).map(r => r.unit_id),
+      ...(req.traveler.email_verificado === true ? bookingRows || [] : []).filter(r => mesmoEmail(r.customer_email, email)).map(r => r.unit_id),
     ]);
     const historyItems = catalog.filter(c => historyIds.has(c.unit_id));
     const categorySet = new Set(historyItems.map(i => i.category_id).filter(Boolean));
@@ -324,7 +334,9 @@ async function getNotifications(req, res, next) {
 
     /* mesma regra do separador Avaliacoes (getBookings.can_review): terminada, mesmo sem check-out marcado */
     const hoje = hojeCaboVerde(new Date());
-    const avaliaveis = (reservas || []).filter(r => mesmoEmail(r.customer_email, email) && podeAvaliarViajante(r, hoje));
+    const avaliaveis = req.traveler.email_verificado === true
+      ? (reservas || []).filter(r => mesmoEmail(r.customer_email, email) && podeAvaliarViajante(r, hoje))
+      : [];
     let pendingReview = 0;
     if (avaliaveis.length) {
       const ids = avaliaveis.map(r => r.id);
@@ -383,6 +395,7 @@ async function markNotificationRead(req, res, next) {
    viajante descarregar o recibo de uma reserva que nao e dele. */
 async function getBookingInvoice(req, res, next) {
   try {
+    if (exigirEmailConfirmado(req, res)) return;
     const email = req.traveler.email.trim().toLowerCase();
     const { data: reserva, error } = await supabaseAdmin
       .from('reservations')

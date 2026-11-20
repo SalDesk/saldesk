@@ -44,7 +44,7 @@ async function authMiddleware(req, res, next) {
     return res.status(401).json({ error: 'Token invalido ou expirado', code: 'INVALID_TOKEN' });
   }
   const supaUser = data.user;
-  req.user = { id: supaUser.id, email: supaUser.email, user_metadata: supaUser.user_metadata || {}, role: supaUser.role };
+  req.user = { id: supaUser.id, email: supaUser.email, user_metadata: supaUser.user_metadata || {}, app_metadata: supaUser.app_metadata || {}, role: supaUser.role };
 
   const operator = await supabaseGet('operators', { user_id: supaUser.id });
   req.operator = operator || null;

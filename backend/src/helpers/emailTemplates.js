@@ -380,6 +380,47 @@ function passwordResetEmail({ name, link }) {
   return { subject, html, text };
 }
 
+/* ── Confirmacao do email do viajante (area do viajante: reservas, recibos e avaliacoes) ── */
+
+function travelerVerifyEmail({ name, link, lang = 'pt' }) {
+  const en = lang === 'en';
+  const ola = en ? `Hi${name ? ` ${name}` : ''},` : `Olá${name ? ` ${name}` : ''},`;
+  const subject = en ? 'Confirm your email on SalDesk' : 'Confirme o seu email na SalDesk';
+  const intro = `<p style="margin:0 0 20px;font-family:${FONT};font-size:14px;line-height:1.6;color:${MUTED};">${ola} ${en
+    ? 'thank you for creating your traveller account on SalDesk.'
+    : 'obrigado por criar a sua conta de viajante na SalDesk.'}</p>`;
+  const body = paragraph(en
+    ? 'Please confirm that this email is yours. You will then see your bookings with Cape Verde operators, download your receipts and leave reviews.'
+    : 'Confirme que este email é seu. A partir daí vê as suas reservas nos operadores de Cabo Verde, descarrega os recibos e deixa avaliações.')
+    + paragraph(en
+      ? `The link is valid for 48 hours. If you did not create this account, you can ignore this email.`
+      : `O link é válido durante 48 horas. Se não foi você a criar esta conta, pode ignorar este email.`)
+    + `<p style="margin:24px 0 0;font-family:${FONT};font-size:14px;line-height:1.6;color:${INK};">${en ? 'Best wishes,' : 'Um abraço,'}<br>Rits Delgado<br><span style="color:${MUTED};font-size:12px;">${en ? 'Founder, SalDesk' : 'Fundador, SalDesk'}</span></p>`;
+  const html = wrapEmail({
+    title: en ? 'Confirm your email' : 'Confirme o seu email',
+    introHtml: intro,
+    bodyHtml: body,
+    ctaUrl: link,
+    ctaLabel: en ? 'Confirm email' : 'Confirmar email',
+  });
+  const text = (en ? [
+    ola, '',
+    'Thank you for creating your traveller account on SalDesk.',
+    'Please confirm that this email is yours. You will then see your bookings with Cape Verde operators, download your receipts and leave reviews.',
+    '', `Confirm your email: ${link}`, '',
+    'The link is valid for 48 hours. If you did not create this account, you can ignore this email.',
+    '', 'Best wishes,', 'Rits Delgado', 'Founder, SalDesk',
+  ] : [
+    ola, '',
+    'Obrigado por criar a sua conta de viajante na SalDesk.',
+    'Confirme que este email é seu. A partir daí vê as suas reservas nos operadores de Cabo Verde, descarrega os recibos e deixa avaliações.',
+    '', `Confirmar o email: ${link}`, '',
+    'O link é válido durante 48 horas. Se não foi você a criar esta conta, pode ignorar este email.',
+    '', 'Um abraço,', 'Rits Delgado', 'Fundador, SalDesk',
+  ]).join('\n');
+  return { subject, html, text };
+}
+
 /* ── e) Primeiro acesso ao painel (operador configurado directamente
    pela equipa SalDesk, nunca passou pelo /register) ── */
 
@@ -478,6 +519,7 @@ module.exports = {
   notificacaoOperadorEmail,
   staffInviteEmail,
   passwordResetEmail,
+  travelerVerifyEmail,
   operatorWelcomeEmail,
   operatorFirstAccessEmail,
 };

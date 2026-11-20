@@ -100,13 +100,13 @@ test('definicoes_le_e_grava_booleano', async () => {
 test('viajante_avalia_reserva_confirmada_passada', async () => {
   estado.reserva = { id: 'r1', operator_id: 'op1', customer_email: 'ana@exemplo.cv', status: 'confirmed', check_out: ontem() };
   let res = resFalso();
-  await traveler.submitReview({ params: { reservationId: 'r1' }, body: { rating: 5, comment: 'Top' }, traveler: { email: 'ANA@exemplo.cv' } }, res, jest.fn());
+  await traveler.submitReview({ params: { reservationId: 'r1' }, body: { rating: 5, comment: 'Top' }, traveler: { email: 'ANA@exemplo.cv', email_verificado: true } }, res, jest.fn());
   expect(res.statusCode).toBe(201);
   expect(estado.inserts[0]).toMatchObject({ tabela: 'reviews', linha: { rating: 5, reservation_id: 'r1', is_public: true } });
 
   estado.reserva = { ...estado.reserva, check_out: new Date().toLocaleDateString('en-CA', { timeZone: 'Atlantic/Cape_Verde' }) };
   res = resFalso();
-  await traveler.submitReview({ params: { reservationId: 'r1' }, body: { rating: 5 }, traveler: { email: 'ana@exemplo.cv' } }, res, jest.fn());
+  await traveler.submitReview({ params: { reservationId: 'r1' }, body: { rating: 5 }, traveler: { email: 'ana@exemplo.cv', email_verificado: true } }, res, jest.fn());
   expect(res.statusCode).toBe(400);
   expect(res.body.code).toBe('INVALID_STATUS');
 });
