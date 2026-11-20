@@ -269,5 +269,94 @@
       "showNewPw": "Neues Passwort anzeigen",
       "showConfirm": "Passwortbestätigung anzeigen"
     }
+  },
+  "passwordStrength": {
+    "weak": "Schwach",
+    "medium": "Mittel",
+    "strong": "Stark",
+    "ruleLength": "Mindestens 8 Zeichen",
+    "ruleUpper": "1 Großbuchstabe (A-Z)",
+    "ruleNumber": "1 Ziffer (0-9)",
+    "ruleSpecial": "1 Sonderzeichen (!@#…)"
+  },
+  "imageUploader": {
+    "photos": "Fotos",
+    "main": "Hauptbild",
+    "moveUp": "Nach oben verschieben",
+    "moveDown": "Nach unten verschieben",
+    "removePhoto": "Foto entfernen",
+    "dropLine1": "Klicken oder ziehen Sie",
+    "dropLine2": "ein Foto hierher",
+    "formatsHint": "JPG, PNG, WebP · max. 5 MB · erstes Foto = Titelbild",
+    "slotsLeft": "{{n}} Platz/Plätze frei",
+    "maxReached": "Maximal {{max}} Fotos erreicht.",
+    "uploadError": "Upload fehlgeschlagen. Bitte versuchen Sie es erneut."
+  },
+  "upload": {
+    "invalidFormat": "Ungültiges Format: {{name}}. Verwenden Sie JPG, PNG oder WebP.",
+    "tooLarge": "Datei zu groß: {{name}}. Maximal {{max}} MB."
+  },
+  "messaging": {
+    "triggers": {
+      "bookingConfirmedTitle": "Buchungsbestätigung",
+      "bookingConfirmedWhen": "Wird für bestätigte Buchungen gesendet.",
+      "reminderTitle": "Erinnerung am Vortag",
+      "reminderWhen": "Wird am Vortag für bestätigte Buchungen gesendet.",
+      "reviewTitle": "Bewertungsanfrage",
+      "reviewWhen": "Wird nach dem Check-out gesendet. Muss {link_avaliacao} enthalten."
+    },
+    "triggerShort": {
+      "booking_confirmed": "Bestätigung",
+      "reminder_d1": "Erinnerung",
+      "review_request": "Bewertungsanfrage"
+    },
+    "langs": {
+      "pt": "Portugiesisch",
+      "en": "Englisch"
+    },
+    "varHelp": {
+      "nome_cliente": "Name des Kunden",
+      "nome_tour": "Tour oder Aktivität",
+      "data": "Buchungsdatum",
+      "hora": "Startzeit",
+      "guia": "Zugewiesener Guide (die Zeile entfällt, wenn keiner zugewiesen ist)",
+      "ponto_encontro": "Treffpunkt (die Zeile entfällt, wenn keiner angegeben ist)",
+      "operador": "Der Name Ihres Unternehmens",
+      "link_avaliacao": "Link, über den der Kunde bewerten kann"
+    },
+    "status": {
+      "unsaved": "Ungespeicherte Änderungen",
+      "custom": "Angepasst",
+      "original": "Originaltext"
+    },
+    "metaStatus": {
+      "approved": "Genehmigt",
+      "pending": "In Prüfung bei Meta",
+      "rejected": "Abgelehnt",
+      "paused": "Pausiert",
+      "disabled": "Deaktiviert"
+    },
+    "saved": "Nachricht gespeichert",
+    "restored": "Originaltext wiederhergestellt",
+    "saveError": "Konnte nicht gespeichert werden",
+    "restoreError": "Konnte nicht wiederhergestellt werden",
+    "loadError": "Die Nachrichten konnten nicht geladen werden",
+    "clickVariable": "Klicken Sie auf eine Variable, um sie an der Cursorposition einzufügen",
+    "previewTitle": "Was der Kunde erhält (Beispiel)",
+    "previewEmpty": "Die Nachricht erscheint hier.",
+    "unknownVariable": "Unbekannte Variable: {{vars}}. Verwenden Sie die Variablen aus der Liste, sonst erhält der Kunde den Text unausgefüllt.",
+    "missingLink": "Die Bewertungsanfrage muss {link_avaliacao} enthalten, sonst kann der Kunde keine Bewertung abgeben.",
+    "save": "Speichern",
+    "restore": "Originaltext wiederherstellen",
+    "channelTitle": "Wie Nachrichten gesendet werden",
+    "channelAuto": "Automatisch (WhatsApp Cloud API)",
+    "channelManual": "Manuell (WhatsApp auf dem Handy)",
+    "quality": "Qualität der Nummer:",
+    "suspended": "Automatischer Versand ausgesetzt",
+    "autoText": "Für Kunden, die dem Empfang von Nachrichten zugestimmt haben, sendet SalDesk automatisch. Außerhalb der 24 Stunden nach der letzten Nachricht des Kunden erlaubt WhatsApp nur von Meta vorab genehmigte Vorlagen: Diese sind fest und ändern sich nicht mit den Texten unten. Die Texte unten gelten, wenn der Kunde vor weniger als 24 Stunden geschrieben hat, sowie beim manuellen Versand.",
+    "manualText": "SalDesk bereitet den Text vor und WhatsApp öffnet sich auf dem Handy, bereit zum Senden mit einem Fingertipp. Für den automatischen Versand muss das WhatsApp-Business-Konto des Anbieters verbunden werden (Wandr richtet diese Verbindung ein).",
+    "introBefore": "Dies sind die Texte, die SalDesk vorbereitet, wenn Sie bei einer Buchung auf",
+    "introAfter": "klicken. WhatsApp öffnet sich mit der fertigen Nachricht, Sie müssen sie nur noch senden. Der Kunde erhält die Version in seiner Sprache (Portugiesisch oder Englisch).",
+    "introNote": "Wenn kein Guide zugewiesen oder kein Treffpunkt angegeben ist, entfällt der entsprechende Satz automatisch."
   }
 }

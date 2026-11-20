@@ -1,4 +1,6 @@
 import api from './api';
+import { getT } from '../i18n';
+import useUiStore from '../store/uiStore';
 
 /**
  * Upload a single image to the server.
@@ -27,11 +29,12 @@ export const MAX_IMAGE_SIZE_MB    = 5;
 export const MAX_IMAGE_SIZE_BYTES = MAX_IMAGE_SIZE_MB * 1024 * 1024;
 
 export function validateImageFile(file) {
+  const t = getT(useUiStore.getState().lang);
   if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
-    return `Formato invalido: ${file.name}. Usa JPG, PNG ou WebP.`;
+    return t('upload.invalidFormat', { name: file.name });
   }
   if (file.size > MAX_IMAGE_SIZE_BYTES) {
-    return `Ficheiro demasiado grande: ${file.name}. Maximo ${MAX_IMAGE_SIZE_MB}MB.`;
+    return t('upload.tooLarge', { name: file.name, max: MAX_IMAGE_SIZE_MB });
   }
   return null;
 }

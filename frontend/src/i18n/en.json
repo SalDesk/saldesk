@@ -685,5 +685,94 @@
       "showNewPw": "Show new password",
       "showConfirm": "Show new password confirmation"
     }
+  },
+  "passwordStrength": {
+    "weak": "Weak",
+    "medium": "Medium",
+    "strong": "Strong",
+    "ruleLength": "At least 8 characters",
+    "ruleUpper": "1 capital letter (A-Z)",
+    "ruleNumber": "1 number (0-9)",
+    "ruleSpecial": "1 special character (!@#…)"
+  },
+  "imageUploader": {
+    "photos": "Photos",
+    "main": "Main",
+    "moveUp": "Move up",
+    "moveDown": "Move down",
+    "removePhoto": "Remove photo",
+    "dropLine1": "Click or drag",
+    "dropLine2": "a photo",
+    "formatsHint": "JPG, PNG, WebP · max 5MB · first photo = main cover",
+    "slotsLeft": "{{n}} slot(s) left",
+    "maxReached": "Maximum of {{max}} photos reached.",
+    "uploadError": "Upload failed. Please try again."
+  },
+  "upload": {
+    "invalidFormat": "Invalid format: {{name}}. Use JPG, PNG or WebP.",
+    "tooLarge": "File too large: {{name}}. Maximum {{max}}MB."
+  },
+  "messaging": {
+    "triggers": {
+      "bookingConfirmedTitle": "Booking confirmation",
+      "bookingConfirmedWhen": "Sent for confirmed bookings.",
+      "reminderTitle": "Day-before reminder",
+      "reminderWhen": "Sent the day before, for confirmed bookings.",
+      "reviewTitle": "Review request",
+      "reviewWhen": "Sent after check-out. Must include {link_avaliacao}."
+    },
+    "triggerShort": {
+      "booking_confirmed": "Confirmation",
+      "reminder_d1": "Reminder",
+      "review_request": "Review request"
+    },
+    "langs": {
+      "pt": "Portuguese",
+      "en": "English"
+    },
+    "varHelp": {
+      "nome_cliente": "Customer name",
+      "nome_tour": "Tour or activity",
+      "data": "Booking date",
+      "hora": "Start time",
+      "guia": "Assigned guide (the line disappears if there is none)",
+      "ponto_encontro": "Meeting point (the line disappears if there is none)",
+      "operador": "Your company name",
+      "link_avaliacao": "Link for the customer to leave a review"
+    },
+    "status": {
+      "unsaved": "Unsaved changes",
+      "custom": "Customised",
+      "original": "Original text"
+    },
+    "metaStatus": {
+      "approved": "Approved",
+      "pending": "Under review by Meta",
+      "rejected": "Rejected",
+      "paused": "Paused",
+      "disabled": "Disabled"
+    },
+    "saved": "Message saved",
+    "restored": "Original text restored",
+    "saveError": "Could not save",
+    "restoreError": "Could not restore",
+    "loadError": "Could not load the messages",
+    "clickVariable": "Click a variable to insert it at the cursor",
+    "previewTitle": "What the customer receives (example)",
+    "previewEmpty": "The message appears here.",
+    "unknownVariable": "Unknown variable: {{vars}}. Use the variables from the list, otherwise the customer receives the text unfilled.",
+    "missingLink": "The review request must include {link_avaliacao}, otherwise the customer has no way to leave a review.",
+    "save": "Save",
+    "restore": "Restore original text",
+    "channelTitle": "How messages are sent",
+    "channelAuto": "Automatic (WhatsApp Cloud API)",
+    "channelManual": "Manual (WhatsApp on your phone)",
+    "quality": "Number quality:",
+    "suspended": "Automatic sending suspended",
+    "autoText": "For customers who have agreed to receive messages, SalDesk sends them automatically. Outside the 24 hours after the customer's last message, WhatsApp only allows templates pre-approved by Meta: these are fixed and do not change with the texts below. The texts below apply when the customer wrote less than 24 hours ago and to manual sending.",
+    "manualText": "SalDesk prepares the text and WhatsApp opens on your phone, ready to send with one tap. Automatic sending requires connecting the operator's WhatsApp Business account (Wandr sets up this connection).",
+    "introBefore": "These are the texts SalDesk prepares when you click",
+    "introAfter": "on a booking. WhatsApp opens with the message ready and you only need to send it. The customer receives the version in their language (Portuguese or English).",
+    "introNote": "If there is no assigned guide or meeting point, the corresponding sentence disappears automatically."
   }
 }
