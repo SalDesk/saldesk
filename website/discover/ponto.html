@@ -401,7 +401,7 @@
   </div>
 </footer>
 
-<script src="_cartao.js?v=20261119b"></script>
+<script src="_cartao.js?v=20261120a"></script>
 <script>
 /* ══════════════════════════════════════════
    PAGINA DE UM PONTO TURISTICO (ponto.html?slug=...)
@@ -562,6 +562,13 @@ function renderLugar() {
   const typeLbl = (POI_TYPE_LABEL[item.type] || {})[lang] || '';
 
   document.title = `${name} — SalDesk Conect`;
+  /* Dados estruturados para o Google (sempre em PT, com o nome da ilha em PT) */
+  const dados = C.jsonLdLugar(item, `https://saldesk.cv/discover/ponto.html?slug=${encodeURIComponent(item.slug)}`, ISLAND_LABEL[item.island_slug]?.pt || '');
+  let ld = document.getElementById('sd-jsonld');
+  if (dados) {
+    if (!ld) { ld = document.createElement('script'); ld.type = 'application/ld+json'; ld.id = 'sd-jsonld'; document.head.appendChild(ld); }
+    ld.textContent = JSON.stringify(dados).replace(/</g, '\\u003c');
+  } else if (ld) ld.remove();
   const md = document.querySelector('meta[name="description"]');
   if (md && desc) md.setAttribute('content', desc.slice(0, 155));
 

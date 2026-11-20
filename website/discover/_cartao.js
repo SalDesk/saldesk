@@ -112,6 +112,94 @@
     return null;
   }
 
+  /* ── Filtros extra do Discover (beneficios, preco, duracao) e ordenacao por preco ──
+     Mesmos valores que o cartao mostra: preco "A partir de" em EUR (CVE / taxa) e duracao
+     da descricao (horas) ou duration_minutes. Sem preco/duracao nunca cai numa faixa. */
+  function precoEmEur(item, meta, taxa) {
+    var p = precoCartao(item, meta);
+    if (!p) return null;
+    return item && item.currency === 'CVE' ? p.valor / (taxa || 110) : p.valor;
+  }
+
+  function faixaPreco(item, meta, taxa) {
+    var eur = precoEmEur(item, meta, taxa);
+    if (eur === null) return null;
+    if (eur <= 50) return 'ate50';
+    if (eur <= 100) return '50a100';
+    return 'mais100';
+  }
+
+  function duracaoMinutos(item, meta) {
+    var horas = Number(meta && meta.duration);
+    if (horas > 0) return horas * 60;
+    var min = Number(item && item.duration_minutes);
+    return min > 0 ? min : null;
+  }
+
+  function faixaDuracao(item, meta) {
+    var min = duracaoMinutos(item, meta);
+    if (min === null) return null;
+    if (min <= 180) return 'ate3';
+    if (min <= 360) return '3a6';
+    return 'mais6';
+  }
+
+  function temBeneficio(item, meta, chave) {
+    if (chave === 'cancelamento') return !!PRAZOS[item && item.free_cancellation_hours];
+    if (chave === 'confirmacao') return !!(item && item.auto_confirm_bookings === true);
+    if (chave === 'recolha') return !!(meta && meta.pickup_included === true);
+    return false;
+  }
+
+  function passaFiltrosExtra(item, meta, filtros, taxa) {
+    var f = filtros || {};
+    if (f.beneficio && !temBeneficio(item, meta, f.beneficio)) return false;
+    if (f.preco && faixaPreco(item, meta, taxa) !== f.preco) return false;
+    if (f.duracao && faixaDuracao(item, meta) !== f.duracao) return false;
+    return true;
+  }
+
+  /* '' = ordem original; sem preco sempre no fim; empates mantem a ordem original */
+  function ordenarPorPreco(itens, sentido, taxa) {
+    var lista = Array.isArray(itens) ? itens.slice() : [];
+    if (sentido !== 'asc' && sentido !== 'desc') return lista;
+    var comIndice = lista.map(function (it, i) { return { it: it, i: i, p: precoEmEur(it, lerMeta(it), taxa) }; });
+    comIndice.sort(function (a, b) {
+      if (a.p === null && b.p === null) return a.i - b.i;
+      if (a.p === null) return 1;
+      if (b.p === null) return -1;
+      var d = sentido === 'asc' ? a.p - b.p : b.p - a.p;
+      return d || a.i - b.i;
+    });
+    return comIndice.map(function (x) { return x.it; });
+  }
+
+  var OPCOES = {
+    beneficio: ['cancelamento', 'confirmacao', 'recolha'],
+    preco: ['ate50', '50a100', 'mais100'],
+    duracao: ['ate3', '3a6', 'mais6'],
+  };
+
+  /* Quantas experiencias tem cada opcao do grupo, contando so as que passam os OUTROS grupos */
+  function contarOpcoes(itens, grupo, filtros, taxa) {
+    var outros = {};
+    var f = filtros || {};
+    Object.keys(OPCOES).forEach(function (g) { outros[g] = g === grupo ? '' : (f[g] || ''); });
+    var cont = {};
+    (OPCOES[grupo] || []).forEach(function (k) { cont[k] = 0; });
+    (Array.isArray(itens) ? itens : []).forEach(function (it) {
+      var meta = lerMeta(it);
+      if (!passaFiltrosExtra(it, meta, outros, taxa)) return;
+      (OPCOES[grupo] || []).forEach(function (k) {
+        var tem = grupo === 'beneficio' ? temBeneficio(it, meta, k)
+          : grupo === 'preco' ? faixaPreco(it, meta, taxa) === k
+            : faixaDuracao(it, meta) === k;
+        if (tem) cont[k] += 1;
+      });
+    });
+    return cont;
+  }
+
   function precoCrianca(meta) {
     var c = Number(meta && meta.price_child);
     return c > 0 ? c : null;
@@ -221,6 +309,25 @@
     return { porItinerario: false, itens: ordenadas.slice(0, 6) };
   }
 
+  /* Dados estruturados (schema.org) de um ponto turistico, para o Google: so o que existe */
+  function jsonLdLugar(lugar, url, regiao) {
+    var nome = texto(lugar && lugar.name_pt);
+    if (!nome) return null;
+    var j = { '@context': 'https://schema.org', '@type': 'TouristAttraction', name: nome };
+    var desc = texto(lugar.description_pt);
+    if (desc) j.description = desc.slice(0, 500);
+    if (texto(lugar.image_url)) j.image = lugar.image_url;
+    if (url) j.url = url;
+    var lat = Number(lugar.lat); var lng = Number(lugar.lng);
+    if (lugar.lat !== null && lugar.lat !== undefined && lugar.lng !== null && lugar.lng !== undefined && isFinite(lat) && isFinite(lng)) {
+      j.geo = { '@type': 'GeoCoordinates', latitude: lat, longitude: lng };
+    }
+    j.address = texto(regiao)
+      ? { '@type': 'PostalAddress', addressRegion: texto(regiao), addressCountry: 'CV' }
+      : { '@type': 'PostalAddress', addressCountry: 'CV' };
+    return j;
+  }
+
   function ilhasDosItens(itens) {
     var cont = {};
     (Array.isArray(itens) ? itens : []).forEach(function (i) {
@@ -239,6 +346,13 @@
     linguasTexto: linguasTexto,
     incluidosTexto: incluidosTexto,
     beneficiosCartao: beneficiosCartao,
+    faixaPreco: faixaPreco,
+    faixaDuracao: faixaDuracao,
+    temBeneficio: temBeneficio,
+    passaFiltrosExtra: passaFiltrosExtra,
+    ordenarPorPreco: ordenarPorPreco,
+    contarOpcoes: contarOpcoes,
+    jsonLdLugar: jsonLdLugar,
     precoCartao: precoCartao,
     precoCrianca: precoCrianca,
     formatarPreco: formatarPreco,

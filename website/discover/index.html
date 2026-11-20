@@ -140,10 +140,21 @@
     .chip:hover{border-color:var(--ocean-300);color:var(--ocean-700)}
     .chip.active{border-color:var(--ocean-700);background:var(--ocean-50);color:var(--ocean-800);font-weight:600}
     .chip-count{font-size:.75rem;color:var(--n400);margin-left:4px}
+    /* ── FILTROS: BENEFICIOS, PRECO, DURACAO E ORDENACAO ── */
+    .filters2{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin:-12px 0 26px}
+    .filters2 .chips-wrap{min-width:0}
+    .xsep{width:1px;height:22px;background:var(--n200);align-self:center;flex-shrink:0}
+    .chip.xchip{padding:7px 13px;font-size:.8125rem}
+    .sort{display:flex;align-items:center;gap:8px;margin-left:auto;font-size:.8125rem;color:var(--n500);white-space:nowrap}
+    .sort select{font-family:var(--fb);font-size:.8125rem;font-weight:500;color:var(--n800);background:#fff;border:1px solid var(--n200);border-radius:100px;padding:7px 12px;cursor:pointer}
+    .sort select:focus-visible,.chip:focus-visible{outline:2px solid var(--ocean-500);outline-offset:2px}
     @media(max-width:600px){
-      .filters{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;margin-right:-24px;padding-right:24px}
-      .filters::-webkit-scrollbar{display:none}
+      .filters,.filters2 .chips-wrap{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;margin-right:-24px;padding-right:24px}
+      .filters::-webkit-scrollbar,.filters2 .chips-wrap::-webkit-scrollbar{display:none}
       .filters .chips-wrap{flex-wrap:nowrap}
+      .filters2{flex-direction:column;flex-wrap:nowrap;align-items:stretch;gap:12px}
+      .filters2 .chips-wrap{width:auto}
+      .sort{margin-left:0}
       .seg,.chip,.filters-sep{flex-shrink:0}
     }
 
@@ -563,6 +574,13 @@
       <span class="filters-sep" id="filters-sep" aria-hidden="true"></span>
       <div class="chips-wrap" id="chips-grid"></div>
     </div>
+    <div class="filters2" id="filters2" style="display:none">
+      <div class="chips-wrap" id="extra-chips" role="group" aria-label="Filtros"></div>
+      <label class="sort">
+        <span class="pt">Ordenar</span><span class="en">Sort</span>
+        <select id="sort-sel" onchange="setOrdem(this.value)"></select>
+      </label>
+    </div>
     <div class="xp-grid" id="act-grid"></div>
     <div id="load-more-wrap" style="display:none">
       <button type="button" onclick="loadMore()" class="btn-outline">
@@ -688,7 +706,7 @@
   </div>
 </footer>
 
-<script src="_cartao.js?v=20261119b"></script>
+<script src="_cartao.js?v=20261120a"></script>
 <script>
 /* ══════════════════════════════════════════
    CONSTANTS
@@ -730,6 +748,10 @@ let visible    = PER_PAGE;
 let currency   = 'EUR';
 let activeFilter = ''; // chave estavel (label PT da categoria, ou tipo)
 let activeIsland = ''; // island_name; '' = todas (partilhado com o campo Ilha do cabecalho)
+/* Filtros de beneficio, preco e duracao (uma opcao por grupo) e ordenacao por preco */
+let filtrosExtra = { beneficio: '', preco: '', duracao: '' };
+let ordem = ''; // '' recomendados | 'asc' | 'desc'
+let vistaBase = []; // depois de ilha, tipo e pesquisa, antes dos filtros extra
 let recommendedItems = [];
 
 /* Pontos turisticos (cms_landmarks) -- conteudo editorial independente dos
@@ -1258,7 +1280,7 @@ function renderChips() {
 function applyFilters() {
   const search = (document.getElementById('nav-search-input')?.value || '').toLowerCase().trim();
 
-  filtered = operators.filter(item => {
+  vistaBase = operators.filter(item => {
     const matchFilter = !activeFilter || categoryKey(item) === activeFilter;
     const matchIsland = !activeIsland || item.island_name === activeIsland;
     const titleEn = (CartaoDiscover.lerMeta(item).name_en || '').toLowerCase();
@@ -1270,6 +1292,10 @@ function applyFilters() {
       || (item.address       || '').toLowerCase().includes(search);
     return matchFilter && matchIsland && matchSearch;
   });
+  const C = window.CartaoDiscover;
+  filtered = C.ordenarPorPreco(
+    vistaBase.filter(item => C.passaFiltrosExtra(item, C.lerMeta(item), filtrosExtra, EUR_CVE)), ordem, EUR_CVE);
+  renderExtraFilters();
 
   visible = PER_PAGE;
   renderGrid();
@@ -1308,6 +1334,65 @@ function renderIslandSeg() {
 function setIsland(nome) {
   activeIsland = nome || '';
   renderIslandSeg();
+  applyFilters();
+}
+
+/* Opcoes dos filtros extra: so as que mudam alguma coisa (0 < n < total da vista);
+   a opcao activa aparece sempre, para se poder desligar */
+const OPCOES_EXTRA = {
+  beneficio: [
+    ['cancelamento', 'Cancelamento grátis', 'Free cancellation'],
+    ['confirmacao', 'Confirmação imediata', 'Instant confirmation'],
+    ['recolha', 'Recolha no hotel', 'Hotel pickup'],
+  ],
+  preco: [
+    ['ate50', 'Até 50 €', 'Up to €50'],
+    ['50a100', '50–100 €', '€50–100'],
+    ['mais100', 'Mais de 100 €', 'Over €100'],
+  ],
+  duracao: [
+    ['ate3', 'Até 3 h', 'Up to 3 h'],
+    ['3a6', '3–6 h', '3–6 h'],
+    ['mais6', 'Mais de 6 h', 'Over 6 h'],
+  ],
+};
+const ORDENS = [['', 'Recomendados', 'Recommended'], ['asc', 'Preço: mais baixo', 'Price: low to high'], ['desc', 'Preço: mais alto', 'Price: high to low']];
+
+function renderExtraFilters() {
+  const wrap = document.getElementById('filters2');
+  const chips = document.getElementById('extra-chips');
+  const sel = document.getElementById('sort-sel');
+  if (!wrap || !chips || !sel) return;
+  const C = window.CartaoDiscover;
+  const en = L() === 'en';
+  const grupos = Object.keys(OPCOES_EXTRA).map(grupo => {
+    const semEste = { ...filtrosExtra, [grupo]: '' };
+    const total = vistaBase.filter(i => C.passaFiltrosExtra(i, C.lerMeta(i), semEste, EUR_CVE)).length;
+    const cont = C.contarOpcoes(vistaBase, grupo, filtrosExtra, EUR_CVE);
+    return OPCOES_EXTRA[grupo]
+      .filter(([k]) => filtrosExtra[grupo] === k || (cont[k] > 0 && cont[k] < total))
+      .map(([k, pt, enTxt]) => {
+        const on = filtrosExtra[grupo] === k;
+        return `<button type="button" class="chip xchip ${on ? 'active' : ''}" aria-pressed="${on}" data-grupo="${grupo}" data-chave="${k}" onclick="setExtra(this.dataset.grupo,this.dataset.chave)">${esc(en ? enTxt : pt)} <span class="chip-count">${cont[k]}</span></button>`;
+      }).join('');
+  }).filter(Boolean);
+  chips.innerHTML = grupos.join('<span class="xsep" aria-hidden="true"></span>');
+  chips.setAttribute('aria-label', en ? 'Filters' : 'Filtros');
+  sel.innerHTML = ORDENS.map(([v, pt, enTxt]) => `<option value="${v}">${esc(en ? enTxt : pt)}</option>`).join('');
+  sel.value = ordem;
+  const comPreco = vistaBase.filter(i => C.precoCartao(i, C.lerMeta(i))).length;
+  sel.parentElement.style.display = comPreco > 1 ? '' : 'none';
+  wrap.style.display = (grupos.length || comPreco > 1) ? '' : 'none';
+}
+
+function setExtra(grupo, chave) {
+  if (!(grupo in filtrosExtra)) return;
+  filtrosExtra = { ...filtrosExtra, [grupo]: filtrosExtra[grupo] === chave ? '' : chave };
+  applyFilters();
+}
+
+function setOrdem(v) {
+  ordem = v === 'asc' || v === 'desc' ? v : '';
   applyFilters();
 }
 
@@ -1356,7 +1441,8 @@ function updateActCount() {
 function updateClearBtn() {
   const btn = document.getElementById('clear-filter-btn');
   const search = (document.getElementById('nav-search-input')?.value || '').trim();
-  if (btn) btn.style.display = (activeFilter || activeIsland || search) ? '' : 'none';
+  const extra = filtrosExtra.beneficio || filtrosExtra.preco || filtrosExtra.duracao || ordem;
+  if (btn) btn.style.display = (activeFilter || activeIsland || search || extra) ? '' : 'none';
 }
 
 function setFilter(key) {
@@ -1369,6 +1455,8 @@ function setFilter(key) {
 function clearFilters() {
   activeFilter = '';
   activeIsland = '';
+  filtrosExtra = { beneficio: '', preco: '', duracao: '' };
+  ordem = '';
   document.getElementById('nav-search-input').value = '';
   renderChips();
   renderIslandSeg();
@@ -2044,6 +2132,7 @@ function setLang(lang) {
   if (operators.length) {
     renderChips();
     renderIslandSeg();
+    renderExtraFilters();
     renderGrid();
     updateActCount();
   }

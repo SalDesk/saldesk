@@ -1401,8 +1401,22 @@ async function getUnitReviews(req, res, next) {
 
     const resIds = (reservationIds || []).map(r => r.id);
     let reviews = [];
+    /* Classificacao propria desta experiencia, sobre TODAS as suas avaliacoes publicas (a lista
+       abaixo so traz as 20 mais recentes). null quando so ha avaliacoes do operador (fallback) --
+       o Google (dados estruturados) so pode usar esta. */
+    let unitRating = null;
 
     if (resIds.length > 0) {
+      const { data: notas } = await supabaseAdmin
+        .from('reviews')
+        .select('rating')
+        .in('reservation_id', resIds)
+        .eq('is_public', true);
+      const validas = (notas || []).map(n => Number(n.rating)).filter(n => n >= 1 && n <= 5);
+      if (validas.length) {
+        unitRating = { avg: Math.round((validas.reduce((s, n) => s + n, 0) / validas.length) * 10) / 10, count: validas.length };
+      }
+
       const { data: unitReviews } = await supabaseAdmin
         .from('reviews')
         .select('id, rating, comment, reply_text, created_at, customer_id, helpful_count')
@@ -1412,6 +1426,7 @@ async function getUnitReviews(req, res, next) {
         .limit(20);
       reviews = unitReviews || [];
     }
+    const daUnidade = reviews.length > 0;
 
     if (reviews.length === 0) {
       const { data: opReviews } = await supabaseAdmin
@@ -1445,7 +1460,11 @@ async function getUnitReviews(req, res, next) {
       helpful_count: r.helpful_count || 0,
     }));
 
-    return res.json({ data: enriched });
+    return res.json({
+      data: enriched,
+      scope: daUnidade ? 'unit' : (enriched.length ? 'operator' : null),
+      unit_rating: unitRating,
+    });
   } catch (err) { next(err); }
 }
 

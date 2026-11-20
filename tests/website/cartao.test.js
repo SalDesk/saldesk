@@ -198,3 +198,111 @@ test('recolha_com_espaco_some_e_a_do_aeroporto_fica', () => {
   const itens = ['Pick up at your hotel', 'Recolha no aeroporto', { label: 'Airport pickup', included: true }, 'Guia'];
   assert.equal(C.incluidosTexto({ pickup_included: true, included_items: itens }), 'Recolha no aeroporto · Airport pickup · Guia');
 });
+
+/* ── Filtros extra do Discover: beneficios, preco, duracao e ordenacao ── */
+const xp = (extra = {}, meta = null) => ({ currency: 'EUR', ...extra, description: meta ? JSON.stringify(meta) : extra.description });
+const SEM = { beneficio: '', preco: '', duracao: '' };
+
+test('faixas_de_preco_e_duracao', () => {
+  const fp = (i) => C.faixaPreco(i, C.lerMeta(i), 110);
+  assert.equal(fp(xp({ base_price: 50 })), 'ate50');
+  assert.equal(fp(xp({ base_price: 50.01 })), '50a100');
+  assert.equal(fp(xp({ base_price: 100 })), '50a100');
+  assert.equal(fp(xp({ base_price: 101 })), 'mais100');
+  assert.equal(fp(xp({ base_price: 0 }, { price_tiers: [{ price: 300 }, { price: 90 }] })), '50a100');
+  assert.equal(fp(xp({})), null);
+  const fd = (i) => C.faixaDuracao(i, C.lerMeta(i));
+  assert.equal(fd(xp({ duration_minutes: 180 })), 'ate3');
+  assert.equal(fd(xp({ duration_minutes: 181 })), '3a6');
+  assert.equal(fd(xp({ duration_minutes: 360 })), '3a6');
+  assert.equal(fd(xp({ duration_minutes: 390 })), 'mais6');
+  assert.equal(fd(xp({ duration_minutes: 60 }, { duration: 6.5 })), 'mais6');
+  assert.equal(fd(xp({})), null);
+});
+
+test('preco_em_cve_converte_para_eur', () => {
+  const i = xp({ base_price: 2750, currency: 'CVE' });
+  assert.equal(C.faixaPreco(i, C.lerMeta(i), 110), 'ate50');
+  assert.equal(C.faixaPreco(i, C.lerMeta(i)), 'ate50');
+  const j = xp({ base_price: 13200, currency: 'CVE' });
+  assert.equal(C.faixaPreco(j, C.lerMeta(j), 110), 'mais100');
+});
+
+test('beneficios_por_chave', () => {
+  const i = xp({ free_cancellation_hours: 48, auto_confirm_bookings: true }, { pickup_included: true });
+  const m = C.lerMeta(i);
+  assert.equal(C.temBeneficio(i, m, 'cancelamento'), true);
+  assert.equal(C.temBeneficio(i, m, 'confirmacao'), true);
+  assert.equal(C.temBeneficio(i, m, 'recolha'), true);
+  const j = xp({ free_cancellation_hours: 0, auto_confirm_bookings: 'true' }, { pickup_included: 'true' });
+  const n = C.lerMeta(j);
+  assert.equal(C.temBeneficio(j, n, 'cancelamento'), false);
+  assert.equal(C.temBeneficio(j, n, 'confirmacao'), false);
+  assert.equal(C.temBeneficio(j, n, 'recolha'), false);
+  assert.equal(C.temBeneficio(i, m, 'outra'), false);
+});
+
+test('sem_preco_ou_duracao_so_sai_com_filtro_activo', () => {
+  const vazio = xp({});
+  const m = C.lerMeta(vazio);
+  assert.equal(C.passaFiltrosExtra(vazio, m, SEM, 110), true);
+  assert.equal(C.passaFiltrosExtra(vazio, m, { ...SEM, preco: 'ate50' }, 110), false);
+  assert.equal(C.passaFiltrosExtra(vazio, m, { ...SEM, duracao: 'ate3' }, 110), false);
+  const i = xp({ base_price: 40, duration_minutes: 120, free_cancellation_hours: 24 });
+  const n = C.lerMeta(i);
+  assert.equal(C.passaFiltrosExtra(i, n, { beneficio: 'cancelamento', preco: 'ate50', duracao: 'ate3' }, 110), true);
+  assert.equal(C.passaFiltrosExtra(i, n, { beneficio: 'confirmacao', preco: 'ate50', duracao: 'ate3' }, 110), false);
+  assert.equal(C.passaFiltrosExtra(i, n, undefined, 110), true);
+});
+
+test('ordenar_por_preco_sem_preco_no_fim_e_estavel', () => {
+  const a = xp({ unit_id: 'a', base_price: 60 });
+  const b = xp({ unit_id: 'b' });
+  const c = xp({ unit_id: 'c', base_price: 30 });
+  const d = xp({ unit_id: 'd', base_price: 60 });
+  const e = xp({ unit_id: 'e', base_price: 2200, currency: 'CVE' });
+  const lista = [a, b, c, d, e];
+  const ids = (l) => l.map((x) => x.unit_id).join('');
+  assert.equal(ids(C.ordenarPorPreco(lista, 'asc', 110)), 'ecadb');
+  assert.equal(ids(C.ordenarPorPreco(lista, 'desc', 110)), 'adceb');
+  const copia = C.ordenarPorPreco(lista, '', 110);
+  assert.equal(ids(copia), 'abcde');
+  assert.notEqual(copia, lista);
+  assert.equal(ids(lista), 'abcde');
+});
+
+test('contar_opcoes_respeita_os_outros_grupos', () => {
+  const lista = [
+    xp({ base_price: 40, duration_minutes: 120, free_cancellation_hours: 24 }),
+    xp({ base_price: 80, duration_minutes: 400, auto_confirm_bookings: true }),
+    xp({ base_price: 150, duration_minutes: 200, free_cancellation_hours: 72 }, { pickup_included: true }),
+  ];
+  assert.deepEqual(C.contarOpcoes(lista, 'beneficio', SEM, 110), { cancelamento: 2, confirmacao: 1, recolha: 1 });
+  assert.deepEqual(C.contarOpcoes(lista, 'preco', SEM, 110), { ate50: 1, '50a100': 1, mais100: 1 });
+  assert.deepEqual(C.contarOpcoes(lista, 'duracao', SEM, 110), { ate3: 1, '3a6': 1, mais6: 1 });
+  /* com cancelamento gratis activo, so contam as duas que o tem; o proprio grupo ignora-se */
+  assert.deepEqual(C.contarOpcoes(lista, 'preco', { ...SEM, beneficio: 'cancelamento' }, 110), { ate50: 1, '50a100': 0, mais100: 1 });
+  assert.deepEqual(C.contarOpcoes(lista, 'beneficio', { ...SEM, beneficio: 'cancelamento' }, 110), { cancelamento: 2, confirmacao: 1, recolha: 1 });
+});
+
+test('jsonld_lugar_com_e_sem_coordenadas', () => {
+  const url = 'https://saldesk.cv/discover/ponto.html?slug=buracona';
+  const lugar = { slug: 'buracona', name_pt: 'Buracona', description_pt: 'Piscina natural.', image_url: 'https://x/b.jpg', lat: 16.82, lng: -22.98, island_slug: 'sal' };
+  assert.deepEqual(C.jsonLdLugar(lugar, url, 'Ilha do Sal'), {
+    '@context': 'https://schema.org',
+    '@type': 'TouristAttraction',
+    name: 'Buracona',
+    description: 'Piscina natural.',
+    image: 'https://x/b.jpg',
+    url,
+    geo: { '@type': 'GeoCoordinates', latitude: 16.82, longitude: -22.98 },
+    address: { '@type': 'PostalAddress', addressRegion: 'Ilha do Sal', addressCountry: 'CV' },
+  });
+  const semNada = C.jsonLdLugar({ slug: 'x', name_pt: 'X', lat: null, lng: -22 }, url, '');
+  assert.equal('geo' in semNada, false);
+  assert.equal('image' in semNada, false);
+  assert.equal('description' in semNada, false);
+  assert.deepEqual(semNada.address, { '@type': 'PostalAddress', addressCountry: 'CV' });
+  assert.equal(C.jsonLdLugar(null, url), null);
+  assert.equal(C.jsonLdLugar({ slug: 'x' }, url), null);
+});
