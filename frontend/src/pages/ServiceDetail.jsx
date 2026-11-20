@@ -29,6 +29,7 @@ import {
 import SiteComplianceFooter from '../components/shared/SiteComplianceFooter';
 import { textoPoliticaCancelamento } from '../utils/politicaCancelamento';
 import { jsonLdExperiencia } from '../utils/dadosEstruturados';
+import { dentroDeCaboVerde } from '../utils/coordenadas';
 
 /* Icone numerado para as paragens do itinerario -- SVG inline (nunca
    bitmap), substitui o icone PNG por defeito do Leaflet (que nem sequer
@@ -39,7 +40,7 @@ function pontoEncontroDe(unit, meta) {
   const num = (v) => (v === null || v === undefined || v === '' ? NaN : Number(v));
   const la = num(unit?.lat);
   const ln = num(unit?.lng);
-  return { texto, la, ln, temPonto: Number.isFinite(la) && Number.isFinite(ln) };
+  return { texto, la, ln, temPonto: dentroDeCaboVerde(la, ln) };
 }
 
 /* Marcador do ponto de encontro (gota, cor da marca SalDesk) */
@@ -1448,7 +1449,9 @@ export default function ServiceDetail() {
                 ganham um pin inventado. Sem NENHUMA paragem com coordenadas,
                 mostra so a lista, sem mapa vazio. ── */}
             {isActivity && Array.isArray(unitMeta.stops) && unitMeta.stops.length > 0 && (() => {
-              const stopsWithCoords = unitMeta.stops.filter(s => s.lat != null && s.lng != null);
+              /* so paragens dentro de Cabo Verde: 0,0 (campos nunca preenchidos) nunca ganha pin */
+              const stopsWithCoords = unitMeta.stops.filter(s => s && s.lat !== null && s.lat !== '' && s.lng !== null && s.lng !== ''
+                && dentroDeCaboVerde(Number(s.lat), Number(s.lng)));
               return (
                 <div className="pb-10 border-b border-n-100">
                   <p className="text-xs font-body font-bold text-brand-700 uppercase tracking-widest mb-4">

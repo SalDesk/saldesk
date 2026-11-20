@@ -320,7 +320,7 @@ test('localizacao_prefere_ponto_de_encontro_e_depois_paragem', () => {
 test('localizacao_aceita_texto_numerico_e_rejeita_vazio', () => {
   assert.deepEqual(C.localizacaoExperiencia({ lat: '16.7', lng: '-22.9' }, {}), { lat: 16.7, lng: -22.9, origem: 'encontro' });
   assert.deepEqual(C.localizacaoExperiencia({ lat: '', lng: '' }, { stops: [{ lat: '16.6', lng: '-22.8' }] }), { lat: 16.6, lng: -22.8, origem: 'paragem' });
-  assert.deepEqual(C.localizacaoExperiencia({ lat: 0, lng: 0 }, {}), { lat: 0, lng: 0, origem: 'encontro' });
+  assert.equal(C.localizacaoExperiencia({ lat: 0, lng: 0 }, {}), null);
   assert.equal(C.localizacaoExperiencia({ lat: 'abc', lng: -22 }, {}), null);
 });
 
@@ -364,4 +364,15 @@ test('azulejos_cobrem_o_mapa', () => {
   /* volta ao mundo na horizontal e nunca pede linhas fora do mapa */
   const borda = C.azulejosDoMapa({ zoom: 1, x0: -100, y0: -300 }, 300, 400);
   assert.ok(borda.every((t) => t.x >= 0 && t.x < 2 && t.y >= 0 && t.y < 2));
+});
+
+test('localizacao_fora_de_cabo_verde_ou_zero_e_ignorada', () => {
+  /* paragens a 0,0 (campos nunca preenchidos) e pontos fora do arquipelago nao contam */
+  assert.equal(C.localizacaoExperiencia({}, { stops: [{ name: 'Murdeira', lat: 0, lng: 0 }] }), null);
+  assert.deepEqual(
+    C.localizacaoExperiencia({ lat: 0, lng: 0 }, { stops: [{ lat: 0, lng: 0 }, { lat: 16.6, lng: -22.9 }] }),
+    { lat: 16.6, lng: -22.9, origem: 'paragem' });
+  assert.equal(C.localizacaoExperiencia({ lat: 38.7, lng: -9.1 }, {}), null);
+  assert.equal(C.dentroDeCaboVerde(16.75, -22.93), true);
+  assert.equal(C.dentroDeCaboVerde(0, 0), false);
 });

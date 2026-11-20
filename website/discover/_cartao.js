@@ -336,14 +336,20 @@
     return Number(v);
   }
 
+  /* Rectangulo largo a volta do arquipelago: fora dele (ex.: 0,0 de campos nunca preenchidos)
+     a coordenada e um erro de dados e nao entra no mapa */
+  function dentroDeCaboVerde(lat, lng) {
+    return isFinite(lat) && isFinite(lng) && lat >= 14.5 && lat <= 17.5 && lng >= -25.5 && lng <= -22.5;
+  }
+
   function localizacaoExperiencia(item, meta) {
     var la = numero(item && item.lat); var ln = numero(item && item.lng);
-    if (isFinite(la) && isFinite(ln)) return { lat: la, lng: ln, origem: 'encontro' };
+    if (dentroDeCaboVerde(la, ln)) return { lat: la, lng: ln, origem: 'encontro' };
     var stops = meta && Array.isArray(meta.stops) ? meta.stops : [];
     for (var i = 0; i < stops.length; i += 1) {
       var s = stops[i];
       var sa = numero(s && s.lat); var sn = numero(s && s.lng);
-      if (isFinite(sa) && isFinite(sn)) return { lat: sa, lng: sn, origem: 'paragem' };
+      if (dentroDeCaboVerde(sa, sn)) return { lat: sa, lng: sn, origem: 'paragem' };
     }
     return null;
   }
@@ -421,6 +427,7 @@
     contarOpcoes: contarOpcoes,
     jsonLdLugar: jsonLdLugar,
     localizacaoExperiencia: localizacaoExperiencia,
+    dentroDeCaboVerde: dentroDeCaboVerde,
     projectar: projectar,
     enquadrarMapa: enquadrarMapa,
     azulejosDoMapa: azulejosDoMapa,

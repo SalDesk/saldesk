@@ -103,6 +103,21 @@ describe('ServiceDetail: ponto de encontro', () => {
     expect(screen.queryByText('Ponto de encontro')).toBeNull();
   });
 
+  it('paragens_a_zero_nao_ganham_mapa', async () => {
+    simularRede({ unit: comMeta({ stops: [{ name: 'Murdeira', lat: 0, lng: 0 }, { name: 'Espargos', lat: 0, lng: 0 }] }) });
+    montar();
+    expect(await screen.findByText('Murdeira')).toBeInTheDocument();
+    expect(screen.queryByTestId('mapa')).toBeNull();
+  });
+
+  it('so_paragens_em_cabo_verde_no_mapa', async () => {
+    simularRede({ unit: comMeta({ stops: [{ name: 'Murdeira', lat: 0, lng: 0 }, { name: 'Shark Bay', lat: 16.6, lng: -22.9 }] }) });
+    montar();
+    expect((await screen.findAllByText('Shark Bay')).length).toBeGreaterThan(0);
+    expect(screen.getByTestId('mapa')).toBeInTheDocument();
+    expect(screen.getAllByTestId('marcador')).toHaveLength(1);
+  });
+
   it('em_ingles', async () => {
     localStorage.setItem('sd-lang', 'en');
     simularRede({ unit: comMeta({ meeting_point: 'Marina' }, { lat: 16.6, lng: -22.9 }) });
