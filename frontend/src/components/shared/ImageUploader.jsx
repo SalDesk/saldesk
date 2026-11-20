@@ -4,6 +4,7 @@ import {
   AlertCircle, GripVertical, ImageOff,
 } from 'lucide-react';
 import { uploadImage, validateImageFile, ALLOWED_IMAGE_TYPES } from '../../services/uploadService';
+import { useT } from '../../i18n';
 
 const MAX_DEFAULT = 10;
 
@@ -29,6 +30,7 @@ function PhotoCard({
   onRemove, onMoveUp, onMoveDown,
   isDragOver, onDragStart, onDragOver, onDrop, onDragEnd,
 }) {
+  const t = useT();
   const isFirst  = idx === 0;
   const isLast   = idx === total - 1;
   const isUploading = photo.uploading;
@@ -70,7 +72,7 @@ function PhotoCard({
       {isFirst && !isUploading && (
         <div className="absolute top-1.5 left-1.5 flex items-center gap-1 bg-sand-500 text-white px-1.5 py-0.5 rounded text-[10px] font-mono font-semibold uppercase tracking-wide">
           <Star size={9} strokeWidth={2.5} />
-          Principal
+          {t('imageUploader.main')}
         </div>
       )}
 
@@ -109,7 +111,7 @@ function PhotoCard({
               onClick={() => onMoveUp(idx)}
               disabled={isFirst}
               className="w-6 h-6 flex items-center justify-center rounded bg-black/50 text-white hover:bg-black/70 disabled:opacity-30 transition-colors"
-              title="Mover para cima"
+              title={t('imageUploader.moveUp')}
             >
               <ChevronUp size={12} strokeWidth={2.5} />
             </button>
@@ -118,7 +120,7 @@ function PhotoCard({
               onClick={() => onMoveDown(idx)}
               disabled={isLast}
               className="w-6 h-6 flex items-center justify-center rounded bg-black/50 text-white hover:bg-black/70 disabled:opacity-30 transition-colors"
-              title="Mover para baixo"
+              title={t('imageUploader.moveDown')}
             >
               <ChevronDown size={12} strokeWidth={2.5} />
             </button>
@@ -127,7 +129,7 @@ function PhotoCard({
             type="button"
             onClick={() => onRemove(idx)}
             className="w-6 h-6 flex items-center justify-center rounded bg-error/80 text-white hover:bg-error transition-colors"
-            title="Remover foto"
+            title={t('imageUploader.removePhoto')}
           >
             <X size={12} strokeWidth={2.5} />
           </button>
@@ -139,6 +141,7 @@ function PhotoCard({
 
 /* ── Drop Zone ── */
 function DropZone({ onFiles, accepting }) {
+  const t = useT();
   const [hovering, setHovering] = useState(false);
   const inputRef = useRef(null);
 
@@ -175,7 +178,7 @@ function DropZone({ onFiles, accepting }) {
         className={hovering ? 'text-ocean-600' : 'text-n-400'}
       />
       <p className="text-xs font-body text-center leading-tight px-2" style={{ color: hovering ? '#0D5470' : '#6B7280' }}>
-        Clica ou arrasta<br />uma foto
+        {t('imageUploader.dropLine1')}<br />{t('imageUploader.dropLine2')}
       </p>
       <input
         ref={inputRef}
@@ -204,9 +207,10 @@ export default function ImageUploader({
   value = [],
   onChange,
   maxImages = MAX_DEFAULT,
-  label = 'Fotos',
+  label,
   hint,
 }) {
+  const t = useT();
   const [photos, setPhotos] = useState(() =>
     value.map(url => ({ id: uid(), url, uploading: false, progress: 100, error: '' })),
   );
@@ -233,7 +237,7 @@ export default function ImageUploader({
   async function handleFiles(files) {
     setGlobalError('');
     const slots = maxImages - photos.length;
-    if (slots <= 0) { setGlobalError(`Maximo de ${maxImages} fotos atingido.`); return; }
+    if (slots <= 0) { setGlobalError(t('imageUploader.maxReached', { max: maxImages })); return; }
 
     const toProcess = files.slice(0, slots);
     const errors = [];
@@ -274,7 +278,7 @@ export default function ImageUploader({
         URL.revokeObjectURL(item.url);
         setPhotos(prev => prev.map(p =>
           p.id === item.id
-            ? { ...p, url: '', uploading: false, error: 'Erro no upload. Tenta novamente.' }
+            ? { ...p, url: '', uploading: false, error: t('imageUploader.uploadError') }
             : p,
         ));
       }
@@ -318,7 +322,7 @@ export default function ImageUploader({
       {/* Label */}
       <div className="mb-2">
         <p className="text-xs font-body font-bold uppercase tracking-wide text-n-600">
-          {label}
+          {label === undefined ? t('imageUploader.photos') : label}
           <span className="ml-1.5 font-normal normal-case tracking-normal text-n-400">
             {photos.filter(p => !p.error).length}/{maxImages}
           </span>
@@ -357,11 +361,11 @@ export default function ImageUploader({
       {/* Hints */}
       <div className="flex items-center justify-between mt-2">
         <p className="text-[11px] font-body text-n-400">
-          JPG, PNG, WebP · max 5MB · primeira foto = capa principal
+          {t('imageUploader.formatsHint')}
         </p>
         {canAdd && (
           <p className="text-[11px] font-mono text-n-400">
-            {maxImages - photos.length} vaga(s) restante(s)
+            {t('imageUploader.slotsLeft', { n: maxImages - photos.length })}
           </p>
         )}
       </div>

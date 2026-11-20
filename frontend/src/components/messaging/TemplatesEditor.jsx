@@ -9,6 +9,7 @@ import Badge from '../ui/Badge';
 import { Textarea } from '../ui/Input';
 import Button from '../ui/Button';
 import LoadingSpinner from '../shared/LoadingSpinner';
+import { useT } from '../../i18n';
 
 /* Editor dos textos das mensagens de WhatsApp (confirmação, lembrete, pedido de avaliação).
    O operador escreve o texto com variáveis ({nome_cliente}, {data}...) e vê, ao lado,
@@ -18,40 +19,41 @@ import LoadingSpinner from '../shared/LoadingSpinner';
 const GATILHOS = [
   {
     id: 'booking_confirmed',
-    titulo: 'Confirmação da reserva',
-    quando: 'Enviada para reservas confirmadas.',
+    titulo: 'messaging.triggers.bookingConfirmedTitle',
+    quando: 'messaging.triggers.bookingConfirmedWhen',
   },
   {
     id: 'reminder_d1',
-    titulo: 'Lembrete da véspera',
-    quando: 'Enviada no dia anterior, para reservas confirmadas.',
+    titulo: 'messaging.triggers.reminderTitle',
+    quando: 'messaging.triggers.reminderWhen',
   },
   {
     id: 'review_request',
-    titulo: 'Pedido de avaliação',
-    quando: 'Enviado depois do check-out. Tem de incluir {link_avaliacao}.',
+    titulo: 'messaging.triggers.reviewTitle',
+    quando: 'messaging.triggers.reviewWhen',
   },
 ];
 
 const IDIOMAS = [
-  { id: 'pt', label: 'Português' },
-  { id: 'en', label: 'English' },
+  { id: 'pt', label: 'messaging.langs.pt' },
+  { id: 'en', label: 'messaging.langs.en' },
 ];
 
 const VARIAVEIS = [
-  { nome: 'nome_cliente', ajuda: 'Nome do cliente' },
-  { nome: 'nome_tour', ajuda: 'Tour ou actividade' },
-  { nome: 'data', ajuda: 'Data da reserva' },
-  { nome: 'hora', ajuda: 'Hora de início' },
-  { nome: 'guia', ajuda: 'Guia atribuído (a linha some se não houver)' },
-  { nome: 'ponto_encontro', ajuda: 'Ponto de encontro (a linha some se não houver)' },
-  { nome: 'operador', ajuda: 'O nome da sua empresa' },
-  { nome: 'link_avaliacao', ajuda: 'Link para o cliente avaliar' },
+  { nome: 'nome_cliente', ajuda: 'messaging.varHelp.nome_cliente' },
+  { nome: 'nome_tour', ajuda: 'messaging.varHelp.nome_tour' },
+  { nome: 'data', ajuda: 'messaging.varHelp.data' },
+  { nome: 'hora', ajuda: 'messaging.varHelp.hora' },
+  { nome: 'guia', ajuda: 'messaging.varHelp.guia' },
+  { nome: 'ponto_encontro', ajuda: 'messaging.varHelp.ponto_encontro' },
+  { nome: 'operador', ajuda: 'messaging.varHelp.operador' },
+  { nome: 'link_avaliacao', ajuda: 'messaging.varHelp.link_avaliacao' },
 ];
 
 const MAX = 1000;
 
 function TemplateCard({ gatilho, dados, onGuardado }) {
+  const t = useT();
   const toast = useToast();
   const textareaRef = useRef(null);
   const pedidoRef = useRef(0);
@@ -110,9 +112,9 @@ function TemplateCard({ gatilho, dados, onGuardado }) {
     try {
       const r = await saveMessageTemplate(gatilho.id, idioma, texto);
       onGuardado(gatilho.id, idioma, { body: r.body, custom: r.custom });
-      toast.success('Mensagem guardada');
+      toast.success(t('messaging.saved'));
     } catch (err) {
-      setErro(err.response?.data?.error || 'Não foi possível guardar');
+      setErro(err.response?.data?.error || t('messaging.saveError'));
     } finally {
       setAGuardar(false);
     }
@@ -125,19 +127,19 @@ function TemplateCard({ gatilho, dados, onGuardado }) {
       const r = await saveMessageTemplate(gatilho.id, idioma, '');
       onGuardado(gatilho.id, idioma, { body: r.body, custom: false });
       setRascunhos((x) => ({ ...x, [idioma]: r.body }));
-      toast.success('Texto original reposto');
+      toast.success(t('messaging.restored'));
     } catch (err) {
-      setErro(err.response?.data?.error || 'Não foi possível repor');
+      setErro(err.response?.data?.error || t('messaging.restoreError'));
     } finally {
       setAGuardar(false);
     }
   }
 
   const estado = alterado
-    ? { texto: 'Alterações por guardar', variant: 'pending' }
+    ? { texto: t('messaging.status.unsaved'), variant: 'pending' }
     : servidor.custom
-      ? { texto: 'Personalizado', variant: 'info' }
-      : { texto: 'Texto original', variant: 'default' };
+      ? { texto: t('messaging.status.custom'), variant: 'info' }
+      : { texto: t('messaging.status.original'), variant: 'default' };
 
   const vazio = texto.trim() === '';
   const semLink = gatilho.id === 'review_request' && !/\{\{?\s*link_avaliacao\s*\}?\}/i.test(texto);
@@ -147,8 +149,8 @@ function TemplateCard({ gatilho, dados, onGuardado }) {
     <Card padding="p-5">
       <div className="flex flex-wrap items-start justify-between gap-3 mb-4">
         <div>
-          <h3 className="font-display font-bold text-base text-n-900 dark:text-n-100">{gatilho.titulo}</h3>
-          <p className="text-xs font-body text-n-500 mt-0.5">{gatilho.quando}</p>
+          <h3 className="font-display font-bold text-base text-n-900 dark:text-n-100">{t(gatilho.titulo)}</h3>
+          <p className="text-xs font-body text-n-500 mt-0.5">{t(gatilho.quando)}</p>
         </div>
         <Badge variant={estado.variant}>{estado.texto}</Badge>
       </div>
@@ -159,7 +161,7 @@ function TemplateCard({ gatilho, dados, onGuardado }) {
             key={i.id} type="button" onClick={() => { setIdioma(i.id); setErro(''); }}
             className={`px-3 py-1.5 rounded text-xs font-display font-medium transition-colors ${idioma === i.id ? 'bg-white text-ocean-700 shadow-sm' : 'text-n-500 hover:text-n-700'}`}
           >
-            {i.label}
+            {t(i.label)}
           </button>
         ))}
       </div>
@@ -171,17 +173,17 @@ function TemplateCard({ gatilho, dados, onGuardado }) {
             value={texto}
             onChange={(e) => editar(e.target.value)}
             rows={9}
-            aria-label={`${gatilho.titulo} (${idioma.toUpperCase()})`}
+            aria-label={`${t(gatilho.titulo)} (${idioma.toUpperCase()})`}
             className="!resize-y"
           />
           <div className="flex items-center justify-between text-xs font-body text-n-500">
-            <span>Clique numa variável para a inserir no cursor</span>
+            <span>{t('messaging.clickVariable')}</span>
             <span className={texto.length > MAX ? 'text-[var(--error)] font-semibold' : ''}>{texto.length}/{MAX}</span>
           </div>
           <div className="flex flex-wrap gap-1.5">
             {VARIAVEIS.map((v) => (
               <button
-                key={v.nome} type="button" title={v.ajuda} onClick={() => inserirVariavel(v.nome)}
+                key={v.nome} type="button" title={t(v.ajuda)} onClick={() => inserirVariavel(v.nome)}
                 className="px-2 py-1 rounded-md bg-ocean-50 hover:bg-ocean-100 text-ocean-700 text-[11px] font-mono transition-colors"
               >
                 {`{${v.nome}}`}
@@ -192,31 +194,31 @@ function TemplateCard({ gatilho, dados, onGuardado }) {
 
         <div className="flex flex-col gap-2">
           <p className="text-[10px] font-body font-semibold uppercase tracking-wide text-n-400 flex items-center gap-1.5">
-            <MessageCircle size={12} strokeWidth={1.75} /> O que o cliente recebe (exemplo)
+            <MessageCircle size={12} strokeWidth={1.75} /> {t('messaging.previewTitle')}
           </p>
           <div className="rounded-2xl rounded-tl-sm bg-turquoise-50 border border-turquoise-100 px-4 py-3 text-sm font-body text-n-900 whitespace-pre-wrap min-h-[8rem] break-words">
-            {previa.text || <span className="text-n-400">A mensagem aparece aqui.</span>}
+            {previa.text || <span className="text-n-400">{t('messaging.previewEmpty')}</span>}
           </div>
         </div>
       </div>
 
       {desconhecidas.length > 0 && (
         <p className="text-xs font-body text-[var(--error)] mt-3">
-          Variável desconhecida: {desconhecidas.join(', ')}. Use as variáveis da lista, senão o cliente recebe o texto por preencher.
+          {t('messaging.unknownVariable', { vars: desconhecidas.join(', ') })}
         </p>
       )}
       {semLink && !vazio && (
-        <p className="text-xs font-body text-[var(--error)] mt-3">O pedido de avaliação tem de incluir {'{link_avaliacao}'}, senão o cliente não tem como avaliar.</p>
+        <p className="text-xs font-body text-[var(--error)] mt-3">{t('messaging.missingLink')}</p>
       )}
       {erro && <p className="text-xs font-body text-[var(--error)] mt-3">{erro}</p>}
 
       <div className="flex flex-wrap items-center gap-2 mt-4">
         <Button icon={Check} loading={aGuardar} disabled={!alterado || bloqueado} onClick={guardar}>
-          Guardar
+          {t('messaging.save')}
         </Button>
         {(servidor.custom || !igualAoPadrao) && (
           <Button variant="secondary" icon={RotateCcw} disabled={aGuardar} onClick={repor}>
-            Repor texto original
+            {t('messaging.restore')}
           </Button>
         )}
       </div>
@@ -225,16 +227,17 @@ function TemplateCard({ gatilho, dados, onGuardado }) {
 }
 
 const ESTADO_MODELO = {
-  approved: { texto: 'Aprovado', variant: 'confirmed' },
-  pending: { texto: 'Em análise na Meta', variant: 'pending' },
-  rejected: { texto: 'Rejeitado', variant: 'cancelled' },
-  paused: { texto: 'Em pausa', variant: 'cancelled' },
-  disabled: { texto: 'Desactivado', variant: 'cancelled' },
+  approved: { texto: 'messaging.metaStatus.approved', variant: 'confirmed' },
+  pending: { texto: 'messaging.metaStatus.pending', variant: 'pending' },
+  rejected: { texto: 'messaging.metaStatus.rejected', variant: 'cancelled' },
+  paused: { texto: 'messaging.metaStatus.paused', variant: 'cancelled' },
+  disabled: { texto: 'messaging.metaStatus.disabled', variant: 'cancelled' },
 };
-const NOME_GATILHO = { booking_confirmed: 'Confirmação', reminder_d1: 'Lembrete', review_request: 'Pedido de avaliação' };
+const NOME_GATILHO = { booking_confirmed: 'messaging.triggerShort.booking_confirmed', reminder_d1: 'messaging.triggerShort.reminder_d1', review_request: 'messaging.triggerShort.review_request' };
 
 /* Que canal esta a enviar as mensagens (wa.me manual ou Cloud API automatica) e como estao os modelos da Meta. */
 function CanalCartao() {
+  const t = useT();
   const [canal, setCanal] = useState(null);
   useEffect(() => { getMessagingChannel().then(setCanal).catch(() => setCanal(null)); }, []);
   if (!canal) return null;
@@ -242,21 +245,21 @@ function CanalCartao() {
   return (
     <Card padding="p-5">
       <div className="flex flex-wrap items-center gap-2 mb-2">
-        <h3 className="font-display font-bold text-base text-n-900 dark:text-n-100">Como as mensagens são enviadas</h3>
+        <h3 className="font-display font-bold text-base text-n-900 dark:text-n-100">{t('messaging.channelTitle')}</h3>
         <Badge variant={automatico ? 'confirmed' : 'default'}>
-          {automatico ? 'Automático (WhatsApp Cloud API)' : 'Manual (WhatsApp no telemóvel)'}
+          {automatico ? t('messaging.channelAuto') : t('messaging.channelManual')}
         </Badge>
         {automatico && canal.quality_rating && (
-          <span className="text-[11px] font-body text-n-500">Qualidade do número: <strong>{canal.quality_rating}</strong></span>
+          <span className="text-[11px] font-body text-n-500">{t('messaging.quality')} <strong>{canal.quality_rating}</strong></span>
         )}
         {canal.cloud_status === 'suspended' && (
-          <Badge variant="cancelled">Envio automático suspenso</Badge>
+          <Badge variant="cancelled">{t('messaging.suspended')}</Badge>
         )}
       </div>
       <p className="text-sm font-body text-n-600">
         {automatico
-          ? 'Para clientes que aceitaram receber mensagens, o SalDesk envia sozinho. Fora das 24 horas a seguir à última mensagem do cliente, o WhatsApp só permite modelos pré-aprovados pela Meta: esses são fixos e não mudam com os textos abaixo. Os textos abaixo valem quando o cliente escreveu há menos de 24 horas e no envio manual.'
-          : 'O SalDesk prepara o texto e o WhatsApp abre no telemóvel, pronto a enviar com um toque. Para o envio automático é preciso ligar a conta WhatsApp Business do operador (a Wandr faz esta ligação).'}
+          ? t('messaging.autoText')
+          : t('messaging.manualText')}
       </p>
       {canal.modelos.length > 0 && (
         <ul className="mt-3 flex flex-col gap-1.5">
@@ -264,8 +267,8 @@ function CanalCartao() {
             const e = ESTADO_MODELO[m.meta_status] || ESTADO_MODELO.pending;
             return (
               <li key={`${m.trigger}:${m.locale}`} className="flex flex-wrap items-center gap-2 text-sm font-body text-n-700">
-                <span>{NOME_GATILHO[m.trigger] || m.trigger} ({m.locale.toUpperCase()})</span>
-                <Badge variant={e.variant}>{e.texto}</Badge>
+                <span>{NOME_GATILHO[m.trigger] ? t(NOME_GATILHO[m.trigger]) : m.trigger} ({m.locale.toUpperCase()})</span>
+                <Badge variant={e.variant}>{t(e.texto)}</Badge>
                 {m.meta_reason && <span className="text-xs text-n-500">{m.meta_reason}</span>}
               </li>
             );
@@ -277,13 +280,14 @@ function CanalCartao() {
 }
 
 export default function TemplatesEditor() {
+  const t = useT();
   const [lista, setLista] = useState(null);
   const [erro, setErro] = useState('');
 
   useEffect(() => {
     listMessageTemplates()
       .then(setLista)
-      .catch((err) => setErro(err.response?.data?.error || 'Não foi possível carregar as mensagens'));
+      .catch((err) => setErro(err.response?.data?.error || t('messaging.loadError')));
   }, []);
 
   function aoGuardar(trigger, locale, novo) {
@@ -298,12 +302,10 @@ export default function TemplatesEditor() {
       <CanalCartao />
       <div className="text-sm font-body text-n-600">
         <p>
-          Estes são os textos que o SalDesk prepara quando carrega em <strong>WhatsApp</strong> numa reserva.
-          O WhatsApp abre com a mensagem pronta e só falta enviar. O cliente recebe a versão do seu idioma
-          (português ou inglês).
+          {t('messaging.introBefore')} <strong>WhatsApp</strong> {t('messaging.introAfter')}
         </p>
         <p className="mt-1 text-n-500">
-          Se não houver guia atribuído ou ponto de encontro, a frase correspondente desaparece sozinha.
+          {t('messaging.introNote')}
         </p>
       </div>
       {GATILHOS.map((g) => {

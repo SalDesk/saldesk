@@ -269,5 +269,94 @@
       "showNewPw": "Nieuw wachtwoord tonen",
       "showConfirm": "Wachtwoordbevestiging tonen"
     }
+  },
+  "passwordStrength": {
+    "weak": "Zwak",
+    "medium": "Gemiddeld",
+    "strong": "Sterk",
+    "ruleLength": "Minimaal 8 tekens",
+    "ruleUpper": "1 hoofdletter (A-Z)",
+    "ruleNumber": "1 cijfer (0-9)",
+    "ruleSpecial": "1 speciaal teken (!@#…)"
+  },
+  "imageUploader": {
+    "photos": "Foto's",
+    "main": "Hoofdfoto",
+    "moveUp": "Omhoog verplaatsen",
+    "moveDown": "Omlaag verplaatsen",
+    "removePhoto": "Foto verwijderen",
+    "dropLine1": "Klik of sleep",
+    "dropLine2": "een foto hierheen",
+    "formatsHint": "JPG, PNG, WebP · max. 5 MB · eerste foto = hoofdfoto",
+    "slotsLeft": "nog {{n}} plek(ken) vrij",
+    "maxReached": "Maximum van {{max}} foto's bereikt.",
+    "uploadError": "Uploaden mislukt. Probeer het opnieuw."
+  },
+  "upload": {
+    "invalidFormat": "Ongeldig formaat: {{name}}. Gebruik JPG, PNG of WebP.",
+    "tooLarge": "Bestand te groot: {{name}}. Maximaal {{max}} MB."
+  },
+  "messaging": {
+    "triggers": {
+      "bookingConfirmedTitle": "Boekingsbevestiging",
+      "bookingConfirmedWhen": "Verzonden voor bevestigde boekingen.",
+      "reminderTitle": "Herinnering de dag ervoor",
+      "reminderWhen": "Verzonden de dag ervoor, voor bevestigde boekingen.",
+      "reviewTitle": "Verzoek om beoordeling",
+      "reviewWhen": "Verzonden na het uitchecken. Moet {link_avaliacao} bevatten."
+    },
+    "triggerShort": {
+      "booking_confirmed": "Bevestiging",
+      "reminder_d1": "Herinnering",
+      "review_request": "Verzoek om beoordeling"
+    },
+    "langs": {
+      "pt": "Portugees",
+      "en": "Engels"
+    },
+    "varHelp": {
+      "nome_cliente": "Naam van de klant",
+      "nome_tour": "Tour of activiteit",
+      "data": "Boekingsdatum",
+      "hora": "Begintijd",
+      "guia": "Toegewezen gids (de regel verdwijnt als er geen is)",
+      "ponto_encontro": "Ontmoetingspunt (de regel verdwijnt als er geen is)",
+      "operador": "De naam van uw bedrijf",
+      "link_avaliacao": "Link waarmee de klant een beoordeling kan geven"
+    },
+    "status": {
+      "unsaved": "Niet-opgeslagen wijzigingen",
+      "custom": "Aangepast",
+      "original": "Oorspronkelijke tekst"
+    },
+    "metaStatus": {
+      "approved": "Goedgekeurd",
+      "pending": "In beoordeling bij Meta",
+      "rejected": "Afgewezen",
+      "paused": "Gepauzeerd",
+      "disabled": "Uitgeschakeld"
+    },
+    "saved": "Bericht opgeslagen",
+    "restored": "Oorspronkelijke tekst hersteld",
+    "saveError": "Kon niet worden opgeslagen",
+    "restoreError": "Kon niet worden hersteld",
+    "loadError": "De berichten konden niet worden geladen",
+    "clickVariable": "Klik op een variabele om deze bij de cursor in te voegen",
+    "previewTitle": "Wat de klant ontvangt (voorbeeld)",
+    "previewEmpty": "Het bericht verschijnt hier.",
+    "unknownVariable": "Onbekende variabele: {{vars}}. Gebruik de variabelen uit de lijst, anders ontvangt de klant de tekst zonder ingevulde gegevens.",
+    "missingLink": "Het verzoek om beoordeling moet {link_avaliacao} bevatten, anders kan de klant geen beoordeling geven.",
+    "save": "Opslaan",
+    "restore": "Oorspronkelijke tekst herstellen",
+    "channelTitle": "Hoe berichten worden verzonden",
+    "channelAuto": "Automatisch (WhatsApp Cloud API)",
+    "channelManual": "Handmatig (WhatsApp op de telefoon)",
+    "quality": "Kwaliteit van het nummer:",
+    "suspended": "Automatisch verzenden opgeschort",
+    "autoText": "Voor klanten die ermee hebben ingestemd berichten te ontvangen, verstuurt SalDesk deze automatisch. Buiten de 24 uur na het laatste bericht van de klant staat WhatsApp alleen sjablonen toe die vooraf door Meta zijn goedgekeurd: die liggen vast en veranderen niet met de teksten hieronder. De teksten hieronder gelden wanneer de klant minder dan 24 uur geleden heeft geschreven en bij handmatig verzenden.",
+    "manualText": "SalDesk stelt de tekst op en WhatsApp opent op de telefoon, klaar om met één tik te verzenden. Voor automatisch verzenden moet het WhatsApp Business-account van de aanbieder worden gekoppeld (Wandr zorgt voor deze koppeling).",
+    "introBefore": "Dit zijn de teksten die SalDesk opstelt wanneer u bij een boeking op",
+    "introAfter": "klikt. WhatsApp opent met het bericht klaar en u hoeft het alleen nog te verzenden. De klant ontvangt de versie in zijn of haar taal (Portugees of Engels).",
+    "introNote": "Als er geen gids is toegewezen of geen ontmoetingspunt is, verdwijnt de bijbehorende zin vanzelf."
   }
 }
