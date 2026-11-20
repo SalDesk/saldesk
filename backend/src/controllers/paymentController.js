@@ -60,7 +60,7 @@ async function publicPaypalClientId(req, res, next) {
     const { data: operatorRow } = await supabaseAdmin
       .from('operators').select('id, paypal_client_id_enc').eq('slug', req.params.slug).single();
     if (!operatorRow?.paypal_client_id_enc) {
-      return res.status(404).json({ error: 'PayPal nao configurado para este operador', code: 'PAYPAL_NOT_CONFIGURED' });
+      return res.status(404).json({ error: 'O pagamento por PayPal não está disponível para este operador', code: 'PAYPAL_NOT_CONFIGURED' });
     }
     return res.json({ data: { client_id: decrypt(operatorRow.paypal_client_id_enc) }, message: 'Client ID PayPal' });
   } catch (err) { next(err); }
@@ -70,7 +70,7 @@ async function createPayPalIntent(req, res, next) {
   try {
     const { reservation_id, amount, currency = 'EUR' } = req.body;
     if (!reservation_id || !amount) {
-      return res.status(400).json({ error: 'reservation_id e amount obrigatorios', code: 'MISSING_FIELDS' });
+      return res.status(400).json({ error: 'reservation_id e amount obrigatórios', code: 'MISSING_FIELDS' });
     }
     const { clientId, clientSecret } = await obterCredenciaisPaypal(req.operator.id);
     const order = await createOrder(clientId, clientSecret, amount, currency, `Reserva SalDesk ${reservation_id}`);
@@ -83,11 +83,11 @@ async function publicCreatePaypalIntent(req, res, next) {
   try {
     const { reservation_id, amount, currency = 'EUR' } = req.body;
     if (!reservation_id || !amount) {
-      return res.status(400).json({ error: 'reservation_id e amount obrigatorios', code: 'MISSING_FIELDS' });
+      return res.status(400).json({ error: 'reservation_id e amount obrigatórios', code: 'MISSING_FIELDS' });
     }
     const { data: reserva } = await supabaseAdmin
       .from('reservations').select('id, operator_id').eq('id', reservation_id).single();
-    if (!reserva) return res.status(404).json({ error: 'Reserva nao encontrada', code: 'NOT_FOUND' });
+    if (!reserva) return res.status(404).json({ error: 'Reserva não encontrada', code: 'NOT_FOUND' });
 
     const { clientId, clientSecret } = await obterCredenciaisPaypal(reserva.operator_id);
     let order;
@@ -145,7 +145,7 @@ async function confirmPayPalPayment(req, res, next) {
   try {
     const { order_id, reservation_id } = req.body;
     if (!order_id || !reservation_id) {
-      return res.status(400).json({ error: 'order_id e reservation_id obrigatorios', code: 'MISSING_FIELDS' });
+      return res.status(400).json({ error: 'order_id e reservation_id obrigatórios', code: 'MISSING_FIELDS' });
     }
     const data = await confirmarCapturaPaypal(req.operator.id, order_id, reservation_id);
     return res.json({ data, message: 'Pagamento PayPal confirmado' });
@@ -157,11 +157,11 @@ async function publicConfirmPaypalPayment(req, res, next) {
   try {
     const { order_id, reservation_id } = req.body;
     if (!order_id || !reservation_id) {
-      return res.status(400).json({ error: 'order_id e reservation_id obrigatorios', code: 'MISSING_FIELDS' });
+      return res.status(400).json({ error: 'order_id e reservation_id obrigatórios', code: 'MISSING_FIELDS' });
     }
     const { data: reserva } = await supabaseAdmin
       .from('reservations').select('id, operator_id').eq('id', reservation_id).single();
-    if (!reserva) return res.status(404).json({ error: 'Reserva nao encontrada', code: 'NOT_FOUND' });
+    if (!reserva) return res.status(404).json({ error: 'Reserva não encontrada', code: 'NOT_FOUND' });
 
     let data;
     try {
@@ -275,7 +275,7 @@ async function initSisp(req, res, next) {
   try {
     const { reservation_id, amount } = req.body;
     if (!reservation_id || !amount) {
-      return res.status(400).json({ error: 'reservation_id e amount obrigatorios', code: 'MISSING_FIELDS' });
+      return res.status(400).json({ error: 'reservation_id e amount obrigatórios', code: 'MISSING_FIELDS' });
     }
     const pedido = await prepararPagamentoSisp(req.operator.id, reservation_id, amount);
     return res.json({ data: { postUrl: pedido.postUrl, fields: pedido.fields }, message: 'Pedido SISP preparado' });
@@ -287,11 +287,11 @@ async function publicInitSisp(req, res, next) {
   try {
     const { reservation_id, amount } = req.body;
     if (!reservation_id || !amount) {
-      return res.status(400).json({ error: 'reservation_id e amount obrigatorios', code: 'MISSING_FIELDS' });
+      return res.status(400).json({ error: 'reservation_id e amount obrigatórios', code: 'MISSING_FIELDS' });
     }
     const { data: reserva } = await supabaseAdmin
       .from('reservations').select('id, operator_id').eq('id', reservation_id).single();
-    if (!reserva) return res.status(404).json({ error: 'Reserva nao encontrada', code: 'NOT_FOUND' });
+    if (!reserva) return res.status(404).json({ error: 'Reserva não encontrada', code: 'NOT_FOUND' });
 
     const pedido = await prepararPagamentoSisp(reserva.operator_id, reservation_id, amount);
     return res.json({ data: { postUrl: pedido.postUrl, fields: pedido.fields }, message: 'Pedido SISP preparado' });
@@ -357,7 +357,7 @@ async function registerManualPayment(req, res, next) {
   try {
     const { reservation_id, amount, method } = req.body;
     if (!reservation_id || !amount || !method) {
-      return res.status(400).json({ error: 'reservation_id, amount e method obrigatorios', code: 'MISSING_FIELDS' });
+      return res.status(400).json({ error: 'reservation_id, amount e method obrigatórios', code: 'MISSING_FIELDS' });
     }
     /* reservations nao tem coluna "total_amount" -- a coluna real e
        "total_price". Este select falhava sempre (coluna inexistente),
@@ -365,7 +365,7 @@ async function registerManualPayment(req, res, next) {
        mesmo de tentar gravar. (notes_internal existe -- ver migracao
        reservations_notes_split_and_no_show -- so nao e usada aqui.) */
     const { data: reserva } = await supabaseAdmin.from('reservations').select('total_price, amount_paid').eq('id', reservation_id).eq('operator_id', req.operator.id).single();
-    if (!reserva) return res.status(404).json({ error: 'Reserva nao encontrada', code: 'NOT_FOUND' });
+    if (!reserva) return res.status(404).json({ error: 'Reserva não encontrada', code: 'NOT_FOUND' });
 
     const newPaid = Number(reserva.amount_paid || 0) + Number(amount);
     const isPaid  = newPaid >= Number(reserva.total_price);
@@ -397,7 +397,7 @@ async function getHistory(req, res, next) {
     if (to)   q = q.lte('check_in', to);
     const { data, error } = await q;
     if (error) throw error;
-    return res.json({ data, message: 'Historico listado' });
+    return res.json({ data, message: 'Histórico listado' });
   } catch (err) { next(err); }
 }
 
@@ -405,7 +405,7 @@ async function refund(req, res, next) {
   try {
     const { reservation_id, amount, reason } = req.body;
     const { data: reserva } = await supabaseAdmin.from('reservations').select('paypal_capture_id, payment_method, total_price, customer_email, notes_internal, operators(name)').eq('id', reservation_id).eq('operator_id', req.operator.id).single();
-    if (!reserva) return res.status(404).json({ error: 'Reserva nao encontrada', code: 'NOT_FOUND' });
+    if (!reserva) return res.status(404).json({ error: 'Reserva não encontrada', code: 'NOT_FOUND' });
 
     if (reserva.payment_method === 'paypal') {
       if (!reserva.paypal_capture_id) {
@@ -413,7 +413,7 @@ async function refund(req, res, next) {
            ID da captura, so o da ordem, que a API de reembolso da PayPal
            rejeita. Nao adivinhar: pedir reembolso manual pelo dashboard. */
         return res.status(400).json({
-          error: 'Esta reserva nao tem o ID de captura PayPal guardado. Reembolse manualmente pelo dashboard da PayPal.',
+          error: 'Esta reserva não tem o ID de captura PayPal guardado. Reembolse manualmente pelo dashboard da PayPal.',
           code: 'PAYPAL_CAPTURE_ID_MISSING',
         });
       }

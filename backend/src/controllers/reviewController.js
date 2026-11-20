@@ -9,8 +9,8 @@ async function obterTemplate(req, res, next) {
   try {
     const { data } = await supabaseAdmin
       .from('review_request_templates').select('*').eq('operator_id', req.operator.id).maybeSingle();
-    if (data) return res.json({ data, message: 'Template de pedido de avaliacao' });
-    return res.json({ data: { operator_id: req.operator.id, ...DEFAULT_TEMPLATE }, message: 'Template de pedido de avaliacao (default)' });
+    if (data) return res.json({ data, message: 'Template de pedido de avaliação' });
+    return res.json({ data: { operator_id: req.operator.id, ...DEFAULT_TEMPLATE }, message: 'Template de pedido de avaliação (default)' });
   } catch (err) { next(err); }
 }
 
@@ -44,7 +44,7 @@ async function listar(req, res, next) {
     if (min_rating) q = q.gte('rating', parseInt(min_rating));
     const { data, error } = await q;
     if (error) throw error;
-    return res.json({ data, message: 'Avaliacoes listadas' });
+    return res.json({ data, message: 'Avaliações listadas' });
   } catch (err) { next(err); }
 }
 
@@ -70,14 +70,14 @@ async function requestReview(req, res, next) {
       .from('reservations')
       .select('id, customer_name, customer_email, customer_id, customer_country, check_out, operator_id, units(name)')
       .eq('id', reservation_id).eq('operator_id', req.operator.id).single();
-    if (!reserva) return res.status(404).json({ error: 'Reserva nao encontrada', code: 'NOT_FOUND' });
+    if (!reserva) return res.status(404).json({ error: 'Reserva não encontrada', code: 'NOT_FOUND' });
 
     /* mesmo codigo da tarefa diaria; nunca substitui uma avaliacao ja dada */
     const r = await enviarPedido(reserva, { operadorId: req.operator.id });
     if (!r.ok && r.code === 'NO_EMAIL') return res.status(400).json({ error: 'Cliente sem email', code: 'NO_EMAIL' });
-    if (!r.ok && r.code === 'ALREADY_REVIEWED') return res.status(409).json({ error: 'Esta reserva ja foi avaliada', code: 'ALREADY_REVIEWED' });
+    if (!r.ok && r.code === 'ALREADY_REVIEWED') return res.status(409).json({ error: 'Esta reserva já foi avaliada', code: 'ALREADY_REVIEWED' });
 
-    return res.json({ data: { token: r.token, link: r.link }, message: 'Pedido de avaliacao enviado' });
+    return res.json({ data: { token: r.token, link: r.link }, message: 'Pedido de avaliação enviado' });
   } catch (err) { next(err); }
 }
 
@@ -134,7 +134,7 @@ async function guardarDefinicoes(req, res, next) {
     const { error } = await supabaseAdmin
       .from('operators').update({ review_auto_request: valor }).eq('id', req.operator.id);
     if (error) throw error;
-    return res.json({ data: { review_auto_request: valor }, message: 'Definicao guardada' });
+    return res.json({ data: { review_auto_request: valor }, message: 'Definição guardada' });
   } catch (err) { next(err); }
 }
 
@@ -143,7 +143,7 @@ async function submitReview(req, res, next) {
     /* staff_id nao vem do publico: quem tem o link so da a nota e o comentario */
     const { token, rating, comment } = req.body;
     if (!token || rating === undefined || rating === null || rating === '') {
-      return res.status(400).json({ error: 'Token e rating obrigatorios', code: 'MISSING_FIELDS' });
+      return res.status(400).json({ error: 'O link e a nota são obrigatórios', code: 'MISSING_FIELDS' });
     }
     const nota = Number(rating);
     if (!Number.isInteger(nota) || nota < 1 || nota > 5) {
@@ -151,12 +151,12 @@ async function submitReview(req, res, next) {
     }
     const texto = comment ? String(comment).trim() : '';
     if (texto.length > 1000) {
-      return res.status(400).json({ error: 'Comentario demasiado longo (maximo 1000 caracteres)', code: 'COMMENT_TOO_LONG' });
+      return res.status(400).json({ error: 'Comentário demasiado longo (máximo 1000 caracteres)', code: 'COMMENT_TOO_LONG' });
     }
 
     const { data: review } = await supabaseAdmin
       .from('reviews').select('id, token_expires_at').eq('review_token', token).single();
-    if (!review) return res.status(404).json({ error: 'Link invalido', code: 'NOT_FOUND' });
+    if (!review) return res.status(404).json({ error: 'Link inválido', code: 'NOT_FOUND' });
     if (new Date(review.token_expires_at) < new Date()) {
       return res.status(410).json({ error: 'Link expirado', code: 'EXPIRED' });
     }
@@ -185,19 +185,19 @@ async function submitReview(req, res, next) {
       }
     }
 
-    return res.json({ data, message: 'Avaliacao submetida. Obrigado!' });
+    return res.json({ data, message: 'Avaliação enviada. Obrigado!' });
   } catch (err) { next(err); }
 }
 
 async function reply(req, res, next) {
   try {
     const { reply_text } = req.body;
-    if (!reply_text) return res.status(400).json({ error: 'Texto de resposta obrigatorio', code: 'MISSING_FIELDS' });
+    if (!reply_text) return res.status(400).json({ error: 'Texto de resposta obrigatório', code: 'MISSING_FIELDS' });
     const { data, error } = await supabaseAdmin
       .from('reviews')
       .update({ reply_text, replied_at: new Date().toISOString() })
       .eq('id', req.params.id).eq('operator_id', req.operator.id).select().single();
-    if (error || !data) return res.status(404).json({ error: 'Avaliacao nao encontrada', code: 'NOT_FOUND' });
+    if (error || !data) return res.status(404).json({ error: 'Avaliação não encontrada', code: 'NOT_FOUND' });
     return res.json({ data, message: 'Resposta publicada' });
   } catch (err) { next(err); }
 }
@@ -205,14 +205,14 @@ async function reply(req, res, next) {
 async function publicReviews(req, res, next) {
   try {
     const { data: op } = await supabaseAdmin.from('operators').select('id').eq('slug', req.params.slug).single();
-    if (!op) return res.status(404).json({ error: 'Operador nao encontrado', code: 'NOT_FOUND' });
+    if (!op) return res.status(404).json({ error: 'Operador não encontrado', code: 'NOT_FOUND' });
     const { data, error } = await supabaseAdmin
       .from('reviews')
       .select('rating, comment, reply_text, replied_at, created_at, customers(name, country_code)')
       .eq('operator_id', op.id).eq('is_public', true).not('rating', 'is', null).not('review_token', 'not.is', null)
       .order('created_at', { ascending: false }).limit(20);
     if (error) throw error;
-    return res.json({ data, message: 'Avaliacoes publicas' });
+    return res.json({ data, message: 'Avaliações públicas' });
   } catch (err) { next(err); }
 }
 

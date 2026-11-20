@@ -128,7 +128,7 @@ async function submitReview(req, res, next) {
       return res.status(404).json({ error: 'Reserva não encontrada', code: 'NOT_FOUND' });
     }
     if (!podeAvaliarViajante(reservation, hojeCaboVerde(new Date()))) {
-      return res.status(400).json({ error: 'So pode avaliar reservas ja concluidas', code: 'INVALID_STATUS' });
+      return res.status(400).json({ error: 'Só pode avaliar reservas já concluídas', code: 'INVALID_STATUS' });
     }
 
     const { data: existing } = await supabaseAdmin
@@ -138,7 +138,7 @@ async function submitReview(req, res, next) {
       .maybeSingle();
 
     if (existing?.rating) {
-      return res.status(409).json({ error: 'Ja avaliou esta reserva', code: 'ALREADY_REVIEWED' });
+      return res.status(409).json({ error: 'Já avaliou esta reserva', code: 'ALREADY_REVIEWED' });
     }
 
     const payload = { rating, comment: comment || null, is_public: true, review_token: null, token_expires_at: null };
@@ -147,7 +147,7 @@ async function submitReview(req, res, next) {
       : await supabaseAdmin.from('reviews').insert({ operator_id: reservation.operator_id, reservation_id: reservationId, ...payload }).select().single();
 
     if (error) throw error;
-    return res.status(201).json({ data, message: 'Avaliacao enviada, obrigado!' });
+    return res.status(201).json({ data, message: 'Avaliação enviada, obrigado!' });
   } catch (err) {
     next(err);
   }
@@ -218,7 +218,7 @@ async function addWishlist(req, res, next) {
           .eq('traveler_id', req.traveler.id)
           .eq('unit_id', unit_id)
           .single();
-        return res.json({ data: existing, message: 'Ja estava na wishlist' });
+        return res.json({ data: existing, message: 'Já estava nos guardados' });
       }
       throw error;
     }
@@ -364,7 +364,7 @@ async function getNotifications(req, res, next) {
 
     const unread_count = notificacoes.filter(n => !n.is_read).length;
 
-    return res.json({ data: notificacoes, unread_count, message: 'Notificacoes listadas' });
+    return res.json({ data: notificacoes, unread_count, message: 'Notificações listadas' });
   } catch (err) {
     next(err);
   }
@@ -379,7 +379,7 @@ async function markNotificationRead(req, res, next) {
       .eq('id', id)
       .eq('traveler_id', req.traveler.id);
     if (error) throw error;
-    return res.json({ data: null, message: 'Notificacao marcada como lida' });
+    return res.json({ data: null, message: 'Notificação marcada como lida' });
   } catch (err) {
     next(err);
   }
