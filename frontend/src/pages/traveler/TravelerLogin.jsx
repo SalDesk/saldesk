@@ -93,7 +93,7 @@ export default function TravelerLogin() {
               <div className="px-3 py-2 rounded-sm bg-red-50 text-error text-sm font-body">{error}</div>
             )}
             <Button type="submit" loading={loading} className="w-full">
-              Enviar link de recuperacao
+              Enviar link de recuperação
             </Button>
           </form>
           <button onClick={() => setMode('login')}
@@ -116,10 +116,10 @@ export default function TravelerLogin() {
             <div>
               <p className="font-display font-bold text-base text-n-900">Email enviado</p>
               <p className="text-sm font-body text-n-500 mt-1">
-                Se <span className="font-semibold text-n-700">{forgotEmail}</span> tiver uma conta, vai receber um link de recuperacao.
+                Se <span className="font-semibold text-n-700">{forgotEmail}</span> tiver uma conta, vai receber um link de recuperação.
               </p>
             </div>
-            <p className="text-xs font-body text-n-400">Verifique tambem a pasta de spam.</p>
+            <p className="text-xs font-body text-n-400">Verifique também a pasta de spam.</p>
             <button onClick={() => { setMode('login'); setForgotEmail(''); }}
               className="text-sm font-body font-semibold text-ocean-700 hover:underline">
               Voltar ao login
@@ -138,7 +138,7 @@ export default function TravelerLogin() {
 
         {registeredOk && (
           <div className="mb-4 px-3 py-2 rounded-sm bg-[#ECFDF5] border border-green-200 text-[#1A7A4A] text-sm font-body">
-            Conta criada com sucesso. Ja pode entrar.
+            Conta criada com sucesso. Já pode entrar.
           </div>
         )}
         {resetOk && (
@@ -207,7 +207,7 @@ export default function TravelerLogin() {
       </AuthCard>
 
       <p className="text-center text-sm font-body text-n-500 mt-5">
-        Ainda nao tem conta?{' '}
+        Ainda não tem conta?{' '}
         <Link to="/viajante/registar" className="font-semibold text-ocean-700 hover:underline">
           Registar
         </Link>

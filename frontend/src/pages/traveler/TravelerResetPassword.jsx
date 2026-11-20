@@ -32,11 +32,11 @@ export default function TravelerResetPassword() {
     e.preventDefault();
     setError('');
     if (getPasswordStrength(form.newPw) < 2) {
-      setError('A password deve ser forte: 8+ caracteres, maiuscula, numero e caracter especial.');
+      setError('A password deve ser forte: 8+ caracteres, maiúscula, número e carácter especial.');
       return;
     }
     if (form.newPw !== form.confirm) {
-      setError('As passwords nao coincidem.');
+      setError('As passwords não coincidem.');
       return;
     }
     setLoading(true);
@@ -60,7 +60,7 @@ export default function TravelerResetPassword() {
           <div>
             <p className="font-display font-bold text-base text-n-900">Link inválido ou expirado</p>
             <p className="text-sm font-body text-n-500 mt-1">
-              Este link de recuperacao ja nao e valido. Solicite um novo.
+              Este link de recuperação já não é válido. Peça um novo.
             </p>
           </div>
           <button onClick={() => navigate('/viajante/entrar')}
@@ -128,7 +128,7 @@ export default function TravelerResetPassword() {
               </button>
             </div>
             {form.confirm && form.newPw !== form.confirm && (
-              <p className="text-xs text-error">As passwords nao coincidem.</p>
+              <p className="text-xs text-error">As passwords não coincidem.</p>
             )}
           </div>
 

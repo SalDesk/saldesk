@@ -24,12 +24,12 @@ export default function TravelerRegister() {
 
   function validate() {
     const errs = {};
-    if (!form.name.trim())  errs.name = 'Obrigatorio';
-    if (!form.email.trim()) errs.email = 'Obrigatorio';
+    if (!form.name.trim())  errs.name = 'Obrigatório';
+    if (!form.email.trim()) errs.email = 'Obrigatório';
     if (getPasswordStrength(form.password) < 2) {
-      errs.password = 'A password deve ser forte: 8+ caracteres, maiuscula, numero e especial.';
+      errs.password = 'A password deve ser forte: 8+ caracteres, maiúscula, número e carácter especial.';
     }
-    if (form.password !== form.confirm) errs.confirm = 'Passwords nao coincidem';
+    if (form.password !== form.confirm) errs.confirm = 'As passwords não coincidem';
     return errs;
   }
 
@@ -42,7 +42,7 @@ export default function TravelerRegister() {
       await register(form.name, form.email, form.password, form.phone || undefined);
       navigate('/viajante/entrar?registered=1');
     } catch (err) {
-      setServerError(err.response?.data?.error || 'Nao foi possivel criar a conta.');
+      setServerError(err.response?.data?.error || 'Não foi possível criar a conta.');
     } finally {
       setLoading(false);
     }
@@ -56,7 +56,7 @@ export default function TravelerRegister() {
         <p className="text-[11px] font-mono uppercase tracking-wider text-ocean-500 mb-2">Conta de viajante</p>
         <h1 className="font-display font-bold text-xl text-n-900 mb-1">Criar conta</h1>
         <p className="text-xs font-body text-n-500 mb-5">
-          Para gerir as suas reservas e guardar experiencias favoritas em Cabo Verde.
+          Para gerir as suas reservas e guardar experiências favoritas em Cabo Verde.
         </p>
 
         {serverError && (
@@ -139,7 +139,7 @@ export default function TravelerRegister() {
       </div>
 
       <p className="text-center text-sm font-body text-n-500 mt-5">
-        Ja tem conta?{' '}
+        Já tem conta?{' '}
         <Link to="/viajante/entrar" className="font-semibold text-ocean-700 hover:underline">
           Entrar
         </Link>
