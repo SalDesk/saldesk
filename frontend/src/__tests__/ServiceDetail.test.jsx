@@ -7,6 +7,14 @@ import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import ServiceDetail from '../pages/ServiceDetail';
 import { TONS } from '../utils/brandPalette';
 
+/* O mapa (react-leaflet) nao corre em jsdom: fica uma caixa simples */
+vi.mock('react-leaflet', () => ({
+  MapContainer: ({ children }) => <div data-testid="mapa">{children}</div>,
+  TileLayer: () => null,
+  Marker: ({ children }) => <div data-testid="marcador">{children}</div>,
+  Popup: ({ children }) => <div>{children}</div>,
+}));
+
 const FUTURE = { v7_startTransition: true, v7_relativeSplatPath: true };
 const raiz = () => document.documentElement;
 
@@ -53,6 +61,55 @@ afterEach(() => {
   cleanup();
   TONS.forEach((t) => raiz().style.removeProperty(`--brand-${t}-rgb`));
   vi.restoreAllMocks();
+});
+
+describe('ServiceDetail: ponto de encontro', () => {
+  const comMeta = (meta, extra = {}) => ({ ...UNIDADE, description: JSON.stringify({ desc_pt: 'Passeio', ...meta }), ...extra });
+
+  it('mostra_ponto_de_encontro_com_link_do_mapa', async () => {
+    simularRede({ unit: comMeta({ meeting_point: 'Marina' }, { lat: 16.6, lng: -22.9 }) });
+    montar();
+    expect(await screen.findByText('Ponto de encontro')).toBeInTheDocument();
+    expect(screen.getByText('Marina', { selector: 'p' })).toBeInTheDocument();
+    const link = screen.getByRole('link', { name: /Abrir no Google Maps/ });
+    expect(link).toHaveAttribute('href', 'https://www.google.com/maps/search/?api=1&query=16.6,-22.9');
+    expect(link).toHaveAttribute('target', '_blank');
+    expect(screen.getByTestId('marcador')).toBeInTheDocument();
+    /* com o ponto marcado, a seccao generica (morada do operador sobre uma foto) sai */
+    expect(screen.queryByText('Localização')).toBeNull();
+  });
+
+  it('so_texto_sem_link', async () => {
+    simularRede({ unit: comMeta({ meeting_point: 'Hotel Riu' }) });
+    montar();
+    expect(await screen.findByText('Ponto de encontro')).toBeInTheDocument();
+    expect(screen.getByText('Hotel Riu')).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /Abrir no Google Maps/ })).toBeNull();
+    expect(screen.queryByTestId('mapa')).toBeNull();
+    expect(screen.getByText('Localização')).toBeInTheDocument();
+  });
+
+  it('so_coordenadas_sem_texto', async () => {
+    simularRede({ unit: comMeta({}, { lat: 16.6, lng: -22.9 }) });
+    montar();
+    expect(await screen.findByText('Ponto de encontro', { selector: 'p' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /Abrir no Google Maps/ })).toBeInTheDocument();
+  });
+
+  it('sem_nada_nao_mostra_seccao', async () => {
+    simularRede({ unit: comMeta({}) });
+    montar();
+    expect(await screen.findByText('Passeio de buggy', { selector: 'h1' })).toBeInTheDocument();
+    expect(screen.queryByText('Ponto de encontro')).toBeNull();
+  });
+
+  it('em_ingles', async () => {
+    localStorage.setItem('sd-lang', 'en');
+    simularRede({ unit: comMeta({ meeting_point: 'Marina' }, { lat: 16.6, lng: -22.9 }) });
+    montar();
+    expect(await screen.findByText('Meeting point')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /Open in Google Maps/ })).toBeInTheDocument();
+  });
 });
 
 describe('ServiceDetail: carregamento', () => {
