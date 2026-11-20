@@ -306,3 +306,85 @@ test('jsonld_lugar_com_e_sem_coordenadas', () => {
   assert.equal(C.jsonLdLugar(null, url), null);
   assert.equal(C.jsonLdLugar({ slug: 'x' }, url), null);
 });
+
+/* ── Mapa das experiencias: localizacao, projeccao e enquadramento ── */
+test('localizacao_prefere_ponto_de_encontro_e_depois_paragem', () => {
+  const meta = { stops: [{ name: 'A' }, { name: 'B', lat: 16.6, lng: -22.9 }, { name: 'C', lat: 16.5, lng: -22.8 }] };
+  assert.deepEqual(C.localizacaoExperiencia({ lat: 16.76, lng: -22.89 }, meta), { lat: 16.76, lng: -22.89, origem: 'encontro' });
+  assert.deepEqual(C.localizacaoExperiencia({ lat: null, lng: null }, meta), { lat: 16.6, lng: -22.9, origem: 'paragem' });
+  assert.equal(C.localizacaoExperiencia({}, {}), null);
+  assert.equal(C.localizacaoExperiencia({}, { stops: [{ name: 'A', lat: 16.6 }] }), null);
+  assert.equal(C.localizacaoExperiencia(null, null), null);
+});
+
+test('localizacao_aceita_texto_numerico_e_rejeita_vazio', () => {
+  assert.deepEqual(C.localizacaoExperiencia({ lat: '16.7', lng: '-22.9' }, {}), { lat: 16.7, lng: -22.9, origem: 'encontro' });
+  assert.deepEqual(C.localizacaoExperiencia({ lat: '', lng: '' }, { stops: [{ lat: '16.6', lng: '-22.8' }] }), { lat: 16.6, lng: -22.8, origem: 'paragem' });
+  assert.equal(C.localizacaoExperiencia({ lat: 0, lng: 0 }, {}), null);
+  assert.equal(C.localizacaoExperiencia({ lat: 'abc', lng: -22 }, {}), null);
+});
+
+test('projectar_valores_conhecidos', () => {
+  assert.deepEqual(C.projectar(0, 0, 0), { x: 128, y: 128 });
+  assert.equal(C.projectar(0, 180, 1).x, 512);
+  assert.equal(C.projectar(0, -180, 3).x, 0);
+  const norte = C.projectar(60, 0, 2); const sul = C.projectar(-60, 0, 2);
+  assert.ok(norte.y < 512 && sul.y > 512 && Math.abs((norte.y + sul.y) - 1024) < 1e-9);
+});
+
+test('enquadrar_um_so_ponto', () => {
+  const e = C.enquadrarMapa([{ lat: 16.76, lng: -22.9 }, { lat: 16.76, lng: -22.9 }], 700, 360);
+  assert.equal(e.zoom, 15);
+  const p = C.projectar(16.76, -22.9, 15);
+  assert.ok(Math.abs(p.x - (e.x0 + 350)) < 1e-6 && Math.abs(p.y - (e.y0 + 180)) < 1e-6);
+  assert.equal(C.enquadrarMapa([], 700, 360), null);
+});
+
+test('enquadrar_varios_pontos_cabem_com_margem', () => {
+  const pts = [{ lat: 16.6, lng: -22.9 }, { lat: 16.85, lng: -22.95 }];
+  const L = 700, A = 360, M = 40;
+  const e = C.enquadrarMapa(pts, L, A);
+  const dentro = (z, x0, y0) => pts.every((q) => { const p = C.projectar(q.lat, q.lng, z); return p.x - x0 >= M - 1e-6 && p.x - x0 <= L - M + 1e-6 && p.y - y0 >= M - 1e-6 && p.y - y0 <= A - M + 1e-6; });
+  assert.ok(dentro(e.zoom, e.x0, e.y0));
+  const ps = pts.map((q) => C.projectar(q.lat, q.lng, e.zoom + 1));
+  const altura = Math.max(...ps.map((p) => p.y)) - Math.min(...ps.map((p) => p.y));
+  assert.ok(altura > A - 2 * M);
+  /* ilhas muito afastadas: nunca abaixo do zoom minimo */
+  assert.equal(C.enquadrarMapa([{ lat: 16.7, lng: -22.9 }, { lat: 14.9, lng: -25.1 }], 300, 200).zoom, 8);
+});
+
+test('azulejos_cobrem_o_mapa', () => {
+  const e = C.enquadrarMapa([{ lat: 16.6, lng: -22.9 }, { lat: 16.85, lng: -22.95 }], 700, 360);
+  const az = C.azulejosDoMapa(e, 700, 360);
+  assert.ok(az.length > 0);
+  assert.ok(az.every((t) => t.z === e.zoom && Number.isInteger(t.x) && Number.isInteger(t.y)));
+  const minL = Math.min(...az.map((t) => t.left)); const minT = Math.min(...az.map((t) => t.top));
+  const maxR = Math.max(...az.map((t) => t.left + 256)); const maxB = Math.max(...az.map((t) => t.top + 256));
+  assert.ok(minL <= 0 && minT <= 0 && maxR >= 700 && maxB >= 360);
+  /* volta ao mundo na horizontal e nunca pede linhas fora do mapa */
+  const borda = C.azulejosDoMapa({ zoom: 1, x0: -100, y0: -300 }, 300, 400);
+  assert.ok(borda.every((t) => t.x >= 0 && t.x < 2 && t.y >= 0 && t.y < 2));
+});
+
+test('localizacao_fora_de_cabo_verde_ou_zero_e_ignorada', () => {
+  /* paragens a 0,0 (campos nunca preenchidos) e pontos fora do arquipelago nao contam */
+  assert.equal(C.localizacaoExperiencia({}, { stops: [{ name: 'Murdeira', lat: 0, lng: 0 }] }), null);
+  assert.deepEqual(
+    C.localizacaoExperiencia({ lat: 0, lng: 0 }, { stops: [{ lat: 0, lng: 0 }, { lat: 16.6, lng: -22.9 }] }),
+    { lat: 16.6, lng: -22.9, origem: 'paragem' });
+  assert.equal(C.localizacaoExperiencia({ lat: 38.7, lng: -9.1 }, {}), null);
+  assert.equal(C.dentroDeCaboVerde(16.75, -22.93), true);
+  assert.equal(C.dentroDeCaboVerde(0, 0), false);
+});
+
+test('agrupar_pinos_proximos', () => {
+  /* tours do mesmo cais (mesmo ponto ou muito perto) ficam num so marcador */
+  const g = C.agruparPinos([{ x: 100, y: 100, i: 0 }, { x: 100, y: 100, i: 1 }, { x: 110, y: 105, i: 2 }, { x: 300, y: 200, i: 3 }], 26);
+  assert.equal(g.length, 2);
+  assert.deepEqual(g[0].membros, [0, 1, 2]);
+  assert.deepEqual(g[1].membros, [3]);
+  assert.ok(Math.abs(g[0].x - 310 / 3) < 1e-9 && Math.abs(g[0].y - 305 / 3) < 1e-9);
+  assert.deepEqual(C.agruparPinos([], 26), []);
+  /* longe uns dos outros: um marcador cada, pela ordem */
+  assert.deepEqual(C.agruparPinos([{ x: 0, y: 0, i: 0 }, { x: 40, y: 0, i: 1 }], 26).map((p) => p.membros), [[0], [1]]);
+});

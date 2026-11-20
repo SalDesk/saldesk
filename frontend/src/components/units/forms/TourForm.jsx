@@ -4,8 +4,9 @@ import Button from '../../ui/Button';
 import ImageUploader from '../../shared/ImageUploader';
 import {
   AmenitiesPicker, IncludedItemsEditor, StopsEditor, TimeSlotsEditor, PriceTiersEditor,
-  SectionLabel, ChipToggle, OtaFields, ConectFields, buildOtaProductIds, LANGUAGES, UNIT_TYPES_BY_OPERATOR,
+  SectionLabel, ChipToggle, OtaFields, buildOtaProductIds, LANGUAGES, UNIT_TYPES_BY_OPERATOR,
 } from './editors';
+import LocalizacaoPontoEncontro from './LocalizacaoPontoEncontro';
 
 const ACTIVITY_AMENS   = ['Equipamento incluído', 'Instrutor certificado', 'Seguro', 'Fotografias/Vídeo', 'Transporte', 'Snacks e água', 'Vestiário', 'Toalhas'];
 
@@ -254,6 +255,9 @@ export default function TourForm({ unit, onSave, onCancel, loading, error }) {
               className="w-4 h-4 accent-[var(--ocean-700)]" />
             Inclui recolha no hotel
           </label>
+          {/* Mapa do ponto de encontro: mostrado na pagina do servico e no mapa do catalogo */}
+          <LocalizacaoPontoEncontro lat={form.lat} lng={form.lng}
+            onChange={({ lat, lng }) => setForm(f => ({ ...f, lat, lng }))} />
         </div>
       </div>
 
@@ -345,7 +349,6 @@ export default function TourForm({ unit, onSave, onCancel, loading, error }) {
       </div>
 
       <OtaFields form={form} set={set} />
-      <ConectFields form={form} set={set} />
 
       {unit && (
         <div>

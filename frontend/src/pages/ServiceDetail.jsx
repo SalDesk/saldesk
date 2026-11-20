@@ -29,10 +29,28 @@ import {
 import SiteComplianceFooter from '../components/shared/SiteComplianceFooter';
 import { textoPoliticaCancelamento } from '../utils/politicaCancelamento';
 import { jsonLdExperiencia } from '../utils/dadosEstruturados';
+import { dentroDeCaboVerde } from '../utils/coordenadas';
 
 /* Icone numerado para as paragens do itinerario -- SVG inline (nunca
    bitmap), substitui o icone PNG por defeito do Leaflet (que nem sequer
    resolve bem com bundlers Vite). */
+/* Ponto de encontro de uma actividade: texto (meta.meeting_point) e coordenadas (units.lat/lng) */
+function pontoEncontroDe(unit, meta) {
+  const texto = typeof meta?.meeting_point === 'string' ? meta.meeting_point.trim() : '';
+  const num = (v) => (v === null || v === undefined || v === '' ? NaN : Number(v));
+  const la = num(unit?.lat);
+  const ln = num(unit?.lng);
+  return { texto, la, ln, temPonto: dentroDeCaboVerde(la, ln) };
+}
+
+/* Marcador do ponto de encontro (gota, cor da marca SalDesk) */
+const pontoEncontroIcon = L.divIcon({
+  className: '',
+  html: '<div style="background:#0D5470;width:24px;height:24px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.35)"></div>',
+  iconSize: [24, 24],
+  iconAnchor: [12, 24],
+});
+
 function stopDivIcon(n) {
   return L.divIcon({
     className: '',
@@ -1389,13 +1407,51 @@ export default function ServiceDetail() {
               </div>
             )}
 
+            {/* ── Ponto de encontro (actividade): texto do operador e, com coordenadas
+                (units.lat/lng, marcadas no mapa do formulario), um mapa pequeno e o
+                link para o Google Maps. Nunca inventa uma localizacao. ── */}
+            {isActivity && (() => {
+              const { texto, la, ln, temPonto } = pontoEncontroDe(unit, unitMeta);
+              if (!texto && !temPonto) return null;
+              return (
+                <div className="pb-10 border-b border-n-100">
+                  <p className="text-xs font-body font-bold text-brand-700 uppercase tracking-widest mb-4">
+                    {lang==='en'?'Meeting point':'Ponto de encontro'}
+                  </p>
+                  <div className={`grid grid-cols-1 ${temPonto?'lg:grid-cols-2':''} gap-6 items-start`}>
+                    <div className="space-y-3">
+                      {texto && <p className="font-body text-n-800 text-base leading-relaxed">{texto}</p>}
+                      {temPonto && (
+                        <a href={`https://www.google.com/maps/search/?api=1&query=${la},${ln}`} target="_blank" rel="noopener noreferrer"
+                          className="inline-flex items-center gap-2 text-sm font-body font-semibold text-brand-700 hover:text-brand-800 underline underline-offset-2">
+                          {lang==='en'?'Open in Google Maps':'Abrir no Google Maps'}
+                        </a>
+                      )}
+                    </div>
+                    {temPonto && (
+                      <div className="h-56 rounded-2xl overflow-hidden border border-n-200">
+                        <MapContainer center={[la, ln]} zoom={14} style={{ height:'100%', width:'100%' }} scrollWheelZoom={false}>
+                          <TileLayer attribution='&copy; OpenStreetMap contributors' url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"/>
+                          <Marker position={[la, ln]} icon={pontoEncontroIcon}>
+                            <Popup>{texto || (lang==='en'?'Meeting point':'Ponto de encontro')}</Popup>
+                          </Marker>
+                        </MapContainer>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })()}
+
             {/* ── O que os viajantes adoraram (itinerário + mapa) — so
                 actividade, so se o operador configurou paragens reais no
                 TourForm. Paragens sem coordenadas ficam so na lista, nunca
                 ganham um pin inventado. Sem NENHUMA paragem com coordenadas,
                 mostra so a lista, sem mapa vazio. ── */}
             {isActivity && Array.isArray(unitMeta.stops) && unitMeta.stops.length > 0 && (() => {
-              const stopsWithCoords = unitMeta.stops.filter(s => s.lat != null && s.lng != null);
+              /* so paragens dentro de Cabo Verde: 0,0 (campos nunca preenchidos) nunca ganha pin */
+              const stopsWithCoords = unitMeta.stops.filter(s => s && s.lat !== null && s.lat !== '' && s.lng !== null && s.lng !== ''
+                && dentroDeCaboVerde(Number(s.lat), Number(s.lng)));
               return (
                 <div className="pb-10 border-b border-n-100">
                   <p className="text-xs font-body font-bold text-brand-700 uppercase tracking-widest mb-4">
@@ -1594,7 +1650,9 @@ export default function ServiceDetail() {
               )}
             </div>
 
-            {/* ── Localização ── */}
+            {/* ── Localização (morada do operador) -- sai numa actividade com o ponto de
+                encontro marcado no mapa, que ja mostra o sitio certo acima ── */}
+            {!(isActivity && pontoEncontroDe(unit, unitMeta).temPonto) && (
             <div className="pb-10 border-b border-n-100">
               <p className="text-xs font-body font-bold text-brand-700 uppercase tracking-widest mb-4">
                 {lang==='en'?'Location':'Localização'}
@@ -1615,6 +1673,7 @@ export default function ServiceDetail() {
                 </div>
               </div>
             </div>
+            )}
 
             {/* ── Partilhar ── */}
             <div className="pb-10 border-b border-n-100">

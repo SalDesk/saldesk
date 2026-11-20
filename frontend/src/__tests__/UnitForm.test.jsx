@@ -11,6 +11,15 @@ vi.mock('../services/uploadService', () => ({
   ALLOWED_IMAGE_TYPES: ['image/jpeg', 'image/png', 'image/webp'],
 }));
 
+/* O mapa do ponto de encontro (react-leaflet) nao corre em jsdom: fica uma caixa simples */
+vi.mock('react-leaflet', () => ({
+  MapContainer: ({ children }) => <div data-testid="mapa">{children}</div>,
+  TileLayer: () => null,
+  Marker: () => <div data-testid="marcador" />,
+  useMapEvents: () => null,
+}));
+vi.mock('leaflet', () => ({ default: { divIcon: () => ({}) }, divIcon: () => ({}) }));
+
 /* Saida limpa: nenhum teste deve disparar console.error nem console.warn.
    Os espioes restauram-se ANTES de afirmar, para nunca ficarem presos se a afirmacao falhar. */
 let errorSpy;
@@ -406,6 +415,85 @@ describe('TourForm', () => {
     escrever(campo('Preco adulto (opcional se usar Preço privado/Escalões)'), '0');
     fireEvent.click(botao('Criar tour'));
     expect(guardar(onSave).base_price).toBe(0);
+  });
+
+  describe('localizacao do ponto de encontro', () => {
+    const COLAR = 'Colar coordenadas ou link do Google Maps';
+    function novoTour() {
+      const r = renderForm('activity');
+      escrever(campo('Nome PT'), 'Volta a ilha');
+      escrever(campo('Capacidade maxima'), '8');
+      return r;
+    }
+    /* le ao colar ou ao sair do campo (nunca a meio da escrita) */
+    function colar(texto) {
+      escrever(campo(COLAR), texto);
+      fireEvent.blur(campo(COLAR));
+    }
+    function gravado(onSave) {
+      fireEvent.click(botao('Criar tour'));
+      const p = guardar(onSave);
+      return { lat: p.lat, lng: p.lng };
+    }
+
+    it('colar_link_preenche_latitude_e_longitude_e_grava', () => {
+      const { onSave } = novoTour();
+      expect(screen.getByText('Localização do ponto de encontro')).toBeInTheDocument();
+      expect(screen.getByTestId('mapa')).toBeInTheDocument();
+      escrever(campo(COLAR), '16.7631, -2');
+      expect(campo('Latitude').value).toBe('');
+      colar('https://maps.google.com/?q=16.7631,-22.895');
+      expect(campo('Latitude').value).toBe('16.7631');
+      expect(campo('Longitude').value).toBe('-22.895');
+      expect(screen.getByTestId('marcador')).toBeInTheDocument();
+      expect(campo(COLAR).value).toBe('');
+      expect(gravado(onSave)).toEqual({ lat: 16.7631, lng: -22.895 });
+    });
+
+    it('colar_texto_invalido_avisa_e_nao_mexe', () => {
+      const { onSave } = novoTour();
+      colar('abc');
+      expect(screen.getByText('Não encontrei coordenadas neste texto.')).toBeInTheDocument();
+      expect(campo('Latitude').value).toBe('');
+      expect(gravado(onSave)).toEqual({ lat: null, lng: null });
+    });
+
+    it('link_curto_explica_o_que_fazer', () => {
+      novoTour();
+      expect(screen.getByText('No Google Maps: clique com o botão direito no local e escolha as coordenadas para as copiar.')).toBeInTheDocument();
+      colar('https://maps.app.goo.gl/abc123');
+      expect(screen.getByText('Links curtos não trazem coordenadas. Abra o link e copie o endereço completo do browser, ou copie as coordenadas no Google Maps.')).toBeInTheDocument();
+      expect(campo('Latitude').value).toBe('');
+    });
+
+    it('fora_de_cabo_verde_avisa_mas_grava', () => {
+      const { onSave } = novoTour();
+      escrever(campo('Latitude'), '38.7');
+      escrever(campo('Longitude'), '-9.1');
+      expect(screen.getByText('Este ponto fica fora de Cabo Verde. Confirme a localização.')).toBeInTheDocument();
+      expect(gravado(onSave)).toEqual({ lat: 38.7, lng: -9.1 });
+    });
+
+    it('remover_localizacao_grava_null', () => {
+      const unit = { id: 'u9', name: 'Volta', capacity: 8, base_price: 40, status: 'active', images: [], lat: 16.7, lng: -22.9,
+        description: JSON.stringify({ meeting_point: 'Marina' }) };
+      const { onSave } = renderForm('activity', { unit });
+      expect(campo('Latitude').value).toBe('16.7');
+      fireEvent.click(botao('Remover localização'));
+      expect(campo('Latitude').value).toBe('');
+      expect(screen.queryByTestId('marcador')).toBeNull();
+      fireEvent.click(botao('Guardar alteracoes'));
+      const p = guardar(onSave);
+      expect({ lat: p.lat, lng: p.lng }).toEqual({ lat: null, lng: null });
+    });
+
+    it('sem_localizacao_grava_null', () => {
+      const { onSave } = novoTour();
+      expect(screen.queryByTestId('marcador')).toBeNull();
+      expect(screen.queryByRole('button', { name: 'Remover localização' })).toBeNull();
+      expect(screen.queryByText('Coordenadas (opcional — Conect)')).toBeNull();
+      expect(gravado(onSave)).toEqual({ lat: null, lng: null });
+    });
   });
 
   it('tour_grava_recolha_no_hotel', () => {

@@ -328,6 +328,97 @@
     return j;
   }
 
+  /* ── Mapa das experiencias (sem biblioteca: azulejos OSM + projeccao Web Mercator) ──
+     Localizacao: ponto de encontro (lat/lng da unidade) ou, em falta, a primeira paragem do
+     itinerario com coordenadas. Nunca inventa (sem centro da ilha, sem morada). */
+  function numero(v) {
+    if (v === null || v === undefined || v === '') return NaN;
+    return Number(v);
+  }
+
+  /* Rectangulo largo a volta do arquipelago: fora dele (ex.: 0,0 de campos nunca preenchidos)
+     a coordenada e um erro de dados e nao entra no mapa */
+  function dentroDeCaboVerde(lat, lng) {
+    return isFinite(lat) && isFinite(lng) && lat >= 14.5 && lat <= 17.5 && lng >= -25.5 && lng <= -22.5;
+  }
+
+  function localizacaoExperiencia(item, meta) {
+    var la = numero(item && item.lat); var ln = numero(item && item.lng);
+    if (dentroDeCaboVerde(la, ln)) return { lat: la, lng: ln, origem: 'encontro' };
+    var stops = meta && Array.isArray(meta.stops) ? meta.stops : [];
+    for (var i = 0; i < stops.length; i += 1) {
+      var s = stops[i];
+      var sa = numero(s && s.lat); var sn = numero(s && s.lng);
+      if (dentroDeCaboVerde(sa, sn)) return { lat: sa, lng: sn, origem: 'paragem' };
+    }
+    return null;
+  }
+
+  /* Pixels do mundo (azulejos de 256 px) para lat/lng e zoom */
+  function projectar(lat, lng, zoom) {
+    var escala = 256 * Math.pow(2, zoom);
+    var sen = Math.max(-0.9999, Math.min(0.9999, Math.sin(lat * Math.PI / 180)));
+    return {
+      x: (lng + 180) / 360 * escala,
+      y: (0.5 - Math.log((1 + sen) / (1 - sen)) / (4 * Math.PI)) * escala,
+    };
+  }
+
+  /* Maior zoom (entre zMin e zMax) em que todos os pontos cabem dentro da margem; o conjunto
+     fica centrado. Devolve o canto superior esquerdo em pixels do mundo. */
+  function enquadrarMapa(pontos, largura, altura, opcoes) {
+    var o = opcoes || {};
+    var zMin = o.zMin === undefined ? 8 : o.zMin;
+    var zMax = o.zMax === undefined ? 15 : o.zMax;
+    var margem = o.margem === undefined ? 40 : o.margem;
+    var lista = Array.isArray(pontos) ? pontos.filter(function (p) { return p && isFinite(p.lat) && isFinite(p.lng); }) : [];
+    if (!lista.length) return null;
+    var escolha = null;
+    for (var z = zMax; z >= zMin; z -= 1) {
+      var ps = lista.map(function (p) { return projectar(p.lat, p.lng, z); });
+      var xs = ps.map(function (p) { return p.x; }); var ys = ps.map(function (p) { return p.y; });
+      var minX = Math.min.apply(null, xs); var maxX = Math.max.apply(null, xs);
+      var minY = Math.min.apply(null, ys); var maxY = Math.max.apply(null, ys);
+      escolha = { zoom: z, cx: (minX + maxX) / 2, cy: (minY + maxY) / 2 };
+      if (maxX - minX <= largura - 2 * margem && maxY - minY <= altura - 2 * margem) break;
+    }
+    return { zoom: escolha.zoom, x0: escolha.cx - largura / 2, y0: escolha.cy - altura / 2 };
+  }
+
+  /* Azulejos que cobrem o rectangulo do mapa, com a posicao relativa ao mapa */
+  function azulejosDoMapa(enq, largura, altura) {
+    if (!enq) return [];
+    var z = enq.zoom; var n = Math.pow(2, z);
+    var tx0 = Math.floor(enq.x0 / 256); var tx1 = Math.floor((enq.x0 + largura - 1) / 256);
+    var ty0 = Math.floor(enq.y0 / 256); var ty1 = Math.floor((enq.y0 + altura - 1) / 256);
+    var out = [];
+    for (var ty = ty0; ty <= ty1; ty += 1) {
+      if (ty < 0 || ty >= n) continue;
+      for (var tx = tx0; tx <= tx1; tx += 1) {
+        out.push({ z: z, x: ((tx % n) + n) % n, y: ty, left: tx * 256 - enq.x0, top: ty * 256 - enq.y0 });
+      }
+    }
+    return out;
+  }
+
+  /* Junta marcadores a menos de 'limite' px uns dos outros (ex.: varios tours do mesmo cais),
+     para nenhum ficar escondido debaixo de outro. Ordem estavel; o centro e a media do grupo. */
+  function agruparPinos(pontos, limite) {
+    var grupos = [];
+    (Array.isArray(pontos) ? pontos : []).forEach(function (p) {
+      var alvo = null;
+      for (var k = 0; k < grupos.length; k += 1) {
+        var g = grupos[k];
+        if (Math.hypot(g.x - p.x, g.y - p.y) <= limite) { alvo = g; break; }
+      }
+      if (!alvo) { grupos.push({ x: p.x, y: p.y, sx: p.x, sy: p.y, membros: [p.i] }); return; }
+      alvo.membros.push(p.i);
+      alvo.sx += p.x; alvo.sy += p.y;
+      alvo.x = alvo.sx / alvo.membros.length; alvo.y = alvo.sy / alvo.membros.length;
+    });
+    return grupos.map(function (g) { return { x: g.x, y: g.y, membros: g.membros }; });
+  }
+
   function ilhasDosItens(itens) {
     var cont = {};
     (Array.isArray(itens) ? itens : []).forEach(function (i) {
@@ -353,6 +444,12 @@
     ordenarPorPreco: ordenarPorPreco,
     contarOpcoes: contarOpcoes,
     jsonLdLugar: jsonLdLugar,
+    localizacaoExperiencia: localizacaoExperiencia,
+    dentroDeCaboVerde: dentroDeCaboVerde,
+    projectar: projectar,
+    enquadrarMapa: enquadrarMapa,
+    azulejosDoMapa: azulejosDoMapa,
+    agruparPinos: agruparPinos,
     precoCartao: precoCartao,
     precoCrianca: precoCrianca,
     formatarPreco: formatarPreco,

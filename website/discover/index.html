@@ -140,6 +140,27 @@
     .chip:hover{border-color:var(--ocean-300);color:var(--ocean-700)}
     .chip.active{border-color:var(--ocean-700);background:var(--ocean-50);color:var(--ocean-800);font-weight:600}
     .chip-count{font-size:.75rem;color:var(--n400);margin-left:4px}
+    /* ── LISTA / MAPA ── */
+    .sec-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+    .xp-map-group+.xp-map-group{margin-top:32px}
+    .xp-map-title{font-family:var(--fd);font-size:1rem;font-weight:700;color:var(--n800);margin-bottom:10px}
+    .xp-map-title span{font-weight:500;color:var(--n500);margin-left:6px}
+    .xp-map{position:relative;overflow:hidden;border-radius:16px;border:1px solid var(--n200);background:#dfe8ec}
+    .xp-map img{position:absolute;width:256px;height:256px;max-width:none;user-select:none;pointer-events:none}
+    .xp-pin{position:absolute;width:30px;height:30px;margin:-30px 0 0 -15px;border:2px solid #fff;border-radius:50% 50% 50% 0;transform:rotate(-45deg);background:var(--ocean-700);box-shadow:0 2px 6px rgba(6,42,56,.35);cursor:pointer;padding:0;display:flex;align-items:center;justify-content:center}
+    .xp-pin span{transform:rotate(45deg);color:#fff;font-family:var(--fd);font-size:.72rem;font-weight:700}
+    .xp-pin:hover,.xp-pin.on{background:var(--sand-500);z-index:2}
+    .xp-pin.on span,.xp-pin:hover span{color:var(--ocean-900)}
+    .xp-pin:focus-visible{outline:3px solid var(--ocean-300);outline-offset:2px}
+    .xp-map-attr{position:absolute;right:0;bottom:0;background:rgba(255,255,255,.88);font-size:.68rem;color:var(--n600);padding:2px 7px;border-top-left-radius:6px}
+    .xp-map-attr a{color:inherit}
+    .xp-pin.multi{background:var(--ocean-900)}
+    .xp-pin.multi:hover,.xp-pin.multi.on{background:var(--sand-500)}
+    .xp-map-sel{margin-top:16px;display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,360px));gap:20px}
+    .xp-map-sel:empty{display:none}
+    .xp-map-hint{margin-top:10px;font-size:.8125rem;color:var(--n500)}
+    .xp-map-note{margin-top:24px;font-size:.875rem;color:var(--n500)}
+
     /* ── FILTROS: BENEFICIOS, PRECO, DURACAO E ORDENACAO ── */
     .filters2{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin:-12px 0 26px}
     .filters2 .chips-wrap{min-width:0}
@@ -564,10 +585,16 @@
         <h2><span class="pt">Experiências em Cabo Verde</span><span class="en">Experiences in Cape Verde</span></h2>
         <p id="act-count"></p>
       </div>
+      <div class="sec-actions">
+      <div class="seg" id="view-seg" role="group" aria-label="Vista" style="display:none">
+        <button type="button" data-vista="lista" onclick="setVista('lista')"><span class="pt">Lista</span><span class="en">List</span></button>
+        <button type="button" data-vista="mapa" onclick="setVista('mapa')"><span class="pt">Mapa</span><span class="en">Map</span></button>
+      </div>
       <button id="clear-filter-btn" type="button" onclick="clearFilters()" style="display:none" class="btn btn-ghost btn-sm">
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
         <span class="pt">Limpar filtros</span><span class="en">Clear filters</span>
       </button>
+      </div>
     </div>
     <div class="filters">
       <div class="seg" id="island-seg" role="group" aria-label="Ilha"></div>
@@ -582,6 +609,7 @@
       </label>
     </div>
     <div class="xp-grid" id="act-grid"></div>
+    <div id="act-map" style="display:none"></div>
     <div id="load-more-wrap" style="display:none">
       <button type="button" onclick="loadMore()" class="btn-outline">
         <span class="pt">Ver mais experiências</span><span class="en">Show more experiences</span>
@@ -706,7 +734,7 @@
   </div>
 </footer>
 
-<script src="_cartao.js?v=20261120a"></script>
+<script src="_cartao.js?v=20261120c"></script>
 <script>
 /* ══════════════════════════════════════════
    CONSTANTS
@@ -752,6 +780,7 @@ let activeIsland = ''; // island_name; '' = todas (partilhado com o campo Ilha d
 let filtrosExtra = { beneficio: '', preco: '', duracao: '' };
 let ordem = ''; // '' recomendados | 'asc' | 'desc'
 let vistaBase = []; // depois de ilha, tipo e pesquisa, antes dos filtros extra
+let vista = 'lista'; // 'lista' | 'mapa' (so com experiencias com localizacao)
 let recommendedItems = [];
 
 /* Pontos turisticos (cms_landmarks) -- conteudo editorial independente dos
@@ -1399,6 +1428,23 @@ function setOrdem(v) {
 function renderGrid() {
   const grid = document.getElementById('act-grid');
   if (!grid) return;
+  const C = window.CartaoDiscover;
+  const localizadas = filtered
+    .map(item => ({ item, p: C.localizacaoExperiencia(item, C.lerMeta(item)) }))
+    .filter(x => x.p);
+  if (!localizadas.length && vista === 'mapa') vista = 'lista';
+  renderVistaSeg(localizadas.length > 0);
+  const mapa = document.getElementById('act-map');
+  if (vista === 'mapa') {
+    grid.style.display = 'none';
+    document.getElementById('load-more-wrap').style.display = 'none';
+    mapa.style.display = '';
+    renderMapa(localizadas);
+    return;
+  }
+  mapa.style.display = 'none';
+  mapa.innerHTML = '';
+  grid.style.display = '';
   const slice = filtered.slice(0, visible);
 
   if (!slice.length) {
@@ -1422,6 +1468,109 @@ function renderGrid() {
   const lmw = document.getElementById('load-more-wrap');
   lmw.style.display = visible < filtered.length ? '' : 'none';
 }
+
+/* ── Lista / Mapa ── */
+function renderVistaSeg(haLocalizadas) {
+  const seg = document.getElementById('view-seg');
+  if (!seg) return;
+  seg.style.display = haLocalizadas ? '' : 'none';
+  seg.querySelectorAll('button').forEach(b => {
+    const on = b.dataset.vista === vista;
+    b.classList.toggle('on', on);
+    b.setAttribute('aria-pressed', String(on));
+  });
+}
+
+function setVista(v) {
+  vista = v === 'mapa' ? 'mapa' : 'lista';
+  renderGrid();
+}
+
+/* Um mapa por ilha, enquadrado nas experiencias com localizacao; azulejos do OpenStreetMap
+   postos a mao (sem biblioteca). Tocar num marcador mostra o cartao dessa experiencia. */
+const ALTURA_MAPA = 360;
+/* marcador escolhido em cada ilha (sobrevive a redesenhos: idioma, moeda, barra do browser no telemovel) */
+let escolhaMapa = {};
+let larguraMapa = 0;
+function renderMapa(localizadas) {
+  const C = window.CartaoDiscover;
+  const cont = document.getElementById('act-map');
+  const en = L() === 'en';
+  const largura = Math.max(280, cont.clientWidth || cont.parentElement.clientWidth || 700);
+  larguraMapa = largura;
+  const grupos = [];
+  localizadas.forEach(x => {
+    const ilha = x.item.island_name ? C.nomeIlha(x.item, L()) : 'Cabo Verde';
+    let g = grupos.find(gr => gr.ilha === ilha);
+    if (!g) { g = { ilha, itens: [] }; grupos.push(g); }
+    g.itens.push(x);
+  });
+  const semLocal = filtered.length - localizadas.length;
+  cont.innerHTML = grupos.map((g, gi) => {
+    /* zoom maximo 13: com uma so experiencia ainda se ve em que parte da ilha fica */
+    const enq = C.enquadrarMapa(g.itens.map(x => x.p), largura, ALTURA_MAPA, { zMax: 13 });
+    const azulejos = C.azulejosDoMapa(enq, largura, ALTURA_MAPA).map(t =>
+      `<img src="https://tile.openstreetmap.org/${t.z}/${t.x}/${t.y}.png" alt="" loading="lazy" decoding="async" style="left:${Math.round(t.left)}px;top:${Math.round(t.top)}px">`).join('');
+    /* marcadores a menos de 26 px juntam-se num so (ex.: varios tours do mesmo cais) */
+    const projectados = g.itens.map((x, i) => { const pt = C.projectar(x.p.lat, x.p.lng, enq.zoom); return { x: pt.x - enq.x0, y: pt.y - enq.y0, i }; });
+    let numero = 0;
+    const pinos = C.agruparPinos(projectados, 26).map(pg => {
+      const membros = pg.membros.map(i => g.itens[i].item);
+      const titulos = membros.map(it => C.tituloCartao(it, C.lerMeta(it), L()));
+      const multi = membros.length > 1;
+      const rotulo = multi ? String(membros.length) : String(++numero);
+      const nome = multi ? `${membros.length} ${en ? 'experiences' : 'experiências'}: ${titulos.join(', ')}` : titulos[0];
+      const chave = membros.map(it => it.unit_id).join('|');
+      const on = escolhaMapa[g.ilha] === chave;
+      return `<button type="button" class="xp-pin${multi ? ' multi' : ''}${on ? ' on' : ''}" aria-pressed="${on}" style="left:${Math.round(pg.x)}px;top:${Math.round(pg.y)}px" aria-label="${esc(nome)}" title="${esc(nome)}" data-grupo="${gi}" data-ilha="${esc(g.ilha)}" data-membros="${esc(chave)}" onclick="escolherPino(this)"><span>${rotulo}</span></button>`;
+    }).join('');
+    const n = g.itens.length;
+    return `<section class="xp-map-group">
+      <h3 class="xp-map-title">${esc(g.ilha)}<span>${n} ${en ? (n === 1 ? 'experience' : 'experiences') : (n === 1 ? 'experiência' : 'experiências')}</span></h3>
+      <div class="xp-map" style="height:${ALTURA_MAPA}px">${azulejos}${pinos}
+        <span class="xp-map-attr">&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap contributors</a></span>
+      </div>
+      <p class="xp-map-hint">${en ? 'Select a pin to see the experience.' : 'Toque num marcador para ver a experiência.'}</p>
+      <div class="xp-map-sel" id="xp-map-sel-${gi}" aria-live="polite"></div>
+    </section>`;
+  }).join('')
+    + (semLocal > 0
+      ? `<p class="xp-map-note">${en
+        ? `${semLocal} experience${semLocal !== 1 ? 's' : ''} without a location on the map`
+        : `${semLocal} experiência${semLocal !== 1 ? 's' : ''} sem localização no mapa`}</p>`
+      : '');
+  cont.querySelectorAll('.xp-pin.on').forEach(mostrarEscolha);
+}
+
+function mostrarEscolha(btn) {
+  const sel = document.getElementById(`xp-map-sel-${btn.dataset.grupo}`);
+  const ids = (btn.dataset.membros || '').split('|');
+  const itens = ids.map(id => filtered.find(i => String(i.unit_id) === id)).filter(Boolean);
+  if (!sel || !itens.length) return;
+  btn.closest('.xp-map').querySelectorAll('.xp-pin').forEach(p => {
+    p.classList.toggle('on', p === btn);
+    p.setAttribute('aria-pressed', String(p === btn));
+  });
+  sel.innerHTML = itens.map(renderActCard).join('');
+  if (L() === 'en') fixLang(sel);
+}
+
+function escolherPino(btn) {
+  escolhaMapa[btn.dataset.ilha] = btn.dataset.membros;
+  mostrarEscolha(btn);
+}
+
+/* O mapa depende da largura: redesenha ao redimensionar (so na vista de mapa) */
+let mapaResizeT = null;
+window.addEventListener('resize', () => {
+  if (vista !== 'mapa') return;
+  clearTimeout(mapaResizeT);
+  mapaResizeT = setTimeout(() => {
+    const cont = document.getElementById('act-map');
+    const largura = Math.max(280, cont.clientWidth || cont.parentElement.clientWidth || 700);
+    if (largura !== larguraMapa) renderGrid();
+  }, 200);
+});
 
 function loadMore() {
   visible += PER_PAGE;
