@@ -24,7 +24,7 @@ const APP = 'https://app.saldesk.cv';
 
 const STATUS_LABEL = {
   pending: 'Pendente', confirmed: 'Confirmada', checked_in: 'Em curso',
-  checked_out: 'Concluida', cancelled: 'Cancelada',
+  checked_out: 'Concluída', cancelled: 'Cancelada',
 };
 const STATUS_BADGE = {
   pending: 'pending', confirmed: 'confirmed', checked_in: 'info',
@@ -120,7 +120,7 @@ function DashboardTab({ traveler, onNavigate }) {
               : initials(traveler?.name)}
           </div>
           <div className="flex-1 min-w-0">
-            <p className="font-display font-bold text-lg text-n-900 dark:text-n-50">Ola, {traveler?.name?.split(' ')[0]}</p>
+            <p className="font-display font-bold text-lg text-n-900 dark:text-n-50">Olá, {traveler?.name?.split(' ')[0]}</p>
             <p className="text-sm font-body text-n-500 dark:text-n-400">{traveler?.email}</p>
             <p className="text-xs font-body text-n-400 dark:text-n-500 mt-0.5">Membro desde {fmtDate(traveler?.created_at)}</p>
           </div>
@@ -138,12 +138,12 @@ function DashboardTab({ traveler, onNavigate }) {
         </button>
         <button onClick={() => onNavigate('avaliacoes')} className="text-left px-4 py-3 rounded-md bg-white dark:bg-n-800 border border-n-200 dark:border-n-700 hover:border-ocean-300 dark:hover:border-ocean-600 transition-colors">
           <p className="font-display font-bold text-xl text-ocean-700 dark:text-ocean-300">{bookings?.filter(b => b.review).length ?? '—'}</p>
-          <p className="text-xs font-body text-n-500 dark:text-n-400">Avaliacoes dadas</p>
+          <p className="text-xs font-body text-n-500 dark:text-n-400">Avaliações dadas</p>
         </button>
       </div>
 
       {emailOk === false ? <AvisoConfirmarEmail email={traveler?.email} /> : (
-      <Card header={<h3 className="font-display font-semibold text-sm text-n-700 dark:text-n-300">Proxima viagem</h3>}>
+      <Card header={<h3 className="font-display font-semibold text-sm text-n-700 dark:text-n-300">Próxima viagem</h3>}>
         {!bookings ? (
           <div className="flex justify-center py-8"><LoadingSpinner /></div>
         ) : !nextTrip ? (
@@ -151,7 +151,7 @@ function DashboardTab({ traveler, onNavigate }) {
             <CalendarCheck size={28} strokeWidth={1.5} className="mx-auto text-n-300 dark:text-n-600 mb-2" />
             <p className="text-sm font-body text-n-500 dark:text-n-400">Sem viagens agendadas.</p>
             <Button variant="ghost" size="sm" className="mt-2" onClick={() => onNavigate('wishlist')}>
-              Explorar experiencias
+              Explorar experiências
             </Button>
           </div>
         ) : (
@@ -193,7 +193,7 @@ function AvatarUploader({ traveler, onUpdate }) {
       const updated = await travelerService.updateProfile({ avatar_url: url });
       onUpdate(updated);
     } catch (err) {
-      setError(err?.response?.data?.error || 'Nao foi possivel carregar a foto.');
+      setError(err?.response?.data?.error || 'Não foi possível carregar a foto.');
     } finally {
       setUploading(false);
     }
@@ -236,7 +236,7 @@ function EditProfileTab({ traveler, onUpdate }) {
       setSavedOk(true);
       setTimeout(() => setSavedOk(false), 2000);
     } catch (err) {
-      window.alert(err?.response?.data?.error || 'Nao foi possivel guardar.');
+      window.alert(err?.response?.data?.error || 'Não foi possível guardar.');
     } finally {
       setSaving(false);
     }
@@ -247,10 +247,10 @@ function EditProfileTab({ traveler, onUpdate }) {
       <AvatarUploader traveler={traveler} onUpdate={onUpdate} />
       <form onSubmit={handleSave} className="space-y-4 max-w-md">
         <Input label="Nome" value={form.name} onChange={e => setForm(p => ({ ...p, name: e.target.value }))} required />
-        <Input label="Email" value={traveler?.email || ''} disabled hint="O email nao pode ser alterado." />
+        <Input label="Email" value={traveler?.email || ''} disabled hint="O email não pode ser alterado." />
         <div className="grid grid-cols-2 gap-3">
           <Input label="Telefone" value={form.phone} onChange={e => setForm(p => ({ ...p, phone: e.target.value }))} />
-          <Input label="Pais" value={form.country} onChange={e => setForm(p => ({ ...p, country: e.target.value }))} />
+          <Input label="País" value={form.country} onChange={e => setForm(p => ({ ...p, country: e.target.value }))} />
         </div>
         <Select label="Idioma" value={form.language} onChange={e => setForm(p => ({ ...p, language: e.target.value }))}>
           <option value="pt">Portugues</option>
@@ -278,11 +278,11 @@ export function ChangePasswordTab() {
     e.preventDefault();
     setError('');
     if (getPasswordStrength(form.newPw) < 2) {
-      setError('A password deve ser forte: 8+ caracteres, maiuscula, numero e especial.');
+      setError('A password deve ser forte: 8+ caracteres, maiúscula, número e carácter especial.');
       return;
     }
     if (form.newPw !== form.confirm) {
-      setError('As passwords nao coincidem.');
+      setError('As passwords não coincidem.');
       return;
     }
     setSaving(true);
@@ -292,7 +292,7 @@ export function ChangePasswordTab() {
       setSavedOk(true);
       setTimeout(() => setSavedOk(false), 3000);
     } catch (err) {
-      setError(err?.response?.data?.error || 'Nao foi possivel alterar a password.');
+      setError(err?.response?.data?.error || 'Não foi possível alterar a password.');
     } finally {
       setSaving(false);
     }
@@ -311,7 +311,7 @@ export function ChangePasswordTab() {
   }
 
   return (
-    <Card header={<h3 className="font-display font-semibold text-sm text-n-700 dark:text-n-300 flex items-center gap-1.5"><ShieldCheck size={14} strokeWidth={1.75} /> Seguranca</h3>}>
+    <Card header={<h3 className="font-display font-semibold text-sm text-n-700 dark:text-n-300 flex items-center gap-1.5"><ShieldCheck size={14} strokeWidth={1.75} /> Segurança</h3>}>
       <form onSubmit={handleSubmit} className="space-y-3 max-w-md">
         {[
           { field: 'current', label: 'Password actual',         ac: 'current-password' },
@@ -348,7 +348,7 @@ export function ChangePasswordTab() {
       {traveler?.email && (
         <div className="mt-5 pt-4 border-t border-n-100 dark:border-n-700 max-w-md">
           <p className="text-xs font-body text-n-500 dark:text-n-400 mb-2">
-            Entrou com Google ou Apple e nunca definiu uma password? Nesse caso nao tem password actual: pode definir uma por email.
+            Entrou com Google ou Apple e nunca definiu uma password? Nesse caso não tem password actual: pode definir uma por email.
           </p>
           {linkEstado === 'sent' ? (
             <p className="text-xs font-body text-n-700 dark:text-n-300">
@@ -360,7 +360,7 @@ export function ChangePasswordTab() {
                 Enviar link para definir a password
               </Button>
               {linkEstado === 'error' && (
-                <p className="text-xs text-error mt-2">Nao foi possivel enviar o email. Tente novamente.</p>
+                <p className="text-xs text-error mt-2">Não foi possível enviar o email. Tente novamente.</p>
               )}
             </>
           )}
@@ -414,7 +414,7 @@ function BookingsTab({ onNavigate, emailOk, email }) {
       <Card>
         <div className="text-center py-10">
           <CalendarCheck size={32} strokeWidth={1.5} className="mx-auto text-n-300 dark:text-n-600 mb-3" />
-          <p className="text-sm font-body text-n-500 dark:text-n-400">Ainda nao tem nenhuma reserva registada com este email.</p>
+          <p className="text-sm font-body text-n-500 dark:text-n-400">Ainda não tem nenhuma reserva registada com este email.</p>
         </div>
       </Card>
     );
@@ -435,7 +435,7 @@ function BookingsTab({ onNavigate, emailOk, email }) {
       )}
       {upcoming.length > 0 && (
         <div>
-          <h3 className="text-xs font-body font-bold uppercase tracking-wide text-n-500 dark:text-n-400 mb-2">Proximas ({upcoming.length})</h3>
+          <h3 className="text-xs font-body font-bold uppercase tracking-wide text-n-500 dark:text-n-400 mb-2">Próximas ({upcoming.length})</h3>
           <div className="space-y-3">
             {upcoming.map(b => <BookingRow key={b.id} booking={b} />)}
           </div>
@@ -469,7 +469,7 @@ function InvoicesTab({ emailOk, email }) {
     try {
       await travelerService.downloadInvoice(id);
     } catch {
-      window.alert('Nao foi possivel descarregar o recibo. Tenta novamente.');
+      window.alert('Não foi possível descarregar o recibo. Tente novamente.');
     } finally {
       setDownloadingId(null);
     }
@@ -483,7 +483,7 @@ function InvoicesTab({ emailOk, email }) {
       <Card>
         <div className="text-center py-10">
           <Receipt size={32} strokeWidth={1.5} className="mx-auto text-n-300 dark:text-n-600 mb-3" />
-          <p className="text-sm font-body text-n-500 dark:text-n-400">Sem facturas — ainda nao tem reservas.</p>
+          <p className="text-sm font-body text-n-500 dark:text-n-400">Sem facturas — ainda não tem reservas.</p>
         </div>
       </Card>
     );
@@ -575,7 +575,7 @@ function PendingReviewCard({ booking, onSubmitted }) {
       const review = await travelerService.submitReview(booking.id, rating, comment.trim());
       onSubmitted(booking.id, review);
     } catch (err) {
-      setError(err?.response?.data?.error || 'Nao foi possivel enviar a avaliacao.');
+      setError(err?.response?.data?.error || 'Não foi possível enviar a avaliação.');
     } finally {
       setSaving(false);
     }
@@ -599,12 +599,12 @@ function PendingReviewCard({ booking, onSubmitted }) {
         <textarea
           value={comment}
           onChange={e => setComment(e.target.value)}
-          placeholder="Como foi a experiencia? (opcional)"
+          placeholder="Como foi a experiência? (opcional)"
           rows={2}
           className="w-full px-3 py-2 rounded-sm border border-n-300 dark:border-n-600 text-sm font-body bg-n-100 dark:bg-n-800 text-n-900 dark:text-n-100 placeholder:text-n-400 focus:outline-none focus:ring-2 focus:ring-ocean-300 focus:border-ocean-700 focus:bg-white dark:focus:bg-n-800 transition-colors resize-none"
         />
         {error && <p className="text-xs text-error">{error}</p>}
-        <Button size="sm" loading={saving} onClick={handleSubmit}>Enviar avaliacao</Button>
+        <Button size="sm" loading={saving} onClick={handleSubmit}>Enviar avaliação</Button>
       </div>
     </Card>
   );
@@ -658,7 +658,7 @@ function ReviewsTab({ emailOk, email }) {
       <Card>
         <div className="text-center py-10">
           <Star size={32} strokeWidth={1.5} className="mx-auto text-n-300 dark:text-n-600 mb-3" />
-          <p className="text-sm font-body text-n-500 dark:text-n-400">Sem avaliacoes por agora — conclua uma reserva para poder avaliar.</p>
+          <p className="text-sm font-body text-n-500 dark:text-n-400">Sem avaliações por agora — conclua uma reserva para poder avaliar.</p>
         </div>
       </Card>
     );
@@ -676,7 +676,7 @@ function ReviewsTab({ emailOk, email }) {
       )}
       {given.length > 0 && (
         <div>
-          <h3 className="text-xs font-body font-bold uppercase tracking-wide text-n-500 dark:text-n-400 mb-2">As minhas avaliacoes ({given.length})</h3>
+          <h3 className="text-xs font-body font-bold uppercase tracking-wide text-n-500 dark:text-n-400 mb-2">As minhas avaliações ({given.length})</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {given.map(b => <GivenReviewCard key={b.id} booking={b} />)}
           </div>
@@ -700,7 +700,7 @@ function WishlistCard({ item, onRemove }) {
           <p className="font-display font-bold text-sm text-n-900 dark:text-n-50 truncate">{item.unit_name}</p>
           <p className="text-xs font-body text-n-500 dark:text-n-400">{item.operator_name}</p>
           {!item.still_published && (
-            <p className="text-xs font-body text-n-400 dark:text-n-500 mt-1">Ja nao disponivel no catalogo</p>
+            <p className="text-xs font-body text-n-400 dark:text-n-500 mt-1">Já não está disponível no catálogo</p>
           )}
           <div className="flex items-center justify-between mt-2">
             <span className="font-mono text-sm font-bold text-ocean-700 dark:text-ocean-300">€{item.base_price ?? '—'}</span>
@@ -784,7 +784,7 @@ function WishlistTab() {
         await travelerService.addToWishlist(unitId);
         loadSaved();
       } catch (err) {
-        window.alert(err?.response?.data?.error || 'Nao foi possivel guardar.');
+        window.alert(err?.response?.data?.error || 'Não foi possível guardar.');
       }
     }
   }
@@ -837,9 +837,9 @@ function WishlistTab() {
           <Card>
             <div className="text-center py-10">
               <Heart size={32} strokeWidth={1.5} className="mx-auto text-n-300 dark:text-n-600 mb-3" />
-              <p className="text-sm font-body text-n-500 dark:text-n-400">Ainda nao guardou nenhuma experiencia.</p>
+              <p className="text-sm font-body text-n-500 dark:text-n-400">Ainda não guardou nenhuma experiência.</p>
               <Button variant="ghost" size="sm" className="mt-3" onClick={() => setView('explorar')}>
-                Explorar catalogo
+                Explorar catálogo
               </Button>
             </div>
           </Card>
@@ -868,7 +868,7 @@ function WishlistTab() {
             <input
               value={search}
               onChange={e => setSearch(e.target.value)}
-              placeholder="Pesquisar experiencias..."
+              placeholder="Pesquisar experiências..."
               className="w-full h-9 pl-9 pr-3 rounded-sm border border-n-300 dark:border-n-600 text-sm font-body bg-n-100 dark:bg-n-800 text-n-900 dark:text-n-100 placeholder:text-n-400 focus:outline-none focus:ring-2 focus:ring-ocean-300 focus:border-ocean-700 focus:bg-white dark:focus:bg-n-800 transition-colors"
             />
           </div>
@@ -950,7 +950,7 @@ function NotificationsTab({ notifications, onRead, onNavigate }) {
       <Card>
         <div className="text-center py-10">
           <Bell size={32} strokeWidth={1.5} className="mx-auto text-n-300 dark:text-n-600 mb-3" />
-          <p className="text-sm font-body text-n-500 dark:text-n-400">Sem notificacoes por agora.</p>
+          <p className="text-sm font-body text-n-500 dark:text-n-400">Sem notificações por agora.</p>
         </div>
       </Card>
     );
@@ -980,21 +980,21 @@ const NAV_GROUPS = [
     items: [
       { id: 'reservas',   label: 'As minhas reservas', icon: CalendarCheck },
       { id: 'facturas',   label: 'Facturas',           icon: Receipt },
-      { id: 'avaliacoes', label: 'Avaliacoes',         icon: Star },
-      { id: 'wishlist',   label: 'Wishlist',           icon: Heart },
+      { id: 'avaliacoes', label: 'Avaliações',         icon: Star },
+      { id: 'wishlist',   label: 'Guardados',          icon: Heart },
     ],
   },
 ];
 
 const TAB_LABEL = {
   ...Object.fromEntries(NAV_GROUPS.flatMap(g => g.items).map(i => [i.id, i.label])),
-  notificacoes: 'Notificacoes',
+  notificacoes: 'Notificações',
 };
 
 const THEME_OPTIONS = [
   { value: 'light',  label: 'Claro' },
   { value: 'dark',   label: 'Escuro' },
-  { value: 'system', label: 'Automatico' },
+  { value: 'system', label: 'Automático' },
 ];
 
 export default function TravelerPortal() {
@@ -1132,7 +1132,7 @@ export default function TravelerPortal() {
                   className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm font-body text-n-700 dark:text-n-300 hover:bg-n-50 dark:hover:bg-n-700 transition-colors border-t border-n-100 dark:border-n-700"
                 >
                   <Settings size={16} strokeWidth={1.75} className="shrink-0" />
-                  <span className="flex-1 text-left">Definicoes</span>
+                  <span className="flex-1 text-left">Definições</span>
                 </button>
 
                 <a
@@ -1148,14 +1148,14 @@ export default function TravelerPortal() {
                   onClick={() => {
                     const estado = window.installPwa?.();
                     setProfileMenuOpen(false);
-                    if (estado === 'already-installed') window.alert('Ja tens a aplicacao instalada.');
+                    if (estado === 'already-installed') window.alert('Já tem a aplicação instalada.');
                     else if (estado === 'ios') window.alert('Para instalar: toca em Partilhar (o icone do quadrado com a seta) e depois em "Adicionar ao Ecra Principal".');
-                    else if (estado === 'unsupported') window.alert('O teu navegador nao suporta instalacao directa. Usa o menu do navegador para adicionar esta pagina ao ecra principal ou aos favoritos.');
+                    else if (estado === 'unsupported') window.alert('O seu navegador não suporta a instalação directa. Use o menu do navegador para adicionar esta página ao ecrã principal ou aos favoritos.');
                   }}
                   className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm font-body text-n-700 dark:text-n-300 hover:bg-n-50 dark:hover:bg-n-700 transition-colors"
                 >
                   <Download size={16} strokeWidth={1.75} className="shrink-0" />
-                  <span className="flex-1 text-left">Transferir a aplicacao</span>
+                  <span className="flex-1 text-left">Transferir a aplicação</span>
                 </button>
 
                 <button
@@ -1163,7 +1163,7 @@ export default function TravelerPortal() {
                   className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm font-body text-error hover:bg-red-50 dark:hover:bg-red-950 transition-colors border-t border-n-100 dark:border-n-700"
                 >
                   <LogOut size={16} strokeWidth={1.75} className="shrink-0" />
-                  <span className="flex-1 text-left">Encerrar sessao</span>
+                  <span className="flex-1 text-left">Encerrar sessão</span>
                 </button>
               </div>
             </>

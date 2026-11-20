@@ -27,7 +27,7 @@ export default function TravelerOAuthCallback() {
         setAuth(session.access_token, user, traveler, session.refresh_token);
         navigate('/viajante', { replace: true });
       } catch {
-        if (!cancelado) setError('Nao foi possivel concluir o login. Tente novamente.');
+        if (!cancelado) setError('Não foi possível concluir o login. Tente novamente.');
       }
     }
 

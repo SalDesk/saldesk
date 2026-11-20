@@ -43,7 +43,7 @@ export default function SocialLoginButtons() {
       await signInWithProvider(provider);
       /* navega para fora -- se chegar aqui sem redireccionar, algo falhou */
     } catch {
-      setError('Nao foi possivel iniciar o login. Tente novamente.');
+      setError('Não foi possível iniciar o login. Tente novamente.');
       setLoadingProvider(null);
     }
   }

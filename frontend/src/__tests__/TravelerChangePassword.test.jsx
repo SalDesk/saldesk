@@ -58,10 +58,10 @@ describe('Portal do viajante: alterar password', () => {
     montar();
     preencher('Actual1!x', 'abc', 'abc');
     enviar();
-    expect(screen.getByText('A password deve ser forte: 8+ caracteres, maiuscula, numero e especial.')).toBeInTheDocument();
+    expect(screen.getByText('A password deve ser forte: 8+ caracteres, maiúscula, número e carácter especial.')).toBeInTheDocument();
     preencher('Actual1!x', 'Abcdef1!', 'outra');
     enviar();
-    expect(screen.getByText('As passwords nao coincidem.')).toBeInTheDocument();
+    expect(screen.getByText('As passwords não coincidem.')).toBeInTheDocument();
     expect(changePassword).not.toHaveBeenCalled();
   });
 
@@ -74,7 +74,7 @@ describe('Portal do viajante: alterar password', () => {
     expect(campo('Password actual')).toHaveValue('errada');
     changePassword.mockRejectedValueOnce(new Error('x'));
     enviar();
-    expect(await screen.findByText('Nao foi possivel alterar a password.')).toBeInTheDocument();
+    expect(await screen.findByText('Não foi possível alterar a password.')).toBeInTheDocument();
   });
 
   it('mostrar e esconder funciona nos tres campos', () => {
@@ -100,7 +100,7 @@ describe('Portal do viajante: alterar password', () => {
     forgotPassword.mockRejectedValueOnce(new Error('x'));
     montar();
     fireEvent.click(screen.getByRole('button', { name: 'Enviar link para definir a password' }));
-    expect(await screen.findByText('Nao foi possivel enviar o email. Tente novamente.')).toBeInTheDocument();
+    expect(await screen.findByText('Não foi possível enviar o email. Tente novamente.')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Enviar link para definir a password' }));
     await waitFor(() => expect(forgotPassword).toHaveBeenCalledTimes(2));
     expect(await screen.findByText(/Enviamos um email para v@x\.test/)).toBeInTheDocument();
