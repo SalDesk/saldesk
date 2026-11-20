@@ -5,6 +5,15 @@ const PDFDocument = require('pdfkit');
 const { desenharRecibo } = require('../helpers/receiptPdf');
 const { frontendBase } = require('../utils/urls');
 
+/* As reservas do viajante sao as que tem o email dele. O LIKE do PostgreSQL trata _ e % como curingas
+   ("j_silva@" apanhava "jxsilva@"): escapam-se, e a igualdade exacta (sem maiusculas nem espacos) confirma. */
+function padraoEmail(email) {
+  return email.replace(/[\\%_]/g, (c) => `\\${c}`);
+}
+function mesmoEmail(emailReserva, email) {
+  return typeof emailReserva === 'string' && emailReserva.trim().toLowerCase() === email;
+}
+
 async function getProfile(req, res) {
   return res.json({ data: req.traveler, message: 'Perfil do viajante' });
 }
@@ -41,14 +50,15 @@ async function getBookings(req, res, next) {
   try {
     const email = req.traveler.email.trim().toLowerCase();
 
-    const { data: reservations, error } = await supabaseAdmin
+    const { data: linhas, error } = await supabaseAdmin
       .from('reservations')
       .select('*')
-      .ilike('customer_email', email)
+      .ilike('customer_email', padraoEmail(email))
       .order('check_in', { ascending: false });
 
     if (error) throw error;
-    if (!reservations?.length) return res.json({ data: [] });
+    const reservations = (linhas || []).filter(r => mesmoEmail(r.customer_email, email));
+    if (!reservations.length) return res.json({ data: [] });
 
     const operatorIds = [...new Set(reservations.map(r => r.operator_id))];
     const unitIds = [...new Set(reservations.map(r => r.unit_id))];
@@ -104,7 +114,7 @@ async function submitReview(req, res, next) {
       .eq('id', reservationId)
       .maybeSingle();
 
-    if (!reservation || reservation.customer_email.trim().toLowerCase() !== email) {
+    if (!reservation || !mesmoEmail(reservation.customer_email, email)) {
       return res.status(404).json({ error: 'Reserva não encontrada', code: 'NOT_FOUND' });
     }
     if (!podeAvaliarViajante(reservation, hojeCaboVerde(new Date()))) {
@@ -240,13 +250,13 @@ async function getRecommendations(req, res, next) {
 
     const [{ data: wishRows }, { data: bookingRows }, catalog] = await Promise.all([
       supabaseAdmin.from('traveler_wishlist').select('unit_id').eq('traveler_id', req.traveler.id),
-      supabaseAdmin.from('reservations').select('unit_id').ilike('customer_email', email),
+      supabaseAdmin.from('reservations').select('unit_id, customer_email').ilike('customer_email', padraoEmail(email)),
       getDiscoverCatalog(),
     ]);
 
     const historyIds = new Set([
       ...(wishRows || []).map(r => r.unit_id),
-      ...(bookingRows || []).map(r => r.unit_id),
+      ...(bookingRows || []).filter(r => mesmoEmail(r.customer_email, email)).map(r => r.unit_id),
     ]);
     const historyItems = catalog.filter(c => historyIds.has(c.unit_id));
     const categorySet = new Set(historyItems.map(i => i.category_id).filter(Boolean));
@@ -307,15 +317,17 @@ async function getNotifications(req, res, next) {
         .limit(50),
       supabaseAdmin
         .from('reservations')
-        .select('id')
-        .ilike('customer_email', email)
-        .eq('status', 'checked_out'),
+        .select('id, status, check_out, customer_email')
+        .ilike('customer_email', padraoEmail(email)),
     ]);
     if (error) throw error;
 
+    /* mesma regra do separador Avaliacoes (getBookings.can_review): terminada, mesmo sem check-out marcado */
+    const hoje = hojeCaboVerde(new Date());
+    const avaliaveis = (reservas || []).filter(r => mesmoEmail(r.customer_email, email) && podeAvaliarViajante(r, hoje));
     let pendingReview = 0;
-    if (reservas?.length) {
-      const ids = reservas.map(r => r.id);
+    if (avaliaveis.length) {
+      const ids = avaliaveis.map(r => r.id);
       const { data: reviewed } = await supabaseAdmin
         .from('reviews')
         .select('reservation_id')
@@ -376,10 +388,11 @@ async function getBookingInvoice(req, res, next) {
       .from('reservations')
       .select('*, units(name), operators(name, slug, address, email, phone, currency, logo_url)')
       .eq('id', req.params.id)
-      .ilike('customer_email', email)
       .maybeSingle();
     if (error) throw error;
-    if (!reserva) return res.status(404).json({ error: 'Reserva não encontrada', code: 'NOT_FOUND' });
+    if (!reserva || !mesmoEmail(reserva.customer_email, email)) {
+      return res.status(404).json({ error: 'Reserva não encontrada', code: 'NOT_FOUND' });
+    }
 
     const ref = reserva.id.slice(0, 8).toUpperCase();
     res.setHeader('Content-Type', 'application/pdf');
