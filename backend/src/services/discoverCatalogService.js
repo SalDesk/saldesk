@@ -1,5 +1,5 @@
 const { supabaseAdmin } = require('../config/supabase');
-const { classificacaoPorUnidade } = require('../helpers/classificacaoUnidade');
+const { lerAvaliacoesPublicas, classificacaoDasAvaliacoes } = require('../helpers/classificacaoUnidade');
 
 /* Extraido de publicController.js (discoverUnits) para ser reutilizado
    tambem por getRecommendations (travelerController.js) -- mesma logica
@@ -49,13 +49,9 @@ async function getDiscoverCatalog({ type } = {}) {
   });
   if (!units.length) return [];
 
-  // Ratings agregadas por operador (seccao de operadores) e por experiencia (cartoes)
-  const { data: ratings } = await supabaseAdmin
-    .from('reviews')
-    .select('operator_id, rating, reservation_id')
-    .in('operator_id', ids)
-    .eq('is_public', true)
-    .not('rating', 'is', null);
+  // Ratings agregadas por operador (seccao de operadores) e por experiencia (cartoes).
+  // Leitura por paginas e com a unidade da reserva na mesma consulta (classificacaoUnidade.js).
+  const ratings = await lerAvaliacoesPublicas(supabaseAdmin, ids);
 
   const ratingMap = {};
   (ratings || []).forEach((r) => {
@@ -65,16 +61,7 @@ async function getDiscoverCatalog({ type } = {}) {
 
   /* Classificacao propria de cada experiencia: avaliacoes das reservas dessa unidade.
      Sem avaliacoes proprias, o cartao nao mostra estrelas (nunca as do operador). */
-  const reservasAvaliadas = [...new Set((ratings || []).map((r) => r.reservation_id).filter(Boolean))];
-  let reservasDasAvaliacoes = [];
-  if (reservasAvaliadas.length) {
-    const { data: rs } = await supabaseAdmin
-      .from('reservations')
-      .select('id, unit_id')
-      .in('id', reservasAvaliadas);
-    reservasDasAvaliacoes = rs || [];
-  }
-  const classificacaoUnidade = classificacaoPorUnidade(ratings, reservasDasAvaliacoes);
+  const classificacaoUnidade = classificacaoDasAvaliacoes(ratings);
 
   // Reservas recentes (ultimos 30 dias) por UNIDADE -- sinal de popularidade
   // mais preciso que por operador, ja que reservations tem unit_id.

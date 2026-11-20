@@ -21,4 +21,46 @@ function classificacaoPorUnidade(reviews, reservas) {
   return out;
 }
 
-module.exports = { classificacaoPorUnidade };
+/* Avaliacoes publicas (com nota) dos operadores indicados, ja com a unidade da reserva
+   (reservations(unit_id) na mesma consulta). Le por paginas de 1000 -- o limite por pedido do
+   PostgREST -- para as contagens nunca ficarem cortadas. Se uma pagina falhar, regista e
+   devolve o que ja leu (os cartoes ficam sem estrelas em vez de rebentar). */
+const PAGINA = 1000;
+
+async function lerAvaliacoesPublicas(supabase, operatorIds) {
+  const ids = (operatorIds || []).filter(Boolean);
+  if (!ids.length) return [];
+  const out = [];
+  for (let de = 0; ; de += PAGINA) {
+    const { data, error } = await supabase
+      .from('reviews')
+      .select('operator_id, rating, reservation_id, reservations(unit_id)')
+      .in('operator_id', ids)
+      .eq('is_public', true)
+      .not('rating', 'is', null)
+      .order('id')
+      .range(de, de + PAGINA - 1);
+    if (error) {
+      console.error('[Classificacao] Falha a ler avaliacoes publicas:', error.message);
+      break;
+    }
+    (data || []).forEach((r) => out.push({
+      operator_id: r.operator_id, rating: r.rating, reservation_id: r.reservation_id,
+      unit_id: r.reservations?.unit_id || null,
+    }));
+    if (!data || data.length < PAGINA) break;
+  }
+  return out;
+}
+
+/* Classificacao de todas as unidades a partir de avaliacoes que ja trazem unit_id */
+function classificacaoDasAvaliacoes(avaliacoes) {
+  const lista = avaliacoes || [];
+  return classificacaoPorUnidade(lista, lista.map((a) => ({ id: a.reservation_id, unit_id: a.unit_id })));
+}
+
+function classificacaoDaUnidade(avaliacoes, unitId) {
+  return classificacaoDasAvaliacoes(avaliacoes)[unitId] || null;
+}
+
+module.exports = { classificacaoPorUnidade, lerAvaliacoesPublicas, classificacaoDasAvaliacoes, classificacaoDaUnidade };

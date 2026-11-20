@@ -3,6 +3,7 @@ const path = require('path');
 const axios = require('axios');
 const sharp = require('sharp');
 const { supabaseAdmin } = require('../config/supabase');
+const { lerAvaliacoesPublicas, classificacaoDaUnidade } = require('../helpers/classificacaoUnidade');
 
 /* Imagens "estilizadas" para o feed de catalogo (Meta/Google) -- selo de
    procura real, nota media e localizacao sobrepostos na propria foto,
@@ -93,14 +94,9 @@ async function getCatalogImage(req, res, next) {
       .eq('id', unit.operator_id)
       .maybeSingle();
 
-    const { data: reviews } = await supabaseAdmin
-      .from('reviews')
-      .select('rating')
-      .eq('operator_id', unit.operator_id)
-      .eq('is_public', true)
-      .not('rating', 'is', null);
-    const ratings = (reviews || []).map((r) => r.rating);
-    const avgRating = ratings.length ? ratings.reduce((s, r) => s + r, 0) / ratings.length : null;
+    /* Estrelas da propria experiencia (avaliacoes das reservas desta unidade), iguais as do
+       cartao do catalogo e dos dados estruturados -- nunca a media do operador */
+    const classificacao = classificacaoDaUnidade(await lerAvaliacoesPublicas(supabaseAdmin, [unit.operator_id]), unitId);
 
     const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
     const { count: recentBookings } = await supabaseAdmin
@@ -112,7 +108,7 @@ async function getCatalogImage(req, res, next) {
 
     const location = truncate((op?.islands?.name || op?.address || 'Cabo Verde').toUpperCase(), 30);
     const showUrgency = (recentBookings || 0) >= URGENCY_THRESHOLD;
-    const showRating = !!avgRating && ratings.length > 0;
+    const showRating = !!classificacao;
 
     const price = displayPrice(unit);
     const priceLabel = fmtPrice(price, op?.currency);
@@ -138,7 +134,7 @@ async function getCatalogImage(req, res, next) {
       `);
     }
     if (showRating) {
-      const label = `★ ${avgRating.toFixed(1)} (${ratings.length})`;
+      const label = `★ ${classificacao.avg.toFixed(1)} (${classificacao.count})`;
       const boxW = 50 + label.length * 15;
       parts.push(`
         <rect x="${W - boxW - 32}" y="32" rx="20" ry="20" width="${boxW}" height="48" fill="white" fill-opacity="0.92"/>
