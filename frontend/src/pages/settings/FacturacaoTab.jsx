@@ -8,6 +8,7 @@ import Card from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
 import Badge from '../../components/ui/Badge';
 import Modal from '../../components/ui/Modal';
+import { useT } from '../../i18n';
 
 /* ─────────────────────────────────────────────────────────
    TAB — FACTURACAO (subscricao SalDesk, distinta das credenciais de
@@ -17,10 +18,12 @@ const PLAN_LABEL = { starter: 'Starter', business: 'Business', pro: 'Pro' };
 /* Mesmo cambio fixo confirmado no backend (sispService.js's CVE_PER_EUR),
    exigido pelo checklist da SISP (preco expresso tambem em CVE). */
 const CVE_PER_EUR = 110.265;
-const STATUS_LABEL = { trial: 'Periodo de avaliacao', active: 'Activo', suspended: 'Suspenso', cancelled: 'Cancelado' };
+/* rotulo de cada estado: settings.facturacao.status.<estado> */
+const STATUS_CONHECIDOS = ['trial', 'active', 'suspended', 'cancelled'];
 const STATUS_VARIANT = { trial: 'info', active: 'confirmed', suspended: 'cancelled', cancelled: 'default' };
 
 export default function FacturacaoTab() {
+  const t = useT();
   const { operator, setOperator } = useAuthStore();
   const { isInTrial, isTrialExpired, trialDaysLeft } = usePlan();
   const [history, setHistory] = useState([]);
@@ -41,7 +44,7 @@ export default function FacturacaoTab() {
       const { approval_url } = await createSubscription(plan);
       window.location.href = approval_url;
     } catch {
-      setError('Nao foi possivel iniciar a subscricao. Tenta novamente.');
+      setError(t('settings.facturacao.errSubscribe'));
       setSubscribingPlan(null);
     }
   }
@@ -68,8 +71,8 @@ export default function FacturacaoTab() {
       form.submit();
     } catch (err) {
       setError(err?.response?.data?.code === 'SISP_NOT_CONFIGURED'
-        ? 'O pagamento por SISP ainda nao esta disponivel para a subscricao SalDesk.'
-        : 'Nao foi possivel iniciar o pagamento SISP. Tenta novamente.');
+        ? t('settings.facturacao.errSispNotConfigured')
+        : t('settings.facturacao.errSisp'));
       setSubscribingPlan(null);
     }
   }
@@ -82,7 +85,7 @@ export default function FacturacaoTab() {
       setOperator(data.data.operator);
       setShowCancelModal(false);
     } catch {
-      setError('Nao foi possivel cancelar a subscricao. Tenta novamente.');
+      setError(t('settings.facturacao.errCancel'));
     } finally {
       setCancelling(false);
     }
@@ -93,26 +96,26 @@ export default function FacturacaoTab() {
 
   return (
     <div className="space-y-5 max-w-2xl">
-      <Card header={<h3 className="font-display font-semibold text-sm text-n-700">Subscricao actual</h3>}>
+      <Card header={<h3 className="font-display font-semibold text-sm text-n-700">{t('settings.facturacao.currentSubscription')}</h3>}>
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <p className="font-display font-bold text-lg text-n-900">{PLAN_LABEL[operator?.plan] || operator?.plan}</p>
-            {isInTrial() && <p className="text-xs font-body text-n-500 mt-1">{trialDaysLeft()} dias restantes no periodo de avaliacao</p>}
-            {isTrialExpired() && <p className="text-xs font-body text-[var(--error)] mt-1">Periodo de avaliacao terminado</p>}
+            {isInTrial() && <p className="text-xs font-body text-n-500 mt-1">{t('settings.facturacao.trialDaysLeft', { n: trialDaysLeft() })}</p>}
+            {isTrialExpired() && <p className="text-xs font-body text-[var(--error)] mt-1">{t('settings.facturacao.trialEnded')}</p>}
             {hasActiveSubscription && paidUntil && (
-              <p className="text-xs font-body text-n-500 mt-1">Renova automaticamente a {paidUntil.toLocaleDateString('pt-PT')}</p>
+              <p className="text-xs font-body text-n-500 mt-1">{t('settings.facturacao.renewsOn', { date: paidUntil.toLocaleDateString('pt-PT') })}</p>
             )}
             {!hasActiveSubscription && paidUntil && (
-              <p className="text-xs font-body text-n-500 mt-1">Pago ate {paidUntil.toLocaleDateString('pt-PT')}</p>
+              <p className="text-xs font-body text-n-500 mt-1">{t('settings.facturacao.paidUntil', { date: paidUntil.toLocaleDateString('pt-PT') })}</p>
             )}
           </div>
           <Badge variant={STATUS_VARIANT[operator?.plan_status] || 'default'}>
-            {STATUS_LABEL[operator?.plan_status] || operator?.plan_status}
+            {STATUS_CONHECIDOS.includes(operator?.plan_status) ? t(`settings.facturacao.status.${operator.plan_status}`) : operator?.plan_status}
           </Badge>
         </div>
         {hasActiveSubscription && (
           <button type="button" onClick={() => setShowCancelModal(true)} className="text-xs font-body font-semibold text-[var(--error)] hover:underline mt-3">
-            Cancelar subscricao
+            {t('settings.facturacao.cancelSubscription')}
           </button>
         )}
       </Card>
@@ -126,7 +129,7 @@ export default function FacturacaoTab() {
             <Card key={plan} className={isCurrent ? 'border-ocean-700' : ''}>
               <div className="space-y-2">
                 <p className="font-display font-bold text-n-900">{PLAN_LABEL[plan]}</p>
-                <p className="font-display font-bold text-2xl text-ocean-700">€{PLAN_PRICES[plan]}<span className="text-xs font-body font-normal text-n-500">/mes</span></p>
+                <p className="font-display font-bold text-2xl text-ocean-700">€{PLAN_PRICES[plan]}<span className="text-xs font-body font-normal text-n-500">{t('settings.facturacao.perMonth')}</span></p>
                 <Button
                   variant={isCurrent ? 'secondary' : 'primary'}
                   size="sm"
@@ -136,7 +139,7 @@ export default function FacturacaoTab() {
                   icon={Wallet}
                   onClick={() => { setBillingPolicyOk(false); setPaymentMethodPlan(plan); }}
                 >
-                  {isCurrent ? 'Plano actual' : 'Subscrever'}
+                  {isCurrent ? t('settings.facturacao.currentPlan') : t('settings.facturacao.subscribe')}
                 </Button>
               </div>
             </Card>
@@ -144,8 +147,8 @@ export default function FacturacaoTab() {
         })}
       </div>
 
-      <Card header={<h3 className="font-display font-semibold text-sm text-n-700">Historico de pagamentos</h3>}>
-        {!history.length && <p className="text-sm font-body text-n-500">Sem pagamentos registados.</p>}
+      <Card header={<h3 className="font-display font-semibold text-sm text-n-700">{t('settings.facturacao.history')}</h3>}>
+        {!history.length && <p className="text-sm font-body text-n-500">{t('settings.facturacao.noPayments')}</p>}
         <div className="space-y-2">
           {history.map((p) => (
             <div key={p.id} className="flex items-center justify-between gap-3 text-sm font-body py-2 border-b border-n-100 last:border-0">
@@ -156,7 +159,7 @@ export default function FacturacaoTab() {
               <div className="text-right">
                 <p className="font-semibold text-n-900">€{Number(p.amount_eur).toFixed(2)}</p>
                 <p className={`text-xs ${p.status === 'completed' ? 'text-[var(--success)]' : p.status === 'failed' ? 'text-[var(--error)]' : 'text-n-500'}`}>
-                  {p.status === 'completed' ? 'Pago' : p.status === 'failed' ? 'Falhou' : 'Pendente'}
+                  {p.status === 'completed' ? t('settings.facturacao.paid') : p.status === 'failed' ? t('settings.facturacao.failed') : t('settings.facturacao.pending')}
                 </p>
               </div>
             </div>
@@ -164,10 +167,10 @@ export default function FacturacaoTab() {
         </div>
       </Card>
 
-      <Modal open={!!paymentMethodPlan} onClose={() => setPaymentMethodPlan(null)} title="Como quer pagar?">
+      <Modal open={!!paymentMethodPlan} onClose={() => setPaymentMethodPlan(null)} title={t('settings.facturacao.howToPay')}>
         <div className="space-y-4">
           <p className="text-sm font-body text-n-600">
-            Plano <strong>{PLAN_LABEL[paymentMethodPlan] || paymentMethodPlan}</strong> — €{PLAN_PRICES[paymentMethodPlan]}/mes
+            {t('settings.facturacao.plan')} <strong>{PLAN_LABEL[paymentMethodPlan] || paymentMethodPlan}</strong> — €{PLAN_PRICES[paymentMethodPlan]}{t('settings.facturacao.perMonth')}
             <span className="text-n-400"> (≈ {Math.round((PLAN_PRICES[paymentMethodPlan] || 0) * CVE_PER_EUR).toLocaleString('pt-PT')} CVE)</span>.
           </p>
           <button
@@ -181,7 +184,7 @@ export default function FacturacaoTab() {
             </div>
             <div>
               <p className="font-display font-semibold text-sm text-n-900">PayPal</p>
-              <p className="text-xs font-body text-n-500">Renova automaticamente todos os meses</p>
+              <p className="text-xs font-body text-n-500">{t('settings.facturacao.paypalRenews')}</p>
             </div>
           </button>
           <button
@@ -195,30 +198,29 @@ export default function FacturacaoTab() {
             </div>
             <div>
               <p className="font-display font-semibold text-sm text-n-900">SISP Vinti4</p>
-              <p className="text-xs font-body text-n-500">Pagamento em escudos, manual todos os meses (sem renovacao automatica)</p>
+              <p className="text-xs font-body text-n-500">{t('settings.facturacao.sispManual')}</p>
             </div>
           </button>
           <label className="flex items-start gap-2 text-xs font-body text-n-700 cursor-pointer border-t border-n-100 pt-3">
             <input type="checkbox" className="mt-0.5" checked={billingPolicyOk} onChange={(e) => setBillingPolicyOk(e.target.checked)} />
             <span>
-              Li e aceito a{' '}
+              {t('settings.facturacao.acceptBefore')}{' '}
               <a href="https://saldesk.cv/termos.html#s6" target="_blank" rel="noreferrer" className="text-ocean-700 font-semibold hover:underline">
-                política de cancelamento e reembolsos
-              </a>{' '}da subscrição SalDesk.
+                {t('settings.facturacao.acceptLink')}
+              </a>{' '}{t('settings.facturacao.acceptAfter')}
             </span>
           </label>
         </div>
       </Modal>
 
-      <Modal open={showCancelModal} onClose={() => setShowCancelModal(false)} title="Cancelar subscricao">
+      <Modal open={showCancelModal} onClose={() => setShowCancelModal(false)} title={t('settings.facturacao.cancelSubscription')}>
         <div className="space-y-4">
           <p className="text-sm font-body text-n-600">
-            Tens a certeza que queres cancelar a subscricao? A cobranca automatica mensal termina
-            imediatamente e a conta fica suspensa assim que o periodo já pago acabar.
+            {t('settings.facturacao.cancelConfirmText')}
           </p>
           <div className="flex gap-3">
-            <Button variant="secondary" onClick={() => setShowCancelModal(false)} className="flex-1">Voltar</Button>
-            <Button variant="danger" loading={cancelling} onClick={handleCancel} className="flex-1">Confirmar cancelamento</Button>
+            <Button variant="secondary" onClick={() => setShowCancelModal(false)} className="flex-1">{t('settings.facturacao.back')}</Button>
+            <Button variant="danger" loading={cancelling} onClick={handleCancel} className="flex-1">{t('settings.facturacao.confirmCancel')}</Button>
           </div>
         </div>
       </Modal>
