@@ -744,7 +744,7 @@
   </div>
 </footer>
 
-<script src="_cartao.js?v=20261120g"></script>
+<script src="_cartao.js?v=20261120h"></script>
 <script>
 /* ══════════════════════════════════════════
    CONSTANTS
@@ -790,7 +790,8 @@ let activeIsland = ''; // island_name; '' = todas (partilhado com o campo Ilha d
 let filtrosExtra = { beneficio: '', preco: '', duracao: '' };
 let ordem = ''; // '' recomendados | 'asc' | 'desc'
 let vistaBase = []; // depois de ilha, tipo e pesquisa, antes dos filtros extra
-let vista = 'lista'; // 'lista' | 'mapa' (so com experiencias com localizacao)
+let vistaEscolhida = 'lista'; // o que o turista escolheu no botao Lista/Mapa
+let vista = 'lista'; // o que se mostra: 'mapa' so com experiencias com localizacao (vistaEfectiva)
 let recommendedItems = [];
 
 /* Pontos turisticos (cms_landmarks) -- conteudo editorial independente dos
@@ -1448,7 +1449,7 @@ function renderGrid() {
   const localizadas = filtered
     .map(item => ({ item, p: C.localizacaoExperiencia(item, C.lerMeta(item)) }))
     .filter(x => x.p);
-  if (!localizadas.length && vista === 'mapa') vista = 'lista';
+  vista = C.vistaEfectiva(vistaEscolhida, localizadas.length);
   renderVistaSeg(localizadas.length > 0);
   const mapa = document.getElementById('act-map');
   if (vista === 'mapa') {
@@ -1498,7 +1499,7 @@ function renderVistaSeg(haLocalizadas) {
 }
 
 function setVista(v) {
-  vista = v === 'mapa' ? 'mapa' : 'lista';
+  vistaEscolhida = v === 'mapa' ? 'mapa' : 'lista';
   renderGrid();
 }
 
@@ -1524,7 +1525,7 @@ function renderMapa(localizadas) {
   cont.innerHTML = grupos.map((g, gi) => {
     /* zoom maximo 13: com uma so experiencia ainda se ve em que parte da ilha fica */
     const tam = C.tamanhoMapa(g.itens.map(x => x.p), disponivel);
-    const enq = C.enquadrarMapa(g.itens.map(x => x.p), tam.largura, tam.altura, { zMax: 13 });
+    const enq = C.enquadrarMapa(g.itens.map(x => x.p), tam.largura, tam.altura, C.OPCOES_MAPA);
     const azulejos = C.azulejosDoMapa(enq, tam.largura, tam.altura).map(t =>
       `<img src="https://tile.openstreetmap.org/${t.z}/${t.x}/${t.y}.png" alt="" loading="lazy" decoding="async" style="left:${Math.round(t.left)}px;top:${Math.round(t.top)}px">`).join('');
     /* marcadores a menos de 26 px juntam-se num so (ex.: varios tours do mesmo cais) */

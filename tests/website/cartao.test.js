@@ -453,3 +453,24 @@ test('rotulo_da_faixa_de_preco_na_moeda_escolhida', () => {
   assert.equal(C.rotuloFaixaPreco('mais100', 'CVE', 'en', 110), 'Over ' + (11000).toLocaleString('pt-PT') + ' CVE');
   assert.equal(C.rotuloFaixaPreco('outra', 'EUR', 'pt'), '');
 });
+
+test('vista_do_mapa_volta_quando_ha_outra_vez_experiencias_com_localizacao', () => {
+  /* a escolha do turista (Mapa) mantem-se; so se mostra a lista enquanto nao houver nada para pôr no mapa */
+  assert.equal(C.vistaEfectiva('mapa', 0), 'lista');
+  assert.equal(C.vistaEfectiva('mapa', 3), 'mapa');
+  assert.equal(C.vistaEfectiva('lista', 3), 'lista');
+  assert.equal(C.vistaEfectiva(undefined, 3), 'lista');
+});
+
+test('mapa_de_cabo_verde_inteiro_cabe_no_telemovel', () => {
+  /* grupo sem ilha (pontos espalhados pelo pais): todos os marcadores dentro do mapa de 327 x 360 */
+  const pts = [{ lat: 16.6, lng: -22.9 }, { lat: 14.92, lng: -23.51 }, { lat: 17.07, lng: -25.17 }, { lat: 15.1, lng: -24.7 }];
+  const L = 327; const A = 360;
+  const e = C.enquadrarMapa(pts, L, A, C.OPCOES_MAPA);
+  pts.forEach((p) => {
+    const q = C.projectar(p.lat, p.lng, e.zoom);
+    assert.ok(q.x - e.x0 >= 40 && q.x - e.x0 <= L - 40, 'x dentro');
+    assert.ok(q.y - e.y0 >= 40 && q.y - e.y0 <= A - 40, 'y dentro');
+  });
+  assert.equal(C.OPCOES_MAPA.zMax, 13);
+});
