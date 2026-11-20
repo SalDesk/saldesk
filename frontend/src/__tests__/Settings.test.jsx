@@ -26,7 +26,7 @@ const OPERADOR = {
   id: 'op1', name: 'Sal Aventura', email: 'a@x.test', phone: '+238 111', whatsapp: '+238 222', address: 'Rua 1',
   language: 'en', currency: 'EUR', timezone: 'Europe/Lisbon', slug: 'demo',
   plan: 'pro', plan_status: 'active', plan_paid_until: dia(20), paypal_subscription_id: 'I-1',
-  description_pt: 'Desc PT', description_en: 'Desc EN', cancellation_policy_pt: 'CP PT', cancellation_policy_en: 'CP EN',
+  description: 'Desc PT', cancellation_policy_pt: 'CP PT', cancellation_policy_en: 'CP EN',
   custom_faqs: [
     { question_pt: 'P1', question_en: 'Q1', answer_pt: 'R1', answer_en: 'A1' },
     { question_pt: 'P2', question_en: '', answer_pt: '', answer_en: '' },
@@ -158,15 +158,13 @@ describe('Definicoes: Conta', () => {
     ]);
   });
 
-  it('guardar_chama_updateOperator_com_os_oito_campos_e_setOperator_e_mostra_Guardado_com_sucesso', async () => {
+  it('guardar_envia_so_os_campos_alterados_e_setOperator_e_mostra_Guardado_com_sucesso', async () => {
     montar();
     fireEvent.change(campo('Nome da empresa'), { target: { value: 'Novo Nome' } });
     fireEvent.change(campo('Moeda', 'select'), { target: { value: 'USD' } });
     fireEvent.click(botao('Guardar alteracoes'));
-    await waitFor(() => expect(updateOperator).toHaveBeenCalledWith({
-      name: 'Novo Nome', email: 'a@x.test', phone: '+238 111', whatsapp: '+238 222', address: 'Rua 1',
-      language: 'en', currency: 'USD', timezone: 'Europe/Lisbon',
-    }));
+    await waitFor(() => expect(updateOperator).toHaveBeenCalledTimes(1));
+    expect(ultimoPut()).toEqual({ name: 'Novo Nome', currency: 'USD' });
     expect(await screen.findByText('Guardado com sucesso')).toBeInTheDocument();
     expect(useAuthStore.getState().operator.name).toBe('Novo Nome');
   });
@@ -183,9 +181,28 @@ describe('Definicoes: Conta', () => {
     expect(screen.queryByText('Guardado com sucesso')).not.toBeInTheDocument();
   });
 
+  it('sem_alteracoes_nao_chama_o_servidor_e_mostra_Guardado', async () => {
+    montar();
+    fireEvent.click(botao('Guardar alteracoes'));
+    expect(await screen.findByText('Guardado com sucesso')).toBeInTheDocument();
+    expect(updateOperator).not.toHaveBeenCalled();
+  });
+
+  it('a_segunda_gravacao_so_envia_o_que_mudou_desde_a_primeira', async () => {
+    montar();
+    fireEvent.change(campo('Nome da empresa'), { target: { value: 'Novo Nome' } });
+    fireEvent.click(botao('Guardar alteracoes'));
+    await waitFor(() => expect(updateOperator).toHaveBeenCalledTimes(1));
+    fireEvent.change(campo('Morada'), { target: { value: 'Rua 2' } });
+    fireEvent.click(botao('Guardar alteracoes'));
+    await waitFor(() => expect(updateOperator).toHaveBeenCalledTimes(2));
+    expect(ultimoPut()).toEqual({ address: 'Rua 2' });
+  });
+
   it('erro_do_servidor_ou_Erro ao guardar', async () => {
     updateOperator.mockRejectedValueOnce({ response: { data: { error: 'Email invalido' } } });
     montar();
+    fireEvent.change(campo('Email'), { target: { value: 'mau@x' } });
     fireEvent.click(botao('Guardar alteracoes'));
     expect(await screen.findByText('Email invalido')).toBeInTheDocument();
     updateOperator.mockRejectedValueOnce(new Error('x'));
@@ -218,8 +235,10 @@ const arquivo = (nome, conteudo) => new File([conteudo], nome, { type: 'image/pn
 describe('Definicoes: Perfil Publico', () => {
   it('mostra_os_valores_do_operador', async () => {
     await abrirPerfil();
-    expect(campo('Portugues', 'textarea', within(cartao('Descricao')))).toHaveValue('Desc PT');
-    expect(campo('Ingles (EN)', 'textarea', within(cartao('Descricao')))).toHaveValue('Desc EN');
+    /* a descricao que o operador escreveu no registo e que os turistas lêem; nao ha descricao em ingles */
+    expect(screen.getByLabelText('Descricao da empresa')).toHaveValue('Desc PT');
+    expect(within(cartao('Descricao')).getAllByRole('textbox')).toHaveLength(1);
+    expect(screen.getByText('Aparece na sua pagina publica e na lista de operadores do catalogo.')).toBeInTheDocument();
     expect(campo('Portugues', 'textarea', within(cartao('Politica de cancelamento')))).toHaveValue('CP PT');
     expect(campo('Ingles (EN)', 'textarea', within(cartao('Politica de cancelamento')))).toHaveValue('CP EN');
     expect(screen.getByText('Pergunta 1')).toBeInTheDocument();
@@ -258,16 +277,17 @@ describe('Definicoes: Perfil Publico', () => {
     expect(screen.getAllByText('Principal')).toHaveLength(1);
   });
 
-  it('guardar_envia_cover_images_com_as_urls_actuais_e_sem_capas_envia_lista_vazia', async () => {
-    await abrirPerfil({ ...OPERADOR, cover_images: ['https://cdn.test/a.jpg', 'https://cdn.test/b.jpg'] });
+  it('capas_sem_mexer_nao_vao_no_pedido_e_remover_todas_envia_lista_vazia', async () => {
+    const { container } = await abrirPerfil({ ...OPERADOR, cover_images: ['https://cdn.test/a.jpg', 'https://cdn.test/b.jpg'] });
+    fireEvent.change(screen.getByLabelText('Descricao da empresa'), { target: { value: 'Nova desc' } });
     fireEvent.click(botao('Guardar perfil'));
     await waitFor(() => expect(updateOperator).toHaveBeenCalledTimes(1));
-    expect(ultimoPut().cover_images).toEqual(['https://cdn.test/a.jpg', 'https://cdn.test/b.jpg']);
-    cleanup();
-    await abrirPerfil({ ...OPERADOR, cover_images: undefined });
+    expect(ultimoPut()).not.toHaveProperty('cover_images');
+    fireEvent.click(container.querySelectorAll('div.group')[1].querySelector('button[title="Remover foto"]'));
+    fireEvent.click(container.querySelectorAll('div.group')[0].querySelector('button[title="Remover foto"]'));
     fireEvent.click(botao('Guardar perfil'));
     await waitFor(() => expect(updateOperator).toHaveBeenCalledTimes(2));
-    expect(ultimoPut().cover_images).toEqual([]);
+    expect(ultimoPut()).toEqual({ cover_images: [] });
   });
 
   it('acrescentar_uma_foto_faz_upload_e_o_url_novo_vai_no_pedido', async () => {
@@ -308,20 +328,16 @@ describe('Definicoes: Perfil Publico', () => {
     expect(screen.queryByText('Pergunta 3')).not.toBeInTheDocument();
   });
 
-  it('guardar_envia_logo_descricoes_politicas_e_faqs_so_com_pergunta_e_setOperator', async () => {
+  it('guardar_envia_so_os_campos_alterados_e_faqs_so_com_pergunta_e_setOperator', async () => {
     await abrirPerfil();
     fireEvent.click(botao('Adicionar pergunta'));
     fireEvent.change(campoFaq(3, 'Resposta PT', 'textarea'), { target: { value: 'so resposta' } });
-    fireEvent.change(campo('Portugues', 'textarea', within(cartao('Descricao'))), { target: { value: 'Nova desc' } });
+    fireEvent.change(screen.getByLabelText('Descricao da empresa'), { target: { value: 'Nova desc' } });
     fireEvent.click(botao('Guardar perfil'));
-    await waitFor(() => expect(updateOperator).toHaveBeenCalledWith({
-      logo_url: null, description_pt: 'Nova desc', description_en: 'Desc EN',
-      cancellation_policy_pt: 'CP PT', cancellation_policy_en: 'CP EN',
-      custom_faqs: OPERADOR.custom_faqs, cover_images: [], chat_auto_reply: null, brand_color: null,
-      free_cancellation_hours: null, auto_confirm_bookings: false,
-    }));
+    /* so o que mudou: a FAQ so com resposta e descartada, por isso as FAQ nao mudaram */
+    await waitFor(() => expect(updateOperator).toHaveBeenCalledWith({ description: 'Nova desc' }));
     expect(await screen.findByText('Guardado com sucesso')).toBeInTheDocument();
-    expect(useAuthStore.getState().operator.description_pt).toBe('Nova desc');
+    expect(useAuthStore.getState().operator.description).toBe('Nova desc');
   });
 
   it('o_cartao_do_chat_comeca_desligado_sem_campos_e_ligar_mostra_dias_horas_e_textos', async () => {
@@ -447,6 +463,15 @@ describe('Definicoes: Perfil Publico', () => {
         + 'As pagas online ficam confirmadas quando o pagamento e feito. Os cartoes do catalogo mostram "Confirmacao imediata".')).toBeInTheDocument();
     });
 
+    it('mudar_so_a_confirmacao_nao_envia_o_prazo_nem_o_resto_do_perfil', async () => {
+      /* outro separador do browser pode ter gravado o prazo entretanto: este nao o pode apagar */
+      await abrirPerfil({ ...OPERADOR, free_cancellation_hours: null, auto_confirm_bookings: false });
+      fireEvent.click(screen.getByRole('switch', { name: 'Confirmar reservas automaticamente' }));
+      fireEvent.click(botao('Guardar perfil'));
+      await waitFor(() => expect(updateOperator).toHaveBeenCalled());
+      expect(ultimoPut()).toEqual({ auto_confirm_bookings: true });
+    });
+
     it('sem_prazo_envia_null', async () => {
       await abrirPerfil({ ...OPERADOR, free_cancellation_hours: 24, auto_confirm_bookings: true });
       expect(prazo()).toHaveValue('24');
@@ -454,7 +479,8 @@ describe('Definicoes: Perfil Publico', () => {
       fireEvent.change(prazo(), { target: { value: '' } });
       fireEvent.click(botao('Guardar perfil'));
       await waitFor(() => expect(updateOperator).toHaveBeenCalled());
-      expect(ultimoPut()).toMatchObject({ free_cancellation_hours: null, auto_confirm_bookings: true });
+      /* a confirmacao nao mudou, por isso nao vai no pedido */
+      expect(ultimoPut()).toEqual({ free_cancellation_hours: null });
     });
   });
 
@@ -462,7 +488,7 @@ describe('Definicoes: Perfil Publico', () => {
     const TITULO = 'Cor da pagina publica e do widget';
     const hex = () => within(cartao(TITULO)).getByLabelText('Cor em hexadecimal');
 
-    it('comeca_sem_cor_escolhida_com_a_cor_original_na_previa_e_guardar_envia_null', async () => {
+    it('comeca_sem_cor_escolhida_com_a_cor_original_na_previa_e_guardar_sem_mexer_nao_envia_nada', async () => {
       await abrirPerfil();
       const c = within(cartao(TITULO));
       expect(hex()).toHaveValue('');
@@ -470,8 +496,8 @@ describe('Definicoes: Perfil Publico', () => {
       expect(c.queryByRole('button', { name: 'Repor cor original' })).toBeNull();
       expect(c.getByTestId('previa-cor')).toHaveStyle({ backgroundColor: 'rgb(13, 84, 112)' });
       fireEvent.click(botao('Guardar perfil'));
-      await waitFor(() => expect(updateOperator).toHaveBeenCalled());
-      expect(ultimoPut().brand_color).toBeNull();
+      expect(await screen.findByText('Guardado com sucesso')).toBeInTheDocument();
+      expect(updateOperator).not.toHaveBeenCalled();
     });
 
     it('escolher_uma_cor_sugerida_preenche_o_campo_muda_a_previa_e_guarda_a_cor', async () => {
@@ -531,6 +557,7 @@ describe('Definicoes: Perfil Publico', () => {
   it('falha_ao_guardar_regista_console.error_e_nao_mostra_o_aviso', async () => {
     updateOperator.mockRejectedValue(new Error('x'));
     await abrirPerfil();
+    fireEvent.change(screen.getByLabelText('Descricao da empresa'), { target: { value: 'Nova desc' } });
     fireEvent.click(botao('Guardar perfil'));
     await waitFor(() => expect(spyErr).toHaveBeenCalled());
     spyErr.mockClear();
@@ -988,6 +1015,7 @@ describe('Definicoes: design system (estrutura, Conta, Notificacoes e Seguranca)
     montar();
     ['Nome da empresa', 'Email', 'Telefone', 'WhatsApp', 'Morada', 'Idioma', 'Moeda', 'Fuso horario'].forEach(e => expect(screen.getByLabelText(e)).toBeInTheDocument());
     updateOperator.mockRejectedValueOnce({ response: { data: { error: 'Email invalido' } } });
+    fireEvent.change(campo('Email'), { target: { value: 'mau@x' } });
     fireEvent.click(botao('Guardar alteracoes'));
     const erro = await screen.findByText('Email invalido');
     expect(erro.className).toContain('var(--error-light)');
@@ -1026,6 +1054,7 @@ describe('Definicoes: design system (estrutura, Conta, Notificacoes e Seguranca)
     const { container } = montar();
     let html = classes(container);
     updateOperator.mockRejectedValueOnce(new Error('x'));
+    fireEvent.change(campo('Nome da empresa'), { target: { value: 'Outro nome' } });
     fireEvent.click(botao('Guardar alteracoes'));
     await screen.findByText('Erro ao guardar');
     html += classes(container);
@@ -1047,7 +1076,7 @@ describe('Definicoes: design system (estrutura, Conta, Notificacoes e Seguranca)
 describe('Definicoes: design system (Perfil Publico)', () => {
   it('os_campos_tem_nome_acessivel_incluindo_os_pares_PT_EN_com_contexto', async () => {
     const { container } = await abrirPerfil();
-    ['Descricao em Portugues', 'Descricao em Ingles', 'Politica de cancelamento em Portugues', 'Politica de cancelamento em Ingles',
+    ['Descricao da empresa', 'Politica de cancelamento em Portugues', 'Politica de cancelamento em Ingles',
       'Pergunta 1 PT', 'Pergunta 1 EN', 'Resposta 1 PT', 'Resposta 1 EN', 'Pergunta 2 PT'].forEach(e => expect(screen.getByLabelText(e)).toBeInTheDocument());
     expect(screen.getByLabelText('Ficheiro do logo')).toHaveAttribute('type', 'file');
     expect(container.querySelectorAll('input[type="file"]')).toHaveLength(2);
@@ -1064,6 +1093,7 @@ describe('Definicoes: design system (Perfil Publico)', () => {
     const { container } = await abrirPerfil({ ...OPERADOR, cover_images: ['https://cdn.test/a.jpg', 'https://cdn.test/b.jpg'] });
     expect(container.querySelectorAll('div.group img')).toHaveLength(2);
     updateOperator.mockRejectedValueOnce(new Error('x'));
+    fireEvent.change(screen.getByLabelText('Descricao da empresa'), { target: { value: 'Nova desc' } });
     fireEvent.click(botao('Guardar perfil'));
     await waitFor(() => expect(spyErr).toHaveBeenCalled());
     spyErr.mockClear();

@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Compass } from 'lucide-react';
 import { updateOperator } from '../../services/authService';
+import { camposAlterados } from '../../utils/camposAlterados';
 import useAuthStore from '../../store/authStore';
 import useUiStore from '../../store/uiStore';
 import Card from '../../components/ui/Card';
@@ -34,12 +35,18 @@ export default function ContaTab({ operator, onSaved }) {
   const [saved,  setSaved]  = useState(false);
   const [error,  setError]  = useState('');
   const set = f => e => setForm(p => ({ ...p, [f]: e.target.value }));
+  /* valores gravados quando o separador abriu (depois, os da ultima gravacao): so se envia o que mudou */
+  const baseRef = useRef(form);
 
   async function handleSubmit(e) {
     e.preventDefault(); setError(''); setSaving(true);
     try {
-      const updated = await updateOperator(form);
-      setOperator(updated);
+      const alterados = camposAlterados(baseRef.current, form);
+      if (Object.keys(alterados).length) {
+        const updated = await updateOperator(alterados);
+        setOperator(updated);
+      }
+      baseRef.current = form;
       setSaved(true); setTimeout(() => setSaved(false), 3000);
       onSaved?.();
     } catch (err) {
