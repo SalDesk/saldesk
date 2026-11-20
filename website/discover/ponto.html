@@ -401,7 +401,7 @@
   </div>
 </footer>
 
-<script src="_cartao.js?v=20261120c"></script>
+<script src="_cartao.js?v=20261120d"></script>
 <script>
 /* ══════════════════════════════════════════
    PAGINA DE UM PONTO TURISTICO (ponto.html?slug=...)
@@ -524,7 +524,7 @@ function renderXp(item) {
       <div class="xp-body">
         ${item.island_name ? `<span class="xp-island">${esc(C.nomeIlha(item, lang))}</span>` : ''}
         <h3><a class="xp-link" href="${href}">${esc(C.tituloCartao(item, meta, lang))}</a></h3>
-        <div class="xp-op"><span class="xp-av" aria-hidden="true">${esc(C.iniciais(item.operator_name))}</span><span class="xp-op-name">${esc(item.operator_name)}</span><span class="xp-ver" title="${lang === 'en' ? 'Verified operator' : 'Operador verificado'}">${xpSvg('badge', 14, 2.2)}</span>${ratingBadge(item.avg_rating, item.review_count)}</div>
+        <div class="xp-op"><span class="xp-av" aria-hidden="true">${esc(C.iniciais(item.operator_name))}</span><span class="xp-op-name">${esc(item.operator_name)}</span><span class="xp-ver" title="${lang === 'en' ? 'Verified operator' : 'Operador verificado'}">${xpSvg('badge', 14, 2.2)}</span>${ratingBadge(C.classificacaoCartao(item)?.media, C.classificacaoCartao(item)?.total)}</div>
         <ul class="xp-attrs">${lis}</ul>
         ${perks ? `<p class="xp-perks">${xpSvg('check', 14, 2.4)}<span>${esc(perks)}</span></p>` : ''}
         <p class="xp-inc">${inc ? `${xpSvg('check', 14, 2.4)}<span>${esc(inc)}</span>` : ''}</p>
