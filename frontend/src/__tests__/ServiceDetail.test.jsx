@@ -2,18 +2,26 @@
    "nao encontrado", muda o titulo do separador e aplica a cor da marca do operador.
    O modo widget tem o seu ficheiro (ServiceDetailWidget.test.jsx): fica guardado no modulo. */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, waitFor, cleanup } from '@testing-library/react';
+import { render, screen, waitFor, cleanup, fireEvent } from '@testing-library/react';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import ServiceDetail from '../pages/ServiceDetail';
 import { TONS } from '../utils/brandPalette';
 
-/* O mapa (react-leaflet) nao corre em jsdom: fica uma caixa simples */
-vi.mock('react-leaflet', () => ({
-  MapContainer: ({ children }) => <div data-testid="mapa">{children}</div>,
+/* O mapa (react-leaflet) nao corre em jsdom: fica uma caixa simples. Como o Leaflet, so le o centro
+   quando o mapa nasce (mudar o centro depois nao o mexe). */
+vi.mock('react-leaflet', async () => {
+  const { useState } = await import('react');
+  function MapContainer({ center, children }) {
+    const [inicial] = useState(center);
+    return <div data-testid="mapa" data-centro={inicial ? inicial.join(',') : ''}>{children}</div>;
+  }
+  return {
+  MapContainer,
   TileLayer: () => null,
   Marker: ({ children }) => <div data-testid="marcador">{children}</div>,
   Popup: ({ children }) => <div>{children}</div>,
-}));
+  };
+});
 
 const FUTURE = { v7_startTransition: true, v7_relativeSplatPath: true };
 const raiz = () => document.documentElement;
@@ -223,5 +231,39 @@ describe('ServiceDetail: cor da marca', () => {
     montar();
     await screen.findAllByText('Passeio de buggy');
     expect(raiz().style.getPropertyValue('--brand-700-rgb')).toBe('');
+  });
+});
+
+describe('ServiceDetail: passar para um servico relacionado', () => {
+  it('recomeca_a_pagina_com_os_dados_e_o_mapa_do_novo_servico', async () => {
+    const meta = (mp) => JSON.stringify({ desc_pt: 'Passeio', meeting_point: mp });
+    const u1 = { ...UNIDADE, description: meta('Marina'), lat: 16.6, lng: -22.9 };
+    const u2 = { ...UNIDADE, id: 'u2', name: 'Mergulho na Baia', description: meta('Cais'), lat: 16.75, lng: -22.95, base_price: 60 };
+    let soltarU2;
+    global.fetch = vi.fn((url) => {
+      const u = String(url);
+      if (u.includes('/traveler-auth/session')) return resposta({}, false);
+      if (u.endsWith('/reviews')) return resposta({ data: [] });
+      if (u.endsWith('/units/u1')) {
+        return resposta({ data: { unit: u1, operator: operador(), related: [{ id: 'u2', name: 'Mergulho na Baia', images: [], base_price: 60 }], recent_bookings: 0 } });
+      }
+      if (u.endsWith('/units/u2')) {
+        return new Promise((ok) => { soltarU2 = () => ok({ ok: true, json: () => Promise.resolve({ data: { unit: u2, operator: operador(), related: [], recent_bookings: 0 } }) }); });
+      }
+      return resposta({ data: [] });
+    });
+    montar();
+    expect((await screen.findByTestId('mapa')).dataset.centro).toBe('16.6,-22.9');
+    fireEvent.click(screen.getByText('Mergulho na Baia'));
+    /* enquanto o novo carrega, nao ficam no ar dados do servico antigo com o endereco do novo */
+    await waitFor(() => expect(soltarU2).toBeTypeOf('function'));
+    expect(document.getElementById('sd-jsonld')).toBeNull();
+    soltarU2();
+    expect(await screen.findByText('Mergulho na Baia', { selector: 'h1' })).toBeInTheDocument();
+    await waitFor(() => expect(document.querySelectorAll('#sd-jsonld')).toHaveLength(1));
+    const j = JSON.parse(document.getElementById('sd-jsonld').textContent);
+    expect(j.name).toBe('Mergulho na Baia');
+    expect(j.url).toMatch(/\/servico\/u2$/);
+    expect(screen.getByTestId('mapa').dataset.centro).toBe('16.75,-22.95');
   });
 });

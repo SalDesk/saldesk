@@ -58,16 +58,17 @@ router.get('/sitemap.xml', async (_req, res) => {
       { loc: `${publicBase}/impacto.html`, priority: '0.6' },
       { loc: `${publicBase}/sobre.html`, priority: '0.5' },
       ...( ops || []).map(op => ({
-        loc: `${base}/book/${op.slug}`,
+        loc: `${base}/book/${encodeURIComponent(op.slug)}`,
         lastmod: op.updated_at?.split('T')[0],
         priority: '0.8',
       })),
       ...experiencias.map((u) => ({
-        loc: `${base}/book/${u.operator_slug}/servico/${u.unit_id}`,
+        loc: `${base}/book/${encodeURIComponent(u.operator_slug)}/servico/${encodeURIComponent(u.unit_id)}`,
         priority: '0.7',
       })),
       ...pontos.map((l) => ({
-        loc: `${publicBase}/discover/ponto.html?slug=${l.slug}`,
+        /* cada parte do endereco codificada (um & no nome partia o ?slug= em dois) */
+        loc: `${publicBase}/discover/ponto.html?slug=${encodeURIComponent(l.slug)}`,
         lastmod: l.updated_at ? String(l.updated_at).split('T')[0] : undefined,
         priority: '0.6',
       })),
@@ -154,7 +155,7 @@ router.get('/catalog-feed.xml', async (_req, res) => {
         const title = `${u.unit_name} — ${u.operator_name}`;
         const description = unitDescriptionText(u.description)
           || `Reserve directamente em ${u.operator_name}, sem comissões.`;
-        const link = `${base}/book/${u.operator_slug}/servico/${u.unit_id}`;
+        const link = `${base}/book/${encodeURIComponent(u.operator_slug)}/servico/${encodeURIComponent(u.unit_id)}`;
         const availability = u.next_available ? 'in stock' : 'out of stock';
         const currency = u.currency || 'EUR';
         // Imagem estilizada (selo/nota/localizacao) em vez da foto em bruto --

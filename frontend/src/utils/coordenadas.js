@@ -25,6 +25,17 @@ function normalizar(texto) {
   return t.replace(/\+/g, ' ');
 }
 
+/* Virgula decimal (teclados e hábitos em portugues): "16,7631 -22,895", "16,7631; -22,895" ou
+   "16,7631, -22,895". So quando a leitura e unica; "16,76,-22,89" nao se adivinha. */
+function parComVirgulaDecimal(t) {
+  const DEC = '(-?\\d{1,3},\\d+)';
+  const m = t.match(new RegExp(`^${DEC}(?:\\s*;\\s*|,\\s+|\\s+)${DEC}$`));
+  if (!m) return null;
+  const lat = Number(m[1].replace(',', '.'));
+  const lng = Number(m[2].replace(',', '.'));
+  return valido(lat, lng) ? { lat, lng } : null;
+}
+
 /* 16.7631° N, 22.895° W  ou  16°45'47.2"N 22°53'42.0"W */
 function grausComHemisferio(t) {
   const parte = '(\\d{1,3})(?:\\.(\\d+))?°\\s*(?:(\\d{1,2})[\'′]\\s*)?(?:([\\d.]+)["″]\\s*)?([NSEWO])';
@@ -60,7 +71,7 @@ export function lerCoordenadas(texto) {
     const r = par(t.match(p));
     if (r) return r;
   }
-  return grausComHemisferio(t);
+  return parComVirgulaDecimal(t) || grausComHemisferio(t);
 }
 
 /* Links curtos de partilha (maps.app.goo.gl, goo.gl/maps): nao trazem coordenadas */

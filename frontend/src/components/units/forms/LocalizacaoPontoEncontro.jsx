@@ -17,7 +17,8 @@ const ICONE = L.divIcon({
   className: '',
   html: '<div style="background:#0D5470;width:22px;height:22px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.35)"></div>',
   iconSize: [22, 22],
-  iconAnchor: [11, 22],
+  /* quadrado rodado 45 graus: a ponta fica a 11 + 11*raiz(2) = 27 px do topo */
+  iconAnchor: [11, 27],
 });
 
 const seis = (n) => String(Number(n.toFixed(6)));
@@ -30,7 +31,8 @@ function CliqueNoMapa({ onEscolher }) {
 export default function LocalizacaoPontoEncontro({ lat, lng, onChange }) {
   const [colado, setColado] = useState('');
   const [erro, setErro] = useState('');
-  /* o mapa recentra quando a localizacao muda por fora dele (colar, remover, campos) */
+  /* o mapa recentra quando a localizacao muda por fora dele (colar, remover, sair dos campos);
+     nunca a cada tecla nos campos (recarregava o mapa inteiro a cada numero) */
   const [chaveMapa, setChaveMapa] = useState(0);
 
   const latN = lat === '' || lat === null || lat === undefined ? NaN : Number(lat);
@@ -67,7 +69,7 @@ export default function LocalizacaoPontoEncontro({ lat, lng, onChange }) {
       <div className="h-56 rounded-md overflow-hidden border border-n-200">
         <MapContainer key={chaveMapa} center={temPonto ? [latN, lngN] : SAL} zoom={temPonto ? 14 : 11}
           style={{ height: '100%', width: '100%' }} scrollWheelZoom={false}>
-          <TileLayer attribution="&copy; OpenStreetMap contributors" url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+          <TileLayer attribution="&copy; OpenStreetMap contributors" url="https://tile.openstreetmap.org/{z}/{x}/{y}.png" />
           <CliqueNoMapa onEscolher={(la, ln) => escolher(la, ln, false)} />
           {temPonto && (
             <Marker position={[latN, lngN]} icon={ICONE} draggable
@@ -90,9 +92,11 @@ export default function LocalizacaoPontoEncontro({ lat, lng, onChange }) {
 
       <div className="grid grid-cols-2 gap-3">
         <Input label="Latitude" type="number" step="0.000001" value={lat ?? ''} placeholder="Ex: 16.7631"
-          onChange={(e) => { onChange({ lat: e.target.value, lng: lng ?? '' }); setChaveMapa((k) => k + 1); }} />
+          onChange={(e) => onChange({ lat: e.target.value, lng: lng ?? '' })}
+          onBlur={() => setChaveMapa((k) => k + 1)} />
         <Input label="Longitude" type="number" step="0.000001" value={lng ?? ''} placeholder="Ex: -22.8950"
-          onChange={(e) => { onChange({ lat: lat ?? '', lng: e.target.value }); setChaveMapa((k) => k + 1); }} />
+          onChange={(e) => onChange({ lat: lat ?? '', lng: e.target.value })}
+          onBlur={() => setChaveMapa((k) => k + 1)} />
       </div>
 
       {temPonto && !dentroDeCaboVerde(latN, lngN) && (

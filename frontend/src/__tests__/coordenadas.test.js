@@ -80,3 +80,21 @@ describe('dentroDeCaboVerde', () => {
     expect(dentroDeCaboVerde(NaN, -22.9)).toBe(false);
   });
 });
+
+describe('virgula decimal', () => {
+  it('le_pares_com_virgula_decimal', () => {
+    const r = { lat: 16.7631, lng: -22.895 };
+    expect(lerCoordenadas('16,7631 -22,895')).toEqual(r);
+    expect(lerCoordenadas('16,7631; -22,895')).toEqual(r);
+    expect(lerCoordenadas('16,7631, -22,895')).toEqual(r);
+    expect(lerCoordenadas(' 16,7631   -22,895 ')).toEqual(r);
+  });
+  it('virgula_ambigua_nao_adivinha', () => {
+    /* "16,76,-22,89" pode ser lido de mais de uma maneira: nao adivinha */
+    expect(lerCoordenadas('16,76,-22,89')).toBeNull();
+  });
+  it('o_par_com_ponto_continua_igual', () => {
+    expect(lerCoordenadas('16.7631, -22.895')).toEqual({ lat: 16.7631, lng: -22.895 });
+    expect(lerCoordenadas('16,-22')).toEqual({ lat: 16, lng: -22 });
+  });
+});

@@ -443,3 +443,13 @@ test('experiencias_do_lugar_ordena_pelas_estrelas_da_propria_experiencia', () =>
   assert.deepEqual(C.experienciasDoLugar(lugar, units).itens.map(i => i.unit_id),
     ['experiencia-avaliada', 'operador-bom', 'sem-nada']);
 });
+
+test('rotulo_da_faixa_de_preco_na_moeda_escolhida', () => {
+  assert.equal(C.rotuloFaixaPreco('ate50', 'EUR', 'pt'), 'Até 50 €');
+  assert.equal(C.rotuloFaixaPreco('50a100', 'EUR', 'en'), '€50–100');
+  assert.equal(C.rotuloFaixaPreco('mais100', 'EUR', 'en'), 'Over €100');
+  assert.equal(C.rotuloFaixaPreco('ate50', 'CVE', 'pt', 110), 'Até ' + (5500).toLocaleString('pt-PT') + ' CVE');
+  assert.equal(C.rotuloFaixaPreco('50a100', 'CVE', 'pt', 110), (5500).toLocaleString('pt-PT') + '–' + (11000).toLocaleString('pt-PT') + ' CVE');
+  assert.equal(C.rotuloFaixaPreco('mais100', 'CVE', 'en', 110), 'Over ' + (11000).toLocaleString('pt-PT') + ' CVE');
+  assert.equal(C.rotuloFaixaPreco('outra', 'EUR', 'pt'), '');
+});
