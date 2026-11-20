@@ -743,7 +743,7 @@
   </div>
 </footer>
 
-<script src="_cartao.js?v=20261120e"></script>
+<script src="_cartao.js?v=20261120f"></script>
 <script>
 /* ══════════════════════════════════════════
    CONSTANTS
@@ -1219,6 +1219,10 @@ function ratingBadge(rating, count) {
   if (!(Number(count) > 0) || !rating) return '';
   return `<span class="xp-rating">${xpSvg('star', 13, 0).replace('fill="none"', 'fill="currentColor"')}${Number(rating).toFixed(1)}<span>(${Number(count)})</span></span>`;
 }
+/* estrelas do cartao: so as da propria experiencia (classificacaoCartao, uma vez por cartao) */
+function estrelasCartao(c) {
+  return c ? ratingBadge(c.media, c.total) : '';
+}
 
 /* Cartao de experiencia -- ordem fixa do desenho (docs/superpowers/specs/2026-11-18-discover-redesenho-design.md):
    foto, ilha, titulo, operador, caracteristicas, incluidos, procura/data, preco. So mostra o que o operador preencheu. */
@@ -1270,7 +1274,7 @@ function renderActCard(item) {
       <div class="xp-body">
         ${item.island_name ? `<span class="xp-island">${esc(C.nomeIlha(item, lang))}</span>` : ''}
         <h3><a class="xp-link" href="${href}">${esc(C.tituloCartao(item, meta, lang))}</a></h3>
-        <div class="xp-op"><span class="xp-av" aria-hidden="true">${esc(C.iniciais(item.operator_name))}</span><span class="xp-op-name">${esc(item.operator_name)}</span><span class="xp-ver" title="${lang === 'en' ? 'Verified operator' : 'Operador verificado'}">${xpSvg('badge', 14, 2.2)}</span>${ratingBadge(C.classificacaoCartao(item)?.media, C.classificacaoCartao(item)?.total)}</div>
+        <div class="xp-op"><span class="xp-av" aria-hidden="true">${esc(C.iniciais(item.operator_name))}</span><span class="xp-op-name">${esc(item.operator_name)}</span><span class="xp-ver" title="${lang === 'en' ? 'Verified operator' : 'Operador verificado'}">${xpSvg('badge', 14, 2.2)}</span>${estrelasCartao(C.classificacaoCartao(item))}</div>
         ${attrs}
         ${perks ? `<p class="xp-perks">${xpSvg('check', 14, 2.4)}<span>${esc(perks)}</span></p>` : ''}
         <p class="xp-inc">${inc ? `${xpSvg('check', 14, 2.4)}<span>${esc(inc)}</span>` : ''}</p>

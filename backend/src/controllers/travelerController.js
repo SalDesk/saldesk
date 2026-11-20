@@ -265,7 +265,11 @@ async function getRecommendations(req, res, next) {
       }));
       const matched = scored
         .filter(s => s.score > 0)
-        .sort((a, b) => b.score - a.score || (b.item.avg_rating || 0) - (a.item.avg_rating || 0) || b.item.recent_bookings - a.item.recent_bookings);
+        /* desempate pelas estrelas da propria experiencia (nunca pela media do operador) */
+        .sort((a, b) => b.score - a.score
+          || (b.item.unit_avg_rating || 0) - (a.item.unit_avg_rating || 0)
+          || (b.item.unit_review_count || 0) - (a.item.unit_review_count || 0)
+          || b.item.recent_bookings - a.item.recent_bookings);
 
       if (matched.length) {
         personalized = true;

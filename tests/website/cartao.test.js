@@ -432,3 +432,14 @@ test('tamanho_do_mapa_um_so_ponto_ou_nenhum', () => {
   assert.equal(C.tamanhoMapa([{ lat: 17.019, lng: -25.064 }], 1000).largura, 420);
   assert.equal(C.tamanhoMapa([], 1000).largura, 420);
 });
+
+test('experiencias_do_lugar_ordena_pelas_estrelas_da_propria_experiencia', () => {
+  const lugar = { slug: 'buracona', name_pt: 'Buracona', island_slug: 'sal' };
+  const units = [
+    { unit_id: 'operador-bom', island_slug: 'sal', avg_rating: 5, review_count: 30, recent_bookings: 5 },
+    { unit_id: 'experiencia-avaliada', island_slug: 'sal', unit_avg_rating: 4.2, unit_review_count: 3, recent_bookings: 0 },
+    { unit_id: 'sem-nada', island_slug: 'sal', recent_bookings: 1 },
+  ];
+  assert.deepEqual(C.experienciasDoLugar(lugar, units).itens.map(i => i.unit_id),
+    ['experiencia-avaliada', 'operador-bom', 'sem-nada']);
+});
