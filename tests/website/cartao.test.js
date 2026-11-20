@@ -388,3 +388,13 @@ test('agrupar_pinos_proximos', () => {
   /* longe uns dos outros: um marcador cada, pela ordem */
   assert.deepEqual(C.agruparPinos([{ x: 0, y: 0, i: 0 }, { x: 40, y: 0, i: 1 }], 26).map((p) => p.membros), [[0], [1]]);
 });
+
+test('estrelas_so_da_propria_experiencia', () => {
+  /* a media do operador (avg_rating) nunca aparece no cartao de uma experiencia */
+  assert.deepEqual(C.classificacaoCartao({ unit_avg_rating: 4.5, unit_review_count: 2, avg_rating: 3.1, review_count: 9 }), { media: 4.5, total: 2 });
+  assert.equal(C.classificacaoCartao({ unit_avg_rating: null, unit_review_count: 0, avg_rating: 4.8, review_count: 5 }), null);
+  assert.equal(C.classificacaoCartao({ avg_rating: 4.8, review_count: 5 }), null);
+  assert.equal(C.classificacaoCartao({ unit_avg_rating: 4.5, unit_review_count: 0 }), null);
+  assert.equal(C.classificacaoCartao({ unit_avg_rating: '4.0', unit_review_count: '3' }).media, 4);
+  assert.equal(C.classificacaoCartao(null), null);
+});

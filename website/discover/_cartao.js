@@ -222,6 +222,15 @@
     return (item && item.unit_name) || '';
   }
 
+  /* Estrelas do cartao: so a classificacao propria da experiencia (unit_avg_rating /
+     unit_review_count). A media do operador (avg_rating) nunca entra aqui. */
+  function classificacaoCartao(item) {
+    var media = Number(item && item.unit_avg_rating);
+    var total = Number(item && item.unit_review_count);
+    if (!(total >= 1) || !(media >= 1 && media <= 5)) return null;
+    return { media: media, total: total };
+  }
+
   /* Reservas dos ultimos 30 dias (recent_bookings da API) */
   function sinalProcura(item, lang) {
     var n = Number(item && item.recent_bookings);
@@ -455,6 +464,7 @@
     formatarPreco: formatarPreco,
     tituloCartao: tituloCartao,
     sinalProcura: sinalProcura,
+    classificacaoCartao: classificacaoCartao,
     hojeCaboVerde: hojeCaboVerde,
     proximaData: proximaData,
     miniaturaWikimedia: miniaturaWikimedia,
