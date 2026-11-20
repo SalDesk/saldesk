@@ -409,7 +409,7 @@ async function validarVoucherCode(slug, code, unitId, amount) {
     body: JSON.stringify({ code, unit_id: unitId, amount }),
   });
   const j = await r.json();
-  if (!r.ok) throw new Error(j.error || 'Erro ao validar codigo');
+  if (!r.ok) throw new Error(j.error || 'Erro ao validar código');
   return j.data;
 }
 
@@ -428,7 +428,7 @@ function VoucherField({ slug, unitId, amount, lang, onApplied }) {
         setResult({ ok: true, discount: r.discount });
         onApplied(code.trim(), r.discount);
       } else {
-        setResult({ ok: false, error: r.error || (lang === 'en' ? 'Invalid code' : 'Codigo invalido') });
+        setResult({ ok: false, error: r.error || (lang === 'en' ? 'Invalid code' : 'Código inválido') });
         onApplied(null, 0);
       }
     } catch (e) {
@@ -445,7 +445,7 @@ function VoucherField({ slug, unitId, amount, lang, onApplied }) {
 
   return (
     <div>
-      <label className={LB}>{lang === 'en' ? 'Discount code (optional)' : 'Codigo de desconto (opcional)'}</label>
+      <label className={LB}>{lang === 'en' ? 'Discount code (optional)' : 'Código de desconto (opcional)'}</label>
       <div className="flex gap-2">
         <input className={IN + ' uppercase font-mono'} value={code}
           onChange={e => { setCode(e.target.value); if (result) setResult(null); }}
