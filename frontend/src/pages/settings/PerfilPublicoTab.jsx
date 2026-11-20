@@ -68,8 +68,8 @@ export default function PerfilPublicoTab({ operator }) {
   /* Fotos de capa: os URLs guardados no operador (cover_images); o ImageUploader trata do upload, da ordem e da remocao. */
   const [covers, setCovers]         = useState(() => (Array.isArray(operator?.cover_images) ? operator.cover_images.filter(Boolean) : []));
   const [logoError, setLogoError]    = useState('');
-  const [descPt,  setDescPt]        = useState(operator?.description_pt || '');
-  const [descEn,  setDescEn]        = useState(operator?.description_en || '');
+  /* operators.description: a do registo, mostrada na pagina publica e na lista de operadores do catalogo */
+  const [descricao, setDescricao]   = useState(operator?.description || '');
   const [cancelPolicyPt, setCancelPolicyPt] = useState(operator?.cancellation_policy_pt || '');
   const [cancelPolicyEn, setCancelPolicyEn] = useState(operator?.cancellation_policy_en || '');
   /* prazo de cancelamento gratis em horas, como texto do select ('' = sem prazo definido) */
@@ -153,8 +153,7 @@ export default function PerfilPublicoTab({ operator }) {
     return {
       logo_url:       logoPreview,
       cover_images:   covers,
-      description_pt: descPt,
-      description_en: descEn,
+      description:    descricao,
       cancellation_policy_pt: cancelPolicyPt,
       cancellation_policy_en: cancelPolicyEn,
       free_cancellation_hours: horasCancel === '' ? null : Number(horasCancel),
@@ -224,10 +223,9 @@ export default function PerfilPublicoTab({ operator }) {
       {/* Description */}
       <Card header={<h3 className="font-display font-semibold text-sm text-n-700">Descricao</h3>}>
         <div className="space-y-3">
-          <Textarea label="Portugues" aria-label="Descricao em Portugues" value={descPt} onChange={e => setDescPt(e.target.value)}
-            rows={4} placeholder="Descricao do operador em portugues..." />
-          <Textarea label="Ingles (EN)" aria-label="Descricao em Ingles" value={descEn} onChange={e => setDescEn(e.target.value)}
-            rows={4} placeholder="Operator description in English..." />
+          <Textarea label="Descricao da empresa" value={descricao} onChange={e => setDescricao(e.target.value)}
+            rows={4} placeholder="Quem sao, o que fazem e onde estao..."
+            hint="Aparece na sua pagina publica e na lista de operadores do catalogo." />
         </div>
       </Card>
 

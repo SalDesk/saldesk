@@ -26,7 +26,7 @@ const OPERADOR = {
   id: 'op1', name: 'Sal Aventura', email: 'a@x.test', phone: '+238 111', whatsapp: '+238 222', address: 'Rua 1',
   language: 'en', currency: 'EUR', timezone: 'Europe/Lisbon', slug: 'demo',
   plan: 'pro', plan_status: 'active', plan_paid_until: dia(20), paypal_subscription_id: 'I-1',
-  description_pt: 'Desc PT', description_en: 'Desc EN', cancellation_policy_pt: 'CP PT', cancellation_policy_en: 'CP EN',
+  description: 'Desc PT', cancellation_policy_pt: 'CP PT', cancellation_policy_en: 'CP EN',
   custom_faqs: [
     { question_pt: 'P1', question_en: 'Q1', answer_pt: 'R1', answer_en: 'A1' },
     { question_pt: 'P2', question_en: '', answer_pt: '', answer_en: '' },
@@ -235,8 +235,10 @@ const arquivo = (nome, conteudo) => new File([conteudo], nome, { type: 'image/pn
 describe('Definicoes: Perfil Publico', () => {
   it('mostra_os_valores_do_operador', async () => {
     await abrirPerfil();
-    expect(campo('Portugues', 'textarea', within(cartao('Descricao')))).toHaveValue('Desc PT');
-    expect(campo('Ingles (EN)', 'textarea', within(cartao('Descricao')))).toHaveValue('Desc EN');
+    /* a descricao que o operador escreveu no registo e que os turistas lêem; nao ha descricao em ingles */
+    expect(screen.getByLabelText('Descricao da empresa')).toHaveValue('Desc PT');
+    expect(within(cartao('Descricao')).getAllByRole('textbox')).toHaveLength(1);
+    expect(screen.getByText('Aparece na sua pagina publica e na lista de operadores do catalogo.')).toBeInTheDocument();
     expect(campo('Portugues', 'textarea', within(cartao('Politica de cancelamento')))).toHaveValue('CP PT');
     expect(campo('Ingles (EN)', 'textarea', within(cartao('Politica de cancelamento')))).toHaveValue('CP EN');
     expect(screen.getByText('Pergunta 1')).toBeInTheDocument();
@@ -277,7 +279,7 @@ describe('Definicoes: Perfil Publico', () => {
 
   it('capas_sem_mexer_nao_vao_no_pedido_e_remover_todas_envia_lista_vazia', async () => {
     const { container } = await abrirPerfil({ ...OPERADOR, cover_images: ['https://cdn.test/a.jpg', 'https://cdn.test/b.jpg'] });
-    fireEvent.change(campo('Portugues', 'textarea', within(cartao('Descricao'))), { target: { value: 'Nova desc' } });
+    fireEvent.change(screen.getByLabelText('Descricao da empresa'), { target: { value: 'Nova desc' } });
     fireEvent.click(botao('Guardar perfil'));
     await waitFor(() => expect(updateOperator).toHaveBeenCalledTimes(1));
     expect(ultimoPut()).not.toHaveProperty('cover_images');
@@ -330,12 +332,12 @@ describe('Definicoes: Perfil Publico', () => {
     await abrirPerfil();
     fireEvent.click(botao('Adicionar pergunta'));
     fireEvent.change(campoFaq(3, 'Resposta PT', 'textarea'), { target: { value: 'so resposta' } });
-    fireEvent.change(campo('Portugues', 'textarea', within(cartao('Descricao'))), { target: { value: 'Nova desc' } });
+    fireEvent.change(screen.getByLabelText('Descricao da empresa'), { target: { value: 'Nova desc' } });
     fireEvent.click(botao('Guardar perfil'));
     /* so o que mudou: a FAQ so com resposta e descartada, por isso as FAQ nao mudaram */
-    await waitFor(() => expect(updateOperator).toHaveBeenCalledWith({ description_pt: 'Nova desc' }));
+    await waitFor(() => expect(updateOperator).toHaveBeenCalledWith({ description: 'Nova desc' }));
     expect(await screen.findByText('Guardado com sucesso')).toBeInTheDocument();
-    expect(useAuthStore.getState().operator.description_pt).toBe('Nova desc');
+    expect(useAuthStore.getState().operator.description).toBe('Nova desc');
   });
 
   it('o_cartao_do_chat_comeca_desligado_sem_campos_e_ligar_mostra_dias_horas_e_textos', async () => {
@@ -555,7 +557,7 @@ describe('Definicoes: Perfil Publico', () => {
   it('falha_ao_guardar_regista_console.error_e_nao_mostra_o_aviso', async () => {
     updateOperator.mockRejectedValue(new Error('x'));
     await abrirPerfil();
-    fireEvent.change(campo('Portugues', 'textarea', within(cartao('Descricao'))), { target: { value: 'Nova desc' } });
+    fireEvent.change(screen.getByLabelText('Descricao da empresa'), { target: { value: 'Nova desc' } });
     fireEvent.click(botao('Guardar perfil'));
     await waitFor(() => expect(spyErr).toHaveBeenCalled());
     spyErr.mockClear();
@@ -1074,7 +1076,7 @@ describe('Definicoes: design system (estrutura, Conta, Notificacoes e Seguranca)
 describe('Definicoes: design system (Perfil Publico)', () => {
   it('os_campos_tem_nome_acessivel_incluindo_os_pares_PT_EN_com_contexto', async () => {
     const { container } = await abrirPerfil();
-    ['Descricao em Portugues', 'Descricao em Ingles', 'Politica de cancelamento em Portugues', 'Politica de cancelamento em Ingles',
+    ['Descricao da empresa', 'Politica de cancelamento em Portugues', 'Politica de cancelamento em Ingles',
       'Pergunta 1 PT', 'Pergunta 1 EN', 'Resposta 1 PT', 'Resposta 1 EN', 'Pergunta 2 PT'].forEach(e => expect(screen.getByLabelText(e)).toBeInTheDocument());
     expect(screen.getByLabelText('Ficheiro do logo')).toHaveAttribute('type', 'file');
     expect(container.querySelectorAll('input[type="file"]')).toHaveLength(2);
@@ -1091,7 +1093,7 @@ describe('Definicoes: design system (Perfil Publico)', () => {
     const { container } = await abrirPerfil({ ...OPERADOR, cover_images: ['https://cdn.test/a.jpg', 'https://cdn.test/b.jpg'] });
     expect(container.querySelectorAll('div.group img')).toHaveLength(2);
     updateOperator.mockRejectedValueOnce(new Error('x'));
-    fireEvent.change(campo('Portugues', 'textarea', within(cartao('Descricao'))), { target: { value: 'Nova desc' } });
+    fireEvent.change(screen.getByLabelText('Descricao da empresa'), { target: { value: 'Nova desc' } });
     fireEvent.click(botao('Guardar perfil'));
     await waitFor(() => expect(spyErr).toHaveBeenCalled());
     spyErr.mockClear();
