@@ -44,7 +44,7 @@ export default function TravelerResetPassword() {
       await resetPassword(token, form.newPw);
       navigate('/viajante/entrar?reset=1');
     } catch (err) {
-      setError(err?.response?.data?.error || 'Link expirado ou invalido. Solicite um novo link de recuperacao.');
+      setError(err?.response?.data?.error || 'Link expirado ou inválido. Peça um novo link de recuperação.');
     } finally {
       setLoading(false);
     }
@@ -58,7 +58,7 @@ export default function TravelerResetPassword() {
             <AlertTriangle size={22} strokeWidth={1.75} className="text-error" />
           </div>
           <div>
-            <p className="font-display font-bold text-base text-n-900">Link invalido ou expirado</p>
+            <p className="font-display font-bold text-base text-n-900">Link inválido ou expirado</p>
             <p className="text-sm font-body text-n-500 mt-1">
               Este link de recuperacao ja nao e valido. Solicite um novo.
             </p>

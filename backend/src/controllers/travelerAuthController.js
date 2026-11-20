@@ -71,7 +71,7 @@ async function register(req, res, next) {
 
     if (error) {
       if (error.message.includes('already registered')) {
-        return res.status(409).json({ error: 'Email ja registado', code: 'EMAIL_EXISTS' });
+        return res.status(409).json({ error: 'Email já registado', code: 'EMAIL_EXISTS' });
       }
       return res.status(400).json({ error: error.message, code: 'REGISTER_ERROR' });
     }
@@ -86,7 +86,7 @@ async function register(req, res, next) {
       /* Sem isto o utilizador Auth ficava orfao -- conseguia fazer login mas
          req.traveler nunca resolvia, bloqueando permanentemente em requireTraveler. */
       await supabaseAdmin.auth.admin.deleteUser(data.user.id).catch(() => {});
-      return res.status(409).json({ error: 'Email ja registado', code: 'EMAIL_EXISTS' });
+      return res.status(409).json({ error: 'Email já registado', code: 'EMAIL_EXISTS' });
     }
 
     /* A conta fica activa logo (favoritos), mas as reservas desse email so aparecem depois de o
@@ -137,7 +137,7 @@ async function login(req, res, next) {
         });
       }
       return res.status(401).json({
-        error: 'Credenciais invalidas',
+        error: 'Credenciais inválidas',
         code: 'INVALID_CREDENTIALS',
         attempts_remaining: Math.max(0, MAX_LOGIN_ATTEMPTS - newState.count),
       });
@@ -151,7 +151,7 @@ async function login(req, res, next) {
       .single();
 
     if (!traveler) {
-      return res.status(403).json({ error: 'Esta conta nao e uma conta de viajante', code: 'NOT_TRAVELER' });
+      return res.status(403).json({ error: 'Esta conta não é uma conta de viajante', code: 'NOT_TRAVELER' });
     }
 
     setTravelerSessionCookie(res, authJson.refresh_token);
@@ -189,7 +189,7 @@ async function oauthComplete(req, res, next) {
 
     const { data: { user }, error } = await supabaseAdmin.auth.getUser(access_token);
     if (error || !user) {
-      return res.status(401).json({ error: 'Sessao OAuth invalida', code: 'INVALID_TOKEN' });
+      return res.status(401).json({ error: 'Sessão inválida. Tente entrar outra vez.', code: 'INVALID_TOKEN' });
     }
 
     let { data: traveler } = await supabaseAdmin
@@ -212,7 +212,7 @@ async function oauthComplete(req, res, next) {
 
     if (refresh_token) setTravelerSessionCookie(res, refresh_token);
 
-    return res.json({ data: { user, traveler }, message: 'Sessao OAuth associada' });
+    return res.json({ data: { user, traveler }, message: 'Sessão OAuth associada' });
   } catch (err) {
     next(err);
   }
@@ -231,7 +231,7 @@ async function refresh(req, res, next) {
        isso partilham o mesmo mapa de pedidos em curso. */
     const authJson = await exchangeRefreshTokenOnce(refresh_token);
     if (!authJson.access_token || authJson.error) {
-      return res.status(401).json({ error: 'Sessao expirada, faca login novamente', code: 'INVALID_REFRESH_TOKEN' });
+      return res.status(401).json({ error: 'A sessão expirou. Entre outra vez.', code: 'INVALID_REFRESH_TOKEN' });
     }
 
     const { data: traveler } = await supabaseAdmin
@@ -253,7 +253,7 @@ async function refresh(req, res, next) {
         user: authJson.user,
         traveler: traveler || null,
       },
-      message: 'Sessao renovada',
+      message: 'Sessão renovada',
     });
   } catch (err) {
     next(err);
@@ -274,7 +274,7 @@ async function logout(req, res, next) {
       await supabaseAdmin.auth.admin.signOut(token);
     }
     clearTravelerSessionCookie(res);
-    return res.json({ data: null, message: 'Sessao terminada' });
+    return res.json({ data: null, message: 'Sessão terminada' });
   } catch (err) {
     next(err);
   }
@@ -290,13 +290,13 @@ async function session(req, res, next) {
   try {
     const refreshToken = req.cookies?.[COOKIE_NAME];
     if (!refreshToken) {
-      return res.json({ data: null, message: 'Sem sessao activa' });
+      return res.json({ data: null, message: 'Sem sessão activa' });
     }
 
     const authJson = await exchangeRefreshTokenOnce(refreshToken);
     if (!authJson.access_token || authJson.error) {
       clearTravelerSessionCookie(res); // token invalido/ja consumido -- parar de o tentar reusar
-      return res.json({ data: null, message: 'Sessao expirada' });
+      return res.json({ data: null, message: 'Sessão expirada' });
     }
 
     const { data: traveler } = await supabaseAdmin
@@ -307,14 +307,14 @@ async function session(req, res, next) {
 
     if (!traveler) {
       clearTravelerSessionCookie(res);
-      return res.json({ data: null, message: 'Sem sessao activa' });
+      return res.json({ data: null, message: 'Sem sessão activa' });
     }
 
     setTravelerSessionCookie(res, authJson.refresh_token); // reamar com o token rodado
 
     return res.json({
       data: { access_token: authJson.access_token, traveler },
-      message: 'Sessao valida',
+      message: 'Sessão válida',
     });
   } catch (err) {
     next(err);
@@ -367,7 +367,7 @@ async function resetPassword(req, res, next) {
 }
 
 async function forgotPassword(req, res, next) {
-  const generic = { data: null, message: 'Se o email existir, ira receber um link de recuperacao.' };
+  const generic = { data: null, message: 'Se o email existir, irá receber um link de recuperação.' };
   try {
     const { email } = req.body;
     if (!email) {
@@ -401,10 +401,10 @@ async function forgotPassword(req, res, next) {
 async function sendVerificationEmail(req, res, next) {
   try {
     if (req.traveler.email_verificado === true) {
-      return res.json({ data: { ja_confirmado: true }, message: 'Email ja confirmado' });
+      return res.json({ data: { ja_confirmado: true }, message: 'Email já confirmado' });
     }
     await enviarPedidoVerificacao(supabaseAdmin, req.user, { nome: req.traveler.name, idioma: req.traveler.language });
-    return res.json({ data: { enviado: true }, message: 'Enviamos um novo link para o seu email' });
+    return res.json({ data: { enviado: true }, message: 'Enviámos um novo link para o seu email' });
   } catch (err) {
     next(err);
   }
@@ -417,9 +417,9 @@ async function confirmEmail(req, res, next) {
     const estado = await confirmarCodigoEmail(supabaseAdmin, u, t);
     if (estado === 'ok') return res.json({ data: { confirmado: true }, message: 'Email confirmado' });
     if (estado === 'expirado') {
-      return res.status(400).json({ error: 'Este link ja expirou. Entre na sua conta e peca um novo.', code: 'TOKEN_EXPIRED' });
+      return res.status(400).json({ error: 'Este link já expirou. Entre na sua conta e peça um novo.', code: 'TOKEN_EXPIRED' });
     }
-    return res.status(400).json({ error: 'Este link nao e valido ou ja foi substituido por outro.', code: 'INVALID_TOKEN' });
+    return res.status(400).json({ error: 'Este link não é válido ou já foi substituído por outro.', code: 'INVALID_TOKEN' });
   } catch (err) {
     next(err);
   }

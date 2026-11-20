@@ -54,7 +54,7 @@ export default function TravelerLogin() {
       setAuth(result.access_token, result.user, result.traveler, result.refresh_token);
       navigate('/viajante');
     } catch (err) {
-      setError(err.response?.data?.error || 'Credenciais invalidas.');
+      setError(err.response?.data?.error || 'Credenciais inválidas.');
     } finally {
       setLoading(false);
     }
