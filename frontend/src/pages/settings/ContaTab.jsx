@@ -9,6 +9,7 @@ import Card from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
 import Input, { Select } from '../../components/ui/Input';
 import { SaveBanner } from './shared';
+import { useT } from '../../i18n';
 
 /* ─────────────────────────────────────────────────────────
    TAB 1 — CONTA
@@ -18,6 +19,7 @@ const CURRENCIES = ['CVE', 'EUR', 'USD', 'GBP'];
 const LANGS      = ['pt', 'en', 'de', 'nl', 'fr', 'es'];
 
 export default function ContaTab({ operator, onSaved }) {
+  const t = useT();
   const { setOperator } = useAuthStore();
   const startTour = useUiStore((s) => s.startTour);
   const navigate  = useNavigate();
@@ -50,33 +52,33 @@ export default function ContaTab({ operator, onSaved }) {
       setSaved(true); setTimeout(() => setSaved(false), 3000);
       onSaved?.();
     } catch (err) {
-      setError(err.response?.data?.error || 'Erro ao guardar');
+      setError(err.response?.data?.error || t('settings.conta.saveError'));
     } finally { setSaving(false); }
   }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5 max-w-2xl">
-      <Card header={<h3 className="font-display font-semibold text-sm text-n-700">Dados da empresa</h3>}>
+      <Card header={<h3 className="font-display font-semibold text-sm text-n-700">{t('settings.conta.companyData')}</h3>}>
         <div className="space-y-4">
-          <Input label="Nome da empresa" aria-label="Nome da empresa" value={form.name} onChange={set('name')} required />
-          <Input label="Email" aria-label="Email" type="email" value={form.email} onChange={set('email')} required />
+          <Input label={t('settings.conta.companyName')} aria-label={t('settings.conta.companyName')} value={form.name} onChange={set('name')} required />
+          <Input label={t('settings.conta.email')} aria-label={t('settings.conta.email')} type="email" value={form.email} onChange={set('email')} required />
           <div className="grid grid-cols-2 gap-3">
-            <Input label="Telefone" aria-label="Telefone" type="tel" value={form.phone} onChange={set('phone')} placeholder="+238 900 0000" />
+            <Input label={t('settings.conta.phone')} aria-label={t('settings.conta.phone')} type="tel" value={form.phone} onChange={set('phone')} placeholder="+238 900 0000" />
             <Input label="WhatsApp" aria-label="WhatsApp" type="tel" value={form.whatsapp} onChange={set('whatsapp')} placeholder="+238 900 0000" />
           </div>
-          <Input label="Morada" aria-label="Morada" value={form.address} onChange={set('address')} placeholder="Rua, localidade" />
+          <Input label={t('settings.conta.address')} aria-label={t('settings.conta.address')} value={form.address} onChange={set('address')} placeholder={t('settings.conta.addressPlaceholder')} />
         </div>
       </Card>
 
-      <Card header={<h3 className="font-display font-semibold text-sm text-n-700">Preferencias</h3>}>
+      <Card header={<h3 className="font-display font-semibold text-sm text-n-700">{t('settings.conta.preferences')}</h3>}>
         <div className="grid grid-cols-3 gap-3">
-          <Select label="Idioma" aria-label="Idioma" value={form.language} onChange={set('language')}>
+          <Select label={t('settings.conta.language')} aria-label={t('settings.conta.language')} value={form.language} onChange={set('language')}>
             {LANGS.map(l => <option key={l} value={l}>{l.toUpperCase()}</option>)}
           </Select>
-          <Select label="Moeda" aria-label="Moeda" value={form.currency} onChange={set('currency')}>
+          <Select label={t('settings.conta.currency')} aria-label={t('settings.conta.currency')} value={form.currency} onChange={set('currency')}>
             {CURRENCIES.map(c => <option key={c} value={c}>{c}</option>)}
           </Select>
-          <Select label="Fuso horario" aria-label="Fuso horario" value={form.timezone} onChange={set('timezone')}>
+          <Select label={t('settings.conta.timezone')} aria-label={t('settings.conta.timezone')} value={form.timezone} onChange={set('timezone')}>
             {TIMEZONES.map(tz => <option key={tz} value={tz}>{tz.replace('_', ' ')}</option>)}
           </Select>
         </div>
@@ -84,15 +86,15 @@ export default function ContaTab({ operator, onSaved }) {
 
       {error && <p className="text-sm font-body px-3 py-2 rounded bg-[var(--error-light)] text-[var(--error)]">{error}</p>}
       <div className="flex items-center gap-3">
-        <Button type="submit" loading={saving}>Guardar alteracoes</Button>
+        <Button type="submit" loading={saving}>{t('settings.conta.save')}</Button>
         <SaveBanner saved={saved} />
       </div>
 
-      <Card header={<h3 className="font-display font-semibold text-sm text-n-700">Ajuda</h3>}>
+      <Card header={<h3 className="font-display font-semibold text-sm text-n-700">{t('settings.conta.help')}</h3>}>
         <div className="flex items-center justify-between gap-4">
           <div>
-            <p className="text-sm font-body font-medium text-n-800">Tour de boas-vindas</p>
-            <p className="text-xs font-body text-n-500 mt-0.5">Revê rapidamente onde encontrar cada secção principal.</p>
+            <p className="text-sm font-body font-medium text-n-800">{t('settings.conta.tourTitle')}</p>
+            <p className="text-xs font-body text-n-500 mt-0.5">{t('settings.conta.tourHint')}</p>
           </div>
           <Button
             type="button"
@@ -100,7 +102,7 @@ export default function ContaTab({ operator, onSaved }) {
             icon={Compass}
             onClick={() => { startTour(); navigate('/'); }}
           >
-            Rever tour
+            {t('settings.conta.tourButton')}
           </Button>
         </div>
       </Card>
