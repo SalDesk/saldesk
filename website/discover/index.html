@@ -160,6 +160,15 @@
     .xp-map-sel:empty{display:none}
     .xp-map-hint{margin-top:10px;font-size:.8125rem;color:var(--n500)}
     .xp-map-note{margin-top:24px;font-size:.875rem;color:var(--n500)}
+    /* marcador sozinho: so um ponto; o numero fica para os grupos (quantas experiencias junta) */
+    .xp-pin span:empty{width:8px;height:8px;border-radius:50%;background:#fff}
+    .xp-pin.on span:empty,.xp-pin:hover span:empty{background:var(--ocean-900)}
+    /* computador: mapa a esquerda (largura a medida da ilha), cartoes escolhidos a direita */
+    .xp-map-body.lado{display:grid;grid-template-columns:var(--mapa-w) minmax(0,1fr);gap:24px;align-items:start}
+    .xp-map-body.lado .xp-map-hint{margin-top:0;min-height:160px;padding:24px;border:1px dashed var(--n300);border-radius:16px;display:flex;align-items:center;justify-content:center;text-align:center}
+    .xp-map-body.lado .xp-map{position:sticky;top:88px}
+    .xp-map-body.lado .xp-map-sel{margin-top:0;grid-template-columns:repeat(auto-fill,minmax(240px,1fr))}
+    .xp-map-body.lado .xp-map-side:has(.xp-map-sel:not(:empty)) .xp-map-hint{display:none}
 
     /* ── FILTROS: BENEFICIOS, PRECO, DURACAO E ORDENACAO ── */
     .filters2{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin:-12px 0 26px}
@@ -734,7 +743,7 @@
   </div>
 </footer>
 
-<script src="_cartao.js?v=20261120d"></script>
+<script src="_cartao.js?v=20261120e"></script>
 <script>
 /* ══════════════════════════════════════════
    CONSTANTS
@@ -1488,7 +1497,6 @@ function setVista(v) {
 
 /* Um mapa por ilha, enquadrado nas experiencias com localizacao; azulejos do OpenStreetMap
    postos a mao (sem biblioteca). Tocar num marcador mostra o cartao dessa experiencia. */
-const ALTURA_MAPA = 360;
 /* marcador escolhido em cada ilha (sobrevive a redesenhos: idioma, moeda, barra do browser no telemovel) */
 let escolhaMapa = {};
 let larguraMapa = 0;
@@ -1496,8 +1504,8 @@ function renderMapa(localizadas) {
   const C = window.CartaoDiscover;
   const cont = document.getElementById('act-map');
   const en = L() === 'en';
-  const largura = Math.max(280, cont.clientWidth || cont.parentElement.clientWidth || 700);
-  larguraMapa = largura;
+  const disponivel = Math.max(280, cont.clientWidth || cont.parentElement.clientWidth || 700);
+  larguraMapa = disponivel;
   const grupos = [];
   localizadas.forEach(x => {
     const ilha = x.item.island_name ? C.nomeIlha(x.item, L()) : 'Cabo Verde';
@@ -1508,17 +1516,17 @@ function renderMapa(localizadas) {
   const semLocal = filtered.length - localizadas.length;
   cont.innerHTML = grupos.map((g, gi) => {
     /* zoom maximo 13: com uma so experiencia ainda se ve em que parte da ilha fica */
-    const enq = C.enquadrarMapa(g.itens.map(x => x.p), largura, ALTURA_MAPA, { zMax: 13 });
-    const azulejos = C.azulejosDoMapa(enq, largura, ALTURA_MAPA).map(t =>
+    const tam = C.tamanhoMapa(g.itens.map(x => x.p), disponivel);
+    const enq = C.enquadrarMapa(g.itens.map(x => x.p), tam.largura, tam.altura, { zMax: 13 });
+    const azulejos = C.azulejosDoMapa(enq, tam.largura, tam.altura).map(t =>
       `<img src="https://tile.openstreetmap.org/${t.z}/${t.x}/${t.y}.png" alt="" loading="lazy" decoding="async" style="left:${Math.round(t.left)}px;top:${Math.round(t.top)}px">`).join('');
     /* marcadores a menos de 26 px juntam-se num so (ex.: varios tours do mesmo cais) */
     const projectados = g.itens.map((x, i) => { const pt = C.projectar(x.p.lat, x.p.lng, enq.zoom); return { x: pt.x - enq.x0, y: pt.y - enq.y0, i }; });
-    let numero = 0;
     const pinos = C.agruparPinos(projectados, 26).map(pg => {
       const membros = pg.membros.map(i => g.itens[i].item);
       const titulos = membros.map(it => C.tituloCartao(it, C.lerMeta(it), L()));
       const multi = membros.length > 1;
-      const rotulo = multi ? String(membros.length) : String(++numero);
+      const rotulo = C.rotuloPino(membros.length);
       const nome = multi ? `${membros.length} ${en ? 'experiences' : 'experiências'}: ${titulos.join(', ')}` : titulos[0];
       const chave = membros.map(it => it.unit_id).join('|');
       const on = escolhaMapa[g.ilha] === chave;
@@ -1527,11 +1535,15 @@ function renderMapa(localizadas) {
     const n = g.itens.length;
     return `<section class="xp-map-group">
       <h3 class="xp-map-title">${esc(g.ilha)}<span>${n} ${en ? (n === 1 ? 'experience' : 'experiences') : (n === 1 ? 'experiência' : 'experiências')}</span></h3>
-      <div class="xp-map" style="height:${ALTURA_MAPA}px">${azulejos}${pinos}
-        <span class="xp-map-attr">&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap contributors</a></span>
+      <div class="xp-map-body${tam.lado ? ' lado' : ''}" style="--mapa-w:${tam.largura}px">
+        <div class="xp-map" style="height:${tam.altura}px">${azulejos}${pinos}
+          <span class="xp-map-attr">&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap contributors</a></span>
+        </div>
+        <div class="xp-map-side">
+          <p class="xp-map-hint">${en ? 'Select a pin to see the experience.' : 'Toque num marcador para ver a experiência.'}</p>
+          <div class="xp-map-sel" id="xp-map-sel-${gi}" aria-live="polite"></div>
+        </div>
       </div>
-      <p class="xp-map-hint">${en ? 'Select a pin to see the experience.' : 'Toque num marcador para ver a experiência.'}</p>
-      <div class="xp-map-sel" id="xp-map-sel-${gi}" aria-live="polite"></div>
     </section>`;
   }).join('')
     + (semLocal > 0

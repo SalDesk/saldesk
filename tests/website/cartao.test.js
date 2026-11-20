@@ -398,3 +398,37 @@ test('estrelas_so_da_propria_experiencia', () => {
   assert.equal(C.classificacaoCartao({ unit_avg_rating: '4.0', unit_review_count: '3' }).media, 4);
   assert.equal(C.classificacaoCartao(null), null);
 });
+
+test('rotulo_do_pino_so_nos_grupos', () => {
+  assert.equal(C.rotuloPino(1), '');
+  assert.equal(C.rotuloPino(4), '4');
+});
+
+const SAL = [{ lat: 16.6025, lng: -22.9010 }, { lat: 16.7617, lng: -22.8930 }, { lat: 16.7555, lng: -22.9455 }];
+
+test('tamanho_do_mapa_no_telemovel_ocupa_a_largura', () => {
+  assert.deepEqual(C.tamanhoMapa(SAL, 375), { largura: 375, altura: 360, lado: false });
+});
+
+test('tamanho_do_mapa_ilha_alta_fica_estreita_ao_lado_dos_cartoes', () => {
+  const t = C.tamanhoMapa(SAL, 1000);
+  assert.equal(t.lado, true);
+  assert.equal(t.altura, 440);
+  assert.equal(t.largura, 420);
+  const enq = C.enquadrarMapa(SAL, t.largura, t.altura, { zMax: 13 });
+  const ps = SAL.map((p) => C.projectar(p.lat, p.lng, enq.zoom));
+  ps.forEach((p) => {
+    assert.ok(p.x - enq.x0 >= 40 && p.x - enq.x0 <= t.largura - 40);
+    assert.ok(p.y - enq.y0 >= 40 && p.y - enq.y0 <= t.altura - 40);
+  });
+});
+
+test('tamanho_do_mapa_pontos_espalhados_na_horizontal_usam_o_maximo', () => {
+  const t = C.tamanhoMapa([{ lat: 16.75, lng: -23.2 }, { lat: 16.76, lng: -22.6 }], 1000);
+  assert.equal(t.largura, 620);
+});
+
+test('tamanho_do_mapa_um_so_ponto_ou_nenhum', () => {
+  assert.equal(C.tamanhoMapa([{ lat: 17.019, lng: -25.064 }], 1000).largura, 420);
+  assert.equal(C.tamanhoMapa([], 1000).largura, 420);
+});
