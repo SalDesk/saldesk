@@ -5,6 +5,7 @@ import {
 } from 'lucide-react';
 import api from '../../services/api';
 import { updateOperator } from '../../services/authService';
+import { camposAlterados } from '../../utils/camposAlterados';
 import useAuthStore from '../../store/authStore';
 import Card from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
@@ -147,28 +148,41 @@ export default function PerfilPublicoTab({ operator }) {
 
   const temPoliticaEscrita = !!(cancelPolicyPt.trim() || cancelPolicyEn.trim());
 
+  /* O que o formulario gravaria agora */
+  function montarPayload() {
+    return {
+      logo_url:       logoPreview,
+      cover_images:   covers,
+      description_pt: descPt,
+      description_en: descEn,
+      cancellation_policy_pt: cancelPolicyPt,
+      cancellation_policy_en: cancelPolicyEn,
+      free_cancellation_hours: horasCancel === '' ? null : Number(horasCancel),
+      auto_confirm_bookings: autoConfirm,
+      custom_faqs: faqs.filter(f => f.question_pt || f.question_en),
+      /* null quando nunca foi configurado e esta desligado (nao escreve valores por omissao) */
+      chat_auto_reply: chatAuto.enabled || operator?.chat_auto_reply ? chatAuto : null,
+      /* null repoe a cor original */
+      brand_color: corNormal || null,
+    };
+  }
+  /* O que estava gravado quando o separador abriu (e depois, o da ultima gravacao): guardar so envia
+     o que mudou desde ai, para nao apagar o que outro separador do browser gravou entretanto */
+  const baseRef = useRef(null);
+  if (baseRef.current === null) baseRef.current = montarPayload();
+
   async function handleSave(e) {
     e.preventDefault();
     if (erroChat || erroCor) return;
     setSaving(true);
     try {
-      const payload = {
-        logo_url:       logoPreview,
-        cover_images:   covers,
-        description_pt: descPt,
-        description_en: descEn,
-        cancellation_policy_pt: cancelPolicyPt,
-        cancellation_policy_en: cancelPolicyEn,
-        free_cancellation_hours: horasCancel === '' ? null : Number(horasCancel),
-        auto_confirm_bookings: autoConfirm,
-        custom_faqs: faqs.filter(f => f.question_pt || f.question_en),
-        /* null quando nunca foi configurado e esta desligado (nao escreve valores por omissao) */
-        chat_auto_reply: chatAuto.enabled || operator?.chat_auto_reply ? chatAuto : null,
-        /* null repoe a cor original */
-        brand_color: corNormal || null,
-      };
-      const updated = await updateOperator(payload);
-      setOperator(updated);
+      const payload = montarPayload();
+      const alterados = camposAlterados(baseRef.current, payload);
+      if (Object.keys(alterados).length) {
+        const updated = await updateOperator(alterados);
+        setOperator(updated);
+      }
+      baseRef.current = payload;
       setSaved(true); setTimeout(() => setSaved(false), 3000);
     } catch (err) { console.error(err); }
     finally { setSaving(false); }
