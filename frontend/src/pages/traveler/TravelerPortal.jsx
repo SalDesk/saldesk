@@ -9,7 +9,7 @@ import useTravelerAuthStore from '../../store/travelerAuthStore';
 import useUiStore from '../../store/uiStore';
 import { useThemeEffect } from '../../hooks/useThemeEffect';
 import * as travelerService from '../../services/travelerService';
-import { logout as apiLogout, changePassword, forgotPassword } from '../../services/travelerAuthService';
+import { logout as apiLogout, changePassword, forgotPassword, sendVerificationEmail } from '../../services/travelerAuthService';
 import { discoverUnits } from '../../services/publicService';
 import { validateImageFile } from '../../services/uploadService';
 import Logo from '../../components/shared/Logo';
@@ -66,15 +66,46 @@ function splitBookings(bookings) {
   return { upcoming, past };
 }
 
+/* ─── Email por confirmar: reservas, recibos e avaliacoes so depois de confirmar (o servidor tambem
+   o exige). emailOk: true confirmado, false por confirmar, undefined ainda a saber. ─── */
+function AvisoConfirmarEmail({ email }) {
+  const [estado, setEstado] = useState('');  // '' | 'a_enviar' | 'enviado' | 'erro'
+  async function reenviar() {
+    setEstado('a_enviar');
+    try { await sendVerificationEmail(); setEstado('enviado'); }
+    catch { setEstado('erro'); }
+  }
+  return (
+    <Card>
+      <div className="text-center py-8 px-2">
+        <ShieldCheck size={28} strokeWidth={1.5} className="mx-auto text-ocean-700 dark:text-ocean-300 mb-2" />
+        <p className="font-display font-bold text-n-900 dark:text-n-50">Confirme o seu email para ver as suas reservas</p>
+        <p className="text-sm font-body text-n-500 dark:text-n-400 mt-1 max-w-md mx-auto">
+          Enviámos um link para {email}. Abra-o para ver as suas reservas, descarregar recibos e deixar avaliações. Os guardados já funcionam.
+        </p>
+        <Button variant="ghost" size="sm" className="mt-3" onClick={reenviar} disabled={estado === 'a_enviar'}>
+          Reenviar email
+        </Button>
+        {estado === 'enviado' && <p role="status" className="text-sm font-body text-ocean-700 dark:text-ocean-300 mt-2">Enviámos um novo link para {email}.</p>}
+        {estado === 'erro' && <p role="alert" className="text-sm font-body text-error mt-2">Não foi possível enviar o email. Tente daqui a pouco.</p>}
+      </div>
+    </Card>
+  );
+}
+
 /* ─── Dashboard ─── */
 function DashboardTab({ traveler, onNavigate }) {
   const [bookings, setBookings] = useState(null);
   const [wishlist, setWishlist] = useState(null);
+  const emailOk = traveler?.email_verificado;
 
   useEffect(() => {
-    travelerService.getBookings().then(setBookings).catch(() => setBookings([]));
     travelerService.getWishlist().then(setWishlist).catch(() => setWishlist([]));
   }, []);
+  useEffect(() => {
+    if (emailOk !== true) return;
+    travelerService.getBookings().then(setBookings).catch(() => setBookings([]));
+  }, [emailOk]);
 
   const { upcoming } = bookings ? splitBookings(bookings) : { upcoming: [] };
   const nextTrip = upcoming[0];
@@ -111,6 +142,7 @@ function DashboardTab({ traveler, onNavigate }) {
         </button>
       </div>
 
+      {emailOk === false ? <AvisoConfirmarEmail email={traveler?.email} /> : (
       <Card header={<h3 className="font-display font-semibold text-sm text-n-700 dark:text-n-300">Proxima viagem</h3>}>
         {!bookings ? (
           <div className="flex justify-center py-8"><LoadingSpinner /></div>
@@ -137,6 +169,7 @@ function DashboardTab({ traveler, onNavigate }) {
           </div>
         )}
       </Card>
+      )}
     </div>
   );
 }
@@ -364,14 +397,16 @@ function BookingRow({ booking }) {
   );
 }
 
-function BookingsTab({ onNavigate }) {
+function BookingsTab({ onNavigate, emailOk, email }) {
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading]   = useState(true);
 
   useEffect(() => {
+    if (emailOk !== true) return;
     travelerService.getBookings().then(setBookings).catch(() => {}).finally(() => setLoading(false));
-  }, []);
+  }, [emailOk]);
 
+  if (emailOk === false) return <AvisoConfirmarEmail email={email} />;
   if (loading) return <div className="flex justify-center py-16"><LoadingSpinner /></div>;
 
   if (!bookings.length) {
@@ -419,14 +454,15 @@ function BookingsTab({ onNavigate }) {
 }
 
 /* ─── Facturas ─── */
-function InvoicesTab() {
+function InvoicesTab({ emailOk, email }) {
   const [bookings, setBookings]     = useState([]);
   const [loading, setLoading]       = useState(true);
   const [downloadingId, setDownloadingId] = useState(null);
 
   useEffect(() => {
+    if (emailOk !== true) return;
     travelerService.getBookings().then(setBookings).catch(() => {}).finally(() => setLoading(false));
-  }, []);
+  }, [emailOk]);
 
   async function handleDownload(id) {
     setDownloadingId(id);
@@ -439,6 +475,7 @@ function InvoicesTab() {
     }
   }
 
+  if (emailOk === false) return <AvisoConfirmarEmail email={email} />;
   if (loading) return <div className="flex justify-center py-16"><LoadingSpinner /></div>;
 
   if (!bookings.length) {
@@ -597,18 +634,20 @@ function GivenReviewCard({ booking }) {
   );
 }
 
-function ReviewsTab() {
+function ReviewsTab({ emailOk, email }) {
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading]   = useState(true);
 
   useEffect(() => {
+    if (emailOk !== true) return;
     travelerService.getBookings().then(setBookings).catch(() => {}).finally(() => setLoading(false));
-  }, []);
+  }, [emailOk]);
 
   function handleSubmitted(reservationId, review) {
     setBookings(prev => prev.map(b => b.id === reservationId ? { ...b, review, can_review: false } : b));
   }
 
+  if (emailOk === false) return <AvisoConfirmarEmail email={email} />;
   if (loading) return <div className="flex justify-center py-16"><LoadingSpinner /></div>;
 
   const pending = bookings.filter(b => b.can_review);
@@ -974,6 +1013,17 @@ export default function TravelerPortal() {
 
   useEffect(() => { loadNotifications(); }, [loadNotifications]);
 
+  /* Perfil fresco: traz email_verificado (a sessao guardada pode ser de antes de confirmar).
+     Se falhar, os separadores tentam na mesma e o servidor decide. */
+  useEffect(() => {
+    travelerService.getProfile()
+      .then(p => setTraveler({ ...useTravelerAuthStore.getState().traveler, ...p }))
+      .catch(() => {
+        const t = useTravelerAuthStore.getState().traveler;
+        if (t && t.email_verificado === undefined) setTraveler({ ...t, email_verificado: true });
+      });
+  }, [setTraveler]);
+
   async function handleMarkRead(id) {
     setNotifications(prev => prev && {
       items: prev.items.map(n => n.id === id ? { ...n, is_read: true } : n),
@@ -1158,9 +1208,9 @@ export default function TravelerPortal() {
           {tab === 'dashboard'   && <DashboardTab traveler={traveler} onNavigate={goTo} />}
           {tab === 'perfil'      && <EditProfileTab traveler={traveler} onUpdate={setTraveler} />}
           {tab === 'password'    && <ChangePasswordTab />}
-          {tab === 'reservas'    && <BookingsTab onNavigate={goTo} />}
-          {tab === 'facturas'    && <InvoicesTab />}
-          {tab === 'avaliacoes'  && <ReviewsTab />}
+          {tab === 'reservas'    && <BookingsTab onNavigate={goTo} emailOk={traveler?.email_verificado} email={traveler?.email} />}
+          {tab === 'facturas'    && <InvoicesTab emailOk={traveler?.email_verificado} email={traveler?.email} />}
+          {tab === 'avaliacoes'  && <ReviewsTab emailOk={traveler?.email_verificado} email={traveler?.email} />}
           {tab === 'wishlist'    && <WishlistTab />}
           {tab === 'notificacoes' && <NotificationsTab notifications={notifications} onRead={handleMarkRead} onNavigate={goTo} />}
         </div>
