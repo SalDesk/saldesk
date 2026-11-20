@@ -129,6 +129,23 @@
     return 'mais100';
   }
 
+  /* Rotulo das faixas de preco (50 e 100 EUR) na moeda escolhida no topo da pagina */
+  function rotuloFaixaPreco(chave, moeda, lang, taxa) {
+    var en = lang === 'en';
+    if (moeda === 'CVE') {
+      var t = taxa || 110;
+      var a = (50 * t).toLocaleString('pt-PT'); var b = (100 * t).toLocaleString('pt-PT');
+      if (chave === 'ate50') return (en ? 'Up to ' : 'Até ') + a + ' CVE';
+      if (chave === '50a100') return a + '–' + b + ' CVE';
+      if (chave === 'mais100') return (en ? 'Over ' : 'Mais de ') + b + ' CVE';
+      return '';
+    }
+    if (chave === 'ate50') return en ? 'Up to €50' : 'Até 50 €';
+    if (chave === '50a100') return en ? '€50–100' : '50–100 €';
+    if (chave === 'mais100') return en ? 'Over €100' : 'Mais de 100 €';
+    return '';
+  }
+
   function duracaoMinutos(item, meta) {
     var horas = Number(meta && meta.duration);
     if (horas > 0) return horas * 60;
@@ -475,6 +492,7 @@
     incluidosTexto: incluidosTexto,
     beneficiosCartao: beneficiosCartao,
     faixaPreco: faixaPreco,
+    rotuloFaixaPreco: rotuloFaixaPreco,
     faixaDuracao: faixaDuracao,
     temBeneficio: temBeneficio,
     passaFiltrosExtra: passaFiltrosExtra,

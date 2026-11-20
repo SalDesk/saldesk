@@ -1415,7 +1415,9 @@ function renderExtraFilters() {
       .filter(([k]) => filtrosExtra[grupo] === k || (cont[k] > 0 && cont[k] < total))
       .map(([k, pt, enTxt]) => {
         const on = filtrosExtra[grupo] === k;
-        return `<button type="button" class="chip xchip ${on ? 'active' : ''}" aria-pressed="${on}" data-grupo="${grupo}" data-chave="${k}" onclick="setExtra(this.dataset.grupo,this.dataset.chave)">${esc(en ? enTxt : pt)} <span class="chip-count">${cont[k]}</span></button>`;
+        /* o preco segue a moeda escolhida no topo (EUR ou CVE) */
+        const rotulo = grupo === 'preco' ? C.rotuloFaixaPreco(k, currency, L(), EUR_CVE) : (en ? enTxt : pt);
+        return `<button type="button" class="chip xchip ${on ? 'active' : ''}" aria-pressed="${on}" data-grupo="${grupo}" data-chave="${k}" onclick="setExtra(this.dataset.grupo,this.dataset.chave)">${esc(rotulo)} <span class="chip-count">${cont[k]}</span></button>`;
       }).join('');
   }).filter(Boolean);
   chips.innerHTML = grupos.join('<span class="xsep" aria-hidden="true"></span>');
@@ -1635,6 +1637,7 @@ function setCurrency(cur) {
   currency = cur;
   const pill = document.getElementById('cur-toggle');
   if (pill) pill.textContent = cur;
+  renderExtraFilters();
   renderGrid();
   renderRecommended();
 }

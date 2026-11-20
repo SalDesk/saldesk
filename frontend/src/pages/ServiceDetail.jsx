@@ -940,7 +940,15 @@ function NotFoundPage({ slug, lang }) {
 /* ══════════════════════════════════════════════════
    MAIN COMPONENT
 ══════════════════════════════════════════════════ */
+/* Passar para um servico relacionado muda so o :id do endereco: sem recomecar, a pagina ficava com o
+   mapa do servico anterior (o Leaflet so le o centro quando nasce), com o formulario de reserva a meio
+   e com os dados para o Google do servico antigo no endereco do novo. A chave recomeca tudo. */
 export default function ServiceDetail() {
+  const { slug, id } = useParams();
+  return <ServiceDetailPagina key={`${slug}/${id}`} />;
+}
+
+function ServiceDetailPagina() {
   const { slug, id } = useParams();
   const navigate     = useNavigate();
   const [searchParams] = useSearchParams();
