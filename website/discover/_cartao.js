@@ -428,6 +428,31 @@
     return grupos.map(function (g) { return { x: g.x, y: g.y, membros: g.membros }; });
   }
 
+  /* Numero no marcador: so nos grupos (quantas experiencias junta); um marcador sozinho leva so um ponto */
+  function rotuloPino(n) {
+    return n > 1 ? String(n) : '';
+  }
+
+  /* Tamanho do mapa de cada ilha. No telemovel ocupa a largura toda (cartoes por baixo).
+     No computador fica ao lado dos cartoes, com a largura ajustada a forma dos pontos (uma ilha
+     alta como o Sal fica estreita, sem uma faixa de mar dos dois lados): entre 42% e 62% do espaco. */
+  function tamanhoMapa(pontos, larguraDisponivel) {
+    var disp = Math.round(larguraDisponivel);
+    if (!(disp >= 720)) return { largura: disp, altura: 360, lado: false };
+    var altura = 440; var margem = 40;
+    var min = Math.round(disp * 0.42); var max = Math.round(disp * 0.62);
+    var ps = (Array.isArray(pontos) ? pontos : []).filter(function (p) { return p && isFinite(p.lat) && isFinite(p.lng); })
+      .map(function (p) { return projectar(p.lat, p.lng, 0); });
+    var desejada = 0;
+    if (ps.length > 1) {
+      var xs = ps.map(function (p) { return p.x; }); var ys = ps.map(function (p) { return p.y; });
+      var bw = Math.max.apply(null, xs) - Math.min.apply(null, xs);
+      var bh = Math.max.apply(null, ys) - Math.min.apply(null, ys);
+      desejada = bh > 0 ? bw / bh * (altura - 2 * margem) + 2 * margem : (bw > 0 ? Infinity : 0);
+    }
+    return { largura: Math.round(Math.max(min, Math.min(max, desejada))), altura: altura, lado: true };
+  }
+
   function ilhasDosItens(itens) {
     var cont = {};
     (Array.isArray(itens) ? itens : []).forEach(function (i) {
@@ -459,6 +484,8 @@
     enquadrarMapa: enquadrarMapa,
     azulejosDoMapa: azulejosDoMapa,
     agruparPinos: agruparPinos,
+    rotuloPino: rotuloPino,
+    tamanhoMapa: tamanhoMapa,
     precoCartao: precoCartao,
     precoCrianca: precoCrianca,
     formatarPreco: formatarPreco,
