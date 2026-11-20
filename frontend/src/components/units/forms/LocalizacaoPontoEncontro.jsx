@@ -3,7 +3,7 @@ import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import Input from '../../ui/Input';
-import { lerCoordenadas, dentroDeCaboVerde } from '../../../utils/coordenadas';
+import { lerCoordenadas, dentroDeCaboVerde, eLinkCurto } from '../../../utils/coordenadas';
 
 /* Localizacao do ponto de encontro de uma actividade (units.lat / units.lng): mapa onde se
    clica ou arrasta o marcador, campo para colar coordenadas ou um link do Google Maps, e os
@@ -46,7 +46,12 @@ export default function LocalizacaoPontoEncontro({ lat, lng, onChange }) {
     const t = (texto ?? colado).trim();
     if (!t) { setErro(''); return; }
     const r = lerCoordenadas(t);
-    if (!r) { setErro('Não encontrei coordenadas neste texto.'); return; }
+    if (!r) {
+      setErro(eLinkCurto(t)
+        ? 'Links curtos não trazem coordenadas. Abra o link e copie o endereço completo do browser, ou copie as coordenadas no Google Maps.'
+        : 'Não encontrei coordenadas neste texto.');
+      return;
+    }
     setErro('');
     setColado('');
     escolher(r.lat, r.lng, true);
@@ -79,6 +84,7 @@ export default function LocalizacaoPontoEncontro({ lat, lng, onChange }) {
         onBlur={() => lerColado()}
         onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); lerColado(); } }}
         placeholder="Ex: 16.7631, -22.8950"
+        hint="No Google Maps: clique com o botão direito no local e escolha as coordenadas para as copiar."
         error={erro || undefined}
       />
 

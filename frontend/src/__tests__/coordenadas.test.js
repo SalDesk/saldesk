@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { lerCoordenadas, dentroDeCaboVerde } from '../utils/coordenadas';
+import { lerCoordenadas, dentroDeCaboVerde, eLinkCurto } from '../utils/coordenadas';
 
 /* Coordenadas coladas pelo operador: par de numeros ou link do Google Maps */
 describe('lerCoordenadas', () => {
@@ -32,6 +32,41 @@ describe('lerCoordenadas', () => {
     expect(lerCoordenadas('')).toBeNull();
     expect(lerCoordenadas(null)).toBeNull();
     expect(lerCoordenadas(undefined)).toBeNull();
+  });
+});
+
+describe('lerCoordenadas: formatos reais', () => {
+  const PONTO = { lat: 16.7631, lng: -22.895 };
+
+  it('virgula_codificada_espaco_e_menos_unicode', () => {
+    expect(lerCoordenadas('https://www.google.com/maps/search/?api=1&query=16.7631%2C-22.895')).toEqual(PONTO);
+    expect(lerCoordenadas('16.7631 -22.895')).toEqual(PONTO);
+    expect(lerCoordenadas('16.7631, −' + '22.895')).toEqual(PONTO);
+  });
+
+  it('caminho_ganha_a_camara', () => {
+    /* direccoes e pesquisa: o ponto vem no caminho, o @ e so a vista do mapa */
+    expect(lerCoordenadas('https://www.google.com/maps/dir//16.7631,-22.895/@16.7,-22.9,12z')).toEqual(PONTO);
+    expect(lerCoordenadas('https://www.google.com/maps/search/16.7631,+-22.895?entry=ttu')).toEqual(PONTO);
+    expect(lerCoordenadas('https://www.google.com/maps/place/16.7631,-22.895/@16.7,-22.9,12z')).toEqual(PONTO);
+  });
+
+  it('graus_com_hemisferio', () => {
+    expect(lerCoordenadas('16.7631° N, 22.895° W')).toEqual(PONTO);
+    const dms = lerCoordenadas(`16°45'47.2"N 22°53'42.0"W`);
+    expect(dms.lat).toBeCloseTo(16.763111, 5);
+    expect(dms.lng).toBeCloseTo(-22.895, 5);
+  });
+
+  it('link_curto_e_reconhecido', () => {
+    expect(eLinkCurto('https://maps.app.goo.gl/abc123')).toBe(true);
+    expect(eLinkCurto('https://goo.gl/maps/xyz')).toBe(true);
+    expect(eLinkCurto('https://maps.google.com/?q=16.7,-22.9')).toBe(false);
+    expect(eLinkCurto(null)).toBe(false);
+  });
+
+  it('percentagem_partida_nao_rebenta', () => {
+    expect(lerCoordenadas('https://www.google.com/maps/search/%E0%A4%A')).toBeNull();
   });
 });
 

@@ -458,6 +458,14 @@ describe('TourForm', () => {
       expect(gravado(onSave)).toEqual({ lat: null, lng: null });
     });
 
+    it('link_curto_explica_o_que_fazer', () => {
+      novoTour();
+      expect(screen.getByText('No Google Maps: clique com o botão direito no local e escolha as coordenadas para as copiar.')).toBeInTheDocument();
+      colar('https://maps.app.goo.gl/abc123');
+      expect(screen.getByText('Links curtos não trazem coordenadas. Abra o link e copie o endereço completo do browser, ou copie as coordenadas no Google Maps.')).toBeInTheDocument();
+      expect(campo('Latitude').value).toBe('');
+    });
+
     it('fora_de_cabo_verde_avisa_mas_grava', () => {
       const { onSave } = novoTour();
       escrever(campo('Latitude'), '38.7');

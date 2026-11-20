@@ -401,6 +401,24 @@
     return out;
   }
 
+  /* Junta marcadores a menos de 'limite' px uns dos outros (ex.: varios tours do mesmo cais),
+     para nenhum ficar escondido debaixo de outro. Ordem estavel; o centro e a media do grupo. */
+  function agruparPinos(pontos, limite) {
+    var grupos = [];
+    (Array.isArray(pontos) ? pontos : []).forEach(function (p) {
+      var alvo = null;
+      for (var k = 0; k < grupos.length; k += 1) {
+        var g = grupos[k];
+        if (Math.hypot(g.x - p.x, g.y - p.y) <= limite) { alvo = g; break; }
+      }
+      if (!alvo) { grupos.push({ x: p.x, y: p.y, sx: p.x, sy: p.y, membros: [p.i] }); return; }
+      alvo.membros.push(p.i);
+      alvo.sx += p.x; alvo.sy += p.y;
+      alvo.x = alvo.sx / alvo.membros.length; alvo.y = alvo.sy / alvo.membros.length;
+    });
+    return grupos.map(function (g) { return { x: g.x, y: g.y, membros: g.membros }; });
+  }
+
   function ilhasDosItens(itens) {
     var cont = {};
     (Array.isArray(itens) ? itens : []).forEach(function (i) {
@@ -431,6 +449,7 @@
     projectar: projectar,
     enquadrarMapa: enquadrarMapa,
     azulejosDoMapa: azulejosDoMapa,
+    agruparPinos: agruparPinos,
     precoCartao: precoCartao,
     precoCrianca: precoCrianca,
     formatarPreco: formatarPreco,

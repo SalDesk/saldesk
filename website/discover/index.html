@@ -154,7 +154,9 @@
     .xp-pin:focus-visible{outline:3px solid var(--ocean-300);outline-offset:2px}
     .xp-map-attr{position:absolute;right:0;bottom:0;background:rgba(255,255,255,.88);font-size:.68rem;color:var(--n600);padding:2px 7px;border-top-left-radius:6px}
     .xp-map-attr a{color:inherit}
-    .xp-map-sel{margin-top:16px;max-width:380px}
+    .xp-pin.multi{background:var(--ocean-900)}
+    .xp-pin.multi:hover,.xp-pin.multi.on{background:var(--sand-500)}
+    .xp-map-sel{margin-top:16px;display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,360px));gap:20px}
     .xp-map-sel:empty{display:none}
     .xp-map-hint{margin-top:10px;font-size:.8125rem;color:var(--n500)}
     .xp-map-note{margin-top:24px;font-size:.875rem;color:var(--n500)}
@@ -732,7 +734,7 @@
   </div>
 </footer>
 
-<script src="_cartao.js?v=20261120b"></script>
+<script src="_cartao.js?v=20261120c"></script>
 <script>
 /* ══════════════════════════════════════════
    CONSTANTS
@@ -1487,11 +1489,15 @@ function setVista(v) {
 /* Um mapa por ilha, enquadrado nas experiencias com localizacao; azulejos do OpenStreetMap
    postos a mao (sem biblioteca). Tocar num marcador mostra o cartao dessa experiencia. */
 const ALTURA_MAPA = 360;
+/* marcador escolhido em cada ilha (sobrevive a redesenhos: idioma, moeda, barra do browser no telemovel) */
+let escolhaMapa = {};
+let larguraMapa = 0;
 function renderMapa(localizadas) {
   const C = window.CartaoDiscover;
   const cont = document.getElementById('act-map');
   const en = L() === 'en';
   const largura = Math.max(280, cont.clientWidth || cont.parentElement.clientWidth || 700);
+  larguraMapa = largura;
   const grupos = [];
   localizadas.forEach(x => {
     const ilha = x.item.island_name ? C.nomeIlha(x.item, L()) : 'Cabo Verde';
@@ -1505,10 +1511,18 @@ function renderMapa(localizadas) {
     const enq = C.enquadrarMapa(g.itens.map(x => x.p), largura, ALTURA_MAPA, { zMax: 13 });
     const azulejos = C.azulejosDoMapa(enq, largura, ALTURA_MAPA).map(t =>
       `<img src="https://tile.openstreetmap.org/${t.z}/${t.x}/${t.y}.png" alt="" loading="lazy" decoding="async" style="left:${Math.round(t.left)}px;top:${Math.round(t.top)}px">`).join('');
-    const pinos = g.itens.map((x, i) => {
-      const pt = C.projectar(x.p.lat, x.p.lng, enq.zoom);
-      const titulo = C.tituloCartao(x.item, C.lerMeta(x.item), L());
-      return `<button type="button" class="xp-pin" style="left:${Math.round(pt.x - enq.x0)}px;top:${Math.round(pt.y - enq.y0)}px" aria-label="${esc(titulo)}" title="${esc(titulo)}" data-grupo="${gi}" data-unit="${esc(x.item.unit_id)}" onclick="escolherPino(this)"><span>${i + 1}</span></button>`;
+    /* marcadores a menos de 26 px juntam-se num so (ex.: varios tours do mesmo cais) */
+    const projectados = g.itens.map((x, i) => { const pt = C.projectar(x.p.lat, x.p.lng, enq.zoom); return { x: pt.x - enq.x0, y: pt.y - enq.y0, i }; });
+    let numero = 0;
+    const pinos = C.agruparPinos(projectados, 26).map(pg => {
+      const membros = pg.membros.map(i => g.itens[i].item);
+      const titulos = membros.map(it => C.tituloCartao(it, C.lerMeta(it), L()));
+      const multi = membros.length > 1;
+      const rotulo = multi ? String(membros.length) : String(++numero);
+      const nome = multi ? `${membros.length} ${en ? 'experiences' : 'experiências'}: ${titulos.join(', ')}` : titulos[0];
+      const chave = membros.map(it => it.unit_id).join('|');
+      const on = escolhaMapa[g.ilha] === chave;
+      return `<button type="button" class="xp-pin${multi ? ' multi' : ''}${on ? ' on' : ''}" aria-pressed="${on}" style="left:${Math.round(pg.x)}px;top:${Math.round(pg.y)}px" aria-label="${esc(nome)}" title="${esc(nome)}" data-grupo="${gi}" data-ilha="${esc(g.ilha)}" data-membros="${esc(chave)}" onclick="escolherPino(this)"><span>${rotulo}</span></button>`;
     }).join('');
     const n = g.itens.length;
     return `<section class="xp-map-group">
@@ -1517,7 +1531,7 @@ function renderMapa(localizadas) {
         <span class="xp-map-attr">&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap contributors</a></span>
       </div>
       <p class="xp-map-hint">${en ? 'Select a pin to see the experience.' : 'Toque num marcador para ver a experiência.'}</p>
-      <div class="xp-map-sel" id="xp-map-sel-${gi}"></div>
+      <div class="xp-map-sel" id="xp-map-sel-${gi}" aria-live="polite"></div>
     </section>`;
   }).join('')
     + (semLocal > 0
@@ -1525,16 +1539,25 @@ function renderMapa(localizadas) {
         ? `${semLocal} experience${semLocal !== 1 ? 's' : ''} without a location on the map`
         : `${semLocal} experiência${semLocal !== 1 ? 's' : ''} sem localização no mapa`}</p>`
       : '');
+  cont.querySelectorAll('.xp-pin.on').forEach(mostrarEscolha);
+}
+
+function mostrarEscolha(btn) {
+  const sel = document.getElementById(`xp-map-sel-${btn.dataset.grupo}`);
+  const ids = (btn.dataset.membros || '').split('|');
+  const itens = ids.map(id => filtered.find(i => String(i.unit_id) === id)).filter(Boolean);
+  if (!sel || !itens.length) return;
+  btn.closest('.xp-map').querySelectorAll('.xp-pin').forEach(p => {
+    p.classList.toggle('on', p === btn);
+    p.setAttribute('aria-pressed', String(p === btn));
+  });
+  sel.innerHTML = itens.map(renderActCard).join('');
+  if (L() === 'en') fixLang(sel);
 }
 
 function escolherPino(btn) {
-  const gi = btn.dataset.grupo;
-  const item = filtered.find(i => String(i.unit_id) === btn.dataset.unit);
-  const sel = document.getElementById(`xp-map-sel-${gi}`);
-  if (!item || !sel) return;
-  btn.closest('.xp-map').querySelectorAll('.xp-pin').forEach(p => p.classList.toggle('on', p === btn));
-  sel.innerHTML = renderActCard(item);
-  if (L() === 'en') fixLang(sel);
+  escolhaMapa[btn.dataset.ilha] = btn.dataset.membros;
+  mostrarEscolha(btn);
 }
 
 /* O mapa depende da largura: redesenha ao redimensionar (so na vista de mapa) */
@@ -1542,7 +1565,11 @@ let mapaResizeT = null;
 window.addEventListener('resize', () => {
   if (vista !== 'mapa') return;
   clearTimeout(mapaResizeT);
-  mapaResizeT = setTimeout(renderGrid, 200);
+  mapaResizeT = setTimeout(() => {
+    const cont = document.getElementById('act-map');
+    const largura = Math.max(280, cont.clientWidth || cont.parentElement.clientWidth || 700);
+    if (largura !== larguraMapa) renderGrid();
+  }, 200);
 });
 
 function loadMore() {

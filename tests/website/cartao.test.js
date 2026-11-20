@@ -376,3 +376,15 @@ test('localizacao_fora_de_cabo_verde_ou_zero_e_ignorada', () => {
   assert.equal(C.dentroDeCaboVerde(16.75, -22.93), true);
   assert.equal(C.dentroDeCaboVerde(0, 0), false);
 });
+
+test('agrupar_pinos_proximos', () => {
+  /* tours do mesmo cais (mesmo ponto ou muito perto) ficam num so marcador */
+  const g = C.agruparPinos([{ x: 100, y: 100, i: 0 }, { x: 100, y: 100, i: 1 }, { x: 110, y: 105, i: 2 }, { x: 300, y: 200, i: 3 }], 26);
+  assert.equal(g.length, 2);
+  assert.deepEqual(g[0].membros, [0, 1, 2]);
+  assert.deepEqual(g[1].membros, [3]);
+  assert.ok(Math.abs(g[0].x - 310 / 3) < 1e-9 && Math.abs(g[0].y - 305 / 3) < 1e-9);
+  assert.deepEqual(C.agruparPinos([], 26), []);
+  /* longe uns dos outros: um marcador cada, pela ordem */
+  assert.deepEqual(C.agruparPinos([{ x: 0, y: 0, i: 0 }, { x: 40, y: 0, i: 1 }], 26).map((p) => p.membros), [[0], [1]]);
+});
