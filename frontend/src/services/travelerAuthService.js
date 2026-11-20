@@ -48,6 +48,18 @@ export async function forgotPassword(email) {
   return data;
 }
 
+/* Envia (de novo) o link de confirmacao do email da conta */
+export async function sendVerificationEmail() {
+  const { data } = await travelerApi.post('/traveler-auth/verify-email');
+  return data.data;
+}
+
+/* Pagina do link do email: u = conta, t = codigo */
+export async function confirmEmail(u, t) {
+  const { data } = await travelerApi.post('/traveler-auth/confirm-email', { u, t });
+  return data.data;
+}
+
 export async function resetPassword(token, password) {
   const { data } = await travelerApi.post('/traveler-auth/reset-password', { token, password });
   return data;

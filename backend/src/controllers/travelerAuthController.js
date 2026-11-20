@@ -9,6 +9,7 @@ const { passwordResetEmail } = require('../helpers/emailTemplates');
 const { verificarPasswordActual } = require('../helpers/passwordAtual');
 const { revogarOutrasSessoes } = require('../helpers/sessoes');
 const { COOKIE_NAME, setTravelerSessionCookie, clearTravelerSessionCookie } = require('../helpers/travelerSessionCookie');
+const { enviarPedidoVerificacao, confirmarEmail: confirmarCodigoEmail } = require('../helpers/verificacaoEmailViajante');
 
 /* Chama o endpoint de token do Supabase Auth (password ou refresh_token grant) --
    mesma mecânica de authController.js, mesma pool de utilizadores Supabase Auth,
@@ -86,6 +87,14 @@ async function register(req, res, next) {
          req.traveler nunca resolvia, bloqueando permanentemente em requireTraveler. */
       await supabaseAdmin.auth.admin.deleteUser(data.user.id).catch(() => {});
       return res.status(409).json({ error: 'Email ja registado', code: 'EMAIL_EXISTS' });
+    }
+
+    /* A conta fica activa logo (favoritos), mas as reservas desse email so aparecem depois de o
+       confirmar. Melhor esforco: se o envio falhar, o portal tem o botao para reenviar. */
+    try {
+      await enviarPedidoVerificacao(supabaseAdmin, data.user, { nome: name, idioma: traveler.language });
+    } catch (err) {
+      console.error('[Viajante Registo] Falha a enviar a confirmacao do email:', err.message);
     }
 
     return res.status(201).json({
@@ -388,4 +397,35 @@ async function forgotPassword(req, res, next) {
   }
 }
 
-module.exports = { register, login, oauthComplete, refresh, getMe, logout, session, changePassword, resetPassword, forgotPassword };
+/* Envia (de novo) o link de confirmacao para o email da conta. O anterior deixa de valer. */
+async function sendVerificationEmail(req, res, next) {
+  try {
+    if (req.traveler.email_verificado === true) {
+      return res.json({ data: { ja_confirmado: true }, message: 'Email ja confirmado' });
+    }
+    await enviarPedidoVerificacao(supabaseAdmin, req.user, { nome: req.traveler.name, idioma: req.traveler.language });
+    return res.json({ data: { enviado: true }, message: 'Enviamos um novo link para o seu email' });
+  } catch (err) {
+    next(err);
+  }
+}
+
+/* Publico: o link pode ser aberto noutro browser ou dispositivo, sem sessao */
+async function confirmEmail(req, res, next) {
+  try {
+    const { u, t } = req.body || {};
+    const estado = await confirmarCodigoEmail(supabaseAdmin, u, t);
+    if (estado === 'ok') return res.json({ data: { confirmado: true }, message: 'Email confirmado' });
+    if (estado === 'expirado') {
+      return res.status(400).json({ error: 'Este link ja expirou. Entre na sua conta e peca um novo.', code: 'TOKEN_EXPIRED' });
+    }
+    return res.status(400).json({ error: 'Este link nao e valido ou ja foi substituido por outro.', code: 'INVALID_TOKEN' });
+  } catch (err) {
+    next(err);
+  }
+}
+
+module.exports = {
+  register, login, oauthComplete, refresh, getMe, logout, session, changePassword, resetPassword, forgotPassword,
+  sendVerificationEmail, confirmEmail,
+};

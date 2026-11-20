@@ -1,7 +1,9 @@
 const express = require('express');
 const router = express.Router();
-const { register, login, oauthComplete, refresh, getMe, logout, session, changePassword, resetPassword, forgotPassword } = require('../controllers/travelerAuthController');
+const { register, login, oauthComplete, refresh, getMe, logout, session, changePassword, resetPassword, forgotPassword,
+  sendVerificationEmail, confirmEmail } = require('../controllers/travelerAuthController');
 const authMiddleware = require('../middleware/auth');
+const requireTraveler = require('../middleware/requireTraveler');
 const { validate, schemas } = require('../middleware/validation');
 const { publicLimiter, authLimiter } = require('../middleware/rateLimiters');
 
@@ -14,6 +16,9 @@ router.post('/forgot-password', authLimiter, forgotPassword);
 router.get('/me',        authLimiter, authMiddleware, getMe);
 router.post('/logout',   authLimiter, authMiddleware, logout);
 router.put('/password',  authLimiter, authMiddleware, validate(schemas.changePassword), changePassword);
+/* Confirmacao do email (reservas, recibos e avaliacoes so depois disto) */
+router.post('/verify-email',  authLimiter, authMiddleware, requireTraveler, sendVerificationEmail);
+router.post('/confirm-email', authLimiter, confirmEmail);
 
 /* Chamada pelo Conect (saldesk.cv) a cada carregamento de pagina -- precisa
    do limite mais generoso do publicLimiter (100/15min), nao do authLimiter
