@@ -448,6 +448,16 @@
     return grupos.map(function (g) { return { x: g.x, y: g.y, membros: g.membros }; });
   }
 
+  /* Vista mostrada: o Mapa que o turista escolheu, so enquanto houver experiencias com localizacao
+     (sem nenhuma mostra a lista, mas a escolha fica para quando voltarem) */
+  function vistaEfectiva(escolhida, nLocalizadas) {
+    return escolhida === 'mapa' && nLocalizadas > 0 ? 'mapa' : 'lista';
+  }
+
+  /* Zoom dos mapas do Discover: ate 13 (com uma so experiencia ainda se ve a zona da ilha); desce ate 5
+     para o grupo sem ilha, com pontos espalhados por Cabo Verde, caber mesmo num telemovel */
+  var OPCOES_MAPA = { zMin: 5, zMax: 13 };
+
   /* Numero no marcador: so nos grupos (quantas experiencias junta); um marcador sozinho leva so um ponto */
   function rotuloPino(n) {
     return n > 1 ? String(n) : '';
@@ -506,6 +516,8 @@
     azulejosDoMapa: azulejosDoMapa,
     agruparPinos: agruparPinos,
     rotuloPino: rotuloPino,
+    vistaEfectiva: vistaEfectiva,
+    OPCOES_MAPA: OPCOES_MAPA,
     tamanhoMapa: tamanhoMapa,
     precoCartao: precoCartao,
     precoCrianca: precoCrianca,
