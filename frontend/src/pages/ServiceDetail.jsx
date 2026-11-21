@@ -33,7 +33,7 @@ import { dentroDeCaboVerde } from '../utils/coordenadas';
 import { textoAdultos, textoCriancas } from '../utils/pessoas';
 import useTopoColante from '../hooks/useTopoColante';
 import { seccoesActividade, factosActividade, comodidadeNaLingua, nomeLingua } from '../utils/paginaActividade';
-import { opcoesValidas } from '../utils/opcoesActividade';
+import { opcoesValidas, opcaoMaisBarata } from '../utils/opcoesActividade';
 import GaleriaActividade, { Lightbox } from '../components/servico/GaleriaActividade';
 import CabecalhoActividade from '../components/servico/CabecalhoActividade';
 import FactosActividade from '../components/servico/FactosActividade';
@@ -1306,9 +1306,14 @@ function ServiceDetailPagina() {
      preco privado) e o formatador da pagina para as linhas do /quote. "Reservar" entrega a
      seleccao inteira ao modal de hoje, que abre nos dados do cliente. */
   const formatarPrecoReserva = (v) => fmtPrice(v, null, op.currency||'EUR', currency, lang);
-  const desdeReserva = unit.base_price
-    ? { valor: Number(unit.base_price), porGrupo: false }
-    : { valor: startingFromPrice(unitMeta), porGrupo: true };
+  /* Com opcoes, as opcoes substituem a tabela de precos: "Desde" e a opcao mais barata (coluna e
+     barra do telemovel), nunca um base_price que tenha ficado para tras */
+  const opcaoDesde = opcaoMaisBarata(unitMeta);
+  const desdeReserva = opcaoDesde
+    ? { valor: opcaoDesde.price, porGrupo: opcaoDesde.type === 'per_group' }
+    : unit.base_price
+      ? { valor: Number(unit.base_price), porGrupo: false }
+      : { valor: startingFromPrice(unitMeta), porGrupo: true };
   function reservarSeleccao(s) {
     setSeleccao(s);
     setBookOpen(true);

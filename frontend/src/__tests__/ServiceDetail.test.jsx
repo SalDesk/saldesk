@@ -432,6 +432,21 @@ describe('ServiceDetail: reservar a partir da coluna', () => {
     expect(corpo).not.toHaveProperty('booking_mode');
   });
 
+  it('barra_do_telemovel_mostra_a_opcao_mais_barata', async () => {
+    /* base_price antigo (45) diferente da opcao mais barata (30): as opcoes substituem a tabela */
+    redeDaReserva({ unit: comMeta({ options: [
+      { id: 'op2h', name_pt: '2 horas', type: 'per_person', price: 40 },
+      { id: 'opbg', name_pt: 'Buggy 2 lugares', type: 'per_vehicle', price: 30, seats: 2 },
+    ] }, { base_price: 45 }) });
+    montar();
+    const barra = await screen.findByTestId('barra-reserva-movel');
+    expect(barra).toHaveTextContent('Desde');
+    expect(within(barra).getByText('€30')).toBeInTheDocument();
+    expect(within(barra).queryByText('€45')).toBeNull();
+    const coluna = await screen.findByTestId('coluna-reserva');
+    expect(within(coluna).getByText(/^Desde/)).toHaveTextContent('Desde €30 por veículo (2 lugares)');
+  });
+
   it('voucher_recusado_nao_vai_na_reserva', async () => {
     redeDaReserva({
       unit: comMeta({ price_private: 300 }),
