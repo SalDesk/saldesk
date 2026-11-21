@@ -32,7 +32,8 @@ import { jsonLdExperiencia } from '../utils/dadosEstruturados';
 import { dentroDeCaboVerde } from '../utils/coordenadas';
 import { textoAdultos, textoCriancas } from '../utils/pessoas';
 import useTopoColante from '../hooks/useTopoColante';
-import { seccoesActividade, factosActividade, comodidadeNaLingua } from '../utils/paginaActividade';
+import { seccoesActividade, factosActividade, comodidadeNaLingua, nomeLingua } from '../utils/paginaActividade';
+import { opcoesValidas } from '../utils/opcoesActividade';
 import GaleriaActividade, { Lightbox } from '../components/servico/GaleriaActividade';
 import CabecalhoActividade from '../components/servico/CabecalhoActividade';
 import FactosActividade from '../components/servico/FactosActividade';
@@ -662,7 +663,8 @@ function HotelModal({ unit, op, slug, lang, onClose, refCode, traveler }) {
 
 /* ── ActivityModal ────────────────────────────────── */
 /* seleccao (opcional) -- vem do "Reservar" da coluna de reserva (ReservaActividade):
-   { date, time|null, adults, children, mode, language|null, voucher|null, quote: { lines, total, before } }.
+   { date, time|null, adults, children, mode, language|null, voucher|null, optionId|null, vehicles|null,
+     guideLanguage|null, quote: { lines, total, before } }.
    Com ela o modal abre nos dados do cliente (o passo 1 ja foi feito na coluna, e "Anterior"
    no passo 2 fecha o modal), a revisao mostra as linhas e o total da cotacao do servidor
    (o modal nao calcula total nenhum) e o voucher e o que a coluna aplicou (sem campo proprio).
@@ -671,8 +673,10 @@ function ActivityModal({ unit, op, slug, lang, onClose, refCode, traveler, selec
   const unitMeta=getUnitMeta(unit);
   const hasPerPerson=!!unit.base_price;
   const hasPrivate=temPrecoPrivado(unitMeta);
+  /* Opcoes da actividade (como na coluna): com elas ha sempre preco e nao ha toggle */
+  const opcoesUnidade=opcoesValidas(unitMeta);
   /* Sem preco nenhum (como na coluna): reserva-se por pessoa com o preco a combinar */
-  const semPreco=!hasPerPerson&&!hasPrivate;
+  const semPreco=opcoesUnidade.length===0&&!hasPerPerson&&!hasPrivate;
   const priceTiers=Array.isArray(unitMeta.price_tiers)?unitMeta.price_tiers:[];
   const col=seleccao||null;
   const [step,ss]=useState(col?2:1); const [date,sd]=useState(col?.date||''); const [time,st]=useState(col?.time||''); const [adults,sa]=useState(col?.adults||2); const [kids,sk]=useState(col?(col.children||0):0);
@@ -691,9 +695,11 @@ function ActivityModal({ unit, op, slug, lang, onClose, refCode, traveler, selec
   const total=rawTotal?fmtPrice(rawTotal,null,op.currency||'EUR','EUR',lang):null;
   /* Total 0 (preco a combinar, ou voucher que cobre tudo): nada a cobrar online, so no local */
   const semCobranca=(col?Number(col.quote?.total)||0:Number(rawTotal)||0)<=0;
-  /* So vai na reserva o voucher que a cotacao aceitou (ha linha de desconto); um voucher
-     recusado (INVALID_VOUCHER) faria o POST falhar com 400 */
-  const voucherDaColuna=col&&col.voucher&&(col.quote?.lines||[]).some(l=>l.type==='discount')?col.voucher:null;
+  /* So vai na reserva o voucher que a cotacao aceitou (a linha de desconto e do codigo); um voucher
+     recusado (INVALID_VOUCHER) faria o POST falhar com 400, e um vencido por uma oferta nao conta */
+  const voucherDaColuna=col&&col.voucher&&(col.quote?.lines||[]).some(l=>l.type==='discount'&&l.source==='voucher')?col.voucher:null;
+  /* Opcao escolhida na coluna (nome em ingles nas linhas da revisao) */
+  const opcaoDaColuna=col&&col.optionId?opcoesUnidade.find(o=>o.id===col.optionId)||null:null;
   const tourLanguages=Array.isArray(unitMeta.languages)?unitMeta.languages:[];
   /* Horarios com capacidade real (TourForm's TimeSlotsEditor) -- so activo
      quando a unidade tem meta.time_slots configurado. Sem isso, a reserva
@@ -707,7 +713,7 @@ function ActivityModal({ unit, op, slug, lang, onClose, refCode, traveler, selec
   /* Alojamento e datas de estadia (pedido real da Logan Tours: precisam de
      saber onde recolher e quando o turista chega/parte). Tudo opcional. */
   const stayLine=[info.hotel.trim()?`${lang==='en'?'Accommodation':'Alojamento'}: ${info.hotel.trim()}`:'',info.arrival?`${lang==='en'?'arrival':'chegada'} ${info.arrival}`:'',info.departure?`${lang==='en'?'departure':'partida'} ${info.departure}`:''].filter(Boolean).join(', ');
-  function buildPayload(){ const notes=[time?`${lang==='en'?'Time':'Hora'}: ${time}`:'',`${textoAdultos(adults,lang)}, ${textoCriancas(kids,lang)}`,tourLang?(lang==='en'?'Language: ':'Idioma: ')+tourLang:'',stayLine,info.needs?(lang==='en'?'Additional request:':'Pedido adicional:')+' '+info.needs:''].filter(Boolean).join('. '); return {unit_id:unit.id,customer_name:info.name,customer_email:info.email,customer_phone:info.phone||null,customer_country:info.country||null,check_in:date,check_out:date,guests:adults+kids,...(col?{adults,children:kids}:{}),notes,tour_time:col?(col.time||undefined):(hasSlots?time:undefined),voucher_code:(col?voucherDaColuna:voucherCode)||undefined,ref_code:refCode||undefined,referred_by:info.referredBy.trim()||undefined,whatsapp_opt_in:info.whatsappOptIn||undefined,booking_mode:isPrivateMode?'private':undefined,payment_method:pay}; }
+  function buildPayload(){ const notes=[time?`${lang==='en'?'Time':'Hora'}: ${time}`:'',`${textoAdultos(adults,lang)}, ${textoCriancas(kids,lang)}`,tourLang?(lang==='en'?'Language: ':'Idioma: ')+tourLang:'',stayLine,info.needs?(lang==='en'?'Additional request:':'Pedido adicional:')+' '+info.needs:''].filter(Boolean).join('. '); return {unit_id:unit.id,customer_name:info.name,customer_email:info.email,customer_phone:info.phone||null,customer_country:info.country||null,check_in:date,check_out:date,guests:adults+kids,...(col?{adults,children:kids,option_id:col.optionId||undefined,vehicles:col.vehicles||undefined,guide_language:col.guideLanguage||undefined}:{}),notes,tour_time:col?(col.time||undefined):(hasSlots?time:undefined),voucher_code:(col?voucherDaColuna:voucherCode)||undefined,ref_code:refCode||undefined,referred_by:info.referredBy.trim()||undefined,whatsapp_opt_in:info.whatsappOptIn||undefined,booking_mode:isPrivateMode?'private':undefined,payment_method:pay}; }
   const postGen=useRef(0);
   useEffect(()=>{ if(step<3){ postGen.current++; if(pendingRes) spr(null); ssub(false); } },[step]);
   /* Voucher mudado ja com a reserva PayPal publicada (ou a caminho): essa reserva tem o total antigo.
@@ -729,7 +735,7 @@ function ActivityModal({ unit, op, slug, lang, onClose, refCode, traveler, selec
     }catch(e){se(e.message);}finally{ssub(false);}
   }
   function next(){ if(!valid())return; step<3?ss(s=>s+1):submit(); }
-  const sumL=[{label:lang==='en'?'Tour / Activity':'Tour / Actividade',value:unit.name},{label:lang==='en'?'Date':'Data',value:date},...(time?[{label:lang==='en'?'Time':'Horário',value:time}]:[]),{label:lang==='en'?'Group':'Grupo',value:`${textoAdultos(adults,lang)}${kids>0?` + ${textoCriancas(kids,lang)}`:''}`},...(tourLang?[{label:lang==='en'?'Language':'Idioma',value:tourLang}]:[]),...(info.hotel.trim()?[{label:lang==='en'?'Accommodation':'Alojamento',value:info.hotel.trim()}]:[]),...(hasPerPerson&&hasPrivate?[{label:lang==='en'?'Booking type':'Tipo de reserva',value:isPrivateMode?(lang==='en'?'Private / group':'Privado / grupo'):(lang==='en'?'Per person':'Por pessoa')}]:[]),...(col?linhasDaCotacao():(total?[{label:'Total',value:fmtTotalBoth(rawTotal,op.currency,lang),hi:true}]:[]))];
+  const sumL=[{label:lang==='en'?'Tour / Activity':'Tour / Actividade',value:unit.name},{label:lang==='en'?'Date':'Data',value:date},...(time?[{label:lang==='en'?'Time':'Horário',value:time}]:[]),{label:lang==='en'?'Group':'Grupo',value:`${textoAdultos(adults,lang)}${kids>0?` + ${textoCriancas(kids,lang)}`:''}`},...(tourLang?[{label:lang==='en'?'Language':'Idioma',value:col?nomeLingua(tourLang,lang):tourLang}]:[]),...(info.hotel.trim()?[{label:lang==='en'?'Accommodation':'Alojamento',value:info.hotel.trim()}]:[]),...(hasPerPerson&&hasPrivate&&!(col&&opcoesUnidade.length>0)?[{label:lang==='en'?'Booking type':'Tipo de reserva',value:isPrivateMode?(lang==='en'?'Private / group':'Privado / grupo'):(lang==='en'?'Per person':'Por pessoa')}]:[]),...(col?linhasDaCotacao():(total?[{label:'Total',value:fmtTotalBoth(rawTotal,op.currency,lang),hi:true}]:[]))];
   /* Linhas e total da cotacao do servidor para a seleccao da coluna (total tambem em CVE, exigencia SISP) */
   function linhasDaCotacao(){
     const en=lang==='en'; const cur=op.currency||'EUR';
@@ -737,7 +743,7 @@ function ActivityModal({ unit, op, slug, lang, onClose, refCode, traveler, selec
     const totalCot=Number(col.quote?.total)||0;
     if(semPreco) return [{label:'Total',value:en?'Price agreed with the operator':'Preço a combinar com o operador',hi:true}];
     return [
-      ...(col.quote?.lines||[]).map(l=>({label:textoDaLinha(l,col.mode,col.voucher,en),value:valor(l.total)})),
+      ...(col.quote?.lines||[]).map(l=>({label:textoDaLinha(l,col.mode,col.voucher,en,{opcao:opcaoDaColuna,meta:unitMeta}),value:valor(l.total)})),
       {label:'Total',value:totalCot>0?fmtTotalBoth(totalCot,op.currency,lang):valor(0),hi:true},
     ];
   }

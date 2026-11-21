@@ -67,7 +67,7 @@ function montarColuna(props = {}) {
   const unit = props.unit || UNIDADE;
   return render(
     <ReservaActividade api={API} slug="demo" unit={unit} meta={props.meta || {}} lang={props.lang || 'pt'}
-      formatarPreco={(v) => `€${v}`} desde={props.desde || { valor: 45, porGrupo: false }} temPrivado={!!props.temPrivado}
+      formatarPreco={props.formatarPreco || ((v) => `€${v}`)} desde={props.desde || { valor: 45, porGrupo: false }} temPrivado={!!props.temPrivado}
       onReservar={props.onReservar || (() => {})}/>
   );
 }
@@ -292,6 +292,7 @@ describe('Coluna de reserva da actividade', () => {
     expect(onReservar).toHaveBeenCalledTimes(1);
     expect(onReservar).toHaveBeenCalledWith({
       date: '2026-11-25', time: '09:00', adults: 2, children: 1, mode: 'private', language: 'English', voucher: 'VERAO',
+      optionId: null, vehicles: null, guideLanguage: 'English',
       quote: { lines: COM_DESCONTO.lines, total: 270, before: 300 },
     });
   });
@@ -401,6 +402,185 @@ describe('Coluna de reserva da actividade', () => {
     expect(screen.getByRole('heading', { name: /Who's coming\?/ })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Book/ })).toBeDisabled();
     await esperarCalendario();
+  });
+});
+
+describe('Coluna de reserva com opcoes, idioma e ofertas', () => {
+  const OPCOES = [
+    { id: 'op2h', name_pt: '2 horas', name_en: '2 hours', type: 'per_person', price: 40 },
+    { id: 'opgr', name_pt: 'Grupo privado', name_en: 'Private group', type: 'per_group', price: 200 },
+    { id: 'opbg', name_pt: 'Buggy 2 lugares', name_en: '2-seat buggy', type: 'per_vehicle', price: 30, seats: 2 },
+  ];
+  const valorDoContador = (rotulo) => within(screen.getByText(rotulo).parentElement).getByText(/^\d+$/).textContent;
+
+  it('passo_de_opcao_substitui_o_toggle', async () => {
+    simularRede();
+    montarColuna({ temPrivado: true, meta: { options: OPCOES, price_private: 300 } });
+    expect(screen.getByRole('heading', { name: /Escolha a opção/ })).toBeInTheDocument();
+    const op2h = screen.getByRole('button', { name: /2 horas/ });
+    expect(op2h).toHaveAttribute('aria-pressed', 'true');
+    expect(op2h).toHaveTextContent('€40 por pessoa');
+    expect(screen.getByRole('button', { name: /Grupo privado/ })).toHaveTextContent('€200 por grupo');
+    expect(screen.getByRole('button', { name: /Buggy 2 lugares/ })).toHaveTextContent('€30 por veículo (2 lugares)');
+    expect(screen.getByRole('button', { name: /Grupo privado/ })).toHaveAttribute('aria-pressed', 'false');
+    /* o toggle por pessoa / privado desaparece */
+    expect(screen.queryByRole('button', { name: 'Privado / grupo' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Por pessoa' })).toBeNull();
+    /* "Desde" e a opcao mais barata, com a sua unidade */
+    expect(screen.getByText(/^Desde/)).toHaveTextContent('Desde €30 por veículo (2 lugares)');
+    await waitFor(() => expect(chamadas('/quote')).toHaveLength(1));
+    expect(chamadas('/quote')[0]).toContain('option=op2h');
+    expect(chamadas('/quote')[0]).toContain('mode=per_person');
+    await esperarCalendario();
+    /* uma opcao por grupo reserva em modo privado (cotacao e calendario) */
+    fireEvent.click(screen.getByRole('button', { name: /Grupo privado/ }));
+    expect(screen.getByRole('button', { name: /Grupo privado/ })).toHaveAttribute('aria-pressed', 'true');
+    await waitFor(() => expect(chamadas('/quote').pop()).toContain('option=opgr'));
+    expect(chamadas('/quote').pop()).toContain('mode=private');
+    await waitFor(() => expect(chamadas('/availability-month').pop()).toContain('mode=private'));
+  });
+
+  it('opcao_por_veiculo_mostra_veiculos_e_cotacao_leva_tudo', async () => {
+    simularRede();
+    const onReservar = vi.fn();
+    montarColuna({ onReservar, meta: { options: OPCOES, languages: ['PT', 'ES'], language_surcharges: { ES: 20 }, offers: [] } });
+    expect(screen.queryByText('Veículos')).toBeNull();
+    const mais = screen.getByRole('button', { name: 'Mais adultos' });
+    fireEvent.click(mais);
+    fireEvent.click(mais);
+    fireEvent.click(mais);
+    fireEvent.click(screen.getByRole('button', { name: /Buggy 2 lugares/ }));
+    /* 5 pessoas em buggies de 2 lugares: pelo menos 3 veiculos */
+    expect(screen.getByText('Veículos')).toBeInTheDocument();
+    expect(valorDoContador('Veículos')).toBe('3');
+    expect(screen.getByRole('button', { name: 'Menos veículos' })).toBeDisabled();
+    fireEvent.change(screen.getByRole('combobox'), { target: { value: 'ES' } });
+    fireEvent.click(await esperarDiaLivre('2026-11-25'));
+    await waitFor(() => expect(chamadas('/quote').pop()).toContain('date=2026-11-25'));
+    const q = new URLSearchParams(chamadas('/quote').pop().split('?')[1]);
+    expect(q.get('option')).toBe('opbg');
+    expect(q.get('vehicles')).toBe('3');
+    expect(q.get('glang')).toBe('ES');
+    expect(q.get('mode')).toBe('per_person');
+    /* o contador nunca passa de uma pessoa por veiculo nem desce do minimo */
+    fireEvent.click(screen.getByRole('button', { name: 'Mais veículos' }));
+    expect(valorDoContador('Veículos')).toBe('4');
+    fireEvent.click(screen.getByRole('button', { name: 'Menos adultos' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Menos adultos' }));
+    expect(valorDoContador('Veículos')).toBe('3');
+    expect(screen.getByRole('button', { name: 'Mais veículos' })).toBeDisabled();
+    const reservar = screen.getByRole('button', { name: /Reservar/ });
+    await waitFor(() => expect(chamadas('/quote').pop()).toContain('vehicles=3&'));
+    await waitFor(() => expect(reservar).toBeEnabled());
+    fireEvent.click(reservar);
+    expect(onReservar.mock.calls[0][0]).toMatchObject({
+      date: '2026-11-25', adults: 3, children: 0, mode: 'per_person', optionId: 'opbg', vehicles: 3, guideLanguage: 'ES', language: 'ES',
+    });
+  });
+
+  it('idioma_com_suplemento_no_select', async () => {
+    simularRede();
+    montarColuna({ formatarPreco: (v) => `${v} €`, meta: { languages: ['PT', 'ES'], language_surcharges: { ES: 20 } } });
+    const select = screen.getByRole('combobox');
+    expect(within(select).getByRole('option', { name: 'Sem preferência' })).toBeInTheDocument();
+    expect(within(select).getByRole('option', { name: 'Português' })).toBeInTheDocument();
+    expect(within(select).getByRole('option', { name: 'Español (+20 €)' })).toBeInTheDocument();
+    await esperarCalendario();
+    await waitFor(() => expect(chamadas('/quote')).toHaveLength(1));
+    expect(chamadas('/quote')[0]).not.toContain('glang=');
+  });
+
+  it('uma_so_lingua_com_suplemento_sem_sem_preferencia', async () => {
+    simularRede();
+    montarColuna({ meta: { languages: ['ES'], language_surcharges: { ES: 20 } } });
+    const select = screen.getByRole('combobox');
+    expect(within(select).queryByRole('option', { name: 'Sem preferência' })).toBeNull();
+    expect(select).toHaveValue('ES');
+    expect(within(select).getByRole('option', { name: 'Español (+€20)' })).toBeInTheDocument();
+    await waitFor(() => expect(chamadas('/quote')).toHaveLength(1));
+    expect(chamadas('/quote')[0]).toContain('glang=ES');
+    await esperarCalendario();
+    cleanup();
+
+    /* uma so lingua sem suplemento: sem select, como sempre */
+    simularRede();
+    montarColuna({ meta: { languages: ['ES'] } });
+    expect(screen.queryByRole('combobox')).toBeNull();
+    await esperarCalendario();
+  });
+
+  it('selo_da_oferta_no_cabecalho', async () => {
+    simularRede();
+    montarColuna({ meta: { offers: [{ percent: 25, from: '2026-12-01', to: '2026-12-15' }] } });
+    expect(screen.getByText('-25% de 1 a 15 dez')).toBeInTheDocument();
+    await esperarCalendario();
+    cleanup();
+
+    /* uma oferta que acaba hoje (Cabo Verde) ainda aparece */
+    simularRede();
+    montarColuna({ meta: { offers: [{ percent: 10, from: '2026-11-01', to: '2026-11-20' }] } });
+    expect(screen.getByText('-10% de 1 a 20 nov')).toBeInTheDocument();
+    await esperarCalendario();
+    cleanup();
+
+    /* uma oferta que acabou ontem nao aparece */
+    simularRede();
+    montarColuna({ meta: { offers: [{ percent: 25, from: '2026-11-01', to: '2026-11-19' }] } });
+    expect(screen.queryByText(/-25%/)).toBeNull();
+    await esperarCalendario();
+    cleanup();
+
+    simularRede();
+    montarColuna({ lang: 'en', meta: { offers: [{ percent: 25, from: '2026-12-01', to: '2026-12-15' }] } });
+    expect(screen.getByText('-25% from 1 to 15 Dec')).toBeInTheDocument();
+    await esperarCalendario();
+  });
+
+  it('preco_antes_riscado_e_linhas_novas', async () => {
+    const COM_OFERTA = {
+      lines: [
+        { type: 'option', description: '2 horas', quantity: 2, total: 270 },
+        { type: 'language', description: 'Suplemento de idioma (ES)', quantity: 1, total: 20 },
+        { type: 'discount', source: 'offer', description: 'Oferta especial (-25%)', quantity: 1, total: -72.5 },
+      ],
+      total: 217.5, before: 290, error: null,
+    };
+    simularRede({ cotacao: () => COM_OFERTA });
+    montarColuna({ meta: { options: OPCOES } });
+    const preco = screen.getByTestId('preco-reserva');
+    const total = await within(preco).findByText('€217.5');
+    const antes = within(preco).getByText('€290');
+    expect(antes).toHaveClass('line-through');
+    expect(antes.parentElement).toBe(total.parentElement);
+    expect(within(preco).getByText('2 horas × 2')).toBeInTheDocument();
+    expect(within(preco).getByText('Suplemento de idioma (Español)')).toBeInTheDocument();
+    expect(within(preco).getByText('Oferta especial (-25%)')).toBeInTheDocument();
+    await esperarCalendario();
+    cleanup();
+
+    simularRede({ cotacao: () => COM_OFERTA });
+    montarColuna({ lang: 'en', meta: { options: OPCOES } });
+    const precoEn = screen.getByTestId('preco-reserva');
+    expect(await within(precoEn).findByText('2 hours × 2')).toBeInTheDocument();
+    expect(within(precoEn).getByText('Language surcharge (Spanish)')).toBeInTheDocument();
+    expect(within(precoEn).getByText('Special offer (-25%)')).toBeInTheDocument();
+    await esperarCalendario();
+  });
+
+  it('codigo_ignorado_mostra_aviso', async () => {
+    simularRede({ cotacao: (p) => (p.get('voucher')
+      ? { lines: [{ type: 'tour', description: 'Adultos', quantity: 2, total: 90 }, { type: 'discount', source: 'offer', description: 'Oferta especial (-25%)', quantity: 1, total: -22.5 }], total: 67.5, before: 90, error: null, voucher_ignored: true }
+      : COTACAO) });
+    const onReservar = vi.fn();
+    montarColuna({ onReservar });
+    fireEvent.click(await esperarDiaLivre('2026-11-25'));
+    fireEvent.change(screen.getByPlaceholderText('Código de desconto'), { target: { value: 'verao' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Aplicar' }));
+    expect(await screen.findByText('Já existe uma oferta melhor; o código não foi aplicado')).toBeInTheDocument();
+    const reservar = screen.getByRole('button', { name: /Reservar/ });
+    await waitFor(() => expect(reservar).toBeEnabled());
+    fireEvent.click(reservar);
+    expect(onReservar.mock.calls[0][0].voucher).toBeNull();
   });
 });
 

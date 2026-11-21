@@ -64,6 +64,13 @@ const LINGUAS = {
   ES: ['Español', 'Spanish'], DE: ['Deutsch', 'German'], IT: ['Italiano', 'Italian'], NL: ['Nederlands', 'Dutch'],
 };
 
+/* Nome de uma lingua pelo codigo (PT: o nome na propria lingua; EN: em ingles); um codigo
+   desconhecido, ou um nome antigo ja escrito por extenso, fica como esta */
+export function nomeLingua(codigo, lang) {
+  const c = String(codigo || '').trim();
+  return (LINGUAS[c.toUpperCase()] || [c, c])[lang === 'en' ? 1 : 0];
+}
+
 /* Comodidades fixas do TourForm (ACTIVITY_AMENS, gravadas em portugues) em ingles; uma
    comodidade escrita pelo operador que nao esteja aqui fica como foi escrita */
 const COMODIDADES_EN = {
@@ -98,7 +105,7 @@ export function factosActividade(unit, meta, lang) {
   if (formatos[m.tour_type]) factos.push({ chave: 'formato', valor: formatos[m.tour_type][en ? 1 : 0] });
   const langs = Array.isArray(m.languages) ? m.languages.map((c) => String(c || '').trim()).filter(Boolean) : [];
   if (langs.length) {
-    factos.push({ chave: 'linguas', valor: langs.map((c) => (LINGUAS[c.toUpperCase()] || [c, c])[en ? 1 : 0]).join(', ') });
+    factos.push({ chave: 'linguas', valor: langs.map((c) => nomeLingua(c, lang)).join(', ') });
   }
   const recolha = m.pickup_included ? (en ? 'Hotel pickup included' : 'Incluída no hotel') : texto(m.meeting_point);
   if (recolha) factos.push({ chave: 'recolha', valor: recolha });
