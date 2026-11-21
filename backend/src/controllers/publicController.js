@@ -1245,6 +1245,73 @@ async function getGuestChatHistory(req, res, next) {
   } catch (err) { next(err); }
 }
 
+/* ─── Cotacao de actividade (mesmo calculo que criarReserva) ───
+   GET /:slug/units/:unitId/quote?adults=&children=&mode=&voucher=
+   O valor mostrado na pagina tem de ser igual ao cobrado: usa precoActividade
+   e aplica o voucher por validarVoucher sobre o mesmo total, como criarReserva. */
+async function cotarActividade(req, res, next) {
+  try {
+    const { slug, unitId } = req.params;
+    const inteiro = (v, omissao, minimo) => {
+      const n = Math.floor(Number(v));
+      return Number.isFinite(n) && n >= minimo ? n : omissao;
+    };
+    const adults = inteiro(req.query.adults, 1, 0);
+    const children = inteiro(req.query.children, 0, 0);
+    const mode = req.query.mode === 'private' ? 'private' : 'per_person';
+    const voucherCode = typeof req.query.voucher === 'string' ? req.query.voucher.trim() : '';
+
+    const { data: operator } = await supabaseAdmin
+      .from('operators')
+      .select('id, operator_type')
+      .eq('slug', slug)
+      .eq('onboarding_complete', true)
+      .single();
+    if (!operator) return res.status(404).json({ error: 'Operador não encontrado', code: 'NOT_FOUND' });
+
+    const { data: unit } = await supabaseAdmin
+      .from('units')
+      .select('*, pricing_rules(*)')
+      .eq('id', unitId)
+      .eq('operator_id', operator.id)
+      .eq('status', 'active')
+      .single();
+    if (!unit || operator.operator_type !== 'activity') {
+      return res.status(404).json({ error: 'Serviço não encontrado', code: 'NOT_FOUND' });
+    }
+
+    const meta = parseUnitMeta(unit);
+    if (mode === 'private' && !temPrecoPrivadoConfigurado(meta)) {
+      return res.json({ data: {
+        lines: [], total: 0, before: null,
+        error: { code: 'INVALID_BOOKING_MODE', message_pt: 'Esta actividade não tem reserva privada disponível', message_en: 'This activity has no private booking available' },
+      } });
+    }
+
+    const preco = precoActividade(unit, meta, { adults, children, mode });
+    if (preco.error) {
+      return res.json({ data: { lines: preco.lines, total: 0, before: null, error: preco.error } });
+    }
+
+    let lines = preco.lines;
+    let total = preco.total;
+    let before = null;
+    let error = null;
+    if (voucherCode) {
+      const resultado = await validarVoucher(operator.id, voucherCode, unit.id, preco.total);
+      if (resultado.valid) {
+        before = preco.total;
+        total = Math.max(0, preco.total - resultado.discount);
+        lines = [...lines, { type: 'discount', description: `Código ${voucherCode.toUpperCase()}`, quantity: 1, total: -resultado.discount }];
+      } else {
+        error = { code: 'INVALID_VOUCHER', message_pt: resultado.error || 'Código inválido', message_en: 'Invalid code' };
+      }
+    }
+
+    return res.json({ data: { lines, total, before, error } });
+  } catch (err) { next(err); }
+}
+
 /* ─── Unidade específica por slug + unitId ─── */
 async function getUnit(req, res, next) {
   try {
@@ -1252,7 +1319,7 @@ async function getUnit(req, res, next) {
 
     const { data: operator } = await supabaseAdmin
       .from('operators')
-      .select('id, name, slug, operator_type, email, phone, whatsapp, address, logo_url, cover_images, business_name, tagline, currency, description, page_config, brand_color, island_id, islands(name, slug, airport_code), cancellation_policy_pt, cancellation_policy_en, free_cancellation_hours, auto_confirm_bookings')
+      .select('id, name, slug, operator_type, email, phone, whatsapp, address, logo_url, cover_images, business_name, tagline, currency, description, page_config, brand_color, island_id, islands(name, slug, airport_code), cancellation_policy_pt, cancellation_policy_en, free_cancellation_hours, auto_confirm_bookings, custom_faqs')
       .eq('slug', slug)
       .eq('onboarding_complete', true)
       .single();
@@ -1889,6 +1956,7 @@ module.exports = {
   sendGuestChatMessage,
   getGuestChatHistory,
   getUnit,
+  cotarActividade,
   callWaiter,
   createOrder,
   getUnitReviews,
