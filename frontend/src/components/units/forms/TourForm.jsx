@@ -218,7 +218,7 @@ export default function TourForm({ unit, onSave, onCancel, loading, error }) {
             label="Descrição longa PT"
             value={form.desc_pt}
             onChange={set('desc_pt')}
-            placeholder="Descrição completa em português. Pode usar vários paragrafos (Enter)..."
+            placeholder="Descrição completa em português. Pode usar vários parágrafos (Enter)..."
             rows={6}
           />
           <Textarea
@@ -279,12 +279,12 @@ export default function TourForm({ unit, onSave, onCancel, loading, error }) {
               placeholder="Ex: 2.5"
             />
             <Select label="Dificuldade" value={form.difficulty} onChange={set('difficulty')}>
-              <option value="Fácil">Fácil</option>
+              <option value="Facil">Fácil</option>
               <option value="Moderado">Moderado</option>
-              <option value="Difícil">Difícil</option>
+              <option value="Dificil">Difícil</option>
             </Select>
             <Input
-              label="Idade minima"
+              label="Idade mínima"
               type="number"
               value={form.min_age}
               onChange={set('min_age')}
@@ -294,7 +294,7 @@ export default function TourForm({ unit, onSave, onCancel, loading, error }) {
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
             <Input
-              label="Capacidade maxima"
+              label="Capacidade máxima"
               type="number"
               value={form.capacity}
               onChange={set('capacity')}

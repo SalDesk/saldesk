@@ -145,10 +145,10 @@ describe('Demand', () => {
 
   it('epoca_alta_acima_de_1_25_da_media_e_baixa_abaixo_de_0_75', async () => {
     await abre();
-    const altas = screen.getByText('Epocas altas').parentElement;
+    const altas = screen.getByText('Épocas altas').parentElement;
     expect(altas.textContent).toContain('Jul · €200');
     expect(altas.textContent).not.toContain('Jan');
-    const baixas = screen.getByText('Epocas baixas').parentElement;
+    const baixas = screen.getByText('Épocas baixas').parentElement;
     expect(baixas.textContent).toContain('Ago · €20');
     /* meses sem receita nunca sao "baixos" */
     expect(baixas.textContent).not.toContain('Set');
@@ -157,8 +157,8 @@ describe('Demand', () => {
   it('sem_epocas_mostra_os_textos_vazios', async () => {
     recebe(Array.from({ length: 12 }, (_, i) => ({ periodo: `${ANO}-${String(i + 1).padStart(2, '0')}`, receita: 100 })), []);
     await abre();
-    expect(screen.getByText('Sem dados suficientes para identificar epocas altas.')).toBeTruthy();
-    expect(screen.getByText('Sem epocas baixas identificadas — bom desempenho anual!')).toBeTruthy();
+    expect(screen.getByText('Sem dados suficientes para identificar épocas altas.')).toBeTruthy();
+    expect(screen.getByText('Sem épocas baixas identificadas — bom desempenho anual!')).toBeTruthy();
   });
 
   it('grafico_usa_dados_dos_12_meses_e_a_linha_da_media', async () => {

@@ -23,6 +23,7 @@ import LoadingSpinner from '../components/shared/LoadingSpinner';
 const DEFAULT_CONFIG = {
   active: false,
   points_per_euro: 1,
+  /* Niveis por omissao do frontend, com acentos; os de loyaltyController.js (backend) nao tem. */
   levels: [
     { name: 'Bronze', min: 0,   max: 100, discount_pct: 5,  reward: '5% desconto em todas as reservas'          },
     { name: 'Prata',  min: 101, max: 499, discount_pct: 10, reward: '10% desconto + upgrade gratuito disponível' },

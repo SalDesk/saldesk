@@ -136,14 +136,14 @@ export default function HotelRoomForm({ unit, onSave, onCancel, loading, error }
       </div>
 
       <div>
-        <SectionLabel>Preços por epoca (€ / noite)</SectionLabel>
+        <SectionLabel>Preços por época (€ / noite)</SectionLabel>
         <div className="grid grid-cols-2 gap-3 mb-3">
           <Input label="Preço base"   type="number" value={form.base_price} onChange={set('base_price')} min="0" step="0.01" required placeholder="0.00" />
-          <Input label="Epoca baixa"  type="number" value={form.price_low}  onChange={set('price_low')}  min="0" step="0.01" placeholder="0.00" />
+          <Input label="Época baixa"  type="number" value={form.price_low}  onChange={set('price_low')}  min="0" step="0.01" placeholder="0.00" />
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-          <Input label="Epoca média"  type="number" value={form.price_mid}  onChange={set('price_mid')}  min="0" step="0.01" placeholder="0.00" />
-          <Input label="Epoca alta"   type="number" value={form.price_high} onChange={set('price_high')} min="0" step="0.01" placeholder="0.00" />
+          <Input label="Época média"  type="number" value={form.price_mid}  onChange={set('price_mid')}  min="0" step="0.01" placeholder="0.00" />
+          <Input label="Época alta"   type="number" value={form.price_high} onChange={set('price_high')} min="0" step="0.01" placeholder="0.00" />
           <Input label="Pico"         type="number" value={form.price_peak} onChange={set('price_peak')} min="0" step="0.01" placeholder="0.00" />
         </div>
       </div>

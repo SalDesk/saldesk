@@ -43,7 +43,7 @@ function resumo(atual = {}, variacao = {}) {
 /* Textos que antes estavam fixos em portugues dentro do componente */
 const ANTIGOS_POR_TIPO = {
   hotel:      ['Check-ins hoje', 'Ocupação hoje', 'Mapa de Quartos — Hoje'],
-  rentacar:   ['Alugueres activos', 'Veiculos disponíveis', 'Frota — Estado Actual'],
+  rentacar:   ['Alugueres activos', 'Veiculos disponiveis', 'Frota — Estado Actual'],
   restaurant: ['Reservas hoje', 'Covers hoje', 'Mapa de Mesas — Hoje'],
 };
 const ANTIGOS_COMUNS = [

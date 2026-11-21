@@ -233,7 +233,7 @@ describe('TourForm', () => {
   it('mínimo válido: só nome e capacidade', () => {
     const { onSave } = renderForm('activity');
     escrever(campo('Nome PT'), 'Mergulho ao Amanhecer');
-    escrever(campo('Capacidade maxima'), '12');
+    escrever(campo('Capacidade máxima'), '12');
     fireEvent.click(botao('Criar tour'));
     expect(guardar(onSave)).toStrictEqual({
       name: 'Mergulho ao Amanhecer',
@@ -265,15 +265,15 @@ describe('TourForm', () => {
     ]);
   });
 
-  it('os campos obrigatórios (Nome PT, Capacidade maxima) levam required e o navegador impede gravar vazio', () => {
+  it('os campos obrigatórios (Nome PT, Capacidade máxima) levam required e o navegador impede gravar vazio', () => {
     const { onSave } = renderForm('activity');
     expect(campo('Nome PT')).toBeRequired();
-    expect(campo('Capacidade maxima')).toBeRequired();
+    expect(campo('Capacidade máxima')).toBeRequired();
     expect(screen.getAllByText((_, el) => el.tagName === 'LABEL' && el.textContent === 'Nome PT*')).toHaveLength(1);
     fireEvent.click(botao('Criar tour'));
     expect(onSave).not.toHaveBeenCalled();
     escrever(campo('Nome PT'), 'Tour do Sal');
-    escrever(campo('Capacidade maxima'), '8');
+    escrever(campo('Capacidade máxima'), '8');
     fireEvent.click(botao('Criar tour'));
     expect(guardar(onSave)).toMatchObject({ name: 'Tour do Sal', capacity: 8, unit_type: 'Tour', price_unit: 'person' });
   });
@@ -281,7 +281,7 @@ describe('TourForm', () => {
   it('a capacidade abaixo do mínimo (min=1) e travada pelo navegador, mas o submit direto passa', () => {
     const { onSave, container } = renderForm('activity');
     escrever(campo('Nome PT'), 'Tour');
-    escrever(campo('Capacidade maxima'), '0');
+    escrever(campo('Capacidade máxima'), '0');
     fireEvent.click(botao('Criar tour'));
     expect(onSave).not.toHaveBeenCalled();
     fireEvent.submit(container.querySelector('form'));
@@ -299,9 +299,9 @@ describe('TourForm', () => {
     escrever(campo('Descrição longa PT'), 'Linha um\nLinha dois');
     escrever(campo('Descrição longa EN'), 'Long description');
     escrever(campo('Duração (horas)'), '2.5');
-    escrever(campo('Dificuldade'), 'Difícil');
-    escrever(campo('Idade minima'), '8');
-    escrever(campo('Capacidade maxima'), '12');
+    escrever(campo('Dificuldade'), 'Dificil');
+    escrever(campo('Idade mínima'), '8');
+    escrever(campo('Capacidade máxima'), '12');
     escrever(campo('Hora de início'), '09:30');
     escrever(campo('Ponto de encontro'), 'Marina Santa Maria');
     fireEvent.click(screen.getByLabelText('EN'));
@@ -379,7 +379,7 @@ describe('TourForm', () => {
         tour_type: 'ambos',
         duration: 2.5,
         languages: ['PT', 'DE'],
-        difficulty: 'Difícil',
+        difficulty: 'Dificil',
         min_age: 8,
         meeting_point: 'Marina Santa Maria',
         pickup_included: false,
@@ -424,7 +424,7 @@ describe('TourForm', () => {
   it('o preço adulto vazio grava 0 e "0" também', () => {
     const { onSave } = renderForm('activity');
     escrever(campo('Nome PT'), 'Tour');
-    escrever(campo('Capacidade maxima'), '4');
+    escrever(campo('Capacidade máxima'), '4');
     escrever(campo('Preço adulto (opcional se usar Preço privado/Escalões)'), '0');
     fireEvent.click(botao('Criar tour'));
     expect(guardar(onSave).base_price).toBe(0);
@@ -433,7 +433,7 @@ describe('TourForm', () => {
   it('destaques_e_o_que_levar_gravam', () => {
     const { onSave } = renderForm('activity');
     escrever(campo('Nome PT'), 'Tour');
-    escrever(campo('Capacidade maxima'), '4');
+    escrever(campo('Capacidade máxima'), '4');
     expect(screen.getByText('Destaques e o que levar')).toBeInTheDocument();
     escrever(campo('Destaques (PT) — um por linha'), 'A\nB');
     escrever(campo('Destaques (EN) — one per line'), 'C\nD');
@@ -450,7 +450,7 @@ describe('TourForm', () => {
   it('destaques_e_o_que_levar_vazios_gravam_null', () => {
     const { onSave } = renderForm('activity');
     escrever(campo('Nome PT'), 'Tour');
-    escrever(campo('Capacidade maxima'), '4');
+    escrever(campo('Capacidade máxima'), '4');
     fireEvent.click(botao('Criar tour'));
     const meta = JSON.parse(guardar(onSave).description);
     expect(meta.highlights_pt).toBeNull();
@@ -464,7 +464,7 @@ describe('TourForm', () => {
     function novoTour() {
       const r = renderForm('activity');
       escrever(campo('Nome PT'), 'Volta a ilha');
-      escrever(campo('Capacidade maxima'), '8');
+      escrever(campo('Capacidade máxima'), '8');
       return r;
     }
     /* le ao colar ou ao sair do campo (nunca a meio da escrita) */
@@ -559,7 +559,7 @@ describe('TourForm', () => {
   it('tour_grava_recolha_no_hotel', () => {
     const { onSave } = renderForm('activity');
     escrever(campo('Nome PT'), 'Volta a ilha');
-    escrever(campo('Capacidade maxima'), '8');
+    escrever(campo('Capacidade máxima'), '8');
     const caixa = screen.getByRole('checkbox', { name: 'Inclui recolha no hotel' });
     expect(caixa).not.toBeChecked();
     fireEvent.click(caixa);
@@ -571,7 +571,7 @@ describe('TourForm', () => {
     function preencherMinimo() {
       const r = renderForm('activity');
       escrever(campo('Nome PT'), 'Tour');
-      escrever(campo('Capacidade maxima'), '4');
+      escrever(campo('Capacidade máxima'), '4');
       return r;
     }
 
@@ -694,7 +694,7 @@ describe('TourForm', () => {
       tour_type: 'privado',
       duration: 3,
       languages: ['PT', 'NL'],
-      difficulty: 'Fácil',
+      difficulty: 'Facil',
       min_age: 0,
       meeting_point: 'Hotel Riu',
       start_time: '08:15',
@@ -732,9 +732,10 @@ describe('TourForm', () => {
       expect(campo('Descrição longa PT').value).toBe('Descrição PT');
       expect(campo('Descrição longa EN').value).toBe('Description EN');
       expect(campo('Duração (horas)').value).toBe('3');
-      expect(campo('Dificuldade').value).toBe('Fácil');
-      expect(campo('Idade minima').value).toBe('0');
-      expect(campo('Capacidade maxima').value).toBe('8');
+      expect(campo('Dificuldade').value).toBe('Facil');
+      expect(campo('Dificuldade').selectedOptions[0].textContent).toBe('Fácil');
+      expect(campo('Idade mínima').value).toBe('0');
+      expect(campo('Capacidade máxima').value).toBe('8');
       expect(campo('Hora de início').value).toBe('08:15');
       expect(campo('Ponto de encontro').value).toBe('Hotel Riu');
       expect(campo('Preço adulto (opcional se usar Preço privado/Escalões)').value).toBe('45');
@@ -785,7 +786,7 @@ describe('TourForm', () => {
           tour_type: 'privado',
           duration: 3,
           languages: ['PT', 'NL'],
-          difficulty: 'Fácil',
+          difficulty: 'Facil',
           min_age: 0,
           meeting_point: 'Hotel Riu',
           pickup_included: false,
@@ -847,7 +848,7 @@ describe('TourForm', () => {
       const { onSave } = renderForm('activity', {
         unit: { id: 'x', name: 'Sem capacidade', description: null, base_price: null, status: 'active' },
       });
-      escrever(campo('Capacidade maxima'), '1');
+      escrever(campo('Capacidade máxima'), '1');
       fireEvent.click(botao('Guardar alterações'));
       expect(guardar(onSave)).toMatchObject({ capacity: 1, base_price: 0 });
     });
@@ -871,7 +872,7 @@ describe('TourForm', () => {
       vi.mocked(uploadImage).mockResolvedValue({ url: 'https://cdn.exemplo/nova.jpg' });
       const { onSave, container } = renderForm('activity');
       escrever(campo('Nome PT'), 'Tour com foto');
-      escrever(campo('Capacidade maxima'), '4');
+      escrever(campo('Capacidade máxima'), '4');
       const ficheiro = new File(['x'], 'foto.jpg', { type: 'image/jpeg' });
       await act(async () => {
         fireEvent.change(container.querySelector('input[type="file"]'), { target: { files: [ficheiro] } });
@@ -970,9 +971,9 @@ describe('HotelRoomForm', () => {
     fireEvent.click(screen.getByLabelText('TV'));
     fireEvent.click(screen.getByLabelText('TV'));
     escrever(campo('Preço base'), '95.5');
-    escrever(campo('Epoca baixa'), '70');
-    escrever(campo('Epoca média'), '85');
-    escrever(campo('Epoca alta'), '110');
+    escrever(campo('Época baixa'), '70');
+    escrever(campo('Época média'), '85');
+    escrever(campo('Época alta'), '110');
     escrever(campo('Pico'), '150.25');
     escrever(porPlaceholder('Descrição do quarto...'), 'Quarto com varanda');
     fireEvent.click(botao('Adicionar item incluído'));
@@ -1020,7 +1021,7 @@ describe('HotelRoomForm', () => {
     escrever(campo('Nome'), 'Quarto');
     escrever(campo('Preço base'), '0');
     escrever(campo('Crianças'), '');
-    escrever(campo('Epoca baixa'), '0');
+    escrever(campo('Época baixa'), '0');
     fireEvent.click(botao('Criar quarto'));
     const r = guardar(onSave);
     expect(r.base_price).toBe(0);
@@ -1082,9 +1083,9 @@ describe('HotelRoomForm', () => {
       expect(screen.getByLabelText('Cofre').checked).toBe(true);
       expect(screen.getByLabelText('TV').checked).toBe(false);
       expect(campo('Preço base').value).toBe('55');
-      expect(campo('Epoca baixa').value).toBe('50');
-      expect(campo('Epoca média').value).toBe('60');
-      expect(campo('Epoca alta').value).toBe('70');
+      expect(campo('Época baixa').value).toBe('50');
+      expect(campo('Época média').value).toBe('60');
+      expect(campo('Época alta').value).toBe('70');
       expect(campo('Pico').value).toBe('0');
       expect(porPlaceholder('Descrição do quarto...').value).toBe('Quarto amplo');
       expect(porPlaceholder('Ex: Pequeno-almoço').value).toBe('Wifi');
@@ -1225,7 +1226,7 @@ describe('RentacarVehicleForm', () => {
     expect(campo('Lugares').value).toBe('5');
     expect(campo('Transmissão').value).toBe('manual');
     expect(campo('Combustível').value).toBe('gasolina');
-    expect(campo('Idade minima').value).toBe('21');
+    expect(campo('Idade mínima').value).toBe('21');
     expect(campo('Carta há (anos)').value).toBe('1');
     expect(opcoes(campo('Categoria')).map(o => o[0])).toEqual(['Economico', 'Compacto', 'SUV', 'Pickup', 'Moto', 'Van', 'Executivo']);
     expect(opcoes(campo('Transmissão'))).toEqual([['manual', 'Manual'], ['automatico', 'Automático']]);
@@ -1278,7 +1279,7 @@ describe('RentacarVehicleForm', () => {
     escrever(campo('Custo km extra (€)'), '0.3');
     escrever(campo('Desc. semana (%)'), '10');
     escrever(campo('Desc. mês (%)'), '20');
-    escrever(campo('Idade minima'), '23');
+    escrever(campo('Idade mínima'), '23');
     escrever(campo('Carta há (anos)'), '3');
     escrever(campo('Seguro até'), '2027-01-31');
     escrever(campo('IUC até'), '2027-02-28');
@@ -1442,7 +1443,7 @@ describe('RentacarVehicleForm', () => {
       expect(campo('Custo km extra (€)').value).toBe('0.3');
       expect(campo('Desc. semana (%)').value).toBe('10');
       expect(campo('Desc. mês (%)').value).toBe('20');
-      expect(campo('Idade minima').value).toBe('23');
+      expect(campo('Idade mínima').value).toBe('23');
       expect(campo('Carta há (anos)').value).toBe('2');
       expect(campo('Seguro até').value).toBe('2027-01-31');
       expect(campo('IUC até').value).toBe('2027-02-28');
@@ -1524,7 +1525,7 @@ describe('RentacarVehicleForm', () => {
       const unit = { id: 'v3', name: 'Carro', description: 'Carro económico', base_price: 20, capacity: 4, status: 'active' };
       const { onSave } = renderForm('rentacar', { unit });
       expect(campo('Lugares').value).toBe('5');
-      expect(campo('Idade minima').value).toBe('21');
+      expect(campo('Idade mínima').value).toBe('21');
       fireEvent.click(botao('Guardar alterações'));
       const v = guardar(onSave);
       expect(v.description).toBe(JSON.stringify(META_VIATURA_VAZIA));
@@ -1960,7 +1961,7 @@ describe('TourForm com o design system', () => {
   function preencherMinimo() {
     const r = renderForm('activity');
     escrever(campo('Nome PT'), 'Tour');
-    escrever(campo('Capacidade maxima'), '4');
+    escrever(campo('Capacidade máxima'), '4');
     return r;
   }
 
@@ -1972,7 +1973,7 @@ describe('TourForm com o design system', () => {
     renderForm('activity');
     temEtiquetaPorCima([
       'Nome PT', 'Nome EN', 'Categoria', 'Modalidade', 'Descrição curta PT', 'Descrição longa EN',
-      'Duração (horas)', 'Dificuldade', 'Capacidade maxima', 'Hora de início', 'Preço criança',
+      'Duração (horas)', 'Dificuldade', 'Capacidade máxima', 'Hora de início', 'Preço criança',
       'ID produto Viator', 'Latitude', 'Longitude',
     ]);
   });
@@ -2074,8 +2075,8 @@ describe('HotelRoomForm com o design system', () => {
   it('os campos tem a etiqueta por cima', () => {
     renderForm('hotel');
     temEtiquetaPorCima([
-      'Número', 'Nome', 'Tipo', 'Andar', 'Vista', 'Adultos', 'Crianças', 'Preço base', 'Epoca baixa',
-      'Epoca média', 'Epoca alta', 'Pico', 'ID produto GetYourGuide',
+      'Número', 'Nome', 'Tipo', 'Andar', 'Vista', 'Adultos', 'Crianças', 'Preço base', 'Época baixa',
+      'Época média', 'Época alta', 'Pico', 'ID produto GetYourGuide',
     ]);
   });
 
@@ -2083,7 +2084,7 @@ describe('HotelRoomForm com o design system', () => {
     const { onSave } = renderForm('hotel');
     escrever(campo('Nome'), 'Suite');
     escrever(campo('Preço base'), '90');
-    escrever(campo('Epoca alta'), '120');
+    escrever(campo('Época alta'), '120');
     fireEvent.click(botao('Adicionar item incluído'));
     fireEvent.click(botao('Adicionar item incluído'));
     escrever(screen.getByLabelText('Item 1'), 'Pequeno-almoço');
@@ -2107,7 +2108,7 @@ describe('RentacarVehicleForm com o design system', () => {
     renderForm('rentacar');
     temEtiquetaPorCima([
       'Marca', 'Modelo', 'Ano', 'Matricula', 'Cor', 'Categoria', 'Lugares', 'Bagagens', 'Transmissão',
-      'Combustível', 'Preço base / dia', 'Idade minima', 'Seguro até', 'IUC até', 'Inspeção até',
+      'Combustível', 'Preço base / dia', 'Idade mínima', 'Seguro até', 'IUC até', 'Inspeção até',
       'Km actuais', 'Próxima revisão (km)',
     ]);
   });

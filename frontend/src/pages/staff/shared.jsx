@@ -1,7 +1,7 @@
 /* ── Constants ── */
 export const ROLES_BY_TYPE = {
   activity:   ['Guia', 'Instrutor', 'Condutor', 'Vendedor de Praia', 'Administracao', 'Gestor/Supervisor'],
-  hotel:      ['Recepcionista', 'Camareira/Housekeeping', 'Porteiro', 'Manutenção', 'Administracao', 'Gestor/Supervisor'],
+  hotel:      ['Recepcionista', 'Camareira/Housekeeping', 'Porteiro', 'Manutencao', 'Administracao', 'Gestor/Supervisor'],
   rentacar:   ['Mecanico', 'Motorista', 'Lavador/Detailing', 'Inspector', 'Administracao', 'Gestor/Supervisor'],
   restaurant: ['Garcom', 'Cozinheiro/Chef', 'Sub-chef', 'Bartender', 'Caixa', 'Empregado de Limpeza', 'Administracao', 'Gestor/Supervisor'],
 };

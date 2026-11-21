@@ -90,7 +90,7 @@ function AffiliateModal({ affiliate, config, onSave, onClose }) {
     <Modal open onClose={onClose} title={isNew ? 'Novo afiliado' : 'Editar afiliado'} size="sm">
       <form onSubmit={handleSubmit} className="space-y-4">
         <Input label="Nome" aria-label="Nome" value={form.name} onChange={set('name')} required placeholder="Ex: João Silva" />
-        <Input label="Email" aria-label="Email" type="email" value={form.email} onChange={set('email')} required placeholder="joão@exemplo.com" />
+        <Input label="Email" aria-label="Email" type="email" value={form.email} onChange={set('email')} required placeholder="joao@exemplo.com" />
 
         <div className="grid grid-cols-2 gap-3">
           <Input label="Comissão (%)" aria-label="Comissão (%)" type="number" min="0" max="50" step="0.5"

@@ -295,9 +295,9 @@ export default function Demand() {
           {/* Season indicators */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <Card padding="px-5 py-4">
-              <h3 className="font-display font-semibold text-sm text-n-700 mb-3">Epocas altas</h3>
+              <h3 className="font-display font-semibold text-sm text-n-700 mb-3">Épocas altas</h3>
               {highMonths.length === 0 ? (
-                <p className="text-xs font-body text-n-400">Sem dados suficientes para identificar epocas altas.</p>
+                <p className="text-xs font-body text-n-400">Sem dados suficientes para identificar épocas altas.</p>
               ) : (
                 <div className="flex flex-wrap gap-2">
                   {highMonths.map(m => (
@@ -310,9 +310,9 @@ export default function Demand() {
               )}
             </Card>
             <Card padding="px-5 py-4">
-              <h3 className="font-display font-semibold text-sm text-n-700 mb-3">Epocas baixas</h3>
+              <h3 className="font-display font-semibold text-sm text-n-700 mb-3">Épocas baixas</h3>
               {lowMonths.length === 0 ? (
-                <p className="text-xs font-body text-n-400">Sem epocas baixas identificadas — bom desempenho anual!</p>
+                <p className="text-xs font-body text-n-400">Sem épocas baixas identificadas — bom desempenho anual!</p>
               ) : (
                 <div className="flex flex-wrap gap-2">
                   {lowMonths.map(m => (

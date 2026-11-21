@@ -60,7 +60,7 @@ const titulo = () => screen.getByText(/^(Janeiro|Fevereiro|Marco|Abril|Maio|Junh
 describe('Planeador: calendário', () => {
   it('o_calendario_comeca_na_segunda_com_celulas_vazias_antes_do_dia_1', () => {
     const { container } = planner([]);
-    expect(screen.getByText('Planeador de Social Média')).toBeInTheDocument();
+    expect(screen.getByText('Planeador de Social Media')).toBeInTheDocument();
     expect(titulo()).toBe('Novembro 2026');
     ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sab', 'Dom'].forEach(d => expect(screen.getByText(d)).toBeInTheDocument());
     expect(vazias(container)).toHaveLength(6);

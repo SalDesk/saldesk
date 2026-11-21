@@ -98,7 +98,7 @@ describe('Marketing: montagem', () => {
     const rotulos = ['QR Code', 'Widget', 'Indicações', 'Estatísticas'];
     rotulos.forEach(r => expect(separador(r)).toBeInTheDocument());
     expect(screen.queryByText('Planeador')).not.toBeInTheDocument();
-    expect(screen.queryByText('Planeador de Social Média')).not.toBeInTheDocument();
+    expect(screen.queryByText('Planeador de Social Media')).not.toBeInTheDocument();
   });
 
   it('getBookingLink_getMarketingStats_e_getReferrals_a_falhar_dao_os_valores_por_omissao', async () => {

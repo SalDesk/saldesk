@@ -5,7 +5,7 @@ import { useT } from '../../i18n';
 const DIA_SEMANA = {
   pt: ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'],
   en: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
-  de: ['Só', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'],
+  de: ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'],
   nl: ['Zo', 'Ma', 'Di', 'Wo', 'Do', 'Vr', 'Za'],
 };
 

@@ -9,7 +9,7 @@ import LoadingSpinner from '../components/shared/LoadingSpinner';
 import ExpiryBadge from '../components/shared/ExpiryBadge';
 
 const LEAVE_TYPE_LABEL = {
-  vacation: 'Férias', sick: 'Doenca', maternity: 'Licença maternidade',
+  vacation: 'Férias', sick: 'Doença', maternity: 'Licença maternidade',
   paternity: 'Licença paternidade', unpaid: 'Sem vencimento', other: 'Outro',
 };
 

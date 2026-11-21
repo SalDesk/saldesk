@@ -179,7 +179,7 @@ export default function RentacarVehicleForm({ unit, onSave, onCancel, loading, e
       <div>
         <SectionLabel>Requisitos condutor</SectionLabel>
         <div className="grid grid-cols-2 gap-3">
-          <Input label="Idade minima" type="number" value={form.min_age} onChange={set('min_age')} min="18" max="99" placeholder="21" />
+          <Input label="Idade mínima" type="number" value={form.min_age} onChange={set('min_age')} min="18" max="99" placeholder="21" />
           <Input label="Carta há (anos)" type="number" value={form.license_years} onChange={set('license_years')} min="0" placeholder="1" />
         </div>
       </div>

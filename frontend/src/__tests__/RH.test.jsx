@@ -35,7 +35,7 @@ const A_EXPIRAR = [
 const COLABORADORES = [
   { id: 's1', name: 'Ana Ferreira', role: 'Guia' },
   { id: 's2', name: 'Rui Lopes', role: 'Motorista' },
-  { id: 's3', name: 'Carla Dias', role: 'Receção' },
+  { id: 's3', name: 'Carla Dias', role: 'Recepcao' },
   { id: 's4', name: 'bruno', role: 'Instrutor' },
 ];
 const VISAO = { pending_leave: PEDIDOS, expiring: A_EXPIRAR, staff: COLABORADORES };
@@ -105,7 +105,7 @@ describe('RH', () => {
     expect(p1.textContent).toContain('2026-12-01 → 2026-12-05');
     expect(p1.textContent).toContain('(5 dias)');
     const p2 = within(pendentes).getByText('Rui Lopes').parentElement;
-    expect(p2.textContent).toContain('Doenca');
+    expect(p2.textContent).toContain('Doença');
     expect(p2.textContent).toContain('(1 dias)');
     /* tipo desconhecido mostra o valor tal e qual */
     const p3 = within(pendentes).getByText('Carla Dias').parentElement;

@@ -519,7 +519,7 @@ function StaffAvailability({ staffId }) {
 
 /* ─── Vista: Perfil ─── */
 const LEAVE_TYPE_LABEL = {
-  vacation: 'Férias', sick: 'Doenca', maternity: 'Licença maternidade',
+  vacation: 'Férias', sick: 'Doença', maternity: 'Licença maternidade',
   paternity: 'Licença paternidade', unpaid: 'Sem vencimento', other: 'Outro',
 };
 const LEAVE_STATUS_CLS = {

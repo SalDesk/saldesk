@@ -28,10 +28,14 @@ import LoadingSpinner from '../components/shared/LoadingSpinner';
 const LANGUAGES   = ['PT', 'EN', 'DE', 'NL', 'FR', 'ES'];
 const DAYS        = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sab', 'Dom'];
 const GUIDE_ROLES = ['Guia', 'Instrutor', 'Guia-Instrutor', 'Assistente', 'Outro'];
+/* O texto gravado nas certificacoes e o da lista; isto e so o que se le no ecra. */
+const CERT_ROTULO = { 'Guia Turistico Certificado': 'Guia Turístico Certificado' };
+const certRotulo = (c) => CERT_ROTULO[c] || c;
+
 const PRESET_CERTS = [
   'PADI Open Water', 'PADI Advanced', 'PADI Rescue Diver',
   'IKO Kitesurf', 'ACSI Kitesurf', 'Surf Coach',
-  'Primeiros Socorros', 'CPR / DAE', 'Guia Turístico Certificado',
+  'Primeiros Socorros', 'CPR / DAE', 'Guia Turistico Certificado',
 ];
 
 /* Cada estado do guia usa uma variante do Badge do sistema */
@@ -129,7 +133,7 @@ function GuideCard({ guide, units, onEdit, onDelete, onHistory, onAssign }) {
               {certs.slice(0, 3).map(c => (
                 <span key={c}
                   className="text-xs font-body px-2 py-0.5 bg-n-50 text-n-600 border border-n-200 rounded-xs">
-                  {c}
+                  {certRotulo(c)}
                 </span>
               ))}
               {certs.length > 3 && (
@@ -282,7 +286,7 @@ function GuideForm({ guide, units, onSave, onCancel, loading, error }) {
               className={`px-2.5 py-1 rounded-sm text-xs font-body transition-colors border ${
                 certs.includes(c) ? 'bg-ocean-50 border-ocean-300 text-ocean-700' : 'bg-n-50 border-n-200 text-n-600 hover:border-n-400'
               }`}>
-              {c}
+              {certRotulo(c)}
             </button>
           ))}
         </div>

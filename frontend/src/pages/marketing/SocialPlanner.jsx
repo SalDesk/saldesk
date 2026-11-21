@@ -90,7 +90,7 @@ export default function SocialPlanner({ posts, onAdd, onEdit, onDelete, onMarkPu
   return (
     <div>
       <div className="flex items-center justify-between mb-4">
-        <h2 className="font-display font-semibold text-base text-n-900">Planeador de Social Média</h2>
+        <h2 className="font-display font-semibold text-base text-n-900">Planeador de Social Media</h2>
         <Button icon={Plus} size="sm" onClick={() => onAdd(null)}>Novo post</Button>
       </div>
 

@@ -327,7 +327,7 @@ export default function CustomerDetail({ customerId, onClose, onUpdate }) {
                       <div className="space-y-2">
                         {[
                           { label: 'Confirmação de reserva', text: `Olá ${customer.first_name || customer.name?.split(' ')[0]}! A sua reserva foi confirmada. Aguardamos a sua visita!` },
-                          { label: 'Lembrete de tour',       text: `Olá! Lembrete do seu tour amanhã. Não se esqueca de trazer protector solar e água.` },
+                          { label: 'Lembrete de tour',       text: `Olá! Lembrete do seu tour amanhã. Não se esqueça de trazer protector solar e água.` },
                           { label: 'Pedido de avaliação',    text: `Obrigado pela sua visita! Pode deixar a sua avaliação em: https://app.saldesk.cv` },
                         ].map(({ label, text }) => {
                           const number = (customer.whatsapp || customer.phone || '').replace(/\D/g, '');

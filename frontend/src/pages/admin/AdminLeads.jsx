@@ -89,7 +89,7 @@ const EMAIL_TEMPLATES = {
     body:
       'Olá {{nome}},\n\n' +
       'Obrigado por se candidatar e querer conhecer a SalDesk. Vimos que tem um negócio de {{tipo}} em Cabo Verde e ' +
-      'gostariamos de mostrar como a nossa plataforma pode ajudar a centralizar reservas, equipa e pagamentos num único lugar.\n\n' +
+      'gostaríamos de mostrar como a nossa plataforma pode ajudar a centralizar reservas, equipa e pagamentos num único lugar.\n\n' +
       'Em breve entraremos em contacto para combinar os próximos passos.\n\nCumprimentos,\nEquipa SalDesk',
   },
   agendar_demo: {
@@ -97,7 +97,7 @@ const EMAIL_TEMPLATES = {
     subject: 'SalDesk — vamos agendar a sua demonstração?',
     body:
       'Olá {{nome}},\n\n' +
-      'Obrigado pela conversa. Para avancarmos, indique 2-3 horários que lhe sejam convenientes nos próximos dias ' +
+      'Obrigado pela conversa. Para avançarmos, indique 2-3 horários que lhe sejam convenientes nos próximos dias ' +
       'e confirmamos a demonstração da plataforma SalDesk adaptada ao seu negócio de {{tipo}}.\n\n' +
       'Aguardamos a sua resposta.\n\nCumprimentos,\nEquipa SalDesk',
   },
@@ -107,7 +107,7 @@ const EMAIL_TEMPLATES = {
     body:
       'Olá {{nome}},\n\n' +
       'Com base na nossa conversa, preparamos uma proposta comercial para o seu negócio de {{tipo}}: planos, preços e ' +
-      'o que a SalDesk pode automatizar desde o primeiro dia (reservas, equipa, financas e comunicação com clientes).\n\n' +
+      'o que a SalDesk pode automatizar desde o primeiro dia (reservas, equipa, finanças e comunicação com clientes).\n\n' +
       'Fico disponível para esclarecer qualquer dúvida e avançar com a activação.\n\nCumprimentos,\nEquipa SalDesk',
   },
   follow_up: {

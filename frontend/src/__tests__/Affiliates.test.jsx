@@ -164,7 +164,7 @@ describe('Afiliados: modais e acções', () => {
     fireEvent.change(within(dlg).getByPlaceholderText('Ex: João Silva'), { target: { value: 'Outro Nome' } });
     expect(codigo).toHaveValue('ANA' + sufixo); /* so quando o codigo esta vazio */
     fireEvent.change(codigo, { target: { value: ' ana77 ' } });
-    fireEvent.change(within(dlg).getByPlaceholderText('joão@exemplo.com'), { target: { value: 'ana@x.cv' } });
+    fireEvent.change(within(dlg).getByPlaceholderText('joao@exemplo.com'), { target: { value: 'ana@x.cv' } });
     expect(within(dlg).getByRole('spinbutton')).toHaveValue(15); /* comissao global */
     const antes = listAffiliates.mock.calls.length;
     fireEvent.click(within(dlg).getByRole('button', { name: 'Criar afiliado' }));
@@ -188,7 +188,7 @@ describe('Afiliados: modais e acções', () => {
     fireEvent.click(novoAfiliado());
     const dlg = screen.getByRole('dialog');
     fireEvent.change(within(dlg).getByPlaceholderText('Ex: João Silva'), { target: { value: 'Ana' } });
-    fireEvent.change(within(dlg).getByPlaceholderText('joão@exemplo.com'), { target: { value: 'a@x.cv' } });
+    fireEvent.change(within(dlg).getByPlaceholderText('joao@exemplo.com'), { target: { value: 'a@x.cv' } });
     fireEvent.click(within(dlg).getByRole('button', { name: 'Criar afiliado' }));
     expect(await within(dlg).findByText('Já existe um afiliado com este código.')).toBeInTheDocument();
     createAffiliate.mockRejectedValueOnce(new Error('x'));

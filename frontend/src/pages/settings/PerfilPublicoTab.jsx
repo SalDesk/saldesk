@@ -29,6 +29,7 @@ const DIAS_CHAT = [
   { v: 5, l: 'fri' }, { v: 6, l: 'sat' }, { v: 0, l: 'sun' },
 ];
 const CHAT_PADRAO = { enabled: false, days: [1, 2, 3, 4, 5], from: '09:00', to: '18:00', message_pt: '', message_en: '' };
+/* Igual ao texto de chatAutoReply.js no backend, mas aqui com acentos (a copia do backend nao tem). */
 const TEXTO_CHAT_PT = 'Obrigado pela sua mensagem. De momento estamos fora do horário de atendimento; responderemos assim que possível.';
 const TEXTO_CHAT_EN = 'Thank you for your message. We are currently outside our opening hours and will reply as soon as we can.';
 

@@ -613,7 +613,7 @@ function MaintenanceTab() {
         </SectionCard>
 
         <SectionCard title="Reiniciar API" icon={RotateCcw}>
-          <p className="text-xs text-n-400 mb-4">Reinicia o processo via PM2. O servidor ficara indisponível alguns segundos.</p>
+          <p className="text-xs text-n-400 mb-4">Reinicia o processo via PM2. O servidor ficará indisponível alguns segundos.</p>
           {confirm ? (
             <div className="space-y-2">
               <p className="text-xs font-semibold text-[var(--error)]">Confirmar reinício?</p>

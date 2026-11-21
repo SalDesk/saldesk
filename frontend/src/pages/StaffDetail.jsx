@@ -37,7 +37,7 @@ function fmtMoney(v) {
 
 const LEAVE_TYPES = [
   { v: 'vacation',  l: 'Férias' },
-  { v: 'sick',      l: 'Doenca' },
+  { v: 'sick',      l: 'Doença' },
   { v: 'maternity', l: 'Licença maternidade' },
   { v: 'paternity', l: 'Licença paternidade' },
   { v: 'unpaid',    l: 'Sem vencimento' },

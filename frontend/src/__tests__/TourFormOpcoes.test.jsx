@@ -37,7 +37,7 @@ function campoPorEtiqueta(re) {
 function formularioNovo() {
   const onSave = renderForm(undefined);
   escrever(campoPorEtiqueta(/^Nome PT/), 'Passeio');
-  escrever(campoPorEtiqueta(/^Capacidade maxima/), '12');
+  escrever(campoPorEtiqueta(/^Capacidade máxima/), '12');
   return onSave;
 }
 

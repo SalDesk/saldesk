@@ -558,7 +558,7 @@ describe('Unidades (página e lista)', () => {
       fireEvent.click(within(cartao('Tour Pedra de Lume')).getByRole('button', { name: 'Eliminar' }));
       const d = dialogo();
       expect(within(d).getByRole('heading', { name: 'Confirmar' })).toBeInTheDocument();
-      expect(within(d).getByText('Eliminar o tour "Tour Pedra de Lume"? As reservas associadas serão mantidas mas o tour ficara indisponível.')).toBeInTheDocument();
+      expect(within(d).getByText('Eliminar o tour "Tour Pedra de Lume"? As reservas associadas serão mantidas mas o tour ficará indisponível.')).toBeInTheDocument();
       expect(deleteUnit).not.toHaveBeenCalled();
       fireEvent.click(within(d).getByRole('button', { name: 'Eliminar' }));
       await waitFor(() => expect(deleteUnit).toHaveBeenCalledWith('t1'));
@@ -578,7 +578,7 @@ describe('Unidades (página e lista)', () => {
 
     it('mensagens de cada tipo', async () => {
       const casos = [
-        ['hotel', 'Quarto Mar', 'Eliminar a unidade "Quarto Mar"? As reservas associadas serão mantidas mas a unidade ficara indisponível.'],
+        ['hotel', 'Quarto Mar', 'Eliminar a unidade "Quarto Mar"? As reservas associadas serão mantidas mas a unidade ficará indisponível.'],
         ['rentacar', 'Suzuki Jimny', 'Eliminar a viatura "Suzuki Jimny"? As reservas associadas serão mantidas.'],
         ['restaurant', 'Mesa 3', 'Eliminar a mesa "Mesa 3"? As reservas associadas serão mantidas.'],
       ];

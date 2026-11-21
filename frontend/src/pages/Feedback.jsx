@@ -15,8 +15,9 @@ import Input, { Textarea } from '../components/ui/Input';
 import Toggle from '../components/ui/Toggle';
 import LoadingSpinner from '../components/shared/LoadingSpinner';
 
-/* Igual ao DEFAULT_TEMPLATE do backend (helpers/pedidoAvaliacao.js): texto neutro, serve
-   actividades, hoteis, rent-a-car e restaurantes */
+/* Parecido com o DEFAULT_TEMPLATE do backend (helpers/pedidoAvaliacao.js): texto neutro, serve
+   actividades, hoteis, rent-a-car e restaurantes. Esta copia do frontend tem acentos; a do
+   backend ainda nao. */
 const DEFAULT_TEMPLATE = {
   subject_pt: 'Como correu? Deixe a sua avaliação',
   subject_en: 'How was it? Leave your review',

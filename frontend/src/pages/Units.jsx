@@ -68,14 +68,14 @@ const LABELS = {
     subtitle:   (n) => `${n} tour(s) disponível(is)`,
     newBtn:     'Novo Tour',
     editPrefix: 'Editar tour',
-    deleteMsg:  (name) => `Eliminar o tour "${name}"? As reservas associadas serão mantidas mas o tour ficara indisponível.`,
+    deleteMsg:  (name) => `Eliminar o tour "${name}"? As reservas associadas serão mantidas mas o tour ficará indisponível.`,
   },
   hotel: {
     title:      'Quartos & Alojamentos',
     subtitle:   (n) => `${n} unidade(s) registada(s)`,
     newBtn:     'Nova Unidade',
     editPrefix: 'Editar',
-    deleteMsg:  (name) => `Eliminar a unidade "${name}"? As reservas associadas serão mantidas mas a unidade ficara indisponível.`,
+    deleteMsg:  (name) => `Eliminar a unidade "${name}"? As reservas associadas serão mantidas mas a unidade ficará indisponível.`,
   },
   rentacar: {
     title:      'Frota',

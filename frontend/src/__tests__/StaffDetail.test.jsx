@@ -126,7 +126,7 @@ describe('Detalhe do colaborador: Férias', () => {
     expect(linha('2026-12-01 → 2026-12-05')).toHaveTextContent('Férias · 2026-12-01 → 2026-12-05 (5 dias)');
     expect(linha('2026-12-01 → 2026-12-05')).toHaveTextContent('Natal');
     expect(linha('2026-12-01 → 2026-12-05')).toHaveTextContent('Pendente');
-    expect(linha('2026-11-02 → 2026-11-02')).toHaveTextContent('Doenca');
+    expect(linha('2026-11-02 → 2026-11-02')).toHaveTextContent('Doença');
     expect(linha('2026-11-02 → 2026-11-02')).toHaveTextContent('(1 dias)');
     expect(linha('2026-11-02 → 2026-11-02')).toHaveTextContent('Aprovado');
     expect(linha('2026-10-01 → 2026-10-03')).toHaveTextContent('xyz'); /* tipo desconhecido tal e qual */
