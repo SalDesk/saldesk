@@ -6,7 +6,7 @@ import {
   Menu, X, Globe, Calendar, Users, Check, ArrowRight, Shield,
   ExternalLink, Copy, Share2,
   Heart, Compass, Car, Utensils, Clock, AlertCircle, RotateCcw,
-  CreditCard, Building, Camera, ThumbsUp, Languages,
+  CreditCard, Building, Camera, ThumbsUp,
   ShoppingBag, User,
 } from 'lucide-react';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
@@ -30,6 +30,14 @@ import SiteComplianceFooter from '../components/shared/SiteComplianceFooter';
 import { textoPoliticaCancelamento } from '../utils/politicaCancelamento';
 import { jsonLdExperiencia } from '../utils/dadosEstruturados';
 import { dentroDeCaboVerde } from '../utils/coordenadas';
+import { seccoesActividade, factosActividade, comodidadeNaLingua } from '../utils/paginaActividade';
+import GaleriaActividade, { Lightbox } from '../components/servico/GaleriaActividade';
+import CabecalhoActividade from '../components/servico/CabecalhoActividade';
+import FactosActividade from '../components/servico/FactosActividade';
+import MenuSeccoes from '../components/servico/MenuSeccoes';
+import SeccoesActividade from '../components/servico/SeccoesActividade';
+import ReservaActividade, { textoDaLinha } from '../components/servico/ReservaActividade';
+import BarraReservaMovel, { irParaReserva } from '../components/servico/BarraReservaMovel';
 
 /* Icone numerado para as paragens do itinerario -- SVG inline (nunca
    bitmap), substitui o icone PNG por defeito do Leaflet (que nem sequer
@@ -144,6 +152,28 @@ function getUnitMeta(unit) {
   try { return JSON.parse(raw); } catch { return {}; }
 }
 
+/* Meta da pagina completa de actividade. Dois dados que a ficha antiga ja mostrava entram nas
+   seccoes novas em vez de se perderem: a descricao em texto simples (fichas sem JSON) ou no campo
+   generico `description` conta como descricao em portugues, e as comodidades escolhidas no
+   TourForm (Equipamento incluido, Seguro, Transporte...) juntam-se ao "Incluido", em ingles
+   na pagina EN (comodidadeNaLingua; as escritas pelo operador ficam como estao). */
+function metaDaActividade(unit, meta, lang) {
+  const raw = typeof unit?.description === 'string' ? unit.description.trim() : '';
+  const generica = typeof meta.description === 'string' ? meta.description.trim() : '';
+  const legado = raw && !raw.startsWith('{') ? raw : generica;
+  const temDesc = [meta.desc_pt, meta.desc_en].some((d) => typeof d === 'string' && d.trim());
+  let m = legado && !temDesc ? { ...meta, desc_pt: legado } : meta;
+  const comodidades = Array.isArray(meta.amenities)
+    ? meta.amenities.filter((a) => typeof a === 'string' && a.trim()).map((a) => comodidadeNaLingua(a, lang))
+    : [];
+  if (comodidades.length) {
+    const itens = Array.isArray(m.included_items) ? m.included_items : [];
+    const ja = new Set(itens.map((it) => String(typeof it === 'string' ? it : it?.label || '').trim().toLowerCase()));
+    m = { ...m, included_items: [...itens, ...comodidades.filter((a) => !ja.has(a.trim().toLowerCase()))] };
+  }
+  return m;
+}
+
 /* Preco de tour privado/em grupo -- por escaloes de numero de pessoas
    (price_tiers) ou valor fixo unico (price_private). Espelha exactamente
    calcularPrecoPrivado() do backend (bookingHelpers.js) para o preview do
@@ -207,23 +237,8 @@ function StarRating({ rating, size = 13 }) {
   );
 }
 
-/* ── Lightbox ─────────────────────────────────────── */
-function Lightbox({ images, idx, onClose, onMove }) {
-  useEffect(() => {
-    const h = e => { if (e.key==='Escape') onClose(); if (e.key==='ArrowLeft') onMove(-1); if (e.key==='ArrowRight') onMove(1); };
-    window.addEventListener('keydown', h);
-    return () => window.removeEventListener('keydown', h);
-  }, [onClose, onMove]);
-  return (
-    <div className="fixed inset-0 z-[70] bg-black/95 flex items-center justify-center" onClick={onClose}>
-      <button onClick={e=>{e.stopPropagation();onMove(-1);}} className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-white hover:bg-white/20"><ChevronLeft size={20} strokeWidth={2}/></button>
-      <img src={images[idx]} alt="" className="max-w-[90vw] max-h-[85vh] object-contain rounded-lg" onClick={e=>e.stopPropagation()}/>
-      <button onClick={e=>{e.stopPropagation();onMove(1);}} className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-white hover:bg-white/20"><ChevronRight size={20} strokeWidth={2}/></button>
-      <button onClick={onClose} className="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-white hover:bg-white/20"><X size={18} strokeWidth={2}/></button>
-      <span className="absolute bottom-4 left-1/2 -translate-x-1/2 text-white/60 text-sm font-body">{idx+1} / {images.length}</span>
-    </div>
-  );
-}
+/* Lightbox (visor de fotos) vive em components/servico/GaleriaActividade.jsx, partilhado com a
+   galeria da pagina de actividade. */
 
 /* ── Modal shell ─────────────────────────────────── */
 const IN  = 'w-full border border-n-300 rounded-xl px-4 py-2.5 font-body text-sm focus:outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/10 bg-white transition-all disabled:bg-n-50 disabled:text-n-500 disabled:cursor-not-allowed';
@@ -276,12 +291,15 @@ function ST({ lines }) {
   );
 }
 
-function PO({ lang, v, set }) {
-  const options = [
+/* soNoLocal -- sem nada a cobrar (total 0), so o pagamento no local: PayPal e Vinti4 nunca
+   cobram 0. Por omissao ficam as tres opcoes de sempre. */
+function PO({ lang, v, set, soNoLocal = false }) {
+  const todas = [
     { k:'paypal', l:lang==='en'?'International card (PayPal)':'Cartão internacional (PayPal)', logos:[visaLogo, mastercardLogo, amexLogo] },
     { k:'sisp',   l:lang==='en'?'Cape Verdean card (Vinti4)':'Cartão cabo-verdiano (Vinti4)',  logos:[vinti4Logo, mastercardLogo] },
     { k:'cash',   l:lang==='en'?'Pay on arrival':'Pagar presencialmente', s:lang==='en'?'Cash or card on site':'Dinheiro ou cartão no local' },
   ];
+  const options = soNoLocal ? todas.filter(o=>o.k==='cash') : todas;
   return (
     <div className="space-y-2.5">
       {options.map(o=>(
@@ -628,13 +646,22 @@ function HotelModal({ unit, op, slug, lang, onClose, refCode, traveler }) {
 }
 
 /* ── ActivityModal ────────────────────────────────── */
-function ActivityModal({ unit, op, slug, lang, onClose, refCode, traveler, initialDate, initialAdults, initialKids, initialLanguage }) {
+/* seleccao (opcional) -- vem do "Reservar" da coluna de reserva (ReservaActividade):
+   { date, time|null, adults, children, mode, language|null, voucher|null, quote: { lines, total, before } }.
+   Com ela o modal abre nos dados do cliente (o passo 1 ja foi feito na coluna, e "Anterior"
+   no passo 2 fecha o modal), a revisao mostra as linhas e o total da cotacao do servidor
+   (o modal nao calcula total nenhum) e o voucher e o que a coluna aplicou (sem campo proprio).
+   Sem seleccao fica tudo como sempre: fallback para qualquer entrada antiga. */
+function ActivityModal({ unit, op, slug, lang, onClose, refCode, traveler, seleccao }) {
   const unitMeta=getUnitMeta(unit);
   const hasPerPerson=!!unit.base_price;
   const hasPrivate=temPrecoPrivado(unitMeta);
+  /* Sem preco nenhum (como na coluna): reserva-se por pessoa com o preco a combinar */
+  const semPreco=!hasPerPerson&&!hasPrivate;
   const priceTiers=Array.isArray(unitMeta.price_tiers)?unitMeta.price_tiers:[];
-  const [step,ss]=useState(1); const [date,sd]=useState(initialDate||''); const [time,st]=useState(''); const [adults,sa]=useState(initialAdults||2); const [kids,sk]=useState(initialKids||0);
-  const [tourLang,stl]=useState(initialLanguage||'');
+  const col=seleccao||null;
+  const [step,ss]=useState(col?2:1); const [date,sd]=useState(col?.date||''); const [time,st]=useState(col?.time||''); const [adults,sa]=useState(col?.adults||2); const [kids,sk]=useState(col?(col.children||0):0);
+  const [tourLang,stl]=useState(col?.language||'');
   /* Modo de reserva -- so relevante quando o tour tem AMBOS preco por
      pessoa e preco privado/escaloes configurados (pedido real da Logan
      Tours: preco privado nao pode continuar a ser forcado por pessoa).
@@ -643,9 +670,15 @@ function ActivityModal({ unit, op, slug, lang, onClose, refCode, traveler, initi
   const [info,si]=useState(()=>({name:traveler?.name||'',email:traveler?.email||'',phone:traveler?.phone||'',country:traveler?.country||'',needs:'',hotel:'',arrival:'',departure:'',referredBy:refCode||'',whatsappOptIn:false})); const [pay,sp]=useState('cash'); const [sub,ssub]=useState(false); const [resId,sr]=useState(null); const [resOk,sro]=useState(false); const [pendingRes,spr]=useState(null); const [err,se]=useState('');
   const [voucherCode,svc]=useState(null); const [policyOk,setPolicyOk]=useState(false);
   const numPessoas=adults+kids;
-  const isPrivateMode=hasPrivate&&(bookingMode==='private'||!hasPerPerson);
-  const rawTotal=isPrivateMode?calcPrivatePrice(unitMeta,numPessoas):numPessoas*(unit.base_price||0);
+  const isPrivateMode=col?col.mode==='private':hasPrivate&&(bookingMode==='private'||!hasPerPerson);
+  /* Sem seleccao o total e calculado aqui (como sempre); com seleccao vem do /quote */
+  const rawTotal=col?null:(isPrivateMode?calcPrivatePrice(unitMeta,numPessoas):numPessoas*(unit.base_price||0));
   const total=rawTotal?fmtPrice(rawTotal,null,op.currency||'EUR','EUR',lang):null;
+  /* Total 0 (preco a combinar, ou voucher que cobre tudo): nada a cobrar online, so no local */
+  const semCobranca=(col?Number(col.quote?.total)||0:Number(rawTotal)||0)<=0;
+  /* So vai na reserva o voucher que a cotacao aceitou (ha linha de desconto); um voucher
+     recusado (INVALID_VOUCHER) faria o POST falhar com 400 */
+  const voucherDaColuna=col&&col.voucher&&(col.quote?.lines||[]).some(l=>l.type==='discount')?col.voucher:null;
   const tourLanguages=Array.isArray(unitMeta.languages)?unitMeta.languages:[];
   /* Horarios com capacidade real (TourForm's TimeSlotsEditor) -- so activo
      quando a unidade tem meta.time_slots configurado. Sem isso, a reserva
@@ -655,28 +688,42 @@ function ActivityModal({ unit, op, slug, lang, onClose, refCode, traveler, initi
   const configuredSlots=Array.isArray(unitMeta.time_slots)?unitMeta.time_slots:[];
   const hasSlots=configuredSlots.length>0;
   const [slotAvail,ssa]=useState([]); const [loadingSlots,sls]=useState(false);
-  useEffect(()=>{ if(!hasSlots||!date){ssa([]);return;} sls(true); st(''); getSlotAvailability(slug,unit.id,date).then(ssa).finally(()=>sls(false)); },[date,hasSlots,slug,unit.id]);
+  useEffect(()=>{ if(col) return; if(!hasSlots||!date){ssa([]);return;} sls(true); st(''); getSlotAvailability(slug,unit.id,date).then(ssa).finally(()=>sls(false)); },[date,hasSlots,slug,unit.id]);
   /* Alojamento e datas de estadia (pedido real da Logan Tours: precisam de
      saber onde recolher e quando o turista chega/parte). Tudo opcional. */
   const stayLine=[info.hotel.trim()?`${lang==='en'?'Accommodation':'Alojamento'}: ${info.hotel.trim()}`:'',info.arrival?`${lang==='en'?'arrival':'chegada'} ${info.arrival}`:'',info.departure?`${lang==='en'?'departure':'partida'} ${info.departure}`:''].filter(Boolean).join(', ');
-  function buildPayload(){ const notes=[time?`${lang==='en'?'Time':'Hora'}: ${time}`:'',`${adults} ${lang==='en'?'adults':'adultos'}, ${kids} ${lang==='en'?'children':'crianças'}`,tourLang?(lang==='en'?'Language: ':'Idioma: ')+tourLang:'',stayLine,info.needs?(lang==='en'?'Additional request:':'Pedido adicional:')+' '+info.needs:''].filter(Boolean).join('. '); return {unit_id:unit.id,customer_name:info.name,customer_email:info.email,customer_phone:info.phone||null,customer_country:info.country||null,check_in:date,check_out:date,guests:adults+kids,notes,tour_time:hasSlots?time:undefined,voucher_code:voucherCode||undefined,ref_code:refCode||undefined,referred_by:info.referredBy.trim()||undefined,whatsapp_opt_in:info.whatsappOptIn||undefined,booking_mode:isPrivateMode?'private':undefined,payment_method:pay}; }
+  function buildPayload(){ const notes=[time?`${lang==='en'?'Time':'Hora'}: ${time}`:'',`${adults} ${lang==='en'?'adults':'adultos'}, ${kids} ${lang==='en'?'children':'crianças'}`,tourLang?(lang==='en'?'Language: ':'Idioma: ')+tourLang:'',stayLine,info.needs?(lang==='en'?'Additional request:':'Pedido adicional:')+' '+info.needs:''].filter(Boolean).join('. '); return {unit_id:unit.id,customer_name:info.name,customer_email:info.email,customer_phone:info.phone||null,customer_country:info.country||null,check_in:date,check_out:date,guests:adults+kids,...(col?{adults,children:kids}:{}),notes,tour_time:col?(col.time||undefined):(hasSlots?time:undefined),voucher_code:(col?voucherDaColuna:voucherCode)||undefined,ref_code:refCode||undefined,referred_by:info.referredBy.trim()||undefined,whatsapp_opt_in:info.whatsappOptIn||undefined,booking_mode:isPrivateMode?'private':undefined,payment_method:pay}; }
   useEffect(()=>{ if(step===3&&pay==='paypal'&&!pendingRes&&!sub){ ssub(true); postReservation(slug,buildPayload()).then(spr).catch(e=>se(e.message)).finally(()=>ssub(false)); } },[step,pay]);
   function valid(){ if(step===1){if(!date){se(lang==='en'?'Select a date':'Seleccione uma data');return false;} if(hasSlots&&!time){se(lang==='en'?'Select a time slot':'Seleccione um horário');return false;} if(adults<1){se(lang==='en'?'At least 1 adult required':'Mínimo 1 adulto');return false;}} if(step===2&&(!info.name||!info.email)){se(lang==='en'?'Name and email required':'Nome e email obrigatórios');return false;} if(step===2&&info.arrival&&info.departure&&info.departure<info.arrival){se(lang==='en'?'Departure date must be after arrival':'A data de partida deve ser depois da chegada');return false;} se('');return true; }
   async function submit(){
     ssub(true);se('');
     try{
       const newRes = await postReservation(slug,buildPayload());
-      if (pay==='sisp' && rawTotal>0) {
-        await iniciarPagamentoSisp(slug, newRes.id, toCVE(newRes.total_price ?? rawTotal, op.currency));
+      /* Com seleccao, o valor a pagar e o total da reserva gravada no servidor (o mesmo calculo do /quote) */
+      if (col ? (pay==='sisp' && Number(newRes.total_price)>0) : (pay==='sisp' && rawTotal>0)) {
+        await iniciarPagamentoSisp(slug, newRes.id, toCVE(col ? Number(newRes.total_price) : (newRes.total_price ?? rawTotal), op.currency));
         return;
       }
       sro(newRes.status==='confirmed'); sr(newRes.id);
     }catch(e){se(e.message);}finally{ssub(false);}
   }
   function next(){ if(!valid())return; step<3?ss(s=>s+1):submit(); }
-  const sumL=[{label:lang==='en'?'Tour / Activity':'Tour / Actividade',value:unit.name},{label:lang==='en'?'Date':'Data',value:date},...(time?[{label:lang==='en'?'Time':'Horário',value:time}]:[]),{label:lang==='en'?'Group':'Grupo',value:`${adults} ${lang==='en'?'adults':'adultos'}${kids>0?` + ${kids} ${lang==='en'?'children':'crianças'}`:''}`},...(tourLang?[{label:lang==='en'?'Language':'Idioma',value:tourLang}]:[]),...(info.hotel.trim()?[{label:lang==='en'?'Accommodation':'Alojamento',value:info.hotel.trim()}]:[]),...(hasPerPerson&&hasPrivate?[{label:lang==='en'?'Booking type':'Tipo de reserva',value:isPrivateMode?(lang==='en'?'Private / group':'Privado / grupo'):(lang==='en'?'Per person':'Por pessoa')}]:[]),...(total?[{label:'Total',value:fmtTotalBoth(rawTotal,op.currency,lang),hi:true}]:[])];
+  const sumL=[{label:lang==='en'?'Tour / Activity':'Tour / Actividade',value:unit.name},{label:lang==='en'?'Date':'Data',value:date},...(time?[{label:lang==='en'?'Time':'Horário',value:time}]:[]),{label:lang==='en'?'Group':'Grupo',value:`${adults} ${lang==='en'?'adults':'adultos'}${kids>0?` + ${kids} ${lang==='en'?'children':'crianças'}`:''}`},...(tourLang?[{label:lang==='en'?'Language':'Idioma',value:tourLang}]:[]),...(info.hotel.trim()?[{label:lang==='en'?'Accommodation':'Alojamento',value:info.hotel.trim()}]:[]),...(hasPerPerson&&hasPrivate?[{label:lang==='en'?'Booking type':'Tipo de reserva',value:isPrivateMode?(lang==='en'?'Private / group':'Privado / grupo'):(lang==='en'?'Per person':'Por pessoa')}]:[]),...(col?linhasDaCotacao():(total?[{label:'Total',value:fmtTotalBoth(rawTotal,op.currency,lang),hi:true}]:[]))];
+  /* Linhas e total da cotacao do servidor para a seleccao da coluna (total tambem em CVE, exigencia SISP) */
+  function linhasDaCotacao(){
+    const en=lang==='en'; const cur=op.currency||'EUR';
+    const valor=(v)=>{ const n=Number(v)||0; if(n===0) return en?'Free':'Grátis'; return n<0?`-${fmtPrice(-n,null,cur,'EUR',lang)}`:fmtPrice(n,null,cur,'EUR',lang); };
+    const totalCot=Number(col.quote?.total)||0;
+    if(semPreco) return [{label:'Total',value:en?'Price agreed with the operator':'Preço a combinar com o operador',hi:true}];
+    return [
+      ...(col.quote?.lines||[]).map(l=>({label:textoDaLinha(l,col.mode,col.voucher,en),value:valor(l.total)})),
+      {label:'Total',value:totalCot>0?fmtTotalBoth(totalCot,op.currency,lang):valor(0),hi:true},
+    ];
+  }
+  /* Com seleccao nao ha passo 1 no modal: "Anterior" no passo 2 fecha e volta a coluna */
+  function prev(){ if(col&&step===2){ onClose(); return; } ss(s=>s-1); }
   return (
-    <MS icon={<Compass size={18} strokeWidth={1.75}/>} title={lang==='en'?'Book tour':'Reservar tour'} step={step} lang={lang} onClose={onClose} onPrev={()=>ss(s=>s-1)} onNext={next} nextLabel={step<3?(lang==='en'?'Continue':'Continuar'):(lang==='en'?'Confirm booking':'Confirmar reserva')} nextDis={(step===1&&(!date||(hasSlots&&!time)))||(step===3&&!policyOk)} sub={sub} err={err} ok={!!resId} hideNext={step===3&&pay==='paypal'}>
+    <MS icon={<Compass size={18} strokeWidth={1.75}/>} title={lang==='en'?'Book tour':'Reservar tour'} step={step} lang={lang} onClose={onClose} onPrev={prev} onNext={next} nextLabel={step<3?(lang==='en'?'Continue':'Continuar'):(lang==='en'?'Confirm booking':'Confirmar reserva')} nextDis={(step===1&&(!date||(hasSlots&&!time)))||(step===3&&!policyOk)} sub={sub} err={err} ok={!!resId} hideNext={step===3&&pay==='paypal'}>
       {resId?<div className="p-5"><BS resId={resId} lang={lang} type="activity" confirmed={resOk} onClose={onClose}/></div>
       :step===1?<div className="p-5 space-y-4"><p className={SH}>{lang==='en'?'Select date, time & group':'Data, horário e grupo'}</p>
         {hasPerPerson&&hasPrivate&&(
@@ -722,10 +769,10 @@ function ActivityModal({ unit, op, slug, lang, onClose, refCode, traveler, initi
         <div><label className={LB}>{lang==='en'?'Referred by (optional)':'Indicado por (opcional)'}</label><input className={IN} value={info.referredBy} onChange={e=>si(i=>({...i,referredBy:e.target.value}))} maxLength={100} placeholder={lang==='en'?'Name or code of who recommended us':'Nome ou código de quem nos indicou'}/></div>
       </GF></div>
       :<div className="p-5 space-y-4"><p className={SH}>{lang==='en'?'Review & payment':'Resumo e pagamento'}</p><ST lines={sumL}/>
-        {rawTotal>0&&<VoucherField slug={slug} unitId={unit.id} amount={rawTotal} lang={lang} onApplied={(c)=>svc(c)}/>}
-        <p className="text-xs font-body font-semibold text-n-700">{lang==='en'?'Payment method':'Método de pagamento'}</p><PO lang={lang} v={pay} set={sp}/>
+        {!col&&rawTotal>0&&<VoucherField slug={slug} unitId={unit.id} amount={rawTotal} lang={lang} onApplied={(c)=>svc(c)}/>}
+        <p className="text-xs font-body font-semibold text-n-700">{lang==='en'?'Payment method':'Método de pagamento'}</p><PO lang={lang} v={pay} set={sp} soNoLocal={semCobranca}/>
         <CancelPolicyCheck op={op} lang={lang} checked={policyOk} onChange={setPolicyOk}/>
-        {pay==='paypal'&&(policyOk?<PayPalButton slug={slug} reservationId={pendingRes?.id} amount={toEUR(pendingRes?.total_price ?? rawTotal,op.currency)} lang={lang} onSuccess={()=>{ sro(true); sr(pendingRes?.id); }} onError={se}/>:<p className="text-xs font-body text-amber-700 bg-amber-50 rounded-lg px-3 py-2">{lang==='en'?'Accept the cancellation policy above to pay.':'Aceite a política de cancelamento acima para pagar.'}</p>)}
+        {pay==='paypal'&&!semCobranca&&(policyOk?<PayPalButton slug={slug} reservationId={pendingRes?.id} amount={col?toEUR(Number(pendingRes?.total_price)||0,op.currency):toEUR(pendingRes?.total_price ?? rawTotal,op.currency)} lang={lang} onSuccess={()=>{ sro(true); sr(pendingRes?.id); }} onError={se}/>:<p className="text-xs font-body text-amber-700 bg-amber-50 rounded-lg px-3 py-2">{lang==='en'?'Accept the cancellation policy above to pay.':'Aceite a política de cancelamento acima para pagar.'}</p>)}
       </div>}
     </MS>
   );
@@ -802,12 +849,13 @@ function RentACarModal({ unit, op, slug, lang, onClose, refCode, traveler }) {
    reservadas via o formulario proprio em PublicBooking.jsx). RestaurantModal,
    REST_SLOTS e OCCASIONS foram removidos por serem codigo morto: nunca sao
    alcançados, dado que este ecrã cai sempre no NotFoundPage para esse tipo. */
-function BookingModal({ unit, op, slug, lang, onClose, refCode, traveler, initialDate, initialAdults, initialKids, initialLanguage }) {
+function BookingModal({ unit, op, slug, lang, onClose, refCode, traveler, seleccao }) {
   if (!unit||!op) return null;
   const t=op.operator_type;
-  const props={unit,op,slug,lang,onClose,refCode,traveler,initialDate,initialAdults,initialKids,initialLanguage};
+  const props={unit,op,slug,lang,onClose,refCode,traveler};
   if (t==='hotel') return <HotelModal {...props}/>;
-  if (t==='activity') return <ActivityModal {...props}/>;
+  /* seleccao (coluna de reserva) so existe na pagina de actividade */
+  if (t==='activity') return <ActivityModal {...props} seleccao={seleccao}/>;
   if (t==='rentacar') return <RentACarModal {...props}/>;
   return <ActivityModal {...props}/>;
 }
@@ -858,21 +906,90 @@ function HeroGallery({ images, unitName, onOpen }) {
   );
 }
 
+/* ── ListaAvaliacoes ─────────────────────────────── */
+/* Resumo das notas e as tres primeiras avaliacoes. `actividade`: estilo da pagina de actividade,
+   onde o titulo vem da seccao "avaliacoes" da SeccoesActividade. */
+function ListaAvaliacoes({ reviews, avgRating, ratingBreakdown, op, lang, onVote, actividade = false }) {
+  return (
+    <div className={`grid grid-cols-1 lg:grid-cols-5 gap-6 ${actividade ? '' : 'mb-6'}`}>
+      {/* Rating summary */}
+      <div className="lg:col-span-2 bg-n-50 rounded-2xl p-5 border border-n-200 flex flex-col items-center justify-center">
+        <p className="font-display font-extrabold text-5xl text-n-900 mb-1">{avgRating.toFixed(1)}</p>
+        <StarRating rating={avgRating} size={18}/>
+        <p className="text-sm font-body text-n-400 mt-2">{reviews.length} {lang==='en'?'reviews':'avaliações'}</p>
+        <div className="w-full mt-4 space-y-2">
+          {ratingBreakdown.map(({ r, count, pct }) => (
+            <div key={r} className="flex items-center gap-2">
+              <span className="text-xs font-body font-semibold text-n-600 w-3">{r}</span>
+              <Star size={10} strokeWidth={1.75} className="text-sand-400 fill-sand-400 flex-shrink-0"/>
+              <div className="flex-1 bg-n-200 rounded-full h-1.5">
+                <div className="bg-sand-400 h-full rounded-full" style={{ width:`${pct}%` }}/>
+              </div>
+              <span className="text-xs text-n-400 font-body w-4 text-right">{count}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+      {/* Review cards */}
+      <div className="lg:col-span-3 space-y-4">
+        {reviews.slice(0, 3).map((r, i) => (
+          <div key={i} className={`bg-white border border-n-200 ${actividade ? 'rounded-2xl' : 'rounded-xl'} p-4 shadow-sm`}>
+            <div className="flex items-start justify-between mb-2">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-full bg-brand-100 flex items-center justify-center font-display font-bold text-brand-700 text-sm flex-shrink-0">
+                  {(r.author_name||'C').charAt(0).toUpperCase()}
+                </div>
+                <div>
+                  <p className="font-body font-semibold text-n-900 text-sm">{r.author_name||'Cliente'}</p>
+                  <p className="text-xs font-body text-n-400">{r.created_at?.split('T')[0]}</p>
+                </div>
+              </div>
+              <StarRating rating={r.rating} size={12}/>
+            </div>
+            {r.comment && <p className="text-sm font-body text-n-600 leading-relaxed">{r.comment}</p>}
+            {r.reply_text && (
+              <div className="mt-3 bg-brand-50 border border-brand-100 rounded-xl px-3 py-2.5">
+                <p className="text-xs font-body font-bold text-brand-700 mb-1">{op.name}</p>
+                <p className="text-xs font-body text-n-600">{r.reply_text}</p>
+              </div>
+            )}
+            <button onClick={() => onVote(r.id)} disabled={hasVotedReview(r.id)}
+              className={`mt-3 flex items-center gap-1.5 text-xs font-body font-semibold transition-colors ${hasVotedReview(r.id)?'text-brand-700 cursor-default':'text-n-400 hover:text-brand-700'}`}>
+              <ThumbsUp size={13} strokeWidth={1.75} className={hasVotedReview(r.id)?'fill-brand-100':''}/>
+              {lang==='en'?'Helpful':'Útil'}{r.helpful_count>0?` (${r.helpful_count})`:''}
+            </button>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 /* ── SimilarServices ─────────────────────────────── */
-function SimilarServices({ units, slug, lang, currency, opCurrency }) {
+/* `semTitulo`: na pagina de actividade a seccao (titulo e id "outros") e da SeccoesActividade */
+function SimilarServices({ units, slug, lang, currency, opCurrency, semTitulo = false }) {
   const navigate = useNavigate();
   if (!units?.length) return null;
+  const Caixa = semTitulo ? 'div' : 'section';
   return (
-    <section className="py-10 border-t border-n-100">
+    <Caixa className={semTitulo ? '' : 'py-10 border-t border-n-100'}>
+      {!semTitulo && (
       <h3 className="font-display font-bold text-xl text-n-900 mb-5">
         {lang === 'en' ? 'More services' : 'Outros serviços'}
       </h3>
+      )}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {units.map(u => (
           <div key={u.id} onClick={() => navigate(`/book/${slug}/servico/${u.id}`)}
-            className="bg-white border border-n-200 rounded-xl overflow-hidden hover:shadow-md hover:-translate-y-0.5 transition-all cursor-pointer">
-            <div className="h-36 bg-cover bg-center"
-              style={{ backgroundImage: u.images?.[0] ? `url(${u.images[0]})` : `url(${FALLBACK_IMGS[0]})` }}/>
+            {...(semTitulo ? {
+              role: 'link', tabIndex: 0,
+              onKeyDown: (e) => { if (e.key === 'Enter') navigate(`/book/${slug}/servico/${u.id}`); },
+            } : {})}
+            className={semTitulo
+              ? 'bg-white border border-n-200 rounded-2xl overflow-hidden shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all motion-reduce:transition-none motion-reduce:hover:translate-y-0 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2'
+              : 'bg-white border border-n-200 rounded-xl overflow-hidden hover:shadow-md hover:-translate-y-0.5 transition-all cursor-pointer'}>
+            <div className={`h-36 bg-cover bg-center ${semTitulo ? 'bg-n-100' : ''}`}
+              style={u.images?.[0] ? { backgroundImage: `url(${u.images[0]})` } : (semTitulo ? undefined : { backgroundImage: `url(${FALLBACK_IMGS[0]})` })}/>
             <div className="p-3">
               <p className="font-display font-bold text-n-900 text-sm mb-1 line-clamp-1">{u.name}</p>
               {u.base_price ? (
@@ -891,7 +1008,7 @@ function SimilarServices({ units, slug, lang, currency, opCurrency }) {
           </div>
         ))}
       </div>
-    </section>
+    </Caixa>
   );
 }
 
@@ -977,13 +1094,9 @@ function ServiceDetailPagina() {
   const [wishlisted, setWishlisted]   = useState(false);
   const [copied, setCopied]           = useState(false);
   const [opUnits, setOpUnits]         = useState([]); // so para restaurante -- ver useEffect abaixo
-  /* Pre-preenchimento da sidebar de actividade -- so inicializa o
-     ActivityModal (que continua a ser a unica fonte de verdade do
-     preco/disponibilidade), nunca substitui a logica do modal. */
-  const [sbDate, setSbDate]           = useState('');
-  const [sbAdults, setSbAdults]       = useState(2);
-  const [sbKids, setSbKids]           = useState(0);
-  const [sbLanguage, setSbLanguage]   = useState('');
+  /* Seleccao da coluna de reserva da actividade (data, hora, pessoas, modo, idioma, voucher e a
+     cotacao do servidor): o ActivityModal abre com ela nos dados do cliente. */
+  const [seleccao, setSeleccao]       = useState(null);
   const [traveler, setTraveler]       = useState(null); // sessao de viajante (cookie partilhada), ver useEffect abaixo
 
   /* Bridge de sessao com a conta de viajante -- mesmo mecanismo do
@@ -1065,6 +1178,15 @@ function ServiceDetailPagina() {
     });
   }
 
+  /* Partilhar (pagina de actividade): a folha de partilha do telemovel quando existe, senao copia o link */
+  function partilhar() {
+    if (typeof navigator.share === 'function') {
+      navigator.share({ title: document.title, url: window.location.href }).catch(() => {});
+      return;
+    }
+    if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') copyLink();
+  }
+
   /* Visitante anonimo (sem conta) -- um voto por browser via localStorage,
      mesmo padrao ja usado pela wishlist anonima do Conect. Actualiza o
      numero optimisticamente, sem esperar pela resposta do servidor. */
@@ -1098,10 +1220,14 @@ function ServiceDetailPagina() {
 
   /* Para um prato/menu de degustação, "reservar" nao abre um modal generico
      -- desloca ate ao widget de reserva completo (mesa+pre-pedido) embutido
-     mais abaixo nesta mesma pagina, ver RestaurantReservationSection. */
+     mais abaixo nesta mesma pagina, ver RestaurantReservationSection.
+     Numa actividade leva a coluna de reserva (#reserva), como a barra do telemovel:
+     o modal so abre a partir do "Reservar" da coluna, ja com a seleccao. */
   function handleReservarClick() {
     if (isRestaurant) {
       document.getElementById('servicos')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } else if (isActivity) {
+      irParaReserva();
     } else {
       setBookOpen(true);
     }
@@ -1140,11 +1266,110 @@ function ServiceDetailPagina() {
     ? fmtPrice(unit.base_price, unit.price_unit, op.currency||'EUR', currency, lang)
     : (startingFrom ? `${lang==='en'?'From ':'A partir de '}${fmtPrice(startingFrom, null, op.currency||'EUR', currency, lang)}` : null);
   const rawPrice     = fmtRaw(unit.base_price, op.currency||'EUR', currency);
+
+  /* Coluna de reserva da actividade: o preco "Desde" (por pessoa, ou por grupo quando so ha
+     preco privado) e o formatador da pagina para as linhas do /quote. "Reservar" entrega a
+     seleccao inteira ao modal de hoje, que abre nos dados do cliente. */
+  const formatarPrecoReserva = (v) => fmtPrice(v, null, op.currency||'EUR', currency, lang);
+  const desdeReserva = unit.base_price
+    ? { valor: Number(unit.base_price), porGrupo: false }
+    : { valor: startingFromPrice(unitMeta), porGrupo: true };
+  function reservarSeleccao(s) {
+    setSeleccao(s);
+    setBookOpen(true);
+  }
+  function fecharReserva() {
+    setBookOpen(false);
+    setSeleccao(null);
+  }
   const currSymbol   = currency === 'CVE' ? 'CVE' : '€';
 
   const whatsappUrl = op.whatsapp
     ? `https://wa.me/${op.whatsapp.replace(/\D/g,'')}?text=${encodeURIComponent(lang==='en'?`Hello, I'm interested in "${unit.name}" on SalDesk.`:`Olá, tenho interesse no serviço "${unit.name}" no SalDesk.`)}`
     : null;
+
+  /* ── Pagina completa de actividade: dados das seccoes (utils/paginaActividade) e os blocos de
+     sempre (itinerario com mapa, ponto de encontro com mapa, avaliacoes, outros servicos), que
+     entram na SeccoesActividade pela ordem da spec. ── */
+  const metaActividade = isActivity ? metaDaActividade(unit, unitMeta, lang) : unitMeta;
+  const tituloActividade = (lang === 'en' && typeof unitMeta.name_en === 'string' && unitMeta.name_en.trim()) || unit.name;
+  const factos = isActivity ? factosActividade(unit, metaActividade, lang) : [];
+  const idsSeccoes = isActivity ? seccoesActividade({ meta: metaActividade, op, reviews, related, lang, unit }) : [];
+  const blocosActividade = isActivity ? {
+    /* Paragens do itinerario; sem NENHUMA dentro de Cabo Verde (0,0 = campos nunca preenchidos)
+       fica so a lista, sem mapa vazio nem pin inventado */
+    itinerario: (() => {
+      const paragens = (Array.isArray(unitMeta.stops) ? unitMeta.stops : []).filter(s => s && typeof s.name === 'string' && s.name.trim());
+      if (!paragens.length) return null;
+      const stopsWithCoords = paragens.filter(s => s.lat !== null && s.lat !== '' && s.lng !== null && s.lng !== ''
+        && dentroDeCaboVerde(Number(s.lat), Number(s.lng)));
+      return (
+        <div className={`grid grid-cols-1 ${stopsWithCoords.length>0?'lg:grid-cols-2':''} gap-6`}>
+          <ol className="space-y-4">
+            {paragens.map((s, i) => (
+              <li key={i} className="flex items-start gap-3">
+                <span className="shrink-0 w-7 h-7 rounded-full bg-brand-700 text-white text-xs font-body font-bold flex items-center justify-center mt-0.5" aria-hidden="true">{i+1}</span>
+                <div className="min-w-0">
+                  <p className="font-body font-semibold text-n-800 text-sm">{lang==='en'&&s.name_en?s.name_en:s.name}</p>
+                  {(lang==='en'&&s.desc_en?s.desc_en:s.desc) && (
+                    <p className="text-sm font-body text-n-500 mt-0.5 leading-relaxed">{lang==='en'&&s.desc_en?s.desc_en:s.desc}</p>
+                  )}
+                </div>
+              </li>
+            ))}
+          </ol>
+          {stopsWithCoords.length > 0 && (
+            <div className="h-72 rounded-2xl overflow-hidden border border-n-200 isolate">
+              <MapContainer center={[Number(stopsWithCoords[0].lat), Number(stopsWithCoords[0].lng)]} zoom={12} style={{ height:'100%', width:'100%' }} scrollWheelZoom={false}>
+                <TileLayer attribution='&copy; OpenStreetMap contributors' url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"/>
+                {stopsWithCoords.map((s, i) => (
+                  <Marker key={i} position={[Number(s.lat), Number(s.lng)]} icon={stopDivIcon(paragens.indexOf(s)+1)}>
+                    <Popup>{lang==='en'&&s.name_en?s.name_en:s.name}</Popup>
+                  </Marker>
+                ))}
+              </MapContainer>
+            </div>
+          )}
+        </div>
+      );
+    })(),
+    /* Ponto de encontro: texto do operador e, com coordenadas (units.lat/lng, marcadas no mapa do
+       formulario), um mapa pequeno e o link para o Google Maps. Nunca inventa uma localizacao. */
+    encontro: (() => {
+      const { texto, la, ln, temPonto } = pontoEncontroDe(unit, unitMeta);
+      if (!texto && !temPonto) return null;
+      return (
+        <div className={`grid grid-cols-1 ${temPonto?'lg:grid-cols-2':''} gap-6 items-start`}>
+          <div className="space-y-3">
+            {texto && <p className="font-body text-n-800 text-base leading-relaxed">{texto}</p>}
+            {unitMeta.pickup_included === true && (
+              <p className="font-body text-sm text-n-600">{lang==='en'?'Hotel pickup is included.':'A recolha no hotel está incluída.'}</p>
+            )}
+            {temPonto && (
+              <a href={`https://www.google.com/maps/search/?api=1&query=${la},${ln}`} target="_blank" rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 text-sm font-body font-semibold text-brand-700 hover:text-brand-800 underline underline-offset-2 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500">
+                {lang==='en'?'Open in Google Maps':'Abrir no Google Maps'}
+              </a>
+            )}
+          </div>
+          {temPonto && (
+            <div className="h-56 rounded-2xl overflow-hidden border border-n-200 isolate">
+              <MapContainer center={[la, ln]} zoom={14} style={{ height:'100%', width:'100%' }} scrollWheelZoom={false}>
+                <TileLayer attribution='&copy; OpenStreetMap contributors' url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"/>
+                <Marker position={[la, ln]} icon={pontoEncontroIcon}>
+                  <Popup>{texto || (lang==='en'?'Meeting point':'Ponto de encontro')}</Popup>
+                </Marker>
+              </MapContainer>
+            </div>
+          )}
+        </div>
+      );
+    })(),
+    avaliacoes: reviews.length > 0
+      ? <ListaAvaliacoes reviews={reviews} avgRating={avgRating} ratingBreakdown={ratingBreakdown} op={op} lang={lang} onVote={handleVoteHelpful} actividade/>
+      : null,
+    outros: <SimilarServices units={related} slug={slug} lang={lang} currency={currency} opCurrency={op.currency||'EUR'} semTitulo/>,
+  } : {};
 
   /* ── RENDER ── */
   return (
@@ -1205,35 +1430,12 @@ function ServiceDetailPagina() {
       </nav>
       )}
 
+      {/* ── Alojamento e viatura: a ficha de sempre ── */}
+      {!isActivity && (<>
       {/* ── Hero Gallery ── */}
       <div className={isWidget ? '' : 'pt-14'}>
         <HeroGallery images={imgs} unitName={unit.name} onOpen={i => setLbIdx(i)}/>
       </div>
-
-      {/* ── Fila de informação rápida (so actividade) — so mostra o que o
-          operador de facto preencheu no TourForm, nunca inventa duracao/
-          modalidade/idiomas em falta. Cancelamento gratuito e' sempre
-          verdade (mesma politica fixa da seccao mais abaixo). */}
-      {isActivity && (
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 pt-6">
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            {[
-              { icon:<RotateCcw size={18} strokeWidth={1.75}/>, pt:'Cancelamento gratuito', en:'Free cancellation', sub_pt:'Até 24h antes', sub_en:'Up to 24h before' },
-              ...(unitMeta.duration ? [{ icon:<Clock size={18} strokeWidth={1.75}/>, pt:'Duração', en:'Duration', sub_pt:`${unitMeta.duration}h`, sub_en:`${unitMeta.duration}h` }] : []),
-              ...(unitMeta.tour_type ? [{ icon:<Users size={18} strokeWidth={1.75}/>, pt:'Modalidade', en:'Group type', sub_pt:{grupo:'Guia partilhado',privado:'Guia privado',ambos:'Grupo ou privado'}[unitMeta.tour_type]||unitMeta.tour_type, sub_en:{grupo:'Shared guide',privado:'Private guide',ambos:'Group or private'}[unitMeta.tour_type]||unitMeta.tour_type }] : []),
-              ...(Array.isArray(unitMeta.languages) && unitMeta.languages.length ? [{ icon:<Languages size={18} strokeWidth={1.75}/>, pt:'Idiomas', en:'Languages', sub_pt:unitMeta.languages.join(' · '), sub_en:unitMeta.languages.join(' · ') }] : []),
-            ].map((c,i) => (
-              <div key={i} className="flex items-start gap-2.5 p-3 rounded-xl border border-n-200 bg-n-50">
-                <div className="w-8 h-8 rounded-lg bg-white border border-n-200 flex items-center justify-center text-brand-700 flex-shrink-0">{c.icon}</div>
-                <div>
-                  <p className="text-xs font-body font-bold text-n-800 leading-tight">{lang==='en'?c.en:c.pt}</p>
-                  <p className="text-xs font-body text-n-500 leading-tight mt-0.5">{lang==='en'?c.sub_en:c.sub_pt}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
 
       {/* ── Main layout ── */}
       <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8">
@@ -1309,7 +1511,6 @@ function ServiceDetailPagina() {
                   <span className="flex items-center gap-1.5 bg-n-50 border border-n-200 text-n-600 text-xs font-body font-semibold px-3 py-1.5 rounded-full">
                     <Clock size={12} strokeWidth={1.75}/>
                     {isHotel && (lang==='en'?'Per night':'Por noite')}
-                    {isActivity && (lang==='en'?'Per person':'Por pessoa')}
                     {isRentaCar && (lang==='en'?'Per day':'Por dia')}
                     {isRestaurant && (lang==='en'?'Per person':'Por pessoa')}
                   </span>
@@ -1318,12 +1519,6 @@ function ServiceDetailPagina() {
                   <span className="flex items-center gap-1.5 bg-n-50 border border-n-200 text-n-600 text-xs font-body font-semibold px-3 py-1.5 rounded-full">
                     <Users size={12} strokeWidth={1.75}/>
                     {lang==='en'?`Capacity: ${unit.capacity}`:`Capacidade: ${unit.capacity}`}
-                  </span>
-                )}
-                {op.operator_type === 'activity' && (
-                  <span className="flex items-center gap-1.5 bg-brand-50 border border-brand-100 text-brand-700 text-xs font-body font-semibold px-3 py-1.5 rounded-full">
-                    <Shield size={12} strokeWidth={1.75}/>
-                    {lang==='en'?'Safe & Certified':'Certificado'}
                   </span>
                 )}
                 {isRestaurant && unitMeta.category && MENU_CATEGORY_LABELS[unitMeta.category] && (
@@ -1372,16 +1567,6 @@ function ServiceDetailPagina() {
 
                 {/* Highlights grid — type-specific */}
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-6">
-                  {isActivity && [
-                    { icon:<Compass size={20} strokeWidth={1.75}/>, pt:'Guia especializado', en:'Specialist guide' },
-                    { icon:<Users size={20} strokeWidth={1.75}/>, pt:'Grupos pequenos', en:'Small groups' },
-                    { icon:<Shield size={20} strokeWidth={1.75}/>, pt:'Equipamento incluído', en:'Equipment included' },
-                  ].map((h,i) => (
-                    <div key={i} className="flex items-start gap-3 p-4 bg-brand-50 rounded-xl border border-brand-100">
-                      <div className="w-9 h-9 bg-brand-100 rounded-lg flex items-center justify-center text-brand-700 flex-shrink-0">{h.icon}</div>
-                      <p className="font-body font-semibold text-n-800 text-sm leading-snug mt-1">{lang==='en'?h.en:h.pt}</p>
-                    </div>
-                  ))}
                   {isHotel && [
                     { icon:<Shield size={20} strokeWidth={1.75}/>, pt:'Limpeza diária', en:'Daily cleaning' },
                     { icon:<Globe size={20} strokeWidth={1.75}/>, pt:'Wi-Fi incluído', en:'Wi-Fi included' },
@@ -1415,87 +1600,6 @@ function ServiceDetailPagina() {
                 </div>
               </div>
             )}
-
-            {/* ── Ponto de encontro (actividade): texto do operador e, com coordenadas
-                (units.lat/lng, marcadas no mapa do formulario), um mapa pequeno e o
-                link para o Google Maps. Nunca inventa uma localizacao. ── */}
-            {isActivity && (() => {
-              const { texto, la, ln, temPonto } = pontoEncontroDe(unit, unitMeta);
-              if (!texto && !temPonto) return null;
-              return (
-                <div className="pb-10 border-b border-n-100">
-                  <p className="text-xs font-body font-bold text-brand-700 uppercase tracking-widest mb-4">
-                    {lang==='en'?'Meeting point':'Ponto de encontro'}
-                  </p>
-                  <div className={`grid grid-cols-1 ${temPonto?'lg:grid-cols-2':''} gap-6 items-start`}>
-                    <div className="space-y-3">
-                      {texto && <p className="font-body text-n-800 text-base leading-relaxed">{texto}</p>}
-                      {temPonto && (
-                        <a href={`https://www.google.com/maps/search/?api=1&query=${la},${ln}`} target="_blank" rel="noopener noreferrer"
-                          className="inline-flex items-center gap-2 text-sm font-body font-semibold text-brand-700 hover:text-brand-800 underline underline-offset-2">
-                          {lang==='en'?'Open in Google Maps':'Abrir no Google Maps'}
-                        </a>
-                      )}
-                    </div>
-                    {temPonto && (
-                      <div className="h-56 rounded-2xl overflow-hidden border border-n-200">
-                        <MapContainer center={[la, ln]} zoom={14} style={{ height:'100%', width:'100%' }} scrollWheelZoom={false}>
-                          <TileLayer attribution='&copy; OpenStreetMap contributors' url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"/>
-                          <Marker position={[la, ln]} icon={pontoEncontroIcon}>
-                            <Popup>{texto || (lang==='en'?'Meeting point':'Ponto de encontro')}</Popup>
-                          </Marker>
-                        </MapContainer>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              );
-            })()}
-
-            {/* ── O que os viajantes adoraram (itinerário + mapa) — so
-                actividade, so se o operador configurou paragens reais no
-                TourForm. Paragens sem coordenadas ficam so na lista, nunca
-                ganham um pin inventado. Sem NENHUMA paragem com coordenadas,
-                mostra so a lista, sem mapa vazio. ── */}
-            {isActivity && Array.isArray(unitMeta.stops) && unitMeta.stops.length > 0 && (() => {
-              /* so paragens dentro de Cabo Verde: 0,0 (campos nunca preenchidos) nunca ganha pin */
-              const stopsWithCoords = unitMeta.stops.filter(s => s && s.lat !== null && s.lat !== '' && s.lng !== null && s.lng !== ''
-                && dentroDeCaboVerde(Number(s.lat), Number(s.lng)));
-              return (
-                <div className="pb-10 border-b border-n-100">
-                  <p className="text-xs font-body font-bold text-brand-700 uppercase tracking-widest mb-4">
-                    {lang==='en'?'What travelers loved':'O que os viajantes adoraram'}
-                  </p>
-                  <div className={`grid grid-cols-1 ${stopsWithCoords.length>0?'lg:grid-cols-2':''} gap-6`}>
-                    <div className="space-y-3">
-                      {unitMeta.stops.map((s, i) => (
-                        <div key={i} className="flex items-start gap-3">
-                          <span className="shrink-0 w-7 h-7 rounded-full bg-brand-700 text-white text-xs font-body font-bold flex items-center justify-center mt-0.5">{i+1}</span>
-                          <div>
-                            <p className="font-body font-semibold text-n-800 text-sm">{lang==='en'&&s.name_en?s.name_en:s.name}</p>
-                            {(lang==='en'&&s.desc_en?s.desc_en:s.desc) && (
-                              <p className="text-xs font-body text-n-500 mt-0.5 leading-relaxed">{lang==='en'&&s.desc_en?s.desc_en:s.desc}</p>
-                            )}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                    {stopsWithCoords.length > 0 && (
-                      <div className="h-72 rounded-2xl overflow-hidden border border-n-200">
-                        <MapContainer center={[stopsWithCoords[0].lat, stopsWithCoords[0].lng]} zoom={12} style={{ height:'100%', width:'100%' }} scrollWheelZoom={false}>
-                          <TileLayer attribution='&copy; OpenStreetMap contributors' url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"/>
-                          {stopsWithCoords.map((s, i) => (
-                            <Marker key={i} position={[s.lat, s.lng]} icon={stopDivIcon(unitMeta.stops.indexOf(s)+1)}>
-                              <Popup>{lang==='en'&&s.name_en?s.name_en:s.name}</Popup>
-                            </Marker>
-                          ))}
-                        </MapContainer>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              );
-            })()}
 
             {/* ── O que está incluído (menu de degustação) ── */}
             {isRestaurant && unit.unit_type === 'tasting_menu' && unitMeta.items?.length > 0 && (
@@ -1576,57 +1680,7 @@ function ServiceDetailPagina() {
                 <p className="text-xs font-body font-bold text-brand-700 uppercase tracking-widest mb-4">
                   {lang==='en'?'Customer reviews':'Avaliações dos clientes'}
                 </p>
-                <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 mb-6">
-                  {/* Rating summary */}
-                  <div className="lg:col-span-2 bg-n-50 rounded-2xl p-5 border border-n-200 flex flex-col items-center justify-center">
-                    <p className="font-display font-extrabold text-5xl text-n-900 mb-1">{avgRating.toFixed(1)}</p>
-                    <StarRating rating={avgRating} size={18}/>
-                    <p className="text-sm font-body text-n-400 mt-2">{reviews.length} {lang==='en'?'reviews':'avaliações'}</p>
-                    <div className="w-full mt-4 space-y-2">
-                      {ratingBreakdown.map(({ r, count, pct }) => (
-                        <div key={r} className="flex items-center gap-2">
-                          <span className="text-xs font-body font-semibold text-n-600 w-3">{r}</span>
-                          <Star size={10} strokeWidth={1.75} className="text-sand-400 fill-sand-400 flex-shrink-0"/>
-                          <div className="flex-1 bg-n-200 rounded-full h-1.5">
-                            <div className="bg-sand-400 h-full rounded-full" style={{ width:`${pct}%` }}/>
-                          </div>
-                          <span className="text-xs text-n-400 font-body w-4 text-right">{count}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                  {/* Review cards */}
-                  <div className="lg:col-span-3 space-y-4">
-                    {reviews.slice(0, 3).map((r, i) => (
-                      <div key={i} className="bg-white border border-n-200 rounded-xl p-4 shadow-sm">
-                        <div className="flex items-start justify-between mb-2">
-                          <div className="flex items-center gap-2.5">
-                            <div className="w-9 h-9 rounded-full bg-brand-100 flex items-center justify-center font-display font-bold text-brand-700 text-sm flex-shrink-0">
-                              {(r.author_name||'C').charAt(0).toUpperCase()}
-                            </div>
-                            <div>
-                              <p className="font-body font-semibold text-n-900 text-sm">{r.author_name||'Cliente'}</p>
-                              <p className="text-xs font-body text-n-400">{r.created_at?.split('T')[0]}</p>
-                            </div>
-                          </div>
-                          <StarRating rating={r.rating} size={12}/>
-                        </div>
-                        {r.comment && <p className="text-sm font-body text-n-600 leading-relaxed">{r.comment}</p>}
-                        {r.reply_text && (
-                          <div className="mt-3 bg-brand-50 border border-brand-100 rounded-xl px-3 py-2.5">
-                            <p className="text-xs font-body font-bold text-brand-700 mb-1">{op.name}</p>
-                            <p className="text-xs font-body text-n-600">{r.reply_text}</p>
-                          </div>
-                        )}
-                        <button onClick={() => handleVoteHelpful(r.id)} disabled={hasVotedReview(r.id)}
-                          className={`mt-3 flex items-center gap-1.5 text-xs font-body font-semibold transition-colors ${hasVotedReview(r.id)?'text-brand-700 cursor-default':'text-n-400 hover:text-brand-700'}`}>
-                          <ThumbsUp size={13} strokeWidth={1.75} className={hasVotedReview(r.id)?'fill-brand-100':''}/>
-                          {lang==='en'?'Helpful':'Útil'}{r.helpful_count>0?` (${r.helpful_count})`:''}
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                </div>
+                <ListaAvaliacoes reviews={reviews} avgRating={avgRating} ratingBreakdown={ratingBreakdown} op={op} lang={lang} onVote={handleVoteHelpful}/>
               </div>
             )}
 
@@ -1659,9 +1713,7 @@ function ServiceDetailPagina() {
               )}
             </div>
 
-            {/* ── Localização (morada do operador) -- sai numa actividade com o ponto de
-                encontro marcado no mapa, que ja mostra o sitio certo acima ── */}
-            {!(isActivity && pontoEncontroDe(unit, unitMeta).temPonto) && (
+            {/* ── Localização (morada do operador) ── */}
             <div className="pb-10 border-b border-n-100">
               <p className="text-xs font-body font-bold text-brand-700 uppercase tracking-widest mb-4">
                 {lang==='en'?'Location':'Localização'}
@@ -1682,7 +1734,6 @@ function ServiceDetailPagina() {
                 </div>
               </div>
             </div>
-            )}
 
             {/* ── Partilhar ── */}
             <div className="pb-10 border-b border-n-100">
@@ -1761,7 +1812,7 @@ function ServiceDetailPagina() {
                       <span className="font-semibold text-n-800">14:00</span>
                     </div>
                   )}
-                  {(isActivity||isRentaCar) && (
+                  {isRentaCar && (
                     <div className="flex items-center justify-between text-sm font-body">
                       <span className="text-n-500 flex items-center gap-2"><MapPin size={14} strokeWidth={1.75} className="text-brand-500"/>{lang==='en'?'Pickup':'Levantamento'}</span>
                       <span className="font-semibold text-n-800">{lang==='en'?'On request':'A combinar'}</span>
@@ -1788,39 +1839,12 @@ function ServiceDetailPagina() {
                   </div>
                 )}
 
-                {/* Selectores inline (so actividade) -- pre-preenchem o
-                    ActivityModal ao abrir; o modal continua a ser a unica
-                    fonte de verdade do preco/disponibilidade/submissao. */}
-                {isActivity && (
-                  <div className="px-5 pt-5 space-y-3 border-b border-n-100 pb-5">
-                    <div>
-                      <label className="text-xs font-body font-bold text-n-600 uppercase tracking-wide mb-1 block">{lang==='en'?'Date':'Data'}</label>
-                      <input type="date" value={sbDate} onChange={e=>setSbDate(e.target.value)} min={new Date().toISOString().split('T')[0]}
-                        className="w-full h-9 px-3 text-sm font-body border border-n-300 rounded-lg focus:outline-none focus:border-brand-700"/>
-                    </div>
-                    <div className="grid grid-cols-2 gap-3">
-                      <Cnt label={lang==='en'?'Adults':'Adultos'} val={sbAdults} set={setSbAdults} min={1} max={20}/>
-                      <Cnt label={lang==='en'?'Children':'Crianças'} val={sbKids} set={setSbKids} min={0} max={10}/>
-                    </div>
-                    {Array.isArray(unitMeta.languages) && unitMeta.languages.length > 0 && (
-                      <div>
-                        <label className="text-xs font-body font-bold text-n-600 uppercase tracking-wide mb-1 block">{lang==='en'?'Language':'Idioma'}</label>
-                        <select value={sbLanguage} onChange={e=>setSbLanguage(e.target.value)}
-                          className="w-full h-9 px-3 text-sm font-body border border-n-300 rounded-lg focus:outline-none focus:border-brand-700 bg-white">
-                          <option value="">{lang==='en'?'-- Select --':'-- Seleccionar --'}</option>
-                          {unitMeta.languages.map(l => <option key={l} value={l}>{l}</option>)}
-                        </select>
-                      </div>
-                    )}
-                  </div>
-                )}
-
                 {/* CTA buttons */}
                 <div className="px-5 py-5 space-y-3">
                   <button onClick={handleReservarClick}
                     className="w-full bg-brand-700 text-white font-body font-bold py-4 rounded-xl flex items-center justify-center gap-2 hover:bg-brand-500 transition-colors text-base shadow-sm hover:shadow-md">
                     <Calendar size={18} strokeWidth={1.75}/>
-                    {isActivity ? (lang==='en'?'Check availability':'Ver disponibilidade') : (lang==='en'?'Book Now':'Reservar Agora')}
+                    {lang==='en'?'Book Now':'Reservar Agora'}
                   </button>
                   <p className="text-center text-xs font-body text-n-400">
                     {lang==='en'?'No charge now — confirm details first':'Sem cobrança agora — confirme os detalhes'}
@@ -1875,6 +1899,59 @@ function ServiceDetailPagina() {
         </div>
       </div>
 
+      </>)}
+
+      {/* ── Pagina completa de actividade: cabecalho, galeria e factos e, a partir de lg, duas
+          colunas (seccoes a esquerda, coluna de reserva a direita). Abaixo de lg fica uma so coluna
+          com a reserva logo a seguir aos factos; no widget a reserva vem primeiro e nao ha menu
+          (o iframe cresce com a pagina, um menu fixo nao teria onde ficar). ── */}
+      {isActivity && (
+        <div className={isWidget ? '' : 'pt-14'}>
+          <div className="max-w-6xl mx-auto px-4 sm:px-6">
+            <CabecalhoActividade titulo={tituloActividade} meta={metaActividade} op={op} classificacao={classificacao}
+              lang={lang} mostrarCaminho={!isWidget} onPartilhar={partilhar} copiado={copied}/>
+            <GaleriaActividade images={unit.images} titulo={tituloActividade} lang={lang}/>
+            {factos.length > 0 && (
+              <div className="mt-6">
+                <FactosActividade factos={factos} lang={lang}/>
+              </div>
+            )}
+            <div className={isWidget
+              ? 'grid grid-cols-[minmax(0,1fr)] gap-8 mt-8 pb-12'
+              : 'grid grid-cols-[minmax(0,1fr)] lg:grid-cols-[minmax(0,1fr)_380px] gap-8 lg:gap-12 mt-8 pb-28 lg:pb-12'}>
+              {/* Coluna de reserva por passos (opcao, quem vem, data e hora, preco do servidor).
+                  Fixa ao rolar a partir de lg; abaixo de lg fica a seguir aos factos e a barra em
+                  baixo (BarraReservaMovel) leva ate aqui. No widget fica primeiro, numa so coluna. */}
+              <aside id="reserva" tabIndex={-1} aria-label={lang==='en'?'Booking':'Reserva'} data-testid="coluna-reserva"
+                className={isWidget ? 'min-w-0 focus:outline-none' : 'lg:col-start-2 lg:row-start-1 min-w-0 focus:outline-none'}>
+                <div className="lg:sticky lg:top-20 lg:max-h-[calc(100vh-6rem)] lg:overflow-y-auto lg:overscroll-contain rounded-2xl">
+                  <ReservaActividade api={API} slug={slug} unit={unit} meta={unitMeta} lang={lang}
+                    formatarPreco={formatarPrecoReserva} desde={desdeReserva} temPrivado={temPrecoPrivado(unitMeta)}
+                    onReservar={reservarSeleccao}>
+                  {recentBookings > 0 && (
+                    <p className="text-xs font-body font-semibold text-amber-700 bg-amber-50 rounded-lg px-3 py-2">
+                      <span className="font-bold">{recentBookings}</span> {lang==='en'?'bookings this month':'reservas este mês'}
+                    </p>
+                  )}
+                  {whatsappUrl && (
+                    <a href={whatsappUrl} target="_blank" rel="noopener noreferrer"
+                      className="w-full border-2 border-n-200 text-n-700 font-body font-semibold py-3 rounded-xl flex items-center justify-center gap-2 hover:border-brand-700 hover:text-brand-700 transition-colors motion-reduce:transition-none text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2">
+                      <MessageCircle size={16} strokeWidth={1.75} aria-hidden="true"/>
+                      {lang==='en'?'Contact operator':'Contactar operador'}
+                    </a>
+                  )}
+                  </ReservaActividade>
+                </div>
+              </aside>
+              <div className={isWidget ? 'min-w-0' : 'lg:col-start-1 lg:row-start-1 min-w-0'}>
+                {!isWidget && <MenuSeccoes ids={idsSeccoes} lang={lang}/>}
+                <SeccoesActividade ids={idsSeccoes} meta={metaActividade} op={op} lang={lang} blocos={blocosActividade}/>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ── Reserva (prato/menu de degustação) — o widget completo (escolha de
           mesa + pré-pedido) fica embutido nesta própria página, com este item
           já pré-adicionado ao carrinho. ── */}
@@ -1917,7 +1994,11 @@ function ServiceDetailPagina() {
       </footer>
       )}
 
-      {/* ── Mobile bottom bar ── */}
+      {/* ── Mobile bottom bar ── (actividade: "Desde X" e "Ver disponibilidade", que leva a coluna
+          de reserva; no widget a coluna ja vem primeiro, por isso nao ha barra) */}
+      {isActivity ? (!isWidget && (
+        <BarraReservaMovel lang={lang} precoTexto={desdeReserva.valor ? formatarPrecoReserva(desdeReserva.valor) : null}/>
+      )) : (
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-n-200 px-4 py-3 flex gap-3 z-30 lg:hidden shadow-lg">
         {displayPrice && (
           <div className="flex flex-col justify-center mr-2">
@@ -1936,16 +2017,17 @@ function ServiceDetailPagina() {
           </a>
         )}
       </div>
+      )}
 
       {/* ── Booking Modal ── */}
       {bookOpen && (
-        <BookingModal unit={unit} op={op} slug={slug} lang={lang} onClose={() => setBookOpen(false)} refCode={refCode} traveler={traveler}
-          initialDate={sbDate} initialAdults={sbAdults} initialKids={sbKids} initialLanguage={sbLanguage}/>
+        <BookingModal unit={unit} op={op} slug={slug} lang={lang} onClose={fecharReserva} refCode={refCode} traveler={traveler}
+          seleccao={seleccao}/>
       )}
 
       {/* ── Lightbox ── */}
       {lbIdx !== null && (
-        <Lightbox images={imgs} idx={lbIdx} onClose={() => setLbIdx(null)} onMove={d => setLbIdx(i => (i+d+imgs.length)%imgs.length)}/>
+        <Lightbox images={imgs} idx={lbIdx} lang={lang} onClose={() => setLbIdx(null)} onMove={d => setLbIdx(i => (i+d+imgs.length)%imgs.length)}/>
       )}
     </div>
   );

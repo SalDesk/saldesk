@@ -220,6 +220,13 @@ describe('Unidades (pagina e lista)', () => {
   });
 
   describe('cartoes e precos formatados', () => {
+    it('tour com criancas gratis (price_child 0) mostra €0 crianca, nunca um "0" solto', async () => {
+      await renderPagina([tour({ description: JSON.stringify({ tour_type: 'grupo', price_child: 0 }) })]);
+      const c = cartao('Tour Pedra de Lume');
+      expect(c.textContent).toContain('€0 crianca');
+      expect(c.textContent).not.toMatch(/€45\/adulto0/);
+    });
+
     it('tour com preco base: €45/adulto, crianca e privado, metadados e etiquetas', async () => {
       await renderPagina([tour()]);
       const c = cartao('Tour Pedra de Lume');

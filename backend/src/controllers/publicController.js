@@ -2,7 +2,7 @@ const { supabaseAdmin } = require('../config/supabase');
 const { estadoInicialReserva } = require('../helpers/politicaOperador');
 const { criarNotificacaoViajante } = require('../helpers/travelerNotificationHelper');
 const { frontendBase } = require('../utils/urls');
-const { verificarDisponibilidade, calcularPreco, verificarDisponibilidadeMesa, listarMesasDisponiveis, DEFAULT_SEATING_MINUTES, parseUnitMeta, verificarDisponibilidadeSlot, listarSlotsComDisponibilidade, calcularPrecoPrivado, temPrecoPrivadoConfigurado } = require('../helpers/bookingHelpers');
+const { verificarDisponibilidade, calcularPreco, verificarDisponibilidadeMesa, listarMesasDisponiveis, DEFAULT_SEATING_MINUTES, parseUnitMeta, verificarDisponibilidadeSlot, listarSlotsComDisponibilidade, calcularPrecoPrivado, temPrecoPrivadoConfigurado, precoActividade, slotJaComecou, diasLivresDoMes } = require('../helpers/bookingHelpers');
 const { obterOuCriarCliente } = require('../helpers/customerHelper');
 const { enviarEmail } = require('../helpers/emailHelper');
 const { detectarIdioma } = require('../helpers/languageHelper');
@@ -146,7 +146,52 @@ async function getSlotAvailability(req, res, next) {
     if (!slots.length) return res.json({ data: [] });
 
     const disponiveis = await listarSlotsComDisponibilidade(supabaseAdmin, unitId, date, slots);
-    return res.json({ data: disponiveis });
+    const agora = new Date();
+    return res.json({
+      data: disponiveis.map((s) => (slotJaComecou(date, s.time, agora) ? { ...s, remaining: 0, started: true } : s)),
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
+/* ─── Dias livres do mes (calendario do widget de reserva) — devolve so os
+   dias com lugar para o grupo, uma consulta ao mes inteiro. So responde por
+   unidades do operador do :slug e so de actividades (como cotarActividade). ─── */
+async function getAvailabilityMonth(req, res, next) {
+  try {
+    const { slug, unitId } = req.params;
+    const { month } = req.query;
+    if (typeof month !== 'string' || !/^\d{4}-(0[1-9]|1[0-2])$/.test(month)) {
+      return res.status(400).json({ error: 'Mês inválido (YYYY-MM)', code: 'INVALID_MONTH' });
+    }
+    const paxN = parseInt(req.query.pax, 10);
+    const pax = Number.isInteger(paxN) && paxN >= 1 ? paxN : 1;
+    const mode = req.query.mode === 'private' ? 'private' : 'per_person';
+
+    const { data: operator } = await supabaseAdmin
+      .from('operators')
+      .select('id, operator_type')
+      .eq('slug', slug)
+      .eq('onboarding_complete', true)
+      .maybeSingle();
+    if (!operator || operator.operator_type !== 'activity') {
+      return res.status(404).json({ error: 'Unidade não encontrada', code: 'NOT_FOUND' });
+    }
+
+    const { data: unit } = await supabaseAdmin
+      .from('units')
+      .select('id, description')
+      .eq('id', unitId)
+      .eq('operator_id', operator.id)
+      .eq('status', 'active')
+      .maybeSingle();
+    if (!unit) {
+      return res.status(404).json({ error: 'Unidade não encontrada', code: 'NOT_FOUND' });
+    }
+
+    const resultado = await diasLivresDoMes(supabaseAdmin, unit, parseUnitMeta(unit), { month, pax, mode, agora: new Date() });
+    return res.json({ data: resultado });
   } catch (err) {
     next(err);
   }
@@ -229,7 +274,7 @@ async function criarReserva(req, res, next) {
             customer_country, check_in, check_out, guests, notes,
             party_size, tour_time, reservation_time, zone_preference,
             voucher_code, ref_code, referred_by, items, driver_included, booking_mode, whatsapp_opt_in,
-            payment_method } = req.body;
+            payment_method, adults, children } = req.body;
 
     // check_out é opcional — activities/restaurants podem enviar só check_in (data do serviço)
     const effectiveCheckOut = check_out || check_in;
@@ -247,6 +292,25 @@ async function criarReserva(req, res, next) {
 
     const isRestaurant = operator.operator_type === 'restaurant';
     const isRentacar   = operator.operator_type === 'rentacar';
+    const isActivity   = operator.operator_type === 'activity';
+
+    /* Numero de pessoas efectivo -- um so valor para preco, vagas, guests
+       guardado e notas. Em actividades, se vierem adults/children, o grupo e
+       adultos + criancas (manda sobre party_size/guests); sem divisao, todas
+       as pessoas contam como adultos. Outros tipos: party_size || guests || 1. */
+    let partyEfectivo = party_size || guests || 1;
+    let splitAdultos = null;
+    let splitCriancas = 0;
+    if (isActivity) {
+      const base = Math.max(1, Math.floor(Number(party_size || guests || 1)) || 1);
+      const temDivisao = (adults !== undefined && adults !== null) || (children !== undefined && children !== null);
+      splitCriancas = Math.max(0, Math.floor(Number(children)) || 0);
+      splitAdultos = (adults !== undefined && adults !== null)
+        ? Math.max(0, Math.floor(Number(adults)) || 0)
+        : Math.max(0, base - splitCriancas);
+      if (temDivisao && splitAdultos + splitCriancas > 0) partyEfectivo = splitAdultos + splitCriancas;
+      else { splitAdultos = base; splitCriancas = 0; partyEfectivo = base; }
+    }
 
     /* Restaurante: cliente escolhe a mesa exacta (unit_id obrigatorio, tal
        como os restantes tipos ja exigem) a partir da lista devolvida por
@@ -275,6 +339,7 @@ async function criarReserva(req, res, next) {
     let preOrderValidado = null;
     let activitySlotTime = null;
     let isGroupBooking = false;
+    let precoAct = null;
     if (isRestaurant) {
       const { data: mesaRow } = await supabaseAdmin
         .from('units')
@@ -343,13 +408,26 @@ async function criarReserva(req, res, next) {
         isGroupBooking = true;
       }
 
+      /* Actividade: preco partilhado com o orcamento (precoActividade). Sem
+         adults/children no corpo, todas as pessoas contam como adultos. A
+         recusa (lotacao, grupo sem preco) vem antes da verificacao de vagas. */
+      if (isActivity) {
+        precoAct = precoActividade(unitRow, unitMeta, { adults: splitAdultos, children: splitCriancas, mode: isGroupBooking ? 'private' : 'per_person' });
+        if (precoAct.error) {
+          return res.status(400).json({ error: precoAct.error.message_pt, code: precoAct.error.code });
+        }
+      }
+
       if (activitySlots.length > 0) {
         const slotEscolhido = activitySlots.find((s) => String(s.time).slice(0, 5) === String(tour_time || '').slice(0, 5));
         if (!slotEscolhido) {
           return res.status(400).json({ error: 'Horário inválido para esta actividade', code: 'INVALID_TIME_SLOT' });
         }
         activitySlotTime = slotEscolhido.time;
-        const cabe = await verificarDisponibilidadeSlot(supabaseAdmin, unit_id, check_in, slotEscolhido.time, Number(party_size || guests || 1), Number(slotEscolhido.capacity) || 0, null, isGroupBooking);
+        if (slotJaComecou(check_in, slotEscolhido.time)) {
+          return res.status(409).json({ error: 'Este horário já começou', code: 'UNAVAILABLE' });
+        }
+        const cabe = await verificarDisponibilidadeSlot(supabaseAdmin, unit_id, check_in, slotEscolhido.time, Number(partyEfectivo), Number(slotEscolhido.capacity) || 0, null, isGroupBooking);
         if (!cabe) {
           return res.status(409).json({ error: 'Sem vagas neste horário', code: 'UNAVAILABLE' });
         }
@@ -366,11 +444,13 @@ async function criarReserva(req, res, next) {
     // por isso usam antes base_price * numero de pessoas. Mesas de restaurante
     // sao sempre criadas com base_price:0 (RestaurantTableForm) -- a propria
     // reserva de mesa nao tem preco fixo, so o pre-pedido (se existir) tem.
-    const numPessoas = party_size || guests || 1;
+    const numPessoas = partyEfectivo;
     let dias = 0;
     let total;
     if (isRestaurant) {
       total = preOrderValidado?.totalPrice || 0;
+    } else if (precoAct) {
+      total = precoAct.total;
     } else if (isGroupBooking) {
       // Preco fixo por grupo ou por escalao de pessoas -- ja validado acima
       // que a unidade tem algum preco privado configurado. unitMeta (linha
@@ -444,7 +524,7 @@ async function criarReserva(req, res, next) {
     if (tour_time) notesLines.push(`Hora: ${tour_time}`);
     if (isRestaurant && reservation_time) notesLines.push(`Hora: ${reservation_time}`);
     if (isRestaurant && zone_preference) notesLines.push(`Zona preferida: ${zone_preference}`);
-    if (party_size) notesLines.push(`Pessoas: ${party_size}`);
+    if (party_size || (isActivity && (adults != null || children != null))) notesLines.push(`Pessoas: ${partyEfectivo}`);
     if (notes) notesLines.push(notes);
     if (referredByNote) notesLines.push(`Indicado por: ${referredByNote}`);
     const finalNotes = notesLines.join(' | ') || null;
@@ -461,7 +541,7 @@ async function criarReserva(req, res, next) {
         customer_country: customer_country || null,
         check_in,
         check_out: effectiveCheckOut,
-        guests: party_size || guests || 1,
+        guests: partyEfectivo,
         total_price: finalTotal,
         /* confirmacao automatica so para quem paga presencialmente (o pagamento online confirma ao capturar) */
         status: estadoInicialReserva({ autoConfirm: operator.auto_confirm_bookings, paymentMethod: payment_method }),
@@ -578,7 +658,7 @@ async function criarReserva(req, res, next) {
       tourName: unit.name,
       checkIn: check_in,
       checkOut: effectiveCheckOut,
-      guests: party_size || guests || 1,
+      guests: partyEfectivo,
       total: finalTotal,
       currency,
       operator,
@@ -597,7 +677,7 @@ async function criarReserva(req, res, next) {
         tourName: unit.name,
         checkIn: check_in,
         checkOut: effectiveCheckOut,
-        guests: party_size || guests || 1,
+        guests: partyEfectivo,
         total,
         currency,
         customer: {
@@ -1177,6 +1257,73 @@ async function getGuestChatHistory(req, res, next) {
   } catch (err) { next(err); }
 }
 
+/* ─── Cotacao de actividade (mesmo calculo que criarReserva) ───
+   GET /:slug/units/:unitId/quote?adults=&children=&mode=&voucher=
+   O valor mostrado na pagina tem de ser igual ao cobrado: usa precoActividade
+   e aplica o voucher por validarVoucher sobre o mesmo total, como criarReserva. */
+async function cotarActividade(req, res, next) {
+  try {
+    const { slug, unitId } = req.params;
+    const inteiro = (v, omissao, minimo) => {
+      const n = Math.floor(Number(v));
+      return Number.isFinite(n) && n >= minimo ? n : omissao;
+    };
+    const adults = inteiro(req.query.adults, 1, 0);
+    const children = inteiro(req.query.children, 0, 0);
+    const mode = req.query.mode === 'private' ? 'private' : 'per_person';
+    const voucherCode = typeof req.query.voucher === 'string' ? req.query.voucher.trim() : '';
+
+    const { data: operator } = await supabaseAdmin
+      .from('operators')
+      .select('id, operator_type')
+      .eq('slug', slug)
+      .eq('onboarding_complete', true)
+      .single();
+    if (!operator) return res.status(404).json({ error: 'Operador não encontrado', code: 'NOT_FOUND' });
+
+    const { data: unit } = await supabaseAdmin
+      .from('units')
+      .select('*, pricing_rules(*)')
+      .eq('id', unitId)
+      .eq('operator_id', operator.id)
+      .eq('status', 'active')
+      .single();
+    if (!unit || operator.operator_type !== 'activity') {
+      return res.status(404).json({ error: 'Serviço não encontrado', code: 'NOT_FOUND' });
+    }
+
+    const meta = parseUnitMeta(unit);
+    if (mode === 'private' && !temPrecoPrivadoConfigurado(meta)) {
+      return res.json({ data: {
+        lines: [], total: 0, before: null,
+        error: { code: 'INVALID_BOOKING_MODE', message_pt: 'Esta actividade não tem reserva privada disponível', message_en: 'This activity has no private booking available' },
+      } });
+    }
+
+    const preco = precoActividade(unit, meta, { adults, children, mode });
+    if (preco.error) {
+      return res.json({ data: { lines: preco.lines, total: 0, before: null, error: preco.error } });
+    }
+
+    let lines = preco.lines;
+    let total = preco.total;
+    let before = null;
+    let error = null;
+    if (voucherCode) {
+      const resultado = await validarVoucher(operator.id, voucherCode, unit.id, preco.total);
+      if (resultado.valid) {
+        before = preco.total;
+        total = Math.max(0, preco.total - resultado.discount);
+        lines = [...lines, { type: 'discount', description: `Código ${voucherCode.toUpperCase()}`, quantity: 1, total: -resultado.discount }];
+      } else {
+        error = { code: 'INVALID_VOUCHER', message_pt: resultado.error || 'Código inválido', message_en: 'Invalid code' };
+      }
+    }
+
+    return res.json({ data: { lines, total, before, error } });
+  } catch (err) { next(err); }
+}
+
 /* ─── Unidade específica por slug + unitId ─── */
 async function getUnit(req, res, next) {
   try {
@@ -1184,7 +1331,7 @@ async function getUnit(req, res, next) {
 
     const { data: operator } = await supabaseAdmin
       .from('operators')
-      .select('id, name, slug, operator_type, email, phone, whatsapp, address, logo_url, cover_images, business_name, tagline, currency, description, page_config, brand_color, island_id, islands(name, slug, airport_code), cancellation_policy_pt, cancellation_policy_en, free_cancellation_hours, auto_confirm_bookings')
+      .select('id, name, slug, operator_type, email, phone, whatsapp, address, logo_url, cover_images, business_name, tagline, currency, description, page_config, brand_color, island_id, islands(name, slug, airport_code), cancellation_policy_pt, cancellation_policy_en, free_cancellation_hours, auto_confirm_bookings, custom_faqs')
       .eq('slug', slug)
       .eq('onboarding_complete', true)
       .single();
@@ -1805,6 +1952,7 @@ module.exports = {
   trackView,
   verificarDisponibilidadePublica,
   getSlotAvailability,
+  getAvailabilityMonth,
   verificarDisponibilidadeRestaurantePublica,
   criarReserva,
   discover,
@@ -1820,6 +1968,7 @@ module.exports = {
   sendGuestChatMessage,
   getGuestChatHistory,
   getUnit,
+  cotarActividade,
   callWaiter,
   createOrder,
   getUnitReviews,

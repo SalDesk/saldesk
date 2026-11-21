@@ -2,7 +2,7 @@
    "nao encontrado", muda o titulo do separador e aplica a cor da marca do operador.
    O modo widget tem o seu ficheiro (ServiceDetailWidget.test.jsx): fica guardado no modulo. */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, waitFor, cleanup, fireEvent } from '@testing-library/react';
+import { render, screen, waitFor, cleanup, fireEvent, within } from '@testing-library/react';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import ServiceDetail from '../pages/ServiceDetail';
 import { TONS } from '../utils/brandPalette';
@@ -77,30 +77,30 @@ describe('ServiceDetail: ponto de encontro', () => {
   it('mostra_ponto_de_encontro_com_link_do_mapa', async () => {
     simularRede({ unit: comMeta({ meeting_point: 'Marina' }, { lat: 16.6, lng: -22.9 }) });
     montar();
-    expect(await screen.findByText('Ponto de encontro')).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Ponto de encontro' })).toBeInTheDocument();
     expect(screen.getByText('Marina', { selector: 'p' })).toBeInTheDocument();
     const link = screen.getByRole('link', { name: /Abrir no Google Maps/ });
     expect(link).toHaveAttribute('href', 'https://www.google.com/maps/search/?api=1&query=16.6,-22.9');
     expect(link).toHaveAttribute('target', '_blank');
     expect(screen.getByTestId('marcador')).toBeInTheDocument();
-    /* com o ponto marcado, a seccao generica (morada do operador sobre uma foto) sai */
+    /* a pagina de actividade nao tem a seccao generica (morada do operador sobre uma foto) */
     expect(screen.queryByText('Localização')).toBeNull();
   });
 
   it('so_texto_sem_link', async () => {
     simularRede({ unit: comMeta({ meeting_point: 'Hotel Riu' }) });
     montar();
-    expect(await screen.findByText('Ponto de encontro')).toBeInTheDocument();
-    expect(screen.getByText('Hotel Riu')).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Ponto de encontro' })).toBeInTheDocument();
+    expect(screen.getByText('Hotel Riu', { selector: 'p' })).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: /Abrir no Google Maps/ })).toBeNull();
     expect(screen.queryByTestId('mapa')).toBeNull();
-    expect(screen.getByText('Localização')).toBeInTheDocument();
+    expect(screen.queryByText('Localização')).toBeNull();
   });
 
   it('so_coordenadas_sem_texto', async () => {
     simularRede({ unit: comMeta({}, { lat: 16.6, lng: -22.9 }) });
     montar();
-    expect(await screen.findByText('Ponto de encontro', { selector: 'p' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Ponto de encontro' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /Abrir no Google Maps/ })).toBeInTheDocument();
   });
 
@@ -130,7 +130,7 @@ describe('ServiceDetail: ponto de encontro', () => {
     localStorage.setItem('sd-lang', 'en');
     simularRede({ unit: comMeta({ meeting_point: 'Marina' }, { lat: 16.6, lng: -22.9 }) });
     montar();
-    expect(await screen.findByText('Meeting point')).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Meeting point' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /Open in Google Maps/ })).toBeInTheDocument();
   });
 });
@@ -265,5 +265,232 @@ describe('ServiceDetail: passar para um servico relacionado', () => {
     expect(j.name).toBe('Mergulho na Baia');
     expect(j.url).toMatch(/\/servico\/u2$/);
     expect(screen.getByTestId('mapa').dataset.centro).toBe('16.75,-22.95');
+  });
+});
+
+/* "Reservar" na coluna de reserva da actividade segue para o checkout de sempre, mas ja nos dados
+   do cliente: a data, a hora, as pessoas, o modo e o voucher vem da coluna, e o total da revisao e
+   o do servidor (/quote). Os pagamentos online usam o total da reserva gravada. */
+describe('ServiceDetail: reservar a partir da coluna', () => {
+  /* 20 de novembro de 2026 ao meio-dia UTC: o calendario abre em novembro de 2026 */
+  const AGORA = new Date('2026-11-20T12:00:00Z');
+  const COTACAO = { lines: [{ type: 'tour', description: 'Adultos', quantity: 2, total: 90 }], total: 90, before: null, error: null };
+  const RESERVA = { id: 'res-1234567890', status: 'pending', total_price: 90 };
+  const comMeta = (meta, extra = {}) => ({ ...UNIDADE, description: JSON.stringify({ desc_pt: 'Passeio', ...meta }), ...extra });
+
+  /* Rede da pagina, da coluna (meses, horarios, cotacao) e do checkout (reserva, SISP, PayPal) */
+  function redeDaReserva({ unit = UNIDADE, op = operador(), cotacao = () => COTACAO, horarios = [], reserva = RESERVA } = {}) {
+    global.fetch = vi.fn((url) => {
+      const u = String(url);
+      const params = u.includes('?') ? new URLSearchParams(u.slice(u.indexOf('?') + 1)) : new URLSearchParams();
+      if (u.includes('/traveler-auth/session')) return resposta({}, false);
+      if (u.includes('/availability-month')) return resposta({ data: { month: params.get('month'), days: { '2026-11-27': true } } });
+      if (u.includes('/slot-availability')) return resposta({ data: horarios });
+      if (u.includes('/quote')) return resposta({ data: cotacao(params) });
+      if (u.endsWith('/public/demo/reservations')) return resposta({ data: reserva });
+      if (u.includes('/payments/sisp/init')) return resposta({ data: { postUrl: 'https://sisp.teste/pagar', fields: { campo: '1' } } });
+      if (u.includes('/payments/paypal/client-id')) return resposta({ data: { client_id: 'cliente-teste' } });
+      if (u.includes('/payments/paypal/create-intent')) return resposta({ data: { order_id: 'ordem-1' } });
+      if (u.endsWith('/units/u1/reviews')) return resposta({ data: [] });
+      if (u.endsWith('/units/u1')) return resposta({ data: { unit, operator: op, related: [], recent_bookings: 0 } });
+      return resposta({ data: [] });
+    });
+  }
+  const pedidos = (parte) => global.fetch.mock.calls.filter(([u]) => String(u).includes(parte));
+  const corpoDe = (parte) => JSON.parse(pedidos(parte).pop()[1].body);
+
+  /* Escolhe o dia 27 na coluna (com mais uma crianca e um voucher, se pedidos) e carrega em Reservar */
+  async function reservarNaColuna({ criancas = 0, voucher, esperar } = {}) {
+    const coluna = await screen.findByTestId('coluna-reserva');
+    for (let i = 0; i < criancas; i += 1) fireEvent.click(within(coluna).getByRole('button', { name: 'Mais crianças' }));
+    await waitFor(() => expect(coluna.querySelector('[data-dia="2026-11-27"]')).not.toHaveAttribute('aria-disabled'));
+    fireEvent.click(coluna.querySelector('[data-dia="2026-11-27"]'));
+    if (voucher) {
+      fireEvent.change(within(coluna).getByPlaceholderText('Código de desconto'), { target: { value: voucher } });
+      fireEvent.click(within(coluna).getByRole('button', { name: 'Aplicar' }));
+    }
+    if (esperar) expect(await within(coluna).findByText(esperar)).toBeInTheDocument();
+    const reservar = within(coluna).getByRole('button', { name: /Reservar/ });
+    await waitFor(() => expect(reservar).toBeEnabled());
+    fireEvent.click(reservar);
+  }
+
+  /* Passo 2 (dados do cliente) e passagem a revisao e pagamento */
+  async function preencherDadosESeguir() {
+    fireEvent.change(await screen.findByPlaceholderText('João Silva'), { target: { value: 'Ana Lima' } });
+    fireEvent.change(screen.getByPlaceholderText('joao@email.com'), { target: { value: 'ana@exemplo.cv' } });
+    fireEvent.click(screen.getByRole('button', { name: /Continuar/ }));
+    expect(await screen.findByText('Resumo e pagamento')).toBeInTheDocument();
+  }
+  const modal = () => document.querySelector('.fixed.inset-0.z-50');
+  const aceitarPolitica = () => fireEvent.click(screen.getByLabelText('Li e aceito a política de cancelamento acima.'));
+
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(AGORA);
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+    delete window.paypal;
+  });
+
+  it('reservar_abre_nos_dados_do_cliente', async () => {
+    redeDaReserva({ unit: comMeta({ languages: ['Português', 'English'] }) });
+    montar();
+    const coluna = await screen.findByTestId('coluna-reserva');
+    fireEvent.change(within(coluna).getByRole('combobox'), { target: { value: 'English' } });
+    await reservarNaColuna({ criancas: 1 });
+    expect(await screen.findByText('Passo 2 de 3')).toBeInTheDocument();
+    expect(screen.getByText('Dados de contacto')).toBeInTheDocument();
+    /* o passo 1 (data, horario e grupo) nao aparece: isso ja foi escolhido na coluna */
+    expect(screen.queryByText('Data, horário e grupo')).toBeNull();
+    expect(screen.queryByDisplayValue('2026-11-27')).toBeNull();
+    /* "Anterior" no passo 2 fecha o modal e volta a coluna */
+    fireEvent.click(screen.getByRole('button', { name: /Anterior/ }));
+    expect(screen.queryByText('Passo 2 de 3')).toBeNull();
+    expect(screen.queryByText('Dados de contacto')).toBeNull();
+    /* reservar outra vez volta a abrir nos dados do cliente, com a seleccao na revisao */
+    fireEvent.click(within(coluna).getByRole('button', { name: /Reservar/ }));
+    expect(await screen.findByText('Passo 2 de 3')).toBeInTheDocument();
+    await preencherDadosESeguir();
+    expect(within(modal()).getByText('2026-11-27')).toBeInTheDocument();
+    expect(within(modal()).getByText('2 adultos + 1 crianças')).toBeInTheDocument();
+    expect(within(modal()).getByText('English')).toBeInTheDocument();
+  });
+
+  it('voucher_da_coluna_vai_na_reserva', async () => {
+    const COM_DESCONTO = {
+      lines: [
+        { type: 'tour', description: 'Adultos', quantity: 2, total: 90 },
+        { type: 'children', description: 'Crianças', quantity: 1, total: 20 },
+        { type: 'discount', description: 'Código VERAO', quantity: 1, total: -11 },
+      ],
+      total: 99, before: 110, error: null,
+    };
+    redeDaReserva({
+      unit: comMeta({ time_slots: [{ time: '09:00' }] }),
+      horarios: [{ time: '09:00', capacity: 10, remaining: 10, privateAvailable: true }],
+      cotacao: (p) => (p.get('voucher') === 'VERAO' ? COM_DESCONTO : { ...COTACAO, total: 110 }),
+      reserva: { ...RESERVA, total_price: 99 },
+    });
+    montar();
+    await reservarNaColuna({ criancas: 1, voucher: ' verao ', esperar: 'Código VERAO' });
+    expect(await screen.findByText('Passo 2 de 3')).toBeInTheDocument();
+    await preencherDadosESeguir();
+    /* a revisao mostra as linhas e o total da cotacao do servidor (com CVE, exigencia SISP) */
+    expect(within(modal()).getByText('Código VERAO')).toBeInTheDocument();
+    expect(within(modal()).getByText('-€11')).toBeInTheDocument();
+    expect(within(modal()).getByText('Crianças × 1')).toBeInTheDocument();
+    expect(within(modal()).getByText(/^€99 \(≈ /)).toBeInTheDocument();
+    expect(within(modal()).getByText('09:00')).toBeInTheDocument();
+    /* o voucher ja foi aplicado na coluna: o modal nao tem o seu campo */
+    expect(screen.queryByText('Código de desconto (opcional)')).toBeNull();
+    aceitarPolitica();
+    fireEvent.click(screen.getByRole('button', { name: /Confirmar reserva/ }));
+    expect(await screen.findByText('Tour reservado!')).toBeInTheDocument();
+    const corpo = corpoDe('/public/demo/reservations');
+    expect(corpo).toMatchObject({
+      unit_id: 'u1', check_in: '2026-11-27', check_out: '2026-11-27', adults: 2, children: 1, guests: 3,
+      tour_time: '09:00', voucher_code: 'VERAO', payment_method: 'cash', customer_name: 'Ana Lima', customer_email: 'ana@exemplo.cv',
+    });
+    expect(corpo).not.toHaveProperty('booking_mode');
+  });
+
+  it('voucher_recusado_nao_vai_na_reserva', async () => {
+    redeDaReserva({
+      unit: comMeta({ price_private: 300 }),
+      cotacao: (p) => (p.get('voucher')
+        ? { ...COTACAO, error: { code: 'INVALID_VOUCHER', message_pt: 'Código expirado', message_en: 'Invalid code' } }
+        : p.get('mode') === 'private'
+          ? { lines: [{ type: 'tour', description: 'Tour privado', quantity: 2, total: 300 }], total: 300, before: null, error: null }
+          : COTACAO),
+    });
+    montar();
+    const coluna = await screen.findByTestId('coluna-reserva');
+    fireEvent.click(within(coluna).getByRole('button', { name: 'Privado / grupo' }));
+    await reservarNaColuna({ voucher: 'velho', esperar: 'Código expirado' });
+    await preencherDadosESeguir();
+    aceitarPolitica();
+    fireEvent.click(screen.getByRole('button', { name: /Confirmar reserva/ }));
+    expect(await screen.findByText('Tour reservado!')).toBeInTheDocument();
+    const corpo = corpoDe('/public/demo/reservations');
+    expect(corpo).not.toHaveProperty('voucher_code');
+    expect(corpo).toMatchObject({ booking_mode: 'private', adults: 2, children: 0, guests: 2 });
+    expect(corpo).not.toHaveProperty('tour_time');
+  });
+
+  it('sisp_e_paypal_usam_o_total_da_reserva', async () => {
+    /* o servidor gravou 80 (a pagina mostrou 90): o pagamento segue o total da reserva gravada */
+    const submeter = vi.spyOn(HTMLFormElement.prototype, 'submit').mockImplementation(() => {});
+    redeDaReserva({ reserva: { ...RESERVA, total_price: 80 } });
+    montar();
+    await reservarNaColuna();
+    await preencherDadosESeguir();
+    fireEvent.click(screen.getByText('Cartão cabo-verdiano (Vinti4)'));
+    aceitarPolitica();
+    fireEvent.click(screen.getByRole('button', { name: /Confirmar reserva/ }));
+    await waitFor(() => expect(pedidos('/payments/sisp/init')).toHaveLength(1));
+    /* 80 EUR em escudos ao cambio da pagina (110.265) */
+    expect(corpoDe('/payments/sisp/init')).toEqual({ reservation_id: 'res-1234567890', amount: Math.round(80 * 110.265) });
+    await waitFor(() => expect(submeter).toHaveBeenCalledTimes(1));
+
+    cleanup();
+    let configuracao = null;
+    window.paypal = { Buttons: vi.fn((cfg) => { configuracao = cfg; return { render: vi.fn() }; }) };
+    redeDaReserva({ reserva: { ...RESERVA, total_price: 80 } });
+    montar();
+    await reservarNaColuna();
+    await preencherDadosESeguir();
+    fireEvent.click(screen.getByText('Cartão internacional (PayPal)'));
+    await waitFor(() => expect(pedidos('/public/demo/reservations')).toHaveLength(1));
+    aceitarPolitica();
+    await waitFor(() => expect(configuracao).not.toBeNull());
+    await configuracao.createOrder();
+    expect(corpoDe('/payments/paypal/create-intent')).toEqual({ reservation_id: 'res-1234567890', amount: 80, currency: 'EUR' });
+  });
+
+  it('reservar_da_barra_de_cima_vai_a_coluna', async () => {
+    redeDaReserva();
+    const scroll = vi.fn();
+    Element.prototype.scrollIntoView = scroll;
+    montar();
+    await screen.findByTestId('coluna-reserva');
+    fireEvent.click(within(document.querySelector('nav')).getByRole('button', { name: /Reservar/ }));
+    expect(scroll).toHaveBeenCalledTimes(1);
+    expect(scroll.mock.instances[0]).toBe(document.getElementById('reserva'));
+    expect(screen.queryByText(/Passo \d de 3/)).toBeNull();
+    delete Element.prototype.scrollIntoView;
+  });
+
+  it('sem_seleccao_modal_antigo_igual', async () => {
+    /* um tipo de operador sem pagina propria cai na ficha de sempre e no modal de actividade sem
+       seleccao: passo 1 com data e grupo, total calculado na pagina e campo de voucher no fim */
+    redeDaReserva({ op: operador({ operator_type: 'outro' }) });
+    montar();
+    await screen.findByText('Passeio de buggy', { selector: 'h1' });
+    expect(screen.queryByTestId('coluna-reserva')).toBeNull();
+    fireEvent.click(screen.getAllByRole('button', { name: /Reservar Agora/ })[0]);
+    expect(await screen.findByText('Passo 1 de 3')).toBeInTheDocument();
+    expect(screen.getByText('Data, horário e grupo')).toBeInTheDocument();
+    fireEvent.change(modal().querySelector('input[type="date"]'), { target: { value: '2026-11-27' } });
+    fireEvent.click(screen.getByRole('button', { name: /Continuar/ }));
+    expect(await screen.findByText('Passo 2 de 3')).toBeInTheDocument();
+    /* aqui "Anterior" volta ao passo 1 (nao fecha) */
+    fireEvent.click(screen.getByRole('button', { name: /Anterior/ }));
+    expect(await screen.findByText('Passo 1 de 3')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /Continuar/ }));
+    await preencherDadosESeguir();
+    expect(within(modal()).getByText(/^€90 \(≈ /)).toBeInTheDocument();
+    expect(screen.getByText('Código de desconto (opcional)')).toBeInTheDocument();
+    aceitarPolitica();
+    fireEvent.click(screen.getByRole('button', { name: /Confirmar reserva/ }));
+    expect(await screen.findByText('Tour reservado!')).toBeInTheDocument();
+    const corpo = corpoDe('/public/demo/reservations');
+    expect(corpo).toMatchObject({ unit_id: 'u1', check_in: '2026-11-27', check_out: '2026-11-27', guests: 2, payment_method: 'cash' });
+    expect(corpo).not.toHaveProperty('adults');
+    expect(corpo).not.toHaveProperty('children');
+    expect(corpo).not.toHaveProperty('voucher_code');
+    expect(corpo).not.toHaveProperty('booking_mode');
+    expect(pedidos('/quote')).toHaveLength(0);
   });
 });

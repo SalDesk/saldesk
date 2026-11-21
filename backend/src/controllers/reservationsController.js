@@ -1,6 +1,6 @@
 const { supabaseAdmin } = require('../config/supabase');
 const { cancelarPorReserva: cancelarMensagensDaReserva } = require('../messaging/outbox');
-const { verificarDisponibilidade, calcularPreco, verificarDisponibilidadeMesa, DEFAULT_SEATING_MINUTES, parseUnitMeta, verificarDisponibilidadeSlot, calcularPrecoPrivado, temPrecoPrivadoConfigurado } = require('../helpers/bookingHelpers');
+const { verificarDisponibilidade, calcularPreco, verificarDisponibilidadeMesa, DEFAULT_SEATING_MINUTES, parseUnitMeta, verificarDisponibilidadeSlot, calcularPrecoPrivado, temPrecoPrivadoConfigurado, precoActividade } = require('../helpers/bookingHelpers');
 const { obterOuCriarCliente, actualizarStatsCheckout } = require('../helpers/customerHelper');
 const { enviarEmail } = require('../helpers/emailHelper');
 const { confirmacaoClienteEmail, notificacaoOperadorEmail } = require('../helpers/emailTemplates');
@@ -175,10 +175,9 @@ async function criar(req, res, next) {
     const numPessoas = guests || 1;
     let dias = 0;
     let total;
-    if (isGroupBooking) {
-      total = calcularPrecoPrivado(unitMetaCriar, numPessoas);
-    } else if (check_out === check_in) {
-      total = Math.round(Number(unit.base_price || 0) * numPessoas * 100) / 100;
+    if (isGroupBooking || check_out === check_in) {
+      // Operadores nao sao recusados (error ignorado): so o total partilhado.
+      total = precoActividade(unit, unitMetaCriar, { adults: numPessoas, children: 0, mode: isGroupBooking ? 'private' : 'per_person' }).total;
     } else {
       const calc = calcularPreco(unit, check_in, check_out);
       total = calc.total;

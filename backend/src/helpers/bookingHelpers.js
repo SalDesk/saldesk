@@ -107,6 +107,62 @@ function temPrecoPrivadoConfigurado(unitMeta) {
   return !!unitMeta.price_private || (Array.isArray(unitMeta.price_tiers) && unitMeta.price_tiers.length > 0);
 }
 
+/* Preco de actividade -- fonte unica do valor mostrado e do valor cobrado.
+   per_person: adultos * base_price + criancas * (meta.price_child se definido,
+   senao base_price). private: calcularPrecoPrivado para o grupo todo.
+   Recusas: grupo acima da lotacao (CAPACITY_EXCEEDED, o total calculado e
+   devolvido na mesma) e privado sem escalao nem price_private a cobrir o grupo
+   (NO_PRICE_FOR_GROUP, total 0). lines usa descricoes em portugues; o frontend
+   re-etiqueta por type. */
+function precoActividade(unit, meta, { adults, children, mode } = {}) {
+  meta = meta || {};
+  const nAdults = Math.max(0, Math.floor(Number(adults) || 0));
+  const nChildren = Math.max(0, Math.floor(Number(children) || 0));
+  const party = nAdults + nChildren;
+  const arred = (n) => Math.round(n * 100) / 100;
+  const lines = [];
+  let total = 0;
+  let error = null;
+
+  if (mode === 'private') {
+    total = arred(calcularPrecoPrivado(meta, party));
+    lines.push({ type: 'tour', description: 'Tour privado', quantity: party, total });
+  } else {
+    const base = Number(unit?.base_price) || 0;
+    const childPrice = meta.price_child !== undefined && meta.price_child !== null && meta.price_child !== ''
+      ? Number(meta.price_child) || 0
+      : base;
+    const totalAdults = arred(base * nAdults);
+    const totalChildren = arred(childPrice * nChildren);
+    total = arred(totalAdults + totalChildren);
+    lines.push({ type: 'tour', description: 'Adultos', quantity: nAdults, total: totalAdults });
+    if (nChildren > 0) lines.push({ type: 'children', description: 'Crianças', quantity: nChildren, total: totalChildren });
+  }
+
+  const capacity = Number(unit?.capacity) || 0;
+  if (capacity > 0 && party > capacity) {
+    error = {
+      code: 'CAPACITY_EXCEEDED',
+      message_pt: 'Este grupo excede a lotação desta actividade',
+      message_en: "This group exceeds this activity's capacity",
+    };
+  } else if (mode === 'private') {
+    const tiers = Array.isArray(meta.price_tiers) ? meta.price_tiers : [];
+    const coberto = tiers.some((t) => party >= Number(t.pax_min) && party <= Number(t.pax_max)) || Number(meta.price_private) > 0;
+    if (!coberto) {
+      total = 0;
+      lines[0].total = 0;
+      error = {
+        code: 'NO_PRICE_FOR_GROUP',
+        message_pt: 'Para este número de pessoas, contacte o operador',
+        message_en: 'For this group size, please contact the operator',
+      };
+    }
+  }
+
+  return { total, lines, error };
+}
+
 // Verifica conflito de horario para UMA mesa candidata, num dia especifico --
 // reservations_no_overlap_time (048) é a rede de segurança ao nível da BD;
 // esta função decide qual mesa oferecer antes de tentar o insert.
@@ -198,6 +254,25 @@ async function listarMesasDisponiveis(supabase, operatorId, { date, startTime, d
 // em reservations.start_time com um horario definido em units.description.
 function normalizarHora(t) {
   return typeof t === 'string' ? t.slice(0, 5) : t;
+}
+
+// Data e hora actuais em Cabo Verde (Atlantic/Cape_Verde, UTC-1, sem DST),
+// independentes do fuso do servidor. Devolve { hoje: 'YYYY-MM-DD', hora: 'HH:MM' }.
+function hojeEHoraCaboVerde(agora = new Date()) {
+  const partes = {};
+  new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Atlantic/Cape_Verde', year: 'numeric', month: '2-digit', day: '2-digit',
+    hour: '2-digit', minute: '2-digit', hourCycle: 'h23',
+  }).formatToParts(agora).forEach((p) => { partes[p.type] = p.value; });
+  return { hoje: `${partes.year}-${partes.month}-${partes.day}`, hora: `${partes.hour}:${partes.minute}` };
+}
+
+// Um slot ja comecou quando o dia ja passou, ou e hoje (em Cabo Verde) e a
+// hora de inicio ja chegou. Nao se reserva um horario que ja arrancou.
+function slotJaComecou(date, time, agora = new Date()) {
+  const { hoje, hora } = hojeEHoraCaboVerde(agora);
+  if (date < hoje) return true;
+  return date === hoje && normalizarHora(time) <= hora;
 }
 
 // Soma os `guests` de reservas activas que ja ocupam um slot especifico
@@ -349,10 +424,60 @@ async function diasBloqueadosEmLote(supabase, unitId, dataInicio, dataFimExclusi
   return new Set((data || []).map((b) => b.date));
 }
 
+// Dias livres de um mes para o calendario de reserva -- UMA consulta ao mes
+// inteiro (ocupacaoSlotsEmLote + diasBloqueadosEmLote), nunca uma por dia.
+// Com time_slots: o dia esta livre se algum slot ainda nao comecou e tem
+// lugar (per_person: capacidade - ocupados >= pax; private: 0 ocupados, e
+// Infinity -- reserva privada -- conta como ocupado). Sem time_slots:
+// regra de uma reserva por dia (pending/confirmed/checked_in no check_in).
+// Dias passados e bloqueados nunca estao livres. Devolve { month, days }
+// com so os dias livres presentes ({ 'YYYY-MM-DD': true }).
+async function diasLivresDoMes(supabase, unit, meta, { month, pax = 1, mode = 'per_person', agora = new Date() } = {}) {
+  const [ano, mes] = month.split('-').map(Number);
+  const nDias = new Date(Date.UTC(ano, mes, 0)).getUTCDate();
+  const dataInicio = `${month}-01`;
+  const proximo = new Date(Date.UTC(ano, mes, 1));
+  const dataFimExclusiva = `${proximo.getUTCFullYear()}-${String(proximo.getUTCMonth() + 1).padStart(2, '0')}-01`;
+  const slots = Array.isArray(meta && meta.time_slots) ? meta.time_slots : [];
+  const { hoje } = hojeEHoraCaboVerde(agora);
+
+  let ocupacao = {};
+  let reservadosPorDia = new Set();
+  const bloqueadosPromise = diasBloqueadosEmLote(supabase, unit.id, dataInicio, dataFimExclusiva);
+  if (slots.length) {
+    ocupacao = await ocupacaoSlotsEmLote(supabase, unit.id, dataInicio, dataFimExclusiva);
+  } else {
+    const { data } = await supabase.from('reservations').select('check_in')
+      .eq('unit_id', unit.id).in('status', ['pending', 'confirmed', 'checked_in'])
+      .gte('check_in', dataInicio).lt('check_in', dataFimExclusiva);
+    reservadosPorDia = new Set((data || []).map((r) => r.check_in));
+  }
+  const bloqueados = await bloqueadosPromise;
+
+  const days = {};
+  for (let d = 1; d <= nDias; d++) {
+    const dia = `${month}-${String(d).padStart(2, '0')}`;
+    if (dia < hoje || bloqueados.has(dia)) continue;
+    if (!slots.length) {
+      if (!reservadosPorDia.has(dia)) days[dia] = true;
+      continue;
+    }
+    const doDia = ocupacao[dia] || {};
+    const livre = slots.some((s) => {
+      if (slotJaComecou(dia, s.time, agora)) return false;
+      const ocupados = doDia[normalizarHora(s.time)] || 0;
+      if (mode === 'private') return ocupados === 0;
+      return (Number(s.capacity) || 0) - ocupados >= pax;
+    });
+    if (livre) days[dia] = true;
+  }
+  return { month, days };
+}
+
 module.exports = {
   verificarDisponibilidade, calcularPreco,
   verificarDisponibilidadeMesa, listarMesasDisponiveis, DEFAULT_SEATING_MINUTES, parseUnitMeta,
   verificarDisponibilidadeSlot, listarSlotsComDisponibilidade,
-  normalizarHora, ocupacaoSlotsEmLote, diasBloqueadosEmLote,
-  calcularPrecoPrivado, temPrecoPrivadoConfigurado,
+  normalizarHora, hojeEHoraCaboVerde, slotJaComecou, ocupacaoSlotsEmLote, diasBloqueadosEmLote, diasLivresDoMes,
+  calcularPrecoPrivado, temPrecoPrivadoConfigurado, precoActividade,
 };

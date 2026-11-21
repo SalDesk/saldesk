@@ -165,7 +165,7 @@ function TourCard({ unit, onEdit, onDelete, onToggle, onSubmitConect }) {
                 ) : (
                   <p className="text-xs font-body text-n-400">Sem preço definido</p>
                 )}
-                {meta.price_child && (
+                {meta.price_child != null && meta.price_child !== '' && (
                   <p className="text-xs font-body text-n-500 tabular-nums">
                     €{Number(meta.price_child).toFixed(0)} crianca
                     {hasBasePrice && meta.price_private && ` · €${Number(meta.price_private).toFixed(0)} privado`}
