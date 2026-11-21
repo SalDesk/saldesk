@@ -587,6 +587,37 @@ describe('ServiceDetail: reservar a partir da coluna', () => {
     await waitFor(() => expect(pedidos('/public/demo/reservations')).toHaveLength(2));
   });
 
+  it('hotel: voucher aplicado no passo do pagamento com PayPal volta a publicar a reserva com o voucher', async () => {
+    redeDaReserva({ op: operador({ operator_type: 'hotel' }) });
+    const base = global.fetch;
+    global.fetch = vi.fn((u, o) => {
+      const s = String(u);
+      if (s.includes('/public/demo/availability?')) return resposta({ data: { disponivel: true } });
+      if (s.includes('/vouchers/validate')) return resposta({ data: { valid: true, discount: 9 } });
+      return base(u, o);
+    });
+    montar();
+    await screen.findByText('Passeio de buggy', { selector: 'h1' });
+    fireEvent.click(screen.getAllByRole('button', { name: /Reservar Agora/ })[0]);
+    expect(await screen.findByText('Passo 1 de 3')).toBeInTheDocument();
+    const [entrada, saida] = modal().querySelectorAll('input[type="date"]');
+    fireEvent.change(entrada, { target: { value: '2026-11-27' } });
+    fireEvent.change(saida, { target: { value: '2026-11-29' } });
+    expect(await within(modal()).findByText('Disponível', {}, { timeout: 3000 })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /Continuar/ }));
+    await preencherDadosESeguir();
+    fireEvent.click(screen.getByText('Cartão internacional (PayPal)'));
+    await waitFor(() => expect(pedidos('/public/demo/reservations')).toHaveLength(1));
+    expect(corpoDe('/public/demo/reservations')).not.toHaveProperty('voucher_code');
+
+    /* O lugar ja esta retido com o total antigo: o voucher obriga a publicar de novo */
+    fireEvent.change(screen.getByPlaceholderText('Ex: VERAO2025'), { target: { value: 'VERAO' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Aplicar' }));
+    expect(await screen.findByText('Desconto aplicado: -€9.00')).toBeInTheDocument();
+    await waitFor(() => expect(pedidos('/public/demo/reservations')).toHaveLength(2));
+    expect(corpoDe('/public/demo/reservations')).toMatchObject({ voucher_code: 'VERAO', payment_method: 'paypal' });
+  });
+
   it('reservar_da_barra_de_cima_vai_a_coluna', async () => {
     redeDaReserva();
     const scroll = vi.fn();
