@@ -431,6 +431,19 @@ describe('criarReserva: duplicados', () => {
     expect(enviarEmail).not.toHaveBeenCalled();
   });
 
+  it('voucher esgotado pela primeira reserva igual em dinheiro, com oferta activa: devolve-a com 200', async () => {
+    // A primeira reserva gastou o ultimo uso do codigo (que ganhou a oferta); no reenvio a oferta ganharia
+    parseUnitMeta.mockImplementation(() => ({ offers: [{ percent: 25, from: '2026-11-25', to: '2026-12-10' }] }));
+    validarVoucher.mockResolvedValue({ valid: false, error: 'Codigo esgotado' });
+    const antiga = linha({ id: 'antiga', status: 'confirmed', start_time: null, total_price: 0, voucher_id: 'v1' });
+    estado.recentes = [antiga];
+    const res = await reservar({ voucher_code: 'ULTIMO' });
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.json).toHaveBeenCalledWith({ data: antiga, pre_order: null, message: 'Reserva confirmada.' });
+    expect(reservasOps().filter((o) => o.tipo === 'insert')).toHaveLength(0);
+    expect(enviarEmail).not.toHaveBeenCalled();
+  });
+
   it('voucher recusado sem reserva igual com voucher: 400 como sempre', async () => {
     validarVoucher.mockResolvedValue({ valid: false, error: 'Codigo esgotado' });
     estado.recentes = [linha({ id: 'antiga', status: 'confirmed', start_time: null, total_price: 80, voucher_id: null })];

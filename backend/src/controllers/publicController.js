@@ -560,10 +560,15 @@ async function criarReserva(req, res, next) {
     const desconto = await escolherDesconto({
       operatorId: operator.id, unitId: unit.id, meta: metaActividade, total, date: check_in, voucherCode: voucher_code,
     });
+    /* Segundo envio da mesma reserva em dinheiro: a primeira pode ter gasto o ultimo uso do
+       voucher. Com uma reserva igual que usou voucher e o codigo agora nao aplicado (recusado,
+       ou vencido por uma oferta que so ganha porque o codigo esgotou), devolve-se essa em vez
+       do 400 ou de uma segunda reserva ao preco da oferta. */
+    const codigoEnviado = voucher_code !== undefined && voucher_code !== null && String(voucher_code).trim() !== '';
+    if (codigoEnviado && !desconto.voucherId && repetidaSemCartao && repetidaSemCartao.voucher_id) {
+      return responderRepetida(repetidaSemCartao);
+    }
     if (desconto.error) {
-      /* Segundo envio da mesma reserva em dinheiro: a primeira pode ter gasto o ultimo uso do
-         voucher. Com uma reserva igual que usou voucher, devolve-se essa em vez do 400. */
-      if (repetidaSemCartao && repetidaSemCartao.voucher_id) return responderRepetida(repetidaSemCartao);
       return res.status(400).json({ error: desconto.error.message_pt, code: 'INVALID_VOUCHER' });
     }
     const finalTotal = desconto.total;
