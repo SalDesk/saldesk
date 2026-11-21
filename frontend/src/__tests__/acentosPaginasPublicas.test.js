@@ -6,8 +6,9 @@ import path from 'path';
    avaliacao, retorno do pagamento, widget do restaurante, rodape de conformidade e politica de
    cancelamento gerada) escritos com acentos ("Código", "horário", "Serviços", "está incluído"...).
    Procura so dentro do texto mostrado (strings e texto JSX), fora dos comentarios. As strings que
-   sao uma unica palavra sem espacos (ids de seccao 'servicos', estados 'invalido', propriedades)
-   e os caminhos com ${...} ficam de fora: sao valores do codigo, nao texto para o turista. */
+   sao uma unica palavra sem espacos (ids de seccao 'servicos', estados 'invalido', propriedades),
+   os caminhos com ${...} e os caminhos de modulos ('../components/servico/...') ficam de fora: sao
+   valores do codigo, nao texto para o turista. */
 const FICHEIROS = [
   'pages/PublicBooking.jsx',
   'pages/ServiceDetail.jsx',
@@ -17,6 +18,11 @@ const FICHEIROS = [
   'components/restaurant/RestaurantReservationWidget.jsx',
   'components/shared/SiteComplianceFooter.jsx',
   'utils/politicaCancelamento.js',
+  'components/servico/CabecalhoActividade.jsx',
+  'components/servico/GaleriaActividade.jsx',
+  'components/servico/FactosActividade.jsx',
+  'components/servico/MenuSeccoes.jsx',
+  'components/servico/SeccoesActividade.jsx',
 ];
 
 const PALAVRAS = [
@@ -57,7 +63,7 @@ function textosVisiveis(codigo) {
     }
     if (!s || !s.trim()) continue;
     if (/^[\w-]+$/.test(s.trim())) continue;
-    const limpo = s.split(/\s+/).filter((tok) => !(tok.includes('${') && tok.includes('/')) && !tok.startsWith('/') && !tok.startsWith('http')).join(' ');
+    const limpo = s.split(/\s+/).filter((tok) => !(tok.includes('${') && tok.includes('/')) && !tok.startsWith('/') && !tok.startsWith('./') && !tok.startsWith('../') && !tok.startsWith('http')).join(' ');
     textos.push(limpo);
   }
   return textos;
@@ -79,6 +85,7 @@ describe('paginas publicas de reserva com acentos', () => {
       "<h2>O seguro esta incluido?</h2>",
       "scrollTo('servicos'); navigate(`/book/${slug}/servico/${u.id}`); setFase('invalido');",
       "const ok = a?.disponivel === true;",
+      "import Galeria from '../components/servico/GaleriaActividade';",
     ].join('\n');
     const achados = textosVisiveis(exemplo).filter((t) => SEM_ACENTO.test(t));
     expect(achados).toEqual(['Codigo invalido', ' servicos disponiveis', 'O seguro esta incluido?']);

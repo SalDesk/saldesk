@@ -77,30 +77,30 @@ describe('ServiceDetail: ponto de encontro', () => {
   it('mostra_ponto_de_encontro_com_link_do_mapa', async () => {
     simularRede({ unit: comMeta({ meeting_point: 'Marina' }, { lat: 16.6, lng: -22.9 }) });
     montar();
-    expect(await screen.findByText('Ponto de encontro')).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Ponto de encontro' })).toBeInTheDocument();
     expect(screen.getByText('Marina', { selector: 'p' })).toBeInTheDocument();
     const link = screen.getByRole('link', { name: /Abrir no Google Maps/ });
     expect(link).toHaveAttribute('href', 'https://www.google.com/maps/search/?api=1&query=16.6,-22.9');
     expect(link).toHaveAttribute('target', '_blank');
     expect(screen.getByTestId('marcador')).toBeInTheDocument();
-    /* com o ponto marcado, a seccao generica (morada do operador sobre uma foto) sai */
+    /* a pagina de actividade nao tem a seccao generica (morada do operador sobre uma foto) */
     expect(screen.queryByText('Localização')).toBeNull();
   });
 
   it('so_texto_sem_link', async () => {
     simularRede({ unit: comMeta({ meeting_point: 'Hotel Riu' }) });
     montar();
-    expect(await screen.findByText('Ponto de encontro')).toBeInTheDocument();
-    expect(screen.getByText('Hotel Riu')).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Ponto de encontro' })).toBeInTheDocument();
+    expect(screen.getByText('Hotel Riu', { selector: 'p' })).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: /Abrir no Google Maps/ })).toBeNull();
     expect(screen.queryByTestId('mapa')).toBeNull();
-    expect(screen.getByText('Localização')).toBeInTheDocument();
+    expect(screen.queryByText('Localização')).toBeNull();
   });
 
   it('so_coordenadas_sem_texto', async () => {
     simularRede({ unit: comMeta({}, { lat: 16.6, lng: -22.9 }) });
     montar();
-    expect(await screen.findByText('Ponto de encontro', { selector: 'p' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Ponto de encontro' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /Abrir no Google Maps/ })).toBeInTheDocument();
   });
 
@@ -130,7 +130,7 @@ describe('ServiceDetail: ponto de encontro', () => {
     localStorage.setItem('sd-lang', 'en');
     simularRede({ unit: comMeta({ meeting_point: 'Marina' }, { lat: 16.6, lng: -22.9 }) });
     montar();
-    expect(await screen.findByText('Meeting point')).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Meeting point' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /Open in Google Maps/ })).toBeInTheDocument();
   });
 });

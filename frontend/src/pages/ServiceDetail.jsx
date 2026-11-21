@@ -6,7 +6,7 @@ import {
   Menu, X, Globe, Calendar, Users, Check, ArrowRight, Shield,
   ExternalLink, Copy, Share2,
   Heart, Compass, Car, Utensils, Clock, AlertCircle, RotateCcw,
-  CreditCard, Building, Camera, ThumbsUp, Languages,
+  CreditCard, Building, Camera, ThumbsUp,
   ShoppingBag, User,
 } from 'lucide-react';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
@@ -30,6 +30,12 @@ import SiteComplianceFooter from '../components/shared/SiteComplianceFooter';
 import { textoPoliticaCancelamento } from '../utils/politicaCancelamento';
 import { jsonLdExperiencia } from '../utils/dadosEstruturados';
 import { dentroDeCaboVerde } from '../utils/coordenadas';
+import { seccoesActividade, factosActividade } from '../utils/paginaActividade';
+import GaleriaActividade, { Lightbox } from '../components/servico/GaleriaActividade';
+import CabecalhoActividade from '../components/servico/CabecalhoActividade';
+import FactosActividade from '../components/servico/FactosActividade';
+import MenuSeccoes from '../components/servico/MenuSeccoes';
+import SeccoesActividade from '../components/servico/SeccoesActividade';
 
 /* Icone numerado para as paragens do itinerario -- SVG inline (nunca
    bitmap), substitui o icone PNG por defeito do Leaflet (que nem sequer
@@ -144,6 +150,25 @@ function getUnitMeta(unit) {
   try { return JSON.parse(raw); } catch { return {}; }
 }
 
+/* Meta da pagina completa de actividade. Dois dados que a ficha antiga ja mostrava entram nas
+   seccoes novas em vez de se perderem: a descricao em texto simples (fichas sem JSON) ou no campo
+   generico `description` conta como descricao em portugues, e as comodidades escolhidas no
+   TourForm (Equipamento incluido, Seguro, Transporte...) juntam-se ao "Incluido". */
+function metaDaActividade(unit, meta) {
+  const raw = typeof unit?.description === 'string' ? unit.description.trim() : '';
+  const generica = typeof meta.description === 'string' ? meta.description.trim() : '';
+  const legado = raw && !raw.startsWith('{') ? raw : generica;
+  const temDesc = [meta.desc_pt, meta.desc_en].some((d) => typeof d === 'string' && d.trim());
+  let m = legado && !temDesc ? { ...meta, desc_pt: legado } : meta;
+  const comodidades = Array.isArray(meta.amenities) ? meta.amenities.filter((a) => typeof a === 'string' && a.trim()) : [];
+  if (comodidades.length) {
+    const itens = Array.isArray(m.included_items) ? m.included_items : [];
+    const ja = new Set(itens.map((it) => String(typeof it === 'string' ? it : it?.label || '').trim().toLowerCase()));
+    m = { ...m, included_items: [...itens, ...comodidades.filter((a) => !ja.has(a.trim().toLowerCase()))] };
+  }
+  return m;
+}
+
 /* Preco de tour privado/em grupo -- por escaloes de numero de pessoas
    (price_tiers) ou valor fixo unico (price_private). Espelha exactamente
    calcularPrecoPrivado() do backend (bookingHelpers.js) para o preview do
@@ -207,23 +232,8 @@ function StarRating({ rating, size = 13 }) {
   );
 }
 
-/* ── Lightbox ─────────────────────────────────────── */
-function Lightbox({ images, idx, onClose, onMove }) {
-  useEffect(() => {
-    const h = e => { if (e.key==='Escape') onClose(); if (e.key==='ArrowLeft') onMove(-1); if (e.key==='ArrowRight') onMove(1); };
-    window.addEventListener('keydown', h);
-    return () => window.removeEventListener('keydown', h);
-  }, [onClose, onMove]);
-  return (
-    <div className="fixed inset-0 z-[70] bg-black/95 flex items-center justify-center" onClick={onClose}>
-      <button onClick={e=>{e.stopPropagation();onMove(-1);}} className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-white hover:bg-white/20"><ChevronLeft size={20} strokeWidth={2}/></button>
-      <img src={images[idx]} alt="" className="max-w-[90vw] max-h-[85vh] object-contain rounded-lg" onClick={e=>e.stopPropagation()}/>
-      <button onClick={e=>{e.stopPropagation();onMove(1);}} className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-white hover:bg-white/20"><ChevronRight size={20} strokeWidth={2}/></button>
-      <button onClick={onClose} className="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-white hover:bg-white/20"><X size={18} strokeWidth={2}/></button>
-      <span className="absolute bottom-4 left-1/2 -translate-x-1/2 text-white/60 text-sm font-body">{idx+1} / {images.length}</span>
-    </div>
-  );
-}
+/* Lightbox (visor de fotos) vive em components/servico/GaleriaActividade.jsx, partilhado com a
+   galeria da pagina de actividade. */
 
 /* ── Modal shell ─────────────────────────────────── */
 const IN  = 'w-full border border-n-300 rounded-xl px-4 py-2.5 font-body text-sm focus:outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/10 bg-white transition-all disabled:bg-n-50 disabled:text-n-500 disabled:cursor-not-allowed';
@@ -858,21 +868,90 @@ function HeroGallery({ images, unitName, onOpen }) {
   );
 }
 
+/* ── ListaAvaliacoes ─────────────────────────────── */
+/* Resumo das notas e as tres primeiras avaliacoes. `actividade`: estilo da pagina de actividade,
+   onde o titulo vem da seccao "avaliacoes" da SeccoesActividade. */
+function ListaAvaliacoes({ reviews, avgRating, ratingBreakdown, op, lang, onVote, actividade = false }) {
+  return (
+    <div className={`grid grid-cols-1 lg:grid-cols-5 gap-6 ${actividade ? '' : 'mb-6'}`}>
+      {/* Rating summary */}
+      <div className="lg:col-span-2 bg-n-50 rounded-2xl p-5 border border-n-200 flex flex-col items-center justify-center">
+        <p className="font-display font-extrabold text-5xl text-n-900 mb-1">{avgRating.toFixed(1)}</p>
+        <StarRating rating={avgRating} size={18}/>
+        <p className="text-sm font-body text-n-400 mt-2">{reviews.length} {lang==='en'?'reviews':'avaliações'}</p>
+        <div className="w-full mt-4 space-y-2">
+          {ratingBreakdown.map(({ r, count, pct }) => (
+            <div key={r} className="flex items-center gap-2">
+              <span className="text-xs font-body font-semibold text-n-600 w-3">{r}</span>
+              <Star size={10} strokeWidth={1.75} className="text-sand-400 fill-sand-400 flex-shrink-0"/>
+              <div className="flex-1 bg-n-200 rounded-full h-1.5">
+                <div className="bg-sand-400 h-full rounded-full" style={{ width:`${pct}%` }}/>
+              </div>
+              <span className="text-xs text-n-400 font-body w-4 text-right">{count}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+      {/* Review cards */}
+      <div className="lg:col-span-3 space-y-4">
+        {reviews.slice(0, 3).map((r, i) => (
+          <div key={i} className={`bg-white border border-n-200 ${actividade ? 'rounded-2xl' : 'rounded-xl'} p-4 shadow-sm`}>
+            <div className="flex items-start justify-between mb-2">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-full bg-brand-100 flex items-center justify-center font-display font-bold text-brand-700 text-sm flex-shrink-0">
+                  {(r.author_name||'C').charAt(0).toUpperCase()}
+                </div>
+                <div>
+                  <p className="font-body font-semibold text-n-900 text-sm">{r.author_name||'Cliente'}</p>
+                  <p className="text-xs font-body text-n-400">{r.created_at?.split('T')[0]}</p>
+                </div>
+              </div>
+              <StarRating rating={r.rating} size={12}/>
+            </div>
+            {r.comment && <p className="text-sm font-body text-n-600 leading-relaxed">{r.comment}</p>}
+            {r.reply_text && (
+              <div className="mt-3 bg-brand-50 border border-brand-100 rounded-xl px-3 py-2.5">
+                <p className="text-xs font-body font-bold text-brand-700 mb-1">{op.name}</p>
+                <p className="text-xs font-body text-n-600">{r.reply_text}</p>
+              </div>
+            )}
+            <button onClick={() => onVote(r.id)} disabled={hasVotedReview(r.id)}
+              className={`mt-3 flex items-center gap-1.5 text-xs font-body font-semibold transition-colors ${hasVotedReview(r.id)?'text-brand-700 cursor-default':'text-n-400 hover:text-brand-700'}`}>
+              <ThumbsUp size={13} strokeWidth={1.75} className={hasVotedReview(r.id)?'fill-brand-100':''}/>
+              {lang==='en'?'Helpful':'Útil'}{r.helpful_count>0?` (${r.helpful_count})`:''}
+            </button>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 /* ── SimilarServices ─────────────────────────────── */
-function SimilarServices({ units, slug, lang, currency, opCurrency }) {
+/* `semTitulo`: na pagina de actividade a seccao (titulo e id "outros") e da SeccoesActividade */
+function SimilarServices({ units, slug, lang, currency, opCurrency, semTitulo = false }) {
   const navigate = useNavigate();
   if (!units?.length) return null;
+  const Caixa = semTitulo ? 'div' : 'section';
   return (
-    <section className="py-10 border-t border-n-100">
+    <Caixa className={semTitulo ? '' : 'py-10 border-t border-n-100'}>
+      {!semTitulo && (
       <h3 className="font-display font-bold text-xl text-n-900 mb-5">
         {lang === 'en' ? 'More services' : 'Outros serviços'}
       </h3>
+      )}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {units.map(u => (
           <div key={u.id} onClick={() => navigate(`/book/${slug}/servico/${u.id}`)}
-            className="bg-white border border-n-200 rounded-xl overflow-hidden hover:shadow-md hover:-translate-y-0.5 transition-all cursor-pointer">
-            <div className="h-36 bg-cover bg-center"
-              style={{ backgroundImage: u.images?.[0] ? `url(${u.images[0]})` : `url(${FALLBACK_IMGS[0]})` }}/>
+            {...(semTitulo ? {
+              role: 'link', tabIndex: 0,
+              onKeyDown: (e) => { if (e.key === 'Enter') navigate(`/book/${slug}/servico/${u.id}`); },
+            } : {})}
+            className={semTitulo
+              ? 'bg-white border border-n-200 rounded-2xl overflow-hidden shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all motion-reduce:transition-none motion-reduce:hover:translate-y-0 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2'
+              : 'bg-white border border-n-200 rounded-xl overflow-hidden hover:shadow-md hover:-translate-y-0.5 transition-all cursor-pointer'}>
+            <div className={`h-36 bg-cover bg-center ${semTitulo ? 'bg-n-100' : ''}`}
+              style={u.images?.[0] ? { backgroundImage: `url(${u.images[0]})` } : (semTitulo ? undefined : { backgroundImage: `url(${FALLBACK_IMGS[0]})` })}/>
             <div className="p-3">
               <p className="font-display font-bold text-n-900 text-sm mb-1 line-clamp-1">{u.name}</p>
               {u.base_price ? (
@@ -891,7 +970,7 @@ function SimilarServices({ units, slug, lang, currency, opCurrency }) {
           </div>
         ))}
       </div>
-    </section>
+    </Caixa>
   );
 }
 
@@ -1065,6 +1144,15 @@ function ServiceDetailPagina() {
     });
   }
 
+  /* Partilhar (pagina de actividade): a folha de partilha do telemovel quando existe, senao copia o link */
+  function partilhar() {
+    if (typeof navigator.share === 'function') {
+      navigator.share({ title: document.title, url: window.location.href }).catch(() => {});
+      return;
+    }
+    if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') copyLink();
+  }
+
   /* Visitante anonimo (sem conta) -- um voto por browser via localStorage,
      mesmo padrao ja usado pela wishlist anonima do Conect. Actualiza o
      numero optimisticamente, sem esperar pela resposta do servidor. */
@@ -1146,6 +1234,89 @@ function ServiceDetailPagina() {
     ? `https://wa.me/${op.whatsapp.replace(/\D/g,'')}?text=${encodeURIComponent(lang==='en'?`Hello, I'm interested in "${unit.name}" on SalDesk.`:`Olá, tenho interesse no serviço "${unit.name}" no SalDesk.`)}`
     : null;
 
+  /* ── Pagina completa de actividade: dados das seccoes (utils/paginaActividade) e os blocos de
+     sempre (itinerario com mapa, ponto de encontro com mapa, avaliacoes, outros servicos), que
+     entram na SeccoesActividade pela ordem da spec. ── */
+  const metaActividade = isActivity ? metaDaActividade(unit, unitMeta) : unitMeta;
+  const tituloActividade = (lang === 'en' && typeof unitMeta.name_en === 'string' && unitMeta.name_en.trim()) || unit.name;
+  const factos = isActivity ? factosActividade(unit, metaActividade, lang) : [];
+  const idsSeccoes = isActivity ? seccoesActividade({ meta: metaActividade, op, reviews, related, lang, unit }) : [];
+  const blocosActividade = isActivity ? {
+    /* Paragens do itinerario; sem NENHUMA dentro de Cabo Verde (0,0 = campos nunca preenchidos)
+       fica so a lista, sem mapa vazio nem pin inventado */
+    itinerario: (() => {
+      const paragens = (Array.isArray(unitMeta.stops) ? unitMeta.stops : []).filter(s => s && typeof s.name === 'string' && s.name.trim());
+      if (!paragens.length) return null;
+      const stopsWithCoords = paragens.filter(s => s.lat !== null && s.lat !== '' && s.lng !== null && s.lng !== ''
+        && dentroDeCaboVerde(Number(s.lat), Number(s.lng)));
+      return (
+        <div className={`grid grid-cols-1 ${stopsWithCoords.length>0?'lg:grid-cols-2':''} gap-6`}>
+          <ol className="space-y-4">
+            {paragens.map((s, i) => (
+              <li key={i} className="flex items-start gap-3">
+                <span className="shrink-0 w-7 h-7 rounded-full bg-brand-700 text-white text-xs font-body font-bold flex items-center justify-center mt-0.5" aria-hidden="true">{i+1}</span>
+                <div className="min-w-0">
+                  <p className="font-body font-semibold text-n-800 text-sm">{lang==='en'&&s.name_en?s.name_en:s.name}</p>
+                  {(lang==='en'&&s.desc_en?s.desc_en:s.desc) && (
+                    <p className="text-sm font-body text-n-500 mt-0.5 leading-relaxed">{lang==='en'&&s.desc_en?s.desc_en:s.desc}</p>
+                  )}
+                </div>
+              </li>
+            ))}
+          </ol>
+          {stopsWithCoords.length > 0 && (
+            <div className="h-72 rounded-2xl overflow-hidden border border-n-200 isolate">
+              <MapContainer center={[Number(stopsWithCoords[0].lat), Number(stopsWithCoords[0].lng)]} zoom={12} style={{ height:'100%', width:'100%' }} scrollWheelZoom={false}>
+                <TileLayer attribution='&copy; OpenStreetMap contributors' url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"/>
+                {stopsWithCoords.map((s, i) => (
+                  <Marker key={i} position={[Number(s.lat), Number(s.lng)]} icon={stopDivIcon(paragens.indexOf(s)+1)}>
+                    <Popup>{lang==='en'&&s.name_en?s.name_en:s.name}</Popup>
+                  </Marker>
+                ))}
+              </MapContainer>
+            </div>
+          )}
+        </div>
+      );
+    })(),
+    /* Ponto de encontro: texto do operador e, com coordenadas (units.lat/lng, marcadas no mapa do
+       formulario), um mapa pequeno e o link para o Google Maps. Nunca inventa uma localizacao. */
+    encontro: (() => {
+      const { texto, la, ln, temPonto } = pontoEncontroDe(unit, unitMeta);
+      if (!texto && !temPonto) return null;
+      return (
+        <div className={`grid grid-cols-1 ${temPonto?'lg:grid-cols-2':''} gap-6 items-start`}>
+          <div className="space-y-3">
+            {texto && <p className="font-body text-n-800 text-base leading-relaxed">{texto}</p>}
+            {unitMeta.pickup_included === true && (
+              <p className="font-body text-sm text-n-600">{lang==='en'?'Hotel pickup is included.':'A recolha no hotel está incluída.'}</p>
+            )}
+            {temPonto && (
+              <a href={`https://www.google.com/maps/search/?api=1&query=${la},${ln}`} target="_blank" rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 text-sm font-body font-semibold text-brand-700 hover:text-brand-800 underline underline-offset-2 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500">
+                {lang==='en'?'Open in Google Maps':'Abrir no Google Maps'}
+              </a>
+            )}
+          </div>
+          {temPonto && (
+            <div className="h-56 rounded-2xl overflow-hidden border border-n-200 isolate">
+              <MapContainer center={[la, ln]} zoom={14} style={{ height:'100%', width:'100%' }} scrollWheelZoom={false}>
+                <TileLayer attribution='&copy; OpenStreetMap contributors' url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"/>
+                <Marker position={[la, ln]} icon={pontoEncontroIcon}>
+                  <Popup>{texto || (lang==='en'?'Meeting point':'Ponto de encontro')}</Popup>
+                </Marker>
+              </MapContainer>
+            </div>
+          )}
+        </div>
+      );
+    })(),
+    avaliacoes: reviews.length > 0
+      ? <ListaAvaliacoes reviews={reviews} avgRating={avgRating} ratingBreakdown={ratingBreakdown} op={op} lang={lang} onVote={handleVoteHelpful} actividade/>
+      : null,
+    outros: <SimilarServices units={related} slug={slug} lang={lang} currency={currency} opCurrency={op.currency||'EUR'} semTitulo/>,
+  } : {};
+
   /* ── RENDER ── */
   return (
     /* Sem min-h-screen em modo widget: "100vh" reflecte a altura do
@@ -1205,35 +1376,12 @@ function ServiceDetailPagina() {
       </nav>
       )}
 
+      {/* ── Alojamento e viatura: a ficha de sempre ── */}
+      {!isActivity && (<>
       {/* ── Hero Gallery ── */}
       <div className={isWidget ? '' : 'pt-14'}>
         <HeroGallery images={imgs} unitName={unit.name} onOpen={i => setLbIdx(i)}/>
       </div>
-
-      {/* ── Fila de informação rápida (so actividade) — so mostra o que o
-          operador de facto preencheu no TourForm, nunca inventa duracao/
-          modalidade/idiomas em falta. Cancelamento gratuito e' sempre
-          verdade (mesma politica fixa da seccao mais abaixo). */}
-      {isActivity && (
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 pt-6">
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            {[
-              { icon:<RotateCcw size={18} strokeWidth={1.75}/>, pt:'Cancelamento gratuito', en:'Free cancellation', sub_pt:'Até 24h antes', sub_en:'Up to 24h before' },
-              ...(unitMeta.duration ? [{ icon:<Clock size={18} strokeWidth={1.75}/>, pt:'Duração', en:'Duration', sub_pt:`${unitMeta.duration}h`, sub_en:`${unitMeta.duration}h` }] : []),
-              ...(unitMeta.tour_type ? [{ icon:<Users size={18} strokeWidth={1.75}/>, pt:'Modalidade', en:'Group type', sub_pt:{grupo:'Guia partilhado',privado:'Guia privado',ambos:'Grupo ou privado'}[unitMeta.tour_type]||unitMeta.tour_type, sub_en:{grupo:'Shared guide',privado:'Private guide',ambos:'Group or private'}[unitMeta.tour_type]||unitMeta.tour_type }] : []),
-              ...(Array.isArray(unitMeta.languages) && unitMeta.languages.length ? [{ icon:<Languages size={18} strokeWidth={1.75}/>, pt:'Idiomas', en:'Languages', sub_pt:unitMeta.languages.join(' · '), sub_en:unitMeta.languages.join(' · ') }] : []),
-            ].map((c,i) => (
-              <div key={i} className="flex items-start gap-2.5 p-3 rounded-xl border border-n-200 bg-n-50">
-                <div className="w-8 h-8 rounded-lg bg-white border border-n-200 flex items-center justify-center text-brand-700 flex-shrink-0">{c.icon}</div>
-                <div>
-                  <p className="text-xs font-body font-bold text-n-800 leading-tight">{lang==='en'?c.en:c.pt}</p>
-                  <p className="text-xs font-body text-n-500 leading-tight mt-0.5">{lang==='en'?c.sub_en:c.sub_pt}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
 
       {/* ── Main layout ── */}
       <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8">
@@ -1372,16 +1520,6 @@ function ServiceDetailPagina() {
 
                 {/* Highlights grid — type-specific */}
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-6">
-                  {isActivity && [
-                    { icon:<Compass size={20} strokeWidth={1.75}/>, pt:'Guia especializado', en:'Specialist guide' },
-                    { icon:<Users size={20} strokeWidth={1.75}/>, pt:'Grupos pequenos', en:'Small groups' },
-                    { icon:<Shield size={20} strokeWidth={1.75}/>, pt:'Equipamento incluído', en:'Equipment included' },
-                  ].map((h,i) => (
-                    <div key={i} className="flex items-start gap-3 p-4 bg-brand-50 rounded-xl border border-brand-100">
-                      <div className="w-9 h-9 bg-brand-100 rounded-lg flex items-center justify-center text-brand-700 flex-shrink-0">{h.icon}</div>
-                      <p className="font-body font-semibold text-n-800 text-sm leading-snug mt-1">{lang==='en'?h.en:h.pt}</p>
-                    </div>
-                  ))}
                   {isHotel && [
                     { icon:<Shield size={20} strokeWidth={1.75}/>, pt:'Limpeza diária', en:'Daily cleaning' },
                     { icon:<Globe size={20} strokeWidth={1.75}/>, pt:'Wi-Fi incluído', en:'Wi-Fi included' },
@@ -1415,87 +1553,6 @@ function ServiceDetailPagina() {
                 </div>
               </div>
             )}
-
-            {/* ── Ponto de encontro (actividade): texto do operador e, com coordenadas
-                (units.lat/lng, marcadas no mapa do formulario), um mapa pequeno e o
-                link para o Google Maps. Nunca inventa uma localizacao. ── */}
-            {isActivity && (() => {
-              const { texto, la, ln, temPonto } = pontoEncontroDe(unit, unitMeta);
-              if (!texto && !temPonto) return null;
-              return (
-                <div className="pb-10 border-b border-n-100">
-                  <p className="text-xs font-body font-bold text-brand-700 uppercase tracking-widest mb-4">
-                    {lang==='en'?'Meeting point':'Ponto de encontro'}
-                  </p>
-                  <div className={`grid grid-cols-1 ${temPonto?'lg:grid-cols-2':''} gap-6 items-start`}>
-                    <div className="space-y-3">
-                      {texto && <p className="font-body text-n-800 text-base leading-relaxed">{texto}</p>}
-                      {temPonto && (
-                        <a href={`https://www.google.com/maps/search/?api=1&query=${la},${ln}`} target="_blank" rel="noopener noreferrer"
-                          className="inline-flex items-center gap-2 text-sm font-body font-semibold text-brand-700 hover:text-brand-800 underline underline-offset-2">
-                          {lang==='en'?'Open in Google Maps':'Abrir no Google Maps'}
-                        </a>
-                      )}
-                    </div>
-                    {temPonto && (
-                      <div className="h-56 rounded-2xl overflow-hidden border border-n-200">
-                        <MapContainer center={[la, ln]} zoom={14} style={{ height:'100%', width:'100%' }} scrollWheelZoom={false}>
-                          <TileLayer attribution='&copy; OpenStreetMap contributors' url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"/>
-                          <Marker position={[la, ln]} icon={pontoEncontroIcon}>
-                            <Popup>{texto || (lang==='en'?'Meeting point':'Ponto de encontro')}</Popup>
-                          </Marker>
-                        </MapContainer>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              );
-            })()}
-
-            {/* ── O que os viajantes adoraram (itinerário + mapa) — so
-                actividade, so se o operador configurou paragens reais no
-                TourForm. Paragens sem coordenadas ficam so na lista, nunca
-                ganham um pin inventado. Sem NENHUMA paragem com coordenadas,
-                mostra so a lista, sem mapa vazio. ── */}
-            {isActivity && Array.isArray(unitMeta.stops) && unitMeta.stops.length > 0 && (() => {
-              /* so paragens dentro de Cabo Verde: 0,0 (campos nunca preenchidos) nunca ganha pin */
-              const stopsWithCoords = unitMeta.stops.filter(s => s && s.lat !== null && s.lat !== '' && s.lng !== null && s.lng !== ''
-                && dentroDeCaboVerde(Number(s.lat), Number(s.lng)));
-              return (
-                <div className="pb-10 border-b border-n-100">
-                  <p className="text-xs font-body font-bold text-brand-700 uppercase tracking-widest mb-4">
-                    {lang==='en'?'What travelers loved':'O que os viajantes adoraram'}
-                  </p>
-                  <div className={`grid grid-cols-1 ${stopsWithCoords.length>0?'lg:grid-cols-2':''} gap-6`}>
-                    <div className="space-y-3">
-                      {unitMeta.stops.map((s, i) => (
-                        <div key={i} className="flex items-start gap-3">
-                          <span className="shrink-0 w-7 h-7 rounded-full bg-brand-700 text-white text-xs font-body font-bold flex items-center justify-center mt-0.5">{i+1}</span>
-                          <div>
-                            <p className="font-body font-semibold text-n-800 text-sm">{lang==='en'&&s.name_en?s.name_en:s.name}</p>
-                            {(lang==='en'&&s.desc_en?s.desc_en:s.desc) && (
-                              <p className="text-xs font-body text-n-500 mt-0.5 leading-relaxed">{lang==='en'&&s.desc_en?s.desc_en:s.desc}</p>
-                            )}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                    {stopsWithCoords.length > 0 && (
-                      <div className="h-72 rounded-2xl overflow-hidden border border-n-200">
-                        <MapContainer center={[stopsWithCoords[0].lat, stopsWithCoords[0].lng]} zoom={12} style={{ height:'100%', width:'100%' }} scrollWheelZoom={false}>
-                          <TileLayer attribution='&copy; OpenStreetMap contributors' url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"/>
-                          {stopsWithCoords.map((s, i) => (
-                            <Marker key={i} position={[s.lat, s.lng]} icon={stopDivIcon(unitMeta.stops.indexOf(s)+1)}>
-                              <Popup>{lang==='en'&&s.name_en?s.name_en:s.name}</Popup>
-                            </Marker>
-                          ))}
-                        </MapContainer>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              );
-            })()}
 
             {/* ── O que está incluído (menu de degustação) ── */}
             {isRestaurant && unit.unit_type === 'tasting_menu' && unitMeta.items?.length > 0 && (
@@ -1576,57 +1633,7 @@ function ServiceDetailPagina() {
                 <p className="text-xs font-body font-bold text-brand-700 uppercase tracking-widest mb-4">
                   {lang==='en'?'Customer reviews':'Avaliações dos clientes'}
                 </p>
-                <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 mb-6">
-                  {/* Rating summary */}
-                  <div className="lg:col-span-2 bg-n-50 rounded-2xl p-5 border border-n-200 flex flex-col items-center justify-center">
-                    <p className="font-display font-extrabold text-5xl text-n-900 mb-1">{avgRating.toFixed(1)}</p>
-                    <StarRating rating={avgRating} size={18}/>
-                    <p className="text-sm font-body text-n-400 mt-2">{reviews.length} {lang==='en'?'reviews':'avaliações'}</p>
-                    <div className="w-full mt-4 space-y-2">
-                      {ratingBreakdown.map(({ r, count, pct }) => (
-                        <div key={r} className="flex items-center gap-2">
-                          <span className="text-xs font-body font-semibold text-n-600 w-3">{r}</span>
-                          <Star size={10} strokeWidth={1.75} className="text-sand-400 fill-sand-400 flex-shrink-0"/>
-                          <div className="flex-1 bg-n-200 rounded-full h-1.5">
-                            <div className="bg-sand-400 h-full rounded-full" style={{ width:`${pct}%` }}/>
-                          </div>
-                          <span className="text-xs text-n-400 font-body w-4 text-right">{count}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                  {/* Review cards */}
-                  <div className="lg:col-span-3 space-y-4">
-                    {reviews.slice(0, 3).map((r, i) => (
-                      <div key={i} className="bg-white border border-n-200 rounded-xl p-4 shadow-sm">
-                        <div className="flex items-start justify-between mb-2">
-                          <div className="flex items-center gap-2.5">
-                            <div className="w-9 h-9 rounded-full bg-brand-100 flex items-center justify-center font-display font-bold text-brand-700 text-sm flex-shrink-0">
-                              {(r.author_name||'C').charAt(0).toUpperCase()}
-                            </div>
-                            <div>
-                              <p className="font-body font-semibold text-n-900 text-sm">{r.author_name||'Cliente'}</p>
-                              <p className="text-xs font-body text-n-400">{r.created_at?.split('T')[0]}</p>
-                            </div>
-                          </div>
-                          <StarRating rating={r.rating} size={12}/>
-                        </div>
-                        {r.comment && <p className="text-sm font-body text-n-600 leading-relaxed">{r.comment}</p>}
-                        {r.reply_text && (
-                          <div className="mt-3 bg-brand-50 border border-brand-100 rounded-xl px-3 py-2.5">
-                            <p className="text-xs font-body font-bold text-brand-700 mb-1">{op.name}</p>
-                            <p className="text-xs font-body text-n-600">{r.reply_text}</p>
-                          </div>
-                        )}
-                        <button onClick={() => handleVoteHelpful(r.id)} disabled={hasVotedReview(r.id)}
-                          className={`mt-3 flex items-center gap-1.5 text-xs font-body font-semibold transition-colors ${hasVotedReview(r.id)?'text-brand-700 cursor-default':'text-n-400 hover:text-brand-700'}`}>
-                          <ThumbsUp size={13} strokeWidth={1.75} className={hasVotedReview(r.id)?'fill-brand-100':''}/>
-                          {lang==='en'?'Helpful':'Útil'}{r.helpful_count>0?` (${r.helpful_count})`:''}
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                </div>
+                <ListaAvaliacoes reviews={reviews} avgRating={avgRating} ratingBreakdown={ratingBreakdown} op={op} lang={lang} onVote={handleVoteHelpful}/>
               </div>
             )}
 
@@ -1788,33 +1795,6 @@ function ServiceDetailPagina() {
                   </div>
                 )}
 
-                {/* Selectores inline (so actividade) -- pre-preenchem o
-                    ActivityModal ao abrir; o modal continua a ser a unica
-                    fonte de verdade do preco/disponibilidade/submissao. */}
-                {isActivity && (
-                  <div className="px-5 pt-5 space-y-3 border-b border-n-100 pb-5">
-                    <div>
-                      <label className="text-xs font-body font-bold text-n-600 uppercase tracking-wide mb-1 block">{lang==='en'?'Date':'Data'}</label>
-                      <input type="date" value={sbDate} onChange={e=>setSbDate(e.target.value)} min={new Date().toISOString().split('T')[0]}
-                        className="w-full h-9 px-3 text-sm font-body border border-n-300 rounded-lg focus:outline-none focus:border-brand-700"/>
-                    </div>
-                    <div className="grid grid-cols-2 gap-3">
-                      <Cnt label={lang==='en'?'Adults':'Adultos'} val={sbAdults} set={setSbAdults} min={1} max={20}/>
-                      <Cnt label={lang==='en'?'Children':'Crianças'} val={sbKids} set={setSbKids} min={0} max={10}/>
-                    </div>
-                    {Array.isArray(unitMeta.languages) && unitMeta.languages.length > 0 && (
-                      <div>
-                        <label className="text-xs font-body font-bold text-n-600 uppercase tracking-wide mb-1 block">{lang==='en'?'Language':'Idioma'}</label>
-                        <select value={sbLanguage} onChange={e=>setSbLanguage(e.target.value)}
-                          className="w-full h-9 px-3 text-sm font-body border border-n-300 rounded-lg focus:outline-none focus:border-brand-700 bg-white">
-                          <option value="">{lang==='en'?'-- Select --':'-- Seleccionar --'}</option>
-                          {unitMeta.languages.map(l => <option key={l} value={l}>{l}</option>)}
-                        </select>
-                      </div>
-                    )}
-                  </div>
-                )}
-
                 {/* CTA buttons */}
                 <div className="px-5 py-5 space-y-3">
                   <button onClick={handleReservarClick}
@@ -1874,6 +1854,62 @@ function ServiceDetailPagina() {
           </div>
         </div>
       </div>
+
+      </>)}
+
+      {/* ── Pagina completa de actividade: cabecalho, galeria e factos e, a partir de lg, duas
+          colunas (seccoes a esquerda, coluna de reserva a direita). Abaixo de lg fica uma so coluna
+          com a reserva logo a seguir aos factos; no widget a reserva vem primeiro e nao ha menu
+          (o iframe cresce com a pagina, um menu fixo nao teria onde ficar). ── */}
+      {isActivity && (
+        <div className={isWidget ? '' : 'pt-14'}>
+          <div className="max-w-6xl mx-auto px-4 sm:px-6">
+            <CabecalhoActividade titulo={tituloActividade} meta={metaActividade} op={op} classificacao={classificacao}
+              lang={lang} mostrarCaminho={!isWidget} onPartilhar={partilhar} copiado={copied}/>
+            <GaleriaActividade images={unit.images} titulo={tituloActividade} lang={lang}/>
+            {factos.length > 0 && (
+              <div className="mt-6">
+                <FactosActividade factos={factos} lang={lang}/>
+              </div>
+            )}
+            <div className="grid grid-cols-[minmax(0,1fr)] lg:grid-cols-[minmax(0,1fr)_380px] gap-8 lg:gap-12 mt-8 pb-12">
+              {/* Coluna de reserva. Conteudo provisorio (preco e o botao que abre o modal de hoje)
+                  ate a Task 8 o trocar pelo bloco de reserva por passos. */}
+              <aside id="reserva" aria-label={lang==='en'?'Booking':'Reserva'} data-testid="coluna-reserva"
+                className="lg:col-start-2 lg:row-start-1 min-w-0">
+                <div className="lg:sticky lg:top-20 bg-white border border-n-200 rounded-2xl shadow-sm p-5 space-y-4">
+                  {displayPrice ? (
+                    <p className="font-display font-extrabold text-2xl text-brand-700 leading-none">{displayPrice}</p>
+                  ) : (
+                    <p className="font-display font-bold text-lg text-n-500">{lang==='en'?'On request':'Consultar'}</p>
+                  )}
+                  {recentBookings > 0 && (
+                    <p className="text-xs font-body font-semibold text-amber-700 bg-amber-50 rounded-lg px-3 py-2">
+                      <span className="font-bold">{recentBookings}</span> {lang==='en'?'bookings this month':'reservas este mês'}
+                    </p>
+                  )}
+                  <button type="button" onClick={handleReservarClick}
+                    className="w-full bg-sand-500 text-n-900 font-body font-bold py-3.5 rounded-xl flex items-center justify-center gap-2 hover:bg-sand-400 transition-colors motion-reduce:transition-none text-base shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2">
+                    <Calendar size={18} strokeWidth={1.75} aria-hidden="true"/>
+                    {lang==='en'?'Check availability':'Ver disponibilidade'}
+                  </button>
+                  {whatsappUrl && (
+                    <a href={whatsappUrl} target="_blank" rel="noopener noreferrer"
+                      className="w-full border-2 border-n-200 text-n-700 font-body font-semibold py-3 rounded-xl flex items-center justify-center gap-2 hover:border-brand-700 hover:text-brand-700 transition-colors motion-reduce:transition-none text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2">
+                      <MessageCircle size={16} strokeWidth={1.75} aria-hidden="true"/>
+                      {lang==='en'?'Contact operator':'Contactar operador'}
+                    </a>
+                  )}
+                </div>
+              </aside>
+              <div className="lg:col-start-1 lg:row-start-1 min-w-0">
+                {!isWidget && <MenuSeccoes ids={idsSeccoes} lang={lang}/>}
+                <SeccoesActividade ids={idsSeccoes} meta={metaActividade} op={op} lang={lang} blocos={blocosActividade}/>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── Reserva (prato/menu de degustação) — o widget completo (escolha de
           mesa + pré-pedido) fica embutido nesta própria página, com este item
@@ -1945,7 +1981,7 @@ function ServiceDetailPagina() {
 
       {/* ── Lightbox ── */}
       {lbIdx !== null && (
-        <Lightbox images={imgs} idx={lbIdx} onClose={() => setLbIdx(null)} onMove={d => setLbIdx(i => (i+d+imgs.length)%imgs.length)}/>
+        <Lightbox images={imgs} idx={lbIdx} lang={lang} onClose={() => setLbIdx(null)} onMove={d => setLbIdx(i => (i+d+imgs.length)%imgs.length)}/>
       )}
     </div>
   );

@@ -6,7 +6,7 @@ import { dentroDeCaboVerde } from './coordenadas';
 const texto = (v) => (typeof v === 'string' ? v.trim() : '');
 
 /* Campo da lingua pedida, com a outra como alternativa */
-function porLingua(meta, base, lang) {
+export function porLingua(meta, base, lang) {
   const m = meta || {};
   const outra = lang === 'en' ? 'pt' : 'en';
   return texto(m[`${base}_${lang}`]) || texto(m[`${base}_${outra}`]);
