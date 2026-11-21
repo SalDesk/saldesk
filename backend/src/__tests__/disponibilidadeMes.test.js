@@ -1,18 +1,25 @@
 /* Dias livres do mes para o calendario de reserva: uma consulta ao mes inteiro. */
-const estado = { unidade: null, reservas: [], bloqueados: [], consultas: [] };
+const estado = { operador: null, unidade: null, reservas: [], bloqueados: [], consultas: [] };
 
 jest.mock('../config/supabase', () => {
   function construir(tabela) {
-    const b = {};
-    ['select', 'eq', 'order', 'in', 'limit', 'gte', 'lte', 'lt', 'gt', 'neq', 'not'].forEach((m) => { b[m] = jest.fn(() => b); });
+    const b = { filtros: {} };
+    ['select', 'order', 'in', 'limit', 'gte', 'lte', 'lt', 'gt', 'neq', 'not'].forEach((m) => { b[m] = jest.fn(() => b); });
+    b.eq = jest.fn((k, v) => { b.filtros[k] = v; return b; });
     const resolver = () => {
       estado.consultas.push(tabela);
-      if (tabela === 'units') return { data: estado.unidade, error: null };
+      if (tabela === 'operators') return { data: estado.operador && b.filtros.slug === estado.operador.slug ? estado.operador : null, error: null };
+      if (tabela === 'units') {
+        const u = estado.unidade;
+        const doOperador = !('operator_id' in b.filtros) || (u && b.filtros.operator_id === u.operator_id);
+        return { data: u && doOperador ? u : null, error: null };
+      }
       if (tabela === 'reservations') return { data: estado.reservas, error: null };
       if (tabela === 'blocked_dates') return { data: estado.bloqueados, error: null };
       return { data: [], error: null };
     };
     b.maybeSingle = jest.fn(() => Promise.resolve(resolver()));
+    b.single = jest.fn(() => Promise.resolve(resolver()));
     b.then = (ok, ko) => Promise.resolve(resolver()).then(ok, ko);
     return b;
   }
@@ -38,6 +45,7 @@ const AGORA = new Date('2026-11-20T10:00:00Z'); // 09:00 de 20 nov em Cabo Verde
 const unit = { id: 'u1' };
 
 beforeEach(() => {
+  estado.operador = { id: 'op1', slug: 'demo', operator_type: 'activity' };
   estado.unidade = null;
   estado.reservas = [];
   estado.bloqueados = [];
@@ -118,25 +126,53 @@ describe('getAvailabilityMonth', () => {
   it('mes_invalido_400', async () => {
     const res = resposta();
     const next = jest.fn();
-    await getAvailabilityMonth({ params: { unitId: 'u1' }, query: { month: '2026-13' } }, res, next);
+    await getAvailabilityMonth({ params: { slug: 'demo', unitId: 'u1' }, query: { month: '2026-13' } }, res, next);
     expect(res.status).toHaveBeenCalledWith(400);
-    await getAvailabilityMonth({ params: { unitId: 'u1' }, query: {} }, res, next);
+    await getAvailabilityMonth({ params: { slug: 'demo', unitId: 'u1' }, query: {} }, res, next);
     expect(res.status).toHaveBeenCalledTimes(2);
     expect(next).not.toHaveBeenCalled();
   });
 
   it('unidade_inactiva_404', async () => {
     const res = resposta();
-    await getAvailabilityMonth({ params: { unitId: 'u1' }, query: { month: '2026-12' } }, res, jest.fn());
+    await getAvailabilityMonth({ params: { slug: 'demo', unitId: 'u1' }, query: { month: '2026-12' } }, res, jest.fn());
+    expect(res.status).toHaveBeenCalledWith(404);
+  });
+
+  /* O :slug conta: so responde por unidades activas do operador do slug, e so de actividades
+     (nunca quartos de hotel nem mesas de restaurante) */
+  it('unidade_de_outro_operador_404', async () => {
+    estado.unidade = { id: 'u1', operator_id: 'op2', description: '{}' };
+    const res = resposta();
+    await getAvailabilityMonth({ params: { slug: 'demo', unitId: 'u1' }, query: { month: '2026-12' } }, res, jest.fn());
+    expect(res.status).toHaveBeenCalledWith(404);
+    expect(estado.consultas).not.toContain('reservations');
+  });
+
+  it('operador_que_nao_e_actividade_404', async () => {
+    estado.unidade = { id: 'u1', operator_id: 'op1', description: '{}' };
+    for (const tipo of ['hotel', 'restaurant', 'rentacar']) {
+      estado.operador = { id: 'op1', slug: 'demo', operator_type: tipo };
+      const res = resposta();
+      await getAvailabilityMonth({ params: { slug: 'demo', unitId: 'u1' }, query: { month: '2026-12' } }, res, jest.fn());
+      expect(res.status).toHaveBeenCalledWith(404);
+    }
+    expect(estado.consultas).not.toContain('reservations');
+  });
+
+  it('slug_desconhecido_404', async () => {
+    estado.unidade = { id: 'u1', operator_id: 'op1', description: '{}' };
+    const res = resposta();
+    await getAvailabilityMonth({ params: { slug: 'outro', unitId: 'u1' }, query: { month: '2026-12' } }, res, jest.fn());
     expect(res.status).toHaveBeenCalledWith(404);
   });
 
   it('devolve_data_com_dias', async () => {
     jest.useFakeTimers().setSystemTime(AGORA);
-    estado.unidade = { id: 'u1', description: JSON.stringify({ time_slots: [{ time: '09:00', capacity: 4 }] }) };
+    estado.unidade = { id: 'u1', operator_id: 'op1', description: JSON.stringify({ time_slots: [{ time: '09:00', capacity: 4 }] }) };
     estado.reservas = [{ check_in: '2026-12-10', start_time: '09:00', guests: 4, is_group_booking: false }];
     const res = resposta();
-    await getAvailabilityMonth({ params: { unitId: 'u1' }, query: { month: '2026-12', pax: 'x', mode: 'zzz' } }, res, jest.fn());
+    await getAvailabilityMonth({ params: { slug: 'demo', unitId: 'u1' }, query: { month: '2026-12', pax: 'x', mode: 'zzz' } }, res, jest.fn());
     jest.useRealTimers();
     const corpo = res.json.mock.calls[0][0];
     expect(corpo.data.month).toBe('2026-12');

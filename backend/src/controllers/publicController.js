@@ -156,10 +156,11 @@ async function getSlotAvailability(req, res, next) {
 }
 
 /* ─── Dias livres do mes (calendario do widget de reserva) — devolve so os
-   dias com lugar para o grupo, uma consulta ao mes inteiro. ─── */
+   dias com lugar para o grupo, uma consulta ao mes inteiro. So responde por
+   unidades do operador do :slug e so de actividades (como cotarActividade). ─── */
 async function getAvailabilityMonth(req, res, next) {
   try {
-    const { unitId } = req.params;
+    const { slug, unitId } = req.params;
     const { month } = req.query;
     if (typeof month !== 'string' || !/^\d{4}-(0[1-9]|1[0-2])$/.test(month)) {
       return res.status(400).json({ error: 'Mês inválido (YYYY-MM)', code: 'INVALID_MONTH' });
@@ -168,10 +169,21 @@ async function getAvailabilityMonth(req, res, next) {
     const pax = Number.isInteger(paxN) && paxN >= 1 ? paxN : 1;
     const mode = req.query.mode === 'private' ? 'private' : 'per_person';
 
+    const { data: operator } = await supabaseAdmin
+      .from('operators')
+      .select('id, operator_type')
+      .eq('slug', slug)
+      .eq('onboarding_complete', true)
+      .maybeSingle();
+    if (!operator || operator.operator_type !== 'activity') {
+      return res.status(404).json({ error: 'Unidade não encontrada', code: 'NOT_FOUND' });
+    }
+
     const { data: unit } = await supabaseAdmin
       .from('units')
       .select('id, description')
       .eq('id', unitId)
+      .eq('operator_id', operator.id)
       .eq('status', 'active')
       .maybeSingle();
     if (!unit) {
