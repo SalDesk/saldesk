@@ -32,6 +32,33 @@ async function enviarReciboPagamento(reserva) {
   }
 }
 
+/* ─── Valor a cobrar ────────────────────────────────────── */
+
+/* O valor de um pagamento online vem SEMPRE da reserva guardada (total_price, na moeda do
+   operador), nunca do browser: antes, quem mexesse no pedido pagava 1 EUR por uma reserva de
+   200 EUR e ela ficava paga e confirmada. PayPal cobra em euros, a SISP em escudos (inteiros).
+   Mesma taxa da pagina e do recibo (receiptPdf.js). */
+const CVE_POR_EUR = 110.265;
+
+function valorEmEur(total, moeda) {
+  const t = Number(total) || 0;
+  return Math.round((moeda === 'CVE' ? t / CVE_POR_EUR : t) * 100) / 100;
+}
+
+function valorEmCve(total, moeda) {
+  const t = Number(total) || 0;
+  return Math.round(moeda === 'CVE' ? t : t * CVE_POR_EUR);
+}
+
+async function lerReservaParaPagamento(reservationId) {
+  const { data } = await supabaseAdmin
+    .from('reservations')
+    .select('id, operator_id, total_price, operators(currency)')
+    .eq('id', reservationId)
+    .maybeSingle();
+  return data || null;
+}
+
 /* ─── PayPal ─────────────────────────────────────────────── */
 
 /* Credenciais PayPal sao por operador (Definicoes > Pagamentos), nunca
@@ -81,13 +108,17 @@ async function createPayPalIntent(req, res, next) {
 /* Rota publica — usada pelo cliente na pagina de reserva, sem sessao de operador. */
 async function publicCreatePaypalIntent(req, res, next) {
   try {
-    const { reservation_id, amount, currency = 'EUR' } = req.body;
-    if (!reservation_id || !amount) {
-      return res.status(400).json({ error: 'reservation_id e amount obrigatórios', code: 'MISSING_FIELDS' });
+    /* o 'amount' que a pagina ainda manda e ignorado: o valor vem da reserva */
+    const { reservation_id } = req.body;
+    if (!reservation_id) {
+      return res.status(400).json({ error: 'reservation_id obrigatório', code: 'MISSING_FIELDS' });
     }
-    const { data: reserva } = await supabaseAdmin
-      .from('reservations').select('id, operator_id').eq('id', reservation_id).single();
+    const reserva = await lerReservaParaPagamento(reservation_id);
     if (!reserva) return res.status(404).json({ error: 'Reserva não encontrada', code: 'NOT_FOUND' });
+    const eur = valorEmEur(reserva.total_price, reserva.operators?.currency);
+    if (!(eur > 0)) return res.status(400).json({ error: 'Esta reserva não tem valor a pagar', code: 'NOTHING_TO_PAY' });
+    const amount = eur.toFixed(2);
+    const currency = 'EUR';
 
     const { clientId, clientSecret } = await obterCredenciaisPaypal(reserva.operator_id);
     let order;
@@ -109,6 +140,26 @@ async function confirmarCapturaPaypal(operatorId, orderId, reservationId) {
   const capture = await captureOrder(clientId, clientSecret, orderId);
   const captureUnit = capture.purchase_units?.[0]?.payments?.captures?.[0];
   const amount = parseFloat(captureUnit?.amount?.value || 0);
+
+  /* So confirma quando o valor capturado cobre o total da reserva (em euros, ao centimo).
+     Abaixo disso fica 'partial' e por confirmar, para o operador ver e tratar. */
+  const reservaAntes = await lerReservaParaPagamento(reservationId);
+  const esperado = valorEmEur(reservaAntes?.total_price, reservaAntes?.operators?.currency);
+  if (amount + 0.01 < esperado) {
+    console.error(`[PayPal] Valor capturado abaixo do total — reservation_id=${reservationId} capturado=${amount} esperado=${esperado}`);
+    const { data: parcial, error: errParcial } = await supabaseAdmin
+      .from('reservations')
+      .update({
+        payment_status: 'partial', payment_method: 'paypal',
+        paypal_order_id: orderId, paypal_capture_id: captureUnit?.id || null, amount_paid: amount,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', reservationId)
+      .select('*')
+      .single();
+    if (errParcial) throw errParcial;
+    return parcial;
+  }
 
   const { data, error } = await supabaseAdmin
     .from('reservations')
@@ -285,15 +336,17 @@ async function initSisp(req, res, next) {
 /* Rota publica — usada pelo cliente na pagina de reserva, sem sessao de operador. */
 async function publicInitSisp(req, res, next) {
   try {
-    const { reservation_id, amount } = req.body;
-    if (!reservation_id || !amount) {
-      return res.status(400).json({ error: 'reservation_id e amount obrigatórios', code: 'MISSING_FIELDS' });
+    /* o 'amount' que a pagina ainda manda e ignorado: o valor vem da reserva */
+    const { reservation_id } = req.body;
+    if (!reservation_id) {
+      return res.status(400).json({ error: 'reservation_id obrigatório', code: 'MISSING_FIELDS' });
     }
-    const { data: reserva } = await supabaseAdmin
-      .from('reservations').select('id, operator_id').eq('id', reservation_id).single();
+    const reserva = await lerReservaParaPagamento(reservation_id);
     if (!reserva) return res.status(404).json({ error: 'Reserva não encontrada', code: 'NOT_FOUND' });
+    const cve = valorEmCve(reserva.total_price, reserva.operators?.currency);
+    if (!(cve > 0)) return res.status(400).json({ error: 'Esta reserva não tem valor a pagar', code: 'NOTHING_TO_PAY' });
 
-    const pedido = await prepararPagamentoSisp(reserva.operator_id, reservation_id, amount);
+    const pedido = await prepararPagamentoSisp(reserva.operator_id, reservation_id, cve);
     return res.json({ data: { postUrl: pedido.postUrl, fields: pedido.fields }, message: 'Pedido SISP preparado' });
   } catch (err) { next(err); }
 }
@@ -304,7 +357,7 @@ async function sispCallback(req, res, next) {
   try {
     const { data: reserva } = await supabaseAdmin
       .from('reservations')
-      .select('id, operator_id, customer_email, operators(name, slug, address, email, phone, currency, logo_url)')
+      .select('id, operator_id, customer_email, total_price, operators(name, slug, address, email, phone, currency, logo_url)')
       .eq('id', reservationId)
       .single();
 
@@ -318,6 +371,22 @@ async function sispCallback(req, res, next) {
 
     const posAutCode = operatorRow?.sisp_api_key_enc ? decrypt(operatorRow.sisp_api_key_enc) : null;
     const resultado = posAutCode ? validarResposta(posAutCode, req.body) : { status: 'error' };
+
+    /* So confirma quando o valor pago cobre o total da reserva (em escudos). Abaixo disso
+       fica 'partial' e por confirmar, para o operador ver e tratar. */
+    const esperadoCve = valorEmCve(reserva.total_price, reserva.operators?.currency);
+    if (resultado.status === 'paid' && Number(resultado.amount) < esperadoCve) {
+      console.error(`[SISP Callback] Valor pago abaixo do total — reservation_id=${reservationId} pago=${resultado.amount} esperado=${esperadoCve}`);
+      await supabaseAdmin
+        .from('reservations')
+        .update({
+          payment_status: 'partial', payment_method: 'sisp',
+          sisp_transaction_id: resultado.transactionID, amount_paid: Number(resultado.amount) || null,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', reservationId);
+      return res.redirect(`${frontBase}/book/cancel?res=${reservationId}&erro=valor`);
+    }
 
     if (resultado.status === 'paid') {
       const { data: reservaPaga } = await supabaseAdmin
