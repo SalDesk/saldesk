@@ -395,6 +395,11 @@
     "errPercent": "De korting moet een geheel getal van 1 tot 90 zijn.",
     "errDates": "Vul beide data in.",
     "errDateOrder": "De startdatum moet voor of gelijk aan de einddatum liggen.",
-    "fixErrors": "Los de gemarkeerde fouten op voor het opslaan."
+    "fixErrors": "Los de gemarkeerde fouten op voor het opslaan.",
+    "option": "Optie",
+    "vehicles": "Voertuigen",
+    "vehiclesHint": "Minimum {{min}}, maximum {{max}}",
+    "vehiclesCount": "{{n}} voertuig(en)",
+    "from": "vanaf"
   }
 }

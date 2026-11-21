@@ -2,6 +2,7 @@
 const {
   opcoesDaActividade, opcaoEscolhida, opcaoMaisBarata, limitarVeiculos,
   idiomaEfectivo, suplementoIdioma, melhorOferta, ofertaActual,
+  nomeOpcao, linhasNotasOpcao,
 } = require('../helpers/opcoesActividade');
 
 describe('limitarVeiculos', () => {
@@ -129,5 +130,23 @@ describe('ofertas', () => {
   it('oferta_que_acaba_hoje_ainda_e_actual', () => {
     expect(ofertaActual(meta, '2026-12-04').percent).toBe(50);
     expect(ofertaActual(meta, '2026-12-21')).toBeNull();
+  });
+});
+
+describe('nomeOpcao e linhasNotasOpcao', () => {
+  it('nome_pt_com_recurso_ao_en', () => {
+    expect(nomeOpcao({ option: { name_pt: ' Buggy 2h ' } })).toBe('Buggy 2h');
+    expect(nomeOpcao({ option: { name_pt: '', name_en: 'Buggy' } })).toBe('Buggy');
+    expect(nomeOpcao({ option: null })).toBeNull();
+    expect(nomeOpcao(null)).toBeNull();
+  });
+
+  it('linhas_das_notas_da_opcao_e_dos_veiculos', () => {
+    expect(linhasNotasOpcao({ option: { name_pt: 'Buggy 2h', type: 'per_vehicle' }, vehicles: 3 }))
+      .toEqual(['Opção: Buggy 2h', 'Veículos: 3']);
+    expect(linhasNotasOpcao({ option: { name_pt: 'Privado', type: 'per_group' }, vehicles: null }))
+      .toEqual(['Opção: Privado']);
+    expect(linhasNotasOpcao({ option: null })).toEqual([]);
+    expect(linhasNotasOpcao(null)).toEqual([]);
   });
 });

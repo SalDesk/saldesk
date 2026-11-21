@@ -816,6 +816,11 @@
     "errPercent": "O desconto tem de ser um número inteiro de 1 a 90.",
     "errDates": "Indique as duas datas.",
     "errDateOrder": "A data de início tem de ser anterior ou igual à de fim.",
-    "fixErrors": "Corrija os erros assinalados antes de guardar."
+    "fixErrors": "Corrija os erros assinalados antes de guardar.",
+    "option": "Opção",
+    "vehicles": "Veículos",
+    "vehiclesHint": "Mínimo {{min}}, máximo {{max}}",
+    "vehiclesCount": "{{n}} veículo(s)",
+    "from": "desde"
   }
 }

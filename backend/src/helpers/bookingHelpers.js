@@ -129,8 +129,10 @@ function temPrecoPrivadoConfigurado(unitMeta) {
    modo vem da opcao escolhida (per_group = 'private'), opcao em falta ou desconhecida
    da OPTION_REQUIRED (total 0) e os veiculos sao corrigidos para [ceil(pessoas/lugares),
    pessoas]. O suplemento do idioma do guia (com ou sem opcoes) e uma linha 'language'
-   antes da verificacao de lotacao. Ofertas e vouchers nao entram aqui. */
-function precoActividade(unit, meta, { adults, children, mode, optionId, vehicles, guideLanguage } = {}) {
+   antes da verificacao de lotacao. Ofertas e vouchers nao entram aqui.
+   semSuplemento: reservas do operador (painel, venda de praia) -- nunca ha suplemento de
+   idioma nem lingua por defeito, o operador escolhe o idioma a mao. */
+function precoActividade(unit, meta, { adults, children, mode, optionId, vehicles, guideLanguage, semSuplemento = false } = {}) {
   meta = meta || {};
   const nAdults = Math.max(0, Math.floor(Number(adults) || 0));
   const nChildren = Math.max(0, Math.floor(Number(children) || 0));
@@ -142,7 +144,7 @@ function precoActividade(unit, meta, { adults, children, mode, optionId, vehicle
 
   const temOpcoes = opcoesDaActividade(meta).length > 0;
   const opcao = temOpcoes ? opcaoEscolhida(meta, optionId) : null;
-  const idioma = idiomaEfectivo(meta, guideLanguage);
+  const idioma = semSuplemento ? null : idiomaEfectivo(meta, guideLanguage);
   const modo = temOpcoes
     ? (opcao && opcao.type === 'per_group' ? 'private' : 'per_person')
     : (mode === 'private' ? 'private' : 'per_person');

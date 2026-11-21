@@ -816,6 +816,11 @@
     "errPercent": "The discount must be a whole number from 1 to 90.",
     "errDates": "Enter both dates.",
     "errDateOrder": "The start date must be on or before the end date.",
-    "fixErrors": "Fix the marked errors before saving."
+    "fixErrors": "Fix the marked errors before saving.",
+    "option": "Option",
+    "vehicles": "Vehicles",
+    "vehiclesHint": "Minimum {{min}}, maximum {{max}}",
+    "vehiclesCount": "{{n}} vehicle(s)",
+    "from": "from"
   }
 }

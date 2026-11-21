@@ -9,7 +9,7 @@ const { detectarIdioma } = require('../helpers/languageHelper');
 const { confirmacaoClienteEmail, notificacaoOperadorEmail } = require('../helpers/emailTemplates');
 const { registarUsoVoucher } = require('./vouchersController');
 const { escolherDesconto } = require('../helpers/descontoActividade');
-const { opcoesDaActividade } = require('../helpers/opcoesActividade');
+const { opcoesDaActividade, nomeOpcao, linhasNotasOpcao } = require('../helpers/opcoesActividade');
 const { avisarNovaReserva } = require('../helpers/avisosReserva');
 const { eMetodoCartao, fimDaRetencao, reservasRecentesDoCliente, classificarRecentes } = require('../helpers/lugarRetido');
 const { encontrarAfiliadoActivo } = require('./affiliatesController');
@@ -282,14 +282,6 @@ async function validarItensPedido(operatorId, items) {
 
   const totalPrice = cleanItems.reduce((sum, i) => sum + Number(dishMap.get(i.unit_id).base_price) * i.quantity, 0);
   return { cleanItems, dishMap, totalPrice };
-}
-
-// Nome da opcao escolhida (resultado de precoActividade), para as notas e os duplicados
-function nomeOpcao(preco) {
-  const opcao = preco && preco.option;
-  if (!opcao) return null;
-  const nome = String(opcao.name_pt || opcao.name_en || '').trim();
-  return nome || null;
 }
 
 async function criarReserva(req, res, next) {
@@ -635,9 +627,7 @@ async function criarReserva(req, res, next) {
     if (isRestaurant && zone_preference) notesLines.push(`Zona preferida: ${zone_preference}`);
     if (party_size || (isActivity && (adults != null || children != null))) notesLines.push(`Pessoas: ${partyEfectivo}`);
     // Opcao e veiculos escritos pelo servidor (a deteccao de duplicados le a linha "Opção:")
-    const opcaoNome = nomeOpcao(precoAct);
-    if (opcaoNome) notesLines.push(`Opção: ${opcaoNome}`);
-    if (precoAct && precoAct.option && precoAct.option.type === 'per_vehicle') notesLines.push(`Veículos: ${precoAct.vehicles}`);
+    notesLines.push(...linhasNotasOpcao(precoAct));
     /* O idioma pedido ja vem nas notas da pagina; se o pedido nao trouxe idioma e o servidor
        escolheu um (lingua unica com suplemento), escreve-se aqui, salvo se ja la estiver. */
     const idiomaNasNotas = typeof notes === 'string' && /(Idioma|Language):/i.test(notes);

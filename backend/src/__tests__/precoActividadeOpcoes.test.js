@@ -161,4 +161,16 @@ describe('precoActividade suplemento de idioma', () => {
     expect(r.guideLanguage).toBe('ES');
     expect(r.total).toBe(60);
   });
+
+  it('sem_suplemento_ignora_a_lingua_unica_e_a_pedida', () => {
+    const unica = { languages: ['ES'], language_surcharges: { ES: 20 } };
+    const r = precoActividade({ base_price: 40 }, unica, { adults: 1, semSuplemento: true });
+    expect(r.total).toBe(40);
+    expect(r.guideLanguage).toBeNull();
+    expect(r.lines.some((l) => l.type === 'language')).toBe(false);
+    const comOpcao = { ...META, options: [{ id: 'g', name_pt: 'Privado', type: 'per_group', price: 200 }] };
+    const r2 = precoActividade({}, comOpcao, { adults: 2, optionId: 'g', guideLanguage: 'ES', semSuplemento: true });
+    expect(r2.total).toBe(200);
+    expect(r2.lines).toEqual([{ type: 'option', description: 'Privado', quantity: 2, total: 200 }]);
+  });
 });

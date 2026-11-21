@@ -121,7 +121,27 @@ function ofertaActual(meta, hoje) {
   return melhor;
 }
 
+// Nome da opcao escolhida (resultado de precoActividade), para as notas e os duplicados
+function nomeOpcao(preco) {
+  const opcao = preco && preco.option;
+  if (!opcao) return null;
+  const nome = String(opcao.name_pt || opcao.name_en || '').trim();
+  return nome || null;
+}
+
+/* Linhas das notas escritas pelo servidor para a opcao escolhida: "Opção: <nome>" e, por
+   veiculo, "Veículos: N". Partilhadas pela reserva publica e pela do operador (a deteccao
+   de duplicados le a linha "Opção:"). */
+function linhasNotasOpcao(preco) {
+  const linhas = [];
+  const nome = nomeOpcao(preco);
+  if (nome) linhas.push(`Opção: ${nome}`);
+  if (preco && preco.option && preco.option.type === 'per_vehicle') linhas.push(`Veículos: ${preco.vehicles}`);
+  return linhas;
+}
+
 module.exports = {
   opcoesDaActividade, opcaoEscolhida, opcaoMaisBarata, limitarVeiculos,
   idiomaEfectivo, suplementoIdioma, melhorOferta, ofertaActual,
+  nomeOpcao, linhasNotasOpcao,
 };

@@ -395,6 +395,11 @@
     "errPercent": "Der Rabatt muss eine ganze Zahl von 1 bis 90 sein.",
     "errDates": "Geben Sie beide Daten an.",
     "errDateOrder": "Das Startdatum muss vor oder gleich dem Enddatum sein.",
-    "fixErrors": "Beheben Sie die markierten Fehler vor dem Speichern."
+    "fixErrors": "Beheben Sie die markierten Fehler vor dem Speichern.",
+    "option": "Option",
+    "vehicles": "Fahrzeuge",
+    "vehiclesHint": "Minimum {{min}}, maximal {{max}}",
+    "vehiclesCount": "{{n}} Fahrzeug(e)",
+    "from": "ab"
   }
 }
