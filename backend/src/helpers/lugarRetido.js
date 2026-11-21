@@ -101,7 +101,8 @@ const metodoDaLinha = (r) => (eMetodoCartao(r.payment_method) ? r.payment_method
 const nomeNormal = (n) => String(n || '').trim().toLowerCase();
 
 /* Separa as reservas recentes do cliente:
-   - retidosProprios: lugares retidos com cartao ainda dentro do prazo (por pagar);
+   - retidosProprios: lugares retidos com cartao ainda dentro do prazo (por pagar) e com o
+     mesmo nome (um rececionista que reserva dois casais no mesmo email nao cancela o primeiro);
    - igualSemCartao: a mesma reserva sem cartao (enviada duas vezes) -- so se devolve se o
      total tambem for igual (o chamador compara depois de calcular o preco e o voucher);
    - igualCartao: a mesma reserva com cartao e lugar ainda retido -- renova-se o prazo.
@@ -113,7 +114,8 @@ function classificarRecentes(recentes, nova, agora = new Date()) {
     && r.payment_status === 'pending'
     && eMetodoCartao(r.payment_method)
     && !!r.hold_expires_at
-    && new Date(r.hold_expires_at).getTime() > agora.getTime());
+    && new Date(r.hold_expires_at).getTime() > agora.getTime()
+    && nomeNormal(r.customer_name) === nomeNormal(nova.customerName));
   const igual = (r) => !nova.temPedido
     && r.check_out === nova.checkOut
     && horaCurta(r.start_time) === horaCurta(nova.startTime)

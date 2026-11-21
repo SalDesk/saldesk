@@ -162,6 +162,19 @@ describe('classificarRecentes', () => {
     const c = classificarRecentes([r], { ...NOVA, startTime: null }, AGORA);
     expect(c.igualSemCartao).toBe(r);
   });
+
+  it('um lugar retido com outro nome nao e retido proprio (outro casal no mesmo email)', () => {
+    const r = linha({ payment_method: 'paypal', hold_expires_at: FUTURO, customer_name: 'Ana' });
+    const c = classificarRecentes([r], { ...NOVA, metodo: 'paypal', customerName: 'Rui Lopes' }, AGORA);
+    expect(c.retidosProprios).toEqual([]);
+    expect(c.igualCartao).toBeUndefined();
+  });
+
+  it('um lugar retido com o mesmo nome noutras maiusculas e espacos continua a ser proprio', () => {
+    const r = linha({ payment_method: 'paypal', hold_expires_at: FUTURO, customer_name: 'Ana Silva' });
+    const c = classificarRecentes([r], { ...NOVA, metodo: 'paypal', guests: 3, customerName: '  ana SILVA ' }, AGORA);
+    expect(c.retidosProprios).toEqual([r]);
+  });
 });
 
 describe('reservasRecentesDoCliente', () => {
@@ -266,6 +279,27 @@ describe('criarReserva: duplicados', () => {
       ['in', 'id', ['antiga']], ['eq', 'status', 'pending'], ['eq', 'payment_status', 'pending'],
     ]));
     expect(ops[1].payload.guests).toBe(3);
+  });
+
+  it('lugar retido de outro nome no mesmo email: nao e substituido e conta nas vagas', async () => {
+    const casal1 = linha({ id: 'casal1', start_time: null, customer_name: 'Ana', payment_method: 'paypal', hold_expires_at: new Date(Date.now() + 10 * 60000).toISOString() });
+    estado.recentes = [casal1];
+    const res = await reservar({ payment_method: 'paypal', customer_name: 'Rui Lopes' });
+    expect(res.status).toHaveBeenCalledWith(201);
+    expect(verificarDisponibilidade).toHaveBeenCalledWith(expect.anything(), 'u1', '2026-12-01', '2026-12-01', []);
+    const ops = reservasOps().filter((o) => o.tipo !== 'select');
+    expect(ops.map((o) => o.tipo)).toEqual(['insert']);
+  });
+
+  it('lugar retido com o mesmo nome noutras maiusculas e espacos: e substituido', async () => {
+    const antiga = linha({ id: 'antiga', start_time: null, customer_name: 'Ana', payment_method: 'paypal', hold_expires_at: new Date(Date.now() + 10 * 60000).toISOString() });
+    estado.recentes = [antiga];
+    const res = await reservar({ payment_method: 'paypal', guests: 3, customer_name: '  ANA ' });
+    expect(res.status).toHaveBeenCalledWith(201);
+    expect(verificarDisponibilidade).toHaveBeenCalledWith(expect.anything(), 'u1', '2026-12-01', '2026-12-01', ['antiga']);
+    const ops = reservasOps().filter((o) => o.tipo !== 'select');
+    expect(ops.map((o) => o.tipo)).toEqual(['update', 'insert']);
+    expect(ops[0].payload.cancel_reason).toBe('replaced');
   });
 
   it('sem reservas recentes: cria como sempre e nao exclui nada', async () => {
