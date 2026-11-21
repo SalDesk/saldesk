@@ -28,6 +28,10 @@ import LoadingSpinner from '../components/shared/LoadingSpinner';
 const LANGUAGES   = ['PT', 'EN', 'DE', 'NL', 'FR', 'ES'];
 const DAYS        = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sab', 'Dom'];
 const GUIDE_ROLES = ['Guia', 'Instrutor', 'Guia-Instrutor', 'Assistente', 'Outro'];
+/* O texto gravado nas certificacoes e o da lista; isto e so o que se le no ecra. */
+const CERT_ROTULO = { 'Guia Turistico Certificado': 'Guia Turístico Certificado' };
+const certRotulo = (c) => CERT_ROTULO[c] || c;
+
 const PRESET_CERTS = [
   'PADI Open Water', 'PADI Advanced', 'PADI Rescue Diver',
   'IKO Kitesurf', 'ACSI Kitesurf', 'Surf Coach',
@@ -36,7 +40,7 @@ const PRESET_CERTS = [
 
 /* Cada estado do guia usa uma variante do Badge do sistema */
 const STATUS_META = {
-  active:    { label: 'Disponivel', variant: 'confirmed'  },
+  active:    { label: 'Disponível', variant: 'confirmed'  },
   busy:      { label: 'Ocupado',    variant: 'checked_in' },
   day_off:   { label: 'Folga',      variant: 'direct'     },
   inactive:  { label: 'Inactivo',   variant: 'cancelled'  },
@@ -124,12 +128,12 @@ function GuideCard({ guide, units, onEdit, onDelete, onHistory, onAssign }) {
         )}
         {certs.length > 0 && (
           <div>
-            <p className="text-xs font-body font-medium text-n-500 mb-1.5">Certificacoes</p>
+            <p className="text-xs font-body font-medium text-n-500 mb-1.5">Certificações</p>
             <div className="flex flex-wrap gap-1">
               {certs.slice(0, 3).map(c => (
                 <span key={c}
                   className="text-xs font-body px-2 py-0.5 bg-n-50 text-n-600 border border-n-200 rounded-xs">
-                  {c}
+                  {certRotulo(c)}
                 </span>
               ))}
               {certs.length > 3 && (
@@ -241,13 +245,13 @@ function GuideForm({ guide, units, onSave, onCancel, loading, error }) {
         </div>
         <div>
           <p className="text-sm font-display font-semibold text-n-800">Foto do guia</p>
-          <p className="text-xs font-body text-n-500">JPG, PNG ate 2MB</p>
+          <p className="text-xs font-body text-n-500">JPG, PNG até 2MB</p>
         </div>
       </div>
 
       <div className="grid grid-cols-2 gap-3">
         <Input label="Nome completo" value={form.name} onChange={set('name')} required placeholder="Nome e apelido" />
-        <Select label="Funcao" value={form.role} onChange={set('role')} required>
+        <Select label="Função" value={form.role} onChange={set('role')} required>
           {GUIDE_ROLES.map(r => <option key={r} value={r}>{r}</option>)}
         </Select>
       </div>
@@ -275,14 +279,14 @@ function GuideForm({ guide, units, onSave, onCancel, loading, error }) {
 
       {/* Certifications */}
       <div>
-        <p className={GROUP_LABEL}>Certificacoes</p>
+        <p className={GROUP_LABEL}>Certificações</p>
         <div className="flex flex-wrap gap-1.5 mb-2">
           {PRESET_CERTS.map(c => (
             <button key={c} type="button" onClick={() => toggleCert(c)}
               className={`px-2.5 py-1 rounded-sm text-xs font-body transition-colors border ${
                 certs.includes(c) ? 'bg-ocean-50 border-ocean-300 text-ocean-700' : 'bg-n-50 border-n-200 text-n-600 hover:border-n-400'
               }`}>
-              {c}
+              {certRotulo(c)}
             </button>
           ))}
         </div>
@@ -293,7 +297,7 @@ function GuideForm({ guide, units, onSave, onCancel, loading, error }) {
           </span>
         ))}
         <Input type="text" value={certInput} onChange={e => setCertInput(e.target.value)} onKeyDown={addCustomCert}
-          placeholder="Outra certificacao + Enter" />
+          placeholder="Outra certificação + Enter" />
       </div>
 
       {/* Tours */}
@@ -315,7 +319,7 @@ function GuideForm({ guide, units, onSave, onCancel, loading, error }) {
 
       {/* Schedule */}
       <div>
-        <p className={GROUP_LABEL}>Dias disponiveis</p>
+        <p className={GROUP_LABEL}>Dias disponíveis</p>
         <div className="flex gap-1.5 flex-wrap">
           {DAYS.map(d => (
             <button key={d} type="button" onClick={() => toggleDay(d)}
@@ -329,11 +333,11 @@ function GuideForm({ guide, units, onSave, onCancel, loading, error }) {
       </div>
 
       <Textarea label="Bio curta" value={form.bio} onChange={set('bio')} rows={2}
-        placeholder="Experiencia, especialidade..." />
+        placeholder="Experiência, especialidade..." />
 
       {guide && (
         <Select label="Estado" value={form.status} onChange={set('status')}>
-          <option value="active">Disponivel</option>
+          <option value="active">Disponível</option>
           <option value="busy">Ocupado</option>
           <option value="day_off">Folga</option>
           <option value="inactive">Inactivo</option>
@@ -355,7 +359,7 @@ function GuideForm({ guide, units, onSave, onCancel, loading, error }) {
           </div>
           {createAccess && (
             <p className="text-xs font-body text-n-500 bg-n-50 rounded p-2">
-              Sera criada uma conta de acesso ao portal /staff com email e password temporaria. O guia recebera as credenciais por WhatsApp.
+              Será criada uma conta de acesso ao portal /staff com email e password temporária. O guia receberá as credenciais por WhatsApp.
             </p>
           )}
         </div>
@@ -366,7 +370,7 @@ function GuideForm({ guide, units, onSave, onCancel, loading, error }) {
       <div className="flex gap-3 pt-1">
         <Button type="button" variant="secondary" onClick={onCancel} className="flex-1">Cancelar</Button>
         <Button type="submit" loading={loading} className="flex-1">
-          {guide ? 'Guardar alteracoes' : 'Adicionar guia'}
+          {guide ? 'Guardar alterações' : 'Adicionar guia'}
         </Button>
       </div>
     </form>
@@ -386,7 +390,7 @@ function HistoryModal({ guide, onClose }) {
       .finally(() => setLoading(false));
   }, [guide?.id]);
 
-  const STATUS_LABEL = { pending: 'Pendente', confirmed: 'Confirmado', in_progress: 'Em progresso', completed: 'Concluido', cancelled: 'Cancelado' };
+  const STATUS_LABEL = { pending: 'Pendente', confirmed: 'Confirmado', in_progress: 'Em progresso', completed: 'Concluído', cancelled: 'Cancelado' };
   const STATUS_VARIANT = {
     completed: 'confirmed',
     cancelled: 'cancelled',
@@ -471,7 +475,7 @@ function AssignModal({ guide, reservations, onClose, onDone }) {
       }>
       <div className="space-y-3">
         {upcoming.length === 0 ? (
-          <p className="text-sm font-body text-n-500 text-center py-4">Sem reservas proximas pendentes.</p>
+          <p className="text-sm font-body text-n-500 text-center py-4">Sem reservas próximas pendentes.</p>
         ) : (
           <div className="space-y-2 max-h-64 overflow-y-auto">
             {upcoming.map(r => (
@@ -577,7 +581,7 @@ function AvailabilityTab({ guides }) {
             <button
               onClick={() => toggle(g.id, d)}
               disabled={isSaving}
-              title={isAv ? 'Disponivel — clicar para marcar indisponivel' : 'Indisponivel — clicar para marcar disponivel'}
+              title={isAv ? 'Disponível — clicar para marcar indisponível' : 'Indisponível — clicar para marcar disponível'}
               className={`w-8 h-8 mx-auto rounded-sm flex items-center justify-center transition-colors ${
                 isAv
                   ? 'bg-[var(--success-light)] text-[var(--success)] hover:brightness-95'
@@ -600,11 +604,11 @@ function AvailabilityTab({ guides }) {
       <div className="flex items-center gap-4 px-4 py-2.5 border-t border-n-100 bg-n-50">
         <div className="flex items-center gap-1.5">
           <span className="w-3 h-3 rounded-sm bg-[var(--success-light)] border border-[var(--success)] inline-block" />
-          <span className="text-xs font-body text-n-500">Disponivel</span>
+          <span className="text-xs font-body text-n-500">Disponível</span>
         </div>
         <div className="flex items-center gap-1.5">
           <span className="w-3 h-3 rounded-sm bg-n-100 border border-n-200 inline-block" />
-          <span className="text-xs font-body text-n-500">Indisponivel</span>
+          <span className="text-xs font-body text-n-500">Indisponível</span>
         </div>
         <span className="text-xs font-body text-n-400 ml-auto">Clicar para alternar</span>
       </div>
@@ -688,7 +692,7 @@ export default function Guides() {
     <div>
       <PageHeader
         title="Guias"
-        subtitle={`${active} disponivel(is) · ${guides.length} total`}
+        subtitle={`${active} disponível(is) · ${guides.length} total`}
         actions={
           tab === 'lista' && (
             <Button icon={Plus} onClick={() => { setFormError(''); setModal('create'); }}>
@@ -772,7 +776,7 @@ export default function Guides() {
           </>
         }>
         <p className="text-sm font-body text-n-700">
-          Eliminar o guia <strong>"{deleteTarget?.name}"</strong>? Esta accao nao pode ser desfeita.
+          Eliminar o guia <strong>"{deleteTarget?.name}"</strong>? Esta acção não pode ser desfeita.
         </p>
       </Modal>
 

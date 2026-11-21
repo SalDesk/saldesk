@@ -25,7 +25,7 @@ let refreshPromise = null;
 
 async function refreshAccessToken() {
   const { refreshToken } = useTravelerAuthStore.getState();
-  if (!refreshToken) throw new Error('Sem refresh token disponivel');
+  if (!refreshToken) throw new Error('Sem refresh token disponível');
 
   const { data } = await axios.post(`${travelerApi.defaults.baseURL}/traveler-auth/refresh`, { refresh_token: refreshToken }, { withCredentials: true });
   const { access_token, refresh_token, user, traveler } = data.data;

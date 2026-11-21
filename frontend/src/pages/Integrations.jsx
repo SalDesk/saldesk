@@ -14,7 +14,7 @@ import LoadingSpinner from '../components/shared/LoadingSpinner';
 const CHANNEL_CONFIG = {
   viator: {
     name:        'Viator',
-    description: 'Plataforma de experiencias da TripAdvisor',
+    description: 'Plataforma de experiências da TripAdvisor',
     color:       'bg-ocean-700',
     fields: [
       { key: 'api_key',     label: 'API Key',      type: 'password', required: true },
@@ -82,7 +82,7 @@ function ChannelCard({ channel, onConnect, onDisconnect, onSync, syncing }) {
           )}
           <p className="text-n-600 flex items-center gap-1">
             <Clock size={11} strokeWidth={1.75} className="text-n-400" />
-            Ultimo sync: {formatDate(channel.last_sync_at)}
+            Último sync: {formatDate(channel.last_sync_at)}
           </p>
           {channel.sync_error && (
             <p className="text-[var(--error)] flex items-center gap-1">
@@ -258,7 +258,7 @@ export default function Integrations() {
           <Card
             header={
               <div className="flex items-center justify-between">
-                <h3 className="font-display font-semibold text-sm text-n-700">Logs de integracao</h3>
+                <h3 className="font-display font-semibold text-sm text-n-700">Logs de integração</h3>
                 <span className="text-xs font-body text-n-400">{logsTotal} evento(s)</span>
               </div>
             }

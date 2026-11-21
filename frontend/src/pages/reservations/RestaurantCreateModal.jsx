@@ -56,26 +56,26 @@ export default function RestaurantCreateModal({ reservation, units, open, onClos
         <div>
           <p className={`${GROUP_LABEL_CLASS} mb-2`}>Turno</p>
           <FilterChips
-            options={[{ value: 'almoco', label: 'Almoco · 12h-15h' }, { value: 'jantar', label: 'Jantar · 19h-23h' }]}
+            options={[{ value: 'almoco', label: 'Almoço · 12h-15h' }, { value: 'jantar', label: 'Jantar · 19h-23h' }]}
             value={form.turno}
             onChange={v => set('turno', v)}
           />
         </div>
 
-        <Select label="Ocasiao especial" value={form.ocasiao} onChange={e => set('ocasiao', e.target.value)}>
+        <Select label="Ocasião especial" value={form.ocasiao} onChange={e => set('ocasiao', e.target.value)}>
           <option value="">Nenhuma</option>
-          <option value="aniversario">Aniversario</option>
+          <option value="aniversario">Aniversário</option>
           <option value="lua_de_mel">Lua-de-mel</option>
-          <option value="negocios">Negocios</option>
+          <option value="negocios">Negócios</option>
           <option value="outro">Outro</option>
         </Select>
 
         <Textarea label="Pedidos especiais" value={form.pedidos_especiais} onChange={e => set('pedidos_especiais', e.target.value)} rows={2}
-          placeholder="Alergias, decoracao, menu vegetariano..." />
+          placeholder="Alergias, decoração, menu vegetariano..." />
 
         <label className="flex items-center gap-2 cursor-pointer">
           <input type="checkbox" checked={form.lista_espera} onChange={e => set('lista_espera', e.target.checked)} className="w-4 h-4 accent-ocean-700" />
-          <span className="text-sm font-body text-n-700">Lista de espera (sem mesa disponivel)</span>
+          <span className="text-sm font-body text-n-700">Lista de espera (sem mesa disponível)</span>
         </label>
 
         <div className="flex gap-3 pt-1">

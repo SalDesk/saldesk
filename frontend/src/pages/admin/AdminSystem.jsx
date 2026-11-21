@@ -29,12 +29,12 @@ const LABEL_CLS   = 'block text-xs font-medium text-n-500 mb-1';
 
 /* ─── Shared components ─────────────────────────────────────── */
 const TABS = [
-  { key: 'monitor',      label: 'Monitorizacao'   },
-  { key: 'services',     label: 'Servicos'         },
+  { key: 'monitor',      label: 'Monitorização'   },
+  { key: 'services',     label: 'Serviços'         },
   { key: 'logs',         label: 'Logs'             },
-  { key: 'security',     label: 'Seguranca'        },
-  { key: 'settings',     label: 'Configuracoes'    },
-  { key: 'maintenance',  label: 'Manutencao'       },
+  { key: 'security',     label: 'Segurança'        },
+  { key: 'settings',     label: 'Configurações'    },
+  { key: 'maintenance',  label: 'Manutenção'       },
 ];
 
 function TabBar({ active, onChange }) {
@@ -109,7 +109,7 @@ function fmtTs(iso) {
 /* ─── Tab 1: Monitorização ──────────────────────────────────── */
 function MonitorTab({ stats, loading }) {
   if (loading && !stats) return <div className="flex justify-center py-16"><LoadingSpinner size={28} /></div>;
-  if (!stats) return <p className="text-sm text-n-400 text-center py-12">Nao foi possivel carregar metricas</p>;
+  if (!stats) return <p className="text-sm text-n-400 text-center py-12">Não foi possível carregar métricas</p>;
 
   const { cpu, memory, disk, uptime_seconds, node_version, environment } = stats;
   const ramPct  = memory ? Math.round((memory.heap_used_mb / memory.heap_total_mb) * 100) : 0;
@@ -316,7 +316,7 @@ function SecurityTab() {
   };
 
   if (loading) return <div className="flex justify-center py-16"><LoadingSpinner size={28} /></div>;
-  if (!data)   return <p className="text-sm text-n-400 text-center py-12">Nao foi possivel carregar dados de seguranca</p>;
+  if (!data)   return <p className="text-sm text-n-400 text-center py-12">Não foi possível carregar dados de segurança</p>;
 
   const { access_logs = [], failed_logins = [], blocked_ips = [], sessions = [] } = data;
   const suspicious = access_logs.filter(l => l.suspicious);
@@ -328,7 +328,7 @@ function SecurityTab() {
           <AlertTriangle {...ICON_SM} className="text-[var(--warning)] mt-0.5 shrink-0" />
           <div>
             <p className="text-sm font-semibold text-n-900">{suspicious.length} acesso{suspicious.length > 1 ? 's' : ''} suspeito{suspicious.length > 1 ? 's' : ''} detectado{suspicious.length > 1 ? 's' : ''}</p>
-            <p className="text-xs text-n-500 mt-0.5">Acessos fora do horario habitual (antes das 07:00 ou apos as 22:00)</p>
+            <p className="text-xs text-n-500 mt-0.5">Acessos fora do horário habitual (antes das 07:00 ou após as 22:00)</p>
           </div>
         </div>
       )}
@@ -337,7 +337,7 @@ function SecurityTab() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
         <SectionCard title="Logs de acesso ao painel" icon={Lock}>
-          {access_logs.length === 0 && <p className="text-sm text-n-400 text-center py-6">Sem acessos registados nesta sessao</p>}
+          {access_logs.length === 0 && <p className="text-sm text-n-400 text-center py-6">Sem acessos registados nesta sessão</p>}
           <div className="space-y-2 max-h-72 overflow-y-auto">
             {access_logs.slice(0, 20).map(l => (
               <div key={l.id} className={`flex items-start justify-between gap-2 p-2.5 rounded-lg border text-xs ${l.suspicious ? 'bg-[var(--warning)]/5 border-[var(--warning)]/20' : 'bg-n-50 border-n-100'}`}>
@@ -355,13 +355,13 @@ function SecurityTab() {
         </SectionCard>
 
         <SectionCard title="Sessões activas do Fundador" icon={Shield}>
-          {sessions.length === 0 && <p className="text-sm text-n-400 text-center py-6">Sem sessoes encontradas via Auth Admin</p>}
+          {sessions.length === 0 && <p className="text-sm text-n-400 text-center py-6">Sem sessões encontradas via Auth Admin</p>}
           <div className="space-y-2">
             {sessions.map(s => (
               <div key={s.user_id} className="flex items-center justify-between gap-2 p-3 rounded-lg bg-n-50 border border-n-100">
                 <div className="min-w-0">
                   <p className="text-sm font-medium text-n-900">{s.email}</p>
-                  <p className="text-xs text-n-400 mt-0.5">Ultimo acesso: {fmtTs(s.last_sign_in)}</p>
+                  <p className="text-xs text-n-400 mt-0.5">Último acesso: {fmtTs(s.last_sign_in)}</p>
                 </div>
                 <span className="text-xs text-n-300">Activa</span>
               </div>
@@ -371,7 +371,7 @@ function SecurityTab() {
       </div>
 
       <SectionCard title={`Tentativas de login falhadas (${failed_logins.length})`} icon={XCircle}>
-        {failed_logins.length === 0 && <p className="text-sm text-n-400 text-center py-6">Sem tentativas falhadas nesta sessao</p>}
+        {failed_logins.length === 0 && <p className="text-sm text-n-400 text-center py-6">Sem tentativas falhadas nesta sessão</p>}
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
@@ -465,14 +465,14 @@ function SettingsTab() {
     setSaving(true); setMsg('');
     try {
       await api.put('/admin/system/settings', form);
-      setMsg('Configuracoes guardadas com sucesso');
+      setMsg('Configurações guardadas com sucesso');
     } catch (e) {
       setMsg(e.response?.data?.error || 'Erro ao guardar');
     } finally { setSaving(false); }
   };
 
   if (loading) return <div className="flex justify-center py-16"><LoadingSpinner size={28} /></div>;
-  if (!form)   return <p className="text-sm text-n-400 text-center py-12">Nao foi possivel carregar configuracoes</p>;
+  if (!form)   return <p className="text-sm text-n-400 text-center py-12">Não foi possível carregar configurações</p>;
 
   const bool = (k) => form[k] === 'true' || form[k] === true;
 
@@ -484,23 +484,23 @@ function SettingsTab() {
             label="Registo por convite"
             checked={bool('invite_only')}
             onChange={v => set('invite_only', String(v))}
-            description="Apenas utilizadores com codigo de convite podem registar-se"
+            description="Apenas utilizadores com código de convite podem registar-se"
           />
           <Toggle
-            label="Modo manutencao"
+            label="Modo manutenção"
             checked={bool('coming_soon_mode')}
             onChange={v => set('coming_soon_mode', String(v))}
-            description="Mostra pagina de manutencao aos visitantes"
+            description="Mostra página de manutenção aos visitantes"
           />
         </div>
 
         <div className="mt-4 space-y-3">
           <div>
-            <label className={LABEL_CLS}>Mensagem de manutencao</label>
-            <textarea className={INPUT_CLS} rows={3} value={form.maintenance_message || ''} onChange={e => set('maintenance_message', e.target.value)} placeholder="Estamos em manutencao. Voltamos em breve." />
+            <label className={LABEL_CLS}>Mensagem de manutenção</label>
+            <textarea className={INPUT_CLS} rows={3} value={form.maintenance_message || ''} onChange={e => set('maintenance_message', e.target.value)} placeholder="Estamos em manutenção. Voltamos em breve." />
           </div>
           <div>
-            <label className={LABEL_CLS}>Data de lancamento</label>
+            <label className={LABEL_CLS}>Data de lançamento</label>
             <input type="date" className={INPUT_CLS} value={form.launch_date || ''} onChange={e => set('launch_date', e.target.value)} />
           </div>
           <div>
@@ -511,7 +511,7 @@ function SettingsTab() {
       </SectionCard>
 
       <SectionCard title="Limites de plano" icon={Settings}>
-        <p className="text-xs text-n-400 mb-4">Numero maximo de tours/reservas por mes. 0 = ilimitado.</p>
+        <p className="text-xs text-n-400 mb-4">Número máximo de tours/reservas por mês. 0 = ilimitado.</p>
         <div className="space-y-3">
           {[
             { key: 'sys_max_tours_starter',  label: 'Starter' },
@@ -519,7 +519,7 @@ function SettingsTab() {
             { key: 'sys_max_tours_pro',      label: 'Pro' },
           ].map(({ key, label }) => (
             <div key={key}>
-              <label className={LABEL_CLS}>{label} — max tours/mes</label>
+              <label className={LABEL_CLS}>{label} — max tours/mês</label>
               <input
                 type="number" min="0" className={INPUT_CLS}
                 value={form[key] || '0'}
@@ -534,7 +534,7 @@ function SettingsTab() {
         {msg && <p className={`text-sm font-medium ${msg.startsWith('Erro') ? 'text-[var(--error)]' : 'text-[var(--success)]'}`}>{msg}</p>}
         <button className={BTN_PRIMARY} onClick={save} disabled={saving}>
           <Save {...ICON_SM} />
-          {saving ? 'A guardar...' : 'Guardar configuracoes'}
+          {saving ? 'A guardar...' : 'Guardar configurações'}
         </button>
       </div>
     </div>
@@ -604,7 +604,7 @@ function MaintenanceTab() {
         </SectionCard>
 
         <SectionCard title="Cache Redis" icon={Zap}>
-          <p className="text-xs text-n-400 mb-4">Limpa todas as chaves do Redis. Filas de jobs serao reiniciadas.</p>
+          <p className="text-xs text-n-400 mb-4">Limpa todas as chaves do Redis. Filas de jobs serão reiniciadas.</p>
           <button className={`${BTN_GHOST} w-full justify-center`} onClick={doFlush} disabled={loading.cache}>
             <Zap {...ICON_SM} />
             {loading.cache ? 'A limpar...' : 'Limpar cache'}
@@ -613,10 +613,10 @@ function MaintenanceTab() {
         </SectionCard>
 
         <SectionCard title="Reiniciar API" icon={RotateCcw}>
-          <p className="text-xs text-n-400 mb-4">Reinicia o processo via PM2. O servidor ficara indisponivel alguns segundos.</p>
+          <p className="text-xs text-n-400 mb-4">Reinicia o processo via PM2. O servidor ficará indisponível alguns segundos.</p>
           {confirm ? (
             <div className="space-y-2">
-              <p className="text-xs font-semibold text-[var(--error)]">Confirmar reinicio?</p>
+              <p className="text-xs font-semibold text-[var(--error)]">Confirmar reinício?</p>
               <div className="flex gap-2">
                 <button className={BTN_DANGER} onClick={doRestart} disabled={loading.restart}>Sim, reiniciar</button>
                 <button className={BTN_GHOST} onClick={() => setConfirm(false)}>Cancelar</button>

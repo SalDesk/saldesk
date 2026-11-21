@@ -60,12 +60,12 @@ const celulas = (tr) => [...tr.querySelectorAll('td')].map(td => td.textContent)
 
 /* ───────────────────────── caracterizacao ───────────────────────── */
 
-describe('Channel Manager: cartoes dos canais', () => {
+describe('Channel Manager: cartões dos canais', () => {
   it('carrega_estado_e_logs_20_e_mostra_o_cabecalho', async () => {
     await montar();
     expect(getStatus).toHaveBeenCalledTimes(1);
     expect(getLogs).toHaveBeenCalledWith({ limit: 20 });
-    expect(screen.getByText('Integracoes')).toBeInTheDocument();
+    expect(screen.getByText('Integrações')).toBeInTheDocument();
     expect(screen.getByText('Channel Manager — Viator e GetYourGuide')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Actualizar' })).toBeInTheDocument();
   });
@@ -76,17 +76,17 @@ describe('Channel Manager: cartoes dos canais', () => {
     const { container } = render(<Integrations />);
     expect(container.querySelector('.animate-spin')).toBeInTheDocument();
     expect(screen.queryByText('Viator', { selector: 'p' })).not.toBeInTheDocument();
-    expect(screen.queryByText('Logs de integracao')).not.toBeInTheDocument();
+    expect(screen.queryByText('Logs de integração')).not.toBeInTheDocument();
   });
 
   it('canal_ligado_mostra_Ligado_supplier_ultimo_sync_e_erro_de_sync', async () => {
     await montar();
     const c = cartao('Viator');
-    expect(c).toHaveTextContent('Plataforma de experiencias da TripAdvisor');
+    expect(c).toHaveTextContent('Plataforma de experiências da TripAdvisor');
     expect(c).toHaveTextContent('Ligado');
     expect(c).not.toHaveTextContent('Desligado');
     expect(c).toHaveTextContent('Supplier ID: SUP-1');
-    expect(norm(c.textContent)).toContain(`Ultimo sync: ${fmt('2026-11-05T10:30:00Z')}`);
+    expect(norm(c.textContent)).toContain(`Último sync: ${fmt('2026-11-05T10:30:00Z')}`);
     expect(c).toHaveTextContent('Token expirado');
     expect(within(c).getByRole('button', { name: 'Sincronizar' })).toBeInTheDocument();
     expect(within(c).getByRole('button', { name: 'Desligar' })).toBeInTheDocument();
@@ -100,7 +100,7 @@ describe('Channel Manager: cartoes dos canais', () => {
     for (const nome of ['Viator', 'GetYourGuide']) {
       const c = cartao(nome);
       expect(c).toHaveTextContent('Desligado');
-      expect(c).not.toHaveTextContent('Ultimo sync');
+      expect(c).not.toHaveTextContent('Último sync');
       expect(within(c).getByRole('button', { name: 'Configurar' })).toBeInTheDocument();
       expect(c.closest('.opacity-80')).not.toBeNull();
     }
@@ -109,14 +109,14 @@ describe('Channel Manager: cartoes dos canais', () => {
   it('ultimo_sync_em_falta_mostra_travessao', async () => {
     getStatus.mockResolvedValue([{ ...VIATOR, last_sync_at: null, sync_error: null, supplier_id: null }, GYG]);
     await montar();
-    expect(cartao('Viator')).toHaveTextContent('Ultimo sync: —');
+    expect(cartao('Viator')).toHaveTextContent('Último sync: —');
     expect(cartao('Viator')).not.toHaveTextContent('Supplier ID');
   });
 
   it('getStatus_a_falhar_deixa_a_pagina_sem_canais_e_regista_console.error', async () => {
     getStatus.mockRejectedValue(new Error('x'));
     render(<Integrations />);
-    expect(await screen.findByText('Logs de integracao')).toBeInTheDocument();
+    expect(await screen.findByText('Logs de integração')).toBeInTheDocument();
     expect(screen.queryByText('Viator', { selector: 'p' })).not.toBeInTheDocument();
     expect(screen.getByText('0 evento(s)')).toBeInTheDocument();
     expect(spyErr).toHaveBeenCalled();

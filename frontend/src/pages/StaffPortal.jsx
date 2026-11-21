@@ -24,7 +24,7 @@ const STATUS_CFG = {
   pending:     { label: 'Pendente',   cls: 'bg-sand-100 text-sand-600' },
   confirmed:   { label: 'Confirmado', cls: 'bg-ocean-50 text-ocean-700' },
   in_progress: { label: 'Em curso',   cls: 'bg-turquoise-100 text-turquoise-700' },
-  completed:   { label: 'Concluido',  cls: 'bg-n-100 text-n-500' },
+  completed:   { label: 'Concluído',  cls: 'bg-n-100 text-n-500' },
   cancelled:   { label: 'Cancelado',  cls: 'bg-red-50 text-error' },
 };
 const TOUR_ICON_BG = ['bg-turquoise-100 text-turquoise-700', 'bg-sand-100 text-sand-600', 'bg-ocean-100 text-ocean-700'];
@@ -71,7 +71,7 @@ function JobsList({ jobs, loading }) {
     <div className="px-4 py-4 space-y-6">
       {/* Proximo trabalho */}
       <div>
-        <p className="text-xs font-mono font-bold uppercase tracking-wide text-n-500 mb-2">Proximo trabalho</p>
+        <p className="text-xs font-mono font-bold uppercase tracking-wide text-n-500 mb-2">Próximo trabalho</p>
         {nextJob ? (
           <button onClick={() => navigate(`/staff/jobs/${nextJob.id}`)}
             className="w-full bg-gradient-to-br from-ocean-700 to-turquoise-600 rounded-2xl p-4 flex items-center justify-between text-left active:scale-[0.99] transition-all">
@@ -98,7 +98,7 @@ function JobsList({ jobs, loading }) {
       </div>
 
       <div>
-        <p className="text-xs font-mono font-bold uppercase tracking-wide text-n-500 mb-3">Proximos trabalhos</p>
+        <p className="text-xs font-mono font-bold uppercase tracking-wide text-n-500 mb-3">Próximos trabalhos</p>
         {upcoming.length === 0 ? (
           <div className="text-center py-8 text-n-400"><Briefcase size={28} strokeWidth={1.25} className="mx-auto mb-2"/><p className="text-sm font-body">Sem trabalhos pendentes</p></div>
         ) : upcoming.map((j, i) => (
@@ -121,7 +121,7 @@ function JobsList({ jobs, loading }) {
 
       {history.length > 0 && (
         <div>
-          <p className="text-xs font-mono font-bold uppercase tracking-wide text-n-500 mb-3">Historico recente</p>
+          <p className="text-xs font-mono font-bold uppercase tracking-wide text-n-500 mb-3">Histórico recente</p>
           {history.map(j => (
             <div key={j.id} className="bg-white rounded-2xl border border-n-100 px-4 py-3 mb-2 flex items-center justify-between opacity-70">
               <div>
@@ -175,7 +175,7 @@ function JobDetail({ staffId }) {
   }
 
   if (loading) return <div className="flex justify-center py-16"><LoadingSpinner size={28}/></div>;
-  if (!job) return <div className="p-4 text-center text-n-400">Trabalho nao encontrado</div>;
+  if (!job) return <div className="p-4 text-center text-n-400">Trabalho não encontrado</div>;
 
   const r = job.reservations;
 
@@ -226,7 +226,7 @@ function JobDetail({ staffId }) {
           {job.status === 'in_progress' && (
             <button onClick={() => updateStatus('complete')} disabled={acting}
               className="w-full h-12 bg-sand-500 hover:bg-sand-600 text-ocean-900 rounded-2xl font-display font-bold text-sm flex items-center justify-center gap-2 active:scale-[0.99] transition-all disabled:opacity-50">
-              {acting ? 'A concluir...' : 'Marcar como concluido'}
+              {acting ? 'A concluir...' : 'Marcar como concluído'}
             </button>
           )}
         </div>
@@ -324,7 +324,7 @@ function StaffCalendar({ jobs, loading }) {
             return { year: y, month: m };
           })}
           className="w-9 h-9 rounded-full flex items-center justify-center text-n-500 hover:bg-n-100 active:scale-95 transition-all"
-          aria-label="Mes anterior"
+          aria-label="Mês anterior"
         >
           <ChevronLeft size={18} strokeWidth={2}/>
         </button>
@@ -339,7 +339,7 @@ function StaffCalendar({ jobs, loading }) {
             return { year: y, month: m };
           })}
           className="w-9 h-9 rounded-full flex items-center justify-center text-n-500 hover:bg-n-100 active:scale-95 transition-all"
-          aria-label="Mes seguinte"
+          aria-label="Mês seguinte"
         >
           <ChevronRight size={18} strokeWidth={2}/>
         </button>
@@ -430,7 +430,7 @@ function StaffAvailability({ staffId }) {
   return (
     <div className="px-4 py-4 space-y-4">
       <p className="text-sm font-body text-n-500">
-        Toca num dia para marcar como indisponivel. Os dias nao marcados sao considerados disponiveis.
+        Toca num dia para marcar como indisponível. Os dias não marcados são considerados disponíveis.
       </p>
 
       <div className="bg-white rounded-2xl border border-n-200 p-4">
@@ -443,7 +443,7 @@ function StaffAvailability({ staffId }) {
               return { year: y, month: m };
             })}
             className="w-9 h-9 rounded-full flex items-center justify-center text-n-500 hover:bg-n-100 active:scale-95 transition-all"
-            aria-label="Mes anterior"
+            aria-label="Mês anterior"
           >
             <ChevronLeft size={18} strokeWidth={2} />
           </button>
@@ -458,7 +458,7 @@ function StaffAvailability({ staffId }) {
               return { year: y, month: m };
             })}
             className="w-9 h-9 rounded-full flex items-center justify-center text-n-500 hover:bg-n-100 active:scale-95 transition-all"
-            aria-label="Mes seguinte"
+            aria-label="Mês seguinte"
           >
             <ChevronRight size={18} strokeWidth={2} />
           </button>
@@ -503,8 +503,8 @@ function StaffAvailability({ staffId }) {
       </div>
 
       <div className="flex items-center gap-4 text-xs font-body text-n-500">
-        <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-md bg-turquoise-50 border border-turquoise-200" />Disponivel</span>
-        <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-md bg-red-50 border border-red-200" />Indisponivel</span>
+        <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-md bg-turquoise-50 border border-turquoise-200" />Disponível</span>
+        <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-md bg-red-50 border border-red-200" />Indisponível</span>
       </div>
 
       <button
@@ -519,8 +519,8 @@ function StaffAvailability({ staffId }) {
 
 /* ─── Vista: Perfil ─── */
 const LEAVE_TYPE_LABEL = {
-  vacation: 'Ferias', sick: 'Doenca', maternity: 'Licenca maternidade',
-  paternity: 'Licenca paternidade', unpaid: 'Sem vencimento', other: 'Outro',
+  vacation: 'Férias', sick: 'Doença', maternity: 'Licença maternidade',
+  paternity: 'Licença paternidade', unpaid: 'Sem vencimento', other: 'Outro',
 };
 const LEAVE_STATUS_CLS = {
   pending: 'bg-sand-100 text-sand-600', approved: 'bg-ocean-50 text-ocean-700', rejected: 'bg-red-50 text-error',
@@ -551,13 +551,13 @@ function MyLeaveSection({ staffId }) {
     setSaving(true);
     try {
       await createLeave(staffId, form);
-      toast.success('Pedido enviado para aprovacao');
+      toast.success('Pedido enviado para aprovação');
       setShowForm(false);
       setForm({ type: 'vacation', start_date: '', end_date: '', notes: '' });
       const [l, b] = await Promise.all([listLeave(staffId), getLeaveBalance(staffId, new Date().getFullYear())]);
       setLeave(l); setBalance(b);
     } catch (err) {
-      toast.error(err.response?.data?.error || 'Erro ao pedir ferias');
+      toast.error(err.response?.data?.error || 'Erro ao pedir férias');
     } finally {
       setSaving(false);
     }
@@ -568,10 +568,10 @@ function MyLeaveSection({ staffId }) {
   return (
     <div>
       <div className="flex items-center justify-between mb-2">
-        <p className="text-xs font-mono uppercase tracking-wider text-n-400">As minhas ferias</p>
+        <p className="text-xs font-mono uppercase tracking-wider text-n-400">As minhas férias</p>
         <button onClick={() => setShowForm(s => !s)} className="text-xs font-body font-semibold text-turquoise-600 flex items-center gap-1">
           {showForm ? <X size={13} strokeWidth={2}/> : <Plus size={13} strokeWidth={2}/>}
-          {showForm ? 'Cancelar' : 'Pedir ferias'}
+          {showForm ? 'Cancelar' : 'Pedir férias'}
         </button>
       </div>
 
@@ -647,7 +647,7 @@ function MyCertificationsSection({ staffId }) {
   if (!certs.length) return null;
   return (
     <div>
-      <p className="text-xs font-mono uppercase tracking-wider text-n-400 mb-2">As minhas certificacoes</p>
+      <p className="text-xs font-mono uppercase tracking-wider text-n-400 mb-2">As minhas certificações</p>
       <div className="bg-white rounded-2xl border border-n-200 divide-y divide-n-100">
         {certs.map(c => (
           <div key={c.id} className="flex items-center gap-3 px-4 py-3">
@@ -799,7 +799,7 @@ function StaffProfile() {
               onClick={handleSave}
               disabled={saving}
               className="w-full h-12 bg-sand-500 hover:bg-sand-600 text-ocean-900 rounded-2xl font-display font-bold text-sm flex items-center justify-center gap-2 active:scale-[0.99] transition-all disabled:opacity-50">
-              {saving ? 'A guardar...' : 'Guardar alteracoes'}
+              {saving ? 'A guardar...' : 'Guardar alterações'}
             </button>
           </div>
         </>
@@ -861,7 +861,7 @@ export default function StaffPortal() {
 
         <div className="flex items-center gap-2 mb-1">
           <Sun size={20} strokeWidth={1.75} className="text-sand-400" />
-          <p className="font-display font-bold text-2xl text-white">Ola, {staffName}</p>
+          <p className="font-display font-bold text-2xl text-white">Olá, {staffName}</p>
         </div>
         {staffRole && (
           <span className="text-[10px] font-mono uppercase tracking-wide text-sand-400">{staffRole}</span>
@@ -884,7 +884,7 @@ export default function StaffPortal() {
       {/* Bottom nav */}
       <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md bg-white border-t border-n-200 flex z-50">
         <NavLink to="/staff/jobs"           className={navClass}><Briefcase size={20} strokeWidth={1.75}/><span>Trabalhos</span></NavLink>
-        <NavLink to="/staff/calendario"     className={navClass}><Calendar size={20} strokeWidth={1.75}/><span>Calendario</span></NavLink>
+        <NavLink to="/staff/calendario"     className={navClass}><Calendar size={20} strokeWidth={1.75}/><span>Calendário</span></NavLink>
         <NavLink to="/staff/disponibilidade" className={navClass}><CalendarCheck size={20} strokeWidth={1.75}/><span>Disponib.</span></NavLink>
         <NavLink to="/staff/chat"           className={navClass}><MessageCircle size={20} strokeWidth={1.75}/><span>Chat</span></NavLink>
         <NavLink to="/staff/perfil"         className={navClass}><User size={20} strokeWidth={1.75}/><span>Perfil</span></NavLink>

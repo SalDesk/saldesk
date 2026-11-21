@@ -46,7 +46,7 @@ function planner(posts, handlers = {}) {
 const celulas = (c) => [...c.querySelectorAll('.h-16')];
 const vazias = (c) => celulas(c).filter(e => /(^|\s)bg-n-50(\s|$)/.test(e.className));
 const dias = (c) => celulas(c).filter(e => !/(^|\s)bg-n-50(\s|$)/.test(e.className));
-const proximos = () => screen.getByText('Proximos posts').parentElement;
+const proximos = () => screen.getByText('Próximos posts').parentElement;
 /* o primeiro ascendente do texto que contem botoes: a linha com os icones de editar e eliminar */
 const linhaDoPost = (raiz, texto) => {
   let e = within(raiz).getByText(texto);
@@ -57,7 +57,7 @@ const titulo = () => screen.getByText(/^(Janeiro|Fevereiro|Marco|Abril|Maio|Junh
 
 /* ───────────────────────── caracterizacao: SocialPlanner ───────────────────────── */
 
-describe('Planeador: calendario', () => {
+describe('Planeador: calendário', () => {
   it('o_calendario_comeca_na_segunda_com_celulas_vazias_antes_do_dia_1', () => {
     const { container } = planner([]);
     expect(screen.getByText('Planeador de Social Media')).toBeInTheDocument();
@@ -105,7 +105,7 @@ describe('Planeador: calendario', () => {
   });
 });
 
-describe('Planeador: proximos posts', () => {
+describe('Planeador: próximos posts', () => {
   it('so_agendados_de_hoje_em_diante_no_maximo_8_ordenados_e_o_texto_corta_aos_50', () => {
     const longo = 'x'.repeat(60);
     const posts = [
@@ -156,10 +156,10 @@ describe('Planeador: proximos posts', () => {
   });
 });
 
-describe('Planeador: historico', () => {
+describe('Planeador: histórico', () => {
   it('sem_posts_nao_mostra_o_historico', () => {
     planner([]);
-    expect(screen.queryByText(/^Historico/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/^Histórico/)).not.toBeInTheDocument();
     expect(screen.queryByRole('table')).not.toBeInTheDocument();
   });
 
@@ -170,7 +170,7 @@ describe('Planeador: historico', () => {
       post('c', '2026-11-12T10:00', { status: 'cancelado' }),
       post('d', '2026-11-01T10:00', { status: 'xyz', platform: 'tiktok' }),
     ]);
-    expect(screen.getByText('Historico (4)')).toBeInTheDocument();
+    expect(screen.getByText('Histórico (4)')).toBeInTheDocument();
     const linhas = screen.getAllByRole('row').slice(1);
     const textos = linhas.map(r => r.querySelector('td').textContent);
     expect(textos).toEqual(['Texto do post b', 'Texto do post c', 'Texto do post a', 'Texto do post d']);
@@ -238,22 +238,22 @@ describe('Planeador: PostModal', () => {
 
   it('escolher_template_preenche_PT_e_EN', () => {
     modal(null);
-    fireEvent.click(screen.getByRole('button', { name: 'Ultimas vagas' }));
-    expect(campo('Texto PT', 'textarea')).toHaveValue('Ultimas vagas para este tour! Nao perca a oportunidade de explorar a ilha connosco.');
+    fireEvent.click(screen.getByRole('button', { name: 'Últimas vagas' }));
+    expect(campo('Texto PT', 'textarea')).toHaveValue('Últimas vagas para este tour! Não perca a oportunidade de explorar a ilha connosco.');
     expect(campo('Texto EN', 'textarea')).toHaveValue('Last spots available for this tour! Do not miss the chance to explore the island with us.');
-    expect([...document.querySelectorAll('button')].filter(b => ['Tour disponivel', 'Ultimas vagas', 'Avaliacao de cliente', 'Promocao especial', 'Foto do dia'].includes(b.textContent))).toHaveLength(5);
+    expect([...document.querySelectorAll('button')].filter(b => ['Tour disponível', 'Últimas vagas', 'Avaliação de cliente', 'Promoção especial', 'Foto do dia'].includes(b.textContent))).toHaveLength(5);
   });
 
   it('guardar_um_novo_chama_onSave_com_os_campos_e_um_id_novo', () => {
     vi.spyOn(Date, 'now').mockReturnValue(1700000000000);
     const { h } = modal({ _new: true, scheduled_at: '2026-11-20T09:00' });
-    fireEvent.change(campo('Texto PT', 'textarea'), { target: { value: 'Ola' } });
+    fireEvent.change(campo('Texto PT', 'textarea'), { target: { value: 'Olá' } });
     fireEvent.change(campo('Data e hora'), { target: { value: '2026-11-20T09:00' } });
     fireEvent.change(campo('Foto (URL)'), { target: { value: 'https://x.test/a.png' } });
     fireEvent.change(campo('Plataforma', 'select'), { target: { value: 'ambos' } });
     fireEvent.submit(screen.getByRole('button', { name: 'Agendar post' }).closest('form'));
     expect(h.onSave).toHaveBeenCalledWith({
-      text_pt: 'Ola', text_en: '', photo_url: 'https://x.test/a.png', platform: 'ambos',
+      text_pt: 'Olá', text_en: '', photo_url: 'https://x.test/a.png', platform: 'ambos',
       scheduled_at: '2026-11-20T09:00', status: 'agendado', id: '1700000000000',
     });
   });
@@ -294,7 +294,7 @@ describe('Planeador: PostModal', () => {
     expect(screen.getAllByText('o_seu_perfil')).toHaveLength(2);
     expect(screen.getByText('A legenda aparecera aqui...')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Facebook' }));
-    expect(screen.getByText('Pagina')).toBeInTheDocument();
+    expect(screen.getByText('Página')).toBeInTheDocument();
     expect(screen.getByText('O texto do post aparecera aqui...')).toBeInTheDocument();
     expect(document.querySelector('img')).toBeNull();
   });
@@ -328,8 +328,8 @@ describe('Planeador: design system', () => {
     const { container } = planner(TODOS);
     expect(screen.getByRole('button', { name: `Novo post em ${HOJE}` })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Novo post em 2026-11-01' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Mes anterior' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Mes seguinte' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Mês anterior' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Mês seguinte' })).toBeInTheDocument();
     expect(within(proximos()).getByRole('button', { name: 'Editar post Texto do post a' })).toBeInTheDocument();
     expect(within(proximos()).getByRole('button', { name: 'Eliminar post Texto do post a' })).toBeInTheDocument();
     expect(within(screen.getByRole('table')).getByRole('button', { name: 'Editar post Texto do post b' })).toBeInTheDocument();
@@ -356,9 +356,9 @@ describe('Planeador: design system', () => {
   it('o_modal_tem_campos_com_nome_acessivel_e_seletores_com_aria_pressed', () => {
     modal(EXISTENTE);
     ['Texto PT', 'Texto EN', 'Foto (URL)', 'Plataforma', 'Data e hora', 'Estado'].forEach(e => expect(screen.getByLabelText(e)).toBeInTheDocument());
-    expect(screen.getByRole('button', { name: 'Tour disponivel', pressed: false })).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'Tour disponivel' }));
-    expect(screen.getByRole('button', { name: 'Tour disponivel', pressed: true })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Tour disponível', pressed: false })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Tour disponível' }));
+    expect(screen.getByRole('button', { name: 'Tour disponível', pressed: true })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Instagram', pressed: true })).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Facebook' }));
     expect(screen.getByRole('button', { name: 'Facebook', pressed: true })).toBeInTheDocument();
@@ -379,7 +379,7 @@ describe('Planeador: design system', () => {
     html += classes(m.container);
     fireEvent.click(screen.getByRole('button', { name: 'Facebook' }));
     html += classes(m.container);
-    fireEvent.click(screen.getByRole('button', { name: 'Promocao especial' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Promoção especial' }));
     html += classes(m.container);
     semCoresForaDosTokens(html);
   });

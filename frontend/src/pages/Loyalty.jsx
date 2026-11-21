@@ -23,9 +23,10 @@ import LoadingSpinner from '../components/shared/LoadingSpinner';
 const DEFAULT_CONFIG = {
   active: false,
   points_per_euro: 1,
+  /* Niveis por omissao do frontend, com acentos; os de loyaltyController.js (backend) nao tem. */
   levels: [
     { name: 'Bronze', min: 0,   max: 100, discount_pct: 5,  reward: '5% desconto em todas as reservas'          },
-    { name: 'Prata',  min: 101, max: 499, discount_pct: 10, reward: '10% desconto + upgrade gratuito disponivel' },
+    { name: 'Prata',  min: 101, max: 499, discount_pct: 10, reward: '10% desconto + upgrade gratuito disponível' },
     { name: 'Ouro',   min: 500, max: null, discount_pct: 15, reward: '15% desconto + tour gratuito por ano'       },
   ],
 };
@@ -107,7 +108,7 @@ function PointsModal({ customer, config, onClose, onAdjust, onRedeem }) {
 
   async function handleSave() {
     const delta = Number(amount);
-    if (!delta || delta <= 0) { setError('Introduza um valor valido.'); return; }
+    if (!delta || delta <= 0) { setError('Introduza um valor válido.'); return; }
     setSaving(true);
     setError('');
     try {
@@ -164,20 +165,20 @@ function PointsModal({ customer, config, onClose, onAdjust, onRedeem }) {
               <code className="flex-1 font-mono text-sm font-bold text-n-900 bg-white border border-n-200 rounded-xs px-2 py-1.5">
                 {redeemedVoucher.code}
               </code>
-              <button type="button" onClick={copyCode} className="p-1.5 rounded text-n-500 hover:text-ocean-700 hover:bg-white transition-colors" title="Copiar codigo" aria-label="Copiar codigo">
+              <button type="button" onClick={copyCode} className="p-1.5 rounded text-n-500 hover:text-ocean-700 hover:bg-white transition-colors" title="Copiar código" aria-label="Copiar código">
                 {copied ? <CheckIcon size={14} strokeWidth={2} className="text-[var(--success)]" /> : <Copy size={14} strokeWidth={1.75} />}
               </button>
             </div>
-            <p className="text-xs font-body text-n-500">Uso unico, valido ate {new Date(redeemedVoucher.expires_at).toLocaleDateString('pt-PT', { timeZone: 'UTC' })}.</p>
+            <p className="text-xs font-body text-n-500">Uso único, válido até {new Date(redeemedVoucher.expires_at).toLocaleDateString('pt-PT', { timeZone: 'UTC' })}.</p>
           </div>
         ) : (
           <div className="p-3 bg-sand-50 border border-sand-100 rounded-sm">
             <div className="flex items-center justify-between gap-3">
               <div className="min-w-0">
                 <p className="text-xs font-body font-semibold text-n-700 flex items-center gap-1.5">
-                  <Gift size={13} strokeWidth={1.75} /> Resgatar nivel {currentLevel.name}
+                  <Gift size={13} strokeWidth={1.75} /> Resgatar nível {currentLevel.name}
                 </p>
-                <p className="text-xs font-body text-n-500 truncate">Troca todo o saldo por um voucher de {currentLevel.discount_pct}% (uso unico).</p>
+                <p className="text-xs font-body text-n-500 truncate">Troca todo o saldo por um voucher de {currentLevel.discount_pct}% (uso único).</p>
               </div>
               <Button size="sm" variant="secondary" loading={redeeming} disabled={current <= 0} onClick={handleRedeem} className="shrink-0">
                 Resgatar
@@ -235,7 +236,7 @@ function PointsModal({ customer, config, onClose, onAdjust, onRedeem }) {
 
         <div className="pt-2 border-t border-n-100">
           <p className="text-xs font-body font-bold uppercase tracking-wide text-n-500 mb-2 flex items-center gap-1.5">
-            <Clock size={12} strokeWidth={1.75} /> Historico
+            <Clock size={12} strokeWidth={1.75} /> Histórico
           </p>
           <HistoryList customerId={customer.id} refreshKey={historyKey} />
         </div>
@@ -290,13 +291,13 @@ function LevelCard({ level, index, onUpdate, totalCustomers }) {
             onChange={e => setDraft(p => ({ ...p, discount_pct: Number(e.target.value) }))}
           />
           <Input
-            label="Descricao da recompensa" aria-label="Descricao da recompensa"
+            label="Descrição da recompensa" aria-label="Descrição da recompensa"
             value={draft.reward}
             onChange={e => setDraft(p => ({ ...p, reward: e.target.value }))}
           />
           {index < 2 && (
             <Input
-              label={`Pontos maximo (nivel ${level.name})`} aria-label={`Pontos maximo (nivel ${level.name})`}
+              label={`Pontos máximo (nível ${level.name})`} aria-label={`Pontos máximo (nível ${level.name})`}
               type="number" min="1"
               value={draft.max ?? ''}
               onChange={e => setDraft(p => ({ ...p, max: e.target.value ? Number(e.target.value) : null }))}
@@ -415,7 +416,7 @@ export default function Loyalty() {
         </span>
       ),
     },
-    { key: 'level', label: 'Nivel', render: c => <LevelBadge name={getLevel(c.loyalty_points, config.levels).name} /> },
+    { key: 'level', label: 'Nível', render: c => <LevelBadge name={getLevel(c.loyalty_points, config.levels).name} /> },
     {
       key: 'reward', label: 'Recompensa',
       render: c => <span className="text-xs font-body text-n-500 max-w-[160px] truncate block">{getLevel(c.loyalty_points, config.levels).reward}</span>,
@@ -434,7 +435,7 @@ export default function Loyalty() {
   if (configLoading) {
     return (
       <div>
-        <PageHeader title="Programa de Fidelidade" subtitle="Configure niveis, pontos e recompensas" />
+        <PageHeader title="Programa de Fidelidade" subtitle="Configure níveis, pontos e recompensas" />
         <div className="flex justify-center py-16"><LoadingSpinner size={32} /></div>
       </div>
     );
@@ -444,7 +445,7 @@ export default function Loyalty() {
     <div>
       <PageHeader
         title="Programa de Fidelidade"
-        subtitle="Configure niveis, pontos e recompensas"
+        subtitle="Configure níveis, pontos e recompensas"
       />
 
       {/* Active toggle */}
@@ -460,8 +461,8 @@ export default function Loyalty() {
           </p>
           <p className="text-xs font-body text-n-400">
             {config.active
-              ? 'Os clientes acumulam pontos automaticamente apos cada reserva.'
-              : 'Active o programa para comecar a atribuir pontos aos clientes.'}
+              ? 'Os clientes acumulam pontos automaticamente após cada reserva.'
+              : 'Active o programa para começar a atribuir pontos aos clientes.'}
           </p>
         </div>
       </div>
@@ -469,7 +470,7 @@ export default function Loyalty() {
       {/* Tabs */}
       <div className="mb-6">
         <Tabs
-          tabs={[{ id: 'config', label: 'Configuracao' }, { id: 'clientes', label: 'Clientes' }]}
+          tabs={[{ id: 'config', label: 'Configuração' }, { id: 'clientes', label: 'Clientes' }]}
           value={activeTab}
           onChange={setActiveTab}
         />
@@ -479,7 +480,7 @@ export default function Loyalty() {
         <div className="space-y-5">
           {/* Points per euro */}
           <Card padding="px-5 py-5">
-            <h3 className="font-display font-semibold text-sm text-n-700 mb-4">Regra de acumulacao</h3>
+            <h3 className="font-display font-semibold text-sm text-n-700 mb-4">Regra de acumulação</h3>
             <div className="flex items-end gap-4 max-w-xs">
               <Input
                 label="Pontos por Euro gasto" aria-label="Pontos por Euro gasto"
@@ -496,14 +497,14 @@ export default function Loyalty() {
 
           {/* Levels */}
           <Card padding="px-5 py-5">
-            <h3 className="font-display font-semibold text-sm text-n-700 mb-4">Niveis e recompensas</h3>
+            <h3 className="font-display font-semibold text-sm text-n-700 mb-4">Níveis e recompensas</h3>
             <div className="space-y-3">
               {config.levels.map((l, i) => (
                 <LevelCard key={l.name} level={l} index={i} onUpdate={updateLevel} totalCustomers={customers.length} />
               ))}
             </div>
             <p className="text-xs font-body text-n-400 mt-3">
-              Os limites minimos dos niveis Prata e Ouro sao calculados automaticamente a partir do maximo do nivel anterior.
+              Os limites mínimos dos níveis Prata e Ouro são calculados automaticamente a partir do máximo do nível anterior.
             </p>
           </Card>
         </div>

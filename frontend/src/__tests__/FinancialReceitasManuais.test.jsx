@@ -66,7 +66,7 @@ afterEach(() => {
 async function montar(props = {}) {
   const r = render(<ReceitasManuaisTab currency="EUR" onChange={() => {}} {...props} />);
   await screen.findByText('Registar receita');
-  await waitFor(() => expect(screen.queryByText('Sem receitas manuais no periodo seleccionado.') || screen.queryByRole('table')).toBeTruthy());
+  await waitFor(() => expect(screen.queryByText('Sem receitas manuais no período seleccionado.') || screen.queryByRole('table')).toBeTruthy());
   return r;
 }
 const linhas = () => screen.getAllByRole('row').slice(1);
@@ -109,7 +109,7 @@ describe('Receitas manuais: lista e filtros', () => {
   it('sem_receitas_mostra_o_vazio', async () => {
     fin.getReceitasManuais.mockResolvedValue([]);
     await montar();
-    expect(screen.getByText('Sem receitas manuais no periodo seleccionado.')).toBeInTheDocument();
+    expect(screen.getByText('Sem receitas manuais no período seleccionado.')).toBeInTheDocument();
     expect(screen.queryByRole('table')).toBeNull();
   });
 
@@ -117,7 +117,7 @@ describe('Receitas manuais: lista e filtros', () => {
     fin.getReceitasManuais.mockReturnValue(new Promise(() => {}));
     render(<ReceitasManuaisTab currency="EUR" />);
     expect(screen.queryByRole('table')).toBeNull();
-    expect(screen.queryByText('Sem receitas manuais no periodo seleccionado.')).toBeNull();
+    expect(screen.queryByText('Sem receitas manuais no período seleccionado.')).toBeNull();
   });
 });
 
@@ -210,7 +210,7 @@ describe('Receitas manuais com o design system', () => {
 
   it('os_filtros_e_os_campos_do_modal_tem_nome_acessivel', async () => {
     await montar();
-    expect(screen.getByLabelText('Mes')).toHaveAttribute('type', 'month');
+    expect(screen.getByLabelText('Mês')).toHaveAttribute('type', 'month');
     expect(screen.getByLabelText('Categoria').tagName).toBe('SELECT');
     fireEvent.click(screen.getByText('Registar receita'));
     const modal = within(screen.getByRole('dialog'));
@@ -224,7 +224,7 @@ describe('Receitas manuais com o design system', () => {
     cleanup();
     fin.getReceitasManuais.mockResolvedValue([]);
     await montar();
-    expect(screen.getByText('Sem receitas manuais no periodo seleccionado.')).toHaveClass('font-display');
+    expect(screen.getByText('Sem receitas manuais no período seleccionado.')).toHaveClass('font-display');
   });
 
   it('cores_dos_cartoes_de_categoria_sao_tokens_e_sem_hexadecimais_ou_nomeadas', async () => {

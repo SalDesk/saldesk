@@ -33,7 +33,7 @@ function ObrigacoesTab({ currency }) {
       <div className={`flex items-center gap-3 px-3 py-2.5 rounded-sm border ${isCritical ? 'bg-[var(--warning-light)] border-[var(--warning)]' : 'bg-n-50 border-n-100'}`}>
         <div className="flex-1 min-w-0">
           <p className="text-xs font-body font-semibold text-n-800">{ins.name}</p>
-          <p className="text-[10px] font-mono text-n-400">{renewal ? `Renovacao: ${fmtDate(ins.renewal_date)}${isCritical ? ` (${daysToRenew}d)` : ''}` : 'Sem data'}</p>
+          <p className="text-[10px] font-mono text-n-400">{renewal ? `Renovação: ${fmtDate(ins.renewal_date)}${isCritical ? ` (${daysToRenew}d)` : ''}` : 'Sem data'}</p>
         </div>
         <span className="text-xs font-body text-n-600 shrink-0">{ins.amount_annual ? `€${ins.amount_annual}/ano` : '—'}</span>
         {isCritical && <AlertTriangle size={14} strokeWidth={1.75} className="text-[var(--warning)] shrink-0" />}
@@ -51,28 +51,28 @@ function ObrigacoesTab({ currency }) {
       {/* INPS */}
       <Card padding="px-5 py-4">
         <div className="flex items-start justify-between mb-3">
-          <h3 className="font-display font-semibold text-sm text-n-700">INPS — Contribuicoes mensais</h3>
+          <h3 className="font-display font-semibold text-sm text-n-700">INPS — Contribuições mensais</h3>
           {daysToInps <= 5 && daysToInps > 0 && <span className="flex items-center gap-1 text-xs font-mono text-[var(--error)] bg-[var(--error-light)] px-2 py-0.5 rounded-xs"><AlertTriangle size={10} strokeWidth={2} />Prazo em {daysToInps}d</span>}
         </div>
         <div className="space-y-2">
           <div className="flex justify-between items-center text-sm">
             <span className="font-body text-n-600">Data de entrega</span>
-            <span className="font-mono text-n-800">Dia 15 de cada mes</span>
+            <span className="font-mono text-n-800">Dia 15 de cada mês</span>
           </div>
           <div className="flex justify-between items-center text-sm">
-            <span className="font-body text-n-600">Contribuicao patronal</span>
-            <span className="font-mono text-n-800">15% dos salarios brutos</span>
+            <span className="font-body text-n-600">Contribuição patronal</span>
+            <span className="font-mono text-n-800">15% dos salários brutos</span>
           </div>
           <div className="flex justify-between items-center text-sm">
-            <span className="font-body text-n-600">Contribuicao do trabalhador</span>
-            <span className="font-mono text-n-800">8% dos salarios brutos</span>
+            <span className="font-body text-n-600">Contribuição do trabalhador</span>
+            <span className="font-mono text-n-800">8% dos salários brutos</span>
           </div>
         </div>
         <div className="mt-3 pt-3 border-t border-n-100">
           <div className="w-56">
             <Select aria-label="Estado do INPS" value={obl.inps_status_current || 'pending'} onChange={e => saveObl({ ...obl, inps_status_current: e.target.value })}>
-              <option value="pending">Pendente este mes</option>
-              <option value="paid">Pago este mes</option>
+              <option value="pending">Pendente este mês</option>
+              <option value="paid">Pago este mês</option>
             </Select>
           </div>
         </div>
@@ -80,13 +80,13 @@ function ObrigacoesTab({ currency }) {
 
       {/* IUR */}
       <Card padding="px-5 py-4">
-        <h3 className="font-display font-semibold text-sm text-n-700 mb-3">IUR — Imposto Unico sobre Rendimentos</h3>
-        <p className="text-xs font-body text-n-500 mb-3">Retenção na fonte mensal sobre salarios. Declaracao anual em Abril.</p>
+        <h3 className="font-display font-semibold text-sm text-n-700 mb-3">IUR — Imposto Único sobre Rendimentos</h3>
+        <p className="text-xs font-body text-n-500 mb-3">Retenção na fonte mensal sobre salários. Declaração anual em Abril.</p>
         <Textarea
           aria-label="Notas sobre IUR"
           value={obl.iur_notes || ''}
           onChange={e => saveObl({ ...obl, iur_notes: e.target.value })}
-          placeholder="Notas sobre IUR, valores estimados, contabilista responsavel..."
+          placeholder="Notas sobre IUR, valores estimados, contabilista responsável..."
           rows={3}
         />
       </Card>
@@ -100,7 +100,7 @@ function ObrigacoesTab({ currency }) {
         </div>
         <div className="grid grid-cols-3 gap-2 items-end">
           <Input aria-label="Nome do seguro" value={newIns.name} onChange={e => setNewIns(p => ({ ...p, name: e.target.value }))} placeholder="Nome do seguro" />
-          <Input aria-label="Data de renovacao do seguro" type="date" value={newIns.renewal_date} onChange={e => setNewIns(p => ({ ...p, renewal_date: e.target.value }))} />
+          <Input aria-label="Data de renovação do seguro" type="date" value={newIns.renewal_date} onChange={e => setNewIns(p => ({ ...p, renewal_date: e.target.value }))} />
           <div className="flex gap-1 items-end">
             <div className="flex-1">
               <Input aria-label="Valor anual do seguro" type="number" value={newIns.amount_annual} onChange={e => setNewIns(p => ({ ...p, amount_annual: e.target.value }))} placeholder="€/ano" className="font-mono" />
@@ -112,14 +112,14 @@ function ObrigacoesTab({ currency }) {
 
       {/* SalDesk */}
       <Card padding="px-5 py-4">
-        <h3 className="font-display font-semibold text-sm text-n-700 mb-3">Subscricao SalDesk</h3>
+        <h3 className="font-display font-semibold text-sm text-n-700 mb-3">Subscrição SalDesk</h3>
         <div className="grid grid-cols-2 gap-3">
           <Select label="Plano actual" aria-label="Plano actual" value={obl.saldesk_plan || 'starter'} onChange={e => saveObl({ ...obl, saldesk_plan: e.target.value })}>
-            <option value="starter">Starter — €29/mes</option>
-            <option value="pro">Pro — €69/mes</option>
-            <option value="business">Business — €79/mes</option>
+            <option value="starter">Starter — €29/mês</option>
+            <option value="pro">Pro — €69/mês</option>
+            <option value="business">Business — €79/mês</option>
           </Select>
-          <Input label="Data de renovacao" aria-label="Data de renovacao" type="date" value={obl.saldesk_renewal || ''} onChange={e => saveObl({ ...obl, saldesk_renewal: e.target.value })} />
+          <Input label="Data de renovação" aria-label="Data de renovação" type="date" value={obl.saldesk_renewal || ''} onChange={e => saveObl({ ...obl, saldesk_renewal: e.target.value })} />
         </div>
       </Card>
     </div>

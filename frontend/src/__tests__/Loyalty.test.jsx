@@ -18,7 +18,7 @@ const NOMEADAS = /(?:^|[\s"'])(?:[a-z-]+:)?(?:text|bg|border|fill|ring)-(?:green
 
 const NIVEIS = [
   { name: 'Bronze', min: 0,   max: 100,  discount_pct: 5,  reward: '5% desconto em todas as reservas' },
-  { name: 'Prata',  min: 101, max: 499,  discount_pct: 10, reward: '10% desconto + upgrade gratuito disponivel' },
+  { name: 'Prata',  min: 101, max: 499,  discount_pct: 10, reward: '10% desconto + upgrade gratuito disponível' },
   { name: 'Ouro',   min: 500, max: null, discount_pct: 15, reward: '15% desconto + tour gratuito por ano' },
 ];
 
@@ -59,15 +59,15 @@ const separador = (rotulo) => screen.getAllByText(rotulo).find(e => e.closest('b
 
 /* ───────────────────────── caracterizacao: estrutura e configuracao ───────────────────────── */
 
-describe('Fidelidade: cabecalho, estado e configuracao', () => {
+describe('Fidelidade: cabeçalho, estado e configuração', () => {
   it('mostra_o_cabecalho_e_o_estado_inactivo_por_omissao', async () => {
     await montar();
     expect(screen.getByText('Programa de Fidelidade')).toBeInTheDocument();
-    expect(screen.getByText('Configure niveis, pontos e recompensas')).toBeInTheDocument();
+    expect(screen.getByText('Configure níveis, pontos e recompensas')).toBeInTheDocument();
     expect(screen.getByText('Programa inactivo')).toBeInTheDocument();
-    expect(screen.getByText('Active o programa para comecar a atribuir pontos aos clientes.')).toBeInTheDocument();
-    expect(screen.getByText('Regra de acumulacao')).toBeInTheDocument();
-    expect(screen.getByText('Niveis e recompensas')).toBeInTheDocument();
+    expect(screen.getByText('Active o programa para começar a atribuir pontos aos clientes.')).toBeInTheDocument();
+    expect(screen.getByText('Regra de acumulação')).toBeInTheDocument();
+    expect(screen.getByText('Níveis e recompensas')).toBeInTheDocument();
     expect(campo('Pontos por Euro gasto')).toHaveValue(1);
     expect(screen.getByText('0–100 pts · 5% desconto')).toBeInTheDocument();
     expect(screen.getByText('101–499 pts · 10% desconto')).toBeInTheDocument();
@@ -81,7 +81,7 @@ describe('Fidelidade: cabecalho, estado e configuracao', () => {
     });
     await montar();
     expect(screen.getByText('Programa activo')).toBeInTheDocument();
-    expect(screen.getByText('Os clientes acumulam pontos automaticamente apos cada reserva.')).toBeInTheDocument();
+    expect(screen.getByText('Os clientes acumulam pontos automaticamente após cada reserva.')).toBeInTheDocument();
     expect(campo('Pontos por Euro gasto')).toHaveValue(2);
     expect(screen.getByText('Ex: reserva de €100 = 200 pontos.')).toBeInTheDocument();
     expect(screen.getByText('0–50 pts · 3% desconto')).toBeInTheDocument();
@@ -100,7 +100,7 @@ describe('Fidelidade: cabecalho, estado e configuracao', () => {
     const { container } = render(<Loyalty />);
     expect(screen.getByText('Programa de Fidelidade')).toBeInTheDocument();
     expect(container.querySelector('.animate-spin')).toBeInTheDocument();
-    expect(screen.queryByText('Regra de acumulacao')).not.toBeInTheDocument();
+    expect(screen.queryByText('Regra de acumulação')).not.toBeInTheDocument();
   });
 
   it('interruptor_chama_updateLoyaltyConfig_com_active_invertido_e_levels_e_points_per_euro', async () => {
@@ -134,7 +134,7 @@ describe('Fidelidade: cabecalho, estado e configuracao', () => {
   });
 });
 
-describe('Fidelidade: niveis', () => {
+describe('Fidelidade: níveis', () => {
   it('niveis_mostram_nome_intervalo_e_desconto', async () => {
     await montar();
     expect(screen.getAllByText('Bronze').length).toBeGreaterThanOrEqual(1);
@@ -148,21 +148,21 @@ describe('Fidelidade: niveis', () => {
     await montar();
     abrirNivel('0–100 pts · 5% desconto');
     expect(campo('Desconto (%)')).toHaveValue(5);
-    expect(campo('Descricao da recompensa')).toHaveValue('5% desconto em todas as reservas');
-    expect(campo('Pontos maximo (nivel Bronze)')).toHaveValue(100);
+    expect(campo('Descrição da recompensa')).toHaveValue('5% desconto em todas as reservas');
+    expect(campo('Pontos máximo (nível Bronze)')).toHaveValue(100);
     abrirNivel('0–100 pts · 5% desconto');
     expect(screen.queryByText('Desconto (%)')).not.toBeInTheDocument();
     abrirNivel('500–∞ pts · 15% desconto');
     expect(campo('Desconto (%)')).toHaveValue(15);
-    expect(screen.queryByText('Pontos maximo (nivel Ouro)')).not.toBeInTheDocument();
+    expect(screen.queryByText('Pontos máximo (nível Ouro)')).not.toBeInTheDocument();
   });
 
   it('guardar_nivel_chama_updateLoyaltyConfig_com_os_niveis_actualizados_e_fecha', async () => {
     await montar();
     abrirNivel('0–100 pts · 5% desconto');
     fireEvent.change(campo('Desconto (%)'), { target: { value: '9' } });
-    fireEvent.change(campo('Descricao da recompensa'), { target: { value: 'Premio X' } });
-    fireEvent.change(campo('Pontos maximo (nivel Bronze)'), { target: { value: '150' } });
+    fireEvent.change(campo('Descrição da recompensa'), { target: { value: 'Premio X' } });
+    fireEvent.change(campo('Pontos máximo (nível Bronze)'), { target: { value: '150' } });
     fireEvent.click(screen.getByRole('button', { name: 'Guardar' }));
     expect(updateLoyaltyConfig).toHaveBeenCalledWith({
       active: false, points_per_euro: 1,
@@ -175,7 +175,7 @@ describe('Fidelidade: niveis', () => {
   it('maximo_vazio_vira_sem_limite', async () => {
     await montar();
     abrirNivel('101–499 pts · 10% desconto');
-    fireEvent.change(campo('Pontos maximo (nivel Prata)'), { target: { value: '' } });
+    fireEvent.change(campo('Pontos máximo (nível Prata)'), { target: { value: '' } });
     fireEvent.click(screen.getByRole('button', { name: 'Guardar' }));
     expect(updateLoyaltyConfig.mock.calls[0][0].levels[1].max).toBeNull();
   });
@@ -201,11 +201,11 @@ describe('Fidelidade: niveis', () => {
 
 /* ───────────────────────── design system: estrutura, configuracao e niveis ───────────────────────── */
 
-describe('Fidelidade: design system (estrutura e niveis)', () => {
+describe('Fidelidade: design system (estrutura e níveis)', () => {
   it('separadores_Configuracao_e_Clientes_sao_Tabs', async () => {
     await montar();
     expect(screen.getByRole('tablist')).toBeInTheDocument();
-    expect(screen.getByRole('tab', { name: 'Configuracao' })).toHaveAttribute('aria-selected', 'true');
+    expect(screen.getByRole('tab', { name: 'Configuração' })).toHaveAttribute('aria-selected', 'true');
     expect(screen.getByRole('tab', { name: 'Clientes' })).toHaveAttribute('aria-selected', 'false');
   });
 
@@ -246,8 +246,8 @@ describe('Fidelidade: design system (estrutura e niveis)', () => {
     expect(screen.getByLabelText('Pontos por Euro gasto')).toHaveValue(1);
     abrirNivel('0–100 pts · 5% desconto');
     expect(screen.getByLabelText('Desconto (%)')).toHaveValue(5);
-    expect(screen.getByLabelText('Descricao da recompensa')).toBeInTheDocument();
-    expect(screen.getByLabelText('Pontos maximo (nivel Bronze)')).toHaveValue(100);
+    expect(screen.getByLabelText('Descrição da recompensa')).toBeInTheDocument();
+    expect(screen.getByLabelText('Pontos máximo (nível Bronze)')).toHaveValue(100);
   });
 
   it('sem_hexadecimais_cores_nomeadas_text_error_nem_style_inline_com_a_config_activa_e_um_nivel_aberto', async () => {
@@ -392,8 +392,8 @@ describe('Fidelidade: modal de pontos', () => {
     ajustar('Carla Lopes');
     expect(await screen.findByText('Pontos — Carla Lopes')).toBeInTheDocument();
     expect(screen.getByText('Pontos actuais').nextSibling.textContent).toBe('40');
-    expect(screen.getByText('Resgatar nivel Bronze')).toBeInTheDocument();
-    expect(screen.getByText('Troca todo o saldo por um voucher de 5% (uso unico).')).toBeInTheDocument();
+    expect(screen.getByText('Resgatar nível Bronze')).toBeInTheDocument();
+    expect(screen.getByText('Troca todo o saldo por um voucher de 5% (uso único).')).toBeInTheDocument();
     await waitFor(() => expect(getCustomerLoyaltyHistory).toHaveBeenCalledWith('c3'));
   });
 
@@ -418,15 +418,15 @@ describe('Fidelidade: modal de pontos', () => {
     await waitFor(() => expect(adjustCustomerPoints).toHaveBeenLastCalledWith('c3', -10, ''));
   });
 
-  it('valor_invalido_mostra_Introduza um valor valido.', async () => {
+  it('valor_invalido_mostra_Introduza um valor válido.', async () => {
     await abrirClientes();
     ajustar('Carla Lopes');
     await screen.findByText('Pontos — Carla Lopes');
     fireEvent.click(screen.getByRole('button', { name: 'Guardar ajuste' }));
-    expect(screen.getByText('Introduza um valor valido.')).toBeInTheDocument();
+    expect(screen.getByText('Introduza um valor válido.')).toBeInTheDocument();
     fireEvent.change(campo('Quantidade de pontos'), { target: { value: '-5' } });
     fireEvent.click(screen.getByRole('button', { name: 'Guardar ajuste' }));
-    expect(screen.getByText('Introduza um valor valido.')).toBeInTheDocument();
+    expect(screen.getByText('Introduza um valor válido.')).toBeInTheDocument();
     expect(adjustCustomerPoints).not.toHaveBeenCalled();
   });
 
@@ -466,7 +466,7 @@ describe('Fidelidade: modal de pontos', () => {
     expect(await screen.findByText('Voucher gerado — 5% de desconto')).toBeInTheDocument();
     expect(redeemCustomerPoints).toHaveBeenCalledWith('c3');
     expect(screen.getByText('FID-AB12')).toBeInTheDocument();
-    expect(screen.getByText(`Uso unico, valido ate ${new Date('2027-01-15T00:00:00Z').toLocaleDateString('pt-PT', { timeZone: 'UTC' })}.`)).toBeInTheDocument();
+    expect(screen.getByText(`Uso único, válido até ${new Date('2027-01-15T00:00:00Z').toLocaleDateString('pt-PT', { timeZone: 'UTC' })}.`)).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Resgatar' })).not.toBeInTheDocument();
     expect(screen.getByText('Pontos actuais').nextSibling.textContent).toBe('0');
     expect(norm(linha('Carla Lopes').textContent)).toContain('0 pts');
@@ -499,7 +499,7 @@ describe('Fidelidade: modal de pontos', () => {
     await screen.findByText('Pontos — Carla Lopes');
     fireEvent.click(screen.getByRole('button', { name: 'Resgatar' }));
     await screen.findByText('FID-AB12');
-    const copiar = screen.getByTitle('Copiar codigo');
+    const copiar = screen.getByTitle('Copiar código');
     fireEvent.click(copiar);
     expect(writeText).toHaveBeenCalledWith('FID-AB12');
     await waitFor(() => expect(copiar.querySelector('svg.lucide-check')).toBeInTheDocument());
@@ -547,7 +547,7 @@ describe('Fidelidade: design system (clientes e modal)', () => {
     await abrirClientes();
     expect(screen.getByRole('table')).toBeInTheDocument();
     const cab = screen.getAllByRole('columnheader').map(h => h.textContent);
-    expect(cab).toEqual(['Cliente', 'Email', 'Visitas', 'Pontos', 'Nivel', 'Recompensa', '']);
+    expect(cab).toEqual(['Cliente', 'Email', 'Visitas', 'Pontos', 'Nível', 'Recompensa', '']);
   });
 
   it('o_nivel_na_tabela_e_Badge_e_os_chips_tem_aria_pressed', async () => {
@@ -585,7 +585,7 @@ describe('Fidelidade: design system (clientes e modal)', () => {
     await screen.findByText('Pontos — Carla Lopes');
     fireEvent.click(screen.getByRole('button', { name: 'Resgatar' }));
     await screen.findByText('FID-AB12');
-    expect(screen.getByRole('button', { name: 'Copiar codigo' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Copiar código' })).toBeInTheDocument();
   });
 
   it('o_vazio_e_EmptyState', async () => {

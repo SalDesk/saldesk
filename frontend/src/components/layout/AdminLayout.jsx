@@ -37,7 +37,7 @@ export default function AdminLayout() {
     { to: '/admin/cms',                     label: 'CMS',         icon: Layers },
     { to: '/admin/conect',                  label: 'Moderação Conect', icon: Compass, badge: counts.conectPending },
     { to: '/admin/financeiro-plataforma',  label: 'Financeiro',   icon: Euro },
-    { to: '/admin/comunicacoes',            label: 'Comunicacao',  icon: MessageSquare },
+    { to: '/admin/comunicacoes',            label: 'Comunicação',  icon: MessageSquare },
     { to: '/admin/analytics-plataforma',  label: 'Analytics',    icon: BarChart2 },
     { to: '/admin/impacto',               label: 'Impacto',      icon: Globe },
     { to: '/admin/sistema',   label: 'Sistema',     icon: Server },

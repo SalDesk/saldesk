@@ -25,7 +25,7 @@ const TOOLTIP_CSS = { fontFamily: 'DM Sans', fontSize: 12, borderRadius: 6, bord
 
 function exportCsv(rows) {
   const keys    = ['name', 'email', 'operator_type', 'plan', 'plan_status', 'reservation_count', 'last_login', 'trial_ends_at', 'created_at'];
-  const headers = ['Nome', 'Email', 'Tipo', 'Plano', 'Estado', 'Reservas', 'Ultimo login', 'Trial ate', 'Registado em'];
+  const headers = ['Nome', 'Email', 'Tipo', 'Plano', 'Estado', 'Reservas', 'Último login', 'Trial até', 'Registado em'];
   const lines   = rows.map(o => keys.map(k => `"${(o[k] ?? '').toString().replace(/"/g, '""')}"`).join(','));
   const csv     = [headers.join(','), ...lines].join('\n');
   const blob    = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
@@ -156,20 +156,20 @@ export default function AdminOperators() {
   }
 
   async function handleSuspend(op) {
-    const reason = window.prompt(`Motivo da suspensao de "${op.name}" (sera incluido no email enviado ao operador):`, '');
+    const reason = window.prompt(`Motivo da suspensão de "${op.name}" (será incluído no email enviado ao operador):`, '');
     if (reason === null) return;
     try {
       const { data } = await api.put(`/admin/operators/${op.id}`, { plan_status: 'suspended', reason: reason.trim() });
       applyUpdate(op.id, data.data);
-    } catch (err) { window.alert(err?.response?.data?.error || 'Nao foi possivel suspender o operador.'); }
+    } catch (err) { window.alert(err?.response?.data?.error || 'Não foi possível suspender o operador.'); }
   }
 
   async function handleReactivate(op) {
-    if (!window.confirm(`Reactivar "${op.name}"? O operador sera notificado por email.`)) return;
+    if (!window.confirm(`Reactivar "${op.name}"? O operador será notificado por email.`)) return;
     try {
-      const { data } = await api.put(`/admin/operators/${op.id}`, { plan_status: 'active', reason: 'Reactivacao manual pelo fundador' });
+      const { data } = await api.put(`/admin/operators/${op.id}`, { plan_status: 'active', reason: 'Reactivação manual pelo fundador' });
       applyUpdate(op.id, data.data);
-    } catch (err) { window.alert(err?.response?.data?.error || 'Nao foi possivel reactivar o operador.'); }
+    } catch (err) { window.alert(err?.response?.data?.error || 'Não foi possível reactivar o operador.'); }
   }
 
   async function handleExtendTrial(op, days) {
@@ -177,20 +177,20 @@ export default function AdminOperators() {
     try {
       const { data } = await api.post(`/admin/operators/${op.id}/extend-trial`, { days });
       applyUpdate(op.id, data.data);
-    } catch (err) { window.alert(err?.response?.data?.error || 'Nao foi possivel estender o trial.'); }
+    } catch (err) { window.alert(err?.response?.data?.error || 'Não foi possível estender o trial.'); }
     finally { setExtending(false); }
   }
 
   async function handleImpersonate(op) {
     if (!op?.id) return;
-    if (!window.confirm(`Aceder como "${op.name}"?\n\nGuarde a sua sessao actual: sera aberto um novo separador com uma sessao autenticada como este operador.`)) return;
+    if (!window.confirm(`Aceder como "${op.name}"?\n\nGuarde a sua sessão actual: será aberto um novo separador com uma sessão autenticada como este operador.`)) return;
     setImpersonating(true);
     try {
       const { data } = await api.post(`/admin/operators/${op.id}/impersonate`);
       if (data?.data?.action_link) window.open(data.data.action_link, '_blank', 'noopener,noreferrer');
-      else window.alert('Nao foi possivel gerar o link de acesso.');
+      else window.alert('Não foi possível gerar o link de acesso.');
     } catch (err) {
-      window.alert(err?.response?.data?.error || 'Nao foi possivel aceder como operador.');
+      window.alert(err?.response?.data?.error || 'Não foi possível aceder como operador.');
     } finally { setImpersonating(false); }
   }
 
@@ -218,7 +218,7 @@ export default function AdminOperators() {
       await api.post(`/admin/operators/${messageModal.id}/message`, messageForm);
       setMessageSentOk(true);
       setTimeout(() => { setMessageModal(null); setMessageSentOk(false); }, 1200);
-    } catch (err) { window.alert(err?.response?.data?.error || 'Nao foi possivel enviar a mensagem.'); }
+    } catch (err) { window.alert(err?.response?.data?.error || 'Não foi possível enviar a mensagem.'); }
     finally { setSendingMessage(false); }
   }
 
@@ -257,13 +257,13 @@ export default function AdminOperators() {
       render: o => <span className="font-mono text-xs text-n-700">{o.reservation_count ?? 0}</span>,
     },
     {
-      key: 'last_login', label: <SortHeader label="Ultimo login" sortKey="last_login" sortBy={sortBy} sortDir={sortDir} onSort={handleSort} />, width: '120px',
+      key: 'last_login', label: <SortHeader label="Último login" sortKey="last_login" sortBy={sortBy} sortDir={sortDir} onSort={handleSort} />, width: '120px',
       render: o => o.last_login
         ? <span className="font-mono text-xs text-n-500">{new Date(o.last_login).toLocaleDateString('pt-PT', { day: '2-digit', month: '2-digit', year: '2-digit' })}</span>
         : <span className="text-n-300">—</span>,
     },
     {
-      key: 'trial_ends_at', label: <SortHeader label="Trial ate" sortKey="trial_ends_at" sortBy={sortBy} sortDir={sortDir} onSort={handleSort} />, width: '110px',
+      key: 'trial_ends_at', label: <SortHeader label="Trial até" sortKey="trial_ends_at" sortBy={sortBy} sortDir={sortDir} onSort={handleSort} />, width: '110px',
       render: o => o.trial_ends_at
         ? <span className="font-mono text-xs text-n-600">{o.trial_ends_at.split('T')[0]}</span>
         : <span className="text-n-300">—</span>,
@@ -374,7 +374,7 @@ export default function AdminOperators() {
             </Button>
             {detail?.operator?.slug && (
               <Button variant="ghost" size="sm" icon={ExternalLink} onClick={() => window.open(`/${detail.operator.slug}`, '_blank')}>
-                Pagina publica
+                Página pública
               </Button>
             )}
             <div className="flex-1" />
@@ -405,13 +405,13 @@ export default function AdminOperators() {
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
               <KpiBox icon={BookOpen}      label="Reservas totais" value={detail.stats?.reservations_total ?? '—'} />
               <KpiBox icon={Euro}          label="Receita gerada"  value={detail.stats?.revenue_total != null ? `€${detail.stats.revenue_total}` : '—'} />
-              <KpiBox icon={Star}          label="Avaliacao media" value={detail.stats?.avg_rating != null ? `${detail.stats.avg_rating} / 5` : 'Sem avaliacoes'} />
-              <KpiBox icon={Clock}         label="Ultimo login"    value={detail.stats?.last_login ? fmtDateTime(detail.stats.last_login) : 'Nunca'} />
+              <KpiBox icon={Star}          label="Avaliação média" value={detail.stats?.avg_rating != null ? `${detail.stats.avg_rating} / 5` : 'Sem avaliações'} />
+              <KpiBox icon={Clock}         label="Último login"    value={detail.stats?.last_login ? fmtDateTime(detail.stats.last_login) : 'Nunca'} />
             </div>
 
             {/* Grafico de reservas por mes */}
             <div>
-              <p className="text-xs font-mono uppercase tracking-wide text-n-400 mb-1.5">Reservas por mes (ultimos 6 meses)</p>
+              <p className="text-xs font-mono uppercase tracking-wide text-n-400 mb-1.5">Reservas por mês (últimos 6 meses)</p>
               <ResponsiveContainer width="100%" height={180}>
                 <BarChart data={detail.reservations_by_month || []} margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#E5E8EC" vertical={false} />
@@ -430,7 +430,7 @@ export default function AdminOperators() {
                 ['Timezone', detail.operator.timezone || '—'],
                 ['Idioma', detail.operator.language || '—'],
                 ['Registo', detail.operator.created_at?.split('T')[0]],
-                ['Trial ate', detail.operator.trial_ends_at?.split('T')[0] || '—'],
+                ['Trial até', detail.operator.trial_ends_at?.split('T')[0] || '—'],
                 ['Slug', detail.operator.slug || '—'],
               ].map(([k, v]) => (
                 <div key={k} className="flex gap-2">
@@ -476,7 +476,7 @@ export default function AdminOperators() {
 
             {/* Historico de actividade */}
             <div>
-              <p className="text-xs font-mono uppercase tracking-wide text-n-400 mb-1.5">Actividade recente (ultimas {Math.min(20, (detail.recent_activity || []).length)})</p>
+              <p className="text-xs font-mono uppercase tracking-wide text-n-400 mb-1.5">Actividade recente (últimas {Math.min(20, (detail.recent_activity || []).length)})</p>
               {(detail.recent_activity || []).length === 0 ? (
                 <p className="text-xs font-body text-n-400">Sem reservas registadas</p>
               ) : (
@@ -510,9 +510,9 @@ export default function AdminOperators() {
       >
         <div className="space-y-4">
           <Select label="Plano" value={editForm.plan} onChange={e => setEditForm({ ...editForm, plan: e.target.value })}>
-            <option value="starter">Starter — €29/mes</option>
-            <option value="pro">Pro — €69/mes</option>
-            <option value="business">Business — €79/mes</option>
+            <option value="starter">Starter — €29/mês</option>
+            <option value="pro">Pro — €69/mês</option>
+            <option value="business">Business — €79/mês</option>
           </Select>
           <Select label="Estado" value={editForm.plan_status} onChange={e => setEditForm({ ...editForm, plan_status: e.target.value })}>
             <option value="trial">Trial</option>
@@ -522,22 +522,22 @@ export default function AdminOperators() {
           </Select>
           {(planChanged || statusChanged) && (
             <Textarea
-              label="Motivo da alteracao"
-              hint={statusChanged && editForm.plan_status === 'suspended' ? 'Sera incluido no email de notificacao ao operador.' : 'Fica registado no historico interno do operador.'}
+              label="Motivo da alteração"
+              hint={statusChanged && editForm.plan_status === 'suspended' ? 'Será incluído no email de notificação ao operador.' : 'Fica registado no histórico interno do operador.'}
               rows={2}
               value={editForm.reason}
               onChange={e => setEditForm({ ...editForm, reason: e.target.value })}
-              placeholder="Explique o motivo desta alteracao..."
+              placeholder="Explique o motivo desta alteração..."
             />
           )}
           <Input
-            label="Trial ate (opcional)"
+            label="Trial até (opcional)"
             type="date"
             value={editForm.trial_ends_at}
             onChange={e => setEditForm({ ...editForm, trial_ends_at: e.target.value })}
           />
           <Textarea
-            label="Notas internas (visiveis apenas para a equipa SalDesk)"
+            label="Notas internas (visíveis apenas para a equipa SalDesk)"
             rows={3}
             value={editForm.notes_internal}
             onChange={e => setEditForm({ ...editForm, notes_internal: e.target.value })}

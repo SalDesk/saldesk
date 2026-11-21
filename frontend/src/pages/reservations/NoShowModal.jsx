@@ -34,7 +34,7 @@ export default function NoShowModal({ reservation, open, onClose, onDone }) {
           Marcar <strong>{reservation?.customer_name}</strong> como no-show?
         </p>
         <Textarea label="Nota interna (opcional)" value={note} onChange={e => setNote(e.target.value)}
-          rows={2} placeholder="Motivo ou observacao..." />
+          rows={2} placeholder="Motivo ou observação..." />
       </div>
     </Modal>
   );

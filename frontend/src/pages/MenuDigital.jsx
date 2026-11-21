@@ -25,7 +25,7 @@ const CATEGORIES = [
 ];
 
 const ALLERGENS = [
-  { key: 'gluten',   label: 'Gluten'       },
+  { key: 'gluten',   label: 'Glúten'       },
   { key: 'lactose',  label: 'Lactose'      },
   { key: 'frutos_secos', label: 'Frutos secos' },
   { key: 'marisco',  label: 'Marisco'      },
@@ -38,7 +38,7 @@ const ALLERGENS = [
 const DIETS = [
   { key: 'vegetariano',  label: 'Vegetariano'   },
   { key: 'vegan',        label: 'Vegan'          },
-  { key: 'sem_gluten',   label: 'Sem gluten'     },
+  { key: 'sem_gluten',   label: 'Sem glúten'     },
   { key: 'halal',        label: 'Halal'          },
 ];
 
@@ -132,8 +132,8 @@ function DishForm({ dish, onSave, onCancel, loading, error }) {
 
       {/* Descricao */}
       <div className="grid grid-cols-2 gap-3">
-        <Textarea label="Descricao PT" value={form.desc_pt} onChange={set('desc_pt')} rows={2} placeholder="Descricao em portugues..." />
-        <Textarea label="Descricao EN" value={form.desc_en} onChange={set('desc_en')} rows={2} placeholder="Description in English..." />
+        <Textarea label="Descrição PT" value={form.desc_pt} onChange={set('desc_pt')} rows={2} placeholder="Descrição em português..." />
+        <Textarea label="Descrição EN" value={form.desc_en} onChange={set('desc_en')} rows={2} placeholder="Description in English..." />
       </div>
 
       {/* Categoria + preco */}
@@ -141,7 +141,7 @@ function DishForm({ dish, onSave, onCancel, loading, error }) {
         <Select label="Categoria" value={form.category} onChange={set('category')} required>
           {CATEGORIES.map(c => <option key={c.key} value={c.key}>{c.label}</option>)}
         </Select>
-        <Input label="Preco (€)" type="number" value={form.price} onChange={set('price')} min="0" step="0.01" required placeholder="0.00" />
+        <Input label="Preço (€)" type="number" value={form.price} onChange={set('price')} min="0" step="0.01" required placeholder="0.00" />
       </div>
 
       {/* Foto */}
@@ -182,11 +182,11 @@ function DishForm({ dish, onSave, onCancel, loading, error }) {
 
       {/* Opcoes */}
       <div>
-        <p className="text-xs font-body font-bold uppercase tracking-wide text-ocean-700 border-b border-n-100 pb-1 mb-2">Opcoes</p>
+        <p className="text-xs font-body font-bold uppercase tracking-wide text-ocean-700 border-b border-n-100 pb-1 mb-2">Opções</p>
         <div className="flex gap-6">
           <label className="flex items-center gap-2 cursor-pointer">
             <input type="checkbox" checked={form.available} onChange={e => setForm(f => ({ ...f, available: e.target.checked }))} className="w-4 h-4 accent-ocean-700" />
-            <span className="text-sm font-body text-n-700">Disponivel</span>
+            <span className="text-sm font-body text-n-700">Disponível</span>
           </label>
           <label className="flex items-center gap-2 cursor-pointer">
             <input type="checkbox" checked={form.featured} onChange={e => setForm(f => ({ ...f, featured: e.target.checked }))} className="w-4 h-4 accent-ocean-700" />
@@ -215,7 +215,7 @@ function DishForm({ dish, onSave, onCancel, loading, error }) {
       <div className="flex gap-3 pt-1">
         <Button type="button" variant="secondary" onClick={onCancel} className="flex-1">Cancelar</Button>
         <Button type="submit" loading={loading} className="flex-1">
-          {dish ? 'Guardar alteracoes' : 'Adicionar prato'}
+          {dish ? 'Guardar alterações' : 'Adicionar prato'}
         </Button>
       </div>
     </form>
@@ -253,7 +253,7 @@ function TastingMenuForm({ menu, onSave, onCancel, loading }) {
       items:    form.items.filter(it => it.name_pt),
     };
     onSave({
-      name:        form.name || 'Menu Degustacao',
+      name:        form.name || 'Menu Degustação',
       description: JSON.stringify(meta2),
       unit_type:   'tasting_menu',
       base_price:  Number(form.price) || 0,
@@ -267,12 +267,12 @@ function TastingMenuForm({ menu, onSave, onCancel, loading }) {
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="grid grid-cols-2 gap-3">
-        <Input label="Nome do menu" value={form.name} onChange={set('name')} required placeholder="Menu Degustacao Chef" autoFocus />
-        <Input label="Preco por pessoa (€)" type="number" value={form.price} onChange={set('price')} min="0" step="0.01" required placeholder="0.00" />
+        <Input label="Nome do menu" value={form.name} onChange={set('name')} required placeholder="Menu Degustação Chef" autoFocus />
+        <Input label="Preço por pessoa (€)" type="number" value={form.price} onChange={set('price')} min="0" step="0.01" required placeholder="0.00" />
       </div>
       <div className="grid grid-cols-2 gap-3">
-        <Textarea label="Descricao PT" value={form.desc_pt} onChange={set('desc_pt')} rows={2} />
-        <Textarea label="Descricao EN" value={form.desc_en} onChange={set('desc_en')} rows={2} />
+        <Textarea label="Descrição PT" value={form.desc_pt} onChange={set('desc_pt')} rows={2} />
+        <Textarea label="Descrição EN" value={form.desc_en} onChange={set('desc_en')} rows={2} />
       </div>
 
       <div>
@@ -298,7 +298,7 @@ function TastingMenuForm({ menu, onSave, onCancel, loading }) {
 
       <label className="flex items-center gap-2 cursor-pointer">
         <input type="checkbox" checked={form.available} onChange={e => setForm(f => ({ ...f, available: e.target.checked }))} className="w-4 h-4 accent-ocean-700" />
-        <span className="text-sm font-body text-n-700">Menu disponivel</span>
+        <span className="text-sm font-body text-n-700">Menu disponível</span>
       </label>
 
       <div className="flex gap-3 pt-1">
@@ -363,7 +363,7 @@ function DishCard({ dish, onEdit, onDelete, onToggleAvailable, onSubmitConect })
             <button onClick={() => onToggleAvailable(dish)}
               aria-label="Alternar disponibilidade"
               className={`p-1.5 rounded transition-colors ${available ? 'text-[var(--success)] hover:bg-[var(--success-light)]' : 'text-n-400 hover:bg-n-100'}`}
-              title={available ? 'Disponivel — clique para desactivar' : 'Indisponivel — clique para activar'}>
+              title={available ? 'Disponível — clique para desactivar' : 'Indisponível — clique para activar'}>
               <CheckCircle size={13} strokeWidth={1.75} />
             </button>
             <button onClick={() => onEdit(dish)} aria-label="Editar" className="p-1.5 rounded text-n-400 hover:text-ocean-700 hover:bg-ocean-50 transition-colors">
@@ -480,11 +480,11 @@ export default function MenuDigital() {
     <div>
       <PageHeader
         title="Menu Digital"
-        subtitle={`${dishes.length} prato(s) · ${tastings.length} menu(s) degustacao`}
+        subtitle={`${dishes.length} prato(s) · ${tastings.length} menu(s) degustação`}
         actions={
           <div className="flex gap-2">
             <Button variant="secondary" icon={ChefHat} onClick={() => { setModalType('tasting'); setModal('tasting_create'); }}>
-              Menu Degustacao
+              Menu Degustação
             </Button>
             <Button icon={Plus} onClick={() => { setModalType('dish'); setModal('create'); }}>
               Novo Prato
@@ -539,7 +539,7 @@ export default function MenuDigital() {
         <div className="bg-white rounded-md border border-n-200 shadow-sm overflow-hidden mb-6">
           <div className="px-5 py-4 border-b border-n-100 flex items-center gap-2">
             <Star size={14} strokeWidth={1.75} className="text-sand-500" />
-            <h2 className="font-display font-semibold text-sm text-n-700">Menus Degustacao</h2>
+            <h2 className="font-display font-semibold text-sm text-n-700">Menus Degustação</h2>
           </div>
           <div className="divide-y divide-n-100">
             {tastings.map(t => {
@@ -593,7 +593,7 @@ export default function MenuDigital() {
               <div className="flex items-center gap-2 bg-n-50 border border-n-200 rounded-md px-3 py-2">
                 <Link size={12} strokeWidth={1.75} className="text-n-400 shrink-0" />
                 <span className="text-xs font-mono text-n-700 truncate flex-1">{menuUrl}</span>
-                <button onClick={copyMenuUrl} aria-label="Copiar ligacao" className="p-1 text-n-400 hover:text-ocean-700 transition-colors shrink-0">
+                <button onClick={copyMenuUrl} aria-label="Copiar ligação" className="p-1 text-n-400 hover:text-ocean-700 transition-colors shrink-0">
                   {copied ? <CheckCircle size={13} strokeWidth={1.75} className="text-[var(--success)]" /> : <Copy size={13} strokeWidth={1.75} />}
                 </button>
               </div>
@@ -603,7 +603,7 @@ export default function MenuDigital() {
             </Button>
           </div>
         ) : (
-          <p className="text-sm font-body text-n-400">Configure o link do restaurante nas Definicoes para gerar o QR Code.</p>
+          <p className="text-sm font-body text-n-400">Configure o link do restaurante nas Definições para gerar o QR Code.</p>
         )}
       </div>
 
@@ -630,7 +630,7 @@ export default function MenuDigital() {
       <Modal
         open={!!modal && modalType === 'tasting'}
         onClose={() => setModal(null)}
-        title={modal === 'tasting_create' ? 'Novo Menu Degustacao' : 'Editar Menu'}
+        title={modal === 'tasting_create' ? 'Novo Menu Degustação' : 'Editar Menu'}
         size="md"
         footer={null}
       >
@@ -648,7 +648,7 @@ export default function MenuDigital() {
       <Modal
         open={!!deleteTarget}
         onClose={() => setDeleteTarget(null)}
-        title="Confirmar eliminacao"
+        title="Confirmar eliminação"
         size="sm"
         footer={
           <>
@@ -658,7 +658,7 @@ export default function MenuDigital() {
         }
       >
         <p className="text-sm font-body text-n-700">
-          Eliminar <strong>{deleteTarget?.name}</strong>? Esta acao nao pode ser desfeita.
+          Eliminar <strong>{deleteTarget?.name}</strong>? Esta ação não pode ser desfeita.
         </p>
       </Modal>
     </div>

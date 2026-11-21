@@ -76,7 +76,7 @@ describe('RH', () => {
         </Routes>
       </MemoryRouter>
     );
-    await screen.findByText('Pedidos de ferias pendentes', { selector: 'h3' });
+    await screen.findByText('Pedidos de férias pendentes', { selector: 'h3' });
     return r;
   }
 
@@ -91,21 +91,21 @@ describe('RH', () => {
 
   it('os_tres_cartoes_contam_pendentes_a_expirar_e_activos', async () => {
     await abre();
-    expect(within(cartao('Pedidos de ferias pendentes')).getByText('3')).toBeTruthy();
-    expect(within(cartao('Documentos/certificacoes a expirar')).getByText('3')).toBeTruthy();
+    expect(within(cartao('Pedidos de férias pendentes')).getByText('3')).toBeTruthy();
+    expect(within(cartao('Documentos/certificações a expirar')).getByText('3')).toBeTruthy();
     expect(within(cartao('Colaboradores activos')).getByText('4')).toBeTruthy();
   });
 
   it('pedido_mostra_nome_tipo_datas_e_dias', async () => {
     await abre();
     /* daysBetween e inclusivo: 5 dias seguidos = 5, o mesmo dia = 1 */
-    const pendentes = screen.getByText('Pedidos de ferias pendentes', { selector: 'h3' }).parentElement;
+    const pendentes = screen.getByText('Pedidos de férias pendentes', { selector: 'h3' }).parentElement;
     const p1 = within(pendentes).getByText('Ana Ferreira').parentElement;
-    expect(p1.textContent).toContain('Ferias');
+    expect(p1.textContent).toContain('Férias');
     expect(p1.textContent).toContain('2026-12-01 → 2026-12-05');
     expect(p1.textContent).toContain('(5 dias)');
     const p2 = within(pendentes).getByText('Rui Lopes').parentElement;
-    expect(p2.textContent).toContain('Doenca');
+    expect(p2.textContent).toContain('Doença');
     expect(p2.textContent).toContain('(1 dias)');
     /* tipo desconhecido mostra o valor tal e qual */
     const p3 = within(pendentes).getByText('Carla Dias').parentElement;
@@ -120,7 +120,7 @@ describe('RH', () => {
     await waitFor(() => expect(updateLeaveStatus).toHaveBeenCalledWith('s1', 'l1', 'approved'));
     await waitFor(() => expect(getHrOverview).toHaveBeenCalledTimes(2));
     expect(mensagens()).toEqual([['success', 'Pedido aprovado']]);
-    await screen.findByText('Pedidos de ferias pendentes', { selector: 'h3' });
+    await screen.findByText('Pedidos de férias pendentes', { selector: 'h3' });
   });
 
   it('rejeitar_chama_updateLeaveStatus_com_staff_leave_e_rejected_e_avisa_Pedido rejeitado', async () => {
@@ -129,7 +129,7 @@ describe('RH', () => {
     await waitFor(() => expect(updateLeaveStatus).toHaveBeenCalledWith('s2', 'l2', 'rejected'));
     await waitFor(() => expect(getHrOverview).toHaveBeenCalledTimes(2));
     expect(mensagens()).toEqual([['success', 'Pedido rejeitado']]);
-    await screen.findByText('Pedidos de ferias pendentes', { selector: 'h3' });
+    await screen.findByText('Pedidos de férias pendentes', { selector: 'h3' });
   });
 
   it('falha_ao_actualizar_mostra_Erro ao actualizar pedido', async () => {
@@ -159,8 +159,8 @@ describe('RH', () => {
     getHrOverview.mockResolvedValue({ pending_leave: [], expiring: [], staff: COLABORADORES });
     await abre();
     expect(screen.getByText('Sem pedidos pendentes.')).toBeTruthy();
-    expect(screen.getByText('Nada a expirar nos proximos 30 dias.')).toBeTruthy();
-    expect(within(cartao('Pedidos de ferias pendentes')).getByText('0')).toBeTruthy();
+    expect(screen.getByText('Nada a expirar nos próximos 30 dias.')).toBeTruthy();
+    expect(within(cartao('Pedidos de férias pendentes')).getByText('0')).toBeTruthy();
     expect(screen.queryByRole('button', { name: 'Aprovar' })).toBeNull();
   });
 
@@ -179,11 +179,11 @@ describe('RH', () => {
     expect(within(botao).getByText('B')).toBeTruthy();
   });
 
-  it('falha_ao_carregar_mostra_Erro ao carregar RH e a pagina fica a zeros', async () => {
+  it('falha_ao_carregar_mostra_Erro ao carregar RH e a página fica a zeros', async () => {
     getHrOverview.mockRejectedValue(new Error('x'));
     await abre();
     expect(mensagens()).toEqual([['error', 'Erro ao carregar RH']]);
-    expect(within(cartao('Pedidos de ferias pendentes')).getByText('0')).toBeTruthy();
+    expect(within(cartao('Pedidos de férias pendentes')).getByText('0')).toBeTruthy();
     expect(within(cartao('Colaboradores activos')).getByText('0')).toBeTruthy();
     expect(screen.getByText('Sem pedidos pendentes.')).toBeTruthy();
   });
@@ -197,7 +197,7 @@ describe('RH', () => {
   /* ---- design system ---- */
   it('cartao_de_numeros_com_pendentes_usa_o_token_de_aviso', async () => {
     await abre();
-    const caixa = cartao('Pedidos de ferias pendentes').previousElementSibling;
+    const caixa = cartao('Pedidos de férias pendentes').previousElementSibling;
     expect(caixa.className).toContain('bg-[var(--warning-light)]');
     expect(caixa.className).toContain('text-[var(--warning)]');
     /* o cartao dos activos nao e de aviso */
@@ -207,8 +207,8 @@ describe('RH', () => {
   it('cartao_sem_pendentes_nao_usa_o_token_de_aviso', async () => {
     getHrOverview.mockResolvedValue({ pending_leave: [], expiring: [], staff: COLABORADORES });
     await abre();
-    expect(cartao('Pedidos de ferias pendentes').previousElementSibling.className).not.toContain('--warning');
-    expect(cartao('Documentos/certificacoes a expirar').previousElementSibling.className).not.toContain('--warning');
+    expect(cartao('Pedidos de férias pendentes').previousElementSibling.className).not.toContain('--warning');
+    expect(cartao('Documentos/certificações a expirar').previousElementSibling.className).not.toContain('--warning');
   });
 
   it('nenhuma_classe_amber_nem_hexadecimal_sobra_na_pagina', async () => {

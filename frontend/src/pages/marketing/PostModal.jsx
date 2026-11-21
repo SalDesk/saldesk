@@ -7,20 +7,20 @@ import { PLATFORMS, STATUS_CONFIG } from './shared';
 
 /* ── Constants ── */
 const TEMPLATES = [
-  { key: 'tour_disponivel', label: 'Tour disponivel',
-    text_pt: 'Novo tour disponivel! Reserve ja o seu lugar e viva uma experiencia unica em Cabo Verde.',
+  { key: 'tour_disponivel', label: 'Tour disponível',
+    text_pt: 'Novo tour disponível! Reserve já o seu lugar e viva uma experiência única em Cabo Verde.',
     text_en: 'New tour available! Book your spot now and live a unique experience in Cabo Verde.' },
-  { key: 'ultimas_vagas', label: 'Ultimas vagas',
-    text_pt: 'Ultimas vagas para este tour! Nao perca a oportunidade de explorar a ilha connosco.',
+  { key: 'ultimas_vagas', label: 'Últimas vagas',
+    text_pt: 'Últimas vagas para este tour! Não perca a oportunidade de explorar a ilha connosco.',
     text_en: 'Last spots available for this tour! Do not miss the chance to explore the island with us.' },
-  { key: 'avaliacao', label: 'Avaliacao de cliente',
-    text_pt: 'Os nossos clientes falam por nos. Obrigado pela sua confianca e avaliacoes incriveis!',
+  { key: 'avaliacao', label: 'Avaliação de cliente',
+    text_pt: 'Os nossos clientes falam por nós. Obrigado pela sua confiança e avaliações incríveis!',
     text_en: 'Our guests speak for themselves. Thank you for trusting us and for the amazing reviews!' },
-  { key: 'promocao', label: 'Promocao especial',
-    text_pt: 'Promocao especial disponivel! Reserve agora e aproveite as nossas tarifas exclusivas.',
+  { key: 'promocao', label: 'Promoção especial',
+    text_pt: 'Promoção especial disponível! Reserve agora e aproveite as nossas tarifas exclusivas.',
     text_en: 'Special offer available! Book now and enjoy our exclusive rates for this season.' },
   { key: 'foto_do_dia', label: 'Foto do dia',
-    text_pt: 'Mais um dia incrivel em Cabo Verde. Venha conhecer a nossa ilha e as nossas experiencias!',
+    text_pt: 'Mais um dia incrível em Cabo Verde. Venha conhecer a nossa ilha e as nossas experiências!',
     text_en: 'Another amazing day in Cabo Verde. Come discover our island and all it has to offer!' },
 ];
 
@@ -63,7 +63,7 @@ function FacebookPreview({ text, photoUrl, username }) {
           <User size={13} strokeWidth={1.75} className="text-white" />
         </div>
         <div>
-          <p className="text-xs font-body font-semibold text-n-900">{username || 'Pagina'}</p>
+          <p className="text-xs font-body font-semibold text-n-900">{username || 'Página'}</p>
           <p className="text-[10px] font-body text-n-400">Agora</p>
         </div>
       </div>
@@ -128,7 +128,7 @@ export default function PostModal({ post, onSave, onClose, operatorName }) {
             </div>
           </div>
 
-          <Textarea label="Texto PT" aria-label="Texto PT" value={form.text_pt} onChange={set('text_pt')} rows={3} required placeholder="Texto para publicar em portugues..." />
+          <Textarea label="Texto PT" aria-label="Texto PT" value={form.text_pt} onChange={set('text_pt')} rows={3} required placeholder="Texto para publicar em português..." />
           <Textarea label="Texto EN" aria-label="Texto EN" value={form.text_en} onChange={set('text_en')} rows={2} placeholder="Text to post in English..." />
           <Input label="Foto (URL)" aria-label="Foto (URL)" value={form.photo_url} onChange={set('photo_url')} placeholder="https://exemplo.com/imagem.jpg" />
 

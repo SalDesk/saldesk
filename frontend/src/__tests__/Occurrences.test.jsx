@@ -19,7 +19,7 @@ vi.mock('../services/staffService', () => ({ listStaff: vi.fn() }));
 const FUTURE = { v7_startTransition: true, v7_relativeSplatPath: true };
 const HOJE = new Date().toISOString().slice(0, 10);
 
-/* "Este mes" usa a hora de agora (sem folga de dias): as do mes ficam a minutos de agora; as outras ficam a 40 e 60 dias */
+/* "Este mês" usa a hora de agora (sem folga de dias): as do mes ficam a minutos de agora; as outras ficam a 40 e 60 dias */
 function ha(minutos) { return new Date(Date.now() - minutos * 60000).toISOString(); }
 function haDias(dias) { return new Date(Date.now() - dias * 86400000).toISOString(); }
 
@@ -90,62 +90,62 @@ describe('Occurrences', () => {
     return screen.getByText(rotulo).previousElementSibling.textContent;
   }
 
-  it('lista as ocorrencias da mais recente para a mais antiga, com as colunas', async () => {
+  it('lista as ocorrências da mais recente para a mais antiga, com as colunas', async () => {
     await abre();
     const cab = within(screen.getByRole('table')).getAllByRole('columnheader').map(c => c.textContent);
-    expect(cab).toEqual(['Data', 'Tipo', 'Severidade', 'Tour', 'Colaborador', 'Descricao', 'Accoes tomadas', '']);
+    expect(cab).toEqual(['Data', 'Tipo', 'Severidade', 'Tour', 'Colaborador', 'Descrição', 'Acções tomadas', '']);
     expect(descricoes()).toEqual(['Queda de turista', 'Atraso do transfer', 'Cortes leves', 'Cliente reclamou', 'Vento forte']);
     const c1 = celulas(linhas()[0]);
-    expect(c1.slice(1, 7)).toEqual(['Acidente', 'Critica', 'Buggy Tour', 'Rui', 'Queda de turista', 'Chamada ambulancia']);
+    expect(c1.slice(1, 7)).toEqual(['Acidente', 'Crítica', 'Buggy Tour', 'Rui', 'Queda de turista', 'Chamada ambulancia']);
   });
 
-  it('campos em falta mostram travessao e "Nao registadas"', async () => {
+  it('campos em falta mostram travessao e "Não registadas"', async () => {
     await abre();
     const c2 = celulas(linhas()[1]);
-    expect(c2.slice(1, 7)).toEqual(['Atraso', 'Media', '—', '—', 'Atraso do transfer', 'Nao registadas']);
+    expect(c2.slice(1, 7)).toEqual(['Atraso', 'Média', '—', '—', 'Atraso do transfer', 'Não registadas']);
   });
 
-  it('os KPIs contam total, este mes, alta ou critica e criticas', async () => {
+  it('os KPIs contam total, este mês, alta ou crítica e críticas', async () => {
     await abre();
     expect(kpi('Total registadas')).toBe('5');
-    expect(kpi('Este mes')).toBe('3');
-    expect(kpi('Alta / Critica')).toBe('3');
-    expect(kpi('Criticas')).toBe('2');
+    expect(kpi('Este mês')).toBe('3');
+    expect(kpi('Alta / Crítica')).toBe('3');
+    expect(kpi('Críticas')).toBe('2');
   });
 
-  it('o aviso de criticas so conta as recentes e nao resolvidas', async () => {
+  it('o aviso de críticas só conta as recentes e não resolvidas', async () => {
     await abre();
-    expect(screen.getByText('1 ocorrencia(s) critica(s) nao resolvida(s)')).toBeInTheDocument();
-    const aviso = screen.getByText('1 ocorrencia(s) critica(s) nao resolvida(s)').parentElement;
+    expect(screen.getByText('1 ocorrência(s) crítica(s) não resolvida(s)')).toBeInTheDocument();
+    const aviso = screen.getByText('1 ocorrência(s) crítica(s) não resolvida(s)').parentElement;
     expect(within(aviso).getByText('Queda de turista')).toBeInTheDocument();
   });
 
-  it('sem criticas nao ha aviso', async () => {
+  it('sem críticas não ha aviso', async () => {
     listOccurrences.mockResolvedValue([O2, O3]);
     await abre();
-    expect(screen.queryByText(/critica\(s\) nao resolvida/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/crítica\(s\) não resolvida/)).not.toBeInTheDocument();
   });
 
-  it('o relatorio mensal conta por tipo e por severidade e o total do mes', async () => {
+  it('o relatório mensal conta por tipo e por severidade e o total do mês', async () => {
     await abre();
     const meses = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
     const agora = new Date();
-    const cartao = screen.getByText(`Relatorio mensal — ${meses[agora.getMonth()]} ${agora.getFullYear()}`).parentElement;
+    const cartao = screen.getByText(`Relatório mensal — ${meses[agora.getMonth()]} ${agora.getFullYear()}`).parentElement;
     expect(within(cartao).getByText('Por tipo')).toBeInTheDocument();
     for (const t of ['Acidente', 'Atraso', 'Incidente']) expect(within(cartao).getByText(t)).toBeInTheDocument();
     expect(within(cartao).queryByText('Mau tempo')).not.toBeInTheDocument();
-    expect(within(cartao).getByText('Media')).toBeInTheDocument();
-    expect(within(cartao).getByText('Critica')).toBeInTheDocument();
+    expect(within(cartao).getByText('Média')).toBeInTheDocument();
+    expect(within(cartao).getByText('Crítica')).toBeInTheDocument();
     expect(within(cartao).getByText('3', { selector: 'span.font-semibold' })).toBeInTheDocument();
   });
 
-  it('sem ocorrencias este mes o relatorio di-lo', async () => {
+  it('sem ocorrências este mês o relatório di-lo', async () => {
     listOccurrences.mockResolvedValue([O3, O5]);
     await abre();
-    expect(screen.getByText('Sem ocorrencias registadas este mes.')).toBeInTheDocument();
+    expect(screen.getByText('Sem ocorrências registadas este mês.')).toBeInTheDocument();
   });
 
-  it('o filtro de tipo mostra so esse tipo e "Todos" repoe', async () => {
+  it('o filtro de tipo mostra só esse tipo e "Todos" repoe', async () => {
     await abre();
     fireEvent.click(screen.getByRole('button', { name: 'Atraso' }));
     expect(descricoes()).toEqual(['Atraso do transfer']);
@@ -155,7 +155,7 @@ describe('Occurrences', () => {
 
   it('a severidade liga-se e desliga-se ao clicar outra vez', async () => {
     await abre();
-    fireEvent.click(screen.getByRole('button', { name: 'Critica' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Crítica' }));
     expect(descricoes()).toEqual(['Queda de turista', 'Cortes leves']);
     fireEvent.click(screen.getByRole('button', { name: 'Alta' }));
     expect(descricoes()).toEqual(['Cliente reclamou']);
@@ -163,9 +163,9 @@ describe('Occurrences', () => {
     expect(descricoes()).toHaveLength(5);
   });
 
-  it('a pesquisa procura na descricao, no tour e no colaborador', async () => {
+  it('a pesquisa procura na descrição, no tour e no colaborador', async () => {
     await abre();
-    const campoPesquisa = screen.getByPlaceholderText('Pesquisar descricao, tour, colaborador...');
+    const campoPesquisa = screen.getByPlaceholderText('Pesquisar descrição, tour, colaborador...');
     fireEvent.change(campoPesquisa, { target: { value: 'vento' } });
     expect(descricoes()).toEqual(['Vento forte']);
     fireEvent.change(campoPesquisa, { target: { value: 'mergulho' } });
@@ -174,21 +174,21 @@ describe('Occurrences', () => {
     expect(descricoes()).toEqual(['Queda de turista', 'Vento forte']);
   });
 
-  it('registar chama createOccurrence com o formulario e os nomes, e a ocorrencia entra na lista', async () => {
+  it('registar chama createOccurrence com o formulário e os nomes, e a ocorrência entra na lista', async () => {
     await abre();
-    fireEvent.click(screen.getByRole('button', { name: 'Registar ocorrencia' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Registar ocorrência' }));
     const dialogo = await screen.findByRole('dialog');
-    expect(within(dialogo).getByText('Registar ocorrencia')).toBeInTheDocument();
-    expect(campo(dialogo, 'Data da ocorrencia').value).toBe(HOJE);
+    expect(within(dialogo).getByText('Registar ocorrência')).toBeInTheDocument();
+    expect(campo(dialogo, 'Data da ocorrência').value).toBe(HOJE);
     expect(campo(dialogo, 'Tipo').value).toBe('incidente');
     expect(campo(dialogo, 'Severidade').value).toBe('media');
-    expect([...campo(dialogo, 'Tour / Servico').options].map(o => o.textContent)).toEqual(['Nao associado a tour especifico', 'Buggy Tour', 'Mergulho']);
+    expect([...campo(dialogo, 'Tour / Serviço').options].map(o => o.textContent)).toEqual(['Não associado a tour específico', 'Buggy Tour', 'Mergulho']);
     fireEvent.change(campo(dialogo, 'Tipo'), { target: { value: 'acidente' } });
     fireEvent.change(campo(dialogo, 'Severidade'), { target: { value: 'alta' } });
-    fireEvent.change(campo(dialogo, 'Tour / Servico'), { target: { value: 'u1' } });
-    fireEvent.change(campo(dialogo, 'Colaborador / Guia responsavel'), { target: { value: 's1' } });
-    fireEvent.change(campo(dialogo, 'Descricao da ocorrencia'), { target: { value: 'Teste novo' } });
-    fireEvent.change(campo(dialogo, 'Accoes tomadas'), { target: { value: 'Feito' } });
+    fireEvent.change(campo(dialogo, 'Tour / Serviço'), { target: { value: 'u1' } });
+    fireEvent.change(campo(dialogo, 'Colaborador / Guia responsável'), { target: { value: 's1' } });
+    fireEvent.change(campo(dialogo, 'Descrição da ocorrência'), { target: { value: 'Teste novo' } });
+    fireEvent.change(campo(dialogo, 'Acções tomadas'), { target: { value: 'Feito' } });
     fireEvent.change(campo(dialogo, 'URLs de fotos (separadas por virgula)'), { target: { value: 'https://a.jpg' } });
     fireEvent.click(within(dialogo).getByRole('button', { name: 'Registar' }));
     await waitFor(() => expect(createOccurrence).toHaveBeenCalledTimes(1));
@@ -204,22 +204,22 @@ describe('Occurrences', () => {
   it('se gravar falhar mostra o erro no modal', async () => {
     createOccurrence.mockRejectedValueOnce(new Error('rede'));
     await abre();
-    fireEvent.click(screen.getByRole('button', { name: 'Registar ocorrencia' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Registar ocorrência' }));
     const dialogo = await screen.findByRole('dialog');
-    fireEvent.change(campo(dialogo, 'Descricao da ocorrencia'), { target: { value: 'X' } });
+    fireEvent.change(campo(dialogo, 'Descrição da ocorrência'), { target: { value: 'X' } });
     fireEvent.click(within(dialogo).getByRole('button', { name: 'Registar' }));
-    expect(await within(dialogo).findByText('Erro ao guardar ocorrencia.')).toBeInTheDocument();
+    expect(await within(dialogo).findByText('Erro ao guardar ocorrência.')).toBeInTheDocument();
   });
 
-  it('editar abre o formulario preenchido e chama updateOccurrence com o id', async () => {
+  it('editar abre o formulário preenchido e chama updateOccurrence com o id', async () => {
     await abre();
     fireEvent.click(within(linhas()[0]).getAllByRole('button')[0]);
     const dialogo = await screen.findByRole('dialog');
-    expect(within(dialogo).getByText('Editar ocorrencia')).toBeInTheDocument();
-    expect(campo(dialogo, 'Descricao da ocorrencia').value).toBe('Queda de turista');
+    expect(within(dialogo).getByText('Editar ocorrência')).toBeInTheDocument();
+    expect(campo(dialogo, 'Descrição da ocorrência').value).toBe('Queda de turista');
     expect(campo(dialogo, 'Tipo').value).toBe('acidente');
     expect(campo(dialogo, 'Severidade').value).toBe('critica');
-    fireEvent.change(campo(dialogo, 'Descricao da ocorrencia'), { target: { value: 'Queda leve' } });
+    fireEvent.change(campo(dialogo, 'Descrição da ocorrência'), { target: { value: 'Queda leve' } });
     fireEvent.click(within(dialogo).getByRole('button', { name: 'Guardar' }));
     await waitFor(() => expect(updateOccurrence).toHaveBeenCalledTimes(1));
     expect(updateOccurrence).toHaveBeenCalledWith('o1', expect.objectContaining({
@@ -230,11 +230,11 @@ describe('Occurrences', () => {
     expect(descricoes()).toHaveLength(5);
   });
 
-  it('eliminar pede confirmacao: cancelar nao apaga e confirmar apaga e tira a linha', async () => {
+  it('eliminar pede confirmação: cancelar não apaga e confirmar apaga e tira a linha', async () => {
     const confirmar = vi.spyOn(window, 'confirm').mockReturnValue(false);
     await abre();
     fireEvent.click(within(linhas()[0]).getAllByRole('button')[1]);
-    expect(confirmar).toHaveBeenCalledWith('Eliminar esta ocorrencia?');
+    expect(confirmar).toHaveBeenCalledWith('Eliminar esta ocorrência?');
     expect(deleteOccurrence).not.toHaveBeenCalled();
     expect(descricoes()).toHaveLength(5);
     confirmar.mockReturnValue(true);
@@ -243,21 +243,21 @@ describe('Occurrences', () => {
     await waitFor(() => expect(descricoes()).not.toContain('Queda de turista'));
   });
 
-  it('o tipo e a severidade sao grupos de botoes com aria-pressed', async () => {
+  it('o tipo e a severidade são grupos de botões com aria-pressed', async () => {
     await abre();
     expect(screen.getByRole('button', { name: 'Todos' })).toHaveAttribute('aria-pressed', 'true');
     expect(screen.getByRole('button', { name: 'Atraso' })).toHaveAttribute('aria-pressed', 'false');
     fireEvent.click(screen.getByRole('button', { name: 'Atraso' }));
     expect(screen.getByRole('button', { name: 'Atraso' })).toHaveAttribute('aria-pressed', 'true');
     expect(screen.getByRole('button', { name: 'Todos' })).toHaveAttribute('aria-pressed', 'false');
-    expect(screen.getByRole('button', { name: 'Critica' })).toHaveAttribute('aria-pressed', 'false');
-    fireEvent.click(screen.getByRole('button', { name: 'Critica' }));
-    expect(screen.getByRole('button', { name: 'Critica' })).toHaveAttribute('aria-pressed', 'true');
-    fireEvent.click(screen.getByRole('button', { name: 'Critica' }));
-    expect(screen.getByRole('button', { name: 'Critica' })).toHaveAttribute('aria-pressed', 'false');
+    expect(screen.getByRole('button', { name: 'Crítica' })).toHaveAttribute('aria-pressed', 'false');
+    fireEvent.click(screen.getByRole('button', { name: 'Crítica' }));
+    expect(screen.getByRole('button', { name: 'Crítica' })).toHaveAttribute('aria-pressed', 'true');
+    fireEvent.click(screen.getByRole('button', { name: 'Crítica' }));
+    expect(screen.getByRole('button', { name: 'Crítica' })).toHaveAttribute('aria-pressed', 'false');
   });
 
-  it('os botoes de editar e eliminar de cada linha tem nome acessivel', async () => {
+  it('os botões de editar e eliminar de cada linha tem nome acessível', async () => {
     await abre();
     for (const l of linhas()) {
       expect(within(l).getByRole('button', { name: 'Editar' })).toBeInTheDocument();
@@ -271,30 +271,30 @@ describe('Occurrences', () => {
     expect(html).not.toContain('[#');
     expect(html).not.toMatch(/style="[^"]*color/);
     expect(html).not.toMatch(/(?:text|bg|border)-(?:red|orange|yellow)-\d/);
-    fireEvent.click(screen.getByRole('button', { name: 'Registar ocorrencia' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Registar ocorrência' }));
     await screen.findByRole('dialog');
     expect(document.body.innerHTML).not.toContain('[#');
   });
 
-  it('sem ocorrencias mostra o vazio com a acao; com filtros sem resultado, so o texto', async () => {
+  it('sem ocorrências mostra o vazio com a ação; com filtros sem resultado, só o texto', async () => {
     listOccurrences.mockResolvedValue([]);
     render(
       <MemoryRouter future={FUTURE}>
         <Occurrences />
       </MemoryRouter>
     );
-    expect(await screen.findByText('Registe a primeira ocorrencia quando necessario.')).toBeInTheDocument();
-    expect(screen.getByText('Sem ocorrencias')).toBeInTheDocument();
-    expect(screen.getAllByRole('button', { name: 'Registar ocorrencia' })).toHaveLength(2);
+    expect(await screen.findByText('Registe a primeira ocorrência quando necessário.')).toBeInTheDocument();
+    expect(screen.getByText('Sem ocorrências')).toBeInTheDocument();
+    expect(screen.getAllByRole('button', { name: 'Registar ocorrência' })).toHaveLength(2);
     cleanup();
     listOccurrences.mockResolvedValue(TODAS);
     await abre();
-    fireEvent.change(screen.getByPlaceholderText('Pesquisar descricao, tour, colaborador...'), { target: { value: 'zzz' } });
-    expect(screen.getByText('Nenhuma ocorrencia corresponde aos filtros aplicados.')).toBeInTheDocument();
-    expect(screen.getAllByRole('button', { name: 'Registar ocorrencia' })).toHaveLength(1);
+    fireEvent.change(screen.getByPlaceholderText('Pesquisar descrição, tour, colaborador...'), { target: { value: 'zzz' } });
+    expect(screen.getByText('Nenhuma ocorrência corresponde aos filtros aplicados.')).toBeInTheDocument();
+    expect(screen.getAllByRole('button', { name: 'Registar ocorrência' })).toHaveLength(1);
   });
 
-  it('servicos a falhar nao rebentam', async () => {
+  it('serviços a falhar não rebentam', async () => {
     listOccurrences.mockRejectedValue(new Error('rede'));
     listUnits.mockRejectedValue(new Error('rede'));
     listStaff.mockRejectedValue(new Error('rede'));
@@ -303,6 +303,6 @@ describe('Occurrences', () => {
         <Occurrences />
       </MemoryRouter>
     );
-    expect(await screen.findByText('Sem ocorrencias')).toBeInTheDocument();
+    expect(await screen.findByText('Sem ocorrências')).toBeInTheDocument();
   });
 });

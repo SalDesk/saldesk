@@ -104,9 +104,9 @@ export default function HotelRoomForm({ unit, onSave, onCancel, loading, error }
     <form onSubmit={handleSubmit} className="space-y-5">
 
       <div>
-        <SectionLabel>Identificacao</SectionLabel>
+        <SectionLabel>Identificação</SectionLabel>
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-3">
-          <Input label="Numero" value={form.number} onChange={set('number')} placeholder="101" />
+          <Input label="Número" value={form.number} onChange={set('number')} placeholder="101" />
           <div className="col-span-2">
             <Input label="Nome" value={form.name} onChange={set('name')} required autoFocus placeholder="Ocean View Suite" />
           </div>
@@ -126,7 +126,7 @@ export default function HotelRoomForm({ unit, onSave, onCancel, loading, error }
         <SectionLabel>Capacidade</SectionLabel>
         <div className="grid grid-cols-2 gap-3">
           <Input label="Adultos" type="number" value={form.capacity}      onChange={set('capacity')}      min="1" required />
-          <Input label="Criancas" type="number" value={form.capacity_kids} onChange={set('capacity_kids')} min="0" />
+          <Input label="Crianças" type="number" value={form.capacity_kids} onChange={set('capacity_kids')} min="0" />
         </div>
       </div>
 
@@ -136,21 +136,21 @@ export default function HotelRoomForm({ unit, onSave, onCancel, loading, error }
       </div>
 
       <div>
-        <SectionLabel>Precos por epoca (€ / noite)</SectionLabel>
+        <SectionLabel>Preços por época (€ / noite)</SectionLabel>
         <div className="grid grid-cols-2 gap-3 mb-3">
-          <Input label="Preco base"   type="number" value={form.base_price} onChange={set('base_price')} min="0" step="0.01" required placeholder="0.00" />
-          <Input label="Epoca baixa"  type="number" value={form.price_low}  onChange={set('price_low')}  min="0" step="0.01" placeholder="0.00" />
+          <Input label="Preço base"   type="number" value={form.base_price} onChange={set('base_price')} min="0" step="0.01" required placeholder="0.00" />
+          <Input label="Época baixa"  type="number" value={form.price_low}  onChange={set('price_low')}  min="0" step="0.01" placeholder="0.00" />
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-          <Input label="Epoca media"  type="number" value={form.price_mid}  onChange={set('price_mid')}  min="0" step="0.01" placeholder="0.00" />
-          <Input label="Epoca alta"   type="number" value={form.price_high} onChange={set('price_high')} min="0" step="0.01" placeholder="0.00" />
+          <Input label="Época média"  type="number" value={form.price_mid}  onChange={set('price_mid')}  min="0" step="0.01" placeholder="0.00" />
+          <Input label="Época alta"   type="number" value={form.price_high} onChange={set('price_high')} min="0" step="0.01" placeholder="0.00" />
           <Input label="Pico"         type="number" value={form.price_peak} onChange={set('price_peak')} min="0" step="0.01" placeholder="0.00" />
         </div>
       </div>
 
       <div>
-        <SectionLabel>Descricao</SectionLabel>
-        <Textarea value={form.description} onChange={set('description')} placeholder="Descricao do quarto..." rows={2} />
+        <SectionLabel>Descrição</SectionLabel>
+        <Textarea value={form.description} onChange={set('description')} placeholder="Descrição do quarto..." rows={2} />
       </div>
 
       <div>
@@ -182,7 +182,7 @@ export default function HotelRoomForm({ unit, onSave, onCancel, loading, error }
           <Select value={form.status} onChange={set('status')}>
             <option value="active">Activo</option>
             <option value="cleaning">Em limpeza</option>
-            <option value="maintenance">Em manutencao</option>
+            <option value="maintenance">Em manutenção</option>
             <option value="inactive">Inactivo</option>
           </Select>
         </div>
@@ -195,7 +195,7 @@ export default function HotelRoomForm({ unit, onSave, onCancel, loading, error }
       <div className="flex gap-3 pt-1">
         <Button type="button" variant="secondary" onClick={onCancel} className="flex-1">Cancelar</Button>
         <Button type="submit" loading={loading} className="flex-1">
-          {unit ? 'Guardar alteracoes' : 'Criar quarto'}
+          {unit ? 'Guardar alterações' : 'Criar quarto'}
         </Button>
       </div>
     </form>

@@ -103,18 +103,18 @@ describe('Detalhe do colaborador: estrutura', () => {
 
   it('os_quatro_separadores_abrem_sem_rebentar', async () => {
     await montar();
-    abrir('Salario');
-    expect(await screen.findByText('Historico de pagamentos')).toBeInTheDocument();
+    abrir('Salário');
+    expect(await screen.findByText('Histórico de pagamentos')).toBeInTheDocument();
     abrir('Documentos');
     expect(await screen.findByText('Contratos e documentos')).toBeInTheDocument();
-    abrir('Certificacoes');
-    expect(await screen.findByText('Formacao e certificacoes')).toBeInTheDocument();
-    abrir('Ferias');
+    abrir('Certificações');
+    expect(await screen.findByText('Formação e certificações')).toBeInTheDocument();
+    abrir('Férias');
     expect(await screen.findByText('Pedidos')).toBeInTheDocument();
   });
 });
 
-describe('Detalhe do colaborador: Ferias', () => {
+describe('Detalhe do colaborador: Férias', () => {
   it('mostra_direito_usados_restantes_e_os_pedidos', async () => {
     await montar();
     expect(await screen.findByText(`Direito (${ANO})`)).toBeInTheDocument();
@@ -123,10 +123,10 @@ describe('Detalhe do colaborador: Ferias', () => {
     expect(screen.getByText('22 dias')).toBeInTheDocument();
     expect(screen.getByText('5 dias')).toBeInTheDocument();
     expect(screen.getByText('17 dias')).toBeInTheDocument();
-    expect(linha('2026-12-01 → 2026-12-05')).toHaveTextContent('Ferias · 2026-12-01 → 2026-12-05 (5 dias)');
+    expect(linha('2026-12-01 → 2026-12-05')).toHaveTextContent('Férias · 2026-12-01 → 2026-12-05 (5 dias)');
     expect(linha('2026-12-01 → 2026-12-05')).toHaveTextContent('Natal');
     expect(linha('2026-12-01 → 2026-12-05')).toHaveTextContent('Pendente');
-    expect(linha('2026-11-02 → 2026-11-02')).toHaveTextContent('Doenca');
+    expect(linha('2026-11-02 → 2026-11-02')).toHaveTextContent('Doença');
     expect(linha('2026-11-02 → 2026-11-02')).toHaveTextContent('(1 dias)');
     expect(linha('2026-11-02 → 2026-11-02')).toHaveTextContent('Aprovado');
     expect(linha('2026-10-01 → 2026-10-03')).toHaveTextContent('xyz'); /* tipo desconhecido tal e qual */
@@ -138,12 +138,12 @@ describe('Detalhe do colaborador: Ferias', () => {
   it('sem_direito_mostra_a_sugestao_ou_a_instrucao', async () => {
     getLeaveBalance.mockResolvedValue({ entitled_days: null, suggested_days: 18, used_days: 0 });
     await montar();
-    expect(await screen.findByText(/Sugestao com base na data de admissao.*18 dias/)).toBeInTheDocument();
+    expect(await screen.findByText(/Sugestão com base na data de admissão.*18 dias/)).toBeInTheDocument();
     expect(screen.getAllByText('—').length).toBeGreaterThan(0);
     cleanup();
     getLeaveBalance.mockResolvedValue({ entitled_days: null, suggested_days: null });
     await montar();
-    expect(await screen.findByText(/O numero de dias de ferias ainda nao esta configurado/)).toBeInTheDocument();
+    expect(await screen.findByText(/O número de dias de férias ainda não está configurado/)).toBeInTheDocument();
   });
 
   it('configurar_direito_chama_setLeaveBalance_com_o_ano_e_numero_e_recarrega', async () => {
@@ -151,14 +151,14 @@ describe('Detalhe do colaborador: Ferias', () => {
     await screen.findByText(`Direito (${ANO})`);
     fireEvent.click(screen.getByRole('button', { name: 'Configurar direito' }));
     const dlg = screen.getByRole('dialog');
-    expect(dlg).toHaveTextContent(`Direito a ferias — ${ANO}`);
-    expect(dlg).toHaveTextContent('Define aqui o numero de dias segundo o contrato/lei aplicavel.');
+    expect(dlg).toHaveTextContent(`Direito a férias — ${ANO}`);
+    expect(dlg).toHaveTextContent('Define aqui o número de dias segundo o contrato/lei aplicável.');
     const campo = within(dlg).getByRole('spinbutton');
     expect(campo).toHaveValue(22);
     fireEvent.change(campo, { target: { value: '25' } });
     fireEvent.click(within(dlg).getByRole('button', { name: 'Guardar' }));
     await waitFor(() => expect(setLeaveBalance).toHaveBeenCalledWith('s1', { year: ANO, entitled_days: 25 }));
-    await waitFor(() => expect(toasts()).toContain('success:Saldo de ferias actualizado'));
+    await waitFor(() => expect(toasts()).toContain('success:Saldo de férias actualizado'));
     await waitFor(() => expect(getLeaveBalance).toHaveBeenCalledTimes(2));
     expect(screen.queryByRole('dialog')).toBeNull();
   });
@@ -177,7 +177,7 @@ describe('Detalhe do colaborador: Ferias', () => {
     await screen.findByText(`Direito (${ANO})`);
     fireEvent.click(screen.getByRole('button', { name: /Novo pedido/ }));
     const dlg = screen.getByRole('dialog');
-    expect(dlg).toHaveTextContent('Novo pedido de ferias');
+    expect(dlg).toHaveTextContent('Novo pedido de férias');
     const [inicio, fim] = dlg.querySelectorAll('input[type="date"]');
     fireEvent.submit(dlg.querySelector('form'));
     expect(createLeave).not.toHaveBeenCalled(); /* sem datas */
@@ -188,7 +188,7 @@ describe('Detalhe do colaborador: Ferias', () => {
     fireEvent.change(dlg.querySelector('textarea'), { target: { value: 'Gripe' } });
     fireEvent.click(within(dlg).getByRole('button', { name: 'Criar pedido' }));
     await waitFor(() => expect(createLeave).toHaveBeenCalledWith('s1', { type: 'sick', start_date: '2027-01-10', end_date: '2027-01-12', notes: 'Gripe' }));
-    await waitFor(() => expect(toasts()).toContain('success:Pedido de ferias criado'));
+    await waitFor(() => expect(toasts()).toContain('success:Pedido de férias criado'));
     await waitFor(() => expect(listLeave).toHaveBeenCalledTimes(2));
   });
 
@@ -226,7 +226,7 @@ describe('Detalhe do colaborador: Ferias', () => {
   it('falha_ao_carregar_ferias_mostra_o_toast', async () => {
     listLeave.mockRejectedValue(new Error('x'));
     await montar();
-    await waitFor(() => expect(toasts()).toContain('error:Erro ao carregar ferias'));
+    await waitFor(() => expect(toasts()).toContain('error:Erro ao carregar férias'));
   });
 
   it('sem_pedidos_mostra_o_vazio', async () => {
@@ -238,18 +238,18 @@ describe('Detalhe do colaborador: Ferias', () => {
 
 /* ───────────────────────── caracterizacao: Salario ───────────────────────── */
 
-describe('Detalhe do colaborador: Salario', () => {
+describe('Detalhe do colaborador: Salário', () => {
   it('calcula_custo_total_inps_e_pago_no_ano_com_so_os_pagamentos_do_colaborador', async () => {
     await montar();
-    abrir('Salario');
-    await screen.findByText('Historico de pagamentos');
+    abrir('Salário');
+    await screen.findByText('Histórico de pagamentos');
     const valor = (rotulo) => screen.getByText(rotulo).nextSibling.textContent;
-    expect(valor('Salario base')).toBe(eur2(1000));
-    expect(valor('Subsidios')).toBe(eur2(80));
+    expect(valor('Salário base')).toBe(eur2(1000));
+    expect(valor('Subsídios')).toBe(eur2(80));
     expect(valor('INPS patronal')).toBe('15%');
-    expect(valor('Custo total/mes')).toBe(eur2(1230));
+    expect(valor('Custo total/mês')).toBe(eur2(1230));
     expect(screen.getByText(`Pago em ${ANO}`).previousSibling.textContent).toBe(eur2(1230));
-    expect(screen.getByText(`Contribuicoes INPS estimadas em ${ANO}`).previousSibling.textContent).toBe(eur2(184.5));
+    expect(screen.getByText(`Contribuições INPS estimadas em ${ANO}`).previousSibling.textContent).toBe(eur2(184.5));
     const meses = screen.getAllByText(/^(Jan|Fev|Mar|Abr|Mai|Jun|Jul|Ago|Set|Out|Nov|Dez) \d{4}$/).map(e => e.textContent);
     expect(meses).toEqual([`Mar ${ANO}`, `Dez ${ANO - 1}`]); /* mais recente primeiro; sem o de s2 */
     expect(screen.getByRole('link', { name: /Editar em Financeiro/ })).toHaveAttribute('href', '/financeiro');
@@ -260,32 +260,32 @@ describe('Detalhe do colaborador: Salario', () => {
     getSalaryConfig.mockResolvedValue({});
     getSalaryPayments.mockResolvedValue([]);
     await montar();
-    abrir('Salario');
-    expect(await screen.findByText(/Configuracao salarial ainda nao definida/)).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Financeiro → Salarios' })).toHaveAttribute('href', '/financeiro');
-    expect(screen.getByText(`Contribuicoes INPS estimadas em ${ANO}`).previousSibling.textContent).toBe('—');
+    abrir('Salário');
+    expect(await screen.findByText(/Configuração salarial ainda não definida/)).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Financeiro → Salários' })).toHaveAttribute('href', '/financeiro');
+    expect(screen.getByText(`Contribuições INPS estimadas em ${ANO}`).previousSibling.textContent).toBe('—');
     expect(screen.getByText('Sem pagamentos registados.')).toBeInTheDocument();
   });
 
   it('falha_ao_carregar_o_salario_mostra_o_toast', async () => {
     getSalaryConfig.mockRejectedValue(new Error('x'));
     await montar();
-    abrir('Salario');
-    await waitFor(() => expect(toasts()).toContain('error:Erro ao carregar salario'));
+    abrir('Salário');
+    await waitFor(() => expect(toasts()).toContain('error:Erro ao carregar salário'));
   });
 });
 
 /* ───────────────────────── design system: estrutura, Ferias e Salario ───────────────────────── */
 
-describe('Detalhe do colaborador com o design system (estrutura, Ferias e Salario)', () => {
+describe('Detalhe do colaborador com o design system (estrutura, Férias e Salário)', () => {
   it('os_quatro_separadores_sao_tabs_com_aria_selected', async () => {
     await montar();
     expect(screen.getAllByRole('tab')).toHaveLength(4);
-    expect(screen.getByRole('tab', { name: 'Ferias' })).toHaveAttribute('aria-selected', 'true');
-    fireEvent.click(screen.getByRole('tab', { name: 'Salario' }));
-    expect(await screen.findByText('Historico de pagamentos')).toBeInTheDocument();
-    expect(screen.getByRole('tab', { name: 'Salario' })).toHaveAttribute('aria-selected', 'true');
-    expect(screen.getByRole('tab', { name: 'Ferias' })).toHaveAttribute('aria-selected', 'false');
+    expect(screen.getByRole('tab', { name: 'Férias' })).toHaveAttribute('aria-selected', 'true');
+    fireEvent.click(screen.getByRole('tab', { name: 'Salário' }));
+    expect(await screen.findByText('Histórico de pagamentos')).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: 'Salário' })).toHaveAttribute('aria-selected', 'true');
+    expect(screen.getByRole('tab', { name: 'Férias' })).toHaveAttribute('aria-selected', 'false');
   });
 
   it('os_campos_dos_modais_de_ferias_tem_nome_acessivel', async () => {
@@ -293,11 +293,11 @@ describe('Detalhe do colaborador com o design system (estrutura, Ferias e Salari
     await screen.findByText(`Direito (${ANO})`);
     fireEvent.click(screen.getByRole('button', { name: /Novo pedido/ }));
     let modal = within(screen.getByRole('dialog'));
-    ['Tipo', 'Inicio', 'Fim', 'Notas'].forEach(r => expect(modal.getByLabelText(r)).toBeInTheDocument());
+    ['Tipo', 'Início', 'Fim', 'Notas'].forEach(r => expect(modal.getByLabelText(r)).toBeInTheDocument());
     fireEvent.click(modal.getByRole('button', { name: 'Fechar' }));
     fireEvent.click(screen.getByRole('button', { name: 'Configurar direito' }));
     modal = within(screen.getByRole('dialog'));
-    expect(modal.getByLabelText('Dias de ferias por ano')).toBeInTheDocument();
+    expect(modal.getByLabelText('Dias de férias por ano')).toBeInTheDocument();
   });
 
   it('os_vazios_usam_EmptyState', async () => {
@@ -305,14 +305,14 @@ describe('Detalhe do colaborador com o design system (estrutura, Ferias e Salari
     getSalaryPayments.mockResolvedValue([]);
     await montar();
     expect(await screen.findByText('Sem pedidos registados.')).toHaveClass('font-display');
-    abrir('Salario');
+    abrir('Salário');
     expect(await screen.findByText('Sem pagamentos registados.')).toHaveClass('font-display');
   });
 
   it('o_aviso_e_o_botao_rejeitar_usam_tokens', async () => {
     getLeaveBalance.mockResolvedValue({ entitled_days: null, suggested_days: null });
     await montar();
-    const aviso = (await screen.findByText(/O numero de dias de ferias ainda nao esta configurado/));
+    const aviso = (await screen.findByText(/O número de dias de férias ainda não está configurado/));
     expect(aviso.className).toContain('var(--warning-light)');
     expect(screen.getByRole('button', { name: 'Rejeitar' }).className).toContain('var(--error)');
   });
@@ -320,13 +320,13 @@ describe('Detalhe do colaborador com o design system (estrutura, Ferias e Salari
   it('sem_hexadecimais_cores_nomeadas_ou_text_error_em_ferias_e_salario', async () => {
     getLeaveBalance.mockResolvedValue({ entitled_days: null, suggested_days: null });
     const { container } = await montar();
-    await screen.findByText(/O numero de dias de ferias ainda nao esta configurado/);
+    await screen.findByText(/O número de dias de férias ainda não está configurado/);
     fireEvent.click(screen.getByRole('button', { name: /Novo pedido/ }));
     let html = container.innerHTML;
     fireEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Fechar' }));
     getSalaryConfig.mockResolvedValue({});
-    abrir('Salario');
-    await screen.findByText(/Configuracao salarial ainda nao definida/);
+    abrir('Salário');
+    await screen.findByText(/Configuração salarial ainda não definida/);
     html += container.innerHTML;
     expect(html).not.toMatch(HEX);
     expect(html).not.toMatch(NOMEADAS);
@@ -379,9 +379,9 @@ describe('Detalhe do colaborador: Documentos', () => {
     const dlg = screen.getByRole('dialog');
     expect(dlg).toHaveTextContent('Novo documento');
     fireEvent.submit(dlg.querySelector('form'));
-    expect(toasts()).toContain('error:Carrega um ficheiro e da um nome ao documento');
+    expect(toasts()).toContain('error:Carrega um ficheiro e dá um nome ao documento');
     expect(createDocument).not.toHaveBeenCalled();
-    expect(Array.from(within(dlg).getByRole('combobox').options).map(o => o.textContent)).toEqual(['Contrato', 'Documento de identificacao', 'Outro']);
+    expect(Array.from(within(dlg).getByRole('combobox').options).map(o => o.textContent)).toEqual(['Contrato', 'Documento de identificação', 'Outro']);
   });
 
   it('carregar_ficheiro_valida_chama_uploadDocument_e_preenche_o_nome_e_guardar_cria', async () => {
@@ -447,7 +447,7 @@ describe('Detalhe do colaborador: Documentos', () => {
   });
 });
 
-describe('Detalhe do colaborador: Certificacoes', () => {
+describe('Detalhe do colaborador: Certificações', () => {
   beforeEach(() => {
     listCertifications.mockResolvedValue(CERTS);
     createCertification.mockReset().mockResolvedValue({});
@@ -455,7 +455,7 @@ describe('Detalhe do colaborador: Certificacoes', () => {
     validateDocumentFile.mockReset().mockReturnValue(null);
     uploadDocument.mockReset().mockResolvedValue({ url: 'http://up/cert.pdf' });
   });
-  const abrirCerts = async () => { await montar(); abrir('Certificacoes'); await screen.findByText(/PADI Open Water/); };
+  const abrirCerts = async () => { await montar(); abrir('Certificações'); await screen.findByText(/PADI Open Water/); };
 
   it('lista_nome_emissor_e_validade', async () => {
     await abrirCerts();
@@ -469,9 +469,9 @@ describe('Detalhe do colaborador: Certificacoes', () => {
     await abrirCerts();
     fireEvent.click(botaoAdicionar());
     const dlg = screen.getByRole('dialog');
-    expect(dlg).toHaveTextContent('Nova certificacao');
+    expect(dlg).toHaveTextContent('Nova certificação');
     fireEvent.submit(dlg.querySelector('form'));
-    expect(toasts()).toContain('error:Da um nome a certificacao');
+    expect(toasts()).toContain('error:Dá um nome à certificação');
     expect(createCertification).not.toHaveBeenCalled();
     fireEvent.change(within(dlg).getByPlaceholderText('Ex: PADI Open Water'), { target: { value: 'CPR' } });
     fireEvent.change(within(dlg).getByPlaceholderText('Ex: PADI'), { target: { value: 'Cruz Vermelha' } });
@@ -480,9 +480,9 @@ describe('Detalhe do colaborador: Certificacoes', () => {
     fireEvent.change(validade, { target: { value: '2028-01-10' } });
     fireEvent.change(campoFicheiro(), { target: { files: [ficheiro()] } });
     expect(await screen.findByText('Certificado carregado.')).toBeInTheDocument();
-    fireEvent.click(within(dlg).getByRole('button', { name: 'Guardar certificacao' }));
+    fireEvent.click(within(dlg).getByRole('button', { name: 'Guardar certificação' }));
     await waitFor(() => expect(createCertification).toHaveBeenCalledWith('s1', { name: 'CPR', issuer: 'Cruz Vermelha', issued_date: '2026-01-10', expiry_date: '2028-01-10', file_url: 'http://up/cert.pdf' }));
-    await waitFor(() => expect(toasts()).toContain('success:Certificacao guardada'));
+    await waitFor(() => expect(toasts()).toContain('success:Certificação guardada'));
     await waitFor(() => expect(listCertifications).toHaveBeenCalledTimes(2));
   });
 
@@ -490,31 +490,31 @@ describe('Detalhe do colaborador: Certificacoes', () => {
     await abrirCerts();
     fireEvent.click(within(linhaDe('PADI Open Water')).getByRole('button'));
     await waitFor(() => expect(deleteCertification).toHaveBeenCalledWith('s1', 'c1'));
-    await waitFor(() => expect(toasts()).toContain('success:Certificacao eliminada'));
+    await waitFor(() => expect(toasts()).toContain('success:Certificação eliminada'));
     deleteCertification.mockRejectedValueOnce(new Error('x'));
     fireEvent.click(within(linhaDe('Primeiros socorros')).getByRole('button'));
     await waitFor(() => expect(toasts()).toContain('error:Erro ao eliminar'));
     createCertification.mockRejectedValue(new Error('x'));
     fireEvent.click(botaoAdicionar());
     fireEvent.change(screen.getByPlaceholderText('Ex: PADI Open Water'), { target: { value: 'X' } });
-    fireEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Guardar certificacao' }));
-    await waitFor(() => expect(toasts()).toContain('error:Erro ao guardar certificacao'));
+    fireEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Guardar certificação' }));
+    await waitFor(() => expect(toasts()).toContain('error:Erro ao guardar certificação'));
     cleanup();
     listCertifications.mockRejectedValue(new Error('x'));
     await montar();
-    abrir('Certificacoes');
-    await waitFor(() => expect(toasts()).toContain('error:Erro ao carregar certificacoes'));
+    abrir('Certificações');
+    await waitFor(() => expect(toasts()).toContain('error:Erro ao carregar certificações'));
   });
 
   it('sem_certificacoes_mostra_o_vazio', async () => {
     listCertifications.mockResolvedValue([]);
     await montar();
-    abrir('Certificacoes');
-    expect(await screen.findByText('Sem certificacoes registadas.')).toBeInTheDocument();
+    abrir('Certificações');
+    expect(await screen.findByText('Sem certificações registadas.')).toBeInTheDocument();
   });
 });
 
-describe('Detalhe do colaborador com o design system (Documentos e Certificacoes)', () => {
+describe('Detalhe do colaborador com o design system (Documentos e Certificações)', () => {
   beforeEach(() => {
     listDocuments.mockResolvedValue(DOCS);
     listCertifications.mockResolvedValue(CERTS);
@@ -526,8 +526,8 @@ describe('Detalhe do colaborador com o design system (Documentos e Certificacoes
     await montar();
     abrir('Documentos');
     expect(await screen.findByText('Sem documentos guardados.')).toHaveClass('font-display');
-    abrir('Certificacoes');
-    expect(await screen.findByText('Sem certificacoes registadas.')).toHaveClass('font-display');
+    abrir('Certificações');
+    expect(await screen.findByText('Sem certificações registadas.')).toHaveClass('font-display');
   });
 
   it('os_botoes_eliminar_e_os_campos_dos_modais_tem_nome_acessivel', async () => {
@@ -540,12 +540,12 @@ describe('Detalhe do colaborador com o design system (Documentos e Certificacoes
     let modal = within(screen.getByRole('dialog'));
     ['Tipo', 'Nome', 'Data de validade (opcional)'].forEach(r => expect(modal.getByLabelText(r)).toBeInTheDocument());
     fireEvent.click(modal.getByRole('button', { name: 'Fechar' }));
-    abrir('Certificacoes');
+    abrir('Certificações');
     await screen.findByText(/PADI Open Water/);
-    expect(screen.getByRole('button', { name: 'Eliminar certificacao - PADI Open Water' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Eliminar certificação - PADI Open Water' })).toBeInTheDocument();
     fireEvent.click(botaoAdicionar());
     modal = within(screen.getByRole('dialog'));
-    ['Nome', 'Emitido por', 'Data de emissao', 'Validade (opcional)'].forEach(r => expect(modal.getByLabelText(r)).toBeInTheDocument());
+    ['Nome', 'Emitido por', 'Data de emissão', 'Validade (opcional)'].forEach(r => expect(modal.getByLabelText(r)).toBeInTheDocument());
   });
 
   it('sem_hexadecimais_cores_nomeadas_ou_text_error_com_o_modal_aberto', async () => {
@@ -555,7 +555,7 @@ describe('Detalhe do colaborador com o design system (Documentos e Certificacoes
     fireEvent.click(botaoAdicionar());
     let html = container.innerHTML;
     fireEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Fechar' }));
-    abrir('Certificacoes');
+    abrir('Certificações');
     await screen.findByText(/PADI Open Water/);
     fireEvent.click(botaoAdicionar());
     html += container.innerHTML;

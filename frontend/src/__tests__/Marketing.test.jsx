@@ -22,7 +22,7 @@ const INDICACOES = {
   referred: [
     { id: 'r1', nome_negocio: 'Hotel A', created_at: '2026-11-01T12:00:00Z', status: 'convertido' },
     { id: 'r2', nome: 'Rent B', status: 'contactado' },
-    { id: 'r3', nome_negocio: 'Cafe C', status: 'xyz' },
+    { id: 'r3', nome_negocio: 'Café C', status: 'xyz' },
   ],
 };
 
@@ -83,7 +83,7 @@ describe('Marketing: montagem', () => {
   it('pede_ao_montar_ligacao_codigo_estatisticas_unidades_e_indicacoes', async () => {
     await montar();
     expect(screen.getByText('Marketing')).toBeInTheDocument();
-    expect(screen.getByText('Ferramentas de divulgacao e planeador de conteudos')).toBeInTheDocument();
+    expect(screen.getByText('Ferramentas de divulgação e planeador de conteudos')).toBeInTheDocument();
     expect(getBookingLink).toHaveBeenCalledTimes(1);
     expect(getWidgetCode).toHaveBeenCalledTimes(1);
     expect(getMarketingStats).toHaveBeenCalledTimes(1);
@@ -95,7 +95,7 @@ describe('Marketing: montagem', () => {
   it('abre_no_separador_QR_Code_e_o_planeador_nao_tem_separador', async () => {
     await montar();
     expect(screen.getByText('QR Code para')).toBeInTheDocument();
-    const rotulos = ['QR Code', 'Widget', 'Indicacoes', 'Estatisticas'];
+    const rotulos = ['QR Code', 'Widget', 'Indicações', 'Estatísticas'];
     rotulos.forEach(r => expect(separador(r)).toBeInTheDocument());
     expect(screen.queryByText('Planeador')).not.toBeInTheDocument();
     expect(screen.queryByText('Planeador de Social Media')).not.toBeInTheDocument();
@@ -106,14 +106,14 @@ describe('Marketing: montagem', () => {
     getMarketingStats.mockRejectedValue(new Error('x'));
     getReferrals.mockRejectedValue(new Error('x'));
     await montar();
-    await abrir('Estatisticas', 'Visitas ao perfil');
+    await abrir('Estatísticas', 'Visitas ao perfil');
     expect(valorKpi('Visitas ao perfil')).toBe('0');
-    expect(valorKpi('Taxa de conversao')).toBe('0%');
+    expect(valorKpi('Taxa de conversão')).toBe('0%');
     expect(screen.getByText('https://saldesk.cv/book/demo')).toBeInTheDocument();
-    await abrir('Indicacoes', 'O seu link de indicacao');
+    await abrir('Indicações', 'O seu link de indicação');
     expect(screen.getByText('https://saldesk.cv/operadores.html?ref=demo')).toBeInTheDocument();
-    expect(valorKpi('Indicacoes enviadas')).toBe('0');
-    expect(screen.getByText('Ainda nao indicou nenhum operador.')).toBeInTheDocument();
+    expect(valorKpi('Indicações enviadas')).toBe('0');
+    expect(screen.getByText('Ainda não indicou nenhum operador.')).toBeInTheDocument();
   });
 
   it('sem_slug_as_ligacoes_por_omissao_ficam_vazias', async () => {
@@ -121,9 +121,9 @@ describe('Marketing: montagem', () => {
     getBookingLink.mockRejectedValue(new Error('x'));
     getReferrals.mockRejectedValue(new Error('x'));
     await montar();
-    await abrir('Estatisticas', 'Visitas ao perfil');
+    await abrir('Estatísticas', 'Visitas ao perfil');
     expect(screen.queryByText('Link de reserva directa')).not.toBeInTheDocument();
-    await abrir('Indicacoes', 'O seu link de indicacao');
+    await abrir('Indicações', 'O seu link de indicação');
     expect(screen.getByText('...')).toBeInTheDocument();
   });
 
@@ -131,10 +131,10 @@ describe('Marketing: montagem', () => {
     getWidgetCode.mockRejectedValue(new Error('x'));
     listUnits.mockRejectedValue(new Error('x'));
     await montar();
-    expect([...campo('QR Code para', 'select').options].map(o => o.textContent)).toEqual(['Perfil publico — link de reserva']);
-    await abrir('Widget', 'Codigo HTML');
+    expect([...campo('QR Code para', 'select').options].map(o => o.textContent)).toEqual(['Perfil público — link de reserva']);
+    await abrir('Widget', 'Código HTML');
     expect(document.querySelector('pre')).toBeNull();
-    expect(screen.getByText('Nao foi possivel gerar o codigo do widget. Recarrega a pagina e tenta de novo.')).toBeInTheDocument();
+    expect(screen.getByText('Não foi possível gerar o código do widget. Recarrega a página e tenta de novo.')).toBeInTheDocument();
   });
 
   it('listUnits_nulo_nao_rebenta', async () => {
@@ -146,14 +146,14 @@ describe('Marketing: montagem', () => {
 
 /* ───────────────────────── caracterizacao: Codigo QR ───────────────────────── */
 
-describe('Marketing: Codigo QR', () => {
+describe('Marketing: Código QR', () => {
   it('gera_ao_montar_com_size_300_e_color_sem_cardinal_e_mostra_o_endereco', async () => {
     await montar();
     expect(getQrCode).toHaveBeenCalledWith({ size: '300', color: '0D5470' });
     expect(screen.getByAltText('QR Code')).toHaveAttribute('src', 'blob:qr');
     expect(screen.getByText('saldesk.cv/book/demo')).toBeInTheDocument();
     expect(screen.getByText('Tamanho — 300px')).toBeInTheDocument();
-    expect([...campo('QR Code para', 'select').options].map(o => o.textContent)).toEqual(['Perfil publico — link de reserva', 'Buggy Tour', 'Kite Aula']);
+    expect([...campo('QR Code para', 'select').options].map(o => o.textContent)).toEqual(['Perfil público — link de reserva', 'Buggy Tour', 'Kite Aula']);
   });
 
   it('mudar_a_unidade_regenera_com_unit_id_e_o_endereco_acompanha', async () => {
@@ -265,7 +265,7 @@ describe('Marketing: Codigo QR', () => {
 describe('Marketing: Widget', () => {
   it('o_codigo_do_servidor_aparece_tal_como_vem_sem_seletor_de_cor', async () => {
     await montar();
-    await abrir('Widget', 'Codigo HTML');
+    await abrir('Widget', 'Código HTML');
     expect(document.querySelector('pre').textContent).toBe(WIDGET_SERVIDOR);
     /* a cor nunca fez nada no codigo real (nao tem data-color): o seletor foi retirado */
     expect(screen.queryByText('Cor primaria')).toBeNull();
@@ -274,41 +274,41 @@ describe('Marketing: Widget', () => {
 
   it('diz_que_a_cor_do_widget_e_a_da_pagina_publica_e_aponta_para_o_Perfil_Publico', async () => {
     await montar();
-    await abrir('Widget', 'Codigo HTML');
-    expect(screen.getByText(/A cor do widget e a da sua pagina publica/)).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Definicoes > Perfil Publico' })).toHaveAttribute('href', '/definicoes?tab=perfil');
+    await abrir('Widget', 'Código HTML');
+    expect(screen.getByText(/A cor do widget é a da sua página pública/)).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Definições > Perfil Público' })).toHaveAttribute('href', '/definicoes?tab=perfil');
   });
 
   it('sem_codigo_do_servidor_mostra_o_aviso_e_nao_oferece_copiar_nem_um_script_inexistente', async () => {
     getWidgetCode.mockResolvedValue('');
     await montar();
-    await abrir('Widget', 'Codigo HTML');
+    await abrir('Widget', 'Código HTML');
     expect(document.querySelector('pre')).toBeNull();
-    expect(screen.getByText('Nao foi possivel gerar o codigo do widget. Recarrega a pagina e tenta de novo.')).toBeInTheDocument();
+    expect(screen.getByText('Não foi possível gerar o código do widget. Recarrega a página e tenta de novo.')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Copiar' })).toBeNull();
     expect(document.body.textContent).not.toContain('widget.js');
   });
 
   it('alternar_Codigo_Preview_mostra_o_widget_real_num_iframe_da_pagina_publica', async () => {
     await montar();
-    await abrir('Widget', 'Codigo HTML');
+    await abrir('Widget', 'Código HTML');
     expect(document.querySelector('iframe')).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: 'Preview' }));
     expect(document.querySelector('pre')).toBeNull();
-    const quadro = screen.getByTitle('Pre-visualizacao do widget');
+    const quadro = screen.getByTitle('Pré-visualização do widget');
     expect(quadro.tagName).toBe('IFRAME');
     /* preview=1: abrir o preview nao conta como visita nas Estatisticas */
     expect(quadro.getAttribute('src')).toBe('/book/demo?widget=1&preview=1');
-    fireEvent.click(screen.getByRole('button', { name: 'Codigo' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Código' }));
     expect(document.querySelector('iframe')).toBeNull();
     expect(document.querySelector('pre')).not.toBeNull();
   });
 
   it('o_iframe_do_preview_ajusta_a_altura_a_mensagem_do_widget_e_ignora_outras_origens', async () => {
     await montar();
-    await abrir('Widget', 'Codigo HTML');
+    await abrir('Widget', 'Código HTML');
     fireEvent.click(screen.getByRole('button', { name: 'Preview' }));
-    const quadro = screen.getByTitle('Pre-visualizacao do widget');
+    const quadro = screen.getByTitle('Pré-visualização do widget');
     const mensagem = (data, source) => act(() => { window.dispatchEvent(new MessageEvent('message', { data, source })); });
     mensagem({ type: 'saldesk-widget-resize', height: 812 }, quadro.contentWindow);
     expect(quadro.style.height).toBe('812px');
@@ -319,7 +319,7 @@ describe('Marketing: Widget', () => {
 
   it('copiar_chama_clipboard_com_o_codigo_do_servidor_e_mostra_Copiado_2s', async () => {
     await montar();
-    await abrir('Widget', 'Codigo HTML');
+    await abrir('Widget', 'Código HTML');
     vi.useFakeTimers();
     fireEvent.click(screen.getByRole('button', { name: 'Copiar' }));
     await act(async () => { await vi.advanceTimersByTimeAsync(0); });
@@ -329,54 +329,54 @@ describe('Marketing: Widget', () => {
     expect(screen.getByRole('button', { name: 'Copiado' })).toBeInTheDocument();
     await act(async () => { await vi.advanceTimersByTimeAsync(1); });
     expect(screen.getByRole('button', { name: 'Copiar' })).toBeInTheDocument();
-    expect(screen.getByText('Cole este codigo no HTML do seu website onde quer que o formulario apareca.')).toBeInTheDocument();
+    expect(screen.getByText('Cole este código no HTML do seu website onde quer que o formulário apareça.')).toBeInTheDocument();
   });
 
   it('avisa_que_o_pagamento_SISP_abre_em_ecra_inteiro_fora_do_site_do_operador', async () => {
     await montar();
-    await abrir('Widget', 'Codigo HTML');
-    expect(screen.getByText(/pagamento com cartao cabo-verdiano \(SISP\) abre em ecra inteiro/i)).toBeInTheDocument();
+    await abrir('Widget', 'Código HTML');
+    expect(screen.getByText(/pagamento com cartão cabo-verdiano \(SISP\) abre em ecrã inteiro/i)).toBeInTheDocument();
   });
 });
 
 /* ───────────────────────── caracterizacao: Indicacoes ───────────────────────── */
 
-describe('Marketing: Indicacoes', () => {
+describe('Marketing: Indicações', () => {
   it('mostra_ligacao_contadores_e_lista_com_negocio_data_e_estado', async () => {
     await montar();
-    await abrir('Indicacoes', 'O seu link de indicacao');
+    await abrir('Indicações', 'O seu link de indicação');
     expect(screen.getByText('Indique outro operador')).toBeInTheDocument();
     expect(screen.getByText('https://saldesk.cv/operadores.html?ref=demo')).toBeInTheDocument();
-    expect(valorKpi('Indicacoes enviadas')).toBe('3');
+    expect(valorKpi('Indicações enviadas')).toBe('3');
     expect(valorKpi('Convertidas')).toBe('1');
-    expect(screen.getByText('As suas indicacoes (3)')).toBeInTheDocument();
+    expect(screen.getByText('As suas indicações (3)')).toBeInTheDocument();
     const linhas = screen.getAllByRole('row').slice(1).map(r => [...r.querySelectorAll('td')].map(td => td.textContent));
     expect(linhas[0]).toEqual(['Hotel A', new Date('2026-11-01T12:00:00Z').toLocaleDateString('pt-PT'), 'Convertido']);
     expect(linhas[1]).toEqual(['Rent B', '—', 'Contactado']);
-    expect(linhas[2]).toEqual(['Cafe C', '—', 'xyz']);
+    expect(linhas[2]).toEqual(['Café C', '—', 'xyz']);
   });
 
   it('sem_indicacoes_mostra_o_vazio_e_contadores_a_zero', async () => {
     getReferrals.mockResolvedValue({ referral_link: 'x', referred: [] });
     await montar();
-    await abrir('Indicacoes', 'O seu link de indicacao');
-    expect(screen.getByText('As suas indicacoes (0)')).toBeInTheDocument();
-    expect(screen.getByText('Ainda nao indicou nenhum operador.')).toBeInTheDocument();
+    await abrir('Indicações', 'O seu link de indicação');
+    expect(screen.getByText('As suas indicações (0)')).toBeInTheDocument();
+    expect(screen.getByText('Ainda não indicou nenhum operador.')).toBeInTheDocument();
     expect(screen.queryByRole('table')).not.toBeInTheDocument();
-    expect(valorKpi('Indicacoes enviadas')).toBe('0');
+    expect(valorKpi('Indicações enviadas')).toBe('0');
     expect(valorKpi('Convertidas')).toBe('0');
   });
 
   it('em_carga_os_contadores_pulsam', async () => {
     getReferrals.mockReturnValue(new Promise(() => {}));
     const { container } = await montar();
-    await abrir('Indicacoes', 'O seu link de indicacao');
+    await abrir('Indicações', 'O seu link de indicação');
     expect(container.querySelectorAll('.animate-pulse')).toHaveLength(2);
   });
 
   it('copiar_a_ligacao_chama_clipboard', async () => {
     await montar();
-    await abrir('Indicacoes', 'O seu link de indicacao');
+    await abrir('Indicações', 'O seu link de indicação');
     fireEvent.click(screen.getByRole('button', { name: 'Copiar' }));
     expect(writeText).toHaveBeenCalledWith('https://saldesk.cv/operadores.html?ref=demo');
     expect(await screen.findByRole('button', { name: 'Copiado' })).toBeInTheDocument();
@@ -397,35 +397,35 @@ function postsDoMes(extra = []) {
   ];
 }
 
-describe('Marketing: Estatisticas', () => {
+describe('Marketing: Estatísticas', () => {
   it('kpis_com_valores_e_com_zero_por_omissao', async () => {
     await montar();
-    await abrir('Estatisticas', 'Visitas ao perfil');
+    await abrir('Estatísticas', 'Visitas ao perfil');
     expect(valorKpi('Visitas ao perfil')).toBe('120');
     expect(valorKpi('Cliques no link')).toBe('45');
     expect(valorKpi('Reservas via link')).toBe('9');
-    expect(valorKpi('Taxa de conversao')).toBe('20%');
-    expect(screen.getAllByText('ultimos 30 dias')).toHaveLength(3);
+    expect(valorKpi('Taxa de conversão')).toBe('20%');
+    expect(screen.getAllByText('últimos 30 dias')).toHaveLength(3);
     expect(screen.getByText('cliques → reservas')).toBeInTheDocument();
     cleanup();
     getMarketingStats.mockResolvedValue({});
     await montar();
-    await abrir('Estatisticas', 'Visitas ao perfil');
+    await abrir('Estatísticas', 'Visitas ao perfil');
     expect(valorKpi('Visitas ao perfil')).toBe('0');
-    expect(valorKpi('Taxa de conversao')).toBe('0%');
+    expect(valorKpi('Taxa de conversão')).toBe('0%');
   });
 
   it('em_carga_os_cartoes_pulsam', async () => {
     getMarketingStats.mockReturnValue(new Promise(() => {}));
     const { container } = await montar();
-    await abrir('Estatisticas', 'Visitas ao perfil');
+    await abrir('Estatísticas', 'Visitas ao perfil');
     expect(container.querySelectorAll('.animate-pulse')).toHaveLength(4);
   });
 
   it('posts_do_mes_lidos_do_localStorage_e_cancelados_so_se_maior_que_zero', async () => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(postsDoMes()));
     await montar();
-    await abrir('Estatisticas', 'Visitas ao perfil');
+    await abrir('Estatísticas', 'Visitas ao perfil');
     expect(screen.getByText(`Posts — ${MONTHS_PT[new Date().getMonth()]}`)).toBeInTheDocument();
     expect(valorKpi('Total')).toBe('3');
     expect(valorKpi('Publicados')).toBe('1');
@@ -434,21 +434,21 @@ describe('Marketing: Estatisticas', () => {
     cleanup();
     localStorage.setItem(STORAGE_KEY, JSON.stringify(postsDoMes([{ id: 'e', scheduled_at: `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}-20T10:00`, status: 'cancelado', text_pt: 'E' }])));
     await montar();
-    await abrir('Estatisticas', 'Visitas ao perfil');
+    await abrir('Estatísticas', 'Visitas ao perfil');
     expect(valorKpi('Cancelados')).toBe('1');
     expect(valorKpi('Total')).toBe('4');
   });
 
   it('localStorage_com_json_invalido_conta_zero_posts', async () => {
-    localStorage.setItem(STORAGE_KEY, '{nao e json');
+    localStorage.setItem(STORAGE_KEY, '{não e json');
     await montar();
-    await abrir('Estatisticas', 'Visitas ao perfil');
+    await abrir('Estatísticas', 'Visitas ao perfil');
     expect(valorKpi('Total')).toBe('0');
   });
 
   it('origens_ordenadas_com_barra_proporcional_e_etiquetas_conhecidas', async () => {
     const { container } = await montar();
-    await abrir('Estatisticas', 'Origem das reservas');
+    await abrir('Estatísticas', 'Origem das reservas');
     const etiquetas = [...container.querySelectorAll('span.w-20')].map(s => s.textContent);
     expect(etiquetas).toEqual(['Directa', 'Booking', 'outro', 'Viator']);
     const larguras = [...container.querySelectorAll('div.h-full.rounded-full')].map(d => d.style.width);
@@ -459,13 +459,13 @@ describe('Marketing: Estatisticas', () => {
   it('sem_sources_mostra_o_aviso_do_endpoint', async () => {
     getMarketingStats.mockResolvedValue({ profile_views: 1 });
     await montar();
-    await abrir('Estatisticas', 'Origem das reservas');
-    expect(screen.getByText(/Dados de origem nao disponiveis\. Configure o endpoint/)).toBeInTheDocument();
+    await abrir('Estatísticas', 'Origem das reservas');
+    expect(screen.getByText(/Dados de origem não disponíveis\. Configure o endpoint/)).toBeInTheDocument();
   });
 
   it('ligacao_de_reserva_com_copiar_e_Abrir_so_com_ligacao', async () => {
     await montar();
-    await abrir('Estatisticas', 'Link de reserva directa');
+    await abrir('Estatísticas', 'Link de reserva directa');
     expect(screen.getByText('https://saldesk.cv/book/demo')).toBeInTheDocument();
     const abrirLink = screen.getByRole('link', { name: 'Abrir' });
     expect(abrirLink).toHaveAttribute('href', 'https://saldesk.cv/book/demo');
@@ -475,14 +475,14 @@ describe('Marketing: Estatisticas', () => {
     cleanup();
     getBookingLink.mockResolvedValue('');
     await montar();
-    await abrir('Estatisticas', 'Visitas ao perfil');
+    await abrir('Estatísticas', 'Visitas ao perfil');
     expect(screen.queryByText('Link de reserva directa')).not.toBeInTheDocument();
   });
 
   it('a_ligacao_pode_vir_como_texto_simples', async () => {
     getBookingLink.mockResolvedValue('https://saldesk.cv/book/outro');
     await montar();
-    await abrir('Estatisticas', 'Link de reserva directa');
+    await abrir('Estatísticas', 'Link de reserva directa');
     expect(screen.getByText('https://saldesk.cv/book/outro')).toBeInTheDocument();
   });
 });
@@ -506,8 +506,8 @@ describe('Marketing: design system (estrutura, QR e Widget)', () => {
     expect(screen.getByRole('tablist')).toBeInTheDocument();
     expect(screen.getByRole('tab', { name: 'QR Code' })).toHaveAttribute('aria-selected', 'true');
     expect(screen.getByRole('tab', { name: 'Widget' })).toHaveAttribute('aria-selected', 'false');
-    expect(screen.getByRole('tab', { name: 'Indicacoes' })).toBeInTheDocument();
-    expect(screen.getByRole('tab', { name: 'Estatisticas' })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: 'Indicações' })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: 'Estatísticas' })).toBeInTheDocument();
     expect(screen.getByRole('tab', { name: 'QR Code' }).querySelector('svg')).toBeNull();
     fireEvent.click(screen.getByRole('tab', { name: 'Widget' }));
     expect(screen.getByRole('tab', { name: 'Widget' })).toHaveAttribute('aria-selected', 'true');
@@ -531,15 +531,15 @@ describe('Marketing: design system (estrutura, QR e Widget)', () => {
 
   it('o_widget_tem_Codigo_Preview_com_aria_pressed', async () => {
     await montar();
-    await abrir('Widget', 'Codigo HTML');
-    expect(screen.getByRole('button', { name: 'Codigo', pressed: true })).toBeInTheDocument();
+    await abrir('Widget', 'Código HTML');
+    expect(screen.getByRole('button', { name: 'Código', pressed: true })).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Preview' }));
     expect(screen.getByRole('button', { name: 'Preview', pressed: true })).toBeInTheDocument();
   });
 
   it('o_botao_Copiar_e_type_button_e_copiado_usa_o_token_de_sucesso', async () => {
     await montar();
-    await abrir('Widget', 'Codigo HTML');
+    await abrir('Widget', 'Código HTML');
     const b = screen.getByRole('button', { name: 'Copiar' });
     expect(b).toHaveAttribute('type', 'button');
     expect(b.className).toContain('bg-ocean-50');
@@ -551,14 +551,14 @@ describe('Marketing: design system (estrutura, QR e Widget)', () => {
 
   it('o_cartao_KPI_e_Card', async () => {
     await montar();
-    await abrir('Estatisticas', 'Visitas ao perfil');
+    await abrir('Estatísticas', 'Visitas ao perfil');
     expect(screen.getByText('Visitas ao perfil').closest('[class*="app:rounded-sm"]')).not.toBeNull();
   });
 
   it('sem_hexadecimais_cores_nomeadas_ou_text_error_em_classes_nos_separadores_QR_e_Widget', async () => {
     const { container } = await montar();
     let html = classes(container);
-    await abrir('Widget', 'Codigo HTML');
+    await abrir('Widget', 'Código HTML');
     html += classes(container);
     fireEvent.click(screen.getByRole('button', { name: 'Preview' }));
     html += classes(container);
@@ -573,13 +573,13 @@ describe('Marketing: design system (estrutura, QR e Widget)', () => {
 
 const ehCard = (el) => el.closest('[class*="app:rounded-sm"]') !== null;
 
-describe('Marketing: design system (Indicacoes e Estatisticas)', () => {
+describe('Marketing: design system (Indicações e Estatísticas)', () => {
   it('a_tabela_de_indicacoes_e_Table_com_as_tres_colunas', async () => {
     await montar();
-    await abrir('Indicacoes', 'O seu link de indicacao');
+    await abrir('Indicações', 'O seu link de indicação');
     expect(screen.getByRole('table')).toBeInTheDocument();
-    expect(screen.getAllByRole('columnheader').map(h => h.textContent)).toEqual(['Negocio', 'Data', 'Estado']);
-    expect(ehCard(screen.getByText('O seu link de indicacao'))).toBe(true);
+    expect(screen.getAllByRole('columnheader').map(h => h.textContent)).toEqual(['Negócio', 'Data', 'Estado']);
+    expect(ehCard(screen.getByText('O seu link de indicação'))).toBe(true);
   });
 
   it('o_estado_da_indicacao_e_Badge_com_a_variante_certa', async () => {
@@ -591,7 +591,7 @@ describe('Marketing: design system (Indicacoes e Estatisticas)', () => {
       ],
     });
     await montar();
-    await abrir('Indicacoes', 'O seu link de indicacao');
+    await abrir('Indicações', 'O seu link de indicação');
     expect(screen.getByText('Novo').className).toContain('var(--info-light)');
     expect(screen.getByText('Proposta enviada').className).toContain('bg-sand-50');
     expect(screen.getByText('Convertido').className).toContain('var(--success-light)');
@@ -602,8 +602,8 @@ describe('Marketing: design system (Indicacoes e Estatisticas)', () => {
   it('o_vazio_das_indicacoes_e_EmptyState', async () => {
     getReferrals.mockResolvedValue({ referral_link: 'x', referred: [] });
     await montar();
-    await abrir('Indicacoes', 'O seu link de indicacao');
-    expect(screen.getByText('Ainda nao indicou nenhum operador.')).toHaveClass('font-display');
+    await abrir('Indicações', 'O seu link de indicação');
+    expect(screen.getByText('Ainda não indicou nenhum operador.')).toHaveClass('font-display');
   });
 
   it('os_blocos_das_estatisticas_sao_Card_e_os_numeros_dos_posts_usam_tokens', async () => {
@@ -615,7 +615,7 @@ describe('Marketing: design system (Indicacoes e Estatisticas)', () => {
       { id: 'e', scheduled_at: `${mes}-20T10:00`, status: 'cancelado', text_pt: 'E' },
     ]));
     await montar();
-    await abrir('Estatisticas', 'Origem das reservas');
+    await abrir('Estatísticas', 'Origem das reservas');
     expect(ehCard(screen.getByText('Origem das reservas'))).toBe(true);
     expect(ehCard(screen.getByText('Link de reserva directa'))).toBe(true);
     expect(ehCard(screen.getByText(`Posts — ${MONTHS_PT[d.getMonth()]}`))).toBe(true);
@@ -629,9 +629,9 @@ describe('Marketing: design system (Indicacoes e Estatisticas)', () => {
     const mes = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
     localStorage.setItem(STORAGE_KEY, JSON.stringify([{ id: 'e', scheduled_at: `${mes}-20T10:00`, status: 'cancelado', text_pt: 'E' }]));
     const { container } = await montar();
-    await abrir('Indicacoes', 'O seu link de indicacao');
+    await abrir('Indicações', 'O seu link de indicação');
     let html = classes(container);
-    await abrir('Estatisticas', 'Origem das reservas');
+    await abrir('Estatísticas', 'Origem das reservas');
     html += classes(container);
     semCoresForaDosTokens(html);
   });

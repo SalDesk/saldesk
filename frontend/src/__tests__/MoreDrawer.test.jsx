@@ -34,7 +34,7 @@ function abrir() {
 }
 
 describe('MoreDrawer: acessibilidade', () => {
-  it('fechado nao expoe os botoes ao teclado nem a leitores de ecra', () => {
+  it('fechado não expoe os botões ao teclado nem a leitores de ecrã', () => {
     render(<Harness />);
     expect(screen.queryByRole('dialog')).toBeNull();
     /* os botoes do menu existem no DOM mas estao inertes: nao focaveis e fora da arvore de acessibilidade */
@@ -46,7 +46,7 @@ describe('MoreDrawer: acessibilidade', () => {
   it('aberto e um dialogo modal com nome', () => {
     render(<Harness />);
     abrir();
-    const dialogo = screen.getByRole('dialog', { name: 'Mais opcoes' });
+    const dialogo = screen.getByRole('dialog', { name: 'Mais opções' });
     expect(dialogo).toHaveAttribute('aria-modal', 'true');
     expect(dialogo.hasAttribute('inert')).toBe(false);
     expect(dialogo).not.toHaveAttribute('aria-hidden');
@@ -55,24 +55,24 @@ describe('MoreDrawer: acessibilidade', () => {
   it('ao abrir o foco vai para dentro do menu', () => {
     render(<Harness />);
     abrir();
-    const dialogo = screen.getByRole('dialog', { name: 'Mais opcoes' });
+    const dialogo = screen.getByRole('dialog', { name: 'Mais opções' });
     expect(dialogo.contains(document.activeElement)).toBe(true);
   });
 
-  it('Escape fecha o menu e devolve o foco ao botao que o abriu', () => {
+  it('Escape fecha o menu e devolve o foco ao botão que o abriu', () => {
     render(<Harness />);
     const botao = abrir();
-    const dialogo = screen.getByRole('dialog', { name: 'Mais opcoes' });
+    const dialogo = screen.getByRole('dialog', { name: 'Mais opções' });
     expect(dialogo.contains(document.activeElement)).toBe(true);
     fireEvent.keyDown(document, { key: 'Escape' });
     expect(screen.queryByRole('dialog')).toBeNull();
     expect(document.activeElement).toBe(botao);
   });
 
-  it('um novo render do pai com o menu aberto nao rouba o foco ao utilizador', () => {
+  it('um novo render do pai com o menu aberto não rouba o foco ao utilizador', () => {
     const { rerender } = render(<Harness />);
     abrir();
-    const dialogo = screen.getByRole('dialog', { name: 'Mais opcoes' });
+    const dialogo = screen.getByRole('dialog', { name: 'Mais opções' });
     const botoes = within(dialogo).getAllByRole('button');
     const outro = botoes[botoes.length - 1];
     outro.focus();
@@ -80,7 +80,7 @@ describe('MoreDrawer: acessibilidade', () => {
     expect(document.activeElement).toBe(outro);
   });
 
-  it('Escape com o menu fechado nao faz nada', () => {
+  it('Escape com o menu fechado não faz nada', () => {
     render(<Harness />);
     const antes = document.activeElement;
     fireEvent.keyDown(document, { key: 'Escape' });
@@ -88,9 +88,9 @@ describe('MoreDrawer: acessibilidade', () => {
     expect(screen.queryByRole('dialog')).toBeNull();
   });
 
-  it('o botao Sair continua acessivel dentro do menu aberto', () => {
+  it('o botão Sair continua acessível dentro do menu aberto', () => {
     render(<Harness />);
     abrir();
-    expect(within(screen.getByRole('dialog', { name: 'Mais opcoes' })).getByRole('button', { name: 'Sair' })).toBeInTheDocument();
+    expect(within(screen.getByRole('dialog', { name: 'Mais opções' })).getByRole('button', { name: 'Sair' })).toBeInTheDocument();
   });
 });

@@ -2,7 +2,7 @@ import { Globe2 } from 'lucide-react';
 import Badge from '../ui/Badge';
 import Button from '../ui/Button';
 
-const CONECT_STATUS_LABEL = { draft: 'Nao submetido', pending_review: 'Em revisao', published: 'Publicado no Conect', paused: 'Pausado' };
+const CONECT_STATUS_LABEL = { draft: 'Não submetido', pending_review: 'Em revisão', published: 'Publicado no Conect', paused: 'Pausado' };
 /* Variante do Badge do sistema para cada estado do Conect */
 const CONECT_STATUS_VARIANT = { draft: 'default', pending_review: 'info', published: 'confirmed', paused: 'pending' };
 

@@ -14,7 +14,7 @@ const PLAN_BADGE_CLASS = {
 function LockCard({ requiredPlan, feature, onVoltar, onNavigate }) {
   const navigate = useNavigate();
   const label = PLAN_LABEL[requiredPlan] || requiredPlan;
-  const desc  = FEATURE_DESCRIPTIONS[feature] || 'Funcionalidade disponivel num plano superior.';
+  const desc  = FEATURE_DESCRIPTIONS[feature] || 'Funcionalidade disponível num plano superior.';
   const price = PLAN_PRICES[requiredPlan] || '—';
 
   return (
@@ -46,7 +46,7 @@ function LockCard({ requiredPlan, feature, onVoltar, onNavigate }) {
           onClick={() => { navigate('/definicoes?tab=facturacao'); onNavigate?.(); }}
           className="flex items-center justify-center gap-2 w-full h-10 px-4 rounded-md bg-ocean-700 text-white text-sm font-body font-semibold hover:bg-ocean-500 transition-colors"
         >
-          Ver planos de subscricao
+          Ver planos de subscrição
           <ArrowRight size={15} strokeWidth={1.75} />
         </button>
         <button

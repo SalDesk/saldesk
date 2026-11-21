@@ -210,7 +210,7 @@ export default function ReservationForm({ reservation, initial, units, operatorT
       </div>
 
       <div className="grid grid-cols-2 gap-3">
-        <Input label={t('customers.nationality')} value={form.customer_country} onChange={set('customer_country')} placeholder="PT, DE, GB..." hint="Codigo ISO 2" />
+        <Input label={t('customers.nationality')} value={form.customer_country} onChange={set('customer_country')} placeholder="PT, DE, GB..." hint="Código ISO 2" />
         <Input label={t('reservations.guests')} type="number" value={form.guests} onChange={(e) => setForm((f) => ({ ...f, guests: e.target.value, vehicles: '' }))} min="1" />
       </div>
 

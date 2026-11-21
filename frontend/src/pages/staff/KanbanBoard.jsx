@@ -18,7 +18,7 @@ import { PRIO, PRIO_COLORS, KANBAN_COLS, tryParseNotes, StaffAvatar } from './sh
 /* ── Kanban Task Card ── */
 function TaskCard({ task, staffList, onMove, onOpen }) {
   const meta  = tryParseNotes(task.notes_manager);
-  const title = meta?.title || task.notes_manager || `Atribuicao #${String(task.id).slice(-6)}`;
+  const title = meta?.title || task.notes_manager || `Atribuição #${String(task.id).slice(-6)}`;
   const prio  = meta?.priority || 'medium';
   const staffMember = staffList.find(s => s.id === task.staff_id);
   const dueDate = meta?.due ? new Date(meta.due) : null;
@@ -256,16 +256,16 @@ function KanbanBoard({ staffList }) {
       {/* Create task modal */}
       <Modal open={taskModal} onClose={() => setTaskModal(false)} title="Nova tarefa" size="md">
         <form onSubmit={handleCreateTask} className="space-y-4">
-          <Input label="Titulo" aria-label="Titulo" value={taskForm.title} onChange={e => setTaskForm(p => ({ ...p, title: e.target.value }))} required placeholder="Titulo da tarefa" />
+          <Input label="Título" aria-label="Título" value={taskForm.title} onChange={e => setTaskForm(p => ({ ...p, title: e.target.value }))} required placeholder="Título da tarefa" />
           <Select label="Reserva" aria-label="Reserva" value={taskForm.reservation_id} onChange={e => setTaskForm(p => ({ ...p, reservation_id: e.target.value }))} required>
             <option value="">Escolha a reserva...</option>
             {reservations.map(r => (
               <option key={r.id} value={r.id}>
-                {r.customer_name} — {r.units?.name || 'Servico'} ({r.check_in})
+                {r.customer_name} — {r.units?.name || 'Serviço'} ({r.check_in})
               </option>
             ))}
           </Select>
-          <Textarea label="Descricao" aria-label="Descricao" value={taskForm.desc} onChange={e => setTaskForm(p => ({ ...p, desc: e.target.value }))} placeholder="Descricao opcional" rows={2} />
+          <Textarea label="Descrição" aria-label="Descrição" value={taskForm.desc} onChange={e => setTaskForm(p => ({ ...p, desc: e.target.value }))} placeholder="Descrição opcional" rows={2} />
           <div className="grid grid-cols-2 gap-3">
             <Select label="Prioridade" aria-label="Prioridade" value={taskForm.priority} onChange={e => setTaskForm(p => ({ ...p, priority: e.target.value }))}>
               {Object.entries(PRIO).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
@@ -273,7 +273,7 @@ function KanbanBoard({ staffList }) {
             <Input label="Data limite" aria-label="Data limite" type="date" value={taskForm.due} onChange={e => setTaskForm(p => ({ ...p, due: e.target.value }))} />
           </div>
           <Select label="Colaborador" aria-label="Colaborador" value={taskForm.staff_id} onChange={e => setTaskForm(p => ({ ...p, staff_id: e.target.value }))}>
-            <option value="">Sem atribuicao</option>
+            <option value="">Sem atribuição</option>
             {staffList.filter(s => s.status === 'active').map(s => (
               <option key={s.id} value={s.id}>{s.name}</option>
             ))}

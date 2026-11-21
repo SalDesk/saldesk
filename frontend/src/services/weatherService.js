@@ -45,6 +45,6 @@ export function dayLabel(dateStr) {
   const today = new Date(); today.setHours(0, 0, 0, 0);
   const diff = Math.round((d.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
   if (diff === 0) return 'Hoje';
-  if (diff === 1) return 'Amanha';
+  if (diff === 1) return 'Amanhã';
   return d.toLocaleDateString('pt-PT', { weekday: 'short', day: '2-digit', month: 'short', timeZone: 'UTC' });
 }

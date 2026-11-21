@@ -3,7 +3,7 @@ import FilterChips from '../../components/ui/FilterChips';
 
 export const SOURCE_LABEL = {
   direct:       'Directo',
-  public:       'Pag. Publica',
+  public:       'Pag. Pública',
   booking_com:  'Booking.com',
   airbnb:       'Airbnb',
   viator:       'Viator',

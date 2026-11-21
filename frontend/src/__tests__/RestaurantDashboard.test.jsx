@@ -148,12 +148,12 @@ describe('RestaurantDashboard (Hoje)', () => {
     carregaServicos({ units: [mesa({ id: 'm1', name: 'Mesa 1' })] });
     renderRestaurant();
     fireEvent.click(await screen.findByText('Mesa 1'));
-    expect(screen.getByText('Mesa disponivel.')).toBeInTheDocument();
+    expect(screen.getByText('Mesa disponível.')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Fechar' }));
-    expect(screen.queryByText('Mesa disponivel.')).not.toBeInTheDocument();
+    expect(screen.queryByText('Mesa disponível.')).not.toBeInTheDocument();
   });
 
-  it('reserva pendente de hoje aparece no painel de atencao', async () => {
+  it('reserva pendente de hoje aparece no painel de atenção', async () => {
     carregaServicos({
       hoje: [reserva({ id: 'p1', status: 'pending' }), reserva({ id: 'p2', status: 'pending', unit_id: 'm2' })],
     });
@@ -163,7 +163,7 @@ describe('RestaurantDashboard (Hoje)', () => {
     expect(screen.getByText('Requer atenção')).toBeInTheDocument();
     expect(screen.queryByText('Tudo em ordem')).not.toBeInTheDocument();
     /* o aviso antigo, em bloco proprio, deixa de existir */
-    expect(screen.queryByText('2 reserva(s) sem confirmacao hoje')).not.toBeInTheDocument();
+    expect(screen.queryByText('2 reserva(s) sem confirmação hoje')).not.toBeInTheDocument();
     /* a linha abre as reservas */
     fireEvent.click(screen.getByRole('button', { name: /2 reserva\(s\) pendente\(s\) para hoje/ }));
     expect(navigateMock).toHaveBeenLastCalledWith('/reservas');
@@ -176,18 +176,18 @@ describe('RestaurantDashboard (Hoje)', () => {
     expect(screen.getByText('Requer atenção')).toBeInTheDocument();
   });
 
-  it('o dashboard nao repete as acoes do cabecalho', async () => {
+  it('o dashboard não repete as ações do cabeçalho', async () => {
     renderRestaurant();
     await screen.findByText('Mesa 1');
     expect(screen.queryByRole('button', { name: 'Nova reserva' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Ver calendario' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Ver calendário' })).not.toBeInTheDocument();
   });
 
   it('sem reservas mostra o estado vazio da agenda', async () => {
     renderRestaurant();
     const vazio = await screen.findByText('Nada agendado para hoje');
     expect(vazio).toHaveClass('font-display');
-    expect(screen.queryByText('Sem reservas de almoco')).not.toBeInTheDocument();
+    expect(screen.queryByText('Sem reservas de almoço')).not.toBeInTheDocument();
   });
 
   it('agenda_por_hora_com_mesa_e_pre_pedido', async () => {
@@ -195,14 +195,14 @@ describe('RestaurantDashboard (Hoje)', () => {
       units: [mesa({ id: 'm1', name: 'Mesa 1', description: JSON.stringify({ number: 4 }) })],
       hoje: [
         reserva({ id: 'j1', status: 'confirmed', customer_name: 'Rui Jantar', start_time: '20:30:00' }, 'jantar'),
-        reserva({ id: 'a1', status: 'confirmed', customer_name: 'Ana Almoco', start_time: '13:00:00' }, 'almoco'),
+        reserva({ id: 'a1', status: 'confirmed', customer_name: 'Ana Almoço', start_time: '13:00:00' }, 'almoco'),
         reserva({ id: 'o1', status: 'pending', customer_name: 'Eva Outros' }),
       ],
       pedidos: [{ id: 'ord1', reservation_id: 'j1' }],
     });
     renderRestaurant();
     const jantar = await screen.findByRole('button', { name: /Rui Jantar/ });
-    const almoco = screen.getByRole('button', { name: /Ana Almoco/ });
+    const almoco = screen.getByRole('button', { name: /Ana Almoço/ });
     expect(jantar).toHaveTextContent('Mesa 4 · 2 pessoa(s) · pré-pedido');
     expect(almoco).not.toHaveTextContent('pré-pedido');
     /* ordem por hora: almoco antes do jantar */
@@ -234,7 +234,7 @@ describe('RestaurantDashboard (Hoje)', () => {
     expect(screen.getByText('50%')).toBeInTheDocument();
     expect(screen.getByText('Ocupação hoje')).toBeInTheDocument();
     expect(screen.getByText('€750')).toBeInTheDocument();
-    expect(screen.getByText('Covers do mes').previousElementSibling).toHaveTextContent(/^6$/);
+    expect(screen.getByText('Covers do mês').previousElementSibling).toHaveTextContent(/^6$/);
     expect(screen.getByText('4.5')).toBeInTheDocument();
     ['Avaliação média', 'Valor médio por reserva', 'Por receber']
       .forEach((rotulo) => expect(screen.getByText(rotulo)).toBeInTheDocument());
@@ -247,34 +247,34 @@ describe('RestaurantDashboard (Hoje)', () => {
     expect(screen.queryByText(/vs mês anterior/)).toBeNull();
   });
 
-  it('a avaliacao media vem de average quando ha avaliacoes', async () => {
+  it('a avaliação média vem de average quando ha avaliações', async () => {
     carregaServicos({ rating: 4.7, ratingTotal: 3 });
     renderRestaurant();
     expect(await screen.findByText('4.7')).toBeInTheDocument();
   });
 
-  it('sem avaliacoes (total 0) a avaliacao media mostra o traco', async () => {
+  it('sem avaliações (total 0) a avaliação média mostra o traco', async () => {
     carregaServicos({ rating: 0, ratingTotal: 0 });
     renderRestaurant();
     const rotulo = await screen.findByText('Avaliação média');
     expect(rotulo.previousElementSibling).toHaveTextContent(/^—$/);
   });
 
-  it('a receita mostra a variacao face ao mes anterior', async () => {
+  it('a receita mostra a variação face ao mês anterior', async () => {
     carregaServicos({ res: resumo({ receita: 1200 }, { receita: 1000 }) });
     renderRestaurant();
     expect(await screen.findByText(`€${(1200).toLocaleString('pt-PT')}`)).toBeInTheDocument();
     expect(screen.getByText('+20% vs mês anterior')).toBeInTheDocument();
   });
 
-  it('sem mes anterior a receita nao mostra variacao', async () => {
+  it('sem mês anterior a receita não mostra variação', async () => {
     carregaServicos({ res: { atual: { receita: 500 } } });
     renderRestaurant();
     expect(await screen.findByText('€500')).toBeInTheDocument();
     expect(screen.queryByText(/vs mês anterior/)).not.toBeInTheDocument();
   });
 
-  it('uma chamada a falhar nao apaga os dados das outras', async () => {
+  it('uma chamada a falhar não apaga os dados das outras', async () => {
     carregaServicos({ hoje: [reserva({ id: 'p1', status: 'pending' })] });
     /* so a lista do mes falha */
     listReservations.mockReset().mockImplementation(async (params) => {
@@ -313,7 +313,7 @@ describe('RestaurantDashboard (Hoje)', () => {
     expect(listOrders).toHaveBeenCalled();
   });
 
-  it('so a reserva pendente de hoje entra no painel de atencao', async () => {
+  it('só a reserva pendente de hoje entra no painel de atenção', async () => {
     /* o servidor entrega as reservas de hoje; so a pendente pede atencao */
     carregaServicos({
       hoje: [
@@ -330,7 +330,7 @@ describe('RestaurantDashboard (Hoje)', () => {
     expect(screen.getByText('em 2 reservas · 1 por confirmar')).toBeInTheDocument();
   });
 
-  it('servicos a falhar mostram estados vazios sem erro', async () => {
+  it('serviços a falhar mostram estados vazios sem erro', async () => {
     servicosAFalhar();
     renderRestaurant();
     expect(await screen.findByText('Tudo em ordem')).toBeInTheDocument();
@@ -339,7 +339,7 @@ describe('RestaurantDashboard (Hoje)', () => {
     await waitFor(() => expect(listUnits).toHaveBeenCalled());
   });
 
-  it('reservas sem campos nao rebentam', async () => {
+  it('reservas sem campos não rebentam', async () => {
     const vazia = { id: 'x', status: 'pending' };
     carregaServicos({ hoje: [vazia], mes: [vazia] });
     renderRestaurant();

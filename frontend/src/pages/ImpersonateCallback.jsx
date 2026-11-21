@@ -33,7 +33,7 @@ export default function ImpersonateCallback() {
         setAuth(session.access_token, user, operator, session.refresh_token);
         navigate('/', { replace: true });
       } catch {
-        if (!cancelado) setError('Nao foi possivel entrar como este operador. Gere o link novamente.');
+        if (!cancelado) setError('Não foi possível entrar como este operador. Gere o link novamente.');
       }
     }
 
@@ -65,7 +65,7 @@ export default function ImpersonateCallback() {
               <AlertTriangle size={22} strokeWidth={1.75} className="text-error" />
             </div>
             <div>
-              <p className="font-display font-bold text-base text-n-900">Nao foi possivel entrar</p>
+              <p className="font-display font-bold text-base text-n-900">Não foi possível entrar</p>
               <p className="text-sm font-body text-n-500 mt-1">{error}</p>
             </div>
             <a href="/login" className="inline-block text-sm font-body font-semibold text-ocean-700 hover:underline">

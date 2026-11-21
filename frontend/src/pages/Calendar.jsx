@@ -482,7 +482,7 @@ export default function Calendar() {
                   </button>
                 </div>
               ) : (
-                <div className="text-center py-4 text-n-400 text-xs font-body">Disponivel</div>
+                <div className="text-center py-4 text-n-400 text-xs font-body">Disponível</div>
               )}
             </div>
           );
@@ -503,7 +503,7 @@ export default function Calendar() {
             {/* View toggle */}
             <div className="flex rounded-sm border border-n-300 overflow-hidden bg-white">
               {[
-                { id: 'month', label: 'Mes' },
+                { id: 'month', label: 'Mês' },
                 { id: 'week',  label: 'Semana' },
                 { id: 'day',   label: 'Dia' },
               ].map(v => (
@@ -633,7 +633,7 @@ export default function Calendar() {
         <div className="space-y-3">
           <p className="text-sm font-body font-semibold text-n-800">{blockModal?.unit?.name}</p>
           <div className="grid grid-cols-2 gap-3">
-            <Input label="Data inicio" type="date" value={blockModal?.date || ''} readOnly />
+            <Input label="Data início" type="date" value={blockModal?.date || ''} readOnly />
             <Input
               label="Data fim"
               type="date"
@@ -646,7 +646,7 @@ export default function Calendar() {
             label="Motivo (opcional)"
             value={blockReason}
             onChange={e => setBlockReason(e.target.value)}
-            placeholder="Manutencao, uso proprio..."
+            placeholder="Manutenção, uso próprio..."
           />
         </div>
       </Modal>
@@ -683,7 +683,7 @@ export default function Calendar() {
                 </div>
               )}
               <div className="bg-n-50 rounded-sm p-3">
-                <p className="text-xs text-n-400 mb-0.5">Hospedes</p>
+                <p className="text-xs text-n-400 mb-0.5">Hóspedes</p>
                 <p className="font-semibold text-n-800">{selectedEvent.guests || 1}</p>
               </div>
               {selectedEvent.total_price && (

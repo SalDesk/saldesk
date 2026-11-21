@@ -18,7 +18,7 @@ vi.mock('../services/messagingService', () => ({
 
 const tpl = (trigger, locale, body) => ({ trigger, locale, body, default_body: body, custom: false });
 const LISTA = [
-  tpl('booking_confirmed', 'pt', 'Ola {nome_cliente}'), tpl('booking_confirmed', 'en', 'Hello {nome_cliente}'),
+  tpl('booking_confirmed', 'pt', 'Olá {nome_cliente}'), tpl('booking_confirmed', 'en', 'Hello {nome_cliente}'),
   tpl('reminder_d1', 'pt', 'Lembrete {data}'), tpl('reminder_d1', 'en', 'Reminder {data}'),
   tpl('review_request', 'pt', 'Avalie {link_avaliacao}'), tpl('review_request', 'en', 'Rate {link_avaliacao}'),
 ];
@@ -63,8 +63,8 @@ async function montarTudo() {
   await screen.findAllByText(/^PREVIA:/);
 }
 
-describe('Componentes das Definicoes em ingles', () => {
-  it('forca da password, fotos e editor de mensagens em ingles, sem chaves cruas', async () => {
+describe('Componentes das Definições em inglês', () => {
+  it('forca da password, fotos e editor de mensagens em inglês, sem chaves cruas', async () => {
     useUiStore.setState({ lang: 'en' });
     await montarTudo();
 
@@ -72,7 +72,7 @@ describe('Componentes das Definicoes em ingles', () => {
     expect(screen.getByText('Strong')).toBeInTheDocument();
     expect(screen.getByText('Weak')).toBeInTheDocument();
     expect(screen.getAllByText('At least 8 characters')).toHaveLength(2);
-    expect(screen.queryByText('Minimo 8 caracteres')).not.toBeInTheDocument();
+    expect(screen.queryByText('Mínimo 8 caracteres')).not.toBeInTheDocument();
 
     /* ImageUploader */
     expect(screen.getByText('Photos')).toBeInTheDocument();
@@ -92,7 +92,7 @@ describe('Componentes das Definicoes em ingles', () => {
     expect(screen.getByText('Under review by Meta')).toBeInTheDocument();
     ['Booking confirmation', 'Day-before reminder', 'Review request'].forEach((x) =>
       expect(screen.getByText(x, { selector: 'h3' })).toBeInTheDocument());
-    expect(screen.getByLabelText('Booking confirmation (PT)')).toHaveValue('Ola {nome_cliente}');
+    expect(screen.getByLabelText('Booking confirmation (PT)')).toHaveValue('Olá {nome_cliente}');
     expect(screen.getAllByRole('button', { name: 'Save' })).toHaveLength(3);
     expect(screen.getAllByText('Original text')).toHaveLength(3);
     expect(screen.getAllByTitle('Customer name')).toHaveLength(3);
@@ -101,7 +101,7 @@ describe('Componentes das Definicoes em ingles', () => {
     expect(chavesCruas()).toEqual([]);
   });
 
-  it('validateImageFile devolve o erro em ingles', () => {
+  it('validateImageFile devolve o erro em inglês', () => {
     useUiStore.setState({ lang: 'en' });
     expect(validateImageFile({ name: 'a.gif', type: 'image/gif', size: 1 })).toBe('Invalid format: a.gif. Use JPG, PNG or WebP.');
     expect(validateImageFile({ name: 'b.jpg', type: 'image/jpeg', size: 6 * 1024 * 1024 })).toBe('File too large: b.jpg. Maximum 5MB.');
@@ -109,8 +109,8 @@ describe('Componentes das Definicoes em ingles', () => {
   });
 });
 
-describe.each(['de', 'nl'])('Componentes das Definicoes em %s', (lang) => {
-  it('sem chaves cruas e sem o texto portugues', async () => {
+describe.each(['de', 'nl'])('Componentes das Definições em %s', (lang) => {
+  it('sem chaves cruas e sem o texto português', async () => {
     useUiStore.setState({ lang });
     await montarTudo();
     expect(screen.queryByText('Forte')).not.toBeInTheDocument();
@@ -119,16 +119,16 @@ describe.each(['de', 'nl'])('Componentes das Definicoes em %s', (lang) => {
     expect(chavesCruas()).toEqual([]);
     const erro = validateImageFile({ name: 'a.gif', type: 'image/gif', size: 1 });
     expect(erro).toContain('a.gif');
-    expect(erro).not.toMatch(/Formato invalido|upload\./);
+    expect(erro).not.toMatch(/Formato inválido|upload\./);
   });
 });
 
-describe('Componentes das Definicoes em portugues (por omissao)', () => {
-  it('continuam em portugues', async () => {
+describe('Componentes das Definições em português (por omissao)', () => {
+  it('continuam em português', async () => {
     await montarTudo();
     expect(screen.getByText('Forte')).toBeInTheDocument();
     expect(screen.getAllByTitle('Mover para cima')).toHaveLength(2);
     expect(screen.getByText('Como as mensagens são enviadas')).toBeInTheDocument();
-    expect(validateImageFile({ name: 'a.gif', type: 'image/gif', size: 1 })).toBe('Formato invalido: a.gif. Usa JPG, PNG ou WebP.');
+    expect(validateImageFile({ name: 'a.gif', type: 'image/gif', size: 1 })).toBe('Formato inválido: a.gif. Usa JPG, PNG ou WebP.');
   });
 });

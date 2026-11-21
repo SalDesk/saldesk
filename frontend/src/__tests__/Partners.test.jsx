@@ -67,13 +67,13 @@ describe('Parcerias: lista', () => {
     await montar();
     expect(screen.getByText('Parcerias Cross-Selling')).toBeInTheDocument();
     const c = cartao('Hotel Morabeza');
-    expect(c).toHaveTextContent('Hotel / Alojamento · Comissao por reserva referenciada');
-    expect(c).toHaveTextContent('10% comissao · reserva media €80');
+    expect(c).toHaveTextContent('Hotel / Alojamento · Comissão por reserva referenciada');
+    expect(c).toHaveTextContent('10% comissão · reserva média €80');
     expect(c).toHaveTextContent('3enviadas');
     expect(c).toHaveTextContent('2recebidas');
     expect(c).toHaveTextContent('Recomendamos o Morabeza');
-    expect(cartao('Rent Sal')).toHaveTextContent('Rent-a-Car · Recomendacao mutua (sem comissao)');
-    expect(cartao('Rent Sal')).not.toHaveTextContent('comissao ·');
+    expect(cartao('Rent Sal')).toHaveTextContent('Rent-a-Car · Recomendação mútua (sem comissão)');
+    expect(cartao('Rent Sal')).not.toHaveTextContent('comissão ·');
     expect(cartao('Rent Sal')).toHaveTextContent('1enviadas');
     expect(cartao('Rent Sal')).toHaveTextContent('0recebidas');
     expect(screen.queryByText('Tours Sal')).not.toBeInTheDocument();
@@ -83,9 +83,9 @@ describe('Parcerias: lista', () => {
     listPartners.mockResolvedValue([{ id: 'x', name: 'Sem Tipo', status: 'accepted', active: true, commission_pct: 7 }]);
     await montar('Sem Tipo');
     const c = cartao('Sem Tipo');
-    expect(c).toHaveTextContent('Hotel / Alojamento · Recomendacao mutua (sem comissao)');
-    expect(c).toHaveTextContent('7% comissao');
-    expect(c).not.toHaveTextContent('reserva media');
+    expect(c).toHaveTextContent('Hotel / Alojamento · Recomendação mútua (sem comissão)');
+    expect(c).toHaveTextContent('7% comissão');
+    expect(c).not.toHaveTextContent('reserva média');
   });
 
   it('parceiro_real_leva_o_selo_SalDesk_e_recusado_o_selo_Recusado_e_fica_esbatido', async () => {
@@ -122,7 +122,7 @@ describe('Parcerias: lista', () => {
     listPartners.mockResolvedValue([]);
     render(<Partners />);
     expect(await screen.findByText('Sem parceiros configurados')).toBeInTheDocument();
-    expect(screen.getByText('Adiciona operadores SalDesk parceiros para comecar a fazer cross-selling.')).toBeInTheDocument();
+    expect(screen.getByText('Adiciona operadores SalDesk parceiros para começar a fazer cross-selling.')).toBeInTheDocument();
     expect(screen.getAllByRole('button', { name: 'Adicionar parceiro' })).toHaveLength(2);
   });
 
@@ -161,8 +161,8 @@ describe('Parcerias: pedidos', () => {
     fireEvent.click(tabPedidos());
     expect(screen.getByText('Recebidos')).toBeInTheDocument();
     expect(screen.getByText('Enviados')).toBeInTheDocument();
-    expect(cartao('Tours Sal')).toHaveTextContent('Recomendacao mutua (sem comissao) · 5% comissao');
-    expect(cartao('Dive CV')).toHaveTextContent('Comissao por reserva referenciada · 12% comissao');
+    expect(cartao('Tours Sal')).toHaveTextContent('Recomendação mútua (sem comissão) · 5% comissão');
+    expect(cartao('Dive CV')).toHaveTextContent('Comissão por reserva referenciada · 12% comissão');
     expect(within(cartao('Tours Sal')).getByRole('button', { name: 'Aceitar' })).toBeInTheDocument();
     expect(within(cartao('Tours Sal')).getByRole('button', { name: 'Recusar' })).toBeInTheDocument();
     expect(cartao('Surf CV')).toHaveTextContent('A aguardar resposta');
@@ -234,22 +234,22 @@ describe('Parcerias: dashboard', () => {
 
   it('comissoes_a_pagar_e_a_receber_so_com_tipo_comissao_e_pct_maior_que_zero', async () => {
     await abrirDashboard([P1, { id: 'p7', name: 'Pct Zero', partnership_type: 'commission', commission_pct: 0, status: 'accepted', active: true, bookings_sent: 10, bookings_received: 10, avg_booking_value: 100 }]);
-    expect(screen.getByText('Comissoes a pagar').nextSibling.textContent).toBe('€24');
-    expect(screen.getByText('Comissoes a receber').nextSibling.textContent).toBe('€16');
-    expect(screen.getByText(/Por reservas que enviaste aos parceiros com comissao\./)).toBeInTheDocument();
+    expect(screen.getByText('Comissões a pagar').nextSibling.textContent).toBe('€24');
+    expect(screen.getByText('Comissões a receber').nextSibling.textContent).toBe('€16');
+    expect(screen.getByText(/Por reservas que enviaste aos parceiros com comissão\./)).toBeInTheDocument();
   });
 
   it('sem_parceiros_de_comissao_nao_mostra_os_blocos_de_comissao', async () => {
     await abrirDashboard([P2]);
-    expect(screen.queryByText('Comissoes a pagar')).not.toBeInTheDocument();
-    expect(screen.queryByText('Comissoes a receber')).not.toBeInTheDocument();
+    expect(screen.queryByText('Comissões a pagar')).not.toBeInTheDocument();
+    expect(screen.queryByText('Comissões a receber')).not.toBeInTheDocument();
     expect(metrica('Balanco (recebidas - enviadas)')).toBe('-1');
   });
 
   it('nota_sobre_automacoes', async () => {
     await abrirDashboard();
-    expect(screen.getByText(/Para activar as recomendacoes automaticas/)).toBeInTheDocument();
-    expect(screen.getByText('Automacoes de Comunicacao')).toBeInTheDocument();
+    expect(screen.getByText(/Para activar as recomendações automáticas/)).toBeInTheDocument();
+    expect(screen.getByText('Automações de Comunicação')).toBeInTheDocument();
   });
 });
 
@@ -325,8 +325,8 @@ describe('Parcerias: modal de parceiro (externo)', () => {
     expect(campoDe('Nome do parceiro')).toHaveValue('');
     expect(campoDe('Tipo de parceiro', 'select')).toHaveValue('hotel');
     expect(campoDe('Tipo de parceria', 'select')).toHaveValue('recommendation');
-    expect(within(d).queryByText('Comissao (%)')).not.toBeInTheDocument();
-    expect(campoDe('Mensagem de recomendacao PT', 'textarea')).toBeInTheDocument();
+    expect(within(d).queryByText('Comissão (%)')).not.toBeInTheDocument();
+    expect(campoDe('Mensagem de recomendação PT', 'textarea')).toBeInTheDocument();
     expect(within(d).getByRole('button', { name: 'Adicionar' })).toBeInTheDocument();
   });
 
@@ -336,14 +336,14 @@ describe('Parcerias: modal de parceiro (externo)', () => {
     fireEvent.change(campoDe('Nome do parceiro'), { target: { value: 'Novo Rent' } });
     fireEvent.change(campoDe('Tipo de parceiro', 'select'), { target: { value: 'rentacar' } });
     fireEvent.change(campoDe('Tipo de parceria', 'select'), { target: { value: 'commission' } });
-    fireEvent.change(campoDe('Comissao (%)'), { target: { value: '10' } });
-    fireEvent.change(campoDe('Preco medio da reserva (€)'), { target: { value: '80' } });
-    fireEvent.change(campoDe('Mensagem de recomendacao PT', 'textarea'), { target: { value: 'Ola PT' } });
-    fireEvent.change(campoDe('Mensagem de recomendacao EN', 'textarea'), { target: { value: 'Hello EN' } });
+    fireEvent.change(campoDe('Comissão (%)'), { target: { value: '10' } });
+    fireEvent.change(campoDe('Preço médio da reserva (€)'), { target: { value: '80' } });
+    fireEvent.change(campoDe('Mensagem de recomendação PT', 'textarea'), { target: { value: 'Olá PT' } });
+    fireEvent.change(campoDe('Mensagem de recomendação EN', 'textarea'), { target: { value: 'Hello EN' } });
     submeter('Adicionar');
     await waitFor(() => expect(createPartner).toHaveBeenCalledWith({
       name: 'Novo Rent', partner_type: 'rentacar', partnership_type: 'commission', commission_pct: 10, avg_booking_value: 80,
-      message_pt: 'Ola PT', message_en: 'Hello EN', active: true,
+      message_pt: 'Olá PT', message_en: 'Hello EN', active: true,
     }));
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
     const nomes = [...document.querySelectorAll('p.font-display')].map(p => p.textContent);
@@ -356,8 +356,8 @@ describe('Parcerias: modal de parceiro (externo)', () => {
     fireEvent.change(campoDe('Nome do parceiro'), { target: { value: 'Desc' } });
     fireEvent.change(campoDe('Tipo de parceria', 'select'), { target: { value: 'commission' } });
     fireEvent.change(campoDe('Tipo de parceria', 'select'), { target: { value: 'discount' } });
-    expect(within(dialogo()).queryByText('Comissao (%)')).not.toBeInTheDocument();
-    expect(within(dialogo()).queryByText('Mensagem de recomendacao PT')).not.toBeInTheDocument();
+    expect(within(dialogo()).queryByText('Comissão (%)')).not.toBeInTheDocument();
+    expect(within(dialogo()).queryByText('Mensagem de recomendação PT')).not.toBeInTheDocument();
     submeter('Adicionar');
     await waitFor(() => expect(createPartner).toHaveBeenCalledWith({
       name: 'Desc', partner_type: 'hotel', partnership_type: 'discount', commission_pct: 0, avg_booking_value: 0,
@@ -409,7 +409,7 @@ describe('Parcerias: modal de parceiro (operador SalDesk)', () => {
     await abrirNovo();
     fireEvent.click(segmento('Operador SalDesk'));
     expect(within(dialogo()).queryByText('Nome do parceiro')).not.toBeInTheDocument();
-    expect(within(dialogo()).getByText('O pedido fica pendente ate o operador escolhido o aceitar.')).toBeInTheDocument();
+    expect(within(dialogo()).getByText('O pedido fica pendente até o operador escolhido o aceitar.')).toBeInTheDocument();
     expect(within(dialogo()).getByRole('button', { name: 'Enviar pedido' })).toBeInTheDocument();
     submeter('Enviar pedido');
     expect(await screen.findByText('Escolhe um operador da lista.')).toBeInTheDocument();
@@ -491,7 +491,7 @@ describe('Parcerias: modal de parceiro (operador SalDesk)', () => {
     } finally { vi.useRealTimers(); }
     fireEvent.click(screen.getByText('Hotel Oasis').closest('button'));
     fireEvent.change(campoDe('Tipo de parceria', 'select'), { target: { value: 'commission' } });
-    fireEvent.change(campoDe('Comissao (%)'), { target: { value: '10' } });
+    fireEvent.change(campoDe('Comissão (%)'), { target: { value: '10' } });
     submeter('Enviar pedido');
     await waitFor(() => expect(requestPartnership).toHaveBeenCalledWith({
       partner_operator_id: 'o9', partnership_type: 'commission', commission_pct: 10, avg_booking_value: 0, message_pt: '', message_en: '',
@@ -525,13 +525,13 @@ describe('Parcerias: modal de parceiro (operador SalDesk)', () => {
     expect(within(d).queryByText('Parceiro externo')).not.toBeInTheDocument();
     expect(within(d).queryByText('Nome do parceiro')).not.toBeInTheDocument();
     expect(within(d).getByText('Operador SalDesk')).toBeInTheDocument();
-    expect(within(d).queryByText('O pedido fica pendente ate o operador escolhido o aceitar.')).not.toBeInTheDocument();
+    expect(within(d).queryByText('O pedido fica pendente até o operador escolhido o aceitar.')).not.toBeInTheDocument();
     expect(within(d).getByText('Hotel Morabeza')).toBeInTheDocument();
     fireEvent.click(within(d).getByRole('button', { name: 'Trocar' }));
     expect(within(d).getByText('Hotel Morabeza')).toBeInTheDocument();
     expect(within(d).queryByPlaceholderText('Pesquisar operador pelo nome...')).not.toBeInTheDocument();
-    expect(campoDe('Comissao (%)')).toHaveValue(10);
-    fireEvent.change(campoDe('Comissao (%)'), { target: { value: '15' } });
+    expect(campoDe('Comissão (%)')).toHaveValue(10);
+    fireEvent.change(campoDe('Comissão (%)'), { target: { value: '15' } });
     submeter('Guardar');
     await waitFor(() => expect(updatePartner).toHaveBeenCalledWith('p1', {
       name: 'Hotel Morabeza', partner_type: 'hotel', partnership_type: 'commission', commission_pct: 15, avg_booking_value: 80,
@@ -546,7 +546,7 @@ describe('Parcerias: registar reservas', () => {
     await montar();
     fireEvent.click(botoes('Hotel Morabeza')[0]);
     expect(within(dialogo()).getByText('Registar reservas — Hotel Morabeza')).toBeInTheDocument();
-    expect(campoDe('Numero de reservas')).toHaveValue(1);
+    expect(campoDe('Número de reservas')).toHaveValue(1);
     submeter('Registar');
     await waitFor(() => expect(registerPartnerBooking).toHaveBeenCalledWith('p1', 'sent', 1));
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
@@ -558,11 +558,11 @@ describe('Parcerias: registar reservas', () => {
     await montar();
     fireEvent.click(botoes('Hotel Morabeza')[0]);
     fireEvent.click(segmento('Reserva recebida do parceiro'));
-    fireEvent.change(campoDe('Numero de reservas'), { target: { value: '3' } });
+    fireEvent.change(campoDe('Número de reservas'), { target: { value: '3' } });
     submeter('Registar');
     await waitFor(() => expect(registerPartnerBooking).toHaveBeenCalledWith('p1', 'received', 3));
     fireEvent.click(botoes('Hotel Morabeza')[0]);
-    fireEvent.change(campoDe('Numero de reservas'), { target: { value: '0' } });
+    fireEvent.change(campoDe('Número de reservas'), { target: { value: '0' } });
     submeter('Registar');
     await waitFor(() => expect(registerPartnerBooking).toHaveBeenLastCalledWith('p1', 'sent', 1));
   });
@@ -583,12 +583,12 @@ describe('Parcerias: design system (modais)', () => {
     await abrirNovo();
     fireEvent.change(campoDe('Tipo de parceria', 'select'), { target: { value: 'commission' } });
     const d = dialogo();
-    for (const etiqueta of ['Nome do parceiro', 'Tipo de parceiro', 'Tipo de parceria', 'Comissao (%)', 'Preco medio da reserva (€)']) {
+    for (const etiqueta of ['Nome do parceiro', 'Tipo de parceiro', 'Tipo de parceria', 'Comissão (%)', 'Preço médio da reserva (€)']) {
       expect(within(d).getByLabelText(etiqueta)).toBeInTheDocument();
     }
     fireEvent.change(campoDe('Tipo de parceria', 'select'), { target: { value: 'recommendation' } });
-    expect(within(d).getByLabelText('Mensagem de recomendacao PT')).toBeInTheDocument();
-    expect(within(d).getByLabelText('Mensagem de recomendacao EN')).toBeInTheDocument();
+    expect(within(d).getByLabelText('Mensagem de recomendação PT')).toBeInTheDocument();
+    expect(within(d).getByLabelText('Mensagem de recomendação EN')).toBeInTheDocument();
   });
 
   it('os_seletores_segmentados_tem_aria_pressed', async () => {
@@ -608,7 +608,7 @@ describe('Parcerias: design system (modais)', () => {
   it('o_modal_de_reservas_tem_campo_e_seletor_acessiveis', async () => {
     await montar();
     fireEvent.click(screen.getByRole('button', { name: 'Registar reservas Hotel Morabeza' }));
-    expect(within(dialogo()).getByLabelText('Numero de reservas')).toHaveValue(1);
+    expect(within(dialogo()).getByLabelText('Número de reservas')).toHaveValue(1);
     expect(within(dialogo()).getByRole('button', { name: 'Reserva enviada ao parceiro', pressed: true })).toBeInTheDocument();
     fireEvent.click(within(dialogo()).getByRole('button', { name: 'Reserva recebida do parceiro' }));
     expect(within(dialogo()).getByRole('button', { name: 'Reserva recebida do parceiro', pressed: true })).toBeInTheDocument();

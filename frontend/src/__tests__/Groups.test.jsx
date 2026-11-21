@@ -21,7 +21,7 @@ const GRUPOS = [
   { id: 'g2', company: 'Hotel Beta', event_type: 'casamento', guests: 50, status: 'confirmado', tour_ids: [], created_at: '2026-11-06T10:00:00Z' },
   { id: 'g3', company: 'Escola Gama', event_type: 'turismo', guests: 30, status: 'concluido', created_at: '2026-11-04T10:00:00Z' },
   { id: 'g4', company: 'Cancelada SA', event_type: 'outro', guests: 10, status: 'cancelado', created_at: '2026-11-03T10:00:00Z' },
-  { id: 'g5', company: 'Analise Lda', event_type: 'incentivo', guests: 12, status: 'em_analise', created_at: '2026-11-02T10:00:00Z' },
+  { id: 'g5', company: 'Análise Lda', event_type: 'incentivo', guests: 12, status: 'em_analise', created_at: '2026-11-02T10:00:00Z' },
   { id: 'g6', company: 'Proposta Lda', event_type: 'incentivo', guests: 8, status: 'proposta_enviada', created_at: '2026-11-01T10:00:00Z' },
 ];
 
@@ -51,7 +51,7 @@ async function montar(primeiro = 'Empresa Alfa') {
 const cartao = (nome) => screen.getByText(nome, { selector: 'p' }).closest('div.overflow-hidden');
 const abrir = (nome) => fireEvent.click(screen.getByText(nome, { selector: 'p' }).closest('div.cursor-pointer'));
 const chip = (rotulo) => screen.getAllByText(rotulo).find(e => e.closest('button')).closest('button');
-const novaCotacao = () => screen.getAllByText('Nova cotacao').find(e => e.closest('button')).closest('button');
+const novaCotacao = () => screen.getAllByText('Nova cotação').find(e => e.closest('button')).closest('button');
 const kpi = (rotulo) => screen.getByText(rotulo).previousSibling.textContent;
 const empresasPorOrdem = () => [...document.querySelectorAll('p.truncate')].map(p => p.textContent);
 
@@ -78,7 +78,7 @@ describe('Grupos: lista', () => {
     expect(c).toHaveTextContent('Desconto15%');
     expect(c).toHaveTextContent('Sinal30%');
     expect(c).toHaveTextContent('Pagamento final7d antes');
-    expect(c).toHaveTextContent(`Proposta valida ate${fmtDate(dia(10))}`);
+    expect(c).toHaveTextContent(`Proposta válida até${fmtDate(dia(10))}`);
     expect(c).toHaveTextContent('Alergias');
     expect(c).toHaveTextContent(`${fmtDate('2026-11-01')} · Sinal`);
     expect(c).toHaveTextContent('Total pago€300.00');
@@ -93,20 +93,20 @@ describe('Grupos: lista', () => {
     expect(c).toHaveTextContent('Desconto—');
     expect(c).toHaveTextContent('Sinal30%');
     expect(c).toHaveTextContent('Pagamento final7d antes');
-    expect(c).toHaveTextContent('Proposta valida ate—');
+    expect(c).toHaveTextContent('Proposta válida até—');
     expect(c).not.toHaveTextContent('Pagamentos recebidos');
   });
 
   it('kpis_total_confirmados_e_pax_de_confirmados_e_concluidos', async () => {
     await montar();
-    expect(kpi('Total cotacoes')).toBe('6');
+    expect(kpi('Total cotações')).toBe('6');
     expect(kpi('Confirmados')).toBe('1');
     expect(kpi('Pax confirmados')).toBe('80');
   });
 
   it('ordena_por_created_at_decrescente', async () => {
     await montar();
-    expect(empresasPorOrdem()).toEqual(['Hotel Beta', 'Empresa Alfa', 'Escola Gama', 'Cancelada SA', 'Analise Lda', 'Proposta Lda']);
+    expect(empresasPorOrdem()).toEqual(['Hotel Beta', 'Empresa Alfa', 'Escola Gama', 'Cancelada SA', 'Análise Lda', 'Proposta Lda']);
   });
 
   it('pesquisa_por_empresa_filtro_por_estado_e_vazios', async () => {
@@ -121,38 +121,38 @@ describe('Grupos: lista', () => {
     fireEvent.click(chip('Todos'));
     expect(empresasPorOrdem()).toHaveLength(6);
     fireEvent.change(screen.getByPlaceholderText('Pesquisar empresa ou grupo...'), { target: { value: 'zzz' } });
-    expect(screen.getByText('Nenhuma cotacao corresponde aos filtros.')).toBeInTheDocument();
-    expect(screen.queryByText('Regista a primeira cotacao para grupo ou evento corporativo.')).toBeNull();
+    expect(screen.getByText('Nenhuma cotação corresponde aos filtros.')).toBeInTheDocument();
+    expect(screen.queryByText('Regista a primeira cotação para grupo ou evento corporativo.')).toBeNull();
   });
 
   it('sem_cotacoes_mostra_o_vazio_com_botao_e_servicos_a_falhar_nao_rebentam', async () => {
     listGroups.mockResolvedValue([]);
     render(<Groups />);
-    expect(await screen.findByText('Regista a primeira cotacao para grupo ou evento corporativo.')).toBeInTheDocument();
-    fireEvent.click(screen.getAllByRole('button', { name: /Nova cotacao/ })[1]);
-    expect(screen.getByRole('dialog')).toHaveTextContent('Nova cotacao de grupo');
+    expect(await screen.findByText('Regista a primeira cotação para grupo ou evento corporativo.')).toBeInTheDocument();
+    fireEvent.click(screen.getAllByRole('button', { name: /Nova cotação/ })[1]);
+    expect(screen.getByRole('dialog')).toHaveTextContent('Nova cotação de grupo');
     cleanup();
     listGroups.mockRejectedValue(new Error('x'));
     listUnits.mockRejectedValue(new Error('x'));
     render(<Groups />);
-    expect(await screen.findByText('Sem cotacoes')).toBeInTheDocument();
+    expect(await screen.findByText('Sem cotações')).toBeInTheDocument();
     cleanup();
     listGroups.mockReturnValue(new Promise(() => {}));
     listUnits.mockReturnValue(new Promise(() => {}));
     render(<Groups />);
     expect(screen.getByText('Grupos e Eventos Corporativos')).toBeInTheDocument();
-    expect(screen.queryByText('Total cotacoes')).toBeNull();
+    expect(screen.queryByText('Total cotações')).toBeNull();
   });
 });
 
-describe('Grupos: accoes', () => {
+describe('Grupos: acções', () => {
   it('avancar_estado_so_para_os_quatro_primeiros_estados', async () => {
     await montar();
-    const botao = (nome) => { abrir(nome); return within(cartao(nome)).queryByText(/Avancar para:/); };
-    expect(botao('Empresa Alfa')).toHaveTextContent('Avancar para: Em analise');
-    expect(botao('Analise Lda')).toHaveTextContent('Avancar para: Proposta enviada');
-    expect(botao('Proposta Lda')).toHaveTextContent('Avancar para: Confirmado');
-    expect(botao('Hotel Beta')).toHaveTextContent('Avancar para: Concluido');
+    const botao = (nome) => { abrir(nome); return within(cartao(nome)).queryByText(/Avançar para:/); };
+    expect(botao('Empresa Alfa')).toHaveTextContent('Avançar para: Em análise');
+    expect(botao('Análise Lda')).toHaveTextContent('Avançar para: Proposta enviada');
+    expect(botao('Proposta Lda')).toHaveTextContent('Avançar para: Confirmado');
+    expect(botao('Hotel Beta')).toHaveTextContent('Avançar para: Concluído');
     expect(botao('Escola Gama')).toBeNull();
     expect(botao('Cancelada SA')).toBeNull();
   });
@@ -161,9 +161,9 @@ describe('Grupos: accoes', () => {
     updateGroup.mockImplementation(async (id, d) => ({ ...GRUPOS.find(g => g.id === id), ...d }));
     await montar();
     abrir('Empresa Alfa');
-    fireEvent.click(within(cartao('Empresa Alfa')).getByText(/Avancar para:/));
+    fireEvent.click(within(cartao('Empresa Alfa')).getByText(/Avançar para:/));
     await waitFor(() => expect(updateGroup).toHaveBeenCalledWith('g1', { status: 'em_analise' }));
-    await waitFor(() => expect(within(cartao('Empresa Alfa')).getAllByText('Em analise').length).toBeGreaterThan(0));
+    await waitFor(() => expect(within(cartao('Empresa Alfa')).getAllByText('Em análise').length).toBeGreaterThan(0));
   });
 
   it('registar_pagamento_chama_createGroupPayment_e_fecha_so_com_montante_positivo', async () => {
@@ -173,7 +173,7 @@ describe('Grupos: accoes', () => {
     fireEvent.click(within(cartao('Empresa Alfa')).getByText('Registar pagamento'));
     const dlg = screen.getByRole('dialog');
     expect(dlg).toHaveTextContent('Pagamento — Empresa Alfa');
-    expect(dlg).toHaveTextContent('Total pago ate agora: €300.00');
+    expect(dlg).toHaveTextContent('Total pago até agora: €300.00');
     expect(dlg.querySelector('input[type="date"]')).toHaveValue(new Date().toISOString().slice(0, 10));
     expect(within(dlg).getByPlaceholderText('Ex: Sinal, Pagamento final...')).toHaveValue('Sinal');
     fireEvent.click(within(dlg).getByRole('button', { name: 'Registar' }));
@@ -201,7 +201,7 @@ describe('Grupos: accoes', () => {
     abrir('Empresa Alfa');
     const apagar = () => within(cartao('Empresa Alfa')).getAllByRole('button').at(-1);
     fireEvent.click(apagar());
-    expect(confirmar).toHaveBeenCalledWith('Eliminar esta cotacao?');
+    expect(confirmar).toHaveBeenCalledWith('Eliminar esta cotação?');
     expect(deleteGroup).not.toHaveBeenCalled();
     confirmar.mockReturnValue(true);
     fireEvent.click(apagar());
@@ -210,23 +210,23 @@ describe('Grupos: accoes', () => {
   });
 });
 
-describe('Grupos: formulario', () => {
+describe('Grupos: formulário', () => {
   it('criar_envia_numeros_e_mostra_o_preco_estimado_com_e_sem_desconto', async () => {
     createGroup.mockImplementation(async (d) => ({ id: 'gn', created_at: '2026-11-08T10:00:00Z', ...d }));
     await montar();
     fireEvent.click(novaCotacao());
     const dlg = screen.getByRole('dialog');
-    expect(dlg).toHaveTextContent('Nova cotacao de grupo');
+    expect(dlg).toHaveTextContent('Nova cotação de grupo');
     expect(within(dlg).queryByText('Estado')).toBeNull();
     fireEvent.change(within(dlg).getByPlaceholderText('Ex: Empresa ABC'), { target: { value: 'Empresa Nova' } });
     fireEvent.change(dlg.querySelector('input[type="date"]'), { target: { value: '2027-02-01' } });
     fireEvent.change(within(dlg).getByPlaceholderText('Ex: 20'), { target: { value: '20' } });
     fireEvent.click(within(dlg).getByText(/Kite — €50\/pax/));
-    expect(dlg).toHaveTextContent('Preco estimado c/ desconto: €1000'); /* 50 * 20, sem desconto */
+    expect(dlg).toHaveTextContent('Preço estimado c/ desconto: €1000'); /* 50 * 20, sem desconto */
     fireEvent.change(within(dlg).getByPlaceholderText('Ex: 15'), { target: { value: '10' } });
-    expect(dlg).toHaveTextContent('Preco estimado c/ desconto: €900');
+    expect(dlg).toHaveTextContent('Preço estimado c/ desconto: €900');
     expect(dlg).toHaveTextContent('(20 pax × 10% desconto)');
-    fireEvent.click(within(dlg).getByRole('button', { name: 'Criar cotacao' }));
+    fireEvent.click(within(dlg).getByRole('button', { name: 'Criar cotação' }));
     await waitFor(() => expect(createGroup).toHaveBeenCalledTimes(1));
     expect(createGroup).toHaveBeenCalledWith(expect.objectContaining({
       company: 'Empresa Nova', event_type: 'team_building', guests: 20, budget: 0, discount_pct: 10, signal_pct: 30, days_before: 7, tour_ids: ['u1'], status: 'pedido', date: '2027-02-01',
@@ -245,7 +245,7 @@ describe('Grupos: formulario', () => {
     expect(within(dlg).getByPlaceholderText('Ex: 20')).toBeRequired();
     fireEvent.change(within(dlg).getByPlaceholderText('Ex: Empresa ABC'), { target: { value: 'Sem Data Lda' } });
     fireEvent.change(within(dlg).getByPlaceholderText('Ex: 20'), { target: { value: '12' } });
-    fireEvent.click(within(dlg).getByRole('button', { name: 'Criar cotacao' }));
+    fireEvent.click(within(dlg).getByRole('button', { name: 'Criar cotação' }));
     await waitFor(() => expect(createGroup).toHaveBeenCalledTimes(1));
     expect(createGroup).toHaveBeenCalledWith(expect.objectContaining({ company: 'Sem Data Lda', guests: 12, date: '' }));
   });
@@ -256,12 +256,12 @@ describe('Grupos: formulario', () => {
     abrir('Empresa Alfa');
     fireEvent.click(within(cartao('Empresa Alfa')).getAllByRole('button').at(-2));
     const dlg = screen.getByRole('dialog');
-    expect(dlg).toHaveTextContent('Editar cotacao');
+    expect(dlg).toHaveTextContent('Editar cotação');
     expect(within(dlg).getByPlaceholderText('Ex: Empresa ABC')).toHaveValue('Empresa Alfa');
     const estado = within(dlg).getAllByRole('combobox')[1];
-    expect(Array.from(estado.options).map(o => o.textContent)).toEqual(['Pedido', 'Em analise', 'Proposta enviada', 'Confirmado', 'Concluido', 'Cancelado']);
+    expect(Array.from(estado.options).map(o => o.textContent)).toEqual(['Pedido', 'Em análise', 'Proposta enviada', 'Confirmado', 'Concluído', 'Cancelado']);
     fireEvent.click(within(dlg).getByRole('button', { name: 'Guardar' }));
-    expect(await within(dlg).findByText('Erro ao guardar cotacao.')).toBeInTheDocument();
+    expect(await within(dlg).findByText('Erro ao guardar cotação.')).toBeInTheDocument();
     updateGroup.mockImplementation(async (id, d) => ({ ...GRUPOS[0], ...d }));
     fireEvent.change(estado, { target: { value: 'confirmado' } });
     fireEvent.click(within(dlg).getByRole('button', { name: 'Guardar' }));
@@ -276,7 +276,7 @@ describe('Grupos com o design system', () => {
     await montar();
     const selo = (nome, texto) => within(cartao(nome)).getAllByText(texto).find(e => e.className.includes('inline-flex'));
     expect(selo('Empresa Alfa', 'Pedido').className).toContain('bg-n-100');
-    expect(selo('Analise Lda', 'Em analise').className).toContain('var(--warning)');
+    expect(selo('Análise Lda', 'Em análise').className).toContain('var(--warning)');
     expect(selo('Proposta Lda', 'Proposta enviada').className).toContain('var(--info)');
     expect(selo('Hotel Beta', 'Confirmado').className).toContain('var(--success)');
     expect(selo('Cancelada SA', 'Cancelado').className).toContain('var(--error)');
@@ -305,18 +305,18 @@ describe('Grupos com o design system', () => {
     expect(screen.getByRole('button', { name: 'Eliminar Empresa Alfa' })).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Editar Empresa Alfa' }));
     let modal = within(screen.getByRole('dialog'));
-    ['Empresa / Grupo', 'Tipo de evento', 'Data pretendida', 'Numero de pessoas', 'Desconto de grupo (%)', 'Orcamento estimado (€)', 'Sinal (%)', 'Restante X dias antes', 'Validade da proposta', 'Notas especiais', 'Estado']
+    ['Empresa / Grupo', 'Tipo de evento', 'Data pretendida', 'Número de pessoas', 'Desconto de grupo (%)', 'Orçamento estimado (€)', 'Sinal (%)', 'Restante X dias antes', 'Validade da proposta', 'Notas especiais', 'Estado']
       .forEach(r => expect(modal.getByLabelText(r)).toBeInTheDocument());
     fireEvent.click(modal.getByRole('button', { name: 'Cancelar' }));
     fireEvent.click(within(cartao('Empresa Alfa')).getByText('Registar pagamento'));
     modal = within(screen.getByRole('dialog'));
-    ['Montante recebido (€)', 'Data', 'Descricao'].forEach(r => expect(modal.getByLabelText(r)).toBeInTheDocument());
+    ['Montante recebido (€)', 'Data', 'Descrição'].forEach(r => expect(modal.getByLabelText(r)).toBeInTheDocument());
   });
 
   it('o_vazio_usa_o_EmptyState', async () => {
     listGroups.mockResolvedValue([]);
     render(<Groups />);
-    expect(await screen.findByText('Sem cotacoes')).toHaveClass('font-display');
+    expect(await screen.findByText('Sem cotações')).toHaveClass('font-display');
   });
 
   it('sem_hexadecimais_cores_nomeadas_ou_text_error_com_tudo_aberto', async () => {
@@ -326,7 +326,7 @@ describe('Grupos com o design system', () => {
     abrir('Cancelada SA');
     fireEvent.click(within(cartao('Empresa Alfa')).getAllByRole('button').at(-2));
     fireEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Guardar' }));
-    await screen.findByText('Erro ao guardar cotacao.');
+    await screen.findByText('Erro ao guardar cotação.');
     const html = container.innerHTML;
     expect(html).not.toMatch(HEX);
     expect(html).not.toMatch(NOMEADAS);

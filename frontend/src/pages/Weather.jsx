@@ -114,7 +114,7 @@ export default function Weather() {
       /* sem previsao nova nao se mantem a antiga (os alertas de conflito vivem fora do ecra de erro) */
       setForecast([]);
       setReservations([]);
-      setError('Nao foi possivel carregar a previsao meteorologica. Verifique a ligacao a internet.');
+      setError('Não foi possível carregar a previsão meteorológica. Verifique a ligação a internet.');
     } finally {
       setLoading(false);
     }
@@ -149,7 +149,7 @@ export default function Weather() {
     <div>
       <PageHeader
         title={`Meteorologia${island ? ` — ${island.name}` : ''}`}
-        subtitle="Previsao a 7 dias · Open-Meteo"
+        subtitle="Previsão a 7 dias · Open-Meteo"
         actions={
           <Button variant="secondary" icon={RefreshCw} size="sm" onClick={carregar} loading={loading}>
             Actualizar
@@ -170,7 +170,7 @@ export default function Weather() {
                     Mau tempo previsto para {fmtDate(c.date)}
                   </p>
                   <p className="text-xs font-body text-[var(--error)] mt-0.5">
-                    {weatherInfo(c.code).label} · {c.precipitation > 0 ? `${c.precipitation}mm precipitacao · ` : ''}
+                    {weatherInfo(c.code).label} · {c.precipitation > 0 ? `${c.precipitation}mm precipitação · ` : ''}
                     {tours.length} tour(s) agendado(s) com {tours.reduce((s, r) => s + (r.guests || 1), 0)} participante(s)
                   </p>
                 </div>
@@ -221,7 +221,7 @@ export default function Weather() {
                 <div className="text-right shrink-0">
                   <p className="font-display font-bold text-xl text-n-900">{selectedDay.tempMax}° / {selectedDay.tempMin}°</p>
                   {selectedDay.precipitation > 0 && (
-                    <p className="text-xs font-mono text-ocean-600 mt-0.5">{selectedDay.precipitation} mm precipitacao</p>
+                    <p className="text-xs font-mono text-ocean-600 mt-0.5">{selectedDay.precipitation} mm precipitação</p>
                   )}
                 </div>
               </div>
@@ -279,7 +279,7 @@ export default function Weather() {
               <p className="font-display font-bold text-xl text-n-900">
                 {Math.round(forecast.reduce((s, d) => s + d.precipitation, 0) * 10) / 10} mm
               </p>
-              <p className="text-xs font-body text-n-500">Precipitacao total 7 dias</p>
+              <p className="text-xs font-body text-n-500">Precipitação total 7 dias</p>
             </Card>
             <Card padding="px-4 py-3">
               <p className="font-display font-bold text-xl text-n-900">
@@ -292,7 +292,7 @@ export default function Weather() {
                 {conflicts.length}
               </p>
               <p className={`text-xs font-body ${conflicts.length > 0 ? 'text-[var(--error)]' : 'text-[var(--success)]'}`}>
-                {conflicts.length === 0 ? 'Sem conflitos meteorologicos' : 'Conflito(s) com tours'}
+                {conflicts.length === 0 ? 'Sem conflitos meteorológicos' : 'Conflito(s) com tours'}
               </p>
             </div>
           </div>

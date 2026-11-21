@@ -90,7 +90,7 @@ function VoucherModal({ voucher, units, onSave, onClose }) {
 
   async function handleSubmit(e) {
     e.preventDefault();
-    if (!form.code.trim()) { setError('O codigo e obrigatorio.'); return; }
+    if (!form.code.trim()) { setError('O código é obrigatório.'); return; }
     if (!form.value || Number(form.value) <= 0) { setError('O valor do desconto deve ser maior que zero.'); return; }
     setError(''); setSaving(true);
     try {
@@ -113,7 +113,7 @@ function VoucherModal({ voucher, units, onSave, onClose }) {
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="flex gap-3 items-end">
           <div className="flex-1">
-            <Input label="Codigo" aria-label="Codigo" value={form.code} onChange={set('code')} required
+            <Input label="Código" aria-label="Código" value={form.code} onChange={set('code')} required
               className="font-mono uppercase" placeholder="Ex: VERAO2025" />
           </div>
           <Button type="button" variant="secondary" size="sm"
@@ -139,11 +139,11 @@ function VoucherModal({ voucher, units, onSave, onClose }) {
 
         <div className="grid grid-cols-2 gap-3">
           <Input
-            label="Minimo de reserva (€)"
-            aria-label="Minimo de reserva (€)"
+            label="Mínimo de reserva (€)"
+            aria-label="Mínimo de reserva (€)"
             type="number" min="0" step="1"
             value={form.min_amount} onChange={set('min_amount')}
-            placeholder="0 = sem minimo"
+            placeholder="0 = sem mínimo"
           />
           <Input
             label="Limite de usos"
@@ -155,8 +155,8 @@ function VoucherModal({ voucher, units, onSave, onClose }) {
         </div>
 
         <Input
-          label="Valido ate"
-          aria-label="Valido ate"
+          label="Válido até"
+          aria-label="Válido até"
           type="date"
           value={form.expires_at} onChange={set('expires_at')}
         />
@@ -164,10 +164,10 @@ function VoucherModal({ voucher, units, onSave, onClose }) {
         {units.length > 0 && (
           <div>
             <label className="text-xs font-body font-bold uppercase tracking-wide text-n-600 block mb-2">
-              Tours aplicaveis
+              Tours aplicáveis
             </label>
             <p className="text-xs font-body text-n-400 mb-2">
-              {form.unit_ids.length === 0 ? 'Aplicavel a todos os tours.' : `${form.unit_ids.length} tour(s) seleccionado(s).`}
+              {form.unit_ids.length === 0 ? 'Aplicável a todos os tours.' : `${form.unit_ids.length} tour(s) seleccionado(s).`}
             </p>
             <div className="flex flex-wrap gap-1.5 max-h-28 overflow-y-auto">
               {units.map(u => (
@@ -199,9 +199,9 @@ function VoucherModal({ voucher, units, onSave, onClose }) {
 function ShareModal({ voucher, bookingLink, onClose }) {
   if (!voucher) return null;
   const discount = fmtDiscount(voucher);
-  const expires  = voucher.expires_at ? ` Valido ate ${new Date(voucher.expires_at).toLocaleDateString('pt-PT', { timeZone: 'UTC' })}.` : '';
+  const expires  = voucher.expires_at ? ` Válido até ${new Date(voucher.expires_at).toLocaleDateString('pt-PT', { timeZone: 'UTC' })}.` : '';
 
-  const msgPt = `Use o codigo *${voucher.code}* para obter ${discount} de desconto na sua proxima reserva.${expires} Reserve em: ${bookingLink}`;
+  const msgPt = `Use o código *${voucher.code}* para obter ${discount} de desconto na sua próxima reserva.${expires} Reserve em: ${bookingLink}`;
   const msgEn = `Use code *${voucher.code}* to get ${discount} off your next booking.${expires} Book at: ${bookingLink}`;
 
   return (
@@ -312,7 +312,7 @@ export default function Vouchers() {
 
   const columns = [
     {
-      key: 'codigo', label: 'Codigo',
+      key: 'codigo', label: 'Código',
       render: v => (
         <div className={`flex items-center gap-2 ${!v.active ? 'opacity-60' : ''}`}>
           <span className="font-mono font-bold text-n-900 tracking-wider">{v.code}</span>
@@ -321,7 +321,7 @@ export default function Vouchers() {
       ),
     },
     { key: 'desconto', label: 'Desconto', render: v => <span className="font-display font-bold text-ocean-700">{fmtDiscount(v)}</span> },
-    { key: 'minimo', label: 'Minimo', render: v => <span className="text-xs font-body text-n-500">{v.min_amount > 0 ? `€${v.min_amount}` : '—'}</span> },
+    { key: 'minimo', label: 'Mínimo', render: v => <span className="text-xs font-body text-n-500">{v.min_amount > 0 ? `€${v.min_amount}` : '—'}</span> },
     {
       key: 'validade', label: 'Validade',
       render: v => {
@@ -377,8 +377,8 @@ export default function Vouchers() {
   return (
     <div>
       <PageHeader
-        title="Vouchers e Promocoes"
-        subtitle="Gerir codigos de desconto"
+        title="Vouchers e Promoções"
+        subtitle="Gerir códigos de desconto"
         actions={
           <Button icon={Plus} onClick={() => setModal({ _new: true })}>Novo voucher</Button>
         }
@@ -390,7 +390,7 @@ export default function Vouchers() {
           { label: 'Total vouchers',  value: total,     icon: Tag      },
           { label: 'Activos',         value: active,    icon: Gift     },
           { label: 'Expirados',       value: expired,   icon: Calendar },
-          { label: 'Total utilizacoes', value: totalUses, icon: BarChart2 },
+          { label: 'Total utilizações', value: totalUses, icon: BarChart2 },
         ].map(m => (
           <Card key={m.label} padding="px-4 py-3">
             <div className="flex items-center gap-3">
@@ -409,8 +409,8 @@ export default function Vouchers() {
       {/* Filters */}
       <div className="flex flex-wrap gap-3 mb-4">
         <div className="flex-1 min-w-[160px] max-w-xs">
-          <Input aria-label="Pesquisar codigo" value={search} onChange={e => setSearch(e.target.value)}
-            placeholder="Pesquisar codigo..." className="font-mono" />
+          <Input aria-label="Pesquisar código" value={search} onChange={e => setSearch(e.target.value)}
+            placeholder="Pesquisar código..." className="font-mono" />
         </div>
         <FilterChips
           options={[{ value: '', label: 'Todos' }, { value: 'activo', label: 'Activos' }, { value: 'expirado', label: 'Expirados' }, { value: 'esgotado', label: 'Esgotados' }]}
@@ -425,7 +425,7 @@ export default function Vouchers() {
       ) : sorted.length === 0 ? (
         <Card padding="p-0">
           <EmptyState icon={Tag} title="Sem vouchers"
-            description="Crie o primeiro codigo de desconto para os seus clientes."
+            description="Crie o primeiro código de desconto para os seus clientes."
             action={<Button icon={Plus} onClick={() => setModal({ _new: true })}>Criar voucher</Button>} />
         </Card>
       ) : (

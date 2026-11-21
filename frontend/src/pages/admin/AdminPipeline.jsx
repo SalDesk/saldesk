@@ -47,22 +47,22 @@ function KpiCard({ icon: Icon, label, value, sub }) {
 
 function exportPipelineCsv(stats, leads) {
   const lines = [];
-  lines.push('Relatorio de Pipeline Comercial — SalDesk');
+  lines.push('Relatório de Pipeline Comercial — SalDesk');
   lines.push(`Gerado em,${new Date().toISOString().slice(0, 10)}`);
   lines.push('');
-  lines.push('Fase,Total de leads,Tempo medio (dias),Taxa de conversao (%)');
+  lines.push('Fase,Total de leads,Tempo médio (dias),Taxa de conversão (%)');
   (stats?.conversion_by_stage || []).forEach(s => {
     lines.push(`"${STAGE_LABELS[s.stage] || s.stage}",${stats.by_stage?.[s.stage] ?? 0},${stats.avg_days_per_stage?.[s.stage] ?? '—'},${s.rate}`);
   });
   lines.push('');
   lines.push('Leads com maior probabilidade de fechar');
-  lines.push('Nome,Negocio,Tipo,Score,Estado,Data de entrada');
+  lines.push('Nome,Negócio,Tipo,Score,Estado,Data de entrada');
   (stats?.top_leads || []).forEach(l => {
     lines.push(`"${l.nome || ''}","${l.nome_negocio || ''}","${TYPE_LABELS[l.tipo_negocio] || l.tipo_negocio || ''}",${l.score},"${STAGE_LABELS[l.status] || l.status}","${(l.created_at || '').slice(0, 10)}"`);
   });
   lines.push('');
   lines.push('Leads filtrados');
-  lines.push('Nome,Negocio,Tipo,Score,Estado,Data de entrada');
+  lines.push('Nome,Negócio,Tipo,Score,Estado,Data de entrada');
   leads.forEach(l => {
     lines.push(`"${l.nome || ''}","${l.nome_negocio || ''}","${TYPE_LABELS[l.tipo_negocio] || l.tipo_negocio || ''}",${l.score || 0},"${STAGE_LABELS[l.computed_status] || l.computed_status}","${(l.created_at || '').slice(0, 10)}"`);
   });
@@ -125,10 +125,10 @@ export default function AdminPipeline() {
     <div>
       <PageHeader
         title="Pipeline Comercial"
-        subtitle="Vista detalhada do funil de conversao de leads em operadores"
+        subtitle="Vista detalhada do funil de conversão de leads em operadores"
         actions={
           <Button variant="secondary" size="sm" icon={Download} onClick={() => exportPipelineCsv(stats, filteredLeads)} disabled={!stats}>
-            Exportar relatorio
+            Exportar relatório
           </Button>
         }
       />
@@ -140,14 +140,14 @@ export default function AdminPipeline() {
           {/* KPIs */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-5">
             <KpiCard icon={Users}      label="Leads no pipeline"       value={stats?.total ?? 0} sub={`${totalActive} activos`} />
-            <KpiCard icon={TrendingUp} label="Taxa de conversao geral" value={`${conversionRate}%`} sub="leads -> operadores" />
-            <KpiCard icon={Clock}      label="Tempo medio ate demo"    value={stats?.avg_days_per_stage?.contactado != null ? `${stats.avg_days_per_stage.contactado}d` : '—'} sub="em fase 'Contactado'" />
+            <KpiCard icon={TrendingUp} label="Taxa de conversão geral" value={`${conversionRate}%`} sub="leads -> operadores" />
+            <KpiCard icon={Clock}      label="Tempo médio até demo"    value={stats?.avg_days_per_stage?.contactado != null ? `${stats.avg_days_per_stage.contactado}d` : '—'} sub="em fase 'Contactado'" />
             <KpiCard icon={Flame}      label="Leads com alta prioridade" value={(stats?.top_leads || []).filter(l => l.score > 70).length} sub="score acima de 70" />
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-5">
             {/* Funil de conversao */}
-            <Card header={<h3 className="font-display font-semibold text-sm text-n-700">Funil de conversao por fase</h3>} padding="px-5 pb-5 pt-3">
+            <Card header={<h3 className="font-display font-semibold text-sm text-n-700">Funil de conversão por fase</h3>} padding="px-5 pb-5 pt-3">
               <div className="space-y-3">
                 {FUNNEL_ORDER.map(stage => {
                   const count = stats?.by_stage?.[stage] || 0;
@@ -168,7 +168,7 @@ export default function AdminPipeline() {
             </Card>
 
             {/* Tempo medio por fase */}
-            <Card header={<h3 className="font-display font-semibold text-sm text-n-700">Tempo medio em cada fase</h3>} padding="px-5 pb-5 pt-3">
+            <Card header={<h3 className="font-display font-semibold text-sm text-n-700">Tempo médio em cada fase</h3>} padding="px-5 pb-5 pt-3">
               <div className="space-y-2">
                 {Object.keys(STAGE_LABELS).map(stage => {
                   const days = stats?.avg_days_per_stage?.[stage];
@@ -217,23 +217,23 @@ export default function AdminPipeline() {
 
           {/* Filtros + relatorio detalhado */}
           <div className="mt-2 mb-3">
-            <h2 className="font-display font-bold text-lg text-n-900">Relatorio detalhado</h2>
+            <h2 className="font-display font-bold text-lg text-n-900">Relatório detalhado</h2>
             <p className="text-sm font-body text-n-500">{filteredLeads.length} leads correspondem aos filtros</p>
           </div>
 
           <div className="flex flex-wrap gap-3 mb-4">
             <Select value={filterType} onChange={e => setFilterType(e.target.value)} className="w-44">
-              <option value="">Todos os tipos de negocio</option>
+              <option value="">Todos os tipos de negócio</option>
               <option value="activity">Actividade</option>
               <option value="hotel">Hotel</option>
               <option value="rentacar">Rent-a-car</option>
               <option value="restaurant">Restaurante</option>
             </Select>
-            <Input type="number" min="0" max="100" placeholder="Score minimo" value={minScore} onChange={e => setMinScore(e.target.value)} className="w-32" />
+            <Input type="number" min="0" max="100" placeholder="Score mínimo" value={minScore} onChange={e => setMinScore(e.target.value)} className="w-32" />
             <Input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} className="w-40" />
             <Input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} className="w-40" />
             <Select value={responsavel} onChange={e => setResponsavel(e.target.value)} className="w-48">
-              <option value="">Todos os responsaveis</option>
+              <option value="">Todos os responsáveis</option>
               {user?.email && <option value={user.email}>{user.email} (fundador)</option>}
             </Select>
             {hasFilters && (

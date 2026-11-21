@@ -4,11 +4,11 @@ import Input, { Textarea, Select } from '../ui/Input';
 import Button from '../ui/Button';
 
 const TRIGGERS = [
-  { value: 'booking_confirmed',   label: 'Confirmacao de reserva',     hasDays: false },
+  { value: 'booking_confirmed',   label: 'Confirmação de reserva',     hasDays: false },
   { value: 'checkin_reminder',    label: 'Lembrete de check-in',        hasDays: false },
-  { value: 'checkout_thanks',     label: 'Agradecimento pos checkout',  hasDays: false },
+  { value: 'checkout_thanks',     label: 'Agradecimento pós checkout',  hasDays: false },
   { value: 'days_before_checkin', label: 'X dias antes do check-in',    hasDays: true  },
-  { value: 'days_after_checkout', label: 'X dias apos o checkout',      hasDays: true  },
+  { value: 'days_after_checkout', label: 'X dias após o checkout',      hasDays: true  },
 ];
 
 const CHANNELS = [
@@ -47,7 +47,7 @@ export default function AutomationForm({ automation, onSave, onCancel, loading, 
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <Input label="Nome da automacao" value={form.name} onChange={set('name')} required placeholder="Ex: Confirmacao de reserva" />
+      <Input label="Nome da automação" value={form.name} onChange={set('name')} required placeholder="Ex: Confirmação de reserva" />
 
       <div className="grid grid-cols-2 gap-3">
         <Select label="Trigger" value={form.trigger_type} onChange={set('trigger_type')} required>
@@ -60,13 +60,13 @@ export default function AutomationForm({ automation, onSave, onCancel, loading, 
 
       {trigger?.hasDays && (
         <Input
-          label="Numero de dias"
+          label="Número de dias"
           type="number"
           value={form.trigger_days}
           onChange={set('trigger_days')}
           min="1"
           required
-          hint={form.trigger_type === 'days_before_checkin' ? 'Dias antes do check-in' : 'Dias apos o checkout'}
+          hint={form.trigger_type === 'days_before_checkin' ? 'Dias antes do check-in' : 'Dias após o checkout'}
         />
       )}
 
@@ -76,7 +76,7 @@ export default function AutomationForm({ automation, onSave, onCancel, loading, 
 
       {/* Variaveis disponiveis */}
       <div>
-        <p className="text-xs font-body font-bold uppercase tracking-wide text-n-500 mb-2">Variaveis disponiveis</p>
+        <p className="text-xs font-body font-bold uppercase tracking-wide text-n-500 mb-2">Variáveis disponíveis</p>
         <div className="flex flex-wrap gap-1.5">
           {VARS.map((v) => (
             <button
@@ -89,20 +89,20 @@ export default function AutomationForm({ automation, onSave, onCancel, loading, 
             </button>
           ))}
         </div>
-        <p className="text-xs font-body text-n-400 mt-1">Clique numa variavel para a copiar e use nas mensagens abaixo</p>
+        <p className="text-xs font-body text-n-400 mt-1">Clique numa variável para a copiar e use nas mensagens abaixo</p>
       </div>
 
       <Textarea
-        label="Mensagem em Portugues"
+        label="Mensagem em Português"
         value={form.message_pt}
         onChange={set('message_pt')}
         required
         rows={4}
-        placeholder={`Ola {{nome}},\n\nA sua reserva em {{unidade}} esta confirmada.\n\nCheck-in: {{check_in}}\nCheck-out: {{check_out}}\n\nObrigado!`}
+        placeholder={`Olá {{nome}},\n\nA sua reserva em {{unidade}} está confirmada.\n\nCheck-in: {{check_in}}\nCheck-out: {{check_out}}\n\nObrigado!`}
       />
 
       <Textarea
-        label="Mensagem em Ingles"
+        label="Mensagem em Inglês"
         value={form.message_en}
         onChange={set('message_en')}
         required
@@ -117,7 +117,7 @@ export default function AutomationForm({ automation, onSave, onCancel, loading, 
       <div className="flex gap-3 pt-2">
         <Button type="button" variant="secondary" onClick={onCancel} className="flex-1">{t('common.cancel')}</Button>
         <Button type="submit" loading={loading} className="flex-1">
-          {automation ? t('common.save') : 'Criar automacao'}
+          {automation ? t('common.save') : 'Criar automação'}
         </Button>
       </div>
     </form>

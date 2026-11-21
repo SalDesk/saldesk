@@ -21,7 +21,7 @@ import EmptyState from '../components/ui/EmptyState';
 const TYPES = [
   { value: 'acidente',   label: 'Acidente',   Icon: AlertTriangle,  cls: 'text-[var(--error)]'   },
   { value: 'atraso',     label: 'Atraso',     Icon: Clock,          cls: 'text-[var(--warning)]' },
-  { value: 'reclamacao', label: 'Reclamacao', Icon: MessageSquare,  cls: 'text-[var(--info)]'    },
+  { value: 'reclamacao', label: 'Reclamação', Icon: MessageSquare,  cls: 'text-[var(--info)]'    },
   { value: 'incidente',  label: 'Incidente',  Icon: Zap,            cls: 'text-ocean-700'        },
   { value: 'mau_tempo',  label: 'Mau tempo',  Icon: CloudRain,      cls: 'text-ocean-500'        },
   { value: 'outro',      label: 'Outro',      Icon: MoreHorizontal, cls: 'text-n-500'            },
@@ -29,9 +29,9 @@ const TYPES = [
 
 const SEVERITIES = [
   { value: 'baixa',   label: 'Baixa',   cls: 'text-[var(--success)] bg-[var(--success-light)] border-n-200' },
-  { value: 'media',   label: 'Media',   cls: 'text-[var(--info)] bg-[var(--info-light)] border-n-200'       },
+  { value: 'media',   label: 'Média',   cls: 'text-[var(--info)] bg-[var(--info-light)] border-n-200'       },
   { value: 'alta',    label: 'Alta',    cls: 'text-[var(--warning)] bg-[var(--warning-light)] border-n-200' },
-  { value: 'critica', label: 'Critica', cls: 'text-[var(--error)] bg-[var(--error-light)] border-n-200'     },
+  { value: 'critica', label: 'Crítica', cls: 'text-[var(--error)] bg-[var(--error-light)] border-n-200'     },
 ];
 
 const MONTHS_PT = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
@@ -92,16 +92,16 @@ function OccurrenceModal({ occurrence, units, staff, onSave, onClose }) {
     try {
       await onSave(base?.id, { ...form, unit_name: unitName, staff_name: staffName });
     } catch {
-      setError('Erro ao guardar ocorrencia.');
+      setError('Erro ao guardar ocorrência.');
     } finally {
       setSaving(false);
     }
   }
 
   return (
-    <Modal open onClose={onClose} title={isNew ? 'Registar ocorrencia' : 'Editar ocorrencia'} size="md">
+    <Modal open onClose={onClose} title={isNew ? 'Registar ocorrência' : 'Editar ocorrência'} size="md">
       <form onSubmit={handleSubmit} className="space-y-4">
-        <Input label="Data da ocorrencia" type="date" value={form.date} onChange={set('date')} required />
+        <Input label="Data da ocorrência" type="date" value={form.date} onChange={set('date')} required />
 
         <div className="grid grid-cols-2 gap-3">
           <Select label="Tipo" value={form.type} onChange={set('type')} required>
@@ -112,19 +112,19 @@ function OccurrenceModal({ occurrence, units, staff, onSave, onClose }) {
           </Select>
         </div>
 
-        <Select label="Tour / Servico" value={form.unit_id} onChange={set('unit_id')}>
-          <option value="">Nao associado a tour especifico</option>
+        <Select label="Tour / Serviço" value={form.unit_id} onChange={set('unit_id')}>
+          <option value="">Não associado a tour específico</option>
           {units.map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
         </Select>
 
-        <Select label="Colaborador / Guia responsavel" value={form.staff_id} onChange={set('staff_id')}>
-          <option value="">Nao especificado</option>
+        <Select label="Colaborador / Guia responsável" value={form.staff_id} onChange={set('staff_id')}>
+          <option value="">Não especificado</option>
           {staff.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
         </Select>
 
-        <Textarea label="Descricao da ocorrencia" value={form.description} onChange={set('description')} rows={3} required placeholder="Descreva o que aconteceu..." />
+        <Textarea label="Descrição da ocorrência" value={form.description} onChange={set('description')} rows={3} required placeholder="Descreva o que aconteceu..." />
 
-        <Textarea label="Accoes tomadas" value={form.actions_taken} onChange={set('actions_taken')} rows={3} placeholder="Descreva as accoes tomadas para resolver ou minimizar o impacto..." />
+        <Textarea label="Acções tomadas" value={form.actions_taken} onChange={set('actions_taken')} rows={3} placeholder="Descreva as acções tomadas para resolver ou minimizar o impacto..." />
 
         <Input
           label="URLs de fotos (separadas por virgula)"
@@ -166,10 +166,10 @@ function MonthlyReport({ occurrences }) {
   return (
     <Card padding="px-5 py-5">
       <h3 className="font-display font-semibold text-sm text-n-700 mb-4">
-        Relatorio mensal — {MONTHS_PT[now.getMonth()]} {now.getFullYear()}
+        Relatório mensal — {MONTHS_PT[now.getMonth()]} {now.getFullYear()}
       </h3>
       {monthly.length === 0 ? (
-        <p className="text-xs font-body text-n-400">Sem ocorrencias registadas este mes.</p>
+        <p className="text-xs font-body text-n-400">Sem ocorrências registadas este mês.</p>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
           <div>
@@ -202,7 +202,7 @@ function MonthlyReport({ occurrences }) {
         </div>
       )}
       <div className="mt-4 pt-3 border-t border-n-100 flex items-center justify-between">
-        <p className="text-xs font-body text-n-500">Total: <span className="font-semibold">{monthly.length}</span> ocorrencia(s)</p>
+        <p className="text-xs font-body text-n-500">Total: <span className="font-semibold">{monthly.length}</span> ocorrência(s)</p>
       </div>
     </Card>
   );
@@ -240,7 +240,7 @@ export default function Occurrences() {
   }
 
   async function handleDelete(id) {
-    if (!window.confirm('Eliminar esta ocorrencia?')) return;
+    if (!window.confirm('Eliminar esta ocorrência?')) return;
     await deleteOccurrence(id);
     setOccurrences(prev => prev.filter(o => o.id !== id));
   }
@@ -293,15 +293,15 @@ export default function Occurrences() {
     },
     {
       key: 'descricao',
-      label: 'Descricao',
+      label: 'Descrição',
       render: (o) => <p className="text-xs font-body text-n-700 line-clamp-2 max-w-[200px]">{o.description}</p>,
     },
     {
       key: 'accoes',
-      label: 'Accoes tomadas',
+      label: 'Acções tomadas',
       render: (o) => o.actions_taken
         ? <p className="text-xs font-body text-n-500 line-clamp-2 max-w-[160px]">{o.actions_taken}</p>
-        : <span className="text-xs font-body text-n-300">Nao registadas</span>,
+        : <span className="text-xs font-body text-n-300">Não registadas</span>,
     },
     {
       key: 'acoes',
@@ -324,7 +324,7 @@ export default function Occurrences() {
   if (loading) {
     return (
       <div>
-        <PageHeader title="Ocorrencias" subtitle="Registo e gestao de incidentes operacionais" />
+        <PageHeader title="Ocorrências" subtitle="Registo e gestão de incidentes operacionais" />
         <div className="flex justify-center py-16"><LoadingSpinner size={32} /></div>
       </div>
     );
@@ -333,10 +333,10 @@ export default function Occurrences() {
   return (
     <div>
       <PageHeader
-        title="Ocorrencias"
-        subtitle="Registo e gestao de incidentes operacionais"
+        title="Ocorrências"
+        subtitle="Registo e gestão de incidentes operacionais"
         actions={
-          <Button icon={Plus} onClick={() => setModal({ _new: true })}>Registar ocorrencia</Button>
+          <Button icon={Plus} onClick={() => setModal({ _new: true })}>Registar ocorrência</Button>
         }
       />
 
@@ -346,7 +346,7 @@ export default function Occurrences() {
           <AlertTriangle size={16} strokeWidth={1.75} className="text-error shrink-0 mt-0.5" />
           <div>
             <p className="text-sm font-body font-semibold text-error">
-              {criticals.length} ocorrencia(s) critica(s) nao resolvida(s)
+              {criticals.length} ocorrência(s) crítica(s) não resolvida(s)
             </p>
             <p className="text-xs font-body text-[var(--error)] mt-0.5">
               {criticals.map(o => o.description?.slice(0, 60) || o.type).join(' · ')}
@@ -359,9 +359,9 @@ export default function Occurrences() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-5">
         {[
           { label: 'Total registadas',  value: kpis.total,  color: 'text-n-900'   },
-          { label: 'Este mes',          value: kpis.month,  color: 'text-ocean-700' },
-          { label: 'Alta / Critica',    value: kpis.alta,   color: 'text-[var(--warning)]' },
-          { label: 'Criticas',          value: kpis.critica, color: 'text-error' },
+          { label: 'Este mês',          value: kpis.month,  color: 'text-ocean-700' },
+          { label: 'Alta / Crítica',    value: kpis.alta,   color: 'text-[var(--warning)]' },
+          { label: 'Críticas',          value: kpis.critica, color: 'text-error' },
         ].map(m => (
           <div key={m.label} className="bg-white rounded-md border border-n-200 px-4 py-3 flex items-center gap-3">
             <FileWarning size={18} strokeWidth={1.75} className="text-n-300 shrink-0" />
@@ -383,7 +383,7 @@ export default function Occurrences() {
         <div className="flex-1 min-w-[200px]">
           <Input
             value={search} onChange={e => setSearch(e.target.value)}
-            placeholder="Pesquisar descricao, tour, colaborador..."
+            placeholder="Pesquisar descrição, tour, colaborador..."
           />
         </div>
         <FilterChips
@@ -403,12 +403,12 @@ export default function Occurrences() {
         <Card padding="p-0">
           <EmptyState
             icon={FileWarning}
-            title="Sem ocorrencias"
+            title="Sem ocorrências"
             description={occurrences.length === 0
-              ? 'Registe a primeira ocorrencia quando necessario.'
-              : 'Nenhuma ocorrencia corresponde aos filtros aplicados.'}
+              ? 'Registe a primeira ocorrência quando necessário.'
+              : 'Nenhuma ocorrência corresponde aos filtros aplicados.'}
             action={occurrences.length === 0 && (
-              <Button icon={Plus} onClick={() => setModal({ _new: true })}>Registar ocorrencia</Button>
+              <Button icon={Plus} onClick={() => setModal({ _new: true })}>Registar ocorrência</Button>
             )}
           />
         </Card>

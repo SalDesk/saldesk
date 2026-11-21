@@ -37,7 +37,7 @@ function campoPorEtiqueta(re) {
 function formularioNovo() {
   const onSave = renderForm(undefined);
   escrever(campoPorEtiqueta(/^Nome PT/), 'Passeio');
-  escrever(campoPorEtiqueta(/^Capacidade maxima/), '12');
+  escrever(campoPorEtiqueta(/^Capacidade máxima/), '12');
   return onSave;
 }
 
@@ -51,8 +51,8 @@ function addOpcao(n, { nome, tipo, preco, lugares }) {
 
 const meta = (onSave) => JSON.parse(onSave.mock.calls[0][0].description);
 
-describe('TourForm: opcoes, suplemento e ofertas', () => {
-  it('opcao por veiculo sem lugares mostra o erro e nao guarda', () => {
+describe('TourForm: opções, suplemento e ofertas', () => {
+  it('opção por veiculo sem lugares mostra o erro e não guarda', () => {
     const onSave = formularioNovo();
     addOpcao(1, { nome: 'Buggy', tipo: 'per_vehicle', preco: '50' });
     fireEvent.click(botao('Criar tour'));
@@ -60,7 +60,7 @@ describe('TourForm: opcoes, suplemento e ofertas', () => {
     expect(screen.getByText('Indique pelo menos 1 lugar por veículo.')).toBeTruthy();
   });
 
-  it('opcao sem nome ou sem preco nao guarda', () => {
+  it('opção sem nome ou sem preço não guarda', () => {
     const onSave = formularioNovo();
     fireEvent.click(botao('Adicionar opção'));
     fireEvent.click(botao('Criar tour'));
@@ -69,7 +69,7 @@ describe('TourForm: opcoes, suplemento e ofertas', () => {
     expect(screen.getByText('O preço tem de ser superior a 0.')).toBeTruthy();
   });
 
-  it('duas opcoes (40 e 30): base_price 30 e os ids mantem-se ao guardar de novo', () => {
+  it('duas opções (40 e 30): base_price 30 e os ids mantem-se ao guardar de novo', () => {
     const onSave = formularioNovo();
     addOpcao(1, { nome: 'Normal', preco: '40' });
     addOpcao(2, { nome: 'Grupo', tipo: 'per_group', preco: '30' });
@@ -90,14 +90,14 @@ describe('TourForm: opcoes, suplemento e ofertas', () => {
       base_price: dados.base_price, capacity: 12, status: 'active', images: [],
     });
     escrever(porRotulo('Preço da opção 1'), '45');
-    fireEvent.click(botao('Guardar alteracoes'));
+    fireEvent.click(botao('Guardar alterações'));
     const m2 = JSON.parse(onSave2.mock.calls[0][0].description);
     expect(m2.options.map(o => o.id)).toEqual(ids);
     expect(m2.options[0].price).toBe(45);
     expect(onSave2.mock.calls[0][0].base_price).toBe(30);
   });
 
-  it('sem opcoes nao ha chaves novas no meta', () => {
+  it('sem opções não ha chaves novas no meta', () => {
     const onSave = formularioNovo();
     fireEvent.click(botao('Criar tour'));
     const m = meta(onSave);
@@ -106,7 +106,7 @@ describe('TourForm: opcoes, suplemento e ofertas', () => {
     expect(m).not.toHaveProperty('offers');
   });
 
-  it('o suplemento aparece so para idiomas seleccionados e guarda { ES: 20 }', () => {
+  it('o suplemento aparece só para idiomas seleccionados e guarda { ES: 20 }', () => {
     const onSave = formularioNovo();
     expect(screen.queryByLabelText('Suplemento de idioma (ES)')).toBeNull();
     expect(screen.getByLabelText('Suplemento de idioma (EN)')).toBeTruthy();
@@ -119,7 +119,7 @@ describe('TourForm: opcoes, suplemento e ofertas', () => {
     expect(meta(onSave).language_surcharges).toEqual({ ES: 20 });
   });
 
-  it('oferta com inicio depois do fim nao guarda', () => {
+  it('oferta com início depois do fim não guarda', () => {
     const onSave = formularioNovo();
     fireEvent.click(botao('Adicionar oferta'));
     escrever(porRotulo('Desconto da oferta 1 (%)'), '25');
@@ -130,7 +130,7 @@ describe('TourForm: opcoes, suplemento e ofertas', () => {
     expect(screen.getByText('A data de início tem de ser anterior ou igual à de fim.')).toBeTruthy();
   });
 
-  it('desconto fora de 1 a 90 nao guarda; uma oferta valida e gravada', () => {
+  it('desconto fora de 1 a 90 não guarda; uma oferta válida e gravada', () => {
     const onSave = formularioNovo();
     fireEvent.click(botao('Adicionar oferta'));
     escrever(porRotulo('Desconto da oferta 1 (%)'), '95');
@@ -146,7 +146,7 @@ describe('TourForm: opcoes, suplemento e ofertas', () => {
     ]);
   });
 
-  it('a nota "opcoes substituem a tabela" so aparece com opcoes', () => {
+  it('a nota "opções substituem a tabela" só aparece com opções', () => {
     formularioNovo();
     const nota = 'As opções substituem a tabela de preços na página pública.';
     expect(screen.queryByText(nota)).toBeNull();

@@ -41,7 +41,7 @@ describe('CommandPalette', () => {
     useAuthStore.setState({ operator: { operator_type: 'activity', plan: 'pro' } });
   });
 
-  it('nao renderiza fechado', () => {
+  it('não renderiza fechado', () => {
     renderPalette({ open: false });
     expect(screen.queryByPlaceholderText('Pesquisar…')).not.toBeInTheDocument();
   });
@@ -68,14 +68,14 @@ describe('CommandPalette', () => {
     expect(onClose).toHaveBeenCalled();
   });
 
-  it('setas movem a selecao', () => {
+  it('setas movem a seleção', () => {
     renderPalette();
     fireEvent.keyDown(campo(), { key: 'ArrowDown' });
     fireEvent.keyDown(campo(), { key: 'Enter' });
     expect(navigate).toHaveBeenCalledWith('/unidades');
   });
 
-  it('clique abre o ecra', () => {
+  it('clique abre o ecrã', () => {
     const onClose = renderPalette();
     fireEvent.click(screen.getByRole('option', { name: /Calendário/ }));
     expect(navigate).toHaveBeenCalledWith('/calendario');
@@ -88,7 +88,7 @@ describe('CommandPalette', () => {
     expect(onClose).toHaveBeenCalled();
   });
 
-  it('bloqueado nao navega', () => {
+  it('bloqueado não navega', () => {
     useAuthStore.setState({ operator: { operator_type: 'activity', plan: 'starter' } });
     renderPalette();
     escrever('automacoes');
@@ -97,7 +97,7 @@ describe('CommandPalette', () => {
     expect(navigate).not.toHaveBeenCalled();
   });
 
-  describe('ecra bloqueado (modal de upgrade)', () => {
+  describe('ecrã bloqueado (modal de upgrade)', () => {
     beforeEach(() => {
       useAuthStore.setState({ operator: { operator_type: 'activity', plan: 'starter' } });
     });
@@ -112,14 +112,14 @@ describe('CommandPalette', () => {
 
     it('Ver planos fecha o modal e a palette', () => {
       const onClose = abrirBloqueado();
-      fireEvent.click(screen.getByRole('button', { name: /Ver planos de subscricao/ }));
+      fireEvent.click(screen.getByRole('button', { name: /Ver planos de subscrição/ }));
 
       expect(navigate).toHaveBeenCalledWith('/definicoes?tab=facturacao');
       expect(screen.queryByText('Funcionalidade Pro')).not.toBeInTheDocument();
       expect(onClose).toHaveBeenCalled();
     });
 
-    it('Esc fecha primeiro o modal e so depois a palette', () => {
+    it('Esc fecha primeiro o modal e só depois a palette', () => {
       const onClose = abrirBloqueado();
 
       fireEvent.keyDown(campo(), { key: 'Escape' });

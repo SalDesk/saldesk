@@ -149,7 +149,7 @@ describe('RentacarDashboard (Hoje)', () => {
     warnSpy.mockRestore();
   });
 
-  it('documento expirado aparece como critico', async () => {
+  it('documento expirado aparece como crítico', async () => {
     carregaServicos({
       units: [
         /* o aviso vem primeiro na lista: o painel tem de por o expirado antes */
@@ -174,12 +174,12 @@ describe('RentacarDashboard (Hoje)', () => {
     expect(navigateMock).toHaveBeenLastCalledWith('/unidades');
   });
 
-  it('revisao atrasada conta como critica', async () => {
+  it('revisão atrasada conta como crítica', async () => {
     carregaServicos({
       units: [viatura({ plate: 'R-33-EF', next_revision_km: 10000, current_km: 10400 })],
     });
     renderRentacar();
-    const item = await screen.findByText('R-33-EF: Revisao atrasada (400km)');
+    const item = await screen.findByText('R-33-EF: Revisão atrasada (400km)');
     expect(item.closest('li').querySelector('[data-severity="critical"]')).not.toBeNull();
   });
 
@@ -188,13 +188,13 @@ describe('RentacarDashboard (Hoje)', () => {
       units: [viatura({ plate: 'W-22-CD', inspecao_expiry: dataEmDias(10) })],
     });
     renderRentacar();
-    const aviso = await screen.findByText(/^W-22-CD: Inspecao expira em \d+d$/);
+    const aviso = await screen.findByText(/^W-22-CD: Inspeção expira em \d+d$/);
     expect(aviso.closest('li').querySelector('[data-severity="warning"]')).not.toBeNull();
     expect(aviso.closest('li').querySelector('[data-severity="critical"]')).toBeNull();
     expect(screen.queryByText('Tudo em ordem')).not.toBeInTheDocument();
   });
 
-  it('documento a mais de 30 dias nao gera alerta', async () => {
+  it('documento a mais de 30 dias não gera alerta', async () => {
     carregaServicos({
       units: [viatura({ plate: 'F-44-GH', seguro_expiry: dataEmDias(90) })],
     });
@@ -255,9 +255,9 @@ describe('RentacarDashboard (Hoje)', () => {
     expect(screen.getByText('€500')).toBeInTheDocument();
     expect(screen.getByText('0 levantamentos')).toBeInTheDocument();
     expect(screen.getByText('0 devoluções')).toBeInTheDocument();
-    ['Viaturas disponiveis', 'Avaliação média', 'Valor médio por reserva', 'Por receber']
+    ['Viaturas disponíveis', 'Avaliação média', 'Valor médio por reserva', 'Por receber']
       .forEach((rotulo) => expect(screen.getByText(rotulo)).toBeInTheDocument());
-    expect(valorKpi('Viaturas disponiveis')).toBe('1');
+    expect(valorKpi('Viaturas disponíveis')).toBe('1');
   });
 
   it('molduras_sem_resumo_nao_rebentam', async () => {
@@ -267,21 +267,21 @@ describe('RentacarDashboard (Hoje)', () => {
     expect(screen.queryByText(/vs mês anterior/)).toBeNull();
   });
 
-  it('a receita mostra a variacao face ao mes anterior', async () => {
+  it('a receita mostra a variação face ao mês anterior', async () => {
     carregaServicos({ res: resumo({ receita: 1200 }, { receita: 1000 }) });
     renderRentacar();
     expect(await screen.findByText(`€${(1200).toLocaleString('pt-PT')}`)).toBeInTheDocument();
     expect(screen.getByText('+20% vs mês anterior')).toBeInTheDocument();
   });
 
-  it('sem mes anterior a receita nao mostra variacao', async () => {
+  it('sem mês anterior a receita não mostra variação', async () => {
     carregaServicos({ res: { atual: { receita: 500 } } });
     renderRentacar();
     expect(await screen.findByText('€500')).toBeInTheDocument();
     expect(screen.queryByText(/vs mês anterior/)).not.toBeInTheDocument();
   });
 
-  it('uma chamada a falhar nao apaga os dados das outras', async () => {
+  it('uma chamada a falhar não apaga os dados das outras', async () => {
     const unidades = [viatura({ plate: 'E-11-AB', seguro_expiry: dataEmDias(-1) })];
     const levanta = reserva({ id: 'c1', status: 'confirmed', customer_name: 'Ana Levanta' });
     carregaServicos({ units: unidades, hoje: [levanta] });
@@ -321,7 +321,7 @@ describe('RentacarDashboard (Hoje)', () => {
     expect(pedidos).toContainEqual({ payment_status: 'pending,partial' });
   });
 
-  it('aluguer levantado com devolucao ultrapassada mantem a viatura alugada e conta nos alugueres activos', async () => {
+  it('aluguer levantado com devolução ultrapassada mantem a viatura alugada e conta nos alugueres activos', async () => {
     /* a viatura nao foi devolvida: a devolucao era ontem, logo a sobreposicao de hoje nao a devolve;
        so o pedido dos levantamentos feitos a traz */
     carregaServicos({
@@ -336,12 +336,12 @@ describe('RentacarDashboard (Hoje)', () => {
     renderRentacar();
     const cartao = async (matricula) => (await screen.findByText(matricula)).closest('button');
     await waitFor(async () => expect(within(await cartao('AA-11-AA')).getByText('Ocupado')).toBeInTheDocument());
-    expect(within(await cartao('BB-22-BB')).getByText('Disponivel')).toBeInTheDocument();
+    expect(within(await cartao('BB-22-BB')).getByText('Disponível')).toBeInTheDocument();
     expect(screen.getByText('1 de 2 viaturas')).toBeInTheDocument();
-    expect(valorKpi('Viaturas disponiveis')).toBe('1');
+    expect(valorKpi('Viaturas disponíveis')).toBe('1');
   });
 
-  it('o mesmo aluguer devolvido pelos dois pedidos aparece uma so vez', async () => {
+  it('o mesmo aluguer devolvido pelos dois pedidos aparece uma só vez', async () => {
     const devolve = reserva({ id: 'b', unit_id: 'v1', status: 'checked_in', check_in: dataEmDias(-4), check_out: HOJE, customer_name: 'Rui Devolve' });
     carregaServicos({ units: [viatura({ plate: 'AA-11-AA' })], hoje: [devolve], checkedIn: [devolve] });
     renderRentacar();
@@ -350,7 +350,7 @@ describe('RentacarDashboard (Hoje)', () => {
     expect(screen.getByText('1 de 1 viaturas')).toBeInTheDocument();
   });
 
-  it('aluguer em curso, devolucao e levantamento de hoje entram na frota, nas listas e nos contadores', async () => {
+  it('aluguer em curso, devolução e levantamento de hoje entram na frota, nas listas e nos contadores', async () => {
     /* o servidor devolve tambem os alugueres que apenas sobrepoem hoje */
     carregaServicos({
       units: [
@@ -359,7 +359,7 @@ describe('RentacarDashboard (Hoje)', () => {
         viatura({ plate: 'CC-33-CC' }, { id: 'v3', name: 'Viatura 3' }),
       ],
       hoje: [
-        /* comecou ha 2 dias e devolve daqui a 3: sem levantamento nem devolucao hoje */
+        /* comecou ha 2 dias e devolve daqui a 3: sem levantamento nem devolução hoje */
         reserva({ id: 'a', unit_id: 'v1', status: 'checked_in', check_in: dataEmDias(-2), check_out: dataEmDias(3), customer_name: 'Cliente Em Curso' }),
         /* devolve hoje */
         reserva({ id: 'b', unit_id: 'v2', status: 'checked_in', check_in: dataEmDias(-4), check_out: HOJE, customer_name: 'Rui Devolve' }),
@@ -374,16 +374,16 @@ describe('RentacarDashboard (Hoje)', () => {
     /* o aluguer em curso mantem o veiculo alugado */
     expect(within(cartao('AA-11-AA')).getByText('Ocupado')).toBeInTheDocument();
     expect(within(cartao('BB-22-BB')).getByText('Ocupado')).toBeInTheDocument();
-    expect(within(cartao('CC-33-CC')).getByText('Disponivel')).toBeInTheDocument();
+    expect(within(cartao('CC-33-CC')).getByText('Disponível')).toBeInTheDocument();
     /* agenda de hoje: so o levantamento e a devolucao; o aluguer em curso nao */
     expect(within(agenda).getByRole('button', { name: /Devolução · Rui Devolve/ })).toBeInTheDocument();
     expect(within(agenda).queryByText(/Cliente Em Curso/)).not.toBeInTheDocument();
     /* contadores: 2 alugados, 1 disponivel */
     expect(screen.getByText('2 de 3 viaturas')).toBeInTheDocument();
-    expect(valorKpi('Viaturas disponiveis')).toBe('1');
+    expect(valorKpi('Viaturas disponíveis')).toBe('1');
   });
 
-  it('servicos a falhar mostram estados vazios sem erro', async () => {
+  it('serviços a falhar mostram estados vazios sem erro', async () => {
     servicosAFalhar();
     renderRentacar();
     expect(await screen.findByText('Tudo em ordem')).toBeInTheDocument();
@@ -392,7 +392,7 @@ describe('RentacarDashboard (Hoje)', () => {
     await waitFor(() => expect(listUnits).toHaveBeenCalled());
   });
 
-  it('reservas sem campos nao rebentam', async () => {
+  it('reservas sem campos não rebentam', async () => {
     const vazia = { id: 'x', status: 'pending' };
     carregaServicos({ units: [{ id: 'u9', name: 'Viatura 9' }], hoje: [vazia], mes: [vazia] });
     renderRentacar();

@@ -61,7 +61,7 @@ export default function QrCodeTab({ slug, units }) {
       {/* Controls */}
       <div className="space-y-5">
         <Select label="QR Code para" aria-label="QR Code para" value={selectedUnit} onChange={e => setSelectedUnit(e.target.value)}>
-          <option value="">Perfil publico — link de reserva</option>
+          <option value="">Perfil público — link de reserva</option>
           {units.map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
         </Select>
 

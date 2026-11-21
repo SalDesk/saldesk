@@ -146,7 +146,7 @@ function montar() {
 function abrir(rotulo) { fireEvent.click(screen.getAllByText(rotulo)[0]); }
 async function prontaVisaoGeral() { await screen.findByText('Receita total'); await waitFor(() => expect(fin.getTransacoes).toHaveBeenCalled()); }
 
-describe('Financeiro: pagina inteira', () => {
+describe('Financeiro: página inteira', () => {
   it('renderiza_a_visao_geral_com_os_pedidos_e_os_kpis', async () => {
     montar();
     await prontaVisaoGeral();
@@ -161,7 +161,7 @@ describe('Financeiro: pagina inteira', () => {
     expect(screen.getByRole('heading', { name: 'Financeiro' })).toBeInTheDocument();
     expect(screen.getAllByText(eur(1000)).length).toBeGreaterThan(0); /* receita total */
     expect(screen.getByText('Directas 60%')).toBeInTheDocument();
-    expect(screen.getByText('Ticket medio')).toBeInTheDocument();
+    expect(screen.getByText('Ticket médio')).toBeInTheDocument();
     expect(screen.getAllByText(eur(100)).length).toBeGreaterThan(0); /* 1000 / 10 */
   });
 
@@ -170,15 +170,15 @@ describe('Financeiro: pagina inteira', () => {
     await prontaVisaoGeral();
     abrir('Por Tour');
     expect(await screen.findByText('Custos operacionais por tour')).toBeInTheDocument();
-    abrir('Previsao');
-    expect(await screen.findByText('Previsao semanal')).toBeInTheDocument();
-    expect(screen.getByText(/Previsao abaixo da media historica/)).toBeInTheDocument();
+    abrir('Previsão');
+    expect(await screen.findByText('Previsão semanal')).toBeInTheDocument();
+    expect(screen.getByText(/Previsão abaixo da média histórica/)).toBeInTheDocument();
     abrir('Caixa');
     expect(await screen.findByText('Pagamentos em dinheiro')).toBeInTheDocument();
     abrir('Receitas Manuais');
     expect(await screen.findByText('Registar receita')).toBeInTheDocument();
     expect(await screen.findByText('Feira')).toBeInTheDocument();
-    abrir('Visao Geral');
+    abrir('Visão Geral');
     expect(await screen.findByText('Receita total')).toBeInTheDocument();
   });
 
@@ -188,15 +188,15 @@ describe('Financeiro: pagina inteira', () => {
     abrir('Despesas');
     expect(await screen.findByText('Registar despesa')).toBeInTheDocument();
     expect(await screen.findByText('Escritorio')).toBeInTheDocument();
-    abrir('Salarios');
+    abrir('Salários');
     expect(await screen.findByText('Colaboradores activos')).toBeInTheDocument();
-    abrir('Comissoes');
+    abrir('Comissões');
     expect(await screen.findByText('Vera Mendes')).toBeInTheDocument();
-    abrir('Obrigacoes');
-    expect(await screen.findByText('INPS — Contribuicoes mensais')).toBeInTheDocument();
+    abrir('Obrigações');
+    expect(await screen.findByText('INPS — Contribuições mensais')).toBeInTheDocument();
     expect(await screen.findByText('Seguro Frota')).toBeInTheDocument();
     abrir('Resultado');
-    expect(await screen.findByText('Decomposicao do resultado')).toBeInTheDocument();
+    expect(await screen.findByText('Decomposição do resultado')).toBeInTheDocument();
     abrir('Receitas');
     expect(await screen.findByText('Receita total')).toBeInTheDocument();
   });
@@ -205,18 +205,18 @@ describe('Financeiro: pagina inteira', () => {
     PLANO = 'starter';
     montar();
     await prontaVisaoGeral();
-    /* cadeado nos separadores: Despesas, Salarios, Obrigacoes e Resultado */
+    /* cadeado nos separadores: Despesas, Salários, Obrigacoes e Resultado */
     expect(document.querySelectorAll('svg.lucide-lock').length).toBe(4);
-    for (const area of ['Despesas', 'Salarios', 'Obrigacoes', 'Resultado']) {
+    for (const area of ['Despesas', 'Salários', 'Obrigações', 'Resultado']) {
       abrir(area);
-      expect(await screen.findByText('Ver planos de subscricao')).toBeInTheDocument();
+      expect(await screen.findByText('Ver planos de subscrição')).toBeInTheDocument();
     }
-    abrir('Comissoes');
+    abrir('Comissões');
     expect(await screen.findByText('Vera Mendes')).toBeInTheDocument();
-    expect(screen.queryByText('Ver planos de subscricao')).toBeNull();
+    expect(screen.queryByText('Ver planos de subscrição')).toBeNull();
     abrir('Receitas');
     expect(await screen.findByText('Receita total')).toBeInTheDocument();
-    expect(screen.queryByText('Ver planos de subscricao')).toBeNull();
+    expect(screen.queryByText('Ver planos de subscrição')).toBeNull();
   });
 
   it('com_o_plano_nao_ha_cadeados', async () => {
@@ -229,13 +229,13 @@ describe('Financeiro: pagina inteira', () => {
     montar();
     await prontaVisaoGeral();
     expect(fin.getForecast).toHaveBeenCalledTimes(0);
-    abrir('Previsao');
-    await screen.findByText('Previsao semanal');
+    abrir('Previsão');
+    await screen.findByText('Previsão semanal');
     expect(fin.getForecast).toHaveBeenCalledTimes(1);
     abrir('Caixa');
     await screen.findByText('Pagamentos em dinheiro');
-    abrir('Previsao');
-    await screen.findByText('Previsao semanal');
+    abrir('Previsão');
+    await screen.findByText('Previsão semanal');
     expect(fin.getForecast).toHaveBeenCalledTimes(1);
   });
 
@@ -243,22 +243,22 @@ describe('Financeiro: pagina inteira', () => {
     fin.getForecast.mockRejectedValue(new Error('x'));
     montar();
     await prontaVisaoGeral();
-    abrir('Previsao');
-    expect(await screen.findByText('Dados de previsao nao disponiveis.')).toBeInTheDocument();
+    abrir('Previsão');
+    expect(await screen.findByText('Dados de previsão não disponíveis.')).toBeInTheDocument();
   });
 
   it('listStaff_so_se_pede_ao_abrir_despesas_salarios_ou_comissoes', async () => {
     montar();
     await prontaVisaoGeral();
     expect(listStaff).toHaveBeenCalledTimes(0);
-    abrir('Obrigacoes');
-    await screen.findByText('INPS — Contribuicoes mensais');
+    abrir('Obrigações');
+    await screen.findByText('INPS — Contribuições mensais');
     expect(listStaff).toHaveBeenCalledTimes(0);
     abrir('Despesas');
     await screen.findByText('Registar despesa');
     await waitFor(() => expect(listStaff).toHaveBeenCalledTimes(1));
-    abrir('Obrigacoes');
-    await screen.findByText('INPS — Contribuicoes mensais');
+    abrir('Obrigações');
+    await screen.findByText('INPS — Contribuições mensais');
     abrir('Despesas');
     await screen.findByText('Registar despesa');
     expect(listStaff).toHaveBeenCalledTimes(1);
@@ -270,7 +270,7 @@ describe('Financeiro: pagina inteira', () => {
     fireEvent.click(screen.getByRole('button', { name: 'CVE' }));
     expect(screen.getAllByText(cve(1000)).length).toBeGreaterThan(0);
     abrir('Resultado');
-    await screen.findByText('Decomposicao do resultado');
+    await screen.findByText('Decomposição do resultado');
     expect(screen.getAllByText(cve(1000)).length).toBeGreaterThan(0); /* receita bruta em CVE */
     /* interruptor flutuante das outras areas */
     fireEvent.click(screen.getByRole('button', { name: 'EUR' }));
@@ -287,7 +287,7 @@ describe('Financeiro: pagina inteira', () => {
     fireEvent.click(screen.getByRole('button', { name: 'PDF' }));
     await waitFor(() => expect(fin.exportPdf).toHaveBeenCalledWith(inicio, fim));
     /* so em Receitas */
-    abrir('Comissoes');
+    abrir('Comissões');
     await screen.findByText('Vera Mendes');
     expect(screen.queryByRole('button', { name: 'Excel' })).toBeNull();
   });
@@ -300,7 +300,7 @@ describe('Financeiro: pagina inteira', () => {
     expect(await screen.findByText('Receita total')).toBeInTheDocument();
     await waitFor(() => expect(spyErr).toHaveBeenCalled()); /* carregar() regista o erro */
     expect(screen.getAllByText(eur(0)).length).toBeGreaterThan(0);
-    expect(await screen.findByText('Sem transacoes no periodo')).toBeInTheDocument();
+    expect(await screen.findByText('Sem transações no período')).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Financeiro' })).toBeInTheDocument();
   });
 });
@@ -322,13 +322,13 @@ function mesAnterior() {
   return { inicio: `${y}-${ms}-01`, fim: `${y}-${ms}-${new Date(y, mo + 1, 0).getDate()}` };
 }
 
-describe('Financeiro: estrutura da pagina', () => {
+describe('Financeiro: estrutura da página', () => {
   it('mudar_de_preset_repete_os_pedidos_com_as_datas_do_preset', async () => {
     montar();
     await prontaVisaoGeral();
     for (const [rotulo, { inicio, fim }] of [
-      ['Este mes', mesAtual()],
-      ['Mes anterior', mesAnterior()],
+      ['Este mês', mesAtual()],
+      ['Mês anterior', mesAnterior()],
       ['Este ano', { inicio: `${ANO}-01-01`, fim: `${ANO}-12-31` }],
     ]) {
       fireEvent.click(screen.getByText(rotulo));
@@ -345,7 +345,7 @@ describe('Financeiro: estrutura da pagina', () => {
     fireEvent.click(screen.getByText('Semana'));
     await waitFor(() => expect(fin.getReceita).toHaveBeenCalledWith(inicio, fim, 'week'));
     await screen.findByText('Receita total');
-    fireEvent.click(screen.getByText('Mes'));
+    fireEvent.click(screen.getByText('Mês'));
     await waitFor(() => expect(fin.getReceita).toHaveBeenCalledWith(inicio, fim, 'month'));
     await screen.findByText('Receita total');
   });
@@ -353,11 +353,11 @@ describe('Financeiro: estrutura da pagina', () => {
   it('o_botao_do_preset_activo_e_o_unico_destacado', async () => {
     montar();
     await prontaVisaoGeral();
-    const rotulos = ['Ultimos 30 dias', 'Este mes', 'Mes anterior', 'Este ano'];
+    const rotulos = ['Últimos 30 dias', 'Este mês', 'Mês anterior', 'Este ano'];
     const activos = () => rotulos.filter(r => estaActivo(screen.getByText(r).closest('button')));
-    expect(activos()).toEqual(['Ultimos 30 dias']);
-    fireEvent.click(screen.getByText('Mes anterior'));
-    expect(activos()).toEqual(['Mes anterior']);
+    expect(activos()).toEqual(['Últimos 30 dias']);
+    fireEvent.click(screen.getByText('Mês anterior'));
+    expect(activos()).toEqual(['Mês anterior']);
     await screen.findByText('Carla Dias'); /* espera o recarregamento terminar */
     /* granularidade e moeda */
     expect(estaActivo(screen.getByText('Dia').closest('button'))).toBe(true);
@@ -374,11 +374,11 @@ describe('Financeiro: estrutura com o design system', () => {
     await prontaVisaoGeral();
     expect(screen.getAllByRole('tablist')).toHaveLength(2);
     expect(screen.getByRole('tab', { name: 'Receitas' })).toHaveAttribute('aria-selected', 'true');
-    expect(screen.getByRole('tab', { name: 'Visao Geral' })).toHaveAttribute('aria-selected', 'true');
+    expect(screen.getByRole('tab', { name: 'Visão Geral' })).toHaveAttribute('aria-selected', 'true');
     fireEvent.click(screen.getByRole('tab', { name: 'Caixa' }));
     expect(await screen.findByText('Pagamentos em dinheiro')).toBeInTheDocument();
     expect(screen.getByRole('tab', { name: 'Caixa' })).toHaveAttribute('aria-selected', 'true');
-    expect(screen.getByRole('tab', { name: 'Visao Geral' })).toHaveAttribute('aria-selected', 'false');
+    expect(screen.getByRole('tab', { name: 'Visão Geral' })).toHaveAttribute('aria-selected', 'false');
     fireEvent.click(screen.getByRole('tab', { name: 'Despesas' }));
     expect(await screen.findByText('Registar despesa')).toBeInTheDocument();
     expect(screen.getByRole('tab', { name: 'Despesas' })).toHaveAttribute('aria-selected', 'true');
@@ -388,8 +388,8 @@ describe('Financeiro: estrutura com o design system', () => {
   it('periodo_granularidade_e_moeda_sao_chips_com_aria_pressed', async () => {
     montar();
     await prontaVisaoGeral();
-    expect(screen.getByRole('button', { name: 'Ultimos 30 dias', pressed: true })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Este mes', pressed: false })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Últimos 30 dias', pressed: true })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Este mês', pressed: false })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Dia', pressed: true })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Semana', pressed: false })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'EUR', pressed: true })).toBeInTheDocument();
@@ -409,10 +409,10 @@ describe('Financeiro: estrutura com o design system', () => {
     PLANO = 'starter';
     montar();
     await prontaVisaoGeral();
-    for (const nome of ['Despesas', 'Salarios', 'Obrigacoes', 'Resultado']) {
+    for (const nome of ['Despesas', 'Salários', 'Obrigações', 'Resultado']) {
       expect(screen.getByRole('tab', { name: nome }).querySelector('svg.lucide-lock')).not.toBeNull();
     }
-    for (const nome of ['Receitas', 'Comissoes']) {
+    for (const nome of ['Receitas', 'Comissões']) {
       expect(screen.getByRole('tab', { name: nome }).querySelector('svg.lucide-lock')).toBeNull();
     }
   });

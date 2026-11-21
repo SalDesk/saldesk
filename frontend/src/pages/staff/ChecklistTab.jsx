@@ -81,7 +81,7 @@ function ChecklistTab() {
           {allDone && (
             <span className="flex items-center gap-1.5 text-xs font-body text-[var(--success)] bg-[var(--success-light)] px-3 py-1.5 rounded-sm border border-[var(--success)]">
               <CheckCircle2 size={13} strokeWidth={1.75} />
-              Tudo concluido
+              Tudo concluído
             </span>
           )}
           <button onClick={() => setConfig(v => !v)} aria-label="Configurar checklist"
@@ -121,7 +121,7 @@ function ChecklistTab() {
         })}
         {tasks.length === 0 && (
           <div className="px-4 py-8 text-center text-n-400 text-sm font-body">
-            Sem tarefas configuradas. Use o icone de configuracoes para adicionar.
+            Sem tarefas configuradas. Use o ícone de configurações para adicionar.
           </div>
         )}
       </div>

@@ -26,7 +26,7 @@ function PreviewWidget({ slug }) {
   return (
     <iframe
       ref={ref}
-      title="Pre-visualizacao do widget"
+      title="Pré-visualização do widget"
       src={`/book/${encodeURIComponent(slug)}?widget=1&preview=1`}
       width="100%"
       height="500"
@@ -45,12 +45,12 @@ export default function WidgetTab({ widgetCode, slug }) {
     <div className="space-y-5">
       <div>
         <div className="flex items-center justify-between mb-2">
-          <label className="text-xs font-body font-bold uppercase tracking-wide text-n-600">Codigo HTML</label>
+          <label className="text-xs font-body font-bold uppercase tracking-wide text-n-600">Código HTML</label>
           <div className="flex gap-0.5 bg-n-100 rounded-xs p-0.5">
             {['Codigo', 'Preview'].map(m => (
               <button key={m} type="button" aria-pressed={(previewMode ? 'Preview' : 'Codigo') === m} onClick={() => setPreviewMode(m === 'Preview')}
                 className={`text-xs px-3 py-1 rounded-xs font-body transition-colors ${(previewMode ? 'Preview' : 'Codigo') === m ? 'bg-white text-ocean-700 shadow-sm' : 'text-n-500 hover:text-n-700'}`}>
-                {m}
+                {m === 'Codigo' ? 'Código' : m}
               </button>
             ))}
           </div>
@@ -64,7 +64,7 @@ export default function WidgetTab({ widgetCode, slug }) {
           </div>
         ) : (
           <div className="border border-n-200 rounded-md bg-n-50 px-4 py-6 text-center">
-            <p className="text-sm font-body text-n-600">Nao foi possivel gerar o codigo do widget. Recarrega a pagina e tenta de novo.</p>
+            <p className="text-sm font-body text-n-600">Não foi possível gerar o código do widget. Recarrega a página e tenta de novo.</p>
           </div>
         )}
       </div>
@@ -73,18 +73,18 @@ export default function WidgetTab({ widgetCode, slug }) {
         <div className="flex items-center gap-3">
           <CopyBtn text={codigo} />
           <p className="text-xs font-body text-n-400 flex-1">
-            Cole este codigo no HTML do seu website onde quer que o formulario apareca.
+            Cole este código no HTML do seu website onde quer que o formulário apareça.
           </p>
         </div>
       )}
 
       <p className="text-xs font-body text-n-500">
-        A cor do widget e a da sua pagina publica. Defina-a em{' '}
-        <a href="/definicoes?tab=perfil" className="font-semibold text-ocean-700 hover:underline">Definicoes &gt; Perfil Publico</a>.
+        A cor do widget é a da sua página pública. Defina-a em{' '}
+        <a href="/definicoes?tab=perfil" className="font-semibold text-ocean-700 hover:underline">Definições &gt; Perfil Público</a>.
       </p>
 
       <p className="text-xs font-body text-n-500">
-        O pagamento com cartao cabo-verdiano (SISP) abre em ecra inteiro, fora do seu site, porque o banco nao aceita ser aberto dentro de outra pagina. As restantes reservas e o PayPal ficam no seu site.
+        O pagamento com cartão cabo-verdiano (SISP) abre em ecrã inteiro, fora do seu site, porque o banco não aceita ser aberto dentro de outra página. As restantes reservas e o PayPal ficam no seu site.
       </p>
     </div>
   );

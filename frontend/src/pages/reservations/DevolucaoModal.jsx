@@ -57,7 +57,7 @@ export default function DevolucaoModal({ reservation, units, open, onClose, onDo
   const kmTotal   = form.km_in && prevKmOut ? Number(form.km_in) - Number(prevKmOut) : null;
 
   return (
-    <Modal open={open} onClose={onClose} title="Devolucao de viatura" size="sm" footer={null}>
+    <Modal open={open} onClose={onClose} title="Devolução de viatura" size="sm" footer={null}>
       <div className="space-y-5">
         <div className="flex items-center gap-3 p-3 bg-n-50 rounded-md border border-n-200">
           <Car size={16} strokeWidth={1.75} className="text-n-500 shrink-0" />
@@ -69,12 +69,12 @@ export default function DevolucaoModal({ reservation, units, open, onClose, onDo
           </div>
           <div className="ml-auto text-right">
             <p className="font-display font-semibold text-sm text-n-900">{reservation?.customer_name || '—'}</p>
-            {prevKmOut && <p className="text-xs font-body text-n-400">Saida: {Number(prevKmOut).toLocaleString()} km</p>}
+            {prevKmOut && <p className="text-xs font-body text-n-400">Saída: {Number(prevKmOut).toLocaleString()} km</p>}
           </div>
         </div>
 
         <div>
-          <p className={`${GROUP_LABEL_CLASS} mb-2`}>Nivel combustivel (chegada)</p>
+          <p className={`${GROUP_LABEL_CLASS} mb-2`}>Nível combustível (chegada)</p>
           <FuelSelector value={form.fuel_in} onChange={v => set('fuel_in', v)} />
         </div>
 
@@ -87,11 +87,11 @@ export default function DevolucaoModal({ reservation, units, open, onClose, onDo
           )}
         </div>
 
-        <Textarea label="Danos na devolucao" value={form.damages_in} onChange={e => set('damages_in', e.target.value)} rows={2}
+        <Textarea label="Danos na devolução" value={form.damages_in} onChange={e => set('damages_in', e.target.value)} rows={2}
           placeholder="Descrever danos verificados na chegada..." />
 
         <div>
-          <p className={`${GROUP_LABEL_CLASS} mb-2`}>Caucao</p>
+          <p className={`${GROUP_LABEL_CLASS} mb-2`}>Caução</p>
           <div className="mb-3">
             <FilterChips
               options={[
@@ -111,7 +111,7 @@ export default function DevolucaoModal({ reservation, units, open, onClose, onDo
         <div className="flex gap-3 pt-1">
           <Button type="button" variant="secondary" onClick={onClose} className="flex-1">Cancelar</Button>
           <Button type="button" loading={saving} onClick={handleSave} icon={MoveLeft} className="flex-1">
-            {saving ? 'A processar...' : 'Confirmar devolucao'}
+            {saving ? 'A processar...' : 'Confirmar devolução'}
           </Button>
         </div>
       </div>

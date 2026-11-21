@@ -40,10 +40,10 @@ async function abrirPassoDois(unidade) {
     </MemoryRouter>,
   );
   fireEvent.click(await screen.findByRole('button', { name: /Buggy Tour/ }));
-  return screen.findByText('Horario');
+  return screen.findByText('Horário');
 }
 
-describe('BeachSale: horarios do tour', () => {
+describe('BeachSale: horários do tour', () => {
   let errSpy;
   let warnSpy;
 
@@ -62,14 +62,14 @@ describe('BeachSale: horarios do tour', () => {
     expect(avisos).toBe(0);
   });
 
-  it('mostra os horarios por omissao quando o tour nao tem hora definida', async () => {
+  it('mostra os horários por omissao quando o tour não tem hora definida', async () => {
     await abrirPassoDois(tour({}));
     for (const hora of ['09:00', '11:00', '14:00', '16:00']) {
       expect(screen.getByRole('button', { name: hora })).toBeTruthy();
     }
   });
 
-  it('sem hora de inicio usa os horarios configurados (time_slots) em vez dos por omissao', async () => {
+  it('sem hora de início usa os horários configurados (time_slots) em vez dos por omissao', async () => {
     await abrirPassoDois(tour({ time_slots: [{ time: '10:00', capacity: 6 }, { time: '15:30', capacity: 4 }] }));
     for (const hora of ['10:00', '15:30']) {
       expect(screen.getByRole('button', { name: hora })).toBeTruthy();
@@ -79,7 +79,7 @@ describe('BeachSale: horarios do tour', () => {
     }
   });
 
-  it('time_slots sem nenhuma hora valida volta aos horarios por omissao', async () => {
+  it('time_slots sem nenhuma hora válida volta aos horários por omissao', async () => {
     await abrirPassoDois(tour({ time_slots: [{ capacity: 3 }, null, ''] }));
     for (const hora of ['09:00', '11:00', '14:00', '16:00']) {
       expect(screen.getByRole('button', { name: hora })).toBeTruthy();
@@ -88,7 +88,7 @@ describe('BeachSale: horarios do tour', () => {
 
   /* Com horarios configurados, o servidor so aceita essas horas (INVALID_TIME_SLOT para outra):
      a hora de inicio solta so se mostra se for tambem um dos horarios */
-  it('com horarios em texto simples mostra so esses horarios, nao a hora de inicio solta', async () => {
+  it('com horários em texto simples mostra só esses horários, não a hora de início solta', async () => {
     await abrirPassoDois(tour({ start_time: '08:30', time_slots: ['10:00', '15:00'] }));
     for (const hora of ['10:00', '15:00']) {
       expect(screen.getByRole('button', { name: hora })).toBeTruthy();
@@ -97,7 +97,7 @@ describe('BeachSale: horarios do tour', () => {
     expect(screen.queryByRole('button', { name: '09:00' })).toBeNull();
   });
 
-  it('nao rebenta com horarios em objeto { time, capacity } e mostra a hora de cada um', async () => {
+  it('não rebenta com horários em objeto { time, capacity } e mostra a hora de cada um', async () => {
     await abrirPassoDois(
       tour({
         start_time: '08:30',
@@ -110,7 +110,7 @@ describe('BeachSale: horarios do tour', () => {
     expect(screen.queryByRole('button', { name: '08:30' })).toBeNull();
   });
 
-  it('ignora horarios sem hora e nao repete a hora de inicio quando ela e um dos horarios', async () => {
+  it('ignora horários sem hora e não repete a hora de início quando ela e um dos horários', async () => {
     await abrirPassoDois(
       tour({
         start_time: '08:30',
@@ -121,13 +121,13 @@ describe('BeachSale: horarios do tour', () => {
     expect(screen.getByRole('button', { name: '10:00' })).toBeTruthy();
   });
 
-  it('sem horarios configurados mostra a hora de inicio do tour', async () => {
+  it('sem horários configurados mostra a hora de início do tour', async () => {
     await abrirPassoDois(tour({ start_time: '08:30' }));
     expect(screen.getByRole('button', { name: '08:30' })).toBeTruthy();
     expect(screen.queryByRole('button', { name: '09:00' })).toBeNull();
   });
 
-  it('selecionar um horario em objeto marca-o como escolhido', async () => {
+  it('selecionar um horário em objeto marca-o como escolhido', async () => {
     await abrirPassoDois(
       tour({ start_time: '08:30', time_slots: [{ time: '10:00', capacity: 6 }] }),
     );
@@ -138,7 +138,7 @@ describe('BeachSale: horarios do tour', () => {
   });
 });
 
-describe('BeachSale: opcoes da actividade', () => {
+describe('BeachSale: opções da actividade', () => {
   let errSpy;
   let warnSpy;
 
@@ -180,7 +180,7 @@ describe('BeachSale: opcoes da actividade', () => {
     return createReservation.mock.calls[0][0];
   }
 
-  it('a lista mostra "desde" com o preco da opcao mais barata', async () => {
+  it('a lista mostra "desde" com o preço da opção mais barata', async () => {
     listUnits.mockResolvedValue([tour({ options: OPCOES })]);
     render(<MemoryRouter future={FUTURE}><BeachSale /></MemoryRouter>);
     const cartao = await screen.findByRole('button', { name: /Buggy Tour/ });
@@ -190,7 +190,7 @@ describe('BeachSale: opcoes da actividade', () => {
     expect(within(cartao).queryByText('€40')).toBeNull();
   });
 
-  it('mostra as opcoes do tour escolhido, comeca na mais barata e envia option_id', async () => {
+  it('mostra as opções do tour escolhido, comeca na mais barata e envia option_id', async () => {
     await abrirPassoDois(tour({ options: OPCOES, time_slots: [{ time: '09:00', capacity: 8 }] }));
     for (const nome of ['Grupo privado', 'Por pessoa', 'Buggy 2h']) {
       expect(screen.getByRole('button', { name: new RegExp(nome) })).toBeTruthy();
@@ -204,7 +204,7 @@ describe('BeachSale: opcoes da actividade', () => {
     expect(corpo).not.toHaveProperty('vehicles');
   });
 
-  it('opcao por veiculo: contador de veiculos com o minimo pelas pessoas e preco pelos veiculos', async () => {
+  it('opção por veiculo: contador de veiculos com o mínimo pelas pessoas e preço pelos veiculos', async () => {
     await abrirPassoDois(tour({ options: OPCOES, time_slots: [{ time: '09:00', capacity: 8 }] }));
     fireEvent.click(screen.getByRole('button', { name: /Buggy 2h/ }));
     for (let i = 0; i < 4; i += 1) fireEvent.click(contador('Adultos').mais);
@@ -218,20 +218,20 @@ describe('BeachSale: opcoes da actividade', () => {
     expect(corpo).toMatchObject({ unit_id: 't1', guests: 5, option_id: 'o3', vehicles: 4, total_amount: 360 });
   });
 
-  it('as criancas contam como pessoas (sem preco de crianca neste ecra)', async () => {
+  it('as crianças contam como pessoas (sem preço de criança neste ecrã)', async () => {
     await abrirPassoDois(tour({ options: OPCOES, time_slots: [{ time: '09:00', capacity: 8 }] }));
-    fireEvent.click(contador('Criancas').mais);
+    fireEvent.click(contador('Crianças').mais);
     expect(screen.getAllByText('€100').length).toBeGreaterThan(0);
   });
 
-  it('tour sem opcoes continua igual: preco por pessoa e sem option_id', async () => {
+  it('tour sem opções continua igual: preço por pessoa e sem option_id', async () => {
     listUnits.mockResolvedValue([tour({ time_slots: [{ time: '09:00', capacity: 8 }] })]);
     render(<MemoryRouter future={FUTURE}><BeachSale /></MemoryRouter>);
     const cartao = await screen.findByRole('button', { name: /Buggy Tour/ });
     expect(within(cartao).getByText('€40')).toBeTruthy();
     expect(within(cartao).getByText('/pessoa')).toBeTruthy();
     fireEvent.click(cartao);
-    await screen.findByText('Horario');
+    await screen.findByText('Horário');
     expect(screen.queryByText('Opção')).toBeNull();
     const corpo = await confirmar();
     expect(corpo).toMatchObject({ unit_id: 't1', guests: 1, total_amount: 40 });
@@ -240,13 +240,13 @@ describe('BeachSale: opcoes da actividade', () => {
   });
 
   /* Sem start_time o servidor recusa a venda de um tour com horarios (INVALID_TIME_SLOT) */
-  it('tour com horarios envia a hora escolhida como start_time', async () => {
+  it('tour com horários envia a hora escolhida como start_time', async () => {
     await abrirPassoDois(tour({ time_slots: [{ time: '09:00', capacity: 8 }, { time: '14:00', capacity: 8 }] }));
     const corpo = await confirmar();
     expect(corpo.start_time).toBe('09:00');
   });
 
-  it('tour sem horarios nao envia start_time (a hora fica so nas notas)', async () => {
+  it('tour sem horários não envia start_time (a hora fica só nas notas)', async () => {
     await abrirPassoDois(tour({}));
     const corpo = await confirmar();
     expect(corpo).not.toHaveProperty('start_time');

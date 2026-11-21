@@ -68,7 +68,7 @@ export default function AssignCompositeModal({ reservation, reservations, guide,
           <div>
             <p className="text-xs font-body font-bold uppercase tracking-wide text-n-500 mb-2">Reserva</p>
             {upcoming.length === 0 ? (
-              <p className="text-sm font-body text-n-500 text-center py-4">Sem reservas proximas pendentes.</p>
+              <p className="text-sm font-body text-n-500 text-center py-4">Sem reservas próximas pendentes.</p>
             ) : (
               <div className="space-y-2 max-h-48 overflow-y-auto">
                 {upcoming.map(r => (

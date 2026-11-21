@@ -85,7 +85,7 @@ describe('Customers', () => {
     return screen.getByText(rotulo).previousElementSibling.textContent;
   }
 
-  it('lista os clientes com as colunas e o subtitulo', async () => {
+  it('lista os clientes com as colunas e o subtítulo', async () => {
     await abre();
     const cab = within(screen.getByRole('table')).getAllByRole('columnheader').map(c => c.textContent);
     expect(cab).toEqual(['Nome', 'Email', 'Nacionalidade', 'Visitas', 'Total gasto', 'Idioma', 'Preço acordado']);
@@ -96,11 +96,11 @@ describe('Customers', () => {
     expect(within(linhas[0]).getAllByRole('cell')[6].textContent).toBe('€45.00');
   });
 
-  it('as metricas mostram total, receita, paises e o primeiro cliente', async () => {
+  it('as métricas mostram total, receita, países e o primeiro cliente', async () => {
     await abre();
     expect(metrica('Total clientes')).toBe('4');
     expect(metrica('Receita total')).toBe('€810');
-    expect(metrica('Paises')).toBe('4');
+    expect(metrica('Países')).toBe('4');
     expect(metrica('Top cliente')).toBe('Ana');
     expect(screen.getByText('€120')).toBeInTheDocument();
   });
@@ -142,16 +142,16 @@ describe('Customers', () => {
     await waitFor(() => expect(exportCustomersCsv).toHaveBeenCalledTimes(1));
   });
 
-  it('novo cliente valida nome e email e nao grava', async () => {
+  it('novo cliente válida nome e email e não grava', async () => {
     await abre();
     fireEvent.click(screen.getByRole('button', { name: 'Novo Cliente' }));
     const dialogo = await screen.findByRole('dialog');
     fireEvent.click(within(dialogo).getByRole('button', { name: 'Criar cliente' }));
-    expect(await within(dialogo).findByText('Nome e email sao obrigatorios')).toBeInTheDocument();
+    expect(await within(dialogo).findByText('Nome e email são obrigatórios')).toBeInTheDocument();
     expect(createCustomer).not.toHaveBeenCalled();
   });
 
-  it('novo cliente chama createCustomer com o objeto do formulario e mostra o sucesso', async () => {
+  it('novo cliente chama createCustomer com o objeto do formulário e mostra o sucesso', async () => {
     await abre();
     const pedidos = listCustomers.mock.calls.length;
     fireEvent.click(screen.getByRole('button', { name: 'Novo Cliente' }));
@@ -160,7 +160,7 @@ describe('Customers', () => {
     fireEvent.change(campo(dialogo, 'Nome *'), { target: { value: 'Novo' } });
     fireEvent.change(campo(dialogo, 'Email *'), { target: { value: 'n@x.cv' } });
     fireEvent.change(campo(dialogo, 'Telefone'), { target: { value: '+238' } });
-    fireEvent.change(campo(dialogo, 'Pais (codigo)'), { target: { value: 'CV' } });
+    fireEvent.change(campo(dialogo, 'País (código)'), { target: { value: 'CV' } });
     fireEvent.click(within(dialogo).getByRole('button', { name: 'VIP' }));
     fireEvent.click(within(dialogo).getByRole('button', { name: 'Local' }));
     fireEvent.change(campo(dialogo, 'Preço acordado (opcional)'), { target: { value: '45' } });
@@ -193,14 +193,14 @@ describe('Customers', () => {
     expect(await within(dialogo).findByText('Erro ao criar cliente')).toBeInTheDocument();
   });
 
-  it('importar CSV envia o ficheiro e mostra o numero de clientes importados', async () => {
+  it('importar CSV envia o ficheiro e mostra o número de clientes importados', async () => {
     await abre();
     fireEvent.click(screen.getByRole('button', { name: 'Importar CSV' }));
     const dialogo = await screen.findByRole('dialog');
     expect(within(dialogo).getByRole('button', { name: 'Importar' })).toBeDisabled();
     const ficheiro = new File(['first_name,last_name,email\nA,B,a@b.cv'], 'clientes.csv', { type: 'text/csv' });
     fireEvent.change(dialogo.querySelector('input[type="file"]'), { target: { files: [ficheiro] } });
-    expect(await within(dialogo).findByText('Pre-visualizacao (primeiras 2 linhas)')).toBeInTheDocument();
+    expect(await within(dialogo).findByText('Pré-visualização (primeiras 2 linhas)')).toBeInTheDocument();
     fireEvent.click(within(dialogo).getByRole('button', { name: 'Importar' }));
     await waitFor(() => expect(api.post).toHaveBeenCalledTimes(1));
     const [url, corpo] = api.post.mock.calls[0];
@@ -219,7 +219,7 @@ describe('Customers', () => {
     expect(screen.queryByText('Detalhe c1')).not.toBeInTheDocument();
   });
 
-  it('os segmentos e os paises sao grupos de botoes com aria-pressed', async () => {
+  it('os segmentos e os países são grupos de botões com aria-pressed', async () => {
     await abre();
     expect(todos(0)).toHaveAttribute('aria-pressed', 'true');
     expect(screen.getByRole('button', { name: 'VIP' })).toHaveAttribute('aria-pressed', 'false');
@@ -247,7 +247,7 @@ describe('Customers', () => {
     expect(document.body.innerHTML).not.toContain('[#');
   });
 
-  it('cliente sem etiquetas nem gasto numerico nao rebenta e entra nos segmentos certos', async () => {
+  it('cliente sem etiquetas nem gasto numerico não rebenta e entra nos segmentos certos', async () => {
     listCustomers.mockResolvedValue([{ id: 'x', name: 'Sem Dados', email: '', country_code: null, total_visits: 0, total_spent: 0, language: 'pt' }]);
     render(
       <MemoryRouter future={FUTURE}>
@@ -255,7 +255,7 @@ describe('Customers', () => {
       </MemoryRouter>
     );
     expect(await screen.findByText('1 cliente(s) registado(s)')).toBeInTheDocument();
-    expect(metrica('Paises')).toBe('0');
+    expect(metrica('Países')).toBe('0');
     fireEvent.click(screen.getByRole('button', { name: 'Turistas' }));
     expect(nomes()).toEqual(['Sem Dados']);
     fireEvent.click(screen.getByRole('button', { name: 'VIP' }));

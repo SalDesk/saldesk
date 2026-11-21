@@ -25,7 +25,7 @@ let refreshPromise = null;
 
 async function refreshAccessToken() {
   const { refreshToken } = useAuthStore.getState();
-  if (!refreshToken) throw new Error('Sem refresh token disponivel');
+  if (!refreshToken) throw new Error('Sem refresh token disponível');
 
   const { data } = await axios.post(`${api.defaults.baseURL}/auth/refresh`, { refresh_token: refreshToken });
   const { access_token, refresh_token, user, operator } = data.data;

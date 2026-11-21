@@ -27,7 +27,7 @@ import RestaurantCreateModal from './reservations/RestaurantCreateModal';
 import { SOURCE_LABEL } from './reservations/shared';
 
 const STATUS_FILTERS = ['', 'pending', 'confirmed', 'checked_in', 'checked_out', 'cancelled', 'payment_not_completed'];
-const TURNO_FILTERS = [{ value: '', label: 'Todos turnos' }, { value: 'almoco', label: 'Almoco' }, { value: 'jantar', label: 'Jantar' }];
+const TURNO_FILTERS = [{ value: '', label: 'Todos turnos' }, { value: 'almoco', label: 'Almoço' }, { value: 'jantar', label: 'Jantar' }];
 
 /* meta.turno so existe quando definido manualmente (RestaurantCreateModal,
    notes_guest). Reservas com hora real (start_time -- publicas ou criadas

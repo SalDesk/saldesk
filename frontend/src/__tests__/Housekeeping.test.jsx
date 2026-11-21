@@ -43,7 +43,7 @@ const RESERVAS = [
   { id: 'r4', unit_id: 'h1', status: 'confirmed', check_in: HOJE, check_out: dia(1) },
 ];
 
-const COLABORADORES = [{ id: 's1', name: 'Maria' }, { id: 's2', name: 'Joao' }];
+const COLABORADORES = [{ id: 's1', name: 'Maria' }, { id: 's2', name: 'João' }];
 
 describe('Housekeeping', () => {
   let errSpy;
@@ -77,7 +77,7 @@ describe('Housekeeping', () => {
 
   /* O cartao de um quarto: o ascendente mais alto do nome que so contem os seletores desse quarto */
   function cartao(nome, seletores = 1) {
-    const nomes = screen.getAllByText(nome).filter(e => e.closest('select') === null && !e.parentElement.textContent.includes('Quartos com saida'));
+    const nomes = screen.getAllByText(nome).filter(e => e.closest('select') === null && !e.parentElement.textContent.includes('Quartos com saída'));
     let el = nomes[0];
     let melhor = el;
     while (el.parentElement) {
@@ -93,7 +93,7 @@ describe('Housekeeping', () => {
   }
   function nomesDosCartoes() {
     return screen.getAllByText(/^Quarto \d+$/)
-      .filter(e => !e.parentElement.textContent.includes('Quartos com saida'))
+      .filter(e => !e.parentElement.textContent.includes('Quartos com saída'))
       .map(e => e.textContent);
   }
   function chip(nome) {
@@ -103,7 +103,7 @@ describe('Housekeeping', () => {
     return within(dentro).getAllByText(texto).find(e => e.tagName === 'SPAN');
   }
 
-  it('o subtitulo mostra a data de hoje e os quartos activos', async () => {
+  it('o subtítulo mostra a data de hoje e os quartos activos', async () => {
     await abre();
     expect(screen.getByText(`${HOJE.split('-').reverse().join('/')} · 5 quartos`)).toBeInTheDocument();
   });
@@ -128,14 +128,14 @@ describe('Housekeeping', () => {
     expect(selo('Sujo', cartao('Quarto 102'))).toBeTruthy();
     expect(selo('Bloqueado', cartao('Quarto 201'))).toBeTruthy();
     expect(selo('Em limpeza', cartao('Quarto 203'))).toBeTruthy();
-    expect([...seletorDeEstado('Quarto 101').options].map(o => o.textContent)).toEqual(['Limpo', 'Sujo', 'Em limpeza', 'Inspeccao', 'Bloqueado']);
+    expect([...seletorDeEstado('Quarto 101').options].map(o => o.textContent)).toEqual(['Limpo', 'Sujo', 'Em limpeza', 'Inspecção', 'Bloqueado']);
   });
 
   it('ordena por prioridade e mostra a prioridade de cada quarto', async () => {
     await abre();
     /* por andar; dentro do andar: saida+entrada, urgente, ocupado, vago */
     expect(nomesDosCartoes()).toEqual(['Quarto 102', 'Quarto 101', 'Quarto 201', 'Quarto 203', 'Quarto 202']);
-    expect(within(cartao('Quarto 102')).getByText('Saida + Entrada')).toBeInTheDocument();
+    expect(within(cartao('Quarto 102')).getByText('Saída + Entrada')).toBeInTheDocument();
     expect(within(cartao('Quarto 101')).getByText('Urgente')).toBeInTheDocument();
     expect(within(cartao('Quarto 202')).getByText('Ocupado')).toBeInTheDocument();
     expect(within(cartao('Quarto 201')).getByText('Vago')).toBeInTheDocument();
@@ -144,7 +144,7 @@ describe('Housekeeping', () => {
 
   it('os chips mostram as contagens e filtram por estado', async () => {
     await abre();
-    for (const rotulo of ['Todos (5)', 'Sujos (1)', 'Limpeza (1)', 'Inspeccao (0)', 'Limpos (2)']) {
+    for (const rotulo of ['Todos (5)', 'Sujos (1)', 'Limpeza (1)', 'Inspecção (0)', 'Limpos (2)']) {
       expect(chip(rotulo)).toBeInTheDocument();
     }
     fireEvent.click(chip('Sujos (1)'));
@@ -155,34 +155,34 @@ describe('Housekeeping', () => {
     expect(nomesDosCartoes()).toHaveLength(5);
   });
 
-  it('avisa dos quartos com saida e entrada no mesmo dia', async () => {
+  it('avisa dos quartos com saída e entrada no mesmo dia', async () => {
     await abre();
-    expect(screen.getByText('Quartos com saida e entrada no mesmo dia:')).toBeInTheDocument();
-    const aviso = screen.getByText('Quartos com saida e entrada no mesmo dia:').parentElement;
+    expect(screen.getByText('Quartos com saída e entrada no mesmo dia:')).toBeInTheDocument();
+    const aviso = screen.getByText('Quartos com saída e entrada no mesmo dia:').parentElement;
     expect(within(aviso).getByText('Quarto 102')).toBeInTheDocument();
   });
 
   it('mudar o estado pelo seletor actualiza o selo e as contagens', async () => {
     await abre();
     fireEvent.change(seletorDeEstado('Quarto 101'), { target: { value: 'inspection' } });
-    expect(selo('Inspeccao', cartao('Quarto 101'))).toBeTruthy();
-    expect(chip('Inspeccao (1)')).toBeInTheDocument();
+    expect(selo('Inspecção', cartao('Quarto 101'))).toBeTruthy();
+    expect(chip('Inspecção (1)')).toBeInTheDocument();
     expect(chip('Limpos (1)')).toBeInTheDocument();
   });
 
-  it('com colaboradores cada quarto tem um seletor de atribuicao; sem eles nao tem', async () => {
+  it('com colaboradores cada quarto tem um seletor de atribuição; sem eles não tem', async () => {
     await abre();
     expect(within(cartao('Quarto 101')).getAllByRole('combobox')).toHaveLength(1);
     cleanup();
     await abre({ colaboradores: true });
     const selects = within(cartao('Quarto 101', 2)).getAllByRole('combobox');
     expect(selects).toHaveLength(2);
-    expect([...selects[1].options].map(o => o.textContent)).toEqual(['Atribuir colaborador...', 'Maria', 'Joao']);
+    expect([...selects[1].options].map(o => o.textContent)).toEqual(['Atribuir colaborador...', 'Maria', 'João']);
     fireEvent.change(selects[1], { target: { value: 's1' } });
     expect(within(cartao('Quarto 101', 2)).getAllByRole('combobox')[1].value).toBe('s1');
   });
 
-  it('colaboradores a falhar nao rebentam e escondem o seletor', async () => {
+  it('colaboradores a falhar não rebentam e escondem o seletor', async () => {
     api.get.mockReset().mockRejectedValue(new Error('rede'));
     await abre();
     expect(within(cartao('Quarto 101')).getAllByRole('combobox')).toHaveLength(1);
@@ -211,7 +211,7 @@ describe('Housekeeping', () => {
     expect(chip('Sujos (0)')).toBeInTheDocument();
   });
 
-  it('"Fechar" na checklist nao altera o estado do quarto', async () => {
+  it('"Fechar" na checklist não altera o estado do quarto', async () => {
     await abre();
     fireEvent.click(within(cartao('Quarto 102')).getByText('0/8').closest('button'));
     const fechar = screen.getAllByRole('button', { name: 'Fechar' });
@@ -229,7 +229,7 @@ describe('Housekeeping', () => {
     expect(seletorDeEstado('Quarto 102').value).toBe('dirty');
   });
 
-  it('nenhuma cor em hexadecimal sobra no HTML (cartoes, aviso, checklist)', async () => {
+  it('nenhuma cor em hexadecimal sobra no HTML (cartões, aviso, checklist)', async () => {
     await abre();
     expect(document.body.innerHTML).not.toContain('[#');
     fireEvent.click(within(cartao('Quarto 102')).getByText('0/8').closest('button'));
@@ -251,8 +251,8 @@ describe('Housekeeping', () => {
     expect(listReservations).toHaveBeenCalledTimes(2);
     expect(listReservations).toHaveBeenCalledWith({ stay_from: HOJE, stay_to: HOJE });
     expect(listReservations).toHaveBeenCalledWith({ status: 'checked_in' });
-    /* a mesma reserva nos dois pedidos conta uma so vez: 'Saida + Entrada' do h2 (r1 e r2) aparece uma vez */
-    expect(screen.getAllByText('Saida + Entrada')).toHaveLength(1);
+    /* a mesma reserva nos dois pedidos conta uma so vez: 'Saída + Entrada' do h2 (r1 e r2) aparece uma vez */
+    expect(screen.getAllByText('Saída + Entrada')).toHaveLength(1);
   });
 
   it('um_hospede_que_ficou_alem_da_saida_continua_a_contar_como_ocupado', async () => {
@@ -273,7 +273,7 @@ describe('Housekeeping', () => {
     expect(await screen.findByText('Nenhum quarto encontrado')).toBeInTheDocument();
   });
 
-  it('servicos a falhar nao rebentam', async () => {
+  it('serviços a falhar não rebentam', async () => {
     listUnits.mockRejectedValue(new Error('rede'));
     render(
       <MemoryRouter future={FUTURE}>

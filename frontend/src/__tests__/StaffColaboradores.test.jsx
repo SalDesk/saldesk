@@ -100,10 +100,10 @@ describe('Colaboradores: lista', () => {
   });
 
   it('com_foto_mostra_a_imagem_e_sem_dados_opcionais_nao_rebenta', async () => {
-    listStaff.mockResolvedValue([{ id: 's7', name: 'So Nome', role: 'Guia', status: 'active', photo_url: 'http://x.test/f.png', average_rating: null }]);
-    await montar('So Nome');
-    expect(screen.getByAltText('So Nome')).toHaveAttribute('src', 'http://x.test/f.png');
-    expect(cartao('So Nome')).toHaveTextContent('0 trabalhos');
+    listStaff.mockResolvedValue([{ id: 's7', name: 'Só Nome', role: 'Guia', status: 'active', photo_url: 'http://x.test/f.png', average_rating: null }]);
+    await montar('Só Nome');
+    expect(screen.getByAltText('Só Nome')).toHaveAttribute('src', 'http://x.test/f.png');
+    expect(cartao('Só Nome')).toHaveTextContent('0 trabalhos');
   });
 
   it('a_conta_a_criar_desactiva_o_botao_e_mostra_A_criar_conta', async () => {
@@ -115,10 +115,10 @@ describe('Colaboradores: lista', () => {
   });
 
   it('falha_ao_criar_conta_mostra_o_erro_do_servidor_ou_o_generico', async () => {
-    createStaffAccount.mockRejectedValueOnce({ response: { data: { error: 'Email invalido' } } });
+    createStaffAccount.mockRejectedValueOnce({ response: { data: { error: 'Email inválido' } } });
     await montar();
     fireEvent.click(within(cartao('Vera Mendes')).getByText('Criar conta'));
-    await waitFor(() => expect(toasts()).toContain('error:Email invalido'));
+    await waitFor(() => expect(toasts()).toContain('error:Email inválido'));
     createStaffAccount.mockRejectedValueOnce(new Error('x'));
     fireEvent.click(within(cartao('Vera Mendes')).getByText('Criar conta'));
     await waitFor(() => expect(toasts()).toContain('error:Erro ao criar conta'));
@@ -135,9 +135,9 @@ describe('Colaboradores: lista', () => {
     await montar();
     expect(screen.getByText(/Atingiu o limite de 2 colaboradores/)).toBeInTheDocument();
     fireEvent.click(screen.getByText('Fazer upgrade'));
-    expect(await screen.findByText('Ver planos de subscricao')).toBeInTheDocument();
+    expect(await screen.findByText('Ver planos de subscrição')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Fechar' }));
-    await waitFor(() => expect(screen.queryByText('Ver planos de subscricao')).toBeNull());
+    await waitFor(() => expect(screen.queryByText('Ver planos de subscrição')).toBeNull());
   });
 
   it('eliminar_cancelar_fecha_sem_apagar', async () => {
@@ -154,8 +154,8 @@ describe('Colaboradores: lista', () => {
     const seccao = screen.getByText('Vendedores de Praia').closest('div.mt-6');
     expect(within(seccao).getByText('Espargos')).toBeInTheDocument();
     expect(within(seccao).getByText('Sem zona definida')).toBeInTheDocument();
-    expect(within(seccao).getByText('12% comissao')).toBeInTheDocument();
-    expect(within(seccao).getByText('10% comissao')).toBeInTheDocument(); /* por omissao */
+    expect(within(seccao).getByText('12% comissão')).toBeInTheDocument();
+    expect(within(seccao).getByText('10% comissão')).toBeInTheDocument(); /* por omissao */
     await waitFor(() => expect(listSellerCommissions).toHaveBeenCalledTimes(2));
     expect(within(seccao).getAllByText('€0')).toHaveLength(4); /* mes e por pagar, dois vendedores */
     expect(within(seccao).queryByText('Registar pagamento')).toBeNull();
@@ -178,11 +178,11 @@ describe('Colaboradores: lista', () => {
     listSellerCommissions.mockResolvedValue([
       { id: 'c1', amount: 30.4, status: 'pending', created_at: agora },
       { id: 'c2', amount: 20, status: 'paid', created_at: agora },
-      { id: 'c3', amount: 100, status: 'pending', created_at: '2020-01-15T10:00:00Z' }, /* outro mes: nao conta */
+      { id: 'c3', amount: 100, status: 'pending', created_at: '2020-01-15T10:00:00Z' }, /* outro mês: não conta */
     ]);
     await montar();
     const seccao = screen.getByText('Vendedores de Praia').closest('div.mt-6');
-    await waitFor(() => expect(within(seccao).getByText('€50').nextSibling.textContent).toBe('Comissoes mes'));
+    await waitFor(() => expect(within(seccao).getByText('€50').nextSibling.textContent).toBe('Comissões mês'));
     expect(within(seccao).getByText('€30').nextSibling.textContent).toBe('Por pagar');
     expect(within(seccao).getByText('Registar pagamento')).toBeInTheDocument();
   });
@@ -206,7 +206,7 @@ describe('Colaboradores: lista', () => {
     await waitFor(() => expect(markCommissionPaid).toHaveBeenCalledTimes(1));
     expect(markCommissionPaid).toHaveBeenCalledWith('c1');
     await waitFor(() => expect(within(seccao).queryByText('Registar pagamento')).toBeNull());
-    expect(within(seccao).getByText('€50').nextSibling.textContent).toBe('Comissoes mes');
+    expect(within(seccao).getByText('€50').nextSibling.textContent).toBe('Comissões mês');
     expect(within(seccao).getByText('€0').nextSibling.textContent).toBe('Por pagar');
   });
 
@@ -255,7 +255,7 @@ describe('Colaboradores com o design system', () => {
     await montar();
     expect(screen.getByRole('button', { name: 'Editar Rui Lopes' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Eliminar Rui Lopes' })).toBeInTheDocument();
-    expect(screen.getAllByRole('button', { name: /^Ferias, documentos e certificacoes/ })).toHaveLength(4);
+    expect(screen.getAllByRole('button', { name: /^Férias, documentos e certificações/ })).toHaveLength(4);
     expect(screen.getByLabelText('Pesquisar colaboradores')).toBeInTheDocument();
   });
 

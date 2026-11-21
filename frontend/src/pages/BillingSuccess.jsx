@@ -55,10 +55,10 @@ export default function BillingSuccess() {
             <p className="text-sm font-body text-n-500 leading-relaxed mb-6">
               {lang === 'en'
                 ? 'Your SalDesk subscription is now active.'
-                : 'A tua subscricao SalDesk esta agora activa.'}
+                : 'A tua subscrição SalDesk está agora activa.'}
             </p>
             <Link to="/definicoes?tab=facturacao" className="text-sm font-body font-semibold text-ocean-700 hover:underline">
-              {lang === 'en' ? 'Back to Billing' : 'Voltar a Facturacao'}
+              {lang === 'en' ? 'Back to Billing' : 'Voltar a Facturação'}
             </Link>
           </>
         )}
@@ -68,15 +68,15 @@ export default function BillingSuccess() {
               <XCircle size={32} strokeWidth={2} className="text-error" />
             </div>
             <h1 className="font-display font-bold text-xl text-n-900 mb-3">
-              {lang === 'en' ? 'Could not confirm payment' : 'Nao foi possivel confirmar o pagamento'}
+              {lang === 'en' ? 'Could not confirm payment' : 'Não foi possível confirmar o pagamento'}
             </h1>
             <p className="text-sm font-body text-n-500 leading-relaxed mb-6">
               {lang === 'en'
                 ? 'If the payment was completed, it will be applied shortly. Otherwise, try again.'
-                : 'Se o pagamento foi concluido, sera aplicado em breve. Caso contrario, tenta novamente.'}
+                : 'Se o pagamento foi concluído, será aplicado em breve. Caso contrário, tenta novamente.'}
             </p>
             <Link to="/definicoes?tab=facturacao" className="text-sm font-body font-semibold text-ocean-700 hover:underline">
-              {lang === 'en' ? 'Back to Billing' : 'Voltar a Facturacao'}
+              {lang === 'en' ? 'Back to Billing' : 'Voltar a Facturação'}
             </Link>
           </>
         )}

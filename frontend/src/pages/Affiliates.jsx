@@ -79,7 +79,7 @@ function AffiliateModal({ affiliate, config, onSave, onClose }) {
       });
     } catch (err) {
       setError(err.response?.data?.code === 'DUPLICATE_CODE'
-        ? 'Ja existe um afiliado com este codigo.'
+        ? 'Já existe um afiliado com este código.'
         : 'Erro ao guardar afiliado.');
     } finally {
       setSaving(false);
@@ -89,14 +89,14 @@ function AffiliateModal({ affiliate, config, onSave, onClose }) {
   return (
     <Modal open onClose={onClose} title={isNew ? 'Novo afiliado' : 'Editar afiliado'} size="sm">
       <form onSubmit={handleSubmit} className="space-y-4">
-        <Input label="Nome" aria-label="Nome" value={form.name} onChange={set('name')} required placeholder="Ex: Joao Silva" />
+        <Input label="Nome" aria-label="Nome" value={form.name} onChange={set('name')} required placeholder="Ex: João Silva" />
         <Input label="Email" aria-label="Email" type="email" value={form.email} onChange={set('email')} required placeholder="joao@exemplo.com" />
 
         <div className="grid grid-cols-2 gap-3">
-          <Input label="Comissao (%)" aria-label="Comissao (%)" type="number" min="0" max="50" step="0.5"
+          <Input label="Comissão (%)" aria-label="Comissão (%)" type="number" min="0" max="50" step="0.5"
             value={form.commission_pct} onChange={set('commission_pct')} required />
           <div>
-            <Input label="Codigo de afiliado" aria-label="Codigo de afiliado" value={form.code} onChange={set('code')} required
+            <Input label="Código de afiliado" aria-label="Código de afiliado" value={form.code} onChange={set('code')} required
               className="font-mono uppercase" placeholder="Ex: JOA3K9" />
           </div>
         </div>
@@ -116,7 +116,7 @@ function AffiliateModal({ affiliate, config, onSave, onClose }) {
 function PaymentModal({ affiliate, onSave, onClose }) {
   const [amount, setAmount] = useState('');
   const [date,   setDate]   = useState(new Date().toISOString().slice(0, 10));
-  const [note,   setNote]   = useState('Pagamento de comissao');
+  const [note,   setNote]   = useState('Pagamento de comissão');
   const [saving, setSaving] = useState(false);
   const [error,  setError]  = useState('');
 
@@ -124,7 +124,7 @@ function PaymentModal({ affiliate, onSave, onClose }) {
   const pending   = Number(affiliate?.commission_pending || 0);
 
   async function handleSave() {
-    if (!amount || Number(amount) <= 0) { setError('Introduza um montante valido.'); return; }
+    if (!amount || Number(amount) <= 0) { setError('Introduza um montante válido.'); return; }
     setSaving(true);
     setError('');
     try {
@@ -249,7 +249,7 @@ export default function Affiliates() {
   if (loading) {
     return (
       <div>
-        <PageHeader title="Programa de Afiliados" subtitle="Gere afiliados e comissoes por reservas referenciadas" />
+        <PageHeader title="Programa de Afiliados" subtitle="Gere afiliados e comissões por reservas referenciadas" />
         <div className="flex justify-center py-16"><LoadingSpinner size={32} /></div>
       </div>
     );
@@ -262,7 +262,7 @@ export default function Affiliates() {
 
   const TABS = [
     { id: 'afiliados',  label: 'Afiliados'      },
-    { id: 'config',     label: 'Configuracao'   },
+    { id: 'config',     label: 'Configuração'   },
     { id: 'analytics',  label: 'Analytics'      },
   ];
 
@@ -272,7 +272,7 @@ export default function Affiliates() {
     <div>
       <PageHeader
         title="Programa de Afiliados"
-        subtitle="Gere afiliados e comissoes por reservas referenciadas"
+        subtitle="Gere afiliados e comissões por reservas referenciadas"
         actions={
           <div className="flex items-center gap-2">
             <button onClick={toggleProgramActive} aria-pressed={!!config.active}
@@ -294,8 +294,8 @@ export default function Affiliates() {
         {[
           { label: 'Afiliados activos',   value: affiliates.filter(a => a.active !== false).length, color: 'text-n-900' },
           { label: 'Reservas geradas',    value: totalBookings,                                       color: 'text-ocean-700' },
-          { label: 'Comissao paga',       value: `€${totalPaid.toFixed(0)}`,                         color: 'text-[var(--success)]' },
-          { label: 'Comissao pendente',   value: `€${totalPending.toFixed(0)}`,                      color: 'text-[var(--warning)]' },
+          { label: 'Comissão paga',       value: `€${totalPaid.toFixed(0)}`,                         color: 'text-[var(--success)]' },
+          { label: 'Comissão pendente',   value: `€${totalPending.toFixed(0)}`,                      color: 'text-[var(--warning)]' },
         ].map(m => (
           <Card key={m.label} padding="px-4 py-3">
             <div className="flex items-center gap-3">
@@ -335,7 +335,7 @@ export default function Affiliates() {
                       <div className="flex items-start justify-between gap-2 mb-2">
                         <div>
                           <p className="font-display font-semibold text-sm text-n-900">{a.name}</p>
-                          <p className="text-xs font-body text-n-500">{a.email} · <span className="font-mono">{a.code}</span> · {a.commission_pct || 0}% comissao</p>
+                          <p className="text-xs font-body text-n-500">{a.email} · <span className="font-mono">{a.code}</span> · {a.commission_pct || 0}% comissão</p>
                         </div>
                         <div className="flex gap-1 shrink-0">
                           <button onClick={() => setPayModal(a)} aria-label={`Registar pagamento ${a.name}`}
@@ -397,34 +397,34 @@ export default function Affiliates() {
 
       {activeTab === 'config' && (
         <Card padding="px-6 py-5">
-          <h3 className="font-display font-semibold text-sm text-n-700 mb-5">Configuracao global do programa</h3>
+          <h3 className="font-display font-semibold text-sm text-n-700 mb-5">Configuração global do programa</h3>
           <div className="space-y-4 max-w-sm">
-            <Input label="Comissao global (%)" aria-label="Comissao global (%)" type="number" min="0" max="50" step="0.5"
+            <Input label="Comissão global (%)" aria-label="Comissão global (%)" type="number" min="0" max="50" step="0.5"
               value={config.commission_pct}
               onChange={e => setConfig(p => ({ ...p, commission_pct: Number(e.target.value) }))}
               className="font-mono"
-              hint="Percentagem padrao para novos afiliados. Pode ser sobreposta por afiliado."
+              hint="Percentagem padrão para novos afiliados. Pode ser sobreposta por afiliado."
             />
 
-            <Input label="Minimo de reserva (€)" aria-label="Minimo de reserva (€)" type="number" min="0" step="1"
+            <Input label="Mínimo de reserva (€)" aria-label="Mínimo de reserva (€)" type="number" min="0" step="1"
               value={config.min_booking_value}
               onChange={e => setConfig(p => ({ ...p, min_booking_value: Number(e.target.value) }))}
               className="font-mono"
-              hint="Valor minimo da reserva para a comissao ser aplicada. 0 = sem minimo."
+              hint="Valor mínimo da reserva para a comissão ser aplicada. 0 = sem mínimo."
             />
 
             <Button icon={confSaved ? Check : Save}
               loading={confSaving}
               className={confSaved ? '!bg-[var(--success)] !text-white hover:!opacity-90' : ''}
               onClick={handleSaveConfig}>
-              {confSaved ? 'Guardado' : 'Guardar configuracao'}
+              {confSaved ? 'Guardado' : 'Guardar configuração'}
             </Button>
 
             <div className="pt-3 border-t border-n-100">
               <p className="text-xs font-body text-n-400">
                 <span className="font-semibold">Portal do afiliado:</span> Cada afiliado pode aceder ao seu dashboard em{' '}
                 <span className="font-mono">saldesk.cv/afiliado/[CODIGO]</span> com o email registado.
-                As reservas feitas atraves do link (<span className="font-mono">?ref=CODIGO</span>) sao atribuidas
+                As reservas feitas através do link (<span className="font-mono">?ref=CODIGO</span>) sao atribuidas
                 automaticamente ao afiliado.
               </p>
             </div>

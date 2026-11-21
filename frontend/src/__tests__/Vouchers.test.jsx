@@ -66,7 +66,7 @@ const novoVoucher = () => screen.getAllByText('Novo voucher').find(e => e.closes
 describe('Vouchers: lista', () => {
   it('lista_com_codigo_desconto_minimo_validade_usos_e_tours', async () => {
     await montar();
-    expect(screen.getAllByRole('columnheader').map(h => h.textContent)).toEqual(['Codigo', 'Desconto', 'Minimo', 'Validade', 'Usos', 'Tours', 'Estado', '']);
+    expect(screen.getAllByRole('columnheader').map(h => h.textContent)).toEqual(['Código', 'Desconto', 'Mínimo', 'Validade', 'Usos', 'Tours', 'Estado', '']);
     const v1 = linha('VERAO20');
     expect(v1).toHaveTextContent('20%');
     expect(v1).toHaveTextContent('€50');
@@ -107,7 +107,7 @@ describe('Vouchers: lista', () => {
   it('kpis_total_activos_expirados_e_utilizacoes', async () => {
     await montar();
     expect(kpi('Total vouchers')).toBe('5');
-    expect(kpi('Total utilizacoes')).toBe('8');
+    expect(kpi('Total utilizações')).toBe('8');
     expect(screen.getAllByText('Activos').find(e => e.tagName === 'P').previousSibling.textContent).toBe('2');
     expect(screen.getAllByText('Expirados').find(e => e.tagName === 'P').previousSibling.textContent).toBe('1');
   });
@@ -126,9 +126,9 @@ describe('Vouchers: lista', () => {
 
   it('pesquisa_por_codigo_sem_maiusculas_filtro_por_estado_e_vazio', async () => {
     await montar();
-    fireEvent.change(screen.getByPlaceholderText('Pesquisar codigo...'), { target: { value: 'ver' } });
+    fireEvent.change(screen.getByPlaceholderText('Pesquisar código...'), { target: { value: 'ver' } });
     expect(codigosPorOrdem()).toEqual(['VERAO20']);
-    fireEvent.change(screen.getByPlaceholderText('Pesquisar codigo...'), { target: { value: '' } });
+    fireEvent.change(screen.getByPlaceholderText('Pesquisar código...'), { target: { value: '' } });
     fireEvent.click(chip('Activos'));
     expect(codigosPorOrdem()).toEqual(['BREVE', 'VERAO20']);
     fireEvent.click(chip('Esgotados'));
@@ -137,7 +137,7 @@ describe('Vouchers: lista', () => {
     expect(codigosPorOrdem()).toEqual(['EXPIRADO']);
     fireEvent.click(chip('Todos'));
     expect(codigosPorOrdem()).toHaveLength(5);
-    fireEvent.change(screen.getByPlaceholderText('Pesquisar codigo...'), { target: { value: 'zzz' } });
+    fireEvent.change(screen.getByPlaceholderText('Pesquisar código...'), { target: { value: 'zzz' } });
     expect(screen.getByText('Sem vouchers')).toBeInTheDocument();
   });
 
@@ -172,7 +172,7 @@ describe('Vouchers: lista', () => {
   });
 });
 
-describe('Vouchers: formulario e accoes', () => {
+describe('Vouchers: formulário e acções', () => {
   it('criar_valida_codigo_e_valor_e_envia_o_codigo_em_maiusculas', async () => {
     vi.spyOn(Math, 'random').mockReturnValue(0);
     createVoucher.mockImplementation(async (d) => ({ id: 'vn', uses_count: 0, active: true, ...d }));
@@ -184,7 +184,7 @@ describe('Vouchers: formulario e accoes', () => {
     expect(codigo).toHaveValue('AAAAAAAA'); /* gerado */
     fireEvent.change(codigo, { target: { value: '   ' } });
     fireEvent.submit(dlg.querySelector('form'));
-    expect(await within(dlg).findByText('O codigo e obrigatorio.')).toBeInTheDocument();
+    expect(await within(dlg).findByText('O código é obrigatório.')).toBeInTheDocument();
     fireEvent.change(codigo, { target: { value: ' teste ' } });
     fireEvent.submit(dlg.querySelector('form'));
     expect(await within(dlg).findByText('O valor do desconto deve ser maior que zero.')).toBeInTheDocument();
@@ -226,11 +226,11 @@ describe('Vouchers: formulario e accoes', () => {
     await montar();
     fireEvent.click(novoVoucher());
     const dlg = screen.getByRole('dialog');
-    expect(dlg).toHaveTextContent('Aplicavel a todos os tours.');
+    expect(dlg).toHaveTextContent('Aplicável a todos os tours.');
     fireEvent.click(within(dlg).getByText('Kite'));
     expect(dlg).toHaveTextContent('1 tour(s) seleccionado(s).');
     fireEvent.change(within(dlg).getByPlaceholderText('20'), { target: { value: '5' } });
-    fireEvent.change(within(dlg).getByPlaceholderText('0 = sem minimo'), { target: { value: '30' } });
+    fireEvent.change(within(dlg).getByPlaceholderText('0 = sem mínimo'), { target: { value: '30' } });
     fireEvent.change(within(dlg).getByPlaceholderText('0 = ilimitado'), { target: { value: '4' } });
     fireEvent.change(dlg.querySelector('input[type="date"]'), { target: { value: '2027-01-31' } });
     fireEvent.click(within(dlg).getByRole('button', { name: 'Criar voucher' }));
@@ -238,14 +238,14 @@ describe('Vouchers: formulario e accoes', () => {
   });
 
   it('editar_chama_updateVoucher_e_mostra_o_erro_do_servidor_ou_o_generico', async () => {
-    updateVoucher.mockRejectedValueOnce({ response: { data: { error: 'Codigo duplicado' } } });
+    updateVoucher.mockRejectedValueOnce({ response: { data: { error: 'Código duplicado' } } });
     await montar();
     fireEvent.click(within(linha('VERAO20')).getByTitle('Editar'));
     const dlg = screen.getByRole('dialog');
     expect(dlg).toHaveTextContent('Editar voucher');
     expect(within(dlg).getByPlaceholderText('Ex: VERAO2025')).toHaveValue('VERAO20');
     fireEvent.click(within(dlg).getByRole('button', { name: 'Guardar' }));
-    expect(await within(dlg).findByText('Codigo duplicado')).toBeInTheDocument();
+    expect(await within(dlg).findByText('Código duplicado')).toBeInTheDocument();
     updateVoucher.mockRejectedValueOnce(new Error('x'));
     fireEvent.click(within(dlg).getByRole('button', { name: 'Guardar' }));
     expect(await within(dlg).findByText('Erro ao guardar voucher.')).toBeInTheDocument();
@@ -279,8 +279,8 @@ describe('Vouchers: formulario e accoes', () => {
 });
 
 describe('Vouchers: partilhar', () => {
-  const msgPt = (link) => `Use o codigo *VERAO20* para obter 20% de desconto na sua proxima reserva. Valido ate ${dataPt(dia(60))}. Reserve em: ${link}`;
-  const msgEn = (link) => `Use code *VERAO20* to get 20% off your next booking. Valido ate ${dataPt(dia(60))}. Book at: ${link}`;
+  const msgPt = (link) => `Use o código *VERAO20* para obter 20% de desconto na sua próxima reserva. Válido até ${dataPt(dia(60))}. Reserve em: ${link}`;
+  const msgEn = (link) => `Use code *VERAO20* to get 20% off your next booking. Válido até ${dataPt(dia(60))}. Book at: ${link}`;
 
   it('abre_o_modal_e_envia_as_mensagens_pt_e_en_por_whatsapp_e_email', async () => {
     await montar();
@@ -309,7 +309,7 @@ describe('Vouchers: partilhar', () => {
     fireEvent.click(within(linha('ESGOTADO')).getByTitle('Partilhar'));
     fireEvent.click(within(screen.getByRole('dialog')).getAllByRole('button', { name: /Enviar/ })[0]);
     expect(aberta).toHaveBeenLastCalledWith(
-      `https://wa.me/?text=${encodeURIComponent('Use o codigo *ESGOTADO* para obter €10 de desconto na sua proxima reserva. Reserve em: https://saldesk.cv/book/sal')}`,
+      `https://wa.me/?text=${encodeURIComponent('Use o código *ESGOTADO* para obter €10 de desconto na sua próxima reserva. Reserve em: https://saldesk.cv/book/sal')}`,
       '_blank', 'noopener',
     );
   });
@@ -333,7 +333,7 @@ describe('Vouchers com o design system', () => {
     expect(screen.getByRole('button', { name: 'Todos', pressed: true })).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Activos', pressed: false }));
     expect(screen.getByRole('button', { name: 'Activos', pressed: true })).toBeInTheDocument();
-    expect(screen.getByLabelText('Pesquisar codigo')).toBeInTheDocument();
+    expect(screen.getByLabelText('Pesquisar código')).toBeInTheDocument();
   });
 
   it('os_botoes_de_icone_e_os_campos_dos_modais_tem_nome_acessivel', async () => {
@@ -342,7 +342,7 @@ describe('Vouchers com o design system', () => {
     expect(screen.getByRole('button', { name: 'Activar INATIVO' })).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Editar VERAO20' }));
     const modal = within(screen.getByRole('dialog'));
-    ['Codigo', 'Tipo de desconto', 'Desconto (%)', 'Minimo de reserva (€)', 'Limite de usos', 'Valido ate'].forEach(r => expect(modal.getByLabelText(r)).toBeInTheDocument());
+    ['Código', 'Tipo de desconto', 'Desconto (%)', 'Mínimo de reserva (€)', 'Limite de usos', 'Válido até'].forEach(r => expect(modal.getByLabelText(r)).toBeInTheDocument());
   });
 
   it('o_vazio_usa_o_EmptyState', async () => {

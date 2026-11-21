@@ -65,31 +65,31 @@ function TableQrModal({ unit, onClose }) {
 const LABELS = {
   activity: {
     title:      'Tours & Actividades',
-    subtitle:   (n) => `${n} tour(s) disponivel(is)`,
+    subtitle:   (n) => `${n} tour(s) disponível(is)`,
     newBtn:     'Novo Tour',
     editPrefix: 'Editar tour',
-    deleteMsg:  (name) => `Eliminar o tour "${name}"? As reservas associadas serao mantidas mas o tour ficara indisponivel.`,
+    deleteMsg:  (name) => `Eliminar o tour "${name}"? As reservas associadas serão mantidas mas o tour ficará indisponível.`,
   },
   hotel: {
     title:      'Quartos & Alojamentos',
     subtitle:   (n) => `${n} unidade(s) registada(s)`,
     newBtn:     'Nova Unidade',
     editPrefix: 'Editar',
-    deleteMsg:  (name) => `Eliminar a unidade "${name}"? As reservas associadas serao mantidas mas a unidade ficara indisponivel.`,
+    deleteMsg:  (name) => `Eliminar a unidade "${name}"? As reservas associadas serão mantidas mas a unidade ficará indisponível.`,
   },
   rentacar: {
     title:      'Frota',
     subtitle:   (n) => `${n} viatura(s) registada(s)`,
     newBtn:     'Nova Viatura',
     editPrefix: 'Editar',
-    deleteMsg:  (name) => `Eliminar a viatura "${name}"? As reservas associadas serao mantidas.`,
+    deleteMsg:  (name) => `Eliminar a viatura "${name}"? As reservas associadas serão mantidas.`,
   },
   restaurant: {
     title:      'Mesas',
     subtitle:   (n) => `${n} mesa(s) registada(s)`,
     newBtn:     'Nova Mesa',
     editPrefix: 'Editar',
-    deleteMsg:  (name) => `Eliminar a mesa "${name}"? As reservas associadas serao mantidas.`,
+    deleteMsg:  (name) => `Eliminar a mesa "${name}"? As reservas associadas serão mantidas.`,
   },
 };
 

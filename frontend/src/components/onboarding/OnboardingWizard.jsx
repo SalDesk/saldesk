@@ -55,7 +55,7 @@ export default function OnboardingWizard() {
       setLogoPreview(publicUrl);
       setData((d) => ({ ...d, logo_url: publicUrl }));
     } catch (err) {
-      setError('Erro ao carregar logotipo. Verifique as permissoes do bucket.');
+      setError('Erro ao carregar logotipo. Verifique as permissões do bucket.');
     } finally {
       setUploadingLogo(false);
     }
@@ -212,7 +212,7 @@ export default function OnboardingWizard() {
                 label={t('onboarding.description')}
                 value={data.description}
                 onChange={set('description')}
-                placeholder="Descreva o seu negocio em 2-3 frases..."
+                placeholder="Descreva o seu negócio em 2-3 frases..."
                 rows={4}
               />
               <div>
@@ -249,7 +249,7 @@ export default function OnboardingWizard() {
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-3">
                 <Select label={t('onboarding.language')} value={data.language} onChange={set('language')}>
-                  <option value="pt">Portugues</option>
+                  <option value="pt">Português</option>
                   <option value="en">English</option>
                 </Select>
                 <Select label={t('onboarding.currency')} value={data.currency} onChange={set('currency')}>

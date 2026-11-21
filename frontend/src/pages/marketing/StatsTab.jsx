@@ -22,10 +22,10 @@ export default function StatsTab({ stats, statsLoading, posts, bookingLink }) {
     <div className="space-y-5">
       {/* KPIs */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <KpiCard icon={Eye}             label="Visitas ao perfil"  value={stats?.profile_views ?? 0} sub="ultimos 30 dias"  loading={statsLoading} />
-        <KpiCard icon={MousePointerClick} label="Cliques no link"  value={stats?.clicks ?? 0}        sub="ultimos 30 dias"  loading={statsLoading} />
-        <KpiCard icon={TrendingUp}      label="Reservas via link"  value={stats?.bookings_direct ?? 0} sub="ultimos 30 dias" loading={statsLoading} />
-        <KpiCard icon={BarChart2}       label="Taxa de conversao"  value={stats ? `${stats.conversion_rate ?? 0}%` : null} sub="cliques → reservas" loading={statsLoading} />
+        <KpiCard icon={Eye}             label="Visitas ao perfil"  value={stats?.profile_views ?? 0} sub="últimos 30 dias"  loading={statsLoading} />
+        <KpiCard icon={MousePointerClick} label="Cliques no link"  value={stats?.clicks ?? 0}        sub="últimos 30 dias"  loading={statsLoading} />
+        <KpiCard icon={TrendingUp}      label="Reservas via link"  value={stats?.bookings_direct ?? 0} sub="últimos 30 dias" loading={statsLoading} />
+        <KpiCard icon={BarChart2}       label="Taxa de conversão"  value={stats ? `${stats.conversion_rate ?? 0}%` : null} sub="cliques → reservas" loading={statsLoading} />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -71,7 +71,7 @@ export default function StatsTab({ stats, statsLoading, posts, bookingLink }) {
             </div>
           ) : (
             <p className="text-xs font-body text-n-400">
-              Dados de origem nao disponiveis. Configure o endpoint <span className="font-mono">/marketing/stats</span> com campo <span className="font-mono">sources</span>.
+              Dados de origem não disponíveis. Configure o endpoint <span className="font-mono">/marketing/stats</span> com campo <span className="font-mono">sources</span>.
             </p>
           )}
         </Card>

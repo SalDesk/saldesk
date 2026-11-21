@@ -30,7 +30,7 @@ const CONFIG = { s1: { base: 1000, food: 50, transport: 30, inps_pct: 15 } };
 const COMISSOES = [
   { id: 'c1', amount: 20, status: 'pending', created_at: `${MES}-05T10:00:00Z`, reservations: { units: { name: 'Tour Ilha' } } },
   { id: 'c2', amount: 30, status: 'paid', created_at: `${MES}-06T10:00:00Z`, reservations: { customer_name: 'Ana Silva' } },
-  { id: 'c3', amount: 99, status: 'pending', created_at: `${MES_ANT}-05T10:00:00Z`, reservations: { units: { name: 'Do mes passado' } } },
+  { id: 'c3', amount: 99, status: 'pending', created_at: `${MES_ANT}-05T10:00:00Z`, reservations: { units: { name: 'Do mês passado' } } },
 ];
 
 let spyErr; let spyWarn;
@@ -71,7 +71,7 @@ const linha = (nome) => screen.getByText(nome).closest('tr');
 describe('Salarios', () => {
   it('so_colaboradores_activos_e_kpis_de_folha_pagos_e_por_pagar', async () => {
     await montarSalarios();
-    expect(screen.getAllByRole('columnheader').map(h => h.textContent)).toEqual(['Colaborador', 'Salario base', 'Subsidios', 'INPS patronal', 'Custo total/mes', 'Estado', '']);
+    expect(screen.getAllByRole('columnheader').map(h => h.textContent)).toEqual(['Colaborador', 'Salário base', 'Subsídios', 'INPS patronal', 'Custo total/mês', 'Estado', '']);
     expect(screen.queryByText('Ex Colega')).toBeNull();
     expect(kpi('Colaboradores activos')).toBe('2'); /* s1 e s2: s3 e s4 estao inactivos */
   });
@@ -89,9 +89,9 @@ describe('Salarios', () => {
     expect(within(vera).getAllByText('—').length).toBeGreaterThanOrEqual(2); /* base e subsidios */
     expect(vera).toHaveTextContent('15%'); /* inps por omissao */
     expect(vera).toHaveTextContent(eur(0));
-    expect(kpi('Folha salarial total/mes')).toBe(eur(1230));
-    expect(kpi('Pagos este mes')).toBe('0');
-    expect(kpi('Por pagar este mes')).toBe('2');
+    expect(kpi('Folha salarial total/mês')).toBe(eur(1230));
+    expect(kpi('Pagos este mês')).toBe('0');
+    expect(kpi('Por pagar este mês')).toBe('2');
   });
 
   it('pago_se_ha_pagamento_do_mes_e_ano_correntes', async () => {
@@ -104,8 +104,8 @@ describe('Salarios', () => {
     expect(within(linha('Rui Lopes')).queryByText('Pagar')).toBeNull();
     expect(linha('Vera Mendes')).toHaveTextContent('Pendente');
     expect(within(linha('Vera Mendes')).getByText('Pagar')).toBeInTheDocument();
-    expect(kpi('Pagos este mes')).toBe('1');
-    expect(kpi('Por pagar este mes')).toBe('1');
+    expect(kpi('Pagos este mês')).toBe('1');
+    expect(kpi('Por pagar este mês')).toBe('1');
   });
 
   it('pagar_chama_addSalaryPayment_com_staffId_mes_ano_e_valor_calculado', async () => {
@@ -119,14 +119,14 @@ describe('Salarios', () => {
     await waitFor(() => expect(addSalaryPayment).toHaveBeenCalledWith({ staffId: 's1', month: MES_NUM, year: ANO_NUM, amount: 1230 }));
     await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
     expect(linha('Rui Lopes')).toHaveTextContent('Pago');
-    expect(kpi('Pagos este mes')).toBe('1');
+    expect(kpi('Pagos este mês')).toBe('1');
   });
 
   it('editar_salario_chama_setSalaryConfig_com_numeros_e_actualiza_o_custo', async () => {
     setSalaryConfig.mockResolvedValue();
     await montarSalarios();
     fireEvent.click(within(linha('Rui Lopes')).getAllByRole('button')[0]);
-    expect(screen.getByText('Salario — Rui Lopes')).toBeInTheDocument();
+    expect(screen.getByText('Salário — Rui Lopes')).toBeInTheDocument();
     const campos = within(screen.getByRole('dialog')).getAllByRole('spinbutton');
     expect(campos.map(c => c.value)).toEqual(['1000', '50', '30', '15']);
     expect(screen.getByText('Default: 15% (Cabo Verde)')).toBeInTheDocument();
@@ -153,7 +153,7 @@ describe('Salarios', () => {
   it('moeda_cve_converte_os_valores', async () => {
     await montarSalarios({ currency: 'CVE' });
     expect(linha('Rui Lopes')).toHaveTextContent(cve(1230));
-    expect(kpi('Folha salarial total/mes')).toBe(cve(1230));
+    expect(kpi('Folha salarial total/mês')).toBe(cve(1230));
   });
 
   it('sem_colaboradores_activos_ou_com_listStaff_a_falhar_mostra_o_vazio', async () => {
@@ -175,14 +175,14 @@ describe('Salarios', () => {
 
 /* ───────────────────────── Comissoes: caracterizacao ───────────────────────── */
 
-describe('Comissoes', () => {
+describe('Comissões', () => {
   it('so_vendedor_de_praia_activo_e_so_comissoes_do_mes_corrente', async () => {
     await montarComissoes();
     expect(screen.getByText('Vera Mendes')).toBeInTheDocument();
     expect(screen.queryByText('Pedro Praia')).toBeNull(); /* inactivo */
     expect(screen.queryByText('Rui Lopes')).toBeNull(); /* nao e vendedor */
-    expect(screen.getByText('12% comissao · 2 reserva(s) este mes')).toBeInTheDocument();
-    expect(screen.queryByText('Do mes passado')).toBeNull();
+    expect(screen.getByText('12% comissão · 2 reserva(s) este mês')).toBeInTheDocument();
+    expect(screen.queryByText('Do mês passado')).toBeNull();
     const cartao = screen.getByText('Vera Mendes').closest('div.flex.items-start').parentElement;
     expect(within(cartao).getByText(eur(50))).toBeInTheDocument(); /* total */
     expect(within(cartao).getByText(eur(30), { selector: 'p' })).toBeInTheDocument(); /* pago */
@@ -195,7 +195,7 @@ describe('Comissoes', () => {
   it('sem_commission_pct_usa_a_percentagem_global_por_omissao', async () => {
     listStaff.mockResolvedValue([{ id: 's2', name: 'Vera Mendes', role: 'Vendedor de Praia', status: 'active' }]);
     await montarComissoes();
-    expect(screen.getByText('10% comissao · 2 reserva(s) este mes')).toBeInTheDocument();
+    expect(screen.getByText('10% comissão · 2 reserva(s) este mês')).toBeInTheDocument();
   });
 
   it('pagar_uma_comissao_chama_markCommissionPaid_e_marca_paga', async () => {
@@ -212,9 +212,9 @@ describe('Comissoes', () => {
     listSellerCommissions.mockResolvedValue([...COMISSOES, { id: 'c4', amount: 5, status: 'pending', created_at: `${MES}-09T10:00:00Z`, reservations: { units: { name: 'Outro' } } }]);
     await montarComissoes();
     fireEvent.click(screen.getByText('Registar pag.'));
-    expect(screen.getByText('Pagar comissoes — Vera Mendes')).toBeInTheDocument();
+    expect(screen.getByText('Pagar comissões — Vera Mendes')).toBeInTheDocument();
     expect(screen.getByText(eur(25), { selector: 'span.font-bold' })).toBeInTheDocument(); /* 20 + 5 */
-    expect(screen.getByText('Esta accao marca todas as comissoes pendentes deste vendedor como pagas.')).toBeInTheDocument();
+    expect(screen.getByText('Esta acção marca todas as comissões pendentes deste vendedor como pagas.')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Confirmar pagamento' }));
     expect(markCommissionPaid.mock.calls.map(c => c[0])).toEqual(['c1', 'c4']);
     await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
@@ -231,7 +231,7 @@ describe('Comissoes', () => {
   it('comissoes_que_nao_sao_lista_dao_zero_reservas', async () => {
     listSellerCommissions.mockResolvedValue(null);
     await montarComissoes();
-    expect(screen.getByText('12% comissao · 0 reserva(s) este mes')).toBeInTheDocument();
+    expect(screen.getByText('12% comissão · 0 reserva(s) este mês')).toBeInTheDocument();
   });
 
   it('sem_vendedores_ou_com_listStaff_a_falhar_mostra_o_vazio', async () => {
@@ -258,19 +258,19 @@ describe('Comissoes', () => {
 
 /* ───────────────────────── design system ───────────────────────── */
 
-describe('Salarios e Comissoes com o design system', () => {
+describe('Salários e Comissões com o design system', () => {
   it('a_folha_tem_role_table_e_as_accoes_tem_nome_acessivel', async () => {
     await montarSalarios();
     expect(within(screen.getByRole('table')).getAllByRole('columnheader')).toHaveLength(7);
-    expect(screen.getByRole('button', { name: 'Editar salario - Rui Lopes' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Pagar salario - Rui Lopes' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Editar salário - Rui Lopes' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Pagar salário - Rui Lopes' })).toBeInTheDocument();
   });
 
   it('os_campos_do_SalaryForm_tem_nome_acessivel', async () => {
     await montarSalarios();
-    fireEvent.click(screen.getByRole('button', { name: 'Editar salario - Rui Lopes' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Editar salário - Rui Lopes' }));
     const modal = within(screen.getByRole('dialog'));
-    ['Salario base (€/mes)', 'Subsidio alimentacao', 'Subsidio transporte', 'INPS patronal (%)'].forEach(r => expect(modal.getByLabelText(r)).toBeInTheDocument());
+    ['Salário base (€/mês)', 'Subsídio alimentação', 'Subsídio transporte', 'INPS patronal (%)'].forEach(r => expect(modal.getByLabelText(r)).toBeInTheDocument());
   });
 
   it('estados_e_kpis_usam_tokens', async () => {
@@ -278,9 +278,9 @@ describe('Salarios e Comissoes com o design system', () => {
     await montarSalarios();
     expect(within(linha('Rui Lopes')).getByText('Pago').className).toContain('var(--success)');
     expect(within(linha('Vera Mendes')).getByText('Pendente').className).toContain('var(--warning)');
-    expect(screen.getByText('Pagos este mes').previousSibling.className).toContain('var(--success)');
-    expect(screen.getByText('Por pagar este mes').previousSibling.className).toContain('var(--warning)');
-    expect(screen.getByText('Folha salarial total/mes').previousSibling.className).toContain('var(--error)');
+    expect(screen.getByText('Pagos este mês').previousSibling.className).toContain('var(--success)');
+    expect(screen.getByText('Por pagar este mês').previousSibling.className).toContain('var(--warning)');
+    expect(screen.getByText('Folha salarial total/mês').previousSibling.className).toContain('var(--error)');
   });
 
   it('os_vazios_usam_EmptyState', async () => {
@@ -296,15 +296,15 @@ describe('Salarios e Comissoes com o design system', () => {
     await montarComissoes();
     expect(screen.getByText(eur(30), { selector: 'p' }).className).toContain('var(--success)');
     expect(screen.getByText(eur(20), { selector: 'p' }).className).toContain('var(--warning)');
-    expect(screen.getByRole('button', { name: 'Pagar comissao - Tour Ilha' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Pagar comissão - Tour Ilha' })).toBeInTheDocument();
     fireEvent.click(screen.getByText('Registar pag.'));
-    expect(screen.getByText(/Comissoes pendentes este mes/).closest('div').className).toContain('var(--warning-light)');
+    expect(screen.getByText(/Comissões pendentes este mês/).closest('div').className).toContain('var(--warning-light)');
   });
 
   it('sem_hexadecimais_cores_nomeadas_ou_text_error', async () => {
     getSalaryPayments.mockResolvedValue([{ staffId: 's1', month: MES_NUM, year: ANO_NUM, amount: 1230 }]);
     await montarSalarios();
-    fireEvent.click(screen.getByRole('button', { name: 'Editar salario - Rui Lopes' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Editar salário - Rui Lopes' }));
     let html = document.body.innerHTML;
     cleanup();
     await montarComissoes();

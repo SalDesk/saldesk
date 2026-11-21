@@ -20,7 +20,7 @@ const REFERRAL_STATUS_VARIANT = {
 };
 
 const REFERRAL_COLUMNS = [
-  { key: 'negocio', label: 'Negocio', render: l => <span className="font-body text-n-900">{l.nome_negocio || l.nome}</span> },
+  { key: 'negocio', label: 'Negócio', render: l => <span className="font-body text-n-900">{l.nome_negocio || l.nome}</span> },
   {
     key: 'data', label: 'Data',
     render: l => (
@@ -59,7 +59,7 @@ export default function ReferralsTab({ referrals, loading }) {
       </div>
 
       <Card padding="p-5">
-        <p className="text-xs font-body font-bold uppercase tracking-wide text-n-600 mb-2">O seu link de indicacao</p>
+        <p className="text-xs font-body font-bold uppercase tracking-wide text-n-600 mb-2">O seu link de indicação</p>
         <div className="flex items-center gap-3 flex-wrap">
           <div className="bg-n-50 border border-n-200 rounded-sm px-3 py-2 flex-1 min-w-0">
             <p className="text-xs font-mono text-n-700 truncate">{link || '...'}</p>
@@ -69,15 +69,15 @@ export default function ReferralsTab({ referrals, loading }) {
       </Card>
 
       <div className="grid grid-cols-2 gap-4">
-        <KpiCard icon={UserPlus} label="Indicacoes enviadas" value={referrals?.total ?? 0} loading={loading} />
+        <KpiCard icon={UserPlus} label="Indicações enviadas" value={referrals?.total ?? 0} loading={loading} />
         <KpiCard icon={CheckCircle2} label="Convertidas" value={referrals?.convertidos ?? 0} loading={loading} />
       </div>
 
       <div>
-        <p className="text-xs font-mono uppercase tracking-wider text-n-500 mb-3">As suas indicacoes ({list.length})</p>
+        <p className="text-xs font-mono uppercase tracking-wider text-n-500 mb-3">As suas indicações ({list.length})</p>
         {list.length === 0 ? (
           <Card padding="p-0">
-            <EmptyState icon={UserPlus} title="Ainda nao indicou nenhum operador." />
+            <EmptyState icon={UserPlus} title="Ainda não indicou nenhum operador." />
           </Card>
         ) : (
           <Card padding="p-0">

@@ -70,12 +70,12 @@ describe('CustomerDetail', () => {
     fireEvent.click(screen.getByText(nome));
   }
 
-  it('carrega o cliente, mostra o nome, as metricas e a coroa de VIP', async () => {
+  it('carrega o cliente, mostra o nome, as métricas e a coroa de VIP', async () => {
     const { container } = await abre();
     expect(getCustomer).toHaveBeenCalledWith('c1');
     expect(metrica('Visitas')).toBe('3');
     expect(metrica('LTV')).toBe('€620');
-    expect(metrica('Pais')).toBe('CV');
+    expect(metrica('País')).toBe('CV');
     expect(container.querySelector('svg.lucide-crown')).toBeTruthy();
   });
 
@@ -93,12 +93,12 @@ describe('CustomerDetail', () => {
     expect(valorDe('Email')).toBe('ana@x.cv');
     expect(valorDe('Telefone')).toBe('+238 991 22 33');
     expect(valorDe('Idioma')).toBe('PT');
-    expect(valorDe('Aniversario')).toBe('17/05/1990');
+    expect(valorDe('Aniversário')).toBe('17/05/1990');
     cleanup();
     const { container } = await abre(SEM_DADOS);
     expect(valorDe('Telefone')).toBe('—');
     expect(valorDe('WhatsApp')).toBe('—');
-    expect(valorDe('Aniversario')).toBe('—');
+    expect(valorDe('Aniversário')).toBe('—');
     expect(container.querySelector('svg.lucide-crown')).toBeNull();
     expect(screen.getByText('Sem notas')).toBeInTheDocument();
   });
@@ -112,7 +112,7 @@ describe('CustomerDetail', () => {
     await waitFor(() => expect(updateCustomer).toHaveBeenLastCalledWith('c1', { tags: ['Custom', 'grupo'] }));
   });
 
-  it('uma etiqueta propria adiciona-se com Enter, sem duplicar nem aceitar vazio, e remove-se', async () => {
+  it('uma etiqueta própria adiciona-se com Enter, sem duplicar nem aceitar vazio, e remove-se', async () => {
     await abre();
     const campo = screen.getByPlaceholderText('Nova tag + Enter');
     fireEvent.change(campo, { target: { value: 'Praia' } });
@@ -149,10 +149,10 @@ describe('CustomerDetail', () => {
     expect(onUpdate).toHaveBeenCalledWith({ id: 'c1', notes: 'Outra nota' });
   });
 
-  it('o historico lista as reservas com estado, datas e total, ou "Sem reservas"', async () => {
+  it('o histórico lista as reservas com estado, datas e total, ou "Sem reservas"', async () => {
     await abre();
-    seccao('Historico');
-    expect(screen.getByText('Historico (2)')).toBeInTheDocument();
+    seccao('Histórico');
+    expect(screen.getByText('Histórico (2)')).toBeInTheDocument();
     const cartao1 = screen.getByText('Buggy Tour').closest('div').parentElement;
     expect(within(cartao1).getByText('Confirmada')).toBeInTheDocument();
     expect(within(cartao1).getByText('10/03/2026')).toBeInTheDocument();
@@ -162,74 +162,74 @@ describe('CustomerDetail', () => {
     expect(screen.getByText('€30.00')).toBeInTheDocument();
     cleanup();
     await abre(SEM_DADOS);
-    seccao('Historico');
-    expect(screen.getByText('Historico (0)')).toBeInTheDocument();
+    seccao('Histórico');
+    expect(screen.getByText('Histórico (0)')).toBeInTheDocument();
     expect(screen.getByText('Sem reservas')).toBeInTheDocument();
   });
 
-  it('enviar email chama api.post com assunto e corpo e mostra a confirmacao', async () => {
+  it('enviar email chama api.post com assunto e corpo e mostra a confirmação', async () => {
     await abre();
-    seccao('Comunicacao');
+    seccao('Comunicação');
     expect(screen.getByText('Enviar Email')).toBeInTheDocument();
     const para = screen.getByDisplayValue('ana@x.cv');
     expect(para).toHaveAttribute('readonly');
     const form = para.closest('form');
     fireEvent.submit(form);
     expect(api.post).not.toHaveBeenCalled();
-    fireEvent.change(within(form).getByPlaceholderText('Assunto do email'), { target: { value: 'Ola' } });
+    fireEvent.change(within(form).getByPlaceholderText('Assunto do email'), { target: { value: 'Olá' } });
     fireEvent.change(within(form).getByPlaceholderText('Corpo do email...'), { target: { value: 'Corpo' } });
     fireEvent.click(within(form).getByRole('button', { name: 'Enviar email' }));
-    await waitFor(() => expect(api.post).toHaveBeenCalledWith('/customers/c1/email', { subject: 'Ola', body: 'Corpo' }));
+    await waitFor(() => expect(api.post).toHaveBeenCalledWith('/customers/c1/email', { subject: 'Olá', body: 'Corpo' }));
     expect(await screen.findByText('Email enviado com sucesso')).toBeInTheDocument();
   });
 
-  it('se o email falhar regista o erro e mantem o formulario', async () => {
+  it('se o email falhar regista o erro e mantem o formulário', async () => {
     esperaErros = true;
     api.post.mockRejectedValueOnce(new Error('rede'));
     await abre();
-    seccao('Comunicacao');
-    fireEvent.change(screen.getByPlaceholderText('Assunto do email'), { target: { value: 'Ola' } });
+    seccao('Comunicação');
+    fireEvent.change(screen.getByPlaceholderText('Assunto do email'), { target: { value: 'Olá' } });
     fireEvent.change(screen.getByPlaceholderText('Corpo do email...'), { target: { value: 'Corpo' } });
     fireEvent.click(screen.getByRole('button', { name: 'Enviar email' }));
     await waitFor(() => expect(errSpy).toHaveBeenCalled());
-    expect(screen.getByPlaceholderText('Assunto do email').value).toBe('Ola');
+    expect(screen.getByPlaceholderText('Assunto do email').value).toBe('Olá');
     expect(screen.queryByText('Email enviado com sucesso')).not.toBeInTheDocument();
   });
 
-  it('o botao Email salta para a comunicacao', async () => {
+  it('o botão Email salta para a comunicação', async () => {
     await abre();
     fireEvent.click(screen.getByRole('button', { name: 'Email' }));
     expect(screen.getByText('Enviar Email')).toBeInTheDocument();
   });
 
-  it('WhatsApp abre o wa.me com o numero so em digitos e a mensagem; os atalhos tem a mesma ligacao', async () => {
+  it('WhatsApp abre o wa.me com o número só em digitos e a mensagem; os atalhos tem a mesma ligação', async () => {
     const abrir = vi.spyOn(window, 'open').mockImplementation(() => null);
     await abre();
     fireEvent.click(screen.getByRole('button', { name: 'WhatsApp' }));
     expect(abrir).toHaveBeenCalledWith(
-      `https://wa.me/${NUMERO}?text=${encodeURIComponent('Ola Ana, obrigado pela sua preferencia!')}`, '_blank',
+      `https://wa.me/${NUMERO}?text=${encodeURIComponent('Olá Ana, obrigado pela sua preferência!')}`, '_blank',
     );
-    seccao('Comunicacao');
-    for (const rotulo of ['Confirmacao de reserva', 'Lembrete de tour', 'Pedido de avaliacao']) {
+    seccao('Comunicação');
+    for (const rotulo of ['Confirmação de reserva', 'Lembrete de tour', 'Pedido de avaliação']) {
       const ligacao = screen.getByText(rotulo).closest('a');
       expect(ligacao.getAttribute('href')).toMatch(new RegExp(`^https://wa\\.me/${NUMERO}\\?text=`));
       expect(ligacao).toHaveAttribute('target', '_blank');
     }
   });
 
-  it('sem numero de WhatsApp nem telefone mostra o aviso e o botao nao abre nada', async () => {
+  it('sem número de WhatsApp nem telefone mostra o aviso e o botão não abre nada', async () => {
     const abrir = vi.spyOn(window, 'open').mockImplementation(() => null);
     await abre(SEM_DADOS);
     fireEvent.click(screen.getByRole('button', { name: 'WhatsApp' }));
     expect(abrir).not.toHaveBeenCalled();
-    seccao('Comunicacao');
-    expect(screen.getByText('Sem numero WhatsApp registado')).toBeInTheDocument();
+    seccao('Comunicação');
+    expect(screen.getByText('Sem número WhatsApp registado')).toBeInTheDocument();
   });
 
-  it('as seccoes sao separadores com aria-selected', async () => {
+  it('as seccoes são separadores com aria-selected', async () => {
     await abre();
     const tabs = screen.getAllByRole('tab');
-    expect(tabs.map(t => t.textContent)).toEqual(['Perfil', 'Historico', 'Comunicacao']);
+    expect(tabs.map(t => t.textContent)).toEqual(['Perfil', 'Histórico', 'Comunicação']);
     expect(tabs[0]).toHaveAttribute('aria-selected', 'true');
     fireEvent.click(tabs[2]);
     expect(screen.getAllByRole('tab')[2]).toHaveAttribute('aria-selected', 'true');
@@ -237,7 +237,7 @@ describe('CustomerDetail', () => {
     expect(screen.getByText('Enviar Email')).toBeInTheDocument();
   });
 
-  it('nenhuma cor em hexadecimal nem verde solta sobra no HTML (perfil, historico, comunicacao e confirmacao)', async () => {
+  it('nenhuma cor em hexadecimal nem verde solta sobra no HTML (perfil, histórico, comunicação e confirmação)', async () => {
     await abre();
     const limpo = () => {
       expect(document.body.innerHTML).not.toContain('[#');
@@ -245,18 +245,18 @@ describe('CustomerDetail', () => {
       expect(document.body.innerHTML).not.toMatch(/hover:(?:bg|border)-green-/);
     };
     limpo();
-    seccao('Historico');
+    seccao('Histórico');
     limpo();
-    seccao('Comunicacao');
+    seccao('Comunicação');
     limpo();
-    fireEvent.change(screen.getByPlaceholderText('Assunto do email'), { target: { value: 'Ola' } });
+    fireEvent.change(screen.getByPlaceholderText('Assunto do email'), { target: { value: 'Olá' } });
     fireEvent.change(screen.getByPlaceholderText('Corpo do email...'), { target: { value: 'Corpo' } });
     fireEvent.click(screen.getByRole('button', { name: 'Enviar email' }));
     await screen.findByText('Email enviado com sucesso');
     limpo();
   });
 
-  it('o botao de fechar tem nome acessivel', async () => {
+  it('o botão de fechar tem nome acessível', async () => {
     await abre();
     fireEvent.click(screen.getByRole('button', { name: 'Fechar' }));
     expect(onClose).toHaveBeenCalledTimes(1);

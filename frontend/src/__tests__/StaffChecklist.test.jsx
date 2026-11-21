@@ -42,7 +42,7 @@ describe('Checklist do dia', () => {
     expect(screen.getByText('Checklist do dia')).toBeInTheDocument();
     expect(screen.getByText(`${hoje()} · 0/5 concluidas`)).toBeInTheDocument();
     DEFAULT_TASKS.forEach(t => expect(screen.getByText(t)).toBeInTheDocument());
-    expect(screen.queryByText('Tudo concluido')).toBeNull();
+    expect(screen.queryByText('Tudo concluído')).toBeNull();
   });
 
   it('marcar_grava_em_localStorage_com_a_hora_e_desmarcar_remove', () => {
@@ -71,7 +71,7 @@ describe('Checklist do dia', () => {
   it('tudo_concluido_mostra_o_selo', () => {
     render(<ChecklistTab />);
     caixas().forEach(c => fireEvent.click(c));
-    expect(screen.getByText('Tudo concluido')).toBeInTheDocument();
+    expect(screen.getByText('Tudo concluído')).toBeInTheDocument();
   });
 
   it('alerta_so_depois_das_8h_com_tarefas_por_completar', () => {
@@ -120,9 +120,9 @@ describe('Checklist do dia', () => {
   it('sem_tarefas_mostra_o_texto_e_o_selo_de_tudo_concluido_com_0_de_0', () => {
     localStorage.setItem(CHECKLIST_KEY, JSON.stringify({ tasks: [], completions: {} }));
     render(<ChecklistTab />);
-    expect(screen.getByText('Sem tarefas configuradas. Use o icone de configuracoes para adicionar.')).toBeInTheDocument();
+    expect(screen.getByText('Sem tarefas configuradas. Use o ícone de configurações para adicionar.')).toBeInTheDocument();
     expect(screen.getByText(`${hoje()} · 0/0 concluidas`)).toBeInTheDocument();
-    expect(screen.getByText('Tudo concluido')).toBeInTheDocument(); /* 0 === 0 */
+    expect(screen.getByText('Tudo concluído')).toBeInTheDocument(); /* 0 === 0 */
   });
 
   it('le_o_que_estava_guardado_e_ignora_json_invalido', () => {
@@ -131,7 +131,7 @@ describe('Checklist do dia', () => {
     expect(screen.getByText(`${hoje()} · 1/2 concluidas`)).toBeInTheDocument();
     expect(caixas()[1]).toBeChecked();
     cleanup();
-    localStorage.setItem(CHECKLIST_KEY, '{nao e json');
+    localStorage.setItem(CHECKLIST_KEY, '{não e json');
     render(<ChecklistTab />);
     expect(screen.getByText(`${hoje()} · 0/5 concluidas`)).toBeInTheDocument();
   });
@@ -154,7 +154,7 @@ describe('Checklist com o design system', () => {
     const alerta = screen.getByText(/por completar/).closest('div');
     expect(alerta.className).toContain('var(--warning-light)');
     caixas().forEach(c => fireEvent.click(c));
-    expect(screen.getByText('Tudo concluido').closest('span').className).toContain('var(--success-light)');
+    expect(screen.getByText('Tudo concluído').closest('span').className).toContain('var(--success-light)');
   });
 
   it('sem_hexadecimais_cores_nomeadas_ou_text_error_com_tudo_aberto', () => {

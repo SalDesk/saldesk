@@ -7,11 +7,11 @@ import Button from '../ui/Button';
 import Modal from '../ui/Modal';
 
 const TRIGGER_LABELS = {
-  booking_confirmed:   'Confirmacao de reserva',
+  booking_confirmed:   'Confirmação de reserva',
   checkin_reminder:    'Lembrete check-in',
-  checkout_thanks:     'Agradecimento pos checkout',
+  checkout_thanks:     'Agradecimento pós checkout',
   days_before_checkin: (d) => `${d} dias antes do check-in`,
-  days_after_checkout: (d) => `${d} dias apos checkout`,
+  days_after_checkout: (d) => `${d} dias após checkout`,
 };
 
 function getTriggerLabel(auto) {
@@ -62,7 +62,7 @@ export default function AutomationCard({ automation, onUpdate, onEdit, onDelete 
             onClick={handleToggle}
             disabled={toggling}
             className={`relative inline-flex h-5 w-9 shrink-0 rounded-full border-2 border-transparent transition-colors focus:outline-none ${automation.active ? 'bg-ocean-700' : 'bg-n-300'}`}
-            aria-label="Toggle automacao"
+            aria-label="Toggle automação"
           >
             <span className={`inline-block h-4 w-4 rounded-full bg-white shadow transition-transform ${automation.active ? 'translate-x-4' : 'translate-x-0'}`} />
           </button>
@@ -104,7 +104,7 @@ export default function AutomationCard({ automation, onUpdate, onEdit, onDelete 
         }
       >
         <p className="text-sm font-body text-n-700">
-          Eliminar a automacao <strong>"{automation.name}"</strong>? Esta accao nao pode ser desfeita.
+          Eliminar a automação <strong>"{automation.name}"</strong>? Esta acção não pode ser desfeita.
         </p>
       </Modal>
     </>

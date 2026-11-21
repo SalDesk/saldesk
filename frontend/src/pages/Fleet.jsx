@@ -15,7 +15,7 @@ const TYPE_ICONS = { vehicle: Car, equipment: Wrench, gear: Package };
 const TYPE_LABELS = { vehicle: 'Viatura', equipment: 'Equipamento', gear: 'Material' };
 /* Variantes do Badge do sistema: disponivel verde, em uso azul, manutencao ambar, retirado neutro */
 const STATUS_BADGE = { available: 'confirmed', in_use: 'checked_in', maintenance: 'pending', retired: 'no_show' };
-const STATUS_LABELS = { available: 'Disponivel', in_use: 'Em uso', maintenance: 'Manutencao', retired: 'Retirado' };
+const STATUS_LABELS = { available: 'Disponível', in_use: 'Em uso', maintenance: 'Manutenção', retired: 'Retirado' };
 
 function FleetForm({ item, units, onSave, onCancel, loading, error }) {
   const [form, setForm] = useState({
@@ -54,9 +54,9 @@ function FleetForm({ item, units, onSave, onCancel, loading, error }) {
         </Select>
         {item && (
           <Select label="Estado" value={form.status} onChange={set('status')}>
-            <option value="available">Disponivel</option>
+            <option value="available">Disponível</option>
             <option value="in_use">Em uso</option>
-            <option value="maintenance">Manutencao</option>
+            <option value="maintenance">Manutenção</option>
             <option value="retired">Retirado</option>
           </Select>
         )}
@@ -71,14 +71,14 @@ function FleetForm({ item, units, onSave, onCancel, loading, error }) {
           <option value={12}>12 lugares</option>
         </Select>
         <Select label="Tour associado" value={form.unit_id} onChange={set('unit_id')}>
-          <option value="">Nenhum (generico)</option>
+          <option value="">Nenhum (genérico)</option>
           {units.map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
         </Select>
       </div>
-      <Textarea label="Descricao" value={form.description} onChange={set('description')} rows={2} />
+      <Textarea label="Descrição" value={form.description} onChange={set('description')} rows={2} />
       <div className="grid grid-cols-2 gap-3">
-        <Input label="Ultima manutencao" type="date" value={form.last_maintenance_at} onChange={set('last_maintenance_at')} />
-        <Input label="Proxima manutencao" type="date" value={form.next_maintenance_at} onChange={set('next_maintenance_at')} />
+        <Input label="Última manutenção" type="date" value={form.last_maintenance_at} onChange={set('last_maintenance_at')} />
+        <Input label="Próxima manutenção" type="date" value={form.next_maintenance_at} onChange={set('next_maintenance_at')} />
       </div>
       <div>
         <label htmlFor="fleet-foto" className="block text-xs font-body font-bold uppercase tracking-wide text-n-600 mb-1 app:normal-case app:tracking-normal app:text-[13px] app:text-n-700">Foto da viatura</label>
@@ -150,7 +150,7 @@ export default function Fleet() {
 
   return (
     <div>
-      <PageHeader title="Frota e Equipamento" subtitle={`${available} disponivel(is) de ${items.length}`}
+      <PageHeader title="Frota e Equipamento" subtitle={`${available} disponível(is) de ${items.length}`}
         actions={<Button icon={Plus} onClick={() => { setFormError(''); setModal('create'); }}>Novo item</Button>} />
 
       {loading ? (
@@ -201,7 +201,7 @@ export default function Fleet() {
                   {item.next_maintenance_at && (
                     <p className={`text-xs font-body flex items-center gap-1.5 px-2.5 py-1.5 rounded-sm ${manutencaoAtrasada ? 'bg-[var(--error-light)] text-[var(--error)]' : 'bg-n-50 text-n-500'}`}>
                       <Wrench size={11} strokeWidth={1.75} />
-                      {manutencaoAtrasada ? 'Manutencao atrasada: ' : 'Manutencao: '}
+                      {manutencaoAtrasada ? 'Manutenção atrasada: ' : 'Manutenção: '}
                       {item.next_maintenance_at.split('T')[0]}
                       {manutencaoAtrasada && ' (atrasada)'}
                     </p>

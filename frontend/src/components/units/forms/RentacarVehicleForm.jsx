@@ -111,7 +111,7 @@ export default function RentacarVehicleForm({ unit, onSave, onCancel, loading, e
     <form onSubmit={handleSubmit} className="space-y-5">
 
       <div>
-        <SectionLabel>Identificacao</SectionLabel>
+        <SectionLabel>Identificação</SectionLabel>
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-3">
           <Input label="Marca" value={form.brand} onChange={set('brand')} placeholder="Toyota" autoFocus />
           <Input label="Modelo" value={form.model} onChange={set('model')} placeholder="Hilux" />
@@ -127,18 +127,18 @@ export default function RentacarVehicleForm({ unit, onSave, onCancel, loading, e
       </div>
 
       <div>
-        <SectionLabel>Especificacoes</SectionLabel>
+        <SectionLabel>Especificações</SectionLabel>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           <Input label="Lugares" type="number" value={form.seats} onChange={set('seats')} min="1" max="20" />
           <Input label="Bagagens" type="number" value={form.luggage} onChange={set('luggage')} min="0" placeholder="2" />
-          <Select label="Transmissao" value={form.transmission} onChange={set('transmission')}>
+          <Select label="Transmissão" value={form.transmission} onChange={set('transmission')}>
             <option value="manual">Manual</option>
-            <option value="automatico">Automatico</option>
+            <option value="automatico">Automático</option>
           </Select>
-          <Select label="Combustivel" value={form.fuel} onChange={set('fuel')}>
+          <Select label="Combustível" value={form.fuel} onChange={set('fuel')}>
             <option value="gasolina">Gasolina</option>
             <option value="diesel">Diesel</option>
-            <option value="electrico">Electrico</option>
+            <option value="electrico">Eléctrico</option>
             <option value="hibrido">Hibrido</option>
           </Select>
         </div>
@@ -153,7 +153,7 @@ export default function RentacarVehicleForm({ unit, onSave, onCancel, loading, e
               step="0.01"
               placeholder="30"
             />
-            <p className="text-xs font-body text-n-500 mt-1">Cobrada por dia quando o cliente escolhe "motorista incluido" na reserva.</p>
+            <p className="text-xs font-body text-n-500 mt-1">Cobrada por dia quando o cliente escolhe "motorista incluído" na reserva.</p>
           </div>
         )}
       </div>
@@ -164,32 +164,32 @@ export default function RentacarVehicleForm({ unit, onSave, onCancel, loading, e
       </div>
 
       <div>
-        <SectionLabel>Precos (€)</SectionLabel>
+        <SectionLabel>Preços (€)</SectionLabel>
         <div className="grid grid-cols-2 gap-3 mb-3">
-          <Input label="Preco base / dia" type="number" value={form.base_price} onChange={set('base_price')} min="0" step="0.01" required placeholder="0.00" />
+          <Input label="Preço base / dia" type="number" value={form.base_price} onChange={set('base_price')} min="0" step="0.01" required placeholder="0.00" />
           <Input label="Km incluidos / dia" type="number" value={form.km_included} onChange={set('km_included')} min="0" placeholder="200" />
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
           <Input label="Custo km extra (€)" type="number" value={form.km_extra_cost} onChange={set('km_extra_cost')} min="0" step="0.01" placeholder="0.30" />
           <Input label="Desc. semana (%)" type="number" value={form.discount_week} onChange={set('discount_week')} min="0" max="100" placeholder="10" />
-          <Input label="Desc. mes (%)" type="number" value={form.discount_month} onChange={set('discount_month')} min="0" max="100" placeholder="20" />
+          <Input label="Desc. mês (%)" type="number" value={form.discount_month} onChange={set('discount_month')} min="0" max="100" placeholder="20" />
         </div>
       </div>
 
       <div>
         <SectionLabel>Requisitos condutor</SectionLabel>
         <div className="grid grid-cols-2 gap-3">
-          <Input label="Idade minima" type="number" value={form.min_age} onChange={set('min_age')} min="18" max="99" placeholder="21" />
-          <Input label="Carta ha (anos)" type="number" value={form.license_years} onChange={set('license_years')} min="0" placeholder="1" />
+          <Input label="Idade mínima" type="number" value={form.min_age} onChange={set('min_age')} min="18" max="99" placeholder="21" />
+          <Input label="Carta há (anos)" type="number" value={form.license_years} onChange={set('license_years')} min="0" placeholder="1" />
         </div>
       </div>
 
       <div>
         <SectionLabel>Documentos — validades</SectionLabel>
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-          <Input label="Seguro ate" type="date" value={form.seguro_expiry} onChange={set('seguro_expiry')} />
-          <Input label="IUC ate" type="date" value={form.iuc_expiry} onChange={set('iuc_expiry')} />
-          <Input label="Inspecao ate" type="date" value={form.inspecao_expiry} onChange={set('inspecao_expiry')} />
+          <Input label="Seguro até" type="date" value={form.seguro_expiry} onChange={set('seguro_expiry')} />
+          <Input label="IUC até" type="date" value={form.iuc_expiry} onChange={set('iuc_expiry')} />
+          <Input label="Inspeção até" type="date" value={form.inspecao_expiry} onChange={set('inspecao_expiry')} />
         </div>
       </div>
 
@@ -197,7 +197,7 @@ export default function RentacarVehicleForm({ unit, onSave, onCancel, loading, e
         <SectionLabel>Quilometragem</SectionLabel>
         <div className="grid grid-cols-2 gap-3">
           <Input label="Km actuais" type="number" value={form.current_km} onChange={set('current_km')} min="0" placeholder="0" />
-          <Input label="Proxima revisao (km)" type="number" value={form.next_revision_km} onChange={set('next_revision_km')} min="0" placeholder="10000" />
+          <Input label="Próxima revisão (km)" type="number" value={form.next_revision_km} onChange={set('next_revision_km')} min="0" placeholder="10000" />
         </div>
       </div>
 
@@ -224,7 +224,7 @@ export default function RentacarVehicleForm({ unit, onSave, onCancel, loading, e
           <SectionLabel>Estado</SectionLabel>
           <Select value={form.status} onChange={set('status')}>
             <option value="active">Activo</option>
-            <option value="maintenance">Em manutencao</option>
+            <option value="maintenance">Em manutenção</option>
             <option value="breakdown">Avaria</option>
             <option value="inactive">Inactivo</option>
           </Select>
@@ -238,7 +238,7 @@ export default function RentacarVehicleForm({ unit, onSave, onCancel, loading, e
       <div className="flex gap-3 pt-1">
         <Button type="button" variant="secondary" onClick={onCancel} className="flex-1">Cancelar</Button>
         <Button type="submit" loading={loading} className="flex-1">
-          {unit ? 'Guardar alteracoes' : 'Registar viatura'}
+          {unit ? 'Guardar alterações' : 'Registar viatura'}
         </Button>
       </div>
     </form>

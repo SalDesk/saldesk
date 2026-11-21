@@ -29,7 +29,8 @@ const DIAS_CHAT = [
   { v: 5, l: 'fri' }, { v: 6, l: 'sat' }, { v: 0, l: 'sun' },
 ];
 const CHAT_PADRAO = { enabled: false, days: [1, 2, 3, 4, 5], from: '09:00', to: '18:00', message_pt: '', message_en: '' };
-const TEXTO_CHAT_PT = 'Obrigado pela sua mensagem. De momento estamos fora do horario de atendimento; responderemos assim que possivel.';
+/* Igual ao texto de chatAutoReply.js no backend, mas aqui com acentos (a copia do backend nao tem). */
+const TEXTO_CHAT_PT = 'Obrigado pela sua mensagem. De momento estamos fora do horário de atendimento; responderemos assim que possível.';
 const TEXTO_CHAT_EN = 'Thank you for your message. We are currently outside our opening hours and will reply as soon as we can.';
 
 /* Cor da pagina publica e do widget: sugestoes todas com texto branco legivel (contraste >= 4.5).
@@ -257,7 +258,7 @@ export default function PerfilPublicoTab({ operator }) {
             <p className="text-xs font-body text-n-600">{t('settings.perfil.confirmSameDeadline')}</p>
           )}
           <Textarea label={t('settings.perfil.portuguese')} aria-label={t('settings.perfil.cancelPolicyPtAria')} value={cancelPolicyPt} onChange={e => setCancelPolicyPt(e.target.value)}
-            rows={4} placeholder="Ex: Cancelamento gratuito ate 48h antes. Apos esse prazo, 50% do valor e retido..." />
+            rows={4} placeholder="Ex: Cancelamento gratuito até 48h antes. Após esse prazo, 50% do valor é retido..." />
           <Textarea label={t('settings.perfil.englishEn')} aria-label={t('settings.perfil.cancelPolicyEnAria')} value={cancelPolicyEn} onChange={e => setCancelPolicyEn(e.target.value)}
             rows={4} placeholder="Ex: Free cancellation up to 48h before. After that, 50% of the value is retained..." />
         </div>

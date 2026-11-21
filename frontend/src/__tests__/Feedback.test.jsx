@@ -101,15 +101,15 @@ describe('Feedback', () => {
     return el;
   }
 
-  it('os KPIs mostram tours, avaliacoes, taxa de resposta e media', async () => {
+  it('os KPIs mostram tours, avaliações, taxa de resposta e média', async () => {
     await abre();
     expect(kpi('Tours realizados')).toBe('11');
-    expect(kpi('Avaliacoes recebidas')).toBe('2');
+    expect(kpi('Avaliações recebidas')).toBe('2');
     expect(kpi('Taxa de resposta')).toBe('18%');
-    expect(kpi('Media geral')).toBe('4.5 / 5');
+    expect(kpi('Média geral')).toBe('4.5 / 5');
   });
 
-  it('"Por Tour" agrupa por unidade, ordena por total e mostra taxa e media', async () => {
+  it('"Por Tour" agrupa por unidade, ordena por total e mostra taxa e média', async () => {
     await abre();
     const nomes = screen.getAllByText(/^(Kitesurf|Mergulho|Buggy Tour)$/).map(e => e.textContent);
     expect(nomes).toEqual(['Kitesurf', 'Mergulho', 'Buggy Tour']);
@@ -123,7 +123,7 @@ describe('Feedback', () => {
     expect(within(cartaoDe('Kitesurf')).queryByText(/^\d\.\d$/)).not.toBeInTheDocument();
   });
 
-  it('a cor da taxa tem tres niveis: 50 ou mais, 25 ou mais e abaixo', async () => {
+  it('a cor da taxa tem três níveis: 50 ou mais, 25 ou mais e abaixo', async () => {
     await abre();
     const classe = (nome, taxa) => within(cartaoDe(nome)).getByText(taxa).className;
     const alta = classe('Buggy Tour', '50%');
@@ -132,11 +132,11 @@ describe('Feedback', () => {
     expect(new Set([alta, media, baixa]).size).toBe(3);
   });
 
-  it('"Pendentes" so lista reservas sem avaliacao, da checkout mais recente para a mais antiga', async () => {
+  it('"Pendentes" só lista reservas sem avaliação, da checkout mais recente para a mais antiga', async () => {
     await abre();
     expect(screen.getByText('Pendentes (9)')).toBeInTheDocument();
     separador('Pendentes (9)');
-    expect(screen.getByText('9 reserva(s) sem pedido de avaliacao enviado.')).toBeInTheDocument();
+    expect(screen.getByText('9 reserva(s) sem pedido de avaliação enviado.')).toBeInTheDocument();
     const cab = within(screen.getByRole('table')).getAllByRole('columnheader').map(c => c.textContent);
     expect(cab).toEqual(['Cliente', 'Tour', 'Checkout', 'Dias desde checkout', '']);
     expect(linhas()).toHaveLength(9);
@@ -182,7 +182,7 @@ describe('Feedback', () => {
     servicos({ avaliacoes: [{ id: 'v', reservation_id: 'z1', rating: 3 }] });
     await abre();
     separador('Pendentes (0)');
-    expect(screen.getByText('Todos os tours tem avaliacao solicitada.')).toBeInTheDocument();
+    expect(screen.getByText('Todos os tours tem avaliação solicitada.')).toBeInTheDocument();
     cleanup();
     listReservations.mockResolvedValue([]);
     servicos({ avaliacoes: [] });
@@ -190,11 +190,11 @@ describe('Feedback', () => {
     expect(screen.getByText('Sem tours com checkout registado.')).toBeInTheDocument();
   });
 
-  it('o template carrega do servidor por cima da omissao e inserir uma variavel acrescenta ao corpo PT', async () => {
+  it('o template carrega do servidor por cima da omissao e inserir uma variável acrescenta ao corpo PT', async () => {
     servicos({ template: { subject_pt: 'Assunto do servidor' } });
     await abre();
     separador('Template');
-    expect(screen.getByText('Template do pedido de avaliacao')).toBeInTheDocument();
+    expect(screen.getByText('Template do pedido de avaliação')).toBeInTheDocument();
     expect(campo('Assunto PT').value).toBe('Assunto do servidor');
     expect(campo('Assunto EN').value).toBe('How was it? Leave your review');
     const antes = campo('Corpo PT').value;
@@ -209,7 +209,7 @@ describe('Feedback', () => {
     expect(screen.getByText('Sem tours com checkout registado.')).toBeInTheDocument();
     separador('Template');
     /* modelo por omissao neutro: serve actividades, hoteis, rent-a-car e restaurantes */
-    expect(campo('Assunto PT').value).toBe('Como correu? Deixe a sua avaliacao');
+    expect(campo('Assunto PT').value).toBe('Como correu? Deixe a sua avaliação');
     expect(campo('Corpo PT').value).not.toMatch(/tour/i);
     /* sem definicoes, o pedido automatico aparece ligado (a omissao do servidor) */
     expect(screen.getByRole('switch', { name: 'Pedir avaliação automaticamente no dia a seguir' })).toHaveAttribute('aria-checked', 'true');
@@ -253,10 +253,10 @@ describe('Feedback', () => {
     expect(await screen.findByRole('button', { name: 'Guardado' })).toBeInTheDocument();
   });
 
-  it('o preview em PT e EN substitui as variaveis por dados de exemplo', async () => {
+  it('o preview em PT e EN substitui as variáveis por dados de exemplo', async () => {
     await abre();
     separador('Template');
-    expect(screen.getByText(/Ola Maria Santos/)).toBeInTheDocument();
+    expect(screen.getByText(/Olá Maria Santos/)).toBeInTheDocument();
     expect(screen.getByText(/Kitesurf Lesson/)).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'EN' }));
     expect(screen.getByText(/Hello Maria Santos/)).toBeInTheDocument();
@@ -290,11 +290,11 @@ describe('Feedback', () => {
     limpo();
   });
 
-  it('servicos a falhar nao rebentam', async () => {
+  it('serviços a falhar não rebentam', async () => {
     servicos({ falha: true });
     listReservations.mockRejectedValue(new Error('rede'));
     await abre();
     expect(kpi('Tours realizados')).toBe('0');
-    expect(kpi('Media geral')).toBe('—');
+    expect(kpi('Média geral')).toBe('—');
   });
 });

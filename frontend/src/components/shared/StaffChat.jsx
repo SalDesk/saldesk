@@ -120,7 +120,7 @@ export default function StaffChat({ staffId, height = 'calc(100vh - 13rem)' }) {
           <div className="flex flex-col items-center justify-center py-16 text-center">
             <MessageCircle size={40} strokeWidth={1} className="text-n-300 mb-3"/>
             <p className="font-display font-bold text-n-700">Sem conversas</p>
-            <p className="text-sm font-body text-n-400 mt-2">Ainda nao existem grupos nem colaboradores associados.</p>
+            <p className="text-sm font-body text-n-400 mt-2">Ainda não existem grupos nem colaboradores associados.</p>
           </div>
         )}
 
