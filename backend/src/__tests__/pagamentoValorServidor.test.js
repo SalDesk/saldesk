@@ -26,11 +26,15 @@ jest.mock('../config/supabase', () => {
     const b = {};
     b.select = () => b;
     b.eq = (k, v) => { filtros.push((r) => r[k] === v); return b; };
+    b.neq = (k, v) => { filtros.push((r) => r[k] !== v); return b; };
+    b.in = (k, vs) => { filtros.push((r) => vs.includes(r[k])); return b; };
     b.update = (d) => { actualizar = d; return b; };
     const linhas = () => (mockBD[tabela] || []).filter((r) => filtros.every((f) => f(r)));
     const resolver = () => {
-      if (actualizar) linhas().forEach((r) => Object.assign(r, actualizar));
-      const l = linhas()[0] || null;
+      // Como o PostgREST: devolve as linhas que os filtros apanharam antes do update.
+      const alvo = linhas();
+      if (actualizar) alvo.forEach((r) => Object.assign(r, actualizar));
+      const l = alvo[0] || null;
       if (!l) return { data: null, error: null };
       const op = mockBD.operators.find((o) => o.id === l.operator_id);
       return { data: { ...l, operators: op ? { ...op } : null }, error: null };

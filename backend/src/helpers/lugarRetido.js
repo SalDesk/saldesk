@@ -122,7 +122,110 @@ function classificarRecentes(recentes, nova, agora = new Date()) {
   };
 }
 
+/* Antes de criar ou capturar um pagamento online: o lugar ainda e desta reserva?
+   - pendente: renova o prazo (se tiver) e segue;
+   - confirmada / com check-in: segue;
+   - expirada por falta de pagamento: so volta a pendente se o lugar ainda estiver livre,
+     com um update condicional (outra reserva pode ter ficado com ele entretanto);
+   - tudo o resto (substituida, cancelada pelo operador...): HOLD_EXPIRED, nada se cobra. */
+async function prepararPagamento(supabase, reservationId, agora = new Date()) {
+  return decidirPagamento(supabase, reservationId, agora, true);
+}
+
+async function decidirPagamento(supabase, reservationId, agora, podeRepetir) {
+  const { data: reserva, error } = await supabase
+    .from('reservations')
+    .select('id, unit_id, check_in, check_out, start_time, duration_minutes, guests, is_group_booking, status, cancel_reason, hold_expires_at')
+    .eq('id', reservationId)
+    .maybeSingle();
+  if (error) throw error;
+  if (!reserva) return { ok: false, code: 'NOT_FOUND' };
+
+  if (reserva.status === 'pending') {
+    if (!reserva.hold_expires_at) return { ok: true };
+    const { data: renovada, error: errRenovar } = await supabase
+      .from('reservations')
+      .update({ hold_expires_at: fimDaRetencao(agora) })
+      .eq('id', reservationId)
+      .eq('status', 'pending')
+      .select('id')
+      .maybeSingle();
+    if (errRenovar) throw errRenovar;
+    if (renovada) return { ok: true };
+    // Expirou entre a leitura e o update: decide de novo com o estado actual (uma vez).
+    if (podeRepetir) return decidirPagamento(supabase, reservationId, agora, false);
+    return { ok: false, code: 'HOLD_EXPIRED' };
+  }
+
+  if (reserva.status === 'confirmed' || reserva.status === 'checked_in') return { ok: true };
+
+  if (reserva.status === 'cancelled' && reserva.cancel_reason === 'payment_not_completed') {
+    if (!(await lugarAindaLivre(supabase, reserva, agora))) return { ok: false, code: 'HOLD_EXPIRED' };
+    const { data: reposta, error: errRepor } = await supabase
+      .from('reservations')
+      .update({ status: 'pending', cancel_reason: null, hold_expires_at: fimDaRetencao(agora) })
+      .eq('id', reservationId)
+      .eq('status', 'cancelled')
+      .eq('cancel_reason', 'payment_not_completed')
+      .select('id')
+      .maybeSingle();
+    if (errRepor) {
+      // 23P01: a restricao de exclusao da BD diz que o lugar ja e de outra reserva.
+      if (errRepor.code === '23P01') return { ok: false, code: 'HOLD_EXPIRED' };
+      throw errRepor;
+    }
+    return reposta ? { ok: true } : { ok: false, code: 'HOLD_EXPIRED' };
+  }
+
+  return { ok: false, code: 'HOLD_EXPIRED' };
+}
+
+/* O dinheiro entrou mas o lugar ja nao existe: regista o pagamento numa reserva cancelada
+   ('paid_after_expiry') e avisa o operador para reembolsar ou remarcar. Nunca lanca. */
+async function registarPagoSemLugar(supabase, reservationId, { metodo, valor, campos = {} } = {}) {
+  try {
+    const { data: reserva, error } = await supabase
+      .from('reservations')
+      .update({
+        status: 'cancelled', payment_status: 'paid', payment_method: metodo, amount_paid: valor,
+        cancel_reason: 'paid_after_expiry', updated_at: new Date().toISOString(), ...campos,
+      })
+      .eq('id', reservationId)
+      .select('*, units(name), operators(name, email)')
+      .maybeSingle();
+    if (error) throw error;
+    if (!reserva) {
+      console.error(`[LugarRetido] Pago sem lugar mas a reserva nao foi encontrada — reservation_id=${reservationId}`);
+      return;
+    }
+
+    const texto = `Pagamento recebido mas o lugar já foi ocupado — reembolsar ou remarcar — ${reserva.customer_name} — ${reserva.units?.name || ''}`;
+    const { error: errNotif } = await supabase.from('notifications').insert({
+      operator_id: reserva.operator_id,
+      notification_type: 'paid_after_expiry',
+      content: texto,
+      link: `/reservas/${reserva.id}`,
+    });
+    if (errNotif) console.error('[LugarRetido] Falha ao criar notificação:', errNotif.message);
+
+    if (reserva.operators?.email) {
+      // Carregado aqui: emailHelper puxa o cliente Supabase e o SendGrid, que os testes
+      // deste modulo nao configuram.
+      const { enviarEmail } = require('./emailHelper');
+      // PayPal cobra sempre em euros e a SISP em escudos.
+      const pago = metodo === 'sisp' ? `${valor} CVE via SISP` : `${valor} EUR via PayPal`;
+      await enviarEmail({
+        to: reserva.operators.email,
+        subject: texto,
+        text: `Olá ${reserva.operators.name || ''},\n\nRecebemos o pagamento (${pago}) da reserva de ${reserva.customer_name} — ${reserva.units?.name || ''}, mas o lugar já tinha sido ocupado. A reserva ficou cancelada e marcada como paga: reembolse o cliente ou combine outra data.\n\nReserva: ${reserva.id}`,
+      });
+    }
+  } catch (err) {
+    console.error(`[LugarRetido] Erro ao registar pago sem lugar — reservation_id=${reservationId}:`, err.message);
+  }
+}
+
 module.exports = {
   MINUTOS_RETENCAO, eMetodoCartao, fimDaRetencao, lugarAindaLivre, expirarReservasNaoPagas,
-  reservasRecentesDoCliente, classificarRecentes,
+  reservasRecentesDoCliente, classificarRecentes, prepararPagamento, registarPagoSemLugar,
 };
