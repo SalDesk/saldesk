@@ -362,6 +362,29 @@ describe('Formulario, detalhe e cartao de reserva', () => {
       expect(screen.getByText('€270.00')).toBeInTheDocument();
     });
 
+    it('opcao por veiculo: o campo mostra o valor limitado que vai ser reservado', () => {
+      renderForm({ operatorType: 'activity' });
+      preencher('Tour / Actividade', 't3');
+      preencher('Data do tour', AMANHA);
+      preencher('Opção', 'o3');
+      preencher('Hospedes', '5');
+      const veiculos = campo('Veículos');
+      // a escrever o numero fica como foi escrito; ao sair do campo corrige-se
+      fireEvent.focus(veiculos);
+      fireEvent.change(veiculos, { target: { value: '10' } });
+      expect(veiculos.value).toBe('10');
+      fireEvent.blur(veiculos);
+      expect(veiculos.value).toBe('5');
+      expect(screen.getByText('5 pessoa(s) · 5 veículo(s)')).toBeInTheDocument();
+      fireEvent.focus(veiculos);
+      fireEvent.change(veiculos, { target: { value: '1' } });
+      fireEvent.blur(veiculos);
+      expect(veiculos.value).toBe('3');
+      // sem foco (ex.: menos pessoas) o campo acompanha o limite
+      preencher('Hospedes', '2');
+      expect(campo('Veículos').value).toBe('1');
+    });
+
     it('opcao por veiculo: menos pessoas baixa o minimo e os veiculos acompanham', () => {
       const props = renderForm({ operatorType: 'activity' });
       preencher('Tour / Actividade', 't3');

@@ -37,6 +37,8 @@ export default function ReservationForm({ reservation, initial, units, operatorT
     vehicles:         '',
   });
   const [pricePreview, setPricePreview] = useState(null);
+  // Veiculos: a escrever mostra-se o que foi escrito; fora do campo, o valor limitado que se reserva
+  const [aEditarVeiculos, setAEditarVeiculos] = useState(false);
 
   const set = (field) => (e) => setForm({ ...form, [field]: e.target.value });
 
@@ -171,8 +173,10 @@ export default function ReservationForm({ reservation, initial, units, operatorT
               type="number"
               min={veiculosMin}
               max={Math.max(veiculosMin, pessoas)}
-              value={form.vehicles === '' ? veiculos : form.vehicles}
+              value={aEditarVeiculos ? form.vehicles : veiculos}
               onChange={set('vehicles')}
+              onFocus={() => { setAEditarVeiculos(true); setForm((f) => ({ ...f, vehicles: String(veiculos) })); }}
+              onBlur={() => { setAEditarVeiculos(false); setForm((f) => ({ ...f, vehicles: String(veiculos) })); }}
               hint={t('opcoesActividade.vehiclesHint', { min: veiculosMin, max: Math.max(veiculosMin, pessoas) })}
             />
           )}
