@@ -64,6 +64,24 @@ const LINGUAS = {
   ES: ['Español', 'Spanish'], DE: ['Deutsch', 'German'], IT: ['Italiano', 'Italian'], NL: ['Nederlands', 'Dutch'],
 };
 
+/* Comodidades fixas do TourForm (ACTIVITY_AMENS, gravadas em portugues) em ingles; uma
+   comodidade escrita pelo operador que nao esteja aqui fica como foi escrita */
+const COMODIDADES_EN = {
+  'Equipamento incluído': 'Equipment included',
+  'Instrutor certificado': 'Certified instructor',
+  'Seguro': 'Insurance',
+  'Fotografias/Vídeo': 'Photos/Video',
+  'Transporte': 'Transport',
+  'Snacks e água': 'Snacks and water',
+  'Vestiário': 'Changing room',
+  'Toalhas': 'Towels',
+};
+
+export function comodidadeNaLingua(rotulo, lang) {
+  if (lang !== 'en') return rotulo;
+  return COMODIDADES_EN[String(rotulo).trim()] || rotulo;
+}
+
 /* Duracao em horas: virgula decimal em portugues ("6,5 h"), ponto em ingles ("6.5 h") */
 export function textoDuracao(horas, lang) {
   const n = String(Number(horas));

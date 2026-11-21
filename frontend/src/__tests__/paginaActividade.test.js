@@ -1,7 +1,9 @@
 import { describe, it, expect } from 'vitest';
 import {
   textoEmBlocos, linhasDestaques, oQueLevar, incluidos, factosActividade, seccoesActividade, precisaLerTudo, textoDuracao,
+  comodidadeNaLingua,
 } from '../utils/paginaActividade';
+import { ACTIVITY_AMENS } from '../components/units/forms/TourForm';
 
 describe('textoEmBlocos', () => {
   it('separa paragrafos por linha em branco', () => {
@@ -52,6 +54,18 @@ describe('incluidos', () => {
   });
   it('sem dados', () => {
     expect(incluidos({}, 'pt')).toEqual({ sim: [], nao: [] });
+  });
+});
+
+describe('comodidadeNaLingua', () => {
+  it('traduz as comodidades do TourForm em EN e deixa o resto como escrito', () => {
+    expect(comodidadeNaLingua('Equipamento incluído', 'en')).toBe('Equipment included');
+    expect(comodidadeNaLingua('Snacks e água', 'en')).toBe('Snacks and water');
+    expect(comodidadeNaLingua('Equipamento incluído', 'pt')).toBe('Equipamento incluído');
+    expect(comodidadeNaLingua('Kayak duplo', 'en')).toBe('Kayak duplo');
+  });
+  it('todas as comodidades do TourForm tem traducao', () => {
+    for (const a of ACTIVITY_AMENS) expect(comodidadeNaLingua(a, 'en')).not.toBe(a);
   });
 });
 

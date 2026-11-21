@@ -231,6 +231,27 @@ describe('Pagina de actividade', () => {
     expect(screen.getByRole('button', { name: /Partilhar/ })).toBeInTheDocument();
   });
 
+  it('comodidades_no_incluido_em_ingles', async () => {
+    const meta = { amenities: ['Equipamento incluído', 'Seguro', 'Kayak duplo'], included_items: [{ label: 'Lunch', included: true }] };
+    localStorage.setItem('sd-lang', 'en');
+    simularRede({ unit: comMeta(meta) });
+    const pagina = montar();
+    await screen.findByRole('heading', { level: 1, name: 'Passeio de buggy' });
+    const incluido = document.getElementById('incluido');
+    expect(within(incluido).getByText('Equipment included')).toBeInTheDocument();
+    expect(within(incluido).getByText('Insurance')).toBeInTheDocument();
+    expect(within(incluido).getByText('Kayak duplo')).toBeInTheDocument();
+    expect(within(incluido).getByText('Lunch')).toBeInTheDocument();
+    expect(within(incluido).queryByText('Equipamento incluído')).toBeNull();
+    pagina.unmount();
+
+    localStorage.setItem('sd-lang', 'pt');
+    simularRede({ unit: comMeta(meta) });
+    montar();
+    await screen.findByRole('heading', { level: 1, name: 'Passeio de buggy' });
+    expect(within(document.getElementById('incluido')).getByText('Equipamento incluído')).toBeInTheDocument();
+  });
+
   it('duracao_com_virgula_decimal_em_portugues', async () => {
     simularRede({ unit: comMeta({ duration: 6.5 }) });
     montar();

@@ -8,7 +8,8 @@ import {
 } from './editors';
 import LocalizacaoPontoEncontro from './LocalizacaoPontoEncontro';
 
-const ACTIVITY_AMENS   = ['Equipamento incluído', 'Instrutor certificado', 'Seguro', 'Fotografias/Vídeo', 'Transporte', 'Snacks e água', 'Vestiário', 'Toalhas'];
+/* Rotulos gravados em portugues; a pagina publica traduz-os em EN (utils/paginaActividade) */
+export const ACTIVITY_AMENS   = ['Equipamento incluído', 'Instrutor certificado', 'Seguro', 'Fotografias/Vídeo', 'Transporte', 'Snacks e água', 'Vestiário', 'Toalhas'];
 
 export function parseTourMeta(description) {
   if (!description?.startsWith('{')) return {};

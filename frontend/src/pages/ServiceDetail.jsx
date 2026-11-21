@@ -30,7 +30,7 @@ import SiteComplianceFooter from '../components/shared/SiteComplianceFooter';
 import { textoPoliticaCancelamento } from '../utils/politicaCancelamento';
 import { jsonLdExperiencia } from '../utils/dadosEstruturados';
 import { dentroDeCaboVerde } from '../utils/coordenadas';
-import { seccoesActividade, factosActividade } from '../utils/paginaActividade';
+import { seccoesActividade, factosActividade, comodidadeNaLingua } from '../utils/paginaActividade';
 import GaleriaActividade, { Lightbox } from '../components/servico/GaleriaActividade';
 import CabecalhoActividade from '../components/servico/CabecalhoActividade';
 import FactosActividade from '../components/servico/FactosActividade';
@@ -155,14 +155,17 @@ function getUnitMeta(unit) {
 /* Meta da pagina completa de actividade. Dois dados que a ficha antiga ja mostrava entram nas
    seccoes novas em vez de se perderem: a descricao em texto simples (fichas sem JSON) ou no campo
    generico `description` conta como descricao em portugues, e as comodidades escolhidas no
-   TourForm (Equipamento incluido, Seguro, Transporte...) juntam-se ao "Incluido". */
-function metaDaActividade(unit, meta) {
+   TourForm (Equipamento incluido, Seguro, Transporte...) juntam-se ao "Incluido", em ingles
+   na pagina EN (comodidadeNaLingua; as escritas pelo operador ficam como estao). */
+function metaDaActividade(unit, meta, lang) {
   const raw = typeof unit?.description === 'string' ? unit.description.trim() : '';
   const generica = typeof meta.description === 'string' ? meta.description.trim() : '';
   const legado = raw && !raw.startsWith('{') ? raw : generica;
   const temDesc = [meta.desc_pt, meta.desc_en].some((d) => typeof d === 'string' && d.trim());
   let m = legado && !temDesc ? { ...meta, desc_pt: legado } : meta;
-  const comodidades = Array.isArray(meta.amenities) ? meta.amenities.filter((a) => typeof a === 'string' && a.trim()) : [];
+  const comodidades = Array.isArray(meta.amenities)
+    ? meta.amenities.filter((a) => typeof a === 'string' && a.trim()).map((a) => comodidadeNaLingua(a, lang))
+    : [];
   if (comodidades.length) {
     const itens = Array.isArray(m.included_items) ? m.included_items : [];
     const ja = new Set(itens.map((it) => String(typeof it === 'string' ? it : it?.label || '').trim().toLowerCase()));
@@ -1288,7 +1291,7 @@ function ServiceDetailPagina() {
   /* ── Pagina completa de actividade: dados das seccoes (utils/paginaActividade) e os blocos de
      sempre (itinerario com mapa, ponto de encontro com mapa, avaliacoes, outros servicos), que
      entram na SeccoesActividade pela ordem da spec. ── */
-  const metaActividade = isActivity ? metaDaActividade(unit, unitMeta) : unitMeta;
+  const metaActividade = isActivity ? metaDaActividade(unit, unitMeta, lang) : unitMeta;
   const tituloActividade = (lang === 'en' && typeof unitMeta.name_en === 'string' && unitMeta.name_en.trim()) || unit.name;
   const factos = isActivity ? factosActividade(unit, metaActividade, lang) : [];
   const idsSeccoes = isActivity ? seccoesActividade({ meta: metaActividade, op, reviews, related, lang, unit }) : [];
