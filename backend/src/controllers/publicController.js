@@ -8,6 +8,8 @@ const { enviarEmail } = require('../helpers/emailHelper');
 const { detectarIdioma } = require('../helpers/languageHelper');
 const { confirmacaoClienteEmail, notificacaoOperadorEmail } = require('../helpers/emailTemplates');
 const { validarVoucher, registarUsoVoucher } = require('./vouchersController');
+const { avisarNovaReserva } = require('../helpers/avisosReserva');
+const { eMetodoCartao, fimDaRetencao } = require('../helpers/lugarRetido');
 const { encontrarAfiliadoActivo } = require('./affiliatesController');
 const { dispararSyncImediato } = require('../helpers/otaSyncHelper');
 const { getDiscoverCatalog } = require('../services/discoverCatalogService');
@@ -529,6 +531,10 @@ async function criarReserva(req, res, next) {
     if (referredByNote) notesLines.push(`Indicado por: ${referredByNote}`);
     const finalNotes = notesLines.join(' | ') || null;
 
+    /* Cartao (PayPal/SISP) com valor a pagar: o lugar fica retido e os avisos
+       (e o uso do voucher) so acontecem quando o pagamento for confirmado. */
+    const adiar = eMetodoCartao(payment_method) && finalTotal > 0;
+
     const { data, error } = await supabaseAdmin
       .from('reservations')
       .insert({
@@ -567,6 +573,8 @@ async function criarReserva(req, res, next) {
         whatsapp_opt_in: whatsapp_opt_in === true,
         whatsapp_opt_in_source: whatsapp_opt_in === true ? 'form' : null,
         whatsapp_opt_in_at: whatsapp_opt_in === true ? new Date().toISOString() : null,
+        voucher_id: voucherId,
+        ...(adiar ? { payment_method, hold_expires_at: fimDaRetencao() } : {}),
       })
       .select()
       .single();
@@ -582,7 +590,7 @@ async function criarReserva(req, res, next) {
       throw error;
     }
 
-    if (voucherId) {
+    if (voucherId && !adiar) {
       registarUsoVoucher(voucherId).catch(err => console.error('[Voucher] Erro ao registar uso:', err.message));
     }
 
@@ -633,68 +641,10 @@ async function criarReserva(req, res, next) {
       ).catch(() => {});
     }
 
-    supabaseAdmin.from('notifications').insert({
-      operator_id:       operator.id,
-      notification_type: 'new_booking',
-      content:            (data.driver_included
-        ? `Nova reserva EXECUTIVO com motorista de ${customer_name} — ${unit.name} (atribuir condutor)`
-        : `Nova reserva de ${customer_name} — ${unit.name}`) + (jaConfirmada ? ' (já confirmada)' : ''),
-      link:               `/reservas/${data.id}`,
-    }).then(({ error: notifErr }) => {
-      if (notifErr) console.error('[Notificacao] Erro ao criar notificacao:', notifErr.message);
-    });
-
     dispararSyncImediato(operator.id);
 
-    const idioma = detectarIdioma(customer_country);
-    const currency = operator.currency || 'EUR';
-
-    /* O cliente agora escolhe a mesa exacta explicitamente (deixou de ser um
-       detalhe interno escondido) -- o email de confirmacao mostra o nome real
-       da mesa/unidade, tal como ja acontecia para os restantes tipos. */
-    const clienteEmail = confirmacaoClienteEmail({
-      idioma,
-      customerName: customer_name,
-      tourName: unit.name,
-      checkIn: check_in,
-      checkOut: effectiveCheckOut,
-      guests: partyEfectivo,
-      total: finalTotal,
-      currency,
-      operator,
-      status: data.status,
-    });
-    enviarEmail({
-      to: customer_email,
-      subject: clienteEmail.subject,
-      html: clienteEmail.html,
-      text: clienteEmail.text
-    }).catch((err) => console.error('[Email] Erro ao enviar recepção:', err.message));
-
-    if (operator.email) {
-      const operadorEmail = notificacaoOperadorEmail({
-        operatorName: operator.name,
-        tourName: unit.name,
-        checkIn: check_in,
-        checkOut: effectiveCheckOut,
-        guests: partyEfectivo,
-        total,
-        currency,
-        customer: {
-          name: customer_name,
-          email: customer_email,
-          phone: customer_phone,
-          country: customer_country
-        },
-        notes: finalNotes,
-        confirmada: jaConfirmada,
-      });
-      enviarEmail({
-        to: operator.email,
-        subject: operadorEmail.subject,
-        html: operadorEmail.html,
-        text: operadorEmail.text
-      }).catch((err) => console.error('[Email] Erro ao enviar notificação ao operador:', err.message));
+    if (!adiar) {
+      await avisarNovaReserva({ reserva: data, operator, unitName: unit.name, totalOperador: total });
     }
 
     return res.status(201).json({

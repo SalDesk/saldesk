@@ -94,8 +94,9 @@ describe('criarReserva: confirmacao automatica', () => {
     await reservar('paypal');
     expect(estado.inseridas[0].status).toBe('pending');
     expect(criarNotificacaoViajante).not.toHaveBeenCalled();
-    expect(notificacaoOperadorEmail.mock.calls[0][0].confirmada).toBe(false);
-    expect(estado.notificacoes[0].content).toBe('Nova reserva de Ana — Volta a ilha');
+    // cartao: os avisos ficam adiados ate ao pagamento (ver criarReservaRetencao.test.js)
+    expect(notificacaoOperadorEmail).not.toHaveBeenCalled();
+    expect(estado.notificacoes).toHaveLength(0);
   });
 
   it('confirmacao_desligada_fica_pendente_mesmo_a_pagar_no_local', async () => {
