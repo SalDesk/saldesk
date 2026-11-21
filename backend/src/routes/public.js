@@ -72,9 +72,11 @@ router.get('/cms', getCmsPublic);
 /* ─── Unidade individual ─── */
 router.get('/:slug/units/:unitId',         getUnit);
 router.get('/:slug/units/:unitId/reviews', getUnitReviews);
+/* Leituras da coluna de reserva: sem publicLimiter (o balde das reservas e pagamentos),
+   como as outras leituras -- ver server.js */
 router.get('/:slug/units/:unitId/slot-availability', getSlotAvailability);
-router.get('/:slug/units/:unitId/availability-month', publicLimiter, getAvailabilityMonth);
-router.get('/:slug/units/:unitId/quote', publicLimiter, cotarActividade);
+router.get('/:slug/units/:unitId/availability-month', getAvailabilityMonth);
+router.get('/:slug/units/:unitId/quote', cotarActividade);
 router.post('/:slug/units/:unitId/reviews/:reviewId/helpful', publicLimiter, marcarReviewUtil);
 router.post('/:slug/units/:unitId/call-waiter', publicLimiter, callWaiter);
 router.post('/:slug/units/:unitId/orders', publicLimiter, createOrder);
