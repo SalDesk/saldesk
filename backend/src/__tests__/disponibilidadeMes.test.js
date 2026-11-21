@@ -39,7 +39,7 @@ jest.mock('../helpers/travelerNotificationHelper', () => ({ criarNotificacaoViaj
 
 const { supabaseAdmin } = require('../config/supabase');
 const { diasLivresDoMes } = require('../helpers/bookingHelpers');
-const { getAvailabilityMonth } = require('../controllers/publicController');
+const { getAvailabilityMonth, getSlotAvailability } = require('../controllers/publicController');
 
 const AGORA = new Date('2026-11-20T10:00:00Z'); // 09:00 de 20 nov em Cabo Verde
 const unit = { id: 'u1' };
@@ -180,5 +180,49 @@ describe('getAvailabilityMonth', () => {
     expect(corpo.data.days['2026-12-11']).toBe(true);
     // 1 consulta a units, 2 em lote (reservations + holds) e 1 a blocked_dates
     expect(estado.consultas.filter((t) => t === 'blocked_dates')).toHaveLength(1);
+  });
+});
+
+/* Vagas por horario: o :slug tambem conta (como getAvailabilityMonth e cotarActividade) */
+describe('getSlotAvailability', () => {
+  function resposta() {
+    const res = {};
+    res.status = jest.fn(() => res);
+    res.json = jest.fn(() => res);
+    return res;
+  }
+  const comHorarios = (operatorId) => ({
+    id: 'u1', operator_id: operatorId, description: JSON.stringify({ time_slots: [{ time: '09:00', capacity: 4 }] }),
+  });
+
+  it('unidade_de_outro_operador_404', async () => {
+    estado.unidade = comHorarios('op2');
+    const res = resposta();
+    const next = jest.fn();
+    await getSlotAvailability({ params: { slug: 'demo', unitId: 'u1' }, query: { date: '2026-12-10' } }, res, next);
+    expect(next).not.toHaveBeenCalled();
+    expect(res.status).toHaveBeenCalledWith(404);
+    expect(res.json.mock.calls[0][0].code).toBe('NOT_FOUND');
+    expect(estado.consultas).not.toContain('reservations');
+  });
+
+  it('slug_desconhecido_404', async () => {
+    estado.unidade = comHorarios('op1');
+    const res = resposta();
+    await getSlotAvailability({ params: { slug: 'outro', unitId: 'u1' }, query: { date: '2026-12-10' } }, res, jest.fn());
+    expect(res.status).toHaveBeenCalledWith(404);
+    expect(res.json.mock.calls[0][0].code).toBe('NOT_FOUND');
+  });
+
+  it('slug_certo_200_com_horarios', async () => {
+    estado.unidade = comHorarios('op1');
+    const res = resposta();
+    const next = jest.fn();
+    await getSlotAvailability({ params: { slug: 'demo', unitId: 'u1' }, query: { date: '2026-12-10' } }, res, next);
+    expect(next).not.toHaveBeenCalled();
+    expect(res.status).not.toHaveBeenCalled();
+    const linhas = res.json.mock.calls[0][0].data;
+    expect(linhas).toHaveLength(1);
+    expect(linhas[0]).toMatchObject({ time: '09:00', remaining: 4 });
   });
 });

@@ -86,7 +86,7 @@ describe('slots e criarReserva', () => {
     jest.useFakeTimers().setSystemTime(new Date('2026-11-20T11:00:00Z')); // 10:00 em Cabo Verde
     const res = resposta();
     const next = jest.fn();
-    await getSlotAvailability({ params: { unitId: 'u1' }, query: { date: '2026-11-20' } }, res, next);
+    await getSlotAvailability({ params: { slug: 'demo', unitId: 'u1' }, query: { date: '2026-11-20' } }, res, next);
     expect(next).not.toHaveBeenCalled();
     const linhas = res.json.mock.calls[0][0].data;
     const nove = linhas.find((l) => l.time === '09:00');

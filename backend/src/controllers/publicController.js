@@ -124,19 +124,31 @@ async function verificarDisponibilidadePublica(req, res, next) {
    configurados, TourForm's TimeSlotsEditor) — devolve lugares restantes em
    cada slot, nunca so um booleano, para o selector desactivar slots ja
    esgotados sem inventar disponibilidade. Unidades sem time_slots definido
-   continuam com o fluxo antigo (verificarDisponibilidadePublica). ─── */
+   continuam com o fluxo antigo (verificarDisponibilidadePublica). So
+   responde por unidades do operador do :slug (como getAvailabilityMonth). ─── */
 async function getSlotAvailability(req, res, next) {
   try {
-    const { unitId } = req.params;
+    const { slug, unitId } = req.params;
     const { date } = req.query;
     if (!date) {
       return res.status(400).json({ error: 'Data é obrigatória', code: 'MISSING_FIELDS' });
+    }
+
+    const { data: operator } = await supabaseAdmin
+      .from('operators')
+      .select('id')
+      .eq('slug', slug)
+      .eq('onboarding_complete', true)
+      .maybeSingle();
+    if (!operator) {
+      return res.status(404).json({ error: 'Unidade não encontrada', code: 'NOT_FOUND' });
     }
 
     const { data: unit } = await supabaseAdmin
       .from('units')
       .select('id, description')
       .eq('id', unitId)
+      .eq('operator_id', operator.id)
       .eq('status', 'active')
       .maybeSingle();
     if (!unit) {
