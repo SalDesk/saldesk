@@ -98,11 +98,15 @@ async function reservasRecentesDoCliente(supabase, { operatorId, unitId, email, 
 
 const horaCurta = (t) => (t === null || t === undefined || t === '' ? null : String(t).slice(0, 5));
 const metodoDaLinha = (r) => (eMetodoCartao(r.payment_method) ? r.payment_method : null);
+const nomeNormal = (n) => String(n || '').trim().toLowerCase();
 
 /* Separa as reservas recentes do cliente:
    - retidosProprios: lugares retidos com cartao ainda dentro do prazo (por pagar);
-   - igualSemCartao: a mesma reserva sem cartao (enviada duas vezes) -- devolve-se esta;
-   - igualCartao: a mesma reserva com cartao e lugar ainda retido -- renova-se o prazo. */
+   - igualSemCartao: a mesma reserva sem cartao (enviada duas vezes) -- so se devolve se o
+     total tambem for igual (o chamador compara depois de calcular o preco e o voucher);
+   - igualCartao: a mesma reserva com cartao e lugar ainda retido -- renova-se o prazo.
+   "A mesma" inclui o nome do cliente (o mesmo email pode reservar para outras pessoas) e o
+   motorista; um pedido com pre-pedido nunca e repetido. */
 function classificarRecentes(recentes, nova, agora = new Date()) {
   const linhas = recentes || [];
   const retidosProprios = linhas.filter((r) => r.status === 'pending'
@@ -110,10 +114,13 @@ function classificarRecentes(recentes, nova, agora = new Date()) {
     && eMetodoCartao(r.payment_method)
     && !!r.hold_expires_at
     && new Date(r.hold_expires_at).getTime() > agora.getTime());
-  const igual = (r) => r.check_out === nova.checkOut
+  const igual = (r) => !nova.temPedido
+    && r.check_out === nova.checkOut
     && horaCurta(r.start_time) === horaCurta(nova.startTime)
     && Number(r.guests) === Number(nova.guests)
     && !!r.is_group_booking === !!nova.isGroupBooking
+    && nomeNormal(r.customer_name) === nomeNormal(nova.customerName)
+    && !!r.driver_included === !!nova.driverIncluded
     && metodoDaLinha(r) === (nova.metodo || null);
   return {
     igualSemCartao: linhas.find((r) => igual(r) && metodoDaLinha(r) === null),
@@ -183,19 +190,28 @@ async function decidirPagamento(supabase, reservationId, agora, podeRepetir) {
 }
 
 /* O dinheiro entrou mas o lugar ja nao existe: regista o pagamento numa reserva cancelada
-   ('paid_after_expiry') e avisa o operador para reembolsar ou remarcar. Nunca lanca. */
+   ('paid_after_expiry') e avisa o operador para reembolsar ou remarcar. Uma reserva ja
+   reembolsada nunca volta a 'paid' (a linha fica igual), mas o operador e avisado na mesma
+   porque entrou dinheiro novo. Nunca lanca. */
 async function registarPagoSemLugar(supabase, reservationId, { metodo, valor, campos = {} } = {}) {
   try {
-    const { data: reserva, error } = await supabase
+    const colunas = '*, units(name), operators(name, email)';
+    let { data: reserva, error } = await supabase
       .from('reservations')
       .update({
         status: 'cancelled', payment_status: 'paid', payment_method: metodo, amount_paid: valor,
         cancel_reason: 'paid_after_expiry', updated_at: new Date().toISOString(), ...campos,
       })
       .eq('id', reservationId)
-      .select('*, units(name), operators(name, email)')
+      .neq('payment_status', 'refunded')
+      .select(colunas)
       .maybeSingle();
     if (error) throw error;
+    if (!reserva) {
+      ({ data: reserva, error } = await supabase
+        .from('reservations').select(colunas).eq('id', reservationId).maybeSingle());
+      if (error) throw error;
+    }
     if (!reserva) {
       console.error(`[LugarRetido] Pago sem lugar mas a reserva nao foi encontrada — reservation_id=${reservationId}`);
       return;

@@ -28,7 +28,7 @@ jest.mock('../services/pushService', () => ({ notifyOperator: jest.fn() }));
 jest.mock('../services/socketService', () => ({ emitToOperator: jest.fn() }));
 jest.mock('../helpers/travelerNotificationHelper', () => ({ criarNotificacaoViajante: jest.fn(() => Promise.resolve()) }));
 
-const estado = { operador: null, recentes: [], ops: [] };
+const estado = { operador: null, recentes: [], ops: [], pratos: [] };
 
 jest.mock('../config/supabase', () => {
   function construir(tabela) {
@@ -41,7 +41,10 @@ jest.mock('../config/supabase', () => {
     b.update = jest.fn((valores) => { b.tipo = 'update'; b.payload = valores; estado.ops.push(b); return b; });
     const resolver = () => {
       if (tabela === 'operators') return { data: estado.operador, error: null };
+      // Pratos do pre-pedido (consulta com .in) ou a unidade reservada
+      if (tabela === 'units' && b.filtros.some((f) => f[0] === 'in')) return { data: estado.pratos, error: null };
       if (tabela === 'units') return { data: { id: 'u1', name: 'Volta a ilha', base_price: 40, operator_id: 'op1', status: 'active' }, error: null };
+      if (tabela === 'orders') return { data: { id: 'ped1' }, error: null };
       if (tabela === 'reservations') {
         if (b.tipo === 'insert') return { data: { id: 'nova', ...b.payload }, error: null };
         if (b.tipo === 'update') {
@@ -67,6 +70,8 @@ const {
   verificarDisponibilidade, verificarDisponibilidadeMesa, verificarDisponibilidadeSlot, parseUnitMeta,
 } = require('../helpers/bookingHelpers');
 const { enviarEmail } = require('../helpers/emailHelper');
+const { validarVoucher } = require('../controllers/vouchersController');
+const { calcularPreco } = require('../helpers/bookingHelpers');
 
 const AGORA = new Date('2026-11-21T10:00:00Z');
 const FUTURO = '2026-11-21T10:20:00.000Z';
@@ -76,11 +81,14 @@ function linha(extra) {
   return {
     id: 'r1', status: 'pending', payment_status: 'pending', payment_method: null, hold_expires_at: null,
     check_in: '2026-12-01', check_out: '2026-12-01', start_time: '09:00', guests: 2, is_group_booking: false,
-    total_price: 80, customer_email: 'ana@exemplo.cv',
+    total_price: 80, customer_email: 'ana@exemplo.cv', customer_name: 'Ana', driver_included: false,
     ...extra,
   };
 }
-const NOVA = { checkOut: '2026-12-01', startTime: '09:00', guests: 2, isGroupBooking: false, metodo: null };
+const NOVA = {
+  checkOut: '2026-12-01', startTime: '09:00', guests: 2, isGroupBooking: false, metodo: null,
+  customerName: 'Ana', driverIncluded: false, temPedido: false,
+};
 
 describe('classificarRecentes', () => {
   it('uma reserva igual em dinheiro e igualSemCartao', () => {
@@ -125,6 +133,28 @@ describe('classificarRecentes', () => {
     const r = linha({ start_time: '09:00:00' });
     const c = classificarRecentes([r], NOVA, AGORA);
     expect(c.igualSemCartao).toBe(r);
+  });
+
+  it('o nome compara-se sem espacos nem maiusculas; outro nome nao e igual', () => {
+    const r = linha({ customer_name: 'Ana' });
+    expect(classificarRecentes([r], { ...NOVA, customerName: '  ANA ' }, AGORA).igualSemCartao).toBe(r);
+    expect(classificarRecentes([r], { ...NOVA, customerName: 'Rui' }, AGORA).igualSemCartao).toBeUndefined();
+  });
+
+  it('com motorista nao e igual a sem motorista', () => {
+    const r = linha({ driver_included: false });
+    expect(classificarRecentes([r], { ...NOVA, driverIncluded: true }, AGORA).igualSemCartao).toBeUndefined();
+    const cartao = linha({ payment_method: 'paypal', hold_expires_at: FUTURO, driver_included: true });
+    expect(classificarRecentes([cartao], { ...NOVA, metodo: 'paypal', driverIncluded: false }, AGORA).igualCartao).toBeUndefined();
+  });
+
+  it('um pedido com pre-pedido nunca e repetido', () => {
+    const r = linha({});
+    const cartao = linha({ id: 'r2', payment_method: 'paypal', hold_expires_at: FUTURO });
+    expect(classificarRecentes([r], { ...NOVA, temPedido: true }, AGORA).igualSemCartao).toBeUndefined();
+    const c = classificarRecentes([cartao], { ...NOVA, metodo: 'paypal', temPedido: true }, AGORA);
+    expect(c.igualCartao).toBeUndefined();
+    expect(c.retidosProprios).toEqual([cartao]);
   });
 
   it('sem hora dos dois lados e igual', () => {
@@ -188,6 +218,7 @@ describe('criarReserva: duplicados', () => {
     estado.operador = { id: 'op1', name: 'Sal Aventura', slug: 'demo', email: 'op@exemplo.cv', currency: 'EUR', operator_type: 'activity', auto_confirm_bookings: true };
     estado.recentes = [];
     estado.ops = [];
+    estado.pratos = [];
     parseUnitMeta.mockImplementation(() => ({}));
   });
 
@@ -250,7 +281,10 @@ describe('criarReserva: duplicados', () => {
     let res = await reservar({ tour_time: '09:00' });
     expect(res.status).toHaveBeenCalledWith(200);
     expect(res.json.mock.calls[0][0].data.id).toBe('dinheiro');
-    expect(verificarDisponibilidadeSlot).not.toHaveBeenCalled();
+    // A reserva igual sai das vagas ate se comparar o valor.
+    expect(verificarDisponibilidadeSlot).toHaveBeenCalledTimes(1);
+    expect(verificarDisponibilidadeSlot).toHaveBeenCalledWith(expect.anything(), 'u1', '2026-12-01', '09:00', 2, 10, ['dinheiro'], false);
+    verificarDisponibilidadeSlot.mockClear();
 
     estado.ops = [];
     estado.recentes = [linha({ id: 'retido', start_time: '09:00:00', payment_method: 'sisp', hold_expires_at: new Date(Date.now() + 10 * 60000).toISOString() })];
@@ -273,12 +307,80 @@ describe('criarReserva: duplicados', () => {
 
   it('mesa de restaurante: a mesma reserva em dinheiro devolve-se sem verificar a mesa', async () => {
     estado.operador = { ...estado.operador, operator_type: 'restaurant' };
-    const antiga = linha({ id: 'mesa', guests: 1, start_time: '20:00:00' });
+    const antiga = linha({ id: 'mesa', guests: 1, start_time: '20:00:00', total_price: 0 });
     estado.recentes = [antiga];
     const res = await reservar({ guests: 1, reservation_time: '20:00' });
     expect(res.status).toHaveBeenCalledWith(200);
     expect(res.json).toHaveBeenCalledWith({ data: antiga, pre_order: null, message: 'Reserva submetida com sucesso. Aguarde confirmação.' });
-    expect(verificarDisponibilidadeMesa).not.toHaveBeenCalled();
+    expect(verificarDisponibilidadeMesa).toHaveBeenCalledTimes(1);
+    expect(verificarDisponibilidadeMesa).toHaveBeenCalledWith(expect.anything(), 'u1', '2026-12-01', '20:00', 90, ['mesa']);
     expect(reservasOps().filter((o) => o.tipo === 'insert')).toHaveLength(0);
+  });
+
+  it('outro nome no mesmo email e no mesmo dia: cria outra reserva', async () => {
+    estado.recentes = [linha({ id: 'casal1', status: 'confirmed', start_time: null, customer_name: 'Ana' })];
+    const res = await reservar({ customer_name: 'Rui Lopes' });
+    expect(res.status).toHaveBeenCalledWith(201);
+    // Nao e a mesma reserva: a primeira conta nas vagas.
+    expect(verificarDisponibilidade).toHaveBeenCalledTimes(1);
+    expect(verificarDisponibilidade).toHaveBeenCalledWith(expect.anything(), 'u1', '2026-12-01', '2026-12-01', []);
+    const insert = reservasOps().find((o) => o.tipo === 'insert');
+    expect(insert.payload.customer_name).toBe('Rui Lopes');
+  });
+
+  it('o mesmo nome com outras maiusculas e espacos devolve a reserva igual', async () => {
+    const antiga = linha({ id: 'antiga', status: 'confirmed', start_time: null, customer_name: 'Ana' });
+    estado.recentes = [antiga];
+    const res = await reservar({ customer_name: ' ana ' });
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.json.mock.calls[0][0].data).toBe(antiga);
+    expect(reservasOps().filter((o) => o.tipo === 'insert')).toHaveLength(0);
+  });
+
+  it('outro total (voucher novo): cria outra reserva e volta a verificar as vagas com a primeira', async () => {
+    validarVoucher.mockResolvedValue({ valid: true, discount: 20, voucherId: 'v1' });
+    estado.recentes = [linha({ id: 'antiga', status: 'confirmed', start_time: null, total_price: 80 })];
+    const res = await reservar({ voucher_code: 'MENOS20' });
+    expect(res.status).toHaveBeenCalledWith(201);
+    expect(verificarDisponibilidade).toHaveBeenCalledTimes(2);
+    expect(verificarDisponibilidade).toHaveBeenNthCalledWith(1, expect.anything(), 'u1', '2026-12-01', '2026-12-01', ['antiga']);
+    expect(verificarDisponibilidade).toHaveBeenNthCalledWith(2, expect.anything(), 'u1', '2026-12-01', '2026-12-01', []);
+    const insert = reservasOps().find((o) => o.tipo === 'insert');
+    expect(insert.payload.total_price).toBe(60);
+  });
+
+  it('outro total e sem vagas com a primeira: 409 e nada se insere', async () => {
+    validarVoucher.mockResolvedValue({ valid: true, discount: 20, voucherId: 'v1' });
+    estado.recentes = [linha({ id: 'antiga', status: 'confirmed', start_time: null, total_price: 80 })];
+    verificarDisponibilidade.mockResolvedValueOnce(true).mockResolvedValueOnce(false);
+    const res = await reservar({ voucher_code: 'MENOS20' });
+    expect(res.status).toHaveBeenCalledWith(409);
+    expect(res.json).toHaveBeenCalledWith({ error: 'Unidade indisponível nas datas seleccionadas', code: 'UNAVAILABLE' });
+    expect(reservasOps().filter((o) => o.tipo === 'insert')).toHaveLength(0);
+  });
+
+  it('rent-a-car: pedir motorista depois de reservar sem motorista cria outra reserva', async () => {
+    estado.operador = { ...estado.operador, operator_type: 'rentacar' };
+    calcularPreco.mockReturnValue({ total: 100, dias: 2 });
+    parseUnitMeta.mockImplementation(() => ({ chauffeur_daily_rate: 50 }));
+    estado.recentes = [linha({
+      id: 'sem-motorista', status: 'confirmed', start_time: null, check_out: '2026-12-03', guests: 1, total_price: 100,
+    })];
+    const res = await reservar({ check_out: '2026-12-03', guests: 1, driver_included: true });
+    expect(res.status).toHaveBeenCalledWith(201);
+    expect(verificarDisponibilidade).toHaveBeenCalledWith(expect.anything(), 'u1', '2026-12-01', '2026-12-03', []);
+    const insert = reservasOps().find((o) => o.tipo === 'insert');
+    expect(insert.payload).toMatchObject({ driver_included: true, total_price: 200 });
+  });
+
+  it('mesa com pre-pedido nunca se devolve como repetida', async () => {
+    estado.operador = { ...estado.operador, operator_type: 'restaurant' };
+    estado.pratos = [{ id: 'p1', name: 'Cachupa', base_price: 0, unit_type: 'menu_item', status: 'active', operator_id: 'op1' }];
+    estado.recentes = [linha({ id: 'mesa', guests: 1, start_time: '20:00:00', total_price: 0 })];
+    const res = await reservar({ guests: 1, reservation_time: '20:00', items: [{ unit_id: 'p1', quantity: 2 }] });
+    expect(res.status).toHaveBeenCalledWith(201);
+    expect(verificarDisponibilidadeMesa).toHaveBeenCalledWith(expect.anything(), 'u1', '2026-12-01', '20:00', 90, []);
+    expect(reservasOps().filter((o) => o.tipo === 'insert')).toHaveLength(1);
+    expect(estado.ops.some((o) => o.tabela === 'orders' && o.tipo === 'insert')).toBe(true);
   });
 });

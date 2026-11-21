@@ -345,9 +345,13 @@ async function criarReserva(req, res, next) {
 
     /* Duplicados (duplo clique, voltar atras, rede lenta): a mesma reserva ja feita nos ultimos
        30 minutos devolve-se em vez de criar outra. Os lugares retidos do mesmo cliente ainda por
-       pagar nao contam contra a nova reserva (excluirRetidos) e sao substituidos por ela. */
+       pagar nao contam contra a nova reserva (excluirRetidos) e sao substituidos por ela.
+       A mesma reserva sem cartao (repetidaSemCartao) so se devolve com o mesmo total: ate o preco
+       e o voucher estarem calculados tambem nao conta nas vagas; se o total for outro, e outra
+       reserva e as vagas voltam a ser verificadas com ela (verificarLugar, de novo). */
     let recentes = { igualSemCartao: undefined, igualCartao: undefined, retidosProprios: [] };
     let excluirRetidos = [];
+    let repetidaSemCartao = null;
     async function procurarDuplicados(startTime) {
       const linhas = await reservasRecentesDoCliente(supabaseAdmin, {
         operatorId: operator.id, unitId: unit_id, email: customer_email, checkIn: check_in,
@@ -355,10 +359,19 @@ async function criarReserva(req, res, next) {
       recentes = classificarRecentes(linhas, {
         checkOut: effectiveCheckOut, startTime, guests: partyEfectivo, isGroupBooking,
         metodo: eMetodoCartao(payment_method) ? payment_method : null,
+        customerName: customer_name,
+        driverIncluded: isRentacar && !!driver_included,
+        temPedido: isRestaurant && Array.isArray(items) && items.length > 0,
       });
       excluirRetidos = recentes.retidosProprios.map((r) => r.id);
-      return recentes.igualSemCartao;
+      repetidaSemCartao = recentes.igualSemCartao || null;
     }
+    // Reservas que nao contam nas vagas desta: os lugares retidos do cliente e a possivel repetida.
+    const naoContam = () => (repetidaSemCartao ? [...excluirRetidos, repetidaSemCartao.id] : excluirRetidos);
+    /* Verificacao de vagas do tipo de unidade (mesa, horario ou datas): devolve null se ha
+       lugar ou o corpo do 409. Definida em cada ramo abaixo e chamada outra vez se a
+       reserva igual afinal tiver outro total. */
+    let verificarLugar = async () => null;
     const responderRepetida = (reserva) => res.status(200).json({
       data: reserva,
       pre_order: null,
@@ -385,14 +398,14 @@ async function criarReserva(req, res, next) {
         return res.status(400).json({ error: 'Número de pessoas não cabe nesta mesa', code: 'PARTY_SIZE_MISMATCH' });
       }
 
-      const repetida = await procurarDuplicados(reservation_time);
-      if (repetida) return responderRepetida(repetida);
+      await procurarDuplicados(reservation_time);
 
       // Corrida: a lista de mesas foi buscada momentos antes -- confirmar de novo.
-      const disponivel = await verificarDisponibilidadeMesa(supabaseAdmin, unit_id, check_in, reservation_time, DEFAULT_SEATING_MINUTES, excluirRetidos);
-      if (!disponivel) {
-        return res.status(409).json({ error: 'Mesa indisponível nesse horário', code: 'UNAVAILABLE' });
-      }
+      verificarLugar = async () => (
+        await verificarDisponibilidadeMesa(supabaseAdmin, unit_id, check_in, reservation_time, DEFAULT_SEATING_MINUTES, naoContam())
+          ? null : { error: 'Mesa indisponível nesse horário', code: 'UNAVAILABLE' });
+      const semMesa = await verificarLugar();
+      if (semMesa) return res.status(409).json(semMesa);
       unit = mesaRow;
 
       // Valida o pre-pedido opcional ANTES de inserir a reserva -- falha cedo,
@@ -455,20 +468,18 @@ async function criarReserva(req, res, next) {
         if (slotJaComecou(check_in, slotEscolhido.time)) {
           return res.status(409).json({ error: 'Este horário já começou', code: 'UNAVAILABLE' });
         }
-        const repetida = await procurarDuplicados(slotEscolhido.time);
-        if (repetida) return responderRepetida(repetida);
-        const cabe = await verificarDisponibilidadeSlot(supabaseAdmin, unit_id, check_in, slotEscolhido.time, Number(partyEfectivo), Number(slotEscolhido.capacity) || 0, excluirRetidos, isGroupBooking);
-        if (!cabe) {
-          return res.status(409).json({ error: 'Sem vagas neste horário', code: 'UNAVAILABLE' });
-        }
+        await procurarDuplicados(slotEscolhido.time);
+        verificarLugar = async () => (
+          await verificarDisponibilidadeSlot(supabaseAdmin, unit_id, check_in, slotEscolhido.time, Number(partyEfectivo), Number(slotEscolhido.capacity) || 0, naoContam(), isGroupBooking)
+            ? null : { error: 'Sem vagas neste horário', code: 'UNAVAILABLE' });
       } else {
-        const repetida = await procurarDuplicados(null);
-        if (repetida) return responderRepetida(repetida);
-        const disponivel = await verificarDisponibilidade(supabaseAdmin, unit_id, check_in, effectiveCheckOut, excluirRetidos);
-        if (!disponivel) {
-          return res.status(409).json({ error: 'Unidade indisponível nas datas seleccionadas', code: 'UNAVAILABLE' });
-        }
+        await procurarDuplicados(null);
+        verificarLugar = async () => (
+          await verificarDisponibilidade(supabaseAdmin, unit_id, check_in, effectiveCheckOut, naoContam())
+            ? null : { error: 'Unidade indisponível nas datas seleccionadas', code: 'UNAVAILABLE' });
       }
+      const semLugar = await verificarLugar();
+      if (semLugar) return res.status(409).json(semLugar);
     }
 
     // calcularPreco e por noite/dia (hotel, rent-a-car) — reservas de um so dia
@@ -520,6 +531,15 @@ async function criarReserva(req, res, next) {
       } else {
         return res.status(400).json({ error: resultado.error || 'Codigo invalido', code: 'INVALID_VOUCHER' });
       }
+    }
+
+    /* A mesma reserva sem cartao e com o mesmo total: devolve-se, sem inserir nem avisar.
+       Com outro total (motorista, voucher...) e outra reserva: a primeira volta a contar nas vagas. */
+    if (repetidaSemCartao) {
+      if (Number(repetidaSemCartao.total_price) === finalTotal) return responderRepetida(repetidaSemCartao);
+      repetidaSemCartao = null;
+      const semLugar = await verificarLugar();
+      if (semLugar) return res.status(409).json(semLugar);
     }
 
     /* A mesma reserva com cartao, ainda retida e com o mesmo valor: renova o prazo e devolve-a,

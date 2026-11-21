@@ -76,7 +76,7 @@ const { construirPedidoPagamento, validarResposta } = require('../services/sispS
 const { enviarEmail } = require('../helpers/emailHelper');
 const bh = require('../helpers/bookingHelpers');
 const { supabaseAdmin } = require('../config/supabase');
-const { prepararPagamento } = require('../helpers/lugarRetido');
+const { prepararPagamento, registarPagoSemLugar } = require('../helpers/lugarRetido');
 const ctrl = require('../controllers/paymentController');
 
 function resposta() {
@@ -95,6 +95,11 @@ async function chamar(fn, req) {
 const esperarPromessas = () => new Promise((r) => setImmediate(r));
 const reserva = () => mockBD.reservations.find((x) => x.id === 'r1');
 const capturaDe = (valor) => ({ purchase_units: [{ payments: { captures: [{ id: 'CAP1', amount: { value: valor } }] } }] });
+// Evento real do PayPal: o resource e a propria captura (id e valor) com a ordem em related_ids.
+const eventoCaptura = (id = 'CAP1', valor = '200.00') => ({
+  event_type: 'PAYMENT.CAPTURE.COMPLETED',
+  resource: { id, amount: { currency_code: 'EUR', value: valor }, supplementary_data: { related_ids: { order_id: 'ORDER1' } } },
+});
 
 const AGORA = new Date('2026-12-01T10:00:00Z');
 const PRAZO_ANTIGO = '2026-12-01T09:50:00.000Z';
@@ -375,10 +380,8 @@ describe('PayPal', () => {
   });
 
   test('webhook depois de um pagamento abaixo do total nao confirma nem avisa', async () => {
-    Object.assign(reserva(), { paypal_order_id: 'ORDER1', payment_status: 'partial', amount_paid: 1 });
-    await chamar(ctrl.paypalWebhook, {
-      body: { event_type: 'PAYMENT.CAPTURE.COMPLETED', resource: { supplementary_data: { related_ids: { order_id: 'ORDER1' } } } },
-    });
+    Object.assign(reserva(), { paypal_order_id: 'ORDER1', paypal_capture_id: 'CAP1', payment_status: 'partial', amount_paid: 1 });
+    await chamar(ctrl.paypalWebhook, { body: eventoCaptura('CAP1', '1.00') });
     await esperarPromessas();
     expect(reserva().payment_status).toBe('partial');
     expect(reserva().status).toBe('pending');
@@ -396,9 +399,7 @@ describe('PayPal', () => {
     expect(enviarEmail).toHaveBeenCalledTimes(3);
     expect(mockBD.notifications.filter((n) => n.notification_type === 'new_booking')).toHaveLength(1);
 
-    await chamar(ctrl.paypalWebhook, {
-      body: { event_type: 'PAYMENT.CAPTURE.COMPLETED', resource: { supplementary_data: { related_ids: { order_id: 'ORDER1' } } } },
-    });
+    await chamar(ctrl.paypalWebhook, { body: eventoCaptura() });
     await esperarPromessas();
     expect(enviarEmail).toHaveBeenCalledTimes(3);
     expect(mockBD.notifications.filter((n) => n.notification_type === 'new_booking')).toHaveLength(1);
@@ -428,9 +429,7 @@ describe('PayPal', () => {
 
   test('webhook com a reserva por pagar confirma e envia os avisos adiados', async () => {
     reserva().paypal_order_id = 'ORDER1';
-    await chamar(ctrl.paypalWebhook, {
-      body: { event_type: 'PAYMENT.CAPTURE.COMPLETED', resource: { supplementary_data: { related_ids: { order_id: 'ORDER1' } } } },
-    });
+    await chamar(ctrl.paypalWebhook, { body: eventoCaptura() });
     await esperarPromessas();
     expect(reserva().status).toBe('confirmed');
     expect(mockBD.notifications.filter((n) => n.notification_type === 'new_booking')).toHaveLength(1);
@@ -438,14 +437,95 @@ describe('PayPal', () => {
 
   test('webhook nao ressuscita uma reserva paga sem lugar', async () => {
     Object.assign(reserva(), {
-      paypal_order_id: 'ORDER1', status: 'cancelled', payment_status: 'paid', cancel_reason: 'paid_after_expiry',
+      paypal_order_id: 'ORDER1', paypal_capture_id: 'CAP1', status: 'cancelled', payment_status: 'paid', cancel_reason: 'paid_after_expiry',
     });
-    await chamar(ctrl.paypalWebhook, {
-      body: { event_type: 'PAYMENT.CAPTURE.COMPLETED', resource: { supplementary_data: { related_ids: { order_id: 'ORDER1' } } } },
-    });
+    await chamar(ctrl.paypalWebhook, { body: eventoCaptura() });
     await esperarPromessas();
     expect(reserva().status).toBe('cancelled');
     expect(mockBD.notifications).toHaveLength(0);
+  });
+});
+
+describe('Webhook PayPal recupera um pagamento capturado', () => {
+  test('create-intent guarda a ordem na reserva', async () => {
+    const res = await chamar(ctrl.publicCreatePaypalIntent, { body: { reservation_id: 'r1' } });
+    expect(res.statusCode).toBe(200);
+    expect(reserva().paypal_order_id).toBe('ORDER1');
+  });
+
+  test('captura feita mas a confirmacao falha na BD: o webhook confirma e avisa uma so vez', async () => {
+    esperarErro(/\[PayPal\] Falha ao confirmar captura/);
+    await chamar(ctrl.publicCreatePaypalIntent, { body: { reservation_id: 'r1' } });
+    captureOrder.mockResolvedValue(capturaDe('200.00'));
+    mockBD.falharUpdate = (tabela, d) => (d.payment_status === 'paid' ? { code: 'XX000', message: 'falha' } : null);
+    await expect(chamar(ctrl.publicConfirmPaypalPayment, { body: { reservation_id: 'r1', order_id: 'ORDER1' } }))
+      .rejects.toMatchObject({ code: 'XX000' });
+    expect(reserva()).toMatchObject({ status: 'pending', payment_status: 'pending' });
+
+    mockBD.falharUpdate = null;
+    await chamar(ctrl.paypalWebhook, { body: eventoCaptura() });
+    await esperarPromessas();
+    expect(reserva()).toMatchObject({
+      status: 'confirmed', payment_status: 'paid', paypal_order_id: 'ORDER1', paypal_capture_id: 'CAP1', amount_paid: 200,
+    });
+    // 2 avisos adiados (cliente + operador) + o recibo
+    expect(enviarEmail).toHaveBeenCalledTimes(3);
+    expect(mockBD.notifications.filter((n) => n.notification_type === 'new_booking')).toHaveLength(1);
+
+    // O PayPal repete o evento com a mesma captura: nada se repete.
+    await chamar(ctrl.paypalWebhook, { body: eventoCaptura() });
+    await esperarPromessas();
+    expect(enviarEmail).toHaveBeenCalledTimes(3);
+    expect(mockBD.notifications).toHaveLength(1);
+  });
+
+  test('webhook depois de a reserva expirar com o lugar livre: repoe e confirma', async () => {
+    Object.assign(reserva(), { paypal_order_id: 'ORDER1', status: 'cancelled', cancel_reason: 'payment_not_completed' });
+    await chamar(ctrl.paypalWebhook, { body: eventoCaptura() });
+    await esperarPromessas();
+    expect(reserva()).toMatchObject({
+      status: 'confirmed', payment_status: 'paid', cancel_reason: null, paypal_capture_id: 'CAP1', amount_paid: 200,
+    });
+    expect(mockBD.notifications.map((n) => n.notification_type)).toEqual(['new_booking']);
+  });
+
+  test('webhook depois de a reserva expirar com o lugar ocupado: pago sem lugar e o operador e avisado', async () => {
+    esperarErro(/\[PayPal\] Pago sem lugar/);
+    Object.assign(reserva(), { paypal_order_id: 'ORDER1', status: 'cancelled', cancel_reason: 'payment_not_completed' });
+    bh.verificarDisponibilidade.mockResolvedValue(false);
+    await chamar(ctrl.paypalWebhook, { body: eventoCaptura() });
+    await esperarPromessas();
+    expect(reserva()).toMatchObject({
+      status: 'cancelled', payment_status: 'paid', cancel_reason: 'paid_after_expiry', paypal_capture_id: 'CAP1',
+    });
+    expect(mockBD.notifications.map((n) => n.notification_type)).toEqual(['paid_after_expiry']);
+    expect(enviarEmail).toHaveBeenCalledWith(expect.objectContaining({ to: 'op@x.cv' }));
+    expect(enviarEmail).not.toHaveBeenCalledWith(expect.objectContaining({ to: 'ana@x.cv' }));
+
+    // O evento repetido nao volta a avisar.
+    await chamar(ctrl.paypalWebhook, { body: eventoCaptura() });
+    await esperarPromessas();
+    expect(mockBD.notifications).toHaveLength(1);
+  });
+
+  test('webhook com outra captura numa reserva ja paga avisa em duplicado e nao toca na reserva', async () => {
+    Object.assign(reserva(), {
+      paypal_order_id: 'ORDER1', status: 'confirmed', payment_status: 'paid', paypal_capture_id: 'CAP0', amount_paid: 200,
+    });
+    await chamar(ctrl.paypalWebhook, { body: eventoCaptura('CAP1') });
+    await esperarPromessas();
+    expect(reserva()).toMatchObject({ status: 'confirmed', payment_status: 'paid', paypal_capture_id: 'CAP0' });
+    expect(mockBD.notifications.map((n) => n.content)).toEqual([`${TEXTO_DUPLICADO} — Ana Lopes — Passeio de barco (CAP1)`]);
+  });
+
+  test('webhook abaixo do total numa reserva por pagar fica parcial com Pagamento incompleto', async () => {
+    esperarErro(/\[PayPal\] Valor capturado abaixo do total/);
+    reserva().paypal_order_id = 'ORDER1';
+    await chamar(ctrl.paypalWebhook, { body: eventoCaptura('CAP1', '1.00') });
+    await esperarPromessas();
+    expect(reserva()).toMatchObject({ status: 'pending', payment_status: 'partial', paypal_capture_id: 'CAP1', amount_paid: 1 });
+    const notif = mockBD.notifications.find((n) => n.notification_type === 'new_booking');
+    expect(notif.content.endsWith('Pagamento incompleto — verificar')).toBe(true);
   });
 });
 
@@ -548,6 +628,64 @@ describe('SISP', () => {
     expect(res.destino).toContain('erro=valor');
     expect(reserva().sisp_transaction_id).toBe('T1');
     expect(mockBD.notifications.map((n) => n.notification_type)).toEqual(['duplicate_payment']);
+  });
+
+  test('callback repetido depois de um reembolso nao escreve nada nem avisa', async () => {
+    Object.assign(reserva(), { status: 'confirmed', payment_status: 'refunded', sisp_transaction_id: 'T1', amount_paid: 22053 });
+    validarResposta.mockReturnValue({ status: 'paid', transactionID: 'T1', amount: 22053 });
+    const antes = { ...reserva() };
+    const res = await chamar(ctrl.sispCallback, { query: { res: 'r1' }, body: {} });
+    await esperarPromessas();
+    expect(res.destino).toBe('https://app.saldesk.cv/book/cancel?res=r1');
+    expect(reserva()).toEqual(antes);
+    expect(mockBD.notifications).toHaveLength(0);
+    expect(enviarEmail).not.toHaveBeenCalled();
+  });
+
+  test('callback repetido de uma reserva cancelada e reembolsada nao volta a pagar nem avisa', async () => {
+    Object.assign(reserva(), {
+      status: 'cancelled', cancel_reason: null, payment_status: 'refunded', sisp_transaction_id: 'T1', amount_paid: 22053,
+    });
+    validarResposta.mockReturnValue({ status: 'paid', transactionID: 'T1', amount: 22053 });
+    const antes = { ...reserva() };
+    const res = await chamar(ctrl.sispCallback, { query: { res: 'r1' }, body: {} });
+    await esperarPromessas();
+    expect(res.destino).toBe('https://app.saldesk.cv/book/cancel?res=r1');
+    expect(reserva()).toEqual(antes);
+    expect(mockBD.notifications).toHaveLength(0);
+    expect(enviarEmail).not.toHaveBeenCalled();
+  });
+
+  test('callback repetido de um pago sem lugar volta ao aviso do lugar sem escrever', async () => {
+    Object.assign(reserva(), {
+      status: 'cancelled', cancel_reason: 'paid_after_expiry', payment_status: 'paid', sisp_transaction_id: 'T1',
+    });
+    validarResposta.mockReturnValue({ status: 'paid', transactionID: 'T1', amount: 22053 });
+    const antes = { ...reserva() };
+    const res = await chamar(ctrl.sispCallback, { query: { res: 'r1' }, body: {} });
+    expect(res.destino).toBe('https://app.saldesk.cv/book/cancel?res=r1&erro=lugar');
+    expect(reserva()).toEqual(antes);
+    expect(mockBD.notifications).toHaveLength(0);
+  });
+
+  test('callback repetido de uma reserva paga e confirmada volta ao sucesso sem escrever', async () => {
+    Object.assign(reserva(), { status: 'confirmed', payment_status: 'paid', sisp_transaction_id: 'T1', amount_paid: 22053 });
+    validarResposta.mockReturnValue({ status: 'paid', transactionID: 'T1', amount: 22053 });
+    const antes = { ...reserva() };
+    const res = await chamar(ctrl.sispCallback, { query: { res: 'r1' }, body: {} });
+    expect(res.destino).toBe('https://app.saldesk.cv/book/success?res=r1');
+    expect(reserva()).toEqual(antes);
+    expect(mockBD.notifications).toHaveLength(0);
+  });
+
+  test('pago sem lugar nunca desfaz um reembolso', async () => {
+    Object.assign(reserva(), {
+      status: 'cancelled', cancel_reason: null, payment_status: 'refunded', sisp_transaction_id: 'T1', amount_paid: 22053,
+    });
+    await registarPagoSemLugar(supabaseAdmin, 'r1', { metodo: 'sisp', valor: 22053, campos: { sisp_transaction_id: 'T2' } });
+    expect(reserva()).toMatchObject({ status: 'cancelled', cancel_reason: null, payment_status: 'refunded', sisp_transaction_id: 'T1' });
+    // O dinheiro novo entrou na mesma: o operador continua a ser avisado.
+    expect(mockBD.notifications.map((n) => n.notification_type)).toEqual(['paid_after_expiry']);
   });
 
   test('iniciar pagamento com o lugar retido renova o prazo e prepara o pedido', async () => {
