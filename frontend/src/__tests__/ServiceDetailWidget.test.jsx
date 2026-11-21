@@ -1,7 +1,7 @@
 /* Ficha de um servico em modo widget (?widget=1). Ficheiro proprio: o modo widget fica guardado numa
    variavel do modulo e contaminaria os testes da ficha normal (ServiceDetail.test.jsx). */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, cleanup } from '@testing-library/react';
+import { render, screen, cleanup, within } from '@testing-library/react';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import ServiceDetail from '../pages/ServiceDetail';
 
@@ -29,7 +29,7 @@ beforeEach(() => {
 afterEach(() => { cleanup(); vi.restoreAllMocks(); });
 
 describe('ServiceDetail em modo widget', () => {
-  it('sem navegacao nem rodape do site: so o servico, o botao Reservar Agora e a assinatura SalDesk', async () => {
+  it('sem navegacao nem rodape do site: so o servico, a coluna de reserva e a assinatura SalDesk', async () => {
     render(
       <MemoryRouter initialEntries={['/book/demo/servico/u1?widget=1']} future={FUTURE}>
         <Routes><Route path="/book/:slug/servico/:id" element={<ServiceDetail />} /></Routes>
@@ -38,7 +38,9 @@ describe('ServiceDetail em modo widget', () => {
     expect((await screen.findAllByText('Passeio de buggy')).length).toBeGreaterThan(0);
     expect(document.querySelector('nav')).toBeNull();
     expect(document.querySelector('footer')).toBeNull();
-    expect(screen.getAllByRole('button', { name: /Reservar Agora/ }).length).toBeGreaterThan(0);
+    /* actividade: a coluna de reserva vem numa so coluna e sem a barra fixa do telemovel (Task 8) */
+    expect(within(screen.getByTestId('coluna-reserva')).getByRole('button', { name: /Reservar/ })).toBeInTheDocument();
+    expect(screen.queryByTestId('barra-reserva-movel')).toBeNull();
     expect(screen.getByRole('link', { name: 'SalDesk' })).toHaveAttribute('href', 'https://saldesk.cv');
   });
 });

@@ -23,6 +23,10 @@ const FICHEIROS = [
   'components/servico/FactosActividade.jsx',
   'components/servico/MenuSeccoes.jsx',
   'components/servico/SeccoesActividade.jsx',
+  'components/servico/ReservaActividade.jsx',
+  'components/servico/CalendarioReserva.jsx',
+  'components/servico/HorariosReserva.jsx',
+  'components/servico/BarraReservaMovel.jsx',
 ];
 
 const PALAVRAS = [

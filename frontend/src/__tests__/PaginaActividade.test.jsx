@@ -231,12 +231,16 @@ describe('Pagina de actividade', () => {
     expect(screen.getByRole('button', { name: /Partilhar/ })).toBeInTheDocument();
   });
 
-  it('coluna_de_reserva_abre_o_modal_de_hoje', async () => {
+  /* A coluna deixou de ser so um botao para o modal (Task 8): tem os passos e "Reservar" fica
+     desactivado ate haver data. Reservar com data abre o modal pre-preenchido: ver
+     reservar_abre_o_modal_com_a_seleccao em ReservaActividade.test.jsx. */
+  it('coluna_de_reserva_por_passos', async () => {
     simularRede();
     montar();
     const coluna = await screen.findByTestId('coluna-reserva');
-    fireEvent.click(within(coluna).getByRole('button', { name: /Ver disponibilidade/ }));
-    expect(await screen.findByText('Passo 1 de 3')).toBeInTheDocument();
+    expect(within(coluna).getByRole('heading', { name: 'Quem vem?' })).toBeInTheDocument();
+    expect(within(coluna).getByRole('heading', { name: 'Escolha a data e a hora' })).toBeInTheDocument();
+    expect(within(coluna).getByRole('button', { name: /Reservar/ })).toBeDisabled();
   });
 
   it('em_ingles_usa_titulos_e_nome_em_ingles', async () => {

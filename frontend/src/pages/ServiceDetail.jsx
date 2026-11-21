@@ -36,6 +36,8 @@ import CabecalhoActividade from '../components/servico/CabecalhoActividade';
 import FactosActividade from '../components/servico/FactosActividade';
 import MenuSeccoes from '../components/servico/MenuSeccoes';
 import SeccoesActividade from '../components/servico/SeccoesActividade';
+import ReservaActividade from '../components/servico/ReservaActividade';
+import BarraReservaMovel from '../components/servico/BarraReservaMovel';
 
 /* Icone numerado para as paragens do itinerario -- SVG inline (nunca
    bitmap), substitui o icone PNG por defeito do Leaflet (que nem sequer
@@ -1228,6 +1230,21 @@ function ServiceDetailPagina() {
     ? fmtPrice(unit.base_price, unit.price_unit, op.currency||'EUR', currency, lang)
     : (startingFrom ? `${lang==='en'?'From ':'A partir de '}${fmtPrice(startingFrom, null, op.currency||'EUR', currency, lang)}` : null);
   const rawPrice     = fmtRaw(unit.base_price, op.currency||'EUR', currency);
+
+  /* Coluna de reserva da actividade: o preco "Desde" (por pessoa, ou por grupo quando so ha
+     preco privado) e o formatador da pagina para as linhas do /quote. "Reservar" passa a
+     seleccao ao modal de hoje pelos valores iniciais (data, pessoas, idioma). */
+  const formatarPrecoReserva = (v) => fmtPrice(v, null, op.currency||'EUR', currency, lang);
+  const desdeReserva = unit.base_price
+    ? { valor: Number(unit.base_price), porGrupo: false }
+    : { valor: startingFromPrice(unitMeta), porGrupo: true };
+  function reservarSeleccao(seleccao) {
+    setSbDate(seleccao.date);
+    setSbAdults(seleccao.adults);
+    setSbKids(seleccao.children);
+    setSbLanguage(seleccao.language || '');
+    setBookOpen(true);
+  }
   const currSymbol   = currency === 'CVE' ? 'CVE' : '€';
 
   const whatsappUrl = op.whatsapp
@@ -1872,27 +1889,23 @@ function ServiceDetailPagina() {
                 <FactosActividade factos={factos} lang={lang}/>
               </div>
             )}
-            <div className="grid grid-cols-[minmax(0,1fr)] lg:grid-cols-[minmax(0,1fr)_380px] gap-8 lg:gap-12 mt-8 pb-12">
-              {/* Coluna de reserva. Conteudo provisorio (preco e o botao que abre o modal de hoje)
-                  ate a Task 8 o trocar pelo bloco de reserva por passos. */}
-              <aside id="reserva" aria-label={lang==='en'?'Booking':'Reserva'} data-testid="coluna-reserva"
-                className="lg:col-start-2 lg:row-start-1 min-w-0">
-                <div className="lg:sticky lg:top-20 bg-white border border-n-200 rounded-2xl shadow-sm p-5 space-y-4">
-                  {displayPrice ? (
-                    <p className="font-display font-extrabold text-2xl text-brand-700 leading-none">{displayPrice}</p>
-                  ) : (
-                    <p className="font-display font-bold text-lg text-n-500">{lang==='en'?'On request':'Consultar'}</p>
-                  )}
+            <div className={isWidget
+              ? 'grid grid-cols-[minmax(0,1fr)] gap-8 mt-8 pb-12'
+              : 'grid grid-cols-[minmax(0,1fr)] lg:grid-cols-[minmax(0,1fr)_380px] gap-8 lg:gap-12 mt-8 pb-28 lg:pb-12'}>
+              {/* Coluna de reserva por passos (opcao, quem vem, data e hora, preco do servidor).
+                  Fixa ao rolar a partir de lg; abaixo de lg fica a seguir aos factos e a barra em
+                  baixo (BarraReservaMovel) leva ate aqui. No widget fica primeiro, numa so coluna. */}
+              <aside id="reserva" tabIndex={-1} aria-label={lang==='en'?'Booking':'Reserva'} data-testid="coluna-reserva"
+                className={isWidget ? 'min-w-0 focus:outline-none' : 'lg:col-start-2 lg:row-start-1 min-w-0 focus:outline-none'}>
+                <div className="lg:sticky lg:top-20 lg:max-h-[calc(100vh-6rem)] lg:overflow-y-auto lg:overscroll-contain rounded-2xl">
+                  <ReservaActividade api={API} slug={slug} unit={unit} meta={unitMeta} lang={lang}
+                    formatarPreco={formatarPrecoReserva} desde={desdeReserva} temPrivado={temPrecoPrivado(unitMeta)}
+                    onReservar={reservarSeleccao}>
                   {recentBookings > 0 && (
                     <p className="text-xs font-body font-semibold text-amber-700 bg-amber-50 rounded-lg px-3 py-2">
                       <span className="font-bold">{recentBookings}</span> {lang==='en'?'bookings this month':'reservas este mês'}
                     </p>
                   )}
-                  <button type="button" onClick={handleReservarClick}
-                    className="w-full bg-sand-500 text-n-900 font-body font-bold py-3.5 rounded-xl flex items-center justify-center gap-2 hover:bg-sand-400 transition-colors motion-reduce:transition-none text-base shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2">
-                    <Calendar size={18} strokeWidth={1.75} aria-hidden="true"/>
-                    {lang==='en'?'Check availability':'Ver disponibilidade'}
-                  </button>
                   {whatsappUrl && (
                     <a href={whatsappUrl} target="_blank" rel="noopener noreferrer"
                       className="w-full border-2 border-n-200 text-n-700 font-body font-semibold py-3 rounded-xl flex items-center justify-center gap-2 hover:border-brand-700 hover:text-brand-700 transition-colors motion-reduce:transition-none text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2">
@@ -1900,9 +1913,10 @@ function ServiceDetailPagina() {
                       {lang==='en'?'Contact operator':'Contactar operador'}
                     </a>
                   )}
+                  </ReservaActividade>
                 </div>
               </aside>
-              <div className="lg:col-start-1 lg:row-start-1 min-w-0">
+              <div className={isWidget ? 'min-w-0' : 'lg:col-start-1 lg:row-start-1 min-w-0'}>
                 {!isWidget && <MenuSeccoes ids={idsSeccoes} lang={lang}/>}
                 <SeccoesActividade ids={idsSeccoes} meta={metaActividade} op={op} lang={lang} blocos={blocosActividade}/>
               </div>
@@ -1953,7 +1967,11 @@ function ServiceDetailPagina() {
       </footer>
       )}
 
-      {/* ── Mobile bottom bar ── */}
+      {/* ── Mobile bottom bar ── (actividade: "Desde X" e "Ver disponibilidade", que leva a coluna
+          de reserva; no widget a coluna ja vem primeiro, por isso nao ha barra) */}
+      {isActivity ? (!isWidget && (
+        <BarraReservaMovel lang={lang} precoTexto={desdeReserva.valor ? formatarPrecoReserva(desdeReserva.valor) : null}/>
+      )) : (
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-n-200 px-4 py-3 flex gap-3 z-30 lg:hidden shadow-lg">
         {displayPrice && (
           <div className="flex flex-col justify-center mr-2">
@@ -1972,6 +1990,7 @@ function ServiceDetailPagina() {
           </a>
         )}
       </div>
+      )}
 
       {/* ── Booking Modal ── */}
       {bookOpen && (
