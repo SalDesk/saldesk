@@ -7,6 +7,11 @@ import {
   SectionLabel, ChipToggle, OtaFields, buildOtaProductIds, LANGUAGES, UNIT_TYPES_BY_OPERATOR,
 } from './editors';
 import LocalizacaoPontoEncontro from './LocalizacaoPontoEncontro';
+import {
+  SeccoesOpcoes, opcoesParaForm, suplementosParaForm, ofertasParaForm,
+  temErrosOpcoes, opcoesParaMeta, suplementosParaMeta, ofertasParaMeta,
+} from './OpcoesActividade';
+import { useT } from '../../../i18n';
 
 /* Rotulos gravados em portugues; a pagina publica traduz-os em EN (utils/paginaActividade) */
 export const ACTIVITY_AMENS   = ['Equipamento incluído', 'Instrutor certificado', 'Seguro', 'Fotografias/Vídeo', 'Transporte', 'Snacks e água', 'Vestiário', 'Toalhas'];
@@ -17,7 +22,9 @@ export function parseTourMeta(description) {
 }
 
 export default function TourForm({ unit, onSave, onCancel, loading, error }) {
+  const t = useT();
   const meta = parseTourMeta(unit?.description);
+  const [tentouGuardar, setTentouGuardar] = useState(false);
 
   const [form, setForm] = useState({
     name:          unit?.name          || '',
@@ -49,6 +56,9 @@ export default function TourForm({ unit, onSave, onCancel, loading, error }) {
     important_info: meta.important_info || '',
     stops:          meta.stops          || [],
     time_slots:     meta.time_slots     || [],
+    options:             opcoesParaForm(meta),
+    language_surcharges: suplementosParaForm(meta),
+    offers:              ofertasParaForm(meta),
     status:   unit?.status  || 'active',
     images:   unit?.images  || [],
     ota_viator_id: unit?.ota_product_ids?.viator       || '',
@@ -77,6 +87,8 @@ export default function TourForm({ unit, onSave, onCancel, loading, error }) {
 
   function handleSubmit(e) {
     e.preventDefault();
+    /* Opcoes, suplementos e ofertas invalidos bloqueiam a gravacao; os erros aparecem nas linhas */
+    if (temErrosOpcoes(form)) { setTentouGuardar(true); return; }
     const images = form.images || [];
     const tourMeta = {
       name_en:       form.name_en       || null,
@@ -117,11 +129,22 @@ export default function TourForm({ unit, onSave, onCancel, loading, error }) {
         .filter(s => s.time && s.capacity)
         .map(s => ({ time: s.time, capacity: Number(s.capacity) })),
     };
+    /* So grava as chaves novas quando ha conteudo: actividades sem opcoes ficam como estavam */
+    const opcoes = opcoesParaMeta(form.options);
+    if (opcoes.length > 0) tourMeta.options = opcoes;
+    const suplementos = suplementosParaMeta(form.language_surcharges, form.languages);
+    if (Object.keys(suplementos).length > 0) tourMeta.language_surcharges = suplementos;
+    const ofertas = ofertasParaMeta(form.offers);
+    if (ofertas.length > 0) tourMeta.offers = ofertas;
+    /* Com opcoes, o preco "desde" de todo o lado passa a ser o da opcao mais barata */
+    const precoBase = opcoes.length > 0
+      ? Math.min(...opcoes.map(o => o.price))
+      : (form.base_price ? Number(form.base_price) : 0);
     onSave({
       name:        form.name,
       description: JSON.stringify(tourMeta),
       unit_type:   form.unit_type,
-      base_price:  form.base_price ? Number(form.base_price) : 0,
+      base_price:  precoBase,
       price_unit:  'person',
       capacity:    Number(form.capacity),
       status:      form.status,
@@ -357,6 +380,9 @@ export default function TourForm({ unit, onSave, onCancel, loading, error }) {
         <PriceTiersEditor tiers={form.price_tiers} onChange={price_tiers => setForm(f => ({ ...f, price_tiers }))} />
       </div>
 
+      {/* Opcoes (variantes), suplemento de idioma do guia e ofertas automaticas */}
+      <SeccoesOpcoes form={form} setForm={setForm} mostrarErros={tentouGuardar} />
+
       <div>
         <SectionLabel>Comodidades</SectionLabel>
         <AmenitiesPicker options={ACTIVITY_AMENS} selected={form.amenities} onToggle={toggleAmen} />
@@ -402,6 +428,12 @@ export default function TourForm({ unit, onSave, onCancel, loading, error }) {
             <option value="inactive">Inactivo</option>
           </Select>
         </div>
+      )}
+
+      {tentouGuardar && temErrosOpcoes(form) && (
+        <p className="text-sm font-body px-3 py-2 rounded-sm bg-[var(--error-light)] text-[var(--error)]">
+          {t('opcoesActividade.fixErrors')}
+        </p>
       )}
 
       {error && (
