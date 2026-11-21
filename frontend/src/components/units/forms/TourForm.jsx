@@ -25,6 +25,10 @@ export default function TourForm({ unit, onSave, onCancel, loading, error }) {
     short_en:      meta.short_en       || '',
     desc_pt:       meta.desc_pt        || '',
     desc_en:       meta.desc_en        || '',
+    highlights_pt: meta.highlights_pt  || '',
+    highlights_en: meta.highlights_en  || '',
+    what_to_bring_pt: meta.what_to_bring_pt || '',
+    what_to_bring_en: meta.what_to_bring_en || '',
     unit_type:     unit?.unit_type     || 'Tour',
     tour_type:     meta.tour_type      || 'grupo',
     duration:      meta.duration       != null ? String(meta.duration) : '',
@@ -79,6 +83,10 @@ export default function TourForm({ unit, onSave, onCancel, loading, error }) {
       short_en:      form.short_en.trim() || null,
       desc_pt:       form.desc_pt       || null,
       desc_en:       form.desc_en       || null,
+      highlights_pt: form.highlights_pt.trim() || null,
+      highlights_en: form.highlights_en.trim() || null,
+      what_to_bring_pt: form.what_to_bring_pt.trim() || null,
+      what_to_bring_en: form.what_to_bring_en.trim() || null,
       tour_type:     form.tour_type,
       duration:      form.duration      ? Number(form.duration)      : null,
       languages:     form.languages,
@@ -194,6 +202,40 @@ export default function TourForm({ unit, onSave, onCancel, loading, error }) {
             onChange={set('desc_en')}
             placeholder="Full description in English. You can use several paragraphs (Enter)..."
             rows={6}
+          />
+        </div>
+      </div>
+
+      <div>
+        <SectionLabel>Destaques e o que levar</SectionLabel>
+        <div className="space-y-3">
+          <Textarea
+            label="Destaques (PT) — um por linha"
+            value={form.highlights_pt}
+            onChange={set('highlights_pt')}
+            placeholder="Um destaque por linha (Enter)..."
+            rows={4}
+          />
+          <Textarea
+            label="Destaques (EN) — one per line"
+            value={form.highlights_en}
+            onChange={set('highlights_en')}
+            placeholder="One highlight per line (Enter)..."
+            rows={4}
+          />
+          <Textarea
+            label="O que levar (PT)"
+            value={form.what_to_bring_pt}
+            onChange={set('what_to_bring_pt')}
+            placeholder="Ex: Toalha, protector solar, chapéu."
+            rows={3}
+          />
+          <Textarea
+            label="O que levar (EN)"
+            value={form.what_to_bring_en}
+            onChange={set('what_to_bring_en')}
+            placeholder="E.g. Towel, sunscreen, hat."
+            rows={3}
           />
         </div>
       </div>

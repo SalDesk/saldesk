@@ -224,6 +224,7 @@ describe.each(TODOS)('formulario comum (%s)', (tipo, rotuloCriar) => {
 describe('TourForm', () => {
   const META_VAZIA = {
     name_en: null, short_pt: null, short_en: null, desc_pt: null, desc_en: null,
+    highlights_pt: null, highlights_en: null, what_to_bring_pt: null, what_to_bring_en: null,
     tour_type: 'grupo', duration: null, languages: ['PT', 'EN'], difficulty: 'Moderado',
     min_age: null, meeting_point: null, pickup_included: false, start_time: null, price_child: null, price_private: null,
     price_tiers: [], amenities: [], included_items: [], important_info: null, stops: [], time_slots: [],
@@ -371,6 +372,10 @@ describe('TourForm', () => {
         short_en: 'Summary EN',
         desc_pt: 'Linha um\nLinha dois',
         desc_en: 'Long description',
+        highlights_pt: null,
+        highlights_en: null,
+        what_to_bring_pt: null,
+        what_to_bring_en: null,
         tour_type: 'ambos',
         duration: 2.5,
         languages: ['PT', 'DE'],
@@ -423,6 +428,35 @@ describe('TourForm', () => {
     escrever(campo('Preco adulto (opcional se usar Preço privado/Escalões)'), '0');
     fireEvent.click(botao('Criar tour'));
     expect(guardar(onSave).base_price).toBe(0);
+  });
+
+  it('destaques_e_o_que_levar_gravam', () => {
+    const { onSave } = renderForm('activity');
+    escrever(campo('Nome PT'), 'Tour');
+    escrever(campo('Capacidade maxima'), '4');
+    expect(screen.getByText('Destaques e o que levar')).toBeInTheDocument();
+    escrever(campo('Destaques (PT) — um por linha'), 'A\nB');
+    escrever(campo('Destaques (EN) — one per line'), 'C\nD');
+    escrever(campo('O que levar (PT)'), 'Toalha e protector solar');
+    escrever(campo('O que levar (EN)'), 'Towel and sunscreen');
+    fireEvent.click(botao('Criar tour'));
+    const meta = JSON.parse(guardar(onSave).description);
+    expect(meta.highlights_pt).toBe('A\nB');
+    expect(meta.highlights_en).toBe('C\nD');
+    expect(meta.what_to_bring_pt).toBe('Toalha e protector solar');
+    expect(meta.what_to_bring_en).toBe('Towel and sunscreen');
+  });
+
+  it('destaques_e_o_que_levar_vazios_gravam_null', () => {
+    const { onSave } = renderForm('activity');
+    escrever(campo('Nome PT'), 'Tour');
+    escrever(campo('Capacidade maxima'), '4');
+    fireEvent.click(botao('Criar tour'));
+    const meta = JSON.parse(guardar(onSave).description);
+    expect(meta.highlights_pt).toBeNull();
+    expect(meta.highlights_en).toBeNull();
+    expect(meta.what_to_bring_pt).toBeNull();
+    expect(meta.what_to_bring_en).toBeNull();
   });
 
   describe('localizacao do ponto de encontro', () => {
@@ -731,6 +765,10 @@ describe('TourForm', () => {
           short_en: 'Summary',
           desc_pt: 'Descricao PT',
           desc_en: 'Description EN',
+          highlights_pt: null,
+          highlights_en: null,
+          what_to_bring_pt: null,
+          what_to_bring_en: null,
           tour_type: 'privado',
           duration: 3,
           languages: ['PT', 'NL'],
