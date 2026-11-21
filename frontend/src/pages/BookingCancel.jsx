@@ -17,7 +17,11 @@ export default function BookingCancel() {
           {lang === 'en' ? 'Payment not completed' : 'Pagamento não concluído'}
         </h1>
         <p className="text-sm font-body text-n-500 leading-relaxed mb-2">
-          {erro
+          {erro === 'lugar'
+            ? (lang === 'en'
+                ? 'Your payment was received, but the place had already been taken. The operator will contact you about a refund or a new date.'
+                : 'O pagamento foi recebido, mas o lugar já tinha sido ocupado. O operador vai contactá-lo para o reembolso ou uma nova data.')
+            : erro
             ? (lang === 'en'
                 ? 'The payment was cancelled or could not be validated.'
                 : 'O pagamento foi cancelado ou não pôde ser validado.')

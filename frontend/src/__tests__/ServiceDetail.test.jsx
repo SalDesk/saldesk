@@ -449,6 +449,42 @@ describe('ServiceDetail: reservar a partir da coluna', () => {
     expect(corpoDe('/payments/paypal/create-intent')).toEqual({ reservation_id: 'res-1234567890', amount: 80, currency: 'EUR' });
   });
 
+  it('mostra o aviso dos 30 minutos ao escolher PayPal', async () => {
+    redeDaReserva();
+    montar();
+    await reservarNaColuna();
+    await preencherDadosESeguir();
+    expect(screen.queryByText('Guardamos o seu lugar durante 30 minutos enquanto paga.')).toBeNull();
+    fireEvent.click(screen.getByText('Cartão internacional (PayPal)'));
+    expect(screen.getByText('Guardamos o seu lugar durante 30 minutos enquanto paga.')).toBeInTheDocument();
+    fireEvent.click(screen.getByText('Cartão cabo-verdiano (Vinti4)'));
+    expect(screen.getByText('Guardamos o seu lugar durante 30 minutos enquanto paga.')).toBeInTheDocument();
+  });
+
+  it('não mostra o aviso para pagar no local', async () => {
+    redeDaReserva();
+    montar();
+    await reservarNaColuna();
+    await preencherDadosESeguir();
+    expect(screen.queryByText(/Guardamos o seu lugar/)).toBeNull();
+    fireEvent.click(screen.getByText('Pagar presencialmente'));
+    expect(screen.queryByText(/Guardamos o seu lugar/)).toBeNull();
+  });
+
+  it('voltar do passo 3 e regressar cria nova reserva PayPal', async () => {
+    redeDaReserva();
+    montar();
+    await reservarNaColuna();
+    await preencherDadosESeguir();
+    fireEvent.click(screen.getByText('Cartão internacional (PayPal)'));
+    await waitFor(() => expect(pedidos('/public/demo/reservations')).toHaveLength(1));
+    fireEvent.click(screen.getByRole('button', { name: /Anterior/ }));
+    expect(await screen.findByText('Passo 2 de 3')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /Continuar/ }));
+    expect(await screen.findByText('Resumo e pagamento')).toBeInTheDocument();
+    await waitFor(() => expect(pedidos('/public/demo/reservations')).toHaveLength(2));
+  });
+
   it('reservar_da_barra_de_cima_vai_a_coluna', async () => {
     redeDaReserva();
     const scroll = vi.fn();
