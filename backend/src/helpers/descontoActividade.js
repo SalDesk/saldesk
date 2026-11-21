@@ -47,8 +47,16 @@ async function escolherDesconto({ operatorId, unitId, meta, total, date, voucher
     };
   }
 
-  // A oferta ganha: o codigo e ignorado por completo, mesmo invalido ou esgotado
-  if (comOferta) return { ...comOferta, voucherIgnored: true };
+  // A oferta ganha e o codigo nao se aplica (nunca regista uso). Codigo valido que perdeu:
+  // voucherIgnored. Codigo invalido ou esgotado: aviso nao bloqueante (voucherError), sem
+  // error, para o POST continuar a nao devolver 400 quando ha oferta.
+  if (comOferta) {
+    if (resultado && resultado.valid) return { ...comOferta, voucherIgnored: true };
+    return {
+      ...comOferta,
+      voucherError: { code: 'INVALID_VOUCHER', message_pt: (resultado && resultado.error) || 'Código inválido', message_en: 'Invalid code' },
+    };
+  }
 
   return {
     ...semDesconto,

@@ -582,6 +582,23 @@ describe('Coluna de reserva com opcoes, idioma e ofertas', () => {
     fireEvent.click(reservar);
     expect(onReservar.mock.calls[0][0].voucher).toBeNull();
   });
+
+  it('codigo_invalido_com_oferta_mostra_a_mensagem_do_codigo_sem_bloquear', async () => {
+    simularRede({ cotacao: (p) => (p.get('voucher')
+      ? { lines: [{ type: 'tour', description: 'Adultos', quantity: 2, total: 90 }, { type: 'discount', source: 'offer', description: 'Oferta especial (-25%)', quantity: 1, total: -22.5 }], total: 67.5, before: 90, error: null, voucher_ignored: false, voucher_error: { code: 'INVALID_VOUCHER', message_pt: 'Código inválido', message_en: 'Invalid code' } }
+      : COTACAO) });
+    const onReservar = vi.fn();
+    montarColuna({ onReservar });
+    fireEvent.click(await esperarDiaLivre('2026-11-25'));
+    fireEvent.change(screen.getByPlaceholderText('Código de desconto'), { target: { value: 'xpto' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Aplicar' }));
+    expect(await screen.findByText('Código inválido')).toBeInTheDocument();
+    expect(screen.queryByText('Já existe uma oferta melhor; o código não foi aplicado')).toBeNull();
+    const reservar = screen.getByRole('button', { name: /Reservar/ });
+    await waitFor(() => expect(reservar).toBeEnabled());
+    fireEvent.click(reservar);
+    expect(onReservar.mock.calls[0][0].voucher).toBeNull();
+  });
 });
 
 describe('Coluna de reserva quando a rede falha', () => {

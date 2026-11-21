@@ -1386,6 +1386,7 @@ async function cotarActividade(req, res, next) {
 
     return res.json({ data: {
       lines, total: desconto.total, before: desconto.before, error: desconto.error, voucher_ignored: desconto.voucherIgnored,
+      voucher_error: desconto.voucherError || null,
     } });
   } catch (err) { next(err); }
 }

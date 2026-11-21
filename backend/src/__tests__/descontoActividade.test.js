@@ -59,13 +59,22 @@ describe('escolherDesconto', () => {
     expect(d.error).toBeNull();
   });
 
-  it('codigo esgotado com oferta: ganha a oferta sem erro', async () => {
+  it('codigo esgotado com oferta: ganha a oferta sem erro bloqueante, com aviso do codigo', async () => {
     validarVoucher.mockResolvedValue({ valid: false, error: 'Codigo esgotado' });
     const d = await escolherDesconto({ ...base, meta: OFERTA, voucherCode: 'ESGOTADO' });
     expect(d.total).toBe(217.5);
     expect(d.line.source).toBe('offer');
-    expect(d.voucherIgnored).toBe(true);
+    expect(d.voucherIgnored).toBe(false);
+    expect(d.voucherError).toEqual({ code: 'INVALID_VOUCHER', message_pt: 'Codigo esgotado', message_en: 'Invalid code' });
     expect(d.voucherId).toBeNull();
+    expect(d.error).toBeNull();
+  });
+
+  it('codigo invalido sem mensagem com oferta: aviso por omissao', async () => {
+    validarVoucher.mockResolvedValue({ valid: false });
+    const d = await escolherDesconto({ ...base, meta: OFERTA, voucherCode: 'XPTO' });
+    expect(d.voucherIgnored).toBe(false);
+    expect(d.voucherError).toEqual({ code: 'INVALID_VOUCHER', message_pt: 'Código inválido', message_en: 'Invalid code' });
     expect(d.error).toBeNull();
   });
 

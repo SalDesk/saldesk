@@ -276,6 +276,8 @@ export default function ReservaActividade({
   const voucherInvalido = erro?.code === 'INVALID_VOUCHER';
   /* O codigo perdeu para uma oferta melhor: nao se aplica (nem vai na reserva) */
   const voucherIgnorado = !!cotacao?.voucher_ignored;
+  /* Codigo invalido com uma oferta a aplicar: aviso do codigo, sem bloquear a reserva */
+  const erroCodigoComOferta = cotacao?.voucher_error || null;
   const erroBloqueia = !!erro && !voucherInvalido;
   /* Uma unidade com time_slots precisa sempre de hora (o servidor devolve sempre os horarios
      configurados; lista vazia ou falha nunca dispensam a hora). Sem cotacao valida, nao reserva. */
@@ -296,7 +298,7 @@ export default function ReservaActividade({
       children: criancas,
       mode: modo,
       language: linguaEfectiva,
-      voucher: voucher && !voucherInvalido && !voucherIgnorado ? voucher : null,
+      voucher: voucher && !voucherInvalido && !voucherIgnorado && !erroCodigoComOferta ? voucher : null,
       optionId: opcaoActual,
       vehicles: veiculos,
       guideLanguage: linguaEfectiva,
@@ -448,6 +450,9 @@ export default function ReservaActividade({
         ) : null}
         {voucherInvalido && (
           <p role="alert" className="text-xs font-body text-red-700">{en ? erro.message_en : erro.message_pt}</p>
+        )}
+        {erroCodigoComOferta && !semPreco && (
+          <p role="alert" className="text-xs font-body text-red-700">{en ? erroCodigoComOferta.message_en : erroCodigoComOferta.message_pt}</p>
         )}
         {voucherIgnorado && !semPreco && (
           <p role="status" className="text-xs font-body text-n-600">

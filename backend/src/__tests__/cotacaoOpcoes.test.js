@@ -192,7 +192,11 @@ describe('cotacao e reserva com opcoes', () => {
       estado.inseridas = [];
       const q = await cotar({ option: 'o1', adults: '2', children: '1', date: '2026-12-05', voucher: codigo });
       expect(q.error).toBeNull();
-      expect(q.voucher_ignored).toBe(true);
+      // MENOS10 e valido e perde para a oferta (ignorado); ESGOTADO e invalido (aviso, nao ignorado)
+      expect(q.voucher_ignored).toBe(codigo === 'MENOS10');
+      expect(q.voucher_error).toEqual(codigo === 'ESGOTADO'
+        ? { code: 'INVALID_VOUCHER', message_pt: 'Codigo esgotado', message_en: 'Invalid code' }
+        : null);
       expect(q.total).toBe(97.5);
       expect(q.lines.find((l) => l.type === 'discount').source).toBe('offer');
 
