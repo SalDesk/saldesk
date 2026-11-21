@@ -249,6 +249,24 @@ async function criarReserva(req, res, next) {
     const isRentacar   = operator.operator_type === 'rentacar';
     const isActivity   = operator.operator_type === 'activity';
 
+    /* Numero de pessoas efectivo -- um so valor para preco, vagas, guests
+       guardado e notas. Em actividades, se vierem adults/children, o grupo e
+       adultos + criancas (manda sobre party_size/guests); sem divisao, todas
+       as pessoas contam como adultos. Outros tipos: party_size || guests || 1. */
+    let partyEfectivo = party_size || guests || 1;
+    let splitAdultos = null;
+    let splitCriancas = 0;
+    if (isActivity) {
+      const base = Math.max(1, Math.floor(Number(party_size || guests || 1)) || 1);
+      const temDivisao = (adults !== undefined && adults !== null) || (children !== undefined && children !== null);
+      splitCriancas = Math.max(0, Math.floor(Number(children)) || 0);
+      splitAdultos = (adults !== undefined && adults !== null)
+        ? Math.max(0, Math.floor(Number(adults)) || 0)
+        : Math.max(0, base - splitCriancas);
+      if (temDivisao && splitAdultos + splitCriancas > 0) partyEfectivo = splitAdultos + splitCriancas;
+      else { splitAdultos = base; splitCriancas = 0; partyEfectivo = base; }
+    }
+
     /* Restaurante: cliente escolhe a mesa exacta (unit_id obrigatorio, tal
        como os restantes tipos ja exigem) a partir da lista devolvida por
        verificarDisponibilidadeRestaurantePublica. Pode incluir um pre-pedido
@@ -349,12 +367,7 @@ async function criarReserva(req, res, next) {
          adults/children no corpo, todas as pessoas contam como adultos. A
          recusa (lotacao, grupo sem preco) vem antes da verificacao de vagas. */
       if (isActivity) {
-        const pessoas = Math.max(1, Math.floor(Number(party_size || guests || 1)) || 1);
-        const nCriancas = Math.max(0, Math.floor(Number(children)) || 0);
-        const nAdultos = (adults !== undefined && adults !== null)
-          ? Math.max(0, Math.floor(Number(adults)) || 0)
-          : Math.max(0, pessoas - nCriancas);
-        precoAct = precoActividade(unitRow, unitMeta, { adults: nAdultos, children: nCriancas, mode: isGroupBooking ? 'private' : 'per_person' });
+        precoAct = precoActividade(unitRow, unitMeta, { adults: splitAdultos, children: splitCriancas, mode: isGroupBooking ? 'private' : 'per_person' });
         if (precoAct.error) {
           return res.status(400).json({ error: precoAct.error.message_pt, code: precoAct.error.code });
         }
@@ -366,7 +379,7 @@ async function criarReserva(req, res, next) {
           return res.status(400).json({ error: 'Horário inválido para esta actividade', code: 'INVALID_TIME_SLOT' });
         }
         activitySlotTime = slotEscolhido.time;
-        const cabe = await verificarDisponibilidadeSlot(supabaseAdmin, unit_id, check_in, slotEscolhido.time, Number(party_size || guests || 1), Number(slotEscolhido.capacity) || 0, null, isGroupBooking);
+        const cabe = await verificarDisponibilidadeSlot(supabaseAdmin, unit_id, check_in, slotEscolhido.time, Number(partyEfectivo), Number(slotEscolhido.capacity) || 0, null, isGroupBooking);
         if (!cabe) {
           return res.status(409).json({ error: 'Sem vagas neste horário', code: 'UNAVAILABLE' });
         }
@@ -383,7 +396,7 @@ async function criarReserva(req, res, next) {
     // por isso usam antes base_price * numero de pessoas. Mesas de restaurante
     // sao sempre criadas com base_price:0 (RestaurantTableForm) -- a propria
     // reserva de mesa nao tem preco fixo, so o pre-pedido (se existir) tem.
-    const numPessoas = party_size || guests || 1;
+    const numPessoas = partyEfectivo;
     let dias = 0;
     let total;
     if (isRestaurant) {
@@ -463,7 +476,7 @@ async function criarReserva(req, res, next) {
     if (tour_time) notesLines.push(`Hora: ${tour_time}`);
     if (isRestaurant && reservation_time) notesLines.push(`Hora: ${reservation_time}`);
     if (isRestaurant && zone_preference) notesLines.push(`Zona preferida: ${zone_preference}`);
-    if (party_size) notesLines.push(`Pessoas: ${party_size}`);
+    if (party_size || (isActivity && (adults != null || children != null))) notesLines.push(`Pessoas: ${partyEfectivo}`);
     if (notes) notesLines.push(notes);
     if (referredByNote) notesLines.push(`Indicado por: ${referredByNote}`);
     const finalNotes = notesLines.join(' | ') || null;
@@ -480,7 +493,7 @@ async function criarReserva(req, res, next) {
         customer_country: customer_country || null,
         check_in,
         check_out: effectiveCheckOut,
-        guests: party_size || guests || 1,
+        guests: partyEfectivo,
         total_price: finalTotal,
         /* confirmacao automatica so para quem paga presencialmente (o pagamento online confirma ao capturar) */
         status: estadoInicialReserva({ autoConfirm: operator.auto_confirm_bookings, paymentMethod: payment_method }),
@@ -597,7 +610,7 @@ async function criarReserva(req, res, next) {
       tourName: unit.name,
       checkIn: check_in,
       checkOut: effectiveCheckOut,
-      guests: party_size || guests || 1,
+      guests: partyEfectivo,
       total: finalTotal,
       currency,
       operator,
@@ -616,7 +629,7 @@ async function criarReserva(req, res, next) {
         tourName: unit.name,
         checkIn: check_in,
         checkOut: effectiveCheckOut,
-        guests: party_size || guests || 1,
+        guests: partyEfectivo,
         total,
         currency,
         customer: {

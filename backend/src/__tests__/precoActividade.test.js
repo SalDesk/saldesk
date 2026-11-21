@@ -1,5 +1,9 @@
 /* precoActividade (preco partilhado de actividade) e o seu uso em criarReserva:
    o valor mostrado tem de ser igual ao valor cobrado. */
+jest.mock('../helpers/bookingHelpers', () => ({
+  ...jest.requireActual('../helpers/bookingHelpers'),
+  verificarDisponibilidadeSlot: jest.fn(() => Promise.resolve(true)),
+}));
 jest.mock('../helpers/customerHelper', () => ({ obterOuCriarCliente: jest.fn(() => Promise.resolve({ id: 'cli1' })) }));
 jest.mock('../helpers/emailHelper', () => ({ enviarEmail: jest.fn(() => Promise.resolve()) }));
 jest.mock('../helpers/languageHelper', () => ({ detectarIdioma: jest.fn(() => 'pt') }));
@@ -40,7 +44,7 @@ jest.mock('../config/supabase', () => {
   return { supabaseAdmin: { from: jest.fn((t) => construir(t)) } };
 });
 
-const { precoActividade } = require('../helpers/bookingHelpers');
+const { precoActividade, verificarDisponibilidadeSlot } = require('../helpers/bookingHelpers');
 const { criarReserva } = require('../controllers/publicController');
 
 const TIERS = { price_tiers: [{ pax_min: 1, pax_max: 2, price: 120 }, { pax_min: 3, pax_max: 4, price: 150 }] };
@@ -111,6 +115,23 @@ describe('criarReserva com actividade', () => {
   it('post_com_divisao_cobra_crianca', async () => {
     const res = await reservar({ party_size: 3, adults: 2, children: 1 });
     expect(res.status).toHaveBeenCalledWith(201);
+    expect(Number(estado.inseridas[0].total_price)).toBe(105);
+  });
+
+  it('post_divisao_sem_party_size_usa_adultos_mais_criancas', async () => {
+    estado.unidade.description = JSON.stringify({ price_child: 25, time_slots: [{ time: '09:00', capacity: 10 }] });
+    verificarDisponibilidadeSlot.mockClear();
+    const res = await reservar({ adults: 2, children: 1, tour_time: '09:00' });
+    expect(res.status).toHaveBeenCalledWith(201);
+    expect(estado.inseridas[0].guests).toBe(3);
+    expect(Number(estado.inseridas[0].total_price)).toBe(105);
+    expect(verificarDisponibilidadeSlot.mock.calls[0][4]).toBe(3);
+  });
+
+  it('post_divisao_manda_sobre_party_size', async () => {
+    const res = await reservar({ party_size: 1, adults: 2, children: 1 });
+    expect(res.status).toHaveBeenCalledWith(201);
+    expect(estado.inseridas[0].guests).toBe(3);
     expect(Number(estado.inseridas[0].total_price)).toBe(105);
   });
 
