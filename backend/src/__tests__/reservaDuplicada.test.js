@@ -383,6 +383,30 @@ describe('criarReserva: duplicados', () => {
     expect(insert.payload.total_price).toBe(60);
   });
 
+  it('voucher esgotado pela primeira reserva igual em dinheiro: devolve-a com 200', async () => {
+    validarVoucher.mockResolvedValue({ valid: false, error: 'Codigo esgotado' });
+    const antiga = linha({ id: 'antiga', status: 'confirmed', start_time: null, total_price: 60, voucher_id: 'v1' });
+    estado.recentes = [antiga];
+    const res = await reservar({ voucher_code: 'MENOS20' });
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.json).toHaveBeenCalledWith({ data: antiga, pre_order: null, message: 'Reserva confirmada.' });
+    expect(reservasOps().filter((o) => o.tipo === 'insert')).toHaveLength(0);
+    expect(enviarEmail).not.toHaveBeenCalled();
+  });
+
+  it('voucher recusado sem reserva igual com voucher: 400 como sempre', async () => {
+    validarVoucher.mockResolvedValue({ valid: false, error: 'Codigo esgotado' });
+    estado.recentes = [linha({ id: 'antiga', status: 'confirmed', start_time: null, total_price: 80, voucher_id: null })];
+    let res = await reservar({ voucher_code: 'MENOS20' });
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith({ error: 'Codigo esgotado', code: 'INVALID_VOUCHER' });
+
+    estado.recentes = [];
+    res = await reservar({ voucher_code: 'MENOS20' });
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(reservasOps().filter((o) => o.tipo === 'insert')).toHaveLength(0);
+  });
+
   it('outro total e sem vagas com a primeira: 409 e nada se insere', async () => {
     validarVoucher.mockResolvedValue({ valid: true, discount: 20, voucherId: 'v1' });
     estado.recentes = [linha({ id: 'antiga', status: 'confirmed', start_time: null, total_price: 80 })];

@@ -541,6 +541,9 @@ async function criarReserva(req, res, next) {
         finalTotal = Math.max(0, total - resultado.discount);
         voucherId = resultado.voucherId;
       } else {
+        /* Segundo envio da mesma reserva em dinheiro: a primeira pode ter gasto o ultimo uso do
+           voucher. Com uma reserva igual que usou voucher, devolve-se essa em vez do 400. */
+        if (repetidaSemCartao && repetidaSemCartao.voucher_id) return responderRepetida(repetidaSemCartao);
         return res.status(400).json({ error: resultado.error || 'Codigo invalido', code: 'INVALID_VOUCHER' });
       }
     }
