@@ -133,6 +133,16 @@ function precoActividade(unit, meta, { adults, children, mode } = {}) {
   let total = 0;
   let error = null;
 
+  /* Pelo menos 1 adulto (orcamento e reserva). Os chamadores sem divisao (paginas antigas,
+     operador) passam todas as pessoas como adultos, por isso nunca caem aqui. */
+  if (nAdults < 1) {
+    return {
+      total: 0,
+      lines: [],
+      error: { code: 'MIN_ADULTS', message_pt: 'É preciso pelo menos 1 adulto', message_en: 'At least 1 adult is required' },
+    };
+  }
+
   if (mode === 'private') {
     total = arred(calcularPrecoPrivado(meta, party));
     lines.push({ type: 'tour', description: 'Tour privado', quantity: party, total });

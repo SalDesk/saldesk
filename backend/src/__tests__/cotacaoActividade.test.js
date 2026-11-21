@@ -130,6 +130,15 @@ describe('cotarActividade', () => {
     expect(q.total).toBe(0);
   });
 
+  it('zero_adultos_devolve_min_adults', async () => {
+    const res = await cotar({ adults: '0', children: '2' });
+    expect(res.status).not.toHaveBeenCalled();
+    expect(res.json.mock.calls[0][0].data).toEqual({
+      lines: [], total: 0, before: null,
+      error: { code: 'MIN_ADULTS', message_pt: 'É preciso pelo menos 1 adulto', message_en: 'At least 1 adult is required' },
+    });
+  });
+
   it('unidade_inexistente_404', async () => {
     estado.unidade = null;
     const res = await cotar({ adults: '2' });

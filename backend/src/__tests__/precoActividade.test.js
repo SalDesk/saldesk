@@ -79,6 +79,15 @@ describe('precoActividade', () => {
     expect(r.error.code).toBe('CAPACITY_EXCEEDED');
     expect(r.total).toBe(120 + 80);
   });
+
+  it('sem_adultos_recusa', () => {
+    for (const mode of ['per_person', 'private']) {
+      const r = precoActividade({ base_price: 40 }, TIERS, { adults: 0, children: 2, mode });
+      expect(r.error).toEqual({ code: 'MIN_ADULTS', message_pt: 'É preciso pelo menos 1 adulto', message_en: 'At least 1 adult is required' });
+      expect(r.total).toBe(0);
+      expect(r.lines).toEqual([]);
+    }
+  });
 });
 
 describe('criarReserva com actividade', () => {
@@ -140,5 +149,19 @@ describe('criarReserva com actividade', () => {
     expect(res.status).toHaveBeenCalledWith(400);
     expect(res.json.mock.calls[0][0]).toEqual({ error: 'Este grupo excede a lotação desta actividade', code: 'CAPACITY_EXCEEDED' });
     expect(estado.inseridas).toHaveLength(0);
+  });
+
+  it('post_zero_adultos_400', async () => {
+    const res = await reservar({ adults: 0, children: 2 });
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json.mock.calls[0][0]).toEqual({ error: 'É preciso pelo menos 1 adulto', code: 'MIN_ADULTS' });
+    expect(estado.inseridas).toHaveLength(0);
+  });
+
+  it('post_antigo_so_com_guests_continua_a_funcionar', async () => {
+    const res = await reservar({ guests: 2 });
+    expect(res.status).toHaveBeenCalledWith(201);
+    expect(estado.inseridas[0].guests).toBe(2);
+    expect(Number(estado.inseridas[0].total_price)).toBe(80);
   });
 });
