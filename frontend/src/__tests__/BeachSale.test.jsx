@@ -86,11 +86,14 @@ describe('BeachSale: horarios do tour', () => {
     }
   });
 
-  it('mostra a hora de inicio e os horarios em texto simples', async () => {
+  /* Com horarios configurados, o servidor so aceita essas horas (INVALID_TIME_SLOT para outra):
+     a hora de inicio solta so se mostra se for tambem um dos horarios */
+  it('com horarios em texto simples mostra so esses horarios, nao a hora de inicio solta', async () => {
     await abrirPassoDois(tour({ start_time: '08:30', time_slots: ['10:00', '15:00'] }));
-    for (const hora of ['08:30', '10:00', '15:00']) {
+    for (const hora of ['10:00', '15:00']) {
       expect(screen.getByRole('button', { name: hora })).toBeTruthy();
     }
+    expect(screen.queryByRole('button', { name: '08:30' })).toBeNull();
     expect(screen.queryByRole('button', { name: '09:00' })).toBeNull();
   });
 
@@ -101,12 +104,13 @@ describe('BeachSale: horarios do tour', () => {
         time_slots: [{ time: '10:00', capacity: 6 }, { time: '15:00', capacity: 4 }],
       }),
     );
-    for (const hora of ['08:30', '10:00', '15:00']) {
+    for (const hora of ['10:00', '15:00']) {
       expect(screen.getByRole('button', { name: hora })).toBeTruthy();
     }
+    expect(screen.queryByRole('button', { name: '08:30' })).toBeNull();
   });
 
-  it('ignora horarios sem hora e nao repete a hora de inicio', async () => {
+  it('ignora horarios sem hora e nao repete a hora de inicio quando ela e um dos horarios', async () => {
     await abrirPassoDois(
       tour({
         start_time: '08:30',
@@ -115,6 +119,12 @@ describe('BeachSale: horarios do tour', () => {
     );
     expect(screen.getAllByRole('button', { name: '08:30' })).toHaveLength(1);
     expect(screen.getByRole('button', { name: '10:00' })).toBeTruthy();
+  });
+
+  it('sem horarios configurados mostra a hora de inicio do tour', async () => {
+    await abrirPassoDois(tour({ start_time: '08:30' }));
+    expect(screen.getByRole('button', { name: '08:30' })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: '09:00' })).toBeNull();
   });
 
   it('selecionar um horario em objeto marca-o como escolhido', async () => {
@@ -227,5 +237,19 @@ describe('BeachSale: opcoes da actividade', () => {
     expect(corpo).toMatchObject({ unit_id: 't1', guests: 1, total_amount: 40 });
     expect(corpo).not.toHaveProperty('option_id');
     expect(corpo).not.toHaveProperty('vehicles');
+  });
+
+  /* Sem start_time o servidor recusa a venda de um tour com horarios (INVALID_TIME_SLOT) */
+  it('tour com horarios envia a hora escolhida como start_time', async () => {
+    await abrirPassoDois(tour({ time_slots: [{ time: '09:00', capacity: 8 }, { time: '14:00', capacity: 8 }] }));
+    const corpo = await confirmar();
+    expect(corpo.start_time).toBe('09:00');
+  });
+
+  it('tour sem horarios nao envia start_time (a hora fica so nas notas)', async () => {
+    await abrirPassoDois(tour({}));
+    const corpo = await confirmar();
+    expect(corpo).not.toHaveProperty('start_time');
+    expect(corpo.notes_internal).toContain('Hora: 09:00');
   });
 });

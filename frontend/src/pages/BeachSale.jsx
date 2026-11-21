@@ -157,8 +157,13 @@ export default function BeachSale() {
   const extraSlots = (Array.isArray(meta.time_slots) ? meta.time_slots : [])
     .map(s => (typeof s === 'string' ? s : s?.time))
     .filter(t => typeof t === 'string' && t);
-  /* Horarios do tour (hora de inicio + time_slots); so sem nenhum configurado se usam os por omissao */
-  const horariosDoTour = [...new Set([meta.start_time, ...extraSlots].filter(t => typeof t === 'string' && t))];
+  /* Com horarios configurados (time_slots) o servidor so aceita essas horas e exige-as em
+     start_time (senao recusa com INVALID_TIME_SLOT): mostram-se so esses. Sem horarios, a hora
+     de inicio do tour; sem nenhuma, os horarios por omissao (a hora fica so nas notas). */
+  const temHorarios = extraSlots.length > 0;
+  const horariosDoTour = temHorarios
+    ? [...new Set(extraSlots)]
+    : [meta.start_time].filter(t => typeof t === 'string' && t);
   const timeSlots = horariosDoTour.length ? horariosDoTour : ['09:00', '11:00', '14:00', '16:00'];
 
   async function handleConfirm() {
@@ -186,6 +191,7 @@ export default function BeachSale() {
         customer_email:   clientEmail,
         customer_phone:   clientPhone,
         fleet_id:         selectedFleetId || null,
+        ...(temHorarios ? { start_time: selectedTime } : {}),
         ...(selectedOption ? { option_id: selectedOption.id } : {}),
         ...(porVeiculo ? { vehicles } : {}),
       });
