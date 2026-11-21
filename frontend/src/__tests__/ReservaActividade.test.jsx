@@ -542,7 +542,7 @@ describe('Pagina de actividade com a coluna de reserva', () => {
     /* a data, as pessoas e o idioma escolhidos na coluna chegam a revisao do modal */
     const modal = (await screen.findByText('Resumo e pagamento')).closest('.fixed');
     expect(within(modal).getByText('2026-11-27')).toBeInTheDocument();
-    expect(within(modal).getByText('2 adultos + 1 crianças')).toBeInTheDocument();
+    expect(within(modal).getByText('2 adultos + 1 criança')).toBeInTheDocument();
     expect(within(modal).getByText('English')).toBeInTheDocument();
   });
 
