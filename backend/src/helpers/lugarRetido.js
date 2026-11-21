@@ -123,6 +123,7 @@ function classificarRecentes(recentes, nova, agora = new Date()) {
 }
 
 /* Antes de criar ou capturar um pagamento online: o lugar ainda e desta reserva?
+   - ja paga (qualquer estado): ALREADY_PAID, nunca se cobra outra vez;
    - pendente: renova o prazo (se tiver) e segue;
    - confirmada / com check-in: segue;
    - expirada por falta de pagamento: so volta a pendente se o lugar ainda estiver livre,
@@ -135,11 +136,12 @@ async function prepararPagamento(supabase, reservationId, agora = new Date()) {
 async function decidirPagamento(supabase, reservationId, agora, podeRepetir) {
   const { data: reserva, error } = await supabase
     .from('reservations')
-    .select('id, unit_id, check_in, check_out, start_time, duration_minutes, guests, is_group_booking, status, cancel_reason, hold_expires_at')
+    .select('id, unit_id, check_in, check_out, start_time, duration_minutes, guests, is_group_booking, status, cancel_reason, hold_expires_at, payment_status')
     .eq('id', reservationId)
     .maybeSingle();
   if (error) throw error;
   if (!reserva) return { ok: false, code: 'NOT_FOUND' };
+  if (reserva.payment_status === 'paid') return { ok: false, code: 'ALREADY_PAID' };
 
   if (reserva.status === 'pending') {
     if (!reserva.hold_expires_at) return { ok: true };
@@ -225,7 +227,47 @@ async function registarPagoSemLugar(supabase, reservationId, { metodo, valor, ca
   }
 }
 
+/* Entrou dinheiro para uma reserva que ja tinha o pagamento registado (outra captura PayPal ou
+   outra transaccao SISP): a reserva nao muda; o operador e avisado para reembolsar. Nunca lanca. */
+async function registarPagamentoDuplicado(supabase, reservationId, { metodo, valor, referencia } = {}) {
+  try {
+    const { data: reserva, error } = await supabase
+      .from('reservations')
+      .select('*, units(name), operators(name, email)')
+      .eq('id', reservationId)
+      .maybeSingle();
+    if (error) throw error;
+    if (!reserva) {
+      console.error(`[LugarRetido] Pagamento duplicado mas a reserva nao foi encontrada — reservation_id=${reservationId}`);
+      return;
+    }
+
+    const assunto = 'Pagamento em duplicado recebido — reembolsar';
+    const { error: errNotif } = await supabase.from('notifications').insert({
+      operator_id: reserva.operator_id,
+      notification_type: 'duplicate_payment',
+      content: `${assunto} — ${reserva.customer_name} — ${reserva.units?.name || ''} (${referencia})`,
+      link: `/reservas/${reserva.id}`,
+    });
+    if (errNotif) console.error('[LugarRetido] Falha ao criar notificação:', errNotif.message);
+
+    if (reserva.operators?.email) {
+      // Carregado aqui pela mesma razao de registarPagoSemLugar.
+      const { enviarEmail } = require('./emailHelper');
+      const pago = metodo === 'sisp' ? `${valor} CVE via SISP` : `${valor} EUR via PayPal`;
+      await enviarEmail({
+        to: reserva.operators.email,
+        subject: assunto,
+        text: `Olá ${reserva.operators.name || ''},\n\nRecebemos um segundo pagamento (${pago}, referência ${referencia}) da reserva de ${reserva.customer_name} — ${reserva.units?.name || ''}, que já estava paga. A reserva não foi alterada: reembolse este pagamento ao cliente.\n\nReserva: ${reserva.id}`,
+      });
+    }
+  } catch (err) {
+    console.error(`[LugarRetido] Erro ao registar pagamento duplicado — reservation_id=${reservationId}:`, err.message);
+  }
+}
+
 module.exports = {
   MINUTOS_RETENCAO, eMetodoCartao, fimDaRetencao, lugarAindaLivre, expirarReservasNaoPagas,
   reservasRecentesDoCliente, classificarRecentes, prepararPagamento, registarPagoSemLugar,
+  registarPagamentoDuplicado,
 };
