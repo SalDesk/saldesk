@@ -351,6 +351,11 @@
     "skip": "Saltar tour"
   },
   "reservations": {
+    "paymentNotCompleted": "Pagamento não concluído",
+    "awaitingPayment": "A aguardar pagamento",
+    "paidAfterExpiry": "Pago sem lugar — reembolsar",
+    "abandonedHint": "O cliente não concluiu o pagamento. Pode contactá-lo:",
+    "paidAfterExpiryHint": "O pagamento entrou depois de o lugar ter sido ocupado. Reembolse ou remarque com o cliente:",
     "title": "Reservas",
     "new": "Nova Reserva",
     "status": {

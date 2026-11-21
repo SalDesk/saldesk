@@ -64,6 +64,8 @@ async function listar(req, res, next) {
       .eq('operator_id', getOperatorId(req))
       .order(order_by === 'created_at' ? 'created_at' : 'check_in', { ascending: false });
 
+    /* esconde as reservas que o proprio cliente substituiu por uma nova (retencao antiga) */
+    q = q.or('cancel_reason.is.null,cancel_reason.neq.replaced');
     if (status) q = q.eq('status', status);
     if (estadosPagamento) q = q.in('payment_status', estadosPagamento);
     if (unit_id) q = q.eq('unit_id', unit_id);

@@ -59,7 +59,9 @@ async function getBookings(req, res, next) {
       .order('check_in', { ascending: false });
 
     if (error) throw error;
-    const reservations = (linhas || []).filter(r => mesmoEmail(r.customer_email, email));
+    /* retencoes substituidas ou abandonadas nao sao reservas do viajante; 'paid_after_expiry' fica (foi cobrada) */
+    const reservations = (linhas || []).filter(r => mesmoEmail(r.customer_email, email)
+      && r.cancel_reason !== 'replaced' && r.cancel_reason !== 'payment_not_completed');
     if (!reservations.length) return res.json({ data: [] });
 
     const operatorIds = [...new Set(reservations.map(r => r.operator_id))];

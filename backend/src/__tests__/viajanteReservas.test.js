@@ -83,6 +83,20 @@ test('reservas_so_do_proprio_email_mesmo_com_underscore', async () => {
   expect(res.corpo.data.map((r) => r.id)).toEqual(['r-meu']);
 });
 
+test('reservas_substituidas_e_pagamentos_nao_concluidos_ficam_escondidas_mas_pago_sem_lugar_nao', async () => {
+  const base = { operator_id: 'o1', unit_id: 'u1', customer_email: 'j_silva@gmail.com', status: 'cancelled', check_in: ONTEM, check_out: ONTEM };
+  BD.reservations.push(
+    { ...base, id: 'r-subst', cancel_reason: 'replaced' },
+    { ...base, id: 'r-abandonada', cancel_reason: 'payment_not_completed' },
+    { ...base, id: 'r-sem-lugar', cancel_reason: 'paid_after_expiry' },
+  );
+  const res = await chamar(ctrl.getBookings);
+  const ids = res.corpo.data.map((r) => r.id);
+  expect(ids).toContain('r-sem-lugar');
+  expect(ids).not.toContain('r-subst');
+  expect(ids).not.toContain('r-abandonada');
+});
+
 test('recibo_de_uma_reserva_de_email_parecido_e_404', async () => {
   const res = await chamar(ctrl.getBookingInvoice, { params: { id: 'r-outro' } });
   expect(res.statusCode).toBe(404);

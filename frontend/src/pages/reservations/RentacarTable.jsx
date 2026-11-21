@@ -7,6 +7,7 @@ import Badge from '../../components/ui/Badge';
 import Table from '../../components/ui/Table';
 import useMediaQuery from '../../hooks/useMediaQuery';
 import ColumnCards from './ColumnCards';
+import { rotuloEstadoReserva } from '../../utils/estadoReserva';
 import { formatDate, parseRentacarMeta } from './shared';
 
 export default function RentacarTable({ reservations, units, onEdit, onDelete, onLevantamento, onDevolucao, onUpdate, onView }) {
@@ -92,7 +93,7 @@ export default function RentacarTable({ reservations, units, onEdit, onDelete, o
     {
       key: 'estado',
       label: 'Estado',
-      render: (r) => <Badge variant={r.status}>{t(`reservations.status.${r.status}`)}</Badge>,
+      render: (r) => <Badge variant={r.status}>{rotuloEstadoReserva(r, t)}</Badge>,
     },
     {
       key: 'total',

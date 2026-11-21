@@ -11,6 +11,7 @@ import Button from '../ui/Button';
 import Tabs from '../ui/Tabs';
 import Input, { Textarea } from '../ui/Input';
 import LoadingSpinner from '../shared/LoadingSpinner';
+import { rotuloEstadoReserva } from '../../utils/estadoReserva';
 
 function formatDate(d) {
   if (!d) return '—';
@@ -277,7 +278,7 @@ export default function CustomerDetail({ customerId, onClose, onUpdate }) {
                             <p className="text-xs font-body font-semibold text-n-700 truncate">
                               {r.units?.name || '—'}
                             </p>
-                            <Badge variant={r.status}>{t(`reservations.status.${r.status}`)}</Badge>
+                            <Badge variant={r.status}>{rotuloEstadoReserva(r, t)}</Badge>
                           </div>
                           <div className="flex items-center gap-1.5 text-xs font-body text-n-500">
                             <span>{formatDate(r.check_in)}</span>

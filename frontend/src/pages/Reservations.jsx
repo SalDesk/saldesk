@@ -26,7 +26,7 @@ import DevolucaoModal from './reservations/DevolucaoModal';
 import RestaurantCreateModal from './reservations/RestaurantCreateModal';
 import { SOURCE_LABEL } from './reservations/shared';
 
-const STATUS_FILTERS = ['', 'pending', 'confirmed', 'checked_in', 'checked_out', 'cancelled'];
+const STATUS_FILTERS = ['', 'pending', 'confirmed', 'checked_in', 'checked_out', 'cancelled', 'payment_not_completed'];
 const TURNO_FILTERS = [{ value: '', label: 'Todos turnos' }, { value: 'almoco', label: 'Almoco' }, { value: 'jantar', label: 'Jantar' }];
 
 /* meta.turno so existe quando definido manualmente (RestaurantCreateModal,
@@ -95,7 +95,9 @@ export default function Reservations() {
 
   const filtered = useMemo(() => {
     return reservations.filter(r => {
-      if (statusFilter && r.status   !== statusFilter) return false;
+      /* 'payment_not_completed' nao e um estado: filtra pelo motivo de cancelamento */
+      if (statusFilter === 'payment_not_completed') { if (r.cancel_reason !== 'payment_not_completed') return false; }
+      else if (statusFilter && r.status !== statusFilter) return false;
       if (tourFilter   && r.unit_id  !== tourFilter)   return false;
       if (dateFilter   && r.check_in !== dateFilter)   return false;
       if (sourceFilter && r.source   !== sourceFilter) return false;
@@ -111,7 +113,7 @@ export default function Reservations() {
   const hasFilters = statusFilter || tourFilter || dateFilter || sourceFilter;
 
   /* Chips de estado: '' = Todas, os restantes vem das traducoes */
-  const statusOptions = STATUS_FILTERS.map(s => ({ value: s, label: s ? t(`reservations.status.${s}`) : 'Todas' }));
+  const statusOptions = STATUS_FILTERS.map(s => ({ value: s, label: s === 'payment_not_completed' ? t('reservations.paymentNotCompleted') : s ? t(`reservations.status.${s}`) : 'Todas' }));
 
   function clearFilters() {
     setStatusFilter('');

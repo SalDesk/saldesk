@@ -7,6 +7,7 @@ import Badge from '../../components/ui/Badge';
 import Table from '../../components/ui/Table';
 import RowMenu from '../../components/ui/RowMenu';
 import AssignCompositeModal from '../../components/assignments/AssignCompositeModal';
+import { rotuloEstadoReserva } from '../../utils/estadoReserva';
 import { STATUS_NEXT, STATUS_NEXT_LABEL, formatDate, SourceBadge } from './shared';
 
 export default function ActivityTable({ reservations, units, guides, onEdit, onDelete, onUpdate, onReschedule, onNoShow, onVoucher, voucherLoading, onView }) {
@@ -87,7 +88,7 @@ export default function ActivityTable({ reservations, units, guides, onEdit, onD
     {
       key: 'estado',
       label: 'Estado',
-      render: (r) => <Badge variant={r.status}>{t(`reservations.status.${r.status}`)}</Badge>,
+      render: (r) => <Badge variant={r.status}>{rotuloEstadoReserva(r, t)}</Badge>,
     },
     {
       key: 'total',
@@ -155,7 +156,7 @@ export default function ActivityTable({ reservations, units, guides, onEdit, onD
                   </p>
                   <p className="text-[11px] font-mono text-n-400 mt-0.5">{r.id?.slice(0, 8)}</p>
                 </div>
-                <Badge variant={r.status}>{t(`reservations.status.${r.status}`)}</Badge>
+                <Badge variant={r.status}>{rotuloEstadoReserva(r, t)}</Badge>
               </div>
               <div className="flex items-center gap-3 text-xs font-body text-n-600 flex-wrap">
                 <span>{formatDate(r.check_in)}</span>
