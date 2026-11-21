@@ -4,6 +4,7 @@ const axios = require('axios');
 const sharp = require('sharp');
 const { supabaseAdmin } = require('../config/supabase');
 const { lerAvaliacoesPublicas, classificacaoDaUnidade } = require('../helpers/classificacaoUnidade');
+const { opcaoMaisBarata } = require('../helpers/opcoesActividade');
 
 /* Imagens "estilizadas" para o feed de catalogo (Meta/Google) -- selo de
    procura real, nota media e localizacao sobrepostos na propria foto,
@@ -47,6 +48,13 @@ function fmtDuration(minutes) {
    fixo > preco por pessoa. Nunca deve divergir do preco que o feed ja
    mostra para o mesmo item. */
 function displayPrice(unit) {
+  /* Opcoes validas mandam: a mais barata e o preco "desde" (mesma regra do Discover). */
+  if (unit.description?.startsWith('{')) {
+    try {
+      const barata = opcaoMaisBarata(JSON.parse(unit.description));
+      if (barata) return barata.price;
+    } catch { /* descricao partida: segue o caminho antigo */ }
+  }
   if (Number(unit.base_price) > 0) return Number(unit.base_price);
   if (!unit.description?.startsWith('{')) return null;
   try {
@@ -167,4 +175,4 @@ async function getCatalogImage(req, res, next) {
   }
 }
 
-module.exports = { getCatalogImage };
+module.exports = { getCatalogImage, displayPrice };

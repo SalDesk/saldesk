@@ -474,3 +474,17 @@ test('mapa_de_cabo_verde_inteiro_cabe_no_telemovel', () => {
   });
   assert.equal(C.OPCOES_MAPA.zMax, 13);
 });
+
+test('preco_cartao_com_opcoes_usa_a_mais_barata_e_a_sua_unidade', () => {
+  const opcoes = [
+    { type: 'per_group', price: 120 },
+    { type: 'per_person', price: 40 },
+  ];
+  assert.deepEqual(C.precoCartao({ base_price: 99 }, { options: opcoes }), { valor: 40, unidade: 'pessoa' });
+  assert.deepEqual(C.precoCartao({ base_price: 0 }, { options: [{ type: 'per_vehicle', price: 90, seats: 4 }] }), { valor: 90, unidade: 'veiculo' });
+  assert.deepEqual(C.precoCartao({ base_price: 10 }, { options: [{ type: 'per_group', price: 60 }] }), { valor: 60, unidade: 'grupo' });
+  // Opcoes invalidas ignoradas: cai no preco antigo
+  const invalidas = [{ type: 'per_vehicle', price: 5, seats: 0 }, { type: 'xx', price: 5 }, { type: 'per_person', price: 0 }];
+  assert.deepEqual(C.precoCartao({ base_price: 35 }, { options: invalidas }), { valor: 35, unidade: 'pessoa' });
+  assert.deepEqual(C.precoCartao({ base_price: 35 }, { options: [] }), { valor: 35, unidade: 'pessoa' });
+});

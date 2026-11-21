@@ -3,7 +3,7 @@ const router  = express.Router();
 const { supabaseAdmin } = require('../config/supabase');
 const { frontendBase } = require('../utils/urls');
 const { getDiscoverCatalog } = require('../services/discoverCatalogService');
-const { getCatalogImage } = require('../controllers/catalogImageController');
+const { getCatalogImage, displayPrice } = require('../controllers/catalogImageController');
 
 /* Imagem "estilizada" do catalogo (selo de procura/nota/localizacao
    sobrepostos na foto real) -- ver catalogImageController.js. Publica,
@@ -116,14 +116,7 @@ function unitDescriptionText(rawDescription) {
    do preco privado fixo. Devolve null quando genuinamente nao ha preco
    nenhum -- esse item fica de fora do feed (Meta exige g:price sempre). */
 function unitDisplayPrice(unit) {
-  if (Number(unit.base_price) > 0) return Number(unit.base_price);
-  if (!unit.description?.startsWith('{')) return null;
-  try {
-    const meta = JSON.parse(unit.description);
-    const tiers = Array.isArray(meta.price_tiers) ? meta.price_tiers : [];
-    const tierMin = tiers.length ? Math.min(...tiers.map((t) => Number(t.price) || 0)) : null;
-    return tierMin || (Number(meta.price_private) || null);
-  } catch { return null; }
+  return displayPrice(unit);
 }
 
 const FB_CATEGORY_BY_TYPE = {

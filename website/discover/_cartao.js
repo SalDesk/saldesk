@@ -102,6 +102,19 @@
   /* Mesma prioridade do servidor (displayPrice): por pessoa > escalao mais
      barato > preco privado. Escaloes e privado sao o total do grupo. */
   function precoCartao(item, meta) {
+    /* Opcoes validas (tipo conhecido, preco > 0, lugares >= 1 por veiculo) mandam: a mais
+       barata decide valor e unidade, como opcaoMaisBarata() no servidor. */
+    var UNIDADES = { per_person: 'pessoa', per_group: 'grupo', per_vehicle: 'veiculo' };
+    var opcoes = Array.isArray(meta && meta.options) ? meta.options : [];
+    var melhor = null;
+    opcoes.forEach(function (o) {
+      if (!o || !UNIDADES[o.type]) return;
+      var p = Number(o.price);
+      if (!(p > 0)) return;
+      if (o.type === 'per_vehicle' && !(Math.floor(Number(o.seats)) >= 1)) return;
+      if (!melhor || p < melhor.valor) melhor = { valor: p, unidade: UNIDADES[o.type] };
+    });
+    if (melhor) return melhor;
     var base = Number(item && item.base_price);
     if (base > 0) return { valor: base, unidade: 'pessoa' };
     var tiers = Array.isArray(meta && meta.price_tiers) ? meta.price_tiers : [];
