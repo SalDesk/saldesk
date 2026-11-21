@@ -2,7 +2,7 @@ const { supabaseAdmin } = require('../config/supabase');
 const { estadoInicialReserva } = require('../helpers/politicaOperador');
 const { criarNotificacaoViajante } = require('../helpers/travelerNotificationHelper');
 const { frontendBase } = require('../utils/urls');
-const { verificarDisponibilidade, calcularPreco, verificarDisponibilidadeMesa, listarMesasDisponiveis, DEFAULT_SEATING_MINUTES, parseUnitMeta, verificarDisponibilidadeSlot, listarSlotsComDisponibilidade, calcularPrecoPrivado, temPrecoPrivadoConfigurado, precoActividade, slotJaComecou } = require('../helpers/bookingHelpers');
+const { verificarDisponibilidade, calcularPreco, verificarDisponibilidadeMesa, listarMesasDisponiveis, DEFAULT_SEATING_MINUTES, parseUnitMeta, verificarDisponibilidadeSlot, listarSlotsComDisponibilidade, calcularPrecoPrivado, temPrecoPrivadoConfigurado, precoActividade, slotJaComecou, diasLivresDoMes } = require('../helpers/bookingHelpers');
 const { obterOuCriarCliente } = require('../helpers/customerHelper');
 const { enviarEmail } = require('../helpers/emailHelper');
 const { detectarIdioma } = require('../helpers/languageHelper');
@@ -150,6 +150,36 @@ async function getSlotAvailability(req, res, next) {
     return res.json({
       data: disponiveis.map((s) => (slotJaComecou(date, s.time, agora) ? { ...s, remaining: 0, started: true } : s)),
     });
+  } catch (err) {
+    next(err);
+  }
+}
+
+/* ─── Dias livres do mes (calendario do widget de reserva) — devolve so os
+   dias com lugar para o grupo, uma consulta ao mes inteiro. ─── */
+async function getAvailabilityMonth(req, res, next) {
+  try {
+    const { unitId } = req.params;
+    const { month } = req.query;
+    if (typeof month !== 'string' || !/^\d{4}-(0[1-9]|1[0-2])$/.test(month)) {
+      return res.status(400).json({ error: 'Mês inválido (YYYY-MM)', code: 'INVALID_MONTH' });
+    }
+    const paxN = parseInt(req.query.pax, 10);
+    const pax = Number.isInteger(paxN) && paxN >= 1 ? paxN : 1;
+    const mode = req.query.mode === 'private' ? 'private' : 'per_person';
+
+    const { data: unit } = await supabaseAdmin
+      .from('units')
+      .select('id, description')
+      .eq('id', unitId)
+      .eq('status', 'active')
+      .maybeSingle();
+    if (!unit) {
+      return res.status(404).json({ error: 'Unidade não encontrada', code: 'NOT_FOUND' });
+    }
+
+    const resultado = await diasLivresDoMes(supabaseAdmin, unit, parseUnitMeta(unit), { month, pax, mode, agora: new Date() });
+    return res.json({ data: resultado });
   } catch (err) {
     next(err);
   }
@@ -1843,6 +1873,7 @@ module.exports = {
   trackView,
   verificarDisponibilidadePublica,
   getSlotAvailability,
+  getAvailabilityMonth,
   verificarDisponibilidadeRestaurantePublica,
   criarReserva,
   discover,

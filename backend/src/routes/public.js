@@ -5,6 +5,7 @@ const {
   trackView,
   verificarDisponibilidadePublica,
   getSlotAvailability,
+  getAvailabilityMonth,
   verificarDisponibilidadeRestaurantePublica,
   criarReserva,
   discover,
@@ -71,6 +72,7 @@ router.get('/cms', getCmsPublic);
 router.get('/:slug/units/:unitId',         getUnit);
 router.get('/:slug/units/:unitId/reviews', getUnitReviews);
 router.get('/:slug/units/:unitId/slot-availability', getSlotAvailability);
+router.get('/:slug/units/:unitId/availability-month', publicLimiter, getAvailabilityMonth);
 router.post('/:slug/units/:unitId/reviews/:reviewId/helpful', publicLimiter, marcarReviewUtil);
 router.post('/:slug/units/:unitId/call-waiter', publicLimiter, callWaiter);
 router.post('/:slug/units/:unitId/orders', publicLimiter, createOrder);

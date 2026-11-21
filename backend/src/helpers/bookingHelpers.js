@@ -424,10 +424,60 @@ async function diasBloqueadosEmLote(supabase, unitId, dataInicio, dataFimExclusi
   return new Set((data || []).map((b) => b.date));
 }
 
+// Dias livres de um mes para o calendario de reserva -- UMA consulta ao mes
+// inteiro (ocupacaoSlotsEmLote + diasBloqueadosEmLote), nunca uma por dia.
+// Com time_slots: o dia esta livre se algum slot ainda nao comecou e tem
+// lugar (per_person: capacidade - ocupados >= pax; private: 0 ocupados, e
+// Infinity -- reserva privada -- conta como ocupado). Sem time_slots:
+// regra de uma reserva por dia (pending/confirmed/checked_in no check_in).
+// Dias passados e bloqueados nunca estao livres. Devolve { month, days }
+// com so os dias livres presentes ({ 'YYYY-MM-DD': true }).
+async function diasLivresDoMes(supabase, unit, meta, { month, pax = 1, mode = 'per_person', agora = new Date() } = {}) {
+  const [ano, mes] = month.split('-').map(Number);
+  const nDias = new Date(Date.UTC(ano, mes, 0)).getUTCDate();
+  const dataInicio = `${month}-01`;
+  const proximo = new Date(Date.UTC(ano, mes, 1));
+  const dataFimExclusiva = `${proximo.getUTCFullYear()}-${String(proximo.getUTCMonth() + 1).padStart(2, '0')}-01`;
+  const slots = Array.isArray(meta && meta.time_slots) ? meta.time_slots : [];
+  const { hoje } = hojeEHoraCaboVerde(agora);
+
+  let ocupacao = {};
+  let reservadosPorDia = new Set();
+  const bloqueadosPromise = diasBloqueadosEmLote(supabase, unit.id, dataInicio, dataFimExclusiva);
+  if (slots.length) {
+    ocupacao = await ocupacaoSlotsEmLote(supabase, unit.id, dataInicio, dataFimExclusiva);
+  } else {
+    const { data } = await supabase.from('reservations').select('check_in')
+      .eq('unit_id', unit.id).in('status', ['pending', 'confirmed', 'checked_in'])
+      .gte('check_in', dataInicio).lt('check_in', dataFimExclusiva);
+    reservadosPorDia = new Set((data || []).map((r) => r.check_in));
+  }
+  const bloqueados = await bloqueadosPromise;
+
+  const days = {};
+  for (let d = 1; d <= nDias; d++) {
+    const dia = `${month}-${String(d).padStart(2, '0')}`;
+    if (dia < hoje || bloqueados.has(dia)) continue;
+    if (!slots.length) {
+      if (!reservadosPorDia.has(dia)) days[dia] = true;
+      continue;
+    }
+    const doDia = ocupacao[dia] || {};
+    const livre = slots.some((s) => {
+      if (slotJaComecou(dia, s.time, agora)) return false;
+      const ocupados = doDia[normalizarHora(s.time)] || 0;
+      if (mode === 'private') return ocupados === 0;
+      return (Number(s.capacity) || 0) - ocupados >= pax;
+    });
+    if (livre) days[dia] = true;
+  }
+  return { month, days };
+}
+
 module.exports = {
   verificarDisponibilidade, calcularPreco,
   verificarDisponibilidadeMesa, listarMesasDisponiveis, DEFAULT_SEATING_MINUTES, parseUnitMeta,
   verificarDisponibilidadeSlot, listarSlotsComDisponibilidade,
-  normalizarHora, hojeEHoraCaboVerde, slotJaComecou, ocupacaoSlotsEmLote, diasBloqueadosEmLote,
+  normalizarHora, hojeEHoraCaboVerde, slotJaComecou, ocupacaoSlotsEmLote, diasBloqueadosEmLote, diasLivresDoMes,
   calcularPrecoPrivado, temPrecoPrivadoConfigurado, precoActividade,
 };
