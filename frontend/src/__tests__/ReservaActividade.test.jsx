@@ -33,17 +33,26 @@ const COTACAO = { lines: [{ type: 'tour', description: 'Adultos', quantity: 2, t
 function resposta(corpo, ok = true) { return Promise.resolve({ ok, json: () => Promise.resolve(corpo) }); }
 
 /* fetch por URL: meses { 'YYYY-MM': { dia: true } }, horarios { dia: [...] }, cotacao(params) */
+/* falhar: { meses, horarios, cotacao } -- enquanto true, esse pedido falha (500, erro de rede ou
+   429); o teste muda a flag para false antes de "Tentar de novo". */
 function simularRede({ meses = { '2026-11': { '2026-11-25': true, '2026-11-27': true } }, horarios = {}, cotacao = () => COTACAO,
-  unit = UNIDADE, op = OPERADOR } = {}) {
+  unit = UNIDADE, op = OPERADOR, falhar = {} } = {}) {
   global.fetch = vi.fn((url) => {
     const u = String(url);
     const params = u.includes('?') ? new URLSearchParams(u.slice(u.indexOf('?') + 1)) : new URLSearchParams();
     if (u.includes('/availability-month')) {
+      if (falhar.meses) return resposta({ error: 'Erro interno' }, false);
       const mes = params.get('month');
       return resposta({ data: { month: mes, days: meses[mes] || {} } });
     }
-    if (u.includes('/slot-availability')) return resposta({ data: horarios[params.get('date')] || [] });
-    if (u.includes('/quote')) return resposta({ data: cotacao(params) });
+    if (u.includes('/slot-availability')) {
+      if (falhar.horarios) return Promise.reject(new TypeError('Failed to fetch'));
+      return resposta({ data: horarios[params.get('date')] || [] });
+    }
+    if (u.includes('/quote')) {
+      if (falhar.cotacao) return resposta({ error: 'Demasiados pedidos' }, false);
+      return resposta({ data: cotacao(params) });
+    }
     if (u.includes('/traveler-auth/session')) return resposta({}, false);
     if (u.endsWith('/units/u1/reviews')) return resposta({ data: [] });
     if (u.endsWith('/units/u1')) return resposta({ data: { unit, operator: op, related: [], recent_bookings: 0 } });
@@ -326,6 +335,108 @@ describe('Coluna de reserva da actividade', () => {
     expect(screen.getByRole('heading', { name: /Who's coming\?/ })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Book/ })).toBeDisabled();
     await esperarCalendario();
+  });
+});
+
+describe('Coluna de reserva quando a rede falha', () => {
+  const SLOTS = [{ time: '09:00' }, { time: '14:00' }];
+  const LIVRES = { '2026-11-25': [
+    { time: '09:00', capacity: 10, remaining: 10, privateAvailable: true },
+    { time: '14:00', capacity: 10, remaining: 10, privateAvailable: true },
+  ] };
+
+  it('falha_dos_horarios_mostra_erro_e_bloqueia_reservar', async () => {
+    const falhar = { horarios: true };
+    simularRede({ horarios: LIVRES, falhar });
+    montarColuna({ meta: { time_slots: SLOTS } });
+    fireEvent.click(await esperarDiaLivre('2026-11-25'));
+    const horarios = await screen.findByTestId('horarios');
+    expect(await within(horarios).findByText('Não foi possível carregar os horários')).toBeInTheDocument();
+    /* a cotacao chega, mas sem horario a reserva continua bloqueada */
+    await within(screen.getByTestId('preco-reserva')).findAllByText('€90');
+    expect(screen.getByRole('button', { name: /Reservar/ })).toBeDisabled();
+    expect(chamadas('/slot-availability')).toHaveLength(1);
+
+    falhar.horarios = false;
+    fireEvent.click(within(horarios).getByRole('button', { name: 'Tentar de novo' }));
+    await waitFor(() => expect(horarios.querySelector('[data-horario="09:00"]')).not.toBeNull());
+    expect(chamadas('/slot-availability')).toHaveLength(2);
+    expect(within(horarios).queryByText('Não foi possível carregar os horários')).toBeNull();
+    /* dois horarios livres: nenhum fica escolhido sozinho, Reservar so depois de escolher */
+    expect(screen.getByRole('button', { name: /Reservar/ })).toBeDisabled();
+    fireEvent.click(horarios.querySelector('[data-horario="14:00"]'));
+    await waitFor(() => expect(screen.getByRole('button', { name: /Reservar/ })).toBeEnabled());
+  });
+
+  it('unidade_com_horarios_e_lista_vazia_continua_a_pedir_hora', async () => {
+    simularRede({ horarios: {} });
+    montarColuna({ meta: { time_slots: SLOTS } });
+    fireEvent.click(await esperarDiaLivre('2026-11-25'));
+    await waitFor(() => expect(chamadas('/slot-availability')).toHaveLength(1));
+    await within(screen.getByTestId('preco-reserva')).findAllByText('€90');
+    await new Promise((r) => setTimeout(r, 50));
+    expect(screen.getByRole('button', { name: /Reservar/ })).toBeDisabled();
+  });
+
+  it('falha_da_cotacao_mostra_erro_e_bloqueia_reservar', async () => {
+    const falhar = { cotacao: true };
+    simularRede({ falhar });
+    montarColuna();
+    fireEvent.click(await esperarDiaLivre('2026-11-25'));
+    const preco = screen.getByTestId('preco-reserva');
+    expect(await within(preco).findByText('Não foi possível calcular o preço')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Reservar/ })).toBeDisabled();
+
+    falhar.cotacao = false;
+    fireEvent.click(within(preco).getByRole('button', { name: 'Tentar de novo' }));
+    expect(await within(preco).findAllByText('€90')).toHaveLength(2);
+    expect(within(preco).queryByText('Não foi possível calcular o preço')).toBeNull();
+    await waitFor(() => expect(screen.getByRole('button', { name: /Reservar/ })).toBeEnabled());
+  });
+
+  it('falha_do_calendario_nao_diz_sem_datas', async () => {
+    const falhar = { meses: true };
+    simularRede({ falhar, meses: { '2026-11': { '2026-11-25': true } } });
+    montarColuna();
+    const calendario = screen.getByTestId('calendario');
+    expect(await within(calendario).findByText('Não foi possível carregar as datas')).toBeInTheDocument();
+    expect(within(calendario).queryByText('Sem datas disponíveis neste mês')).toBeNull();
+    await new Promise((r) => setTimeout(r, 50));
+    /* uma falha nao gasta o avanco automatico para o mes seguinte */
+    expect(chamadas('/availability-month')).toHaveLength(1);
+    expect(screen.getByText('Novembro de 2026')).toBeInTheDocument();
+    expect(dia('2026-11-25')).toHaveAttribute('aria-disabled', 'true');
+    expect(dia('2026-11-25')).not.toHaveClass('line-through');
+
+    falhar.meses = false;
+    fireEvent.click(within(calendario).getByRole('button', { name: 'Tentar de novo' }));
+    await esperarDiaLivre('2026-11-25');
+    expect(chamadas('/availability-month')).toHaveLength(2);
+    expect(chamadas('/availability-month')[1]).toContain('month=2026-11');
+    expect(within(calendario).queryByText('Não foi possível carregar as datas')).toBeNull();
+  });
+
+  it('falha_do_calendario_em_ingles', async () => {
+    simularRede({ falhar: { meses: true } });
+    montarColuna({ lang: 'en' });
+    const calendario = screen.getByTestId('calendario');
+    expect(await within(calendario).findByText('Could not load dates')).toBeInTheDocument();
+    expect(within(calendario).getByRole('button', { name: 'Try again' })).toBeInTheDocument();
+  });
+
+  it('mudar_pessoas_rapido_um_so_pedido_do_mes', async () => {
+    simularRede();
+    montarColuna();
+    await esperarDiaLivre('2026-11-25');
+    expect(chamadas('/availability-month')).toHaveLength(1);
+    const mais = screen.getByRole('button', { name: 'Mais adultos' });
+    fireEvent.click(mais);
+    fireEvent.click(mais);
+    fireEvent.click(mais);
+    await waitFor(() => expect(chamadas('/availability-month')).toHaveLength(2));
+    await new Promise((r) => setTimeout(r, 350));
+    expect(chamadas('/availability-month')).toHaveLength(2);
+    expect(chamadas('/availability-month')[1]).toContain('pax=5');
   });
 });
 

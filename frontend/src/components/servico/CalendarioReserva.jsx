@@ -4,6 +4,7 @@
    tem tabIndex 0). Datas sempre como texto 'YYYY-MM-DD', nunca a hora local do browser. */
 import { useRef, useState } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import FalhaComRepetir from './FalhaComRepetir';
 
 /* Mes corrente em Cabo Verde ('YYYY-MM'), seja qual for o fuso do browser */
 export function mesDeCaboVerde(agora = new Date()) {
@@ -38,8 +39,9 @@ function nomeDoDia(dia, en) {
   return new Date(Date.UTC(a, m - 1, d)).toLocaleDateString(en ? 'en-GB' : 'pt-PT', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC' });
 }
 
-export default function CalendarioReserva({ mes, dias, seleccionado, onEscolher, onMudarMes, podeRecuar, lang }) {
+export default function CalendarioReserva({ mes, dias, seleccionado, onEscolher, onMudarMes, podeRecuar, lang, falhou, onTentarDeNovo }) {
   const en = lang === 'en';
+  /* sem dias (a carregar ou depois de uma falha) nada e escolhivel, mas tambem nada fica riscado */
   const carregando = dias === null;
   const livres = dias || {};
   const vazio = !carregando && Object.keys(livres).length === 0;
@@ -114,11 +116,13 @@ export default function CalendarioReserva({ mes, dias, seleccionado, onEscolher,
           );
         })}
       </div>
-      <p aria-live="polite" className="text-xs font-body text-n-500 mt-2 min-h-[1rem]">
-        {carregando
+      <div aria-live="polite" className="text-xs font-body text-n-500 mt-2 min-h-[1rem]">
+        {falhou ? (
+          <FalhaComRepetir lang={lang} texto={en ? 'Could not load dates' : 'Não foi possível carregar as datas'} onTentar={onTentarDeNovo}/>
+        ) : carregando
           ? (en ? 'Loading dates…' : 'A carregar datas…')
           : vazio ? (en ? 'No dates available this month' : 'Sem datas disponíveis neste mês') : ''}
-      </p>
+      </div>
     </div>
   );
 }

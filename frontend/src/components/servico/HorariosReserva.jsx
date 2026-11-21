@@ -1,6 +1,7 @@
 /* Horarios do dia escolhido (slot-availability). Por pessoa, um horario serve quando tem
    lugares para o grupo todo; privado, quando ninguem o reservou ainda. Horarios ja
-   comecados (started) vem do servidor com remaining 0 e ficam esgotados. */
+   comecados (started) vem do servidor com remaining 0 e ficam esgotados. Uma falha do pedido mostra-se como falha, com "Tentar de novo". */
+import FalhaComRepetir from './FalhaComRepetir';
 
 export function horarioDisponivel(h, pax, modo) {
   if (!h || h.started) return false;
@@ -16,12 +17,14 @@ function nota(h, disponivel, modo, en) {
   return '';
 }
 
-export default function HorariosReserva({ horarios: lista, carregando, seleccionado, onEscolher, pax, modo, lang }) {
+export default function HorariosReserva({ horarios: lista, carregando, seleccionado, onEscolher, pax, modo, lang, falhou, onTentarDeNovo }) {
   const en = lang === 'en';
   return (
     <div aria-live="polite" data-testid="horarios">
       {carregando ? (
         <p className="text-xs font-body text-n-500">{en ? 'Loading times…' : 'A carregar horários…'}</p>
+      ) : falhou ? (
+        <FalhaComRepetir lang={lang} texto={en ? 'Could not load times' : 'Não foi possível carregar os horários'} onTentar={onTentarDeNovo}/>
       ) : lista.length > 0 && (
         <div role="group" aria-label={en ? 'Time' : 'Horário'} className="grid grid-cols-2 min-[420px]:grid-cols-3 lg:grid-cols-2 gap-2">
           {lista.map((h) => {

@@ -7,14 +7,20 @@ import { useEffect, useRef, useState } from 'react';
 import { Minus, Plus, Calendar, AlertCircle } from 'lucide-react';
 import CalendarioReserva, { mesDeCaboVerde, somarMes } from './CalendarioReserva';
 import HorariosReserva, { horarioDisponivel } from './HorariosReserva';
+import FalhaComRepetir from './FalhaComRepetir';
 
 const MAX_ADULTOS = 20;
 const MAX_CRIANCAS = 10;
 const ESPERA_COTACAO = 300;
+const ESPERA_MES = 300;
 
 const focoVisivel = 'focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-1';
 
-function lerJson(r) { return r && r.ok ? r.json() : null; }
+/* Uma resposta nao-ok (429 do publicLimiter, 500) e uma falha, nunca "sem dados" */
+function lerJson(r) {
+  if (!r || !r.ok) throw new Error(`HTTP ${r ? r.status : 0}`);
+  return r.json();
+}
 
 function Passo({ numero, titulo, children }) {
   return (
@@ -70,31 +76,42 @@ export default function ReservaActividade({
   const [idioma, setIdioma] = useState('');
   const pax = adultos + criancas;
 
-  /* ── Calendario: mes corrente em Cabo Verde; se vier vazio, avanca um mes (uma vez so) ── */
+  /* ── Calendario: mes corrente em Cabo Verde; se vier vazio, avanca um mes (uma vez so).
+     Mudar pessoas ou modo espera 300 ms (como a cotacao); mudar de mes ou repetir pede logo.
+     Uma falha mostra-se como falha (com "Tentar de novo") e nao gasta o avanco automatico. ── */
   const [mes, setMes] = useState(() => mesDeCaboVerde(new Date()));
   const mesInicial = useRef(mes).current;
   const jaAvancou = useRef(false);
   const [dias, setDias] = useState(null);
+  const [falhaMes, setFalhaMes] = useState(false);
+  const [tentativaMes, setTentativaMes] = useState(0);
+  const pedidoMes = useRef(null);
   const [data, setData] = useState('');
 
   useEffect(() => {
     let activo = true;
+    const anterior = pedidoMes.current;
+    pedidoMes.current = { mes, tentativa: tentativaMes };
+    const esperar = !!anterior && anterior.mes === mes && anterior.tentativa === tentativaMes;
     setDias(null);
-    fetch(`${base}/availability-month?month=${mes}&pax=${pax}&mode=${modo}`)
-      .then(lerJson)
-      .then((j) => {
-        if (!activo) return;
-        const livres = j?.data?.days && typeof j.data.days === 'object' ? j.data.days : {};
-        if (!Object.keys(livres).length && mes === mesInicial && !jaAvancou.current) {
-          jaAvancou.current = true;
-          setMes(somarMes(mes, 1));
-          return;
-        }
-        setDias(livres);
-      })
-      .catch(() => { if (activo) setDias({}); });
-    return () => { activo = false; };
-  }, [base, mes, pax, modo, mesInicial]);
+    setFalhaMes(false);
+    const espera = setTimeout(() => {
+      fetch(`${base}/availability-month?month=${mes}&pax=${pax}&mode=${modo}`)
+        .then(lerJson)
+        .then((j) => {
+          if (!activo) return;
+          const livres = j?.data?.days && typeof j.data.days === 'object' ? j.data.days : {};
+          if (!Object.keys(livres).length && mes === mesInicial && !jaAvancou.current) {
+            jaAvancou.current = true;
+            setMes(somarMes(mes, 1));
+            return;
+          }
+          setDias(livres);
+        })
+        .catch(() => { if (activo) setFalhaMes(true); });
+    }, esperar ? ESPERA_MES : 0);
+    return () => { activo = false; clearTimeout(espera); };
+  }, [base, mes, pax, modo, mesInicial, tentativaMes]);
 
   /* Dia escolhido que deixou de ter lugar (mais pessoas, outro modo) sai da seleccao */
   useEffect(() => {
@@ -104,21 +121,28 @@ export default function ReservaActividade({
   /* ── Horarios do dia ── */
   const [horarios, setHorarios] = useState([]);
   const [aCarregarHorarios, setACarregarHorarios] = useState(false);
+  const [falhaHorarios, setFalhaHorarios] = useState(false);
+  const [tentativaHorarios, setTentativaHorarios] = useState(0);
   const [hora, setHora] = useState('');
 
   useEffect(() => {
     setHorarios([]);
     setHora('');
+    setFalhaHorarios(false);
     if (!data || !temHorariosNaUnidade) { setACarregarHorarios(false); return undefined; }
     let activo = true;
     setACarregarHorarios(true);
     fetch(`${base}/slot-availability?date=${data}`)
       .then(lerJson)
-      .then((j) => { if (activo) setHorarios(Array.isArray(j?.data) ? j.data : []); })
-      .catch(() => { if (activo) setHorarios([]); })
+      .then((j) => {
+        if (!activo) return;
+        if (!Array.isArray(j?.data)) throw new Error('slot-availability sem lista');
+        setHorarios(j.data);
+      })
+      .catch(() => { if (activo) setFalhaHorarios(true); })
       .finally(() => { if (activo) setACarregarHorarios(false); });
     return () => { activo = false; };
-  }, [base, data, temHorariosNaUnidade]);
+  }, [base, data, temHorariosNaUnidade, tentativaHorarios]);
 
   /* Hora que deixou de servir sai; com um so horario livre, fica escolhido */
   useEffect(() => {
@@ -131,27 +155,36 @@ export default function ReservaActividade({
   const [voucher, setVoucher] = useState('');
   const [cotacao, setCotacao] = useState(null);
   const [aCotar, setACotar] = useState(true);
+  const [falhaCotacao, setFalhaCotacao] = useState(false);
+  const [tentativaCotacao, setTentativaCotacao] = useState(0);
 
   useEffect(() => {
     let activo = true;
     setACotar(true);
+    setFalhaCotacao(false);
     const espera = setTimeout(() => {
       const q = new URLSearchParams({ adults: String(adultos), children: String(criancas), mode: modo });
       if (voucher) q.set('voucher', voucher);
       fetch(`${base}/quote?${q.toString()}`)
         .then(lerJson)
-        .then((j) => { if (activo) setCotacao(j?.data || null); })
-        .catch(() => { if (activo) setCotacao(null); })
+        .then((j) => {
+          if (!activo) return;
+          if (!j?.data || typeof j.data !== 'object') throw new Error('quote sem dados');
+          setCotacao(j.data);
+        })
+        .catch(() => { if (activo) { setCotacao(null); setFalhaCotacao(true); } })
         .finally(() => { if (activo) setACotar(false); });
     }, ESPERA_COTACAO);
     return () => { activo = false; clearTimeout(espera); };
-  }, [base, adultos, criancas, modo, voucher]);
+  }, [base, adultos, criancas, modo, voucher, tentativaCotacao]);
 
   const erro = cotacao?.error || null;
   const voucherInvalido = erro?.code === 'INVALID_VOUCHER';
   const erroBloqueia = !!erro && !voucherInvalido;
-  const horariosDoDia = temHorariosNaUnidade && horarios.length > 0;
-  const podeReservar = !!data && !aCarregarHorarios && (!horariosDoDia || !!hora) && !aCotar && !erroBloqueia;
+  /* Uma unidade com time_slots precisa sempre de hora (o servidor devolve sempre os horarios
+     configurados; lista vazia ou falha nunca dispensam a hora). Sem cotacao valida, nao reserva. */
+  const podeReservar = !!data && !aCarregarHorarios && !falhaHorarios && (!temHorariosNaUnidade || !!hora)
+    && !aCotar && !falhaCotacao && !!cotacao && !erroBloqueia;
 
   function aplicarVoucher(e) {
     e.preventDefault();
@@ -168,7 +201,7 @@ export default function ReservaActividade({
       mode: modo,
       language: idioma || (linguas.length === 1 ? linguas[0] : null),
       voucher: voucher && !voucherInvalido ? voucher : null,
-      quote: cotacao ? { lines: cotacao.lines || [], total: cotacao.total, before: cotacao.before ?? null } : null,
+      quote: { lines: cotacao.lines || [], total: cotacao.total, before: cotacao.before ?? null },
     });
   }
 
@@ -232,16 +265,21 @@ export default function ReservaActividade({
 
       <Passo numero={proximo()} titulo={en ? 'Choose date and time' : 'Escolha a data e a hora'}>
         <CalendarioReserva mes={mes} dias={dias} seleccionado={data} onEscolher={setData}
-          onMudarMes={(n) => setMes((m) => somarMes(m, n))} podeRecuar={mes > mesInicial} lang={lang}/>
+          onMudarMes={(n) => setMes((m) => somarMes(m, n))} podeRecuar={mes > mesInicial} lang={lang}
+          falhou={falhaMes} onTentarDeNovo={() => setTentativaMes((t) => t + 1)}/>
         {data && temHorariosNaUnidade && (
           <HorariosReserva horarios={horarios} carregando={aCarregarHorarios} seleccionado={hora}
-            onEscolher={setHora} pax={pax} modo={modo} lang={lang}/>
+            onEscolher={setHora} pax={pax} modo={modo} lang={lang}
+            falhou={falhaHorarios} onTentarDeNovo={() => setTentativaHorarios((t) => t + 1)}/>
         )}
       </Passo>
 
       <div data-testid="preco-reserva" aria-live="polite" className="bg-n-50 border border-n-100 rounded-xl p-4 space-y-2">
         {aCotar && !cotacao ? (
           <p className="text-xs font-body text-n-500">{en ? 'Calculating price…' : 'A calcular o preço…'}</p>
+        ) : falhaCotacao ? (
+          <FalhaComRepetir lang={lang} texto={en ? 'Could not calculate the price' : 'Não foi possível calcular o preço'}
+            onTentar={() => setTentativaCotacao((t) => t + 1)}/>
         ) : erroBloqueia ? (
           <p role="alert" className="flex items-start gap-2 text-sm font-body text-red-700">
             <AlertCircle size={16} strokeWidth={1.75} aria-hidden="true" className="mt-0.5 shrink-0"/>

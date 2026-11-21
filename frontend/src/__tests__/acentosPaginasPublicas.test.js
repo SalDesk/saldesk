@@ -27,6 +27,7 @@ const FICHEIROS = [
   'components/servico/CalendarioReserva.jsx',
   'components/servico/HorariosReserva.jsx',
   'components/servico/BarraReservaMovel.jsx',
+  'components/servico/FalhaComRepetir.jsx',
 ];
 
 const PALAVRAS = [
