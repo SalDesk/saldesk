@@ -2,7 +2,7 @@ const { supabaseAdmin } = require('../config/supabase');
 const { estadoInicialReserva } = require('../helpers/politicaOperador');
 const { criarNotificacaoViajante } = require('../helpers/travelerNotificationHelper');
 const { frontendBase } = require('../utils/urls');
-const { verificarDisponibilidade, calcularPreco, verificarDisponibilidadeMesa, listarMesasDisponiveis, DEFAULT_SEATING_MINUTES, parseUnitMeta, verificarDisponibilidadeSlot, listarSlotsComDisponibilidade, calcularPrecoPrivado, temPrecoPrivadoConfigurado, precoActividade } = require('../helpers/bookingHelpers');
+const { verificarDisponibilidade, calcularPreco, verificarDisponibilidadeMesa, listarMesasDisponiveis, DEFAULT_SEATING_MINUTES, parseUnitMeta, verificarDisponibilidadeSlot, listarSlotsComDisponibilidade, calcularPrecoPrivado, temPrecoPrivadoConfigurado, precoActividade, slotJaComecou } = require('../helpers/bookingHelpers');
 const { obterOuCriarCliente } = require('../helpers/customerHelper');
 const { enviarEmail } = require('../helpers/emailHelper');
 const { detectarIdioma } = require('../helpers/languageHelper');
@@ -146,7 +146,10 @@ async function getSlotAvailability(req, res, next) {
     if (!slots.length) return res.json({ data: [] });
 
     const disponiveis = await listarSlotsComDisponibilidade(supabaseAdmin, unitId, date, slots);
-    return res.json({ data: disponiveis });
+    const agora = new Date();
+    return res.json({
+      data: disponiveis.map((s) => (slotJaComecou(date, s.time, agora) ? { ...s, remaining: 0, started: true } : s)),
+    });
   } catch (err) {
     next(err);
   }
@@ -379,6 +382,9 @@ async function criarReserva(req, res, next) {
           return res.status(400).json({ error: 'Horário inválido para esta actividade', code: 'INVALID_TIME_SLOT' });
         }
         activitySlotTime = slotEscolhido.time;
+        if (slotJaComecou(check_in, slotEscolhido.time)) {
+          return res.status(409).json({ error: 'Este horário já começou', code: 'UNAVAILABLE' });
+        }
         const cabe = await verificarDisponibilidadeSlot(supabaseAdmin, unit_id, check_in, slotEscolhido.time, Number(partyEfectivo), Number(slotEscolhido.capacity) || 0, null, isGroupBooking);
         if (!cabe) {
           return res.status(409).json({ error: 'Sem vagas neste horário', code: 'UNAVAILABLE' });

@@ -256,6 +256,25 @@ function normalizarHora(t) {
   return typeof t === 'string' ? t.slice(0, 5) : t;
 }
 
+// Data e hora actuais em Cabo Verde (Atlantic/Cape_Verde, UTC-1, sem DST),
+// independentes do fuso do servidor. Devolve { hoje: 'YYYY-MM-DD', hora: 'HH:MM' }.
+function hojeEHoraCaboVerde(agora = new Date()) {
+  const partes = {};
+  new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Atlantic/Cape_Verde', year: 'numeric', month: '2-digit', day: '2-digit',
+    hour: '2-digit', minute: '2-digit', hourCycle: 'h23',
+  }).formatToParts(agora).forEach((p) => { partes[p.type] = p.value; });
+  return { hoje: `${partes.year}-${partes.month}-${partes.day}`, hora: `${partes.hour}:${partes.minute}` };
+}
+
+// Um slot ja comecou quando o dia ja passou, ou e hoje (em Cabo Verde) e a
+// hora de inicio ja chegou. Nao se reserva um horario que ja arrancou.
+function slotJaComecou(date, time, agora = new Date()) {
+  const { hoje, hora } = hojeEHoraCaboVerde(agora);
+  if (date < hoje) return true;
+  return date === hoje && normalizarHora(time) <= hora;
+}
+
 // Soma os `guests` de reservas activas que ja ocupam um slot especifico
 // (unidade+dia+hora) -- ao contrario de verificarDisponibilidadeMesa (uma
 // mesa e exclusiva, so uma reserva de cada vez), um slot de tour tem
@@ -409,6 +428,6 @@ module.exports = {
   verificarDisponibilidade, calcularPreco,
   verificarDisponibilidadeMesa, listarMesasDisponiveis, DEFAULT_SEATING_MINUTES, parseUnitMeta,
   verificarDisponibilidadeSlot, listarSlotsComDisponibilidade,
-  normalizarHora, ocupacaoSlotsEmLote, diasBloqueadosEmLote,
+  normalizarHora, hojeEHoraCaboVerde, slotJaComecou, ocupacaoSlotsEmLote, diasBloqueadosEmLote,
   calcularPrecoPrivado, temPrecoPrivadoConfigurado, precoActividade,
 };
