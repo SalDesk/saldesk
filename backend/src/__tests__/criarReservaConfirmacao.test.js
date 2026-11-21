@@ -37,7 +37,7 @@ jest.mock('../config/supabase', () => {
     const resolver = () => {
       if (tabela === 'operators') return { data: estado.operador, error: null };
       if (tabela === 'units') return { data: { id: 'u1', name: 'Volta a ilha', base_price: 40, operator_id: 'op1', status: 'active' }, error: null };
-      if (tabela === 'reservations') return { data: { id: 'r1', ...b.linha }, error: null };
+      if (tabela === 'reservations') return b.linha ? { data: { id: 'r1', ...b.linha }, error: null } : { data: [], error: null };
       return { data: null, error: null };
     };
     b.single = jest.fn(() => Promise.resolve(resolver()));

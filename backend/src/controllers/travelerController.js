@@ -4,15 +4,8 @@ const { getDiscoverCatalog } = require('../services/discoverCatalogService');
 const PDFDocument = require('pdfkit');
 const { desenharRecibo } = require('../helpers/receiptPdf');
 const { frontendBase } = require('../utils/urls');
-
-/* As reservas do viajante sao as que tem o email dele. O LIKE do PostgreSQL trata _ e % como curingas
-   ("j_silva@" apanhava "jxsilva@"): escapam-se, e a igualdade exacta (sem maiusculas nem espacos) confirma. */
-function padraoEmail(email) {
-  return email.replace(/[\\%_]/g, (c) => `\\${c}`);
-}
-function mesmoEmail(emailReserva, email) {
-  return typeof emailReserva === 'string' && emailReserva.trim().toLowerCase() === email;
-}
+// As reservas do viajante sao as que tem o email dele (curingas do LIKE escapados, igualdade exacta)
+const { padraoEmail, mesmoEmail } = require('../helpers/emailPadrao');
 
 /* Reservas, recibos e avaliacoes so com o email confirmado: sem isto, quem soubesse o email de
    um turista criava uma conta com ele e via as reservas dele (helpers/verificacaoEmailViajante.js) */

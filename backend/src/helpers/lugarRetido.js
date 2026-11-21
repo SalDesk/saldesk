@@ -4,6 +4,7 @@ const {
   verificarDisponibilidade, verificarDisponibilidadeMesa, verificarDisponibilidadeSlot,
   parseUnitMeta, hojeEHoraCaboVerde, slotJaComecou, normalizarHora,
 } = require('./bookingHelpers');
+const { padraoEmail, mesmoEmail } = require('./emailPadrao');
 
 const MINUTOS_RETENCAO = 30;
 
@@ -76,4 +77,52 @@ async function expirarReservasNaoPagas(supabase, agora = new Date()) {
   return expiradas.length;
 }
 
-module.exports = { MINUTOS_RETENCAO, eMetodoCartao, fimDaRetencao, lugarAindaLivre, expirarReservasNaoPagas };
+/* Reservas publicas do mesmo cliente, na mesma unidade e dia, feitas nos ultimos 30 minutos.
+   O email e comparado sem curingas: o ILIKE pre-filtra (maiusculas iguais) e mesmoEmail confirma. */
+async function reservasRecentesDoCliente(supabase, { operatorId, unitId, email, checkIn, agora = new Date() }) {
+  const emailNormal = String(email || '').trim().toLowerCase();
+  const desde = new Date(agora.getTime() - MINUTOS_RETENCAO * 60 * 1000).toISOString();
+  const { data, error } = await supabase
+    .from('reservations')
+    .select('*')
+    .eq('operator_id', operatorId)
+    .eq('unit_id', unitId)
+    .eq('check_in', checkIn)
+    .eq('source', 'public')
+    .in('status', ['pending', 'confirmed'])
+    .gte('created_at', desde)
+    .ilike('customer_email', padraoEmail(emailNormal));
+  if (error) throw error;
+  return (data || []).filter((r) => mesmoEmail(r.customer_email, emailNormal));
+}
+
+const horaCurta = (t) => (t === null || t === undefined || t === '' ? null : String(t).slice(0, 5));
+const metodoDaLinha = (r) => (eMetodoCartao(r.payment_method) ? r.payment_method : null);
+
+/* Separa as reservas recentes do cliente:
+   - retidosProprios: lugares retidos com cartao ainda dentro do prazo (por pagar);
+   - igualSemCartao: a mesma reserva sem cartao (enviada duas vezes) -- devolve-se esta;
+   - igualCartao: a mesma reserva com cartao e lugar ainda retido -- renova-se o prazo. */
+function classificarRecentes(recentes, nova, agora = new Date()) {
+  const linhas = recentes || [];
+  const retidosProprios = linhas.filter((r) => r.status === 'pending'
+    && r.payment_status === 'pending'
+    && eMetodoCartao(r.payment_method)
+    && !!r.hold_expires_at
+    && new Date(r.hold_expires_at).getTime() > agora.getTime());
+  const igual = (r) => r.check_out === nova.checkOut
+    && horaCurta(r.start_time) === horaCurta(nova.startTime)
+    && Number(r.guests) === Number(nova.guests)
+    && !!r.is_group_booking === !!nova.isGroupBooking
+    && metodoDaLinha(r) === (nova.metodo || null);
+  return {
+    igualSemCartao: linhas.find((r) => igual(r) && metodoDaLinha(r) === null),
+    igualCartao: retidosProprios.find(igual),
+    retidosProprios,
+  };
+}
+
+module.exports = {
+  MINUTOS_RETENCAO, eMetodoCartao, fimDaRetencao, lugarAindaLivre, expirarReservasNaoPagas,
+  reservasRecentesDoCliente, classificarRecentes,
+};

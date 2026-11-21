@@ -9,7 +9,7 @@ const { detectarIdioma } = require('../helpers/languageHelper');
 const { confirmacaoClienteEmail, notificacaoOperadorEmail } = require('../helpers/emailTemplates');
 const { validarVoucher, registarUsoVoucher } = require('./vouchersController');
 const { avisarNovaReserva } = require('../helpers/avisosReserva');
-const { eMetodoCartao, fimDaRetencao } = require('../helpers/lugarRetido');
+const { eMetodoCartao, fimDaRetencao, reservasRecentesDoCliente, classificarRecentes } = require('../helpers/lugarRetido');
 const { encontrarAfiliadoActivo } = require('./affiliatesController');
 const { dispararSyncImediato } = require('../helpers/otaSyncHelper');
 const { getDiscoverCatalog } = require('../services/discoverCatalogService');
@@ -342,6 +342,29 @@ async function criarReserva(req, res, next) {
     let activitySlotTime = null;
     let isGroupBooking = false;
     let precoAct = null;
+
+    /* Duplicados (duplo clique, voltar atras, rede lenta): a mesma reserva ja feita nos ultimos
+       30 minutos devolve-se em vez de criar outra. Os lugares retidos do mesmo cliente ainda por
+       pagar nao contam contra a nova reserva (excluirRetidos) e sao substituidos por ela. */
+    let recentes = { igualSemCartao: undefined, igualCartao: undefined, retidosProprios: [] };
+    let excluirRetidos = [];
+    async function procurarDuplicados(startTime) {
+      const linhas = await reservasRecentesDoCliente(supabaseAdmin, {
+        operatorId: operator.id, unitId: unit_id, email: customer_email, checkIn: check_in,
+      });
+      recentes = classificarRecentes(linhas, {
+        checkOut: effectiveCheckOut, startTime, guests: partyEfectivo, isGroupBooking,
+        metodo: eMetodoCartao(payment_method) ? payment_method : null,
+      });
+      excluirRetidos = recentes.retidosProprios.map((r) => r.id);
+      return recentes.igualSemCartao;
+    }
+    const responderRepetida = (reserva) => res.status(200).json({
+      data: reserva,
+      pre_order: null,
+      message: reserva.status === 'confirmed' ? 'Reserva confirmada.' : 'Reserva submetida com sucesso. Aguarde confirmação.',
+    });
+
     if (isRestaurant) {
       const { data: mesaRow } = await supabaseAdmin
         .from('units')
@@ -362,8 +385,11 @@ async function criarReserva(req, res, next) {
         return res.status(400).json({ error: 'Número de pessoas não cabe nesta mesa', code: 'PARTY_SIZE_MISMATCH' });
       }
 
+      const repetida = await procurarDuplicados(reservation_time);
+      if (repetida) return responderRepetida(repetida);
+
       // Corrida: a lista de mesas foi buscada momentos antes -- confirmar de novo.
-      const disponivel = await verificarDisponibilidadeMesa(supabaseAdmin, unit_id, check_in, reservation_time, DEFAULT_SEATING_MINUTES);
+      const disponivel = await verificarDisponibilidadeMesa(supabaseAdmin, unit_id, check_in, reservation_time, DEFAULT_SEATING_MINUTES, excluirRetidos);
       if (!disponivel) {
         return res.status(409).json({ error: 'Mesa indisponível nesse horário', code: 'UNAVAILABLE' });
       }
@@ -429,12 +455,16 @@ async function criarReserva(req, res, next) {
         if (slotJaComecou(check_in, slotEscolhido.time)) {
           return res.status(409).json({ error: 'Este horário já começou', code: 'UNAVAILABLE' });
         }
-        const cabe = await verificarDisponibilidadeSlot(supabaseAdmin, unit_id, check_in, slotEscolhido.time, Number(partyEfectivo), Number(slotEscolhido.capacity) || 0, null, isGroupBooking);
+        const repetida = await procurarDuplicados(slotEscolhido.time);
+        if (repetida) return responderRepetida(repetida);
+        const cabe = await verificarDisponibilidadeSlot(supabaseAdmin, unit_id, check_in, slotEscolhido.time, Number(partyEfectivo), Number(slotEscolhido.capacity) || 0, excluirRetidos, isGroupBooking);
         if (!cabe) {
           return res.status(409).json({ error: 'Sem vagas neste horário', code: 'UNAVAILABLE' });
         }
       } else {
-        const disponivel = await verificarDisponibilidade(supabaseAdmin, unit_id, check_in, effectiveCheckOut);
+        const repetida = await procurarDuplicados(null);
+        if (repetida) return responderRepetida(repetida);
+        const disponivel = await verificarDisponibilidade(supabaseAdmin, unit_id, check_in, effectiveCheckOut, excluirRetidos);
         if (!disponivel) {
           return res.status(409).json({ error: 'Unidade indisponível nas datas seleccionadas', code: 'UNAVAILABLE' });
         }
@@ -492,6 +522,22 @@ async function criarReserva(req, res, next) {
       }
     }
 
+    /* A mesma reserva com cartao, ainda retida e com o mesmo valor: renova o prazo e devolve-a,
+       sem inserir, notificar nem enviar emails. Se entretanto deixou de estar por pagar, segue
+       e cria uma nova. */
+    if (recentes.igualCartao && Number(recentes.igualCartao.total_price) === finalTotal) {
+      const { data: renovada, error: errRenovar } = await supabaseAdmin
+        .from('reservations')
+        .update({ hold_expires_at: fimDaRetencao(), updated_at: new Date().toISOString() })
+        .eq('id', recentes.igualCartao.id)
+        .eq('status', 'pending')
+        .eq('payment_status', 'pending')
+        .select()
+        .maybeSingle();
+      if (errRenovar) throw errRenovar;
+      if (renovada) return responderRepetida(renovada);
+    }
+
     let affiliateId = null;
     /* "Indicado por" e texto livre escrito pelo cliente (ex: "o Carlos da
        praia"), por isso nunca pode falhar a reserva: se coincidir com o
@@ -534,6 +580,17 @@ async function criarReserva(req, res, next) {
     /* Cartao (PayPal/SISP) com valor a pagar: o lugar fica retido e os avisos
        (e o uso do voucher) so acontecem quando o pagamento for confirmado. */
     const adiar = eMetodoCartao(payment_method) && finalTotal > 0;
+
+    // Os lugares retidos antigos do mesmo cliente dao lugar a esta reserva (ja nao contaram nas vagas)
+    if (recentes.retidosProprios.length) {
+      const { error: errSubstituir } = await supabaseAdmin
+        .from('reservations')
+        .update({ status: 'cancelled', cancel_reason: 'replaced', updated_at: new Date().toISOString() })
+        .in('id', excluirRetidos)
+        .eq('status', 'pending')
+        .eq('payment_status', 'pending');
+      if (errSubstituir) throw errSubstituir;
+    }
 
     const { data, error } = await supabaseAdmin
       .from('reservations')
