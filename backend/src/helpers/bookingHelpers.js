@@ -107,6 +107,62 @@ function temPrecoPrivadoConfigurado(unitMeta) {
   return !!unitMeta.price_private || (Array.isArray(unitMeta.price_tiers) && unitMeta.price_tiers.length > 0);
 }
 
+/* Preco de actividade -- fonte unica do valor mostrado e do valor cobrado.
+   per_person: adultos * base_price + criancas * (meta.price_child se definido,
+   senao base_price). private: calcularPrecoPrivado para o grupo todo.
+   Recusas: grupo acima da lotacao (CAPACITY_EXCEEDED, o total calculado e
+   devolvido na mesma) e privado sem escalao nem price_private a cobrir o grupo
+   (NO_PRICE_FOR_GROUP, total 0). lines usa descricoes em portugues; o frontend
+   re-etiqueta por type. */
+function precoActividade(unit, meta, { adults, children, mode } = {}) {
+  meta = meta || {};
+  const nAdults = Math.max(0, Math.floor(Number(adults) || 0));
+  const nChildren = Math.max(0, Math.floor(Number(children) || 0));
+  const party = nAdults + nChildren;
+  const arred = (n) => Math.round(n * 100) / 100;
+  const lines = [];
+  let total = 0;
+  let error = null;
+
+  if (mode === 'private') {
+    total = arred(calcularPrecoPrivado(meta, party));
+    lines.push({ type: 'tour', description: 'Tour privado', quantity: party, total });
+  } else {
+    const base = Number(unit?.base_price) || 0;
+    const childPrice = meta.price_child !== undefined && meta.price_child !== null && meta.price_child !== ''
+      ? Number(meta.price_child) || 0
+      : base;
+    const totalAdults = arred(base * nAdults);
+    const totalChildren = arred(childPrice * nChildren);
+    total = arred(totalAdults + totalChildren);
+    lines.push({ type: 'tour', description: 'Adultos', quantity: nAdults, total: totalAdults });
+    if (nChildren > 0) lines.push({ type: 'children', description: 'Crianças', quantity: nChildren, total: totalChildren });
+  }
+
+  const capacity = Number(unit?.capacity) || 0;
+  if (capacity > 0 && party > capacity) {
+    error = {
+      code: 'CAPACITY_EXCEEDED',
+      message_pt: 'Este grupo excede a lotação desta actividade',
+      message_en: "This group exceeds this activity's capacity",
+    };
+  } else if (mode === 'private') {
+    const tiers = Array.isArray(meta.price_tiers) ? meta.price_tiers : [];
+    const coberto = tiers.some((t) => party >= Number(t.pax_min) && party <= Number(t.pax_max)) || Number(meta.price_private) > 0;
+    if (!coberto) {
+      total = 0;
+      lines[0].total = 0;
+      error = {
+        code: 'NO_PRICE_FOR_GROUP',
+        message_pt: 'Para este número de pessoas, contacte o operador',
+        message_en: 'For this group size, please contact the operator',
+      };
+    }
+  }
+
+  return { total, lines, error };
+}
+
 // Verifica conflito de horario para UMA mesa candidata, num dia especifico --
 // reservations_no_overlap_time (048) é a rede de segurança ao nível da BD;
 // esta função decide qual mesa oferecer antes de tentar o insert.
@@ -354,5 +410,5 @@ module.exports = {
   verificarDisponibilidadeMesa, listarMesasDisponiveis, DEFAULT_SEATING_MINUTES, parseUnitMeta,
   verificarDisponibilidadeSlot, listarSlotsComDisponibilidade,
   normalizarHora, ocupacaoSlotsEmLote, diasBloqueadosEmLote,
-  calcularPrecoPrivado, temPrecoPrivadoConfigurado,
+  calcularPrecoPrivado, temPrecoPrivadoConfigurado, precoActividade,
 };

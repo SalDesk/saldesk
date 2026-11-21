@@ -5,6 +5,7 @@ jest.mock('../helpers/bookingHelpers', () => ({
   parseUnitMeta: jest.fn(() => ({})),
   calcularPreco: jest.fn(),
   DEFAULT_SEATING_MINUTES: 90,
+  precoActividade: jest.requireActual('../helpers/bookingHelpers').precoActividade,
 }));
 jest.mock('../helpers/customerHelper', () => ({ obterOuCriarCliente: jest.fn(() => Promise.resolve({ id: 'cli1' })) }));
 jest.mock('../helpers/emailHelper', () => ({ enviarEmail: jest.fn(() => Promise.resolve()) }));

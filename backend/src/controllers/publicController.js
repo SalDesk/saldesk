@@ -2,7 +2,7 @@ const { supabaseAdmin } = require('../config/supabase');
 const { estadoInicialReserva } = require('../helpers/politicaOperador');
 const { criarNotificacaoViajante } = require('../helpers/travelerNotificationHelper');
 const { frontendBase } = require('../utils/urls');
-const { verificarDisponibilidade, calcularPreco, verificarDisponibilidadeMesa, listarMesasDisponiveis, DEFAULT_SEATING_MINUTES, parseUnitMeta, verificarDisponibilidadeSlot, listarSlotsComDisponibilidade, calcularPrecoPrivado, temPrecoPrivadoConfigurado } = require('../helpers/bookingHelpers');
+const { verificarDisponibilidade, calcularPreco, verificarDisponibilidadeMesa, listarMesasDisponiveis, DEFAULT_SEATING_MINUTES, parseUnitMeta, verificarDisponibilidadeSlot, listarSlotsComDisponibilidade, calcularPrecoPrivado, temPrecoPrivadoConfigurado, precoActividade } = require('../helpers/bookingHelpers');
 const { obterOuCriarCliente } = require('../helpers/customerHelper');
 const { enviarEmail } = require('../helpers/emailHelper');
 const { detectarIdioma } = require('../helpers/languageHelper');
@@ -229,7 +229,7 @@ async function criarReserva(req, res, next) {
             customer_country, check_in, check_out, guests, notes,
             party_size, tour_time, reservation_time, zone_preference,
             voucher_code, ref_code, referred_by, items, driver_included, booking_mode, whatsapp_opt_in,
-            payment_method } = req.body;
+            payment_method, adults, children } = req.body;
 
     // check_out é opcional — activities/restaurants podem enviar só check_in (data do serviço)
     const effectiveCheckOut = check_out || check_in;
@@ -247,6 +247,7 @@ async function criarReserva(req, res, next) {
 
     const isRestaurant = operator.operator_type === 'restaurant';
     const isRentacar   = operator.operator_type === 'rentacar';
+    const isActivity   = operator.operator_type === 'activity';
 
     /* Restaurante: cliente escolhe a mesa exacta (unit_id obrigatorio, tal
        como os restantes tipos ja exigem) a partir da lista devolvida por
@@ -275,6 +276,7 @@ async function criarReserva(req, res, next) {
     let preOrderValidado = null;
     let activitySlotTime = null;
     let isGroupBooking = false;
+    let precoAct = null;
     if (isRestaurant) {
       const { data: mesaRow } = await supabaseAdmin
         .from('units')
@@ -343,6 +345,21 @@ async function criarReserva(req, res, next) {
         isGroupBooking = true;
       }
 
+      /* Actividade: preco partilhado com o orcamento (precoActividade). Sem
+         adults/children no corpo, todas as pessoas contam como adultos. A
+         recusa (lotacao, grupo sem preco) vem antes da verificacao de vagas. */
+      if (isActivity) {
+        const pessoas = Math.max(1, Math.floor(Number(party_size || guests || 1)) || 1);
+        const nCriancas = Math.max(0, Math.floor(Number(children)) || 0);
+        const nAdultos = (adults !== undefined && adults !== null)
+          ? Math.max(0, Math.floor(Number(adults)) || 0)
+          : Math.max(0, pessoas - nCriancas);
+        precoAct = precoActividade(unitRow, unitMeta, { adults: nAdultos, children: nCriancas, mode: isGroupBooking ? 'private' : 'per_person' });
+        if (precoAct.error) {
+          return res.status(400).json({ error: precoAct.error.message_pt, code: precoAct.error.code });
+        }
+      }
+
       if (activitySlots.length > 0) {
         const slotEscolhido = activitySlots.find((s) => String(s.time).slice(0, 5) === String(tour_time || '').slice(0, 5));
         if (!slotEscolhido) {
@@ -371,6 +388,8 @@ async function criarReserva(req, res, next) {
     let total;
     if (isRestaurant) {
       total = preOrderValidado?.totalPrice || 0;
+    } else if (precoAct) {
+      total = precoAct.total;
     } else if (isGroupBooking) {
       // Preco fixo por grupo ou por escalao de pessoas -- ja validado acima
       // que a unidade tem algum preco privado configurado. unitMeta (linha
