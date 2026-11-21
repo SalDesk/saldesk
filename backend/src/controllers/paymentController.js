@@ -198,7 +198,7 @@ async function publicCreatePaypalIntent(req, res, next) {
     const { clientId, clientSecret } = await obterCredenciaisPaypal(reserva.operator_id);
     let order;
     try {
-      order = await createOrder(clientId, clientSecret, amount, currency, `Reserva SalDesk ${reservation_id}`);
+      order = await createOrder(clientId, clientSecret, amount, currency, `Reserva SalDesk ${reservation_id}`, reservation_id);
     } catch (paypalErr) {
       /* O errorHandler generico nao sabe a que operador/reserva um erro
          pertence -- sem isto, um 401 da PayPal (ex: credenciais invalidas
@@ -379,11 +379,22 @@ async function paypalWebhook(req, res, next) {
     /* A conta PayPal (e por isso as credenciais/webhook ID a usar na
        verificacao) e do OPERADOR, nao da plataforma -- tem de se saber a
        que reserva/operador o evento pertence antes de conseguir verificar. */
-    const { data: reserva } = await supabaseAdmin
+    let { data: reserva } = await supabaseAdmin
       .from('reservations')
       .select('id, operator_id')
       .eq('paypal_order_id', orderId)
       .maybeSingle();
+    /* So se guarda a ultima ordem: uma ordem anterior capturada (cuja confirmacao falhou)
+       encontra a reserva pelo custom_id que createOrder lhe pos. A assinatura e verificada
+       a seguir com as credenciais do operador desta reserva. */
+    const customId = event.resource?.custom_id;
+    if (!reserva && customId) {
+      ({ data: reserva } = await supabaseAdmin
+        .from('reservations')
+        .select('id, operator_id')
+        .eq('id', customId)
+        .maybeSingle());
+    }
     if (!reserva) return;
 
     const { data: operatorRow } = await supabaseAdmin

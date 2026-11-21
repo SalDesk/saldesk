@@ -18,7 +18,9 @@ async function getAccessToken(clientId, clientSecret) {
   return data.access_token;
 }
 
-async function createOrder(clientId, clientSecret, amount, currency = 'EUR', description = 'SalDesk Reservation') {
+/* customId (opcional): id da reserva, guardado na ordem como custom_id. A captura traz o
+   custom_id de volta no webhook, mesmo quando esta ordem ja nao e a ultima da reserva. */
+async function createOrder(clientId, clientSecret, amount, currency = 'EUR', description = 'SalDesk Reservation', customId = null) {
   const token = await getAccessToken(clientId, clientSecret);
   const { data } = await axios.post(
     `${BASE}/v2/checkout/orders`,
@@ -27,6 +29,7 @@ async function createOrder(clientId, clientSecret, amount, currency = 'EUR', des
       purchase_units: [{
         amount: { currency_code: currency, value: Number(amount).toFixed(2) },
         description,
+        ...(customId ? { custom_id: String(customId) } : {}),
       }],
     },
     { headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } }

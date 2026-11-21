@@ -162,6 +162,19 @@ describe('classificarRecentes', () => {
     const c = classificarRecentes([r], { ...NOVA, startTime: null }, AGORA);
     expect(c.igualSemCartao).toBe(r);
   });
+
+  it('um lugar retido com outro nome nao e retido proprio (outro casal no mesmo email)', () => {
+    const r = linha({ payment_method: 'paypal', hold_expires_at: FUTURO, customer_name: 'Ana' });
+    const c = classificarRecentes([r], { ...NOVA, metodo: 'paypal', customerName: 'Rui Lopes' }, AGORA);
+    expect(c.retidosProprios).toEqual([]);
+    expect(c.igualCartao).toBeUndefined();
+  });
+
+  it('um lugar retido com o mesmo nome noutras maiusculas e espacos continua a ser proprio', () => {
+    const r = linha({ payment_method: 'paypal', hold_expires_at: FUTURO, customer_name: 'Ana Silva' });
+    const c = classificarRecentes([r], { ...NOVA, metodo: 'paypal', guests: 3, customerName: '  ana SILVA ' }, AGORA);
+    expect(c.retidosProprios).toEqual([r]);
+  });
 });
 
 describe('reservasRecentesDoCliente', () => {
@@ -268,6 +281,27 @@ describe('criarReserva: duplicados', () => {
     expect(ops[1].payload.guests).toBe(3);
   });
 
+  it('lugar retido de outro nome no mesmo email: nao e substituido e conta nas vagas', async () => {
+    const casal1 = linha({ id: 'casal1', start_time: null, customer_name: 'Ana', payment_method: 'paypal', hold_expires_at: new Date(Date.now() + 10 * 60000).toISOString() });
+    estado.recentes = [casal1];
+    const res = await reservar({ payment_method: 'paypal', customer_name: 'Rui Lopes' });
+    expect(res.status).toHaveBeenCalledWith(201);
+    expect(verificarDisponibilidade).toHaveBeenCalledWith(expect.anything(), 'u1', '2026-12-01', '2026-12-01', []);
+    const ops = reservasOps().filter((o) => o.tipo !== 'select');
+    expect(ops.map((o) => o.tipo)).toEqual(['insert']);
+  });
+
+  it('lugar retido com o mesmo nome noutras maiusculas e espacos: e substituido', async () => {
+    const antiga = linha({ id: 'antiga', start_time: null, customer_name: 'Ana', payment_method: 'paypal', hold_expires_at: new Date(Date.now() + 10 * 60000).toISOString() });
+    estado.recentes = [antiga];
+    const res = await reservar({ payment_method: 'paypal', guests: 3, customer_name: '  ANA ' });
+    expect(res.status).toHaveBeenCalledWith(201);
+    expect(verificarDisponibilidade).toHaveBeenCalledWith(expect.anything(), 'u1', '2026-12-01', '2026-12-01', ['antiga']);
+    const ops = reservasOps().filter((o) => o.tipo !== 'select');
+    expect(ops.map((o) => o.tipo)).toEqual(['update', 'insert']);
+    expect(ops[0].payload.cancel_reason).toBe('replaced');
+  });
+
   it('sem reservas recentes: cria como sempre e nao exclui nada', async () => {
     const res = await reservar({});
     expect(res.status).toHaveBeenCalledWith(201);
@@ -347,6 +381,30 @@ describe('criarReserva: duplicados', () => {
     expect(verificarDisponibilidade).toHaveBeenNthCalledWith(2, expect.anything(), 'u1', '2026-12-01', '2026-12-01', []);
     const insert = reservasOps().find((o) => o.tipo === 'insert');
     expect(insert.payload.total_price).toBe(60);
+  });
+
+  it('voucher esgotado pela primeira reserva igual em dinheiro: devolve-a com 200', async () => {
+    validarVoucher.mockResolvedValue({ valid: false, error: 'Codigo esgotado' });
+    const antiga = linha({ id: 'antiga', status: 'confirmed', start_time: null, total_price: 60, voucher_id: 'v1' });
+    estado.recentes = [antiga];
+    const res = await reservar({ voucher_code: 'MENOS20' });
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.json).toHaveBeenCalledWith({ data: antiga, pre_order: null, message: 'Reserva confirmada.' });
+    expect(reservasOps().filter((o) => o.tipo === 'insert')).toHaveLength(0);
+    expect(enviarEmail).not.toHaveBeenCalled();
+  });
+
+  it('voucher recusado sem reserva igual com voucher: 400 como sempre', async () => {
+    validarVoucher.mockResolvedValue({ valid: false, error: 'Codigo esgotado' });
+    estado.recentes = [linha({ id: 'antiga', status: 'confirmed', start_time: null, total_price: 80, voucher_id: null })];
+    let res = await reservar({ voucher_code: 'MENOS20' });
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith({ error: 'Codigo esgotado', code: 'INVALID_VOUCHER' });
+
+    estado.recentes = [];
+    res = await reservar({ voucher_code: 'MENOS20' });
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(reservasOps().filter((o) => o.tipo === 'insert')).toHaveLength(0);
   });
 
   it('outro total e sem vagas com a primeira: 409 e nada se insere', async () => {

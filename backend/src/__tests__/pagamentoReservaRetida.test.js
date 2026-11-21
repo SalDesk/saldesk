@@ -518,6 +518,30 @@ describe('Webhook PayPal recupera um pagamento capturado', () => {
     expect(mockBD.notifications.map((n) => n.content)).toEqual([`${TEXTO_DUPLICADO} — Ana Lopes — Passeio de barco (CAP1)`]);
   });
 
+  test('ordem A capturada depois de criada a ordem B: o webhook encontra a reserva pelo custom_id', async () => {
+    reserva().paypal_order_id = 'ORDER_B';
+    const evento = eventoCaptura();
+    evento.resource.supplementary_data.related_ids.order_id = 'ORDER_A';
+    evento.resource.custom_id = 'r1';
+    await chamar(ctrl.paypalWebhook, { body: evento });
+    await esperarPromessas();
+    expect(reserva()).toMatchObject({
+      status: 'confirmed', payment_status: 'paid', paypal_order_id: 'ORDER_A', paypal_capture_id: 'CAP1', amount_paid: 200,
+    });
+    expect(mockBD.notifications.map((n) => n.notification_type)).toEqual(['new_booking']);
+  });
+
+  test('ordem desconhecida e custom_id sem reserva: o webhook nao toca em nada', async () => {
+    reserva().paypal_order_id = 'ORDER_B';
+    const evento = eventoCaptura();
+    evento.resource.supplementary_data.related_ids.order_id = 'ORDER_A';
+    evento.resource.custom_id = 'outra';
+    await chamar(ctrl.paypalWebhook, { body: evento });
+    await esperarPromessas();
+    expect(reserva()).toMatchObject({ status: 'pending', payment_status: 'pending', paypal_order_id: 'ORDER_B' });
+    expect(mockBD.notifications).toHaveLength(0);
+  });
+
   test('webhook abaixo do total numa reserva por pagar fica parcial com Pagamento incompleto', async () => {
     esperarErro(/\[PayPal\] Valor capturado abaixo do total/);
     reserva().paypal_order_id = 'ORDER1';

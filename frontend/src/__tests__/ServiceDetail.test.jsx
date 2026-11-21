@@ -354,7 +354,7 @@ describe('ServiceDetail: reservar a partir da coluna', () => {
     expect(await screen.findByText('Passo 2 de 3')).toBeInTheDocument();
     await preencherDadosESeguir();
     expect(within(modal()).getByText('2026-11-27')).toBeInTheDocument();
-    expect(within(modal()).getByText('2 adultos + 1 crianças')).toBeInTheDocument();
+    expect(within(modal()).getByText('2 adultos + 1 criança')).toBeInTheDocument();
     expect(within(modal()).getByText('English')).toBeInTheDocument();
   });
 
@@ -616,6 +616,30 @@ describe('ServiceDetail: reservar a partir da coluna', () => {
     expect(await screen.findByText('Desconto aplicado: -€9.00')).toBeInTheDocument();
     await waitFor(() => expect(pedidos('/public/demo/reservations')).toHaveLength(2));
     expect(corpoDe('/public/demo/reservations')).toMatchObject({ voucher_code: 'VERAO', payment_method: 'paypal' });
+  });
+
+  it('coluna_fixa_sem_barra_de_scroll_propria', async () => {
+    /* Ecra lg com 760 px: a coluna (1000 px) rola com a pagina e fica presa com topo negativo */
+    const matchMediaAntes = window.matchMedia;
+    const alturaAntes = window.innerHeight;
+    window.matchMedia = vi.fn((q) => ({ matches: q === '(min-width: 1024px)', media: q, addEventListener: vi.fn(), removeEventListener: vi.fn() }));
+    window.innerHeight = 760;
+    const alturaAntesDoProto = Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'offsetHeight');
+    Object.defineProperty(HTMLElement.prototype, 'offsetHeight', { configurable: true, get: () => 1000 });
+    try {
+      redeDaReserva();
+      montar();
+      const coluna = await screen.findByTestId('coluna-reserva');
+      const colante = coluna.firstElementChild;
+      expect(colante.className).toContain('lg:sticky');
+      expect(colante.className).not.toMatch(/overflow-y-auto|max-h-|overscroll-contain/);
+      await waitFor(() => expect(colante.style.top).toBe('-256px'));
+    } finally {
+      window.matchMedia = matchMediaAntes;
+      window.innerHeight = alturaAntes;
+      if (alturaAntesDoProto) Object.defineProperty(HTMLElement.prototype, 'offsetHeight', alturaAntesDoProto);
+      else delete HTMLElement.prototype.offsetHeight;
+    }
   });
 
   it('reservar_da_barra_de_cima_vai_a_coluna', async () => {

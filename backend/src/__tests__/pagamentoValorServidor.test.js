@@ -81,7 +81,8 @@ describe('PayPal na pagina publica', () => {
   it('cobra o total da reserva em euros e ignora o valor do browser', async () => {
     const res = await chamar(ctrl.publicCreatePaypalIntent, { body: { reservation_id: 'r-eur', amount: 1 } });
     expect(res.statusCode).toBe(200);
-    expect(createOrder).toHaveBeenCalledWith('dec:id', 'dec:sec', '200.00', 'EUR', expect.any(String));
+    // O id da reserva vai na ordem (custom_id) para o webhook a encontrar
+    expect(createOrder).toHaveBeenCalledWith('dec:id', 'dec:sec', '200.00', 'EUR', expect.any(String), 'r-eur');
   });
 
   it('operador em escudos: converte o total para euros', async () => {
