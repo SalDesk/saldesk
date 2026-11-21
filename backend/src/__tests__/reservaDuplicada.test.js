@@ -170,6 +170,18 @@ describe('classificarRecentes', () => {
     expect(c.igualCartao).toBeUndefined();
   });
 
+  it('outra opcao (outra linha Opção: nas notas) nao e igual; a mesma opcao e', () => {
+    const r = linha({ notes: 'Hora: 09:00 | Pessoas: 2 | Opção: Buggy 2h | Veículos: 1' });
+    expect(classificarRecentes([r], { ...NOVA, opcao: 'Quad 1h' }, AGORA).igualSemCartao).toBeUndefined();
+    expect(classificarRecentes([r], { ...NOVA, opcao: null }, AGORA).igualSemCartao).toBeUndefined();
+    expect(classificarRecentes([r], { ...NOVA, opcao: 'Buggy 2h' }, AGORA).igualSemCartao).toBe(r);
+    const semOpcao = linha({ notes: 'Hora: 09:00 | Pessoas: 2' });
+    expect(classificarRecentes([semOpcao], NOVA, AGORA).igualSemCartao).toBe(semOpcao);
+    expect(classificarRecentes([semOpcao], { ...NOVA, opcao: 'Buggy 2h' }, AGORA).igualSemCartao).toBeUndefined();
+    const cartao = linha({ payment_method: 'paypal', hold_expires_at: FUTURO, notes: 'Opção: Buggy 2h' });
+    expect(classificarRecentes([cartao], { ...NOVA, metodo: 'paypal', opcao: 'Quad 1h' }, AGORA).igualCartao).toBeUndefined();
+  });
+
   it('um lugar retido com o mesmo nome noutras maiusculas e espacos continua a ser proprio', () => {
     const r = linha({ payment_method: 'paypal', hold_expires_at: FUTURO, customer_name: 'Ana Silva' });
     const c = classificarRecentes([r], { ...NOVA, metodo: 'paypal', guests: 3, customerName: '  ana SILVA ' }, AGORA);
@@ -349,6 +361,31 @@ describe('criarReserva: duplicados', () => {
     expect(verificarDisponibilidadeMesa).toHaveBeenCalledTimes(1);
     expect(verificarDisponibilidadeMesa).toHaveBeenCalledWith(expect.anything(), 'u1', '2026-12-01', '20:00', 90, ['mesa']);
     expect(reservasOps().filter((o) => o.tipo === 'insert')).toHaveLength(0);
+  });
+
+  it('a mesma reserva com outra opcao ao mesmo preco: cria outra reserva', async () => {
+    parseUnitMeta.mockImplementation(() => ({
+      options: [
+        { id: 'o1', name_pt: 'Buggy 2h', type: 'per_group', price: 80 },
+        { id: 'o2', name_pt: 'Quad 2h', type: 'per_group', price: 80 },
+      ],
+    }));
+    estado.recentes = [linha({
+      id: 'antiga', status: 'confirmed', start_time: null, total_price: 80, is_group_booking: true,
+      notes: 'Opção: Buggy 2h',
+    })];
+    const res = await reservar({ option_id: 'o2' });
+    expect(res.status).toHaveBeenCalledWith(201);
+    expect(verificarDisponibilidade).toHaveBeenCalledWith(expect.anything(), 'u1', '2026-12-01', '2026-12-01', []);
+    const insert = reservasOps().find((o) => o.tipo === 'insert');
+    expect(insert.payload.notes).toBe('Opção: Quad 2h');
+    expect(insert.payload.total_price).toBe(80);
+
+    // A mesma opcao devolve a primeira
+    estado.ops = [];
+    const igual = await reservar({ option_id: 'o1' });
+    expect(igual.status).toHaveBeenCalledWith(200);
+    expect(igual.json.mock.calls[0][0].data.id).toBe('antiga');
   });
 
   it('outro nome no mesmo email e no mesmo dia: cria outra reserva', async () => {
