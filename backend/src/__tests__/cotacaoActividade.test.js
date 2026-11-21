@@ -136,6 +136,17 @@ describe('cotarActividade', () => {
     expect(res.status).toHaveBeenCalledWith(404);
   });
 
+  it('sem_preco_nenhum_cota_zero_sem_erro', async () => {
+    /* TourForm grava um preco em branco como 0; sem preco privado, reserva-se como pedido a 0 */
+    estado.unidade = { ...estado.unidade, base_price: 0, description: JSON.stringify({}) };
+    const q = (await cotar({ adults: '2', children: '1', mode: 'per_person' })).json.mock.calls[0][0].data;
+    expect(q.error).toBeNull();
+    expect(q.total).toBe(0);
+    const r = await reservar({ adults: 2, children: 1 });
+    expect(r.status).toHaveBeenCalledWith(201);
+    expect(Number(estado.inseridas[0].total_price)).toBe(0);
+  });
+
   it('valores_em_falta_ou_invalidos_usam_predefinicoes', async () => {
     const q = (await cotar({ adults: 'abc', children: '-2', mode: 'xyz' })).json.mock.calls[0][0].data;
     expect(q.total).toBe(40);

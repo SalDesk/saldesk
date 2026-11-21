@@ -288,12 +288,15 @@ function ST({ lines }) {
   );
 }
 
-function PO({ lang, v, set }) {
-  const options = [
+/* soNoLocal -- sem nada a cobrar (total 0), so o pagamento no local: PayPal e Vinti4 nunca
+   cobram 0. Por omissao ficam as tres opcoes de sempre. */
+function PO({ lang, v, set, soNoLocal = false }) {
+  const todas = [
     { k:'paypal', l:lang==='en'?'International card (PayPal)':'Cartão internacional (PayPal)', logos:[visaLogo, mastercardLogo, amexLogo] },
     { k:'sisp',   l:lang==='en'?'Cape Verdean card (Vinti4)':'Cartão cabo-verdiano (Vinti4)',  logos:[vinti4Logo, mastercardLogo] },
     { k:'cash',   l:lang==='en'?'Pay on arrival':'Pagar presencialmente', s:lang==='en'?'Cash or card on site':'Dinheiro ou cartão no local' },
   ];
+  const options = soNoLocal ? todas.filter(o=>o.k==='cash') : todas;
   return (
     <div className="space-y-2.5">
       {options.map(o=>(
@@ -650,6 +653,8 @@ function ActivityModal({ unit, op, slug, lang, onClose, refCode, traveler, selec
   const unitMeta=getUnitMeta(unit);
   const hasPerPerson=!!unit.base_price;
   const hasPrivate=temPrecoPrivado(unitMeta);
+  /* Sem preco nenhum (como na coluna): reserva-se por pessoa com o preco a combinar */
+  const semPreco=!hasPerPerson&&!hasPrivate;
   const priceTiers=Array.isArray(unitMeta.price_tiers)?unitMeta.price_tiers:[];
   const col=seleccao||null;
   const [step,ss]=useState(col?2:1); const [date,sd]=useState(col?.date||''); const [time,st]=useState(col?.time||''); const [adults,sa]=useState(col?.adults||2); const [kids,sk]=useState(col?(col.children||0):0);
@@ -666,6 +671,8 @@ function ActivityModal({ unit, op, slug, lang, onClose, refCode, traveler, selec
   /* Sem seleccao o total e calculado aqui (como sempre); com seleccao vem do /quote */
   const rawTotal=col?null:(isPrivateMode?calcPrivatePrice(unitMeta,numPessoas):numPessoas*(unit.base_price||0));
   const total=rawTotal?fmtPrice(rawTotal,null,op.currency||'EUR','EUR',lang):null;
+  /* Total 0 (preco a combinar, ou voucher que cobre tudo): nada a cobrar online, so no local */
+  const semCobranca=(col?Number(col.quote?.total)||0:Number(rawTotal)||0)<=0;
   /* So vai na reserva o voucher que a cotacao aceitou (ha linha de desconto); um voucher
      recusado (INVALID_VOUCHER) faria o POST falhar com 400 */
   const voucherDaColuna=col&&col.voucher&&(col.quote?.lines||[]).some(l=>l.type==='discount')?col.voucher:null;
@@ -704,6 +711,7 @@ function ActivityModal({ unit, op, slug, lang, onClose, refCode, traveler, selec
     const en=lang==='en'; const cur=op.currency||'EUR';
     const valor=(v)=>{ const n=Number(v)||0; if(n===0) return en?'Free':'Grátis'; return n<0?`-${fmtPrice(-n,null,cur,'EUR',lang)}`:fmtPrice(n,null,cur,'EUR',lang); };
     const totalCot=Number(col.quote?.total)||0;
+    if(semPreco) return [{label:'Total',value:en?'Price agreed with the operator':'Preço a combinar com o operador',hi:true}];
     return [
       ...(col.quote?.lines||[]).map(l=>({label:textoDaLinha(l,col.mode,col.voucher,en),value:valor(l.total)})),
       {label:'Total',value:totalCot>0?fmtTotalBoth(totalCot,op.currency,lang):valor(0),hi:true},
@@ -759,9 +767,9 @@ function ActivityModal({ unit, op, slug, lang, onClose, refCode, traveler, selec
       </GF></div>
       :<div className="p-5 space-y-4"><p className={SH}>{lang==='en'?'Review & payment':'Resumo e pagamento'}</p><ST lines={sumL}/>
         {!col&&rawTotal>0&&<VoucherField slug={slug} unitId={unit.id} amount={rawTotal} lang={lang} onApplied={(c)=>svc(c)}/>}
-        <p className="text-xs font-body font-semibold text-n-700">{lang==='en'?'Payment method':'Método de pagamento'}</p><PO lang={lang} v={pay} set={sp}/>
+        <p className="text-xs font-body font-semibold text-n-700">{lang==='en'?'Payment method':'Método de pagamento'}</p><PO lang={lang} v={pay} set={sp} soNoLocal={semCobranca}/>
         <CancelPolicyCheck op={op} lang={lang} checked={policyOk} onChange={setPolicyOk}/>
-        {pay==='paypal'&&(policyOk?<PayPalButton slug={slug} reservationId={pendingRes?.id} amount={col?toEUR(Number(pendingRes?.total_price)||0,op.currency):toEUR(pendingRes?.total_price ?? rawTotal,op.currency)} lang={lang} onSuccess={()=>{ sro(true); sr(pendingRes?.id); }} onError={se}/>:<p className="text-xs font-body text-amber-700 bg-amber-50 rounded-lg px-3 py-2">{lang==='en'?'Accept the cancellation policy above to pay.':'Aceite a política de cancelamento acima para pagar.'}</p>)}
+        {pay==='paypal'&&!semCobranca&&(policyOk?<PayPalButton slug={slug} reservationId={pendingRes?.id} amount={col?toEUR(Number(pendingRes?.total_price)||0,op.currency):toEUR(pendingRes?.total_price ?? rawTotal,op.currency)} lang={lang} onSuccess={()=>{ sro(true); sr(pendingRes?.id); }} onError={se}/>:<p className="text-xs font-body text-amber-700 bg-amber-50 rounded-lg px-3 py-2">{lang==='en'?'Accept the cancellation policy above to pay.':'Aceite a política de cancelamento acima para pagar.'}</p>)}
       </div>}
     </MS>
   );

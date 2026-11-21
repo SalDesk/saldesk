@@ -67,7 +67,7 @@ function montarColuna(props = {}) {
   const unit = props.unit || UNIDADE;
   return render(
     <ReservaActividade api={API} slug="demo" unit={unit} meta={props.meta || {}} lang={props.lang || 'pt'}
-      formatarPreco={(v) => `€${v}`} desde={{ valor: 45, porGrupo: false }} temPrivado={!!props.temPrivado}
+      formatarPreco={(v) => `€${v}`} desde={props.desde || { valor: 45, porGrupo: false }} temPrivado={!!props.temPrivado}
       onReservar={props.onReservar || (() => {})}/>
   );
 }
@@ -323,6 +323,36 @@ describe('Coluna de reserva da actividade', () => {
     expect(dia('2026-11-22')).toHaveAttribute('tabindex', '0');
   });
 
+  it('sem_preco_nenhum_reserva_por_pessoa_a_combinar', async () => {
+    /* base_price 0 (preco em branco no TourForm) e sem preco privado: continua reservavel, como
+       hoje, por pessoa e com o preco a combinar com o operador (nunca "Gratis" nem total 0) */
+    const SEM_PRECO = { ...UNIDADE, base_price: 0 };
+    simularRede({ unit: SEM_PRECO, cotacao: (p) => (p.get('mode') === 'private'
+      ? { lines: [], total: 0, before: null, error: { code: 'INVALID_BOOKING_MODE', message_pt: 'Esta actividade não tem reserva privada disponível', message_en: 'x' } }
+      : { lines: [{ type: 'tour', description: 'Adultos', quantity: 2, total: 0 }], total: 0, before: null, error: null }) });
+    const onReservar = vi.fn();
+    montarColuna({ unit: SEM_PRECO, desde: { valor: null, porGrupo: true }, onReservar });
+    expect(screen.getByText('Consultar')).toBeInTheDocument();
+    const preco = screen.getByTestId('preco-reserva');
+    expect(await within(preco).findByText('Preço a combinar com o operador')).toBeInTheDocument();
+    expect(within(preco).queryByText('Grátis')).toBeNull();
+    expect(within(preco).queryByText('Total')).toBeNull();
+    expect(chamadas('/quote')[0]).toContain('mode=per_person');
+    const reservar = screen.getByRole('button', { name: /Reservar/ });
+    expect(reservar).toBeDisabled();
+    fireEvent.click(await esperarDiaLivre('2026-11-25'));
+    expect(chamadas('/availability-month')[0]).toContain('mode=per_person');
+    await waitFor(() => expect(reservar).toBeEnabled());
+    fireEvent.click(reservar);
+    expect(onReservar.mock.calls[0][0]).toMatchObject({ date: '2026-11-25', mode: 'per_person', adults: 2, quote: { total: 0 } });
+    cleanup();
+
+    simularRede({ unit: SEM_PRECO, cotacao: () => ({ lines: [{ type: 'tour', description: 'Adultos', quantity: 2, total: 0 }], total: 0, before: null, error: null }) });
+    montarColuna({ unit: SEM_PRECO, desde: { valor: null, porGrupo: true }, lang: 'en' });
+    expect(await within(screen.getByTestId('preco-reserva')).findByText('Price agreed with the operator')).toBeInTheDocument();
+    await esperarCalendario();
+  });
+
   it('em_ingles_rotula_as_linhas_pelo_tipo', async () => {
     simularRede({ cotacao: () => ({
       lines: [{ type: 'tour', description: 'Adultos', quantity: 2, total: 90 }, { type: 'children', description: 'Crianças', quantity: 1, total: 20 }],
@@ -478,5 +508,29 @@ describe('Pagina de actividade com a coluna de reserva', () => {
     expect(within(modal).getByText('2026-11-27')).toBeInTheDocument();
     expect(within(modal).getByText('2 adultos + 1 crianças')).toBeInTheDocument();
     expect(within(modal).getByText('English')).toBeInTheDocument();
+  });
+
+  it('servicedetail_sem_preco_revisao_a_combinar_e_so_pagamento_no_local', async () => {
+    /* Actividade sem preco nenhum: a revisao do modal mostra "a combinar" (nunca total 0) e os
+       pagamentos online (PayPal, Vinti4) nao aparecem -- nao ha nada para cobrar */
+    simularRede({
+      unit: { ...UNIDADE, base_price: 0 },
+      cotacao: () => ({ lines: [{ type: 'tour', description: 'Adultos', quantity: 2, total: 0 }], total: 0, before: null, error: null }),
+    });
+    montarPagina();
+    const coluna = await screen.findByTestId('coluna-reserva');
+    fireEvent.click(await esperarDiaLivre('2026-11-25'));
+    const reservar = within(coluna).getByRole('button', { name: /Reservar/ });
+    await waitFor(() => expect(reservar).toBeEnabled());
+    fireEvent.click(reservar);
+    fireEvent.change(await screen.findByPlaceholderText('João Silva'), { target: { value: 'Ana Lima' } });
+    fireEvent.change(screen.getByPlaceholderText('joao@email.com'), { target: { value: 'ana@exemplo.cv' } });
+    fireEvent.click(screen.getByRole('button', { name: /Continuar/ }));
+    const modal = (await screen.findByText('Resumo e pagamento')).closest('.fixed');
+    expect(within(modal).getByText('Preço a combinar com o operador')).toBeInTheDocument();
+    expect(within(modal).queryByText('Grátis')).toBeNull();
+    expect(within(modal).queryByText(/PayPal/)).toBeNull();
+    expect(within(modal).queryByText(/Vinti4/)).toBeNull();
+    expect(within(modal).getByText('Pagar presencialmente')).toBeInTheDocument();
   });
 });

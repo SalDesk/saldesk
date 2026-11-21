@@ -78,11 +78,14 @@ export default function ReservaActividade({
   const en = lang === 'en';
   const temPorPessoa = !!unit.base_price;
   const mostrarOpcao = temPorPessoa && !!temPrivado;
+  /* Sem preco por pessoa (0/vazio: o TourForm grava um preco em branco como 0) nem privado,
+     reserva-se como sempre: por pessoa, com o preco a combinar com o operador */
+  const semPreco = !temPorPessoa && !temPrivado;
   const linguas = Array.isArray(meta.languages) ? meta.languages.filter(Boolean) : [];
   const temHorariosNaUnidade = Array.isArray(meta.time_slots) && meta.time_slots.length > 0;
   const base = `${api}/public/${slug}/units/${unit.id}`;
 
-  const [modo, setModo] = useState(temPorPessoa ? 'per_person' : 'private');
+  const [modo, setModo] = useState(temPorPessoa || semPreco ? 'per_person' : 'private');
   const [adultos, setAdultos] = useState(2);
   const [criancas, setCriancas] = useState(0);
   const [idioma, setIdioma] = useState('');
@@ -291,6 +294,8 @@ export default function ReservaActividade({
             <AlertCircle size={16} strokeWidth={1.75} aria-hidden="true" className="mt-0.5 shrink-0"/>
             {en ? erro.message_en : erro.message_pt}
           </p>
+        ) : cotacao && semPreco ? (
+          <p className="font-body font-semibold text-sm text-n-700">{en ? 'Price agreed with the operator' : 'Preço a combinar com o operador'}</p>
         ) : cotacao ? (
           <>
             <ul className="space-y-1">
@@ -310,7 +315,7 @@ export default function ReservaActividade({
         {voucherInvalido && (
           <p role="alert" className="text-xs font-body text-red-700">{en ? erro.message_en : erro.message_pt}</p>
         )}
-        <form onSubmit={aplicarVoucher} className="flex gap-2 pt-1">
+        {!semPreco && <form onSubmit={aplicarVoucher} className="flex gap-2 pt-1">
           <label className="sr-only" htmlFor={`voucher-${unit.id}`}>{en ? 'Discount code' : 'Código de desconto'}</label>
           <input id={`voucher-${unit.id}`} value={textoVoucher} onChange={(e) => setTextoVoucher(e.target.value)}
             placeholder={en ? 'Discount code' : 'Código de desconto'} maxLength={40}
@@ -318,7 +323,7 @@ export default function ReservaActividade({
           <button type="submit" className={`shrink-0 border border-brand-700 text-brand-700 font-body font-semibold text-sm px-3 rounded-lg hover:bg-brand-50 transition-colors motion-reduce:transition-none ${focoVisivel}`}>
             {en ? 'Apply' : 'Aplicar'}
           </button>
-        </form>
+        </form>}
       </div>
 
       <button type="button" onClick={reservar} disabled={!podeReservar}
