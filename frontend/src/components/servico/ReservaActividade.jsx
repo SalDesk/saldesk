@@ -88,7 +88,8 @@ export default function ReservaActividade({
   const [modo, setModo] = useState(temPorPessoa || semPreco ? 'per_person' : 'private');
   /* Com lotacao definida, comeca em min(2, lotacao) adultos (pelo menos 1) e adultos + criancas
      nunca passam da lotacao; sem lotacao ficam os limites fixos de sempre */
-  const lotacao = Math.floor(Number(unit.capacity)) > 0 ? Math.floor(Number(unit.capacity)) : null;
+  const lotacaoN = Math.floor(Number(unit.capacity));
+  const lotacao = Number.isFinite(lotacaoN) && lotacaoN >= 1 ? lotacaoN : null;
   const [adultos, setAdultos] = useState(lotacao ? Math.max(1, Math.min(2, lotacao)) : 2);
   const [criancas, setCriancas] = useState(0);
   const [idioma, setIdioma] = useState('');
