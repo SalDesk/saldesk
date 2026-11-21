@@ -72,7 +72,7 @@ jest.mock('../config/supabase', () => {
 });
 
 const { createOrder, captureOrder } = require('../services/paypalService');
-const { validarResposta } = require('../services/sispService');
+const { construirPedidoPagamento, validarResposta } = require('../services/sispService');
 const { enviarEmail } = require('../helpers/emailHelper');
 const bh = require('../helpers/bookingHelpers');
 const { supabaseAdmin } = require('../config/supabase');
@@ -210,7 +210,13 @@ describe('PayPal', () => {
     expect(reserva().status).toBe('cancelled');
     expect(reserva().cancel_reason).toBe('paid_after_expiry');
     expect(reserva().paypal_capture_id).toBe('CAP1');
-    expect(res.corpo.data.cancel_reason).toBe('paid_after_expiry');
+    // O cliente nao ve "confirmado": 409 a explicar que o operador o vai contactar.
+    expect(res.statusCode).toBe(409);
+    expect(res.corpo).toEqual({
+      error: 'O pagamento foi recebido, mas o lugar já tinha sido ocupado. O operador vai contactá-lo para o reembolso ou uma nova data.',
+      error_en: 'Your payment was received, but the place had already been taken. The operator will contact you about a refund or a new date.',
+      code: 'PAID_AFTER_EXPIRY',
+    });
     const notif = mockBD.notifications.find((n) => n.notification_type === 'paid_after_expiry');
     expect(notif).toBeDefined();
     expect(notif.content).toBe('Pagamento recebido mas o lugar já foi ocupado — reembolsar ou remarcar — Ana Lopes — Passeio de barco');
@@ -226,9 +232,47 @@ describe('PayPal', () => {
       Object.assign(reserva(), { status: 'cancelled', cancel_reason: null });
       return capturaDe('200.00');
     });
-    await chamar(ctrl.publicConfirmPaypalPayment, { body: { reservation_id: 'r1', order_id: 'ORDER1' } });
+    const res = await chamar(ctrl.publicConfirmPaypalPayment, { body: { reservation_id: 'r1', order_id: 'ORDER1' } });
     expect(reserva().cancel_reason).toBe('paid_after_expiry');
     expect(reserva().payment_status).toBe('paid');
+    expect(res.statusCode).toBe(409);
+    expect(res.corpo.code).toBe('PAID_AFTER_EXPIRY');
+  });
+
+  test('confirmacao do operador com pago sem lugar mantem a resposta de sempre', async () => {
+    captureOrder.mockResolvedValue(capturaDe('200.00'));
+    mockBD.falharUpdate = (tabela, d) => (d.status === 'confirmed' ? { code: '23P01', message: 'conflito' } : null);
+    const res = await chamar(ctrl.confirmPayPalPayment, {
+      operator: { id: 'op1' }, body: { reservation_id: 'r1', order_id: 'ORDER1' },
+    });
+    expect(res.statusCode).toBe(200);
+    expect(res.corpo.data.cancel_reason).toBe('paid_after_expiry');
+  });
+
+  test('captura numa reserva com check-in: fica paga e continua com check-in', async () => {
+    Object.assign(reserva(), { status: 'checked_in' });
+    captureOrder.mockResolvedValue(capturaDe('200.00'));
+    const res = await chamar(ctrl.publicConfirmPaypalPayment, { body: { reservation_id: 'r1', order_id: 'ORDER1' } });
+    expect(res.statusCode).toBe(200);
+    expect(reserva().status).toBe('checked_in');
+    expect(reserva().payment_status).toBe('paid');
+    expect(reserva().cancel_reason).toBeNull();
+    expect(reserva().paypal_capture_id).toBe('CAP1');
+    expect(reserva().paypal_order_id).toBe('ORDER1');
+    expect(reserva().amount_paid).toBe(200);
+    expect(mockBD.notifications.some((n) => n.notification_type === 'paid_after_expiry')).toBe(false);
+  });
+
+  test('webhook depois de um pagamento abaixo do total nao confirma nem avisa', async () => {
+    Object.assign(reserva(), { paypal_order_id: 'ORDER1', payment_status: 'partial', amount_paid: 1 });
+    await chamar(ctrl.paypalWebhook, {
+      body: { event_type: 'PAYMENT.CAPTURE.COMPLETED', resource: { supplementary_data: { related_ids: { order_id: 'ORDER1' } } } },
+    });
+    await esperarPromessas();
+    expect(reserva().payment_status).toBe('partial');
+    expect(reserva().status).toBe('pending');
+    expect(mockBD.notifications).toHaveLength(0);
+    expect(enviarEmail).not.toHaveBeenCalled();
   });
 
   test('confirmação envia os avisos adiados uma vez; webhook a seguir não repete', async () => {
@@ -322,6 +366,38 @@ describe('SISP', () => {
     expect(res2.destino).toContain('/book/success');
     expect(enviarEmail).toHaveBeenCalledTimes(3);
     expect(mockBD.notifications.filter((n) => n.notification_type === 'new_booking')).toHaveLength(1);
+  });
+
+  test('pago numa reserva com check-in: fica paga e continua com check-in', async () => {
+    Object.assign(reserva(), { status: 'checked_in' });
+    validarResposta.mockReturnValue({ status: 'paid', transactionID: 'T1', amount: 22053 });
+    const res = await chamar(ctrl.sispCallback, { query: { res: 'r1' }, body: {} });
+    expect(res.destino).toContain('/book/success');
+    expect(reserva().status).toBe('checked_in');
+    expect(reserva().payment_status).toBe('paid');
+    expect(reserva().cancel_reason).toBeNull();
+    expect(reserva().sisp_transaction_id).toBe('T1');
+    expect(reserva().amount_paid).toBe(22053);
+  });
+
+  test('iniciar pagamento com lugar perdido: 409 e nenhum pedido ao banco', async () => {
+    Object.assign(reserva(), { status: 'cancelled', cancel_reason: 'payment_not_completed' });
+    bh.verificarDisponibilidade.mockResolvedValue(false);
+    const res = await chamar(ctrl.publicInitSisp, { body: { reservation_id: 'r1' } });
+    expect(construirPedidoPagamento).not.toHaveBeenCalled();
+    expect(res.statusCode).toBe(409);
+    expect(res.corpo).toEqual({
+      error: 'Este lugar já não está disponível. Não foi feita nenhuma cobrança.',
+      error_en: 'This place is no longer available. You have not been charged.',
+      code: 'HOLD_EXPIRED',
+    });
+  });
+
+  test('iniciar pagamento com o lugar retido renova o prazo e prepara o pedido', async () => {
+    const res = await chamar(ctrl.publicInitSisp, { body: { reservation_id: 'r1' } });
+    expect(res.statusCode).toBe(200);
+    expect(construirPedidoPagamento).toHaveBeenCalledTimes(1);
+    expect(reserva().hold_expires_at).not.toBe(PRAZO_ANTIGO);
   });
 
   test('pago abaixo do total avisa o operador com Pagamento incompleto', async () => {
