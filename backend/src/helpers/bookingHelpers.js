@@ -1,3 +1,5 @@
+const { opcoesDaActividade, opcaoEscolhida, limitarVeiculos, idiomaEfectivo, suplementoIdioma } = require('./opcoesActividade');
+
 function addDays(dateStr, n) {
   const d = new Date(dateStr + 'T00:00:00Z');
   d.setUTCDate(d.getUTCDate() + n);
@@ -122,8 +124,13 @@ function temPrecoPrivadoConfigurado(unitMeta) {
    Recusas: grupo acima da lotacao (CAPACITY_EXCEEDED, o total calculado e
    devolvido na mesma) e privado sem escalao nem price_private a cobrir o grupo
    (NO_PRICE_FOR_GROUP, total 0). lines usa descricoes em portugues; o frontend
-   re-etiqueta por type. */
-function precoActividade(unit, meta, { adults, children, mode } = {}) {
+   re-etiqueta por type.
+   Com meta.options (validas) a tabela e o argumento mode sao ignorados: o preco e o
+   modo vem da opcao escolhida (per_group = 'private'), opcao em falta ou desconhecida
+   da OPTION_REQUIRED (total 0) e os veiculos sao corrigidos para [ceil(pessoas/lugares),
+   pessoas]. O suplemento do idioma do guia (com ou sem opcoes) e uma linha 'language'
+   antes da verificacao de lotacao. Ofertas e vouchers nao entram aqui. */
+function precoActividade(unit, meta, { adults, children, mode, optionId, vehicles, guideLanguage } = {}) {
   meta = meta || {};
   const nAdults = Math.max(0, Math.floor(Number(adults) || 0));
   const nChildren = Math.max(0, Math.floor(Number(children) || 0));
@@ -133,6 +140,15 @@ function precoActividade(unit, meta, { adults, children, mode } = {}) {
   let total = 0;
   let error = null;
 
+  const temOpcoes = opcoesDaActividade(meta).length > 0;
+  const opcao = temOpcoes ? opcaoEscolhida(meta, optionId) : null;
+  const idioma = idiomaEfectivo(meta, guideLanguage);
+  const modo = temOpcoes
+    ? (opcao && opcao.type === 'per_group' ? 'private' : 'per_person')
+    : (mode === 'private' ? 'private' : 'per_person');
+  let nVeiculos = null;
+  const escolha = () => ({ mode: modo, vehicles: nVeiculos, option: opcao, guideLanguage: idioma });
+
   /* Pelo menos 1 adulto (orcamento e reserva). Os chamadores sem divisao (paginas antigas,
      operador) passam todas as pessoas como adultos, por isso nunca caem aqui. */
   if (nAdults < 1) {
@@ -140,10 +156,34 @@ function precoActividade(unit, meta, { adults, children, mode } = {}) {
       total: 0,
       lines: [],
       error: { code: 'MIN_ADULTS', message_pt: 'É preciso pelo menos 1 adulto', message_en: 'At least 1 adult is required' },
+      ...escolha(),
     };
   }
 
-  if (mode === 'private') {
+  if (temOpcoes && !opcao) {
+    return {
+      total: 0,
+      lines: [],
+      error: { code: 'OPTION_REQUIRED', message_pt: 'Escolha uma opção', message_en: 'Choose an option' },
+      ...escolha(),
+    };
+  }
+
+  if (opcao && opcao.type === 'per_person') {
+    const childPrice = opcao.price_child !== undefined ? opcao.price_child : opcao.price;
+    const totalAdults = arred(opcao.price * nAdults);
+    const totalChildren = arred(childPrice * nChildren);
+    total = arred(totalAdults + totalChildren);
+    lines.push({ type: 'option', description: opcao.name_pt, quantity: nAdults, total: totalAdults });
+    if (nChildren > 0) lines.push({ type: 'children', description: 'Crianças', quantity: nChildren, total: totalChildren });
+  } else if (opcao && opcao.type === 'per_group') {
+    total = arred(opcao.price);
+    lines.push({ type: 'option', description: opcao.name_pt, quantity: party, total });
+  } else if (opcao) {
+    nVeiculos = limitarVeiculos(opcao.seats, party, vehicles);
+    total = arred(opcao.price * nVeiculos);
+    lines.push({ type: 'vehicles', description: opcao.name_pt, quantity: nVeiculos, total });
+  } else if (mode === 'private') {
     total = arred(calcularPrecoPrivado(meta, party));
     lines.push({ type: 'tour', description: 'Tour privado', quantity: party, total });
   } else {
@@ -158,6 +198,12 @@ function precoActividade(unit, meta, { adults, children, mode } = {}) {
     if (nChildren > 0) lines.push({ type: 'children', description: 'Crianças', quantity: nChildren, total: totalChildren });
   }
 
+  const suplemento = suplementoIdioma(meta, idioma);
+  if (suplemento > 0) {
+    lines.push({ type: 'language', description: `Suplemento de idioma (${idioma})`, quantity: 1, total: suplemento });
+    total = arred(total + suplemento);
+  }
+
   const capacity = Number(unit?.capacity) || 0;
   if (capacity > 0 && party > capacity) {
     error = {
@@ -165,12 +211,12 @@ function precoActividade(unit, meta, { adults, children, mode } = {}) {
       message_pt: 'Este grupo excede a lotação desta actividade',
       message_en: "This group exceeds this activity's capacity",
     };
-  } else if (mode === 'private') {
+  } else if (!temOpcoes && mode === 'private') {
     const tiers = Array.isArray(meta.price_tiers) ? meta.price_tiers : [];
     const coberto = tiers.some((t) => party >= Number(t.pax_min) && party <= Number(t.pax_max)) || Number(meta.price_private) > 0;
     if (!coberto) {
       total = 0;
-      lines[0].total = 0;
+      lines.forEach((l) => { l.total = 0; });
       error = {
         code: 'NO_PRICE_FOR_GROUP',
         message_pt: 'Para este número de pessoas, contacte o operador',
@@ -179,7 +225,7 @@ function precoActividade(unit, meta, { adults, children, mode } = {}) {
     }
   }
 
-  return { total, lines, error };
+  return { total, lines, error, ...escolha() };
 }
 
 // Verifica conflito de horario para UMA mesa candidata, num dia especifico --
