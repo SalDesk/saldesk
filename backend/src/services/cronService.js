@@ -6,6 +6,7 @@ const { enviarEmail } = require('../helpers/emailHelper');
 // O helpers/whatsappHelper.js (Cloud API directa, numero global) fica so para o chat do painel.
 const { enfileirarAutomacao } = require('../messaging/service');
 const { nomeDoGuia } = require('../messaging/context');
+const { expirarReservasNaoPagas } = require('../helpers/lugarRetido');
 
 // Variáveis das mensagens (modelos prontos e formulário manual): ver helpers/automationTemplate.js
 const { renderTemplate } = require('../helpers/automationTemplate');
@@ -256,12 +257,23 @@ async function processarPedidosAvaliacao() {
   }
 }
 
+/* Expira reservas com cartao cujo lugar retido (30 min) venceu sem pagamento */
+async function expirarRetencoes() {
+  try {
+    const n = await expirarReservasNaoPagas(supabaseAdmin);
+    if (n) console.log(`[Cron] ${n} reserva(s) com pagamento não concluído expirada(s).`);
+  } catch (err) {
+    console.error('[Cron] Erro ao expirar retenções:', err.message);
+  }
+}
+
 function iniciarCron() {
   cron.schedule('0 * * * *', processarAutomacoes, { timezone: 'Atlantic/Cape_Verde' });
   cron.schedule('*/15 * * * *', sincronizarCanais, { timezone: 'Atlantic/Cape_Verde' });
   cron.schedule('0 8 * * *', processarAlertasExpiracaoRH, { timezone: 'Atlantic/Cape_Verde' });
   cron.schedule('0 10 * * *', processarPedidosAvaliacao, { timezone: 'Atlantic/Cape_Verde' });
-  console.log('[Cron] Servicos iniciados — automacoes (1h) + sync OTA (15min) + alertas RH (diario 08h) + pedidos de avaliacao (diario 10h)');
+  cron.schedule('*/5 * * * *', expirarRetencoes, { timezone: 'Atlantic/Cape_Verde' });
+  console.log('[Cron] Servicos iniciados — automacoes (1h) + sync OTA (15min) + alertas RH (diario 08h) + pedidos de avaliacao (diario 10h) + expiracao de retencoes (5min)');
 }
 
-module.exports = { iniciarCron, processarAutomacoes, sincronizarCanais, processarAlertasExpiracaoRH, processarPedidosAvaliacao };
+module.exports = { iniciarCron, processarAutomacoes, sincronizarCanais, processarAlertasExpiracaoRH, processarPedidosAvaliacao, expirarRetencoes };
