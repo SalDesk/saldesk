@@ -60,6 +60,18 @@ function rotuloDaLinha(linha, modo, voucher, en) {
   return modo === 'private' ? 'Private tour' : 'Adults';
 }
 
+/* Quantidade de uma linha: "× N", ou "· N pessoas" no tour privado; o desconto nao tem */
+function quantidadeDaLinha(linha, modo, en) {
+  if (linha.type === 'discount' || !linha.quantity) return '';
+  if (modo === 'private' && linha.type === 'tour') return ` · ${linha.quantity} ${en ? 'people' : 'pessoas'}`;
+  return ` × ${linha.quantity}`;
+}
+
+/* Texto de uma linha do /quote (rotulo e quantidade); o modal de reserva usa-o na revisao */
+export function textoDaLinha(linha, modo, voucher, en) {
+  return `${rotuloDaLinha(linha, modo, voucher, en)}${quantidadeDaLinha(linha, modo, en)}`;
+}
+
 export default function ReservaActividade({
   api, slug, unit, meta = {}, lang, formatarPreco, desde, temPrivado, onReservar, children: extra,
 }) {
@@ -211,12 +223,6 @@ export default function ReservaActividade({
     return n < 0 ? `-${formatarPreco(-n)}` : formatarPreco(n);
   };
 
-  const quantidade = (l) => {
-    if (l.type === 'discount' || !l.quantity) return '';
-    if (modo === 'private' && l.type === 'tour') return ` · ${l.quantity} ${en ? 'people' : 'pessoas'}`;
-    return ` × ${l.quantity}`;
-  };
-
   let numero = 0;
   const proximo = () => { numero += 1; return numero; };
   const opcaoBotao = (activo) => `flex-1 text-xs font-body font-semibold py-2 rounded-lg transition-colors motion-reduce:transition-none ${focoVisivel} ${activo ? 'bg-white text-brand-700 shadow-sm' : 'text-n-500 hover:text-n-700'}`;
@@ -290,7 +296,7 @@ export default function ReservaActividade({
             <ul className="space-y-1">
               {(cotacao.lines || []).map((l, i) => (
                 <li key={`${l.type}-${i}`} className={`flex justify-between gap-3 text-sm font-body ${l.type === 'discount' ? 'text-emerald-700' : 'text-n-600'}`}>
-                  <span className="min-w-0">{rotuloDaLinha(l, modo, voucher, en)}{quantidade(l)}</span>
+                  <span className="min-w-0">{textoDaLinha(l, modo, voucher, en)}</span>
                   <span className="shrink-0">{valor(l.total)}</span>
                 </li>
               ))}

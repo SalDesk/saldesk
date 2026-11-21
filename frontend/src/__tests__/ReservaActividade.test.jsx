@@ -467,9 +467,16 @@ describe('Pagina de actividade com a coluna de reserva', () => {
     const reservar = within(coluna).getByRole('button', { name: /Reservar/ });
     await waitFor(() => expect(reservar).toBeEnabled());
     fireEvent.click(reservar);
-    expect(await screen.findByText('Passo 1 de 3')).toBeInTheDocument();
-    expect(screen.getByDisplayValue('2026-11-27')).toBeInTheDocument();
-    /* o idioma escolhido na coluna (select da coluna) chega tambem ao select do modal */
-    expect(screen.getAllByDisplayValue('English')).toHaveLength(2);
+    /* a seleccao ja esta feita na coluna: o modal abre nos dados do cliente (passo 2) */
+    expect(await screen.findByText('Passo 2 de 3')).toBeInTheDocument();
+    expect(screen.getByText('Dados de contacto')).toBeInTheDocument();
+    fireEvent.change(screen.getByPlaceholderText('João Silva'), { target: { value: 'Ana Lima' } });
+    fireEvent.change(screen.getByPlaceholderText('joao@email.com'), { target: { value: 'ana@exemplo.cv' } });
+    fireEvent.click(screen.getByRole('button', { name: /Continuar/ }));
+    /* a data, as pessoas e o idioma escolhidos na coluna chegam a revisao do modal */
+    const modal = (await screen.findByText('Resumo e pagamento')).closest('.fixed');
+    expect(within(modal).getByText('2026-11-27')).toBeInTheDocument();
+    expect(within(modal).getByText('2 adultos + 1 crianças')).toBeInTheDocument();
+    expect(within(modal).getByText('English')).toBeInTheDocument();
   });
 });

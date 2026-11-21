@@ -36,8 +36,8 @@ import CabecalhoActividade from '../components/servico/CabecalhoActividade';
 import FactosActividade from '../components/servico/FactosActividade';
 import MenuSeccoes from '../components/servico/MenuSeccoes';
 import SeccoesActividade from '../components/servico/SeccoesActividade';
-import ReservaActividade from '../components/servico/ReservaActividade';
-import BarraReservaMovel from '../components/servico/BarraReservaMovel';
+import ReservaActividade, { textoDaLinha } from '../components/servico/ReservaActividade';
+import BarraReservaMovel, { irParaReserva } from '../components/servico/BarraReservaMovel';
 
 /* Icone numerado para as paragens do itinerario -- SVG inline (nunca
    bitmap), substitui o icone PNG por defeito do Leaflet (que nem sequer
@@ -640,13 +640,20 @@ function HotelModal({ unit, op, slug, lang, onClose, refCode, traveler }) {
 }
 
 /* ── ActivityModal ────────────────────────────────── */
-function ActivityModal({ unit, op, slug, lang, onClose, refCode, traveler, initialDate, initialAdults, initialKids, initialLanguage }) {
+/* seleccao (opcional) -- vem do "Reservar" da coluna de reserva (ReservaActividade):
+   { date, time|null, adults, children, mode, language|null, voucher|null, quote: { lines, total, before } }.
+   Com ela o modal abre nos dados do cliente (o passo 1 ja foi feito na coluna, e "Anterior"
+   no passo 2 fecha o modal), a revisao mostra as linhas e o total da cotacao do servidor
+   (o modal nao calcula total nenhum) e o voucher e o que a coluna aplicou (sem campo proprio).
+   Sem seleccao fica tudo como sempre: fallback para qualquer entrada antiga. */
+function ActivityModal({ unit, op, slug, lang, onClose, refCode, traveler, seleccao }) {
   const unitMeta=getUnitMeta(unit);
   const hasPerPerson=!!unit.base_price;
   const hasPrivate=temPrecoPrivado(unitMeta);
   const priceTiers=Array.isArray(unitMeta.price_tiers)?unitMeta.price_tiers:[];
-  const [step,ss]=useState(1); const [date,sd]=useState(initialDate||''); const [time,st]=useState(''); const [adults,sa]=useState(initialAdults||2); const [kids,sk]=useState(initialKids||0);
-  const [tourLang,stl]=useState(initialLanguage||'');
+  const col=seleccao||null;
+  const [step,ss]=useState(col?2:1); const [date,sd]=useState(col?.date||''); const [time,st]=useState(col?.time||''); const [adults,sa]=useState(col?.adults||2); const [kids,sk]=useState(col?(col.children||0):0);
+  const [tourLang,stl]=useState(col?.language||'');
   /* Modo de reserva -- so relevante quando o tour tem AMBOS preco por
      pessoa e preco privado/escaloes configurados (pedido real da Logan
      Tours: preco privado nao pode continuar a ser forcado por pessoa).
@@ -655,9 +662,13 @@ function ActivityModal({ unit, op, slug, lang, onClose, refCode, traveler, initi
   const [info,si]=useState(()=>({name:traveler?.name||'',email:traveler?.email||'',phone:traveler?.phone||'',country:traveler?.country||'',needs:'',hotel:'',arrival:'',departure:'',referredBy:refCode||'',whatsappOptIn:false})); const [pay,sp]=useState('cash'); const [sub,ssub]=useState(false); const [resId,sr]=useState(null); const [resOk,sro]=useState(false); const [pendingRes,spr]=useState(null); const [err,se]=useState('');
   const [voucherCode,svc]=useState(null); const [policyOk,setPolicyOk]=useState(false);
   const numPessoas=adults+kids;
-  const isPrivateMode=hasPrivate&&(bookingMode==='private'||!hasPerPerson);
-  const rawTotal=isPrivateMode?calcPrivatePrice(unitMeta,numPessoas):numPessoas*(unit.base_price||0);
+  const isPrivateMode=col?col.mode==='private':hasPrivate&&(bookingMode==='private'||!hasPerPerson);
+  /* Sem seleccao o total e calculado aqui (como sempre); com seleccao vem do /quote */
+  const rawTotal=col?null:(isPrivateMode?calcPrivatePrice(unitMeta,numPessoas):numPessoas*(unit.base_price||0));
   const total=rawTotal?fmtPrice(rawTotal,null,op.currency||'EUR','EUR',lang):null;
+  /* So vai na reserva o voucher que a cotacao aceitou (ha linha de desconto); um voucher
+     recusado (INVALID_VOUCHER) faria o POST falhar com 400 */
+  const voucherDaColuna=col&&col.voucher&&(col.quote?.lines||[]).some(l=>l.type==='discount')?col.voucher:null;
   const tourLanguages=Array.isArray(unitMeta.languages)?unitMeta.languages:[];
   /* Horarios com capacidade real (TourForm's TimeSlotsEditor) -- so activo
      quando a unidade tem meta.time_slots configurado. Sem isso, a reserva
@@ -667,28 +678,41 @@ function ActivityModal({ unit, op, slug, lang, onClose, refCode, traveler, initi
   const configuredSlots=Array.isArray(unitMeta.time_slots)?unitMeta.time_slots:[];
   const hasSlots=configuredSlots.length>0;
   const [slotAvail,ssa]=useState([]); const [loadingSlots,sls]=useState(false);
-  useEffect(()=>{ if(!hasSlots||!date){ssa([]);return;} sls(true); st(''); getSlotAvailability(slug,unit.id,date).then(ssa).finally(()=>sls(false)); },[date,hasSlots,slug,unit.id]);
+  useEffect(()=>{ if(col) return; if(!hasSlots||!date){ssa([]);return;} sls(true); st(''); getSlotAvailability(slug,unit.id,date).then(ssa).finally(()=>sls(false)); },[date,hasSlots,slug,unit.id]);
   /* Alojamento e datas de estadia (pedido real da Logan Tours: precisam de
      saber onde recolher e quando o turista chega/parte). Tudo opcional. */
   const stayLine=[info.hotel.trim()?`${lang==='en'?'Accommodation':'Alojamento'}: ${info.hotel.trim()}`:'',info.arrival?`${lang==='en'?'arrival':'chegada'} ${info.arrival}`:'',info.departure?`${lang==='en'?'departure':'partida'} ${info.departure}`:''].filter(Boolean).join(', ');
-  function buildPayload(){ const notes=[time?`${lang==='en'?'Time':'Hora'}: ${time}`:'',`${adults} ${lang==='en'?'adults':'adultos'}, ${kids} ${lang==='en'?'children':'crianças'}`,tourLang?(lang==='en'?'Language: ':'Idioma: ')+tourLang:'',stayLine,info.needs?(lang==='en'?'Additional request:':'Pedido adicional:')+' '+info.needs:''].filter(Boolean).join('. '); return {unit_id:unit.id,customer_name:info.name,customer_email:info.email,customer_phone:info.phone||null,customer_country:info.country||null,check_in:date,check_out:date,guests:adults+kids,notes,tour_time:hasSlots?time:undefined,voucher_code:voucherCode||undefined,ref_code:refCode||undefined,referred_by:info.referredBy.trim()||undefined,whatsapp_opt_in:info.whatsappOptIn||undefined,booking_mode:isPrivateMode?'private':undefined,payment_method:pay}; }
+  function buildPayload(){ const notes=[time?`${lang==='en'?'Time':'Hora'}: ${time}`:'',`${adults} ${lang==='en'?'adults':'adultos'}, ${kids} ${lang==='en'?'children':'crianças'}`,tourLang?(lang==='en'?'Language: ':'Idioma: ')+tourLang:'',stayLine,info.needs?(lang==='en'?'Additional request:':'Pedido adicional:')+' '+info.needs:''].filter(Boolean).join('. '); return {unit_id:unit.id,customer_name:info.name,customer_email:info.email,customer_phone:info.phone||null,customer_country:info.country||null,check_in:date,check_out:date,guests:adults+kids,...(col?{adults,children:kids}:{}),notes,tour_time:col?(col.time||undefined):(hasSlots?time:undefined),voucher_code:(col?voucherDaColuna:voucherCode)||undefined,ref_code:refCode||undefined,referred_by:info.referredBy.trim()||undefined,whatsapp_opt_in:info.whatsappOptIn||undefined,booking_mode:isPrivateMode?'private':undefined,payment_method:pay}; }
   useEffect(()=>{ if(step===3&&pay==='paypal'&&!pendingRes&&!sub){ ssub(true); postReservation(slug,buildPayload()).then(spr).catch(e=>se(e.message)).finally(()=>ssub(false)); } },[step,pay]);
   function valid(){ if(step===1){if(!date){se(lang==='en'?'Select a date':'Seleccione uma data');return false;} if(hasSlots&&!time){se(lang==='en'?'Select a time slot':'Seleccione um horário');return false;} if(adults<1){se(lang==='en'?'At least 1 adult required':'Mínimo 1 adulto');return false;}} if(step===2&&(!info.name||!info.email)){se(lang==='en'?'Name and email required':'Nome e email obrigatórios');return false;} if(step===2&&info.arrival&&info.departure&&info.departure<info.arrival){se(lang==='en'?'Departure date must be after arrival':'A data de partida deve ser depois da chegada');return false;} se('');return true; }
   async function submit(){
     ssub(true);se('');
     try{
       const newRes = await postReservation(slug,buildPayload());
-      if (pay==='sisp' && rawTotal>0) {
-        await iniciarPagamentoSisp(slug, newRes.id, toCVE(newRes.total_price ?? rawTotal, op.currency));
+      /* Com seleccao, o valor a pagar e o total da reserva gravada no servidor (o mesmo calculo do /quote) */
+      if (col ? (pay==='sisp' && Number(newRes.total_price)>0) : (pay==='sisp' && rawTotal>0)) {
+        await iniciarPagamentoSisp(slug, newRes.id, toCVE(col ? Number(newRes.total_price) : (newRes.total_price ?? rawTotal), op.currency));
         return;
       }
       sro(newRes.status==='confirmed'); sr(newRes.id);
     }catch(e){se(e.message);}finally{ssub(false);}
   }
   function next(){ if(!valid())return; step<3?ss(s=>s+1):submit(); }
-  const sumL=[{label:lang==='en'?'Tour / Activity':'Tour / Actividade',value:unit.name},{label:lang==='en'?'Date':'Data',value:date},...(time?[{label:lang==='en'?'Time':'Horário',value:time}]:[]),{label:lang==='en'?'Group':'Grupo',value:`${adults} ${lang==='en'?'adults':'adultos'}${kids>0?` + ${kids} ${lang==='en'?'children':'crianças'}`:''}`},...(tourLang?[{label:lang==='en'?'Language':'Idioma',value:tourLang}]:[]),...(info.hotel.trim()?[{label:lang==='en'?'Accommodation':'Alojamento',value:info.hotel.trim()}]:[]),...(hasPerPerson&&hasPrivate?[{label:lang==='en'?'Booking type':'Tipo de reserva',value:isPrivateMode?(lang==='en'?'Private / group':'Privado / grupo'):(lang==='en'?'Per person':'Por pessoa')}]:[]),...(total?[{label:'Total',value:fmtTotalBoth(rawTotal,op.currency,lang),hi:true}]:[])];
+  const sumL=[{label:lang==='en'?'Tour / Activity':'Tour / Actividade',value:unit.name},{label:lang==='en'?'Date':'Data',value:date},...(time?[{label:lang==='en'?'Time':'Horário',value:time}]:[]),{label:lang==='en'?'Group':'Grupo',value:`${adults} ${lang==='en'?'adults':'adultos'}${kids>0?` + ${kids} ${lang==='en'?'children':'crianças'}`:''}`},...(tourLang?[{label:lang==='en'?'Language':'Idioma',value:tourLang}]:[]),...(info.hotel.trim()?[{label:lang==='en'?'Accommodation':'Alojamento',value:info.hotel.trim()}]:[]),...(hasPerPerson&&hasPrivate?[{label:lang==='en'?'Booking type':'Tipo de reserva',value:isPrivateMode?(lang==='en'?'Private / group':'Privado / grupo'):(lang==='en'?'Per person':'Por pessoa')}]:[]),...(col?linhasDaCotacao():(total?[{label:'Total',value:fmtTotalBoth(rawTotal,op.currency,lang),hi:true}]:[]))];
+  /* Linhas e total da cotacao do servidor para a seleccao da coluna (total tambem em CVE, exigencia SISP) */
+  function linhasDaCotacao(){
+    const en=lang==='en'; const cur=op.currency||'EUR';
+    const valor=(v)=>{ const n=Number(v)||0; if(n===0) return en?'Free':'Grátis'; return n<0?`-${fmtPrice(-n,null,cur,'EUR',lang)}`:fmtPrice(n,null,cur,'EUR',lang); };
+    const totalCot=Number(col.quote?.total)||0;
+    return [
+      ...(col.quote?.lines||[]).map(l=>({label:textoDaLinha(l,col.mode,col.voucher,en),value:valor(l.total)})),
+      {label:'Total',value:totalCot>0?fmtTotalBoth(totalCot,op.currency,lang):valor(0),hi:true},
+    ];
+  }
+  /* Com seleccao nao ha passo 1 no modal: "Anterior" no passo 2 fecha e volta a coluna */
+  function prev(){ if(col&&step===2){ onClose(); return; } ss(s=>s-1); }
   return (
-    <MS icon={<Compass size={18} strokeWidth={1.75}/>} title={lang==='en'?'Book tour':'Reservar tour'} step={step} lang={lang} onClose={onClose} onPrev={()=>ss(s=>s-1)} onNext={next} nextLabel={step<3?(lang==='en'?'Continue':'Continuar'):(lang==='en'?'Confirm booking':'Confirmar reserva')} nextDis={(step===1&&(!date||(hasSlots&&!time)))||(step===3&&!policyOk)} sub={sub} err={err} ok={!!resId} hideNext={step===3&&pay==='paypal'}>
+    <MS icon={<Compass size={18} strokeWidth={1.75}/>} title={lang==='en'?'Book tour':'Reservar tour'} step={step} lang={lang} onClose={onClose} onPrev={prev} onNext={next} nextLabel={step<3?(lang==='en'?'Continue':'Continuar'):(lang==='en'?'Confirm booking':'Confirmar reserva')} nextDis={(step===1&&(!date||(hasSlots&&!time)))||(step===3&&!policyOk)} sub={sub} err={err} ok={!!resId} hideNext={step===3&&pay==='paypal'}>
       {resId?<div className="p-5"><BS resId={resId} lang={lang} type="activity" confirmed={resOk} onClose={onClose}/></div>
       :step===1?<div className="p-5 space-y-4"><p className={SH}>{lang==='en'?'Select date, time & group':'Data, horário e grupo'}</p>
         {hasPerPerson&&hasPrivate&&(
@@ -734,10 +758,10 @@ function ActivityModal({ unit, op, slug, lang, onClose, refCode, traveler, initi
         <div><label className={LB}>{lang==='en'?'Referred by (optional)':'Indicado por (opcional)'}</label><input className={IN} value={info.referredBy} onChange={e=>si(i=>({...i,referredBy:e.target.value}))} maxLength={100} placeholder={lang==='en'?'Name or code of who recommended us':'Nome ou código de quem nos indicou'}/></div>
       </GF></div>
       :<div className="p-5 space-y-4"><p className={SH}>{lang==='en'?'Review & payment':'Resumo e pagamento'}</p><ST lines={sumL}/>
-        {rawTotal>0&&<VoucherField slug={slug} unitId={unit.id} amount={rawTotal} lang={lang} onApplied={(c)=>svc(c)}/>}
+        {!col&&rawTotal>0&&<VoucherField slug={slug} unitId={unit.id} amount={rawTotal} lang={lang} onApplied={(c)=>svc(c)}/>}
         <p className="text-xs font-body font-semibold text-n-700">{lang==='en'?'Payment method':'Método de pagamento'}</p><PO lang={lang} v={pay} set={sp}/>
         <CancelPolicyCheck op={op} lang={lang} checked={policyOk} onChange={setPolicyOk}/>
-        {pay==='paypal'&&(policyOk?<PayPalButton slug={slug} reservationId={pendingRes?.id} amount={toEUR(pendingRes?.total_price ?? rawTotal,op.currency)} lang={lang} onSuccess={()=>{ sro(true); sr(pendingRes?.id); }} onError={se}/>:<p className="text-xs font-body text-amber-700 bg-amber-50 rounded-lg px-3 py-2">{lang==='en'?'Accept the cancellation policy above to pay.':'Aceite a política de cancelamento acima para pagar.'}</p>)}
+        {pay==='paypal'&&(policyOk?<PayPalButton slug={slug} reservationId={pendingRes?.id} amount={col?toEUR(Number(pendingRes?.total_price)||0,op.currency):toEUR(pendingRes?.total_price ?? rawTotal,op.currency)} lang={lang} onSuccess={()=>{ sro(true); sr(pendingRes?.id); }} onError={se}/>:<p className="text-xs font-body text-amber-700 bg-amber-50 rounded-lg px-3 py-2">{lang==='en'?'Accept the cancellation policy above to pay.':'Aceite a política de cancelamento acima para pagar.'}</p>)}
       </div>}
     </MS>
   );
@@ -814,12 +838,13 @@ function RentACarModal({ unit, op, slug, lang, onClose, refCode, traveler }) {
    reservadas via o formulario proprio em PublicBooking.jsx). RestaurantModal,
    REST_SLOTS e OCCASIONS foram removidos por serem codigo morto: nunca sao
    alcançados, dado que este ecrã cai sempre no NotFoundPage para esse tipo. */
-function BookingModal({ unit, op, slug, lang, onClose, refCode, traveler, initialDate, initialAdults, initialKids, initialLanguage }) {
+function BookingModal({ unit, op, slug, lang, onClose, refCode, traveler, seleccao }) {
   if (!unit||!op) return null;
   const t=op.operator_type;
-  const props={unit,op,slug,lang,onClose,refCode,traveler,initialDate,initialAdults,initialKids,initialLanguage};
+  const props={unit,op,slug,lang,onClose,refCode,traveler};
   if (t==='hotel') return <HotelModal {...props}/>;
-  if (t==='activity') return <ActivityModal {...props}/>;
+  /* seleccao (coluna de reserva) so existe na pagina de actividade */
+  if (t==='activity') return <ActivityModal {...props} seleccao={seleccao}/>;
   if (t==='rentacar') return <RentACarModal {...props}/>;
   return <ActivityModal {...props}/>;
 }
@@ -1058,13 +1083,9 @@ function ServiceDetailPagina() {
   const [wishlisted, setWishlisted]   = useState(false);
   const [copied, setCopied]           = useState(false);
   const [opUnits, setOpUnits]         = useState([]); // so para restaurante -- ver useEffect abaixo
-  /* Pre-preenchimento da sidebar de actividade -- so inicializa o
-     ActivityModal (que continua a ser a unica fonte de verdade do
-     preco/disponibilidade), nunca substitui a logica do modal. */
-  const [sbDate, setSbDate]           = useState('');
-  const [sbAdults, setSbAdults]       = useState(2);
-  const [sbKids, setSbKids]           = useState(0);
-  const [sbLanguage, setSbLanguage]   = useState('');
+  /* Seleccao da coluna de reserva da actividade (data, hora, pessoas, modo, idioma, voucher e a
+     cotacao do servidor): o ActivityModal abre com ela nos dados do cliente. */
+  const [seleccao, setSeleccao]       = useState(null);
   const [traveler, setTraveler]       = useState(null); // sessao de viajante (cookie partilhada), ver useEffect abaixo
 
   /* Bridge de sessao com a conta de viajante -- mesmo mecanismo do
@@ -1188,10 +1209,14 @@ function ServiceDetailPagina() {
 
   /* Para um prato/menu de degustação, "reservar" nao abre um modal generico
      -- desloca ate ao widget de reserva completo (mesa+pre-pedido) embutido
-     mais abaixo nesta mesma pagina, ver RestaurantReservationSection. */
+     mais abaixo nesta mesma pagina, ver RestaurantReservationSection.
+     Numa actividade leva a coluna de reserva (#reserva), como a barra do telemovel:
+     o modal so abre a partir do "Reservar" da coluna, ja com a seleccao. */
   function handleReservarClick() {
     if (isRestaurant) {
       document.getElementById('servicos')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } else if (isActivity) {
+      irParaReserva();
     } else {
       setBookOpen(true);
     }
@@ -1232,18 +1257,19 @@ function ServiceDetailPagina() {
   const rawPrice     = fmtRaw(unit.base_price, op.currency||'EUR', currency);
 
   /* Coluna de reserva da actividade: o preco "Desde" (por pessoa, ou por grupo quando so ha
-     preco privado) e o formatador da pagina para as linhas do /quote. "Reservar" passa a
-     seleccao ao modal de hoje pelos valores iniciais (data, pessoas, idioma). */
+     preco privado) e o formatador da pagina para as linhas do /quote. "Reservar" entrega a
+     seleccao inteira ao modal de hoje, que abre nos dados do cliente. */
   const formatarPrecoReserva = (v) => fmtPrice(v, null, op.currency||'EUR', currency, lang);
   const desdeReserva = unit.base_price
     ? { valor: Number(unit.base_price), porGrupo: false }
     : { valor: startingFromPrice(unitMeta), porGrupo: true };
-  function reservarSeleccao(seleccao) {
-    setSbDate(seleccao.date);
-    setSbAdults(seleccao.adults);
-    setSbKids(seleccao.children);
-    setSbLanguage(seleccao.language || '');
+  function reservarSeleccao(s) {
+    setSeleccao(s);
     setBookOpen(true);
+  }
+  function fecharReserva() {
+    setBookOpen(false);
+    setSeleccao(null);
   }
   const currSymbol   = currency === 'CVE' ? 'CVE' : '€';
 
@@ -1474,7 +1500,6 @@ function ServiceDetailPagina() {
                   <span className="flex items-center gap-1.5 bg-n-50 border border-n-200 text-n-600 text-xs font-body font-semibold px-3 py-1.5 rounded-full">
                     <Clock size={12} strokeWidth={1.75}/>
                     {isHotel && (lang==='en'?'Per night':'Por noite')}
-                    {isActivity && (lang==='en'?'Per person':'Por pessoa')}
                     {isRentaCar && (lang==='en'?'Per day':'Por dia')}
                     {isRestaurant && (lang==='en'?'Per person':'Por pessoa')}
                   </span>
@@ -1483,12 +1508,6 @@ function ServiceDetailPagina() {
                   <span className="flex items-center gap-1.5 bg-n-50 border border-n-200 text-n-600 text-xs font-body font-semibold px-3 py-1.5 rounded-full">
                     <Users size={12} strokeWidth={1.75}/>
                     {lang==='en'?`Capacity: ${unit.capacity}`:`Capacidade: ${unit.capacity}`}
-                  </span>
-                )}
-                {op.operator_type === 'activity' && (
-                  <span className="flex items-center gap-1.5 bg-brand-50 border border-brand-100 text-brand-700 text-xs font-body font-semibold px-3 py-1.5 rounded-full">
-                    <Shield size={12} strokeWidth={1.75}/>
-                    {lang==='en'?'Safe & Certified':'Certificado'}
                   </span>
                 )}
                 {isRestaurant && unitMeta.category && MENU_CATEGORY_LABELS[unitMeta.category] && (
@@ -1683,9 +1702,7 @@ function ServiceDetailPagina() {
               )}
             </div>
 
-            {/* ── Localização (morada do operador) -- sai numa actividade com o ponto de
-                encontro marcado no mapa, que ja mostra o sitio certo acima ── */}
-            {!(isActivity && pontoEncontroDe(unit, unitMeta).temPonto) && (
+            {/* ── Localização (morada do operador) ── */}
             <div className="pb-10 border-b border-n-100">
               <p className="text-xs font-body font-bold text-brand-700 uppercase tracking-widest mb-4">
                 {lang==='en'?'Location':'Localização'}
@@ -1706,7 +1723,6 @@ function ServiceDetailPagina() {
                 </div>
               </div>
             </div>
-            )}
 
             {/* ── Partilhar ── */}
             <div className="pb-10 border-b border-n-100">
@@ -1785,7 +1801,7 @@ function ServiceDetailPagina() {
                       <span className="font-semibold text-n-800">14:00</span>
                     </div>
                   )}
-                  {(isActivity||isRentaCar) && (
+                  {isRentaCar && (
                     <div className="flex items-center justify-between text-sm font-body">
                       <span className="text-n-500 flex items-center gap-2"><MapPin size={14} strokeWidth={1.75} className="text-brand-500"/>{lang==='en'?'Pickup':'Levantamento'}</span>
                       <span className="font-semibold text-n-800">{lang==='en'?'On request':'A combinar'}</span>
@@ -1817,7 +1833,7 @@ function ServiceDetailPagina() {
                   <button onClick={handleReservarClick}
                     className="w-full bg-brand-700 text-white font-body font-bold py-4 rounded-xl flex items-center justify-center gap-2 hover:bg-brand-500 transition-colors text-base shadow-sm hover:shadow-md">
                     <Calendar size={18} strokeWidth={1.75}/>
-                    {isActivity ? (lang==='en'?'Check availability':'Ver disponibilidade') : (lang==='en'?'Book Now':'Reservar Agora')}
+                    {lang==='en'?'Book Now':'Reservar Agora'}
                   </button>
                   <p className="text-center text-xs font-body text-n-400">
                     {lang==='en'?'No charge now — confirm details first':'Sem cobrança agora — confirme os detalhes'}
@@ -1994,8 +2010,8 @@ function ServiceDetailPagina() {
 
       {/* ── Booking Modal ── */}
       {bookOpen && (
-        <BookingModal unit={unit} op={op} slug={slug} lang={lang} onClose={() => setBookOpen(false)} refCode={refCode} traveler={traveler}
-          initialDate={sbDate} initialAdults={sbAdults} initialKids={sbKids} initialLanguage={sbLanguage}/>
+        <BookingModal unit={unit} op={op} slug={slug} lang={lang} onClose={fecharReserva} refCode={refCode} traveler={traveler}
+          seleccao={seleccao}/>
       )}
 
       {/* ── Lightbox ── */}
