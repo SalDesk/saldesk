@@ -31,6 +31,7 @@ import { textoPoliticaCancelamento } from '../utils/politicaCancelamento';
 import { jsonLdExperiencia } from '../utils/dadosEstruturados';
 import { dentroDeCaboVerde } from '../utils/coordenadas';
 import { textoAdultos, textoCriancas } from '../utils/pessoas';
+import useTopoColante from '../hooks/useTopoColante';
 import { seccoesActividade, factosActividade, comodidadeNaLingua } from '../utils/paginaActividade';
 import GaleriaActividade, { Lightbox } from '../components/servico/GaleriaActividade';
 import CabecalhoActividade from '../components/servico/CabecalhoActividade';
@@ -1124,6 +1125,8 @@ function ServiceDetailPagina() {
      cotacao do servidor): o ActivityModal abre com ela nos dados do cliente. */
   const [seleccao, setSeleccao]       = useState(null);
   const [traveler, setTraveler]       = useState(null); // sessao de viajante (cookie partilhada), ver useEffect abaixo
+  // Coluna de reserva fixa ao rolar (lg), sem barra de scroll propria (ver useTopoColante)
+  const colunaColante = useTopoColante();
 
   /* Bridge de sessao com a conta de viajante -- mesmo mecanismo do
      Discover (bootstrapTravelerSession em website/discover/index.html):
@@ -1950,7 +1953,7 @@ function ServiceDetailPagina() {
                   baixo (BarraReservaMovel) leva ate aqui. No widget fica primeiro, numa so coluna. */}
               <aside id="reserva" tabIndex={-1} aria-label={lang==='en'?'Booking':'Reserva'} data-testid="coluna-reserva"
                 className={isWidget ? 'min-w-0 focus:outline-none' : 'lg:col-start-2 lg:row-start-1 min-w-0 focus:outline-none'}>
-                <div className="lg:sticky lg:top-20 lg:max-h-[calc(100vh-6rem)] lg:overflow-y-auto lg:overscroll-contain rounded-2xl">
+                <div ref={colunaColante.ref} style={colunaColante.style} className="lg:sticky lg:top-20 rounded-2xl">
                   <ReservaActividade api={API} slug={slug} unit={unit} meta={unitMeta} lang={lang}
                     formatarPreco={formatarPrecoReserva} desde={desdeReserva} temPrivado={temPrecoPrivado(unitMeta)}
                     onReservar={reservarSeleccao}>
