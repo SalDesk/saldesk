@@ -579,6 +579,19 @@ describe('TourForm', () => {
       return JSON.parse(guardar(onSave).description);
     }
 
+    it('preco crianca 0 grava 0 (criancas gratis), vazio grava null', () => {
+      const { onSave } = preencherMinimo();
+      escrever(campo('Preco adulto (opcional se usar Preço privado/Escalões)'), '40');
+      escrever(campo('Preco crianca'), '0');
+      fireEvent.click(botao('Criar tour'));
+      expect(metaGravada(onSave).price_child).toBe(0);
+      cleanup();
+
+      const outro = preencherMinimo();
+      fireEvent.click(botao('Criar tour'));
+      expect(metaGravada(outro.onSave).price_child).toBeNull();
+    });
+
     it('itens incluidos: adicionar, alternar incluido/nao incluido, editar e remover', () => {
       const { onSave } = preencherMinimo();
       fireEvent.click(botao('Adicionar item incluído'));

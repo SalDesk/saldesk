@@ -95,7 +95,8 @@ export default function TourForm({ unit, onSave, onCancel, loading, error }) {
       meeting_point: form.meeting_point || null,
       pickup_included: form.pickup_included === true,
       start_time:    form.start_time    || null,
-      price_child:   form.price_child   ? Number(form.price_child)   : null,
+      /* 0 e um preco valido (criancas gratis); so o campo vazio fica sem preco de crianca */
+      price_child:   form.price_child !== '' ? Number(form.price_child) : null,
       price_private: form.price_private ? Number(form.price_private) : null,
       price_tiers: form.price_tiers
         .filter(t => t.pax_min !== '' && t.pax_max !== '' && t.price !== '')
