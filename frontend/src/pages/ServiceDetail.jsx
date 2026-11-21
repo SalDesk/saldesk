@@ -32,7 +32,8 @@ import { jsonLdExperiencia } from '../utils/dadosEstruturados';
 import { dentroDeCaboVerde } from '../utils/coordenadas';
 import { textoAdultos, textoCriancas } from '../utils/pessoas';
 import useTopoColante from '../hooks/useTopoColante';
-import { seccoesActividade, factosActividade, comodidadeNaLingua } from '../utils/paginaActividade';
+import { seccoesActividade, factosActividade, comodidadeNaLingua, nomeLingua } from '../utils/paginaActividade';
+import { opcoesValidas, opcaoMaisBarata } from '../utils/opcoesActividade';
 import GaleriaActividade, { Lightbox } from '../components/servico/GaleriaActividade';
 import CabecalhoActividade from '../components/servico/CabecalhoActividade';
 import FactosActividade from '../components/servico/FactosActividade';
@@ -210,12 +211,24 @@ function fmtPrice(price, priceUnit, opCurrency, viewCurrency, lang) {
   return `€${eur < 10 ? eur.toFixed(1) : Math.round(eur)}${suffix}`;
 }
 
+/* Valor exacto para a coluna de reserva e o resumo do modal: em EUR mostra os centimos
+   quando existem (217,50 em PT, 217.50 em EN) e inteiros caso contrario; em CVE mantem
+   inteiros (a SISP exige). So afecta a apresentacao, nao o valor enviado nem cobrado. */
+function fmtExato(price, opCurrency, viewCurrency, lang) {
+  if (!price || viewCurrency === 'CVE') return fmtPrice(price, null, opCurrency, viewCurrency, lang);
+  const eur = (opCurrency||'EUR') === 'CVE' ? price / EUR_CVE : price;
+  const centimos = Math.round(eur * 100);
+  if (centimos % 100 === 0) return `€${centimos / 100}`;
+  const texto = (centimos / 100).toFixed(2);
+  return `€${lang === 'en' ? texto : texto.replace('.', ',')}`;
+}
+
 /* No ecra de pagamento (step 3 dos modais de reserva) o total tem de
    aparecer sempre tambem em CVE, independentemente do toggle EUR/CVE da
    pagina -- exigido pelo checklist de validacao de site da SISP ("preco
    expresso tambem em CVE"), nao so quando o visitante escolhe ver em CVE. */
-function fmtTotalBoth(price, opCurrency, lang) {
-  const principal = fmtPrice(price, null, opCurrency, 'EUR', lang);
+function fmtTotalBoth(price, opCurrency, lang, exacto = false) {
+  const principal = exacto ? fmtExato(price, opCurrency, 'EUR', lang) : fmtPrice(price, null, opCurrency, 'EUR', lang);
   if (!price) return principal;
   const cve = (opCurrency || 'EUR') === 'CVE' ? price : price * EUR_CVE;
   return `${principal} (≈ ${Math.round(cve).toLocaleString('pt-PT')} CVE)`;
@@ -662,7 +675,8 @@ function HotelModal({ unit, op, slug, lang, onClose, refCode, traveler }) {
 
 /* ── ActivityModal ────────────────────────────────── */
 /* seleccao (opcional) -- vem do "Reservar" da coluna de reserva (ReservaActividade):
-   { date, time|null, adults, children, mode, language|null, voucher|null, quote: { lines, total, before } }.
+   { date, time|null, adults, children, mode, language|null, voucher|null, optionId|null, vehicles|null,
+     guideLanguage|null, quote: { lines, total, before } }.
    Com ela o modal abre nos dados do cliente (o passo 1 ja foi feito na coluna, e "Anterior"
    no passo 2 fecha o modal), a revisao mostra as linhas e o total da cotacao do servidor
    (o modal nao calcula total nenhum) e o voucher e o que a coluna aplicou (sem campo proprio).
@@ -671,8 +685,10 @@ function ActivityModal({ unit, op, slug, lang, onClose, refCode, traveler, selec
   const unitMeta=getUnitMeta(unit);
   const hasPerPerson=!!unit.base_price;
   const hasPrivate=temPrecoPrivado(unitMeta);
+  /* Opcoes da actividade (como na coluna): com elas ha sempre preco e nao ha toggle */
+  const opcoesUnidade=opcoesValidas(unitMeta);
   /* Sem preco nenhum (como na coluna): reserva-se por pessoa com o preco a combinar */
-  const semPreco=!hasPerPerson&&!hasPrivate;
+  const semPreco=opcoesUnidade.length===0&&!hasPerPerson&&!hasPrivate;
   const priceTiers=Array.isArray(unitMeta.price_tiers)?unitMeta.price_tiers:[];
   const col=seleccao||null;
   const [step,ss]=useState(col?2:1); const [date,sd]=useState(col?.date||''); const [time,st]=useState(col?.time||''); const [adults,sa]=useState(col?.adults||2); const [kids,sk]=useState(col?(col.children||0):0);
@@ -691,9 +707,11 @@ function ActivityModal({ unit, op, slug, lang, onClose, refCode, traveler, selec
   const total=rawTotal?fmtPrice(rawTotal,null,op.currency||'EUR','EUR',lang):null;
   /* Total 0 (preco a combinar, ou voucher que cobre tudo): nada a cobrar online, so no local */
   const semCobranca=(col?Number(col.quote?.total)||0:Number(rawTotal)||0)<=0;
-  /* So vai na reserva o voucher que a cotacao aceitou (ha linha de desconto); um voucher
-     recusado (INVALID_VOUCHER) faria o POST falhar com 400 */
-  const voucherDaColuna=col&&col.voucher&&(col.quote?.lines||[]).some(l=>l.type==='discount')?col.voucher:null;
+  /* So vai na reserva o voucher que a cotacao aceitou (a linha de desconto e do codigo); um voucher
+     recusado (INVALID_VOUCHER) faria o POST falhar com 400, e um vencido por uma oferta nao conta */
+  const voucherDaColuna=col&&col.voucher&&(col.quote?.lines||[]).some(l=>l.type==='discount'&&l.source==='voucher')?col.voucher:null;
+  /* Opcao escolhida na coluna (nome em ingles nas linhas da revisao) */
+  const opcaoDaColuna=col&&col.optionId?opcoesUnidade.find(o=>o.id===col.optionId)||null:null;
   const tourLanguages=Array.isArray(unitMeta.languages)?unitMeta.languages:[];
   /* Horarios com capacidade real (TourForm's TimeSlotsEditor) -- so activo
      quando a unidade tem meta.time_slots configurado. Sem isso, a reserva
@@ -707,7 +725,7 @@ function ActivityModal({ unit, op, slug, lang, onClose, refCode, traveler, selec
   /* Alojamento e datas de estadia (pedido real da Logan Tours: precisam de
      saber onde recolher e quando o turista chega/parte). Tudo opcional. */
   const stayLine=[info.hotel.trim()?`${lang==='en'?'Accommodation':'Alojamento'}: ${info.hotel.trim()}`:'',info.arrival?`${lang==='en'?'arrival':'chegada'} ${info.arrival}`:'',info.departure?`${lang==='en'?'departure':'partida'} ${info.departure}`:''].filter(Boolean).join(', ');
-  function buildPayload(){ const notes=[time?`${lang==='en'?'Time':'Hora'}: ${time}`:'',`${textoAdultos(adults,lang)}, ${textoCriancas(kids,lang)}`,tourLang?(lang==='en'?'Language: ':'Idioma: ')+tourLang:'',stayLine,info.needs?(lang==='en'?'Additional request:':'Pedido adicional:')+' '+info.needs:''].filter(Boolean).join('. '); return {unit_id:unit.id,customer_name:info.name,customer_email:info.email,customer_phone:info.phone||null,customer_country:info.country||null,check_in:date,check_out:date,guests:adults+kids,...(col?{adults,children:kids}:{}),notes,tour_time:col?(col.time||undefined):(hasSlots?time:undefined),voucher_code:(col?voucherDaColuna:voucherCode)||undefined,ref_code:refCode||undefined,referred_by:info.referredBy.trim()||undefined,whatsapp_opt_in:info.whatsappOptIn||undefined,booking_mode:isPrivateMode?'private':undefined,payment_method:pay}; }
+  function buildPayload(){ const notes=[time?`${lang==='en'?'Time':'Hora'}: ${time}`:'',`${textoAdultos(adults,lang)}, ${textoCriancas(kids,lang)}`,tourLang?(lang==='en'?'Language: ':'Idioma: ')+tourLang:'',stayLine,info.needs?(lang==='en'?'Additional request:':'Pedido adicional:')+' '+info.needs:''].filter(Boolean).join('. '); return {unit_id:unit.id,customer_name:info.name,customer_email:info.email,customer_phone:info.phone||null,customer_country:info.country||null,check_in:date,check_out:date,guests:adults+kids,...(col?{adults,children:kids,option_id:col.optionId||undefined,vehicles:col.vehicles||undefined,guide_language:col.guideLanguage||undefined}:{}),notes,tour_time:col?(col.time||undefined):(hasSlots?time:undefined),voucher_code:(col?voucherDaColuna:voucherCode)||undefined,ref_code:refCode||undefined,referred_by:info.referredBy.trim()||undefined,whatsapp_opt_in:info.whatsappOptIn||undefined,booking_mode:isPrivateMode?'private':undefined,payment_method:pay}; }
   const postGen=useRef(0);
   useEffect(()=>{ if(step<3){ postGen.current++; if(pendingRes) spr(null); ssub(false); } },[step]);
   /* Voucher mudado ja com a reserva PayPal publicada (ou a caminho): essa reserva tem o total antigo.
@@ -729,16 +747,16 @@ function ActivityModal({ unit, op, slug, lang, onClose, refCode, traveler, selec
     }catch(e){se(e.message);}finally{ssub(false);}
   }
   function next(){ if(!valid())return; step<3?ss(s=>s+1):submit(); }
-  const sumL=[{label:lang==='en'?'Tour / Activity':'Tour / Actividade',value:unit.name},{label:lang==='en'?'Date':'Data',value:date},...(time?[{label:lang==='en'?'Time':'Horário',value:time}]:[]),{label:lang==='en'?'Group':'Grupo',value:`${textoAdultos(adults,lang)}${kids>0?` + ${textoCriancas(kids,lang)}`:''}`},...(tourLang?[{label:lang==='en'?'Language':'Idioma',value:tourLang}]:[]),...(info.hotel.trim()?[{label:lang==='en'?'Accommodation':'Alojamento',value:info.hotel.trim()}]:[]),...(hasPerPerson&&hasPrivate?[{label:lang==='en'?'Booking type':'Tipo de reserva',value:isPrivateMode?(lang==='en'?'Private / group':'Privado / grupo'):(lang==='en'?'Per person':'Por pessoa')}]:[]),...(col?linhasDaCotacao():(total?[{label:'Total',value:fmtTotalBoth(rawTotal,op.currency,lang),hi:true}]:[]))];
+  const sumL=[{label:lang==='en'?'Tour / Activity':'Tour / Actividade',value:unit.name},{label:lang==='en'?'Date':'Data',value:date},...(time?[{label:lang==='en'?'Time':'Horário',value:time}]:[]),{label:lang==='en'?'Group':'Grupo',value:`${textoAdultos(adults,lang)}${kids>0?` + ${textoCriancas(kids,lang)}`:''}`},...(tourLang?[{label:lang==='en'?'Language':'Idioma',value:col?nomeLingua(tourLang,lang):tourLang}]:[]),...(info.hotel.trim()?[{label:lang==='en'?'Accommodation':'Alojamento',value:info.hotel.trim()}]:[]),...(hasPerPerson&&hasPrivate&&!(col&&opcoesUnidade.length>0)?[{label:lang==='en'?'Booking type':'Tipo de reserva',value:isPrivateMode?(lang==='en'?'Private / group':'Privado / grupo'):(lang==='en'?'Per person':'Por pessoa')}]:[]),...(col?linhasDaCotacao():(total?[{label:'Total',value:fmtTotalBoth(rawTotal,op.currency,lang),hi:true}]:[]))];
   /* Linhas e total da cotacao do servidor para a seleccao da coluna (total tambem em CVE, exigencia SISP) */
   function linhasDaCotacao(){
     const en=lang==='en'; const cur=op.currency||'EUR';
-    const valor=(v)=>{ const n=Number(v)||0; if(n===0) return en?'Free':'Grátis'; return n<0?`-${fmtPrice(-n,null,cur,'EUR',lang)}`:fmtPrice(n,null,cur,'EUR',lang); };
+    const valor=(v)=>{ const n=Number(v)||0; if(n===0) return en?'Free':'Grátis'; return n<0?`-${fmtExato(-n,cur,'EUR',lang)}`:fmtExato(n,cur,'EUR',lang); };
     const totalCot=Number(col.quote?.total)||0;
     if(semPreco) return [{label:'Total',value:en?'Price agreed with the operator':'Preço a combinar com o operador',hi:true}];
     return [
-      ...(col.quote?.lines||[]).map(l=>({label:textoDaLinha(l,col.mode,col.voucher,en),value:valor(l.total)})),
-      {label:'Total',value:totalCot>0?fmtTotalBoth(totalCot,op.currency,lang):valor(0),hi:true},
+      ...(col.quote?.lines||[]).map(l=>({label:textoDaLinha(l,col.mode,col.voucher,en,{opcao:opcaoDaColuna,meta:unitMeta}),value:valor(l.total)})),
+      {label:'Total',value:totalCot>0?fmtTotalBoth(totalCot,op.currency,lang,true):valor(0),hi:true},
     ];
   }
   /* Com seleccao nao ha passo 1 no modal: "Anterior" no passo 2 fecha e volta a coluna */
@@ -1299,10 +1317,15 @@ function ServiceDetailPagina() {
   /* Coluna de reserva da actividade: o preco "Desde" (por pessoa, ou por grupo quando so ha
      preco privado) e o formatador da pagina para as linhas do /quote. "Reservar" entrega a
      seleccao inteira ao modal de hoje, que abre nos dados do cliente. */
-  const formatarPrecoReserva = (v) => fmtPrice(v, null, op.currency||'EUR', currency, lang);
-  const desdeReserva = unit.base_price
-    ? { valor: Number(unit.base_price), porGrupo: false }
-    : { valor: startingFromPrice(unitMeta), porGrupo: true };
+  const formatarPrecoReserva = (v) => fmtExato(v, op.currency||'EUR', currency, lang);
+  /* Com opcoes, as opcoes substituem a tabela de precos: "Desde" e a opcao mais barata (coluna e
+     barra do telemovel), nunca um base_price que tenha ficado para tras */
+  const opcaoDesde = opcaoMaisBarata(unitMeta);
+  const desdeReserva = opcaoDesde
+    ? { valor: opcaoDesde.price, porGrupo: opcaoDesde.type === 'per_group' }
+    : unit.base_price
+      ? { valor: Number(unit.base_price), porGrupo: false }
+      : { valor: startingFromPrice(unitMeta), porGrupo: true };
   function reservarSeleccao(s) {
     setSeleccao(s);
     setBookOpen(true);

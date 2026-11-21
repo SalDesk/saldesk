@@ -16,6 +16,11 @@ import useAuthStore from '../store/authStore';
 import Logo from '../components/shared/Logo';
 import { buildWhatsAppLink } from '../utils/whatsapp';
 import { getMonthGrid } from '../utils/calendar';
+import { useT } from '../i18n';
+import useUiStore from '../store/uiStore';
+import {
+  opcoesValidas, nomeOpcao, unidadeOpcao, limitarVeiculos, precoEstimado, opcaoMaisBarata,
+} from '../utils/opcoesActividade';
 
 /* ── helpers ── */
 /* Data local do dispositivo, nao UTC -- ver nota em BeachSeller.jsx */
@@ -61,6 +66,9 @@ function Counter({ value, min = 0, max = 99, onChange, label }) {
 export default function BeachSale() {
   const navigate = useNavigate();
   const { user } = useAuthStore();
+  const t = useT();
+  const lang = useUiStore((s) => s.lang);
+  const langOpcao = lang === 'pt' ? 'pt' : 'en';
 
   const sellerId   = user?.user_metadata?.staff_id || user?.id;
   const sellerName = user?.user_metadata?.name || user?.email || 'Vendedor';
@@ -100,6 +108,9 @@ export default function BeachSale() {
   const [clientHotel,  setClientHotel]  = useState('');
   const [clientRoom,   setClientRoom]   = useState('');
   const [notes,        setNotes]        = useState('');
+  /* Opcao (variante) escolhida e veiculos pedidos -- so para tours com opcoes */
+  const [selectedOptionId, setSelectedOptionId] = useState(null);
+  const [vehiclesReq,      setVehiclesReq]      = useState(null);
 
   /* Fleet state */
   const [availableFleet,  setAvailableFleet]  = useState([]);
@@ -126,10 +137,21 @@ export default function BeachSale() {
 
   const totalPax    = adults + kids;
   const tourPrice   = Number(selectedTour?.base_price || 0);
-  const totalPrice  = tourPrice * totalPax;
-  const commission  = (totalPrice * commPct) / 100;
 
   const meta = selectedTour ? parseMeta(selectedTour.description) : {};
+  /* Tour com opcoes: o preco vem da opcao (a mais barata se nada for escolhido, como no
+     servidor) e todos contam como adultos -- sem preco de crianca neste ecra. */
+  const tourOptions = opcoesValidas(meta);
+  const selectedOption = tourOptions.length > 0
+    ? (tourOptions.find(o => o.id === selectedOptionId) || opcaoMaisBarata(meta))
+    : null;
+  const porVeiculo   = selectedOption?.type === 'per_vehicle';
+  const vehiclesMin  = porVeiculo ? limitarVeiculos(selectedOption.seats, totalPax) : 0;
+  const vehicles     = porVeiculo ? limitarVeiculos(selectedOption.seats, totalPax, vehiclesReq) : null;
+  const totalPrice   = selectedOption
+    ? precoEstimado(selectedOption, { adults: totalPax, children: 0, vehicles })
+    : tourPrice * totalPax;
+  const commission  = (totalPrice * commPct) / 100;
   /* O TourForm grava os horarios como { time, capacity }; descricoes antigas
      podem ter texto simples. Aqui so interessa a hora (sem repeticoes). */
   const extraSlots = (Array.isArray(meta.time_slots) ? meta.time_slots : [])
@@ -164,6 +186,8 @@ export default function BeachSale() {
         customer_email:   clientEmail,
         customer_phone:   clientPhone,
         fleet_id:         selectedFleetId || null,
+        ...(selectedOption ? { option_id: selectedOption.id } : {}),
+        ...(porVeiculo ? { vehicles } : {}),
       });
 
       // A comissao e criada automaticamente no backend ao criar a reserva
@@ -194,6 +218,7 @@ export default function BeachSale() {
     setAdults(1); setKids(0); setClientName(''); setClientEmail('');
     setClientPhone(''); setClientHotel(''); setClientRoom('');
     setNotes(''); setSuccessData(null);
+    setSelectedOptionId(null); setVehiclesReq(null);
     setAvailableFleet([]); setSelectedFleetId(null);
     setError(''); setStep(1);
   }
@@ -252,11 +277,14 @@ export default function BeachSale() {
               <div className="grid grid-cols-1 gap-3">
                 {tours.map((tour, i) => {
                   const m = parseMeta(tour.description);
+                  const maisBarata = opcaoMaisBarata(m);
                   const iconBg = TOUR_ICON_BG[i % TOUR_ICON_BG.length];
                   return (
                     <button
                       key={tour.id}
-                      onClick={() => { setSelectedTour(tour); setStep(2); }}
+                      onClick={() => {
+                        setSelectedTour(tour); setSelectedOptionId(maisBarata?.id ?? null); setVehiclesReq(null); setStep(2);
+                      }}
                       className="bg-white rounded-2xl border-2 border-n-200 shadow-sm p-4 flex items-center gap-4 text-left active:scale-[0.99] transition-all hover:border-turquoise-400">
                       {tour.images?.[0] ? (
                         <img src={tour.images[0]} alt={tour.name}
@@ -280,10 +308,18 @@ export default function BeachSale() {
                           </p>
                         )}
                       </div>
-                      <div className="text-right shrink-0">
-                        <p className="font-display font-bold text-lg text-ocean-700">€{tour.base_price}</p>
-                        <p className="text-[10px] font-mono text-n-400">/pessoa</p>
-                      </div>
+                      {maisBarata ? (
+                        <div className="text-right shrink-0">
+                          <p className="text-[10px] font-mono text-n-400">{t('opcoesActividade.from')}</p>
+                          <p className="font-display font-bold text-lg text-ocean-700">€{maisBarata.price}</p>
+                          <p className="text-[10px] font-mono text-n-400">{unidadeOpcao(maisBarata, langOpcao)}</p>
+                        </div>
+                      ) : (
+                        <div className="text-right shrink-0">
+                          <p className="font-display font-bold text-lg text-ocean-700">€{tour.base_price}</p>
+                          <p className="text-[10px] font-mono text-n-400">/pessoa</p>
+                        </div>
+                      )}
                     </button>
                   );
                 })}
@@ -299,10 +335,39 @@ export default function BeachSale() {
             <div className="bg-ocean-50 border border-ocean-200 rounded-2xl px-4 py-3 flex items-center gap-3">
               <div className="flex-1">
                 <p className="font-display font-semibold text-sm text-ocean-900">{selectedTour.name}</p>
-                <p className="text-xs font-mono text-ocean-600">€{selectedTour.base_price}/pax</p>
+                <p className="text-xs font-mono text-ocean-600">
+                  {selectedOption
+                    ? `${nomeOpcao(selectedOption, langOpcao)} · €${selectedOption.price} ${unidadeOpcao(selectedOption, langOpcao)}`
+                    : `€${selectedTour.base_price}/pax`}
+                </p>
               </div>
               <button onClick={() => setStep(1)} className="text-xs font-body text-ocean-700 underline">Mudar</button>
             </div>
+
+            {/* Opcoes do tour (variantes) -- so quando o tour as tem */}
+            {tourOptions.length > 0 && (
+              <div>
+                <p className="font-display font-semibold text-sm text-n-800 mb-3">{t('opcoesActividade.option')}</p>
+                <div className="grid grid-cols-1 gap-2">
+                  {tourOptions.map(o => {
+                    const activa = o.id === selectedOption?.id;
+                    return (
+                      <button
+                        key={o.id} type="button" aria-pressed={activa}
+                        onClick={() => { setSelectedOptionId(o.id); setVehiclesReq(null); }}
+                        className={`px-4 py-3 rounded-2xl border-2 flex items-center justify-between gap-3 text-left transition-all active:scale-[0.99] ${
+                          activa
+                            ? 'bg-turquoise-500 border-turquoise-500 text-white'
+                            : 'bg-white border-n-200 text-n-800 hover:border-turquoise-300'
+                        }`}>
+                        <span className="font-display font-semibold text-base">{nomeOpcao(o, langOpcao)}</span>
+                        <span className="text-sm font-body shrink-0">€{o.price} {unidadeOpcao(o, langOpcao)}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
 
             {/* Date picker — calendario mensal completo */}
             <div>
@@ -421,8 +486,11 @@ export default function BeachSale() {
                 <Users size={16} strokeWidth={1.75} />Composicao do grupo
               </p>
               <div className="bg-white rounded-2xl border border-n-200 px-4 divide-y divide-n-100">
-                <Counter label="Adultos" value={adults} min={1} onChange={setAdults} />
-                <Counter label="Criancas" value={kids} min={0} onChange={setKids} />
+                <Counter label="Adultos" value={adults} min={1} onChange={v => { setAdults(v); setVehiclesReq(null); }} />
+                <Counter label="Criancas" value={kids} min={0} onChange={v => { setKids(v); setVehiclesReq(null); }} />
+                {porVeiculo && (
+                  <Counter label={t('opcoesActividade.vehicles')} value={vehicles} min={vehiclesMin} max={Math.max(vehiclesMin, totalPax)} onChange={setVehiclesReq} />
+                )}
               </div>
             </div>
 
@@ -431,7 +499,15 @@ export default function BeachSale() {
               <div>
                 <p className="text-white/70 text-xs font-mono uppercase tracking-wide">Total</p>
                 <p className="font-display font-bold text-2xl mt-0.5">€{totalPrice.toFixed(0)}</p>
-                <p className="text-white/70 text-xs">{totalPax} pax × €{tourPrice}</p>
+                <p className="text-white/70 text-xs">
+                  {!selectedOption
+                    ? `${totalPax} pax × €${tourPrice}`
+                    : porVeiculo
+                      ? `${t('opcoesActividade.vehiclesCount', { n: vehicles })} × €${selectedOption.price}`
+                      : selectedOption.type === 'per_group'
+                        ? `${totalPax} pax · ${nomeOpcao(selectedOption, langOpcao)}`
+                        : `${totalPax} pax × €${selectedOption.price}`}
+                </p>
               </div>
               <div className="text-right">
                 <p className="text-white/70 text-xs font-mono uppercase tracking-wide">A sua comissao</p>

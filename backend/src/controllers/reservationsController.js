@@ -1,6 +1,7 @@
 const { supabaseAdmin } = require('../config/supabase');
 const { cancelarPorReserva: cancelarMensagensDaReserva } = require('../messaging/outbox');
 const { verificarDisponibilidade, calcularPreco, verificarDisponibilidadeMesa, DEFAULT_SEATING_MINUTES, parseUnitMeta, verificarDisponibilidadeSlot, calcularPrecoPrivado, temPrecoPrivadoConfigurado, precoActividade } = require('../helpers/bookingHelpers');
+const { opcoesDaActividade, opcaoEscolhida, opcaoMaisBarata, linhasNotasOpcao } = require('../helpers/opcoesActividade');
 const { obterOuCriarCliente, actualizarStatsCheckout } = require('../helpers/customerHelper');
 const { enviarEmail } = require('../helpers/emailHelper');
 const { confirmacaoClienteEmail, notificacaoOperadorEmail } = require('../helpers/emailTemplates');
@@ -92,7 +93,8 @@ async function criar(req, res, next) {
     const { unit_id, customer_name, customer_email, customer_phone, customer_country,
             check_in, check_out, guests, notes, notes_internal, notes_guest,
             total_amount, source, payment_method, payment_status, fleet_id,
-            start_time, duration_minutes, driver_included, booking_mode, whatsapp_opt_in } = req.body;
+            start_time, duration_minutes, driver_included, booking_mode, whatsapp_opt_in,
+            option_id, vehicles } = req.body;
 
     if (!unit_id || !customer_name || !customer_email || !check_in || !check_out) {
       return res.status(400).json({ error: 'Campos obrigatórios em falta', code: 'MISSING_FIELDS' });
@@ -143,8 +145,20 @@ async function criar(req, res, next) {
        inteiro em exclusivo. Mesmo mecanismo do lado publico
        (publicController.criarReserva) -- so permitido se a unidade tiver
        mesmo algum preco privado configurado. */
+    const numPessoas = guests || 1;
+    /* Actividade com opcoes (variantes): o preco e o modo vem da opcao escolhida; sem opcao
+       (ou desconhecida -- clientes antigos) usa-se a mais barata. Operadores nunca sao
+       recusados pelo preco (R1) e o suplemento de idioma nao se aplica neste caminho. */
+    const temOpcoes = !isRestaurant && opcoesDaActividade(unitMetaCriar).length > 0;
+    let precoOpcao = null;
     let isGroupBooking = false;
-    if (!isRestaurant && booking_mode === 'private') {
+    if (temOpcoes) {
+      const opcaoId = opcaoEscolhida(unitMetaCriar, option_id) ? option_id : opcaoMaisBarata(unitMetaCriar).id;
+      precoOpcao = precoActividade(unit, unitMetaCriar, {
+        adults: numPessoas, children: 0, optionId: opcaoId, vehicles, semSuplemento: true,
+      });
+      isGroupBooking = precoOpcao.mode === 'private';
+    } else if (!isRestaurant && booking_mode === 'private') {
       if (!temPrecoPrivadoConfigurado(unitMetaCriar)) {
         return res.status(400).json({ error: 'Esta actividade não tem reserva privada disponível', code: 'INVALID_BOOKING_MODE' });
       }
@@ -174,12 +188,13 @@ async function criar(req, res, next) {
     // por isso usam antes base_price * numero de pessoas (mesma logica de
     // publicController.criarReserva, para o motor de precos nao divergir consoante
     // quem cria a reserva).
-    const numPessoas = guests || 1;
     let dias = 0;
     let total;
-    if (isGroupBooking || check_out === check_in) {
+    if (precoOpcao) {
+      total = precoOpcao.total;
+    } else if (isGroupBooking || check_out === check_in) {
       // Operadores nao sao recusados (error ignorado): so o total partilhado.
-      total = precoActividade(unit, unitMetaCriar, { adults: numPessoas, children: 0, mode: isGroupBooking ? 'private' : 'per_person' }).total;
+      total = precoActividade(unit, unitMetaCriar, { adults: numPessoas, children: 0, mode: isGroupBooking ? 'private' : 'per_person', semSuplemento: true }).total;
     } else {
       const calc = calcularPreco(unit, check_in, check_out);
       total = calc.total;
@@ -200,6 +215,8 @@ async function criar(req, res, next) {
 
     const finalPrice = (total_amount !== undefined && total_amount !== null) ? Number(total_amount) : total;
     const finalSource = source || 'admin';
+    // Opcao e veiculos escritos pelo servidor, a seguir as notas do operador (mesmo formato da reserva publica)
+    const finalNotes = [notes, ...linhasNotasOpcao(precoOpcao)].filter(Boolean).join(' | ') || null;
 
     // Criar ou obter cliente CRM
     const customer = await obterOuCriarCliente(getOperatorId(req), {
@@ -225,7 +242,7 @@ async function criar(req, res, next) {
         total_price: finalPrice,
         status: 'confirmed',
         source: finalSource,
-        notes: notes || null,
+        notes: finalNotes,
         notes_internal: notes_internal || null,
         notes_guest: notes_guest || null,
         fleet_id: fleet_id || null,
@@ -341,7 +358,7 @@ async function criar(req, res, next) {
           phone: customer_phone,
           country: customer_country,
         },
-        notes: notes || null,
+        notes: finalNotes,
         sellerName,
       });
       enviarEmail({

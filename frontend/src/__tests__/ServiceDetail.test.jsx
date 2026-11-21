@@ -363,7 +363,7 @@ describe('ServiceDetail: reservar a partir da coluna', () => {
       lines: [
         { type: 'tour', description: 'Adultos', quantity: 2, total: 90 },
         { type: 'children', description: 'Crianças', quantity: 1, total: 20 },
-        { type: 'discount', description: 'Código VERAO', quantity: 1, total: -11 },
+        { type: 'discount', source: 'voucher', description: 'Código VERAO', quantity: 1, total: -11 },
       ],
       total: 99, before: 110, error: null,
     };
@@ -394,6 +394,57 @@ describe('ServiceDetail: reservar a partir da coluna', () => {
       tour_time: '09:00', voucher_code: 'VERAO', payment_method: 'cash', customer_name: 'Ana Lima', customer_email: 'ana@exemplo.cv',
     });
     expect(corpo).not.toHaveProperty('booking_mode');
+  });
+
+  it('opcao_veiculos_e_idioma_vao_na_reserva_e_codigo_vencido_pela_oferta_nao', async () => {
+    const OPCOES = [
+      { id: 'op2h', name_pt: '2 horas', type: 'per_person', price: 40 },
+      { id: 'opbg', name_pt: 'Buggy 2 lugares', type: 'per_vehicle', price: 30, seats: 2 },
+    ];
+    const COM_OFERTA = {
+      lines: [
+        { type: 'vehicles', description: 'Buggy 2 lugares', quantity: 1, total: 30 },
+        { type: 'language', description: 'Suplemento de idioma (ES)', quantity: 1, total: 20 },
+        { type: 'discount', source: 'offer', description: 'Oferta especial (-25%)', quantity: 1, total: -12.5 },
+      ],
+      total: 37.5, before: 50, error: null, voucher_ignored: true,
+    };
+    redeDaReserva({
+      unit: comMeta({ options: OPCOES, languages: ['PT', 'ES'], language_surcharges: { ES: 20 }, offers: [{ percent: 25, from: '2026-11-01', to: '2026-11-30' }] }, { base_price: 30 }),
+      cotacao: (p) => (p.get('option') === 'opbg' && p.get('glang') === 'ES' && p.get('date') ? COM_OFERTA : COTACAO),
+      reserva: { ...RESERVA, total_price: 37.5 },
+    });
+    montar();
+    const coluna = await screen.findByTestId('coluna-reserva');
+    fireEvent.click(within(coluna).getByRole('button', { name: /Buggy 2 lugares/ }));
+    fireEvent.change(within(coluna).getByRole('combobox'), { target: { value: 'ES' } });
+    await reservarNaColuna({ voucher: 'verao', esperar: 'Já existe uma oferta melhor; o código não foi aplicado' });
+    await preencherDadosESeguir();
+    expect(within(modal()).getByText('Buggy 2 lugares × 1')).toBeInTheDocument();
+    expect(within(modal()).getByText('Suplemento de idioma (Español)')).toBeInTheDocument();
+    expect(within(modal()).getByText('Oferta especial (-25%)')).toBeInTheDocument();
+    aceitarPolitica();
+    fireEvent.click(screen.getByRole('button', { name: /Confirmar reserva/ }));
+    expect(await screen.findByText('Tour reservado!')).toBeInTheDocument();
+    const corpo = corpoDe('/public/demo/reservations');
+    expect(corpo).toMatchObject({ option_id: 'opbg', vehicles: 1, guide_language: 'ES', adults: 2, children: 0, guests: 2 });
+    expect(corpo).not.toHaveProperty('voucher_code');
+    expect(corpo).not.toHaveProperty('booking_mode');
+  });
+
+  it('barra_do_telemovel_mostra_a_opcao_mais_barata', async () => {
+    /* base_price antigo (45) diferente da opcao mais barata (30): as opcoes substituem a tabela */
+    redeDaReserva({ unit: comMeta({ options: [
+      { id: 'op2h', name_pt: '2 horas', type: 'per_person', price: 40 },
+      { id: 'opbg', name_pt: 'Buggy 2 lugares', type: 'per_vehicle', price: 30, seats: 2 },
+    ] }, { base_price: 45 }) });
+    montar();
+    const barra = await screen.findByTestId('barra-reserva-movel');
+    expect(barra).toHaveTextContent('Desde');
+    expect(within(barra).getByText('€30')).toBeInTheDocument();
+    expect(within(barra).queryByText('€45')).toBeNull();
+    const coluna = await screen.findByTestId('coluna-reserva');
+    expect(within(coluna).getByText(/^Desde/)).toHaveTextContent('Desde €30 por veículo (2 lugares)');
   });
 
   it('voucher_recusado_nao_vai_na_reserva', async () => {

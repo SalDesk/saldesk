@@ -110,7 +110,8 @@ describe('cotarActividade', () => {
     const comVoucher = (await cotar(casos[2].query)).json.mock.calls[0][0].data;
     expect(comVoucher.before).toBe(105);
     expect(comVoucher.total).toBe(94.5);
-    expect(comVoucher.lines.find((l) => l.type === 'discount')).toEqual({ type: 'discount', description: 'Código BEMVINDO', quantity: 1, total: -10.5 });
+    expect(comVoucher.lines.find((l) => l.type === 'discount')).toEqual({ type: 'discount', source: 'voucher', description: 'Código BEMVINDO', quantity: 1, total: -10.5 });
+    expect(comVoucher.voucher_ignored).toBe(false);
   });
 
   it('voucher_invalido_mantem_preco_e_avisa', async () => {
@@ -134,7 +135,7 @@ describe('cotarActividade', () => {
     const res = await cotar({ adults: '0', children: '2' });
     expect(res.status).not.toHaveBeenCalled();
     expect(res.json.mock.calls[0][0].data).toEqual({
-      lines: [], total: 0, before: null,
+      lines: [], total: 0, before: null, voucher_ignored: false,
       error: { code: 'MIN_ADULTS', message_pt: 'É preciso pelo menos 1 adulto', message_en: 'At least 1 adult is required' },
     });
   });

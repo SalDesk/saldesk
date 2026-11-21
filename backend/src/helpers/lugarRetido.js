@@ -99,6 +99,12 @@ async function reservasRecentesDoCliente(supabase, { operatorId, unitId, email, 
 const horaCurta = (t) => (t === null || t === undefined || t === '' ? null : String(t).slice(0, 5));
 const metodoDaLinha = (r) => (eMetodoCartao(r.payment_method) ? r.payment_method : null);
 const nomeNormal = (n) => String(n || '').trim().toLowerCase();
+const opcaoNormal = (o) => (o === undefined || o === null || String(o).trim() === '' ? null : String(o).trim());
+// Opcao escolhida, lida da linha "Opção: <nome>" que o servidor escreve nas notas
+const opcaoDaLinha = (r) => {
+  const parte = String(r.notes || '').split(' | ').find((p) => p.startsWith('Opção: '));
+  return parte ? opcaoNormal(parte.slice('Opção: '.length)) : null;
+};
 
 /* Separa as reservas recentes do cliente:
    - retidosProprios: lugares retidos com cartao ainda dentro do prazo (por pagar) e com o
@@ -106,8 +112,9 @@ const nomeNormal = (n) => String(n || '').trim().toLowerCase();
    - igualSemCartao: a mesma reserva sem cartao (enviada duas vezes) -- so se devolve se o
      total tambem for igual (o chamador compara depois de calcular o preco e o voucher);
    - igualCartao: a mesma reserva com cartao e lugar ainda retido -- renova-se o prazo.
-   "A mesma" inclui o nome do cliente (o mesmo email pode reservar para outras pessoas) e o
-   motorista; um pedido com pre-pedido nunca e repetido. */
+   "A mesma" inclui o nome do cliente (o mesmo email pode reservar para outras pessoas), o
+   motorista e a opcao da actividade (nova.opcao, o nome da opcao); um pedido com
+   pre-pedido nunca e repetido. */
 function classificarRecentes(recentes, nova, agora = new Date()) {
   const linhas = recentes || [];
   const retidosProprios = linhas.filter((r) => r.status === 'pending'
@@ -123,6 +130,7 @@ function classificarRecentes(recentes, nova, agora = new Date()) {
     && !!r.is_group_booking === !!nova.isGroupBooking
     && nomeNormal(r.customer_name) === nomeNormal(nova.customerName)
     && !!r.driver_included === !!nova.driverIncluded
+    && opcaoDaLinha(r) === opcaoNormal(nova.opcao)
     && metodoDaLinha(r) === (nova.metodo || null);
   return {
     igualSemCartao: linhas.find((r) => igual(r) && metodoDaLinha(r) === null),

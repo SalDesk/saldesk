@@ -1,13 +1,19 @@
-/* Coluna de reserva da actividade: opcao (por pessoa ou privado, so com os dois precos),
-   quem vem, data e hora, e o preco calculado pelo servidor (/quote, o mesmo calculo que
-   criarReserva). A pagina nunca calcula o total: mostra as linhas que o servidor devolve.
+/* Coluna de reserva da actividade: opcao (as opcoes da actividade, quando as ha; senao por
+   pessoa ou privado, so com os dois precos), quem vem (mais veiculos e idioma do guia), data e
+   hora, e o preco calculado pelo servidor (/quote, o mesmo calculo que criarReserva). A pagina
+   nunca calcula o total: mostra as linhas que o servidor devolve.
    "Reservar" entrega a seleccao a onReservar(seleccao):
-   { date, time, adults, children, mode, language, voucher, quote: { lines, total, before } }. */
+   { date, time, adults, children, mode, language, voucher, optionId, vehicles, guideLanguage,
+     quote: { lines, total, before } }. */
 import { useEffect, useRef, useState } from 'react';
 import { Minus, Plus, Calendar, AlertCircle } from 'lucide-react';
 import CalendarioReserva, { mesDeCaboVerde, somarMes } from './CalendarioReserva';
 import HorariosReserva, { horarioDisponivel } from './HorariosReserva';
 import FalhaComRepetir from './FalhaComRepetir';
+import {
+  opcoesValidas, nomeOpcao, unidadeOpcao, limitarVeiculos, opcaoMaisBarata, ofertaActual, textoOferta,
+} from '../../utils/opcoesActividade';
+import { nomeLingua } from '../../utils/paginaActividade';
 
 const MAX_ADULTOS = 20;
 const MAX_CRIANCAS = 10;
@@ -52,50 +58,112 @@ function Contador({ rotulo, valor, min, max, onMudar, menos, mais }) {
   );
 }
 
-/* As descricoes das linhas vem do servidor em portugues; em ingles o rotulo sai do tipo */
-function rotuloDaLinha(linha, modo, voucher, en) {
+/* Codigo da lingua no fim da descricao do suplemento: "Suplemento de idioma (ES)" -> "ES" */
+function codigoDoSuplemento(descricao) {
+  const m = /\(([^()]+)\)\s*$/.exec(String(descricao || ''));
+  return m ? m[1].trim() : '';
+}
+
+/* Rotulo em ingles de uma oferta: o label_en da oferta com esse label_pt, ou o texto por omissao */
+function rotuloDaOfertaEn(descricao, meta) {
+  const ofertas = Array.isArray(meta?.offers) ? meta.offers : [];
+  const oferta = ofertas.find((o) => o && o.label_pt && o.label_pt === descricao);
+  if (oferta) return oferta.label_en || descricao;
+  const m = /^Oferta especial \(-(\d+)%\)$/.exec(String(descricao || ''));
+  return m ? `Special offer (-${m[1]}%)` : descricao;
+}
+
+/* As descricoes das linhas vem do servidor em portugues; em ingles o rotulo sai do tipo.
+   contexto (opcional): { opcao, meta } -- a opcao escolhida (nome em ingles) e o meta (ofertas). */
+function rotuloDaLinha(linha, modo, voucher, en, contexto = {}) {
+  if (linha.type === 'language') {
+    const nome = nomeLingua(codigoDoSuplemento(linha.description), en ? 'en' : 'pt');
+    return en ? `Language surcharge (${nome})` : `Suplemento de idioma (${nome})`;
+  }
   if (!en) return linha.description;
+  if (linha.type === 'option' || linha.type === 'vehicles') {
+    return contexto.opcao ? nomeOpcao(contexto.opcao, 'en') : linha.description;
+  }
   if (linha.type === 'children') return 'Children';
-  if (linha.type === 'discount') return `Discount ${voucher}`;
+  if (linha.type === 'discount') {
+    return linha.source === 'offer' ? rotuloDaOfertaEn(linha.description, contexto.meta) : `Discount ${voucher}`;
+  }
   return modo === 'private' ? 'Private tour' : 'Adults';
 }
 
-/* Quantidade de uma linha: "× N", ou "· N pessoas" no tour privado; o desconto nao tem */
+/* Quantidade de uma linha: "× N", ou "· N pessoas" no tour (ou opcao) privado; o desconto e o
+   suplemento de idioma nao tem */
 function quantidadeDaLinha(linha, modo, en) {
-  if (linha.type === 'discount' || !linha.quantity) return '';
-  if (modo === 'private' && linha.type === 'tour') return ` · ${linha.quantity} ${en ? 'people' : 'pessoas'}`;
+  if (linha.type === 'discount' || linha.type === 'language' || !linha.quantity) return '';
+  if (modo === 'private' && (linha.type === 'tour' || linha.type === 'option')) return ` · ${linha.quantity} ${en ? 'people' : 'pessoas'}`;
   return ` × ${linha.quantity}`;
 }
 
 /* Texto de uma linha do /quote (rotulo e quantidade); o modal de reserva usa-o na revisao */
-export function textoDaLinha(linha, modo, voucher, en) {
-  return `${rotuloDaLinha(linha, modo, voucher, en)}${quantidadeDaLinha(linha, modo, en)}`;
+export function textoDaLinha(linha, modo, voucher, en, contexto) {
+  return `${rotuloDaLinha(linha, modo, voucher, en, contexto)}${quantidadeDaLinha(linha, modo, en)}`;
+}
+
+/* Dia corrente em Cabo Verde, 'YYYY-MM-DD' (como mesDeCaboVerde) */
+function diaDeCaboVerde(agora = new Date()) {
+  const partes = new Intl.DateTimeFormat('en-GB', { timeZone: 'Atlantic/Cape_Verde', year: 'numeric', month: '2-digit', day: '2-digit' })
+    .formatToParts(agora);
+  const p = (t) => partes.find((x) => x.type === t)?.value;
+  return `${p('year')}-${p('month')}-${p('day')}`;
 }
 
 export default function ReservaActividade({
   api, slug, unit, meta = {}, lang, formatarPreco, desde, temPrivado, onReservar, children: extra,
 }) {
   const en = lang === 'en';
-  const temPorPessoa = !!unit.base_price;
+  /* Opcoes primeiro: com opcoes, substituem a tabela de precos e o toggle por pessoa / privado */
+  const opcoes = opcoesValidas(meta);
+  const temOpcoes = opcoes.length > 0;
+  const temPorPessoa = !temOpcoes && !!unit.base_price;
   const mostrarOpcao = temPorPessoa && !!temPrivado;
-  /* Sem preco por pessoa (0/vazio: o TourForm grava um preco em branco como 0) nem privado,
-     reserva-se como sempre: por pessoa, com o preco a combinar com o operador */
-  const semPreco = !temPorPessoa && !temPrivado;
+  /* Sem opcoes, sem preco por pessoa (0/vazio: o TourForm grava um preco em branco como 0) nem
+     privado, reserva-se como sempre: por pessoa, com o preco a combinar com o operador */
+  const semPreco = !temOpcoes && !temPorPessoa && !temPrivado;
   const linguas = Array.isArray(meta.languages) ? meta.languages.filter(Boolean) : [];
   const temHorariosNaUnidade = Array.isArray(meta.time_slots) && meta.time_slots.length > 0;
   const base = `${api}/public/${slug}/units/${unit.id}`;
 
-  const [modo, setModo] = useState(temPorPessoa || semPreco ? 'per_person' : 'private');
+  /* Suplemento de idioma (valor fixo por reserva); 0 ou em falta e sem suplemento */
+  const suplementos = meta.language_surcharges && typeof meta.language_surcharges === 'object' ? meta.language_surcharges : {};
+  const suplemento = (codigo) => {
+    const n = Number(suplementos[codigo] ?? suplementos[String(codigo).toUpperCase()]);
+    return Number.isFinite(n) && n > 0 ? n : 0;
+  };
+  /* Uma so lingua com suplemento: o select aparece (o preco nunca fica escondido) e sem
+     "Sem preferencia" -- o servidor assume essa lingua, como a coluna */
+  const linguaUnicaPaga = linguas.length === 1 && suplemento(linguas[0]) > 0;
+  const mostrarIdioma = linguas.length >= 2 || linguaUnicaPaga;
+
+  const [opcaoId, setOpcaoId] = useState(temOpcoes ? opcoes[0].id : null);
+  const opcao = temOpcoes ? (opcoes.find((o) => o.id === opcaoId) || opcoes[0]) : null;
+  const opcaoActual = opcao ? opcao.id ?? null : null;
+  const [modoEscolhido, setModo] = useState(temPorPessoa || semPreco || temOpcoes ? 'per_person' : 'private');
+  /* Com opcoes, o modo segue o tipo da opcao: por grupo e o privado exclusivo */
+  const modo = opcao ? (opcao.type === 'per_group' ? 'private' : 'per_person') : modoEscolhido;
   /* Com lotacao definida, comeca em min(2, lotacao) adultos (pelo menos 1) e adultos + criancas
      nunca passam da lotacao; sem lotacao ficam os limites fixos de sempre */
   const lotacaoN = Math.floor(Number(unit.capacity));
   const lotacao = Number.isFinite(lotacaoN) && lotacaoN >= 1 ? lotacaoN : null;
   const [adultos, setAdultos] = useState(lotacao ? Math.max(1, Math.min(2, lotacao)) : 2);
   const [criancas, setCriancas] = useState(0);
-  const [idioma, setIdioma] = useState('');
+  const [idioma, setIdioma] = useState(linguaUnicaPaga ? linguas[0] : '');
   const pax = adultos + criancas;
   const maxAdultos = lotacao ? Math.max(1, lotacao - criancas) : MAX_ADULTOS;
   const maxCriancas = lotacao ? Math.max(0, lotacao - adultos) : MAX_CRIANCAS;
+  /* Lingua que conta (a escolhida, ou a unica que a actividade tem) */
+  const linguaEfectiva = idioma || (linguas.length === 1 ? linguas[0] : null);
+
+  /* Veiculos (opcao por veiculo): entre ceil(pessoas / lugares) e uma pessoa por veiculo; o
+     pedido segue as pessoas dentro desses limites (sem pedido, o minimo) */
+  const porVeiculo = opcao?.type === 'per_vehicle';
+  const [veiculosPedidos, setVeiculosPedidos] = useState(null);
+  const veiculos = porVeiculo ? limitarVeiculos(opcao.seats, pax, veiculosPedidos) : null;
+  const minVeiculos = porVeiculo ? limitarVeiculos(opcao.seats, pax) : 0;
 
   /* ── Calendario: mes corrente em Cabo Verde; se vier vazio, avanca um mes (uma vez so).
      Mudar pessoas ou modo espera 300 ms (como a cotacao); mudar de mes ou repetir pede logo.
@@ -185,6 +253,11 @@ export default function ReservaActividade({
     setFalhaCotacao(false);
     const espera = setTimeout(() => {
       const q = new URLSearchParams({ adults: String(adultos), children: String(criancas), mode: modo });
+      if (opcaoActual) q.set('option', opcaoActual);
+      if (veiculos) q.set('vehicles', String(veiculos));
+      if (linguaEfectiva) q.set('glang', linguaEfectiva);
+      /* a data decide a oferta automatica: sem data, a cotacao vem sem oferta */
+      if (data) q.set('date', data);
       if (voucher) q.set('voucher', voucher);
       fetch(`${base}/quote?${q.toString()}`)
         .then(lerJson)
@@ -197,10 +270,14 @@ export default function ReservaActividade({
         .finally(() => { if (activo) setACotar(false); });
     }, ESPERA_COTACAO);
     return () => { activo = false; clearTimeout(espera); };
-  }, [base, adultos, criancas, modo, voucher, tentativaCotacao]);
+  }, [base, adultos, criancas, modo, opcaoActual, veiculos, linguaEfectiva, data, voucher, tentativaCotacao]);
 
   const erro = cotacao?.error || null;
   const voucherInvalido = erro?.code === 'INVALID_VOUCHER';
+  /* O codigo perdeu para uma oferta melhor: nao se aplica (nem vai na reserva) */
+  const voucherIgnorado = !!cotacao?.voucher_ignored;
+  /* Codigo invalido com uma oferta a aplicar: aviso do codigo, sem bloquear a reserva */
+  const erroCodigoComOferta = cotacao?.voucher_error || null;
   const erroBloqueia = !!erro && !voucherInvalido;
   /* Uma unidade com time_slots precisa sempre de hora (o servidor devolve sempre os horarios
      configurados; lista vazia ou falha nunca dispensam a hora). Sem cotacao valida, nao reserva. */
@@ -220,8 +297,11 @@ export default function ReservaActividade({
       adults: adultos,
       children: criancas,
       mode: modo,
-      language: idioma || (linguas.length === 1 ? linguas[0] : null),
-      voucher: voucher && !voucherInvalido ? voucher : null,
+      language: linguaEfectiva,
+      voucher: voucher && !voucherInvalido && !voucherIgnorado && !erroCodigoComOferta ? voucher : null,
+      optionId: opcaoActual,
+      vehicles: veiculos,
+      guideLanguage: linguaEfectiva,
       quote: { lines: cotacao.lines || [], total: cotacao.total, before: cotacao.before ?? null },
     });
   }
@@ -236,16 +316,54 @@ export default function ReservaActividade({
   const proximo = () => { numero += 1; return numero; };
   const opcaoBotao = (activo) => `flex-1 text-xs font-body font-semibold py-2 rounded-lg transition-colors motion-reduce:transition-none ${focoVisivel} ${activo ? 'bg-white text-brand-700 shadow-sm' : 'text-n-500 hover:text-n-700'}`;
 
+  /* "Desde": com opcoes, a mais barata e a sua unidade (por pessoa / grupo / veiculo) */
+  const maisBarata = temOpcoes ? opcaoMaisBarata(meta) : null;
+  const oferta = ofertaActual(meta, diaDeCaboVerde(new Date()));
+  const contextoLinhas = { opcao, meta };
+  const antes = cotacao && cotacao.before != null && Number(cotacao.before) > Number(cotacao.total) ? Number(cotacao.before) : null;
+
   return (
     <div className="bg-white border border-n-200 rounded-2xl shadow-sm p-5 space-y-6">
-      {desde?.valor ? (
-        <p className="font-body text-sm text-n-500">
-          {en ? 'From' : 'Desde'}{' '}
-          <span className="font-display font-extrabold text-2xl text-brand-700">{formatarPreco(desde.valor)}</span>{' '}
-          {desde.porGrupo ? (en ? 'per group' : 'por grupo') : (en ? 'per person' : 'por pessoa')}
-        </p>
-      ) : (
-        <p className="font-display font-bold text-lg text-n-500">{en ? 'On request' : 'Consultar'}</p>
+      <div className="space-y-2">
+        {maisBarata ? (
+          <p className="font-body text-sm text-n-500">
+            {en ? 'From' : 'Desde'}{' '}
+            <span className="font-display font-extrabold text-2xl text-brand-700">{formatarPreco(maisBarata.price)}</span>{' '}
+            {unidadeOpcao(maisBarata, lang)}
+          </p>
+        ) : desde?.valor ? (
+          <p className="font-body text-sm text-n-500">
+            {en ? 'From' : 'Desde'}{' '}
+            <span className="font-display font-extrabold text-2xl text-brand-700">{formatarPreco(desde.valor)}</span>{' '}
+            {desde.porGrupo ? (en ? 'per group' : 'por grupo') : (en ? 'per person' : 'por pessoa')}
+          </p>
+        ) : (
+          <p className="font-display font-bold text-lg text-n-500">{en ? 'On request' : 'Consultar'}</p>
+        )}
+        {oferta && (
+          <p className="inline-flex max-w-full items-center rounded-full bg-emerald-50 border border-emerald-100 px-2.5 py-0.5 text-xs font-body font-semibold text-emerald-700"
+            title={(en ? oferta.label_en || oferta.label_pt : oferta.label_pt) || undefined}>
+            {textoOferta(oferta, lang)}
+          </p>
+        )}
+      </div>
+
+      {temOpcoes && (
+        <Passo numero={proximo()} titulo={en ? 'Choose an option' : 'Escolha a opção'}>
+          <div className="space-y-2">
+            {opcoes.map((o) => {
+              const activa = o === opcao;
+              return (
+                <button key={o.id ?? nomeOpcao(o, 'pt')} type="button" aria-pressed={activa}
+                  onClick={() => { setOpcaoId(o.id); setVeiculosPedidos(null); }}
+                  className={`w-full text-left rounded-xl border px-3 py-2.5 transition-colors motion-reduce:transition-none ${focoVisivel} ${activa ? 'border-brand-700 bg-brand-50' : 'border-n-200 hover:border-brand-500'}`}>
+                  <span className="block font-body font-semibold text-sm text-n-900 break-words">{nomeOpcao(o, lang)}</span>
+                  <span className="block font-body text-xs text-n-600">{formatarPreco(o.price)} {unidadeOpcao(o, lang)}</span>
+                </button>
+              );
+            })}
+          </div>
+        </Passo>
       )}
 
       {mostrarOpcao && (
@@ -266,13 +384,20 @@ export default function ReservaActividade({
           menos={en ? 'Fewer adults' : 'Menos adultos'} mais={en ? 'More adults' : 'Mais adultos'}/>
         <Contador rotulo={en ? 'Children' : 'Crianças'} valor={criancas} min={0} max={maxCriancas} onMudar={setCriancas}
           menos={en ? 'Fewer children' : 'Menos crianças'} mais={en ? 'More children' : 'Mais crianças'}/>
-        {linguas.length > 1 && (
+        {porVeiculo && (
+          <Contador rotulo={en ? 'Vehicles' : 'Veículos'} valor={veiculos} min={minVeiculos} max={Math.max(minVeiculos, pax)}
+            onMudar={setVeiculosPedidos} menos={en ? 'Fewer vehicles' : 'Menos veículos'} mais={en ? 'More vehicles' : 'Mais veículos'}/>
+        )}
+        {mostrarIdioma && (
           <label className="block">
             <span className="block text-xs font-body font-semibold text-n-600 mb-1">{en ? 'Guide language' : 'Idioma do guia'}</span>
             <select value={idioma} onChange={(e) => setIdioma(e.target.value)}
               className={`w-full border border-n-200 rounded-xl px-3 py-2 text-sm font-body bg-white ${focoVisivel}`}>
-              <option value="">{en ? 'No preference' : 'Sem preferência'}</option>
-              {linguas.map((l) => <option key={l} value={l}>{l}</option>)}
+              {!linguaUnicaPaga && <option value="">{en ? 'No preference' : 'Sem preferência'}</option>}
+              {linguas.map((l) => {
+                const s = suplemento(l);
+                return <option key={l} value={l}>{nomeLingua(l, lang)}{s > 0 ? ` (+${formatarPreco(s)})` : ''}</option>;
+              })}
             </select>
           </label>
         )}
@@ -307,19 +432,32 @@ export default function ReservaActividade({
             <ul className="space-y-1">
               {(cotacao.lines || []).map((l, i) => (
                 <li key={`${l.type}-${i}`} className={`flex justify-between gap-3 text-sm font-body ${l.type === 'discount' ? 'text-emerald-700' : 'text-n-600'}`}>
-                  <span className="min-w-0">{textoDaLinha(l, modo, voucher, en)}</span>
+                  <span className="min-w-0">{textoDaLinha(l, modo, voucher, en, contextoLinhas)}</span>
                   <span className="shrink-0">{valor(l.total)}</span>
                 </li>
               ))}
             </ul>
             <p className="flex justify-between items-baseline gap-3 border-t border-n-200 pt-2">
               <span className="font-body font-semibold text-sm text-n-700">Total</span>
-              <span className="font-display font-extrabold text-xl text-brand-700">{valor(cotacao.total)}</span>
+              <span className="flex flex-wrap items-baseline justify-end gap-x-2">
+                {antes != null && <span className="sr-only">{en ? 'Before:' : 'Antes:'}</span>}
+                {antes != null && <span className="font-body text-sm text-n-400 line-through">{valor(antes)}</span>}
+                {antes != null && <span className="sr-only">{en ? 'Now:' : 'Agora:'}</span>}
+                <span className="font-display font-extrabold text-xl text-brand-700">{valor(cotacao.total)}</span>
+              </span>
             </p>
           </>
         ) : null}
         {voucherInvalido && (
           <p role="alert" className="text-xs font-body text-red-700">{en ? erro.message_en : erro.message_pt}</p>
+        )}
+        {erroCodigoComOferta && !semPreco && (
+          <p role="alert" className="text-xs font-body text-red-700">{en ? erroCodigoComOferta.message_en : erroCodigoComOferta.message_pt}</p>
+        )}
+        {voucherIgnorado && !semPreco && (
+          <p role="status" className="text-xs font-body text-n-600">
+            {en ? 'A better offer already applies; the code was not used' : 'Já existe uma oferta melhor; o código não foi aplicado'}
+          </p>
         )}
         {!semPreco && <form onSubmit={aplicarVoucher} className="flex gap-2 pt-1">
           <label className="sr-only" htmlFor={`voucher-${unit.id}`}>{en ? 'Discount code' : 'Código de desconto'}</label>

@@ -401,7 +401,7 @@
   </div>
 </footer>
 
-<script src="_cartao.js?v=20261120h"></script>
+<script src="_cartao.js?v=20261122b"></script>
 <script>
 /* ══════════════════════════════════════════
    PAGINA DE UM PONTO TURISTICO (ponto.html?slug=...)
@@ -515,7 +515,7 @@ function renderXp(item) {
   const crianca = C.precoCrianca(meta);
   let precoHtml;
   if (preco) {
-    const unidade = preco.unidade === 'pessoa' ? (lang === 'en' ? 'person' : 'pessoa') : (lang === 'en' ? 'group' : 'grupo');
+    const unidade = preco.unidade === 'pessoa' ? (lang === 'en' ? 'person' : 'pessoa') : preco.unidade === 'veiculo' ? (lang === 'en' ? 'vehicle' : 'veículo') : (lang === 'en' ? 'group' : 'grupo');
     precoHtml = `<small>${lang === 'en' ? 'From' : 'A partir de'}</small>`
       + `<span><b>${esc(C.formatarPreco(preco.valor, item.currency, 'EUR'))}</b> / ${unidade}</span>`
       + (crianca ? `<span class="xp-extra">${lang === 'en' ? 'Child' : 'Criança'} ${esc(C.formatarPreco(crianca, item.currency, 'EUR'))}</span>` : '');

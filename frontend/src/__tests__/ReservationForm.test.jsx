@@ -6,6 +6,7 @@ import ReservationCard from '../components/reservations/ReservationCard';
 import useUiStore from '../store/uiStore';
 import { getReservation, changeStatus, deleteReservation } from '../services/reservationsService';
 import { getFleetAvailability } from '../services/fleetService';
+import { precoEstimado } from '../utils/opcoesActividade';
 
 /* Sem rede: so os servicos que estes componentes importam */
 vi.mock('../services/reservationsService', () => ({
@@ -79,11 +80,20 @@ describe('Formulario, detalhe e cartao de reserva', () => {
       description: JSON.stringify({ time_slots: [{ time: '09:00', capacity: 8 }, { time: '14:00', capacity: 6 }] }),
     };
     const MESA = { id: 'm1', name: 'Mesa 4', base_price: 0 };
+    const OPCOES = [
+      { id: 'o2', name_pt: 'Grupo privado', name_en: 'Private group', type: 'per_group', price: 200 },
+      { id: 'o1', name_pt: 'Por pessoa', name_en: 'Per person', type: 'per_person', price: 50, price_child: 30 },
+      { id: 'o3', name_pt: 'Buggy 2h', name_en: 'Buggy 2h', type: 'per_vehicle', price: 90, seats: 2 },
+    ];
+    const TOUR_COM_OPCOES = {
+      id: 't3', name: 'Buggy Sal', base_price: 25,
+      description: JSON.stringify({ options: OPCOES, time_slots: [{ time: '09:00', capacity: 8 }] }),
+    };
 
     function renderForm(over = {}) {
       const props = {
         reservation: null,
-        units: [QUARTO, TOUR_SEM_HORARIOS, TOUR_COM_HORARIOS, MESA],
+        units: [QUARTO, TOUR_SEM_HORARIOS, TOUR_COM_HORARIOS, MESA, TOUR_COM_OPCOES],
         operatorType: 'hotel',
         onSave: vi.fn(),
         onCancel: vi.fn(),
@@ -285,6 +295,128 @@ describe('Formulario, detalhe e cartao de reserva', () => {
       expect(props.onSave).toHaveBeenCalledWith(expect.objectContaining({
         unit_id: 't2', check_in: AMANHA, check_out: AMANHA, tour_time: '14:00', start_time: '14:00', notes: 'Hora: 14:00',
       }));
+    });
+
+    it('actividade sem opcoes nao mostra a escolha da opcao nem os veiculos', () => {
+      renderForm({ operatorType: 'activity' });
+      preencher('Tour / Actividade', 't2');
+      expect(screen.queryByText('Opção')).not.toBeInTheDocument();
+      expect(screen.queryByText('Veículos')).not.toBeInTheDocument();
+    });
+
+    it('actividade com opcoes: comeca na mais barata, a previsao e a da opcao e envia option_id', () => {
+      const props = renderForm({ operatorType: 'activity' });
+      preencher('Tour / Actividade', 't3');
+      preencher('Data do tour', AMANHA);
+      expect(within(campo('Opção')).getAllByRole('option').map(o => [o.value, o.textContent])).toEqual([
+        ['o2', 'Grupo privado · €200 por grupo'],
+        ['o1', 'Por pessoa · €50 por pessoa'],
+        ['o3', 'Buggy 2h · €90 por veículo (2 lugares)'],
+      ]);
+      expect(campo('Opção')).toHaveValue('o1');
+      preencher('Hospedes', '2');
+      expect(screen.getByText('€100.00')).toBeInTheDocument();
+      expect(screen.queryByText('€50.00')).not.toBeInTheDocument();
+      expect(screen.queryByText('Veículos')).not.toBeInTheDocument();
+      preencher('Horário', '09:00');
+      preencherCliente();
+      fireEvent.click(botao('Nova Reserva'));
+      const enviado = props.onSave.mock.calls[0][0];
+      expect(enviado).toMatchObject({ unit_id: 't3', guests: 2, option_id: 'o1', start_time: '09:00' });
+      expect(enviado).not.toHaveProperty('vehicles');
+    });
+
+    it('opcao por veiculo: mostra os veiculos (minimo pelas pessoas), previsao = precoEstimado e envia vehicles', () => {
+      const props = renderForm({ operatorType: 'activity' });
+      preencher('Tour / Actividade', 't3');
+      preencher('Data do tour', AMANHA);
+      preencher('Opção', 'o3');
+      preencher('Hospedes', '5');
+      expect(campo('Veículos')).toHaveValue(3);
+      expect(campo('Veículos')).toHaveAttribute('min', '3');
+      expect(campo('Veículos')).toHaveAttribute('max', '5');
+      expect(screen.getByText('Mínimo 3, máximo 5')).toBeInTheDocument();
+      const op = OPCOES[2];
+      expect(screen.getByText(`€${precoEstimado(op, { adults: 5, vehicles: 3 }).toFixed(2)}`)).toBeInTheDocument();
+      expect(screen.getByText('€270.00')).toBeInTheDocument();
+      preencher('Veículos', '4');
+      expect(screen.getByText(`€${precoEstimado(op, { adults: 5, vehicles: 4 }).toFixed(2)}`)).toBeInTheDocument();
+      expect(screen.getByText('5 pessoa(s) · 4 veículo(s)')).toBeInTheDocument();
+      preencher('Horário', '09:00');
+      preencherCliente();
+      fireEvent.click(botao('Nova Reserva'));
+      expect(props.onSave).toHaveBeenCalledWith(expect.objectContaining({ unit_id: 't3', guests: 5, option_id: 'o3', vehicles: 4 }));
+    });
+
+    it('opcao por veiculo: um pedido fora dos limites e corrigido na previsao (o campo tem min e max)', () => {
+      renderForm({ operatorType: 'activity' });
+      preencher('Tour / Actividade', 't3');
+      preencher('Data do tour', AMANHA);
+      preencher('Opção', 'o3');
+      preencher('Hospedes', '5');
+      preencher('Veículos', '9');
+      expect(screen.getByText('5 pessoa(s) · 5 veículo(s)')).toBeInTheDocument();
+      expect(screen.getByText('€450.00')).toBeInTheDocument();
+      preencher('Veículos', '1');
+      expect(screen.getByText('5 pessoa(s) · 3 veículo(s)')).toBeInTheDocument();
+      expect(screen.getByText('€270.00')).toBeInTheDocument();
+    });
+
+    it('opcao por veiculo: o campo mostra o valor limitado que vai ser reservado', () => {
+      renderForm({ operatorType: 'activity' });
+      preencher('Tour / Actividade', 't3');
+      preencher('Data do tour', AMANHA);
+      preencher('Opção', 'o3');
+      preencher('Hospedes', '5');
+      const veiculos = campo('Veículos');
+      // a escrever o numero fica como foi escrito; ao sair do campo corrige-se
+      fireEvent.focus(veiculos);
+      fireEvent.change(veiculos, { target: { value: '10' } });
+      expect(veiculos.value).toBe('10');
+      fireEvent.blur(veiculos);
+      expect(veiculos.value).toBe('5');
+      expect(screen.getByText('5 pessoa(s) · 5 veículo(s)')).toBeInTheDocument();
+      fireEvent.focus(veiculos);
+      fireEvent.change(veiculos, { target: { value: '1' } });
+      fireEvent.blur(veiculos);
+      expect(veiculos.value).toBe('3');
+      // sem foco (ex.: menos pessoas) o campo acompanha o limite
+      preencher('Hospedes', '2');
+      expect(campo('Veículos').value).toBe('1');
+    });
+
+    it('opcao por veiculo: menos pessoas baixa o minimo e os veiculos acompanham', () => {
+      const props = renderForm({ operatorType: 'activity' });
+      preencher('Tour / Actividade', 't3');
+      preencher('Data do tour', AMANHA);
+      preencher('Opção', 'o3');
+      preencher('Hospedes', '4');
+      expect(campo('Veículos')).toHaveValue(2);
+      preencher('Veículos', '4');
+      preencher('Hospedes', '1');
+      expect(campo('Veículos')).toHaveValue(1);
+      expect(screen.getByText('€90.00')).toBeInTheDocument();
+      preencher('Horário', '09:00');
+      preencherCliente();
+      fireEvent.click(botao('Nova Reserva'));
+      expect(props.onSave).toHaveBeenCalledWith(expect.objectContaining({ option_id: 'o3', vehicles: 1, guests: 1 }));
+    });
+
+    it('em ingles as opcoes usam o nome e a unidade em ingles', () => {
+      useUiStore.setState({ lang: 'en' });
+      renderForm({ operatorType: 'activity' });
+      preencher('Tour / Actividade', 't3');
+      expect(within(campo('Option')).getAllByRole('option').map(o => o.textContent)).toEqual([
+        'Private group · €200 per group', 'Per person · €50 per person', 'Buggy 2h · €90 per vehicle (2 seats)',
+      ]);
+    });
+
+    it('edicao de uma reserva com opcoes nao mostra a escolha da opcao', () => {
+      renderForm({
+        operatorType: 'activity',
+        reservation: { id: 'r9', unit_id: 't3', customer_name: 'Rui', customer_email: 'rui@exemplo.com', check_in: AMANHA, check_out: AMANHA, guests: 2 },
+      });
+      expect(screen.queryByText('Opção')).not.toBeInTheDocument();
     });
 
     it('restaurante: data e hora da reserva, sem pre-visualizacao de preco', () => {

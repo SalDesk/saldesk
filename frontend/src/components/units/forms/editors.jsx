@@ -14,7 +14,7 @@ const NATIVE_FIELD_CLASS = [
 ].join(' ');
 
 /* Botao de remover uma linha dos editores (so icone, por isso leva aria-label) */
-function RemoveRowButton({ label, onClick }) {
+export function RemoveRowButton({ label, onClick }) {
   return (
     <Button
       type="button"
@@ -29,7 +29,7 @@ function RemoveRowButton({ label, onClick }) {
 }
 
 /* Botao de adicionar uma linha aos editores */
-function AddRowButton({ onClick, children }) {
+export function AddRowButton({ onClick, children }) {
   return (
     <Button type="button" variant="secondary" size="sm" icon={Plus} onClick={onClick}>
       {children}

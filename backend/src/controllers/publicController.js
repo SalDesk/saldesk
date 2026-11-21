@@ -7,7 +7,9 @@ const { obterOuCriarCliente } = require('../helpers/customerHelper');
 const { enviarEmail } = require('../helpers/emailHelper');
 const { detectarIdioma } = require('../helpers/languageHelper');
 const { confirmacaoClienteEmail, notificacaoOperadorEmail } = require('../helpers/emailTemplates');
-const { validarVoucher, registarUsoVoucher } = require('./vouchersController');
+const { registarUsoVoucher } = require('./vouchersController');
+const { escolherDesconto } = require('../helpers/descontoActividade');
+const { opcoesDaActividade, nomeOpcao, linhasNotasOpcao } = require('../helpers/opcoesActividade');
 const { avisarNovaReserva } = require('../helpers/avisosReserva');
 const { eMetodoCartao, fimDaRetencao, reservasRecentesDoCliente, classificarRecentes } = require('../helpers/lugarRetido');
 const { encontrarAfiliadoActivo } = require('./affiliatesController');
@@ -288,7 +290,7 @@ async function criarReserva(req, res, next) {
             customer_country, check_in, check_out, guests, notes,
             party_size, tour_time, reservation_time, zone_preference,
             voucher_code, ref_code, referred_by, items, driver_included, booking_mode, whatsapp_opt_in,
-            payment_method, adults, children } = req.body;
+            payment_method, adults, children, option_id, vehicles, guide_language } = req.body;
 
     // check_out é opcional — activities/restaurants podem enviar só check_in (data do serviço)
     const effectiveCheckOut = check_out || check_in;
@@ -354,6 +356,7 @@ async function criarReserva(req, res, next) {
     let activitySlotTime = null;
     let isGroupBooking = false;
     let precoAct = null;
+    let metaActividade = {};
 
     /* Duplicados (duplo clique, voltar atras, rede lenta): a mesma reserva ja feita nos ultimos
        30 minutos devolve-se em vez de criar outra. Os lugares retidos do mesmo cliente ainda por
@@ -373,6 +376,7 @@ async function criarReserva(req, res, next) {
         metodo: eMetodoCartao(payment_method) ? payment_method : null,
         customerName: customer_name,
         driverIncluded: isRentacar && !!driver_included,
+        opcao: nomeOpcao(precoAct),
         temPedido: isRestaurant && Array.isArray(items) && items.length > 0,
       });
       excluirRetidos = recentes.retidosProprios.map((r) => r.id);
@@ -453,8 +457,11 @@ async function criarReserva(req, res, next) {
       /* Reserva de grupo/privada -- preco fixo (unitMeta.price_private) ou por
          escaloes de numero de pessoas (unitMeta.price_tiers), ocupa o
          slot/dia INTEIRO em exclusivo. So permitido se a unidade tiver
-         mesmo algum preco privado configurado -- nunca inventar um preco. */
-      if (booking_mode === 'private') {
+         mesmo algum preco privado configurado -- nunca inventar um preco.
+         Actividade com opcoes: a tabela de precos e o booking_mode nao contam,
+         o modo vem da opcao escolhida (por grupo = privado, em exclusivo). */
+      const temOpcoes = isActivity && opcoesDaActividade(unitMeta).length > 0;
+      if (booking_mode === 'private' && !temOpcoes) {
         if (!temPrecoPrivadoConfigurado(unitMeta)) {
           return res.status(400).json({ error: 'Esta actividade não tem reserva privada disponível', code: 'INVALID_BOOKING_MODE' });
         }
@@ -463,12 +470,18 @@ async function criarReserva(req, res, next) {
 
       /* Actividade: preco partilhado com o orcamento (precoActividade). Sem
          adults/children no corpo, todas as pessoas contam como adultos. A
-         recusa (lotacao, grupo sem preco) vem antes da verificacao de vagas. */
+         recusa (lotacao, grupo sem preco, opcao em falta) vem antes da
+         verificacao de vagas. Nas vagas contam sempre as pessoas, mesmo por veiculo. */
       if (isActivity) {
-        precoAct = precoActividade(unitRow, unitMeta, { adults: splitAdultos, children: splitCriancas, mode: isGroupBooking ? 'private' : 'per_person' });
+        metaActividade = unitMeta;
+        precoAct = precoActividade(unitRow, unitMeta, {
+          adults: splitAdultos, children: splitCriancas, mode: isGroupBooking ? 'private' : 'per_person',
+          optionId: option_id, vehicles, guideLanguage: guide_language,
+        });
         if (precoAct.error) {
           return res.status(400).json({ error: precoAct.error.message_pt, code: precoAct.error.code });
         }
+        if (temOpcoes) isGroupBooking = precoAct.mode === 'private';
       }
 
       if (activitySlots.length > 0) {
@@ -533,20 +546,25 @@ async function criarReserva(req, res, next) {
       }
     }
 
-    let finalTotal = total;
-    let voucherId = null;
-    if (voucher_code) {
-      const resultado = await validarVoucher(operator.id, voucher_code, unit.id, total);
-      if (resultado.valid) {
-        finalTotal = Math.max(0, total - resultado.discount);
-        voucherId = resultado.voucherId;
-      } else {
-        /* Segundo envio da mesma reserva em dinheiro: a primeira pode ter gasto o ultimo uso do
-           voucher. Com uma reserva igual que usou voucher, devolve-se essa em vez do 400. */
-        if (repetidaSemCartao && repetidaSemCartao.voucher_id) return responderRepetida(repetidaSemCartao);
-        return res.status(400).json({ error: resultado.error || 'Codigo invalido', code: 'INVALID_VOUCHER' });
-      }
+    /* Oferta automatica (so actividades, pela data do servico) ou voucher, o que der mais
+       desconto, como na cotacao. Um codigo que perde para a oferta e ignorado por completo:
+       sem 400, sem voucher_id e sem uso registado. */
+    const desconto = await escolherDesconto({
+      operatorId: operator.id, unitId: unit.id, meta: metaActividade, total, date: check_in, voucherCode: voucher_code,
+    });
+    /* Segundo envio da mesma reserva em dinheiro: a primeira pode ter gasto o ultimo uso do
+       voucher. Com uma reserva igual que usou voucher e o codigo agora nao aplicado (recusado,
+       ou vencido por uma oferta que so ganha porque o codigo esgotou), devolve-se essa em vez
+       do 400 ou de uma segunda reserva ao preco da oferta. */
+    const codigoEnviado = voucher_code !== undefined && voucher_code !== null && String(voucher_code).trim() !== '';
+    if (codigoEnviado && !desconto.voucherId && repetidaSemCartao && repetidaSemCartao.voucher_id) {
+      return responderRepetida(repetidaSemCartao);
     }
+    if (desconto.error) {
+      return res.status(400).json({ error: desconto.error.message_pt, code: 'INVALID_VOUCHER' });
+    }
+    const finalTotal = desconto.total;
+    const voucherId = desconto.voucherId;
 
     /* A mesma reserva sem cartao e com o mesmo total: devolve-se, sem inserir nem avisar.
        Com outro total (motorista, voucher...) e outra reserva: a primeira volta a contar nas vagas. */
@@ -608,6 +626,12 @@ async function criarReserva(req, res, next) {
     if (isRestaurant && reservation_time) notesLines.push(`Hora: ${reservation_time}`);
     if (isRestaurant && zone_preference) notesLines.push(`Zona preferida: ${zone_preference}`);
     if (party_size || (isActivity && (adults != null || children != null))) notesLines.push(`Pessoas: ${partyEfectivo}`);
+    // Opcao e veiculos escritos pelo servidor (a deteccao de duplicados le a linha "Opção:")
+    notesLines.push(...linhasNotasOpcao(precoAct));
+    /* O idioma pedido ja vem nas notas da pagina; se o pedido nao trouxe idioma e o servidor
+       escolheu um (lingua unica com suplemento), escreve-se aqui, salvo se ja la estiver. */
+    const idiomaNasNotas = typeof notes === 'string' && /(Idioma|Language):/i.test(notes);
+    if (precoAct && precoAct.guideLanguage && !guide_language && !idiomaNasNotas) notesLines.push(`Idioma: ${precoAct.guideLanguage}`);
     if (notes) notesLines.push(notes);
     if (referredByNote) notesLines.push(`Indicado por: ${referredByNote}`);
     const finalNotes = notesLines.join(' | ') || null;
@@ -1300,9 +1324,9 @@ async function getGuestChatHistory(req, res, next) {
 }
 
 /* ─── Cotacao de actividade (mesmo calculo que criarReserva) ───
-   GET /:slug/units/:unitId/quote?adults=&children=&mode=&voucher=
-   O valor mostrado na pagina tem de ser igual ao cobrado: usa precoActividade
-   e aplica o voucher por validarVoucher sobre o mesmo total, como criarReserva. */
+   GET /:slug/units/:unitId/quote?adults=&children=&mode=&voucher=&option=&vehicles=&glang=&date=
+   O valor mostrado na pagina tem de ser igual ao cobrado: usa precoActividade e
+   escolhe entre a oferta (so com date) e o voucher por escolherDesconto, como criarReserva. */
 async function cotarActividade(req, res, next) {
   try {
     const { slug, unitId } = req.params;
@@ -1314,6 +1338,11 @@ async function cotarActividade(req, res, next) {
     const children = inteiro(req.query.children, 0, 0);
     const mode = req.query.mode === 'private' ? 'private' : 'per_person';
     const voucherCode = typeof req.query.voucher === 'string' ? req.query.voucher.trim() : '';
+    const texto = (v) => (typeof v === 'string' ? v.trim() : '');
+    const optionId = texto(req.query.option);
+    const vehicles = texto(req.query.vehicles);
+    const guideLanguage = texto(req.query.glang);
+    const date = texto(req.query.date);
 
     const { data: operator } = await supabaseAdmin
       .from('operators')
@@ -1335,34 +1364,30 @@ async function cotarActividade(req, res, next) {
     }
 
     const meta = parseUnitMeta(unit);
-    if (mode === 'private' && !temPrecoPrivadoConfigurado(meta)) {
+    // Com opcoes o modo vem da opcao: o pedido privado sem tabela privada nao se recusa
+    const temOpcoes = opcoesDaActividade(meta).length > 0;
+    if (!temOpcoes && mode === 'private' && !temPrecoPrivadoConfigurado(meta)) {
       return res.json({ data: {
-        lines: [], total: 0, before: null,
+        lines: [], total: 0, before: null, voucher_ignored: false,
         error: { code: 'INVALID_BOOKING_MODE', message_pt: 'Esta actividade não tem reserva privada disponível', message_en: 'This activity has no private booking available' },
       } });
     }
 
-    const preco = precoActividade(unit, meta, { adults, children, mode });
+    const preco = precoActividade(unit, meta, { adults, children, mode, optionId, vehicles, guideLanguage });
     if (preco.error) {
-      return res.json({ data: { lines: preco.lines, total: 0, before: null, error: preco.error } });
+      return res.json({ data: { lines: preco.lines, total: 0, before: null, error: preco.error, voucher_ignored: false } });
     }
 
-    let lines = preco.lines;
-    let total = preco.total;
-    let before = null;
-    let error = null;
-    if (voucherCode) {
-      const resultado = await validarVoucher(operator.id, voucherCode, unit.id, preco.total);
-      if (resultado.valid) {
-        before = preco.total;
-        total = Math.max(0, preco.total - resultado.discount);
-        lines = [...lines, { type: 'discount', description: `Código ${voucherCode.toUpperCase()}`, quantity: 1, total: -resultado.discount }];
-      } else {
-        error = { code: 'INVALID_VOUCHER', message_pt: resultado.error || 'Código inválido', message_en: 'Invalid code' };
-      }
-    }
+    // A oferta so se aplica com uma data escolhida
+    const desconto = await escolherDesconto({
+      operatorId: operator.id, unitId: unit.id, meta, total: preco.total, date: date || null, voucherCode,
+    });
+    const lines = desconto.line ? [...preco.lines, desconto.line] : preco.lines;
 
-    return res.json({ data: { lines, total, before, error } });
+    return res.json({ data: {
+      lines, total: desconto.total, before: desconto.before, error: desconto.error, voucher_ignored: desconto.voucherIgnored,
+      voucher_error: desconto.voucherError || null,
+    } });
   } catch (err) { next(err); }
 }
 
