@@ -231,6 +231,15 @@ describe('Pagina de actividade', () => {
     expect(screen.getByRole('button', { name: /Partilhar/ })).toBeInTheDocument();
   });
 
+  it('duracao_com_virgula_decimal_em_portugues', async () => {
+    simularRede({ unit: comMeta({ duration: 6.5 }) });
+    montar();
+    await screen.findByRole('heading', { level: 1, name: 'Passeio de buggy' });
+    /* chip do cabecalho e facto "Duração" */
+    expect(screen.getAllByText('6,5 h').length).toBeGreaterThanOrEqual(2);
+    expect(screen.queryByText('6.5 h')).toBeNull();
+  });
+
   /* A coluna deixou de ser so um botao para o modal (Task 8): tem os passos e "Reservar" fica
      desactivado ate haver data. Reservar com data abre o modal pre-preenchido: ver
      reservar_abre_o_modal_com_a_seleccao em ReservaActividade.test.jsx. */

@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import {
-  textoEmBlocos, linhasDestaques, oQueLevar, incluidos, factosActividade, seccoesActividade, precisaLerTudo,
+  textoEmBlocos, linhasDestaques, oQueLevar, incluidos, factosActividade, seccoesActividade, precisaLerTudo, textoDuracao,
 } from '../utils/paginaActividade';
 
 describe('textoEmBlocos', () => {
@@ -78,6 +78,12 @@ describe('factosActividade', () => {
       { chave: 'recolha', valor: 'Marina' },
       { chave: 'grupo', valor: 'Up to 6 people' },
     ]);
+  });
+  it('duracao com virgula decimal em PT e ponto em EN', () => {
+    expect(factosActividade({}, { duration: 6.5 }, 'pt')).toEqual([{ chave: 'duracao', valor: '6,5 h' }]);
+    expect(factosActividade({}, { duration: '6.5' }, 'en')).toEqual([{ chave: 'duracao', valor: '6.5 h' }]);
+    expect(textoDuracao(2, 'pt')).toBe('2 h');
+    expect(textoDuracao(1.25, 'pt')).toBe('1,25 h');
   });
   it('privado e sem dados', () => {
     expect(factosActividade({}, { tour_type: 'privado' }, 'pt')).toEqual([{ chave: 'formato', valor: 'Privado' }]);

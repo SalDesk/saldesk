@@ -64,12 +64,18 @@ const LINGUAS = {
   ES: ['Español', 'Spanish'], DE: ['Deutsch', 'German'], IT: ['Italiano', 'Italian'], NL: ['Nederlands', 'Dutch'],
 };
 
+/* Duracao em horas: virgula decimal em portugues ("6,5 h"), ponto em ingles ("6.5 h") */
+export function textoDuracao(horas, lang) {
+  const n = String(Number(horas));
+  return `${lang === 'en' ? n : n.replace('.', ',')} h`;
+}
+
 export function factosActividade(unit, meta, lang) {
   const en = lang === 'en';
   const m = meta || {};
   const factos = [];
   const dur = Number(m.duration);
-  if (Number.isFinite(dur) && dur > 0) factos.push({ chave: 'duracao', valor: `${dur} h` });
+  if (Number.isFinite(dur) && dur > 0) factos.push({ chave: 'duracao', valor: textoDuracao(dur, lang) });
   const formatos = { grupo: ['Em grupo', 'Group'], privado: ['Privado', 'Private'], ambos: ['Grupo ou privado', 'Group or private'] };
   if (formatos[m.tour_type]) factos.push({ chave: 'formato', valor: formatos[m.tour_type][en ? 1 : 0] });
   const langs = Array.isArray(m.languages) ? m.languages.map((c) => String(c || '').trim()).filter(Boolean) : [];

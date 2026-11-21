@@ -3,7 +3,7 @@
    gratis, confirmacao imediata) e Partilhar. Cada chip so aparece com o dado real.
    Spec: docs/superpowers/specs/2026-11-21-pagina-servico-completa-design.md */
 import { Star, Clock, MapPin, RotateCcw, Zap, Share2, Check } from 'lucide-react';
-import { textoEmBlocos, porLingua } from '../../utils/paginaActividade';
+import { textoEmBlocos, porLingua, textoDuracao } from '../../utils/paginaActividade';
 import { textoBeneficioCancelamento } from '../../utils/politicaCancelamento';
 
 const FOCO = 'focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2';
@@ -39,7 +39,7 @@ export default function CabecalhoActividade({ titulo, meta, op, classificacao, l
   const horas = Number(m.duration);
 
   const chips = [
-    Number.isFinite(horas) && horas > 0 && { chave: 'horas', icone: Clock, texto: `${horas} h` },
+    Number.isFinite(horas) && horas > 0 && { chave: 'horas', icone: Clock, texto: textoDuracao(horas, lang) },
     m.pickup_included === true && { chave: 'recolha', icone: MapPin, texto: en ? 'Hotel pickup included' : 'Recolha no hotel incluída' },
     textoBeneficioCancelamento(op?.free_cancellation_hours, lang) && { chave: 'cancelamento', icone: RotateCcw, texto: textoBeneficioCancelamento(op.free_cancellation_hours, lang) },
     op?.auto_confirm_bookings === true && { chave: 'confirmacao', icone: Zap, texto: en ? 'Instant confirmation' : 'Confirmação imediata' },
