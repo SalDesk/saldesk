@@ -41,7 +41,8 @@ function resFalso() {
   return res;
 }
 const TOKEN = 'a'.repeat(40);
-const ontem = () => { const d = new Date(Date.now() - 86400000); return d.toISOString().slice(0, 10); };
+/* ontem no dia de Cabo Verde (o servidor decide por hojeCaboVerde); em UTC falhava entre as 23h e a meia-noite */
+const ontem = () => { const d = new Date(new Date().toLocaleDateString('en-CA', { timeZone: 'Atlantic/Cape_Verde' }) + 'T12:00:00Z'); d.setUTCDate(d.getUTCDate() - 1); return d.toISOString().slice(0, 10); };
 const daqui = (dias) => new Date(Date.now() + dias * 86400000).toISOString();
 
 beforeEach(repor);
