@@ -30,6 +30,7 @@ import SiteComplianceFooter from '../components/shared/SiteComplianceFooter';
 import { textoPoliticaCancelamento } from '../utils/politicaCancelamento';
 import { jsonLdExperiencia } from '../utils/dadosEstruturados';
 import { dentroDeCaboVerde } from '../utils/coordenadas';
+import { textoAdultos, textoCriancas } from '../utils/pessoas';
 import { seccoesActividade, factosActividade, comodidadeNaLingua } from '../utils/paginaActividade';
 import GaleriaActividade, { Lightbox } from '../components/servico/GaleriaActividade';
 import CabecalhoActividade from '../components/servico/CabecalhoActividade';
@@ -615,7 +616,7 @@ function HotelModal({ unit, op, slug, lang, onClose, refCode, traveler }) {
   const [voucherCode,svc]=useState(null);
   const nights=nts(ci,co); const rawTotal=nights*(unit.base_price||0); const total=nights>0&&unit.base_price?fmtPrice(rawTotal,null,op.currency||'EUR','EUR',lang):null;
   useEffect(()=>{ if (!ci||!co||co<=ci){sav(null);return;} const t=setTimeout(async()=>{ sc(true); try{sav((await(await fetch(`${API}/public/${slug}/availability?unitId=${unit.id}&checkIn=${ci}&checkOut=${co}`)).json()).data);}catch{sav(null);}finally{sc(false);} },700); return()=>clearTimeout(t); },[ci,co]);
-  function buildPayload(){ const notes=[`${adults} ${lang==='en'?'adults':'adultos'}, ${kids} ${lang==='en'?'children':'crianças'}`,info.notes].filter(Boolean).join('. '); return {unit_id:unit.id,customer_name:info.name,customer_email:info.email,customer_phone:info.phone||null,customer_country:info.country||null,check_in:ci,check_out:co,guests:adults+kids,notes,voucher_code:voucherCode||undefined,ref_code:refCode||undefined,payment_method:pay}; }
+  function buildPayload(){ const notes=[`${textoAdultos(adults,lang)}, ${textoCriancas(kids,lang)}`,info.notes].filter(Boolean).join('. '); return {unit_id:unit.id,customer_name:info.name,customer_email:info.email,customer_phone:info.phone||null,customer_country:info.country||null,check_in:ci,check_out:co,guests:adults+kids,notes,voucher_code:voucherCode||undefined,ref_code:refCode||undefined,payment_method:pay}; }
   const postGen=useRef(0);
   useEffect(()=>{ if(step<3){ postGen.current++; if(pendingRes) spr(null); ssub(false); } },[step]);
   /* Voucher mudado ja com a reserva PayPal publicada (ou a caminho): essa reserva tem o total antigo.
@@ -636,7 +637,7 @@ function HotelModal({ unit, op, slug, lang, onClose, refCode, traveler }) {
     }catch(e){se(e.message);}finally{ssub(false);}
   }
   function next(){ if(!valid())return; step<3?ss(s=>s+1):submit(); }
-  const sumL=[{label:lang==='en'?'Room':'Quarto',value:unit.name},{label:'Check-in',value:ci},{label:'Check-out',value:co},{label:lang==='en'?'Nights':'Noites',value:`${nights}`},{label:lang==='en'?'Guests':'Hóspedes',value:`${adults} ${lang==='en'?'adults':'adultos'}${kids>0?` + ${kids} ${lang==='en'?'children':'crianças'}`:''}`},...(total?[{label:'Total',value:fmtTotalBoth(rawTotal,op.currency,lang),hi:true}]:[])];
+  const sumL=[{label:lang==='en'?'Room':'Quarto',value:unit.name},{label:'Check-in',value:ci},{label:'Check-out',value:co},{label:lang==='en'?'Nights':'Noites',value:`${nights}`},{label:lang==='en'?'Guests':'Hóspedes',value:`${textoAdultos(adults,lang)}${kids>0?` + ${textoCriancas(kids,lang)}`:''}`},...(total?[{label:'Total',value:fmtTotalBoth(rawTotal,op.currency,lang),hi:true}]:[])];
   const icon=<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M2 22V10a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v12"/><path d="M2 22h20"/><path d="M7 22v-4h10v4"/><rect x="7" y="10" width="4" height="4" rx="1"/><rect x="13" y="10" width="4" height="4" rx="1"/></svg>;
   return (
     <MS icon={icon} title={lang==='en'?'Book room':'Reservar quarto'} step={step} lang={lang} onClose={onClose} onPrev={()=>ss(s=>s-1)} onNext={next} nextLabel={step<3?(lang==='en'?'Continue':'Continuar'):(lang==='en'?'Confirm booking':'Confirmar reserva')} nextDis={(step===1&&(!avail?.disponivel||chk))||(step===3&&!policyOk)} sub={sub} err={err} ok={!!resId} hideNext={step===3&&pay==='paypal'}>
@@ -705,7 +706,7 @@ function ActivityModal({ unit, op, slug, lang, onClose, refCode, traveler, selec
   /* Alojamento e datas de estadia (pedido real da Logan Tours: precisam de
      saber onde recolher e quando o turista chega/parte). Tudo opcional. */
   const stayLine=[info.hotel.trim()?`${lang==='en'?'Accommodation':'Alojamento'}: ${info.hotel.trim()}`:'',info.arrival?`${lang==='en'?'arrival':'chegada'} ${info.arrival}`:'',info.departure?`${lang==='en'?'departure':'partida'} ${info.departure}`:''].filter(Boolean).join(', ');
-  function buildPayload(){ const notes=[time?`${lang==='en'?'Time':'Hora'}: ${time}`:'',`${adults} ${lang==='en'?'adults':'adultos'}, ${kids} ${lang==='en'?'children':'crianças'}`,tourLang?(lang==='en'?'Language: ':'Idioma: ')+tourLang:'',stayLine,info.needs?(lang==='en'?'Additional request:':'Pedido adicional:')+' '+info.needs:''].filter(Boolean).join('. '); return {unit_id:unit.id,customer_name:info.name,customer_email:info.email,customer_phone:info.phone||null,customer_country:info.country||null,check_in:date,check_out:date,guests:adults+kids,...(col?{adults,children:kids}:{}),notes,tour_time:col?(col.time||undefined):(hasSlots?time:undefined),voucher_code:(col?voucherDaColuna:voucherCode)||undefined,ref_code:refCode||undefined,referred_by:info.referredBy.trim()||undefined,whatsapp_opt_in:info.whatsappOptIn||undefined,booking_mode:isPrivateMode?'private':undefined,payment_method:pay}; }
+  function buildPayload(){ const notes=[time?`${lang==='en'?'Time':'Hora'}: ${time}`:'',`${textoAdultos(adults,lang)}, ${textoCriancas(kids,lang)}`,tourLang?(lang==='en'?'Language: ':'Idioma: ')+tourLang:'',stayLine,info.needs?(lang==='en'?'Additional request:':'Pedido adicional:')+' '+info.needs:''].filter(Boolean).join('. '); return {unit_id:unit.id,customer_name:info.name,customer_email:info.email,customer_phone:info.phone||null,customer_country:info.country||null,check_in:date,check_out:date,guests:adults+kids,...(col?{adults,children:kids}:{}),notes,tour_time:col?(col.time||undefined):(hasSlots?time:undefined),voucher_code:(col?voucherDaColuna:voucherCode)||undefined,ref_code:refCode||undefined,referred_by:info.referredBy.trim()||undefined,whatsapp_opt_in:info.whatsappOptIn||undefined,booking_mode:isPrivateMode?'private':undefined,payment_method:pay}; }
   const postGen=useRef(0);
   useEffect(()=>{ if(step<3){ postGen.current++; if(pendingRes) spr(null); ssub(false); } },[step]);
   /* Voucher mudado ja com a reserva PayPal publicada (ou a caminho): essa reserva tem o total antigo.
@@ -727,7 +728,7 @@ function ActivityModal({ unit, op, slug, lang, onClose, refCode, traveler, selec
     }catch(e){se(e.message);}finally{ssub(false);}
   }
   function next(){ if(!valid())return; step<3?ss(s=>s+1):submit(); }
-  const sumL=[{label:lang==='en'?'Tour / Activity':'Tour / Actividade',value:unit.name},{label:lang==='en'?'Date':'Data',value:date},...(time?[{label:lang==='en'?'Time':'Horário',value:time}]:[]),{label:lang==='en'?'Group':'Grupo',value:`${adults} ${lang==='en'?'adults':'adultos'}${kids>0?` + ${kids} ${lang==='en'?'children':'crianças'}`:''}`},...(tourLang?[{label:lang==='en'?'Language':'Idioma',value:tourLang}]:[]),...(info.hotel.trim()?[{label:lang==='en'?'Accommodation':'Alojamento',value:info.hotel.trim()}]:[]),...(hasPerPerson&&hasPrivate?[{label:lang==='en'?'Booking type':'Tipo de reserva',value:isPrivateMode?(lang==='en'?'Private / group':'Privado / grupo'):(lang==='en'?'Per person':'Por pessoa')}]:[]),...(col?linhasDaCotacao():(total?[{label:'Total',value:fmtTotalBoth(rawTotal,op.currency,lang),hi:true}]:[]))];
+  const sumL=[{label:lang==='en'?'Tour / Activity':'Tour / Actividade',value:unit.name},{label:lang==='en'?'Date':'Data',value:date},...(time?[{label:lang==='en'?'Time':'Horário',value:time}]:[]),{label:lang==='en'?'Group':'Grupo',value:`${textoAdultos(adults,lang)}${kids>0?` + ${textoCriancas(kids,lang)}`:''}`},...(tourLang?[{label:lang==='en'?'Language':'Idioma',value:tourLang}]:[]),...(info.hotel.trim()?[{label:lang==='en'?'Accommodation':'Alojamento',value:info.hotel.trim()}]:[]),...(hasPerPerson&&hasPrivate?[{label:lang==='en'?'Booking type':'Tipo de reserva',value:isPrivateMode?(lang==='en'?'Private / group':'Privado / grupo'):(lang==='en'?'Per person':'Por pessoa')}]:[]),...(col?linhasDaCotacao():(total?[{label:'Total',value:fmtTotalBoth(rawTotal,op.currency,lang),hi:true}]:[]))];
   /* Linhas e total da cotacao do servidor para a seleccao da coluna (total tambem em CVE, exigencia SISP) */
   function linhasDaCotacao(){
     const en=lang==='en'; const cur=op.currency||'EUR';
