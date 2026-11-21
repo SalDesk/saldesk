@@ -766,4 +766,54 @@ describe('Pagina de actividade com a coluna de reserva', () => {
     expect(within(modal).queryByText(/Vinti4/)).toBeNull();
     expect(within(modal).getByText('Pagar presencialmente')).toBeInTheDocument();
   });
+
+  /* Centimos: o total e o desconto da oferta percentual aparecem exactos na coluna e no resumo do modal */
+  const COM_OFERTA_PAGINA = { lines: [{ type: 'tour', description: 'Adultos', quantity: 2, total: 290 }, { type: 'discount', source: 'offer', description: 'Oferta especial (-25%)', quantity: 1, total: -72.5 }], total: 217.5, before: 290, error: null };
+
+  async function abrirResumo(cotacao) {
+    simularRede({ cotacao: () => cotacao });
+    montarPagina();
+    const coluna = await screen.findByTestId('coluna-reserva');
+    fireEvent.click(await esperarDiaLivre('2026-11-25'));
+    const reservar = within(coluna).getByRole('button', { name: /Reservar|Book/ });
+    await waitFor(() => expect(reservar).toBeEnabled());
+    const preco = within(coluna).getByTestId('preco-reserva');
+    return { coluna, preco, reservar };
+  }
+  async function irParaResumo() {
+    fireEvent.change(await screen.findByPlaceholderText(/João Silva|John Smith/), { target: { value: 'Ana Lima' } });
+    fireEvent.change(screen.getByPlaceholderText(/joao@email.com|john@email.com/), { target: { value: 'ana@exemplo.cv' } });
+    fireEvent.click(screen.getByRole('button', { name: /Continuar|Continue/ }));
+    return (await screen.findByText(/Resumo e pagamento|Review & payment/)).closest('.fixed');
+  }
+
+  it('centimos_na_coluna_e_no_resumo_em_pt', async () => {
+    const { preco, reservar } = await abrirResumo(COM_OFERTA_PAGINA);
+    expect(await within(preco).findByText('€217,50')).toBeInTheDocument();
+    expect(within(preco).getByText('-€72,50')).toBeInTheDocument();
+    expect(within(preco).getAllByText('€290').length).toBeGreaterThan(0);
+    fireEvent.click(reservar);
+    const modal = await irParaResumo();
+    expect(within(modal).getByText('-€72,50')).toBeInTheDocument();
+    expect(within(modal).getByText(/^€217,50 \(≈/)).toBeInTheDocument();
+  });
+
+  it('centimos_na_coluna_e_no_resumo_em_en', async () => {
+    localStorage.setItem('sd-lang', 'en');
+    const { preco, reservar } = await abrirResumo(COM_OFERTA_PAGINA);
+    expect(await within(preco).findByText('€217.50')).toBeInTheDocument();
+    expect(within(preco).getByText('-€72.50')).toBeInTheDocument();
+    fireEvent.click(reservar);
+    const modal = await irParaResumo();
+    expect(within(modal).getByText('-€72.50')).toBeInTheDocument();
+    expect(within(modal).getByText(/^€217\.50 \(≈/)).toBeInTheDocument();
+  });
+
+  it('total_inteiro_continua_sem_decimais', async () => {
+    const { preco, reservar } = await abrirResumo({ lines: [{ type: 'tour', description: 'Adultos', quantity: 2, total: 290 }], total: 290, before: null, error: null });
+    expect(await within(preco).findAllByText('€290')).not.toHaveLength(0);
+    fireEvent.click(reservar);
+    const modal = await irParaResumo();
+    expect(within(modal).getByText(/^€290 \(≈/)).toBeInTheDocument();
+  });
 });

@@ -211,12 +211,24 @@ function fmtPrice(price, priceUnit, opCurrency, viewCurrency, lang) {
   return `€${eur < 10 ? eur.toFixed(1) : Math.round(eur)}${suffix}`;
 }
 
+/* Valor exacto para a coluna de reserva e o resumo do modal: em EUR mostra os centimos
+   quando existem (217,50 em PT, 217.50 em EN) e inteiros caso contrario; em CVE mantem
+   inteiros (a SISP exige). So afecta a apresentacao, nao o valor enviado nem cobrado. */
+function fmtExato(price, opCurrency, viewCurrency, lang) {
+  if (!price || viewCurrency === 'CVE') return fmtPrice(price, null, opCurrency, viewCurrency, lang);
+  const eur = (opCurrency||'EUR') === 'CVE' ? price / EUR_CVE : price;
+  const centimos = Math.round(eur * 100);
+  if (centimos % 100 === 0) return `€${centimos / 100}`;
+  const texto = (centimos / 100).toFixed(2);
+  return `€${lang === 'en' ? texto : texto.replace('.', ',')}`;
+}
+
 /* No ecra de pagamento (step 3 dos modais de reserva) o total tem de
    aparecer sempre tambem em CVE, independentemente do toggle EUR/CVE da
    pagina -- exigido pelo checklist de validacao de site da SISP ("preco
    expresso tambem em CVE"), nao so quando o visitante escolhe ver em CVE. */
-function fmtTotalBoth(price, opCurrency, lang) {
-  const principal = fmtPrice(price, null, opCurrency, 'EUR', lang);
+function fmtTotalBoth(price, opCurrency, lang, exacto = false) {
+  const principal = exacto ? fmtExato(price, opCurrency, 'EUR', lang) : fmtPrice(price, null, opCurrency, 'EUR', lang);
   if (!price) return principal;
   const cve = (opCurrency || 'EUR') === 'CVE' ? price : price * EUR_CVE;
   return `${principal} (≈ ${Math.round(cve).toLocaleString('pt-PT')} CVE)`;
@@ -739,12 +751,12 @@ function ActivityModal({ unit, op, slug, lang, onClose, refCode, traveler, selec
   /* Linhas e total da cotacao do servidor para a seleccao da coluna (total tambem em CVE, exigencia SISP) */
   function linhasDaCotacao(){
     const en=lang==='en'; const cur=op.currency||'EUR';
-    const valor=(v)=>{ const n=Number(v)||0; if(n===0) return en?'Free':'Grátis'; return n<0?`-${fmtPrice(-n,null,cur,'EUR',lang)}`:fmtPrice(n,null,cur,'EUR',lang); };
+    const valor=(v)=>{ const n=Number(v)||0; if(n===0) return en?'Free':'Grátis'; return n<0?`-${fmtExato(-n,cur,'EUR',lang)}`:fmtExato(n,cur,'EUR',lang); };
     const totalCot=Number(col.quote?.total)||0;
     if(semPreco) return [{label:'Total',value:en?'Price agreed with the operator':'Preço a combinar com o operador',hi:true}];
     return [
       ...(col.quote?.lines||[]).map(l=>({label:textoDaLinha(l,col.mode,col.voucher,en,{opcao:opcaoDaColuna,meta:unitMeta}),value:valor(l.total)})),
-      {label:'Total',value:totalCot>0?fmtTotalBoth(totalCot,op.currency,lang):valor(0),hi:true},
+      {label:'Total',value:totalCot>0?fmtTotalBoth(totalCot,op.currency,lang,true):valor(0),hi:true},
     ];
   }
   /* Com seleccao nao ha passo 1 no modal: "Anterior" no passo 2 fecha e volta a coluna */
@@ -1305,7 +1317,7 @@ function ServiceDetailPagina() {
   /* Coluna de reserva da actividade: o preco "Desde" (por pessoa, ou por grupo quando so ha
      preco privado) e o formatador da pagina para as linhas do /quote. "Reservar" entrega a
      seleccao inteira ao modal de hoje, que abre nos dados do cliente. */
-  const formatarPrecoReserva = (v) => fmtPrice(v, null, op.currency||'EUR', currency, lang);
+  const formatarPrecoReserva = (v) => fmtExato(v, op.currency||'EUR', currency, lang);
   /* Com opcoes, as opcoes substituem a tabela de precos: "Desde" e a opcao mais barata (coluna e
      barra do telemovel), nunca um base_price que tenha ficado para tras */
   const opcaoDesde = opcaoMaisBarata(unitMeta);
