@@ -104,9 +104,12 @@ function Incluido({ meta, lang }) {
 function Politicas({ op, lang }) {
   const en = lang === 'en';
   const politica = textoPoliticaCancelamento(op, lang);
+  /* Regra real: o pagamento online (PayPal, SISP) confirma sempre a reserva quando e pago; so o
+     pagamento no local depende de auto_confirm_bookings (backend: politicaOperador.estadoInicialReserva
+     e a captura em paymentController) */
   const confirmacao = op?.auto_confirm_bookings === true
-    ? (en ? 'Bookings are confirmed automatically, without waiting for the operator.' : 'A reserva é confirmada automaticamente, sem esperar pela resposta do operador.')
-    : (en ? 'The operator confirms each booking after receiving it.' : 'O operador confirma cada reserva depois de a receber.');
+    ? (en ? 'With pay on site, the booking is confirmed immediately. With online payment, it is confirmed as soon as the payment is made.' : 'Com pagamento no local, a reserva fica confirmada de imediato. Com pagamento online, fica confirmada logo que o pagamento é feito.')
+    : (en ? 'Online payments confirm the booking immediately. With pay on site, the operator confirms after receiving it.' : 'Os pagamentos online confirmam a reserva de imediato. Com pagamento no local, o operador confirma depois de a receber.');
   const itens = [
     politica && { icone: RotateCcw, titulo: en ? 'Cancellation' : 'Cancelamento', texto: politica },
     { icone: BadgeCheck, titulo: en ? 'Confirmation' : 'Confirmação', texto: confirmacao },

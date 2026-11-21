@@ -181,6 +181,34 @@ describe('Pagina de actividade', () => {
     expect(screen.getByRole('button', { name: 'Posso levar crianças?' })).toBeInTheDocument();
   });
 
+  /* Regra real (politicaOperador.estadoInicialReserva + captura PayPal/SISP): o pagamento online
+     confirma sempre a reserva; so o pagamento no local depende de auto_confirm_bookings */
+  it('politica_de_confirmacao_igual_a_regra_real', async () => {
+    const antiga = /O operador confirma cada reserva depois de a receber|confirmada automaticamente, sem esperar/;
+    simularRede({ op: operador({ free_cancellation_hours: 24, auto_confirm_bookings: false }) });
+    const { unmount } = montar();
+    expect(await screen.findByText('Os pagamentos online confirmam a reserva de imediato. Com pagamento no local, o operador confirma depois de a receber.')).toBeInTheDocument();
+    expect(screen.queryByText(antiga)).toBeNull();
+    unmount();
+
+    simularRede({ op: operador({ free_cancellation_hours: 24, auto_confirm_bookings: true }) });
+    const segunda = montar();
+    expect(await screen.findByText('Com pagamento no local, a reserva fica confirmada de imediato. Com pagamento online, fica confirmada logo que o pagamento é feito.')).toBeInTheDocument();
+    expect(screen.queryByText(antiga)).toBeNull();
+    segunda.unmount();
+
+    localStorage.setItem('sd-lang', 'en');
+    simularRede({ op: operador({ free_cancellation_hours: 24, auto_confirm_bookings: false }) });
+    const terceira = montar();
+    expect(await screen.findByText('Online payments confirm the booking immediately. With pay on site, the operator confirms after receiving it.')).toBeInTheDocument();
+    terceira.unmount();
+
+    simularRede({ op: operador({ free_cancellation_hours: 24, auto_confirm_bookings: true }) });
+    montar();
+    expect(await screen.findByText('With pay on site, the booking is confirmed immediately. With online payment, it is confirmed as soon as the payment is made.')).toBeInTheDocument();
+    expect(screen.queryByText(/Bookings are confirmed automatically|The operator confirms each booking/)).toBeNull();
+  });
+
   it('cabecalho_com_ilha_classificacao_propria_e_chips', async () => {
     simularRede({
       unit: comMeta({ duration: 4, pickup_included: true, short_pt: 'A ilha numa manhã.' }),
