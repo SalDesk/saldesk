@@ -7,7 +7,7 @@ import { OtaFields, ConectFields, buildOtaProductIds, UNIT_TYPES_BY_OPERATOR } f
 
 const PRICE_UNITS_BY_OPERATOR = {
   hotel:      [{ value: 'night',   label: 'por noite'  }],
-  activity:   [{ value: 'person',  label: 'por pessoa' }, { value: 'session', label: 'por sessao' }],
+  activity:   [{ value: 'person',  label: 'por pessoa' }, { value: 'session', label: 'por sessão' }],
   rentacar:   [{ value: 'day',     label: 'por dia'    }],
   restaurant: [{ value: 'hour',    label: 'por hora'   }],
 };

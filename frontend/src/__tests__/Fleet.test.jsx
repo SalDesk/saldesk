@@ -89,7 +89,7 @@ function dialogo() {
 function cartao(nome) {
   let el = screen.getByText(nome);
   while (el && within(el).queryAllByRole('button', { name: 'Editar' }).length !== 1) el = el.parentElement;
-  if (!el) throw new Error(`Cartao nao encontrado: ${nome}`);
+  if (!el) throw new Error(`Cartão não encontrado: ${nome}`);
   while (el.parentElement && within(el.parentElement).queryAllByRole('button', { name: 'Editar' }).length === 1) el = el.parentElement;
   return el;
 }
@@ -153,17 +153,17 @@ describe('Frota', () => {
     return r;
   }
 
-  describe('pagina e lista', () => {
-    it('titulo, subtitulo "N disponivel(is) de M" e botao de criar', async () => {
+  describe('página e lista', () => {
+    it('título, subtítulo "N disponível(is) de M" e botão de criar', async () => {
       await renderPagina();
       expect(screen.getByRole('heading', { level: 1, name: 'Frota e Equipamento' })).toBeInTheDocument();
-      expect(screen.getByText('1 disponivel(is) de 5')).toBeInTheDocument();
+      expect(screen.getByText('1 disponível(is) de 5')).toBeInTheDocument();
       expect(screen.getByRole('button', { name: 'Novo item' })).toBeInTheDocument();
     });
 
-    it('o subtitulo conta so os itens disponiveis', async () => {
+    it('o subtítulo conta só os itens disponíveis', async () => {
       await renderPagina({ frota: [KIA(), { ...KIA(), id: 'f9', name: 'Outro Kia' }, PRANCHA()] });
-      expect(screen.getByText('2 disponivel(is) de 3')).toBeInTheDocument();
+      expect(screen.getByText('2 disponível(is) de 3')).toBeInTheDocument();
     });
 
     it('carrega frota e tours sem argumentos', async () => {
@@ -179,28 +179,28 @@ describe('Frota', () => {
       expect(nomesNaGrelha()).toEqual(['Kia Sportage', 'Prancha Kite 12m', 'Colete Salva-vidas', 'Quad Velho', 'Barco Misterio']);
     });
 
-    it('cartao completo: matricula, estado, lugares, tour associado, foto e manutencao futura', async () => {
+    it('cartão completo: matricula, estado, lugares, tour associado, foto e manutenção futura', async () => {
       await renderPagina();
       const c = cartao('Kia Sportage');
       expect(within(c).getByText('SL-12-AB')).toBeInTheDocument();
-      expect(within(c).getByText('Disponivel')).toBeInTheDocument();
+      expect(within(c).getByText('Disponível')).toBeInTheDocument();
       expect(within(c).getByText('4 lugares')).toBeInTheDocument();
       expect(within(c).getByText('Tour Vulcao')).toBeInTheDocument();
       expect(within(c).getByRole('img', { name: 'Kia Sportage' })).toHaveAttribute('src', 'https://img.exemplo.cv/kia.png');
-      expect(c.textContent).toContain('Manutencao: 2099-06-01');
+      expect(c.textContent).toContain('Manutenção: 2099-06-01');
       expect(c.textContent).not.toContain('atrasada');
     });
 
-    it('manutencao atrasada fica assinalada com a data (sem a hora)', async () => {
+    it('manutenção atrasada fica assinalada com a data (sem a hora)', async () => {
       await renderPagina();
       const c = cartao('Prancha Kite 12m');
-      expect(c.textContent).toContain('Manutencao atrasada: 2000-03-15 (atrasada)');
+      expect(c.textContent).toContain('Manutenção atrasada: 2000-03-15 (atrasada)');
     });
 
-    it('sem data de manutencao, matricula, lugares, tour ou foto nada disso aparece', async () => {
+    it('sem data de manutenção, matricula, lugares, tour ou foto nada disso aparece', async () => {
       await renderPagina();
       const c = cartao('Colete Salva-vidas');
-      expect(c.textContent).not.toContain('Manutencao:');
+      expect(c.textContent).not.toContain('Manutenção:');
       expect(c.textContent).not.toContain('lugares');
       expect(within(c).queryByRole('img')).not.toBeInTheDocument();
       expect(c.textContent).not.toContain('Tour');
@@ -209,27 +209,27 @@ describe('Frota', () => {
       expect(q.textContent).not.toMatch(/SL-/);
     });
 
-    it('rotulo do estado de cada item', async () => {
+    it('rótulo do estado de cada item', async () => {
       await renderPagina();
       expect(within(cartao('Prancha Kite 12m')).getByText('Em uso')).toBeInTheDocument();
-      expect(within(cartao('Colete Salva-vidas')).getByText('Manutencao')).toBeInTheDocument();
+      expect(within(cartao('Colete Salva-vidas')).getByText('Manutenção')).toBeInTheDocument();
       expect(within(cartao('Quad Velho')).getByText('Retirado')).toBeInTheDocument();
     });
 
-    it('tipo e estado desconhecidos nao rebentam (estado sem rotulo)', async () => {
+    it('tipo e estado desconhecidos não rebentam (estado sem rótulo)', async () => {
       await renderPagina();
       const c = cartao('Barco Misterio');
       expect(c.textContent).toContain('6 lugares');
       expect(within(c).getByRole('button', { name: 'Editar' })).toBeInTheDocument();
     });
 
-    it('sem itens mostra o estado vazio e o subtitulo a zero', async () => {
+    it('sem itens mostra o estado vazio e o subtítulo a zero', async () => {
       await renderPagina({ frota: [] });
       expect(screen.getByText('Sem itens de frota registados')).toBeInTheDocument();
-      expect(screen.getByText('0 disponivel(is) de 0')).toBeInTheDocument();
+      expect(screen.getByText('0 disponível(is) de 0')).toBeInTheDocument();
     });
 
-    it('enquanto carrega mostra o indicador, sem vazio nem cartoes; depois a lista', async () => {
+    it('enquanto carrega mostra o indicador, sem vazio nem cartões; depois a lista', async () => {
       const espera = adiado();
       listFleet.mockReset().mockReturnValue(espera.promise);
       listUnits.mockReset().mockResolvedValue(UNIDADES);
@@ -241,7 +241,7 @@ describe('Frota', () => {
       expect(document.querySelector('.animate-spin')).toBeNull();
     });
 
-    it('lista de tours nula nao rebenta (o formulario fica sem tours)', async () => {
+    it('lista de tours nula não rebenta (o formulário fica sem tours)', async () => {
       await renderPagina({ unidades: null });
       fireEvent.click(screen.getByRole('button', { name: 'Novo item' }));
       expect([...campo('Tour associado').options].map((o) => o.value)).toEqual(['']);
@@ -249,7 +249,7 @@ describe('Frota', () => {
 
     /* O servico a falhar nao tem tratamento na pagina (so ha finally): a promessa rejeitada nao e
        apanhada. O teste engole essa rejeicao para ver apenas o que a pagina mostra. */
-    it('frota a falhar deixa a pagina a mostrar o vazio, sem registar erro no consolo', async () => {
+    it('frota a falhar deixa a página a mostrar o vazio, sem registar erro no consolo', async () => {
       const ouvintes = process.listeners('unhandledRejection');
       process.removeAllListeners('unhandledRejection');
       process.on('unhandledRejection', () => {});
@@ -275,7 +275,7 @@ describe('Frota', () => {
       return dialogo();
     }
 
-    it('abre o formulario com os valores por omissao e sem o campo Estado', async () => {
+    it('abre o formulário com os valores por omissao e sem o campo Estado', async () => {
       const d = await abrirCriar();
       expect(within(d).getByRole('heading', { name: 'Novo item' })).toBeInTheDocument();
       expect(campo('Nome')).toHaveValue('');
@@ -293,11 +293,11 @@ describe('Frota', () => {
       ]);
       expect(campo('Tour associado')).toHaveValue('');
       expect([...campo('Tour associado').options].map((o) => [o.value, o.textContent])).toEqual([
-        ['', 'Nenhum (generico)'], ['u1', 'Tour Vulcao'], ['u2', 'Tour Sal'],
+        ['', 'Nenhum (genérico)'], ['u1', 'Tour Vulcao'], ['u2', 'Tour Sal'],
       ]);
-      expect(campo('Descricao').tagName).toBe('TEXTAREA');
-      expect(campo('Ultima manutencao')).toHaveAttribute('type', 'date');
-      expect(campo('Proxima manutencao')).toHaveAttribute('type', 'date');
+      expect(campo('Descrição').tagName).toBe('TEXTAREA');
+      expect(campo('Última manutenção')).toHaveAttribute('type', 'date');
+      expect(campo('Próxima manutenção')).toHaveAttribute('type', 'date');
       expect(within(d).getByText('Foto da viatura')).toBeInTheDocument();
       expect(d.querySelector('input[type="file"]')).toHaveAttribute('accept', 'image/*');
       expect(botaoDoDialogo('Cancelar')).toBeInTheDocument();
@@ -306,10 +306,10 @@ describe('Frota', () => {
 
     it('cada campo traz a etiqueta logo por cima', async () => {
       await abrirCriar();
-      temEtiquetaPorCima(['Nome', 'Matricula', 'Tipo', 'Capacidade (lugares)', 'Tour associado', 'Descricao', 'Ultima manutencao', 'Proxima manutencao']);
+      temEtiquetaPorCima(['Nome', 'Matricula', 'Tipo', 'Capacidade (lugares)', 'Tour associado', 'Descrição', 'Última manutenção', 'Próxima manutenção']);
     });
 
-    it('so o nome preenchido envia o objeto de hoje com todas as chaves', async () => {
+    it('só o nome preenchido envia o objeto de hoje com todas as chaves', async () => {
       await abrirCriar();
       fireEvent.change(campo('Nome'), { target: { value: 'Novo Item' } });
       fireEvent.click(botaoDoDialogo('Criar item'));
@@ -321,16 +321,16 @@ describe('Frota', () => {
       expect(updateFleet).not.toHaveBeenCalled();
     });
 
-    it('formulario completo envia todos os campos, com a capacidade como numero', async () => {
+    it('formulário completo envia todos os campos, com a capacidade como número', async () => {
       await abrirCriar();
       fireEvent.change(campo('Nome'), { target: { value: 'Novo Item' } });
       fireEvent.change(campo('Matricula'), { target: { value: 'SL-99-ZZ' } });
       fireEvent.change(campo('Tipo'), { target: { value: 'equipment' } });
       fireEvent.change(campo('Capacidade (lugares)'), { target: { value: '8' } });
       fireEvent.change(campo('Tour associado'), { target: { value: 'u2' } });
-      fireEvent.change(campo('Descricao'), { target: { value: 'Equipamento novo' } });
-      fireEvent.change(campo('Ultima manutencao'), { target: { value: '2026-03-01' } });
-      fireEvent.change(campo('Proxima manutencao'), { target: { value: '2026-09-01' } });
+      fireEvent.change(campo('Descrição'), { target: { value: 'Equipamento novo' } });
+      fireEvent.change(campo('Última manutenção'), { target: { value: '2026-03-01' } });
+      fireEvent.change(campo('Próxima manutenção'), { target: { value: '2026-09-01' } });
       fireEvent.click(botaoDoDialogo('Criar item'));
       await waitFor(() => expect(createFleet).toHaveBeenCalledTimes(1));
       expect(createFleet.mock.calls[0]).toStrictEqual([{
@@ -341,7 +341,7 @@ describe('Frota', () => {
       expect(typeof createFleet.mock.calls[0][0].capacity).toBe('number');
     });
 
-    it('o nome e obrigatorio: vazio o navegador impede o envio, preenchido envia', async () => {
+    it('o nome e obrigatório: vazio o navegador impede o envio, preenchido envia', async () => {
       await abrirCriar();
       expect(campo('Nome')).toBeRequired();
       fireEvent.click(botaoDoDialogo('Criar item'));
@@ -370,16 +370,16 @@ describe('Frota', () => {
       expect(dados.images).toEqual(['data:image/png;base64,eA==']);
     });
 
-    it('sucesso: fecha o modal, o item novo fica no topo e o subtitulo actualiza', async () => {
+    it('sucesso: fecha o modal, o item novo fica no topo e o subtítulo actualiza', async () => {
       await abrirCriar();
       fireEvent.change(campo('Nome'), { target: { value: 'Novo Item' } });
       fireEvent.click(botaoDoDialogo('Criar item'));
       await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
       expect(nomesNaGrelha()).toEqual(['Novo Item', 'Kia Sportage', 'Prancha Kite 12m', 'Colete Salva-vidas', 'Quad Velho', 'Barco Misterio']);
-      expect(screen.getByText('2 disponivel(is) de 6')).toBeInTheDocument();
+      expect(screen.getByText('2 disponível(is) de 6')).toBeInTheDocument();
     });
 
-    it('enquanto grava o botao fica bloqueado e depois fecha', async () => {
+    it('enquanto grava o botão fica bloqueado e depois fecha', async () => {
       await abrirCriar();
       const espera = adiado();
       createFleet.mockReset().mockReturnValue(espera.promise);
@@ -412,7 +412,7 @@ describe('Frota', () => {
       expect(screen.queryByText('Erro ao guardar')).not.toBeInTheDocument();
     });
 
-    it('Cancelar, o X e Escape fecham sem chamar servicos de escrita', async () => {
+    it('Cancelar, o X e Escape fecham sem chamar serviços de escrita', async () => {
       await abrirCriar();
       fireEvent.click(botaoDoDialogo('Cancelar'));
       expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
@@ -438,13 +438,13 @@ describe('Frota', () => {
       expect(campo('Tipo')).toHaveValue('vehicle');
       expect(campo('Estado')).toHaveValue('available');
       expect([...campo('Estado').options].map((o) => [o.value, o.textContent])).toEqual([
-        ['available', 'Disponivel'], ['in_use', 'Em uso'], ['maintenance', 'Manutencao'], ['retired', 'Retirado'],
+        ['available', 'Disponível'], ['in_use', 'Em uso'], ['maintenance', 'Manutenção'], ['retired', 'Retirado'],
       ]);
       expect(campo('Capacidade (lugares)')).toHaveValue('4');
       expect(campo('Tour associado')).toHaveValue('u1');
-      expect(campo('Descricao')).toHaveValue('Bom estado');
-      expect(campo('Ultima manutencao')).toHaveValue('2025-01-10');
-      expect(campo('Proxima manutencao')).toHaveValue('2099-06-01');
+      expect(campo('Descrição')).toHaveValue('Bom estado');
+      expect(campo('Última manutenção')).toHaveValue('2025-01-10');
+      expect(campo('Próxima manutenção')).toHaveValue('2099-06-01');
       expect(within(d).getByRole('img', { name: 'Viatura' })).toHaveAttribute('src', 'https://img.exemplo.cv/kia.png');
       expect(botaoDoDialogo('Guardar')).toHaveAttribute('type', 'submit');
     });
@@ -452,10 +452,10 @@ describe('Frota', () => {
     it('cada campo traz a etiqueta logo por cima', async () => {
       await renderPagina();
       abrirEditar('Kia Sportage');
-      temEtiquetaPorCima(['Nome', 'Matricula', 'Tipo', 'Estado', 'Capacidade (lugares)', 'Tour associado', 'Descricao', 'Ultima manutencao', 'Proxima manutencao']);
+      temEtiquetaPorCima(['Nome', 'Matricula', 'Tipo', 'Estado', 'Capacidade (lugares)', 'Tour associado', 'Descrição', 'Última manutenção', 'Próxima manutenção']);
     });
 
-    it('sem alterar nada, guarda o mesmo objeto (com notas, estado e imagens) e substitui o cartao na mesma posicao', async () => {
+    it('sem alterar nada, guarda o mesmo objeto (com notas, estado e imagens) e substitui o cartão na mesma posição', async () => {
       await renderPagina();
       abrirEditar('Kia Sportage');
       fireEvent.click(botaoDoDialogo('Guardar'));
@@ -470,7 +470,7 @@ describe('Frota', () => {
       expect(nomesNaGrelha()).toEqual(['Kia Sportage', 'Prancha Kite 12m', 'Colete Salva-vidas', 'Quad Velho', 'Barco Misterio']);
     });
 
-    it('alterar campos envia os novos valores e actualiza o cartao e o subtitulo', async () => {
+    it('alterar campos envia os novos valores e actualiza o cartão e o subtítulo', async () => {
       await renderPagina();
       abrirEditar('Kia Sportage');
       fireEvent.change(campo('Nome'), { target: { value: 'Kia Novo' } });
@@ -479,20 +479,20 @@ describe('Frota', () => {
       fireEvent.change(campo('Estado'), { target: { value: 'in_use' } });
       fireEvent.change(campo('Capacidade (lugares)'), { target: { value: '10' } });
       fireEvent.change(campo('Tour associado'), { target: { value: '' } });
-      fireEvent.change(campo('Descricao'), { target: { value: 'Outra descricao' } });
-      fireEvent.change(campo('Ultima manutencao'), { target: { value: '2026-01-02' } });
-      fireEvent.change(campo('Proxima manutencao'), { target: { value: '2026-12-31' } });
+      fireEvent.change(campo('Descrição'), { target: { value: 'Outra descrição' } });
+      fireEvent.change(campo('Última manutenção'), { target: { value: '2026-01-02' } });
+      fireEvent.change(campo('Próxima manutenção'), { target: { value: '2026-12-31' } });
       fireEvent.click(botaoDoDialogo('Guardar'));
       await waitFor(() => expect(updateFleet).toHaveBeenCalledTimes(1));
       expect(updateFleet.mock.calls[0]).toStrictEqual(['f1', {
-        name: 'Kia Novo', plate: 'SL-00-ZZ', type: 'gear', description: 'Outra descricao', notes: 'nota interna',
+        name: 'Kia Novo', plate: 'SL-00-ZZ', type: 'gear', description: 'Outra descrição', notes: 'nota interna',
         status: 'in_use', last_maintenance_at: '2026-01-02', next_maintenance_at: '2026-12-31',
         capacity: 10, unit_id: null, photo: 'https://img.exemplo.cv/kia.png', images: ['https://img.exemplo.cv/kia.png'],
       }]);
       await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
       expect(within(cartao('Kia Novo')).getByText('Em uso')).toBeInTheDocument();
       expect(screen.queryByText('Kia Sportage')).not.toBeInTheDocument();
-      expect(screen.getByText('0 disponivel(is) de 5')).toBeInTheDocument();
+      expect(screen.getByText('0 disponível(is) de 5')).toBeInTheDocument();
     });
 
     it('item sem foto, datas, tour nem capacidade: valores por omissao e images vazio', async () => {
@@ -501,8 +501,8 @@ describe('Frota', () => {
       expect(campo('Matricula')).toHaveValue('');
       expect(campo('Capacidade (lugares)')).toHaveValue('2');
       expect(campo('Tour associado')).toHaveValue('');
-      expect(campo('Ultima manutencao')).toHaveValue('');
-      expect(campo('Proxima manutencao')).toHaveValue('2000-03-15');
+      expect(campo('Última manutenção')).toHaveValue('');
+      expect(campo('Próxima manutenção')).toHaveValue('2000-03-15');
       expect(within(dialogo()).queryByRole('img', { name: 'Viatura' })).not.toBeInTheDocument();
       fireEvent.click(botaoDoDialogo('Guardar'));
       await waitFor(() => expect(updateFleet).toHaveBeenCalledTimes(1));
@@ -512,7 +512,7 @@ describe('Frota', () => {
       }]);
     });
 
-    it('com varias imagens guardadas, so a primeira segue em images (como hoje)', async () => {
+    it('com varias imagens guardadas, só a primeira segue em images (como hoje)', async () => {
       await renderPagina({ frota: [{ ...KIA(), images: ['a.png', 'b.png'] }] });
       abrirEditar('Kia Sportage');
       fireEvent.click(botaoDoDialogo('Guardar'));
@@ -535,13 +535,13 @@ describe('Frota', () => {
     it('erro do servidor mostra a mensagem e mantem o modal; sem mensagem usa "Erro ao guardar"', async () => {
       await renderPagina();
       abrirEditar('Kia Sportage');
-      updateFleet.mockReset().mockRejectedValue(erroApi('Sem permissao'));
+      updateFleet.mockReset().mockRejectedValue(erroApi('Sem permissão'));
       fireEvent.click(botaoDoDialogo('Guardar'));
-      expect(await screen.findByText('Sem permissao')).toBeInTheDocument();
+      expect(await screen.findByText('Sem permissão')).toBeInTheDocument();
       updateFleet.mockReset().mockRejectedValue(new Error('rede'));
       fireEvent.click(botaoDoDialogo('Guardar'));
       expect(await screen.findByText('Erro ao guardar')).toBeInTheDocument();
-      expect(screen.queryByText('Sem permissao')).not.toBeInTheDocument();
+      expect(screen.queryByText('Sem permissão')).not.toBeInTheDocument();
       expect(dialogo()).toBeInTheDocument();
     });
 
@@ -555,7 +555,7 @@ describe('Frota', () => {
   });
 
   describe('eliminar item', () => {
-    it('pede confirmacao com o nome do item; Cancelar nao chama o servico', async () => {
+    it('pede confirmação com o nome do item; Cancelar não chama o serviço', async () => {
       await renderPagina();
       abrirEliminar('Quad Velho');
       const d = dialogo();
@@ -575,17 +575,17 @@ describe('Frota', () => {
       expect(deleteFleet).toHaveBeenCalledTimes(1);
       expect(deleteFleet).toHaveBeenCalledWith('f1');
       expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
-      expect(screen.getByText('0 disponivel(is) de 4')).toBeInTheDocument();
+      expect(screen.getByText('0 disponível(is) de 4')).toBeInTheDocument();
     });
 
-    it('eliminar o ultimo item mostra o vazio', async () => {
+    it('eliminar o último item mostra o vazio', async () => {
       await renderPagina({ frota: [QUAD()] });
       abrirEliminar('Quad Velho');
       fireEvent.click(botaoDoDialogo('Eliminar'));
       expect(await screen.findByText('Sem itens de frota registados')).toBeInTheDocument();
     });
 
-    it('o X e Escape fecham a confirmacao sem eliminar', async () => {
+    it('o X e Escape fecham a confirmação sem eliminar', async () => {
       await renderPagina();
       abrirEliminar('Quad Velho');
       fireEvent.click(botaoDoDialogo('Fechar'));
@@ -639,7 +639,7 @@ describe('FleetSelector', () => {
     return { ...r, p };
   }
 
-  it('sem tour ou sem data nao pede nada, nao mostra nada e avisa com lista vazia', async () => {
+  it('sem tour ou sem data não pede nada, não mostra nada e avisa com lista vazia', async () => {
     const a = props({ unitId: undefined });
     const { container, rerender } = render(<FleetSelector {...a} />);
     expect(container).toBeEmptyDOMElement();
@@ -682,7 +682,7 @@ describe('FleetSelector', () => {
     expect(p.onLoad).toHaveBeenCalledWith(BUGGYS());
   });
 
-  it('os botoes sao do tipo button (nao submetem formularios) e o ocupado esta desactivado', async () => {
+  it('os botões são do tipo button (não submetem formularios) e o ocupado esta desactivado', async () => {
     await renderSeletor();
     for (const b of screen.getAllByRole('button')) expect(b).toHaveAttribute('type', 'button');
     expect(screen.getByRole('button', { name: /Buggy 1/ })).not.toBeDisabled();
@@ -697,19 +697,19 @@ describe('FleetSelector', () => {
     expect(p.onChange).toHaveBeenCalledWith('v3');
   });
 
-  it('o buggy ocupado nao chama onChange', async () => {
+  it('o buggy ocupado não chama onChange', async () => {
     const { p } = await renderSeletor();
     fireEvent.click(screen.getByRole('button', { name: /Buggy 2/ }));
     expect(p.onChange).not.toHaveBeenCalled();
   });
 
-  it('escolher o ja escolhido volta a chamar onChange (o pai decide)', async () => {
+  it('escolher o já escolhido volta a chamar onChange (o pai decide)', async () => {
     const { p } = await renderSeletor({ value: 'v1' });
     fireEvent.click(screen.getByRole('button', { name: /Buggy 1/ }));
     expect(p.onChange).toHaveBeenCalledWith('v1');
   });
 
-  it('sem buggys nao mostra nada e avisa com lista vazia', async () => {
+  it('sem buggys não mostra nada e avisa com lista vazia', async () => {
     getFleetAvailability.mockReset().mockResolvedValue([]);
     const p = props();
     const { container } = render(<FleetSelector {...p} />);
@@ -725,7 +725,7 @@ describe('FleetSelector', () => {
     expect(container).toBeEmptyDOMElement();
   });
 
-  it('servico a falhar e silencioso: nao mostra nada e avisa com lista vazia', async () => {
+  it('serviço a falhar e silencioso: não mostra nada e avisa com lista vazia', async () => {
     getFleetAvailability.mockReset().mockRejectedValue(new Error('rede'));
     const p = props();
     const { container } = render(<FleetSelector {...p} />);
@@ -751,7 +751,7 @@ describe('FleetSelector', () => {
     expect(p.onLoad).toHaveBeenLastCalledWith([]);
   });
 
-  it('mudar so value ou onChange nao volta a pedir a disponibilidade', async () => {
+  it('mudar só value ou onChange não volta a pedir a disponibilidade', async () => {
     const { rerender, p } = await renderSeletor();
     rerender(<FleetSelector {...p} value="v1" onChange={vi.fn()} />);
     expect(getFleetAvailability).toHaveBeenCalledTimes(1);
@@ -812,18 +812,18 @@ describe('Frota (desenho do sistema)', () => {
     expect(etiqueta.control).toBe(dialogo().querySelector('input[type="file"]'));
   });
 
-  it('o estado de cada item tem um aspecto proprio (verde, azul, ambar, neutro)', async () => {
+  it('o estado de cada item tem um aspecto próprio (verde, azul, ambar, neutro)', async () => {
     render(<Fleet />);
     await waitFor(() => expect(document.querySelector('.animate-spin')).toBeNull());
     const classe = (nome, rotulo) => within(cartao(nome)).getByText(rotulo).className;
-    expect(classe('Kia Sportage', 'Disponivel')).toContain('--success');
+    expect(classe('Kia Sportage', 'Disponível')).toContain('--success');
     expect(classe('Prancha Kite 12m', 'Em uso')).toContain('ocean');
-    expect(classe('Colete Salva-vidas', 'Manutencao')).toContain('--warning');
+    expect(classe('Colete Salva-vidas', 'Manutenção')).toContain('--warning');
     /* text-n-500 so existe na variante no_show (default, checked_out e delivered usam n-600) */
     expect(classe('Quad Velho', 'Retirado')).toContain('text-n-500');
     expect(classe('Quad Velho', 'Retirado')).not.toContain('text-n-600');
   });
-  it('FleetSelector: fora da app a base e a de sempre (turquoise, rounded-2xl) e o aspecto novo vem so em variantes app:', async () => {
+  it('FleetSelector: fora da app a base e a de sempre (turquoise, rounded-2xl) e o aspecto novo vem só em variantes app:', async () => {
     getFleetAvailability.mockReset().mockResolvedValue([
       { id: 'v1', name: 'Buggy 1', capacity: 4, available: true },
       { id: 'v2', name: 'Buggy 2', capacity: 2, available: false },

@@ -87,26 +87,26 @@ describe('Reviews', () => {
     return screen.getByRole('button', { name: n === 0 ? 'Todas' : `${n}★` });
   }
 
-  it('o subtitulo e as estatisticas mostram total, media, distribuicao, respondidas e publicas', async () => {
+  it('o subtítulo e as estatísticas mostram total, média, distribuição, respondidas e públicas', async () => {
     await abre();
     expect(screen.getByText('4.2')).toBeInTheDocument();
-    expect(screen.getByText('12 avaliacoes')).toBeInTheDocument();
+    expect(screen.getByText('12 avaliações')).toBeInTheDocument();
     /* "Respondidas" tambem e uma opcao do filtro: o rotulo das estatisticas e o <span> */
     const rotulo = (texto) => screen.getAllByText(texto).find(e => e.tagName === 'SPAN');
     expect(rotulo('Respondidas').nextElementSibling.textContent).toBe('1/ 12');
-    expect(rotulo('Publicas').nextElementSibling.textContent).toBe('3');
+    expect(rotulo('Públicas').nextElementSibling.textContent).toBe('3');
     expect(screen.getByText('sem resposta')).toBeInTheDocument();
     expect(screen.getByText('9')).toBeInTheDocument();
   });
 
-  it('cada avaliacao mostra privacidade, servico, cliente, comentario e resposta', async () => {
+  it('cada avaliação mostra privacidade, serviço, cliente, comentário e resposta', async () => {
     await abre();
-    expect(screen.getAllByText('Publica').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Pública').length).toBeGreaterThan(0);
     expect(screen.getAllByText('Privada').length).toBeGreaterThan(0);
     expect(screen.getAllByText('Buggy Tour').some(e => e.tagName === 'SPAN')).toBe(true);
     expect(screen.getByText('Ana · CV')).toBeInTheDocument();
     expect(screen.getByText('Cliente anonimo')).toBeInTheDocument();
-    expect(screen.getByText('Sem comentario')).toBeInTheDocument();
+    expect(screen.getByText('Sem comentário')).toBeInTheDocument();
     expect(screen.getByText('Resposta do operador')).toBeInTheDocument();
     expect(screen.getByText('Obrigado pela visita')).toBeInTheDocument();
   });
@@ -124,7 +124,7 @@ describe('Reviews', () => {
     expect(screen.queryByText('Atraso')).not.toBeInTheDocument();
   });
 
-  it('o filtro de estrelas mostra so essa nota e a contagem acompanha', async () => {
+  it('o filtro de estrelas mostra só essa nota e a contagem acompanha', async () => {
     await abre();
     expect(screen.getByText('12 resultado(s)')).toBeInTheDocument();
     fireEvent.click(estrelas(2));
@@ -137,7 +137,7 @@ describe('Reviews', () => {
     expect(screen.getByText('12 resultado(s)')).toBeInTheDocument();
   });
 
-  it('o filtro de estrelas e um grupo de botoes com aria-pressed', async () => {
+  it('o filtro de estrelas e um grupo de botões com aria-pressed', async () => {
     await abre();
     expect(estrelas(0)).toHaveAttribute('aria-pressed', 'true');
     expect(estrelas(5)).toHaveAttribute('aria-pressed', 'false');
@@ -146,22 +146,22 @@ describe('Reviews', () => {
     expect(estrelas(0)).toHaveAttribute('aria-pressed', 'false');
   });
 
-  it('o filtro de servico lista os servicos e filtra pela unidade da reserva', async () => {
+  it('o filtro de serviço lista os serviços e filtra pela unidade da reserva', async () => {
     await abre();
-    const sel = screen.getByDisplayValue('Todos os servicos');
-    expect([...sel.options].map(o => o.textContent)).toEqual(['Todos os servicos', 'Buggy Tour', 'Mergulho']);
+    const sel = screen.getByDisplayValue('Todos os serviços');
+    expect([...sel.options].map(o => o.textContent)).toEqual(['Todos os serviços', 'Buggy Tour', 'Mergulho']);
     fireEvent.change(sel, { target: { value: 'u1' } });
     expect(screen.getByText('1 resultado(s)')).toBeInTheDocument();
     expect(screen.getByText('Excelente passeio')).toBeInTheDocument();
   });
 
-  it('sem servicos (ou se o pedido falhar) nao ha filtro de servico', async () => {
+  it('sem serviços (ou se o pedido falhar) não ha filtro de serviço', async () => {
     servicos({ unitsFalha: true });
     await abre();
-    expect(screen.queryByDisplayValue('Todos os servicos')).not.toBeInTheDocument();
+    expect(screen.queryByDisplayValue('Todos os serviços')).not.toBeInTheDocument();
   });
 
-  it('o filtro de resposta mostra as sem resposta (publicas) ou as respondidas', async () => {
+  it('o filtro de resposta mostra as sem resposta (públicas) ou as respondidas', async () => {
     await abre();
     const sel = screen.getByDisplayValue('Todas');
     expect([...sel.options].map(o => o.textContent)).toEqual(['Todas', 'Sem resposta', 'Respondidas']);
@@ -180,7 +180,7 @@ describe('Reviews', () => {
     expect(screen.getByText('2 resultado(s)')).toBeInTheDocument();
   });
 
-  it('a pesquisa procura no comentario e no nome do cliente', async () => {
+  it('a pesquisa procura no comentário e no nome do cliente', async () => {
     await abre();
     const campo = screen.getByPlaceholderText('Pesquisar...');
     fireEvent.change(campo, { target: { value: 'atraso' } });
@@ -190,7 +190,7 @@ describe('Reviews', () => {
     expect(screen.getByText('1 resultado(s)')).toBeInTheDocument();
   });
 
-  it('pagina de 10 em 10: "Carregar mais" mostra o resto e mudar um filtro volta a primeira pagina', async () => {
+  it('página de 10 em 10: "Carregar mais" mostra o resto e mudar um filtro volta a primeira página', async () => {
     await abre();
     expect(screen.getByRole('button', { name: 'Carregar mais (2 restantes)' })).toBeInTheDocument();
     expect(screen.queryByText('Filler r12')).not.toBeInTheDocument();
@@ -202,16 +202,16 @@ describe('Reviews', () => {
     expect(screen.getByRole('button', { name: 'Carregar mais (2 restantes)' })).toBeInTheDocument();
   });
 
-  it('"Responder" so aparece nas publicas sem resposta', async () => {
+  it('"Responder" só aparece nas públicas sem resposta', async () => {
     await abre();
     expect(screen.getAllByRole('button', { name: 'Responder' })).toHaveLength(2);
   });
 
-  it('responder envia a resposta e actualiza o cartao e a contagem', async () => {
+  it('responder envia a resposta e actualiza o cartão e a contagem', async () => {
     await abre();
     fireEvent.click(screen.getAllByRole('button', { name: 'Responder' })[0]);
     const dialogo = await screen.findByRole('dialog');
-    expect(within(dialogo).getByText('Responder avaliacao')).toBeInTheDocument();
+    expect(within(dialogo).getByText('Responder avaliação')).toBeInTheDocument();
     expect(within(dialogo).getByText('Excelente passeio')).toBeInTheDocument();
     const form = dialogo.querySelector('form');
     fireEvent.submit(form);
@@ -238,16 +238,16 @@ describe('Reviews', () => {
     await abre();
     const campo = screen.getByPlaceholderText('Pesquisar...');
     fireEvent.change(campo, { target: { value: 'zzz' } });
-    expect(screen.getByText('Nenhuma avaliacao encontrada')).toBeInTheDocument();
+    expect(screen.getByText('Nenhuma avaliação encontrada')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Limpar filtros' }));
     expect(screen.getByText('12 resultado(s)')).toBeInTheDocument();
     expect(campo.value).toBe('');
   });
 
-  it('sem nenhuma avaliacao mostra o vazio sem "Limpar filtros"', async () => {
+  it('sem nenhuma avaliação mostra o vazio sem "Limpar filtros"', async () => {
     servicos({ reviews: [], stats: { average: 0, total: 0, distribution: [] } });
     await abre('0 no total · 0 sem resposta');
-    expect(screen.getByText('Nenhuma avaliacao encontrada')).toBeInTheDocument();
+    expect(screen.getByText('Nenhuma avaliação encontrada')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Limpar filtros' })).not.toBeInTheDocument();
     expect(screen.getByText('Todas respondidas')).toBeInTheDocument();
   });

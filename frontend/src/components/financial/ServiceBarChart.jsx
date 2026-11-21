@@ -38,7 +38,7 @@ export default function ServiceBarChart({ data, currency = 'EUR' }) {
   if (!top5.length) {
     return (
       <div className="flex items-center justify-center h-52 text-n-400 text-sm font-body">
-        Sem dados de servicos
+        Sem dados de serviços
       </div>
     );
   }

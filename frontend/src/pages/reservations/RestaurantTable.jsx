@@ -10,9 +10,9 @@ import ColumnCards from './ColumnCards';
 import { rotuloEstadoReserva } from '../../utils/estadoReserva';
 import { formatDate, parseRestaurantMeta } from './shared';
 
-const TURNO_LABELS = { almoco: 'Almoco', jantar: 'Jantar' };
+const TURNO_LABELS = { almoco: 'Almoço', jantar: 'Jantar' };
 const OCASIAO_LABELS = {
-  aniversario: 'Aniversario', lua_de_mel: 'Lua-de-mel', negocios: 'Negocios', outro: 'Outro',
+  aniversario: 'Aniversário', lua_de_mel: 'Lua-de-mel', negocios: 'Negócios', outro: 'Outro',
 };
 
 export default function RestaurantTable({ reservations, units, onEdit, onDelete, onDetails, onUpdate, onView }) {
@@ -102,7 +102,7 @@ export default function RestaurantTable({ reservations, units, onEdit, onDelete,
     },
     {
       key: 'ocasiao',
-      label: 'Ocasiao',
+      label: 'Ocasião',
       render: (r) => {
         const rcMeta = parseRestaurantMeta(r);
         return rcMeta.ocasiao ? (

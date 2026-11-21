@@ -76,7 +76,7 @@ function ReviewCard({ review, onReply }) {
             <StarRow rating={review.rating} />
             <span className="text-xs font-mono text-n-400">{fmtDate(review.created_at)}</span>
             {review.is_public
-              ? <Badge variant="confirmed">Publica</Badge>
+              ? <Badge variant="confirmed">Pública</Badge>
               : <Badge variant="default">Privada</Badge>}
             {unitName && (
               <span className="text-xs font-body text-ocean-700 bg-ocean-50 px-2 py-0.5 rounded">
@@ -89,7 +89,7 @@ function ReviewCard({ review, onReply }) {
           {review.comment ? (
             <p className="text-sm font-body text-n-800 leading-relaxed mb-2">{review.comment}</p>
           ) : (
-            <p className="text-sm font-body text-n-400 italic mb-2">Sem comentario</p>
+            <p className="text-sm font-body text-n-400 italic mb-2">Sem comentário</p>
           )}
 
           {/* Customer */}
@@ -200,7 +200,7 @@ export default function Reviews() {
   return (
     <div>
       <PageHeader
-        title="Avaliacoes"
+        title="Avaliações"
         subtitle={`${reviews.length} no total · ${pendingReply} sem resposta`}
       />
 
@@ -215,7 +215,7 @@ export default function Reviews() {
                   {Number(stats.average || 0).toFixed(1)}
                 </p>
                 <StarRow rating={Math.round(stats.average || 0)} size={16} />
-                <p className="text-xs font-body text-n-400 mt-1">{stats.total} avaliacoes</p>
+                <p className="text-xs font-body text-n-400 mt-1">{stats.total} avaliações</p>
               </div>
               <div className="flex-1">
                 <StarBreakdown distribution={stats.distribution} total={stats.total} />
@@ -238,7 +238,7 @@ export default function Reviews() {
                   style={{ width: reviews.length ? `${(reviews.filter(r => r.reply_text).length / reviews.length) * 100}%` : '0%' }} />
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-sm font-body text-n-600">Publicas</span>
+                <span className="text-sm font-body text-n-600">Públicas</span>
                 <span className="font-display font-bold text-n-900">
                   {reviews.filter(r => r.is_public).length}
                 </span>
@@ -288,7 +288,7 @@ export default function Reviews() {
         {units.length > 0 && (
           <div className="w-40">
             <Select value={filterUnit} onChange={e => { setFilterUnit(e.target.value); setPage(1); }}>
-              <option value="">Todos os servicos</option>
+              <option value="">Todos os serviços</option>
               {units.map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
             </Select>
           </div>
@@ -321,7 +321,7 @@ export default function Reviews() {
         <div className="bg-white border border-n-200 rounded-md">
           <EmptyState
             icon={Star}
-            title="Nenhuma avaliacao encontrada"
+            title="Nenhuma avaliação encontrada"
             action={(filterStar > 0 || filterUnit || filterReply !== 'all' || search) && (
               <Button variant="ghost" size="sm"
                 onClick={() => { setFilterStar(0); setFilterUnit(''); setFilterReply('all'); setSearch(''); setPage(1); }}>
@@ -347,7 +347,7 @@ export default function Reviews() {
       )}
 
       {/* Reply modal */}
-      <Modal open={!!replyModal} onClose={() => setReplyModal(null)} title="Responder avaliacao" size="md"
+      <Modal open={!!replyModal} onClose={() => setReplyModal(null)} title="Responder avaliação" size="md"
         footer={
           <>
             <Button variant="secondary" onClick={() => setReplyModal(null)}>Cancelar</Button>
@@ -368,11 +368,11 @@ export default function Reviews() {
           </div>
           <form id="reply-form" onSubmit={handleReply}>
             <Textarea
-              label="A sua resposta (sera publicada)"
+              label="A sua resposta (será publicada)"
               value={replyText}
               onChange={e => setReplyText(e.target.value)}
               required rows={4}
-              placeholder="Obrigado pela sua visita e pelo seu comentario..." />
+              placeholder="Obrigado pela sua visita e pelo seu comentário..." />
           </form>
         </div>
       </Modal>

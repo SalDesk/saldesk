@@ -82,7 +82,7 @@ function abrir(rotulo) {
 const cartao = (nome) => screen.getAllByText(nome, { selector: 'p' })[0].closest('div.flex-col');
 const toasts = () => useToastStore.getState().toasts.map(t => `${t.type}:${t.message}`);
 
-describe('Staff: pagina inteira', () => {
+describe('Staff: página inteira', () => {
   it('lista_os_colaboradores_com_o_subtitulo_e_o_contador', async () => {
     await montar();
     expect(screen.getByText('2 activo(s) · 3 total')).toBeInTheDocument();
@@ -125,7 +125,7 @@ describe('Staff: pagina inteira', () => {
     const nome = screen.getByPlaceholderText('Nome e apelido');
     expect(nome).toHaveValue('Rui Lopes');
     fireEvent.change(nome, { target: { value: 'Rui L. Lopes' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Guardar alteracoes' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Guardar alterações' }));
     await waitFor(() => expect(updateStaff).toHaveBeenCalledWith('s1', expect.objectContaining({ name: 'Rui L. Lopes', skills: [], schedule: [] })));
     expect(await screen.findByText('Rui L. Lopes')).toBeInTheDocument();
   });
@@ -146,7 +146,7 @@ describe('Staff: pagina inteira', () => {
     expect(screen.getByText('2 activo(s) · 3/2 no plano Starter')).toBeInTheDocument();
     expect(screen.getByText('Atingiu o limite de 2 colaboradores do plano Starter.')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: /Novo colaborador/ }));
-    expect(await screen.findByText('Ver planos de subscricao')).toBeInTheDocument();
+    expect(await screen.findByText('Ver planos de subscrição')).toBeInTheDocument();
     expect(screen.queryByRole('dialog')).toBeNull(); /* nao abre o formulario */
   });
 
@@ -225,7 +225,7 @@ describe('Staff: criar colaborador com conta de acesso', () => {
     createStaffAccount.mockRejectedValue(new Error('x'));
     await abrirFormulario('n@x.cv');
     fireEvent.click(screen.getByRole('button', { name: 'Criar colaborador' }));
-    await waitFor(() => expect(toasts()).toContain('error:Colaborador criado, mas a conta de acesso falhou — tente novamente no cartao do colaborador'));
+    await waitFor(() => expect(toasts()).toContain('error:Colaborador criado, mas a conta de acesso falhou — tente novamente no cartão do colaborador'));
     await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
     expect(within(cartao('Novo Guia')).getByText('Criar conta')).toBeInTheDocument(); /* sem user_id */
   });

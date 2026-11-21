@@ -35,7 +35,7 @@ function alertSeverity(days) {
 const SEV_STYLE = {
   expired:  { bg: 'bg-[var(--error-light)]',   text: 'text-[var(--error)]',   label: 'Expirado'  },
   critical: { bg: 'bg-[var(--error-light)]',   text: 'text-[var(--error)]',   label: 'Urgente'   },
-  warning:  { bg: 'bg-[var(--warning-light)]', text: 'text-[var(--warning)]', label: 'Atencao'   },
+  warning:  { bg: 'bg-[var(--warning-light)]', text: 'text-[var(--warning)]', label: 'Atenção'   },
 };
 
 function computeAlerts(units) {
@@ -50,11 +50,11 @@ function computeAlerts(units) {
     };
     check(meta.seguro_expiry,   'Seguro');
     check(meta.iuc_expiry,      'IUC');
-    check(meta.inspecao_expiry, 'Inspecao');
+    check(meta.inspecao_expiry, 'Inspeção');
     if (meta.next_revision_km && meta.current_km) {
       const kmLeft = Number(meta.next_revision_km) - Number(meta.current_km);
       const sev = kmLeft <= 0 ? 'expired' : kmLeft <= 500 ? 'critical' : null;
-      if (sev) alerts.push({ unit: u, meta, label, name: 'Revisao', days: null, kmLeft, sev });
+      if (sev) alerts.push({ unit: u, meta, label, name: 'Revisão', days: null, kmLeft, sev });
     }
   });
   return alerts.sort((a, b) => {
@@ -137,7 +137,7 @@ function MaintenanceModal({ units, record, onSave, onClose }) {
         <Select label="Tipo" value={form.tipo} onChange={e => set('tipo', e.target.value)}>
           {MAINT_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
         </Select>
-        <Input label="Data realizacao" type="date" value={form.date} onChange={e => set('date', e.target.value)} />
+        <Input label="Data realização" type="date" value={form.date} onChange={e => set('date', e.target.value)} />
       </div>
 
       <div className="grid grid-cols-2 gap-4">
@@ -159,9 +159,9 @@ function MaintenanceModal({ units, record, onSave, onClose }) {
       </div>
 
       <div className="grid grid-cols-2 gap-4">
-        <Input label="Proxima data" type="date" value={form.next_date} onChange={e => set('next_date', e.target.value)} />
+        <Input label="Próxima data" type="date" value={form.next_date} onChange={e => set('next_date', e.target.value)} />
         <Input
-          label="Proxima revisao (km)"
+          label="Próxima revisão (km)"
           type="number"
           value={form.next_km}
           onChange={e => set('next_km', e.target.value)}
@@ -253,7 +253,7 @@ export default function Maintenance() {
     },
     { key: 'seguro',   label: 'Seguro',   render: (u) => <DocCell dateStr={parseVehicleMeta(u).seguro_expiry} /> },
     { key: 'iuc',      label: 'IUC',      render: (u) => <DocCell dateStr={parseVehicleMeta(u).iuc_expiry} /> },
-    { key: 'inspecao', label: 'Inspecao', render: (u) => <DocCell dateStr={parseVehicleMeta(u).inspecao_expiry} /> },
+    { key: 'inspecao', label: 'Inspeção', render: (u) => <DocCell dateStr={parseVehicleMeta(u).inspecao_expiry} /> },
     {
       key: 'km',
       label: 'Km actual',
@@ -264,7 +264,7 @@ export default function Maintenance() {
     },
     {
       key: 'revisao',
-      label: 'Prox. revisao',
+      label: 'Prox. revisão',
       render: (u) => {
         const meta = parseVehicleMeta(u);
         const kmLeft = meta.next_revision_km && meta.current_km
@@ -285,9 +285,9 @@ export default function Maintenance() {
   return (
     <div>
       <PageHeader
-        title="Manutencao"
+        title="Manutenção"
         subtitle={`${units.length} viatura(s) · ${alerts.length} alerta(s)`}
-        actions={<Button icon={Plus} onClick={() => setModal(true)}>Registar intervencao</Button>}
+        actions={<Button icon={Plus} onClick={() => setModal(true)}>Registar intervenção</Button>}
       />
 
       {/* Alert filters */}
@@ -297,7 +297,7 @@ export default function Maintenance() {
             options={[
               { value: 'all',     label: `Todos (${alerts.length})` },
               { value: 'expired', label: `Urgentes (${alerts.filter(a => ['expired','critical'].includes(a.sev)).length})` },
-              { value: 'warning', label: `Atencao (${alerts.filter(a => a.sev === 'warning').length})` },
+              { value: 'warning', label: `Atenção (${alerts.filter(a => a.sev === 'warning').length})` },
             ]}
             value={filter}
             onChange={setFilter}
@@ -319,7 +319,7 @@ export default function Maintenance() {
                     {a.name}
                     {a.days !== null && a.days !== undefined
                       ? a.days <= 0
-                        ? ` — expirado ha ${Math.abs(a.days)} dias`
+                        ? ` — expirado há ${Math.abs(a.days)} dias`
                         : ` — expira em ${a.days} dias (${a.dateStr})`
                       : a.kmLeft !== undefined
                         ? a.kmLeft <= 0
@@ -339,7 +339,7 @@ export default function Maintenance() {
       ) : (
         <div className="flex items-center gap-3 px-4 py-3 rounded-md bg-[var(--success-light)] border border-n-200 mb-8">
           <CheckCircle size={15} strokeWidth={1.75} className="text-[var(--success)] shrink-0" />
-          <p className="text-sm font-body text-[var(--success)]">Sem alertas de documentacao. Toda a frota em dia.</p>
+          <p className="text-sm font-body text-[var(--success)]">Sem alertas de documentação. Toda a frota em dia.</p>
         </div>
       )}
 
@@ -347,7 +347,7 @@ export default function Maintenance() {
       <div className="bg-white rounded-md border border-n-200 shadow-sm mb-8 overflow-hidden">
         <div className="px-5 py-4 border-b border-n-100 flex items-center gap-2">
           <Car size={14} strokeWidth={1.75} className="text-n-500" />
-          <h2 className="font-display font-semibold text-sm text-n-700">Estado documentacao — frota</h2>
+          <h2 className="font-display font-semibold text-sm text-n-700">Estado documentação — frota</h2>
         </div>
         <Table columns={docColumns} rows={units} />
       </div>
@@ -356,7 +356,7 @@ export default function Maintenance() {
       <div className="bg-white rounded-md border border-n-200 shadow-sm overflow-hidden">
         <div className="px-5 py-4 border-b border-n-100 flex items-center gap-2">
           <Wrench size={14} strokeWidth={1.75} className="text-n-500" />
-          <h2 className="font-display font-semibold text-sm text-n-700">Historico de intervencoes</h2>
+          <h2 className="font-display font-semibold text-sm text-n-700">Histórico de intervenções</h2>
           {totalCost > 0 && (
             <span className="ml-auto text-xs font-mono text-n-500">
               Total: <strong className="text-n-900">€{totalCost.toFixed(2)}</strong>
@@ -364,7 +364,7 @@ export default function Maintenance() {
           )}
         </div>
         {history.length === 0 ? (
-          <EmptyState icon={Wrench} title="Nenhuma intervencao registada." />
+          <EmptyState icon={Wrench} title="Nenhuma intervenção registada." />
         ) : (
           <div className="divide-y divide-n-100">
             {history.map((h, i) => {
@@ -399,7 +399,7 @@ export default function Maintenance() {
       <Modal
         open={modal}
         onClose={() => setModal(false)}
-        title="Registar intervencao"
+        title="Registar intervenção"
         size="md"
         footer={null}
       >

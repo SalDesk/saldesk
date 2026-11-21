@@ -38,9 +38,9 @@ afterEach(() => {
 
 describe('AttentionPanel', () => {
   const items = [
-    { id: 'a', severity: 'critical', title: 'Titulo critico', detail: 'Detalhe A', to: '/meteorologia' },
-    { id: 'b', severity: 'warning', title: 'Titulo aviso', to: '/reservas' },
-    { id: 'c', severity: 'info', title: 'Titulo info', to: '/calendario' },
+    { id: 'a', severity: 'critical', title: 'Título crítico', detail: 'Detalhe A', to: '/meteorologia' },
+    { id: 'b', severity: 'warning', title: 'Título aviso', to: '/reservas' },
+    { id: 'c', severity: 'info', title: 'Título info', to: '/calendario' },
   ];
 
   it('sem itens mostra Tudo em ordem', () => {
@@ -52,7 +52,7 @@ describe('AttentionPanel', () => {
   it('com itens mostra os titulos pela ordem recebida e a contagem', () => {
     renderRouted(<AttentionPanel items={items} />);
     const titulos = screen.getAllByRole('listitem').map((li) => li.querySelector('[data-role="title"]').textContent);
-    expect(titulos).toEqual(['Titulo critico', 'Titulo aviso', 'Titulo info']);
+    expect(titulos).toEqual(['Título crítico', 'Título aviso', 'Título info']);
     expect(screen.getByRole('heading', { name: /Requer atenção/ })).toBeInTheDocument();
     expect(screen.getByText('3')).toBeInTheDocument();
     expect(screen.getByText('Detalhe A')).toBeInTheDocument();
@@ -75,7 +75,7 @@ describe('AttentionPanel', () => {
 });
 
 describe('DashboardHeader', () => {
-  it('mostra titulo, subtitulo e acoes', () => {
+  it('mostra título, subtítulo e ações', () => {
     render(
       <DashboardHeader
         title="Hotel Morabeza"
@@ -106,7 +106,7 @@ describe('DashboardHeader', () => {
 });
 
 describe('TrialStrip', () => {
-  it('em avaliacao com 20 dias mostra os dias e o estilo normal', () => {
+  it('em avaliação com 20 dias mostra os dias e o estilo normal', () => {
     useAuthStore.setState({ operator: { plan_status: 'trial', trial_ends_at: inDays(20) } });
     renderRouted(<TrialStrip />);
     expect(screen.getByText(/20 dia\(s\) restante\(s\)/)).toBeInTheDocument();
@@ -120,22 +120,22 @@ describe('TrialStrip', () => {
     expect(screen.getByTestId('trial-strip').className).toContain('bg-amber-50');
   });
 
-  it('o botao Ver planos leva a definicoes', () => {
+  it('o botão Ver planos leva a definições', () => {
     useAuthStore.setState({ operator: { plan_status: 'trial', trial_ends_at: inDays(20) } });
     renderRouted(<TrialStrip />);
     fireEvent.click(screen.getByRole('button', { name: /Ver planos/ }));
     expect(navigateMock).toHaveBeenCalledWith('/definicoes');
   });
 
-  it('expirado mostra o aviso e leva a facturacao', () => {
+  it('expirado mostra o aviso e leva a facturação', () => {
     useAuthStore.setState({ operator: { plan_status: 'trial', trial_ends_at: inDays(-2) } });
     renderRouted(<TrialStrip />);
-    expect(screen.getByText('Periodo de avaliacao expirado')).toBeInTheDocument();
+    expect(screen.getByText('Período de avaliação expirado')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: /Ver planos/ }));
     expect(navigateMock).toHaveBeenCalledWith('/definicoes?tab=facturacao');
   });
 
-  it('sem avaliacao devolve nada', () => {
+  it('sem avaliação devolve nada', () => {
     useAuthStore.setState({ operator: { plan_status: 'active', trial_ends_at: null } });
     const { container } = renderRouted(<TrialStrip />);
     expect(container).toBeEmptyDOMElement();
@@ -186,16 +186,16 @@ describe('KpiCard', () => {
     expect(valorDe('Num')).toHaveTextContent(/^0$/);
   });
 
-  it('o formato numero nao muda para valores em falta', () => {
+  it('o formato número não muda para valores em falta', () => {
     render(<KpiCard label="Nulo" value={null} />);
     render(<KpiCard label="Texto" value="—" />);
     expect(valorDe('Nulo')).toHaveTextContent(/^0$/);
     expect(valorDe('Texto')).toHaveTextContent(/^—$/);
   });
 
-  it('a variacao em euro leva o sinal antes do simbolo', () => {
+  it('a variação em euro leva o sinal antes do simbolo', () => {
     render(<KpiCard label="Neg" value={100} delta={-10} format="euro" />);
-    render(<KpiCard label="Pos" value={100} delta={10} format="euro" />);
+    render(<KpiCard label="Pós" value={100} delta={10} format="euro" />);
     render(<KpiCard label="Zero" value={100} delta={0} format="euro" />);
     expect(screen.getByText('-€10')).toBeInTheDocument();
     expect(screen.getByText('+€10')).toBeInTheDocument();
@@ -203,7 +203,7 @@ describe('KpiCard', () => {
     expect(screen.getByText('€0')).toBeInTheDocument();
   });
 
-  it('a variacao em percentagem e em numero mantem o formato', () => {
+  it('a variação em percentagem e em número mantem o formato', () => {
     render(<KpiCard label="PctPos" value={50} delta={2} format="percent" />);
     render(<KpiCard label="PctNeg" value={50} delta={-3} format="percent" />);
     render(<KpiCard label="NumNeg" value={5} delta={-3} />);

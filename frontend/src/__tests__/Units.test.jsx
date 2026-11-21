@@ -27,7 +27,7 @@ vi.mock('../components/units/UnitForm', () => ({
   default: ({ unit, operatorType, onSave, onCancel, loading, error }) => (
     <div data-testid="unit-form-stub" data-operator-type={operatorType} data-unit-id={unit ? unit.id : ''} data-loading={String(!!loading)}>
       <span data-testid="unit-form-error">{error}</span>
-      <button type="button" onClick={() => onSave({ name: 'Dados do formulario', base_price: 12 })}>stub-guardar</button>
+      <button type="button" onClick={() => onSave({ name: 'Dados do formulário', base_price: 12 })}>stub-guardar</button>
       <button type="button" onClick={onCancel}>stub-cancelar</button>
     </div>
   ),
@@ -120,7 +120,7 @@ function carregaServicos({ units = [] } = {}) {
 function cartao(nome) {
   let el = screen.getByText(nome);
   while (el && within(el).queryAllByRole('button', { name: 'Editar' }).length !== 1) el = el.parentElement;
-  if (!el) throw new Error(`Cartao nao encontrado: ${nome}`);
+  if (!el) throw new Error(`Cartão não encontrado: ${nome}`);
   return el;
 }
 
@@ -128,7 +128,7 @@ function dialogo() {
   return screen.getByRole('dialog');
 }
 
-describe('Unidades (pagina e lista)', () => {
+describe('Unidades (página e lista)', () => {
   let errSpy;
   let warnSpy;
   let esperaErros;
@@ -170,7 +170,7 @@ describe('Unidades (pagina e lista)', () => {
 
   describe('por tipo de operador', () => {
     for (const [tipo, cfg] of Object.entries(TIPOS)) {
-      it(`${tipo}: titulo, subtitulo, botao de criar e a unidade listada`, async () => {
+      it(`${tipo}: título, subtítulo, botão de criar e a unidade listada`, async () => {
         await renderPagina([cfg.unidade()], tipo);
         expect(screen.getByRole('heading', { level: 1, name: cfg.titulo })).toBeInTheDocument();
         expect(screen.getByText(/1 .*\(.*\)/)).toBeInTheDocument();
@@ -181,7 +181,7 @@ describe('Unidades (pagina e lista)', () => {
 
     it('subtitulos com a contagem de cada tipo', async () => {
       await renderPagina([tour(), tour({ id: 't2', name: 'Outro Tour' })], 'activity');
-      expect(screen.getByText('2 tour(s) disponivel(is)')).toBeInTheDocument();
+      expect(screen.getByText('2 tour(s) disponível(is)')).toBeInTheDocument();
       cleanup();
       await renderPagina([quarto()], 'hotel');
       expect(screen.getByText('1 unidade(s) registada(s)')).toBeInTheDocument();
@@ -193,7 +193,7 @@ describe('Unidades (pagina e lista)', () => {
       expect(screen.getByText('1 mesa(s) registada(s)')).toBeInTheDocument();
     });
 
-    it('operador sem tipo usa os rotulos de hotel e nao rebenta', async () => {
+    it('operador sem tipo usa os rotulos de hotel e não rebenta', async () => {
       defineOperador(null);
       carregaServicos({ units: [quarto()] });
       render(<Units />);
@@ -201,7 +201,7 @@ describe('Unidades (pagina e lista)', () => {
       expect(screen.getByRole('heading', { level: 1, name: 'Quartos & Alojamentos' })).toBeInTheDocument();
     });
 
-    it('restaurante esconde pratos e menus de degustacao (so lista mesas)', async () => {
+    it('restaurante esconde pratos e menus de degustação (só lista mesas)', async () => {
       await renderPagina([
         mesa(),
         mesa({ id: 'p1', name: 'Prato do dia', unit_type: 'menu_item' }),
@@ -213,30 +213,30 @@ describe('Unidades (pagina e lista)', () => {
       expect(screen.getByText('1 mesa(s) registada(s)')).toBeInTheDocument();
     });
 
-    it('os outros tipos nao filtram por unit_type', async () => {
+    it('os outros tipos não filtram por unit_type', async () => {
       await renderPagina([quarto({ id: 'x1', name: 'Item de menu', unit_type: 'menu_item' })], 'hotel');
       expect(screen.getByText('Item de menu')).toBeInTheDocument();
     });
   });
 
-  describe('cartoes e precos formatados', () => {
-    it('tour com criancas gratis (price_child 0) mostra €0 crianca, nunca um "0" solto', async () => {
+  describe('cartões e preços formatados', () => {
+    it('tour com crianças grátis (price_child 0) mostra €0 criança, nunca um "0" solto', async () => {
       await renderPagina([tour({ description: JSON.stringify({ tour_type: 'grupo', price_child: 0 }) })]);
       const c = cartao('Tour Pedra de Lume');
-      expect(c.textContent).toContain('€0 crianca');
+      expect(c.textContent).toContain('€0 criança');
       expect(c.textContent).not.toMatch(/€45\/adulto0/);
     });
 
-    it('tour com preco base: €45/adulto, crianca e privado, metadados e etiquetas', async () => {
+    it('tour com preço base: €45/adulto, criança e privado, metadados e etiquetas', async () => {
       await renderPagina([tour()]);
       const c = cartao('Tour Pedra de Lume');
       expect(c.textContent).toContain('€45/adulto');
-      expect(c.textContent).toContain('€25 crianca');
+      expect(c.textContent).toContain('€25 criança');
       expect(c.textContent).toContain('€120 privado');
       expect(within(c).getByText('Salt Crater Tour')).toBeInTheDocument();
       expect(within(c).getByText('Tour')).toBeInTheDocument();
       expect(within(c).getByText('Grupo')).toBeInTheDocument();
-      expect(within(c).getByText('Facil')).toBeInTheDocument();
+      expect(within(c).getByText('Fácil')).toBeInTheDocument();
       expect(within(c).getByText('3h')).toBeInTheDocument();
       expect(within(c).getByText('Max 12 pax')).toBeInTheDocument();
       expect(within(c).getByText('09:00')).toBeInTheDocument();
@@ -246,7 +246,7 @@ describe('Unidades (pagina e lista)', () => {
       expect(within(c).getByText('EN')).toBeInTheDocument();
     });
 
-    it('tour sem preco base mostra "A partir de" com o escalao mais baixo', async () => {
+    it('tour sem preço base mostra "A partir de" com o escalao mais baixo', async () => {
       await renderPagina([tour({
         base_price: 0,
         description: JSON.stringify({ price_tiers: [{ pax_min: 1, pax_max: 2, price: 60 }, { pax_min: 3, pax_max: 6, price: 40 }] }),
@@ -254,17 +254,17 @@ describe('Unidades (pagina e lista)', () => {
       expect(cartao('Tour Pedra de Lume').textContent).toContain('A partir de €40');
     });
 
-    it('tour sem escaloes usa o preco privado como "A partir de"', async () => {
+    it('tour sem escaloes usa o preço privado como "A partir de"', async () => {
       await renderPagina([tour({ base_price: 0, description: JSON.stringify({ price_private: 150 }) })]);
       expect(cartao('Tour Pedra de Lume').textContent).toContain('A partir de €150');
     });
 
-    it('tour sem nenhum preco mostra "Sem preço definido"', async () => {
+    it('tour sem nenhum preço mostra "Sem preço definido"', async () => {
       await renderPagina([tour({ base_price: 0, description: null })]);
       expect(cartao('Tour Pedra de Lume').textContent).toContain('Sem preço definido');
     });
 
-    it('quarto: preco por noite, capacidade, descricao em texto e regras de preco activas (max. 2)', async () => {
+    it('quarto: preço por noite, capacidade, descrição em texto e regras de preço activas (max. 2)', async () => {
       await renderPagina([quarto({
         pricing_rules: [
           { id: 'r1', name: 'Epoca alta', active: true },
@@ -284,12 +284,12 @@ describe('Unidades (pagina e lista)', () => {
       expect(within(c).queryByText('Regra desligada')).not.toBeInTheDocument();
     });
 
-    it('descricao em JSON nao aparece como texto', async () => {
+    it('descrição em JSON não aparece como texto', async () => {
       await renderPagina([viatura()], 'rentacar');
       expect(screen.queryByText('{"plate":"AA-00-AA"}')).not.toBeInTheDocument();
     });
 
-    it('viatura: preco por dia; mesa: preco sem unidade de preco', async () => {
+    it('viatura: preço por dia; mesa: preço sem unidade de preço', async () => {
       await renderPagina([viatura()], 'rentacar');
       expect(cartao('Suzuki Jimny').textContent).toContain('€50.00/dia');
       cleanup();
@@ -299,14 +299,14 @@ describe('Unidades (pagina e lista)', () => {
       expect(c.textContent).toContain('Cap. 4');
     });
 
-    it('unidades de hora, sessao e pessoa usam o sufixo certo', async () => {
+    it('unidades de hora, sessão e pessoa usam o sufixo certo', async () => {
       await renderPagina([
         quarto({ id: 'a', name: 'Por hora', price_unit: 'hour' }),
-        quarto({ id: 'b', name: 'Por sessao', price_unit: 'session' }),
+        quarto({ id: 'b', name: 'Por sessão', price_unit: 'session' }),
         quarto({ id: 'c', name: 'Por pessoa', price_unit: 'person' }),
       ], 'hotel');
       expect(cartao('Por hora').textContent).toContain('€80.00/hora');
-      expect(cartao('Por sessao').textContent).toContain('€80.00/sessao');
+      expect(cartao('Por sessão').textContent).toContain('€80.00/sessão');
       expect(cartao('Por pessoa').textContent).toContain('€80.00/pessoa');
     });
 
@@ -316,7 +316,7 @@ describe('Unidades (pagina e lista)', () => {
       expect(img).toHaveAttribute('src', 'https://exemplo.test/a.jpg');
     });
 
-    it('imagem do tour tambem aparece, com o nome como texto alternativo', async () => {
+    it('imagem do tour também aparece, com o nome como texto alternativo', async () => {
       await renderPagina([tour({ images: ['https://exemplo.test/t.jpg'] })]);
       expect(screen.getByAltText('Tour Pedra de Lume')).toHaveAttribute('src', 'https://exemplo.test/t.jpg');
     });
@@ -333,7 +333,7 @@ describe('Unidades (pagina e lista)', () => {
       expect(within(cartao('Quarto Parado')).getByText('Inactiva')).toBeInTheDocument();
     });
 
-    it('barra de totais: Total, Activos e Inactivos so quando existem inactivos', async () => {
+    it('barra de totais: Total, Activos e Inactivos só quando existem inactivos', async () => {
       await renderPagina([tour(), tour({ id: 't2', name: 'Tour Parado', status: 'inactive' })]);
       const total = screen.getByText('Total');
       expect(total.nextElementSibling).toHaveTextContent('2');
@@ -345,7 +345,7 @@ describe('Unidades (pagina e lista)', () => {
       expect(screen.queryByText('Inactivos')).not.toBeInTheDocument();
     });
 
-    it('desactivar chama toggleUnitStatus(id, "inactive") e o cartao passa a inactivo', async () => {
+    it('desactivar chama toggleUnitStatus(id, "inactive") e o cartão passa a inactivo', async () => {
       await renderPagina([tour()]);
       fireEvent.click(within(cartao('Tour Pedra de Lume')).getByRole('button', { name: 'Desactivar' }));
       await waitFor(() => expect(toggleUnitStatus).toHaveBeenCalledWith('t1', 'inactive'));
@@ -362,7 +362,7 @@ describe('Unidades (pagina e lista)', () => {
       expect(within(cartao('Quarto Mar')).getByRole('button', { name: 'Desactivar' })).toBeInTheDocument();
     });
 
-    it('se o servico de estado falha o cartao fica como estava', async () => {
+    it('se o serviço de estado falha o cartão fica como estava', async () => {
       await renderPagina([tour()]);
       toggleUnitStatus.mockReset().mockRejectedValue(new Error('falhou'));
       esperaErros = true;
@@ -379,7 +379,7 @@ describe('Unidades (pagina e lista)', () => {
       expect(screen.getByText(/unidade está.*sem categoria e\/ou coordenadas/)).toBeInTheDocument();
     });
 
-    it('plural, e as unidades inactivas nao contam', async () => {
+    it('plural, e as unidades inactivas não contam', async () => {
       await renderPagina([
         tour({ lat: null }),
         tour({ id: 't2', name: 'Tour B', lng: null }),
@@ -389,7 +389,7 @@ describe('Unidades (pagina e lista)', () => {
       expect(screen.getByText('2', { selector: 'span.font-semibold' })).toBeInTheDocument();
     });
 
-    it('nao aparece quando tudo esta completo nem para restaurantes', async () => {
+    it('não aparece quando tudo esta completo nem para restaurantes', async () => {
       await renderPagina([tour()]);
       expect(screen.queryByText(/sem categoria e\/ou coordenadas/)).not.toBeInTheDocument();
       cleanup();
@@ -399,13 +399,13 @@ describe('Unidades (pagina e lista)', () => {
   });
 
   describe('SalDesk Conect', () => {
-    it('rascunho: "Submeter ao Conect" chama updateConectStatus(id, "pending_review") e passa a Em revisao', async () => {
+    it('rascunho: "Submeter ao Conect" chama updateConectStatus(id, "pending_review") e passa a Em revisão', async () => {
       await renderPagina([tour()]);
       const c = cartao('Tour Pedra de Lume');
-      expect(within(c).getByText('Nao submetido')).toBeInTheDocument();
+      expect(within(c).getByText('Não submetido')).toBeInTheDocument();
       fireEvent.click(within(c).getByRole('button', { name: 'Submeter ao Conect' }));
       await waitFor(() => expect(updateConectStatus).toHaveBeenCalledWith('t1', 'pending_review'));
-      expect(await within(cartao('Tour Pedra de Lume')).findByText('Em revisao')).toBeInTheDocument();
+      expect(await within(cartao('Tour Pedra de Lume')).findByText('Em revisão')).toBeInTheDocument();
       /* em revisao nao ha nenhuma acao */
       expect(within(cartao('Tour Pedra de Lume')).queryByRole('button', { name: /Conect/ })).not.toBeInTheDocument();
     });
@@ -416,10 +416,10 @@ describe('Unidades (pagina e lista)', () => {
       expect(within(c).getByText('Publicado no Conect')).toBeInTheDocument();
       fireEvent.click(within(c).getByRole('button', { name: 'Retirar do Conect' }));
       await waitFor(() => expect(updateConectStatus).toHaveBeenCalledWith('h1', 'draft'));
-      expect(await within(cartao('Quarto Mar')).findByText('Nao submetido')).toBeInTheDocument();
+      expect(await within(cartao('Quarto Mar')).findByText('Não submetido')).toBeInTheDocument();
     });
 
-    it('pausado tambem pode ser retirado; em revisao nao tem acao', async () => {
+    it('pausado também pode ser retirado; em revisão não tem ação', async () => {
       await renderPagina([
         viatura({ conect_status: 'paused' }),
         viatura({ id: 'v2', name: 'Kia Picanto', conect_status: 'pending_review' }),
@@ -432,21 +432,21 @@ describe('Unidades (pagina e lista)', () => {
 
     it('unidade sem conect_status conta como rascunho', async () => {
       await renderPagina([mesa({ conect_status: undefined })], 'restaurant');
-      expect(within(cartao('Mesa 3')).getByText('Nao submetido')).toBeInTheDocument();
+      expect(within(cartao('Mesa 3')).getByText('Não submetido')).toBeInTheDocument();
     });
 
-    it('se o servico falha nao rebenta e o estado fica como estava', async () => {
+    it('se o serviço falha não rebenta e o estado fica como estava', async () => {
       await renderPagina([tour()]);
       updateConectStatus.mockReset().mockRejectedValue(new Error('falhou'));
       esperaErros = true;
       fireEvent.click(within(cartao('Tour Pedra de Lume')).getByRole('button', { name: 'Submeter ao Conect' }));
       await waitFor(() => expect(errSpy).toHaveBeenCalled());
-      expect(within(cartao('Tour Pedra de Lume')).getByText('Nao submetido')).toBeInTheDocument();
+      expect(within(cartao('Tour Pedra de Lume')).getByText('Não submetido')).toBeInTheDocument();
     });
   });
 
   describe('editar e guardar', () => {
-    it('Editar abre o modal com o formulario do tipo certo e a unidade (tour)', async () => {
+    it('Editar abre o modal com o formulário do tipo certo e a unidade (tour)', async () => {
       await renderPagina([tour()]);
       fireEvent.click(within(cartao('Tour Pedra de Lume')).getByRole('button', { name: 'Editar' }));
       const d = dialogo();
@@ -469,17 +469,17 @@ describe('Unidades (pagina e lista)', () => {
       });
     }
 
-    it('guardar chama updateUnit(id, dados), fecha o modal e actualiza o cartao', async () => {
+    it('guardar chama updateUnit(id, dados), fecha o modal e actualiza o cartão', async () => {
       await renderPagina([tour()]);
       fireEvent.click(within(cartao('Tour Pedra de Lume')).getByRole('button', { name: 'Editar' }));
       fireEvent.click(screen.getByRole('button', { name: 'stub-guardar' }));
-      await waitFor(() => expect(updateUnit).toHaveBeenCalledWith('t1', { name: 'Dados do formulario', base_price: 12 }));
+      await waitFor(() => expect(updateUnit).toHaveBeenCalledWith('t1', { name: 'Dados do formulário', base_price: 12 }));
       await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
-      expect(screen.getByText('Dados do formulario')).toBeInTheDocument();
+      expect(screen.getByText('Dados do formulário')).toBeInTheDocument();
       expect(screen.queryByText('Tour Pedra de Lume')).not.toBeInTheDocument();
     });
 
-    it('erro do servidor aparece no formulario; sem resposta usa a mensagem generica; novo pedido limpa o erro', async () => {
+    it('erro do servidor aparece no formulário; sem resposta usa a mensagem generica; novo pedido limpa o erro', async () => {
       await renderPagina([tour()]);
       fireEvent.click(within(cartao('Tour Pedra de Lume')).getByRole('button', { name: 'Editar' }));
       updateUnit.mockReset().mockRejectedValueOnce({ response: { data: { error: 'Nome repetido' } } });
@@ -491,7 +491,7 @@ describe('Unidades (pagina e lista)', () => {
       expect(await screen.findByText('Ocorreu um erro. Tente novamente.')).toBeInTheDocument();
     });
 
-    it('cancelar fecha o modal sem chamar o servico', async () => {
+    it('cancelar fecha o modal sem chamar o serviço', async () => {
       await renderPagina([tour()]);
       fireEvent.click(within(cartao('Tour Pedra de Lume')).getByRole('button', { name: 'Editar' }));
       fireEvent.click(screen.getByRole('button', { name: 'stub-cancelar' }));
@@ -499,7 +499,7 @@ describe('Unidades (pagina e lista)', () => {
       expect(updateUnit).not.toHaveBeenCalled();
     });
 
-    it('Fechar (X) do modal tambem fecha', async () => {
+    it('Fechar (X) do modal também fecha', async () => {
       await renderPagina([tour()]);
       fireEvent.click(within(cartao('Tour Pedra de Lume')).getByRole('button', { name: 'Editar' }));
       fireEvent.click(within(dialogo()).getByRole('button', { name: 'Fechar' }));
@@ -509,7 +509,7 @@ describe('Unidades (pagina e lista)', () => {
 
   describe('criar', () => {
     for (const [tipo, cfg] of Object.entries(TIPOS)) {
-      it(`${cfg.novo} (${tipo}) abre o modal com o formulario de ${tipo} e sem unidade`, async () => {
+      it(`${cfg.novo} (${tipo}) abre o modal com o formulário de ${tipo} e sem unidade`, async () => {
         await renderPagina([cfg.unidade()], tipo);
         fireEvent.click(screen.getAllByRole('button', { name: cfg.novo })[0]);
         const d = dialogo();
@@ -524,14 +524,14 @@ describe('Unidades (pagina e lista)', () => {
       await renderPagina([tour()]);
       fireEvent.click(screen.getAllByRole('button', { name: 'Novo Tour' })[0]);
       fireEvent.click(screen.getByRole('button', { name: 'stub-guardar' }));
-      await waitFor(() => expect(createUnit).toHaveBeenCalledWith({ name: 'Dados do formulario', base_price: 12 }));
+      await waitFor(() => expect(createUnit).toHaveBeenCalledWith({ name: 'Dados do formulário', base_price: 12 }));
       await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
-      const nomes = screen.getAllByText(/Dados do formulario|Tour Pedra de Lume/).map((n) => n.textContent);
-      expect(nomes).toEqual(['Dados do formulario', 'Tour Pedra de Lume']);
-      expect(screen.getByText('2 tour(s) disponivel(is)')).toBeInTheDocument();
+      const nomes = screen.getAllByText(/Dados do formulário|Tour Pedra de Lume/).map((n) => n.textContent);
+      expect(nomes).toEqual(['Dados do formulário', 'Tour Pedra de Lume']);
+      expect(screen.getByText('2 tour(s) disponível(is)')).toBeInTheDocument();
     });
 
-    it('createUnit a falhar mostra o erro no formulario', async () => {
+    it('createUnit a falhar mostra o erro no formulário', async () => {
       await renderPagina([tour()]);
       createUnit.mockReset().mockRejectedValue({ response: { data: { error: 'Plano sem espaco' } } });
       fireEvent.click(screen.getAllByRole('button', { name: 'Novo Tour' })[0]);
@@ -540,7 +540,7 @@ describe('Unidades (pagina e lista)', () => {
       expect(dialogo()).toBeInTheDocument();
     });
 
-    it('reabrir o formulario limpa o erro anterior', async () => {
+    it('reabrir o formulário limpa o erro anterior', async () => {
       await renderPagina([tour()]);
       createUnit.mockReset().mockRejectedValue({ response: { data: { error: 'Erro antigo' } } });
       fireEvent.click(screen.getAllByRole('button', { name: 'Novo Tour' })[0]);
@@ -553,12 +553,12 @@ describe('Unidades (pagina e lista)', () => {
   });
 
   describe('eliminar', () => {
-    it('pede confirmacao com a mensagem do tipo e so apaga ao confirmar', async () => {
+    it('pede confirmação com a mensagem do tipo e só apaga ao confirmar', async () => {
       await renderPagina([tour()]);
       fireEvent.click(within(cartao('Tour Pedra de Lume')).getByRole('button', { name: 'Eliminar' }));
       const d = dialogo();
       expect(within(d).getByRole('heading', { name: 'Confirmar' })).toBeInTheDocument();
-      expect(within(d).getByText('Eliminar o tour "Tour Pedra de Lume"? As reservas associadas serao mantidas mas o tour ficara indisponivel.')).toBeInTheDocument();
+      expect(within(d).getByText('Eliminar o tour "Tour Pedra de Lume"? As reservas associadas serão mantidas mas o tour ficara indisponível.')).toBeInTheDocument();
       expect(deleteUnit).not.toHaveBeenCalled();
       fireEvent.click(within(d).getByRole('button', { name: 'Eliminar' }));
       await waitFor(() => expect(deleteUnit).toHaveBeenCalledWith('t1'));
@@ -567,7 +567,7 @@ describe('Unidades (pagina e lista)', () => {
       expect(screen.getByText('Sem resultados')).toBeInTheDocument();
     });
 
-    it('Cancelar fecha a confirmacao sem apagar', async () => {
+    it('Cancelar fecha a confirmação sem apagar', async () => {
       await renderPagina([tour()]);
       fireEvent.click(within(cartao('Tour Pedra de Lume')).getByRole('button', { name: 'Eliminar' }));
       fireEvent.click(within(dialogo()).getByRole('button', { name: 'Cancelar' }));
@@ -578,9 +578,9 @@ describe('Unidades (pagina e lista)', () => {
 
     it('mensagens de cada tipo', async () => {
       const casos = [
-        ['hotel', 'Quarto Mar', 'Eliminar a unidade "Quarto Mar"? As reservas associadas serao mantidas mas a unidade ficara indisponivel.'],
-        ['rentacar', 'Suzuki Jimny', 'Eliminar a viatura "Suzuki Jimny"? As reservas associadas serao mantidas.'],
-        ['restaurant', 'Mesa 3', 'Eliminar a mesa "Mesa 3"? As reservas associadas serao mantidas.'],
+        ['hotel', 'Quarto Mar', 'Eliminar a unidade "Quarto Mar"? As reservas associadas serão mantidas mas a unidade ficara indisponível.'],
+        ['rentacar', 'Suzuki Jimny', 'Eliminar a viatura "Suzuki Jimny"? As reservas associadas serão mantidas.'],
+        ['restaurant', 'Mesa 3', 'Eliminar a mesa "Mesa 3"? As reservas associadas serão mantidas.'],
       ];
       for (const [tipo, nome, msg] of casos) {
         await renderPagina([TIPOS[tipo].unidade()], tipo);
@@ -590,7 +590,7 @@ describe('Unidades (pagina e lista)', () => {
       }
     });
 
-    it('se deleteUnit falha, fecha a confirmacao e a unidade continua na lista', async () => {
+    it('se deleteUnit falha, fecha a confirmação e a unidade continua na lista', async () => {
       await renderPagina([tour()]);
       deleteUnit.mockReset().mockRejectedValue(new Error('falhou'));
       esperaErros = true;
@@ -603,7 +603,7 @@ describe('Unidades (pagina e lista)', () => {
   });
 
   describe('QR das mesas', () => {
-    it('so os restaurantes tem o botao "Ver QR"', async () => {
+    it('só os restaurantes tem o botão "Ver QR"', async () => {
       await renderPagina([mesa()], 'restaurant');
       expect(within(cartao('Mesa 3')).getByRole('button', { name: 'Ver QR' })).toBeInTheDocument();
       for (const tipo of ['activity', 'hotel', 'rentacar']) {
@@ -624,7 +624,7 @@ describe('Unidades (pagina e lista)', () => {
       expect(await within(d).findByAltText('QR code')).toHaveAttribute('src', 'blob:qr-teste');
     });
 
-    it('Descarregar QR Code descarrega qrcode-mesa-<numero>.png', async () => {
+    it('Descarregar QR Code descarrega qrcode-mesa-<número>.png', async () => {
       const cliques = [];
       const original = HTMLAnchorElement.prototype.click;
       HTMLAnchorElement.prototype.click = function click() { cliques.push({ href: this.href, download: this.download }); };
@@ -639,7 +639,7 @@ describe('Unidades (pagina e lista)', () => {
       }
     });
 
-    it('sem numero na descricao o ficheiro usa o id da mesa', async () => {
+    it('sem número na descrição o ficheiro usa o id da mesa', async () => {
       const cliques = [];
       const original = HTMLAnchorElement.prototype.click;
       HTMLAnchorElement.prototype.click = function click() { cliques.push(this.download); };
@@ -654,7 +654,7 @@ describe('Unidades (pagina e lista)', () => {
       }
     });
 
-    it('o botao de copiar o link escreve o URL na area de transferencia', async () => {
+    it('o botão de copiar o link escreve o URL na area de transferência', async () => {
       const writeText = vi.fn().mockResolvedValue(undefined);
       Object.defineProperty(navigator, 'clipboard', { value: { writeText }, configurable: true });
       await renderPagina([mesa()], 'restaurant');
@@ -686,8 +686,8 @@ describe('Unidades (pagina e lista)', () => {
     });
   });
 
-  describe('lista vazia e servicos a falhar', () => {
-    it('sem tours mostra o vazio de tours e a acao de criar do cabecalho abre o formulario', async () => {
+  describe('lista vazia e serviços a falhar', () => {
+    it('sem tours mostra o vazio de tours e a ação de criar do cabeçalho abre o formulário', async () => {
       await renderPagina([], 'activity');
       expect(screen.getByText('Sem resultados')).toBeInTheDocument();
       expect(screen.getByText('Crie o seu primeiro tour')).toBeInTheDocument();
@@ -707,7 +707,7 @@ describe('Unidades (pagina e lista)', () => {
       });
     }
 
-    it('listUnits a falhar nao rebenta: mostra o vazio e o cabecalho', async () => {
+    it('listUnits a falhar não rebenta: mostra o vazio e o cabeçalho', async () => {
       defineOperador('activity');
       carregaServicos();
       listUnits.mockReset().mockRejectedValue(new Error('sem rede'));
@@ -718,7 +718,7 @@ describe('Unidades (pagina e lista)', () => {
       expect(errSpy).toHaveBeenCalled();
     });
 
-    it('enquanto carrega nao mostra a lista nem o vazio', async () => {
+    it('enquanto carrega não mostra a lista nem o vazio', async () => {
       defineOperador('activity');
       carregaServicos();
       let resolver;
@@ -730,8 +730,8 @@ describe('Unidades (pagina e lista)', () => {
     });
   });
 
-  describe('nomes acessiveis das acoes', () => {
-    it('cada botao so com icone tem nome acessivel (tour, unidade e mesa)', async () => {
+  describe('nomes acessiveis das ações', () => {
+    it('cada botão só com ícone tem nome acessível (tour, unidade e mesa)', async () => {
       await renderPagina([tour()], 'activity');
       const t = cartao('Tour Pedra de Lume');
       for (const nome of ['Desactivar', 'Editar', 'Eliminar']) {
@@ -745,7 +745,7 @@ describe('Unidades (pagina e lista)', () => {
       }
     });
 
-    it('todos os botoes da pagina tem nome acessivel', async () => {
+    it('todos os botões da página tem nome acessível', async () => {
       await renderPagina([tour(), tour({ id: 't2', name: 'Tour B', status: 'inactive', conect_status: 'published' })]);
       for (const b of screen.getAllByRole('button')) {
         expect((b.textContent || '').trim() || b.getAttribute('aria-label')).toBeTruthy();
@@ -793,7 +793,7 @@ describe('Unidades: pecas do design system', () => {
   }
 
   for (const [tipo, cfg] of Object.entries(TIPOS)) {
-    it(`vazio (${tipo}): o botao de criar do vazio abre o formulario de ${tipo}`, async () => {
+    it(`vazio (${tipo}): o botão de criar do vazio abre o formulário de ${tipo}`, async () => {
       await renderPagina([], tipo);
       const botoes = screen.getAllByRole('button', { name: cfg.novo });
       /* cabecalho + vazio */
@@ -806,7 +806,7 @@ describe('Unidades: pecas do design system', () => {
     });
   }
 
-  it('vazio: abrir pelo botao do vazio limpa o erro anterior, como o do cabecalho', async () => {
+  it('vazio: abrir pelo botão do vazio limpa o erro anterior, como o do cabeçalho', async () => {
     await renderPagina([], 'activity');
     createUnit.mockReset().mockRejectedValue({ response: { data: { error: 'Erro antigo' } } });
     fireEvent.click(screen.getAllByRole('button', { name: 'Novo Tour' })[1]);
@@ -817,7 +817,7 @@ describe('Unidades: pecas do design system', () => {
     expect(screen.queryByText('Erro antigo')).not.toBeInTheDocument();
   });
 
-  it('UnitList sem onCreate nao mostra botao no vazio; com onCreate chama-o e usa createLabel', async () => {
+  it('UnitList sem onCreate não mostra botão no vazio; com onCreate chama-o e usa createLabel', async () => {
     const { default: UnitList } = await import('../components/units/UnitList');
     const base = { units: [], onEdit: vi.fn(), onDelete: vi.fn(), onToggle: vi.fn(), onSubmitConect: vi.fn() };
     const { rerender } = render(<UnitList {...base} operatorType="hotel" />);
@@ -834,15 +834,15 @@ describe('Unidades: pecas do design system', () => {
     expect(screen.getByRole('button', { name: 'Nova Unidade' })).toBeInTheDocument();
   });
 
-  it('UnitList sem onToggle nem onSubmitConect nao rebenta ao clicar em desactivar', async () => {
+  it('UnitList sem onToggle nem onSubmitConect não rebenta ao clicar em desactivar', async () => {
     const { default: UnitList } = await import('../components/units/UnitList');
     render(<UnitList units={[quarto()]} operatorType="hotel" onEdit={vi.fn()} onDelete={vi.fn()} />);
     fireEvent.click(screen.getByRole('button', { name: 'Desactivar' }));
     /* sem onSubmitConect a linha do Conect nem aparece */
-    expect(screen.queryByText('Nao submetido')).not.toBeInTheDocument();
+    expect(screen.queryByText('Não submetido')).not.toBeInTheDocument();
   });
 
-  it('o botao de copiar o link do QR tem nome acessivel traduzido', async () => {
+  it('o botão de copiar o link do QR tem nome acessível traduzido', async () => {
     await renderPagina([mesa()], 'restaurant');
     fireEvent.click(within(cartao('Mesa 3')).getByRole('button', { name: 'Ver QR' }));
     const d = dialogo();
@@ -853,7 +853,7 @@ describe('Unidades: pecas do design system', () => {
     }
   });
 
-  it('o nome acessivel do botao de copiar segue o idioma', async () => {
+  it('o nome acessível do botão de copiar segue o idioma', async () => {
     useUiStore.setState({ lang: 'en' });
     await renderPagina([mesa()], 'restaurant');
     fireEvent.click(within(cartao('Mesa 3')).getByRole('button', { name: 'Ver QR' }));
@@ -862,7 +862,7 @@ describe('Unidades: pecas do design system', () => {
     expect(within(d).getByRole('button', { name: 'Copy link' })).toBeInTheDocument();
   });
 
-  it('copiar o link mostra a confirmacao e volta ao icone de copiar', async () => {
+  it('copiar o link mostra a confirmação e volta ao ícone de copiar', async () => {
     const writeText = vi.fn().mockResolvedValue(undefined);
     Object.defineProperty(navigator, 'clipboard', { value: { writeText }, configurable: true });
     await renderPagina([mesa()], 'restaurant');
@@ -875,26 +875,26 @@ describe('Unidades: pecas do design system', () => {
     await waitFor(() => expect(within(d).getByRole('button', { name: 'Copiar link' }).innerHTML).toBe(antes), { timeout: 3000 });
   });
 
-  it('a dificuldade usa as variantes do Badge: Facil sucesso, Moderado aviso, Dificil erro', async () => {
+  it('a dificuldade usa as variantes do Badge: Fácil sucesso, Moderado aviso, Difícil erro', async () => {
     const mk = (id, nome, difficulty) => tour({ id, name: nome, description: JSON.stringify({ difficulty }) });
     await renderPagina([mk('a', 'Tour A', 'Facil'), mk('b', 'Tour B', 'Moderado'), mk('c', 'Tour C', 'Dificil'), mk('d', 'Tour D', 'Extremo')]);
-    expect(within(cartao('Tour A')).getByText('Facil').className).toContain('--success');
+    expect(within(cartao('Tour A')).getByText('Fácil').className).toContain('--success');
     expect(within(cartao('Tour B')).getByText('Moderado').className).toContain('--warning');
-    expect(within(cartao('Tour C')).getByText('Dificil').className).toContain('--error');
+    expect(within(cartao('Tour C')).getByText('Difícil').className).toContain('--error');
     /* dificuldade desconhecida: variante neutra, texto mantido */
     expect(within(cartao('Tour D')).getByText('Extremo').className).toContain('bg-n-100');
   });
 
-  it('o estado do Conect e uma etiqueta (nao um botao) e a acao e um botao do sistema', async () => {
+  it('o estado do Conect e uma etiqueta (não um botão) e a ação e um botão do sistema', async () => {
     await renderPagina([tour(), tour({ id: 't2', name: 'Tour B', conect_status: 'published' })]);
     const c = cartao('Tour Pedra de Lume');
-    expect(within(c).queryByRole('button', { name: 'Nao submetido' })).not.toBeInTheDocument();
-    expect(within(c).getByText('Nao submetido').className).toContain('bg-n-100');
+    expect(within(c).queryByRole('button', { name: 'Não submetido' })).not.toBeInTheDocument();
+    expect(within(c).getByText('Não submetido').className).toContain('bg-n-100');
     expect(within(cartao('Tour B')).getByText('Publicado no Conect').className).toContain('--success');
     expect(within(c).getByRole('button', { name: 'Submeter ao Conect' }).className).toContain('h-8');
   });
 
-  it('as unidades inactivas ficam esbatidas e as activas nao', async () => {
+  it('as unidades inactivas ficam esbatidas e as activas não', async () => {
     await renderPagina([quarto(), quarto({ id: 'h2', name: 'Quarto Parado', status: 'inactive' })], 'hotel');
     const classes = (nome) => {
       let el = cartao(nome);

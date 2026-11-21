@@ -11,7 +11,7 @@ function PrevisaoTab({ forecast, currency, loading }) {
     <Card padding="p-0">
       <EmptyState
         icon={TrendingUp}
-        title="Dados de previsao nao disponiveis."
+        title="Dados de previsão não disponíveis."
         description={<>Implemente o endpoint <span className="font-mono">GET /financial/forecast</span> no backend.</>}
       />
     </Card>
@@ -20,14 +20,14 @@ function PrevisaoTab({ forecast, currency, loading }) {
   const isBelow = historical_avg > 0 && confirmed_future_revenue < historical_avg * 0.8;
   return (
     <div className="space-y-4">
-      {isBelow && <div className="flex items-center gap-3 px-4 py-3 bg-[var(--warning-light)] border border-[var(--warning)] rounded-sm"><AlertTriangle size={16} strokeWidth={1.75} className="text-[var(--warning)] shrink-0" /><p className="text-sm font-body text-[var(--warning)]">Previsao abaixo da media historica. Considera acoes de marketing.</p></div>}
+      {isBelow && <div className="flex items-center gap-3 px-4 py-3 bg-[var(--warning-light)] border border-[var(--warning)] rounded-sm"><AlertTriangle size={16} strokeWidth={1.75} className="text-[var(--warning)] shrink-0" /><p className="text-sm font-body text-[var(--warning)]">Previsão abaixo da média histórica. Considera ações de marketing.</p></div>}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <KpiCard label="Receita confirmada (prox. periodo)" value={confirmed_future_revenue} format="euro" currency={currency} icon={CalendarDays} />
-        <KpiCard label="Mesmo periodo — ano anterior" value={same_period_last_year} format="euro" currency={currency} icon={TrendingUp} />
-        <KpiCard label="Media historica mensal" value={historical_avg} format="euro" currency={currency} icon={BarChart2} />
+        <KpiCard label="Receita confirmada (prox. período)" value={confirmed_future_revenue} format="euro" currency={currency} icon={CalendarDays} />
+        <KpiCard label="Mesmo período — ano anterior" value={same_period_last_year} format="euro" currency={currency} icon={TrendingUp} />
+        <KpiCard label="Média histórica mensal" value={historical_avg} format="euro" currency={currency} icon={BarChart2} />
       </div>
       {weeks?.length > 0 && (
-        <Card header={<h3 className="font-display font-semibold text-sm text-n-700">Previsao semanal</h3>}>
+        <Card header={<h3 className="font-display font-semibold text-sm text-n-700">Previsão semanal</h3>}>
           <div className="space-y-0">{weeks.map((w, i) => (
             <div key={i} className="flex items-center justify-between py-3 border-b border-n-100 last:border-0">
               <span className="text-xs font-mono text-n-500">{w.week_label || w.week}</span>

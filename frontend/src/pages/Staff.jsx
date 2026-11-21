@@ -80,7 +80,7 @@ export default function Staff() {
             m.user_id = acc.user_id;
             toast.success('Colaborador criado e conta de acesso enviada por email');
           } catch {
-            toast.error('Colaborador criado, mas a conta de acesso falhou — tente novamente no cartao do colaborador');
+            toast.error('Colaborador criado, mas a conta de acesso falhou — tente novamente no cartão do colaborador');
           }
         }
         setStaffList(p => [m, ...p]);
@@ -237,7 +237,7 @@ export default function Staff() {
           </>
         }>
         <p className="text-sm font-body text-n-700">
-          Eliminar o colaborador <strong>"{deleteTarget?.name}"</strong>? Esta accao nao pode ser desfeita.
+          Eliminar o colaborador <strong>"{deleteTarget?.name}"</strong>? Esta acção não pode ser desfeita.
         </p>
       </Modal>
 

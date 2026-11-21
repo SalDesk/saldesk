@@ -90,7 +90,7 @@ export default function SocialPlanner({ posts, onAdd, onEdit, onDelete, onMarkPu
   return (
     <div>
       <div className="flex items-center justify-between mb-4">
-        <h2 className="font-display font-semibold text-base text-n-900">Planeador de Social Media</h2>
+        <h2 className="font-display font-semibold text-base text-n-900">Planeador de Social Média</h2>
         <Button icon={Plus} size="sm" onClick={() => onAdd(null)}>Novo post</Button>
       </div>
 
@@ -98,11 +98,11 @@ export default function SocialPlanner({ posts, onAdd, onEdit, onDelete, onMarkPu
         {/* Calendar */}
         <Card padding="p-0" className="lg:col-span-2 overflow-hidden">
           <div className="flex items-center justify-between px-4 py-3 border-b border-n-200">
-            <button type="button" aria-label="Mes anterior" onClick={() => setMonth(new Date(year, mon - 1, 1))} className="p-1 rounded hover:bg-n-100 text-n-500 transition-colors">
+            <button type="button" aria-label="Mês anterior" onClick={() => setMonth(new Date(year, mon - 1, 1))} className="p-1 rounded hover:bg-n-100 text-n-500 transition-colors">
               <ChevronLeft size={18} strokeWidth={1.75} />
             </button>
             <p className="font-display font-semibold text-sm text-n-900">{MONTHS_PT[mon]} {year}</p>
-            <button type="button" aria-label="Mes seguinte" onClick={() => setMonth(new Date(year, mon + 1, 1))} className="p-1 rounded hover:bg-n-100 text-n-500 transition-colors">
+            <button type="button" aria-label="Mês seguinte" onClick={() => setMonth(new Date(year, mon + 1, 1))} className="p-1 rounded hover:bg-n-100 text-n-500 transition-colors">
               <ChevronRight size={18} strokeWidth={1.75} />
             </button>
           </div>
@@ -135,7 +135,7 @@ export default function SocialPlanner({ posts, onAdd, onEdit, onDelete, onMarkPu
 
         {/* Upcoming */}
         <div className="flex flex-col gap-3">
-          <p className="text-xs font-mono uppercase tracking-wider text-n-500">Proximos posts</p>
+          <p className="text-xs font-mono uppercase tracking-wider text-n-500">Próximos posts</p>
           {upcoming.length === 0 ? (
             <Card padding="p-0">
               <EmptyState icon={Calendar} title="Sem posts agendados" />
@@ -176,7 +176,7 @@ export default function SocialPlanner({ posts, onAdd, onEdit, onDelete, onMarkPu
       {/* All posts table */}
       {posts.length > 0 && (
         <div className="mt-6">
-          <p className="text-xs font-mono uppercase tracking-wider text-n-500 mb-3">Historico ({posts.length})</p>
+          <p className="text-xs font-mono uppercase tracking-wider text-n-500 mb-3">Histórico ({posts.length})</p>
           <Card padding="p-0" className="overflow-hidden">
             <Table
               columns={historyColumns}

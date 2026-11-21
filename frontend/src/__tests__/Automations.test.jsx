@@ -13,12 +13,12 @@ vi.mock('../services/automationsService', () => ({
 const HEX = /#[0-9A-Fa-f]{3,8}(?![0-9A-Za-z])/;
 const NOMEADAS = /(?:^|[\s"'])(?:[a-z-]+:)?(?:text|bg|border|fill|ring)-(?:green|yellow|blue|red|amber)-\d/;
 
-const T_EMAIL = 'Nova reserva — Email de confirmacao';
+const T_EMAIL = 'Nova reserva — Email de confirmação';
 const T_WHATS = 'Nova reserva — WhatsApp de boas-vindas';
-const T_D7 = 'D-7 — Email de preparacao';
-const T_D3 = 'D-3 — Email com instrucoes';
+const T_D7 = 'D-7 — Email de preparação';
+const T_D3 = 'D-3 — Email com instruções';
 const T_D1 = 'D-1 — WhatsApp de lembrete';
-const TITULOS = [T_EMAIL, T_WHATS, T_D7, T_D3, T_D1, 'D+1 — Pedido de avaliacao', 'D+7 — Desconto proxima reserva', 'D+30 — Newsletter de novos tours'];
+const TITULOS = [T_EMAIL, T_WHATS, T_D7, T_D3, T_D1, 'D+1 — Pedido de avaliação', 'D+7 — Desconto próxima reserva', 'D+30 — Newsletter de novos tours'];
 
 const A1 = { id: 'a1', trigger_type: 'booking_confirmed', trigger_days: null, channel: 'email', active: true, subject_pt: 'Assunto PT guardado', subject_en: 'Subject EN saved', message_pt: 'Mensagem guardada PT', message_en: 'Saved message EN' };
 const A2 = { id: 'a2', trigger_type: 'days_before_checkin', trigger_days: 7, channel: 'email', active: false, subject: 'Assunto antigo', message_pt: 'Corpo D7' };
@@ -59,18 +59,18 @@ const separador = (rotulo) => screen.getAllByText(rotulo).find(e => e.closest('b
 
 /* ───────────────────────── caracterizacao: estrutura e sequencias ───────────────────────── */
 
-describe('Automacoes: lista de sequencias', () => {
+describe('Automações: lista de sequências', () => {
   it('mostra_as_oito_sequencias_e_o_subtitulo_com_as_activas', async () => {
     await montar();
-    expect(screen.getByText('Automacoes de Comunicacao')).toBeInTheDocument();
+    expect(screen.getByText('Automações de Comunicação')).toBeInTheDocument();
     TITULOS.forEach(t => expect(screen.getByText(t)).toBeInTheDocument());
-    expect(screen.getByText('Email imediato ao cliente apos confirmacao')).toBeInTheDocument();
+    expect(screen.getByText('Email imediato ao cliente após confirmação')).toBeInTheDocument();
     expect(screen.getByText('7 dias antes do tour')).toBeInTheDocument();
-    expect(screen.getByText('30 dias apos o tour')).toBeInTheDocument();
-    expect(screen.getByText('3 sequencia(s) activa(s)')).toBeInTheDocument();
+    expect(screen.getByText('30 dias após o tour')).toBeInTheDocument();
+    expect(screen.getByText('3 sequência(s) activa(s)')).toBeInTheDocument();
     expect(screen.getAllByText('Email')).toHaveLength(6);
     expect(screen.getAllByText('WhatsApp')).toHaveLength(2);
-    expect(screen.getByText('Variaveis disponiveis:').parentElement.textContent).toContain('{nome_cliente} · {nome_tour} · {data} · {hora} · {guia} · {ponto_encontro}');
+    expect(screen.getByText('Variáveis disponíveis:').parentElement.textContent).toContain('{nome_cliente} · {nome_tour} · {data} · {hora} · {guia} · {ponto_encontro}');
   });
 
   it('encontra_a_automacao_por_tipo_canal_e_dias', async () => {
@@ -93,29 +93,29 @@ describe('Automacoes: lista de sequencias', () => {
     listAutomations.mockResolvedValue([]);
     await montar();
     TITULOS.forEach(t => expect(esbatida(t)).toBe(true));
-    expect(screen.getByText('0 sequencia(s) activa(s)')).toBeInTheDocument();
+    expect(screen.getByText('0 sequência(s) activa(s)')).toBeInTheDocument();
   });
 
   it('listAutomations_a_falhar_ou_nulo_nao_rebenta', async () => {
     listAutomations.mockRejectedValue(new Error('x'));
     await montar();
-    expect(screen.getByText('0 sequencia(s) activa(s)')).toBeInTheDocument();
+    expect(screen.getByText('0 sequência(s) activa(s)')).toBeInTheDocument();
     cleanup();
     listAutomations.mockResolvedValue(null);
     await montar();
-    expect(screen.getByText('0 sequencia(s) activa(s)')).toBeInTheDocument();
+    expect(screen.getByText('0 sequência(s) activa(s)')).toBeInTheDocument();
   });
 
   it('em_carga_mostra_o_spinner_e_nao_as_sequencias', () => {
     listAutomations.mockReturnValue(new Promise(() => {}));
     const { container } = render(<Automations />);
-    expect(screen.getByText('Automacoes de Comunicacao')).toBeInTheDocument();
+    expect(screen.getByText('Automações de Comunicação')).toBeInTheDocument();
     expect(container.querySelector('.animate-spin')).toBeInTheDocument();
     expect(screen.queryByText(T_EMAIL)).not.toBeInTheDocument();
   });
 });
 
-describe('Automacoes: cartao de sequencia', () => {
+describe('Automações: cartão de sequência', () => {
   it('abrir_mostra_assunto_e_mensagem_PT_lidos_da_automacao_ou_dos_valores_por_omissao', async () => {
     await montar();
     abrir(T_EMAIL);
@@ -128,11 +128,11 @@ describe('Automacoes: cartao de sequencia', () => {
     expect(screen.getByText('Assunto antigo')).toBeInTheDocument();
     abrir(T_D7);
     abrir(T_WHATS);
-    expect(screen.getByText(/^Ola \{nome_cliente\}! Confirmamos a sua reserva/)).toBeInTheDocument();
+    expect(screen.getByText(/^Olá \{nome_cliente\}! Confirmamos a sua reserva/)).toBeInTheDocument();
     expect(screen.queryByText('Assunto PT')).not.toBeInTheDocument();
     abrir(T_WHATS);
     abrir(T_D3);
-    expect(screen.getByText('Instrucoes finais para o seu tour — {nome_tour}')).toBeInTheDocument();
+    expect(screen.getByText('Instruções finais para o seu tour — {nome_tour}')).toBeInTheDocument();
   });
 
   it('activar_sem_automacao_chama_createAutomation_com_os_valores_por_omissao_e_active_true', async () => {
@@ -142,10 +142,10 @@ describe('Automacoes: cartao de sequencia', () => {
     await waitFor(() => expect(createAutomation).toHaveBeenCalledWith(expect.objectContaining({
       name: 'Boas-vindas WhatsApp', trigger_type: 'booking_confirmed', trigger_days: null, channel: 'whatsapp',
       subject: '', subject_pt: '', subject_en: '', active: true,
-      message_pt: expect.stringContaining('Ola {nome_cliente}! Confirmamos'), message_en: expect.stringContaining('Hello {nome_cliente}!'),
+      message_pt: expect.stringContaining('Olá {nome_cliente}! Confirmamos'), message_en: expect.stringContaining('Hello {nome_cliente}!'),
     })));
     await waitFor(() => expect(esbatida(T_WHATS)).toBe(false));
-    expect(screen.getByText('4 sequencia(s) activa(s)')).toBeInTheDocument();
+    expect(screen.getByText('4 sequência(s) activa(s)')).toBeInTheDocument();
     expect(screen.queryByText(/Confirmamos a sua reserva/)).not.toBeInTheDocument();
   });
 
@@ -174,7 +174,7 @@ describe('Automacoes: cartao de sequencia', () => {
     await montar();
     abrir(T_EMAIL);
     fireEvent.click(botao('Editar template'));
-    expect(screen.getByText('Variaveis — clique para inserir no corpo PT')).toBeInTheDocument();
+    expect(screen.getByText('Variáveis — clique para inserir no corpo PT')).toBeInTheDocument();
     ['{nome_cliente}', '{nome_tour}', '{data}', '{hora}', '{guia}', '{ponto_encontro}'].forEach(v => {
       expect(screen.getByRole('button', { name: v })).toBeInTheDocument();
     });
@@ -209,13 +209,13 @@ describe('Automacoes: cartao de sequencia', () => {
     fireEvent.change(campo('Mensagem EN', 'textarea'), { target: { value: 'M EN' } });
     fireEvent.click(botao('Guardar template'));
     await waitFor(() => expect(createAutomation).toHaveBeenCalledWith({
-      name: 'Confirmacao de reserva', trigger_type: 'booking_confirmed', trigger_days: null, channel: 'email',
+      name: 'Confirmação de reserva', trigger_type: 'booking_confirmed', trigger_days: null, channel: 'email',
       subject: 'S PT', subject_pt: 'S PT', subject_en: 'Your booking is confirmed — {nome_tour}',
       message_pt: 'M PT', message_en: 'M EN', active: true,
     }));
     expect(await screen.findByRole('button', { name: 'Editar template' })).toBeInTheDocument();
     expect(screen.getByText('S PT')).toBeInTheDocument();
-    expect(screen.getByText('1 sequencia(s) activa(s)')).toBeInTheDocument();
+    expect(screen.getByText('1 sequência(s) activa(s)')).toBeInTheDocument();
   });
 
   it('guardar_com_automacao_chama_updateAutomation_com_o_id_e_active_mantido', async () => {
@@ -247,7 +247,7 @@ describe('Automacoes: cartao de sequencia', () => {
   });
 });
 
-describe('Automacoes: pre-visualizacao', () => {
+describe('Automações: pre-visualizacao', () => {
   it('preview_substitui_as_seis_variaveis_pelos_dados_de_exemplo_em_PT_e_EN', async () => {
     listAutomations.mockResolvedValue([]);
     const { container } = await montar();
@@ -256,12 +256,12 @@ describe('Automacoes: pre-visualizacao', () => {
     expect(screen.getByText('SalDesk Tours')).toBeInTheDocument();
     expect(screen.getByText('Assunto: A sua reserva foi confirmada — Kitesurf Lesson')).toBeInTheDocument();
     const corpo = container.querySelector('pre').textContent;
-    expect(corpo).toContain('Ola Maria Santos,');
-    expect(corpo).toContain('Kitesurf Lesson em 15 Jun 2025 as 09h00');
+    expect(corpo).toContain('Olá Maria Santos,');
+    expect(corpo).toContain('Kitesurf Lesson em 15 Jun 2025 às 09h00');
     expect(corpo).toContain('Ponto de encontro: Praia de Santa Maria, Sal');
-    expect(corpo).toContain('Guia: Joao Silva');
+    expect(corpo).toContain('Guia: João Silva');
     expect(corpo).not.toMatch(/\{[a-z_]+\}/);
-    expect(screen.getByText('Preview com dados de exemplo. Variaveis substituidas no envio real.')).toBeInTheDocument();
+    expect(screen.getByText('Preview com dados de exemplo. Variáveis substituidas no envio real.')).toBeInTheDocument();
     fireEvent.click(botao('EN'));
     expect(screen.getByText('Assunto: Your booking is confirmed — Kitesurf Lesson')).toBeInTheDocument();
     expect(container.querySelector('pre').textContent).toContain('Hello Maria Santos,');
@@ -278,7 +278,7 @@ describe('Automacoes: pre-visualizacao', () => {
     expect(screen.getByText('09:00')).toBeInTheDocument();
     expect(screen.getByText('Preview com dados de exemplo.')).toBeInTheDocument();
     expect(screen.queryByText(/^Assunto:/)).not.toBeInTheDocument();
-    expect(container.querySelector('pre').textContent).toContain('Ola Maria Santos! Lembrete: o seu tour *Kitesurf Lesson* e amanha em 15 Jun 2025 as 09h00.');
+    expect(container.querySelector('pre').textContent).toContain('Olá Maria Santos! Lembrete: o seu tour *Kitesurf Lesson* é amanhã em 15 Jun 2025 às 09h00.');
   });
 
   it('na_edicao_Ver_preview_alterna_e_corpo_vazio_mostra_sem_conteudo', async () => {
@@ -287,31 +287,31 @@ describe('Automacoes: pre-visualizacao', () => {
     fireEvent.click(botao('Editar template'));
     fireEvent.change(campo('Mensagem PT', 'textarea'), { target: { value: '' } });
     fireEvent.click(screen.getByText('Ver preview').closest('button'));
-    expect(container.querySelector('pre').textContent).toBe('(sem conteudo)');
+    expect(container.querySelector('pre').textContent).toBe('(sem conteúdo)');
     fireEvent.click(screen.getByText('Ocultar preview').closest('button'));
     expect(container.querySelector('pre')).toBeNull();
   });
 });
 
-describe('Automacoes: separadores', () => {
+describe('Automações: separadores', () => {
   it('o_separador_Historico_mostra_o_historico_e_voltar_as_sequencias', async () => {
     await montar();
-    fireEvent.click(separador('Historico de envios'));
-    expect(await screen.findByText('Sem historico de envios.')).toBeInTheDocument();
+    fireEvent.click(separador('Histórico de envios'));
+    expect(await screen.findByText('Sem histórico de envios.')).toBeInTheDocument();
     expect(screen.queryByText(T_EMAIL)).not.toBeInTheDocument();
-    fireEvent.click(separador('Sequencias'));
+    fireEvent.click(separador('Sequências'));
     expect(screen.getByText(T_EMAIL)).toBeInTheDocument();
   });
 });
 
 /* ───────────────────────── design system: estrutura e sequencias ───────────────────────── */
 
-describe('Automacoes: design system (estrutura e sequencias)', () => {
+describe('Automações: design system (estrutura e sequências)', () => {
   it('separadores_sao_Tabs', async () => {
     await montar();
     expect(screen.getByRole('tablist')).toBeInTheDocument();
-    expect(screen.getByRole('tab', { name: 'Sequencias' })).toHaveAttribute('aria-selected', 'true');
-    expect(screen.getByRole('tab', { name: 'Historico de envios' })).toHaveAttribute('aria-selected', 'false');
+    expect(screen.getByRole('tab', { name: 'Sequências' })).toHaveAttribute('aria-selected', 'true');
+    expect(screen.getByRole('tab', { name: 'Histórico de envios' })).toHaveAttribute('aria-selected', 'false');
   });
 
   it('o_cabecalho_da_sequencia_tem_aria_expanded_abre_com_Enter_e_Espaco_e_o_interruptor_nao_o_alterna', async () => {
@@ -373,7 +373,7 @@ describe('Automacoes: design system (estrutura e sequencias)', () => {
 const fmtData = (d) => new Date(d).toLocaleDateString('pt-PT', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
 const LOGS = [
   { id: 'l1', created_at: '2026-11-05T10:30:00Z', automation_name: 'Lembrete 7 dias', recipient_name: 'Maria', channel: 'email', status: 'sent' },
-  { id: 'l2', created_at: '2026-11-04T08:00:00Z', automation: { name: 'Via objecto' }, customer_name: 'Joao', channel: 'whatsapp', status: 'failed' },
+  { id: 'l2', created_at: '2026-11-04T08:00:00Z', automation: { name: 'Via objecto' }, customer_name: 'João', channel: 'whatsapp', status: 'failed' },
   { id: 'l3', channel: 'email', status: 'pending' },
   { id: 'l4', channel: 'whatsapp', status: 'queued' },
   { id: 'l5', channel: 'email' },
@@ -383,19 +383,19 @@ const linhas = () => screen.getAllByRole('row').slice(1);
 async function abrirHistorico(logs = LOGS) {
   getLogsAll.mockResolvedValue(logs);
   const r = await montar();
-  fireEvent.click(separador('Historico de envios'));
+  fireEvent.click(separador('Histórico de envios'));
   await waitFor(() => expect(getLogsAll).toHaveBeenCalled());
   return r;
 }
 
-describe('Automacoes: historico', () => {
+describe('Automações: histórico', () => {
   it('lista_data_automacao_cliente_canal_e_estado_com_alternativas_e_travessoes', async () => {
     await abrirHistorico();
     await screen.findByText('Lembrete 7 dias');
     const r = linhas();
     expect(r).toHaveLength(5);
     expect(celulas(r[0]).map(t => t.replace(/\s/g, ' '))).toEqual([fmtData('2026-11-05T10:30:00Z').replace(/\s/g, ' '), 'Lembrete 7 dias', 'Maria', 'Email', 'Enviado']);
-    expect(celulas(r[1]).slice(1)).toEqual(['Via objecto', 'Joao', 'WhatsApp', 'Falhou']);
+    expect(celulas(r[1]).slice(1)).toEqual(['Via objecto', 'João', 'WhatsApp', 'Falhou']);
     expect(celulas(r[2])).toEqual(['—', '—', '—', 'Email', 'pending']);
     expect(celulas(r[3])).toEqual(['—', '—', '—', 'WhatsApp', 'queued']);
     expect(celulas(r[4])).toEqual(['—', '—', '—', 'Email', '—']);
@@ -404,10 +404,10 @@ describe('Automacoes: historico', () => {
   it('o_historico_so_carrega_ao_abrir_o_separador_e_uma_vez', async () => {
     await montar();
     expect(getLogsAll).not.toHaveBeenCalled();
-    fireEvent.click(separador('Historico de envios'));
-    await screen.findByText('Sem historico de envios.');
-    fireEvent.click(separador('Sequencias'));
-    fireEvent.click(separador('Historico de envios'));
+    fireEvent.click(separador('Histórico de envios'));
+    await screen.findByText('Sem histórico de envios.');
+    fireEvent.click(separador('Sequências'));
+    fireEvent.click(separador('Histórico de envios'));
     expect(getLogsAll).toHaveBeenCalledTimes(1);
   });
 
@@ -426,42 +426,42 @@ describe('Automacoes: historico', () => {
 
   it('sem_registos_mostra_o_vazio_com_a_descricao', async () => {
     await abrirHistorico([]);
-    expect(await screen.findByText('Sem historico de envios.')).toBeInTheDocument();
-    expect(screen.getByText('Os envios aparecerao aqui apos as primeiras automacoes serem disparadas.')).toBeInTheDocument();
+    expect(await screen.findByText('Sem histórico de envios.')).toBeInTheDocument();
+    expect(screen.getByText('Os envios aparecerão aqui após as primeiras automações serem disparadas.')).toBeInTheDocument();
   });
 
   it('em_carga_mostra_o_spinner', async () => {
     getLogsAll.mockReturnValue(new Promise(() => {}));
     const { container } = await montar();
-    fireEvent.click(separador('Historico de envios'));
+    fireEvent.click(separador('Histórico de envios'));
     await waitFor(() => expect(container.querySelector('.animate-spin')).toBeInTheDocument());
-    expect(screen.queryByText('Sem historico de envios.')).not.toBeInTheDocument();
+    expect(screen.queryByText('Sem histórico de envios.')).not.toBeInTheDocument();
   });
 
   it('getLogsAll_a_falhar_ou_nulo_mostra_o_vazio_e_nao_volta_a_tentar', async () => {
     getLogsAll.mockRejectedValue(new Error('x'));
     await montar();
-    fireEvent.click(separador('Historico de envios'));
-    expect(await screen.findByText('Sem historico de envios.')).toBeInTheDocument();
-    fireEvent.click(separador('Sequencias'));
-    fireEvent.click(separador('Historico de envios'));
+    fireEvent.click(separador('Histórico de envios'));
+    expect(await screen.findByText('Sem histórico de envios.')).toBeInTheDocument();
+    fireEvent.click(separador('Sequências'));
+    fireEvent.click(separador('Histórico de envios'));
     expect(getLogsAll).toHaveBeenCalledTimes(1);
     cleanup();
     getLogsAll.mockReset().mockResolvedValue(null);
     await montar();
-    fireEvent.click(separador('Historico de envios'));
-    expect(await screen.findByText('Sem historico de envios.')).toBeInTheDocument();
+    fireEvent.click(separador('Histórico de envios'));
+    expect(await screen.findByText('Sem histórico de envios.')).toBeInTheDocument();
   });
 });
 
 /* ───────────────────────── design system: historico ───────────────────────── */
 
-describe('Automacoes: design system (historico)', () => {
+describe('Automações: design system (histórico)', () => {
   it('a_tabela_e_Table_com_as_cinco_colunas', async () => {
     await abrirHistorico();
     await screen.findByText('Lembrete 7 dias');
     expect(screen.getByRole('table')).toBeInTheDocument();
-    expect(screen.getAllByRole('columnheader').map(h => h.textContent)).toEqual(['Data', 'Automacao', 'Cliente', 'Canal', 'Estado']);
+    expect(screen.getAllByRole('columnheader').map(h => h.textContent)).toEqual(['Data', 'Automação', 'Cliente', 'Canal', 'Estado']);
   });
 
   it('o_estado_e_Badge_com_a_variante_certa', async () => {
@@ -475,7 +475,7 @@ describe('Automacoes: design system (historico)', () => {
 
   it('o_vazio_e_EmptyState', async () => {
     await abrirHistorico([]);
-    expect(await screen.findByText('Sem historico de envios.')).toHaveClass('font-display');
+    expect(await screen.findByText('Sem histórico de envios.')).toHaveClass('font-display');
   });
 
   it('sem_hexadecimais_cores_nomeadas_ou_text_error_no_historico', async () => {

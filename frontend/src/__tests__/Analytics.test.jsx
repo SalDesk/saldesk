@@ -130,7 +130,7 @@ describe('Analytics', () => {
         <Analytics />
       </MemoryRouter>
     );
-    await screen.findByText('Score de Saude do Negocio');
+    await screen.findByText('Score de Saúde do Negócio');
     return r;
   }
 
@@ -139,7 +139,7 @@ describe('Analytics', () => {
     return screen.getByText(titulo, { selector: 'h3' }).closest('div.bg-white');
   }
   function resumo() {
-    return screen.getByText('Resumo — Ultimos 30 dias').parentElement;
+    return screen.getByText('Resumo — Últimos 30 dias').parentElement;
   }
   /* valor e rotulo de um cartao de numeros: o valor e o irmao anterior do rotulo */
   function valor(raiz, rotulo) {
@@ -176,7 +176,7 @@ describe('Analytics', () => {
     expect(screen.queryByText(/Por tour/)).toBeNull();
     expect(valor(resumo(), 'Receita').textContent).toBe('—');
     expect(screen.getByText('Sem dados de origem disponíveis.')).toBeTruthy();
-    expect(screen.getByText('Dados do funil nao disponiveis.')).toBeTruthy();
+    expect(screen.getByText('Dados do funil não disponíveis.')).toBeTruthy();
     expect(screen.getByText('Sem tours registados para comparar.')).toBeTruthy();
   });
 
@@ -186,9 +186,9 @@ describe('Analytics', () => {
     expect(within(document.querySelector('svg[viewBox="0 0 160 160"]')).getByText('85')).toBeTruthy();
     const barra = (rotulo) => screen.getByText(rotulo).parentElement.textContent;
     expect(barra('Crescimento de receita')).toBe('Crescimento de receita20/25');
-    expect(barra('Taxa de ocupacao')).toBe('Taxa de ocupacao10/25');
-    expect(barra('Avaliacoes')).toBe('Avaliacoes5/25');
-    expect(barra('Fidelizacao')).toBe('Fidelizacao1/25');
+    expect(barra('Taxa de ocupação')).toBe('Taxa de ocupação10/25');
+    expect(barra('Avaliações')).toBe('Avaliações5/25');
+    expect(barra('Fidelização')).toBe('Fidelização1/25');
   });
 
   it('score_calculado_a_partir_de_receita_ocupacao_e_avaliacoes', async () => {
@@ -196,15 +196,15 @@ describe('Analytics', () => {
     expect(within(document.querySelector('svg[viewBox="0 0 160 160"]')).getByText('76')).toBeTruthy();
     const barra = (rotulo) => screen.getByText(rotulo).parentElement.textContent;
     expect(barra('Crescimento de receita')).toBe('Crescimento de receita25/25');
-    expect(barra('Taxa de ocupacao')).toBe('Taxa de ocupacao20/25');
+    expect(barra('Taxa de ocupação')).toBe('Taxa de ocupação20/25');
     /* o endpoint /reviews/stats devolve `average` (4,2 -> 16 pontos) */
-    expect(barra('Avaliacoes')).toBe('Avaliacoes16/25');
-    expect(barra('Fidelizacao')).toBe('Fidelizacao15/25');
+    expect(barra('Avaliações')).toBe('Avaliações16/25');
+    expect(barra('Fidelização')).toBe('Fidelização15/25');
   });
 
   it('os_limiares_de_cada_componente_do_score', async () => {
     const casos = [
-      /* [variacao da receita, ocupacao, crescimento esperado, ocupacao esperada] */
+      /* [variação da receita, ocupação, crescimento esperado, ocupação esperada] */
       [25, 90, 25, 25], [15, 70, 20, 20], [5, 50, 15, 14], [-5, 30, 8, 8], [-20, 10, 3, 3],
     ];
     for (const [variacao, ocupacao, cresc, ocup] of casos) {
@@ -212,7 +212,7 @@ describe('Analytics', () => {
       await abre();
       const barra = (rotulo) => screen.getByText(rotulo).parentElement.textContent;
       expect(barra('Crescimento de receita')).toBe(`Crescimento de receita${cresc}/25`);
-      expect(barra('Taxa de ocupacao')).toBe(`Taxa de ocupacao${ocup}/25`);
+      expect(barra('Taxa de ocupação')).toBe(`Taxa de ocupação${ocup}/25`);
       cleanup();
     }
   });
@@ -220,12 +220,12 @@ describe('Analytics', () => {
   it('o_rating_le_average_do_endpoint_e_conta_para_o_score', async () => {
     getReviewsStats.mockResolvedValue({ average: 4.9, total: 3 });
     await abre();
-    expect(screen.getByText('Avaliacoes').parentElement.textContent).toBe('Avaliacoes25/25');
-    expect(valor(resumo(), 'Rating medio').textContent).toBe('4.9');
+    expect(screen.getByText('Avaliações').parentElement.textContent).toBe('Avaliações25/25');
+    expect(valor(resumo(), 'Rating médio').textContent).toBe('4.9');
   });
 
   it('rotulo_do_medidor_bom_moderado_critico', async () => {
-    for (const [pontos, rotulo, cor] of [[70, 'Bom', 'bom'], [69, 'Moderado', 'aviso'], [50, 'Moderado', 'aviso'], [49, 'Critico', 'mau']]) {
+    for (const [pontos, rotulo, cor] of [[70, 'Bom', 'bom'], [69, 'Moderado', 'aviso'], [50, 'Moderado', 'aviso'], [49, 'Crítico', 'mau']]) {
       getAnalyticsStats.mockResolvedValue({ health_score: pontos });
       await abre();
       expect(screen.getByText(rotulo)).toBeTruthy();
@@ -242,7 +242,7 @@ describe('Analytics', () => {
     expect(valor(r, 'Reservas').textContent).toBe('18');
     expect(valor(r, 'Reservas').parentElement.parentElement.textContent).toContain('-8%');
     expect(valor(r, 'Novos clientes').textContent).toBe('—');
-    expect(valor(r, 'Rating medio').textContent).toBe('4.2');
+    expect(valor(r, 'Rating médio').textContent).toBe('4.2');
   });
 
   it('o_resumo_semanal_do_servidor_tem_prioridade', async () => {
@@ -269,8 +269,8 @@ describe('Analytics', () => {
   it('origens_do_servidor_tem_prioridade_sobre_os_clientes', async () => {
     getAnalyticsStats.mockResolvedValue({ customer_origins: [{ country_code: 'FR', count: 5, pct: 62.5 }, { country_code: 'IT', count: 3, pct: 37.5 }] });
     await abre();
-    expect(screen.getByText('Franca').parentElement.textContent).toContain('62.5%');
-    expect(screen.getByText('Italia')).toBeTruthy();
+    expect(screen.getByText('França').parentElement.textContent).toContain('62.5%');
+    expect(screen.getByText('Itália')).toBeTruthy();
     expect(screen.queryByText('Portugal')).toBeNull();
   });
 
@@ -287,25 +287,25 @@ describe('Analytics', () => {
     listCustomers.mockResolvedValue([]);
     await abre();
     expect(screen.getByText('Sem dados de origem disponíveis.')).toBeTruthy();
-    expect(screen.getByText('Sem dados disponiveis.')).toBeTruthy();
+    expect(screen.getByText('Sem dados disponíveis.')).toBeTruthy();
     expect(graficos('BarChart')).toHaveLength(0);
   });
 
   it('funil_em_falta_mostra_o_aviso', async () => {
     await abre();
-    expect(screen.getByText('Dados do funil nao disponiveis.')).toBeTruthy();
+    expect(screen.getByText('Dados do funil não disponíveis.')).toBeTruthy();
   });
 
   it('funil_calcula_a_percentagem_sobre_o_passo_anterior', async () => {
     getAnalyticsStats.mockResolvedValue({ conversion_funnel: { page_views: 1000, booking_started: 400, booking_completed: 100, payment_confirmed: 50 } });
     await abre();
     const linha = (rotulo) => screen.getByText(rotulo).closest('div.flex.items-center.gap-4');
-    expect(linha('Visitas pagina publica').textContent).toContain((1000).toLocaleString());
-    expect(linha('Visitas pagina publica').textContent).not.toContain('%');
+    expect(linha('Visitas página pública').textContent).toContain((1000).toLocaleString());
+    expect(linha('Visitas página pública').textContent).not.toContain('%');
     expect(linha('Reserva iniciada').textContent).toContain('40.0%');
-    expect(linha('Reserva concluida').textContent).toContain('25.0%');
+    expect(linha('Reserva concluída').textContent).toContain('25.0%');
     expect(linha('Pagamento confirmado').textContent).toContain('50.0%');
-    expect(screen.getByText('% indica taxa de conversao para o passo anterior.')).toBeTruthy();
+    expect(screen.getByText('% indica taxa de conversão para o passo anterior.')).toBeTruthy();
   });
 
   it('o_funil_pode_vir_do_marketing', async () => {
@@ -321,13 +321,13 @@ describe('Analytics', () => {
     fireEvent.click(screen.getByRole('button', { name: /Enviar por email/ }));
     expect(abrir).toHaveBeenCalledTimes(1);
     const url = abrir.mock.calls[0][0];
-    expect(url.startsWith(`mailto:?subject=${encodeURIComponent('SalDesk — Relatorio Mensal')}&body=`)).toBe(true);
+    expect(url.startsWith(`mailto:?subject=${encodeURIComponent('SalDesk — Relatório Mensal')}&body=`)).toBe(true);
     const corpo = decodeURIComponent(url.split('&body=')[1]);
     expect(corpo).toBe(
-      'Score de Saude: 76/100\n' +
+      'Score de Saúde: 76/100\n' +
       `Receita: ${eur(1234)}\n` +
       'Reservas: 18\n' +
-      'Rating medio: 4.2\n\n' +
+      'Rating médio: 4.2\n\n' +
       `Gerado em SalDesk — ${new Date().toLocaleDateString('pt-PT')}`
     );
   });
@@ -336,20 +336,20 @@ describe('Analytics', () => {
     getAnalyticsStats.mockResolvedValue({ health_score: 72 });
     getReviewsStats.mockResolvedValue({ average: 4.5, total: 8 });
     await abre();
-    const c = cartao('Relatorio Semanal');
-    expect(valor(c, 'Score de saude').textContent).toBe('72/100');
+    const c = cartao('Relatório Semanal');
+    expect(valor(c, 'Score de saúde').textContent).toBe('72/100');
     expect(valor(c, 'Receita').textContent).toBe(eur(1234));
     expect(valor(c, 'Reservas').textContent).toBe('18');
     expect(valor(c, 'Rating').textContent).toBe('4.5 / 5.0');
-    expect(tom(valor(c, 'Score de saude').className)).toBe('bom');
+    expect(tom(valor(c, 'Score de saúde').className)).toBe('bom');
     cleanup();
     getAnalyticsStats.mockResolvedValue({ health_score: 55 });
     await abre();
-    expect(tom(valor(cartao('Relatorio Semanal'), 'Score de saude').className)).toBe('aviso');
+    expect(tom(valor(cartao('Relatório Semanal'), 'Score de saúde').className)).toBe('aviso');
     cleanup();
     getAnalyticsStats.mockResolvedValue({ health_score: 30 });
     await abre();
-    expect(tom(valor(cartao('Relatorio Semanal'), 'Score de saude').className)).toBe('mau');
+    expect(tom(valor(cartao('Relatório Semanal'), 'Score de saúde').className)).toBe('mau');
   });
 
   it('taxa_de_abandono_e_limiares', async () => {
@@ -408,7 +408,7 @@ describe('Analytics', () => {
     expect(within(c).getAllByText('melhora fotos')).toHaveLength(2);
     expect(linha('Barco').textContent).toContain('melhora fotos');
     expect(linha('Mergulho').textContent).not.toContain('melhora fotos');
-    expect(within(c).getByText(/Por tour \(reservas dos ultimos 30 dias\)/)).toBeTruthy();
+    expect(within(c).getByText(/Por tour \(reservas dos últimos 30 dias\)/)).toBeTruthy();
     expect(within(c).queryByText(/estimad/)).toBeNull();
     expect(aleatorio).not.toHaveBeenCalled();
   });
@@ -431,12 +431,12 @@ describe('Analytics', () => {
     await abre();
     const tabela = screen.getByRole('table');
     const colunas = within(tabela).getAllByRole('columnheader').map(h => h.textContent);
-    expect(colunas).toEqual(['Tour', 'Preco SalDesk', 'Preco Viator/GYG', 'Posicao no mercado', '']);
+    expect(colunas).toEqual(['Tour', 'Preço SalDesk', 'Preço Viator/GYG', 'Posição no mercado', '']);
     expect(within(tabela).getAllByRole('row')).toHaveLength(1 + 8);
     expect(within(tabela).queryByText('Extra nono')).toBeNull();
     expect(linhaDe('Buggy Tour').textContent).toContain('€60');
     /* sem preco do concorrente */
-    expect(linhaDe('Buggy Tour').textContent).toContain('Nao definido');
+    expect(linhaDe('Buggy Tour').textContent).toContain('Não definido');
     expect(linhaDe('Buggy Tour').textContent).toContain('—');
   });
 
@@ -444,22 +444,22 @@ describe('Analytics', () => {
     localStorage.setItem(CHAVE, JSON.stringify({ u1: { price: 40 }, u2: { price: 40 }, u3: { price: 40 }, u4: { price: 40 }, u5: { price: 40 }, u6: { price: 30 } }));
     await abre();
     /* limiares 5 e 20: 60 vs 40 = +50%; 45 vs 40 = +12,5 -> +13%; 20 vs 40 = -50%; 35 vs 40 = -12,5 -> -12%; 41 vs 40 = 2,5 */
-    const dica = 'Considera reduzir para aumentar conversao';
+    const dica = 'Considera reduzir para aumentar conversão';
     expect(linhaDe('Buggy Tour').textContent).toContain('+50% acima');
     expect(linhaDe('Buggy Tour').textContent).toContain(dica);
     expect(linhaDe('Mergulho').textContent).toContain('+13% acima');
     expect(linhaDe('Mergulho').textContent).not.toContain(dica);
     expect(linhaDe('Kitesurf').textContent).toContain('-50% abaixo');
     expect(linhaDe('Barco').textContent).toContain('-12% abaixo');
-    expect(linhaDe('Quad').textContent).toContain('Na media');
-    expect(linhaDe('Passeio').textContent).toContain('Na media');
+    expect(linhaDe('Quad').textContent).toContain('Na média');
+    expect(linhaDe('Passeio').textContent).toContain('Na média');
     expect(linhaDe('Buggy Tour').textContent).toContain('€40');
   });
 
   it('os_precos_guardados_sao_lidos_ao_abrir_e_um_json_estragado_e_ignorado', async () => {
-    localStorage.setItem(CHAVE, '{nao e json');
+    localStorage.setItem(CHAVE, '{não e json');
     await abre();
-    expect(linhaDe('Buggy Tour').textContent).toContain('Nao definido');
+    expect(linhaDe('Buggy Tour').textContent).toContain('Não definido');
   });
 
   it('editar_preco_guarda_em_localStorage_saldesk_competition_v1', async () => {
@@ -489,7 +489,7 @@ describe('Analytics', () => {
     fireEvent.change(within(linhaDe('Buggy Tour')).getByPlaceholderText('Ex: 45'), { target: { value: '' } });
     fireEvent.click(within(linhaDe('Buggy Tour')).getByRole('button'));
     expect(JSON.parse(localStorage.getItem(CHAVE))).toEqual({ u1: { price: 0 } });
-    expect(linhaDe('Buggy Tour').textContent).toContain('Nao definido');
+    expect(linhaDe('Buggy Tour').textContent).toContain('Não definido');
   });
 
   it('sem_tours_mostra_o_vazio_da_concorrencia', async () => {
@@ -572,11 +572,11 @@ describe('Analytics', () => {
 
   it('os_botoes_de_editar_e_guardar_a_concorrencia_tem_nome_acessivel', async () => {
     await abre();
-    const editar = within(linhaDe('Buggy Tour')).getByRole('button', { name: 'Editar preco' });
+    const editar = within(linhaDe('Buggy Tour')).getByRole('button', { name: 'Editar preço' });
     fireEvent.click(editar);
-    expect(within(linhaDe('Buggy Tour')).getByLabelText('Preco do concorrente')).toBeTruthy();
-    expect(within(linhaDe('Buggy Tour')).getByRole('button', { name: 'Guardar preco' })).toBeTruthy();
+    expect(within(linhaDe('Buggy Tour')).getByLabelText('Preço do concorrente')).toBeTruthy();
+    expect(within(linhaDe('Buggy Tour')).getByRole('button', { name: 'Guardar preço' })).toBeTruthy();
     /* so o tour em edicao muda */
-    expect(within(linhaDe('Mergulho')).getByRole('button', { name: 'Editar preco' })).toBeTruthy();
+    expect(within(linhaDe('Mergulho')).getByRole('button', { name: 'Editar preço' })).toBeTruthy();
   });
 });

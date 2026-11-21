@@ -20,8 +20,8 @@ import PostModal from './marketing/PostModal';
 const MKTG_TABS = [
   { id: 'qrcode',    label: 'QR Code' },
   { id: 'widget',    label: 'Widget' },
-  { id: 'referrals', label: 'Indicacoes' },
-  { id: 'stats',     label: 'Estatisticas' },
+  { id: 'referrals', label: 'Indicações' },
+  { id: 'stats',     label: 'Estatísticas' },
 ];
 
 /* ─────────────────────── Main ─────────────────────── */
@@ -83,7 +83,7 @@ export default function Marketing() {
 
   return (
     <div>
-      <PageHeader title="Marketing" subtitle="Ferramentas de divulgacao e planeador de conteudos" />
+      <PageHeader title="Marketing" subtitle="Ferramentas de divulgação e planeador de conteudos" />
 
       {/* Tabs */}
       <div className="mb-6">

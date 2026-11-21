@@ -36,8 +36,8 @@ function StaffCard({ member, onEdit, onDelete, onCreateAccount, creatingAccountI
         </div>
         <div className="flex gap-0.5">
           <button onClick={() => navigate(`/colaboradores/${member.id}`)}
-            title="Ferias, documentos e certificacoes"
-            aria-label={`Ferias, documentos e certificacoes de ${member.name}`}
+            title="Férias, documentos e certificações"
+            aria-label={`Férias, documentos e certificações de ${member.name}`}
             className="p-1.5 rounded text-n-400 hover:text-ocean-700 hover:bg-ocean-50 transition-colors">
             <ClipboardCheck size={14} strokeWidth={1.75} />
           </button>

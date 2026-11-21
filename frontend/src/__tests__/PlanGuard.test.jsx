@@ -24,11 +24,11 @@ describe('UpgradeModal', () => {
     navigate.mockClear();
   });
 
-  it('o botao Ver planos navega e fecha o modal', () => {
+  it('o botão Ver planos navega e fecha o modal', () => {
     const onClose = vi.fn();
     renderComRouter(<UpgradeModal plan="pro" feature="automacoes" onClose={onClose} />);
 
-    fireEvent.click(screen.getByRole('button', { name: /Ver planos de subscricao/ }));
+    fireEvent.click(screen.getByRole('button', { name: /Ver planos de subscrição/ }));
 
     expect(navigate).toHaveBeenCalledWith('/definicoes?tab=facturacao');
     expect(onClose).toHaveBeenCalledTimes(1);
@@ -61,19 +61,19 @@ describe('PlanGuard (guarda de rota)', () => {
     useAuthStore.setState({ operator: { operator_type: 'activity', plan: 'starter' } });
   });
 
-  it('Ver planos so navega, sem fechar nada', () => {
+  it('Ver planos só navega, sem fechar nada', () => {
     renderComRouter(
       <PlanGuard feature="automacoes">
         <p>Conteudo</p>
       </PlanGuard>
     );
 
-    fireEvent.click(screen.getByRole('button', { name: /Ver planos de subscricao/ }));
+    fireEvent.click(screen.getByRole('button', { name: /Ver planos de subscrição/ }));
     expect(navigate).toHaveBeenCalledTimes(1);
     expect(navigate).toHaveBeenCalledWith('/definicoes?tab=facturacao');
   });
 
-  it('Fechar volta atras na historia', () => {
+  it('Fechar volta atrás na história', () => {
     renderComRouter(
       <PlanGuard feature="automacoes">
         <p>Conteudo</p>
@@ -84,7 +84,7 @@ describe('PlanGuard (guarda de rota)', () => {
     expect(navigate).toHaveBeenCalledWith(-1);
   });
 
-  it('com acesso mostra o conteudo', () => {
+  it('com acesso mostra o conteúdo', () => {
     useAuthStore.setState({ operator: { operator_type: 'activity', plan: 'pro' } });
     renderComRouter(
       <PlanGuard feature="automacoes">

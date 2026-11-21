@@ -54,19 +54,19 @@ function exportCsv(summary, mrrHistory, costs) {
     + Math.round((costs.cost_domains_annual || 0) / 12 * 100) / 100;
 
   const lines = [];
-  lines.push('SalDesk — Relatorio Financeiro da Plataforma');
+  lines.push('SalDesk — Relatório Financeiro da Plataforma');
   lines.push(`Gerado em,${new Date().toISOString().slice(0, 10)}`);
   lines.push('');
   lines.push('KPIs');
   lines.push(`MRR actual (EUR),${summary.mrr}`);
-  lines.push(`Variacao MoM (%),${summary.mrr_change_pct}`);
+  lines.push(`Variação MoM (%),${summary.mrr_change_pct}`);
   lines.push(`Operadores pagantes,${summary.paying_operators}`);
   lines.push(`Operadores em trial,${summary.trial_operators}`);
-  lines.push(`Churn este mes,${summary.churn_this_month}`);
-  lines.push(`LTV medio (EUR),${summary.ltv_avg}`);
+  lines.push(`Churn este mês,${summary.churn_this_month}`);
+  lines.push(`LTV médio (EUR),${summary.ltv_avg}`);
   lines.push('');
-  lines.push('Historico MRR — ultimos 12 meses');
-  lines.push('Mes,MRR total (EUR),Starter,Business,Pro,Churn');
+  lines.push('Histórico MRR — últimos 12 meses');
+  lines.push('Mês,MRR total (EUR),Starter,Business,Pro,Churn');
   mrrHistory.forEach(m => {
     lines.push(`${m.month},${m.mrr},${m.starter},${m.business},${m.pro},${m.churn}`);
   });
@@ -76,11 +76,11 @@ function exportCsv(summary, mrrHistory, costs) {
   lines.push(`Hostinger VPS,${costs.cost_hostinger || 0}`);
   lines.push(`Supabase,${costs.cost_supabase || 0}`);
   lines.push(`SendGrid,${costs.cost_sendgrid || 0}`);
-  lines.push(`Dominios (rateio mensal),${Math.round((costs.cost_domains_annual || 0) / 12 * 100) / 100}`);
+  lines.push(`Domínios (rateio mensal),${Math.round((costs.cost_domains_annual || 0) / 12 * 100) / 100}`);
   lines.push(`Outros,${costs.cost_outros || 0}`);
   lines.push(`TOTAL MENSAL,${monthlyFixed}`);
   lines.push('');
-  lines.push('Previsao MRR proximos 3 meses');
+  lines.push('Previsão MRR próximos 3 meses');
   (summary.forecast || []).forEach(f => lines.push(`${f.label},${f.mrr}`));
 
   const blob = new Blob(['﻿' + lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
@@ -184,7 +184,7 @@ export default function AdminFinancial() {
   if (loading) {
     return (
       <div>
-        <PageHeader title="Financeiro da Plataforma" subtitle="Receitas, custos e metricas financeiras da SalDesk" />
+        <PageHeader title="Financeiro da Plataforma" subtitle="Receitas, custos e métricas financeiras da SalDesk" />
         <div className="flex justify-center py-20"><LoadingSpinner /></div>
       </div>
     );
@@ -197,7 +197,7 @@ export default function AdminFinancial() {
     <div>
       <PageHeader
         title="Financeiro da Plataforma"
-        subtitle="Receitas, custos e metricas financeiras da SalDesk"
+        subtitle="Receitas, custos e métricas financeiras da SalDesk"
         actions={
           <div className="flex gap-2">
             <Button

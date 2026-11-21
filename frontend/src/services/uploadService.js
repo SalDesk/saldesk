@@ -67,10 +67,10 @@ export const MAX_DOCUMENT_SIZE_BYTES = MAX_DOCUMENT_SIZE_MB * 1024 * 1024;
 
 export function validateDocumentFile(file) {
   if (!ALLOWED_DOCUMENT_TYPES.includes(file.type)) {
-    return `Formato invalido: ${file.name}. Usa PDF, JPG, PNG ou WebP.`;
+    return `Formato inválido: ${file.name}. Usa PDF, JPG, PNG ou WebP.`;
   }
   if (file.size > MAX_DOCUMENT_SIZE_BYTES) {
-    return `Ficheiro demasiado grande: ${file.name}. Maximo ${MAX_DOCUMENT_SIZE_MB}MB.`;
+    return `Ficheiro demasiado grande: ${file.name}. Máximo ${MAX_DOCUMENT_SIZE_MB}MB.`;
   }
   return null;
 }

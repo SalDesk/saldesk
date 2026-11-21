@@ -33,11 +33,11 @@ export default function ResetPassword() {
     e.preventDefault();
     setError('');
     if (getPasswordStrength(form.newPw) < 2) {
-      setError('A password deve ser forte: 8+ caracteres, maiuscula, numero e caracter especial.');
+      setError('A password deve ser forte: 8+ caracteres, maiúscula, número e carácter especial.');
       return;
     }
     if (form.newPw !== form.confirm) {
-      setError('As passwords nao coincidem.');
+      setError('As passwords não coincidem.');
       return;
     }
     setLoading(true);
@@ -45,7 +45,7 @@ export default function ResetPassword() {
       await resetPassword(token, form.newPw);
       navigate('/login?reset=1');
     } catch (err) {
-      setError(err?.response?.data?.error || 'Link expirado ou invalido. Solicita um novo link de recuperacao.');
+      setError(err?.response?.data?.error || 'Link expirado ou inválido. Solicita um novo link de recuperação.');
     } finally {
       setLoading(false);
     }
@@ -59,9 +59,9 @@ export default function ResetPassword() {
             <AlertTriangle size={22} strokeWidth={1.75} className="text-error" />
           </div>
           <div>
-            <p className="font-display font-bold text-base text-n-900">Link invalido ou expirado</p>
+            <p className="font-display font-bold text-base text-n-900">Link inválido ou expirado</p>
             <p className="text-sm font-body text-n-500 mt-1">
-              Este link de recuperacao ja nao e valido. Solicita um novo.
+              Este link de recuperação já não é válido. Solicita um novo.
             </p>
           </div>
           <button onClick={() => navigate('/login')}
@@ -131,7 +131,7 @@ export default function ResetPassword() {
               </button>
             </div>
             {form.confirm && form.newPw !== form.confirm && (
-              <p className="text-xs text-error">As passwords nao coincidem.</p>
+              <p className="text-xs text-error">As passwords não coincidem.</p>
             )}
           </div>
 

@@ -25,10 +25,10 @@ const TYPE_LABEL  = { hotel: 'Hotel', activity: 'Actividade', rentacar: 'Rent-a-
 
 const COUNTRY_NAMES = {
   PT: 'Portugal',  DE: 'Alemanha',    NL: 'Holanda',      GB: 'Reino Unido',
-  FR: 'Franca',    IT: 'Italia',      ES: 'Espanha',      BE: 'Belgica',
-  US: 'EUA',       BR: 'Brasil',      CV: 'Cabo Verde',   AT: 'Austria',
-  CH: 'Suica',     SE: 'Suecia',      DK: 'Dinamarca',    NO: 'Noruega',
-  PL: 'Polonia',   IE: 'Irlanda',     FI: 'Finlandia',    CZ: 'Rep. Checa',
+  FR: 'França',    IT: 'Itália',      ES: 'Espanha',      BE: 'Bélgica',
+  US: 'EUA',       BR: 'Brasil',      CV: 'Cabo Verde',   AT: 'Áustria',
+  CH: 'Suíça',     SE: 'Suécia',      DK: 'Dinamarca',    NO: 'Noruega',
+  PL: 'Polónia',   IE: 'Irlanda',     FI: 'Finlândia',    CZ: 'Rep. Checa',
 };
 function countryName(code) { return COUNTRY_NAMES[code] || code; }
 
@@ -88,8 +88,8 @@ function TrafficTab({ data }) {
     <div className="space-y-5">
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <KpiCard icon={BarChart2} label="Visitas (30 dias)" value={totalVisits.toLocaleString('pt-PT')} sub="dados simulados — GA em breve" />
-        <KpiCard icon={Users} label="Paginas mais visitadas" value={pages[0]?.label || '—'} sub={`${pages[0]?.visits?.toLocaleString('pt-PT') || 0} visitas`} />
-        <KpiCard icon={Globe} label="Principal origem" value={sources[0]?.name || '—'} sub={`${sources[0]?.value || 0}% do trafego`} />
+        <KpiCard icon={Users} label="Páginas mais visitadas" value={pages[0]?.label || '—'} sub={`${pages[0]?.visits?.toLocaleString('pt-PT') || 0} visitas`} />
+        <KpiCard icon={Globe} label="Principal origem" value={sources[0]?.name || '—'} sub={`${sources[0]?.value || 0}% do tráfego`} />
       </div>
 
       <SectionCard title="Visitas por dia — últimos 30 dias">
@@ -205,7 +205,7 @@ function FunnelStep({ label, value, prevValue, pctNext, width, isLast }) {
         <div className="flex items-center gap-1 text-xs text-n-500 my-0.5">
           <ArrowRight size={12} strokeWidth={1.75} />
           <span className="font-medium text-ocean-700">{pctNext}%</span>
-          <span>taxa de conversao</span>
+          <span>taxa de conversão</span>
         </div>
       )}
     </div>
@@ -230,7 +230,7 @@ function FunnelTab({ data }) {
               <p className="text-2xl font-bold text-n-900 font-display mt-1">{step.value.toLocaleString('pt-PT')}</p>
               <p className={`text-xs font-medium mt-1 flex items-center gap-0.5 ${delta >= 0 ? 'text-[var(--success)]' : 'text-[var(--error)]'}`}>
                 {delta >= 0 ? <ChevronUp size={12} strokeWidth={2} /> : <ChevronDown size={12} strokeWidth={2} />}
-                {Math.abs(delta)} vs mes anterior
+                {Math.abs(delta)} vs mês anterior
               </p>
             </div>
           );
@@ -279,11 +279,11 @@ function ChurnTab({ data }) {
           icon={TrendingDown}
           label="Churn mensal"
           value={`${churn_rate}%`}
-          sub={churn_rate > 5 ? 'Acima do limite saudavel (5%)' : 'Dentro do limite saudavel'}
+          sub={churn_rate > 5 ? 'Acima do limite saudável (5%)' : 'Dentro do limite saudável'}
           down={churn_rate > 5}
           up={churn_rate <= 2}
         />
-        <KpiCard icon={UserX} label="Cancelamentos este mes" value={cancelled_this_month} sub={`${cancelled_list.length} total acumulado`} down={cancelled_this_month > 0} />
+        <KpiCard icon={UserX} label="Cancelamentos este mês" value={cancelled_this_month} sub={`${cancelled_list.length} total acumulado`} down={cancelled_this_month > 0} />
         <KpiCard icon={AlertTriangle} label="Operadores em risco" value={at_risk.length} sub="Inactivos +14 dias ou trial a expirar" down={at_risk.length > 0} />
       </div>
 
@@ -378,7 +378,7 @@ function GeographyTab({ data }) {
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <KpiCard icon={Globe} label="Total de clientes" value={total.toLocaleString('pt-PT')} sub="em toda a plataforma" />
         <KpiCard icon={Users} label="Principal mercado" value={countryName(top10[0]?.country || '')} sub={`${top10[0]?.pct || 0}% dos clientes`} />
-        <KpiCard icon={TrendingUp} label="Paises representados" value={top10.length} sub="top 10 listados" />
+        <KpiCard icon={TrendingUp} label="Países representados" value={top10.length} sub="top 10 listados" />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
@@ -399,7 +399,7 @@ function GeographyTab({ data }) {
             <thead>
               <tr className="border-b border-n-100">
                 <th className="text-left text-xs font-medium text-n-500 pb-2 pr-3">#</th>
-                <th className="text-left text-xs font-medium text-n-500 pb-2 pr-3">Pais</th>
+                <th className="text-left text-xs font-medium text-n-500 pb-2 pr-3">País</th>
                 <th className="text-right text-xs font-medium text-n-500 pb-2 pr-3">Clientes</th>
                 <th className="text-right text-xs font-medium text-n-500 pb-2">Quota</th>
               </tr>
@@ -455,9 +455,9 @@ function ReportTab({ funnel, churn }) {
     setSending(true); setMsg('');
     try {
       const { data } = await api.post('/admin/analytics/send-report');
-      setMsg(data.message || 'Relatorio enviado');
+      setMsg(data.message || 'Relatório enviado');
     } catch (e) {
-      setMsg(e.response?.data?.error || 'Erro ao enviar relatorio');
+      setMsg(e.response?.data?.error || 'Erro ao enviar relatório');
     } finally { setSending(false); }
   };
 
@@ -501,7 +501,7 @@ function ReportTab({ funnel, churn }) {
           <KpiCard icon={AlertTriangle} label="Em risco"            value={emRisco}  down={emRisco > 0} />
         </div>
 
-        <SectionCard title="Funil do mes">
+        <SectionCard title="Funil do mês">
           <div className="grid grid-cols-4 gap-3">
             {current.map((step, i) => (
               <div key={step.label} className="text-center p-4 bg-n-50 rounded-lg">
@@ -521,7 +521,7 @@ function ReportTab({ funnel, churn }) {
               <div key={p.plan} className="p-4 rounded-lg bg-n-50 border border-n-100">
                 <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${PLAN_BADGE[p.plan]}`}>{PLAN_LABEL[p.plan]}</span>
                 <p className="text-2xl font-bold text-n-900 font-display mt-2">€{p.ltv}</p>
-                <p className="text-xs text-n-500 mt-0.5">LTV medio · {p.avg_months} meses · {p.count} operadores</p>
+                <p className="text-xs text-n-500 mt-0.5">LTV médio · {p.avg_months} meses · {p.count} operadores</p>
                 <p className="text-xs text-n-400 mt-0.5">€{p.price}/mes</p>
               </div>
             ))}
@@ -529,7 +529,7 @@ function ReportTab({ funnel, churn }) {
         </SectionCard>
 
         <div className="p-4 rounded-lg bg-ocean-50 border border-ocean-100 print:border print:border-n-200">
-          <p className="text-xs font-semibold text-ocean-700 uppercase tracking-wide mb-2">Notas do mes</p>
+          <p className="text-xs font-semibold text-ocean-700 uppercase tracking-wide mb-2">Notas do mês</p>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm">
             <div><span className="text-n-500">Cancelamentos: </span><span className="font-medium text-n-900">{cancelados}</span></div>
             <div><span className="text-n-500">Em risco: </span><span className="font-medium text-n-900">{emRisco}</span></div>
@@ -544,11 +544,11 @@ function ReportTab({ funnel, churn }) {
 
 /* ─── Page ───────────────────────────────────────────────────── */
 const TABS = [
-  { key: 'traffic',  label: 'Trafego'     },
+  { key: 'traffic',  label: 'Tráfego'     },
   { key: 'funnel',   label: 'Funil'       },
   { key: 'churn',    label: 'Churn'       },
   { key: 'geo',      label: 'Geografia'   },
-  { key: 'report',   label: 'Relatorio'   },
+  { key: 'report',   label: 'Relatório'   },
 ];
 
 export default function AdminAnalytics() {
@@ -583,7 +583,7 @@ export default function AdminAnalytics() {
       <div className="flex items-start justify-between print:hidden">
         <div>
           <h1 className="text-2xl font-bold text-n-900 font-display">Analytics</h1>
-          <p className="text-sm text-n-500 mt-1">Trafego, funil de conversao, churn e geografia da plataforma</p>
+          <p className="text-sm text-n-500 mt-1">Tráfego, funil de conversão, churn e geografia da plataforma</p>
         </div>
         <button
           className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-n-200 text-sm text-n-700 hover:bg-n-50 transition-colors"

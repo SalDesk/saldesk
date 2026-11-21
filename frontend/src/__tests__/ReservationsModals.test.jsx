@@ -77,7 +77,7 @@ describe('Modais de Reservas', () => {
       return props;
     }
 
-    it('mostra o titulo, o cliente e a data actual no campo', () => {
+    it('mostra o título, o cliente e a data actual no campo', () => {
       renderModal();
       expect(screen.getByRole('heading', { name: 'Reagendar reserva' })).toBeInTheDocument();
       expect(screen.getByText('Cliente Alfa')).toBeInTheDocument();
@@ -94,7 +94,7 @@ describe('Modais de Reservas', () => {
       expect(props.onDone).toHaveBeenCalledWith(AMANHA);
     });
 
-    it('sem data nao chama o servico', () => {
+    it('sem data não chama o serviço', () => {
       const props = renderModal();
       fireEvent.change(campo('Nova data'), { target: { value: '' } });
       fireEvent.click(botao('Reagendar'));
@@ -102,12 +102,12 @@ describe('Modais de Reservas', () => {
       expect(props.onDone).not.toHaveBeenCalled();
     });
 
-    it('mostra o erro do servidor e nao conclui', async () => {
-      updateReservation.mockRejectedValue({ response: { data: { error: 'Data indisponivel' } } });
+    it('mostra o erro do servidor e não conclui', async () => {
+      updateReservation.mockRejectedValue({ response: { data: { error: 'Data indisponível' } } });
       const props = renderModal();
       fireEvent.change(campo('Nova data'), { target: { value: DEPOIS } });
       fireEvent.click(botao('Reagendar'));
-      expect(await screen.findByText('Data indisponivel')).toBeInTheDocument();
+      expect(await screen.findByText('Data indisponível')).toBeInTheDocument();
       expect(props.onDone).not.toHaveBeenCalled();
     });
 
@@ -136,7 +136,7 @@ describe('Modais de Reservas', () => {
       return props;
     }
 
-    it('mostra o titulo e o cliente', () => {
+    it('mostra o título e o cliente', () => {
       renderModal();
       expect(screen.getByRole('heading', { name: 'Registar No-Show' })).toBeInTheDocument();
       expect(screen.getByText('Cliente Alfa')).toBeInTheDocument();
@@ -144,16 +144,16 @@ describe('Modais de Reservas', () => {
 
     it('com nota: muda o estado para no_show e guarda a nota tal como escrita', async () => {
       const props = renderModal();
-      fireEvent.change(campo('Nota interna (opcional)'), { target: { value: ' Nao apareceu ' } });
+      fireEvent.change(campo('Nota interna (opcional)'), { target: { value: ' Não apareceu ' } });
       fireEvent.click(botao('Confirmar No-Show'));
       await waitFor(() => expect(props.onDone).toHaveBeenCalledTimes(1));
       expect(changeStatus).toHaveBeenCalledTimes(1);
       expect(changeStatus).toHaveBeenCalledWith('r1', 'no_show');
       expect(updateReservation).toHaveBeenCalledTimes(1);
-      expect(updateReservation).toHaveBeenCalledWith('r1', { notes_internal: ' Nao apareceu ' });
+      expect(updateReservation).toHaveBeenCalledWith('r1', { notes_internal: ' Não apareceu ' });
     });
 
-    it('sem nota (ou so espacos) so muda o estado', async () => {
+    it('sem nota (ou só espacos) só muda o estado', async () => {
       const props = renderModal();
       fireEvent.change(campo('Nota interna (opcional)'), { target: { value: '   ' } });
       fireEvent.click(botao('Confirmar No-Show'));
@@ -167,7 +167,7 @@ describe('Modais de Reservas', () => {
       temEtiquetaPorCima(['Nota interna (opcional)']);
     });
 
-    it('Cancelar chama onClose e nao toca no servico', () => {
+    it('Cancelar chama onClose e não toca no serviço', () => {
       const props = renderModal();
       fireEvent.click(botao('Cancelar'));
       expect(props.onClose).toHaveBeenCalledTimes(1);
@@ -201,18 +201,18 @@ describe('Modais de Reservas', () => {
       expect(screen.getByText('Fiat Panda')).toBeInTheDocument();
       expect(screen.getByText('S-01-AB')).toBeInTheDocument();
       expect(screen.getByText('Cliente Alfa')).toBeInTheDocument();
-      expect(campo('Km na saida')).toHaveValue(null);
+      expect(campo('Km na saída')).toHaveValue(null);
       expect(campo('Danos existentes (registo)')).toHaveValue('');
-      expect(campo('Caucao (€)')).toHaveValue(null);
+      expect(campo('Caução (€)')).toHaveValue(null);
       expect(screen.getByRole('checkbox')).not.toBeChecked();
     });
 
-    it('confirma com o objecto exacto: combustivel, km numero, caucao em texto e paga booleano', async () => {
+    it('confirma com o objecto exacto: combustível, km número, caução em texto e paga booleano', async () => {
       const props = renderModal();
       fireEvent.click(botao('1/2'));
-      fireEvent.change(campo('Km na saida'), { target: { value: '12345' } });
+      fireEvent.change(campo('Km na saída'), { target: { value: '12345' } });
       fireEvent.change(campo('Danos existentes (registo)'), { target: { value: 'Risco no para-choques' } });
-      fireEvent.change(campo('Caucao (€)'), { target: { value: '150.5' } });
+      fireEvent.change(campo('Caução (€)'), { target: { value: '150.5' } });
       fireEvent.click(screen.getByRole('checkbox'));
       fireEvent.click(botao('Confirmar levantamento'));
       await waitFor(() => expect(props.onDone).toHaveBeenCalledTimes(1));
@@ -229,7 +229,7 @@ describe('Modais de Reservas', () => {
       expect(changeStatus).toHaveBeenCalledWith('r1', 'checked_in');
     });
 
-    it('sem preencher nada: combustivel cheio, km nulo, textos vazios, paga falso', async () => {
+    it('sem preencher nada: combustível cheio, km nulo, textos vazios, paga falso', async () => {
       const props = renderModal();
       fireEvent.click(botao('Confirmar levantamento'));
       await waitFor(() => expect(props.onDone).toHaveBeenCalledTimes(1));
@@ -244,14 +244,14 @@ describe('Modais de Reservas', () => {
       expect(changeStatus).toHaveBeenCalledWith('r1', 'checked_in');
     });
 
-    it('parte dos dados ja guardados e preserva os campos que nao edita', async () => {
+    it('parte dos dados já guardados e preserva os campos que não edita', async () => {
       const props = renderModal({
         notes_internal: JSON.stringify({ rentacar: { fuel_out: 1, km_out: 500, caucao: 80, caucao_paid: true, outro: 'x' } }),
       });
-      expect(campo('Km na saida')).toHaveValue(500);
-      expect(campo('Caucao (€)')).toHaveValue(80);
+      expect(campo('Km na saída')).toHaveValue(500);
+      expect(campo('Caução (€)')).toHaveValue(80);
       expect(screen.getByRole('checkbox')).toBeChecked();
-      fireEvent.change(campo('Km na saida'), { target: { value: '650' } });
+      fireEvent.change(campo('Km na saída'), { target: { value: '650' } });
       fireEvent.click(botao('Confirmar levantamento'));
       await waitFor(() => expect(props.onDone).toHaveBeenCalledTimes(1));
       expect(updateReservation).toHaveBeenCalledWith('r1', {
@@ -265,10 +265,10 @@ describe('Modais de Reservas', () => {
 
     it('os campos tem a etiqueta por cima', () => {
       renderModal();
-      temEtiquetaPorCima(['Km na saida', 'Danos existentes (registo)', 'Caucao (€)']);
+      temEtiquetaPorCima(['Km na saída', 'Danos existentes (registo)', 'Caução (€)']);
     });
 
-    it('Cancelar chama onClose e nao toca no servico', () => {
+    it('Cancelar chama onClose e não toca no serviço', () => {
       const props = renderModal();
       fireEvent.click(botao('Cancelar'));
       expect(props.onClose).toHaveBeenCalledTimes(1);
@@ -296,12 +296,12 @@ describe('Modais de Reservas', () => {
       return props;
     }
 
-    it('mostra viatura, cliente, km de saida e esconde o valor retido por omissao', () => {
+    it('mostra viatura, cliente, km de saída e esconde o valor retido por omissao', () => {
       renderModal();
-      expect(screen.getByRole('heading', { name: 'Devolucao de viatura' })).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: 'Devolução de viatura' })).toBeInTheDocument();
       expect(screen.getByText('Fiat Panda')).toBeInTheDocument();
       expect(screen.getByText('Cliente Alfa')).toBeInTheDocument();
-      expect(screen.getByText(/^Saida: .*km$/)).toBeInTheDocument();
+      expect(screen.getByText(/^Saída: .*km$/)).toBeInTheDocument();
       expect(campo('Km na chegada')).toHaveValue(null);
       expect(screen.queryByText('Valor retido (€)')).not.toBeInTheDocument();
     });
@@ -312,12 +312,12 @@ describe('Modais de Reservas', () => {
       expect(screen.getByText(/km percorridos/)).toBeInTheDocument();
     });
 
-    it('caucao devolvida: confirma com o objecto exacto', async () => {
+    it('caução devolvida: confirma com o objecto exacto', async () => {
       const props = renderModal();
       fireEvent.click(botao('1/4'));
       fireEvent.change(campo('Km na chegada'), { target: { value: '12500' } });
-      fireEvent.change(campo('Danos na devolucao'), { target: { value: 'Sem danos' } });
-      fireEvent.click(botao('Confirmar devolucao'));
+      fireEvent.change(campo('Danos na devolução'), { target: { value: 'Sem danos' } });
+      fireEvent.click(botao('Confirmar devolução'));
       await waitFor(() => expect(props.onDone).toHaveBeenCalledTimes(1));
       expect(updateReservation).toHaveBeenCalledTimes(1);
       expect(updateReservation).toHaveBeenCalledWith('r1', {
@@ -333,12 +333,12 @@ describe('Modais de Reservas', () => {
       expect(changeStatus).toHaveBeenCalledWith('r1', 'checked_out');
     });
 
-    it('caucao retida (parcial): o valor retido passa a numero', async () => {
+    it('caução retida (parcial): o valor retido passa a número', async () => {
       const props = renderModal();
       fireEvent.click(botao('Retida (parcial)'));
       fireEvent.change(campo('Valor retido (€)'), { target: { value: '40.5' } });
       fireEvent.change(campo('Km na chegada'), { target: { value: '12100' } });
-      fireEvent.click(botao('Confirmar devolucao'));
+      fireEvent.click(botao('Confirmar devolução'));
       await waitFor(() => expect(props.onDone).toHaveBeenCalledTimes(1));
       expect(updateReservation).toHaveBeenCalledWith('r1', {
         notes_internal: JSON.stringify({
@@ -352,10 +352,10 @@ describe('Modais de Reservas', () => {
       expect(changeStatus).toHaveBeenCalledWith('r1', 'checked_out');
     });
 
-    it('caucao retida (total) sem valor: km nulo e retido zero', async () => {
+    it('caução retida (total) sem valor: km nulo e retido zero', async () => {
       const props = renderModal();
       fireEvent.click(botao('Retida (total)'));
-      fireEvent.click(botao('Confirmar devolucao'));
+      fireEvent.click(botao('Confirmar devolução'));
       await waitFor(() => expect(props.onDone).toHaveBeenCalledTimes(1));
       expect(updateReservation).toHaveBeenCalledWith('r1', {
         notes_internal: JSON.stringify({
@@ -370,16 +370,16 @@ describe('Modais de Reservas', () => {
 
     it('os campos tem a etiqueta por cima', () => {
       renderModal();
-      temEtiquetaPorCima(['Km na chegada', 'Danos na devolucao']);
+      temEtiquetaPorCima(['Km na chegada', 'Danos na devolução']);
     });
 
-    it('o valor retido tambem tem a etiqueta por cima', () => {
+    it('o valor retido também tem a etiqueta por cima', () => {
       renderModal();
       fireEvent.click(botao('Retida (parcial)'));
       temEtiquetaPorCima(['Valor retido (€)']);
     });
 
-    it('Cancelar chama onClose e nao toca no servico', () => {
+    it('Cancelar chama onClose e não toca no serviço', () => {
       const props = renderModal();
       fireEvent.click(botao('Cancelar'));
       expect(props.onClose).toHaveBeenCalledTimes(1);
@@ -413,16 +413,16 @@ describe('Modais de Reservas', () => {
       expect(screen.getByText('Cliente Alfa')).toBeInTheDocument();
       expect(screen.getByText(/4 pessoas/)).toBeInTheDocument();
       expect(screen.getByText(/Mesa 4/)).toBeInTheDocument();
-      expect(campo('Ocasiao especial')).toHaveValue('');
+      expect(campo('Ocasião especial')).toHaveValue('');
       expect(campo('Pedidos especiais')).toHaveValue('');
       expect(screen.getByRole('checkbox')).not.toBeChecked();
     });
 
-    it('guarda turno, ocasiao, pedidos e lista de espera com o objecto exacto', async () => {
+    it('guarda turno, ocasião, pedidos e lista de espera com o objecto exacto', async () => {
       const props = renderModal();
-      fireEvent.click(botao(/Almoco/));
-      fireEvent.change(campo('Ocasiao especial'), { target: { value: 'lua_de_mel' } });
-      fireEvent.change(campo('Pedidos especiais'), { target: { value: 'Sem gluten' } });
+      fireEvent.click(botao(/Almoço/));
+      fireEvent.change(campo('Ocasião especial'), { target: { value: 'lua_de_mel' } });
+      fireEvent.change(campo('Pedidos especiais'), { target: { value: 'Sem glúten' } });
       fireEvent.click(screen.getByRole('checkbox'));
       fireEvent.click(botao('Guardar detalhes'));
       await waitFor(() => expect(props.onDone).toHaveBeenCalledTimes(1));
@@ -430,12 +430,12 @@ describe('Modais de Reservas', () => {
       expect(updateReservation).toHaveBeenCalledWith('r1', {
         notes_guest: JSON.stringify({
           phone: '+238 999',
-          turno: 'almoco', ocasiao: 'lua_de_mel', pedidos_especiais: 'Sem gluten', lista_espera: true,
+          turno: 'almoco', ocasiao: 'lua_de_mel', pedidos_especiais: 'Sem glúten', lista_espera: true,
         }),
       });
     });
 
-    it('sem mexer em nada guarda jantar, sem ocasiao, sem pedidos e fora da lista de espera', async () => {
+    it('sem mexer em nada guarda jantar, sem ocasião, sem pedidos e fora da lista de espera', async () => {
       const props = renderModal();
       fireEvent.click(botao('Guardar detalhes'));
       await waitFor(() => expect(props.onDone).toHaveBeenCalledTimes(1));
@@ -447,24 +447,24 @@ describe('Modais de Reservas', () => {
       });
     });
 
-    it('a ocasiao oferece as cinco opcoes de hoje', () => {
+    it('a ocasião oferece as cinco opções de hoje', () => {
       renderModal();
-      const opcoes = within(campo('Ocasiao especial')).getAllByRole('option').map(o => [o.value, o.textContent]);
+      const opcoes = within(campo('Ocasião especial')).getAllByRole('option').map(o => [o.value, o.textContent]);
       expect(opcoes).toEqual([
         ['', 'Nenhuma'],
-        ['aniversario', 'Aniversario'],
+        ['aniversario', 'Aniversário'],
         ['lua_de_mel', 'Lua-de-mel'],
-        ['negocios', 'Negocios'],
+        ['negocios', 'Negócios'],
         ['outro', 'Outro'],
       ]);
     });
 
     it('os campos tem a etiqueta por cima', () => {
       renderModal();
-      temEtiquetaPorCima(['Ocasiao especial', 'Pedidos especiais']);
+      temEtiquetaPorCima(['Ocasião especial', 'Pedidos especiais']);
     });
 
-    it('Cancelar chama onClose e nao toca no servico', () => {
+    it('Cancelar chama onClose e não toca no serviço', () => {
       const props = renderModal();
       fireEvent.click(botao('Cancelar'));
       expect(props.onClose).toHaveBeenCalledTimes(1);
@@ -472,7 +472,7 @@ describe('Modais de Reservas', () => {
     });
   });
 
-  describe('ManifestoModal (so leitura)', () => {
+  describe('ManifestoModal (só leitura)', () => {
     const UNITS = [
       { id: 't1', name: 'Tour Norte' },
       { id: 't2', name: 'Tour Sul' },
@@ -513,7 +513,7 @@ describe('Modais de Reservas', () => {
       expect(opcoes).toEqual([['', 'Todos os tours'], ['t1', 'Tour Norte'], ['t2', 'Tour Sul']]);
     });
 
-    it('filtrar por tour lista so as reservas activas desse tour, por ordem de nome', () => {
+    it('filtrar por tour lista só as reservas activas desse tour, por ordem de nome', () => {
       renderModal();
       fireEvent.change(campo('Tour'), { target: { value: 't1' } });
       expect(nomes()).toEqual(['Ana Alfa', 'Zeca Zulu']);
@@ -542,7 +542,7 @@ describe('Modais de Reservas', () => {
       expect(screen.queryByRole('button', { name: 'Exportar PDF' })).not.toBeInTheDocument();
     });
 
-    it('Exportar PDF imprime a pagina', () => {
+    it('Exportar PDF imprime a página', () => {
       const print = vi.spyOn(window, 'print').mockImplementation(() => {});
       renderModal();
       fireEvent.change(campo('Tour'), { target: { value: 't1' } });

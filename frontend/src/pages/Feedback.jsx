@@ -18,16 +18,16 @@ import LoadingSpinner from '../components/shared/LoadingSpinner';
 /* Igual ao DEFAULT_TEMPLATE do backend (helpers/pedidoAvaliacao.js): texto neutro, serve
    actividades, hoteis, rent-a-car e restaurantes */
 const DEFAULT_TEMPLATE = {
-  subject_pt: 'Como correu? Deixe a sua avaliacao',
+  subject_pt: 'Como correu? Deixe a sua avaliação',
   subject_en: 'How was it? Leave your review',
-  body_pt:    'Ola {nome_cliente},\n\nObrigado por ter escolhido {nome_tour}. Esperamos que tenha corrido bem!\n\nA sua opiniao ajuda-nos e ajuda outros viajantes a escolher. Demora menos de um minuto:\n\n{link_avaliacao}\n\nObrigado!',
+  body_pt:    'Olá {nome_cliente},\n\nObrigado por ter escolhido {nome_tour}. Esperamos que tenha corrido bem!\n\nA sua opinião ajuda-nos e ajuda outros viajantes a escolher. Demora menos de um minuto:\n\n{link_avaliacao}\n\nObrigado!',
   body_en:    'Hello {nome_cliente},\n\nThank you for choosing {nome_tour}. We hope you had a great time!\n\nYour opinion helps us and helps other travellers choose. It takes less than a minute:\n\n{link_avaliacao}\n\nThank you!',
 };
 
 const TEMPLATE_VARS = [
   { key: '{nome_cliente}',  desc: 'Nome do cliente'            },
   { key: '{nome_tour}',     desc: 'Nome do tour'               },
-  { key: '{link_avaliacao}', desc: 'Link directo para avaliacao' },
+  { key: '{link_avaliacao}', desc: 'Link directo para avaliação' },
 ];
 
 /* ── Helpers ── */
@@ -84,7 +84,7 @@ export default function Feedback() {
     const map = {};
     (reservations || []).forEach(r => {
       const key  = r.unit_id || 'unknown';
-      const name = r.units?.name || r.unit_name || 'Servico sem nome';
+      const name = r.units?.name || r.unit_name || 'Serviço sem nome';
       if (!map[key]) map[key] = { unit_id: key, unit_name: name, reservations: [], reviews: [] };
       map[key].reservations.push(r);
     });
@@ -211,8 +211,8 @@ export default function Feedback() {
   return (
     <div>
       <PageHeader
-        title="Feedback Pos-Tour"
-        subtitle="Gestao de avaliacoes e pedidos de feedback"
+        title="Feedback Pós-Tour"
+        subtitle="Gestão de avaliações e pedidos de feedback"
         actions={
           <Button variant="secondary" icon={RefreshCw} size="sm"
             onClick={() => { setLoading(true); window.location.reload(); }}>
@@ -225,9 +225,9 @@ export default function Feedback() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-5">
         {[
           { label: 'Tours realizados',  value: totalCompleted,               icon: CheckCircle2, color: 'text-n-900'     },
-          { label: 'Avaliacoes recebidas', value: totalReviews,              icon: Star,         color: 'text-sand-500'  },
+          { label: 'Avaliações recebidas', value: totalReviews,              icon: Star,         color: 'text-sand-500'  },
           { label: 'Taxa de resposta',  value: `${globalRate}%`,             icon: TrendingUp,   color: 'text-ocean-700' },
-          { label: 'Media geral',       value: globalAvg > 0 ? globalAvg.toFixed(1) + ' / 5' : '—', icon: BarChart2, color: 'text-[var(--success)]' },
+          { label: 'Média geral',       value: globalAvg > 0 ? globalAvg.toFixed(1) + ' / 5' : '—', icon: BarChart2, color: 'text-[var(--success)]' },
         ].map(m => (
           <div key={m.label} className="bg-white rounded-md border border-n-200 px-4 py-3 flex items-center gap-3">
             <div className="w-8 h-8 rounded-sm bg-ocean-50 flex items-center justify-center shrink-0">
@@ -264,7 +264,7 @@ export default function Feedback() {
                       <span className="font-semibold text-n-700">{t.total}</span> tours realizados
                     </span>
                     <span className="text-xs font-body text-n-500">
-                      <span className="font-semibold text-n-700">{t.received}</span> avaliacoes
+                      <span className="font-semibold text-n-700">{t.received}</span> avaliações
                     </span>
                     {t.received > 0 && <StarRating value={t.avgRating} />}
                   </div>
@@ -289,12 +289,12 @@ export default function Feedback() {
         <div className="space-y-3">
           {pendingReview.length === 0 ? (
             <Card padding="p-0">
-              <EmptyState icon={CheckCircle2} title="Todos os tours tem avaliacao solicitada." />
+              <EmptyState icon={CheckCircle2} title="Todos os tours tem avaliação solicitada." />
             </Card>
           ) : (
             <>
               <p className="text-xs font-body text-n-500">
-                {pendingReview.length} reserva(s) sem pedido de avaliacao enviado.
+                {pendingReview.length} reserva(s) sem pedido de avaliação enviado.
               </p>
               <Card padding="p-0">
                 <Table columns={pendingColumns} rows={pendingReview.slice(0, 50)} />
@@ -318,11 +318,11 @@ export default function Feedback() {
             {autoErro && <p className="text-xs font-body text-red-600 mt-2" role="alert">Não foi possível guardar. Tente de novo.</p>}
           </Card>
           <Card padding="px-5 py-5">
-            <h3 className="font-display font-semibold text-sm text-n-700 mb-4">Template do pedido de avaliacao</h3>
+            <h3 className="font-display font-semibold text-sm text-n-700 mb-4">Template do pedido de avaliação</h3>
 
             {/* Variables */}
             <div className="mb-4">
-              <p className="text-xs font-body font-bold uppercase tracking-wide text-n-500 mb-2">Variaveis disponiveis</p>
+              <p className="text-xs font-body font-bold uppercase tracking-wide text-n-500 mb-2">Variáveis disponíveis</p>
               <div className="flex flex-wrap gap-1.5">
                 {TEMPLATE_VARS.map(v => (
                   <button key={v.key} type="button"

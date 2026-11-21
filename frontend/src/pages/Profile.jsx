@@ -75,7 +75,7 @@ export default function Profile() {
 
   return (
     <div>
-      <PageHeader title="Perfil do Operador" subtitle="Informacoes publicas do seu negocio" />
+      <PageHeader title="Perfil do Operador" subtitle="Informações públicas do seu negócio" />
 
       <div className="space-y-6">
         {/* Logo + Cover photos row */}
@@ -131,7 +131,7 @@ export default function Profile() {
               <div>
                 <h3 className="font-display font-semibold text-sm text-n-700">Fotos de Capa</h3>
                 <p className="text-xs font-body text-n-400 mt-0.5">
-                  Aparecem no carousel da sua pagina publica de reservas.
+                  Aparecem no carousel da sua página pública de reservas.
                 </p>
               </div>
             }
@@ -140,26 +140,26 @@ export default function Profile() {
               value={coverImages}
               onChange={setCoverImages}
               maxImages={5}
-              hint="Ate 5 fotos · primeira = foto principal · JPG, PNG, WebP · max 5MB cada"
+              hint="Até 5 fotos · primeira = foto principal · JPG, PNG, WebP · max 5MB cada"
             />
           </Card>
         </div>
 
         {/* Business data */}
         <form onSubmit={handleSave} className="space-y-4">
-          <Card header={<h3 className="font-display font-semibold text-sm text-n-700">Informacoes do negocio</h3>}>
+          <Card header={<h3 className="font-display font-semibold text-sm text-n-700">Informações do negócio</h3>}>
             <div className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <Input label="Nome legal" value={form.name} onChange={set('name')} required />
                 <Input label="Nome comercial" value={form.business_name} onChange={set('business_name')} placeholder="Ex: Zy Tours Sal" />
               </div>
-              <Input label="Tagline" value={form.tagline} onChange={set('tagline')} placeholder="Ex: A melhor experiencia em Cabo Verde" />
+              <Input label="Tagline" value={form.tagline} onChange={set('tagline')} placeholder="Ex: A melhor experiência em Cabo Verde" />
               <Textarea
-                label="Descricao"
+                label="Descrição"
                 value={form.description}
                 onChange={set('description')}
                 rows={3}
-                placeholder="Descreva o seu negocio para os clientes..."
+                placeholder="Descreva o seu negócio para os clientes..."
               />
               <div className="grid grid-cols-2 gap-3">
                 <Input label="Telefone" value={form.phone} onChange={set('phone')} type="tel" />
@@ -169,10 +169,10 @@ export default function Profile() {
             </div>
           </Card>
 
-          <Card header={<h3 className="font-display font-semibold text-sm text-n-700">Configuracoes</h3>}>
+          <Card header={<h3 className="font-display font-semibold text-sm text-n-700">Configurações</h3>}>
             <div className="grid grid-cols-3 gap-3">
-              <Select label="Idioma padrao" value={form.language} onChange={set('language')}>
-                <option value="pt">Portugues</option>
+              <Select label="Idioma padrão" value={form.language} onChange={set('language')}>
+                <option value="pt">Português</option>
                 <option value="en">English</option>
                 <option value="de">Deutsch</option>
                 <option value="nl">Nederlands</option>
@@ -182,7 +182,7 @@ export default function Profile() {
                 <option value="CVE">CVE — Escudo</option>
                 <option value="USD">USD — Dolar</option>
               </Select>
-              <Select label="Fuso horario" value={form.timezone} onChange={set('timezone')}>
+              <Select label="Fuso horário" value={form.timezone} onChange={set('timezone')}>
                 <option value="Atlantic/Cape_Verde">Cabo Verde (UTC-1)</option>
                 <option value="Europe/Lisbon">Lisboa (UTC+0/+1)</option>
                 <option value="Europe/London">Londres (UTC+0/+1)</option>
@@ -193,7 +193,7 @@ export default function Profile() {
           <div className="flex items-center gap-3">
             <Button type="submit" loading={saving} icon={saved ? Check : Save}
               className={saved ? 'bg-[#1A7A4A] hover:bg-[#15623c]' : ''}>
-              {saved ? 'Guardado!' : 'Guardar alteracoes'}
+              {saved ? 'Guardado!' : 'Guardar alterações'}
             </Button>
           </div>
         </form>

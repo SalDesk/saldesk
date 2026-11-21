@@ -95,7 +95,7 @@ function StaffForm({ member, onSave, onCancel, loading, error, roles }) {
         </div>
         <div>
           <p className="text-sm font-display font-semibold text-n-800">Foto de perfil</p>
-          <p className="text-xs font-body text-n-500">JPG, PNG ate 2MB</p>
+          <p className="text-xs font-body text-n-500">JPG, PNG até 2MB</p>
         </div>
       </div>
 
@@ -122,14 +122,14 @@ function StaffForm({ member, onSave, onCancel, loading, error, roles }) {
         <Input label="WhatsApp" aria-label="WhatsApp" value={form.whatsapp} onChange={set('whatsapp')} type="tel" placeholder="+238 900 0000" />
       </div>
       <Input
-        label="Data de admissao" aria-label="Data de admissao" type="date" value={form.hire_date} onChange={set('hire_date')}
-        hint="Opcional — usada para sugerir o direito a ferias proporcional em RH."
+        label="Data de admissão" aria-label="Data de admissão" type="date" value={form.hire_date} onChange={set('hire_date')}
+        hint="Opcional — usada para sugerir o direito a férias proporcional em RH."
       />
 
       {/* Schedule */}
       <div>
         <label className="text-xs font-body font-bold uppercase tracking-wide text-n-600 mb-2 block">
-          Horario habitual
+          Horário habitual
         </label>
         <div className="flex gap-1.5 flex-wrap">
           {DAYS.map(d => (
@@ -144,14 +144,14 @@ function StaffForm({ member, onSave, onCancel, loading, error, roles }) {
       {/* Skills */}
       <div>
         <label className="text-xs font-body font-bold uppercase tracking-wide text-n-600 mb-2 block">
-          Competencias e certificacoes
+          Competências e certificações
         </label>
         {skills.length > 0 && (
           <div className="flex flex-wrap gap-1.5 mb-2">
             {skills.map(s => (
               <span key={s} className="flex items-center gap-1 px-2 py-0.5 bg-ocean-50 text-ocean-700 rounded text-xs font-body">
                 <Tag size={9} strokeWidth={1.75} />{s}
-                <button type="button" aria-label={`Remover competencia - ${s}`} onClick={() => setSkills(p => p.filter(x => x !== s))}>
+                <button type="button" aria-label={`Remover competência - ${s}`} onClick={() => setSkills(p => p.filter(x => x !== s))}>
                   <X size={10} strokeWidth={2} />
                 </button>
               </span>
@@ -159,10 +159,10 @@ function StaffForm({ member, onSave, onCancel, loading, error, roles }) {
           </div>
         )}
         <Input
-          aria-label="Competencias e certificacoes"
+          aria-label="Competências e certificações"
           type="text" value={skillInput}
           onChange={e => setSkillInput(e.target.value)} onKeyDown={addSkill}
-          placeholder="Escrever competencia + Enter"
+          placeholder="Escrever competência + Enter"
         />
       </div>
 
@@ -170,16 +170,16 @@ function StaffForm({ member, onSave, onCancel, loading, error, roles }) {
       {form.role === 'Vendedor de Praia' && (
         <div className="border border-[var(--sand-300)] bg-[var(--sand-50)] rounded-sm p-4 space-y-3">
           <p className="text-xs font-body font-bold uppercase tracking-wide text-[var(--sand-600)]">
-            Configuracao do Vendedor de Praia
+            Configuração do Vendedor de Praia
           </p>
           <div className="grid grid-cols-2 gap-3">
-            <Input label="Comissao (%)" aria-label="Comissao (%)" type="number" min="0" max="50" step="0.5"
+            <Input label="Comissão (%)" aria-label="Comissão (%)" type="number" min="0" max="50" step="0.5"
               value={form.commission_pct}
               onChange={set('commission_pct')}
               placeholder="Ex: 10"
               className="font-mono"
             />
-            <Select label="Zona de actuacao" aria-label="Zona de actuacao" value={form.seller_zone} onChange={set('seller_zone')}>
+            <Select label="Zona de actuação" aria-label="Zona de actuação" value={form.seller_zone} onChange={set('seller_zone')}>
               <option value="">Todas as zonas</option>
               {SELLER_ZONES.map(z => <option key={z} value={z}>{z}</option>)}
             </Select>
@@ -216,7 +216,7 @@ function StaffForm({ member, onSave, onCancel, loading, error, roles }) {
           <Toggle checked={createAccess} onChange={setCreateAccess} label="Criar conta /staff" />
           {createAccess && (
             <p className="text-xs font-body text-n-500 bg-n-50 rounded p-2">
-              Sera criada uma conta de acesso e enviado um email ao colaborador com um link para definir a sua password.
+              Será criada uma conta de acesso e enviado um email ao colaborador com um link para definir a sua password.
             </p>
           )}
         </div>
@@ -229,7 +229,7 @@ function StaffForm({ member, onSave, onCancel, loading, error, roles }) {
       <div className="flex gap-3 pt-1">
         <Button type="button" variant="secondary" onClick={onCancel} className="flex-1">Cancelar</Button>
         <Button type="submit" loading={loading} className="flex-1">
-          {member ? 'Guardar alteracoes' : 'Criar colaborador'}
+          {member ? 'Guardar alterações' : 'Criar colaborador'}
         </Button>
       </div>
     </form>

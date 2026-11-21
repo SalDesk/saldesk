@@ -84,7 +84,7 @@ function removerDe(input) {
     const botaoRemover = el.querySelector('button[aria-label^="Remover"]');
     if (botaoRemover) return botaoRemover;
   }
-  throw new Error('Botao de remover nao encontrado');
+  throw new Error('Botão de remover não encontrado');
 }
 
 /* O selector de estado nao tem etiqueta: e o que tem a opcao "inactive" */
@@ -116,15 +116,15 @@ const OTA_VAZIO = { viator: null, getyourguide: null };
 /* ---------- parseTourMeta (exportado e usado por outros ficheiros) ---------- */
 
 describe('parseTourMeta', () => {
-  it('devolve {} para vazio, texto simples e JSON invalido', () => {
+  it('devolve {} para vazio, texto simples e JSON inválido', () => {
     expect(parseTourMeta(undefined)).toEqual({});
     expect(parseTourMeta(null)).toEqual({});
     expect(parseTourMeta('')).toEqual({});
     expect(parseTourMeta('Texto simples')).toEqual({});
-    expect(parseTourMeta('{nao e json')).toEqual({});
+    expect(parseTourMeta('{não e json')).toEqual({});
   });
 
-  it('devolve o objeto quando a descricao e JSON', () => {
+  it('devolve o objeto quando a descrição e JSON', () => {
     expect(parseTourMeta('{"duration":3,"languages":["PT"]}')).toEqual({ duration: 3, languages: ['PT'] });
   });
 });
@@ -133,19 +133,19 @@ describe('parseTourMeta', () => {
 
 describe('UnitForm: despacho por tipo de operador', () => {
   it.each([
-    ['activity', 'Criar tour', 'Identificacao'],
+    ['activity', 'Criar tour', 'Identificação'],
     ['hotel', 'Criar quarto', 'Capacidade'],
-    ['rentacar', 'Registar viatura', 'Especificacoes'],
-    ['restaurant', 'Criar mesa', 'Opcoes'],
+    ['rentacar', 'Registar viatura', 'Especificações'],
+    ['restaurant', 'Criar mesa', 'Opções'],
     ['transfer', 'Nova Unidade', null],
     [undefined, 'Nova Unidade', null],
-  ])('operatorType %s mostra o botao "%s"', (tipo, rotulo, seccao) => {
+  ])('operatorType %s mostra o botão "%s"', (tipo, rotulo, seccao) => {
     renderForm(tipo);
     expect(botao(rotulo)).toBeInTheDocument();
     if (seccao) expect(screen.getByText(seccao)).toBeInTheDocument();
   });
 
-  it('cada tipo mostra campos so seus', () => {
+  it('cada tipo mostra campos só seus', () => {
     const { unmount } = renderForm('activity');
     expect(campo('Nome PT')).toBeInTheDocument();
     expect(screen.queryByText('Matricula')).toBeNull();
@@ -172,15 +172,15 @@ const TODOS = [
   ['transfer', 'Nova Unidade'],
 ];
 
-describe.each(TODOS)('formulario comum (%s)', (tipo, rotuloCriar) => {
-  it('Cancelar chama onCancel e nao grava', () => {
+describe.each(TODOS)('formulário comum (%s)', (tipo, rotuloCriar) => {
+  it('Cancelar chama onCancel e não grava', () => {
     const { onSave, onCancel } = renderForm(tipo);
     fireEvent.click(botao('Cancelar'));
     expect(onCancel).toHaveBeenCalledTimes(1);
     expect(onSave).not.toHaveBeenCalled();
   });
 
-  it('o erro recebido por prop e mostrado, e sem erro nao ha mensagem', () => {
+  it('o erro recebido por prop e mostrado, e sem erro não ha mensagem', () => {
     const { unmount } = renderForm(tipo);
     expect(screen.queryByText('Falha ao gravar a unidade')).toBeNull();
     unmount();
@@ -189,7 +189,7 @@ describe.each(TODOS)('formulario comum (%s)', (tipo, rotuloCriar) => {
     expect(screen.getByText('Falha ao gravar a unidade')).toBeInTheDocument();
   });
 
-  it('com loading o botao de gravar fica desativado e mostra o indicador; Cancelar continua ativo', () => {
+  it('com loading o botão de gravar fica desativado e mostra o indicador; Cancelar continua ativo', () => {
     const { onSave, container } = renderForm(tipo, { loading: true });
     const gravar = botao(rotuloCriar);
     expect(gravar).toBeDisabled();
@@ -199,21 +199,21 @@ describe.each(TODOS)('formulario comum (%s)', (tipo, rotuloCriar) => {
     expect(onSave).not.toHaveBeenCalled();
   });
 
-  it('sem loading o botao de gravar esta ativo e sem indicador', () => {
+  it('sem loading o botão de gravar esta ativo e sem indicador', () => {
     const { container } = renderForm(tipo);
     expect(botao(rotuloCriar)).not.toBeDisabled();
     expect(container.querySelector('.animate-spin')).toBeNull();
   });
 
-  it('em edicao o botao de gravar muda de nome e aparece o selector de estado', () => {
+  it('em edição o botão de gravar muda de nome e aparece o selector de estado', () => {
     const unit = { id: 'u1', name: 'Existente', status: 'active', capacity: 2, base_price: 10 };
     renderForm(tipo, { unit });
-    const nome = tipo === 'transfer' ? 'Guardar' : 'Guardar alteracoes';
+    const nome = tipo === 'transfer' ? 'Guardar' : 'Guardar alterações';
     expect(botao(nome)).toBeInTheDocument();
     expect(seletorEstado()).toBeInTheDocument();
   });
 
-  it('na criacao nao aparece o selector de estado', () => {
+  it('na criação não aparece o selector de estado', () => {
     renderForm(tipo);
     expect(seletorEstado()).toBeUndefined();
   });
@@ -230,7 +230,7 @@ describe('TourForm', () => {
     price_tiers: [], amenities: [], included_items: [], important_info: null, stops: [], time_slots: [],
   };
 
-  it('minimo valido: so nome e capacidade', () => {
+  it('mínimo válido: só nome e capacidade', () => {
     const { onSave } = renderForm('activity');
     escrever(campo('Nome PT'), 'Mergulho ao Amanhecer');
     escrever(campo('Capacidade maxima'), '12');
@@ -265,7 +265,7 @@ describe('TourForm', () => {
     ]);
   });
 
-  it('os campos obrigatorios (Nome PT, Capacidade maxima) levam required e o navegador impede gravar vazio', () => {
+  it('os campos obrigatórios (Nome PT, Capacidade maxima) levam required e o navegador impede gravar vazio', () => {
     const { onSave } = renderForm('activity');
     expect(campo('Nome PT')).toBeRequired();
     expect(campo('Capacidade maxima')).toBeRequired();
@@ -278,7 +278,7 @@ describe('TourForm', () => {
     expect(guardar(onSave)).toMatchObject({ name: 'Tour do Sal', capacity: 8, unit_type: 'Tour', price_unit: 'person' });
   });
 
-  it('a capacidade abaixo do minimo (min=1) e travada pelo navegador, mas o submit direto passa', () => {
+  it('a capacidade abaixo do mínimo (min=1) e travada pelo navegador, mas o submit direto passa', () => {
     const { onSave, container } = renderForm('activity');
     escrever(campo('Nome PT'), 'Tour');
     escrever(campo('Capacidade maxima'), '0');
@@ -288,27 +288,27 @@ describe('TourForm', () => {
     expect(guardar(onSave).capacity).toBe(0);
   });
 
-  it('todos os campos preenchidos: texto vs numeros, cortes, filtros e a ordem das chaves', () => {
+  it('todos os campos preenchidos: texto vs números, cortes, filtros e a ordem das chaves', () => {
     const { onSave } = renderForm('activity');
     escrever(campo('Nome PT'), 'Mergulho ao Amanhecer');
     escrever(campo('Nome EN'), 'Sunrise Dive');
     escrever(campo('Categoria'), 'Pesca');
     escrever(campo('Modalidade'), 'ambos');
-    escrever(campo('Descricao curta PT'), '  Resumo PT  ');
-    escrever(campo('Descricao curta EN'), 'Summary EN');
-    escrever(campo('Descricao longa PT'), 'Linha um\nLinha dois');
-    escrever(campo('Descricao longa EN'), 'Long description');
-    escrever(campo('Duracao (horas)'), '2.5');
-    escrever(campo('Dificuldade'), 'Dificil');
+    escrever(campo('Descrição curta PT'), '  Resumo PT  ');
+    escrever(campo('Descrição curta EN'), 'Summary EN');
+    escrever(campo('Descrição longa PT'), 'Linha um\nLinha dois');
+    escrever(campo('Descrição longa EN'), 'Long description');
+    escrever(campo('Duração (horas)'), '2.5');
+    escrever(campo('Dificuldade'), 'Difícil');
     escrever(campo('Idade minima'), '8');
     escrever(campo('Capacidade maxima'), '12');
-    escrever(campo('Hora de inicio'), '09:30');
+    escrever(campo('Hora de início'), '09:30');
     escrever(campo('Ponto de encontro'), 'Marina Santa Maria');
     fireEvent.click(screen.getByLabelText('EN'));
     fireEvent.click(screen.getByLabelText('DE'));
-    escrever(campo('Preco adulto (opcional se usar Preço privado/Escalões)'), '45.5');
-    escrever(campo('Preco crianca'), '25');
-    escrever(campo('Preco privado'), '120');
+    escrever(campo('Preço adulto (opcional se usar Preço privado/Escalões)'), '45.5');
+    escrever(campo('Preço criança'), '25');
+    escrever(campo('Preço privado'), '120');
 
     /* escaloes: um completo, um incompleto (descartado) */
     fireEvent.click(botao('Adicionar escalão'));
@@ -352,7 +352,7 @@ describe('TourForm', () => {
     const descs = screen.getAllByPlaceholderText('Descrição curta (opcional)');
     const lats = screen.getAllByPlaceholderText('Latitude (opcional)');
     const lngs = screen.getAllByPlaceholderText('Longitude (opcional)');
-    escrever(nomes[0], 'Templo'); escrever(descs[0], 'Vista incrivel'); escrever(lats[0], '16.1'); escrever(lngs[0], '-22.5');
+    escrever(nomes[0], 'Templo'); escrever(descs[0], 'Vista incrível'); escrever(lats[0], '16.1'); escrever(lngs[0], '-22.5');
     escrever(nomes[1], 'Sem coordenadas');
     escrever(nomes[2], '   '); escrever(descs[2], 'Descartada');
 
@@ -379,7 +379,7 @@ describe('TourForm', () => {
         tour_type: 'ambos',
         duration: 2.5,
         languages: ['PT', 'DE'],
-        difficulty: 'Dificil',
+        difficulty: 'Difícil',
         min_age: 8,
         meeting_point: 'Marina Santa Maria',
         pickup_included: false,
@@ -394,7 +394,7 @@ describe('TourForm', () => {
         ],
         important_info: 'Traga protector',
         stops: [
-          { name: 'Templo', desc: 'Vista incrivel', lat: 16.1, lng: -22.5 },
+          { name: 'Templo', desc: 'Vista incrível', lat: 16.1, lng: -22.5 },
           { name: 'Sem coordenadas', desc: null, lat: null, lng: null },
         ],
         time_slots: [{ time: '09:00', capacity: 8 }],
@@ -411,21 +411,21 @@ describe('TourForm', () => {
     });
   });
 
-  it('o contador da descricao curta acompanha o texto', () => {
+  it('o contador da descrição curta acompanha o texto', () => {
     renderForm('activity');
     expect(screen.getByText('0/160 caracteres')).toBeInTheDocument();
     expect(screen.getByText('0/160 characters')).toBeInTheDocument();
-    escrever(campo('Descricao curta PT'), 'Ola');
-    escrever(campo('Descricao curta EN'), 'Hello!');
+    escrever(campo('Descrição curta PT'), 'Olá');
+    escrever(campo('Descrição curta EN'), 'Hello!');
     expect(screen.getByText('3/160 caracteres')).toBeInTheDocument();
     expect(screen.getByText('6/160 characters')).toBeInTheDocument();
   });
 
-  it('o preco adulto vazio grava 0 e "0" tambem', () => {
+  it('o preço adulto vazio grava 0 e "0" também', () => {
     const { onSave } = renderForm('activity');
     escrever(campo('Nome PT'), 'Tour');
     escrever(campo('Capacidade maxima'), '4');
-    escrever(campo('Preco adulto (opcional se usar Preço privado/Escalões)'), '0');
+    escrever(campo('Preço adulto (opcional se usar Preço privado/Escalões)'), '0');
     fireEvent.click(botao('Criar tour'));
     expect(guardar(onSave).base_price).toBe(0);
   });
@@ -459,7 +459,7 @@ describe('TourForm', () => {
     expect(meta.what_to_bring_en).toBeNull();
   });
 
-  describe('localizacao do ponto de encontro', () => {
+  describe('localização do ponto de encontro', () => {
     const COLAR = 'Colar coordenadas ou link do Google Maps';
     function novoTour() {
       const r = renderForm('activity');
@@ -542,7 +542,7 @@ describe('TourForm', () => {
       fireEvent.click(botao('Remover localização'));
       expect(campo('Latitude').value).toBe('');
       expect(screen.queryByTestId('marcador')).toBeNull();
-      fireEvent.click(botao('Guardar alteracoes'));
+      fireEvent.click(botao('Guardar alterações'));
       const p = guardar(onSave);
       expect({ lat: p.lat, lng: p.lng }).toEqual({ lat: null, lng: null });
     });
@@ -579,10 +579,10 @@ describe('TourForm', () => {
       return JSON.parse(guardar(onSave).description);
     }
 
-    it('preco crianca 0 grava 0 (criancas gratis), vazio grava null', () => {
+    it('preço criança 0 grava 0 (crianças grátis), vazio grava null', () => {
       const { onSave } = preencherMinimo();
-      escrever(campo('Preco adulto (opcional se usar Preço privado/Escalões)'), '40');
-      escrever(campo('Preco crianca'), '0');
+      escrever(campo('Preço adulto (opcional se usar Preço privado/Escalões)'), '40');
+      escrever(campo('Preço criança'), '0');
       fireEvent.click(botao('Criar tour'));
       expect(metaGravada(onSave).price_child).toBe(0);
       cleanup();
@@ -592,26 +592,26 @@ describe('TourForm', () => {
       expect(metaGravada(outro.onSave).price_child).toBeNull();
     });
 
-    it('itens incluidos: adicionar, alternar incluido/nao incluido, editar e remover', () => {
+    it('itens incluidos: adicionar, alternar incluído/não incluído, editar e remover', () => {
       const { onSave } = preencherMinimo();
       fireEvent.click(botao('Adicionar item incluído'));
       fireEvent.click(botao('Adicionar item incluído'));
       let itens = screen.getAllByPlaceholderText('Ex: Pequeno-almoço');
-      escrever(itens[0], 'Agua');
+      escrever(itens[0], 'Água');
       escrever(itens[1], 'Snack');
       /* alternar o primeiro para nao incluido muda o texto do botao e o placeholder */
       fireEvent.click(screen.getAllByTitle('Clique para alternar entre incluído e não incluído')[0]);
       expect(screen.getByText('Não incluído')).toBeInTheDocument();
-      expect(screen.getByPlaceholderText('Ex: Entradas (€5/pessoa), almoço').value).toBe('Agua');
+      expect(screen.getByPlaceholderText('Ex: Entradas (€5/pessoa), almoço').value).toBe('Água');
       /* remover o segundo */
       fireEvent.click(removerDe(screen.getByPlaceholderText('Ex: Pequeno-almoço')));
       itens = screen.getAllByPlaceholderText(/^Ex: (Pequeno-almoço|Entradas)/);
       expect(itens).toHaveLength(1);
       fireEvent.click(botao('Criar tour'));
-      expect(metaGravada(onSave).included_items).toEqual([{ label: 'Agua', included: false }]);
+      expect(metaGravada(onSave).included_items).toEqual([{ label: 'Água', included: false }]);
     });
 
-    it('paragens: adicionar, numerar, editar e remover; coordenadas ficam em numero', () => {
+    it('paragens: adicionar, numerar, editar e remover; coordenadas ficam em número', () => {
       const { onSave } = preencherMinimo();
       fireEvent.click(botao('Adicionar paragem'));
       fireEvent.click(botao('Adicionar paragem'));
@@ -629,7 +629,7 @@ describe('TourForm', () => {
       expect(metaGravada(onSave).stops).toEqual([{ name: 'B', desc: null, lat: 10.5, lng: 0 }]);
     });
 
-    it('horarios: adicionar, editar e remover', () => {
+    it('horários: adicionar, editar e remover', () => {
       const { onSave } = preencherMinimo();
       fireEvent.click(botao('Adicionar horário'));
       fireEvent.click(botao('Adicionar horário'));
@@ -641,7 +641,7 @@ describe('TourForm', () => {
       expect(metaGravada(onSave).time_slots).toEqual([{ time: '15:30', capacity: 6 }]);
     });
 
-    it('escaloes de preco: adicionar, editar e remover; o preco aceita decimais', () => {
+    it('escaloes de preço: adicionar, editar e remover; o preço aceita decimais', () => {
       const { onSave } = preencherMinimo();
       fireEvent.click(botao('Adicionar escalão'));
       fireEvent.click(botao('Adicionar escalão'));
@@ -655,7 +655,7 @@ describe('TourForm', () => {
       expect(metaGravada(onSave).price_tiers).toEqual([{ pax_min: 3, pax_max: 4, price: 140.5 }]);
     });
 
-    it('comodidades: ligar, desligar e religar mantem a ordem do ultimo clique', () => {
+    it('comodidades: ligar, desligar e religar mantem a ordem do último clique', () => {
       const { onSave } = preencherMinimo();
       fireEvent.click(screen.getByLabelText('Seguro'));
       fireEvent.click(screen.getByLabelText('Vestiário'));
@@ -675,7 +675,7 @@ describe('TourForm', () => {
       expect(metaGravada(onSave).languages).toEqual([]);
     });
 
-    it('lista as seis linguas e as oito comodidades de atividade', () => {
+    it('lista as seis línguas e as oito comodidades de atividade', () => {
       renderForm('activity');
       for (const l of ['PT', 'EN', 'DE', 'NL', 'FR', 'ES']) expect(screen.getByLabelText(l)).toBeInTheDocument();
       for (const a of ['Equipamento incluído', 'Instrutor certificado', 'Seguro', 'Fotografias/Vídeo', 'Transporte', 'Snacks e água', 'Vestiário', 'Toalhas']) {
@@ -689,12 +689,12 @@ describe('TourForm', () => {
       name_en: 'Salt Crater Tour',
       short_pt: 'Resumo',
       short_en: 'Summary',
-      desc_pt: 'Descricao PT',
+      desc_pt: 'Descrição PT',
       desc_en: 'Description EN',
       tour_type: 'privado',
       duration: 3,
       languages: ['PT', 'NL'],
-      difficulty: 'Facil',
+      difficulty: 'Fácil',
       min_age: 0,
       meeting_point: 'Hotel Riu',
       start_time: '08:15',
@@ -702,7 +702,7 @@ describe('TourForm', () => {
       price_private: 90,
       price_tiers: [{ pax_min: 1, pax_max: 2, price: 80 }],
       amenities: ['Seguro', 'Toalhas'],
-      included_items: [{ label: 'Almoco', included: true }, { label: 'Bebidas', included: false }],
+      included_items: [{ label: 'Almoço', included: true }, { label: 'Bebidas', included: false }],
       important_info: 'Levar toalha',
       stops: [{ name: 'Praia', desc: 'Bonita', lat: 16.1, lng: -22.5 }],
       time_slots: [{ time: '08:00', capacity: 6 }],
@@ -721,25 +721,25 @@ describe('TourForm', () => {
       lng: -22.9,
     };
 
-    it('pre-preenche todos os campos a partir da unidade e da descricao em JSON', () => {
+    it('pre-preenche todos os campos a partir da unidade e da descrição em JSON', () => {
       renderForm('activity', { unit: UNIT });
       expect(campo('Nome PT').value).toBe('Tour Pedra de Lume');
       expect(campo('Nome EN').value).toBe('Salt Crater Tour');
       expect(campo('Categoria').value).toBe('Pesca');
       expect(campo('Modalidade').value).toBe('privado');
-      expect(campo('Descricao curta PT').value).toBe('Resumo');
-      expect(campo('Descricao curta EN').value).toBe('Summary');
-      expect(campo('Descricao longa PT').value).toBe('Descricao PT');
-      expect(campo('Descricao longa EN').value).toBe('Description EN');
-      expect(campo('Duracao (horas)').value).toBe('3');
-      expect(campo('Dificuldade').value).toBe('Facil');
+      expect(campo('Descrição curta PT').value).toBe('Resumo');
+      expect(campo('Descrição curta EN').value).toBe('Summary');
+      expect(campo('Descrição longa PT').value).toBe('Descrição PT');
+      expect(campo('Descrição longa EN').value).toBe('Description EN');
+      expect(campo('Duração (horas)').value).toBe('3');
+      expect(campo('Dificuldade').value).toBe('Fácil');
       expect(campo('Idade minima').value).toBe('0');
       expect(campo('Capacidade maxima').value).toBe('8');
-      expect(campo('Hora de inicio').value).toBe('08:15');
+      expect(campo('Hora de início').value).toBe('08:15');
       expect(campo('Ponto de encontro').value).toBe('Hotel Riu');
-      expect(campo('Preco adulto (opcional se usar Preço privado/Escalões)').value).toBe('45');
-      expect(campo('Preco crianca').value).toBe('15');
-      expect(campo('Preco privado').value).toBe('90');
+      expect(campo('Preço adulto (opcional se usar Preço privado/Escalões)').value).toBe('45');
+      expect(campo('Preço criança').value).toBe('15');
+      expect(campo('Preço privado').value).toBe('90');
       expect(screen.getByLabelText('PT').checked).toBe(true);
       expect(screen.getByLabelText('EN').checked).toBe(false);
       expect(screen.getByLabelText('NL').checked).toBe(true);
@@ -749,7 +749,7 @@ describe('TourForm', () => {
       expect(screen.getByPlaceholderText('Mín PAX').value).toBe('1');
       expect(screen.getByPlaceholderText('Máx PAX').value).toBe('2');
       expect(screen.getByPlaceholderText('Preço (€)').value).toBe('80');
-      expect(screen.getByPlaceholderText('Ex: Pequeno-almoço').value).toBe('Almoco');
+      expect(screen.getByPlaceholderText('Ex: Pequeno-almoço').value).toBe('Almoço');
       expect(screen.getByPlaceholderText('Ex: Entradas (€5/pessoa), almoço').value).toBe('Bebidas');
       expect(screen.getByPlaceholderText('Ex: Templo do Amanhecer').value).toBe('Praia');
       expect(screen.getByPlaceholderText('Descrição curta (opcional)').value).toBe('Bonita');
@@ -767,16 +767,16 @@ describe('TourForm', () => {
       expect(screen.getByText('2/10')).toBeInTheDocument();
     });
 
-    it('gravar sem mexer reenvia os mesmos dados (numeros como numeros, imagens e estado intactos)', () => {
+    it('gravar sem mexer reenvia os mesmos dados (números como números, imagens e estado intactos)', () => {
       const { onSave } = renderForm('activity', { unit: UNIT });
-      fireEvent.click(botao('Guardar alteracoes'));
+      fireEvent.click(botao('Guardar alterações'));
       expect(guardar(onSave)).toStrictEqual({
         name: 'Tour Pedra de Lume',
         description: JSON.stringify({
           name_en: 'Salt Crater Tour',
           short_pt: 'Resumo',
           short_en: 'Summary',
-          desc_pt: 'Descricao PT',
+          desc_pt: 'Descrição PT',
           desc_en: 'Description EN',
           highlights_pt: null,
           highlights_en: null,
@@ -785,7 +785,7 @@ describe('TourForm', () => {
           tour_type: 'privado',
           duration: 3,
           languages: ['PT', 'NL'],
-          difficulty: 'Facil',
+          difficulty: 'Fácil',
           min_age: 0,
           meeting_point: 'Hotel Riu',
           pickup_included: false,
@@ -794,7 +794,7 @@ describe('TourForm', () => {
           price_private: 90,
           price_tiers: [{ pax_min: 1, pax_max: 2, price: 80 }],
           amenities: ['Seguro', 'Toalhas'],
-          included_items: [{ label: 'Almoco', included: true }, { label: 'Bebidas', included: false }],
+          included_items: [{ label: 'Almoço', included: true }, { label: 'Bebidas', included: false }],
           important_info: 'Levar toalha',
           stops: [{ name: 'Praia', desc: 'Bonita', lat: 16.1, lng: -22.5 }],
           time_slots: [{ time: '08:00', capacity: 6 }],
@@ -818,7 +818,7 @@ describe('TourForm', () => {
       escrever(campo('ID produto GetYourGuide'), '');
       escrever(campo('Latitude'), '');
       escrever(campo('Longitude'), '');
-      fireEvent.click(botao('Guardar alteracoes'));
+      fireEvent.click(botao('Guardar alterações'));
       const r = guardar(onSave);
       expect(r.status).toBe('active');
       expect(r.ota_product_ids).toStrictEqual({ viator: null, getyourguide: null });
@@ -826,16 +826,16 @@ describe('TourForm', () => {
       expect(r.lng).toBeNull();
     });
 
-    it('descricao em texto simples ou JSON invalido: campos por omissao e o nome da unidade', () => {
-      for (const description of ['Descricao antiga em texto', '{nao e json', null, undefined]) {
+    it('descrição em texto simples ou JSON inválido: campos por omissao e o nome da unidade', () => {
+      for (const description of ['Descrição antiga em texto', '{não e json', null, undefined]) {
         const { onSave, unmount } = renderForm('activity', {
           unit: { id: 'x', name: 'Antigo', description, capacity: 3, base_price: 20, status: 'active' },
         });
         expect(campo('Nome PT').value).toBe('Antigo');
         expect(campo('Modalidade').value).toBe('grupo');
         expect(campo('Dificuldade').value).toBe('Moderado');
-        expect(campo('Duracao (horas)').value).toBe('');
-        fireEvent.click(botao('Guardar alteracoes'));
+        expect(campo('Duração (horas)').value).toBe('');
+        fireEvent.click(botao('Guardar alterações'));
         const r = guardar(onSave);
         expect(r.description).toBe(JSON.stringify(META_VAZIA));
         expect(r).toMatchObject({ name: 'Antigo', unit_type: 'Tour', base_price: 20, capacity: 3, images: [] });
@@ -848,7 +848,7 @@ describe('TourForm', () => {
         unit: { id: 'x', name: 'Sem capacidade', description: null, base_price: null, status: 'active' },
       });
       escrever(campo('Capacidade maxima'), '1');
-      fireEvent.click(botao('Guardar alteracoes'));
+      fireEvent.click(botao('Guardar alterações'));
       expect(guardar(onSave)).toMatchObject({ capacity: 1, base_price: 0 });
     });
   });
@@ -861,11 +861,11 @@ describe('TourForm', () => {
       };
       const { onSave } = renderForm('activity', { unit });
       fireEvent.click(screen.getAllByTitle('Remover foto')[0]);
-      fireEvent.click(botao('Guardar alteracoes'));
+      fireEvent.click(botao('Guardar alterações'));
       expect(guardar(onSave).images).toEqual(['https://cdn.exemplo/b.jpg']);
     });
 
-    it('carregar uma foto nova acrescenta o url devolvido pelo servico', async () => {
+    it('carregar uma foto nova acrescenta o url devolvido pelo serviço', async () => {
       URL.createObjectURL = vi.fn(() => 'blob:preview');
       URL.revokeObjectURL = vi.fn();
       vi.mocked(uploadImage).mockResolvedValue({ url: 'https://cdn.exemplo/nova.jpg' });
@@ -904,10 +904,10 @@ describe('HotelRoomForm', () => {
     price_low: null, price_mid: null, price_high: null, price_peak: null,
   };
 
-  it('minimo valido: nome e preco base; capacidade 2 e 0 criancas por omissao', () => {
+  it('mínimo válido: nome e preço base; capacidade 2 e 0 crianças por omissao', () => {
     const { onSave } = renderForm('hotel');
     escrever(campo('Nome'), 'Ocean View');
-    escrever(campo('Preco base'), '80');
+    escrever(campo('Preço base'), '80');
     fireEvent.click(botao('Criar quarto'));
     expect(guardar(onSave)).toStrictEqual({
       name: 'Ocean View',
@@ -924,12 +924,12 @@ describe('HotelRoomForm', () => {
     });
   });
 
-  it('valores por omissao e listas de opcoes', () => {
+  it('valores por omissao e listas de opções', () => {
     renderForm('hotel');
     expect(campo('Tipo').value).toBe('Double');
     expect(campo('Vista').value).toBe('Mar');
     expect(campo('Adultos').value).toBe('2');
-    expect(campo('Criancas').value).toBe('0');
+    expect(campo('Crianças').value).toBe('0');
     expect(opcoes(campo('Tipo')).map(o => o[0])).toEqual(['Single', 'Double', 'Twin', 'Suite', 'Apartamento', 'Villa', 'Bungalow']);
     expect(opcoes(campo('Vista')).map(o => o[0])).toEqual(['Mar', 'Jardim', 'Piscina', 'Cidade', 'Sem vista']);
     for (const a of ['AC', 'TV', 'WiFi', 'Cofre', 'Minibar', 'Jacuzzi', 'Varanda', 'Banheira', 'Cozinha']) {
@@ -937,44 +937,44 @@ describe('HotelRoomForm', () => {
     }
   });
 
-  it('o nome e o preco base levam required e o navegador impede gravar vazio', () => {
+  it('o nome e o preço base levam required e o navegador impede gravar vazio', () => {
     const { onSave } = renderForm('hotel');
     expect(campo('Nome')).toBeRequired();
-    expect(campo('Preco base')).toBeRequired();
+    expect(campo('Preço base')).toBeRequired();
     fireEvent.click(botao('Criar quarto'));
     expect(onSave).not.toHaveBeenCalled();
     escrever(campo('Nome'), 'Quarto Azul');
-    escrever(campo('Preco base'), '80');
+    escrever(campo('Preço base'), '80');
     fireEvent.click(botao('Criar quarto'));
     expect(guardar(onSave)).toMatchObject({ name: 'Quarto Azul', base_price: 80, unit_type: 'Double', price_unit: 'night', capacity: 2 });
   });
 
-  it('adultos abaixo do minimo (min=1) sao travados pelo navegador', () => {
+  it('adultos abaixo do mínimo (min=1) são travados pelo navegador', () => {
     const { onSave } = renderForm('hotel');
     escrever(campo('Adultos'), '0');
     fireEvent.click(botao('Criar quarto'));
     expect(onSave).not.toHaveBeenCalled();
   });
 
-  it('todos os campos preenchidos: o numero compoe o nome ("101 — Nome") e a descricao e JSON', () => {
+  it('todos os campos preenchidos: o número compoe o nome ("101 — Nome") e a descrição e JSON', () => {
     const { onSave } = renderForm('hotel');
-    escrever(campo('Numero'), '101');
+    escrever(campo('Número'), '101');
     escrever(campo('Nome'), 'Ocean View Suite');
     escrever(campo('Tipo'), 'Suite');
     escrever(campo('Andar'), '3');
     escrever(campo('Vista'), 'Piscina');
     escrever(campo('Adultos'), '3');
-    escrever(campo('Criancas'), '2');
+    escrever(campo('Crianças'), '2');
     fireEvent.click(screen.getByLabelText('WiFi'));
     fireEvent.click(screen.getByLabelText('AC'));
     fireEvent.click(screen.getByLabelText('TV'));
     fireEvent.click(screen.getByLabelText('TV'));
-    escrever(campo('Preco base'), '95.5');
+    escrever(campo('Preço base'), '95.5');
     escrever(campo('Epoca baixa'), '70');
-    escrever(campo('Epoca media'), '85');
+    escrever(campo('Epoca média'), '85');
     escrever(campo('Epoca alta'), '110');
     escrever(campo('Pico'), '150.25');
-    escrever(porPlaceholder('Descricao do quarto...'), 'Quarto com varanda');
+    escrever(porPlaceholder('Descrição do quarto...'), 'Quarto com varanda');
     fireEvent.click(botao('Adicionar item incluído'));
     fireEvent.click(botao('Adicionar item não incluído'));
     const itens = screen.getAllByPlaceholderText(/^Ex: (Pequeno-almoço|Entradas)/);
@@ -1015,11 +1015,11 @@ describe('HotelRoomForm', () => {
     });
   });
 
-  it('criancas vazio grava 0, preco "0" grava 0 e preco vazio grava null', () => {
+  it('crianças vazio grava 0, preço "0" grava 0 e preço vazio grava null', () => {
     const { onSave } = renderForm('hotel');
     escrever(campo('Nome'), 'Quarto');
-    escrever(campo('Preco base'), '0');
-    escrever(campo('Criancas'), '');
+    escrever(campo('Preço base'), '0');
+    escrever(campo('Crianças'), '');
     escrever(campo('Epoca baixa'), '0');
     fireEvent.click(botao('Criar quarto'));
     const r = guardar(onSave);
@@ -1027,18 +1027,18 @@ describe('HotelRoomForm', () => {
     expect(JSON.parse(r.description)).toMatchObject({ capacity_kids: 0, price_low: 0, price_mid: null });
   });
 
-  it('sem numero o nome fica so o nome', () => {
+  it('sem número o nome fica só o nome', () => {
     const { onSave } = renderForm('hotel');
-    escrever(campo('Nome'), 'Sem numero');
-    escrever(campo('Preco base'), '10');
+    escrever(campo('Nome'), 'Sem número');
+    escrever(campo('Preço base'), '10');
     fireEvent.click(botao('Criar quarto'));
-    expect(guardar(onSave).name).toBe('Sem numero');
+    expect(guardar(onSave).name).toBe('Sem número');
   });
 
   it('itens incluidos: adicionar, editar e remover', () => {
     const { onSave } = renderForm('hotel');
     escrever(campo('Nome'), 'Quarto');
-    escrever(campo('Preco base'), '10');
+    escrever(campo('Preço base'), '10');
     fireEvent.click(botao('Adicionar item incluído'));
     fireEvent.click(botao('Adicionar item incluído'));
     const itens = screen.getAllByPlaceholderText('Ex: Pequeno-almoço');
@@ -1071,22 +1071,22 @@ describe('HotelRoomForm', () => {
 
     it('pre-preenche os campos a partir da unidade e de parseRoomMeta', () => {
       renderForm('hotel', { unit: UNIT });
-      expect(campo('Numero').value).toBe('101');
+      expect(campo('Número').value).toBe('101');
       expect(campo('Nome').value).toBe('Ocean View');
       expect(campo('Tipo').value).toBe('Suite');
       expect(campo('Andar').value).toBe('2');
       expect(campo('Vista').value).toBe('Piscina');
       expect(campo('Adultos').value).toBe('3');
-      expect(campo('Criancas').value).toBe('1');
+      expect(campo('Crianças').value).toBe('1');
       expect(screen.getByLabelText('AC').checked).toBe(true);
       expect(screen.getByLabelText('Cofre').checked).toBe(true);
       expect(screen.getByLabelText('TV').checked).toBe(false);
-      expect(campo('Preco base').value).toBe('55');
+      expect(campo('Preço base').value).toBe('55');
       expect(campo('Epoca baixa').value).toBe('50');
-      expect(campo('Epoca media').value).toBe('60');
+      expect(campo('Epoca média').value).toBe('60');
       expect(campo('Epoca alta').value).toBe('70');
       expect(campo('Pico').value).toBe('0');
-      expect(porPlaceholder('Descricao do quarto...').value).toBe('Quarto amplo');
+      expect(porPlaceholder('Descrição do quarto...').value).toBe('Quarto amplo');
       expect(porPlaceholder('Ex: Pequeno-almoço').value).toBe('Wifi');
       expect(porPlaceholder('Ex: Check-in a partir das 14h, check-out até às 12h.').value).toBe('Check-in 14h');
       expect(campo('ID produto Viator').value).toBe('VH');
@@ -1095,14 +1095,14 @@ describe('HotelRoomForm', () => {
       expect(campo('Longitude').value).toBe('-22.6');
       expect(seletorEstado().value).toBe('maintenance');
       expect(opcoes(seletorEstado())).toEqual([
-        ['active', 'Activo'], ['cleaning', 'Em limpeza'], ['maintenance', 'Em manutencao'], ['inactive', 'Inactivo'],
+        ['active', 'Activo'], ['cleaning', 'Em limpeza'], ['maintenance', 'Em manutenção'], ['inactive', 'Inactivo'],
       ]);
       expect(screen.getByText('1/10')).toBeInTheDocument();
     });
 
-    it('gravar sem mexer volta a compor o nome uma so vez e reenvia os mesmos dados', () => {
+    it('gravar sem mexer volta a compor o nome uma só vez e reenvia os mesmos dados', () => {
       const { onSave } = renderForm('hotel', { unit: UNIT });
-      fireEvent.click(botao('Guardar alteracoes'));
+      fireEvent.click(botao('Guardar alterações'));
       expect(guardar(onSave)).toStrictEqual({
         name: '101 — Ocean View',
         description: JSON.stringify({
@@ -1132,18 +1132,18 @@ describe('HotelRoomForm', () => {
       });
     });
 
-    it('registo antigo sem meta.name: stripComposedPrefix remove o prefixo "numero — " uma vez', () => {
+    it('registo antigo sem meta.name: stripComposedPrefix remove o prefixo "número — " uma vez', () => {
       const unit = {
         id: 'h2', name: '101 — 101 — Deluxe', capacity: 2, base_price: 40, status: 'active',
         description: JSON.stringify({ number: '101' }),
       };
       const { onSave } = renderForm('hotel', { unit });
       expect(campo('Nome').value).toBe('101 — Deluxe');
-      fireEvent.click(botao('Guardar alteracoes'));
+      fireEvent.click(botao('Guardar alterações'));
       expect(guardar(onSave).name).toBe('101 — 101 — Deluxe');
     });
 
-    it('registo antigo: nome sem prefixo, sem numero ou sem nome fica como esta', () => {
+    it('registo antigo: nome sem prefixo, sem número ou sem nome fica como esta', () => {
       let r = renderForm('hotel', {
         unit: { id: 'a', name: 'Deluxe', description: JSON.stringify({ number: '101' }), capacity: 2, base_price: 1 },
       });
@@ -1154,7 +1154,7 @@ describe('HotelRoomForm', () => {
         unit: { id: 'b', name: '101 — Deluxe', description: 'texto simples', capacity: 2, base_price: 1 },
       });
       expect(campo('Nome').value).toBe('101 — Deluxe');
-      expect(campo('Numero').value).toBe('');
+      expect(campo('Número').value).toBe('');
       r.unmount();
 
       r = renderForm('hotel', { unit: { id: 'c', description: null, capacity: 2, base_price: 1 } });
@@ -1175,14 +1175,14 @@ describe('HotelRoomForm', () => {
     it('mudar o estado e gravar', () => {
       const { onSave } = renderForm('hotel', { unit: UNIT });
       escrever(seletorEstado(), 'cleaning');
-      fireEvent.click(botao('Guardar alteracoes'));
+      fireEvent.click(botao('Guardar alterações'));
       expect(guardar(onSave).status).toBe('cleaning');
     });
 
     it('remover a foto existente grava imagens vazias', () => {
       const { onSave } = renderForm('hotel', { unit: UNIT });
       fireEvent.click(screen.getByTitle('Remover foto'));
-      fireEvent.click(botao('Guardar alteracoes'));
+      fireEvent.click(botao('Guardar alterações'));
       expect(guardar(onSave).images).toEqual([]);
     });
   });
@@ -1200,9 +1200,9 @@ describe('RentacarVehicleForm', () => {
     current_km: null, next_revision_km: null, maintenance_history: [],
   };
 
-  it('minimo valido: so o preco base; sem marca, modelo, matricula nem nome o nome e "Viatura"', () => {
+  it('mínimo válido: só o preço base; sem marca, modelo, matricula nem nome o nome e "Viatura"', () => {
     const { onSave } = renderForm('rentacar');
-    escrever(campo('Preco base / dia'), '45');
+    escrever(campo('Preço base / dia'), '45');
     fireEvent.click(botao('Registar viatura'));
     expect(guardar(onSave)).toStrictEqual({
       name: 'Viatura',
@@ -1219,18 +1219,18 @@ describe('RentacarVehicleForm', () => {
     });
   });
 
-  it('valores por omissao e listas de opcoes', () => {
+  it('valores por omissao e listas de opções', () => {
     renderForm('rentacar');
     expect(campo('Categoria').value).toBe('Compacto');
     expect(campo('Lugares').value).toBe('5');
-    expect(campo('Transmissao').value).toBe('manual');
-    expect(campo('Combustivel').value).toBe('gasolina');
+    expect(campo('Transmissão').value).toBe('manual');
+    expect(campo('Combustível').value).toBe('gasolina');
     expect(campo('Idade minima').value).toBe('21');
-    expect(campo('Carta ha (anos)').value).toBe('1');
+    expect(campo('Carta há (anos)').value).toBe('1');
     expect(opcoes(campo('Categoria')).map(o => o[0])).toEqual(['Economico', 'Compacto', 'SUV', 'Pickup', 'Moto', 'Van', 'Executivo']);
-    expect(opcoes(campo('Transmissao'))).toEqual([['manual', 'Manual'], ['automatico', 'Automatico']]);
-    expect(opcoes(campo('Combustivel'))).toEqual([
-      ['gasolina', 'Gasolina'], ['diesel', 'Diesel'], ['electrico', 'Electrico'], ['hibrido', 'Hibrido'],
+    expect(opcoes(campo('Transmissão'))).toEqual([['manual', 'Manual'], ['automatico', 'Automático']]);
+    expect(opcoes(campo('Combustível'))).toEqual([
+      ['gasolina', 'Gasolina'], ['diesel', 'Diesel'], ['electrico', 'Eléctrico'], ['hibrido', 'Hibrido'],
     ]);
     for (const a of ['AC', 'GPS', 'Bluetooth', 'USB', 'Cadeira bebe', '4x4', 'Teto solar', 'Camera re']) {
       expect(screen.getByLabelText(a)).toBeInTheDocument();
@@ -1238,26 +1238,26 @@ describe('RentacarVehicleForm', () => {
     expect(screen.queryByText('Tarifa de motorista (por dia)')).toBeNull();
   });
 
-  it('o preco base leva required e o navegador impede gravar sem preco', () => {
+  it('o preço base leva required e o navegador impede gravar sem preço', () => {
     const { onSave } = renderForm('rentacar');
-    expect(campo('Preco base / dia')).toBeRequired();
+    expect(campo('Preço base / dia')).toBeRequired();
     fireEvent.click(botao('Registar viatura'));
     expect(onSave).not.toHaveBeenCalled();
-    escrever(campo('Preco base / dia'), '45');
+    escrever(campo('Preço base / dia'), '45');
     fireEvent.click(botao('Registar viatura'));
     const v = guardar(onSave);
     expect(v.base_price).toBe(45);
     expect(v.name).toBe('Viatura');
   });
 
-  it('lugares abaixo do minimo (min=1) sao travados pelo navegador', () => {
+  it('lugares abaixo do mínimo (min=1) são travados pelo navegador', () => {
     const { onSave } = renderForm('rentacar');
     escrever(campo('Lugares'), '0');
     fireEvent.click(botao('Registar viatura'));
     expect(onSave).not.toHaveBeenCalled();
   });
 
-  it('todos os campos preenchidos: nome = marca + modelo, numeros vs texto, ordem das chaves', () => {
+  it('todos os campos preenchidos: nome = marca + modelo, números vs texto, ordem das chaves', () => {
     const { onSave } = renderForm('rentacar');
     escrever(campo('Marca'), 'Toyota');
     escrever(campo('Modelo'), 'Hilux');
@@ -1267,27 +1267,27 @@ describe('RentacarVehicleForm', () => {
     escrever(campo('Categoria'), 'Pickup');
     escrever(campo('Lugares'), '4');
     escrever(campo('Bagagens'), '2');
-    escrever(campo('Transmissao'), 'automatico');
-    escrever(campo('Combustivel'), 'diesel');
+    escrever(campo('Transmissão'), 'automatico');
+    escrever(campo('Combustível'), 'diesel');
     fireEvent.click(screen.getByLabelText('GPS'));
     fireEvent.click(screen.getByLabelText('4x4'));
     fireEvent.click(screen.getByLabelText('USB'));
     fireEvent.click(screen.getByLabelText('USB'));
-    escrever(campo('Preco base / dia'), '60.5');
+    escrever(campo('Preço base / dia'), '60.5');
     escrever(campo('Km incluidos / dia'), '200');
     escrever(campo('Custo km extra (€)'), '0.3');
     escrever(campo('Desc. semana (%)'), '10');
-    escrever(campo('Desc. mes (%)'), '20');
+    escrever(campo('Desc. mês (%)'), '20');
     escrever(campo('Idade minima'), '23');
-    escrever(campo('Carta ha (anos)'), '3');
-    escrever(campo('Seguro ate'), '2027-01-31');
-    escrever(campo('IUC ate'), '2027-02-28');
-    escrever(campo('Inspecao ate'), '2027-03-31');
+    escrever(campo('Carta há (anos)'), '3');
+    escrever(campo('Seguro até'), '2027-01-31');
+    escrever(campo('IUC até'), '2027-02-28');
+    escrever(campo('Inspeção até'), '2027-03-31');
     escrever(campo('Km actuais'), '15000');
-    escrever(campo('Proxima revisao (km)'), '20000');
+    escrever(campo('Próxima revisão (km)'), '20000');
     fireEvent.click(botao('Adicionar item incluído'));
-    escrever(porPlaceholder('Ex: Pequeno-almoço'), 'Seguro basico');
-    escrever(porPlaceholder('Ex: Caução exigida no levantamento, cartão de crédito obrigatório.'), 'Caucao 300');
+    escrever(porPlaceholder('Ex: Pequeno-almoço'), 'Seguro básico');
+    escrever(porPlaceholder('Ex: Caução exigida no levantamento, cartão de crédito obrigatório.'), 'Caução 300');
     escrever(campo('ID produto Viator'), 'VV');
     escrever(campo('ID produto GetYourGuide'), 'GG');
     escrever(campo('Latitude'), '16.7');
@@ -1306,8 +1306,8 @@ describe('RentacarVehicleForm', () => {
         transmission: 'automatico',
         fuel: 'diesel',
         amenities: ['GPS', '4x4'],
-        included_items: [{ label: 'Seguro basico', included: true }],
-        important_info: 'Caucao 300',
+        included_items: [{ label: 'Seguro básico', included: true }],
+        important_info: 'Caução 300',
         discount_week: 10,
         discount_month: 20,
         km_included: 200,
@@ -1345,7 +1345,7 @@ describe('RentacarVehicleForm', () => {
     for (const [campos, esperado] of casos) {
       const { onSave, unmount } = renderForm('rentacar');
       for (const [k, v] of Object.entries(campos)) escrever(campo(k), v);
-      escrever(campo('Preco base / dia'), '10');
+      escrever(campo('Preço base / dia'), '10');
       fireEvent.click(botao('Registar viatura'));
       expect(guardar(onSave).name).toBe(esperado);
       unmount();
@@ -1354,7 +1354,7 @@ describe('RentacarVehicleForm', () => {
 
   it('lugares vazio ou 0 grava capacidade 5 e seats null/0 conforme o campo', () => {
     let r = renderForm('rentacar');
-    escrever(campo('Preco base / dia'), '10');
+    escrever(campo('Preço base / dia'), '10');
     escrever(campo('Lugares'), '');
     fireEvent.click(botao('Registar viatura'));
     let v = guardar(r.onSave);
@@ -1363,7 +1363,7 @@ describe('RentacarVehicleForm', () => {
     r.unmount();
 
     r = renderForm('rentacar');
-    escrever(campo('Preco base / dia'), '10');
+    escrever(campo('Preço base / dia'), '10');
     escrever(campo('Lugares'), '0');
     fireEvent.submit(r.container.querySelector('form'));
     v = guardar(r.onSave);
@@ -1371,11 +1371,11 @@ describe('RentacarVehicleForm', () => {
     expect(JSON.parse(v.description).seats).toBe(0);
   });
 
-  it('Executivo mostra a tarifa de motorista e so entao ela e gravada', () => {
+  it('Executivo mostra a tarifa de motorista e só então ela e gravada', () => {
     const { onSave } = renderForm('rentacar');
-    escrever(campo('Preco base / dia'), '90');
+    escrever(campo('Preço base / dia'), '90');
     escrever(campo('Categoria'), 'Executivo');
-    expect(screen.getByText('Cobrada por dia quando o cliente escolhe "motorista incluido" na reserva.')).toBeInTheDocument();
+    expect(screen.getByText('Cobrada por dia quando o cliente escolhe "motorista incluído" na reserva.')).toBeInTheDocument();
     escrever(campo('Tarifa de motorista (por dia)'), '30');
     fireEvent.click(botao('Registar viatura'));
     let v = guardar(onSave);
@@ -1392,7 +1392,7 @@ describe('RentacarVehicleForm', () => {
     expect(JSON.parse(v.description).chauffeur_daily_rate).toBeNull();
   });
 
-  it('a seccao de fotos aceita ate 8 fotos', () => {
+  it('a seccao de fotos aceita até 8 fotos', () => {
     renderForm('rentacar');
     expect(screen.getByText('Primeira foto = capa · max 8 fotos · 5MB cada')).toBeInTheDocument();
     expect(screen.getByText('0/8')).toBeInTheDocument();
@@ -1406,8 +1406,8 @@ describe('RentacarVehicleForm', () => {
       description: JSON.stringify({
         brand: 'Toyota', model: 'Hilux', year: 2022, plate: 'AA-11-BB', color: 'Branco',
         seats: 7, luggage: 3, transmission: 'automatico', fuel: 'diesel',
-        amenities: ['GPS'], included_items: [{ label: 'Seguro basico', included: true }],
-        important_info: 'Caucao', discount_week: 10, discount_month: 20, km_included: 200,
+        amenities: ['GPS'], included_items: [{ label: 'Seguro básico', included: true }],
+        important_info: 'Caução', discount_week: 10, discount_month: 20, km_included: 200,
         km_extra_cost: 0.3, chauffeur_daily_rate: 30, min_age: 23, license_years: 2,
         seguro_expiry: '2027-01-31', iuc_expiry: '2027-02-28', inspecao_expiry: '2027-03-31',
         current_km: 15000, next_revision_km: 20000, maintenance_history: HISTORICO,
@@ -1432,37 +1432,37 @@ describe('RentacarVehicleForm', () => {
       expect(campo('Categoria').value).toBe('Executivo');
       expect(campo('Lugares').value).toBe('7');
       expect(campo('Bagagens').value).toBe('3');
-      expect(campo('Transmissao').value).toBe('automatico');
-      expect(campo('Combustivel').value).toBe('diesel');
+      expect(campo('Transmissão').value).toBe('automatico');
+      expect(campo('Combustível').value).toBe('diesel');
       expect(campo('Tarifa de motorista (por dia)').value).toBe('30');
       expect(screen.getByLabelText('GPS').checked).toBe(true);
       expect(screen.getByLabelText('AC').checked).toBe(false);
-      expect(campo('Preco base / dia').value).toBe('60');
+      expect(campo('Preço base / dia').value).toBe('60');
       expect(campo('Km incluidos / dia').value).toBe('200');
       expect(campo('Custo km extra (€)').value).toBe('0.3');
       expect(campo('Desc. semana (%)').value).toBe('10');
-      expect(campo('Desc. mes (%)').value).toBe('20');
+      expect(campo('Desc. mês (%)').value).toBe('20');
       expect(campo('Idade minima').value).toBe('23');
-      expect(campo('Carta ha (anos)').value).toBe('2');
-      expect(campo('Seguro ate').value).toBe('2027-01-31');
-      expect(campo('IUC ate').value).toBe('2027-02-28');
-      expect(campo('Inspecao ate').value).toBe('2027-03-31');
+      expect(campo('Carta há (anos)').value).toBe('2');
+      expect(campo('Seguro até').value).toBe('2027-01-31');
+      expect(campo('IUC até').value).toBe('2027-02-28');
+      expect(campo('Inspeção até').value).toBe('2027-03-31');
       expect(campo('Km actuais').value).toBe('15000');
-      expect(campo('Proxima revisao (km)').value).toBe('20000');
-      expect(porPlaceholder('Ex: Pequeno-almoço').value).toBe('Seguro basico');
-      expect(porPlaceholder('Ex: Caução exigida no levantamento, cartão de crédito obrigatório.').value).toBe('Caucao');
+      expect(campo('Próxima revisão (km)').value).toBe('20000');
+      expect(porPlaceholder('Ex: Pequeno-almoço').value).toBe('Seguro básico');
+      expect(porPlaceholder('Ex: Caução exigida no levantamento, cartão de crédito obrigatório.').value).toBe('Caução');
       expect(campo('ID produto Viator').value).toBe('VV1');
       expect(campo('Latitude').value).toBe('16.6');
       expect(seletorEstado().value).toBe('breakdown');
       expect(opcoes(seletorEstado())).toEqual([
-        ['active', 'Activo'], ['maintenance', 'Em manutencao'], ['breakdown', 'Avaria'], ['inactive', 'Inactivo'],
+        ['active', 'Activo'], ['maintenance', 'Em manutenção'], ['breakdown', 'Avaria'], ['inactive', 'Inactivo'],
       ]);
       expect(screen.getByText('1/8')).toBeInTheDocument();
     });
 
-    it('gravar sem mexer reenvia tudo, incluindo o historico de manutencao que o formulario nao edita', () => {
+    it('gravar sem mexer reenvia tudo, incluindo o histórico de manutenção que o formulário não edita', () => {
       const { onSave } = renderForm('rentacar', { unit: UNIT });
-      fireEvent.click(botao('Guardar alteracoes'));
+      fireEvent.click(botao('Guardar alterações'));
       expect(guardar(onSave)).toStrictEqual({
         name: 'Toyota Hilux',
         description: JSON.stringify({
@@ -1476,8 +1476,8 @@ describe('RentacarVehicleForm', () => {
           transmission: 'automatico',
           fuel: 'diesel',
           amenities: ['GPS'],
-          included_items: [{ label: 'Seguro basico', included: true }],
-          important_info: 'Caucao',
+          included_items: [{ label: 'Seguro básico', included: true }],
+          important_info: 'Caução',
           discount_week: 10,
           discount_month: 20,
           km_included: 200,
@@ -1508,24 +1508,24 @@ describe('RentacarVehicleForm', () => {
       const { onSave } = renderForm('rentacar', { unit: UNIT });
       escrever(campo('Categoria'), 'Van');
       expect(screen.queryByText('Tarifa de motorista (por dia)')).toBeNull();
-      fireEvent.click(botao('Guardar alteracoes'));
+      fireEvent.click(botao('Guardar alterações'));
       expect(JSON.parse(guardar(onSave).description).chauffeur_daily_rate).toBeNull();
     });
 
-    it('sem marca nem modelo usa o nome ja guardado na unidade', () => {
+    it('sem marca nem modelo usa o nome já guardado na unidade', () => {
       const unit = { id: 'v2', name: 'Hilux Branco', description: null, base_price: 20, capacity: 5, status: 'active' };
       const { onSave } = renderForm('rentacar', { unit });
       expect(campo('Marca').value).toBe('');
-      fireEvent.click(botao('Guardar alteracoes'));
+      fireEvent.click(botao('Guardar alterações'));
       expect(guardar(onSave).name).toBe('Hilux Branco');
     });
 
-    it('registo antigo com texto simples na descricao usa os valores por omissao', () => {
-      const unit = { id: 'v3', name: 'Carro', description: 'Carro economico', base_price: 20, capacity: 4, status: 'active' };
+    it('registo antigo com texto simples na descrição usa os valores por omissao', () => {
+      const unit = { id: 'v3', name: 'Carro', description: 'Carro económico', base_price: 20, capacity: 4, status: 'active' };
       const { onSave } = renderForm('rentacar', { unit });
       expect(campo('Lugares').value).toBe('5');
       expect(campo('Idade minima').value).toBe('21');
-      fireEvent.click(botao('Guardar alteracoes'));
+      fireEvent.click(botao('Guardar alterações'));
       const v = guardar(onSave);
       expect(v.description).toBe(JSON.stringify(META_VIATURA_VAZIA));
       expect(v.name).toBe('Carro');
@@ -1535,7 +1535,7 @@ describe('RentacarVehicleForm', () => {
     it('mudar o estado e gravar', () => {
       const { onSave } = renderForm('rentacar', { unit: UNIT });
       escrever(seletorEstado(), 'maintenance');
-      fireEvent.click(botao('Guardar alteracoes'));
+      fireEvent.click(botao('Guardar alterações'));
       expect(guardar(onSave).status).toBe('maintenance');
     });
   });
@@ -1549,7 +1549,7 @@ describe('RestaurantTableForm', () => {
     amenities: [], included_items: [], important_info: null,
   };
 
-  it('minimo valido: nada preenchido grava a mesa "Mesa" com 1 a 4 pessoas na zona interior', () => {
+  it('mínimo válido: nada preenchido grava a mesa "Mesa" com 1 a 4 pessoas na zona interior', () => {
     const { onSave } = renderForm('restaurant');
     fireEvent.click(botao('Criar mesa'));
     expect(guardar(onSave)).toStrictEqual({
@@ -1567,14 +1567,14 @@ describe('RestaurantTableForm', () => {
     });
   });
 
-  it('valores por omissao e listas de opcoes; sem seccao de fotos', () => {
+  it('valores por omissao e listas de opções; sem seccao de fotos', () => {
     renderForm('restaurant');
     expect(campo('Zona').value).toBe('interior');
-    expect(campo('Minimo (pessoas)').value).toBe('1');
-    expect(campo('Maximo (pessoas)').value).toBe('4');
-    expect(screen.getByLabelText('Mesa combinavel com outras').checked).toBe(false);
+    expect(campo('Mínimo (pessoas)').value).toBe('1');
+    expect(campo('Máximo (pessoas)').value).toBe('4');
+    expect(screen.getByLabelText('Mesa combinável com outras').checked).toBe(false);
     expect(opcoes(campo('Zona'))).toEqual([
-      ['interior', 'Interior'], ['esplanada', 'Esplanada'], ['terraco', 'Terraco'], ['vip', 'VIP'], ['privado', 'Privado'],
+      ['interior', 'Interior'], ['esplanada', 'Esplanada'], ['terraco', 'Terraço'], ['vip', 'VIP'], ['privado', 'Privado'],
     ]);
     for (const a of ['WiFi', 'Ar condicionado', 'Vista mar', 'Terraço', 'Acesso cadeira de rodas', 'Estacionamento', 'Música ao vivo', 'Ambiente para crianças']) {
       expect(screen.getByLabelText(a)).toBeInTheDocument();
@@ -1584,10 +1584,10 @@ describe('RestaurantTableForm', () => {
 
   it('capacidade minima ou maxima vazia: o navegador impede; num submit directo cai para 1 e 4', () => {
     const { onSave, container } = renderForm('restaurant');
-    expect(campo('Minimo (pessoas)')).toBeRequired();
-    expect(campo('Maximo (pessoas)')).toBeRequired();
-    escrever(campo('Minimo (pessoas)'), '');
-    escrever(campo('Maximo (pessoas)'), '');
+    expect(campo('Mínimo (pessoas)')).toBeRequired();
+    expect(campo('Máximo (pessoas)')).toBeRequired();
+    escrever(campo('Mínimo (pessoas)'), '');
+    escrever(campo('Máximo (pessoas)'), '');
     fireEvent.click(botao('Criar mesa'));
     expect(onSave).not.toHaveBeenCalled();
     fireEvent.submit(container.querySelector('form'));
@@ -1596,21 +1596,21 @@ describe('RestaurantTableForm', () => {
     expect(JSON.parse(v.description)).toMatchObject({ capacity_min: 1, capacity_max: 4 });
   });
 
-  it('capacidade abaixo do minimo (min=1) e travada pelo navegador', () => {
+  it('capacidade abaixo do mínimo (min=1) e travada pelo navegador', () => {
     const { onSave } = renderForm('restaurant');
-    escrever(campo('Maximo (pessoas)'), '0');
+    escrever(campo('Máximo (pessoas)'), '0');
     fireEvent.click(botao('Criar mesa'));
     expect(onSave).not.toHaveBeenCalled();
   });
 
-  it('todos os campos preenchidos: "Mesa N — Nome", unit_type pela zona e capacidade = maximo', () => {
+  it('todos os campos preenchidos: "Mesa N — Nome", unit_type pela zona e capacidade = máximo', () => {
     const { onSave } = renderForm('restaurant');
-    escrever(campo('Numero'), '12');
-    escrever(campo('Nome / descricao (opcional)'), 'Terraco Vista Mar');
+    escrever(campo('Número'), '12');
+    escrever(campo('Nome / descrição (opcional)'), 'Terraço Vista Mar');
     escrever(campo('Zona'), 'vip');
-    escrever(campo('Minimo (pessoas)'), '2');
-    escrever(campo('Maximo (pessoas)'), '6');
-    fireEvent.click(screen.getByLabelText('Mesa combinavel com outras'));
+    escrever(campo('Mínimo (pessoas)'), '2');
+    escrever(campo('Máximo (pessoas)'), '6');
+    fireEvent.click(screen.getByLabelText('Mesa combinável com outras'));
     fireEvent.click(screen.getByLabelText('Vista mar'));
     fireEvent.click(screen.getByLabelText('WiFi'));
     fireEvent.click(screen.getByLabelText('Terraço'));
@@ -1627,10 +1627,10 @@ describe('RestaurantTableForm', () => {
     escrever(campo('Longitude'), '-22.3');
     fireEvent.click(botao('Criar mesa'));
     expect(guardar(onSave)).toStrictEqual({
-      name: 'Mesa 12 — Terraco Vista Mar',
+      name: 'Mesa 12 — Terraço Vista Mar',
       description: JSON.stringify({
         number: '12',
-        name: 'Terraco Vista Mar',
+        name: 'Terraço Vista Mar',
         zone: 'vip',
         capacity_min: 2,
         capacity_max: 6,
@@ -1651,11 +1651,11 @@ describe('RestaurantTableForm', () => {
     });
   });
 
-  it('composicao do nome: so numero, so nome, ambos e nenhum', () => {
+  it('composição do nome: só número, só nome, ambos e nenhum', () => {
     const casos = [
-      [{ 'Numero': '5' }, 'Mesa 5'],
-      [{ 'Nome / descricao (opcional)': 'Esplanada Norte' }, 'Esplanada Norte'],
-      [{ 'Numero': '5', 'Nome / descricao (opcional)': 'Norte' }, 'Mesa 5 — Norte'],
+      [{ 'Número': '5' }, 'Mesa 5'],
+      [{ 'Nome / descrição (opcional)': 'Esplanada Norte' }, 'Esplanada Norte'],
+      [{ 'Número': '5', 'Nome / descrição (opcional)': 'Norte' }, 'Mesa 5 — Norte'],
       [{}, 'Mesa'],
     ];
     for (const [campos, esperado] of casos) {
@@ -1667,7 +1667,7 @@ describe('RestaurantTableForm', () => {
     }
   });
 
-  it('o unit_type vem do rotulo da zona', () => {
+  it('o unit_type vem do rótulo da zona', () => {
     const esperados = { interior: 'Interior', esplanada: 'Esplanada', terraco: 'Terraco', vip: 'VIP', privado: 'Privado' };
     for (const [zona, rotulo] of Object.entries(esperados)) {
       const { onSave, unmount } = renderForm('restaurant');
@@ -1680,19 +1680,19 @@ describe('RestaurantTableForm', () => {
     }
   });
 
-  it('capacidades invalidas (0) caem para 1 e 4 quando o submit passa por cima da validacao do navegador', () => {
+  it('capacidades invalidas (0) caem para 1 e 4 quando o submit passa por cima da validação do navegador', () => {
     const { onSave, container } = renderForm('restaurant');
-    escrever(campo('Minimo (pessoas)'), '0');
-    escrever(campo('Maximo (pessoas)'), '0');
+    escrever(campo('Mínimo (pessoas)'), '0');
+    escrever(campo('Máximo (pessoas)'), '0');
     fireEvent.submit(container.querySelector('form'));
     const v = guardar(onSave);
     expect(v.capacity).toBe(4);
     expect(JSON.parse(v.description)).toMatchObject({ capacity_min: 1, capacity_max: 4 });
   });
 
-  it('a opcao combinavel liga e desliga', () => {
+  it('a opção combinável liga e desliga', () => {
     const { onSave } = renderForm('restaurant');
-    const caixa = screen.getByLabelText('Mesa combinavel com outras');
+    const caixa = screen.getByLabelText('Mesa combinável com outras');
     fireEvent.click(caixa);
     fireEvent.click(caixa);
     fireEvent.click(botao('Criar mesa'));
@@ -1704,11 +1704,11 @@ describe('RestaurantTableForm', () => {
     fireEvent.click(botao('Adicionar item incluído'));
     fireEvent.click(botao('Adicionar item incluído'));
     const itens = screen.getAllByPlaceholderText('Ex: Pequeno-almoço');
-    escrever(itens[0], 'Agua');
+    escrever(itens[0], 'Água');
     escrever(itens[1], 'Pao');
     fireEvent.click(removerDe(itens[1]));
     fireEvent.click(botao('Criar mesa'));
-    expect(JSON.parse(guardar(onSave).description).included_items).toEqual([{ label: 'Agua', included: true }]);
+    expect(JSON.parse(guardar(onSave).description).included_items).toEqual([{ label: 'Água', included: true }]);
   });
 
   describe('editar uma unidade existente', () => {
@@ -1731,12 +1731,12 @@ describe('RestaurantTableForm', () => {
 
     it('pre-preenche os campos a partir da unidade e de parseTableMeta', () => {
       renderForm('restaurant', { unit: UNIT });
-      expect(campo('Numero').value).toBe('12');
-      expect(campo('Nome / descricao (opcional)').value).toBe('Terraco');
+      expect(campo('Número').value).toBe('12');
+      expect(campo('Nome / descrição (opcional)').value).toBe('Terraco');
       expect(campo('Zona').value).toBe('esplanada');
-      expect(campo('Minimo (pessoas)').value).toBe('2');
-      expect(campo('Maximo (pessoas)').value).toBe('6');
-      expect(screen.getByLabelText('Mesa combinavel com outras').checked).toBe(true);
+      expect(campo('Mínimo (pessoas)').value).toBe('2');
+      expect(campo('Máximo (pessoas)').value).toBe('6');
+      expect(screen.getByLabelText('Mesa combinável com outras').checked).toBe(true);
       expect(screen.getByLabelText('WiFi').checked).toBe(true);
       expect(screen.getByLabelText('Vista mar').checked).toBe(false);
       expect(porPlaceholder('Ex: Pequeno-almoço').value).toBe('Pao');
@@ -1751,7 +1751,7 @@ describe('RestaurantTableForm', () => {
 
     it('gravar sem mexer reenvia os mesmos dados e preserva as imagens da unidade', () => {
       const { onSave } = renderForm('restaurant', { unit: UNIT });
-      fireEvent.click(botao('Guardar alteracoes'));
+      fireEvent.click(botao('Guardar alterações'));
       expect(guardar(onSave)).toStrictEqual({
         name: 'Mesa 12 — Terraco',
         description: JSON.stringify({
@@ -1783,47 +1783,47 @@ describe('RestaurantTableForm', () => {
         description: JSON.stringify({ number: '7' }),
       };
       const { onSave } = renderForm('restaurant', { unit });
-      expect(campo('Nome / descricao (opcional)').value).toBe('Mesa 7 — Janela');
-      fireEvent.click(botao('Guardar alteracoes'));
+      expect(campo('Nome / descrição (opcional)').value).toBe('Mesa 7 — Janela');
+      fireEvent.click(botao('Guardar alterações'));
       expect(guardar(onSave).name).toBe('Mesa 7 — Mesa 7 — Janela');
     });
 
-    it('registo antigo: nome sem prefixo, sem numero ou sem nome fica como esta', () => {
+    it('registo antigo: nome sem prefixo, sem número ou sem nome fica como esta', () => {
       let r = renderForm('restaurant', {
         unit: { id: 'a', name: 'Janela', description: JSON.stringify({ number: '7' }), capacity: 4 },
       });
-      expect(campo('Nome / descricao (opcional)').value).toBe('Janela');
+      expect(campo('Nome / descrição (opcional)').value).toBe('Janela');
       r.unmount();
 
       r = renderForm('restaurant', {
         unit: { id: 'b', name: 'Mesa 7 — Janela', description: 'texto', capacity: 4 },
       });
-      expect(campo('Nome / descricao (opcional)').value).toBe('Mesa 7 — Janela');
-      expect(campo('Numero').value).toBe('');
+      expect(campo('Nome / descrição (opcional)').value).toBe('Mesa 7 — Janela');
+      expect(campo('Número').value).toBe('');
       r.unmount();
 
       r = renderForm('restaurant', { unit: { id: 'c', description: null, capacity: 4 } });
-      expect(campo('Nome / descricao (opcional)').value).toBe('');
+      expect(campo('Nome / descrição (opcional)').value).toBe('');
       r.unmount();
     });
 
-    it('sem capacity_max na descricao usa a capacidade da unidade (e 4 se nao houver)', () => {
+    it('sem capacity_max na descrição usa a capacidade da unidade (e 4 se não houver)', () => {
       let r = renderForm('restaurant', {
         unit: { id: 'a', name: 'Mesa', description: JSON.stringify({ number: '1' }), capacity: 8 },
       });
-      expect(campo('Maximo (pessoas)').value).toBe('8');
-      expect(campo('Minimo (pessoas)').value).toBe('1');
+      expect(campo('Máximo (pessoas)').value).toBe('8');
+      expect(campo('Mínimo (pessoas)').value).toBe('1');
       r.unmount();
 
       r = renderForm('restaurant', { unit: { id: 'b', name: 'Mesa', description: null } });
-      expect(campo('Maximo (pessoas)').value).toBe('4');
+      expect(campo('Máximo (pessoas)').value).toBe('4');
       r.unmount();
     });
 
     it('mudar o estado para Activa e gravar', () => {
       const { onSave } = renderForm('restaurant', { unit: UNIT });
       escrever(seletorEstado(), 'active');
-      fireEvent.click(botao('Guardar alteracoes'));
+      fireEvent.click(botao('Guardar alterações'));
       expect(guardar(onSave).status).toBe('active');
     });
   });
@@ -1831,11 +1831,11 @@ describe('RestaurantTableForm', () => {
 
 /* ---------- Formulario generico (tipo de operador sem formulario proprio) ---------- */
 
-describe('formulario generico', () => {
-  it('minimo valido: nome e preco base; unit_type fica vazio porque o tipo nao tem lista', () => {
+describe('formulário genérico', () => {
+  it('mínimo válido: nome e preço base; unit_type fica vazio porque o tipo não tem lista', () => {
     const { onSave } = renderForm('transfer');
     escrever(campo('Nome'), 'Transfer aeroporto');
-    escrever(campo('Preco base (€)'), '25');
+    escrever(campo('Preço base (€)'), '25');
     fireEvent.click(botao('Nova Unidade'));
     expect(guardar(onSave)).toStrictEqual({
       name: 'Transfer aeroporto',
@@ -1856,10 +1856,10 @@ describe('formulario generico', () => {
     const { onSave } = renderForm(undefined);
     escrever(campo('Nome'), 'Transfer');
     escrever(campo('Tipo'), 'Outro');
-    escrever(campo('Unidade de preco'), 'day');
-    escrever(campo('Preco base (€)'), '30.5');
+    escrever(campo('Unidade de preço'), 'day');
+    escrever(campo('Preço base (€)'), '30.5');
     escrever(campo('Capacidade'), '8');
-    escrever(campo('Descricao'), 'Carrinha de 8 lugares');
+    escrever(campo('Descrição'), 'Carrinha de 8 lugares');
     escrever(campo('ID produto Viator'), 'VT');
     escrever(campo('ID produto GetYourGuide'), 'GT');
     escrever(campo('Latitude'), '16.75');
@@ -1880,10 +1880,10 @@ describe('formulario generico', () => {
     });
   });
 
-  it('listas de opcoes por omissao e etiquetas traduzidas', () => {
+  it('listas de opções por omissao e etiquetas traduzidas', () => {
     renderForm('transfer');
     expect(opcoes(campo('Tipo'))).toEqual([['Outro', 'Outro']]);
-    expect(opcoes(campo('Unidade de preco'))).toEqual([['day', 'por dia']]);
+    expect(opcoes(campo('Unidade de preço'))).toEqual([['day', 'por dia']]);
     expect(campo('Capacidade').value).toBe('1');
   });
 
@@ -1893,19 +1893,19 @@ describe('formulario generico', () => {
     fireEvent.click(botao('Nova Unidade'));
     expect(onSave).not.toHaveBeenCalled();
     escrever(campo('Nome'), 'Transfer aeroporto');
-    escrever(campo('Preco base (€)'), '25');
+    escrever(campo('Preço base (€)'), '25');
     fireEvent.click(botao('Nova Unidade'));
     expect(guardar(onSave)).toMatchObject({ name: 'Transfer aeroporto', base_price: 25, price_unit: 'day', capacity: 1 });
   });
 
-  it('capacidade abaixo do minimo (min=1) e travada pelo navegador', () => {
+  it('capacidade abaixo do mínimo (min=1) e travada pelo navegador', () => {
     const { onSave } = renderForm('transfer');
     escrever(campo('Capacidade'), '0');
     fireEvent.click(botao('Nova Unidade'));
     expect(onSave).not.toHaveBeenCalled();
   });
 
-  it('editar: pre-preenche, mostra o estado traduzido e reenvia a descricao em texto simples', () => {
+  it('editar: pre-preenche, mostra o estado traduzido e reenvia a descrição em texto simples', () => {
     const unit = {
       id: 'g1', name: 'Transfer', description: 'Texto simples', unit_type: 'Van', base_price: 20,
       price_unit: 'hour', capacity: 6, status: 'inactive', images: ['https://cdn.exemplo/g.jpg'],
@@ -1913,8 +1913,8 @@ describe('formulario generico', () => {
     };
     const { onSave } = renderForm('transfer', { unit });
     expect(campo('Nome').value).toBe('Transfer');
-    expect(campo('Descricao').value).toBe('Texto simples');
-    expect(campo('Preco base (€)').value).toBe('20');
+    expect(campo('Descrição').value).toBe('Texto simples');
+    expect(campo('Preço base (€)').value).toBe('20');
     expect(campo('Capacidade').value).toBe('6');
     expect(campo('ID produto Viator').value).toBe('VG');
     expect(campo('Latitude').value).toBe('16.1');
@@ -1936,10 +1936,10 @@ describe('formulario generico', () => {
     });
   });
 
-  it('em ingles os rotulos traduzidos mudam', () => {
+  it('em inglês os rotulos traduzidos mudam', () => {
     useUiStore.setState({ lang: 'en' });
     renderForm('transfer');
-    expect(screen.queryByText('Preco base (€)')).toBeNull();
+    expect(screen.queryByText('Preço base (€)')).toBeNull();
     expect(screen.getByRole('button', { name: 'Cancel' })).toBeInTheDocument();
   });
 });
@@ -1971,20 +1971,20 @@ describe('TourForm com o design system', () => {
   it('os campos principais tem a etiqueta por cima', () => {
     renderForm('activity');
     temEtiquetaPorCima([
-      'Nome PT', 'Nome EN', 'Categoria', 'Modalidade', 'Descricao curta PT', 'Descricao longa EN',
-      'Duracao (horas)', 'Dificuldade', 'Capacidade maxima', 'Hora de inicio', 'Preco crianca',
+      'Nome PT', 'Nome EN', 'Categoria', 'Modalidade', 'Descrição curta PT', 'Descrição longa EN',
+      'Duração (horas)', 'Dificuldade', 'Capacidade maxima', 'Hora de início', 'Preço criança',
       'ID produto Viator', 'Latitude', 'Longitude',
     ]);
   });
 
   it('os titulos de seccao existem', () => {
     renderForm('activity');
-    ['Identificacao', 'Descricao', 'Idiomas', 'Comodidades', 'O que está incluído', 'Fotos'].forEach(t => {
+    ['Identificação', 'Descrição', 'Idiomas', 'Comodidades', 'O que está incluído', 'Fotos'].forEach(t => {
       expect(screen.getAllByText((_, el) => el.tagName === 'P' && el.textContent === t)).toHaveLength(1);
     });
   });
 
-  it('idiomas e comodidades continuam a ser de selecao multipla', () => {
+  it('idiomas e comodidades continuam a ser de seleção multipla', () => {
     const { onSave } = preencherMinimo();
     fireEvent.click(screen.getByLabelText('DE'));
     fireEvent.click(screen.getByLabelText('PT'));
@@ -1998,20 +1998,20 @@ describe('TourForm com o design system', () => {
     expect(meta.amenities).toEqual(['Seguro', 'Toalhas']);
   });
 
-  it('item incluido: adicionar, editar e remover pelo botao com nome', () => {
+  it('item incluído: adicionar, editar e remover pelo botão com nome', () => {
     const { onSave } = preencherMinimo();
     fireEvent.click(botao('Adicionar item incluído'));
     fireEvent.click(botao('Adicionar item não incluído'));
-    escrever(screen.getByLabelText('Item 1'), 'Agua');
-    escrever(screen.getByLabelText('Item 2'), 'Almoco');
+    escrever(screen.getByLabelText('Item 1'), 'Água');
+    escrever(screen.getByLabelText('Item 2'), 'Almoço');
     fireEvent.click(botao('Remover item 1'));
     expect(screen.queryByLabelText('Item 2')).toBeNull();
-    expect(screen.getByLabelText('Item 1').value).toBe('Almoco');
+    expect(screen.getByLabelText('Item 1').value).toBe('Almoço');
     fireEvent.click(botao('Criar tour'));
-    expect(metaGravada(onSave).included_items).toEqual([{ label: 'Almoco', included: false }]);
+    expect(metaGravada(onSave).included_items).toEqual([{ label: 'Almoço', included: false }]);
   });
 
-  it('paragem: adicionar, editar e remover pelo botao com nome', () => {
+  it('paragem: adicionar, editar e remover pelo botão com nome', () => {
     const { onSave } = preencherMinimo();
     fireEvent.click(botao('Adicionar paragem'));
     fireEvent.click(botao('Adicionar paragem'));
@@ -2026,7 +2026,7 @@ describe('TourForm com o design system', () => {
     expect(metaGravada(onSave).stops).toEqual([{ name: 'A', desc: 'Desc A', lat: 16.5, lng: -22.9 }]);
   });
 
-  it('horario: adicionar, editar e remover pelo botao com nome', () => {
+  it('horário: adicionar, editar e remover pelo botão com nome', () => {
     const { onSave } = preencherMinimo();
     fireEvent.click(botao('Adicionar horário'));
     fireEvent.click(botao('Adicionar horário'));
@@ -2040,7 +2040,7 @@ describe('TourForm com o design system', () => {
     expect(metaGravada(onSave).time_slots).toEqual([{ time: '11:00', capacity: 5 }]);
   });
 
-  it('escalao: adicionar, editar e remover pelo botao com nome', () => {
+  it('escalao: adicionar, editar e remover pelo botão com nome', () => {
     const { onSave } = preencherMinimo();
     fireEvent.click(botao('Adicionar escalão'));
     fireEvent.click(botao('Adicionar escalão'));
@@ -2056,7 +2056,7 @@ describe('TourForm com o design system', () => {
     expect(metaGravada(onSave).price_tiers).toEqual([{ pax_min: 3, pax_max: 4, price: 140.5 }]);
   });
 
-  it('os botoes de adicionar e remover nao submetem o formulario', () => {
+  it('os botões de adicionar e remover não submetem o formulário', () => {
     const { onSave } = preencherMinimo();
     fireEvent.click(botao('Adicionar item incluído'));
     fireEvent.click(botao('Adicionar paragem'));
@@ -2074,19 +2074,19 @@ describe('HotelRoomForm com o design system', () => {
   it('os campos tem a etiqueta por cima', () => {
     renderForm('hotel');
     temEtiquetaPorCima([
-      'Numero', 'Nome', 'Tipo', 'Andar', 'Vista', 'Adultos', 'Criancas', 'Preco base', 'Epoca baixa',
-      'Epoca media', 'Epoca alta', 'Pico', 'ID produto GetYourGuide',
+      'Número', 'Nome', 'Tipo', 'Andar', 'Vista', 'Adultos', 'Crianças', 'Preço base', 'Epoca baixa',
+      'Epoca média', 'Epoca alta', 'Pico', 'ID produto GetYourGuide',
     ]);
   });
 
-  it('o editor de itens incluidos usa botoes com nome e a descricao continua em JSON', () => {
+  it('o editor de itens incluidos usa botões com nome e a descrição continua em JSON', () => {
     const { onSave } = renderForm('hotel');
     escrever(campo('Nome'), 'Suite');
-    escrever(campo('Preco base'), '90');
+    escrever(campo('Preço base'), '90');
     escrever(campo('Epoca alta'), '120');
     fireEvent.click(botao('Adicionar item incluído'));
     fireEvent.click(botao('Adicionar item incluído'));
-    escrever(screen.getByLabelText('Item 1'), 'Pequeno-almoco');
+    escrever(screen.getByLabelText('Item 1'), 'Pequeno-almoço');
     escrever(screen.getByLabelText('Item 2'), 'Parking');
     fireEvent.click(botao('Remover item 2'));
     fireEvent.click(screen.getByLabelText('Jacuzzi'));
@@ -2095,7 +2095,7 @@ describe('HotelRoomForm com o design system', () => {
     const gravado = guardar(onSave);
     expect(typeof gravado.description).toBe('string');
     const meta = JSON.parse(gravado.description);
-    expect(meta.included_items).toEqual([{ label: 'Pequeno-almoco', included: true }]);
+    expect(meta.included_items).toEqual([{ label: 'Pequeno-almoço', included: true }]);
     expect(meta.amenities).toEqual(['Jacuzzi', 'WiFi']);
     expect(meta.price_high).toBe(120);
     expect(gravado.base_price).toBe(90);
@@ -2106,32 +2106,32 @@ describe('RentacarVehicleForm com o design system', () => {
   it('os campos tem a etiqueta por cima, incluindo documentos e quilometragem', () => {
     renderForm('rentacar');
     temEtiquetaPorCima([
-      'Marca', 'Modelo', 'Ano', 'Matricula', 'Cor', 'Categoria', 'Lugares', 'Bagagens', 'Transmissao',
-      'Combustivel', 'Preco base / dia', 'Idade minima', 'Seguro ate', 'IUC ate', 'Inspecao ate',
-      'Km actuais', 'Proxima revisao (km)',
+      'Marca', 'Modelo', 'Ano', 'Matricula', 'Cor', 'Categoria', 'Lugares', 'Bagagens', 'Transmissão',
+      'Combustível', 'Preço base / dia', 'Idade minima', 'Seguro até', 'IUC até', 'Inspeção até',
+      'Km actuais', 'Próxima revisão (km)',
     ]);
   });
 
-  it('os campos de documentos sao de data e os de quilometragem numericos', () => {
+  it('os campos de documentos são de data e os de quilometragem numericos', () => {
     renderForm('rentacar');
-    ['Seguro ate', 'IUC ate', 'Inspecao ate'].forEach(t => expect(campo(t).type).toBe('date'));
-    ['Km actuais', 'Proxima revisao (km)'].forEach(t => expect(campo(t).type).toBe('number'));
+    ['Seguro até', 'IUC até', 'Inspeção até'].forEach(t => expect(campo(t).type).toBe('date'));
+    ['Km actuais', 'Próxima revisão (km)'].forEach(t => expect(campo(t).type).toBe('number'));
   });
 
-  it('o editor de itens incluidos remove pelo botao com nome e a tarifa de motorista so aparece em Executivo', () => {
+  it('o editor de itens incluidos remove pelo botão com nome e a tarifa de motorista só aparece em Executivo', () => {
     const { onSave } = renderForm('rentacar');
     expect(screen.queryByText('Tarifa de motorista (por dia)')).toBeNull();
     fireEvent.change(campo('Categoria'), { target: { value: 'Executivo' } });
     expect(campo('Tarifa de motorista (por dia)')).toBeInTheDocument();
-    escrever(campo('Preco base / dia'), '55');
-    escrever(campo('Seguro ate'), '2027-01-31');
+    escrever(campo('Preço base / dia'), '55');
+    escrever(campo('Seguro até'), '2027-01-31');
     escrever(campo('Km actuais'), '12000');
     fireEvent.click(botao('Adicionar item não incluído'));
-    escrever(screen.getByLabelText('Item 1'), 'Combustivel');
+    escrever(screen.getByLabelText('Item 1'), 'Combustível');
     fireEvent.click(botao('Registar viatura'));
     const gravado = guardar(onSave);
     const meta = JSON.parse(gravado.description);
-    expect(meta.included_items).toEqual([{ label: 'Combustivel', included: false }]);
+    expect(meta.included_items).toEqual([{ label: 'Combustível', included: false }]);
     expect(meta.seguro_expiry).toBe('2027-01-31');
     expect(meta.current_km).toBe(12000);
     expect(gravado.base_price).toBe(55);
@@ -2143,14 +2143,14 @@ describe('RestaurantTableForm com o design system', () => {
   it('os campos tem a etiqueta por cima', () => {
     renderForm('restaurant');
     temEtiquetaPorCima([
-      'Numero', 'Nome / descricao (opcional)', 'Zona', 'Minimo (pessoas)', 'Maximo (pessoas)',
+      'Número', 'Nome / descrição (opcional)', 'Zona', 'Mínimo (pessoas)', 'Máximo (pessoas)',
       'ID produto Viator', 'Latitude',
     ]);
   });
 
-  it('a opcao combinavel continua a ser uma caixa de verificacao e as comodidades de selecao multipla', () => {
+  it('a opção combinável continua a ser uma caixa de verificação e as comodidades de seleção multipla', () => {
     const { onSave } = renderForm('restaurant');
-    const caixa = screen.getByLabelText('Mesa combinavel com outras');
+    const caixa = screen.getByLabelText('Mesa combinável com outras');
     expect(caixa.type).toBe('checkbox');
     fireEvent.click(caixa);
     fireEvent.click(screen.getByLabelText('Terraço'));
@@ -2165,16 +2165,16 @@ describe('RestaurantTableForm com o design system', () => {
   });
 });
 
-describe('formulario generico com o design system', () => {
+describe('formulário genérico com o design system', () => {
   it('os campos tem a etiqueta por cima', () => {
     renderForm('transfer');
-    temEtiquetaPorCima(['Nome', 'Tipo', 'Preco base (€)', 'ID produto Viator', 'Latitude']);
+    temEtiquetaPorCima(['Nome', 'Tipo', 'Preço base (€)', 'ID produto Viator', 'Latitude']);
   });
 
-  it('o rodape tem Cancelar e o botao de gravar, e submeter grava o mesmo objeto', () => {
+  it('o rodapé tem Cancelar e o botão de gravar, e submeter grava o mesmo objeto', () => {
     const { onSave, onCancel } = renderForm('transfer');
     escrever(campo('Nome'), 'Transfer');
-    escrever(campo('Preco base (€)'), '20');
+    escrever(campo('Preço base (€)'), '20');
     fireEvent.click(botao('Nova Unidade'));
     expect(guardar(onSave).name).toBe('Transfer');
     expect(guardar(onSave).base_price).toBe(20);

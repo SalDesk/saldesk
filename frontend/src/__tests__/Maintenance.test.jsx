@@ -61,7 +61,7 @@ function campo(dialogo, etiqueta) {
 }
 
 function gravidades() {
-  return screen.queryAllByText(/^(Expirado|Urgente|Atencao)$/).map(e => e.textContent);
+  return screen.queryAllByText(/^(Expirado|Urgente|Atenção)$/).map(e => e.textContent);
 }
 
 describe('Maintenance', () => {
@@ -82,40 +82,40 @@ describe('Maintenance', () => {
     warnSpy.mockRestore();
   });
 
-  it('o subtitulo conta as viaturas e os alertas', async () => {
+  it('o subtítulo conta as viaturas e os alertas', async () => {
     await abrePronta();
     expect(screen.getByText('4 viatura(s) · 5 alerta(s)')).toBeInTheDocument();
   });
 
   it('os alertas vem ordenados por gravidade com o texto de dias ou de km', async () => {
     await abrePronta();
-    expect(gravidades()).toEqual(['Expirado', 'Expirado', 'Urgente', 'Urgente', 'Atencao']);
-    expect(screen.getByText(/^Seguro — expirado ha \d+ dias$/)).toBeInTheDocument();
-    expect(screen.getByText('Revisao — atrasada 120km')).toBeInTheDocument();
-    expect(screen.getByText('Revisao — em 300km')).toBeInTheDocument();
+    expect(gravidades()).toEqual(['Expirado', 'Expirado', 'Urgente', 'Urgente', 'Atenção']);
+    expect(screen.getByText(/^Seguro — expirado há \d+ dias$/)).toBeInTheDocument();
+    expect(screen.getByText('Revisão — atrasada 120km')).toBeInTheDocument();
+    expect(screen.getByText('Revisão — em 300km')).toBeInTheDocument();
     expect(screen.getByText(new RegExp(`^Seguro — expira em \\d+ dias \\(${dia(5)}\\)$`))).toBeInTheDocument();
     expect(screen.getByText(new RegExp(`^IUC — expira em \\d+ dias \\(${dia(20)}\\)$`))).toBeInTheDocument();
     /* a etiqueta leva a matricula quando existe */
     expect(screen.getAllByText('Hilux 4x4 (AA-11-BB)').length).toBeGreaterThan(0);
   });
 
-  it('os chips filtram os alertas urgentes e os de atencao', async () => {
+  it('os chips filtram os alertas urgentes e os de atenção', async () => {
     await abrePronta();
     fireEvent.click(screen.getByRole('button', { name: 'Urgentes (4)' }));
     expect(gravidades()).toEqual(['Expirado', 'Expirado', 'Urgente', 'Urgente']);
-    fireEvent.click(screen.getByRole('button', { name: 'Atencao (1)' }));
-    expect(gravidades()).toEqual(['Atencao']);
+    fireEvent.click(screen.getByRole('button', { name: 'Atenção (1)' }));
+    expect(gravidades()).toEqual(['Atenção']);
     fireEvent.click(screen.getByRole('button', { name: 'Todos (5)' }));
     expect(gravidades()).toHaveLength(5);
   });
 
   it('sem alertas mostra a frota em dia e esconde os chips', async () => {
     await abrePronta([V3, V4]);
-    expect(screen.getByText('Sem alertas de documentacao. Toda a frota em dia.')).toBeInTheDocument();
+    expect(screen.getByText('Sem alertas de documentação. Toda a frota em dia.')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /^Todos/ })).not.toBeInTheDocument();
   });
 
-  it('a tabela de documentacao mostra datas, km e proxima revisao', async () => {
+  it('a tabela de documentação mostra datas, km e próxima revisão', async () => {
     await abrePronta();
     const linhas = within(screen.getByRole('table')).getAllByRole('row').slice(1);
     expect(linhas).toHaveLength(4);
@@ -134,7 +134,7 @@ describe('Maintenance', () => {
     expect(c4).toEqual(['Vazia', '—', '—', '—', '—', '—']);
   });
 
-  it('o historico vem por data decrescente com o total de custo', async () => {
+  it('o histórico vem por data decrescente com o total de custo', async () => {
     await abrePronta();
     expect(screen.getAllByText(/^(Revisao|Oleo)$/).map(e => e.textContent)).toEqual(['Revisao', 'Oleo']);
     expect(screen.getByText('€200.50')).toBeInTheDocument();
@@ -145,9 +145,9 @@ describe('Maintenance', () => {
     expect(screen.getByText('Troca de oleo')).toBeInTheDocument();
   });
 
-  it('o modal regista a intervencao: grava a descricao com o historico novo e actualiza o seguro', async () => {
+  it('o modal regista a intervenção: grava a descrição com o histórico novo e actualiza o seguro', async () => {
     await abrePronta();
-    fireEvent.click(screen.getByRole('button', { name: 'Registar intervencao' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Registar intervenção' }));
     const dialogo = await screen.findByRole('dialog');
 
     const registar = within(dialogo).getByRole('button', { name: 'Registar' });
@@ -164,12 +164,12 @@ describe('Maintenance', () => {
     expect([...campo(dialogo, 'Tipo').options].map(o => o.textContent)).toEqual(
       ['Revisao', 'Seguro', 'IUC', 'Inspecao', 'Reparacao', 'Pneus', 'Oleo', 'Outro'],
     );
-    expect(campo(dialogo, 'Data realizacao').value).toBe(HOJE);
+    expect(campo(dialogo, 'Data realização').value).toBe(HOJE);
 
     fireEvent.change(campo(dialogo, 'Tipo'), { target: { value: 'Seguro' } });
     fireEvent.change(campo(dialogo, 'Km actuais'), { target: { value: '12500' } });
     fireEvent.change(campo(dialogo, 'Custo (EUR)'), { target: { value: '99.9' } });
-    fireEvent.change(campo(dialogo, 'Proxima data'), { target: { value: dia(200) } });
+    fireEvent.change(campo(dialogo, 'Próxima data'), { target: { value: dia(200) } });
     fireEvent.change(campo(dialogo, 'Notas'), { target: { value: 'Renovado' } });
     fireEvent.click(registar);
 
@@ -193,12 +193,12 @@ describe('Maintenance', () => {
     expect(listUnits).toHaveBeenCalledTimes(2);
   });
 
-  it('uma revisao com proxima revisao (km) actualiza next_revision_km e deixa os documentos', async () => {
+  it('uma revisão com próxima revisão (km) actualiza next_revision_km e deixa os documentos', async () => {
     await abrePronta();
-    fireEvent.click(screen.getByRole('button', { name: 'Registar intervencao' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Registar intervenção' }));
     const dialogo = await screen.findByRole('dialog');
     fireEvent.change(campo(dialogo, 'Viatura'), { target: { value: 'v2' } });
-    fireEvent.change(campo(dialogo, 'Proxima revisao (km)'), { target: { value: '30000' } });
+    fireEvent.change(campo(dialogo, 'Próxima revisão (km)'), { target: { value: '30000' } });
     fireEvent.click(within(dialogo).getByRole('button', { name: 'Registar' }));
     await waitFor(() => expect(updateUnit).toHaveBeenCalledTimes(1));
     const meta = JSON.parse(updateUnit.mock.calls[0][1].description);
@@ -209,28 +209,28 @@ describe('Maintenance', () => {
 
   it('cancelar fecha o modal sem gravar', async () => {
     await abrePronta();
-    fireEvent.click(screen.getByRole('button', { name: 'Registar intervencao' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Registar intervenção' }));
     const dialogo = await screen.findByRole('dialog');
     fireEvent.click(within(dialogo).getByRole('button', { name: 'Cancelar' }));
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     expect(updateUnit).not.toHaveBeenCalled();
   });
 
-  it('descricao invalida ou vazia nao rebenta e a viatura aparece na tabela', async () => {
+  it('descrição invalida ou vazia não rebenta e a viatura aparece na tabela', async () => {
     await abrePronta([V3, V4]);
     const linhas = within(screen.getByRole('table')).getAllByRole('row').slice(1);
     expect(linhas.map(l => within(l).getAllByRole('cell')[0].textContent)).toEqual(['Quebrada', 'Vazia']);
   });
 
-  it('sem historico mostra o vazio do historico', async () => {
+  it('sem histórico mostra o vazio do histórico', async () => {
     await abrePronta([V3]);
-    expect(screen.getByText('Nenhuma intervencao registada.')).toBeInTheDocument();
+    expect(screen.getByText('Nenhuma intervenção registada.')).toBeInTheDocument();
   });
 
-  it('nenhuma cor em hexadecimal sobra no HTML (alertas, tabela, historico, modal)', async () => {
+  it('nenhuma cor em hexadecimal sobra no HTML (alertas, tabela, histórico, modal)', async () => {
     await abrePronta();
     expect(document.body.innerHTML).not.toContain('[#');
-    fireEvent.click(screen.getByRole('button', { name: 'Registar intervencao' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Registar intervenção' }));
     await screen.findByRole('dialog');
     expect(document.body.innerHTML).not.toContain('[#');
     cleanup();
@@ -238,7 +238,7 @@ describe('Maintenance', () => {
     expect(document.body.innerHTML).not.toContain('[#');
   });
 
-  it('servicos a falhar nao rebentam: pagina vazia', async () => {
+  it('serviços a falhar não rebentam: página vazia', async () => {
     listUnits.mockReset().mockRejectedValue(new Error('rede'));
     render(
       <MemoryRouter future={FUTURE}>
@@ -246,7 +246,7 @@ describe('Maintenance', () => {
       </MemoryRouter>
     );
     expect(await screen.findByText('0 viatura(s) · 0 alerta(s)')).toBeInTheDocument();
-    expect(screen.getByText('Sem alertas de documentacao. Toda a frota em dia.')).toBeInTheDocument();
-    expect(screen.getByText('Nenhuma intervencao registada.')).toBeInTheDocument();
+    expect(screen.getByText('Sem alertas de documentação. Toda a frota em dia.')).toBeInTheDocument();
+    expect(screen.getByText('Nenhuma intervenção registada.')).toBeInTheDocument();
   });
 });

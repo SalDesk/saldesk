@@ -44,10 +44,10 @@ function fmtMoney(v) {
 }
 
 const COUNTRY_NAMES = {
-  DE: 'Alemanha', GB: 'Reino Unido', NL: 'Holanda', FR: 'Franca',
+  DE: 'Alemanha', GB: 'Reino Unido', NL: 'Holanda', FR: 'França',
   PT: 'Portugal', CV: 'Cabo Verde', US: 'EUA', ES: 'Espanha',
-  IT: 'Italia', BE: 'Belgica', AT: 'Austria', CH: 'Suica',
-  IE: 'Irlanda', PL: 'Polonia', BR: 'Brasil',
+  IT: 'Itália', BE: 'Bélgica', AT: 'Áustria', CH: 'Suíça',
+  IE: 'Irlanda', PL: 'Polónia', BR: 'Brasil',
 };
 
 const CHART_COLORS = [
@@ -120,7 +120,7 @@ function HealthGauge({ score }) {
   const circ  = 2 * Math.PI * r;
   const filled = (score / 100) * circ;
   const color  = score >= 70 ? 'var(--success)' : score >= 50 ? 'var(--sand-500)' : 'var(--error)';
-  const label  = score >= 70 ? 'Bom' : score >= 50 ? 'Moderado' : 'Critico';
+  const label  = score >= 70 ? 'Bom' : score >= 50 ? 'Moderado' : 'Crítico';
 
   return (
     <div className="flex flex-col items-center gap-2">
@@ -231,7 +231,7 @@ function competitionPosition(ownPrice, compPrice) {
   if (diff > 5)   return { position: 'slight', label: `+${Math.round(diff)}% acima`, color: 'text-[var(--warning)]' };
   if (diff < -20) return { position: 'low',    label: `${Math.round(diff)}% abaixo`,  color: 'text-[var(--success)]' };
   if (diff < -5)  return { position: 'slight', label: `${Math.round(diff)}% abaixo`,  color: 'text-ocean-700' };
-  return { position: null, label: 'Na media', color: 'text-[var(--success)]' };
+  return { position: null, label: 'Na média', color: 'text-[var(--success)]' };
 }
 
 /* ── Main Analytics ── */
@@ -311,9 +311,9 @@ export default function Analytics() {
 
   const SCORE_COMPONENTS = [
     { label: 'Crescimento de receita', value: components.crescimento ?? 0, max: 25, color: 'var(--ocean-700)' },
-    { label: 'Taxa de ocupacao',       value: components.ocupacao    ?? 0, max: 25, color: 'var(--ocean-500)' },
-    { label: 'Avaliacoes',             value: components.avaliacoes  ?? 0, max: 25, color: 'var(--sand-500)' },
-    { label: 'Fidelizacao',            value: components.fidelizacao ?? 0, max: 25, color: 'var(--ocean-400)' },
+    { label: 'Taxa de ocupação',       value: components.ocupacao    ?? 0, max: 25, color: 'var(--ocean-500)' },
+    { label: 'Avaliações',             value: components.avaliacoes  ?? 0, max: 25, color: 'var(--sand-500)' },
+    { label: 'Fidelização',            value: components.fidelizacao ?? 0, max: 25, color: 'var(--ocean-400)' },
   ];
 
   /* Concorrencia: o preco do concorrente edita-se na propria celula */
@@ -329,7 +329,7 @@ export default function Analytics() {
       render: u => <span className="block max-w-[160px] truncate font-body font-semibold text-n-800">{u.name}</span>,
     },
     {
-      key: 'own', label: 'Preco SalDesk',
+      key: 'own', label: 'Preço SalDesk',
       render: u => (
         <span className="font-display font-bold text-ocean-700">
           {Number(u.base_price || 0) > 0 ? `€${Number(u.base_price || 0)}` : '—'}
@@ -337,7 +337,7 @@ export default function Analytics() {
       ),
     },
     {
-      key: 'comp', label: 'Preco Viator/GYG',
+      key: 'comp', label: 'Preço Viator/GYG',
       render: u => {
         const c = comp[u.id] || {};
         const compPrice = Number(c.price || 0);
@@ -346,7 +346,7 @@ export default function Analytics() {
             <div className="w-28">
               <Input
                 type="number" min="0" step="1"
-                aria-label="Preco do concorrente"
+                aria-label="Preço do concorrente"
                 value={compDraft[u.id] ?? c.price ?? ''}
                 onChange={e => setCompDraft(p => ({ ...p, [u.id]: e.target.value }))}
                 className="font-mono"
@@ -358,13 +358,13 @@ export default function Analytics() {
         }
         return (
           <span className="font-mono text-n-700">
-            {compPrice > 0 ? `€${compPrice}` : <span className="text-n-300 text-xs">Nao definido</span>}
+            {compPrice > 0 ? `€${compPrice}` : <span className="text-n-300 text-xs">Não definido</span>}
           </span>
         );
       },
     },
     {
-      key: 'position', label: 'Posicao no mercado',
+      key: 'position', label: 'Posição no mercado',
       render: u => {
         const c = comp[u.id] || {};
         const pos = competitionPosition(Number(u.base_price || 0), Number(c.price || 0));
@@ -372,7 +372,7 @@ export default function Analytics() {
           <>
             <span className={`text-xs font-mono font-semibold ${pos.color}`}>{pos.label}</span>
             {pos.position === 'high' && (
-              <p className="text-[10px] font-body text-n-400">Considera reduzir para aumentar conversao</p>
+              <p className="text-[10px] font-body text-n-400">Considera reduzir para aumentar conversão</p>
             )}
           </>
         );
@@ -384,7 +384,7 @@ export default function Analytics() {
         const c = comp[u.id] || {};
         return editComp === u.id ? (
           <button
-            aria-label="Guardar preco"
+            aria-label="Guardar preço"
             onClick={() => guardarPreco(u, c)}
             className="p-1.5 rounded text-[var(--success)] hover:bg-[var(--success-light)] transition-colors"
           >
@@ -392,7 +392,7 @@ export default function Analytics() {
           </button>
         ) : (
           <button
-            aria-label="Editar preco"
+            aria-label="Editar preço"
             onClick={() => { setEditComp(u.id); setCompDraft(p => ({ ...p, [u.id]: c.price || '' })); }}
             className="p-1.5 rounded text-n-400 hover:text-ocean-700 hover:bg-ocean-50 transition-colors"
           >
@@ -407,7 +407,7 @@ export default function Analytics() {
     <div>
       <PageHeader
         title="Analytics"
-        subtitle="Visao estrategica do negocio"
+        subtitle="Visão estratégica do negócio"
         actions={
           <Button variant="secondary" icon={RefreshCw} size="sm" onClick={carregar} loading={loading}>
             Actualizar
@@ -423,7 +423,7 @@ export default function Analytics() {
           {/* Score de Saude + componentes */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
             <Card padding="px-6 py-6">
-              <h3 className="font-display font-semibold text-sm text-n-700 mb-5">Score de Saude do Negocio</h3>
+              <h3 className="font-display font-semibold text-sm text-n-700 mb-5">Score de Saúde do Negócio</h3>
               <HealthGauge score={score} />
               {score == null && (
                 <p className="text-center text-xs font-body text-n-400 mt-3">
@@ -441,7 +441,7 @@ export default function Analytics() {
               </div>
               <div className="mt-4 pt-4 border-t border-n-100">
                 <p className="text-xs font-body text-n-400">
-                  Score baseado em crescimento de receita, ocupacao, avaliacoes e fidelizacao nos ultimos 30 dias.
+                  Score baseado em crescimento de receita, ocupação, avaliações e fidelização nos últimos 30 dias.
                   {resumo == null && ' Carregue dados financeiros para score preciso.'}
                 </p>
               </div>
@@ -450,7 +450,7 @@ export default function Analytics() {
 
           {/* Resumo semanal */}
           <div>
-            <h3 className="font-display font-semibold text-sm text-n-700 mb-3">Resumo — Ultimos 30 dias</h3>
+            <h3 className="font-display font-semibold text-sm text-n-700 mb-3">Resumo — Últimos 30 dias</h3>
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
               <WeeklyMetric
                 label="Receita"
@@ -470,7 +470,7 @@ export default function Analytics() {
                 icon={Users}
               />
               <WeeklyMetric
-                label="Rating medio"
+                label="Rating médio"
                 value={ratingNum > 0 ? ratingNum.toFixed(1) : '—'}
                 icon={Star}
               />
@@ -507,9 +507,9 @@ export default function Analytics() {
             </Card>
 
             <Card padding="px-6 py-5">
-              <h3 className="font-display font-semibold text-sm text-n-700 mb-4">Distribuicao por Pais</h3>
+              <h3 className="font-display font-semibold text-sm text-n-700 mb-4">Distribuição por País</h3>
               {origins.length === 0 ? (
-                <EmptyState icon={BarChart2} title="Sem dados disponiveis." />
+                <EmptyState icon={BarChart2} title="Sem dados disponíveis." />
               ) : (
                 <ResponsiveContainer width="100%" height={220}>
                   <BarChart data={origins.slice(0, 8)} layout="vertical" margin={{ left: 4, right: 16, top: 0, bottom: 0 }}>
@@ -533,19 +533,19 @@ export default function Analytics() {
 
           {/* Funil de conversao */}
           <Card padding="px-6 py-5">
-            <h3 className="font-display font-semibold text-sm text-n-700 mb-5">Funil de Conversao</h3>
+            <h3 className="font-display font-semibold text-sm text-n-700 mb-5">Funil de Conversão</h3>
             {!funnel ? (
               <EmptyState
                 icon={Activity}
-                title="Dados do funil nao disponiveis."
+                title="Dados do funil não disponíveis."
                 description={<>Implemente <span className="font-mono">/marketing/stats</span> com campo <span className="font-mono">funnel</span>.</>}
               />
             ) : (
               <div className="space-y-3 max-w-2xl">
                 {[
-                  { label: 'Visitas pagina publica', key: 'page_views',          color: 'var(--ocean-700)' },
+                  { label: 'Visitas página pública', key: 'page_views',          color: 'var(--ocean-700)' },
                   { label: 'Reserva iniciada',       key: 'booking_started',     color: 'var(--ocean-500)' },
-                  { label: 'Reserva concluida',      key: 'booking_completed',   color: 'var(--ocean-400)' },
+                  { label: 'Reserva concluída',      key: 'booking_completed',   color: 'var(--ocean-400)' },
                   { label: 'Pagamento confirmado',   key: 'payment_confirmed',   color: 'var(--sand-500)' },
                 ].map((step, i, arr) => {
                   const value = funnel[step.key] || 0;
@@ -563,7 +563,7 @@ export default function Analytics() {
                     />
                   );
                 })}
-                <p className="text-xs font-body text-n-400 pt-1">% indica taxa de conversao para o passo anterior.</p>
+                <p className="text-xs font-body text-n-400 pt-1">% indica taxa de conversão para o passo anterior.</p>
               </div>
             )}
           </Card>
@@ -572,9 +572,9 @@ export default function Analytics() {
           <Card padding="px-6 py-5">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <h3 className="font-display font-semibold text-sm text-n-700 mb-1">Relatorio Semanal</h3>
+                <h3 className="font-display font-semibold text-sm text-n-700 mb-1">Relatório Semanal</h3>
                 <p className="text-xs font-body text-n-400">
-                  Envie um resumo por email com os principais indicadores dos ultimos 30 dias.
+                  Envie um resumo por email com os principais indicadores dos últimos 30 dias.
                 </p>
               </div>
               <Button
@@ -582,12 +582,12 @@ export default function Analytics() {
                 variant="secondary"
                 size="sm"
                 onClick={() => {
-                  const subject = encodeURIComponent('SalDesk — Relatorio Mensal');
+                  const subject = encodeURIComponent('SalDesk — Relatório Mensal');
                   const body = encodeURIComponent(
-                    `Score de Saude: ${score ?? '—'}/100\n` +
+                    `Score de Saúde: ${score ?? '—'}/100\n` +
                     `Receita: ${weekly.revenue != null ? fmtMoney(weekly.revenue) : '—'}\n` +
                     `Reservas: ${weekly.reservas ?? '—'}\n` +
-                    `Rating medio: ${ratingNum > 0 ? ratingNum.toFixed(1) : '—'}\n\n` +
+                    `Rating médio: ${ratingNum > 0 ? ratingNum.toFixed(1) : '—'}\n\n` +
                     `Gerado em SalDesk — ${new Date().toLocaleDateString('pt-PT')}`,
                   );
                   window.open(`mailto:?subject=${subject}&body=${body}`);
@@ -599,7 +599,7 @@ export default function Analytics() {
 
             <div className="mt-4 grid grid-cols-2 lg:grid-cols-4 gap-3">
               {[
-                { label: 'Score de saude',  value: score != null ? `${score}/100` : '—',                       color: score >= 70 ? 'text-[var(--success)]' : score >= 50 ? 'text-[var(--warning)]' : 'text-[var(--error)]' },
+                { label: 'Score de saúde',  value: score != null ? `${score}/100` : '—',                       color: score >= 70 ? 'text-[var(--success)]' : score >= 50 ? 'text-[var(--warning)]' : 'text-[var(--error)]' },
                 { label: 'Receita',         value: weekly.revenue  != null ? fmtMoney(weekly.revenue) : '—',   color: 'text-ocean-700' },
                 { label: 'Reservas',        value: weekly.reservas != null ? String(weekly.reservas) : '—',    color: 'text-n-900' },
                 { label: 'Rating',          value: ratingNum > 0 ? `${ratingNum.toFixed(1)} / 5.0` : '—',       color: 'text-sand-500' },
@@ -643,14 +643,14 @@ export default function Analytics() {
                       <MousePointerClick size={14} strokeWidth={1.75} className="text-[var(--warning)] shrink-0 mt-0.5" />
                       <p className="text-xs font-body text-[var(--warning)]">
                         <span className="font-semibold">Alta taxa de abandono ({abandonment}%).</span>{' '}
-                        Muitos visitantes nao completam a reserva. Verifica as fotos e descricoes dos tours, simplifica o processo de reserva, ou considera reduzir o preco de entrada.
+                        Muitos visitantes não completam a reserva. Verifica as fotos e descrições dos tours, simplifica o processo de reserva, ou considera reduzir o preço de entrada.
                       </p>
                     </div>
                   )}
 
                   {maisReservados.length > 0 && (
                     <div>
-                      <p className="text-xs font-mono uppercase tracking-wider text-n-500 mb-2">Por tour (reservas dos ultimos 30 dias)</p>
+                      <p className="text-xs font-mono uppercase tracking-wider text-n-500 mb-2">Por tour (reservas dos últimos 30 dias)</p>
                       <div className="space-y-2">
                         {maisReservados.map((u) => {
                           const popularity = maxReservas > 0 ? Math.round((Number(u.num_reservas || 0) / maxReservas) * 100) : 0;
@@ -673,7 +673,7 @@ export default function Analytics() {
                         })}
                       </div>
                       <p className="text-[10px] font-mono text-n-400 mt-2">
-                        Percentagem das reservas do tour mais reservado nos ultimos 30 dias (canceladas nao contam).
+                        Percentagem das reservas do tour mais reservado nos últimos 30 dias (canceladas não contam).
                       </p>
                     </div>
                   )}
@@ -686,9 +686,9 @@ export default function Analytics() {
           <Card padding="px-6 py-5">
             <div className="flex items-center justify-between mb-4">
               <div>
-                <h3 className="font-display font-semibold text-sm text-n-700">Analise de Concorrencia</h3>
+                <h3 className="font-display font-semibold text-sm text-n-700">Análise de Concorrência</h3>
                 <p className="text-xs font-body text-n-400 mt-0.5">
-                  Comparativo dos seus precos vs mercado (dados introduzidos manualmente)
+                  Comparativo dos seus preços vs mercado (dados introduzidos manualmente)
                 </p>
               </div>
               <Building2 size={16} strokeWidth={1.75} className="text-n-400 shrink-0" />
@@ -700,7 +700,7 @@ export default function Analytics() {
               <Table columns={compColumns} rows={units.slice(0, 8)} compact />
             )}
             <p className="text-[10px] font-mono text-n-400 mt-3">
-              Introduz o preco do concorrente mais proximo (Viator, GYG ou operador local) para ver o comparativo. Guardado localmente.
+              Introduz o preço do concorrente mais próximo (Viator, GYG ou operador local) para ver o comparativo. Guardado localmente.
             </p>
           </Card>
 

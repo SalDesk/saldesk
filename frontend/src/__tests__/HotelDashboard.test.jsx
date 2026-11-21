@@ -153,7 +153,7 @@ describe('HotelDashboard (Hoje)', () => {
     warnSpy.mockRestore();
   });
 
-  it('manutencao, sem confirmacao e limpeza aparecem no painel', async () => {
+  it('manutenção, sem confirmação e limpeza aparecem no painel', async () => {
     carregaServicos({
       units: [
         unidade({ id: 'u1', name: 'Quarto 101', status: 'maintenance' }),
@@ -191,13 +191,13 @@ describe('HotelDashboard (Hoje)', () => {
     carregaServicos({
       hoje: [
         reserva({ id: 'c1', status: 'confirmed', customer_name: 'Ana Entrada' }),
-        reserva({ id: 'c2', status: 'checked_in', check_in: '2020-01-01', check_out: HOJE, customer_name: 'Rui Saida' }),
+        reserva({ id: 'c2', status: 'checked_in', check_in: '2020-01-01', check_out: HOJE, customer_name: 'Rui Saída' }),
       ],
       res: resumo({ receita: 500 }),
     });
     renderHotel();
     const chegada = await screen.findByRole('button', { name: /Chegada · Ana Entrada/ });
-    const partida = screen.getByRole('button', { name: /Partida · Rui Saida/ });
+    const partida = screen.getByRole('button', { name: /Partida · Rui Saída/ });
     expect(chegada).toHaveTextContent('Quarto 101 · 2 pessoa(s)');
     expect(partida).toBeInTheDocument();
     expect(screen.getByText('11:00')).toBeInTheDocument();
@@ -236,21 +236,21 @@ describe('HotelDashboard (Hoje)', () => {
     expect(screen.queryByText(/vs mês anterior/)).toBeNull();
   });
 
-  it('a receita mostra a variacao face ao mes anterior', async () => {
+  it('a receita mostra a variação face ao mês anterior', async () => {
     carregaServicos({ res: resumo({ receita: 1200 }, { receita: 1000 }) });
     renderHotel();
     expect(await screen.findByText(`€${(1200).toLocaleString('pt-PT')}`)).toBeInTheDocument();
     expect(screen.getByText('+20% vs mês anterior')).toBeInTheDocument();
   });
 
-  it('sem mes anterior a receita nao mostra variacao', async () => {
+  it('sem mês anterior a receita não mostra variação', async () => {
     carregaServicos({ res: { atual: { receita: 500 } } });
     renderHotel();
     expect(await screen.findByText('€500')).toBeInTheDocument();
     expect(screen.queryByText(/vs mês anterior/)).not.toBeInTheDocument();
   });
 
-  it('uma chamada a falhar nao apaga os dados das outras', async () => {
+  it('uma chamada a falhar não apaga os dados das outras', async () => {
     const pendente = reserva({ id: 'p1', status: 'pending' });
     carregaServicos({ hoje: [pendente] });
     /* so o pedido das pendentes falha */
@@ -287,7 +287,7 @@ describe('HotelDashboard (Hoje)', () => {
     expect(pedidos).toContainEqual({ payment_status: 'pending,partial' });
   });
 
-  it('reservas pendentes conta as de qualquer mes e nao so as que tocam o mes actual', async () => {
+  it('reservas pendentes conta as de qualquer mês e não só as que tocam o mês actual', async () => {
     /* nada no mes actual, mas ha duas pendentes (uma do mes seguinte): a barra lateral ja contava as duas */
     carregaServicos({
       pendentes: [
@@ -312,7 +312,7 @@ describe('HotelDashboard (Hoje)', () => {
     expect(valorKpi('Reservas pendentes')).toBe('0');
   });
 
-  it('check-in feito com saida ultrapassada mantem o quarto ocupado e conta na ocupacao', async () => {
+  it('check-in feito com saída ultrapassada mantem o quarto ocupado e conta na ocupação', async () => {
     /* o hospede nao fez check-out: a saida foi ontem, logo a sobreposicao de hoje nao o devolve;
        so o pedido dos check-ins feitos o traz */
     carregaServicos({
@@ -321,24 +321,24 @@ describe('HotelDashboard (Hoje)', () => {
         unidade({ id: 'u2', name: 'Quarto 102' }),
       ],
       checkedIn: [
-        reserva({ id: 'o', unit_id: 'u1', status: 'checked_in', check_in: diaLocal(-5), check_out: diaLocal(-1), customer_name: 'Hospede Atrasado' }),
+        reserva({ id: 'o', unit_id: 'u1', status: 'checked_in', check_in: diaLocal(-5), check_out: diaLocal(-1), customer_name: 'Hóspede Atrasado' }),
       ],
     });
     renderHotel();
     const celula = async (nome) => (await screen.findByText(nome)).parentElement;
     await waitFor(async () => expect(within(await celula('Quarto 101')).getByText('Ocupado')).toBeInTheDocument());
-    expect(within(await celula('Quarto 102')).getByText('Disponivel')).toBeInTheDocument();
+    expect(within(await celula('Quarto 102')).getByText('Disponível')).toBeInTheDocument();
     /* 1 de 2 quartos ocupados */
     expect(screen.getByText('50%')).toBeInTheDocument();
     expect(screen.getByText('1 de 2 quartos')).toBeInTheDocument();
   });
 
-  it('a mesma reserva devolvida pelos dois pedidos aparece uma so vez', async () => {
-    const saida = reserva({ id: 'b', unit_id: 'u1', status: 'checked_in', check_in: diaLocal(-3), check_out: HOJE, customer_name: 'Rui Saida' });
+  it('a mesma reserva devolvida pelos dois pedidos aparece uma só vez', async () => {
+    const saida = reserva({ id: 'b', unit_id: 'u1', status: 'checked_in', check_in: diaLocal(-3), check_out: HOJE, customer_name: 'Rui Saída' });
     carregaServicos({ hoje: [saida], checkedIn: [saida] });
     renderHotel();
     /* sem deduplicacao a agenda e o contador de partidas contariam 2 */
-    await waitFor(() => expect(screen.getAllByRole('button', { name: /Partida · Rui Saida/ })).toHaveLength(1));
+    await waitFor(() => expect(screen.getAllByRole('button', { name: /Partida · Rui Saída/ })).toHaveLength(1));
     expect(screen.getByText('1 partidas · 0 chegadas por confirmar')).toBeInTheDocument();
   });
 
@@ -355,7 +355,7 @@ describe('HotelDashboard (Hoje)', () => {
         /* entrou ha 2 dias e sai daqui a 2: sem check-in nem check-out hoje */
         reserva({ id: 'a', unit_id: 'u1', status: 'checked_in', check_in: diaLocal(-2), check_out: diaLocal(2), customer_name: 'Maria Estadia' }),
         /* sai hoje */
-        reserva({ id: 'b', unit_id: 'u2', status: 'checked_in', check_in: diaLocal(-3), check_out: HOJE, customer_name: 'Rui Saida' }),
+        reserva({ id: 'b', unit_id: 'u2', status: 'checked_in', check_in: diaLocal(-3), check_out: HOJE, customer_name: 'Rui Saída' }),
         /* entra hoje */
         reserva({ id: 'c', unit_id: 'u3', status: 'confirmed', check_in: HOJE, check_out: diaLocal(3), customer_name: 'Ana Entrada' }),
       ],
@@ -369,11 +369,11 @@ describe('HotelDashboard (Hoje)', () => {
     expect(within(celula('Quarto 101')).getByText('Ocupado')).toBeInTheDocument();
     expect(within(celula('Quarto 102')).getByText('Ocupado')).toBeInTheDocument();
     expect(within(celula('Quarto 103')).getByText('Check-in')).toBeInTheDocument();
-    expect(within(celula('Quarto 104')).getByText('Disponivel')).toBeInTheDocument();
+    expect(within(celula('Quarto 104')).getByText('Disponível')).toBeInTheDocument();
     /* agenda de hoje: so a chegada e a partida; a estadia a meio nao */
-    expect(within(agenda).getByRole('button', { name: /Partida · Rui Saida/ })).toBeInTheDocument();
+    expect(within(agenda).getByRole('button', { name: /Partida · Rui Saída/ })).toBeInTheDocument();
     expect(within(agenda).queryByText(/Maria Estadia/)).not.toBeInTheDocument();
-    expect(within(agenda).queryByText(/Chegada · Rui Saida/)).not.toBeInTheDocument();
+    expect(within(agenda).queryByText(/Chegada · Rui Saída/)).not.toBeInTheDocument();
     /* contadores: 2 de 4 quartos ocupados, 1 chegada, 1 partida, 1 pendente */
     expect(screen.getByText('50%')).toBeInTheDocument();
     expect(screen.getByText('2 de 4 quartos')).toBeInTheDocument();
@@ -382,7 +382,7 @@ describe('HotelDashboard (Hoje)', () => {
     expect(valorKpi('Reservas pendentes')).toBe('1');
   });
 
-  it('servicos a falhar mostram estados vazios sem erro', async () => {
+  it('serviços a falhar mostram estados vazios sem erro', async () => {
     servicosAFalhar();
     renderHotel();
     expect(await screen.findByText('Tudo em ordem')).toBeInTheDocument();
@@ -391,7 +391,7 @@ describe('HotelDashboard (Hoje)', () => {
     await waitFor(() => expect(listUnits).toHaveBeenCalled());
   });
 
-  it('reservas sem campos nao rebentam', async () => {
+  it('reservas sem campos não rebentam', async () => {
     const vazia = { id: 'x', status: 'pending' };
     carregaServicos({ units: [{ id: 'u9', name: 'Quarto 9' }], hoje: [vazia] });
     renderHotel();

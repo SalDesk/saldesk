@@ -71,7 +71,7 @@ export default function MoreDrawer({ open, onClose }) {
         ref={folhaRef}
         role={open ? 'dialog' : undefined}
         aria-modal={open ? 'true' : undefined}
-        aria-label={open ? 'Mais opcoes' : undefined}
+        aria-label={open ? 'Mais opções' : undefined}
         aria-hidden={open ? undefined : 'true'}
         inert={open ? undefined : ''}
         className={`md:hidden fixed bottom-0 inset-x-0 z-50 bg-white rounded-t-2xl shadow-xl max-h-[80vh] overflow-y-auto transition-transform duration-250 ease-out ${

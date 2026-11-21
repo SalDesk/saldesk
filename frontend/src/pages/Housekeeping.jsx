@@ -24,7 +24,7 @@ const HK = {
   clean:      { label: 'Limpo',      badge: 'confirmed', dot: 'bg-[var(--success)]', bg: 'bg-[var(--success-light)]' },
   dirty:      { label: 'Sujo',       badge: 'cancelled', dot: 'bg-[var(--error)]',   bg: 'bg-[var(--error-light)]'   },
   cleaning:   { label: 'Em limpeza', badge: 'info',      dot: 'bg-ocean-500',        bg: 'bg-ocean-50'               },
-  inspection: { label: 'Inspeccao',  badge: 'pending',   dot: 'bg-[var(--warning)]', bg: 'bg-[var(--warning-light)]' },
+  inspection: { label: 'Inspecção',  badge: 'pending',   dot: 'bg-[var(--warning)]', bg: 'bg-[var(--warning-light)]' },
   blocked:    { label: 'Bloqueado',  badge: 'default',   dot: 'bg-n-300',            bg: 'bg-n-50'                   },
 };
 
@@ -62,7 +62,7 @@ function computePriority(unit, todayRes) {
 }
 
 const PRIORITY_SORT = { double: 0, urgent: 1, occupied: 2, vacant: 3 };
-const PRIORITY_LABEL = { double: 'Saida + Entrada', urgent: 'Urgente', occupied: 'Ocupado', vacant: 'Vago' };
+const PRIORITY_LABEL = { double: 'Saída + Entrada', urgent: 'Urgente', occupied: 'Ocupado', vacant: 'Vago' };
 const PRIORITY_CLS   = {
   double:   'text-error font-semibold',
   urgent:   'text-[var(--warning)] font-medium',
@@ -205,7 +205,7 @@ export default function Housekeeping() {
             { value: 'all',        label: `Todos (${enriched.length})` },
             { value: 'dirty',      label: `Sujos (${summary.dirty})` },
             { value: 'cleaning',   label: `Limpeza (${summary.cleaning})` },
-            { value: 'inspection', label: `Inspeccao (${summary.inspection})` },
+            { value: 'inspection', label: `Inspecção (${summary.inspection})` },
             { value: 'clean',      label: `Limpos (${summary.clean})` },
           ]}
           value={filterState}
@@ -218,7 +218,7 @@ export default function Housekeeping() {
         <div className="flex items-start gap-3 px-4 py-3 bg-[var(--error-light)] border border-n-200 rounded-md mb-4">
           <AlertTriangle size={15} strokeWidth={1.75} className="text-error shrink-0 mt-0.5" />
           <div>
-            <p className="text-sm font-body font-semibold text-error">Quartos com saida e entrada no mesmo dia:</p>
+            <p className="text-sm font-body font-semibold text-error">Quartos com saída e entrada no mesmo dia:</p>
             <p className="text-xs font-body text-[var(--error)]">
               {enriched.filter(r => r.priority === 'double').map(r => r.unit.name).join(', ')}
             </p>

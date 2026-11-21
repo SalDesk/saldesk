@@ -38,7 +38,7 @@ function reserva(over) {
   };
 }
 
-const CABECALHOS = ['Ref', 'Mesa', 'Turno', 'Pax', 'Cliente', 'Ocasiao', 'Estado', ''];
+const CABECALHOS = ['Ref', 'Mesa', 'Turno', 'Pax', 'Cliente', 'Ocasião', 'Estado', ''];
 
 describe('RestaurantTable (tabela de reservas de restaurante)', () => {
   let errSpy;
@@ -99,7 +99,7 @@ describe('RestaurantTable (tabela de reservas de restaurante)', () => {
     return within(linha).queryByRole('button', { name: nome });
   }
 
-  describe('conteudo (comportamento actual)', () => {
+  describe('conteúdo (comportamento actual)', () => {
     it('mostra as oito colunas pela ordem de hoje', () => {
       renderTabela();
       expect(within(tabela()).getAllByRole('columnheader').map(th => th.textContent)).toEqual(CABECALHOS);
@@ -118,13 +118,13 @@ describe('RestaurantTable (tabela de reservas de restaurante)', () => {
         '13:00',
         '4',
         `Cliente Alfa${formatada(AMANHA)}`,
-        'Aniversario',
+        'Aniversário',
         'Pendente',
         'Confirmar',
       ]);
     });
 
-    it('mesa: sem numero usa o nome da unidade e sem unidade mostra o travessao', () => {
+    it('mesa: sem número usa o nome da unidade e sem unidade mostra o travessao', () => {
       renderTabela({
         reservations: [
           reserva({ id: 'aaaaaaaa-0001', unit_id: 'u1' }),
@@ -135,10 +135,10 @@ describe('RestaurantTable (tabela de reservas de restaurante)', () => {
         units: [
           mesa({ id: 'u1', description: '{"number":7}' }),
           mesa({ id: 'u2', name: 'Esplanada', description: '{}' }),
-          mesa({ id: 'u3', name: 'Balcao', description: 'isto nao e json' }),
+          mesa({ id: 'u3', name: 'Balcão', description: 'isto não e json' }),
         ],
       });
-      expect(linhas().map(l => celulas(l)[1].textContent)).toEqual(['Mesa 7', 'Esplanada', 'Balcao', '—']);
+      expect(linhas().map(l => celulas(l)[1].textContent)).toEqual(['Mesa 7', 'Esplanada', 'Balcão', '—']);
     });
 
     it('lista de espera mostra a etiqueta junto a mesa', () => {
@@ -153,7 +153,7 @@ describe('RestaurantTable (tabela de reservas de restaurante)', () => {
       expect(celulas(l2)[1].textContent).toBe('Mesa 3');
     });
 
-    it('turno: a hora de inicio tem prioridade; sem hora usa o nome do turno; sem nenhum mostra o travessao', () => {
+    it('turno: a hora de início tem prioridade; sem hora usa o nome do turno; sem nenhum mostra o travessao', () => {
       renderTabela({
         reservations: [
           reserva({ id: 'aaaaaaaa-0001', start_time: '19:45:00', notes_guest: JSON.stringify({ turno: 'almoco' }) }),
@@ -163,10 +163,10 @@ describe('RestaurantTable (tabela de reservas de restaurante)', () => {
           reserva({ id: 'eeeeeeee-0005', start_time: undefined, notes_guest: '{}' }),
         ],
       });
-      expect(linhas().map(l => celulas(l)[2].textContent)).toEqual(['19:45', 'Almoco', 'Jantar', 'brunch', '—']);
+      expect(linhas().map(l => celulas(l)[2].textContent)).toEqual(['19:45', 'Almoço', 'Jantar', 'brunch', '—']);
     });
 
-    it('ocasiao: usa o nome conhecido, o valor em bruto se for desconhecido e o travessao se faltar', () => {
+    it('ocasião: usa o nome conhecido, o valor em bruto se for desconhecido e o travessao se faltar', () => {
       renderTabela({
         reservations: [
           reserva({ id: 'aaaaaaaa-0001', notes_guest: JSON.stringify({ ocasiao: 'lua_de_mel' }) }),
@@ -177,11 +177,11 @@ describe('RestaurantTable (tabela de reservas de restaurante)', () => {
       expect(linhas().map(l => celulas(l)[5].textContent)).toEqual(['Lua-de-mel', 'reuniao', '—']);
     });
 
-    it('campos em falta (cliente, data, notas invalidas) mostram o travessao e nao rebentam', () => {
+    it('campos em falta (cliente, data, notas invalidas) mostram o travessao e não rebentam', () => {
       renderTabela({
         reservations: [reserva({
           customer_name: undefined, check_in: undefined, start_time: undefined, guests: undefined,
-          notes_guest: 'isto nao e json',
+          notes_guest: 'isto não e json',
         })],
       });
       const c = celulas(linhas()[0]);
@@ -191,7 +191,7 @@ describe('RestaurantTable (tabela de reservas de restaurante)', () => {
       expect(c[5].textContent).toBe('—');
     });
 
-    it('sem notas de convidado (notes_guest ausente) nao rebenta', () => {
+    it('sem notas de convidado (notes_guest ausente) não rebenta', () => {
       renderTabela({ reservations: [reserva({ notes_guest: undefined, start_time: undefined })] });
       expect(celulas(linhas()[0])[2].textContent).toBe('—');
     });
@@ -203,7 +203,7 @@ describe('RestaurantTable (tabela de reservas de restaurante)', () => {
     });
   });
 
-  describe('accoes (comportamento actual)', () => {
+  describe('acções (comportamento actual)', () => {
     it('Ver, Editar e Eliminar chamam o handler com a reserva da linha', () => {
       const r1 = reserva({ id: 'aaaaaaaa-0001' });
       const r2 = reserva({ id: 'bbbbbbbb-0002', customer_name: 'Cliente Beta' });
@@ -236,14 +236,14 @@ describe('RestaurantTable (tabela de reservas de restaurante)', () => {
       ['pending', 'Confirmar', 'confirmed'],
       ['confirmed', 'Sentar', 'checked_in'],
       ['checked_in', 'Liberar mesa', 'checked_out'],
-    ])('avancar estado de %s: o botao %s chama changeStatus com %s e depois onUpdate', async (estado, rotulo, proximo) => {
+    ])('avançar estado de %s: o botão %s chama changeStatus com %s e depois onUpdate', async (estado, rotulo, proximo) => {
       renderTabela({ reservations: [reserva({ id: 'aaaaaaaa-0001', status: estado })] });
       fireEvent.click(botao(linhas()[0], rotulo));
       await waitFor(() => expect(changeStatus).toHaveBeenCalledWith('aaaaaaaa-0001', proximo));
       await waitFor(() => expect(props.onUpdate).toHaveBeenCalledWith({ id: 'aaaaaaaa-0001', status: proximo }));
     });
 
-    it('enquanto o estado muda, o botao de avancar da linha fica desactivado', async () => {
+    it('enquanto o estado muda, o botão de avançar da linha fica desactivado', async () => {
       let resolve;
       changeStatus.mockReset().mockImplementation(() => new Promise((res) => { resolve = res; }));
       renderTabela({
@@ -259,7 +259,7 @@ describe('RestaurantTable (tabela de reservas de restaurante)', () => {
       expect(props.onUpdate).toHaveBeenCalledWith({ id: 'aaaaaaaa-0001', status: 'confirmed' });
     });
 
-    it('se a mudanca de estado falhar, regista o erro, nao chama onUpdate e reactiva o botao', async () => {
+    it('se a mudanca de estado falhar, regista o erro, não chama onUpdate e reactiva o botão', async () => {
       esperaErros = true;
       const erro = new Error('falha de rede');
       changeStatus.mockReset().mockRejectedValue(erro);
@@ -278,7 +278,7 @@ describe('RestaurantTable (tabela de reservas de restaurante)', () => {
       ['checked_out', null],
       ['cancelled',   null],
       ['no_show',     null],
-    ])('estado %s: botao de avancar=%s', (estado, rotuloAvancar) => {
+    ])('estado %s: botão de avançar=%s', (estado, rotuloAvancar) => {
       renderTabela({ reservations: [reserva({ status: estado })] });
       const linha = linhas()[0];
       for (const rotulo of ['Confirmar', 'Sentar', 'Liberar mesa']) {
@@ -305,10 +305,10 @@ describe('RestaurantTable (tabela de reservas de restaurante)', () => {
       fireEvent.click(within(cabecalho(nome)).getByRole('button'));
     }
 
-    it('so Pax e ordenavel (aria-sort a none) e as outras colunas nao', () => {
+    it('só Pax e ordenavel (aria-sort a none) e as outras colunas não', () => {
       renderTabela({ reservations: TRES });
       expect(cabecalho('Pax')).toHaveAttribute('aria-sort', 'none');
-      for (const nome of ['Ref', 'Mesa', 'Turno', 'Cliente', 'Ocasiao', 'Estado']) {
+      for (const nome of ['Ref', 'Mesa', 'Turno', 'Cliente', 'Ocasião', 'Estado']) {
         expect(cabecalho(nome)).not.toHaveAttribute('aria-sort');
       }
     });
@@ -343,7 +343,7 @@ describe('RestaurantTable (tabela de reservas de restaurante)', () => {
       clicar('Pax');
     });
 
-    it('as accoes continuam ligadas a reserva certa depois de ordenar', () => {
+    it('as acções continuam ligadas a reserva certa depois de ordenar', () => {
       renderTabela({ reservations: TRES });
       clicar('Pax');
       /* a primeira linha passa a ser a de menos pessoas (aaaaaaaa) */

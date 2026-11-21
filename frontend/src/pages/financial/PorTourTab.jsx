@@ -7,7 +7,7 @@ import { fmtMoney, unitTotalCost } from './shared';
 
 function PorTourTab({ unidades, currency, costs, onEditCosts }) {
   if (!unidades || unidades.length === 0) return (
-    <Card padding="p-0"><EmptyState icon={Layers} title="Sem dados de tours no periodo." /></Card>
+    <Card padding="p-0"><EmptyState icon={Layers} title="Sem dados de tours no período." /></Card>
   );
   const rows = unidades.map(u => {
     const custo = unitTotalCost(costs[u.unit_id || u.id]);

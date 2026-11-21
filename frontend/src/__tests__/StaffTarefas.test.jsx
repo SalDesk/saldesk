@@ -54,7 +54,7 @@ describe('Tarefas: quadro', () => {
     expect(coluna('Pendente')).toHaveTextContent('2');
     ['Briefing', 'Tarefa atrasada'].forEach(t => expect(within(coluna('Pendente')).getByText(t)).toBeInTheDocument());
     ['Levar equipamento', 'Texto simples sem JSON'].forEach(t => expect(within(coluna('Em Progresso')).getByText(t)).toBeInTheDocument());
-    expect(within(coluna('Concluida')).getByText('Tarefa feita')).toBeInTheDocument();
+    expect(within(coluna('Concluída')).getByText('Tarefa feita')).toBeInTheDocument();
     expect(within(coluna('Bloqueada')).getByText('Tarefa bloqueada')).toBeInTheDocument();
     expect(screen.getByText('6 tarefa(s)')).toBeInTheDocument();
   });
@@ -64,7 +64,7 @@ describe('Tarefas: quadro', () => {
     await montar();
     expect(screen.getByText('Briefing')).toBeInTheDocument();
     expect(screen.getByText('Texto simples sem JSON')).toBeInTheDocument();
-    expect(screen.getByText('Atribuicao #123456')).toBeInTheDocument();
+    expect(screen.getByText('Atribuição #123456')).toBeInTheDocument();
   });
 
   it('prioridade_por_omissao_media_e_as_quatro_etiquetas', async () => {
@@ -72,8 +72,8 @@ describe('Tarefas: quadro', () => {
     expect(within(cartaoDe('Briefing')).getByText('Alta')).toBeInTheDocument();
     expect(within(cartaoDe('Levar equipamento')).getByText('Baixa')).toBeInTheDocument();
     expect(within(cartaoDe('Tarefa feita')).getByText('Urgente')).toBeInTheDocument();
-    expect(within(cartaoDe('Tarefa bloqueada')).getByText('Media')).toBeInTheDocument();
-    expect(within(cartaoDe('Texto simples sem JSON')).getByText('Media')).toBeInTheDocument(); /* omissao */
+    expect(within(cartaoDe('Tarefa bloqueada')).getByText('Média')).toBeInTheDocument();
+    expect(within(cartaoDe('Texto simples sem JSON')).getByText('Média')).toBeInTheDocument(); /* omissao */
   });
 
   it('tarefa_atrasada_so_com_prazo_passado_e_nao_concluida_nem_bloqueada', async () => {
@@ -103,9 +103,9 @@ describe('Tarefas: quadro', () => {
     fireEvent.click(within(cartaoDe('Briefing')).getByText('Mover para Em Progresso'));
     await waitFor(() => expect(startAssignment).toHaveBeenCalledWith('a1'));
     await waitFor(() => expect(within(coluna('Em Progresso')).getByText('Briefing')).toBeInTheDocument());
-    fireEvent.click(within(cartaoDe('Levar equipamento')).getByText('Mover para Concluida'));
+    fireEvent.click(within(cartaoDe('Levar equipamento')).getByText('Mover para Concluída'));
     await waitFor(() => expect(completeAssignment).toHaveBeenCalledWith('a2'));
-    await waitFor(() => expect(within(coluna('Concluida')).getByText('Levar equipamento')).toBeInTheDocument());
+    await waitFor(() => expect(within(coluna('Concluída')).getByText('Levar equipamento')).toBeInTheDocument());
     /* confirmed -> em progresso */
     fireEvent.click(within(cartaoDe('Texto simples sem JSON')).getByText('Mover para Em Progresso'));
     await waitFor(() => expect(startAssignment).toHaveBeenCalledWith('a3'));
@@ -116,10 +116,10 @@ describe('Tarefas: quadro', () => {
 
   it('falha_ao_mover_mostra_o_toast_e_nao_muda', async () => {
     errosEsperados = true;
-    startAssignment.mockRejectedValueOnce({ response: { data: { error: 'Sem permissao' } } });
+    startAssignment.mockRejectedValueOnce({ response: { data: { error: 'Sem permissão' } } });
     await montar();
     fireEvent.click(within(cartaoDe('Briefing')).getByText('Mover para Em Progresso'));
-    await waitFor(() => expect(toasts()).toContain('error:Sem permissao'));
+    await waitFor(() => expect(toasts()).toContain('error:Sem permissão'));
     expect(within(coluna('Pendente')).getByText('Briefing')).toBeInTheDocument();
     startAssignment.mockRejectedValueOnce(new Error('x'));
     fireEvent.click(within(cartaoDe('Briefing')).getByText('Mover para Em Progresso'));
@@ -149,7 +149,7 @@ describe('Tarefas: quadro', () => {
 
 describe('Tarefas: detalhe', () => {
   it('abrir_a_tarefa_mostra_o_detalhe', async () => {
-    listAssignments.mockResolvedValue([{ id: 'a1', status: 'pending', staff_id: 's1', notes_manager: meta({ title: 'Briefing', desc: 'Falar com todos', priority: 'high', due: '2026-12-24', checklist: ['Material', 'Agua'] }) }]);
+    listAssignments.mockResolvedValue([{ id: 'a1', status: 'pending', staff_id: 's1', notes_manager: meta({ title: 'Briefing', desc: 'Falar com todos', priority: 'high', due: '2026-12-24', checklist: ['Material', 'Água'] }) }]);
     await montar();
     fireEvent.click(cartaoDe('Briefing'));
     const dlg = screen.getByRole('dialog');
@@ -158,7 +158,7 @@ describe('Tarefas: detalhe', () => {
     expect(dlg).toHaveTextContent('Alta');
     expect(dlg).toHaveTextContent(new Date('2026-12-24').toLocaleDateString('pt-PT', { timeZone: 'UTC' }));
     expect(dlg).toHaveTextContent('Rui Lopes');
-    ['Checklist', 'Material', 'Agua'].forEach(t => expect(within(dlg).getByText(t)).toBeInTheDocument());
+    ['Checklist', 'Material', 'Água'].forEach(t => expect(within(dlg).getByText(t)).toBeInTheDocument());
   });
 
   it('as_accoes_dependem_do_estado', async () => {
@@ -201,7 +201,7 @@ describe('Tarefas: criar', () => {
   it('criar_exige_reserva_senao_mostra_o_toast', async () => {
     await montar();
     const dlg = await abrirModal();
-    fireEvent.change(within(dlg).getByPlaceholderText('Titulo da tarefa'), { target: { value: 'Sem reserva' } });
+    fireEvent.change(within(dlg).getByPlaceholderText('Título da tarefa'), { target: { value: 'Sem reserva' } });
     fireEvent.submit(dlg.querySelector('form'));
     expect(toasts()).toContain('error:Escolha a reserva a que esta tarefa pertence');
     expect(createAssignment).not.toHaveBeenCalled();
@@ -213,13 +213,13 @@ describe('Tarefas: criar', () => {
     const dlg = await abrirModal();
     const [reserva, prioridade, colaborador] = within(dlg).getAllByRole('combobox');
     expect(Array.from(reserva.options).map(o => o.textContent)).toEqual([
-      'Escolha a reserva...', 'Maria Cliente — Buggy Tour (2026-12-01)', 'Sem Unidade — Servico (2026-12-03)',
+      'Escolha a reserva...', 'Maria Cliente — Buggy Tour (2026-12-01)', 'Sem Unidade — Serviço (2026-12-03)',
     ]);
-    expect(Array.from(colaborador.options).map(o => o.textContent)).toEqual(['Sem atribuicao', 'Rui Lopes', 'Vera Mendes']); /* so activos */
-    expect(Array.from(prioridade.options).map(o => o.textContent)).toEqual(['Baixa', 'Media', 'Alta', 'Urgente']);
-    fireEvent.change(within(dlg).getByPlaceholderText('Titulo da tarefa'), { target: { value: 'Nova coisa' } });
+    expect(Array.from(colaborador.options).map(o => o.textContent)).toEqual(['Sem atribuição', 'Rui Lopes', 'Vera Mendes']); /* so activos */
+    expect(Array.from(prioridade.options).map(o => o.textContent)).toEqual(['Baixa', 'Média', 'Alta', 'Urgente']);
+    fireEvent.change(within(dlg).getByPlaceholderText('Título da tarefa'), { target: { value: 'Nova coisa' } });
     fireEvent.change(reserva, { target: { value: 'r1' } });
-    fireEvent.change(within(dlg).getByPlaceholderText('Descricao opcional'), { target: { value: 'Detalhes' } });
+    fireEvent.change(within(dlg).getByPlaceholderText('Descrição opcional'), { target: { value: 'Detalhes' } });
     fireEvent.change(prioridade, { target: { value: 'high' } });
     fireEvent.change(dlg.querySelector('input[type="date"]'), { target: { value: '2026-12-31' } });
     fireEvent.change(colaborador, { target: { value: 's1' } });
@@ -232,14 +232,14 @@ describe('Tarefas: criar', () => {
     await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
     expect(within(coluna('Pendente')).getByText('Nova coisa')).toBeInTheDocument();
     const outra = await abrirModal();
-    expect(within(outra).getByPlaceholderText('Titulo da tarefa')).toHaveValue('');
+    expect(within(outra).getByPlaceholderText('Título da tarefa')).toHaveValue('');
   });
 
   it('sem_colaborador_vai_staff_id_nulo', async () => {
     createAssignment.mockResolvedValue({ id: 'novo', status: 'pending', notes_manager: 'x' });
     await montar();
     const dlg = await abrirModal();
-    fireEvent.change(within(dlg).getByPlaceholderText('Titulo da tarefa'), { target: { value: 'T' } });
+    fireEvent.change(within(dlg).getByPlaceholderText('Título da tarefa'), { target: { value: 'T' } });
     fireEvent.change(within(dlg).getAllByRole('combobox')[0], { target: { value: 'r3' } });
     fireEvent.click(within(dlg).getByRole('button', { name: 'Criar tarefa' }));
     await waitFor(() => expect(createAssignment).toHaveBeenCalledWith(expect.objectContaining({ reservation_id: 'r3', staff_id: null })));
@@ -250,7 +250,7 @@ describe('Tarefas: criar', () => {
     createAssignment.mockRejectedValue({ response: { data: { error: 'Reserva invalida' } } });
     await montar();
     const dlg = await abrirModal();
-    fireEvent.change(within(dlg).getByPlaceholderText('Titulo da tarefa'), { target: { value: 'T' } });
+    fireEvent.change(within(dlg).getByPlaceholderText('Título da tarefa'), { target: { value: 'T' } });
     fireEvent.change(within(dlg).getAllByRole('combobox')[0], { target: { value: 'r1' } });
     fireEvent.click(within(dlg).getByRole('button', { name: 'Criar tarefa' }));
     await waitFor(() => expect(toasts()).toContain('error:Reserva invalida'));
@@ -273,7 +273,7 @@ describe('Tarefas com o design system', () => {
     expect(screen.getByLabelText('Filtrar por colaborador')).toBeInTheDocument();
     fireEvent.click(botaoNova());
     const dlg = within(await screen.findByRole('dialog'));
-    ['Titulo', 'Reserva', 'Descricao', 'Prioridade', 'Data limite', 'Colaborador', 'Checklist (uma por linha)']
+    ['Título', 'Reserva', 'Descrição', 'Prioridade', 'Data limite', 'Colaborador', 'Checklist (uma por linha)']
       .forEach(r => expect(dlg.getByLabelText(r)).toBeInTheDocument());
   });
 

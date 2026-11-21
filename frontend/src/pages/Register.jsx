@@ -49,7 +49,7 @@ export default function Register() {
 
   async function handleInviteSubmit(e) {
     e.preventDefault();
-    if (!inviteCode.trim()) { setInviteError('Introduz o teu codigo de convite.'); return; }
+    if (!inviteCode.trim()) { setInviteError('Introduz o teu código de convite.'); return; }
     setInviteError('');
     setInviteLoading(true);
     try {
@@ -57,10 +57,10 @@ export default function Register() {
       if (result?.data?.valid) {
         setInviteValid(true);
       } else {
-        setInviteError('Codigo invalido ou expirado. Verifica o codigo e tenta novamente.');
+        setInviteError('Código inválido ou expirado. Verifica o código e tenta novamente.');
       }
     } catch {
-      setInviteError('Codigo invalido ou expirado. Verifica o codigo e tenta novamente.');
+      setInviteError('Código inválido ou expirado. Verifica o código e tenta novamente.');
     } finally {
       setInviteLoading(false);
     }
@@ -71,9 +71,9 @@ export default function Register() {
     if (!form.name.trim())    errs.name = t('common.required');
     if (!form.email.trim())   errs.email = t('common.required');
     if (getPasswordStrength(form.password) < 2) {
-      errs.password = 'A password deve ser forte: 8+ caracteres, maiuscula, numero e especial.';
+      errs.password = 'A password deve ser forte: 8+ caracteres, maiúscula, número e especial.';
     }
-    if (form.password !== form.confirm) errs.confirm = 'Passwords nao coincidem';
+    if (form.password !== form.confirm) errs.confirm = 'Passwords não coincidem';
     return errs;
   }
 
@@ -118,7 +118,7 @@ export default function Register() {
               <div>
                 <h1 className="font-display font-bold text-base text-n-900">Acesso por convite</h1>
                 <p className="text-xs font-body text-n-500 mt-0.5">
-                  A SalDesk esta em fase de lançamento. Necessitas de um codigo de convite.
+                  A SalDesk está em fase de lançamento. Necessitas de um código de convite.
                 </p>
               </div>
             </div>
@@ -126,7 +126,7 @@ export default function Register() {
             <form onSubmit={handleInviteSubmit} className="space-y-4">
               <div>
                 <label className="text-xs font-body font-bold uppercase tracking-wide text-n-600 block mb-1">
-                  Codigo de convite
+                  Código de convite
                 </label>
                 <input
                   type="text"
@@ -143,12 +143,12 @@ export default function Register() {
               </div>
 
               <Button type="submit" loading={inviteLoading} icon={ArrowRight} className="w-full">
-                Validar codigo
+                Validar código
               </Button>
             </form>
 
             <p className="mt-4 text-center text-xs font-body text-n-400">
-              Nao tens codigo?{' '}
+              Não tens código?{' '}
               <a href="mailto:hello@saldesk.cv" className="text-ocean-700 hover:underline">
                 Pede acesso antecipado
               </a>
@@ -161,7 +161,7 @@ export default function Register() {
               <div className="flex items-center gap-2 mb-5 px-3 py-2 bg-[#ECFDF5] border border-green-200 rounded-sm">
                 <CheckCircle2 size={14} strokeWidth={1.75} className="text-[#1A7A4A] shrink-0" />
                 <p className="text-xs font-body text-[#1A7A4A]">
-                  Codigo <span className="font-mono font-semibold">{inviteCode.toUpperCase()}</span> validado.
+                  Código <span className="font-mono font-semibold">{inviteCode.toUpperCase()}</span> validado.
                 </p>
               </div>
             )}
@@ -175,7 +175,7 @@ export default function Register() {
             )}
 
             <form onSubmit={handleSubmit} className="space-y-4">
-              <Input label={t('auth.name')} type="text" placeholder="Joao Silva"
+              <Input label={t('auth.name')} type="text" placeholder="João Silva"
                 value={form.name} onChange={set('name')} error={errors.name} required />
 
               <Input label={t('auth.email')} type="email" placeholder="nome@email.com"
@@ -235,7 +235,7 @@ export default function Register() {
 
             <div className="mt-5 pt-4 border-t border-n-100 flex items-center justify-center gap-1.5 text-n-400">
               <Shield size={12} strokeWidth={1.75} />
-              <span className="text-[11px] font-mono uppercase tracking-wider">Ligacao segura SSL</span>
+              <span className="text-[11px] font-mono uppercase tracking-wider">Ligação segura SSL</span>
             </div>
           </>
         )}

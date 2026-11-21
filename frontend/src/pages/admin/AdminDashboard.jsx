@@ -149,7 +149,7 @@ function WaitlistSection() {
   }, []);
 
   function exportCsv() {
-    const rows = [['Email', 'Data de inscricao', 'Fonte']];
+    const rows = [['Email', 'Data de inscrição', 'Fonte']];
     waitlist.forEach(w => rows.push([w.email, w.created_at?.slice(0, 10) || '', w.source || 'coming-soon']));
     const csv  = rows.map(r => r.join(',')).join('\n');
     const blob = new Blob([csv], { type: 'text/csv' });
@@ -197,7 +197,7 @@ function WaitlistSection() {
               onClick={sendLaunchEmail}
               disabled={waitlist.length === 0}
               className={sentOk ? 'text-[#1A7A4A] border-green-200' : ''}>
-              {sentOk ? 'Email enviado' : 'Email de lancamento'}
+              {sentOk ? 'Email enviado' : 'Email de lançamento'}
             </Button>
           </div>
         </div>
@@ -222,7 +222,7 @@ function WaitlistSection() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-n-200 bg-n-50">
-                  {['Email', 'Fonte', 'Lingua', 'Data'].map(h => (
+                  {['Email', 'Fonte', 'Língua', 'Data'].map(h => (
                     <th key={h} className="text-left py-2 px-4 text-xs font-mono uppercase tracking-wider text-n-500">{h}</th>
                   ))}
                 </tr>
@@ -306,10 +306,10 @@ function InviteCodesSection() {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Key size={16} strokeWidth={1.75} className="text-ocean-700" />
-            <h3 className="font-display font-semibold text-sm text-n-700">Codigos de Convite</h3>
+            <h3 className="font-display font-semibold text-sm text-n-700">Códigos de Convite</h3>
           </div>
           <Button variant="secondary" size="sm" icon={Plus} onClick={() => setShowForm(p => !p)}>
-            Novo codigo
+            Novo código
           </Button>
         </div>
       }
@@ -326,7 +326,7 @@ function InviteCodesSection() {
           <input
             value={newCode.description}
             onChange={e => setNewCode(p => ({ ...p, description: e.target.value }))}
-            placeholder="Descricao"
+            placeholder="Descrição"
             className="h-8 px-3 text-sm font-body border border-n-200 rounded bg-white focus:outline-none focus:border-ocean-700 flex-1 min-w-[120px]"
           />
           <input
@@ -350,14 +350,14 @@ function InviteCodesSection() {
       {codes.length === 0 ? (
         <div className="text-center py-8">
           <Key size={28} strokeWidth={1.25} className="mx-auto mb-2 text-n-300" />
-          <p className="text-sm font-body text-n-400">Sem codigos de convite registados.</p>
+          <p className="text-sm font-body text-n-400">Sem códigos de convite registados.</p>
         </div>
       ) : (
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-n-200">
-                {['Codigo', 'Descricao', 'Usos', 'Estado', ''].map(h => (
+                {['Código', 'Descrição', 'Usos', 'Estado', ''].map(h => (
                   <th key={h} className="text-left py-2 px-3 text-xs font-mono uppercase tracking-wider text-n-500">{h}</th>
                 ))}
               </tr>
@@ -421,7 +421,7 @@ export default function AdminDashboard() {
     <div>
       <PageHeader
         title="Dashboard"
-        subtitle="Metricas globais da plataforma SalDesk"
+        subtitle="Métricas globais da plataforma SalDesk"
       />
 
       {/* KPIs */}
@@ -443,7 +443,7 @@ export default function AdminDashboard() {
           icon={BookOpen}
           label="Reservas hoje"
           value={stats.reservations.today}
-          sub={`${stats.reservations.this_month} este mes · ${stats.reservations.total} total`}
+          sub={`${stats.reservations.this_month} este mês · ${stats.reservations.total} total`}
         />
         <KpiCard
           icon={CalendarCheck}
@@ -459,7 +459,7 @@ export default function AdminDashboard() {
         />
         <KpiCard
           icon={Percent}
-          label="Taxa de conversao"
+          label="Taxa de conversão"
           value={`${stats.leads.conversion_rate}%`}
           sub="Leads convertidos em operadores"
         />
@@ -467,7 +467,7 @@ export default function AdminDashboard() {
           icon={UserX}
           label="Operadores inactivos"
           value={(stats.inactive_operators || []).length}
-          sub="Sem reservas nos ultimos 30 dias"
+          sub="Sem reservas nos últimos 30 dias"
         />
         <KpiCard
           icon={Users}
@@ -480,7 +480,7 @@ export default function AdminDashboard() {
       {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
         <Card
-          header={<h3 className="font-display font-semibold text-sm text-n-700">Crescimento de operadores (ultimos 6 meses)</h3>}
+          header={<h3 className="font-display font-semibold text-sm text-n-700">Crescimento de operadores (últimos 6 meses)</h3>}
           padding="px-5 pb-5 pt-2"
         >
           <ResponsiveContainer width="100%" height={220}>
@@ -502,7 +502,7 @@ export default function AdminDashboard() {
         </Card>
 
         <Card
-          header={<h3 className="font-display font-semibold text-sm text-n-700">MRR estimado (ultimos 6 meses)</h3>}
+          header={<h3 className="font-display font-semibold text-sm text-n-700">MRR estimado (últimos 6 meses)</h3>}
           padding="px-5 pb-5 pt-2"
         >
           <ResponsiveContainer width="100%" height={220}>
@@ -523,7 +523,7 @@ export default function AdminDashboard() {
         </Card>
 
         <Card
-          header={<h3 className="font-display font-semibold text-sm text-n-700">Reservas diarias (ultimos 30 dias)</h3>}
+          header={<h3 className="font-display font-semibold text-sm text-n-700">Reservas diárias (últimos 30 dias)</h3>}
           padding="px-5 pb-5 pt-2"
         >
           <ResponsiveContainer width="100%" height={220}>

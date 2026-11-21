@@ -29,7 +29,7 @@ const TYPE_ICON = {
 const TYPE_LABEL = {
   new_booking:  'Nova reserva',
   cancellation: 'Cancelamento',
-  new_review:   'Nova avaliacao',
+  new_review:   'Nova avaliação',
   new_message:  'Nova mensagem',
   ota_import_failed: 'Falha ao importar reserva OTA',
   call_waiter:  'Mesa a chamar',
@@ -38,7 +38,7 @@ const TYPE_LABEL = {
   partnership_accepted: 'Parceria aceite',
   partnership_rejected: 'Parceria recusada',
   founder_message:      'Mensagem da SalDesk',
-  platform_broadcast:   'Anuncio da SalDesk',
+  platform_broadcast:   'Anúncio da SalDesk',
 };
 
 function timeAgo(dateStr) {
@@ -185,7 +185,7 @@ export default function Topbar() {
             onClick={handleBellClick}
             data-tour="topbar-bell"
             className="relative p-2 rounded-md text-n-500 hover:text-ocean-700 hover:bg-ocean-50 transition-colors"
-            aria-label="Notificacoes"
+            aria-label="Notificações"
           >
             <Bell size={20} strokeWidth={1.75} />
             {unread > 0 && (
@@ -198,9 +198,9 @@ export default function Topbar() {
           {open && (
             <div className="absolute top-full right-0 mt-2 w-80 bg-white border border-n-200 rounded-md shadow-lg z-50">
               <div className="flex items-center justify-between px-4 py-3 border-b border-n-100">
-                <span className="text-sm font-display font-semibold text-n-900">Notificacoes</span>
+                <span className="text-sm font-display font-semibold text-n-900">Notificações</span>
                 {unread > 0 && (
-                  <span className="text-xs font-mono text-n-500">{unread} nao lida{unread !== 1 ? 's' : ''}</span>
+                  <span className="text-xs font-mono text-n-500">{unread} não lida{unread !== 1 ? 's' : ''}</span>
                 )}
               </div>
 
@@ -209,11 +209,11 @@ export default function Topbar() {
                   <div className="px-4 py-6 text-center text-sm text-n-400 font-body">A carregar...</div>
                 )}
                 {!loading && notifs.length === 0 && (
-                  <div className="px-4 py-6 text-center text-sm text-n-400 font-body">Sem notificacoes</div>
+                  <div className="px-4 py-6 text-center text-sm text-n-400 font-body">Sem notificações</div>
                 )}
                 {notifs.map((n) => {
                   const type  = TYPE_ICON[n.notification_type] || TYPE_ICON.new_message;
-                  const label = TYPE_LABEL[n.notification_type] || 'Notificacao';
+                  const label = TYPE_LABEL[n.notification_type] || 'Notificação';
                   return (
                     <button
                       key={n.id}

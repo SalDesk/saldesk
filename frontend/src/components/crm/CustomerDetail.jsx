@@ -122,7 +122,7 @@ export default function CustomerDetail({ customerId, onClose, onUpdate }) {
   function handleWhatsApp() {
     if (!customer?.whatsapp && !customer?.phone) return;
     const number = (customer.whatsapp || customer.phone).replace(/\D/g, '');
-    const text   = encodeURIComponent(`Ola ${customer.first_name || customer.name?.split(' ')[0]}, obrigado pela sua preferencia!`);
+    const text   = encodeURIComponent(`Olá ${customer.first_name || customer.name?.split(' ')[0]}, obrigado pela sua preferência!`);
     window.open(`https://wa.me/${number}?text=${text}`, '_blank');
   }
 
@@ -130,8 +130,8 @@ export default function CustomerDetail({ customerId, onClose, onUpdate }) {
 
   const SECTIONS = [
     { key: 'perfil',   label: 'Perfil' },
-    { key: 'tours',    label: 'Historico' },
-    { key: 'comms',    label: 'Comunicacao' },
+    { key: 'tours',    label: 'Histórico' },
+    { key: 'comms',    label: 'Comunicação' },
   ];
 
   return (
@@ -165,7 +165,7 @@ export default function CustomerDetail({ customerId, onClose, onUpdate }) {
               {[
                 { label: 'Visitas',     value: customer.total_visits },
                 { label: 'LTV',         value: `€${Number(customer.total_spent).toFixed(0)}` },
-                { label: 'Pais',        value: customer.country_code || '—' },
+                { label: 'País',        value: customer.country_code || '—' },
               ].map(m => (
                 <div key={m.label} className="px-4 py-4 text-center border-r last:border-r-0 border-n-200">
                   <p className="font-display font-bold text-xl text-ocean-700">{m.value}</p>
@@ -196,7 +196,7 @@ export default function CustomerDetail({ customerId, onClose, onUpdate }) {
                       <InfoRow label="Telefone" value={customer.phone} />
                       <InfoRow label="WhatsApp" value={customer.whatsapp} />
                       <InfoRow label="Idioma"   value={customer.language?.toUpperCase()} />
-                      <InfoRow label="Aniversario" value={customer.birthday ? formatDate(customer.birthday) : null} />
+                      <InfoRow label="Aniversário" value={customer.birthday ? formatDate(customer.birthday) : null} />
                     </div>
                   </section>
 
@@ -266,7 +266,7 @@ export default function CustomerDetail({ customerId, onClose, onUpdate }) {
               {activeSection === 'tours' && (
                 <div className="px-5 py-4">
                   <h3 className="text-xs font-body font-bold uppercase tracking-wide text-n-500 mb-3">
-                    Historico ({customer.reservations?.length || 0})
+                    Histórico ({customer.reservations?.length || 0})
                   </h3>
                   {!customer.reservations?.length ? (
                     <p className="text-sm font-body text-n-400 italic">Sem reservas</p>
@@ -326,9 +326,9 @@ export default function CustomerDetail({ customerId, onClose, onUpdate }) {
                     {customer.whatsapp || customer.phone ? (
                       <div className="space-y-2">
                         {[
-                          { label: 'Confirmacao de reserva', text: `Ola ${customer.first_name || customer.name?.split(' ')[0]}! A sua reserva foi confirmada. Aguardamos a sua visita!` },
-                          { label: 'Lembrete de tour',       text: `Ola! Lembrete do seu tour amanha. Nao se esqueca de trazer protector solar e agua.` },
-                          { label: 'Pedido de avaliacao',    text: `Obrigado pela sua visita! Pode deixar a sua avaliacao em: https://app.saldesk.cv` },
+                          { label: 'Confirmação de reserva', text: `Olá ${customer.first_name || customer.name?.split(' ')[0]}! A sua reserva foi confirmada. Aguardamos a sua visita!` },
+                          { label: 'Lembrete de tour',       text: `Olá! Lembrete do seu tour amanhã. Não se esqueca de trazer protector solar e água.` },
+                          { label: 'Pedido de avaliação',    text: `Obrigado pela sua visita! Pode deixar a sua avaliação em: https://app.saldesk.cv` },
                         ].map(({ label, text }) => {
                           const number = (customer.whatsapp || customer.phone || '').replace(/\D/g, '');
                           return (
@@ -344,7 +344,7 @@ export default function CustomerDetail({ customerId, onClose, onUpdate }) {
                         })}
                       </div>
                     ) : (
-                      <p className="text-sm font-body text-n-400 italic">Sem numero WhatsApp registado</p>
+                      <p className="text-sm font-body text-n-400 italic">Sem número WhatsApp registado</p>
                     )}
                   </section>
                 </div>

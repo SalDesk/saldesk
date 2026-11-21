@@ -62,7 +62,7 @@ function ExpenseModal({ expense, staff, onSave, onClose }) {
         </div>
         {['Salarios', 'Comissoes vendedores'].includes(form.category) && staff.length > 0 && (
           <Select label="Colaborador" aria-label="Colaborador" value={form.staff_id} onChange={set('staff_id')}>
-            <option value="">Nenhum especifico</option>
+            <option value="">Nenhum específico</option>
             {staff.map(s => <option key={s.id} value={s.id}>{s.name} ({s.role})</option>)}
           </Select>
         )}
@@ -162,7 +162,7 @@ function DespesasTab({ currency, staff }) {
         <div className="flex items-start gap-3 px-4 py-3 bg-[var(--warning-light)] border border-[var(--warning)] rounded-sm">
           <AlertTriangle size={15} strokeWidth={1.75} className="text-[var(--warning)] shrink-0 mt-0.5" />
           <div className="flex-1">
-            <p className="text-sm font-body font-semibold text-[var(--warning)]">Despesas recorrentes em falta este mes</p>
+            <p className="text-sm font-body font-semibold text-[var(--warning)]">Despesas recorrentes em falta este mês</p>
             <p className="text-xs font-body text-[var(--warning)] mt-0.5">{missingRecurring.slice(0, 3).map(r => r.category).join(' · ')}</p>
           </div>
         </div>
@@ -171,7 +171,7 @@ function DespesasTab({ currency, staff }) {
       {/* Filters + Add */}
       <div className="flex flex-wrap items-center gap-3">
         <div className="w-44">
-          <Input type="month" aria-label="Mes" value={filterMonth} onChange={e => setFilterMonth(e.target.value)} />
+          <Input type="month" aria-label="Mês" value={filterMonth} onChange={e => setFilterMonth(e.target.value)} />
         </div>
         <div className="w-56">
           <Select aria-label="Categoria" value={filterCat} onChange={e => setFilterCat(e.target.value)}>
@@ -231,7 +231,7 @@ function DespesasTab({ currency, staff }) {
       {/* List */}
       {loading ? <div className="flex justify-center py-12"><LoadingSpinner size={32} /></div> :
        periodExp.length === 0 ? (
-        <Card padding="p-0"><EmptyState icon={TrendingDown} title="Sem despesas no periodo seleccionado." /></Card>
+        <Card padding="p-0"><EmptyState icon={TrendingDown} title="Sem despesas no período seleccionado." /></Card>
       ) : (
         <Card padding="p-0">
           <Table columns={columns} rows={[...periodExp].sort((a, b) => (b.date || '').localeCompare(a.date || ''))} compact />

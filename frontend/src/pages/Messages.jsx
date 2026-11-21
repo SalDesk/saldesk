@@ -471,7 +471,7 @@ export default function Messages() {
                 <div className="min-w-0 flex-1">
                   <p className="font-display font-semibold text-sm text-n-900 truncate">{selectedContact.label}</p>
                   {typingContacts.has(selectedContact.id) ? (
-                    <p className="text-xs font-body text-ocean-600 italic">esta a escrever...</p>
+                    <p className="text-xs font-body text-ocean-600 italic">está a escrever...</p>
                   ) : (
                     <p className="text-xs font-body text-n-400 truncate">{selectedContact.sublabel}</p>
                   )}
@@ -528,7 +528,7 @@ export default function Messages() {
                           <p className="text-xs font-semibold mb-1 opacity-60 capitalize">{msg.sender_name || msg.sender_type}</p>
                         )}
                         {msg.sender_type === 'system' && (
-                          <p className="text-xs font-semibold mb-1 opacity-70">Resposta automatica</p>
+                          <p className="text-xs font-semibold mb-1 opacity-70">Resposta automática</p>
                         )}
                         <p className="leading-relaxed whitespace-pre-wrap break-words">{msg.content}</p>
                         {msg.channel && msg.channel !== 'internal' && (

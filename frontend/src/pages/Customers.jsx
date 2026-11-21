@@ -108,7 +108,7 @@ function NewCustomerModal({ open, onClose, onCreated }) {
 
   async function handleCreate() {
     if (!form.name.trim() || !form.email.trim()) {
-      setError('Nome e email sao obrigatorios');
+      setError('Nome e email são obrigatórios');
       return;
     }
     setLoading(true); setError('');
@@ -129,7 +129,7 @@ function NewCustomerModal({ open, onClose, onCreated }) {
         <Input label="Email *" type="email" value={form.email} onChange={(e) => update('email', e.target.value)} placeholder="cliente@email.com" />
         <div className="grid grid-cols-2 gap-3">
           <Input label="Telefone" value={form.phone} onChange={(e) => update('phone', e.target.value)} placeholder="+238..." />
-          <Input label="Pais (codigo)" value={form.country_code} onChange={(e) => update('country_code', e.target.value)} placeholder="Ex: CV, PT" maxLength={2} />
+          <Input label="País (código)" value={form.country_code} onChange={(e) => update('country_code', e.target.value)} placeholder="Ex: CV, PT" maxLength={2} />
         </div>
 
         <div>
@@ -164,7 +164,7 @@ function NewCustomerModal({ open, onClose, onCreated }) {
           placeholder="Ex: 45.00"
         />
 
-        <Textarea label="Notas" value={form.notes} onChange={(e) => update('notes', e.target.value)} rows={3} placeholder="Preferencias, contexto adicional, etc." />
+        <Textarea label="Notas" value={form.notes} onChange={(e) => update('notes', e.target.value)} rows={3} placeholder="Preferências, contexto adicional, etc." />
 
         {error && <p className="text-xs font-body text-error">{error}</p>}
 
@@ -218,7 +218,7 @@ function CsvImportModal({ open, onClose, onImported }) {
     <Modal open={open} onClose={onClose} title="Importar clientes via CSV" size="md">
       <div className="space-y-4">
         <div className="px-3 py-2.5 bg-ocean-50 border border-ocean-100 rounded-sm text-xs font-body text-ocean-700 space-y-1">
-          <p className="font-semibold">Formato esperado (cabecalho obrigatorio):</p>
+          <p className="font-semibold">Formato esperado (cabeçalho obrigatório):</p>
           <p className="font-mono">first_name, last_name, email, phone, country_code, language</p>
         </div>
 
@@ -234,7 +234,7 @@ function CsvImportModal({ open, onClose, onImported }) {
         {preview.length > 0 && (
           <div className="border border-n-200 rounded-sm overflow-hidden">
             <div className="px-3 py-2 bg-n-50 border-b border-n-200">
-              <p className="text-xs font-mono text-n-500 uppercase tracking-wide">Pre-visualizacao (primeiras {preview.length} linhas)</p>
+              <p className="text-xs font-mono text-n-500 uppercase tracking-wide">Pré-visualização (primeiras {preview.length} linhas)</p>
             </div>
             <div className="p-3 space-y-1">
               {preview.map((line, i) => (
@@ -359,7 +359,7 @@ export default function Customers() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <MetricCard icon={Users}      label="Total clientes"  value={customers.length} />
         <MetricCard icon={TrendingUp} label="Receita total"   value={`€${totalGasto.toFixed(0)}`} />
-        <MetricCard icon={Globe}      label="Paises"          value={paises} />
+        <MetricCard icon={Globe}      label="Países"          value={paises} />
         <MetricCard icon={Star}       label="Top cliente"     value={topCliente?.name?.split(' ')[0] || '—'}
           sub={topCliente ? `€${Number(topCliente.total_spent).toFixed(0)}` : ''} />
       </div>

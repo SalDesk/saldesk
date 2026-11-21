@@ -128,7 +128,7 @@ function ReceitasManuaisTab({ currency, onChange }) {
       {/* Filters + Add */}
       <div className="flex flex-wrap items-center gap-3">
         <div className="w-44">
-          <Input type="month" aria-label="Mes" value={filterMonth} onChange={e => setFilterMonth(e.target.value)} />
+          <Input type="month" aria-label="Mês" value={filterMonth} onChange={e => setFilterMonth(e.target.value)} />
         </div>
         <div className="w-56">
           <Select aria-label="Categoria" value={filterCat} onChange={e => setFilterCat(e.target.value)}>
@@ -160,7 +160,7 @@ function ReceitasManuaisTab({ currency, onChange }) {
       {/* List */}
       {loading ? <div className="flex justify-center py-12"><LoadingSpinner size={32} /></div> :
        periodRec.length === 0 ? (
-        <Card padding="p-0"><EmptyState icon={Receipt} title="Sem receitas manuais no periodo seleccionado." /></Card>
+        <Card padding="p-0"><EmptyState icon={Receipt} title="Sem receitas manuais no período seleccionado." /></Card>
       ) : (
         <Card padding="p-0">
           <Table columns={columns} rows={[...periodRec].sort((a, b) => (b.date || '').localeCompare(a.date || ''))} compact />

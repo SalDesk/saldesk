@@ -135,7 +135,7 @@ describe('Weather', () => {
     expect(c[0].className).toContain('ring-2');
     expect(c[0].textContent).toContain('Hoje');
     expect(c[1].className).not.toContain('ring-2');
-    expect(c[1].textContent).toContain('Amanha');
+    expect(c[1].textContent).toContain('Amanhã');
   });
 
   it('conflito_so_com_mau_tempo_e_reservas_activas', async () => {
@@ -152,7 +152,7 @@ describe('Weather', () => {
     const alerta = screen.getByText(/Mau tempo previsto para/).parentElement;
     /* r1 tem 3 pax, r2 nao tem guests = 1 */
     expect(alerta.textContent).toContain('Chuva');
-    expect(alerta.textContent).toContain('12mm precipitacao');
+    expect(alerta.textContent).toContain('12mm precipitação');
     expect(alerta.textContent).toContain('2 tour(s) agendado(s) com 4 participante(s)');
     fireEvent.click(screen.getByRole('button', { name: 'Contactar clientes' }));
     expect((await screen.findByTestId('local')).textContent).toBe(`/reservas?date=${dia(2)}`);
@@ -165,7 +165,7 @@ describe('Weather', () => {
     const detalhe = screen.getByRole('heading', { level: 3 });
     expect(detalhe.textContent).toBe(fmt(dia(2)));
     expect(screen.getByText('27° / 21°')).toBeTruthy();
-    expect(screen.getByText('12 mm precipitacao')).toBeTruthy();
+    expect(screen.getByText('12 mm precipitação')).toBeTruthy();
     fireEvent.click(cartoes(r)[2]);
     expect(screen.queryByRole('heading', { level: 3 })).toBeNull();
     /* outro dia troca o detalhe */
@@ -212,16 +212,16 @@ describe('Weather', () => {
     const valor = (rotulo) => screen.getByText(rotulo).previousElementSibling.textContent;
     expect(valor('Max. hoje')).toBe('30°');
     /* 0 + 0 + 12 + 8.5 + 0 + 0.5 + 3 = 24 */
-    expect(valor('Precipitacao total 7 dias')).toBe('24 mm');
+    expect(valor('Precipitação total 7 dias')).toBe('24 mm');
     /* maus: dia 2 (12 mm), dia 3 (codigo 80) e dia 6 (codigo 95) */
     expect(valor('Dias sem mau tempo')).toBe('4');
     expect(valor('Conflito(s) com tours')).toBe('1');
   });
 
-  it('sem_conflitos_mostra_Sem conflitos meteorologicos', async () => {
+  it('sem_conflitos_mostra_Sem conflitos meteorológicos', async () => {
     listReservations.mockResolvedValue([]);
     await abre();
-    expect(screen.getByText('Sem conflitos meteorologicos').previousElementSibling.textContent).toBe('0');
+    expect(screen.getByText('Sem conflitos meteorológicos').previousElementSibling.textContent).toBe('0');
     expect(screen.queryByText(/Mau tempo previsto para/)).toBeNull();
     expect(screen.queryByRole('button', { name: 'Contactar clientes' })).toBeNull();
   });
@@ -233,7 +233,7 @@ describe('Weather', () => {
         <Weather />
       </MemoryRouter>
     );
-    await screen.findByText('Nao foi possivel carregar a previsao meteorologica. Verifique a ligacao a internet.');
+    await screen.findByText('Não foi possível carregar a previsão meteorológica. Verifique a ligação a internet.');
     expect(screen.queryByText('Max. hoje')).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: /Tentar novamente/ }));
     await screen.findByText('Max. hoje');
@@ -253,7 +253,7 @@ describe('Weather', () => {
     expect(screen.getAllByText(/Mau tempo previsto para/)).toHaveLength(1);
     getWeatherForecast.mockRejectedValue(new Error('x'));
     fireEvent.click(screen.getByRole('button', { name: /Actualizar/ }));
-    await screen.findByText(/Nao foi possivel carregar a previsao meteorologica/);
+    await screen.findByText(/Não foi possível carregar a previsão meteorológica/);
     expect(screen.queryByText(/Mau tempo previsto para/)).toBeNull();
     expect(cartoes(r)).toHaveLength(0);
   });
@@ -262,7 +262,7 @@ describe('Weather', () => {
     listReservations.mockRejectedValue(new Error('x'));
     const r = await abre();
     expect(cartoes(r)).toHaveLength(7);
-    expect(screen.getByText('Sem conflitos meteorologicos')).toBeTruthy();
+    expect(screen.getByText('Sem conflitos meteorológicos')).toBeTruthy();
   });
 
   it('weatherInfo_devolve_etiqueta_e_icone_por_codigo', () => {
@@ -322,7 +322,7 @@ describe('Weather', () => {
         <Weather />
       </MemoryRouter>
     );
-    const msg = await screen.findByText('Nao foi possivel carregar a previsao meteorologica. Verifique a ligacao a internet.');
+    const msg = await screen.findByText('Não foi possível carregar a previsão meteorológica. Verifique a ligação a internet.');
     expect(msg.className).toContain('font-display');
     expect(screen.getByRole('button', { name: /Tentar novamente/ })).toBeTruthy();
   });

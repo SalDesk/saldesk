@@ -37,7 +37,7 @@ export default function AffiliatePortal() {
       setAffiliate(data);
       setStep('dashboard');
     } catch {
-      setError('Email ou codigo invalido. Verifique os dados e tente novamente.');
+      setError('Email ou código inválido. Verifique os dados e tente novamente.');
     } finally {
       setLoading(false);
     }
@@ -63,7 +63,7 @@ export default function AffiliatePortal() {
           <div className="bg-white rounded-md border border-n-200 shadow-sm p-6">
             <h1 className="font-display font-bold text-xl text-n-900 mb-1">Entrar no portal</h1>
             <p className="text-xs font-body text-n-500 mb-6">
-              Codigo de afiliado: <span className="font-mono font-semibold text-n-700">{codigo?.toUpperCase()}</span>
+              Código de afiliado: <span className="font-mono font-semibold text-n-700">{codigo?.toUpperCase()}</span>
             </p>
 
             <form onSubmit={handleLogin} className="space-y-4">
@@ -92,7 +92,7 @@ export default function AffiliatePortal() {
 
             <div className="mt-6 pt-4 border-t border-n-100">
               <p className="text-xs font-body text-n-400 text-center">
-                Ainda nao es afiliado? Contacta o operador para obter as tuas credenciais.
+                Ainda não es afiliado? Contacta o operador para obter as tuas credenciais.
               </p>
             </div>
           </div>
@@ -102,15 +102,15 @@ export default function AffiliatePortal() {
             <div className="bg-ocean-900 rounded-md px-5 py-4 text-white">
               <p className="text-xs font-mono text-ocean-400 uppercase tracking-wide mb-1">Bem-vindo</p>
               <p className="font-display font-bold text-xl">{affiliate.name}</p>
-              <p className="text-ocean-300 text-xs mt-0.5">{affiliate.commission_pct || 0}% de comissao por reserva</p>
+              <p className="text-ocean-300 text-xs mt-0.5">{affiliate.commission_pct || 0}% de comissão por reserva</p>
             </div>
 
             {/* Stats */}
             <div className="grid grid-cols-2 gap-3">
               {[
                 { label: 'Reservas geradas', value: affiliate.bookings_count || 0,          icon: BarChart2, color: 'text-n-900'      },
-                { label: 'Comissao paga',    value: `€${totalCommission.toFixed(0)}`,        icon: CheckCircle2, color: 'text-[#1A7A4A]' },
-                { label: 'Comissao pendente', value: `€${pendingCommission.toFixed(0)}`,    icon: Clock,      color: 'text-yellow-700' },
+                { label: 'Comissão paga',    value: `€${totalCommission.toFixed(0)}`,        icon: CheckCircle2, color: 'text-[#1A7A4A]' },
+                { label: 'Comissão pendente', value: `€${pendingCommission.toFixed(0)}`,    icon: Clock,      color: 'text-yellow-700' },
                 { label: 'Total estimado',   value: `€${(totalCommission + pendingCommission).toFixed(0)}`, icon: Euro, color: 'text-ocean-700' },
               ].map(m => (
                 <div key={m.label} className="bg-white border border-n-200 rounded-md px-4 py-3">
@@ -145,7 +145,7 @@ export default function AffiliatePortal() {
             {/* Payment history */}
             {(affiliate.payments || []).length > 0 && (
               <div className="bg-white border border-n-200 rounded-md p-4">
-                <p className="text-xs font-mono uppercase tracking-wider text-n-500 mb-3">Historico de pagamentos</p>
+                <p className="text-xs font-mono uppercase tracking-wider text-n-500 mb-3">Histórico de pagamentos</p>
                 <div className="space-y-2">
                   {affiliate.payments.map((p, i) => (
                     <div key={i} className="flex items-center justify-between py-2 border-b border-n-100 last:border-0">

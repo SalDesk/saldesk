@@ -167,7 +167,7 @@ export default function BeachSale() {
   const timeSlots = horariosDoTour.length ? horariosDoTour : ['09:00', '11:00', '14:00', '16:00'];
 
   async function handleConfirm() {
-    if (!clientName.trim()) { setError('Nome do cliente obrigatorio.'); return; }
+    if (!clientName.trim()) { setError('Nome do cliente obrigatório.'); return; }
     setSaving(true);
     setError('');
     try {
@@ -277,7 +277,7 @@ export default function BeachSale() {
             ) : tours.length === 0 ? (
               <div className="text-center py-12 text-n-400">
                 <MapPin size={32} strokeWidth={1.25} className="mx-auto mb-3" />
-                <p className="font-body">Nenhum tour disponivel para venda.</p>
+                <p className="font-body">Nenhum tour disponível para venda.</p>
               </div>
             ) : (
               <div className="grid grid-cols-1 gap-3">
@@ -392,7 +392,7 @@ export default function BeachSale() {
                       return { year: y, month: m };
                     })}
                     className="w-9 h-9 rounded-full flex items-center justify-center text-n-500 hover:bg-n-100 active:scale-95 transition-all"
-                    aria-label="Mes anterior"
+                    aria-label="Mês anterior"
                   >
                     <ChevronLeft size={18} strokeWidth={2} />
                   </button>
@@ -407,7 +407,7 @@ export default function BeachSale() {
                       return { year: y, month: m };
                     })}
                     className="w-9 h-9 rounded-full flex items-center justify-center text-n-500 hover:bg-n-100 active:scale-95 transition-all"
-                    aria-label="Mes seguinte"
+                    aria-label="Mês seguinte"
                   >
                     <ChevronRight size={18} strokeWidth={2} />
                   </button>
@@ -461,7 +461,7 @@ export default function BeachSale() {
             {/* Time slots */}
             <div>
               <p className="font-display font-semibold text-sm text-n-800 mb-3 flex items-center gap-2">
-                <Clock size={16} strokeWidth={1.75} />Horario
+                <Clock size={16} strokeWidth={1.75} />Horário
               </p>
               <div className="grid grid-cols-3 gap-2">
                 {timeSlots.map(slot => (
@@ -489,11 +489,11 @@ export default function BeachSale() {
             {/* Counters */}
             <div>
               <p className="font-display font-semibold text-sm text-n-800 mb-2 flex items-center gap-2">
-                <Users size={16} strokeWidth={1.75} />Composicao do grupo
+                <Users size={16} strokeWidth={1.75} />Composição do grupo
               </p>
               <div className="bg-white rounded-2xl border border-n-200 px-4 divide-y divide-n-100">
                 <Counter label="Adultos" value={adults} min={1} onChange={v => { setAdults(v); setVehiclesReq(null); }} />
-                <Counter label="Criancas" value={kids} min={0} onChange={v => { setKids(v); setVehiclesReq(null); }} />
+                <Counter label="Crianças" value={kids} min={0} onChange={v => { setKids(v); setVehiclesReq(null); }} />
                 {porVeiculo && (
                   <Counter label={t('opcoesActividade.vehicles')} value={vehicles} min={vehiclesMin} max={Math.max(vehiclesMin, totalPax)} onChange={setVehiclesReq} />
                 )}
@@ -516,7 +516,7 @@ export default function BeachSale() {
                 </p>
               </div>
               <div className="text-right">
-                <p className="text-white/70 text-xs font-mono uppercase tracking-wide">A sua comissao</p>
+                <p className="text-white/70 text-xs font-mono uppercase tracking-wide">A sua comissão</p>
                 <p className="font-display font-bold text-xl mt-0.5 text-sand-300">€{commission.toFixed(0)}</p>
                 <p className="text-white/70 text-xs">{commPct}%</p>
               </div>
@@ -524,10 +524,10 @@ export default function BeachSale() {
 
             <button
               onClick={() => {
-                if (!selectedTime) { setError('Selecciona um horario.'); return; }
+                if (!selectedTime) { setError('Selecciona um horário.'); return; }
                 if (availableFleet.length > 0) {
                   if (availableFleet.every(v => !v.available)) {
-                    setError('Nao ha buggys disponiveis para esta data — escolhe outra data.');
+                    setError('Não há buggys disponíveis para esta data — escolhe outra data.');
                     return;
                   }
                   if (!selectedFleetId) {
@@ -555,7 +555,7 @@ export default function BeachSale() {
                 <Calendar size={12} strokeWidth={1.75} />{fmtDatePT(selectedDate)} — {selectedTime}
               </p>
               <p className="text-xs font-body text-n-500 flex items-center gap-1.5">
-                <Users size={12} strokeWidth={1.75} />{adults} adulto(s){kids > 0 ? ` + ${kids} crianca(s)` : ''}
+                <Users size={12} strokeWidth={1.75} />{adults} adulto(s){kids > 0 ? ` + ${kids} criança(s)` : ''}
               </p>
               <p className="font-display font-semibold text-ocean-700">€{totalPrice.toFixed(0)}</p>
             </div>
@@ -624,7 +624,7 @@ export default function BeachSale() {
                 </label>
                 <textarea
                   value={notes} onChange={e => setNotes(e.target.value)}
-                  rows={3} placeholder="Ex: vegetariano, aniversario, necessidades especiais..."
+                  rows={3} placeholder="Ex: vegetariano, aniversário, necessidades especiais..."
                   className="w-full px-4 py-3 rounded-2xl border-2 border-n-200 text-base font-body bg-white focus:outline-none focus:border-turquoise-500 resize-none transition-colors"
                 />
               </div>
@@ -638,7 +638,7 @@ export default function BeachSale() {
 
             {/* Commission preview */}
             <div className="bg-turquoise-50 border border-turquoise-300 rounded-2xl px-4 py-3 flex items-center justify-between">
-              <p className="text-sm font-body text-turquoise-700">A tua comissao nesta reserva</p>
+              <p className="text-sm font-body text-turquoise-700">A tua comissão nesta reserva</p>
               <p className="font-display font-bold text-xl text-turquoise-700">€{commission.toFixed(0)}</p>
             </div>
 

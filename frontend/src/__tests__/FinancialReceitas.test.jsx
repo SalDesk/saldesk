@@ -86,16 +86,16 @@ const NOMEADAS = /(?:^|[\s"'])(?:[a-z-]+:)?(?:text|bg|border)-(?:green|yellow|bl
 
 /* ───────────────────────── caracterizacao ───────────────────────── */
 
-describe('Visao Geral: KPIs e graficos da pagina', () => {
+describe('Visão Geral: KPIs e gráficos da página', () => {
   it('kpis_receita_directas_ticket_medio_e_margem_sem_custos', async () => {
     montarPagina();
     await paginaPronta();
     expect(screen.getByText('Receita total')).toBeInTheDocument();
     expect(screen.getAllByText(eur(1000)).length).toBeGreaterThan(0);
-    expect(screen.getByText('vs periodo ant.')).toBeInTheDocument();
+    expect(screen.getByText('vs período ant.')).toBeInTheDocument();
     expect(screen.getByText('Directas 60%')).toBeInTheDocument();
     expect(screen.getByText('4 via OTA')).toBeInTheDocument();
-    expect(screen.getByText('Ticket medio')).toBeInTheDocument();
+    expect(screen.getByText('Ticket médio')).toBeInTheDocument();
     expect(screen.getAllByText(eur(100)).length).toBeGreaterThan(0);
     /* sem custos guardados a margem e a propria receita e o rotulo nao leva percentagem */
     expect(screen.getByText('Margem liquida')).toBeInTheDocument();
@@ -122,19 +122,19 @@ describe('Visao Geral: KPIs e graficos da pagina', () => {
   it('comparativo_so_aparece_com_periodo_anterior', async () => {
     montarPagina();
     await paginaPronta();
-    expect(screen.getByText('Comparativo com periodo anterior')).toBeInTheDocument();
+    expect(screen.getByText('Comparativo com período anterior')).toBeInTheDocument();
     cleanup();
     fin.getResumo.mockResolvedValue({ atual: RESUMO.atual });
     montarPagina();
     await paginaPronta();
-    expect(screen.queryByText('Comparativo com periodo anterior')).toBeNull();
+    expect(screen.queryByText('Comparativo com período anterior')).toBeNull();
   });
 
   it('actualizar_repete_getTransacoes', async () => {
     montarPagina();
     await paginaPronta();
     expect(fin.getTransacoes).toHaveBeenCalledTimes(1);
-    const botao = screen.getByText('Transacoes').parentElement.querySelector('button');
+    const botao = screen.getByText('Transações').parentElement.querySelector('button');
     fireEvent.click(botao);
     await waitFor(() => expect(fin.getTransacoes).toHaveBeenCalledTimes(2));
     await screen.findByText('Carla Dias');
@@ -156,7 +156,7 @@ describe('TransacoesTable', () => {
 
   it('mostra_as_colunas_e_as_linhas', () => {
     montar();
-    expect(screen.getAllByRole('columnheader').map(h => h.textContent)).toEqual(['Data', 'Cliente', 'Servico', 'Canal', 'Metodo', 'Montante', 'Estado']);
+    expect(screen.getAllByRole('columnheader').map(h => h.textContent)).toEqual(['Data', 'Cliente', 'Serviço', 'Canal', 'Método', 'Montante', 'Estado']);
     const linha = screen.getByText('Ana Silva').closest('tr');
     expect(linha).toHaveTextContent(fmtDate(`${MES}-03`));
     expect(linha).toHaveTextContent('Tour Ilha');
@@ -166,13 +166,13 @@ describe('TransacoesTable', () => {
     expect(linha).toHaveTextContent('Pago');
     expect(screen.getByText('Carla Dias').closest('tr')).toHaveTextContent('Pendente');
     expect(screen.getByText('Carla Dias').closest('tr')).toHaveTextContent('Manual');
-    expect(screen.getByText('3 transacao(oes)')).toBeInTheDocument();
+    expect(screen.getByText('3 transação(ões)')).toBeInTheDocument();
   });
 
   it('filtra_por_pesquisa_no_cliente_ou_no_servico', () => {
     montar();
     fireEvent.change(screen.getByPlaceholderText('Pesquisar...'), { target: { value: 'carla' } });
-    expect(screen.getByText('1 transacao(oes)')).toBeInTheDocument();
+    expect(screen.getByText('1 transação(ões)')).toBeInTheDocument();
     expect(screen.queryByText('Ana Silva')).toBeNull();
     fireEvent.change(screen.getByPlaceholderText('Pesquisar...'), { target: { value: 'MERG' } });
     expect(screen.getByText('Bruno Costa')).toBeInTheDocument();
@@ -183,12 +183,12 @@ describe('TransacoesTable', () => {
     montar();
     const [metodo, estado] = screen.getAllByRole('combobox');
     fireEvent.change(metodo, { target: { value: 'cash' } });
-    expect(screen.getByText('2 transacao(oes)')).toBeInTheDocument();
+    expect(screen.getByText('2 transação(ões)')).toBeInTheDocument();
     expect(screen.queryByText('Ana Silva')).toBeNull();
     fireEvent.change(estado, { target: { value: 'pending' } });
-    expect(screen.getByText('1 transacao(oes)')).toBeInTheDocument();
+    expect(screen.getByText('1 transação(ões)')).toBeInTheDocument();
     expect(screen.getByText('Carla Dias')).toBeInTheDocument();
-    expect(Array.from(metodo.options).map(o => o.textContent)).toEqual(['Todos os metodos', 'PayPal', 'SISP', 'Dinheiro', 'Transferencia']);
+    expect(Array.from(metodo.options).map(o => o.textContent)).toEqual(['Todos os métodos', 'PayPal', 'SISP', 'Dinheiro', 'Transferência']);
     expect(Array.from(estado.options).map(o => o.textContent)).toEqual(['Todos os estados', 'Pago', 'Pendente', 'Parcial', 'Reembolsado']);
   });
 
@@ -196,7 +196,7 @@ describe('TransacoesTable', () => {
     const muitas = Array.from({ length: 60 }, (_, i) => ({ id: `m${i}`, check_in: `${MES}-03`, customer_name: `Cliente ${i}`, total_price: 10 }));
     montar({ transacoes: muitas });
     expect(screen.getAllByRole('row')).toHaveLength(51); /* cabecalho + 50 */
-    expect(screen.getByText('60 transacao(oes)')).toBeInTheDocument();
+    expect(screen.getByText('60 transação(ões)')).toBeInTheDocument();
   });
 
   it('campos_em_falta_dao_travessao_e_zero', () => {
@@ -213,28 +213,28 @@ describe('TransacoesTable', () => {
 
   it('sem_transacoes_mostra_o_vazio', () => {
     montar({ transacoes: [] });
-    expect(screen.getByText('Sem transacoes no periodo')).toBeInTheDocument();
+    expect(screen.getByText('Sem transações no período')).toBeInTheDocument();
     montar({ transacoes: null });
-    expect(screen.getAllByText('Sem transacoes no periodo')).toHaveLength(2);
+    expect(screen.getAllByText('Sem transações no período')).toHaveLength(2);
   });
 
   it('em_carga_mostra_o_spinner_e_nao_a_tabela', () => {
     montar({ loading: true });
     expect(screen.queryByRole('table')).toBeNull();
-    expect(screen.queryByText('Sem transacoes no periodo')).toBeNull();
+    expect(screen.queryByText('Sem transações no período')).toBeNull();
   });
 });
 
 describe('Comparativo', () => {
   it('mostra_actual_anterior_e_variacao', () => {
     render(<Comparativo resumo={RESUMO} currency="EUR" />);
-    expect(screen.getAllByRole('columnheader').map(h => h.textContent)).toEqual(['Metrica', 'Periodo actual', 'Periodo anterior', 'Variacao']);
+    expect(screen.getAllByRole('columnheader').map(h => h.textContent)).toEqual(['Métrica', 'Período actual', 'Período anterior', 'Variação']);
     const receita = screen.getByText('Receita').closest('tr');
     expect(receita).toHaveTextContent(eur(1000));
     expect(receita).toHaveTextContent(eur(800));
     expect(receita).toHaveTextContent(`+${eur(25)}`);
     expect(screen.getByText('Reservas').closest('tr')).toHaveTextContent('+25');
-    const ocup = screen.getByText('Ocupacao').closest('tr');
+    const ocup = screen.getByText('Ocupação').closest('tr');
     expect(ocup).toHaveTextContent('50.0%');
     expect(ocup).toHaveTextContent('40.0%');
     expect(ocup).toHaveTextContent('+10.0 p.p.');
@@ -245,7 +245,7 @@ describe('Comparativo', () => {
     render(<Comparativo resumo={resumo} currency="EUR" />);
     expect(within(screen.getByText('Receita').closest('tr')).getByText('—')).toBeInTheDocument();
     expect(within(screen.getByText('Reservas').closest('tr')).getByText('—')).toBeInTheDocument();
-    expect(screen.getByText('Ocupacao').closest('tr')).toHaveTextContent('-5.0 p.p.');
+    expect(screen.getByText('Ocupação').closest('tr')).toHaveTextContent('-5.0 p.p.');
   });
 
   it('nao_desenha_nada_sem_periodo_anterior_ou_variacao', () => {
@@ -262,7 +262,7 @@ describe('Comparativo', () => {
   });
 });
 
-describe('Graficos de receitas', () => {
+describe('Gráficos de receitas', () => {
   it('canais_consolidam_directa_com_public_e_manual_com_admin', () => {
     render(<ChannelChart data={[
       { source: 'direct', num_reservas: 2, receita: 100 }, { source: 'public', num_reservas: 3, receita: 50 },
@@ -296,7 +296,7 @@ describe('Graficos de receitas', () => {
 
   it('servicos_sem_dados_mostra_o_texto', () => {
     render(<ServiceBarChart data={[]} />);
-    expect(screen.getByText('Sem dados de servicos')).toBeInTheDocument();
+    expect(screen.getByText('Sem dados de serviços')).toBeInTheDocument();
   });
 
   it('receita_por_periodo_converte_etiquetas_e_valores', () => {
@@ -310,7 +310,7 @@ describe('Graficos de receitas', () => {
 
   it('receita_por_periodo_sem_dados_mostra_o_texto', () => {
     render(<RevenueChart data={[]} granularidade="day" />);
-    expect(screen.getByText('Sem dados para o periodo seleccionado')).toBeInTheDocument();
+    expect(screen.getByText('Sem dados para o período seleccionado')).toBeInTheDocument();
   });
 
   it('top_clientes_barra_proporcional_ao_maior_e_vazio', () => {
@@ -326,7 +326,7 @@ describe('Graficos de receitas', () => {
 
 /* ───────────────────────── design system ───────────────────────── */
 
-describe('Visao Geral com o design system', () => {
+describe('Visão Geral com o design system', () => {
   it('as_duas_tabelas_tem_role_table_e_as_colunas_esperadas', () => {
     render(<TransacoesTable transacoes={TRANSACOES} currency="EUR" loading={false} />);
     const tabela = screen.getByRole('table');
@@ -338,8 +338,8 @@ describe('Visao Geral com o design system', () => {
 
   it('os_campos_de_filtro_tem_nome_acessivel', () => {
     render(<TransacoesTable transacoes={TRANSACOES} currency="EUR" loading={false} />);
-    expect(screen.getByLabelText('Pesquisar transacoes')).toBeInTheDocument();
-    expect(screen.getByLabelText('Metodo de pagamento')).toBeInTheDocument();
+    expect(screen.getByLabelText('Pesquisar transações')).toBeInTheDocument();
+    expect(screen.getByLabelText('Método de pagamento')).toBeInTheDocument();
     expect(screen.getByLabelText('Estado do pagamento')).toBeInTheDocument();
   });
 
@@ -362,13 +362,13 @@ describe('Visao Geral com o design system', () => {
 
   it('o_vazio_das_transacoes_usa_o_EmptyState', () => {
     render(<TransacoesTable transacoes={[]} currency="EUR" loading={false} />);
-    expect(screen.getByText('Sem transacoes no periodo')).toHaveClass('font-display');
+    expect(screen.getByText('Sem transações no período')).toHaveClass('font-display');
   });
 
   it('o_botao_de_actualizar_transacoes_tem_nome_acessivel', async () => {
     montarPagina();
     await paginaPronta();
-    expect(screen.getByRole('button', { name: 'Actualizar transacoes' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Actualizar transações' })).toBeInTheDocument();
   });
 
   it('os_graficos_da_visao_geral_so_usam_cores_var', async () => {
@@ -442,10 +442,10 @@ describe('Por Tour', () => {
 
   it('sem_dados_mostra_o_vazio', () => {
     montarPorTour({ unidades: [] });
-    expect(screen.getByText('Sem dados de tours no periodo.')).toBeInTheDocument();
+    expect(screen.getByText('Sem dados de tours no período.')).toBeInTheDocument();
     cleanup();
     montarPorTour({ unidades: null });
-    expect(screen.getByText('Sem dados de tours no periodo.')).toBeInTheDocument();
+    expect(screen.getByText('Sem dados de tours no período.')).toBeInTheDocument();
   });
 });
 
@@ -459,7 +459,7 @@ describe('CostEditModal', () => {
     expect(campos).toHaveLength(5);
     expect(campos.map(c => c.value)).toEqual(['100', '50', '0', '0', '0']);
     expect(screen.getByText('€150.00')).toBeInTheDocument();
-    ['Guia / Instrutor', 'Transporte', 'Bilhetes / Entrada', 'Refeicoes', 'Outros'].forEach(r => expect(screen.getByText(r)).toBeInTheDocument());
+    ['Guia / Instrutor', 'Transporte', 'Bilhetes / Entrada', 'Refeições', 'Outros'].forEach(r => expect(screen.getByText(r)).toBeInTheDocument());
   });
 
   it('o_total_soma_os_cinco_e_guardar_envia_os_campos_e_fecha', () => {
@@ -497,13 +497,13 @@ describe('CostEditModal', () => {
   });
 });
 
-describe('Previsao', () => {
+describe('Previsão', () => {
   it('mostra_kpis_semanas_e_o_aviso_abaixo_de_80_da_media', () => {
     render(<PrevisaoTab forecast={FORECAST} currency="EUR" loading={false} />);
-    expect(screen.getByText('Previsao abaixo da media historica. Considera acoes de marketing.')).toBeInTheDocument();
-    expect(screen.getByText('Receita confirmada (prox. periodo)')).toBeInTheDocument();
+    expect(screen.getByText('Previsão abaixo da média histórica. Considera ações de marketing.')).toBeInTheDocument();
+    expect(screen.getByText('Receita confirmada (prox. período)')).toBeInTheDocument();
     [500, 700, 900].forEach(v => expect(screen.getAllByText(eur(v)).length).toBeGreaterThan(0));
-    expect(screen.getByText('Previsao semanal')).toBeInTheDocument();
+    expect(screen.getByText('Previsão semanal')).toBeInTheDocument();
     expect(screen.getByText('Semana 1')).toBeInTheDocument();
     expect(screen.getByText('2 reserva(s)')).toBeInTheDocument();
     expect(screen.getByText(eur(250))).toBeInTheDocument();
@@ -511,11 +511,11 @@ describe('Previsao', () => {
 
   it('sem_aviso_a_80_ou_mais_da_media_ou_sem_media_e_sem_semanas_sem_cartao', () => {
     render(<PrevisaoTab forecast={{ ...FORECAST, confirmed_future_revenue: 720, weeks: [] }} currency="EUR" loading={false} />);
-    expect(screen.queryByText(/Previsao abaixo da media/)).toBeNull();
-    expect(screen.queryByText('Previsao semanal')).toBeNull();
+    expect(screen.queryByText(/Previsão abaixo da média/)).toBeNull();
+    expect(screen.queryByText('Previsão semanal')).toBeNull();
     cleanup();
     render(<PrevisaoTab forecast={{ ...FORECAST, historical_avg: 0, confirmed_future_revenue: 0 }} currency="EUR" loading={false} />);
-    expect(screen.queryByText(/Previsao abaixo da media/)).toBeNull();
+    expect(screen.queryByText(/Previsão abaixo da média/)).toBeNull();
   });
 
   it('etiqueta_da_semana_cai_para_week', () => {
@@ -525,14 +525,14 @@ describe('Previsao', () => {
 
   it('sem_dados_mostra_a_mensagem_e_o_endpoint', () => {
     render(<PrevisaoTab forecast={null} currency="EUR" loading={false} />);
-    expect(screen.getByText('Dados de previsao nao disponiveis.')).toBeInTheDocument();
+    expect(screen.getByText('Dados de previsão não disponíveis.')).toBeInTheDocument();
     expect(screen.getByText('GET /financial/forecast')).toBeInTheDocument();
   });
 
   it('em_carga_so_mostra_o_spinner', () => {
     render(<PrevisaoTab forecast={FORECAST} currency="EUR" loading />);
-    expect(screen.queryByText('Previsao semanal')).toBeNull();
-    expect(screen.queryByText('Dados de previsao nao disponiveis.')).toBeNull();
+    expect(screen.queryByText('Previsão semanal')).toBeNull();
+    expect(screen.queryByText('Dados de previsão não disponíveis.')).toBeNull();
   });
 });
 
@@ -544,7 +544,7 @@ describe('Caixa', () => {
     expect(screen.getByText(eur(80), { selector: 'p' })).toBeInTheDocument(); /* por confirmar */
     ['Total recebido', 'Confirmado', 'Por confirmar'].forEach(r => expect(screen.getByText(r)).toBeInTheDocument());
     expect(screen.getByText('Pagamentos em dinheiro')).toBeInTheDocument();
-    expect(screen.getAllByRole('columnheader').map(h => h.textContent)).toEqual(['Data', 'Cliente', 'Servico', 'Montante', 'Estado']);
+    expect(screen.getAllByRole('columnheader').map(h => h.textContent)).toEqual(['Data', 'Cliente', 'Serviço', 'Montante', 'Estado']);
     expect(screen.queryByText('Ana Silva')).toBeNull(); /* paypal nao aparece */
     expect(screen.getByText('Bruno Costa').closest('tr')).toHaveTextContent('Pago');
     expect(screen.getByText('Carla Dias').closest('tr')).toHaveTextContent('Pendente');
@@ -557,7 +557,7 @@ describe('Caixa', () => {
 
   it('sem_dinheiro_mostra_o_vazio_e_zeros', () => {
     render(<CaixaTab transacoes={[TRANSACOES[0]]} currency="EUR" loading={false} />);
-    expect(screen.getByText('Sem pagamentos em dinheiro no periodo.')).toBeInTheDocument();
+    expect(screen.getByText('Sem pagamentos em dinheiro no período.')).toBeInTheDocument();
     expect(screen.getAllByText(eur(0))).toHaveLength(3);
   });
 
@@ -565,11 +565,11 @@ describe('Caixa', () => {
     render(<CaixaTab transacoes={TRANSACOES} currency="EUR" loading />);
     expect(screen.getByText('Total recebido')).toBeInTheDocument();
     expect(screen.queryByRole('table')).toBeNull();
-    expect(screen.queryByText('Sem pagamentos em dinheiro no periodo.')).toBeNull();
+    expect(screen.queryByText('Sem pagamentos em dinheiro no período.')).toBeNull();
   });
 });
 
-describe('Por Tour, Previsao e Caixa com o design system', () => {
+describe('Por Tour, Previsão e Caixa com o design system', () => {
   it('a_tabela_por_tour_tem_role_table_e_o_destaque_esta_no_nome', () => {
     montarPorTour();
     expect(within(screen.getByRole('table')).getAllByRole('columnheader')).toHaveLength(7);
@@ -587,18 +587,18 @@ describe('Por Tour, Previsao e Caixa com o design system', () => {
 
   it('os_campos_do_modal_tem_nome_acessivel', () => {
     render(<CostEditModal open onClose={() => {}} unitId="u1" unitName="Tour Ilha" costs={CUSTOS.u1} onSave={() => {}} />);
-    ['Guia / Instrutor', 'Transporte', 'Bilhetes / Entrada', 'Refeicoes', 'Outros'].forEach(r => expect(screen.getByLabelText(r)).toBeInTheDocument());
+    ['Guia / Instrutor', 'Transporte', 'Bilhetes / Entrada', 'Refeições', 'Outros'].forEach(r => expect(screen.getByLabelText(r)).toBeInTheDocument());
   });
 
   it('os_vazios_usam_o_EmptyState', () => {
     montarPorTour({ unidades: [] });
-    expect(screen.getByText('Sem dados de tours no periodo.')).toHaveClass('font-display');
+    expect(screen.getByText('Sem dados de tours no período.')).toHaveClass('font-display');
     cleanup();
     render(<PrevisaoTab forecast={null} currency="EUR" loading={false} />);
-    expect(screen.getByText('Dados de previsao nao disponiveis.')).toHaveClass('font-display');
+    expect(screen.getByText('Dados de previsão não disponíveis.')).toHaveClass('font-display');
     cleanup();
     render(<CaixaTab transacoes={[]} currency="EUR" loading={false} />);
-    expect(screen.getByText('Sem pagamentos em dinheiro no periodo.')).toHaveClass('font-display');
+    expect(screen.getByText('Sem pagamentos em dinheiro no período.')).toHaveClass('font-display');
   });
 
   it('a_tabela_da_caixa_tem_role_table', () => {
@@ -608,7 +608,7 @@ describe('Por Tour, Previsao e Caixa com o design system', () => {
 
   it('aviso_da_previsao_e_cartoes_da_caixa_usam_tokens', () => {
     render(<PrevisaoTab forecast={FORECAST} currency="EUR" loading={false} />);
-    const aviso = screen.getByText(/Previsao abaixo da media/).closest('div');
+    const aviso = screen.getByText(/Previsão abaixo da média/).closest('div');
     expect(aviso.className).toContain('var(--warning-light)');
     cleanup();
     render(<CaixaTab transacoes={TRANSACOES} currency="EUR" loading={false} />);

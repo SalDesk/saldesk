@@ -89,7 +89,7 @@ describe('StaffForm', () => {
     const estado = screen.getAllByRole('combobox')[1];
     expect(Array.from(estado.options).map(o => o.textContent)).toEqual(['Activo', 'Inactivo']);
     expect(estado).toHaveValue('inactive');
-    submeter('Guardar alteracoes');
+    submeter('Guardar alterações');
     expect(onSave).toHaveBeenCalledWith(expect.objectContaining({ name: 'Rui Lopes', status: 'inactive', create_access: false, skills: [], schedule: [] }));
   });
 
@@ -100,7 +100,7 @@ describe('StaffForm', () => {
 
   it('competencias_acrescentam_com_Enter_sem_duplicar_nem_vazias_e_removem', () => {
     const { onSave } = montar();
-    const campo = screen.getByPlaceholderText('Escrever competencia + Enter');
+    const campo = screen.getByPlaceholderText('Escrever competência + Enter');
     fireEvent.change(campo, { target: { value: 'PADI' } });
     fireEvent.keyDown(campo, { key: 'Enter' });
     expect(campo).toHaveValue('');
@@ -133,22 +133,22 @@ describe('StaffForm', () => {
     expect(screen.getByText('CPR')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Seg' }).className).toContain('bg-ocean-700');
     expect(screen.getByRole('button', { name: 'Ter' }).className).not.toContain('bg-ocean-700');
-    submeter('Guardar alteracoes');
+    submeter('Guardar alterações');
     expect(onSave).toHaveBeenCalledWith(expect.objectContaining({ skills: ['PADI', 'CPR'], schedule: ['Seg', 'Qua'] }));
   });
 
   it('ao_editar_da_para_remover_uma_competencia_e_alternar_dias_sem_perder_o_resto', () => {
     const { onSave } = montar({ member: { ...COLABORADORES[0], skills: ['PADI', 'CPR'], schedule: ['Seg'] } });
-    fireEvent.click(screen.getByRole('button', { name: 'Remover competencia - PADI' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Remover competência - PADI' }));
     fireEvent.click(screen.getByRole('button', { name: 'Sex' }));
-    submeter('Guardar alteracoes');
+    submeter('Guardar alterações');
     expect(onSave).toHaveBeenCalledWith(expect.objectContaining({ skills: ['CPR'], schedule: ['Seg', 'Sex'] }));
   });
 
   it('valores_guardados_que_nao_sao_listas_caem_em_lista_vazia', () => {
     for (const valor of [null, undefined, 'Seg', 5, { a: 1 }]) {
       const { onSave, unmount } = montar({ member: { ...COLABORADORES[0], skills: valor, schedule: valor } });
-      submeter('Guardar alteracoes');
+      submeter('Guardar alterações');
       expect(onSave).toHaveBeenCalledWith(expect.objectContaining({ skills: [], schedule: [] }));
       unmount?.();
       cleanup();
@@ -157,10 +157,10 @@ describe('StaffForm', () => {
 
   it('vendedor_mostra_comissao_zona_e_os_tours_e_envia_os_valores', async () => {
     const { onSave } = montar();
-    expect(screen.queryByText('Configuracao do Vendedor de Praia')).toBeNull();
+    expect(screen.queryByText('Configuração do Vendedor de Praia')).toBeNull();
     expect(listUnits).not.toHaveBeenCalled();
     fireEvent.change(screen.getAllByRole('combobox')[0], { target: { value: 'Vendedor de Praia' } });
-    expect(await screen.findByText('Configuracao do Vendedor de Praia')).toBeInTheDocument();
+    expect(await screen.findByText('Configuração do Vendedor de Praia')).toBeInTheDocument();
     expect(await screen.findByText('Buggy Tour')).toBeInTheDocument();
     expect(listUnits).toHaveBeenCalledTimes(1);
     expect(screen.getByText('Tours que pode vender (todos)')).toBeInTheDocument();
@@ -193,14 +193,14 @@ describe('StaffForm', () => {
 
   it('criar_conta_com_o_interruptor_mostra_o_aviso_e_vai_no_pedido', () => {
     const { onSave } = montar();
-    expect(screen.queryByText(/Sera criada uma conta de acesso/)).toBeNull();
+    expect(screen.queryByText(/Será criada uma conta de acesso/)).toBeNull();
     fireEvent.click(interruptor());
-    expect(screen.getByText(/Sera criada uma conta de acesso/)).toBeInTheDocument();
+    expect(screen.getByText(/Será criada uma conta de acesso/)).toBeInTheDocument();
     fireEvent.change(nome(), { target: { value: 'X' } });
     submeter();
     expect(onSave).toHaveBeenCalledWith(expect.objectContaining({ create_access: true }));
     fireEvent.click(interruptor());
-    expect(screen.queryByText(/Sera criada uma conta de acesso/)).toBeNull();
+    expect(screen.queryByText(/Será criada uma conta de acesso/)).toBeNull();
   });
 
   it('erro_loading_e_cancelar', () => {
@@ -225,7 +225,7 @@ describe('StaffForm', () => {
   });
 });
 
-describe('StaffForm: cargos por tipo de operador (na pagina)', () => {
+describe('StaffForm: cargos por tipo de operador (na página)', () => {
   it.each([
     ['activity', 'Guia'], ['hotel', 'Recepcionista'], ['rentacar', 'Mecanico'], ['restaurant', 'Garcom'],
     ['outro', 'Administracao'], [undefined, 'Administracao'],
@@ -248,13 +248,13 @@ describe('StaffForm: cargos por tipo de operador (na pagina)', () => {
 describe('StaffForm com o design system', () => {
   it('os_campos_tem_nome_acessivel', async () => {
     montar({ member: COLABORADORES[0] });
-    ['Nome completo', 'Cargo', 'Estado', 'Telefone', 'Email', 'WhatsApp', 'Data de admissao', 'Competencias e certificacoes']
+    ['Nome completo', 'Cargo', 'Estado', 'Telefone', 'Email', 'WhatsApp', 'Data de admissão', 'Competências e certificações']
       .forEach(r => expect(screen.getByLabelText(r)).toBeInTheDocument());
     cleanup();
     montar();
     fireEvent.change(screen.getByLabelText('Cargo'), { target: { value: 'Vendedor de Praia' } });
-    expect(await screen.findByLabelText('Comissao (%)')).toBeInTheDocument();
-    expect(screen.getByLabelText('Zona de actuacao')).toBeInTheDocument();
+    expect(await screen.findByLabelText('Comissão (%)')).toBeInTheDocument();
+    expect(screen.getByLabelText('Zona de actuação')).toBeInTheDocument();
   });
 
   it('o_interruptor_e_o_Toggle_do_design_system', () => {
@@ -266,7 +266,7 @@ describe('StaffForm com o design system', () => {
   it('nenhum_campo_escrito_a_mao', async () => {
     const { container } = montar();
     fireEvent.change(screen.getByLabelText('Cargo'), { target: { value: 'Vendedor de Praia' } });
-    await screen.findByLabelText('Comissao (%)');
+    await screen.findByLabelText('Comissão (%)');
     const soltos = [...container.querySelectorAll('input:not([type="file"]), select, textarea')].filter(e => !e.className.includes('app:bg-white'));
     expect(soltos).toHaveLength(0);
   });
@@ -274,7 +274,7 @@ describe('StaffForm com o design system', () => {
   it('sem_hexadecimais_cores_nomeadas_ou_text_error_nem_com_o_vendedor_e_o_erro', async () => {
     const { container } = montar({ error: 'Erro ao guardar' });
     fireEvent.change(screen.getByLabelText('Cargo'), { target: { value: 'Vendedor de Praia' } });
-    await screen.findByLabelText('Comissao (%)');
+    await screen.findByLabelText('Comissão (%)');
     const html = container.innerHTML;
     expect(html).not.toMatch(HEX);
     expect(html).not.toMatch(NOMEADAS);

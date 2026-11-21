@@ -73,7 +73,7 @@ export default function RentacarTable({ reservations, units, onEdit, onDelete, o
     },
     {
       key: 'devolucao',
-      label: 'Devolucao',
+      label: 'Devolução',
       sortValue: (r) => r.check_out || '',
       render: (r) => {
         const rcMeta = parseRentacarMeta(r);
@@ -126,7 +126,7 @@ export default function RentacarTable({ reservations, units, onEdit, onDelete, o
               className="flex items-center gap-1 px-2 py-1 rounded-xs bg-ocean-700 text-white text-xs font-body font-medium hover:bg-ocean-500 transition-colors whitespace-nowrap"
             >
               <MoveLeft size={11} strokeWidth={2} />
-              Devolucao
+              Devolução
             </button>
           )}
           <Button variant="ghost" size="sm" icon={Eye} onClick={() => onView(r)} aria-label={t('reservations.view')} />

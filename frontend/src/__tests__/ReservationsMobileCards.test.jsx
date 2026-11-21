@@ -57,15 +57,15 @@ afterEach(() => {
   delete window.matchMedia;
 });
 
-describe('rent-a-car: tabela no ecra grande, cartoes no telemovel', () => {
-  it('no ecra grande continua a ser uma tabela', () => {
+describe('rent-a-car: tabela no ecrã grande, cartões no telemóvel', () => {
+  it('no ecrã grande continua a ser uma tabela', () => {
     simularEcra(false);
     carros();
     expect(screen.getByRole('table')).toBeInTheDocument();
     expect(screen.queryByRole('list')).toBeNull();
   });
 
-  it('no telemovel mostra um cartao por reserva, sem tabela', () => {
+  it('no telemóvel mostra um cartão por reserva, sem tabela', () => {
     simularEcra(true);
     carros();
     expect(screen.queryByRole('table')).toBeNull();
@@ -79,13 +79,13 @@ describe('rent-a-car: tabela no ecra grande, cartoes no telemovel', () => {
     expect(primeiro.getByText('Levantamento', { selector: 'span' })).toBeInTheDocument(); // etiqueta da coluna
   });
 
-  it('as accoes de cada cartao funcionam: Levantamento, Devolucao, Ver, Editar e Eliminar', () => {
+  it('as acções de cada cartão funcionam: Levantamento, Devolução, Ver, Editar e Eliminar', () => {
     simularEcra(true);
     const p = carros();
     const [c1, c2] = within(screen.getByRole('list')).getAllByRole('listitem');
     fireEvent.click(within(c1).getByRole('button', { name: /Levantamento/ }));
     expect(p.onLevantamento).toHaveBeenCalledWith(CARROS[0]);
-    fireEvent.click(within(c2).getByRole('button', { name: /Devolucao/ }));
+    fireEvent.click(within(c2).getByRole('button', { name: /Devolução/ }));
     expect(p.onDevolucao).toHaveBeenCalledWith(CARROS[1]);
     fireEvent.click(within(c1).getByRole('button', { name: 'Editar' }));
     expect(p.onEdit).toHaveBeenCalledWith(CARROS[0]);
@@ -95,7 +95,7 @@ describe('rent-a-car: tabela no ecra grande, cartoes no telemovel', () => {
     expect(p.onView).toHaveBeenCalledWith(CARROS[1]);
   });
 
-  it('muda de tabela para cartoes quando o ecra passa a ser de telemovel', () => {
+  it('muda de tabela para cartões quando o ecrã passa a ser de telemóvel', () => {
     simularEcra(false);
     carros();
     expect(screen.getByRole('table')).toBeInTheDocument();
@@ -114,8 +114,8 @@ describe('rent-a-car: tabela no ecra grande, cartoes no telemovel', () => {
   });
 });
 
-describe('restaurante: tabela no ecra grande, cartoes no telemovel', () => {
-  it('no telemovel mostra a mesa, a hora, os pax e as accoes do cartao', async () => {
+describe('restaurante: tabela no ecrã grande, cartões no telemóvel', () => {
+  it('no telemóvel mostra a mesa, a hora, os pax e as acções do cartão', async () => {
     simularEcra(true);
     const p = mesas();
     expect(screen.queryByRole('table')).toBeNull();
@@ -133,7 +133,7 @@ describe('restaurante: tabela no ecra grande, cartoes no telemovel', () => {
     expect(p.onEdit).toHaveBeenCalledWith(MESAS[0]);
   });
 
-  it('no ecra grande continua a ser uma tabela', () => {
+  it('no ecrã grande continua a ser uma tabela', () => {
     simularEcra(false);
     mesas();
     expect(screen.getByRole('table')).toBeInTheDocument();

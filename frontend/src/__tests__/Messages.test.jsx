@@ -31,7 +31,7 @@ const COLABORADORES = [{ id: 's1', name: 'Rui', role: 'Guia' }, { id: 's2', name
 const GRUPOS = [{ id: 'g1', name: 'Equipa Kite', members: ['s1', 's2'] }];
 const CLIENTES = [
   { id: 'c1', name: 'Maria Cliente', email: 'maria@x.cv', phone: '+238 99' },
-  { id: 'c2', name: 'Joao Sem Contacto', email: null, phone: null },
+  { id: 'c2', name: 'João Sem Contacto', email: null, phone: null },
 ];
 const ACTIVIDADE = { c1: '2026-03-12T10:00:00Z', s2: '2026-03-13T10:00:00Z' };
 
@@ -105,7 +105,7 @@ describe('Messages', () => {
     await abre();
     expect(screen.getByText('Colaboradores')).toBeInTheDocument();
     expect(screen.getByText('Conversas')).toBeInTheDocument();
-    expect(nomesDaBarra()).toEqual(['Ana', 'Rui', 'Maria Cliente', 'Equipa Kite', 'Joao Sem Contacto']);
+    expect(nomesDaBarra()).toEqual(['Ana', 'Rui', 'Maria Cliente', 'Equipa Kite', 'João Sem Contacto']);
     expect(screen.getByText('Guia')).toBeInTheDocument();
     expect(screen.getByText('Grupo · 2 membros')).toBeInTheDocument();
     expect(screen.getByText('maria@x.cv')).toBeInTheDocument();
@@ -113,7 +113,7 @@ describe('Messages', () => {
     expect(screen.getByText('Seleccione uma conversa')).toBeInTheDocument();
   });
 
-  it('a pesquisa filtra os contactos e diz quando nao ha resultados', async () => {
+  it('a pesquisa filtra os contactos e diz quando não ha resultados', async () => {
     await abre();
     const pesquisa = screen.getByPlaceholderText('Pesquisar...');
     fireEvent.change(pesquisa, { target: { value: 'ANA' } });
@@ -122,7 +122,7 @@ describe('Messages', () => {
     expect(screen.getByText('Sem resultados')).toBeInTheDocument();
   });
 
-  it('sem contactos mostra o aviso; servicos a falhar nao rebentam', async () => {
+  it('sem contactos mostra o aviso; serviços a falhar não rebentam', async () => {
     listStaff.mockRejectedValue(new Error('rede'));
     listGroups.mockRejectedValue(new Error('rede'));
     listCustomers.mockRejectedValue(new Error('rede'));
@@ -135,14 +135,14 @@ describe('Messages', () => {
     expect(await screen.findByText('Sem colaboradores, grupos ou clientes')).toBeInTheDocument();
   });
 
-  it('abrir uma conversa pede as mensagens ao destinatario certo e marca as nao lidas', async () => {
+  it('abrir uma conversa pede as mensagens ao destinatario certo e marca as não lidas', async () => {
     await abre();
     await abreConversa('Rui', [
-      { id: 'm1', sender_type: 'staff', sender_name: 'Rui', content: 'Ola chefe', created_at: AGORA, is_read: false },
+      { id: 'm1', sender_type: 'staff', sender_name: 'Rui', content: 'Olá chefe', created_at: AGORA, is_read: false },
       { id: 'm2', sender_type: 'manager', content: 'Bom dia', created_at: AGORA, is_read: true, channel: 'internal' },
     ]);
     expect(listMessages).toHaveBeenLastCalledWith({ recipient_id: 's1' });
-    expect(screen.getByText('Ola chefe')).toBeInTheDocument();
+    expect(screen.getByText('Olá chefe')).toBeInTheDocument();
     expect(screen.getByText('Bom dia')).toBeInTheDocument();
     expect(markRead).toHaveBeenCalledTimes(1);
     expect(markRead).toHaveBeenCalledWith('m1');
@@ -154,13 +154,13 @@ describe('Messages', () => {
     expect(listMessages).toHaveBeenLastCalledWith({ recipient_id: 'c1' });
   });
 
-  it('uma conversa sem mensagens convida a comecar', async () => {
+  it('uma conversa sem mensagens convida a começar', async () => {
     await abre();
     await abreConversa('Rui');
     expect(screen.getByText('Sem mensagens ainda. Comece a conversa.')).toBeInTheDocument();
   });
 
-  it('uma mensagem nova de outro contacto incrementa o contador e o titulo', async () => {
+  it('uma mensagem nova de outro contacto incrementa o contador e o título', async () => {
     await abre();
     expect(screen.getByRole('heading', { name: 'Mensagens' })).toBeInTheDocument();
     evento('message:new', { id: 'x1', sender_type: 'staff', sender_id: 's2', recipient_id: 'op1', content: 'Nova', created_at: AGORA });
@@ -172,7 +172,7 @@ describe('Messages', () => {
     expect(within(contacto('Ana')).getByText('9+')).toBeInTheDocument();
   });
 
-  it('uma mensagem na conversa aberta aparece uma vez so e e marcada como lida', async () => {
+  it('uma mensagem na conversa aberta aparece uma vez só e e marcada como lida', async () => {
     await abre();
     await abreConversa('Ana');
     const msg = { id: 'x1', sender_type: 'staff', sender_id: 's2', recipient_id: 'op1', content: 'Chegou', created_at: AGORA };
@@ -187,7 +187,7 @@ describe('Messages', () => {
   it('um visitante desconhecido volta a pedir a lista de clientes', async () => {
     await abre();
     expect(listCustomers).toHaveBeenCalledTimes(1);
-    evento('message:new', { id: 'v1', sender_type: 'guest', sender_id: 'c9', recipient_id: 'op1', content: 'Ola', created_at: AGORA });
+    evento('message:new', { id: 'v1', sender_type: 'guest', sender_id: 'c9', recipient_id: 'op1', content: 'Olá', created_at: AGORA });
     await waitFor(() => expect(listCustomers).toHaveBeenCalledTimes(2));
   });
 
@@ -199,9 +199,9 @@ describe('Messages', () => {
     expect(within(contacto('Rui')).queryByText('Online')).not.toBeInTheDocument();
     await abreConversa('Rui');
     evento('typing:start', { from: 's1' });
-    expect(screen.getByText('esta a escrever...')).toBeInTheDocument();
+    expect(screen.getByText('está a escrever...')).toBeInTheDocument();
     evento('typing:stop', { from: 's1' });
-    expect(screen.queryByText('esta a escrever...')).not.toBeInTheDocument();
+    expect(screen.queryByText('está a escrever...')).not.toBeInTheDocument();
   });
 
   it('escrever emite typing:start uma vez e enviar para um colaborador usa o objeto certo', async () => {
@@ -210,12 +210,12 @@ describe('Messages', () => {
     fireEvent.change(caixa(), { target: { value: 'O' } });
     fireEvent.change(caixa(), { target: { value: 'Ol' } });
     expect(sock.emit.mock.calls.filter(c => c[0] === 'typing:start')).toEqual([['typing:start', { to: 's1' }]]);
-    fireEvent.change(caixa(), { target: { value: 'Ola' } });
+    fireEvent.change(caixa(), { target: { value: 'Olá' } });
     fireEvent.click(botaoEnviar());
     await waitFor(() => expect(sendMessage).toHaveBeenCalledWith({
-      content: 'Ola', recipient_id: 's1', recipient_type: 'staff', message_type: 'direct',
+      content: 'Olá', recipient_id: 's1', recipient_type: 'staff', message_type: 'direct',
     }));
-    expect(await screen.findByText('Ola')).toBeInTheDocument();
+    expect(await screen.findByText('Olá')).toBeInTheDocument();
     await waitFor(() => expect(caixa().value).toBe(''));
   });
 
@@ -229,13 +229,13 @@ describe('Messages', () => {
     }));
   });
 
-  it('enviar para um cliente leva o canal; o alternador activa email e WhatsApp so com esses dados', async () => {
+  it('enviar para um cliente leva o canal; o alternador activa email e WhatsApp só com esses dados', async () => {
     await abre();
     await abreConversa('Maria Cliente');
-    fireEvent.change(caixa(), { target: { value: 'Ola cliente' } });
+    fireEvent.change(caixa(), { target: { value: 'Olá cliente' } });
     fireEvent.click(botaoEnviar());
     await waitFor(() => expect(sendMessage).toHaveBeenLastCalledWith({
-      content: 'Ola cliente', recipient_id: 'c1', recipient_type: 'guest', message_type: 'direct', channel: 'internal',
+      content: 'Olá cliente', recipient_id: 'c1', recipient_type: 'guest', message_type: 'direct', channel: 'internal',
     }));
     expect(screen.getByRole('button', { name: 'Chat' })).not.toBeDisabled();
     fireEvent.click(screen.getByRole('button', { name: 'Email' }));
@@ -247,7 +247,7 @@ describe('Messages', () => {
     expect(caixa('Escrever mensagem por WhatsApp...')).toBeInTheDocument();
     cleanup();
     await abre();
-    await abreConversa('Joao Sem Contacto');
+    await abreConversa('João Sem Contacto');
     expect(screen.getByRole('button', { name: 'Email' })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'WhatsApp' })).toBeDisabled();
   });
@@ -262,7 +262,7 @@ describe('Messages', () => {
     expect(screen.getByText('Enviado por WhatsApp')).toBeInTheDocument();
   });
 
-  it('o botao de enviar fica desactivado sem texto', async () => {
+  it('o botão de enviar fica desactivado sem texto', async () => {
     await abre();
     await abreConversa('Rui');
     expect(botaoEnviar()).toBeDisabled();
@@ -270,7 +270,7 @@ describe('Messages', () => {
     expect(botaoEnviar()).not.toBeDisabled();
   });
 
-  it('um anexo junta o nome ao conteudo e so existe para colaboradores e grupos', async () => {
+  it('um anexo junta o nome ao conteúdo e só existe para colaboradores e grupos', async () => {
     await abre();
     await abreConversa('Rui');
     const ficheiro = new File(['x'], 'foto.png', { type: 'image/png' });
@@ -328,18 +328,18 @@ describe('Messages', () => {
     limpo();
   });
 
-  describe('resposta automatica do chat do site (sender_type system)', () => {
-    const AUTO = { id: 'au1', sender_type: 'system', sender_id: 'op1', recipient_id: 'c1', recipient_type: 'guest', content: 'Estamos fora do horario.', channel: 'internal', is_read: false, created_at: AGORA };
+  describe('resposta automática do chat do site (sender_type system)', () => {
+    const AUTO = { id: 'au1', sender_type: 'system', sender_id: 'op1', recipient_id: 'c1', recipient_type: 'guest', content: 'Estamos fora do horário.', channel: 'internal', is_read: false, created_at: AGORA };
 
     it('na conversa aberta aparece do lado do operador, identificada, sem etiqueta de remetente de visitante', async () => {
       await abre();
       await abreConversa('Maria Cliente', [
-        { id: 'g1m', sender_type: 'guest', sender_id: 'c1', recipient_id: 'op1', content: 'Ola', created_at: AGORA, is_read: true },
+        { id: 'g1m', sender_type: 'guest', sender_id: 'c1', recipient_id: 'op1', content: 'Olá', created_at: AGORA, is_read: true },
         AUTO,
       ]);
-      const bolha = screen.getByText('Estamos fora do horario.').closest('div.max-w-\\[72\\%\\]');
+      const bolha = screen.getByText('Estamos fora do horário.').closest('div.max-w-\\[72\\%\\]');
       expect(bolha.parentElement).toHaveClass('justify-end');
-      expect(within(bolha).getByText('Resposta automatica')).toBeInTheDocument();
+      expect(within(bolha).getByText('Resposta automática')).toBeInTheDocument();
       expect(within(bolha).queryByText('system')).not.toBeInTheDocument();
       /* nao e uma mensagem recebida: nao se marca como lida nem se mostra o visto de leitura */
       expect(markRead).not.toHaveBeenCalledWith('au1');
@@ -350,18 +350,18 @@ describe('Messages', () => {
       await abre();
       await abreConversa('Maria Cliente');
       evento('message:new', AUTO);
-      expect(screen.getByText('Estamos fora do horario.')).toBeInTheDocument();
+      expect(screen.getByText('Estamos fora do horário.')).toBeInTheDocument();
       expect(markRead).not.toHaveBeenCalled();
     });
 
-    it('com outra conversa aberta nao conta como mensagem nao lida', async () => {
+    it('com outra conversa aberta não conta como mensagem não lida', async () => {
       await abre();
       evento('message:new', AUTO);
       expect(within(contacto('Maria Cliente')).queryByText('1')).not.toBeInTheDocument();
       expect(screen.getByRole('heading', { name: 'Mensagens' })).toBeInTheDocument();
     });
 
-    it('nao dispara notificacao do browser ("nova mensagem de um colaborador")', async () => {
+    it('não dispara notificação do browser ("nova mensagem de um colaborador")', async () => {
       const Antiga = window.Notification;
       const criadas = [];
       window.Notification = function (titulo) { criadas.push(titulo); };

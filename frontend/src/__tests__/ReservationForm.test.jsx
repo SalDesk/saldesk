@@ -47,7 +47,7 @@ function preencher(texto, valor) {
   fireEvent.change(campo(texto), { target: { value: valor } });
 }
 
-describe('Formulario, detalhe e cartao de reserva', () => {
+describe('Formulário, detalhe e cartão de reserva', () => {
   let errSpy;
   let warnSpy;
 
@@ -110,26 +110,26 @@ describe('Formulario, detalhe e cartao de reserva', () => {
       preencher('Email', 'maria@exemplo.com');
     }
 
-    it('hotel: mostra os campos de hoje e o botao de criar', () => {
+    it('hotel: mostra os campos de hoje e o botão de criar', () => {
       renderForm();
-      for (const e of ['Unidade', 'Check-in', 'Check-out', 'Cliente', 'Email', 'Telefone', 'Nacionalidade', 'Hospedes', 'Fonte', 'Notas internas']) {
+      for (const e of ['Unidade', 'Check-in', 'Check-out', 'Cliente', 'Email', 'Telefone', 'Nacionalidade', 'Hóspedes', 'Fonte', 'Notas internas']) {
         expect(screen.getByText(e)).toBeInTheDocument();
       }
-      expect(campo('Hospedes')).toHaveValue(1);
+      expect(campo('Hóspedes')).toHaveValue(1);
       expect(campo('Fonte')).toHaveValue('manual');
-      expect(screen.getByText('Codigo ISO 2')).toBeInTheDocument();
+      expect(screen.getByText('Código ISO 2')).toBeInTheDocument();
       expect(screen.getByRole('checkbox')).not.toBeChecked();
       expect(botao('Nova Reserva')).toBeInTheDocument();
       expect(botao('Cancelar')).toBeInTheDocument();
     });
 
-    it('hotel: preencher e submeter entrega o objecto exacto (vazios incluidos, hospedes numero)', () => {
+    it('hotel: preencher e submeter entrega o objecto exacto (vazios incluidos, hóspedes número)', () => {
       const props = renderForm();
       preencher('Unidade', 'u1');
       preencher('Check-in', AMANHA);
       preencher('Check-out', MAIS_QUATRO);
       preencherCliente();
-      preencher('Hospedes', '3');
+      preencher('Hóspedes', '3');
       fireEvent.click(botao('Nova Reserva'));
       expect(props.onSave).toHaveBeenCalledTimes(1);
       expect(props.onSave).toHaveBeenCalledWith({
@@ -180,7 +180,7 @@ describe('Formulario, detalhe e cartao de reserva', () => {
       });
     });
 
-    it('hotel: pre-visualiza o preco pelas noites', () => {
+    it('hotel: pre-visualiza o preço pelas noites', () => {
       renderForm();
       preencher('Unidade', 'u1');
       preencher('Check-in', AMANHA);
@@ -189,18 +189,18 @@ describe('Formulario, detalhe e cartao de reserva', () => {
       expect(screen.getByText('€150.00')).toBeInTheDocument();
     });
 
-    it('os campos obrigatorios mostram o asterisco (o componente de campo nao passa required ao elemento)', () => {
+    it('os campos obrigatórios mostram o asterisco (o componente de campo não passa required ao elemento)', () => {
       renderForm();
       for (const e of ['Unidade', 'Check-in', 'Check-out', 'Cliente', 'Email']) {
         expect(screen.getByText(e)).toHaveTextContent(`${e}*`);
       }
-      for (const e of ['Telefone', 'Nacionalidade', 'Hospedes', 'Fonte', 'Notas internas']) {
+      for (const e of ['Telefone', 'Nacionalidade', 'Hóspedes', 'Fonte', 'Notas internas']) {
         expect(screen.getByText(e)).not.toHaveTextContent('*');
       }
       expect(campo('Check-out')).not.toHaveAttribute('min');
       preencher('Check-in', AMANHA);
       expect(campo('Check-out')).toHaveAttribute('min', AMANHA);
-      expect(campo('Hospedes')).toHaveAttribute('min', '1');
+      expect(campo('Hóspedes')).toHaveAttribute('min', '1');
     });
 
     it('mostra o erro recebido por prop', () => {
@@ -208,17 +208,17 @@ describe('Formulario, detalhe e cartao de reserva', () => {
       expect(screen.getByText('Unidade ocupada nessas datas')).toBeInTheDocument();
     });
 
-    it('sem erro nao mostra caixa de erro', () => {
+    it('sem erro não mostra caixa de erro', () => {
       renderForm();
       expect(screen.queryByText('Unidade ocupada nessas datas')).not.toBeInTheDocument();
     });
 
-    it('a carregar o botao de submeter fica desactivado', () => {
+    it('a carregar o botão de submeter fica desactivado', () => {
       renderForm({ loading: true });
       expect(botao('Nova Reserva')).toBeDisabled();
     });
 
-    it('Cancelar chama onCancel e nao submete', () => {
+    it('Cancelar chama onCancel e não submete', () => {
       const props = renderForm();
       fireEvent.click(botao('Cancelar'));
       expect(props.onCancel).toHaveBeenCalledTimes(1);
@@ -253,13 +253,13 @@ describe('Formulario, detalhe e cartao de reserva', () => {
       expect(getFleetAvailability).toHaveBeenCalledWith('t1', AMANHA);
     });
 
-    it('actividade sem horarios: hora livre, data repetida na saida e hora nas notas', () => {
+    it('actividade sem horários: hora livre, data repetida na saída e hora nas notas', () => {
       const props = renderForm({ operatorType: 'activity' });
       preencher('Tour / Actividade', 't1');
       preencher('Data do tour', AMANHA);
       preencher('Hora', '10:30');
       preencherCliente();
-      preencher('Hospedes', '2');
+      preencher('Hóspedes', '2');
       preencher('Notas internas', 'Vegetariano');
       expect(screen.getByText('2 pessoa(s)')).toBeInTheDocument();
       expect(screen.getByText('€50.00')).toBeInTheDocument();
@@ -282,7 +282,7 @@ describe('Formulario, detalhe e cartao de reserva', () => {
       });
     });
 
-    it('actividade com horarios: escolhe um horario e o start_time acompanha-o', () => {
+    it('actividade com horários: escolhe um horário e o start_time acompanha-o', () => {
       const props = renderForm({ operatorType: 'activity' });
       preencher('Tour / Actividade', 't2');
       preencher('Data do tour', AMANHA);
@@ -297,14 +297,14 @@ describe('Formulario, detalhe e cartao de reserva', () => {
       }));
     });
 
-    it('actividade sem opcoes nao mostra a escolha da opcao nem os veiculos', () => {
+    it('actividade sem opções não mostra a escolha da opção nem os veiculos', () => {
       renderForm({ operatorType: 'activity' });
       preencher('Tour / Actividade', 't2');
       expect(screen.queryByText('Opção')).not.toBeInTheDocument();
       expect(screen.queryByText('Veículos')).not.toBeInTheDocument();
     });
 
-    it('actividade com opcoes: comeca na mais barata, a previsao e a da opcao e envia option_id', () => {
+    it('actividade com opções: comeca na mais barata, a previsão e a da opção e envia option_id', () => {
       const props = renderForm({ operatorType: 'activity' });
       preencher('Tour / Actividade', 't3');
       preencher('Data do tour', AMANHA);
@@ -314,7 +314,7 @@ describe('Formulario, detalhe e cartao de reserva', () => {
         ['o3', 'Buggy 2h · €90 por veículo (2 lugares)'],
       ]);
       expect(campo('Opção')).toHaveValue('o1');
-      preencher('Hospedes', '2');
+      preencher('Hóspedes', '2');
       expect(screen.getByText('€100.00')).toBeInTheDocument();
       expect(screen.queryByText('€50.00')).not.toBeInTheDocument();
       expect(screen.queryByText('Veículos')).not.toBeInTheDocument();
@@ -326,12 +326,12 @@ describe('Formulario, detalhe e cartao de reserva', () => {
       expect(enviado).not.toHaveProperty('vehicles');
     });
 
-    it('opcao por veiculo: mostra os veiculos (minimo pelas pessoas), previsao = precoEstimado e envia vehicles', () => {
+    it('opção por veiculo: mostra os veiculos (mínimo pelas pessoas), previsão = precoEstimado e envia vehicles', () => {
       const props = renderForm({ operatorType: 'activity' });
       preencher('Tour / Actividade', 't3');
       preencher('Data do tour', AMANHA);
       preencher('Opção', 'o3');
-      preencher('Hospedes', '5');
+      preencher('Hóspedes', '5');
       expect(campo('Veículos')).toHaveValue(3);
       expect(campo('Veículos')).toHaveAttribute('min', '3');
       expect(campo('Veículos')).toHaveAttribute('max', '5');
@@ -348,12 +348,12 @@ describe('Formulario, detalhe e cartao de reserva', () => {
       expect(props.onSave).toHaveBeenCalledWith(expect.objectContaining({ unit_id: 't3', guests: 5, option_id: 'o3', vehicles: 4 }));
     });
 
-    it('opcao por veiculo: um pedido fora dos limites e corrigido na previsao (o campo tem min e max)', () => {
+    it('opção por veiculo: um pedido fora dos limites e corrigido na previsão (o campo tem min e max)', () => {
       renderForm({ operatorType: 'activity' });
       preencher('Tour / Actividade', 't3');
       preencher('Data do tour', AMANHA);
       preencher('Opção', 'o3');
-      preencher('Hospedes', '5');
+      preencher('Hóspedes', '5');
       preencher('Veículos', '9');
       expect(screen.getByText('5 pessoa(s) · 5 veículo(s)')).toBeInTheDocument();
       expect(screen.getByText('€450.00')).toBeInTheDocument();
@@ -362,12 +362,12 @@ describe('Formulario, detalhe e cartao de reserva', () => {
       expect(screen.getByText('€270.00')).toBeInTheDocument();
     });
 
-    it('opcao por veiculo: o campo mostra o valor limitado que vai ser reservado', () => {
+    it('opção por veiculo: o campo mostra o valor limitado que vai ser reservado', () => {
       renderForm({ operatorType: 'activity' });
       preencher('Tour / Actividade', 't3');
       preencher('Data do tour', AMANHA);
       preencher('Opção', 'o3');
-      preencher('Hospedes', '5');
+      preencher('Hóspedes', '5');
       const veiculos = campo('Veículos');
       // a escrever o numero fica como foi escrito; ao sair do campo corrige-se
       fireEvent.focus(veiculos);
@@ -381,19 +381,19 @@ describe('Formulario, detalhe e cartao de reserva', () => {
       fireEvent.blur(veiculos);
       expect(veiculos.value).toBe('3');
       // sem foco (ex.: menos pessoas) o campo acompanha o limite
-      preencher('Hospedes', '2');
+      preencher('Hóspedes', '2');
       expect(campo('Veículos').value).toBe('1');
     });
 
-    it('opcao por veiculo: menos pessoas baixa o minimo e os veiculos acompanham', () => {
+    it('opção por veiculo: menos pessoas baixa o mínimo e os veiculos acompanham', () => {
       const props = renderForm({ operatorType: 'activity' });
       preencher('Tour / Actividade', 't3');
       preencher('Data do tour', AMANHA);
       preencher('Opção', 'o3');
-      preencher('Hospedes', '4');
+      preencher('Hóspedes', '4');
       expect(campo('Veículos')).toHaveValue(2);
       preencher('Veículos', '4');
-      preencher('Hospedes', '1');
+      preencher('Hóspedes', '1');
       expect(campo('Veículos')).toHaveValue(1);
       expect(screen.getByText('€90.00')).toBeInTheDocument();
       preencher('Horário', '09:00');
@@ -402,7 +402,7 @@ describe('Formulario, detalhe e cartao de reserva', () => {
       expect(props.onSave).toHaveBeenCalledWith(expect.objectContaining({ option_id: 'o3', vehicles: 1, guests: 1 }));
     });
 
-    it('em ingles as opcoes usam o nome e a unidade em ingles', () => {
+    it('em inglês as opções usam o nome e a unidade em inglês', () => {
       useUiStore.setState({ lang: 'en' });
       renderForm({ operatorType: 'activity' });
       preencher('Tour / Actividade', 't3');
@@ -411,7 +411,7 @@ describe('Formulario, detalhe e cartao de reserva', () => {
       ]);
     });
 
-    it('edicao de uma reserva com opcoes nao mostra a escolha da opcao', () => {
+    it('edição de uma reserva com opções não mostra a escolha da opção', () => {
       renderForm({
         operatorType: 'activity',
         reservation: { id: 'r9', unit_id: 't3', customer_name: 'Rui', customer_email: 'rui@exemplo.com', check_in: AMANHA, check_out: AMANHA, guests: 2 },
@@ -419,14 +419,14 @@ describe('Formulario, detalhe e cartao de reserva', () => {
       expect(screen.queryByText('Opção')).not.toBeInTheDocument();
     });
 
-    it('restaurante: data e hora da reserva, sem pre-visualizacao de preco', () => {
+    it('restaurante: data e hora da reserva, sem pre-visualizacao de preço', () => {
       const props = renderForm({ operatorType: 'restaurant' });
       preencher('Unidade', 'm1');
       preencher('Data da reserva', AMANHA);
       expect(campo('Hora')).toHaveValue('19:00');
       preencher('Hora', '20:30');
       preencherCliente();
-      preencher('Hospedes', '4');
+      preencher('Hóspedes', '4');
       expect(screen.queryByText(/pessoa\(s\)/)).not.toBeInTheDocument();
       fireEvent.click(botao('Nova Reserva'));
       expect(props.onSave).toHaveBeenCalledWith({
@@ -447,22 +447,22 @@ describe('Formulario, detalhe e cartao de reserva', () => {
       });
     });
 
-    it('edicao: parte dos valores da reserva, esconde o consentimento e mostra Guardar', () => {
+    it('edição: parte dos valores da reserva, esconde o consentimento e mostra Guardar', () => {
       const reservation = {
-        id: 'r1', unit_id: 'u1', customer_name: 'Joao Pires', customer_email: 'joao@exemplo.com',
+        id: 'r1', unit_id: 'u1', customer_name: 'João Pires', customer_email: 'joao@exemplo.com',
         customer_phone: '+238 911', customer_country: 'DE', check_in: AMANHA, check_out: MAIS_QUATRO,
         guests: 2, start_time: '18:45:00', source: 'airbnb', notes: 'Nota antiga', fleet_id: 'f9',
       };
       const props = renderForm({ reservation });
       expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();
-      expect(campo('Cliente')).toHaveValue('Joao Pires');
+      expect(campo('Cliente')).toHaveValue('João Pires');
       expect(campo('Fonte')).toHaveValue('airbnb');
       expect(botao('Guardar')).toBeInTheDocument();
       preencher('Telefone', '+238 922');
       fireEvent.click(botao('Guardar'));
       expect(props.onSave).toHaveBeenCalledWith({
         unit_id: 'u1',
-        customer_name: 'Joao Pires',
+        customer_name: 'João Pires',
         customer_email: 'joao@exemplo.com',
         customer_phone: '+238 922',
         customer_country: 'DE',
@@ -522,7 +522,7 @@ describe('Formulario, detalhe e cartao de reserva', () => {
       expect(screen.getByText('PT')).toBeInTheDocument();
       expect(screen.getByText('Buggy 1 (4 lugares)')).toBeInTheDocument();
       expect(screen.getByText('Chega tarde')).toBeInTheDocument();
-      for (const e of ['Check-in', 'Check-out', 'Hora', 'Hospedes', 'Estado do pagamento', 'Metodo de pagamento', 'Cliente', 'Email', 'Telefone', 'Viatura', 'Notas', 'Criada em']) {
+      for (const e of ['Check-in', 'Check-out', 'Hora', 'Hóspedes', 'Estado do pagamento', 'Método de pagamento', 'Cliente', 'Email', 'Telefone', 'Viatura', 'Notas', 'Criada em']) {
         expect(screen.getByText(e)).toBeInTheDocument();
       }
     });
@@ -534,7 +534,7 @@ describe('Formulario, detalhe e cartao de reserva', () => {
       expect(screen.getByText('Pago')).toBeInTheDocument();
     });
 
-    it('as acoes de WhatsApp aparecem conforme o estado da reserva', async () => {
+    it('as ações de WhatsApp aparecem conforme o estado da reserva', async () => {
       getReservation.mockResolvedValue(COMPLETA);
       renderDetalhe();
       expect(await screen.findByText('Maria Silva')).toBeInTheDocument();
@@ -542,7 +542,7 @@ describe('Formulario, detalhe e cartao de reserva', () => {
       expect(botao('Lembrete')).toBeEnabled();
     });
 
-    it('no mesmo dia nao repete a saida e sem extras esconde os blocos opcionais', async () => {
+    it('no mesmo dia não repete a saída e sem extras esconde os blocos opcionais', async () => {
       getReservation.mockResolvedValue({
         id: 'x1', status: 'pending', source: 'manual', units: { name: 'Quarto 1' }, total_price: 80,
         check_in: AMANHA, check_out: AMANHA, guests: 2, customer_name: 'Rui Rosa',
@@ -558,9 +558,9 @@ describe('Formulario, detalhe e cartao de reserva', () => {
     });
 
     it('mostra o erro do servidor', async () => {
-      getReservation.mockRejectedValue({ response: { data: { error: 'Reserva nao encontrada' } } });
+      getReservation.mockRejectedValue({ response: { data: { error: 'Reserva não encontrada' } } });
       renderDetalhe();
-      expect(await screen.findByText('Reserva nao encontrada')).toBeInTheDocument();
+      expect(await screen.findByText('Reserva não encontrada')).toBeInTheDocument();
     });
 
     it('fechar chama onClose', async () => {
@@ -571,7 +571,7 @@ describe('Formulario, detalhe e cartao de reserva', () => {
       expect(props.onClose).toHaveBeenCalledTimes(1);
     });
 
-    it('fechado nao pede a reserva', () => {
+    it('fechado não pede a reserva', () => {
       renderDetalhe({ open: false });
       expect(getReservation).not.toHaveBeenCalled();
       expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
@@ -594,7 +594,7 @@ describe('Formulario, detalhe e cartao de reserva', () => {
       return props;
     }
 
-    it('mostra cliente, estado, origem, unidade, total, hospedes e datas', () => {
+    it('mostra cliente, estado, origem, unidade, total, hóspedes e datas', () => {
       renderCartao();
       expect(screen.getByText('Maria Silva')).toBeInTheDocument();
       expect(screen.getByText('· PT')).toBeInTheDocument();
@@ -607,7 +607,7 @@ describe('Formulario, detalhe e cartao de reserva', () => {
       expect(screen.getByText(formatada(MAIS_QUATRO))).toBeInTheDocument();
     });
 
-    it('usa a base de cartao do desenho: branco, com borda e cantos de 8 px', () => {
+    it('usa a base de cartão do desenho: branco, com borda e cantos de 8 px', () => {
       const { container } = render(<ReservationCard reservation={reserva()} onUpdate={vi.fn()} onEdit={vi.fn()} onView={vi.fn()} />);
       expect(container.firstChild).toHaveClass('bg-white', 'border', 'border-n-200', 'rounded-sm');
     });
@@ -626,7 +626,7 @@ describe('Formulario, detalhe e cartao de reserva', () => {
       expect(props.onEdit).toHaveBeenCalledWith(r);
     });
 
-    it('o botao de avancar muda o estado e devolve a reserva actualizada', async () => {
+    it('o botão de avançar muda o estado e devolve a reserva actualizada', async () => {
       changeStatus.mockResolvedValue({ id: 'r1', status: 'confirmed' });
       const props = renderCartao();
       fireEvent.click(botao('Confirmar'));
@@ -635,7 +635,7 @@ describe('Formulario, detalhe e cartao de reserva', () => {
       expect(props.onUpdate).toHaveBeenCalledWith({ id: 'r1', status: 'confirmed' });
     });
 
-    it('o botao de avancar segue o estado: confirmada passa a Check-in, check-in a Check-out', () => {
+    it('o botão de avançar segue o estado: confirmada passa a Check-in, check-in a Check-out', () => {
       renderCartao(reserva({ status: 'confirmed' }));
       expect(botao('Check-in')).toBeInTheDocument();
       cleanup();
@@ -643,12 +643,12 @@ describe('Formulario, detalhe e cartao de reserva', () => {
       expect(botao('Check-out')).toBeInTheDocument();
     });
 
-    it('sem proximo estado nao ha botao de avancar nem de eliminar', () => {
+    it('sem próximo estado não ha botão de avançar nem de eliminar', () => {
       renderCartao(reserva({ status: 'checked_out' }));
       expect(screen.getAllByRole('button').map(b => b.getAttribute('aria-label'))).toEqual(['Ver', 'Editar']);
     });
 
-    it('pendente: eliminar pede confirmacao e depois apaga', async () => {
+    it('pendente: eliminar pede confirmação e depois apaga', async () => {
       deleteReservation.mockResolvedValue();
       const props = renderCartao();
       expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
@@ -662,7 +662,7 @@ describe('Formulario, detalhe e cartao de reserva', () => {
       await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
     });
 
-    it('cancelar a confirmacao nao apaga', async () => {
+    it('cancelar a confirmação não apaga', async () => {
       const props = renderCartao();
       fireEvent.click(botao('Eliminar'));
       const dialogo = await screen.findByRole('dialog');
@@ -672,7 +672,7 @@ describe('Formulario, detalhe e cartao de reserva', () => {
       expect(props.onUpdate).not.toHaveBeenCalled();
     });
 
-    it('cancelada tambem pode ser eliminada, confirmada nao', () => {
+    it('cancelada também pode ser eliminada, confirmada não', () => {
       renderCartao(reserva({ status: 'cancelled' }));
       expect(botao('Eliminar')).toBeInTheDocument();
       cleanup();

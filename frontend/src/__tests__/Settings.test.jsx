@@ -103,14 +103,14 @@ const ultimoPut = () => updateOperator.mock.calls[updateOperator.mock.calls.leng
 
 /* ───────────────────────── caracterizacao: estrutura ───────────────────────── */
 
-describe('Definicoes: estrutura', () => {
+describe('Definições: estrutura', () => {
   it('abre_em_Conta_e_o_query_string_tab_escolhe_o_separador_inicial', async () => {
     montar();
-    expect(screen.getByText('Definicoes')).toBeInTheDocument();
+    expect(screen.getByText('Definições')).toBeInTheDocument();
     expect(screen.getByText('Dados da empresa')).toBeInTheDocument();
     cleanup();
     montar('/definicoes?tab=notificacoes');
-    expect(screen.getByText('Canal de notificacoes')).toBeInTheDocument();
+    expect(screen.getByText('Canal de notificações')).toBeInTheDocument();
     cleanup();
     montar('/definicoes?tab=nao-existe');
     expect(screen.getByText('Dados da empresa')).toBeInTheDocument();
@@ -119,8 +119,8 @@ describe('Definicoes: estrutura', () => {
   it('os_sete_separadores_trocam_o_conteudo', async () => {
     montar();
     for (const [rotulo, ancora] of [
-      ['Perfil Publico', 'Logo'], ['Pagamentos', 'Guardar credenciais'], ['Facturacao', 'Subscricao actual'],
-      ['Notificacoes', 'Canal de notificacoes'], ['Mensagens', 'EDITOR MENSAGENS'], ['Seguranca', 'Alterar password'], ['Conta', 'Dados da empresa'],
+      ['Perfil Público', 'Logo'], ['Pagamentos', 'Guardar credenciais'], ['Facturação', 'Subscrição actual'],
+      ['Notificações', 'Canal de notificações'], ['Mensagens', 'EDITOR MENSAGENS'], ['Segurança', 'Alterar password'], ['Conta', 'Dados da empresa'],
     ]) {
       await abrir(rotulo, ancora);
     }
@@ -130,7 +130,7 @@ describe('Definicoes: estrutura', () => {
 
 /* ───────────────────────── caracterizacao: Conta ───────────────────────── */
 
-describe('Definicoes: Conta', () => {
+describe('Definições: Conta', () => {
   it('mostra_os_valores_do_operador_e_os_por_omissao', () => {
     montar();
     expect(campo('Nome da empresa')).toHaveValue('Sal Aventura');
@@ -140,12 +140,12 @@ describe('Definicoes: Conta', () => {
     expect(campo('Morada')).toHaveValue('Rua 1');
     expect(campo('Idioma', 'select')).toHaveValue('en');
     expect(campo('Moeda', 'select')).toHaveValue('EUR');
-    expect(campo('Fuso horario', 'select')).toHaveValue('Europe/Lisbon');
+    expect(campo('Fuso horário', 'select')).toHaveValue('Europe/Lisbon');
     cleanup();
     montar('/definicoes', { id: 'o', name: 'X', email: 'e@x.test' });
     expect(campo('Idioma', 'select')).toHaveValue('pt');
     expect(campo('Moeda', 'select')).toHaveValue('CVE');
-    expect(campo('Fuso horario', 'select')).toHaveValue('Atlantic/Cape_Verde');
+    expect(campo('Fuso horário', 'select')).toHaveValue('Atlantic/Cape_Verde');
     expect(campo('Telefone')).toHaveValue('');
   });
 
@@ -153,7 +153,7 @@ describe('Definicoes: Conta', () => {
     montar();
     expect([...campo('Idioma', 'select').options].map(o => o.textContent)).toEqual(['PT', 'EN', 'DE', 'NL', 'FR', 'ES']);
     expect([...campo('Moeda', 'select').options].map(o => o.textContent)).toEqual(['CVE', 'EUR', 'USD', 'GBP']);
-    expect([...campo('Fuso horario', 'select').options].map(o => o.textContent)).toEqual([
+    expect([...campo('Fuso horário', 'select').options].map(o => o.textContent)).toEqual([
       'Atlantic/Cape Verde', 'Europe/Lisbon', 'Europe/London', 'America/New York', 'America/Sao_Paulo'.replace('_', ' '),
     ]);
   });
@@ -162,7 +162,7 @@ describe('Definicoes: Conta', () => {
     montar();
     fireEvent.change(campo('Nome da empresa'), { target: { value: 'Novo Nome' } });
     fireEvent.change(campo('Moeda', 'select'), { target: { value: 'USD' } });
-    fireEvent.click(botao('Guardar alteracoes'));
+    fireEvent.click(botao('Guardar alterações'));
     await waitFor(() => expect(updateOperator).toHaveBeenCalledTimes(1));
     expect(ultimoPut()).toEqual({ name: 'Novo Nome', currency: 'USD' });
     expect(await screen.findByText('Guardado com sucesso')).toBeInTheDocument();
@@ -172,7 +172,7 @@ describe('Definicoes: Conta', () => {
   it('o_aviso_de_guardado_desaparece_apos_3s', async () => {
     montar();
     vi.useFakeTimers();
-    fireEvent.click(botao('Guardar alteracoes'));
+    fireEvent.click(botao('Guardar alterações'));
     await act(async () => { await vi.advanceTimersByTimeAsync(0); });
     expect(screen.getByText('Guardado com sucesso')).toBeInTheDocument();
     await act(async () => { await vi.advanceTimersByTimeAsync(2999); });
@@ -183,7 +183,7 @@ describe('Definicoes: Conta', () => {
 
   it('sem_alteracoes_nao_chama_o_servidor_e_mostra_Guardado', async () => {
     montar();
-    fireEvent.click(botao('Guardar alteracoes'));
+    fireEvent.click(botao('Guardar alterações'));
     expect(await screen.findByText('Guardado com sucesso')).toBeInTheDocument();
     expect(updateOperator).not.toHaveBeenCalled();
   });
@@ -191,22 +191,22 @@ describe('Definicoes: Conta', () => {
   it('a_segunda_gravacao_so_envia_o_que_mudou_desde_a_primeira', async () => {
     montar();
     fireEvent.change(campo('Nome da empresa'), { target: { value: 'Novo Nome' } });
-    fireEvent.click(botao('Guardar alteracoes'));
+    fireEvent.click(botao('Guardar alterações'));
     await waitFor(() => expect(updateOperator).toHaveBeenCalledTimes(1));
     fireEvent.change(campo('Morada'), { target: { value: 'Rua 2' } });
-    fireEvent.click(botao('Guardar alteracoes'));
+    fireEvent.click(botao('Guardar alterações'));
     await waitFor(() => expect(updateOperator).toHaveBeenCalledTimes(2));
     expect(ultimoPut()).toEqual({ address: 'Rua 2' });
   });
 
   it('erro_do_servidor_ou_Erro ao guardar', async () => {
-    updateOperator.mockRejectedValueOnce({ response: { data: { error: 'Email invalido' } } });
+    updateOperator.mockRejectedValueOnce({ response: { data: { error: 'Email inválido' } } });
     montar();
     fireEvent.change(campo('Email'), { target: { value: 'mau@x' } });
-    fireEvent.click(botao('Guardar alteracoes'));
-    expect(await screen.findByText('Email invalido')).toBeInTheDocument();
+    fireEvent.click(botao('Guardar alterações'));
+    expect(await screen.findByText('Email inválido')).toBeInTheDocument();
     updateOperator.mockRejectedValueOnce(new Error('x'));
-    fireEvent.click(botao('Guardar alteracoes'));
+    fireEvent.click(botao('Guardar alterações'));
     expect(await screen.findByText('Erro ao guardar')).toBeInTheDocument();
   });
 
@@ -226,21 +226,21 @@ const campoFaq = (n, etiqueta, tag = 'input') => within(faq(n)).getByText(etique
 const setas = (n) => within(faq(n).firstChild).getAllByRole('button');
 async function abrirPerfil(op = OPERADOR) {
   const r = montar('/definicoes', op);
-  await abrir('Perfil Publico', 'Logo');
+  await abrir('Perfil Público', 'Logo');
   await screen.findByText(/saldesk\.cv\/book\/demo|^\.\.\.$/);
   return r;
 }
 const arquivo = (nome, conteudo) => new File([conteudo], nome, { type: 'image/png' });
 
-describe('Definicoes: Perfil Publico', () => {
+describe('Definições: Perfil Público', () => {
   it('mostra_os_valores_do_operador', async () => {
     await abrirPerfil();
     /* a descricao que o operador escreveu no registo e que os turistas lêem; nao ha descricao em ingles */
-    expect(screen.getByLabelText('Descricao da empresa')).toHaveValue('Desc PT');
-    expect(within(cartao('Descricao')).getAllByRole('textbox')).toHaveLength(1);
-    expect(screen.getByText('Aparece na sua pagina publica e na lista de operadores do catalogo.')).toBeInTheDocument();
-    expect(campo('Portugues', 'textarea', within(cartao('Politica de cancelamento')))).toHaveValue('CP PT');
-    expect(campo('Ingles (EN)', 'textarea', within(cartao('Politica de cancelamento')))).toHaveValue('CP EN');
+    expect(screen.getByLabelText('Descrição da empresa')).toHaveValue('Desc PT');
+    expect(within(cartao('Descrição')).getAllByRole('textbox')).toHaveLength(1);
+    expect(screen.getByText('Aparece na sua página pública e na lista de operadores do catálogo.')).toBeInTheDocument();
+    expect(campo('Português', 'textarea', within(cartao('Política de cancelamento')))).toHaveValue('CP PT');
+    expect(campo('Inglês (EN)', 'textarea', within(cartao('Política de cancelamento')))).toHaveValue('CP EN');
     expect(screen.getByText('Pergunta 1')).toBeInTheDocument();
     expect(campoFaq(1, 'Pergunta PT')).toHaveValue('P1');
     expect(campoFaq(2, 'Pergunta EN')).toHaveValue('');
@@ -261,9 +261,9 @@ describe('Definicoes: Perfil Publico', () => {
   it('logo_invalido_ou_upload_falhado_mostra_o_erro_e_nao_altera_o_logo', async () => {
     const { container } = await abrirPerfil();
     const entrada = () => container.querySelector('input[type="file"]:not([multiple])');
-    validateImageFile.mockReturnValueOnce('Formato invalido: l.gif. Usa JPG, PNG ou WebP.');
+    validateImageFile.mockReturnValueOnce('Formato inválido: l.gif. Usa JPG, PNG ou WebP.');
     fireEvent.change(entrada(), { target: { files: [arquivo('l.gif', 'a')] } });
-    expect(await screen.findByText('Formato invalido: l.gif. Usa JPG, PNG ou WebP.')).toBeInTheDocument();
+    expect(await screen.findByText('Formato inválido: l.gif. Usa JPG, PNG ou WebP.')).toBeInTheDocument();
     expect(uploadImage).not.toHaveBeenCalled();
     uploadImage.mockRejectedValueOnce(new Error('x'));
     fireEvent.change(entrada(), { target: { files: [arquivo('l.png', 'a')] } });
@@ -279,7 +279,7 @@ describe('Definicoes: Perfil Publico', () => {
 
   it('capas_sem_mexer_nao_vao_no_pedido_e_remover_todas_envia_lista_vazia', async () => {
     const { container } = await abrirPerfil({ ...OPERADOR, cover_images: ['https://cdn.test/a.jpg', 'https://cdn.test/b.jpg'] });
-    fireEvent.change(screen.getByLabelText('Descricao da empresa'), { target: { value: 'Nova desc' } });
+    fireEvent.change(screen.getByLabelText('Descrição da empresa'), { target: { value: 'Nova desc' } });
     fireEvent.click(botao('Guardar perfil'));
     await waitFor(() => expect(updateOperator).toHaveBeenCalledTimes(1));
     expect(ultimoPut()).not.toHaveProperty('cover_images');
@@ -331,8 +331,8 @@ describe('Definicoes: Perfil Publico', () => {
   it('guardar_envia_so_os_campos_alterados_e_faqs_so_com_pergunta_e_setOperator', async () => {
     await abrirPerfil();
     fireEvent.click(botao('Adicionar pergunta'));
-    fireEvent.change(campoFaq(3, 'Resposta PT', 'textarea'), { target: { value: 'so resposta' } });
-    fireEvent.change(screen.getByLabelText('Descricao da empresa'), { target: { value: 'Nova desc' } });
+    fireEvent.change(campoFaq(3, 'Resposta PT', 'textarea'), { target: { value: 'só resposta' } });
+    fireEvent.change(screen.getByLabelText('Descrição da empresa'), { target: { value: 'Nova desc' } });
     fireEvent.click(botao('Guardar perfil'));
     /* so o que mudou: a FAQ so com resposta e descartada, por isso as FAQ nao mudaram */
     await waitFor(() => expect(updateOperator).toHaveBeenCalledWith({ description: 'Nova desc' }));
@@ -342,8 +342,8 @@ describe('Definicoes: Perfil Publico', () => {
 
   it('o_cartao_do_chat_comeca_desligado_sem_campos_e_ligar_mostra_dias_horas_e_textos', async () => {
     await abrirPerfil();
-    const cartaoChat = cartao('Chat do site: resposta automatica');
-    const ligar = within(cartaoChat).getByRole('checkbox', { name: 'Responder automaticamente fora do horario' });
+    const cartaoChat = cartao('Chat do site: resposta automática');
+    const ligar = within(cartaoChat).getByRole('checkbox', { name: 'Responder automaticamente fora do horário' });
     expect(ligar).not.toBeChecked();
     expect(within(cartaoChat).queryByLabelText('Abre as')).toBeNull();
     fireEvent.click(ligar);
@@ -353,22 +353,22 @@ describe('Definicoes: Perfil Publico', () => {
     ['Sab', 'Dom'].forEach(d => expect(within(cartaoChat).getByRole('checkbox', { name: d })).not.toBeChecked());
     expect(within(cartaoChat).getByLabelText('Abre as')).toHaveValue('09:00');
     expect(within(cartaoChat).getByLabelText('Fecha as')).toHaveValue('18:00');
-    expect(within(cartaoChat).getByLabelText('Mensagem em Portugues')).toHaveValue('');
-    expect(within(cartaoChat).getByLabelText('Mensagem em Ingles')).toHaveValue('');
+    expect(within(cartaoChat).getByLabelText('Mensagem em Português')).toHaveValue('');
+    expect(within(cartaoChat).getByLabelText('Mensagem em Inglês')).toHaveValue('');
     /* o texto por omissao aparece como sugestao */
-    expect(within(cartaoChat).getByLabelText('Mensagem em Portugues')).toHaveAttribute('placeholder', expect.stringContaining('fora do horario de atendimento'));
+    expect(within(cartaoChat).getByLabelText('Mensagem em Português')).toHaveAttribute('placeholder', expect.stringContaining('fora do horário de atendimento'));
   });
 
   it('guardar_com_o_chat_ligado_envia_a_configuracao_com_as_alteracoes', async () => {
     await abrirPerfil();
-    const cartaoChat = cartao('Chat do site: resposta automatica');
-    fireEvent.click(within(cartaoChat).getByRole('checkbox', { name: 'Responder automaticamente fora do horario' }));
+    const cartaoChat = cartao('Chat do site: resposta automática');
+    fireEvent.click(within(cartaoChat).getByRole('checkbox', { name: 'Responder automaticamente fora do horário' }));
     fireEvent.click(within(cartaoChat).getByRole('checkbox', { name: 'Sab' }));
     fireEvent.click(within(cartaoChat).getByRole('checkbox', { name: 'Qua' }));
     fireEvent.change(within(cartaoChat).getByLabelText('Abre as'), { target: { value: '08:30' } });
     fireEvent.change(within(cartaoChat).getByLabelText('Fecha as'), { target: { value: '17:00' } });
-    fireEvent.change(within(cartaoChat).getByLabelText('Mensagem em Portugues'), { target: { value: 'Voltamos segunda.' } });
-    fireEvent.change(within(cartaoChat).getByLabelText('Mensagem em Ingles'), { target: { value: 'Back Monday.' } });
+    fireEvent.change(within(cartaoChat).getByLabelText('Mensagem em Português'), { target: { value: 'Voltamos segunda.' } });
+    fireEvent.change(within(cartaoChat).getByLabelText('Mensagem em Inglês'), { target: { value: 'Back Monday.' } });
     fireEvent.click(botao('Guardar perfil'));
     await waitFor(() => expect(updateOperator).toHaveBeenCalled());
     expect(ultimoPut().chat_auto_reply).toEqual({
@@ -378,14 +378,14 @@ describe('Definicoes: Perfil Publico', () => {
 
   it('arranca_com_a_configuracao_guardada_no_operador_e_desligar_mantem_os_valores', async () => {
     await abrirPerfil({ ...OPERADOR, chat_auto_reply: { enabled: true, days: [0, 6], from: '10:00', to: '14:00', message_pt: 'PT guardado', message_en: 'EN saved' } });
-    const cartaoChat = cartao('Chat do site: resposta automatica');
-    const ligar = within(cartaoChat).getByRole('checkbox', { name: 'Responder automaticamente fora do horario' });
+    const cartaoChat = cartao('Chat do site: resposta automática');
+    const ligar = within(cartaoChat).getByRole('checkbox', { name: 'Responder automaticamente fora do horário' });
     expect(ligar).toBeChecked();
     expect(within(cartaoChat).getByRole('checkbox', { name: 'Dom' })).toBeChecked();
     expect(within(cartaoChat).getByRole('checkbox', { name: 'Sab' })).toBeChecked();
     expect(within(cartaoChat).getByRole('checkbox', { name: 'Seg' })).not.toBeChecked();
     expect(within(cartaoChat).getByLabelText('Abre as')).toHaveValue('10:00');
-    expect(within(cartaoChat).getByLabelText('Mensagem em Portugues')).toHaveValue('PT guardado');
+    expect(within(cartaoChat).getByLabelText('Mensagem em Português')).toHaveValue('PT guardado');
     fireEvent.click(ligar);
     fireEvent.click(botao('Guardar perfil'));
     await waitFor(() => expect(updateOperator).toHaveBeenCalled());
@@ -396,8 +396,8 @@ describe('Definicoes: Perfil Publico', () => {
 
   it('um_horario_que_atravessa_a_meia_noite_e_aceite_e_guardado', async () => {
     await abrirPerfil();
-    const cartaoChat = cartao('Chat do site: resposta automatica');
-    fireEvent.click(within(cartaoChat).getByRole('checkbox', { name: 'Responder automaticamente fora do horario' }));
+    const cartaoChat = cartao('Chat do site: resposta automática');
+    fireEvent.click(within(cartaoChat).getByRole('checkbox', { name: 'Responder automaticamente fora do horário' }));
     fireEvent.change(within(cartaoChat).getByLabelText('Abre as'), { target: { value: '22:00' } });
     fireEvent.change(within(cartaoChat).getByLabelText('Fecha as'), { target: { value: '06:00' } });
     expect(within(cartaoChat).queryByRole('alert')).toBeNull();
@@ -409,8 +409,8 @@ describe('Definicoes: Perfil Publico', () => {
 
   it('um_horario_em_que_o_fim_e_igual_ao_inicio_avisa_e_nao_guarda', async () => {
     await abrirPerfil();
-    const cartaoChat = cartao('Chat do site: resposta automatica');
-    fireEvent.click(within(cartaoChat).getByRole('checkbox', { name: 'Responder automaticamente fora do horario' }));
+    const cartaoChat = cartao('Chat do site: resposta automática');
+    fireEvent.click(within(cartaoChat).getByRole('checkbox', { name: 'Responder automaticamente fora do horário' }));
     fireEvent.change(within(cartaoChat).getByLabelText('Fecha as'), { target: { value: '09:00' } });
     expect(within(cartaoChat).getByRole('alert')).toHaveTextContent('A hora de fecho tem de ser diferente da hora de abertura.');
     fireEvent.click(botao('Guardar perfil'));
@@ -421,16 +421,16 @@ describe('Definicoes: Perfil Publico', () => {
 
   it('ligado_sem_nenhum_dia_avisa_e_nao_guarda', async () => {
     await abrirPerfil();
-    const cartaoChat = cartao('Chat do site: resposta automatica');
-    fireEvent.click(within(cartaoChat).getByRole('checkbox', { name: 'Responder automaticamente fora do horario' }));
+    const cartaoChat = cartao('Chat do site: resposta automática');
+    fireEvent.click(within(cartaoChat).getByRole('checkbox', { name: 'Responder automaticamente fora do horário' }));
     ['Seg', 'Ter', 'Qua', 'Qui', 'Sex'].forEach(d => fireEvent.click(within(cartaoChat).getByRole('checkbox', { name: d })));
     expect(within(cartaoChat).getByRole('alert')).toHaveTextContent('Escolhe pelo menos um dia de atendimento.');
     fireEvent.click(botao('Guardar perfil'));
     expect(updateOperator).not.toHaveBeenCalled();
   });
 
-  describe('cancelamento gratis e confirmacao automatica', () => {
-    const POLITICA = 'Politica de cancelamento';
+  describe('cancelamento grátis e confirmação automática', () => {
+    const POLITICA = 'Política de cancelamento';
     const prazo = () => within(cartao(POLITICA)).getByLabelText('Cancelamento grátis');
 
     it('prazo_e_confirmacao_vao_no_guardar', async () => {
@@ -459,8 +459,8 @@ describe('Definicoes: Perfil Publico', () => {
 
     it('dica_da_confirmacao_explica_que_so_pagar_no_local_confirma_logo', async () => {
       await abrirPerfil({ ...OPERADOR, auto_confirm_bookings: false });
-      expect(screen.getByText('As reservas da sua pagina publica com pagamento no local ficam logo confirmadas, sem precisar de as aceitar. '
-        + 'As pagas online ficam confirmadas quando o pagamento e feito. Os cartoes do catalogo mostram "Confirmacao imediata".')).toBeInTheDocument();
+      expect(screen.getByText('As reservas da sua página pública com pagamento no local ficam logo confirmadas, sem precisar de as aceitar. '
+        + 'As pagas online ficam confirmadas quando o pagamento é feito. Os cartões do catálogo mostram "Confirmação imediata".')).toBeInTheDocument();
     });
 
     it('mudar_so_a_confirmacao_nao_envia_o_prazo_nem_o_resto_do_perfil', async () => {
@@ -484,8 +484,8 @@ describe('Definicoes: Perfil Publico', () => {
     });
   });
 
-  describe('cor da pagina publica', () => {
-    const TITULO = 'Cor da pagina publica e do widget';
+  describe('cor da página pública', () => {
+    const TITULO = 'Cor da página pública e do widget';
     const hex = () => within(cartao(TITULO)).getByLabelText('Cor em hexadecimal');
 
     it('comeca_sem_cor_escolhida_com_a_cor_original_na_previa_e_guardar_sem_mexer_nao_envia_nada', async () => {
@@ -557,7 +557,7 @@ describe('Definicoes: Perfil Publico', () => {
   it('falha_ao_guardar_regista_console.error_e_nao_mostra_o_aviso', async () => {
     updateOperator.mockRejectedValue(new Error('x'));
     await abrirPerfil();
-    fireEvent.change(screen.getByLabelText('Descricao da empresa'), { target: { value: 'Nova desc' } });
+    fireEvent.change(screen.getByLabelText('Descrição da empresa'), { target: { value: 'Nova desc' } });
     fireEvent.click(botao('Guardar perfil'));
     await waitFor(() => expect(spyErr).toHaveBeenCalled());
     spyErr.mockClear();
@@ -573,7 +573,7 @@ describe('Definicoes: Perfil Publico', () => {
     expect(qr).toHaveAttribute('src', `${apiBase}/api/v1/public/demo/qrcode`);
     expect(f.getByRole('link', { name: 'Descarregar PNG' })).toHaveAttribute('download', 'qrcode.png');
     expect(f.getByText('<script data-slug="demo"></script>')).toBeInTheDocument();
-    expect(f.getByRole('link', { name: 'Pre-visualizar pagina publica' })).toHaveAttribute('href', '/book/demo');
+    expect(f.getByRole('link', { name: 'Pré-visualizar página pública' })).toHaveAttribute('href', '/book/demo');
     vi.useFakeTimers();
     fireEvent.click(f.getAllByRole('button', { name: 'Copiar' })[0]);
     await act(async () => { await vi.advanceTimersByTimeAsync(0); });
@@ -588,13 +588,13 @@ describe('Definicoes: Perfil Publico', () => {
     respostas['/marketing/booking-link'] = { data: { data: {} } };
     useAuthStore.setState({ operator: { ...OPERADOR, slug: undefined } });
     montar('/definicoes', { ...OPERADOR, slug: undefined });
-    await abrir('Perfil Publico', 'Logo');
+    await abrir('Perfil Público', 'Logo');
     await screen.findByText('...');
     const f = within(cartao('Ferramentas de marketing'));
     expect(f.queryByAltText('QR Code')).not.toBeInTheDocument();
-    expect(f.queryByText('Widget embebivel')).not.toBeInTheDocument();
+    expect(f.queryByText('Widget embebível')).not.toBeInTheDocument();
     expect(f.queryByRole('link', { name: 'Abrir' })).not.toBeInTheDocument();
-    expect(f.getByRole('link', { name: 'Pre-visualizar pagina publica' })).toHaveAttribute('href', '#');
+    expect(f.getByRole('link', { name: 'Pré-visualizar página pública' })).toHaveAttribute('href', '#');
     expect(screen.queryByText('Indique um operador')).not.toBeInTheDocument();
   });
 
@@ -613,13 +613,13 @@ describe('Definicoes: Perfil Publico', () => {
 
 const estadoCartao = (rotulo) => screen.getAllByText(rotulo).find(e => e.tagName === 'P' && e.className.includes('font-semibold')).nextSibling.textContent;
 
-describe('Definicoes: Pagamentos', () => {
+describe('Definições: Pagamentos', () => {
   it('mostra_o_estado_PayPal_Webhook_e_SISP_e_os_marcadores_de_ja_configurado', async () => {
     montar();
     await abrir('Pagamentos', 'Webhook PayPal');
     expect(estadoCartao('PayPal')).toBe('Configurado');
-    expect(estadoCartao('Webhook PayPal')).toBe('Nao configurado');
-    expect(estadoCartao('SISP Vinti4')).toBe('Nao configurado');
+    expect(estadoCartao('Webhook PayPal')).toBe('Não configurado');
+    expect(estadoCartao('SISP Vinti4')).toBe('Não configurado');
     expect(screen.getByPlaceholderText('••••••••••••')).toBeInTheDocument();
     expect(screen.getByPlaceholderText('Ex: 8PT597110X687430LKGECATA')).toBeInTheDocument();
     expect(screen.getByPlaceholderText('Ex: 90051')).toBeInTheDocument();
@@ -664,56 +664,56 @@ describe('Definicoes: Pagamentos', () => {
 const plano = (nome) => screen.getAllByText(nome).find(e => e.tagName === 'P' && e.className.includes('text-n-900') && !e.className.includes('text-lg')).closest('div.space-y-2');
 async function abrirFacturacao(op = OPERADOR) {
   montar('/definicoes', op);
-  await abrir('Facturacao', 'Subscricao actual');
-  await screen.findByText('Historico de pagamentos');
+  await abrir('Facturação', 'Subscrição actual');
+  await screen.findByText('Histórico de pagamentos');
   await act(async () => {});
 }
 const escolher = (nomePlano) => fireEvent.click(within(plano(nomePlano)).getByRole('button'));
 const modalPagamento = () => within(screen.getByText('Como quer pagar?').closest('[role="dialog"]'));
 
-describe('Definicoes: Facturacao', () => {
+describe('Definições: Facturação', () => {
   it('mostra_plano_estado_renovacao_e_cancelar', async () => {
     await abrirFacturacao();
-    const sub = within(cartao('Subscricao actual'));
+    const sub = within(cartao('Subscrição actual'));
     expect(sub.getByText('Pro')).toBeInTheDocument();
     expect(sub.getByText('Activo')).toBeInTheDocument();
     expect(sub.getByText(`Renova automaticamente a ${new Date(OPERADOR.plan_paid_until).toLocaleDateString('pt-PT')}`)).toBeInTheDocument();
-    expect(sub.getByRole('button', { name: 'Cancelar subscricao' })).toBeInTheDocument();
+    expect(sub.getByRole('button', { name: 'Cancelar subscrição' })).toBeInTheDocument();
   });
 
   it('sem_subscricao_activa_mostra_pago_ate_e_sem_cancelar', async () => {
     await abrirFacturacao({ ...OPERADOR, paypal_subscription_id: null });
-    const sub = within(cartao('Subscricao actual'));
-    expect(sub.getByText(`Pago ate ${new Date(OPERADOR.plan_paid_until).toLocaleDateString('pt-PT')}`)).toBeInTheDocument();
-    expect(sub.queryByRole('button', { name: 'Cancelar subscricao' })).not.toBeInTheDocument();
+    const sub = within(cartao('Subscrição actual'));
+    expect(sub.getByText(`Pago até ${new Date(OPERADOR.plan_paid_until).toLocaleDateString('pt-PT')}`)).toBeInTheDocument();
+    expect(sub.queryByRole('button', { name: 'Cancelar subscrição' })).not.toBeInTheDocument();
   });
 
   it('avaliacao_em_curso_expirada_e_estado_desconhecido', async () => {
     await abrirFacturacao({ ...OPERADOR, plan_status: 'trial', trial_ends_at: dia(5), plan_paid_until: null, paypal_subscription_id: null });
-    expect(within(cartao('Subscricao actual')).getByText('Periodo de avaliacao')).toBeInTheDocument();
-    expect(screen.getByText('5 dias restantes no periodo de avaliacao')).toBeInTheDocument();
+    expect(within(cartao('Subscrição actual')).getByText('Período de avaliação')).toBeInTheDocument();
+    expect(screen.getByText('5 dias restantes no período de avaliação')).toBeInTheDocument();
     cleanup();
     await abrirFacturacao({ ...OPERADOR, plan_status: 'trial', trial_ends_at: dia(-1), plan_paid_until: null, paypal_subscription_id: null });
-    expect(screen.getByText('Periodo de avaliacao terminado')).toBeInTheDocument();
+    expect(screen.getByText('Período de avaliação terminado')).toBeInTheDocument();
     cleanup();
     await abrirFacturacao({ ...OPERADOR, plan_status: 'xyz', paypal_subscription_id: null });
-    expect(within(cartao('Subscricao actual')).getByText('xyz')).toBeInTheDocument();
+    expect(within(cartao('Subscrição actual')).getByText('xyz')).toBeInTheDocument();
   });
 
   it('plano_actual_desactivado_e_os_outros_mostram_o_preco', async () => {
     await abrirFacturacao();
     expect(within(plano('Pro')).getByRole('button', { name: 'Plano actual' })).toBeDisabled();
     expect(within(plano('Starter')).getByRole('button', { name: 'Subscrever' })).not.toBeDisabled();
-    expect(plano('Starter')).toHaveTextContent('€29/mes');
-    expect(plano('Business')).toHaveTextContent('€79/mes');
-    expect(plano('Pro')).toHaveTextContent('€69/mes');
+    expect(plano('Starter')).toHaveTextContent('€29/mês');
+    expect(plano('Business')).toHaveTextContent('€79/mês');
+    expect(plano('Pro')).toHaveTextContent('€69/mês');
   });
 
   it('escolher_um_plano_abre_o_modal_com_o_preco_em_euro_e_CVE_e_a_politica_desbloqueia_os_botoes', async () => {
     await abrirFacturacao();
     escolher('Business');
     const m = modalPagamento();
-    expect(norm(m.getByText(/Plano/).parentElement.textContent)).toContain(`Plano Business — €79/mes`);
+    expect(norm(m.getByText(/Plano/).parentElement.textContent)).toContain(`Plano Business — €79/mês`);
     expect(norm(m.getByText(/Plano/).parentElement.textContent)).toContain(`≈ ${Math.round(79 * 110.265).toLocaleString('pt-PT')} CVE`);
     const paypal = m.getByRole('button', { name: /^PayPal/ });
     const sisp = m.getByRole('button', { name: /^SISP Vinti4/ });
@@ -739,7 +739,7 @@ describe('Definicoes: Facturacao', () => {
     escolher('Business');
     fireEvent.click(modalPagamento().getByRole('checkbox'));
     fireEvent.click(modalPagamento().getByRole('button', { name: /^PayPal/ }));
-    expect(await screen.findByText('Nao foi possivel iniciar a subscricao. Tenta novamente.')).toBeInTheDocument();
+    expect(await screen.findByText('Não foi possível iniciar a subscrição. Tenta novamente.')).toBeInTheDocument();
     expect(screen.queryByText('Como quer pagar?')).not.toBeInTheDocument();
   });
 
@@ -761,39 +761,39 @@ describe('Definicoes: Facturacao', () => {
     escolher('Business');
     fireEvent.click(modalPagamento().getByRole('checkbox'));
     fireEvent.click(modalPagamento().getByRole('button', { name: /^SISP Vinti4/ }));
-    expect(await screen.findByText('O pagamento por SISP ainda nao esta disponivel para a subscricao SalDesk.')).toBeInTheDocument();
+    expect(await screen.findByText('O pagamento por SISP ainda não está disponível para a subscrição SalDesk.')).toBeInTheDocument();
     createSispCheckout.mockRejectedValueOnce(new Error('x'));
     escolher('Business');
     fireEvent.click(modalPagamento().getByRole('checkbox'));
     fireEvent.click(modalPagamento().getByRole('button', { name: /^SISP Vinti4/ }));
-    expect(await screen.findByText('Nao foi possivel iniciar o pagamento SISP. Tenta novamente.')).toBeInTheDocument();
+    expect(await screen.findByText('Não foi possível iniciar o pagamento SISP. Tenta novamente.')).toBeInTheDocument();
   });
 
   it('cancelar_subscricao_abre_o_modal_chama_cancelSubscription_e_recarrega_o_operador', async () => {
     cancelSubscription.mockResolvedValue({});
     await abrirFacturacao();
-    fireEvent.click(within(cartao('Subscricao actual')).getByRole('button', { name: 'Cancelar subscricao' }));
-    expect(screen.getByText(/Tens a certeza que queres cancelar a subscricao/)).toBeInTheDocument();
+    fireEvent.click(within(cartao('Subscrição actual')).getByRole('button', { name: 'Cancelar subscrição' }));
+    expect(screen.getByText(/Tens a certeza que queres cancelar a subscrição/)).toBeInTheDocument();
     fireEvent.click(botao('Confirmar cancelamento'));
     await waitFor(() => expect(cancelSubscription).toHaveBeenCalledTimes(1));
     await waitFor(() => expect(screen.queryByText(/Tens a certeza que queres cancelar/)).not.toBeInTheDocument());
     expect(api.get).toHaveBeenCalledWith('/auth/me');
-    expect(within(cartao('Subscricao actual')).getByText('Cancelado')).toBeInTheDocument();
+    expect(within(cartao('Subscrição actual')).getByText('Cancelado')).toBeInTheDocument();
   });
 
   it('cancelar_falha_mostra_o_erro_e_Voltar_fecha_o_modal', async () => {
     cancelSubscription.mockRejectedValue(new Error('x'));
     await abrirFacturacao();
-    fireEvent.click(within(cartao('Subscricao actual')).getByRole('button', { name: 'Cancelar subscricao' }));
+    fireEvent.click(within(cartao('Subscrição actual')).getByRole('button', { name: 'Cancelar subscrição' }));
     fireEvent.click(botao('Confirmar cancelamento'));
-    expect(await screen.findByText('Nao foi possivel cancelar a subscricao. Tenta novamente.')).toBeInTheDocument();
+    expect(await screen.findByText('Não foi possível cancelar a subscrição. Tenta novamente.')).toBeInTheDocument();
     fireEvent.click(botao('Voltar'));
     expect(screen.queryByText(/Tens a certeza que queres cancelar/)).not.toBeInTheDocument();
   });
 
   it('historico_com_estados_Pago_Falhou_Pendente_e_o_vazio', async () => {
     await abrirFacturacao();
-    const h = within(cartao('Historico de pagamentos'));
+    const h = within(cartao('Histórico de pagamentos'));
     expect(h.getByText('€69.00')).toBeInTheDocument();
     expect(h.getByText('€79.00')).toBeInTheDocument();
     expect(h.getByText('Pago')).toBeInTheDocument();
@@ -814,10 +814,10 @@ const canalMarcado = (rotulo) => { const e = canal(rotulo); const r = e.querySel
 const interruptor = (rotulo) => screen.getByText(rotulo).parentElement.parentElement.querySelector('button');
 const ligado = (rotulo) => interruptor(rotulo).className.includes('bg-ocean-700');
 
-describe('Definicoes: Notificacoes', () => {
+describe('Definições: Notificações', () => {
   it('valores_por_omissao_e_os_do_operador', async () => {
     montar();
-    await abrir('Notificacoes', 'Canal de notificacoes');
+    await abrir('Notificações', 'Canal de notificações');
     expect(canalMarcado('Push (PWA)')).toBe(true);
     expect(canalMarcado('Email')).toBe(false);
     expect(ligado('Nova reserva')).toBe(false);
@@ -870,7 +870,7 @@ describe('Definicoes: Notificacoes', () => {
       tecla(1, 'a');
       expect(marcado()).toEqual([false, true, false]);
       tecla(1, 'ArrowLeft'); // email
-      fireEvent.click(botao('Guardar preferencias'));
+      fireEvent.click(botao('Guardar preferências'));
       await waitFor(() => expect(updateOperator).toHaveBeenCalledWith(expect.objectContaining({ notif_channel: 'email' })));
     });
   });
@@ -881,7 +881,7 @@ describe('Definicoes: Notificacoes', () => {
     expect(canalMarcado('Email')).toBe(true);
     fireEvent.click(interruptor('Nova reserva'));
     fireEvent.click(interruptor('Lembrete de check-in'));
-    fireEvent.click(botao('Guardar preferencias'));
+    fireEvent.click(botao('Guardar preferências'));
     await waitFor(() => expect(updateOperator).toHaveBeenCalledWith({
       notification_prefs: { new_booking: true, cancellation: true, payment_confirmed: true, review_received: true, new_message: true, checkin_reminder: true },
       notif_channel: 'email',
@@ -892,7 +892,7 @@ describe('Definicoes: Notificacoes', () => {
   it('falha_regista_console.error', async () => {
     updateOperator.mockRejectedValue(new Error('x'));
     montar('/definicoes?tab=notificacoes');
-    fireEvent.click(botao('Guardar preferencias'));
+    fireEvent.click(botao('Guardar preferências'));
     await waitFor(() => expect(spyErr).toHaveBeenCalled());
     spyErr.mockClear();
     expect(screen.queryByText('Guardado com sucesso')).not.toBeInTheDocument();
@@ -904,17 +904,17 @@ describe('Definicoes: Notificacoes', () => {
 const pw = (rotulo) => campo(rotulo);
 const formPw = () => pw('Nova password').closest('form');
 
-describe('Definicoes: Seguranca', () => {
+describe('Definições: Segurança', () => {
   it('valida_a_forca_e_a_confirmacao', async () => {
     montar('/definicoes?tab=seguranca');
     fireEvent.change(pw('Nova password'), { target: { value: 'abc' } });
     fireEvent.submit(formPw());
-    expect(screen.getByText('A password deve ser forte: 8+ caracteres, maiuscula, numero e especial.')).toBeInTheDocument();
+    expect(screen.getByText('A password deve ser forte: 8+ caracteres, maiúscula, número e especial.')).toBeInTheDocument();
     fireEvent.change(pw('Nova password'), { target: { value: 'Abcdef1!' } });
     fireEvent.change(pw('Confirmar nova password'), { target: { value: 'outra' } });
-    expect(screen.getAllByText('As passwords nao coincidem.')).toHaveLength(1);
+    expect(screen.getAllByText('As passwords não coincidem.')).toHaveLength(1);
     fireEvent.submit(formPw());
-    expect(screen.getAllByText('As passwords nao coincidem.')).toHaveLength(2);
+    expect(screen.getAllByText('As passwords não coincidem.')).toHaveLength(2);
     expect(changePassword).not.toHaveBeenCalled();
   });
 
@@ -985,26 +985,26 @@ const semCoresForaDosTokens = (html) => {
   expect(html).not.toMatch(/bg-error/);
 };
 
-describe('Definicoes: design system (estrutura, Conta, Notificacoes e Seguranca)', () => {
+describe('Definições: design system (estrutura, Conta, Notificações e Segurança)', () => {
   it('os_sete_separadores_sao_Tabs_sem_icones_e_o_query_string_escolhe_o_inicial', async () => {
     montar();
     expect(screen.getByRole('tablist')).toBeInTheDocument();
-    const nomes = ['Conta', 'Perfil Publico', 'Pagamentos', 'Facturacao', 'Notificacoes', 'Mensagens', 'Seguranca'];
+    const nomes = ['Conta', 'Perfil Público', 'Pagamentos', 'Facturação', 'Notificações', 'Mensagens', 'Segurança'];
     nomes.forEach(n => expect(screen.getByRole('tab', { name: n })).toBeInTheDocument());
     expect(screen.getAllByRole('tab')).toHaveLength(7);
     expect(screen.getByRole('tab', { name: 'Conta' })).toHaveAttribute('aria-selected', 'true');
     expect(screen.getByRole('tab', { name: 'Conta' }).querySelector('svg')).toBeNull();
-    fireEvent.click(screen.getByRole('tab', { name: 'Seguranca' }));
-    expect(screen.getByRole('tab', { name: 'Seguranca' })).toHaveAttribute('aria-selected', 'true');
+    fireEvent.click(screen.getByRole('tab', { name: 'Segurança' }));
+    expect(screen.getByRole('tab', { name: 'Segurança' })).toHaveAttribute('aria-selected', 'true');
     cleanup();
     montar('/definicoes?tab=facturacao');
-    expect(screen.getByRole('tab', { name: 'Facturacao' })).toHaveAttribute('aria-selected', 'true');
+    expect(screen.getByRole('tab', { name: 'Facturação' })).toHaveAttribute('aria-selected', 'true');
     await screen.findByText('Pago');
   });
 
   it('o_aviso_de_guardado_tem_role_status_e_tokens', async () => {
     montar();
-    fireEvent.click(botao('Guardar alteracoes'));
+    fireEvent.click(botao('Guardar alterações'));
     const aviso = await screen.findByRole('status');
     expect(aviso).toHaveTextContent('Guardado com sucesso');
     expect(aviso.className).toContain('var(--success-light)');
@@ -1013,11 +1013,11 @@ describe('Definicoes: design system (estrutura, Conta, Notificacoes e Seguranca)
 
   it('os_campos_de_Conta_tem_nome_acessivel_e_o_erro_usa_tokens', async () => {
     montar();
-    ['Nome da empresa', 'Email', 'Telefone', 'WhatsApp', 'Morada', 'Idioma', 'Moeda', 'Fuso horario'].forEach(e => expect(screen.getByLabelText(e)).toBeInTheDocument());
-    updateOperator.mockRejectedValueOnce({ response: { data: { error: 'Email invalido' } } });
+    ['Nome da empresa', 'Email', 'Telefone', 'WhatsApp', 'Morada', 'Idioma', 'Moeda', 'Fuso horário'].forEach(e => expect(screen.getByLabelText(e)).toBeInTheDocument());
+    updateOperator.mockRejectedValueOnce({ response: { data: { error: 'Email inválido' } } });
     fireEvent.change(campo('Email'), { target: { value: 'mau@x' } });
-    fireEvent.click(botao('Guardar alteracoes'));
-    const erro = await screen.findByText('Email invalido');
+    fireEvent.click(botao('Guardar alterações'));
+    const erro = await screen.findByText('Email inválido');
     expect(erro.className).toContain('var(--error-light)');
     expect(erro.className).toContain('var(--error)');
   });
@@ -1043,10 +1043,10 @@ describe('Definicoes: design system (estrutura, Conta, Notificacoes e Seguranca)
   it('os_erros_de_Seguranca_usam_tokens', () => {
     montar('/definicoes?tab=seguranca');
     fireEvent.change(pw('Confirmar nova password'), { target: { value: 'x' } });
-    const inline = screen.getByText('As passwords nao coincidem.');
+    const inline = screen.getByText('As passwords não coincidem.');
     expect(inline.className).toContain('var(--error)');
     fireEvent.submit(formPw());
-    const erro = screen.getByText('A password deve ser forte: 8+ caracteres, maiuscula, numero e especial.');
+    const erro = screen.getByText('A password deve ser forte: 8+ caracteres, maiúscula, número e especial.');
     expect(erro.className).toContain('var(--error-light)');
   });
 
@@ -1055,15 +1055,15 @@ describe('Definicoes: design system (estrutura, Conta, Notificacoes e Seguranca)
     let html = classes(container);
     updateOperator.mockRejectedValueOnce(new Error('x'));
     fireEvent.change(campo('Nome da empresa'), { target: { value: 'Outro nome' } });
-    fireEvent.click(botao('Guardar alteracoes'));
+    fireEvent.click(botao('Guardar alterações'));
     await screen.findByText('Erro ao guardar');
     html += classes(container);
-    fireEvent.click(botao('Guardar alteracoes'));
+    fireEvent.click(botao('Guardar alterações'));
     await screen.findByRole('status');
     html += classes(container);
-    fireEvent.click(screen.getByRole('tab', { name: 'Notificacoes' }));
+    fireEvent.click(screen.getByRole('tab', { name: 'Notificações' }));
     html += classes(container);
-    fireEvent.click(screen.getByRole('tab', { name: 'Seguranca' }));
+    fireEvent.click(screen.getByRole('tab', { name: 'Segurança' }));
     fireEvent.change(pw('Confirmar nova password'), { target: { value: 'x' } });
     fireEvent.submit(formPw());
     html += classes(container);
@@ -1073,10 +1073,10 @@ describe('Definicoes: design system (estrutura, Conta, Notificacoes e Seguranca)
 
 /* ───────────────────────── design system: Perfil Publico ───────────────────────── */
 
-describe('Definicoes: design system (Perfil Publico)', () => {
+describe('Definições: design system (Perfil Público)', () => {
   it('os_campos_tem_nome_acessivel_incluindo_os_pares_PT_EN_com_contexto', async () => {
     const { container } = await abrirPerfil();
-    ['Descricao da empresa', 'Politica de cancelamento em Portugues', 'Politica de cancelamento em Ingles',
+    ['Descrição da empresa', 'Política de cancelamento em Português', 'Política de cancelamento em Inglês',
       'Pergunta 1 PT', 'Pergunta 1 EN', 'Resposta 1 PT', 'Resposta 1 EN', 'Pergunta 2 PT'].forEach(e => expect(screen.getByLabelText(e)).toBeInTheDocument());
     expect(screen.getByLabelText('Ficheiro do logo')).toHaveAttribute('type', 'file');
     expect(container.querySelectorAll('input[type="file"]')).toHaveLength(2);
@@ -1093,7 +1093,7 @@ describe('Definicoes: design system (Perfil Publico)', () => {
     const { container } = await abrirPerfil({ ...OPERADOR, cover_images: ['https://cdn.test/a.jpg', 'https://cdn.test/b.jpg'] });
     expect(container.querySelectorAll('div.group img')).toHaveLength(2);
     updateOperator.mockRejectedValueOnce(new Error('x'));
-    fireEvent.change(screen.getByLabelText('Descricao da empresa'), { target: { value: 'Nova desc' } });
+    fireEvent.change(screen.getByLabelText('Descrição da empresa'), { target: { value: 'Nova desc' } });
     fireEvent.click(botao('Guardar perfil'));
     await waitFor(() => expect(spyErr).toHaveBeenCalled());
     spyErr.mockClear();
@@ -1108,13 +1108,13 @@ describe('Definicoes: design system (Perfil Publico)', () => {
 
 /* ───────────────────────── design system: Pagamentos e Facturacao ───────────────────────── */
 
-describe('Definicoes: design system (Pagamentos e Facturacao)', () => {
+describe('Definições: design system (Pagamentos e Facturação)', () => {
   it('os_estados_de_Pagamentos_sao_cartoes_estaticos_sem_role_status_com_tokens_e_os_campos_tem_nome', async () => {
     montar();
     await abrir('Pagamentos', 'Webhook PayPal');
     /* nao mudam em directo, por isso nao sao uma "live region" (role=status) */
     expect(screen.queryAllByRole('status')).toHaveLength(0);
-    const estados = screen.getAllByText(/^(Configurado|Nao configurado)$/).map(p => p.parentElement.parentElement);
+    const estados = screen.getAllByText(/^(Configurado|Não configurado)$/).map(p => p.parentElement.parentElement);
     expect(estados).toHaveLength(3);
     expect(estados[0].className).toContain('var(--success-light)');
     expect(estados[1].className).toContain('bg-n-50');
@@ -1125,12 +1125,12 @@ describe('Definicoes: design system (Pagamentos e Facturacao)', () => {
   it('o_estado_da_subscricao_e_Badge_com_a_variante_certa', async () => {
     const estado = async (op, texto) => {
       await abrirFacturacao(op);
-      const e = within(cartao('Subscricao actual')).getByText(texto);
+      const e = within(cartao('Subscrição actual')).getByText(texto);
       cleanup();
       return e.className;
     };
     expect(await estado(OPERADOR, 'Activo')).toContain('var(--success-light)');
-    expect(await estado({ ...OPERADOR, plan_status: 'trial', trial_ends_at: dia(5) }, 'Periodo de avaliacao')).toContain('var(--info-light)');
+    expect(await estado({ ...OPERADOR, plan_status: 'trial', trial_ends_at: dia(5) }, 'Período de avaliação')).toContain('var(--info-light)');
     expect(await estado({ ...OPERADOR, plan_status: 'suspended', paypal_subscription_id: null }, 'Suspenso')).toContain('var(--error-light)');
     expect(await estado({ ...OPERADOR, plan_status: 'cancelled', paypal_subscription_id: null }, 'Cancelado')).toContain('bg-n-100');
     expect(await estado({ ...OPERADOR, plan_status: 'xyz', paypal_subscription_id: null }, 'xyz')).toContain('bg-n-100');
@@ -1139,13 +1139,13 @@ describe('Definicoes: design system (Pagamentos e Facturacao)', () => {
   it('o_historico_e_os_erros_usam_tokens', async () => {
     createSubscription.mockRejectedValueOnce(new Error('x'));
     await abrirFacturacao();
-    const h = within(cartao('Historico de pagamentos'));
+    const h = within(cartao('Histórico de pagamentos'));
     expect(h.getByText('Pago').className).toContain('var(--success)');
     expect(h.getByText('Falhou').className).toContain('var(--error)');
     escolher('Starter');
     fireEvent.click(modalPagamento().getByRole('checkbox'));
     fireEvent.click(modalPagamento().getByRole('button', { name: /^PayPal/ }));
-    const erro = await screen.findByText('Nao foi possivel iniciar a subscricao. Tenta novamente.');
+    const erro = await screen.findByText('Não foi possível iniciar a subscrição. Tenta novamente.');
     expect(erro.className).toContain('var(--error-light)');
     expect(erro.className).toContain('var(--error)');
   });
@@ -1155,8 +1155,8 @@ describe('Definicoes: design system (Pagamentos e Facturacao)', () => {
     const { container } = montar();
     await abrir('Pagamentos', 'Webhook PayPal');
     let html = classes(container);
-    fireEvent.click(separador('Facturacao'));
-    await screen.findByText('Historico de pagamentos');
+    fireEvent.click(separador('Facturação'));
+    await screen.findByText('Histórico de pagamentos');
     await screen.findByText('Pago');
     html += classes(container);
     cleanup();
@@ -1167,7 +1167,7 @@ describe('Definicoes: design system (Pagamentos e Facturacao)', () => {
     html += classes(r.container);
     fireEvent.click(modalPagamento().getByRole('checkbox'));
     fireEvent.click(modalPagamento().getByRole('button', { name: /^PayPal/ }));
-    await screen.findByText('Nao foi possivel iniciar a subscricao. Tenta novamente.');
+    await screen.findByText('Não foi possível iniciar a subscrição. Tenta novamente.');
     html += classes(r.container);
     semCoresForaDosTokens(html);
   });

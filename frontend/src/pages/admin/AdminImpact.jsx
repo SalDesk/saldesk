@@ -58,7 +58,7 @@ export default function AdminImpact() {
     <div>
       <PageHeader
         title="Impacto"
-        subtitle="Metricas de impacto socioeconomico da plataforma"
+        subtitle="Métricas de impacto socioeconómico da plataforma"
         actions={
           <Button
             variant="secondary"
@@ -66,7 +66,7 @@ export default function AdminImpact() {
             icon={copied ? Check : Copy}
             onClick={copyLink}
           >
-            {copied ? 'Copiado' : 'Copiar link publico'}
+            {copied ? 'Copiado' : 'Copiar link público'}
           </Button>
         }
       />
@@ -82,7 +82,7 @@ export default function AdminImpact() {
           icon={BookOpen}
           label="Reservas processadas"
           value={data.reservations_total}
-          sub="desde o lancamento"
+          sub="desde o lançamento"
         />
         <BigKpi
           icon={UserCheck}
@@ -101,7 +101,7 @@ export default function AdminImpact() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
         <Card
           className="lg:col-span-2"
-          header={<h3 className="font-display font-semibold text-sm text-n-700">Crescimento de operadores (ultimos 6 meses)</h3>}
+          header={<h3 className="font-display font-semibold text-sm text-n-700">Crescimento de operadores (últimos 6 meses)</h3>}
           padding="px-5 pb-5 pt-2"
         >
           <ResponsiveContainer width="100%" height={220}>
@@ -137,7 +137,7 @@ export default function AdminImpact() {
         </Card>
 
         <Card
-          header={<h3 className="font-display font-semibold text-sm text-n-700">Tipos de negocio</h3>}
+          header={<h3 className="font-display font-semibold text-sm text-n-700">Tipos de negócio</h3>}
           padding="px-4 pb-4 pt-2"
         >
           {byType.length > 0 ? (
@@ -177,14 +177,14 @@ export default function AdminImpact() {
       <Card padding="p-5">
         <div className="flex flex-col lg:flex-row gap-4 items-start">
           <div className="flex-1">
-            <h3 className="font-display font-semibold text-n-900 mb-1">Relatorio para Ministerio do Turismo</h3>
+            <h3 className="font-display font-semibold text-n-900 mb-1">Relatório para Ministério do Turismo</h3>
             <p className="text-sm font-body text-n-500 leading-relaxed">
-              Estes dados reflectem o impacto directo da plataforma SalDesk no ecossistema turistico de Cabo Verde.
-              O link publico pode ser partilhado com entidades governamentais e parceiros institucionais.
+              Estes dados reflectem o impacto directo da plataforma SalDesk no ecossistema turístico de Cabo Verde.
+              O link público pode ser partilhado com entidades governamentais e parceiros institucionais.
             </p>
           </div>
           <div className="bg-n-50 rounded-sm px-4 py-3 text-center shrink-0">
-            <p className="font-mono text-xs text-n-400 mb-1">Link publico</p>
+            <p className="font-mono text-xs text-n-400 mb-1">Link público</p>
             <p className="font-mono text-sm text-ocean-700 font-semibold">{PUBLIC_URL}</p>
           </div>
         </div>

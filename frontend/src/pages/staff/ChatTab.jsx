@@ -349,7 +349,7 @@ function ChatTab({ staffList }) {
         <form onSubmit={handleBroadcast} className="space-y-4">
           <div className="px-3 py-2.5 bg-[var(--sand-50)] border border-[var(--sand-300)] rounded-sm">
             <p className="text-xs font-body text-n-800">
-              Esta mensagem sera enviada individualmente para {staffList.length} colaborador(es) activo(s).
+              Esta mensagem será enviada individualmente para {staffList.length} colaborador(es) activo(s).
             </p>
           </div>
           <Input

@@ -95,7 +95,7 @@ const CMS_CONFIG = {
       { key: 'name_pt',        label: 'Nome PT',        required: true },
       { key: 'name_en',        label: 'Nome EN' },
       { key: 'island_slug',    label: 'Ilha', type: 'select', options: ['sal','santiago','sao-vicente','boa-vista','maio','fogo','santo-antao','sao-nicolau','brava'] },
-      { key: 'type',           label: 'Categoria (praia, natureza, historico, miradouro, cultura)' },
+      { key: 'type',           label: 'Categoria (praia, natureza, histórico, miradouro, cultura)' },
       { key: 'description_pt', label: 'Descrição PT',   type: 'textarea' },
       { key: 'description_en', label: 'Descrição EN',   type: 'textarea' },
       { key: 'lat',            label: 'Latitude',       type: 'number' },

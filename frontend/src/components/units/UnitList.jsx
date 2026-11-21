@@ -8,7 +8,7 @@ import { parseTourMeta } from './UnitForm';
 import ConectRow from '../shared/ConectRow';
 
 function formatPrice(unit) {
-  const labels = { night: '/noite', day: '/dia', hour: '/hora', session: '/sessao', person: '/pessoa' };
+  const labels = { night: '/noite', day: '/dia', hour: '/hora', session: '/sessão', person: '/pessoa' };
   return `€${Number(unit.base_price).toFixed(2)}${labels[unit.price_unit] || ''}`;
 }
 
@@ -18,6 +18,9 @@ const DIFFICULTY_VARIANT = {
   Moderado: 'pending',
   Dificil:  'cancelled',
 };
+
+/* O que o operador le; o valor guardado na unidade continua a ser o da chave. */
+const DIFFICULTY_ROTULO = { Facil: 'Fácil', Dificil: 'Difícil' };
 
 /* Botoes so com icone: o realce ao passar o rato depende do estado */
 const TOGGLE_HOVER_ACTIVE   = 'hover:text-error hover:bg-[var(--error-light)]';
@@ -89,7 +92,7 @@ function TourCard({ unit, onEdit, onDelete, onToggle, onSubmitConect }) {
           )}
           {meta.difficulty && (
             <Badge variant={DIFFICULTY_VARIANT[meta.difficulty] || 'default'}>
-              {meta.difficulty}
+              {DIFFICULTY_ROTULO[meta.difficulty] || meta.difficulty}
             </Badge>
           )}
         </div>
@@ -167,7 +170,7 @@ function TourCard({ unit, onEdit, onDelete, onToggle, onSubmitConect }) {
                 )}
                 {meta.price_child != null && meta.price_child !== '' && (
                   <p className="text-xs font-body text-n-500 tabular-nums">
-                    €{Number(meta.price_child).toFixed(0)} crianca
+                    €{Number(meta.price_child).toFixed(0)} criança
                     {hasBasePrice && meta.price_private && ` · €${Number(meta.price_private).toFixed(0)} privado`}
                   </p>
                 )}

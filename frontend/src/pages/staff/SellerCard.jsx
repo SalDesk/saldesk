@@ -55,7 +55,7 @@ export default function SellerCard({ seller }) {
         <div className="grid grid-cols-2 gap-2">
           <div className="bg-n-50 rounded-sm px-2.5 py-2">
             <p className="font-display font-bold text-sm text-ocean-700">€{Math.round(totalMonth)}</p>
-            <p className="text-[10px] font-body text-n-400">Comissoes mes</p>
+            <p className="text-[10px] font-body text-n-400">Comissões mês</p>
           </div>
           <div className="bg-[var(--warning-light)] rounded-sm px-2.5 py-2">
             <p className="font-display font-bold text-sm text-[var(--warning)]">€{Math.round(totalPending)}</p>
@@ -63,7 +63,7 @@ export default function SellerCard({ seller }) {
           </div>
         </div>
         <div className="flex items-center justify-between text-xs font-body text-n-500 pt-1 border-t border-n-100">
-          <span>{seller.commission_pct || 10}% comissao</span>
+          <span>{seller.commission_pct || 10}% comissão</span>
           {totalPending > 0 && (
             <button
               type="button"

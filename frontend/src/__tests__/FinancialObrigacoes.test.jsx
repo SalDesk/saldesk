@@ -30,7 +30,7 @@ afterEach(() => {
 
 async function montar() {
   const r = render(<ObrigacoesTab currency="EUR" />);
-  await screen.findByText('INPS — Contribuicoes mensais');
+  await screen.findByText('INPS — Contribuições mensais');
   return r;
 }
 /* so a data e simulada: os temporizadores reais continuam a funcionar */
@@ -44,14 +44,14 @@ const guardado = () => setObligations.mock.calls.at(-1)[0];
 
 /* ───────────────────────── caracterizacao ───────────────────────── */
 
-describe('Obrigacoes', () => {
+describe('Obrigações', () => {
   it('mostra_o_inps_com_o_dia_15_e_as_contribuicoes', async () => {
     await montar();
-    expect(screen.getByText('Dia 15 de cada mes')).toBeInTheDocument();
-    expect(screen.getByText('15% dos salarios brutos')).toBeInTheDocument();
-    expect(screen.getByText('8% dos salarios brutos')).toBeInTheDocument();
-    expect(screen.getByText('IUR — Imposto Unico sobre Rendimentos')).toBeInTheDocument();
-    expect(screen.getByText('Subscricao SalDesk')).toBeInTheDocument();
+    expect(screen.getByText('Dia 15 de cada mês')).toBeInTheDocument();
+    expect(screen.getByText('15% dos salários brutos')).toBeInTheDocument();
+    expect(screen.getByText('8% dos salários brutos')).toBeInTheDocument();
+    expect(screen.getByText('IUR — Imposto Único sobre Rendimentos')).toBeInTheDocument();
+    expect(screen.getByText('Subscrição SalDesk')).toBeInTheDocument();
   });
 
   it('aviso_de_prazo_so_entre_1_e_5_dias_antes_do_dia_15', async () => {
@@ -67,11 +67,11 @@ describe('Obrigacoes', () => {
 
   it('mudar_o_estado_do_inps_grava_com_setObligations', async () => {
     await montar();
-    const estado = screen.getByDisplayValue('Pendente este mes');
-    expect(Array.from(estado.options).map(o => o.textContent)).toEqual(['Pendente este mes', 'Pago este mes']);
+    const estado = screen.getByDisplayValue('Pendente este mês');
+    expect(Array.from(estado.options).map(o => o.textContent)).toEqual(['Pendente este mês', 'Pago este mês']);
     fireEvent.change(estado, { target: { value: 'paid' } });
     expect(guardado()).toEqual({ ...BASE, inps_status_current: 'paid' });
-    expect(screen.getByDisplayValue('Pago este mes')).toBeInTheDocument();
+    expect(screen.getByDisplayValue('Pago este mês')).toBeInTheDocument();
   });
 
   it('notas_do_iur_gravam_ao_escrever', async () => {
@@ -99,7 +99,7 @@ describe('Obrigacoes', () => {
   it('mostra_o_seguro_com_renovacao_e_valor_anual', async () => {
     await montar();
     const caixa = screen.getByText('Seguro Frota').closest('div.flex');
-    expect(caixa).toHaveTextContent(`Renovacao: ${fmtDate('2027-06-01')}`);
+    expect(caixa).toHaveTextContent(`Renovação: ${fmtDate('2027-06-01')}`);
     expect(caixa).toHaveTextContent('€400/ano');
     expect(caixa).not.toHaveTextContent(/\(\d+d\)/);
   });
@@ -132,10 +132,10 @@ describe('Obrigacoes', () => {
     await montar();
     const plano = screen.getByText('Plano actual').parentElement.querySelector('select');
     expect(plano).toHaveValue('starter');
-    expect(Array.from(plano.options).map(o => o.textContent)).toEqual(['Starter — €29/mes', 'Pro — €69/mes', 'Business — €79/mes']);
+    expect(Array.from(plano.options).map(o => o.textContent)).toEqual(['Starter — €29/mês', 'Pro — €69/mês', 'Business — €79/mês']);
     fireEvent.change(plano, { target: { value: 'pro' } });
     expect(guardado()).toEqual({ ...BASE, saldesk_plan: 'pro' });
-    const renovacao = screen.getByText('Data de renovacao').parentElement.querySelector('input');
+    const renovacao = screen.getByText('Data de renovação').parentElement.querySelector('input');
     fireEvent.change(renovacao, { target: { value: '2027-02-01' } });
     expect(guardado()).toEqual({ ...BASE, saldesk_plan: 'pro', saldesk_renewal: '2027-02-01' });
   });
@@ -143,9 +143,9 @@ describe('Obrigacoes', () => {
   it('falha_em_setObligations_nao_rebenta_e_a_pagina_mantem_o_valor', async () => {
     setObligations.mockRejectedValue(new Error('x'));
     await montar();
-    fireEvent.change(screen.getByDisplayValue('Pendente este mes'), { target: { value: 'paid' } });
+    fireEvent.change(screen.getByDisplayValue('Pendente este mês'), { target: { value: 'paid' } });
     await waitFor(() => expect(setObligations).toHaveBeenCalled());
-    expect(screen.getByDisplayValue('Pago este mes')).toBeInTheDocument();
+    expect(screen.getByDisplayValue('Pago este mês')).toBeInTheDocument();
   });
 
   it('sem_seguros_mostra_o_texto_e_em_carga_o_spinner', async () => {
@@ -155,16 +155,16 @@ describe('Obrigacoes', () => {
     cleanup();
     getObligations.mockReturnValue(new Promise(() => {}));
     render(<ObrigacoesTab currency="EUR" />);
-    expect(screen.queryByText('INPS — Contribuicoes mensais')).toBeNull();
+    expect(screen.queryByText('INPS — Contribuições mensais')).toBeNull();
   });
 });
 
 /* ───────────────────────── design system ───────────────────────── */
 
-describe('Obrigacoes com o design system', () => {
+describe('Obrigações com o design system', () => {
   it('os_campos_e_os_botoes_tem_nome_acessivel', async () => {
     await montar();
-    ['Estado do INPS', 'Notas sobre IUR', 'Nome do seguro', 'Data de renovacao do seguro', 'Valor anual do seguro', 'Plano actual', 'Data de renovacao']
+    ['Estado do INPS', 'Notas sobre IUR', 'Nome do seguro', 'Data de renovação do seguro', 'Valor anual do seguro', 'Plano actual', 'Data de renovação']
       .forEach(r => expect(screen.getByLabelText(r)).toBeInTheDocument());
     expect(screen.getByRole('button', { name: 'Adicionar seguro' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Remover seguro - Seguro Frota' })).toBeInTheDocument();

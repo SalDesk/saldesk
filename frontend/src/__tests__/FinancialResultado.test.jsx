@@ -60,7 +60,7 @@ afterEach(() => {
 
 async function montar(props = {}) {
   const r = render(<ResultadoTab resumo={RESUMO} currency="EUR" periodo={PERIODO} {...props} />);
-  await screen.findByText('Decomposicao do resultado');
+  await screen.findByText('Decomposição do resultado');
   return r;
 }
 const cartao = (rotulo) => screen.getByText(rotulo, { selector: 'p' });
@@ -97,9 +97,9 @@ describe('Resultado', () => {
   it('resultado_e_receita_menos_despesas_menos_folha_e_margem_sobre_a_receita', async () => {
     await montar();
     expect(valor('Receita bruta')).toBe(eur(1000));
-    expect(valor('Resultado liquido')).toBe(eur(400)); /* 1000 - 400 - 200 */
+    expect(valor('Resultado líquido')).toBe(eur(400)); /* 1000 - 400 - 200 */
     expect(valor('Margem')).toBe('40.0%');
-    expect(valor('Reservas no periodo')).toBe('10');
+    expect(valor('Reservas no período')).toBe('10');
   });
 
   it('margem_a_verde_a_amarelo_e_a_vermelho_nos_limiares_20_e_0', async () => {
@@ -116,11 +116,11 @@ describe('Resultado', () => {
     cleanup();
     await montar({ resumo: { atual: { receita: 100 } } }); /* -500 */
     expect(tomDe('Margem')).toBe('mau');
-    expect(tomDe('Resultado liquido')).toBe('mau');
+    expect(tomDe('Resultado líquido')).toBe('mau');
     cleanup();
     await montar();
     expect(tomDe('Margem')).toBe('bom');
-    expect(tomDe('Resultado liquido')).toBe('bom');
+    expect(tomDe('Resultado líquido')).toBe('bom');
     expect(tomDe('Despesas operacionais')).toBe('mau');
     expect(tomDe('Folha salarial')).toBe('mau');
   });
@@ -129,19 +129,19 @@ describe('Resultado', () => {
     await montar({ resumo: null });
     expect(valor('Receita bruta')).toBe(eur(0));
     expect(valor('Margem')).toBe('0.0%');
-    expect(valor('Reservas no periodo')).toBe('—');
+    expect(valor('Reservas no período')).toBe('—');
   });
 
   it('decomposicao_mostra_sinais_e_o_valor_absoluto_do_resultado', async () => {
     await montar();
-    const caixa = screen.getByText('Decomposicao do resultado').parentElement;
+    const caixa = screen.getByText('Decomposição do resultado').parentElement;
     expect(within(caixa).getByText(`+ ${eur(1000)}`)).toBeInTheDocument();
     expect(within(caixa).getByText(`− ${eur(400)}`)).toBeInTheDocument();
     expect(within(caixa).getByText(`− ${eur(200)}`)).toBeInTheDocument();
     expect(within(caixa).getByText(`+ ${eur(400)}`)).toBeInTheDocument();
     cleanup();
     await montar({ resumo: { atual: { receita: 100 } } });
-    const outra = screen.getByText('Decomposicao do resultado').parentElement;
+    const outra = screen.getByText('Decomposição do resultado').parentElement;
     expect(within(outra).getByText(`− ${eur(500)}`, { selector: 'span.text-base' })).toBeInTheDocument();
   });
 
@@ -155,7 +155,7 @@ describe('Resultado', () => {
     expect(atual.despesas).toBe(300 + 100 + 200);
     expect(anterior.despesas).toBe(500 + 50);
     expect(d[0].despesas).toBe(0);
-    expect(screen.getByText('Receitas vs Despesas — ultimos 6 meses')).toBeInTheDocument();
+    expect(screen.getByText('Receitas vs Despesas — últimos 6 meses')).toBeInTheDocument();
   });
 
   it('receita_do_grafico_vem_da_API_mensal_dos_ultimos_6_meses_com_a_forma_real_periodo_receita', async () => {
@@ -203,7 +203,7 @@ describe('Resultado', () => {
     unmount();
     await montar({ currency: 'CVE' });
     expect(valor('Receita bruta')).toBe(cve(1000));
-    expect(valor('Resultado liquido')).toBe(cve(400));
+    expect(valor('Resultado líquido')).toBe(cve(400));
     const emCve = dadosDoGrafico('bar');
     expect(eur[5].receita).toBe(700);
     expect(emCve[5].receita).toBe(700 * 110);
@@ -222,7 +222,7 @@ describe('Resultado', () => {
   it('em_carga_mostra_o_spinner', () => {
     listExpenses.mockReturnValue(new Promise(() => {}));
     render(<ResultadoTab resumo={RESUMO} currency="EUR" periodo={PERIODO} />);
-    expect(screen.queryByText('Decomposicao do resultado')).toBeNull();
+    expect(screen.queryByText('Decomposição do resultado')).toBeNull();
   });
 });
 
@@ -231,7 +231,7 @@ describe('Resultado', () => {
 describe('Resultado com o design system', () => {
   it('os_tons_usam_tokens', async () => {
     await montar();
-    expect(cartao('Resultado liquido').previousSibling.className).toContain('var(--success)');
+    expect(cartao('Resultado líquido').previousSibling.className).toContain('var(--success)');
     expect(cartao('Despesas operacionais').previousSibling.className).toContain('var(--error)');
     cleanup();
     await montar({ resumo: { atual: { receita: 700 } } });

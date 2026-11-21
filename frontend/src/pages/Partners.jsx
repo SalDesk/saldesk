@@ -20,14 +20,14 @@ import LoadingSpinner from '../components/shared/LoadingSpinner';
 
 const PARTNER_TYPES = [
   { value: 'hotel',      label: 'Hotel / Alojamento', Icon: Hotel   },
-  { value: 'activity',   label: 'Actividade Turistica', Icon: Compass },
+  { value: 'activity',   label: 'Actividade Turística', Icon: Compass },
   { value: 'rentacar',   label: 'Rent-a-Car',         Icon: Car     },
   { value: 'restaurant', label: 'Restaurante',        Icon: Utensils },
 ];
 
 const PARTNERSHIP_TYPES = [
-  { value: 'recommendation', label: 'Recomendacao mutua (sem comissao)' },
-  { value: 'commission',     label: 'Comissao por reserva referenciada'  },
+  { value: 'recommendation', label: 'Recomendação mútua (sem comissão)' },
+  { value: 'commission',     label: 'Comissão por reserva referenciada'  },
   { value: 'discount',       label: 'Desconto cruzado para clientes'     },
 ];
 
@@ -191,7 +191,7 @@ function PartnerModal({ partner, onSave, onRequest, onClose }) {
             )}
             {!isRealPartner && (
               <p className="text-xs font-body text-n-400 mt-1">
-                O pedido fica pendente ate o operador escolhido o aceitar.
+                O pedido fica pendente até o operador escolhido o aceitar.
               </p>
             )}
           </div>
@@ -204,27 +204,27 @@ function PartnerModal({ partner, onSave, onRequest, onClose }) {
         {needsCommission && (
           <div className="grid grid-cols-2 gap-3">
             <Input
-              label="Comissao (%)" aria-label="Comissao (%)"
+              label="Comissão (%)" aria-label="Comissão (%)"
               type="number" min="0" max="50" step="0.5"
               value={form.commission_pct} onChange={set('commission_pct')}
               placeholder="Ex: 10"
               hint="Percentagem da reserva paga ao parceiro que a referenciou"
             />
             <Input
-              label="Preco medio da reserva (€)" aria-label="Preco medio da reserva (€)"
+              label="Preço médio da reserva (€)" aria-label="Preço médio da reserva (€)"
               type="number" min="0" step="1"
               value={form.avg_booking_value} onChange={set('avg_booking_value')}
               placeholder="Ex: 80"
-              hint="Usado para estimar comissoes a pagar/receber no Dashboard"
+              hint="Usado para estimar comissões a pagar/receber no Dashboard"
             />
           </div>
         )}
 
         {needsMessage && (
           <>
-            <Textarea label="Mensagem de recomendacao PT" aria-label="Mensagem de recomendacao PT" value={form.message_pt} onChange={set('message_pt')} rows={3}
+            <Textarea label="Mensagem de recomendação PT" aria-label="Mensagem de recomendação PT" value={form.message_pt} onChange={set('message_pt')} rows={3}
               placeholder="Ex: Para o seu alojamento em Sal, recomendamos o nosso parceiro Hotel Morabeza." />
-            <Textarea label="Mensagem de recomendacao EN" aria-label="Mensagem de recomendacao EN" value={form.message_en} onChange={set('message_en')} rows={3}
+            <Textarea label="Mensagem de recomendação EN" aria-label="Mensagem de recomendação EN" value={form.message_en} onChange={set('message_en')} rows={3}
               placeholder="Ex: For your accommodation in Sal, we recommend our partner Hotel Morabeza." />
           </>
         )}
@@ -270,7 +270,7 @@ function BookingLogModal({ partner, onSave, onClose }) {
             </button>
           ))}
         </div>
-        <Input label="Numero de reservas" aria-label="Numero de reservas" type="number" min="1" step="1" value={count} onChange={e => setCount(e.target.value)} />
+        <Input label="Número de reservas" aria-label="Número de reservas" type="number" min="1" step="1" value={count} onChange={e => setCount(e.target.value)} />
         <div className="flex gap-3">
           <Button variant="secondary" onClick={onClose} className="flex-1">Cancelar</Button>
           <Button loading={saving} onClick={handleSave} className="flex-1">Registar</Button>
@@ -356,7 +356,7 @@ export default function Partners() {
   if (loading) {
     return (
       <div>
-        <PageHeader title="Parcerias Cross-Selling" subtitle="Recomendacoes e comissoes entre operadores SalDesk" />
+        <PageHeader title="Parcerias Cross-Selling" subtitle="Recomendações e comissões entre operadores SalDesk" />
         <div className="flex justify-center py-16"><LoadingSpinner size={32} /></div>
       </div>
     );
@@ -366,7 +366,7 @@ export default function Partners() {
     <div>
       <PageHeader
         title="Parcerias Cross-Selling"
-        subtitle="Recomendacoes e comissoes entre operadores SalDesk"
+        subtitle="Recomendações e comissões entre operadores SalDesk"
         actions={
           <Button icon={Plus} onClick={() => setModal({ _new: true })}>Adicionar parceiro</Button>
         }
@@ -382,7 +382,7 @@ export default function Partners() {
             <EmptyState
               icon={Handshake}
               title="Sem parceiros configurados"
-              description="Adiciona operadores SalDesk parceiros para comecar a fazer cross-selling."
+              description="Adiciona operadores SalDesk parceiros para começar a fazer cross-selling."
               action={<Button icon={Plus} onClick={() => setModal({ _new: true })}>Adicionar parceiro</Button>}
             />
           </Card>
@@ -408,7 +408,7 @@ export default function Partners() {
                         <p className="text-xs font-body text-n-500 mt-0.5">{typeInfo.label} · {pshipType.label}</p>
                         {p.commission_pct > 0 && (
                           <p className="text-xs font-mono text-n-400 mt-0.5">
-                            {p.commission_pct}% comissao{p.avg_booking_value > 0 ? ` · reserva media €${p.avg_booking_value}` : ''}
+                            {p.commission_pct}% comissão{p.avg_booking_value > 0 ? ` · reserva média €${p.avg_booking_value}` : ''}
                           </p>
                         )}
                       </div>
@@ -471,7 +471,7 @@ export default function Partners() {
                       <p className="font-display font-semibold text-sm text-n-900">{p.name}</p>
                       <p className="text-xs font-body text-n-500">
                         {(PARTNERSHIP_TYPES.find(t => t.value === p.partnership_type) || PARTNERSHIP_TYPES[0]).label}
-                        {p.commission_pct > 0 ? ` · ${p.commission_pct}% comissao` : ''}
+                        {p.commission_pct > 0 ? ` · ${p.commission_pct}% comissão` : ''}
                       </p>
                     </div>
                     <Button size="sm" icon={Check} loading={responding === p.id} onClick={() => handleRespond(p.id, 'accepted')}>Aceitar</Button>
@@ -528,19 +528,19 @@ export default function Partners() {
           {activePartners.some(p => p.partnership_type === 'commission') && (
             <div className="grid grid-cols-2 gap-4">
               <Card padding="px-5 py-4">
-                <h3 className="font-display font-semibold text-sm text-n-700 mb-3">Comissoes a pagar</h3>
+                <h3 className="font-display font-semibold text-sm text-n-700 mb-3">Comissões a pagar</h3>
                 <p className="font-display font-bold text-2xl text-[var(--error)]">€{commPayable.toFixed(0)}</p>
                 <p className="text-xs font-body text-n-400 mt-0.5">
-                  Por reservas que enviaste aos parceiros com comissao.
-                  <br />Requer precos medios configurados por parceiro.
+                  Por reservas que enviaste aos parceiros com comissão.
+                  <br />Requer preços médios configurados por parceiro.
                 </p>
               </Card>
               <Card padding="px-5 py-4">
-                <h3 className="font-display font-semibold text-sm text-n-700 mb-3">Comissoes a receber</h3>
+                <h3 className="font-display font-semibold text-sm text-n-700 mb-3">Comissões a receber</h3>
                 <p className="font-display font-bold text-2xl text-[var(--success)]">€{commReceivable.toFixed(0)}</p>
                 <p className="text-xs font-body text-n-400 mt-0.5">
                   Por reservas que os parceiros te enviaram.
-                  <br />Requer precos medios configurados por parceiro.
+                  <br />Requer preços médios configurados por parceiro.
                 </p>
               </Card>
             </div>
@@ -548,7 +548,7 @@ export default function Partners() {
 
           <div className="px-4 py-3 bg-[var(--info-light)] border border-n-200 rounded-sm">
             <p className="text-xs font-body text-[var(--info)]">
-              <span className="font-semibold">Nota:</span> Para activar as recomendacoes automaticas (email apos tour confirmado, etc.), configura as automacoes correspondentes em <span className="font-mono">Automacoes de Comunicacao</span>.
+              <span className="font-semibold">Nota:</span> Para activar as recomendações automáticas (email após tour confirmado, etc.), configura as automações correspondentes em <span className="font-mono">Automações de Comunicação</span>.
             </p>
           </div>
         </div>

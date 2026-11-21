@@ -127,7 +127,7 @@ describe('Reservations', () => {
   });
 
   describe('por tipo de operador', () => {
-    it('atividade: titulo e colunas da tabela de tours', async () => {
+    it('atividade: título e colunas da tabela de tours', async () => {
       renderPagina('activity');
       expect(screen.getByRole('heading', { name: 'Reservas' })).toBeInTheDocument();
       expect(await screen.findByText('Tour')).toBeInTheDocument();
@@ -136,7 +136,7 @@ describe('Reservations', () => {
       expect(screen.getAllByText('Cliente Alfa').length).toBeGreaterThan(0);
     });
 
-    it('rent-a-car: titulo e colunas de viatura, levantamento e devolucao', async () => {
+    it('rent-a-car: título e colunas de viatura, levantamento e devolução', async () => {
       carregaServicos({
         reservas: [reserva({ customer_name: 'Cliente Alfa', status: 'confirmed' })],
         units: [unidade({ name: 'Carro 1', unit_type: 'vehicle', description: '{"brand":"Fiat","model":"Panda","plate":"S-01-AB"}' })],
@@ -144,14 +144,14 @@ describe('Reservations', () => {
       renderPagina('rentacar');
       expect(screen.getByRole('heading', { name: 'Reservas' })).toBeInTheDocument();
       expect(await screen.findByText('Viatura')).toBeInTheDocument();
-      expect(screen.getByText('Devolucao')).toBeInTheDocument();
+      expect(screen.getByText('Devolução')).toBeInTheDocument();
       expect(screen.getByText('Fiat Panda')).toBeInTheDocument();
       /* o cabecalho Levantamento tambem e um botao (ordenacao): a accao procura-se na linha */
       expect(within(screen.getAllByRole('row')[1]).getByRole('button', { name: 'Levantamento' })).toBeInTheDocument();
       expect(screen.queryByRole('button', { name: 'Manifesto' })).not.toBeInTheDocument();
     });
 
-    it('restaurante: titulo e colunas de mesa, turno e ocasiao', async () => {
+    it('restaurante: título e colunas de mesa, turno e ocasião', async () => {
       carregaServicos({
         reservas: [reserva({ customer_name: 'Cliente Alfa', start_time: '20:30:00' })],
         units: [unidade({ name: 'M3', unit_type: 'table', description: '{"number":3}' })],
@@ -159,13 +159,13 @@ describe('Reservations', () => {
       renderPagina('restaurant');
       expect(screen.getByRole('heading', { name: 'Reservas' })).toBeInTheDocument();
       expect(await screen.findByText('Mesa')).toBeInTheDocument();
-      expect(screen.getByText('Ocasiao')).toBeInTheDocument();
+      expect(screen.getByText('Ocasião')).toBeInTheDocument();
       expect(screen.getByText('Mesa 3')).toBeInTheDocument();
       expect(screen.getByText('20:30')).toBeInTheDocument();
       expect(screen.getByRole('button', { name: 'Jantar' })).toBeInTheDocument();
     });
 
-    it('hotel: titulo e cartoes de reserva', async () => {
+    it('hotel: título e cartões de reserva', async () => {
       renderPagina('hotel');
       expect(screen.getByRole('heading', { name: 'Reservas' })).toBeInTheDocument();
       expect(await screen.findByText('Cliente Alfa')).toBeInTheDocument();
@@ -174,7 +174,7 @@ describe('Reservations', () => {
       expect(screen.queryByText('Viatura')).not.toBeInTheDocument();
     });
 
-    it('tipo em falta: trata como hotel e mostra cartoes', async () => {
+    it('tipo em falta: trata como hotel e mostra cartões', async () => {
       renderPagina(null);
       expect(screen.getByRole('heading', { name: 'Reservas' })).toBeInTheDocument();
       expect(await screen.findByText('Cliente Alfa')).toBeInTheDocument();
@@ -218,8 +218,8 @@ describe('Reservations', () => {
     });
   });
 
-  describe('pagamento nao concluido', () => {
-    it('o chip mostra so a reserva abandonada e o seu estado diz Pagamento não concluído', async () => {
+  describe('pagamento não concluído', () => {
+    it('o chip mostra só a reserva abandonada e o seu estado diz Pagamento não concluído', async () => {
       carregaServicos({
         reservas: [
           reserva({ id: 'aaaaaaaa-0001', status: 'confirmed', customer_name: 'Cliente Alfa' }),
@@ -255,7 +255,7 @@ describe('Reservations', () => {
       return container.querySelector('input[type="date"]');
     }
 
-    it('o estado e um grupo de botoes aria-pressed, com Todas seleccionada por defeito', async () => {
+    it('o estado e um grupo de botões aria-pressed, com Todas seleccionada por defeito', async () => {
       carregaTres();
       renderPagina('activity');
       await screen.findByText('Tour');
@@ -328,7 +328,7 @@ describe('Reservations', () => {
       expect(screen.queryByRole('button', { name: 'Limpar' })).not.toBeInTheDocument();
     });
 
-    it('hotel: o segundo bloco de estado tambem e aria-pressed e filtra', async () => {
+    it('hotel: o segundo bloco de estado também e aria-pressed e filtra', async () => {
       carregaTres();
       renderPagina('hotel');
       await screen.findByText('Cliente Alfa');
@@ -345,7 +345,7 @@ describe('Reservations', () => {
       expect(screen.getByText('1 resultado(s)')).toBeInTheDocument();
     });
 
-    it('restaurante: estado e turno sao grupos de botoes aria-pressed independentes', async () => {
+    it('restaurante: estado e turno são grupos de botões aria-pressed independentes', async () => {
       carregaServicos({
         reservas: [
           reserva({ id: 'aaaaaaaa-0001', status: 'confirmed', start_time: '13:00:00', customer_name: 'Cliente Alfa' }),
@@ -370,7 +370,7 @@ describe('Reservations', () => {
   });
 
   describe('accoes', () => {
-    it('Nova reserva abre o formulario', async () => {
+    it('Nova reserva abre o formulário', async () => {
       renderPagina('activity');
       await screen.findByText('Tour');
       expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
@@ -381,7 +381,7 @@ describe('Reservations', () => {
       expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     });
 
-    it('o botao Ver abre o detalhe da reserva', async () => {
+    it('o botão Ver abre o detalhe da reserva', async () => {
       renderPagina('activity');
       await screen.findByText('Tour');
       fireEvent.click(screen.getAllByRole('button', { name: 'Ver' })[0]);
@@ -390,7 +390,7 @@ describe('Reservations', () => {
       expect(await screen.findByText('alfa@exemplo.cv')).toBeInTheDocument();
     });
 
-    it('atividade: avancar estado chama changeStatus com o proximo estado', async () => {
+    it('atividade: avançar estado chama changeStatus com o próximo estado', async () => {
       renderPagina('activity');
       await screen.findByText('Tour');
       /* a reserva pendente (Cliente Beta) avanca para confirmada */
@@ -423,8 +423,8 @@ describe('Reservations', () => {
     });
   });
 
-  describe('servicos a falhar', () => {
-    it.each(['activity', 'rentacar', 'restaurant', 'hotel'])('%s: a pagina nao rebenta', async (tipo) => {
+  describe('serviços a falhar', () => {
+    it.each(['activity', 'rentacar', 'restaurant', 'hotel'])('%s: a página não rebenta', async (tipo) => {
       servicosAFalhar();
       esperaErros = true;
       renderPagina(tipo);

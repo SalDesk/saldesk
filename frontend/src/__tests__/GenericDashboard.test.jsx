@@ -42,21 +42,21 @@ function resumo(atual = {}, variacao = {}) {
 
 /* Textos que antes estavam fixos em portugues dentro do componente */
 const ANTIGOS_POR_TIPO = {
-  hotel:      ['Check-ins hoje', 'Ocupacao hoje', 'Mapa de Quartos — Hoje'],
-  rentacar:   ['Alugueres activos', 'Veiculos disponiveis', 'Frota — Estado Actual'],
+  hotel:      ['Check-ins hoje', 'Ocupação hoje', 'Mapa de Quartos — Hoje'],
+  rentacar:   ['Alugueres activos', 'Veiculos disponíveis', 'Frota — Estado Actual'],
   restaurant: ['Reservas hoje', 'Covers hoje', 'Mapa de Mesas — Hoje'],
 };
 const ANTIGOS_COMUNS = [
-  'Accoes Rapidas', 'Clientes', 'Automacoes', 'Financeiro', 'Unidades',
-  'CRM com historico e estatisticas', 'Emails e WhatsApp automaticos',
-  'Relatorios e exportacoes', 'Gerir quartos, actividades, etc.',
-  'vs mes ant.', 'p.p.',
+  'Acções Rápidas', 'Clientes', 'Automações', 'Financeiro', 'Unidades',
+  'CRM com histórico e estatísticas', 'Emails e WhatsApp automáticos',
+  'Relatórios e exportações', 'Gerir quartos, actividades, etc.',
+  'vs mês ant.', 'p.p.',
 ];
 
 /* O que cada tipo mostra em portugues (a chave existente diz Viaturas, como o dashboard de rent-a-car) */
 const PORTUGUES_POR_TIPO = {
-  hotel:      ['Check-ins hoje', 'Ocupacao hoje', 'Mapa de Quartos — Hoje'],
-  rentacar:   ['Alugueres activos', 'Viaturas disponiveis', 'Frota — Estado Actual'],
+  hotel:      ['Check-ins hoje', 'Ocupação hoje', 'Mapa de Quartos — Hoje'],
+  rentacar:   ['Alugueres activos', 'Viaturas disponíveis', 'Frota — Estado Actual'],
   restaurant: ['Reservas hoje', 'Covers hoje', 'Mapa de Mesas — Hoje'],
 };
 
@@ -136,7 +136,7 @@ describe('GenericDashboard (Hoje)', () => {
     expect(screen.getByText('Receita')).toBeInTheDocument();
     expect(screen.getByText('Reservas')).toBeInTheDocument();
     expect(screen.getByText('7')).toBeInTheDocument();
-    expect(screen.getByText('Ocupacao')).toBeInTheDocument();
+    expect(screen.getByText('Ocupação')).toBeInTheDocument();
     expect(screen.getByText('41.0%')).toBeInTheDocument();
     /* sem tipo nao ha mapa */
     expect(screen.queryByText('Mapa de Quartos — Hoje')).not.toBeInTheDocument();
@@ -156,7 +156,7 @@ describe('GenericDashboard (Hoje)', () => {
     getResumo.mockReset().mockImplementation(pendente);
     const { container } = renderGenerico(undefined);
     expect(valorDe('Receita')).toHaveTextContent(/^—$/);
-    expect(valorDe('Ocupacao')).toHaveTextContent(/^—$/);
+    expect(valorDe('Ocupação')).toHaveTextContent(/^—$/);
     expect(container.textContent).not.toContain('NaN');
   });
 
@@ -165,16 +165,16 @@ describe('GenericDashboard (Hoje)', () => {
     const { container } = renderGenerico(undefined);
     await esperaCarregar();
     expect(valorDe('Receita')).toHaveTextContent(/^—$/);
-    expect(valorDe('Ocupacao')).toHaveTextContent(/^—$/);
+    expect(valorDe('Ocupação')).toHaveTextContent(/^—$/);
     expect(container.textContent).not.toContain('NaN');
   });
 
-  it('a variacao da receita e a diferenca em euros face ao mes anterior', async () => {
+  it('a variação da receita e a diferença em euros face ao mês anterior', async () => {
     carregaServicos({
       res: {
         atual: { ...ZERO, receita: 1200 },
         anterior: { ...ZERO, receita: 1000 },
-        /* variacao do backend e uma percentagem (+20%), nao euros */
+        /* variação do backend e uma percentagem (+20%), não euros */
         variacao: { ...ZERO, receita: 20 },
       },
     });
@@ -183,23 +183,23 @@ describe('GenericDashboard (Hoje)', () => {
     expect(screen.queryByText('+€20')).not.toBeInTheDocument();
   });
 
-  it('sem mes anterior a receita nao mostra variacao', async () => {
+  it('sem mês anterior a receita não mostra variação', async () => {
     carregaServicos({ res: { atual: { ...ZERO, receita: 500 } } });
     renderGenerico(undefined);
     expect(await screen.findByText('€500')).toBeInTheDocument();
-    expect(screen.queryByText('vs mes anterior')).not.toBeInTheDocument();
+    expect(screen.queryByText('vs mês anterior')).not.toBeInTheDocument();
   });
 
-  it('as accoes rapidas nao repetem as do cabecalho', async () => {
+  it('as acções rápidas não repetem as do cabeçalho', async () => {
     renderGenerico(undefined);
-    expect(await screen.findByText('Accoes Rapidas')).toBeInTheDocument();
+    expect(await screen.findByText('Acções Rápidas')).toBeInTheDocument();
     /* ver calendario e nova reserva ja estao na casca */
-    expect(screen.queryByRole('button', { name: /Calendario/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Calendário/ })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /Gerir e acompanhar reservas/ })).not.toBeInTheDocument();
     /* o que a casca nao tem continua aqui, com destino proprio */
     fireEvent.click(screen.getByRole('button', { name: /Clientes/ }));
     expect(navigateMock).toHaveBeenLastCalledWith('/clientes');
-    fireEvent.click(screen.getByRole('button', { name: /Automacoes/ }));
+    fireEvent.click(screen.getByRole('button', { name: /Automações/ }));
     expect(navigateMock).toHaveBeenLastCalledWith('/automacoes');
     fireEvent.click(screen.getByRole('button', { name: /Financeiro/ }));
     expect(navigateMock).toHaveBeenLastCalledWith('/financeiro');
@@ -208,16 +208,16 @@ describe('GenericDashboard (Hoje)', () => {
     await esperaCarregar();
   });
 
-  it('a variacao de ocupacao mostra a unidade uma so vez', async () => {
+  it('a variação de ocupação mostra a unidade uma só vez', async () => {
     carregaServicos({ res: resumo({ taxa_ocupacao: 40 }, { taxa_ocupacao: 2, receita: 5 }) });
     renderGenerico(undefined);
     expect(await screen.findByText('+2.0 p.p.')).toBeInTheDocument();
     expect(screen.queryAllByText('p.p.')).toHaveLength(0);
-    expect(screen.getByText('vs mes anterior')).toBeInTheDocument();
+    expect(screen.getByText('vs mês anterior')).toBeInTheDocument();
   });
 
   Object.keys(ANTIGOS_POR_TIPO).forEach((tipo) => {
-    it(`${tipo}: em portugues mostra os textos do tipo`, async () => {
+    it(`${tipo}: em português mostra os textos do tipo`, async () => {
       renderGenerico(tipo);
       for (const texto of PORTUGUES_POR_TIPO[tipo]) {
         expect(await screen.findByText(texto)).toBeInTheDocument();
@@ -225,7 +225,7 @@ describe('GenericDashboard (Hoje)', () => {
       await esperaCarregar();
     });
 
-    it(`${tipo}: em ingles nenhum texto fixo em portugues aparece`, async () => {
+    it(`${tipo}: em inglês nenhum texto fixo em português aparece`, async () => {
       useUiStore.setState({ lang: 'en' });
       carregaServicos({ res: resumo({ receita: 100 }, { receita: 5, taxa_ocupacao: 2 }) });
       renderGenerico(tipo);
@@ -243,7 +243,7 @@ describe('GenericDashboard (Hoje)', () => {
     });
   });
 
-  it('em ingles sem tipo nenhum texto fixo em portugues aparece', async () => {
+  it('em inglês sem tipo nenhum texto fixo em português aparece', async () => {
     useUiStore.setState({ lang: 'en' });
     renderGenerico(undefined);
     expect(await screen.findByText('Quick Actions')).toBeInTheDocument();
@@ -305,7 +305,7 @@ describe('GenericDashboard (Hoje)', () => {
   });
 
   ['restaurant', undefined].forEach((tipo) => {
-    it(`${tipo ?? 'sem tipo'}: nao pede as reservas com check-in feito`, async () => {
+    it(`${tipo ?? 'sem tipo'}: não pede as reservas com check-in feito`, async () => {
       renderGenerico(tipo);
       await esperaCarregar();
       await waitFor(() => expect(listReservations).toHaveBeenCalledTimes(1));
@@ -315,7 +315,7 @@ describe('GenericDashboard (Hoje)', () => {
     });
   });
 
-  it('hotel: check-in feito com saida ultrapassada conta na ocupacao', async () => {
+  it('hotel: check-in feito com saída ultrapassada conta na ocupação', async () => {
     const ontem = new Date();
     ontem.setDate(ontem.getDate() - 1);
     carregaServicos({
@@ -323,7 +323,7 @@ describe('GenericDashboard (Hoje)', () => {
         { id: 'u1', name: 'Quarto 1', unit_type: 'double', status: 'available', is_active: true },
         { id: 'u2', name: 'Quarto 2', unit_type: 'double', status: 'available', is_active: true },
       ],
-      /* so o pedido dos check-ins feitos devolve esta reserva (saida ontem) */
+      /* só o pedido dos check-ins feitos devolve esta reserva (saída ontem) */
       checkedIn: [{
         id: 'o', unit_id: 'u1', status: 'checked_in', check_in: '2020-01-01',
         check_out: ontem.toLocaleDateString('en-CA'), guests: 2,
@@ -335,7 +335,7 @@ describe('GenericDashboard (Hoje)', () => {
     expect(screen.getByText('Quarto 1').parentElement).toHaveTextContent('Ocupado');
   });
 
-  it('rentacar: devolucao ultrapassada continua a contar nos alugueres activos e fora das viaturas disponiveis', async () => {
+  it('rentacar: devolução ultrapassada continua a contar nos alugueres activos e fora das viaturas disponíveis', async () => {
     const ontem = new Date();
     ontem.setDate(ontem.getDate() - 1);
     carregaServicos({
@@ -348,10 +348,10 @@ describe('GenericDashboard (Hoje)', () => {
     renderGenerico('rentacar');
     await screen.findByText('Viatura 1');
     await waitFor(() => expect(screen.getByText('Alugueres activos').parentElement.nextElementSibling).toHaveTextContent('1'));
-    expect(screen.getByText('Viaturas disponiveis').parentElement.nextElementSibling).toHaveTextContent('0');
+    expect(screen.getByText('Viaturas disponíveis').parentElement.nextElementSibling).toHaveTextContent('0');
   });
 
-  it('rentacar: o mesmo aluguer devolvido pelos dois pedidos conta uma so vez', async () => {
+  it('rentacar: o mesmo aluguer devolvido pelos dois pedidos conta uma só vez', async () => {
     const aluguer = { id: 'r1', unit_id: 'v1', status: 'checked_in', check_in: HOJE, check_out: HOJE };
     carregaServicos({
       units: [{ id: 'v1', name: 'Viatura 1', unit_type: 'car', status: 'available', is_active: true }],
@@ -382,16 +382,16 @@ describe('GenericDashboard (Hoje)', () => {
     expect(screen.getByText('Alugueres activos').parentElement.nextElementSibling).toHaveTextContent('1');
   });
 
-  it('servicos a falhar nao rebentam', async () => {
+  it('serviços a falhar não rebentam', async () => {
     servicosAFalhar();
     renderGenerico('restaurant');
     expect(await screen.findByText('Sem mesas registadas.')).toBeInTheDocument();
     expect(screen.getByText('Covers hoje')).toBeInTheDocument();
-    expect(screen.getByText('Accoes Rapidas')).toBeInTheDocument();
+    expect(screen.getByText('Acções Rápidas')).toBeInTheDocument();
     await esperaCarregar();
   });
 
-  it('uma chamada a falhar nao apaga os dados das outras', async () => {
+  it('uma chamada a falhar não apaga os dados das outras', async () => {
     carregaServicos({ units: [{ id: 'u1', name: 'Quarto 1', unit_type: 'double', status: 'available', is_active: true }] });
     listReservations.mockReset().mockRejectedValue(new Error('falha de rede'));
     renderGenerico('hotel');
@@ -399,7 +399,7 @@ describe('GenericDashboard (Hoje)', () => {
     expect(screen.queryByText('Sem unidades registadas.')).not.toBeInTheDocument();
   });
 
-  it('reservas sem campos nao rebentam', async () => {
+  it('reservas sem campos não rebentam', async () => {
     const vazia = { id: 'x', status: 'confirmed' };
     carregaServicos({ units: [{ id: 'u9', name: 'Mesa 9' }], hoje: [vazia] });
     renderGenerico('restaurant');

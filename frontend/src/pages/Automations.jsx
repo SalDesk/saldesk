@@ -23,14 +23,14 @@ const SEQUENCES = [
   {
     id: 'booking_email',
     trigger_type: 'booking_confirmed', trigger_days: null, channel: 'email',
-    title: 'Nova reserva — Email de confirmacao',
-    subtitle: 'Email imediato ao cliente apos confirmacao',
+    title: 'Nova reserva — Email de confirmação',
+    subtitle: 'Email imediato ao cliente após confirmação',
     Icon: Mail, iconColor: 'text-ocean-700', iconBg: 'bg-ocean-50',
     defaults: {
-      name: 'Confirmacao de reserva',
+      name: 'Confirmação de reserva',
       subject_pt: 'A sua reserva foi confirmada — {nome_tour}',
       subject_en: 'Your booking is confirmed — {nome_tour}',
-      message_pt: 'Ola {nome_cliente},\n\nA sua reserva de {nome_tour} em {data} as {hora} foi confirmada.\n\nPonto de encontro: {ponto_encontro}\nGuia: {guia}\n\nLembre-se de trazer protector solar e vestuario confortavel.\n\nObrigado por escolher a nossa empresa!',
+      message_pt: 'Olá {nome_cliente},\n\nA sua reserva de {nome_tour} em {data} às {hora} foi confirmada.\n\nPonto de encontro: {ponto_encontro}\nGuia: {guia}\n\nLembre-se de trazer protector solar e vestuário confortável.\n\nObrigado por escolher a nossa empresa!',
       message_en: 'Hello {nome_cliente},\n\nYour {nome_tour} booking for {data} at {hora} is confirmed.\n\nMeeting point: {ponto_encontro}\nGuide: {guia}\n\nRemember to bring sunscreen and comfortable clothing.\n\nThank you for choosing us!',
     },
   },
@@ -43,35 +43,35 @@ const SEQUENCES = [
     defaults: {
       name: 'Boas-vindas WhatsApp',
       subject_pt: '', subject_en: '',
-      message_pt: 'Ola {nome_cliente}! Confirmamos a sua reserva de *{nome_tour}* em {data} as {hora}. Ponto de encontro: {ponto_encontro}. Guia: {guia}. Qualquer questao, estamos disponiveis!',
+      message_pt: 'Olá {nome_cliente}! Confirmamos a sua reserva de *{nome_tour}* em {data} às {hora}. Ponto de encontro: {ponto_encontro}. Guia: {guia}. Qualquer questão, estamos disponíveis!',
       message_en: 'Hello {nome_cliente}! Your *{nome_tour}* booking for {data} at {hora} is confirmed. Meeting point: {ponto_encontro}. Guide: {guia}. Contact us for any questions!',
     },
   },
   {
     id: 'd7_email',
     trigger_type: 'days_before_checkin', trigger_days: 7, channel: 'email',
-    title: 'D-7 — Email de preparacao',
+    title: 'D-7 — Email de preparação',
     subtitle: '7 dias antes do tour',
     Icon: Calendar, iconColor: 'text-ocean-500', iconBg: 'bg-ocean-50',
     defaults: {
       name: 'Lembrete 7 dias',
-      subject_pt: 'O seu tour e em 7 dias — {nome_tour}',
+      subject_pt: 'O seu tour é em 7 dias — {nome_tour}',
       subject_en: 'Your tour is in 7 days — {nome_tour}',
-      message_pt: 'Ola {nome_cliente},\n\nO seu tour {nome_tour} e em 7 dias, em {data} as {hora}.\n\nPonto de encontro: {ponto_encontro}\nGuia: {guia}\n\nO que trazer:\n- Vestuario confortavel\n- Protector solar e oculos de sol\n- Agua e snack leve\n- Documento de identidade\n\nAte breve!',
+      message_pt: 'Olá {nome_cliente},\n\nO seu tour {nome_tour} é em 7 dias, em {data} às {hora}.\n\nPonto de encontro: {ponto_encontro}\nGuia: {guia}\n\nO que trazer:\n- Vestuário confortável\n- Protector solar e oculos de sol\n- Água e snack leve\n- Documento de identidade\n\nAte breve!',
       message_en: 'Hello {nome_cliente},\n\nYour {nome_tour} tour is in 7 days, on {data} at {hora}.\n\nMeeting point: {ponto_encontro}\nGuide: {guia}\n\nWhat to bring:\n- Comfortable clothing\n- Sunscreen and sunglasses\n- Water and light snack\n- ID document\n\nSee you soon!',
     },
   },
   {
     id: 'd3_email',
     trigger_type: 'days_before_checkin', trigger_days: 3, channel: 'email',
-    title: 'D-3 — Email com instrucoes',
+    title: 'D-3 — Email com instruções',
     subtitle: '3 dias antes do tour',
     Icon: Calendar, iconColor: 'text-sand-600', iconBg: 'bg-sand-50',
     defaults: {
-      name: 'Instrucoes D-3',
-      subject_pt: 'Instrucoes finais para o seu tour — {nome_tour}',
+      name: 'Instruções D-3',
+      subject_pt: 'Instruções finais para o seu tour — {nome_tour}',
       subject_en: 'Final instructions for your tour — {nome_tour}',
-      message_pt: 'Ola {nome_cliente},\n\nO seu tour {nome_tour} e em apenas 3 dias!\n\n- Data: {data} as {hora}\n- Ponto de encontro: {ponto_encontro}\n- Guia: {guia}\n\nEm caso de cancelamento por mau tempo, entraremos em contacto com 24h de antecedencia.\n\nAte breve!',
+      message_pt: 'Olá {nome_cliente},\n\nO seu tour {nome_tour} é em apenas 3 dias!\n\n- Data: {data} às {hora}\n- Ponto de encontro: {ponto_encontro}\n- Guia: {guia}\n\nEm caso de cancelamento por mau tempo, entraremos em contacto com 24h de antecedência.\n\nAte breve!',
       message_en: 'Hello {nome_cliente},\n\nYour {nome_tour} tour is in just 3 days!\n\n- Date: {data} at {hora}\n- Meeting point: {ponto_encontro}\n- Guide: {guia}\n\nIn case of cancellation due to bad weather, we will contact you 24h in advance.\n\nSee you soon!',
     },
   },
@@ -84,35 +84,35 @@ const SEQUENCES = [
     defaults: {
       name: 'Lembrete D-1',
       subject_pt: '', subject_en: '',
-      message_pt: 'Ola {nome_cliente}! Lembrete: o seu tour *{nome_tour}* e amanha em {data} as {hora}. Ponto de encontro: {ponto_encontro}. Guia: {guia}. Ate amanha!',
+      message_pt: 'Olá {nome_cliente}! Lembrete: o seu tour *{nome_tour}* é amanhã em {data} às {hora}. Ponto de encontro: {ponto_encontro}. Guia: {guia}. Até amanhã!',
       message_en: 'Hello {nome_cliente}! Reminder: your *{nome_tour}* tour is tomorrow {data} at {hora}. Meeting point: {ponto_encontro}. Guide: {guia}. See you tomorrow!',
     },
   },
   {
     id: 'post1_review',
     trigger_type: 'days_after_checkout', trigger_days: 1, channel: 'email',
-    title: 'D+1 — Pedido de avaliacao',
-    subtitle: '1 dia apos o tour',
+    title: 'D+1 — Pedido de avaliação',
+    subtitle: '1 dia após o tour',
     Icon: Star, iconColor: 'text-sand-600', iconBg: 'bg-sand-50',
     defaults: {
-      name: 'Pedido de avaliacao',
+      name: 'Pedido de avaliação',
       subject_pt: 'Como correu o seu tour? — {nome_tour}',
       subject_en: 'How was your tour? — {nome_tour}',
-      message_pt: 'Ola {nome_cliente},\n\nEsperamos que tenha tido uma experiencia incrivel no tour {nome_tour}!\n\nA sua opiniao e muito importante para nos. Clique no link abaixo para deixar a sua avaliacao:\n\n→ Avaliar o meu tour\n\nObrigado pela sua confianca!',
+      message_pt: 'Olá {nome_cliente},\n\nEsperamos que tenha tido uma experiência incrível no tour {nome_tour}!\n\nA sua opinião é muito importante para nós. Clique no link abaixo para deixar a sua avaliação:\n\n→ Avaliar o meu tour\n\nObrigado pela sua confiança!',
       message_en: 'Hello {nome_cliente},\n\nWe hope you had an amazing experience on the {nome_tour} tour!\n\nYour feedback means the world to us. Click the link below to leave your review:\n\n→ Rate my tour\n\nThank you for your trust!',
     },
   },
   {
     id: 'post7_discount',
     trigger_type: 'days_after_checkout', trigger_days: 7, channel: 'email',
-    title: 'D+7 — Desconto proxima reserva',
-    subtitle: '7 dias apos o tour',
+    title: 'D+7 — Desconto próxima reserva',
+    subtitle: '7 dias após o tour',
     Icon: Gift, iconColor: 'text-[var(--success)]', iconBg: 'bg-[var(--success-light)]',
     defaults: {
       name: 'Desconto fidelidade D+7',
       subject_pt: 'Um presente especial para si — {nome_tour}',
       subject_en: 'A special gift for you',
-      message_pt: 'Ola {nome_cliente},\n\nObrigado por ter escolhido o tour {nome_tour}!\n\nComo agradecimento, temos um desconto especial de 10% para a sua proxima reserva. Use o codigo: VOLTA10\n\nValido por 30 dias. Reserve em: saldesk.cv\n\nEsperamos ve-lo em breve!',
+      message_pt: 'Olá {nome_cliente},\n\nObrigado por ter escolhido o tour {nome_tour}!\n\nComo agradecimento, temos um desconto especial de 10% para a sua próxima reserva. Use o código: VOLTA10\n\nValido por 30 dias. Reserve em: saldesk.cv\n\nEsperamos ve-lo em breve!',
       message_en: 'Hello {nome_cliente},\n\nThank you for joining the {nome_tour} tour!\n\nAs a thank you, we have a special 10% discount for your next booking. Use code: BACK10\n\nValid for 30 days. Book at: saldesk.cv\n\nWe hope to see you soon!',
     },
   },
@@ -120,13 +120,13 @@ const SEQUENCES = [
     id: 'post30_newsletter',
     trigger_type: 'days_after_checkout', trigger_days: 30, channel: 'email',
     title: 'D+30 — Newsletter de novos tours',
-    subtitle: '30 dias apos o tour',
+    subtitle: '30 dias após o tour',
     Icon: Newspaper, iconColor: 'text-n-600', iconBg: 'bg-n-100',
     defaults: {
       name: 'Newsletter D+30',
       subject_pt: 'Novidades e novos tours para si',
       subject_en: 'New tours and updates for you',
-      message_pt: 'Ola {nome_cliente},\n\nJa passou um mes desde o seu tour {nome_tour}! Temos novidades incriveis:\n\n- Novos tours disponiveis para esta epoca\n- Pacotes especiais de fim de semana\n- Experiencias exclusivas em Cabo Verde\n\nVeja todas as novidades e reserve em: saldesk.cv\n\nAte breve!',
+      message_pt: 'Olá {nome_cliente},\n\nJa passou um mês desde o seu tour {nome_tour}! Temos novidades incríveis:\n\n- Novos tours disponíveis para esta epoca\n- Pacotes especiais de fim de semana\n- Experiências exclusivas em Cabo Verde\n\nVeja todas as novidades e reserve em: saldesk.cv\n\nAte breve!',
       message_en: 'Hello {nome_cliente},\n\nA month has passed since your {nome_tour} tour! We have amazing news:\n\n- New tours available this season\n- Special weekend packages\n- Exclusive experiences across Cabo Verde\n\nCheck out everything at: saldesk.cv\n\nSee you soon!',
     },
   },
@@ -134,10 +134,10 @@ const SEQUENCES = [
 
 const VARS = [
   { key: '{nome_cliente}', desc: 'Nome do cliente' },
-  { key: '{nome_tour}',    desc: 'Nome do tour/servico' },
+  { key: '{nome_tour}',    desc: 'Nome do tour/serviço' },
   { key: '{data}',         desc: 'Data do tour' },
   { key: '{hora}',         desc: 'Hora do tour' },
-  { key: '{guia}',         desc: 'Nome do guia atribuido' },
+  { key: '{guia}',         desc: 'Nome do guia atribuído' },
   { key: '{ponto_encontro}', desc: 'Ponto de encontro' },
 ];
 
@@ -146,7 +146,7 @@ const DEMO = {
   '{nome_tour}':    'Kitesurf Lesson',
   '{data}':         '15 Jun 2025',
   '{hora}':         '09h00',
-  '{guia}':         'Joao Silva',
+  '{guia}':         'João Silva',
   '{ponto_encontro}': 'Praia de Santa Maria, Sal',
 };
 
@@ -181,7 +181,7 @@ function EmailPreview({ subject, body, isWhatsApp }) {
         </div>
         <div className="bg-n-100 p-3">
           <div className="bg-white rounded-lg px-3 py-2 max-w-xs shadow-sm">
-            <pre className="text-xs font-body text-n-800 whitespace-pre-wrap leading-relaxed">{pb || '(sem conteudo)'}</pre>
+            <pre className="text-xs font-body text-n-800 whitespace-pre-wrap leading-relaxed">{pb || '(sem conteúdo)'}</pre>
             <p className="text-[10px] font-mono text-n-400 text-right mt-1">09:00</p>
           </div>
         </div>
@@ -199,10 +199,10 @@ function EmailPreview({ subject, body, isWhatsApp }) {
         {ps && <p className="text-ocean-300 text-[11px] font-mono mt-0.5">Assunto: {ps}</p>}
       </div>
       <div className="bg-white px-5 py-4">
-        <pre className="text-xs font-body text-n-700 whitespace-pre-wrap leading-relaxed">{pb || '(sem conteudo)'}</pre>
+        <pre className="text-xs font-body text-n-700 whitespace-pre-wrap leading-relaxed">{pb || '(sem conteúdo)'}</pre>
       </div>
       <div className="bg-n-50 px-4 py-2 border-t border-n-100">
-        <p className="text-[10px] font-mono text-n-400">Preview com dados de exemplo. Variaveis substituidas no envio real.</p>
+        <p className="text-[10px] font-mono text-n-400">Preview com dados de exemplo. Variáveis substituidas no envio real.</p>
       </div>
     </div>
   );
@@ -386,7 +386,7 @@ function SequenceCard({ seq, automation, onSaved }) {
             <div className="space-y-4">
               {/* Variables */}
               <div>
-                <p className="text-xs font-body font-bold uppercase tracking-wide text-n-500 mb-2">Variaveis — clique para inserir no corpo PT</p>
+                <p className="text-xs font-body font-bold uppercase tracking-wide text-n-500 mb-2">Variáveis — clique para inserir no corpo PT</p>
                 <div className="flex flex-wrap gap-1.5">
                   {VARS.map(v => (
                     <button key={v.key} type="button" onClick={() => insertVar(v.key)} title={v.desc}
@@ -456,7 +456,7 @@ const LOG_COLUMNS = [
     ),
   },
   {
-    key: 'automation', label: 'Automacao',
+    key: 'automation', label: 'Automação',
     render: l => <span className="font-body text-n-700 block max-w-[180px] truncate">{l.automation_name || l.automation?.name || '—'}</span>,
   },
   {
@@ -492,8 +492,8 @@ function LogsTab({ logs, loading }) {
       <Card padding="p-0">
         <EmptyState
           icon={History}
-          title="Sem historico de envios."
-          description="Os envios aparecerao aqui apos as primeiras automacoes serem disparadas."
+          title="Sem histórico de envios."
+          description="Os envios aparecerão aqui após as primeiras automações serem disparadas."
         />
       </Card>
     );
@@ -546,14 +546,14 @@ export default function Automations() {
   return (
     <div>
       <PageHeader
-        title="Automacoes de Comunicacao"
-        subtitle={`${activeCount} sequencia(s) activa(s)`}
+        title="Automações de Comunicação"
+        subtitle={`${activeCount} sequência(s) activa(s)`}
       />
 
       {/* Info */}
       <div className="bg-[var(--info-light)] border border-n-200 rounded-sm px-4 py-3 mb-5">
         <p className="text-xs font-body text-[var(--info)]">
-          <span className="font-semibold">Variaveis disponiveis:</span>{' '}
+          <span className="font-semibold">Variáveis disponíveis:</span>{' '}
           {VARS.map(v => v.key).join(' · ')}
         </p>
       </div>
@@ -561,7 +561,7 @@ export default function Automations() {
       {/* Tabs */}
       <div className="mb-5">
         <Tabs
-          tabs={[{ id: 'sequencias', label: 'Sequencias' }, { id: 'historico', label: 'Historico de envios' }]}
+          tabs={[{ id: 'sequencias', label: 'Sequências' }, { id: 'historico', label: 'Histórico de envios' }]}
           value={activeTab}
           onChange={setActiveTab}
         />

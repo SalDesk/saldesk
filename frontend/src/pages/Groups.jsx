@@ -25,10 +25,10 @@ const EVENT_TYPES = [
 
 const STATUSES = [
   { value: 'pedido',           label: 'Pedido',           variant: 'default'   },
-  { value: 'em_analise',       label: 'Em analise',       variant: 'pending'   },
+  { value: 'em_analise',       label: 'Em análise',       variant: 'pending'   },
   { value: 'proposta_enviada', label: 'Proposta enviada', variant: 'info'      },
   { value: 'confirmado',       label: 'Confirmado',       variant: 'confirmed' },
-  { value: 'concluido',        label: 'Concluido',        variant: 'default'   },
+  { value: 'concluido',        label: 'Concluído',        variant: 'default'   },
   { value: 'cancelado',        label: 'Cancelado',        variant: 'cancelled' },
 ];
 
@@ -93,14 +93,14 @@ function GroupModal({ group, units, onSave, onClose }) {
         days_before:  Number(form.days_before),
       });
     } catch {
-      setError('Erro ao guardar cotacao.');
+      setError('Erro ao guardar cotação.');
     } finally {
       setSaving(false);
     }
   }
 
   return (
-    <Modal open onClose={onClose} title={isNew ? 'Nova cotacao de grupo' : 'Editar cotacao'} size="lg">
+    <Modal open onClose={onClose} title={isNew ? 'Nova cotação de grupo' : 'Editar cotação'} size="lg">
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <Input label="Empresa / Grupo" aria-label="Empresa / Grupo" value={form.company} onChange={set('company')} required placeholder="Ex: Empresa ABC" />
@@ -111,7 +111,7 @@ function GroupModal({ group, units, onSave, onClose }) {
 
         <div className="grid grid-cols-2 gap-3">
           <Input label="Data pretendida" aria-label="Data pretendida" type="date" value={form.date} onChange={set('date')} />
-          <Input label="Numero de pessoas" aria-label="Numero de pessoas" type="number" min="1" value={form.guests} onChange={set('guests')} required placeholder="Ex: 20" />
+          <Input label="Número de pessoas" aria-label="Número de pessoas" type="number" min="1" value={form.guests} onChange={set('guests')} required placeholder="Ex: 20" />
         </div>
 
         {/* Tours */}
@@ -120,7 +120,7 @@ function GroupModal({ group, units, onSave, onClose }) {
             Tours pretendidos ({form.tour_ids.length} seleccionado(s))
           </label>
           {units.length === 0 ? (
-            <p className="text-xs font-body text-n-400">Sem tours disponiveis.</p>
+            <p className="text-xs font-body text-n-400">Sem tours disponíveis.</p>
           ) : (
             <div className="flex flex-wrap gap-1.5">
               {units.map(u => (
@@ -140,14 +140,14 @@ function GroupModal({ group, units, onSave, onClose }) {
         <div className="grid grid-cols-2 gap-3">
           <Input label="Desconto de grupo (%)" aria-label="Desconto de grupo (%)" type="number" min="0" max="50" step="1"
             value={form.discount_pct} onChange={set('discount_pct')} placeholder="Ex: 15" />
-          <Input label="Orcamento estimado (€)" aria-label="Orcamento estimado (€)" type="number" min="0"
-            value={form.budget} onChange={set('budget')} placeholder="Orcamento do cliente" />
+          <Input label="Orçamento estimado (€)" aria-label="Orçamento estimado (€)" type="number" min="0"
+            value={form.budget} onChange={set('budget')} placeholder="Orçamento do cliente" />
         </div>
 
         {groupPrice > 0 && (
           <div className="px-3 py-2 bg-ocean-50 border border-ocean-100 rounded-sm">
             <p className="text-xs font-body text-ocean-700">
-              Preco estimado c/ desconto: <span className="font-bold">€{groupPrice.toFixed(0)}</span>
+              Preço estimado c/ desconto: <span className="font-bold">€{groupPrice.toFixed(0)}</span>
               {' '}({form.guests} pax × {form.discount_pct || 0}% desconto)
             </p>
           </div>
@@ -164,7 +164,7 @@ function GroupModal({ group, units, onSave, onClose }) {
         <Input label="Validade da proposta" aria-label="Validade da proposta" type="date" value={form.proposal_expires} onChange={set('proposal_expires')} />
 
         <Textarea label="Notas especiais" aria-label="Notas especiais" value={form.notes} onChange={set('notes')} rows={3}
-          placeholder="Necessidades especiais, alergias, preferencias do grupo..." />
+          placeholder="Necessidades especiais, alergias, preferências do grupo..." />
 
         {!isNew && (
           <Select label="Estado" aria-label="Estado" value={form.status} onChange={set('status')}>
@@ -176,7 +176,7 @@ function GroupModal({ group, units, onSave, onClose }) {
 
         <div className="flex gap-3 pt-1">
           <Button type="button" variant="secondary" onClick={onClose} className="flex-1">Cancelar</Button>
-          <Button type="submit" loading={saving} className="flex-1">{isNew ? 'Criar cotacao' : 'Guardar'}</Button>
+          <Button type="submit" loading={saving} className="flex-1">{isNew ? 'Criar cotação' : 'Guardar'}</Button>
         </div>
       </form>
     </Modal>
@@ -207,12 +207,12 @@ function PaymentModal({ group, onSave, onClose }) {
     <Modal open onClose={onClose} title={`Pagamento — ${group.company}`} size="sm">
       <div className="space-y-4">
         <div className="px-3 py-2 bg-n-50 border border-n-200 rounded-sm">
-          <p className="text-xs font-body text-n-500">Total pago ate agora: <span className="font-bold text-n-700">€{totalPaid.toFixed(2)}</span></p>
+          <p className="text-xs font-body text-n-500">Total pago até agora: <span className="font-bold text-n-700">€{totalPaid.toFixed(2)}</span></p>
         </div>
         <Input label="Montante recebido (€)" aria-label="Montante recebido (€)" type="number" min="0.01" step="0.01"
           value={amount} onChange={e => setAmount(e.target.value)} required />
         <Input label="Data" aria-label="Data" type="date" value={date} onChange={e => setDate(e.target.value)} />
-        <Input label="Descricao" aria-label="Descricao" value={note} onChange={e => setNote(e.target.value)} placeholder="Ex: Sinal, Pagamento final..." />
+        <Input label="Descrição" aria-label="Descrição" value={note} onChange={e => setNote(e.target.value)} placeholder="Ex: Sinal, Pagamento final..." />
         <div className="flex gap-3">
           <Button variant="secondary" onClick={onClose} className="flex-1">Cancelar</Button>
           <Button loading={saving} onClick={handleSave} className="flex-1">Registar</Button>
@@ -279,7 +279,7 @@ function GroupCard({ group, units, onEdit, onDelete, onPayment, onStatusChange }
               { label: 'Desconto', value: group.discount_pct ? `${group.discount_pct}%` : '—' },
               { label: 'Sinal', value: `${group.signal_pct || 30}%` },
               { label: 'Pagamento final', value: `${group.days_before || 7}d antes` },
-              { label: 'Proposta valida ate', value: fmtDate(group.proposal_expires) },
+              { label: 'Proposta válida até', value: fmtDate(group.proposal_expires) },
             ].map(m => (
               <div key={m.label}>
                 <p className="text-[10px] font-mono text-n-400 uppercase tracking-wide">{m.label}</p>
@@ -320,7 +320,7 @@ function GroupCard({ group, units, onEdit, onDelete, onPayment, onStatusChange }
             {nextStatus && (
               <Button size="sm" variant="secondary" icon={Check}
                 onClick={() => onStatusChange(group.id, nextStatus)}>
-                Avancar para: {STATUSES.find(s => s.value === nextStatus)?.label}
+                Avançar para: {STATUSES.find(s => s.value === nextStatus)?.label}
               </Button>
             )}
             <Button size="sm" variant="secondary" icon={Euro}
@@ -368,7 +368,7 @@ export default function Groups() {
   }
 
   async function handleDelete(id) {
-    if (!window.confirm('Eliminar esta cotacao?')) return;
+    if (!window.confirm('Eliminar esta cotação?')) return;
     await deleteGroup(id);
     setGroups(prev => prev.filter(g => g.id !== id));
   }
@@ -400,7 +400,7 @@ export default function Groups() {
   if (loading) {
     return (
       <div>
-        <PageHeader title="Grupos e Eventos Corporativos" subtitle="Cotacoes e propostas para grupos e empresas" />
+        <PageHeader title="Grupos e Eventos Corporativos" subtitle="Cotações e propostas para grupos e empresas" />
         <div className="flex justify-center py-16"><LoadingSpinner size={32} /></div>
       </div>
     );
@@ -410,14 +410,14 @@ export default function Groups() {
     <div>
       <PageHeader
         title="Grupos e Eventos Corporativos"
-        subtitle="Cotacoes e propostas para grupos e empresas"
-        actions={<Button icon={Plus} onClick={() => setModal({ _new: true })}>Nova cotacao</Button>}
+        subtitle="Cotações e propostas para grupos e empresas"
+        actions={<Button icon={Plus} onClick={() => setModal({ _new: true })}>Nova cotação</Button>}
       />
 
       {/* KPIs */}
       <div className="grid grid-cols-3 gap-3 mb-5">
         {[
-          { label: 'Total cotacoes',   value: kpis.total,       color: 'text-n-900'     },
+          { label: 'Total cotações',   value: kpis.total,       color: 'text-n-900'     },
           { label: 'Confirmados',      value: kpis.confirmados, color: 'text-[var(--success)]' },
           { label: 'Pax confirmados',  value: kpis.pax,         color: 'text-ocean-700' },
         ].map(m => (
@@ -448,11 +448,11 @@ export default function Groups() {
 
       {sorted.length === 0 ? (
         <Card padding="p-0">
-          <EmptyState icon={Users2} title="Sem cotacoes"
+          <EmptyState icon={Users2} title="Sem cotações"
             description={groups.length === 0
-              ? 'Regista a primeira cotacao para grupo ou evento corporativo.'
-              : 'Nenhuma cotacao corresponde aos filtros.'}
-            action={groups.length === 0 ? <Button icon={Plus} onClick={() => setModal({ _new: true })}>Nova cotacao</Button> : undefined} />
+              ? 'Regista a primeira cotação para grupo ou evento corporativo.'
+              : 'Nenhuma cotação corresponde aos filtros.'}
+            action={groups.length === 0 ? <Button icon={Plus} onClick={() => setModal({ _new: true })}>Nova cotação</Button> : undefined} />
         </Card>
       ) : (
         <div className="space-y-3">

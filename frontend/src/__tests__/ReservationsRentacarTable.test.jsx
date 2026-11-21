@@ -44,7 +44,7 @@ function reserva(over) {
   };
 }
 
-const CABECALHOS = ['Ref', 'Viatura', 'Levantamento', 'Devolucao', 'Cliente', 'Estado', 'Total', ''];
+const CABECALHOS = ['Ref', 'Viatura', 'Levantamento', 'Devolução', 'Cliente', 'Estado', 'Total', ''];
 
 describe('RentacarTable (tabela de reservas de rent-a-car)', () => {
   let errSpy;
@@ -103,7 +103,7 @@ describe('RentacarTable (tabela de reservas de rent-a-car)', () => {
     return within(linha).queryByRole('button', { name: nome });
   }
 
-  describe('conteudo (comportamento actual)', () => {
+  describe('conteúdo (comportamento actual)', () => {
     it('mostra as oito colunas pela ordem de hoje', () => {
       renderTabela();
       expect(within(tabela()).getAllByRole('columnheader').map(th => th.textContent)).toEqual(CABECALHOS);
@@ -125,11 +125,11 @@ describe('RentacarTable (tabela de reservas de rent-a-car)', () => {
         'Cliente Alfa',
         'Check-in',
         '€100',
-        'Devolucao',
+        'Devolução',
       ]);
     });
 
-    it('sem quilometros mostra so as datas; o total usa total_amount como alternativa', () => {
+    it('sem quilometros mostra só as datas; o total usa total_amount como alternativa', () => {
       renderTabela({
         reservations: [reserva({ total_price: undefined, total_amount: 250, check_in: HOJE, check_out: AMANHA })],
       });
@@ -150,18 +150,18 @@ describe('RentacarTable (tabela de reservas de rent-a-car)', () => {
         units: [
           carro({ id: 'u1', description: '{"brand":"Toyota"}' }),
           carro({ id: 'u2', name: 'Carro Dois', description: '{}' }),
-          carro({ id: 'u3', name: 'Carro Tres', description: 'isto nao e json' }),
+          carro({ id: 'u3', name: 'Carro Três', description: 'isto não e json' }),
         ],
       });
       const viaturas = linhas().map(l => celulas(l)[1].textContent);
-      expect(viaturas).toEqual(['Toyota', 'Carro Dois', 'Carro Tres', '—']);
+      expect(viaturas).toEqual(['Toyota', 'Carro Dois', 'Carro Três', '—']);
     });
 
-    it('campos em falta (cliente, datas, metadados invalidos) mostram o travessao e nao rebentam', () => {
+    it('campos em falta (cliente, datas, metadados invalidos) mostram o travessao e não rebentam', () => {
       renderTabela({
         reservations: [reserva({
           customer_name: undefined, check_in: undefined, check_out: undefined, total_price: undefined,
-          notes_internal: 'isto nao e json',
+          notes_internal: 'isto não e json',
         })],
       });
       const c = celulas(linhas()[0]);
@@ -171,7 +171,7 @@ describe('RentacarTable (tabela de reservas de rent-a-car)', () => {
       expect(c[6].textContent).toBe('€0');
     });
 
-    it('sem metadados de aluguer (notes_internal ausente) nao rebenta', () => {
+    it('sem metadados de aluguer (notes_internal ausente) não rebenta', () => {
       renderTabela({ reservations: [reserva({ notes_internal: undefined })] });
       expect(celulas(linhas()[0])[2].textContent).toBe(formatada(HOJE));
     });
@@ -183,7 +183,7 @@ describe('RentacarTable (tabela de reservas de rent-a-car)', () => {
     });
   });
 
-  describe('accoes (comportamento actual)', () => {
+  describe('acções (comportamento actual)', () => {
     it('Ver, Editar e Eliminar chamam o handler com a reserva da linha', () => {
       const r1 = reserva({ id: 'aaaaaaaa-0001' });
       const r2 = reserva({ id: 'bbbbbbbb-0002', customer_name: 'Cliente Beta' });
@@ -203,44 +203,44 @@ describe('RentacarTable (tabela de reservas de rent-a-car)', () => {
       expect(props.onDelete).toHaveBeenCalledWith(r2);
     });
 
-    it.each(['pending', 'confirmed'])('um aluguer %s mostra Levantamento (e nao Devolucao) e chama onLevantamento com a reserva', (estado) => {
+    it.each(['pending', 'confirmed'])('um aluguer %s mostra Levantamento (e não Devolução) e chama onLevantamento com a reserva', (estado) => {
       const r = reserva({ status: estado });
       renderTabela({ reservations: [r] });
       const linha = linhas()[0];
-      expect(semBotao(linha, 'Devolucao')).not.toBeInTheDocument();
+      expect(semBotao(linha, 'Devolução')).not.toBeInTheDocument();
       fireEvent.click(botao(linha, 'Levantamento'));
       expect(props.onLevantamento).toHaveBeenCalledTimes(1);
       expect(props.onLevantamento).toHaveBeenCalledWith(r);
       expect(props.onDevolucao).not.toHaveBeenCalled();
     });
 
-    it('um aluguer checked_in mostra Devolucao (e nao Levantamento) e chama onDevolucao com a reserva', () => {
+    it('um aluguer checked_in mostra Devolução (e não Levantamento) e chama onDevolucao com a reserva', () => {
       const r = reserva({ status: 'checked_in' });
       renderTabela({ reservations: [r] });
       const linha = linhas()[0];
       expect(semBotao(linha, 'Levantamento')).not.toBeInTheDocument();
-      fireEvent.click(botao(linha, 'Devolucao'));
+      fireEvent.click(botao(linha, 'Devolução'));
       expect(props.onDevolucao).toHaveBeenCalledTimes(1);
       expect(props.onDevolucao).toHaveBeenCalledWith(r);
       expect(props.onLevantamento).not.toHaveBeenCalled();
     });
 
-    it.each(['checked_out', 'cancelled', 'no_show'])('estado final %s: sem Levantamento nem Devolucao, mas com Ver, Editar e Eliminar', (estado) => {
+    it.each(['checked_out', 'cancelled', 'no_show'])('estado final %s: sem Levantamento nem Devolução, mas com Ver, Editar e Eliminar', (estado) => {
       renderTabela({ reservations: [reserva({ status: estado })] });
       const linha = linhas()[0];
       expect(semBotao(linha, 'Levantamento')).not.toBeInTheDocument();
-      expect(semBotao(linha, 'Devolucao')).not.toBeInTheDocument();
+      expect(semBotao(linha, 'Devolução')).not.toBeInTheDocument();
       for (const nome of ['Ver', 'Editar', 'Eliminar']) {
         expect(botao(linha, nome)).toBeInTheDocument();
       }
     });
 
-    it('cada linha chama o handler com a sua propria reserva', () => {
+    it('cada linha chama o handler com a sua própria reserva', () => {
       const r1 = reserva({ id: 'aaaaaaaa-0001', status: 'confirmed' });
       const r2 = reserva({ id: 'bbbbbbbb-0002', status: 'checked_in' });
       renderTabela({ reservations: [r1, r2] });
       const [l1, l2] = linhas();
-      fireEvent.click(botao(l2, 'Devolucao'));
+      fireEvent.click(botao(l2, 'Devolução'));
       fireEvent.click(botao(l1, 'Levantamento'));
       expect(props.onDevolucao).toHaveBeenCalledWith(r2);
       expect(props.onLevantamento).toHaveBeenCalledWith(r1);
@@ -261,9 +261,9 @@ describe('RentacarTable (tabela de reservas de rent-a-car)', () => {
       fireEvent.click(within(cabecalho(nome)).getByRole('button'));
     }
 
-    it('so Levantamento, Devolucao e Total sao ordenaveis (aria-sort a none) e as outras colunas nao', () => {
+    it('só Levantamento, Devolução e Total são ordenaveis (aria-sort a none) e as outras colunas não', () => {
       renderTabela({ reservations: TRES });
-      for (const nome of ['Levantamento', 'Devolucao', 'Total']) {
+      for (const nome of ['Levantamento', 'Devolução', 'Total']) {
         expect(cabecalho(nome)).toHaveAttribute('aria-sort', 'none');
       }
       for (const nome of ['Ref', 'Viatura', 'Cliente', 'Estado']) {
@@ -288,13 +288,13 @@ describe('RentacarTable (tabela de reservas de rent-a-car)', () => {
       expect(refs()).toEqual(['cccccccc', 'aaaaaaaa', 'bbbbbbbb']);
     });
 
-    it('clicar em Devolucao ordena por data de devolucao e repoe a ordem original na terceira vez', () => {
+    it('clicar em Devolução ordena por data de devolução e repoe a ordem original na terceira vez', () => {
       renderTabela({ reservations: TRES });
-      clicar('Devolucao');
+      clicar('Devolução');
       expect(refs()).toEqual(['aaaaaaaa', 'bbbbbbbb', 'cccccccc']); // HOJE, AMANHA, MAIS_TRES
-      clicar('Devolucao');
+      clicar('Devolução');
       expect(refs()).toEqual(['cccccccc', 'bbbbbbbb', 'aaaaaaaa']);
-      clicar('Devolucao');
+      clicar('Devolução');
       expect(refs()).toEqual(['cccccccc', 'aaaaaaaa', 'bbbbbbbb']);
     });
 
@@ -315,7 +315,7 @@ describe('RentacarTable (tabela de reservas de rent-a-car)', () => {
           reserva({ id: 'bbbbbbbb-0002', check_in: HOJE, check_out: AMANHA, total_price: 50 }),
         ],
       });
-      for (const nome of ['Levantamento', 'Devolucao', 'Total']) {
+      for (const nome of ['Levantamento', 'Devolução', 'Total']) {
         clicar(nome);
         expect(refs()).toHaveLength(2);
         clicar(nome);
@@ -323,7 +323,7 @@ describe('RentacarTable (tabela de reservas de rent-a-car)', () => {
       }
     });
 
-    it('as accoes continuam ligadas a reserva certa depois de ordenar', () => {
+    it('as acções continuam ligadas a reserva certa depois de ordenar', () => {
       renderTabela({ reservations: TRES });
       clicar('Levantamento');
       /* a primeira linha passa a ser a mais antiga (aaaaaaaa) */

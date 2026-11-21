@@ -124,7 +124,7 @@ describe('Pacotes: lista', () => {
   });
 });
 
-describe('Pacotes: accoes e formulario', () => {
+describe('Pacotes: acções e formulário', () => {
   it('activar_e_desactivar_chamam_updatePackage_com_o_estado_seguinte', async () => {
     updatePackage.mockImplementation(async (id, d) => ({ ...PACOTES.find(p => p.id === id), ...d }));
     await montar();
@@ -207,7 +207,7 @@ describe('Pacotes: accoes e formulario', () => {
     listUnits.mockResolvedValue([]);
     await montar();
     fireEvent.click(novoPacote());
-    expect(screen.getByText('Sem tours disponiveis. Cria tours primeiro em Unidades.')).toBeInTheDocument();
+    expect(screen.getByText('Sem tours disponíveis. Cria tours primeiro em Unidades.')).toBeInTheDocument();
   });
 });
 
@@ -234,7 +234,7 @@ describe('Pacotes com o design system', () => {
     await montar();
     fireEvent.click(within(cartao('Pacote Aventura')).getByRole('button', { name: 'Editar Pacote Aventura' }));
     const modal = within(screen.getByRole('dialog'));
-    ['Nome PT', 'Nome EN', 'Descricao PT', 'Descricao EN', 'Preco do pacote (€)', 'Limite de vendas (0 = ilimitado)', 'Valido de', 'Valido ate', 'Foto (URL)', 'Estado']
+    ['Nome PT', 'Nome EN', 'Descrição PT', 'Descrição EN', 'Preço do pacote (€)', 'Limite de vendas (0 = ilimitado)', 'Válido de', 'Válido até', 'Foto (URL)', 'Estado']
       .forEach(r => expect(modal.getByLabelText(r)).toBeInTheDocument());
   });
 

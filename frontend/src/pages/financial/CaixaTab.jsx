@@ -13,7 +13,7 @@ function CaixaTab({ transacoes, currency, loading }) {
   const columns = [
     { key: 'data', label: 'Data', render: t => <span className="text-xs font-mono text-n-500 whitespace-nowrap">{fmtDate(t.check_in)}</span> },
     { key: 'cliente', label: 'Cliente', render: t => <span className="font-body text-n-800 whitespace-nowrap">{t.customer_name || '—'}</span> },
-    { key: 'servico', label: 'Servico', render: t => <span className="block max-w-[160px] truncate font-body text-n-700">{t.units?.name || '—'}</span> },
+    { key: 'servico', label: 'Serviço', render: t => <span className="block max-w-[160px] truncate font-body text-n-700">{t.units?.name || '—'}</span> },
     { key: 'montante', label: 'Montante', render: t => <span className="font-display font-bold text-ocean-700 whitespace-nowrap">{fmtMoney(t.total_price, currency)}</span> },
     { key: 'estado', label: 'Estado', render: t => <span className={`text-xs font-mono px-1.5 py-0.5 rounded-xs ${PS_COLOR[t.payment_status] || 'text-n-500 bg-n-100'}`}>{PS_LABEL[t.payment_status] || t.payment_status || '—'}</span> },
   ];
@@ -25,7 +25,7 @@ function CaixaTab({ transacoes, currency, loading }) {
         ))}
       </div>
       {loading ? <div className="flex justify-center py-8"><LoadingSpinner size={24} /></div> :
-       cash.length === 0 ? <Card padding="p-0"><EmptyState icon={Wallet} title="Sem pagamentos em dinheiro no periodo." /></Card> :
+       cash.length === 0 ? <Card padding="p-0"><EmptyState icon={Wallet} title="Sem pagamentos em dinheiro no período." /></Card> :
        <Card header={<h3 className="font-display font-semibold text-sm text-n-700">Pagamentos em dinheiro</h3>}>
          <Table columns={columns} rows={cash} compact />
        </Card>}

@@ -47,7 +47,7 @@ export default function BottomNav({ onOpenMore }) {
         <button
           type="button"
           onClick={onOpenMore}
-          aria-label="Mais opcoes"
+          aria-label="Mais opções"
           className="-translate-y-3 w-14 h-14 rounded-full bg-sand-500 shadow-lg flex items-center justify-center hover:bg-sand-600 transition-colors"
         >
           <Plus size={26} strokeWidth={1.75} className="text-white" />

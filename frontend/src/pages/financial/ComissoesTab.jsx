@@ -54,7 +54,7 @@ function ComissoesTab({ currency }) {
   if (loading) return <div className="flex justify-center py-16"><LoadingSpinner size={32} /></div>;
 
   if (sellers.length === 0) return (
-    <Card padding="p-0"><EmptyState icon={Users} title="Sem vendedores de praia activos." description={'Cria colaboradores com funcao "Vendedor de Praia" na secção Colaboradores.'} /></Card>
+    <Card padding="p-0"><EmptyState icon={Users} title="Sem vendedores de praia activos." description={'Cria colaboradores com função "Vendedor de Praia" na secção Colaboradores.'} /></Card>
   );
 
   return (
@@ -69,7 +69,7 @@ function ComissoesTab({ currency }) {
             <div className="flex items-start gap-4">
               <div className="flex-1 min-w-0">
                 <p className="font-display font-semibold text-sm text-n-900">{s.name}</p>
-                <p className="text-xs font-body text-n-500">{s.commission_pct ?? getSellerCommissionPct(s.id, 10)}% comissao · {comms.length} reserva(s) este mes</p>
+                <p className="text-xs font-body text-n-500">{s.commission_pct ?? getSellerCommissionPct(s.id, 10)}% comissão · {comms.length} reserva(s) este mês</p>
               </div>
               <div className="flex gap-4 shrink-0">
                 {[{l: 'Total', v: fmtMoney(total, currency), c: 'text-n-800'}, {l: 'Pago', v: fmtMoney(paid, currency), c: 'text-[var(--success)]'}, {l: 'Pendente', v: fmtMoney(pending, currency), c: 'text-[var(--warning)]'}].map(m => (
@@ -86,7 +86,7 @@ function ComissoesTab({ currency }) {
                     <div className="flex items-center gap-3 shrink-0">
                       <span className="font-mono font-semibold text-[var(--success)]">{fmtMoney(c.amount, currency)}</span>
                       <span className={`font-mono px-1.5 py-0.5 rounded-xs ${c.status === 'paid' ? 'bg-[var(--success-light)] text-[var(--success)]' : 'bg-[var(--warning-light)] text-[var(--warning)]'}`}>{c.status === 'paid' ? 'Pago' : 'Pendente'}</span>
-                      {c.status === 'pending' && <button aria-label={`Pagar comissao - ${c.reservations?.units?.name || c.reservations?.customer_name || '—'}`} onClick={() => handlePay(s.id, c.id)} className="text-ocean-700 hover:underline">Pagar</button>}
+                      {c.status === 'pending' && <button aria-label={`Pagar comissão - ${c.reservations?.units?.name || c.reservations?.customer_name || '—'}`} onClick={() => handlePay(s.id, c.id)} className="text-ocean-700 hover:underline">Pagar</button>}
                     </div>
                   </div>
                 ))}
@@ -96,10 +96,10 @@ function ComissoesTab({ currency }) {
         );
       })}
       {payModal && (
-        <Modal open onClose={() => setPayModal(null)} title={`Pagar comissoes — ${payModal.seller.name}`} size="sm">
+        <Modal open onClose={() => setPayModal(null)} title={`Pagar comissões — ${payModal.seller.name}`} size="sm">
           <div className="space-y-4">
-            <div className="px-3 py-2 bg-[var(--warning-light)] border border-[var(--warning)] rounded-sm"><p className="text-xs font-body text-[var(--warning)]">Comissoes pendentes este mes: <span className="font-bold">{fmtMoney(payModal.pending, currency)}</span></p></div>
-            <p className="text-xs font-body text-n-500">Esta accao marca todas as comissoes pendentes deste vendedor como pagas.</p>
+            <div className="px-3 py-2 bg-[var(--warning-light)] border border-[var(--warning)] rounded-sm"><p className="text-xs font-body text-[var(--warning)]">Comissões pendentes este mês: <span className="font-bold">{fmtMoney(payModal.pending, currency)}</span></p></div>
+            <p className="text-xs font-body text-n-500">Esta acção marca todas as comissões pendentes deste vendedor como pagas.</p>
             <div className="flex gap-3"><Button variant="secondary" onClick={() => setPayModal(null)} className="flex-1">Cancelar</Button><Button icon={Check} onClick={() => { const comms = getMonthComms(payModal.seller.id).filter(c => c.status === 'pending'); comms.forEach(c => handlePay(payModal.seller.id, c.id)); }} className="flex-1">Confirmar pagamento</Button></div>
           </div>
         </Modal>

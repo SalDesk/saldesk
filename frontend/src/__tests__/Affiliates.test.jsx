@@ -19,7 +19,7 @@ const NOMEADAS = /(?:^|[\s"'])(?:[a-z-]+:)?(?:text|bg|border|fill|ring)-(?:green
 const HOJE = new Date().toISOString().slice(0, 10);
 
 const AFILIADOS = [
-  { id: 'a1', name: 'Joao Silva', email: 'joao@x.cv', code: 'JOA3K9', commission_pct: 12, active: true, bookings_count: 10, commission_paid: 100, commission_pending: 50 },
+  { id: 'a1', name: 'João Silva', email: 'joao@x.cv', code: 'JOA3K9', commission_pct: 12, active: true, bookings_count: 10, commission_paid: 100, commission_pending: 50 },
   { id: 'a2', name: 'Maria Lopes', email: 'm@x.cv', code: 'MAR1', commission_pct: 10, active: false, bookings_count: 4, commission_paid: 20, commission_pending: 0 },
   { id: 'a3', name: '', email: '', code: 'SEMNOME', commission_pct: 0, bookings_count: 0 },
 ];
@@ -49,7 +49,7 @@ afterEach(() => {
   expect(avisos).toEqual([]);
 });
 
-async function montar(primeiro = 'Joao Silva') {
+async function montar(primeiro = 'João Silva') {
   const r = render(<Affiliates />);
   await screen.findByText(primeiro);
   return r;
@@ -65,8 +65,8 @@ const separador = (rotulo) => screen.getAllByText(rotulo).find(e => e.closest('b
 describe('Afiliados: lista', () => {
   it('lista_afiliados_com_nome_email_codigo_comissao_e_estatisticas', async () => {
     await montar();
-    const l = linha('Joao Silva');
-    expect(l).toHaveTextContent('joao@x.cv · JOA3K9 · 12% comissao');
+    const l = linha('João Silva');
+    expect(l).toHaveTextContent('joao@x.cv · JOA3K9 · 12% comissão');
     expect(l).toHaveTextContent('10Reservas');
     expect(l).toHaveTextContent('€100Pago');
     expect(l).toHaveTextContent('€50Pendente');
@@ -76,30 +76,30 @@ describe('Afiliados: lista', () => {
 
   it('a_ligacao_usa_o_slug_do_operador_ou_o_do_link_de_reservas', async () => {
     await montar();
-    expect(linha('Joao Silva')).toHaveTextContent('https://saldesk.cv/book/sal?ref=JOA3K9');
+    expect(linha('João Silva')).toHaveTextContent('https://saldesk.cv/book/sal?ref=JOA3K9');
     expect(getBookingLink).not.toHaveBeenCalled();
     cleanup();
     useAuthStore.setState({ operator: { id: 'op1' } });
     await montar();
-    await waitFor(() => expect(linha('Joao Silva')).toHaveTextContent('https://saldesk.cv/book/demo?ref=JOA3K9'));
+    await waitFor(() => expect(linha('João Silva')).toHaveTextContent('https://saldesk.cv/book/demo?ref=JOA3K9'));
   });
 
   it('kpis_activos_reservas_comissao_paga_e_pendente', async () => {
     await montar();
     expect(kpi('Afiliados activos')).toBe('2'); /* active !== false */
     expect(kpi('Reservas geradas')).toBe('14');
-    expect(kpi('Comissao paga')).toBe('€120');
-    expect(kpi('Comissao pendente')).toBe('€50');
+    expect(kpi('Comissão paga')).toBe('€120');
+    expect(kpi('Comissão pendente')).toBe('€50');
   });
 
   it('inactivo_fica_esbatido_e_o_estado_alterna_com_updateAffiliate', async () => {
     updateAffiliate.mockImplementation(async (id, d) => ({ ...AFILIADOS.find(a => a.id === id), ...d }));
     await montar();
     expect(linha('Maria Lopes').closest('.opacity-60')).not.toBeNull();
-    expect(linha('Joao Silva').closest('.opacity-60')).toBeNull();
-    fireEvent.click(within(linha('Joao Silva')).getAllByRole('button')[1]);
+    expect(linha('João Silva').closest('.opacity-60')).toBeNull();
+    fireEvent.click(within(linha('João Silva')).getAllByRole('button')[1]);
     await waitFor(() => expect(updateAffiliate).toHaveBeenCalledWith('a1', { active: false }));
-    await waitFor(() => expect(linha('Joao Silva').closest('.opacity-60')).not.toBeNull());
+    await waitFor(() => expect(linha('João Silva').closest('.opacity-60')).not.toBeNull());
     fireEvent.click(within(linha('Maria Lopes')).getAllByRole('button')[1]);
     await waitFor(() => expect(updateAffiliate).toHaveBeenCalledWith('a2', { active: true }));
   });
@@ -113,10 +113,10 @@ describe('Afiliados: lista', () => {
   it('copiar_e_whatsapp', async () => {
     await montar();
     const link = 'https://saldesk.cv/book/sal?ref=JOA3K9';
-    fireEvent.click(within(linha('Joao Silva')).getByText('Copiar'));
+    fireEvent.click(within(linha('João Silva')).getByText('Copiar'));
     expect(clip).toHaveBeenCalledWith(link);
-    expect(await within(linha('Joao Silva')).findByText('Copiado')).toBeInTheDocument();
-    fireEvent.click(within(linha('Joao Silva')).getByText('WA'));
+    expect(await within(linha('João Silva')).findByText('Copiado')).toBeInTheDocument();
+    fireEvent.click(within(linha('João Silva')).getByText('WA'));
     expect(aberta).toHaveBeenCalledWith(`https://wa.me/?text=${encodeURIComponent(`Reserve o seu tour: ${link}`)}`, '_blank', 'noopener');
   });
 
@@ -148,7 +148,7 @@ describe('Afiliados: lista', () => {
   });
 });
 
-describe('Afiliados: modais e accoes', () => {
+describe('Afiliados: modais e acções', () => {
   it('criar_gera_o_codigo_a_partir_do_nome_so_uma_vez_e_envia_os_valores_e_recarrega', async () => {
     vi.spyOn(Math, 'random').mockReturnValue(0.123456789);
     const sufixo = (0.123456789).toString(36).substring(2, 5).toUpperCase();
@@ -159,12 +159,12 @@ describe('Afiliados: modais e accoes', () => {
     expect(dlg).toHaveTextContent('Novo afiliado');
     const codigo = within(dlg).getByPlaceholderText('Ex: JOA3K9');
     expect(codigo).toHaveValue('');
-    fireEvent.change(within(dlg).getByPlaceholderText('Ex: Joao Silva'), { target: { value: 'Ana Costa' } });
+    fireEvent.change(within(dlg).getByPlaceholderText('Ex: João Silva'), { target: { value: 'Ana Costa' } });
     await waitFor(() => expect(codigo).toHaveValue('ANA' + sufixo));
-    fireEvent.change(within(dlg).getByPlaceholderText('Ex: Joao Silva'), { target: { value: 'Outro Nome' } });
+    fireEvent.change(within(dlg).getByPlaceholderText('Ex: João Silva'), { target: { value: 'Outro Nome' } });
     expect(codigo).toHaveValue('ANA' + sufixo); /* so quando o codigo esta vazio */
     fireEvent.change(codigo, { target: { value: ' ana77 ' } });
-    fireEvent.change(within(dlg).getByPlaceholderText('joao@exemplo.com'), { target: { value: 'ana@x.cv' } });
+    fireEvent.change(within(dlg).getByPlaceholderText('joão@exemplo.com'), { target: { value: 'ana@x.cv' } });
     expect(within(dlg).getByRole('spinbutton')).toHaveValue(15); /* comissao global */
     const antes = listAffiliates.mock.calls.length;
     fireEvent.click(within(dlg).getByRole('button', { name: 'Criar afiliado' }));
@@ -178,7 +178,7 @@ describe('Afiliados: modais e accoes', () => {
     await montar();
     fireEvent.click(novoAfiliado());
     const dlg = screen.getByRole('dialog');
-    fireEvent.change(within(dlg).getByPlaceholderText('Ex: Joao Silva'), { target: { value: 'Jo' } });
+    fireEvent.change(within(dlg).getByPlaceholderText('Ex: João Silva'), { target: { value: 'Jo' } });
     await waitFor(() => expect(within(dlg).getByPlaceholderText('Ex: JOA3K9').value).toMatch(/^JOX/));
   });
 
@@ -187,10 +187,10 @@ describe('Afiliados: modais e accoes', () => {
     await montar();
     fireEvent.click(novoAfiliado());
     const dlg = screen.getByRole('dialog');
-    fireEvent.change(within(dlg).getByPlaceholderText('Ex: Joao Silva'), { target: { value: 'Ana' } });
-    fireEvent.change(within(dlg).getByPlaceholderText('joao@exemplo.com'), { target: { value: 'a@x.cv' } });
+    fireEvent.change(within(dlg).getByPlaceholderText('Ex: João Silva'), { target: { value: 'Ana' } });
+    fireEvent.change(within(dlg).getByPlaceholderText('joão@exemplo.com'), { target: { value: 'a@x.cv' } });
     fireEvent.click(within(dlg).getByRole('button', { name: 'Criar afiliado' }));
-    expect(await within(dlg).findByText('Ja existe um afiliado com este codigo.')).toBeInTheDocument();
+    expect(await within(dlg).findByText('Já existe um afiliado com este código.')).toBeInTheDocument();
     createAffiliate.mockRejectedValueOnce(new Error('x'));
     fireEvent.click(within(dlg).getByRole('button', { name: 'Criar afiliado' }));
     expect(await within(dlg).findByText('Erro ao guardar afiliado.')).toBeInTheDocument();
@@ -199,42 +199,42 @@ describe('Afiliados: modais e accoes', () => {
   it('editar_chama_updateAffiliate_com_o_id_e_os_valores', async () => {
     updateAffiliate.mockResolvedValue({});
     await montar();
-    fireEvent.click(within(linha('Joao Silva')).getAllByRole('button')[2]);
+    fireEvent.click(within(linha('João Silva')).getAllByRole('button')[2]);
     const dlg = screen.getByRole('dialog');
     expect(dlg).toHaveTextContent('Editar afiliado');
-    expect(within(dlg).getByPlaceholderText('Ex: Joao Silva')).toHaveValue('Joao Silva');
+    expect(within(dlg).getByPlaceholderText('Ex: João Silva')).toHaveValue('João Silva');
     fireEvent.click(within(dlg).getByRole('button', { name: 'Guardar' }));
-    await waitFor(() => expect(updateAffiliate).toHaveBeenCalledWith('a1', { name: 'Joao Silva', email: 'joao@x.cv', commission_pct: 12, code: 'JOA3K9', active: true }));
+    await waitFor(() => expect(updateAffiliate).toHaveBeenCalledWith('a1', { name: 'João Silva', email: 'joao@x.cv', commission_pct: 12, code: 'JOA3K9', active: true }));
   });
 
   it('eliminar_pede_confirmacao_e_chama_deleteAffiliate', async () => {
     const confirmar = vi.spyOn(window, 'confirm').mockReturnValue(false);
     deleteAffiliate.mockResolvedValue();
     await montar();
-    fireEvent.click(within(linha('Joao Silva')).getAllByRole('button')[3]);
+    fireEvent.click(within(linha('João Silva')).getAllByRole('button')[3]);
     expect(confirmar).toHaveBeenCalledWith('Eliminar este afiliado?');
     expect(deleteAffiliate).not.toHaveBeenCalled();
     confirmar.mockReturnValue(true);
-    fireEvent.click(within(linha('Joao Silva')).getAllByRole('button')[3]);
+    fireEvent.click(within(linha('João Silva')).getAllByRole('button')[3]);
     await waitFor(() => expect(deleteAffiliate).toHaveBeenCalledWith('a1'));
-    await waitFor(() => expect(screen.queryByText('Joao Silva')).toBeNull());
+    await waitFor(() => expect(screen.queryByText('João Silva')).toBeNull());
   });
 
   it('pagamento_exige_montante_valido_e_chama_createAffiliatePayment_e_recarrega', async () => {
     createAffiliatePayment.mockResolvedValue({});
     await montar();
-    fireEvent.click(within(linha('Joao Silva')).getByTitle('Registar pagamento'));
+    fireEvent.click(within(linha('João Silva')).getByTitle('Registar pagamento'));
     const dlg = screen.getByRole('dialog');
-    expect(dlg).toHaveTextContent('Pagamento — Joao Silva');
+    expect(dlg).toHaveTextContent('Pagamento — João Silva');
     expect(dlg).toHaveTextContent('TOTAL PAGO€100.00');
     expect(dlg).toHaveTextContent('PENDENTE€50.00');
     fireEvent.click(within(dlg).getByRole('button', { name: 'Registar pagamento' }));
-    expect(await within(dlg).findByText('Introduza um montante valido.')).toBeInTheDocument();
+    expect(await within(dlg).findByText('Introduza um montante válido.')).toBeInTheDocument();
     expect(createAffiliatePayment).not.toHaveBeenCalled();
     fireEvent.change(within(dlg).getByRole('spinbutton'), { target: { value: '20' } });
     const antes = listAffiliates.mock.calls.length;
     fireEvent.click(within(dlg).getByRole('button', { name: 'Registar pagamento' }));
-    await waitFor(() => expect(createAffiliatePayment).toHaveBeenCalledWith('a1', { amount: 20, payment_date: HOJE, note: 'Pagamento de comissao' }));
+    await waitFor(() => expect(createAffiliatePayment).toHaveBeenCalledWith('a1', { amount: 20, payment_date: HOJE, note: 'Pagamento de comissão' }));
     await waitFor(() => expect(listAffiliates.mock.calls.length).toBeGreaterThan(antes));
     await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
   });
@@ -242,7 +242,7 @@ describe('Afiliados: modais e accoes', () => {
   it('falha_ao_registar_pagamento_mostra_o_erro', async () => {
     createAffiliatePayment.mockRejectedValue(new Error('x'));
     await montar();
-    fireEvent.click(within(linha('Joao Silva')).getByTitle('Registar pagamento'));
+    fireEvent.click(within(linha('João Silva')).getByTitle('Registar pagamento'));
     const dlg = screen.getByRole('dialog');
     fireEvent.change(within(dlg).getByRole('spinbutton'), { target: { value: '20' } });
     fireEvent.click(within(dlg).getByRole('button', { name: 'Registar pagamento' }));
@@ -257,9 +257,9 @@ describe('Afiliados com o design system (estrutura, lista e modais)', () => {
     await montar();
     expect(screen.getAllByRole('tab')).toHaveLength(3);
     expect(screen.getByRole('tab', { name: 'Afiliados' })).toHaveAttribute('aria-selected', 'true');
-    fireEvent.click(screen.getByRole('tab', { name: 'Configuracao' }));
-    expect(await screen.findByText('Configuracao global do programa')).toBeInTheDocument();
-    expect(screen.getByRole('tab', { name: 'Configuracao' })).toHaveAttribute('aria-selected', 'true');
+    fireEvent.click(screen.getByRole('tab', { name: 'Configuração' }));
+    expect(await screen.findByText('Configuração global do programa')).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: 'Configuração' })).toHaveAttribute('aria-selected', 'true');
     expect(screen.getByRole('tab', { name: 'Afiliados' })).toHaveAttribute('aria-selected', 'false');
   });
 
@@ -274,13 +274,13 @@ describe('Afiliados com o design system (estrutura, lista e modais)', () => {
 
   it('os_botoes_de_icone_e_os_campos_dos_modais_tem_nome_acessivel', async () => {
     await montar();
-    ['Registar pagamento Joao Silva', 'Desactivar Joao Silva', 'Editar Joao Silva', 'Eliminar Joao Silva'].forEach(n => expect(screen.getByRole('button', { name: n })).toBeInTheDocument());
+    ['Registar pagamento João Silva', 'Desactivar João Silva', 'Editar João Silva', 'Eliminar João Silva'].forEach(n => expect(screen.getByRole('button', { name: n })).toBeInTheDocument());
     expect(screen.getByRole('button', { name: 'Activar Maria Lopes' })).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'Editar Joao Silva' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Editar João Silva' }));
     let modal = within(screen.getByRole('dialog'));
-    ['Nome', 'Email', 'Comissao (%)', 'Codigo de afiliado'].forEach(r => expect(modal.getByLabelText(r)).toBeInTheDocument());
+    ['Nome', 'Email', 'Comissão (%)', 'Código de afiliado'].forEach(r => expect(modal.getByLabelText(r)).toBeInTheDocument());
     fireEvent.click(modal.getByRole('button', { name: 'Cancelar' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Registar pagamento Joao Silva' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Registar pagamento João Silva' }));
     modal = within(screen.getByRole('dialog'));
     ['Montante a pagar (€)', 'Data do pagamento', 'Nota'].forEach(r => expect(modal.getByLabelText(r)).toBeInTheDocument());
   });
@@ -294,7 +294,7 @@ describe('Afiliados com o design system (estrutura, lista e modais)', () => {
   it('sem_hexadecimais_cores_nomeadas_ou_text_error_na_lista_e_nos_modais_com_erro', async () => {
     createAffiliatePayment.mockRejectedValue(new Error('x'));
     const { container } = await montar();
-    fireEvent.click(screen.getByRole('button', { name: 'Registar pagamento Joao Silva' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Registar pagamento João Silva' }));
     fireEvent.change(within(screen.getByRole('dialog')).getByRole('spinbutton'), { target: { value: '20' } });
     fireEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Registar pagamento' }));
     await screen.findByText('Erro ao registar pagamento.');
@@ -307,8 +307,8 @@ describe('Afiliados com o design system (estrutura, lista e modais)', () => {
 
 /* ───────────────────────── Tarefa 5: configuracao e analytics ───────────────────────── */
 
-describe('Afiliados: configuracao', () => {
-  const abrirConfig = async () => { await montar(); fireEvent.click(separador('Configuracao')); await screen.findByText('Configuracao global do programa'); };
+describe('Afiliados: configuração', () => {
+  const abrirConfig = async () => { await montar(); fireEvent.click(separador('Configuração')); await screen.findByText('Configuração global do programa'); };
 
   it('mostra_os_valores_e_alterar_actualiza_como_numero', async () => {
     await abrirConfig();
@@ -317,18 +317,18 @@ describe('Afiliados: configuracao', () => {
     expect(minimo).toHaveValue(30);
     fireEvent.change(comissao, { target: { value: '20' } });
     expect(comissao).toHaveValue(20);
-    expect(screen.getByText('Percentagem padrao para novos afiliados. Pode ser sobreposta por afiliado.')).toBeInTheDocument();
-    expect(screen.getByText('Valor minimo da reserva para a comissao ser aplicada. 0 = sem minimo.')).toBeInTheDocument();
+    expect(screen.getByText('Percentagem padrão para novos afiliados. Pode ser sobreposta por afiliado.')).toBeInTheDocument();
+    expect(screen.getByText('Valor mínimo da reserva para a comissão ser aplicada. 0 = sem mínimo.')).toBeInTheDocument();
   });
 
   it('guardar_chama_updateAffiliateConfig_e_mostra_Guardado_2s', async () => {
     updateAffiliateConfig.mockResolvedValue({});
     await abrirConfig();
     fireEvent.change(screen.getAllByRole('spinbutton')[1], { target: { value: '45' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Guardar configuracao' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Guardar configuração' }));
     await waitFor(() => expect(updateAffiliateConfig).toHaveBeenCalledWith({ active: true, commission_pct: 15, min_booking_value: 45 }));
     expect(await screen.findByRole('button', { name: 'Guardado' })).toBeInTheDocument();
-    await waitFor(() => expect(screen.getByRole('button', { name: 'Guardar configuracao' })).toBeInTheDocument(), { timeout: 3500 });
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Guardar configuração' })).toBeInTheDocument(), { timeout: 3500 });
   });
 
   it('mostra_o_texto_do_portal_do_afiliado', async () => {
@@ -347,7 +347,7 @@ describe('Afiliados: analytics', () => {
     fireEvent.click(separador('Analytics'));
     await screen.findByText('Top afiliados por reservas');
     const nomes = [...container.querySelectorAll('p.truncate')].map(p => p.textContent);
-    expect(nomes).toEqual(['Joao Silva', 'Maria Lopes', '']);
+    expect(nomes).toEqual(['João Silva', 'Maria Lopes', '']);
     expect(screen.getByText('10 reservas · €100 pago')).toBeInTheDocument();
     expect(screen.getByText('4 reservas · €20 pago')).toBeInTheDocument();
     const barras = [...container.querySelectorAll('div[style*="width"]')].map(b => b.style.width);
@@ -371,19 +371,19 @@ describe('Afiliados: analytics', () => {
   });
 });
 
-describe('Afiliados com o design system (configuracao e analytics)', () => {
+describe('Afiliados com o design system (configuração e analytics)', () => {
   it('os_dois_campos_da_configuracao_sao_Input_com_nome_acessivel', async () => {
     await montar();
-    fireEvent.click(screen.getByRole('tab', { name: 'Configuracao' }));
-    expect(await screen.findByLabelText('Comissao global (%)')).toHaveValue(15);
-    expect(screen.getByLabelText('Minimo de reserva (€)')).toHaveValue(30);
+    fireEvent.click(screen.getByRole('tab', { name: 'Configuração' }));
+    expect(await screen.findByLabelText('Comissão global (%)')).toHaveValue(15);
+    expect(screen.getByLabelText('Mínimo de reserva (€)')).toHaveValue(30);
   });
 
   it('o_botao_guardado_usa_o_token_de_sucesso', async () => {
     updateAffiliateConfig.mockResolvedValue({});
     await montar();
-    fireEvent.click(screen.getByRole('tab', { name: 'Configuracao' }));
-    fireEvent.click(await screen.findByRole('button', { name: 'Guardar configuracao' }));
+    fireEvent.click(screen.getByRole('tab', { name: 'Configuração' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Guardar configuração' }));
     const guardado = await screen.findByRole('button', { name: 'Guardado' });
     expect(guardado.className).toContain('var(--success)');
     expect(guardado.className).not.toMatch(HEX);
@@ -408,8 +408,8 @@ describe('Afiliados com o design system (configuracao e analytics)', () => {
     updateAffiliateConfig.mockResolvedValue({});
     const { container } = await montar();
     let html = container.innerHTML;
-    fireEvent.click(screen.getByRole('tab', { name: 'Configuracao' }));
-    fireEvent.click(await screen.findByRole('button', { name: 'Guardar configuracao' }));
+    fireEvent.click(screen.getByRole('tab', { name: 'Configuração' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Guardar configuração' }));
     await screen.findByRole('button', { name: 'Guardado' });
     html += container.innerHTML;
     fireEvent.click(screen.getByRole('tab', { name: 'Analytics' }));

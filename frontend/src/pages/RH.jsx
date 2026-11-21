@@ -9,8 +9,8 @@ import LoadingSpinner from '../components/shared/LoadingSpinner';
 import ExpiryBadge from '../components/shared/ExpiryBadge';
 
 const LEAVE_TYPE_LABEL = {
-  vacation: 'Ferias', sick: 'Doenca', maternity: 'Licenca maternidade',
-  paternity: 'Licenca paternidade', unpaid: 'Sem vencimento', other: 'Outro',
+  vacation: 'Férias', sick: 'Doenca', maternity: 'Licença maternidade',
+  paternity: 'Licença paternidade', unpaid: 'Sem vencimento', other: 'Outro',
 };
 
 function daysBetween(a, b) {
@@ -70,17 +70,17 @@ export default function RH() {
 
   return (
     <div>
-      <PageHeader title="RH" subtitle="Ferias, documentos e certificacoes de toda a equipa" />
+      <PageHeader title="RH" subtitle="Férias, documentos e certificações de toda a equipa" />
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-        <StatCard Icon={Calendar} value={pending.length} label="Pedidos de ferias pendentes" tone={pending.length ? 'warn' : 'ok'} />
-        <StatCard Icon={AlertTriangle} value={expiring.length} label="Documentos/certificacoes a expirar" tone={expiring.length ? 'warn' : 'ok'} />
+        <StatCard Icon={Calendar} value={pending.length} label="Pedidos de férias pendentes" tone={pending.length ? 'warn' : 'ok'} />
+        <StatCard Icon={AlertTriangle} value={expiring.length} label="Documentos/certificações a expirar" tone={expiring.length ? 'warn' : 'ok'} />
         <StatCard Icon={Users} value={staff.length} label="Colaboradores activos" />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <section>
-          <h3 className="font-display font-semibold text-sm text-n-900 mb-3">Pedidos de ferias pendentes</h3>
+          <h3 className="font-display font-semibold text-sm text-n-900 mb-3">Pedidos de férias pendentes</h3>
           {!pending.length && <p className="text-sm font-body text-n-500">Sem pedidos pendentes.</p>}
           <div className="space-y-2">
             {pending.map(l => (
@@ -105,7 +105,7 @@ export default function RH() {
 
         <section>
           <h3 className="font-display font-semibold text-sm text-n-900 mb-3">A expirar em breve</h3>
-          {!expiring.length && <p className="text-sm font-body text-n-500">Nada a expirar nos proximos 30 dias.</p>}
+          {!expiring.length && <p className="text-sm font-body text-n-500">Nada a expirar nos próximos 30 dias.</p>}
           <div className="space-y-2">
             {expiring.map(item => (
               <Card key={`${item.kind}-${item.id}`} padding="px-4 py-3">

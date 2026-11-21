@@ -268,17 +268,17 @@ function BroadcastsTab() {
         </h3>
 
         <div>
-          <label className={LABEL_CLS}>Titulo *</label>
-          <input className={INPUT_CLS} value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} placeholder="Titulo da mensagem" />
+          <label className={LABEL_CLS}>Título *</label>
+          <input className={INPUT_CLS} value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} placeholder="Título da mensagem" />
         </div>
         <div>
           <label className={LABEL_CLS}>Mensagem *</label>
-          <textarea className={INPUT_CLS} rows={4} value={form.content} onChange={e => setForm(f => ({ ...f, content: e.target.value }))} placeholder="Conteudo da mensagem..." />
+          <textarea className={INPUT_CLS} rows={4} value={form.content} onChange={e => setForm(f => ({ ...f, content: e.target.value }))} placeholder="Conteúdo da mensagem..." />
         </div>
 
         <div className="grid grid-cols-3 gap-3">
           <div>
-            <label className={LABEL_CLS}>Audiencia</label>
+            <label className={LABEL_CLS}>Audiência</label>
             <select className={INPUT_CLS} value={form.target} onChange={e => setForm(f => ({ ...f, target: e.target.value }))}>
               <option value="all">Todos</option>
               <option value="trial">Trial</option>
@@ -316,7 +316,7 @@ function BroadcastsTab() {
 
       {/* Historico */}
       <div className="bg-white rounded-xl border border-n-200 p-5">
-        <h3 className="text-sm font-semibold text-n-900 mb-4">Historico</h3>
+        <h3 className="text-sm font-semibold text-n-900 mb-4">Histórico</h3>
         {history.length === 0 && <p className="text-sm text-n-400 text-center py-8">Sem broadcasts enviados</p>}
         <div className="space-y-3">
           {history.map(b => (
@@ -415,7 +415,7 @@ function EmailMarketingTab() {
 
         <div className="grid grid-cols-3 gap-3">
           <div>
-            <label className={LABEL_CLS}>Audiencia</label>
+            <label className={LABEL_CLS}>Audiência</label>
             <select className={INPUT_CLS} value={form.target} onChange={e => setForm(f => ({ ...f, target: e.target.value }))}>
               <option value="all">Todos</option>
               <option value="trial">Trial</option>
@@ -463,12 +463,12 @@ function EmailMarketingTab() {
             <p className="text-xs font-medium text-n-500 uppercase tracking-wide mb-3">Preview (exemplo: Maria Silva, business, 14 dias)</p>
             <p className="text-sm font-semibold text-n-900 mb-3">{form.subject || '(sem assunto)'}</p>
             <div className="text-sm text-n-700 leading-relaxed border-t border-n-100 pt-3"
-              dangerouslySetInnerHTML={{ __html: previewHtml || '<span class="text-n-400">Sem conteudo</span>' }} />
+              dangerouslySetInnerHTML={{ __html: previewHtml || '<span class="text-n-400">Sem conteúdo</span>' }} />
           </div>
         )}
 
         <div className="bg-white rounded-xl border border-n-200 p-5">
-          <h3 className="text-sm font-semibold text-n-900 mb-4">Historico de emails</h3>
+          <h3 className="text-sm font-semibold text-n-900 mb-4">Histórico de emails</h3>
           {history.length === 0 && <p className="text-sm text-n-400 text-center py-6">Sem emails enviados</p>}
           <div className="space-y-3">
             {history.map(b => (
@@ -530,12 +530,12 @@ function LaunchEmailTab() {
       <div className="bg-white rounded-xl border border-n-200 p-5 space-y-4">
         <div className="flex items-start gap-3 p-3 rounded-lg bg-sand-50 border border-sand-300">
           <AlertCircle className="text-sand-500 flex-shrink-0 mt-0.5" {...ICON} size={16} />
-          <p className="text-sm text-n-700">Este email sera enviado para <strong>todos os subscritores da waitlist</strong>. Use com cuidado.</p>
+          <p className="text-sm text-n-700">Este email será enviado para <strong>todos os subscritores da waitlist</strong>. Use com cuidado.</p>
         </div>
 
         <h3 className="text-sm font-semibold text-n-900 flex items-center gap-2">
           <Rocket {...ICON} size={16} className="text-ocean-700" />
-          Email de lancamento
+          Email de lançamento
         </h3>
 
         <div>
@@ -559,13 +559,13 @@ function LaunchEmailTab() {
 
         <button className={BTN_PRIMARY} onClick={send} disabled={sending}>
           <Rocket {...ICON} size={16} />
-          {sending ? 'A enviar para waitlist...' : 'Enviar email de lancamento'}
+          {sending ? 'A enviar para waitlist...' : 'Enviar email de lançamento'}
         </button>
       </div>
 
       <div className="bg-white rounded-xl border border-n-200 p-5">
-        <h3 className="text-sm font-semibold text-n-900 mb-4">Historico de lançamentos</h3>
-        {history.length === 0 && <p className="text-sm text-n-400 text-center py-8">Nenhum email de lancamento enviado</p>}
+        <h3 className="text-sm font-semibold text-n-900 mb-4">Histórico de lançamentos</h3>
+        {history.length === 0 && <p className="text-sm text-n-400 text-center py-8">Nenhum email de lançamento enviado</p>}
         <div className="space-y-3">
           {history.map(b => (
             <div key={b.id} className="p-3 rounded-lg bg-n-50 border border-n-100">
@@ -591,7 +591,7 @@ const TABS = [
   { key: 'chat',      label: 'Chat directo'   },
   { key: 'broadcast', label: 'Broadcasts'     },
   { key: 'email',     label: 'Email marketing'},
-  { key: 'launch',    label: 'Lancamento'     },
+  { key: 'launch',    label: 'Lançamento'     },
 ];
 
 export default function AdminCommunications() {
@@ -615,7 +615,7 @@ export default function AdminCommunications() {
   return (
     <div className="space-y-6 p-6">
       <div>
-        <h1 className="text-2xl font-bold text-n-900">Comunicacao</h1>
+        <h1 className="text-2xl font-bold text-n-900">Comunicação</h1>
         <p className="text-sm text-n-500 mt-1">Chat directo, broadcasts e email marketing para operadores</p>
       </div>
 

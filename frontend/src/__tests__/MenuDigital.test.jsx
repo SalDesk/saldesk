@@ -109,15 +109,15 @@ describe('MenuDigital', () => {
     return within(dialogo).getByText(texto).closest('label').querySelector('input');
   }
 
-  it('o subtitulo e os rotulos contam pratos e menus', async () => {
+  it('o subtítulo e os rotulos contam pratos e menus', async () => {
     await abre();
-    expect(screen.getByText('4 prato(s) · 1 menu(s) degustacao')).toBeInTheDocument();
+    expect(screen.getByText('4 prato(s) · 1 menu(s) degustação')).toBeInTheDocument();
     for (const r of ['Todos (4)', 'Entradas (0)', 'Pratos Principais (1)', 'Sobremesas (1)', 'Bebidas (0)', 'Outros (0)']) {
       expect(chip(r)).toBeInTheDocument();
     }
   });
 
-  it('o separador de categoria filtra e um prato sem categoria so aparece em Todos', async () => {
+  it('o separador de categoria filtra e um prato sem categoria só aparece em Todos', async () => {
     await abre();
     expect(nomesNaGrelha()).toEqual(['Atum Grelhado', 'Pudim', 'Sopa', 'Quebrado']);
     fireEvent.click(chip('Pratos Principais (1)'));
@@ -130,19 +130,19 @@ describe('MenuDigital', () => {
     expect(nomesNaGrelha()).toHaveLength(4);
   });
 
-  it('o cartao mostra preco, as duas primeiras etiquetas de dieta e alergenio e o prato do dia', async () => {
+  it('o cartão mostra preço, as duas primeiras etiquetas de dieta e alergenio e o prato do dia', async () => {
     await abre();
     const c = cartao('Atum Grelhado');
     expect(within(c).getByText('€12.50')).toBeInTheDocument();
     expect(within(c).getByText('Pratos Principais')).toBeInTheDocument();
     for (const t of ['Vegan', 'Halal', 'Peixe', 'Soja']) expect(within(c).getByText(t)).toBeInTheDocument();
-    expect(within(c).queryByText('Sem gluten')).not.toBeInTheDocument();
-    expect(within(c).queryByText('Gluten')).not.toBeInTheDocument();
+    expect(within(c).queryByText('Sem glúten')).not.toBeInTheDocument();
+    expect(within(c).queryByText('Glúten')).not.toBeInTheDocument();
     expect(within(c).getByText('Prato do dia')).toBeInTheDocument();
     expect(within(cartao('Pudim')).queryByText('Prato do dia')).not.toBeInTheDocument();
   });
 
-  it('descricao invalida ou sem categoria nao rebenta e mostra o prato', async () => {
+  it('descrição invalida ou sem categoria não rebenta e mostra o prato', async () => {
     await abre();
     expect(screen.getByText('Quebrado')).toBeInTheDocument();
     expect(screen.getByText('Sopa')).toBeInTheDocument();
@@ -154,7 +154,7 @@ describe('MenuDigital', () => {
     const dialogo = await screen.findByRole('dialog');
     expect(within(dialogo).getByText('Novo Prato')).toBeInTheDocument();
     fireEvent.change(campo(dialogo, 'Nome PT'), { target: { value: 'Bacalhau' } });
-    fireEvent.change(campo(dialogo, 'Preco (€)'), { target: { value: '9.9' } });
+    fireEvent.change(campo(dialogo, 'Preço (€)'), { target: { value: '9.9' } });
     fireEvent.change(campo(dialogo, 'Categoria'), { target: { value: 'sobremesas' } });
     fireEvent.click(caixa(dialogo, 'Peixe'));
     fireEvent.click(caixa(dialogo, 'Destaque (landing page)'));
@@ -174,36 +174,36 @@ describe('MenuDigital', () => {
       allergens: ['peixe'], diets: [], featured: true, daily_special: { 1: true },
     });
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
-    expect(screen.getByText('5 prato(s) · 1 menu(s) degustacao')).toBeInTheDocument();
+    expect(screen.getByText('5 prato(s) · 1 menu(s) degustação')).toBeInTheDocument();
     expect(nomesNaGrelha()).toHaveLength(4);
     expect(screen.getByText('Bacalhau')).toBeInTheDocument();
   });
 
   it('se gravar falhar mostra o erro do servidor, ou o texto por omissao', async () => {
-    createUnit.mockRejectedValueOnce({ response: { data: { error: 'Nome invalido' } } });
+    createUnit.mockRejectedValueOnce({ response: { data: { error: 'Nome inválido' } } });
     await abre();
     fireEvent.click(screen.getByRole('button', { name: 'Novo Prato' }));
     const dialogo = await screen.findByRole('dialog');
     fireEvent.change(campo(dialogo, 'Nome PT'), { target: { value: 'Bacalhau' } });
-    fireEvent.change(campo(dialogo, 'Preco (€)'), { target: { value: '9.9' } });
+    fireEvent.change(campo(dialogo, 'Preço (€)'), { target: { value: '9.9' } });
     fireEvent.click(within(dialogo).getByRole('button', { name: 'Adicionar prato' }));
-    expect(await within(dialogo).findByText('Nome invalido')).toBeInTheDocument();
+    expect(await within(dialogo).findByText('Nome inválido')).toBeInTheDocument();
     createUnit.mockRejectedValueOnce(new Error('rede'));
     fireEvent.click(within(dialogo).getByRole('button', { name: 'Adicionar prato' }));
     expect(await within(dialogo).findByText('Erro ao guardar')).toBeInTheDocument();
   });
 
-  it('editar abre o formulario preenchido e chama updateUnit com o id', async () => {
+  it('editar abre o formulário preenchido e chama updateUnit com o id', async () => {
     await abre();
     fireEvent.click(botoesDe('Atum Grelhado')[1]);
     const dialogo = await screen.findByRole('dialog');
     expect(within(dialogo).getByText('Editar Prato')).toBeInTheDocument();
     expect(campo(dialogo, 'Nome PT').value).toBe('Atum Grelhado');
     expect(campo(dialogo, 'Nome EN').value).toBe('Grilled Tuna');
-    expect(campo(dialogo, 'Preco (€)').value).toBe('12.5');
+    expect(campo(dialogo, 'Preço (€)').value).toBe('12.5');
     expect(campo(dialogo, 'Categoria').value).toBe('pratos_principais');
-    fireEvent.change(campo(dialogo, 'Preco (€)'), { target: { value: '20' } });
-    fireEvent.click(within(dialogo).getByRole('button', { name: 'Guardar alteracoes' }));
+    fireEvent.change(campo(dialogo, 'Preço (€)'), { target: { value: '20' } });
+    fireEvent.click(within(dialogo).getByRole('button', { name: 'Guardar alterações' }));
     await waitFor(() => expect(updateUnit).toHaveBeenCalledTimes(1));
     const [id, dados] = updateUnit.mock.calls[0];
     expect(id).toBe('d1');
@@ -214,11 +214,11 @@ describe('MenuDigital', () => {
     expect(within(cartao('Atum Grelhado')).getByText('€20.00')).toBeInTheDocument();
   });
 
-  it('eliminar pede confirmacao e chama deleteUnit', async () => {
+  it('eliminar pede confirmação e chama deleteUnit', async () => {
     await abre();
     fireEvent.click(botoesDe('Atum Grelhado')[2]);
     const dialogo = await screen.findByRole('dialog');
-    expect(within(dialogo).getByText('Confirmar eliminacao')).toBeInTheDocument();
+    expect(within(dialogo).getByText('Confirmar eliminação')).toBeInTheDocument();
     expect(within(dialogo).getByText('Atum Grelhado')).toBeInTheDocument();
     fireEvent.click(within(dialogo).getByRole('button', { name: 'Cancelar' }));
     expect(deleteUnit).not.toHaveBeenCalled();
@@ -238,7 +238,7 @@ describe('MenuDigital', () => {
     await waitFor(() => expect(updateUnit).toHaveBeenCalledWith('d2', { status: 'active', is_active: true }));
   });
 
-  it('submeter ao Conect envia pending_review, ou draft se ja estiver publicado', async () => {
+  it('submeter ao Conect envia pending_review, ou draft se já estiver publicado', async () => {
     await abre();
     fireEvent.click(screen.getByRole('button', { name: 'Conect Atum Grelhado' }));
     await waitFor(() => expect(updateConectStatus).toHaveBeenCalledWith('d1', 'pending_review'));
@@ -246,9 +246,9 @@ describe('MenuDigital', () => {
     await waitFor(() => expect(updateConectStatus).toHaveBeenCalledWith('d2', 'draft'));
   });
 
-  it('mostra o menu de degustacao com preco, estado, descricao e pratos', async () => {
+  it('mostra o menu de degustação com preço, estado, descrição e pratos', async () => {
     await abre();
-    expect(screen.getByText('Menus Degustacao')).toBeInTheDocument();
+    expect(screen.getByText('Menus Degustação')).toBeInTheDocument();
     expect(screen.getByText('Menu Chef')).toBeInTheDocument();
     expect(screen.getByText('€45.00')).toBeInTheDocument();
     expect(screen.getByText('Inactivo')).toBeInTheDocument();
@@ -256,13 +256,13 @@ describe('MenuDigital', () => {
     expect(screen.getByText('Entrada · Peixe')).toBeInTheDocument();
   });
 
-  it('criar um menu de degustacao chama createUnit com o payload do menu', async () => {
+  it('criar um menu de degustação chama createUnit com o payload do menu', async () => {
     await abre();
-    fireEvent.click(screen.getByRole('button', { name: 'Menu Degustacao' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Menu Degustação' }));
     const dialogo = await screen.findByRole('dialog');
-    expect(within(dialogo).getByText('Novo Menu Degustacao')).toBeInTheDocument();
+    expect(within(dialogo).getByText('Novo Menu Degustação')).toBeInTheDocument();
     fireEvent.change(campo(dialogo, 'Nome do menu'), { target: { value: 'Menu Mar' } });
-    fireEvent.change(campo(dialogo, 'Preco por pessoa (€)'), { target: { value: '30' } });
+    fireEvent.change(campo(dialogo, 'Preço por pessoa (€)'), { target: { value: '30' } });
     fireEvent.change(within(dialogo).getByPlaceholderText('Nome do prato'), { target: { value: 'Ceviche' } });
     fireEvent.click(within(dialogo).getByRole('button', { name: 'Criar menu' }));
     await waitFor(() => expect(createUnit).toHaveBeenCalledTimes(1));
@@ -275,7 +275,7 @@ describe('MenuDigital', () => {
     expect(screen.getByText('Menu Mar')).toBeInTheDocument();
   });
 
-  it('copiar o URL escreve a ligacao do menu na area de transferencia', async () => {
+  it('copiar o URL escreve a ligação do menu na area de transferência', async () => {
     const escrever = vi.fn().mockResolvedValue();
     Object.defineProperty(navigator, 'clipboard', { value: { writeText: escrever }, configurable: true });
     await abre();
@@ -297,11 +297,11 @@ describe('MenuDigital', () => {
   it('sem slug mostra o aviso em vez do QR', async () => {
     useAuthStore.setState({ operator: { slug: null } });
     await abre();
-    expect(screen.getByText('Configure o link do restaurante nas Definicoes para gerar o QR Code.')).toBeInTheDocument();
+    expect(screen.getByText('Configure o link do restaurante nas Definições para gerar o QR Code.')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Descarregar QR Code' })).not.toBeInTheDocument();
   });
 
-  it('sem pratos mostra o vazio com a acao de adicionar', async () => {
+  it('sem pratos mostra o vazio com a ação de adicionar', async () => {
     listUnits.mockResolvedValue([]);
     await abre();
     expect(screen.getByText('Nenhum prato nesta categoria.')).toBeInTheDocument();
@@ -310,7 +310,7 @@ describe('MenuDigital', () => {
     expect(within(dialogo).getByText('Novo Prato')).toBeInTheDocument();
   });
 
-  it('os separadores de categoria sao um grupo de botoes com aria-pressed', async () => {
+  it('os separadores de categoria são um grupo de botões com aria-pressed', async () => {
     await abre();
     expect(chip('Todos (4)')).toHaveAttribute('aria-pressed', 'true');
     expect(chip('Sobremesas (1)')).toHaveAttribute('aria-pressed', 'false');
@@ -319,7 +319,7 @@ describe('MenuDigital', () => {
     expect(chip('Todos (4)')).toHaveAttribute('aria-pressed', 'false');
   });
 
-  it('os botoes de icone do cartao tem nome acessivel', async () => {
+  it('os botões de ícone do cartão tem nome acessível', async () => {
     await abre();
     const c = cartao('Atum Grelhado');
     expect(within(c).getByRole('button', { name: 'Alternar disponibilidade' })).toBeInTheDocument();
@@ -327,7 +327,7 @@ describe('MenuDigital', () => {
     expect(within(c).getByRole('button', { name: 'Eliminar' })).toBeInTheDocument();
   });
 
-  it('nenhuma cor em hexadecimal sobra no HTML (pagina, formulario de prato e de menu)', async () => {
+  it('nenhuma cor em hexadecimal sobra no HTML (página, formulário de prato e de menu)', async () => {
     await abre();
     expect(document.body.innerHTML).not.toContain('[#');
     fireEvent.click(screen.getByRole('button', { name: 'Novo Prato' }));
@@ -336,12 +336,12 @@ describe('MenuDigital', () => {
     fireEvent.click(caixa(dialogo, 'Vegan'));
     expect(document.body.innerHTML).not.toContain('[#');
     fireEvent.click(within(dialogo).getByRole('button', { name: 'Cancelar' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Menu Degustacao' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Menu Degustação' }));
     await screen.findByRole('dialog');
     expect(document.body.innerHTML).not.toContain('[#');
   });
 
-  it('servicos a falhar nao rebentam', async () => {
+  it('serviços a falhar não rebentam', async () => {
     listUnits.mockRejectedValue(new Error('rede'));
     await abre();
     expect(screen.getByText('Nenhum prato nesta categoria.')).toBeInTheDocument();

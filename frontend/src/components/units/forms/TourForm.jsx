@@ -159,7 +159,7 @@ export default function TourForm({ unit, onSave, onCancel, loading, error }) {
     <form onSubmit={handleSubmit} className="space-y-5">
 
       <div>
-        <SectionLabel>Identificacao</SectionLabel>
+        <SectionLabel>Identificação</SectionLabel>
         <div className="space-y-3">
           <div className="grid grid-cols-2 gap-3">
             <Input
@@ -194,19 +194,19 @@ export default function TourForm({ unit, onSave, onCancel, loading, error }) {
       </div>
 
       <div>
-        <SectionLabel>Descricao</SectionLabel>
+        <SectionLabel>Descrição</SectionLabel>
         <div className="space-y-3">
           <Textarea
-            label="Descricao curta PT"
+            label="Descrição curta PT"
             value={form.short_pt}
             onChange={set('short_pt')}
-            placeholder="Resumo numa frase, mostrado logo abaixo do titulo..."
+            placeholder="Resumo numa frase, mostrado logo abaixo do título..."
             rows={2}
             maxLength={160}
             hint={`${form.short_pt.length}/160 caracteres`}
           />
           <Textarea
-            label="Descricao curta EN"
+            label="Descrição curta EN"
             value={form.short_en}
             onChange={set('short_en')}
             placeholder="One-sentence summary, shown right below the title..."
@@ -215,14 +215,14 @@ export default function TourForm({ unit, onSave, onCancel, loading, error }) {
             hint={`${form.short_en.length}/160 characters`}
           />
           <Textarea
-            label="Descricao longa PT"
+            label="Descrição longa PT"
             value={form.desc_pt}
             onChange={set('desc_pt')}
-            placeholder="Descricao completa em portugues. Pode usar varios paragrafos (Enter)..."
+            placeholder="Descrição completa em português. Pode usar vários paragrafos (Enter)..."
             rows={6}
           />
           <Textarea
-            label="Descricao longa EN"
+            label="Descrição longa EN"
             value={form.desc_en}
             onChange={set('desc_en')}
             placeholder="Full description in English. You can use several paragraphs (Enter)..."
@@ -270,7 +270,7 @@ export default function TourForm({ unit, onSave, onCancel, loading, error }) {
         <div className="space-y-3">
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
             <Input
-              label="Duracao (horas)"
+              label="Duração (horas)"
               type="number"
               value={form.duration}
               onChange={set('duration')}
@@ -279,9 +279,9 @@ export default function TourForm({ unit, onSave, onCancel, loading, error }) {
               placeholder="Ex: 2.5"
             />
             <Select label="Dificuldade" value={form.difficulty} onChange={set('difficulty')}>
-              <option value="Facil">Facil</option>
+              <option value="Fácil">Fácil</option>
               <option value="Moderado">Moderado</option>
-              <option value="Dificil">Dificil</option>
+              <option value="Difícil">Difícil</option>
             </Select>
             <Input
               label="Idade minima"
@@ -303,7 +303,7 @@ export default function TourForm({ unit, onSave, onCancel, loading, error }) {
               placeholder="Ex: 12"
             />
             <Input
-              label="Hora de inicio"
+              label="Hora de início"
               type="time"
               value={form.start_time}
               onChange={set('start_time')}
@@ -343,10 +343,10 @@ export default function TourForm({ unit, onSave, onCancel, loading, error }) {
       </div>
 
       <div>
-        <SectionLabel>Precos (€ por pessoa)</SectionLabel>
+        <SectionLabel>Preços (€ por pessoa)</SectionLabel>
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
           <Input
-            label="Preco adulto (opcional se usar Preço privado/Escalões)"
+            label="Preço adulto (opcional se usar Preço privado/Escalões)"
             type="number"
             value={form.base_price}
             onChange={set('base_price')}
@@ -355,7 +355,7 @@ export default function TourForm({ unit, onSave, onCancel, loading, error }) {
             placeholder="0.00"
           />
           <Input
-            label="Preco crianca"
+            label="Preço criança"
             type="number"
             value={form.price_child}
             onChange={set('price_child')}
@@ -364,7 +364,7 @@ export default function TourForm({ unit, onSave, onCancel, loading, error }) {
             placeholder="0.00"
           />
           <Input
-            label="Preco privado"
+            label="Preço privado"
             type="number"
             value={form.price_private}
             onChange={set('price_private')}
@@ -447,7 +447,7 @@ export default function TourForm({ unit, onSave, onCancel, loading, error }) {
           Cancelar
         </Button>
         <Button type="submit" loading={loading} className="flex-1">
-          {unit ? 'Guardar alteracoes' : 'Criar tour'}
+          {unit ? 'Guardar alterações' : 'Criar tour'}
         </Button>
       </div>
     </form>

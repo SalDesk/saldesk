@@ -222,9 +222,9 @@ describe('Calendar', () => {
       carregaServicos({ dados: dadosDaSemana(seg) });
     });
 
-    it('mostra o titulo e, por omissao, a vista de mes com as unidades', async () => {
+    it('mostra o título e, por omissao, a vista de mês com as unidades', async () => {
       await abrePagina();
-      expect(screen.getByRole('heading', { name: 'Calendario' })).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: 'Calendário' })).toBeInTheDocument();
       expect(screen.getByText('Gerir disponibilidade e reservas')).toBeInTheDocument();
       expect(colunasDoMes()).toEqual(['Quarto Azul', 'Quarto Verde']);
       /* a vista de mes tem a coluna "Dia", nao "Unidade" */
@@ -273,7 +273,7 @@ describe('Calendar', () => {
       expect(screen.getAllByTitle('Beta Costa · Pendente')).toHaveLength(1);
     });
 
-    it('uma reserva de um so dia (entrada = saida) ocupa so essa celula e nao se repete', async () => {
+    it('uma reserva de um só dia (entrada = saída) ocupa só essa celula e não se repete', async () => {
       const umDia = reserva({ id: 'r9', unit_id: 'u1', customer_name: 'Delta Pires', check_in: somaDias(seg, 2), check_out: somaDias(seg, 2) });
       carregaServicos({ dados: { units: UNIDADES, reservations: [umDia], blocked_dates: [] } });
       await abreSemana();
@@ -340,7 +340,7 @@ describe('Calendar', () => {
       expect(nomesDasUnidades()).toEqual(['Quarto Azul', 'Quarto Verde']);
     });
 
-    it('filtrar por guia deixa so as unidades com reservas desse guia', async () => {
+    it('filtrar por guia deixa só as unidades com reservas desse guia', async () => {
       await abreSemana();
       const sel = seletor('Todos os guias');
       expect([...sel.options].map(o => o.textContent)).toEqual(['Todos os guias', 'Guia Ana', 'Guia Rui']);
@@ -367,20 +367,20 @@ describe('Calendar', () => {
       expect(screen.getByText('Sem unidades activas.')).toBeInTheDocument();
     });
 
-    it('o filtro de unidade tambem vale na vista de mes', async () => {
+    it('o filtro de unidade também vale na vista de mês', async () => {
       await abrePagina();
       fireEvent.change(seletor('Todas as unidades'), { target: { value: 'u1' } });
       expect(colunasDoMes()).toEqual(['Quarto Azul']);
     });
 
-    it('so mostra o filtro de unidade com mais de uma unidade', async () => {
+    it('só mostra o filtro de unidade com mais de uma unidade', async () => {
       carregaServicos({ dados: { ...dadosDaSemana(seg), units: [UNIDADES[0]] } });
       await abrePagina();
       expect(screen.queryByDisplayValue('Todas as unidades')).not.toBeInTheDocument();
       expect(screen.getByDisplayValue('Todos os guias')).toBeInTheDocument();
     });
 
-    it('so mostra o filtro de guia quando ha guias', async () => {
+    it('só mostra o filtro de guia quando ha guias', async () => {
       carregaServicos({ dados: dadosDaSemana(seg), guias: [] });
       await abrePagina();
       expect(screen.queryByDisplayValue('Todos os guias')).not.toBeInTheDocument();
@@ -417,7 +417,7 @@ describe('Calendar', () => {
       expect(verde.getByRole('button', { name: 'Desbloquear' })).toBeInTheDocument();
 
       const rosa = within(cartaoDoDia('Quarto Rosa'));
-      expect(rosa.getByText('Disponivel')).toBeInTheDocument();
+      expect(rosa.getByText('Disponível')).toBeInTheDocument();
       expect(rosa.getByRole('button', { name: 'Bloquear' })).toBeInTheDocument();
     });
 
@@ -438,11 +438,11 @@ describe('Calendar', () => {
       const azul = within(cartaoDoDia('Quarto Azul'));
       expect(azul.getByText('Alfa Silva')).toBeInTheDocument();
       expect(azul.getByText('Beta Costa')).toBeInTheDocument();
-      expect(azul.queryByText('Disponivel')).not.toBeInTheDocument();
+      expect(azul.queryByText('Disponível')).not.toBeInTheDocument();
       expect(azul.queryByRole('button', { name: 'Bloquear' })).not.toBeInTheDocument();
     });
 
-    it('servicos a falhar nao rebentam: a vista de mes mostra o vazio', async () => {
+    it('serviços a falhar não rebentam: a vista de mês mostra o vazio', async () => {
       esperaErros = true;
       getCalendar.mockReset().mockRejectedValue(new Error('falha de rede'));
       listStaff.mockReset().mockRejectedValue(new Error('falha de rede'));
@@ -454,7 +454,7 @@ describe('Calendar', () => {
     });
   });
 
-  describe('viragem de mes e de ano (data simulada)', () => {
+  describe('viragem de mês e de ano (data simulada)', () => {
     /* So a Date e simulada, para os temporizadores do findBy/waitFor continuarem reais.
        Hora local do meio-dia; restaurada no afterEach (useRealTimers). */
     function fixaHoje(ano, mes, dia) {
@@ -520,7 +520,7 @@ describe('Calendar', () => {
       expect(screen.getByText('16 - 22 Fev 2026')).toBeInTheDocument();
     });
 
-    it('vista de mes em Dezembro: seguinte vai a Janeiro do ano seguinte e anterior volta', async () => {
+    it('vista de mês em Dezembro: seguinte vai a Janeiro do ano seguinte e anterior volta', async () => {
       fixaHoje(2026, 12, 29);
       carregaServicos({ dados: dadosDaSemana('2026-12-28') });
       await abrePagina();
@@ -538,7 +538,7 @@ describe('Calendar', () => {
       expect(getCalendar).toHaveBeenLastCalledWith('2026-12-01', '2026-12-31');
     });
 
-    it('vista de mes: uma reserva de um so dia aparece so nesse dia', async () => {
+    it('vista de mês: uma reserva de um só dia aparece só nesse dia', async () => {
       fixaHoje(2026, 3, 10);
       const umDia = reserva({ id: 'r9', unit_id: 'u1', customer_name: 'Delta Pires', check_in: '2026-03-12', check_out: '2026-03-12' });
       carregaServicos({ dados: { units: UNIDADES, reservations: [umDia], blocked_dates: [] } });
@@ -552,7 +552,7 @@ describe('Calendar', () => {
       expect(screen.getAllByTitle('Delta Pires · confirmed')).toHaveLength(1);
     });
 
-    it('vista de mes: varias reservas da mesma unidade no mesmo dia aparecem todas', async () => {
+    it('vista de mês: varias reservas da mesma unidade no mesmo dia aparecem todas', async () => {
       fixaHoje(2026, 3, 10);
       const duas = [
         reserva({ id: 'r8', unit_id: 'u1', customer_name: 'Delta Pires', check_in: '2026-03-12', check_out: '2026-03-12' }),
@@ -566,7 +566,7 @@ describe('Calendar', () => {
       expect(screen.getAllByTitle('Omega Lopes · confirmed')).toHaveLength(1);
     });
 
-    it('vista de mes em Marco: anterior vai a Fevereiro com 28 dias', async () => {
+    it('vista de mês em Marco: anterior vai a Fevereiro com 28 dias', async () => {
       fixaHoje(2026, 3, 1);
       carregaServicos({ dados: dadosDaSemana('2026-02-23') });
       await abrePagina();
@@ -581,7 +581,7 @@ describe('Calendar', () => {
     });
   });
 
-  describe('criar reserva a partir do calendario', () => {
+  describe('criar reserva a partir do calendário', () => {
     const pad = (n) => String(n).padStart(2, '0');
     const agora = new Date();
     const mesAtual = `${agora.getFullYear()}-${pad(agora.getMonth() + 1)}`;
@@ -609,7 +609,7 @@ describe('Calendar', () => {
       expect(createReservation).not.toHaveBeenCalled();
     });
 
-    it('Criar reserva abre o formulario com a unidade e a data preenchidas e grava a reserva', async () => {
+    it('Criar reserva abre o formulário com a unidade e a data preenchidas e grava a reserva', async () => {
       await abrePagina();
       fireEvent.click(celulaVazia());
       fireEvent.click(await screen.findByRole('button', { name: 'Criar reserva' }));
@@ -635,8 +635,8 @@ describe('Calendar', () => {
       await waitFor(() => expect(screen.queryByRole('heading', { name: 'Nova Reserva' })).not.toBeInTheDocument());
     });
 
-    it('um erro ao gravar mostra a mensagem e mantem o formulario aberto sem recarregar', async () => {
-      createReservation.mockRejectedValue({ response: { data: { error: 'Unidade indisponivel nessas datas' } } });
+    it('um erro ao gravar mostra a mensagem e mantem o formulário aberto sem recarregar', async () => {
+      createReservation.mockRejectedValue({ response: { data: { error: 'Unidade indisponível nessas datas' } } });
       await abrePagina();
       fireEvent.click(celulaVazia());
       fireEvent.click(await screen.findByRole('button', { name: 'Criar reserva' }));
@@ -645,12 +645,12 @@ describe('Calendar', () => {
       fireEvent.change(campo('Email'), { target: { value: 'maria@teste.cv' } });
       const antes = getCalendar.mock.calls.length;
       fireEvent.click(screen.getByRole('button', { name: 'Nova Reserva' }));
-      expect(await screen.findByText('Unidade indisponivel nessas datas')).toBeInTheDocument();
+      expect(await screen.findByText('Unidade indisponível nessas datas')).toBeInTheDocument();
       expect(screen.getByRole('heading', { name: 'Nova Reserva' })).toBeInTheDocument();
       expect(getCalendar.mock.calls.length).toBe(antes);
     });
 
-    it('Cancelar fecha o formulario sem criar nada', async () => {
+    it('Cancelar fecha o formulário sem criar nada', async () => {
       await abrePagina();
       fireEvent.click(celulaVazia());
       fireEvent.click(await screen.findByRole('button', { name: 'Criar reserva' }));
@@ -668,7 +668,7 @@ describe('Calendar', () => {
       expect(screen.queryByText(/O que quer fazer em/)).not.toBeInTheDocument();
     });
 
-    it('uma celula com reserva nao faz a pergunta', async () => {
+    it('uma celula com reserva não faz a pergunta', async () => {
       carregaServicos({ dados: { units: UNIDADES, reservations: [reserva({ id: 'r1', check_in: DIA15, check_out: DIA16, customer_name: 'Alfa Silva' })], blocked_dates: [] } });
       await abrePagina();
       fireEvent.click(celulaVazia());
@@ -676,7 +676,7 @@ describe('Calendar', () => {
       expect(createReservation).not.toHaveBeenCalled();
     });
 
-    it('na vista de dia, uma unidade livre tem o botao Nova reserva, que abre o formulario desse dia', async () => {
+    it('na vista de dia, uma unidade livre tem o botão Nova reserva, que abre o formulário desse dia', async () => {
       const hoje = hojeDaPagina();
       await abrePagina();
       await accaoQueRecarrega(() => fireEvent.click(screen.getByRole('button', { name: 'Dia' })));

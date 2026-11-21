@@ -1,14 +1,14 @@
 /* ── Constants ── */
 export const ROLES_BY_TYPE = {
   activity:   ['Guia', 'Instrutor', 'Condutor', 'Vendedor de Praia', 'Administracao', 'Gestor/Supervisor'],
-  hotel:      ['Recepcionista', 'Camareira/Housekeeping', 'Porteiro', 'Manutencao', 'Administracao', 'Gestor/Supervisor'],
+  hotel:      ['Recepcionista', 'Camareira/Housekeeping', 'Porteiro', 'Manutenção', 'Administracao', 'Gestor/Supervisor'],
   rentacar:   ['Mecanico', 'Motorista', 'Lavador/Detailing', 'Inspector', 'Administracao', 'Gestor/Supervisor'],
   restaurant: ['Garcom', 'Cozinheiro/Chef', 'Sub-chef', 'Bartender', 'Caixa', 'Empregado de Limpeza', 'Administracao', 'Gestor/Supervisor'],
 };
 export const ROLES_DEFAULT = ['Administracao', 'Gestor/Supervisor'];
 export const SELLER_ZONES = ['Santa Maria Norte', 'Santa Maria Sul', 'Praia de Santa Maria', 'Aeroporto', 'Espargos', 'Outro'];
 export const DAYS  = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sab', 'Dom'];
-export const PRIO  = { low: 'Baixa', medium: 'Media', high: 'Alta', urgent: 'Urgente' };
+export const PRIO  = { low: 'Baixa', medium: 'Média', high: 'Alta', urgent: 'Urgente' };
 export const PRIO_COLORS = {
   low:    'text-n-500 bg-n-100',
   medium: 'text-[var(--warning)] bg-[var(--warning-light)]',
@@ -21,14 +21,14 @@ export const DEFAULT_TASKS = [
   'Verificar equipamento e material',
   'Confirmar reservas do dia',
   'Briefing com a equipa',
-  'Verificar seguranca e primeiros socorros',
-  'Comunicar horario de inicio ao grupo',
+  'Verificar segurança e primeiros socorros',
+  'Comunicar horário de início ao grupo',
 ];
 
 export const KANBAN_COLS = [
   { key: 'pending',     label: 'Pendente',    color: 'border-[var(--warning)] text-[var(--warning)] bg-[var(--warning-light)]' },
   { key: 'in_progress', label: 'Em Progresso', color: 'border-ocean-300 text-ocean-700 bg-ocean-50' },
-  { key: 'completed',   label: 'Concluida',   color: 'border-[var(--success)] text-[var(--success)] bg-[var(--success-light)]' },
+  { key: 'completed',   label: 'Concluída',   color: 'border-[var(--success)] text-[var(--success)] bg-[var(--success-light)]' },
   { key: 'cancelled',   label: 'Bloqueada',   color: 'border-[var(--error)] text-[var(--error)] bg-[var(--error-light)]' },
 ];
 

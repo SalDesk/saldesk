@@ -140,19 +140,19 @@ export default function Demand() {
     highMonths.forEach(m => {
       result.push({
         type: 'high',
-        text: `${m.name} e historicamente um mes de alta procura — considera abrir mais vagas e ajustar precos para maximizar receita.`,
+        text: `${m.name} é historicamente um mês de alta procura — considera abrir mais vagas e ajustar preços para maximizar receita.`,
       });
     });
     lowMonths.forEach(m => {
       result.push({
         type: 'low',
-        text: `${m.name} tem historicamente baixa ocupacao — cria uma promocao especial ou voucher para atrair mais reservas.`,
+        text: `${m.name} tem historicamente baixa ocupação — cria uma promoção especial ou voucher para atrair mais reservas.`,
       });
     });
     if (result.length === 0) {
       result.push({
         type: 'low',
-        text: 'Sem dados historicos suficientes para gerar sugestoes. Adiciona mais reservas ao sistema para desbloquear a analise de sazonalidade.',
+        text: 'Sem dados históricos suficientes para gerar sugestões. Adiciona mais reservas ao sistema para desbloquear a análise de sazonalidade.',
       });
     }
     return result.slice(0, 6);
@@ -184,16 +184,16 @@ export default function Demand() {
   const yoyDelta  = prevTotal > 0 ? Math.round(((curTotal - prevTotal) / prevTotal) * 100) : null;
 
   const TABS = [
-    { id: 'historico', label: 'Historico' },
-    { id: 'proximo30', label: 'Proximos 30 dias' },
-    { id: 'sugestoes', label: 'Sugestoes' },
+    { id: 'historico', label: 'Histórico' },
+    { id: 'proximo30', label: 'Próximos 30 dias' },
+    { id: 'sugestoes', label: 'Sugestões' },
   ];
 
   return (
     <div>
       <PageHeader
-        title="Previsao de Procura"
-        subtitle="Analise de sazonalidade e identificacao de oportunidades"
+        title="Previsão de Procura"
+        subtitle="Análise de sazonalidade e identificação de oportunidades"
         actions={
           <Button variant="secondary" icon={RefreshCw} size="sm" onClick={carregar} loading={loading}>
             Actualizar
@@ -217,13 +217,13 @@ export default function Demand() {
             icon:   yoyDelta == null ? Minus : yoyDelta >= 0 ? TrendingUp : TrendingDown,
           },
           {
-            label:  'Melhor mes',
+            label:  'Melhor mês',
             value:  bestMonth?.curValue > 0 ? bestMonth.name : '—',
             color:  'text-[var(--success)]',
             icon:   BarChart2,
           },
           {
-            label:  'Reservas proximos 30d',
+            label:  'Reservas próximos 30d',
             value:  next30Res.length,
             color:  'text-n-900',
             icon:   Calendar,
@@ -263,7 +263,7 @@ export default function Demand() {
             padding="px-5 pb-5 pt-2"
           >
             {chartData.every(d => d.curValue === 0 && d.prevValue === 0) ? (
-              <EmptyState icon={BarChart2} title="Sem dados financeiros disponiveis para o periodo." />
+              <EmptyState icon={BarChart2} title="Sem dados financeiros disponíveis para o período." />
             ) : (
               <ResponsiveContainer width="100%" height={260}>
                 <BarChart data={chartData} margin={{ left: 0, right: 8, top: 8, bottom: 0 }}>
@@ -275,7 +275,7 @@ export default function Demand() {
                   <Legend wrapperStyle={{ fontSize: 11, fontFamily: 'DM Mono' }} />
                   {average > 0 && (
                     <ReferenceLine y={average} stroke="var(--sand-500)" strokeDasharray="4 4"
-                      label={{ value: 'Media', position: 'insideTopRight', fontSize: 10, fill: 'var(--sand-500)', fontFamily: 'DM Mono' }} />
+                      label={{ value: 'Média', position: 'insideTopRight', fontSize: 10, fill: 'var(--sand-500)', fontFamily: 'DM Mono' }} />
                   )}
                   <Bar dataKey="prevValue" name={String(py)} fill="var(--n200)" radius={[2, 2, 0, 0]} />
                   <Bar dataKey="curValue"  name={String(yr)} fill="var(--ocean-400)" radius={[2, 2, 0, 0]}>
@@ -331,10 +331,10 @@ export default function Demand() {
         <div className="space-y-5">
           <Card padding="px-5 py-5">
             <h3 className="font-display font-semibold text-sm text-n-700 mb-4">
-              Reservas confirmadas — proximos 30 dias
+              Reservas confirmadas — próximos 30 dias
             </h3>
             {next30Res.length === 0 ? (
-              <EmptyState icon={Calendar} title="Sem reservas confirmadas para os proximos 30 dias." />
+              <EmptyState icon={Calendar} title="Sem reservas confirmadas para os próximos 30 dias." />
             ) : (
               <>
                 <div className="grid grid-cols-7 sm:grid-cols-10 gap-1 mb-4">
@@ -410,7 +410,7 @@ export default function Demand() {
         <div className="space-y-4">
           <div className="px-4 py-3 bg-ocean-50 border border-ocean-100 rounded-sm">
             <p className="text-xs font-body text-ocean-700">
-              <span className="font-semibold">Sugestoes automaticas</span> baseadas nos dados de receita mensal dos ultimos 12 meses. Quanto mais dados tiveres no sistema, mais precisas sao as sugestoes.
+              <span className="font-semibold">Sugestões automáticas</span> baseadas nos dados de receita mensal dos últimos 12 meses. Quanto mais dados tiveres no sistema, mais precisas são as sugestões.
             </p>
           </div>
           {suggestions.map((s, i) => (
@@ -433,7 +433,7 @@ export default function Demand() {
                   </p>
                 </div>
                 <div>
-                  <p className="text-xs font-body text-n-500">Variacao</p>
+                  <p className="text-xs font-body text-n-500">Variação</p>
                   <p className={`font-display font-bold text-lg ${yoyDelta == null ? 'text-n-400' : yoyDelta >= 0 ? 'text-[var(--success)]' : 'text-[var(--error)]'}`}>
                     {yoyDelta != null ? `${yoyDelta > 0 ? '+' : ''}${yoyDelta}%` : '—'}
                   </p>

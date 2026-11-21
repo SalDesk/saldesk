@@ -71,18 +71,18 @@ export default function LevantamentoModal({ reservation, units, open, onClose, o
         </div>
 
         <div>
-          <p className={`${GROUP_LABEL_CLASS} mb-2`}>Nivel combustivel (saida)</p>
+          <p className={`${GROUP_LABEL_CLASS} mb-2`}>Nível combustível (saída)</p>
           <FuelSelector value={form.fuel_out} onChange={v => set('fuel_out', v)} />
         </div>
 
-        <Input label="Km na saida" type="number" value={form.km_out} onChange={e => set('km_out', e.target.value)} placeholder="0" />
+        <Input label="Km na saída" type="number" value={form.km_out} onChange={e => set('km_out', e.target.value)} placeholder="0" />
 
         <Textarea label="Danos existentes (registo)" value={form.damages_out} onChange={e => set('damages_out', e.target.value)} rows={2}
           placeholder="Descrever danos pre-existentes..." />
 
         <div className="flex items-end gap-3">
           <div className="flex-1">
-            <Input label="Caucao (€)" type="number" value={form.caucao} onChange={e => set('caucao', e.target.value)} placeholder="0.00" step="0.01" />
+            <Input label="Caução (€)" type="number" value={form.caucao} onChange={e => set('caucao', e.target.value)} placeholder="0.00" step="0.01" />
           </div>
           <label className="flex items-center gap-2 h-9 text-sm font-body text-n-700 cursor-pointer">
             <input type="checkbox" checked={form.caucao_paid} onChange={e => set('caucao_paid', e.target.checked)} className="w-4 h-4 accent-ocean-700" />

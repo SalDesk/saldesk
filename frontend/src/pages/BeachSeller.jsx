@@ -74,7 +74,7 @@ const STATUS_CFG = {
   pending:     { label: 'Pendente',   cls: 'bg-sand-100 text-sand-600'         },
   confirmed:   { label: 'Confirmado', cls: 'bg-ocean-50 text-ocean-700'        },
   checked_in:  { label: 'Activo',     cls: 'bg-turquoise-100 text-turquoise-700' },
-  checked_out: { label: 'Concluido',  cls: 'bg-n-100 text-n-500'               },
+  checked_out: { label: 'Concluído',  cls: 'bg-n-100 text-n-500'               },
   cancelled:   { label: 'Cancelado',  cls: 'bg-red-50 text-error'              },
 };
 
@@ -316,7 +316,7 @@ export default function BeachSeller() {
         <div className="flex mt-5 gap-1 bg-n-100 rounded-2xl p-1 max-w-lg">
           {[
             { key: 'hoje',      label: 'Hoje'            },
-            { key: 'comissoes', label: 'Minhas Comissoes' },
+            { key: 'comissoes', label: 'Minhas Comissões' },
             { key: 'chat',      label: 'Chat'             },
           ].map(t => (
             <button key={t.key} onClick={() => setActiveTab(t.key)}
@@ -367,7 +367,7 @@ export default function BeachSeller() {
                     return { year: y, month: m };
                   })}
                   className="w-9 h-9 rounded-full flex items-center justify-center text-n-500 hover:bg-n-100 active:scale-95 transition-all"
-                  aria-label="Mes anterior"
+                  aria-label="Mês anterior"
                 >
                   <ChevronLeft size={18} strokeWidth={2} />
                 </button>
@@ -385,7 +385,7 @@ export default function BeachSeller() {
                   className={`w-9 h-9 rounded-full flex items-center justify-center transition-all ${
                     isReservCurrentMonth ? 'text-n-300 opacity-30 cursor-not-allowed' : 'text-n-500 hover:bg-n-100 active:scale-95'
                   }`}
-                  aria-label="Mes seguinte"
+                  aria-label="Mês seguinte"
                 >
                   <ChevronRight size={18} strokeWidth={2} />
                 </button>
@@ -399,7 +399,7 @@ export default function BeachSeller() {
                   Sem reservas {reservMode === 'hoje' ? 'hoje' : `em ${MONTHS_PT[reservViewMonth.month]}`}
                 </p>
                 <p className="text-sm font-body text-n-400 mt-1">
-                  Usa o botao "Nova Reserva" para registar vendas.
+                  Usa o botão "Nova Reserva" para registar vendas.
                 </p>
               </div>
             ) : (
@@ -452,7 +452,7 @@ export default function BeachSeller() {
                       </div>
                       <div className="text-right">
                         <p className="font-display font-bold text-lg text-ocean-700">{fmtMoney(val)}</p>
-                        <p className="text-xs font-body text-turquoise-700">Comissao: {fmtMoney(com)}</p>
+                        <p className="text-xs font-body text-turquoise-700">Comissão: {fmtMoney(com)}</p>
                       </div>
                     </div>
                   </div>
@@ -475,7 +475,7 @@ export default function BeachSeller() {
                   return { year: y, month: m };
                 })}
                 className="w-9 h-9 rounded-full flex items-center justify-center text-n-500 hover:bg-n-100 active:scale-95 transition-all"
-                aria-label="Mes anterior"
+                aria-label="Mês anterior"
               >
                 <ChevronLeft size={18} strokeWidth={2} />
               </button>
@@ -493,7 +493,7 @@ export default function BeachSeller() {
                 className={`w-9 h-9 rounded-full flex items-center justify-center transition-all ${
                   isCurrentMonth ? 'text-n-300 opacity-30 cursor-not-allowed' : 'text-n-500 hover:bg-n-100 active:scale-95'
                 }`}
-                aria-label="Mes seguinte"
+                aria-label="Mês seguinte"
               >
                 <ChevronRight size={18} strokeWidth={2} />
               </button>
@@ -517,13 +517,13 @@ export default function BeachSeller() {
             {monthComms.length === 0 ? (
               <div className="text-center py-12 text-n-400">
                 <BarChart2 size={36} strokeWidth={1} className="mx-auto mb-3 text-n-300" />
-                <p className="font-body">Sem comissoes este mes.</p>
-                <p className="text-sm text-n-400 mt-1">As comissoes aparecem aqui apos cada venda.</p>
+                <p className="font-body">Sem comissões este mês.</p>
+                <p className="text-sm text-n-400 mt-1">As comissões aparecem aqui após cada venda.</p>
               </div>
             ) : (
               <div className="space-y-2">
                 <p className="text-xs font-mono uppercase tracking-wider text-n-500">
-                  Historico — {MONTHS_PT[viewMonth.month]}
+                  Histórico — {MONTHS_PT[viewMonth.month]}
                 </p>
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-2">
                 {[...monthComms].sort((a, b) => b.created_at.localeCompare(a.created_at)).map(c => (

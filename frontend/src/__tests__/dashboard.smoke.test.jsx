@@ -70,8 +70,8 @@ function servicosAFalhar() {
 const TEXTO_ACTIVITY   = 'Ocupação do mês';
 const TEXTO_HOTEL      = 'Mapa de Quartos — Hoje';
 const TEXTO_RENTACAR   = 'Frota — Estado Actual';
-const TEXTO_RESTAURANT = 'Covers do mes';
-const TEXTO_GENERICO   = 'Accoes Rapidas';
+const TEXTO_RESTAURANT = 'Covers do mês';
+const TEXTO_GENERICO   = 'Acções Rápidas';
 const TODOS = [TEXTO_ACTIVITY, TEXTO_HOTEL, TEXTO_RENTACAR, TEXTO_RESTAURANT, TEXTO_GENERICO];
 
 function renderDashboard(operator_type) {
@@ -140,12 +140,12 @@ describe('Dashboard (fumo por tipo de operador)', () => {
     await esperaSoTipo(TEXTO_RESTAURANT);
   });
 
-  it('tipo em falta usa o generico', async () => {
+  it('tipo em falta usa o genérico', async () => {
     renderDashboard(undefined);
     await esperaSoTipo(TEXTO_GENERICO);
   });
 
-  it('servicos a falhar nao partem', async () => {
+  it('serviços a falhar não partem', async () => {
     servicosAFalhar();
     renderDashboard('hotel');
     await esperaSoTipo(TEXTO_HOTEL);
@@ -183,16 +183,16 @@ describe('Dashboard (fumo por tipo de operador)', () => {
     expect((await screen.findAllByText(TEXTO_HOTEL)).length).toBeGreaterThan(0);
   });
 
-  it('as acoes do cabecalho navegam', async () => {
+  it('as ações do cabeçalho navegam', async () => {
     renderDashboard('hotel');
     await esperaSoTipo(TEXTO_HOTEL);
     fireEvent.click(screen.getByRole('button', { name: 'Nova reserva' }));
     expect(navigateMock).toHaveBeenLastCalledWith('/reservas');
-    fireEvent.click(screen.getByRole('button', { name: 'Ver calendario' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Ver calendário' }));
     expect(navigateMock).toHaveBeenLastCalledWith('/calendario');
   });
 
-  it('activity: as acoes do cabecalho navegam e a nova reserva e unica', async () => {
+  it('activity: as ações do cabeçalho navegam e a nova reserva e única', async () => {
     /* com um tour hoje nao ha estado vazio, logo so o cabecalho tem "Nova reserva" */
     const hoje = new Date().toLocaleDateString('en-CA');
     listUnits.mockResolvedValue([{ id: 't1', name: 'Tour Teste', capacity: 10, status: 'active' }]);
@@ -205,12 +205,12 @@ describe('Dashboard (fumo por tipo de operador)', () => {
     await esperaSoTipo(TEXTO_ACTIVITY);
     fireEvent.click(screen.getByRole('button', { name: 'Nova reserva' }));
     expect(navigateMock).toHaveBeenLastCalledWith('/reservas');
-    fireEvent.click(screen.getByRole('button', { name: 'Ver calendario' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Ver calendário' }));
     expect(navigateMock).toHaveBeenLastCalledWith('/calendario');
   });
 });
 
-describe('Dashboard: cabecalho com saudacao, data e hora', () => {
+describe('Dashboard: cabeçalho com saudacao, data e hora', () => {
   beforeEach(() => {
     servicosVazios();
     navigateMock.mockReset();
@@ -265,7 +265,7 @@ describe('Dashboard: cabecalho com saudacao, data e hora', () => {
   });
 });
 
-describe('Dashboard: virar o dia com o ecra aberto', () => {
+describe('Dashboard: virar o dia com o ecrã aberto', () => {
   beforeEach(() => {
     servicosVazios();
     recarregarPagina.mockReset();

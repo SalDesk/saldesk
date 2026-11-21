@@ -29,17 +29,17 @@ const STATUS_OPTIONS = Object.entries(STATUS_CONFIG).filter(([k]) => k !== 'conv
 const TYPE_LABELS = { activity: 'Actividade', hotel: 'Hotel', rentacar: 'Rent-a-car', restaurant: 'Restaurante' };
 
 const SCORE_LABELS = {
-  tipo_negocio:   'Tipo de negocio',
+  tipo_negocio:   'Tipo de negócio',
   volume_mensal:  'Volume mensal',
-  anos_operacao:  'Anos de operacao',
-  tem_site:       'Tem site proprio',
+  anos_operacao:  'Anos de operação',
+  tem_site:       'Tem site próprio',
   usa_otas:       'Usa OTAs',
 };
 
 const CONTACT_TYPE_CONFIG = {
   email:    { label: 'Email',     icon: Mail },
   telefone: { label: 'Telefone',  icon: Phone },
-  reuniao:  { label: 'Reuniao',   icon: UsersIcon },
+  reuniao:  { label: 'Reunião',   icon: UsersIcon },
   demo:     { label: 'Demo',      icon: Video },
 };
 
@@ -51,7 +51,7 @@ function scoreBarColor(score) {
 }
 function priorityBadge(score) {
   if (score > 70) return { label: 'Prioridade alta',  variant: 'confirmed' };
-  if (score >= 40) return { label: 'Prioridade media', variant: 'pending' };
+  if (score >= 40) return { label: 'Prioridade média', variant: 'pending' };
   return { label: 'Prioridade baixa', variant: 'cancelled' };
 }
 function daysInPipeline(lead) {
@@ -72,7 +72,7 @@ function ScoreBar({ score, size = 'sm' }) {
 
 function exportCsv(rows) {
   const keys    = ['email', 'nome', 'nome_negocio', 'tipo_negocio', 'source', 'computed_status', 'score', 'created_at'];
-  const headers = ['Email', 'Nome', 'Negocio', 'Tipo', 'Origem', 'Estado', 'Score', 'Data'];
+  const headers = ['Email', 'Nome', 'Negócio', 'Tipo', 'Origem', 'Estado', 'Score', 'Data'];
   const lines   = rows.map(l => keys.map(k => `"${(l[k] ?? '').toString().replace(/"/g, '""')}"`).join(','));
   const csv     = [headers.join(','), ...lines].join('\n');
   const blob    = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
@@ -87,36 +87,36 @@ const EMAIL_TEMPLATES = {
     label: 'Boas-vindas',
     subject: 'SalDesk — obrigado pelo seu interesse',
     body:
-      'Ola {{nome}},\n\n' +
-      'Obrigado por se candidatar e querer conhecer a SalDesk. Vimos que tem um negocio de {{tipo}} em Cabo Verde e ' +
-      'gostariamos de mostrar como a nossa plataforma pode ajudar a centralizar reservas, equipa e pagamentos num unico lugar.\n\n' +
-      'Em breve entraremos em contacto para combinar os proximos passos.\n\nCumprimentos,\nEquipa SalDesk',
+      'Olá {{nome}},\n\n' +
+      'Obrigado por se candidatar e querer conhecer a SalDesk. Vimos que tem um negócio de {{tipo}} em Cabo Verde e ' +
+      'gostariamos de mostrar como a nossa plataforma pode ajudar a centralizar reservas, equipa e pagamentos num único lugar.\n\n' +
+      'Em breve entraremos em contacto para combinar os próximos passos.\n\nCumprimentos,\nEquipa SalDesk',
   },
   agendar_demo: {
     label: 'Agendar demo',
-    subject: 'SalDesk — vamos agendar a sua demonstracao?',
+    subject: 'SalDesk — vamos agendar a sua demonstração?',
     body:
-      'Ola {{nome}},\n\n' +
-      'Obrigado pela conversa. Para avancarmos, indique 2-3 horarios que lhe sejam convenientes nos proximos dias ' +
-      'e confirmamos a demonstracao da plataforma SalDesk adaptada ao seu negocio de {{tipo}}.\n\n' +
+      'Olá {{nome}},\n\n' +
+      'Obrigado pela conversa. Para avancarmos, indique 2-3 horários que lhe sejam convenientes nos próximos dias ' +
+      'e confirmamos a demonstração da plataforma SalDesk adaptada ao seu negócio de {{tipo}}.\n\n' +
       'Aguardamos a sua resposta.\n\nCumprimentos,\nEquipa SalDesk',
   },
   proposta_comercial: {
     label: 'Proposta comercial',
-    subject: 'SalDesk — proposta para o seu negocio',
+    subject: 'SalDesk — proposta para o seu negócio',
     body:
-      'Ola {{nome}},\n\n' +
-      'Com base na nossa conversa, preparamos uma proposta comercial para o seu negocio de {{tipo}}: planos, precos e ' +
-      'o que a SalDesk pode automatizar desde o primeiro dia (reservas, equipa, financas e comunicacao com clientes).\n\n' +
-      'Fico disponivel para esclarecer qualquer duvida e avancar com a activacao.\n\nCumprimentos,\nEquipa SalDesk',
+      'Olá {{nome}},\n\n' +
+      'Com base na nossa conversa, preparamos uma proposta comercial para o seu negócio de {{tipo}}: planos, preços e ' +
+      'o que a SalDesk pode automatizar desde o primeiro dia (reservas, equipa, financas e comunicação com clientes).\n\n' +
+      'Fico disponível para esclarecer qualquer dúvida e avançar com a activação.\n\nCumprimentos,\nEquipa SalDesk',
   },
   follow_up: {
     label: 'Follow-up',
-    subject: 'SalDesk — continuamos disponiveis para ajudar',
+    subject: 'SalDesk — continuamos disponíveis para ajudar',
     body:
-      'Ola {{nome}},\n\n' +
-      'Notamos que ainda nao avancamos com os proximos passos. A SalDesk continua disponivel para ' +
-      'apresentar a plataforma e esclarecer qualquer duvida sobre planos, precos ou funcionalidades.\n\n' +
+      'Olá {{nome}},\n\n' +
+      'Notamos que ainda não avançamos com os próximos passos. A SalDesk continua disponível para ' +
+      'apresentar a plataforma e esclarecer qualquer dúvida sobre planos, preços ou funcionalidades.\n\n' +
       'Quando lhe for conveniente, estamos aqui.\n\nCumprimentos,\nEquipa SalDesk',
   },
 };
@@ -259,7 +259,7 @@ export default function AdminLeads() {
       const { data } = await api.put(`/admin/leads/${lead.id}/stage`, { stage });
       applyLeadUpdate(data.data);
     } catch (err) {
-      window.alert(err?.response?.data?.error || 'Nao foi possivel alterar a fase do lead.');
+      window.alert(err?.response?.data?.error || 'Não foi possível alterar a fase do lead.');
     }
   }
 
@@ -282,7 +282,7 @@ export default function AdminLeads() {
       setSelectedLead(null);
       window.alert(`Operador criado: ${data.data.operator.name}\nSlug: ${data.data.operator.slug}`);
     } catch (err) {
-      window.alert(err?.response?.data?.error || 'Nao foi possivel converter o lead.');
+      window.alert(err?.response?.data?.error || 'Não foi possível converter o lead.');
     } finally { setConverting(false); }
   }
 
@@ -559,7 +559,7 @@ export default function AdminLeads() {
 
             {/* Score detalhado com barra de progresso */}
             <div>
-              <p className="text-xs font-mono uppercase tracking-wide text-n-400 mb-1.5">Composicao do score</p>
+              <p className="text-xs font-mono uppercase tracking-wide text-n-400 mb-1.5">Composição do score</p>
               <ScoreBar score={selectedLead.score || 0} size="lg" />
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mt-2">
                 {Object.entries(selectedLead.score_breakdown || {}).map(([k, v]) => (
@@ -575,27 +575,27 @@ export default function AdminLeads() {
             <div>
               <p className="text-xs font-mono uppercase tracking-wide text-n-400 mb-1.5">Candidatura</p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 bg-n-50 rounded-sm p-3">
-                <DetailRow label="Funcao"               value={selectedLead.funcao} />
-                <DetailRow label="Localizacao"          value={selectedLead.localizacao} />
-                <DetailRow label="Tipo de negocio"      value={TYPE_LABELS[selectedLead.tipo_negocio] || selectedLead.tipo_negocio} />
-                <DetailRow label="Anos de operacao"     value={selectedLead.anos_operacao} />
-                <DetailRow label="Clientes / mes"       value={selectedLead.clientes_mes || selectedLead.volume_mensal} />
-                <DetailRow label="Tem site"             value={selectedLead.tem_site ? (selectedLead.url_site || 'Sim') : 'Nao'} />
-                <DetailRow label="Funcionarios"         value={selectedLead.num_funcionarios} />
-                <DetailRow label="Usa OTAs"             value={Array.isArray(selectedLead.otas) && selectedLead.otas.length ? selectedLead.otas.join(', ') : 'Nao'} />
+                <DetailRow label="Função"               value={selectedLead.funcao} />
+                <DetailRow label="Localização"          value={selectedLead.localizacao} />
+                <DetailRow label="Tipo de negócio"      value={TYPE_LABELS[selectedLead.tipo_negocio] || selectedLead.tipo_negocio} />
+                <DetailRow label="Anos de operação"     value={selectedLead.anos_operacao} />
+                <DetailRow label="Clientes / mês"       value={selectedLead.clientes_mes || selectedLead.volume_mensal} />
+                <DetailRow label="Tem site"             value={selectedLead.tem_site ? (selectedLead.url_site || 'Sim') : 'Não'} />
+                <DetailRow label="Funcionários"         value={selectedLead.num_funcionarios} />
+                <DetailRow label="Usa OTAs"             value={Array.isArray(selectedLead.otas) && selectedLead.otas.length ? selectedLead.otas.join(', ') : 'Não'} />
                 <DetailRow label="Gere reservas via"    value={Array.isArray(selectedLead.como_gere_reservas) ? selectedLead.como_gere_reservas.join(', ') : '—'} />
                 <DetailRow label="Desafios"             value={Array.isArray(selectedLead.desafios) ? selectedLead.desafios.join(', ') : '—'} />
                 <DetailRow label="Plano de interesse"   value={selectedLead.plano_interesse} />
-                <DetailRow label="Quando comecar"       value={selectedLead.quando_comecar} />
+                <DetailRow label="Quando começar"       value={selectedLead.quando_comecar} />
                 <DetailRow label="Como soube da SalDesk" value={selectedLead.como_soube} />
                 {selectedLead.referred_by && (
                   <DetailRow label="Indicado por" value={`${selectedLead.referred_by.name} (recompensar ao converter)`} />
                 )}
-                <DetailRow label="Disponivel p/ demo"   value={selectedLead.disponivel_demo ? 'Sim' : 'Nao'} />
-                <DetailRow label="Horario de contacto"  value={selectedLead.horario_contacto} />
+                <DetailRow label="Disponível p/ demo"   value={selectedLead.disponivel_demo ? 'Sim' : 'Não'} />
+                <DetailRow label="Horário de contacto"  value={selectedLead.horario_contacto} />
                 {selectedLead.comentarios && (
                   <div className="sm:col-span-2">
-                    <DetailRow label="Comentarios" value={selectedLead.comentarios} />
+                    <DetailRow label="Comentários" value={selectedLead.comentarios} />
                   </div>
                 )}
               </div>
@@ -635,7 +635,7 @@ export default function AdminLeads() {
             {/* Historico de contactos */}
             <div>
               <div className="flex items-center justify-between mb-1.5">
-                <p className="text-xs font-mono uppercase tracking-wide text-n-400">Historico de contactos</p>
+                <p className="text-xs font-mono uppercase tracking-wide text-n-400">Histórico de contactos</p>
                 {!contactForm.open && (
                   <Button variant="ghost" size="sm" icon={Plus} onClick={() => setContactForm(p => ({ ...p, open: true }))}>
                     Registar contacto
@@ -656,7 +656,7 @@ export default function AdminLeads() {
                     rows={2}
                     value={contactForm.notes}
                     onChange={e => setContactForm(p => ({ ...p, notes: e.target.value }))}
-                    placeholder="O que foi discutido, proximos passos..."
+                    placeholder="O que foi discutido, próximos passos..."
                   />
                   <div className="flex gap-2 justify-end">
                     <Button variant="secondary" size="sm" onClick={() => setContactForm({ open: false, type: 'telefone', date: new Date().toISOString().slice(0, 10), notes: '' })}>

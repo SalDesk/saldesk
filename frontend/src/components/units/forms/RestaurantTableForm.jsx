@@ -10,6 +10,8 @@ const RESTAURANT_AMENS = ['WiFi', 'Ar condicionado', 'Vista mar', 'Terraço', 'A
 
 const TABLE_ZONES = ['interior', 'esplanada', 'terraco', 'vip', 'privado'];
 const ZONE_LABEL_MAP = { interior: 'Interior', esplanada: 'Esplanada', terraco: 'Terraco', vip: 'VIP', privado: 'Privado' };
+/* O que o operador ve na lista; o unit_type guardado continua a ser o de ZONE_LABEL_MAP. */
+const ZONE_ROTULO = { terraco: 'Terraço' };
 
 function parseTableMeta(description) {
   if (!description?.startsWith('{')) return {};
@@ -90,16 +92,16 @@ export default function RestaurantTableForm({ unit, onSave, onCancel, loading, e
     <form onSubmit={handleSubmit} className="space-y-5">
 
       <div>
-        <SectionLabel>Identificacao</SectionLabel>
+        <SectionLabel>Identificação</SectionLabel>
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-3">
-          <Input label="Numero" value={form.number} onChange={set('number')} placeholder="1" autoFocus />
+          <Input label="Número" value={form.number} onChange={set('number')} placeholder="1" autoFocus />
           <div className="col-span-2">
-            <Input label="Nome / descricao (opcional)" value={form.name} onChange={set('name')} placeholder="Ex: Terraco Vista Mar" />
+            <Input label="Nome / descrição (opcional)" value={form.name} onChange={set('name')} placeholder="Ex: Terraço Vista Mar" />
           </div>
         </div>
         <Select label="Zona" value={form.zone} onChange={set('zone')} required>
           {TABLE_ZONES.map(z => (
-            <option key={z} value={z}>{ZONE_LABEL_MAP[z]}</option>
+            <option key={z} value={z}>{ZONE_ROTULO[z] || ZONE_LABEL_MAP[z]}</option>
           ))}
         </Select>
       </div>
@@ -107,13 +109,13 @@ export default function RestaurantTableForm({ unit, onSave, onCancel, loading, e
       <div>
         <SectionLabel>Capacidade</SectionLabel>
         <div className="grid grid-cols-2 gap-3">
-          <Input label="Minimo (pessoas)" type="number" value={form.capacity_min} onChange={set('capacity_min')} min="1" required />
-          <Input label="Maximo (pessoas)" type="number" value={form.capacity_max} onChange={set('capacity_max')} min="1" required />
+          <Input label="Mínimo (pessoas)" type="number" value={form.capacity_min} onChange={set('capacity_min')} min="1" required />
+          <Input label="Máximo (pessoas)" type="number" value={form.capacity_max} onChange={set('capacity_max')} min="1" required />
         </div>
       </div>
 
       <div>
-        <SectionLabel>Opcoes</SectionLabel>
+        <SectionLabel>Opções</SectionLabel>
         <label className="flex items-center gap-3 cursor-pointer">
           <input
             type="checkbox"
@@ -121,7 +123,7 @@ export default function RestaurantTableForm({ unit, onSave, onCancel, loading, e
             onChange={e => setForm(f => ({ ...f, combinable: e.target.checked }))}
             className="w-4 h-4 accent-ocean-700"
           />
-          <span className="text-sm font-body text-n-700 app:text-[13px]">Mesa combinavel com outras</span>
+          <span className="text-sm font-body text-n-700 app:text-[13px]">Mesa combinável com outras</span>
         </label>
       </div>
 
@@ -160,7 +162,7 @@ export default function RestaurantTableForm({ unit, onSave, onCancel, loading, e
       <div className="flex gap-3 pt-1">
         <Button type="button" variant="secondary" onClick={onCancel} className="flex-1">Cancelar</Button>
         <Button type="submit" loading={loading} className="flex-1">
-          {unit ? 'Guardar alteracoes' : 'Criar mesa'}
+          {unit ? 'Guardar alterações' : 'Criar mesa'}
         </Button>
       </div>
     </form>

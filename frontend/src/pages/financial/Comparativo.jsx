@@ -8,7 +8,7 @@ function Comparativo({ resumo, currency }) {
   const rows = [
     { id: 'receita',  label: 'Receita',  atual: atual.receita,       ant: anterior.receita,       fmt: 'euro', delta: variacao.receita },
     { id: 'reservas', label: 'Reservas', atual: atual.num_reservas,  ant: anterior.num_reservas,  fmt: 'num',  delta: variacao.num_reservas },
-    { id: 'ocupacao', label: 'Ocupacao', atual: atual.taxa_ocupacao, ant: anterior.taxa_ocupacao, fmt: 'pct',  delta: variacao.taxa_ocupacao },
+    { id: 'ocupacao', label: 'Ocupação', atual: atual.taxa_ocupacao, ant: anterior.taxa_ocupacao, fmt: 'pct',  delta: variacao.taxa_ocupacao },
   ];
   function fmt(v, f) {
     if (f === 'euro') return fmtMoney(v, currency);
@@ -16,11 +16,11 @@ function Comparativo({ resumo, currency }) {
     return String(v ?? 0);
   }
   const columns = [
-    { key: 'label', label: 'Metrica', render: r => <span className="font-body font-semibold text-n-800">{r.label}</span> },
-    { key: 'atual', label: 'Periodo actual', align: 'right', render: r => <span className="font-display font-bold text-ocean-700">{fmt(r.atual, r.fmt)}</span> },
-    { key: 'ant', label: 'Periodo anterior', align: 'right', render: r => <span className="font-body text-n-500">{fmt(r.ant, r.fmt)}</span> },
+    { key: 'label', label: 'Métrica', render: r => <span className="font-body font-semibold text-n-800">{r.label}</span> },
+    { key: 'atual', label: 'Período actual', align: 'right', render: r => <span className="font-display font-bold text-ocean-700">{fmt(r.atual, r.fmt)}</span> },
+    { key: 'ant', label: 'Período anterior', align: 'right', render: r => <span className="font-body text-n-500">{fmt(r.ant, r.fmt)}</span> },
     {
-      key: 'delta', label: 'Variacao', align: 'right',
+      key: 'delta', label: 'Variação', align: 'right',
       render: r => {
         const up = r.delta > 0, neutral = r.delta === 0 || r.delta == null;
         const Icon = neutral ? Minus : up ? ArrowUpRight : ArrowDownRight;

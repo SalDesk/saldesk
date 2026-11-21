@@ -43,24 +43,24 @@ import ResultadoTab from './financial/ResultadoTab';
 const SECTIONS = [
   { id: 'receitas',   label: 'Receitas',   pro: false },
   { id: 'despesas',   label: 'Despesas',   pro: true  },
-  { id: 'salarios',   label: 'Salarios',   pro: true  },
-  { id: 'comissoes',  label: 'Comissoes',  pro: false },
-  { id: 'obrigacoes', label: 'Obrigacoes', pro: true  },
+  { id: 'salarios',   label: 'Salários',   pro: true  },
+  { id: 'comissoes',  label: 'Comissões',  pro: false },
+  { id: 'obrigacoes', label: 'Obrigações', pro: true  },
   { id: 'resultado',  label: 'Resultado',  pro: true  },
 ];
 
 const RECEITAS_TABS = [
-  { id: 'geral',    label: 'Visao Geral' },
+  { id: 'geral',    label: 'Visão Geral' },
   { id: 'portour',  label: 'Por Tour' },
-  { id: 'previsao', label: 'Previsao' },
+  { id: 'previsao', label: 'Previsão' },
   { id: 'caixa',    label: 'Caixa' },
   { id: 'manuais',  label: 'Receitas Manuais' },
 ];
 
 const PRESETS = [
-  { label: 'Ultimos 30 dias', fn: ultimos30 },
-  { label: 'Este mes',        fn: mesAtual },
-  { label: 'Mes anterior',    fn: mesAnterior },
+  { label: 'Últimos 30 dias', fn: ultimos30 },
+  { label: 'Este mês',        fn: mesAtual },
+  { label: 'Mês anterior',    fn: mesAnterior },
   { label: 'Este ano',        fn: esteAno },
 ];
 const MOEDAS = [
@@ -70,7 +70,7 @@ const MOEDAS = [
 const GRANULARIDADES = [
   { value: 'day',   label: 'Dia' },
   { value: 'week',  label: 'Semana' },
-  { value: 'month', label: 'Mes' },
+  { value: 'month', label: 'Mês' },
 ];
 
 /* ─────────────────── MAIN ─────────────────── */
@@ -238,13 +238,13 @@ export default function Financial() {
           ) : activeTab === 'geral' ? (
             <div className="space-y-5">
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                <KpiCard label="Receita total" value={atual.receita} delta={variacao.receita} deltaLabel="vs periodo ant." icon={Euro} format="euro" currency={currency} />
+                <KpiCard label="Receita total" value={atual.receita} delta={variacao.receita} deltaLabel="vs período ant." icon={Euro} format="euro" currency={currency} />
                 <KpiCard label={`Directas ${directaPct != null ? directaPct + '%' : ''}`} value={directas} sub={ota > 0 ? `${ota} via OTA` : undefined} icon={BarChart2} format="number" />
-                <KpiCard label="Ticket medio" value={ticketMedio} icon={Receipt} format="euro" currency={currency} />
+                <KpiCard label="Ticket médio" value={ticketMedio} icon={Receipt} format="euro" currency={currency} />
                 <KpiCard label={`Margem liquida${margemLiq != null && totalCustos > 0 ? ` (${((receitaNum - totalCustos) / receitaNum * 100).toFixed(0)}%)` : ''}`} value={margemLiq} delta={crescimento} deltaLabel="crescimento" icon={TrendingUp} format="euro" currency={currency} />
               </div>
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-                <Card className="lg:col-span-2" header={<div className="flex items-center justify-between"><h3 className="font-display font-semibold text-sm text-n-700">Receita por periodo</h3><span className="text-xs font-mono text-n-400">{periodo.inicio} — {periodo.fim}</span></div>} padding="px-5 pb-5 pt-2">
+                <Card className="lg:col-span-2" header={<div className="flex items-center justify-between"><h3 className="font-display font-semibold text-sm text-n-700">Receita por período</h3><span className="text-xs font-mono text-n-400">{periodo.inicio} — {periodo.fim}</span></div>} padding="px-5 pb-5 pt-2">
                   <RevenueChart data={receita} granularidade={granularidade} currency={currency} />
                 </Card>
                 <Card header={<h3 className="font-display font-semibold text-sm text-n-700">Por canal</h3>} padding="px-5 pb-5 pt-2">
@@ -257,11 +257,11 @@ export default function Financial() {
                 </Card>
               )}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                <Card header={<h3 className="font-display font-semibold text-sm text-n-700">Top 5 servicos por receita</h3>} padding="px-5 pb-5 pt-2"><ServiceBarChart data={unidades} currency={currency} /></Card>
+                <Card header={<h3 className="font-display font-semibold text-sm text-n-700">Top 5 serviços por receita</h3>} padding="px-5 pb-5 pt-2"><ServiceBarChart data={unidades} currency={currency} /></Card>
                 <Card header={<h3 className="font-display font-semibold text-sm text-n-700">Top clientes</h3>}><TopCustomersList data={clientes} /></Card>
               </div>
-              {resumo?.anterior && <Card header={<h3 className="font-display font-semibold text-sm text-n-700">Comparativo com periodo anterior</h3>}><Comparativo resumo={resumo} currency={currency} /></Card>}
-              <Card header={<div className="flex items-center justify-between"><h3 className="font-display font-semibold text-sm text-n-700">Transacoes</h3><button aria-label="Actualizar transacoes" onClick={() => carregarTx(periodo)} className="p-1 rounded text-n-400 hover:text-ocean-700 hover:bg-ocean-50 transition-colors"><RefreshCw size={13} strokeWidth={1.75} /></button></div>}>
+              {resumo?.anterior && <Card header={<h3 className="font-display font-semibold text-sm text-n-700">Comparativo com período anterior</h3>}><Comparativo resumo={resumo} currency={currency} /></Card>}
+              <Card header={<div className="flex items-center justify-between"><h3 className="font-display font-semibold text-sm text-n-700">Transações</h3><button aria-label="Actualizar transações" onClick={() => carregarTx(periodo)} className="p-1 rounded text-n-400 hover:text-ocean-700 hover:bg-ocean-50 transition-colors"><RefreshCw size={13} strokeWidth={1.75} /></button></div>}>
                 <TransacoesTable transacoes={transacoes} currency={currency} loading={loadingTx} />
               </Card>
             </div>

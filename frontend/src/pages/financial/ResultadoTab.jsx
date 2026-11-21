@@ -102,9 +102,9 @@ function ResultadoTab({ resumo, currency, periodo }) {
           { label: 'Receita bruta',         value: fmtMoney(receita, currency),        color: 'text-ocean-700'  },
           { label: 'Despesas operacionais', value: fmtMoney(totalDespesas, currency),   color: 'text-[var(--error)]' },
           { label: 'Folha salarial',        value: fmtMoney(totalSal, currency),        color: 'text-[var(--error)]' },
-          { label: 'Resultado liquido',     value: fmtMoney(resultado, currency),       color: resultado >= 0 ? 'text-[var(--success)]' : 'text-[var(--error)]' },
+          { label: 'Resultado líquido',     value: fmtMoney(resultado, currency),       color: resultado >= 0 ? 'text-[var(--success)]' : 'text-[var(--error)]' },
           { label: 'Margem',                value: `${margem.toFixed(1)}%`,             color: margem >= 20 ? 'text-[var(--success)]' : margem >= 0 ? 'text-[var(--warning)]' : 'text-[var(--error)]' },
-          { label: 'Reservas no periodo',   value: resumo?.atual?.num_reservas ?? '—',   color: 'text-n-900'      },
+          { label: 'Reservas no período',   value: resumo?.atual?.num_reservas ?? '—',   color: 'text-n-900'      },
         ].map(m => (
           <Card key={m.label} padding="px-4 py-3">
             <p className={`font-display font-bold text-xl ${m.color}`}>{m.value}</p>
@@ -114,7 +114,7 @@ function ResultadoTab({ resumo, currency, periodo }) {
       </div>
 
       {/* Receitas vs Despesas chart */}
-      <Card padding="px-5 pb-5 pt-3" header={<h3 className="font-display font-semibold text-sm text-n-700">Receitas vs Despesas — ultimos 6 meses</h3>}>
+      <Card padding="px-5 pb-5 pt-3" header={<h3 className="font-display font-semibold text-sm text-n-700">Receitas vs Despesas — últimos 6 meses</h3>}>
         <ResponsiveContainer width="100%" height={240}>
           <BarChart data={chartData} margin={{ left: 0, right: 8, top: 8, bottom: 0 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="var(--n200)" vertical={false} />
@@ -130,7 +130,7 @@ function ResultadoTab({ resumo, currency, periodo }) {
 
       {/* Breakdown */}
       <Card padding="px-5 py-4">
-        <h3 className="font-display font-semibold text-sm text-n-700 mb-4">Decomposicao do resultado</h3>
+        <h3 className="font-display font-semibold text-sm text-n-700 mb-4">Decomposição do resultado</h3>
         <div className="space-y-2">
           {[
             { label: 'Receita bruta',     value: receita,        sign: '+', color: 'text-ocean-700' },
@@ -143,7 +143,7 @@ function ResultadoTab({ resumo, currency, periodo }) {
             </div>
           ))}
           <div className="flex items-center justify-between py-2 pt-3 border-t-2 border-n-300">
-            <span className="text-sm font-body font-bold text-n-800">Resultado liquido</span>
+            <span className="text-sm font-body font-bold text-n-800">Resultado líquido</span>
             <span className={`font-display font-bold text-base ${resultado >= 0 ? 'text-[var(--success)]' : 'text-[var(--error)]'}`}>{resultado >= 0 ? '+' : '−'} {fmtMoney(Math.abs(resultado), currency)}</span>
           </div>
         </div>

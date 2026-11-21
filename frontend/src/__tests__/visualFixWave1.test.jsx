@@ -16,23 +16,23 @@ vi.mock('../services/reservationsService', () => ({
 describe('ajustes visuais (fix wave 1)', () => {
   afterEach(cleanup);
 
-  it('Tabs: o contentor com scroll horizontal nao mostra barra vertical', () => {
+  it('Tabs: o contentor com scroll horizontal não mostra barra vertical', () => {
     render(<Tabs tabs={[{ id: 'a', label: 'A' }, { id: 'b', label: 'B' }]} value="a" onChange={() => {}} />);
     const lista = screen.getByRole('tablist');
     expect(lista.className).toContain('overflow-x-auto');
     expect(lista.className).toContain('overflow-y-hidden');
   });
 
-  it('ConectRow: badge e botao nao partem o texto e a linha pode quebrar', () => {
+  it('ConectRow: badge e botão não partem o texto e a linha pode quebrar', () => {
     render(<ConectRow unit={{ id: 'u1', conect_status: 'draft' }} onSubmitConect={() => {}} />);
-    const badge = screen.getByText('Nao submetido');
+    const badge = screen.getByText('Não submetido');
     const botao = screen.getByRole('button', { name: /Submeter ao Conect/ });
     expect(badge.className).toContain('whitespace-nowrap');
     expect(botao.className).toContain('whitespace-nowrap');
     expect(badge.parentElement.className).toContain('flex-wrap');
   });
 
-  it('PriceTiersEditor: a linha quebra no telemovel e o botao de remover e neutro com hover vermelho', () => {
+  it('PriceTiersEditor: a linha quebra no telemóvel e o botão de remover e neutro com hover vermelho', () => {
     render(<PriceTiersEditor tiers={[{ pax_min: '1', pax_max: '2', price: '70' }]} onChange={() => {}} />);
     const preco = screen.getByLabelText('Preço do escalão 1');
     expect(preco.closest('div.flex.flex-wrap')).not.toBeNull();
@@ -42,7 +42,7 @@ describe('ajustes visuais (fix wave 1)', () => {
     expect(remover.className).toContain('hover:!bg-[var(--error-light)]');
   });
 
-  it('RentacarTable: o botao Levantamento usa o token de sucesso, sem cor hex fixa', () => {
+  it('RentacarTable: o botão Levantamento usa o token de sucesso, sem cor hex fixa', () => {
     useUiStore.setState({ lang: 'pt' });
     const hoje = new Date().toLocaleDateString('en-CA');
     render(

@@ -83,7 +83,7 @@ describe('Despesas: lista e filtros', () => {
     fireEvent.change(mes, { target: { value: MES_ANT } });
     expect(linhas()[0]).toHaveTextContent(fmtDate(`${MES_ANT}-20`));
     fireEvent.change(categoria, { target: { value: 'Seguro viatura' } });
-    expect(screen.getByText('Sem despesas no periodo seleccionado.')).toBeInTheDocument();
+    expect(screen.getByText('Sem despesas no período seleccionado.')).toBeInTheDocument();
     expect(Array.from(categoria.options).map(o => o.textContent).slice(0, 3)).toEqual(['Todas as categorias', 'Salarios', 'Comissoes vendedores']);
   });
 
@@ -115,19 +115,19 @@ describe('Despesas: lista e filtros', () => {
 
   it('alerta_de_recorrentes_em_falta_este_mes', async () => {
     await montar();
-    expect(screen.getByText('Despesas recorrentes em falta este mes')).toBeInTheDocument();
-    expect(within(screen.getByText('Despesas recorrentes em falta este mes').closest('div')).getByText('Combustivel')).toBeInTheDocument();
+    expect(screen.getByText('Despesas recorrentes em falta este mês')).toBeInTheDocument();
+    expect(within(screen.getByText('Despesas recorrentes em falta este mês').closest('div')).getByText('Combustivel')).toBeInTheDocument();
     /* com uma despesa normal da mesma categoria no mes o alerta desaparece */
     cleanup();
     listExpenses.mockResolvedValue([...DESPESAS, { id: 'e5', category: 'Combustivel', amount: 40, date: `${MES}-12`, is_recurring: false }]);
     await montar();
-    expect(screen.queryByText('Despesas recorrentes em falta este mes')).toBeNull();
+    expect(screen.queryByText('Despesas recorrentes em falta este mês')).toBeNull();
   });
 
   it('sem_despesas_mostra_o_vazio', async () => {
     listExpenses.mockResolvedValue([]);
     await montar();
-    expect(screen.getByText('Sem despesas no periodo seleccionado.')).toBeInTheDocument();
+    expect(screen.getByText('Sem despesas no período seleccionado.')).toBeInTheDocument();
     expect(screen.queryByRole('table')).toBeNull();
   });
 
@@ -135,7 +135,7 @@ describe('Despesas: lista e filtros', () => {
     listExpenses.mockReturnValue(new Promise(() => {}));
     render(<DespesasTab currency="EUR" staff={STAFF} />);
     expect(screen.queryByRole('table')).toBeNull();
-    expect(screen.queryByText('Sem despesas no periodo seleccionado.')).toBeNull();
+    expect(screen.queryByText('Sem despesas no período seleccionado.')).toBeNull();
     expect(screen.getByText('Registar despesa')).toBeInTheDocument();
   });
 });
@@ -235,7 +235,7 @@ describe('Despesas com o design system', () => {
 
   it('os_filtros_tem_nome_acessivel', async () => {
     await montar();
-    expect(screen.getByLabelText('Mes')).toHaveAttribute('type', 'month');
+    expect(screen.getByLabelText('Mês')).toHaveAttribute('type', 'month');
     expect(screen.getByLabelText('Categoria').tagName).toBe('SELECT');
   });
 
@@ -263,12 +263,12 @@ describe('Despesas com o design system', () => {
 
   it('os_vazios_e_o_alerta_usam_tokens_e_EmptyState', async () => {
     await montar();
-    const alerta = screen.getByText('Despesas recorrentes em falta este mes').closest('div').parentElement;
+    const alerta = screen.getByText('Despesas recorrentes em falta este mês').closest('div').parentElement;
     expect(alerta.className).toContain('var(--warning-light)');
     cleanup();
     listExpenses.mockResolvedValue([]);
     await montar();
-    expect(screen.getByText('Sem despesas no periodo seleccionado.')).toHaveClass('font-display');
+    expect(screen.getByText('Sem despesas no período seleccionado.')).toHaveClass('font-display');
   });
 
   it('sem_hexadecimais_cores_nomeadas_ou_text_error_nem_com_o_modal_aberto', async () => {

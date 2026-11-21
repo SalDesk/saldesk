@@ -92,8 +92,8 @@ function PackageModal({ pkg, units, onSave, onClose }) {
           <Input label="Nome EN" aria-label="Nome EN" value={form.name_en} onChange={set('name_en')} placeholder="Ex: Kite + Diving Package" />
         </div>
 
-        <Textarea label="Descricao PT" aria-label="Descricao PT" value={form.description_pt} onChange={set('description_pt')} rows={2} />
-        <Textarea label="Descricao EN" aria-label="Descricao EN" value={form.description_en} onChange={set('description_en')} rows={2} />
+        <Textarea label="Descrição PT" aria-label="Descrição PT" value={form.description_pt} onChange={set('description_pt')} rows={2} />
+        <Textarea label="Descrição EN" aria-label="Descrição EN" value={form.description_en} onChange={set('description_en')} rows={2} />
 
         {/* Tour selection */}
         <div>
@@ -101,7 +101,7 @@ function PackageModal({ pkg, units, onSave, onClose }) {
             Tours incluidos ({form.tour_ids.length} seleccionado(s))
           </label>
           {units.length === 0 ? (
-            <p className="text-xs font-body text-n-400">Sem tours disponiveis. Cria tours primeiro em Unidades.</p>
+            <p className="text-xs font-body text-n-400">Sem tours disponíveis. Cria tours primeiro em Unidades.</p>
           ) : (
             <div className="flex flex-wrap gap-1.5 max-h-32 overflow-y-auto">
               {units.map(u => (
@@ -126,7 +126,7 @@ function PackageModal({ pkg, units, onSave, onClose }) {
 
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <Input label="Preco do pacote (€)" aria-label="Preco do pacote (€)" type="number" min="0" step="0.01"
+            <Input label="Preço do pacote (€)" aria-label="Preço do pacote (€)" type="number" min="0" step="0.01"
               value={form.price} onChange={set('price')} required placeholder="Ex: 85.00" />
             {savings > 0 && (
               <p className="text-xs font-body text-[var(--success)] mt-1">
@@ -139,8 +139,8 @@ function PackageModal({ pkg, units, onSave, onClose }) {
         </div>
 
         <div className="grid grid-cols-2 gap-3">
-          <Input label="Valido de" aria-label="Valido de" type="date" value={form.valid_from} onChange={set('valid_from')} />
-          <Input label="Valido ate" aria-label="Valido ate" type="date" value={form.valid_to} onChange={set('valid_to')} />
+          <Input label="Válido de" aria-label="Válido de" type="date" value={form.valid_from} onChange={set('valid_from')} />
+          <Input label="Válido até" aria-label="Válido até" type="date" value={form.valid_to} onChange={set('valid_to')} />
         </div>
 
         <Input label="Foto (URL)" aria-label="Foto (URL)" value={form.photo_url} onChange={set('photo_url')} placeholder="https://exemplo.com/foto.jpg" />
@@ -199,7 +199,7 @@ export default function Packages() {
   if (loading) {
     return (
       <div>
-        <PageHeader title="Pacotes Sazonais" subtitle="Combina tours em pacotes com preco especial" />
+        <PageHeader title="Pacotes Sazonais" subtitle="Combina tours em pacotes com preço especial" />
         <div className="flex justify-center py-16"><LoadingSpinner size={32} /></div>
       </div>
     );
@@ -209,7 +209,7 @@ export default function Packages() {
     <div>
       <PageHeader
         title="Pacotes Sazonais"
-        subtitle="Combina tours em pacotes com preco especial"
+        subtitle="Combina tours em pacotes com preço especial"
         actions={
           <Button icon={Plus} onClick={() => setModal({ _new: true })}>Novo pacote</Button>
         }
@@ -237,14 +237,14 @@ export default function Packages() {
       {/* Note about public visibility */}
       <div className="mb-4 px-4 py-2.5 bg-[var(--info-light)] border border-[var(--info)] rounded-sm">
         <p className="text-xs font-body text-[var(--info)]">
-          Os pacotes activos aparecem automaticamente na pagina publica de reservas quando o backend implementar o endpoint <span className="font-mono">/public/:slug/packages</span>.
+          Os pacotes activos aparecem automaticamente na página pública de reservas quando o backend implementar o endpoint <span className="font-mono">/public/:slug/packages</span>.
         </p>
       </div>
 
       {packages.length === 0 ? (
         <Card padding="p-0">
           <EmptyState icon={Package} title="Sem pacotes criados"
-            description="Cria o primeiro pacote combinando tours com preco especial."
+            description="Cria o primeiro pacote combinando tours com preço especial."
             action={<Button icon={Plus} onClick={() => setModal({ _new: true })}>Criar pacote</Button>} />
         </Card>
       ) : (
