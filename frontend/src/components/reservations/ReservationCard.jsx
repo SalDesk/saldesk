@@ -5,6 +5,7 @@ import { useT } from '../../i18n';
 import Badge from '../ui/Badge';
 import Button from '../ui/Button';
 import Modal from '../ui/Modal';
+import { rotuloEstadoReserva } from '../../utils/estadoReserva';
 
 const STATUS_NEXT = {
   pending:    'confirmed',
@@ -62,7 +63,7 @@ export default function ReservationCard({ reservation: r, onUpdate, onEdit, onVi
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
-              <Badge variant={r.status}>{t(`reservations.status.${r.status}`)}</Badge>
+              <Badge variant={r.status}>{rotuloEstadoReserva(r, t)}</Badge>
               <Badge variant={r.source === 'direct' || r.source === 'public' ? 'direct' : 'default'}>
                 {t(`reservations.source.${r.source}`)}
               </Badge>

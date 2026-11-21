@@ -351,6 +351,11 @@
     "skip": "Skip tour"
   },
   "reservations": {
+    "paymentNotCompleted": "Payment not completed",
+    "awaitingPayment": "Awaiting payment",
+    "paidAfterExpiry": "Paid without a place — refund",
+    "abandonedHint": "The customer did not complete the payment. You can contact them:",
+    "paidAfterExpiryHint": "The payment arrived after the place was taken. Refund or rebook with the customer:",
     "title": "Reservations",
     "new": "New Reservation",
     "status": {

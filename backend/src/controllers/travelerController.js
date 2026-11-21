@@ -4,15 +4,8 @@ const { getDiscoverCatalog } = require('../services/discoverCatalogService');
 const PDFDocument = require('pdfkit');
 const { desenharRecibo } = require('../helpers/receiptPdf');
 const { frontendBase } = require('../utils/urls');
-
-/* As reservas do viajante sao as que tem o email dele. O LIKE do PostgreSQL trata _ e % como curingas
-   ("j_silva@" apanhava "jxsilva@"): escapam-se, e a igualdade exacta (sem maiusculas nem espacos) confirma. */
-function padraoEmail(email) {
-  return email.replace(/[\\%_]/g, (c) => `\\${c}`);
-}
-function mesmoEmail(emailReserva, email) {
-  return typeof emailReserva === 'string' && emailReserva.trim().toLowerCase() === email;
-}
+// As reservas do viajante sao as que tem o email dele (curingas do LIKE escapados, igualdade exacta)
+const { padraoEmail, mesmoEmail } = require('../helpers/emailPadrao');
 
 /* Reservas, recibos e avaliacoes so com o email confirmado: sem isto, quem soubesse o email de
    um turista criava uma conta com ele e via as reservas dele (helpers/verificacaoEmailViajante.js) */
@@ -66,7 +59,9 @@ async function getBookings(req, res, next) {
       .order('check_in', { ascending: false });
 
     if (error) throw error;
-    const reservations = (linhas || []).filter(r => mesmoEmail(r.customer_email, email));
+    /* retencoes substituidas ou abandonadas nao sao reservas do viajante; 'paid_after_expiry' fica (foi cobrada) */
+    const reservations = (linhas || []).filter(r => mesmoEmail(r.customer_email, email)
+      && r.cancel_reason !== 'replaced' && r.cancel_reason !== 'payment_not_completed');
     if (!reservations.length) return res.json({ data: [] });
 
     const operatorIds = [...new Set(reservations.map(r => r.operator_id))];

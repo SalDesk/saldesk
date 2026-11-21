@@ -14,7 +14,7 @@ jest.mock('../config/supabase', () => {
     from: jest.fn(() => builder),
     then: (resolve, reject) => Promise.resolve({ data: [], error: null }).then(resolve, reject),
   };
-  ['select', 'eq', 'order', 'gte', 'lte', 'in', 'limit'].forEach((m) => {
+  ['select', 'eq', 'order', 'gte', 'lte', 'in', 'limit', 'or'].forEach((m) => {
     builder[m] = jest.fn(() => builder);
   });
   return { supabaseAdmin: builder };
@@ -48,6 +48,11 @@ describe('GET /reservations (listar)', () => {
     expect(supabaseAdmin.lte).toHaveBeenCalledWith('check_in', '2026-11-05');
     expect(supabaseAdmin.gte).toHaveBeenCalledWith('check_out', '2026-11-03');
     expect(res.json).toHaveBeenCalledWith({ data: [], message: 'Reservas listadas' });
+  });
+
+  it('esconde as reservas substituidas pelo proprio cliente', async () => {
+    await chamar({});
+    expect(supabaseAdmin.or).toHaveBeenCalledWith('cancel_reason.is.null,cancel_reason.neq.replaced');
   });
 
   it('payment_status aceita uma lista separada por virgulas e chega ao builder como in()', async () => {

@@ -6,6 +6,7 @@ import Modal from '../ui/Modal';
 import Badge from '../ui/Badge';
 import LoadingSpinner from '../shared/LoadingSpinner';
 import WhatsAppSend from '../messaging/WhatsAppSend';
+import { rotuloEstadoReserva } from '../../utils/estadoReserva';
 
 const SOURCE_LABEL = {
   direct:       'Directo',
@@ -92,7 +93,7 @@ export default function ReservationDetailModal({ reservationId, open, onClose })
           <div className="flex items-start justify-between gap-3 flex-wrap">
             <div>
               <div className="flex items-center gap-2 flex-wrap">
-                <Badge variant={reservation.status}>{t(`reservations.status.${reservation.status}`)}</Badge>
+                <Badge variant={reservation.status}>{rotuloEstadoReserva(reservation, t)}</Badge>
                 <Badge>{SOURCE_LABEL[reservation.source] || reservation.source}</Badge>
                 <span className="text-xs font-mono text-n-400">#{reservation.id?.slice(0, 8)}</span>
               </div>
@@ -141,6 +142,29 @@ export default function ReservationDetailModal({ reservationId, open, onClose })
             <Row icon={Phone} label="Telefone" value={reservation.customer_phone} />
             <Row icon={Globe} label="País" value={reservation.customer_country} />
           </div>
+
+          {(reservation.cancel_reason === 'payment_not_completed' || reservation.cancel_reason === 'paid_after_expiry') && (
+            <div className="rounded-md border border-sand-100 bg-sand-50 p-4 space-y-2">
+              <p className="text-sm font-body text-n-700">
+                {reservation.cancel_reason === 'paid_after_expiry' ? t('reservations.paidAfterExpiryHint') : t('reservations.abandonedHint')}
+              </p>
+              <div className="flex flex-wrap gap-4 text-sm font-body">
+                {reservation.customer_email && (
+                  <a href={`mailto:${reservation.customer_email}`} className="text-ocean-700 underline">{reservation.customer_email}</a>
+                )}
+                {reservation.customer_phone && (
+                  <a
+                    href={`https://wa.me/${String(reservation.customer_phone).replace(/\D/g, '')}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-ocean-700 underline"
+                  >
+                    WhatsApp
+                  </a>
+                )}
+              </div>
+            </div>
+          )}
 
           <WhatsAppSend
             reservationId={reservation.id}

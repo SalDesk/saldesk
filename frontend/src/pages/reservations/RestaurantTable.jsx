@@ -7,6 +7,7 @@ import Badge from '../../components/ui/Badge';
 import Table from '../../components/ui/Table';
 import useMediaQuery from '../../hooks/useMediaQuery';
 import ColumnCards from './ColumnCards';
+import { rotuloEstadoReserva } from '../../utils/estadoReserva';
 import { formatDate, parseRestaurantMeta } from './shared';
 
 const TURNO_LABELS = { almoco: 'Almoco', jantar: 'Jantar' };
@@ -112,7 +113,7 @@ export default function RestaurantTable({ reservations, units, onEdit, onDelete,
     {
       key: 'estado',
       label: 'Estado',
-      render: (r) => <Badge variant={r.status}>{t(`reservations.status.${r.status}`)}</Badge>,
+      render: (r) => <Badge variant={r.status}>{rotuloEstadoReserva(r, t)}</Badge>,
     },
     {
       key: 'acoes',

@@ -4,6 +4,15 @@ function addDays(dateStr, n) {
   return d.toISOString().split('T')[0];
 }
 
+// Exclui uma ou varias reservas (id ou lista de ids) de uma consulta de ocupacao.
+// Lista vazia ou null nao acrescenta filtro.
+function aplicarExclusao(query, excluirReservaId) {
+  if (Array.isArray(excluirReservaId)) {
+    return excluirReservaId.length ? query.not('id', 'in', `(${excluirReservaId.join(',')})`) : query;
+  }
+  return excluirReservaId ? query.neq('id', excluirReservaId) : query;
+}
+
 // Verifica se uma unidade está disponível num período. Tours/actividades sao
 // reservas de um so dia (check_in === check_out) -- um intervalo exclusivo
 // [d, d) fica vazio e nunca colide consigo mesmo, por isso a comparacao SQL
@@ -22,7 +31,7 @@ async function verificarDisponibilidade(supabase, unitId, checkIn, checkOut, exc
     .lt('check_in', effectiveCheckOut);
 
   if (excluirReservaId) {
-    query = query.neq('id', excluirReservaId);
+    query = aplicarExclusao(query, excluirReservaId);
   }
 
   const { data: candidatos } = await query;
@@ -174,7 +183,7 @@ async function verificarDisponibilidadeMesa(supabase, unitId, date, startTime, d
     .eq('check_in', date)
     .in('status', ['pending', 'confirmed', 'checked_in'])
     .not('start_time', 'is', null);
-  if (excluirReservaId) query = query.neq('id', excluirReservaId);
+  query = aplicarExclusao(query, excluirReservaId);
 
   const { data: existentes } = await query;
 
@@ -296,7 +305,7 @@ async function ocupacaoDoSlot(supabase, unitId, date, time, excluirReservaId = n
     .eq('unit_id', unitId)
     .eq('check_in', date)
     .in('status', ['pending', 'confirmed', 'checked_in']);
-  if (excluirReservaId) query = query.neq('id', excluirReservaId);
+  query = aplicarExclusao(query, excluirReservaId);
 
   const { data } = await query;
   const doSlot = (data || []).filter((r) => normalizarHora(r.start_time) === normalizarHora(time));

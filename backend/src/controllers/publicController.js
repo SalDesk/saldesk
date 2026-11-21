@@ -8,6 +8,8 @@ const { enviarEmail } = require('../helpers/emailHelper');
 const { detectarIdioma } = require('../helpers/languageHelper');
 const { confirmacaoClienteEmail, notificacaoOperadorEmail } = require('../helpers/emailTemplates');
 const { validarVoucher, registarUsoVoucher } = require('./vouchersController');
+const { avisarNovaReserva } = require('../helpers/avisosReserva');
+const { eMetodoCartao, fimDaRetencao, reservasRecentesDoCliente, classificarRecentes } = require('../helpers/lugarRetido');
 const { encontrarAfiliadoActivo } = require('./affiliatesController');
 const { dispararSyncImediato } = require('../helpers/otaSyncHelper');
 const { getDiscoverCatalog } = require('../services/discoverCatalogService');
@@ -340,6 +342,42 @@ async function criarReserva(req, res, next) {
     let activitySlotTime = null;
     let isGroupBooking = false;
     let precoAct = null;
+
+    /* Duplicados (duplo clique, voltar atras, rede lenta): a mesma reserva ja feita nos ultimos
+       30 minutos devolve-se em vez de criar outra. Os lugares retidos do mesmo cliente ainda por
+       pagar nao contam contra a nova reserva (excluirRetidos) e sao substituidos por ela.
+       A mesma reserva sem cartao (repetidaSemCartao) so se devolve com o mesmo total: ate o preco
+       e o voucher estarem calculados tambem nao conta nas vagas; se o total for outro, e outra
+       reserva e as vagas voltam a ser verificadas com ela (verificarLugar, de novo). */
+    let recentes = { igualSemCartao: undefined, igualCartao: undefined, retidosProprios: [] };
+    let excluirRetidos = [];
+    let repetidaSemCartao = null;
+    async function procurarDuplicados(startTime) {
+      const linhas = await reservasRecentesDoCliente(supabaseAdmin, {
+        operatorId: operator.id, unitId: unit_id, email: customer_email, checkIn: check_in,
+      });
+      recentes = classificarRecentes(linhas, {
+        checkOut: effectiveCheckOut, startTime, guests: partyEfectivo, isGroupBooking,
+        metodo: eMetodoCartao(payment_method) ? payment_method : null,
+        customerName: customer_name,
+        driverIncluded: isRentacar && !!driver_included,
+        temPedido: isRestaurant && Array.isArray(items) && items.length > 0,
+      });
+      excluirRetidos = recentes.retidosProprios.map((r) => r.id);
+      repetidaSemCartao = recentes.igualSemCartao || null;
+    }
+    // Reservas que nao contam nas vagas desta: os lugares retidos do cliente e a possivel repetida.
+    const naoContam = () => (repetidaSemCartao ? [...excluirRetidos, repetidaSemCartao.id] : excluirRetidos);
+    /* Verificacao de vagas do tipo de unidade (mesa, horario ou datas): devolve null se ha
+       lugar ou o corpo do 409. Definida em cada ramo abaixo e chamada outra vez se a
+       reserva igual afinal tiver outro total. */
+    let verificarLugar = async () => null;
+    const responderRepetida = (reserva) => res.status(200).json({
+      data: reserva,
+      pre_order: null,
+      message: reserva.status === 'confirmed' ? 'Reserva confirmada.' : 'Reserva submetida com sucesso. Aguarde confirmação.',
+    });
+
     if (isRestaurant) {
       const { data: mesaRow } = await supabaseAdmin
         .from('units')
@@ -360,11 +398,14 @@ async function criarReserva(req, res, next) {
         return res.status(400).json({ error: 'Número de pessoas não cabe nesta mesa', code: 'PARTY_SIZE_MISMATCH' });
       }
 
+      await procurarDuplicados(reservation_time);
+
       // Corrida: a lista de mesas foi buscada momentos antes -- confirmar de novo.
-      const disponivel = await verificarDisponibilidadeMesa(supabaseAdmin, unit_id, check_in, reservation_time, DEFAULT_SEATING_MINUTES);
-      if (!disponivel) {
-        return res.status(409).json({ error: 'Mesa indisponível nesse horário', code: 'UNAVAILABLE' });
-      }
+      verificarLugar = async () => (
+        await verificarDisponibilidadeMesa(supabaseAdmin, unit_id, check_in, reservation_time, DEFAULT_SEATING_MINUTES, naoContam())
+          ? null : { error: 'Mesa indisponível nesse horário', code: 'UNAVAILABLE' });
+      const semMesa = await verificarLugar();
+      if (semMesa) return res.status(409).json(semMesa);
       unit = mesaRow;
 
       // Valida o pre-pedido opcional ANTES de inserir a reserva -- falha cedo,
@@ -427,16 +468,18 @@ async function criarReserva(req, res, next) {
         if (slotJaComecou(check_in, slotEscolhido.time)) {
           return res.status(409).json({ error: 'Este horário já começou', code: 'UNAVAILABLE' });
         }
-        const cabe = await verificarDisponibilidadeSlot(supabaseAdmin, unit_id, check_in, slotEscolhido.time, Number(partyEfectivo), Number(slotEscolhido.capacity) || 0, null, isGroupBooking);
-        if (!cabe) {
-          return res.status(409).json({ error: 'Sem vagas neste horário', code: 'UNAVAILABLE' });
-        }
+        await procurarDuplicados(slotEscolhido.time);
+        verificarLugar = async () => (
+          await verificarDisponibilidadeSlot(supabaseAdmin, unit_id, check_in, slotEscolhido.time, Number(partyEfectivo), Number(slotEscolhido.capacity) || 0, naoContam(), isGroupBooking)
+            ? null : { error: 'Sem vagas neste horário', code: 'UNAVAILABLE' });
       } else {
-        const disponivel = await verificarDisponibilidade(supabaseAdmin, unit_id, check_in, effectiveCheckOut);
-        if (!disponivel) {
-          return res.status(409).json({ error: 'Unidade indisponível nas datas seleccionadas', code: 'UNAVAILABLE' });
-        }
+        await procurarDuplicados(null);
+        verificarLugar = async () => (
+          await verificarDisponibilidade(supabaseAdmin, unit_id, check_in, effectiveCheckOut, naoContam())
+            ? null : { error: 'Unidade indisponível nas datas seleccionadas', code: 'UNAVAILABLE' });
       }
+      const semLugar = await verificarLugar();
+      if (semLugar) return res.status(409).json(semLugar);
     }
 
     // calcularPreco e por noite/dia (hotel, rent-a-car) — reservas de um so dia
@@ -490,6 +533,31 @@ async function criarReserva(req, res, next) {
       }
     }
 
+    /* A mesma reserva sem cartao e com o mesmo total: devolve-se, sem inserir nem avisar.
+       Com outro total (motorista, voucher...) e outra reserva: a primeira volta a contar nas vagas. */
+    if (repetidaSemCartao) {
+      if (Number(repetidaSemCartao.total_price) === finalTotal) return responderRepetida(repetidaSemCartao);
+      repetidaSemCartao = null;
+      const semLugar = await verificarLugar();
+      if (semLugar) return res.status(409).json(semLugar);
+    }
+
+    /* A mesma reserva com cartao, ainda retida e com o mesmo valor: renova o prazo e devolve-a,
+       sem inserir, notificar nem enviar emails. Se entretanto deixou de estar por pagar, segue
+       e cria uma nova. */
+    if (recentes.igualCartao && Number(recentes.igualCartao.total_price) === finalTotal) {
+      const { data: renovada, error: errRenovar } = await supabaseAdmin
+        .from('reservations')
+        .update({ hold_expires_at: fimDaRetencao(), updated_at: new Date().toISOString() })
+        .eq('id', recentes.igualCartao.id)
+        .eq('status', 'pending')
+        .eq('payment_status', 'pending')
+        .select()
+        .maybeSingle();
+      if (errRenovar) throw errRenovar;
+      if (renovada) return responderRepetida(renovada);
+    }
+
     let affiliateId = null;
     /* "Indicado por" e texto livre escrito pelo cliente (ex: "o Carlos da
        praia"), por isso nunca pode falhar a reserva: se coincidir com o
@@ -529,6 +597,21 @@ async function criarReserva(req, res, next) {
     if (referredByNote) notesLines.push(`Indicado por: ${referredByNote}`);
     const finalNotes = notesLines.join(' | ') || null;
 
+    /* Cartao (PayPal/SISP) com valor a pagar: o lugar fica retido e os avisos
+       (e o uso do voucher) so acontecem quando o pagamento for confirmado. */
+    const adiar = eMetodoCartao(payment_method) && finalTotal > 0;
+
+    // Os lugares retidos antigos do mesmo cliente dao lugar a esta reserva (ja nao contaram nas vagas)
+    if (recentes.retidosProprios.length) {
+      const { error: errSubstituir } = await supabaseAdmin
+        .from('reservations')
+        .update({ status: 'cancelled', cancel_reason: 'replaced', updated_at: new Date().toISOString() })
+        .in('id', excluirRetidos)
+        .eq('status', 'pending')
+        .eq('payment_status', 'pending');
+      if (errSubstituir) throw errSubstituir;
+    }
+
     const { data, error } = await supabaseAdmin
       .from('reservations')
       .insert({
@@ -567,6 +650,8 @@ async function criarReserva(req, res, next) {
         whatsapp_opt_in: whatsapp_opt_in === true,
         whatsapp_opt_in_source: whatsapp_opt_in === true ? 'form' : null,
         whatsapp_opt_in_at: whatsapp_opt_in === true ? new Date().toISOString() : null,
+        voucher_id: voucherId,
+        ...(adiar ? { payment_method, hold_expires_at: fimDaRetencao() } : {}),
       })
       .select()
       .single();
@@ -582,7 +667,7 @@ async function criarReserva(req, res, next) {
       throw error;
     }
 
-    if (voucherId) {
+    if (voucherId && !adiar) {
       registarUsoVoucher(voucherId).catch(err => console.error('[Voucher] Erro ao registar uso:', err.message));
     }
 
@@ -633,68 +718,10 @@ async function criarReserva(req, res, next) {
       ).catch(() => {});
     }
 
-    supabaseAdmin.from('notifications').insert({
-      operator_id:       operator.id,
-      notification_type: 'new_booking',
-      content:            (data.driver_included
-        ? `Nova reserva EXECUTIVO com motorista de ${customer_name} — ${unit.name} (atribuir condutor)`
-        : `Nova reserva de ${customer_name} — ${unit.name}`) + (jaConfirmada ? ' (já confirmada)' : ''),
-      link:               `/reservas/${data.id}`,
-    }).then(({ error: notifErr }) => {
-      if (notifErr) console.error('[Notificacao] Erro ao criar notificacao:', notifErr.message);
-    });
-
     dispararSyncImediato(operator.id);
 
-    const idioma = detectarIdioma(customer_country);
-    const currency = operator.currency || 'EUR';
-
-    /* O cliente agora escolhe a mesa exacta explicitamente (deixou de ser um
-       detalhe interno escondido) -- o email de confirmacao mostra o nome real
-       da mesa/unidade, tal como ja acontecia para os restantes tipos. */
-    const clienteEmail = confirmacaoClienteEmail({
-      idioma,
-      customerName: customer_name,
-      tourName: unit.name,
-      checkIn: check_in,
-      checkOut: effectiveCheckOut,
-      guests: partyEfectivo,
-      total: finalTotal,
-      currency,
-      operator,
-      status: data.status,
-    });
-    enviarEmail({
-      to: customer_email,
-      subject: clienteEmail.subject,
-      html: clienteEmail.html,
-      text: clienteEmail.text
-    }).catch((err) => console.error('[Email] Erro ao enviar recepção:', err.message));
-
-    if (operator.email) {
-      const operadorEmail = notificacaoOperadorEmail({
-        operatorName: operator.name,
-        tourName: unit.name,
-        checkIn: check_in,
-        checkOut: effectiveCheckOut,
-        guests: partyEfectivo,
-        total,
-        currency,
-        customer: {
-          name: customer_name,
-          email: customer_email,
-          phone: customer_phone,
-          country: customer_country
-        },
-        notes: finalNotes,
-        confirmada: jaConfirmada,
-      });
-      enviarEmail({
-        to: operator.email,
-        subject: operadorEmail.subject,
-        html: operadorEmail.html,
-        text: operadorEmail.text
-      }).catch((err) => console.error('[Email] Erro ao enviar notificação ao operador:', err.message));
+    if (!adiar) {
+      await avisarNovaReserva({ reserva: data, operator, unitName: unit.name, totalOperador: total });
     }
 
     return res.status(201).json({

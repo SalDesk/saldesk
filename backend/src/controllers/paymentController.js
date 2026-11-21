@@ -8,6 +8,77 @@ const { frontendBase } = require('../utils/urls');
 const { criarNotificacaoViajante } = require('../helpers/travelerNotificationHelper');
 const { gerarReciboBuffer } = require('../helpers/receiptPdf');
 const { enviarEmail } = require('../helpers/emailHelper');
+const { prepararPagamento, registarPagoSemLugar, registarPagamentoDuplicado } = require('../helpers/lugarRetido');
+const { concluirReservaPaga } = require('../helpers/avisosReserva');
+
+/* Reserva paga com tudo o que o recibo e os avisos adiados precisam. */
+const COLUNAS_RESERVA_PAGA = '*, units(name), operators(id, name, slug, address, email, phone, currency, language, logo_url, push_subscription)';
+
+/* O lugar desta reserva ja nao existe: nada foi criado nem cobrado. */
+function responderLugarPerdido(res) {
+  return res.status(409).json({
+    error: 'Este lugar já não está disponível. Não foi feita nenhuma cobrança.',
+    error_en: 'This place is no longer available. You have not been charged.',
+    code: 'HOLD_EXPIRED',
+  });
+}
+
+/* A reserva ja tem o pagamento registado: nada foi criado nem cobrado outra vez. */
+function responderJaPaga(res) {
+  return res.status(409).json({
+    error: 'Esta reserva já está paga. Não foi feita nenhuma nova cobrança.',
+    error_en: 'This booking is already paid. You have not been charged again.',
+    code: 'ALREADY_PAID',
+  });
+}
+
+/* Entrou uma segunda captura para uma reserva ja paga: o operador foi avisado para reembolsar. */
+function responderPagamentoDuplicado(res) {
+  return res.status(409).json({
+    error: 'Este pagamento foi recebido em duplicado. O operador vai reembolsá-lo.',
+    error_en: 'This payment was received twice. The operator will refund it.',
+    code: 'DUPLICATE_PAYMENT',
+  });
+}
+
+/* Pago, mas o lugar ja era de outra reserva: o cliente nao pode ver "confirmado". */
+function responderPagoSemLugar(res) {
+  return res.status(409).json({
+    error: 'O pagamento foi recebido, mas o lugar já tinha sido ocupado. O operador vai contactá-lo para o reembolso ou uma nova data.',
+    error_en: 'Your payment was received, but the place had already been taken. The operator will contact you about a refund or a new date.',
+    code: 'PAID_AFTER_EXPIRY',
+  });
+}
+
+async function lerReservaPaga(reservationId) {
+  const { data } = await supabaseAdmin
+    .from('reservations').select(COLUNAS_RESERVA_PAGA).eq('id', reservationId).maybeSingle();
+  return data || null;
+}
+
+/* Marca o pagamento total com updates condicionais (so reservas vivas e por pagar):
+   pendente/confirmada passa a 'confirmed'; com check-in fica paga e mantem 'checked_in'.
+   Devolve { data, error } do update que apanhou a linha (data null se nenhum apanhou). */
+async function marcarPagamentoTotal(reservationId, campos) {
+  const base = { payment_status: 'paid', ...campos, updated_at: new Date().toISOString() };
+  const viva = await supabaseAdmin
+    .from('reservations')
+    .update({ ...base, status: 'confirmed' })
+    .eq('id', reservationId)
+    .in('status', ['pending', 'confirmed'])
+    .neq('payment_status', 'paid')
+    .select(COLUNAS_RESERVA_PAGA)
+    .maybeSingle();
+  if (viva.error || viva.data) return viva;
+  return supabaseAdmin
+    .from('reservations')
+    .update(base)
+    .eq('id', reservationId)
+    .eq('status', 'checked_in')
+    .neq('payment_status', 'paid')
+    .select(COLUNAS_RESERVA_PAGA)
+    .maybeSingle();
+}
 
 /* Envia o recibo real ao cliente no momento exacto da confirmacao do
    pagamento -- ate agora nenhum email era enviado nesse instante (so um
@@ -113,7 +184,11 @@ async function publicCreatePaypalIntent(req, res, next) {
     if (!reservation_id) {
       return res.status(400).json({ error: 'reservation_id obrigatório', code: 'MISSING_FIELDS' });
     }
-    const reserva = await lerReservaParaPagamento(reservation_id);
+    /* Antes de criar a ordem: o lugar ainda e desta reserva (e renova o prazo). */
+    const preparado = await prepararPagamento(supabaseAdmin, reservation_id);
+    if (preparado.code === 'ALREADY_PAID') return responderJaPaga(res);
+    if (!preparado.ok && preparado.code === 'HOLD_EXPIRED') return responderLugarPerdido(res);
+    const reserva = preparado.ok ? await lerReservaParaPagamento(reservation_id) : null;
     if (!reserva) return res.status(404).json({ error: 'Reserva não encontrada', code: 'NOT_FOUND' });
     const eur = valorEmEur(reserva.total_price, reserva.operators?.currency);
     if (!(eur > 0)) return res.status(400).json({ error: 'Esta reserva não tem valor a pagar', code: 'NOTHING_TO_PAY' });
@@ -131,52 +206,113 @@ async function publicCreatePaypalIntent(req, res, next) {
       console.error(`[PayPal] Falha ao criar order — operator_id=${reserva.operator_id} reservation_id=${reservation_id}:`, paypalErr.message);
       throw paypalErr;
     }
+    /* A ordem fica guardada ja aqui: se a captura passar e o servidor falhar a seguir,
+       o webhook encontra a reserva por esta ordem e regista o pagamento. */
+    const { error: errOrdem } = await supabaseAdmin
+      .from('reservations').update({ paypal_order_id: order.id }).eq('id', reservation_id);
+    if (errOrdem) throw errOrdem;
     return res.json({ data: { order_id: order.id, status: order.status }, message: 'Order PayPal criada' });
   } catch (err) { next(err); }
 }
 
+/* Captura a ordem e regista-a na reserva. Devolve { data, duplicado } (ver registarCapturaPaypal). */
 async function confirmarCapturaPaypal(operatorId, orderId, reservationId) {
   const { clientId, clientSecret } = await obterCredenciaisPaypal(operatorId);
   const capture = await captureOrder(clientId, clientSecret, orderId);
   const captureUnit = capture.purchase_units?.[0]?.payments?.captures?.[0];
-  const amount = parseFloat(captureUnit?.amount?.value || 0);
+  return registarCapturaPaypal(reservationId, {
+    orderId,
+    captureId: captureUnit?.id || null,
+    amount: parseFloat(captureUnit?.amount?.value || 0),
+  });
+}
+
+/* O dinheiro ja entrou (confirmacao do browser ou webhook): regista a captura na reserva.
+   - a mesma captura ja registada (pedido ou evento repetido): silencio, nada se escreve;
+   - reserva expirada por falta de pagamento: volta a pendente se o lugar ainda estiver livre,
+     senao fica paga sem lugar e o operador e avisado para reembolsar ou remarcar;
+   - ja paga com outra captura: a reserva nao muda e o operador e avisado em duplicado;
+   - por pagar: o total confirma, abaixo do total fica 'partial'; os avisos adiados saem uma vez.
+   Devolve { data, duplicado }: duplicado quando esta captura chegou a uma reserva que ja tinha
+   outro pagamento registado. */
+async function registarCapturaPaypal(reservationId, { orderId, captureId, amount }) {
+  const reservaAntes = await lerReservaPaga(reservationId);
+  if (!reservaAntes) return { data: null, duplicado: false };
+  if (captureId && reservaAntes.paypal_capture_id === captureId) return { data: reservaAntes, duplicado: false };
+
+  /* Ja havia um pagamento registado. A mesma captura fica em silencio; outra captura e
+     dinheiro a mais: avisar o operador. */
+  const jaRegistado = async () => {
+    const actual = await lerReservaPaga(reservationId);
+    if (actual && captureId && actual.paypal_capture_id !== captureId) {
+      await registarPagamentoDuplicado(supabaseAdmin, reservationId, { metodo: 'paypal', valor: amount, referencia: captureId });
+      return { data: actual, duplicado: true };
+    }
+    return { data: actual, duplicado: false };
+  };
+
+  /* O dinheiro ja entrou mas o lugar nao existe: fica registado como pago sem lugar. */
+  const pagoSemLugar = async () => {
+    console.error(`[PayPal] Pago sem lugar — reservation_id=${reservationId} order_id=${orderId}`);
+    await registarPagoSemLugar(supabaseAdmin, reservationId, {
+      metodo: 'paypal', valor: amount,
+      campos: { paypal_order_id: orderId, paypal_capture_id: captureId },
+    });
+    return { data: await lerReservaPaga(reservationId), duplicado: false };
+  };
+
+  /* O lugar ainda e desta reserva? (repoe uma reserva expirada se o lugar estiver livre) */
+  const preparado = await prepararPagamento(supabaseAdmin, reservationId);
+  if (preparado.code === 'ALREADY_PAID') return jaRegistado();
+  if (preparado.code === 'HOLD_EXPIRED') return pagoSemLugar();
 
   /* So confirma quando o valor capturado cobre o total da reserva (em euros, ao centimo).
      Abaixo disso fica 'partial' e por confirmar, para o operador ver e tratar. */
-  const reservaAntes = await lerReservaParaPagamento(reservationId);
-  const esperado = valorEmEur(reservaAntes?.total_price, reservaAntes?.operators?.currency);
+  const esperado = valorEmEur(reservaAntes.total_price, reservaAntes.operators?.currency);
   if (amount + 0.01 < esperado) {
     console.error(`[PayPal] Valor capturado abaixo do total — reservation_id=${reservationId} capturado=${amount} esperado=${esperado}`);
+    /* So a primeira vez (ainda 'pending'): os avisos adiados saem uma unica vez. */
     const { data: parcial, error: errParcial } = await supabaseAdmin
       .from('reservations')
       .update({
         payment_status: 'partial', payment_method: 'paypal',
-        paypal_order_id: orderId, paypal_capture_id: captureUnit?.id || null, amount_paid: amount,
+        paypal_order_id: orderId, paypal_capture_id: captureId, amount_paid: amount,
         updated_at: new Date().toISOString(),
       })
       .eq('id', reservationId)
-      .select('*')
-      .single();
+      .eq('payment_status', 'pending')
+      .select(COLUNAS_RESERVA_PAGA)
+      .maybeSingle();
     if (errParcial) throw errParcial;
-    return parcial;
+    if (!parcial) return jaRegistado();
+    if (parcial.hold_expires_at) await concluirReservaPaga(parcial, { incompleto: true });
+    return { data: parcial, duplicado: false };
   }
 
-  const { data, error } = await supabaseAdmin
-    .from('reservations')
-    .update({
-      payment_status: 'paid', payment_method: 'paypal',
-      /* refundCapture() exige o ID da CAPTURA (captureUnit.id), nao o da
-         ordem -- sao valores diferentes na API da PayPal. Guardar os dois:
-         paypal_order_id so para referencia/histórico, paypal_capture_id e
-         o que o reembolso realmente usa. */
-      paypal_order_id: orderId, paypal_capture_id: captureUnit?.id || null, amount_paid: amount,
-      status: 'confirmed', updated_at: new Date().toISOString(),
-    })
-    .eq('id', reservationId)
-    .select('*, units(name), operators(name, slug, address, email, phone, currency, logo_url, push_subscription)')
-    .single();
+  /* Condicional: so marca paga uma reserva ainda viva e por pagar. Se o lugar se perdeu
+     entretanto (23P01 da restricao de exclusao, ou a linha ja nao esta viva),
+     o dinheiro ja entrou -- fica registado como pago sem lugar para o operador reembolsar. */
+  const { data, error } = await marcarPagamentoTotal(reservationId, {
+    payment_method: 'paypal',
+    /* refundCapture() exige o ID da CAPTURA (captureUnit.id), nao o da
+       ordem -- sao valores diferentes na API da PayPal. Guardar os dois:
+       paypal_order_id so para referencia/histórico, paypal_capture_id e
+       o que o reembolso realmente usa. */
+    paypal_order_id: orderId, paypal_capture_id: captureId, amount_paid: amount,
+  });
 
-  if (error) throw error;
+  if (error && error.code !== '23P01') throw error;
+  if (error || !data) {
+    if (!error) {
+      /* Ja estava paga: confirmacao repetida (silencio) ou segunda captura (duplicado). */
+      const { data: actual } = await supabaseAdmin
+        .from('reservations').select('payment_status').eq('id', reservationId).maybeSingle();
+      if (actual?.payment_status === 'paid') return jaRegistado();
+    }
+    return pagoSemLugar();
+  }
+
+  if (data.hold_expires_at) await concluirReservaPaga(data);
 
   emitToOperator(data.operator_id, 'payment:confirmed', { reservation_id: reservationId, amount, method: 'paypal' });
   if (data.operators?.push_subscription) {
@@ -189,7 +325,7 @@ async function confirmarCapturaPaypal(operatorId, orderId, reservationId) {
   ).catch(() => {});
   enviarReciboPagamento(data).catch(() => {});
 
-  return data;
+  return { data, duplicado: false };
 }
 
 async function confirmPayPalPayment(req, res, next) {
@@ -198,7 +334,7 @@ async function confirmPayPalPayment(req, res, next) {
     if (!order_id || !reservation_id) {
       return res.status(400).json({ error: 'order_id e reservation_id obrigatórios', code: 'MISSING_FIELDS' });
     }
-    const data = await confirmarCapturaPaypal(req.operator.id, order_id, reservation_id);
+    const { data } = await confirmarCapturaPaypal(req.operator.id, order_id, reservation_id);
     return res.json({ data, message: 'Pagamento PayPal confirmado' });
   } catch (err) { next(err); }
 }
@@ -210,17 +346,25 @@ async function publicConfirmPaypalPayment(req, res, next) {
     if (!order_id || !reservation_id) {
       return res.status(400).json({ error: 'order_id e reservation_id obrigatórios', code: 'MISSING_FIELDS' });
     }
+    /* Antes de capturar: uma reserva ja paga ou um lugar perdido e recusado sem cobrar nada. */
+    const preparado = await prepararPagamento(supabaseAdmin, reservation_id);
+    if (preparado.code === 'ALREADY_PAID') return responderJaPaga(res);
+    if (!preparado.ok && preparado.code === 'HOLD_EXPIRED') return responderLugarPerdido(res);
+    if (!preparado.ok) return res.status(404).json({ error: 'Reserva não encontrada', code: 'NOT_FOUND' });
     const { data: reserva } = await supabaseAdmin
       .from('reservations').select('id, operator_id').eq('id', reservation_id).single();
     if (!reserva) return res.status(404).json({ error: 'Reserva não encontrada', code: 'NOT_FOUND' });
 
     let data;
+    let duplicado;
     try {
-      data = await confirmarCapturaPaypal(reserva.operator_id, order_id, reservation_id);
+      ({ data, duplicado } = await confirmarCapturaPaypal(reserva.operator_id, order_id, reservation_id));
     } catch (paypalErr) {
       console.error(`[PayPal] Falha ao confirmar captura — operator_id=${reserva.operator_id} reservation_id=${reservation_id} order_id=${order_id}:`, paypalErr.message);
       throw paypalErr;
     }
+    if (duplicado) return responderPagamentoDuplicado(res);
+    if (data?.cancel_reason === 'paid_after_expiry') return responderPagoSemLugar(res);
     return res.json({ data, message: 'Pagamento PayPal confirmado' });
   } catch (err) { next(err); }
 }
@@ -237,7 +381,7 @@ async function paypalWebhook(req, res, next) {
        que reserva/operador o evento pertence antes de conseguir verificar. */
     const { data: reserva } = await supabaseAdmin
       .from('reservations')
-      .select('id, operator_id, customer_email, operators(name)')
+      .select('id, operator_id')
       .eq('paypal_order_id', orderId)
       .maybeSingle();
     if (!reserva) return;
@@ -266,15 +410,14 @@ async function paypalWebhook(req, res, next) {
     }
 
     if (event.event_type === 'PAYMENT.CAPTURE.COMPLETED') {
-      await supabaseAdmin
-        .from('reservations')
-        .update({ payment_status: 'paid', status: 'confirmed', updated_at: new Date().toISOString() })
-        .eq('id', reserva.id);
-      criarNotificacaoViajante(
-        reserva.customer_email, 'booking_confirmed',
-        `A sua reserva com ${reserva.operators?.name || 'o operador'} foi confirmada.`,
-        `${frontendBase()}/viajante`,
-      ).catch(() => {});
+      /* O resource e a propria captura. Mesmo tratamento da confirmacao do browser: se esta
+         ja registou a captura nada se repete; se o servidor falhou depois de capturar,
+         e aqui que o pagamento fica registado. */
+      const captureId = event.resource?.id || null;
+      if (!captureId) return;
+      await registarCapturaPaypal(reserva.id, {
+        orderId, captureId, amount: parseFloat(event.resource?.amount?.value || 0),
+      });
     }
   } catch (err) { console.error('[PayPal Webhook]', err.message); }
 }
@@ -341,7 +484,11 @@ async function publicInitSisp(req, res, next) {
     if (!reservation_id) {
       return res.status(400).json({ error: 'reservation_id obrigatório', code: 'MISSING_FIELDS' });
     }
-    const reserva = await lerReservaParaPagamento(reservation_id);
+    /* Antes de preparar o pedido ao banco: o lugar ainda e desta reserva (e renova o prazo). */
+    const preparado = await prepararPagamento(supabaseAdmin, reservation_id);
+    if (preparado.code === 'ALREADY_PAID') return responderJaPaga(res);
+    if (!preparado.ok && preparado.code === 'HOLD_EXPIRED') return responderLugarPerdido(res);
+    const reserva = preparado.ok ? await lerReservaParaPagamento(reservation_id) : null;
     if (!reserva) return res.status(404).json({ error: 'Reserva não encontrada', code: 'NOT_FOUND' });
     const cve = valorEmCve(reserva.total_price, reserva.operators?.currency);
     if (!(cve > 0)) return res.status(400).json({ error: 'Esta reserva não tem valor a pagar', code: 'NOTHING_TO_PAY' });
@@ -357,7 +504,7 @@ async function sispCallback(req, res, next) {
   try {
     const { data: reserva } = await supabaseAdmin
       .from('reservations')
-      .select('id, operator_id, customer_email, total_price, operators(name, slug, address, email, phone, currency, logo_url)')
+      .select('id, operator_id, customer_email, total_price, status, cancel_reason, hold_expires_at, payment_status, sisp_transaction_id, operators(name, slug, address, email, phone, currency, logo_url)')
       .eq('id', reservationId)
       .single();
 
@@ -372,39 +519,101 @@ async function sispCallback(req, res, next) {
     const posAutCode = operatorRow?.sisp_api_key_enc ? decrypt(operatorRow.sisp_api_key_enc) : null;
     const resultado = posAutCode ? validarResposta(posAutCode, req.body) : { status: 'error' };
 
+    /* A mesma transaccao ja registada (o browser reenviou a resposta, ou a SISP voltou a chamar):
+       nada se escreve nem se avisa -- uma reserva entretanto reembolsada continua reembolsada.
+       So se devolve o cliente a pagina que corresponde ao estado actual. */
+    if (resultado.status === 'paid' && resultado.transactionID
+      && resultado.transactionID === reserva.sisp_transaction_id) {
+      if (reserva.cancel_reason === 'paid_after_expiry') {
+        return res.redirect(`${frontBase}/book/cancel?res=${reservationId}&erro=lugar`);
+      }
+      if (reserva.payment_status === 'paid' && reserva.status !== 'cancelled') {
+        return res.redirect(`${frontBase}/book/success?res=${reservationId}`);
+      }
+      if (reserva.payment_status === 'partial') {
+        return res.redirect(`${frontBase}/book/cancel?res=${reservationId}&erro=valor`);
+      }
+      return res.redirect(`${frontBase}/book/cancel?res=${reservationId}`);
+    }
+
+    /* Pagamento que chega a uma reserva com outro pagamento ja registado: a mesma transaccao
+       (a SISP voltou a chamar) fica em silencio; outra transaccao e dinheiro a mais e o
+       operador e avisado para reembolsar. A reserva nao muda. */
+    const avisarSeDuplicado = async () => {
+      const actual = await lerReservaPaga(reservationId);
+      if (actual && resultado.transactionID && actual.sisp_transaction_id !== resultado.transactionID) {
+        await registarPagamentoDuplicado(supabaseAdmin, reservationId, {
+          metodo: 'sisp', valor: resultado.amount, referencia: resultado.transactionID,
+        });
+      }
+      return actual;
+    };
+
     /* So confirma quando o valor pago cobre o total da reserva (em escudos). Abaixo disso
        fica 'partial' e por confirmar, para o operador ver e tratar. */
     const esperadoCve = valorEmCve(reserva.total_price, reserva.operators?.currency);
     if (resultado.status === 'paid' && Number(resultado.amount) < esperadoCve) {
       console.error(`[SISP Callback] Valor pago abaixo do total — reservation_id=${reservationId} pago=${resultado.amount} esperado=${esperadoCve}`);
-      await supabaseAdmin
+      /* So a primeira vez (ainda 'pending'): os avisos adiados saem uma unica vez. */
+      const { data: parcial } = await supabaseAdmin
         .from('reservations')
         .update({
           payment_status: 'partial', payment_method: 'sisp',
           sisp_transaction_id: resultado.transactionID, amount_paid: Number(resultado.amount) || null,
           updated_at: new Date().toISOString(),
         })
-        .eq('id', reservationId);
+        .eq('id', reservationId)
+        .eq('payment_status', 'pending')
+        .select(COLUNAS_RESERVA_PAGA)
+        .maybeSingle();
+      if (!parcial) await avisarSeDuplicado();
+      else if (parcial.hold_expires_at) await concluirReservaPaga(parcial, { incompleto: true });
       return res.redirect(`${frontBase}/book/cancel?res=${reservationId}&erro=valor`);
     }
 
     if (resultado.status === 'paid') {
-      const { data: reservaPaga } = await supabaseAdmin
-        .from('reservations')
-        .update({
-          payment_status: 'paid', payment_method: 'sisp',
-          sisp_transaction_id: resultado.transactionID, amount_paid: resultado.amount || null,
-          status: 'confirmed', updated_at: new Date().toISOString(),
-        })
-        .eq('id', reservationId)
-        .select('*, units(name), operators(name, slug, address, email, phone, currency, logo_url)')
-        .single();
+      const camposSisp = { sisp_transaction_id: resultado.transactionID };
+      const lugarPerdido = async () => {
+        console.error(`[SISP Callback] Pago sem lugar — reservation_id=${reservationId}`);
+        await registarPagoSemLugar(supabaseAdmin, reservationId, { metodo: 'sisp', valor: resultado.amount, campos: camposSisp });
+        return res.redirect(`${frontBase}/book/cancel?res=${reservationId}&erro=lugar`);
+      };
+      /* Ja havia um pagamento registado: nunca e "pago sem lugar" de novo. */
+      const jaPago = async () => {
+        const actual = await avisarSeDuplicado();
+        return actual?.cancel_reason === 'paid_after_expiry'
+          ? res.redirect(`${frontBase}/book/cancel?res=${reservationId}&erro=lugar`)
+          : res.redirect(`${frontBase}/book/success?res=${reservationId}`);
+      };
+
+      /* O lugar ainda e desta reserva? (repoe uma reserva expirada se o lugar estiver livre) */
+      const preparado = await prepararPagamento(supabaseAdmin, reservationId);
+      if (preparado.code === 'ALREADY_PAID') return jaPago();
+      if (!preparado.ok && preparado.code === 'HOLD_EXPIRED') return lugarPerdido();
+      if (!preparado.ok) return res.redirect(`${frontBase}/book/cancel`);
+
+      /* Mesmos updates condicionais do PayPal: so marca paga uma reserva viva e por pagar. */
+      const { data: reservaPaga, error: errPaga } = await marcarPagamentoTotal(reservationId, {
+        payment_method: 'sisp', ...camposSisp, amount_paid: resultado.amount || null,
+      });
+      if (errPaga && errPaga.code !== '23P01') throw errPaga;
+      if (errPaga || !reservaPaga) {
+        if (!errPaga) {
+          /* Outra chamada registou o pagamento entretanto. */
+          const { data: actual } = await supabaseAdmin
+            .from('reservations').select('payment_status').eq('id', reservationId).maybeSingle();
+          if (actual?.payment_status === 'paid') return jaPago();
+        }
+        return lugarPerdido();
+      }
+
       criarNotificacaoViajante(
         reserva.customer_email, 'booking_confirmed',
         `A sua reserva com ${reserva.operators?.name || 'o operador'} foi confirmada.`,
         `${frontBase}/viajante`,
       ).catch(() => {});
-      if (reservaPaga) enviarReciboPagamento(reservaPaga).catch(() => {});
+      enviarReciboPagamento(reservaPaga).catch(() => {});
+      if (reservaPaga.hold_expires_at) await concluirReservaPaga(reservaPaga);
       return res.redirect(`${frontBase}/book/success?res=${reservationId}`);
     }
 

@@ -310,7 +310,7 @@ describe('ServiceDetail: reservar a partir da coluna', () => {
       fireEvent.click(within(coluna).getByRole('button', { name: 'Aplicar' }));
     }
     if (esperar) expect(await within(coluna).findByText(esperar)).toBeInTheDocument();
-    const reservar = within(coluna).getByRole('button', { name: /Reservar/ });
+    const reservar = within(coluna).getByRole('button', { name: /Reservar|Book|Reserve/ });
     await waitFor(() => expect(reservar).toBeEnabled());
     fireEvent.click(reservar);
   }
@@ -447,6 +447,175 @@ describe('ServiceDetail: reservar a partir da coluna', () => {
     await waitFor(() => expect(configuracao).not.toBeNull());
     await configuracao.createOrder();
     expect(corpoDe('/payments/paypal/create-intent')).toEqual({ reservation_id: 'res-1234567890', amount: 80, currency: 'EUR' });
+  });
+
+  it('mostra o aviso dos 30 minutos ao escolher PayPal', async () => {
+    redeDaReserva();
+    montar();
+    await reservarNaColuna();
+    await preencherDadosESeguir();
+    expect(screen.queryByText('Guardamos o seu lugar durante 30 minutos enquanto paga.')).toBeNull();
+    fireEvent.click(screen.getByText('Cartão internacional (PayPal)'));
+    expect(screen.getByText('Guardamos o seu lugar durante 30 minutos enquanto paga.')).toBeInTheDocument();
+    fireEvent.click(screen.getByText('Cartão cabo-verdiano (Vinti4)'));
+    expect(screen.getByText('Guardamos o seu lugar durante 30 minutos enquanto paga.')).toBeInTheDocument();
+  });
+
+  it('não mostra o aviso para pagar no local', async () => {
+    redeDaReserva();
+    montar();
+    await reservarNaColuna();
+    await preencherDadosESeguir();
+    expect(screen.queryByText(/Guardamos o seu lugar/)).toBeNull();
+    fireEvent.click(screen.getByText('Pagar presencialmente'));
+    expect(screen.queryByText(/Guardamos o seu lugar/)).toBeNull();
+  });
+
+  it('voltar do passo 3 e regressar cria nova reserva PayPal', async () => {
+    redeDaReserva();
+    montar();
+    await reservarNaColuna();
+    await preencherDadosESeguir();
+    fireEvent.click(screen.getByText('Cartão internacional (PayPal)'));
+    await waitFor(() => expect(pedidos('/public/demo/reservations')).toHaveLength(1));
+    fireEvent.click(screen.getByRole('button', { name: /Anterior/ }));
+    expect(await screen.findByText('Passo 2 de 3')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /Continuar/ }));
+    expect(await screen.findByText('Resumo e pagamento')).toBeInTheDocument();
+    await waitFor(() => expect(pedidos('/public/demo/reservations')).toHaveLength(2));
+  });
+
+  /* Troca a resposta de um endpoint pela dada (ok false = erro HTTP); o resto segue a rede da reserva */
+  function sobrepor(parte, corpo, ok = false) {
+    const base = global.fetch;
+    global.fetch = vi.fn((u, o) => (String(u).includes(parte) ? resposta(corpo, ok) : base(u, o)));
+  }
+  const HOLD = { error: 'Este lugar já não está disponível. Não foi feita nenhuma cobrança.', error_en: 'This place is no longer available. You have not been charged.', code: 'HOLD_EXPIRED' };
+
+  /* Vai ate ao passo 3 com PayPal escolhido e a politica aceite; devolve a configuracao dos botoes */
+  async function chegarAoPayPal(en = false) {
+    let configuracao = null;
+    window.paypal = { Buttons: vi.fn((cfg) => { configuracao = cfg; return { render: vi.fn() }; }) };
+    montar();
+    await reservarNaColuna();
+    if (en) {
+      fireEvent.change(await screen.findByPlaceholderText('John Smith'), { target: { value: 'Ana Lima' } });
+      fireEvent.change(screen.getByPlaceholderText('joao@email.com'), { target: { value: 'ana@exemplo.cv' } });
+      fireEvent.click(screen.getByRole('button', { name: /Continue/ }));
+      expect(await screen.findByText('Review & payment')).toBeInTheDocument();
+      fireEvent.click(screen.getByText('International card (PayPal)'));
+      fireEvent.click(screen.getByLabelText('I have read and accept the cancellation policy above.'));
+    } else {
+      await preencherDadosESeguir();
+      fireEvent.click(screen.getByText('Cartão internacional (PayPal)'));
+      aceitarPolitica();
+    }
+    await waitFor(() => expect(configuracao).not.toBeNull());
+    return configuracao;
+  }
+
+  it('PayPal: a mensagem do servidor fica no ecra e o onError do SDK nao a substitui', async () => {
+    redeDaReserva();
+    sobrepor('/payments/paypal/create-intent', HOLD);
+    const cfg = await chegarAoPayPal();
+    const erro = await cfg.createOrder().catch((e) => e);
+    expect(await screen.findByText(HOLD.error)).toBeInTheDocument();
+    cfg.onError(erro);
+    expect(screen.getByText(HOLD.error)).toBeInTheDocument();
+    expect(screen.queryByText('Erro no PayPal. Tente novamente.')).toBeNull();
+  });
+
+  it('PayPal: em ingles mostra o error_en do servidor', async () => {
+    localStorage.setItem('sd-lang', 'en');
+    redeDaReserva();
+    sobrepor('/payments/paypal/create-intent', HOLD);
+    const cfg = await chegarAoPayPal(true);
+    const erro = await cfg.createOrder().catch((e) => e);
+    cfg.onError(erro);
+    expect(await screen.findByText(HOLD.error_en)).toBeInTheDocument();
+    expect(screen.queryByText('PayPal error. Please try again.')).toBeNull();
+  });
+
+  it('PayPal: confirmar com PAID_AFTER_EXPIRY mostra a mensagem do servidor', async () => {
+    redeDaReserva();
+    sobrepor('/payments/paypal/confirm', { error: 'Pagamento recebido mas o lugar já foi ocupado.', error_en: 'Payment received but the place was taken.', code: 'PAID_AFTER_EXPIRY' });
+    const cfg = await chegarAoPayPal();
+    await cfg.onApprove({ orderID: 'ordem-1' });
+    expect(await screen.findByText('Pagamento recebido mas o lugar já foi ocupado.')).toBeInTheDocument();
+  });
+
+  it('SISP: em ingles o 409 mostra o error_en', async () => {
+    localStorage.setItem('sd-lang', 'en');
+    vi.spyOn(HTMLFormElement.prototype, 'submit').mockImplementation(() => {});
+    redeDaReserva();
+    sobrepor('/payments/sisp/init', HOLD);
+    montar();
+    await reservarNaColuna();
+    fireEvent.change(await screen.findByPlaceholderText('John Smith'), { target: { value: 'Ana Lima' } });
+    fireEvent.change(screen.getByPlaceholderText('joao@email.com'), { target: { value: 'ana@exemplo.cv' } });
+    fireEvent.click(screen.getByRole('button', { name: /Continue/ }));
+    expect(await screen.findByText('Review & payment')).toBeInTheDocument();
+    fireEvent.click(screen.getByText('Cape Verdean card (Vinti4)'));
+    fireEvent.click(screen.getByLabelText('I have read and accept the cancellation policy above.'));
+    fireEvent.click(screen.getByRole('button', { name: /Confirm booking/ }));
+    expect(await screen.findByText(HOLD.error_en)).toBeInTheDocument();
+  });
+
+  it('voltar com a reserva PayPal ainda a caminho descarta o resultado e cria nova reserva', async () => {
+    redeDaReserva();
+    const base = global.fetch;
+    let largar;
+    let primeira = true;
+    global.fetch = vi.fn((u, o) => {
+      if (String(u).endsWith('/public/demo/reservations') && primeira) {
+        primeira = false;
+        return new Promise((res) => { largar = () => res({ ok: true, json: () => Promise.resolve({ data: RESERVA }) }); });
+      }
+      return base(u, o);
+    });
+    montar();
+    await reservarNaColuna();
+    await preencherDadosESeguir();
+    fireEvent.click(screen.getByText('Cartão internacional (PayPal)'));
+    await waitFor(() => expect(pedidos('/public/demo/reservations')).toHaveLength(1));
+    fireEvent.click(screen.getByRole('button', { name: /Anterior/ }));
+    expect(await screen.findByText('Passo 2 de 3')).toBeInTheDocument();
+    largar();
+    await new Promise((r) => setTimeout(r, 20));
+    fireEvent.click(screen.getByRole('button', { name: /Continuar/ }));
+    expect(await screen.findByText('Resumo e pagamento')).toBeInTheDocument();
+    await waitFor(() => expect(pedidos('/public/demo/reservations')).toHaveLength(2));
+  });
+
+  it('hotel: voucher aplicado no passo do pagamento com PayPal volta a publicar a reserva com o voucher', async () => {
+    redeDaReserva({ op: operador({ operator_type: 'hotel' }) });
+    const base = global.fetch;
+    global.fetch = vi.fn((u, o) => {
+      const s = String(u);
+      if (s.includes('/public/demo/availability?')) return resposta({ data: { disponivel: true } });
+      if (s.includes('/vouchers/validate')) return resposta({ data: { valid: true, discount: 9 } });
+      return base(u, o);
+    });
+    montar();
+    await screen.findByText('Passeio de buggy', { selector: 'h1' });
+    fireEvent.click(screen.getAllByRole('button', { name: /Reservar Agora/ })[0]);
+    expect(await screen.findByText('Passo 1 de 3')).toBeInTheDocument();
+    const [entrada, saida] = modal().querySelectorAll('input[type="date"]');
+    fireEvent.change(entrada, { target: { value: '2026-11-27' } });
+    fireEvent.change(saida, { target: { value: '2026-11-29' } });
+    expect(await within(modal()).findByText('Disponível', {}, { timeout: 3000 })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /Continuar/ }));
+    await preencherDadosESeguir();
+    fireEvent.click(screen.getByText('Cartão internacional (PayPal)'));
+    await waitFor(() => expect(pedidos('/public/demo/reservations')).toHaveLength(1));
+    expect(corpoDe('/public/demo/reservations')).not.toHaveProperty('voucher_code');
+
+    /* O lugar ja esta retido com o total antigo: o voucher obriga a publicar de novo */
+    fireEvent.change(screen.getByPlaceholderText('Ex: VERAO2025'), { target: { value: 'VERAO' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Aplicar' }));
+    expect(await screen.findByText('Desconto aplicado: -€9.00')).toBeInTheDocument();
+    await waitFor(() => expect(pedidos('/public/demo/reservations')).toHaveLength(2));
+    expect(corpoDe('/public/demo/reservations')).toMatchObject({ voucher_code: 'VERAO', payment_method: 'paypal' });
   });
 
   it('reservar_da_barra_de_cima_vai_a_coluna', async () => {

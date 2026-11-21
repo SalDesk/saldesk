@@ -322,6 +322,7 @@ function PO({ lang, v, set, soNoLocal = false }) {
           </div>
         </button>
       ))}
+      {!soNoLocal&&(v==='paypal'||v==='sisp')&&<p className="text-xs font-body text-n-500">{lang==='en'?'We hold your place for 30 minutes while you pay.':'Guardamos o seu lugar durante 30 minutos enquanto paga.'}</p>}
     </div>
   );
 }
@@ -485,13 +486,13 @@ function toCVE(amount, opCurrency) {
 
 /* Pede os campos do formulario a Vinti4 e redirecciona o browser do cliente
    para la — o pagamento acontece fora do nosso site (fluxo de redirect). */
-async function iniciarPagamentoSisp(slug, reservationId, amountCve) {
+async function iniciarPagamentoSisp(slug, reservationId, amountCve, lang) {
   const r = await fetch(`${API}/public/${slug}/payments/sisp/init`, {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ reservation_id: reservationId, amount: amountCve }),
   });
   const j = await r.json();
-  if (!r.ok) throw new Error(j.error || 'Erro ao iniciar pagamento SISP');
+  if (!r.ok) throw new Error((lang === 'en' && j.error_en) ? j.error_en : (j.error || 'Erro ao iniciar pagamento SISP'));
 
   const { postUrl, fields } = j.data;
   const form = document.createElement('form');
@@ -543,7 +544,13 @@ function PayPalButton({ slug, reservationId, amount, lang, onSuccess, onError })
             body: JSON.stringify({ reservation_id: reservationId, amount, currency: 'EUR' }),
           });
           const j = await r.json();
-          if (!r.ok) throw new Error(j.error || 'Erro ao criar pagamento');
+          if (!r.ok) {
+            const msg = (lang === 'en' && j.error_en) ? j.error_en : (j.error || (lang === 'en' ? 'Error creating the payment' : 'Erro ao criar pagamento'));
+            onError(msg);
+            const erro = new Error(msg);
+            erro.jaMostrado = true; /* o onError do SDK nao deve trocar esta mensagem pela generica */
+            throw erro;
+          }
           return j.data.order_id;
         },
         onApprove: async (data) => {
@@ -552,10 +559,10 @@ function PayPalButton({ slug, reservationId, amount, lang, onSuccess, onError })
             body: JSON.stringify({ order_id: data.orderID, reservation_id: reservationId }),
           });
           const j = await r.json();
-          if (!r.ok) { onError(j.error || 'Erro ao confirmar pagamento'); return; }
+          if (!r.ok) { onError((lang === 'en' && j.error_en) ? j.error_en : (j.error || (lang === 'en' ? 'Error confirming the payment' : 'Erro ao confirmar pagamento'))); return; }
           onSuccess();
         },
-        onError: () => onError(lang === 'en' ? 'PayPal error. Please try again.' : 'Erro no PayPal. Tente novamente.'),
+        onError: (err) => { if (err?.jaMostrado) return; onError(lang === 'en' ? 'PayPal error. Please try again.' : 'Erro no PayPal. Tente novamente.'); },
       }).render(containerRef.current);
     }
 
@@ -609,14 +616,20 @@ function HotelModal({ unit, op, slug, lang, onClose, refCode, traveler }) {
   const nights=nts(ci,co); const rawTotal=nights*(unit.base_price||0); const total=nights>0&&unit.base_price?fmtPrice(rawTotal,null,op.currency||'EUR','EUR',lang):null;
   useEffect(()=>{ if (!ci||!co||co<=ci){sav(null);return;} const t=setTimeout(async()=>{ sc(true); try{sav((await(await fetch(`${API}/public/${slug}/availability?unitId=${unit.id}&checkIn=${ci}&checkOut=${co}`)).json()).data);}catch{sav(null);}finally{sc(false);} },700); return()=>clearTimeout(t); },[ci,co]);
   function buildPayload(){ const notes=[`${adults} ${lang==='en'?'adults':'adultos'}, ${kids} ${lang==='en'?'children':'crianças'}`,info.notes].filter(Boolean).join('. '); return {unit_id:unit.id,customer_name:info.name,customer_email:info.email,customer_phone:info.phone||null,customer_country:info.country||null,check_in:ci,check_out:co,guests:adults+kids,notes,voucher_code:voucherCode||undefined,ref_code:refCode||undefined,payment_method:pay}; }
-  useEffect(()=>{ if(step===3&&pay==='paypal'&&!pendingRes&&!sub){ ssub(true); postReservation(slug,buildPayload()).then(spr).catch(e=>se(e.message)).finally(()=>ssub(false)); } },[step,pay]);
+  const postGen=useRef(0);
+  useEffect(()=>{ if(step<3){ postGen.current++; if(pendingRes) spr(null); ssub(false); } },[step]);
+  /* Voucher mudado ja com a reserva PayPal publicada (ou a caminho): essa reserva tem o total antigo.
+     Larga-se como ao voltar atras e publica-se de novo com o voucher (o servidor substitui o lugar retido). */
+  const voucherEnviado=buildPayload().voucher_code; const [repost,srp]=useState(0);
+  useEffect(()=>{ if(pendingRes||(pay==='paypal'&&sub)){ postGen.current++; spr(null); ssub(false); srp(n=>n+1); } },[voucherEnviado]);
+  useEffect(()=>{ if(step===3&&pay==='paypal'&&!pendingRes&&!sub){ const g=postGen.current; ssub(true); postReservation(slug,buildPayload()).then(r=>{ if(g===postGen.current) spr(r); }).catch(e=>{ if(g===postGen.current) se(e.message); }).finally(()=>{ if(g===postGen.current) ssub(false); }); } },[step,pay,repost]);
   function valid(){ if(step===1){if(!ci||!co){se(lang==='en'?'Select both dates':'Seleccione ambas as datas');return false;} if(co<=ci){se(lang==='en'?'Check-out must be after check-in':'Check-out deve ser posterior ao check-in');return false;} if(!avail?.disponivel){se(lang==='en'?'Room unavailable for these dates':'Quarto indisponível nestas datas');return false;}} if(step===2&&(!info.name||!info.email)){se(lang==='en'?'Name and email required':'Nome e email obrigatórios');return false;} se('');return true; }
   async function submit(){
     ssub(true);se('');
     try{
       const newRes = await postReservation(slug,buildPayload());
       if (pay==='sisp' && nights>0 && unit.base_price) {
-        await iniciarPagamentoSisp(slug, newRes.id, toCVE(newRes.total_price ?? rawTotal, op.currency));
+        await iniciarPagamentoSisp(slug, newRes.id, toCVE(newRes.total_price ?? rawTotal, op.currency), lang);
         return;
       }
       sro(newRes.status==='confirmed'); sr(newRes.id);
@@ -693,7 +706,13 @@ function ActivityModal({ unit, op, slug, lang, onClose, refCode, traveler, selec
      saber onde recolher e quando o turista chega/parte). Tudo opcional. */
   const stayLine=[info.hotel.trim()?`${lang==='en'?'Accommodation':'Alojamento'}: ${info.hotel.trim()}`:'',info.arrival?`${lang==='en'?'arrival':'chegada'} ${info.arrival}`:'',info.departure?`${lang==='en'?'departure':'partida'} ${info.departure}`:''].filter(Boolean).join(', ');
   function buildPayload(){ const notes=[time?`${lang==='en'?'Time':'Hora'}: ${time}`:'',`${adults} ${lang==='en'?'adults':'adultos'}, ${kids} ${lang==='en'?'children':'crianças'}`,tourLang?(lang==='en'?'Language: ':'Idioma: ')+tourLang:'',stayLine,info.needs?(lang==='en'?'Additional request:':'Pedido adicional:')+' '+info.needs:''].filter(Boolean).join('. '); return {unit_id:unit.id,customer_name:info.name,customer_email:info.email,customer_phone:info.phone||null,customer_country:info.country||null,check_in:date,check_out:date,guests:adults+kids,...(col?{adults,children:kids}:{}),notes,tour_time:col?(col.time||undefined):(hasSlots?time:undefined),voucher_code:(col?voucherDaColuna:voucherCode)||undefined,ref_code:refCode||undefined,referred_by:info.referredBy.trim()||undefined,whatsapp_opt_in:info.whatsappOptIn||undefined,booking_mode:isPrivateMode?'private':undefined,payment_method:pay}; }
-  useEffect(()=>{ if(step===3&&pay==='paypal'&&!pendingRes&&!sub){ ssub(true); postReservation(slug,buildPayload()).then(spr).catch(e=>se(e.message)).finally(()=>ssub(false)); } },[step,pay]);
+  const postGen=useRef(0);
+  useEffect(()=>{ if(step<3){ postGen.current++; if(pendingRes) spr(null); ssub(false); } },[step]);
+  /* Voucher mudado ja com a reserva PayPal publicada (ou a caminho): essa reserva tem o total antigo.
+     Larga-se como ao voltar atras e publica-se de novo com o voucher (o servidor substitui o lugar retido). */
+  const voucherEnviado=buildPayload().voucher_code; const [repost,srp]=useState(0);
+  useEffect(()=>{ if(pendingRes||(pay==='paypal'&&sub)){ postGen.current++; spr(null); ssub(false); srp(n=>n+1); } },[voucherEnviado]);
+  useEffect(()=>{ if(step===3&&pay==='paypal'&&!pendingRes&&!sub){ const g=postGen.current; ssub(true); postReservation(slug,buildPayload()).then(r=>{ if(g===postGen.current) spr(r); }).catch(e=>{ if(g===postGen.current) se(e.message); }).finally(()=>{ if(g===postGen.current) ssub(false); }); } },[step,pay,repost]);
   function valid(){ if(step===1){if(!date){se(lang==='en'?'Select a date':'Seleccione uma data');return false;} if(hasSlots&&!time){se(lang==='en'?'Select a time slot':'Seleccione um horário');return false;} if(adults<1){se(lang==='en'?'At least 1 adult required':'Mínimo 1 adulto');return false;}} if(step===2&&(!info.name||!info.email)){se(lang==='en'?'Name and email required':'Nome e email obrigatórios');return false;} if(step===2&&info.arrival&&info.departure&&info.departure<info.arrival){se(lang==='en'?'Departure date must be after arrival':'A data de partida deve ser depois da chegada');return false;} se('');return true; }
   async function submit(){
     ssub(true);se('');
@@ -701,7 +720,7 @@ function ActivityModal({ unit, op, slug, lang, onClose, refCode, traveler, selec
       const newRes = await postReservation(slug,buildPayload());
       /* Com seleccao, o valor a pagar e o total da reserva gravada no servidor (o mesmo calculo do /quote) */
       if (col ? (pay==='sisp' && Number(newRes.total_price)>0) : (pay==='sisp' && rawTotal>0)) {
-        await iniciarPagamentoSisp(slug, newRes.id, toCVE(col ? Number(newRes.total_price) : (newRes.total_price ?? rawTotal), op.currency));
+        await iniciarPagamentoSisp(slug, newRes.id, toCVE(col ? Number(newRes.total_price) : (newRes.total_price ?? rawTotal), op.currency), lang);
         return;
       }
       sro(newRes.status==='confirmed'); sr(newRes.id);
@@ -794,14 +813,20 @@ function RentACarModal({ unit, op, slug, lang, onClose, refCode, traveler }) {
   const rawTotal=days*(unit.base_price||0)+chauffeurTotal; const total=days>0&&unit.base_price?fmtPrice(rawTotal,null,op.currency||'EUR','EUR',lang):null;
   const locs=buildLocs(lang, op.islands?.airport_code); const extList=CAR_EXTRAS.filter(e=>ext[e.k]);
   function buildPayload(){ const notes=[`${lang==='en'?'Pickup':'Levantamento'}: ${pu.loc} ${pu.date} ${pu.time}`,`${lang==='en'?'Return':'Devolução'}: ${re.loc||pu.loc} ${re.date} ${re.time}`,extList.length?`Extras: ${extList.map(e=>lang==='en'?e.en:e.pt).join(', ')}`:'',driverIncluded&&chauffeurRate>0?(lang==='en'?'Chauffeur included':'Motorista incluído'):'' ].filter(Boolean).join('. '); return {unit_id:unit.id,customer_name:drv.name,customer_email:drv.email,customer_phone:drv.phone||null,customer_country:drv.country||null,check_in:pu.date,check_out:re.date,guests:1,notes,driver_included:driverIncluded&&chauffeurRate>0,voucher_code:voucherCode||undefined,ref_code:refCode||undefined,payment_method:pay}; }
-  useEffect(()=>{ if(step===3&&pay==='paypal'&&!pendingRes&&!sub){ ssub(true); postReservation(slug,buildPayload()).then(spr).catch(e=>se(e.message)).finally(()=>ssub(false)); } },[step,pay]);
+  const postGen=useRef(0);
+  useEffect(()=>{ if(step<3){ postGen.current++; if(pendingRes) spr(null); ssub(false); } },[step]);
+  /* Voucher mudado ja com a reserva PayPal publicada (ou a caminho): essa reserva tem o total antigo.
+     Larga-se como ao voltar atras e publica-se de novo com o voucher (o servidor substitui o lugar retido). */
+  const voucherEnviado=buildPayload().voucher_code; const [repost,srp]=useState(0);
+  useEffect(()=>{ if(pendingRes||(pay==='paypal'&&sub)){ postGen.current++; spr(null); ssub(false); srp(n=>n+1); } },[voucherEnviado]);
+  useEffect(()=>{ if(step===3&&pay==='paypal'&&!pendingRes&&!sub){ const g=postGen.current; ssub(true); postReservation(slug,buildPayload()).then(r=>{ if(g===postGen.current) spr(r); }).catch(e=>{ if(g===postGen.current) se(e.message); }).finally(()=>{ if(g===postGen.current) ssub(false); }); } },[step,pay,repost]);
   function valid(){ if(step===1){if(!pu.date||!re.date){se(lang==='en'?'Select pickup and return dates':'Seleccione datas');return false;} if(re.date<=pu.date){se(lang==='en'?'Return after pickup':'Devolução após levantamento');return false;} if(!pu.loc){se(lang==='en'?'Select pickup location':'Seleccione o local');return false;}} if(step===2&&(!drv.name||!drv.email)){se(lang==='en'?'Name and email required':'Nome e email obrigatórios');return false;} if(step===2&&!drv.license){se(lang==='en'?'Driving licence required':'Carta de condução obrigatória');return false;} se('');return true; }
   async function submit(){
     ssub(true);se('');
     try{
       const newRes = await postReservation(slug,buildPayload());
       if (pay==='sisp' && days>0 && unit.base_price) {
-        await iniciarPagamentoSisp(slug, newRes.id, toCVE(newRes.total_price ?? rawTotal, op.currency));
+        await iniciarPagamentoSisp(slug, newRes.id, toCVE(newRes.total_price ?? rawTotal, op.currency), lang);
         return;
       }
       sro(newRes.status==='confirmed'); sr(newRes.id);

@@ -218,6 +218,27 @@ describe('Reservations', () => {
     });
   });
 
+  describe('pagamento nao concluido', () => {
+    it('o chip mostra so a reserva abandonada e o seu estado diz Pagamento não concluído', async () => {
+      carregaServicos({
+        reservas: [
+          reserva({ id: 'aaaaaaaa-0001', status: 'confirmed', customer_name: 'Cliente Alfa' }),
+          reserva({ id: 'bbbbbbbb-0002', status: 'cancelled', cancel_reason: 'payment_not_completed', customer_name: 'Cliente Beta' }),
+          reserva({ id: 'cccccccc-0003', status: 'cancelled', cancel_reason: null, customer_name: 'Cliente Gama' }),
+        ],
+      });
+      renderPagina('hotel');
+      await screen.findByText('Cliente Alfa');
+
+      fireEvent.click(screen.getByRole('button', { name: 'Pagamento não concluído' }));
+      expect(screen.getByText('Cliente Beta')).toBeInTheDocument();
+      expect(screen.queryByText('Cliente Alfa')).not.toBeInTheDocument();
+      expect(screen.queryByText('Cliente Gama')).not.toBeInTheDocument();
+      /* o chip e o rotulo do cartao */
+      expect(screen.getAllByText('Pagamento não concluído').length).toBe(2);
+    });
+  });
+
   describe('barra de filtros', () => {
     const TRES = [
       reserva({ id: 'aaaaaaaa-0001', unit_id: 'u1', status: 'confirmed', source: 'direct', check_in: HOJE, customer_name: 'Cliente Alfa' }),
@@ -240,7 +261,7 @@ describe('Reservations', () => {
       await screen.findByText('Tour');
       /* so os chips tem aria-pressed (a tabela tem outros botoes, p.ex. a accao Check-in) */
       const chips = screen.getAllByRole('button').filter(b => b.hasAttribute('aria-pressed'));
-      expect(chips.map(b => b.textContent)).toEqual(['Todas', 'Pendente', 'Confirmada', 'Check-in', 'Check-out', 'Cancelada']);
+      expect(chips.map(b => b.textContent)).toEqual(['Todas', 'Pendente', 'Confirmada', 'Check-in', 'Check-out', 'Cancelada', 'Pagamento não concluído']);
       expect(screen.getByRole('button', { name: 'Todas' })).toHaveAttribute('aria-pressed', 'true');
       expect(screen.getByRole('button', { name: 'Confirmada' })).toHaveAttribute('aria-pressed', 'false');
 
