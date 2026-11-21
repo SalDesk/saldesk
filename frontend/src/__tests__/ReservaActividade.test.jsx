@@ -323,6 +323,42 @@ describe('Coluna de reserva da actividade', () => {
     expect(dia('2026-11-22')).toHaveAttribute('tabindex', '0');
   });
 
+  it('contadores_respeitam_a_lotacao', async () => {
+    /* lotacao 3: comeca em 2 adultos e adultos + criancas nunca passam de 3 */
+    simularRede();
+    montarColuna({ unit: { ...UNIDADE, capacity: 3 } });
+    const maisAdultos = screen.getByRole('button', { name: 'Mais adultos' });
+    const maisCriancas = screen.getByRole('button', { name: 'Mais crianças' });
+    fireEvent.click(maisAdultos);
+    expect(maisAdultos).toBeDisabled();
+    expect(maisCriancas).toBeDisabled();
+    fireEvent.click(screen.getByRole('button', { name: 'Menos adultos' }));
+    fireEvent.click(maisCriancas);
+    expect(maisCriancas).toBeDisabled();
+    expect(maisAdultos).toBeDisabled();
+    await esperarCalendario();
+    cleanup();
+
+    /* lotacao 1: comeca em 1 adulto, sem poder juntar ninguem */
+    simularRede();
+    montarColuna({ unit: { ...UNIDADE, capacity: 1 } });
+    expect(screen.getByRole('button', { name: 'Mais adultos' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Mais crianças' })).toBeDisabled();
+    await waitFor(() => expect(chamadas('/availability-month')[0]).toContain('pax=1'));
+    cleanup();
+
+    /* sem lotacao: 2 adultos e os limites fixos de sempre (20 adultos, 10 criancas) */
+    simularRede();
+    montarColuna({ unit: { ...UNIDADE, capacity: null } });
+    const mais = screen.getByRole('button', { name: 'Mais adultos' });
+    for (let i = 0; i < 18; i += 1) fireEvent.click(mais);
+    expect(mais).toBeDisabled();
+    const maisC = screen.getByRole('button', { name: 'Mais crianças' });
+    for (let i = 0; i < 10; i += 1) fireEvent.click(maisC);
+    expect(maisC).toBeDisabled();
+    await esperarCalendario();
+  });
+
   it('sem_preco_nenhum_reserva_por_pessoa_a_combinar', async () => {
     /* base_price 0 (preco em branco no TourForm) e sem preco privado: continua reservavel, como
        hoje, por pessoa e com o preco a combinar com o operador (nunca "Gratis" nem total 0) */

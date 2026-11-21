@@ -86,10 +86,15 @@ export default function ReservaActividade({
   const base = `${api}/public/${slug}/units/${unit.id}`;
 
   const [modo, setModo] = useState(temPorPessoa || semPreco ? 'per_person' : 'private');
-  const [adultos, setAdultos] = useState(2);
+  /* Com lotacao definida, comeca em min(2, lotacao) adultos (pelo menos 1) e adultos + criancas
+     nunca passam da lotacao; sem lotacao ficam os limites fixos de sempre */
+  const lotacao = Math.floor(Number(unit.capacity)) > 0 ? Math.floor(Number(unit.capacity)) : null;
+  const [adultos, setAdultos] = useState(lotacao ? Math.max(1, Math.min(2, lotacao)) : 2);
   const [criancas, setCriancas] = useState(0);
   const [idioma, setIdioma] = useState('');
   const pax = adultos + criancas;
+  const maxAdultos = lotacao ? Math.max(1, lotacao - criancas) : MAX_ADULTOS;
+  const maxCriancas = lotacao ? Math.max(0, lotacao - adultos) : MAX_CRIANCAS;
 
   /* ── Calendario: mes corrente em Cabo Verde; se vier vazio, avanca um mes (uma vez so).
      Mudar pessoas ou modo espera 300 ms (como a cotacao); mudar de mes ou repetir pede logo.
@@ -256,9 +261,9 @@ export default function ReservaActividade({
       )}
 
       <Passo numero={proximo()} titulo={en ? "Who's coming?" : 'Quem vem?'}>
-        <Contador rotulo={en ? 'Adults' : 'Adultos'} valor={adultos} min={1} max={MAX_ADULTOS} onMudar={setAdultos}
+        <Contador rotulo={en ? 'Adults' : 'Adultos'} valor={adultos} min={1} max={maxAdultos} onMudar={setAdultos}
           menos={en ? 'Fewer adults' : 'Menos adultos'} mais={en ? 'More adults' : 'Mais adultos'}/>
-        <Contador rotulo={en ? 'Children' : 'Crianças'} valor={criancas} min={0} max={MAX_CRIANCAS} onMudar={setCriancas}
+        <Contador rotulo={en ? 'Children' : 'Crianças'} valor={criancas} min={0} max={maxCriancas} onMudar={setCriancas}
           menos={en ? 'Fewer children' : 'Menos crianças'} mais={en ? 'More children' : 'Mais crianças'}/>
         {linguas.length > 1 && (
           <label className="block">
