@@ -488,3 +488,12 @@ test('preco_cartao_com_opcoes_usa_a_mais_barata_e_a_sua_unidade', () => {
   assert.deepEqual(C.precoCartao({ base_price: 35 }, { options: invalidas }), { valor: 35, unidade: 'pessoa' });
   assert.deepEqual(C.precoCartao({ base_price: 35 }, { options: [] }), { valor: 35, unidade: 'pessoa' });
 });
+
+test('preco_crianca_some_com_opcoes_validas', () => {
+  assert.equal(C.precoCrianca({ price_child: 12 }), 12);
+  assert.equal(C.precoCrianca({ price_child: 12, options: [{ type: 'per_person', price: 30 }] }), null);
+  assert.equal(C.precoCrianca({ price_child: 12, options: [{ type: 'per_vehicle', price: 80, seats: 4 }] }), null);
+  // opcoes invalidas nao contam: o preco de crianca mantem-se
+  assert.equal(C.precoCrianca({ price_child: 12, options: [{ type: 'per_person', price: 0 }, { type: 'x', price: 5 }, { type: 'per_vehicle', price: 80, seats: 0 }] }), 12);
+  assert.equal(C.precoCrianca({ price_child: 12, options: [] }), 12);
+});

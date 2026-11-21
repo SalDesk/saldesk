@@ -101,7 +101,7 @@
 
   /* Mesma prioridade do servidor (displayPrice): por pessoa > escalao mais
      barato > preco privado. Escaloes e privado sao o total do grupo. */
-  function precoCartao(item, meta) {
+  function opcaoMaisBarata(meta) {
     /* Opcoes validas (tipo conhecido, preco > 0, lugares >= 1 por veiculo) mandam: a mais
        barata decide valor e unidade, como opcaoMaisBarata() no servidor. */
     var UNIDADES = { per_person: 'pessoa', per_group: 'grupo', per_vehicle: 'veiculo' };
@@ -114,6 +114,11 @@
       if (o.type === 'per_vehicle' && !(Math.floor(Number(o.seats)) >= 1)) return;
       if (!melhor || p < melhor.valor) melhor = { valor: p, unidade: UNIDADES[o.type] };
     });
+    return melhor;
+  }
+
+  function precoCartao(item, meta) {
+    var melhor = opcaoMaisBarata(meta);
     if (melhor) return melhor;
     var base = Number(item && item.base_price);
     if (base > 0) return { valor: base, unidade: 'pessoa' };
@@ -230,7 +235,9 @@
     return cont;
   }
 
+  /* Com opcoes validas a tabela de precos nao se aplica: o preco de crianca antigo nunca e cobrado */
   function precoCrianca(meta) {
+    if (opcaoMaisBarata(meta)) return null;
     var c = Number(meta && meta.price_child);
     return c > 0 ? c : null;
   }
