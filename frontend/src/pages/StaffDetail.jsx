@@ -21,6 +21,8 @@ import Input, { Select, Textarea } from '../components/ui/Input';
 import Badge from '../components/ui/Badge';
 import LoadingSpinner from '../components/shared/LoadingSpinner';
 import ExpiryBadge from '../components/shared/ExpiryBadge';
+import { useT } from '../i18n';
+import { mensagemErro } from '../utils/mensagemErro';
 
 const TABS = [
   { id: 'ferias',        label: 'Férias' },
@@ -55,6 +57,7 @@ function daysBetween(a, b) {
    FERIAS
 ══════════════════════════════════════════ */
 function FeriasTab({ staffId }) {
+  const t = useT();
   const toast = useToast();
   const year = new Date().getFullYear();
   const [leave, setLeave] = useState([]);
@@ -93,7 +96,7 @@ function FeriasTab({ staffId }) {
       setForm({ type: 'vacation', start_date: '', end_date: '', notes: '' });
       load();
     } catch (err) {
-      toast.error(err.response?.data?.error || 'Erro ao criar pedido');
+      toast.error(mensagemErro(err, t, 'Erro ao criar pedido'));
     } finally {
       setSaving(false);
     }

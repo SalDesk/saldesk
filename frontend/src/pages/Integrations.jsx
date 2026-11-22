@@ -10,6 +10,7 @@ import Input from '../components/ui/Input';
 import Badge from '../components/ui/Badge';
 import Table from '../components/ui/Table';
 import LoadingSpinner from '../components/shared/LoadingSpinner';
+import { mensagemErro } from '../utils/mensagemErro';
 
 const CHANNEL_CONFIG = {
   viator: {
@@ -201,7 +202,7 @@ export default function Integrations() {
       setConnectModal(null);
       carregar();
     } catch (err) {
-      setConnectError(err.response?.data?.error || t('errors.generic'));
+      setConnectError(mensagemErro(err, t, t('errors.generic')));
     } finally {
       setConnectLoading(false);
     }

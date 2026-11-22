@@ -24,9 +24,12 @@ import Card from '../components/ui/Card';
 import Tabs from '../components/ui/Tabs';
 import EmptyState from '../components/ui/EmptyState';
 import Input from '../components/ui/Input';
+import { useT } from '../i18n';
+import { mensagemErro } from '../utils/mensagemErro';
 
 /* ── Main Staff Page ── */
 export default function Staff() {
+  const t = useT();
   const { operator } = useAuthStore();
   const ROLES = ROLES_BY_TYPE[operator?.operator_type] || ROLES_DEFAULT;
   const { plan } = usePlan();
@@ -58,7 +61,7 @@ export default function Staff() {
       setStaffList(p => p.map(s => s.id === member.id ? { ...s, user_id: acc.user_id } : s));
       toast.success('Conta criada e email enviado ao colaborador');
     } catch (err) {
-      toast.error(err.response?.data?.error || 'Erro ao criar conta');
+      toast.error(mensagemErro(err, t, 'Erro ao criar conta'));
     } finally {
       setAccountCreatingId(null);
     }
@@ -90,7 +93,7 @@ export default function Staff() {
       }
       setModal(null);
     } catch (err) {
-      setFormError(err.response?.data?.error || 'Erro ao guardar');
+      setFormError(mensagemErro(err, t, 'Erro ao guardar'));
     } finally { setFormLoad(false); }
   }
 

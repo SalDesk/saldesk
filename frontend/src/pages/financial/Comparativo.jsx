@@ -1,8 +1,10 @@
 import { ArrowUpRight, ArrowDownRight, Minus } from 'lucide-react';
 import Table from '../../components/ui/Table';
 import { fmtMoney } from './shared';
+import { useLingua } from '../../utils/formatoLingua';
 
 function Comparativo({ resumo, currency }) {
+  useLingua();
   if (!resumo?.variacao || !resumo?.atual || !resumo?.anterior) return null;
   const { atual, anterior, variacao } = resumo;
   const rows = [

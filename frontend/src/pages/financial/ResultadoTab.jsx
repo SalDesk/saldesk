@@ -19,6 +19,7 @@ import Button from '../../components/ui/Button';
 import Card from '../../components/ui/Card';
 import LoadingSpinner from '../../components/shared/LoadingSpinner';
 import { MONTHS_PT, EUR_CVE, fmtMoney, fmtEixo, fmtDica } from './shared';
+import { useLingua } from '../../utils/formatoLingua';
 
 /* ─────────────────── RESULTADO ─────────────────── */
 
@@ -28,6 +29,7 @@ function ymd(d) {
 }
 
 function ResultadoTab({ resumo, currency, periodo }) {
+  useLingua();
   const [allExp,     setAllExp]     = useState([]);
   const [mensal,     setMensal]     = useState([]);
   const [salPayments, setSalPayments] = useState([]);

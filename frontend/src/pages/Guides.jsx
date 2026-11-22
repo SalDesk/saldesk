@@ -24,6 +24,8 @@ import FilterChips from '../components/ui/FilterChips';
 import Tabs from '../components/ui/Tabs';
 import Table from '../components/ui/Table';
 import LoadingSpinner from '../components/shared/LoadingSpinner';
+import { useT } from '../i18n';
+import { mensagemErro } from '../utils/mensagemErro';
 
 const LANGUAGES   = ['PT', 'EN', 'DE', 'NL', 'FR', 'ES'];
 const DAYS        = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sab', 'Dom'];
@@ -443,6 +445,7 @@ function HistoryModal({ guide, onClose }) {
 
 /* ───────── Assign Modal ───────── */
 function AssignModal({ guide, reservations, onClose, onDone }) {
+  const t = useT();
   const [selected, setSelected] = useState('');
   const [saving,   setSaving]   = useState(false);
   const [error,    setError]    = useState('');
@@ -459,7 +462,7 @@ function AssignModal({ guide, reservations, onClose, onDone }) {
       await createAssignment({ staff_id: guide.id, reservation_id: selected });
       onDone();
     } catch (err) {
-      setError(err.response?.data?.error || 'Erro ao atribuir');
+      setError(mensagemErro(err, t, 'Erro ao atribuir'));
     } finally {
       setSaving(false);
     }
@@ -618,6 +621,7 @@ function AvailabilityTab({ guides }) {
 
 /* ───────── Main Page ───────── */
 export default function Guides() {
+  const t = useT();
   const { operator } = useAuthStore();
   const [tab,          setTab]          = useState('lista');
   const [guides,       setGuides]       = useState([]);
@@ -656,7 +660,7 @@ export default function Guides() {
       }
       setModal(null);
     } catch (err) {
-      setFormError(err.response?.data?.error || 'Erro ao guardar');
+      setFormError(mensagemErro(err, t, 'Erro ao guardar'));
     } finally { setFormLoading(false); }
   }
 

@@ -15,6 +15,8 @@ import ImageUploader from '../components/shared/ImageUploader';
 import ConectRow from '../components/shared/ConectRow';
 import FilterChips from '../components/ui/FilterChips';
 import EmptyState from '../components/ui/EmptyState';
+import { useT } from '../i18n';
+import { mensagemErro } from '../utils/mensagemErro';
 
 const CATEGORIES = [
   { key: 'entradas',         label: 'Entradas'          },
@@ -381,6 +383,7 @@ function DishCard({ dish, onEdit, onDelete, onToggleAvailable, onSubmitConect })
 }
 
 export default function MenuDigital() {
+  const t = useT();
   const { operator } = useAuthStore();
   const slug         = operator?.slug;
 
@@ -425,7 +428,7 @@ export default function MenuDigital() {
         setUnits(prev => prev.map(x => x.id === u.id ? u : x));
       }
       setModal(null);
-    } catch (err) { setFormError(err.response?.data?.error || 'Erro ao guardar'); }
+    } catch (err) { setFormError(mensagemErro(err, t, 'Erro ao guardar')); }
     finally { setFormLoading(false); }
   }
 

@@ -10,6 +10,7 @@ import Modal from '../components/ui/Modal';
 import UnitList from '../components/units/UnitList';
 import UnitForm, { parseTourMeta } from '../components/units/UnitForm';
 import LoadingSpinner from '../components/shared/LoadingSpinner';
+import { mensagemErro } from '../utils/mensagemErro';
 
 function TableQrModal({ unit, onClose }) {
   const t = useT();
@@ -136,7 +137,7 @@ export default function Units() {
       }
       setModal(null);
     } catch (err) {
-      setFormError(err.response?.data?.error || t('errors.generic'));
+      setFormError(mensagemErro(err, t, t('errors.generic')));
     } finally {
       setFormLoading(false);
     }

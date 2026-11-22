@@ -5,8 +5,10 @@ import Input, { Select } from '../../components/ui/Input';
 import EmptyState from '../../components/ui/EmptyState';
 import LoadingSpinner from '../../components/shared/LoadingSpinner';
 import { PAYMENT_METHODS, PAYMENT_STATUS, PM_LABEL, PS_LABEL, PS_COLOR, SRC_LABEL, fmtDate, fmtMoney } from './shared';
+import { useLingua } from '../../utils/formatoLingua';
 
 function TransacoesTable({ transacoes, currency, loading }) {
+  useLingua();
   const [filterMethod, setFilterMethod] = useState('Todos');
   const [filterStatus, setFilterStatus] = useState('Todos');
   const [search, setSearch] = useState('');

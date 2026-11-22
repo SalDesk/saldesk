@@ -10,6 +10,8 @@ import Input, { Select, Textarea } from '../components/ui/Input';
 import Badge from '../components/ui/Badge';
 import EmptyState from '../components/ui/EmptyState';
 import LoadingSpinner from '../components/shared/LoadingSpinner';
+import { useT } from '../i18n';
+import { mensagemErro } from '../utils/mensagemErro';
 
 const TYPE_ICONS = { vehicle: Car, equipment: Wrench, gear: Package };
 const TYPE_LABELS = { vehicle: 'Viatura', equipment: 'Equipamento', gear: 'Material' };
@@ -109,6 +111,7 @@ function FleetForm({ item, units, onSave, onCancel, loading, error }) {
 }
 
 export default function Fleet() {
+  const t = useT();
   const [items, setItems] = useState([]);
   const [units, setUnits] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -135,7 +138,7 @@ export default function Fleet() {
       }
       setModal(null);
     } catch (err) {
-      setFormError(err.response?.data?.error || 'Erro ao guardar');
+      setFormError(mensagemErro(err, t, 'Erro ao guardar'));
     } finally { setFormLoading(false); }
   }
 

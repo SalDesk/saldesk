@@ -14,6 +14,8 @@ import Modal from '../../components/ui/Modal';
 import Input, { Select, Textarea } from '../../components/ui/Input';
 import LoadingSpinner from '../../components/shared/LoadingSpinner';
 import { PRIO, PRIO_COLORS, KANBAN_COLS, tryParseNotes, StaffAvatar } from './shared';
+import { useT } from '../../i18n';
+import { mensagemErro } from '../../utils/mensagemErro';
 
 /* ── Kanban Task Card ── */
 function TaskCard({ task, staffList, onMove, onOpen }) {
@@ -78,6 +80,7 @@ function TaskCard({ task, staffList, onMove, onOpen }) {
 
 /* ── Kanban Board ── */
 function KanbanBoard({ staffList }) {
+  const t = useT();
   const toast = useToast();
   const [tasks, setTasks]         = useState([]);
   const [reservations, setReservations] = useState([]);
@@ -104,7 +107,7 @@ function KanbanBoard({ staffList }) {
       setTasks(p => p.map(t => t.id === task.id ? { ...t, status: newStatus } : t));
     } catch (err) {
       console.error(err);
-      toast.error(err.response?.data?.error || 'Erro ao actualizar tarefa');
+      toast.error(mensagemErro(err, t, 'Erro ao actualizar tarefa'));
     }
   }
 
@@ -134,7 +137,7 @@ function KanbanBoard({ staffList }) {
       setTaskForm({ title: '', desc: '', priority: 'medium', due: '', staff_id: '', reservation_id: '', checklist: '' });
     } catch (err) {
       console.error(err);
-      toast.error(err.response?.data?.error || 'Erro ao criar tarefa');
+      toast.error(mensagemErro(err, t, 'Erro ao criar tarefa'));
     } finally { setSaving(false); }
   }
 

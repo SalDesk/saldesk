@@ -10,8 +10,11 @@ import { getSellerCommissionPct } from '../services/sellerService';
 import useAuthStore from '../store/authStore';
 import { useToast } from '../store/toastStore';
 import Logo from '../components/shared/Logo';
+import { useT } from '../i18n';
+import { mensagemErro } from '../utils/mensagemErro';
 
 export default function VendedorPerfil() {
+  const t = useT();
   const navigate = useNavigate();
   const { user } = useAuthStore();
   const toast = useToast();
@@ -56,7 +59,7 @@ export default function VendedorPerfil() {
       await updateMyProfile({ phone, whatsapp, photo_url: photoPreview });
       toast.success('Perfil actualizado');
     } catch (err) {
-      toast.error(err.response?.data?.error || 'Erro ao actualizar perfil');
+      toast.error(mensagemErro(err, t, 'Erro ao actualizar perfil'));
     } finally {
       setSaving(false);
     }

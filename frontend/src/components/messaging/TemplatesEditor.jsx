@@ -10,6 +10,7 @@ import { Textarea } from '../ui/Input';
 import Button from '../ui/Button';
 import LoadingSpinner from '../shared/LoadingSpinner';
 import { useT } from '../../i18n';
+import { mensagemErro } from '../../utils/mensagemErro';
 
 /* Editor dos textos das mensagens de WhatsApp (confirmação, lembrete, pedido de avaliação).
    O operador escreve o texto com variáveis ({nome_cliente}, {data}...) e vê, ao lado,
@@ -114,7 +115,7 @@ function TemplateCard({ gatilho, dados, onGuardado }) {
       onGuardado(gatilho.id, idioma, { body: r.body, custom: r.custom });
       toast.success(t('messaging.saved'));
     } catch (err) {
-      setErro(err.response?.data?.error || t('messaging.saveError'));
+      setErro(mensagemErro(err, t, t('messaging.saveError')));
     } finally {
       setAGuardar(false);
     }
@@ -129,7 +130,7 @@ function TemplateCard({ gatilho, dados, onGuardado }) {
       setRascunhos((x) => ({ ...x, [idioma]: r.body }));
       toast.success(t('messaging.restored'));
     } catch (err) {
-      setErro(err.response?.data?.error || t('messaging.restoreError'));
+      setErro(mensagemErro(err, t, t('messaging.restoreError')));
     } finally {
       setAGuardar(false);
     }
@@ -287,7 +288,7 @@ export default function TemplatesEditor() {
   useEffect(() => {
     listMessageTemplates()
       .then(setLista)
-      .catch((err) => setErro(err.response?.data?.error || t('messaging.loadError')));
+      .catch((err) => setErro(mensagemErro(err, t, t('messaging.loadError'))));
   }, []);
 
   function aoGuardar(trigger, locale, novo) {

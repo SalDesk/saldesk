@@ -4,8 +4,10 @@ import Table from '../../components/ui/Table';
 import EmptyState from '../../components/ui/EmptyState';
 import LoadingSpinner from '../../components/shared/LoadingSpinner';
 import { PS_COLOR, PS_LABEL, fmtDate, fmtMoney } from './shared';
+import { useLingua } from '../../utils/formatoLingua';
 
 function CaixaTab({ transacoes, currency, loading }) {
+  useLingua();
   const cash     = (transacoes || []).filter(t => t.payment_method === 'cash');
   const totalRec = cash.reduce((s, t) => s + Number(t.total_price || 0), 0);
   const pago     = cash.filter(t => t.payment_status === 'paid').reduce((s, t) => s + Number(t.total_price || 0), 0);

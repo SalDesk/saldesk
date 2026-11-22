@@ -23,6 +23,7 @@ import Modal from '../../components/ui/Modal';
 import Input, { Textarea, Select } from '../../components/ui/Input';
 import LoadingSpinner from '../../components/shared/LoadingSpinner';
 import { EXPENSE_CATEGORIES, CAT_COLORS, fmtDate, fmtMoney } from './shared';
+import { useLingua } from '../../utils/formatoLingua';
 
 /* ─────────────────── DESPESAS ─────────────────── */
 
@@ -79,6 +80,7 @@ function ExpenseModal({ expense, staff, onSave, onClose }) {
 }
 
 function DespesasTab({ currency, staff }) {
+  useLingua();
   const [expenses,    setExpenses]    = useState([]);
   const [loading,     setLoading]     = useState(true);
   const [modal,       setModal]       = useState(null);

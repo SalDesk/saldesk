@@ -17,6 +17,8 @@ import FilterChips from '../components/ui/FilterChips';
 import Badge from '../components/ui/Badge';
 import EmptyState from '../components/ui/EmptyState';
 import Input, { Select } from '../components/ui/Input';
+import { useT } from '../i18n';
+import { mensagemErro } from '../utils/mensagemErro';
 
 /* ── Helpers ── */
 function generateCode() {
@@ -61,6 +63,7 @@ function CopyBtn({ text }) {
 
 /* ── VoucherModal ── */
 function VoucherModal({ voucher, units, onSave, onClose }) {
+  const t = useT();
   const isNew = !voucher || voucher._new;
   const base  = voucher && !voucher._new ? voucher : null;
 
@@ -102,7 +105,7 @@ function VoucherModal({ voucher, units, onSave, onClose }) {
         max_uses:   form.max_uses   ? Number(form.max_uses)   : 0,
       });
     } catch (err) {
-      setError(err.response?.data?.error || 'Erro ao guardar voucher.');
+      setError(mensagemErro(err, t, 'Erro ao guardar voucher.'));
     } finally {
       setSaving(false);
     }

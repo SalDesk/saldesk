@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import useToastStore from '../../store/toastStore';
+import { useT } from '../../i18n';
 
 /* "info" usava bg-primary-500 -- classe que nunca existiu neste projecto
    (nao ha nenhuma cor "primary" no tailwind.config.js), por isso ficava
@@ -13,6 +14,7 @@ const CONFIG = {
 };
 
 function ToastItem({ toast, onRemove }) {
+  const t = useT();
   useEffect(() => {
     const timer = setTimeout(() => onRemove(toast.id), 4000);
     return () => clearTimeout(timer);
@@ -37,7 +39,7 @@ function ToastItem({ toast, onRemove }) {
       <button
         onClick={(e) => { e.stopPropagation(); onRemove(toast.id); }}
         className="shrink-0 opacity-60 hover:opacity-100 text-lg leading-none ml-1"
-        aria-label="Fechar"
+        aria-label={t('common.close')}
       >
         ×
       </button>

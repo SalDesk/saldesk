@@ -21,6 +21,7 @@ import useUiStore from '../store/uiStore';
 import {
   opcoesValidas, nomeOpcao, unidadeOpcao, limitarVeiculos, precoEstimado, opcaoMaisBarata,
 } from '../utils/opcoesActividade';
+import { mensagemErro } from '../utils/mensagemErro';
 
 /* ── helpers ── */
 /* Data local do dispositivo, nao UTC -- ver nota em BeachSeller.jsx */
@@ -213,7 +214,7 @@ export default function BeachSale() {
       });
       setStep(4);
     } catch (err) {
-      setError(err?.response?.data?.error || 'Erro ao criar reserva. Tente novamente.');
+      setError(mensagemErro(err, t, 'Erro ao criar reserva. Tente novamente.'));
     } finally {
       setSaving(false);
     }

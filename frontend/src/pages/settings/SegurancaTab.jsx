@@ -6,6 +6,7 @@ import Card from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
 import { SaveBanner } from './shared';
 import { useT } from '../../i18n';
+import { mensagemErro } from '../../utils/mensagemErro';
 
 /* ─────────────────────────────────────────────────────────
    TAB 6 — SEGURANCA
@@ -32,7 +33,7 @@ export default function SegurancaTab() {
       setPwForm({ current: '', newPw: '', confirm: '' });
       setPwSaved(true); setTimeout(() => setPwSaved(false), 3000);
     } catch (err) {
-      setPwError(err.response?.data?.error || t('settings.seguranca.errChange'));
+      setPwError(mensagemErro(err, t, t('settings.seguranca.errChange')));
     } finally { setPwSave(false); }
   }
 

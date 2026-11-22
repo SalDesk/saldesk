@@ -25,6 +25,7 @@ import LevantamentoModal from './reservations/LevantamentoModal';
 import DevolucaoModal from './reservations/DevolucaoModal';
 import RestaurantCreateModal from './reservations/RestaurantCreateModal';
 import { SOURCE_LABEL } from './reservations/shared';
+import { mensagemErro } from '../utils/mensagemErro';
 
 const STATUS_FILTERS = ['', 'pending', 'confirmed', 'checked_in', 'checked_out', 'cancelled', 'payment_not_completed'];
 const TURNO_FILTERS = [{ value: '', label: 'Todos turnos' }, { value: 'almoco', label: 'Almoço' }, { value: 'jantar', label: 'Jantar' }];
@@ -135,7 +136,7 @@ export default function Reservations() {
       }
       setModal(null);
     } catch (err) {
-      setFormError(err.response?.data?.error || t('errors.generic'));
+      setFormError(mensagemErro(err, t, t('errors.generic')));
     } finally {
       setFormLoading(false);
     }

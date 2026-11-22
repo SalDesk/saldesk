@@ -15,10 +15,12 @@ import Modal from '../../components/ui/Modal';
 import Input from '../../components/ui/Input';
 import LoadingSpinner from '../../components/shared/LoadingSpinner';
 import { fmtMoney } from './shared';
+import { useLingua } from '../../utils/formatoLingua';
 
 /* ─────────────────── SALARIOS ─────────────────── */
 
 function SalariosTab({ currency }) {
+  useLingua();
   const [staffList,    setStaffList]    = useState([]);
   const [salaryConfig, setSalaryConfig] = useState({});
   const [payments,     setPayments]     = useState([]);

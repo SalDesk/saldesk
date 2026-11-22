@@ -19,6 +19,8 @@ import Button from '../components/ui/Button';
 import LoadingSpinner from '../components/shared/LoadingSpinner';
 import Logo from '../components/shared/Logo';
 import WhatsAppSend from '../components/messaging/WhatsAppSend';
+import { useT } from '../i18n';
+import { mensagemErro } from '../utils/mensagemErro';
 
 const STATUS_CFG = {
   pending:     { label: 'Pendente',   cls: 'bg-sand-100 text-sand-600' },
@@ -398,6 +400,7 @@ function StaffCalendar({ jobs, loading }) {
 
 /* ─── Vista: Disponibilidade ─── */
 function StaffAvailability({ staffId }) {
+  const t = useT();
   const toast = useToast();
   const [viewMonth, setViewMonth] = useState(() => {
     const d = new Date();
@@ -419,7 +422,7 @@ function StaffAvailability({ staffId }) {
       toast.success('Disponibilidade actualizada');
       setAvail({});
     } catch (err) {
-      toast.error(err.response?.data?.error || 'Erro ao actualizar disponibilidade');
+      toast.error(mensagemErro(err, t, 'Erro ao actualizar disponibilidade'));
     } finally {
       setSaving(false);
     }
@@ -529,6 +532,7 @@ function daysBetween(a, b) { return Math.round((new Date(b) - new Date(a)) / 864
 
 /* ── As minhas ferias ── */
 function MyLeaveSection({ staffId }) {
+  const t = useT();
   const toast = useToast();
   const [leave, setLeave] = useState([]);
   const [balance, setBalance] = useState(null);
@@ -557,7 +561,7 @@ function MyLeaveSection({ staffId }) {
       const [l, b] = await Promise.all([listLeave(staffId), getLeaveBalance(staffId, new Date().getFullYear())]);
       setLeave(l); setBalance(b);
     } catch (err) {
-      toast.error(err.response?.data?.error || 'Erro ao pedir férias');
+      toast.error(mensagemErro(err, t, 'Erro ao pedir férias'));
     } finally {
       setSaving(false);
     }
@@ -662,6 +666,7 @@ function MyCertificationsSection({ staffId }) {
 }
 
 function StaffProfile() {
+  const t = useT();
   const { user } = useAuthStore();
   const toast = useToast();
 
@@ -704,7 +709,7 @@ function StaffProfile() {
       await updateMyProfile({ phone, whatsapp, photo_url: photoPreview });
       toast.success('Perfil actualizado');
     } catch (err) {
-      toast.error(err.response?.data?.error || 'Erro ao actualizar perfil');
+      toast.error(mensagemErro(err, t, 'Erro ao actualizar perfil'));
     } finally {
       setSaving(false);
     }

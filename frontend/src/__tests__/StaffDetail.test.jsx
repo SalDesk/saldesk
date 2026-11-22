@@ -1,8 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import StaffDetail from '../pages/StaffDetail';
 import useToastStore from '../store/toastStore';
+import useUiStore from '../store/uiStore';
+import en from '../i18n/en.json';
 import {
   getStaff, listLeave, createLeave, updateLeaveStatus, getLeaveBalance, setLeaveBalance,
   listDocuments, createDocument, deleteDocument, listCertifications, createCertification, deleteCertification,
@@ -206,6 +208,27 @@ describe('Detalhe do colaborador: Férias', () => {
     createLeave.mockRejectedValueOnce(new Error('x'));
     fireEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Criar pedido' }));
     await waitFor(() => expect(toasts()).toContain('error:Erro ao criar pedido'));
+  });
+
+  it('em_ingles_o_toast_traduz_o_erro_pelo_codigo_e_sem_codigo_mostra_o_texto_do_servidor', async () => {
+    act(() => { useUiStore.setState({ lang: 'en' }); });
+    try {
+      createLeave.mockRejectedValueOnce({ response: { data: { error: 'Datas sobrepostas', code: 'INVALID_DATES' } } });
+      await montar();
+      await screen.findByText(`Direito (${ANO})`);
+      fireEvent.click(screen.getByRole('button', { name: /Novo pedido/ }));
+      const dlg = screen.getByRole('dialog');
+      const [inicio, fim] = dlg.querySelectorAll('input[type="date"]');
+      fireEvent.change(inicio, { target: { value: '2027-01-10' } });
+      fireEvent.change(fim, { target: { value: '2027-01-12' } });
+      fireEvent.click(within(dlg).getByRole('button', { name: 'Criar pedido' }));
+      await waitFor(() => expect(toasts()).toContain(`error:${en.errors.code.INVALID_DATES}`));
+      createLeave.mockRejectedValueOnce({ response: { data: { error: 'Datas sobrepostas' } } });
+      fireEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Criar pedido' }));
+      await waitFor(() => expect(toasts()).toContain('error:Datas sobrepostas'));
+    } finally {
+      act(() => { useUiStore.setState({ lang: 'pt' }); });
+    }
   });
 
   it('aprovar_e_rejeitar_chamam_updateLeaveStatus_e_avisam_e_falha_mostra_o_toast', async () => {

@@ -14,6 +14,7 @@ import Modal from '../../components/ui/Modal';
 import Input, { Textarea, Select } from '../../components/ui/Input';
 import LoadingSpinner from '../../components/shared/LoadingSpinner';
 import { MANUAL_REVENUE_CATEGORIES, CAT_COLORS, fmtDate, fmtMoney } from './shared';
+import { useLingua } from '../../utils/formatoLingua';
 
 /* ─────────────────── RECEITAS MANUAIS ─────────────────── */
 
@@ -61,6 +62,7 @@ function ReceitaManualModal({ receita, onSave, onClose }) {
 }
 
 function ReceitasManuaisTab({ currency, onChange }) {
+  useLingua();
   const [receitas,    setReceitas]    = useState([]);
   const [loading,     setLoading]     = useState(true);
   const [modal,       setModal]       = useState(null);

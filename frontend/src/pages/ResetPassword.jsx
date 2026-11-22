@@ -5,8 +5,11 @@ import { resetPassword } from '../services/authService';
 import AuthLayout from '../components/auth/AuthLayout';
 import Button from '../components/ui/Button';
 import PasswordStrength, { getPasswordStrength } from '../components/auth/PasswordStrength';
+import { useT } from '../i18n';
+import { mensagemErro } from '../utils/mensagemErro';
 
 export default function ResetPassword() {
+  const t = useT();
   const navigate = useNavigate();
   const [token,    setToken]   = useState('');
   const [form,     setForm]    = useState({ newPw: '', confirm: '' });
@@ -45,7 +48,7 @@ export default function ResetPassword() {
       await resetPassword(token, form.newPw);
       navigate('/login?reset=1');
     } catch (err) {
-      setError(err?.response?.data?.error || 'Link expirado ou inválido. Solicita um novo link de recuperação.');
+      setError(mensagemErro(err, t, 'Link expirado ou inválido. Solicita um novo link de recuperação.'));
     } finally {
       setLoading(false);
     }

@@ -1,3 +1,5 @@
+import { formatarData, formatarNumero } from '../../utils/formatoLingua';
+
 /* ── constants ── */
 export const EUR_CVE = 110;
 export const TOUR_COSTS_KEY = 'saldesk_tour_costs_v1';
@@ -61,12 +63,12 @@ export function ultimos30() {
 
 export function fmtDate(d) {
   if (!d) return '—';
-  return new Date(d + 'T00:00:00Z').toLocaleDateString('pt-PT', { day: '2-digit', month: 'short', timeZone: 'UTC' });
+  return formatarData(d, { day: '2-digit', month: 'short' });
 }
 export function fmtMoney(v, currency) {
   const n = Number(v || 0);
-  if (currency === 'CVE') return `${Math.round(n * EUR_CVE).toLocaleString('pt-PT')} CVE`;
-  return `€${Math.round(n).toLocaleString('pt-PT')}`;
+  if (currency === 'CVE') return `${formatarNumero(Math.round(n * EUR_CVE))} CVE`;
+  return `€${formatarNumero(Math.round(n))}`;
 }
 
 /* Formatos dos graficos: recebem valores JA na moeda escolhida (o grafico converte os dados antes). */
@@ -77,7 +79,7 @@ export function fmtEixo(v, currency) {
 }
 export function fmtDica(v, currency) {
   const n = Math.round(Number(v || 0));
-  return currency === 'CVE' ? `${n.toLocaleString('pt-PT')} CVE` : `€${n.toLocaleString('pt-PT')}`;
+  return currency === 'CVE' ? `${formatarNumero(n)} CVE` : `€${formatarNumero(n)}`;
 }
 
 export function loadCosts() {

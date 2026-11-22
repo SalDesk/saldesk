@@ -4,8 +4,10 @@ import EmptyState from '../../components/ui/EmptyState';
 import KpiCard from '../../components/financial/KpiCard';
 import LoadingSpinner from '../../components/shared/LoadingSpinner';
 import { fmtMoney } from './shared';
+import { useLingua } from '../../utils/formatoLingua';
 
 function PrevisaoTab({ forecast, currency, loading }) {
+  useLingua();
   if (loading) return <div className="flex justify-center py-16"><LoadingSpinner size={32} /></div>;
   if (!forecast) return (
     <Card padding="p-0">
