@@ -1,7 +1,8 @@
 import { useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Lock, ArrowRight, Zap } from 'lucide-react';
-import usePlan, { FEATURE_PLAN, FEATURE_DESCRIPTIONS, PLAN_LEVEL, PLAN_PRICES } from '../hooks/usePlan';
+import usePlan, { FEATURE_PLAN, FEATURE_DESCRIPTION_KEYS, PLAN_LEVEL, PLAN_PRICES } from '../hooks/usePlan';
+import { useT } from '../i18n';
 
 const PLAN_LABEL = { business: 'Business', pro: 'Pro' };
 const PLAN_BADGE_CLASS = {
@@ -12,9 +13,10 @@ const PLAN_BADGE_CLASS = {
 /* onNavigate (opcional): chamado ao seguir para os planos, para quem mostra o
    cartao como sobreposicao o poder fechar. A guarda de rota nao o passa. */
 function LockCard({ requiredPlan, feature, onVoltar, onNavigate }) {
+  const t = useT();
   const navigate = useNavigate();
   const label = PLAN_LABEL[requiredPlan] || requiredPlan;
-  const desc  = FEATURE_DESCRIPTIONS[feature] || 'Funcionalidade disponível num plano superior.';
+  const desc  = FEATURE_DESCRIPTION_KEYS[feature] ? t(FEATURE_DESCRIPTION_KEYS[feature]) : t('plan.fallback');
   const price = PLAN_PRICES[requiredPlan] || '—';
 
   return (
@@ -26,19 +28,19 @@ function LockCard({ requiredPlan, feature, onVoltar, onNavigate }) {
       <div className="flex justify-center mb-3">
         <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-mono font-semibold uppercase tracking-wide text-white ${PLAN_BADGE_CLASS[requiredPlan] || 'bg-n-600'}`}>
           <Zap size={10} strokeWidth={2.5} />
-          Plano {label}
+          {t('plan.planName', { plan: label })}
         </span>
       </div>
 
       <h2 className="font-display font-bold text-xl text-n-900 text-center mb-2">
-        Funcionalidade {label}
+        {t('plan.featureTitle', { plan: label })}
       </h2>
       <p className="text-sm font-body text-n-500 text-center leading-relaxed mb-4">
         {desc}
       </p>
       <p className="text-xs font-body text-n-400 text-center mb-6">
-        Plano {label} a partir de{' '}
-        <span className="font-semibold text-n-600">€{price}/mes</span>
+        {t('plan.fromPrice', { plan: label })}{' '}
+        <span className="font-semibold text-n-600">{t('plan.pricePerMonth', { price })}</span>
       </p>
 
       <div className="flex flex-col gap-2">
@@ -46,14 +48,14 @@ function LockCard({ requiredPlan, feature, onVoltar, onNavigate }) {
           onClick={() => { navigate('/definicoes?tab=facturacao'); onNavigate?.(); }}
           className="flex items-center justify-center gap-2 w-full h-10 px-4 rounded-md bg-ocean-700 text-white text-sm font-body font-semibold hover:bg-ocean-500 transition-colors"
         >
-          Ver planos de subscrição
+          {t('plan.viewPlans')}
           <ArrowRight size={15} strokeWidth={1.75} />
         </button>
         <button
           onClick={onVoltar}
           className="w-full h-10 px-4 rounded-md border border-n-200 text-sm font-body text-n-600 hover:bg-n-50 transition-colors"
         >
-          Fechar
+          {t('common.close')}
         </button>
       </div>
     </div>

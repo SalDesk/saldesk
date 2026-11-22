@@ -5,10 +5,12 @@ import useAuthStore from '../../store/authStore';
 import usePlan from '../../hooks/usePlan';
 import { UpgradeModal } from '../PlanGuard';
 import { PLAN_BADGE, filterNavItems, getNavSections, isLocked } from './navConfig';
+import { useT } from '../../i18n';
 
 /* Conteudo da palette: so existe enquanto aberta, por isso o estado
    (pesquisa e selecao) volta ao inicio de cada vez que abre */
 function PaletteBody({ onClose }) {
+  const t = useT();
   const operator = useAuthStore((s) => s.operator);
   const navigate = useNavigate();
   const location = useLocation();
@@ -22,7 +24,7 @@ function PaletteBody({ onClose }) {
   const opType = operator?.operator_type || 'hotel';
 
   /* Seccoes com os itens que passam o filtro; indice plano para o teclado */
-  const groups = getNavSections(opType)
+  const groups = getNavSections(opType, t)
     .map((section) => ({ ...section, items: filterNavItems(section.items, query) }))
     .filter((section) => section.items.length > 0);
   const flat = groups.flatMap((g) => g.items);
@@ -96,7 +98,7 @@ function PaletteBody({ onClose }) {
         role="dialog"
         aria-modal="true"
         data-command-palette
-        aria-label="Pesquisar ecrãs"
+        aria-label={t('palette.searchScreens')}
         onKeyDown={handleKeyDown}
         className="w-full max-w-lg bg-white rounded-lg border border-n-200 shadow-xl overflow-hidden"
       >
@@ -107,8 +109,8 @@ function PaletteBody({ onClose }) {
             type="text"
             value={query}
             onChange={handleChange}
-            placeholder="Pesquisar…"
-            aria-label="Pesquisar ecrãs"
+            placeholder={t('topbar.searchPlaceholder')}
+            aria-label={t('palette.searchScreens')}
             aria-controls="command-palette-list"
             aria-activedescendant={flat[active] ? `command-palette-opt-${active}` : undefined}
             autoComplete="off"
@@ -121,11 +123,11 @@ function PaletteBody({ onClose }) {
           ref={listRef}
           id="command-palette-list"
           role="listbox"
-          aria-label="Ecrãs"
+          aria-label={t('palette.screens')}
           className="max-h-[50vh] overflow-y-auto py-2"
         >
           {flat.length === 0 && (
-            <p className="px-4 py-6 text-center text-sm font-body text-n-500">Sem resultados</p>
+            <p className="px-4 py-6 text-center text-sm font-body text-n-500">{t('common.noResults')}</p>
           )}
           {groups.map((section) => (
             <div key={section.id} role="group" aria-label={section.label}>

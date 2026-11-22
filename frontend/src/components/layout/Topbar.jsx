@@ -10,6 +10,7 @@ import LanguageToggle from '../shared/LanguageToggle';
 import Logo from '../shared/Logo';
 import CommandPalette from './CommandPalette';
 import api from '../../services/api';
+import { useT } from '../../i18n';
 
 const TYPE_ICON = {
   new_booking:      { Icon: Calendar,       color: 'text-ocean-700' },
@@ -26,20 +27,10 @@ const TYPE_ICON = {
   platform_broadcast:   { Icon: Bell,          color: 'text-sand-600'  },
 };
 
-const TYPE_LABEL = {
-  new_booking:  'Nova reserva',
-  cancellation: 'Cancelamento',
-  new_review:   'Nova avaliação',
-  new_message:  'Nova mensagem',
-  ota_import_failed: 'Falha ao importar reserva OTA',
-  call_waiter:  'Mesa a chamar',
-  new_order:    'Novo pedido',
-  partnership_request:  'Pedido de parceria',
-  partnership_accepted: 'Parceria aceite',
-  partnership_rejected: 'Parceria recusada',
-  founder_message:      'Mensagem da SalDesk',
-  platform_broadcast:   'Anúncio da SalDesk',
-};
+/* Rotulo de cada tipo: topbar.types.<tipo> nos json; tipo desconhecido usa topbar.notification */
+function typeLabel(t, type) {
+  return TYPE_ICON[type] ? t(`topbar.types.${type}`) : t('topbar.notification');
+}
 
 function timeAgo(dateStr) {
   const diff = Math.floor((Date.now() - new Date(dateStr)) / 1000);
@@ -50,6 +41,7 @@ function timeAgo(dateStr) {
 }
 
 export default function Topbar() {
+  const t = useT();
   const { operator, logout } = useAuthStore();
   const navigate             = useNavigate();
 
@@ -166,11 +158,11 @@ export default function Topbar() {
       <button
         type="button"
         onClick={() => setSearchOpen(true)}
-        aria-label="Pesquisar"
+        aria-label={t('common.search')}
         className="flex items-center gap-2 h-9 px-2.5 md:px-3 md:w-64 rounded-md text-n-500 md:border md:border-n-200 md:bg-n-50 hover:text-ocean-700 hover:bg-ocean-50 transition-colors"
       >
         <Search size={16} strokeWidth={1.75} aria-hidden="true" />
-        <span className="hidden md:block flex-1 text-left text-sm font-body text-n-400">Pesquisar…</span>
+        <span className="hidden md:block flex-1 text-left text-sm font-body text-n-400">{t('topbar.searchPlaceholder')}</span>
         <kbd className="hidden md:block text-[10px] font-mono text-n-400 border border-n-200 rounded px-1.5 py-0.5 bg-white">Ctrl K</kbd>
       </button>
 
@@ -185,7 +177,7 @@ export default function Topbar() {
             onClick={handleBellClick}
             data-tour="topbar-bell"
             className="relative p-2 rounded-md text-n-500 hover:text-ocean-700 hover:bg-ocean-50 transition-colors"
-            aria-label="Notificações"
+            aria-label={t('topbar.notifications')}
           >
             <Bell size={20} strokeWidth={1.75} />
             {unread > 0 && (
@@ -198,22 +190,22 @@ export default function Topbar() {
           {open && (
             <div className="absolute top-full right-0 mt-2 w-80 bg-white border border-n-200 rounded-md shadow-lg z-50">
               <div className="flex items-center justify-between px-4 py-3 border-b border-n-100">
-                <span className="text-sm font-display font-semibold text-n-900">Notificações</span>
+                <span className="text-sm font-display font-semibold text-n-900">{t('topbar.notifications')}</span>
                 {unread > 0 && (
-                  <span className="text-xs font-mono text-n-500">{unread} não lida{unread !== 1 ? 's' : ''}</span>
+                  <span className="text-xs font-mono text-n-500">{t(unread === 1 ? 'topbar.unreadOne' : 'topbar.unreadMany', { n: unread })}</span>
                 )}
               </div>
 
               <div className="max-h-80 overflow-y-auto divide-y divide-n-100">
                 {loading && notifs.length === 0 && (
-                  <div className="px-4 py-6 text-center text-sm text-n-400 font-body">A carregar...</div>
+                  <div className="px-4 py-6 text-center text-sm text-n-400 font-body">{t('common.loading')}</div>
                 )}
                 {!loading && notifs.length === 0 && (
-                  <div className="px-4 py-6 text-center text-sm text-n-400 font-body">Sem notificações</div>
+                  <div className="px-4 py-6 text-center text-sm text-n-400 font-body">{t('topbar.empty')}</div>
                 )}
                 {notifs.map((n) => {
                   const type  = TYPE_ICON[n.notification_type] || TYPE_ICON.new_message;
-                  const label = TYPE_LABEL[n.notification_type] || 'Notificação';
+                  const label = typeLabel(t, n.notification_type);
                   return (
                     <button
                       key={n.id}
@@ -245,7 +237,7 @@ export default function Topbar() {
                   onClick={handleViewAll}
                   className="w-full text-center text-sm font-body font-medium text-ocean-700 hover:text-ocean-900 transition-colors py-1"
                 >
-                  Ver todas
+                  {t('topbar.viewAll')}
                 </button>
               </div>
             </div>
@@ -272,7 +264,7 @@ export default function Topbar() {
                 className="w-full flex items-center gap-2.5 px-3 py-2 text-sm font-body text-n-700 hover:bg-ocean-50 hover:text-ocean-700 transition-colors"
               >
                 <User size={14} strokeWidth={1.75} />
-                Ver perfil
+                {t('topbar.viewProfile')}
               </button>
               <div className="border-t border-n-100 mt-1 pt-1">
                 <button
@@ -280,7 +272,7 @@ export default function Topbar() {
                   className="w-full flex items-center gap-2.5 px-3 py-2 text-sm font-body text-error hover:bg-red-50 transition-colors"
                 >
                   <LogOut size={14} strokeWidth={1.75} />
-                  Sair
+                  {t('nav.logout')}
                 </button>
               </div>
             </div>

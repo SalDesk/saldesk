@@ -1,17 +1,19 @@
 import { NavLink } from 'react-router-dom';
 import { LayoutDashboard, Calendar, Plus, MessageCircle, User } from 'lucide-react';
+import { useT } from '../../i18n';
 
 const ITEMS = [
-  { to: '/',          icon: LayoutDashboard, label: 'Dashboard', end: true },
-  { to: '/reservas',  icon: Calendar,        label: 'Reservas'            },
+  { to: '/',          icon: LayoutDashboard, labelKey: 'nav.dashboard', end: true },
+  { to: '/reservas',  icon: Calendar,        labelKey: 'nav.reservations'         },
 ];
 
 const ITEMS_RIGHT = [
-  { to: '/mensagens', icon: MessageCircle, label: 'Mensagens' },
-  { to: '/perfil',    icon: User,          label: 'Perfil'    },
+  { to: '/mensagens', icon: MessageCircle, labelKey: 'nav.messages' },
+  { to: '/perfil',    icon: User,          labelKey: 'nav.profile'  },
 ];
 
-function NavItem({ to, icon: Icon, label, end }) {
+function NavItem({ to, icon: Icon, labelKey, end }) {
+  const t = useT();
   return (
     <NavLink
       to={to}
@@ -28,7 +30,7 @@ function NavItem({ to, icon: Icon, label, end }) {
             <span className="absolute top-1.5 w-1.5 h-1.5 rounded-full bg-sand-500" />
           )}
           <Icon size={20} strokeWidth={1.75} />
-          <span>{label}</span>
+          <span>{t(labelKey)}</span>
         </>
       )}
     </NavLink>
@@ -36,6 +38,7 @@ function NavItem({ to, icon: Icon, label, end }) {
 }
 
 export default function BottomNav({ onOpenMore }) {
+  const t = useT();
   return (
     <nav
       className="md:hidden fixed bottom-0 inset-x-0 z-30 bg-ocean-900 border-t border-ocean-800 flex items-stretch h-16"
@@ -47,7 +50,7 @@ export default function BottomNav({ onOpenMore }) {
         <button
           type="button"
           onClick={onOpenMore}
-          aria-label="Mais opções"
+          aria-label={t('nav.moreOptions')}
           className="-translate-y-3 w-14 h-14 rounded-full bg-sand-500 shadow-lg flex items-center justify-center hover:bg-sand-600 transition-colors"
         >
           <Plus size={26} strokeWidth={1.75} className="text-white" />

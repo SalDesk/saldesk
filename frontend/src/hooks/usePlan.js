@@ -22,25 +22,11 @@ export const FEATURE_PLAN = {
   vendedor:              'pro',
 };
 
-export const FEATURE_DESCRIPTIONS = {
-  colaboradores:         'Gere a tua equipa, atribui trabalhos e acompanha o desempenho de cada colaborador.',
-  guias:                 'Cria perfis de guias, define disponibilidade e acompanha as suas avaliações e missões.',
-  financeiro:            'Acede a relatórios financeiros detalhados, exportações e análise de receitas por tour.',
-  marketing:             'Cria campanhas, agenda publicações e monitoriza o desempenho do teu marketing digital.',
-  analytics:             'Analisa tendências, fontes de tráfego e métricas de crescimento do negócio.',
-  vouchers:              'Cria e gere vouchers e códigos de desconto para os teus clientes.',
-  afiliados:             'Expande o teu alcance com um programa de afiliados e comissões automáticas.',
-  meteorologia:          'Consulta previsões meteorológicas e recebe alertas para dias com tours agendados.',
-  integracoes:           'Liga o teu negócio ao Viator e GetYourGuide e gere reservas de plataformas externas num só lugar.',
-  automacoes:            'Configura sequências de comunicação automática por email e WhatsApp para cada etapa da reserva.',
-  fidelidade:            'Fideliza os teus clientes com um programa de pontos, recompensas e benefícios exclusivos.',
-  grupos:                'Gere grupos corporativos, eventos especiais e reservas em grupo com faturação centralizada.',
-  pacotes:               'Cria pacotes sazonais e combina serviços para aumentar o valor médio por cliente.',
-  parcerias:             'Establece parcerias de cross-selling com outros operadores e partilha comissões automaticamente.',
-  previsao:              'Usa dados históricos e condições externas para prever a procura e optimizar a disponibilidade.',
-  'financeiro-completo': 'Controla despesas operacionais, salários e obrigações fiscais com relatórios e exportações completos.',
-  vendedor:              'Activa o modo Vendedor de Praia — colaboradores vendem tours no campo com uma app simplificada.',
-};
+/* Chave i18n da descricao de cada funcionalidade no aviso de upgrade (textos em plan.features.<feature>
+   dos json). As chaves de FEATURE_PLAN sao ids e nao mudam. */
+export const FEATURE_DESCRIPTION_KEYS = Object.fromEntries(
+  Object.keys(FEATURE_PLAN).map((feature) => [feature, `plan.features.${feature}`])
+);
 
 export const PLAN_PRICES = { starter: 29, pro: 69, business: 79 };
 
