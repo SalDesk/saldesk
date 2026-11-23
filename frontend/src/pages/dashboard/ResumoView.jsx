@@ -4,6 +4,7 @@ import { BookOpen, Euro, Percent, Receipt, TrendingUp, BarChart2 } from 'lucide-
 import { getResumo, getReceita, getUnidades } from '../../services/financeiroService';
 import { listReservations } from '../../services/reservationsService';
 import { useT } from '../../i18n';
+import { formatarNumero } from '../../utils/formatoLingua';
 import KpiCard from '../../components/financial/KpiCard';
 import RevenueChart from '../../components/financial/RevenueChart';
 import Badge from '../../components/ui/Badge';
@@ -189,7 +190,7 @@ export default function ResumoView() {
                     </p>
                   </div>
                   <p className="text-sm font-display font-bold text-ocean-700 shrink-0">
-                    {`€${Math.round(Number(s.receita || 0)).toLocaleString('pt-PT')}`}
+                    {`€${formatarNumero(Math.round(Number(s.receita || 0)))}`}
                   </p>
                 </div>
               ))}

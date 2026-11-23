@@ -148,7 +148,27 @@ describe('o detector de portugues fixo', () => {
   });
 });
 
+/* Locale escrito directamente: so os mapas LOCALES (um por lingua) o podem ter. */
+export const PT_PT_PERMITIDO = {
+  'utils/formatoLingua.js': 'mapa LOCALES: o locale de cada lingua do painel',
+  'pages/dashboard/agendaLogic.js': 'mapa LOCALES das datas: o locale de cada lingua do painel',
+};
+
 describe('painel sem portugues fixo', () => {
+  FICHEIROS_CONVERTIDOS.forEach((rel) => {
+    it(`${rel} nao fixa o locale pt-PT`, () => {
+      /* sem comentarios: so conta codigo */
+      const codigo = ler(rel).replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+      if (PT_PT_PERMITIDO[rel]) {
+        /* so a linha do mapa LOCALES pode ter pt-PT */
+        const fora = codigo.split(/\r?\n/).filter((l) => /pt-PT/.test(l) && !/\bpt:\s*'pt-PT'/.test(l));
+        expect(fora).toEqual([]);
+      } else {
+        expect(codigo).not.toMatch(/pt-PT/);
+      }
+    });
+  });
+
   FICHEIROS_CONVERTIDOS.forEach((rel) => {
     it(rel, () => {
       expect(textosPortugueses(ler(rel), permitidos(rel))).toEqual([]);

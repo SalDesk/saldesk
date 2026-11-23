@@ -1,5 +1,5 @@
 import { useT } from '../../i18n';
-import { formatarNumero, useLingua } from '../../utils/formatoLingua';
+import { formatarNumero } from '../../utils/formatoLingua';
 
 const LARGURA = 200;
 const ALTURA = 34;

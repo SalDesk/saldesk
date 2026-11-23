@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { MemoryRouter, useLocation } from 'react-router-dom';
 import Sidebar from '../components/layout/Sidebar';
 import useAuthStore from '../store/authStore';
@@ -215,5 +215,36 @@ describe('Sidebar por lingua', () => {
     expect(screen.getByText('Configura sequências de comunicação automática por email e WhatsApp para cada etapa da reserva.')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Ver planos de subscrição/ })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Fechar' })).toBeInTheDocument();
+  });
+});
+
+describe('Sidebar: troca de lingua com o menu aberto', () => {
+  beforeEach(() => {
+    localStorage.clear();
+    useAuthStore.setState({ operator: operador() });
+    useUiStore.setState({ navCollapsed: {}, lang: 'pt' });
+    useNavCounters.mockReturnValue({});
+  });
+
+  /* Desmonta antes de repor a lingua, para a mudanca nao re-renderizar fora de act */
+  afterEach(() => {
+    cleanup();
+    useUiStore.setState({ lang: 'pt' });
+  });
+
+  it('as seccoes e os itens mudam de PT para EN e voltam sem remontar', () => {
+    renderSidebar();
+    expect(screen.getByRole('button', { name: 'Operação' })).toBeInTheDocument();
+    expect(screen.getByText('Reservas')).toBeInTheDocument();
+
+    act(() => { useUiStore.setState({ lang: 'en' }); });
+    expect(screen.getByRole('button', { name: 'Operations' })).toBeInTheDocument();
+    expect(screen.getByText('Bookings')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Operação' })).not.toBeInTheDocument();
+    expect(screen.queryByText('Reservas')).not.toBeInTheDocument();
+
+    act(() => { useUiStore.setState({ lang: 'pt' }); });
+    expect(screen.getByRole('button', { name: 'Operação' })).toBeInTheDocument();
+    expect(screen.getByText('Reservas')).toBeInTheDocument();
   });
 });
