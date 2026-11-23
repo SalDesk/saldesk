@@ -19,6 +19,40 @@ estes, em singular e plural, em todos os ecras; nao alternar com sinonimos. O po
 | Integracoes | Integrations | Ligacoes a plataformas externas; o item do menu chama-se "Channel Manager". |
 | Frota | Fleet | As viaturas de um rent-a-car ou de um operador de actividades. |
 | Plano | Plan | Subscricao do SalDesk (Starter, Pro, Business): "Pro plan", "Pro feature", "View subscription plans". |
+| RH | HR | Recursos humanos: o ecra "HR" com ferias, documentos e certificacoes da equipa. |
+| Ferias / Licenca | Leave | Ausencias do colaborador ("Leave", "Leave request", "My leave"); o tipo "ferias" e "Annual leave", os outros "Sick leave", "Maternity leave"... |
+| Direito a ferias | Leave entitlement | Dias de ferias a que o colaborador tem direito por ano ("Entitlement", "Set entitlement"). |
+| Salario / Salarios | Salary / Salaries | O vencimento de um colaborador; a area de processamento em Financeiro e "Payroll" se aparecer. |
+| Horario / Turno | Schedule / Shift | "Usual schedule" para os dias habituais de um colaborador; "Shift" para um turno com hora. |
+| Documento | Document | Contratos e documentos de identificacao guardados na ficha do colaborador. |
+| Certificacao | Certification | Formacao ou certificado de um colaborador ou guia ("Training and certifications"). |
+| Checklist | Checklist | Lista de verificacao diaria do pessoal ("Today's checklist"). |
+| Tarefa | Task | Tarefa do quadro do pessoal ("New task", "Tasks"). |
+| Trabalho (atribuicao) | Job | Servico atribuido a um colaborador ou guia ("Next job", "12 jobs"); nao usar "Work". |
+| Cargo / Funcao | Role | O cargo de um colaborador ("Role", "Maintenance", "Receptionist"). |
+| Guia | Guide | Guia de actividades (menu "Guides"). |
+| Vendedor de Praia | Beach Seller | O cargo e o modo de venda na praia ("Beach Sellers"). |
+| Disponibilidade / Folga | Availability / Day off | Dias em que o colaborador pode trabalhar; "Day off" para folga. |
+| Manutencao / Intervencao | Maintenance | Ecra "Maintenance" e cada registo feito numa viatura ("Record maintenance", "Maintenance history"); nao usar "Repair job". |
+| Revisao (viatura) | Service | A revisao periodica de uma viatura ("Next service (km)"); o tipo gravado continua "Revisao". |
+| Seguro / Inspecao / IUC | Insurance / Inspection / IUC | Documentos da viatura com validade; IUC e nome oficial e nao se traduz. |
+| Ocorrencia / Ocorrencias | Incident / Incidents | Registo de algo que correu mal na operacao (menu "Incidents", "Log incident"); nao usar "Occurrence". |
+| Severidade | Severity | Gravidade de uma ocorrencia: Low, Medium, High, Critical. |
+| Frota e Equipamento | Fleet and equipment | Ecra da frota: viaturas (Vehicle), equipamento (Equipment) e material (Gear). |
+| Meteorologia | Weather | Ecra da previsao do tempo ("7-day forecast", "Bad weather forecast for..."). |
+| Limpeza de quartos | Housekeeping | Ecra "Housekeeping": estados Clean, Dirty, Being cleaned, Inspection, Blocked. |
+| Financeiro | Financial | Ecra das financas (menu "Financial"); areas Revenue, Expenses, Payroll, Commissions, Obligations, Profit and loss. |
+| Receita / Receitas | Revenue | Dinheiro que entra ("Total revenue", "Gross revenue", "Manual revenue"); nao usar "Income" nem "Sales". |
+| Despesa / Despesas | Expense / Expenses | Custo registado pelo operador ("Record expense", "Operating expenses"); a categoria gravada continua em portugues. |
+| Folha salarial / Salarios (area) | Payroll | A area de salarios do Financeiro e o total pago ao pessoal ("Total payroll/month"). |
+| Comissao / Comissoes | Commission / Commissions | O que se paga aos vendedores de praia e parceiros ("Pay commission"). |
+| Caixa | Cash | O separador dos pagamentos em dinheiro ("Cash payments"); "Cash flow" so se aparecer o fluxo de caixa. |
+| Previsao | Forecast | Previsao de receita ("Weekly forecast") e o ecra "Demand forecast" (Previsao de Procura). |
+| Resultado | Profit and loss / Net result | A area "Profit and loss"; o valor final e "Net result". |
+| Margem | Margin | "Net margin", "Margin" por tour. |
+| Obrigacoes | Obligations | INPS, IUR, seguros e subscricao; INPS, IUR, NIF, DNRE, Vinti4 e SISP sao nomes oficiais e nao se traduzem. |
+| Analises | Analytics | O ecra "Analytics" (Score de saude = "Business health score", funil = "Conversion funnel"). |
+| Sazonalidade / Epoca alta | Seasonality / High season | Analise da previsao de procura ("High seasons", "Low seasons"). |
 
 ## Regras
 

@@ -5,6 +5,9 @@ import Weather from '../pages/Weather';
 import { getWeatherForecast, weatherInfo } from '../services/weatherService';
 import { listReservations } from '../services/reservationsService';
 import { listIslands } from '../services/islandsService';
+import useUiStore from '../store/uiStore';
+import ptJson from '../i18n/pt.json';
+import { portuguesNoEcra, chavesCruas } from './helpers/portuguesNoEcra';
 
 /* Sem rede: so a previsao e os servicos da pagina sao simulados; weatherInfo, isBadWeather e dayLabel sao os reais */
 vi.mock('../services/weatherService', async (importOriginal) => ({
@@ -273,7 +276,7 @@ describe('Weather', () => {
     ];
     for (const [codigo, etiqueta, icone] of esperado) {
       const info = weatherInfo(codigo);
-      expect([codigo, info.label, info.iconName]).toEqual([codigo, etiqueta, icone]);
+      expect([codigo, ptJson.weather.conditions[info.chave], info.iconName]).toEqual([codigo, etiqueta, icone]);
     }
   });
 
@@ -325,5 +328,115 @@ describe('Weather', () => {
     const msg = await screen.findByText('Não foi possível carregar a previsão meteorológica. Verifique a ligação a internet.');
     expect(msg.className).toContain('font-display');
     expect(screen.getByRole('button', { name: /Tentar novamente/ })).toBeTruthy();
+  });
+});
+
+/* ───────────────────────── Painel em ingles ───────────────────────── */
+
+describe('Weather em inglês', () => {
+  const DADOS = ['Buggy Tour', 'Mergulho', 'Ana Ferreira', 'John Smith', 'Kitesurf', 'Marie Dubois', 'Open-Meteo'];
+
+  beforeEach(() => {
+    useUiStore.setState({ lang: 'en' });
+    getWeatherForecast.mockReset().mockResolvedValue(PREVISAO);
+    listReservations.mockReset().mockResolvedValue(RESERVAS);
+    listIslands.mockReset().mockResolvedValue(ILHAS);
+  });
+  afterEach(() => {
+    cleanup();
+    useUiStore.setState({ lang: 'pt' });
+  });
+
+  async function abreEmIngles() {
+    const r = render(
+      <MemoryRouter future={FUTURE} initialEntries={['/meteorologia']}>
+        <Routes>
+          <Route path="/meteorologia" element={<Weather />} />
+          <Route path="*" element={<Local />} />
+        </Routes>
+      </MemoryRouter>
+    );
+    await waitFor(() => expect(r.container.querySelectorAll('.grid.grid-cols-4 > button').length).toBeGreaterThan(0));
+    return r;
+  }
+
+  const fmtEn = (data) => new Date(data + 'T00:00:00Z').toLocaleDateString('en-GB', { weekday: 'long', day: '2-digit', month: 'long', timeZone: 'UTC' });
+  const curtaEn = (data) => new Date(data + 'T00:00:00Z').toLocaleDateString('en-GB', { day: '2-digit', month: 'short', timeZone: 'UTC' });
+  const diaEn = (data) => new Date(data + 'T00:00:00Z').toLocaleDateString('en-GB', { weekday: 'short', day: '2-digit', month: 'short', timeZone: 'UTC' });
+
+  it('cartoes_alerta_e_resumo_em_ingles_sem_portugues', async () => {
+    const r = await abreEmIngles();
+    expect(screen.getByRole('heading', { name: 'Weather — Sal' })).toBeTruthy();
+    expect(screen.getByText('7-day forecast · Open-Meteo')).toBeTruthy();
+    const c = [...r.container.querySelectorAll('.grid.grid-cols-4 > button')];
+    expect(c[0].textContent).toContain('Today');
+    expect(c[0].textContent).toContain(curtaEn(dia(0)));
+    expect(c[0].textContent).toContain('Clear sky');
+    expect(c[1].textContent).toContain('Tomorrow');
+    expect(c[1].textContent).toContain('Cloudy');
+    /* os outros dias: dia da semana e data pelo en-GB */
+    expect(c[2].textContent).toContain(diaEn(dia(2)));
+    expect(c[2].textContent).toContain('Rain');
+    expect(c[6].textContent).toContain('Thunderstorm');
+    expect(screen.getByText(`Bad weather forecast for ${fmtEn(dia(2))}`)).toBeTruthy();
+    const alerta = screen.getByText(/Bad weather forecast for/).parentElement;
+    expect(alerta.textContent).toContain('Rain · 12mm precipitation · 2 tour(s) scheduled with 4 guest(s)');
+    expect(screen.getByRole('button', { name: 'Contact customers' })).toBeTruthy();
+    const valor = (rotulo) => screen.getByText(rotulo).previousElementSibling.textContent;
+    expect(valor('Max. today')).toBe('30°');
+    expect(valor('Total precipitation, 7 days')).toBe('24 mm');
+    expect(valor('Days without bad weather')).toBe('4');
+    expect(valor('Conflict(s) with tours')).toBe('1');
+    expect(screen.getByText(/Updated automatically/)).toBeTruthy();
+    expect(screen.getByRole('button', { name: /Refresh/ })).toBeTruthy();
+    expect(portuguesNoEcra(DADOS)).toEqual([]);
+    expect(chavesCruas(['weather'])).toEqual([]);
+  });
+
+  it('detalhe_do_dia_em_ingles', async () => {
+    const r = await abreEmIngles();
+    const c = [...r.container.querySelectorAll('.grid.grid-cols-4 > button')];
+    fireEvent.click(c[2]);
+    expect(screen.getByRole('heading', { level: 3 }).textContent).toBe(fmtEn(dia(2)));
+    expect(screen.getByText('12 mm precipitation')).toBeTruthy();
+    expect(screen.getByText('2 tour(s) scheduled')).toBeTruthy();
+    fireEvent.click(c[4]);
+    expect(screen.getByText('No tours scheduled for this day.')).toBeTruthy();
+    expect(portuguesNoEcra(DADOS)).toEqual([]);
+  });
+
+  it('sem_conflitos_e_erro_em_ingles', async () => {
+    listReservations.mockResolvedValue([]);
+    await abreEmIngles();
+    expect(screen.getByText('No weather conflicts')).toBeTruthy();
+    cleanup();
+    getWeatherForecast.mockRejectedValue(new Error('x'));
+    render(
+      <MemoryRouter future={FUTURE}>
+        <Weather />
+      </MemoryRouter>
+    );
+    expect(await screen.findByText('Could not load the weather forecast. Check your internet connection.')).toBeTruthy();
+    expect(screen.getByRole('button', { name: /Try again/ })).toBeTruthy();
+  });
+});
+
+describe('Weather: o dia da semana em português continua igual', () => {
+  afterEach(() => cleanup());
+
+  it('os_dias_depois_de_amanha_usam_o_formato_pt', async () => {
+    useUiStore.setState({ lang: 'pt' });
+    getWeatherForecast.mockReset().mockResolvedValue(PREVISAO);
+    listReservations.mockReset().mockResolvedValue([]);
+    listIslands.mockReset().mockResolvedValue(ILHAS);
+    const r = render(
+      <MemoryRouter future={FUTURE}>
+        <Weather />
+      </MemoryRouter>
+    );
+    await waitFor(() => expect(r.container.querySelectorAll('.grid.grid-cols-4 > button').length).toBe(7));
+    const c = [...r.container.querySelectorAll('.grid.grid-cols-4 > button')];
+    expect(c[2].textContent).toContain(new Date(dia(2) + 'T00:00:00Z').toLocaleDateString('pt-PT', { weekday: 'short', day: '2-digit', month: 'short', timeZone: 'UTC' }));
+    expect(c[2].textContent).toContain(new Date(dia(2) + 'T00:00:00Z').toLocaleDateString('pt-PT', { day: '2-digit', month: 'short', timeZone: 'UTC' }));
   });
 });

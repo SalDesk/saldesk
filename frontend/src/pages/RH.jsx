@@ -7,11 +7,9 @@ import PageHeader from '../components/layout/PageHeader';
 import Card from '../components/ui/Card';
 import LoadingSpinner from '../components/shared/LoadingSpinner';
 import ExpiryBadge from '../components/shared/ExpiryBadge';
-
-const LEAVE_TYPE_LABEL = {
-  vacation: 'Férias', sick: 'Doença', maternity: 'Licença maternidade',
-  paternity: 'Licença paternidade', unpaid: 'Sem vencimento', other: 'Outro',
-};
+import { useT } from '../i18n';
+import { useLingua } from '../utils/formatoLingua';
+import { rotuloCargo, rotuloTipoFerias } from './staff/shared';
 
 function daysBetween(a, b) {
   return Math.round((new Date(b) - new Date(a)) / 86400000) + 1;
@@ -34,6 +32,8 @@ function StatCard({ Icon, value, label, tone }) {
 }
 
 export default function RH() {
+  const t = useT();
+  const lang = useLingua();
   const navigate = useNavigate();
   const toast = useToast();
   const [data, setData] = useState(null);
@@ -44,7 +44,7 @@ export default function RH() {
     try {
       setData(await getHrOverview());
     } catch {
-      toast.error('Erro ao carregar RH');
+      toast.error(t('hr.errorLoad'));
     } finally {
       setLoading(false);
     }
@@ -55,10 +55,10 @@ export default function RH() {
   async function changeStatus(staffId, leaveId, status) {
     try {
       await updateLeaveStatus(staffId, leaveId, status);
-      toast.success(status === 'approved' ? 'Pedido aprovado' : 'Pedido rejeitado');
+      toast.success(status === 'approved' ? t('hr.requestApproved') : t('hr.requestRejected'));
       load();
     } catch {
-      toast.error('Erro ao actualizar pedido');
+      toast.error(t('hr.errorUpdate'));
     }
   }
 
@@ -70,18 +70,18 @@ export default function RH() {
 
   return (
     <div>
-      <PageHeader title="RH" subtitle="Férias, documentos e certificações de toda a equipa" />
+      <PageHeader title={t('hr.title')} subtitle={t('hr.subtitle')} />
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-        <StatCard Icon={Calendar} value={pending.length} label="Pedidos de férias pendentes" tone={pending.length ? 'warn' : 'ok'} />
-        <StatCard Icon={AlertTriangle} value={expiring.length} label="Documentos/certificações a expirar" tone={expiring.length ? 'warn' : 'ok'} />
-        <StatCard Icon={Users} value={staff.length} label="Colaboradores activos" />
+        <StatCard Icon={Calendar} value={pending.length} label={t('hr.pendingLeave')} tone={pending.length ? 'warn' : 'ok'} />
+        <StatCard Icon={AlertTriangle} value={expiring.length} label={t('hr.expiring')} tone={expiring.length ? 'warn' : 'ok'} />
+        <StatCard Icon={Users} value={staff.length} label={t('hr.activeStaff')} />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <section>
-          <h3 className="font-display font-semibold text-sm text-n-900 mb-3">Pedidos de férias pendentes</h3>
-          {!pending.length && <p className="text-sm font-body text-n-500">Sem pedidos pendentes.</p>}
+          <h3 className="font-display font-semibold text-sm text-n-900 mb-3">{t('hr.pendingLeave')}</h3>
+          {!pending.length && <p className="text-sm font-body text-n-500">{t('hr.noPending')}</p>}
           <div className="space-y-2">
             {pending.map(l => (
               <Card key={l.id} padding="px-4 py-3">
@@ -89,13 +89,13 @@ export default function RH() {
                   <div className="min-w-0">
                     <p className="font-body font-semibold text-sm text-n-900 truncate">{l.staff_name}</p>
                     <p className="text-xs font-body text-n-500">
-                      {LEAVE_TYPE_LABEL[l.type] || l.type} · {l.start_date} → {l.end_date}
-                      <span className="text-n-400"> ({daysBetween(l.start_date, l.end_date)} dias)</span>
+                      {rotuloTipoFerias(l.type, t)} · {l.start_date} → {l.end_date}
+                      <span className="text-n-400"> ({t('hr.daysCount', { n: daysBetween(l.start_date, l.end_date) })})</span>
                     </p>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
-                    <button onClick={() => changeStatus(l.staff_id, l.id, 'approved')} className="text-ocean-700 hover:text-ocean-500" aria-label="Aprovar"><Check size={16} strokeWidth={2} /></button>
-                    <button onClick={() => changeStatus(l.staff_id, l.id, 'rejected')} className="text-[var(--error)] hover:opacity-70" aria-label="Rejeitar"><X size={16} strokeWidth={2} /></button>
+                    <button onClick={() => changeStatus(l.staff_id, l.id, 'approved')} className="text-ocean-700 hover:text-ocean-500" aria-label={t('hr.approve')}><Check size={16} strokeWidth={2} /></button>
+                    <button onClick={() => changeStatus(l.staff_id, l.id, 'rejected')} className="text-[var(--error)] hover:opacity-70" aria-label={t('hr.reject')}><X size={16} strokeWidth={2} /></button>
                   </div>
                 </div>
               </Card>
@@ -104,8 +104,8 @@ export default function RH() {
         </section>
 
         <section>
-          <h3 className="font-display font-semibold text-sm text-n-900 mb-3">A expirar em breve</h3>
-          {!expiring.length && <p className="text-sm font-body text-n-500">Nada a expirar nos próximos 30 dias.</p>}
+          <h3 className="font-display font-semibold text-sm text-n-900 mb-3">{t('hr.expiringSoon')}</h3>
+          {!expiring.length && <p className="text-sm font-body text-n-500">{t('hr.nothingExpiring')}</p>}
           <div className="space-y-2">
             {expiring.map(item => (
               <Card key={`${item.kind}-${item.id}`} padding="px-4 py-3">
@@ -126,7 +126,7 @@ export default function RH() {
       </div>
 
       <section className="mt-6">
-        <h3 className="font-display font-semibold text-sm text-n-900 mb-3">Colaboradores</h3>
+        <h3 className="font-display font-semibold text-sm text-n-900 mb-3">{t('hr.staffHeading')}</h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
           {staff.map(s => (
             <button key={s.id} onClick={() => navigate(`/colaboradores/${s.id}`)}
@@ -136,7 +136,7 @@ export default function RH() {
               </div>
               <div className="min-w-0">
                 <p className="font-body font-semibold text-sm text-n-900 truncate">{s.name}</p>
-                <p className="text-xs font-body text-n-500 truncate">{s.role}</p>
+                <p className="text-xs font-body text-n-500 truncate">{rotuloCargo(s.role, t, lang)}</p>
               </div>
             </button>
           ))}

@@ -2,27 +2,32 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid,
   Tooltip, ResponsiveContainer, Cell,
 } from 'recharts';
+import { useT } from '../../i18n';
+import { formatarNumero, useLingua } from '../../utils/formatoLingua';
 
 const EUR_CVE = 110;
 const COLORS  = ['var(--ocean-700)','var(--ocean-500)','var(--ocean-400)','var(--ocean-300)','var(--ocean-200)'];
 
 function CustomTooltip({ active, payload, currency }) {
+  const t = useT();
+  useLingua();
   if (!active || !payload?.length) return null;
   const d = payload[0].payload;
   const v = Number(d.receita || 0);
   const fmt = currency === 'CVE'
-    ? `${Math.round(v).toLocaleString('pt-PT')} CVE`
-    : `€${Math.round(v).toLocaleString('pt-PT')}`;
+    ? `${formatarNumero(Math.round(v))} CVE`
+    : `€${formatarNumero(Math.round(v))}`;
   return (
     <div className="bg-white border border-n-200 rounded shadow-md px-3 py-2 text-xs font-body">
       <p className="font-semibold text-n-800 mb-1">{d.fullName}</p>
       <p className="text-ocean-700 font-bold">{fmt}</p>
-      <p className="text-n-500">{d.num_reservas} reserva(s)</p>
+      <p className="text-n-500">{t('financial.bookingsCount', { n: d.num_reservas })}</p>
     </div>
   );
 }
 
 export default function ServiceBarChart({ data, currency = 'EUR' }) {
+  const t = useT();
   const rate = currency === 'CVE' ? EUR_CVE : 1;
 
   const top5 = [...(data || [])]
@@ -38,7 +43,7 @@ export default function ServiceBarChart({ data, currency = 'EUR' }) {
   if (!top5.length) {
     return (
       <div className="flex items-center justify-center h-52 text-n-400 text-sm font-body">
-        Sem dados de serviços
+        {t('financial.noServiceData')}
       </div>
     );
   }

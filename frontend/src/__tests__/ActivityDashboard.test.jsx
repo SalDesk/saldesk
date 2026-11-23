@@ -254,6 +254,17 @@ describe('ActivityDashboard (Hoje)', () => {
     expect(screen.queryByText(/por regularizar/)).not.toBeInTheDocument();
   });
 
+  it('em ingles o alerta de meteorologia mostra o estado do tempo em ingles', async () => {
+    useUiStore.setState({ lang: 'en' });
+    carregaServicos({
+      semana: [RES_AMANHA],
+      meteo: [{ date: AMANHA, code: 95, precipitation: 12 }],
+    });
+    renderActivity();
+    expect(await screen.findByText(`${AMANHA} Thunderstorm`)).toBeInTheDocument();
+    expect(screen.queryByText(`${AMANHA} Trovoada`)).not.toBeInTheDocument();
+  });
+
   it('o mau tempo e um item da atencao e nao ha faixa vermelha', async () => {
     carregaServicos({
       semana: [RES_AMANHA],

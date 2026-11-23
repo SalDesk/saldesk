@@ -13,14 +13,17 @@ import Button from '../../components/ui/Button';
 import Modal from '../../components/ui/Modal';
 import Input, { Select, Textarea } from '../../components/ui/Input';
 import LoadingSpinner from '../../components/shared/LoadingSpinner';
-import { PRIO, PRIO_COLORS, KANBAN_COLS, tryParseNotes, StaffAvatar } from './shared';
+import { PRIO_NIVEIS, PRIO_COLORS, KANBAN_COLS, tryParseNotes, StaffAvatar, rotuloPrio } from './shared';
 import { useT } from '../../i18n';
 import { mensagemErro } from '../../utils/mensagemErro';
+import { formatarData, useLingua } from '../../utils/formatoLingua';
 
 /* ── Kanban Task Card ── */
 function TaskCard({ task, staffList, onMove, onOpen }) {
+  const t = useT();
+  const lang = useLingua();
   const meta  = tryParseNotes(task.notes_manager);
-  const title = meta?.title || task.notes_manager || `Atribuição #${String(task.id).slice(-6)}`;
+  const title = meta?.title || task.notes_manager || t('staff.tasks.assignmentN', { id: String(task.id).slice(-6) });
   const prio  = meta?.priority || 'medium';
   const staffMember = staffList.find(s => s.id === task.staff_id);
   const dueDate = meta?.due ? new Date(meta.due) : null;
@@ -30,6 +33,7 @@ function TaskCard({ task, staffList, onMove, onOpen }) {
     pending: 'in_progress', in_progress: 'completed',
     confirmed: 'in_progress',
   };
+  const proxima = KANBAN_COLS.find(c => c.key === nextStatus[task.status]);
 
   return (
     <div onClick={() => onOpen(task)}
@@ -37,19 +41,19 @@ function TaskCard({ task, staffList, onMove, onOpen }) {
       {isOverdue && (
         <div className="flex items-center gap-1 mb-1.5 text-[var(--error)] text-xs font-body">
           <AlertTriangle size={11} strokeWidth={1.75} />
-          <span>Atrasada</span>
+          <span>{t('staff.tasks.overdue')}</span>
         </div>
       )}
       <div className="flex items-start justify-between gap-2 mb-2">
         <p className="text-sm font-display font-semibold text-n-900 line-clamp-2 leading-tight">{title}</p>
         <span className={`shrink-0 text-xs font-mono font-medium px-1.5 py-0.5 rounded ${PRIO_COLORS[prio]}`}>
-          {PRIO[prio]}
+          {rotuloPrio(prio, t)}
         </span>
       </div>
       {meta?.checklist?.length > 0 && (
         <p className="text-xs font-body text-n-400 mb-2">
           <CheckSquare size={10} strokeWidth={1.75} className="inline mr-1" />
-          {meta.checklist.filter(Boolean).length} sub-tarefas
+          {t('staff.tasks.subtasks', { n: meta.checklist.filter(Boolean).length })}
         </p>
       )}
       <div className="flex items-center justify-between pt-2 border-t border-n-100">
@@ -62,16 +66,16 @@ function TaskCard({ task, staffList, onMove, onOpen }) {
         {dueDate && (
           <span className={`text-xs font-mono ${isOverdue ? 'text-[var(--error)]' : 'text-n-400'}`}>
             <Clock size={10} strokeWidth={1.75} className="inline mr-0.5" />
-            {dueDate.toLocaleDateString('pt-PT', { day: '2-digit', month: 'short', timeZone: 'UTC' })}
+            {formatarData(dueDate, { day: '2-digit', month: 'short', timeZone: 'UTC' }, lang)}
           </span>
         )}
       </div>
-      {nextStatus[task.status] && (
+      {proxima && (
         <button
           onClick={e => { e.stopPropagation(); onMove(nextStatus[task.status]); }}
           className="mt-2 w-full flex items-center justify-center gap-1 py-1 rounded text-xs font-body text-ocean-700 bg-ocean-50 hover:bg-ocean-100 transition-colors">
           <ArrowRight size={11} strokeWidth={1.75} />
-          Mover para {KANBAN_COLS.find(c => c.key === nextStatus[task.status])?.label}
+          {t('staff.tasks.moveTo', { col: t(proxima.rotulo) })}
         </button>
       )}
     </div>
@@ -81,6 +85,7 @@ function TaskCard({ task, staffList, onMove, onOpen }) {
 /* ── Kanban Board ── */
 function KanbanBoard({ staffList }) {
   const t = useT();
+  const lang = useLingua();
   const toast = useToast();
   const [tasks, setTasks]         = useState([]);
   const [reservations, setReservations] = useState([]);
@@ -104,17 +109,17 @@ function KanbanBoard({ staffList }) {
       if      (newStatus === 'in_progress') await startAssignment(task.id);
       else if (newStatus === 'completed')   await completeAssignment(task.id);
       else if (newStatus === 'cancelled')   await cancelAssignment(task.id);
-      setTasks(p => p.map(t => t.id === task.id ? { ...t, status: newStatus } : t));
+      setTasks(p => p.map(x => x.id === task.id ? { ...x, status: newStatus } : x));
     } catch (err) {
       console.error(err);
-      toast.error(mensagemErro(err, t, 'Erro ao actualizar tarefa'));
+      toast.error(mensagemErro(err, t, t('staff.errors.updateTask')));
     }
   }
 
   async function handleCreateTask(e) {
     e.preventDefault();
     if (!taskForm.reservation_id) {
-      toast.error('Escolha a reserva a que esta tarefa pertence');
+      toast.error(t('staff.errors.chooseBooking'));
       return;
     }
     setSaving(true);
@@ -137,12 +142,12 @@ function KanbanBoard({ staffList }) {
       setTaskForm({ title: '', desc: '', priority: 'medium', due: '', staff_id: '', reservation_id: '', checklist: '' });
     } catch (err) {
       console.error(err);
-      toast.error(mensagemErro(err, t, 'Erro ao criar tarefa'));
+      toast.error(mensagemErro(err, t, t('staff.errors.createTask')));
     } finally { setSaving(false); }
   }
 
   const filtered = filterStaff
-    ? tasks.filter(t => t.staff_id === filterStaff)
+    ? tasks.filter(x => x.staff_id === filterStaff)
     : tasks;
 
   if (loading) return <div className="flex justify-center py-20"><LoadingSpinner size={32} /></div>;
@@ -153,37 +158,37 @@ function KanbanBoard({ staffList }) {
       <div className="flex items-center justify-between mb-4 gap-3 flex-wrap">
         <div className="flex items-center gap-2">
           <div className="w-56">
-            <Select aria-label="Filtrar por colaborador" value={filterStaff} onChange={e => setFilter(e.target.value)}>
-              <option value="">Todos os colaboradores</option>
+            <Select aria-label={t('staff.tasks.filterLabel')} value={filterStaff} onChange={e => setFilter(e.target.value)}>
+              <option value="">{t('staff.tasks.allStaff')}</option>
               {staffList.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
             </Select>
           </div>
-          <span className="text-xs font-body text-n-400">{filtered.length} tarefa(s)</span>
+          <span className="text-xs font-body text-n-400">{t('staff.tasks.count', { n: filtered.length })}</span>
         </div>
-        <Button icon={Plus} size="sm" onClick={() => setTaskModal(true)}>Nova tarefa</Button>
+        <Button icon={Plus} size="sm" onClick={() => setTaskModal(true)}>{t('staff.tasks.newTask')}</Button>
       </div>
 
       {/* Overdue alert */}
-      {filtered.some(t => {
-        const m = tryParseNotes(t.notes_manager);
-        return m?.due && new Date(m.due) < new Date() && !['completed','cancelled'].includes(t.status);
+      {filtered.some(x => {
+        const m = tryParseNotes(x.notes_manager);
+        return m?.due && new Date(m.due) < new Date() && !['completed','cancelled'].includes(x.status);
       }) && (
         <div className="flex items-center gap-2 mb-4 px-3 py-2 bg-[var(--error-light)] border border-[var(--error)] rounded-sm text-xs font-body text-[var(--error)]">
           <AlertTriangle size={14} strokeWidth={1.75} />
-          Existem tarefas com prazo ultrapassado
+          {t('staff.tasks.overdueAlert')}
         </div>
       )}
 
       {/* Kanban columns */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {KANBAN_COLS.map(col => {
-          const colTasks = filtered.filter(t =>
-            t.status === col.key || (col.key === 'in_progress' && t.status === 'confirmed')
+          const colTasks = filtered.filter(x =>
+            x.status === col.key || (col.key === 'in_progress' && x.status === 'confirmed')
           );
           return (
             <div key={col.key}>
               <div className={`flex items-center justify-between px-3 py-2 rounded-t-md border mb-2 ${col.color}`}>
-                <span className="text-xs font-mono font-semibold uppercase tracking-wider">{col.label}</span>
+                <span className="text-xs font-mono font-semibold uppercase tracking-wider">{t(col.rotulo)}</span>
                 <span className="text-xs font-mono font-bold">{colTasks.length}</span>
               </div>
               <div className="space-y-2">
@@ -193,7 +198,7 @@ function KanbanBoard({ staffList }) {
                 ))}
                 {colTasks.length === 0 && (
                   <div className="border-2 border-dashed border-n-200 rounded-md p-4 text-center">
-                    <p className="text-xs font-body text-n-400">Sem tarefas</p>
+                    <p className="text-xs font-body text-n-400">{t('staff.tasks.noTasks')}</p>
                   </div>
                 )}
               </div>
@@ -203,7 +208,7 @@ function KanbanBoard({ staffList }) {
       </div>
 
       {/* Task detail modal */}
-      <Modal open={!!selected} onClose={() => setSelected(null)} title="Detalhe da tarefa" size="md">
+      <Modal open={!!selected} onClose={() => setSelected(null)} title={t('staff.tasks.detailTitle')} size="md">
         {selected && (() => {
           const meta = tryParseNotes(selected.notes_manager);
           const staffMember = staffList.find(s => s.id === selected.staff_id);
@@ -212,8 +217,8 @@ function KanbanBoard({ staffList }) {
               <p className="font-display font-semibold text-n-900">{meta?.title || selected.notes_manager}</p>
               {meta?.desc && <p className="text-sm font-body text-n-600">{meta.desc}</p>}
               <div className="flex gap-2 text-xs font-body text-n-500 flex-wrap">
-                {meta?.priority && <span className={`px-2 py-0.5 rounded font-mono ${PRIO_COLORS[meta.priority]}`}>{PRIO[meta.priority]}</span>}
-                {meta?.due && <span className="flex items-center gap-1"><Clock size={11} strokeWidth={1.75} />{new Date(meta.due).toLocaleDateString('pt-PT', { timeZone: 'UTC' })}</span>}
+                {meta?.priority && <span className={`px-2 py-0.5 rounded font-mono ${PRIO_COLORS[meta.priority]}`}>{rotuloPrio(meta.priority, t)}</span>}
+                {meta?.due && <span className="flex items-center gap-1"><Clock size={11} strokeWidth={1.75} />{formatarData(new Date(meta.due), { timeZone: 'UTC' }, lang)}</span>}
                 {staffMember && (
                   <span className="flex items-center gap-1.5">
                     <StaffAvatar member={staffMember} size={16} showStatus={false} />
@@ -223,7 +228,7 @@ function KanbanBoard({ staffList }) {
               </div>
               {meta?.checklist?.length > 0 && (
                 <div>
-                  <p className="text-xs font-mono uppercase tracking-wider text-n-500 mb-2">Checklist</p>
+                  <p className="text-xs font-mono uppercase tracking-wider text-n-500 mb-2">{t('staff.tasks.checklist')}</p>
                   <div className="space-y-1.5">
                     {meta.checklist.map((item, i) => (
                       <div key={i} className="flex items-center gap-2 text-sm font-body text-n-700">
@@ -237,17 +242,17 @@ function KanbanBoard({ staffList }) {
               <div className="flex gap-2 pt-2 border-t border-n-100 flex-wrap">
                 {selected.status === 'pending' && (
                   <Button size="sm" onClick={() => { moveTask(selected, 'in_progress'); setSelected(null); }}>
-                    Iniciar
+                    {t('staff.tasks.start')}
                   </Button>
                 )}
                 {['pending','confirmed','in_progress'].includes(selected.status) && (
                   <Button size="sm" variant="secondary" onClick={() => { moveTask(selected, 'completed'); setSelected(null); }}>
-                    Concluir
+                    {t('staff.tasks.complete')}
                   </Button>
                 )}
                 {selected.status !== 'cancelled' && (
                   <Button size="sm" variant="danger" onClick={() => { moveTask(selected, 'cancelled'); setSelected(null); }}>
-                    Bloquear
+                    {t('staff.tasks.block')}
                   </Button>
                 )}
               </div>
@@ -257,34 +262,34 @@ function KanbanBoard({ staffList }) {
       </Modal>
 
       {/* Create task modal */}
-      <Modal open={taskModal} onClose={() => setTaskModal(false)} title="Nova tarefa" size="md">
+      <Modal open={taskModal} onClose={() => setTaskModal(false)} title={t('staff.tasks.newTask')} size="md">
         <form onSubmit={handleCreateTask} className="space-y-4">
-          <Input label="Título" aria-label="Título" value={taskForm.title} onChange={e => setTaskForm(p => ({ ...p, title: e.target.value }))} required placeholder="Título da tarefa" />
-          <Select label="Reserva" aria-label="Reserva" value={taskForm.reservation_id} onChange={e => setTaskForm(p => ({ ...p, reservation_id: e.target.value }))} required>
-            <option value="">Escolha a reserva...</option>
+          <Input label={t('staff.tasks.title')} aria-label={t('staff.tasks.title')} value={taskForm.title} onChange={e => setTaskForm(p => ({ ...p, title: e.target.value }))} required placeholder={t('staff.tasks.titlePlaceholder')} />
+          <Select label={t('staff.tasks.booking')} aria-label={t('staff.tasks.booking')} value={taskForm.reservation_id} onChange={e => setTaskForm(p => ({ ...p, reservation_id: e.target.value }))} required>
+            <option value="">{t('staff.tasks.chooseBooking')}</option>
             {reservations.map(r => (
               <option key={r.id} value={r.id}>
-                {r.customer_name} — {r.units?.name || 'Serviço'} ({r.check_in})
+                {r.customer_name} — {r.units?.name || t('staff.tasks.service')} ({r.check_in})
               </option>
             ))}
           </Select>
-          <Textarea label="Descrição" aria-label="Descrição" value={taskForm.desc} onChange={e => setTaskForm(p => ({ ...p, desc: e.target.value }))} placeholder="Descrição opcional" rows={2} />
+          <Textarea label={t('staff.tasks.description')} aria-label={t('staff.tasks.description')} value={taskForm.desc} onChange={e => setTaskForm(p => ({ ...p, desc: e.target.value }))} placeholder={t('staff.tasks.descriptionPlaceholder')} rows={2} />
           <div className="grid grid-cols-2 gap-3">
-            <Select label="Prioridade" aria-label="Prioridade" value={taskForm.priority} onChange={e => setTaskForm(p => ({ ...p, priority: e.target.value }))}>
-              {Object.entries(PRIO).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+            <Select label={t('staff.tasks.priority')} aria-label={t('staff.tasks.priority')} value={taskForm.priority} onChange={e => setTaskForm(p => ({ ...p, priority: e.target.value }))}>
+              {PRIO_NIVEIS.map(k => <option key={k} value={k}>{rotuloPrio(k, t)}</option>)}
             </Select>
-            <Input label="Data limite" aria-label="Data limite" type="date" value={taskForm.due} onChange={e => setTaskForm(p => ({ ...p, due: e.target.value }))} />
+            <Input label={t('staff.tasks.due')} aria-label={t('staff.tasks.due')} type="date" value={taskForm.due} onChange={e => setTaskForm(p => ({ ...p, due: e.target.value }))} />
           </div>
-          <Select label="Colaborador" aria-label="Colaborador" value={taskForm.staff_id} onChange={e => setTaskForm(p => ({ ...p, staff_id: e.target.value }))}>
-            <option value="">Sem atribuição</option>
+          <Select label={t('staff.tasks.staffMember')} aria-label={t('staff.tasks.staffMember')} value={taskForm.staff_id} onChange={e => setTaskForm(p => ({ ...p, staff_id: e.target.value }))}>
+            <option value="">{t('staff.tasks.unassigned')}</option>
             {staffList.filter(s => s.status === 'active').map(s => (
               <option key={s.id} value={s.id}>{s.name}</option>
             ))}
           </Select>
-          <Textarea label="Checklist (uma por linha)" aria-label="Checklist (uma por linha)" value={taskForm.checklist} onChange={e => setTaskForm(p => ({ ...p, checklist: e.target.value }))} placeholder={"Item 1\nItem 2\nItem 3"} rows={3} />
+          <Textarea label={t('staff.tasks.checklistLabel')} aria-label={t('staff.tasks.checklistLabel')} value={taskForm.checklist} onChange={e => setTaskForm(p => ({ ...p, checklist: e.target.value }))} placeholder={"Item 1\nItem 2\nItem 3"} rows={3} />
           <div className="flex gap-3 pt-1">
-            <Button type="button" variant="secondary" onClick={() => setTaskModal(false)} className="flex-1">Cancelar</Button>
-            <Button type="submit" loading={saving} className="flex-1">Criar tarefa</Button>
+            <Button type="button" variant="secondary" onClick={() => setTaskModal(false)} className="flex-1">{t('common.cancel')}</Button>
+            <Button type="submit" loading={saving} className="flex-1">{t('staff.tasks.createTask')}</Button>
           </div>
         </form>
       </Modal>

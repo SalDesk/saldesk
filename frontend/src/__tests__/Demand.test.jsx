@@ -4,6 +4,8 @@ import { MemoryRouter } from 'react-router-dom';
 import Demand from '../pages/Demand';
 import { getReceita } from '../services/financeiroService';
 import { listReservations } from '../services/reservationsService';
+import useUiStore from '../store/uiStore';
+import { portuguesNoEcra, chavesCruas } from './helpers/portuguesNoEcra';
 
 /* Sem rede: so os servicos da pagina sao simulados */
 vi.mock('../services/financeiroService', () => ({ getReceita: vi.fn() }));
@@ -366,5 +368,94 @@ describe('Demand', () => {
     const alta = screen.getByText(/alta procura — considera/).parentElement;
     expect(alta.className).toContain('bg-[var(--success-light)]');
     expect(alta.className).toContain('border-[var(--success)]');
+  });
+});
+
+describe('Demand em inglês', () => {
+  const MESES_EN = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+  beforeEach(() => {
+    useUiStore.setState({ lang: 'en' });
+    getReceita.mockReset();
+    recebe(ATUAL, PASSADO);
+    listReservations.mockReset().mockResolvedValue(RESERVAS);
+  });
+  afterEach(() => {
+    cleanup();
+    useUiStore.setState({ lang: 'pt' });
+  });
+
+  async function abreEmIngles() {
+    render(
+      <MemoryRouter future={FUTURE}>
+        <Demand />
+      </MemoryRouter>
+    );
+    await screen.findByText('Monthly revenue — year-on-year comparison');
+  }
+  const kpi = (rotulo) => screen.getByText(rotulo).previousElementSibling;
+  const semPortugues = () => {
+    expect(portuguesNoEcra()).toEqual([]);
+    expect(chavesCruas(['demand', 'staff'])).toEqual([]);
+  };
+
+  it('historico_em_ingles_com_os_meses_ingleses', async () => {
+    await abreEmIngles();
+    expect(screen.getByRole('heading', { level: 1, name: 'Demand forecast' })).toBeInTheDocument();
+    expect(screen.getByText('Seasonality analysis and opportunity spotting')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Refresh/ })).toBeInTheDocument();
+    expect(kpi(`Revenue ${ANO} (year to date)`).textContent).toBe('€620');
+    expect(kpi('Change vs last year').textContent).toBe('+3%');
+    expect(kpi('Best month').textContent).toBe('Jul');
+    expect(kpi('Bookings next 30d').textContent).toBe('6');
+    for (const r of ['History', 'Next 30 days', 'Suggestions']) expect(screen.getByRole('tab', { name: r })).toBeInTheDocument();
+    const dados = JSON.parse(document.querySelector('[data-chart="BarChart"]').getAttribute('data-data'));
+    expect(dados.map(d => d.name)).toEqual(MESES_EN);
+    expect(screen.getByText('High seasons').parentElement.textContent).toContain('Jul · €200');
+    expect(screen.getByText('Low seasons').parentElement.textContent).toContain('Aug · €20');
+    semPortugues();
+  });
+
+  it('proximos_30_dias_em_ingles', async () => {
+    await abreEmIngles();
+    fireEvent.click(screen.getByRole('tab', { name: 'Next 30 days' }));
+    expect(screen.getByText('Confirmed bookings — next 30 days')).toBeInTheDocument();
+    for (const r of ['High demand (3+)', 'Bookings', 'Free', 'Busiest days']) expect(screen.getAllByText(r).length).toBeGreaterThan(0);
+    const dia3 = somaDias(HOJE, 3);
+    const d = new Date(dia3 + 'T00:00:00Z');
+    expect(document.querySelector(`[title="${d.getUTCDate()} ${MESES_EN[d.getUTCMonth()]}: 3 booking(s)"]`)).not.toBeNull();
+    const rotulo = d.toLocaleDateString('en-GB', { weekday: 'short', day: '2-digit', month: 'short', timeZone: 'UTC' });
+    expect(screen.getByText(rotulo).parentElement).toHaveTextContent('3 booking(s)');
+    semPortugues();
+  });
+
+  it('sugestoes_em_ingles', async () => {
+    await abreEmIngles();
+    fireEvent.click(screen.getByRole('tab', { name: 'Suggestions' }));
+    expect(screen.getByText('Automatic suggestions')).toBeInTheDocument();
+    expect(screen.getByText(/^Jul is historically a high-demand month/)).toBeInTheDocument();
+    expect(screen.getByText(/^Aug historically has low occupancy/)).toBeInTheDocument();
+    expect(screen.getByText('Year-on-year comparison')).toBeInTheDocument();
+    expect(screen.getByText(`Revenue ${ANO}`)).toBeInTheDocument();
+    expect(screen.getByText(`Revenue ${ANTERIOR}`)).toBeInTheDocument();
+    expect(screen.getByText('Change')).toBeInTheDocument();
+    semPortugues();
+  });
+
+  it('sem_dados_em_ingles', async () => {
+    recebe([], []);
+    listReservations.mockResolvedValue([]);
+    render(
+      <MemoryRouter future={FUTURE}>
+        <Demand />
+      </MemoryRouter>
+    );
+    expect(await screen.findByText('No financial data available for the period.')).toBeInTheDocument();
+    expect(screen.getByText('Not enough data to identify high seasons.')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('tab', { name: 'Suggestions' }));
+    expect(screen.getByText(/^Not enough historical data to generate suggestions\./)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('tab', { name: 'Next 30 days' }));
+    expect(screen.getByText('No confirmed bookings for the next 30 days.')).toBeInTheDocument();
+    semPortugues();
   });
 });

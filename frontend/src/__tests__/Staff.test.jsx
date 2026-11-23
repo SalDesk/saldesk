@@ -4,6 +4,9 @@ import { MemoryRouter } from 'react-router-dom';
 import Staff from '../pages/Staff';
 import useAuthStore from '../store/authStore';
 import useToastStore from '../store/toastStore';
+import useUiStore from '../store/uiStore';
+import { listUnits } from '../services/unitsService';
+import { portuguesNoEcra, chavesCruas } from './helpers/portuguesNoEcra';
 import { io } from 'socket.io-client';
 import { listStaff, createStaff, updateStaff, deleteStaff, createStaffAccount } from '../services/staffService';
 import { listSellerCommissions } from '../services/sellerService';
@@ -248,5 +251,116 @@ describe('Staff: criar colaborador com conta de acesso', () => {
     createStaff.mockRejectedValueOnce(new Error('x'));
     fireEvent.click(screen.getByRole('button', { name: 'Criar colaborador' }));
     expect(await within(screen.getByRole('dialog')).findByText('Erro ao guardar')).toBeInTheDocument();
+  });
+});
+
+/* ───────────────────────── Painel em ingles ───────────────────────── */
+
+describe('Staff em inglês', () => {
+  /* dados dos testes que ficam como estao em qualquer lingua */
+  const DADOS = ['Rui Lopes', 'Ana Tavares', 'Vera Mendes', 'Espargos', 'Briefing', 'Levar equipamento', 'Texto simples sem JSON',
+    'Tarefa', 'Equipa Campo', 'Material', 'Agua', 'rui@x.cv', 'vera@x.cv', '+238', 'Novo Hotel'];
+  beforeEach(() => { useUiStore.setState({ lang: 'en' }); });
+  afterEach(() => { cleanup(); useUiStore.setState({ lang: 'pt' }); });
+
+  it('lista_separadores_cartoes_e_vendedores_em_ingles_sem_portugues', async () => {
+    await montar();
+    expect(screen.getByRole('heading', { name: 'Staff' })).toBeInTheDocument();
+    expect(screen.getByText('2 active · 3 total')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /New staff member/ })).toBeInTheDocument();
+    ['Staff', 'Checklist', 'Tasks', 'Chat'].forEach(r => expect(screen.getAllByText(r).some(e => e.closest('[role="tab"], button'))).toBe(true));
+    /* cargos gravados em portugues, mostrados em ingles */
+    expect(within(cartao('Rui Lopes')).getByText('Guide')).toBeInTheDocument();
+    expect(within(cartao('Ana Tavares')).getByText('Instructor')).toBeInTheDocument();
+    expect(within(cartao('Rui Lopes')).getByText('Active account')).toBeInTheDocument();
+    expect(within(cartao('Rui Lopes')).getByText('12 jobs')).toBeInTheDocument();
+    expect(within(cartao('Vera Mendes')).getByText('Create account')).toBeInTheDocument();
+    expect(screen.getAllByText('Active').length).toBeGreaterThan(0);
+    expect(screen.getByText('Inactive')).toBeInTheDocument();
+    expect(screen.getByText('Beach Sellers')).toBeInTheDocument();
+    expect(screen.getByText('Commissions this month')).toBeInTheDocument();
+    expect(screen.getByText('Unpaid')).toBeInTheDocument();
+    expect(screen.getByText('12% commission')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Edit Rui Lopes' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Leave, documents and certifications for Rui Lopes' })).toBeInTheDocument();
+    expect(portuguesNoEcra(DADOS)).toEqual([]);
+    expect(chavesCruas(['staff', 'hr', 'common'])).toEqual([]);
+  });
+
+  it('checklist_tarefas_e_chat_em_ingles', async () => {
+    await montar();
+    abrir('Checklist');
+    expect(await screen.findByText("Today's checklist")).toBeInTheDocument();
+    expect(screen.getByText('Team briefing')).toBeInTheDocument();
+    expect(screen.getByText(/0\/5 done/)).toBeInTheDocument();
+    expect(portuguesNoEcra(DADOS)).toEqual([]);
+    abrir('Tasks');
+    expect(await screen.findByText('New task')).toBeInTheDocument();
+    ['Pending', 'In progress', 'Done', 'Blocked'].forEach(c => expect(screen.getAllByText(c).length).toBeGreaterThan(0));
+    expect(screen.getAllByText('High').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Move to In progress').length).toBeGreaterThan(0);
+    expect(portuguesNoEcra(DADOS)).toEqual([]);
+    abrir('Chat');
+    expect(await screen.findByText('Select a conversation')).toBeInTheDocument();
+    expect(screen.getByText('Groups')).toBeInTheDocument();
+    expect(screen.getByText('Direct')).toBeInTheDocument();
+    expect(portuguesNoEcra(DADOS)).toEqual([]);
+    expect(chavesCruas(['staff', 'hr', 'common'])).toEqual([]);
+  });
+
+  it('num_hotel_escolher_Maintenance_grava_o_cargo_Manutencao_e_Mon_grava_Seg', async () => {
+    useAuthStore.setState({ operator: { id: 'op1', operator_type: 'hotel', plan: 'business' } });
+    createStaff.mockResolvedValue({ id: 's9', name: 'Novo Hotel', role: 'Manutencao', status: 'active' });
+    await montar();
+    fireEvent.click(screen.getByRole('button', { name: /New staff member/ }));
+    const dlg = screen.getByRole('dialog');
+    expect(dlg).toHaveTextContent('New staff member');
+    fireEvent.change(within(dlg).getByPlaceholderText('First and last name'), { target: { value: 'Novo Hotel' } });
+    const cargo = within(dlg).getByLabelText('Role');
+    const opcao = within(cargo).getByRole('option', { name: 'Maintenance' });
+    expect(opcao.value).toBe('Manutencao');
+    fireEvent.change(cargo, { target: { value: opcao.value } });
+    fireEvent.click(within(dlg).getByRole('button', { name: 'Mon' }));
+    expect(portuguesNoEcra(DADOS, dlg)).toEqual([]);
+    fireEvent.click(within(dlg).getByRole('button', { name: 'Create staff member' }));
+    await waitFor(() => expect(createStaff).toHaveBeenCalledWith(expect.objectContaining({ role: 'Manutencao', schedule: ['Seg'] })));
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+    expect(within(cartao('Novo Hotel')).getByText('Maintenance')).toBeInTheDocument();
+  });
+
+  it('o_erro_sem_texto_do_servidor_cai_no_texto_ingles', async () => {
+    createStaff.mockRejectedValueOnce(new Error('x'));
+    await montar();
+    fireEvent.click(screen.getByRole('button', { name: /New staff member/ }));
+    fireEvent.change(screen.getByPlaceholderText('First and last name'), { target: { value: 'Novo' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Create staff member' }));
+    expect(await within(screen.getByRole('dialog')).findByText('Could not save')).toBeInTheDocument();
+  });
+
+  it('o_vendedor_de_praia_e_a_zona_aparecem_traduzidos_no_formulario', async () => {
+    listUnits.mockResolvedValue([]);
+    await montar();
+    fireEvent.click(screen.getByRole('button', { name: /New staff member/ }));
+    const dlg = screen.getByRole('dialog');
+    const cargo = within(dlg).getByLabelText('Role');
+    const opcao = within(cargo).getByRole('option', { name: 'Beach Seller' });
+    expect(opcao.value).toBe('Vendedor de Praia');
+    fireEvent.change(cargo, { target: { value: opcao.value } });
+    expect(await within(dlg).findByText('Beach Seller settings')).toBeInTheDocument();
+    const zona = within(dlg).getByLabelText('Working zone');
+    expect(within(zona).getByRole('option', { name: 'Airport' }).value).toBe('Aeroporto');
+    expect(within(zona).getByRole('option', { name: 'All zones' }).value).toBe('');
+    await waitFor(() => expect(listUnits).toHaveBeenCalled());
+  });
+
+  it('a_pesquisa_encontra_o_cargo_pelo_rotulo_ingles_e_pelo_valor_gravado', async () => {
+    listStaff.mockResolvedValue([...COLABORADORES, { id: 's4', name: 'Pedro Praia', role: 'Guia', status: 'active' }]);
+    await montar();
+    const pesquisa = screen.getByPlaceholderText('Search...');
+    fireEvent.change(pesquisa, { target: { value: 'instructor' } });
+    expect(screen.getByText('Ana Tavares')).toBeInTheDocument();
+    expect(screen.queryByText('Pedro Praia')).toBeNull();
+    fireEvent.change(pesquisa, { target: { value: 'instrutor' } });
+    expect(screen.getByText('Ana Tavares')).toBeInTheDocument();
   });
 });

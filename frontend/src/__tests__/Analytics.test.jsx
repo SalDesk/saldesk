@@ -6,6 +6,8 @@ import { getAnalyticsStats, getReviewsStats, getMarketingStats } from '../servic
 import { listCustomers } from '../services/customersService';
 import { getResumo, getUnidades } from '../services/financeiroService';
 import { listUnits } from '../services/unitsService';
+import useUiStore from '../store/uiStore';
+import { portuguesNoEcra, chavesCruas } from './helpers/portuguesNoEcra';
 
 /* Sem rede: so os servicos da pagina sao simulados */
 vi.mock('../services/analyticsService', () => ({
@@ -578,5 +580,110 @@ describe('Analytics', () => {
     expect(within(linhaDe('Buggy Tour')).getByRole('button', { name: 'Guardar preço' })).toBeTruthy();
     /* so o tour em edicao muda */
     expect(within(linhaDe('Mergulho')).getByRole('button', { name: 'Editar preço' })).toBeTruthy();
+  });
+});
+
+describe('Analytics em inglês', () => {
+  let abrir;
+  /* dados dos testes que podem parecer portugueses (nomes dos tours) */
+  const DADOS = ['Buggy Tour', 'Mergulho', 'Kitesurf', 'Barco', 'Quad', 'Passeio', 'Snorkel', 'Pesca'];
+  const eurEn = (v) => `€${Math.round(Number(v || 0)).toLocaleString('en-GB')}`;
+
+  beforeEach(() => {
+    useUiStore.setState({ lang: 'en' });
+    abrir = vi.spyOn(window, 'open').mockImplementation(() => null);
+    localStorage.clear();
+    getResumo.mockReset().mockResolvedValue(RESUMO);
+    getReviewsStats.mockReset().mockResolvedValue({ average: 4.2, total: 10 });
+    getAnalyticsStats.mockReset().mockResolvedValue({});
+    getMarketingStats.mockReset().mockResolvedValue({
+      profile_views: 100,
+      funnel: { page_views: 1000, booking_started: 400, booking_completed: 100, payment_confirmed: 80 },
+    });
+    listCustomers.mockReset().mockResolvedValue(CLIENTES);
+    listUnits.mockReset().mockResolvedValue(UNIDADES);
+    getUnidades.mockReset().mockResolvedValue(DESEMPENHO);
+  });
+  afterEach(() => {
+    cleanup();
+    vi.restoreAllMocks();
+    localStorage.clear();
+    useUiStore.setState({ lang: 'pt' });
+  });
+
+  async function abreEmIngles() {
+    render(
+      <MemoryRouter future={FUTURE}>
+        <Analytics />
+      </MemoryRouter>
+    );
+    await screen.findByText('Business health score');
+  }
+
+  it('a_pagina_inteira_em_ingles_sem_portugues', async () => {
+    await abreEmIngles();
+    expect(screen.getByRole('heading', { level: 1, name: 'Analytics' })).toBeInTheDocument();
+    expect(screen.getByText('Strategic view of the business')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Refresh/ })).toBeInTheDocument();
+    expect(screen.getByText('Good')).toBeInTheDocument();
+    for (const r of ['Score components', 'Revenue growth', 'Occupancy rate', 'Reviews', 'Loyalty',
+      'Summary — Last 30 days', 'New customers', 'Average rating', 'Customer origin', 'Distribution by country',
+      'Conversion funnel', 'Public page visits', 'Booking started', 'Booking completed', 'Payment confirmed',
+      '% shows the conversion rate from the previous step.', 'Weekly report', 'Health score', 'Abandonment rate',
+      'Profile visits', 'Completed bookings', 'Competitor analysis', 'By tour (bookings in the last 30 days)']) {
+      expect(screen.getAllByText(r).length).toBeGreaterThan(0);
+    }
+    expect(screen.getAllByText(eurEn(1234)).length).toBeGreaterThan(0);
+    /* o funil agrupa os milhares pelo en-GB */
+    expect(screen.getByText('1,000')).toBeInTheDocument();
+    /* paises pelo nome ingles; um codigo desconhecido mostra-se tal e qual */
+    for (const p of ['Portugal', 'United Kingdom', 'Germany']) expect(screen.getByText(p)).toBeInTheDocument();
+    expect(screen.getAllByText('XX')).toHaveLength(2); /* o codigo e o nome */
+    expect(screen.getByText(/^High abandonment rate \(82%\)\./)).toBeInTheDocument();
+    expect(screen.getAllByText('improve photos').length).toBeGreaterThan(0);
+    const tabela = screen.getByRole('table');
+    expect(within(tabela).getAllByRole('columnheader').map(h => h.textContent)).toEqual(['Tour', 'SalDesk price', 'Viator/GYG price', 'Market position', '']);
+    expect(within(tabela).getAllByText('Not set').length).toBeGreaterThan(0);
+    expect(portuguesNoEcra(DADOS)).toEqual([]);
+    expect(chavesCruas(['analytics'])).toEqual([]);
+  });
+
+  it('o_relatorio_por_email_vai_em_ingles_com_a_data_inglesa', async () => {
+    await abreEmIngles();
+    fireEvent.click(screen.getByRole('button', { name: /Send by email/ }));
+    const url = abrir.mock.calls[0][0];
+    expect(url.startsWith(`mailto:?subject=${encodeURIComponent('SalDesk — Monthly report')}&body=`)).toBe(true);
+    expect(decodeURIComponent(url.split('&body=')[1])).toBe(
+      'Health score: 76/100\n' +
+      `Revenue: ${eurEn(1234)}\n` +
+      'Bookings: 18\n' +
+      'Average rating: 4.2\n\n' +
+      `Generated in SalDesk — ${new Date().toLocaleDateString('en-GB')}`
+    );
+  });
+
+  it('o_preco_do_concorrente_guarda_o_numero_e_a_posicao_em_ingles', async () => {
+    await abreEmIngles();
+    const linha = screen.getAllByText('Buggy Tour').find(e => e.closest('table')).closest('tr');
+    fireEvent.click(within(linha).getByRole('button', { name: 'Edit price' }));
+    const campo = within(linha).getByLabelText('Competitor price');
+    expect(campo).toHaveAttribute('placeholder', 'e.g. 45');
+    fireEvent.change(campo, { target: { value: '50' } });
+    fireEvent.click(within(linha).getByRole('button', { name: 'Save price' }));
+    expect(JSON.parse(localStorage.getItem(CHAVE))).toEqual({ u1: { price: 50 } });
+    expect(linha).toHaveTextContent('+20% above');
+  });
+
+  it('servicos_a_falhar_mostram_os_vazios_em_ingles', async () => {
+    [getResumo, getReviewsStats, getAnalyticsStats, getMarketingStats, listCustomers, listUnits, getUnidades]
+      .forEach(f => f.mockRejectedValue(new Error('x')));
+    await abreEmIngles();
+    expect(screen.getByText('Moderate')).toBeInTheDocument();
+    expect(screen.getByText('No origin data available.')).toBeInTheDocument();
+    expect(screen.getByText('No data available.')).toBeInTheDocument();
+    expect(screen.getByText('Funnel data not available.')).toBeInTheDocument();
+    expect(screen.getByText('No tours to compare.')).toBeInTheDocument();
+    expect(screen.getByText(/Load financial data for an accurate score\./)).toBeInTheDocument();
+    expect(portuguesNoEcra(DADOS)).toEqual([]);
   });
 });

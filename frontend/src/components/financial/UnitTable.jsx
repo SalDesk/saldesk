@@ -1,6 +1,9 @@
+import { useT } from '../../i18n';
+
 export default function UnitTable({ data }) {
+  const t = useT();
   if (!data?.length) {
-    return <p className="text-sm font-body text-n-400 py-6 text-center">Sem unidades activas</p>;
+    return <p className="text-sm font-body text-n-400 py-6 text-center">{t('financial.noActiveUnits')}</p>;
   }
 
   const maxReceita = Math.max(...data.map((u) => u.receita), 1);
@@ -12,11 +15,11 @@ export default function UnitTable({ data }) {
           <div className="flex items-center justify-between text-sm">
             <div className="min-w-0">
               <span className="font-body font-semibold text-n-800 truncate block">{unit.name}</span>
-              <span className="text-xs font-body text-n-400">{unit.unit_type} · {unit.num_reservas} reserva(s)</span>
+              <span className="text-xs font-body text-n-400">{t('financial.unitLine', { type: unit.unit_type, n: unit.num_reservas })}</span>
             </div>
             <div className="text-right shrink-0 ml-3">
               <p className="font-display font-bold text-ocean-700">€{Number(unit.receita).toFixed(0)}</p>
-              <p className="text-xs font-body text-n-500">{unit.taxa_ocupacao}% ocup.</p>
+              <p className="text-xs font-body text-n-500">{t('financial.occupancyShort', { pct: unit.taxa_ocupacao })}</p>
             </div>
           </div>
           {/* Barra de ocupacao */}

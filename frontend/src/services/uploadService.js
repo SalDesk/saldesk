@@ -65,12 +65,14 @@ export const ALLOWED_DOCUMENT_TYPES = ['application/pdf', 'image/jpeg', 'image/p
 export const MAX_DOCUMENT_SIZE_MB    = 10;
 export const MAX_DOCUMENT_SIZE_BYTES = MAX_DOCUMENT_SIZE_MB * 1024 * 1024;
 
+/* O erro vem na lingua do painel (o mesmo texto de sempre em pt) */
 export function validateDocumentFile(file) {
+  const t = getT(useUiStore.getState().lang);
   if (!ALLOWED_DOCUMENT_TYPES.includes(file.type)) {
-    return `Formato inválido: ${file.name}. Usa PDF, JPG, PNG ou WebP.`;
+    return t('upload.invalidDocFormat', { name: file.name });
   }
   if (file.size > MAX_DOCUMENT_SIZE_BYTES) {
-    return `Ficheiro demasiado grande: ${file.name}. Máximo ${MAX_DOCUMENT_SIZE_MB}MB.`;
+    return t('upload.tooLarge', { name: file.name, max: MAX_DOCUMENT_SIZE_MB });
   }
   return null;
 }

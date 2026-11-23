@@ -1,7 +1,9 @@
+import { useT } from '../../i18n';
 
 export default function TopCustomersList({ data }) {
+  const t = useT();
   if (!data?.length) {
-    return <p className="text-sm font-body text-n-400 py-6 text-center">Sem dados</p>;
+    return <p className="text-sm font-body text-n-400 py-6 text-center">{t('financial.noData')}</p>;
   }
 
   const max = Math.max(...data.map((c) => c.total_gasto), 1);

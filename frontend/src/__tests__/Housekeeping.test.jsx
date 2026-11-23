@@ -5,6 +5,8 @@ import Housekeeping from '../pages/Housekeeping';
 import { listUnits } from '../services/unitsService';
 import { listReservations } from '../services/reservationsService';
 import api from '../services/api';
+import useUiStore from '../store/uiStore';
+import { portuguesNoEcra, chavesCruas } from './helpers/portuguesNoEcra';
 
 /* Sem rede: so os servicos da pagina sao simulados */
 vi.mock('../services/unitsService', () => ({ listUnits: vi.fn(), updateUnit: vi.fn() }));
@@ -281,5 +283,87 @@ describe('Housekeeping', () => {
       </MemoryRouter>
     );
     expect(await screen.findByText('Nenhum quarto encontrado')).toBeInTheDocument();
+  });
+});
+
+
+/* ───────────────────────── Painel em ingles ───────────────────────── */
+
+describe('Housekeeping em inglês', () => {
+  const DADOS = ['Quarto 101', 'Quarto 102', 'Quarto 201', 'Quarto 202', 'Quarto 203', 'Maria', 'João', 'Mar'];
+
+  beforeEach(() => {
+    useUiStore.setState({ lang: 'en' });
+    listUnits.mockReset().mockResolvedValue(UNIDADES);
+    listReservations.mockReset().mockResolvedValue(RESERVAS);
+    api.get.mockReset().mockResolvedValue({ data: { data: COLABORADORES } });
+  });
+  afterEach(() => {
+    cleanup();
+    useUiStore.setState({ lang: 'pt' });
+  });
+
+  const dataEn = new Date(Number(HOJE.slice(0, 4)), Number(HOJE.slice(5, 7)) - 1, Number(HOJE.slice(8, 10))).toLocaleDateString('en-GB');
+
+  async function abreEmIngles() {
+    render(
+      <MemoryRouter future={FUTURE}>
+        <Housekeeping />
+      </MemoryRouter>
+    );
+    await screen.findByText(`${dataEn} · 5 rooms`);
+  }
+
+  it('andares_estados_prioridades_e_chips_em_ingles_sem_portugues', async () => {
+    await abreEmIngles();
+    expect(screen.getByRole('heading', { level: 1, name: 'Housekeeping' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Refresh/ })).toBeInTheDocument();
+    const cabecalhos = screen.getAllByRole('button', { name: /^(Floor \d|No floor)/ }).map(b => b.textContent);
+    expect(cabecalhos).toEqual(['Floor 12 rooms', 'Floor 22 rooms', 'No floor1 rooms']);
+    for (const rotulo of ['All (5)', 'Dirty (1)', 'Cleaning (1)', 'Inspection (0)', 'Clean (2)']) {
+      expect(screen.getByRole('button', { name: rotulo })).toBeInTheDocument();
+    }
+    expect(screen.getByText('Rooms with check-out and check-in on the same day:')).toBeInTheDocument();
+    expect(screen.getByText('Check-out + Check-in')).toBeInTheDocument();
+    expect(screen.getAllByText('Urgent').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Occupied').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Vacant').length).toBeGreaterThan(0);
+    const estado = screen.getAllByRole('combobox')[0];
+    /* os valores sao os estados de sempre; so o rotulo muda */
+    expect([...estado.options].map(o => [o.value, o.textContent])).toEqual([
+      ['clean', 'Clean'], ['dirty', 'Dirty'], ['cleaning', 'Being cleaned'], ['inspection', 'Inspection'], ['blocked', 'Blocked'],
+    ]);
+    expect(screen.getAllByRole('combobox')[1].options[0].textContent).toBe('Assign staff member...');
+    expect(screen.getAllByText(/· 2 guests$/).length).toBeGreaterThan(0);
+    expect(portuguesNoEcra(DADOS)).toEqual([]);
+    expect(chavesCruas(['housekeeping'])).toEqual([]);
+  });
+
+  it('a_checklist_em_ingles_marca_e_conta', async () => {
+    await abreEmIngles();
+    const progresso = screen.getAllByText('0/8')[0];
+    fireEvent.click(progresso.closest('button'));
+    const dialogo = await screen.findByRole('dialog');
+    for (const item of ['Change bed linen', 'Clean bathroom', 'Vacuum / sweep', 'Clean surfaces', 'Restock amenities',
+      'Check TV / AC / WiFi', 'Restock mini-bar', 'Check balcony']) {
+      expect(within(dialogo).getByText(item)).toBeInTheDocument();
+    }
+    fireEvent.click(within(dialogo).getByText('Change bed linen').closest('label').querySelector('button'));
+    expect(within(dialogo).getByText('Change bed linen').className).toContain('line-through');
+    expect(within(dialogo).getByRole('button', { name: 'Mark as clean' })).toBeInTheDocument();
+    expect(portuguesNoEcra(DADOS, dialogo)).toEqual([]);
+    const fechar = within(dialogo).getAllByRole('button', { name: 'Close' });
+    fireEvent.click(fechar[fechar.length - 1]);
+    expect(screen.getByText('1/8')).toBeInTheDocument();
+  });
+
+  it('sem_quartos_em_ingles', async () => {
+    listUnits.mockResolvedValue([]);
+    render(
+      <MemoryRouter future={FUTURE}>
+        <Housekeeping />
+      </MemoryRouter>
+    );
+    expect(await screen.findByText('No rooms found')).toBeInTheDocument();
   });
 });

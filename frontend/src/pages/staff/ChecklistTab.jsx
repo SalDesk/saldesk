@@ -7,12 +7,17 @@ import {
   Settings2,
 } from 'lucide-react';
 import Button from '../../components/ui/Button';
-import { CHECKLIST_KEY, DEFAULT_TASKS } from './shared';
+import { CHECKLIST_KEY, DEFAULT_TASKS, rotuloTarefa } from './shared';
 import Card from '../../components/ui/Card';
 import Input from '../../components/ui/Input';
+import { useT } from '../../i18n';
+import { localeDe, useLingua } from '../../utils/formatoLingua';
 
 /* ── Checklist Tab ── */
+/* As tarefas guardam-se com o texto (as por omissao em portugues); o ecra mostra o rotulo na lingua do painel. */
 function ChecklistTab() {
+  const t = useT();
+  const lang = useLingua();
   const todayStr = new Date().toISOString().split('T')[0];
 
   function load() {
@@ -66,26 +71,26 @@ function ChecklistTab() {
       {isLate && !allDone && (
         <div className="flex items-center gap-2 px-4 py-3 bg-[var(--warning-light)] border border-[var(--warning)] rounded-sm text-sm font-body text-[var(--warning)]">
           <AlertTriangle size={16} strokeWidth={1.75} className="shrink-0" />
-          <span>{incomplete} tarefa(s) por completar — verifique antes do tour</span>
+          <span>{t('staff.checklist.lateAlert', { n: incomplete })}</span>
         </div>
       )}
 
       <div className="flex items-center justify-between">
         <div>
-          <p className="font-display font-semibold text-n-900">Checklist do dia</p>
+          <p className="font-display font-semibold text-n-900">{t('staff.checklist.title')}</p>
           <p className="text-xs font-body text-n-500 mt-0.5">
-            {todayStr} · {doneCount}/{tasks.length} concluidas
+            {t('staff.checklist.progress', { date: todayStr, done: doneCount, total: tasks.length })}
           </p>
         </div>
         <div className="flex items-center gap-2">
           {allDone && (
             <span className="flex items-center gap-1.5 text-xs font-body text-[var(--success)] bg-[var(--success-light)] px-3 py-1.5 rounded-sm border border-[var(--success)]">
               <CheckCircle2 size={13} strokeWidth={1.75} />
-              Tudo concluído
+              {t('staff.checklist.allDone')}
             </span>
           )}
-          <button onClick={() => setConfig(v => !v)} aria-label="Configurar checklist"
-            className="p-2 rounded-sm text-n-500 hover:text-ocean-700 hover:bg-ocean-50 transition-colors" title="Configurar checklist">
+          <button onClick={() => setConfig(v => !v)} aria-label={t('staff.checklist.configure')}
+            className="p-2 rounded-sm text-n-500 hover:text-ocean-700 hover:bg-ocean-50 transition-colors" title={t('staff.checklist.configure')}>
             <Settings2 size={16} strokeWidth={1.75} />
           </button>
         </div>
@@ -108,10 +113,10 @@ function ChecklistTab() {
               <input type="checkbox" checked={done} onChange={() => toggle(idx)}
                 className="mt-0.5 w-4 h-4 accent-ocean-700 cursor-pointer" />
               <div className="flex-1">
-                <p className={`text-sm font-body text-n-800 ${done ? 'line-through text-n-400' : ''}`}>{task}</p>
+                <p className={`text-sm font-body text-n-800 ${done ? 'line-through text-n-400' : ''}`}>{rotuloTarefa(task, t, lang)}</p>
                 {done && at && (
                   <p className="text-xs font-body text-n-400 mt-0.5">
-                    Confirmado as {new Date(at).toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' })}
+                    {t('staff.checklist.confirmedAt', { time: new Date(at).toLocaleTimeString(localeDe(lang), { hour: '2-digit', minute: '2-digit' }) })}
                   </p>
                 )}
               </div>
@@ -121,7 +126,7 @@ function ChecklistTab() {
         })}
         {tasks.length === 0 && (
           <div className="px-4 py-8 text-center text-n-400 text-sm font-body">
-            Sem tarefas configuradas. Use o ícone de configurações para adicionar.
+            {t('staff.checklist.empty')}
           </div>
         )}
       </div>
@@ -130,12 +135,12 @@ function ChecklistTab() {
       {/* Config panel */}
       {configOpen && (
         <div className="bg-n-50 border border-n-200 rounded-md p-4 space-y-3">
-          <p className="text-xs font-mono uppercase tracking-wide text-n-500">Gerir tarefas</p>
+          <p className="text-xs font-mono uppercase tracking-wide text-n-500">{t('staff.checklist.manage')}</p>
           <div className="space-y-1.5">
             {tasks.map((task, idx) => (
               <div key={idx} className="flex items-center gap-2">
-                <span className="flex-1 text-sm font-body text-n-800 px-3 py-1.5 bg-white border border-n-200 rounded-sm">{task}</span>
-                <button onClick={() => removeTask(idx)} aria-label={`Remover tarefa - ${task}`}
+                <span className="flex-1 text-sm font-body text-n-800 px-3 py-1.5 bg-white border border-n-200 rounded-sm">{rotuloTarefa(task, t, lang)}</span>
+                <button onClick={() => removeTask(idx)} aria-label={t('staff.checklist.removeTask', { task: rotuloTarefa(task, t, lang) })}
                   className="p-1.5 rounded text-n-400 hover:text-[var(--error)] hover:bg-[var(--error-light)] transition-colors">
                   <X size={13} strokeWidth={2} />
                 </button>
@@ -144,11 +149,11 @@ function ChecklistTab() {
           </div>
           <div className="flex gap-2">
             <div className="flex-1">
-              <Input aria-label="Nova tarefa" value={newTask} onChange={e => setNewTask(e.target.value)}
+              <Input aria-label={t('staff.checklist.newTask')} value={newTask} onChange={e => setNewTask(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && addTask()}
-                placeholder="Nova tarefa + Enter" />
+                placeholder={t('staff.checklist.newTaskPlaceholder')} />
             </div>
-            <Button size="sm" onClick={addTask} icon={Plus}>Adicionar</Button>
+            <Button size="sm" onClick={addTask} icon={Plus}>{t('staff.checklist.add')}</Button>
           </div>
         </div>
       )}

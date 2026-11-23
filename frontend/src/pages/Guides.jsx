@@ -26,13 +26,15 @@ import Table from '../components/ui/Table';
 import LoadingSpinner from '../components/shared/LoadingSpinner';
 import { useT } from '../i18n';
 import { mensagemErro } from '../utils/mensagemErro';
+import { formatarData, useLingua } from '../utils/formatoLingua';
+import { DAYS, CARGO_VENDEDOR, rotuloCargo, rotuloDia } from './staff/shared';
 
 const LANGUAGES   = ['PT', 'EN', 'DE', 'NL', 'FR', 'ES'];
-const DAYS        = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sab', 'Dom'];
+/* Funcoes gravadas tal como estao; o ecra mostra o rotulo de staff.roles */
 const GUIDE_ROLES = ['Guia', 'Instrutor', 'Guia-Instrutor', 'Assistente', 'Outro'];
-/* O texto gravado nas certificacoes e o da lista; isto e so o que se le no ecra. */
-const CERT_ROTULO = { 'Guia Turistico Certificado': 'Guia Turístico Certificado' };
-const certRotulo = (c) => CERT_ROTULO[c] || c;
+/* O texto gravado nas certificacoes e o da lista; isto e so o que se le no ecra (guides.certs). */
+const CERT_CHAVE = { 'Guia Turistico Certificado': 'guiaTuristico', 'Primeiros Socorros': 'primeirosSocorros', 'CPR / DAE': 'cprDae' };
+const certRotulo = (c, t) => (CERT_CHAVE[c] ? t(`guides.certs.${CERT_CHAVE[c]}`) : c);
 
 const PRESET_CERTS = [
   'PADI Open Water', 'PADI Advanced', 'PADI Rescue Diver',
@@ -42,10 +44,10 @@ const PRESET_CERTS = [
 
 /* Cada estado do guia usa uma variante do Badge do sistema */
 const STATUS_META = {
-  active:    { label: 'Disponível', variant: 'confirmed'  },
-  busy:      { label: 'Ocupado',    variant: 'checked_in' },
-  day_off:   { label: 'Folga',      variant: 'direct'     },
-  inactive:  { label: 'Inactivo',   variant: 'cancelled'  },
+  active:    { rotulo: 'guides.status.active',   variant: 'confirmed'  },
+  busy:      { rotulo: 'guides.status.busy',     variant: 'checked_in' },
+  day_off:   { rotulo: 'guides.status.dayOff',   variant: 'direct'     },
+  inactive:  { rotulo: 'guides.status.inactive', variant: 'cancelled'  },
 };
 
 /* Etiqueta de grupo de campos: igual a etiqueta dos campos do sistema */
@@ -83,6 +85,8 @@ function GuideAvatar({ guide, size = 40 }) {
 
 /* ───────── Card ───────── */
 function GuideCard({ guide, units, onEdit, onDelete, onHistory, onAssign }) {
+  const t = useT();
+  const lang = useLingua();
   const langs  = guide.languages || [];
   const certs  = guide.certifications || guide.skills || [];
   const rating = Number(guide.average_rating || 0);
@@ -94,7 +98,7 @@ function GuideCard({ guide, units, onEdit, onDelete, onHistory, onAssign }) {
         <GuideAvatar guide={guide} size={52} />
         <div className="flex-1 min-w-0">
           <p className="font-display font-semibold text-sm text-n-900 truncate">{guide.name}</p>
-          <p className="text-xs font-body text-n-500 mt-0.5">{guide.role}</p>
+          <p className="text-xs font-body text-n-500 mt-0.5">{rotuloCargo(guide.role, t, lang)}</p>
           <div className="flex items-center gap-2 mt-1.5">
             {rating > 0 && (
               <span className="flex items-center gap-1 text-xs font-body text-n-700 tabular-nums">
@@ -104,20 +108,20 @@ function GuideCard({ guide, units, onEdit, onDelete, onHistory, onAssign }) {
             )}
             <span className="flex items-center gap-1 text-xs font-body text-n-500 tabular-nums">
               <Briefcase size={11} strokeWidth={1.75} className="text-n-400" />
-              {guide.total_jobs_completed || 0} tours
+              {t('guides.card.tours', { n: guide.total_jobs_completed || 0 })}
             </span>
           </div>
         </div>
         <div className="flex gap-0.5 shrink-0">
-          <Button variant="ghost" size="sm" icon={Pencil} onClick={() => onEdit(guide)} aria-label="Editar" />
-          <Button variant="ghost" size="sm" icon={Trash2} onClick={() => onDelete(guide)} className={DELETE_HOVER} aria-label="Eliminar" />
+          <Button variant="ghost" size="sm" icon={Pencil} onClick={() => onEdit(guide)} aria-label={t('common.edit')} />
+          <Button variant="ghost" size="sm" icon={Trash2} onClick={() => onDelete(guide)} className={DELETE_HOVER} aria-label={t('common.delete')} />
         </div>
       </div>
 
       <div className="px-4 pb-3 flex-1 space-y-3">
         {langs.length > 0 && (
           <div>
-            <p className="text-xs font-body font-medium text-n-500 mb-1.5">Idiomas</p>
+            <p className="text-xs font-body font-medium text-n-500 mb-1.5">{t('guides.card.languages')}</p>
             <div className="flex flex-wrap gap-1">
               {langs.map(l => (
                 <span key={l}
@@ -130,12 +134,12 @@ function GuideCard({ guide, units, onEdit, onDelete, onHistory, onAssign }) {
         )}
         {certs.length > 0 && (
           <div>
-            <p className="text-xs font-body font-medium text-n-500 mb-1.5">Certificações</p>
+            <p className="text-xs font-body font-medium text-n-500 mb-1.5">{t('guides.card.certifications')}</p>
             <div className="flex flex-wrap gap-1">
               {certs.slice(0, 3).map(c => (
                 <span key={c}
                   className="text-xs font-body px-2 py-0.5 bg-n-50 text-n-600 border border-n-200 rounded-xs">
-                  {certRotulo(c)}
+                  {certRotulo(c, t)}
                 </span>
               ))}
               {certs.length > 3 && (
@@ -152,14 +156,14 @@ function GuideCard({ guide, units, onEdit, onDelete, onHistory, onAssign }) {
       </div>
 
       <div className="px-4 py-3 border-t border-n-100 flex items-center justify-between gap-2">
-        <Badge variant={statusMeta.variant} className="whitespace-nowrap">{statusMeta.label}</Badge>
+        <Badge variant={statusMeta.variant} className="whitespace-nowrap">{t(statusMeta.rotulo)}</Badge>
         <div className="flex gap-1.5">
           <Button variant="secondary" size="sm" onClick={() => onAssign(guide)}>
             <UserPlus size={12} strokeWidth={1.75} className="mr-1" />
-            Atribuir
+            {t('guides.card.assign')}
           </Button>
           <Button variant="secondary" size="sm" onClick={() => onHistory(guide)}>
-            Historial
+            {t('guides.card.history')}
           </Button>
         </div>
       </div>
@@ -168,7 +172,10 @@ function GuideCard({ guide, units, onEdit, onDelete, onHistory, onAssign }) {
 }
 
 /* ───────── Form ───────── */
+/* Funcao, certificacoes e dias gravam o valor da lista (portugues); so o texto mostrado muda com a lingua. */
 function GuideForm({ guide, units, onSave, onCancel, loading, error }) {
+  const t = useT();
+  const lang = useLingua();
   const meta = guide?.guide_meta
     ? (() => { try { return JSON.parse(guide.guide_meta); } catch { return {}; } })()
     : {};
@@ -239,34 +246,34 @@ function GuideForm({ guide, units, onSave, onCancel, loading, error }) {
               ? <img src={photoPreview} alt="" className="w-full h-full object-cover" />
               : <Camera size={20} strokeWidth={1.75} className="text-n-400" />}
           </div>
-          <button type="button" onClick={() => fileRef.current?.click()} aria-label="Carregar foto"
+          <button type="button" onClick={() => fileRef.current?.click()} aria-label={t('staff.form.uploadPhoto')}
             className="absolute -bottom-1 -right-1 w-6 h-6 bg-ocean-700 text-white rounded-full flex items-center justify-center hover:bg-ocean-500 transition-colors">
             <Upload size={10} strokeWidth={2} />
           </button>
           <input ref={fileRef} type="file" accept="image/*" onChange={handleFile} className="hidden" />
         </div>
         <div>
-          <p className="text-sm font-display font-semibold text-n-800">Foto do guia</p>
-          <p className="text-xs font-body text-n-500">JPG, PNG até 2MB</p>
+          <p className="text-sm font-display font-semibold text-n-800">{t('guides.form.photo')}</p>
+          <p className="text-xs font-body text-n-500">{t('staff.form.photoHint')}</p>
         </div>
       </div>
 
       <div className="grid grid-cols-2 gap-3">
-        <Input label="Nome completo" value={form.name} onChange={set('name')} required placeholder="Nome e apelido" />
-        <Select label="Função" value={form.role} onChange={set('role')} required>
-          {GUIDE_ROLES.map(r => <option key={r} value={r}>{r}</option>)}
+        <Input label={t('staff.form.fullName')} value={form.name} onChange={set('name')} required placeholder={t('staff.form.namePlaceholder')} />
+        <Select label={t('guides.form.role')} value={form.role} onChange={set('role')} required>
+          {GUIDE_ROLES.map(r => <option key={r} value={r}>{rotuloCargo(r, t, lang)}</option>)}
         </Select>
       </div>
 
       <div className="grid grid-cols-2 gap-3">
-        <Input label="Telefone" value={form.phone} onChange={set('phone')} type="tel" placeholder="+238 900 0000" />
-        <Input label="WhatsApp" value={form.whatsapp} onChange={set('whatsapp')} type="tel" placeholder="+238 900 0000" />
+        <Input label={t('staff.form.phone')} value={form.phone} onChange={set('phone')} type="tel" placeholder="+238 900 0000" />
+        <Input label={t('staff.form.whatsapp')} value={form.whatsapp} onChange={set('whatsapp')} type="tel" placeholder="+238 900 0000" />
       </div>
-      <Input label="Email" value={form.email} onChange={set('email')} type="email" placeholder="guia@email.com" />
+      <Input label={t('staff.form.email')} value={form.email} onChange={set('email')} type="email" placeholder={t('guides.form.emailPlaceholder')} />
 
       {/* Languages */}
       <div>
-        <p className={GROUP_LABEL}>Idiomas</p>
+        <p className={GROUP_LABEL}>{t('guides.card.languages')}</p>
         <div className="flex gap-2 flex-wrap">
           {LANGUAGES.map(l => (
             <label key={l} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-sm border text-xs font-body font-medium cursor-pointer transition-colors select-none ${
@@ -281,31 +288,31 @@ function GuideForm({ guide, units, onSave, onCancel, loading, error }) {
 
       {/* Certifications */}
       <div>
-        <p className={GROUP_LABEL}>Certificações</p>
+        <p className={GROUP_LABEL}>{t('guides.card.certifications')}</p>
         <div className="flex flex-wrap gap-1.5 mb-2">
           {PRESET_CERTS.map(c => (
             <button key={c} type="button" onClick={() => toggleCert(c)}
               className={`px-2.5 py-1 rounded-sm text-xs font-body transition-colors border ${
                 certs.includes(c) ? 'bg-ocean-50 border-ocean-300 text-ocean-700' : 'bg-n-50 border-n-200 text-n-600 hover:border-n-400'
               }`}>
-              {certRotulo(c)}
+              {certRotulo(c, t)}
             </button>
           ))}
         </div>
         {certs.filter(c => !PRESET_CERTS.includes(c)).map(c => (
           <span key={c} className="inline-flex items-center gap-1 mr-1.5 mb-1.5 px-2 py-0.5 bg-sand-50 text-sand-600 border border-sand-200 rounded-xs text-xs font-body">
             <Tag size={9} strokeWidth={1.75} />{c}
-            <button type="button" onClick={() => setCerts(p => p.filter(x => x !== c))} aria-label="Remover"><X size={9} strokeWidth={2} /></button>
+            <button type="button" onClick={() => setCerts(p => p.filter(x => x !== c))} aria-label={t('guides.form.remove')}><X size={9} strokeWidth={2} /></button>
           </span>
         ))}
         <Input type="text" value={certInput} onChange={e => setCertInput(e.target.value)} onKeyDown={addCustomCert}
-          placeholder="Outra certificação + Enter" />
+          placeholder={t('guides.form.otherCert')} />
       </div>
 
       {/* Tours */}
       {units.length > 0 && (
         <div>
-          <p className={GROUP_LABEL}>Tours que pode conduzir</p>
+          <p className={GROUP_LABEL}>{t('guides.form.tours')}</p>
           <div className="flex flex-col gap-1.5 max-h-36 overflow-y-auto">
             {units.map(u => (
               <label key={u.id} className={`flex items-center gap-2.5 px-3 py-2 rounded-sm border cursor-pointer transition-colors ${
@@ -321,28 +328,25 @@ function GuideForm({ guide, units, onSave, onCancel, loading, error }) {
 
       {/* Schedule */}
       <div>
-        <p className={GROUP_LABEL}>Dias disponíveis</p>
+        <p className={GROUP_LABEL}>{t('guides.form.days')}</p>
         <div className="flex gap-1.5 flex-wrap">
           {DAYS.map(d => (
             <button key={d} type="button" onClick={() => toggleDay(d)}
               className={`px-2.5 py-1 rounded text-xs font-mono font-medium transition-colors ${
                 schedule.includes(d) ? 'bg-ocean-700 text-white' : 'bg-n-100 text-n-600 hover:bg-n-200'
               }`}>
-              {d}
+              {rotuloDia(d, t)}
             </button>
           ))}
         </div>
       </div>
 
-      <Textarea label="Bio curta" value={form.bio} onChange={set('bio')} rows={2}
-        placeholder="Experiência, especialidade..." />
+      <Textarea label={t('guides.form.bio')} value={form.bio} onChange={set('bio')} rows={2}
+        placeholder={t('guides.form.bioPlaceholder')} />
 
       {guide && (
-        <Select label="Estado" value={form.status} onChange={set('status')}>
-          <option value="active">Disponível</option>
-          <option value="busy">Ocupado</option>
-          <option value="day_off">Folga</option>
-          <option value="inactive">Inactivo</option>
+        <Select label={t('staff.form.status')} value={form.status} onChange={set('status')}>
+          {Object.entries(STATUS_META).map(([v, m]) => <option key={v} value={v}>{t(m.rotulo)}</option>)}
         </Select>
       )}
 
@@ -352,16 +356,16 @@ function GuideForm({ guide, units, onSave, onCancel, loading, error }) {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Shield size={15} strokeWidth={1.75} className="text-ocean-700" />
-              <span className="text-sm font-display font-semibold text-n-800">Criar conta /staff</span>
+              <span className="text-sm font-display font-semibold text-n-800">{t('staff.form.createAccess')}</span>
             </div>
-            <button type="button" onClick={() => setCreateAccess(!createAccess)} aria-label="Criar conta /staff"
+            <button type="button" onClick={() => setCreateAccess(!createAccess)} aria-label={t('staff.form.createAccess')}
               className={`w-10 h-5 rounded-full transition-colors relative ${createAccess ? 'bg-ocean-700' : 'bg-n-300'}`}>
               <span className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-all ${createAccess ? 'left-[22px]' : 'left-0.5'}`} />
             </button>
           </div>
           {createAccess && (
             <p className="text-xs font-body text-n-500 bg-n-50 rounded p-2">
-              Será criada uma conta de acesso ao portal /staff com email e password temporária. O guia receberá as credenciais por WhatsApp.
+              {t('guides.form.accessHint')}
             </p>
           )}
         </div>
@@ -370,9 +374,9 @@ function GuideForm({ guide, units, onSave, onCancel, loading, error }) {
       {error && <p className="text-sm font-body px-3 py-2 rounded-sm bg-[var(--error-light)] text-[var(--error)]">{error}</p>}
 
       <div className="flex gap-3 pt-1">
-        <Button type="button" variant="secondary" onClick={onCancel} className="flex-1">Cancelar</Button>
+        <Button type="button" variant="secondary" onClick={onCancel} className="flex-1">{t('common.cancel')}</Button>
         <Button type="submit" loading={loading} className="flex-1">
-          {guide ? 'Guardar alterações' : 'Adicionar guia'}
+          {guide ? t('staff.form.saveChanges') : t('guides.add')}
         </Button>
       </div>
     </form>
@@ -381,6 +385,8 @@ function GuideForm({ guide, units, onSave, onCancel, loading, error }) {
 
 /* ───────── History Modal ───────── */
 function HistoryModal({ guide, onClose }) {
+  const t = useT();
+  const lang = useLingua();
   const [jobs,    setJobs]    = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -392,7 +398,11 @@ function HistoryModal({ guide, onClose }) {
       .finally(() => setLoading(false));
   }, [guide?.id]);
 
-  const STATUS_LABEL = { pending: 'Pendente', confirmed: 'Confirmado', in_progress: 'Em progresso', completed: 'Concluído', cancelled: 'Cancelado' };
+  const STATUS_LABEL = {
+    pending: t('guides.history.status.pending'), confirmed: t('guides.history.status.confirmed'),
+    in_progress: t('guides.history.status.inProgress'), completed: t('guides.history.status.completed'),
+    cancelled: t('guides.history.status.cancelled'),
+  };
   const STATUS_VARIANT = {
     completed: 'confirmed',
     cancelled: 'cancelled',
@@ -404,16 +414,16 @@ function HistoryModal({ guide, onClose }) {
   const totalEarned = jobs.filter(j => j.status === 'completed').reduce((s, j) => s + Number(j.earnings_amount || 0), 0);
 
   return (
-    <Modal open={!!guide} onClose={onClose} title={`Historial — ${guide?.name}`} size="md">
+    <Modal open={!!guide} onClose={onClose} title={t('guides.history.title', { name: guide?.name })} size="md">
       {loading ? (
         <div className="flex justify-center py-10"><LoadingSpinner size={24} /></div>
       ) : jobs.length === 0 ? (
-        <EmptyState icon={Briefcase} title="Sem tours registados" />
+        <EmptyState icon={Briefcase} title={t('guides.history.empty')} />
       ) : (
         <>
           {totalEarned > 0 && (
             <div className="mb-4 px-4 py-3 bg-ocean-50 border border-ocean-100 rounded-sm flex items-center justify-between">
-              <span className="text-xs font-body font-medium text-ocean-600">Total ganho</span>
+              <span className="text-xs font-body font-medium text-ocean-600">{t('guides.history.totalEarned')}</span>
               <span className="font-display font-bold text-ocean-700 tabular-nums">€{totalEarned.toFixed(2)}</span>
             </div>
           )}
@@ -425,7 +435,7 @@ function HistoryModal({ guide, onClose }) {
                     {job.reservations?.units?.name || job.reservation_id?.slice(0, 8) || '—'}
                   </p>
                   <p className="text-xs font-body text-n-500 mt-0.5">
-                    {job.assigned_at ? new Date(job.assigned_at).toLocaleDateString('pt-PT') : '—'}
+                    {job.assigned_at ? formatarData(new Date(job.assigned_at), {}, lang) : '—'}
                   </p>
                   {job.earnings_amount > 0 && (
                     <p className="text-xs font-body text-ocean-700 mt-0.5">€{Number(job.earnings_amount).toFixed(2)}</p>
@@ -462,23 +472,23 @@ function AssignModal({ guide, reservations, onClose, onDone }) {
       await createAssignment({ staff_id: guide.id, reservation_id: selected });
       onDone();
     } catch (err) {
-      setError(mensagemErro(err, t, 'Erro ao atribuir'));
+      setError(mensagemErro(err, t, t('guides.assign.error')));
     } finally {
       setSaving(false);
     }
   }
 
   return (
-    <Modal open={!!guide} onClose={onClose} title={`Atribuir a — ${guide?.name}`} size="sm"
+    <Modal open={!!guide} onClose={onClose} title={t('guides.assign.title', { name: guide?.name })} size="sm"
       footer={
         <>
-          <Button variant="secondary" onClick={onClose}>Cancelar</Button>
-          <Button onClick={handleAssign} loading={saving} disabled={!selected}>Atribuir</Button>
+          <Button variant="secondary" onClick={onClose}>{t('common.cancel')}</Button>
+          <Button onClick={handleAssign} loading={saving} disabled={!selected}>{t('guides.card.assign')}</Button>
         </>
       }>
       <div className="space-y-3">
         {upcoming.length === 0 ? (
-          <p className="text-sm font-body text-n-500 text-center py-4">Sem reservas próximas pendentes.</p>
+          <p className="text-sm font-body text-n-500 text-center py-4">{t('guides.assign.none')}</p>
         ) : (
           <div className="space-y-2 max-h-64 overflow-y-auto">
             {upcoming.map(r => (
@@ -493,7 +503,7 @@ function AssignModal({ guide, reservations, onClose, onDone }) {
                     {r.units?.name || r.unit_id?.slice(0, 8)}
                   </p>
                   <p className="text-xs font-body text-n-500 mt-0.5">
-                    {r.check_in} · {r.guests} pax · {r.customer_name || '—'}
+                    {r.check_in} · {t('guides.assign.pax', { n: r.guests })} · {r.customer_name || '—'}
                   </p>
                 </div>
               </label>
@@ -508,6 +518,8 @@ function AssignModal({ guide, reservations, onClose, onDone }) {
 
 /* ───────── Weekly Availability View ───────── */
 function AvailabilityTab({ guides }) {
+  const t = useT();
+  const lang = useLingua();
   const [savingId, setSavingId] = useState(null);
 
   const TODAY     = new Date();
@@ -534,13 +546,12 @@ function AvailabilityTab({ guides }) {
     }
   }
 
-  const DAY_LABELS = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sab', 'Dom'];
   const todayStr   = TODAY.toISOString().split('T')[0];
 
   if (guides.length === 0) {
     return (
       <Card padding="p-0">
-        <EmptyState icon={Users} title="Sem guias para mostrar disponibilidade" />
+        <EmptyState icon={Users} title={t('guides.availability.empty')} />
       </Card>
     );
   }
@@ -549,14 +560,14 @@ function AvailabilityTab({ guides }) {
   const columns = [
     {
       key: 'guia',
-      label: 'Guia',
+      label: t('guides.availability.guide'),
       width: 160,
       render: (g) => (
         <div className="flex items-center gap-2.5">
           <GuideAvatar guide={g} size={28} />
           <div>
             <p className="font-body font-semibold text-n-800 text-xs truncate max-w-[90px]">{g.name.split(' ')[0]}</p>
-            <p className="font-body text-n-400 text-xs">{g.role}</p>
+            <p className="font-body text-n-400 text-xs">{rotuloCargo(g.role, t, lang)}</p>
           </div>
         </div>
       ),
@@ -571,7 +582,7 @@ function AvailabilityTab({ guides }) {
             <span className={isToday
               ? 'inline-flex items-center justify-center min-w-[22px] h-[22px] px-1 rounded-full bg-ocean-700 text-white font-display font-semibold tabular-nums'
               : 'font-display font-semibold text-n-700 tabular-nums'}>{dayNum}</span>
-            <span className="font-body text-n-400 font-normal">{DAY_LABELS[i]}</span>
+            <span className="font-body text-n-400 font-normal">{rotuloDia(DAYS[i], t)}</span>
           </div>
         ),
         align: 'center',
@@ -584,7 +595,7 @@ function AvailabilityTab({ guides }) {
             <button
               onClick={() => toggle(g.id, d)}
               disabled={isSaving}
-              title={isAv ? 'Disponível — clicar para marcar indisponível' : 'Indisponível — clicar para marcar disponível'}
+              title={isAv ? t('guides.availability.availableTitle') : t('guides.availability.unavailableTitle')}
               className={`w-8 h-8 mx-auto rounded-sm flex items-center justify-center transition-colors ${
                 isAv
                   ? 'bg-[var(--success-light)] text-[var(--success)] hover:brightness-95'
@@ -607,13 +618,13 @@ function AvailabilityTab({ guides }) {
       <div className="flex items-center gap-4 px-4 py-2.5 border-t border-n-100 bg-n-50">
         <div className="flex items-center gap-1.5">
           <span className="w-3 h-3 rounded-sm bg-[var(--success-light)] border border-[var(--success)] inline-block" />
-          <span className="text-xs font-body text-n-500">Disponível</span>
+          <span className="text-xs font-body text-n-500">{t('guides.availability.available')}</span>
         </div>
         <div className="flex items-center gap-1.5">
           <span className="w-3 h-3 rounded-sm bg-n-100 border border-n-200 inline-block" />
-          <span className="text-xs font-body text-n-500">Indisponível</span>
+          <span className="text-xs font-body text-n-500">{t('guides.availability.unavailable')}</span>
         </div>
-        <span className="text-xs font-body text-n-400 ml-auto">Clicar para alternar</span>
+        <span className="text-xs font-body text-n-400 ml-auto">{t('guides.availability.toggleHint')}</span>
       </div>
     </Card>
   );
@@ -622,6 +633,7 @@ function AvailabilityTab({ guides }) {
 /* ───────── Main Page ───────── */
 export default function Guides() {
   const t = useT();
+  const lang = useLingua();
   const { operator } = useAuthStore();
   const [tab,          setTab]          = useState('lista');
   const [guides,       setGuides]       = useState([]);
@@ -640,7 +652,7 @@ export default function Guides() {
   useEffect(() => {
     Promise.all([listStaff(), listUnits(), listReservations({})])
       .then(([staff, uns, res]) => {
-        setGuides((staff || []).filter(s => s.role !== 'Vendedor de Praia'));
+        setGuides((staff || []).filter(s => s.role !== CARGO_VENDEDOR));
         setUnits(uns.filter(u => u.status === 'active' || u.is_active));
         setReservations(res);
       })
@@ -660,7 +672,7 @@ export default function Guides() {
       }
       setModal(null);
     } catch (err) {
-      setFormError(mensagemErro(err, t, 'Erro ao guardar'));
+      setFormError(mensagemErro(err, t, t('staff.errors.save')));
     } finally { setFormLoading(false); }
   }
 
@@ -674,33 +686,35 @@ export default function Guides() {
 
   const filtered = guides.filter(g => {
     if (statusFilter && g.status !== statusFilter) return false;
+    /* a funcao procura-se pelo valor gravado e pelo rotulo na lingua do painel */
     if (search && !g.name.toLowerCase().includes(search.toLowerCase()) &&
-        !(g.role || '').toLowerCase().includes(search.toLowerCase())) return false;
+        !(g.role || '').toLowerCase().includes(search.toLowerCase()) &&
+        !String(rotuloCargo(g.role, t, lang) || '').toLowerCase().includes(search.toLowerCase())) return false;
     return true;
   });
 
   const active = guides.filter(g => g.status === 'active').length;
 
   const TABS = [
-    { id: 'lista',           label: 'Guias' },
-    { id: 'disponibilidade', label: 'Disponibilidade' },
+    { id: 'lista',           label: t('guides.tabs.list') },
+    { id: 'disponibilidade', label: t('guides.tabs.availability') },
   ];
 
   /* Chips de estado: Todos primeiro, depois um por estado do guia */
   const STATUS_OPTIONS = ['', 'active', 'busy', 'day_off', 'inactive'].map(s => ({
     value: s,
-    label: s === '' ? 'Todos' : STATUS_META[s]?.label || s,
+    label: s === '' ? t('guides.all') : t(STATUS_META[s].rotulo),
   }));
 
   return (
     <div>
       <PageHeader
-        title="Guias"
-        subtitle={`${active} disponível(is) · ${guides.length} total`}
+        title={t('guides.title')}
+        subtitle={t('guides.subtitle', { active, n: guides.length })}
         actions={
           tab === 'lista' && (
             <Button icon={Plus} onClick={() => { setFormError(''); setModal('create'); }}>
-              Adicionar guia
+              {t('guides.add')}
             </Button>
           )
         }
@@ -718,7 +732,7 @@ export default function Guides() {
             <div className="relative">
               <Search size={14} strokeWidth={1.75} className="absolute left-3 top-1/2 -translate-y-1/2 text-n-400" />
               <Input value={search} onChange={e => setSearch(e.target.value)}
-                placeholder="Pesquisar guia..." className="pl-8" />
+                placeholder={t('guides.search')} className="pl-8" />
             </div>
             <FilterChips options={STATUS_OPTIONS} value={statusFilter} onChange={setStatusFilter} />
           </div>
@@ -729,8 +743,8 @@ export default function Guides() {
             <Card padding="p-0">
               <EmptyState
                 icon={Users}
-                title="Sem guias registados"
-                description="Adicione os guias da sua equipa e associe-os aos tours que conduzem"
+                title={t('guides.emptyTitle')}
+                description={t('guides.emptyDesc')}
               />
             </Card>
           ) : (
@@ -756,7 +770,7 @@ export default function Guides() {
       <Modal
         open={!!modal}
         onClose={() => setModal(null)}
-        title={modal === 'create' ? 'Novo guia' : `Editar: ${modal?.name}`}
+        title={modal === 'create' ? t('guides.newTitle') : t('guides.editTitle', { name: modal?.name })}
         size="lg"
       >
         {modal && (
@@ -772,15 +786,15 @@ export default function Guides() {
       </Modal>
 
       {/* Delete confirm */}
-      <Modal open={!!deleteTarget} onClose={() => setDeleteTarget(null)} title="Confirmar" size="sm"
+      <Modal open={!!deleteTarget} onClose={() => setDeleteTarget(null)} title={t('common.confirm')} size="sm"
         footer={
           <>
-            <Button variant="secondary" onClick={() => setDeleteTarget(null)}>Cancelar</Button>
-            <Button variant="danger" onClick={handleDelete}>Eliminar</Button>
+            <Button variant="secondary" onClick={() => setDeleteTarget(null)}>{t('common.cancel')}</Button>
+            <Button variant="danger" onClick={handleDelete}>{t('common.delete')}</Button>
           </>
         }>
         <p className="text-sm font-body text-n-700">
-          Eliminar o guia <strong>"{deleteTarget?.name}"</strong>? Esta acção não pode ser desfeita.
+          {t('guides.deleteBefore')}<strong>"{deleteTarget?.name}"</strong>{t('guides.deleteAfter')}
         </p>
       </Modal>
 

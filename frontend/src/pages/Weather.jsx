@@ -13,6 +13,8 @@ import Button from '../components/ui/Button';
 import Card from '../components/ui/Card';
 import EmptyState from '../components/ui/EmptyState';
 import LoadingSpinner from '../components/shared/LoadingSpinner';
+import { useT } from '../i18n';
+import { formatarData, useLingua } from '../utils/formatoLingua';
 
 const ICON_MAP = { Sun, Cloud, CloudFog, CloudDrizzle, CloudRain, CloudLightning };
 
@@ -25,12 +27,19 @@ function addDays(n) {
   return d.toLocaleDateString('en-CA');
 }
 
-function fmtDate(dateStr) {
-  return new Date(dateStr + 'T00:00:00Z').toLocaleDateString('pt-PT', { weekday: 'long', day: '2-digit', month: 'long', timeZone: 'UTC' });
+function fmtDate(dateStr, lang) {
+  return formatarData(new Date(dateStr + 'T00:00:00Z'), { weekday: 'long', day: '2-digit', month: 'long', timeZone: 'UTC' }, lang);
+}
+
+/* Estado do tempo pela chave do servico (o pt de weather.conditions e o texto de sempre) */
+function rotuloTempo(code, t) {
+  return t(`weather.conditions.${weatherInfo(code).chave}`);
 }
 
 /* ── WeatherCard ── */
 function WeatherCard({ day, isToday, tours, onClick }) {
+  const t = useT();
+  const lang = useLingua();
   const info  = weatherInfo(day.code);
   const Icon  = ICON_MAP[info.iconName] || Cloud;
   const isBad = isBadWeather(day);
@@ -48,15 +57,15 @@ function WeatherCard({ day, isToday, tours, onClick }) {
       } ${isToday ? 'ring-2 ring-ocean-700' : ''}`}
     >
       <p className={`text-[10px] font-mono uppercase tracking-wider font-semibold ${isToday ? 'text-ocean-700' : 'text-n-400'}`}>
-        {dayLabel(day.date)}
+        {dayLabel(day.date, t, lang)}
       </p>
       <p className="text-[10px] font-mono text-n-400">
-        {new Date(day.date + 'T00:00:00Z').toLocaleDateString('pt-PT', { day: '2-digit', month: 'short', timeZone: 'UTC' })}
+        {formatarData(new Date(day.date + 'T00:00:00Z'), { day: '2-digit', month: 'short', timeZone: 'UTC' }, lang)}
       </p>
 
       <Icon size={26} strokeWidth={1.5} style={{ color: info.color }} />
 
-      <p className="text-[10px] font-body text-n-600 text-center leading-tight">{info.label}</p>
+      <p className="text-[10px] font-body text-n-600 text-center leading-tight">{rotuloTempo(day.code, t)}</p>
 
       <div className="text-center">
         <p className="font-display font-bold text-base text-n-900">{day.tempMax}°</p>
@@ -76,7 +85,7 @@ function WeatherCard({ day, isToday, tours, onClick }) {
         <div className={`w-full text-center px-2 py-0.5 rounded-xs text-[10px] font-mono font-semibold ${
           hasConflict ? 'bg-[var(--error)] text-white' : 'bg-ocean-100 text-ocean-700'
         }`}>
-          {tours.length} tour(s)
+          {t('weather.toursCount', { n: tours.length })}
         </div>
       )}
     </button>
@@ -85,6 +94,8 @@ function WeatherCard({ day, isToday, tours, onClick }) {
 
 /* ─────────────────────── Main ─────────────────────── */
 export default function Weather() {
+  const t = useT();
+  const lang = useLingua();
   const navigate = useNavigate();
   const { operator } = useAuthStore();
   const [forecast,    setForecast]    = useState([]);
@@ -114,7 +125,7 @@ export default function Weather() {
       /* sem previsao nova nao se mantem a antiga (os alertas de conflito vivem fora do ecra de erro) */
       setForecast([]);
       setReservations([]);
-      setError('Não foi possível carregar a previsão meteorológica. Verifique a ligação a internet.');
+      setError(t('weather.error'));
     } finally {
       setLoading(false);
     }
@@ -148,11 +159,11 @@ export default function Weather() {
   return (
     <div>
       <PageHeader
-        title={`Meteorologia${island ? ` — ${island.name}` : ''}`}
-        subtitle="Previsão a 7 dias · Open-Meteo"
+        title={`${t('weather.title')}${island ? ` — ${island.name}` : ''}`}
+        subtitle={t('weather.subtitle')}
         actions={
           <Button variant="secondary" icon={RefreshCw} size="sm" onClick={carregar} loading={loading}>
-            Actualizar
+            {t('weather.refresh')}
           </Button>
         }
       />
@@ -167,17 +178,17 @@ export default function Weather() {
                 <AlertTriangle size={16} strokeWidth={1.75} className="text-[var(--error)] shrink-0 mt-0.5" />
                 <div className="flex-1">
                   <p className="text-sm font-body font-semibold text-[var(--error)]">
-                    Mau tempo previsto para {fmtDate(c.date)}
+                    {t('weather.badWeatherFor', { date: fmtDate(c.date, lang) })}
                   </p>
                   <p className="text-xs font-body text-[var(--error)] mt-0.5">
-                    {weatherInfo(c.code).label} · {c.precipitation > 0 ? `${c.precipitation}mm precipitação · ` : ''}
-                    {tours.length} tour(s) agendado(s) com {tours.reduce((s, r) => s + (r.guests || 1), 0)} participante(s)
+                    {rotuloTempo(c.code, t)} · {c.precipitation > 0 ? `${t('weather.precipShort', { mm: c.precipitation })} · ` : ''}
+                    {t('weather.toursWithGuests', { n: tours.length, guests: tours.reduce((s, r) => s + (r.guests || 1), 0) })}
                   </p>
                 </div>
                 <Button size="sm" variant="secondary"
                   onClick={() => navigate(`/reservas?date=${c.date}`)}
                   className="shrink-0 text-[var(--error)] border-[var(--error)] hover:bg-[var(--error-light)]">
-                  Contactar clientes
+                  {t('weather.contact')}
                 </Button>
               </div>
             );
@@ -192,7 +203,7 @@ export default function Weather() {
           <EmptyState
             icon={CloudRain}
             title={error}
-            action={<Button variant="secondary" icon={RefreshCw} onClick={carregar}>Tentar novamente</Button>}
+            action={<Button variant="secondary" icon={RefreshCw} onClick={carregar}>{t('weather.retry')}</Button>}
           />
         </Card>
       ) : (
@@ -215,23 +226,23 @@ export default function Weather() {
             <Card padding="px-5 py-5">
               <div className="flex items-start justify-between gap-4 mb-4">
                 <div>
-                  <h3 className="font-display font-semibold text-sm text-n-700">{fmtDate(selectedDay.date)}</h3>
-                  <p className="text-xs font-body text-n-500 mt-0.5">{weatherInfo(selectedDay.code).label}</p>
+                  <h3 className="font-display font-semibold text-sm text-n-700">{fmtDate(selectedDay.date, lang)}</h3>
+                  <p className="text-xs font-body text-n-500 mt-0.5">{rotuloTempo(selectedDay.code, t)}</p>
                 </div>
                 <div className="text-right shrink-0">
                   <p className="font-display font-bold text-xl text-n-900">{selectedDay.tempMax}° / {selectedDay.tempMin}°</p>
                   {selectedDay.precipitation > 0 && (
-                    <p className="text-xs font-mono text-ocean-600 mt-0.5">{selectedDay.precipitation} mm precipitação</p>
+                    <p className="text-xs font-mono text-ocean-600 mt-0.5">{t('weather.precip', { mm: selectedDay.precipitation })}</p>
                   )}
                 </div>
               </div>
 
               {selectedTours.length === 0 ? (
-                <p className="text-xs font-body text-n-400">Sem tours agendados para este dia.</p>
+                <p className="text-xs font-body text-n-400">{t('weather.noTours')}</p>
               ) : (
                 <div>
                   <p className="text-xs font-mono uppercase tracking-wider text-n-500 mb-3">
-                    {selectedTours.length} tour(s) agendado(s)
+                    {t('weather.toursScheduled', { n: selectedTours.length })}
                   </p>
                   <div className="space-y-2">
                     {selectedTours.map(r => (
@@ -273,33 +284,33 @@ export default function Weather() {
               <p className="font-display font-bold text-xl text-n-900">
                 {forecast[0]?.tempMax ?? '—'}°
               </p>
-              <p className="text-xs font-body text-n-500">Max. hoje</p>
+              <p className="text-xs font-body text-n-500">{t('weather.maxToday')}</p>
             </Card>
             <Card padding="px-4 py-3">
               <p className="font-display font-bold text-xl text-n-900">
                 {Math.round(forecast.reduce((s, d) => s + d.precipitation, 0) * 10) / 10} mm
               </p>
-              <p className="text-xs font-body text-n-500">Precipitação total 7 dias</p>
+              <p className="text-xs font-body text-n-500">{t('weather.totalPrecip')}</p>
             </Card>
             <Card padding="px-4 py-3">
               <p className="font-display font-bold text-xl text-n-900">
                 {forecast.filter(d => !isBadWeather(d)).length}
               </p>
-              <p className="text-xs font-body text-n-500">Dias sem mau tempo</p>
+              <p className="text-xs font-body text-n-500">{t('weather.goodDays')}</p>
             </Card>
             <div className={`border rounded-md px-4 py-3 ${conflicts.length > 0 ? 'bg-[var(--error-light)] border-[var(--error)]' : 'bg-[var(--success-light)] border-[var(--success)]'}`}>
               <p className={`font-display font-bold text-xl ${conflicts.length > 0 ? 'text-[var(--error)]' : 'text-[var(--success)]'}`}>
                 {conflicts.length}
               </p>
               <p className={`text-xs font-body ${conflicts.length > 0 ? 'text-[var(--error)]' : 'text-[var(--success)]'}`}>
-                {conflicts.length === 0 ? 'Sem conflitos meteorológicos' : 'Conflito(s) com tours'}
+                {conflicts.length === 0 ? t('weather.noConflicts') : t('weather.conflicts')}
               </p>
             </div>
           </div>
 
           {/* Attribution */}
           <p className="text-[10px] font-mono text-n-400 text-right">
-            Dados: Open-Meteo.com — Ilha do Sal, Cabo Verde (16.73°N, 22.93°W) · Actualizado automaticamente
+            {t('weather.attribution')}
           </p>
         </div>
       )}

@@ -28,7 +28,7 @@ const VALORES_GUARDADOS = {
   'pages/financial/DespesasTab.jsx': ['Salarios', 'Comissoes vendedores'],
   'pages/Maintenance.jsx': ['Revisao', 'Inspecao', 'Reparacao'],
   'components/units/forms/editors.jsx': ['Sessao', 'Terraco', 'Economico'],
-  'pages/staff/shared.jsx': ['Mecanico', 'Administracao', 'Manutencao'],
+  'pages/staff/shared.jsx': ['Mecanico', 'Administracao', 'Manutencao', 'Recepcao'],
   'components/dashboard/NextDaysStrip.jsx': ['So'],
   'pages/Affiliates.jsx': ['joao@exemplo.com'],
   'pages/marketing/SocialPlanner.jsx': ['Planeador de Social Media'],

@@ -16,54 +16,63 @@ import LoadingSpinner from '../components/shared/LoadingSpinner';
 import Table from '../components/ui/Table';
 import FilterChips from '../components/ui/FilterChips';
 import EmptyState from '../components/ui/EmptyState';
+import { useT } from '../i18n';
+import { formatarData, useLingua } from '../utils/formatoLingua';
+import { rotuloMes } from './staff/shared';
 
 /* ── Constants ── */
+/* value e o tipo / a severidade gravados na ocorrencia; o rotulo vem de occurrences.types e
+   occurrences.severities (o pt e o texto de sempre) */
 const TYPES = [
-  { value: 'acidente',   label: 'Acidente',   Icon: AlertTriangle,  cls: 'text-[var(--error)]'   },
-  { value: 'atraso',     label: 'Atraso',     Icon: Clock,          cls: 'text-[var(--warning)]' },
-  { value: 'reclamacao', label: 'Reclamação', Icon: MessageSquare,  cls: 'text-[var(--info)]'    },
-  { value: 'incidente',  label: 'Incidente',  Icon: Zap,            cls: 'text-ocean-700'        },
-  { value: 'mau_tempo',  label: 'Mau tempo',  Icon: CloudRain,      cls: 'text-ocean-500'        },
-  { value: 'outro',      label: 'Outro',      Icon: MoreHorizontal, cls: 'text-n-500'            },
+  { value: 'acidente',   Icon: AlertTriangle,  cls: 'text-[var(--error)]'   },
+  { value: 'atraso',     Icon: Clock,          cls: 'text-[var(--warning)]' },
+  { value: 'reclamacao', Icon: MessageSquare,  cls: 'text-[var(--info)]'    },
+  { value: 'incidente',  Icon: Zap,            cls: 'text-ocean-700'        },
+  { value: 'mau_tempo',  Icon: CloudRain,      cls: 'text-ocean-500'        },
+  { value: 'outro',      Icon: MoreHorizontal, cls: 'text-n-500'            },
 ];
 
 const SEVERITIES = [
-  { value: 'baixa',   label: 'Baixa',   cls: 'text-[var(--success)] bg-[var(--success-light)] border-n-200' },
-  { value: 'media',   label: 'Média',   cls: 'text-[var(--info)] bg-[var(--info-light)] border-n-200'       },
-  { value: 'alta',    label: 'Alta',    cls: 'text-[var(--warning)] bg-[var(--warning-light)] border-n-200' },
-  { value: 'critica', label: 'Crítica', cls: 'text-[var(--error)] bg-[var(--error-light)] border-n-200'     },
+  { value: 'baixa',   cls: 'text-[var(--success)] bg-[var(--success-light)] border-n-200' },
+  { value: 'media',   cls: 'text-[var(--info)] bg-[var(--info-light)] border-n-200'       },
+  { value: 'alta',    cls: 'text-[var(--warning)] bg-[var(--warning-light)] border-n-200' },
+  { value: 'critica', cls: 'text-[var(--error)] bg-[var(--error-light)] border-n-200'     },
 ];
 
-const MONTHS_PT = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+const rotuloTipo = (value, t) => t(`occurrences.types.${value}`);
+const rotuloSev  = (value, t) => t(`occurrences.severities.${value}`);
 
-function fmtDate(d) {
+function fmtDate(d, lang) {
   if (!d) return '—';
-  return new Date(d).toLocaleDateString('pt-PT', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'UTC' });
+  return formatarData(new Date(d), { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'UTC' }, lang);
 }
 
 function TypeBadge({ typeKey }) {
-  const t = TYPES.find(x => x.value === typeKey);
-  if (!t) return <span className="text-xs font-mono text-n-500">{typeKey}</span>;
+  const t = useT();
+  const tipo = TYPES.find(x => x.value === typeKey);
+  if (!tipo) return <span className="text-xs font-mono text-n-500">{typeKey}</span>;
   return (
-    <span className={`flex items-center gap-1 text-xs font-body font-semibold ${t.cls}`}>
-      <t.Icon size={11} strokeWidth={1.75} />
-      {t.label}
+    <span className={`flex items-center gap-1 text-xs font-body font-semibold ${tipo.cls}`}>
+      <tipo.Icon size={11} strokeWidth={1.75} />
+      {rotuloTipo(tipo.value, t)}
     </span>
   );
 }
 
 function SeverityBadge({ sev }) {
+  const t = useT();
   const s = SEVERITIES.find(x => x.value === sev);
   if (!s) return null;
   return (
     <span className={`text-xs font-mono font-semibold px-2 py-0.5 rounded-xs border ${s.cls}`}>
-      {s.label}
+      {rotuloSev(s.value, t)}
     </span>
   );
 }
 
 /* ── OccurrenceModal ── */
 function OccurrenceModal({ occurrence, units, staff, onSave, onClose }) {
+  const t = useT();
   const isNew = !occurrence || occurrence._new;
   const base  = isNew ? null : occurrence;
 
@@ -92,53 +101,53 @@ function OccurrenceModal({ occurrence, units, staff, onSave, onClose }) {
     try {
       await onSave(base?.id, { ...form, unit_name: unitName, staff_name: staffName });
     } catch {
-      setError('Erro ao guardar ocorrência.');
+      setError(t('occurrences.form.error'));
     } finally {
       setSaving(false);
     }
   }
 
   return (
-    <Modal open onClose={onClose} title={isNew ? 'Registar ocorrência' : 'Editar ocorrência'} size="md">
+    <Modal open onClose={onClose} title={isNew ? t('occurrences.new') : t('occurrences.editTitle')} size="md">
       <form onSubmit={handleSubmit} className="space-y-4">
-        <Input label="Data da ocorrência" type="date" value={form.date} onChange={set('date')} required />
+        <Input label={t('occurrences.form.date')} type="date" value={form.date} onChange={set('date')} required />
 
         <div className="grid grid-cols-2 gap-3">
-          <Select label="Tipo" value={form.type} onChange={set('type')} required>
-            {TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
+          <Select label={t('occurrences.form.type')} value={form.type} onChange={set('type')} required>
+            {TYPES.map(tipo => <option key={tipo.value} value={tipo.value}>{rotuloTipo(tipo.value, t)}</option>)}
           </Select>
-          <Select label="Severidade" value={form.severity} onChange={set('severity')} required>
-            {SEVERITIES.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
+          <Select label={t('occurrences.form.severity')} value={form.severity} onChange={set('severity')} required>
+            {SEVERITIES.map(s => <option key={s.value} value={s.value}>{rotuloSev(s.value, t)}</option>)}
           </Select>
         </div>
 
-        <Select label="Tour / Serviço" value={form.unit_id} onChange={set('unit_id')}>
-          <option value="">Não associado a tour específico</option>
+        <Select label={t('occurrences.form.unit')} value={form.unit_id} onChange={set('unit_id')}>
+          <option value="">{t('occurrences.form.noUnit')}</option>
           {units.map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
         </Select>
 
-        <Select label="Colaborador / Guia responsável" value={form.staff_id} onChange={set('staff_id')}>
-          <option value="">Não especificado</option>
+        <Select label={t('occurrences.form.staff')} value={form.staff_id} onChange={set('staff_id')}>
+          <option value="">{t('occurrences.form.noStaff')}</option>
           {staff.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
         </Select>
 
-        <Textarea label="Descrição da ocorrência" value={form.description} onChange={set('description')} rows={3} required placeholder="Descreva o que aconteceu..." />
+        <Textarea label={t('occurrences.form.description')} value={form.description} onChange={set('description')} rows={3} required placeholder={t('occurrences.form.descriptionPlaceholder')} />
 
-        <Textarea label="Acções tomadas" value={form.actions_taken} onChange={set('actions_taken')} rows={3} placeholder="Descreva as acções tomadas para resolver ou minimizar o impacto..." />
+        <Textarea label={t('occurrences.form.actions')} value={form.actions_taken} onChange={set('actions_taken')} rows={3} placeholder={t('occurrences.form.actionsPlaceholder')} />
 
         <Input
-          label="URLs de fotos (separadas por virgula)"
+          label={t('occurrences.form.photos')}
           value={form.photo_urls}
           onChange={set('photo_urls')}
-          placeholder="https://exemplo.com/foto1.jpg, https://exemplo.com/foto2.jpg"
-          hint="Opcional. Separe multiplas URLs por virgula."
+          placeholder={t('occurrences.form.photosPlaceholder')}
+          hint={t('occurrences.form.photosHint')}
         />
 
         {error && <p className="text-xs text-error">{error}</p>}
 
         <div className="flex gap-3 pt-1">
-          <Button type="button" variant="secondary" onClick={onClose} className="flex-1">Cancelar</Button>
-          <Button type="submit" loading={saving} className="flex-1">{isNew ? 'Registar' : 'Guardar'}</Button>
+          <Button type="button" variant="secondary" onClick={onClose} className="flex-1">{t('common.cancel')}</Button>
+          <Button type="submit" loading={saving} className="flex-1">{isNew ? t('occurrences.form.submit') : t('common.save')}</Button>
         </div>
       </form>
     </Modal>
@@ -147,6 +156,7 @@ function OccurrenceModal({ occurrence, units, staff, onSave, onClose }) {
 
 /* ── MonthlyReport ── */
 function MonthlyReport({ occurrences }) {
+  const t = useT();
   const now = new Date();
   const monthly = occurrences.filter(o => {
     const d = new Date(o.created_at || o.date);
@@ -166,30 +176,30 @@ function MonthlyReport({ occurrences }) {
   return (
     <Card padding="px-5 py-5">
       <h3 className="font-display font-semibold text-sm text-n-700 mb-4">
-        Relatório mensal — {MONTHS_PT[now.getMonth()]} {now.getFullYear()}
+        {t('occurrences.report.title', { month: rotuloMes(now.getMonth(), t), year: now.getFullYear() })}
       </h3>
       {monthly.length === 0 ? (
-        <p className="text-xs font-body text-n-400">Sem ocorrências registadas este mês.</p>
+        <p className="text-xs font-body text-n-400">{t('occurrences.report.empty')}</p>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
           <div>
-            <p className="text-xs font-mono uppercase tracking-wider text-n-500 mb-3">Por tipo</p>
+            <p className="text-xs font-mono uppercase tracking-wider text-n-500 mb-3">{t('occurrences.report.byType')}</p>
             <div className="space-y-2">
-              {byType.map(t => (
-                <div key={t.value} className="flex items-center gap-3">
-                  <t.Icon size={13} strokeWidth={1.75} className={`${t.cls} shrink-0`} />
-                  <span className="text-xs font-body text-n-600 flex-1">{t.label}</span>
-                  <span className="font-mono font-semibold text-xs text-n-800">{t.count}</span>
+              {byType.map(tipo => (
+                <div key={tipo.value} className="flex items-center gap-3">
+                  <tipo.Icon size={13} strokeWidth={1.75} className={`${tipo.cls} shrink-0`} />
+                  <span className="text-xs font-body text-n-600 flex-1">{rotuloTipo(tipo.value, t)}</span>
+                  <span className="font-mono font-semibold text-xs text-n-800">{tipo.count}</span>
                 </div>
               ))}
             </div>
           </div>
           <div>
-            <p className="text-xs font-mono uppercase tracking-wider text-n-500 mb-3">Por severidade</p>
+            <p className="text-xs font-mono uppercase tracking-wider text-n-500 mb-3">{t('occurrences.report.bySeverity')}</p>
             <div className="space-y-2">
               {bySev.map(s => (
                 <div key={s.value} className="flex items-center gap-3">
-                  <span className={`text-xs font-mono px-1.5 py-0.5 rounded-xs border shrink-0 ${s.cls}`}>{s.label}</span>
+                  <span className={`text-xs font-mono px-1.5 py-0.5 rounded-xs border shrink-0 ${s.cls}`}>{rotuloSev(s.value, t)}</span>
                   <div className="flex-1 h-1.5 bg-n-100 rounded-full overflow-hidden">
                     <div className="h-full rounded-full bg-ocean-400"
                       style={{ width: `${(s.count / monthly.length) * 100}%` }} />
@@ -202,7 +212,7 @@ function MonthlyReport({ occurrences }) {
         </div>
       )}
       <div className="mt-4 pt-3 border-t border-n-100 flex items-center justify-between">
-        <p className="text-xs font-body text-n-500">Total: <span className="font-semibold">{monthly.length}</span> ocorrência(s)</p>
+        <p className="text-xs font-body text-n-500">{t('occurrences.report.total')} <span className="font-semibold">{monthly.length}</span> {t('occurrences.report.unit')}</p>
       </div>
     </Card>
   );
@@ -210,6 +220,8 @@ function MonthlyReport({ occurrences }) {
 
 /* ─────────────────────── Main ─────────────────────── */
 export default function Occurrences() {
+  const t = useT();
+  const lang = useLingua();
   const [occurrences, setOccurrences] = useState([]);
   const [loading,     setLoading]     = useState(true);
   const [units,       setUnits]       = useState([]);
@@ -240,7 +252,7 @@ export default function Occurrences() {
   }
 
   async function handleDelete(id) {
-    if (!window.confirm('Eliminar esta ocorrência?')) return;
+    if (!window.confirm(t('occurrences.confirmDelete'))) return;
     await deleteOccurrence(id);
     setOccurrences(prev => prev.filter(o => o.id !== id));
   }
@@ -276,43 +288,43 @@ export default function Occurrences() {
   const columns = [
     {
       key: 'data',
-      label: 'Data',
-      render: (o) => <span className="text-xs font-mono text-n-500 whitespace-nowrap">{fmtDate(o.date || o.created_at)}</span>,
+      label: t('occurrences.columns.date'),
+      render: (o) => <span className="text-xs font-mono text-n-500 whitespace-nowrap">{fmtDate(o.date || o.created_at, lang)}</span>,
     },
-    { key: 'tipo', label: 'Tipo', render: (o) => <TypeBadge typeKey={o.type} /> },
-    { key: 'severidade', label: 'Severidade', render: (o) => <SeverityBadge sev={o.severity} /> },
+    { key: 'tipo', label: t('occurrences.columns.type'), render: (o) => <TypeBadge typeKey={o.type} /> },
+    { key: 'severidade', label: t('occurrences.columns.severity'), render: (o) => <SeverityBadge sev={o.severity} /> },
     {
       key: 'tour',
-      label: 'Tour',
+      label: t('occurrences.columns.tour'),
       render: (o) => <span className="block text-xs font-body text-n-600 max-w-[120px] truncate">{o.unit_name || '—'}</span>,
     },
     {
       key: 'colaborador',
-      label: 'Colaborador',
+      label: t('occurrences.columns.staff'),
       render: (o) => <span className="text-xs font-body text-n-600 whitespace-nowrap">{o.staff_name || '—'}</span>,
     },
     {
       key: 'descricao',
-      label: 'Descrição',
+      label: t('occurrences.columns.description'),
       render: (o) => <p className="text-xs font-body text-n-700 line-clamp-2 max-w-[200px]">{o.description}</p>,
     },
     {
       key: 'accoes',
-      label: 'Acções tomadas',
+      label: t('occurrences.columns.actions'),
       render: (o) => o.actions_taken
         ? <p className="text-xs font-body text-n-500 line-clamp-2 max-w-[160px]">{o.actions_taken}</p>
-        : <span className="text-xs font-body text-n-300">Não registadas</span>,
+        : <span className="text-xs font-body text-n-300">{t('occurrences.columns.notRecorded')}</span>,
     },
     {
       key: 'acoes',
       label: '',
       render: (o) => (
         <div className="flex gap-0.5">
-          <button onClick={() => setModal(o)} aria-label="Editar"
+          <button onClick={() => setModal(o)} aria-label={t('common.edit')}
             className="p-1.5 rounded text-n-400 hover:text-ocean-700 hover:bg-ocean-50 transition-colors">
             <Pencil size={13} strokeWidth={1.75} />
           </button>
-          <button onClick={() => handleDelete(o.id)} aria-label="Eliminar"
+          <button onClick={() => handleDelete(o.id)} aria-label={t('common.delete')}
             className="p-1.5 rounded text-n-400 hover:text-error hover:bg-[var(--error-light)] transition-colors">
             <Trash2 size={13} strokeWidth={1.75} />
           </button>
@@ -324,7 +336,7 @@ export default function Occurrences() {
   if (loading) {
     return (
       <div>
-        <PageHeader title="Ocorrências" subtitle="Registo e gestão de incidentes operacionais" />
+        <PageHeader title={t('occurrences.title')} subtitle={t('occurrences.subtitle')} />
         <div className="flex justify-center py-16"><LoadingSpinner size={32} /></div>
       </div>
     );
@@ -333,10 +345,10 @@ export default function Occurrences() {
   return (
     <div>
       <PageHeader
-        title="Ocorrências"
-        subtitle="Registo e gestão de incidentes operacionais"
+        title={t('occurrences.title')}
+        subtitle={t('occurrences.subtitle')}
         actions={
-          <Button icon={Plus} onClick={() => setModal({ _new: true })}>Registar ocorrência</Button>
+          <Button icon={Plus} onClick={() => setModal({ _new: true })}>{t('occurrences.new')}</Button>
         }
       />
 
@@ -346,10 +358,11 @@ export default function Occurrences() {
           <AlertTriangle size={16} strokeWidth={1.75} className="text-error shrink-0 mt-0.5" />
           <div>
             <p className="text-sm font-body font-semibold text-error">
-              {criticals.length} ocorrência(s) crítica(s) não resolvida(s)
+              {t('occurrences.criticalAlert', { n: criticals.length })}
             </p>
             <p className="text-xs font-body text-[var(--error)] mt-0.5">
-              {criticals.map(o => o.description?.slice(0, 60) || o.type).join(' · ')}
+              {/* sem descricao mostra o tipo: em pt o valor gravado, como sempre; nas outras linguas o rotulo */}
+              {criticals.map(o => o.description?.slice(0, 60) || (lang === 'pt' || !TYPES.some(x => x.value === o.type) ? o.type : rotuloTipo(o.type, t))).join(' · ')}
             </p>
           </div>
         </div>
@@ -358,10 +371,10 @@ export default function Occurrences() {
       {/* KPIs */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-5">
         {[
-          { label: 'Total registadas',  value: kpis.total,  color: 'text-n-900'   },
-          { label: 'Este mês',          value: kpis.month,  color: 'text-ocean-700' },
-          { label: 'Alta / Crítica',    value: kpis.alta,   color: 'text-[var(--warning)]' },
-          { label: 'Críticas',          value: kpis.critica, color: 'text-error' },
+          { label: t('occurrences.kpi.total'),    value: kpis.total,  color: 'text-n-900'   },
+          { label: t('occurrences.kpi.month'),    value: kpis.month,  color: 'text-ocean-700' },
+          { label: t('occurrences.kpi.high'),     value: kpis.alta,   color: 'text-[var(--warning)]' },
+          { label: t('occurrences.kpi.critical'), value: kpis.critica, color: 'text-error' },
         ].map(m => (
           <div key={m.label} className="bg-white rounded-md border border-n-200 px-4 py-3 flex items-center gap-3">
             <FileWarning size={18} strokeWidth={1.75} className="text-n-300 shrink-0" />
@@ -383,16 +396,16 @@ export default function Occurrences() {
         <div className="flex-1 min-w-[200px]">
           <Input
             value={search} onChange={e => setSearch(e.target.value)}
-            placeholder="Pesquisar descrição, tour, colaborador..."
+            placeholder={t('occurrences.searchPlaceholder')}
           />
         </div>
         <FilterChips
-          options={[{ value: '', label: 'Todos' }, ...TYPES.map(t => ({ value: t.value, label: t.label }))]}
+          options={[{ value: '', label: t('occurrences.all') }, ...TYPES.map(tipo => ({ value: tipo.value, label: rotuloTipo(tipo.value, t) }))]}
           value={filterType}
           onChange={setFilterType}
         />
         <FilterChips
-          options={SEVERITIES.map(s => ({ value: s.value, label: s.label }))}
+          options={SEVERITIES.map(s => ({ value: s.value, label: rotuloSev(s.value, t) }))}
           value={filterSev}
           onChange={v => setFilterSev(filterSev === v ? '' : v)}
         />
@@ -403,12 +416,12 @@ export default function Occurrences() {
         <Card padding="p-0">
           <EmptyState
             icon={FileWarning}
-            title="Sem ocorrências"
+            title={t('occurrences.empty.title')}
             description={occurrences.length === 0
-              ? 'Registe a primeira ocorrência quando necessário.'
-              : 'Nenhuma ocorrência corresponde aos filtros aplicados.'}
+              ? t('occurrences.empty.first')
+              : t('occurrences.empty.filtered')}
             action={occurrences.length === 0 && (
-              <Button icon={Plus} onClick={() => setModal({ _new: true })}>Registar ocorrência</Button>
+              <Button icon={Plus} onClick={() => setModal({ _new: true })}>{t('occurrences.new')}</Button>
             )}
           />
         </Card>

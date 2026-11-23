@@ -4,11 +4,12 @@ import { CheckCircle, XCircle, Loader2 } from 'lucide-react';
 import api from '../services/api';
 import { confirmSubscription } from '../services/billingService';
 import useAuthStore from '../store/authStore';
+import { useT } from '../i18n';
 
 export default function BillingSuccess() {
   const [searchParams] = useSearchParams();
   const setOperator = useAuthStore((s) => s.setOperator);
-  const lang = localStorage.getItem('sd-lang') || 'pt';
+  const t = useT();
   const subscriptionId = searchParams.get('subscription_id');
   const gateway = searchParams.get('gateway');
   const [status, setStatus] = useState('confirming');
@@ -40,7 +41,7 @@ export default function BillingSuccess() {
               <Loader2 size={32} strokeWidth={2} className="text-ocean-700 animate-spin" />
             </div>
             <h1 className="font-display font-bold text-xl text-n-900 mb-3">
-              {lang === 'en' ? 'Confirming payment...' : 'A confirmar pagamento...'}
+              {t('billingResult.confirming')}
             </h1>
           </>
         )}
@@ -50,15 +51,13 @@ export default function BillingSuccess() {
               <CheckCircle size={32} strokeWidth={2} className="text-green-600" />
             </div>
             <h1 className="font-display font-bold text-xl text-n-900 mb-3">
-              {lang === 'en' ? 'Payment confirmed!' : 'Pagamento confirmado!'}
+              {t('billingResult.confirmed')}
             </h1>
             <p className="text-sm font-body text-n-500 leading-relaxed mb-6">
-              {lang === 'en'
-                ? 'Your SalDesk subscription is now active.'
-                : 'A tua subscrição SalDesk está agora activa.'}
+              {t('billingResult.confirmedBody')}
             </p>
             <Link to="/definicoes?tab=facturacao" className="text-sm font-body font-semibold text-ocean-700 hover:underline">
-              {lang === 'en' ? 'Back to Billing' : 'Voltar a Facturação'}
+              {t('billingResult.backToBilling')}
             </Link>
           </>
         )}
@@ -68,15 +67,13 @@ export default function BillingSuccess() {
               <XCircle size={32} strokeWidth={2} className="text-error" />
             </div>
             <h1 className="font-display font-bold text-xl text-n-900 mb-3">
-              {lang === 'en' ? 'Could not confirm payment' : 'Não foi possível confirmar o pagamento'}
+              {t('billingResult.errorTitle')}
             </h1>
             <p className="text-sm font-body text-n-500 leading-relaxed mb-6">
-              {lang === 'en'
-                ? 'If the payment was completed, it will be applied shortly. Otherwise, try again.'
-                : 'Se o pagamento foi concluído, será aplicado em breve. Caso contrário, tenta novamente.'}
+              {t('billingResult.errorBody')}
             </p>
             <Link to="/definicoes?tab=facturacao" className="text-sm font-body font-semibold text-ocean-700 hover:underline">
-              {lang === 'en' ? 'Back to Billing' : 'Voltar a Facturação'}
+              {t('billingResult.backToBilling')}
             </Link>
           </>
         )}

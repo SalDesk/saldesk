@@ -40,42 +40,34 @@ import ObrigacoesTab from './financial/ObrigacoesTab';
 import ResultadoTab from './financial/ResultadoTab';
 
 /* ── constants ── */
+/* Os rotulos vem de financial.sections.<id>, financial.revenueTabs.<id>, financial.presets.<chave> e
+   financial.granularity.<valor>; os ids e os valores nao mudam com a lingua */
 const SECTIONS = [
-  { id: 'receitas',   label: 'Receitas',   pro: false },
-  { id: 'despesas',   label: 'Despesas',   pro: true  },
-  { id: 'salarios',   label: 'Salários',   pro: true  },
-  { id: 'comissoes',  label: 'Comissões',  pro: false },
-  { id: 'obrigacoes', label: 'Obrigações', pro: true  },
-  { id: 'resultado',  label: 'Resultado',  pro: true  },
+  { id: 'receitas',   pro: false },
+  { id: 'despesas',   pro: true  },
+  { id: 'salarios',   pro: true  },
+  { id: 'comissoes',  pro: false },
+  { id: 'obrigacoes', pro: true  },
+  { id: 'resultado',  pro: true  },
 ];
 
-const RECEITAS_TABS = [
-  { id: 'geral',    label: 'Visão Geral' },
-  { id: 'portour',  label: 'Por Tour' },
-  { id: 'previsao', label: 'Previsão' },
-  { id: 'caixa',    label: 'Caixa' },
-  { id: 'manuais',  label: 'Receitas Manuais' },
-];
+const RECEITAS_TABS = ['geral', 'portour', 'previsao', 'caixa', 'manuais'];
 
 const PRESETS = [
-  { label: 'Últimos 30 dias', fn: ultimos30 },
-  { label: 'Este mês',        fn: mesAtual },
-  { label: 'Mês anterior',    fn: mesAnterior },
-  { label: 'Este ano',        fn: esteAno },
+  { chave: 'last30',    fn: ultimos30 },
+  { chave: 'thisMonth', fn: mesAtual },
+  { chave: 'lastMonth', fn: mesAnterior },
+  { chave: 'thisYear',  fn: esteAno },
 ];
 const MOEDAS = [
   { value: 'EUR', label: 'EUR' },
   { value: 'CVE', label: 'CVE' },
 ];
-const GRANULARIDADES = [
-  { value: 'day',   label: 'Dia' },
-  { value: 'week',  label: 'Semana' },
-  { value: 'month', label: 'Mês' },
-];
+const GRANULARIDADES = ['day', 'week', 'month'];
 
 /* ─────────────────── MAIN ─────────────────── */
 export default function Financial() {
-  useT();
+  const t = useT();
   const { canAccess } = usePlan();
   const [activeSec,     setActiveSec]     = useState('receitas');
   const [activeTab,     setActiveTab]     = useState('geral');
@@ -190,7 +182,7 @@ export default function Financial() {
   return (
     <div>
       <PageHeader
-        title="Financeiro"
+        title={t('financial.title')}
         actions={
           activeSec === 'receitas' ? (
             <div className="flex gap-2">
@@ -204,12 +196,15 @@ export default function Financial() {
       {/* Section tabs (top level) */}
       <div className="mb-5">
         <Tabs
-          tabs={SECTIONS.map(({ id, label, pro }) => ({
-            id,
-            label: pro && !canAccess('financeiro-completo')
-              ? <span className="inline-flex items-center gap-1.5">{label}<Lock size={11} strokeWidth={1.75} className="text-n-300 shrink-0" /></span>
-              : label,
-          }))}
+          tabs={SECTIONS.map(({ id, pro }) => {
+            const label = t(`financial.sections.${id}`);
+            return {
+              id,
+              label: pro && !canAccess('financeiro-completo')
+                ? <span className="inline-flex items-center gap-1.5">{label}<Lock size={11} strokeWidth={1.75} className="text-n-300 shrink-0" /></span>
+                : label,
+            };
+          })}
           value={activeSec}
           onChange={setActiveSec}
         />
@@ -220,8 +215,8 @@ export default function Financial() {
         <>
           {/* Toolbar */}
           <div className="flex flex-wrap items-center gap-3 mb-5">
-            <FilterChips options={PRESETS.map((p, i) => ({ value: i, label: p.label }))} value={presetAtivo} onChange={selectPreset} />
-            <FilterChips options={GRANULARIDADES} value={granularidade} onChange={setGran} />
+            <FilterChips options={PRESETS.map((p, i) => ({ value: i, label: t(`financial.presets.${p.chave}`) }))} value={presetAtivo} onChange={selectPreset} />
+            <FilterChips options={GRANULARIDADES.map(g => ({ value: g, label: t(`financial.granularity.${g}`) }))} value={granularidade} onChange={setGran} />
             <div className="ml-auto">
               <FilterChips options={MOEDAS} value={currency} onChange={setCurrency} />
             </div>
@@ -229,7 +224,7 @@ export default function Financial() {
 
           {/* Receitas sub-tabs */}
           <div className="mb-5">
-            <Tabs tabs={RECEITAS_TABS} value={activeTab} onChange={setActiveTab} />
+            <Tabs tabs={RECEITAS_TABS.map(id => ({ id, label: t(`financial.revenueTabs.${id}`) }))} value={activeTab} onChange={setActiveTab} />
           </div>
 
           {/* Receitas tab content */}
@@ -238,30 +233,30 @@ export default function Financial() {
           ) : activeTab === 'geral' ? (
             <div className="space-y-5">
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                <KpiCard label="Receita total" value={atual.receita} delta={variacao.receita} deltaLabel="vs período ant." icon={Euro} format="euro" currency={currency} />
-                <KpiCard label={`Directas ${directaPct != null ? directaPct + '%' : ''}`} value={directas} sub={ota > 0 ? `${ota} via OTA` : undefined} icon={BarChart2} format="number" />
-                <KpiCard label="Ticket médio" value={ticketMedio} icon={Receipt} format="euro" currency={currency} />
-                <KpiCard label={`Margem liquida${margemLiq != null && totalCustos > 0 ? ` (${((receitaNum - totalCustos) / receitaNum * 100).toFixed(0)}%)` : ''}`} value={margemLiq} delta={crescimento} deltaLabel="crescimento" icon={TrendingUp} format="euro" currency={currency} />
+                <KpiCard label={t('financial.overview.totalRevenue')} value={atual.receita} delta={variacao.receita} deltaLabel={t('financial.overview.vsPrevious')} icon={Euro} format="euro" currency={currency} />
+                <KpiCard label={t('financial.overview.direct', { pct: directaPct != null ? `${directaPct}%` : '' })} value={directas} sub={ota > 0 ? t('financial.overview.viaOta', { n: ota }) : undefined} icon={BarChart2} format="number" />
+                <KpiCard label={t('financial.overview.avgTicket')} value={ticketMedio} icon={Receipt} format="euro" currency={currency} />
+                <KpiCard label={t('financial.overview.netMargin', { pct: margemLiq != null && totalCustos > 0 ? ` (${((receitaNum - totalCustos) / receitaNum * 100).toFixed(0)}%)` : '' })} value={margemLiq} delta={crescimento} deltaLabel={t('financial.overview.growth')} icon={TrendingUp} format="euro" currency={currency} />
               </div>
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-                <Card className="lg:col-span-2" header={<div className="flex items-center justify-between"><h3 className="font-display font-semibold text-sm text-n-700">Receita por período</h3><span className="text-xs font-mono text-n-400">{periodo.inicio} — {periodo.fim}</span></div>} padding="px-5 pb-5 pt-2">
+                <Card className="lg:col-span-2" header={<div className="flex items-center justify-between"><h3 className="font-display font-semibold text-sm text-n-700">{t('financial.overview.revenueByPeriod')}</h3><span className="text-xs font-mono text-n-400">{periodo.inicio} — {periodo.fim}</span></div>} padding="px-5 pb-5 pt-2">
                   <RevenueChart data={receita} granularidade={granularidade} currency={currency} />
                 </Card>
-                <Card header={<h3 className="font-display font-semibold text-sm text-n-700">Por canal</h3>} padding="px-5 pb-5 pt-2">
+                <Card header={<h3 className="font-display font-semibold text-sm text-n-700">{t('financial.overview.byChannel')}</h3>} padding="px-5 pb-5 pt-2">
                   <ChannelChart data={canais} />
                 </Card>
               </div>
               {sazonal.length > 0 && (
-                <Card header={<h3 className="font-display font-semibold text-sm text-n-700">Sazonalidade anual — {new Date().getFullYear()}</h3>} padding="px-5 pb-5 pt-2">
+                <Card header={<h3 className="font-display font-semibold text-sm text-n-700">{t('financial.overview.seasonality', { year: new Date().getFullYear() })}</h3>} padding="px-5 pb-5 pt-2">
                   <RevenueChart data={sazonal} granularidade="month" currency={currency} />
                 </Card>
               )}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                <Card header={<h3 className="font-display font-semibold text-sm text-n-700">Top 5 serviços por receita</h3>} padding="px-5 pb-5 pt-2"><ServiceBarChart data={unidades} currency={currency} /></Card>
-                <Card header={<h3 className="font-display font-semibold text-sm text-n-700">Top clientes</h3>}><TopCustomersList data={clientes} /></Card>
+                <Card header={<h3 className="font-display font-semibold text-sm text-n-700">{t('financial.overview.topServices')}</h3>} padding="px-5 pb-5 pt-2"><ServiceBarChart data={unidades} currency={currency} /></Card>
+                <Card header={<h3 className="font-display font-semibold text-sm text-n-700">{t('financial.overview.topCustomers')}</h3>}><TopCustomersList data={clientes} /></Card>
               </div>
-              {resumo?.anterior && <Card header={<h3 className="font-display font-semibold text-sm text-n-700">Comparativo com período anterior</h3>}><Comparativo resumo={resumo} currency={currency} /></Card>}
-              <Card header={<div className="flex items-center justify-between"><h3 className="font-display font-semibold text-sm text-n-700">Transações</h3><button aria-label="Actualizar transações" onClick={() => carregarTx(periodo)} className="p-1 rounded text-n-400 hover:text-ocean-700 hover:bg-ocean-50 transition-colors"><RefreshCw size={13} strokeWidth={1.75} /></button></div>}>
+              {resumo?.anterior && <Card header={<h3 className="font-display font-semibold text-sm text-n-700">{t('financial.overview.comparison')}</h3>}><Comparativo resumo={resumo} currency={currency} /></Card>}
+              <Card header={<div className="flex items-center justify-between"><h3 className="font-display font-semibold text-sm text-n-700">{t('financial.overview.transactions')}</h3><button aria-label={t('financial.overview.refreshTransactions')} onClick={() => carregarTx(periodo)} className="p-1 rounded text-n-400 hover:text-ocean-700 hover:bg-ocean-50 transition-colors"><RefreshCw size={13} strokeWidth={1.75} /></button></div>}>
                 <TransacoesTable transacoes={transacoes} currency={currency} loading={loadingTx} />
               </Card>
             </div>

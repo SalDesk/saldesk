@@ -5,6 +5,8 @@ import Occurrences from '../pages/Occurrences';
 import { listOccurrences, createOccurrence, updateOccurrence, deleteOccurrence } from '../services/occurrencesService';
 import { listUnits } from '../services/unitsService';
 import { listStaff } from '../services/staffService';
+import useUiStore from '../store/uiStore';
+import { portuguesNoEcra, chavesCruas } from './helpers/portuguesNoEcra';
 
 /* Sem rede: so os servicos da pagina sao simulados */
 vi.mock('../services/occurrencesService', () => ({
@@ -304,5 +306,151 @@ describe('Occurrences', () => {
       </MemoryRouter>
     );
     expect(await screen.findByText('Sem ocorrências')).toBeInTheDocument();
+  });
+});
+
+/* ───────────────────────── Painel em ingles ───────────────────────── */
+
+describe('Occurrences em inglês', () => {
+  const DADOS = ['Queda de turista', 'Atraso do transfer', 'Cortes leves', 'Cliente reclamou', 'Vento forte', 'Chamada ambulancia',
+    'Penso', 'Pedido de desculpa', 'Buggy Tour', 'Mergulho', 'Rui', 'Ana'];
+
+  beforeEach(() => {
+    useUiStore.setState({ lang: 'en' });
+    listOccurrences.mockReset().mockResolvedValue(TODAS);
+    listUnits.mockReset().mockResolvedValue(UNIDADES);
+    listStaff.mockReset().mockResolvedValue(COLABORADORES);
+    createOccurrence.mockReset().mockImplementation(async (dados) => ({ id: 'novo', ...dados }));
+    deleteOccurrence.mockReset().mockResolvedValue({});
+  });
+  afterEach(() => {
+    cleanup();
+    vi.restoreAllMocks();
+    useUiStore.setState({ lang: 'pt' });
+  });
+
+  async function abreEmIngles() {
+    render(
+      <MemoryRouter future={FUTURE}>
+        <Occurrences />
+      </MemoryRouter>
+    );
+    await screen.findByRole('table');
+  }
+
+  function linhasEn() {
+    return within(screen.getByRole('table')).getAllByRole('row').slice(1);
+  }
+  function campoEn(dialogo, etiqueta) {
+    const label = within(dialogo).getAllByText(etiqueta).find(e => e.tagName === 'LABEL');
+    expect(label).toBeTruthy();
+    return label.nextElementSibling;
+  }
+  function escolhe(select, rotulo) {
+    const opcao = [...select.options].find(o => o.textContent === rotulo);
+    expect(opcao).toBeTruthy();
+    fireEvent.change(select, { target: { value: opcao.value } });
+  }
+
+  it('lista_kpis_relatorio_e_filtros_em_ingles_sem_portugues', async () => {
+    await abreEmIngles();
+    expect(screen.getByRole('heading', { level: 1, name: 'Incidents' })).toBeInTheDocument();
+    expect(screen.getByText('Logging and management of operational incidents')).toBeInTheDocument();
+    const cab = within(screen.getByRole('table')).getAllByRole('columnheader').map(c => c.textContent);
+    expect(cab).toEqual(['Date', 'Type', 'Severity', 'Tour', 'Staff member', 'Description', 'Actions taken', '']);
+    const c1 = within(linhasEn()[0]).getAllByRole('cell').map(c => c.textContent);
+    /* data no formato en-GB */
+    expect(c1[0]).toBe(new Date(HOJE).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'UTC' }));
+    expect(c1.slice(1, 3)).toEqual(['Accident', 'Critical']);
+    expect(within(linhasEn()[1]).getAllByRole('cell').map(c => c.textContent)[6]).toBe('Not recorded');
+    const kpi = (rotulo) => screen.getByText(rotulo).previousElementSibling.textContent;
+    expect(kpi('Total logged')).toBe('5');
+    expect(kpi('This month')).toBe('3');
+    expect(kpi('High / Critical')).toBe('3');
+    expect(kpi('Critical incidents')).toBe('2');
+    expect(screen.getByText('1 unresolved critical incident(s)')).toBeInTheDocument();
+    const meses = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const agora = new Date();
+    const cartao = screen.getByText(`Monthly report — ${meses[agora.getMonth()]} ${agora.getFullYear()}`).parentElement;
+    expect(within(cartao).getByText('By type')).toBeInTheDocument();
+    expect(within(cartao).getByText('By severity')).toBeInTheDocument();
+    expect(cartao.textContent).toContain('Total: 3 incident(s)');
+    expect(screen.getByPlaceholderText('Search description, tour, staff member...')).toBeInTheDocument();
+    ['All', 'Accident', 'Delay', 'Complaint', 'Incident', 'Bad weather', 'Other', 'Low', 'Medium', 'High', 'Critical']
+      .forEach(n => expect(screen.getAllByRole('button', { name: n }).length).toBeGreaterThan(0));
+    expect(screen.getAllByRole('button', { name: 'Edit' })).toHaveLength(5);
+    expect(screen.getAllByRole('button', { name: 'Delete' })).toHaveLength(5);
+    expect(portuguesNoEcra(DADOS)).toEqual([]);
+    expect(chavesCruas(['occurrences', 'staff'])).toEqual([]);
+  });
+
+  it('registar_em_ingles_escolhe_pelo_rotulo_e_grava_o_valor_de_sempre', async () => {
+    await abreEmIngles();
+    fireEvent.click(screen.getByRole('button', { name: 'Log incident' }));
+    const dialogo = await screen.findByRole('dialog');
+    expect(within(dialogo).getByRole('heading', { name: 'Log incident' })).toBeInTheDocument();
+    expect([...campoEn(dialogo, 'Type').options].map(o => [o.value, o.textContent])).toEqual([
+      ['acidente', 'Accident'], ['atraso', 'Delay'], ['reclamacao', 'Complaint'],
+      ['incidente', 'Incident'], ['mau_tempo', 'Bad weather'], ['outro', 'Other'],
+    ]);
+    expect([...campoEn(dialogo, 'Severity').options].map(o => [o.value, o.textContent])).toEqual([
+      ['baixa', 'Low'], ['media', 'Medium'], ['alta', 'High'], ['critica', 'Critical'],
+    ]);
+    expect(campoEn(dialogo, 'Tour / Service').options[0].textContent).toBe('Not linked to a specific tour');
+    expect(campoEn(dialogo, 'Staff member / Guide in charge').options[0].textContent).toBe('Not specified');
+    expect(campoEn(dialogo, 'Incident date').value).toBe(HOJE);
+    expect(portuguesNoEcra(DADOS, dialogo)).toEqual([]);
+    expect(chavesCruas(['occurrences'], dialogo)).toEqual([]);
+    escolhe(campoEn(dialogo, 'Type'), 'Complaint');
+    escolhe(campoEn(dialogo, 'Severity'), 'High');
+    fireEvent.change(campoEn(dialogo, 'Incident description'), { target: { value: 'Test' } });
+    fireEvent.click(within(dialogo).getByRole('button', { name: 'Log' }));
+    await waitFor(() => expect(createOccurrence).toHaveBeenCalledTimes(1));
+    expect(createOccurrence.mock.calls[0][0]).toMatchObject({ type: 'reclamacao', severity: 'alta', description: 'Test' });
+  });
+
+  it('erro_ao_gravar_e_confirmacao_de_eliminar_em_ingles', async () => {
+    createOccurrence.mockRejectedValueOnce(new Error('rede'));
+    const confirmar = vi.spyOn(window, 'confirm').mockReturnValue(false);
+    await abreEmIngles();
+    fireEvent.click(within(linhasEn()[0]).getByRole('button', { name: 'Delete' }));
+    expect(confirmar).toHaveBeenCalledWith('Delete this incident?');
+    fireEvent.click(screen.getByRole('button', { name: 'Log incident' }));
+    const dialogo = await screen.findByRole('dialog');
+    fireEvent.change(campoEn(dialogo, 'Incident description'), { target: { value: 'X' } });
+    fireEvent.click(within(dialogo).getByRole('button', { name: 'Log' }));
+    expect(await within(dialogo).findByText('Could not save the incident.')).toBeInTheDocument();
+  });
+
+  it('vazios_em_ingles', async () => {
+    listOccurrences.mockResolvedValue([]);
+    render(
+      <MemoryRouter future={FUTURE}>
+        <Occurrences />
+      </MemoryRouter>
+    );
+    expect(await screen.findByText('No incidents')).toBeInTheDocument();
+    expect(screen.getByText('Log the first incident when needed.')).toBeInTheDocument();
+    expect(screen.getByText('No incidents logged this month.')).toBeInTheDocument();
+  });
+});
+
+describe('Occurrences: a data em português continua igual', () => {
+  afterEach(() => cleanup());
+
+  it('a_coluna_da_data_usa_o_formato_pt', async () => {
+    useUiStore.setState({ lang: 'pt' });
+    listOccurrences.mockReset().mockResolvedValue([O3]);
+    listUnits.mockReset().mockResolvedValue([]);
+    listStaff.mockReset().mockResolvedValue([]);
+    render(
+      <MemoryRouter future={FUTURE}>
+        <Occurrences />
+      </MemoryRouter>
+    );
+    await screen.findByRole('table');
+    const linha = within(screen.getByRole('table')).getAllByRole('row')[1];
+    expect(within(linha).getAllByRole('cell')[0].textContent)
+      .toBe(new Date(O3.date).toLocaleDateString('pt-PT', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'UTC' }));
   });
 });

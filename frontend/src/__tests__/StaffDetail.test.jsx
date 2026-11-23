@@ -5,6 +5,7 @@ import StaffDetail from '../pages/StaffDetail';
 import useToastStore from '../store/toastStore';
 import useUiStore from '../store/uiStore';
 import en from '../i18n/en.json';
+import { portuguesNoEcra, chavesCruas } from './helpers/portuguesNoEcra';
 import {
   getStaff, listLeave, createLeave, updateLeaveStatus, getLeaveBalance, setLeaveBalance,
   listDocuments, createDocument, deleteDocument, listCertifications, createCertification, deleteCertification,
@@ -215,16 +216,17 @@ describe('Detalhe do colaborador: Férias', () => {
     try {
       createLeave.mockRejectedValueOnce({ response: { data: { error: 'Datas sobrepostas', code: 'INVALID_DATES' } } });
       await montar();
-      await screen.findByText(`Direito (${ANO})`);
-      fireEvent.click(screen.getByRole('button', { name: /Novo pedido/ }));
+      /* o ecra ja esta em ingles (fase 4) */
+      await screen.findByText(`Entitlement (${ANO})`);
+      fireEvent.click(screen.getByRole('button', { name: /New request/ }));
       const dlg = screen.getByRole('dialog');
       const [inicio, fim] = dlg.querySelectorAll('input[type="date"]');
       fireEvent.change(inicio, { target: { value: '2027-01-10' } });
       fireEvent.change(fim, { target: { value: '2027-01-12' } });
-      fireEvent.click(within(dlg).getByRole('button', { name: 'Criar pedido' }));
+      fireEvent.click(within(dlg).getByRole('button', { name: 'Create request' }));
       await waitFor(() => expect(toasts()).toContain(`error:${en.errors.code.INVALID_DATES}`));
       createLeave.mockRejectedValueOnce({ response: { data: { error: 'Datas sobrepostas' } } });
-      fireEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Criar pedido' }));
+      fireEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Create request' }));
       await waitFor(() => expect(toasts()).toContain('error:Datas sobrepostas'));
     } finally {
       act(() => { useUiStore.setState({ lang: 'pt' }); });
@@ -587,5 +589,98 @@ describe('Detalhe do colaborador com o design system (Documentos e Certificaçõ
     expect(semBadge).not.toMatch(HEX);
     expect(semBadge).not.toMatch(NOMEADAS);
     expect(semBadge.replace(/text-error ml-0[.]5/g, '')).not.toMatch(/(?:text|bg|border)-error/);
+  });
+});
+
+/* ───────────────────────── Painel em ingles ───────────────────────── */
+
+describe('Detalhe do colaborador em inglês', () => {
+  /* dados dos testes que ficam como estao em qualquer lingua */
+  const DADOS = ['Rui Lopes', 'Natal', 'xyz', 'Contrato 2026', 'Bilhete de identidade', 'Seguro', 'Sem data', 'PADI', 'Primeiros socorros'];
+  beforeEach(() => {
+    useUiStore.setState({ lang: 'en' });
+    listDocuments.mockResolvedValue(DOCS);
+    listCertifications.mockResolvedValue(CERTS);
+  });
+  afterEach(() => { cleanup(); useUiStore.setState({ lang: 'pt' }); });
+
+  it('separadores_cargo_e_ferias_em_ingles_sem_portugues', async () => {
+    await montar();
+    expect(screen.getByText('Guide')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Staff/ })).toBeInTheDocument();
+    ['Leave', 'Salary', 'Documents', 'Certifications'].forEach(r => expect(screen.getByRole('tab', { name: r })).toBeInTheDocument());
+    expect(await screen.findByText(`Entitlement (${ANO})`)).toBeInTheDocument();
+    expect(screen.getByText('22 days')).toBeInTheDocument();
+    expect(screen.getByText('5 days')).toBeInTheDocument();
+    expect(screen.getByText('Used')).toBeInTheDocument();
+    expect(screen.getByText('Remaining')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Set entitlement' })).toBeInTheDocument();
+    expect(linha('2026-12-01 → 2026-12-05')).toHaveTextContent('Annual leave · 2026-12-01 → 2026-12-05 (5 day(s))');
+    expect(linha('2026-12-01 → 2026-12-05')).toHaveTextContent('Pending');
+    expect(linha('2026-11-02 → 2026-11-02')).toHaveTextContent('Sick leave');
+    expect(linha('2026-11-02 → 2026-11-02')).toHaveTextContent('Approved');
+    expect(linha('2026-10-01 → 2026-10-03')).toHaveTextContent('Rejected');
+    expect(screen.getAllByRole('button', { name: 'Approve' })).toHaveLength(1);
+    expect(screen.getAllByRole('button', { name: 'Reject' })).toHaveLength(1);
+    expect(portuguesNoEcra(DADOS)).toEqual([]);
+    expect(chavesCruas(['staffDetail', 'hr', 'staff', 'common'])).toEqual([]);
+  });
+
+  it('novo_pedido_em_ingles_grava_o_tipo_sick', async () => {
+    await montar();
+    await screen.findByText(`Entitlement (${ANO})`);
+    fireEvent.click(screen.getByRole('button', { name: 'New request' }));
+    const dlg = screen.getByRole('dialog');
+    expect(dlg).toHaveTextContent('New leave request');
+    const tipo = within(dlg).getByLabelText('Type');
+    const opcao = within(tipo).getByRole('option', { name: 'Sick leave' });
+    expect(opcao.value).toBe('sick');
+    fireEvent.change(tipo, { target: { value: opcao.value } });
+    fireEvent.change(within(dlg).getByLabelText('Start'), { target: { value: '2026-12-10' } });
+    fireEvent.change(within(dlg).getByLabelText('End'), { target: { value: '2026-12-11' } });
+    expect(portuguesNoEcra(DADOS, dlg)).toEqual([]);
+    fireEvent.click(within(dlg).getByRole('button', { name: 'Create request' }));
+    await waitFor(() => expect(createLeave).toHaveBeenCalledWith('s1', expect.objectContaining({ type: 'sick', start_date: '2026-12-10' })));
+    await waitFor(() => expect(toasts()).toContain('success:Leave request created'));
+  });
+
+  it('documentos_certificacoes_e_salario_em_ingles', async () => {
+    await montar();
+    abrir('Documents');
+    expect(await screen.findByText('Contracts and documents')).toBeInTheDocument();
+    expect(linhaDe('Contrato 2026')).toHaveTextContent(`${dia(10)} (expires soon)`);
+    expect(linhaDe('Bilhete de identidade')).toHaveTextContent(`${dia(-10)} (expired)`);
+    expect(screen.getByRole('button', { name: 'Delete document - Contrato 2026' })).toBeInTheDocument();
+    expect(portuguesNoEcra(DADOS)).toEqual([]);
+    fireEvent.click(screen.getByRole('button', { name: /Add/ }));
+    let dlg = screen.getByRole('dialog');
+    expect(dlg).toHaveTextContent('New document');
+    expect(within(within(dlg).getByLabelText('Type')).getByRole('option', { name: 'ID document' }).value).toBe('id_document');
+    ['Name', 'Expiry date (optional)'].forEach(r => expect(within(dlg).getByLabelText(r)).toBeInTheDocument());
+    expect(within(dlg).getByRole('button', { name: 'Upload file' })).toBeInTheDocument();
+    expect(portuguesNoEcra(DADOS, dlg)).toEqual([]);
+    fireEvent.click(within(dlg).getByRole('button', { name: 'Close' }));
+    abrir('Certifications');
+    expect(await screen.findByText('Training and certifications')).toBeInTheDocument();
+    expect(portuguesNoEcra(DADOS)).toEqual([]);
+    fireEvent.click(screen.getByRole('button', { name: /Add/ }));
+    dlg = screen.getByRole('dialog');
+    ['Name', 'Issued by', 'Issue date', 'Expiry (optional)'].forEach(r => expect(within(dlg).getByLabelText(r)).toBeInTheDocument());
+    expect(portuguesNoEcra(DADOS, dlg)).toEqual([]);
+    fireEvent.click(within(dlg).getByRole('button', { name: 'Close' }));
+    abrir('Salary');
+    expect(await screen.findByText('Payment history')).toBeInTheDocument();
+    expect(screen.getByText('Base salary')).toBeInTheDocument();
+    expect(screen.getByText('Employer INPS')).toBeInTheDocument();
+    expect(screen.getByText(`Mar ${ANO}`)).toBeInTheDocument();
+    expect(screen.getByText(`Paid in ${ANO}`)).toBeInTheDocument();
+    expect(portuguesNoEcra(DADOS)).toEqual([]);
+    expect(chavesCruas(['staffDetail', 'hr', 'staff', 'common'])).toEqual([]);
+  });
+
+  it('a_falha_ao_carregar_avisa_em_ingles', async () => {
+    listLeave.mockRejectedValue(new Error('x'));
+    await montar();
+    await waitFor(() => expect(toasts()).toContain('error:Could not load leave'));
   });
 });

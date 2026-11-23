@@ -1,3 +1,5 @@
+import { formatarData } from '../utils/formatoLingua';
+
 /* Coordenadas por omissao (Ilha do Sal) -- usadas quando o operador ainda
    nao tem ilha definida (contas antigas, antes do onboarding gravar
    island_id). */
@@ -23,28 +25,30 @@ export async function getWeatherForecast(lat = DEFAULT_LAT, lng = DEFAULT_LNG) {
   }));
 }
 
-/* WMO code → display info */
+/* WMO code → display info. chave: o estado do tempo em weather.conditions (o ecra Meteorologia
+   e o dashboard traduzem por ela). */
 export function weatherInfo(code) {
-  if (code === 0)  return { label: 'Ceu limpo',             iconName: 'Sun',            color: 'var(--sand-500)', bg: '#FFF7E6' };
-  if (code <= 2)   return { label: 'Maioritariamente limpo', iconName: 'Sun',            color: 'var(--sand-500)', bg: '#FFF7E6' };
-  if (code === 3)  return { label: 'Nublado',                iconName: 'Cloud',          color: 'var(--n500)', bg: '#F9FAFB' };
-  if (code <= 48)  return { label: 'Nevoeiro',               iconName: 'CloudFog',       color: 'var(--n500)', bg: '#F1F5F9' };
-  if (code <= 55)  return { label: 'Garoa',                  iconName: 'CloudDrizzle',   color: 'var(--ocean-500)', bg: '#EFF6FF' };
-  if (code <= 65)  return { label: 'Chuva',                  iconName: 'CloudRain',      color: 'var(--ocean-700)', bg: '#DBEAFE' };
-  if (code <= 75)  return { label: 'Neve',                   iconName: 'Cloud',          color: 'var(--n400)', bg: '#F8FAFC' };
-  if (code <= 82)  return { label: 'Aguaceiros',             iconName: 'CloudRain',      color: 'var(--ocean-700)', bg: '#DBEAFE' };
-  return                  { label: 'Trovoada',               iconName: 'CloudLightning', color: 'var(--error)', bg: '#FEF2F2' };
+  if (code === 0)  return { chave: 'clear',        iconName: 'Sun',            color: 'var(--sand-500)', bg: '#FFF7E6' };
+  if (code <= 2)   return { chave: 'mostlyClear',  iconName: 'Sun',            color: 'var(--sand-500)', bg: '#FFF7E6' };
+  if (code === 3)  return { chave: 'cloudy',       iconName: 'Cloud',          color: 'var(--n500)', bg: '#F9FAFB' };
+  if (code <= 48)  return { chave: 'fog',          iconName: 'CloudFog',       color: 'var(--n500)', bg: '#F1F5F9' };
+  if (code <= 55)  return { chave: 'drizzle',      iconName: 'CloudDrizzle',   color: 'var(--ocean-500)', bg: '#EFF6FF' };
+  if (code <= 65)  return { chave: 'rain',         iconName: 'CloudRain',      color: 'var(--ocean-700)', bg: '#DBEAFE' };
+  if (code <= 75)  return { chave: 'snow',         iconName: 'Cloud',          color: 'var(--n400)', bg: '#F8FAFC' };
+  if (code <= 82)  return { chave: 'showers',      iconName: 'CloudRain',      color: 'var(--ocean-700)', bg: '#DBEAFE' };
+  return                  { chave: 'thunderstorm', iconName: 'CloudLightning', color: 'var(--error)', bg: '#FEF2F2' };
 }
 
 export function isBadWeather(day) {
   return day.precipitation > 5 || day.code >= 80;
 }
 
-export function dayLabel(dateStr) {
+/* Hoje, amanha ou o dia da semana com a data, na lingua do painel (t de useT / getT) */
+export function dayLabel(dateStr, t, lang) {
   const d = new Date(dateStr + 'T00:00:00Z');
   const today = new Date(); today.setHours(0, 0, 0, 0);
   const diff = Math.round((d.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-  if (diff === 0) return 'Hoje';
-  if (diff === 1) return 'Amanhã';
-  return d.toLocaleDateString('pt-PT', { weekday: 'short', day: '2-digit', month: 'short', timeZone: 'UTC' });
+  if (diff === 0) return t('weather.today');
+  if (diff === 1) return t('weather.tomorrow');
+  return formatarData(d, { weekday: 'short', day: '2-digit', month: 'short', timeZone: 'UTC' }, lang);
 }

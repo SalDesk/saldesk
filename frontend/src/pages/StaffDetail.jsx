@@ -23,30 +23,21 @@ import LoadingSpinner from '../components/shared/LoadingSpinner';
 import ExpiryBadge from '../components/shared/ExpiryBadge';
 import { useT } from '../i18n';
 import { mensagemErro } from '../utils/mensagemErro';
+import { useLingua } from '../utils/formatoLingua';
+import { rotuloCargo, rotuloMes, rotuloTipoFerias, rotuloEstadoFerias, TIPOS_FERIAS } from './staff/shared';
 
+/* Separadores: id fixo, rotulo na lingua do painel */
 const TABS = [
-  { id: 'ferias',        label: 'Férias' },
-  { id: 'salario',       label: 'Salário' },
-  { id: 'documentos',    label: 'Documentos' },
-  { id: 'certificacoes', label: 'Certificações' },
+  { id: 'ferias',        rotulo: 'staffDetail.tabs.leave' },
+  { id: 'salario',       rotulo: 'staffDetail.tabs.salary' },
+  { id: 'documentos',    rotulo: 'staffDetail.tabs.documents' },
+  { id: 'certificacoes', rotulo: 'staffDetail.tabs.certifications' },
 ];
-
-const MONTH_LABEL = ['', 'Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
 
 function fmtMoney(v) {
   return `€${Number(v || 0).toFixed(2)}`;
 }
 
-const LEAVE_TYPES = [
-  { v: 'vacation',  l: 'Férias' },
-  { v: 'sick',      l: 'Doença' },
-  { v: 'maternity', l: 'Licença maternidade' },
-  { v: 'paternity', l: 'Licença paternidade' },
-  { v: 'unpaid',    l: 'Sem vencimento' },
-  { v: 'other',     l: 'Outro' },
-];
-
-const LEAVE_TYPE_LABEL = Object.fromEntries(LEAVE_TYPES.map(t => [t.v, t.l]));
 const LEAVE_BADGE = { pending: 'pending', approved: 'confirmed', rejected: 'cancelled' };
 
 function daysBetween(a, b) {
@@ -77,7 +68,7 @@ function FeriasTab({ staffId }) {
       setBalance(b);
       setEntitledInput(b.entitled_days ?? b.suggested_days ?? '');
     } catch {
-      toast.error('Erro ao carregar férias');
+      toast.error(t('staffDetail.leave.errorLoad'));
     } finally {
       setLoading(false);
     }
@@ -91,12 +82,12 @@ function FeriasTab({ staffId }) {
     setSaving(true);
     try {
       await createLeave(staffId, form);
-      toast.success('Pedido de férias criado');
+      toast.success(t('staffDetail.leave.created'));
       setShowForm(false);
       setForm({ type: 'vacation', start_date: '', end_date: '', notes: '' });
       load();
     } catch (err) {
-      toast.error(mensagemErro(err, t, 'Erro ao criar pedido'));
+      toast.error(mensagemErro(err, t, t('staffDetail.leave.errorCreate')));
     } finally {
       setSaving(false);
     }
@@ -105,10 +96,10 @@ function FeriasTab({ staffId }) {
   async function changeStatus(leaveId, status) {
     try {
       await updateLeaveStatus(staffId, leaveId, status);
-      toast.success(status === 'approved' ? 'Pedido aprovado' : 'Pedido rejeitado');
+      toast.success(status === 'approved' ? t('hr.requestApproved') : t('hr.requestRejected'));
       load();
     } catch {
-      toast.error('Erro ao actualizar pedido');
+      toast.error(t('hr.errorUpdate'));
     }
   }
 
@@ -117,11 +108,11 @@ function FeriasTab({ staffId }) {
     setSaving(true);
     try {
       await setLeaveBalance(staffId, { year, entitled_days: Number(entitledInput) || 0 });
-      toast.success('Saldo de férias actualizado');
+      toast.success(t('staffDetail.leave.balanceUpdated'));
       setShowBalanceForm(false);
       load();
     } catch {
-      toast.error('Erro ao guardar saldo');
+      toast.error(t('staffDetail.leave.errorBalance'));
     } finally {
       setSaving(false);
     }
@@ -135,40 +126,40 @@ function FeriasTab({ staffId }) {
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div className="flex gap-8">
           <div>
-            <p className="text-xs font-body font-bold uppercase tracking-wide text-n-500">Direito ({year})</p>
+            <p className="text-xs font-body font-bold uppercase tracking-wide text-n-500">{t('staffDetail.leave.entitlement', { year })}</p>
             <p className="font-display font-bold text-2xl text-n-900">
-              {balance?.entitled_days ?? '—'} {balance?.entitled_days != null && 'dias'}
+              {balance?.entitled_days ?? '—'} {balance?.entitled_days != null && t('hr.daysUnit')}
             </p>
           </div>
           <div>
-            <p className="text-xs font-body font-bold uppercase tracking-wide text-n-500">Usados</p>
-            <p className="font-display font-bold text-2xl text-n-900">{balance?.used_days ?? 0} dias</p>
+            <p className="text-xs font-body font-bold uppercase tracking-wide text-n-500">{t('staffDetail.leave.used')}</p>
+            <p className="font-display font-bold text-2xl text-n-900">{balance?.used_days ?? 0} {t('hr.daysUnit')}</p>
           </div>
           <div>
-            <p className="text-xs font-body font-bold uppercase tracking-wide text-n-500">Restantes</p>
+            <p className="text-xs font-body font-bold uppercase tracking-wide text-n-500">{t('staffDetail.leave.remaining')}</p>
             <p className="font-display font-bold text-2xl text-ocean-700">
-              {balance?.remaining_days ?? '—'} {balance?.remaining_days != null && 'dias'}
+              {balance?.remaining_days ?? '—'} {balance?.remaining_days != null && t('hr.daysUnit')}
             </p>
           </div>
         </div>
-        <Button variant="secondary" size="sm" onClick={() => setShowBalanceForm(true)}>Configurar direito</Button>
+        <Button variant="secondary" size="sm" onClick={() => setShowBalanceForm(true)}>{t('staffDetail.leave.configure')}</Button>
       </div>
       </Card>
 
       {balance?.entitled_days == null && (
         <p className="text-xs font-body text-n-700 bg-[var(--warning-light)] border border-[var(--warning)] rounded-sm px-3 py-2">
           {balance?.suggested_days != null
-            ? `O direito a férias ainda não foi configurado. Sugestão com base na data de admissão (22 dias/12 meses, proporcional): ${balance.suggested_days} dias — confirma ou ajusta em "Configurar direito".`
-            : 'O número de dias de férias ainda não está configurado — define o direito anual deste colaborador acima (adiciona a data de admissão no perfil do colaborador para receberes uma sugestão automática).'}
+            ? t('staffDetail.leave.suggestion', { n: balance.suggested_days })
+            : t('staffDetail.leave.notConfigured')}
         </p>
       )}
 
       <div className="flex items-center justify-between">
-        <h3 className="font-display font-semibold text-sm text-n-900">Pedidos</h3>
-        <Button size="sm" icon={Plus} onClick={() => setShowForm(true)}>Novo pedido</Button>
+        <h3 className="font-display font-semibold text-sm text-n-900">{t('staffDetail.leave.requests')}</h3>
+        <Button size="sm" icon={Plus} onClick={() => setShowForm(true)}>{t('staffDetail.leave.newRequest')}</Button>
       </div>
 
-      {!leave.length && <Card padding="p-0"><EmptyState title="Sem pedidos registados." /></Card>}
+      {!leave.length && <Card padding="p-0"><EmptyState title={t('staffDetail.leave.noRequests')} /></Card>}
 
       <div className="space-y-2">
         {leave.map(l => (
@@ -176,17 +167,17 @@ function FeriasTab({ staffId }) {
           <div className="flex items-center justify-between gap-3">
             <div>
               <p className="font-body font-semibold text-sm text-n-900">
-                {LEAVE_TYPE_LABEL[l.type] || l.type} · {l.start_date} → {l.end_date}
-                <span className="text-n-400 font-normal"> ({daysBetween(l.start_date, l.end_date)} dias)</span>
+                {rotuloTipoFerias(l.type, t)} · {l.start_date} → {l.end_date}
+                <span className="text-n-400 font-normal"> ({t('hr.daysCount', { n: daysBetween(l.start_date, l.end_date) })})</span>
               </p>
               {l.notes && <p className="text-xs font-body text-n-500 mt-0.5">{l.notes}</p>}
             </div>
             <div className="flex items-center gap-2 shrink-0">
-              <Badge variant={LEAVE_BADGE[l.status]}>{l.status === 'pending' ? 'Pendente' : l.status === 'approved' ? 'Aprovado' : 'Rejeitado'}</Badge>
+              <Badge variant={LEAVE_BADGE[l.status]}>{rotuloEstadoFerias(l.status, t)}</Badge>
               {l.status === 'pending' && (
                 <>
-                  <button onClick={() => changeStatus(l.id, 'approved')} className="text-ocean-700 hover:text-ocean-500" aria-label="Aprovar"><Check size={16} strokeWidth={2} /></button>
-                  <button onClick={() => changeStatus(l.id, 'rejected')} className="text-[var(--error)] hover:opacity-70" aria-label="Rejeitar"><X size={16} strokeWidth={2} /></button>
+                  <button onClick={() => changeStatus(l.id, 'approved')} className="text-ocean-700 hover:text-ocean-500" aria-label={t('hr.approve')}><Check size={16} strokeWidth={2} /></button>
+                  <button onClick={() => changeStatus(l.id, 'rejected')} className="text-[var(--error)] hover:opacity-70" aria-label={t('hr.reject')}><X size={16} strokeWidth={2} /></button>
                 </>
               )}
             </div>
@@ -195,30 +186,30 @@ function FeriasTab({ staffId }) {
         ))}
       </div>
 
-      <Modal open={showForm} onClose={() => setShowForm(false)} title="Novo pedido de férias">
+      <Modal open={showForm} onClose={() => setShowForm(false)} title={t('staffDetail.leave.newTitle')}>
         <form onSubmit={submitLeave} className="space-y-4">
-          <Select label="Tipo" aria-label="Tipo" required value={form.type} onChange={e => setForm(f => ({ ...f, type: e.target.value }))}>
-            {LEAVE_TYPES.map(t => <option key={t.v} value={t.v}>{t.l}</option>)}
+          <Select label={t('staffDetail.leave.type')} aria-label={t('staffDetail.leave.type')} required value={form.type} onChange={e => setForm(f => ({ ...f, type: e.target.value }))}>
+            {TIPOS_FERIAS.map(tipo => <option key={tipo} value={tipo}>{rotuloTipoFerias(tipo, t)}</option>)}
           </Select>
           <div className="grid grid-cols-2 gap-3">
-            <Input label="Início" aria-label="Início" type="date" required value={form.start_date} onChange={e => setForm(f => ({ ...f, start_date: e.target.value }))} />
-            <Input label="Fim" aria-label="Fim" type="date" required value={form.end_date} min={form.start_date} onChange={e => setForm(f => ({ ...f, end_date: e.target.value }))} />
+            <Input label={t('staffDetail.leave.start')} aria-label={t('staffDetail.leave.start')} type="date" required value={form.start_date} onChange={e => setForm(f => ({ ...f, start_date: e.target.value }))} />
+            <Input label={t('staffDetail.leave.end')} aria-label={t('staffDetail.leave.end')} type="date" required value={form.end_date} min={form.start_date} onChange={e => setForm(f => ({ ...f, end_date: e.target.value }))} />
           </div>
-          <Textarea label="Notas" aria-label="Notas" value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} />
-          <Button type="submit" loading={saving} className="w-full">Criar pedido</Button>
+          <Textarea label={t('staffDetail.leave.notes')} aria-label={t('staffDetail.leave.notes')} value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} />
+          <Button type="submit" loading={saving} className="w-full">{t('staffDetail.leave.createRequest')}</Button>
         </form>
       </Modal>
 
-      <Modal open={showBalanceForm} onClose={() => setShowBalanceForm(false)} title={`Direito a férias — ${year}`}>
+      <Modal open={showBalanceForm} onClose={() => setShowBalanceForm(false)} title={t('staffDetail.leave.entitlementTitle', { year })}>
         <form onSubmit={saveBalance} className="space-y-4">
           <Input
-            label="Dias de férias por ano" aria-label="Dias de férias por ano" type="number" min="0" step="0.5" required
+            label={t('staffDetail.leave.daysPerYear')} aria-label={t('staffDetail.leave.daysPerYear')} type="number" min="0" step="0.5" required
             value={entitledInput} onChange={e => setEntitledInput(e.target.value)}
             hint={balance?.suggested_days != null
-              ? `Pré-preenchido com a sugestão proporcional (22 dias/12 meses) a partir da data de admissão — ajusta se o contrato definir outro valor.`
-              : 'Define aqui o número de dias segundo o contrato/lei aplicável.'}
+              ? t('staffDetail.leave.hintSuggested')
+              : t('staffDetail.leave.hintManual')}
           />
-          <Button type="submit" loading={saving} className="w-full">Guardar</Button>
+          <Button type="submit" loading={saving} className="w-full">{t('common.save')}</Button>
         </form>
       </Modal>
     </div>
@@ -229,6 +220,7 @@ function FeriasTab({ staffId }) {
    DOCUMENTOS / CERTIFICACOES (upload comum)
 ══════════════════════════════════════════ */
 function UploadButton({ onUploaded }) {
+  const t = useT();
   const inputRef = useRef(null);
   const [uploading, setUploading] = useState(false);
   const toast = useToast();
@@ -244,7 +236,7 @@ function UploadButton({ onUploaded }) {
       const { url } = await uploadDocument(file);
       onUploaded(url, file.name);
     } catch {
-      toast.error('Erro ao carregar ficheiro');
+      toast.error(t('staffDetail.upload.error'));
     } finally {
       setUploading(false);
     }
@@ -254,13 +246,14 @@ function UploadButton({ onUploaded }) {
     <>
       <input ref={inputRef} type="file" accept="application/pdf,image/jpeg,image/png,image/webp" className="hidden" onChange={handleFile} />
       <Button size="sm" icon={uploading ? Loader2 : Upload} loading={uploading} onClick={() => inputRef.current?.click()}>
-        Carregar ficheiro
+        {t('staffDetail.upload.button')}
       </Button>
     </>
   );
 }
 
 function DocumentosTab({ staffId }) {
+  const t = useT();
   const toast = useToast();
   const [docs, setDocs] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -271,7 +264,7 @@ function DocumentosTab({ staffId }) {
   const load = useCallback(async () => {
     setLoading(true);
     try { setDocs(await listDocuments(staffId)); }
-    catch { toast.error('Erro ao carregar documentos'); }
+    catch { toast.error(t('staffDetail.docs.errorLoad')); }
     finally { setLoading(false); }
   }, [staffId]);
 
@@ -279,24 +272,24 @@ function DocumentosTab({ staffId }) {
 
   async function submit(e) {
     e.preventDefault();
-    if (!form.name || !form.file_url) { toast.error('Carrega um ficheiro e dá um nome ao documento'); return; }
+    if (!form.name || !form.file_url) { toast.error(t('staffDetail.docs.needFileAndName')); return; }
     setSaving(true);
     try {
       await createDocument(staffId, form);
-      toast.success('Documento guardado');
+      toast.success(t('staffDetail.docs.saved'));
       setShowForm(false);
       setForm({ type: 'contract', name: '', file_url: '', expiry_date: '' });
       load();
     } catch {
-      toast.error('Erro ao guardar documento');
+      toast.error(t('staffDetail.docs.errorSave'));
     } finally {
       setSaving(false);
     }
   }
 
   async function remove(docId) {
-    try { await deleteDocument(staffId, docId); toast.success('Documento eliminado'); load(); }
-    catch { toast.error('Erro ao eliminar'); }
+    try { await deleteDocument(staffId, docId); toast.success(t('staffDetail.docs.deleted')); load(); }
+    catch { toast.error(t('staffDetail.docs.errorDelete')); }
   }
 
   if (loading) return <div className="py-12 flex justify-center"><LoadingSpinner /></div>;
@@ -304,11 +297,11 @@ function DocumentosTab({ staffId }) {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h3 className="font-display font-semibold text-sm text-n-900">Contratos e documentos</h3>
-        <Button size="sm" icon={Plus} onClick={() => setShowForm(true)}>Adicionar</Button>
+        <h3 className="font-display font-semibold text-sm text-n-900">{t('staffDetail.docs.heading')}</h3>
+        <Button size="sm" icon={Plus} onClick={() => setShowForm(true)}>{t('staffDetail.docs.add')}</Button>
       </div>
 
-      {!docs.length && <Card padding="p-0"><EmptyState title="Sem documentos guardados." /></Card>}
+      {!docs.length && <Card padding="p-0"><EmptyState title={t('staffDetail.docs.empty')} /></Card>}
 
       <div className="space-y-2">
         {docs.map(d => (
@@ -321,26 +314,26 @@ function DocumentosTab({ staffId }) {
                 <ExpiryBadge date={d.expiry_date} />
               </div>
             </div>
-            <button onClick={() => remove(d.id)} className="text-n-400 hover:text-[var(--error)] shrink-0" aria-label={`Eliminar documento - ${d.name}`}><Trash2 size={16} strokeWidth={1.75} /></button>
+            <button onClick={() => remove(d.id)} className="text-n-400 hover:text-[var(--error)] shrink-0" aria-label={t('staffDetail.docs.deleteAria', { name: d.name })}><Trash2 size={16} strokeWidth={1.75} /></button>
           </div>
           </Card>
         ))}
       </div>
 
-      <Modal open={showForm} onClose={() => setShowForm(false)} title="Novo documento">
+      <Modal open={showForm} onClose={() => setShowForm(false)} title={t('staffDetail.docs.newTitle')}>
         <form onSubmit={submit} className="space-y-4">
-          <Select label="Tipo" aria-label="Tipo" value={form.type} onChange={e => setForm(f => ({ ...f, type: e.target.value }))}>
-            <option value="contract">Contrato</option>
-            <option value="id_document">Documento de identificação</option>
-            <option value="other">Outro</option>
+          <Select label={t('staffDetail.docs.type')} aria-label={t('staffDetail.docs.type')} value={form.type} onChange={e => setForm(f => ({ ...f, type: e.target.value }))}>
+            <option value="contract">{t('staffDetail.docs.types.contract')}</option>
+            <option value="id_document">{t('staffDetail.docs.types.idDocument')}</option>
+            <option value="other">{t('staffDetail.docs.types.other')}</option>
           </Select>
-          <Input label="Nome" aria-label="Nome" required value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} placeholder="Ex: Contrato de trabalho 2026" />
+          <Input label={t('staffDetail.docs.name')} aria-label={t('staffDetail.docs.name')} required value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} placeholder={t('staffDetail.docs.namePlaceholder')} />
           <div>
             <UploadButton onUploaded={(url, filename) => setForm(f => ({ ...f, file_url: url, name: f.name || filename }))} />
-            {form.file_url && <p className="text-xs font-body text-ocean-700 mt-2">Ficheiro carregado.</p>}
+            {form.file_url && <p className="text-xs font-body text-ocean-700 mt-2">{t('staffDetail.docs.fileUploaded')}</p>}
           </div>
-          <Input label="Data de validade (opcional)" aria-label="Data de validade (opcional)" type="date" value={form.expiry_date} onChange={e => setForm(f => ({ ...f, expiry_date: e.target.value }))} />
-          <Button type="submit" loading={saving} className="w-full">Guardar documento</Button>
+          <Input label={t('staffDetail.docs.expiryOptional')} aria-label={t('staffDetail.docs.expiryOptional')} type="date" value={form.expiry_date} onChange={e => setForm(f => ({ ...f, expiry_date: e.target.value }))} />
+          <Button type="submit" loading={saving} className="w-full">{t('staffDetail.docs.save')}</Button>
         </form>
       </Modal>
     </div>
@@ -351,6 +344,7 @@ function DocumentosTab({ staffId }) {
    CERTIFICACOES
 ══════════════════════════════════════════ */
 function CertificacoesTab({ staffId }) {
+  const t = useT();
   const toast = useToast();
   const [certs, setCerts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -361,7 +355,7 @@ function CertificacoesTab({ staffId }) {
   const load = useCallback(async () => {
     setLoading(true);
     try { setCerts(await listCertifications(staffId)); }
-    catch { toast.error('Erro ao carregar certificações'); }
+    catch { toast.error(t('staffDetail.certs.errorLoad')); }
     finally { setLoading(false); }
   }, [staffId]);
 
@@ -369,24 +363,24 @@ function CertificacoesTab({ staffId }) {
 
   async function submit(e) {
     e.preventDefault();
-    if (!form.name) { toast.error('Dá um nome à certificação'); return; }
+    if (!form.name) { toast.error(t('staffDetail.certs.needName')); return; }
     setSaving(true);
     try {
       await createCertification(staffId, form);
-      toast.success('Certificação guardada');
+      toast.success(t('staffDetail.certs.saved'));
       setShowForm(false);
       setForm({ name: '', issuer: '', issued_date: '', expiry_date: '', file_url: '' });
       load();
     } catch {
-      toast.error('Erro ao guardar certificação');
+      toast.error(t('staffDetail.certs.errorSave'));
     } finally {
       setSaving(false);
     }
   }
 
   async function remove(certId) {
-    try { await deleteCertification(staffId, certId); toast.success('Certificação eliminada'); load(); }
-    catch { toast.error('Erro ao eliminar'); }
+    try { await deleteCertification(staffId, certId); toast.success(t('staffDetail.certs.deleted')); load(); }
+    catch { toast.error(t('staffDetail.docs.errorDelete')); }
   }
 
   if (loading) return <div className="py-12 flex justify-center"><LoadingSpinner /></div>;
@@ -394,11 +388,11 @@ function CertificacoesTab({ staffId }) {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h3 className="font-display font-semibold text-sm text-n-900">Formação e certificações</h3>
-        <Button size="sm" icon={Plus} onClick={() => setShowForm(true)}>Adicionar</Button>
+        <h3 className="font-display font-semibold text-sm text-n-900">{t('staffDetail.certs.heading')}</h3>
+        <Button size="sm" icon={Plus} onClick={() => setShowForm(true)}>{t('staffDetail.docs.add')}</Button>
       </div>
 
-      {!certs.length && <Card padding="p-0"><EmptyState title="Sem certificações registadas." /></Card>}
+      {!certs.length && <Card padding="p-0"><EmptyState title={t('staffDetail.certs.empty')} /></Card>}
 
       <div className="space-y-2">
         {certs.map(c => (
@@ -411,25 +405,25 @@ function CertificacoesTab({ staffId }) {
                 <ExpiryBadge date={c.expiry_date} />
               </div>
             </div>
-            <button onClick={() => remove(c.id)} className="text-n-400 hover:text-[var(--error)] shrink-0" aria-label={`Eliminar certificação - ${c.name}`}><Trash2 size={16} strokeWidth={1.75} /></button>
+            <button onClick={() => remove(c.id)} className="text-n-400 hover:text-[var(--error)] shrink-0" aria-label={t('staffDetail.certs.deleteAria', { name: c.name })}><Trash2 size={16} strokeWidth={1.75} /></button>
           </div>
           </Card>
         ))}
       </div>
 
-      <Modal open={showForm} onClose={() => setShowForm(false)} title="Nova certificação">
+      <Modal open={showForm} onClose={() => setShowForm(false)} title={t('staffDetail.certs.newTitle')}>
         <form onSubmit={submit} className="space-y-4">
-          <Input label="Nome" aria-label="Nome" required value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} placeholder="Ex: PADI Open Water" />
-          <Input label="Emitido por" aria-label="Emitido por" value={form.issuer} onChange={e => setForm(f => ({ ...f, issuer: e.target.value }))} placeholder="Ex: PADI" />
+          <Input label={t('staffDetail.docs.name')} aria-label={t('staffDetail.docs.name')} required value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} placeholder={t('staffDetail.certs.namePlaceholder')} />
+          <Input label={t('staffDetail.certs.issuer')} aria-label={t('staffDetail.certs.issuer')} value={form.issuer} onChange={e => setForm(f => ({ ...f, issuer: e.target.value }))} placeholder={t('staffDetail.certs.issuerPlaceholder')} />
           <div className="grid grid-cols-2 gap-3">
-            <Input label="Data de emissão" aria-label="Data de emissão" type="date" value={form.issued_date} onChange={e => setForm(f => ({ ...f, issued_date: e.target.value }))} />
-            <Input label="Validade (opcional)" aria-label="Validade (opcional)" type="date" value={form.expiry_date} onChange={e => setForm(f => ({ ...f, expiry_date: e.target.value }))} />
+            <Input label={t('staffDetail.certs.issued')} aria-label={t('staffDetail.certs.issued')} type="date" value={form.issued_date} onChange={e => setForm(f => ({ ...f, issued_date: e.target.value }))} />
+            <Input label={t('staffDetail.certs.validityOptional')} aria-label={t('staffDetail.certs.validityOptional')} type="date" value={form.expiry_date} onChange={e => setForm(f => ({ ...f, expiry_date: e.target.value }))} />
           </div>
           <div>
             <UploadButton onUploaded={(url) => setForm(f => ({ ...f, file_url: url }))} />
-            {form.file_url && <p className="text-xs font-body text-ocean-700 mt-2">Certificado carregado.</p>}
+            {form.file_url && <p className="text-xs font-body text-ocean-700 mt-2">{t('staffDetail.certs.uploaded')}</p>}
           </div>
-          <Button type="submit" loading={saving} className="w-full">Guardar certificação</Button>
+          <Button type="submit" loading={saving} className="w-full">{t('staffDetail.certs.save')}</Button>
         </form>
       </Modal>
     </div>
@@ -443,6 +437,7 @@ function CertificacoesTab({ staffId }) {
    continua a fazer-se em Financeiro para nao duplicar logica de escrita.
 ══════════════════════════════════════════ */
 function SalarioTab({ staffId }) {
+  const t = useT();
   const toast = useToast();
   const [cfg, setCfg] = useState(null);
   const [payments, setPayments] = useState([]);
@@ -456,7 +451,7 @@ function SalarioTab({ staffId }) {
         setPayments((allPayments || []).filter(p => p.staffId === staffId)
           .sort((a, b) => b.year - a.year || b.month - a.month));
       })
-      .catch(() => toast.error('Erro ao carregar salário'))
+      .catch(() => toast.error(t('staffDetail.salary.errorLoad')))
       .finally(() => setLoading(false));
   }, [staffId]);
 
@@ -476,31 +471,31 @@ function SalarioTab({ staffId }) {
     <div className="space-y-5">
       {!cfg ? (
         <p className="text-sm font-body text-n-700 bg-[var(--warning-light)] border border-[var(--warning)] rounded-sm px-3 py-2">
-          Configuração salarial ainda não definida. Define o salário base, subsídios e INPS em{' '}
-          <Link to="/financeiro" className="font-semibold text-ocean-700 hover:underline">Financeiro → Salários</Link>.
+          {t('staffDetail.salary.notConfigured')}{' '}
+          <Link to="/financeiro" className="font-semibold text-ocean-700 hover:underline">{t('staffDetail.salary.financeLink')}</Link>.
         </p>
       ) : (
         <Card padding="p-5">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="flex flex-wrap gap-8">
             <div>
-              <p className="text-xs font-body font-bold uppercase tracking-wide text-n-500">Salário base</p>
+              <p className="text-xs font-body font-bold uppercase tracking-wide text-n-500">{t('staffDetail.salary.base')}</p>
               <p className="font-display font-bold text-2xl text-n-900">{fmtMoney(base)}</p>
             </div>
             <div>
-              <p className="text-xs font-body font-bold uppercase tracking-wide text-n-500">Subsídios</p>
+              <p className="text-xs font-body font-bold uppercase tracking-wide text-n-500">{t('staffDetail.salary.allowances')}</p>
               <p className="font-display font-bold text-2xl text-n-900">{fmtMoney(subsidios)}</p>
             </div>
             <div>
-              <p className="text-xs font-body font-bold uppercase tracking-wide text-n-500">INPS patronal</p>
+              <p className="text-xs font-body font-bold uppercase tracking-wide text-n-500">{t('staffDetail.salary.employerInps')}</p>
               <p className="font-display font-bold text-2xl text-n-900">{inpsPct}%</p>
             </div>
             <div>
-              <p className="text-xs font-body font-bold uppercase tracking-wide text-n-500">Custo total/mês</p>
+              <p className="text-xs font-body font-bold uppercase tracking-wide text-n-500">{t('staffDetail.salary.totalCost')}</p>
               <p className="font-display font-bold text-2xl text-ocean-700">{fmtMoney(custoTotal)}</p>
             </div>
           </div>
-          <Link to="/financeiro" className="text-xs font-body font-semibold text-ocean-700 hover:underline whitespace-nowrap">Editar em Financeiro →</Link>
+          <Link to="/financeiro" className="text-xs font-body font-semibold text-ocean-700 hover:underline whitespace-nowrap">{t('staffDetail.salary.editInFinance')}</Link>
         </div>
         </Card>
       )}
@@ -508,21 +503,21 @@ function SalarioTab({ staffId }) {
       <div className="grid grid-cols-2 gap-3">
         <Card padding="px-4 py-3">
           <p className="font-display font-bold text-xl text-n-900">{fmtMoney(paidThisYear)}</p>
-          <p className="text-xs font-body text-n-500">Pago em {year}</p>
+          <p className="text-xs font-body text-n-500">{t('staffDetail.salary.paidIn', { year })}</p>
         </Card>
         <Card padding="px-4 py-3">
           <p className="font-display font-bold text-xl text-n-900">{inpsThisYear != null ? fmtMoney(inpsThisYear) : '—'}</p>
-          <p className="text-xs font-body text-n-500">Contribuições INPS estimadas em {year}</p>
+          <p className="text-xs font-body text-n-500">{t('staffDetail.salary.inpsEstimated', { year })}</p>
         </Card>
       </div>
 
-      <h3 className="font-display font-semibold text-sm text-n-900">Histórico de pagamentos</h3>
-      {!payments.length && <Card padding="p-0"><EmptyState title="Sem pagamentos registados." /></Card>}
+      <h3 className="font-display font-semibold text-sm text-n-900">{t('staffDetail.salary.history')}</h3>
+      {!payments.length && <Card padding="p-0"><EmptyState title={t('staffDetail.salary.noPayments')} /></Card>}
       <div className="space-y-2">
         {payments.map(p => (
           <Card key={p.id} padding="px-4 py-3">
           <div className="flex items-center justify-between gap-3">
-            <p className="font-body font-semibold text-sm text-n-900">{MONTH_LABEL[p.month]} {p.year}</p>
+            <p className="font-body font-semibold text-sm text-n-900">{p.month >= 1 && p.month <= 12 ? rotuloMes(p.month - 1, t) : ''} {p.year}</p>
             <p className="font-display font-bold text-sm text-n-900">{fmtMoney(p.amount)}</p>
           </div>
           </Card>
@@ -536,6 +531,8 @@ function SalarioTab({ staffId }) {
    PAGINA
 ══════════════════════════════════════════ */
 export default function StaffDetail() {
+  const t = useT();
+  const lang = useLingua();
   const { staffId } = useParams();
   const navigate = useNavigate();
   const [staff, setStaff] = useState(null);
@@ -548,12 +545,12 @@ export default function StaffDetail() {
   return (
     <div>
       <button onClick={() => navigate('/colaboradores')} className="flex items-center gap-1.5 text-xs font-body font-semibold text-n-500 hover:text-ocean-700 mb-3">
-        <ArrowLeft size={14} strokeWidth={2} /> Colaboradores
+        <ArrowLeft size={14} strokeWidth={2} /> {t('staff.title')}
       </button>
-      <PageHeader title={staff?.name || 'Colaborador'} subtitle={staff?.role} />
+      <PageHeader title={staff?.name || t('staffDetail.fallbackName')} subtitle={rotuloCargo(staff?.role, t, lang)} />
 
       <div className="mb-5">
-        <Tabs tabs={TABS} value={activeTab} onChange={setActiveTab} />
+        <Tabs tabs={TABS.map(x => ({ id: x.id, label: t(x.rotulo) }))} value={activeTab} onChange={setActiveTab} />
       </div>
 
       {activeTab === 'ferias' && <FeriasTab staffId={staffId} />}

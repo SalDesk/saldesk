@@ -1,4 +1,6 @@
 import { Document, Page, Text, View, StyleSheet, pdf } from '@react-pdf/renderer';
+import { getT } from '../../i18n';
+import { formatarData, linguaActual } from '../../utils/formatoLingua';
 
 const C = {
   primary: '#0F4C81',
@@ -42,29 +44,38 @@ const s = StyleSheet.create({
 
 function fmt(v) { return `${Number(v).toFixed(2)} €`; }
 
-function RelatorioPDF({ operator, periodo, resumo, receitaDados, unidadesDados, topClientesDados }) {
+/* O relatorio segue a lingua do painel (lang; por omissao a actual): titulos, cabecalhos e a data de
+   "Gerado em" no formato da lingua. Os montantes e as datas do periodo ficam como sempre. */
+export function RelatorioPDF({ operator, periodo, resumo, receitaDados, unidadesDados, topClientesDados, lang = linguaActual() }) {
+  const t = getT(lang);
+  const vs = t('financial.pdf.vsPrevious');
   const { atual, variacao } = resumo;
   const metricas = [
-    { label: 'Receita Total',  value: fmt(atual.receita),      sub: variacao.receita >= 0 ? `+${variacao.receita}% vs anterior` : `${variacao.receita}% vs anterior` },
-    { label: 'Nº Reservas',    value: String(atual.num_reservas), sub: `${variacao.num_reservas >= 0 ? '+' : ''}${variacao.num_reservas} vs anterior` },
-    { label: 'Taxa Ocupação',  value: `${atual.taxa_ocupacao}%`,  sub: `${variacao.taxa_ocupacao >= 0 ? '+' : ''}${variacao.taxa_ocupacao}pp vs anterior` },
-    { label: 'Valor Médio',    value: fmt(atual.valor_medio),   sub: `${variacao.valor_medio >= 0 ? '+' : ''}${variacao.valor_medio}% vs anterior` }
+    { label: t('financial.pdf.totalRevenue'),  value: fmt(atual.receita),      sub: variacao.receita >= 0 ? `+${variacao.receita}% ${vs}` : `${variacao.receita}% ${vs}` },
+    { label: t('financial.pdf.bookingsNo'),    value: String(atual.num_reservas), sub: `${variacao.num_reservas >= 0 ? '+' : ''}${variacao.num_reservas} ${vs}` },
+    { label: t('financial.pdf.occupancyRate'), value: `${atual.taxa_ocupacao}%`,  sub: `${variacao.taxa_ocupacao >= 0 ? '+' : ''}${variacao.taxa_ocupacao}pp ${vs}` },
+    { label: t('financial.pdf.averageValue'),  value: fmt(atual.valor_medio),   sub: `${variacao.valor_medio >= 0 ? '+' : ''}${variacao.valor_medio}% ${vs}` }
   ];
+  /* "Periodo: inicio -> fim  ·  Gerado em <data>" */
+  const subtitulo = [
+    t('financial.pdf.period', { start: periodo.inicio, end: periodo.fim }),
+    t('financial.pdf.generatedOn', { date: formatarData(new Date(), {}, lang) }),
+  ].join('  ·  ');
 
   return (
     <Document>
       <Page size="A4" style={s.page}>
-        {/* Cabeçalho */}
+        {/* Cabecalho */}
         <View style={s.header}>
-          <Text style={s.titulo}>{operator.name} — Relatório Financeiro</Text>
+          <Text style={s.titulo}>{t('financial.pdf.title', { name: operator.name })}</Text>
           <Text style={s.subtitulo}>
-            Período: {periodo.inicio} → {periodo.fim}  ·  Gerado em {new Date().toLocaleDateString('pt-PT')}
+            {subtitulo}
           </Text>
         </View>
 
-        {/* Métricas */}
+        {/* Metricas */}
         <View style={s.seccao}>
-          <Text style={s.seccaoTitulo}>Métricas Principais</Text>
+          <Text style={s.seccaoTitulo}>{t('financial.pdf.keyMetrics')}</Text>
           <View style={s.metricsRow}>
             {metricas.map((m) => (
               <View key={m.label} style={s.metricBox}>
@@ -76,14 +87,14 @@ function RelatorioPDF({ operator, periodo, resumo, receitaDados, unidadesDados, 
           </View>
         </View>
 
-        {/* Receita por período */}
+        {/* Receita por periodo */}
         {receitaDados.length > 0 && (
           <View style={s.seccao}>
-            <Text style={s.seccaoTitulo}>Receita por Período</Text>
+            <Text style={s.seccaoTitulo}>{t('financial.pdf.revenueByPeriod')}</Text>
             <View style={s.tHead}>
-              <Text style={[s.tCell, s.cNome]}>Período</Text>
-              <Text style={[s.tCell, s.cNum]}>Reservas</Text>
-              <Text style={[s.tCell, s.cNum]}>Receita</Text>
+              <Text style={[s.tCell, s.cNome]}>{t('financial.pdf.periodColumn')}</Text>
+              <Text style={[s.tCell, s.cNum]}>{t('financial.pdf.bookings')}</Text>
+              <Text style={[s.tCell, s.cNum]}>{t('financial.pdf.revenue')}</Text>
             </View>
             {receitaDados.slice(0, 20).map((d) => (
               <View key={d.periodo} style={s.tRow}>
@@ -98,12 +109,12 @@ function RelatorioPDF({ operator, periodo, resumo, receitaDados, unidadesDados, 
         {/* Performance por unidade */}
         {unidadesDados.length > 0 && (
           <View style={s.seccao}>
-            <Text style={s.seccaoTitulo}>Performance por Unidade</Text>
+            <Text style={s.seccaoTitulo}>{t('financial.pdf.byUnit')}</Text>
             <View style={s.tHead}>
-              <Text style={[s.tCell, s.cNome]}>Unidade</Text>
-              <Text style={[s.tCell, s.cNum]}>Res.</Text>
-              <Text style={[s.tCell, s.cNum]}>Ocup.</Text>
-              <Text style={[s.tCell, s.cNum]}>Receita</Text>
+              <Text style={[s.tCell, s.cNome]}>{t('financial.pdf.unit')}</Text>
+              <Text style={[s.tCell, s.cNum]}>{t('financial.pdf.bookingsShort')}</Text>
+              <Text style={[s.tCell, s.cNum]}>{t('financial.pdf.occupancyShort')}</Text>
+              <Text style={[s.tCell, s.cNum]}>{t('financial.pdf.revenue')}</Text>
             </View>
             {unidadesDados.map((u) => (
               <View key={u.id} style={s.tRow}>
@@ -119,11 +130,11 @@ function RelatorioPDF({ operator, periodo, resumo, receitaDados, unidadesDados, 
         {/* Top clientes */}
         {topClientesDados.length > 0 && (
           <View style={s.seccao}>
-            <Text style={s.seccaoTitulo}>Top Clientes no Período</Text>
+            <Text style={s.seccaoTitulo}>{t('financial.pdf.topCustomers')}</Text>
             <View style={s.tHead}>
-              <Text style={[s.tCell, s.cNome]}>Cliente</Text>
-              <Text style={[s.tCell, s.cNum]}>Visitas</Text>
-              <Text style={[s.tCell, s.cNum]}>Total</Text>
+              <Text style={[s.tCell, s.cNome]}>{t('financial.pdf.customer')}</Text>
+              <Text style={[s.tCell, s.cNum]}>{t('financial.pdf.visits')}</Text>
+              <Text style={[s.tCell, s.cNum]}>{t('financial.pdf.total')}</Text>
             </View>
             {topClientesDados.map((c, i) => (
               <View key={c.customer_email} style={s.tRow}>
@@ -136,7 +147,7 @@ function RelatorioPDF({ operator, periodo, resumo, receitaDados, unidadesDados, 
         )}
 
         <Text style={s.footer}>
-          SalDesk · Gestão Turística · Cabo Verde
+          {t('financial.pdf.footer')}
         </Text>
       </Page>
     </Document>

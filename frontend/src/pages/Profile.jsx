@@ -11,7 +11,7 @@ import Button from '../components/ui/Button';
 import ImageUploader from '../components/shared/ImageUploader';
 
 export default function Profile() {
-  useT();
+  const t = useT();
   const { operator, setOperator } = useAuthStore();
   const [form, setForm] = useState({
     name:          operator?.name || '',
@@ -51,7 +51,7 @@ export default function Profile() {
       await api.put('/onboarding/operator', { logo_url: result.url });
       setOperator({ ...operator, logo_url: result.url });
     } catch {
-      setLogoError('Erro ao carregar logo. Tenta novamente.');
+      setLogoError(t('settings.perfil.logoUploadError'));
     } finally {
       setUploading(false);
     }
@@ -75,20 +75,20 @@ export default function Profile() {
 
   return (
     <div>
-      <PageHeader title="Perfil do Operador" subtitle="Informações públicas do seu negócio" />
+      <PageHeader title={t('profile.title')} subtitle={t('profile.subtitle')} />
 
       <div className="space-y-6">
         {/* Logo + Cover photos row */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
           {/* Logo */}
-          <Card header={<h3 className="font-display font-semibold text-sm text-n-700">Logotipo</h3>}>
+          <Card header={<h3 className="font-display font-semibold text-sm text-n-700">{t('profile.logo')}</h3>}>
             <div className="flex flex-col items-center gap-4">
               <div className="relative">
                 {logoUrl ? (
                   <img
                     src={logoUrl}
-                    alt="Logo"
+                    alt={t('profile.logoAlt')}
                     className="w-24 h-24 rounded-full object-cover border-2 border-n-200"
                   />
                 ) : (
@@ -118,7 +118,7 @@ export default function Profile() {
                 <p className="text-xs text-error text-center">{logoError}</p>
               ) : (
                 <p className="text-xs font-body text-n-400 text-center">
-                  {uploading ? 'A carregar...' : 'JPG, PNG, WebP — max 5MB'}
+                  {uploading ? t('common.loading') : t('profile.logoHint')}
                 </p>
               )}
             </div>
@@ -129,9 +129,9 @@ export default function Profile() {
             className="lg:col-span-2"
             header={
               <div>
-                <h3 className="font-display font-semibold text-sm text-n-700">Fotos de Capa</h3>
+                <h3 className="font-display font-semibold text-sm text-n-700">{t('profile.covers')}</h3>
                 <p className="text-xs font-body text-n-400 mt-0.5">
-                  Aparecem no carousel da sua página pública de reservas.
+                  {t('profile.coversIntro')}
                 </p>
               </div>
             }
@@ -140,52 +140,45 @@ export default function Profile() {
               value={coverImages}
               onChange={setCoverImages}
               maxImages={5}
-              hint="Até 5 fotos · primeira = foto principal · JPG, PNG, WebP · max 5MB cada"
+              hint={t('profile.coversHint')}
             />
           </Card>
         </div>
 
         {/* Business data */}
         <form onSubmit={handleSave} className="space-y-4">
-          <Card header={<h3 className="font-display font-semibold text-sm text-n-700">Informações do negócio</h3>}>
+          <Card header={<h3 className="font-display font-semibold text-sm text-n-700">{t('profile.businessInfo')}</h3>}>
             <div className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <Input label="Nome legal" value={form.name} onChange={set('name')} required />
-                <Input label="Nome comercial" value={form.business_name} onChange={set('business_name')} placeholder="Ex: Zy Tours Sal" />
+                <Input label={t('profile.legalName')} value={form.name} onChange={set('name')} required />
+                <Input label={t('profile.tradeName')} value={form.business_name} onChange={set('business_name')} placeholder={t('profile.tradeNamePlaceholder')} />
               </div>
-              <Input label="Tagline" value={form.tagline} onChange={set('tagline')} placeholder="Ex: A melhor experiência em Cabo Verde" />
+              <Input label={t('profile.tagline')} value={form.tagline} onChange={set('tagline')} placeholder={t('profile.taglinePlaceholder')} />
               <Textarea
-                label="Descrição"
+                label={t('profile.description')}
                 value={form.description}
                 onChange={set('description')}
                 rows={3}
-                placeholder="Descreva o seu negócio para os clientes..."
+                placeholder={t('profile.descriptionPlaceholder')}
               />
               <div className="grid grid-cols-2 gap-3">
-                <Input label="Telefone" value={form.phone} onChange={set('phone')} type="tel" />
-                <Input label="WhatsApp" value={form.whatsapp} onChange={set('whatsapp')} type="tel" />
+                <Input label={t('profile.phone')} value={form.phone} onChange={set('phone')} type="tel" />
+                <Input label={t('profile.whatsapp')} value={form.whatsapp} onChange={set('whatsapp')} type="tel" />
               </div>
-              <Input label="Morada" value={form.address} onChange={set('address')} />
+              <Input label={t('profile.address')} value={form.address} onChange={set('address')} />
             </div>
           </Card>
 
-          <Card header={<h3 className="font-display font-semibold text-sm text-n-700">Configurações</h3>}>
+          <Card header={<h3 className="font-display font-semibold text-sm text-n-700">{t('profile.settings')}</h3>}>
             <div className="grid grid-cols-3 gap-3">
-              <Select label="Idioma padrão" value={form.language} onChange={set('language')}>
-                <option value="pt">Português</option>
-                <option value="en">English</option>
-                <option value="de">Deutsch</option>
-                <option value="nl">Nederlands</option>
+              <Select label={t('profile.language')} value={form.language} onChange={set('language')}>
+                {['pt', 'en', 'de', 'nl'].map((l) => <option key={l} value={l}>{t(`accountOptions.language.${l}`)}</option>)}
               </Select>
-              <Select label="Moeda" value={form.currency} onChange={set('currency')}>
-                <option value="EUR">EUR — Euro</option>
-                <option value="CVE">CVE — Escudo</option>
-                <option value="USD">USD — Dolar</option>
+              <Select label={t('profile.currency')} value={form.currency} onChange={set('currency')}>
+                {['EUR', 'CVE', 'USD'].map((c) => <option key={c} value={c}>{t(`accountOptions.currency.${c}`)}</option>)}
               </Select>
-              <Select label="Fuso horário" value={form.timezone} onChange={set('timezone')}>
-                <option value="Atlantic/Cape_Verde">Cabo Verde (UTC-1)</option>
-                <option value="Europe/Lisbon">Lisboa (UTC+0/+1)</option>
-                <option value="Europe/London">Londres (UTC+0/+1)</option>
+              <Select label={t('profile.timezone')} value={form.timezone} onChange={set('timezone')}>
+                {['Atlantic/Cape_Verde', 'Europe/Lisbon', 'Europe/London'].map((z) => <option key={z} value={z}>{t(`accountOptions.timezone.${z}`)}</option>)}
               </Select>
             </div>
           </Card>
@@ -193,7 +186,7 @@ export default function Profile() {
           <div className="flex items-center gap-3">
             <Button type="submit" loading={saving} icon={saved ? Check : Save}
               className={saved ? 'bg-[#1A7A4A] hover:bg-[#15623c]' : ''}>
-              {saved ? 'Guardado!' : 'Guardar alterações'}
+              {saved ? t('profile.saved') : t('profile.save')}
             </Button>
           </div>
         </form>

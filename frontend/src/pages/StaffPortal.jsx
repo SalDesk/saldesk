@@ -21,25 +21,33 @@ import Logo from '../components/shared/Logo';
 import WhatsAppSend from '../components/messaging/WhatsAppSend';
 import { useT } from '../i18n';
 import { mensagemErro } from '../utils/mensagemErro';
+import { formatarData, useLingua } from '../utils/formatoLingua';
+import LanguageToggle from '../components/shared/LanguageToggle';
+import { rotuloCargo, rotuloDia, rotuloMes, rotuloTipoFerias, rotuloEstadoFerias, TIPOS_FERIAS } from './staff/shared';
 
+/* O portal fica fora da moldura do painel: tem a sua propria troca de lingua no cabecalho */
 const STATUS_CFG = {
-  pending:     { label: 'Pendente',   cls: 'bg-sand-100 text-sand-600' },
-  confirmed:   { label: 'Confirmado', cls: 'bg-ocean-50 text-ocean-700' },
-  in_progress: { label: 'Em curso',   cls: 'bg-turquoise-100 text-turquoise-700' },
-  completed:   { label: 'Concluído',  cls: 'bg-n-100 text-n-500' },
-  cancelled:   { label: 'Cancelado',  cls: 'bg-red-50 text-error' },
+  pending:     { rotulo: 'staffPortal.status.pending',    cls: 'bg-sand-100 text-sand-600' },
+  confirmed:   { rotulo: 'staffPortal.status.confirmed',  cls: 'bg-ocean-50 text-ocean-700' },
+  in_progress: { rotulo: 'staffPortal.status.inProgress', cls: 'bg-turquoise-100 text-turquoise-700' },
+  completed:   { rotulo: 'staffPortal.status.completed',  cls: 'bg-n-100 text-n-500' },
+  cancelled:   { rotulo: 'staffPortal.status.cancelled',  cls: 'bg-red-50 text-error' },
 };
 const TOUR_ICON_BG = ['bg-turquoise-100 text-turquoise-700', 'bg-sand-100 text-sand-600', 'bg-ocean-100 text-ocean-700'];
-const MONTHS_PT = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
-const DAYS_PT   = ['Dom','Seg','Ter','Qua','Qui','Sex','Sab'];
+/* Cabecalho do calendario, de domingo a sabado (valores de staff.days) */
+const DIAS_CALENDARIO = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sab'];
 /* Data local do dispositivo, nao UTC -- ver nota em BeachSeller.jsx */
 const TODAY = new Date().toLocaleDateString('en-CA');
 
-function formatDate(d) { if (!d) return '—'; const dt = new Date(d+'T00:00:00Z'); return dt.toLocaleDateString('pt-PT',{day:'2-digit',month:'short',year:'numeric',timeZone:'UTC'}); }
+function formatDate(d, lang) {
+  if (!d) return '—';
+  return formatarData(new Date(d + 'T00:00:00Z'), { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'UTC' }, lang);
+}
 
 function StatusBadge({ status }) {
+  const t = useT();
   const sc = STATUS_CFG[status] || STATUS_CFG.pending;
-  return <span className={`text-xs font-mono px-2 py-1 rounded-lg ${sc.cls}`}>{sc.label}</span>;
+  return <span className={`text-xs font-mono px-2 py-1 rounded-lg ${sc.cls}`}>{t(sc.rotulo)}</span>;
 }
 
 function getWeekRange() {
@@ -55,6 +63,8 @@ function getWeekRange() {
 /* ─── Vista: Lista de trabalhos ─── */
 function JobsList({ jobs, loading }) {
   const navigate = useNavigate();
+  const t = useT();
+  const lang = useLingua();
 
   if (loading) return <div className="flex justify-center py-16"><LoadingSpinner size={28}/></div>;
 
@@ -73,7 +83,7 @@ function JobsList({ jobs, loading }) {
     <div className="px-4 py-4 space-y-6">
       {/* Proximo trabalho */}
       <div>
-        <p className="text-xs font-mono font-bold uppercase tracking-wide text-n-500 mb-2">Próximo trabalho</p>
+        <p className="text-xs font-mono font-bold uppercase tracking-wide text-n-500 mb-2">{t('staffPortal.jobs.next')}</p>
         {nextJob ? (
           <button onClick={() => navigate(`/staff/jobs/${nextJob.id}`)}
             className="w-full bg-gradient-to-br from-ocean-700 to-turquoise-600 rounded-2xl p-4 flex items-center justify-between text-left active:scale-[0.99] transition-all">
@@ -84,7 +94,7 @@ function JobsList({ jobs, loading }) {
               <div>
                 <p className="font-display font-bold text-base text-white">{nextJob.reservations?.units?.name || '—'}</p>
                 <p className="text-xs font-body text-white/80 mt-0.5">
-                  {nextJob.reservations?.customer_name} · {formatDate(nextJob.reservations?.check_in)}
+                  {nextJob.reservations?.customer_name} · {formatDate(nextJob.reservations?.check_in, lang)}
                 </p>
               </div>
             </div>
@@ -93,16 +103,16 @@ function JobsList({ jobs, loading }) {
         ) : (
           <div className="bg-white rounded-2xl border border-n-200 p-5 text-center text-n-400">
             <Briefcase size={24} strokeWidth={1.25} className="mx-auto mb-2" />
-            <p className="text-sm font-body">Sem trabalhos agendados</p>
+            <p className="text-sm font-body">{t('staffPortal.jobs.noneScheduled')}</p>
           </div>
         )}
-        <p className="text-xs font-body text-n-400 mt-2 text-center">{weeklyCount} trabalho(s) esta semana</p>
+        <p className="text-xs font-body text-n-400 mt-2 text-center">{t('staffPortal.jobs.thisWeek', { n: weeklyCount })}</p>
       </div>
 
       <div>
-        <p className="text-xs font-mono font-bold uppercase tracking-wide text-n-500 mb-3">Próximos trabalhos</p>
+        <p className="text-xs font-mono font-bold uppercase tracking-wide text-n-500 mb-3">{t('staffPortal.jobs.upcoming')}</p>
         {upcoming.length === 0 ? (
-          <div className="text-center py-8 text-n-400"><Briefcase size={28} strokeWidth={1.25} className="mx-auto mb-2"/><p className="text-sm font-body">Sem trabalhos pendentes</p></div>
+          <div className="text-center py-8 text-n-400"><Briefcase size={28} strokeWidth={1.25} className="mx-auto mb-2"/><p className="text-sm font-body">{t('staffPortal.jobs.nonePending')}</p></div>
         ) : upcoming.map((j, i) => (
           <button key={j.id} onClick={() => navigate(`/staff/jobs/${j.id}`)}
             className="w-full bg-white rounded-3xl border border-n-200 shadow-sm px-4 py-4 mb-3 flex items-center gap-3 text-left hover:border-turquoise-300 transition-colors">
@@ -111,7 +121,7 @@ function JobsList({ jobs, loading }) {
             </div>
             <div className="flex-1 min-w-0">
               <p className="font-display font-bold text-sm text-n-900 truncate">{j.reservations?.units?.name}</p>
-              <p className="text-xs font-body text-n-500 mt-0.5 truncate">{j.reservations?.customer_name} · {formatDate(j.reservations?.check_in)}</p>
+              <p className="text-xs font-body text-n-500 mt-0.5 truncate">{j.reservations?.customer_name} · {formatDate(j.reservations?.check_in, lang)}</p>
             </div>
             <div className="flex flex-col items-end gap-1.5 shrink-0">
               <StatusBadge status={j.status} />
@@ -123,12 +133,12 @@ function JobsList({ jobs, loading }) {
 
       {history.length > 0 && (
         <div>
-          <p className="text-xs font-mono font-bold uppercase tracking-wide text-n-500 mb-3">Histórico recente</p>
+          <p className="text-xs font-mono font-bold uppercase tracking-wide text-n-500 mb-3">{t('staffPortal.jobs.recent')}</p>
           {history.map(j => (
             <div key={j.id} className="bg-white rounded-2xl border border-n-100 px-4 py-3 mb-2 flex items-center justify-between opacity-70">
               <div>
                 <p className="text-sm font-body font-semibold text-n-700">{j.reservations?.units?.name}</p>
-                <p className="text-xs font-body text-n-400">{formatDate(j.reservations?.check_in)}</p>
+                <p className="text-xs font-body text-n-400">{formatDate(j.reservations?.check_in, lang)}</p>
               </div>
               <StatusBadge status={j.status} />
             </div>
@@ -141,6 +151,8 @@ function JobsList({ jobs, loading }) {
 
 /* ─── Vista: Detalhe de trabalho ─── */
 function JobDetail({ staffId }) {
+  const t = useT();
+  const lang = useLingua();
   const { jobId } = useParams();
   const navigate  = useNavigate();
   const [job, setJob]       = useState(null);
@@ -177,14 +189,14 @@ function JobDetail({ staffId }) {
   }
 
   if (loading) return <div className="flex justify-center py-16"><LoadingSpinner size={28}/></div>;
-  if (!job) return <div className="p-4 text-center text-n-400">Trabalho não encontrado</div>;
+  if (!job) return <div className="p-4 text-center text-n-400">{t('staffPortal.job.notFound')}</div>;
 
   const r = job.reservations;
 
   return (
     <div className="px-4 py-4">
       <button onClick={() => navigate('/staff/jobs')} className="text-xs font-body font-semibold text-ocean-700 mb-4 flex items-center gap-1">
-        <ChevronLeft size={14} strokeWidth={2}/> Voltar
+        <ChevronLeft size={14} strokeWidth={2}/> {t('staffPortal.job.back')}
       </button>
 
       <div className="bg-white rounded-3xl border border-n-200 shadow-sm p-5 space-y-4">
@@ -194,18 +206,18 @@ function JobDetail({ staffId }) {
         </div>
 
         <div className="space-y-3 py-3 border-y border-n-100">
-          <InfoRow icon={User}    label="Cliente"   value={r?.customer_name} />
-          <InfoRow icon={Clock}   label="Check-in"  value={formatDate(r?.check_in)} />
-          <InfoRow icon={Clock}   label="Check-out" value={formatDate(r?.check_out)} />
-          {job.fleet?.name && <InfoRow icon={Car} label="Viatura" value={job.fleet.name} />}
-          {job.earnings_amount > 0 && <InfoRow icon={Euro} label="Ganho" value={`€${Number(job.earnings_amount).toFixed(2)}`} />}
+          <InfoRow icon={User}    label={t('staffPortal.job.customer')} value={r?.customer_name} />
+          <InfoRow icon={Clock}   label={t('staffPortal.job.checkIn')}  value={formatDate(r?.check_in, lang)} />
+          <InfoRow icon={Clock}   label={t('staffPortal.job.checkOut')} value={formatDate(r?.check_out, lang)} />
+          {job.fleet?.name && <InfoRow icon={Car} label={t('staffPortal.job.vehicle')} value={job.fleet.name} />}
+          {job.earnings_amount > 0 && <InfoRow icon={Euro} label={t('staffPortal.job.earnings')} value={`€${Number(job.earnings_amount).toFixed(2)}`} />}
         </div>
 
         <WhatsAppSend reservationId={job.reservation_id} status={r?.status} />
 
         {job.notes_manager && (
           <div className="bg-n-50 rounded-xl px-3 py-2">
-            <p className="text-xs font-mono font-bold uppercase tracking-wide text-n-500 mb-1">Notas do gestor</p>
+            <p className="text-xs font-mono font-bold uppercase tracking-wide text-n-500 mb-1">{t('staffPortal.job.managerNotes')}</p>
             <p className="text-sm font-body text-n-700">{job.notes_manager}</p>
           </div>
         )}
@@ -215,20 +227,20 @@ function JobDetail({ staffId }) {
             <button onClick={() => updateStatus('confirm')} disabled={acting}
               className="w-full h-12 bg-turquoise-600 hover:bg-turquoise-700 text-white rounded-2xl font-display font-bold text-sm flex items-center justify-center gap-2 active:scale-[0.99] transition-all disabled:opacity-50">
               <CheckCircle size={17} strokeWidth={1.75} />
-              {acting ? 'A confirmar...' : 'Confirmar trabalho'}
+              {acting ? t('staffPortal.job.confirming') : t('staffPortal.job.confirm')}
             </button>
           )}
           {job.status === 'confirmed' && (
             <button onClick={() => updateStatus('start')} disabled={acting}
               className="w-full h-12 bg-turquoise-600 hover:bg-turquoise-700 text-white rounded-2xl font-display font-bold text-sm flex items-center justify-center gap-2 active:scale-[0.99] transition-all disabled:opacity-50">
               <PlayCircle size={17} strokeWidth={1.75} />
-              {acting ? 'A iniciar...' : 'Iniciar'}
+              {acting ? t('staffPortal.job.starting') : t('staffPortal.job.start')}
             </button>
           )}
           {job.status === 'in_progress' && (
             <button onClick={() => updateStatus('complete')} disabled={acting}
               className="w-full h-12 bg-sand-500 hover:bg-sand-600 text-ocean-900 rounded-2xl font-display font-bold text-sm flex items-center justify-center gap-2 active:scale-[0.99] transition-all disabled:opacity-50">
-              {acting ? 'A concluir...' : 'Marcar como concluído'}
+              {acting ? t('staffPortal.job.completing') : t('staffPortal.job.markCompleted')}
             </button>
           )}
         </div>
@@ -236,27 +248,27 @@ function JobDetail({ staffId }) {
         {job.fleet?.name && (
           <div className="pt-2 border-t border-n-100">
             {reportDone && (
-              <p className="text-xs font-body text-turquoise-700 mb-2">Problema reportado ao gestor.</p>
+              <p className="text-xs font-body text-turquoise-700 mb-2">{t('staffPortal.job.reported')}</p>
             )}
             {!showReport ? (
               <button onClick={() => setShowReport(true)}
                 className="w-full text-sm font-body font-semibold text-error flex items-center justify-center gap-1.5 py-2">
                 <AlertTriangle size={14} strokeWidth={1.75} />
-                Reportar problema com a viatura
+                {t('staffPortal.job.report')}
               </button>
             ) : (
               <div className="space-y-2">
                 <textarea
                   value={reportText} onChange={e => setReportText(e.target.value)}
-                  rows={3} placeholder="Descreva o problema com a viatura..."
+                  rows={3} placeholder={t('staffPortal.job.reportPlaceholder')}
                   className="w-full px-3 py-2 rounded-xl border border-n-300 text-sm font-body bg-n-100 focus:outline-none focus:ring-2 focus:ring-turquoise-300 focus:border-turquoise-600 focus:bg-white resize-none"
                 />
                 <div className="flex gap-2">
                   <Button variant="secondary" className="flex-1" onClick={() => { setShowReport(false); setReportText(''); }}>
-                    Cancelar
+                    {t('staffPortal.job.cancel')}
                   </Button>
                   <Button className="flex-1" loading={reporting} disabled={!reportText.trim()} onClick={handleReportIssue}>
-                    Enviar
+                    {t('staffPortal.job.send')}
                   </Button>
                 </div>
               </div>
@@ -281,6 +293,7 @@ function InfoRow({ icon: Icon, label, value }) {
 /* ─── Vista: Calendario ─── */
 function StaffCalendar({ jobs, loading }) {
   const navigate = useNavigate();
+  const t = useT();
   const [viewMonth, setViewMonth] = useState(() => {
     const d = new Date();
     return { year: d.getFullYear(), month: d.getMonth() };
@@ -326,12 +339,12 @@ function StaffCalendar({ jobs, loading }) {
             return { year: y, month: m };
           })}
           className="w-9 h-9 rounded-full flex items-center justify-center text-n-500 hover:bg-n-100 active:scale-95 transition-all"
-          aria-label="Mês anterior"
+          aria-label={t('staffPortal.calendar.prev')}
         >
           <ChevronLeft size={18} strokeWidth={2}/>
         </button>
         <p className="font-display font-bold text-base text-n-900">
-          {MONTHS_PT[viewMonth.month]} {viewMonth.year}
+          {rotuloMes(viewMonth.month, t)} {viewMonth.year}
         </p>
         <button
           type="button"
@@ -341,7 +354,7 @@ function StaffCalendar({ jobs, loading }) {
             return { year: y, month: m };
           })}
           className="w-9 h-9 rounded-full flex items-center justify-center text-n-500 hover:bg-n-100 active:scale-95 transition-all"
-          aria-label="Mês seguinte"
+          aria-label={t('staffPortal.calendar.next')}
         >
           <ChevronRight size={18} strokeWidth={2}/>
         </button>
@@ -349,8 +362,8 @@ function StaffCalendar({ jobs, loading }) {
 
       {/* Cabecalho dos dias */}
       <div className="grid grid-cols-7 gap-1">
-        {DAYS_PT.map(d => (
-          <div key={d} className="text-center text-[10px] font-mono uppercase tracking-wide text-n-400 py-1">{d}</div>
+        {DIAS_CALENDARIO.map(d => (
+          <div key={d} className="text-center text-[10px] font-mono uppercase tracking-wide text-n-400 py-1">{rotuloDia(d, t)}</div>
         ))}
       </div>
 
@@ -385,13 +398,13 @@ function StaffCalendar({ jobs, loading }) {
       {/* Legenda */}
       <div className="flex flex-wrap items-center gap-x-4 gap-y-2 pt-1 text-xs font-body text-n-500">
         <span className="flex items-center gap-1.5">
-          <span className="w-3.5 h-3.5 rounded-lg bg-ocean-700 shrink-0"/>Confirmado
+          <span className="w-3.5 h-3.5 rounded-lg bg-ocean-700 shrink-0"/>{t('staffPortal.status.confirmed')}
         </span>
         <span className="flex items-center gap-1.5">
-          <span className="w-3.5 h-3.5 rounded-lg bg-turquoise-500 shrink-0"/>Em curso
+          <span className="w-3.5 h-3.5 rounded-lg bg-turquoise-500 shrink-0"/>{t('staffPortal.status.inProgress')}
         </span>
         <span className="flex items-center gap-1.5">
-          <span className="w-3.5 h-3.5 rounded-lg bg-sand-100 border border-sand-400 shrink-0"/>Pendente
+          <span className="w-3.5 h-3.5 rounded-lg bg-sand-100 border border-sand-400 shrink-0"/>{t('staffPortal.status.pending')}
         </span>
       </div>
     </div>
@@ -419,10 +432,10 @@ function StaffAvailability({ staffId }) {
     setSaving(true);
     try {
       await setAvailability(staffId, { dates });
-      toast.success('Disponibilidade actualizada');
+      toast.success(t('staffPortal.availability.updated'));
       setAvail({});
     } catch (err) {
-      toast.error(mensagemErro(err, t, 'Erro ao actualizar disponibilidade'));
+      toast.error(mensagemErro(err, t, t('staffPortal.availability.errorUpdate')));
     } finally {
       setSaving(false);
     }
@@ -433,7 +446,7 @@ function StaffAvailability({ staffId }) {
   return (
     <div className="px-4 py-4 space-y-4">
       <p className="text-sm font-body text-n-500">
-        Toca num dia para marcar como indisponível. Os dias não marcados são considerados disponíveis.
+        {t('staffPortal.availability.intro')}
       </p>
 
       <div className="bg-white rounded-2xl border border-n-200 p-4">
@@ -446,12 +459,12 @@ function StaffAvailability({ staffId }) {
               return { year: y, month: m };
             })}
             className="w-9 h-9 rounded-full flex items-center justify-center text-n-500 hover:bg-n-100 active:scale-95 transition-all"
-            aria-label="Mês anterior"
+            aria-label={t('staffPortal.calendar.prev')}
           >
             <ChevronLeft size={18} strokeWidth={2} />
           </button>
           <p className="font-display font-bold text-base text-n-900">
-            {MONTHS_PT[viewMonth.month]} {viewMonth.year}
+            {rotuloMes(viewMonth.month, t)} {viewMonth.year}
           </p>
           <button
             type="button"
@@ -461,15 +474,15 @@ function StaffAvailability({ staffId }) {
               return { year: y, month: m };
             })}
             className="w-9 h-9 rounded-full flex items-center justify-center text-n-500 hover:bg-n-100 active:scale-95 transition-all"
-            aria-label="Mês seguinte"
+            aria-label={t('staffPortal.calendar.next')}
           >
             <ChevronRight size={18} strokeWidth={2} />
           </button>
         </div>
 
         <div className="grid grid-cols-7 gap-1 mb-2">
-          {DAYS_PT.map(d => (
-            <div key={d} className="text-center text-[10px] font-mono uppercase tracking-wide text-n-400 py-1">{d}</div>
+          {DIAS_CALENDARIO.map(d => (
+            <div key={d} className="text-center text-[10px] font-mono uppercase tracking-wide text-n-400 py-1">{rotuloDia(d, t)}</div>
           ))}
         </div>
 
@@ -506,25 +519,21 @@ function StaffAvailability({ staffId }) {
       </div>
 
       <div className="flex items-center gap-4 text-xs font-body text-n-500">
-        <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-md bg-turquoise-50 border border-turquoise-200" />Disponível</span>
-        <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-md bg-red-50 border border-red-200" />Indisponível</span>
+        <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-md bg-turquoise-50 border border-turquoise-200" />{t('staffPortal.availability.available')}</span>
+        <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-md bg-red-50 border border-red-200" />{t('staffPortal.availability.unavailable')}</span>
       </div>
 
       <button
         onClick={handleSave}
         disabled={!hasChanges || saving}
         className="w-full h-12 bg-sand-500 hover:bg-sand-600 text-ocean-900 rounded-2xl font-display font-bold text-sm flex items-center justify-center gap-2 active:scale-[0.99] transition-all disabled:opacity-50">
-        {saving ? 'A guardar...' : 'Guardar'}
+        {saving ? t('staffPortal.availability.saving') : t('staffPortal.availability.save')}
       </button>
     </div>
   );
 }
 
 /* ─── Vista: Perfil ─── */
-const LEAVE_TYPE_LABEL = {
-  vacation: 'Férias', sick: 'Doença', maternity: 'Licença maternidade',
-  paternity: 'Licença paternidade', unpaid: 'Sem vencimento', other: 'Outro',
-};
 const LEAVE_STATUS_CLS = {
   pending: 'bg-sand-100 text-sand-600', approved: 'bg-ocean-50 text-ocean-700', rejected: 'bg-red-50 text-error',
 };
@@ -555,13 +564,13 @@ function MyLeaveSection({ staffId }) {
     setSaving(true);
     try {
       await createLeave(staffId, form);
-      toast.success('Pedido enviado para aprovação');
+      toast.success(t('staffPortal.leave.sent'));
       setShowForm(false);
       setForm({ type: 'vacation', start_date: '', end_date: '', notes: '' });
       const [l, b] = await Promise.all([listLeave(staffId), getLeaveBalance(staffId, new Date().getFullYear())]);
       setLeave(l); setBalance(b);
     } catch (err) {
-      toast.error(mensagemErro(err, t, 'Erro ao pedir férias'));
+      toast.error(mensagemErro(err, t, t('staffPortal.leave.errorRequest')));
     } finally {
       setSaving(false);
     }
@@ -572,18 +581,18 @@ function MyLeaveSection({ staffId }) {
   return (
     <div>
       <div className="flex items-center justify-between mb-2">
-        <p className="text-xs font-mono uppercase tracking-wider text-n-400">As minhas férias</p>
+        <p className="text-xs font-mono uppercase tracking-wider text-n-400">{t('staffPortal.leave.mine')}</p>
         <button onClick={() => setShowForm(s => !s)} className="text-xs font-body font-semibold text-turquoise-600 flex items-center gap-1">
           {showForm ? <X size={13} strokeWidth={2}/> : <Plus size={13} strokeWidth={2}/>}
-          {showForm ? 'Cancelar' : 'Pedir férias'}
+          {showForm ? t('staffPortal.leave.cancel') : t('staffPortal.leave.request')}
         </button>
       </div>
 
       {balance && (
         <div className="bg-white rounded-2xl border border-n-200 p-4 mb-2 flex justify-between text-center">
-          <div><p className="font-display font-bold text-lg text-n-900">{balance.entitled_days ?? balance.suggested_days ?? '—'}</p><p className="text-[10px] font-body text-n-400 uppercase">Direito</p></div>
-          <div><p className="font-display font-bold text-lg text-n-900">{balance.used_days}</p><p className="text-[10px] font-body text-n-400 uppercase">Usados</p></div>
-          <div><p className="font-display font-bold text-lg text-turquoise-600">{balance.remaining_days ?? '—'}</p><p className="text-[10px] font-body text-n-400 uppercase">Restantes</p></div>
+          <div><p className="font-display font-bold text-lg text-n-900">{balance.entitled_days ?? balance.suggested_days ?? '—'}</p><p className="text-[10px] font-body text-n-400 uppercase">{t('staffPortal.leave.entitlement')}</p></div>
+          <div><p className="font-display font-bold text-lg text-n-900">{balance.used_days}</p><p className="text-[10px] font-body text-n-400 uppercase">{t('staffPortal.leave.used')}</p></div>
+          <div><p className="font-display font-bold text-lg text-turquoise-600">{balance.remaining_days ?? '—'}</p><p className="text-[10px] font-body text-n-400 uppercase">{t('staffPortal.leave.remaining')}</p></div>
         </div>
       )}
 
@@ -591,7 +600,7 @@ function MyLeaveSection({ staffId }) {
         <form onSubmit={submitLeave} className="bg-white rounded-2xl border border-n-200 p-4 mb-2 space-y-3">
           <select value={form.type} onChange={e => setForm(f => ({ ...f, type: e.target.value }))}
             className="w-full h-10 px-3 rounded-xl border border-n-300 text-sm font-body bg-n-100">
-            {Object.entries(LEAVE_TYPE_LABEL).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+            {TIPOS_FERIAS.map(v => <option key={v} value={v}>{rotuloTipoFerias(v, t)}</option>)}
           </select>
           <div className="grid grid-cols-2 gap-2">
             <input type="date" required value={form.start_date} onChange={e => setForm(f => ({ ...f, start_date: e.target.value }))}
@@ -600,7 +609,7 @@ function MyLeaveSection({ staffId }) {
               className="h-10 px-3 rounded-xl border border-n-300 text-sm font-body bg-n-100" />
           </div>
           <button type="submit" disabled={saving} className="w-full h-10 bg-turquoise-500 text-white rounded-xl font-body font-semibold text-sm disabled:opacity-50">
-            {saving ? 'A enviar...' : 'Enviar pedido'}
+            {saving ? t('staffPortal.leave.sending') : t('staffPortal.leave.send')}
           </button>
         </form>
       )}
@@ -610,11 +619,11 @@ function MyLeaveSection({ staffId }) {
           {leave.map(l => (
             <div key={l.id} className="flex items-center justify-between gap-2 px-4 py-3">
               <div className="min-w-0">
-                <p className="text-sm font-body font-semibold text-n-800 truncate">{LEAVE_TYPE_LABEL[l.type] || l.type}</p>
+                <p className="text-sm font-body font-semibold text-n-800 truncate">{rotuloTipoFerias(l.type, t)}</p>
                 <p className="text-xs font-body text-n-400">{l.start_date} → {l.end_date} ({daysBetween(l.start_date, l.end_date)}d)</p>
               </div>
               <span className={`text-[10px] font-body font-bold uppercase px-2 py-1 rounded-full shrink-0 ${LEAVE_STATUS_CLS[l.status]}`}>
-                {l.status === 'pending' ? 'Pendente' : l.status === 'approved' ? 'Aprovado' : 'Rejeitado'}
+                {rotuloEstadoFerias(l.status, t)}
               </span>
             </div>
           ))}
@@ -626,12 +635,13 @@ function MyLeaveSection({ staffId }) {
 
 /* ── Os meus documentos / certificacoes (so leitura) ── */
 function MyDocumentsSection({ staffId }) {
+  const t = useT();
   const [docs, setDocs] = useState([]);
   useEffect(() => { if (staffId) listDocuments(staffId).then(setDocs).catch(() => {}); }, [staffId]);
   if (!docs.length) return null;
   return (
     <div>
-      <p className="text-xs font-mono uppercase tracking-wider text-n-400 mb-2">Os meus documentos</p>
+      <p className="text-xs font-mono uppercase tracking-wider text-n-400 mb-2">{t('staffPortal.myDocuments')}</p>
       <div className="bg-white rounded-2xl border border-n-200 divide-y divide-n-100">
         {docs.map(d => (
           <a key={d.id} href={d.file_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 px-4 py-3">
@@ -646,12 +656,13 @@ function MyDocumentsSection({ staffId }) {
 }
 
 function MyCertificationsSection({ staffId }) {
+  const t = useT();
   const [certs, setCerts] = useState([]);
   useEffect(() => { if (staffId) listCertifications(staffId).then(setCerts).catch(() => {}); }, [staffId]);
   if (!certs.length) return null;
   return (
     <div>
-      <p className="text-xs font-mono uppercase tracking-wider text-n-400 mb-2">As minhas certificações</p>
+      <p className="text-xs font-mono uppercase tracking-wider text-n-400 mb-2">{t('staffPortal.myCertifications')}</p>
       <div className="bg-white rounded-2xl border border-n-200 divide-y divide-n-100">
         {certs.map(c => (
           <div key={c.id} className="flex items-center gap-3 px-4 py-3">
@@ -667,10 +678,11 @@ function MyCertificationsSection({ staffId }) {
 
 function StaffProfile() {
   const t = useT();
+  const lang = useLingua();
   const { user } = useAuthStore();
   const toast = useToast();
 
-  const staffName  = user?.user_metadata?.name || user?.email || 'Colaborador';
+  const staffName  = user?.user_metadata?.name || user?.email || t('staffPortal.fallbackName');
   const staffEmail = user?.email;
 
   const [loading,      setLoading]      = useState(true);
@@ -691,7 +703,7 @@ function StaffProfile() {
         setWhatsapp(data?.whatsapp || '');
         setPhotoPreview(data?.photo_url || null);
       })
-      .catch(() => toast.error('Erro ao carregar perfil'))
+      .catch(() => toast.error(t('staffPortal.profile.errorLoad')))
       .finally(() => setLoading(false));
   }, []);
 
@@ -707,9 +719,9 @@ function StaffProfile() {
     setSaving(true);
     try {
       await updateMyProfile({ phone, whatsapp, photo_url: photoPreview });
-      toast.success('Perfil actualizado');
+      toast.success(t('staffPortal.profile.updated'));
     } catch (err) {
-      toast.error(mensagemErro(err, t, 'Erro ao actualizar perfil'));
+      toast.error(mensagemErro(err, t, t('staffPortal.profile.errorUpdate')));
     } finally {
       setSaving(false);
     }
@@ -720,9 +732,9 @@ function StaffProfile() {
     setSendingReset(true);
     try {
       await forgotPassword(staffEmail);
-      toast.success('Email enviado para definir nova password');
+      toast.success(t('staffPortal.profile.resetSent'));
     } catch {
-      toast.success('Email enviado para definir nova password');
+      toast.success(t('staffPortal.profile.resetSent'));
     } finally {
       setSendingReset(false);
     }
@@ -742,7 +754,7 @@ function StaffProfile() {
                   ? <img src={photoPreview} alt={staffName} className="w-full h-full object-cover" />
                   : <Camera size={28} strokeWidth={1.5} className="text-ocean-400" />}
               </div>
-              <button type="button" onClick={() => fileRef.current?.click()}
+              <button type="button" onClick={() => fileRef.current?.click()} aria-label={t('staffPortal.profile.uploadPhoto')}
                 className="absolute -bottom-1 -right-1 w-8 h-8 bg-sand-500 text-ocean-900 rounded-full flex items-center justify-center shadow-md hover:bg-sand-600 active:scale-95 transition-all">
                 <Upload size={14} strokeWidth={2} />
               </button>
@@ -755,7 +767,7 @@ function StaffProfile() {
             <div className="space-y-4">
               <div>
                 <label className="flex items-center gap-1.5 text-sm font-body font-semibold text-n-700 mb-2">
-                  <Phone size={14} strokeWidth={1.75} />Telefone
+                  <Phone size={14} strokeWidth={1.75} />{t('staffPortal.profile.phone')}
                 </label>
                 <input
                   type="tel" value={phone} onChange={e => setPhone(e.target.value)}
@@ -778,11 +790,11 @@ function StaffProfile() {
 
             {/* Read-only info */}
             <div>
-              <p className="text-xs font-mono uppercase tracking-wider text-n-400 mb-2">Definido pelo operador</p>
+              <p className="text-xs font-mono uppercase tracking-wider text-n-400 mb-2">{t('staffPortal.profile.setByOperator')}</p>
               <div className="bg-white rounded-2xl border border-n-200 divide-y divide-n-100">
-                <ReadOnlyRow icon={User} label="Nome" value={staffName} />
-                {profile?.role && <ReadOnlyRow icon={Briefcase} label="Cargo" value={profile.role} />}
-                {staffEmail && <ReadOnlyRow icon={Mail} label="Email" value={staffEmail} />}
+                <ReadOnlyRow icon={User} label={t('staffPortal.profile.name')} value={staffName} />
+                {profile?.role && <ReadOnlyRow icon={Briefcase} label={t('staffPortal.profile.role')} value={rotuloCargo(profile.role, t, lang)} />}
+                {staffEmail && <ReadOnlyRow icon={Mail} label={t('staffPortal.profile.email')} value={staffEmail} />}
               </div>
             </div>
 
@@ -796,7 +808,7 @@ function StaffProfile() {
               disabled={sendingReset}
               className="w-full h-12 bg-white border border-n-300 text-n-700 rounded-2xl font-body font-semibold text-sm flex items-center justify-center gap-2 active:scale-[0.99] transition-all hover:border-turquoise-300 disabled:opacity-50">
               <Lock size={16} strokeWidth={1.75} />
-              {sendingReset ? 'A enviar...' : 'Alterar password'}
+              {sendingReset ? t('staffPortal.profile.sending') : t('staffPortal.profile.changePassword')}
             </button>
 
             {/* Save */}
@@ -804,7 +816,7 @@ function StaffProfile() {
               onClick={handleSave}
               disabled={saving}
               className="w-full h-12 bg-sand-500 hover:bg-sand-600 text-ocean-900 rounded-2xl font-display font-bold text-sm flex items-center justify-center gap-2 active:scale-[0.99] transition-all disabled:opacity-50">
-              {saving ? 'A guardar...' : 'Guardar alterações'}
+              {saving ? t('staffPortal.profile.saving') : t('staffPortal.profile.saveChanges')}
             </button>
           </div>
         </>
@@ -825,11 +837,13 @@ function ReadOnlyRow({ icon: Icon, label, value }) {
 
 /* ─── Portal Principal ─── */
 export default function StaffPortal() {
+  const t = useT();
+  const lang = useLingua();
   const { user, logout } = useAuthStore();
   const navigate  = useNavigate();
   const staffId   = user?.user_metadata?.staff_id;
   const staffRole = user?.user_metadata?.staff_role;
-  const staffName = user?.user_metadata?.name || 'Colaborador';
+  const staffName = user?.user_metadata?.name || t('staffPortal.fallbackName');
 
   const [jobs, setJobs]           = useState([]);
   const [jobsLoading, setJobsLoading] = useState(false);
@@ -858,18 +872,21 @@ export default function StaffPortal() {
       <header className="bg-gradient-to-br from-ocean-900 to-ocean-700 px-5 pt-6 pb-5 rounded-b-3xl shadow-lg">
         <div className="flex items-center justify-between mb-5">
           <Logo white size="sm" />
-          <button onClick={handleLogout}
+          <div className="flex items-center gap-2">
+          <LanguageToggle variant="white" />
+          <button onClick={handleLogout} aria-label={t('staffPortal.logout')} title={t('staffPortal.logout')}
             className="w-10 h-10 rounded-full flex items-center justify-center hover:bg-white/10 active:scale-95 transition-all">
             <LogOut size={18} strokeWidth={1.75} className="text-ocean-200" />
           </button>
+          </div>
         </div>
 
         <div className="flex items-center gap-2 mb-1">
           <Sun size={20} strokeWidth={1.75} className="text-sand-400" />
-          <p className="font-display font-bold text-2xl text-white">Olá, {staffName}</p>
+          <p className="font-display font-bold text-2xl text-white">{t('staffPortal.hello', { name: staffName })}</p>
         </div>
         {staffRole && (
-          <span className="text-[10px] font-mono uppercase tracking-wide text-sand-400">{staffRole}</span>
+          <span className="text-[10px] font-mono uppercase tracking-wide text-sand-400">{rotuloCargo(staffRole, t, lang)}</span>
         )}
       </header>
 
@@ -888,11 +905,11 @@ export default function StaffPortal() {
 
       {/* Bottom nav */}
       <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md bg-white border-t border-n-200 flex z-50">
-        <NavLink to="/staff/jobs"           className={navClass}><Briefcase size={20} strokeWidth={1.75}/><span>Trabalhos</span></NavLink>
-        <NavLink to="/staff/calendario"     className={navClass}><Calendar size={20} strokeWidth={1.75}/><span>Calendário</span></NavLink>
-        <NavLink to="/staff/disponibilidade" className={navClass}><CalendarCheck size={20} strokeWidth={1.75}/><span>Disponib.</span></NavLink>
-        <NavLink to="/staff/chat"           className={navClass}><MessageCircle size={20} strokeWidth={1.75}/><span>Chat</span></NavLink>
-        <NavLink to="/staff/perfil"         className={navClass}><User size={20} strokeWidth={1.75}/><span>Perfil</span></NavLink>
+        <NavLink to="/staff/jobs"           className={navClass}><Briefcase size={20} strokeWidth={1.75}/><span>{t('staffPortal.nav.jobs')}</span></NavLink>
+        <NavLink to="/staff/calendario"     className={navClass}><Calendar size={20} strokeWidth={1.75}/><span>{t('staffPortal.nav.calendar')}</span></NavLink>
+        <NavLink to="/staff/disponibilidade" className={navClass}><CalendarCheck size={20} strokeWidth={1.75}/><span>{t('staffPortal.nav.availability')}</span></NavLink>
+        <NavLink to="/staff/chat"           className={navClass}><MessageCircle size={20} strokeWidth={1.75}/><span>{t('staffPortal.nav.chat')}</span></NavLink>
+        <NavLink to="/staff/perfil"         className={navClass}><User size={20} strokeWidth={1.75}/><span>{t('staffPortal.nav.profile')}</span></NavLink>
       </nav>
     </div>
   );

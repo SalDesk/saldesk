@@ -19,9 +19,13 @@ import Input from '../../components/ui/Input';
 import LoadingSpinner from '../../components/shared/LoadingSpinner';
 import { StaffAvatar } from './shared';
 import EmptyState from '../../components/ui/EmptyState';
+import { useT } from '../../i18n';
+import { localeDe, useLingua } from '../../utils/formatoLingua';
 
 /* ── Chat Message ── */
 function MessageBubble({ msg, isOwn, staffList, pinnedIds, onPin, onReply, allMessages }) {
+  const t = useT();
+  const lang = useLingua();
   const sender    = staffList.find(s => s.id === msg.sender_id);
   const isPinned  = pinnedIds?.has(msg.id);
   const replyMsg  = msg.reply_to_id ? allMessages?.find(m => m.id === msg.reply_to_id) : null;
@@ -39,7 +43,7 @@ function MessageBubble({ msg, isOwn, staffList, pinnedIds, onPin, onReply, allMe
         {/* Reply context */}
         {replyMsg && (
           <div className={`mb-1 px-2 py-1 rounded-sm border-l-2 border-ocean-500 ${isOwn ? 'bg-ocean-600 text-ocean-200 self-end' : 'bg-n-200 text-n-500'} text-xs font-body`}>
-            <span className="font-semibold mr-1">{replySender?.name.split(' ')[0] || 'Sistema'}</span>
+            <span className="font-semibold mr-1">{replySender?.name.split(' ')[0] || t('staff.chat.system')}</span>
             <span className="truncate">{replyMsg.content?.slice(0, 60)}</span>
           </div>
         )}
@@ -52,17 +56,17 @@ function MessageBubble({ msg, isOwn, staffList, pinnedIds, onPin, onReply, allMe
           )}
           <p>{msg.content}</p>
           <p className={`text-xs mt-1 ${isOwn ? 'text-ocean-200' : 'text-n-400'}`}>
-            {new Date(msg.created_at).toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' })}
+            {new Date(msg.created_at).toLocaleTimeString(localeDe(lang), { hour: '2-digit', minute: '2-digit' })}
           </p>
         </div>
       </div>
       {/* Action buttons on hover */}
       <div className={`flex flex-col gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity ${isOwn ? 'order-first' : ''}`}>
-        <button onClick={() => onReply?.(msg)} title="Responder" aria-label="Responder"
+        <button onClick={() => onReply?.(msg)} title={t('staff.chat.reply')} aria-label={t('staff.chat.reply')}
           className="p-1 rounded text-n-400 hover:text-ocean-700 hover:bg-ocean-50 transition-colors">
           <CornerUpLeft size={12} strokeWidth={1.75} />
         </button>
-        <button onClick={() => onPin?.(msg.id)} title={isPinned ? 'Desafixar' : 'Fixar'} aria-label={isPinned ? 'Desafixar' : 'Fixar'}
+        <button onClick={() => onPin?.(msg.id)} title={isPinned ? t('staff.chat.unpin') : t('staff.chat.pin')} aria-label={isPinned ? t('staff.chat.unpin') : t('staff.chat.pin')}
           className={`p-1 rounded transition-colors ${isPinned ? 'text-ocean-700 bg-ocean-50' : 'text-n-400 hover:text-ocean-700 hover:bg-ocean-50'}`}>
           <Pin size={12} strokeWidth={1.75} />
         </button>
@@ -73,6 +77,7 @@ function MessageBubble({ msg, isOwn, staffList, pinnedIds, onPin, onReply, allMe
 
 /* ── Chat Tab ── */
 function ChatTab({ staffList }) {
+  const t = useT();
   const { operator }  = useAuthStore();
   const [groups,       setGroups]      = useState([]);
   const [messages,     setMessages]    = useState([]);
@@ -215,13 +220,13 @@ function ChatTab({ staffList }) {
       {/* Sidebar */}
       <div className="w-56 shrink-0 border-r border-n-200 bg-n-50 flex flex-col">
         <div className="px-3 py-2.5 border-b border-n-200 flex items-center justify-between">
-          <span className="text-xs font-mono uppercase tracking-wider text-n-500">Mensagens</span>
+          <span className="text-xs font-mono uppercase tracking-wider text-n-500">{t('staff.chat.messages')}</span>
           <div className="flex items-center gap-0.5">
-            <button onClick={() => setBroadcast(true)} title="Broadcast" aria-label="Broadcast"
+            <button onClick={() => setBroadcast(true)} title={t('staff.chat.broadcast')} aria-label={t('staff.chat.broadcast')}
               className="p-1 rounded text-n-400 hover:text-sand-500 hover:bg-sand-50 transition-colors">
               <Megaphone size={13} strokeWidth={1.75} />
             </button>
-            <button onClick={() => setGroupModal(true)} title="Novo grupo" aria-label="Novo grupo"
+            <button onClick={() => setGroupModal(true)} title={t('staff.chat.newGroup')} aria-label={t('staff.chat.newGroup')}
               className="p-1 rounded text-n-400 hover:text-ocean-700 hover:bg-ocean-50 transition-colors">
               <Plus size={13} strokeWidth={1.75} />
             </button>
@@ -231,7 +236,7 @@ function ChatTab({ staffList }) {
           {groups.length > 0 && (
             <>
               <div className="px-3 pt-3 pb-1">
-                <span className="text-xs font-mono text-n-400 uppercase">Grupos</span>
+                <span className="text-xs font-mono text-n-400 uppercase">{t('staff.chat.groups')}</span>
               </div>
               {groups.map(g => (
                 <button key={g.id} onClick={() => setConvo({ type: 'group', id: g.id, name: g.name })}
@@ -246,7 +251,7 @@ function ChatTab({ staffList }) {
           )}
 
           <div className="px-3 pt-3 pb-1">
-            <span className="text-xs font-mono text-n-400 uppercase">Direto</span>
+            <span className="text-xs font-mono text-n-400 uppercase">{t('staff.chat.direct')}</span>
           </div>
           {staffList.map(s => (
             <button key={s.id} onClick={() => setConvo({ type: 'direct', id: s.id, name: s.name })}
@@ -268,7 +273,7 @@ function ChatTab({ staffList }) {
             {pinnedMsgs.length > 0 && (
               <span className="flex items-center gap-1 text-xs font-body text-n-500">
                 <Pin size={11} strokeWidth={1.75} />
-                {pinnedMsgs.length} fixada(s)
+                {t('staff.chat.pinnedCount', { n: pinnedMsgs.length })}
               </span>
             )}
           </div>
@@ -280,7 +285,7 @@ function ChatTab({ staffList }) {
                 <div key={m.id} className="flex items-center gap-2 text-xs font-body text-ocean-700">
                   <Pin size={10} strokeWidth={1.75} className="shrink-0" />
                   <span className="truncate">{m.content}</span>
-                  <button onClick={() => handlePin(m.id)} aria-label="Desafixar mensagem fixada" className="ml-auto text-ocean-400 hover:text-ocean-700">
+                  <button onClick={() => handlePin(m.id)} aria-label={t('staff.chat.unpinPinned')} className="ml-auto text-ocean-400 hover:text-ocean-700">
                     <X size={10} strokeWidth={2} />
                   </button>
                 </div>
@@ -292,7 +297,7 @@ function ChatTab({ staffList }) {
             {loadingMsgs
               ? <div className="flex justify-center pt-8"><LoadingSpinner size={24} /></div>
               : messages.length === 0
-                ? <p className="text-xs font-body text-n-400 text-center pt-8">Sem mensagens ainda</p>
+                ? <p className="text-xs font-body text-n-400 text-center pt-8">{t('staff.chat.noMessages')}</p>
                 : messages.map(msg => (
                   <MessageBubble key={msg.id} msg={msg}
                     isOwn={msg.sender_id === operator?.id}
@@ -312,7 +317,7 @@ function ChatTab({ staffList }) {
             <div className="flex items-center gap-2 px-3 py-2 bg-ocean-50 border-t border-ocean-100 shrink-0">
               <CornerUpLeft size={12} strokeWidth={1.75} className="text-ocean-600 shrink-0" />
               <span className="text-xs font-body text-ocean-700 truncate flex-1">{replyTo.content?.slice(0, 80)}</span>
-              <button onClick={() => setReplyTo(null)} aria-label="Cancelar resposta" className="text-ocean-400 hover:text-ocean-700">
+              <button onClick={() => setReplyTo(null)} aria-label={t('staff.chat.cancelReply')} className="text-ocean-400 hover:text-ocean-700">
                 <X size={12} strokeWidth={2} />
               </button>
             </div>
@@ -320,49 +325,49 @@ function ChatTab({ staffList }) {
 
           <form onSubmit={handleSend} className="p-3 border-t border-n-200 bg-white flex gap-2 shrink-0">
             <div className="flex-1">
-              <Input ref={inputRef} aria-label="Escrever mensagem" value={input} onChange={e => setInput(e.target.value)}
-                placeholder="Escrever mensagem..."
+              <Input ref={inputRef} aria-label={t('staff.chat.writeLabel')} value={input} onChange={e => setInput(e.target.value)}
+                placeholder={t('staff.chat.writePlaceholder')}
               />
             </div>
-            <Button type="submit" aria-label="Enviar" icon={Send} disabled={!input.trim()} />
+            <Button type="submit" aria-label={t('staff.chat.send')} icon={Send} disabled={!input.trim()} />
           </form>
         </div>
       ) : (
         <div className="flex-1 flex items-center justify-center bg-n-50">
-          <EmptyState icon={MessageSquare} title="Seleccionar uma conversa" />
+          <EmptyState icon={MessageSquare} title={t('staff.chat.selectConversation')} />
         </div>
       )}
 
       {/* Create group modal */}
-      <Modal open={groupModal} onClose={() => setGroupModal(false)} title="Novo grupo" size="sm">
+      <Modal open={groupModal} onClose={() => setGroupModal(false)} title={t('staff.chat.newGroup')} size="sm">
         <form onSubmit={handleCreateGroup} className="space-y-4">
-          <Input label="Nome do grupo" aria-label="Nome do grupo" value={groupName} onChange={e => setGroupName(e.target.value)} required placeholder="Ex: Equipa de campo" />
+          <Input label={t('staff.chat.groupName')} aria-label={t('staff.chat.groupName')} value={groupName} onChange={e => setGroupName(e.target.value)} required placeholder={t('staff.chat.groupPlaceholder')} />
           <div className="flex gap-3">
-            <Button type="button" variant="secondary" onClick={() => setGroupModal(false)} className="flex-1">Cancelar</Button>
-            <Button type="submit" className="flex-1">Criar grupo</Button>
+            <Button type="button" variant="secondary" onClick={() => setGroupModal(false)} className="flex-1">{t('common.cancel')}</Button>
+            <Button type="submit" className="flex-1">{t('staff.chat.createGroup')}</Button>
           </div>
         </form>
       </Modal>
 
       {/* Broadcast modal */}
-      <Modal open={broadcastModal} onClose={() => setBroadcast(false)} title="Broadcast — enviar a todos" size="sm">
+      <Modal open={broadcastModal} onClose={() => setBroadcast(false)} title={t('staff.chat.broadcastTitle')} size="sm">
         <form onSubmit={handleBroadcast} className="space-y-4">
           <div className="px-3 py-2.5 bg-[var(--sand-50)] border border-[var(--sand-300)] rounded-sm">
             <p className="text-xs font-body text-n-800">
-              Esta mensagem será enviada individualmente para {staffList.length} colaborador(es) activo(s).
+              {t('staff.chat.broadcastInfo', { n: staffList.length })}
             </p>
           </div>
           <Input
-            label="Mensagem"
-            aria-label="Mensagem"
+            label={t('staff.chat.message')}
+            aria-label={t('staff.chat.message')}
             value={broadcastText}
             onChange={e => setBroadcastText(e.target.value)}
             required
-            placeholder="Escrever mensagem de broadcast..."
+            placeholder={t('staff.chat.broadcastPlaceholder')}
           />
           <div className="flex gap-3">
-            <Button type="button" variant="secondary" onClick={() => setBroadcast(false)} className="flex-1">Cancelar</Button>
-            <Button type="submit" loading={broadcasting} icon={Megaphone} className="flex-1">Enviar</Button>
+            <Button type="button" variant="secondary" onClick={() => setBroadcast(false)} className="flex-1">{t('common.cancel')}</Button>
+            <Button type="submit" loading={broadcasting} icon={Megaphone} className="flex-1">{t('staff.chat.send')}</Button>
           </div>
         </form>
       </Modal>
