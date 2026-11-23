@@ -936,5 +936,261 @@
       "saving": "Wird gespeichert...",
       "saveChanges": "Änderungen speichern"
     }
+  },
+  "fleet": {
+    "title": "Flotte und Ausrüstung",
+    "subtitle": "{{available}} verfügbar von {{total}}",
+    "newItem": "Neuer Eintrag",
+    "empty": "Noch keine Flotteneinträge",
+    "seats": "{{n}} Plätze",
+    "maintNext": "Wartung: {{date}}",
+    "maintOverdue": "Wartung überfällig: {{date}} (überfällig)",
+    "editTitle": "Bearbeiten: {{name}}",
+    "deleteBefore": "Eintrag ",
+    "deleteAfter": " löschen?",
+    "errorSave": "Speichern fehlgeschlagen",
+    "types": {
+      "vehicle": "Fahrzeug",
+      "equipment": "Ausrüstung",
+      "gear": "Material"
+    },
+    "status": {
+      "available": "Verfügbar",
+      "in_use": "In Benutzung",
+      "maintenance": "Wartung",
+      "retired": "Ausgemustert"
+    },
+    "form": {
+      "name": "Name",
+      "namePlaceholder": "Z. B. Kia Sportage, Kiteboard 12 m",
+      "plate": "Kennzeichen",
+      "type": "Typ",
+      "status": "Status",
+      "capacity": "Kapazität (Plätze)",
+      "unit": "Zugeordnete Tour",
+      "noUnit": "Keine (allgemein)",
+      "description": "Beschreibung",
+      "lastMaint": "Letzte Wartung",
+      "nextMaint": "Nächste Wartung",
+      "photo": "Fahrzeugfoto",
+      "create": "Eintrag erstellen"
+    },
+    "selector": {
+      "checking": "Buggy-Verfügbarkeit wird geprüft...",
+      "choose": "Buggy auswählen",
+      "free": "Frei",
+      "taken": "Belegt"
+    }
+  },
+  "maintenance": {
+    "title": "Wartung",
+    "subtitle": "{{vehicles}} Fahrzeug(e) · {{alerts}} Warnung(en)",
+    "record": "Wartung erfassen",
+    "filters": {
+      "all": "Alle ({{n}})",
+      "urgent": "Dringend ({{n}})",
+      "warning": "Bald fällig ({{n}})"
+    },
+    "severity": {
+      "expired": "Abgelaufen",
+      "critical": "Dringend",
+      "warning": "Bald fällig"
+    },
+    "docs": {
+      "seguro": "Versicherung",
+      "iuc": "IUC",
+      "inspecao": "Hauptuntersuchung",
+      "revisao": "Inspektion"
+    },
+    "alert": {
+      "expiredAgo": "{{name}} — seit {{n}} Tagen abgelaufen",
+      "expiresIn": "{{name}} — läuft in {{n}} Tagen ab ({{date}})",
+      "kmOverdue": "{{name}} — {{km}} km überfällig",
+      "kmIn": "{{name}} — in {{km}} km"
+    },
+    "noAlerts": "Keine Dokumentenwarnungen. Die ganze Flotte ist auf dem neuesten Stand.",
+    "table": {
+      "title": "Dokumentenstatus — Flotte",
+      "vehicle": "Fahrzeug",
+      "currentKm": "Aktueller km-Stand",
+      "nextService": "Nächste Inspektion",
+      "overdueKm": "{{km}} km überfällig"
+    },
+    "history": {
+      "title": "Wartungsverlauf",
+      "total": "Gesamt:",
+      "empty": "Keine Wartung erfasst.",
+      "next": "Nächste: {{date}}"
+    },
+    "form": {
+      "vehicle": "Fahrzeug",
+      "selectVehicle": "Fahrzeug auswählen...",
+      "type": "Typ",
+      "date": "Durchgeführt am",
+      "km": "Aktueller km-Stand",
+      "cost": "Kosten (EUR)",
+      "nextDate": "Nächstes Datum",
+      "nextKm": "Nächste Inspektion (km)",
+      "replacement": "Ersatzfahrzeug (Kennzeichen)",
+      "notes": "Notizen",
+      "submit": "Erfassen"
+    },
+    "types": {
+      "Revisao": "Inspektion",
+      "Seguro": "Versicherung",
+      "IUC": "IUC",
+      "Inspecao": "Hauptuntersuchung",
+      "Reparacao": "Reparatur",
+      "Pneus": "Reifen",
+      "Oleo": "Öl",
+      "Outro": "Sonstiges"
+    }
+  },
+  "occurrences": {
+    "title": "Vorfälle",
+    "subtitle": "Erfassung und Verwaltung betrieblicher Vorfälle",
+    "new": "Vorfall erfassen",
+    "editTitle": "Vorfall bearbeiten",
+    "confirmDelete": "Diesen Vorfall löschen?",
+    "criticalAlert": "{{n}} ungelöste(r) kritische(r) Vorfall/Vorfälle",
+    "types": {
+      "acidente": "Unfall",
+      "atraso": "Verspätung",
+      "reclamacao": "Beschwerde",
+      "incidente": "Vorfall",
+      "mau_tempo": "Schlechtes Wetter",
+      "outro": "Sonstiges"
+    },
+    "severities": {
+      "baixa": "Niedrig",
+      "media": "Mittel",
+      "alta": "Hoch",
+      "critica": "Kritisch"
+    },
+    "kpi": {
+      "total": "Insgesamt erfasst",
+      "month": "Diesen Monat",
+      "high": "Hoch / Kritisch",
+      "critical": "Kritische Vorfälle"
+    },
+    "report": {
+      "title": "Monatsbericht — {{month}} {{year}}",
+      "empty": "Diesen Monat wurden keine Vorfälle erfasst.",
+      "byType": "Nach Typ",
+      "bySeverity": "Nach Schweregrad",
+      "total": "Gesamt:",
+      "unit": "Vorfall/Vorfälle"
+    },
+    "searchPlaceholder": "Beschreibung, Tour, Mitarbeiter suchen...",
+    "all": "Alle",
+    "columns": {
+      "date": "Datum",
+      "type": "Typ",
+      "severity": "Schweregrad",
+      "tour": "Tour",
+      "staff": "Mitarbeiter",
+      "description": "Beschreibung",
+      "actions": "Ergriffene Maßnahmen",
+      "notRecorded": "Nicht erfasst"
+    },
+    "empty": {
+      "title": "Keine Vorfälle",
+      "first": "Erfassen Sie den ersten Vorfall, wenn nötig.",
+      "filtered": "Keine Vorfälle entsprechen den gewählten Filtern."
+    },
+    "form": {
+      "date": "Datum des Vorfalls",
+      "type": "Typ",
+      "severity": "Schweregrad",
+      "unit": "Tour / Leistung",
+      "noUnit": "Keiner bestimmten Tour zugeordnet",
+      "staff": "Verantwortlicher Mitarbeiter / Guide",
+      "noStaff": "Nicht angegeben",
+      "description": "Beschreibung des Vorfalls",
+      "descriptionPlaceholder": "Beschreiben Sie, was passiert ist...",
+      "actions": "Ergriffene Maßnahmen",
+      "actionsPlaceholder": "Beschreiben Sie die Maßnahmen zur Lösung oder Begrenzung der Auswirkungen...",
+      "photos": "Foto-URLs (durch Komma getrennt)",
+      "photosPlaceholder": "https://beispiel.de/foto1.jpg, https://beispiel.de/foto2.jpg",
+      "photosHint": "Optional. Mehrere URLs durch Kommas trennen.",
+      "error": "Der Vorfall konnte nicht gespeichert werden.",
+      "submit": "Erfassen"
+    }
+  },
+  "weather": {
+    "title": "Wetter",
+    "subtitle": "7-Tage-Vorhersage · Open-Meteo",
+    "refresh": "Aktualisieren",
+    "retry": "Erneut versuchen",
+    "error": "Die Wettervorhersage konnte nicht geladen werden. Prüfen Sie Ihre Internetverbindung.",
+    "today": "Heute",
+    "tomorrow": "Morgen",
+    "badWeatherFor": "Schlechtes Wetter erwartet am {{date}}",
+    "precipShort": "{{mm}} mm Niederschlag",
+    "precip": "{{mm}} mm Niederschlag",
+    "toursWithGuests": "{{n}} geplante Tour(en) mit {{guests}} Gast/Gästen",
+    "contact": "Kunden kontaktieren",
+    "toursCount": "{{n}} Tour(en)",
+    "toursScheduled": "{{n}} geplante Tour(en)",
+    "noTours": "Für diesen Tag sind keine Touren geplant.",
+    "maxToday": "Max. heute",
+    "totalPrecip": "Gesamtniederschlag, 7 Tage",
+    "goodDays": "Tage ohne schlechtes Wetter",
+    "noConflicts": "Keine Wetterkonflikte",
+    "conflicts": "Konflikt(e) mit Touren",
+    "attribution": "Daten: Open-Meteo.com — Insel Sal, Kap Verde (16.73°N, 22.93°W) · Automatisch aktualisiert",
+    "conditions": {
+      "clear": "Klarer Himmel",
+      "mostlyClear": "Überwiegend klar",
+      "cloudy": "Bewölkt",
+      "fog": "Nebel",
+      "drizzle": "Nieselregen",
+      "rain": "Regen",
+      "snow": "Schnee",
+      "showers": "Schauer",
+      "thunderstorm": "Gewitter"
+    }
+  },
+  "housekeeping": {
+    "subtitle": "{{date}} · {{n}} Zimmer",
+    "refresh": "Aktualisieren",
+    "rooms": "{{n}} Zimmer",
+    "floor": "Etage {{n}}",
+    "noFloor": "Ohne Etage",
+    "persons": "{{n}} Gäste",
+    "sameDay": "Zimmer mit Abreise und Anreise am selben Tag:",
+    "assignStaff": "Mitarbeiter zuweisen...",
+    "empty": "Keine Zimmer gefunden",
+    "markClean": "Als sauber markieren",
+    "filters": {
+      "all": "Alle ({{n}})",
+      "dirty": "Schmutzig ({{n}})",
+      "cleaning": "Reinigung ({{n}})",
+      "inspection": "Kontrolle ({{n}})",
+      "clean": "Sauber ({{n}})"
+    },
+    "states": {
+      "clean": "Sauber",
+      "dirty": "Schmutzig",
+      "cleaning": "In Reinigung",
+      "inspection": "Kontrolle",
+      "blocked": "Gesperrt"
+    },
+    "priority": {
+      "double": "Abreise + Anreise",
+      "urgent": "Dringend",
+      "occupied": "Belegt",
+      "vacant": "Frei"
+    },
+    "checklist": {
+      "bedLinen": "Bettwäsche wechseln",
+      "bathroom": "Bad reinigen",
+      "vacuum": "Saugen / fegen",
+      "surfaces": "Oberflächen reinigen",
+      "amenities": "Pflegeartikel auffüllen",
+      "tvAcWifi": "TV / Klimaanlage / WLAN prüfen",
+      "minibar": "Minibar auffüllen",
+      "balcony": "Balkon prüfen"
+    }
   }
 }

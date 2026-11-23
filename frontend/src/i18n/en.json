@@ -1568,5 +1568,261 @@
       "saving": "Saving...",
       "saveChanges": "Save changes"
     }
+  },
+  "fleet": {
+    "title": "Fleet and equipment",
+    "subtitle": "{{available}} available of {{total}}",
+    "newItem": "New item",
+    "empty": "No fleet items yet",
+    "seats": "{{n}} seats",
+    "maintNext": "Maintenance: {{date}}",
+    "maintOverdue": "Maintenance overdue: {{date}} (overdue)",
+    "editTitle": "Edit: {{name}}",
+    "deleteBefore": "Delete ",
+    "deleteAfter": "?",
+    "errorSave": "Could not save",
+    "types": {
+      "vehicle": "Vehicle",
+      "equipment": "Equipment",
+      "gear": "Gear"
+    },
+    "status": {
+      "available": "Available",
+      "in_use": "In use",
+      "maintenance": "Maintenance",
+      "retired": "Retired"
+    },
+    "form": {
+      "name": "Name",
+      "namePlaceholder": "E.g. Kia Sportage, 12m kite board",
+      "plate": "Plate",
+      "type": "Type",
+      "status": "Status",
+      "capacity": "Capacity (seats)",
+      "unit": "Linked tour",
+      "noUnit": "None (generic)",
+      "description": "Description",
+      "lastMaint": "Last maintenance",
+      "nextMaint": "Next maintenance",
+      "photo": "Vehicle photo",
+      "create": "Create item"
+    },
+    "selector": {
+      "checking": "Checking buggy availability...",
+      "choose": "Choose the buggy",
+      "free": "Available",
+      "taken": "Taken"
+    }
+  },
+  "maintenance": {
+    "title": "Maintenance",
+    "subtitle": "{{vehicles}} vehicle(s) · {{alerts}} alert(s)",
+    "record": "Record maintenance",
+    "filters": {
+      "all": "All ({{n}})",
+      "urgent": "Urgent ({{n}})",
+      "warning": "Due soon ({{n}})"
+    },
+    "severity": {
+      "expired": "Expired",
+      "critical": "Urgent",
+      "warning": "Due soon"
+    },
+    "docs": {
+      "seguro": "Insurance",
+      "iuc": "IUC",
+      "inspecao": "Inspection",
+      "revisao": "Service"
+    },
+    "alert": {
+      "expiredAgo": "{{name}} — expired {{n}} days ago",
+      "expiresIn": "{{name}} — expires in {{n}} days ({{date}})",
+      "kmOverdue": "{{name}} — overdue {{km}}km",
+      "kmIn": "{{name}} — in {{km}}km"
+    },
+    "noAlerts": "No document alerts. The whole fleet is up to date.",
+    "table": {
+      "title": "Document status — fleet",
+      "vehicle": "Vehicle",
+      "currentKm": "Current km",
+      "nextService": "Next service",
+      "overdueKm": "Overdue {{km}}km"
+    },
+    "history": {
+      "title": "Maintenance history",
+      "total": "Total:",
+      "empty": "No maintenance recorded.",
+      "next": "Next: {{date}}"
+    },
+    "form": {
+      "vehicle": "Vehicle",
+      "selectVehicle": "Select vehicle...",
+      "type": "Type",
+      "date": "Date performed",
+      "km": "Current km",
+      "cost": "Cost (EUR)",
+      "nextDate": "Next date",
+      "nextKm": "Next service (km)",
+      "replacement": "Replacement vehicle (plate)",
+      "notes": "Notes",
+      "submit": "Record"
+    },
+    "types": {
+      "Revisao": "Service",
+      "Seguro": "Insurance",
+      "IUC": "IUC",
+      "Inspecao": "Inspection",
+      "Reparacao": "Repair",
+      "Pneus": "Tyres",
+      "Oleo": "Oil",
+      "Outro": "Other"
+    }
+  },
+  "occurrences": {
+    "title": "Incidents",
+    "subtitle": "Logging and management of operational incidents",
+    "new": "Log incident",
+    "editTitle": "Edit incident",
+    "confirmDelete": "Delete this incident?",
+    "criticalAlert": "{{n}} unresolved critical incident(s)",
+    "types": {
+      "acidente": "Accident",
+      "atraso": "Delay",
+      "reclamacao": "Complaint",
+      "incidente": "Incident",
+      "mau_tempo": "Bad weather",
+      "outro": "Other"
+    },
+    "severities": {
+      "baixa": "Low",
+      "media": "Medium",
+      "alta": "High",
+      "critica": "Critical"
+    },
+    "kpi": {
+      "total": "Total logged",
+      "month": "This month",
+      "high": "High / Critical",
+      "critical": "Critical incidents"
+    },
+    "report": {
+      "title": "Monthly report — {{month}} {{year}}",
+      "empty": "No incidents logged this month.",
+      "byType": "By type",
+      "bySeverity": "By severity",
+      "total": "Total:",
+      "unit": "incident(s)"
+    },
+    "searchPlaceholder": "Search description, tour, staff member...",
+    "all": "All",
+    "columns": {
+      "date": "Date",
+      "type": "Type",
+      "severity": "Severity",
+      "tour": "Tour",
+      "staff": "Staff member",
+      "description": "Description",
+      "actions": "Actions taken",
+      "notRecorded": "Not recorded"
+    },
+    "empty": {
+      "title": "No incidents",
+      "first": "Log the first incident when needed.",
+      "filtered": "No incidents match the applied filters."
+    },
+    "form": {
+      "date": "Incident date",
+      "type": "Type",
+      "severity": "Severity",
+      "unit": "Tour / Service",
+      "noUnit": "Not linked to a specific tour",
+      "staff": "Staff member / Guide in charge",
+      "noStaff": "Not specified",
+      "description": "Incident description",
+      "descriptionPlaceholder": "Describe what happened...",
+      "actions": "Actions taken",
+      "actionsPlaceholder": "Describe the actions taken to resolve or reduce the impact...",
+      "photos": "Photo URLs (comma-separated)",
+      "photosPlaceholder": "https://example.com/photo1.jpg, https://example.com/photo2.jpg",
+      "photosHint": "Optional. Separate multiple URLs with commas.",
+      "error": "Could not save the incident.",
+      "submit": "Log"
+    }
+  },
+  "weather": {
+    "title": "Weather",
+    "subtitle": "7-day forecast · Open-Meteo",
+    "refresh": "Refresh",
+    "retry": "Try again",
+    "error": "Could not load the weather forecast. Check your internet connection.",
+    "today": "Today",
+    "tomorrow": "Tomorrow",
+    "badWeatherFor": "Bad weather forecast for {{date}}",
+    "precipShort": "{{mm}}mm precipitation",
+    "precip": "{{mm}} mm precipitation",
+    "toursWithGuests": "{{n}} tour(s) scheduled with {{guests}} guest(s)",
+    "contact": "Contact customers",
+    "toursCount": "{{n}} tour(s)",
+    "toursScheduled": "{{n}} tour(s) scheduled",
+    "noTours": "No tours scheduled for this day.",
+    "maxToday": "Max. today",
+    "totalPrecip": "Total precipitation, 7 days",
+    "goodDays": "Days without bad weather",
+    "noConflicts": "No weather conflicts",
+    "conflicts": "Conflict(s) with tours",
+    "attribution": "Data: Open-Meteo.com — Sal Island, Cape Verde (16.73°N, 22.93°W) · Updated automatically",
+    "conditions": {
+      "clear": "Clear sky",
+      "mostlyClear": "Mostly clear",
+      "cloudy": "Cloudy",
+      "fog": "Fog",
+      "drizzle": "Drizzle",
+      "rain": "Rain",
+      "snow": "Snow",
+      "showers": "Showers",
+      "thunderstorm": "Thunderstorm"
+    }
+  },
+  "housekeeping": {
+    "subtitle": "{{date}} · {{n}} rooms",
+    "refresh": "Refresh",
+    "rooms": "{{n}} rooms",
+    "floor": "Floor {{n}}",
+    "noFloor": "No floor",
+    "persons": "{{n}} guests",
+    "sameDay": "Rooms with check-out and check-in on the same day:",
+    "assignStaff": "Assign staff member...",
+    "empty": "No rooms found",
+    "markClean": "Mark as clean",
+    "filters": {
+      "all": "All ({{n}})",
+      "dirty": "Dirty ({{n}})",
+      "cleaning": "Cleaning ({{n}})",
+      "inspection": "Inspection ({{n}})",
+      "clean": "Clean ({{n}})"
+    },
+    "states": {
+      "clean": "Clean",
+      "dirty": "Dirty",
+      "cleaning": "Being cleaned",
+      "inspection": "Inspection",
+      "blocked": "Blocked"
+    },
+    "priority": {
+      "double": "Check-out + Check-in",
+      "urgent": "Urgent",
+      "occupied": "Occupied",
+      "vacant": "Vacant"
+    },
+    "checklist": {
+      "bedLinen": "Change bed linen",
+      "bathroom": "Clean bathroom",
+      "vacuum": "Vacuum / sweep",
+      "surfaces": "Clean surfaces",
+      "amenities": "Restock amenities",
+      "tvAcWifi": "Check TV / AC / WiFi",
+      "minibar": "Restock mini-bar",
+      "balcony": "Check balcony"
+    }
   }
 }

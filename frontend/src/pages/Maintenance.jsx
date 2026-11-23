@@ -11,6 +11,8 @@ import Table from '../components/ui/Table';
 import EmptyState from '../components/ui/EmptyState';
 import Input, { Textarea, Select } from '../components/ui/Input';
 import LoadingSpinner from '../components/shared/LoadingSpinner';
+import { useT } from '../i18n';
+import { formatarNumero, useLingua } from '../utils/formatoLingua';
 
 /* Data local do dispositivo, nao UTC -- ver nota em BeachSeller.jsx */
 const TODAY = new Date().toLocaleDateString('en-CA');
@@ -32,10 +34,11 @@ function alertSeverity(days) {
   return null;
 }
 
+/* O rotulo de cada gravidade vem de maintenance.severity.<chave> */
 const SEV_STYLE = {
-  expired:  { bg: 'bg-[var(--error-light)]',   text: 'text-[var(--error)]',   label: 'Expirado'  },
-  critical: { bg: 'bg-[var(--error-light)]',   text: 'text-[var(--error)]',   label: 'Urgente'   },
-  warning:  { bg: 'bg-[var(--warning-light)]', text: 'text-[var(--warning)]', label: 'Atenção'   },
+  expired:  { bg: 'bg-[var(--error-light)]',   text: 'text-[var(--error)]'   },
+  critical: { bg: 'bg-[var(--error-light)]',   text: 'text-[var(--error)]'   },
+  warning:  { bg: 'bg-[var(--warning-light)]', text: 'text-[var(--warning)]' },
 };
 
 function computeAlerts(units) {
@@ -43,18 +46,19 @@ function computeAlerts(units) {
   units.forEach(u => {
     const meta  = parseVehicleMeta(u);
     const label = meta.plate ? `${u.name} (${meta.plate})` : u.name;
-    const check = (dateStr, name) => {
+    /* doc: chave do documento em maintenance.docs (seguro, iuc, inspecao, revisao) */
+    const check = (dateStr, doc) => {
       const days = daysUntil(dateStr);
       const sev  = alertSeverity(days);
-      if (sev) alerts.push({ unit: u, meta, label, name, days, sev, dateStr });
+      if (sev) alerts.push({ unit: u, meta, label, doc, days, sev, dateStr });
     };
-    check(meta.seguro_expiry,   'Seguro');
-    check(meta.iuc_expiry,      'IUC');
-    check(meta.inspecao_expiry, 'Inspeção');
+    check(meta.seguro_expiry,   'seguro');
+    check(meta.iuc_expiry,      'iuc');
+    check(meta.inspecao_expiry, 'inspecao');
     if (meta.next_revision_km && meta.current_km) {
       const kmLeft = Number(meta.next_revision_km) - Number(meta.current_km);
       const sev = kmLeft <= 0 ? 'expired' : kmLeft <= 500 ? 'critical' : null;
-      if (sev) alerts.push({ unit: u, meta, label, name: 'Revisão', days: null, kmLeft, sev });
+      if (sev) alerts.push({ unit: u, meta, label, doc: 'revisao', days: null, kmLeft, sev });
     }
   });
   return alerts.sort((a, b) => {
@@ -72,9 +76,15 @@ function DocCell({ dateStr }) {
   return <span className={`font-mono text-xs ${cls}`}>{dateStr}{sev && ` (${days}d)`}</span>;
 }
 
+/* Tipos gravados em maintenance_history[].tipo e comparados abaixo: o valor nunca muda com a lingua.
+   Em pt mostra-se o proprio valor, como sempre (gravado sem acento); nas outras linguas vai a traducao
+   de maintenance.types. Um tipo que a lista nao conhece mostra-se tal e qual. */
 const MAINT_TYPES = ['Revisao', 'Seguro', 'IUC', 'Inspecao', 'Reparacao', 'Pneus', 'Oleo', 'Outro'];
+const rotuloTipo = (tipo, t, lang) => (lang === 'pt' || !MAINT_TYPES.includes(tipo) ? tipo : t(`maintenance.types.${tipo}`));
 
 function MaintenanceModal({ units, record, onSave, onClose }) {
+  const t = useT();
+  const lang = useLingua();
   const [form, setForm] = useState({
     unit_id:      record?.unit_id      || '',
     tipo:         record?.tipo         || MAINT_TYPES[0],
@@ -121,8 +131,8 @@ function MaintenanceModal({ units, record, onSave, onClose }) {
 
   return (
     <div className="space-y-5">
-      <Select label="Viatura" value={form.unit_id} onChange={e => set('unit_id', e.target.value)}>
-        <option value="">Seleccionar viatura...</option>
+      <Select label={t('maintenance.form.vehicle')} value={form.unit_id} onChange={e => set('unit_id', e.target.value)}>
+        <option value="">{t('maintenance.form.selectVehicle')}</option>
         {units.map(u => {
           const m = parseVehicleMeta(u);
           return (
@@ -134,22 +144,22 @@ function MaintenanceModal({ units, record, onSave, onClose }) {
       </Select>
 
       <div className="grid grid-cols-2 gap-4">
-        <Select label="Tipo" value={form.tipo} onChange={e => set('tipo', e.target.value)}>
-          {MAINT_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+        <Select label={t('maintenance.form.type')} value={form.tipo} onChange={e => set('tipo', e.target.value)}>
+          {MAINT_TYPES.map(tipo => <option key={tipo} value={tipo}>{rotuloTipo(tipo, t, lang)}</option>)}
         </Select>
-        <Input label="Data realização" type="date" value={form.date} onChange={e => set('date', e.target.value)} />
+        <Input label={t('maintenance.form.date')} type="date" value={form.date} onChange={e => set('date', e.target.value)} />
       </div>
 
       <div className="grid grid-cols-2 gap-4">
         <Input
-          label="Km actuais"
+          label={t('maintenance.form.km')}
           type="number"
           value={form.km}
           onChange={e => set('km', e.target.value)}
           placeholder={unitMeta.current_km || '0'}
         />
         <Input
-          label="Custo (EUR)"
+          label={t('maintenance.form.cost')}
           type="number"
           step="0.01"
           value={form.cost}
@@ -159,9 +169,9 @@ function MaintenanceModal({ units, record, onSave, onClose }) {
       </div>
 
       <div className="grid grid-cols-2 gap-4">
-        <Input label="Próxima data" type="date" value={form.next_date} onChange={e => set('next_date', e.target.value)} />
+        <Input label={t('maintenance.form.nextDate')} type="date" value={form.next_date} onChange={e => set('next_date', e.target.value)} />
         <Input
-          label="Próxima revisão (km)"
+          label={t('maintenance.form.nextKm')}
           type="number"
           value={form.next_km}
           onChange={e => set('next_km', e.target.value)}
@@ -170,19 +180,19 @@ function MaintenanceModal({ units, record, onSave, onClose }) {
       </div>
 
       <Input
-        label="Viatura substituta (matricula)"
+        label={t('maintenance.form.replacement')}
         type="text"
         value={form.replacement}
         onChange={e => set('replacement', e.target.value)}
-        placeholder="Opcional"
+        placeholder={t('common.optional')}
       />
 
-      <Textarea label="Notas" value={form.notes} onChange={e => set('notes', e.target.value)} rows={3} />
+      <Textarea label={t('maintenance.form.notes')} value={form.notes} onChange={e => set('notes', e.target.value)} rows={3} />
 
       <div className="flex gap-3 pt-2">
-        <Button variant="secondary" onClick={onClose} className="flex-1">Cancelar</Button>
+        <Button variant="secondary" onClick={onClose} className="flex-1">{t('common.cancel')}</Button>
         <Button onClick={handleSave} loading={saving} disabled={!form.unit_id} className="flex-1">
-          Registar
+          {t('maintenance.form.submit')}
         </Button>
       </div>
     </div>
@@ -190,6 +200,8 @@ function MaintenanceModal({ units, record, onSave, onClose }) {
 }
 
 export default function Maintenance() {
+  const t = useT();
+  const lang = useLingua();
   const [units,   setUnits]   = useState([]);
   const [loading, setLoading] = useState(true);
   const [modal,   setModal]   = useState(false);
@@ -238,7 +250,7 @@ export default function Maintenance() {
   const docColumns = [
     {
       key: 'viatura',
-      label: 'Viatura',
+      label: t('maintenance.table.vehicle'),
       render: (u) => {
         const meta = parseVehicleMeta(u);
         return (
@@ -251,20 +263,21 @@ export default function Maintenance() {
         );
       },
     },
-    { key: 'seguro',   label: 'Seguro',   render: (u) => <DocCell dateStr={parseVehicleMeta(u).seguro_expiry} /> },
-    { key: 'iuc',      label: 'IUC',      render: (u) => <DocCell dateStr={parseVehicleMeta(u).iuc_expiry} /> },
-    { key: 'inspecao', label: 'Inspeção', render: (u) => <DocCell dateStr={parseVehicleMeta(u).inspecao_expiry} /> },
+    { key: 'seguro',   label: t('maintenance.docs.seguro'),   render: (u) => <DocCell dateStr={parseVehicleMeta(u).seguro_expiry} /> },
+    { key: 'iuc',      label: t('maintenance.docs.iuc'),      render: (u) => <DocCell dateStr={parseVehicleMeta(u).iuc_expiry} /> },
+    { key: 'inspecao', label: t('maintenance.docs.inspecao'), render: (u) => <DocCell dateStr={parseVehicleMeta(u).inspecao_expiry} /> },
     {
       key: 'km',
-      label: 'Km actual',
+      label: t('maintenance.table.currentKm'),
       render: (u) => {
         const meta = parseVehicleMeta(u);
-        return <span className="font-mono text-xs text-n-700">{meta.current_km ? `${Number(meta.current_km).toLocaleString()} km` : '—'}</span>;
+        /* o conta-quilometros segue a lingua do painel */
+        return <span className="font-mono text-xs text-n-700">{meta.current_km ? `${formatarNumero(meta.current_km, {}, lang)} km` : '—'}</span>;
       },
     },
     {
       key: 'revisao',
-      label: 'Prox. revisão',
+      label: t('maintenance.table.nextService'),
       render: (u) => {
         const meta = parseVehicleMeta(u);
         const kmLeft = meta.next_revision_km && meta.current_km
@@ -273,7 +286,7 @@ export default function Maintenance() {
         if (kmLeft === null) return <span className="text-n-300 text-xs font-mono">—</span>;
         return (
           <span className={`font-mono text-xs ${kmLeft <= 0 ? 'text-[var(--error)]' : kmLeft <= 500 ? 'text-[var(--warning)]' : 'text-n-700'}`}>
-            {kmLeft <= 0 ? `Atrasada ${Math.abs(kmLeft)}km` : `${kmLeft}km`}
+            {kmLeft <= 0 ? t('maintenance.table.overdueKm', { km: Math.abs(kmLeft) }) : `${kmLeft}km`}
           </span>
         );
       },
@@ -285,9 +298,9 @@ export default function Maintenance() {
   return (
     <div>
       <PageHeader
-        title="Manutenção"
-        subtitle={`${units.length} viatura(s) · ${alerts.length} alerta(s)`}
-        actions={<Button icon={Plus} onClick={() => setModal(true)}>Registar intervenção</Button>}
+        title={t('maintenance.title')}
+        subtitle={t('maintenance.subtitle', { vehicles: units.length, alerts: alerts.length })}
+        actions={<Button icon={Plus} onClick={() => setModal(true)}>{t('maintenance.record')}</Button>}
       />
 
       {/* Alert filters */}
@@ -295,9 +308,9 @@ export default function Maintenance() {
         <div className="mb-5">
           <FilterChips
             options={[
-              { value: 'all',     label: `Todos (${alerts.length})` },
-              { value: 'expired', label: `Urgentes (${alerts.filter(a => ['expired','critical'].includes(a.sev)).length})` },
-              { value: 'warning', label: `Atenção (${alerts.filter(a => a.sev === 'warning').length})` },
+              { value: 'all',     label: t('maintenance.filters.all', { n: alerts.length }) },
+              { value: 'expired', label: t('maintenance.filters.urgent', { n: alerts.filter(a => ['expired','critical'].includes(a.sev)).length }) },
+              { value: 'warning', label: t('maintenance.filters.warning', { n: alerts.filter(a => a.sev === 'warning').length }) },
             ]}
             value={filter}
             onChange={setFilter}
@@ -310,27 +323,27 @@ export default function Maintenance() {
         <div className="space-y-2 mb-8">
           {filteredAlerts.map((a, i) => {
             const s = SEV_STYLE[a.sev];
+            const nome = t(`maintenance.docs.${a.doc}`);
             return (
               <div key={i} className={`flex items-start gap-3 px-4 py-3 rounded-md border border-n-200 ${s.bg}`}>
                 <AlertTriangle size={15} strokeWidth={1.75} className={`${s.text} shrink-0 mt-0.5`} />
                 <div className="flex-1 min-w-0">
                   <p className={`text-sm font-body font-medium ${s.text}`}>{a.label}</p>
                   <p className={`text-xs font-body ${s.text} opacity-80`}>
-                    {a.name}
                     {a.days !== null && a.days !== undefined
                       ? a.days <= 0
-                        ? ` — expirado há ${Math.abs(a.days)} dias`
-                        : ` — expira em ${a.days} dias (${a.dateStr})`
+                        ? t('maintenance.alert.expiredAgo', { name: nome, n: Math.abs(a.days) })
+                        : t('maintenance.alert.expiresIn', { name: nome, n: a.days, date: a.dateStr })
                       : a.kmLeft !== undefined
                         ? a.kmLeft <= 0
-                          ? ` — atrasada ${Math.abs(a.kmLeft)}km`
-                          : ` — em ${a.kmLeft}km`
-                        : ''
+                          ? t('maintenance.alert.kmOverdue', { name: nome, km: Math.abs(a.kmLeft) })
+                          : t('maintenance.alert.kmIn', { name: nome, km: a.kmLeft })
+                        : nome
                     }
                   </p>
                 </div>
                 <span className={`text-[10px] font-mono font-bold uppercase tracking-wide px-2 py-0.5 rounded bg-white ${s.text} shrink-0`}>
-                  {s.label}
+                  {t(`maintenance.severity.${a.sev}`)}
                 </span>
               </div>
             );
@@ -339,7 +352,7 @@ export default function Maintenance() {
       ) : (
         <div className="flex items-center gap-3 px-4 py-3 rounded-md bg-[var(--success-light)] border border-n-200 mb-8">
           <CheckCircle size={15} strokeWidth={1.75} className="text-[var(--success)] shrink-0" />
-          <p className="text-sm font-body text-[var(--success)]">Sem alertas de documentação. Toda a frota em dia.</p>
+          <p className="text-sm font-body text-[var(--success)]">{t('maintenance.noAlerts')}</p>
         </div>
       )}
 
@@ -347,7 +360,7 @@ export default function Maintenance() {
       <div className="bg-white rounded-md border border-n-200 shadow-sm mb-8 overflow-hidden">
         <div className="px-5 py-4 border-b border-n-100 flex items-center gap-2">
           <Car size={14} strokeWidth={1.75} className="text-n-500" />
-          <h2 className="font-display font-semibold text-sm text-n-700">Estado documentação — frota</h2>
+          <h2 className="font-display font-semibold text-sm text-n-700">{t('maintenance.table.title')}</h2>
         </div>
         <Table columns={docColumns} rows={units} />
       </div>
@@ -356,15 +369,15 @@ export default function Maintenance() {
       <div className="bg-white rounded-md border border-n-200 shadow-sm overflow-hidden">
         <div className="px-5 py-4 border-b border-n-100 flex items-center gap-2">
           <Wrench size={14} strokeWidth={1.75} className="text-n-500" />
-          <h2 className="font-display font-semibold text-sm text-n-700">Histórico de intervenções</h2>
+          <h2 className="font-display font-semibold text-sm text-n-700">{t('maintenance.history.title')}</h2>
           {totalCost > 0 && (
             <span className="ml-auto text-xs font-mono text-n-500">
-              Total: <strong className="text-n-900">€{totalCost.toFixed(2)}</strong>
+              {t('maintenance.history.total')} <strong className="text-n-900">€{totalCost.toFixed(2)}</strong>
             </span>
           )}
         </div>
         {history.length === 0 ? (
-          <EmptyState icon={Wrench} title="Nenhuma intervenção registada." />
+          <EmptyState icon={Wrench} title={t('maintenance.history.empty')} />
         ) : (
           <div className="divide-y divide-n-100">
             {history.map((h, i) => {
@@ -377,15 +390,15 @@ export default function Maintenance() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-baseline gap-2 flex-wrap">
-                      <span className="font-display font-semibold text-sm text-n-900">{h.tipo}</span>
+                      <span className="font-display font-semibold text-sm text-n-900">{rotuloTipo(h.tipo, t, lang)}</span>
                       <span className="text-xs font-body text-n-500">{vLabel}</span>
                       {metaU.plate && <span className="text-xs font-mono text-n-400">{metaU.plate}</span>}
                     </div>
                     <div className="flex gap-3 mt-0.5 flex-wrap">
                       <span className="text-xs font-mono text-n-500">{h.date}</span>
-                      {h.km    && <span className="text-xs font-mono text-n-400">{Number(h.km).toLocaleString()} km</span>}
+                      {h.km    && <span className="text-xs font-mono text-n-400">{formatarNumero(h.km, {}, lang)} km</span>}
                       {h.cost  && <span className="text-xs font-mono text-[var(--success)]">€{Number(h.cost).toFixed(2)}</span>}
-                      {h.next_date && <span className="text-xs font-mono text-ocean-700">Prox: {h.next_date}</span>}
+                      {h.next_date && <span className="text-xs font-mono text-ocean-700">{t('maintenance.history.next', { date: h.next_date })}</span>}
                     </div>
                     {h.notes && <p className="text-xs font-body text-n-500 mt-0.5">{h.notes}</p>}
                   </div>
@@ -399,7 +412,7 @@ export default function Maintenance() {
       <Modal
         open={modal}
         onClose={() => setModal(false)}
-        title="Registar intervenção"
+        title={t('maintenance.record')}
         size="md"
         footer={null}
       >

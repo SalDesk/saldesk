@@ -936,5 +936,261 @@
       "saving": "Opslaan...",
       "saveChanges": "Wijzigingen opslaan"
     }
+  },
+  "fleet": {
+    "title": "Vloot en uitrusting",
+    "subtitle": "{{available}} beschikbaar van {{total}}",
+    "newItem": "Nieuw item",
+    "empty": "Nog geen vlootitems",
+    "seats": "{{n}} plaatsen",
+    "maintNext": "Onderhoud: {{date}}",
+    "maintOverdue": "Onderhoud achterstallig: {{date}} (achterstallig)",
+    "editTitle": "Bewerken: {{name}}",
+    "deleteBefore": "Item ",
+    "deleteAfter": " verwijderen?",
+    "errorSave": "Opslaan mislukt",
+    "types": {
+      "vehicle": "Voertuig",
+      "equipment": "Uitrusting",
+      "gear": "Materiaal"
+    },
+    "status": {
+      "available": "Beschikbaar",
+      "in_use": "In gebruik",
+      "maintenance": "Onderhoud",
+      "retired": "Buiten gebruik"
+    },
+    "form": {
+      "name": "Naam",
+      "namePlaceholder": "Bijv. Kia Sportage, kiteboard 12 m",
+      "plate": "Kenteken",
+      "type": "Type",
+      "status": "Status",
+      "capacity": "Capaciteit (plaatsen)",
+      "unit": "Gekoppelde tour",
+      "noUnit": "Geen (algemeen)",
+      "description": "Beschrijving",
+      "lastMaint": "Laatste onderhoud",
+      "nextMaint": "Volgend onderhoud",
+      "photo": "Foto van het voertuig",
+      "create": "Item aanmaken"
+    },
+    "selector": {
+      "checking": "Beschikbaarheid van buggy's controleren...",
+      "choose": "Kies de buggy",
+      "free": "Vrij",
+      "taken": "Bezet"
+    }
+  },
+  "maintenance": {
+    "title": "Onderhoud",
+    "subtitle": "{{vehicles}} voertuig(en) · {{alerts}} melding(en)",
+    "record": "Onderhoud registreren",
+    "filters": {
+      "all": "Alle ({{n}})",
+      "urgent": "Dringend ({{n}})",
+      "warning": "Binnenkort ({{n}})"
+    },
+    "severity": {
+      "expired": "Verlopen",
+      "critical": "Dringend",
+      "warning": "Binnenkort"
+    },
+    "docs": {
+      "seguro": "Verzekering",
+      "iuc": "IUC",
+      "inspecao": "Keuring",
+      "revisao": "Onderhoudsbeurt"
+    },
+    "alert": {
+      "expiredAgo": "{{name}} — {{n}} dagen geleden verlopen",
+      "expiresIn": "{{name}} — verloopt over {{n}} dagen ({{date}})",
+      "kmOverdue": "{{name}} — {{km}} km achterstallig",
+      "kmIn": "{{name}} — over {{km}} km"
+    },
+    "noAlerts": "Geen documentmeldingen. De hele vloot is up-to-date.",
+    "table": {
+      "title": "Documentstatus — vloot",
+      "vehicle": "Voertuig",
+      "currentKm": "Huidige km-stand",
+      "nextService": "Volgende beurt",
+      "overdueKm": "{{km}} km achterstallig"
+    },
+    "history": {
+      "title": "Onderhoudsgeschiedenis",
+      "total": "Totaal:",
+      "empty": "Geen onderhoud geregistreerd.",
+      "next": "Volgende: {{date}}"
+    },
+    "form": {
+      "vehicle": "Voertuig",
+      "selectVehicle": "Voertuig kiezen...",
+      "type": "Type",
+      "date": "Uitgevoerd op",
+      "km": "Huidige km-stand",
+      "cost": "Kosten (EUR)",
+      "nextDate": "Volgende datum",
+      "nextKm": "Volgende beurt (km)",
+      "replacement": "Vervangend voertuig (kenteken)",
+      "notes": "Notities",
+      "submit": "Registreren"
+    },
+    "types": {
+      "Revisao": "Onderhoudsbeurt",
+      "Seguro": "Verzekering",
+      "IUC": "IUC",
+      "Inspecao": "Keuring",
+      "Reparacao": "Reparatie",
+      "Pneus": "Banden",
+      "Oleo": "Olie",
+      "Outro": "Overig"
+    }
+  },
+  "occurrences": {
+    "title": "Incidenten",
+    "subtitle": "Registratie en beheer van operationele incidenten",
+    "new": "Incident registreren",
+    "editTitle": "Incident bewerken",
+    "confirmDelete": "Dit incident verwijderen?",
+    "criticalAlert": "{{n}} onopgelost(e) kritiek(e) incident(en)",
+    "types": {
+      "acidente": "Ongeval",
+      "atraso": "Vertraging",
+      "reclamacao": "Klacht",
+      "incidente": "Incident",
+      "mau_tempo": "Slecht weer",
+      "outro": "Overig"
+    },
+    "severities": {
+      "baixa": "Laag",
+      "media": "Gemiddeld",
+      "alta": "Hoog",
+      "critica": "Kritiek"
+    },
+    "kpi": {
+      "total": "Totaal geregistreerd",
+      "month": "Deze maand",
+      "high": "Hoog / Kritiek",
+      "critical": "Kritieke incidenten"
+    },
+    "report": {
+      "title": "Maandrapport — {{month}} {{year}}",
+      "empty": "Deze maand geen incidenten geregistreerd.",
+      "byType": "Per type",
+      "bySeverity": "Per ernst",
+      "total": "Totaal:",
+      "unit": "incident(en)"
+    },
+    "searchPlaceholder": "Zoek beschrijving, tour, medewerker...",
+    "all": "Alle",
+    "columns": {
+      "date": "Datum",
+      "type": "Type",
+      "severity": "Ernst",
+      "tour": "Tour",
+      "staff": "Medewerker",
+      "description": "Beschrijving",
+      "actions": "Genomen maatregelen",
+      "notRecorded": "Niet geregistreerd"
+    },
+    "empty": {
+      "title": "Geen incidenten",
+      "first": "Registreer het eerste incident wanneer nodig.",
+      "filtered": "Geen incidenten komen overeen met de filters."
+    },
+    "form": {
+      "date": "Datum van het incident",
+      "type": "Type",
+      "severity": "Ernst",
+      "unit": "Tour / Dienst",
+      "noUnit": "Niet gekoppeld aan een specifieke tour",
+      "staff": "Verantwoordelijke medewerker / gids",
+      "noStaff": "Niet opgegeven",
+      "description": "Beschrijving van het incident",
+      "descriptionPlaceholder": "Beschrijf wat er is gebeurd...",
+      "actions": "Genomen maatregelen",
+      "actionsPlaceholder": "Beschrijf de maatregelen om het op te lossen of de impact te beperken...",
+      "photos": "Foto-URL's (gescheiden door komma's)",
+      "photosPlaceholder": "https://voorbeeld.nl/foto1.jpg, https://voorbeeld.nl/foto2.jpg",
+      "photosHint": "Optioneel. Scheid meerdere URL's met komma's.",
+      "error": "Het incident kon niet worden opgeslagen.",
+      "submit": "Registreren"
+    }
+  },
+  "weather": {
+    "title": "Weer",
+    "subtitle": "7-daagse verwachting · Open-Meteo",
+    "refresh": "Vernieuwen",
+    "retry": "Opnieuw proberen",
+    "error": "De weersverwachting kon niet worden geladen. Controleer je internetverbinding.",
+    "today": "Vandaag",
+    "tomorrow": "Morgen",
+    "badWeatherFor": "Slecht weer verwacht op {{date}}",
+    "precipShort": "{{mm}} mm neerslag",
+    "precip": "{{mm}} mm neerslag",
+    "toursWithGuests": "{{n}} geplande tour(s) met {{guests}} gast/gasten",
+    "contact": "Klanten contacteren",
+    "toursCount": "{{n}} tour(s)",
+    "toursScheduled": "{{n}} geplande tour(s)",
+    "noTours": "Geen tours gepland voor deze dag.",
+    "maxToday": "Max. vandaag",
+    "totalPrecip": "Totale neerslag, 7 dagen",
+    "goodDays": "Dagen zonder slecht weer",
+    "noConflicts": "Geen weerconflicten",
+    "conflicts": "Conflict(en) met tours",
+    "attribution": "Gegevens: Open-Meteo.com — eiland Sal, Kaapverdië (16.73°N, 22.93°W) · Automatisch bijgewerkt",
+    "conditions": {
+      "clear": "Heldere hemel",
+      "mostlyClear": "Overwegend helder",
+      "cloudy": "Bewolkt",
+      "fog": "Mist",
+      "drizzle": "Motregen",
+      "rain": "Regen",
+      "snow": "Sneeuw",
+      "showers": "Buien",
+      "thunderstorm": "Onweer"
+    }
+  },
+  "housekeeping": {
+    "subtitle": "{{date}} · {{n}} kamers",
+    "refresh": "Vernieuwen",
+    "rooms": "{{n}} kamers",
+    "floor": "Verdieping {{n}}",
+    "noFloor": "Geen verdieping",
+    "persons": "{{n}} gasten",
+    "sameDay": "Kamers met vertrek en aankomst op dezelfde dag:",
+    "assignStaff": "Medewerker toewijzen...",
+    "empty": "Geen kamers gevonden",
+    "markClean": "Markeren als schoon",
+    "filters": {
+      "all": "Alle ({{n}})",
+      "dirty": "Vuil ({{n}})",
+      "cleaning": "Schoonmaak ({{n}})",
+      "inspection": "Inspectie ({{n}})",
+      "clean": "Schoon ({{n}})"
+    },
+    "states": {
+      "clean": "Schoon",
+      "dirty": "Vuil",
+      "cleaning": "Wordt schoongemaakt",
+      "inspection": "Inspectie",
+      "blocked": "Geblokkeerd"
+    },
+    "priority": {
+      "double": "Vertrek + aankomst",
+      "urgent": "Dringend",
+      "occupied": "Bezet",
+      "vacant": "Vrij"
+    },
+    "checklist": {
+      "bedLinen": "Beddengoed verschonen",
+      "bathroom": "Badkamer schoonmaken",
+      "vacuum": "Stofzuigen / vegen",
+      "surfaces": "Oppervlakken schoonmaken",
+      "amenities": "Amenities aanvullen",
+      "tvAcWifi": "Tv / airco / wifi controleren",
+      "minibar": "Minibar aanvullen",
+      "balcony": "Balkon controleren"
+    }
   }
 }

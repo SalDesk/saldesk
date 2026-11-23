@@ -72,6 +72,14 @@ export const FICHEIROS_CONVERTIDOS = [
   'pages/StaffPortal.jsx',
   'components/shared/ExpiryBadge.jsx',
   'services/uploadService.js',
+  /* Fase 4, tarefa 2: frota, manutencao, ocorrencias, meteorologia e limpezas */
+  'pages/Fleet.jsx',
+  'components/fleet/FleetSelector.jsx',
+  'pages/Maintenance.jsx',
+  'pages/Occurrences.jsx',
+  'pages/Weather.jsx',
+  'services/weatherService.js',
+  'pages/Housekeeping.jsx',
 ];
 
 /* Valores portugueses que ficam no codigo de proposito, por ficheiro, com o motivo. */

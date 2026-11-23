@@ -3,6 +3,7 @@ import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-li
 import Fleet from '../pages/Fleet';
 import FleetSelector from '../components/fleet/FleetSelector';
 import useUiStore from '../store/uiStore';
+import { portuguesNoEcra, chavesCruas } from './helpers/portuguesNoEcra';
 import {
   listFleet, createFleet, updateFleet, deleteFleet, getFleetAvailability,
 } from '../services/fleetService';
@@ -868,5 +869,136 @@ describe('Frota (desenho do sistema)', () => {
       const soltas = el.className.split(/\s+/).filter((c) => c && !c.startsWith('app:'));
       expect(soltas.join(' ')).not.toMatch(/rounded-md|rounded-sm|ring-ocean-700|tabular-nums/);
     }
+  });
+});
+
+/* ───────────────────────── Painel em ingles ───────────────────────── */
+
+describe('Frota em inglês', () => {
+  const DADOS = ['Kia Sportage', 'Prancha Kite 12m', 'Colete Salva-vidas', 'Quad Velho', 'Barco Misterio', 'Tour Vulcao', 'Tour Sal', 'SL-12-AB', 'Buggy'];
+
+  beforeEach(() => {
+    useUiStore.setState({ lang: 'en' });
+    carregaServicos();
+  });
+  afterEach(() => {
+    cleanup();
+    useUiStore.setState({ lang: 'pt' });
+  });
+
+  async function abreEmIngles(opcoes = {}) {
+    carregaServicos(opcoes);
+    render(<Fleet />);
+    await waitFor(() => expect(listFleet).toHaveBeenCalled());
+    await waitFor(() => expect(document.querySelector('.animate-spin')).toBeNull());
+  }
+
+  /* Escolhe a opcao pelo rotulo que se ve (ingles); o valor enviado e o gravado */
+  function escolhe(select, rotulo) {
+    const opcao = [...select.options].find((o) => o.textContent === rotulo);
+    expect(opcao).toBeTruthy();
+    fireEvent.change(select, { target: { value: opcao.value } });
+  }
+
+  function cartaoEn(nome) {
+    let el = screen.getByText(nome);
+    while (el && within(el).queryAllByRole('button', { name: 'Edit' }).length !== 1) el = el.parentElement;
+    while (el.parentElement && within(el.parentElement).queryAllByRole('button', { name: 'Edit' }).length === 1) el = el.parentElement;
+    return el;
+  }
+
+  it('lista_em_ingles_sem_portugues_e_estados_traduzidos', async () => {
+    await abreEmIngles();
+    expect(screen.getByRole('heading', { level: 1, name: 'Fleet and equipment' })).toBeInTheDocument();
+    expect(screen.getByText('1 available of 5')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'New item' })).toBeInTheDocument();
+    const kia = cartaoEn('Kia Sportage');
+    expect(within(kia).getByText('Available')).toBeInTheDocument();
+    expect(within(kia).getByText('4 seats')).toBeInTheDocument();
+    expect(kia.textContent).toContain('Maintenance: 2099-06-01');
+    expect(cartaoEn('Prancha Kite 12m').textContent).toContain('Maintenance overdue: 2000-03-15 (overdue)');
+    expect(within(cartaoEn('Prancha Kite 12m')).getByText('In use')).toBeInTheDocument();
+    expect(within(cartaoEn('Colete Salva-vidas')).getByText('Maintenance')).toBeInTheDocument();
+    expect(within(cartaoEn('Quad Velho')).getByText('Retired')).toBeInTheDocument();
+    expect(within(kia).getByRole('button', { name: 'Delete' })).toBeInTheDocument();
+    expect(portuguesNoEcra(DADOS)).toEqual([]);
+    expect(chavesCruas(['fleet'])).toEqual([]);
+  });
+
+  it('vazio_em_ingles', async () => {
+    await abreEmIngles({ frota: [] });
+    expect(screen.getByText('No fleet items yet')).toBeInTheDocument();
+    expect(screen.getByText('0 available of 0')).toBeInTheDocument();
+  });
+
+  it('criar_em_ingles_escolhe_pelo_rotulo_e_grava_o_valor_de_sempre', async () => {
+    await abreEmIngles();
+    fireEvent.click(screen.getByRole('button', { name: 'New item' }));
+    const d = dialogo();
+    expect(within(d).getByRole('heading', { name: 'New item' })).toBeInTheDocument();
+    expect(campo('Name')).toHaveAttribute('placeholder', 'E.g. Kia Sportage, 12m kite board');
+    expect([...campo('Type').options].map((o) => [o.value, o.textContent])).toEqual([
+      ['vehicle', 'Vehicle'], ['equipment', 'Equipment'], ['gear', 'Gear'],
+    ]);
+    expect([...campo('Capacity (seats)').options].map((o) => o.textContent)).toEqual(
+      ['2 seats', '4 seats', '6 seats', '8 seats', '10 seats', '12 seats'],
+    );
+    expect(campo('Linked tour').options[0].textContent).toBe('None (generic)');
+    ['Plate', 'Description', 'Last maintenance', 'Next maintenance'].forEach((e) => expect(campo(e)).toBeTruthy());
+    expect(within(d).getByText('Vehicle photo')).toBeInTheDocument();
+    expect(portuguesNoEcra(DADOS, d)).toEqual([]);
+    expect(chavesCruas(['fleet'], d)).toEqual([]);
+    fireEvent.change(campo('Name'), { target: { value: 'Novo Item' } });
+    escolhe(campo('Type'), 'Gear');
+    fireEvent.click(within(d).getByRole('button', { name: 'Create item' }));
+    await waitFor(() => expect(createFleet).toHaveBeenCalledTimes(1));
+    expect(createFleet.mock.calls[0][0]).toMatchObject({ name: 'Novo Item', type: 'gear', status: 'available' });
+  });
+
+  it('editar_em_ingles_grava_o_estado_de_sempre', async () => {
+    await abreEmIngles();
+    fireEvent.click(within(cartaoEn('Kia Sportage')).getByRole('button', { name: 'Edit' }));
+    const d = dialogo();
+    expect(within(d).getByRole('heading', { name: 'Edit: Kia Sportage' })).toBeInTheDocument();
+    expect([...campo('Status').options].map((o) => [o.value, o.textContent])).toEqual([
+      ['available', 'Available'], ['in_use', 'In use'], ['maintenance', 'Maintenance'], ['retired', 'Retired'],
+    ]);
+    escolhe(campo('Status'), 'Maintenance');
+    fireEvent.click(within(d).getByRole('button', { name: 'Save' }));
+    await waitFor(() => expect(updateFleet).toHaveBeenCalledTimes(1));
+    expect(updateFleet.mock.calls[0][1].status).toBe('maintenance');
+  });
+
+  it('erro_sem_mensagem_e_eliminar_em_ingles', async () => {
+    await abreEmIngles();
+    createFleet.mockReset().mockRejectedValue(new Error('rede'));
+    fireEvent.click(screen.getByRole('button', { name: 'New item' }));
+    fireEvent.change(campo('Name'), { target: { value: 'Jimny 2' } });
+    fireEvent.click(within(dialogo()).getByRole('button', { name: 'Create item' }));
+    expect(await screen.findByText('Could not save')).toBeInTheDocument();
+    fireEvent.click(within(dialogo()).getByRole('button', { name: 'Cancel' }));
+    fireEvent.click(within(cartaoEn('Quad Velho')).getByRole('button', { name: 'Delete' }));
+    const d = dialogo();
+    expect(within(d).getByRole('heading', { name: 'Confirm' })).toBeInTheDocument();
+    expect(d.textContent).toContain('Delete "Quad Velho"?');
+    fireEvent.click(within(d).getByRole('button', { name: 'Delete' }));
+    await waitFor(() => expect(deleteFleet).toHaveBeenCalledWith('f4'));
+  });
+
+  it('o_seletor_de_buggys_em_ingles', async () => {
+    const espera = adiado();
+    getFleetAvailability.mockReset().mockReturnValue(espera.promise);
+    render(<FleetSelector unitId="t1" date="2099-01-15" value={null} onChange={vi.fn()} />);
+    expect(screen.getByText('Checking buggy availability...')).toBeInTheDocument();
+    espera.resolve([
+      { id: 'v1', name: 'Buggy 1', capacity: 4, available: true },
+      { id: 'v2', name: 'Buggy 2', capacity: 2, available: false },
+    ]);
+    expect(await screen.findByText('Choose the buggy')).toBeInTheDocument();
+    const b1 = screen.getByRole('button', { name: /Buggy 1/ });
+    expect(within(b1).getByText('4 seats')).toBeInTheDocument();
+    expect(within(b1).getByText('Available')).toBeInTheDocument();
+    expect(within(screen.getByRole('button', { name: /Buggy 2/ })).getByText('Taken')).toBeInTheDocument();
+    expect(portuguesNoEcra(DADOS)).toEqual([]);
   });
 });

@@ -1568,5 +1568,261 @@
       "saving": "A guardar...",
       "saveChanges": "Guardar alterações"
     }
+  },
+  "fleet": {
+    "title": "Frota e Equipamento",
+    "subtitle": "{{available}} disponível(is) de {{total}}",
+    "newItem": "Novo item",
+    "empty": "Sem itens de frota registados",
+    "seats": "{{n}} lugares",
+    "maintNext": "Manutenção: {{date}}",
+    "maintOverdue": "Manutenção atrasada: {{date}} (atrasada)",
+    "editTitle": "Editar: {{name}}",
+    "deleteBefore": "Eliminar ",
+    "deleteAfter": "?",
+    "errorSave": "Erro ao guardar",
+    "types": {
+      "vehicle": "Viatura",
+      "equipment": "Equipamento",
+      "gear": "Material"
+    },
+    "status": {
+      "available": "Disponível",
+      "in_use": "Em uso",
+      "maintenance": "Manutenção",
+      "retired": "Retirado"
+    },
+    "form": {
+      "name": "Nome",
+      "namePlaceholder": "Ex: Kia Sportage, Prancha Kite 12m",
+      "plate": "Matricula",
+      "type": "Tipo",
+      "status": "Estado",
+      "capacity": "Capacidade (lugares)",
+      "unit": "Tour associado",
+      "noUnit": "Nenhum (genérico)",
+      "description": "Descrição",
+      "lastMaint": "Última manutenção",
+      "nextMaint": "Próxima manutenção",
+      "photo": "Foto da viatura",
+      "create": "Criar item"
+    },
+    "selector": {
+      "checking": "A verificar disponibilidade de buggys...",
+      "choose": "Escolha o buggy",
+      "free": "Livre",
+      "taken": "Ocupado"
+    }
+  },
+  "maintenance": {
+    "title": "Manutenção",
+    "subtitle": "{{vehicles}} viatura(s) · {{alerts}} alerta(s)",
+    "record": "Registar intervenção",
+    "filters": {
+      "all": "Todos ({{n}})",
+      "urgent": "Urgentes ({{n}})",
+      "warning": "Atenção ({{n}})"
+    },
+    "severity": {
+      "expired": "Expirado",
+      "critical": "Urgente",
+      "warning": "Atenção"
+    },
+    "docs": {
+      "seguro": "Seguro",
+      "iuc": "IUC",
+      "inspecao": "Inspeção",
+      "revisao": "Revisão"
+    },
+    "alert": {
+      "expiredAgo": "{{name}} — expirado há {{n}} dias",
+      "expiresIn": "{{name}} — expira em {{n}} dias ({{date}})",
+      "kmOverdue": "{{name}} — atrasada {{km}}km",
+      "kmIn": "{{name}} — em {{km}}km"
+    },
+    "noAlerts": "Sem alertas de documentação. Toda a frota em dia.",
+    "table": {
+      "title": "Estado documentação — frota",
+      "vehicle": "Viatura",
+      "currentKm": "Km actual",
+      "nextService": "Prox. revisão",
+      "overdueKm": "Atrasada {{km}}km"
+    },
+    "history": {
+      "title": "Histórico de intervenções",
+      "total": "Total:",
+      "empty": "Nenhuma intervenção registada.",
+      "next": "Prox: {{date}}"
+    },
+    "form": {
+      "vehicle": "Viatura",
+      "selectVehicle": "Seleccionar viatura...",
+      "type": "Tipo",
+      "date": "Data realização",
+      "km": "Km actuais",
+      "cost": "Custo (EUR)",
+      "nextDate": "Próxima data",
+      "nextKm": "Próxima revisão (km)",
+      "replacement": "Viatura substituta (matricula)",
+      "notes": "Notas",
+      "submit": "Registar"
+    },
+    "types": {
+      "Revisao": "Revisão",
+      "Seguro": "Seguro",
+      "IUC": "IUC",
+      "Inspecao": "Inspeção",
+      "Reparacao": "Reparação",
+      "Pneus": "Pneus",
+      "Oleo": "Óleo",
+      "Outro": "Outro"
+    }
+  },
+  "occurrences": {
+    "title": "Ocorrências",
+    "subtitle": "Registo e gestão de incidentes operacionais",
+    "new": "Registar ocorrência",
+    "editTitle": "Editar ocorrência",
+    "confirmDelete": "Eliminar esta ocorrência?",
+    "criticalAlert": "{{n}} ocorrência(s) crítica(s) não resolvida(s)",
+    "types": {
+      "acidente": "Acidente",
+      "atraso": "Atraso",
+      "reclamacao": "Reclamação",
+      "incidente": "Incidente",
+      "mau_tempo": "Mau tempo",
+      "outro": "Outro"
+    },
+    "severities": {
+      "baixa": "Baixa",
+      "media": "Média",
+      "alta": "Alta",
+      "critica": "Crítica"
+    },
+    "kpi": {
+      "total": "Total registadas",
+      "month": "Este mês",
+      "high": "Alta / Crítica",
+      "critical": "Críticas"
+    },
+    "report": {
+      "title": "Relatório mensal — {{month}} {{year}}",
+      "empty": "Sem ocorrências registadas este mês.",
+      "byType": "Por tipo",
+      "bySeverity": "Por severidade",
+      "total": "Total:",
+      "unit": "ocorrência(s)"
+    },
+    "searchPlaceholder": "Pesquisar descrição, tour, colaborador...",
+    "all": "Todos",
+    "columns": {
+      "date": "Data",
+      "type": "Tipo",
+      "severity": "Severidade",
+      "tour": "Tour",
+      "staff": "Colaborador",
+      "description": "Descrição",
+      "actions": "Acções tomadas",
+      "notRecorded": "Não registadas"
+    },
+    "empty": {
+      "title": "Sem ocorrências",
+      "first": "Registe a primeira ocorrência quando necessário.",
+      "filtered": "Nenhuma ocorrência corresponde aos filtros aplicados."
+    },
+    "form": {
+      "date": "Data da ocorrência",
+      "type": "Tipo",
+      "severity": "Severidade",
+      "unit": "Tour / Serviço",
+      "noUnit": "Não associado a tour específico",
+      "staff": "Colaborador / Guia responsável",
+      "noStaff": "Não especificado",
+      "description": "Descrição da ocorrência",
+      "descriptionPlaceholder": "Descreva o que aconteceu...",
+      "actions": "Acções tomadas",
+      "actionsPlaceholder": "Descreva as acções tomadas para resolver ou minimizar o impacto...",
+      "photos": "URLs de fotos (separadas por virgula)",
+      "photosPlaceholder": "https://exemplo.com/foto1.jpg, https://exemplo.com/foto2.jpg",
+      "photosHint": "Opcional. Separe multiplas URLs por virgula.",
+      "error": "Erro ao guardar ocorrência.",
+      "submit": "Registar"
+    }
+  },
+  "weather": {
+    "title": "Meteorologia",
+    "subtitle": "Previsão a 7 dias · Open-Meteo",
+    "refresh": "Actualizar",
+    "retry": "Tentar novamente",
+    "error": "Não foi possível carregar a previsão meteorológica. Verifique a ligação a internet.",
+    "today": "Hoje",
+    "tomorrow": "Amanhã",
+    "badWeatherFor": "Mau tempo previsto para {{date}}",
+    "precipShort": "{{mm}}mm precipitação",
+    "precip": "{{mm}} mm precipitação",
+    "toursWithGuests": "{{n}} tour(s) agendado(s) com {{guests}} participante(s)",
+    "contact": "Contactar clientes",
+    "toursCount": "{{n}} tour(s)",
+    "toursScheduled": "{{n}} tour(s) agendado(s)",
+    "noTours": "Sem tours agendados para este dia.",
+    "maxToday": "Max. hoje",
+    "totalPrecip": "Precipitação total 7 dias",
+    "goodDays": "Dias sem mau tempo",
+    "noConflicts": "Sem conflitos meteorológicos",
+    "conflicts": "Conflito(s) com tours",
+    "attribution": "Dados: Open-Meteo.com — Ilha do Sal, Cabo Verde (16.73°N, 22.93°W) · Actualizado automaticamente",
+    "conditions": {
+      "clear": "Ceu limpo",
+      "mostlyClear": "Maioritariamente limpo",
+      "cloudy": "Nublado",
+      "fog": "Nevoeiro",
+      "drizzle": "Garoa",
+      "rain": "Chuva",
+      "snow": "Neve",
+      "showers": "Aguaceiros",
+      "thunderstorm": "Trovoada"
+    }
+  },
+  "housekeeping": {
+    "subtitle": "{{date}} · {{n}} quartos",
+    "refresh": "Actualizar",
+    "rooms": "{{n}} quartos",
+    "floor": "Andar {{n}}",
+    "noFloor": "Sem andar",
+    "persons": "{{n}} pers.",
+    "sameDay": "Quartos com saída e entrada no mesmo dia:",
+    "assignStaff": "Atribuir colaborador...",
+    "empty": "Nenhum quarto encontrado",
+    "markClean": "Marcar como Limpo",
+    "filters": {
+      "all": "Todos ({{n}})",
+      "dirty": "Sujos ({{n}})",
+      "cleaning": "Limpeza ({{n}})",
+      "inspection": "Inspecção ({{n}})",
+      "clean": "Limpos ({{n}})"
+    },
+    "states": {
+      "clean": "Limpo",
+      "dirty": "Sujo",
+      "cleaning": "Em limpeza",
+      "inspection": "Inspecção",
+      "blocked": "Bloqueado"
+    },
+    "priority": {
+      "double": "Saída + Entrada",
+      "urgent": "Urgente",
+      "occupied": "Ocupado",
+      "vacant": "Vago"
+    },
+    "checklist": {
+      "bedLinen": "Trocar roupa de cama",
+      "bathroom": "Limpar casa de banho",
+      "vacuum": "Aspirar / varrer",
+      "surfaces": "Limpar superficies",
+      "amenities": "Repor amenities",
+      "tvAcWifi": "Verificar TV / AC / WiFi",
+      "minibar": "Repor mini-bar",
+      "balcony": "Verificar varanda"
+    }
   }
 }

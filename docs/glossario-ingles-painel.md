@@ -33,6 +33,14 @@ estes, em singular e plural, em todos os ecras; nao alternar com sinonimos. O po
 | Guia | Guide | Guia de actividades (menu "Guides"). |
 | Vendedor de Praia | Beach Seller | O cargo e o modo de venda na praia ("Beach Sellers"). |
 | Disponibilidade / Folga | Availability / Day off | Dias em que o colaborador pode trabalhar; "Day off" para folga. |
+| Manutencao / Intervencao | Maintenance | Ecra "Maintenance" e cada registo feito numa viatura ("Record maintenance", "Maintenance history"); nao usar "Repair job". |
+| Revisao (viatura) | Service | A revisao periodica de uma viatura ("Next service (km)"); o tipo gravado continua "Revisao". |
+| Seguro / Inspecao / IUC | Insurance / Inspection / IUC | Documentos da viatura com validade; IUC e nome oficial e nao se traduz. |
+| Ocorrencia / Ocorrencias | Incident / Incidents | Registo de algo que correu mal na operacao (menu "Incidents", "Log incident"); nao usar "Occurrence". |
+| Severidade | Severity | Gravidade de uma ocorrencia: Low, Medium, High, Critical. |
+| Frota e Equipamento | Fleet and equipment | Ecra da frota: viaturas (Vehicle), equipamento (Equipment) e material (Gear). |
+| Meteorologia | Weather | Ecra da previsao do tempo ("7-day forecast", "Bad weather forecast for..."). |
+| Limpeza de quartos | Housekeeping | Ecra "Housekeeping": estados Clean, Dirty, Being cleaned, Inspection, Blocked. |
 
 ## Regras
 

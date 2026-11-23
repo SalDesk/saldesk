@@ -3,6 +3,9 @@ import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-li
 import { MemoryRouter } from 'react-router-dom';
 import Maintenance from '../pages/Maintenance';
 import { listUnits, updateUnit } from '../services/unitsService';
+import useUiStore from '../store/uiStore';
+import { formatarNumero } from '../utils/formatoLingua';
+import { portuguesNoEcra, chavesCruas } from './helpers/portuguesNoEcra';
 
 /* Sem rede: so os servicos da pagina sao simulados */
 vi.mock('../services/unitsService', () => ({
@@ -124,7 +127,8 @@ describe('Maintenance', () => {
     expect(c1[1]).toMatch(new RegExp(`^${dia(-3)} \\(-?\\d+d\\)$`));
     expect(c1[2]).toMatch(new RegExp(`^${dia(20)} \\(\\d+d\\)$`));
     expect(c1[3]).toBe(dia(60));
-    expect(c1[4]).toBe(`${Number(12000).toLocaleString()} km`);
+    /* o conta-quilometros segue a lingua do painel (pt: pt-PT) */
+    expect(c1[4]).toBe(`${formatarNumero(12000, {}, 'pt')} km`);
     expect(c1[5]).toBe('300km');
     const c2 = within(linhas[1]).getAllByRole('cell').map(c => c.textContent);
     expect(c2[0]).toBe('PandaCC-22-DD');
@@ -141,7 +145,7 @@ describe('Maintenance', () => {
     expect(screen.getByText('€80.50')).toBeInTheDocument();
     expect(screen.getByText(`Prox: ${dia(100)}`)).toBeInTheDocument();
     /* o separador de milhares do ambiente pode ser um espaco especial; o matcher normaliza o texto da pagina */
-    expect(screen.getByText(new RegExp(`^${Number(11000).toLocaleString().replace(/\s/g, '\\s')} km$`))).toBeInTheDocument();
+    expect(screen.getByText(new RegExp(`^${formatarNumero(11000, {}, 'pt').replace(/\s/g, '\\s')} km$`))).toBeInTheDocument();
     expect(screen.getByText('Troca de oleo')).toBeInTheDocument();
   });
 
@@ -248,5 +252,111 @@ describe('Maintenance', () => {
     expect(await screen.findByText('0 viatura(s) · 0 alerta(s)')).toBeInTheDocument();
     expect(screen.getByText('Sem alertas de documentação. Toda a frota em dia.')).toBeInTheDocument();
     expect(screen.getByText('Nenhuma intervenção registada.')).toBeInTheDocument();
+  });
+});
+
+/* ───────────────────────── Painel em ingles ───────────────────────── */
+
+describe('Maintenance em inglês', () => {
+  const DADOS = ['Hilux 4x4', 'Toyota', 'Hilux', 'Panda', 'Quebrada', 'Vazia', 'AA-11-BB', 'CC-22-DD', 'Troca de oleo'];
+
+  beforeEach(() => {
+    useUiStore.setState({ lang: 'en' });
+    updateUnit.mockReset().mockResolvedValue({});
+  });
+  afterEach(() => {
+    cleanup();
+    useUiStore.setState({ lang: 'pt' });
+  });
+
+  async function abreEmIngles(units = [V1, V2, V3, V4]) {
+    abre(units);
+    await screen.findByText(/vehicle\(s\)/);
+  }
+
+  function gravidadesEn() {
+    return screen.queryAllByText(/^(Expired|Urgent|Due soon)$/).map(e => e.textContent);
+  }
+
+  it('alertas_tabela_e_historico_em_ingles_sem_portugues', async () => {
+    await abreEmIngles();
+    expect(screen.getByRole('heading', { level: 1, name: 'Maintenance' })).toBeInTheDocument();
+    expect(screen.getByText('4 vehicle(s) · 5 alert(s)')).toBeInTheDocument();
+    expect(gravidadesEn()).toEqual(['Expired', 'Expired', 'Urgent', 'Urgent', 'Due soon']);
+    expect(screen.getByText(/^Insurance — expired \d+ days ago$/)).toBeInTheDocument();
+    expect(screen.getByText('Service — overdue 120km')).toBeInTheDocument();
+    expect(screen.getByText('Service — in 300km')).toBeInTheDocument();
+    expect(screen.getByText(new RegExp(`^IUC — expires in \\d+ days \\(${dia(20)}\\)$`))).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'All (5)' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Urgent (4)' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Due soon (1)' })).toBeInTheDocument();
+    expect(screen.getByText('Document status — fleet')).toBeInTheDocument();
+    const cab = within(screen.getByRole('table')).getAllByRole('columnheader').map(c => c.textContent);
+    expect(cab).toEqual(['Vehicle', 'Insurance', 'IUC', 'Inspection', 'Current km', 'Next service']);
+    const linhas = within(screen.getByRole('table')).getAllByRole('row').slice(1);
+    /* o conta-quilometros segue a lingua (en-GB: virgula dos milhares) */
+    expect(within(linhas[0]).getAllByRole('cell')[4].textContent).toBe('12,000 km');
+    expect(within(linhas[1]).getAllByRole('cell')[5].textContent).toBe('Overdue 120km');
+    expect(screen.getByText('Maintenance history')).toBeInTheDocument();
+    /* tipos gravados em portugues, mostrados em ingles */
+    expect(screen.getAllByText(/^(Service|Oil)$/).map(e => e.textContent)).toEqual(['Service', 'Oil']);
+    expect(screen.getByText('11,000 km')).toBeInTheDocument();
+    expect(screen.getByText(`Next: ${dia(100)}`)).toBeInTheDocument();
+    expect(portuguesNoEcra(DADOS)).toEqual([]);
+    expect(chavesCruas(['maintenance'])).toEqual([]);
+  });
+
+  it('sem_alertas_e_sem_historico_em_ingles', async () => {
+    await abreEmIngles([V3]);
+    expect(screen.getByText('No document alerts. The whole fleet is up to date.')).toBeInTheDocument();
+    expect(screen.getByText('No maintenance recorded.')).toBeInTheDocument();
+  });
+
+  it('registar_em_ingles_grava_o_tipo_portugues_Revisao', async () => {
+    await abreEmIngles();
+    fireEvent.click(screen.getByRole('button', { name: 'Record maintenance' }));
+    const dialogo = await screen.findByRole('dialog');
+    expect(within(dialogo).getByRole('heading', { name: 'Record maintenance' })).toBeInTheDocument();
+    const tipo = campo(dialogo, 'Type');
+    expect([...tipo.options].map(o => [o.value, o.textContent])).toEqual([
+      ['Revisao', 'Service'], ['Seguro', 'Insurance'], ['IUC', 'IUC'], ['Inspecao', 'Inspection'],
+      ['Reparacao', 'Repair'], ['Pneus', 'Tyres'], ['Oleo', 'Oil'], ['Outro', 'Other'],
+    ]);
+    expect(tipo.value).toBe('Revisao');
+    expect(campo(dialogo, 'Vehicle').options[0].textContent).toBe('Select vehicle...');
+    ['Date performed', 'Current km', 'Cost (EUR)', 'Next date', 'Next service (km)', 'Replacement vehicle (plate)', 'Notes']
+      .forEach(e => expect(campo(dialogo, e)).toBeTruthy());
+    expect(campo(dialogo, 'Replacement vehicle (plate)')).toHaveAttribute('placeholder', 'Optional');
+    expect(portuguesNoEcra(DADOS, dialogo)).toEqual([]);
+    expect(chavesCruas(['maintenance'], dialogo)).toEqual([]);
+    fireEvent.change(campo(dialogo, 'Vehicle'), { target: { value: 'v2' } });
+    fireEvent.change(campo(dialogo, 'Next service (km)'), { target: { value: '30000' } });
+    fireEvent.click(within(dialogo).getByRole('button', { name: 'Record' }));
+    await waitFor(() => expect(updateUnit).toHaveBeenCalledTimes(1));
+    const meta = JSON.parse(updateUnit.mock.calls[0][1].description);
+    expect(meta.maintenance_history[0].tipo).toBe('Revisao');
+    expect(meta.next_revision_km).toBe('30000');
+  });
+
+  it('escolher_Inspection_pelo_rotulo_grava_Inspecao_e_a_validade', async () => {
+    await abreEmIngles();
+    fireEvent.click(screen.getByRole('button', { name: 'Record maintenance' }));
+    const dialogo = await screen.findByRole('dialog');
+    fireEvent.change(campo(dialogo, 'Vehicle'), { target: { value: 'v1' } });
+    const tipo = campo(dialogo, 'Type');
+    const opcao = [...tipo.options].find(o => o.textContent === 'Inspection');
+    fireEvent.change(tipo, { target: { value: opcao.value } });
+    fireEvent.change(campo(dialogo, 'Next date'), { target: { value: dia(300) } });
+    fireEvent.click(within(dialogo).getByRole('button', { name: 'Record' }));
+    await waitFor(() => expect(updateUnit).toHaveBeenCalledTimes(1));
+    const meta = JSON.parse(updateUnit.mock.calls[0][1].description);
+    expect(meta.maintenance_history[0].tipo).toBe('Inspecao');
+    expect(meta.inspecao_expiry).toBe(dia(300));
+  });
+
+  it('um_tipo_desconhecido_no_historico_mostra_se_tal_e_qual', async () => {
+    const V5 = viatura('v5', 'Velha', { maintenance_history: [{ id: 9, tipo: 'Lavagem', date: dia(-1) }] });
+    await abreEmIngles([V5]);
+    expect(screen.getByText('Lavagem')).toBeInTheDocument();
   });
 });
