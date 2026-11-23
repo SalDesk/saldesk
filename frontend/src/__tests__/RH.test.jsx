@@ -3,6 +3,8 @@ import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-li
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom';
 import RH from '../pages/RH';
 import useToastStore from '../store/toastStore';
+import useUiStore from '../store/uiStore';
+import { portuguesNoEcra, chavesCruas } from './helpers/portuguesNoEcra';
 import { getHrOverview, updateLeaveStatus } from '../services/staffService';
 
 /* Sem rede: so o servico da pagina e simulado */
@@ -224,5 +226,76 @@ describe('RH', () => {
     getHrOverview.mockResolvedValue({ pending_leave: PEDIDOS, expiring: [], staff: COLABORADORES });
     const { container } = await abre();
     expect(container.innerHTML).not.toMatch(/amber-/);
+  });
+});
+
+/* ───────────────────────── Painel em ingles ───────────────────────── */
+
+describe('RH em inglês', () => {
+  const DADOS = ['Ana Ferreira', 'Rui Lopes', 'Carla Dias', 'bruno', 'viagem_especial', 'Passaporte', 'Carta de Pesados', 'Seguro'];
+
+  beforeEach(() => {
+    useUiStore.setState({ lang: 'en' });
+    useToastStore.setState({ toasts: [] });
+    getHrOverview.mockReset().mockResolvedValue(VISAO);
+    updateLeaveStatus.mockReset().mockResolvedValue({});
+  });
+  afterEach(() => {
+    cleanup();
+    useUiStore.setState({ lang: 'pt' });
+  });
+
+  async function abreEmIngles() {
+    render(
+      <MemoryRouter future={FUTURE} initialEntries={['/rh']}>
+        <Routes>
+          <Route path="/rh" element={<RH />} />
+          <Route path="*" element={<Local />} />
+        </Routes>
+      </MemoryRouter>
+    );
+    await screen.findByText('Pending leave requests', { selector: 'h3' });
+  }
+
+  it('cartoes_pedidos_a_expirar_e_cargos_em_ingles_sem_portugues', async () => {
+    await abreEmIngles();
+    expect(screen.getByRole('heading', { name: 'HR' })).toBeInTheDocument();
+    expect(screen.getByText('Leave, documents and certifications for the whole team')).toBeInTheDocument();
+    expect(screen.getByText('Pending leave requests', { selector: 'p' })).toBeInTheDocument();
+    expect(screen.getByText('Documents/certifications expiring')).toBeInTheDocument();
+    expect(screen.getByText('Active staff')).toBeInTheDocument();
+    const pendentes = screen.getByText('Pending leave requests', { selector: 'h3' }).parentElement;
+    const p1 = within(pendentes).getByText('Ana Ferreira').parentElement;
+    expect(p1.textContent).toContain('Annual leave · 2026-12-01 → 2026-12-05');
+    expect(p1.textContent).toContain('(5 day(s))');
+    expect(within(pendentes).getByText('Rui Lopes').parentElement.textContent).toContain('Sick leave');
+    expect(screen.getByText('Expiring soon')).toBeInTheDocument();
+    expect(screen.getByText('Passaporte').closest('div.flex.items-center.justify-between').textContent).toContain('(expires soon)');
+    expect(screen.getByText('Carta de Pesados').closest('div.flex.items-center.justify-between').textContent).toContain('(expired)');
+    expect(screen.getByText('Staff', { selector: 'h3' })).toBeInTheDocument();
+    /* cargos gravados em portugues, mostrados em ingles */
+    ['Guide', 'Driver', 'Reception', 'Instructor'].forEach(c => expect(screen.getByText(c)).toBeInTheDocument());
+    expect(screen.getAllByRole('button', { name: 'Approve' })).toHaveLength(3);
+    expect(screen.getAllByRole('button', { name: 'Reject' })).toHaveLength(3);
+    expect(portuguesNoEcra(DADOS)).toEqual([]);
+    expect(chavesCruas(['hr', 'staff'])).toEqual([]);
+  });
+
+  it('aprovar_avisa_em_ingles_e_os_vazios_tambem', async () => {
+    await abreEmIngles();
+    fireEvent.click(screen.getAllByRole('button', { name: 'Approve' })[0]);
+    await waitFor(() => expect(updateLeaveStatus).toHaveBeenCalledWith('s1', 'l1', 'approved'));
+    await waitFor(() => expect(useToastStore.getState().toasts.map(t => t.message)).toEqual(['Request approved']));
+    cleanup();
+    getHrOverview.mockResolvedValue({ pending_leave: [], expiring: [], staff: [] });
+    await abreEmIngles();
+    expect(screen.getByText('No pending requests.')).toBeInTheDocument();
+    expect(screen.getByText('Nothing expiring in the next 30 days.')).toBeInTheDocument();
+  });
+
+  it('a_falha_ao_carregar_avisa_em_ingles', async () => {
+    getHrOverview.mockRejectedValue(new Error('x'));
+    await abreEmIngles();
+    expect(useToastStore.getState().toasts.map(t => t.message)).toEqual(['Could not load HR']);
   });
 });

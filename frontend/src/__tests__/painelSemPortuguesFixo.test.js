@@ -57,12 +57,36 @@ export const FICHEIROS_CONVERTIDOS = [
   'components/messaging/TemplatesEditor.jsx',
   'pages/settings/ContaTab.jsx',
   'pages/settings/SegurancaTab.jsx',
+  /* Fase 4, tarefa 1: pessoal, RH, guias e portal do pessoal */
+  'pages/staff/shared.jsx',
+  'pages/staff/StaffForm.jsx',
+  'pages/staff/KanbanBoard.jsx',
+  'pages/staff/ChatTab.jsx',
+  'pages/staff/ChecklistTab.jsx',
+  'pages/staff/StaffCard.jsx',
+  'pages/staff/SellerCard.jsx',
+  'pages/Staff.jsx',
+  'pages/StaffDetail.jsx',
+  'pages/RH.jsx',
+  'pages/Guides.jsx',
+  'pages/StaffPortal.jsx',
+  'components/shared/ExpiryBadge.jsx',
+  'services/uploadService.js',
 ];
 
 /* Valores portugueses que ficam no codigo de proposito, por ficheiro, com o motivo. */
 export const PERMITIDOS = {
   'components/dashboard/NextDaysStrip.jsx': [
     { valor: 'Sáb', motivo: 'abreviatura do sabado na tabela DIA_SEMANA, que ja tem uma linha por lingua (pt/en/de/nl)' },
+  ],
+  'pages/staff/shared.jsx': [
+    { valor: 'Vendedor de Praia', motivo: 'cargo gravado em staff.role e comparado no codigo (CARGO_VENDEDOR); o rotulo vem de staff.roles' },
+    { valor: 'Empregado de Limpeza', motivo: 'cargo gravado em staff.role (ROLES_BY_TYPE); o rotulo vem de staff.roles' },
+    { valor: 'Praia de Santa Maria', motivo: 'zona gravada em staff.seller_zone (SELLER_ZONES); o rotulo vem de staff.zones' },
+    { valor: 'Confirmar reservas do dia', motivo: 'tarefa por omissao da checklist, guardada como texto no localStorage; o rotulo vem de staff.defaultTasks' },
+    { valor: 'Briefing com a equipa', motivo: 'tarefa por omissao da checklist, guardada como texto no localStorage; o rotulo vem de staff.defaultTasks' },
+    { valor: 'Verificar segurança e primeiros socorros', motivo: 'tarefa por omissao da checklist, guardada como texto no localStorage; o rotulo vem de staff.defaultTasks' },
+    { valor: 'Comunicar horário de início ao grupo', motivo: 'tarefa por omissao da checklist, guardada como texto no localStorage; o rotulo vem de staff.defaultTasks' },
   ],
 };
 

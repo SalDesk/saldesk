@@ -4,6 +4,7 @@ import { MemoryRouter } from 'react-router-dom';
 import Guides from '../pages/Guides';
 import useAuthStore from '../store/authStore';
 import useUiStore from '../store/uiStore';
+import { portuguesNoEcra, chavesCruas } from './helpers/portuguesNoEcra';
 import {
   listStaff, createStaff, updateStaff, deleteStaff, getStaffJobs, setAvailability,
 } from '../services/staffService';
@@ -1348,5 +1349,139 @@ describe('Guias (desenho do sistema)', () => {
     fireEvent.click(screen.getByText('Disponibilidade', { selector: 'button' }));
     expect(screen.getByRole('table')).toBeInTheDocument();
     expect(screen.getAllByRole('columnheader')).toHaveLength(8);
+  });
+});
+
+/* ───────────────────────── Painel em ingles ───────────────────────── */
+
+describe('Guias em inglês', () => {
+  let errSpy;
+  let warnSpy;
+  /* dados dos testes que ficam como estao em qualquer lingua */
+  const DADOS = ['Ana Lopes', 'Rui Costa', 'Sara Dias', 'Tiago Vaz', 'Guia desde 2015', 'Curso Extra', 'Tour Vulcao', 'Tour Sal',
+    'Maria Silva', 'Nova Guia', '+238', 'exemplo.cv'];
+
+  beforeEach(() => {
+    useUiStore.setState({ lang: 'en' });
+    defineOperador('hotel');
+    carregaServicos();
+    errSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    cleanup();
+    vi.useRealTimers();
+    useUiStore.setState({ lang: 'pt' });
+    const erros = errSpy.mock.calls.length;
+    const avisos = warnSpy.mock.calls.length;
+    errSpy.mockRestore();
+    warnSpy.mockRestore();
+    expect(erros).toBe(0);
+    expect(avisos).toBe(0);
+  });
+
+  /* o cartao de um guia em ingles: o menor bloco com o nome e o seu proprio botao History */
+  function cartaoEn(nome) {
+    let el = screen.getByText(nome);
+    while (el && within(el).queryAllByRole('button', { name: 'History' }).length !== 1) el = el.parentElement;
+    if (!el) throw new Error(`Card not found: ${nome}`);
+    return el;
+  }
+
+  async function renderPagina() {
+    render(
+      <MemoryRouter future={FUTURE}>
+        <Guides />
+      </MemoryRouter>,
+    );
+    await waitFor(() => expect(listReservations).toHaveBeenCalled());
+    await waitFor(() => expect(document.querySelector('.animate-spin')).toBeNull());
+  }
+
+  it('lista_cartoes_e_filtros_em_ingles_sem_portugues', async () => {
+    await renderPagina();
+    expect(screen.getByRole('heading', { level: 1, name: 'Guides' })).toBeInTheDocument();
+    expect(screen.getByText('1 available · 4 total')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Add guide' })).toBeInTheDocument();
+    expect(screen.getByPlaceholderText('Search guides...')).toBeInTheDocument();
+    expect(screen.getAllByRole('tab').map((t) => t.textContent)).toEqual(['Guides', 'Availability']);
+    for (const nome of ['All', 'Available', 'Busy', 'Day off', 'Inactive']) {
+      expect(screen.getByRole('button', { name: nome })).toBeInTheDocument();
+    }
+    const ana = cartaoEn('Ana Lopes');
+    expect(within(ana).getByText('Guide')).toBeInTheDocument();
+    expect(within(ana).getByText('Languages')).toBeInTheDocument();
+    expect(within(ana).getByText('Certifications')).toBeInTheDocument();
+    expect(within(ana).getByText('CPR / AED')).toBeInTheDocument();
+    expect(within(ana).getByText('12 tours')).toBeInTheDocument();
+    expect(within(ana).getByRole('button', { name: 'Assign' })).toBeInTheDocument();
+    expect(within(ana).getByRole('button', { name: 'History' })).toBeInTheDocument();
+    expect(within(ana).getByRole('button', { name: 'Edit' })).toBeInTheDocument();
+    expect(within(cartaoEn('Rui Costa')).getByText('Instructor')).toBeInTheDocument();
+    expect(within(cartaoEn('Sara Dias')).getByText('Assistant')).toBeInTheDocument();
+    expect(within(cartaoEn('Tiago Vaz')).getByText('Other')).toBeInTheDocument();
+    expect(portuguesNoEcra(DADOS)).toEqual([]);
+    expect(chavesCruas(['guides', 'staff', 'common'])).toEqual([]);
+  });
+
+  it('criar_guia_em_ingles_grava_os_valores_em_portugues', async () => {
+    await renderPagina();
+    fireEvent.click(screen.getByRole('button', { name: 'Add guide' }));
+    const d = dialogo();
+    expect(d).toHaveTextContent('New guide');
+    expect(portuguesNoEcra(DADOS, d)).toEqual([]);
+    fireEvent.change(within(d).getByPlaceholderText('First and last name'), { target: { value: 'Nova Guia' } });
+    const funcao = campo('Role');
+    const instrutor = within(funcao).getByRole('option', { name: 'Instructor' });
+    expect(instrutor.value).toBe('Instrutor');
+    fireEvent.change(funcao, { target: { value: instrutor.value } });
+    fireEvent.click(within(d).getByRole('button', { name: 'Certified Tour Guide' }));
+    fireEvent.click(within(d).getByRole('button', { name: 'First Aid' }));
+    fireEvent.click(within(d).getByRole('button', { name: 'Mon' }));
+    fireEvent.click(botaoDoDialogo('Add guide'));
+    await waitFor(() => expect(createStaff).toHaveBeenCalledTimes(1));
+    const dados = createStaff.mock.calls[0][0];
+    expect(dados.role).toBe('Instrutor');
+    expect(dados.certifications).toEqual(['Guia Turistico Certificado', 'Primeiros Socorros']);
+    expect(dados.skills).toEqual(['Guia Turistico Certificado', 'Primeiros Socorros']);
+    expect(dados.schedule).toEqual(['Seg']);
+    expect(JSON.parse(dados.guide_meta).certifications).toEqual(['Guia Turistico Certificado', 'Primeiros Socorros']);
+  });
+
+  it('a_certificacao_gravada_em_portugues_aparece_em_ingles_no_cartao', async () => {
+    carregaServicos({ equipa: [guia({ certifications: ['Guia Turistico Certificado', 'Primeiros Socorros'] })] });
+    await renderPagina();
+    const ana = cartaoEn('Ana Lopes');
+    expect(within(ana).getByText('Certified Tour Guide')).toBeInTheDocument();
+    expect(within(ana).getByText('First Aid')).toBeInTheDocument();
+  });
+
+  it('historial_atribuir_e_disponibilidade_em_ingles', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date(2026, 5, 21, 12, 0, 0));
+    getStaffJobs.mockResolvedValue([
+      { id: 'j1', status: 'completed', earnings_amount: 40, assigned_at: new Date(2026, 5, 1, 12, 0, 0).toISOString(), reservations: { units: { name: 'Tour Vulcao' } } },
+    ]);
+    await renderPagina();
+    fireEvent.click(within(cartaoEn('Ana Lopes')).getByRole('button', { name: 'History' }));
+    expect(await screen.findByText('Total earned')).toBeInTheDocument();
+    expect(dialogo()).toHaveTextContent('History — Ana Lopes');
+    expect(dialogo()).toHaveTextContent('Completed');
+    expect(dialogo()).toHaveTextContent('01/06/2026');
+    expect(portuguesNoEcra(DADOS, dialogo())).toEqual([]);
+    fireEvent.click(within(dialogo()).getByRole('button', { name: 'Close' }));
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+    fireEvent.click(within(cartaoEn('Ana Lopes')).getByRole('button', { name: 'Assign' }));
+    expect(dialogo()).toHaveTextContent('Assign to — Ana Lopes');
+    expect(dialogo()).toHaveTextContent('2 pax');
+    expect(portuguesNoEcra(DADOS, dialogo())).toEqual([]);
+    fireEvent.click(within(dialogo()).getByRole('button', { name: 'Cancel' }));
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+    fireEvent.click(screen.getByText('Availability', { selector: 'button' }));
+    expect(screen.getAllByRole('columnheader').map((c) => c.textContent)).toEqual(['Guide', '15Mon', '16Tue', '17Wed', '18Thu', '19Fri', '20Sat', '21Sun']);
+    expect(screen.getByText('Click to toggle')).toBeInTheDocument();
+    expect(screen.getAllByTitle('Available — click to mark unavailable').length).toBeGreaterThan(0);
+    expect(portuguesNoEcra(DADOS)).toEqual([]);
   });
 });

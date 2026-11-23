@@ -13,7 +13,8 @@ import PageHeader from '../components/layout/PageHeader';
 import Button from '../components/ui/Button';
 import Modal from '../components/ui/Modal';
 import LoadingSpinner from '../components/shared/LoadingSpinner';
-import { ROLES_BY_TYPE, ROLES_DEFAULT, STARTER_STAFF_LIMIT } from './staff/shared';
+import { ROLES_BY_TYPE, ROLES_DEFAULT, STARTER_STAFF_LIMIT, CARGO_VENDEDOR, rotuloCargo } from './staff/shared';
+import { useLingua } from '../utils/formatoLingua';
 import StaffCard from './staff/StaffCard';
 import SellerCard from './staff/SellerCard';
 import StaffForm from './staff/StaffForm';
@@ -30,6 +31,7 @@ import { mensagemErro } from '../utils/mensagemErro';
 /* ── Main Staff Page ── */
 export default function Staff() {
   const t = useT();
+  const lang = useLingua();
   const { operator } = useAuthStore();
   const ROLES = ROLES_BY_TYPE[operator?.operator_type] || ROLES_DEFAULT;
   const { plan } = usePlan();
@@ -59,9 +61,9 @@ export default function Staff() {
     try {
       const acc = await createStaffAccount(member.id);
       setStaffList(p => p.map(s => s.id === member.id ? { ...s, user_id: acc.user_id } : s));
-      toast.success('Conta criada e email enviado ao colaborador');
+      toast.success(t('staff.toast.accountCreated'));
     } catch (err) {
-      toast.error(mensagemErro(err, t, 'Erro ao criar conta'));
+      toast.error(mensagemErro(err, t, t('staff.errors.createAccount')));
     } finally {
       setAccountCreatingId(null);
     }
@@ -81,9 +83,9 @@ export default function Staff() {
           try {
             const acc = await createStaffAccount(m.id);
             m.user_id = acc.user_id;
-            toast.success('Colaborador criado e conta de acesso enviada por email');
+            toast.success(t('staff.toast.createdWithAccount'));
           } catch {
-            toast.error('Colaborador criado, mas a conta de acesso falhou — tente novamente no cartão do colaborador');
+            toast.error(t('staff.toast.accountFailed'));
           }
         }
         setStaffList(p => [m, ...p]);
@@ -93,7 +95,7 @@ export default function Staff() {
       }
       setModal(null);
     } catch (err) {
-      setFormError(mensagemErro(err, t, 'Erro ao guardar'));
+      setFormError(mensagemErro(err, t, t('staff.errors.save')));
     } finally { setFormLoad(false); }
   }
 
@@ -105,25 +107,28 @@ export default function Staff() {
   }
 
   const active    = staffList.filter(s => s.status === 'active').length;
+  /* o cargo procura-se pelo valor gravado e pelo rotulo na lingua do painel */
+  const q = search.toLowerCase();
   const filtered  = search
-    ? staffList.filter(s => s.name.toLowerCase().includes(search.toLowerCase()) || s.role.toLowerCase().includes(search.toLowerCase()))
+    ? staffList.filter(s => s.name.toLowerCase().includes(q) || s.role.toLowerCase().includes(q)
+      || String(rotuloCargo(s.role, t, lang) || '').toLowerCase().includes(q))
     : staffList;
 
   const TABS = [
-    { id: 'staff',     label: 'Colaboradores' },
-    { id: 'checklist', label: 'Checklist' },
-    { id: 'tasks',     label: 'Tarefas' },
-    { id: 'chat',      label: 'Chat', count: unread > 0 ? (unread > 9 ? '9+' : unread) : undefined },
+    { id: 'staff',     label: t('staff.tabs.staff') },
+    { id: 'checklist', label: t('staff.tabs.checklist') },
+    { id: 'tasks',     label: t('staff.tabs.tasks') },
+    { id: 'chat',      label: t('staff.tabs.chat'), count: unread > 0 ? (unread > 9 ? '9+' : unread) : undefined },
   ];
 
   return (
     <div>
       <PageHeader
-        title="Colaboradores"
+        title={t('staff.title')}
         subtitle={
           plan === 'starter'
-            ? `${active} activo(s) · ${staffList.length}/${STARTER_STAFF_LIMIT} no plano Starter`
-            : `${active} activo(s) · ${staffList.length} total`
+            ? t('staff.subtitleStarter', { active, n: staffList.length, limit: STARTER_STAFF_LIMIT })
+            : t('staff.subtitle', { active, n: staffList.length })
         }
         actions={
           tab === 'staff' && (
@@ -134,7 +139,7 @@ export default function Staff() {
                 setFormError(''); setModal('create');
               }}
             >
-              Novo colaborador
+              {t('staff.newStaff')}
             </Button>
           )
         }
@@ -142,9 +147,9 @@ export default function Staff() {
 
       {atStarterLimit && (
         <div className="mb-5 px-4 py-3 rounded-sm bg-[var(--sand-50)] border border-[var(--sand-300)] text-sm font-body text-n-800 flex items-center justify-between gap-3">
-          <span>Atingiu o limite de {STARTER_STAFF_LIMIT} colaboradores do plano Starter.</span>
+          <span>{t('staff.limitReached', { limit: STARTER_STAFF_LIMIT })}</span>
           <button onClick={() => setShowUpgrade(true)} className="font-semibold underline shrink-0">
-            Fazer upgrade
+            {t('staff.upgrade')}
           </button>
         </div>
       )}
@@ -160,8 +165,8 @@ export default function Staff() {
           {/* Search */}
           {staffList.length > 3 && (
             <div className="mb-4 max-w-xs">
-              <Input aria-label="Pesquisar colaboradores" value={search} onChange={e => setSearch(e.target.value)}
-                placeholder="Pesquisar..." />
+              <Input aria-label={t('staff.searchLabel')} value={search} onChange={e => setSearch(e.target.value)}
+                placeholder={t('staff.searchPlaceholder')} />
             </div>
           )}
 
@@ -169,8 +174,8 @@ export default function Staff() {
             <div className="flex justify-center py-20"><LoadingSpinner size={32} /></div>
           ) : filtered.length === 0 && !search ? (
             <Card padding="p-0">
-              <EmptyState icon={Briefcase} title="Sem colaboradores registados"
-                description="Adicione guias, instrutores e motoristas para atribuir trabalhos" />
+              <EmptyState icon={Briefcase} title={t('staff.emptyTitle')}
+                description={t('staff.emptyDesc')} />
             </Card>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -188,13 +193,13 @@ export default function Staff() {
 
       {/* Vendedores de Praia section */}
       {tab === 'staff' && (() => {
-        const sellers = staffList.filter(s => s.role === 'Vendedor de Praia');
+        const sellers = staffList.filter(s => s.role === CARGO_VENDEDOR);
         if (sellers.length === 0) return null;
         return (
           <div className="mt-6">
             <div className="flex items-center gap-2 mb-4">
               <div className="flex-1 h-px bg-n-200" />
-              <p className="text-xs font-mono uppercase tracking-wider text-n-500 px-3">Vendedores de Praia</p>
+              <p className="text-xs font-mono uppercase tracking-wider text-n-500 px-3">{t('staff.sellersTitle')}</p>
               <div className="flex-1 h-px bg-n-200" />
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -217,7 +222,7 @@ export default function Staff() {
       <Modal
         open={!!modal}
         onClose={() => setModal(null)}
-        title={modal === 'create' ? 'Novo colaborador' : `Editar: ${modal?.name}`}
+        title={modal === 'create' ? t('staff.newStaff') : t('staff.editTitle', { name: modal?.name })}
         size="md">
         {modal && (
           <StaffForm
@@ -232,15 +237,15 @@ export default function Staff() {
       </Modal>
 
       {/* Delete confirm */}
-      <Modal open={!!deleteTarget} onClose={() => setDelTarget(null)} title="Confirmar" size="sm"
+      <Modal open={!!deleteTarget} onClose={() => setDelTarget(null)} title={t('common.confirm')} size="sm"
         footer={
           <>
-            <Button variant="secondary" onClick={() => setDelTarget(null)}>Cancelar</Button>
-            <Button variant="danger" onClick={handleDelete}>Eliminar</Button>
+            <Button variant="secondary" onClick={() => setDelTarget(null)}>{t('common.cancel')}</Button>
+            <Button variant="danger" onClick={handleDelete}>{t('common.delete')}</Button>
           </>
         }>
         <p className="text-sm font-body text-n-700">
-          Eliminar o colaborador <strong>"{deleteTarget?.name}"</strong>? Esta acção não pode ser desfeita.
+          {t('staff.deleteBefore')}<strong>"{deleteTarget?.name}"</strong>{t('staff.deleteAfter')}
         </p>
       </Modal>
 

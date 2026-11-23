@@ -6,7 +6,7 @@ import { cleanup, render, screen } from '@testing-library/react';
 import PasswordStrength from '../components/auth/PasswordStrength';
 import ImageUploader from '../components/shared/ImageUploader';
 import TemplatesEditor from '../components/messaging/TemplatesEditor';
-import { validateImageFile } from '../services/uploadService';
+import { validateImageFile, validateDocumentFile } from '../services/uploadService';
 import useUiStore from '../store/uiStore';
 import {
   listMessageTemplates, previewMessageTemplate, getMessagingChannel,
@@ -130,5 +130,21 @@ describe('Componentes das Definições em português (por omissao)', () => {
     expect(screen.getAllByTitle('Mover para cima')).toHaveLength(2);
     expect(screen.getByText('Como as mensagens são enviadas')).toBeInTheDocument();
     expect(validateImageFile({ name: 'a.gif', type: 'image/gif', size: 1 })).toBe('Formato inválido: a.gif. Usa JPG, PNG ou WebP.');
+  });
+});
+
+/* Documentos do pessoal (contratos, certificados): o mesmo texto de sempre em pt, ingles em en */
+describe('validateDocumentFile segue a lingua do painel', () => {
+  it('em português fica como estava', () => {
+    useUiStore.setState({ lang: 'pt' });
+    expect(validateDocumentFile({ name: 'a.gif', type: 'image/gif', size: 1 })).toBe('Formato inválido: a.gif. Usa PDF, JPG, PNG ou WebP.');
+    expect(validateDocumentFile({ name: 'b.pdf', type: 'application/pdf', size: 11 * 1024 * 1024 })).toBe('Ficheiro demasiado grande: b.pdf. Máximo 10MB.');
+    expect(validateDocumentFile({ name: 'c.pdf', type: 'application/pdf', size: 1 })).toBeNull();
+  });
+
+  it('em inglês', () => {
+    useUiStore.setState({ lang: 'en' });
+    expect(validateDocumentFile({ name: 'a.gif', type: 'image/gif', size: 1 })).toBe('Invalid format: a.gif. Use PDF, JPG, PNG or WebP.');
+    expect(validateDocumentFile({ name: 'b.pdf', type: 'application/pdf', size: 11 * 1024 * 1024 })).toBe('File too large: b.pdf. Maximum 10MB.');
   });
 });

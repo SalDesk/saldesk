@@ -19,6 +19,20 @@ estes, em singular e plural, em todos os ecras; nao alternar com sinonimos. O po
 | Integracoes | Integrations | Ligacoes a plataformas externas; o item do menu chama-se "Channel Manager". |
 | Frota | Fleet | As viaturas de um rent-a-car ou de um operador de actividades. |
 | Plano | Plan | Subscricao do SalDesk (Starter, Pro, Business): "Pro plan", "Pro feature", "View subscription plans". |
+| RH | HR | Recursos humanos: o ecra "HR" com ferias, documentos e certificacoes da equipa. |
+| Ferias / Licenca | Leave | Ausencias do colaborador ("Leave", "Leave request", "My leave"); o tipo "ferias" e "Annual leave", os outros "Sick leave", "Maternity leave"... |
+| Direito a ferias | Leave entitlement | Dias de ferias a que o colaborador tem direito por ano ("Entitlement", "Set entitlement"). |
+| Salario / Salarios | Salary / Salaries | O vencimento de um colaborador; a area de processamento em Financeiro e "Payroll" se aparecer. |
+| Horario / Turno | Schedule / Shift | "Usual schedule" para os dias habituais de um colaborador; "Shift" para um turno com hora. |
+| Documento | Document | Contratos e documentos de identificacao guardados na ficha do colaborador. |
+| Certificacao | Certification | Formacao ou certificado de um colaborador ou guia ("Training and certifications"). |
+| Checklist | Checklist | Lista de verificacao diaria do pessoal ("Today's checklist"). |
+| Tarefa | Task | Tarefa do quadro do pessoal ("New task", "Tasks"). |
+| Trabalho (atribuicao) | Job | Servico atribuido a um colaborador ou guia ("Next job", "12 jobs"); nao usar "Work". |
+| Cargo / Funcao | Role | O cargo de um colaborador ("Role", "Maintenance", "Receptionist"). |
+| Guia | Guide | Guia de actividades (menu "Guides"). |
+| Vendedor de Praia | Beach Seller | O cargo e o modo de venda na praia ("Beach Sellers"). |
+| Disponibilidade / Folga | Availability / Day off | Dias em que o colaborador pode trabalhar; "Day off" para folga. |
 
 ## Regras
 
