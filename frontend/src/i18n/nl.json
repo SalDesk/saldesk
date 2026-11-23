@@ -12,7 +12,7 @@
   "units": { "title": "Eenheden", "new": "Nieuwe eenheid", "name": "Naam", "type": "Type", "capacity": "Capaciteit", "basePrice": "Basisprijs", "priceUnit": "Prijseenheid", "description": "Beschrijving", "active": "Actief", "inactive": "Inactief", "copyLink": "Link kopieren" },
   "customers": { "title": "Klanten", "name": "Naam", "email": "E-mail", "phone": "Telefoon", "nationality": "Nationaliteit", "visits": "Bezoeken", "totalSpent": "Totaal uitgegeven", "firstVisit": "Eerste bezoek", "lastVisit": "Laatste bezoek", "notes": "Notities", "tags": "Tags" },
   "errors": { "generic": "Er is een fout opgetreden. Probeer het opnieuw.", "network": "Verbindingsfout. Controleer uw internetverbinding.", "unauthorized": "Sessie verlopen. Meld u opnieuw aan.", "notFound": "Niet gevonden.", "validation": "Controleer de velden en probeer het opnieuw.", "code": { "ACCOUNT_EXISTS": "Er bestaat al een account voor deze medewerker.", "ACCOUNT_LOCKED": "Account tijdelijk geblokkeerd na te veel mislukte pogingen.", "ALREADY_EXISTS": "Er bestaat al een samenwerking met deze aanbieder.", "ALREADY_PAID": "Deze boeking is al betaald. Er is niets opnieuw in rekening gebracht.", "ALREADY_RESPONDED": "Dit verzoek is al beantwoord.", "ALREADY_REVIEWED": "Deze boeking is al beoordeeld.", "BAD_ENCRYPTION_KEY": "Serverconfiguratiefout (versleutelingssleutel).", "BAD_SECRET_FORMAT": "Een opgeslagen sleutel heeft een onbekend formaat.", "CAPACITY_EXCEEDED": "Deze groep overschrijdt de capaciteit van deze activiteit.", "COMMENT_TOO_LONG": "De opmerking is te lang (maximaal 1000 tekens).", "DB_ERROR": "De gegevens konden niet worden opgeslagen. Probeer het opnieuw.", "DECRYPT_FAILED": "Een opgeslagen sleutel kon niet worden ontsleuteld.", "DEMO_READ_ONLY": "Dit is een demo-account: alleen lezen, wijzigingen zijn niet toegestaan.", "DEMO_UNAVAILABLE": "Het demo-account is momenteel niet beschikbaar.", "DUPLICATE_CODE": "Deze code is al in gebruik.", "DUPLICATE_PAYMENT": "Deze betaling is dubbel ontvangen. De aanbieder betaalt hem terug.", "EMAIL_EXISTS": "Dit e-mailadres is al geregistreerd.", "EMAIL_NOT_VERIFIED": "Bevestig uw e-mailadres om uw boekingen te zien.", "EMPTY_MESSAGE": "Het bericht is leeg.", "EXPIRED": "Deze link is verlopen.", "FILE_TOO_LARGE": "Het bestand is te groot.", "FORBIDDEN": "U heeft hiervoor geen toestemming.", "HOLD_EXPIRED": "Deze plek is niet meer beschikbaar. Er is niets in rekening gebracht.", "INTERNAL_ERROR": "Er ging iets mis op de server. Probeer het opnieuw.", "INVALID_AMOUNT": "Ongeldig bedrag.", "INVALID_AUTO_CONFIRM": "Automatisch bevestigen moet aan of uit staan.", "INVALID_BOOKING_MODE": "Voor deze activiteit is geen privéboeking beschikbaar.", "INVALID_BRAND_COLOR": "De merkkleur is ongeldig.", "INVALID_CHANNEL": "Ongeldig kanaal.", "INVALID_CHAT_AUTO_REPLY": "De instellingen van het automatische chatantwoord zijn ongeldig.", "INVALID_CREDENTIALS": "Ongeldige inloggegevens.", "INVALID_CSV": "Ongeldig CSV-bestand.", "INVALID_CURRENT_PASSWORD": "Het huidige wachtwoord is onjuist.", "INVALID_DATE": "Ongeldige datum.", "INVALID_DATES": "De einddatum moet na de begindatum liggen.", "INVALID_DIRECTION": "Ongeldige richting.", "INVALID_EMAIL": "Ongeldig e-mailadres.", "INVALID_FORMAT": "Ongeldig bestandsformaat. Gebruik een .csv-bestand.", "INVALID_FREE_CANCELLATION": "Ongeldige termijn voor gratis annulering.", "INVALID_INVITE": "Ongeldige of verlopen uitnodigingscode.", "INVALID_ITEM": "Een van de items is ongeldig of niet beschikbaar.", "INVALID_ITEMS": "De bestelling is leeg of ongeldig.", "INVALID_LIMIT": "Ongeldige limiet (geheel getal van 1 tot 500).", "INVALID_MODIFIER_TYPE": "Ongeldig type aanpassing.", "INVALID_MONTH": "Ongeldige maand (YYYY-MM).", "INVALID_OPERATOR_TYPE": "Deze aanbieder is geen restaurant.", "INVALID_ORDER_BY": "Ongeldige sortering.", "INVALID_PARTNER": "U kunt niet uw eigen partner zijn.", "INVALID_PAYMENT_STATUS": "Ongeldige betalingsstatus.", "INVALID_PLAN": "Ongeldig abonnement.", "INVALID_PRICE": "Ongeldige basisprijs.", "INVALID_RANGE": "Het begin van de periode mag niet na het einde liggen.", "INVALID_RATING": "De beoordeling moet van 1 tot 5 zijn.", "INVALID_REFRESH_TOKEN": "Uw sessie is verlopen. Meld u opnieuw aan.", "INVALID_STATUS": "Deze status is niet geldig voor deze actie.", "INVALID_TEMPLATE": "Ongeldige trigger of taal.", "INVALID_TIME_SLOT": "Ongeldig tijdslot voor deze activiteit.", "INVALID_TOKEN": "Deze link of sessie is ongeldig.", "INVALID_TRANSITION": "Deze wijziging is in de huidige status niet toegestaan.", "INVALID_TRIGGER": "Ongeldig berichttype.", "INVALID_TYPE": "Ongeldig type aanbieder.", "INVALID_VALUE": "Automatische beoordelingsverzoeken moeten aan of uit staan.", "INVALID_VOUCHER": "Deze vouchercode is ongeldig.", "INVITE_REQUIRED": "Registratie alleen op uitnodiging.", "IP_BLOCKED": "Toegang geblokkeerd.", "MIN_ADULTS": "Er is minstens 1 volwassene nodig.", "MISSING_EMAIL": "De medewerker heeft een e-mailadres nodig om een account aan te maken.", "MISSING_FIELDS": "Enkele verplichte velden ontbreken.", "MISSING_FILE": "Er is geen bestand ontvangen.", "MISSING_REVIEW_LINK": "Het beoordelingsverzoek moet {link_avaliacao} bevatten.", "MISSING_SUBJECT": "Voor het e-mailkanaal is een onderwerp verplicht.", "MISSING_TRIGGER_DAYS": "Voor dit type is het aantal dagen verplicht.", "NOTHING_TO_PAY": "Voor deze boeking hoeft niets betaald te worden.", "NOT_FOUND": "Niet gevonden.", "NOT_TRAVELER": "Dit is geen reizigersaccount.", "NO_EMAIL": "Deze klant heeft geen e-mailadres.", "NO_ENCRYPTION_KEY": "Serverconfiguratiefout (versleutelingssleutel ontbreekt).", "NO_PHONE": "De klant heeft geen geldig telefoonnummer.", "NO_PRICE_FOR_GROUP": "Neem voor deze groepsgrootte contact op met de aanbieder.", "NO_SUBSCRIPTION": "Er is geen actief abonnement om op te zeggen.", "ONBOARDING_REQUIRED": "De installatie is niet voltooid. Maak eerst het aanbiedersprofiel aan.", "OPERATOR_ONLY": "Alleen aanbieders kunnen dit doen.", "OPTION_REQUIRED": "Kies een optie.", "PAID_AFTER_EXPIRY": "De betaling is ontvangen, maar de plek was al bezet. De aanbieder neemt contact met u op voor een terugbetaling of een nieuwe datum.", "PARTY_SIZE_MISMATCH": "Het aantal personen past niet bij deze tafel.", "PASSWORD_ERROR": "Het wachtwoord kon niet worden gewijzigd.", "PAYPAL_CAPTURE_ID_MISSING": "Voor deze boeking is geen PayPal-capture-ID opgeslagen. Betaal handmatig terug via het PayPal-dashboard.", "PAYPAL_GATEWAY_ERROR": "De betaalgateway is niet bereikbaar. Probeer het straks opnieuw.", "PAYPAL_NOT_CONFIGURED": "PayPal-betalingen zijn niet beschikbaar voor deze aanbieder.", "PLAN_INACTIVE": "Uw SalDesk-abonnement is opgeschort of de proefperiode is verlopen. Verleng uw abonnement om door te gaan.", "PRICE_NOT_FOUND": "Voor dit abonnement is geen prijs ingesteld.", "RATE_LIMIT": "Te veel pogingen. Probeer het later opnieuw.", "REGISTER_ERROR": "Het account kon niet worden aangemaakt. Controleer uw gegevens.", "SELF_BLOCK": "U kunt uw eigen IP niet blokkeren.", "SEM_PONTOS": "Geen punten om in te wisselen.", "SISP_NOT_CONFIGURED": "SISP-betalingen zijn hier nog niet beschikbaar.", "STAFF_ONLY": "Alleen medewerkers kunnen dit doen.", "STATE_NOT_ALLOWED": "Dit bericht kan bij de huidige status van de boeking niet worden verzonden.", "SUBSCRIPTION_NOT_ACTIVE": "Het abonnement is nog niet actief.", "TABLE_NOT_FOUND": "Tafel niet gevonden.", "TEMPLATE_TOO_LONG": "Het bericht is te lang.", "TERMS_REQUIRED": "U moet de algemene voorwaarden accepteren.", "TOKEN_EXPIRED": "Deze link is verlopen. Log in en vraag een nieuwe aan.", "TOO_LONG": "Het bericht is te lang.", "TOO_MANY_ROWS": "Maximaal 5000 rijen per import.", "TRAVELER_REQUIRED": "Meld u aan als reiziger.", "UNAUTHORIZED": "Meld u aan om door te gaan.", "UNAVAILABLE": "Niet beschikbaar op de gekozen datum of tijd.", "UNKNOWN_VARIABLE": "Het bericht gebruikt een onbekende variabele.", "UPLOAD_ERROR": "Het uploaden is mislukt.", "VALIDATION_ERROR": "Sommige velden zijn ongeldig.", "VOUCHER_CODE_CLASH": "Er kon geen unieke vouchercode worden aangemaakt. Probeer het opnieuw." } },
-  "onboarding": { "title": "Welkom bij SalDesk", "subtitle": "Stel uw bedrijf in minder dan 5 minuten in", "step1Title": "Bedrijfstype", "step1Subtitle": "Wat voor soort bedrijf beheert u?", "step2Title": "Bedrijfsgegevens", "step2Subtitle": "Contact- en locatiegegevens", "step3Title": "Identiteit", "step3Subtitle": "Logo en bedrijfsbeschrijving", "step4Title": "Instellingen", "step4Subtitle": "Taal, valuta en boekingslink", "step5Title": "Alles klaar!", "step5Subtitle": "Uw bedrijf is geconfigureerd", "next": "Doorgaan", "back": "Terug", "finish": "Naar Dashboard", "operatorTypes": { "hotel": "Hotel / Pension", "activity": "Toeristische activiteit", "rentacar": "Autoverhuur", "restaurant": "Restaurant" }, "operatorDescriptions": { "hotel": "Kamers, suites, bungalows — check-in/check-out beheer", "activity": "Kitesurfen, duiken, tours — sessies en per-persoon boekingen", "rentacar": "Dagelijkse autohuur met aangepaste ophaallocaties", "restaurant": "Tafels, boekingen per uur, bezettingsbeheer" }, "businessName": "Bedrijfsnaam", "phone": "Telefoon", "whatsapp": "WhatsApp", "island": "Eiland", "selectIsland": "Eiland selecteren...", "address": "Adres", "description": "Korte beschrijving", "logo": "Logo", "language": "Standaardtaal", "currency": "Valuta", "timezone": "Tijdzone", "bookingSlug": "Boekingslink", "bookingSlugHint": "app.saldesk.cv/book/", "uploadLogo": "Logo uploaden", "dragDrop": "of hier slepen en neerzetten" },
+  "onboarding": { "title": "Welkom bij SalDesk", "subtitle": "Stel uw bedrijf in minder dan 5 minuten in", "step1Title": "Bedrijfstype", "step1Subtitle": "Wat voor soort bedrijf beheert u?", "step2Title": "Bedrijfsgegevens", "step2Subtitle": "Contact- en locatiegegevens", "step3Title": "Identiteit", "step3Subtitle": "Logo en bedrijfsbeschrijving", "step4Title": "Instellingen", "step4Subtitle": "Taal, valuta en boekingslink", "step5Title": "Alles klaar!", "step5Subtitle": "Uw bedrijf is geconfigureerd", "next": "Doorgaan", "back": "Terug", "finish": "Naar Dashboard", "operatorTypes": { "hotel": "Hotel / Pension", "activity": "Toeristische activiteit", "rentacar": "Autoverhuur", "restaurant": "Restaurant" }, "operatorDescriptions": { "hotel": "Kamers, suites, bungalows — check-in/check-out beheer", "activity": "Kitesurfen, duiken, tours — sessies en per-persoon boekingen", "rentacar": "Dagelijkse autohuur met aangepaste ophaallocaties", "restaurant": "Tafels, boekingen per uur, bezettingsbeheer" }, "businessName": "Bedrijfsnaam", "phone": "Telefoon", "whatsapp": "WhatsApp", "island": "Eiland", "selectIsland": "Eiland selecteren...", "address": "Adres", "description": "Korte beschrijving", "logo": "Logo", "language": "Standaardtaal", "currency": "Valuta", "timezone": "Tijdzone", "bookingSlug": "Boekingslink", "bookingSlugHint": "app.saldesk.cv/book/", "uploadLogo": "Logo uploaden", "dragDrop": "of hier slepen en neerzetten", "logoTooBig": "Het logo moet kleiner zijn dan 2 MB", "logoUploadError": "Het logo kon niet worden geüpload. Controleer de bucketrechten.", "businessNamePlaceholder": "Bijv. Sal Kite Center", "addressPlaceholder": "Santa Maria, eiland Sal", "descriptionPlaceholder": "Beschrijf uw bedrijf in 2-3 zinnen...", "logoPreviewAlt": "Voorbeeld van het logo", "changeLogo": "Klik om te wijzigen", "logoHint": "PNG, JPG, WebP — max. 2 MB", "summaryType": "Type", "doneTitle": "Alles klaar!", "doneBody": "Uw operatorprofiel is aangemaakt. Begin met het toevoegen van uw eenheden.", "goToDashboard": "Naar het dashboard" },
   "review": {
     "loading": "Laden...",
     "title": "Hoe was het?",
@@ -1639,5 +1639,77 @@
     "yearComparison": "Jaarvergelijking",
     "revenueYear": "Inkomsten {{year}}",
     "change": "Verandering"
+  },
+  "accountOptions": {
+    "language": {
+      "pt": "Português",
+      "en": "English",
+      "de": "Deutsch",
+      "nl": "Nederlands"
+    },
+    "currency": {
+      "EUR": "EUR — Euro",
+      "CVE": "CVE — Kaapverdische escudo",
+      "USD": "USD — Amerikaanse dollar"
+    },
+    "timezone": {
+      "Atlantic/Cape_Verde": "Kaapverdië (UTC-1)",
+      "Europe/Lisbon": "Lissabon (UTC+0/+1)",
+      "Europe/London": "Londen (UTC+0/+1)"
+    }
+  },
+  "profile": {
+    "title": "Operatorprofiel",
+    "subtitle": "Openbare informatie over uw bedrijf",
+    "logo": "Logo",
+    "logoAlt": "Logo",
+    "logoHint": "JPG, PNG, WebP — max. 5 MB",
+    "covers": "Omslagfoto's",
+    "coversIntro": "Worden getoond in de carrousel op uw openbare boekingspagina.",
+    "coversHint": "Tot 5 foto's · eerste = hoofdfoto · JPG, PNG, WebP · max. 5 MB per foto",
+    "businessInfo": "Bedrijfsgegevens",
+    "legalName": "Juridische naam",
+    "tradeName": "Handelsnaam",
+    "tradeNamePlaceholder": "Bijv. Zy Tours Sal",
+    "tagline": "Slogan",
+    "taglinePlaceholder": "Bijv. De beste ervaring op Kaapverdië",
+    "description": "Beschrijving",
+    "descriptionPlaceholder": "Beschrijf uw bedrijf voor uw klanten...",
+    "phone": "Telefoon",
+    "whatsapp": "WhatsApp",
+    "address": "Adres",
+    "settings": "Instellingen",
+    "language": "Standaardtaal",
+    "currency": "Valuta",
+    "timezone": "Tijdzone",
+    "save": "Wijzigingen opslaan",
+    "saved": "Opgeslagen!"
+  },
+  "billingResult": {
+    "confirming": "Betaling wordt bevestigd...",
+    "confirmed": "Betaling bevestigd!",
+    "confirmedBody": "Uw SalDesk-abonnement is nu actief.",
+    "backToBilling": "Terug naar facturatie",
+    "errorTitle": "De betaling kon niet worden bevestigd",
+    "errorBody": "Als de betaling is voltooid, wordt deze binnenkort verwerkt. Probeer het anders opnieuw.",
+    "cancelTitle": "Betaling niet voltooid",
+    "cancelBody": "U hebt de betaling geannuleerd. Er is niets in rekening gebracht en uw abonnement is niet gewijzigd."
+  },
+  "register": {
+    "inviteTitle": "Toegang alleen op uitnodiging",
+    "inviteIntro": "SalDesk is in de lanceringsfase. U hebt een uitnodigingscode nodig.",
+    "inviteCode": "Uitnodigingscode",
+    "inviteCodePlaceholder": "Bijv. SALDESK2026",
+    "validateCode": "Code valideren",
+    "codeRequired": "Voer uw uitnodigingscode in.",
+    "codeInvalid": "Ongeldige of verlopen code. Controleer de code en probeer het opnieuw.",
+    "noCode": "Geen code?",
+    "requestAccess": "Vraag vroegtijdige toegang aan",
+    "codeValidatedBefore": "Code",
+    "codeValidatedAfter": "gevalideerd.",
+    "namePlaceholder": "Jan Jansen",
+    "emailPlaceholder": "naam@email.com",
+    "passwordWeak": "Het wachtwoord moet sterk zijn: minimaal 8 tekens, een hoofdletter, een cijfer en een speciaal teken.",
+    "passwordMismatch": "Wachtwoorden komen niet overeen"
   }
 }

@@ -106,6 +106,14 @@ export const FICHEIROS_CONVERTIDOS = [
   'components/financial/UnitTable.jsx',
   'pages/Analytics.jsx',
   'pages/Demand.jsx',
+  /* Fase 4, tarefa 4: perfil, facturacao, registo e boas-vindas */
+  'pages/Profile.jsx',
+  'pages/BillingSuccess.jsx',
+  'pages/BillingCancel.jsx',
+  'pages/Register.jsx',
+  'pages/Onboarding.jsx',
+  'components/onboarding/OnboardingWizard.jsx',
+  'components/onboarding/Step3Complete.jsx',
 ];
 
 /* Valores portugueses que ficam no codigo de proposito, por ficheiro, com o motivo. */

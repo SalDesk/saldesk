@@ -44,7 +44,7 @@ export default function OnboardingWizard() {
   async function handleLogoUpload(e) {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (file.size > 2 * 1024 * 1024) { setError('Logotipo deve ter menos de 2MB'); return; }
+    if (file.size > 2 * 1024 * 1024) { setError(t('onboarding.logoTooBig')); return; }
     setUploadingLogo(true);
     setError('');
     try {
@@ -56,7 +56,7 @@ export default function OnboardingWizard() {
       setLogoPreview(publicUrl);
       setData((d) => ({ ...d, logo_url: publicUrl }));
     } catch (err) {
-      setError('Erro ao carregar logotipo. Verifique as permissões do bucket.');
+      setError(t('onboarding.logoUploadError'));
     } finally {
       setUploadingLogo(false);
     }
@@ -187,7 +187,7 @@ export default function OnboardingWizard() {
             <h2 className="font-display font-bold text-xl text-n-900 mb-1">{t('onboarding.step2Title')}</h2>
             <p className="text-sm font-body text-n-500 mb-6">{t('onboarding.step2Subtitle')}</p>
             <div className="space-y-4">
-              <Input label={t('onboarding.businessName')} value={data.name} onChange={set('name')} required placeholder="Ex: Sal Kite Center" />
+              <Input label={t('onboarding.businessName')} value={data.name} onChange={set('name')} required placeholder={t('onboarding.businessNamePlaceholder')} />
               <div className="grid grid-cols-2 gap-3">
                 <Input label={t('onboarding.phone')} value={data.phone} onChange={set('phone')} placeholder="+238 900 0000" type="tel" />
                 <Input label={t('onboarding.whatsapp')} value={data.whatsapp} onChange={set('whatsapp')} placeholder="+238 900 0000" type="tel" />
@@ -198,7 +198,7 @@ export default function OnboardingWizard() {
                   <option key={i.id} value={i.id}>{i.name}</option>
                 ))}
               </Select>
-              <Input label={t('onboarding.address')} value={data.address} onChange={set('address')} placeholder="Santa Maria, Ilha do Sal" />
+              <Input label={t('onboarding.address')} value={data.address} onChange={set('address')} placeholder={t('onboarding.addressPlaceholder')} />
             </div>
           </div>
         )}
@@ -213,7 +213,7 @@ export default function OnboardingWizard() {
                 label={t('onboarding.description')}
                 value={data.description}
                 onChange={set('description')}
-                placeholder="Descreva o seu negócio em 2-3 frases..."
+                placeholder={t('onboarding.descriptionPlaceholder')}
                 rows={4}
               />
               <div>
@@ -226,15 +226,15 @@ export default function OnboardingWizard() {
                   className="border-2 border-dashed border-n-200 rounded-md p-6 flex flex-col items-center gap-3 text-center bg-n-50 hover:border-ocean-300 transition-colors cursor-pointer"
                 >
                   {logoPreview ? (
-                    <img src={logoPreview} alt="Logo preview" className="h-16 object-contain rounded" />
+                    <img src={logoPreview} alt={t('onboarding.logoPreviewAlt')} className="h-16 object-contain rounded" />
                   ) : (
                     <ImageIcon size={28} strokeWidth={1.25} className="text-n-300" />
                   )}
                   <div>
                     <p className="text-sm font-body text-n-600 font-semibold">
-                      {uploadingLogo ? 'A carregar...' : logoPreview ? 'Clique para alterar' : t('onboarding.uploadLogo')}
+                      {uploadingLogo ? t('common.loading') : logoPreview ? t('onboarding.changeLogo') : t('onboarding.uploadLogo')}
                     </p>
-                    <p className="text-xs font-body text-n-400 mt-0.5">PNG, JPG, WebP — max 2MB</p>
+                    <p className="text-xs font-body text-n-400 mt-0.5">{t('onboarding.logoHint')}</p>
                   </div>
                 </div>
               </div>
@@ -250,13 +250,11 @@ export default function OnboardingWizard() {
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-3">
                 <Select label={t('onboarding.language')} value={data.language} onChange={set('language')}>
-                  <option value="pt">Português</option>
-                  <option value="en">English</option>
+                  <option value="pt">{t('accountOptions.language.pt')}</option>
+                  <option value="en">{t('accountOptions.language.en')}</option>
                 </Select>
                 <Select label={t('onboarding.currency')} value={data.currency} onChange={set('currency')}>
-                  <option value="EUR">EUR — Euro</option>
-                  <option value="CVE">CVE — Escudo</option>
-                  <option value="USD">USD — Dolar</option>
+                  {['EUR', 'CVE', 'USD'].map((c) => <option key={c} value={c}>{t(`accountOptions.currency.${c}`)}</option>)}
                 </Select>
               </div>
               <Select label={t('onboarding.timezone')} value={data.timezone} onChange={set('timezone')}>
@@ -284,7 +282,7 @@ export default function OnboardingWizard() {
             <h2 className="font-display font-bold text-xl text-n-900 mb-2">{t('onboarding.step5Title')}</h2>
             <p className="text-sm font-body text-n-500 mb-6">{t('onboarding.step5Subtitle')}</p>
             <div className="bg-n-50 rounded-md p-4 text-left space-y-2 mb-6">
-              <SummaryRow label="Tipo" value={t(`onboarding.operatorTypes.${data.operator_type}`)} />
+              <SummaryRow label={t('onboarding.summaryType')} value={t(`onboarding.operatorTypes.${data.operator_type}`)} />
               <SummaryRow label={t('onboarding.businessName')} value={data.name} />
               <SummaryRow label={t('onboarding.language')} value={data.language.toUpperCase()} />
               <SummaryRow label={t('onboarding.bookingSlug')} value={`/book/${data.slug}`} />

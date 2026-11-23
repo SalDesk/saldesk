@@ -201,7 +201,19 @@
     "bookingSlug": "Link de reserva",
     "bookingSlugHint": "app.saldesk.cv/book/",
     "uploadLogo": "Carregar logotipo",
-    "dragDrop": "ou arraste e solte aqui"
+    "dragDrop": "ou arraste e solte aqui",
+    "logoTooBig": "Logotipo deve ter menos de 2MB",
+    "logoUploadError": "Erro ao carregar logotipo. Verifique as permissões do bucket.",
+    "businessNamePlaceholder": "Ex: Sal Kite Center",
+    "addressPlaceholder": "Santa Maria, Ilha do Sal",
+    "descriptionPlaceholder": "Descreva o seu negócio em 2-3 frases...",
+    "logoPreviewAlt": "Logo preview",
+    "changeLogo": "Clique para alterar",
+    "logoHint": "PNG, JPG, WebP — max 2MB",
+    "summaryType": "Tipo",
+    "doneTitle": "Tudo pronto!",
+    "doneBody": "O seu perfil de operador foi criado com sucesso. Comece por adicionar as suas unidades.",
+    "goToDashboard": "Ir para o dashboard"
   },
   "common": {
     "save": "Guardar",
@@ -2271,5 +2283,77 @@
     "yearComparison": "Comparativo anual",
     "revenueYear": "Receita {{year}}",
     "change": "Variação"
+  },
+  "accountOptions": {
+    "language": {
+      "pt": "Português",
+      "en": "English",
+      "de": "Deutsch",
+      "nl": "Nederlands"
+    },
+    "currency": {
+      "EUR": "EUR — Euro",
+      "CVE": "CVE — Escudo",
+      "USD": "USD — Dolar"
+    },
+    "timezone": {
+      "Atlantic/Cape_Verde": "Cabo Verde (UTC-1)",
+      "Europe/Lisbon": "Lisboa (UTC+0/+1)",
+      "Europe/London": "Londres (UTC+0/+1)"
+    }
+  },
+  "profile": {
+    "title": "Perfil do Operador",
+    "subtitle": "Informações públicas do seu negócio",
+    "logo": "Logotipo",
+    "logoAlt": "Logo",
+    "logoHint": "JPG, PNG, WebP — max 5MB",
+    "covers": "Fotos de Capa",
+    "coversIntro": "Aparecem no carousel da sua página pública de reservas.",
+    "coversHint": "Até 5 fotos · primeira = foto principal · JPG, PNG, WebP · max 5MB cada",
+    "businessInfo": "Informações do negócio",
+    "legalName": "Nome legal",
+    "tradeName": "Nome comercial",
+    "tradeNamePlaceholder": "Ex: Zy Tours Sal",
+    "tagline": "Tagline",
+    "taglinePlaceholder": "Ex: A melhor experiência em Cabo Verde",
+    "description": "Descrição",
+    "descriptionPlaceholder": "Descreva o seu negócio para os clientes...",
+    "phone": "Telefone",
+    "whatsapp": "WhatsApp",
+    "address": "Morada",
+    "settings": "Configurações",
+    "language": "Idioma padrão",
+    "currency": "Moeda",
+    "timezone": "Fuso horário",
+    "save": "Guardar alterações",
+    "saved": "Guardado!"
+  },
+  "billingResult": {
+    "confirming": "A confirmar pagamento...",
+    "confirmed": "Pagamento confirmado!",
+    "confirmedBody": "A tua subscrição SalDesk está agora activa.",
+    "backToBilling": "Voltar a Facturação",
+    "errorTitle": "Não foi possível confirmar o pagamento",
+    "errorBody": "Se o pagamento foi concluído, será aplicado em breve. Caso contrário, tenta novamente.",
+    "cancelTitle": "Pagamento não concluído",
+    "cancelBody": "Cancelaste o pagamento. Não houve qualquer cobrança e o teu plano não foi alterado."
+  },
+  "register": {
+    "inviteTitle": "Acesso por convite",
+    "inviteIntro": "A SalDesk está em fase de lançamento. Necessitas de um código de convite.",
+    "inviteCode": "Código de convite",
+    "inviteCodePlaceholder": "Ex: SALDESK2026",
+    "validateCode": "Validar código",
+    "codeRequired": "Introduz o teu código de convite.",
+    "codeInvalid": "Código inválido ou expirado. Verifica o código e tenta novamente.",
+    "noCode": "Não tens código?",
+    "requestAccess": "Pede acesso antecipado",
+    "codeValidatedBefore": "Código",
+    "codeValidatedAfter": "validado.",
+    "namePlaceholder": "João Silva",
+    "emailPlaceholder": "nome@email.com",
+    "passwordWeak": "A password deve ser forte: 8+ caracteres, maiúscula, número e especial.",
+    "passwordMismatch": "Passwords não coincidem"
   }
 }

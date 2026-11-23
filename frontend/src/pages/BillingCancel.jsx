@@ -1,8 +1,9 @@
 import { Link } from 'react-router-dom';
 import { XCircle } from 'lucide-react';
+import { useT } from '../i18n';
 
 export default function BillingCancel() {
-  const lang = localStorage.getItem('sd-lang') || 'pt';
+  const t = useT();
 
   return (
     <div className="min-h-screen bg-n-50 flex items-center justify-center p-4">
@@ -11,15 +12,13 @@ export default function BillingCancel() {
           <XCircle size={32} strokeWidth={2} className="text-red-600" />
         </div>
         <h1 className="font-display font-bold text-xl text-n-900 mb-3">
-          {lang === 'en' ? 'Payment not completed' : 'Pagamento não concluído'}
+          {t('billingResult.cancelTitle')}
         </h1>
         <p className="text-sm font-body text-n-500 leading-relaxed mb-6">
-          {lang === 'en'
-            ? 'You cancelled the payment. No charge was made and your plan was not changed.'
-            : 'Cancelaste o pagamento. Não houve qualquer cobrança e o teu plano não foi alterado.'}
+          {t('billingResult.cancelBody')}
         </p>
         <Link to="/definicoes?tab=facturacao" className="text-sm font-body font-semibold text-ocean-700 hover:underline">
-          {lang === 'en' ? 'Back to Billing' : 'Voltar a Facturação'}
+          {t('billingResult.backToBilling')}
         </Link>
       </div>
     </div>

@@ -50,7 +50,7 @@ export default function Register() {
 
   async function handleInviteSubmit(e) {
     e.preventDefault();
-    if (!inviteCode.trim()) { setInviteError('Introduz o teu código de convite.'); return; }
+    if (!inviteCode.trim()) { setInviteError(t('register.codeRequired')); return; }
     setInviteError('');
     setInviteLoading(true);
     try {
@@ -58,10 +58,10 @@ export default function Register() {
       if (result?.data?.valid) {
         setInviteValid(true);
       } else {
-        setInviteError('Código inválido ou expirado. Verifica o código e tenta novamente.');
+        setInviteError(t('register.codeInvalid'));
       }
     } catch {
-      setInviteError('Código inválido ou expirado. Verifica o código e tenta novamente.');
+      setInviteError(t('register.codeInvalid'));
     } finally {
       setInviteLoading(false);
     }
@@ -72,9 +72,9 @@ export default function Register() {
     if (!form.name.trim())    errs.name = t('common.required');
     if (!form.email.trim())   errs.email = t('common.required');
     if (getPasswordStrength(form.password) < 2) {
-      errs.password = 'A password deve ser forte: 8+ caracteres, maiúscula, número e especial.';
+      errs.password = t('register.passwordWeak');
     }
-    if (form.password !== form.confirm) errs.confirm = 'Passwords não coincidem';
+    if (form.password !== form.confirm) errs.confirm = t('register.passwordMismatch');
     return errs;
   }
 
@@ -117,9 +117,9 @@ export default function Register() {
                 <Key size={18} strokeWidth={1.75} className="text-ocean-700" />
               </div>
               <div>
-                <h1 className="font-display font-bold text-base text-n-900">Acesso por convite</h1>
+                <h1 className="font-display font-bold text-base text-n-900">{t('register.inviteTitle')}</h1>
                 <p className="text-xs font-body text-n-500 mt-0.5">
-                  A SalDesk está em fase de lançamento. Necessitas de um código de convite.
+                  {t('register.inviteIntro')}
                 </p>
               </div>
             </div>
@@ -127,13 +127,13 @@ export default function Register() {
             <form onSubmit={handleInviteSubmit} className="space-y-4">
               <div>
                 <label className="text-xs font-body font-bold uppercase tracking-wide text-n-600 block mb-1">
-                  Código de convite
+                  {t('register.inviteCode')}
                 </label>
                 <input
                   type="text"
                   value={inviteCode}
                   onChange={e => setInviteCode(e.target.value)}
-                  placeholder="Ex: SALDESK2026"
+                  placeholder={t('register.inviteCodePlaceholder')}
                   autoComplete="off"
                   autoFocus
                   className={`w-full h-9 px-3 rounded-sm border text-sm font-mono uppercase bg-n-100 text-n-900 placeholder:text-n-400 placeholder:normal-case focus:outline-none focus:ring-2 focus:ring-ocean-300 focus:border-ocean-700 focus:bg-white transition-colors ${inviteError ? 'border-error' : 'border-n-300'}`}
@@ -144,14 +144,14 @@ export default function Register() {
               </div>
 
               <Button type="submit" loading={inviteLoading} icon={ArrowRight} className="w-full">
-                Validar código
+                {t('register.validateCode')}
               </Button>
             </form>
 
             <p className="mt-4 text-center text-xs font-body text-n-400">
-              Não tens código?{' '}
+              {t('register.noCode')}{' '}
               <a href="mailto:hello@saldesk.cv" className="text-ocean-700 hover:underline">
-                Pede acesso antecipado
+                {t('register.requestAccess')}
               </a>
             </p>
           </>
@@ -162,7 +162,7 @@ export default function Register() {
               <div className="flex items-center gap-2 mb-5 px-3 py-2 bg-[#ECFDF5] border border-green-200 rounded-sm">
                 <CheckCircle2 size={14} strokeWidth={1.75} className="text-[#1A7A4A] shrink-0" />
                 <p className="text-xs font-body text-[#1A7A4A]">
-                  Código <span className="font-mono font-semibold">{inviteCode.toUpperCase()}</span> validado.
+                  {t('register.codeValidatedBefore')} <span className="font-mono font-semibold">{inviteCode.toUpperCase()}</span> {t('register.codeValidatedAfter')}
                 </p>
               </div>
             )}
@@ -176,10 +176,10 @@ export default function Register() {
             )}
 
             <form onSubmit={handleSubmit} className="space-y-4">
-              <Input label={t('auth.name')} type="text" placeholder="João Silva"
+              <Input label={t('auth.name')} type="text" placeholder={t('register.namePlaceholder')}
                 value={form.name} onChange={set('name')} error={errors.name} required />
 
-              <Input label={t('auth.email')} type="email" placeholder="nome@email.com"
+              <Input label={t('auth.email')} type="email" placeholder={t('register.emailPlaceholder')}
                 value={form.email} onChange={set('email')} error={errors.email} required autoComplete="email" />
 
               {/* Password with strength */}
@@ -236,7 +236,7 @@ export default function Register() {
 
             <div className="mt-5 pt-4 border-t border-n-100 flex items-center justify-center gap-1.5 text-n-400">
               <Shield size={12} strokeWidth={1.75} />
-              <span className="text-[11px] font-mono uppercase tracking-wider">Ligação segura SSL</span>
+              <span className="text-[11px] font-mono uppercase tracking-wider">{t('auth.sslSecure')}</span>
             </div>
           </>
         )}

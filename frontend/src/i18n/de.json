@@ -12,7 +12,7 @@
   "units": { "title": "Einheiten", "new": "Neue Einheit", "name": "Name", "type": "Typ", "capacity": "Kapazitat", "basePrice": "Grundpreis", "priceUnit": "Preiseinheit", "description": "Beschreibung", "active": "Aktiv", "inactive": "Inaktiv", "copyLink": "Link kopieren" },
   "customers": { "title": "Kunden", "name": "Name", "email": "E-Mail", "phone": "Telefon", "nationality": "Nationalitat", "visits": "Besuche", "totalSpent": "Gesamtausgaben", "firstVisit": "Erster Besuch", "lastVisit": "Letzter Besuch", "notes": "Notizen", "tags": "Tags" },
   "errors": { "generic": "Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.", "network": "Verbindungsfehler. Überprüfen Sie Ihre Internetverbindung.", "unauthorized": "Sitzung abgelaufen. Bitte melden Sie sich erneut an.", "notFound": "Nicht gefunden.", "validation": "Bitte uberprufung Sie die Felder und versuchen Sie es erneut.", "code": { "ACCOUNT_EXISTS": "Für diesen Mitarbeiter existiert bereits ein Konto.", "ACCOUNT_LOCKED": "Konto nach zu vielen Fehlversuchen vorübergehend gesperrt.", "ALREADY_EXISTS": "Mit diesem Anbieter besteht bereits eine Partnerschaft.", "ALREADY_PAID": "Diese Buchung ist bereits bezahlt. Es wurde nichts erneut berechnet.", "ALREADY_RESPONDED": "Diese Anfrage wurde bereits beantwortet.", "ALREADY_REVIEWED": "Diese Buchung wurde bereits bewertet.", "BAD_ENCRYPTION_KEY": "Serverkonfigurationsfehler (Verschlüsselungsschlüssel).", "BAD_SECRET_FORMAT": "Ein gespeicherter Zugangsschlüssel hat ein unbekanntes Format.", "CAPACITY_EXCEEDED": "Diese Gruppe überschreitet die Kapazität dieser Aktivität.", "COMMENT_TOO_LONG": "Der Kommentar ist zu lang (maximal 1000 Zeichen).", "DB_ERROR": "Die Daten konnten nicht gespeichert werden. Bitte versuchen Sie es erneut.", "DECRYPT_FAILED": "Ein gespeicherter Zugangsschlüssel konnte nicht entschlüsselt werden.", "DEMO_READ_ONLY": "Dies ist ein Demokonto: nur lesen, Änderungen sind nicht erlaubt.", "DEMO_UNAVAILABLE": "Das Demokonto ist derzeit nicht verfügbar.", "DUPLICATE_CODE": "Dieser Code wird bereits verwendet.", "DUPLICATE_PAYMENT": "Diese Zahlung ist doppelt eingegangen. Der Anbieter erstattet sie.", "EMAIL_EXISTS": "Diese E-Mail-Adresse ist bereits registriert.", "EMAIL_NOT_VERIFIED": "Bestätigen Sie Ihre E-Mail-Adresse, um Ihre Buchungen zu sehen.", "EMPTY_MESSAGE": "Die Nachricht ist leer.", "EXPIRED": "Dieser Link ist abgelaufen.", "FILE_TOO_LARGE": "Die Datei ist zu groß.", "FORBIDDEN": "Sie haben dafür keine Berechtigung.", "HOLD_EXPIRED": "Dieser Platz ist nicht mehr verfügbar. Es wurde nichts berechnet.", "INTERNAL_ERROR": "Auf dem Server ist ein Fehler aufgetreten. Bitte versuchen Sie es erneut.", "INVALID_AMOUNT": "Ungültiger Betrag.", "INVALID_AUTO_CONFIRM": "Die automatische Bestätigung muss ein- oder ausgeschaltet sein.", "INVALID_BOOKING_MODE": "Für diese Aktivität ist keine private Buchung verfügbar.", "INVALID_BRAND_COLOR": "Die Markenfarbe ist ungültig.", "INVALID_CHANNEL": "Ungültiger Kanal.", "INVALID_CHAT_AUTO_REPLY": "Die Einstellungen der automatischen Chat-Antwort sind ungültig.", "INVALID_CREDENTIALS": "Ungültige Anmeldedaten.", "INVALID_CSV": "Ungültige CSV-Datei.", "INVALID_CURRENT_PASSWORD": "Das aktuelle Passwort ist falsch.", "INVALID_DATE": "Ungültiges Datum.", "INVALID_DATES": "Das Enddatum muss nach dem Startdatum liegen.", "INVALID_DIRECTION": "Ungültige Richtung.", "INVALID_EMAIL": "Ungültige E-Mail-Adresse.", "INVALID_FORMAT": "Ungültiges Dateiformat. Verwenden Sie eine .csv-Datei.", "INVALID_FREE_CANCELLATION": "Ungültige Frist für kostenlose Stornierung.", "INVALID_INVITE": "Ungültiger oder abgelaufener Einladungscode.", "INVALID_ITEM": "Einer der Artikel ist ungültig oder nicht verfügbar.", "INVALID_ITEMS": "Die Bestellung ist leer oder ungültig.", "INVALID_LIMIT": "Ungültiges Limit (ganze Zahl von 1 bis 500).", "INVALID_MODIFIER_TYPE": "Ungültiger Modifikatortyp.", "INVALID_MONTH": "Ungültiger Monat (YYYY-MM).", "INVALID_OPERATOR_TYPE": "Dieser Anbieter ist kein Restaurant.", "INVALID_ORDER_BY": "Ungültige Sortierung.", "INVALID_PARTNER": "Sie können nicht Ihr eigener Partner sein.", "INVALID_PAYMENT_STATUS": "Ungültiger Zahlungsstatus.", "INVALID_PLAN": "Ungültiger Tarif.", "INVALID_PRICE": "Ungültiger Grundpreis.", "INVALID_RANGE": "Der Beginn des Zeitraums darf nicht nach dem Ende liegen.", "INVALID_RATING": "Die Bewertung muss zwischen 1 und 5 liegen.", "INVALID_REFRESH_TOKEN": "Ihre Sitzung ist abgelaufen. Bitte melden Sie sich erneut an.", "INVALID_STATUS": "Dieser Status ist für diese Aktion ungültig.", "INVALID_TEMPLATE": "Ungültiger Auslöser oder ungültige Sprache.", "INVALID_TIME_SLOT": "Ungültiges Zeitfenster für diese Aktivität.", "INVALID_TOKEN": "Dieser Link oder diese Sitzung ist ungültig.", "INVALID_TRANSITION": "Diese Änderung ist im aktuellen Status nicht erlaubt.", "INVALID_TRIGGER": "Ungültiger Nachrichtentyp.", "INVALID_TYPE": "Ungültiger Anbietertyp.", "INVALID_VALUE": "Automatische Bewertungsanfragen müssen ein- oder ausgeschaltet sein.", "INVALID_VOUCHER": "Dieser Gutscheincode ist ungültig.", "INVITE_REQUIRED": "Registrierung nur mit Einladung.", "IP_BLOCKED": "Zugriff gesperrt.", "MIN_ADULTS": "Mindestens 1 Erwachsener ist erforderlich.", "MISSING_EMAIL": "Der Mitarbeiter benötigt eine E-Mail-Adresse, um ein Konto zu erstellen.", "MISSING_FIELDS": "Einige Pflichtfelder fehlen.", "MISSING_FILE": "Es wurde keine Datei empfangen.", "MISSING_REVIEW_LINK": "Die Bewertungsanfrage muss {link_avaliacao} enthalten.", "MISSING_SUBJECT": "Für den E-Mail-Kanal ist ein Betreff erforderlich.", "MISSING_TRIGGER_DAYS": "Für diesen Typ ist die Anzahl der Tage erforderlich.", "NOTHING_TO_PAY": "Für diese Buchung ist kein Betrag zu zahlen.", "NOT_FOUND": "Nicht gefunden.", "NOT_TRAVELER": "Dies ist kein Reisendenkonto.", "NO_EMAIL": "Dieser Kunde hat keine E-Mail-Adresse.", "NO_ENCRYPTION_KEY": "Serverkonfigurationsfehler (Verschlüsselungsschlüssel fehlt).", "NO_PHONE": "Der Kunde hat keine gültige Telefonnummer.", "NO_PRICE_FOR_GROUP": "Für diese Gruppengröße wenden Sie sich bitte an den Anbieter.", "NO_SUBSCRIPTION": "Es gibt kein aktives Abonnement zum Kündigen.", "ONBOARDING_REQUIRED": "Die Einrichtung ist nicht abgeschlossen. Erstellen Sie zuerst das Anbieterprofil.", "OPERATOR_ONLY": "Nur Anbieter können das tun.", "OPTION_REQUIRED": "Wählen Sie eine Option.", "PAID_AFTER_EXPIRY": "Die Zahlung ist eingegangen, aber der Platz war bereits vergeben. Der Anbieter meldet sich wegen einer Erstattung oder eines neuen Termins.", "PARTY_SIZE_MISMATCH": "Die Personenzahl passt nicht zu diesem Tisch.", "PASSWORD_ERROR": "Das Passwort konnte nicht geändert werden.", "PAYPAL_CAPTURE_ID_MISSING": "Für diese Buchung ist keine PayPal-Capture-ID gespeichert. Erstatten Sie manuell über das PayPal-Dashboard.", "PAYPAL_GATEWAY_ERROR": "Das Zahlungs-Gateway ist nicht erreichbar. Bitte versuchen Sie es in Kürze erneut.", "PAYPAL_NOT_CONFIGURED": "PayPal-Zahlungen sind für diesen Anbieter nicht verfügbar.", "PLAN_INACTIVE": "Ihr SalDesk-Abonnement ist ausgesetzt oder die Testphase ist abgelaufen. Verlängern Sie Ihren Tarif, um fortzufahren.", "PRICE_NOT_FOUND": "Für diesen Tarif ist kein Preis hinterlegt.", "RATE_LIMIT": "Zu viele Versuche. Bitte versuchen Sie es später erneut.", "REGISTER_ERROR": "Das Konto konnte nicht erstellt werden. Bitte überprüfen Sie Ihre Angaben.", "SELF_BLOCK": "Sie können Ihre eigene IP nicht sperren.", "SEM_PONTOS": "Keine Punkte zum Einlösen.", "SISP_NOT_CONFIGURED": "SISP-Zahlungen sind hier noch nicht verfügbar.", "STAFF_ONLY": "Nur Mitarbeiter können das tun.", "STATE_NOT_ALLOWED": "Diese Nachricht kann beim aktuellen Status der Buchung nicht gesendet werden.", "SUBSCRIPTION_NOT_ACTIVE": "Das Abonnement ist noch nicht aktiv.", "TABLE_NOT_FOUND": "Tisch nicht gefunden.", "TEMPLATE_TOO_LONG": "Die Nachricht ist zu lang.", "TERMS_REQUIRED": "Sie müssen die Allgemeinen Geschäftsbedingungen akzeptieren.", "TOKEN_EXPIRED": "Dieser Link ist abgelaufen. Melden Sie sich an und fordern Sie einen neuen an.", "TOO_LONG": "Die Nachricht ist zu lang.", "TOO_MANY_ROWS": "Maximal 5000 Zeilen pro Import.", "TRAVELER_REQUIRED": "Bitte melden Sie sich als Reisender an.", "UNAUTHORIZED": "Bitte melden Sie sich an, um fortzufahren.", "UNAVAILABLE": "Für das gewählte Datum oder die gewählte Uhrzeit nicht verfügbar.", "UNKNOWN_VARIABLE": "Die Nachricht verwendet eine unbekannte Variable.", "UPLOAD_ERROR": "Der Upload ist fehlgeschlagen.", "VALIDATION_ERROR": "Einige Felder sind ungültig.", "VOUCHER_CODE_CLASH": "Es konnte kein eindeutiger Gutscheincode erzeugt werden. Bitte versuchen Sie es erneut." } },
-  "onboarding": { "title": "Willkommen bei SalDesk", "subtitle": "Richten Sie Ihr Unternehmen in weniger als 5 Minuten ein", "step1Title": "Unternehmenstyp", "step1Subtitle": "Welche Art von Betrieb fuhren Sie?", "step2Title": "Geschaftsdetails", "step2Subtitle": "Kontakt- und Standortinformationen", "step3Title": "Identitat", "step3Subtitle": "Logo und Unternehmensbeschreibung", "step4Title": "Einstellungen", "step4Subtitle": "Sprache, Wahrung und Buchungslink", "step5Title": "Alles bereit!", "step5Subtitle": "Ihr Unternehmen ist konfiguriert", "next": "Weiter", "back": "Zuruck", "finish": "Zum Dashboard", "operatorTypes": { "hotel": "Hotel / Pension", "activity": "Touristik-Aktivitat", "rentacar": "Autovermietung", "restaurant": "Restaurant" }, "operatorDescriptions": { "hotel": "Zimmer, Suiten, Bungalows — Check-in/Check-out-Verwaltung", "activity": "Kitesurfen, Tauchen, Touren — Sitzungen und Pro-Person-Buchungen", "rentacar": "Tagesmietwagen mit benutzerdefinierten Abholorten", "restaurant": "Tische, stundenweise Buchungen, Belegungsverwaltung" }, "businessName": "Unternehmensname", "phone": "Telefon", "whatsapp": "WhatsApp", "island": "Insel", "selectIsland": "Insel auswahlen...", "address": "Adresse", "description": "Kurzbeschreibung", "logo": "Logo", "language": "Standardsprache", "currency": "Wahrung", "timezone": "Zeitzone", "bookingSlug": "Buchungslink", "bookingSlugHint": "app.saldesk.cv/book/", "uploadLogo": "Logo hochladen", "dragDrop": "oder hierher ziehen und ablegen" },
+  "onboarding": { "title": "Willkommen bei SalDesk", "subtitle": "Richten Sie Ihr Unternehmen in weniger als 5 Minuten ein", "step1Title": "Unternehmenstyp", "step1Subtitle": "Welche Art von Betrieb fuhren Sie?", "step2Title": "Geschaftsdetails", "step2Subtitle": "Kontakt- und Standortinformationen", "step3Title": "Identitat", "step3Subtitle": "Logo und Unternehmensbeschreibung", "step4Title": "Einstellungen", "step4Subtitle": "Sprache, Wahrung und Buchungslink", "step5Title": "Alles bereit!", "step5Subtitle": "Ihr Unternehmen ist konfiguriert", "next": "Weiter", "back": "Zuruck", "finish": "Zum Dashboard", "operatorTypes": { "hotel": "Hotel / Pension", "activity": "Touristik-Aktivitat", "rentacar": "Autovermietung", "restaurant": "Restaurant" }, "operatorDescriptions": { "hotel": "Zimmer, Suiten, Bungalows — Check-in/Check-out-Verwaltung", "activity": "Kitesurfen, Tauchen, Touren — Sitzungen und Pro-Person-Buchungen", "rentacar": "Tagesmietwagen mit benutzerdefinierten Abholorten", "restaurant": "Tische, stundenweise Buchungen, Belegungsverwaltung" }, "businessName": "Unternehmensname", "phone": "Telefon", "whatsapp": "WhatsApp", "island": "Insel", "selectIsland": "Insel auswahlen...", "address": "Adresse", "description": "Kurzbeschreibung", "logo": "Logo", "language": "Standardsprache", "currency": "Wahrung", "timezone": "Zeitzone", "bookingSlug": "Buchungslink", "bookingSlugHint": "app.saldesk.cv/book/", "uploadLogo": "Logo hochladen", "dragDrop": "oder hierher ziehen und ablegen", "logoTooBig": "Das Logo muss kleiner als 2 MB sein", "logoUploadError": "Das Logo konnte nicht hochgeladen werden. Prüfen Sie die Bucket-Berechtigungen.", "businessNamePlaceholder": "Z. B. Sal Kite Center", "addressPlaceholder": "Santa Maria, Insel Sal", "descriptionPlaceholder": "Beschreiben Sie Ihr Unternehmen in 2-3 Sätzen...", "logoPreviewAlt": "Logo-Vorschau", "changeLogo": "Zum Ändern klicken", "logoHint": "PNG, JPG, WebP — max. 2 MB", "summaryType": "Typ", "doneTitle": "Alles bereit!", "doneBody": "Ihr Betreiberprofil wurde erfolgreich erstellt. Beginnen Sie damit, Ihre Einheiten hinzuzufügen.", "goToDashboard": "Zum Dashboard" },
   "review": {
     "loading": "Wird geladen...",
     "title": "Wie war es?",
@@ -1639,5 +1639,77 @@
     "yearComparison": "Jahresvergleich",
     "revenueYear": "Einnahmen {{year}}",
     "change": "Veränderung"
+  },
+  "accountOptions": {
+    "language": {
+      "pt": "Português",
+      "en": "English",
+      "de": "Deutsch",
+      "nl": "Nederlands"
+    },
+    "currency": {
+      "EUR": "EUR — Euro",
+      "CVE": "CVE — Kap-Verde-Escudo",
+      "USD": "USD — US-Dollar"
+    },
+    "timezone": {
+      "Atlantic/Cape_Verde": "Kap Verde (UTC-1)",
+      "Europe/Lisbon": "Lissabon (UTC+0/+1)",
+      "Europe/London": "London (UTC+0/+1)"
+    }
+  },
+  "profile": {
+    "title": "Betreiberprofil",
+    "subtitle": "Öffentliche Informationen zu Ihrem Unternehmen",
+    "logo": "Logo",
+    "logoAlt": "Logo",
+    "logoHint": "JPG, PNG, WebP — max. 5 MB",
+    "covers": "Titelbilder",
+    "coversIntro": "Werden im Karussell Ihrer öffentlichen Buchungsseite angezeigt.",
+    "coversHint": "Bis zu 5 Fotos · erstes = Hauptfoto · JPG, PNG, WebP · max. 5 MB pro Bild",
+    "businessInfo": "Unternehmensinformationen",
+    "legalName": "Rechtlicher Name",
+    "tradeName": "Handelsname",
+    "tradeNamePlaceholder": "Z. B. Zy Tours Sal",
+    "tagline": "Slogan",
+    "taglinePlaceholder": "Z. B. Das beste Erlebnis auf Kap Verde",
+    "description": "Beschreibung",
+    "descriptionPlaceholder": "Beschreiben Sie Ihr Unternehmen für Ihre Kunden...",
+    "phone": "Telefon",
+    "whatsapp": "WhatsApp",
+    "address": "Adresse",
+    "settings": "Einstellungen",
+    "language": "Standardsprache",
+    "currency": "Währung",
+    "timezone": "Zeitzone",
+    "save": "Änderungen speichern",
+    "saved": "Gespeichert!"
+  },
+  "billingResult": {
+    "confirming": "Zahlung wird bestätigt...",
+    "confirmed": "Zahlung bestätigt!",
+    "confirmedBody": "Ihr SalDesk-Abonnement ist jetzt aktiv.",
+    "backToBilling": "Zurück zur Abrechnung",
+    "errorTitle": "Die Zahlung konnte nicht bestätigt werden",
+    "errorBody": "Wenn die Zahlung abgeschlossen wurde, wird sie in Kürze verbucht. Andernfalls versuchen Sie es erneut.",
+    "cancelTitle": "Zahlung nicht abgeschlossen",
+    "cancelBody": "Sie haben die Zahlung abgebrochen. Es wurde nichts berechnet und Ihr Tarif wurde nicht geändert."
+  },
+  "register": {
+    "inviteTitle": "Zugang nur mit Einladung",
+    "inviteIntro": "SalDesk befindet sich in der Startphase. Sie benötigen einen Einladungscode.",
+    "inviteCode": "Einladungscode",
+    "inviteCodePlaceholder": "Z. B. SALDESK2026",
+    "validateCode": "Code prüfen",
+    "codeRequired": "Geben Sie Ihren Einladungscode ein.",
+    "codeInvalid": "Ungültiger oder abgelaufener Code. Prüfen Sie den Code und versuchen Sie es erneut.",
+    "noCode": "Kein Code?",
+    "requestAccess": "Frühzeitigen Zugang anfragen",
+    "codeValidatedBefore": "Code",
+    "codeValidatedAfter": "bestätigt.",
+    "namePlaceholder": "Max Mustermann",
+    "emailPlaceholder": "name@email.com",
+    "passwordWeak": "Das Passwort muss stark sein: mindestens 8 Zeichen, ein Großbuchstabe, eine Zahl und ein Sonderzeichen.",
+    "passwordMismatch": "Die Passwörter stimmen nicht überein"
   }
 }
