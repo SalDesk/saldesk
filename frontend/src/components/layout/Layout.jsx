@@ -14,10 +14,12 @@ import { getMe } from '../../services/authService';
 import { trackPageView } from '../../utils/telemetry';
 import { playNotificationSound } from '../../utils/notificationSound';
 import { ehDoOperador } from '../../utils/mensagens';
+import { getT, useT } from '../../i18n';
 
 const OPERATOR_REFRESH_MS = 60 * 1000;
 
 export default function Layout() {
+  const t = useT();
   const [moreDrawerOpen, setMoreDrawerOpen] = useState(false);
   const sidebarOpen = useUiStore((s) => s.sidebarOpen);
   const setOperator = useAuthStore((s) => s.setOperator);
@@ -51,7 +53,9 @@ export default function Layout() {
     socket.on('message:new', (msg) => {
       if (ehDoOperador(msg) && msg.sender_id === operatorId) return;
       playNotificationSound();
-      const title = msg.sender_type === 'guest' ? 'Novo cliente' : 'Mensagem da equipa';
+      /* Lingua lida no momento do aviso: a ligacao vive toda a sessao e a lingua pode mudar entretanto */
+      const tAgora = getT(useUiStore.getState().lang);
+      const title = msg.sender_type === 'guest' ? tAgora('layout.customerMessage') : tAgora('layout.teamMessage');
       toast.notify(title, msg.content, () => navigate('/mensagens'));
     });
 
@@ -61,7 +65,7 @@ export default function Layout() {
        isto ate agora, sem popup nem som. */
     socket.on('admin:message:new', (msg) => {
       playNotificationSound();
-      toast.notify('Mensagem do SalDesk', msg.content, () => navigate('/mensagens-saldesk'));
+      toast.notify(getT(useUiStore.getState().lang)('layout.saldeskMessage'), msg.content, () => navigate('/mensagens-saldesk'));
     });
 
     return () => socket.disconnect();
@@ -116,7 +120,7 @@ export default function Layout() {
       <div className="flex-1 flex flex-col min-w-0">
         {isDemo && (
           <div className="bg-sand-500 text-ocean-900 text-xs font-display font-bold uppercase tracking-wide text-center py-1.5 px-3 shrink-0">
-            Modo demonstração — dados fictícios, alterações não são guardadas
+            {t('layout.demoBanner')}
           </div>
         )}
         <Topbar />

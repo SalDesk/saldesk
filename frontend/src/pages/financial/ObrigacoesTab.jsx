@@ -10,10 +10,12 @@ import Button from '../../components/ui/Button';
 import Input, { Textarea, Select } from '../../components/ui/Input';
 import LoadingSpinner from '../../components/shared/LoadingSpinner';
 import { fmtDate } from './shared';
+import { useLingua } from '../../utils/formatoLingua';
 
 /* ─────────────────── OBRIGACOES ─────────────────── */
 
 function ObrigacoesTab({ currency }) {
+  useLingua();
   const [obl, setObl] = useState({});
   const [loading, setLoading] = useState(true);
   const now  = new Date();

@@ -10,6 +10,7 @@ import Button from '../../components/ui/Button';
 import Input, { Select } from '../../components/ui/Input';
 import { SaveBanner } from './shared';
 import { useT } from '../../i18n';
+import { mensagemErro } from '../../utils/mensagemErro';
 
 /* ─────────────────────────────────────────────────────────
    TAB 1 — CONTA
@@ -52,7 +53,7 @@ export default function ContaTab({ operator, onSaved }) {
       setSaved(true); setTimeout(() => setSaved(false), 3000);
       onSaved?.();
     } catch (err) {
-      setError(err.response?.data?.error || t('settings.conta.saveError'));
+      setError(mensagemErro(err, t, t('settings.conta.saveError')));
     } finally { setSaving(false); }
   }
 

@@ -5,6 +5,8 @@ import { createCompositeAssignment } from '../../services/assignmentService';
 import Modal from '../ui/Modal';
 import Button from '../ui/Button';
 import { Select } from '../ui/Input';
+import { useT } from '../../i18n';
+import { mensagemErro } from '../../utils/mensagemErro';
 
 /**
  * Atribuicao composta Guia + Condutor + Viatura para reservas de Activity/Tour.
@@ -13,6 +15,7 @@ import { Select } from '../ui/Input';
  * da pagina de Guias, por colaborador).
  */
 export default function AssignCompositeModal({ reservation, reservations, guide, guides, onClose, onDone }) {
+  const t = useT();
   const [selected,   setSelected]   = useState(reservation?.id || '');
   const [guideId,    setGuideId]    = useState(guide?.id || '');
   const [driverId,   setDriverId]   = useState(guide?.id || '');
@@ -49,7 +52,7 @@ export default function AssignCompositeModal({ reservation, reservations, guide,
       });
       onDone();
     } catch (err) {
-      setError(err.response?.data?.error || 'Erro ao atribuir');
+      setError(mensagemErro(err, t, 'Erro ao atribuir'));
     } finally {
       setSaving(false);
     }

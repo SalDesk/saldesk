@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { MessageCircle, ExternalLink } from 'lucide-react';
 import { sendReservationMessage, markMessageOpened } from '../../services/messagingService';
 import { useToast } from '../../store/toastStore';
+import { useT } from '../../i18n';
+import { mensagemErro } from '../../utils/mensagemErro';
 
 /* Mensagens de WhatsApp para o cliente da reserva, por wa.me: o SalDesk prepara o texto
    (idioma do cliente, dados da reserva) e abre o WhatsApp com tudo pronto; quem envia e a pessoa.
@@ -14,6 +16,7 @@ const ACCOES = [
 ];
 
 export default function WhatsAppSend({ reservationId, status, hasPhone }) {
+  const t = useT();
   const toast = useToast();
   const [aEnviar, setAEnviar] = useState(null);
   const [linkManual, setLinkManual] = useState(null); // quando o navegador bloqueia o popup
@@ -47,7 +50,7 @@ export default function WhatsAppSend({ reservationId, status, hasPhone }) {
       toast.success(msg.created ? `${accao.label}: WhatsApp aberto` : `${accao.label} já estava preparada: WhatsApp aberto`);
     } catch (err) {
       if (janela) janela.close();
-      toast.error(err.response?.data?.error || 'Não foi possível preparar a mensagem');
+      toast.error(mensagemErro(err, t, 'Não foi possível preparar a mensagem'));
     } finally {
       setAEnviar(null);
     }

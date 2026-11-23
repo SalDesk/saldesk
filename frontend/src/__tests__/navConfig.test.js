@@ -6,6 +6,7 @@ import {
   filterNavItems,
   sectionIdOfPath,
 } from '../components/layout/navConfig';
+import { getT } from '../i18n';
 
 /* Conjuntos de rotas copiados do TYPE_NAV antigo (Sidebar.jsx) */
 const OLD_ROUTES = {
@@ -125,5 +126,38 @@ describe('navConfig', () => {
     expect(sectionIdOfPath(secs, '/colaboradores/abc')).toBe('gestao');
     expect(sectionIdOfPath(secs, '/')).toBe('operacao');
     expect(sectionIdOfPath(secs, '/nao-existe')).toBeNull();
+  });
+});
+
+describe('navConfig por lingua', () => {
+  it('sem t usa os rotulos portugueses; com getT(en) usa o glossario ingles', () => {
+    const en = getT('en');
+    const enItens = getNavSections('activity', en).flatMap((s) => s.items);
+    const rotulo = (itens, to) => itens.find((i) => i.to === to).label;
+
+    expect(getNavSections('activity')[0].label).toBe('Operação');
+    expect(getNavSections('activity', en).map((s) => s.label)).toEqual([
+      'Operations', 'Customers', 'Management', 'Growth', 'Configuration',
+    ]);
+    expect(rotulo(enItens, '/reservas')).toBe('Bookings');
+    expect(rotulo(enItens, '/clientes')).toBe('Customers');
+    expect(rotulo(enItens, '/definicoes')).toBe('Settings');
+    expect(rotulo(enItens, '/unidades')).toBe('Tours & Activities');
+    expect(rotulo(getNavSections('hotel', en).flatMap((s) => s.items), '/unidades')).toBe('Rooms');
+    expect(filterNavItems(enItens, 'book').map((i) => i.to)).toEqual(['/reservas']);
+  });
+
+  it('cada item e seccao tem a chave do rotulo, e todas existem em pt', () => {
+    const pt = getT('pt');
+    ['activity', 'hotel', 'rentacar', 'restaurant'].forEach((tipo) => {
+      getNavSections(tipo).forEach((s) => {
+        expect(pt(s.labelKey)).toBe(s.label);
+        expect(s.label).not.toBe(s.labelKey);
+        s.items.forEach((i) => {
+          expect(pt(i.labelKey)).toBe(i.label);
+          expect(i.label).not.toBe(i.labelKey);
+        });
+      });
+    });
   });
 });

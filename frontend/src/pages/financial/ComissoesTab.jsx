@@ -11,10 +11,12 @@ import EmptyState from '../../components/ui/EmptyState';
 import Modal from '../../components/ui/Modal';
 import LoadingSpinner from '../../components/shared/LoadingSpinner';
 import { fmtMoney } from './shared';
+import { useLingua } from '../../utils/formatoLingua';
 
 /* ─────────────────── COMISSOES VENDEDORES ─────────────────── */
 
 function ComissoesTab({ currency }) {
+  useLingua();
   const [sellers, setSellers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [sellerComms, setSellerComms] = useState({});

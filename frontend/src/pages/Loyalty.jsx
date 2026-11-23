@@ -19,6 +19,8 @@ import EmptyState from '../components/ui/EmptyState';
 import Modal from '../components/ui/Modal';
 import Input from '../components/ui/Input';
 import LoadingSpinner from '../components/shared/LoadingSpinner';
+import { useT } from '../i18n';
+import { mensagemErro } from '../utils/mensagemErro';
 
 const DEFAULT_CONFIG = {
   active: false,
@@ -95,6 +97,7 @@ function HistoryList({ customerId, refreshKey }) {
 
 /* ── Points Modal ── */
 function PointsModal({ customer, config, onClose, onAdjust, onRedeem }) {
+  const t = useT();
   const current = Number(customer?.loyalty_points || 0);
   const [mode,   setMode]   = useState('add');
   const [amount, setAmount] = useState('');
@@ -128,7 +131,7 @@ function PointsModal({ customer, config, onClose, onAdjust, onRedeem }) {
       setRedeemedVoucher(result.voucher);
       setHistoryKey(k => k + 1);
     } catch (err) {
-      setError(err?.response?.data?.error || 'Erro ao resgatar pontos.');
+      setError(mensagemErro(err, t, 'Erro ao resgatar pontos.'));
     } finally { setRedeeming(false); }
   }
 

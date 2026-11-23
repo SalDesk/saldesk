@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { X } from 'lucide-react';
 import Button from './Button';
+import { useT } from '../../i18n';
 
 const sizes = {
   sm:  'max-w-sm',
@@ -17,6 +18,7 @@ export default function Modal({
   children,
   footer,
 }) {
+  const t = useT();
   const overlayRef = useRef(null);
 
   useEffect(() => {
@@ -54,7 +56,7 @@ export default function Modal({
             <button
               onClick={onClose}
               className="text-n-400 hover:text-n-700 transition-colors p-1 rounded-sm"
-              aria-label="Fechar"
+              aria-label={t('common.close')}
             >
               <X size={18} strokeWidth={1.75} />
             </button>

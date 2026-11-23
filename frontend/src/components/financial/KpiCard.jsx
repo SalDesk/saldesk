@@ -1,9 +1,10 @@
 import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
+import { formatarNumero, useLingua } from '../../utils/formatoLingua';
 const EUR_CVE = 110;
 function fmtMoney(value, currency) {
   const n = Number(value || 0);
-  if (currency === 'CVE') return `${Math.round(n * EUR_CVE).toLocaleString('pt-PT')} CVE`;
-  return `€${Math.round(n).toLocaleString('pt-PT')}`;
+  if (currency === 'CVE') return `${formatarNumero(Math.round(n * EUR_CVE))} CVE`;
+  return `€${formatarNumero(Math.round(n))}`;
 }
 /* Numero finito ou null (null, undefined, texto como '—' e NaN contam como em falta) */
 function toFinite(value) {
@@ -31,6 +32,8 @@ export default function KpiCard({
   icon: Icon, format = 'number', currency = 'EUR',
   sub,
 }) {
+  /* Subscreve a lingua para os valores formatados mudarem com ela */
+  useLingua();
   /* Valor em falta (null, undefined, '—', NaN) mostra o traco em euro e percentagem */
   const finite = toFinite(value);
   const formatted =

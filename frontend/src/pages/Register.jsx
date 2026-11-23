@@ -9,6 +9,7 @@ import AuthLayout from '../components/auth/AuthLayout';
 import Input from '../components/ui/Input';
 import Button from '../components/ui/Button';
 import PasswordStrength, { getPasswordStrength } from '../components/auth/PasswordStrength';
+import { mensagemErro } from '../utils/mensagemErro';
 
 /* Invite-gate feature flag — can be disabled via env */
 const INVITE_REQUIRED = import.meta.env.VITE_INVITE_REQUIRED !== 'false';
@@ -96,7 +97,7 @@ export default function Register() {
       }
       navigate('/onboarding');
     } catch (err) {
-      setServerError(err.response?.data?.error || t('errors.generic'));
+      setServerError(mensagemErro(err, t, t('errors.generic')));
     } finally {
       setLoading(false);
     }

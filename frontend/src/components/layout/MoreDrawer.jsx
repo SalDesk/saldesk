@@ -5,10 +5,12 @@ import useAuthStore from '../../store/authStore';
 import usePlan from '../../hooks/usePlan';
 import { UpgradeModal } from '../PlanGuard';
 import { PLAN_BADGE, getNavSections, isLocked } from './navConfig';
+import { useT } from '../../i18n';
 
 const HIDDEN_IN_DRAWER = ['/', '/reservas', '/mensagens'];
 
 export default function MoreDrawer({ open, onClose }) {
+  const t = useT();
   const { operator, logout } = useAuthStore();
   const navigate = useNavigate();
   const { canAccess } = usePlan();
@@ -38,7 +40,7 @@ export default function MoreDrawer({ open, onClose }) {
 
   const opType   = operator?.operator_type || 'hotel';
   /* Seccoes sem os itens que ja estao na barra inferior */
-  const sections = getNavSections(opType)
+  const sections = getNavSections(opType, t)
     .map(section => ({ ...section, items: section.items.filter(item => !HIDDEN_IN_DRAWER.includes(item.to)) }))
     .filter(section => section.items.length > 0);
 
@@ -71,7 +73,7 @@ export default function MoreDrawer({ open, onClose }) {
         ref={folhaRef}
         role={open ? 'dialog' : undefined}
         aria-modal={open ? 'true' : undefined}
-        aria-label={open ? 'Mais opções' : undefined}
+        aria-label={open ? t('nav.moreOptions') : undefined}
         aria-hidden={open ? undefined : 'true'}
         inert={open ? undefined : ''}
         className={`md:hidden fixed bottom-0 inset-x-0 z-50 bg-white rounded-t-2xl shadow-xl max-h-[80vh] overflow-y-auto transition-transform duration-250 ease-out ${
@@ -125,7 +127,7 @@ export default function MoreDrawer({ open, onClose }) {
             className="w-full flex items-center justify-center gap-2 py-3 text-sm font-body font-medium text-error"
           >
             <LogOut size={16} strokeWidth={1.75} />
-            Sair
+            {t('nav.logout')}
           </button>
         </div>
       </div>

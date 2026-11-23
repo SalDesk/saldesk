@@ -4,8 +4,11 @@ import { updateReservation } from '../../services/reservationsService';
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
 import Modal from '../../components/ui/Modal';
+import { useT } from '../../i18n';
+import { mensagemErro } from '../../utils/mensagemErro';
 
 export default function RescheduleModal({ reservation, open, onClose, onDone }) {
+  const t = useT();
   const [newDate,  setNewDate]  = useState(reservation?.check_in || '');
   const [saving,   setSaving]   = useState(false);
   const [error,    setError]    = useState('');
@@ -19,7 +22,7 @@ export default function RescheduleModal({ reservation, open, onClose, onDone }) 
       await updateReservation(reservation.id, { check_in: newDate });
       onDone(newDate);
     } catch (err) {
-      setError(err.response?.data?.error || 'Erro ao reagendar');
+      setError(mensagemErro(err, t, 'Erro ao reagendar'));
     } finally { setSaving(false); }
   }
 

@@ -1,8 +1,9 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import CommandPalette from '../components/layout/CommandPalette';
 import useAuthStore from '../store/authStore';
+import useUiStore from '../store/uiStore';
 
 const navigate = vi.fn();
 
@@ -137,5 +138,31 @@ describe('CommandPalette', () => {
     renderPalette();
     escrever('zzzz');
     expect(screen.getByText('Sem resultados')).toBeInTheDocument();
+  });
+});
+
+describe('CommandPalette em ingles', () => {
+  beforeEach(() => {
+    useAuthStore.setState({ operator: { operator_type: 'activity', plan: 'pro' } });
+    useUiStore.setState({ lang: 'en' });
+  });
+
+  /* Desmonta antes de repor a lingua, para a mudanca nao re-renderizar fora de act */
+  afterEach(() => {
+    cleanup();
+    useUiStore.setState({ lang: 'pt' });
+  });
+
+  it('encontra Bookings pelo nome ingles e nao pelo portugues', () => {
+    renderPalette();
+    const input = screen.getByPlaceholderText('Search…');
+    expect(screen.getByRole('dialog', { name: 'Search screens' })).toBeInTheDocument();
+
+    fireEvent.change(input, { target: { value: 'book' } });
+    expect(screen.getByRole('option', { name: 'Bookings' })).toBeInTheDocument();
+
+    fireEvent.change(input, { target: { value: 'reservas' } });
+    expect(screen.queryByRole('option')).not.toBeInTheDocument();
+    expect(screen.getByText('No results')).toBeInTheDocument();
   });
 });

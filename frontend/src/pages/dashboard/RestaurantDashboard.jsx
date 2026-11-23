@@ -8,6 +8,7 @@ import { listUnits } from '../../services/unitsService';
 import { listReservations } from '../../services/reservationsService';
 import { estadiaEm } from '../../services/reservationRanges';
 import { useT } from '../../i18n';
+import { formatarNumero } from '../../utils/formatoLingua';
 import useUiStore from '../../store/uiStore';
 import useAgora from '../../hooks/useAgora';
 import AttentionPanel from '../../components/dashboard/AttentionPanel';
@@ -35,7 +36,7 @@ function proximosDias() {
 }
 
 function euros(valor) {
-  return `€${Math.round(Number(valor) || 0).toLocaleString('pt-PT')}`;
+  return `€${formatarNumero(Math.round(Number(valor) || 0))}`;
 }
 
 /* ─── Restaurant dashboard ──────────────────────────────────── */

@@ -10,6 +10,7 @@ import Logo from '../shared/Logo';
 import Button from '../ui/Button';
 import Input, { Textarea, Select } from '../ui/Input';
 import LanguageToggle from '../shared/LanguageToggle';
+import { mensagemErro } from '../../utils/mensagemErro';
 
 const supabase = createClient(
   import.meta.env.VITE_SUPABASE_URL || '',
@@ -88,7 +89,7 @@ export default function OnboardingWizard() {
       setOperator(updated);
       setStep(nextStep);
     } catch (err) {
-      setError(err.response?.data?.error || t('errors.generic'));
+      setError(mensagemErro(err, t, t('errors.generic')));
     } finally {
       setLoading(false);
     }
@@ -102,7 +103,7 @@ export default function OnboardingWizard() {
       setOperator(updated);
       navigate('/');
     } catch (err) {
-      setError(err.response?.data?.error || t('errors.generic'));
+      setError(mensagemErro(err, t, t('errors.generic')));
     } finally {
       setLoading(false);
     }

@@ -7,6 +7,7 @@ import Badge from '../ui/Badge';
 import LoadingSpinner from '../shared/LoadingSpinner';
 import WhatsAppSend from '../messaging/WhatsAppSend';
 import { rotuloEstadoReserva } from '../../utils/estadoReserva';
+import { mensagemErro } from '../../utils/mensagemErro';
 
 const SOURCE_LABEL = {
   direct:       'Directo',
@@ -74,7 +75,7 @@ export default function ReservationDetailModal({ reservationId, open, onClose })
     setError('');
     getReservation(reservationId)
       .then(setReservation)
-      .catch((err) => setError(err.response?.data?.error || t('errors.generic')))
+      .catch((err) => setError(mensagemErro(err, t, t('errors.generic'))))
       .finally(() => setLoading(false));
   }, [open, reservationId]);
 

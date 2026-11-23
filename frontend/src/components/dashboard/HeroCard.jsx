@@ -1,11 +1,12 @@
 import { useT } from '../../i18n';
+import { formatarNumero } from '../../utils/formatoLingua';
 
 const LARGURA = 200;
 const ALTURA = 34;
 
 function euros(valor) {
   const n = Number(valor);
-  return `€${Math.round(Number.isFinite(n) ? n : 0).toLocaleString('pt-PT')}`;
+  return `€${formatarNumero(Math.round(Number.isFinite(n) ? n : 0))}`;
 }
 
 /* Caminhos SVG (linha e area) de uma serie; menos de 2 pontos ou tudo a zero da uma linha plana em baixo */

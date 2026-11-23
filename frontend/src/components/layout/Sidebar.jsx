@@ -7,6 +7,7 @@ import usePlan from '../../hooks/usePlan';
 import { useNavCounters } from '../../hooks/useNavCounters';
 import { UpgradeModal } from '../PlanGuard';
 import Logo from '../shared/Logo';
+import { useT } from '../../i18n';
 import { PLAN_BADGE, getNavSections, isLocked, sectionIdOfPath } from './navConfig';
 
 /* Ancoras para o WelcomeTour (ver components/tour/WelcomeTour.jsx) --
@@ -30,6 +31,7 @@ function CounterPill({ value }) {
 }
 
 export default function Sidebar({ onClose }) {
+  const t = useT();
   const operator = useAuthStore((s) => s.operator);
   const navCollapsed = useUiStore((s) => s.navCollapsed);
   const setNavSectionCollapsed = useUiStore((s) => s.setNavSectionCollapsed);
@@ -39,10 +41,9 @@ export default function Sidebar({ onClose }) {
   const [upgradeModal, setUpgradeModal] = useState(null); // { plan, feature }
 
   const opType    = operator?.operator_type || 'hotel';
-  const sections  = getNavSections(opType);
+  const sections  = getNavSections(opType, t);
   const slug      = operator?.slug;
-  const lang      = operator?.language || 'pt';
-  const siteLabel = lang === 'en' ? 'View my site' : 'Ver o meu site';
+  const siteLabel = t('nav.viewSite');
   const activeSectionId = sectionIdOfPath(sections, pathname);
 
   /* Estado efetivo: substituicao explicita ou defaultCollapsed; a seccao da rota ativa abre sempre */
@@ -103,7 +104,7 @@ export default function Sidebar({ onClose }) {
       <div className="flex items-center justify-between px-5 py-5 border-b border-ocean-700">
         <Logo white size="lg" />
         {onClose && (
-          <button onClick={onClose} className="md:hidden text-ocean-300 hover:text-white p-1" aria-label="Fechar">
+          <button onClick={onClose} className="md:hidden text-ocean-300 hover:text-white p-1" aria-label={t('common.close')}>
             <X size={18} strokeWidth={1.75} />
           </button>
         )}

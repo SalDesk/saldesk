@@ -1,7 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import Vouchers from '../pages/Vouchers';
 import useAuthStore from '../store/authStore';
+import useUiStore from '../store/uiStore';
+import en from '../i18n/en.json';
 import { listVouchers, createVoucher, updateVoucher, deleteVoucher } from '../services/vouchersService';
 import { listUnits } from '../services/unitsService';
 import { getBookingLink } from '../services/marketingService';
@@ -252,6 +254,23 @@ describe('Vouchers: formulário e acções', () => {
     updateVoucher.mockImplementation(async (id, d) => ({ ...VOUCHERS[0], ...d }));
     fireEvent.click(within(dlg).getByRole('button', { name: 'Guardar' }));
     await waitFor(() => expect(updateVoucher).toHaveBeenLastCalledWith('v1', expect.objectContaining({ code: 'VERAO20', value: 20, min_amount: 50, max_uses: 10 })));
+  });
+
+  it('em_ingles_o_erro_no_formulario_traduz_pelo_codigo_e_em_pt_fica_o_texto_do_servidor', async () => {
+    const erro = { response: { data: { error: 'Já existe um voucher com este código', code: 'DUPLICATE_CODE' } } };
+    updateVoucher.mockRejectedValue(erro);
+    await montar();
+    fireEvent.click(within(linha('VERAO20')).getByTitle('Editar'));
+    const dlg = screen.getByRole('dialog');
+    fireEvent.click(within(dlg).getByRole('button', { name: 'Guardar' }));
+    expect(await within(dlg).findByText('Já existe um voucher com este código')).toBeInTheDocument();
+    act(() => { useUiStore.setState({ lang: 'en' }); });
+    try {
+      fireEvent.click(within(dlg).getByRole('button', { name: /Guardar|Save/ }));
+      expect(await within(dlg).findByText(en.errors.code.DUPLICATE_CODE)).toBeInTheDocument();
+    } finally {
+      act(() => { useUiStore.setState({ lang: 'pt' }); });
+    }
   });
 
   it('activar_desactivar_chama_updateVoucher_com_active_invertido', async () => {

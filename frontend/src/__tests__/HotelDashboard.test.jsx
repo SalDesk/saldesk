@@ -243,6 +243,19 @@ describe('HotelDashboard (Hoje)', () => {
     expect(screen.getByText('+20% vs mês anterior')).toBeInTheDocument();
   });
 
+  it('o valor por receber segue a lingua: 12 345 em PT e 12,345 em EN', async () => {
+    const porPagar = [reserva({ id: 'rp', total_price: 12345, amount_paid: 0, payment_status: 'pending' })];
+    carregaServicos({ porPagar });
+    renderHotel();
+    /* o pt-PT separa milhares com um espaco unico (nao-quebravel); o texto do DOM chega normalizado */
+    expect(await screen.findByText(/^€12\s345$/)).toBeInTheDocument();
+    cleanup();
+    useUiStore.setState({ lang: 'en' });
+    carregaServicos({ porPagar });
+    renderHotel();
+    expect(await screen.findByText('€12,345')).toBeInTheDocument();
+  });
+
   it('sem mês anterior a receita não mostra variação', async () => {
     carregaServicos({ res: { atual: { receita: 500 } } });
     renderHotel();

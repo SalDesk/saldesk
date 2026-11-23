@@ -13,6 +13,7 @@ import Table from '../components/ui/Table';
 import Modal from '../components/ui/Modal';
 import FilterChips from '../components/ui/FilterChips';
 import CustomerDetail from '../components/crm/CustomerDetail';
+import { mensagemErro } from '../utils/mensagemErro';
 
 const SEGMENTS = [
   { key: '',           label: 'Todos',       Icon: Users },
@@ -93,6 +94,7 @@ const TAG_OPTIONS = [
 ];
 
 function NewCustomerModal({ open, onClose, onCreated }) {
+  const t = useT();
   const [form,    setForm]    = useState({ name: '', email: '', phone: '', country_code: '', notes: '', tags: [], custom_price: '' });
   const [loading, setLoading] = useState(false);
   const [error,   setError]   = useState('');
@@ -118,7 +120,7 @@ function NewCustomerModal({ open, onClose, onCreated }) {
       setForm({ name: '', email: '', phone: '', country_code: '', notes: '', tags: [], custom_price: '' });
       onClose();
     } catch (err) {
-      setError(err.response?.data?.error || 'Erro ao criar cliente');
+      setError(mensagemErro(err, t, 'Erro ao criar cliente'));
     } finally { setLoading(false); }
   }
 
@@ -178,6 +180,7 @@ function NewCustomerModal({ open, onClose, onCreated }) {
 }
 
 function CsvImportModal({ open, onClose, onImported }) {
+  const t = useT();
   const [file,     setFile]    = useState(null);
   const [preview,  setPreview] = useState([]);
   const [loading,  setLoading] = useState(false);
@@ -210,7 +213,7 @@ function CsvImportModal({ open, onClose, onImported }) {
       onImported(res.data.data?.imported || 0);
       onClose();
     } catch (err) {
-      setError(err.response?.data?.error || 'Erro ao importar ficheiro');
+      setError(mensagemErro(err, t, 'Erro ao importar ficheiro'));
     } finally { setLoading(false); }
   }
 

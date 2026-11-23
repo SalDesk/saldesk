@@ -17,6 +17,8 @@ import EmptyState from '../components/ui/EmptyState';
 import Modal from '../components/ui/Modal';
 import Input, { Textarea, Select } from '../components/ui/Input';
 import LoadingSpinner from '../components/shared/LoadingSpinner';
+import { useT } from '../i18n';
+import { mensagemErro } from '../utils/mensagemErro';
 
 const PARTNER_TYPES = [
   { value: 'hotel',      label: 'Hotel / Alojamento', Icon: Hotel   },
@@ -99,6 +101,7 @@ function OperatorPicker({ selected, onSelect }) {
 
 /* ── PartnerModal ── */
 function PartnerModal({ partner, onSave, onRequest, onClose }) {
+  const t = useT();
   const isNew = !partner || partner._new;
   const base  = isNew ? null : partner;
   const isRealPartner = !!base?.partner_operator_id;
@@ -149,7 +152,7 @@ function PartnerModal({ partner, onSave, onRequest, onClose }) {
         await onSave(base?.id, { ...dadosComuns, name: form.name, partner_type: form.partner_type, active: form.active });
       }
     } catch (err) {
-      setError(err?.response?.data?.error || 'Erro ao guardar parceiro.');
+      setError(mensagemErro(err, t, 'Erro ao guardar parceiro.'));
     } finally {
       setSaving(false);
     }

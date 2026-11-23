@@ -4,8 +4,10 @@ import Table from '../../components/ui/Table';
 import EmptyState from '../../components/ui/EmptyState';
 import ServiceBarChart from '../../components/financial/ServiceBarChart';
 import { fmtMoney, unitTotalCost } from './shared';
+import { useLingua } from '../../utils/formatoLingua';
 
 function PorTourTab({ unidades, currency, costs, onEditCosts }) {
+  useLingua();
   if (!unidades || unidades.length === 0) return (
     <Card padding="p-0"><EmptyState icon={Layers} title="Sem dados de tours no período." /></Card>
   );

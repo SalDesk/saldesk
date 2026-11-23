@@ -9,6 +9,7 @@ import { estadiaEm, estadiaNoMes, estadiaProximosDias } from '../../services/res
 import { getWeatherForecast, weatherInfo, isBadWeather } from '../../services/weatherService';
 import api from '../../services/api';
 import { useT } from '../../i18n';
+import { formatarNumero } from '../../utils/formatoLingua';
 import useUiStore from '../../store/uiStore';
 import useAgora from '../../hooks/useAgora';
 import AttentionPanel from '../../components/dashboard/AttentionPanel';
@@ -42,7 +43,7 @@ function weekDays() {
 }
 
 function euros(valor) {
-  return `€${Math.round(Number(valor) || 0).toLocaleString('pt-PT')}`;
+  return `€${formatarNumero(Math.round(Number(valor) || 0))}`;
 }
 
 export default function ActivityDashboard() {

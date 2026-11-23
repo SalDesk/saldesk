@@ -18,6 +18,7 @@ import Input, { Select } from '../components/ui/Input';
 import CalendarView from '../components/calendar/CalendarView';
 import reservationCoversDay from '../components/calendar/reservationCoversDay';
 import LoadingSpinner from '../components/shared/LoadingSpinner';
+import { mensagemErro } from '../utils/mensagemErro';
 
 const MESES_PT = ['Janeiro','Fevereiro','Marco','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const DIAS_ABR  = ['Dom','Seg','Ter','Qua','Qui','Sex','Sab'];
@@ -187,7 +188,7 @@ export default function Calendar() {
       setNovaReserva(null);
       await carregar();
     } catch (err) {
-      setNovaErro(err.response?.data?.error || t('errors.generic'));
+      setNovaErro(mensagemErro(err, t, t('errors.generic')));
     } finally {
       setNovaLoading(false);
     }
