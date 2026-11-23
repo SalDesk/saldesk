@@ -6,7 +6,10 @@ import { textosPortugueses, temPortugues } from './helpers/detectorPortugues';
 /* Guarda contra texto portugues escrito directamente no codigo do painel do operador. Os ficheiros desta
    lista ja passaram todos os textos para i18n (useT / getT); se alguem voltar a escrever "Guardar" ou
    "Sem resultados" no JSX, o teste falha. As fases seguintes acrescentam ficheiros a lista.
-   Caminhos relativos a frontend/src. O painel do fundador (pages/admin/*, AdminLayout.jsx) fica de fora. */
+   Caminhos relativos a frontend/src. O painel do fundador (pages/admin/*, AdminLayout.jsx) fica de fora.
+   Limites por desenho do detector (ver helpers/detectorPortugues.js): uma palavra so, em minusculas, entre
+   aspas e tratada como id e nao e vista; uma palavra com maiuscula, sem acento e fora de PALAVRAS_PORTUGUESAS
+   passa. A guarda apanha o grosso; a revisao continua a ser precisa para o resto. */
 export const FICHEIROS_CONVERTIDOS = [
   /* Moldura do painel: menu, barra de topo, pesquisa, navegacao movel */
   'components/layout/navConfig.js',
@@ -117,6 +120,27 @@ describe('o detector de portugues fixo', () => {
     expect(textosPortugueses(codigo)).toEqual([]);
   });
 
+  it('apanha portugues que comeca com uma palavra pequena em maiuscula ou com verbos comuns sem acento', () => {
+    const codigo = [
+      '<p>Por favor aguarde</p>',
+      '<p>Em breve</p>',
+      '<p>Para continuar, inicie</p>',
+      "toast('Bloquear dia');",
+      '<p>Total pago</p>',
+      '<button>Remover</button>',
+      '<span>Carregar</span>',
+      "const e = { label: 'Ativo' };",
+    ].join('\n');
+    expect(textosPortugueses(codigo)).toEqual([
+      'Por favor aguarde', 'Em breve', 'Para continuar, inicie', 'Bloquear dia', 'Total pago', 'Remover', 'Carregar', 'Ativo',
+    ]);
+  });
+
+  it('as palavras com maiuscula nao apanham ingles comum', () => {
+    const codigo = "const a = ['No results', 'Do this', 'Coming soon', 'Total paid', 'On hold', 'Remove', 'Load more'];";
+    expect(textosPortugueses(codigo)).toEqual([]);
+  });
+
   it('palavras pequenas portuguesas e acentos', () => {
     expect(temPortugues('Plano Pro a partir de')).toBe(true);
     expect(temPortugues('Ecrãs')).toBe(true);
@@ -129,6 +153,14 @@ describe('painel sem portugues fixo', () => {
     it(rel, () => {
       expect(textosPortugueses(ler(rel), permitidos(rel))).toEqual([]);
     });
+  });
+
+  it('o ingles segue o glossario: Booking, nunca Reservation', () => {
+    const en = JSON.parse(ler('i18n/en.json'));
+    const valores = (obj, p = '') => Object.entries(obj).flatMap(([k, v]) => (
+      typeof v === 'string' ? [[`${p}${k}`, v]] : valores(v, `${p}${k}.`)
+    ));
+    expect(valores(en).filter(([, v]) => /reservation/i.test(v)).map(([k]) => k)).toEqual([]);
   });
 
   it('a lista nao tem ficheiros repetidos nem o painel do fundador', () => {

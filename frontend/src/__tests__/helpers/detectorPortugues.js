@@ -1,6 +1,11 @@
 /* Detector do teste contra portugues fixo no painel (painelSemPortuguesFixo.test.js): procura, no texto
    mostrado fora dos comentarios, letras acentuadas ou palavras que so podem ser portuguesas. Reaproveita
-   o recorte de texto visivel do detector de acentos (chaves de i18n, ids, caminhos e codigo ficam de fora). */
+   o recorte de texto visivel do detector de acentos (chaves de i18n, ids, caminhos e codigo ficam de fora).
+   Limites por desenho:
+   - uma palavra so, em minusculas, entre aspas ('pendente', 'reservas') e tratada como id e nao e vista;
+   - uma palavra com maiuscula sem acento que nao esteja em PALAVRAS_PORTUGUESAS ('Total', 'Bloqueio') passa;
+   - as palavras pequenas em minusculas ('as', 'do', 'no') tambem apanham ingles a meio de uma frase; texto
+     visivel nao deve estar no codigo em lingua nenhuma, por isso isso e aceite. */
 import { semComentarios, trechosVisiveis } from './detectorAcentos';
 
 /* Nomes de marcas que aparecem tal e qual em qualquer lingua. */
@@ -17,6 +22,11 @@ export const PALAVRAS_PORTUGUESAS = [
   'Frota', 'Guias', 'Funcionalidade', 'Plano', 'Modo', 'Parceria', 'Parcerias', 'Grupos', 'Pacotes',
   'Afiliados', 'Fidelidade', 'Colaboradores', 'Financeiro', 'Meteorologia', 'Crescimento', 'Hoje', 'Todas',
   'reserva', 'reservas', 'hoje', 'mais', 'todas', 'todos', 'lida', 'lidas',
+  /* Palavras pequenas com maiuscula no inicio de uma frase ('Por favor', 'Em breve'), so as que nao sao
+     palavras inglesas (ficam de fora 'Do', 'No', 'As'), e verbos e rotulos comuns sem acento. */
+  'Para', 'Por', 'Com', 'Uma', 'Em', 'Da', 'Ao', 'Ou', 'Na', 'Que', 'De', 'Os',
+  'Carregar', 'Remover', 'Criar', 'Voltar', 'Confirmar', 'Enviar', 'Bloquear', 'Ativo', 'Activo', 'Ativa',
+  'Activa', 'Nenhum', 'Nenhuma', 'Pessoas', 'pessoas', 'Pago', 'pago',
 ];
 
 /* Letras latinas acentuadas (sem o x e o / de multiplicar e dividir). */

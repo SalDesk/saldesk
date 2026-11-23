@@ -64,7 +64,7 @@ const PORTUGUES_POR_TIPO = {
 const INGLES_POR_TIPO = {
   hotel:      ['Check-ins today', 'Occupancy today', 'Room Map — Today'],
   rentacar:   ['Active rentals', 'Available vehicles', 'Fleet — Current Status'],
-  restaurant: ['Reservations today', 'Covers today', 'Table Map — Today'],
+  restaurant: ['Bookings today', 'Covers today', 'Table Map — Today'],
 };
 
 function carregaServicos({ units = [], hoje = [], checkedIn = [], res = resumo() } = {}) {
