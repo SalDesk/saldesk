@@ -186,7 +186,7 @@ export default function ActivityDashboard() {
     })),
     weather: wxAlerts.map(wx => ({
       date:       wx.date,
-      label:      weatherInfo(wx.code).label,
+      label:      t(`weather.conditions.${weatherInfo(wx.code).chave}`),
       toursCount: weekRes.filter(r => r.check_in === wx.date && ['confirmed', 'pending'].includes(r.status)).length,
     })),
   }, t), [alertas, porPagar, wxAlerts, weekRes, t]);

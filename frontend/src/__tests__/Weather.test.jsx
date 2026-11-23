@@ -6,6 +6,7 @@ import { getWeatherForecast, weatherInfo } from '../services/weatherService';
 import { listReservations } from '../services/reservationsService';
 import { listIslands } from '../services/islandsService';
 import useUiStore from '../store/uiStore';
+import ptJson from '../i18n/pt.json';
 import { portuguesNoEcra, chavesCruas } from './helpers/portuguesNoEcra';
 
 /* Sem rede: so a previsao e os servicos da pagina sao simulados; weatherInfo, isBadWeather e dayLabel sao os reais */
@@ -275,7 +276,7 @@ describe('Weather', () => {
     ];
     for (const [codigo, etiqueta, icone] of esperado) {
       const info = weatherInfo(codigo);
-      expect([codigo, info.label, info.iconName]).toEqual([codigo, etiqueta, icone]);
+      expect([codigo, ptJson.weather.conditions[info.chave], info.iconName]).toEqual([codigo, etiqueta, icone]);
     }
   });
 
