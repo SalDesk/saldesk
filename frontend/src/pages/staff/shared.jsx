@@ -28,8 +28,8 @@ export const ZONA_CHAVE = {
   'Aeroporto': 'aeroporto', 'Espargos': 'espargos', 'Outro': 'outro',
 };
 export const DIA_CHAVE = { Seg: 'mon', Ter: 'tue', Qua: 'wed', Qui: 'thu', Sex: 'fri', Sab: 'sat', Dom: 'sun' };
-/* Indice do mes (0-11) -> chave em staff.months */
-export const MES_CHAVE = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
+/* Indice do mes (0-11) -> chave em staff.months; MES_CHAVE e rotuloMes vivem em utils/rotuloMes.js */
+export { MES_CHAVE, rotuloMes } from '../../utils/rotuloMes';
 
 /* Rotulo de um valor gravado: em pt mostra-se o proprio valor, tal como sempre se leu (alguns estao
    gravados sem acento e o pt.json, que tem de ter acentos, nao serve aqui); nas outras linguas vai a
@@ -42,7 +42,6 @@ export const rotuloCargo = (valor, t, lang) => rotuloGuardado(valor, CARGO_CHAVE
 export const rotuloZona = (valor, t, lang) => rotuloGuardado(valor, ZONA_CHAVE, 'staff.zones', t, lang);
 /* Os dias leem-se pelas chaves staff.days, cujo pt e igual ao valor gravado */
 export const rotuloDia = (valor, t) => (DIA_CHAVE[valor] ? t(`staff.days.${DIA_CHAVE[valor]}`) : valor);
-export const rotuloMes = (indice, t) => t(`staff.months.${MES_CHAVE[indice]}`);
 
 /* Ferias e licencas: o tipo e o estado gravam-se em ingles (vacation, sick...; pending, approved, rejected) */
 export const TIPOS_FERIAS = ['vacation', 'sick', 'maternity', 'paternity', 'unpaid', 'other'];

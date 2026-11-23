@@ -1,8 +1,11 @@
+import { useT } from '../../i18n';
+
 export default function SimpleChart({ dados, altura = 180 }) {
+  const t = useT();
   if (!dados || dados.length === 0) {
     return (
       <div className="flex items-center justify-center text-gray-300 text-sm" style={{ height: altura }}>
-        Sem dados para o período seleccionado
+        {t('financial.noDataPeriod')}
       </div>
     );
   }
@@ -53,7 +56,7 @@ export default function SimpleChart({ dados, altura = 180 }) {
                 opacity={0.8}
                 className="hover:opacity-100 transition-opacity"
               >
-                <title>{d.periodo}: {Number(d.receita).toFixed(2)} € ({d.num_reservas} res.)</title>
+                <title>{t('financial.barTitle', { period: d.periodo, value: Number(d.receita).toFixed(2), n: d.num_reservas })}</title>
               </rect>
               {barWidth >= 20 && (
                 <text

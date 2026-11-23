@@ -41,6 +41,18 @@ estes, em singular e plural, em todos os ecras; nao alternar com sinonimos. O po
 | Frota e Equipamento | Fleet and equipment | Ecra da frota: viaturas (Vehicle), equipamento (Equipment) e material (Gear). |
 | Meteorologia | Weather | Ecra da previsao do tempo ("7-day forecast", "Bad weather forecast for..."). |
 | Limpeza de quartos | Housekeeping | Ecra "Housekeeping": estados Clean, Dirty, Being cleaned, Inspection, Blocked. |
+| Financeiro | Financial | Ecra das financas (menu "Financial"); areas Revenue, Expenses, Payroll, Commissions, Obligations, Profit and loss. |
+| Receita / Receitas | Revenue | Dinheiro que entra ("Total revenue", "Gross revenue", "Manual revenue"); nao usar "Income" nem "Sales". |
+| Despesa / Despesas | Expense / Expenses | Custo registado pelo operador ("Record expense", "Operating expenses"); a categoria gravada continua em portugues. |
+| Folha salarial / Salarios (area) | Payroll | A area de salarios do Financeiro e o total pago ao pessoal ("Total payroll/month"). |
+| Comissao / Comissoes | Commission / Commissions | O que se paga aos vendedores de praia e parceiros ("Pay commission"). |
+| Caixa | Cash | O separador dos pagamentos em dinheiro ("Cash payments"); "Cash flow" so se aparecer o fluxo de caixa. |
+| Previsao | Forecast | Previsao de receita ("Weekly forecast") e o ecra "Demand forecast" (Previsao de Procura). |
+| Resultado | Profit and loss / Net result | A area "Profit and loss"; o valor final e "Net result". |
+| Margem | Margin | "Net margin", "Margin" por tour. |
+| Obrigacoes | Obligations | INPS, IUR, seguros e subscricao; INPS, IUR, NIF, DNRE, Vinti4 e SISP sao nomes oficiais e nao se traduzem. |
+| Analises | Analytics | O ecra "Analytics" (Score de saude = "Business health score", funil = "Conversion funnel"). |
+| Sazonalidade / Epoca alta | Seasonality / High season | Analise da previsao de procura ("High seasons", "Low seasons"). |
 
 ## Regras
 

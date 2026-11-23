@@ -1,41 +1,47 @@
 import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { useT } from '../../i18n';
 
-const SOURCE_LABELS = {
-  direct:       'Directa',
-  public:       'Directa',
-  admin:        'Manual',
-  manual:       'Manual',
+/* Canais das plataformas: nomes de marca, iguais em todas as linguas */
+const MARCAS = {
   booking_com:  'Booking.com',
   airbnb:       'Airbnb',
   viator:       'Viator',
   getyourguide: 'GetYourGuide',
 };
+/* Rotulo de um canal: directa e manual traduzem-se, as marcas nao, o resto mostra-se tal e qual */
+function rotuloCanal(source, t) {
+  if (source === 'direct' || source === 'public') return t('financial.sources.direct');
+  if (source === 'admin' || source === 'manual') return t('financial.sources.manual');
+  return MARCAS[source] || source;
+}
 
 const COLORS = ['var(--ocean-700)','var(--sand-500)','var(--ocean-400)','var(--success)','var(--warning)','var(--sand-400)','var(--ocean-300)','var(--n400)'];
 
 const CustomTooltip = ({ active, payload }) => {
+  const t = useT();
   if (!active || !payload?.length) return null;
   const d = payload[0].payload;
   return (
     <div className="bg-white border border-n-200 rounded-sm shadow-md px-3 py-2 text-xs font-body">
       <p className="font-bold text-n-800 mb-1">{d.name}</p>
-      <p className="text-n-600">{d.num_reservas} reserva(s)</p>
+      <p className="text-n-600">{t('financial.bookingsCount', { n: d.num_reservas })}</p>
       <p className="text-ocean-700 font-semibold">€{Number(d.receita).toFixed(2)}</p>
     </div>
   );
 };
 
 export default function ChannelChart({ data }) {
+  const t = useT();
   if (!data?.length) {
     return (
       <div className="flex items-center justify-center h-48 text-n-400 text-sm font-body">
-        Sem dados
+        {t('financial.noData')}
       </div>
     );
   }
 
   const consolidated = data.reduce((acc, d) => {
-    const label = SOURCE_LABELS[d.source] || d.source;
+    const label = rotuloCanal(d.source, t);
     const ex = acc.find((x) => x.name === label);
     if (ex) {
       ex.num_reservas += d.num_reservas;

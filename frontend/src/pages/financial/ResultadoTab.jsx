@@ -18,8 +18,10 @@ import { listExpenses, getSalaryPayments } from '../../services/expensesService'
 import Button from '../../components/ui/Button';
 import Card from '../../components/ui/Card';
 import LoadingSpinner from '../../components/shared/LoadingSpinner';
-import { MONTHS_PT, EUR_CVE, fmtMoney, fmtEixo, fmtDica } from './shared';
+import { EUR_CVE, fmtMoney, fmtEixo, fmtDica } from './shared';
 import { useLingua } from '../../utils/formatoLingua';
+import { rotuloMes } from '../../utils/rotuloMes';
+import { useT } from '../../i18n';
 
 /* ─────────────────── RESULTADO ─────────────────── */
 
@@ -30,6 +32,7 @@ function ymd(d) {
 
 function ResultadoTab({ resumo, currency, periodo }) {
   useLingua();
+  const t = useT();
   const [allExp,     setAllExp]     = useState([]);
   const [mensal,     setMensal]     = useState([]);
   const [salPayments, setSalPayments] = useState([]);
@@ -83,7 +86,7 @@ function ResultadoTab({ resumo, currency, periodo }) {
     const rec = mensal.find(s => s.periodo === m);
     const dep = allExp.filter(e => (e.date || '').startsWith(m)).reduce((s, e) => s + Number(e.amount || 0), 0);
     const sal = salPayments.filter(p => `${p.year}-${String(p.month).padStart(2, '0')}` === m).reduce((s, p) => s + Number(p.amount || 0), 0);
-    return { name: MONTHS_PT[d.getMonth()], receita: Math.round(Number(rec?.receita || 0) * taxa), despesas: Math.round((dep + sal) * taxa) };
+    return { name: rotuloMes(d.getMonth(), t), receita: Math.round(Number(rec?.receita || 0) * taxa), despesas: Math.round((dep + sal) * taxa) };
   });
 
   async function handleExport(type) {
@@ -101,12 +104,12 @@ function ResultadoTab({ resumo, currency, periodo }) {
       {/* Summary */}
       <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
         {[
-          { label: 'Receita bruta',         value: fmtMoney(receita, currency),        color: 'text-ocean-700'  },
-          { label: 'Despesas operacionais', value: fmtMoney(totalDespesas, currency),   color: 'text-[var(--error)]' },
-          { label: 'Folha salarial',        value: fmtMoney(totalSal, currency),        color: 'text-[var(--error)]' },
-          { label: 'Resultado líquido',     value: fmtMoney(resultado, currency),       color: resultado >= 0 ? 'text-[var(--success)]' : 'text-[var(--error)]' },
-          { label: 'Margem',                value: `${margem.toFixed(1)}%`,             color: margem >= 20 ? 'text-[var(--success)]' : margem >= 0 ? 'text-[var(--warning)]' : 'text-[var(--error)]' },
-          { label: 'Reservas no período',   value: resumo?.atual?.num_reservas ?? '—',   color: 'text-n-900'      },
+          { label: t('financial.result.grossRevenue'),      value: fmtMoney(receita, currency),        color: 'text-ocean-700'  },
+          { label: t('financial.result.operatingExpenses'), value: fmtMoney(totalDespesas, currency),   color: 'text-[var(--error)]' },
+          { label: t('financial.result.payroll'),           value: fmtMoney(totalSal, currency),        color: 'text-[var(--error)]' },
+          { label: t('financial.result.netResult'),         value: fmtMoney(resultado, currency),       color: resultado >= 0 ? 'text-[var(--success)]' : 'text-[var(--error)]' },
+          { label: t('financial.result.margin'),            value: `${margem.toFixed(1)}%`,             color: margem >= 20 ? 'text-[var(--success)]' : margem >= 0 ? 'text-[var(--warning)]' : 'text-[var(--error)]' },
+          { label: t('financial.result.bookingsInPeriod'),  value: resumo?.atual?.num_reservas ?? '—',   color: 'text-n-900'      },
         ].map(m => (
           <Card key={m.label} padding="px-4 py-3">
             <p className={`font-display font-bold text-xl ${m.color}`}>{m.value}</p>
@@ -116,7 +119,7 @@ function ResultadoTab({ resumo, currency, periodo }) {
       </div>
 
       {/* Receitas vs Despesas chart */}
-      <Card padding="px-5 pb-5 pt-3" header={<h3 className="font-display font-semibold text-sm text-n-700">Receitas vs Despesas — últimos 6 meses</h3>}>
+      <Card padding="px-5 pb-5 pt-3" header={<h3 className="font-display font-semibold text-sm text-n-700">{t('financial.result.chartTitle')}</h3>}>
         <ResponsiveContainer width="100%" height={240}>
           <BarChart data={chartData} margin={{ left: 0, right: 8, top: 8, bottom: 0 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="var(--n200)" vertical={false} />
@@ -124,20 +127,20 @@ function ResultadoTab({ resumo, currency, periodo }) {
             <YAxis tick={{ fontSize: 10, fontFamily: 'DM Mono', fill: 'var(--n500)' }} tickLine={false} axisLine={false} tickFormatter={v => fmtEixo(v, currency)} />
             <ChartTooltip contentStyle={{ fontSize: 11, fontFamily: 'DM Sans', border: '1px solid var(--n200)', borderRadius: 4 }} formatter={v => fmtDica(v, currency)} />
             <Legend wrapperStyle={{ fontSize: 11, fontFamily: 'DM Mono' }} />
-            <Bar dataKey="receita"  name="Receita"  fill="var(--ocean-700)" radius={[2,2,0,0]} />
-            <Bar dataKey="despesas" name="Despesas" fill="var(--error)" radius={[2,2,0,0]} />
+            <Bar dataKey="receita"  name={t('financial.result.revenue')}  fill="var(--ocean-700)" radius={[2,2,0,0]} />
+            <Bar dataKey="despesas" name={t('financial.result.expenses')} fill="var(--error)" radius={[2,2,0,0]} />
           </BarChart>
         </ResponsiveContainer>
       </Card>
 
       {/* Breakdown */}
       <Card padding="px-5 py-4">
-        <h3 className="font-display font-semibold text-sm text-n-700 mb-4">Decomposição do resultado</h3>
+        <h3 className="font-display font-semibold text-sm text-n-700 mb-4">{t('financial.result.breakdown')}</h3>
         <div className="space-y-2">
           {[
-            { label: 'Receita bruta',     value: receita,        sign: '+', color: 'text-ocean-700' },
-            { label: 'Despesas operac.',  value: totalDespesas,  sign: '−', color: 'text-[var(--error)]' },
-            { label: 'Folha salarial',    value: totalSal,       sign: '−', color: 'text-[var(--error)]' },
+            { label: t('financial.result.grossRevenue'),           value: receita,        sign: '+', color: 'text-ocean-700' },
+            { label: t('financial.result.operatingExpensesShort'), value: totalDespesas,  sign: '−', color: 'text-[var(--error)]' },
+            { label: t('financial.result.payroll'),                value: totalSal,       sign: '−', color: 'text-[var(--error)]' },
           ].map(r => (
             <div key={r.label} className="flex items-center justify-between py-2 border-b border-n-100 last:border-0">
               <span className="text-sm font-body text-n-700">{r.label}</span>
@@ -145,7 +148,7 @@ function ResultadoTab({ resumo, currency, periodo }) {
             </div>
           ))}
           <div className="flex items-center justify-between py-2 pt-3 border-t-2 border-n-300">
-            <span className="text-sm font-body font-bold text-n-800">Resultado líquido</span>
+            <span className="text-sm font-body font-bold text-n-800">{t('financial.result.netResult')}</span>
             <span className={`font-display font-bold text-base ${resultado >= 0 ? 'text-[var(--success)]' : 'text-[var(--error)]'}`}>{resultado >= 0 ? '+' : '−'} {fmtMoney(Math.abs(resultado), currency)}</span>
           </div>
         </div>
@@ -154,10 +157,10 @@ function ResultadoTab({ resumo, currency, periodo }) {
       {/* Export */}
       <div className="flex gap-3">
         <Button variant="secondary" icon={FileText} loading={exporting} onClick={() => handleExport('pdf')} className="flex-1">
-          Exportar PDF
+          {t('financial.result.exportPdf')}
         </Button>
         <Button variant="secondary" icon={FileSpreadsheet} loading={exporting} onClick={() => handleExport('excel')} className="flex-1">
-          Exportar Excel
+          {t('financial.result.exportExcel')}
         </Button>
       </div>
     </div>

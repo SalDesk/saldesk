@@ -16,21 +16,17 @@ import Card from '../components/ui/Card';
 import Tabs from '../components/ui/Tabs';
 import EmptyState from '../components/ui/EmptyState';
 import LoadingSpinner from '../components/shared/LoadingSpinner';
+import { useT } from '../i18n';
+import { formatarData, formatarNumero, useLingua } from '../utils/formatoLingua';
+import { MES_CHAVE, rotuloMes } from '../utils/rotuloMes';
 
 /* ── helpers ── */
-const MONTHS_PT = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
 
 function currentYear()  { return new Date().getFullYear(); }
 function prevYear()     { return currentYear() - 1; }
 function addDays(base, n) {
   const d = new Date(base + 'T00:00:00Z'); d.setUTCDate(d.getUTCDate() + n);
   return d.toISOString().slice(0, 10);
-}
-
-function monthLabel(dateStr) {
-  if (!dateStr) return '';
-  const m = parseInt(dateStr.split('-')[1]) - 1;
-  return MONTHS_PT[m] || '';
 }
 
 function avg(arr) {
@@ -40,13 +36,14 @@ function avg(arr) {
 
 /* ── CHART TOOLTIP ── */
 function ChartTooltip({ active, payload, label }) {
+  useLingua();
   if (!active || !payload?.length) return null;
   return (
     <div className="bg-white border border-n-200 rounded-sm shadow-sm px-3 py-2 text-xs font-body">
       <p className="font-semibold text-n-700 mb-1">{label}</p>
       {payload.map(p => (
         <p key={p.dataKey} style={{ color: p.color }}>
-          {p.name}: €{Math.round(p.value).toLocaleString('pt-PT')}
+          {p.name}: €{formatarNumero(Math.round(p.value))}
         </p>
       ))}
     </div>
@@ -70,6 +67,8 @@ function SuggestionCard({ type, month, text }) {
 
 /* ─────────────────────── Main ─────────────────────── */
 export default function Demand() {
+  const t = useT();
+  const lang = useLingua();
   const [activeTab,   setActiveTab]   = useState('historico');
   const [loading,     setLoading]     = useState(true);
   const [curData,     setCurData]     = useState([]);
@@ -102,9 +101,10 @@ export default function Demand() {
 
   useEffect(() => { carregar(); }, []);
 
-  /* ── Process monthly chart data ── */
+  /* ── Process monthly chart data (name: o mes abreviado na lingua do painel) ── */
   const chartData = useMemo(() => {
-    return MONTHS_PT.map((name, idx) => {
+    return MES_CHAVE.map((_, idx) => {
+      const name = rotuloMes(idx, t);
       const month = String(idx + 1).padStart(2, '0');
       /* GET /financial/receita devolve { periodo: 'AAAA-MM', receita, num_reservas } por mes */
       const curPt  = curData.find(d  => d.periodo === `${yr}-${month}`);
@@ -116,7 +116,7 @@ export default function Demand() {
         month: idx + 1,
       };
     });
-  }, [curData, prevData]);
+  }, [curData, prevData, lang]);
 
   /* ── Identify high/low seasons ── */
   const { highMonths, lowMonths, average, bestMonth, worstMonth } = useMemo(() => {
@@ -134,29 +134,20 @@ export default function Demand() {
     };
   }, [chartData]);
 
-  /* ── Suggestions ── */
+  /* ── Suggestions (o texto vem de demand.suggestionHigh / suggestionLow / suggestionNone) ── */
   const suggestions = useMemo(() => {
     const result = [];
     highMonths.forEach(m => {
-      result.push({
-        type: 'high',
-        text: `${m.name} é historicamente um mês de alta procura — considera abrir mais vagas e ajustar preços para maximizar receita.`,
-      });
+      result.push({ type: 'high', text: t('demand.suggestionHigh', { month: m.name }) });
     });
     lowMonths.forEach(m => {
-      result.push({
-        type: 'low',
-        text: `${m.name} tem historicamente baixa ocupação — cria uma promoção especial ou voucher para atrair mais reservas.`,
-      });
+      result.push({ type: 'low', text: t('demand.suggestionLow', { month: m.name }) });
     });
     if (result.length === 0) {
-      result.push({
-        type: 'low',
-        text: 'Sem dados históricos suficientes para gerar sugestões. Adiciona mais reservas ao sistema para desbloquear a análise de sazonalidade.',
-      });
+      result.push({ type: 'low', text: t('demand.suggestionNone') });
     }
     return result.slice(0, 6);
-  }, [highMonths, lowMonths]);
+  }, [highMonths, lowMonths, lang]);
 
   /* ── Next 30 days — group by date ── */
   const next30ByDate = useMemo(() => {
@@ -184,19 +175,19 @@ export default function Demand() {
   const yoyDelta  = prevTotal > 0 ? Math.round(((curTotal - prevTotal) / prevTotal) * 100) : null;
 
   const TABS = [
-    { id: 'historico', label: 'Histórico' },
-    { id: 'proximo30', label: 'Próximos 30 dias' },
-    { id: 'sugestoes', label: 'Sugestões' },
+    { id: 'historico', label: t('demand.tabs.history') },
+    { id: 'proximo30', label: t('demand.tabs.next30') },
+    { id: 'sugestoes', label: t('demand.tabs.suggestions') },
   ];
 
   return (
     <div>
       <PageHeader
-        title="Previsão de Procura"
-        subtitle="Análise de sazonalidade e identificação de oportunidades"
+        title={t('demand.title')}
+        subtitle={t('demand.subtitle')}
         actions={
           <Button variant="secondary" icon={RefreshCw} size="sm" onClick={carregar} loading={loading}>
-            Actualizar
+            {t('demand.refresh')}
           </Button>
         }
       />
@@ -205,25 +196,25 @@ export default function Demand() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-5">
         {[
           {
-            label:  `Receita ${yr} (acumulado)`,
-            value:  `€${Math.round(curTotal).toLocaleString('pt-PT')}`,
+            label:  t('demand.revenueYtd', { year: yr }),
+            value:  `€${formatarNumero(Math.round(curTotal))}`,
             color:  'text-ocean-700',
             icon:   TrendingUp,
           },
           {
-            label:  'Var. vs ano anterior',
+            label:  t('demand.vsLastYear'),
             value:  yoyDelta != null ? `${yoyDelta > 0 ? '+' : ''}${yoyDelta}%` : '—',
             color:  yoyDelta == null ? 'text-n-400' : yoyDelta >= 0 ? 'text-[var(--success)]' : 'text-[var(--error)]',
             icon:   yoyDelta == null ? Minus : yoyDelta >= 0 ? TrendingUp : TrendingDown,
           },
           {
-            label:  'Melhor mês',
+            label:  t('demand.bestMonth'),
             value:  bestMonth?.curValue > 0 ? bestMonth.name : '—',
             color:  'text-[var(--success)]',
             icon:   BarChart2,
           },
           {
-            label:  'Reservas próximos 30d',
+            label:  t('demand.next30'),
             value:  next30Res.length,
             color:  'text-n-900',
             icon:   Calendar,
@@ -256,14 +247,14 @@ export default function Demand() {
           <Card
             header={
               <div className="flex items-center justify-between">
-                <h3 className="font-display font-semibold text-sm text-n-700">Receita mensal — comparativo anual</h3>
+                <h3 className="font-display font-semibold text-sm text-n-700">{t('demand.monthlyChart')}</h3>
                 <span className="text-xs font-mono text-n-400">{py} vs {yr}</span>
               </div>
             }
             padding="px-5 pb-5 pt-2"
           >
             {chartData.every(d => d.curValue === 0 && d.prevValue === 0) ? (
-              <EmptyState icon={BarChart2} title="Sem dados financeiros disponíveis para o período." />
+              <EmptyState icon={BarChart2} title={t('demand.noFinancialData')} />
             ) : (
               <ResponsiveContainer width="100%" height={260}>
                 <BarChart data={chartData} margin={{ left: 0, right: 8, top: 8, bottom: 0 }}>
@@ -275,7 +266,7 @@ export default function Demand() {
                   <Legend wrapperStyle={{ fontSize: 11, fontFamily: 'DM Mono' }} />
                   {average > 0 && (
                     <ReferenceLine y={average} stroke="var(--sand-500)" strokeDasharray="4 4"
-                      label={{ value: 'Média', position: 'insideTopRight', fontSize: 10, fill: 'var(--sand-500)', fontFamily: 'DM Mono' }} />
+                      label={{ value: t('demand.average'), position: 'insideTopRight', fontSize: 10, fill: 'var(--sand-500)', fontFamily: 'DM Mono' }} />
                   )}
                   <Bar dataKey="prevValue" name={String(py)} fill="var(--n200)" radius={[2, 2, 0, 0]} />
                   <Bar dataKey="curValue"  name={String(yr)} fill="var(--ocean-400)" radius={[2, 2, 0, 0]}>
@@ -295,30 +286,30 @@ export default function Demand() {
           {/* Season indicators */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <Card padding="px-5 py-4">
-              <h3 className="font-display font-semibold text-sm text-n-700 mb-3">Épocas altas</h3>
+              <h3 className="font-display font-semibold text-sm text-n-700 mb-3">{t('demand.highSeasons')}</h3>
               {highMonths.length === 0 ? (
-                <p className="text-xs font-body text-n-400">Sem dados suficientes para identificar épocas altas.</p>
+                <p className="text-xs font-body text-n-400">{t('demand.noHighSeasons')}</p>
               ) : (
                 <div className="flex flex-wrap gap-2">
                   {highMonths.map(m => (
                     <span key={m.name} className="flex items-center gap-1.5 px-3 py-1.5 bg-[var(--success-light)] border border-[var(--success)] rounded-sm text-xs font-body font-semibold text-[var(--success)]">
                       <TrendingUp size={11} strokeWidth={2} />
-                      {m.name} · €{Math.round(m.curValue).toLocaleString('pt-PT')}
+                      {m.name} · €{formatarNumero(Math.round(m.curValue))}
                     </span>
                   ))}
                 </div>
               )}
             </Card>
             <Card padding="px-5 py-4">
-              <h3 className="font-display font-semibold text-sm text-n-700 mb-3">Épocas baixas</h3>
+              <h3 className="font-display font-semibold text-sm text-n-700 mb-3">{t('demand.lowSeasons')}</h3>
               {lowMonths.length === 0 ? (
-                <p className="text-xs font-body text-n-400">Sem épocas baixas identificadas — bom desempenho anual!</p>
+                <p className="text-xs font-body text-n-400">{t('demand.noLowSeasons')}</p>
               ) : (
                 <div className="flex flex-wrap gap-2">
                   {lowMonths.map(m => (
                     <span key={m.name} className="flex items-center gap-1.5 px-3 py-1.5 bg-ocean-50 border border-ocean-200 rounded-sm text-xs font-body font-semibold text-ocean-700">
                       <TrendingDown size={11} strokeWidth={2} />
-                      {m.name} · €{Math.round(m.curValue).toLocaleString('pt-PT')}
+                      {m.name} · €{formatarNumero(Math.round(m.curValue))}
                     </span>
                   ))}
                 </div>
@@ -331,10 +322,10 @@ export default function Demand() {
         <div className="space-y-5">
           <Card padding="px-5 py-5">
             <h3 className="font-display font-semibold text-sm text-n-700 mb-4">
-              Reservas confirmadas — próximos 30 dias
+              {t('demand.confirmedNext30')}
             </h3>
             {next30Res.length === 0 ? (
-              <EmptyState icon={Calendar} title="Sem reservas confirmadas para os próximos 30 dias." />
+              <EmptyState icon={Calendar} title={t('demand.noConfirmed')} />
             ) : (
               <>
                 <div className="grid grid-cols-7 sm:grid-cols-10 gap-1 mb-4">
@@ -343,10 +334,10 @@ export default function Demand() {
                     const isHigh   = count >= 3;
                     const d        = new Date(date + 'T00:00:00Z');
                     const dayNum   = d.getUTCDate();
-                    const monthAbbr = MONTHS_PT[d.getUTCMonth()];
+                    const monthAbbr = rotuloMes(d.getUTCMonth(), t);
                     const intensity = maxDayCount > 0 ? count / maxDayCount : 0;
                     return (
-                      <div key={date} title={`${dayNum} ${monthAbbr}: ${count} reserva(s)`}
+                      <div key={date} title={t('demand.dayTitle', { day: dayNum, month: monthAbbr, n: count })}
                         className={`rounded-sm p-1.5 flex flex-col items-center gap-0.5 border cursor-default ${
                           isToday
                             ? 'border-ocean-700 bg-ocean-700'
@@ -370,9 +361,9 @@ export default function Demand() {
                   })}
                 </div>
                 <div className="flex items-center gap-4 text-[10px] font-mono text-n-400">
-                  <span className="flex items-center gap-1"><span className="w-3 h-3 bg-[var(--success)] rounded-xs" /> Alta procura (3+)</span>
-                  <span className="flex items-center gap-1"><span className="w-3 h-3 bg-ocean-100 rounded-xs border border-ocean-200" /> Reservas</span>
-                  <span className="flex items-center gap-1"><span className="w-3 h-3 bg-white rounded-xs border border-n-200" /> Livre</span>
+                  <span className="flex items-center gap-1"><span className="w-3 h-3 bg-[var(--success)] rounded-xs" /> {t('demand.highDemand')}</span>
+                  <span className="flex items-center gap-1"><span className="w-3 h-3 bg-ocean-100 rounded-xs border border-ocean-200" /> {t('demand.bookings')}</span>
+                  <span className="flex items-center gap-1"><span className="w-3 h-3 bg-white rounded-xs border border-n-200" /> {t('demand.free')}</span>
                 </div>
               </>
             )}
@@ -381,7 +372,7 @@ export default function Demand() {
           {/* Top busy days */}
           {next30Res.length > 0 && (
             <Card padding="px-5 py-4">
-              <h3 className="font-display font-semibold text-sm text-n-700 mb-3">Dias com mais actividade</h3>
+              <h3 className="font-display font-semibold text-sm text-n-700 mb-3">{t('demand.busiestDays')}</h3>
               <div className="space-y-2">
                 {next30Days
                   .filter(d => d.count > 0)
@@ -390,14 +381,14 @@ export default function Demand() {
                   .map(({ date, count }) => (
                     <div key={date} className="flex items-center gap-3">
                       <span className="text-xs font-mono text-n-500 w-28 shrink-0">
-                        {new Date(date + 'T00:00:00Z').toLocaleDateString('pt-PT', { weekday: 'short', day: '2-digit', month: 'short', timeZone: 'UTC' })}
+                        {formatarData(new Date(date + 'T00:00:00Z'), { weekday: 'short', day: '2-digit', month: 'short', timeZone: 'UTC' })}
                       </span>
                       <div className="flex-1 h-2 bg-n-100 rounded-full overflow-hidden">
                         <div className="h-full rounded-full bg-ocean-500 transition-all"
                           style={{ width: `${(count / maxDayCount) * 100}%` }} />
                       </div>
                       <span className="text-xs font-mono font-semibold text-ocean-700 w-24 text-right shrink-0 whitespace-nowrap">
-                        {count} reserva(s)
+                        {t('demand.bookingsCount', { n: count })}
                       </span>
                     </div>
                   ))}
@@ -410,7 +401,7 @@ export default function Demand() {
         <div className="space-y-4">
           <div className="px-4 py-3 bg-ocean-50 border border-ocean-100 rounded-sm">
             <p className="text-xs font-body text-ocean-700">
-              <span className="font-semibold">Sugestões automáticas</span> baseadas nos dados de receita mensal dos últimos 12 meses. Quanto mais dados tiveres no sistema, mais precisas são as sugestões.
+              <span className="font-semibold">{t('demand.suggestionsIntroBold')}</span>{t('demand.suggestionsIntro')}
             </p>
           </div>
           {suggestions.map((s, i) => (
@@ -418,22 +409,22 @@ export default function Demand() {
           ))}
           {bestMonth?.curValue > 0 && (
             <Card padding="px-5 py-4">
-              <h3 className="font-display font-semibold text-sm text-n-700 mb-3">Comparativo anual</h3>
+              <h3 className="font-display font-semibold text-sm text-n-700 mb-3">{t('demand.yearComparison')}</h3>
               <div className="grid grid-cols-3 gap-4">
                 <div>
-                  <p className="text-xs font-body text-n-500">Receita {yr}</p>
+                  <p className="text-xs font-body text-n-500">{t('demand.revenueYear', { year: yr })}</p>
                   <p className="font-display font-bold text-lg text-ocean-700">
-                    €{Math.round(curTotal).toLocaleString('pt-PT')}
+                    €{formatarNumero(Math.round(curTotal))}
                   </p>
                 </div>
                 <div>
-                  <p className="text-xs font-body text-n-500">Receita {py}</p>
+                  <p className="text-xs font-body text-n-500">{t('demand.revenueYear', { year: py })}</p>
                   <p className="font-display font-bold text-lg text-n-600">
-                    €{Math.round(prevTotal).toLocaleString('pt-PT')}
+                    €{formatarNumero(Math.round(prevTotal))}
                   </p>
                 </div>
                 <div>
-                  <p className="text-xs font-body text-n-500">Variação</p>
+                  <p className="text-xs font-body text-n-500">{t('demand.change')}</p>
                   <p className={`font-display font-bold text-lg ${yoyDelta == null ? 'text-n-400' : yoyDelta >= 0 ? 'text-[var(--success)]' : 'text-[var(--error)]'}`}>
                     {yoyDelta != null ? `${yoyDelta > 0 ? '+' : ''}${yoyDelta}%` : '—'}
                   </p>

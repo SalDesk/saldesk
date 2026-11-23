@@ -5,40 +5,66 @@ export const EUR_CVE = 110;
 export const TOUR_COSTS_KEY = 'saldesk_tour_costs_v1';
 
 
+/* Valores gravados ou comparados: 'Todos' e o valor do filtro "todos" das transaccoes; os metodos, os
+   estados e os canais vem do servidor. Nunca mudam com a lingua: o rotulo mostrado vem das funcoes rotulo*. */
 export const PAYMENT_METHODS = ['Todos', 'paypal', 'sisp', 'cash', 'transfer'];
 export const PAYMENT_STATUS  = ['Todos', 'paid', 'pending', 'partial', 'refunded'];
-export const PM_LABEL  = { paypal: 'PayPal', sisp: 'SISP', cash: 'Dinheiro', transfer: 'Transferência' };
-export const PS_LABEL  = { paid: 'Pago', pending: 'Pendente', partial: 'Parcial', refunded: 'Reembolsado' };
 export const PS_COLOR  = { paid: 'text-[var(--success)] bg-[var(--success-light)]', pending: 'text-[var(--warning)] bg-[var(--warning-light)]', partial: 'text-[var(--info)] bg-[var(--info-light)]', refunded: 'text-n-500 bg-n-100' };
-export const SRC_LABEL = { direct: 'Directa', public: 'Directa', manual: 'Manual', booking_com: 'Booking', airbnb: 'Airbnb', viator: 'Viator', getyourguide: 'GYG' };
 
-export const COST_FIELDS = [
-  { key: 'guide',     label: 'Guia / Instrutor' },
-  { key: 'transport', label: 'Transporte' },
-  { key: 'tickets',   label: 'Bilhetes / Entrada' },
-  { key: 'meals',     label: 'Refeições' },
-  { key: 'other',     label: 'Outros' },
-];
+/* Nomes de marcas: iguais em todas as linguas */
+const MARCAS_PAGAMENTO = { paypal: 'PayPal', sisp: 'SISP' };
+const MARCAS_CANAL = { booking_com: 'Booking', airbnb: 'Airbnb', viator: 'Viator', getyourguide: 'GYG' };
+const METODOS_TRADUZIDOS = ['cash', 'transfer'];
+const ESTADOS_PAGAMENTO = ['paid', 'pending', 'partial', 'refunded'];
 
-export const EXPENSE_CATEGORIES = [
-  'Salarios', 'Comissoes vendedores', 'Seguro viatura',
-  'Manutencao', 'Combustivel', 'Renda', 'Electricidade',
-  'Internet', 'Equipamento', 'Marketing', 'Subscricao SalDesk',
-  'INPS', 'IUR', 'Outro',
-];
+/* Rotulos de metodo, estado e canal de pagamento; um valor desconhecido mostra-se tal e qual (ou o traco) */
+export function rotuloMetodo(metodo, t) {
+  if (MARCAS_PAGAMENTO[metodo]) return MARCAS_PAGAMENTO[metodo];
+  if (METODOS_TRADUZIDOS.includes(metodo)) return t(`financial.paymentMethods.${metodo}`);
+  return metodo || '—';
+}
+export function rotuloEstadoPagamento(estado, t) {
+  return ESTADOS_PAGAMENTO.includes(estado) ? t(`financial.paymentStatus.${estado}`) : (estado || '—');
+}
+export function rotuloCanal(canal, t) {
+  if (canal === 'direct' || canal === 'public') return t('financial.sources.direct');
+  if (canal === 'manual') return t('financial.sources.manual');
+  return MARCAS_CANAL[canal] || canal || '—';
+}
 
-export const MANUAL_REVENUE_CATEGORIES = [
-  'Venda ao balcao', 'Comissao de parceiro', 'Merchandising',
-  'Aluguer de equipamento', 'Patrocinio', 'Evento privado', 'Outro',
-];
+/* Custos por tour guardados no localStorage (TOUR_COSTS_KEY) com estes ids; o rotulo vem de
+   financial.costs.fields.<key> */
+export const COST_FIELDS = ['guide', 'transport', 'tickets', 'meals', 'other'].map(key => ({ key }));
+
+/* Categorias gravadas em cada despesa e receita manual (e comparadas no codigo): o valor nunca muda com a
+   lingua. Em pt mostra-se o proprio valor, como sempre (alguns gravados sem acento); nas outras linguas vai a
+   traducao de financial.expenseCategories / financial.revenueCategories. INPS e IUR sao nomes oficiais e
+   ficam iguais em todas as linguas. Uma categoria que o mapa nao conhece mostra-se tal e qual. */
+export const CATEGORIA_DESPESA_CHAVE = {
+  'Salarios': 'salaries', 'Comissoes vendedores': 'sellerCommissions', 'Seguro viatura': 'vehicleInsurance',
+  'Manutencao': 'maintenance', 'Combustivel': 'fuel', 'Renda': 'rent', 'Electricidade': 'electricity',
+  'Internet': 'internet', 'Equipamento': 'equipment', 'Marketing': 'marketing', 'Subscricao SalDesk': 'saldeskSubscription',
+  'INPS': 'inps', 'IUR': 'iur', 'Outro': 'other',
+};
+export const CATEGORIA_RECEITA_CHAVE = {
+  'Venda ao balcao': 'counterSale', 'Comissao de parceiro': 'partnerCommission', 'Merchandising': 'merchandising',
+  'Aluguer de equipamento': 'equipmentRental', 'Patrocinio': 'sponsorship', 'Evento privado': 'privateEvent', 'Outro': 'other',
+};
+export const EXPENSE_CATEGORIES = Object.keys(CATEGORIA_DESPESA_CHAVE);
+export const MANUAL_REVENUE_CATEGORIES = Object.keys(CATEGORIA_RECEITA_CHAVE);
+
+function rotuloGuardado(valor, mapa, prefixo, t, lang) {
+  if (!valor || lang === 'pt' || !Object.prototype.hasOwnProperty.call(mapa, valor)) return valor;
+  return t(`${prefixo}.${mapa[valor]}`);
+}
+export const rotuloCategoriaDespesa = (valor, t, lang) => rotuloGuardado(valor, CATEGORIA_DESPESA_CHAVE, 'financial.expenseCategories', t, lang);
+export const rotuloCategoriaReceita = (valor, t, lang) => rotuloGuardado(valor, CATEGORIA_RECEITA_CHAVE, 'financial.revenueCategories', t, lang);
 
 export const CAT_COLORS = [
   'var(--ocean-700)','var(--ocean-500)','var(--ocean-400)','var(--ocean-300)','var(--ocean-200)',
   'var(--sand-500)','var(--sand-300)','var(--success)','var(--error)','var(--sand-600)',
   'var(--warning)','var(--n700)','var(--n500)','var(--n400)',
 ];
-
-export const MONTHS_PT = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
 
 /* ── date helpers ── */
 export function mesAtual() {

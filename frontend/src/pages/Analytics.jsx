@@ -19,6 +19,8 @@ import Table from '../components/ui/Table';
 import Input from '../components/ui/Input';
 import EmptyState from '../components/ui/EmptyState';
 import LoadingSpinner from '../components/shared/LoadingSpinner';
+import { useT } from '../i18n';
+import { formatarData, formatarNumero, useLingua } from '../utils/formatoLingua';
 
 const COMP_KEY = 'saldesk_competition_v1';
 function loadComp() { try { return JSON.parse(localStorage.getItem(COMP_KEY) || '{}'); } catch { return {}; } }
@@ -40,15 +42,14 @@ function ratingDe(stats) {
 }
 
 function fmtMoney(v) {
-  return `€${Math.round(Number(v || 0)).toLocaleString('pt-PT')}`;
+  return `€${formatarNumero(Math.round(Number(v || 0)))}`;
 }
 
-const COUNTRY_NAMES = {
-  DE: 'Alemanha', GB: 'Reino Unido', NL: 'Holanda', FR: 'França',
-  PT: 'Portugal', CV: 'Cabo Verde', US: 'EUA', ES: 'Espanha',
-  IT: 'Itália', BE: 'Bélgica', AT: 'Áustria', CH: 'Suíça',
-  IE: 'Irlanda', PL: 'Polónia', BR: 'Brasil',
-};
+/* Paises com nome em analytics.countries; um codigo fora da lista mostra-se tal e qual */
+const PAISES = ['DE', 'GB', 'NL', 'FR', 'PT', 'CV', 'US', 'ES', 'IT', 'BE', 'AT', 'CH', 'IE', 'PL', 'BR'];
+function nomePais(codigo, t) {
+  return PAISES.includes(codigo) ? t(`analytics.countries.${codigo}`) : codigo;
+}
 
 const CHART_COLORS = [
   'var(--ocean-700)', 'var(--ocean-500)', 'var(--ocean-400)', 'var(--ocean-300)',
@@ -108,10 +109,11 @@ function computeHealthScore(resumo, reviewsStats, stats) {
 
 /* ── HealthGauge SVG ── */
 function HealthGauge({ score }) {
+  const t = useT();
   if (score == null) {
     return (
       <div className="w-40 h-40 flex items-center justify-center rounded-full border-[12px] border-n-200 mx-auto">
-        <span className="text-xs font-body text-n-400">Sem dados</span>
+        <span className="text-xs font-body text-n-400">{t('analytics.noData')}</span>
       </div>
     );
   }
@@ -120,7 +122,7 @@ function HealthGauge({ score }) {
   const circ  = 2 * Math.PI * r;
   const filled = (score / 100) * circ;
   const color  = score >= 70 ? 'var(--success)' : score >= 50 ? 'var(--sand-500)' : 'var(--error)';
-  const label  = score >= 70 ? 'Bom' : score >= 50 ? 'Moderado' : 'Crítico';
+  const label  = t(`analytics.health.${score >= 70 ? 'good' : score >= 50 ? 'moderate' : 'critical'}`);
 
   return (
     <div className="flex flex-col items-center gap-2">
@@ -182,11 +184,11 @@ function FunnelRow({ label, value, max, color, pct }) {
           style={{ width: `${barPct}%`, backgroundColor: color, minWidth: barPct > 0 ? '2rem' : 0 }}
         >
           {barPct > 12 && (
-            <span className="text-white text-xs font-mono font-semibold">{value.toLocaleString()}</span>
+            <span className="text-white text-xs font-mono font-semibold">{formatarNumero(value)}</span>
           )}
         </div>
         {barPct <= 12 && (
-          <span className="absolute left-2 top-1/2 -translate-y-1/2 text-xs font-mono font-semibold text-n-700">{value.toLocaleString()}</span>
+          <span className="absolute left-2 top-1/2 -translate-y-1/2 text-xs font-mono font-semibold text-n-700">{formatarNumero(value)}</span>
         )}
       </div>
       {pct != null && (
@@ -224,18 +226,21 @@ function WeeklyMetric({ label, value, delta, icon: Icon }) {
 }
 
 /* ── Posicao do preco face ao concorrente (limiares 5 e 20) ── */
-function competitionPosition(ownPrice, compPrice) {
+function competitionPosition(ownPrice, compPrice, t) {
   if (!(ownPrice > 0 && compPrice > 0)) return { position: null, label: '—', color: 'text-n-400' };
   const diff = ((ownPrice - compPrice) / compPrice) * 100;
-  if (diff > 20)  return { position: 'high',   label: `+${Math.round(diff)}% acima`, color: 'text-[var(--error)]' };
-  if (diff > 5)   return { position: 'slight', label: `+${Math.round(diff)}% acima`, color: 'text-[var(--warning)]' };
-  if (diff < -20) return { position: 'low',    label: `${Math.round(diff)}% abaixo`,  color: 'text-[var(--success)]' };
-  if (diff < -5)  return { position: 'slight', label: `${Math.round(diff)}% abaixo`,  color: 'text-ocean-700' };
-  return { position: null, label: 'Na média', color: 'text-[var(--success)]' };
+  const n = Math.round(diff);
+  if (diff > 20)  return { position: 'high',   label: t('analytics.above', { n }), color: 'text-[var(--error)]' };
+  if (diff > 5)   return { position: 'slight', label: t('analytics.above', { n }), color: 'text-[var(--warning)]' };
+  if (diff < -20) return { position: 'low',    label: t('analytics.below', { n }), color: 'text-[var(--success)]' };
+  if (diff < -5)  return { position: 'slight', label: t('analytics.below', { n }), color: 'text-ocean-700' };
+  return { position: null, label: t('analytics.atAverage'), color: 'text-[var(--success)]' };
 }
 
 /* ── Main Analytics ── */
 export default function Analytics() {
+  const t = useT();
+  useLingua();
   const [loading, setLoading] = useState(true);
   const [resumo,  setResumo]  = useState(null);
   const [reviews, setReviews] = useState(null);
@@ -310,10 +315,10 @@ export default function Analytics() {
   const ratingNum = ratingDe(reviews);
 
   const SCORE_COMPONENTS = [
-    { label: 'Crescimento de receita', value: components.crescimento ?? 0, max: 25, color: 'var(--ocean-700)' },
-    { label: 'Taxa de ocupação',       value: components.ocupacao    ?? 0, max: 25, color: 'var(--ocean-500)' },
-    { label: 'Avaliações',             value: components.avaliacoes  ?? 0, max: 25, color: 'var(--sand-500)' },
-    { label: 'Fidelização',            value: components.fidelizacao ?? 0, max: 25, color: 'var(--ocean-400)' },
+    { label: t('analytics.components.growth'),    value: components.crescimento ?? 0, max: 25, color: 'var(--ocean-700)' },
+    { label: t('analytics.components.occupancy'), value: components.ocupacao    ?? 0, max: 25, color: 'var(--ocean-500)' },
+    { label: t('analytics.components.reviews'),   value: components.avaliacoes  ?? 0, max: 25, color: 'var(--sand-500)' },
+    { label: t('analytics.components.loyalty'),   value: components.fidelizacao ?? 0, max: 25, color: 'var(--ocean-400)' },
   ];
 
   /* Concorrencia: o preco do concorrente edita-se na propria celula */
@@ -325,11 +330,11 @@ export default function Analytics() {
 
   const compColumns = [
     {
-      key: 'name', label: 'Tour',
+      key: 'name', label: t('analytics.tour'),
       render: u => <span className="block max-w-[160px] truncate font-body font-semibold text-n-800">{u.name}</span>,
     },
     {
-      key: 'own', label: 'Preço SalDesk',
+      key: 'own', label: t('analytics.ownPrice'),
       render: u => (
         <span className="font-display font-bold text-ocean-700">
           {Number(u.base_price || 0) > 0 ? `€${Number(u.base_price || 0)}` : '—'}
@@ -337,7 +342,7 @@ export default function Analytics() {
       ),
     },
     {
-      key: 'comp', label: 'Preço Viator/GYG',
+      key: 'comp', label: t('analytics.competitorPrice'),
       render: u => {
         const c = comp[u.id] || {};
         const compPrice = Number(c.price || 0);
@@ -346,11 +351,11 @@ export default function Analytics() {
             <div className="w-28">
               <Input
                 type="number" min="0" step="1"
-                aria-label="Preço do concorrente"
+                aria-label={t('analytics.competitorPriceAria')}
                 value={compDraft[u.id] ?? c.price ?? ''}
                 onChange={e => setCompDraft(p => ({ ...p, [u.id]: e.target.value }))}
                 className="font-mono"
-                placeholder="Ex: 45"
+                placeholder={t('analytics.pricePlaceholder')}
                 autoFocus
               />
             </div>
@@ -358,21 +363,21 @@ export default function Analytics() {
         }
         return (
           <span className="font-mono text-n-700">
-            {compPrice > 0 ? `€${compPrice}` : <span className="text-n-300 text-xs">Não definido</span>}
+            {compPrice > 0 ? `€${compPrice}` : <span className="text-n-300 text-xs">{t('analytics.notSet')}</span>}
           </span>
         );
       },
     },
     {
-      key: 'position', label: 'Posição no mercado',
+      key: 'position', label: t('analytics.marketPosition'),
       render: u => {
         const c = comp[u.id] || {};
-        const pos = competitionPosition(Number(u.base_price || 0), Number(c.price || 0));
+        const pos = competitionPosition(Number(u.base_price || 0), Number(c.price || 0), t);
         return (
           <>
             <span className={`text-xs font-mono font-semibold ${pos.color}`}>{pos.label}</span>
             {pos.position === 'high' && (
-              <p className="text-[10px] font-body text-n-400">Considera reduzir para aumentar conversão</p>
+              <p className="text-[10px] font-body text-n-400">{t('analytics.reduceTip')}</p>
             )}
           </>
         );
@@ -384,7 +389,7 @@ export default function Analytics() {
         const c = comp[u.id] || {};
         return editComp === u.id ? (
           <button
-            aria-label="Guardar preço"
+            aria-label={t('analytics.savePrice')}
             onClick={() => guardarPreco(u, c)}
             className="p-1.5 rounded text-[var(--success)] hover:bg-[var(--success-light)] transition-colors"
           >
@@ -392,7 +397,7 @@ export default function Analytics() {
           </button>
         ) : (
           <button
-            aria-label="Editar preço"
+            aria-label={t('analytics.editPrice')}
             onClick={() => { setEditComp(u.id); setCompDraft(p => ({ ...p, [u.id]: c.price || '' })); }}
             className="p-1.5 rounded text-n-400 hover:text-ocean-700 hover:bg-ocean-50 transition-colors"
           >
@@ -406,11 +411,11 @@ export default function Analytics() {
   return (
     <div>
       <PageHeader
-        title="Analytics"
-        subtitle="Visão estratégica do negócio"
+        title={t('analytics.title')}
+        subtitle={t('analytics.subtitle')}
         actions={
           <Button variant="secondary" icon={RefreshCw} size="sm" onClick={carregar} loading={loading}>
-            Actualizar
+            {t('analytics.refresh')}
           </Button>
         }
       />
@@ -423,17 +428,17 @@ export default function Analytics() {
           {/* Score de Saude + componentes */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
             <Card padding="px-6 py-6">
-              <h3 className="font-display font-semibold text-sm text-n-700 mb-5">Score de Saúde do Negócio</h3>
+              <h3 className="font-display font-semibold text-sm text-n-700 mb-5">{t('analytics.healthScoreTitle')}</h3>
               <HealthGauge score={score} />
               {score == null && (
                 <p className="text-center text-xs font-body text-n-400 mt-3">
-                  Configure o endpoint <span className="font-mono">/financial/stats</span> para activar.
+                  {t('analytics.configureBefore')}<span className="font-mono">/financial/stats</span>{t('analytics.configureAfter')}
                 </p>
               )}
             </Card>
 
             <Card className="lg:col-span-2" padding="px-6 py-6">
-              <h3 className="font-display font-semibold text-sm text-n-700 mb-5">Componentes do Score</h3>
+              <h3 className="font-display font-semibold text-sm text-n-700 mb-5">{t('analytics.scoreComponents')}</h3>
               <div className="space-y-4">
                 {SCORE_COMPONENTS.map(c => (
                   <ScoreBar key={c.label} label={c.label} value={c.value} max={c.max} color={c.color} />
@@ -441,8 +446,8 @@ export default function Analytics() {
               </div>
               <div className="mt-4 pt-4 border-t border-n-100">
                 <p className="text-xs font-body text-n-400">
-                  Score baseado em crescimento de receita, ocupação, avaliações e fidelização nos últimos 30 dias.
-                  {resumo == null && ' Carregue dados financeiros para score preciso.'}
+                  {t('analytics.scoreNote')}
+                  {resumo == null && t('analytics.scoreNoteNoData')}
                 </p>
               </div>
             </Card>
@@ -450,27 +455,27 @@ export default function Analytics() {
 
           {/* Resumo semanal */}
           <div>
-            <h3 className="font-display font-semibold text-sm text-n-700 mb-3">Resumo — Últimos 30 dias</h3>
+            <h3 className="font-display font-semibold text-sm text-n-700 mb-3">{t('analytics.summaryTitle')}</h3>
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
               <WeeklyMetric
-                label="Receita"
+                label={t('analytics.revenue')}
                 value={weekly.revenue != null ? fmtMoney(weekly.revenue) : '—'}
                 delta={resumo?.variacao?.receita != null ? Math.round(resumo.variacao.receita) : null}
                 icon={TrendingUp}
               />
               <WeeklyMetric
-                label="Reservas"
+                label={t('analytics.bookings')}
                 value={weekly.reservas ?? '—'}
                 delta={resumo?.variacao?.num_reservas != null ? Math.round(resumo.variacao.num_reservas) : null}
                 icon={BarChart2}
               />
               <WeeklyMetric
-                label="Novos clientes"
+                label={t('analytics.newCustomers')}
                 value={weekly.novos_clientes ?? '—'}
                 icon={Users}
               />
               <WeeklyMetric
-                label="Rating médio"
+                label={t('analytics.avgRating')}
                 value={ratingNum > 0 ? ratingNum.toFixed(1) : '—'}
                 icon={Star}
               />
@@ -480,9 +485,9 @@ export default function Analytics() {
           {/* Origem de clientes */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <Card padding="px-6 py-5">
-              <h3 className="font-display font-semibold text-sm text-n-700 mb-4">Origem de Clientes</h3>
+              <h3 className="font-display font-semibold text-sm text-n-700 mb-4">{t('analytics.customerOrigin')}</h3>
               {origins.length === 0 ? (
-                <EmptyState icon={Globe} title="Sem dados de origem disponíveis." />
+                <EmptyState icon={Globe} title={t('analytics.noOriginData')} />
               ) : (
                 <div className="space-y-2.5">
                   {origins.slice(0, 8).map((o, i) => (
@@ -495,7 +500,7 @@ export default function Analytics() {
                         />
                       </div>
                       <span className="text-xs font-body text-n-600 w-20 text-right shrink-0">
-                        {COUNTRY_NAMES[o.country_code] || o.country_code}
+                        {nomePais(o.country_code, t)}
                       </span>
                       <span className="text-xs font-mono text-n-500 w-10 text-right shrink-0">
                         {o.pct.toFixed(1)}%
@@ -507,9 +512,9 @@ export default function Analytics() {
             </Card>
 
             <Card padding="px-6 py-5">
-              <h3 className="font-display font-semibold text-sm text-n-700 mb-4">Distribuição por País</h3>
+              <h3 className="font-display font-semibold text-sm text-n-700 mb-4">{t('analytics.countryDistribution')}</h3>
               {origins.length === 0 ? (
-                <EmptyState icon={BarChart2} title="Sem dados disponíveis." />
+                <EmptyState icon={BarChart2} title={t('analytics.noDataAvailable')} />
               ) : (
                 <ResponsiveContainer width="100%" height={220}>
                   <BarChart data={origins.slice(0, 8)} layout="vertical" margin={{ left: 4, right: 16, top: 0, bottom: 0 }}>
@@ -518,7 +523,7 @@ export default function Analytics() {
                     <Tooltip
                       cursor={{ fill: 'var(--ocean-50)' }}
                       contentStyle={{ fontSize: 11, fontFamily: 'DM Sans', border: '1px solid var(--n200)', borderRadius: 4 }}
-                      formatter={(v, _n, p) => [`${v} clientes (${p.payload.pct.toFixed(1)}%)`, p.payload.country_code]}
+                      formatter={(v, _n, p) => [t('analytics.customersTooltip', { n: v, pct: p.payload.pct.toFixed(1) }), p.payload.country_code]}
                     />
                     <Bar dataKey="count" radius={[0, 3, 3, 0]}>
                       {origins.slice(0, 8).map((_, i) => (
@@ -533,20 +538,20 @@ export default function Analytics() {
 
           {/* Funil de conversao */}
           <Card padding="px-6 py-5">
-            <h3 className="font-display font-semibold text-sm text-n-700 mb-5">Funil de Conversão</h3>
+            <h3 className="font-display font-semibold text-sm text-n-700 mb-5">{t('analytics.funnelTitle')}</h3>
             {!funnel ? (
               <EmptyState
                 icon={Activity}
-                title="Dados do funil não disponíveis."
-                description={<>Implemente <span className="font-mono">/marketing/stats</span> com campo <span className="font-mono">funnel</span>.</>}
+                title={t('analytics.funnelUnavailable')}
+                description={<>{t('analytics.funnelHintA')}<span className="font-mono">/marketing/stats</span>{t('analytics.funnelHintB')}<span className="font-mono">funnel</span>{t('analytics.funnelHintC')}</>}
               />
             ) : (
               <div className="space-y-3 max-w-2xl">
                 {[
-                  { label: 'Visitas página pública', key: 'page_views',          color: 'var(--ocean-700)' },
-                  { label: 'Reserva iniciada',       key: 'booking_started',     color: 'var(--ocean-500)' },
-                  { label: 'Reserva concluída',      key: 'booking_completed',   color: 'var(--ocean-400)' },
-                  { label: 'Pagamento confirmado',   key: 'payment_confirmed',   color: 'var(--sand-500)' },
+                  { label: t('analytics.funnelSteps.pageViews'),        key: 'page_views',          color: 'var(--ocean-700)' },
+                  { label: t('analytics.funnelSteps.bookingStarted'),   key: 'booking_started',     color: 'var(--ocean-500)' },
+                  { label: t('analytics.funnelSteps.bookingCompleted'), key: 'booking_completed',   color: 'var(--ocean-400)' },
+                  { label: t('analytics.funnelSteps.paymentConfirmed'), key: 'payment_confirmed',   color: 'var(--sand-500)' },
                 ].map((step, i, arr) => {
                   const value = funnel[step.key] || 0;
                   const max   = funnel[arr[0].key] || 1;
@@ -563,7 +568,7 @@ export default function Analytics() {
                     />
                   );
                 })}
-                <p className="text-xs font-body text-n-400 pt-1">% indica taxa de conversão para o passo anterior.</p>
+                <p className="text-xs font-body text-n-400 pt-1">{t('analytics.funnelNote')}</p>
               </div>
             )}
           </Card>
@@ -572,9 +577,9 @@ export default function Analytics() {
           <Card padding="px-6 py-5">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <h3 className="font-display font-semibold text-sm text-n-700 mb-1">Relatório Semanal</h3>
+                <h3 className="font-display font-semibold text-sm text-n-700 mb-1">{t('analytics.weeklyReport')}</h3>
                 <p className="text-xs font-body text-n-400">
-                  Envie um resumo por email com os principais indicadores dos últimos 30 dias.
+                  {t('analytics.weeklyReportDescription')}
                 </p>
               </div>
               <Button
@@ -582,27 +587,27 @@ export default function Analytics() {
                 variant="secondary"
                 size="sm"
                 onClick={() => {
-                  const subject = encodeURIComponent('SalDesk — Relatório Mensal');
+                  const subject = encodeURIComponent(t('analytics.email.subject'));
                   const body = encodeURIComponent(
-                    `Score de Saúde: ${score ?? '—'}/100\n` +
-                    `Receita: ${weekly.revenue != null ? fmtMoney(weekly.revenue) : '—'}\n` +
-                    `Reservas: ${weekly.reservas ?? '—'}\n` +
-                    `Rating médio: ${ratingNum > 0 ? ratingNum.toFixed(1) : '—'}\n\n` +
-                    `Gerado em SalDesk — ${new Date().toLocaleDateString('pt-PT')}`,
+                    `${t('analytics.email.healthScore', { v: score ?? '—' })}\n` +
+                    `${t('analytics.email.revenue', { v: weekly.revenue != null ? fmtMoney(weekly.revenue) : '—' })}\n` +
+                    `${t('analytics.email.bookings', { v: weekly.reservas ?? '—' })}\n` +
+                    `${t('analytics.email.avgRating', { v: ratingNum > 0 ? ratingNum.toFixed(1) : '—' })}\n\n` +
+                    t('analytics.email.generated', { date: formatarData(new Date()) }),
                   );
                   window.open(`mailto:?subject=${subject}&body=${body}`);
                 }}
               >
-                Enviar por email
+                {t('analytics.sendEmail')}
               </Button>
             </div>
 
             <div className="mt-4 grid grid-cols-2 lg:grid-cols-4 gap-3">
               {[
-                { label: 'Score de saúde',  value: score != null ? `${score}/100` : '—',                       color: score >= 70 ? 'text-[var(--success)]' : score >= 50 ? 'text-[var(--warning)]' : 'text-[var(--error)]' },
-                { label: 'Receita',         value: weekly.revenue  != null ? fmtMoney(weekly.revenue) : '—',   color: 'text-ocean-700' },
-                { label: 'Reservas',        value: weekly.reservas != null ? String(weekly.reservas) : '—',    color: 'text-n-900' },
-                { label: 'Rating',          value: ratingNum > 0 ? `${ratingNum.toFixed(1)} / 5.0` : '—',       color: 'text-sand-500' },
+                { label: t('analytics.healthScoreShort'), value: score != null ? `${score}/100` : '—',                       color: score >= 70 ? 'text-[var(--success)]' : score >= 50 ? 'text-[var(--warning)]' : 'text-[var(--error)]' },
+                { label: t('analytics.revenue'),  value: weekly.revenue  != null ? fmtMoney(weekly.revenue) : '—',   color: 'text-ocean-700' },
+                { label: t('analytics.bookings'), value: weekly.reservas != null ? String(weekly.reservas) : '—',    color: 'text-n-900' },
+                { label: t('analytics.rating'),   value: ratingNum > 0 ? `${ratingNum.toFixed(1)} / 5.0` : '—',       color: 'text-sand-500' },
               ].map(m => (
                 <div key={m.label} className="bg-n-50 rounded-sm px-4 py-3 border border-n-200">
                   <p className={`font-display font-bold text-lg leading-none ${m.color}`}>{m.value}</p>
@@ -614,7 +619,7 @@ export default function Analytics() {
 
           {/* ── Taxa de Abandono ── */}
           <Card padding="px-6 py-5">
-            <h3 className="font-display font-semibold text-sm text-n-700 mb-4">Taxa de Abandono</h3>
+            <h3 className="font-display font-semibold text-sm text-n-700 mb-4">{t('analytics.abandonmentTitle')}</h3>
             {(() => {
               const views    = mktg?.profile_views || stats?.profile_views || 0;
               const bookings = resumo?.atual?.num_reservas || 0;
@@ -623,10 +628,10 @@ export default function Analytics() {
                 <div className="space-y-4">
                   <div className="grid grid-cols-3 gap-4">
                     {[
-                      { label: 'Visitas ao perfil',   value: views     > 0 ? views.toLocaleString('pt-PT')    : '—', color: 'text-n-900'    },
-                      { label: 'Reservas completadas', value: bookings > 0 ? String(bookings)                 : '—', color: 'text-ocean-700' },
+                      { label: t('analytics.profileVisits'),     value: views     > 0 ? formatarNumero(views)    : '—', color: 'text-n-900'    },
+                      { label: t('analytics.completedBookings'), value: bookings > 0 ? String(bookings)         : '—', color: 'text-ocean-700' },
                       {
-                        label: 'Taxa de abandono',
+                        label: t('analytics.abandonmentRate'),
                         value: abandonment != null ? `${abandonment}%` : '—',
                         color: abandonment == null ? 'text-n-400' : abandonment > 80 ? 'text-[var(--error)]' : abandonment > 60 ? 'text-[var(--warning)]' : 'text-[var(--success)]',
                       },
@@ -642,15 +647,15 @@ export default function Analytics() {
                     <div className="flex items-start gap-2 px-3 py-2.5 bg-[var(--warning-light)] border border-[var(--warning)] rounded-sm">
                       <MousePointerClick size={14} strokeWidth={1.75} className="text-[var(--warning)] shrink-0 mt-0.5" />
                       <p className="text-xs font-body text-[var(--warning)]">
-                        <span className="font-semibold">Alta taxa de abandono ({abandonment}%).</span>{' '}
-                        Muitos visitantes não completam a reserva. Verifica as fotos e descrições dos tours, simplifica o processo de reserva, ou considera reduzir o preço de entrada.
+                        <span className="font-semibold">{t('analytics.highAbandonment', { n: abandonment })}</span>{' '}
+                        {t('analytics.highAbandonmentTip')}
                       </p>
                     </div>
                   )}
 
                   {maisReservados.length > 0 && (
                     <div>
-                      <p className="text-xs font-mono uppercase tracking-wider text-n-500 mb-2">Por tour (reservas dos últimos 30 dias)</p>
+                      <p className="text-xs font-mono uppercase tracking-wider text-n-500 mb-2">{t('analytics.byTour')}</p>
                       <div className="space-y-2">
                         {maisReservados.map((u) => {
                           const popularity = maxReservas > 0 ? Math.round((Number(u.num_reservas || 0) / maxReservas) * 100) : 0;
@@ -666,14 +671,14 @@ export default function Analytics() {
                                 {popularity}%
                               </span>
                               {needsAttention && (
-                                <span className="text-[10px] font-body text-[var(--error)] shrink-0">melhora fotos</span>
+                                <span className="text-[10px] font-body text-[var(--error)] shrink-0">{t('analytics.improvePhotos')}</span>
                               )}
                             </div>
                           );
                         })}
                       </div>
                       <p className="text-[10px] font-mono text-n-400 mt-2">
-                        Percentagem das reservas do tour mais reservado nos últimos 30 dias (canceladas não contam).
+                        {t('analytics.byTourNote')}
                       </p>
                     </div>
                   )}
@@ -686,21 +691,21 @@ export default function Analytics() {
           <Card padding="px-6 py-5">
             <div className="flex items-center justify-between mb-4">
               <div>
-                <h3 className="font-display font-semibold text-sm text-n-700">Análise de Concorrência</h3>
+                <h3 className="font-display font-semibold text-sm text-n-700">{t('analytics.competitionTitle')}</h3>
                 <p className="text-xs font-body text-n-400 mt-0.5">
-                  Comparativo dos seus preços vs mercado (dados introduzidos manualmente)
+                  {t('analytics.competitionDescription')}
                 </p>
               </div>
               <Building2 size={16} strokeWidth={1.75} className="text-n-400 shrink-0" />
             </div>
 
             {units.length === 0 ? (
-              <EmptyState icon={Building2} title="Sem tours registados para comparar." />
+              <EmptyState icon={Building2} title={t('analytics.noTours')} />
             ) : (
               <Table columns={compColumns} rows={units.slice(0, 8)} compact />
             )}
             <p className="text-[10px] font-mono text-n-400 mt-3">
-              Introduz o preço do concorrente mais próximo (Viator, GYG ou operador local) para ver o comparativo. Guardado localmente.
+              {t('analytics.competitionNote')}
             </p>
           </Card>
 

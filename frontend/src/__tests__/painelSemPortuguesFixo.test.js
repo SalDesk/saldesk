@@ -80,6 +80,32 @@ export const FICHEIROS_CONVERTIDOS = [
   'pages/Weather.jsx',
   'services/weatherService.js',
   'pages/Housekeeping.jsx',
+  /* Fase 4, tarefa 3: financas, analises, previsao de procura e relatorio em PDF */
+  'utils/rotuloMes.js',
+  'pages/Financial.jsx',
+  'pages/financial/shared.jsx',
+  'pages/financial/CaixaTab.jsx',
+  'pages/financial/ComissoesTab.jsx',
+  'pages/financial/Comparativo.jsx',
+  'pages/financial/CostEditModal.jsx',
+  'pages/financial/DespesasTab.jsx',
+  'pages/financial/ObrigacoesTab.jsx',
+  'pages/financial/PorTourTab.jsx',
+  'pages/financial/PrevisaoTab.jsx',
+  'pages/financial/ReceitasManuaisTab.jsx',
+  'pages/financial/ResultadoTab.jsx',
+  'pages/financial/SalariosTab.jsx',
+  'pages/financial/TransacoesTable.jsx',
+  'components/financial/ChannelChart.jsx',
+  'components/financial/MetricCard.jsx',
+  'components/financial/PdfReport.jsx',
+  'components/financial/RevenueChart.jsx',
+  'components/financial/ServiceBarChart.jsx',
+  'components/financial/SimpleChart.jsx',
+  'components/financial/TopCustomersList.jsx',
+  'components/financial/UnitTable.jsx',
+  'pages/Analytics.jsx',
+  'pages/Demand.jsx',
 ];
 
 /* Valores portugueses que ficam no codigo de proposito, por ficheiro, com o motivo. */
@@ -95,6 +121,11 @@ export const PERMITIDOS = {
     { valor: 'Briefing com a equipa', motivo: 'tarefa por omissao da checklist, guardada como texto no localStorage; o rotulo vem de staff.defaultTasks' },
     { valor: 'Verificar segurança e primeiros socorros', motivo: 'tarefa por omissao da checklist, guardada como texto no localStorage; o rotulo vem de staff.defaultTasks' },
     { valor: 'Comunicar horário de início ao grupo', motivo: 'tarefa por omissao da checklist, guardada como texto no localStorage; o rotulo vem de staff.defaultTasks' },
+  ],
+  'pages/financial/shared.jsx': [
+    { valor: 'Venda ao balcao', motivo: 'categoria gravada em cada receita manual (MANUAL_REVENUE_CATEGORIES); o rotulo vem de financial.revenueCategories' },
+    { valor: 'Comissao de parceiro', motivo: 'categoria gravada em cada receita manual (MANUAL_REVENUE_CATEGORIES); o rotulo vem de financial.revenueCategories' },
+    { valor: 'Aluguer de equipamento', motivo: 'categoria gravada em cada receita manual (MANUAL_REVENUE_CATEGORIES); o rotulo vem de financial.revenueCategories' },
   ],
 };
 
