@@ -16,23 +16,27 @@ import useAuthStore from '../store/authStore';
 import Logo from '../components/shared/Logo';
 import { buildWhatsAppLink } from '../utils/whatsapp';
 import { getMonthGrid } from '../utils/calendar';
-import { useT } from '../i18n';
+import { useT, getT } from '../i18n';
 import useUiStore from '../store/uiStore';
 import {
   opcoesValidas, nomeOpcao, unidadeOpcao, limitarVeiculos, precoEstimado, opcaoMaisBarata,
 } from '../utils/opcoesActividade';
 import { mensagemErro } from '../utils/mensagemErro';
+import LanguageToggle from '../components/shared/LanguageToggle';
+import { rotuloMes } from '../utils/rotuloMes';
+import { rotuloDiaMes, euroPreco } from '../utils/formatoVendedor';
+import { eurosInteiros } from './reservations/shared';
 
 /* ── helpers ── */
 /* Data local do dispositivo, nao UTC -- ver nota em BeachSeller.jsx */
 const TODAY = new Date().toLocaleDateString('en-CA');
-const MONTHS_PT = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
-const DAYS_PT   = ['Dom','Seg','Ter','Qua','Qui','Sex','Sab'];
+const DIAS_SEMANA = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
 const TOUR_ICON_BG = ['bg-turquoise-100 text-turquoise-700', 'bg-sand-100 text-sand-600', 'bg-ocean-100 text-ocean-700'];
 
-function fmtDatePT(dateStr) {
-  const d = new Date(dateStr + 'T00:00:00Z');
-  return `${DAYS_PT[d.getUTCDay()]} ${d.getUTCDate()} ${MONTHS_PT[d.getUTCMonth()]}`;
+/* Mensagem enviada ao cliente: fica sempre em portugues, qualquer que seja a lingua do painel */
+function mensagemConfirmacaoCliente({ clientName, tourName, date, time }) {
+  const tPt = getT('pt');
+  return tPt('beachSeller.sale.whatsappConfirm', { name: clientName, tour: tourName, date: rotuloDiaMes(date, tPt), time });
 }
 
 function parseMeta(description) {
@@ -69,10 +73,12 @@ export default function BeachSale() {
   const { user } = useAuthStore();
   const t = useT();
   const lang = useUiStore((s) => s.lang);
+  const eur = (v) => eurosInteiros(v, lang);
+  const preco = (v) => euroPreco(v, lang);
   const langOpcao = lang === 'pt' ? 'pt' : 'en';
 
   const sellerId   = user?.user_metadata?.staff_id || user?.id;
-  const sellerName = user?.user_metadata?.name || user?.email || 'Vendedor';
+  const sellerName = user?.user_metadata?.name || user?.email || 'Vendedor'; /* so vai nas notas internas da reserva, nunca se mostra */
   const sellerMeta = getSellerMeta(sellerId);
 
   const [profile, setProfile] = useState(null);
@@ -168,7 +174,7 @@ export default function BeachSale() {
   const timeSlots = horariosDoTour.length ? horariosDoTour : ['09:00', '11:00', '14:00', '16:00'];
 
   async function handleConfirm() {
-    if (!clientName.trim()) { setError('Nome do cliente obrigatório.'); return; }
+    if (!clientName.trim()) { setError(t('beachSeller.sale.errName')); return; }
     setSaving(true);
     setError('');
     try {
@@ -214,7 +220,7 @@ export default function BeachSale() {
       });
       setStep(4);
     } catch (err) {
-      setError(mensagemErro(err, t, 'Erro ao criar reserva. Tente novamente.'));
+      setError(mensagemErro(err, t, t('beachSeller.sale.errCreate')));
     } finally {
       setSaving(false);
     }
@@ -231,7 +237,7 @@ export default function BeachSale() {
   }
 
   /* ── Progress bar ── */
-  const STEPS = ['Tour', 'Data e Grupo', 'Cliente'];
+  const STEPS = [t('beachSeller.sale.stepTour'), t('beachSeller.sale.stepDateGroup'), t('beachSeller.sale.stepCustomer')];
 
   return (
     <div className="min-h-screen bg-n-50 flex flex-col max-w-md md:max-w-2xl lg:max-w-3xl xl:max-w-4xl mx-auto">
@@ -246,12 +252,13 @@ export default function BeachSale() {
         )}
         <div className="flex-1 min-w-0">
           <p className="font-display font-bold text-white text-base truncate">
-            {step === 4 ? 'Reserva confirmada' : 'Nova Reserva'}
+            {step === 4 ? t('beachSeller.sale.confirmed') : t('beachSeller.newBooking')}
           </p>
           {step < 4 && (
-            <p className="text-ocean-300 text-xs mt-0.5">Passo {step} de 3 — {STEPS[step - 1]}</p>
+            <p className="text-ocean-300 text-xs mt-0.5">{t('beachSeller.sale.step', { step, name: STEPS[step - 1] })}</p>
           )}
         </div>
+        <LanguageToggle variant="white" />
         <Logo white size="sm" />
       </header>
 
@@ -270,7 +277,7 @@ export default function BeachSale() {
         {/* ── Step 1: Select Tour ── */}
         {step === 1 && (
           <div>
-            <p className="font-display font-semibold text-base text-n-900 mb-4">Selecciona o tour</p>
+            <p className="font-display font-semibold text-base text-n-900 mb-4">{t('beachSeller.sale.selectTour')}</p>
             {loading ? (
               <div className="flex justify-center py-16">
                 <div className="w-8 h-8 border-3 border-ocean-200 border-t-ocean-700 rounded-full animate-spin" />
@@ -278,7 +285,7 @@ export default function BeachSale() {
             ) : tours.length === 0 ? (
               <div className="text-center py-12 text-n-400">
                 <MapPin size={32} strokeWidth={1.25} className="mx-auto mb-3" />
-                <p className="font-body">Nenhum tour disponível para venda.</p>
+                <p className="font-body">{t('beachSeller.sale.noTours')}</p>
               </div>
             ) : (
               <div className="grid grid-cols-1 gap-3">
@@ -311,20 +318,20 @@ export default function BeachSale() {
                         )}
                         {tour.capacity > 0 && (
                           <p className="text-xs font-body text-n-400 flex items-center gap-1">
-                            <Users size={11} strokeWidth={1.75} />max {tour.capacity} pax
+                            <Users size={11} strokeWidth={1.75} />{t('beachSeller.sale.maxPax', { n: tour.capacity })}
                           </p>
                         )}
                       </div>
                       {maisBarata ? (
                         <div className="text-right shrink-0">
                           <p className="text-[10px] font-mono text-n-400">{t('opcoesActividade.from')}</p>
-                          <p className="font-display font-bold text-lg text-ocean-700">€{maisBarata.price}</p>
+                          <p className="font-display font-bold text-lg text-ocean-700">{preco(maisBarata.price)}</p>
                           <p className="text-[10px] font-mono text-n-400">{unidadeOpcao(maisBarata, langOpcao)}</p>
                         </div>
                       ) : (
                         <div className="text-right shrink-0">
-                          <p className="font-display font-bold text-lg text-ocean-700">€{tour.base_price}</p>
-                          <p className="text-[10px] font-mono text-n-400">/pessoa</p>
+                          <p className="font-display font-bold text-lg text-ocean-700">{preco(tour.base_price)}</p>
+                          <p className="text-[10px] font-mono text-n-400">{t('beachSeller.sale.perPerson')}</p>
                         </div>
                       )}
                     </button>
@@ -344,11 +351,11 @@ export default function BeachSale() {
                 <p className="font-display font-semibold text-sm text-ocean-900">{selectedTour.name}</p>
                 <p className="text-xs font-mono text-ocean-600">
                   {selectedOption
-                    ? `${nomeOpcao(selectedOption, langOpcao)} · €${selectedOption.price} ${unidadeOpcao(selectedOption, langOpcao)}`
-                    : `€${selectedTour.base_price}/pax`}
+                    ? `${nomeOpcao(selectedOption, langOpcao)} · ${preco(selectedOption.price)} ${unidadeOpcao(selectedOption, langOpcao)}`
+                    : t('beachSeller.sale.perPax', { price: preco(selectedTour.base_price) })}
                 </p>
               </div>
-              <button onClick={() => setStep(1)} className="text-xs font-body text-ocean-700 underline">Mudar</button>
+              <button onClick={() => setStep(1)} className="text-xs font-body text-ocean-700 underline">{t('beachSeller.sale.change')}</button>
             </div>
 
             {/* Opcoes do tour (variantes) -- so quando o tour as tem */}
@@ -368,7 +375,7 @@ export default function BeachSale() {
                             : 'bg-white border-n-200 text-n-800 hover:border-turquoise-300'
                         }`}>
                         <span className="font-display font-semibold text-base">{nomeOpcao(o, langOpcao)}</span>
-                        <span className="text-sm font-body shrink-0">€{o.price} {unidadeOpcao(o, langOpcao)}</span>
+                        <span className="text-sm font-body shrink-0">{preco(o.price)} {unidadeOpcao(o, langOpcao)}</span>
                       </button>
                     );
                   })}
@@ -379,7 +386,7 @@ export default function BeachSale() {
             {/* Date picker — calendario mensal completo */}
             <div>
               <p className="font-display font-semibold text-sm text-n-800 mb-3 flex items-center gap-2">
-                <Calendar size={16} strokeWidth={1.75} />Data
+                <Calendar size={16} strokeWidth={1.75} />{t('beachSeller.sale.date')}
               </p>
 
               <div className="bg-white rounded-2xl border-2 border-n-200 p-4">
@@ -393,12 +400,12 @@ export default function BeachSale() {
                       return { year: y, month: m };
                     })}
                     className="w-9 h-9 rounded-full flex items-center justify-center text-n-500 hover:bg-n-100 active:scale-95 transition-all"
-                    aria-label="Mês anterior"
+                    aria-label={t('beachSeller.prevMonth')}
                   >
                     <ChevronLeft size={18} strokeWidth={2} />
                   </button>
                   <p className="font-display font-bold text-base text-n-900">
-                    {MONTHS_PT[viewMonth.month]} {viewMonth.year}
+                    {rotuloMes(viewMonth.month, t)} {viewMonth.year}
                   </p>
                   <button
                     type="button"
@@ -408,7 +415,7 @@ export default function BeachSale() {
                       return { year: y, month: m };
                     })}
                     className="w-9 h-9 rounded-full flex items-center justify-center text-n-500 hover:bg-n-100 active:scale-95 transition-all"
-                    aria-label="Mês seguinte"
+                    aria-label={t('beachSeller.nextMonth')}
                   >
                     <ChevronRight size={18} strokeWidth={2} />
                   </button>
@@ -416,9 +423,9 @@ export default function BeachSale() {
 
                 {/* Cabecalho dos dias da semana */}
                 <div className="grid grid-cols-7 gap-1 mb-2">
-                  {DAYS_PT.map(d => (
+                  {DIAS_SEMANA.map(d => (
                     <div key={d} className="text-center text-[10px] font-mono uppercase tracking-wide text-n-400 py-1">
-                      {d}
+                      {t(`staff.days.${d}`)}
                     </div>
                   ))}
                 </div>
@@ -462,7 +469,7 @@ export default function BeachSale() {
             {/* Time slots */}
             <div>
               <p className="font-display font-semibold text-sm text-n-800 mb-3 flex items-center gap-2">
-                <Clock size={16} strokeWidth={1.75} />Horário
+                <Clock size={16} strokeWidth={1.75} />{t('beachSeller.sale.time')}
               </p>
               <div className="grid grid-cols-3 gap-2">
                 {timeSlots.map(slot => (
@@ -490,11 +497,11 @@ export default function BeachSale() {
             {/* Counters */}
             <div>
               <p className="font-display font-semibold text-sm text-n-800 mb-2 flex items-center gap-2">
-                <Users size={16} strokeWidth={1.75} />Composição do grupo
+                <Users size={16} strokeWidth={1.75} />{t('beachSeller.sale.group')}
               </p>
               <div className="bg-white rounded-2xl border border-n-200 px-4 divide-y divide-n-100">
-                <Counter label="Adultos" value={adults} min={1} onChange={v => { setAdults(v); setVehiclesReq(null); }} />
-                <Counter label="Crianças" value={kids} min={0} onChange={v => { setKids(v); setVehiclesReq(null); }} />
+                <Counter label={t('beachSeller.sale.adults')} value={adults} min={1} onChange={v => { setAdults(v); setVehiclesReq(null); }} />
+                <Counter label={t('beachSeller.sale.children')} value={kids} min={0} onChange={v => { setKids(v); setVehiclesReq(null); }} />
                 {porVeiculo && (
                   <Counter label={t('opcoesActividade.vehicles')} value={vehicles} min={vehiclesMin} max={Math.max(vehiclesMin, totalPax)} onChange={setVehiclesReq} />
                 )}
@@ -504,42 +511,42 @@ export default function BeachSale() {
             {/* Total */}
             <div className="bg-gradient-to-br from-ocean-700 to-turquoise-600 rounded-2xl px-5 py-4 flex items-center justify-between text-white">
               <div>
-                <p className="text-white/70 text-xs font-mono uppercase tracking-wide">Total</p>
-                <p className="font-display font-bold text-2xl mt-0.5">€{totalPrice.toFixed(0)}</p>
+                <p className="text-white/70 text-xs font-mono uppercase tracking-wide">{t('beachSeller.sale.total')}</p>
+                <p className="font-display font-bold text-2xl mt-0.5">{eur(totalPrice)}</p>
                 <p className="text-white/70 text-xs">
                   {!selectedOption
-                    ? `${totalPax} pax × €${tourPrice}`
+                    ? t('beachSeller.sale.paxTimes', { pax: totalPax, price: preco(tourPrice) })
                     : porVeiculo
-                      ? `${t('opcoesActividade.vehiclesCount', { n: vehicles })} × €${selectedOption.price}`
+                      ? t('beachSeller.sale.vehiclesTimes', { vehicles: t('opcoesActividade.vehiclesCount', { n: vehicles }), price: preco(selectedOption.price) })
                       : selectedOption.type === 'per_group'
-                        ? `${totalPax} pax · ${nomeOpcao(selectedOption, langOpcao)}`
-                        : `${totalPax} pax × €${selectedOption.price}`}
+                        ? t('beachSeller.sale.paxOption', { pax: totalPax, name: nomeOpcao(selectedOption, langOpcao) })
+                        : t('beachSeller.sale.paxTimes', { pax: totalPax, price: preco(selectedOption.price) })}
                 </p>
               </div>
               <div className="text-right">
-                <p className="text-white/70 text-xs font-mono uppercase tracking-wide">A sua comissão</p>
-                <p className="font-display font-bold text-xl mt-0.5 text-sand-300">€{commission.toFixed(0)}</p>
+                <p className="text-white/70 text-xs font-mono uppercase tracking-wide">{t('beachSeller.sale.yourCommission')}</p>
+                <p className="font-display font-bold text-xl mt-0.5 text-sand-300">{eur(commission)}</p>
                 <p className="text-white/70 text-xs">{commPct}%</p>
               </div>
             </div>
 
             <button
               onClick={() => {
-                if (!selectedTime) { setError('Selecciona um horário.'); return; }
+                if (!selectedTime) { setError(t('beachSeller.sale.errTime')); return; }
                 if (availableFleet.length > 0) {
                   if (availableFleet.every(v => !v.available)) {
-                    setError('Não há buggys disponíveis para esta data — escolhe outra data.');
+                    setError(t('beachSeller.sale.errNoBuggies'));
                     return;
                   }
                   if (!selectedFleetId) {
-                    setError('Por favor escolhe um buggy para continuar.');
+                    setError(t('beachSeller.sale.errPickBuggy'));
                     return;
                   }
                 }
                 setError(''); setStep(3);
               }}
               className="w-full h-16 bg-gradient-to-r from-ocean-700 to-turquoise-600 text-white rounded-2xl font-display font-bold text-lg flex items-center justify-center gap-2 active:scale-[0.99] transition-all hover:opacity-90">
-              Continuar
+              {t('beachSeller.sale.next')}
               <ChevronRight size={20} strokeWidth={2} />
             </button>
             {error && <p className="text-center text-sm text-error">{error}</p>}
@@ -553,41 +560,41 @@ export default function BeachSale() {
             <div className="bg-n-50 border border-n-200 rounded-2xl px-4 py-3 space-y-1.5">
               <p className="font-display font-semibold text-sm text-n-800">{selectedTour?.name}</p>
               <p className="text-xs font-body text-n-500 flex items-center gap-1.5">
-                <Calendar size={12} strokeWidth={1.75} />{fmtDatePT(selectedDate)} — {selectedTime}
+                <Calendar size={12} strokeWidth={1.75} />{rotuloDiaMes(selectedDate, t)} — {selectedTime}
               </p>
               <p className="text-xs font-body text-n-500 flex items-center gap-1.5">
-                <Users size={12} strokeWidth={1.75} />{adults} adulto(s){kids > 0 ? ` + ${kids} criança(s)` : ''}
+                <Users size={12} strokeWidth={1.75} />{t('beachSeller.sale.adultsCount', { n: adults })}{kids > 0 ? t('beachSeller.sale.childrenExtra', { n: kids }) : ''}
               </p>
-              <p className="font-display font-semibold text-ocean-700">€{totalPrice.toFixed(0)}</p>
+              <p className="font-display font-semibold text-ocean-700">{eur(totalPrice)}</p>
             </div>
 
             {/* Client fields */}
             <div className="space-y-4">
               <div>
                 <label className="flex items-center gap-1.5 text-sm font-body font-semibold text-n-700 mb-2">
-                  <User size={14} strokeWidth={1.75} />Nome completo *
+                  <User size={14} strokeWidth={1.75} />{t('beachSeller.sale.fullName')}
                 </label>
                 <input
                   type="text" required value={clientName} onChange={e => setClientName(e.target.value)}
-                  placeholder="Nome e apelido do cliente"
+                  placeholder={t('beachSeller.sale.fullNamePh')}
                   className="w-full h-12 px-4 rounded-2xl border-2 border-n-200 text-base font-body bg-white focus:outline-none focus:border-turquoise-500 transition-colors"
                 />
               </div>
 
               <div>
                 <label className="flex items-center gap-1.5 text-sm font-body font-semibold text-n-700 mb-2">
-                  <Mail size={14} strokeWidth={1.75} />Email
+                  <Mail size={14} strokeWidth={1.75} />{t('beachSeller.sale.email')}
                 </label>
                 <input
                   type="email" value={clientEmail} onChange={e => setClientEmail(e.target.value)}
-                  placeholder="cliente@email.com"
+                  placeholder={t('beachSeller.sale.emailPh')}
                   className="w-full h-12 px-4 rounded-2xl border-2 border-n-200 text-base font-body bg-white focus:outline-none focus:border-turquoise-500 transition-colors"
                 />
               </div>
 
               <div>
                 <label className="flex items-center gap-1.5 text-sm font-body font-semibold text-n-700 mb-2">
-                  <Phone size={14} strokeWidth={1.75} />Telefone / WhatsApp
+                  <Phone size={14} strokeWidth={1.75} />{t('beachSeller.sale.phone')}
                 </label>
                 <input
                   type="tel" value={clientPhone} onChange={e => setClientPhone(e.target.value)}
@@ -599,21 +606,21 @@ export default function BeachSale() {
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="flex items-center gap-1.5 text-sm font-body font-semibold text-n-700 mb-2">
-                    <MapPin size={14} strokeWidth={1.75} />Hotel
+                    <MapPin size={14} strokeWidth={1.75} />{t('beachSeller.sale.hotel')}
                   </label>
                   <input
                     type="text" value={clientHotel} onChange={e => setClientHotel(e.target.value)}
-                    placeholder="Ex: Hotel Morabeza"
+                    placeholder={t('beachSeller.sale.hotelPh')}
                     className="w-full h-12 px-4 rounded-2xl border-2 border-n-200 text-base font-body bg-white focus:outline-none focus:border-turquoise-500 transition-colors"
                   />
                 </div>
                 <div>
                   <label className="text-sm font-body font-semibold text-n-700 mb-2 block">
-                    Quarto / Apartamento
+                    {t('beachSeller.sale.room')}
                   </label>
                   <input
                     type="text" value={clientRoom} onChange={e => setClientRoom(e.target.value)}
-                    placeholder="Ex: 204"
+                    placeholder={t('beachSeller.sale.roomPh')}
                     className="w-full h-12 px-4 rounded-2xl border-2 border-n-200 text-base font-body bg-white focus:outline-none focus:border-turquoise-500 transition-colors"
                   />
                 </div>
@@ -621,11 +628,11 @@ export default function BeachSale() {
 
               <div>
                 <label className="text-sm font-body font-semibold text-n-700 mb-2 block">
-                  Notas especiais (opcional)
+                  {t('beachSeller.sale.notes')}
                 </label>
                 <textarea
                   value={notes} onChange={e => setNotes(e.target.value)}
-                  rows={3} placeholder="Ex: vegetariano, aniversário, necessidades especiais..."
+                  rows={3} placeholder={t('beachSeller.sale.notesPh')}
                   className="w-full px-4 py-3 rounded-2xl border-2 border-n-200 text-base font-body bg-white focus:outline-none focus:border-turquoise-500 resize-none transition-colors"
                 />
               </div>
@@ -639,8 +646,8 @@ export default function BeachSale() {
 
             {/* Commission preview */}
             <div className="bg-turquoise-50 border border-turquoise-300 rounded-2xl px-4 py-3 flex items-center justify-between">
-              <p className="text-sm font-body text-turquoise-700">A tua comissão nesta reserva</p>
-              <p className="font-display font-bold text-xl text-turquoise-700">€{commission.toFixed(0)}</p>
+              <p className="text-sm font-body text-turquoise-700">{t('beachSeller.sale.commissionPreview')}</p>
+              <p className="font-display font-bold text-xl text-turquoise-700">{eur(commission)}</p>
             </div>
 
             <button
@@ -650,7 +657,7 @@ export default function BeachSale() {
               {saving ? (
                 <span className="w-6 h-6 border-3 border-ocean-900/30 border-t-ocean-900 rounded-full animate-spin" />
               ) : (
-                <>Confirmar Reserva <Check size={20} strokeWidth={2.5} /></>
+                <>{t('beachSeller.sale.confirm')} <Check size={20} strokeWidth={2.5} /></>
               )}
             </button>
           </div>
@@ -665,32 +672,32 @@ export default function BeachSale() {
             </div>
 
             <div>
-              <p className="font-display font-bold text-2xl text-n-900">Reserva confirmada!</p>
+              <p className="font-display font-bold text-2xl text-n-900">{t('beachSeller.sale.done')}</p>
               <p className="text-n-500 font-body mt-1">{successData.tourName}</p>
-              <p className="text-n-400 text-sm font-body">{fmtDatePT(successData.date)} — {successData.time}</p>
+              <p className="text-n-400 text-sm font-body">{rotuloDiaMes(successData.date, t)} — {successData.time}</p>
             </div>
 
             {/* Commission earned */}
             <div className="bg-gradient-to-br from-ocean-700 to-turquoise-600 rounded-3xl px-8 py-5 w-full">
-              <p className="text-white/70 text-sm font-body">Ganhaste nesta reserva</p>
-              <p className="font-display font-bold text-4xl text-white mt-1">€{successData.commission.toFixed(0)}</p>
-              <p className="text-white/70 text-xs mt-1">{commPct}% de €{successData.total.toFixed(0)}</p>
+              <p className="text-white/70 text-sm font-body">{t('beachSeller.sale.earned')}</p>
+              <p className="font-display font-bold text-4xl text-white mt-1">{eur(successData.commission)}</p>
+              <p className="text-white/70 text-xs mt-1">{t('beachSeller.sale.pctOf', { pct: commPct, amount: eur(successData.total) })}</p>
             </div>
 
             <div className="bg-n-50 rounded-2xl px-4 py-3 w-full text-left space-y-1.5">
               <div className="flex justify-between text-sm">
-                <span className="text-n-500">Pax</span>
-                <span className="font-body font-semibold text-n-800">{successData.pax} pessoa(s)</span>
+                <span className="text-n-500">{t('beachSeller.sale.pax')}</span>
+                <span className="font-body font-semibold text-n-800">{t('beachSeller.sale.people', { n: successData.pax })}</span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-n-500">Total cobrado</span>
-                <span className="font-display font-bold text-ocean-700">€{successData.total.toFixed(0)}</span>
+                <span className="text-n-500">{t('beachSeller.sale.charged')}</span>
+                <span className="font-display font-bold text-ocean-700">{eur(successData.total)}</span>
               </div>
               {successData.clientHotel && (
                 <div className="flex justify-between text-sm">
-                  <span className="text-n-500">Hotel</span>
+                  <span className="text-n-500">{t('beachSeller.sale.hotel')}</span>
                   <span className="font-body font-semibold text-n-800">
-                    {successData.clientHotel}{successData.clientRoom ? ` — Quarto ${successData.clientRoom}` : ''}
+                    {successData.clientHotel}{successData.clientRoom ? t('beachSeller.sale.roomSuffix', { room: successData.clientRoom }) : ''}
                   </span>
                 </div>
               )}
@@ -700,25 +707,25 @@ export default function BeachSale() {
               <button
                 onClick={resetForm}
                 className="w-full h-16 bg-sand-500 text-ocean-900 rounded-full font-display font-bold text-lg active:scale-[0.99] transition-all hover:bg-sand-600">
-                Nova Reserva
+                {t('beachSeller.newBooking')}
               </button>
               <button
                 onClick={() => navigate('/vendedor')}
                 className="w-full h-12 bg-white border-2 border-n-200 text-n-700 rounded-2xl font-body font-semibold text-sm active:scale-[0.99] transition-all hover:border-turquoise-300">
-                Ver Minhas Reservas
+                {t('beachSeller.sale.viewMine')}
               </button>
               {successData.clientPhone && (
                 <a
                   href={buildWhatsAppLink(
                     successData.clientPhone,
-                    `Olá ${successData.clientName}! A sua reserva para ${successData.tourName} no dia ${fmtDatePT(successData.date)} às ${successData.time} está confirmada. Até breve!`
+                    mensagemConfirmacaoCliente(successData)
                   )}
                   target="_blank"
                   rel="noreferrer"
                   className="w-full h-12 bg-[#25D366] text-white rounded-2xl font-body font-semibold text-sm flex items-center justify-center gap-2 active:scale-[0.99] transition-all hover:bg-[#1FB855]"
                 >
                   <MessageCircle size={18} strokeWidth={1.75} />
-                  Enviar confirmação por WhatsApp
+                  {t('beachSeller.sale.sendWhatsapp')}
                 </a>
               )}
             </div>

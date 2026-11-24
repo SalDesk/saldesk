@@ -114,6 +114,47 @@ export const FICHEIROS_CONVERTIDOS = [
   'pages/Onboarding.jsx',
   'components/onboarding/OnboardingWizard.jsx',
   'components/onboarding/Step3Complete.jsx',
+  /* Fase 2, tarefa 1: reservas, modais e manifesto */
+  'pages/Reservations.jsx',
+  'pages/reservations/shared.jsx',
+  'pages/reservations/ActivityTable.jsx',
+  'pages/reservations/RestaurantTable.jsx',
+  'pages/reservations/RentacarTable.jsx',
+  'pages/reservations/ColumnCards.jsx',
+  'pages/reservations/DevolucaoModal.jsx',
+  'pages/reservations/LevantamentoModal.jsx',
+  'pages/reservations/NoShowModal.jsx',
+  'pages/reservations/RescheduleModal.jsx',
+  'pages/reservations/RestaurantCreateModal.jsx',
+  'pages/reservations/ManifestoModal.jsx',
+  'components/reservations/ReservationForm.jsx',
+  'components/reservations/ReservationCard.jsx',
+  'components/reservations/ReservationDetailModal.jsx',
+  'components/reservations/StatusBadge.jsx',
+  'components/assignments/AssignCompositeModal.jsx',
+  /* Fase 2, tarefa 2: calendario */
+  'pages/Calendar.jsx',
+  'components/calendar/CalendarView.jsx',
+  'components/calendar/rotulosCalendario.js',
+  /* Fase 2, tarefa 3: formulario de actividade, editores, opcoes e ponto de encontro */
+  'components/units/forms/TourForm.jsx',
+  'components/units/forms/editors.jsx',
+  'components/units/forms/OpcoesActividade.jsx',
+  'components/units/forms/LocalizacaoPontoEncontro.jsx',
+  /* Fase 2, tarefa 4: pagina de unidades, lista e formularios de quarto, viatura e mesa */
+  'components/shared/ConectRow.jsx',
+  'pages/Units.jsx',
+  'components/units/UnitList.jsx',
+  'components/units/UnitForm.jsx',
+  'components/units/forms/HotelRoomForm.jsx',
+  'components/units/forms/RentacarVehicleForm.jsx',
+  'components/units/forms/RestaurantTableForm.jsx',
+  'components/units/forms/GenericUnitForm.jsx',
+  /* Fase 2, tarefa 5: vendedor de praia */
+  'pages/BeachSeller.jsx',
+  'pages/BeachSale.jsx',
+  'pages/VendedorPerfil.jsx',
+  'utils/formatoVendedor.js',
 ];
 
 /* Valores portugueses que ficam no codigo de proposito, por ficheiro, com o motivo. */
@@ -134,6 +175,24 @@ export const PERMITIDOS = {
     { valor: 'Venda ao balcao', motivo: 'categoria gravada em cada receita manual (MANUAL_REVENUE_CATEGORIES); o rotulo vem de financial.revenueCategories' },
     { valor: 'Comissao de parceiro', motivo: 'categoria gravada em cada receita manual (MANUAL_REVENUE_CATEGORIES); o rotulo vem de financial.revenueCategories' },
     { valor: 'Aluguer de equipamento', motivo: 'categoria gravada em cada receita manual (MANUAL_REVENUE_CATEGORIES); o rotulo vem de financial.revenueCategories' },
+  ],
+  'components/units/forms/TourForm.jsx': [
+    { valor: 'Equipamento incluído', motivo: 'comodidade fixa de actividade gravada em portugues nos metadados da unidade (ACTIVITY_AMENS); o rotulo vem de unitForm.amenity' },
+    { valor: 'Fotografias/Vídeo', motivo: 'comodidade fixa de actividade gravada em portugues nos metadados da unidade (ACTIVITY_AMENS); o rotulo vem de unitForm.amenity' },
+    { valor: 'Snacks e água', motivo: 'comodidade fixa de actividade gravada em portugues nos metadados da unidade (ACTIVITY_AMENS); o rotulo vem de unitForm.amenity' },
+    { valor: 'Vestiário', motivo: 'comodidade fixa de actividade gravada em portugues nos metadados da unidade (ACTIVITY_AMENS); o rotulo vem de unitForm.amenity' },
+  ],
+  'components/units/forms/HotelRoomForm.jsx': [
+    { valor: 'Sem vista', motivo: 'vista do quarto gravada em portugues em meta.view (ROOM_VIEWS); o rotulo vem de unitForm.roomView' },
+  ],
+  'components/units/forms/RestaurantTableForm.jsx': [
+    { valor: 'Terraço', motivo: 'comodidade gravada em portugues nos metadados da unidade e mostrada nas paginas publicas (RESTAURANT_AMENS); o rotulo vem de unitForm.amenities' },
+    { valor: 'Acesso cadeira de rodas', motivo: 'comodidade gravada em portugues nos metadados da unidade e mostrada nas paginas publicas (RESTAURANT_AMENS); o rotulo vem de unitForm.amenities' },
+    { valor: 'Música ao vivo', motivo: 'comodidade gravada em portugues nos metadados da unidade e mostrada nas paginas publicas (RESTAURANT_AMENS); o rotulo vem de unitForm.amenities' },
+    { valor: 'Ambiente para crianças', motivo: 'comodidade gravada em portugues nos metadados da unidade e mostrada nas paginas publicas (RESTAURANT_AMENS); o rotulo vem de unitForm.amenities' },
+  ],
+  'components/units/forms/editors.jsx': [
+    { valor: 'Passeio de Barco', motivo: 'categoria de actividade gravada em units.unit_type (UNIT_TYPES_BY_OPERATOR); o rotulo vem de unitForm.unitType' },
   ],
 };
 

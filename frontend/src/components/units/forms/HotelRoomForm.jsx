@@ -2,6 +2,9 @@ import { useState } from 'react';
 import Input, { Textarea, Select } from '../../ui/Input';
 import Button from '../../ui/Button';
 import ImageUploader from '../../shared/ImageUploader';
+import { useT } from '../../../i18n';
+import { rotuloComodidade, rotuloTipoUnidade, rotuloVistaQuarto } from '../rotulosUnidades';
+import { useLingua } from '../../../utils/formatoLingua';
 import {
   AmenitiesPicker, IncludedItemsEditor,
   SectionLabel, OtaFields, ConectFields, buildOtaProductIds,
@@ -29,6 +32,8 @@ function stripComposedPrefix(name, prefix) {
 }
 
 export default function HotelRoomForm({ unit, onSave, onCancel, loading, error }) {
+  const t = useT();
+  const lang = useLingua();
   const meta = parseRoomMeta(unit?.description);
 
   const [form, setForm] = useState({
@@ -104,72 +109,72 @@ export default function HotelRoomForm({ unit, onSave, onCancel, loading, error }
     <form onSubmit={handleSubmit} className="space-y-5">
 
       <div>
-        <SectionLabel>Identificação</SectionLabel>
+        <SectionLabel>{t('unitForm.section.identification')}</SectionLabel>
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-3">
-          <Input label="Número" value={form.number} onChange={set('number')} placeholder="101" />
+          <Input label={t('unitForm.hotel.number')} value={form.number} onChange={set('number')} placeholder="101" />
           <div className="col-span-2">
-            <Input label="Nome" value={form.name} onChange={set('name')} required autoFocus placeholder="Ocean View Suite" />
+            <Input label={t('unitForm.hotel.name')} value={form.name} onChange={set('name')} required autoFocus placeholder="Ocean View Suite" />
           </div>
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-          <Select label="Tipo" value={form.unit_type} onChange={set('unit_type')} required>
-            {ROOM_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+          <Select label={t('unitForm.hotel.type')} value={form.unit_type} onChange={set('unit_type')} required>
+            {ROOM_TYPES.map(tp => <option key={tp} value={tp}>{rotuloTipoUnidade(tp, t, lang)}</option>)}
           </Select>
-          <Input label="Andar" value={form.floor} onChange={set('floor')} placeholder="1" />
-          <Select label="Vista" value={form.view} onChange={set('view')}>
-            {ROOM_VIEWS.map(v => <option key={v} value={v}>{v}</option>)}
+          <Input label={t('unitForm.hotel.floor')} value={form.floor} onChange={set('floor')} placeholder="1" />
+          <Select label={t('unitForm.hotel.view')} value={form.view} onChange={set('view')}>
+            {ROOM_VIEWS.map(v => <option key={v} value={v}>{rotuloVistaQuarto(v, t)}</option>)}
           </Select>
         </div>
       </div>
 
       <div>
-        <SectionLabel>Capacidade</SectionLabel>
+        <SectionLabel>{t('unitForm.section.capacity')}</SectionLabel>
         <div className="grid grid-cols-2 gap-3">
-          <Input label="Adultos" type="number" value={form.capacity}      onChange={set('capacity')}      min="1" required />
-          <Input label="Crianças" type="number" value={form.capacity_kids} onChange={set('capacity_kids')} min="0" />
+          <Input label={t('unitForm.hotel.adults')} type="number" value={form.capacity}      onChange={set('capacity')}      min="1" required />
+          <Input label={t('unitForm.hotel.children')} type="number" value={form.capacity_kids} onChange={set('capacity_kids')} min="0" />
         </div>
       </div>
 
       <div>
-        <SectionLabel>Comodidades</SectionLabel>
-        <AmenitiesPicker options={ROOM_AMENS} selected={form.amenities} onToggle={toggleAmen} />
+        <SectionLabel>{t('unitForm.section.amenities')}</SectionLabel>
+        <AmenitiesPicker options={ROOM_AMENS} selected={form.amenities} onToggle={toggleAmen} rotulo={(a) => rotuloComodidade(a, t)} />
       </div>
 
       <div>
-        <SectionLabel>Preços por época (€ / noite)</SectionLabel>
+        <SectionLabel>{t('unitForm.hotel.seasonPrices')}</SectionLabel>
         <div className="grid grid-cols-2 gap-3 mb-3">
-          <Input label="Preço base"   type="number" value={form.base_price} onChange={set('base_price')} min="0" step="0.01" required placeholder="0.00" />
-          <Input label="Época baixa"  type="number" value={form.price_low}  onChange={set('price_low')}  min="0" step="0.01" placeholder="0.00" />
+          <Input label={t('unitForm.hotel.basePrice')} type="number" value={form.base_price} onChange={set('base_price')} min="0" step="0.01" required placeholder="0.00" />
+          <Input label={t('unitForm.hotel.low')} type="number" value={form.price_low}  onChange={set('price_low')}  min="0" step="0.01" placeholder="0.00" />
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-          <Input label="Época média"  type="number" value={form.price_mid}  onChange={set('price_mid')}  min="0" step="0.01" placeholder="0.00" />
-          <Input label="Época alta"   type="number" value={form.price_high} onChange={set('price_high')} min="0" step="0.01" placeholder="0.00" />
-          <Input label="Pico"         type="number" value={form.price_peak} onChange={set('price_peak')} min="0" step="0.01" placeholder="0.00" />
+          <Input label={t('unitForm.hotel.mid')} type="number" value={form.price_mid}  onChange={set('price_mid')}  min="0" step="0.01" placeholder="0.00" />
+          <Input label={t('unitForm.hotel.high')} type="number" value={form.price_high} onChange={set('price_high')} min="0" step="0.01" placeholder="0.00" />
+          <Input label={t('unitForm.hotel.peak')} type="number" value={form.price_peak} onChange={set('price_peak')} min="0" step="0.01" placeholder="0.00" />
         </div>
       </div>
 
       <div>
-        <SectionLabel>Descrição</SectionLabel>
-        <Textarea value={form.description} onChange={set('description')} placeholder="Descrição do quarto..." rows={2} />
+        <SectionLabel>{t('unitForm.section.description')}</SectionLabel>
+        <Textarea value={form.description} onChange={set('description')} placeholder={t('unitForm.hotel.descPh')} rows={2} />
       </div>
 
       <div>
-        <SectionLabel>O que está incluído</SectionLabel>
+        <SectionLabel>{t('unitForm.section.included')}</SectionLabel>
         <IncludedItemsEditor items={form.included_items} onChange={items => setForm(f => ({ ...f, included_items: items }))} />
       </div>
 
       <div>
-        <SectionLabel>Informação importante (opcional)</SectionLabel>
-        <Textarea value={form.important_info} onChange={set('important_info')} placeholder="Ex: Check-in a partir das 14h, check-out até às 12h." rows={2} />
+        <SectionLabel>{t('unitForm.section.importantInfo')}</SectionLabel>
+        <Textarea value={form.important_info} onChange={set('important_info')} placeholder={t('unitForm.hotel.importantPh')} rows={2} />
       </div>
 
       <div>
-        <SectionLabel>Fotos</SectionLabel>
+        <SectionLabel>{t('unitForm.section.photos')}</SectionLabel>
         <ImageUploader
           value={form.images}
           onChange={(urls) => setForm(f => ({ ...f, images: urls }))}
           maxImages={10}
-          hint="Primeira foto = capa principal · max 10 fotos · 5MB cada"
+          hint={t('unitForm.tour.photosHint')}
         />
       </div>
 
@@ -178,12 +183,12 @@ export default function HotelRoomForm({ unit, onSave, onCancel, loading, error }
 
       {unit && (
         <div>
-          <SectionLabel>Estado</SectionLabel>
+          <SectionLabel>{t('unitForm.section.status')}</SectionLabel>
           <Select value={form.status} onChange={set('status')}>
-            <option value="active">Activo</option>
-            <option value="cleaning">Em limpeza</option>
-            <option value="maintenance">Em manutenção</option>
-            <option value="inactive">Inactivo</option>
+            <option value="active">{t('unitForm.status.active')}</option>
+            <option value="cleaning">{t('unitForm.status.cleaning')}</option>
+            <option value="maintenance">{t('unitForm.status.maintenance')}</option>
+            <option value="inactive">{t('unitForm.status.inactive')}</option>
           </Select>
         </div>
       )}
@@ -193,9 +198,9 @@ export default function HotelRoomForm({ unit, onSave, onCancel, loading, error }
       )}
 
       <div className="flex gap-3 pt-1">
-        <Button type="button" variant="secondary" onClick={onCancel} className="flex-1">Cancelar</Button>
+        <Button type="button" variant="secondary" onClick={onCancel} className="flex-1">{t('common.cancel')}</Button>
         <Button type="submit" loading={loading} className="flex-1">
-          {unit ? 'Guardar alterações' : 'Criar quarto'}
+          {unit ? t('unitForm.tour.saveChanges') : t('unitForm.hotel.create')}
         </Button>
       </div>
     </form>

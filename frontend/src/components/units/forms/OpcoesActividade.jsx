@@ -151,11 +151,11 @@ export function OpcoesEditor({ options, onChange, mostrarErros }) {
             <div className="flex flex-wrap items-start gap-2">
               <div className="flex-1 min-w-[140px]">
                 <Input value={o.name_pt} onChange={(ev) => actualizar(i, { name_pt: ev.target.value })}
-                  placeholder="Ex: Buggy duplo" aria-label={t('opcoesActividade.optionNamePt', { n })} error={msg('name_pt')} />
+                  placeholder={t('unitForm.options.namePtPh')} aria-label={t('opcoesActividade.optionNamePt', { n })} error={msg('name_pt')} />
               </div>
               <div className="flex-1 min-w-[140px]">
                 <Input value={o.name_en} onChange={(ev) => actualizar(i, { name_en: ev.target.value })}
-                  placeholder="Ex: Double buggy" aria-label={t('opcoesActividade.optionNameEn', { n })} />
+                  placeholder={t('unitForm.options.nameEnPh')} aria-label={t('opcoesActividade.optionNameEn', { n })} />
               </div>
               <RemoveRowButton label={t('opcoesActividade.removeOption', { n })} onClick={() => onChange(options.filter((_, idx) => idx !== i))} />
             </div>
@@ -246,11 +246,11 @@ export function OfertasEditor({ offers, onChange, mostrarErros }) {
             <div className="flex flex-wrap items-start gap-2">
               <div className="flex-1 min-w-[140px]">
                 <Input value={o.label_pt} onChange={(ev) => actualizar(i, { label_pt: ev.target.value })}
-                  placeholder="Oferta especial (-25%)" aria-label={t('opcoesActividade.offerLabelPt', { n })} />
+                  placeholder={t('unitForm.options.offerPtPh')} aria-label={t('opcoesActividade.offerLabelPt', { n })} />
               </div>
               <div className="flex-1 min-w-[140px]">
                 <Input value={o.label_en} onChange={(ev) => actualizar(i, { label_en: ev.target.value })}
-                  placeholder="Special offer (-25%)" aria-label={t('opcoesActividade.offerLabelEn', { n })} />
+                  placeholder={t('unitForm.options.offerEnPh')} aria-label={t('opcoesActividade.offerLabelEn', { n })} />
               </div>
             </div>
           </div>

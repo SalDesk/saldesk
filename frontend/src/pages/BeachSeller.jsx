@@ -15,28 +15,29 @@ import useAuthStore from '../store/authStore';
 import Logo from '../components/shared/Logo';
 import StaffChat from '../components/shared/StaffChat';
 import { buildWhatsAppLink } from '../utils/whatsapp';
+import LanguageToggle from '../components/shared/LanguageToggle';
+import { useT, getT } from '../i18n';
+import { useLingua, formatarData } from '../utils/formatoLingua';
+import { rotuloMes } from '../utils/rotuloMes';
+import { rotuloDiaMes } from '../utils/formatoVendedor';
+import { eurosInteiros } from './reservations/shared';
 
 /* ── helpers ── */
 /* Data local do dispositivo, nao UTC -- Cabo Verde e UTC-1, por isso
    toISOString() mostrava sempre o dia seguinte entre as 23h e a meia-noite
    locais, escondendo as reservas de "hoje" nessa janela. */
 const TODAY = new Date().toLocaleDateString('en-CA');
-const MONTHS_PT = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
-const DAYS_PT   = ['Dom','Seg','Ter','Qua','Qui','Sex','Sab'];
 const TOUR_ICON_BG = ['bg-turquoise-100 text-turquoise-700', 'bg-sand-100 text-sand-600', 'bg-ocean-100 text-ocean-700'];
 
-function fmtDate(d) {
+/* Dia e mes curtos na lingua do painel (AAAA-MM-DD le-se como data local) */
+function fmtDate(d, lang) {
   if (!d) return '—';
-  return new Date(d + 'T00:00:00Z').toLocaleDateString('pt-PT', { day: '2-digit', month: 'short', timeZone: 'UTC' });
+  return formatarData(d, { day: '2-digit', month: 'short' }, lang);
 }
 
-function fmtDatePT(dateStr) {
-  const d = new Date(dateStr + 'T00:00:00Z');
-  return `${DAYS_PT[d.getUTCDay()]} ${d.getUTCDate()} ${MONTHS_PT[d.getUTCMonth()]}`;
-}
-
-function fmtMoney(v) {
-  return `€${Number(v || 0).toFixed(0)}`;
+/* Data AAAA-MM-DD do passeio: em pt aparece gravada, como sempre; nas outras linguas na lingua do painel */
+function fmtPasseio(d, lang) {
+  return lang === 'pt' ? d : formatarData(d, {}, lang);
 }
 
 /* Data LOCAL (nao UTC) em que a venda foi feita, a partir de created_at.
@@ -51,18 +52,19 @@ function saleDateLocal(createdAt) {
   return new Date(createdAt).toLocaleDateString('en-CA');
 }
 
-function buildShiftSummaryText({ sellerName, date, reservations, commission }) {
+function buildShiftSummaryText({ sellerName, date, reservations, commission, t, lang }) {
+  const fmtMoney = (v) => eurosInteiros(v, lang);
   const lines = [
-    `*Resumo do Turno — ${sellerName}*`,
-    `${fmtDatePT(date)}`,
+    t('beachSeller.shift.summaryTitle', { name: sellerName }),
+    `${rotuloDiaMes(date, t)}`,
     '',
-    `Vendas: ${reservations.length}`,
-    `Total vendido: ${fmtMoney(reservations.reduce((s, r) => s + Number(r.total_price || 0), 0))}`,
-    `Comissão gerada: ${fmtMoney(commission)}`,
+    t('beachSeller.shift.salesLine', { n: reservations.length }),
+    t('beachSeller.shift.totalLine', { amount: fmtMoney(reservations.reduce((s, r) => s + Number(r.total_price || 0), 0)) }),
+    t('beachSeller.shift.commissionLine', { amount: fmtMoney(commission) }),
     '',
   ];
   if (reservations.length > 0) {
-    lines.push('Detalhe das vendas:');
+    lines.push(t('beachSeller.shift.detail'));
     reservations.forEach(r => {
       lines.push(`- ${r.customer_name} · ${fmtMoney(r.total_price)}`);
     });
@@ -70,21 +72,25 @@ function buildShiftSummaryText({ sellerName, date, reservations, commission }) {
   return lines.join('\n');
 }
 
+/* O rotulo vem de beachSeller.status.<estado> */
 const STATUS_CFG = {
-  pending:     { label: 'Pendente',   cls: 'bg-sand-100 text-sand-600'         },
-  confirmed:   { label: 'Confirmado', cls: 'bg-ocean-50 text-ocean-700'        },
-  checked_in:  { label: 'Activo',     cls: 'bg-turquoise-100 text-turquoise-700' },
-  checked_out: { label: 'Concluído',  cls: 'bg-n-100 text-n-500'               },
-  cancelled:   { label: 'Cancelado',  cls: 'bg-red-50 text-error'              },
+  pending:     { cls: 'bg-sand-100 text-sand-600'         },
+  confirmed:   { cls: 'bg-ocean-50 text-ocean-700'        },
+  checked_in:  { cls: 'bg-turquoise-100 text-turquoise-700' },
+  checked_out: { cls: 'bg-n-100 text-n-500'               },
+  cancelled:   { cls: 'bg-red-50 text-error'              },
 };
 
 /* ─────────────────────── Main ─────────────────────── */
 export default function BeachSeller() {
+  const t = useT();
+  const lang = useLingua();
+  const fmtMoney = (v) => eurosInteiros(v, lang);
   const navigate = useNavigate();
   const { user, logout } = useAuthStore();
 
   const sellerId   = user?.user_metadata?.staff_id || user?.id || 'unknown';
-  const sellerName = user?.user_metadata?.name || user?.email?.split('@')[0] || 'Vendedor';
+  const sellerName = user?.user_metadata?.name || user?.email?.split('@')[0] || t('beachSeller.fallbackName');
 
   const [profile, setProfile] = useState(null);
   /* commission_pct real vem do proprio perfil (GET /staff/me) -- o
@@ -204,17 +210,17 @@ export default function BeachSeller() {
   function getMotivationMessage() {
     if (todayStats.count === 0) {
       return recordCountDay.count > 0
-        ? `O teu recorde é ${recordCountDay.count} venda(s) num dia. Vamos lá!`
-        : 'Hoje é um bom dia para a primeira venda!';
+        ? t('beachSeller.goal.record', { n: recordCountDay.count })
+        : t('beachSeller.goal.first');
     }
     if (isBeatingRecordValue && isBeatingRecordCount) {
-      return 'Novo recorde pessoal! Continua assim!';
+      return t('beachSeller.goal.newRecord');
     }
     const remaining = Math.max(0, recordCountDay.count - todayStats.count);
     if (remaining > 0 && remaining <= 2) {
-      return `Faltam ${remaining} venda(s) para bateres o teu recorde!`;
+      return t('beachSeller.goal.remaining', { n: remaining });
     }
-    return 'Continua a vender — cada venda conta.';
+    return t('beachSeller.goal.keepGoing');
   }
 
 
@@ -228,6 +234,7 @@ export default function BeachSeller() {
           <div className="flex items-center justify-between mb-5">
             <Logo white size="sm" />
             <div className="flex items-center gap-1">
+              <LanguageToggle variant="white" />
               <button onClick={() => navigate('/vendedor/perfil')}
                 className="w-10 h-10 rounded-full flex items-center justify-center hover:bg-white/10 active:scale-95 transition-all">
                 <User size={18} strokeWidth={1.75} className="text-ocean-200" />
@@ -242,7 +249,7 @@ export default function BeachSeller() {
           <div className="flex items-center justify-between gap-2 mb-1">
             <div className="flex items-center gap-2">
               <Sun size={20} strokeWidth={1.75} className="text-sand-400" />
-              <p className="font-display font-bold text-2xl text-white">Olá, {sellerName}</p>
+              <p className="font-display font-bold text-2xl text-white">{t('beachSeller.hello', { name: sellerName })}</p>
             </div>
             <div className="flex items-center gap-2 shrink-0">
               <button
@@ -250,18 +257,18 @@ export default function BeachSeller() {
                 className="flex items-center gap-2 px-3 py-2 bg-white/10 rounded-xl text-white text-xs font-body font-semibold hover:bg-white/20 transition-colors"
               >
                 <ClipboardCheck size={15} strokeWidth={1.75} />
-                Fim de Turno
+                {t('beachSeller.shiftEnd')}
               </button>
               <button
                 onClick={() => navigate('/vendedor/nova-reserva')}
                 className="hidden md:flex items-center gap-2 px-4 py-2 bg-sand-500 text-ocean-900 rounded-xl text-xs font-body font-bold hover:bg-sand-600 transition-colors"
               >
                 <Plus size={15} strokeWidth={2.5} />
-                Nova Reserva
+                {t('beachSeller.newBooking')}
               </button>
             </div>
           </div>
-          <p className="text-ocean-300 text-sm font-body">Pronto para a próxima venda?</p>
+          <p className="text-ocean-300 text-sm font-body">{t('beachSeller.readyForNext')}</p>
 
           {/* Stats cards */}
           <div className="grid grid-cols-2 gap-3 mt-5 max-w-xl">
@@ -269,13 +276,13 @@ export default function BeachSeller() {
               <TrendingUp size={20} strokeWidth={1.75} className="text-ocean-900 mb-2" />
               <p className="font-display font-bold text-3xl text-ocean-900 leading-none">{fmtMoney(totalToday)}</p>
               <p className="text-ocean-900/70 text-xs font-body font-semibold mt-1.5">
-                Hoje · {todayReservations.length} reserva(s)
+                {t('beachSeller.todayBookings', { n: todayReservations.length })}
               </p>
             </div>
             <div className="bg-gradient-to-br from-turquoise-600 to-turquoise-400 rounded-3xl p-4">
               <Euro size={20} strokeWidth={1.75} className="text-white mb-2" />
               <p className="font-display font-bold text-3xl text-white leading-none">{fmtMoney(totalCurrentMonth)}</p>
-              <p className="text-white/80 text-xs font-body font-semibold mt-1.5">Comissão este mês</p>
+              <p className="text-white/80 text-xs font-body font-semibold mt-1.5">{t('beachSeller.commissionMonth')}</p>
             </div>
           </div>
         </div>
@@ -287,20 +294,20 @@ export default function BeachSeller() {
           <div className="mt-3 bg-gradient-to-r from-turquoise-500 to-turquoise-700 rounded-2xl p-4 text-white">
             <div className="flex items-center gap-2 mb-2">
               <Trophy size={18} strokeWidth={1.75} />
-              <p className="font-display font-bold text-sm">Meta Pessoal</p>
+              <p className="font-display font-bold text-sm">{t('beachSeller.goal.title')}</p>
             </div>
             <p className="text-sm font-body opacity-90">{getMotivationMessage()}</p>
             <div className="flex items-center gap-4 mt-3 pt-3 border-t border-white/20">
               <div>
-                <p className="text-[10px] font-mono uppercase tracking-wide opacity-70">Recorde vendas/dia</p>
+                <p className="text-[10px] font-mono uppercase tracking-wide opacity-70">{t('beachSeller.goal.recordSales')}</p>
                 <p className="font-display font-bold text-lg">{recordCountDay.count}</p>
               </div>
               <div>
-                <p className="text-[10px] font-mono uppercase tracking-wide opacity-70">Recorde valor/dia</p>
+                <p className="text-[10px] font-mono uppercase tracking-wide opacity-70">{t('beachSeller.goal.recordValue')}</p>
                 <p className="font-display font-bold text-lg">{fmtMoney(recordDay.total)}</p>
               </div>
               <div>
-                <p className="text-[10px] font-mono uppercase tracking-wide opacity-70">Hoje</p>
+                <p className="text-[10px] font-mono uppercase tracking-wide opacity-70">{t('beachSeller.goal.today')}</p>
                 <p className="font-display font-bold text-lg">{todayStats.count} · {fmtMoney(todayStats.total)}</p>
               </div>
             </div>
@@ -308,16 +315,16 @@ export default function BeachSeller() {
         ) : (
           <div className="mt-3 bg-gradient-to-r from-turquoise-500 to-turquoise-700 rounded-2xl p-4 text-white flex items-center gap-3">
             <Trophy size={20} strokeWidth={1.75} className="shrink-0" />
-            <p className="text-sm font-body font-semibold">Ainda sem vendas — hoje pode ser o teu primeiro recorde!</p>
+            <p className="text-sm font-body font-semibold">{t('beachSeller.goal.noSales')}</p>
           </div>
         )}
 
         {/* Tabs */}
         <div className="flex mt-5 gap-1 bg-n-100 rounded-2xl p-1 max-w-lg">
           {[
-            { key: 'hoje',      label: 'Hoje'            },
-            { key: 'comissoes', label: 'Minhas Comissões' },
-            { key: 'chat',      label: 'Chat'             },
+            { key: 'hoje',      label: t('beachSeller.tabs.today')       },
+            { key: 'comissoes', label: t('beachSeller.tabs.commissions') },
+            { key: 'chat',      label: t('beachSeller.tabs.chat')        },
           ].map(t => (
             <button key={t.key} onClick={() => setActiveTab(t.key)}
               className={`flex-1 py-3 rounded-xl text-sm font-body font-semibold transition-colors ${
@@ -344,7 +351,7 @@ export default function BeachSeller() {
                   reservMode === 'hoje' ? 'bg-ocean-700 text-white' : 'bg-n-100 text-n-500'
                 }`}
               >
-                Hoje
+                {t('beachSeller.mode.today')}
               </button>
               <button
                 onClick={() => setReservMode('mes')}
@@ -352,7 +359,7 @@ export default function BeachSeller() {
                   reservMode === 'mes' ? 'bg-ocean-700 text-white' : 'bg-n-100 text-n-500'
                 }`}
               >
-                Por mês
+                {t('beachSeller.mode.byMonth')}
               </button>
             </div>
 
@@ -367,12 +374,12 @@ export default function BeachSeller() {
                     return { year: y, month: m };
                   })}
                   className="w-9 h-9 rounded-full flex items-center justify-center text-n-500 hover:bg-n-100 active:scale-95 transition-all"
-                  aria-label="Mês anterior"
+                  aria-label={t('beachSeller.prevMonth')}
                 >
                   <ChevronLeft size={18} strokeWidth={2} />
                 </button>
                 <p className="font-display font-bold text-base text-n-900">
-                  {MONTHS_PT[reservViewMonth.month]} {reservViewMonth.year}
+                  {rotuloMes(reservViewMonth.month, t)} {reservViewMonth.year}
                 </p>
                 <button
                   type="button"
@@ -385,7 +392,7 @@ export default function BeachSeller() {
                   className={`w-9 h-9 rounded-full flex items-center justify-center transition-all ${
                     isReservCurrentMonth ? 'text-n-300 opacity-30 cursor-not-allowed' : 'text-n-500 hover:bg-n-100 active:scale-95'
                   }`}
-                  aria-label="Mês seguinte"
+                  aria-label={t('beachSeller.nextMonth')}
                 >
                   <ChevronRight size={18} strokeWidth={2} />
                 </button>
@@ -396,20 +403,25 @@ export default function BeachSeller() {
               <div className="text-center py-16 text-n-400">
                 <Calendar size={40} strokeWidth={1} className="mx-auto mb-3 text-n-300" />
                 <p className="font-body font-semibold text-n-600">
-                  Sem reservas {reservMode === 'hoje' ? 'hoje' : `em ${MONTHS_PT[reservViewMonth.month]}`}
+                  {reservMode === 'hoje'
+                    ? t('beachSeller.list.noneToday')
+                    : t('beachSeller.list.noneMonth', { month: rotuloMes(reservViewMonth.month, t) })}
                 </p>
                 <p className="text-sm font-body text-n-400 mt-1">
-                  Usa o botão "Nova Reserva" para registar vendas.
+                  {t('beachSeller.list.noneHint')}
                 </p>
               </div>
             ) : (
               <>
                 <p className="text-xs font-mono uppercase tracking-wider text-n-500 mb-2">
-                  {reservationsFiltered.length} reserva(s) {reservMode === 'hoje' ? 'hoje' : `em ${MONTHS_PT[reservViewMonth.month]}`}
+                  {reservMode === 'hoje'
+                    ? t('beachSeller.list.countToday', { n: reservationsFiltered.length })
+                    : t('beachSeller.list.countMonth', { n: reservationsFiltered.length, month: rotuloMes(reservViewMonth.month, t) })}
                 </p>
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
                 {reservationsFiltered.map((r, i) => {
-                const sc  = STATUS_CFG[r.status] || STATUS_CFG.pending;
+                const estado = Object.prototype.hasOwnProperty.call(STATUS_CFG, r.status) ? r.status : 'pending';
+                const sc  = STATUS_CFG[estado];
                 const val = Number(r.total_price || 0);
                 const com = val * (commPct / 100);
                 const iconBg = TOUR_ICON_BG[i % TOUR_ICON_BG.length];
@@ -424,21 +436,21 @@ export default function BeachSeller() {
                           {r.customers?.first_name || r.customer_name || '—'}
                         </p>
                         <p className="text-sm font-body text-n-500 mt-0.5 truncate">
-                          {r.units?.name || r.unit_name || '—'} · {r.guests || 1} pax
+                          {r.units?.name || r.unit_name || '—'} · {t('beachSeller.list.pax', { n: r.guests || 1 })}
                         </p>
                       </div>
                       <div className="flex flex-col items-end gap-1.5 shrink-0">
                         <span className={`text-xs font-mono px-2 py-1 rounded-lg ${sc.cls}`}>
-                          {sc.label}
+                          {t(`beachSeller.status.${estado}`)}
                         </span>
                         {r.customer_phone && (
                           <a
-                            href={buildWhatsAppLink(r.customer_phone, `Olá ${r.customer_name}! Sobre a sua reserva...`)}
+                            href={buildWhatsAppLink(r.customer_phone, getT('pt')('beachSeller.list.whatsappGreeting', { name: r.customer_name }) /* mensagem ao cliente: sempre em portugues */)}
                             target="_blank"
                             rel="noreferrer"
                             onClick={(e) => e.stopPropagation()}
                             className="w-8 h-8 rounded-full bg-[#25D366]/10 flex items-center justify-center text-[#25D366] hover:bg-[#25D366]/20 transition-colors"
-                            aria-label="Contactar via WhatsApp"
+                            aria-label={t('beachSeller.list.contactWhatsapp')}
                           >
                             <MessageCircle size={16} strokeWidth={1.75} />
                           </a>
@@ -448,11 +460,11 @@ export default function BeachSeller() {
                     <div className="flex items-center justify-between pt-3 border-t border-n-100">
                       <div className="flex items-center gap-1 text-n-500">
                         <Clock size={13} strokeWidth={1.75} />
-                        <span className="text-sm font-body">Passeio: {r.check_in}</span>
+                        <span className="text-sm font-body">{t('beachSeller.list.tourDate', { date: fmtPasseio(r.check_in, lang) })}</span>
                       </div>
                       <div className="text-right">
                         <p className="font-display font-bold text-lg text-ocean-700">{fmtMoney(val)}</p>
-                        <p className="text-xs font-body text-turquoise-700">Comissão: {fmtMoney(com)}</p>
+                        <p className="text-xs font-body text-turquoise-700">{t('beachSeller.list.commission', { amount: fmtMoney(com) })}</p>
                       </div>
                     </div>
                   </div>
@@ -475,12 +487,12 @@ export default function BeachSeller() {
                   return { year: y, month: m };
                 })}
                 className="w-9 h-9 rounded-full flex items-center justify-center text-n-500 hover:bg-n-100 active:scale-95 transition-all"
-                aria-label="Mês anterior"
+                aria-label={t('beachSeller.prevMonth')}
               >
                 <ChevronLeft size={18} strokeWidth={2} />
               </button>
               <p className="font-display font-bold text-base text-n-900">
-                {MONTHS_PT[viewMonth.month]} {viewMonth.year}
+                {rotuloMes(viewMonth.month, t)} {viewMonth.year}
               </p>
               <button
                 type="button"
@@ -493,7 +505,7 @@ export default function BeachSeller() {
                 className={`w-9 h-9 rounded-full flex items-center justify-center transition-all ${
                   isCurrentMonth ? 'text-n-300 opacity-30 cursor-not-allowed' : 'text-n-500 hover:bg-n-100 active:scale-95'
                 }`}
-                aria-label="Mês seguinte"
+                aria-label={t('beachSeller.nextMonth')}
               >
                 <ChevronRight size={18} strokeWidth={2} />
               </button>
@@ -502,9 +514,9 @@ export default function BeachSeller() {
             {/* Stats cards */}
             <div className="grid grid-cols-3 gap-2">
               {[
-                { label: 'Total',    value: fmtMoney(totalMonth),   color: 'text-n-900',         bg: 'bg-white'         },
-                { label: 'Pago',     value: fmtMoney(totalPaid),    color: 'text-turquoise-700',  bg: 'bg-turquoise-50' },
-                { label: 'Pendente', value: fmtMoney(totalPending), color: 'text-yellow-700',     bg: 'bg-yellow-50'     },
+                { label: t('beachSeller.comm.total'),   value: fmtMoney(totalMonth),   color: 'text-n-900',         bg: 'bg-white'         },
+                { label: t('beachSeller.comm.paid'),    value: fmtMoney(totalPaid),    color: 'text-turquoise-700',  bg: 'bg-turquoise-50' },
+                { label: t('beachSeller.comm.pending'), value: fmtMoney(totalPending), color: 'text-yellow-700',     bg: 'bg-yellow-50'     },
               ].map(m => (
                 <div key={m.label} className={`${m.bg} rounded-2xl border border-n-200 px-3 py-3 text-center`}>
                   <p className={`font-display font-bold text-lg ${m.color}`}>{m.value}</p>
@@ -517,13 +529,13 @@ export default function BeachSeller() {
             {monthComms.length === 0 ? (
               <div className="text-center py-12 text-n-400">
                 <BarChart2 size={36} strokeWidth={1} className="mx-auto mb-3 text-n-300" />
-                <p className="font-body">Sem comissões este mês.</p>
-                <p className="text-sm text-n-400 mt-1">As comissões aparecem aqui após cada venda.</p>
+                <p className="font-body">{t('beachSeller.comm.none')}</p>
+                <p className="text-sm text-n-400 mt-1">{t('beachSeller.comm.noneHint')}</p>
               </div>
             ) : (
               <div className="space-y-2">
                 <p className="text-xs font-mono uppercase tracking-wider text-n-500">
-                  Histórico — {MONTHS_PT[viewMonth.month]}
+                  {t('beachSeller.comm.history', { month: rotuloMes(viewMonth.month, t) })}
                 </p>
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-2">
                 {[...monthComms].sort((a, b) => b.created_at.localeCompare(a.created_at)).map(c => (
@@ -532,26 +544,26 @@ export default function BeachSeller() {
                       <div className="flex-1 min-w-0">
                         <p className="font-body font-semibold text-n-800 truncate">{c.tour_name}</p>
                         <p className="text-xs font-mono text-n-400 mt-0.5">
-                          {fmtDate(c.created_at?.slice(0, 10))}
+                          {fmtDate(c.created_at?.slice(0, 10), lang)}
                         </p>
                       </div>
                       <div className="text-right shrink-0">
                         <p className="font-display font-bold text-lg text-turquoise-700">{fmtMoney(c.amount)}</p>
-                        <p className="text-[10px] font-body text-n-400">{c.percentage}% de {fmtMoney(c.reservations?.total_price)}</p>
+                        <p className="text-[10px] font-body text-n-400">{t('beachSeller.comm.pctOf', { pct: c.percentage, amount: fmtMoney(c.reservations?.total_price) })}</p>
                       </div>
                     </div>
                     <div className="flex items-center justify-between mt-2 pt-2 border-t border-n-100">
                       <span className={`text-xs font-mono px-2 py-0.5 rounded-lg flex items-center gap-1 ${c.status === 'paid' ? 'bg-turquoise-50 text-turquoise-700' : 'bg-yellow-50 text-yellow-700'}`}>
                         {c.status === 'paid' && <Check size={11} strokeWidth={2} />}
-                        {c.status === 'paid' ? 'Pago' : 'Pendente'}
+                        {c.status === 'paid' ? t('beachSeller.comm.paid') : t('beachSeller.comm.pending')}
                       </span>
                       {c.status === 'pending' && (
                         <span className="text-xs font-body text-n-400">
-                          Aguarda confirmação do operador
+                          {t('beachSeller.comm.awaiting')}
                         </span>
                       )}
                       {c.status === 'paid' && c.paid_at && (
-                        <span className="text-xs font-mono text-n-400">{fmtDate(c.paid_at.slice(0, 10))}</span>
+                        <span className="text-xs font-mono text-n-400">{fmtDate(c.paid_at.slice(0, 10), lang)}</span>
                       )}
                     </div>
                   </div>
@@ -574,7 +586,7 @@ export default function BeachSeller() {
           onClick={() => navigate('/vendedor/nova-reserva')}
           className="w-full h-16 bg-sand-500 text-ocean-900 rounded-full font-display font-bold text-lg flex items-center justify-center gap-2 shadow-2xl shadow-sand-500/30 active:scale-95 transition-all hover:bg-sand-600">
           <Plus size={24} strokeWidth={2.5} />
-          Nova Reserva
+          {t('beachSeller.newBooking')}
         </button>
       </div>
 
@@ -593,33 +605,33 @@ export default function BeachSeller() {
             </div>
             <div className="px-5 py-4 space-y-4">
               <div className="flex items-center justify-between">
-                <p className="font-display font-bold text-lg text-n-900">Fim de Turno</p>
+                <p className="font-display font-bold text-lg text-n-900">{t('beachSeller.shiftEnd')}</p>
                 <button onClick={() => setShowShiftSummary(false)} className="text-n-400">
                   <X size={20} strokeWidth={1.75} />
                 </button>
               </div>
 
               <div className="bg-gradient-to-br from-ocean-700 to-turquoise-600 rounded-2xl p-5 text-white">
-                <p className="text-sm opacity-80">{fmtDatePT(TODAY)}</p>
+                <p className="text-sm opacity-80">{rotuloDiaMes(TODAY, t)}</p>
                 <div className="flex items-center gap-6 mt-3">
                   <div>
                     <p className="font-display font-bold text-3xl">{todayReservations.length}</p>
-                    <p className="text-xs opacity-80">vendas</p>
+                    <p className="text-xs opacity-80">{t('beachSeller.shift.sales')}</p>
                   </div>
                   <div>
                     <p className="font-display font-bold text-3xl">{fmtMoney(totalToday)}</p>
-                    <p className="text-xs opacity-80">total vendido</p>
+                    <p className="text-xs opacity-80">{t('beachSeller.shift.totalSold')}</p>
                   </div>
                   <div>
                     <p className="font-display font-bold text-3xl">{fmtMoney(todayCommission)}</p>
-                    <p className="text-xs opacity-80">comissão</p>
+                    <p className="text-xs opacity-80">{t('beachSeller.shift.commission')}</p>
                   </div>
                 </div>
               </div>
 
               {todayReservations.length > 0 && (
                 <div className="space-y-2">
-                  <p className="text-xs font-mono uppercase tracking-wider text-n-500">Vendas de hoje</p>
+                  <p className="text-xs font-mono uppercase tracking-wider text-n-500">{t('beachSeller.shift.todaySales')}</p>
                   {todayReservations.map(r => (
                     <div key={r.id} className="flex items-center justify-between bg-n-50 rounded-xl px-3 py-2.5">
                       <span className="text-sm font-body text-n-800">{r.customer_name}</span>
@@ -636,6 +648,8 @@ export default function BeachSeller() {
                     date: TODAY,
                     reservations: todayReservations,
                     commission: todayCommission,
+                    t,
+                    lang,
                   })
                 )}`}
                 target="_blank"
@@ -643,7 +657,7 @@ export default function BeachSeller() {
                 className="w-full h-14 bg-[#25D366] text-white rounded-2xl font-display font-bold flex items-center justify-center gap-2 active:scale-[0.99] transition-all"
               >
                 <MessageCircle size={18} strokeWidth={1.75} />
-                Partilhar por WhatsApp
+                {t('beachSeller.shift.share')}
               </a>
             </div>
           </div>

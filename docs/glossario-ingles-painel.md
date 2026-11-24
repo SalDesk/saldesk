@@ -48,11 +48,35 @@ estes, em singular e plural, em todos os ecras; nao alternar com sinonimos. O po
 | Comissao / Comissoes | Commission / Commissions | O que se paga aos vendedores de praia e parceiros ("Pay commission"). |
 | Caixa | Cash | O separador dos pagamentos em dinheiro ("Cash payments"); "Cash flow" so se aparecer o fluxo de caixa. |
 | Previsao | Forecast | Previsao de receita ("Weekly forecast") e o ecra "Demand forecast" (Previsao de Procura). |
+| Fim de Turno | End of shift | O resumo do dia do vendedor de praia ("End of shift"); o texto partilhado e "Shift summary". |
+| Meta Pessoal | Personal goal | O cartao de recordes do vendedor de praia ("Record sales/day"). |
 | Resultado | Profit and loss / Net result | A area "Profit and loss"; o valor final e "Net result". |
 | Margem | Margin | "Net margin", "Margin" por tour. |
 | Obrigacoes | Obligations | INPS, IUR, seguros e subscricao; INPS, IUR, NIF, DNRE, Vinti4 e SISP sao nomes oficiais e nao se traduzem. |
 | Analises | Analytics | O ecra "Analytics" (Score de saude = "Business health score", funil = "Conversion funnel"). |
 | Sazonalidade / Epoca alta | Seasonality / High season | Analise da previsao de procura ("High seasons", "Low seasons"). |
+| Levantamento / Devolucao (viatura) | Pick-up / Drop-off | Entrega e recolha de uma viatura de aluguer ou o ponto de encontro de um tour ("Car pick-up", "Car drop-off"); nao usar "Return" nem "Collection". |
+| No-show | No-show | Cliente que nao apareceu ("Record No-show"); o estado gravado e "no_show". |
+| Manifesto | Manifest | A lista de participantes de um tour num dia, que tambem se imprime ("Participant Manifest"). |
+| Caucao | Deposit | Valor retido ao cliente do rent-a-car; as opcoes sao Returned, Partly retained e Fully retained. |
+| Lista de espera | Waiting list | Reserva de restaurante sem mesa disponivel. |
+| Turno (restaurante) | Shift | Almoco (Lunch) ou jantar (Dinner) de uma reserva de restaurante. |
+| Pax | Guests | Numero de pessoas de uma reserva de tour (coluna "Guests"); o gravado nao muda. |
+| Vagas | Spots | Lugares livres de uma unidade num dia do calendario ("3/6 spots", "3 spots left"). |
+| Bloquear datas | Block dates | Fechar uma unidade a reservas num intervalo do calendario ("Blocked", "Unblock"). |
+| Ponto de encontro | Meeting point | Onde o grupo se junta para um tour ("Meeting point location"); o gravado e texto livre mais lat/lng. |
+| Dificuldade | Difficulty | Facil / Moderado / Dificil gravados; mostram-se "Easy", "Moderate", "Hard". |
+| Comodidades | Amenities | Lista fixa de extras de uma actividade ("Equipment included", "Towels"); o gravado e o texto portugues. |
+| Opcao (variante) | Option | Variante de uma actividade com preco proprio ("Per person", "Per group", "Per vehicle"); o tipo gravado e per_person, per_group, per_vehicle. |
+| Suplemento de idioma | Language surcharge | Valor fixo por reserva quando o cliente escolhe o idioma do guia. |
+| Oferta | Offer | Desconto automatico por periodo ("Automatic offers"). |
+| Paragem / Itinerario | Stop / Itinerary | Pontos de um tour com coordenadas opcionais. |
+| Escalao de preco | Price tier | Preco privado por intervalo de pessoas ("1-2 guests at 80"). |
+| Horario com lugares | Time slot | Hora de um tour com lugares proprios ("Time slots with limited spots"). |
+| Viatura | Vehicle | Carro ou moto do rent-a-car ("Register vehicle", "New Vehicle"); a matricula e "Licence plate". |
+| Mesa / Zona | Table / Zone | Mesa de restaurante e a zona onde fica; as zonas gravadas (interior, esplanada, terraco, vip, privado) mostram-se "Indoor", "Outdoor seating", "Terrace", "VIP", "Private". |
+| Epoca | Season | Preco do quarto por epoca ("Low season", "Mid season", "High season", "Peak"). |
+| Motorista | Chauffeur | Condutor incluido na reserva de um Executivo ("Chauffeur rate (per day)"). |
 
 ## Regras
 

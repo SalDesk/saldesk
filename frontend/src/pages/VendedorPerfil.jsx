@@ -12,15 +12,19 @@ import { useToast } from '../store/toastStore';
 import Logo from '../components/shared/Logo';
 import { useT } from '../i18n';
 import { mensagemErro } from '../utils/mensagemErro';
+import LanguageToggle from '../components/shared/LanguageToggle';
+import { useLingua } from '../utils/formatoLingua';
+import { rotuloZona } from './staff/shared';
 
 export default function VendedorPerfil() {
   const t = useT();
+  const lang = useLingua();
   const navigate = useNavigate();
   const { user } = useAuthStore();
   const toast = useToast();
 
   const sellerId   = user?.user_metadata?.staff_id || user?.id;
-  const sellerName = user?.user_metadata?.name || user?.email || 'Vendedor';
+  const sellerName = user?.user_metadata?.name || user?.email || t('beachSeller.fallbackName');
   const sellerEmail = user?.email;
 
   const [loading,      setLoading]      = useState(true);
@@ -41,7 +45,7 @@ export default function VendedorPerfil() {
         setWhatsapp(data?.whatsapp || '');
         setPhotoPreview(data?.photo_url || null);
       })
-      .catch(() => toast.error('Erro ao carregar perfil'))
+      .catch(() => toast.error(t('beachSeller.profile.loadError')))
       .finally(() => setLoading(false));
   }, []);
 
@@ -57,9 +61,9 @@ export default function VendedorPerfil() {
     setSaving(true);
     try {
       await updateMyProfile({ phone, whatsapp, photo_url: photoPreview });
-      toast.success('Perfil actualizado');
+      toast.success(t('beachSeller.profile.updated'));
     } catch (err) {
-      toast.error(mensagemErro(err, t, 'Erro ao actualizar perfil'));
+      toast.error(mensagemErro(err, t, t('beachSeller.profile.updateError')));
     } finally {
       setSaving(false);
     }
@@ -70,9 +74,9 @@ export default function VendedorPerfil() {
     setSendingReset(true);
     try {
       await forgotPassword(sellerEmail);
-      toast.success('Email enviado para definir nova password');
+      toast.success(t('beachSeller.profile.resetSent'));
     } catch {
-      toast.success('Email enviado para definir nova password');
+      toast.success(t('beachSeller.profile.resetSent'));
     } finally {
       setSendingReset(false);
     }
@@ -89,7 +93,8 @@ export default function VendedorPerfil() {
           className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-white/10 active:scale-95 transition-colors shrink-0">
           <ChevronLeft size={20} strokeWidth={1.75} className="text-white" />
         </button>
-        <p className="flex-1 font-display font-bold text-white text-base">O meu perfil</p>
+        <p className="flex-1 font-display font-bold text-white text-base">{t('beachSeller.profile.title')}</p>
+        <LanguageToggle variant="white" />
         <Logo white size="sm" />
       </header>
 
@@ -121,7 +126,7 @@ export default function VendedorPerfil() {
             <div className="space-y-4">
               <div>
                 <label className="flex items-center gap-1.5 text-sm font-body font-semibold text-n-700 mb-2">
-                  <Phone size={14} strokeWidth={1.75} />Telefone
+                  <Phone size={14} strokeWidth={1.75} />{t('beachSeller.profile.phone')}
                 </label>
                 <input
                   type="tel" value={phone} onChange={e => setPhone(e.target.value)}
@@ -132,7 +137,7 @@ export default function VendedorPerfil() {
 
               <div>
                 <label className="flex items-center gap-1.5 text-sm font-body font-semibold text-n-700 mb-2">
-                  <MessageCircle size={14} strokeWidth={1.75} />WhatsApp
+                  <MessageCircle size={14} strokeWidth={1.75} />{t('beachSeller.profile.whatsapp')}
                 </label>
                 <input
                   type="tel" value={whatsapp} onChange={e => setWhatsapp(e.target.value)}
@@ -144,14 +149,14 @@ export default function VendedorPerfil() {
 
             {/* Read-only info */}
             <div>
-              <p className="text-xs font-mono uppercase tracking-wider text-n-400 mb-2">Definido pelo operador</p>
+              <p className="text-xs font-mono uppercase tracking-wider text-n-400 mb-2">{t('beachSeller.profile.setByOperator')}</p>
               <div className="bg-white rounded-2xl border border-n-200 divide-y divide-n-100">
-                <ReadOnlyRow icon={User} label="Nome" value={sellerName} />
+                <ReadOnlyRow icon={User} label={t('beachSeller.profile.name')} value={sellerName} />
                 {profile?.seller_zone && (
-                  <ReadOnlyRow icon={MapPin} label="Zona de venda" value={profile.seller_zone} />
+                  <ReadOnlyRow icon={MapPin} label={t('beachSeller.profile.zone')} value={rotuloZona(profile.seller_zone, t, lang)} />
                 )}
-                <ReadOnlyRow icon={Percent} label="Comissão" value={`${commPct}%`} />
-                {sellerEmail && <ReadOnlyRow icon={Mail} label="Email" value={sellerEmail} />}
+                <ReadOnlyRow icon={Percent} label={t('beachSeller.profile.commission')} value={`${commPct}%`} />
+                {sellerEmail && <ReadOnlyRow icon={Mail} label={t('beachSeller.profile.email')} value={sellerEmail} />}
               </div>
             </div>
 
@@ -161,7 +166,7 @@ export default function VendedorPerfil() {
               disabled={sendingReset}
               className="w-full h-14 bg-white border-2 border-n-200 text-n-700 rounded-2xl font-body font-semibold text-sm flex items-center justify-center gap-2 active:scale-[0.99] transition-all hover:border-turquoise-300 disabled:opacity-50">
               <Lock size={16} strokeWidth={1.75} />
-              {sendingReset ? 'A enviar...' : 'Alterar password'}
+              {sendingReset ? t('beachSeller.profile.sending') : t('beachSeller.profile.changePassword')}
             </button>
 
             {/* Save */}
@@ -172,7 +177,7 @@ export default function VendedorPerfil() {
               {saving ? (
                 <span className="w-6 h-6 border-3 border-ocean-900/30 border-t-ocean-900 rounded-full animate-spin" />
               ) : (
-                'Guardar alterações'
+                t('beachSeller.profile.save')
               )}
             </button>
           </>

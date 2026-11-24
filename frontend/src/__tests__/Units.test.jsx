@@ -7,6 +7,7 @@ import {
   listUnits, createUnit, updateUnit, deleteUnit, toggleUnitStatus, updateConectStatus,
 } from '../services/unitsService';
 import { getQrCode } from '../services/marketingService';
+import { portuguesNoEcra, chavesCruas } from './helpers/portuguesNoEcra';
 
 /* Sem rede: todos os servicos usados pela pagina sao simulados */
 vi.mock('../services/unitsService', () => ({
@@ -117,9 +118,9 @@ function carregaServicos({ units = [] } = {}) {
 }
 
 /* Cartao de uma unidade: o menor bloco que contem o nome e o seu proprio botao Editar */
-function cartao(nome) {
+function cartao(nome, editar = 'Editar') {
   let el = screen.getByText(nome);
-  while (el && within(el).queryAllByRole('button', { name: 'Editar' }).length !== 1) el = el.parentElement;
+  while (el && within(el).queryAllByRole('button', { name: editar }).length !== 1) el = el.parentElement;
   if (!el) throw new Error(`Cartão não encontrado: ${nome}`);
   return el;
 }
@@ -856,7 +857,7 @@ describe('Unidades: pecas do design system', () => {
   it('o nome acessível do botão de copiar segue o idioma', async () => {
     useUiStore.setState({ lang: 'en' });
     await renderPagina([mesa()], 'restaurant');
-    fireEvent.click(within(cartao('Mesa 3')).getByRole('button', { name: 'Ver QR' }));
+    fireEvent.click(within(cartao('Mesa 3', 'Edit')).getByRole('button', { name: 'View QR' }));
     const d = dialogo();
     await within(d).findByAltText('QR code');
     expect(within(d).getByRole('button', { name: 'Copy link' })).toBeInTheDocument();
@@ -903,5 +904,156 @@ describe('Unidades: pecas do design system', () => {
     };
     expect(classes('Quarto Mar')).not.toContain('opacity-70');
     expect(classes('Quarto Parado')).toContain('opacity-70');
+  });
+});
+
+
+/* Pagina de unidades em ingles: textos, rotulos dos valores gravados e formato do dinheiro. Em pt tudo igual. */
+describe('Unidades em inglês', () => {
+  /* nomes e textos que o operador escreveu: ficam como estao */
+  const DADOS = ['Tour Pedra de Lume', 'Salt Crater Tour', 'Hotel Riu', 'Quarto Mar', 'Quarto com vista para o mar', 'Suzuki Jimny', 'Mesa 3', 'Quarto Parado'];
+
+  beforeEach(() => {
+    useUiStore.setState({ lang: 'en' });
+    URL.createObjectURL = vi.fn(() => 'blob:qr-teste');
+    URL.revokeObjectURL = vi.fn();
+  });
+  afterEach(() => {
+    cleanup();
+    useUiStore.setState({ lang: 'pt' });
+  });
+
+  async function renderPagina(units, tipo) {
+    defineOperador(tipo);
+    carregaServicos({ units });
+    render(<Units />);
+    await waitFor(() => expect(listUnits).toHaveBeenCalled());
+    await waitFor(() => expect(screen.getByText('Total')).toBeInTheDocument());
+  }
+
+  const EN = {
+    activity:   { titulo: 'Tours & Activities', novo: 'New Tour', subtitulo: '1 tour(s) available' },
+    hotel:      { titulo: 'Rooms & Accommodation', novo: 'New Unit', subtitulo: '1 unit(s) registered' },
+    rentacar:   { titulo: 'Fleet', novo: 'New Vehicle', subtitulo: '1 vehicle(s) registered' },
+    restaurant: { titulo: 'Tables', novo: 'New Table', subtitulo: '1 table(s) registered' },
+  };
+
+  for (const [tipo, cfg] of Object.entries(EN)) {
+    it(`${tipo}: título, subtítulo, botão, totais e botões do cartão em inglês, sem português`, async () => {
+      await renderPagina([TIPOS[tipo].unidade()], tipo);
+      expect(screen.getByRole('heading', { level: 1, name: cfg.titulo })).toBeInTheDocument();
+      expect(screen.getByText(cfg.subtitulo)).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: cfg.novo })).toBeInTheDocument();
+      expect(screen.getAllByText('Active').length).toBeGreaterThanOrEqual(1);
+      const c = cartao(TIPOS[tipo].nome, 'Edit');
+      expect(within(c).getByRole('button', { name: 'Deactivate' })).toBeInTheDocument();
+      expect(within(c).getByRole('button', { name: 'Delete' })).toBeInTheDocument();
+      expect(within(c).getByText('Not submitted')).toBeInTheDocument();
+      expect(within(c).getByRole('button', { name: 'Submit to Conect' })).toBeInTheDocument();
+      expect(portuguesNoEcra(DADOS)).toEqual([]);
+      expect(chavesCruas(['units', 'unitForm', 'common'])).toEqual([]);
+    });
+  }
+
+  it('o cartão do tour mostra dificuldade, tipo, limites, idade e preços em inglês', async () => {
+    await renderPagina([tour()], 'activity');
+    const c = cartao('Tour Pedra de Lume', 'Edit');
+    expect(within(c).getByText('Easy')).toBeInTheDocument();
+    expect(within(c).getByText('Group')).toBeInTheDocument();
+    expect(within(c).getByText('Max 12 guests')).toBeInTheDocument();
+    expect(within(c).getByText('6 years')).toBeInTheDocument();
+    expect(within(c).getByText('Active')).toBeInTheDocument();
+    expect(within(c).getByText('/adult')).toBeInTheDocument();
+    expect(c.textContent).toContain('€25 child · €120 private');
+  });
+
+  it('o tour só com escalões mostra "From" e o vazio mostra o preço por definir', async () => {
+    await renderPagina([
+      tour({ id: 'a', name: 'Tour Escalões', base_price: 0, description: JSON.stringify({ price_tiers: [{ price: 80 }, { price: 140 }] }) }),
+      tour({ id: 'b', name: 'Tour Sem Preço', base_price: 0, description: '{}' }),
+    ], 'activity');
+    expect(within(cartao('Tour Escalões', 'Edit')).getByText('From')).toBeInTheDocument();
+    expect(cartao('Tour Escalões', 'Edit').textContent).toContain('€80');
+    expect(within(cartao('Tour Sem Preço', 'Edit')).getByText('No price set')).toBeInTheDocument();
+  });
+
+  it('o preço do cartão usa o separador do inglês; em pt fica como sempre', async () => {
+    await renderPagina([quarto({ base_price: 1234.5 })], 'hotel');
+    expect(screen.getByText('€1,234.50/night')).toBeInTheDocument();
+    expect(screen.getByText('Capacity 2')).toBeInTheDocument();
+    cleanup();
+    useUiStore.setState({ lang: 'pt' });
+    await renderPagina([quarto({ base_price: 1234.5 })], 'hotel');
+    await waitFor(() => expect(screen.getByText('€1234.50/noite')).toBeInTheDocument());
+    expect(screen.getByText('Cap. 2')).toBeInTheDocument();
+  });
+
+  it('em alemão e neerlandês o preço usa os seus separadores', async () => {
+    useUiStore.setState({ lang: 'de' });
+    defineOperador('hotel');
+    carregaServicos({ units: [quarto({ base_price: 1234.5 })] });
+    render(<Units />);
+    expect(await screen.findByText('€1.234,50/Nacht')).toBeInTheDocument();
+    expect(screen.getByText('Gesamt')).toBeInTheDocument();
+  });
+
+  it('a categoria de uma unidade traduz o valor gravado e o que é desconhecido fica como está', async () => {
+    await renderPagina([
+      quarto({ id: 'h1', name: 'Quarto Mar', unit_type: 'Suite' }),
+      quarto({ id: 'h2', name: 'Quarto Parado', unit_type: 'Apartamento' }),
+      quarto({ id: 'h3', name: 'Quarto Livre', unit_type: 'Cabana do operador' }),
+    ], 'hotel');
+    expect(within(cartao('Quarto Mar', 'Edit')).getByText('Suite')).toBeInTheDocument();
+    expect(within(cartao('Quarto Parado', 'Edit')).getByText('Apartment')).toBeInTheDocument();
+    expect(within(cartao('Quarto Livre', 'Edit')).getByText('Cabana do operador')).toBeInTheDocument();
+  });
+
+  it('o tipo Outro (gravado pelos formulários) lê-se Other em inglês e Outro em pt', async () => {
+    await renderPagina([quarto({ unit_type: 'Outro' }), tour({ unit_type: 'Outro' })], 'hotel');
+    expect(within(cartao('Quarto Mar', 'Edit')).getByText('Other')).toBeInTheDocument();
+    cleanup();
+    await renderPagina([tour({ unit_type: 'Outro' })], 'activity');
+    expect(within(cartao('Tour Pedra de Lume', 'Edit')).getByText('Other')).toBeInTheDocument();
+    cleanup();
+    useUiStore.setState({ lang: 'pt' });
+    await renderPagina([tour({ unit_type: 'Outro' })], 'activity');
+    expect(within(cartao('Tour Pedra de Lume')).getByText('Outro')).toBeInTheDocument();
+  });
+
+  it('as mesas mostram a zona gravada em inglês (Terraco passa a Terrace)', async () => {
+    await renderPagina([
+      mesa({ id: 'm1', name: 'Mesa 3', unit_type: 'Terraco' }),
+      mesa({ id: 'm2', name: 'Mesa 4', unit_type: 'Esplanada' }),
+    ], 'restaurant');
+    expect(within(cartao('Mesa 3', 'Edit')).getByText('Terrace')).toBeInTheDocument();
+    expect(within(cartao('Mesa 4', 'Edit')).getByText('Outdoor seating')).toBeInTheDocument();
+  });
+
+  it('o aviso de dados em falta, o modal do QR e a confirmação de eliminar em inglês', async () => {
+    await renderPagina([tour({ category_id: null })], 'activity');
+    expect(screen.getByText(/unit is missing a category and\/or coordinates/)).toBeInTheDocument();
+    fireEvent.click(within(cartao('Tour Pedra de Lume', 'Edit')).getByRole('button', { name: 'Delete' }));
+    expect(within(dialogo()).getByText('Delete the tour "Tour Pedra de Lume"? Its bookings will be kept but the tour will no longer be available.')).toBeInTheDocument();
+    expect(portuguesNoEcra(DADOS)).toEqual([]);
+  });
+
+  it('o modal do QR em inglês descarrega o código', async () => {
+    await renderPagina([mesa()], 'restaurant');
+    fireEvent.click(within(cartao('Mesa 3', 'Edit')).getByRole('button', { name: 'View QR' }));
+    const d = dialogo();
+    await within(d).findByAltText('QR code');
+    expect(within(d).getByRole('button', { name: 'Download QR code' })).toBeInTheDocument();
+    expect(portuguesNoEcra(DADOS)).toEqual([]);
+  });
+
+  it('em pt o cartão do tour e o aviso continuam como sempre', async () => {
+    useUiStore.setState({ lang: 'pt' });
+    await renderPagina([tour({ category_id: null })], 'activity');
+    const c = cartao('Tour Pedra de Lume');
+    ['Fácil', 'Grupo', 'Max 12 pax', '6 anos', 'Activo', '/adulto'].forEach((texto) => {
+      expect(within(c).getByText(texto)).toBeInTheDocument();
+    });
+    expect(c.textContent).toContain('€25 criança · €120 privado');
+    expect(screen.getByText(/unidade está sem categoria e\/ou coordenadas/)).toBeInTheDocument();
   });
 });

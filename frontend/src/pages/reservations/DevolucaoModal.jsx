@@ -5,9 +5,12 @@ import Button from '../../components/ui/Button';
 import FilterChips from '../../components/ui/FilterChips';
 import Input, { Textarea } from '../../components/ui/Input';
 import Modal from '../../components/ui/Modal';
+import { useT } from '../../i18n';
+import { formatarNumero } from '../../utils/formatoLingua';
 import { parseRentacarMeta, FuelSelector, GROUP_LABEL_CLASS } from './shared';
 
 export default function DevolucaoModal({ reservation, units, open, onClose, onDone }) {
+  const t = useT();
   const unit = units.find(u => u.id === reservation?.unit_id);
   const prevMeta = parseRentacarMeta(reservation);
 
@@ -57,7 +60,7 @@ export default function DevolucaoModal({ reservation, units, open, onClose, onDo
   const kmTotal   = form.km_in && prevKmOut ? Number(form.km_in) - Number(prevKmOut) : null;
 
   return (
-    <Modal open={open} onClose={onClose} title="Devolução de viatura" size="sm" footer={null}>
+    <Modal open={open} onClose={onClose} title={t('reservations.dropoff.title')} size="sm" footer={null}>
       <div className="space-y-5">
         <div className="flex items-center gap-3 p-3 bg-n-50 rounded-md border border-n-200">
           <Car size={16} strokeWidth={1.75} className="text-n-500 shrink-0" />
@@ -69,49 +72,49 @@ export default function DevolucaoModal({ reservation, units, open, onClose, onDo
           </div>
           <div className="ml-auto text-right">
             <p className="font-display font-semibold text-sm text-n-900">{reservation?.customer_name || '—'}</p>
-            {prevKmOut && <p className="text-xs font-body text-n-400">Saída: {Number(prevKmOut).toLocaleString()} km</p>}
+            {prevKmOut && <p className="text-xs font-body text-n-400">{t('reservations.dropoff.out', { km: formatarNumero(prevKmOut) })}</p>}
           </div>
         </div>
 
         <div>
-          <p className={`${GROUP_LABEL_CLASS} mb-2`}>Nível combustível (chegada)</p>
+          <p className={`${GROUP_LABEL_CLASS} mb-2`}>{t('reservations.dropoff.fuelIn')}</p>
           <FuelSelector value={form.fuel_in} onChange={v => set('fuel_in', v)} />
         </div>
 
         <div className="flex items-end gap-3">
           <div className="flex-1">
-            <Input label="Km na chegada" type="number" value={form.km_in} onChange={e => set('km_in', e.target.value)} placeholder="0" />
+            <Input label={t('reservations.dropoff.kmIn')} type="number" value={form.km_in} onChange={e => set('km_in', e.target.value)} placeholder="0" />
           </div>
           {kmTotal !== null && (
-            <span className="flex items-center h-9 text-sm font-mono text-n-600 whitespace-nowrap">{kmTotal.toLocaleString()} km percorridos</span>
+            <span className="flex items-center h-9 text-sm font-mono text-n-600 whitespace-nowrap">{t('reservations.dropoff.kmDriven', { km: formatarNumero(kmTotal) })}</span>
           )}
         </div>
 
-        <Textarea label="Danos na devolução" value={form.damages_in} onChange={e => set('damages_in', e.target.value)} rows={2}
-          placeholder="Descrever danos verificados na chegada..." />
+        <Textarea label={t('reservations.dropoff.damageIn')} value={form.damages_in} onChange={e => set('damages_in', e.target.value)} rows={2}
+          placeholder={t('reservations.dropoff.damageInPlaceholder')} />
 
         <div>
-          <p className={`${GROUP_LABEL_CLASS} mb-2`}>Caução</p>
+          <p className={`${GROUP_LABEL_CLASS} mb-2`}>{t('reservations.dropoff.deposit')}</p>
           <div className="mb-3">
             <FilterChips
               options={[
-                { value: 'returned', label: 'Devolvida' },
-                { value: 'retained', label: 'Retida (parcial)' },
-                { value: 'full',     label: 'Retida (total)' },
+                { value: 'returned', label: t('reservations.dropoff.depositReturned') },
+                { value: 'retained', label: t('reservations.dropoff.depositPartial') },
+                { value: 'full',     label: t('reservations.dropoff.depositFull') },
               ]}
               value={form.caucao_status}
               onChange={v => set('caucao_status', v)}
             />
           </div>
           {form.caucao_status !== 'returned' && (
-            <Input label="Valor retido (€)" type="number" value={form.caucao_retained} onChange={e => set('caucao_retained', e.target.value)} placeholder="0.00" step="0.01" />
+            <Input label={t('reservations.dropoff.amountRetained')} type="number" value={form.caucao_retained} onChange={e => set('caucao_retained', e.target.value)} placeholder="0.00" step="0.01" />
           )}
         </div>
 
         <div className="flex gap-3 pt-1">
-          <Button type="button" variant="secondary" onClick={onClose} className="flex-1">Cancelar</Button>
+          <Button type="button" variant="secondary" onClick={onClose} className="flex-1">{t('common.cancel')}</Button>
           <Button type="button" loading={saving} onClick={handleSave} icon={MoveLeft} className="flex-1">
-            {saving ? 'A processar...' : 'Confirmar devolução'}
+            {saving ? t('reservations.processing') : t('reservations.dropoff.confirm')}
           </Button>
         </div>
       </div>

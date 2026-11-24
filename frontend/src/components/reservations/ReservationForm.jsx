@@ -5,6 +5,7 @@ import Button from '../ui/Button';
 import FleetSelector from '../fleet/FleetSelector';
 import { parseTourMeta } from '../units/UnitForm';
 import useUiStore from '../../store/uiStore';
+import { eurosDecimais } from '../../pages/reservations/shared';
 import {
   opcoesValidas, nomeOpcao, unidadeOpcao, limitarVeiculos, precoEstimado, opcaoMaisBarata,
 } from '../../utils/opcoesActividade';
@@ -113,8 +114,8 @@ export default function ReservationForm({ reservation, initial, units, operatorT
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <Select label={operatorType === 'activity' ? 'Tour / Actividade' : t('reservations.unit')} value={form.unit_id} onChange={(e) => setForm((f) => ({ ...f, unit_id: e.target.value, option_id: '', vehicles: '' }))} required>
-        <option value="">Seleccionar unidade...</option>
+      <Select label={operatorType === 'activity' ? t('reservations.form.tourActivity') : t('reservations.unit')} value={form.unit_id} onChange={(e) => setForm((f) => ({ ...f, unit_id: e.target.value, option_id: '', vehicles: '' }))} required>
+        <option value="">{t('reservations.form.selectUnit')}</option>
         {units.map((u) => (
           <option key={u.id} value={u.id}>{u.name}</option>
         ))}
@@ -123,33 +124,33 @@ export default function ReservationForm({ reservation, initial, units, operatorT
       {operatorType === 'activity' ? (
         <div className="grid grid-cols-2 gap-3">
           <Input
-            label="Data do tour"
+            label={t('reservations.form.tourDate')}
             type="date"
             value={form.check_in}
             onChange={e => setForm(f => ({ ...f, check_in: e.target.value, check_out: e.target.value }))}
             required
           />
           {unitSlots.length > 0 ? (
-            <Select label="Horário" value={form.tour_time} onChange={set('tour_time')} required>
-              <option value="">Seleccionar horário...</option>
+            <Select label={t('reservations.form.timeSlot')} value={form.tour_time} onChange={set('tour_time')} required>
+              <option value="">{t('reservations.form.selectSlot')}</option>
               {unitSlots.map((s) => (
-                <option key={s.time} value={s.time}>{s.time} ({s.capacity} lugares)</option>
+                <option key={s.time} value={s.time}>{t('reservations.form.slot', { time: s.time, n: s.capacity })}</option>
               ))}
             </Select>
           ) : (
-            <Input label="Hora" type="time" value={form.tour_time} onChange={set('tour_time')} />
+            <Input label={t('reservations.time')} type="time" value={form.tour_time} onChange={set('tour_time')} />
           )}
         </div>
       ) : operatorType === 'restaurant' ? (
         <div className="grid grid-cols-2 gap-3">
           <Input
-            label="Data da reserva"
+            label={t('reservations.form.bookingDate')}
             type="date"
             value={form.check_in}
             onChange={e => setForm(f => ({ ...f, check_in: e.target.value, check_out: e.target.value }))}
             required
           />
-          <Input label="Hora" type="time" value={form.start_time} onChange={set('start_time')} required />
+          <Input label={t('reservations.time')} type="time" value={form.start_time} onChange={set('start_time')} required />
         </div>
       ) : (
         <div className="grid grid-cols-2 gap-3">
@@ -195,22 +196,22 @@ export default function ReservationForm({ reservation, initial, units, operatorT
         <div className="bg-ocean-50 border border-ocean-100 rounded-sm px-3 py-2 flex items-center justify-between">
           <span className="text-xs font-body text-ocean-700">
             {pricePreview.tipo === 'activity'
-              ? `${form.guests} pessoa(s)${porVeiculo ? ` · ${t('opcoesActividade.vehiclesCount', { n: veiculos })}` : ''}`
-              : `${pricePreview.dias} noite(s)`}
+              ? `${t('reservations.form.people', { n: form.guests })}${porVeiculo ? ` · ${t('opcoesActividade.vehiclesCount', { n: veiculos })}` : ''}`
+              : t('reservations.form.nights', { n: pricePreview.dias })}
           </span>
-          <span className="font-display font-bold text-ocean-700">€{pricePreview.total.toFixed(2)}</span>
+          <span className="font-display font-bold text-ocean-700">{eurosDecimais(pricePreview.total)}</span>
         </div>
       )}
 
-      <Input label={t('reservations.customer')} value={form.customer_name} onChange={set('customer_name')} required placeholder="Nome do cliente" />
+      <Input label={t('reservations.customer')} value={form.customer_name} onChange={set('customer_name')} required placeholder={t('reservations.form.customerName')} />
 
       <div className="grid grid-cols-2 gap-3">
-        <Input label={t('auth.email')} type="email" value={form.customer_email} onChange={set('customer_email')} required placeholder="email@exemplo.com" />
+        <Input label={t('auth.email')} type="email" value={form.customer_email} onChange={set('customer_email')} required placeholder={t('reservations.form.emailPlaceholder')} />
         <Input label={t('customers.phone')} type="tel" value={form.customer_phone} onChange={set('customer_phone')} placeholder="+238 900 0000" />
       </div>
 
       <div className="grid grid-cols-2 gap-3">
-        <Input label={t('customers.nationality')} value={form.customer_country} onChange={set('customer_country')} placeholder="PT, DE, GB..." hint="Código ISO 2" />
+        <Input label={t('customers.nationality')} value={form.customer_country} onChange={set('customer_country')} placeholder="PT, DE, GB..." hint={t('reservations.form.isoHint')} />
         <Input label={t('reservations.guests')} type="number" value={form.guests} onChange={(e) => setForm((f) => ({ ...f, guests: e.target.value, vehicles: '' }))} min="1" />
       </div>
 
@@ -223,17 +224,17 @@ export default function ReservationForm({ reservation, initial, units, operatorT
             checked={form.whatsapp_opt_in}
             onChange={(e) => setForm((f) => ({ ...f, whatsapp_opt_in: e.target.checked }))}
           />
-          <span>O cliente aceitou receber mensagens sobre esta reserva por WhatsApp</span>
+          <span>{t('reservations.form.optIn')}</span>
         </label>
       )}
 
-      <Select label="Fonte" value={form.source} onChange={set('source')}>
+      <Select label={t('reservations.form.source')} value={form.source} onChange={set('source')}>
         {SOURCES.map((s) => (
           <option key={s} value={s}>{t(`reservations.source.${s}`)}</option>
         ))}
       </Select>
 
-      <Textarea label={t('reservations.internalNotes')} value={form.notes} onChange={set('notes')} rows={2} placeholder="Notas internas..." />
+      <Textarea label={t('reservations.internalNotes')} value={form.notes} onChange={set('notes')} rows={2} placeholder={t('reservations.form.internalPlaceholder')} />
 
       {error && (
         <p className="text-sm font-body px-3 py-2 rounded-sm bg-[var(--error-light)] text-[var(--error)]">{error}</p>

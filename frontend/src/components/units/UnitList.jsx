@@ -6,10 +6,21 @@ import Card from '../ui/Card';
 import EmptyState from '../ui/EmptyState';
 import { parseTourMeta } from './UnitForm';
 import ConectRow from '../shared/ConectRow';
+import { formatarNumero, useLingua } from '../../utils/formatoLingua';
+import { rotuloDificuldade, rotuloTipoUnidade } from './rotulosUnidades';
 
-function formatPrice(unit) {
-  const labels = { night: '/noite', day: '/dia', hour: '/hora', session: '/sessão', person: '/pessoa' };
-  return `€${Number(unit.base_price).toFixed(2)}${labels[unit.price_unit] || ''}`;
+/* Valor em euros: em pt como sempre (toFixed, ponto decimal); nas outras linguas com os separadores da lingua */
+function dinheiro(valor, casas, lang) {
+  const n = Number(valor);
+  if (lang === 'pt') return n.toFixed(casas);
+  return formatarNumero(n, { minimumFractionDigits: casas, maximumFractionDigits: casas }, lang);
+}
+
+const UNIDADES_PRECO = ['night', 'day', 'hour', 'session', 'person'];
+
+function formatPrice(unit, t, lang) {
+  const sufixo = UNIDADES_PRECO.includes(unit.price_unit) ? t(`units.list.priceUnit.${unit.price_unit}`) : '';
+  return `€${dinheiro(unit.base_price, 2, lang)}${sufixo}`;
 }
 
 /* Variante do Badge do sistema para cada dificuldade */
@@ -19,15 +30,13 @@ const DIFFICULTY_VARIANT = {
   Dificil:  'cancelled',
 };
 
-/* O que o operador le; o valor guardado na unidade continua a ser o da chave. */
-const DIFFICULTY_ROTULO = { Facil: 'Fácil', Dificil: 'Difícil' };
-
 /* Botoes so com icone: o realce ao passar o rato depende do estado */
 const TOGGLE_HOVER_ACTIVE   = 'hover:text-error hover:bg-[var(--error-light)]';
 const TOGGLE_HOVER_INACTIVE = 'hover:text-[var(--success)] hover:bg-[var(--success-light)]';
 const DELETE_HOVER          = 'hover:text-error hover:bg-[var(--error-light)]';
 
-const TOUR_TYPE_LABEL = { grupo: 'Grupo', privado: 'Privado', ambos: 'Grupo / Privado' };
+/* tipos de tour gravados em meta.tour_type; o texto vem de units.list.tourType */
+const TOUR_TYPES = ['grupo', 'privado', 'ambos'];
 
 /* Cartao de unidade: o cartao do sistema, em coluna, com a miniatura a toda a largura */
 function UnitCard({ isActive, children }) {
@@ -42,6 +51,8 @@ function UnitCard({ isActive, children }) {
 }
 
 function TourCard({ unit, onEdit, onDelete, onToggle, onSubmitConect }) {
+  const t        = useT();
+  const lang     = useLingua();
   const isActive = unit.status !== 'inactive';
   const meta     = parseTourMeta(unit.description);
   const thumb    = unit.images?.[0];
@@ -76,23 +87,23 @@ function TourCard({ unit, onEdit, onDelete, onToggle, onSubmitConect }) {
             )}
           </div>
           <Badge variant={isActive ? 'confirmed' : 'cancelled'}>
-            {isActive ? 'Activo' : 'Inactivo'}
+            {isActive ? t('unitForm.status.active') : t('unitForm.status.inactive')}
           </Badge>
         </div>
 
         {/* Tags row */}
         <div className="flex flex-wrap items-center gap-1.5">
           <span className="text-xs font-body px-2 py-0.5 bg-ocean-50 text-ocean-700 border border-ocean-100 rounded-xs">
-            {unit.unit_type}
+            {rotuloTipoUnidade(unit.unit_type, t, lang)}
           </span>
           {meta.tour_type && (
             <span className="text-xs font-body px-2 py-0.5 bg-n-50 text-n-600 border border-n-200 rounded-xs">
-              {TOUR_TYPE_LABEL[meta.tour_type] || meta.tour_type}
+              {TOUR_TYPES.includes(meta.tour_type) ? t(`units.list.tourType.${meta.tour_type}`) : meta.tour_type}
             </span>
           )}
           {meta.difficulty && (
             <Badge variant={DIFFICULTY_VARIANT[meta.difficulty] || 'default'}>
-              {DIFFICULTY_ROTULO[meta.difficulty] || meta.difficulty}
+              {rotuloDificuldade(meta.difficulty, t)}
             </Badge>
           )}
         </div>
@@ -108,7 +119,7 @@ function TourCard({ unit, onEdit, onDelete, onToggle, onSubmitConect }) {
           {unit.capacity && (
             <div className="flex items-center gap-1.5">
               <Users size={12} strokeWidth={1.75} className="text-n-400 shrink-0" />
-              <span>Max {unit.capacity} pax</span>
+              <span>{t('units.list.maxPax', { n: unit.capacity })}</span>
             </div>
           )}
           {meta.start_time && (
@@ -119,8 +130,8 @@ function TourCard({ unit, onEdit, onDelete, onToggle, onSubmitConect }) {
           )}
           {meta.min_age && (
             <div className="flex items-center gap-1.5">
-              <span className="text-n-400">Min</span>
-              <span>{meta.min_age} anos</span>
+              <span className="text-n-400">{t('units.list.minLabel')}</span>
+              <span>{t('units.list.years', { n: meta.min_age })}</span>
             </div>
           )}
         </div>
@@ -151,7 +162,7 @@ function TourCard({ unit, onEdit, onDelete, onToggle, onSubmitConect }) {
              "A partir de" com o valor mais baixo entre os escaloes/preco
              privado configurados, em vez de "€0/adulto" enganoso. */
           const tiers = Array.isArray(meta.price_tiers) ? meta.price_tiers : [];
-          const tierMin = tiers.length ? Math.min(...tiers.map(t => Number(t.price) || 0)) : null;
+          const tierMin = tiers.length ? Math.min(...tiers.map(tier => Number(tier.price) || 0)) : null;
           const startingFrom = tierMin ?? (meta.price_private ? Number(meta.price_private) : null);
           const hasBasePrice = Number(unit.base_price) > 0;
           return (
@@ -159,19 +170,19 @@ function TourCard({ unit, onEdit, onDelete, onToggle, onSubmitConect }) {
               <div>
                 {hasBasePrice ? (
                   <p className="font-display font-bold text-base text-ocean-700 tabular-nums">
-                    €{Number(unit.base_price).toFixed(0)}<span className="text-xs font-body font-normal text-n-500">/adulto</span>
+                    €{dinheiro(unit.base_price, 0, lang)}<span className="text-xs font-body font-normal text-n-500">{t('units.list.perAdult')}</span>
                   </p>
                 ) : startingFrom != null ? (
                   <p className="font-display font-bold text-base text-ocean-700 tabular-nums">
-                    <span className="text-xs font-body font-normal text-n-500">A partir de </span>€{startingFrom.toFixed(0)}
+                    <span className="text-xs font-body font-normal text-n-500">{t('units.list.from')} </span>€{dinheiro(startingFrom, 0, lang)}
                   </p>
                 ) : (
-                  <p className="text-xs font-body text-n-400">Sem preço definido</p>
+                  <p className="text-xs font-body text-n-400">{t('units.list.noPrice')}</p>
                 )}
                 {meta.price_child != null && meta.price_child !== '' && (
                   <p className="text-xs font-body text-n-500 tabular-nums">
-                    €{Number(meta.price_child).toFixed(0)} criança
-                    {hasBasePrice && meta.price_private && ` · €${Number(meta.price_private).toFixed(0)} privado`}
+                    {t('units.list.childAmount', { n: dinheiro(meta.price_child, 0, lang) })}
+                    {hasBasePrice && meta.price_private && ` · ${t('units.list.privateAmount', { n: dinheiro(meta.price_private, 0, lang) })}`}
                   </p>
                 )}
               </div>
@@ -181,17 +192,17 @@ function TourCard({ unit, onEdit, onDelete, onToggle, onSubmitConect }) {
                   size="sm"
                   icon={Power}
                   onClick={() => onToggle?.(unit)}
-                  aria-label={isActive ? 'Desactivar' : 'Activar'}
+                  aria-label={isActive ? t('units.list.deactivate') : t('units.list.activate')}
                   className={isActive ? TOGGLE_HOVER_ACTIVE : TOGGLE_HOVER_INACTIVE}
                 />
-                <Button variant="ghost" size="sm" icon={Pencil} onClick={() => onEdit(unit)} aria-label="Editar" />
+                <Button variant="ghost" size="sm" icon={Pencil} onClick={() => onEdit(unit)} aria-label={t('units.list.edit')} />
                 <Button
                   variant="ghost"
                   size="sm"
                   icon={Trash2}
                   onClick={() => onDelete(unit)}
                   className={DELETE_HOVER}
-                  aria-label="Eliminar"
+                  aria-label={t('common.delete')}
                 />
               </div>
             </div>
@@ -206,6 +217,7 @@ function TourCard({ unit, onEdit, onDelete, onToggle, onSubmitConect }) {
 /* onCreate e createLabel sao opcionais: com onCreate o vazio traz o botao de criar */
 export default function UnitList({ units, onEdit, onDelete, onToggle, onSubmitConect, onViewQr, operatorType, onCreate, createLabel }) {
   const t = useT();
+  const lang = useLingua();
   const isTour = operatorType === 'activity';
 
   if (!units.length) {
@@ -214,10 +226,10 @@ export default function UnitList({ units, onEdit, onDelete, onToggle, onSubmitCo
         <EmptyState
           icon={isTour ? Compass : Building2}
           title={t('common.noResults')}
-          description={isTour ? 'Crie o seu primeiro tour' : 'Crie a sua primeira unidade'}
+          description={isTour ? t('units.list.emptyTour') : t('units.list.emptyUnit')}
           action={onCreate && (
             <Button icon={Plus} onClick={onCreate}>
-              {createLabel || (isTour ? 'Novo Tour' : 'Nova Unidade')}
+              {createLabel || (isTour ? t('units.page.activity.newBtn') : t('units.new'))}
             </Button>
           )}
         />
@@ -269,7 +281,7 @@ export default function UnitList({ units, onEdit, onDelete, onToggle, onSubmitCo
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0">
                   <p className="font-display font-semibold text-sm text-n-900 truncate">{unit.name}</p>
-                  <p className="text-xs font-body text-n-500 mt-0.5">{unit.unit_type}</p>
+                  <p className="text-xs font-body text-n-500 mt-0.5">{rotuloTipoUnidade(unit.unit_type, t, lang)}</p>
                 </div>
                 <Badge variant={isActive ? 'confirmed' : 'cancelled'}>
                   {isActive ? t('units.active') : t('units.inactive')}
@@ -284,8 +296,8 @@ export default function UnitList({ units, onEdit, onDelete, onToggle, onSubmitCo
 
               <div className="flex items-center justify-between mt-auto pt-2 border-t border-n-100">
                 <div>
-                  <p className="font-display font-bold text-base text-ocean-700 tabular-nums">{formatPrice(unit)}</p>
-                  <p className="text-xs font-body text-n-400">Cap. {unit.capacity}</p>
+                  <p className="font-display font-bold text-base text-ocean-700 tabular-nums">{formatPrice(unit, t, lang)}</p>
+                  <p className="text-xs font-body text-n-400">{t('units.list.capacity', { n: unit.capacity })}</p>
                 </div>
                 <div className="flex gap-1">
                   {operatorType === 'restaurant' && onViewQr && (
@@ -294,7 +306,7 @@ export default function UnitList({ units, onEdit, onDelete, onToggle, onSubmitCo
                       size="sm"
                       icon={QrCode}
                       onClick={() => onViewQr(unit)}
-                      aria-label="Ver QR"
+                      aria-label={t('units.list.viewQr')}
                     />
                   )}
                   <Button
@@ -302,17 +314,17 @@ export default function UnitList({ units, onEdit, onDelete, onToggle, onSubmitCo
                     size="sm"
                     icon={Power}
                     onClick={() => onToggle?.(unit)}
-                    aria-label={isActive ? 'Desactivar' : 'Activar'}
+                    aria-label={isActive ? t('units.list.deactivate') : t('units.list.activate')}
                     className={isActive ? TOGGLE_HOVER_ACTIVE : TOGGLE_HOVER_INACTIVE}
                   />
-                  <Button variant="ghost" size="sm" icon={Pencil} onClick={() => onEdit(unit)} aria-label="Editar" />
+                  <Button variant="ghost" size="sm" icon={Pencil} onClick={() => onEdit(unit)} aria-label={t('units.list.edit')} />
                   <Button
                     variant="ghost"
                     size="sm"
                     icon={Trash2}
                     onClick={() => onDelete(unit)}
                     className={DELETE_HOVER}
-                    aria-label="Eliminar"
+                    aria-label={t('common.delete')}
                   />
                 </div>
               </div>

@@ -405,7 +405,7 @@ describe('Formulário, detalhe e cartão de reserva', () => {
     it('em inglês as opções usam o nome e a unidade em inglês', () => {
       useUiStore.setState({ lang: 'en' });
       renderForm({ operatorType: 'activity' });
-      preencher('Tour / Actividade', 't3');
+      preencher('Tour / Activity', 't3');
       expect(within(campo('Option')).getAllByRole('option').map(o => o.textContent)).toEqual([
         'Private group · €200 per group', 'Per person · €50 per person', 'Buggy 2h · €90 per vehicle (2 seats)',
       ]);

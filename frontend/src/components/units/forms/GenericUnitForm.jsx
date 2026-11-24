@@ -3,27 +3,31 @@ import { useT } from '../../../i18n';
 import Input, { Textarea, Select } from '../../ui/Input';
 import Button from '../../ui/Button';
 import ImageUploader from '../../shared/ImageUploader';
+import { useLingua } from '../../../utils/formatoLingua';
+import { rotuloTipoUnidade } from '../rotulosUnidades';
 import { OtaFields, ConectFields, buildOtaProductIds, UNIT_TYPES_BY_OPERATOR } from './editors';
 
+/* Unidades de preco por tipo de operador (o valor e o gravado; o texto vem de unitForm.generic.priceUnit) */
 const PRICE_UNITS_BY_OPERATOR = {
-  hotel:      [{ value: 'night',   label: 'por noite'  }],
-  activity:   [{ value: 'person',  label: 'por pessoa' }, { value: 'session', label: 'por sessão' }],
-  rentacar:   [{ value: 'day',     label: 'por dia'    }],
-  restaurant: [{ value: 'hour',    label: 'por hora'   }],
+  hotel:      ['night'],
+  activity:   ['person', 'session'],
+  rentacar:   ['day'],
+  restaurant: ['hour'],
 };
 
 export default function GenericUnitForm({ unit, operatorType, onSave, onCancel, loading, error }) {
   const t = useT();
+  const lang = useLingua();
 
   const tipos      = UNIT_TYPES_BY_OPERATOR[operatorType] || [];
-  const priceUnits = PRICE_UNITS_BY_OPERATOR[operatorType] || [{ value: 'day', label: 'por dia' }];
+  const priceUnits = PRICE_UNITS_BY_OPERATOR[operatorType] || ['day'];
 
   const [form, setForm] = useState({
     name:        unit?.name        || '',
     description: unit?.description || '',
     unit_type:   unit?.unit_type   || tipos[0] || '',
     base_price:  unit?.base_price  ?? '',
-    price_unit:  unit?.price_unit  || priceUnits[0]?.value || 'night',
+    price_unit:  unit?.price_unit  || priceUnits[0] || 'night',
     capacity:    unit?.capacity    ?? 1,
     status:  unit?.status  || 'active',
     images:  unit?.images  || [],
@@ -60,17 +64,17 @@ export default function GenericUnitForm({ unit, operatorType, onSave, onCancel, 
         onChange={set('name')}
         required
         autoFocus
-        placeholder="Ex: Quarto Ocean View"
+        placeholder={t('unitForm.generic.namePh')}
       />
 
       <div className="grid grid-cols-2 gap-3">
         <Select label={t('units.type')} value={form.unit_type} onChange={set('unit_type')} required>
-          {tipos.map((tp) => <option key={tp} value={tp}>{tp}</option>)}
-          <option value="Outro">Outro</option>
+          {tipos.map((tp) => <option key={tp} value={tp}>{rotuloTipoUnidade(tp, t, lang)}</option>)}
+          <option value="Outro">{t('unitForm.tour.other')}</option>
         </Select>
         <Select label={t('units.priceUnit')} value={form.price_unit} onChange={set('price_unit')}>
           {priceUnits.map((pu) => (
-            <option key={pu.value} value={pu.value}>{pu.label}</option>
+            <option key={pu} value={pu}>{t(`unitForm.generic.priceUnit.${pu}`)}</option>
           ))}
         </Select>
       </div>
@@ -100,7 +104,7 @@ export default function GenericUnitForm({ unit, operatorType, onSave, onCancel, 
         label={t('units.description')}
         value={form.description}
         onChange={set('description')}
-        placeholder="Descreva a unidade..."
+        placeholder={t('unitForm.generic.descPh')}
         rows={3}
       />
 
@@ -108,7 +112,7 @@ export default function GenericUnitForm({ unit, operatorType, onSave, onCancel, 
         value={form.images}
         onChange={(urls) => setForm(f => ({ ...f, images: urls }))}
         maxImages={10}
-        hint="Primeira foto = capa principal · max 10 fotos · 5MB cada"
+        hint={t('unitForm.tour.photosHint')}
       />
 
       <OtaFields form={form} set={set} />

@@ -6,6 +6,7 @@ import Badge from '../ui/Badge';
 import Button from '../ui/Button';
 import Modal from '../ui/Modal';
 import { rotuloEstadoReserva } from '../../utils/estadoReserva';
+import { formatDate as formatarDia, eurosDecimais, rotuloProximoEstado } from '../../pages/reservations/shared';
 
 const STATUS_NEXT = {
   pending:    'confirmed',
@@ -13,16 +14,9 @@ const STATUS_NEXT = {
   checked_in: 'checked_out',
 };
 
-const STATUS_LABEL_NEXT = {
-  pending:    'Confirmar',
-  confirmed:  'Check-in',
-  checked_in: 'Check-out',
-};
-
+/* Sem data fica vazio (a tabela mostra o traco) */
 function formatDate(d) {
-  if (!d) return '';
-  const [y, m, day] = d.split('-');
-  return `${day}/${m}/${y}`;
+  return d ? formatarDia(d) : '';
 }
 
 export default function ReservationCard({ reservation: r, onUpdate, onEdit, onView }) {
@@ -74,9 +68,9 @@ export default function ReservationCard({ reservation: r, onUpdate, onEdit, onVi
           </div>
           <div className="text-right shrink-0">
             <p className="font-display font-bold text-base text-ocean-700">
-              €{Number(r.total_price).toFixed(2)}
+              {eurosDecimais(r.total_price)}
             </p>
-            <p className="text-xs font-body text-n-400">{r.guests} hósp.</p>
+            <p className="text-xs font-body text-n-400">{t('reservations.guestsShort', { n: r.guests })}</p>
           </div>
         </div>
 
@@ -98,7 +92,7 @@ export default function ReservationCard({ reservation: r, onUpdate, onEdit, onVi
         {r.fleet?.name && (
           <div className="flex items-center gap-2 text-xs font-body text-n-500">
             <Car size={13} strokeWidth={1.75} className="text-n-400 shrink-0" />
-            <span>{r.fleet.name} ({r.fleet.capacity} lugares)</span>
+            <span>{t('reservations.vehicleSeats', { name: r.fleet.name, n: r.fleet.capacity })}</span>
           </div>
         )}
 
@@ -110,17 +104,17 @@ export default function ReservationCard({ reservation: r, onUpdate, onEdit, onVi
               onClick={handleNextStatus}
               className="flex-1"
             >
-              {STATUS_LABEL_NEXT[r.status]}
+              {rotuloProximoEstado(r.status, t)}
             </Button>
           )}
           <Button variant="ghost" size="sm" icon={Eye} onClick={() => onView(r)} aria-label={t('reservations.view')} />
-          <Button variant="ghost" size="sm" icon={Pencil} onClick={() => onEdit(r)} aria-label="Editar" />
+          <Button variant="ghost" size="sm" icon={Pencil} onClick={() => onEdit(r)} aria-label={t('common.edit')} />
           {r.status === 'pending' || r.status === 'cancelled' ? (
             <Button
               variant="ghost" size="sm" icon={Trash2}
               onClick={() => setConfirmDelete(true)}
               className="hover:text-error hover:bg-[var(--error-light)]"
-              aria-label="Eliminar"
+              aria-label={t('common.delete')}
             />
           ) : null}
         </div>

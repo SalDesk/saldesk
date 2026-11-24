@@ -3,9 +3,11 @@ import { FileText } from 'lucide-react';
 import Button from '../../components/ui/Button';
 import Input, { Select } from '../../components/ui/Input';
 import Modal from '../../components/ui/Modal';
-import { formatDate } from './shared';
+import { useT } from '../../i18n';
+import { formatDate, eurosInteiros } from './shared';
 
 export default function ManifestoModal({ open, onClose, reservations, units }) {
+  const t = useT();
   const [tourId, setTourId] = useState('');
   const [date,   setDate]   = useState('');
 
@@ -27,17 +29,17 @@ export default function ManifestoModal({ open, onClose, reservations, units }) {
   }
 
   return (
-    <Modal open={open} onClose={onClose} title="Manifesto de Participantes" size="xl">
+    <Modal open={open} onClose={onClose} title={t('reservations.manifest.title')} size="xl">
       <div className="space-y-4">
         <div className="flex gap-3">
           <div className="flex-1">
-            <Select label="Tour" value={tourId} onChange={e => setTourId(e.target.value)}>
-              <option value="">Todos os tours</option>
+            <Select label={t('reservations.columns.tour')} value={tourId} onChange={e => setTourId(e.target.value)}>
+              <option value="">{t('reservations.filters.allTours')}</option>
               {units.map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
             </Select>
           </div>
           <div className="flex-1">
-            <Input label="Data" type="date" value={date} onChange={e => setDate(e.target.value)} />
+            <Input label={t('common.date')} type="date" value={date} onChange={e => setDate(e.target.value)} />
           </div>
         </div>
 
@@ -46,31 +48,31 @@ export default function ManifestoModal({ open, onClose, reservations, units }) {
             <div className="bg-ocean-50 border border-ocean-100 rounded-sm px-4 py-3 flex items-center justify-between">
               <div>
                 <p className="font-display font-semibold text-sm text-ocean-900">
-                  {tourName || 'Todos os tours'}{date ? ` · ${formatDate(date)}` : ''}
+                  {tourName || t('reservations.filters.allTours')}{date ? ` · ${formatDate(date)}` : ''}
                 </p>
-                <p className="text-xs font-body text-ocean-600 mt-0.5">{participants.length} reservas · {totalPax} participantes</p>
+                <p className="text-xs font-body text-ocean-600 mt-0.5">{t('reservations.manifest.summary', { n: participants.length, pax: totalPax })}</p>
               </div>
               {participants.length > 0 && (
-                <Button variant="secondary" size="sm" icon={FileText} onClick={handlePrintPdf}>Exportar PDF</Button>
+                <Button variant="secondary" size="sm" icon={FileText} onClick={handlePrintPdf}>{t('reservations.manifest.export')}</Button>
               )}
             </div>
 
             {participants.length === 0 ? (
-              <p className="text-sm font-body text-n-500 text-center py-6">Nenhum participante encontrado.</p>
+              <p className="text-sm font-body text-n-500 text-center py-6">{t('reservations.manifest.empty')}</p>
             ) : (
               <div className="border border-n-200 rounded-sm overflow-hidden overflow-x-auto">
                 <table className="w-full text-sm" style={{ minWidth: 820 }}>
                   <thead>
                     <tr className="bg-n-50 border-b border-n-200">
                       <th className="text-left px-3 py-2.5 text-xs font-body font-bold uppercase tracking-wide text-n-500">#</th>
-                      <th className="text-left px-3 py-2.5 text-xs font-body font-bold uppercase tracking-wide text-n-500">Nome</th>
-                      <th className="text-left px-3 py-2.5 text-xs font-body font-bold uppercase tracking-wide text-n-500">Telefone</th>
-                      <th className="text-left px-3 py-2.5 text-xs font-body font-bold uppercase tracking-wide text-n-500">Hotel / Quarto</th>
-                      <th className="text-left px-3 py-2.5 text-xs font-body font-bold uppercase tracking-wide text-n-500">Contacto emergência</th>
-                      <th className="text-left px-3 py-2.5 text-xs font-body font-bold uppercase tracking-wide text-n-500">Req. especiais</th>
-                      <th className="text-center px-3 py-2.5 text-xs font-body font-bold uppercase tracking-wide text-n-500">Pax</th>
-                      <th className="text-left px-3 py-2.5 text-xs font-body font-bold uppercase tracking-wide text-n-500">Estado</th>
-                      <th className="text-right px-3 py-2.5 text-xs font-body font-bold uppercase tracking-wide text-n-500">Total</th>
+                      <th className="text-left px-3 py-2.5 text-xs font-body font-bold uppercase tracking-wide text-n-500">{t('reservations.manifest.name')}</th>
+                      <th className="text-left px-3 py-2.5 text-xs font-body font-bold uppercase tracking-wide text-n-500">{t('customers.phone')}</th>
+                      <th className="text-left px-3 py-2.5 text-xs font-body font-bold uppercase tracking-wide text-n-500">{t('reservations.manifest.hotelRoom')}</th>
+                      <th className="text-left px-3 py-2.5 text-xs font-body font-bold uppercase tracking-wide text-n-500">{t('reservations.manifest.emergency')}</th>
+                      <th className="text-left px-3 py-2.5 text-xs font-body font-bold uppercase tracking-wide text-n-500">{t('reservations.manifest.specialReqs')}</th>
+                      <th className="text-center px-3 py-2.5 text-xs font-body font-bold uppercase tracking-wide text-n-500">{t('reservations.pax')}</th>
+                      <th className="text-left px-3 py-2.5 text-xs font-body font-bold uppercase tracking-wide text-n-500">{t('common.status')}</th>
+                      <th className="text-right px-3 py-2.5 text-xs font-body font-bold uppercase tracking-wide text-n-500">{t('reservations.total')}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-n-100">
@@ -94,10 +96,10 @@ export default function ManifestoModal({ open, onClose, reservations, units }) {
                           <td className="px-3 py-2.5">
                             <span className={`text-xs font-mono px-1.5 py-0.5 rounded-xs uppercase tracking-wide ${
                               ['confirmed','checked_in'].includes(r.status) ? 'bg-[#ECFDF5] text-[#1A7A4A]' : 'bg-n-100 text-n-500'
-                            }`}>{r.status}</span>
+                            }`}>{t(`reservations.status.${r.status}`)}</span>
                           </td>
                           <td className="px-3 py-2.5 text-right font-display font-bold text-sm text-ocean-700">
-                            €{Number(r.total_price || r.total_amount || 0).toFixed(0)}
+                            {eurosInteiros(r.total_price || r.total_amount)}
                           </td>
                         </tr>
                       );
@@ -105,11 +107,11 @@ export default function ManifestoModal({ open, onClose, reservations, units }) {
                   </tbody>
                   <tfoot>
                     <tr className="bg-n-50 border-t border-n-200">
-                      <td colSpan={6} className="px-3 py-2.5 text-xs font-body font-bold text-n-700 uppercase tracking-wide">Total</td>
+                      <td colSpan={6} className="px-3 py-2.5 text-xs font-body font-bold text-n-700 uppercase tracking-wide">{t('reservations.total')}</td>
                       <td className="px-3 py-2.5 text-center font-display font-bold text-sm text-n-900">{totalPax}</td>
                       <td />
                       <td className="px-3 py-2.5 text-right font-display font-bold text-sm text-ocean-700">
-                        €{participants.reduce((s, r) => s + Number(r.total_price || r.total_amount || 0), 0).toFixed(0)}
+                        {eurosInteiros(participants.reduce((s, r) => s + Number(r.total_price || r.total_amount || 0), 0))}
                       </td>
                     </tr>
                   </tfoot>
@@ -118,7 +120,7 @@ export default function ManifestoModal({ open, onClose, reservations, units }) {
             )}
           </>
         ) : (
-          <p className="text-sm font-body text-n-500 text-center py-6">Seleccione um tour e/ou uma data para ver o manifesto.</p>
+          <p className="text-sm font-body text-n-500 text-center py-6">{t('reservations.manifest.prompt')}</p>
         )}
       </div>
     </Modal>

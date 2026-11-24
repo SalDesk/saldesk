@@ -1,12 +1,15 @@
 import { Globe2 } from 'lucide-react';
 import Badge from '../ui/Badge';
 import Button from '../ui/Button';
+import { useT } from '../../i18n';
 
-const CONECT_STATUS_LABEL = { draft: 'Não submetido', pending_review: 'Em revisão', published: 'Publicado no Conect', paused: 'Pausado' };
+/* Estados do Conect gravados em unit.conect_status; o texto vem de units.conect.<estado> */
+const CONECT_STATUS_LABEL_CHAVE = ['draft', 'pending_review', 'published', 'paused'];
 /* Variante do Badge do sistema para cada estado do Conect */
 const CONECT_STATUS_VARIANT = { draft: 'default', pending_review: 'info', published: 'confirmed', paused: 'pending' };
 
 export default function ConectRow({ unit, onSubmitConect }) {
+  const t = useT();
   if (!onSubmitConect) return null;
   const status = unit.conect_status || 'draft';
   const canSubmit = status === 'draft';
@@ -14,7 +17,7 @@ export default function ConectRow({ unit, onSubmitConect }) {
   return (
     <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-n-100">
       <Badge variant={CONECT_STATUS_VARIANT[status] || 'default'} className="whitespace-nowrap">
-        {CONECT_STATUS_LABEL[status] || status}
+        {CONECT_STATUS_LABEL_CHAVE.includes(status) ? t(`units.conect.${status}`) : status}
       </Badge>
       {(canSubmit || canWithdraw) && (
         <Button
@@ -24,7 +27,7 @@ export default function ConectRow({ unit, onSubmitConect }) {
           className="whitespace-nowrap"
           onClick={() => onSubmitConect(unit)}
         >
-          {canSubmit ? 'Submeter ao Conect' : 'Retirar do Conect'}
+          {canSubmit ? t('units.conect.submit') : t('units.conect.withdraw')}
         </Button>
       )}
     </div>

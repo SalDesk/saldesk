@@ -9,7 +9,8 @@ const translations = { pt, en, de, nl };
 function interpolate(str, vars) {
   if (!vars) return str;
   return Object.entries(vars).reduce(
-    (acc, [k, v]) => acc.replaceAll(`{{${k}}}`, v),
+    /* funcao de troca: o valor entra tal e qual, sem os padroes especiais ($&, $', $$) de String.replace */
+    (acc, [k, v]) => acc.replaceAll(`{{${k}}}`, () => String(v)),
     str
   );
 }

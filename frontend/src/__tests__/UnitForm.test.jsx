@@ -3,6 +3,12 @@ import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-libra
 import UnitForm, { parseTourMeta } from '../components/units/UnitForm';
 import useUiStore from '../store/uiStore';
 import { uploadImage } from '../services/uploadService';
+import { getT } from '../i18n';
+import {
+  rotuloDificuldade, rotuloComodidadeActividade, rotuloTipoUnidade, rotuloComodidade, rotuloZonaMesa, rotuloVistaQuarto,
+} from '../components/units/rotulosUnidades';
+import GenericUnitForm from '../components/units/forms/GenericUnitForm';
+import { portuguesNoEcra, chavesCruas } from './helpers/portuguesNoEcra';
 
 /* Sem rede: o unico servico que os formularios tocam (via ImageUploader) e o de upload */
 vi.mock('../services/uploadService', () => ({
@@ -2181,5 +2187,219 @@ describe('formulário genérico com o design system', () => {
     expect(guardar(onSave).base_price).toBe(20);
     fireEvent.click(botao('Cancelar'));
     expect(onCancel).toHaveBeenCalledTimes(1);
+  });
+});
+
+/* Rotulos dos valores gravados nas unidades: o valor nunca muda, so o texto mostrado */
+describe('rotulosUnidades', () => {
+  const pt = getT('pt');
+  const en = getT('en');
+
+  it('rotuloDificuldade: em pt como sempre, em en traduz e um valor desconhecido fica como esta', () => {
+    expect(['Facil', 'Moderado', 'Dificil'].map(v => rotuloDificuldade(v, pt))).toEqual(['Fácil', 'Moderado', 'Difícil']);
+    expect(['Facil', 'Moderado', 'Dificil'].map(v => rotuloDificuldade(v, en))).toEqual(['Easy', 'Moderate', 'Hard']);
+    expect(rotuloDificuldade('Extremo', en)).toBe('Extremo');
+    expect(rotuloDificuldade(undefined, en)).toBeUndefined();
+  });
+
+  it('rotuloComodidadeActividade: as oito comodidades em en; a escrita pelo operador fica como esta', () => {
+    expect(rotuloComodidadeActividade('Seguro', pt)).toBe('Seguro');
+    expect(rotuloComodidadeActividade('Snacks e água', en)).toBe('Snacks and water');
+    expect(rotuloComodidadeActividade('Vista mar', en)).toBe('Vista mar');
+  });
+
+  it('rotuloTipoUnidade: em pt mostra o valor gravado (mesmo sem acento); em en traduz', () => {
+    expect(rotuloTipoUnidade('Sessao', pt, 'pt')).toBe('Sessao');
+    expect(rotuloTipoUnidade('Sessao', en, 'en')).toBe('Session');
+    expect(rotuloTipoUnidade('Passeio de Barco', en, 'en')).toBe('Boat trip');
+    expect(rotuloTipoUnidade('Outra coisa', en, 'en')).toBe('Outra coisa');
+  });
+});
+
+
+/* ---------- Quarto, viatura, mesa e unidade generica em ingles ---------- */
+
+/* Escolhe numa lista pelo texto que o operador le; o que se grava e o valor da opcao */
+function escolher(select, rotulo) {
+  const opcao = Array.from(select.querySelectorAll('option')).find(o => o.textContent === rotulo);
+  if (!opcao) throw new Error(`Opção "${rotulo}" não encontrada`);
+  fireEvent.change(select, { target: { value: opcao.value } });
+}
+
+describe('formulários de unidade em inglês', () => {
+  /* o que o operador escreveu (nomes, matriculas, marcas) nao conta como portugues */
+  const DADOS = ['Ocean View Suite', 'Toyota', 'Hilux'];
+
+  beforeEach(() => { useUiStore.setState({ lang: 'en' }); });
+
+  it('quarto: etiquetas, listas e botões em inglês, sem português nem chaves cruas', () => {
+    renderForm('hotel', { unit: { id: 'u1', name: '101 — Suite', unit_type: 'Suite', status: 'active', capacity: 2, base_price: 50, description: '{}' } });
+    ['Number', 'Name', 'Type', 'Floor', 'View', 'Adults', 'Children', 'Base price', 'Low season', 'Mid season', 'High season', 'Peak']
+      .forEach(texto => expect(campo(texto)).toBeInTheDocument());
+    ['Identification', 'Capacity', 'Amenities', 'Prices by season (€ / night)', 'Description', "What's included", 'Important information (optional)', 'Status']
+      .forEach(texto => expect(screen.getByText(texto)).toBeInTheDocument());
+    expect(screen.getAllByText('Photos').length).toBeGreaterThanOrEqual(1);
+    expect(opcoes(campo('View')).map(o => o[1])).toEqual(['Sea', 'Garden', 'Pool', 'City', 'No view']);
+    expect(opcoes(campo('Type')).map(o => o[1])).toEqual(['Single', 'Double', 'Twin', 'Suite', 'Apartment', 'Villa', 'Bungalow']);
+    expect(opcoes(seletorEstado()).map(o => o[1])).toEqual(['Active', 'Being cleaned', 'Under maintenance', 'Inactive']);
+    expect(screen.getByRole('button', { name: 'Cancel' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Save changes' })).toBeInTheDocument();
+    expect(portuguesNoEcra(DADOS)).toEqual([]);
+    expect(chavesCruas(['unitForm', 'units', 'common'])).toEqual([]);
+  });
+
+  it('quarto: o botão de criar e as comodidades em inglês; ao gravar ficam os valores em português', () => {
+    const { onSave } = renderForm('hotel');
+    expect(screen.getByRole('button', { name: 'Create room' })).toBeInTheDocument();
+    ['AC', 'TV', 'WiFi', 'Safe', 'Minibar', 'Jacuzzi', 'Balcony', 'Bathtub', 'Kitchen'].forEach(a => {
+      expect(screen.getByLabelText(a)).toBeInTheDocument();
+    });
+    escrever(campo('Name'), 'Ocean View Suite');
+    escrever(campo('Base price'), '80');
+    escolher(campo('View'), 'City');
+    escolher(campo('Type'), 'Apartment');
+    fireEvent.click(screen.getByLabelText('Safe'));
+    fireEvent.click(screen.getByLabelText('Balcony'));
+    fireEvent.click(screen.getByRole('button', { name: 'Create room' }));
+    const v = guardar(onSave);
+    expect(v.unit_type).toBe('Apartamento');
+    expect(JSON.parse(v.description)).toMatchObject({ view: 'Cidade', amenities: ['Cofre', 'Varanda'] });
+  });
+
+  it('viatura: etiquetas, listas e botões em inglês, sem português nem chaves cruas', () => {
+    renderForm('rentacar', { unit: { id: 'u1', name: 'Toyota Hilux', unit_type: 'Compacto', status: 'active', capacity: 5, base_price: 50, description: '{}' } });
+    ['Make', 'Model', 'Year', 'Licence plate', 'Colour', 'Category', 'Seats', 'Luggage', 'Transmission', 'Fuel',
+      'Base price / day', 'Km included / day', 'Extra km cost (€)', 'Weekly discount (%)', 'Monthly discount (%)',
+      'Minimum age', 'Licence held for (years)', 'Insurance until', 'IUC until', 'Inspection until', 'Current km', 'Next service (km)']
+      .forEach(texto => expect(campo(texto)).toBeInTheDocument());
+    ['Specifications', 'Prices (€)', 'Driver requirements', 'Documents — expiry dates', 'Mileage'].forEach(texto => {
+      expect(screen.getByText(texto)).toBeInTheDocument();
+    });
+    expect(opcoes(campo('Category')).map(o => o[1])).toEqual(['Economy', 'Compact', 'SUV', 'Pickup', 'Motorbike', 'Van', 'Executive']);
+    expect(opcoes(campo('Transmission'))).toEqual([['manual', 'Manual'], ['automatico', 'Automatic']]);
+    expect(opcoes(campo('Fuel'))).toEqual([['gasolina', 'Petrol'], ['diesel', 'Diesel'], ['electrico', 'Electric'], ['hibrido', 'Hybrid']]);
+    expect(opcoes(seletorEstado()).map(o => o[1])).toEqual(['Active', 'Under maintenance', 'Breakdown', 'Inactive']);
+    expect(screen.getByRole('button', { name: 'Save changes' })).toBeInTheDocument();
+    expect(portuguesNoEcra(DADOS)).toEqual([]);
+    expect(chavesCruas(['unitForm', 'units', 'common'])).toEqual([]);
+  });
+
+  it('viatura: a tarifa de motorista aparece só no Executive e a nota está em inglês', () => {
+    renderForm('rentacar');
+    expect(screen.queryByText('Chauffeur rate (per day)')).toBeNull();
+    escolher(campo('Category'), 'Executive');
+    expect(campo('Chauffeur rate (per day)')).toBeInTheDocument();
+    expect(screen.getByText('Charged per day when the customer picks "chauffeur included" on the booking.')).toBeInTheDocument();
+    expect(portuguesNoEcra()).toEqual([]);
+  });
+
+  it('viatura: ao gravar ficam os valores em português (categoria, combustível, comodidades)', () => {
+    const { onSave } = renderForm('rentacar');
+    expect(screen.getByRole('button', { name: 'Register vehicle' })).toBeInTheDocument();
+    ['AC', 'GPS', 'Bluetooth', 'USB', 'Baby seat', '4x4', 'Sunroof', 'Rear camera'].forEach(a => {
+      expect(screen.getByLabelText(a)).toBeInTheDocument();
+    });
+    escrever(campo('Base price / day'), '45');
+    escolher(campo('Category'), 'Economy');
+    escolher(campo('Fuel'), 'Hybrid');
+    escolher(campo('Transmission'), 'Automatic');
+    fireEvent.click(screen.getByLabelText('Baby seat'));
+    fireEvent.click(screen.getByLabelText('Sunroof'));
+    fireEvent.click(screen.getByLabelText('Rear camera'));
+    fireEvent.click(screen.getByRole('button', { name: 'Register vehicle' }));
+    const v = guardar(onSave);
+    expect(v.unit_type).toBe('Economico');
+    expect(JSON.parse(v.description)).toMatchObject({ fuel: 'hibrido', transmission: 'automatico', amenities: ['Cadeira bebe', 'Teto solar', 'Camera re'] });
+  });
+
+  it('mesa: etiquetas, zonas e botões em inglês, sem português nem chaves cruas', () => {
+    renderForm('restaurant', { unit: { id: 'u1', name: 'Mesa 1', unit_type: 'Interior', status: 'active', capacity: 4, description: '{}' } });
+    ['Number', 'Name / description (optional)', 'Zone', 'Minimum (guests)', 'Maximum (guests)'].forEach(texto => {
+      expect(campo(texto)).toBeInTheDocument();
+    });
+    expect(opcoes(campo('Zone')).map(o => o[1])).toEqual(['Indoor', 'Outdoor seating', 'Terrace', 'VIP', 'Private']);
+    expect(opcoes(seletorEstado()).map(o => o[1])).toEqual(['Active', 'Blocked']);
+    expect(screen.getByLabelText('Table can be combined with others')).toBeInTheDocument();
+    ['WiFi', 'Air conditioning', 'Sea view', 'Terrace', 'Wheelchair access', 'Parking', 'Live music', 'Child-friendly'].forEach(a => {
+      expect(screen.getByLabelText(a)).toBeInTheDocument();
+    });
+    expect(screen.getByRole('button', { name: 'Save changes' })).toBeInTheDocument();
+    expect(portuguesNoEcra(['Mesa 1'])).toEqual([]);
+    expect(chavesCruas(['unitForm', 'units', 'common'])).toEqual([]);
+  });
+
+  it('mesa: escolher "Terrace" e "Sea view" grava terraco, Terraco e Vista mar', () => {
+    const { onSave } = renderForm('restaurant');
+    expect(screen.getByRole('button', { name: 'Create table' })).toBeInTheDocument();
+    escolher(campo('Zone'), 'Terrace');
+    fireEvent.click(screen.getByLabelText('Sea view'));
+    fireEvent.click(screen.getByRole('button', { name: 'Create table' }));
+    const v = guardar(onSave);
+    expect(v.unit_type).toBe('Terraco');
+    expect(JSON.parse(v.description)).toMatchObject({ zone: 'terraco', amenities: ['Vista mar'] });
+  });
+
+  it('unidade generica: tipos, unidades de preço e botões em inglês; grava os valores em português', () => {
+    const onSave = vi.fn();
+    render(<GenericUnitForm operatorType="rentacar" onSave={onSave} onCancel={vi.fn()} />);
+    expect(opcoes(campo('Type')).map(o => o[1])).toEqual(['Economy', 'Compact', 'SUV', 'Pickup', 'Motorbike', 'Van', 'Executive', 'Other']);
+    expect(opcoes(campo('Price unit'))).toEqual([['day', 'per day']]);
+    expect(screen.getByPlaceholderText('E.g. Ocean View Room')).toBeInTheDocument();
+    expect(screen.getByPlaceholderText('Describe the unit...')).toBeInTheDocument();
+    expect(screen.getByText('First photo = main cover · max 10 photos · 5MB each')).toBeInTheDocument();
+    expect(portuguesNoEcra()).toEqual([]);
+    escrever(campo('Name'), 'Carrinha');
+    escrever(campo('Base price (€)'), '30');
+    escolher(campo('Type'), 'Executive');
+    fireEvent.click(screen.getByRole('button', { name: 'New Unit' }));
+    expect(guardar(onSave)).toMatchObject({ unit_type: 'Executivo', price_unit: 'day' });
+  });
+
+  it('uma comodidade escrita pelo operador continua gravada quando se guarda', () => {
+    const unit = {
+      id: 'u1', name: 'Mesa 1', unit_type: 'Interior', status: 'active', capacity: 4,
+      description: JSON.stringify({ zone: 'interior', amenities: ['Piscina privada', 'Vista mar'] }),
+    };
+    const { onSave } = renderForm('restaurant', { unit });
+    expect(screen.getByLabelText('Sea view').checked).toBe(true);
+    fireEvent.click(screen.getByRole('button', { name: 'Save changes' }));
+    expect(JSON.parse(guardar(onSave).description).amenities).toEqual(['Piscina privada', 'Vista mar']);
+  });
+});
+
+describe('rotulosUnidades: quartos, viaturas e mesas', () => {
+  const pt = getT('pt');
+  const en = getT('en');
+  const de = getT('de');
+  const AMENS = [
+    'AC', 'TV', 'WiFi', 'Cofre', 'Minibar', 'Jacuzzi', 'Varanda', 'Banheira', 'Cozinha',
+    'GPS', 'Bluetooth', 'USB', 'Cadeira bebe', '4x4', 'Teto solar', 'Camera re',
+    'Ar condicionado', 'Vista mar', 'Terraço', 'Acesso cadeira de rodas', 'Estacionamento', 'Música ao vivo', 'Ambiente para crianças',
+  ];
+
+  it('rotuloComodidade: em pt o valor gravado, em en o texto inglês, e o que é do operador fica como está', () => {
+    expect(AMENS.map(a => rotuloComodidade(a, pt))).toEqual(AMENS);
+    expect(rotuloComodidade('Vista mar', en)).toBe('Sea view');
+    expect(rotuloComodidade('Cadeira bebe', en)).toBe('Baby seat');
+    expect(rotuloComodidade('Cofre', de)).toBe('Safe');
+    expect(AMENS.map(a => rotuloComodidade(a, en)).every(r => r && !/[À-ÿ]/.test(r))).toBe(true);
+    expect(rotuloComodidade('Piscina privada', en)).toBe('Piscina privada');
+    expect(rotuloComodidade('Piscina privada', pt)).toBe('Piscina privada');
+    expect(rotuloComodidade(undefined, en)).toBeUndefined();
+  });
+
+  it('rotuloZonaMesa: aceita a chave da zona e o unit_type gravado; desconhecidas ficam como estão', () => {
+    expect(['interior', 'esplanada', 'terraco', 'vip', 'privado'].map(z => rotuloZonaMesa(z, pt))).toEqual(['Interior', 'Esplanada', 'Terraço', 'VIP', 'Privado']);
+    expect(['interior', 'esplanada', 'terraco', 'vip', 'privado'].map(z => rotuloZonaMesa(z, en))).toEqual(['Indoor', 'Outdoor seating', 'Terrace', 'VIP', 'Private']);
+    expect(rotuloZonaMesa('Terraco', en)).toBe('Terrace');
+    expect(rotuloZonaMesa('Salão', en)).toBe('Salão');
+  });
+
+  it('rotuloVistaQuarto e a zona gravada na lista (rotuloTipoUnidade)', () => {
+    expect(['Mar', 'Jardim', 'Piscina', 'Cidade', 'Sem vista'].map(v => rotuloVistaQuarto(v, pt))).toEqual(['Mar', 'Jardim', 'Piscina', 'Cidade', 'Sem vista']);
+    expect(['Mar', 'Jardim', 'Piscina', 'Cidade', 'Sem vista'].map(v => rotuloVistaQuarto(v, en))).toEqual(['Sea', 'Garden', 'Pool', 'City', 'No view']);
+    expect(rotuloTipoUnidade('Esplanada', en, 'en')).toBe('Outdoor seating');
+    expect(rotuloTipoUnidade('Esplanada', pt, 'pt')).toBe('Esplanada');
+    expect(rotuloTipoUnidade('Terraco', pt, 'pt')).toBe('Terraco');
   });
 });
