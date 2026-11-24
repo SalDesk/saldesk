@@ -7,6 +7,7 @@ import en from '../i18n/en.json';
 import { listVouchers, createVoucher, updateVoucher, deleteVoucher } from '../services/vouchersService';
 import { listUnits } from '../services/unitsService';
 import { getBookingLink } from '../services/marketingService';
+import { portuguesNoEcra, chavesCruas } from './helpers/portuguesNoEcra';
 
 vi.mock('../services/vouchersService', () => ({
   listVouchers: vi.fn(), createVoucher: vi.fn(), updateVoucher: vi.fn(), deleteVoucher: vi.fn(),
@@ -383,5 +384,123 @@ describe('Vouchers com o design system', () => {
     expect(html).not.toMatch(HEX);
     expect(html).not.toMatch(NOMEADAS);
     expect(html.replace(/text-error ml-0[.]5/g, '')).not.toMatch(/(?:text|bg|border)-error/);
+  });
+});
+
+/* ───────────────────────── painel em ingles ───────────────────────── */
+
+describe('Vouchers: painel em ingles', () => {
+  const DADOS = ['VERAO20', 'ESGOTADO', 'EXPIRADO', 'INATIVO', 'BREVE', 'Kite', 'Mergulho', 'GRANDE'];
+  const codigosEn = () => codigosPorOrdem().map(c => c.replace('Copy', '').replace('Copied', ''));
+  const dataEn = (d) => new Date(d).toLocaleDateString('en-GB', { timeZone: 'UTC' });
+
+  beforeEach(() => { useUiStore.setState({ lang: 'en' }); });
+  afterEach(() => { cleanup(); useUiStore.setState({ lang: 'pt' }); });
+
+  it('a_lista_mostra_rotulos_em_ingles_sem_portugues_nem_chaves_cruas', async () => {
+    await montar();
+    expect(screen.getAllByRole('columnheader').map(h => h.textContent)).toEqual(['Code', 'Discount', 'Minimum', 'Validity', 'Uses', 'Tours', 'Status', '']);
+    const estado = (c) => within(linha(c)).getAllByRole('cell')[6].textContent;
+    expect(estado('VERAO20')).toBe('Active');
+    expect(estado('ESGOTADO')).toBe('Used up');
+    expect(estado('EXPIRADO')).toBe('Expired');
+    expect(estado('INATIVO')).toBe('Inactive');
+    expect(linha('VERAO20')).toHaveTextContent('1 tour(s)');
+    expect(linha('ESGOTADO')).toHaveTextContent('All');
+    expect(screen.getByText('Vouchers and promotions')).toBeInTheDocument();
+    expect(portuguesNoEcra(DADOS)).toEqual([]);
+    expect(chavesCruas(['vouchersPage'])).toEqual([]);
+  });
+
+  it('o_filtro_por_estado_usa_o_valor_gravado_e_nao_o_rotulo', async () => {
+    await montar();
+    fireEvent.click(chip('Used up'));
+    expect(codigosEn()).toEqual(['ESGOTADO']);
+    fireEvent.click(chip('Active'));
+    expect(codigosEn()).toEqual(['BREVE', 'VERAO20']);
+  });
+
+  it('valores_e_datas_seguem_a_lingua_en_com_separador_de_milhares_e_pt_como_sempre', async () => {
+    const extra = { id: 'v9', code: 'GRANDE', type: 'fixed', value: 1234, min_amount: 2500, expires_at: dia(60), max_uses: 0, uses_count: 0, unit_ids: [], active: true, created_at: '2026-11-09T10:00:00Z' };
+    listVouchers.mockResolvedValue([...VOUCHERS, extra]);
+    await montar('GRANDE');
+    expect(linha('GRANDE')).toHaveTextContent('€1,234');
+    expect(linha('GRANDE')).toHaveTextContent('€2,500');
+    expect(linha('GRANDE')).toHaveTextContent(dataEn(dia(60)));
+    cleanup();
+    useUiStore.setState({ lang: 'pt' });
+    await montar('GRANDE');
+    expect(linha('GRANDE')).toHaveTextContent('€1234');
+    expect(linha('GRANDE')).toHaveTextContent('€2500');
+    expect(linha('GRANDE')).toHaveTextContent(dataPt(dia(60)));
+  });
+
+  it('criar_um_voucher_em_ingles_grava_o_tipo_gravado_e_nao_o_rotulo', async () => {
+    createVoucher.mockImplementation(async (p) => ({ id: 'novo', created_at: '2026-11-20T10:00:00Z', uses_count: 0, ...p }));
+    await montar();
+    fireEvent.click(screen.getAllByText('New voucher').find(e => e.closest('button')).closest('button'));
+    const dlg = within(screen.getByRole('dialog'));
+    fireEvent.change(dlg.getByLabelText('Code'), { target: { value: 'ingles1' } });
+    const tipo = dlg.getByLabelText('Discount type');
+    const fixo = dlg.getByRole('option', { name: 'Fixed amount (€)' });
+    fireEvent.change(tipo, { target: { value: fixo.value } });
+    fireEvent.change(dlg.getByLabelText('Discount (€)'), { target: { value: '15' } });
+    expect(portuguesNoEcra(DADOS, screen.getByRole('dialog'))).toEqual([]);
+    fireEvent.click(dlg.getByRole('button', { name: 'Create voucher' }));
+    await waitFor(() => expect(createVoucher).toHaveBeenCalledWith(expect.objectContaining({ code: 'INGLES1', type: 'fixed', value: 15, active: true })));
+  });
+
+  it('erros_de_validacao_e_a_confirmacao_de_eliminar_aparecem_em_ingles', async () => {
+    const confirma = vi.spyOn(window, 'confirm').mockReturnValue(false);
+    await montar();
+    fireEvent.click(screen.getByRole('button', { name: 'Delete VERAO20' }));
+    expect(confirma).toHaveBeenCalledWith('Delete this voucher?');
+    fireEvent.click(screen.getAllByText('New voucher').find(e => e.closest('button')).closest('button'));
+    const dlg = within(screen.getByRole('dialog'));
+    fireEvent.change(dlg.getByLabelText('Code'), { target: { value: '   ' } });
+    fireEvent.submit(dlg.getByLabelText('Code').closest('form'));
+    expect(await screen.findByText('The code is required.')).toBeInTheDocument();
+  });
+
+  it('activar_desactivar_grava_o_campo_active_e_nao_um_texto', async () => {
+    updateVoucher.mockImplementation(async (id, p) => ({ ...VOUCHERS.find(v => v.id === id), ...p }));
+    await montar();
+    fireEvent.click(screen.getByRole('button', { name: 'Deactivate VERAO20' }));
+    await waitFor(() => expect(updateVoucher).toHaveBeenCalledWith('v1', { active: false }));
+    expect(screen.getByRole('button', { name: 'Activate INATIVO' })).toBeInTheDocument();
+  });
+
+  it('as_mensagens_para_o_cliente_ficam_iguais_com_o_painel_em_ingles_e_em_portugues', async () => {
+    const enviadas = async () => {
+      aberta.mockClear();
+      await montar();
+      fireEvent.click(within(linha('VERAO20')).getByRole('button', { name: /^(Share|Partilhar) VERAO20$/ }));
+      const dlg = within(screen.getByRole('dialog'));
+      const enviar = dlg.getAllByRole('button', { name: /^(Send|Enviar)$/ });
+      enviar.forEach(b => fireEvent.click(b));
+      const emails = dlg.getAllByRole('button', { name: /^Email (PT|EN)$/ });
+      emails.forEach(b => fireEvent.click(b));
+      return aberta.mock.calls.map(c => c[0]);
+    };
+    const emIngles = await enviadas();
+    cleanup();
+    useUiStore.setState({ lang: 'pt' });
+    const emPortugues = await enviadas();
+    expect(emIngles).toHaveLength(4);
+    expect(emIngles).toEqual(emPortugues);
+    expect(decodeURIComponent(emIngles[0])).toContain('Use o código *VERAO20* para obter 20% de desconto na sua próxima reserva.');
+    expect(decodeURIComponent(emIngles[1])).toContain('Use code *VERAO20* to get 20% off your next booking.');
+    expect(decodeURIComponent(emIngles[2])).toContain('subject=Voucher especial para si');
+    expect(decodeURIComponent(emIngles[3])).toContain('subject=Special voucher for you');
+  });
+
+  it('o_modal_de_partilha_tem_rotulos_ingleses', async () => {
+    await montar();
+    fireEvent.click(within(linha('VERAO20')).getByRole('button', { name: 'Share VERAO20' }));
+    const dlg = screen.getByRole('dialog');
+    expect(dlg).toHaveTextContent('Share — VERAO20');
+    expect(dlg).toHaveTextContent('20% off');
+    expect(within(dlg).getAllByRole('button', { name: 'Close' }).length).toBeGreaterThan(0);
+    expect(portuguesNoEcra(DADOS, dlg)).toEqual([]);
   });
 });

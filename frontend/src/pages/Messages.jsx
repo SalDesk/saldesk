@@ -9,7 +9,7 @@ import { listStaff } from '../services/staffService';
 import { listCustomers } from '../services/customersService';
 import api from '../services/api';
 import useAuthStore from '../store/authStore';
-import { useT } from '../i18n';
+import { useT, getT } from '../i18n';
 import PageHeader from '../components/layout/PageHeader';
 import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
@@ -17,10 +17,12 @@ import Modal from '../components/ui/Modal';
 import LoadingSpinner from '../components/shared/LoadingSpinner';
 import EmptyState from '../components/ui/EmptyState';
 import { ehDoOperador } from '../utils/mensagens';
+import { useLingua, linguaActual, localeDe } from '../utils/formatoLingua';
+import { rotuloCargo } from './staff/shared';
 
-function formatTime(d) {
+function formatTime(d, lang) {
   if (!d) return '';
-  return new Date(d).toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' });
+  return new Date(d).toLocaleTimeString(localeDe(lang), { hour: '2-digit', minute: '2-digit' });
 }
 
 /* Toque curto de notificacao -- gerado via Web Audio, sem precisar de
@@ -102,6 +104,7 @@ function ContactAvatar({ contact, online = false, size = 36 }) {
 }
 
 function ContactRow({ contact, isOnline, unread, isActive, onClick }) {
+  const t = useT();
   const hasUnread = unread > 0;
   return (
     <button
@@ -120,7 +123,7 @@ function ContactRow({ contact, isOnline, unread, isActive, onClick }) {
         </div>
         <p className={`text-xs font-body truncate mt-0.5 ${hasUnread ? 'font-bold text-n-700' : 'text-n-400'}`}>
           {contact.type === 'staff' && isOnline ? (
-            <span className="text-[var(--success)]">Online</span>
+            <span className="text-[var(--success)]">{t('messagesPage.online')}</span>
           ) : contact.sublabel}
         </p>
       </div>
@@ -147,6 +150,7 @@ async function registerPushNotifications() {
 
 export default function Messages() {
   const t = useT();
+  const lang = useLingua();
   const { token, operator } = useAuthStore();
 
   const [staff,           setStaff]           = useState([]);
@@ -229,7 +233,9 @@ export default function Messages() {
 
       if (!ehDoOperador(msg)) {
         playNotificationSound();
-        const origem = msg.group_id ? 'Nova mensagem num grupo' : msg.sender_type === 'guest' ? 'Nova mensagem de um visitante' : 'Nova mensagem de um colaborador';
+        /* dentro do socket a lingua le-se na hora: o texto do efeito ficaria preso a lingua do arranque */
+        const tAgora = getT(linguaActual());
+        const origem = msg.group_id ? tAgora('messagesPage.notif.group') : msg.sender_type === 'guest' ? tAgora('messagesPage.notif.guest') : tAgora('messagesPage.notif.staff');
         showDesktopNotification(origem, msg.content?.slice(0, 120) || '');
       }
 
@@ -308,8 +314,10 @@ export default function Messages() {
 
     setSending(true);
     try {
+      /* o marcador fica gravado na mensagem para quem a recebe: sempre em portugues */
+      const marcador = getT('pt')('messagesPage.attachmentMarker', { name: attachment?.name });
       const msgContent = attachment
-        ? (content ? `${content}\n[Anexo: ${attachment.name}]` : `[Anexo: ${attachment.name}]`)
+        ? (content ? `${content}\n${marcador}` : marcador)
         : content;
 
       const payload = {
@@ -349,10 +357,10 @@ export default function Messages() {
     e.target.value = '';
   }
 
-  const staffContacts = staff.map(s => ({ ...s, type: 'staff', label: s.name, sublabel: s.role }));
+  const staffContacts = staff.map(s => ({ ...s, type: 'staff', label: s.name, sublabel: rotuloCargo(s.role, t, lang) }));
   const otherContacts = [
-    ...groups.map(g    => ({ ...g, type: 'group', label: g.name, sublabel: `Grupo · ${(g.members || []).length} membros` })),
-    ...customers.map(c => ({ ...c, type: 'guest', label: c.name, sublabel: c.email || c.phone || 'Cliente' })),
+    ...groups.map(g    => ({ ...g, type: 'group', label: g.name, sublabel: t('messagesPage.groupSublabel', { n: (g.members || []).length }) })),
+    ...customers.map(c => ({ ...c, type: 'guest', label: c.name, sublabel: c.email || c.phone || t('messagesPage.customer') })),
   ];
 
   /* Ordem de chegada -- conversa com actividade mais recente primeiro.
@@ -378,10 +386,10 @@ export default function Messages() {
   return (
     <div>
       <PageHeader
-        title={`Mensagens${totalUnread > 0 ? ` (${totalUnread})` : ''}`}
+        title={`${t('messagesPage.title')}${totalUnread > 0 ? ` (${totalUnread})` : ''}`}
         actions={
           <Button variant="secondary" icon={Plus} onClick={() => setGroupModal(true)}>
-            Novo grupo
+            {t('messagesPage.newGroup')}
           </Button>
         }
       />
@@ -399,7 +407,7 @@ export default function Messages() {
                 type="text"
                 value={search}
                 onChange={e => setSearch(e.target.value)}
-                placeholder="Pesquisar..."
+                placeholder={`${t('common.search')}...`}
                 className="pl-8"
               />
             </div>
@@ -408,13 +416,13 @@ export default function Messages() {
           <div className="flex-1 overflow-y-auto">
             {filteredStaff.length === 0 && filteredOther.length === 0 ? (
               <p className="p-4 text-xs font-body text-n-400 text-center">
-                {search ? 'Sem resultados' : 'Sem colaboradores, grupos ou clientes'}
+                {search ? t('common.noResults') : t('messagesPage.emptyList')}
               </p>
             ) : (
               <>
                 {filteredStaff.length > 0 && (
                   <>
-                    <p className="px-3 pt-2.5 pb-1 text-xs font-body font-bold uppercase tracking-wide text-n-400">Colaboradores</p>
+                    <p className="px-3 pt-2.5 pb-1 text-xs font-body font-bold uppercase tracking-wide text-n-400">{t('messagesPage.staff')}</p>
                     {filteredStaff.map(c => (
                       <ContactRow
                         key={c.id}
@@ -429,7 +437,7 @@ export default function Messages() {
                 )}
                 {filteredOther.length > 0 && (
                   <>
-                    <p className="px-3 pt-2.5 pb-1 text-xs font-body font-bold uppercase tracking-wide text-n-400">Conversas</p>
+                    <p className="px-3 pt-2.5 pb-1 text-xs font-body font-bold uppercase tracking-wide text-n-400">{t('messagesPage.conversations')}</p>
                     {filteredOther.map(c => (
                       <ContactRow
                         key={c.id}
@@ -451,7 +459,7 @@ export default function Messages() {
         <div className={`flex-1 flex-col overflow-hidden ${showChat ? 'flex' : 'hidden md:flex'}`}>
           {!selectedContact ? (
             <div className="flex-1 flex items-center justify-center">
-              <EmptyState icon={MessageCircle} title="Seleccione uma conversa" />
+              <EmptyState icon={MessageCircle} title={t('messagesPage.selectConversation')} />
             </div>
           ) : (
             <>
@@ -471,7 +479,7 @@ export default function Messages() {
                 <div className="min-w-0 flex-1">
                   <p className="font-display font-semibold text-sm text-n-900 truncate">{selectedContact.label}</p>
                   {typingContacts.has(selectedContact.id) ? (
-                    <p className="text-xs font-body text-ocean-600 italic">está a escrever...</p>
+                    <p className="text-xs font-body text-ocean-600 italic">{t('messagesPage.typing')}</p>
                   ) : (
                     <p className="text-xs font-body text-n-400 truncate">{selectedContact.sublabel}</p>
                   )}
@@ -482,27 +490,27 @@ export default function Messages() {
                       type="button"
                       aria-pressed={guestChannel === 'internal'}
                       onClick={() => setGuestChannel('internal')}
-                      title="Conversa do chat do site"
+                      title={t('messagesPage.chatTitle')}
                       className={`flex items-center gap-1 px-2 py-1 rounded-xs text-xs font-body font-semibold transition-colors ${guestChannel === 'internal' ? 'bg-white text-ocean-700 shadow-sm' : 'text-n-500 hover:text-n-700'}`}
                     >
-                      <MessageCircle size={13} strokeWidth={1.75} /> Chat
+                      <MessageCircle size={13} strokeWidth={1.75} /> {t('messagesPage.chat')}
                     </button>
                     <button
                       type="button"
                       disabled={!selectedContact.email}
                       aria-pressed={guestChannel === 'email'}
                       onClick={() => setGuestChannel('email')}
-                      title={selectedContact.email || 'Sem email'}
+                      title={selectedContact.email || t('messagesPage.noEmail')}
                       className={`flex items-center gap-1 px-2 py-1 rounded-xs text-xs font-body font-semibold transition-colors disabled:opacity-30 disabled:cursor-not-allowed ${guestChannel === 'email' ? 'bg-white text-ocean-700 shadow-sm' : 'text-n-500 hover:text-n-700'}`}
                     >
-                      <Mail size={13} strokeWidth={1.75} /> Email
+                      <Mail size={13} strokeWidth={1.75} /> {t('messagesPage.email')}
                     </button>
                     <button
                       type="button"
                       disabled={!selectedContact.phone}
                       aria-pressed={guestChannel === 'whatsapp'}
                       onClick={() => setGuestChannel('whatsapp')}
-                      title={selectedContact.phone || 'Sem telefone'}
+                      title={selectedContact.phone || t('messagesPage.noPhone')}
                       className={`flex items-center gap-1 px-2 py-1 rounded-xs text-xs font-body font-semibold transition-colors disabled:opacity-30 disabled:cursor-not-allowed ${guestChannel === 'whatsapp' ? 'bg-white text-ocean-700 shadow-sm' : 'text-n-500 hover:text-n-700'}`}
                     >
                       <MessageSquare size={13} strokeWidth={1.75} /> WhatsApp
@@ -517,7 +525,7 @@ export default function Messages() {
                   <div className="flex justify-center py-8"><LoadingSpinner /></div>
                 ) : messages.length === 0 ? (
                   <div className="flex justify-center py-12">
-                    <p className="text-xs font-body text-n-400">Sem mensagens ainda. Comece a conversa.</p>
+                    <p className="text-xs font-body text-n-400">{t('messagesPage.noMessages')}</p>
                   </div>
                 ) : messages.map(msg => {
                   const isMe = ehDoOperador(msg);
@@ -528,19 +536,19 @@ export default function Messages() {
                           <p className="text-xs font-semibold mb-1 opacity-60 capitalize">{msg.sender_name || msg.sender_type}</p>
                         )}
                         {msg.sender_type === 'system' && (
-                          <p className="text-xs font-semibold mb-1 opacity-70">Resposta automática</p>
+                          <p className="text-xs font-semibold mb-1 opacity-70">{t('messagesPage.autoReply')}</p>
                         )}
                         <p className="leading-relaxed whitespace-pre-wrap break-words">{msg.content}</p>
                         {msg.channel && msg.channel !== 'internal' && (
                           <p className={`flex items-center gap-1 text-xs mt-1 ${msg.delivery_status === 'failed' ? 'text-[var(--error-light)]' : 'opacity-60'}`}>
                             {msg.channel === 'email' ? <Mail size={11} strokeWidth={1.75} /> : <MessageSquare size={11} strokeWidth={1.75} />}
                             {msg.delivery_status === 'failed' ? (
-                              <span className="flex items-center gap-1"><AlertTriangle size={11} strokeWidth={2} /> Falha ao entregar</span>
-                            ) : msg.channel === 'email' ? 'Enviado por email' : 'Enviado por WhatsApp'}
+                              <span className="flex items-center gap-1"><AlertTriangle size={11} strokeWidth={2} /> {t('messagesPage.deliveryFailed')}</span>
+                            ) : msg.channel === 'email' ? t('messagesPage.sentByEmail') : t('messagesPage.sentByWhatsapp')}
                           </p>
                         )}
                         <div className={`flex items-center justify-end gap-1 mt-1 ${isMe ? 'opacity-60' : ''}`}>
-                          <span className="text-xs">{formatTime(msg.created_at)}</span>
+                          <span className="text-xs">{formatTime(msg.created_at, lang)}</span>
                           {msg.sender_type === 'manager' && msg.channel === 'internal' && (
                             msg.is_read
                               ? <CheckCheck size={12} strokeWidth={2} className="text-sand-300" />
@@ -581,7 +589,7 @@ export default function Messages() {
                         type="button"
                         onClick={() => fileRef.current?.click()}
                         className="p-2 rounded-sm text-n-400 hover:text-ocean-700 hover:bg-ocean-50 transition-colors shrink-0"
-                        title="Anexar ficheiro"
+                        title={t('messagesPage.attachFile')}
                       >
                         <Paperclip size={16} strokeWidth={1.75} />
                       </button>
@@ -593,8 +601,8 @@ export default function Messages() {
                       onChange={handleTextChange}
                       placeholder={
                         selectedContact.type === 'guest' && guestChannel !== 'internal'
-                          ? `Escrever mensagem por ${guestChannel === 'email' ? 'email' : 'WhatsApp'}...`
-                          : 'Escrever mensagem...'
+                          ? t(guestChannel === 'email' ? 'messagesPage.writeByEmail' : 'messagesPage.writeByWhatsapp')
+                          : t('messagesPage.write')
                       }
                     />
                   </div>
@@ -608,7 +616,7 @@ export default function Messages() {
                     }
                     size="sm"
                   >
-                    Enviar
+                    {t('messagesPage.send')}
                   </Button>
                 </form>
               </div>
@@ -621,26 +629,26 @@ export default function Messages() {
       <Modal
         open={groupModal}
         onClose={() => setGroupModal(false)}
-        title="Novo grupo"
+        title={t('messagesPage.groupModal.title')}
         size="sm"
         footer={
           <>
-            <Button variant="secondary" onClick={() => setGroupModal(false)}>Cancelar</Button>
-            <Button form="group-form" type="submit">Criar grupo</Button>
+            <Button variant="secondary" onClick={() => setGroupModal(false)}>{t('common.cancel')}</Button>
+            <Button form="group-form" type="submit">{t('messagesPage.groupModal.create')}</Button>
           </>
         }
       >
         <form id="group-form" onSubmit={handleCreateGroup} className="space-y-4">
           <Input
-            label="Nome do grupo"
+            label={t('messagesPage.groupModal.name')}
             value={groupForm.name}
             onChange={e => setGroupForm({ ...groupForm, name: e.target.value })}
             required
-            placeholder="Ex: Equipa Kitesurf"
+            placeholder={t('messagesPage.groupModal.namePlaceholder')}
           />
           {staff.length > 0 && (
             <div>
-              <p className="text-xs font-body font-bold uppercase tracking-wide text-n-600 mb-2">Membros</p>
+              <p className="text-xs font-body font-bold uppercase tracking-wide text-n-600 mb-2">{t('messagesPage.groupModal.members')}</p>
               <div className="space-y-1.5 max-h-48 overflow-y-auto">
                 {staff.map(s => (
                   <label key={s.id} className="flex items-center gap-2.5 cursor-pointer py-0.5">
@@ -657,7 +665,7 @@ export default function Messages() {
                     />
                     <span className="text-sm font-body text-n-700">
                       {s.name}
-                      <span className="text-n-400"> · {s.role}</span>
+                      <span className="text-n-400"> · {rotuloCargo(s.role, t, lang)}</span>
                     </span>
                   </label>
                 ))}

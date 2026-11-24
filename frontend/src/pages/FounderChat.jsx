@@ -6,16 +6,21 @@ import LoadingSpinner from '../components/shared/LoadingSpinner';
 import Button from '../components/ui/Button';
 import EmptyState from '../components/ui/EmptyState';
 import { Textarea } from '../components/ui/Input';
+import { useT } from '../i18n';
+import { useLingua, localeDe } from '../utils/formatoLingua';
 
-function fmt(iso) {
+function fmt(iso, lang) {
   if (!iso) return '';
   const d = new Date(iso);
   const now = new Date();
-  if (d.toDateString() === now.toDateString()) return d.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' });
-  return d.toLocaleDateString('pt-PT', { day: '2-digit', month: '2-digit' }) + ' ' + d.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' });
+  const locale = localeDe(lang);
+  if (d.toDateString() === now.toDateString()) return d.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' });
+  return d.toLocaleDateString(locale, { day: '2-digit', month: '2-digit' }) + ' ' + d.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' });
 }
 
 export default function FounderChat() {
+  const t = useT();
+  const lang = useLingua();
   const [messages, setMessages] = useState([]);
   const [loading,  setLoading]  = useState(true);
   const [text,     setText]     = useState('');
@@ -58,7 +63,7 @@ export default function FounderChat() {
 
   return (
     <div>
-      <PageHeader title="Mensagens SalDesk" subtitle="Conversa directa com a equipa SalDesk" />
+      <PageHeader title={t('founderChat.title')} subtitle={t('founderChat.subtitle')} />
 
       <div className="bg-white rounded-md border border-n-200 flex flex-col h-[calc(100vh-220px)] min-h-[420px]">
         <div className="flex-1 overflow-y-auto p-4 space-y-3">
@@ -68,8 +73,8 @@ export default function FounderChat() {
           {!loading && messages.length === 0 && (
             <EmptyState
               icon={MessageSquare}
-              title="Sem mensagens ainda"
-              description="Escreve aqui se precisares de contactar a equipa SalDesk"
+              title={t('founderChat.emptyTitle')}
+              description={t('founderChat.emptyText')}
             />
           )}
           {messages.map(msg => (
@@ -81,7 +86,7 @@ export default function FounderChat() {
               }`}>
                 <p className="whitespace-pre-wrap">{msg.content}</p>
                 <p className={`text-xs mt-1 ${msg.sender_type === 'operator' ? 'text-ocean-200' : 'text-n-400'}`}>
-                  {fmt(msg.created_at)}
+                  {fmt(msg.created_at, lang)}
                 </p>
               </div>
             </div>
@@ -94,7 +99,7 @@ export default function FounderChat() {
             <div className="flex-1">
               <Textarea
                 rows={2}
-                placeholder="Escreve uma mensagem..."
+                placeholder={t('founderChat.placeholder')}
                 value={text}
                 onChange={e => setText(e.target.value)}
                 onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
@@ -102,7 +107,7 @@ export default function FounderChat() {
             </div>
             <Button
               icon={Send}
-              aria-label="Enviar"
+              aria-label={t('founderChat.send')}
               onClick={handleSend}
               disabled={!text.trim() || sending}
             />

@@ -4,6 +4,7 @@ import CustomerDetail from '../components/crm/CustomerDetail';
 import useUiStore from '../store/uiStore';
 import api from '../services/api';
 import { getCustomer, updateCustomer } from '../services/customersService';
+import { portuguesNoEcra, chavesCruas } from './helpers/portuguesNoEcra';
 
 /* Sem rede: so os servicos da gaveta sao simulados */
 vi.mock('../services/customersService', () => ({
@@ -268,5 +269,135 @@ describe('CustomerDetail', () => {
     expect(onClose).toHaveBeenCalledTimes(1);
     fireEvent.click(container.querySelector('.fixed > .absolute'));
     expect(onClose).toHaveBeenCalledTimes(2);
+  });
+});
+
+/* Painel em ingles: os rotulos mudam; as etiquetas gravadas e os textos para o cliente ficam como estavam */
+describe('CustomerDetail em ingles', () => {
+  /* nome, notas, etiqueta e unidade sao dados do cliente, nao texto do painel */
+  const DADOS = ['Ana Silva', 'Gosta de mar', 'Buggy Tour', 'Custom'];
+  let errSpy;
+  let warnSpy;
+  let onClose;
+  let onUpdate;
+
+  beforeEach(() => {
+    useUiStore.setState({ lang: 'en' });
+    errSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    getCustomer.mockReset().mockResolvedValue(ANA);
+    updateCustomer.mockReset().mockImplementation(async (id, dados) => ({ id, ...dados }));
+    api.post.mockReset().mockResolvedValue({});
+    onClose = vi.fn();
+    onUpdate = vi.fn();
+  });
+
+  afterEach(() => {
+    cleanup();
+    useUiStore.setState({ lang: 'pt' });
+    const erros = errSpy.mock.calls.length;
+    const avisos = warnSpy.mock.calls.length;
+    vi.restoreAllMocks();
+    expect(erros).toBe(0);
+    expect(avisos).toBe(0);
+  });
+
+  async function abreEn(cliente = ANA) {
+    getCustomer.mockResolvedValue(cliente);
+    render(<CustomerDetail customerId={cliente.id} onClose={onClose} onUpdate={onUpdate} />);
+    await screen.findByRole('heading', { name: cliente.name });
+  }
+  function seccao(nome) {
+    fireEvent.click(screen.getByText(nome));
+  }
+  function valorDe(rotulo) {
+    return screen.getAllByText(rotulo).find(e => e.tagName === 'SPAN').nextElementSibling.textContent;
+  }
+
+  it('o_perfil_em_ingles_traduz_metricas_contacto_etiquetas_e_notas_sem_portugues', async () => {
+    await abreEn();
+    expect(screen.getByText('Visits').previousElementSibling.textContent).toBe('3');
+    expect(screen.getByText('LTV').previousElementSibling.textContent).toBe('€620');
+    expect(screen.getByText('Country').previousElementSibling.textContent).toBe('CV');
+    expect(screen.getAllByRole('tab').map(t => t.textContent)).toEqual(['Profile', 'History', 'Communication']);
+    expect(screen.getByText('Contact')).toBeInTheDocument();
+    expect(valorDe('Phone')).toBe('+238 991 22 33');
+    expect(valorDe('Language')).toBe('PT');
+    expect(valorDe('Birthday')).toBe('17/05/1990');
+    expect(screen.getByText('Internal notes')).toBeInTheDocument();
+    expect(screen.getByPlaceholderText('New tag + Enter')).toBeInTheDocument();
+    ['VIP', 'group', 'corporate', 'loyal', 'new', 'returning'].forEach((etiqueta) => {
+      expect(screen.getByRole('button', { name: etiqueta })).toBeInTheDocument();
+    });
+    expect(portuguesNoEcra(DADOS)).toEqual([]);
+    expect(chavesCruas(['customerDetail', 'customersPage'])).toEqual([]);
+  });
+
+  it('alternar_uma_etiqueta_em_ingles_grava_o_valor_guardado', async () => {
+    await abreEn();
+    fireEvent.click(screen.getByRole('button', { name: 'group' }));
+    await waitFor(() => expect(updateCustomer).toHaveBeenCalledWith('c1', { tags: ['VIP', 'Custom', 'grupo'] }));
+  });
+
+  it('as_notas_em_ingles_mostram_editar_guardar_e_o_vazio', async () => {
+    await abreEn(SEM_DADOS);
+    expect(screen.getByText('No notes')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Edit' }));
+    expect(screen.getByRole('button', { name: 'Cancel' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Save' })).toBeInTheDocument();
+  });
+
+  it('o_historico_em_ingles_traduz_titulo_estado_data_e_valor', async () => {
+    await abreEn();
+    seccao('History');
+    expect(screen.getByText('History (2)')).toBeInTheDocument();
+    expect(screen.getByText('Confirmed')).toBeInTheDocument();
+    expect(screen.getAllByText('10/03/2026')).toHaveLength(1);
+    expect(screen.getByText('€55.00')).toBeInTheDocument();
+    expect(screen.getByText('€30.00')).toBeInTheDocument();
+    expect(portuguesNoEcra(DADOS)).toEqual([]);
+  });
+
+  it('o_historico_vazio_em_ingles', async () => {
+    await abreEn(SEM_DADOS);
+    seccao('History');
+    expect(screen.getByText('No bookings')).toBeInTheDocument();
+  });
+
+  it('a_comunicacao_em_ingles_traduz_o_formulario_e_envia_o_email_como_escrito', async () => {
+    await abreEn();
+    seccao('Communication');
+    expect(screen.getByText('Send Email')).toBeInTheDocument();
+    fireEvent.change(screen.getByPlaceholderText('Email subject'), { target: { value: 'Olá' } });
+    fireEvent.change(screen.getByPlaceholderText('Email body...'), { target: { value: 'Corpo' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Send email' }));
+    await screen.findByText('Email sent successfully');
+    expect(api.post).toHaveBeenCalledWith('/customers/c1/email', { subject: 'Olá', body: 'Corpo' });
+    expect(portuguesNoEcra(DADOS)).toEqual([]);
+  });
+
+  it('os_botoes_de_WhatsApp_em_ingles_levam_o_mesmo_texto_em_portugues_que_o_painel_em_portugues', async () => {
+    const abrir = vi.spyOn(window, 'open').mockImplementation(() => null);
+    await abreEn();
+    fireEvent.click(screen.getByRole('button', { name: 'WhatsApp' }));
+    expect(abrir).toHaveBeenCalledWith(
+      `https://wa.me/${NUMERO}?text=${encodeURIComponent('Olá Ana, obrigado pela sua preferência!')}`, '_blank',
+    );
+    seccao('Communication');
+    const textos = ['Booking confirmation', 'Tour reminder', 'Review request'].map((rotulo) => {
+      const href = screen.getByText(rotulo).closest('a').getAttribute('href');
+      return decodeURIComponent(href.split('?text=')[1]);
+    });
+    expect(textos).toEqual([
+      'Olá Ana! A sua reserva foi confirmada. Aguardamos a sua visita!',
+      'Olá! Lembrete do seu tour amanhã. Não se esqueça de trazer protector solar e água.',
+      'Obrigado pela sua visita! Pode deixar a sua avaliação em: https://app.saldesk.cv',
+    ]);
+  });
+
+  it('sem_numero_de_WhatsApp_em_ingles_mostra_o_aviso_traduzido', async () => {
+    await abreEn(SEM_DADOS);
+    seccao('Communication');
+    expect(screen.getByText('No WhatsApp number on file')).toBeInTheDocument();
   });
 });

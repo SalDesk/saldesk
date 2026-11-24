@@ -1,27 +1,26 @@
 import { useState, useEffect, useCallback } from 'react';
 import { MessageCircle } from 'lucide-react';
 import { listOutbox, markMessageOpened } from '../../services/messagingService';
+import { useT } from '../../i18n';
+import { formatarData } from '../../utils/formatoLingua';
 
 /* Mensagens de WhatsApp preparadas (pelas automacoes) que ainda ninguem abriu.
    Com o wa.me quem envia e uma pessoa: aqui toca-se no botao e o WhatsApp abre com o texto pronto.
    Desaparece sozinho quando nao ha nada por enviar. */
 
-const ROTULO = {
-  booking_confirmed: 'Confirmação',
-  reminder_d1: 'Lembrete',
-  review_request: 'Avaliação',
-  automation: 'Automação',
-};
+/* Gatilhos conhecidos; o rotulo vem de whatsappMessages.pending.triggers */
+const GATILHOS = ['booking_confirmed', 'reminder_d1', 'review_request', 'automation'];
 
 const MAX_VISIVEIS = 5;
 
-function formatarData(d) {
+/* Data AAAA-MM-DD na lingua do painel (em pt: dd/mm/aaaa); outro formato mostra-se como veio */
+function dataLegivel(d) {
   if (!d) return '';
-  const [y, m, dia] = String(d).split('-');
-  return y && m && dia ? `${dia}/${m}/${y}` : d;
+  return /^\d{4}-\d{2}-\d{2}$/.test(String(d)) ? formatarData(String(d)) : d;
 }
 
 export default function WhatsAppPendentes() {
+  const t = useT();
   const [linhas, setLinhas] = useState([]);
 
   const carregar = useCallback(() => {
@@ -47,7 +46,7 @@ export default function WhatsAppPendentes() {
       <div className="flex items-center gap-2 mb-3">
         <MessageCircle size={16} strokeWidth={1.75} className="text-turquoise-600" />
         <h3 className="font-display font-bold text-sm text-n-900">
-          WhatsApp por enviar <span className="text-n-400 font-body font-semibold">({linhas.length})</span>
+          {t('whatsappMessages.pending.title')} <span className="text-n-400 font-body font-semibold">({linhas.length})</span>
         </h3>
       </div>
       <ul className="divide-y divide-n-100">
@@ -58,9 +57,9 @@ export default function WhatsAppPendentes() {
                 {l.display?.customerName || l.to_e164}
               </p>
               <p className="text-xs font-body text-n-500 truncate">
-                {ROTULO[l.trigger] || 'Mensagem'}
+                {GATILHOS.includes(l.trigger) ? t(`whatsappMessages.pending.triggers.${l.trigger}`) : t('whatsappMessages.pending.message')}
                 {l.display?.tourName ? ` · ${l.display.tourName}` : ''}
-                {l.display?.date ? ` · ${formatarData(l.display.date)}` : ''}
+                {l.display?.date ? ` · ${dataLegivel(l.display.date)}` : ''}
               </p>
             </div>
             <button
@@ -68,13 +67,13 @@ export default function WhatsAppPendentes() {
               onClick={() => abrir(l)}
               className="shrink-0 h-8 px-3 rounded-xl bg-turquoise-600 hover:bg-turquoise-700 text-white text-xs font-body font-semibold transition-colors"
             >
-              Abrir WhatsApp
+              {t('whatsappMessages.pending.open')}
             </button>
           </li>
         ))}
       </ul>
       {linhas.length > MAX_VISIVEIS && (
-        <p className="text-xs font-body text-n-500 mt-2">+ {linhas.length - MAX_VISIVEIS} mensagem(ns) por enviar</p>
+        <p className="text-xs font-body text-n-500 mt-2">{t('whatsappMessages.pending.more', { n: linhas.length - MAX_VISIVEIS })}</p>
       )}
     </div>
   );

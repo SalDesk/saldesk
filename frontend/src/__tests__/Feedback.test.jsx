@@ -6,6 +6,8 @@ import api from '../services/api';
 import { listReservations } from '../services/reservationsService';
 
 /* Sem rede: so o cliente HTTP e as reservas sao simulados */
+import useUiStore from '../store/uiStore';
+import { portuguesNoEcra, chavesCruas } from './helpers/portuguesNoEcra';
 vi.mock('../services/api', () => ({ default: { get: vi.fn(), post: vi.fn(), put: vi.fn() } }));
 vi.mock('../services/reservationsService', () => ({ listReservations: vi.fn() }));
 
@@ -296,5 +298,113 @@ describe('Feedback', () => {
     await abre();
     expect(kpi('Tours realizados')).toBe('0');
     expect(kpi('Média geral')).toBe('—');
+  });
+});
+
+/* ───────────────────────── painel em ingles ───────────────────────── */
+
+describe('Feedback: painel em inglês', () => {
+  let errSpy;
+  let warnSpy;
+  /* dados dos testes e textos escritos ao cliente: nao contam como portugues do painel */
+  const DADOS = ['Cliente a', 'Rui Direto', 'Buggy Tour', 'Mergulho', 'Kitesurf', 'Olá {nome_cliente}', 'Como correu', 'Maria Santos'];
+
+  beforeEach(() => {
+    errSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    useUiStore.setState({ lang: 'en' });
+    listReservations.mockReset().mockResolvedValue(RESERVAS);
+    api.post.mockReset().mockResolvedValue({});
+    api.put.mockReset().mockResolvedValue({});
+    api.get.mockReset().mockImplementation(async (url) => {
+      if (url === '/reviews') return { data: { data: AVALIACOES } };
+      if (url === '/reviews/template') return { data: { data: null } };
+      if (url === '/reviews/settings') return { data: { data: { review_auto_request: true } } };
+      throw new Error(`pedido inesperado: ${url}`);
+    });
+  });
+
+  afterEach(() => {
+    cleanup();
+    useUiStore.setState({ lang: 'pt' });
+    const erros = errSpy.mock.calls.length;
+    const avisos = warnSpy.mock.calls.length;
+    errSpy.mockRestore();
+    warnSpy.mockRestore();
+    expect(erros).toBe(0);
+    expect(avisos).toBe(0);
+  });
+
+  async function abreEn() {
+    render(
+      <MemoryRouter future={FUTURE}>
+        <Feedback />
+      </MemoryRouter>
+    );
+    await screen.findByText('Tours completed');
+    await waitFor(() => expect(document.querySelector('.animate-spin')).toBeNull());
+  }
+
+  function separador(texto) {
+    fireEvent.click(screen.getByText(texto));
+  }
+  function linhas() {
+    return within(screen.getByRole('table')).getAllByRole('row').slice(1);
+  }
+  function campo(etiqueta) {
+    const label = screen.getAllByText(etiqueta).find(e => e.tagName === 'LABEL');
+    expect(label).toBeTruthy();
+    return label.nextElementSibling;
+  }
+
+  it('mostra_titulo_kpis_e_tours_em_ingles_com_a_media_e_sem_portugues', async () => {
+    await abreEn();
+    expect(screen.getByText('Post-Tour Feedback')).toBeInTheDocument();
+    expect(screen.getByText('Overall average').previousElementSibling.textContent).toBe('4.5 / 5');
+    expect(screen.getByText('Response rate').previousElementSibling.textContent).toBe('18%');
+    expect(screen.getAllByText('response rate')).toHaveLength(3);
+    expect(screen.getAllByText('tours completed')).toHaveLength(3);
+    expect(screen.getByRole('button', { name: 'Refresh' })).toBeInTheDocument();
+    expect(portuguesNoEcra(DADOS)).toEqual([]);
+    expect(chavesCruas(['feedbackPage'])).toEqual([]);
+  });
+
+  it('a_lista_de_pendentes_em_ingles_traduz_colunas_botao_e_data', async () => {
+    await abreEn();
+    fireEvent.click(screen.getByText('Pending (9)'));
+    expect(screen.getByText('9 booking(s) without a review request sent.')).toBeInTheDocument();
+    const cabecalhos = within(screen.getByRole('table')).getAllByRole('columnheader').map(h => h.textContent);
+    expect(cabecalhos).toEqual(['Customer', 'Tour', 'Checkout', 'Days since checkout', '']);
+    expect(screen.getAllByRole('button', { name: 'Resend request' })).toHaveLength(9);
+    /* a data usa o formato ingles: "dd Mon yyyy" */
+    expect(within(linhas()[0]).getByText(/^\d{2} [A-Z][a-z]{2} \d{4}$/)).toBeInTheDocument();
+    expect(portuguesNoEcra(DADOS)).toEqual([]);
+  });
+
+  it('o_separador_Template_em_ingles_traduz_as_etiquetas_e_grava_o_modelo_do_cliente_em_portugues', async () => {
+    await abreEn();
+    separador('Template');
+    expect(screen.getByText('Request a review automatically the next day')).toBeInTheDocument();
+    expect(screen.getByText('Review request template')).toBeInTheDocument();
+    expect(screen.getByTitle('Direct link to the review')).toBeInTheDocument();
+    expect(campo('Subject PT').value).toBe('Como correu? Deixe a sua avaliação');
+    expect(campo('Body PT').value).toMatch(/^Olá \{nome_cliente\},/);
+    expect(campo('Body EN').value).toMatch(/^Hello \{nome_cliente\},/);
+    fireEvent.click(screen.getByRole('button', { name: 'Save template' }));
+    await screen.findByRole('button', { name: 'Saved' });
+    expect(api.put).toHaveBeenCalledWith('/reviews/template', expect.objectContaining({
+      subject_pt: 'Como correu? Deixe a sua avaliação',
+      body_pt: expect.stringMatching(/^Olá \{nome_cliente\},/),
+    }));
+    expect(portuguesNoEcra(DADOS)).toEqual([]);
+    expect(chavesCruas(['feedbackPage'])).toEqual([]);
+  });
+
+  it('o_erro_do_interruptor_automatico_aparece_em_ingles', async () => {
+    await abreEn();
+    separador('Template');
+    api.put.mockRejectedValueOnce(new Error('rede'));
+    fireEvent.click(screen.getByRole('switch'));
+    expect(await screen.findByRole('alert')).toHaveTextContent('Could not save. Please try again.');
   });
 });

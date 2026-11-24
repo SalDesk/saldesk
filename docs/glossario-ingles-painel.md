@@ -77,6 +77,24 @@ estes, em singular e plural, em todos os ecras; nao alternar com sinonimos. O po
 | Mesa / Zona | Table / Zone | Mesa de restaurante e a zona onde fica; as zonas gravadas (interior, esplanada, terraco, vip, privado) mostram-se "Indoor", "Outdoor seating", "Terrace", "VIP", "Private". |
 | Epoca | Season | Preco do quarto por epoca ("Low season", "Mid season", "High season", "Peak"). |
 | Motorista | Chauffeur | Condutor incluido na reserva de um Executivo ("Chauffeur rate (per day)"). |
+| Avaliacao / Avaliacoes | Review / Reviews | Opiniao e nota de um cliente depois da actividade ou estadia (menu "Reviews", "Review request"); nao usar "Rating" para o texto todo. |
+| Historico de envios | Sending history | Registo das mensagens enviadas pelas automacoes ("Sending history"); os modelos de mensagem ao cliente ficam em portugues e ingles. |
+| Gestor | Manager | O dono ou responsavel do operador nos chats ("Manager", "Management"); nao usar "Owner". |
+| Pedido (restaurante) | Order | Pedido de uma mesa ao restaurante (menu "Orders"); os estados gravados received, preparing, ready, delivered, cancelled mostram-se "Received", "Preparing", "Ready", "Delivered", "Cancelled". |
+| Preco acordado | Agreed price | Preco negociado com um cliente na sua ficha ("Agreed price"). |
+| Etiqueta (cliente) | Tag | Marca livre de um cliente; as etiquetas gravadas (VIP, grupo, corporativo, fidelizado, novo, recorrente...) mostram-se "VIP", "group", "corporate", "loyal", "new", "returning". |
+| Fidelidade | Loyalty | O programa de pontos do operador ("Loyalty programme"); os niveis gravados Bronze, Prata e Ouro mostram-se "Bronze", "Silver" e "Gold". |
+| Recompensa | Reward | O que o cliente ganha em cada nivel ou ao trocar pontos ("Reward description"). |
+| Nivel (fidelidade) | Tier | Escalao do programa de fidelidade ("Tier", "Redeem Gold tier"); nao usar "Level". |
+| Pacote / Pacotes | Package / Packages | Varios tours vendidos juntos a preco especial ("Seasonal packages"); os estados gravados activo, inactivo, esgotado mostram-se "Active", "Inactive", "Sold out". |
+| Grupo / Cotacao | Group booking / Quote | Pedido de um grupo ou empresa ("Group bookings and corporate events"); a cotacao e o "Quote" e o sinal e o "Deposit"; os estados gravados pedido, em_analise, proposta_enviada, confirmado, concluido, cancelado mostram-se "Request", "Under review", "Proposal sent", "Confirmed", "Completed", "Cancelled". |
+| Parceiro / Parceria | Partner / Partnership | Operador ou empresa com quem se troca clientes ("Cross-selling partnerships"); tipos gravados hotel, activity, rentacar, restaurant e parcerias recommendation, commission, discount. |
+| Indicacao / Indicacoes | Referral / Referrals | Negocio que o operador indica a SalDesk (separador Marketing); os estados gravados novo, contactado, demo_agendada, proposta_enviada, convertido, descartado mostram-se "New", "Contacted", "Demo scheduled", "Proposal sent", "Converted", "Discarded". |
+| Post (redes sociais) | Post | Publicacao agendada do planeador de marketing; os estados gravados agendado, publicado, cancelado mostram-se "Scheduled", "Published", "Cancelled"; as redes (Instagram, Facebook) sao marcas e nao se traduzem. |
+| Portal do afiliado | Affiliate portal | Pagina publica /afiliado/:codigo onde o afiliado ve as suas comissoes; segue o idioma do browser e tem o seletor de idioma. |
+| Menu digital / Prato | Digital menu / Dish | O ecra do menu do restaurante; as categorias gravadas (entradas, pratos_principais, sobremesas, bebidas, outros) mostram-se "Starters", "Main Courses", "Desserts", "Drinks", "Other". |
+| Menu de degustacao | Tasting menu | Menu fechado com varios pratos a preco por pessoa. |
+| Editor da pagina publica | Public page editor | Ecra onde o operador activa e ordena as seccoes da pagina de reservas ("Highlights", "About Us", "How It Works"); o texto escrito pelo operador nao se traduz. |
 
 ## Regras
 
@@ -86,3 +104,7 @@ estes, em singular e plural, em todos os ecras; nao alternar com sinonimos. O po
 - Valores guardados ou comparados no codigo (estados, categorias, cargos, metodos de pagamento) ficam em
   portugues; so o rotulo mostrado passa pela traducao.
 - Alemao e holandes seguem os mesmos conceitos (Buchung / Boeking, Einheit / Eenheid, Kunde / Klant...).
+
+## Cobertura
+
+O painel do operador esta todo coberto: o teste de guarda (frontend/src/__tests__/painelSemPortuguesFixo.test.js) examina todos os ficheiros .js/.jsx de frontend/src, e um ficheiro novo do painel e apanhado sem ser acrescentado a nenhuma lista. As excepcoes (painel do fundador, paginas publicas e do viajante com os seus auxiliares, components/ui/, i18n/ e main.jsx) estao em EXCLUIDOS nesse teste, cada uma com o motivo.

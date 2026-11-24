@@ -3,6 +3,8 @@ import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-libra
 import { MemoryRouter } from 'react-router-dom';
 import FounderChat from '../pages/FounderChat';
 import { getFounderConversation, sendFounderMessage } from '../services/founderChatService';
+import useUiStore from '../store/uiStore';
+import { portuguesNoEcra, chavesCruas } from './helpers/portuguesNoEcra';
 
 /* Sem rede: so os servicos da pagina sao simulados */
 vi.mock('../services/founderChatService', () => ({
@@ -137,5 +139,71 @@ describe('FounderChat', () => {
     getFounderConversation.mockRejectedValue(new Error('rede'));
     renderPagina();
     expect(await screen.findByText('Sem mensagens ainda')).toBeInTheDocument();
+  });
+});
+
+/* Painel em ingles: os rotulos mudam; o que as pessoas escreveram aparece como foi escrito */
+describe('FounderChat em ingles', () => {
+  const DADOS = ['Ola equipa', 'Em que podemos ajudar?'];
+  let errSpy;
+  let warnSpy;
+
+  beforeEach(() => {
+    useUiStore.setState({ lang: 'en' });
+    errSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    Element.prototype.scrollIntoView = vi.fn();
+    getFounderConversation.mockReset().mockResolvedValue(MENSAGENS);
+    sendFounderMessage.mockReset().mockImplementation(async (texto) => ({ id: `n-${texto}`, sender_type: 'operator', content: texto, created_at: new Date().toISOString() }));
+  });
+
+  afterEach(() => {
+    cleanup();
+    useUiStore.setState({ lang: 'pt' });
+    const erros = errSpy.mock.calls.length;
+    const avisos = warnSpy.mock.calls.length;
+    errSpy.mockRestore();
+    warnSpy.mockRestore();
+    expect(erros).toBe(0);
+    expect(avisos).toBe(0);
+  });
+
+  function renderEn() {
+    return render(
+      <MemoryRouter future={FUTURE}>
+        <FounderChat />
+      </MemoryRouter>
+    );
+  }
+
+  it('mostra_titulo_subtitulo_placeholder_e_botao_em_ingles_sem_portugues', async () => {
+    renderEn();
+    await screen.findByText('Ola equipa');
+    expect(screen.getByRole('heading', { name: 'SalDesk messages' })).toBeInTheDocument();
+    expect(screen.getByText('Direct conversation with the SalDesk team')).toBeInTheDocument();
+    expect(screen.getByPlaceholderText('Write a message...')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Send' })).toBeInTheDocument();
+    /* a hora de hoje usa o formato ingles (24 h, dois pontos) */
+    const hora = new Date(MENSAGENS[0].created_at).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+    expect(screen.getAllByText(hora).length).toBeGreaterThan(0);
+    expect(portuguesNoEcra(DADOS)).toEqual([]);
+    expect(chavesCruas(['founderChat'])).toEqual([]);
+  });
+
+  it('sem_mensagens_em_ingles_mostra_o_vazio_traduzido', async () => {
+    getFounderConversation.mockResolvedValue([]);
+    renderEn();
+    expect(await screen.findByText('No messages yet')).toBeInTheDocument();
+    expect(screen.getByText('Write here if you need to contact the SalDesk team')).toBeInTheDocument();
+    expect(portuguesNoEcra()).toEqual([]);
+  });
+
+  it('enviar_em_ingles_manda_o_texto_tal_como_foi_escrito', async () => {
+    renderEn();
+    await screen.findByText('Ola equipa');
+    fireEvent.change(screen.getByPlaceholderText('Write a message...'), { target: { value: '  Preciso de ajuda  ' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Send' }));
+    await waitFor(() => expect(sendFounderMessage).toHaveBeenCalledWith('Preciso de ajuda'));
+    expect(await screen.findByText('Preciso de ajuda')).toBeInTheDocument();
   });
 });

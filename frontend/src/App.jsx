@@ -5,6 +5,7 @@ import Layout from './components/layout/Layout';
 import PlanGuard from './components/PlanGuard';
 import { isVendedor, isStaff, isFounder } from './utils/userRoles';
 import TravelerProtectedRoute from './components/traveler/TravelerProtectedRoute';
+import { useT } from './i18n';
 
 // Eager — critical path, must load instantly
 import Login from './pages/Login';
@@ -83,7 +84,8 @@ const AdminAnalytics       = lazy(() => import('./pages/admin/AdminAnalytics'));
 const AdminImpact          = lazy(() => import('./pages/admin/AdminImpact'));
 const AdminSystem     = lazy(() => import('./pages/admin/AdminSystem'));
 
-function AppLoader() {
+export function AppLoader() {
+  const t = useT();
   return (
     <div className="min-h-screen flex flex-col items-center justify-center gap-8 bg-ocean-900">
       <div className="splash-mark flex flex-col items-center">
@@ -93,7 +95,7 @@ function AppLoader() {
         </div>
         <span className="font-display font-extrabold text-4xl leading-none tracking-tight text-white -mt-1">DESK</span>
       </div>
-      <div className="splash-beat flex items-center gap-1.5" role="status" aria-label="A carregar">
+      <div className="splash-beat flex items-center gap-1.5" role="status" aria-label={t('common.loadingShort')}>
         <span className="w-1.5 h-1.5 rounded-full bg-sand-400" />
         <span className="w-1.5 h-1.5 rounded-full bg-sand-400" />
         <span className="w-1.5 h-1.5 rounded-full bg-sand-400" />

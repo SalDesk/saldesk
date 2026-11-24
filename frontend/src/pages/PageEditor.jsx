@@ -13,6 +13,7 @@ import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
 import Toggle from '../components/ui/Toggle';
+import { useT } from '../i18n';
 
 const DEFAULT_SECTIONS = [
   { key: 'featured',           enabled: true },
@@ -31,36 +32,43 @@ const DEFAULT_SECTIONS = [
   { key: 'instagram',          enabled: false },
 ];
 
-const SECTION_META = {
-  featured:           { label: 'Destaques',                 icon: Star },
-  services:           { label: 'Serviços',                  icon: Grid3x3 },
-  about:              { label: 'Sobre Nós',                 icon: Info },
-  timeline:           { label: 'Como Funciona',             icon: Clock3 },
-  gallery:            { label: 'Galeria',                   icon: ImageIcon },
-  reviews:            { label: 'Avaliações',                icon: BarChart3 },
-  comparison:         { label: 'Comparação de Serviços',    icon: Layers },
-  availability:       { label: 'Disponibilidade ao Vivo',    icon: CalendarCheck },
-  contact:            { label: 'Localização & Contacto',     icon: MapPinned },
-  faq:                { label: 'Perguntas Frequentes',       icon: HelpCircle },
-  partners:           { label: 'Parceiros',                  icon: Handshake },
-  video_testimonials: { label: 'Testemunhos em Vídeo',       icon: Video },
-  google_reviews:     { label: 'Avaliações Google',          icon: GoogleIcon },
-  instagram:          { label: 'Instagram',                  icon: Globe },
+/* Icone de cada seccao; o rotulo vem de pageEditor.sections.<chave> */
+const SECTION_ICON = {
+  featured: Star,
+  services: Grid3x3,
+  about: Info,
+  timeline: Clock3,
+  gallery: ImageIcon,
+  reviews: BarChart3,
+  comparison: Layers,
+  availability: CalendarCheck,
+  contact: MapPinned,
+  faq: HelpCircle,
+  partners: Handshake,
+  video_testimonials: Video,
+  google_reviews: GoogleIcon,
+  instagram: Globe,
 };
 
+/* Rotulo e icone de uma seccao; uma chave desconhecida mostra a propria chave */
+function metaSeccao(key, t) {
+  return SECTION_ICON[key]
+    ? { label: t(`pageEditor.sections.${key}`), icon: SECTION_ICON[key] }
+    : { label: key, icon: Layers };
+}
+
+/* Os valores gravados no horario sao as chaves; o rotulo vem de pageEditor.days.<chave> */
 const WEEK_DAYS = [
-  { key: 'seg', label: 'Segunda' }, { key: 'ter', label: 'Terça' },
-  { key: 'qua', label: 'Quarta' },  { key: 'qui', label: 'Quinta' },
-  { key: 'sex', label: 'Sexta' },   { key: 'sab', label: 'Sábado' },
-  { key: 'dom', label: 'Domingo' },
+  { key: 'seg' }, { key: 'ter' }, { key: 'qua' }, { key: 'qui' }, { key: 'sex' }, { key: 'sab' }, { key: 'dom' },
 ];
 const SPOKEN_LANGS = ['PT', 'EN', 'FR', 'ES', 'DE', 'NL', 'IT'];
 
 function SaveBanner({ saved }) {
+  const t = useT();
   if (!saved) return null;
   return (
     <div role="status" className="flex items-center gap-2 text-sm font-body text-[var(--success)] bg-[var(--success-light)] border border-n-200 rounded px-3 py-2">
-      Guardado com sucesso
+      {t('pageEditor.saved')}
     </div>
   );
 }
@@ -73,6 +81,7 @@ function move(list, idx, dir) {
 }
 
 export default function PageEditor() {
+  const t = useT();
   const { operator, setOperator } = useAuthStore();
   const cfg = operator?.page_config || {};
 
@@ -153,11 +162,11 @@ export default function PageEditor() {
   return (
     <div>
       <PageHeader
-        title="Editor da Página Pública"
-        subtitle="Activa, desactiva e reordena as secções da tua página de reservas. Adiciona parceiros, testemunhos e redes sociais."
+        title={t('pageEditor.title')}
+        subtitle={t('pageEditor.subtitle')}
         actions={previewUrl && (
           <a href={previewUrl} target="_blank" rel="noopener noreferrer">
-            <Button variant="secondary" icon={Eye} size="sm">Ver a minha página</Button>
+            <Button variant="secondary" icon={Eye} size="sm">{t('pageEditor.viewMyPage')}</Button>
           </a>
         )}
       />
@@ -167,22 +176,22 @@ export default function PageEditor() {
         <div className="lg:col-span-2 space-y-5">
 
           {/* Secções */}
-          <Card header={<h3 className="font-display font-semibold text-sm text-n-700">Secções da página</h3>}>
+          <Card header={<h3 className="font-display font-semibold text-sm text-n-700">{t('pageEditor.sectionsTitle')}</h3>}>
             <p className="text-xs font-body text-n-400 mb-3">
-              Usa as setas para reordenar. Desliga secções que não queres mostrar.
+              {t('pageEditor.sectionsHint')}
             </p>
             <div className="space-y-1">
               {sections.map((s, i) => {
-                const meta = SECTION_META[s.key] || { label: s.key, icon: Layers };
+                const meta = metaSeccao(s.key, t);
                 const Icon = meta.icon;
                 return (
                   <div key={s.key} className="flex items-center gap-3 py-2 border-b border-n-100 last:border-0">
                     <div className="flex flex-col shrink-0">
-                      <button type="button" aria-label={`Mover ${meta.label} para cima`} onClick={() => moveSection(i, -1)} disabled={i === 0}
+                      <button type="button" aria-label={t('pageEditor.moveSectionUp', { label: meta.label })} onClick={() => moveSection(i, -1)} disabled={i === 0}
                         className="w-5 h-4 flex items-center justify-center text-n-400 disabled:opacity-20 hover:text-ocean-700">
                         <ChevronUp size={12} strokeWidth={2} />
                       </button>
-                      <button type="button" aria-label={`Mover ${meta.label} para baixo`} onClick={() => moveSection(i, 1)} disabled={i === sections.length - 1}
+                      <button type="button" aria-label={t('pageEditor.moveSectionDown', { label: meta.label })} onClick={() => moveSection(i, 1)} disabled={i === sections.length - 1}
                         className="w-5 h-4 flex items-center justify-center text-n-400 disabled:opacity-20 hover:text-ocean-700">
                         <ChevronDown size={12} strokeWidth={2} />
                       </button>
@@ -191,7 +200,7 @@ export default function PageEditor() {
                       <Icon size={15} strokeWidth={1.75} />
                     </div>
                     <p className="text-sm font-display font-semibold text-n-800 flex-1">{meta.label}</p>
-                    <Toggle checked={s.enabled} onChange={() => toggleSection(s.key)} aria-label={`Mostrar ${meta.label}`} />
+                    <Toggle checked={s.enabled} onChange={() => toggleSection(s.key)} aria-label={t('pageEditor.showSection', { label: meta.label })} />
                   </div>
                 );
               })}
@@ -199,115 +208,115 @@ export default function PageEditor() {
           </Card>
 
           {/* Parceiros */}
-          <Card header={<h3 className="font-display font-semibold text-sm text-n-700">Parceiros</h3>}>
+          <Card header={<h3 className="font-display font-semibold text-sm text-n-700">{t('pageEditor.partnersTitle')}</h3>}>
             <div className="space-y-3">
               {partners.map((p, i) => (
                 <div key={i} className="border border-n-200 rounded-md p-3 space-y-2">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-body font-bold uppercase tracking-wide text-n-500">Parceiro {i + 1}</span>
+                    <span className="text-xs font-body font-bold uppercase tracking-wide text-n-500">{t('pageEditor.partnerN', { n: i + 1 })}</span>
                     <div className="flex gap-1">
-                      <button type="button" aria-label={`Mover parceiro ${i + 1} para cima`} onClick={() => moveItem(setPartners, i, -1)} disabled={i === 0}
+                      <button type="button" aria-label={t('pageEditor.movePartnerUp', { n: i + 1 })} onClick={() => moveItem(setPartners, i, -1)} disabled={i === 0}
                         className="w-6 h-6 flex items-center justify-center rounded bg-n-100 text-n-500 disabled:opacity-30">
                         <ChevronUp size={12} strokeWidth={2} />
                       </button>
-                      <button type="button" aria-label={`Mover parceiro ${i + 1} para baixo`} onClick={() => moveItem(setPartners, i, 1)} disabled={i === partners.length - 1}
+                      <button type="button" aria-label={t('pageEditor.movePartnerDown', { n: i + 1 })} onClick={() => moveItem(setPartners, i, 1)} disabled={i === partners.length - 1}
                         className="w-6 h-6 flex items-center justify-center rounded bg-n-100 text-n-500 disabled:opacity-30">
                         <ChevronDown size={12} strokeWidth={2} />
                       </button>
-                      <button type="button" aria-label={`Remover parceiro ${i + 1}`} onClick={() => removeItem(setPartners, i)}
+                      <button type="button" aria-label={t('pageEditor.removePartner', { n: i + 1 })} onClick={() => removeItem(setPartners, i)}
                         className="w-6 h-6 flex items-center justify-center rounded bg-[var(--error-light)] text-[var(--error)]">
                         <X size={12} strokeWidth={2} />
                       </button>
                     </div>
                   </div>
-                  <Input label="Nome" aria-label={`Nome do parceiro ${i + 1}`} value={p.name || ''} onChange={e => updateItem(setPartners, i, 'name', e.target.value)} />
-                  <Input label="URL do logótipo" aria-label={`URL do logótipo do parceiro ${i + 1}`} value={p.logo_url || ''} onChange={e => updateItem(setPartners, i, 'logo_url', e.target.value)} placeholder="https://..." />
-                  <Input label="Link (opcional)" aria-label={`Link do parceiro ${i + 1}`} value={p.url || ''} onChange={e => updateItem(setPartners, i, 'url', e.target.value)} placeholder="https://..." />
+                  <Input label={t('pageEditor.name')} aria-label={t('pageEditor.partnerNameAria', { n: i + 1 })} value={p.name || ''} onChange={e => updateItem(setPartners, i, 'name', e.target.value)} />
+                  <Input label={t('pageEditor.logoUrl')} aria-label={t('pageEditor.partnerLogoAria', { n: i + 1 })} value={p.logo_url || ''} onChange={e => updateItem(setPartners, i, 'logo_url', e.target.value)} placeholder="https://..." />
+                  <Input label={t('pageEditor.link')} aria-label={t('pageEditor.partnerLinkAria', { n: i + 1 })} value={p.url || ''} onChange={e => updateItem(setPartners, i, 'url', e.target.value)} placeholder="https://..." />
                 </div>
               ))}
               <Button type="button" variant="secondary" icon={Plus} size="sm"
                 onClick={() => addItem(setPartners, { name: '', logo_url: '', url: '' })}>
-                Adicionar parceiro
+                {t('pageEditor.addPartner')}
               </Button>
             </div>
           </Card>
 
           {/* Testemunhos em vídeo */}
-          <Card header={<h3 className="font-display font-semibold text-sm text-n-700">Testemunhos em vídeo</h3>}>
+          <Card header={<h3 className="font-display font-semibold text-sm text-n-700">{t('pageEditor.videosTitle')}</h3>}>
             <div className="space-y-3">
               {videos.map((v, i) => (
                 <div key={i} className="border border-n-200 rounded-md p-3 space-y-2">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-body font-bold uppercase tracking-wide text-n-500">Vídeo {i + 1}</span>
+                    <span className="text-xs font-body font-bold uppercase tracking-wide text-n-500">{t('pageEditor.videoN', { n: i + 1 })}</span>
                     <div className="flex gap-1">
-                      <button type="button" aria-label={`Mover vídeo ${i + 1} para cima`} onClick={() => moveItem(setVideos, i, -1)} disabled={i === 0}
+                      <button type="button" aria-label={t('pageEditor.moveVideoUp', { n: i + 1 })} onClick={() => moveItem(setVideos, i, -1)} disabled={i === 0}
                         className="w-6 h-6 flex items-center justify-center rounded bg-n-100 text-n-500 disabled:opacity-30">
                         <ChevronUp size={12} strokeWidth={2} />
                       </button>
-                      <button type="button" aria-label={`Mover vídeo ${i + 1} para baixo`} onClick={() => moveItem(setVideos, i, 1)} disabled={i === videos.length - 1}
+                      <button type="button" aria-label={t('pageEditor.moveVideoDown', { n: i + 1 })} onClick={() => moveItem(setVideos, i, 1)} disabled={i === videos.length - 1}
                         className="w-6 h-6 flex items-center justify-center rounded bg-n-100 text-n-500 disabled:opacity-30">
                         <ChevronDown size={12} strokeWidth={2} />
                       </button>
-                      <button type="button" aria-label={`Remover vídeo ${i + 1}`} onClick={() => removeItem(setVideos, i)}
+                      <button type="button" aria-label={t('pageEditor.removeVideo', { n: i + 1 })} onClick={() => removeItem(setVideos, i)}
                         className="w-6 h-6 flex items-center justify-center rounded bg-[var(--error-light)] text-[var(--error)]">
                         <X size={12} strokeWidth={2} />
                       </button>
                     </div>
                   </div>
-                  <Input label="URL do vídeo" aria-label={`URL do vídeo ${i + 1}`} value={v.url || ''} onChange={e => updateItem(setVideos, i, 'url', e.target.value)} placeholder="https://..." />
-                  <Input label="URL da miniatura (opcional)" aria-label={`URL da miniatura do vídeo ${i + 1}`} value={v.thumbnail_url || ''} onChange={e => updateItem(setVideos, i, 'thumbnail_url', e.target.value)} placeholder="https://..." />
+                  <Input label={t('pageEditor.videoUrl')} aria-label={t('pageEditor.videoUrlAria', { n: i + 1 })} value={v.url || ''} onChange={e => updateItem(setVideos, i, 'url', e.target.value)} placeholder="https://..." />
+                  <Input label={t('pageEditor.thumbnailUrl')} aria-label={t('pageEditor.thumbnailAria', { n: i + 1 })} value={v.thumbnail_url || ''} onChange={e => updateItem(setVideos, i, 'thumbnail_url', e.target.value)} placeholder="https://..." />
                 </div>
               ))}
               <Button type="button" variant="secondary" icon={Plus} size="sm"
                 onClick={() => addItem(setVideos, { url: '', thumbnail_url: '' })}>
-                Adicionar vídeo
+                {t('pageEditor.addVideo')}
               </Button>
             </div>
           </Card>
 
           {/* Avaliações Google */}
-          <Card header={<h3 className="font-display font-semibold text-sm text-n-700">Avaliações Google</h3>}>
+          <Card header={<h3 className="font-display font-semibold text-sm text-n-700">{t('pageEditor.googleTitle')}</h3>}>
             <div className="space-y-3">
               {gReviews.map((r, i) => (
                 <div key={i} className="border border-n-200 rounded-md p-3 space-y-2">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-body font-bold uppercase tracking-wide text-n-500">Avaliação {i + 1}</span>
+                    <span className="text-xs font-body font-bold uppercase tracking-wide text-n-500">{t('pageEditor.reviewN', { n: i + 1 })}</span>
                     <div className="flex gap-1">
-                      <button type="button" aria-label={`Mover avaliação ${i + 1} para cima`} onClick={() => moveItem(setGReviews, i, -1)} disabled={i === 0}
+                      <button type="button" aria-label={t('pageEditor.moveReviewUp', { n: i + 1 })} onClick={() => moveItem(setGReviews, i, -1)} disabled={i === 0}
                         className="w-6 h-6 flex items-center justify-center rounded bg-n-100 text-n-500 disabled:opacity-30">
                         <ChevronUp size={12} strokeWidth={2} />
                       </button>
-                      <button type="button" aria-label={`Mover avaliação ${i + 1} para baixo`} onClick={() => moveItem(setGReviews, i, 1)} disabled={i === gReviews.length - 1}
+                      <button type="button" aria-label={t('pageEditor.moveReviewDown', { n: i + 1 })} onClick={() => moveItem(setGReviews, i, 1)} disabled={i === gReviews.length - 1}
                         className="w-6 h-6 flex items-center justify-center rounded bg-n-100 text-n-500 disabled:opacity-30">
                         <ChevronDown size={12} strokeWidth={2} />
                       </button>
-                      <button type="button" aria-label={`Remover avaliação ${i + 1}`} onClick={() => removeItem(setGReviews, i)}
+                      <button type="button" aria-label={t('pageEditor.removeReview', { n: i + 1 })} onClick={() => removeItem(setGReviews, i)}
                         className="w-6 h-6 flex items-center justify-center rounded bg-[var(--error-light)] text-[var(--error)]">
                         <X size={12} strokeWidth={2} />
                       </button>
                     </div>
                   </div>
-                  <Input label="Nome do autor" aria-label={`Nome do autor da avaliação ${i + 1}`} value={r.author_name || ''} onChange={e => updateItem(setGReviews, i, 'author_name', e.target.value)} />
-                  <Input label="URL da foto (opcional)" aria-label={`URL da foto da avaliação ${i + 1}`} value={r.author_photo || ''} onChange={e => updateItem(setGReviews, i, 'author_photo', e.target.value)} placeholder="https://..." />
-                  <Input label="Texto da avaliação" aria-label={`Texto da avaliação ${i + 1}`} value={r.text || ''} onChange={e => updateItem(setGReviews, i, 'text', e.target.value)} />
+                  <Input label={t('pageEditor.authorName')} aria-label={t('pageEditor.authorNameAria', { n: i + 1 })} value={r.author_name || ''} onChange={e => updateItem(setGReviews, i, 'author_name', e.target.value)} />
+                  <Input label={t('pageEditor.photoUrl')} aria-label={t('pageEditor.photoAria', { n: i + 1 })} value={r.author_photo || ''} onChange={e => updateItem(setGReviews, i, 'author_photo', e.target.value)} placeholder="https://..." />
+                  <Input label={t('pageEditor.reviewText')} aria-label={t('pageEditor.reviewTextAria', { n: i + 1 })} value={r.text || ''} onChange={e => updateItem(setGReviews, i, 'text', e.target.value)} />
                 </div>
               ))}
               <Button type="button" variant="secondary" icon={Plus} size="sm"
                 onClick={() => addItem(setGReviews, { author_name: '', author_photo: '', text: '' })}>
-                Adicionar avaliação
+                {t('pageEditor.addReview')}
               </Button>
             </div>
           </Card>
 
           {/* Redes sociais */}
-          <Card header={<h3 className="font-display font-semibold text-sm text-n-700">Redes sociais</h3>}>
+          <Card header={<h3 className="font-display font-semibold text-sm text-n-700">{t('pageEditor.socialTitle')}</h3>}>
             <div className="space-y-3">
               {[
                 { key: 'instagram',   label: 'Instagram',   icon: Globe, ph: 'https://instagram.com/...' },
                 { key: 'facebook',    label: 'Facebook',     icon: Share2,    ph: 'https://facebook.com/...' },
                 { key: 'tripadvisor', label: 'TripAdvisor',  icon: Globe,     ph: 'https://tripadvisor.com/...' },
                 { key: 'google_maps', label: 'Google Maps',  icon: Globe,     ph: 'https://maps.app.goo.gl/...' },
-                { key: 'linkedin',    label: 'LinkedIn (opcional)', icon: ExternalLink, ph: 'https://linkedin.com/company/...' },
+                { key: 'linkedin',    label: t('pageEditor.linkedinOptional'), icon: ExternalLink, ph: 'https://linkedin.com/company/...' },
               ].map(({ key, label, icon: Icon, ph }) => (
                 <div key={key} className="flex items-start gap-2">
                   <Icon size={16} strokeWidth={1.75} className="text-n-400 shrink-0 mt-7" />
@@ -321,36 +330,39 @@ export default function PageEditor() {
           </Card>
 
           {/* Horário de funcionamento */}
-          <Card header={<h3 className="font-display font-semibold text-sm text-n-700">Horário de funcionamento</h3>}>
+          <Card header={<h3 className="font-display font-semibold text-sm text-n-700">{t('pageEditor.hoursTitle')}</h3>}>
             <div className="space-y-2">
-              {WEEK_DAYS.map(d => (
+              {WEEK_DAYS.map(d => {
+                const diaRotulo = t(`pageEditor.days.${d.key}`);
+                return (
                 <div key={d.key} className="flex items-center gap-3">
-                  <button type="button" role="switch" aria-checked={hours[d.key].open} aria-label={`Aberto ${d.label}`}
+                  <button type="button" role="switch" aria-checked={hours[d.key].open} aria-label={t('pageEditor.openDay', { day: diaRotulo })}
                     onClick={() => setHourField(d.key, 'open', !hours[d.key].open)}
                     className={`w-8 h-4 rounded-full transition-colors relative shrink-0 ${hours[d.key].open ? 'bg-ocean-700' : 'bg-n-300'}`}>
                     <span className={`absolute top-0.5 w-3 h-3 bg-white rounded-full shadow transition-all ${hours[d.key].open ? 'left-[18px]' : 'left-0.5'}`} />
                   </button>
-                  <span className="text-sm font-body text-n-700 w-16 shrink-0">{d.label}</span>
+                  <span className="text-sm font-body text-n-700 w-16 shrink-0">{diaRotulo}</span>
                   {hours[d.key].open ? (
                     <div className="flex items-center gap-2">
-                      <input type="time" aria-label={`Abertura de ${d.label}`} value={hours[d.key].start}
+                      <input type="time" aria-label={t('pageEditor.openingOf', { day: diaRotulo })} value={hours[d.key].start}
                         onChange={e => setHourField(d.key, 'start', e.target.value)}
                         className="h-8 px-2 border border-n-200 rounded text-sm font-mono text-n-800 bg-n-50 focus:outline-none focus:border-ocean-700" />
-                      <span className="text-xs text-n-400">até</span>
-                      <input type="time" aria-label={`Fecho de ${d.label}`} value={hours[d.key].end}
+                      <span className="text-xs text-n-400">{t('pageEditor.until')}</span>
+                      <input type="time" aria-label={t('pageEditor.closingOf', { day: diaRotulo })} value={hours[d.key].end}
                         onChange={e => setHourField(d.key, 'end', e.target.value)}
                         className="h-8 px-2 border border-n-200 rounded text-sm font-mono text-n-800 bg-n-50 focus:outline-none focus:border-ocean-700" />
                     </div>
                   ) : (
-                    <span className="text-xs font-body text-n-400 italic">Fechado</span>
+                    <span className="text-xs font-body text-n-400 italic">{t('pageEditor.closed')}</span>
                   )}
                 </div>
-              ))}
+                );
+              })}
             </div>
           </Card>
 
           {/* Idiomas + GPS */}
-          <Card header={<h3 className="font-display font-semibold text-sm text-n-700">Idiomas falados</h3>}>
+          <Card header={<h3 className="font-display font-semibold text-sm text-n-700">{t('pageEditor.languagesTitle')}</h3>}>
             <div className="flex gap-2 flex-wrap">
               {SPOKEN_LANGS.map(l => (
                 <button key={l} type="button" aria-pressed={spokenLangs.includes(l)} onClick={() => toggleSpokenLang(l)}
@@ -361,27 +373,27 @@ export default function PageEditor() {
             </div>
           </Card>
 
-          <Card header={<h3 className="font-display font-semibold text-sm text-n-700">Localização (coordenadas GPS)</h3>}>
+          <Card header={<h3 className="font-display font-semibold text-sm text-n-700">{t('pageEditor.locationTitle')}</h3>}>
             <div className="grid grid-cols-2 gap-3">
-              <Input label="Latitude" aria-label="Latitude" value={lat} onChange={e => setLat(e.target.value)} placeholder="16.8948" />
-              <Input label="Longitude" aria-label="Longitude" value={lng} onChange={e => setLng(e.target.value)} placeholder="-22.9144" />
+              <Input label={t('pageEditor.latitude')} aria-label={t('pageEditor.latitude')} value={lat} onChange={e => setLat(e.target.value)} placeholder="16.8948" />
+              <Input label={t('pageEditor.longitude')} aria-label={t('pageEditor.longitude')} value={lng} onChange={e => setLng(e.target.value)} placeholder="-22.9144" />
             </div>
             <p className="text-xs font-body text-n-400 mt-2">
-              Encontrar coordenadas em <strong>maps.google.com</strong> → clique direito → "What's here?"
+              {t('pageEditor.coordsHelpBefore')} <strong>maps.google.com</strong> {t('pageEditor.coordsHelpAfter')}
             </p>
           </Card>
 
           <div className="flex items-center gap-3">
-            <Button onClick={handleSave} loading={saving}>Guardar alterações</Button>
+            <Button onClick={handleSave} loading={saving}>{t('pageEditor.save')}</Button>
             <SaveBanner saved={saved} />
           </div>
         </div>
 
         {/* ── Preview (wireframe) ── */}
         <div className="lg:col-span-1">
-          <Card header={<h3 className="font-display font-semibold text-sm text-n-700">Pré-visualização (esquema)</h3>}>
+          <Card header={<h3 className="font-display font-semibold text-sm text-n-700">{t('pageEditor.previewTitle')}</h3>}>
             <p className="text-xs font-body text-n-400 mb-3">
-              Ordem final da tua página. Para ver o resultado real, usa "Ver a minha página" acima.
+              {t('pageEditor.previewHelp')}
             </p>
             <div className="border border-n-200 rounded-md overflow-hidden">
               <div className="bg-ocean-900 text-white text-[10px] font-body font-bold uppercase tracking-wide px-3 py-2">
@@ -391,7 +403,7 @@ export default function PageEditor() {
                 Hero
               </div>
               {sections.filter(s => s.enabled).map(s => {
-                const meta = SECTION_META[s.key] || { label: s.key, icon: Layers };
+                const meta = metaSeccao(s.key, t);
                 const Icon = meta.icon;
                 return (
                   <div key={s.key} className="flex items-center gap-2 px-3 py-2 border-t border-n-200 text-xs font-body text-n-700">
@@ -406,11 +418,11 @@ export default function PageEditor() {
             </div>
             {sections.filter(s => !s.enabled).length > 0 && (
               <div className="mt-3">
-                <p className="text-xs font-body font-bold text-n-400 uppercase tracking-wide mb-1.5">Desactivadas</p>
+                <p className="text-xs font-body font-bold text-n-400 uppercase tracking-wide mb-1.5">{t('pageEditor.disabled')}</p>
                 <div className="flex flex-wrap gap-1.5">
                   {sections.filter(s => !s.enabled).map(s => (
                     <span key={s.key} className="text-[10px] font-body text-n-400 bg-n-100 px-2 py-1 rounded-full">
-                      {(SECTION_META[s.key] || {}).label || s.key}
+                      {metaSeccao(s.key, t).label}
                     </span>
                   ))}
                 </div>

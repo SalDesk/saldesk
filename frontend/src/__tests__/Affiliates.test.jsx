@@ -7,6 +7,8 @@ import {
   getAffiliateConfig, updateAffiliateConfig,
 } from '../services/affiliatesService';
 import { getBookingLink } from '../services/marketingService';
+import useUiStore from '../store/uiStore';
+import { portuguesNoEcra, chavesCruas } from './helpers/portuguesNoEcra';
 
 vi.mock('../services/affiliatesService', () => ({
   listAffiliates: vi.fn(), createAffiliate: vi.fn(), updateAffiliate: vi.fn(), deleteAffiliate: vi.fn(),
@@ -418,5 +420,130 @@ describe('Afiliados com o design system (configuração e analytics)', () => {
     expect(html).not.toMatch(HEX);
     expect(html).not.toMatch(NOMEADAS);
     expect(html.replace(/text-error ml-0[.]5/g, '')).not.toMatch(/(?:text|bg|border)-error/);
+  });
+});
+
+/* ───────────────────────── painel em ingles ───────────────────────── */
+
+describe('Afiliados em ingles', () => {
+  const novoAfiliadoEn = () => screen.getAllByText('New affiliate').find(e => e.closest('button')).closest('button');
+  const DADOS = ['João Silva', 'Maria Lopes', 'joao@x.cv', 'm@x.cv'];
+  beforeEach(() => { useUiStore.setState({ lang: 'en' }); });
+  afterEach(() => { cleanup(); useUiStore.setState({ lang: 'pt' }); });
+
+  it('a_lista_mostra_os_textos_em_ingles_sem_portugues_nem_chaves_cruas', async () => {
+    await montar();
+    expect(screen.getByText('Affiliate programme')).toBeInTheDocument();
+    expect(screen.getByText('Manage affiliates and commissions on referred bookings')).toBeInTheDocument();
+    expect(screen.getByText(/^Programme (active|inactive)$/).closest('button')).toHaveTextContent('Programme active');
+    expect(kpi('Active affiliates')).toBe('2');
+    expect(kpi('Bookings generated')).toBe('14');
+    expect(kpi('Commission paid')).toBe('€120');
+    expect(kpi('Commission pending')).toBe('€50');
+    const l = linha('João Silva');
+    expect(l).toHaveTextContent('joao@x.cv · JOA3K9 · 12% commission');
+    expect(l).toHaveTextContent('10Bookings');
+    expect(l).toHaveTextContent('€100Paid');
+    expect(l).toHaveTextContent('€50Pending');
+    expect(within(l).getByLabelText('Record payment João Silva')).toBeInTheDocument();
+    expect(within(l).getByLabelText('Deactivate João Silva')).toBeInTheDocument();
+    expect(within(linha('Maria Lopes')).getByLabelText('Activate Maria Lopes')).toBeInTheDocument();
+    expect(within(l).getByLabelText('Edit João Silva')).toBeInTheDocument();
+    expect(within(l).getByLabelText('Delete João Silva')).toBeInTheDocument();
+    expect(portuguesNoEcra(DADOS)).toEqual([]);
+    expect(chavesCruas(['affiliatesPage', 'common'])).toEqual([]);
+  });
+
+  it('os_valores_em_euros_usam_os_separadores_do_ingles', async () => {
+    listAffiliates.mockResolvedValue([{ ...AFILIADOS[0], commission_paid: 1250.5, commission_pending: 0 }]);
+    await montar();
+    expect(kpi('Commission paid')).toBe('€1,251');
+    expect(linha('João Silva')).toHaveTextContent('€1,251Paid');
+    fireEvent.click(within(linha('João Silva')).getByTitle('Record payment'));
+    expect(screen.getByRole('dialog')).toHaveTextContent('TOTAL PAID€1,250.50');
+  });
+
+  it('o_texto_enviado_pelo_whatsapp_fica_em_portugues', async () => {
+    await montar();
+    fireEvent.click(within(linha('João Silva')).getByText('WA'));
+    const link = 'https://saldesk.cv/book/sal?ref=JOA3K9';
+    expect(aberta).toHaveBeenCalledWith(`https://wa.me/?text=${encodeURIComponent(`Reserve o seu tour: ${link}`)}`, '_blank', 'noopener');
+  });
+
+  it('os_separadores_de_configuracao_e_analytics_em_ingles', async () => {
+    await montar();
+    fireEvent.click(screen.getByRole('tab', { name: 'Settings' }));
+    expect(await screen.findByText('Global programme settings')).toBeInTheDocument();
+    expect(screen.getByText('Default percentage for new affiliates. It can be overridden per affiliate.')).toBeInTheDocument();
+    expect(screen.getByText('Minimum booking value for the commission to apply. 0 = no minimum.')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Save settings' })).toBeInTheDocument();
+    expect(document.body.textContent).toContain('Affiliate portal: Each affiliate can open their dashboard at saldesk.cv/afiliado/[CODIGO] with their registered email. Bookings made through the link (?ref=CODIGO) are assigned to the affiliate automatically.');
+    expect(portuguesNoEcra(DADOS)).toEqual([]);
+    fireEvent.click(screen.getByRole('tab', { name: 'Analytics' }));
+    expect(await screen.findByText('Top affiliates by bookings')).toBeInTheDocument();
+    expect(screen.getByText('10 bookings · €100 paid')).toBeInTheDocument();
+    expect(portuguesNoEcra(DADOS)).toEqual([]);
+    cleanup();
+    listAffiliates.mockResolvedValue([]);
+    render(<Affiliates />);
+    await screen.findByText('No affiliates registered');
+    expect(screen.getByText('Create your first affiliate and share their affiliate link.')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('tab', { name: 'Analytics' }));
+    expect(await screen.findByText('No affiliate data yet.')).toBeInTheDocument();
+    expect(portuguesNoEcra()).toEqual([]);
+  });
+
+  it('criar_em_ingles_envia_os_mesmos_valores_gravados', async () => {
+    createAffiliate.mockResolvedValue({});
+    await montar();
+    fireEvent.click(novoAfiliadoEn());
+    const dlg = screen.getByRole('dialog');
+    expect(dlg).toHaveTextContent('New affiliate');
+    fireEvent.change(within(dlg).getByPlaceholderText('E.g. John Smith'), { target: { value: 'Ana Costa' } });
+    fireEvent.change(within(dlg).getByPlaceholderText('E.g. JOH3K9'), { target: { value: ' ana77 ' } });
+    fireEvent.change(within(dlg).getByPlaceholderText('john@example.com'), { target: { value: 'ana@x.cv' } });
+    expect(portuguesNoEcra(['Ana Costa'], dlg)).toEqual([]);
+    fireEvent.click(within(dlg).getByRole('button', { name: 'Create affiliate' }));
+    await waitFor(() => expect(createAffiliate).toHaveBeenCalledWith({ name: 'Ana Costa', email: 'ana@x.cv', commission_pct: 15, code: 'ANA77', active: true }));
+  });
+
+  it('codigo_duplicado_e_outro_erro_em_ingles', async () => {
+    createAffiliate.mockRejectedValueOnce({ response: { data: { code: 'DUPLICATE_CODE' } } });
+    await montar();
+    fireEvent.click(novoAfiliadoEn());
+    const dlg = screen.getByRole('dialog');
+    fireEvent.change(within(dlg).getByPlaceholderText('E.g. John Smith'), { target: { value: 'Ana' } });
+    fireEvent.change(within(dlg).getByPlaceholderText('john@example.com'), { target: { value: 'a@x.cv' } });
+    fireEvent.click(within(dlg).getByRole('button', { name: 'Create affiliate' }));
+    expect(await within(dlg).findByText('An affiliate with this code already exists.')).toBeInTheDocument();
+    createAffiliate.mockRejectedValueOnce(new Error('x'));
+    fireEvent.click(within(dlg).getByRole('button', { name: 'Create affiliate' }));
+    expect(await within(dlg).findByText('Could not save the affiliate.')).toBeInTheDocument();
+  });
+
+  it('pagamento_em_ingles_valida_o_montante_e_grava_a_nota_por_omissao_em_portugues', async () => {
+    createAffiliatePayment.mockResolvedValue({});
+    await montar();
+    fireEvent.click(within(linha('João Silva')).getByTitle('Record payment'));
+    const dlg = screen.getByRole('dialog');
+    expect(dlg).toHaveTextContent('Payment — João Silva');
+    expect(dlg).toHaveTextContent('TOTAL PAID€100.00');
+    expect(dlg).toHaveTextContent('PENDING€50.00');
+    expect(within(dlg).getByDisplayValue('Pagamento de comissão')).toBeInTheDocument();
+    expect(portuguesNoEcra([...DADOS, 'Pagamento de comissão'], dlg)).toEqual([]);
+    fireEvent.click(within(dlg).getByRole('button', { name: 'Record payment' }));
+    expect(await within(dlg).findByText('Enter a valid amount.')).toBeInTheDocument();
+    fireEvent.change(within(dlg).getByRole('spinbutton'), { target: { value: '20' } });
+    fireEvent.click(within(dlg).getByRole('button', { name: 'Record payment' }));
+    await waitFor(() => expect(createAffiliatePayment).toHaveBeenCalledWith('a1', { amount: 20, payment_date: HOJE, note: 'Pagamento de comissão' }));
+  });
+
+  it('eliminar_pede_confirmacao_em_ingles_e_apaga_o_mesmo_id', async () => {
+    const confirmar = vi.spyOn(window, 'confirm').mockReturnValue(true);
+    deleteAffiliate.mockResolvedValue();
+    await montar();
+    fireEvent.click(within(linha('João Silva')).getByLabelText('Delete João Silva'));
+    expect(confirmar).toHaveBeenCalledWith('Delete this affiliate?');
+    await waitFor(() => expect(deleteAffiliate).toHaveBeenCalledWith('a1'));
   });
 });

@@ -7,12 +7,13 @@ import { mensagemErro } from '../../utils/mensagemErro';
 
 /* Mensagens de WhatsApp para o cliente da reserva, por wa.me: o SalDesk prepara o texto
    (idioma do cliente, dados da reserva) e abre o WhatsApp com tudo pronto; quem envia e a pessoa.
-   So aparecem as mensagens que fazem sentido para o estado da reserva. */
+   So aparecem as mensagens que fazem sentido para o estado da reserva.
+   O texto da mensagem para o cliente vem do servidor (na lingua do cliente); aqui so ha botoes do operador. */
 
 const ACCOES = [
-  { trigger: 'booking_confirmed', label: 'Confirmação',        estados: ['confirmed', 'checked_in'] },
-  { trigger: 'reminder_d1',       label: 'Lembrete',           estados: ['confirmed'] },
-  { trigger: 'review_request',    label: 'Pedir avaliação',    estados: ['checked_out'] },
+  { trigger: 'booking_confirmed', label: 'confirmation', estados: ['confirmed', 'checked_in'] },
+  { trigger: 'reminder_d1',       label: 'reminder',     estados: ['confirmed'] },
+  { trigger: 'review_request',    label: 'review',       estados: ['checked_out'] },
 ];
 
 export default function WhatsAppSend({ reservationId, status, hasPhone }) {
@@ -36,10 +37,10 @@ export default function WhatsAppSend({ reservationId, status, hasPhone }) {
       if (msg.automatico) {
         // Canal automatico (Cloud API): o SalDesk envia sozinho, nao ha nada para abrir.
         if (janela) janela.close();
-        toast.success(`${accao.label}: a enviar por WhatsApp`);
+        toast.success(t('whatsappMessages.send.sending', { label: t(`whatsappMessages.send.${accao.label}`) }));
         return;
       }
-      if (!msg.url) throw new Error('Sem ligação');
+      if (!msg.url) throw new Error('missing_url');
       if (janela) {
         janela.opener = null;
         janela.location.href = msg.url;
@@ -47,10 +48,11 @@ export default function WhatsAppSend({ reservationId, status, hasPhone }) {
         setLinkManual({ url: msg.url, id: msg.id });
       }
       markMessageOpened(msg.id).catch(() => {});
-      toast.success(msg.created ? `${accao.label}: WhatsApp aberto` : `${accao.label} já estava preparada: WhatsApp aberto`);
+      const rotulo = t(`whatsappMessages.send.${accao.label}`);
+      toast.success(t(msg.created ? 'whatsappMessages.send.opened' : 'whatsappMessages.send.alreadyPrepared', { label: rotulo }));
     } catch (err) {
       if (janela) janela.close();
-      toast.error(mensagemErro(err, t, 'Não foi possível preparar a mensagem'));
+      toast.error(mensagemErro(err, t, t('whatsappMessages.send.prepareError')));
     } finally {
       setAEnviar(null);
     }
@@ -69,18 +71,18 @@ export default function WhatsAppSend({ reservationId, status, hasPhone }) {
             className="inline-flex items-center gap-1.5 h-9 px-3 rounded-xl border border-n-300 bg-white text-xs font-body font-semibold text-n-800 hover:bg-n-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             <MessageCircle size={14} strokeWidth={1.75} className="text-turquoise-600" />
-            {aEnviar === a.trigger ? 'A preparar…' : a.label}
+            {aEnviar === a.trigger ? t('whatsappMessages.send.preparing') : t(`whatsappMessages.send.${a.label}`)}
           </button>
         ))}
       </div>
-      {semTelefone && <p className="text-xs font-body text-n-500 mt-2">O cliente não tem telefone registado.</p>}
+      {semTelefone && <p className="text-xs font-body text-n-500 mt-2">{t('whatsappMessages.send.noPhone')}</p>}
       {linkManual && (
         <a
           href={linkManual.url} target="_blank" rel="noopener noreferrer"
           onClick={() => markMessageOpened(linkManual.id).catch(() => {})}
           className="inline-flex items-center gap-1.5 mt-2 text-xs font-body font-semibold text-ocean-700 underline"
         >
-          <ExternalLink size={13} strokeWidth={1.75} /> O navegador bloqueou a janela: abrir o WhatsApp
+          <ExternalLink size={13} strokeWidth={1.75} /> {t('whatsappMessages.send.blocked')}
         </a>
       )}
     </div>

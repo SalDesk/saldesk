@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { getBookingLink, getMarketingStats, getWidgetCode, getReferrals } from '../services/marketingService';
 import { listUnits } from '../services/unitsService';
 import useAuthStore from '../store/authStore';
+import { useT } from '../i18n';
 import PageHeader from '../components/layout/PageHeader';
 import Tabs from '../components/ui/Tabs';
 import { loadPosts, savePosts } from './marketing/shared';
@@ -17,15 +18,11 @@ import PostModal from './marketing/PostModal';
    serio exige integracao OAuth com cada rede social, fora do ambito de um
    fix rapido. Codigo mantido, so a entrada de navegacao removida --
    reactivar quando houver essa integracao real. */
-const MKTG_TABS = [
-  { id: 'qrcode',    label: 'QR Code' },
-  { id: 'widget',    label: 'Widget' },
-  { id: 'referrals', label: 'Indicações' },
-  { id: 'stats',     label: 'Estatísticas' },
-];
+const MKTG_TABS = ['qrcode', 'widget', 'referrals', 'stats'];
 
 /* ─────────────────────── Main ─────────────────────── */
 export default function Marketing() {
+  const t = useT();
   const { operator } = useAuthStore();
   const slug = operator?.slug;
 
@@ -83,11 +80,11 @@ export default function Marketing() {
 
   return (
     <div>
-      <PageHeader title="Marketing" subtitle="Ferramentas de divulgação e planeador de conteudos" />
+      <PageHeader title={t('marketingPage.title')} subtitle={t('marketingPage.subtitle')} />
 
       {/* Tabs */}
       <div className="mb-6">
-        <Tabs tabs={MKTG_TABS} value={activeTab} onChange={setActiveTab} />
+        <Tabs tabs={MKTG_TABS.map(id => ({ id, label: t(`marketingPage.tabs.${id}`) }))} value={activeTab} onChange={setActiveTab} />
       </div>
 
       {activeTab === 'planeador' && (

@@ -13,20 +13,27 @@ import EmptyState from '../components/ui/EmptyState';
 import Modal from '../components/ui/Modal';
 import Input, { Textarea, Select } from '../components/ui/Input';
 import LoadingSpinner from '../components/shared/LoadingSpinner';
+import { useT } from '../i18n';
+import { formatarData, formatarNumero, useLingua } from '../utils/formatoLingua';
+import { euroPreco } from '../utils/formatoVendedor';
+import { eurosInteiros } from './reservations/shared';
 
-const STATUS_CFG = {
-  activo:   { label: 'Activo',   variant: 'confirmed' },
-  inactivo: { label: 'Inactivo', variant: 'default'   },
-  esgotado: { label: 'Esgotado', variant: 'pending'   },
+/* estados gravados do pacote (activo, inactivo, esgotado); o rotulo vem de packagesPage.status */
+const STATUS_VARIANT = {
+  activo:   'confirmed',
+  inactivo: 'default',
+  esgotado: 'pending',
 };
 
-function fmtDate(d) {
+function fmtDate(d, lang) {
   if (!d) return '—';
-  return new Date(d + 'T00:00:00Z').toLocaleDateString('pt-PT', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'UTC' });
+  return formatarData(new Date(d + 'T00:00:00Z'), { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'UTC' }, lang);
 }
 
 /* ── PackageModal ── */
 function PackageModal({ pkg, units, onSave, onClose }) {
+  const t = useT();
+  const lang = useLingua();
   const isNew = !pkg || pkg._new;
   const base  = isNew ? null : pkg;
 
@@ -78,30 +85,30 @@ function PackageModal({ pkg, units, onSave, onClose }) {
         original_price: originalPrice,
       });
     } catch {
-      setError('Erro ao guardar pacote.');
+      setError(t('packagesPage.modal.errSave'));
     } finally {
       setSaving(false);
     }
   }
 
   return (
-    <Modal open onClose={onClose} title={isNew ? 'Novo pacote' : 'Editar pacote'} size="lg">
+    <Modal open onClose={onClose} title={isNew ? t('packagesPage.modal.titleNew') : t('packagesPage.modal.titleEdit')} size="lg">
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <Input label="Nome PT" aria-label="Nome PT" value={form.name_pt} onChange={set('name_pt')} required placeholder="Ex: Pacote Kite + Mergulho" />
-          <Input label="Nome EN" aria-label="Nome EN" value={form.name_en} onChange={set('name_en')} placeholder="Ex: Kite + Diving Package" />
+          <Input label={t('packagesPage.modal.namePt')} aria-label={t('packagesPage.modal.namePt')} value={form.name_pt} onChange={set('name_pt')} required placeholder={t('packagesPage.modal.namePtPlaceholder')} />
+          <Input label={t('packagesPage.modal.nameEn')} aria-label={t('packagesPage.modal.nameEn')} value={form.name_en} onChange={set('name_en')} placeholder={t('packagesPage.modal.nameEnPlaceholder')} />
         </div>
 
-        <Textarea label="Descrição PT" aria-label="Descrição PT" value={form.description_pt} onChange={set('description_pt')} rows={2} />
-        <Textarea label="Descrição EN" aria-label="Descrição EN" value={form.description_en} onChange={set('description_en')} rows={2} />
+        <Textarea label={t('packagesPage.modal.descPt')} aria-label={t('packagesPage.modal.descPt')} value={form.description_pt} onChange={set('description_pt')} rows={2} />
+        <Textarea label={t('packagesPage.modal.descEn')} aria-label={t('packagesPage.modal.descEn')} value={form.description_en} onChange={set('description_en')} rows={2} />
 
         {/* Tour selection */}
         <div>
           <label className="text-xs font-body font-bold uppercase tracking-wide text-n-600 block mb-2">
-            Tours incluidos ({form.tour_ids.length} seleccionado(s))
+            {t('packagesPage.modal.includedTours', { n: form.tour_ids.length })}
           </label>
           {units.length === 0 ? (
-            <p className="text-xs font-body text-n-400">Sem tours disponíveis. Cria tours primeiro em Unidades.</p>
+            <p className="text-xs font-body text-n-400">{t('packagesPage.modal.noTours')}</p>
           ) : (
             <div className="flex flex-wrap gap-1.5 max-h-32 overflow-y-auto">
               {units.map(u => (
@@ -112,50 +119,50 @@ function PackageModal({ pkg, units, onSave, onClose }) {
                       : 'bg-white text-n-600 border-n-200 hover:border-ocean-300'
                   }`}>
                   {u.name}
-                  {u.base_price > 0 && <span className="ml-1 opacity-70">€{u.base_price}</span>}
+                  {u.base_price > 0 && <span className="ml-1 opacity-70">{euroPreco(u.base_price, lang)}</span>}
                 </button>
               ))}
             </div>
           )}
           {originalPrice > 0 && (
             <p className="text-xs font-body text-n-400 mt-1.5">
-              Soma dos tours individuais: <span className="font-semibold text-n-700">€{originalPrice}</span>
+              {t('packagesPage.modal.sumTours')} <span className="font-semibold text-n-700">{euroPreco(originalPrice, lang)}</span>
             </p>
           )}
         </div>
 
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <Input label="Preço do pacote (€)" aria-label="Preço do pacote (€)" type="number" min="0" step="0.01"
-              value={form.price} onChange={set('price')} required placeholder="Ex: 85.00" />
+            <Input label={t('packagesPage.modal.price')} aria-label={t('packagesPage.modal.price')} type="number" min="0" step="0.01"
+              value={form.price} onChange={set('price')} required placeholder={t('packagesPage.modal.pricePlaceholder')} />
             {savings > 0 && (
               <p className="text-xs font-body text-[var(--success)] mt-1">
-                Cliente poupa €{savings.toFixed(0)} vs compra individual
+                {t('packagesPage.modal.customerSaves', { amount: eurosInteiros(savings, lang) })}
               </p>
             )}
           </div>
-          <Input label="Limite de vendas (0 = ilimitado)" aria-label="Limite de vendas (0 = ilimitado)" type="number" min="0"
+          <Input label={t('packagesPage.modal.limit')} aria-label={t('packagesPage.modal.limit')} type="number" min="0"
             value={form.limit} onChange={set('limit')} placeholder="0" />
         </div>
 
         <div className="grid grid-cols-2 gap-3">
-          <Input label="Válido de" aria-label="Válido de" type="date" value={form.valid_from} onChange={set('valid_from')} />
-          <Input label="Válido até" aria-label="Válido até" type="date" value={form.valid_to} onChange={set('valid_to')} />
+          <Input label={t('packagesPage.modal.validFrom')} aria-label={t('packagesPage.modal.validFrom')} type="date" value={form.valid_from} onChange={set('valid_from')} />
+          <Input label={t('packagesPage.modal.validTo')} aria-label={t('packagesPage.modal.validTo')} type="date" value={form.valid_to} onChange={set('valid_to')} />
         </div>
 
-        <Input label="Foto (URL)" aria-label="Foto (URL)" value={form.photo_url} onChange={set('photo_url')} placeholder="https://exemplo.com/foto.jpg" />
+        <Input label={t('packagesPage.modal.photo')} aria-label={t('packagesPage.modal.photo')} value={form.photo_url} onChange={set('photo_url')} placeholder={t('packagesPage.modal.photoPlaceholder')} />
 
         {!isNew && (
-          <Select label="Estado" aria-label="Estado" value={form.status} onChange={set('status')}>
-            {Object.entries(STATUS_CFG).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
+          <Select label={t('packagesPage.modal.status')} aria-label={t('packagesPage.modal.status')} value={form.status} onChange={set('status')}>
+            {Object.keys(STATUS_VARIANT).map(k => <option key={k} value={k}>{t(`packagesPage.status.${k}`)}</option>)}
           </Select>
         )}
 
         {error && <p className="text-xs text-[var(--error)]">{error}</p>}
 
         <div className="flex gap-3 pt-1">
-          <Button type="button" variant="secondary" onClick={onClose} className="flex-1">Cancelar</Button>
-          <Button type="submit" loading={saving} className="flex-1">{isNew ? 'Criar pacote' : 'Guardar'}</Button>
+          <Button type="button" variant="secondary" onClick={onClose} className="flex-1">{t('packagesPage.modal.cancel')}</Button>
+          <Button type="submit" loading={saving} className="flex-1">{isNew ? t('packagesPage.modal.create') : t('packagesPage.modal.save')}</Button>
         </div>
       </form>
     </Modal>
@@ -164,6 +171,8 @@ function PackageModal({ pkg, units, onSave, onClose }) {
 
 /* ─────────────────────── Main ─────────────────────── */
 export default function Packages() {
+  const t = useT();
+  const lang = useLingua();
   const [packages, setPackages] = useState([]);
   const [loading,  setLoading]  = useState(true);
   const [units,    setUnits]    = useState([]);
@@ -181,7 +190,7 @@ export default function Packages() {
   }
 
   async function handleDelete(id) {
-    if (!window.confirm('Eliminar este pacote?')) return;
+    if (!window.confirm(t('packagesPage.confirmDelete'))) return;
     await deletePackage(id);
     setPackages(prev => prev.filter(p => p.id !== id));
   }
@@ -199,7 +208,7 @@ export default function Packages() {
   if (loading) {
     return (
       <div>
-        <PageHeader title="Pacotes Sazonais" subtitle="Combina tours em pacotes com preço especial" />
+        <PageHeader title={t('packagesPage.title')} subtitle={t('packagesPage.subtitle')} />
         <div className="flex justify-center py-16"><LoadingSpinner size={32} /></div>
       </div>
     );
@@ -208,19 +217,19 @@ export default function Packages() {
   return (
     <div>
       <PageHeader
-        title="Pacotes Sazonais"
-        subtitle="Combina tours em pacotes com preço especial"
+        title={t('packagesPage.title')}
+        subtitle={t('packagesPage.subtitle')}
         actions={
-          <Button icon={Plus} onClick={() => setModal({ _new: true })}>Novo pacote</Button>
+          <Button icon={Plus} onClick={() => setModal({ _new: true })}>{t('packagesPage.newPackage')}</Button>
         }
       />
 
       {/* KPIs */}
       <div className="grid grid-cols-3 gap-3 mb-5">
         {[
-          { label: 'Pacotes activos',   value: activeCount,                            color: 'text-n-900'     },
-          { label: 'Reservas por pacotes', value: totalBookings,                       color: 'text-ocean-700' },
-          { label: 'Receita gerada',    value: `€${Math.round(totalRevenue).toLocaleString('pt-PT')}`, color: 'text-[var(--success)]' },
+          { label: t('packagesPage.kpi.active'),   value: activeCount,                            color: 'text-n-900'     },
+          { label: t('packagesPage.kpi.bookings'), value: totalBookings,                          color: 'text-ocean-700' },
+          { label: t('packagesPage.kpi.revenue'),  value: `€${formatarNumero(Math.round(totalRevenue), {}, lang)}`, color: 'text-[var(--success)]' },
         ].map(m => (
           <Card key={m.label} padding="px-4 py-3">
             <div className="flex items-center gap-3">
@@ -237,20 +246,20 @@ export default function Packages() {
       {/* Note about public visibility */}
       <div className="mb-4 px-4 py-2.5 bg-[var(--info-light)] border border-[var(--info)] rounded-sm">
         <p className="text-xs font-body text-[var(--info)]">
-          Os pacotes activos aparecem automaticamente na página pública de reservas quando o backend implementar o endpoint <span className="font-mono">/public/:slug/packages</span>.
+          {t('packagesPage.publicNote')} <span className="font-mono">/public/:slug/packages</span>.
         </p>
       </div>
 
       {packages.length === 0 ? (
         <Card padding="p-0">
-          <EmptyState icon={Package} title="Sem pacotes criados"
-            description="Cria o primeiro pacote combinando tours com preço especial."
-            action={<Button icon={Plus} onClick={() => setModal({ _new: true })}>Criar pacote</Button>} />
+          <EmptyState icon={Package} title={t('packagesPage.empty.title')}
+            description={t('packagesPage.empty.description')}
+            action={<Button icon={Plus} onClick={() => setModal({ _new: true })}>{t('packagesPage.empty.create')}</Button>} />
         </Card>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {packages.map(pkg => {
-            const cfg     = STATUS_CFG[pkg.status] || STATUS_CFG.activo;
+            const statusKey = Object.prototype.hasOwnProperty.call(STATUS_VARIANT, pkg.status) ? pkg.status : 'activo';
             const tours   = (pkg.tour_ids || []).map(id => units.find(u => u.id === id)).filter(Boolean);
             const savings = (pkg.original_price || 0) - (pkg.price || 0);
             const isExpired = pkg.valid_to && new Date(pkg.valid_to + 'T00:00:00Z') < new Date();
@@ -269,8 +278,8 @@ export default function Packages() {
                       <ImageIcon size={28} strokeWidth={1.25} className="text-n-300" />
                     </div>
                   )}
-                  <Badge className="absolute top-2 right-2" variant={isFull ? 'pending' : isExpired ? 'default' : cfg.variant}>
-                    {isFull ? 'Esgotado' : isExpired ? 'Expirado' : cfg.label}
+                  <Badge className="absolute top-2 right-2" variant={isFull ? 'pending' : isExpired ? 'default' : STATUS_VARIANT[statusKey]}>
+                    {isFull ? t('packagesPage.status.esgotado') : isExpired ? t('packagesPage.status.expirado') : t(`packagesPage.status.${statusKey}`)}
                   </Badge>
                 </div>
 
@@ -284,9 +293,9 @@ export default function Packages() {
 
                   {/* Tours */}
                   <div className="flex flex-wrap gap-1">
-                    {tours.slice(0, 3).map(t => (
-                      <span key={t.id} className="text-[10px] font-body bg-ocean-50 text-ocean-700 px-1.5 py-0.5 rounded-xs">
-                        {t.name}
+                    {tours.slice(0, 3).map(tour => (
+                      <span key={tour.id} className="text-[10px] font-body bg-ocean-50 text-ocean-700 px-1.5 py-0.5 rounded-xs">
+                        {tour.name}
                       </span>
                     ))}
                     {tours.length > 3 && (
@@ -297,14 +306,14 @@ export default function Packages() {
                   {/* Price */}
                   <div className="flex items-end gap-3">
                     <div>
-                      <p className="font-display font-bold text-lg text-ocean-700">€{pkg.price}</p>
+                      <p className="font-display font-bold text-lg text-ocean-700">{euroPreco(pkg.price, lang)}</p>
                       {pkg.original_price > 0 && (
-                        <p className="text-[10px] font-body text-n-400 line-through">€{pkg.original_price}</p>
+                        <p className="text-[10px] font-body text-n-400 line-through">{euroPreco(pkg.original_price, lang)}</p>
                       )}
                     </div>
                     {savings > 0 && (
                       <span className="text-xs font-body font-semibold text-[var(--success)] bg-[var(--success-light)] px-1.5 py-0.5 rounded-xs">
-                        Poupa €{savings.toFixed(0)}
+                        {t('packagesPage.card.saves', { amount: eurosInteiros(savings, lang) })}
                       </span>
                     )}
                   </div>
@@ -312,34 +321,34 @@ export default function Packages() {
                   {/* Validity */}
                   {(pkg.valid_from || pkg.valid_to) && (
                     <p className="text-[10px] font-mono text-n-400">
-                      {fmtDate(pkg.valid_from)} — {fmtDate(pkg.valid_to)}
+                      {fmtDate(pkg.valid_from, lang)} — {fmtDate(pkg.valid_to, lang)}
                     </p>
                   )}
 
                   {/* Stats */}
                   <div className="flex items-center gap-3 pt-1 border-t border-n-100">
                     <span className="text-xs font-mono text-n-500">
-                      {pkg.bookings_count || 0} reserva(s)
+                      {t('packagesPage.card.bookings', { n: pkg.bookings_count || 0 })}
                     </span>
                     {pkg.limit > 0 && (
                       <span className="text-xs font-mono text-n-400">
-                        {Math.max(0, pkg.limit - (pkg.bookings_count || 0))} restante(s)
+                        {t('packagesPage.card.remaining', { n: Math.max(0, pkg.limit - (pkg.bookings_count || 0)) })}
                       </span>
                     )}
                     <div className="ml-auto flex gap-1">
                       <button onClick={() => handleToggleStatus(pkg)}
-                        aria-label={`${pkg.status === 'activo' ? 'Desactivar' : 'Activar'} ${pkg.name_pt}`}
+                        aria-label={t(pkg.status === 'activo' ? 'packagesPage.card.deactivateAria' : 'packagesPage.card.activateAria', { name: pkg.name_pt })}
                         className="p-1.5 rounded text-n-400 hover:text-ocean-700 hover:bg-ocean-50 transition-colors"
-                        title={pkg.status === 'activo' ? 'Desactivar' : 'Activar'}>
+                        title={t(pkg.status === 'activo' ? 'packagesPage.card.deactivate' : 'packagesPage.card.activate')}>
                         {pkg.status === 'activo' ? <EyeOff size={13} strokeWidth={1.75} /> : <Eye size={13} strokeWidth={1.75} />}
                       </button>
                       <button onClick={() => setModal(pkg)}
-                        aria-label={`Editar ${pkg.name_pt}`}
+                        aria-label={t('packagesPage.card.editAria', { name: pkg.name_pt })}
                         className="p-1.5 rounded text-n-400 hover:text-ocean-700 hover:bg-ocean-50 transition-colors">
                         <Pencil size={13} strokeWidth={1.75} />
                       </button>
                       <button onClick={() => handleDelete(pkg.id)}
-                        aria-label={`Eliminar ${pkg.name_pt}`}
+                        aria-label={t('packagesPage.card.deleteAria', { name: pkg.name_pt })}
                         className="p-1.5 rounded text-n-400 hover:text-[var(--error)] hover:bg-[var(--error-light)] transition-colors">
                         <Trash2 size={13} strokeWidth={1.75} />
                       </button>

@@ -25,7 +25,7 @@ export const PALAVRAS_PORTUGUESAS = [
   /* Palavras pequenas com maiuscula no inicio de uma frase ('Por favor', 'Em breve'), so as que nao sao
      palavras inglesas (ficam de fora 'Do', 'No', 'As'), e verbos e rotulos comuns sem acento. */
   'Para', 'Por', 'Com', 'Uma', 'Em', 'Da', 'Ao', 'Ou', 'Na', 'Que', 'De', 'Os',
-  'Carregar', 'Remover', 'Criar', 'Voltar', 'Confirmar', 'Enviar', 'Bloquear', 'Ativo', 'Activo', 'Ativa',
+  'Carregar', 'carregar', 'Remover', 'Criar', 'Voltar', 'Confirmar', 'Enviar', 'Bloquear', 'Ativo', 'Activo', 'Ativa',
   'Activa', 'Nenhum', 'Nenhuma', 'Pessoas', 'pessoas', 'Pago', 'pago',
   'Oferta', 'Ofertas', 'duplo',
 ];

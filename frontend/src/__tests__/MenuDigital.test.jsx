@@ -3,6 +3,8 @@ import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-li
 import { MemoryRouter } from 'react-router-dom';
 import MenuDigital from '../pages/MenuDigital';
 import useAuthStore from '../store/authStore';
+import useUiStore from '../store/uiStore';
+import { portuguesNoEcra, chavesCruas } from './helpers/portuguesNoEcra';
 import api from '../services/api';
 import { listUnits, createUnit, updateUnit, deleteUnit, updateConectStatus } from '../services/unitsService';
 
@@ -275,6 +277,13 @@ describe('MenuDigital', () => {
     expect(screen.getByText('Menu Mar')).toBeInTheDocument();
   });
 
+  it('editar um menu de degustação abre o modal com o titulo "Editar Menu" (M maiusculo)', async () => {
+    await abre();
+    fireEvent.click(screen.getByRole('button', { name: 'Editar menu' }));
+    const dialogo = await screen.findByRole('dialog');
+    expect(within(dialogo).getByText('Editar Menu')).toBeInTheDocument();
+  });
+
   it('copiar o URL escreve a ligação do menu na area de transferência', async () => {
     const escrever = vi.fn().mockResolvedValue();
     Object.defineProperty(navigator, 'clipboard', { value: { writeText: escrever }, configurable: true });
@@ -345,5 +354,123 @@ describe('MenuDigital', () => {
     listUnits.mockRejectedValue(new Error('rede'));
     await abre();
     expect(screen.getByText('Nenhum prato nesta categoria.')).toBeInTheDocument();
+  });
+});
+
+describe('MenuDigital: em ingles', () => {
+  /* O que o operador escreveu (pratos, descricoes, nomes de menus) nao se traduz */
+  const DADOS = ['Atum Grelhado', 'Pudim', 'Sopa', 'Quebrado', 'Menu Chef', 'Cinco momentos', 'Entrada', 'Peixe'];
+  let errSpy;
+  let warnSpy;
+
+  beforeEach(() => {
+    errSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    useUiStore.setState({ lang: 'en' });
+    useAuthStore.setState({ operator: { slug: 'sabor-do-sal' } });
+    listUnits.mockReset().mockResolvedValue(TODOS);
+    createUnit.mockReset().mockImplementation(async (dados) => ({ id: 'novo', images: [], ...dados }));
+  });
+  afterEach(() => {
+    cleanup();
+    useUiStore.setState({ lang: 'pt' });
+    useAuthStore.setState({ operator: null });
+    const erros = errSpy.mock.calls.length;
+    const avisos = warnSpy.mock.calls.length;
+    vi.restoreAllMocks();
+    expect(erros).toBe(0);
+    expect(avisos).toBe(0);
+  });
+
+  async function abreEn() {
+    render(<MemoryRouter future={FUTURE}><MenuDigital /></MemoryRouter>);
+    await screen.findByText(/dish\(es\)/);
+  }
+  const cartaoEn = (nome) => {
+    let el = screen.getByText(nome);
+    while (el.parentElement && within(el).queryAllByRole('button').length < 3) el = el.parentElement;
+    return el;
+  };
+  const campoEn = (dialogo, etiqueta) => within(dialogo).getAllByText(etiqueta).find(e => e.tagName === 'LABEL').nextElementSibling;
+
+  it('a pagina inteira fala ingles e os pratos do operador ficam como foram escritos', async () => {
+    await abreEn();
+    expect(screen.getByText('4 dish(es) · 1 tasting menu(s)')).toBeInTheDocument();
+    for (const r of ['All (4)', 'Starters (0)', 'Main Courses (1)', 'Desserts (1)', 'Drinks (0)', 'Other (0)']) {
+      expect(screen.getByRole('button', { name: r })).toBeInTheDocument();
+    }
+    const c = cartaoEn('Atum Grelhado');
+    expect(within(c).getByText('Main Courses')).toBeInTheDocument();
+    for (const t of ['Vegan', 'Halal', 'Fish', 'Soy', 'Dish of the day', '€12.50']) expect(within(c).getByText(t)).toBeInTheDocument();
+    expect(within(c).getByRole('button', { name: 'Toggle availability' })).toBeInTheDocument();
+    expect(screen.getByText('Tasting Menus')).toBeInTheDocument();
+    expect(screen.getByText('Inactive')).toBeInTheDocument();
+    expect(screen.getByText('Entrada · Peixe')).toBeInTheDocument();
+    expect(screen.getByText('Cinco momentos')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Download QR Code' })).toBeInTheDocument();
+    expect(portuguesNoEcra(DADOS)).toEqual([]);
+    expect(chavesCruas(['menuDigital'])).toEqual([]);
+  });
+
+  it('o formulario do prato fala ingles e grava os valores de sempre', async () => {
+    await abreEn();
+    fireEvent.click(screen.getByRole('button', { name: 'New Dish' }));
+    const dialogo = await screen.findByRole('dialog');
+    expect(within(dialogo).getByText('Allergens')).toBeInTheDocument();
+    expect(within(dialogo).getByPlaceholderText('Description in Portuguese...')).toBeInTheDocument();
+    expect(portuguesNoEcra(DADOS, dialogo)).toEqual([]);
+    expect(chavesCruas(['menuDigital'], dialogo)).toEqual([]);
+    fireEvent.change(campoEn(dialogo, 'Name PT'), { target: { value: 'Bacalhau' } });
+    fireEvent.change(campoEn(dialogo, 'Price (€)'), { target: { value: '9.9' } });
+    fireEvent.change(campoEn(dialogo, 'Category'), { target: { value: 'sobremesas' } });
+    fireEvent.click(within(dialogo).getByText('Fish').closest('label').querySelector('input'));
+    fireEvent.click(within(dialogo).getByText('Gluten-free').closest('label').querySelector('input'));
+    fireEvent.click(within(dialogo).getByText('Mon').closest('label').querySelector('input'));
+    fireEvent.click(within(dialogo).getByRole('button', { name: 'Add dish' }));
+    await waitFor(() => expect(createUnit).toHaveBeenCalledTimes(1));
+    const dados = createUnit.mock.calls[0][0];
+    expect(dados.name).toBe('Bacalhau');
+    expect(JSON.parse(dados.description)).toMatchObject({
+      category: 'sobremesas', allergens: ['peixe'], diets: ['sem_gluten'], daily_special: { 1: true },
+    });
+  });
+
+  it('o menu de degustacao fala ingles', async () => {
+    await abreEn();
+    fireEvent.click(screen.getByRole('button', { name: 'Tasting Menu' }));
+    const dialogo = await screen.findByRole('dialog');
+    expect(within(dialogo).getByText('New Tasting Menu')).toBeInTheDocument();
+    expect(within(dialogo).getByText('Included dishes')).toBeInTheDocument();
+    expect(portuguesNoEcra(DADOS, dialogo)).toEqual([]);
+    fireEvent.change(campoEn(dialogo, 'Menu name'), { target: { value: 'Menu Mar' } });
+    fireEvent.change(campoEn(dialogo, 'Price per person (€)'), { target: { value: '30' } });
+    fireEvent.click(within(dialogo).getByRole('button', { name: 'Create menu' }));
+    await waitFor(() => expect(createUnit).toHaveBeenCalledTimes(1));
+    expect(createUnit.mock.calls[0][0]).toMatchObject({ name: 'Menu Mar', unit_type: 'tasting_menu', base_price: 30 });
+  });
+
+  it('editar um menu de degustação abre o modal com o titulo em ingles', async () => {
+    await abreEn();
+    fireEvent.click(screen.getByRole('button', { name: 'Edit menu' }));
+    const dialogo = await screen.findByRole('dialog');
+    expect(within(dialogo).getByText('Edit menu')).toBeInTheDocument();
+    expect(portuguesNoEcra(DADOS, dialogo)).toEqual([]);
+  });
+
+  it('o aviso de eliminar e o erro de gravar falam ingles', async () => {
+    createUnit.mockRejectedValueOnce(new Error('rede'));
+    await abreEn();
+    fireEvent.click(within(cartaoEn('Atum Grelhado')).getByRole('button', { name: 'Delete' }));
+    const dialogo = await screen.findByRole('dialog');
+    expect(within(dialogo).getByText('Confirm deletion')).toBeInTheDocument();
+    expect(dialogo.textContent).toContain('Delete Atum Grelhado? This action cannot be undone.');
+    fireEvent.click(within(dialogo).getByRole('button', { name: 'Cancel' }));
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+    fireEvent.click(screen.getByRole('button', { name: 'New Dish' }));
+    const form = await screen.findByRole('dialog');
+    fireEvent.change(campoEn(form, 'Name PT'), { target: { value: 'Bacalhau' } });
+    fireEvent.change(campoEn(form, 'Price (€)'), { target: { value: '9' } });
+    fireEvent.click(within(form).getByRole('button', { name: 'Add dish' }));
+    expect(await within(form).findByText('Error saving')).toBeInTheDocument();
   });
 });

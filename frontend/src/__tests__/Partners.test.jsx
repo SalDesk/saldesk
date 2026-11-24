@@ -6,6 +6,8 @@ import {
   listPartners, createPartner, updatePartner, deletePartner, registerPartnerBooking,
   searchOperators, requestPartnership, respondPartnership,
 } from '../services/partnersService';
+import useUiStore from '../store/uiStore';
+import { portuguesNoEcra, chavesCruas } from './helpers/portuguesNoEcra';
 
 vi.mock('../services/partnersService', () => ({
   listPartners: vi.fn(), createPartner: vi.fn(), updatePartner: vi.fn(), deletePartner: vi.fn(),
@@ -644,5 +646,142 @@ describe('Parcerias: design system (modais)', () => {
     expect(html).not.toMatch(NOMEADAS);
     expect(html.replace(/text-error ml-0[.]5/g, '')).not.toMatch(/(?:text|bg|border)-error/);
     expect(html).not.toMatch(/bg-red-/);
+  });
+});
+
+/* ───────────────────────── painel em ingles ───────────────────────── */
+
+describe('Parcerias: painel em ingles', () => {
+  /* nomes dos parceiros e a mensagem de recomendacao do cartao sao dados do operador */
+  const DADOS = ['Hotel Morabeza', 'Rent Sal', 'Restaurante Recusado', 'Tours Sal', 'Surf CV', 'Dive CV', 'Hotel Oasis', 'Recomendamos o Morabeza'];
+
+  beforeEach(() => { useUiStore.setState({ lang: 'en' }); });
+  afterEach(() => { cleanup(); useUiStore.setState({ lang: 'pt' }); });
+
+  const tabEn = (rotulo) => screen.getAllByText(rotulo).find(e => e.closest('button')).closest('button');
+  const dlgEn = () => within(screen.getByRole('dialog'));
+  const abrirNovoEn = async () => {
+    await montar();
+    fireEvent.click(screen.getAllByRole('button', { name: 'Add partner' })[0]);
+  };
+
+  it('a_lista_mostra_rotulos_em_ingles_sem_portugues_nem_chaves_cruas', async () => {
+    await montar();
+    expect(screen.getByText('Cross-selling partnerships')).toBeInTheDocument();
+    expect(cartao('Hotel Morabeza')).toHaveTextContent('Hotel / Accommodation · Commission per referred booking');
+    expect(cartao('Hotel Morabeza')).toHaveTextContent('10% commission · average booking €80');
+    expect(cartao('Hotel Morabeza')).toHaveTextContent('sent');
+    expect(cartao('Hotel Morabeza')).toHaveTextContent('received');
+    expect(cartao('Rent Sal')).toHaveTextContent('Rent-a-Car · Mutual recommendation (no commission)');
+    expect(cartao('Restaurante Recusado')).toHaveTextContent('Rejected');
+    expect(cartao('Restaurante Recusado')).toHaveTextContent('Restaurant · Cross discount for customers');
+    expect(screen.getByRole('button', { name: 'Record bookings Hotel Morabeza' })).toBeInTheDocument();
+    expect(tabEn('Partners')).toBeInTheDocument();
+    expect(screen.getByText(/^Requests/)).toBeInTheDocument();
+    expect(portuguesNoEcra(DADOS)).toEqual([]);
+    expect(chavesCruas(['partnersPage'])).toEqual([]);
+  });
+
+  it('os_pedidos_aparecem_em_ingles_e_aceitar_recusar_enviam_os_estados_gravados', async () => {
+    respondPartnership.mockImplementation(async (id, status) => ({ ...PARCEIROS.find(p => p.id === id), status }));
+    await montar();
+    fireEvent.click(screen.getByText(/^Requests/).closest('button'));
+    expect(screen.getByText('Received')).toBeInTheDocument();
+    expect(screen.getByText('Sent')).toBeInTheDocument();
+    expect(screen.getByText('Awaiting reply')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Cancel request Surf CV' })).toBeInTheDocument();
+    const aceitar = screen.getAllByRole('button', { name: 'Accept' });
+    expect(portuguesNoEcra(DADOS)).toEqual([]);
+    fireEvent.click(aceitar[0]);
+    await waitFor(() => expect(respondPartnership).toHaveBeenCalledWith('p4', 'accepted'));
+    fireEvent.click(await screen.findAllByRole('button', { name: 'Decline' }).then(l => l[0]));
+    await waitFor(() => expect(respondPartnership).toHaveBeenCalledWith('p6', 'rejected'));
+  });
+
+  it('o_dashboard_usa_separador_de_milhares_en_e_pt_fica_como_sempre', async () => {
+    listPartners.mockResolvedValue([{ ...P1, bookings_sent: 30, bookings_received: 10, avg_booking_value: 1000 }]);
+    await montar();
+    fireEvent.click(tabEn('Dashboard'));
+    expect(screen.getByText('Active partners')).toBeInTheDocument();
+    expect(screen.getByText('Bookings sent')).toBeInTheDocument();
+    expect(screen.getByText('Balance (received - sent)')).toBeInTheDocument();
+    expect(screen.getByText('Commissions payable').nextSibling).toHaveTextContent('€3,000');
+    expect(screen.getByText('Commissions receivable').nextSibling).toHaveTextContent('€1,000');
+    expect(screen.getByText('Communication Automations')).toBeInTheDocument();
+    expect(portuguesNoEcra(DADOS)).toEqual([]);
+    cleanup();
+    useUiStore.setState({ lang: 'pt' });
+    await montar();
+    fireEvent.click(separador('Dashboard'));
+    expect(screen.getByText('Comissões a pagar').nextSibling).toHaveTextContent('€3000');
+  });
+
+  it('criar_um_parceiro_externo_em_ingles_grava_os_tipos_gravados', async () => {
+    createPartner.mockImplementation(async (d) => ({ id: 'novo', status: 'accepted', ...d }));
+    await abrirNovoEn();
+    const dlg = dlgEn();
+    fireEvent.change(dlg.getByLabelText('Partner name'), { target: { value: 'Novo Bistro' } });
+    const tipo = dlg.getByLabelText('Partner type');
+    expect(Array.from(tipo.options).map(o => o.textContent)).toEqual(['Hotel / Accommodation', 'Tourist activity', 'Rent-a-Car', 'Restaurant']);
+    fireEvent.change(tipo, { target: { value: Array.from(tipo.options).find(o => o.textContent === 'Restaurant').value } });
+    const parceria = dlg.getByLabelText('Partnership type');
+    expect(Array.from(parceria.options).map(o => o.textContent)).toEqual(['Mutual recommendation (no commission)', 'Commission per referred booking', 'Cross discount for customers']);
+    fireEvent.change(parceria, { target: { value: Array.from(parceria.options).find(o => o.textContent === 'Commission per referred booking').value } });
+    fireEvent.change(dlg.getByLabelText('Commission (%)'), { target: { value: '12' } });
+    fireEvent.change(dlg.getByLabelText('Average booking price (€)'), { target: { value: '80' } });
+    expect(screen.getByRole('dialog')).toHaveTextContent('Percentage of the booking paid to the partner who referred it');
+    expect(portuguesNoEcra([...DADOS, 'Novo Bistro'], screen.getByRole('dialog'))).toEqual([]);
+    fireEvent.click(dlg.getByRole('button', { name: 'Add' }));
+    await waitFor(() => expect(createPartner).toHaveBeenCalledWith({
+      partnership_type: 'commission', commission_pct: 12, avg_booking_value: 80, message_pt: '', message_en: '',
+      name: 'Novo Bistro', partner_type: 'restaurant', active: true,
+    }));
+  });
+
+  it('pedir_parceria_a_um_operador_em_ingles_envia_o_id_e_o_tipo_gravado', async () => {
+    searchOperators.mockResolvedValue([OPERADOR]);
+    requestPartnership.mockResolvedValue({ id: 'n2', name: 'Hotel Oasis', partner_type: 'hotel', status: 'pending', requested_by_operator_id: 'op1' });
+    await abrirNovoEn();
+    fireEvent.click(dlgEn().getByText('SalDesk operator', { selector: 'button' }));
+    fireEvent.click(dlgEn().getByRole('button', { name: 'Send request' }));
+    expect(await screen.findByText('Choose an operator from the list.')).toBeInTheDocument();
+    fireEvent.change(dlgEn().getByLabelText('Search operator by name'), { target: { value: 'oa' } });
+    const operador = await screen.findByText('Hotel Oasis');
+    expect(screen.getByRole('dialog')).toHaveTextContent('Hotel / Accommodation');
+    fireEvent.click(operador.closest('button'));
+    expect(screen.getByRole('dialog')).toHaveTextContent('The request stays pending until the chosen operator accepts it.');
+    expect(dlgEn().getByRole('button', { name: 'Change' })).toBeInTheDocument();
+    fireEvent.click(dlgEn().getByRole('button', { name: 'Send request' }));
+    await waitFor(() => expect(requestPartnership).toHaveBeenCalledWith(expect.objectContaining({ partner_operator_id: 'o9', partnership_type: 'recommendation' })));
+  });
+
+  it('registar_reservas_activar_e_eliminar_gravam_valores_gravados_e_perguntam_em_ingles', async () => {
+    registerPartnerBooking.mockImplementation(async (id) => ({ ...PARCEIROS.find(p => p.id === id), bookings_received: 5 }));
+    updatePartner.mockImplementation(async (id, d) => ({ ...PARCEIROS.find(p => p.id === id), ...d }));
+    const confirma = vi.spyOn(window, 'confirm').mockReturnValue(false);
+    await montar();
+    fireEvent.click(screen.getByRole('button', { name: 'Record bookings Hotel Morabeza' }));
+    expect(screen.getByRole('dialog')).toHaveTextContent('Record bookings — Hotel Morabeza');
+    fireEvent.click(dlgEn().getByText('Booking received from partner'));
+    fireEvent.change(dlgEn().getByLabelText('Number of bookings'), { target: { value: '2' } });
+    fireEvent.click(dlgEn().getByRole('button', { name: 'Record' }));
+    await waitFor(() => expect(registerPartnerBooking).toHaveBeenCalledWith('p1', 'received', 2));
+    fireEvent.click(screen.getByRole('button', { name: 'Deactivate Hotel Morabeza' }));
+    await waitFor(() => expect(updatePartner).toHaveBeenCalledWith('p1', { active: false }));
+    fireEvent.click(screen.getByRole('button', { name: 'Delete Rent Sal' }));
+    expect(confirma).toHaveBeenCalledWith('Delete this partner?');
+  });
+
+  it('o_erro_ao_guardar_aparece_em_ingles_e_o_vazio_tambem', async () => {
+    createPartner.mockRejectedValue(new Error('x'));
+    await abrirNovoEn();
+    fireEvent.change(dlgEn().getByLabelText('Partner name'), { target: { value: 'X' } });
+    fireEvent.click(dlgEn().getByRole('button', { name: 'Add' }));
+    expect(await screen.findByText('Could not save the partner.')).toBeInTheDocument();
+    cleanup();
+    listPartners.mockResolvedValue([]);
+    render(<Partners />);
+    expect(await screen.findByText('No partners set up')).toBeInTheDocument();
+    expect(chavesCruas(['partnersPage'])).toEqual([]);
   });
 });

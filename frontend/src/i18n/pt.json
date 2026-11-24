@@ -224,6 +224,7 @@
     "confirm": "Confirmar",
     "close": "Fechar",
     "loading": "A carregar...",
+    "loadingShort": "A carregar",
     "error": "Erro",
     "success": "Sucesso",
     "noResults": "Sem resultados",
@@ -945,6 +946,8 @@
       "tourButton": "Rever tour"
     },
     "perfil": {
+      "cancelPolicyPtExample": "Ex: Cancelamento gratuito até 48h antes. Após esse prazo, 50% do valor é retido...",
+      "cancelPolicyEnExample": "Ex: Free cancellation up to 48h before. After that, 50% of the value is retained...",
       "days": {
         "mon": "Seg",
         "tue": "Ter",
@@ -3117,5 +3120,1355 @@
       "sending": "A enviar...",
       "save": "Guardar alterações"
     }
+  },
+  "automations": {
+    "title": "Automações de Comunicação",
+    "activeCount": "{{count}} sequência(s) activa(s)",
+    "varsAvailable": "Variáveis disponíveis:",
+    "vars": {
+      "nome_cliente": "Nome do cliente",
+      "nome_tour": "Nome do tour/serviço",
+      "data": "Data do tour",
+      "hora": "Hora do tour",
+      "guia": "Nome do guia atribuído",
+      "ponto_encontro": "Ponto de encontro"
+    },
+    "tabs": {
+      "sequences": "Sequências",
+      "history": "Histórico de envios"
+    },
+    "seq": {
+      "booking_email": {
+        "title": "Nova reserva — Email de confirmação",
+        "subtitle": "Email imediato ao cliente após confirmação"
+      },
+      "booking_whatsapp": {
+        "title": "Nova reserva — WhatsApp de boas-vindas",
+        "subtitle": "Mensagem imediata ao cliente via WhatsApp"
+      },
+      "d7_email": {
+        "title": "D-7 — Email de preparação",
+        "subtitle": "7 dias antes do tour"
+      },
+      "d3_email": {
+        "title": "D-3 — Email com instruções",
+        "subtitle": "3 dias antes do tour"
+      },
+      "d1_whatsapp": {
+        "title": "D-1 — WhatsApp de lembrete",
+        "subtitle": "Mensagem um dia antes do tour"
+      },
+      "post1_review": {
+        "title": "D+1 — Pedido de avaliação",
+        "subtitle": "1 dia após o tour"
+      },
+      "post7_discount": {
+        "title": "D+7 — Desconto próxima reserva",
+        "subtitle": "7 dias após o tour"
+      },
+      "post30_newsletter": {
+        "title": "D+30 — Newsletter de novos tours",
+        "subtitle": "30 dias após o tour"
+      }
+    },
+    "activate": "Activar {{title}}",
+    "deactivate": "Desactivar {{title}}",
+    "subjectPt": "Assunto PT",
+    "subjectEn": "Assunto EN",
+    "messagePt": "Mensagem PT",
+    "messageEn": "Mensagem EN",
+    "editTemplate": "Editar template",
+    "preview": "Preview",
+    "hide": "Ocultar",
+    "viewPreview": "Ver preview",
+    "hidePreview": "Ocultar preview",
+    "variablesHint": "Variáveis — clique para inserir no corpo PT",
+    "saveTemplate": "Guardar template",
+    "previewWhatsApp": "WhatsApp Preview",
+    "previewSubject": "Assunto:",
+    "emptyBody": "(sem conteúdo)",
+    "sampleNote": "Preview com dados de exemplo.",
+    "sampleNoteLong": "Preview com dados de exemplo. Variáveis substituidas no envio real.",
+    "logs": {
+      "date": "Data",
+      "automation": "Automação",
+      "customer": "Cliente",
+      "channel": "Canal",
+      "status": "Estado",
+      "sent": "Enviado",
+      "failed": "Falhou",
+      "emptyTitle": "Sem histórico de envios.",
+      "emptyDescription": "Os envios aparecerão aqui após as primeiras automações serem disparadas.",
+      "showing": "A mostrar {{shown}} de {{total}} registos"
+    },
+    "trigger": {
+      "booking_confirmed": "Confirmação de reserva",
+      "checkin_reminder": "Lembrete check-in",
+      "checkout_thanks": "Agradecimento pós checkout",
+      "days_before_checkin": "{{days}} dias antes do check-in",
+      "days_after_checkout": "{{days}} dias após checkout"
+    },
+    "triggerOption": {
+      "booking_confirmed": "Confirmação de reserva",
+      "checkin_reminder": "Lembrete de check-in",
+      "checkout_thanks": "Agradecimento pós checkout",
+      "days_before_checkin": "X dias antes do check-in",
+      "days_after_checkout": "X dias após o checkout"
+    },
+    "card": {
+      "toggle": "Toggle automação",
+      "subject": "Assunto: {{subject}}",
+      "active": "Activa",
+      "inactive": "Inactiva",
+      "edit": "Editar",
+      "delete": "Eliminar",
+      "deleteIntro": "Eliminar a automação",
+      "deleteWarning": "Esta acção não pode ser desfeita."
+    },
+    "form": {
+      "name": "Nome da automação",
+      "namePlaceholder": "Ex: Confirmação de reserva",
+      "trigger": "Trigger",
+      "channel": "Canal",
+      "days": "Número de dias",
+      "daysBefore": "Dias antes do check-in",
+      "daysAfter": "Dias após o checkout",
+      "subject": "Assunto do email",
+      "varsTitle": "Variáveis disponíveis",
+      "varsHint": "Clique numa variável para a copiar e use nas mensagens abaixo",
+      "messagePt": "Mensagem em Português",
+      "messageEn": "Mensagem em Inglês",
+      "create": "Criar automação",
+      "subjectExample": "Ex: A sua reserva foi confirmada"
+    }
+  },
+  "feedbackPage": {
+    "title": "Feedback Pós-Tour",
+    "subtitle": "Gestão de avaliações e pedidos de feedback",
+    "refresh": "Actualizar",
+    "kpi": {
+      "toursDone": "Tours realizados",
+      "reviewsReceived": "Avaliações recebidas",
+      "responseRate": "Taxa de resposta",
+      "average": "Média geral"
+    },
+    "tabs": {
+      "byTour": "Por Tour",
+      "pending": "Pendentes ({{count}})",
+      "template": "Template"
+    },
+    "unnamedService": "Serviço sem nome",
+    "noTours": "Sem tours com checkout registado.",
+    "toursDoneSuffix": "tours realizados",
+    "reviewsSuffix": "avaliações",
+    "rateSuffix": "taxa resposta",
+    "allRequested": "Todos os tours tem avaliação solicitada.",
+    "pendingNote": "{{count}} reserva(s) sem pedido de avaliação enviado.",
+    "showing": "A mostrar {{shown}} de {{total}}",
+    "cols": {
+      "customer": "Cliente",
+      "tour": "Tour",
+      "checkout": "Checkout",
+      "daysSince": "Dias desde checkout"
+    },
+    "resend": "Reenviar pedido",
+    "autoLabel": "Pedir avaliação automaticamente no dia a seguir",
+    "autoHint": "Envia um e-mail no dia a seguir à actividade ou estadia, só a reservas directas e uma vez por reserva.",
+    "autoError": "Não foi possível guardar. Tente de novo.",
+    "templateTitle": "Template do pedido de avaliação",
+    "varsTitle": "Variáveis disponíveis",
+    "vars": {
+      "customerName": "Nome do cliente",
+      "tourName": "Nome do tour",
+      "reviewLink": "Link directo para avaliação"
+    },
+    "subjectPt": "Assunto PT",
+    "subjectEn": "Assunto EN",
+    "bodyPt": "Corpo PT",
+    "bodyEn": "Corpo EN",
+    "saveTemplate": "Guardar template",
+    "saved": "Guardado",
+    "preview": "Preview",
+    "previewSubject": "Assunto:",
+    "sampleNote": "Preview com dados de exemplo."
+  },
+  "reviewsPage": {
+    "title": "Avaliações",
+    "subtitle": "{{total}} no total · {{pending}} sem resposta",
+    "totalReviews": "{{count}} avaliações",
+    "answered": "Respondidas",
+    "public": "Públicas",
+    "unanswered": "sem resposta",
+    "seeNow": "Ver agora",
+    "allAnswered": "Todas respondidas",
+    "searchPlaceholder": "Pesquisar...",
+    "all": "Todas",
+    "allServices": "Todos os serviços",
+    "filterPending": "Sem resposta",
+    "filterReplied": "Respondidas",
+    "sort": {
+      "recent": "Mais recentes",
+      "oldest": "Mais antigas",
+      "best": "Melhor nota",
+      "worst": "Pior nota"
+    },
+    "results": "{{count}} resultado(s)",
+    "empty": "Nenhuma avaliação encontrada",
+    "clearFilters": "Limpar filtros",
+    "loadMore": "Carregar mais ({{count}} restantes)",
+    "badgePublic": "Pública",
+    "badgePrivate": "Privada",
+    "noComment": "Sem comentário",
+    "anonymous": "Cliente anonimo",
+    "operatorReply": "Resposta do operador",
+    "reply": "Responder",
+    "replyTitle": "Responder avaliação",
+    "publishReply": "Publicar resposta",
+    "yourReply": "A sua resposta (será publicada)",
+    "replyPlaceholder": "Obrigado pela sua visita e pelo seu comentário..."
+  },
+  "customersPage": {
+    "segments": {
+      "all": "Todos",
+      "tourist": "Turistas",
+      "local": "Locais",
+      "group": "Grupos",
+      "corporate": "Corporativos",
+      "vip": "VIP"
+    },
+    "categories": {
+      "turista": "Turista",
+      "local": "Local",
+      "VIP": "VIP",
+      "grupo": "Grupo",
+      "corporativo": "Corporativo"
+    },
+    "tags": {
+      "VIP": "VIP",
+      "grupo": "grupo",
+      "corporativo": "corporativo",
+      "fidelizado": "fidelizado",
+      "novo": "novo",
+      "recorrente": "recorrente",
+      "turista": "turista",
+      "local": "local",
+      "empresa": "empresa"
+    },
+    "language": "Idioma",
+    "agreedPrice": "Preço acordado",
+    "country": "País",
+    "subtitle": "{{n}} cliente(s) registado(s)",
+    "newCustomer": "Novo Cliente",
+    "importCsv": "Importar CSV",
+    "metrics": {
+      "totalCustomers": "Total clientes",
+      "totalRevenue": "Receita total",
+      "countries": "Países",
+      "topCustomer": "Top cliente"
+    },
+    "importedMsg": "{{n}} cliente(s) importado(s) com sucesso.",
+    "createdMsg": "Cliente criado com sucesso.",
+    "csvHeader": "Nome,Email,Telefone,País,Idioma,Visitas,Total gasto,Notas,Criado em",
+    "csvFilePrefix": "clientes",
+    "newModal": {
+      "title": "Novo cliente",
+      "name": "Nome *",
+      "namePlaceholder": "Nome do cliente",
+      "emailPlaceholder": "cliente@email.com",
+      "email": "Email *",
+      "phone": "Telefone",
+      "countryCode": "País (código)",
+      "countryPlaceholder": "Ex: CV, PT",
+      "category": "Categoria (opcional)",
+      "price": "Preço acordado (opcional)",
+      "pricePlaceholder": "Ex: 45.00",
+      "notes": "Notas",
+      "notesPlaceholder": "Preferências, contexto adicional, etc.",
+      "required": "Nome e email são obrigatórios",
+      "createError": "Erro ao criar cliente",
+      "create": "Criar cliente"
+    },
+    "importModal": {
+      "title": "Importar clientes via CSV",
+      "expected": "Formato esperado (cabeçalho obrigatório):",
+      "selectFile": "Clicar para seleccionar ficheiro CSV",
+      "fileHint": "Ficheiro .csv, max 5MB",
+      "preview": "Pré-visualização (primeiras {{n}} linhas)",
+      "import": "Importar",
+      "importError": "Erro ao importar ficheiro"
+    }
+  },
+  "customerDetail": {
+    "sections": {
+      "profile": "Perfil",
+      "history": "Histórico",
+      "comms": "Comunicação"
+    },
+    "ltv": "LTV",
+    "contact": "Contacto",
+    "whatsapp": "WhatsApp",
+    "birthday": "Aniversário",
+    "newTag": "Nova tag + Enter",
+    "internalNotes": "Notas internas",
+    "noNotes": "Sem notas",
+    "history": "Histórico ({{n}})",
+    "noBookings": "Sem reservas",
+    "sendEmailTitle": "Enviar Email",
+    "emailSent": "Email enviado com sucesso",
+    "to": "Para",
+    "subject": "Assunto",
+    "subjectPlaceholder": "Assunto do email",
+    "message": "Mensagem",
+    "bodyPlaceholder": "Corpo do email...",
+    "sendEmail": "Enviar email",
+    "noWhatsapp": "Sem número WhatsApp registado",
+    "templates": {
+      "confirmation": "Confirmação de reserva",
+      "reminder": "Lembrete de tour",
+      "review": "Pedido de avaliação"
+    },
+    "messages": {
+      "greeting": "Olá {{name}}, obrigado pela sua preferência!",
+      "confirmation": "Olá {{name}}! A sua reserva foi confirmada. Aguardamos a sua visita!",
+      "reminder": "Olá! Lembrete do seu tour amanhã. Não se esqueça de trazer protector solar e água.",
+      "review": "Obrigado pela sua visita! Pode deixar a sua avaliação em: https://app.saldesk.cv"
+    }
+  },
+  "messagesPage": {
+    "title": "Mensagens",
+    "newGroup": "Novo grupo",
+    "emptyList": "Sem colaboradores, grupos ou clientes",
+    "staff": "Colaboradores",
+    "conversations": "Conversas",
+    "selectConversation": "Seleccione uma conversa",
+    "typing": "está a escrever...",
+    "chatTitle": "Conversa do chat do site",
+    "chat": "Chat",
+    "email": "Email",
+    "noEmail": "Sem email",
+    "noPhone": "Sem telefone",
+    "noMessages": "Sem mensagens ainda. Comece a conversa.",
+    "autoReply": "Resposta automática",
+    "deliveryFailed": "Falha ao entregar",
+    "sentByEmail": "Enviado por email",
+    "sentByWhatsapp": "Enviado por WhatsApp",
+    "attachFile": "Anexar ficheiro",
+    "write": "Escrever mensagem...",
+    "writeByEmail": "Escrever mensagem por email...",
+    "writeByWhatsapp": "Escrever mensagem por WhatsApp...",
+    "send": "Enviar",
+    "online": "Online",
+    "groupSublabel": "Grupo · {{n}} membros",
+    "customer": "Cliente",
+    "notif": {
+      "group": "Nova mensagem num grupo",
+      "guest": "Nova mensagem de um visitante",
+      "staff": "Nova mensagem de um colaborador"
+    },
+    "attachmentMarker": "[Anexo: {{name}}]",
+    "groupModal": {
+      "title": "Novo grupo",
+      "name": "Nome do grupo",
+      "namePlaceholder": "Ex: Equipa Kitesurf",
+      "members": "Membros",
+      "create": "Criar grupo"
+    }
+  },
+  "staffChat": {
+    "noConversations": "Sem conversas",
+    "noneLinked": "Ainda não existem grupos nem colaboradores associados.",
+    "management": "Gestão",
+    "manager": "Gestor",
+    "groups": "Grupos",
+    "members": "{{n}} membros",
+    "team": "Equipa",
+    "member": "Colaborador",
+    "noMessages": "Sem mensagens ainda. Comece a conversa.",
+    "placeholder": "Escreva uma mensagem..."
+  },
+  "founderChat": {
+    "title": "Mensagens SalDesk",
+    "subtitle": "Conversa directa com a equipa SalDesk",
+    "emptyTitle": "Sem mensagens ainda",
+    "emptyText": "Escreve aqui se precisares de contactar a equipa SalDesk",
+    "placeholder": "Escreve uma mensagem...",
+    "send": "Enviar"
+  },
+  "orders": {
+    "title": "Pedidos",
+    "subtitle": "{{n}} pedido(s)",
+    "refresh": "Actualizar",
+    "all": "Todos",
+    "allTables": "Todas as mesas",
+    "empty": "Sem pedidos.",
+    "table": "Mesa {{n}}",
+    "orderTitle": "Pedido — {{table}}",
+    "orderNotes": "Notas do pedido",
+    "total": "Total",
+    "columns": {
+      "ref": "Ref",
+      "table": "Mesa",
+      "items": "Itens",
+      "total": "Total",
+      "status": "Estado",
+      "time": "Hora"
+    },
+    "cancel": "Cancelar",
+    "viewDetails": "Ver detalhes",
+    "status": {
+      "received": "Recebido",
+      "preparing": "Em preparação",
+      "ready": "Pronto",
+      "delivered": "Entregue",
+      "cancelled": "Cancelado"
+    },
+    "advance": {
+      "received": "Preparar",
+      "preparing": "Pronto",
+      "ready": "Entregar"
+    }
+  },
+  "whatsappMessages": {
+    "send": {
+      "confirmation": "Confirmação",
+      "reminder": "Lembrete",
+      "review": "Pedir avaliação",
+      "preparing": "A preparar…",
+      "sending": "{{label}}: a enviar por WhatsApp",
+      "opened": "{{label}}: WhatsApp aberto",
+      "alreadyPrepared": "{{label}} já estava preparada: WhatsApp aberto",
+      "prepareError": "Não foi possível preparar a mensagem",
+      "noPhone": "O cliente não tem telefone registado.",
+      "blocked": "O navegador bloqueou a janela: abrir o WhatsApp"
+    },
+    "pending": {
+      "title": "WhatsApp por enviar",
+      "open": "Abrir WhatsApp",
+      "more": "+ {{n}} mensagem(ns) por enviar",
+      "triggers": {
+        "booking_confirmed": "Confirmação",
+        "reminder_d1": "Lembrete",
+        "review_request": "Avaliação",
+        "automation": "Automação"
+      },
+      "message": "Mensagem"
+    }
+  },
+  "vouchersPage": {
+    "title": "Vouchers e Promoções",
+    "subtitle": "Gerir códigos de desconto",
+    "newVoucher": "Novo voucher",
+    "status": {
+      "activo": "Activo",
+      "expirado": "Expirado",
+      "esgotado": "Esgotado",
+      "inactivo": "Inactivo"
+    },
+    "stats": {
+      "total": "Total vouchers",
+      "active": "Activos",
+      "expired": "Expirados",
+      "totalUses": "Total utilizações"
+    },
+    "searchPlaceholder": "Pesquisar código...",
+    "searchAria": "Pesquisar código",
+    "filters": {
+      "all": "Todos",
+      "active": "Activos",
+      "expired": "Expirados",
+      "usedUp": "Esgotados"
+    },
+    "columns": {
+      "code": "Código",
+      "discount": "Desconto",
+      "minimum": "Mínimo",
+      "validity": "Validade",
+      "uses": "Usos",
+      "tours": "Tours",
+      "status": "Estado"
+    },
+    "toursCount": "{{n}} tour(s)",
+    "allTours": "Todos",
+    "actions": {
+      "share": "Partilhar",
+      "edit": "Editar",
+      "deactivate": "Desactivar",
+      "activate": "Activar",
+      "delete": "Eliminar",
+      "shareAria": "Partilhar {{code}}",
+      "editAria": "Editar {{code}}",
+      "deactivateAria": "Desactivar {{code}}",
+      "activateAria": "Activar {{code}}",
+      "deleteAria": "Eliminar {{code}}"
+    },
+    "confirmDelete": "Eliminar este voucher?",
+    "loading": "A carregar...",
+    "empty": {
+      "title": "Sem vouchers",
+      "description": "Crie o primeiro código de desconto para os seus clientes.",
+      "create": "Criar voucher"
+    },
+    "copy": "Copiar",
+    "copied": "Copiado",
+    "modal": {
+      "titleNew": "Novo voucher",
+      "titleEdit": "Editar voucher",
+      "code": "Código",
+      "codePlaceholder": "Ex: VERAO2025",
+      "generate": "Gerar",
+      "discountType": "Tipo de desconto",
+      "typePercent": "Percentagem (%)",
+      "typeFixed": "Valor fixo (€)",
+      "discountPct": "Desconto (%)",
+      "discountEur": "Desconto (€)",
+      "minBooking": "Mínimo de reserva (€)",
+      "minPlaceholder": "0 = sem mínimo",
+      "maxUses": "Limite de usos",
+      "maxPlaceholder": "0 = ilimitado",
+      "validUntil": "Válido até",
+      "applicableTours": "Tours aplicáveis",
+      "allToursApply": "Aplicável a todos os tours.",
+      "selectedTours": "{{n}} tour(s) seleccionado(s).",
+      "errCode": "O código é obrigatório.",
+      "errValue": "O valor do desconto deve ser maior que zero.",
+      "errSave": "Erro ao guardar voucher.",
+      "cancel": "Cancelar",
+      "create": "Criar voucher",
+      "save": "Guardar"
+    },
+    "share": {
+      "title": "Partilhar — {{code}}",
+      "discountOff": "{{discount}} de desconto",
+      "whatsapp": "WhatsApp",
+      "send": "Enviar",
+      "email": "Email",
+      "emailPt": "Email PT",
+      "emailEn": "Email EN",
+      "close": "Fechar",
+      "expires": " Válido até {{date}}.",
+      "message": "Use o código *{{code}}* para obter {{discount}} de desconto na sua próxima reserva.{{expires}} Reserve em: {{link}}",
+      "subject": "Voucher especial para si"
+    }
+  },
+  "loyaltyPage": {
+    "title": "Programa de Fidelidade",
+    "subtitle": "Configure níveis, pontos e recompensas",
+    "levels": {
+      "Bronze": "Bronze",
+      "Prata": "Prata",
+      "Ouro": "Ouro"
+    },
+    "ledger": {
+      "earn": "Ganho",
+      "manual_adjust": "Ajuste manual",
+      "redeem": "Resgate"
+    },
+    "noMovements": "Sem movimentos ainda.",
+    "points": {
+      "title": "Pontos — {{name}}",
+      "current": "Pontos actuais",
+      "voucherCreated": "Voucher gerado — {{pct}}% de desconto",
+      "copyCode": "Copiar código",
+      "singleUse": "Uso único, válido até {{date}}.",
+      "redeemTier": "Resgatar nível {{level}}",
+      "redeemHelp": "Troca todo o saldo por um voucher de {{pct}}% (uso único).",
+      "redeem": "Resgatar",
+      "add": "Adicionar",
+      "remove": "Remover",
+      "amount": "Quantidade de pontos",
+      "amountPlaceholder": "Ex: 50",
+      "reason": "Motivo",
+      "reasonPlaceholder": "Ex: reserva especial, ajuste manual...",
+      "result": "Resultado",
+      "pts": "pts",
+      "close": "Fechar",
+      "saveAdjust": "Guardar ajuste",
+      "history": "Histórico",
+      "errAmount": "Introduza um valor válido.",
+      "errAdjust": "Erro ao actualizar pontos.",
+      "errRedeem": "Erro ao resgatar pontos."
+    },
+    "level": {
+      "range": "{{min}}–{{max}} pts · {{pct}}% desconto",
+      "discountPct": "Desconto (%)",
+      "rewardDesc": "Descrição da recompensa",
+      "maxPoints": "Pontos máximo (nível {{level}})",
+      "cancel": "Cancelar",
+      "save": "Guardar"
+    },
+    "programAria": "Programa de fidelidade",
+    "programActive": "Programa activo",
+    "programInactive": "Programa inactivo",
+    "activeHelp": "Os clientes acumulam pontos automaticamente após cada reserva.",
+    "inactiveHelp": "Active o programa para começar a atribuir pontos aos clientes.",
+    "tabs": {
+      "config": "Configuração",
+      "customers": "Clientes"
+    },
+    "earning": {
+      "title": "Regra de acumulação",
+      "pointsPerEuro": "Pontos por Euro gasto",
+      "unit": "pt / EUR",
+      "example": "Ex: reserva de €100 = {{n}} pontos."
+    },
+    "tiers": {
+      "title": "Níveis e recompensas",
+      "note": "Os limites mínimos dos níveis Prata e Ouro são calculados automaticamente a partir do máximo do nível anterior."
+    },
+    "stats": {
+      "total": "Total clientes"
+    },
+    "searchPlaceholder": "Pesquisar cliente...",
+    "searchAria": "Pesquisar cliente",
+    "all": "Todos",
+    "columns": {
+      "customer": "Cliente",
+      "email": "Email",
+      "visits": "Visitas",
+      "points": "Pontos",
+      "tier": "Nível",
+      "reward": "Recompensa"
+    },
+    "adjustAria": "Ajustar pontos {{name}}",
+    "emptyCustomers": "Sem clientes encontrados."
+  },
+  "packagesPage": {
+    "title": "Pacotes Sazonais",
+    "subtitle": "Combina tours em pacotes com preço especial",
+    "newPackage": "Novo pacote",
+    "status": {
+      "activo": "Activo",
+      "inactivo": "Inactivo",
+      "esgotado": "Esgotado",
+      "expirado": "Expirado"
+    },
+    "kpi": {
+      "active": "Pacotes activos",
+      "bookings": "Reservas por pacotes",
+      "revenue": "Receita gerada"
+    },
+    "publicNote": "Os pacotes activos aparecem automaticamente na página pública de reservas quando o backend implementar o endpoint",
+    "empty": {
+      "title": "Sem pacotes criados",
+      "description": "Cria o primeiro pacote combinando tours com preço especial.",
+      "create": "Criar pacote"
+    },
+    "card": {
+      "saves": "Poupa {{amount}}",
+      "bookings": "{{n}} reserva(s)",
+      "remaining": "{{n}} restante(s)",
+      "deactivate": "Desactivar",
+      "activate": "Activar",
+      "deactivateAria": "Desactivar {{name}}",
+      "activateAria": "Activar {{name}}",
+      "editAria": "Editar {{name}}",
+      "deleteAria": "Eliminar {{name}}"
+    },
+    "confirmDelete": "Eliminar este pacote?",
+    "modal": {
+      "titleNew": "Novo pacote",
+      "titleEdit": "Editar pacote",
+      "namePt": "Nome PT",
+      "nameEn": "Nome EN",
+      "namePtPlaceholder": "Ex: Pacote Kite + Mergulho",
+      "nameEnPlaceholder": "Ex: Kite + Diving Package",
+      "descPt": "Descrição PT",
+      "descEn": "Descrição EN",
+      "includedTours": "Tours incluidos ({{n}} seleccionado(s))",
+      "noTours": "Sem tours disponíveis. Cria tours primeiro em Unidades.",
+      "sumTours": "Soma dos tours individuais:",
+      "price": "Preço do pacote (€)",
+      "pricePlaceholder": "Ex: 85.00",
+      "customerSaves": "Cliente poupa {{amount}} vs compra individual",
+      "limit": "Limite de vendas (0 = ilimitado)",
+      "validFrom": "Válido de",
+      "validTo": "Válido até",
+      "photo": "Foto (URL)",
+      "photoPlaceholder": "https://exemplo.com/foto.jpg",
+      "status": "Estado",
+      "errSave": "Erro ao guardar pacote.",
+      "cancel": "Cancelar",
+      "create": "Criar pacote",
+      "save": "Guardar"
+    }
+  },
+  "groupsPage": {
+    "title": "Grupos e Eventos Corporativos",
+    "subtitle": "Cotações e propostas para grupos e empresas",
+    "newQuote": "Nova cotação",
+    "eventTypes": {
+      "team_building": "Team Building",
+      "incentivo": "Viagem de Incentivo",
+      "turismo": "Turismo de Grupo",
+      "casamento": "Casamento / Evento",
+      "outro": "Outro"
+    },
+    "statuses": {
+      "pedido": "Pedido",
+      "em_analise": "Em análise",
+      "proposta_enviada": "Proposta enviada",
+      "confirmado": "Confirmado",
+      "concluido": "Concluído",
+      "cancelado": "Cancelado"
+    },
+    "kpi": {
+      "total": "Total cotações",
+      "confirmed": "Confirmados",
+      "guests": "Pax confirmados"
+    },
+    "searchPlaceholder": "Pesquisar empresa ou grupo...",
+    "searchAria": "Pesquisar empresa ou grupo",
+    "all": "Todos",
+    "empty": {
+      "title": "Sem cotações",
+      "first": "Regista a primeira cotação para grupo ou evento corporativo.",
+      "filtered": "Nenhuma cotação corresponde aos filtros."
+    },
+    "confirmDelete": "Eliminar esta cotação?",
+    "modal": {
+      "titleNew": "Nova cotação de grupo",
+      "titleEdit": "Editar cotação",
+      "company": "Empresa / Grupo",
+      "companyPlaceholder": "Ex: Empresa ABC",
+      "eventType": "Tipo de evento",
+      "date": "Data pretendida",
+      "guests": "Número de pessoas",
+      "guestsPlaceholder": "Ex: 20",
+      "requestedTours": "Tours pretendidos ({{n}} seleccionado(s))",
+      "noTours": "Sem tours disponíveis.",
+      "tourPrice": "{{name}} — {{price}}/pax",
+      "discount": "Desconto de grupo (%)",
+      "discountPlaceholder": "Ex: 15",
+      "budget": "Orçamento estimado (€)",
+      "budgetPlaceholder": "Orçamento do cliente",
+      "estimated": "Preço estimado c/ desconto:",
+      "estimatedDetail": "({{guests}} pax × {{pct}}% desconto)",
+      "deposit": "Sinal (%)",
+      "depositHint": "Percentagem a pagar como sinal",
+      "daysBefore": "Restante X dias antes",
+      "daysBeforeHint": "Dias antes do evento para pagamento",
+      "proposalValidity": "Validade da proposta",
+      "notes": "Notas especiais",
+      "notesPlaceholder": "Necessidades especiais, alergias, preferências do grupo...",
+      "status": "Estado",
+      "errSave": "Erro ao guardar cotação.",
+      "cancel": "Cancelar",
+      "create": "Criar cotação",
+      "save": "Guardar"
+    },
+    "payment": {
+      "title": "Pagamento — {{company}}",
+      "totalPaid": "Total pago até agora:",
+      "amount": "Montante recebido (€)",
+      "date": "Data",
+      "description": "Descrição",
+      "descriptionPlaceholder": "Ex: Sinal, Pagamento final...",
+      "defaultNote": "Sinal",
+      "cancel": "Cancelar",
+      "record": "Registar"
+    },
+    "card": {
+      "requestedTours": "Tours pretendidos",
+      "guestsCount": "{{n}} pax",
+      "discount": "Desconto",
+      "deposit": "Sinal",
+      "finalPayment": "Pagamento final",
+      "daysBefore": "{{n}}d antes",
+      "proposalUntil": "Proposta válida até",
+      "notes": "Notas",
+      "paymentsReceived": "Pagamentos recebidos",
+      "totalPaid": "Total pago",
+      "advance": "Avançar para: {{status}}",
+      "recordPayment": "Registar pagamento",
+      "printProposal": "Imprimir proposta",
+      "editAria": "Editar {{name}}",
+      "deleteAria": "Eliminar {{name}}"
+    }
+  },
+  "partnersPage": {
+    "title": "Parcerias Cross-Selling",
+    "subtitle": "Recomendações e comissões entre operadores SalDesk",
+    "addPartner": "Adicionar parceiro",
+    "types": {
+      "hotel": "Hotel / Alojamento",
+      "activity": "Actividade Turística",
+      "rentacar": "Rent-a-Car",
+      "restaurant": "Restaurante"
+    },
+    "partnershipTypes": {
+      "recommendation": "Recomendação mútua (sem comissão)",
+      "commission": "Comissão por reserva referenciada",
+      "discount": "Desconto cruzado para clientes"
+    },
+    "picker": {
+      "change": "Trocar",
+      "placeholder": "Pesquisar operador pelo nome...",
+      "aria": "Pesquisar operador pelo nome",
+      "searching": "A pesquisar...",
+      "none": "Nenhum operador encontrado."
+    },
+    "modal": {
+      "titleNew": "Adicionar parceiro",
+      "titleEdit": "Editar parceiro",
+      "modeManual": "Parceiro externo",
+      "modeReal": "Operador SalDesk",
+      "name": "Nome do parceiro",
+      "namePlaceholder": "Ex: Hotel Morabeza",
+      "partnerType": "Tipo de parceiro",
+      "operatorLabel": "Operador SalDesk",
+      "pendingHint": "O pedido fica pendente até o operador escolhido o aceitar.",
+      "partnershipType": "Tipo de parceria",
+      "commission": "Comissão (%)",
+      "commissionPlaceholder": "Ex: 10",
+      "commissionHint": "Percentagem da reserva paga ao parceiro que a referenciou",
+      "avgValue": "Preço médio da reserva (€)",
+      "avgPlaceholder": "Ex: 80",
+      "avgHint": "Usado para estimar comissões a pagar/receber no Dashboard",
+      "messagePt": "Mensagem de recomendação PT",
+      "messageEn": "Mensagem de recomendação EN",
+      "messagePtPlaceholder": "Ex: Para o seu alojamento em Sal, recomendamos o nosso parceiro Hotel Morabeza.",
+      "messageEnPlaceholder": "Ex: For your accommodation in Sal, we recommend our partner Hotel Morabeza.",
+      "errChoose": "Escolhe um operador da lista.",
+      "errSave": "Erro ao guardar parceiro.",
+      "cancel": "Cancelar",
+      "sendRequest": "Enviar pedido",
+      "add": "Adicionar",
+      "save": "Guardar"
+    },
+    "log": {
+      "title": "Registar reservas — {{name}}",
+      "sent": "Reserva enviada ao parceiro",
+      "received": "Reserva recebida do parceiro",
+      "count": "Número de reservas",
+      "cancel": "Cancelar",
+      "record": "Registar"
+    },
+    "tabs": {
+      "partners": "Parceiros",
+      "requests": "Pedidos",
+      "dashboard": "Dashboard"
+    },
+    "empty": {
+      "title": "Sem parceiros configurados",
+      "description": "Adiciona operadores SalDesk parceiros para começar a fazer cross-selling."
+    },
+    "rejected": "Recusado",
+    "commissionLine": "{{pct}}% comissão",
+    "avgBookingLine": " · reserva média {{amount}}",
+    "bookingsSent": "enviadas",
+    "bookingsReceived": "recebidas",
+    "actions": {
+      "record": "Registar reservas",
+      "recordAria": "Registar reservas {{name}}",
+      "deactivateAria": "Desactivar {{name}}",
+      "activateAria": "Activar {{name}}",
+      "editAria": "Editar {{name}}",
+      "deleteAria": "Eliminar {{name}}"
+    },
+    "confirmDelete": "Eliminar este parceiro?",
+    "requests": {
+      "received": "Recebidos",
+      "noneReceived": "Sem pedidos de parceria por responder.",
+      "accept": "Aceitar",
+      "reject": "Recusar",
+      "sent": "Enviados",
+      "noneSent": "Sem pedidos de parceria enviados.",
+      "awaiting": "A aguardar resposta",
+      "cancel": "Cancelar pedido",
+      "cancelAria": "Cancelar pedido {{name}}"
+    },
+    "dashboard": {
+      "activePartners": "Parceiros activos",
+      "sent": "Reservas enviadas",
+      "received": "Reservas recebidas",
+      "balance": "Balanco (recebidas - enviadas)",
+      "payable": "Comissões a pagar",
+      "payableHelp": "Por reservas que enviaste aos parceiros com comissão.",
+      "receivable": "Comissões a receber",
+      "receivableHelp": "Por reservas que os parceiros te enviaram.",
+      "needsAvg": "Requer preços médios configurados por parceiro.",
+      "noteLabel": "Nota:",
+      "noteText": "Para activar as recomendações automáticas (email após tour confirmado, etc.), configura as automações correspondentes em"
+    }
+  },
+  "affiliatesPage": {
+    "title": "Programa de Afiliados",
+    "subtitle": "Gere afiliados e comissões por reservas referenciadas",
+    "copied": "Copiado",
+    "copy": "Copiar",
+    "modal": {
+      "newTitle": "Novo afiliado",
+      "editTitle": "Editar afiliado",
+      "name": "Nome",
+      "email": "Email",
+      "commission": "Comissão (%)",
+      "code": "Código de afiliado",
+      "namePlaceholder": "Ex: João Silva",
+      "emailPlaceholder": "joao@exemplo.com",
+      "codePlaceholder": "Ex: JOA3K9",
+      "duplicateCode": "Já existe um afiliado com este código.",
+      "saveError": "Erro ao guardar afiliado.",
+      "create": "Criar afiliado"
+    },
+    "payment": {
+      "title": "Pagamento — {{name}}",
+      "totalPaid": "TOTAL PAGO",
+      "pending": "PENDENTE",
+      "amount": "Montante a pagar (€)",
+      "date": "Data do pagamento",
+      "note": "Nota",
+      "defaultNote": "Pagamento de comissão",
+      "invalidAmount": "Introduza um montante válido.",
+      "saveError": "Erro ao registar pagamento.",
+      "register": "Registar pagamento"
+    },
+    "programActive": "Programa activo",
+    "programInactive": "Programa inactivo",
+    "newAffiliate": "Novo afiliado",
+    "kpi": {
+      "active": "Afiliados activos",
+      "bookings": "Reservas geradas",
+      "paid": "Comissão paga",
+      "pending": "Comissão pendente"
+    },
+    "tabs": {
+      "affiliates": "Afiliados",
+      "config": "Configuração",
+      "analytics": "Analytics"
+    },
+    "empty": {
+      "title": "Sem afiliados registados",
+      "description": "Cria o primeiro afiliado e partilha o link de afiliado."
+    },
+    "row": {
+      "commission": "{{pct}}% comissão",
+      "registerPayment": "Registar pagamento",
+      "registerPaymentFor": "Registar pagamento {{name}}",
+      "deactivate": "Desactivar {{name}}",
+      "activate": "Activar {{name}}",
+      "edit": "Editar {{name}}",
+      "delete": "Eliminar {{name}}",
+      "bookings": "Reservas",
+      "paid": "Pago",
+      "pending": "Pendente"
+    },
+    "confirmDelete": "Eliminar este afiliado?",
+    "config": {
+      "title": "Configuração global do programa",
+      "globalCommission": "Comissão global (%)",
+      "globalCommissionHint": "Percentagem padrão para novos afiliados. Pode ser sobreposta por afiliado.",
+      "minBooking": "Mínimo de reserva (€)",
+      "minBookingHint": "Valor mínimo da reserva para a comissão ser aplicada. 0 = sem mínimo.",
+      "saved": "Guardado",
+      "save": "Guardar configuração",
+      "portalLabel": "Portal do afiliado:",
+      "portalIntro": "Cada afiliado pode aceder ao seu dashboard em",
+      "portalMid": "com o email registado. As reservas feitas através do link (",
+      "portalEnd": ") são atribuídas automaticamente ao afiliado."
+    },
+    "analytics": {
+      "empty": "Sem dados de afiliados ainda.",
+      "top": "Top afiliados por reservas",
+      "line": "{{n}} reservas · {{paid}} pago"
+    },
+    "shareText": "Reserve o seu tour: {{link}}"
+  },
+  "affiliatePortal": {
+    "header": "Portal do Afiliado",
+    "loginTitle": "Entrar no portal",
+    "codeLabel": "Código de afiliado:",
+    "emailLabel": "Email registado",
+    "emailPlaceholder": "o-seu@email.com",
+    "loginError": "Email ou código inválido. Verifique os dados e tente novamente.",
+    "signingIn": "A entrar...",
+    "signIn": "Entrar",
+    "notAffiliate": "Ainda não es afiliado? Contacta o operador para obter as tuas credenciais.",
+    "welcome": "Bem-vindo",
+    "commissionPerBooking": "{{pct}}% de comissão por reserva",
+    "stats": {
+      "bookings": "Reservas geradas",
+      "paid": "Comissão paga",
+      "pending": "Comissão pendente",
+      "total": "Total estimado"
+    },
+    "linkTitle": "O teu link de afiliado",
+    "copied": "Copiado",
+    "copyLink": "Copiar link",
+    "shareText": "Reserve o seu tour com desconto: {{link}}",
+    "paymentHistory": "Histórico de pagamentos",
+    "logout": "Sair"
+  },
+  "marketingPage": {
+    "title": "Marketing",
+    "subtitle": "Ferramentas de divulgação e planeador de conteudos",
+    "tabs": {
+      "qrcode": "QR Code",
+      "widget": "Widget",
+      "referrals": "Indicações",
+      "stats": "Estatísticas"
+    },
+    "copied": "Copiado",
+    "copy": "Copiar",
+    "qr": {
+      "for": "QR Code para",
+      "publicProfile": "Perfil público — link de reserva",
+      "color": "Cor",
+      "colorNamed": "Cor {{color}}",
+      "customColor": "Cor personalizada",
+      "size": "Tamanho — {{size}}px",
+      "sizeAria": "Tamanho do QR code",
+      "generate": "Gerar preview",
+      "preview": "Preview",
+      "alt": "QR Code"
+    },
+    "widget": {
+      "htmlCode": "Código HTML",
+      "code": "Código",
+      "preview": "Preview",
+      "previewTitle": "Pré-visualização do widget",
+      "failed": "Não foi possível gerar o código do widget. Recarrega a página e tenta de novo.",
+      "pasteHint": "Cole este código no HTML do seu website onde quer que o formulário apareça.",
+      "colorNote": "A cor do widget é a da sua página pública. Defina-a em",
+      "settingsLink": "Definições > Perfil Público",
+      "sisp": "O pagamento com cartão cabo-verdiano (SISP) abre em ecrã inteiro, fora do seu site, porque o banco não aceita ser aberto dentro de outra página. As restantes reservas e o PayPal ficam no seu site."
+    },
+    "referrals": {
+      "inviteTitle": "Indique outro operador",
+      "inviteText": "Partilhe o seu link — quando um negócio indicado por si aderir à SalDesk, fale connosco para receber a sua recompensa.",
+      "yourLink": "O seu link de indicação",
+      "sent": "Indicações enviadas",
+      "converted": "Convertidas",
+      "yours": "As suas indicações ({{n}})",
+      "none": "Ainda não indicou nenhum operador.",
+      "cols": {
+        "business": "Negócio",
+        "date": "Data",
+        "status": "Estado"
+      },
+      "status": {
+        "novo": "Novo",
+        "contactado": "Contactado",
+        "demo_agendada": "Demo agendada",
+        "proposta_enviada": "Proposta enviada",
+        "convertido": "Convertido",
+        "descartado": "Descartado"
+      }
+    },
+    "stats": {
+      "visits": "Visitas ao perfil",
+      "clicks": "Cliques no link",
+      "bookings": "Reservas via link",
+      "conversion": "Taxa de conversão",
+      "last30": "últimos 30 dias",
+      "clicksToBookings": "cliques → reservas",
+      "postsTitle": "Posts — {{month}}",
+      "total": "Total",
+      "published": "Publicados",
+      "scheduled": "Agendados",
+      "cancelled": "Cancelados",
+      "origin": "Origem das reservas",
+      "noSourcesA": "Dados de origem não disponíveis. Configure o endpoint",
+      "noSourcesB": "com campo",
+      "bookingLink": "Link de reserva directa",
+      "open": "Abrir",
+      "sources": {
+        "direct": "Directa",
+        "manual": "Manual",
+        "social": "Social"
+      }
+    },
+    "planner": {
+      "title": "Planeador de Social Media",
+      "newPost": "Novo post",
+      "prevMonth": "Mês anterior",
+      "nextMonth": "Mês seguinte",
+      "newPostOn": "Novo post em {{date}}",
+      "upcoming": "Próximos posts",
+      "noScheduled": "Sem posts agendados",
+      "editPost": "Editar post {{text}}",
+      "deletePost": "Eliminar post {{text}}",
+      "published": "Publicado",
+      "history": "Histórico ({{n}})",
+      "cols": {
+        "text": "Texto",
+        "platform": "Plataforma",
+        "date": "Data",
+        "status": "Estado"
+      }
+    },
+    "postStatus": {
+      "agendado": "Agendado",
+      "publicado": "Publicado",
+      "cancelado": "Cancelado"
+    },
+    "post": {
+      "newTitle": "Novo post",
+      "editTitle": "Editar post",
+      "template": "Template",
+      "templates": {
+        "tour_disponivel": "Tour disponível",
+        "ultimas_vagas": "Últimas vagas",
+        "avaliacao": "Avaliação de cliente",
+        "promocao": "Promoção especial",
+        "foto_do_dia": "Foto do dia"
+      },
+      "textPt": "Texto PT",
+      "textEn": "Texto EN",
+      "textPtPlaceholder": "Texto para publicar em português...",
+      "textEnPlaceholder": "Text to post in English...",
+      "photo": "Foto (URL)",
+      "photoPlaceholder": "https://exemplo.com/imagem.jpg",
+      "platform": "Plataforma",
+      "dateTime": "Data e hora",
+      "state": "Estado",
+      "schedule": "Agendar post",
+      "preview": "Preview",
+      "now": "Agora",
+      "pageFallback": "Página",
+      "profileFallback": "o_seu_perfil",
+      "captionPlaceholder": "A legenda aparecera aqui...",
+      "bodyPlaceholder": "O texto do post aparecera aqui..."
+    }
+  },
+  "integrationsPage": {
+    "subtitle": "Channel Manager — Viator e GetYourGuide",
+    "refresh": "Actualizar",
+    "viatorDescription": "Plataforma de experiências da TripAdvisor",
+    "getyourguideDescription": "Plataforma global de actividades e tours",
+    "productIds": "Product IDs (separados por virgula)",
+    "connected": "Ligado",
+    "disconnected": "Desligado",
+    "lastSync": "Último sync: {{date}}",
+    "sync": "Sincronizar",
+    "disconnect": "Desligar",
+    "configure": "Configurar",
+    "webhookUrls": "URLs de webhook para configurar nas plataformas:",
+    "logsTitle": "Logs de integração",
+    "events": "{{n}} evento(s)",
+    "cols": {
+      "date": "Data",
+      "channel": "Canal",
+      "event": "Evento",
+      "status": "Estado",
+      "ref": "Ref. OTA",
+      "error": "Erro"
+    },
+    "configureTitle": "Configurar {{name}}",
+    "connect": "Ligar"
+  },
+  "pageEditor": {
+    "title": "Editor da Página Pública",
+    "subtitle": "Activa, desactiva e reordena as secções da tua página de reservas. Adiciona parceiros, testemunhos e redes sociais.",
+    "viewMyPage": "Ver a minha página",
+    "sectionsTitle": "Secções da página",
+    "sectionsHint": "Usa as setas para reordenar. Desliga secções que não queres mostrar.",
+    "sections": {
+      "featured": "Destaques",
+      "services": "Serviços",
+      "about": "Sobre Nós",
+      "timeline": "Como Funciona",
+      "gallery": "Galeria",
+      "reviews": "Avaliações",
+      "comparison": "Comparação de Serviços",
+      "availability": "Disponibilidade ao Vivo",
+      "contact": "Localização & Contacto",
+      "faq": "Perguntas Frequentes",
+      "partners": "Parceiros",
+      "video_testimonials": "Testemunhos em Vídeo",
+      "google_reviews": "Avaliações Google",
+      "instagram": "Instagram"
+    },
+    "moveSectionUp": "Mover {{label}} para cima",
+    "moveSectionDown": "Mover {{label}} para baixo",
+    "showSection": "Mostrar {{label}}",
+    "partnersTitle": "Parceiros",
+    "partnerN": "Parceiro {{n}}",
+    "movePartnerUp": "Mover parceiro {{n}} para cima",
+    "movePartnerDown": "Mover parceiro {{n}} para baixo",
+    "removePartner": "Remover parceiro {{n}}",
+    "name": "Nome",
+    "partnerNameAria": "Nome do parceiro {{n}}",
+    "logoUrl": "URL do logótipo",
+    "partnerLogoAria": "URL do logótipo do parceiro {{n}}",
+    "link": "Link (opcional)",
+    "partnerLinkAria": "Link do parceiro {{n}}",
+    "addPartner": "Adicionar parceiro",
+    "videosTitle": "Testemunhos em vídeo",
+    "videoN": "Vídeo {{n}}",
+    "moveVideoUp": "Mover vídeo {{n}} para cima",
+    "moveVideoDown": "Mover vídeo {{n}} para baixo",
+    "removeVideo": "Remover vídeo {{n}}",
+    "videoUrl": "URL do vídeo",
+    "videoUrlAria": "URL do vídeo {{n}}",
+    "thumbnailUrl": "URL da miniatura (opcional)",
+    "thumbnailAria": "URL da miniatura do vídeo {{n}}",
+    "addVideo": "Adicionar vídeo",
+    "googleTitle": "Avaliações Google",
+    "reviewN": "Avaliação {{n}}",
+    "moveReviewUp": "Mover avaliação {{n}} para cima",
+    "moveReviewDown": "Mover avaliação {{n}} para baixo",
+    "removeReview": "Remover avaliação {{n}}",
+    "authorName": "Nome do autor",
+    "authorNameAria": "Nome do autor da avaliação {{n}}",
+    "photoUrl": "URL da foto (opcional)",
+    "photoAria": "URL da foto da avaliação {{n}}",
+    "reviewText": "Texto da avaliação",
+    "reviewTextAria": "Texto da avaliação {{n}}",
+    "addReview": "Adicionar avaliação",
+    "socialTitle": "Redes sociais",
+    "linkedinOptional": "LinkedIn (opcional)",
+    "hoursTitle": "Horário de funcionamento",
+    "openDay": "Aberto {{day}}",
+    "openingOf": "Abertura de {{day}}",
+    "closingOf": "Fecho de {{day}}",
+    "until": "até",
+    "closed": "Fechado",
+    "days": {
+      "seg": "Segunda",
+      "ter": "Terça",
+      "qua": "Quarta",
+      "qui": "Quinta",
+      "sex": "Sexta",
+      "sab": "Sábado",
+      "dom": "Domingo"
+    },
+    "languagesTitle": "Idiomas falados",
+    "locationTitle": "Localização (coordenadas GPS)",
+    "latitude": "Latitude",
+    "longitude": "Longitude",
+    "coordsHelpBefore": "Encontrar coordenadas em",
+    "coordsHelpAfter": "→ clique direito → \"What's here?\"",
+    "save": "Guardar alterações",
+    "saved": "Guardado com sucesso",
+    "previewTitle": "Pré-visualização (esquema)",
+    "previewHelp": "Ordem final da tua página. Para ver o resultado real, usa \"Ver a minha página\" acima.",
+    "disabled": "Desactivadas"
+  },
+  "menuDigital": {
+    "title": "Menu Digital",
+    "subtitle": "{{dishes}} prato(s) · {{menus}} menu(s) degustação",
+    "tastingMenuButton": "Menu Degustação",
+    "newDish": "Novo Prato",
+    "all": "Todos ({{n}})",
+    "categoryCount": "{{label}} ({{n}})",
+    "categories": {
+      "entradas": "Entradas",
+      "pratos_principais": "Pratos Principais",
+      "sobremesas": "Sobremesas",
+      "bebidas": "Bebidas",
+      "outros": "Outros"
+    },
+    "allergens": {
+      "gluten": "Glúten",
+      "lactose": "Lactose",
+      "frutos_secos": "Frutos secos",
+      "marisco": "Marisco",
+      "ovos": "Ovos",
+      "soja": "Soja",
+      "peixe": "Peixe",
+      "amendoim": "Amendoim"
+    },
+    "diets": {
+      "vegetariano": "Vegetariano",
+      "vegan": "Vegan",
+      "sem_gluten": "Sem glúten",
+      "halal": "Halal"
+    },
+    "weekdays": {
+      "mon": "Seg",
+      "tue": "Ter",
+      "wed": "Qua",
+      "thu": "Qui",
+      "fri": "Sex",
+      "sat": "Sab",
+      "sun": "Dom"
+    },
+    "namePt": "Nome PT",
+    "nameEn": "Nome EN",
+    "namePtPlaceholder": "Ex: Atum Grelhado",
+    "nameEnPlaceholder": "Ex: Grilled Tuna",
+    "descPt": "Descrição PT",
+    "descEn": "Descrição EN",
+    "descPtPlaceholder": "Descrição em português...",
+    "descEnPlaceholder": "Description in English...",
+    "category": "Categoria",
+    "price": "Preço (€)",
+    "photo": "Foto",
+    "photoHint": "1 foto · 5MB max",
+    "allergensTitle": "Alérgenos",
+    "dietsTitle": "Dietas",
+    "optionsTitle": "Opções",
+    "available": "Disponível",
+    "featured": "Destaque (landing page)",
+    "dailySpecial": "Prato do dia",
+    "cancel": "Cancelar",
+    "saveChanges": "Guardar alterações",
+    "addDish": "Adicionar prato",
+    "menuName": "Nome do menu",
+    "menuNamePlaceholder": "Menu Degustação Chef",
+    "pricePerPerson": "Preço por pessoa (€)",
+    "includedDishes": "Pratos incluídos",
+    "add": "Adicionar",
+    "dishNamePlaceholder": "Nome do prato",
+    "menuAvailable": "Menu disponível",
+    "save": "Guardar",
+    "createMenu": "Criar menu",
+    "toggleAvailability": "Alternar disponibilidade",
+    "availableHint": "Disponível — clique para desactivar",
+    "unavailableHint": "Indisponível — clique para activar",
+    "edit": "Editar",
+    "delete": "Eliminar",
+    "editMenu": "Editar menu",
+    "editMenuTitle": "Editar Menu",
+    "deleteMenu": "Eliminar menu",
+    "emptyCategory": "Nenhum prato nesta categoria.",
+    "tastingMenusTitle": "Menus Degustação",
+    "inactive": "Inactivo",
+    "qrTitle": "QR Code do Menu",
+    "shareUrl": "URL do menu para partilhar:",
+    "copyLink": "Copiar ligação",
+    "downloadQr": "Descarregar QR Code",
+    "noSlug": "Configure o link do restaurante nas Definições para gerar o QR Code.",
+    "editDish": "Editar Prato",
+    "newTastingMenu": "Novo Menu Degustação",
+    "confirmDeleteTitle": "Confirmar eliminação",
+    "deleteBefore": "Eliminar",
+    "deleteAfter": "? Esta ação não pode ser desfeita.",
+    "saveError": "Erro ao guardar"
+  },
+  "resetPassword": {
+    "weakPassword": "A password deve ser forte: 8+ caracteres, maiúscula, número e carácter especial.",
+    "mismatch": "As passwords não coincidem.",
+    "expired": "Link expirado ou inválido. Solicita um novo link de recuperação.",
+    "invalidTitle": "Link inválido ou expirado",
+    "invalidText": "Este link de recuperação já não é válido. Solicita um novo.",
+    "backToLogin": "Voltar ao login",
+    "title": "Nova password",
+    "subtitle": "Escolhe uma password forte para a tua conta.",
+    "newPassword": "Nova password",
+    "confirmPassword": "Confirmar password",
+    "submit": "Repor password"
+  },
+  "demoEntry": {
+    "unavailableTitle": "Demonstração indisponível",
+    "unavailableText": "Não foi possível aceder à conta de demonstração agora. Tente novamente em breve.",
+    "back": "Voltar a saldesk.cv",
+    "preparing": "A preparar a conta de demonstração..."
+  },
+  "impersonate": {
+    "failedTitle": "Não foi possível entrar",
+    "failedText": "Não foi possível entrar como este operador. Gere o link novamente.",
+    "timeout": "O acesso demorou demasiado tempo. Tente novamente.",
+    "backToLogin": "Voltar ao login",
+    "enteringTitle": "A entrar como operador",
+    "moment": "Um momento…"
+  },
+  "errorBoundary": {
+    "title": "Algo correu mal",
+    "text": "Ocorreu um erro inesperado na aplicação.",
+    "reload": "Recarregar a página"
+  },
+  "apiMessages": {
+    "demoReadOnly": "Conta de demonstração — apenas leitura, esta alteração não foi guardada."
   }
 }

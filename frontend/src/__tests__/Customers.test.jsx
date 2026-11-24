@@ -5,6 +5,7 @@ import Customers from '../pages/Customers';
 import useUiStore from '../store/uiStore';
 import api from '../services/api';
 import { listCustomers, exportCustomersCsv, createCustomer } from '../services/customersService';
+import { portuguesNoEcra, chavesCruas } from './helpers/portuguesNoEcra';
 
 /* Sem rede: so os servicos da pagina sao simulados; a gaveta do cliente tem testes proprios */
 vi.mock('../services/customersService', () => ({
@@ -142,6 +143,13 @@ describe('Customers', () => {
     await waitFor(() => expect(exportCustomersCsv).toHaveBeenCalledTimes(1));
   });
 
+  it('exportar em portugues pede o ficheiro tal como o servidor o escreve (sem trocar o cabecalho)', async () => {
+    await abre();
+    fireEvent.click(screen.getByRole('button', { name: 'Exportar' }));
+    await waitFor(() => expect(exportCustomersCsv).toHaveBeenCalledTimes(1));
+    expect(exportCustomersCsv).toHaveBeenCalledWith(undefined);
+  });
+
   it('novo cliente válida nome e email e não grava', async () => {
     await abre();
     fireEvent.click(screen.getByRole('button', { name: 'Novo Cliente' }));
@@ -260,5 +268,125 @@ describe('Customers', () => {
     expect(nomes()).toEqual(['Sem Dados']);
     fireEvent.click(screen.getByRole('button', { name: 'VIP' }));
     expect(screen.getByText('Sem resultados')).toBeInTheDocument();
+  });
+});
+
+/* Painel em ingles: os rotulos mudam, o que se grava (etiquetas, filtros) fica igual */
+describe('Customers em ingles', () => {
+  /* nomes, emails e etiquetas dos clientes sao dados, nao texto do painel */
+  const DADOS = ['Ana Silva', 'John Smith', 'Empresa Lda', 'Vip Cliente'];
+  let errSpy;
+  let warnSpy;
+
+  beforeEach(() => {
+    useUiStore.setState({ lang: 'en' });
+    errSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    listCustomers.mockReset().mockResolvedValue(CLIENTES);
+    exportCustomersCsv.mockReset().mockResolvedValue();
+    createCustomer.mockReset().mockImplementation(async (dados) => ({ id: 'novo', ...dados }));
+    api.post.mockReset().mockResolvedValue({ data: { data: { imported: 3 } } });
+  });
+
+  afterEach(() => {
+    cleanup();
+    useUiStore.setState({ lang: 'pt' });
+    const erros = errSpy.mock.calls.length;
+    const avisos = warnSpy.mock.calls.length;
+    errSpy.mockRestore();
+    warnSpy.mockRestore();
+    expect(erros).toBe(0);
+    expect(avisos).toBe(0);
+  });
+
+  async function abreEn() {
+    render(
+      <MemoryRouter future={FUTURE}>
+        <Customers />
+      </MemoryRouter>
+    );
+    await screen.findByText('4 customer(s) registered');
+  }
+  function campo(dialogo, etiqueta) {
+    const label = within(dialogo).getAllByText(etiqueta).find(e => e.tagName === 'LABEL');
+    expect(label).toBeTruthy();
+    return label.nextElementSibling;
+  }
+  function nomes() {
+    return within(screen.getByRole('table')).getAllByRole('row').slice(1).map(l => within(l).getAllByRole('cell')[0].textContent);
+  }
+
+  it('mostra_colunas_metricas_e_segmentos_em_ingles_sem_portugues', async () => {
+    await abreEn();
+    expect(within(screen.getByRole('table')).getAllByRole('columnheader').map(c => c.textContent))
+      .toEqual(['Name', 'Email', 'Nationality', 'Visits', 'Total spent', 'Language', 'Agreed price']);
+    const c2 = within(within(screen.getByRole('table')).getAllByRole('row')[2]).getAllByRole('cell').map(c => c.textContent);
+    expect(c2).toEqual(['John Smith', 'john@x.com', 'GB', '6', '€650.00', 'en', '—']);
+    expect(screen.getByText('Total customers').previousElementSibling.textContent).toBe('4');
+    expect(screen.getByText('Total revenue').previousElementSibling.textContent).toBe('€810');
+    expect(screen.getByText('Top customer').previousElementSibling.textContent).toBe('Ana');
+    ['Tourists', 'Locals', 'Groups', 'Corporate', 'VIP', 'New Customer', 'Import CSV', 'Export'].forEach((nome) => {
+      expect(screen.getByRole('button', { name: nome })).toBeInTheDocument();
+    });
+    expect(screen.getByPlaceholderText('Search...')).toBeInTheDocument();
+    expect(portuguesNoEcra(DADOS)).toEqual([]);
+    expect(chavesCruas(['customersPage', 'customers'])).toEqual([]);
+  });
+
+  it('os_segmentos_em_ingles_filtram_como_em_portugues', async () => {
+    await abreEn();
+    fireEvent.click(screen.getByRole('button', { name: 'Corporate' }));
+    expect(nomes()).toEqual(['Empresa Lda']);
+    fireEvent.click(screen.getByRole('button', { name: 'Locals' }));
+    expect(nomes()).toEqual(['Ana Silva']);
+  });
+
+  it('exportar_em_ingles_troca_o_cabecalho_do_ficheiro_e_o_prefixo_do_nome', async () => {
+    await abreEn();
+    fireEvent.click(screen.getByRole('button', { name: 'Export' }));
+    await waitFor(() => expect(exportCustomersCsv).toHaveBeenCalledTimes(1));
+    expect(exportCustomersCsv).toHaveBeenCalledWith({
+      cabecalho: 'Name,Email,Phone,Country,Language,Visits,Total spent,Notes,Created on',
+      prefixo: 'customers',
+    });
+  });
+
+  it('o_novo_cliente_em_ingles_grava_as_etiquetas_guardadas_e_valida_em_ingles', async () => {
+    await abreEn();
+    fireEvent.click(screen.getByRole('button', { name: 'New Customer' }));
+    const dialogo = await screen.findByRole('dialog');
+    expect(within(dialogo).getByText('New customer')).toBeInTheDocument();
+    fireEvent.click(within(dialogo).getByRole('button', { name: 'Create customer' }));
+    expect(await within(dialogo).findByText('Name and email are required')).toBeInTheDocument();
+    expect(createCustomer).not.toHaveBeenCalled();
+    fireEvent.change(campo(dialogo, 'Name *'), { target: { value: 'Novo' } });
+    fireEvent.change(campo(dialogo, 'Email *'), { target: { value: 'n@x.cv' } });
+    fireEvent.change(campo(dialogo, 'Country (code)'), { target: { value: 'CV' } });
+    expect(within(dialogo).getByPlaceholderText('E.g. CV, PT')).toBeInTheDocument();
+    expect(within(dialogo).getByPlaceholderText('customer@email.com')).toBeInTheDocument();
+    fireEvent.click(within(dialogo).getByRole('button', { name: 'Tourist' }));
+    fireEvent.click(within(dialogo).getByRole('button', { name: 'Corporate' }));
+    fireEvent.change(campo(dialogo, 'Agreed price (optional)'), { target: { value: '45' } });
+    expect(portuguesNoEcra(DADOS, dialogo)).toEqual([]);
+    fireEvent.click(within(dialogo).getByRole('button', { name: 'Create customer' }));
+    await waitFor(() => expect(createCustomer).toHaveBeenCalledTimes(1));
+    /* as etiquetas gravadas continuam a ser os valores de sempre */
+    expect(createCustomer).toHaveBeenCalledWith(expect.objectContaining({ name: 'Novo', tags: ['turista', 'corporativo'], custom_price: '45' }));
+    expect(await screen.findByText('Customer created successfully.')).toBeInTheDocument();
+  });
+
+  it('importar_csv_em_ingles_traduz_o_modal_e_mantem_o_formato_esperado', async () => {
+    await abreEn();
+    fireEvent.click(screen.getByRole('button', { name: 'Import CSV' }));
+    const dialogo = await screen.findByRole('dialog');
+    expect(within(dialogo).getByText('Expected format (header required):')).toBeInTheDocument();
+    /* o cabecalho que a importacao le nao se traduz */
+    expect(within(dialogo).getByText('first_name, last_name, email, phone, country_code, language')).toBeInTheDocument();
+    const ficheiro = new File(['first_name,last_name,email\nA,B,a@b.cv'], 'clientes.csv', { type: 'text/csv' });
+    fireEvent.change(dialogo.querySelector('input[type="file"]'), { target: { files: [ficheiro] } });
+    expect(await within(dialogo).findByText('Preview (first 2 lines)')).toBeInTheDocument();
+    fireEvent.click(within(dialogo).getByRole('button', { name: 'Import' }));
+    await waitFor(() => expect(api.post).toHaveBeenCalledTimes(1));
+    expect(await screen.findByText('3 customer(s) imported successfully.')).toBeInTheDocument();
   });
 });

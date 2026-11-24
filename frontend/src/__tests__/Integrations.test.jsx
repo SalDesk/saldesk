@@ -2,6 +2,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import Integrations from '../pages/Integrations';
 import { getStatus, connectChannel, disconnectChannel, syncManual, getLogs } from '../services/integrationsService';
+import useUiStore from '../store/uiStore';
+import { portuguesNoEcra, chavesCruas } from './helpers/portuguesNoEcra';
 
 vi.mock('../services/integrationsService', () => ({
   getStatus: vi.fn(), connectChannel: vi.fn(), disconnectChannel: vi.fn(), syncManual: vi.fn(), getLogs: vi.fn(),
@@ -300,5 +302,54 @@ describe('Channel Manager: design system', () => {
     expect(html).not.toMatch(HEX);
     expect(html).not.toMatch(NOMEADAS);
     expect(html.replace(/text-error ml-0[.]5/g, '')).not.toMatch(/(?:text|bg|border)-error/);
+  });
+});
+
+/* ───────────────────────── painel em ingles ───────────────────────── */
+
+describe('Channel Manager em ingles', () => {
+  const fmtEn = (d) => norm(new Date(d).toLocaleString('en-GB', { dateStyle: 'short', timeStyle: 'short' }));
+  /* texto que vem do servidor (erro de sincronizacao e de log) nao se traduz */
+  const DADOS = ['Token expirado', 'Falhou X'];
+  beforeEach(() => { useUiStore.setState({ lang: 'en' }); });
+  afterEach(() => { cleanup(); useUiStore.setState({ lang: 'pt' }); });
+
+  it('cabecalho_cartoes_webhooks_e_logs_em_ingles_sem_portugues', async () => {
+    await montar();
+    expect(screen.getByText('Integrations')).toBeInTheDocument();
+    expect(screen.getByText('Channel Manager — Viator and GetYourGuide')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Refresh' })).toBeInTheDocument();
+    const c = cartao('Viator');
+    expect(c).toHaveTextContent('TripAdvisor experiences platform');
+    expect(c).toHaveTextContent('Connected');
+    expect(c).not.toHaveTextContent('Disconnected');
+    expect(norm(c.textContent)).toContain(`Last sync: ${fmtEn('2026-11-05T10:30:00Z')}`);
+    expect(within(c).getByRole('button', { name: 'Sync' })).toBeInTheDocument();
+    expect(within(c).getByRole('button', { name: 'Disconnect' })).toBeInTheDocument();
+    const g = cartao('GetYourGuide');
+    expect(g).toHaveTextContent('Global platform for activities and tours');
+    expect(g).toHaveTextContent('Disconnected');
+    expect(within(g).getByRole('button', { name: 'Set up' })).toBeInTheDocument();
+    expect(screen.getByText('Webhook URLs to set up on the platforms:')).toBeInTheDocument();
+    expect(screen.getByText('Integration logs')).toBeInTheDocument();
+    expect(screen.getByText('37 event(s)')).toBeInTheDocument();
+    ['Date', 'Channel', 'Event', 'Status', 'OTA ref.', 'Error'].forEach(h => expect(screen.getByText(h, { selector: 'th' })).toBeInTheDocument());
+    expect(norm(screen.getAllByText(/\d/, { selector: 'span.font-mono' })[0].textContent)).toBe(fmtEn('2026-11-05T10:30:00Z'));
+    expect(portuguesNoEcra(DADOS)).toEqual([]);
+    expect(chavesCruas(['integrationsPage', 'nav', 'common'])).toEqual([]);
+  });
+
+  it('configurar_em_ingles_abre_o_modal_com_a_descricao_e_envia_os_mesmos_campos', async () => {
+    await montar();
+    fireEvent.click(within(cartao('GetYourGuide')).getByRole('button', { name: 'Set up' }));
+    const dlg = dialogo();
+    expect(dlg).toHaveTextContent('Set up GetYourGuide');
+    expect(dlg).toHaveTextContent('Global platform for activities and tours');
+    expect(within(dlg).getByText('Product IDs (comma-separated)')).toBeInTheDocument();
+    expect(portuguesNoEcra([], dlg)).toEqual([]);
+    fireEvent.change(campo('API Key'), { target: { value: 'k1' } });
+    fireEvent.change(campo('Product IDs (comma-separated)'), { target: { value: 'a, b ,,c' } });
+    fireEvent.click(within(dlg).getByRole('button', { name: 'Connect' }));
+    await waitFor(() => expect(connectChannel).toHaveBeenCalledWith('getyourguide', { api_key: 'k1', product_ids: ['a', 'b', 'c'] }));
   });
 });

@@ -5,7 +5,7 @@
   "layout": { "customerMessage": "Klantbericht", "teamMessage": "Teambericht", "saldeskMessage": "Bericht van SalDesk", "demoBanner": "Demomodus — voorbeeldgegevens, wijzigingen worden niet opgeslagen" },
   "plan": { "planName": "Plan {{plan}}", "featureTitle": "{{plan}}-functie", "fromPrice": "Plan {{plan}} vanaf", "pricePerMonth": "€{{price}}/maand", "viewPlans": "Abonnementen bekijken", "fallback": "Functie beschikbaar in een hoger plan.", "features": {"colaboradores": "Beheer je team, wijs taken toe en volg de prestaties van elke medewerker.", "guias": "Maak gidsprofielen aan, stel beschikbaarheid in en volg hun beoordelingen en opdrachten.", "financeiro": "Bekijk gedetailleerde financiële rapporten, exports en omzetanalyse per tour.", "marketing": "Maak campagnes, plan berichten en volg de prestaties van je digitale marketing.", "analytics": "Analyseer trends, verkeersbronnen en groeicijfers van je bedrijf.", "vouchers": "Maak en beheer vouchers en kortingscodes voor je klanten.", "afiliados": "Vergroot je bereik met een affiliateprogramma en automatische commissies.", "meteorologia": "Bekijk weersverwachtingen en ontvang meldingen voor dagen met geplande tours.", "integracoes": "Koppel je bedrijf aan Viator en GetYourGuide en beheer boekingen van externe platforms op één plek.", "automacoes": "Stel automatische e-mail- en WhatsApp-reeksen in voor elke fase van de boeking.", "fidelidade": "Bind je klanten met een puntenprogramma, beloningen en exclusieve voordelen.", "grupos": "Beheer bedrijfsgroepen, speciale evenementen en groepsboekingen met centrale facturatie.", "pacotes": "Maak seizoenspakketten en combineer diensten om de gemiddelde besteding per klant te verhogen.", "parcerias": "Sluit cross-selling-partnerschappen met andere aanbieders en deel commissies automatisch.", "previsao": "Gebruik historische gegevens en externe omstandigheden om de vraag te voorspellen en de beschikbaarheid te optimaliseren.", "financeiro-completo": "Beheer bedrijfskosten, salarissen en belastingverplichtingen met volledige rapporten en exports.", "vendedor": "Zet de strandverkopermodus aan — medewerkers verkopen tours ter plekke met een vereenvoudigde app."} },
   "auth": { "login": "Inloggen", "logout": "Uitloggen", "register": "Account aanmaken", "email": "E-mail", "password": "Wachtwoord", "confirmPassword": "Wachtwoord bevestigen", "forgotPassword": "Wachtwoord vergeten", "showPassword": "Wachtwoord tonen", "hidePassword": "Wachtwoord verbergen", "noAccount": "Nog geen account?", "hasAccount": "Al een account?", "loginTitle": "Inloggen op uw account", "registerTitle": "SalDesk-account aanmaken", "loginSubtitle": "Toerismebeheer · Kaapverdie", "name": "Volledige naam", "rememberDevice": "Dit apparaat 30 dagen onthouden", "sslSecure": "Beveiligde SSL-verbinding", "registeredSuccess": "Account succesvol aangemaakt. Log in om door te gaan.", "resetSuccess": "Wachtwoord succesvol gereset. Log in met uw nieuwe wachtwoord.", "accountLocked": "Account tijdelijk vergrendeld voor {{min}} minuten vanwege te veel pogingen.", "invalidCredentials": "Onjuist e-mailadres of wachtwoord.", "attemptsRemaining": "U heeft nog {{n}} poging(en).", "attemptsWarning": "Nog {{n}} poging(en) voor vergrendeling.", "rateLimit": "Te veel pogingen vanaf jouw netwerk. Wacht een paar minuten en probeer het opnieuw.", "accessBlocked": "Toegang geblokkeerd", "tryAgainIn": "Probeer opnieuw over", "forgotEyebrow": "SalDesk · Accountherstel", "forgotTitle": "Wachtwoord resetten", "forgotSubtitle": "Voer uw e-mailadres in en we sturen u een link om uw wachtwoord te resetten.", "sendRecoveryLink": "Herstellink versturen", "backToLogin": "Terug naar login", "emailSentTitle": "E-mail verzonden", "emailSentBody": "Als het e-mailadres {{email}} op ons platform bestaat, ontvangt u binnenkort een herstellink.", "checkSpam": "Controleer ook uw spammap. De link verloopt over 1 uur.", "footerCredit": "Systeem ontwikkeld door", "footerOrigin": "Trots Kaapverdisch", "brandHeadline": "Toerismebeheer zonder OTA-commissies", "brandSub": "Het platform geboren op het eiland Sal, nu in dienst van exploitanten in heel Kaapverdie.", "brandPoint1": "Directe boekingen, geen commissie aan tussenpersonen", "brandPoint2": "CRM, financien en channel manager op een plek", "brandPoint3": "Ondersteuning in het Portugees, gemaakt voor Kaapverdie", "brandStat1Value": "0%", "brandStat1Label": "OTA-commissie", "brandStat2Value": "4", "brandStat2Label": "Soorten exploitanten", "brandStat3Value": "30d", "brandStat3Label": "Gratis proefperiode" },
-  "common": { "save": "Opslaan", "cancel": "Annuleren", "delete": "Verwijderen", "edit": "Bewerken", "create": "Aanmaken", "confirm": "Bevestigen", "close": "Sluiten", "loading": "Laden...", "error": "Fout", "success": "Succes", "noResults": "Geen resultaten", "search": "Zoeken", "filter": "Filteren", "export": "Exporteren", "actions": "Acties", "status": "Status", "date": "Datum", "amount": "Bedrag", "yes": "Ja", "no": "Nee", "required": "Verplicht veld", "optional": "Optioneel" },
+  "common": { "save": "Opslaan", "cancel": "Annuleren", "delete": "Verwijderen", "edit": "Bewerken", "create": "Aanmaken", "confirm": "Bevestigen", "close": "Sluiten", "loading": "Laden...", "loadingShort": "Laden", "error": "Fout", "success": "Succes", "noResults": "Geen resultaten", "search": "Zoeken", "filter": "Filteren", "export": "Exporteren", "actions": "Acties", "status": "Status", "date": "Datum", "amount": "Bedrag", "yes": "Ja", "no": "Nee", "required": "Verplicht veld", "optional": "Optioneel" },
   "dashboard": { "greeting": {"morning": "Goedemorgen, {{name}}", "afternoon": "Goedemiddag, {{name}}", "evening": "Goedenavond, {{name}}"}, "agenda": {"title": "Planning van vandaag", "summary": "{{tours}} tours · {{people}} personen", "noTime": "Geen tijd ingesteld", "done": "Afgerond", "now": "Bezig, eindigt om {{time}}", "toConfirm": "{{n}} te bevestigen", "nearlyFull": "Bijna vol", "guide": "gids {{name}}", "chegada": "Aankomst · {{name}}", "partida": "Vertrek · {{name}}", "levantamento": "Ophalen · {{name}}", "devolucao": "Inleveren · {{name}}", "mesa": "{{name}}", "guests": "{{n}} persoon/personen", "nights": "{{n}} nacht(en)", "preOrder": "vooraf besteld", "empty": "Vandaag niets gepland", "summaryHotel": "{{a}} aankomsten · {{d}} vertrekken", "summaryRentacar": "{{a}} keer ophalen · {{d}} keer inleveren", "summaryRestaurant": "{{n}} reserveringen · {{p}} personen"}, "hero": {"revenue": "Omzet in {{month}}", "vsPrev": "{{pct}}% t.o.v. vorige maand", "occupancy": "Bezetting deze maand", "today": "Vandaag", "peopleToday": "{{n}} personen", "inTours": "in {{n}} tours · {{p}} te bevestigen", "participants": "{{n}} deelnemers", "occupancyToday": "Bezetting vandaag", "roomsOccupied": "{{n}} van {{total}} kamers", "vehiclesRented": "{{n}} van {{total}} voertuigen", "tablesTaken": "{{n}} van {{total}} tafels", "arrivals": "{{n}} aankomsten", "departures": "{{n}} vertrekken · {{p}} aankomsten te bevestigen", "pickups": "{{n}} keer ophalen", "returns": "{{n}} keer inleveren", "peopleTables": "in {{n}} reserveringen · {{p}} te bevestigen"}, "tiles": {"reservations": "Boekingen deze maand", "rating": "Gemiddelde beoordeling", "avgValue": "Gemiddelde boekingswaarde", "toReceive": "Te ontvangen"}, "shortcuts": {"title": "Snelkoppelingen", "checkin": "Check-in", "blockDay": "Dag blokkeren", "message": "Bericht sturen", "payment": "Betaling registreren"}, "attention": { "title": "Vraagt aandacht", "allClear": "Alles in orde", "open": "Openen", "weather": "{{n}} tour(s) getroffen door het weer", "maintenance": "{{n}} eenheid/eenheden in onderhoud", "unconfirmed": "{{n}} boeking(en) te bevestigen", "pending": "{{n}} openstaande boeking(en) voor vandaag", "unpaid": "{{n}} betaling(en) openstaand", "cleaning": "{{n}} schoonmaakbeurt(en) te doen", "nearlyFull": "{{n}} datum/data bijna vol" }, "view": { "today": "Vandaag", "summary": "Overzicht" }, "summary": { "kpiRevenue": "Omzet van de maand", "kpiBookings": "Boekingen", "kpiAvgValue": "Gemiddelde waarde", "kpiOccupancy": "Bezetting", "vsPrevMonth": "t.o.v. vorige maand", "chartTitle": "Omzet laatste 30 dagen", "chartEmpty": "Geen omzet in de afgelopen 30 dagen", "topServices": "Best verkochte diensten", "topServicesEmpty": "Geen verkopen deze maand" }, "title": "Dashboard", "revenue": "Omzet", "occupancy": "Bezetting", "reservations": "Boekingen", "directBookings": "Directe boekingen", "thisMonth": "Deze maand", "vsLastMonth": "vs. vorige maand", "recentReservations": "Recente boekingen", "quickActions": "Snelle acties", "newReservation": "Nieuwe boeking", "todayCheckins": "Check-ins vandaag", "todayCheckouts": "Check-outs vandaag", "welcome": "Welkom, {{name}}", "typeLabel": { "hotel": "Hotel / Pension", "activity": "Toeristische activiteit", "rentacar": "Autoverhuur", "restaurant": "Restaurant / Bar" }, "trial": { "expiredTitle": "Proefperiode verlopen", "expiredBody": "Uw toegang is beperkt. Neem een abonnement om door te gaan.", "viewPlans": "Bekijk abonnementen", "lastDay": "Laatste dag van de proefperiode", "daysLeft": "{{days}} dag(en) resterend in de proefperiode", "upgradeBody": "Upgrade om alle functies zonder onderbreking te blijven gebruiken." }, "map": { "available": "Beschikbaar", "occupied": "Bezet", "checkin": "Check-in", "checkout": "Check-out", "cleaning": "Schoonmaak", "maintenance": "Onderhoud", "breakdown": "Defect", "inactive": "Inactief" }, "zones": { "interior": "Binnen", "esplanada": "Terras", "terraco": "Dakterras", "vip": "VIP", "privado": "Prive" }, "status": { "pending": "In behandeling", "confirmed": "Bevestigd", "active": "Actief", "completed": "Voltooid", "cancelled": "Geannuleerd", "seated": "Aan tafel", "inProgress": "Bezig", "return": "Inlevering" }, "common": { "close": "Sluiten", "viewReservations": "Boekingen bekijken", "viewAll": "Alles bekijken", "maintenance": "Onderhoud", "guestsSuffix": "gast(en)", "reservationsSuffix": "boeking(en)", "pax": "pers." }, "hotel": { "maintenanceAlert": "{{n}} kamer(s) in onderhoud:", "noConfirmationAlert": "{{n}} onbevestigde check-in(s) vandaag", "cleaningAlert": "{{n}} kamer(s) worden schoongemaakt", "housekeeping": "Housekeeping", "occupancyToday": "Bezetting vandaag", "revenueMonth": "Omzet deze maand", "checkinsToday": "Check-ins vandaag", "checkoutsToday": "Check-outs vandaag", "pendingReservations": "Openstaande boekingen", "roomMap": "Kamerplattegrond — Vandaag", "noCheckinToday": "Geen check-in gepland voor vandaag", "noCheckoutToday": "Geen check-out gepland voor vandaag", "floor": "Verdieping {{n}}", "checkIn": "Aankomst", "checkOut": "Vertrek", "noActiveReservation": "Geen actieve boeking voor vandaag.", "noRoomsRegistered": "Geen eenheden geregistreerd." }, "rentacar": { "availableVehicles": "Beschikbare voertuigen", "revenueMonth": "Omzet deze maand", "activeRentals": "Actieve verhuur", "inMaintenance": "In onderhoud", "fleetStatus": "Wagenpark — Huidige status", "pickupsToday": "Ophalingen vandaag", "returnsToday": "Inleveringen vandaag", "noPickupToday": "Geen ophaling gepland voor vandaag", "noReturnToday": "Geen inlevering gepland voor vandaag", "pickup": "Ophaling", "return": "Inlevering", "vehicleAvailable": "Voertuig beschikbaar.", "noVehiclesRegistered": "Geen voertuigen geregistreerd.", "expired": "{{label}}: {{name}} verlopen", "expiresIn": "{{label}}: {{name}} verloopt over {{days}}d", "revisionOverdue": "{{label}}: Onderhoud te laat ({{km}}km)", "revisionIn": "{{label}}: Onderhoud over {{km}}km", "insurance": "Verzekering", "roadTax": "Wegenbelasting", "inspection": "Keuring", "since": "sinds {{date}}" }, "restaurant": { "noConfirmationAlert": "{{n}} onbevestigde boeking(en) vandaag", "reservationsToday": "Boekingen vandaag", "coversMonth": "Couverts deze maand", "revenueEstimated": "Geschatte omzet", "avgRating": "Gemiddelde beoordeling", "tableMap": "Tafelplattegrond — Vandaag", "manageTables": "Tafels beheren", "lunch": "Lunch · 12–15u", "dinner": "Diner · 19–23u", "noShiftDefined": "Geen dienst ingesteld", "noLunchReservations": "Geen lunchboekingen", "noDinnerReservations": "Geen dinerboekingen", "table": "Tafel {{n}}", "noTable": "Geen tafel", "shift": "Dienst {{turno}}", "people": "personen", "tableAvailable": "Tafel beschikbaar.", "noTablesRegistered": "Geen tafels geregistreerd." }, "generic": { "coversToday": "Couverts vandaag", "customersDesc": "CRM met geschiedenis en statistieken", "automationsDesc": "Automatische e-mails en WhatsApp", "financialDesc": "Rapporten en exports", "unitsDesc": "Beheer kamers, activiteiten enz." }, "activity": { "badWeatherAlert": "Slecht weer voorspeld op dagen met geplande tours", "viewDetails": "Details bekijken", "toursScheduled": "{{n}} tour(s) gepland", "toursToday": "Tours vandaag", "participantsMonth": "Deelnemers deze maand", "occupancyRate": "Bezettingsgraad", "revenueMonth": "Omzet deze maand", "toursTodayHeading": "Tours vandaag — {{date}}", "activeCount": "{{n}} actief", "noToursToday": "Geen tours gepland voor vandaag", "planYourDay": "Gebruik de tijd om je dag te plannen of een nieuwe boeking te maken.", "newReservation": "Nieuwe boeking", "pendingReservations": "Openstaande boekingen", "almostFull": "Bijna vol", "allGood": "Alles in orde", "noPendingToday": "Niets openstaand voor vandaag", "quickActions": "Snelle acties", "viewCalendar": "Kalender bekijken", "manageTours": "Tours beheren", "next7Days": "Volgende 7 dagen", "recentReservations": "Recente boekingen", "topToursMonth": "Top tours deze maand", "noRecentReservations": "Geen recente boekingen", "noDataMonth": "Geen gegevens deze maand", "reservationsSuffix": "boekingen", "resShort": "boek.", "toursTodayTitle": "Tours van vandaag", "colTour": "Tour", "colCapacity": "Bezetting", "colReservations": "Boekingen" } },
   "tour": { "welcomeTitle": "Welkom bij SalDesk!", "welcomeBody": "We laten je snel zien waar je alles vindt. Het duurt minder dan een minuut.", "dashTitle": "Jouw Dashboard", "dashBody": "Hier zie je een samenvatting van de dag: boekingen, omzet en wat aandacht nodig heeft.", "unitsTitle": "Wat je verkoopt", "unitsBody": "Hier beheer je {{unit}}.", "unitLabelHotel": "je kamers", "unitLabelActivity": "je tours en activiteiten", "unitLabelRentacar": "je wagenpark", "unitLabelRestaurant": "je tafels", "resTitle": "Boekingen", "resBody": "Alle boekingen op een plek — direct of via externe kanalen.", "financeTitle": "Financieel", "financeBody": "Volg je omzet, exporteer rapporten en zie waar het geld naartoe gaat.", "siteTitle": "Jouw openbare pagina", "siteBody": "Je hebt al een boekingspagina klaar om met klanten te delen — zonder commissies.", "bellTitle": "Meldingen", "bellBody": "Nieuwe boekingen, berichten en beoordelingen verschijnen hier in realtime.", "doneTitle": "Klaar om te beginnen!", "doneBody": "Bij vragen kun je ons altijd bereiken via WhatsApp.", "next": "Volgende", "back": "Terug", "finish": "Voltooien", "skip": "Tour overslaan" },
   "reservations": { "paymentNotCompleted": "Betaling niet voltooid", "awaitingPayment": "Wacht op betaling", "paidAfterExpiry": "Betaald zonder plaats — terugbetalen", "abandonedHint": "De klant heeft de betaling niet voltooid. U kunt contact opnemen:", "paidAfterExpiryHint": "De betaling kwam nadat de plaats bezet was. Terugbetalen of omboeken met de klant:", "title": "Boekingen", "new": "Nieuwe boeking", "status": { "pending": "In behandeling", "confirmed": "Bevestigd", "checked_in": "Ingecheckt", "checked_out": "Uitgecheckt", "cancelled": "Geannuleerd", "no_show": "Niet verschenen" }, "source": { "direct": "Direct", "public": "Openbare pagina", "admin": "Handmatig", "booking_com": "Booking.com", "airbnb": "Airbnb", "viator": "Viator", "getyourguide": "GetYourGuide", "conect": "SalDesk Conect", "manual": "Handmatig" }, "checkIn": "Check-in", "checkOut": "Check-out", "time": "Tijd", "guests": "Gasten", "unit": "Eenheid", "customer": "Klant", "total": "Totaal", "paid": "Betaald", "notes": "Notities", "internalNotes": "Interne notities", "guestNotes": "Gastnotities", "confirmDelete": "Weet u zeker dat u deze boeking wilt verwijderen?", "view": "Bekijken", "moreActions": "Meer acties", "details": "Boekingsdetails", "paymentStatus": "Betaalstatus", "paymentMethod": "Betaalmethode", "vehicle": "Voertuig", "createdAt": "Aangemaakt op", "subtitle": "{{n}} resultaat/resultaten", "manifestButton": "Manifest", "editTitle": "Boeking bewerken", "confirmDeleteIrreversible": "Deze boeking verwijderen? Deze actie kan niet ongedaan worden gemaakt.", "none": "Geen", "pax": "Pers.", "paxCount": "{{n}} pers.", "guestsShort": "{{n}} gasten", "vehicleSeats": "{{name}} ({{n}} plaatsen)", "tableNumber": "Tafel {{n}}", "noTable": "Geen tafel", "waitlist": "Wachtlijst", "processing": "Bezig met verwerken...", "saving": "Bezig met opslaan...", "filters": { "allStatuses": "Alle", "allShifts": "Alle diensten", "allTours": "Alle tours", "allSources": "Alle bronnen", "clear": "Wissen" }, "shift": { "lunch": "Lunch", "dinner": "Diner", "lunchHours": "Lunch · 12-15u", "dinnerHours": "Diner · 19-23u" }, "occasion": { "birthday": "Verjaardag", "honeymoon": "Huwelijksreis", "business": "Zakelijk", "other": "Anders" }, "sourceLabel": { "direct": "Direct", "public": "Openbare pagina", "manual": "Handmatig", "conect": "Conect", "admin": "Admin" }, "columns": { "ref": "Ref", "tour": "Tour", "pickup": "Ophalen", "dropoff": "Inleveren", "table": "Tafel", "shift": "Dienst", "occasion": "Gelegenheid", "source": "Bron" }, "actions": { "reschedule": "Verplaatsen", "sendVoucher": "Voucher versturen", "noShow": "No-show", "assignTeam": "Team toewijzen", "seat": "Plaatsen", "freeTable": "Tafel vrijgeven", "pickup": "Ophalen", "dropoff": "Inleveren", "shiftRequests": "Dienst / speciale wensen" }, "fuel": { "empty": "Leeg", "full": "Vol" }, "reschedule": { "title": "Boeking verplaatsen", "bookingOf": "Boeking van {{name}}", "newDate": "Nieuwe datum", "error": "Verplaatsen mislukt" }, "noShow": { "title": "No-show registreren", "mark": "{{name}} als no-show markeren?", "noteLabel": "Interne notitie (optioneel)", "notePlaceholder": "Reden of opmerking...", "confirm": "No-show bevestigen" }, "pickup": { "title": "Voertuig ophalen", "fuelOut": "Brandstofniveau (vertrek)", "kmOut": "Kilometers bij vertrek", "damageOut": "Bestaande schade (registratie)", "damageOutPlaceholder": "Bestaande schade beschrijven...", "deposit": "Borg (€)", "depositPaid": "Betaald", "confirm": "Ophalen bevestigen" }, "dropoff": { "title": "Voertuig inleveren", "out": "Vertrek: {{km}} km", "fuelIn": "Brandstofniveau (aankomst)", "kmIn": "Kilometers bij aankomst", "kmDriven": "{{km}} km gereden", "damageIn": "Schade bij inlevering", "damageInPlaceholder": "Bij aankomst vastgestelde schade beschrijven...", "deposit": "Borg", "depositReturned": "Teruggegeven", "depositPartial": "Deels ingehouden", "depositFull": "Volledig ingehouden", "amountRetained": "Ingehouden bedrag (€)", "confirm": "Inlevering bevestigen" }, "restaurantDetails": { "summary": "{{n}} personen · {{unit}}", "occasionLabel": "Speciale gelegenheid", "requests": "Speciale wensen", "requestsPlaceholder": "Allergieën, decoratie, vegetarisch menu...", "waitlistCheck": "Wachtlijst (geen tafel beschikbaar)", "save": "Details opslaan" }, "manifest": { "title": "Deelnemerslijst", "summary": "{{n}} boekingen · {{pax}} deelnemers", "export": "PDF exporteren", "empty": "Geen deelnemers gevonden.", "prompt": "Selecteer een tour en/of een datum om de deelnemerslijst te zien.", "name": "Naam", "hotelRoom": "Hotel / Kamer", "emergency": "Noodcontact", "specialReqs": "Speciale wensen" }, "form": { "tourActivity": "Tour / Activiteit", "selectUnit": "Eenheid selecteren...", "tourDate": "Datum van de tour", "timeSlot": "Tijdslot", "selectSlot": "Tijdslot selecteren...", "slot": "{{time}} ({{n}} plaatsen)", "bookingDate": "Datum van de boeking", "people": "{{n}} persoon/personen", "nights": "{{n}} nacht(en)", "customerName": "Naam van de klant", "emailPlaceholder": "email@voorbeeld.nl", "isoHint": "ISO-2-code", "optIn": "De klant heeft ingestemd met berichten over deze boeking via WhatsApp", "source": "Bron", "internalPlaceholder": "Interne notities..." }, "country": "Land", "assign": { "title": "Team toewijzen", "booking": "Boeking", "noUpcoming": "Geen aankomende openstaande boekingen.", "guide": "Gids", "selectGuide": "Gids selecteren...", "sameDriver": "Is de gids ook de chauffeur?", "driver": "Chauffeur", "selectDriver": "Chauffeur selecteren...", "vehicleOptional": "Voertuig (optioneel)", "noVehiclesPrefix": "Geen voertuigen geregistreerd — u kunt ze toevoegen bij", "noVehiclesSuffix": ".", "error": "Toewijzen mislukt", "submit": "Toewijzen" } },
@@ -72,6 +72,8 @@
       "tourButton": "Tour opnieuw bekijken"
     },
     "perfil": {
+      "cancelPolicyPtExample": "Bijv. Gratis annuleren tot 48 uur van tevoren. Daarna wordt 50% van het bedrag ingehouden...",
+      "cancelPolicyEnExample": "Bijv. Free cancellation up to 48h before. After that, 50% of the value is retained...",
       "days": {
         "mon": "ma",
         "tue": "di",
@@ -1857,5 +1859,1355 @@
       "sending": "Bezig met versturen...",
       "save": "Wijzigingen opslaan"
     }
+  },
+  "automations": {
+    "title": "Communicatie-automatisering",
+    "activeCount": "{{count}} actieve reeks(en)",
+    "varsAvailable": "Beschikbare variabelen:",
+    "vars": {
+      "nome_cliente": "Naam van de klant",
+      "nome_tour": "Naam van de tour/dienst",
+      "data": "Datum van de tour",
+      "hora": "Tijd van de tour",
+      "guia": "Naam van de toegewezen gids",
+      "ponto_encontro": "Ontmoetingspunt"
+    },
+    "tabs": {
+      "sequences": "Reeksen",
+      "history": "Verzendgeschiedenis"
+    },
+    "seq": {
+      "booking_email": {
+        "title": "Nieuwe boeking — Bevestigingsmail",
+        "subtitle": "E-mail naar de klant direct na bevestiging"
+      },
+      "booking_whatsapp": {
+        "title": "Nieuwe boeking — Welkomst-WhatsApp",
+        "subtitle": "Direct bericht aan de klant via WhatsApp"
+      },
+      "d7_email": {
+        "title": "D-7 — Voorbereidingsmail",
+        "subtitle": "7 dagen voor de tour"
+      },
+      "d3_email": {
+        "title": "D-3 — Mail met instructies",
+        "subtitle": "3 dagen voor de tour"
+      },
+      "d1_whatsapp": {
+        "title": "D-1 — Herinnerings-WhatsApp",
+        "subtitle": "Bericht een dag voor de tour"
+      },
+      "post1_review": {
+        "title": "D+1 — Beoordelingsverzoek",
+        "subtitle": "1 dag na de tour"
+      },
+      "post7_discount": {
+        "title": "D+7 — Korting op volgende boeking",
+        "subtitle": "7 dagen na de tour"
+      },
+      "post30_newsletter": {
+        "title": "D+30 — Nieuwsbrief over nieuwe tours",
+        "subtitle": "30 dagen na de tour"
+      }
+    },
+    "activate": "{{title}} activeren",
+    "deactivate": "{{title}} deactiveren",
+    "subjectPt": "Onderwerp PT",
+    "subjectEn": "Onderwerp EN",
+    "messagePt": "Bericht PT",
+    "messageEn": "Bericht EN",
+    "editTemplate": "Sjabloon bewerken",
+    "preview": "Voorbeeld",
+    "hide": "Verbergen",
+    "viewPreview": "Voorbeeld bekijken",
+    "hidePreview": "Voorbeeld verbergen",
+    "variablesHint": "Variabelen — klik om in de PT-tekst in te voegen",
+    "saveTemplate": "Sjabloon opslaan",
+    "previewWhatsApp": "WhatsApp-voorbeeld",
+    "previewSubject": "Onderwerp:",
+    "emptyBody": "(geen inhoud)",
+    "sampleNote": "Voorbeeld met voorbeeldgegevens.",
+    "sampleNoteLong": "Voorbeeld met voorbeeldgegevens. De variabelen worden bij het echte verzenden vervangen.",
+    "logs": {
+      "date": "Datum",
+      "automation": "Automatisering",
+      "customer": "Klant",
+      "channel": "Kanaal",
+      "status": "Status",
+      "sent": "Verzonden",
+      "failed": "Mislukt",
+      "emptyTitle": "Geen verzendgeschiedenis.",
+      "emptyDescription": "Verzonden berichten verschijnen hier zodra de eerste automatiseringen zijn geactiveerd.",
+      "showing": "{{shown}} van {{total}} records worden getoond"
+    },
+    "trigger": {
+      "booking_confirmed": "Boekingsbevestiging",
+      "checkin_reminder": "Check-in-herinnering",
+      "checkout_thanks": "Bedankje na het uitchecken",
+      "days_before_checkin": "{{days}} dagen voor het inchecken",
+      "days_after_checkout": "{{days}} dagen na het uitchecken"
+    },
+    "triggerOption": {
+      "booking_confirmed": "Boekingsbevestiging",
+      "checkin_reminder": "Check-in-herinnering",
+      "checkout_thanks": "Bedankje na het uitchecken",
+      "days_before_checkin": "X dagen voor het inchecken",
+      "days_after_checkout": "X dagen na het uitchecken"
+    },
+    "card": {
+      "toggle": "Automatisering omschakelen",
+      "subject": "Onderwerp: {{subject}}",
+      "active": "Actief",
+      "inactive": "Inactief",
+      "edit": "Bewerken",
+      "delete": "Verwijderen",
+      "deleteIntro": "De automatisering verwijderen:",
+      "deleteWarning": "Deze actie kan niet ongedaan worden gemaakt."
+    },
+    "form": {
+      "name": "Naam van de automatisering",
+      "namePlaceholder": "Bijv. Boekingsbevestiging",
+      "trigger": "Trigger",
+      "channel": "Kanaal",
+      "days": "Aantal dagen",
+      "daysBefore": "Dagen voor het inchecken",
+      "daysAfter": "Dagen na het uitchecken",
+      "subject": "Onderwerp van de e-mail",
+      "varsTitle": "Beschikbare variabelen",
+      "varsHint": "Klik op een variabele om die te kopiëren en in de onderstaande berichten te gebruiken",
+      "messagePt": "Bericht in het Portugees",
+      "messageEn": "Bericht in het Engels",
+      "create": "Automatisering aanmaken",
+      "subjectExample": "Bijv. Uw boeking is bevestigd"
+    }
+  },
+  "feedbackPage": {
+    "title": "Feedback na de tour",
+    "subtitle": "Beoordelingen en feedbackverzoeken beheren",
+    "refresh": "Vernieuwen",
+    "kpi": {
+      "toursDone": "Uitgevoerde tours",
+      "reviewsReceived": "Ontvangen beoordelingen",
+      "responseRate": "Responspercentage",
+      "average": "Algemeen gemiddelde"
+    },
+    "tabs": {
+      "byTour": "Per tour",
+      "pending": "In afwachting ({{count}})",
+      "template": "Sjabloon"
+    },
+    "unnamedService": "Dienst zonder naam",
+    "noTours": "Geen tours met geregistreerde check-out.",
+    "toursDoneSuffix": "tours uitgevoerd",
+    "reviewsSuffix": "beoordelingen",
+    "rateSuffix": "responspercentage",
+    "allRequested": "Voor alle tours is een beoordeling aangevraagd.",
+    "pendingNote": "{{count}} boeking(en) zonder verzonden beoordelingsverzoek.",
+    "showing": "{{shown}} van {{total}} worden getoond",
+    "cols": {
+      "customer": "Klant",
+      "tour": "Tour",
+      "checkout": "Check-out",
+      "daysSince": "Dagen sinds check-out"
+    },
+    "resend": "Verzoek opnieuw verzenden",
+    "autoLabel": "Beoordeling de volgende dag automatisch aanvragen",
+    "autoHint": "Stuurt de dag na de activiteit of het verblijf een e-mail, alleen voor directe boekingen en één keer per boeking.",
+    "autoError": "Opslaan is niet gelukt. Probeer het opnieuw.",
+    "templateTitle": "Sjabloon voor het beoordelingsverzoek",
+    "varsTitle": "Beschikbare variabelen",
+    "vars": {
+      "customerName": "Naam van de klant",
+      "tourName": "Naam van de tour",
+      "reviewLink": "Directe link naar de beoordeling"
+    },
+    "subjectPt": "Onderwerp PT",
+    "subjectEn": "Onderwerp EN",
+    "bodyPt": "Tekst PT",
+    "bodyEn": "Tekst EN",
+    "saveTemplate": "Sjabloon opslaan",
+    "saved": "Opgeslagen",
+    "preview": "Voorbeeld",
+    "previewSubject": "Onderwerp:",
+    "sampleNote": "Voorbeeld met voorbeeldgegevens."
+  },
+  "reviewsPage": {
+    "title": "Beoordelingen",
+    "subtitle": "{{total}} in totaal · {{pending}} onbeantwoord",
+    "totalReviews": "{{count}} beoordelingen",
+    "answered": "Beantwoord",
+    "public": "Openbaar",
+    "unanswered": "onbeantwoord",
+    "seeNow": "Nu bekijken",
+    "allAnswered": "Alles beantwoord",
+    "searchPlaceholder": "Zoeken...",
+    "all": "Alle",
+    "allServices": "Alle diensten",
+    "filterPending": "Onbeantwoord",
+    "filterReplied": "Beantwoord",
+    "sort": {
+      "recent": "Meest recent",
+      "oldest": "Oudste eerst",
+      "best": "Hoogste beoordeling",
+      "worst": "Laagste beoordeling"
+    },
+    "results": "{{count}} resultaat/resultaten",
+    "empty": "Geen beoordelingen gevonden",
+    "clearFilters": "Filters wissen",
+    "loadMore": "Meer laden ({{count}} resterend)",
+    "badgePublic": "Openbaar",
+    "badgePrivate": "Privé",
+    "noComment": "Geen opmerking",
+    "anonymous": "Anonieme klant",
+    "operatorReply": "Reactie van de aanbieder",
+    "reply": "Beantwoorden",
+    "replyTitle": "Op beoordeling reageren",
+    "publishReply": "Reactie publiceren",
+    "yourReply": "Uw reactie (wordt gepubliceerd)",
+    "replyPlaceholder": "Bedankt voor uw bezoek en uw opmerking..."
+  },
+  "customersPage": {
+    "segments": {
+      "all": "Alle",
+      "tourist": "Toeristen",
+      "local": "Locals",
+      "group": "Groepen",
+      "corporate": "Zakelijk",
+      "vip": "VIP"
+    },
+    "categories": {
+      "turista": "Toerist",
+      "local": "Local",
+      "VIP": "VIP",
+      "grupo": "Groep",
+      "corporativo": "Zakelijk"
+    },
+    "tags": {
+      "VIP": "VIP",
+      "grupo": "groep",
+      "corporativo": "zakelijk",
+      "fidelizado": "vaste klant",
+      "novo": "nieuw",
+      "recorrente": "terugkerend",
+      "turista": "toerist",
+      "local": "local",
+      "empresa": "bedrijf"
+    },
+    "language": "Taal",
+    "agreedPrice": "Afgesproken prijs",
+    "country": "Land",
+    "subtitle": "{{n}} klant(en) geregistreerd",
+    "newCustomer": "Nieuwe klant",
+    "importCsv": "CSV importeren",
+    "metrics": {
+      "totalCustomers": "Totaal klanten",
+      "totalRevenue": "Totale omzet",
+      "countries": "Landen",
+      "topCustomer": "Topklant"
+    },
+    "importedMsg": "{{n}} klant(en) succesvol geïmporteerd.",
+    "createdMsg": "Klant succesvol aangemaakt.",
+    "csvHeader": "Naam,E-mail,Telefoon,Land,Taal,Bezoeken,Totaal uitgegeven,Notities,Aangemaakt op",
+    "csvFilePrefix": "klanten",
+    "newModal": {
+      "title": "Nieuwe klant",
+      "name": "Naam *",
+      "namePlaceholder": "Naam van de klant",
+      "emailPlaceholder": "klant@email.nl",
+      "email": "E-mail *",
+      "phone": "Telefoon",
+      "countryCode": "Land (code)",
+      "countryPlaceholder": "Bijv. CV, PT",
+      "category": "Categorie (optioneel)",
+      "price": "Afgesproken prijs (optioneel)",
+      "pricePlaceholder": "Bijv. 45.00",
+      "notes": "Notities",
+      "notesPlaceholder": "Voorkeuren, extra context, enz.",
+      "required": "Naam en e-mail zijn verplicht",
+      "createError": "Klant kon niet worden aangemaakt",
+      "create": "Klant aanmaken"
+    },
+    "importModal": {
+      "title": "Klanten importeren via CSV",
+      "expected": "Verwacht formaat (koprij verplicht):",
+      "selectFile": "Klik om een CSV-bestand te kiezen",
+      "fileHint": ".csv-bestand, max. 5 MB",
+      "preview": "Voorbeeld (eerste {{n}} regels)",
+      "import": "Importeren",
+      "importError": "Bestand kon niet worden geïmporteerd"
+    }
+  },
+  "customerDetail": {
+    "sections": {
+      "profile": "Profiel",
+      "history": "Geschiedenis",
+      "comms": "Communicatie"
+    },
+    "ltv": "LTV",
+    "contact": "Contact",
+    "whatsapp": "WhatsApp",
+    "birthday": "Verjaardag",
+    "newTag": "Nieuwe tag + Enter",
+    "internalNotes": "Interne notities",
+    "noNotes": "Geen notities",
+    "history": "Geschiedenis ({{n}})",
+    "noBookings": "Geen boekingen",
+    "sendEmailTitle": "E-mail versturen",
+    "emailSent": "E-mail succesvol verstuurd",
+    "to": "Aan",
+    "subject": "Onderwerp",
+    "subjectPlaceholder": "Onderwerp van de e-mail",
+    "message": "Bericht",
+    "bodyPlaceholder": "Inhoud van de e-mail...",
+    "sendEmail": "E-mail versturen",
+    "noWhatsapp": "Geen WhatsApp-nummer geregistreerd",
+    "templates": {
+      "confirmation": "Boekingsbevestiging",
+      "reminder": "Tourherinnering",
+      "review": "Beoordelingsverzoek"
+    },
+    "messages": {
+      "greeting": "Hallo {{name}}, bedankt voor uw voorkeur!",
+      "confirmation": "Hallo {{name}}! Uw boeking is bevestigd. We kijken uit naar uw bezoek!",
+      "reminder": "Hallo! Een herinnering aan uw tour morgen. Vergeet uw zonnebrandcrème en water niet.",
+      "review": "Bedankt voor uw bezoek! U kunt uw beoordeling achterlaten op: https://app.saldesk.cv"
+    }
+  },
+  "messagesPage": {
+    "title": "Berichten",
+    "newGroup": "Nieuwe groep",
+    "emptyList": "Geen medewerkers, groepen of klanten",
+    "staff": "Medewerkers",
+    "conversations": "Gesprekken",
+    "selectConversation": "Selecteer een gesprek",
+    "typing": "is aan het typen...",
+    "chatTitle": "Gesprek via de websitechat",
+    "chat": "Chat",
+    "email": "E-mail",
+    "noEmail": "Geen e-mail",
+    "noPhone": "Geen telefoon",
+    "noMessages": "Nog geen berichten. Begin het gesprek.",
+    "autoReply": "Automatisch antwoord",
+    "deliveryFailed": "Bezorging mislukt",
+    "sentByEmail": "Per e-mail verstuurd",
+    "sentByWhatsapp": "Via WhatsApp verstuurd",
+    "attachFile": "Bestand toevoegen",
+    "write": "Schrijf een bericht...",
+    "writeByEmail": "Schrijf een bericht per e-mail...",
+    "writeByWhatsapp": "Schrijf een bericht via WhatsApp...",
+    "send": "Verzenden",
+    "online": "Online",
+    "groupSublabel": "Groep · {{n}} leden",
+    "customer": "Klant",
+    "notif": {
+      "group": "Nieuw bericht in een groep",
+      "guest": "Nieuw bericht van een bezoeker",
+      "staff": "Nieuw bericht van een medewerker"
+    },
+    "attachmentMarker": "[Bijlage: {{name}}]",
+    "groupModal": {
+      "title": "Nieuwe groep",
+      "name": "Groepsnaam",
+      "namePlaceholder": "Bijv. Kitesurfteam",
+      "members": "Leden",
+      "create": "Groep aanmaken"
+    }
+  },
+  "staffChat": {
+    "noConversations": "Geen gesprekken",
+    "noneLinked": "Er zijn nog geen groepen of medewerkers gekoppeld.",
+    "management": "Beheer",
+    "manager": "Manager",
+    "groups": "Groepen",
+    "members": "{{n}} leden",
+    "team": "Team",
+    "member": "Medewerker",
+    "noMessages": "Nog geen berichten. Begin het gesprek.",
+    "placeholder": "Schrijf een bericht..."
+  },
+  "founderChat": {
+    "title": "SalDesk-berichten",
+    "subtitle": "Direct gesprek met het SalDesk-team",
+    "emptyTitle": "Nog geen berichten",
+    "emptyText": "Schrijf hier als u contact wilt opnemen met het SalDesk-team",
+    "placeholder": "Schrijf een bericht...",
+    "send": "Verzenden"
+  },
+  "orders": {
+    "title": "Bestellingen",
+    "subtitle": "{{n}} bestelling(en)",
+    "refresh": "Vernieuwen",
+    "all": "Alle",
+    "allTables": "Alle tafels",
+    "empty": "Geen bestellingen.",
+    "table": "Tafel {{n}}",
+    "orderTitle": "Bestelling — {{table}}",
+    "orderNotes": "Notities bij de bestelling",
+    "total": "Totaal",
+    "columns": {
+      "ref": "Ref.",
+      "table": "Tafel",
+      "items": "Items",
+      "total": "Totaal",
+      "status": "Status",
+      "time": "Tijd"
+    },
+    "cancel": "Annuleren",
+    "viewDetails": "Details bekijken",
+    "status": {
+      "received": "Ontvangen",
+      "preparing": "In bereiding",
+      "ready": "Klaar",
+      "delivered": "Geleverd",
+      "cancelled": "Geannuleerd"
+    },
+    "advance": {
+      "received": "Bereiden",
+      "preparing": "Klaar",
+      "ready": "Leveren"
+    }
+  },
+  "whatsappMessages": {
+    "send": {
+      "confirmation": "Bevestiging",
+      "reminder": "Herinnering",
+      "review": "Beoordeling vragen",
+      "preparing": "Bezig met voorbereiden…",
+      "sending": "{{label}}: wordt via WhatsApp verstuurd",
+      "opened": "{{label}}: WhatsApp geopend",
+      "alreadyPrepared": "{{label}} was al voorbereid: WhatsApp geopend",
+      "prepareError": "Het bericht kon niet worden voorbereid",
+      "noPhone": "De klant heeft geen telefoonnummer geregistreerd.",
+      "blocked": "De browser heeft het venster geblokkeerd: open WhatsApp"
+    },
+    "pending": {
+      "title": "WhatsApp te versturen",
+      "open": "WhatsApp openen",
+      "more": "+ {{n}} bericht(en) te versturen",
+      "triggers": {
+        "booking_confirmed": "Bevestiging",
+        "reminder_d1": "Herinnering",
+        "review_request": "Beoordeling",
+        "automation": "Automatisering"
+      },
+      "message": "Bericht"
+    }
+  },
+  "vouchersPage": {
+    "title": "Vouchers en acties",
+    "subtitle": "Kortingscodes beheren",
+    "newVoucher": "Nieuwe voucher",
+    "status": {
+      "activo": "Actief",
+      "expirado": "Verlopen",
+      "esgotado": "Opgebruikt",
+      "inactivo": "Inactief"
+    },
+    "stats": {
+      "total": "Totaal vouchers",
+      "active": "Actief",
+      "expired": "Verlopen",
+      "totalUses": "Totaal gebruik"
+    },
+    "searchPlaceholder": "Code zoeken...",
+    "searchAria": "Code zoeken",
+    "filters": {
+      "all": "Alle",
+      "active": "Actief",
+      "expired": "Verlopen",
+      "usedUp": "Opgebruikt"
+    },
+    "columns": {
+      "code": "Code",
+      "discount": "Korting",
+      "minimum": "Minimum",
+      "validity": "Geldigheid",
+      "uses": "Gebruik",
+      "tours": "Tours",
+      "status": "Status"
+    },
+    "toursCount": "{{n}} tour(s)",
+    "allTours": "Alle",
+    "actions": {
+      "share": "Delen",
+      "edit": "Bewerken",
+      "deactivate": "Deactiveren",
+      "activate": "Activeren",
+      "delete": "Verwijderen",
+      "shareAria": "{{code}} delen",
+      "editAria": "{{code}} bewerken",
+      "deactivateAria": "{{code}} deactiveren",
+      "activateAria": "{{code}} activeren",
+      "deleteAria": "{{code}} verwijderen"
+    },
+    "confirmDelete": "Deze voucher verwijderen?",
+    "loading": "Laden...",
+    "empty": {
+      "title": "Geen vouchers",
+      "description": "Maak de eerste kortingscode voor uw klanten.",
+      "create": "Voucher aanmaken"
+    },
+    "copy": "Kopiëren",
+    "copied": "Gekopieerd",
+    "modal": {
+      "titleNew": "Nieuwe voucher",
+      "titleEdit": "Voucher bewerken",
+      "code": "Code",
+      "codePlaceholder": "bijv. ZOMER2025",
+      "generate": "Genereren",
+      "discountType": "Kortingstype",
+      "typePercent": "Percentage (%)",
+      "typeFixed": "Vast bedrag (€)",
+      "discountPct": "Korting (%)",
+      "discountEur": "Korting (€)",
+      "minBooking": "Minimum boeking (€)",
+      "minPlaceholder": "0 = geen minimum",
+      "maxUses": "Gebruikslimiet",
+      "maxPlaceholder": "0 = onbeperkt",
+      "validUntil": "Geldig tot",
+      "applicableTours": "Toepasselijke tours",
+      "allToursApply": "Geldt voor alle tours.",
+      "selectedTours": "{{n}} tour(s) geselecteerd.",
+      "errCode": "De code is verplicht.",
+      "errValue": "De kortingswaarde moet groter zijn dan nul.",
+      "errSave": "De voucher kon niet worden opgeslagen.",
+      "cancel": "Annuleren",
+      "create": "Voucher aanmaken",
+      "save": "Opslaan"
+    },
+    "share": {
+      "title": "Delen — {{code}}",
+      "discountOff": "{{discount}} korting",
+      "whatsapp": "WhatsApp",
+      "send": "Versturen",
+      "email": "E-mail",
+      "emailPt": "E-mail PT",
+      "emailEn": "E-mail EN",
+      "close": "Sluiten",
+      "expires": " Geldig tot {{date}}.",
+      "message": "Gebruik de code *{{code}}* voor {{discount}} korting op uw volgende boeking.{{expires}} Boek op: {{link}}",
+      "subject": "Speciale voucher voor u"
+    }
+  },
+  "loyaltyPage": {
+    "title": "Loyaliteitsprogramma",
+    "subtitle": "Stel niveaus, punten en beloningen in",
+    "levels": {
+      "Bronze": "Brons",
+      "Prata": "Zilver",
+      "Ouro": "Goud"
+    },
+    "ledger": {
+      "earn": "Verdiend",
+      "manual_adjust": "Handmatige aanpassing",
+      "redeem": "Ingewisseld"
+    },
+    "noMovements": "Nog geen transacties.",
+    "points": {
+      "title": "Punten — {{name}}",
+      "current": "Huidige punten",
+      "voucherCreated": "Voucher aangemaakt — {{pct}}% korting",
+      "copyCode": "Code kopiëren",
+      "singleUse": "Eenmalig te gebruiken, geldig tot {{date}}.",
+      "redeemTier": "Niveau {{level}} inwisselen",
+      "redeemHelp": "Wisselt het hele saldo in voor een voucher van {{pct}}% (eenmalig).",
+      "redeem": "Inwisselen",
+      "add": "Toevoegen",
+      "remove": "Verwijderen",
+      "amount": "Aantal punten",
+      "amountPlaceholder": "bijv. 50",
+      "reason": "Reden",
+      "reasonPlaceholder": "bijv. speciale boeking, handmatige aanpassing...",
+      "result": "Resultaat",
+      "pts": "ptn",
+      "close": "Sluiten",
+      "saveAdjust": "Aanpassing opslaan",
+      "history": "Geschiedenis",
+      "errAmount": "Voer een geldige waarde in.",
+      "errAdjust": "De punten konden niet worden bijgewerkt.",
+      "errRedeem": "De punten konden niet worden ingewisseld."
+    },
+    "level": {
+      "range": "{{min}}–{{max}} ptn · {{pct}}% korting",
+      "discountPct": "Korting (%)",
+      "rewardDesc": "Beschrijving van de beloning",
+      "maxPoints": "Maximumpunten (niveau {{level}})",
+      "cancel": "Annuleren",
+      "save": "Opslaan"
+    },
+    "programAria": "Loyaliteitsprogramma",
+    "programActive": "Programma actief",
+    "programInactive": "Programma inactief",
+    "activeHelp": "Klanten sparen automatisch punten na elke boeking.",
+    "inactiveHelp": "Activeer het programma om punten aan klanten toe te kennen.",
+    "tabs": {
+      "config": "Configuratie",
+      "customers": "Klanten"
+    },
+    "earning": {
+      "title": "Spaarregel",
+      "pointsPerEuro": "Punten per bestede euro",
+      "unit": "pt / EUR",
+      "example": "bijv. een boeking van €100 = {{n}} punten."
+    },
+    "tiers": {
+      "title": "Niveaus en beloningen",
+      "note": "De ondergrenzen van de niveaus Zilver en Goud worden automatisch berekend op basis van het maximum van het vorige niveau."
+    },
+    "stats": {
+      "total": "Totaal klanten"
+    },
+    "searchPlaceholder": "Klant zoeken...",
+    "searchAria": "Klant zoeken",
+    "all": "Alle",
+    "columns": {
+      "customer": "Klant",
+      "email": "E-mail",
+      "visits": "Bezoeken",
+      "points": "Punten",
+      "tier": "Niveau",
+      "reward": "Beloning"
+    },
+    "adjustAria": "Punten aanpassen {{name}}",
+    "emptyCustomers": "Geen klanten gevonden."
+  },
+  "packagesPage": {
+    "title": "Seizoenspakketten",
+    "subtitle": "Combineer tours in pakketten tegen een speciale prijs",
+    "newPackage": "Nieuw pakket",
+    "status": {
+      "activo": "Actief",
+      "inactivo": "Inactief",
+      "esgotado": "Uitverkocht",
+      "expirado": "Verlopen"
+    },
+    "kpi": {
+      "active": "Actieve pakketten",
+      "bookings": "Boekingen via pakketten",
+      "revenue": "Gegenereerde omzet"
+    },
+    "publicNote": "Actieve pakketten verschijnen automatisch op de openbare boekingspagina zodra de backend het endpoint implementeert",
+    "empty": {
+      "title": "Nog geen pakketten",
+      "description": "Maak het eerste pakket door tours te combineren tegen een speciale prijs.",
+      "create": "Pakket aanmaken"
+    },
+    "card": {
+      "saves": "Bespaar {{amount}}",
+      "bookings": "{{n}} boeking(en)",
+      "remaining": "{{n}} over",
+      "deactivate": "Deactiveren",
+      "activate": "Activeren",
+      "deactivateAria": "{{name}} deactiveren",
+      "activateAria": "{{name}} activeren",
+      "editAria": "{{name}} bewerken",
+      "deleteAria": "{{name}} verwijderen"
+    },
+    "confirmDelete": "Dit pakket verwijderen?",
+    "modal": {
+      "titleNew": "Nieuw pakket",
+      "titleEdit": "Pakket bewerken",
+      "namePt": "Naam PT",
+      "nameEn": "Naam EN",
+      "namePtPlaceholder": "bijv. Kite + Duik pakket",
+      "nameEnPlaceholder": "bijv. Kite + Duik pakket",
+      "descPt": "Beschrijving PT",
+      "descEn": "Beschrijving EN",
+      "includedTours": "Inbegrepen tours ({{n}} geselecteerd)",
+      "noTours": "Geen tours beschikbaar. Maak eerst tours aan bij Eenheden.",
+      "sumTours": "Som van de afzonderlijke tours:",
+      "price": "Pakketprijs (€)",
+      "pricePlaceholder": "bijv. 85.00",
+      "customerSaves": "Klant bespaart {{amount}} t.o.v. losse aankoop",
+      "limit": "Verkooplimiet (0 = onbeperkt)",
+      "validFrom": "Geldig vanaf",
+      "validTo": "Geldig tot",
+      "photo": "Foto (URL)",
+      "photoPlaceholder": "https://voorbeeld.com/foto.jpg",
+      "status": "Status",
+      "errSave": "Het pakket kon niet worden opgeslagen.",
+      "cancel": "Annuleren",
+      "create": "Pakket aanmaken",
+      "save": "Opslaan"
+    }
+  },
+  "groupsPage": {
+    "title": "Groepsboekingen en bedrijfsevenementen",
+    "subtitle": "Offertes en voorstellen voor groepen en bedrijven",
+    "newQuote": "Nieuwe offerte",
+    "eventTypes": {
+      "team_building": "Teambuilding",
+      "incentivo": "Incentive-reis",
+      "turismo": "Groepstoerisme",
+      "casamento": "Bruiloft / Evenement",
+      "outro": "Overig"
+    },
+    "statuses": {
+      "pedido": "Aanvraag",
+      "em_analise": "In behandeling",
+      "proposta_enviada": "Voorstel verzonden",
+      "confirmado": "Bevestigd",
+      "concluido": "Afgerond",
+      "cancelado": "Geannuleerd"
+    },
+    "kpi": {
+      "total": "Totaal offertes",
+      "confirmed": "Bevestigd",
+      "guests": "Bevestigde gasten"
+    },
+    "searchPlaceholder": "Bedrijf of groep zoeken...",
+    "searchAria": "Bedrijf of groep zoeken",
+    "all": "Alle",
+    "empty": {
+      "title": "Geen offertes",
+      "first": "Registreer de eerste offerte voor een groep of bedrijfsevenement.",
+      "filtered": "Geen offerte komt overeen met de filters."
+    },
+    "confirmDelete": "Deze offerte verwijderen?",
+    "modal": {
+      "titleNew": "Nieuwe groepsofferte",
+      "titleEdit": "Offerte bewerken",
+      "company": "Bedrijf / Groep",
+      "companyPlaceholder": "bijv. Bedrijf ABC",
+      "eventType": "Type evenement",
+      "date": "Gewenste datum",
+      "guests": "Aantal personen",
+      "guestsPlaceholder": "bijv. 20",
+      "requestedTours": "Gewenste tours ({{n}} geselecteerd)",
+      "noTours": "Geen tours beschikbaar.",
+      "tourPrice": "{{name}} — {{price}}/gast",
+      "discount": "Groepskorting (%)",
+      "discountPlaceholder": "bijv. 15",
+      "budget": "Geschat budget (€)",
+      "budgetPlaceholder": "Budget van de klant",
+      "estimated": "Geschatte prijs met korting:",
+      "estimatedDetail": "({{guests}} gasten × {{pct}}% korting)",
+      "deposit": "Aanbetaling (%)",
+      "depositHint": "Percentage dat als aanbetaling wordt betaald",
+      "daysBefore": "Restant X dagen van tevoren",
+      "daysBeforeHint": "Dagen vóór het evenement om het restant te betalen",
+      "proposalValidity": "Geldigheid van het voorstel",
+      "notes": "Bijzondere opmerkingen",
+      "notesPlaceholder": "Bijzondere behoeften, allergieën, voorkeuren van de groep...",
+      "status": "Status",
+      "errSave": "De offerte kon niet worden opgeslagen.",
+      "cancel": "Annuleren",
+      "create": "Offerte aanmaken",
+      "save": "Opslaan"
+    },
+    "payment": {
+      "title": "Betaling — {{company}}",
+      "totalPaid": "Tot nu toe betaald:",
+      "amount": "Ontvangen bedrag (€)",
+      "date": "Datum",
+      "description": "Omschrijving",
+      "descriptionPlaceholder": "bijv. Aanbetaling, Eindbetaling...",
+      "defaultNote": "Aanbetaling",
+      "cancel": "Annuleren",
+      "record": "Registreren"
+    },
+    "card": {
+      "requestedTours": "Gewenste tours",
+      "guestsCount": "{{n}} gasten",
+      "discount": "Korting",
+      "deposit": "Aanbetaling",
+      "finalPayment": "Eindbetaling",
+      "daysBefore": "{{n}}d van tevoren",
+      "proposalUntil": "Voorstel geldig tot",
+      "notes": "Notities",
+      "paymentsReceived": "Ontvangen betalingen",
+      "totalPaid": "Totaal betaald",
+      "advance": "Verder naar: {{status}}",
+      "recordPayment": "Betaling registreren",
+      "printProposal": "Voorstel afdrukken",
+      "editAria": "{{name}} bewerken",
+      "deleteAria": "{{name}} verwijderen"
+    }
+  },
+  "partnersPage": {
+    "title": "Cross-sellingpartnerschappen",
+    "subtitle": "Aanbevelingen en commissies tussen SalDesk-operators",
+    "addPartner": "Partner toevoegen",
+    "types": {
+      "hotel": "Hotel / Accommodatie",
+      "activity": "Toeristische activiteit",
+      "rentacar": "Autoverhuur",
+      "restaurant": "Restaurant"
+    },
+    "partnershipTypes": {
+      "recommendation": "Wederzijdse aanbeveling (zonder commissie)",
+      "commission": "Commissie per doorverwezen boeking",
+      "discount": "Wederzijdse korting voor klanten"
+    },
+    "picker": {
+      "change": "Wijzigen",
+      "placeholder": "Operator zoeken op naam...",
+      "aria": "Operator zoeken op naam",
+      "searching": "Zoeken...",
+      "none": "Geen operator gevonden."
+    },
+    "modal": {
+      "titleNew": "Partner toevoegen",
+      "titleEdit": "Partner bewerken",
+      "modeManual": "Externe partner",
+      "modeReal": "SalDesk-operator",
+      "name": "Naam van de partner",
+      "namePlaceholder": "bijv. Hotel Morabeza",
+      "partnerType": "Type partner",
+      "operatorLabel": "SalDesk-operator",
+      "pendingHint": "Het verzoek blijft in behandeling tot de gekozen operator het accepteert.",
+      "partnershipType": "Type partnerschap",
+      "commission": "Commissie (%)",
+      "commissionPlaceholder": "bijv. 10",
+      "commissionHint": "Percentage van de boeking dat wordt betaald aan de partner die deze doorverwees",
+      "avgValue": "Gemiddelde boekingsprijs (€)",
+      "avgPlaceholder": "bijv. 80",
+      "avgHint": "Wordt gebruikt om te betalen/te ontvangen commissies in het Dashboard te schatten",
+      "messagePt": "Aanbevelingsbericht PT",
+      "messageEn": "Aanbevelingsbericht EN",
+      "messagePtPlaceholder": "bijv. Voor uw accommodatie op Sal raden wij onze partner Hotel Morabeza aan.",
+      "messageEnPlaceholder": "bijv. Voor uw accommodatie op Sal raden wij onze partner Hotel Morabeza aan.",
+      "errChoose": "Kies een operator uit de lijst.",
+      "errSave": "De partner kon niet worden opgeslagen.",
+      "cancel": "Annuleren",
+      "sendRequest": "Verzoek versturen",
+      "add": "Toevoegen",
+      "save": "Opslaan"
+    },
+    "log": {
+      "title": "Boekingen registreren — {{name}}",
+      "sent": "Boeking naar partner gestuurd",
+      "received": "Boeking van partner ontvangen",
+      "count": "Aantal boekingen",
+      "cancel": "Annuleren",
+      "record": "Registreren"
+    },
+    "tabs": {
+      "partners": "Partners",
+      "requests": "Verzoeken",
+      "dashboard": "Dashboard"
+    },
+    "empty": {
+      "title": "Geen partners ingesteld",
+      "description": "Voeg SalDesk-partneroperators toe om met cross-selling te beginnen."
+    },
+    "rejected": "Afgewezen",
+    "commissionLine": "{{pct}}% commissie",
+    "avgBookingLine": " · gemiddelde boeking {{amount}}",
+    "bookingsSent": "verstuurd",
+    "bookingsReceived": "ontvangen",
+    "actions": {
+      "record": "Boekingen registreren",
+      "recordAria": "Boekingen registreren {{name}}",
+      "deactivateAria": "{{name}} deactiveren",
+      "activateAria": "{{name}} activeren",
+      "editAria": "{{name}} bewerken",
+      "deleteAria": "{{name}} verwijderen"
+    },
+    "confirmDelete": "Deze partner verwijderen?",
+    "requests": {
+      "received": "Ontvangen",
+      "noneReceived": "Geen partnerschapsverzoeken om te beantwoorden.",
+      "accept": "Accepteren",
+      "reject": "Weigeren",
+      "sent": "Verstuurd",
+      "noneSent": "Geen partnerschapsverzoeken verstuurd.",
+      "awaiting": "Wachten op antwoord",
+      "cancel": "Verzoek annuleren",
+      "cancelAria": "Verzoek {{name}} annuleren"
+    },
+    "dashboard": {
+      "activePartners": "Actieve partners",
+      "sent": "Verstuurde boekingen",
+      "received": "Ontvangen boekingen",
+      "balance": "Saldo (ontvangen - verstuurd)",
+      "payable": "Te betalen commissies",
+      "payableHelp": "Voor boekingen die u naar partners met commissie hebt gestuurd.",
+      "receivable": "Te ontvangen commissies",
+      "receivableHelp": "Voor boekingen die partners naar u hebben gestuurd.",
+      "needsAvg": "Vereist per partner ingestelde gemiddelde prijzen.",
+      "noteLabel": "Opmerking:",
+      "noteText": "Om automatische aanbevelingen te activeren (e-mail na een bevestigde tour, enz.), stelt u de bijbehorende automatiseringen in bij"
+    }
+  },
+  "affiliatesPage": {
+    "title": "Partnerprogramma",
+    "subtitle": "Beheer partners en commissies op doorverwezen boekingen",
+    "copied": "Gekopieerd",
+    "copy": "Kopiëren",
+    "modal": {
+      "newTitle": "Nieuwe partner",
+      "editTitle": "Partner bewerken",
+      "name": "Naam",
+      "email": "E-mail",
+      "commission": "Commissie (%)",
+      "code": "Partnercode",
+      "namePlaceholder": "Bijv. Jan Jansen",
+      "emailPlaceholder": "jan@voorbeeld.nl",
+      "codePlaceholder": "Bijv. JAN3K9",
+      "duplicateCode": "Er bestaat al een partner met deze code.",
+      "saveError": "De partner kon niet worden opgeslagen.",
+      "create": "Partner aanmaken"
+    },
+    "payment": {
+      "title": "Betaling — {{name}}",
+      "totalPaid": "TOTAAL BETAALD",
+      "pending": "OPENSTAAND",
+      "amount": "Te betalen bedrag (€)",
+      "date": "Betaaldatum",
+      "note": "Notitie",
+      "defaultNote": "Commissiebetaling",
+      "invalidAmount": "Voer een geldig bedrag in.",
+      "saveError": "De betaling kon niet worden geregistreerd.",
+      "register": "Betaling registreren"
+    },
+    "programActive": "Programma actief",
+    "programInactive": "Programma inactief",
+    "newAffiliate": "Nieuwe partner",
+    "kpi": {
+      "active": "Actieve partners",
+      "bookings": "Gegenereerde boekingen",
+      "paid": "Betaalde commissie",
+      "pending": "Openstaande commissie"
+    },
+    "tabs": {
+      "affiliates": "Partners",
+      "config": "Configuratie",
+      "analytics": "Analytics"
+    },
+    "empty": {
+      "title": "Geen partners geregistreerd",
+      "description": "Maak je eerste partner aan en deel de partnerlink."
+    },
+    "row": {
+      "commission": "{{pct}}% commissie",
+      "registerPayment": "Betaling registreren",
+      "registerPaymentFor": "Betaling registreren {{name}}",
+      "deactivate": "{{name}} deactiveren",
+      "activate": "{{name}} activeren",
+      "edit": "{{name}} bewerken",
+      "delete": "{{name}} verwijderen",
+      "bookings": "Boekingen",
+      "paid": "Betaald",
+      "pending": "Openstaand"
+    },
+    "confirmDelete": "Deze partner verwijderen?",
+    "config": {
+      "title": "Algemene programma-instellingen",
+      "globalCommission": "Algemene commissie (%)",
+      "globalCommissionHint": "Standaardpercentage voor nieuwe partners. Kan per partner worden overschreven.",
+      "minBooking": "Minimale boekingswaarde (€)",
+      "minBookingHint": "Minimale boekingswaarde waarvoor de commissie geldt. 0 = geen minimum.",
+      "saved": "Opgeslagen",
+      "save": "Configuratie opslaan",
+      "portalLabel": "Partnerportaal:",
+      "portalIntro": "Elke partner kan zijn dashboard openen op",
+      "portalMid": "met het geregistreerde e-mailadres. Boekingen via de link (",
+      "portalEnd": ") worden automatisch aan de partner toegewezen."
+    },
+    "analytics": {
+      "empty": "Nog geen partnergegevens.",
+      "top": "Toppartners op boekingen",
+      "line": "{{n}} boekingen · {{paid}} betaald"
+    },
+    "shareText": "Boek je tour: {{link}}"
+  },
+  "affiliatePortal": {
+    "header": "Partnerportaal",
+    "loginTitle": "Inloggen op het portaal",
+    "codeLabel": "Partnercode:",
+    "emailLabel": "Geregistreerd e-mailadres",
+    "emailPlaceholder": "jouw@email.nl",
+    "loginError": "Ongeldig e-mailadres of ongeldige code. Controleer je gegevens en probeer opnieuw.",
+    "signingIn": "Inloggen...",
+    "signIn": "Inloggen",
+    "notAffiliate": "Nog geen partner? Neem contact op met de aanbieder voor je inloggegevens.",
+    "welcome": "Welkom",
+    "commissionPerBooking": "{{pct}}% commissie per boeking",
+    "stats": {
+      "bookings": "Gegenereerde boekingen",
+      "paid": "Betaalde commissie",
+      "pending": "Openstaande commissie",
+      "total": "Geschat totaal"
+    },
+    "linkTitle": "Jouw partnerlink",
+    "copied": "Gekopieerd",
+    "copyLink": "Link kopiëren",
+    "shareText": "Boek je tour met korting: {{link}}",
+    "paymentHistory": "Betalingsgeschiedenis",
+    "logout": "Uitloggen"
+  },
+  "marketingPage": {
+    "title": "Marketing",
+    "subtitle": "Hulpmiddelen voor promotie en contentplanner",
+    "tabs": {
+      "qrcode": "QR-code",
+      "widget": "Widget",
+      "referrals": "Doorverwijzingen",
+      "stats": "Statistieken"
+    },
+    "copied": "Gekopieerd",
+    "copy": "Kopiëren",
+    "qr": {
+      "for": "QR-code voor",
+      "publicProfile": "Openbaar profiel — boekingslink",
+      "color": "Kleur",
+      "colorNamed": "Kleur {{color}}",
+      "customColor": "Eigen kleur",
+      "size": "Grootte — {{size}}px",
+      "sizeAria": "Grootte van de QR-code",
+      "generate": "Voorbeeld genereren",
+      "preview": "Voorbeeld",
+      "alt": "QR-code"
+    },
+    "widget": {
+      "htmlCode": "HTML-code",
+      "code": "Code",
+      "preview": "Voorbeeld",
+      "previewTitle": "Voorbeeld van de widget",
+      "failed": "De widgetcode kon niet worden gegenereerd. Laad de pagina opnieuw en probeer het nog eens.",
+      "pasteHint": "Plak deze code in de HTML van je website waar het formulier moet verschijnen.",
+      "colorNote": "De kleur van de widget is die van je openbare pagina. Stel hem in via",
+      "settingsLink": "Instellingen > Openbaar profiel",
+      "sisp": "Betalen met een Kaapverdische kaart (SISP) opent op het volledige scherm, buiten je site, omdat de bank niet toestaat dat dit binnen een andere pagina wordt geopend. Alle andere boekingen en PayPal blijven op je site."
+    },
+    "referrals": {
+      "inviteTitle": "Verwijs een andere aanbieder door",
+      "inviteText": "Deel je link — wanneer een door jou doorverwezen bedrijf zich bij SalDesk aansluit, neem contact met ons op om je beloning te ontvangen.",
+      "yourLink": "Jouw doorverwijslink",
+      "sent": "Verzonden doorverwijzingen",
+      "converted": "Geconverteerd",
+      "yours": "Jouw doorverwijzingen ({{n}})",
+      "none": "Je hebt nog geen aanbieder doorverwezen.",
+      "cols": {
+        "business": "Bedrijf",
+        "date": "Datum",
+        "status": "Status"
+      },
+      "status": {
+        "novo": "Nieuw",
+        "contactado": "Gecontacteerd",
+        "demo_agendada": "Demo gepland",
+        "proposta_enviada": "Voorstel verzonden",
+        "convertido": "Geconverteerd",
+        "descartado": "Afgewezen"
+      }
+    },
+    "stats": {
+      "visits": "Profielbezoeken",
+      "clicks": "Klikken op de link",
+      "bookings": "Boekingen via de link",
+      "conversion": "Conversiepercentage",
+      "last30": "laatste 30 dagen",
+      "clicksToBookings": "klikken → boekingen",
+      "postsTitle": "Berichten — {{month}}",
+      "total": "Totaal",
+      "published": "Gepubliceerd",
+      "scheduled": "Gepland",
+      "cancelled": "Geannuleerd",
+      "origin": "Herkomst van de boekingen",
+      "noSourcesA": "Herkomstgegevens niet beschikbaar. Configureer het eindpunt",
+      "noSourcesB": "met het veld",
+      "bookingLink": "Link voor directe boeking",
+      "open": "Openen",
+      "sources": {
+        "direct": "Direct",
+        "manual": "Handmatig",
+        "social": "Social"
+      }
+    },
+    "planner": {
+      "title": "Socialmediaplanner",
+      "newPost": "Nieuw bericht",
+      "prevMonth": "Vorige maand",
+      "nextMonth": "Volgende maand",
+      "newPostOn": "Nieuw bericht op {{date}}",
+      "upcoming": "Komende berichten",
+      "noScheduled": "Geen geplande berichten",
+      "editPost": "Bericht bewerken {{text}}",
+      "deletePost": "Bericht verwijderen {{text}}",
+      "published": "Gepubliceerd",
+      "history": "Geschiedenis ({{n}})",
+      "cols": {
+        "text": "Tekst",
+        "platform": "Platform",
+        "date": "Datum",
+        "status": "Status"
+      }
+    },
+    "postStatus": {
+      "agendado": "Gepland",
+      "publicado": "Gepubliceerd",
+      "cancelado": "Geannuleerd"
+    },
+    "post": {
+      "newTitle": "Nieuw bericht",
+      "editTitle": "Bericht bewerken",
+      "template": "Sjabloon",
+      "templates": {
+        "tour_disponivel": "Tour beschikbaar",
+        "ultimas_vagas": "Laatste plaatsen",
+        "avaliacao": "Klantbeoordeling",
+        "promocao": "Speciale aanbieding",
+        "foto_do_dia": "Foto van de dag"
+      },
+      "textPt": "Tekst PT",
+      "textEn": "Tekst EN",
+      "textPtPlaceholder": "Tekst om in het Portugees te plaatsen...",
+      "textEnPlaceholder": "Tekst om in het Engels te plaatsen...",
+      "photo": "Foto (URL)",
+      "photoPlaceholder": "https://voorbeeld.nl/afbeelding.jpg",
+      "platform": "Platform",
+      "dateTime": "Datum en tijd",
+      "state": "Status",
+      "schedule": "Bericht plannen",
+      "preview": "Voorbeeld",
+      "now": "Nu",
+      "pageFallback": "Pagina",
+      "profileFallback": "jouw_profiel",
+      "captionPlaceholder": "Het bijschrift verschijnt hier...",
+      "bodyPlaceholder": "De tekst van het bericht verschijnt hier..."
+    }
+  },
+  "integrationsPage": {
+    "subtitle": "Channel Manager — Viator en GetYourGuide",
+    "refresh": "Vernieuwen",
+    "viatorDescription": "Ervaringenplatform van TripAdvisor",
+    "getyourguideDescription": "Wereldwijd platform voor activiteiten en tours",
+    "productIds": "Product IDs (gescheiden door komma)",
+    "connected": "Verbonden",
+    "disconnected": "Verbroken",
+    "lastSync": "Laatste synchronisatie: {{date}}",
+    "sync": "Synchroniseren",
+    "disconnect": "Verbreken",
+    "configure": "Instellen",
+    "webhookUrls": "Webhook-URLs om in te stellen op de platforms:",
+    "logsTitle": "Integratielogboeken",
+    "events": "{{n}} gebeurtenis(sen)",
+    "cols": {
+      "date": "Datum",
+      "channel": "Kanaal",
+      "event": "Gebeurtenis",
+      "status": "Status",
+      "ref": "OTA-ref.",
+      "error": "Fout"
+    },
+    "configureTitle": "{{name}} instellen",
+    "connect": "Verbinden"
+  },
+  "pageEditor": {
+    "title": "Editor voor de openbare pagina",
+    "subtitle": "Zet de secties van uw boekingspagina aan of uit en wijzig de volgorde. Voeg partners, getuigenissen en sociale netwerken toe.",
+    "viewMyPage": "Mijn pagina bekijken",
+    "sectionsTitle": "Secties van de pagina",
+    "sectionsHint": "Gebruik de pijlen om de volgorde te wijzigen. Zet secties uit die u niet wilt tonen.",
+    "sections": {
+      "featured": "Uitgelicht",
+      "services": "Diensten",
+      "about": "Over ons",
+      "timeline": "Hoe het werkt",
+      "gallery": "Galerij",
+      "reviews": "Beoordelingen",
+      "comparison": "Vergelijking van diensten",
+      "availability": "Live beschikbaarheid",
+      "contact": "Locatie & contact",
+      "faq": "Veelgestelde vragen",
+      "partners": "Partners",
+      "video_testimonials": "Videogetuigenissen",
+      "google_reviews": "Google-beoordelingen",
+      "instagram": "Instagram"
+    },
+    "moveSectionUp": "{{label}} omhoog verplaatsen",
+    "moveSectionDown": "{{label}} omlaag verplaatsen",
+    "showSection": "{{label}} tonen",
+    "partnersTitle": "Partners",
+    "partnerN": "Partner {{n}}",
+    "movePartnerUp": "Partner {{n}} omhoog verplaatsen",
+    "movePartnerDown": "Partner {{n}} omlaag verplaatsen",
+    "removePartner": "Partner {{n}} verwijderen",
+    "name": "Naam",
+    "partnerNameAria": "Naam van partner {{n}}",
+    "logoUrl": "Logo-URL",
+    "partnerLogoAria": "Logo-URL van partner {{n}}",
+    "link": "Link (optioneel)",
+    "partnerLinkAria": "Link van partner {{n}}",
+    "addPartner": "Partner toevoegen",
+    "videosTitle": "Videogetuigenissen",
+    "videoN": "Video {{n}}",
+    "moveVideoUp": "Video {{n}} omhoog verplaatsen",
+    "moveVideoDown": "Video {{n}} omlaag verplaatsen",
+    "removeVideo": "Video {{n}} verwijderen",
+    "videoUrl": "Video-URL",
+    "videoUrlAria": "URL van video {{n}}",
+    "thumbnailUrl": "URL van de miniatuur (optioneel)",
+    "thumbnailAria": "URL van de miniatuur van video {{n}}",
+    "addVideo": "Video toevoegen",
+    "googleTitle": "Google-beoordelingen",
+    "reviewN": "Beoordeling {{n}}",
+    "moveReviewUp": "Beoordeling {{n}} omhoog verplaatsen",
+    "moveReviewDown": "Beoordeling {{n}} omlaag verplaatsen",
+    "removeReview": "Beoordeling {{n}} verwijderen",
+    "authorName": "Naam van de auteur",
+    "authorNameAria": "Naam van de auteur van beoordeling {{n}}",
+    "photoUrl": "Foto-URL (optioneel)",
+    "photoAria": "Foto-URL van beoordeling {{n}}",
+    "reviewText": "Tekst van de beoordeling",
+    "reviewTextAria": "Tekst van beoordeling {{n}}",
+    "addReview": "Beoordeling toevoegen",
+    "socialTitle": "Sociale netwerken",
+    "linkedinOptional": "LinkedIn (optioneel)",
+    "hoursTitle": "Openingstijden",
+    "openDay": "Open op {{day}}",
+    "openingOf": "Openingstijd op {{day}}",
+    "closingOf": "Sluitingstijd op {{day}}",
+    "until": "tot",
+    "closed": "Gesloten",
+    "days": {
+      "seg": "Maandag",
+      "ter": "Dinsdag",
+      "qua": "Woensdag",
+      "qui": "Donderdag",
+      "sex": "Vrijdag",
+      "sab": "Zaterdag",
+      "dom": "Zondag"
+    },
+    "languagesTitle": "Gesproken talen",
+    "locationTitle": "Locatie (GPS-coördinaten)",
+    "latitude": "Breedtegraad",
+    "longitude": "Lengtegraad",
+    "coordsHelpBefore": "Coördinaten vindt u op",
+    "coordsHelpAfter": "→ rechtsklik → \"What's here?\"",
+    "save": "Wijzigingen opslaan",
+    "saved": "Succesvol opgeslagen",
+    "previewTitle": "Voorbeeld (schema)",
+    "previewHelp": "Definitieve volgorde van uw pagina. Het echte resultaat ziet u via \"Mijn pagina bekijken\" hierboven.",
+    "disabled": "Uitgeschakeld"
+  },
+  "menuDigital": {
+    "title": "Digitaal menu",
+    "subtitle": "{{dishes}} gerecht(en) · {{menus}} proeverijmenu('s)",
+    "tastingMenuButton": "Proeverijmenu",
+    "newDish": "Nieuw gerecht",
+    "all": "Alle ({{n}})",
+    "categoryCount": "{{label}} ({{n}})",
+    "categories": {
+      "entradas": "Voorgerechten",
+      "pratos_principais": "Hoofdgerechten",
+      "sobremesas": "Desserts",
+      "bebidas": "Dranken",
+      "outros": "Overig"
+    },
+    "allergens": {
+      "gluten": "Gluten",
+      "lactose": "Lactose",
+      "frutos_secos": "Noten",
+      "marisco": "Schaaldieren",
+      "ovos": "Eieren",
+      "soja": "Soja",
+      "peixe": "Vis",
+      "amendoim": "Pinda's"
+    },
+    "diets": {
+      "vegetariano": "Vegetarisch",
+      "vegan": "Veganistisch",
+      "sem_gluten": "Glutenvrij",
+      "halal": "Halal"
+    },
+    "weekdays": {
+      "mon": "Ma",
+      "tue": "Di",
+      "wed": "Wo",
+      "thu": "Do",
+      "fri": "Vr",
+      "sat": "Za",
+      "sun": "Zo"
+    },
+    "namePt": "Naam PT",
+    "nameEn": "Naam EN",
+    "namePtPlaceholder": "Bijv. Atum Grelhado",
+    "nameEnPlaceholder": "Bijv. Grilled Tuna",
+    "descPt": "Beschrijving PT",
+    "descEn": "Beschrijving EN",
+    "descPtPlaceholder": "Beschrijving in het Portugees...",
+    "descEnPlaceholder": "Beschrijving in het Engels...",
+    "category": "Categorie",
+    "price": "Prijs (€)",
+    "photo": "Foto",
+    "photoHint": "1 foto · max. 5 MB",
+    "allergensTitle": "Allergenen",
+    "dietsTitle": "Diëten",
+    "optionsTitle": "Opties",
+    "available": "Beschikbaar",
+    "featured": "Uitgelicht (landingspagina)",
+    "dailySpecial": "Dagschotel",
+    "cancel": "Annuleren",
+    "saveChanges": "Wijzigingen opslaan",
+    "addDish": "Gerecht toevoegen",
+    "menuName": "Naam van het menu",
+    "menuNamePlaceholder": "Proeverijmenu van de chef",
+    "pricePerPerson": "Prijs per persoon (€)",
+    "includedDishes": "Inbegrepen gerechten",
+    "add": "Toevoegen",
+    "dishNamePlaceholder": "Naam van het gerecht",
+    "menuAvailable": "Menu beschikbaar",
+    "save": "Opslaan",
+    "createMenu": "Menu aanmaken",
+    "toggleAvailability": "Beschikbaarheid wisselen",
+    "availableHint": "Beschikbaar — klik om uit te zetten",
+    "unavailableHint": "Niet beschikbaar — klik om aan te zetten",
+    "edit": "Bewerken",
+    "delete": "Verwijderen",
+    "editMenu": "Menu bewerken",
+    "editMenuTitle": "Menu bewerken",
+    "deleteMenu": "Menu verwijderen",
+    "emptyCategory": "Geen gerechten in deze categorie.",
+    "tastingMenusTitle": "Proeverijmenu's",
+    "inactive": "Inactief",
+    "qrTitle": "QR-code van het menu",
+    "shareUrl": "Menu-URL om te delen:",
+    "copyLink": "Link kopiëren",
+    "downloadQr": "QR-code downloaden",
+    "noSlug": "Stel de link van het restaurant in bij Instellingen om de QR-code te genereren.",
+    "editDish": "Gerecht bewerken",
+    "newTastingMenu": "Nieuw proeverijmenu",
+    "confirmDeleteTitle": "Verwijdering bevestigen",
+    "deleteBefore": "Verwijder",
+    "deleteAfter": "? Deze actie kan niet ongedaan worden gemaakt.",
+    "saveError": "Fout bij het opslaan"
+  },
+  "resetPassword": {
+    "weakPassword": "Het wachtwoord moet sterk zijn: minimaal 8 tekens, een hoofdletter, een cijfer en een speciaal teken.",
+    "mismatch": "De wachtwoorden komen niet overeen.",
+    "expired": "De link is verlopen of ongeldig. Vraag een nieuwe herstellink aan.",
+    "invalidTitle": "Ongeldige of verlopen link",
+    "invalidText": "Deze herstellink is niet meer geldig. Vraag een nieuwe aan.",
+    "backToLogin": "Terug naar inloggen",
+    "title": "Nieuw wachtwoord",
+    "subtitle": "Kies een sterk wachtwoord voor uw account.",
+    "newPassword": "Nieuw wachtwoord",
+    "confirmPassword": "Wachtwoord bevestigen",
+    "submit": "Wachtwoord opnieuw instellen"
+  },
+  "demoEntry": {
+    "unavailableTitle": "Demo niet beschikbaar",
+    "unavailableText": "Het demoaccount is nu niet bereikbaar. Probeer het binnenkort opnieuw.",
+    "back": "Terug naar saldesk.cv",
+    "preparing": "Demoaccount wordt voorbereid..."
+  },
+  "impersonate": {
+    "failedTitle": "Inloggen is niet gelukt",
+    "failedText": "Inloggen als deze operator is niet gelukt. Genereer de link opnieuw.",
+    "timeout": "Het inloggen duurde te lang. Probeer het opnieuw.",
+    "backToLogin": "Terug naar inloggen",
+    "enteringTitle": "Inloggen als operator",
+    "moment": "Een ogenblik…"
+  },
+  "errorBoundary": {
+    "title": "Er is iets misgegaan",
+    "text": "Er is een onverwachte fout opgetreden in de toepassing.",
+    "reload": "Pagina opnieuw laden"
+  },
+  "apiMessages": {
+    "demoReadOnly": "Demoaccount — alleen lezen, deze wijziging is niet opgeslagen."
   }
 }

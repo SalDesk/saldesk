@@ -3,6 +3,8 @@ import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testi
 import { MemoryRouter } from 'react-router-dom';
 import Messages from '../pages/Messages';
 import useAuthStore from '../store/authStore';
+import useUiStore from '../store/uiStore';
+import { portuguesNoEcra, chavesCruas } from './helpers/portuguesNoEcra';
 import { listMessages, sendMessage, markRead, listGroups, createGroup, getLastActivity } from '../services/messageService';
 import { listStaff } from '../services/staffService';
 import { listCustomers } from '../services/customersService';
@@ -387,5 +389,169 @@ describe('Messages', () => {
     await abre();
     cleanup();
     expect(sock.disconnect).toHaveBeenCalled();
+  });
+});
+
+/* Painel em ingles: os rotulos mudam; o que se grava e o que chega ao outro lado nao */
+describe('Messages em ingles', () => {
+  /* nomes, grupos e conteudo das mensagens sao dados, nao texto do painel */
+  const DADOS = ['Rui', 'Ana', 'Equipa Kite', 'Maria Cliente', 'João Sem Contacto', 'Falhou', 'Foi', 'Estamos fora do horário.', 'foto.png', 'Veja'];
+  let errSpy;
+  let warnSpy;
+
+  beforeEach(() => {
+    useUiStore.setState({ lang: 'en' });
+    errSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    Element.prototype.scrollIntoView = vi.fn();
+    sock.handlers = {};
+    sock.emit.mockClear();
+    sock.disconnect.mockClear();
+    useAuthStore.setState({ token: 'tok', operator: { id: 'op1' } });
+    listStaff.mockReset().mockResolvedValue(COLABORADORES);
+    listGroups.mockReset().mockResolvedValue(GRUPOS);
+    listCustomers.mockReset().mockResolvedValue(CLIENTES);
+    getLastActivity.mockReset().mockResolvedValue(ACTIVIDADE);
+    listMessages.mockReset().mockResolvedValue([]);
+    markRead.mockReset().mockResolvedValue({});
+    sendMessage.mockReset().mockImplementation(async (d) => ({ id: `n-${d.content}`, sender_type: 'manager', content: d.content, created_at: AGORA, channel: d.channel || 'internal', is_read: false }));
+    createGroup.mockReset().mockImplementation(async (d) => ({ id: 'g2', name: d.name, members: d.members }));
+  });
+
+  afterEach(() => {
+    cleanup();
+    useUiStore.setState({ lang: 'pt' });
+    useAuthStore.setState({ token: null, operator: null });
+    const erros = errSpy.mock.calls.length;
+    const avisos = warnSpy.mock.calls.length;
+    errSpy.mockRestore();
+    warnSpy.mockRestore();
+    expect(erros).toBe(0);
+    expect(avisos).toBe(0);
+  });
+
+  async function abreEn() {
+    render(
+      <MemoryRouter future={FUTURE}>
+        <Messages />
+      </MemoryRouter>
+    );
+    await screen.findByText('Rui');
+  }
+  function contacto(nome) {
+    return screen.getByText(nome).closest('button');
+  }
+  async function abreConversa(nome, mensagens = []) {
+    listMessages.mockResolvedValue(mensagens);
+    fireEvent.click(contacto(nome));
+    await waitFor(() => expect(listMessages).toHaveBeenCalled());
+    await waitFor(() => expect(document.querySelector('.animate-spin')).toBeNull());
+  }
+  function evento(nome, dados) {
+    act(() => { sock.handlers[nome](dados); });
+  }
+
+  it('a_barra_lateral_em_ingles_traduz_titulos_cargos_grupos_e_vazio_sem_portugues', async () => {
+    await abreEn();
+    expect(screen.getByRole('heading', { name: 'Messages' })).toBeInTheDocument();
+    expect(screen.getByText('Staff')).toBeInTheDocument();
+    expect(screen.getByText('Conversations')).toBeInTheDocument();
+    /* o cargo gravado e 'Guia'; o rotulo e o do glossario */
+    expect(screen.getByText('Guide')).toBeInTheDocument();
+    expect(screen.getByText('Driver')).toBeInTheDocument();
+    expect(screen.getByText('Group · 2 members')).toBeInTheDocument();
+    expect(screen.getByText('Customer')).toBeInTheDocument();
+    expect(screen.getByText('Select a conversation')).toBeInTheDocument();
+    expect(screen.getByPlaceholderText('Search...')).toBeInTheDocument();
+    fireEvent.change(screen.getByPlaceholderText('Search...'), { target: { value: 'zzz' } });
+    expect(screen.getByText('No results')).toBeInTheDocument();
+    expect(portuguesNoEcra(DADOS)).toEqual([]);
+    expect(chavesCruas(['messagesPage'])).toEqual([]);
+  });
+
+  it('a_conversa_com_um_cliente_em_ingles_traduz_canais_estado_de_entrega_e_hora', async () => {
+    await abreEn();
+    await abreConversa('Maria Cliente', [
+      { id: 'a', sender_type: 'manager', content: 'Falhou', channel: 'email', delivery_status: 'failed', created_at: AGORA },
+      { id: 'b', sender_type: 'manager', content: 'Foi', channel: 'whatsapp', created_at: AGORA },
+      { id: 'c', sender_type: 'manager', content: 'Veja', channel: 'email', created_at: AGORA },
+    ]);
+    expect(screen.getByRole('button', { name: 'Chat' })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByTitle('Website chat conversation')).toBeInTheDocument();
+    expect(screen.getByText('Delivery failed')).toBeInTheDocument();
+    expect(screen.getByText('Sent by WhatsApp')).toBeInTheDocument();
+    expect(screen.getByText('Sent by email')).toBeInTheDocument();
+    const hora = new Date(AGORA).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+    expect(screen.getAllByText(hora).length).toBeGreaterThan(0);
+    expect(screen.getByPlaceholderText('Write a message...')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Email' }));
+    expect(screen.getByPlaceholderText('Write a message by email...')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'WhatsApp' }));
+    expect(screen.getByPlaceholderText('Write a message by WhatsApp...')).toBeInTheDocument();
+    expect(portuguesNoEcra(DADOS)).toEqual([]);
+  });
+
+  it('o_contacto_sem_email_nem_telefone_tem_os_titulos_em_ingles', async () => {
+    await abreEn();
+    await abreConversa('João Sem Contacto');
+    expect(screen.getByRole('button', { name: 'Email' })).toHaveAttribute('title', 'No email');
+    expect(screen.getByRole('button', { name: 'WhatsApp' })).toHaveAttribute('title', 'No phone');
+  });
+
+  it('enviar_em_ingles_grava_o_mesmo_payload_e_o_anexo_leva_o_marcador_em_portugues', async () => {
+    await abreEn();
+    await abreConversa('Rui');
+    expect(screen.getByTitle('Attach file')).toBeInTheDocument();
+    const ficheiro = new File(['x'], 'foto.png', { type: 'image/png' });
+    fireEvent.change(document.querySelector('input[type="file"]'), { target: { files: [ficheiro] } });
+    fireEvent.change(screen.getByPlaceholderText('Write a message...'), { target: { value: 'Veja' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Send' }));
+    /* o marcador fica gravado na mensagem para quem a recebe: o mesmo texto do painel em portugues */
+    await waitFor(() => expect(sendMessage).toHaveBeenCalledWith({
+      content: 'Veja\n[Anexo: foto.png]', recipient_id: 's1', recipient_type: 'staff', message_type: 'direct',
+    }));
+  });
+
+  it('a_resposta_automatica_em_ingles_aparece_identificada', async () => {
+    await abreEn();
+    await abreConversa('Maria Cliente', [
+      { id: 'au1', sender_type: 'system', sender_id: 'op1', recipient_id: 'c1', recipient_type: 'guest', content: 'Estamos fora do horário.', channel: 'internal', is_read: false, created_at: AGORA },
+    ]);
+    expect(screen.getByText('Automatic reply')).toBeInTheDocument();
+  });
+
+  it('o_novo_grupo_em_ingles_traduz_o_modal_e_cria_com_os_mesmos_dados', async () => {
+    await abreEn();
+    fireEvent.click(screen.getByRole('button', { name: 'New group' }));
+    const dialogo = await screen.findByRole('dialog');
+    expect(within(dialogo).getByText('Members')).toBeInTheDocument();
+    expect(within(dialogo).getByPlaceholderText('E.g. Kitesurf team')).toBeInTheDocument();
+    const nome = within(dialogo).getAllByText('Group name').find(e => e.tagName === 'LABEL').nextElementSibling;
+    fireEvent.change(nome, { target: { value: 'Praia' } });
+    fireEvent.click(within(dialogo).getByText(/Rui/).closest('label').querySelector('input'));
+    expect(within(dialogo).getByText(/Guide/)).toBeInTheDocument();
+    expect(portuguesNoEcra(['Rui', 'Ana', 'Praia'], dialogo)).toEqual([]);
+    fireEvent.submit(dialogo.querySelector('form'));
+    await waitFor(() => expect(createGroup).toHaveBeenCalledWith({ name: 'Praia', members: ['s1'] }));
+  });
+
+  it('a_notificacao_do_browser_em_ingles_usa_o_titulo_em_ingles', async () => {
+    const Antiga = window.Notification;
+    const criadas = [];
+    window.Notification = function (titulo) { criadas.push(titulo); };
+    window.Notification.permission = 'granted';
+    const oculto = Object.getOwnPropertyDescriptor(Document.prototype, 'hidden');
+    Object.defineProperty(document, 'hidden', { configurable: true, get: () => true });
+    try {
+      await abreEn();
+      evento('message:new', { id: 'x1', sender_type: 'staff', sender_id: 's2', recipient_id: 'op1', content: 'Oi', created_at: AGORA });
+      evento('message:new', { id: 'x2', sender_type: 'guest', sender_id: 'c1', recipient_id: 'op1', content: 'Oi', created_at: AGORA });
+      evento('message:new', { id: 'x3', sender_type: 'staff', sender_id: 's2', group_id: 'g1', content: 'Oi', created_at: AGORA });
+      expect(criadas).toEqual(['New message from a staff member', 'New message from a visitor', 'New message in a group']);
+    } finally {
+      window.Notification = Antiga;
+      delete document.hidden;
+      if (oculto) Object.defineProperty(Document.prototype, 'hidden', oculto);
+    }
   });
 });

@@ -3,6 +3,8 @@ import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-li
 import Packages from '../pages/Packages';
 import { listPackages, createPackage, updatePackage, deletePackage } from '../services/packagesService';
 import { listUnits } from '../services/unitsService';
+import useUiStore from '../store/uiStore';
+import { portuguesNoEcra, chavesCruas } from './helpers/portuguesNoEcra';
 
 vi.mock('../services/packagesService', () => ({
   listPackages: vi.fn(), createPackage: vi.fn(), updatePackage: vi.fn(), deletePackage: vi.fn(),
@@ -256,5 +258,107 @@ describe('Pacotes com o design system', () => {
     expect(html).not.toMatch(HEX);
     expect(html).not.toMatch(NOMEADAS);
     expect(html.replace(/text-error ml-0[.]5/g, '')).not.toMatch(/(?:text|bg|border)-error/);
+  });
+});
+
+/* ───────────────────────── painel em ingles ───────────────────────── */
+
+describe('Pacotes: painel em ingles', () => {
+  /* nomes e descricoes dos pacotes e dos tours sao dados do operador */
+  const DADOS = ['Pacote', 'Quatro tours', 'Kite', 'Mergulho', 'Quad', 'Barco'];
+  const dataEn = (d) => new Date(d + 'T00:00:00Z').toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'UTC' });
+
+  beforeEach(() => { useUiStore.setState({ lang: 'en' }); });
+  afterEach(() => { cleanup(); useUiStore.setState({ lang: 'pt' }); });
+
+  it('a_lista_mostra_rotulos_em_ingles_sem_portugues_nem_chaves_cruas', async () => {
+    await montar();
+    expect(screen.getByText('Seasonal packages')).toBeInTheDocument();
+    expect(kpi('Active packages')).toBe('4');
+    expect(kpi('Bookings from packages')).toBe('23');
+    const c = cartao('Pacote Aventura');
+    expect(c).toHaveTextContent('Save €40');
+    expect(c).toHaveTextContent('5 booking(s)');
+    expect(c).toHaveTextContent(`${dataEn('2026-12-01')} — ${dataEn(dia(30))}`);
+    expect(cartao('Pacote Cheio')).toHaveTextContent('Sold out');
+    expect(cartao('Pacote Expirado')).toHaveTextContent('Expired');
+    expect(cartao('Pacote Inactivo')).toHaveTextContent('Inactive');
+    expect(cartao('Pacote Limitado')).toHaveTextContent('12 left');
+    expect(cartao('Pacote Aventura')).toHaveTextContent('Active');
+    expect(portuguesNoEcra(DADOS)).toEqual([]);
+    expect(chavesCruas(['packagesPage'])).toEqual([]);
+  });
+
+  it('a_receita_e_os_precos_usam_separador_de_milhares_en_e_pt_fica_como_sempre', async () => {
+    const grande = { id: 'p9', name_pt: 'Pacote Grande', tour_ids: [], price: 1234, original_price: 1500, bookings_count: 10, limit: 0, status: 'activo' };
+    listPackages.mockResolvedValue([grande]);
+    await montar('Pacote Grande');
+    expect(kpi('Revenue generated')).toBe('€12,340');
+    expect(cartao('Pacote Grande')).toHaveTextContent('€1,234');
+    expect(cartao('Pacote Grande')).toHaveTextContent('Save €266');
+    cleanup();
+    useUiStore.setState({ lang: 'pt' });
+    await montar('Pacote Grande');
+    expect(norm(kpi('Receita gerada'))).toBe(norm(`€${(12340).toLocaleString('pt-PT')}`));
+    expect(cartao('Pacote Grande')).toHaveTextContent('€1234');
+    expect(cartao('Pacote Grande')).toHaveTextContent('Poupa €266');
+  });
+
+  it('criar_em_ingles_mostra_a_soma_e_a_poupanca_e_grava_o_estado_gravado', async () => {
+    createPackage.mockImplementation(async (d) => ({ id: 'pn', bookings_count: 0, ...d }));
+    await montar();
+    fireEvent.click(screen.getAllByText('New package').find(e => e.closest('button')).closest('button'));
+    const dlg = screen.getByRole('dialog');
+    expect(within(dlg).getByText(/Included tours \(0 selected\)/)).toBeInTheDocument();
+    fireEvent.change(within(dlg).getByLabelText('Name PT'), { target: { value: 'Pacote Novo' } });
+    fireEvent.click(within(dlg).getByText('Kite'));
+    fireEvent.click(within(dlg).getByText('Mergulho'));
+    expect(dlg).toHaveTextContent('Sum of the individual tours: €90');
+    fireEvent.change(within(dlg).getByPlaceholderText('e.g. 85.00'), { target: { value: '70' } });
+    expect(dlg).toHaveTextContent('Customer saves €20 vs buying separately');
+    expect(within(dlg).queryByText('Status')).toBeNull(); /* so ao editar */
+    expect(portuguesNoEcra(DADOS, dlg)).toEqual([]);
+    fireEvent.click(within(dlg).getByRole('button', { name: 'Create package' }));
+    await waitFor(() => expect(createPackage).toHaveBeenCalledWith(expect.objectContaining({
+      name_pt: 'Pacote Novo', price: 70, original_price: 90, tour_ids: ['u1', 'u2'], status: 'activo',
+    })));
+  });
+
+  it('editar_em_ingles_grava_o_valor_do_estado_e_nao_o_rotulo', async () => {
+    updatePackage.mockImplementation(async (id, d) => ({ ...PACOTES[0], ...d }));
+    await montar();
+    fireEvent.click(screen.getByRole('button', { name: 'Edit Pacote Aventura' }));
+    const dlg = screen.getByRole('dialog');
+    expect(dlg).toHaveTextContent('Edit package');
+    const estado = within(dlg).getAllByRole('combobox')[0];
+    expect(Array.from(estado.options).map(o => o.textContent)).toEqual(['Active', 'Inactive', 'Sold out']);
+    fireEvent.change(estado, { target: { value: Array.from(estado.options).find(o => o.textContent === 'Sold out').value } });
+    fireEvent.click(within(dlg).getByRole('button', { name: 'Save' }));
+    await waitFor(() => expect(updatePackage).toHaveBeenCalledWith('p1', expect.objectContaining({ status: 'esgotado', price: 100 })));
+  });
+
+  it('desactivar_grava_inactivo_e_eliminar_pergunta_em_ingles', async () => {
+    updatePackage.mockImplementation(async (id, d) => ({ ...PACOTES[0], ...d }));
+    const confirma = vi.spyOn(window, 'confirm').mockReturnValue(false);
+    await montar();
+    fireEvent.click(screen.getByRole('button', { name: 'Deactivate Pacote Aventura' }));
+    await waitFor(() => expect(updatePackage).toHaveBeenCalledWith('p1', { status: 'inactivo' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Delete Pacote Cheio' }));
+    expect(confirma).toHaveBeenCalledWith('Delete this package?');
+  });
+
+  it('falha_ao_guardar_e_o_vazio_aparecem_em_ingles', async () => {
+    createPackage.mockRejectedValue(new Error('x'));
+    await montar();
+    fireEvent.click(screen.getAllByText('New package').find(e => e.closest('button')).closest('button'));
+    fireEvent.change(screen.getByLabelText('Name PT'), { target: { value: 'X' } });
+    fireEvent.change(screen.getByPlaceholderText('e.g. 85.00'), { target: { value: '10' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Create package' }));
+    expect(await screen.findByText('Could not save the package.')).toBeInTheDocument();
+    cleanup();
+    listPackages.mockResolvedValue([]);
+    render(<Packages />);
+    expect(await screen.findByText('No packages yet')).toBeInTheDocument();
+    expect(chavesCruas(['packagesPage'])).toEqual([]);
   });
 });

@@ -258,9 +258,9 @@ export default function PerfilPublicoTab({ operator }) {
             <p className="text-xs font-body text-n-600">{t('settings.perfil.confirmSameDeadline')}</p>
           )}
           <Textarea label={t('settings.perfil.portuguese')} aria-label={t('settings.perfil.cancelPolicyPtAria')} value={cancelPolicyPt} onChange={e => setCancelPolicyPt(e.target.value)}
-            rows={4} placeholder="Ex: Cancelamento gratuito até 48h antes. Após esse prazo, 50% do valor é retido..." />
+            rows={4} placeholder={t('settings.perfil.cancelPolicyPtExample')} />
           <Textarea label={t('settings.perfil.englishEn')} aria-label={t('settings.perfil.cancelPolicyEnAria')} value={cancelPolicyEn} onChange={e => setCancelPolicyEn(e.target.value)}
-            rows={4} placeholder="Ex: Free cancellation up to 48h before. After that, 50% of the value is retained..." />
+            rows={4} placeholder={t('settings.perfil.cancelPolicyEnExample')} />
         </div>
       </Card>
 

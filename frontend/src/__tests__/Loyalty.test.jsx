@@ -6,6 +6,8 @@ import {
   getLoyaltyConfig, updateLoyaltyConfig,
   getCustomerLoyaltyHistory, adjustCustomerPoints, redeemCustomerPoints,
 } from '../services/loyaltyService';
+import useUiStore from '../store/uiStore';
+import { portuguesNoEcra, chavesCruas } from './helpers/portuguesNoEcra';
 
 vi.mock('../services/customersService', () => ({ listCustomers: vi.fn() }));
 vi.mock('../services/loyaltyService', () => ({
@@ -620,5 +622,142 @@ describe('Fidelidade: design system (clientes e modal)', () => {
     expect(html.replace(/text-error ml-0[.]5/g, '')).not.toMatch(/(?:text|bg|border)-error/);
     const comCor = [...document.body.querySelectorAll('[style]')].filter(e => /color|background/.test(e.getAttribute('style')));
     expect(comCor).toHaveLength(0);
+  });
+});
+
+/* ───────────────────────── painel em ingles ───────────────────────── */
+
+describe('Fidelidade: painel em ingles', () => {
+  /* dados que nao se traduzem: nomes dos clientes e a descricao da recompensa por omissao (texto do operador) */
+  const DADOS = ['Ana Silva', 'Bruno Dias', 'Carla Lopes', 'Diogo Zero', '5% desconto em todas as reservas', '10% desconto + upgrade gratuito disponível', '15% desconto + tour gratuito por ano'];
+  const GRANDES = [
+    { id: 'c1', name: 'Ana Silva', email: 'ana@x.test', total_visits: 5, loyalty_points: 12345 },
+    { id: 'c2', name: 'Bruno Dias', email: 'bruno@x.test', total_visits: 2, loyalty_points: 150 },
+    { id: 'c3', name: 'Carla Lopes', email: 'carla@x.test', total_visits: 1, loyalty_points: 50 },
+  ];
+  const dataEn = (d, opcoes = {}) => new Date(d).toLocaleDateString('en-GB', opcoes);
+
+  beforeEach(() => { useUiStore.setState({ lang: 'en' }); });
+  afterEach(() => { cleanup(); useUiStore.setState({ lang: 'pt' }); });
+
+  async function montarEn() {
+    const r = render(<Loyalty />);
+    await screen.findByText(/^Programme (active|inactive)$/);
+    return r;
+  }
+  async function clientesEn(lista = GRANDES) {
+    listCustomers.mockResolvedValue(lista);
+    const r = await montarEn();
+    fireEvent.click(separador('Customers'));
+    await screen.findByText(lista[0].name);
+    return r;
+  }
+  const ajustarEn = (nome) => fireEvent.click(screen.getByRole('button', { name: `Adjust points ${nome}` }));
+
+  it('a_configuracao_mostra_rotulos_em_ingles_e_os_niveis_gravados_com_o_nome_traduzido', async () => {
+    await montarEn();
+    expect(screen.getByText('Loyalty programme', { selector: 'h1, h2' })).toBeInTheDocument();
+    expect(screen.getByText('Programme inactive')).toBeInTheDocument();
+    expect(screen.getByText('Activate the programme to start giving points to customers.')).toBeInTheDocument();
+    expect(screen.getByText('Earning rule')).toBeInTheDocument();
+    expect(screen.getByText('Tiers and rewards')).toBeInTheDocument();
+    expect(screen.getByText('e.g. a €100 booking = 100 points.')).toBeInTheDocument();
+    expect(screen.getByText('0–100 pts · 5% discount')).toBeInTheDocument();
+    expect(screen.getByText('101–499 pts · 10% discount')).toBeInTheDocument();
+    expect(screen.getByText('500–∞ pts · 15% discount')).toBeInTheDocument();
+    expect(screen.getAllByText('Silver').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Gold').length).toBeGreaterThan(0);
+    expect(portuguesNoEcra(DADOS)).toEqual([]);
+    expect(chavesCruas(['loyaltyPage'])).toEqual([]);
+  });
+
+  it('activar_o_programa_e_editar_um_nivel_gravam_o_nome_do_nivel_portugues', async () => {
+    await montarEn();
+    fireEvent.click(screen.getByRole('button', { name: 'Loyalty programme' }));
+    await waitFor(() => expect(updateLoyaltyConfig).toHaveBeenCalledWith(expect.objectContaining({ active: true })));
+    abrirNivel('101–499 pts · 10% discount');
+    fireEvent.change(screen.getByLabelText('Discount (%)'), { target: { value: '12' } });
+    expect(screen.getByLabelText('Maximum points (Silver tier)')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+    await waitFor(() => {
+      const ultimo = updateLoyaltyConfig.mock.calls.at(-1)[0];
+      expect(ultimo.levels.map(l => l.name)).toEqual(['Bronze', 'Prata', 'Ouro']);
+      expect(ultimo.levels[1].discount_pct).toBe(12);
+    });
+  });
+
+  it('a_lista_de_clientes_usa_numeros_en_o_filtro_por_nivel_usa_o_nome_gravado', async () => {
+    await clientesEn();
+    expect(screen.getAllByRole('columnheader').map(h => h.textContent)).toEqual(['Customer', 'Email', 'Visits', 'Points', 'Tier', 'Reward', '']);
+    const ana = screen.getByText('Ana Silva').closest('tr');
+    expect(ana).toHaveTextContent('12,345 pts');
+    expect(ana).toHaveTextContent('Gold');
+    fireEvent.click(chip('Silver'));
+    expect(screen.queryByText('Ana Silva')).not.toBeInTheDocument();
+    expect(screen.getByText('Bruno Dias')).toBeInTheDocument();
+    expect(screen.getByPlaceholderText('Search customer...')).toBeInTheDocument();
+    expect(portuguesNoEcra(DADOS)).toEqual([]);
+    expect(chavesCruas(['loyaltyPage'])).toEqual([]);
+    cleanup();
+    useUiStore.setState({ lang: 'pt' });
+    listCustomers.mockResolvedValue(GRANDES);
+    await montar();
+    fireEvent.click(separador('Clientes'));
+    await screen.findByText('Ana Silva');
+    expect(norm(screen.getByText('Ana Silva').closest('tr').textContent)).toContain(norm(`${(12345).toLocaleString('pt-PT')} pts`));
+  });
+
+  it('ajustar_pontos_em_ingles_grava_o_delta_com_sinal_e_o_historico_usa_rotulos_e_datas_en', async () => {
+    getCustomerLoyaltyHistory.mockResolvedValue([
+      { id: 'h1', type: 'earn', points: 50, reason: 'Booking', created_at: '2026-11-01T12:00:00Z' },
+      { id: 'h2', type: 'redeem', points: -30, created_at: '2026-11-02T12:00:00Z' },
+      { id: 'h3', type: 'manual_adjust', points: 10, created_at: '2026-11-03T12:00:00Z' },
+    ]);
+    adjustCustomerPoints.mockResolvedValue({ loyalty_points: 100 });
+    await clientesEn();
+    ajustarEn('Carla Lopes');
+    expect(await screen.findByText('Points — Carla Lopes')).toBeInTheDocument();
+    const dlg = within(screen.getByRole('dialog'));
+    await dlg.findByText('Earned');
+    expect(dlg.getByText('Redeemed')).toBeInTheDocument();
+    expect(dlg.getByText('Manual adjustment')).toBeInTheDocument();
+    expect(dlg.getByText(dataEn('2026-11-01T12:00:00Z'))).toBeInTheDocument();
+    fireEvent.click(dlg.getByRole('button', { name: 'Remove' }));
+    fireEvent.change(dlg.getByLabelText('Number of points'), { target: { value: '20' } });
+    fireEvent.change(dlg.getByLabelText('Reason'), { target: { value: 'test' } });
+    expect(dlg.getByText('Result')).toBeInTheDocument();
+    expect(portuguesNoEcra([...DADOS, 'Booking'], screen.getByRole('dialog'))).toEqual([]);
+    fireEvent.click(dlg.getByRole('button', { name: 'Save adjustment' }));
+    await waitFor(() => expect(adjustCustomerPoints).toHaveBeenCalledWith('c3', -20, 'test'));
+  });
+
+  it('resgatar_em_ingles_mostra_o_voucher_com_a_validade_en_e_o_erro_em_ingles', async () => {
+    redeemCustomerPoints.mockResolvedValue({ voucher: { code: 'FID-AB12', value: 5, expires_at: '2027-01-15T00:00:00Z' }, loyalty_points: 0 });
+    await clientesEn();
+    ajustarEn('Carla Lopes');
+    await screen.findByText('Points — Carla Lopes');
+    expect(screen.getByText('Redeem Bronze tier')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Redeem' }));
+    expect(await screen.findByText('Voucher created — 5% off')).toBeInTheDocument();
+    expect(screen.getByText(`Single use, valid until ${dataEn('2027-01-15T00:00:00Z', { timeZone: 'UTC' })}.`)).toBeInTheDocument();
+    cleanup();
+    redeemCustomerPoints.mockReset().mockRejectedValueOnce(new Error('x'));
+    await clientesEn();
+    ajustarEn('Carla Lopes');
+    await screen.findByText('Points — Carla Lopes');
+    fireEvent.click(screen.getByRole('button', { name: 'Redeem' }));
+    expect(await screen.findByText('Could not redeem the points.')).toBeInTheDocument();
+  });
+
+  it('o_erro_de_valor_invalido_e_o_de_gravar_aparecem_em_ingles', async () => {
+    adjustCustomerPoints.mockRejectedValue(new Error('x'));
+    await clientesEn();
+    ajustarEn('Carla Lopes');
+    await screen.findByText('Points — Carla Lopes');
+    fireEvent.click(screen.getByRole('button', { name: 'Save adjustment' }));
+    expect(screen.getByText('Enter a valid value.')).toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText('Number of points'), { target: { value: '5' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Save adjustment' }));
+    expect(await screen.findByText('Could not update the points.')).toBeInTheDocument();
   });
 });

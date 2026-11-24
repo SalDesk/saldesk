@@ -17,14 +17,14 @@ import Table from '../components/ui/Table';
 import EmptyState from '../components/ui/EmptyState';
 import Input, { Textarea } from '../components/ui/Input';
 import LoadingSpinner from '../components/shared/LoadingSpinner';
+import { useT } from '../i18n';
+import { formatarData } from '../utils/formatoLingua';
 
 /* ── Sequence definitions ── */
 const SEQUENCES = [
   {
     id: 'booking_email',
     trigger_type: 'booking_confirmed', trigger_days: null, channel: 'email',
-    title: 'Nova reserva — Email de confirmação',
-    subtitle: 'Email imediato ao cliente após confirmação',
     Icon: Mail, iconColor: 'text-ocean-700', iconBg: 'bg-ocean-50',
     defaults: {
       name: 'Confirmação de reserva',
@@ -37,8 +37,6 @@ const SEQUENCES = [
   {
     id: 'booking_whatsapp',
     trigger_type: 'booking_confirmed', trigger_days: null, channel: 'whatsapp',
-    title: 'Nova reserva — WhatsApp de boas-vindas',
-    subtitle: 'Mensagem imediata ao cliente via WhatsApp',
     Icon: MessageCircle, iconColor: 'text-[var(--success)]', iconBg: 'bg-[var(--success-light)]',
     defaults: {
       name: 'Boas-vindas WhatsApp',
@@ -50,8 +48,6 @@ const SEQUENCES = [
   {
     id: 'd7_email',
     trigger_type: 'days_before_checkin', trigger_days: 7, channel: 'email',
-    title: 'D-7 — Email de preparação',
-    subtitle: '7 dias antes do tour',
     Icon: Calendar, iconColor: 'text-ocean-500', iconBg: 'bg-ocean-50',
     defaults: {
       name: 'Lembrete 7 dias',
@@ -64,8 +60,6 @@ const SEQUENCES = [
   {
     id: 'd3_email',
     trigger_type: 'days_before_checkin', trigger_days: 3, channel: 'email',
-    title: 'D-3 — Email com instruções',
-    subtitle: '3 dias antes do tour',
     Icon: Calendar, iconColor: 'text-sand-600', iconBg: 'bg-sand-50',
     defaults: {
       name: 'Instruções D-3',
@@ -78,8 +72,6 @@ const SEQUENCES = [
   {
     id: 'd1_whatsapp',
     trigger_type: 'days_before_checkin', trigger_days: 1, channel: 'whatsapp',
-    title: 'D-1 — WhatsApp de lembrete',
-    subtitle: 'Mensagem um dia antes do tour',
     Icon: MessageCircle, iconColor: 'text-[var(--success)]', iconBg: 'bg-[var(--success-light)]',
     defaults: {
       name: 'Lembrete D-1',
@@ -91,8 +83,6 @@ const SEQUENCES = [
   {
     id: 'post1_review',
     trigger_type: 'days_after_checkout', trigger_days: 1, channel: 'email',
-    title: 'D+1 — Pedido de avaliação',
-    subtitle: '1 dia após o tour',
     Icon: Star, iconColor: 'text-sand-600', iconBg: 'bg-sand-50',
     defaults: {
       name: 'Pedido de avaliação',
@@ -105,8 +95,6 @@ const SEQUENCES = [
   {
     id: 'post7_discount',
     trigger_type: 'days_after_checkout', trigger_days: 7, channel: 'email',
-    title: 'D+7 — Desconto próxima reserva',
-    subtitle: '7 dias após o tour',
     Icon: Gift, iconColor: 'text-[var(--success)]', iconBg: 'bg-[var(--success-light)]',
     defaults: {
       name: 'Desconto fidelidade D+7',
@@ -119,8 +107,6 @@ const SEQUENCES = [
   {
     id: 'post30_newsletter',
     trigger_type: 'days_after_checkout', trigger_days: 30, channel: 'email',
-    title: 'D+30 — Newsletter de novos tours',
-    subtitle: '30 dias após o tour',
     Icon: Newspaper, iconColor: 'text-n-600', iconBg: 'bg-n-100',
     defaults: {
       name: 'Newsletter D+30',
@@ -133,12 +119,12 @@ const SEQUENCES = [
 ];
 
 const VARS = [
-  { key: '{nome_cliente}', desc: 'Nome do cliente' },
-  { key: '{nome_tour}',    desc: 'Nome do tour/serviço' },
-  { key: '{data}',         desc: 'Data do tour' },
-  { key: '{hora}',         desc: 'Hora do tour' },
-  { key: '{guia}',         desc: 'Nome do guia atribuído' },
-  { key: '{ponto_encontro}', desc: 'Ponto de encontro' },
+  { key: '{nome_cliente}', id: 'nome_cliente' },
+  { key: '{nome_tour}',    id: 'nome_tour' },
+  { key: '{data}',         id: 'data' },
+  { key: '{hora}',         id: 'hora' },
+  { key: '{guia}',         id: 'guia' },
+  { key: '{ponto_encontro}', id: 'ponto_encontro' },
 ];
 
 const DEMO = {
@@ -169,6 +155,7 @@ function findAutomation(list, seq) {
 
 /* ── EmailPreview ── */
 function EmailPreview({ subject, body, isWhatsApp }) {
+  const t = useT();
   const pb = interpolate(body);
   const ps = interpolate(subject);
 
@@ -177,16 +164,16 @@ function EmailPreview({ subject, body, isWhatsApp }) {
       <div className="border border-n-200 rounded-md overflow-hidden">
         <div className="bg-[var(--success)] px-3 py-2 flex items-center gap-2">
           <MessageCircle size={13} strokeWidth={1.75} className="text-white shrink-0" />
-          <p className="text-white text-xs font-body font-semibold">WhatsApp Preview</p>
+          <p className="text-white text-xs font-body font-semibold">{t('automations.previewWhatsApp')}</p>
         </div>
         <div className="bg-n-100 p-3">
           <div className="bg-white rounded-lg px-3 py-2 max-w-xs shadow-sm">
-            <pre className="text-xs font-body text-n-800 whitespace-pre-wrap leading-relaxed">{pb || '(sem conteúdo)'}</pre>
+            <pre className="text-xs font-body text-n-800 whitespace-pre-wrap leading-relaxed">{pb || t('automations.emptyBody')}</pre>
             <p className="text-[10px] font-mono text-n-400 text-right mt-1">09:00</p>
           </div>
         </div>
         <div className="bg-n-50 px-3 py-1.5 border-t border-n-100">
-          <p className="text-[10px] font-mono text-n-400">Preview com dados de exemplo.</p>
+          <p className="text-[10px] font-mono text-n-400">{t('automations.sampleNote')}</p>
         </div>
       </div>
     );
@@ -196,13 +183,13 @@ function EmailPreview({ subject, body, isWhatsApp }) {
     <div className="border border-n-200 rounded-md overflow-hidden">
       <div className="bg-ocean-900 px-4 py-2.5">
         <p className="text-white text-[11px] font-display font-semibold">SalDesk Tours</p>
-        {ps && <p className="text-ocean-300 text-[11px] font-mono mt-0.5">Assunto: {ps}</p>}
+        {ps && <p className="text-ocean-300 text-[11px] font-mono mt-0.5">{t('automations.previewSubject')} {ps}</p>}
       </div>
       <div className="bg-white px-5 py-4">
-        <pre className="text-xs font-body text-n-700 whitespace-pre-wrap leading-relaxed">{pb || '(sem conteúdo)'}</pre>
+        <pre className="text-xs font-body text-n-700 whitespace-pre-wrap leading-relaxed">{pb || t('automations.emptyBody')}</pre>
       </div>
       <div className="bg-n-50 px-4 py-2 border-t border-n-100">
-        <p className="text-[10px] font-mono text-n-400">Preview com dados de exemplo. Variáveis substituidas no envio real.</p>
+        <p className="text-[10px] font-mono text-n-400">{t('automations.sampleNoteLong')}</p>
       </div>
     </div>
   );
@@ -210,6 +197,8 @@ function EmailPreview({ subject, body, isWhatsApp }) {
 
 /* ── SequenceCard ── */
 function SequenceCard({ seq, automation, onSaved }) {
+  const t = useT();
+  const titulo = t(`automations.seq.${seq.id}.title`);
   const [open,    setOpen]    = useState(false);
   const [editing, setEditing] = useState(false);
   const [preview, setPreview] = useState(false);
@@ -319,8 +308,8 @@ function SequenceCard({ seq, automation, onSaved }) {
           <seq.Icon size={16} strokeWidth={1.75} className={seq.iconColor} />
         </div>
         <div className="flex-1 min-w-0">
-          <p className="font-display font-semibold text-sm text-n-900 truncate">{seq.title}</p>
-          <p className="text-xs font-body text-n-500">{seq.subtitle}</p>
+          <p className="font-display font-semibold text-sm text-n-900 truncate">{titulo}</p>
+          <p className="text-xs font-body text-n-500">{t(`automations.seq.${seq.id}.subtitle`)}</p>
         </div>
         <span className="hidden sm:inline-flex items-center gap-1 text-[10px] font-mono text-n-500 bg-n-100 px-2 py-0.5 rounded-xs shrink-0">
           {hasEmail
@@ -333,7 +322,7 @@ function SequenceCard({ seq, automation, onSaved }) {
           onClick={handleToggle}
           disabled={toggling}
           aria-pressed={isActive}
-          aria-label={`${isActive ? 'Desactivar' : 'Activar'} ${seq.title}`}
+          aria-label={t(isActive ? 'automations.deactivate' : 'automations.activate', { title: titulo })}
           className={`relative inline-flex h-5 w-9 shrink-0 rounded-full border-2 border-transparent transition-colors focus:outline-none ${toggling ? 'opacity-50' : ''} ${isActive ? 'bg-ocean-700' : 'bg-n-300'}`}
         >
           <span className={`inline-block h-4 w-4 rounded-full bg-white shadow transition-transform ${isActive ? 'translate-x-4' : 'translate-x-0'}`} />
@@ -351,20 +340,20 @@ function SequenceCard({ seq, automation, onSaved }) {
             <div className="space-y-3">
               {hasEmail && form.subject_pt && (
                 <div className="bg-white border border-n-200 rounded-sm px-3 py-2">
-                  <p className="text-[10px] font-mono text-n-400 mb-0.5 uppercase tracking-wide">Assunto PT</p>
+                  <p className="text-[10px] font-mono text-n-400 mb-0.5 uppercase tracking-wide">{t('automations.subjectPt')}</p>
                   <p className="text-xs font-body text-n-700 truncate">{form.subject_pt}</p>
                 </div>
               )}
               <div className="bg-white border border-n-200 rounded-sm px-3 py-2">
-                <p className="text-[10px] font-mono text-n-400 mb-0.5 uppercase tracking-wide">Mensagem PT</p>
+                <p className="text-[10px] font-mono text-n-400 mb-0.5 uppercase tracking-wide">{t('automations.messagePt')}</p>
                 <p className="text-xs font-body text-n-600 whitespace-pre-wrap line-clamp-3">{form.message_pt}</p>
               </div>
               <div className="flex gap-2">
                 <Button variant="secondary" size="sm" icon={Edit2} onClick={e => { e.stopPropagation(); setEditing(true); }}>
-                  Editar template
+                  {t('automations.editTemplate')}
                 </Button>
                 <Button variant="secondary" size="sm" icon={Eye} onClick={e => { e.stopPropagation(); setPreview(p => !p); }}>
-                  {preview ? 'Ocultar' : 'Preview'}
+                  {preview ? t('automations.hide') : t('automations.preview')}
                 </Button>
               </div>
               {preview && (
@@ -386,10 +375,10 @@ function SequenceCard({ seq, automation, onSaved }) {
             <div className="space-y-4">
               {/* Variables */}
               <div>
-                <p className="text-xs font-body font-bold uppercase tracking-wide text-n-500 mb-2">Variáveis — clique para inserir no corpo PT</p>
+                <p className="text-xs font-body font-bold uppercase tracking-wide text-n-500 mb-2">{t('automations.variablesHint')}</p>
                 <div className="flex flex-wrap gap-1.5">
                   {VARS.map(v => (
-                    <button key={v.key} type="button" onClick={() => insertVar(v.key)} title={v.desc}
+                    <button key={v.key} type="button" onClick={() => insertVar(v.key)} title={t(`automations.vars.${v.id}`)}
                       className="text-xs font-mono px-2 py-0.5 rounded-xs bg-ocean-50 text-ocean-700 border border-ocean-100 hover:bg-ocean-100 transition-colors">
                       {v.key}
                     </button>
@@ -399,18 +388,18 @@ function SequenceCard({ seq, automation, onSaved }) {
 
               {hasEmail && (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <Input label="Assunto PT" aria-label="Assunto PT" value={form.subject_pt} onChange={e => setForm(p => ({ ...p, subject_pt: e.target.value }))} />
-                  <Input label="Assunto EN" aria-label="Assunto EN" value={form.subject_en} onChange={e => setForm(p => ({ ...p, subject_en: e.target.value }))} />
+                  <Input label={t('automations.subjectPt')} aria-label={t('automations.subjectPt')} value={form.subject_pt} onChange={e => setForm(p => ({ ...p, subject_pt: e.target.value }))} />
+                  <Input label={t('automations.subjectEn')} aria-label={t('automations.subjectEn')} value={form.subject_en} onChange={e => setForm(p => ({ ...p, subject_en: e.target.value }))} />
                 </div>
               )}
-              <Textarea label="Mensagem PT" aria-label="Mensagem PT" value={form.message_pt} rows={5} onChange={e => setForm(p => ({ ...p, message_pt: e.target.value }))} />
-              <Textarea label="Mensagem EN" aria-label="Mensagem EN" value={form.message_en} rows={5} onChange={e => setForm(p => ({ ...p, message_en: e.target.value }))} />
+              <Textarea label={t('automations.messagePt')} aria-label={t('automations.messagePt')} value={form.message_pt} rows={5} onChange={e => setForm(p => ({ ...p, message_pt: e.target.value }))} />
+              <Textarea label={t('automations.messageEn')} aria-label={t('automations.messageEn')} value={form.message_en} rows={5} onChange={e => setForm(p => ({ ...p, message_en: e.target.value }))} />
 
               <div className="flex items-center justify-between">
                 <button type="button" onClick={() => setPreview(p => !p)}
                   className="text-xs font-body text-ocean-700 hover:underline flex items-center gap-1">
                   <Eye size={12} strokeWidth={1.75} />
-                  {preview ? 'Ocultar preview' : 'Ver preview'}
+                  {preview ? t('automations.hidePreview') : t('automations.viewPreview')}
                 </button>
                 {preview && (
                   <div className="flex gap-1">
@@ -429,10 +418,10 @@ function SequenceCard({ seq, automation, onSaved }) {
               <div className="flex gap-2 pt-1">
                 <Button variant="secondary" icon={XIcon}
                   onClick={() => { setEditing(false); setPreview(false); }} className="flex-1">
-                  Cancelar
+                  {t('common.cancel')}
                 </Button>
                 <Button icon={Save} loading={saving} onClick={handleSave} className="flex-1">
-                  Guardar template
+                  {t('automations.saveTemplate')}
                 </Button>
               </div>
             </div>
@@ -446,45 +435,48 @@ function SequenceCard({ seq, automation, onSaved }) {
 /* ── LogsTab ── */
 const STATUS_BADGE = { sent: 'confirmed', failed: 'cancelled', pending: 'pending' };
 
-const LOG_COLUMNS = [
-  {
-    key: 'created_at', label: 'Data',
-    render: l => (
-      <span className="text-xs font-mono text-n-500 whitespace-nowrap">
-        {l.created_at ? new Date(l.created_at).toLocaleDateString('pt-PT', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) : '—'}
-      </span>
-    ),
-  },
-  {
-    key: 'automation', label: 'Automação',
-    render: l => <span className="font-body text-n-700 block max-w-[180px] truncate">{l.automation_name || l.automation?.name || '—'}</span>,
-  },
-  {
-    key: 'customer', label: 'Cliente',
-    render: l => <span className="font-body text-n-800 whitespace-nowrap">{l.recipient_name || l.customer_name || '—'}</span>,
-  },
-  {
-    key: 'channel', label: 'Canal',
-    render: l => (
-      <span className="flex items-center gap-1 text-xs font-body text-n-600">
-        {l.channel === 'email'
-          ? <Mail size={11} strokeWidth={1.75} />
-          : <MessageCircle size={11} strokeWidth={1.75} />}
-        {l.channel === 'email' ? 'Email' : 'WhatsApp'}
-      </span>
-    ),
-  },
-  {
-    key: 'status', label: 'Estado',
-    render: l => (
-      <Badge variant={STATUS_BADGE[l.status] || 'default'}>
-        {l.status === 'sent' ? 'Enviado' : l.status === 'failed' ? 'Falhou' : l.status || '—'}
-      </Badge>
-    ),
-  },
-];
+function colunasHistorico(t) {
+  return [
+    {
+      key: 'created_at', label: t('automations.logs.date'),
+      render: l => (
+        <span className="text-xs font-mono text-n-500 whitespace-nowrap">
+          {l.created_at ? formatarData(new Date(l.created_at), { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) : '—'}
+        </span>
+      ),
+    },
+    {
+      key: 'automation', label: t('automations.logs.automation'),
+      render: l => <span className="font-body text-n-700 block max-w-[180px] truncate">{l.automation_name || l.automation?.name || '—'}</span>,
+    },
+    {
+      key: 'customer', label: t('automations.logs.customer'),
+      render: l => <span className="font-body text-n-800 whitespace-nowrap">{l.recipient_name || l.customer_name || '—'}</span>,
+    },
+    {
+      key: 'channel', label: t('automations.logs.channel'),
+      render: l => (
+        <span className="flex items-center gap-1 text-xs font-body text-n-600">
+          {l.channel === 'email'
+            ? <Mail size={11} strokeWidth={1.75} />
+            : <MessageCircle size={11} strokeWidth={1.75} />}
+          {l.channel === 'email' ? 'Email' : 'WhatsApp'}
+        </span>
+      ),
+    },
+    {
+      key: 'status', label: t('automations.logs.status'),
+      render: l => (
+        <Badge variant={STATUS_BADGE[l.status] || 'default'}>
+          {l.status === 'sent' ? t('automations.logs.sent') : l.status === 'failed' ? t('automations.logs.failed') : l.status || '—'}
+        </Badge>
+      ),
+    },
+  ];
+}
 
 function LogsTab({ logs, loading }) {
+  const t = useT();
   if (loading) return <div className="flex justify-center py-16"><LoadingSpinner size={32} /></div>;
 
   if (!logs || logs.length === 0) {
@@ -492,8 +484,8 @@ function LogsTab({ logs, loading }) {
       <Card padding="p-0">
         <EmptyState
           icon={History}
-          title="Sem histórico de envios."
-          description="Os envios aparecerão aqui após as primeiras automações serem disparadas."
+          title={t('automations.logs.emptyTitle')}
+          description={t('automations.logs.emptyDescription')}
         />
       </Card>
     );
@@ -501,9 +493,9 @@ function LogsTab({ logs, loading }) {
 
   return (
     <Card padding="p-0">
-      <Table columns={LOG_COLUMNS} rows={logs.slice(0, 100)} />
+      <Table columns={colunasHistorico(t)} rows={logs.slice(0, 100)} />
       {logs.length > 100 && (
-        <p className="text-xs font-body text-n-400 text-center py-3">A mostrar 100 de {logs.length} registos</p>
+        <p className="text-xs font-body text-n-400 text-center py-3">{t('automations.logs.showing', { shown: 100, total: logs.length })}</p>
       )}
     </Card>
   );
@@ -511,6 +503,7 @@ function LogsTab({ logs, loading }) {
 
 /* ─────────────────────── Main ─────────────────────── */
 export default function Automations() {
+  const t = useT();
   const [activeTab,    setActiveTab]    = useState('sequencias');
   const [automations,  setAutomations]  = useState([]);
   const [logs,         setLogs]         = useState([]);
@@ -546,14 +539,14 @@ export default function Automations() {
   return (
     <div>
       <PageHeader
-        title="Automações de Comunicação"
-        subtitle={`${activeCount} sequência(s) activa(s)`}
+        title={t('automations.title')}
+        subtitle={t('automations.activeCount', { count: activeCount })}
       />
 
       {/* Info */}
       <div className="bg-[var(--info-light)] border border-n-200 rounded-sm px-4 py-3 mb-5">
         <p className="text-xs font-body text-[var(--info)]">
-          <span className="font-semibold">Variáveis disponíveis:</span>{' '}
+          <span className="font-semibold">{t('automations.varsAvailable')}</span>{' '}
           {VARS.map(v => v.key).join(' · ')}
         </p>
       </div>
@@ -561,7 +554,7 @@ export default function Automations() {
       {/* Tabs */}
       <div className="mb-5">
         <Tabs
-          tabs={[{ id: 'sequencias', label: 'Sequências' }, { id: 'historico', label: 'Histórico de envios' }]}
+          tabs={[{ id: 'sequencias', label: t('automations.tabs.sequences') }, { id: 'historico', label: t('automations.tabs.history') }]}
           value={activeTab}
           onChange={setActiveTab}
         />

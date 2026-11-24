@@ -30,12 +30,16 @@ const VALORES_GUARDADOS = {
   'components/units/forms/editors.jsx': ['Sessao', 'Terraco', 'Economico'],
   'pages/staff/shared.jsx': ['Mecanico', 'Administracao', 'Manutencao', 'Recepcao'],
   'components/dashboard/NextDaysStrip.jsx': ['So'],
-  'pages/Affiliates.jsx': ['joao@exemplo.com'],
-  'pages/marketing/SocialPlanner.jsx': ['Planeador de Social Media'],
   'pages/Guides.jsx': ['Guia Turistico Certificado'],
   'pages/admin/AdminCms.jsx': ['Categoria (praia, natureza, historico, miradouro, cultura)'],
   'pages/marketing/WidgetTab.jsx': ['Codigo'],
   'components/units/forms/RestaurantTableForm.jsx': ['Terraco'],
+};
+
+/* Valores de i18n/pt.json que o detector aponta mas ficam como estao, por chave, com o motivo. */
+const VALORES_JSON_GUARDADOS = {
+  'affiliatesPage.modal.emailPlaceholder': 'e-mail de exemplo: "joao" e o nome proprio escrito num endereco, que nao leva acento',
+  'marketingPage.planner.title': '"Social Media" e o termo ingles de sempre (o planeador esta escondido; o texto ja era assim)',
 };
 
 function listar(dir) {
@@ -71,7 +75,7 @@ describe('painel do operador com acentos', () => {
 
   it('i18n/pt.json tem os valores portugueses acentuados', () => {
     const pt = JSON.parse(fs.readFileSync(path.join(SRC, 'i18n/pt.json'), 'utf8'));
-    const errados = valoresDoJson(pt).filter(([, v]) => SEM_ACENTO.test(v)).map(([k, v]) => `${k}: ${v.slice(0, 80)}`);
+    const errados = valoresDoJson(pt).filter(([k, v]) => !VALORES_JSON_GUARDADOS[k] && SEM_ACENTO.test(v)).map(([k, v]) => `${k}: ${v.slice(0, 80)}`);
     expect(errados).toEqual([]);
   });
 

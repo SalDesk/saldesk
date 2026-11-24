@@ -14,14 +14,18 @@ import Modal from '../components/ui/Modal';
 import FilterChips from '../components/ui/FilterChips';
 import CustomerDetail from '../components/crm/CustomerDetail';
 import { mensagemErro } from '../utils/mensagemErro';
+import { useLingua } from '../utils/formatoLingua';
+import { eurosDuasCasas } from '../utils/formatoEuros';
+import { eurosInteiros } from './reservations/shared';
 
+/* label: chave em customersPage.segments (a chave do segmento e o valor que filtra) */
 const SEGMENTS = [
-  { key: '',           label: 'Todos',       Icon: Users },
-  { key: 'tourist',    label: 'Turistas',    Icon: Plane },
-  { key: 'local',      label: 'Locais',      Icon: UserCheck },
-  { key: 'group',      label: 'Grupos',      Icon: Users },
-  { key: 'corporate',  label: 'Corporativos',Icon: Building2 },
-  { key: 'vip',        label: 'VIP',         Icon: Crown },
+  { key: '',           label: 'all',       Icon: Users },
+  { key: 'tourist',    label: 'tourist',   Icon: Plane },
+  { key: 'local',      label: 'local',     Icon: UserCheck },
+  { key: 'group',      label: 'group',     Icon: Users },
+  { key: 'corporate',  label: 'corporate', Icon: Building2 },
+  { key: 'vip',        label: 'vip',       Icon: Crown },
 ];
 
 function MetricCard({ icon: Icon, label, value, sub }) {
@@ -39,7 +43,7 @@ function MetricCard({ icon: Icon, label, value, sub }) {
   );
 }
 
-const COLUMNS = (t, onSelect) => [
+const COLUMNS = (t, onSelect, lang) => [
   {
     key: 'name',
     label: t('customers.name'),
@@ -57,21 +61,21 @@ const COLUMNS = (t, onSelect) => [
     label: t('customers.totalSpent'),
     render: (c) => (
       <span className="font-display font-semibold text-ocean-700">
-        €{Number(c.total_spent).toFixed(2)}
+        {eurosDuasCasas(c.total_spent, lang)}
       </span>
     ),
     width: '110px',
   },
   {
     key: 'language',
-    label: 'Idioma',
+    label: t('customersPage.language'),
     render: (c) => <span className="text-n-500 text-xs uppercase">{c.language}</span>,
     width: '70px',
   },
   {
     key: 'custom_price',
-    label: 'Preço acordado',
-    render: (c) => c.custom_price != null ? <span className="font-display font-semibold text-n-700">€{Number(c.custom_price).toFixed(2)}</span> : <span className="text-n-300">—</span>,
+    label: t('customersPage.agreedPrice'),
+    render: (c) => c.custom_price != null ? <span className="font-display font-semibold text-n-700">{eurosDuasCasas(c.custom_price, lang)}</span> : <span className="text-n-300">—</span>,
     width: '110px',
   },
 ];
@@ -86,11 +90,11 @@ const COLUMNS = (t, onSelect) => [
    manual passa a complementar essa deteccao, nunca a substitui.
    Grupo/Corporativo/VIP nao tem nenhum dado automatico, dependem so da tag. */
 const TAG_OPTIONS = [
-  { key: 'turista',      label: 'Turista',      Icon: Plane },
-  { key: 'local',        label: 'Local',        Icon: UserCheck },
-  { key: 'VIP',          label: 'VIP',          Icon: Crown },
-  { key: 'grupo',        label: 'Grupo',        Icon: Users },
-  { key: 'corporativo',  label: 'Corporativo',  Icon: Building2 },
+  { key: 'turista',      Icon: Plane },
+  { key: 'local',        Icon: UserCheck },
+  { key: 'VIP',          Icon: Crown },
+  { key: 'grupo',        Icon: Users },
+  { key: 'corporativo',  Icon: Building2 },
 ];
 
 function NewCustomerModal({ open, onClose, onCreated }) {
@@ -110,7 +114,7 @@ function NewCustomerModal({ open, onClose, onCreated }) {
 
   async function handleCreate() {
     if (!form.name.trim() || !form.email.trim()) {
-      setError('Nome e email são obrigatórios');
+      setError(t('customersPage.newModal.required'));
       return;
     }
     setLoading(true); setError('');
@@ -120,24 +124,24 @@ function NewCustomerModal({ open, onClose, onCreated }) {
       setForm({ name: '', email: '', phone: '', country_code: '', notes: '', tags: [], custom_price: '' });
       onClose();
     } catch (err) {
-      setError(mensagemErro(err, t, 'Erro ao criar cliente'));
+      setError(mensagemErro(err, t, t('customersPage.newModal.createError')));
     } finally { setLoading(false); }
   }
 
   return (
-    <Modal open={open} onClose={onClose} title="Novo cliente" size="md">
+    <Modal open={open} onClose={onClose} title={t('customersPage.newModal.title')} size="md">
       <div className="space-y-4">
-        <Input label="Nome *" value={form.name} onChange={(e) => update('name', e.target.value)} placeholder="Nome do cliente" />
-        <Input label="Email *" type="email" value={form.email} onChange={(e) => update('email', e.target.value)} placeholder="cliente@email.com" />
+        <Input label={t('customersPage.newModal.name')} value={form.name} onChange={(e) => update('name', e.target.value)} placeholder={t('customersPage.newModal.namePlaceholder')} />
+        <Input label={t('customersPage.newModal.email')} type="email" value={form.email} onChange={(e) => update('email', e.target.value)} placeholder={t('customersPage.newModal.emailPlaceholder')} />
         <div className="grid grid-cols-2 gap-3">
-          <Input label="Telefone" value={form.phone} onChange={(e) => update('phone', e.target.value)} placeholder="+238..." />
-          <Input label="País (código)" value={form.country_code} onChange={(e) => update('country_code', e.target.value)} placeholder="Ex: CV, PT" maxLength={2} />
+          <Input label={t('customersPage.newModal.phone')} value={form.phone} onChange={(e) => update('phone', e.target.value)} placeholder="+238..." />
+          <Input label={t('customersPage.newModal.countryCode')} value={form.country_code} onChange={(e) => update('country_code', e.target.value)} placeholder={t('customersPage.newModal.countryPlaceholder')} maxLength={2} />
         </div>
 
         <div>
-          <label className="block text-xs font-body font-medium text-n-500 uppercase tracking-wide mb-2">Categoria (opcional)</label>
+          <label className="block text-xs font-body font-medium text-n-500 uppercase tracking-wide mb-2">{t('customersPage.newModal.category')}</label>
           <div className="flex flex-wrap gap-2">
-            {TAG_OPTIONS.map(({ key, label, Icon }) => {
+            {TAG_OPTIONS.map(({ key, Icon }) => {
               const active = form.tags.includes(key);
               return (
                 <button
@@ -149,7 +153,7 @@ function NewCustomerModal({ open, onClose, onCreated }) {
                   }`}
                 >
                   <Icon size={14} strokeWidth={1.75} />
-                  {label}
+                  {t(`customersPage.categories.${key}`)}
                 </button>
               );
             })}
@@ -157,22 +161,22 @@ function NewCustomerModal({ open, onClose, onCreated }) {
         </div>
 
         <Input
-          label="Preço acordado (opcional)"
+          label={t('customersPage.newModal.price')}
           type="number"
           step="0.01"
           min="0"
           value={form.custom_price}
           onChange={(e) => update('custom_price', e.target.value)}
-          placeholder="Ex: 45.00"
+          placeholder={t('customersPage.newModal.pricePlaceholder')}
         />
 
-        <Textarea label="Notas" value={form.notes} onChange={(e) => update('notes', e.target.value)} rows={3} placeholder="Preferências, contexto adicional, etc." />
+        <Textarea label={t('customersPage.newModal.notes')} value={form.notes} onChange={(e) => update('notes', e.target.value)} rows={3} placeholder={t('customersPage.newModal.notesPlaceholder')} />
 
         {error && <p className="text-xs font-body text-error">{error}</p>}
 
         <div className="flex gap-3">
-          <Button variant="secondary" onClick={onClose} className="flex-1">Cancelar</Button>
-          <Button onClick={handleCreate} loading={loading} icon={Plus} className="flex-1">Criar cliente</Button>
+          <Button variant="secondary" onClick={onClose} className="flex-1">{t('common.cancel')}</Button>
+          <Button onClick={handleCreate} loading={loading} icon={Plus} className="flex-1">{t('customersPage.newModal.create')}</Button>
         </div>
       </div>
     </Modal>
@@ -213,15 +217,15 @@ function CsvImportModal({ open, onClose, onImported }) {
       onImported(res.data.data?.imported || 0);
       onClose();
     } catch (err) {
-      setError(mensagemErro(err, t, 'Erro ao importar ficheiro'));
+      setError(mensagemErro(err, t, t('customersPage.importModal.importError')));
     } finally { setLoading(false); }
   }
 
   return (
-    <Modal open={open} onClose={onClose} title="Importar clientes via CSV" size="md">
+    <Modal open={open} onClose={onClose} title={t('customersPage.importModal.title')} size="md">
       <div className="space-y-4">
         <div className="px-3 py-2.5 bg-ocean-50 border border-ocean-100 rounded-sm text-xs font-body text-ocean-700 space-y-1">
-          <p className="font-semibold">Formato esperado (cabeçalho obrigatório):</p>
+          <p className="font-semibold">{t('customersPage.importModal.expected')}</p>
           <p className="font-mono">first_name, last_name, email, phone, country_code, language</p>
         </div>
 
@@ -229,15 +233,15 @@ function CsvImportModal({ open, onClose, onImported }) {
           onClick={() => fileRef.current?.click()}
           className="border-2 border-dashed border-n-300 rounded-md p-8 text-center cursor-pointer hover:border-ocean-400 hover:bg-ocean-50/30 transition-colors">
           <Upload size={24} strokeWidth={1.25} className="mx-auto mb-2 text-n-400" />
-          <p className="text-sm font-body text-n-600">{file ? file.name : 'Clicar para seleccionar ficheiro CSV'}</p>
-          <p className="text-xs font-body text-n-400 mt-1">Ficheiro .csv, max 5MB</p>
+          <p className="text-sm font-body text-n-600">{file ? file.name : t('customersPage.importModal.selectFile')}</p>
+          <p className="text-xs font-body text-n-400 mt-1">{t('customersPage.importModal.fileHint')}</p>
           <input ref={fileRef} type="file" accept=".csv" onChange={handleFile} className="hidden" />
         </div>
 
         {preview.length > 0 && (
           <div className="border border-n-200 rounded-sm overflow-hidden">
             <div className="px-3 py-2 bg-n-50 border-b border-n-200">
-              <p className="text-xs font-mono text-n-500 uppercase tracking-wide">Pré-visualização (primeiras {preview.length} linhas)</p>
+              <p className="text-xs font-mono text-n-500 uppercase tracking-wide">{t('customersPage.importModal.preview', { n: preview.length })}</p>
             </div>
             <div className="p-3 space-y-1">
               {preview.map((line, i) => (
@@ -250,9 +254,9 @@ function CsvImportModal({ open, onClose, onImported }) {
         {error && <p className="text-xs font-body text-error">{error}</p>}
 
         <div className="flex gap-3">
-          <Button variant="secondary" onClick={onClose} className="flex-1">Cancelar</Button>
+          <Button variant="secondary" onClick={onClose} className="flex-1">{t('common.cancel')}</Button>
           <Button onClick={handleImport} loading={loading} disabled={!file} icon={Upload} className="flex-1">
-            Importar
+            {t('customersPage.importModal.import')}
           </Button>
         </div>
       </div>
@@ -262,6 +266,7 @@ function CsvImportModal({ open, onClose, onImported }) {
 
 export default function Customers() {
   const t = useT();
+  const lang = useLingua();
   const [customers,    setCustomers]  = useState([]);
   const [loading,      setLoading]    = useState(true);
   const [search,       setSearch]     = useState('');
@@ -295,7 +300,14 @@ export default function Customers() {
 
   async function handleExport() {
     setExporting(true);
-    try { await exportCustomersCsv(); }
+    /* O servidor escreve o cabecalho em portugues; nas outras linguas troca-se pelo da lingua do painel.
+       Ninguem o le de volta: a importacao usa os seus proprios nomes (first_name, last_name...). */
+    try {
+      await exportCustomersCsv(lang === 'pt' ? undefined : {
+        cabecalho: t('customersPage.csvHeader'),
+        prefixo: t('customersPage.csvFilePrefix'),
+      });
+    }
     finally { setExporting(false); }
   }
 
@@ -304,13 +316,13 @@ export default function Customers() {
   }
 
   function handleImported(count) {
-    setImportMsg(`${count} cliente(s) importado(s) com sucesso.`);
+    setImportMsg(t('customersPage.importedMsg', { n: count }));
     carregar('', '');
     setTimeout(() => setImportMsg(''), 4000);
   }
 
   function handleCreated() {
-    setImportMsg('Cliente criado com sucesso.');
+    setImportMsg(t('customersPage.createdMsg'));
     carregar('', '');
     setTimeout(() => setImportMsg(''), 4000);
   }
@@ -336,17 +348,17 @@ export default function Customers() {
     <div>
       <PageHeader
         title={t('customers.title')}
-        subtitle={`${customers.length} cliente(s) registado(s)`}
+        subtitle={t('customersPage.subtitle', { n: customers.length })}
         actions={
           <div className="flex gap-2">
             <Button icon={Plus} onClick={() => setNewModal(true)}>
-              Novo Cliente
+              {t('customersPage.newCustomer')}
             </Button>
             <Button variant="secondary" icon={Upload} onClick={() => setCsvModal(true)}>
-              Importar CSV
+              {t('customersPage.importCsv')}
             </Button>
             <Button variant="secondary" icon={Download} loading={exporting} onClick={handleExport}>
-              Exportar
+              {t('common.export')}
             </Button>
           </div>
         }
@@ -360,17 +372,17 @@ export default function Customers() {
 
       {/* Metricas */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <MetricCard icon={Users}      label="Total clientes"  value={customers.length} />
-        <MetricCard icon={TrendingUp} label="Receita total"   value={`€${totalGasto.toFixed(0)}`} />
-        <MetricCard icon={Globe}      label="Países"          value={paises} />
-        <MetricCard icon={Star}       label="Top cliente"     value={topCliente?.name?.split(' ')[0] || '—'}
-          sub={topCliente ? `€${Number(topCliente.total_spent).toFixed(0)}` : ''} />
+        <MetricCard icon={Users}      label={t('customersPage.metrics.totalCustomers')}  value={customers.length} />
+        <MetricCard icon={TrendingUp} label={t('customersPage.metrics.totalRevenue')}   value={eurosInteiros(totalGasto, lang)} />
+        <MetricCard icon={Globe}      label={t('customersPage.metrics.countries')}      value={paises} />
+        <MetricCard icon={Star}       label={t('customersPage.metrics.topCustomer')}    value={topCliente?.name?.split(' ')[0] || '—'}
+          sub={topCliente ? eurosInteiros(topCliente.total_spent, lang) : ''} />
       </div>
 
       {/* Segmentacao */}
       <div className="mb-4">
         <FilterChips
-          options={SEGMENTS.map(({ key, label }) => ({ value: key, label }))}
+          options={SEGMENTS.map(({ key, label }) => ({ value: key, label: t(`customersPage.segments.${label}`) }))}
           value={segment}
           onChange={setSegment}
         />
@@ -386,7 +398,7 @@ export default function Customers() {
         </form>
         {countries.length > 0 && (
           <FilterChips
-            options={[{ value: '', label: 'Todos' }, ...countries.slice(0, 8).map(c => ({ value: c, label: c }))]}
+            options={[{ value: '', label: t('customersPage.segments.all') }, ...countries.slice(0, 8).map(c => ({ value: c, label: c }))]}
             value={countryFilter}
             onChange={handleCountryFilter}
           />
@@ -395,7 +407,7 @@ export default function Customers() {
 
       {/* Tabela */}
       <Card padding="p-0">
-        <Table columns={COLUMNS(t, setSelectedId)} rows={segmented} loading={loading} />
+        <Table columns={COLUMNS(t, setSelectedId, lang)} rows={segmented} loading={loading} />
       </Card>
 
       {/* Perfil lateral */}

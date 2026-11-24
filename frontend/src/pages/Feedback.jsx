@@ -14,8 +14,12 @@ import EmptyState from '../components/ui/EmptyState';
 import Input, { Textarea } from '../components/ui/Input';
 import Toggle from '../components/ui/Toggle';
 import LoadingSpinner from '../components/shared/LoadingSpinner';
+import { useT } from '../i18n';
+import { formatarData } from '../utils/formatoLingua';
+import { formatarNota } from '../utils/formatoNota';
 
-/* Parecido com o DEFAULT_TEMPLATE do backend (helpers/pedidoAvaliacao.js): texto neutro, serve
+/* Texto enviado ao cliente: fica em portugues e ingles em qualquer lingua do painel (so as etiquetas do
+   editor se traduzem). Parecido com o DEFAULT_TEMPLATE do backend (helpers/pedidoAvaliacao.js): texto neutro, serve
    actividades, hoteis, rent-a-car e restaurantes. Esta copia do frontend tem acentos; a do
    backend ainda nao. */
 const DEFAULT_TEMPLATE = {
@@ -26,15 +30,15 @@ const DEFAULT_TEMPLATE = {
 };
 
 const TEMPLATE_VARS = [
-  { key: '{nome_cliente}',  desc: 'Nome do cliente'            },
-  { key: '{nome_tour}',     desc: 'Nome do tour'               },
-  { key: '{link_avaliacao}', desc: 'Link directo para avaliação' },
+  { key: '{nome_cliente}',   id: 'customerName' },
+  { key: '{nome_tour}',      id: 'tourName'     },
+  { key: '{link_avaliacao}', id: 'reviewLink'   },
 ];
 
 /* ── Helpers ── */
 function fmtDate(d) {
   if (!d) return '—';
-  return new Date(d + (d.length === 10 ? 'T00:00:00Z' : '')).toLocaleDateString('pt-PT', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'UTC' });
+  return formatarData(new Date(d + (d.length === 10 ? 'T00:00:00Z' : '')), { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'UTC' });
 }
 
 function StarRating({ value }) {
@@ -45,13 +49,14 @@ function StarRating({ value }) {
         <Star key={i} size={12} strokeWidth={1.75}
           className={i <= n ? 'text-sand-500 fill-sand-400' : 'text-n-300'} />
       ))}
-      <span className="text-xs font-mono text-n-600 ml-1">{Number(value).toFixed(1)}</span>
+      <span className="text-xs font-mono text-n-600 ml-1">{formatarNota(value)}</span>
     </div>
   );
 }
 
 /* ─────────────────────── Main ─────────────────────── */
 export default function Feedback() {
+  const t = useT();
   const [activeTab,   setActiveTab]   = useState('tours');
   const [reservations, setReservations] = useState([]);
   const [reviews,     setReviews]     = useState([]);
@@ -85,7 +90,7 @@ export default function Feedback() {
     const map = {};
     (reservations || []).forEach(r => {
       const key  = r.unit_id || 'unknown';
-      const name = r.units?.name || r.unit_name || 'Serviço sem nome';
+      const name = r.units?.name || r.unit_name || null;
       if (!map[key]) map[key] = { unit_id: key, unit_name: name, reservations: [], reviews: [] };
       map[key].reservations.push(r);
     });
@@ -94,14 +99,14 @@ export default function Feedback() {
       const key  = res?.unit_id || 'unknown';
       if (map[key]) map[key].reviews.push(rv);
     });
-    return Object.values(map).map(t => {
-      const total    = t.reservations.length;
-      const received = t.reviews.length;
+    return Object.values(map).map(g => {
+      const total    = g.reservations.length;
+      const received = g.reviews.length;
       const avgRating = received > 0
-        ? t.reviews.reduce((s, r) => s + Number(r.rating || 0), 0) / received
+        ? g.reviews.reduce((s, r) => s + Number(r.rating || 0), 0) / received
         : 0;
       const rate = total > 0 ? Math.round((received / total) * 100) : 0;
-      return { ...t, total, received, avgRating, rate };
+      return { ...g, total, received, avgRating, rate };
     }).sort((a, b) => b.total - a.total);
   }, [reservations, reviews]);
 
@@ -153,31 +158,31 @@ export default function Feedback() {
     : 0;
 
   const TABS = [
-    { id: 'tours',    label: 'Por Tour' },
-    { id: 'pending',  label: `Pendentes (${pendingReview.length})` },
-    { id: 'template', label: 'Template' },
+    { id: 'tours',    label: t('feedbackPage.tabs.byTour') },
+    { id: 'pending',  label: t('feedbackPage.tabs.pending', { count: pendingReview.length }) },
+    { id: 'template', label: t('feedbackPage.tabs.template') },
   ];
 
   // Colunas da lista de reservas sem avaliacao
   const pendingColumns = [
     {
       key: 'cliente',
-      label: 'Cliente',
+      label: t('feedbackPage.cols.customer'),
       render: (r) => <span className="font-body font-semibold text-n-900 whitespace-nowrap">{r.customers?.name || r.customer_name || '—'}</span>,
     },
     {
       key: 'tour',
-      label: 'Tour',
+      label: t('feedbackPage.cols.tour'),
       render: (r) => <span className="block font-body text-n-600 max-w-[160px] truncate">{r.units?.name || r.unit_name || '—'}</span>,
     },
     {
       key: 'checkout',
-      label: 'Checkout',
+      label: t('feedbackPage.cols.checkout'),
       render: (r) => <span className="text-xs font-mono text-n-500 whitespace-nowrap">{fmtDate(r.check_out)}</span>,
     },
     {
       key: 'dias',
-      label: 'Dias desde checkout',
+      label: t('feedbackPage.cols.daysSince'),
       render: (r) => {
         const days = r.check_out
           ? Math.floor((Date.now() - new Date(r.check_out + 'T00:00:00Z').getTime()) / (1000 * 60 * 60 * 24))
@@ -202,7 +207,7 @@ export default function Feedback() {
             loading={isSending}
             onClick={() => handleResend(r.id)}
           >
-            Reenviar pedido
+            {t('feedbackPage.resend')}
           </Button>
         );
       },
@@ -212,12 +217,12 @@ export default function Feedback() {
   return (
     <div>
       <PageHeader
-        title="Feedback Pós-Tour"
-        subtitle="Gestão de avaliações e pedidos de feedback"
+        title={t('feedbackPage.title')}
+        subtitle={t('feedbackPage.subtitle')}
         actions={
           <Button variant="secondary" icon={RefreshCw} size="sm"
             onClick={() => { setLoading(true); window.location.reload(); }}>
-            Actualizar
+            {t('feedbackPage.refresh')}
           </Button>
         }
       />
@@ -225,10 +230,10 @@ export default function Feedback() {
       {/* KPIs */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-5">
         {[
-          { label: 'Tours realizados',  value: totalCompleted,               icon: CheckCircle2, color: 'text-n-900'     },
-          { label: 'Avaliações recebidas', value: totalReviews,              icon: Star,         color: 'text-sand-500'  },
-          { label: 'Taxa de resposta',  value: `${globalRate}%`,             icon: TrendingUp,   color: 'text-ocean-700' },
-          { label: 'Média geral',       value: globalAvg > 0 ? globalAvg.toFixed(1) + ' / 5' : '—', icon: BarChart2, color: 'text-[var(--success)]' },
+          { label: t('feedbackPage.kpi.toursDone'),  value: totalCompleted,               icon: CheckCircle2, color: 'text-n-900'     },
+          { label: t('feedbackPage.kpi.reviewsReceived'), value: totalReviews,              icon: Star,         color: 'text-sand-500'  },
+          { label: t('feedbackPage.kpi.responseRate'),  value: `${globalRate}%`,             icon: TrendingUp,   color: 'text-ocean-700' },
+          { label: t('feedbackPage.kpi.average'),       value: globalAvg > 0 ? formatarNota(globalAvg) + ' / 5' : '—', icon: BarChart2, color: 'text-[var(--success)]' },
         ].map(m => (
           <div key={m.label} className="bg-white rounded-md border border-n-200 px-4 py-3 flex items-center gap-3">
             <div className="w-8 h-8 rounded-sm bg-ocean-50 flex items-center justify-center shrink-0">
@@ -253,34 +258,34 @@ export default function Feedback() {
         <div className="space-y-3">
           {tourStats.length === 0 ? (
             <Card padding="p-0">
-              <EmptyState icon={BarChart2} title="Sem tours com checkout registado." />
+              <EmptyState icon={BarChart2} title={t('feedbackPage.noTours')} />
             </Card>
-          ) : tourStats.map(t => (
-            <Card key={t.unit_id} padding="px-5 py-4">
+          ) : tourStats.map(tour => (
+            <Card key={tour.unit_id} padding="px-5 py-4">
               <div className="flex items-start gap-4">
                 <div className="flex-1 min-w-0">
-                  <p className="font-display font-semibold text-sm text-n-900 truncate">{t.unit_name}</p>
+                  <p className="font-display font-semibold text-sm text-n-900 truncate">{tour.unit_name || t('feedbackPage.unnamedService')}</p>
                   <div className="flex flex-wrap items-center gap-4 mt-2">
                     <span className="text-xs font-body text-n-500">
-                      <span className="font-semibold text-n-700">{t.total}</span> tours realizados
+                      <span className="font-semibold text-n-700">{tour.total}</span> {t('feedbackPage.toursDoneSuffix')}
                     </span>
                     <span className="text-xs font-body text-n-500">
-                      <span className="font-semibold text-n-700">{t.received}</span> avaliações
+                      <span className="font-semibold text-n-700">{tour.received}</span> {t('feedbackPage.reviewsSuffix')}
                     </span>
-                    {t.received > 0 && <StarRating value={t.avgRating} />}
+                    {tour.received > 0 && <StarRating value={tour.avgRating} />}
                   </div>
                 </div>
                 <div className="shrink-0 text-right">
-                  <p className={`font-display font-bold text-2xl ${t.rate >= 50 ? 'text-[var(--success)]' : t.rate >= 25 ? 'text-[var(--warning)]' : 'text-[var(--error)]'}`}>
-                    {t.rate}%
+                  <p className={`font-display font-bold text-2xl ${tour.rate >= 50 ? 'text-[var(--success)]' : tour.rate >= 25 ? 'text-[var(--warning)]' : 'text-[var(--error)]'}`}>
+                    {tour.rate}%
                   </p>
-                  <p className="text-xs font-body text-n-400">taxa resposta</p>
+                  <p className="text-xs font-body text-n-400">{t('feedbackPage.rateSuffix')}</p>
                 </div>
               </div>
               {/* Rate bar */}
               <div className="mt-3 h-1.5 bg-n-100 rounded-full overflow-hidden">
-                <div className={`h-full rounded-full transition-all duration-500 ${t.rate >= 50 ? 'bg-[var(--success)]' : t.rate >= 25 ? 'bg-[var(--warning)]' : 'bg-[var(--error)]'}`}
-                  style={{ width: `${t.rate}%` }} />
+                <div className={`h-full rounded-full transition-all duration-500 ${tour.rate >= 50 ? 'bg-[var(--success)]' : tour.rate >= 25 ? 'bg-[var(--warning)]' : 'bg-[var(--error)]'}`}
+                  style={{ width: `${tour.rate}%` }} />
               </div>
             </Card>
           ))}
@@ -290,17 +295,17 @@ export default function Feedback() {
         <div className="space-y-3">
           {pendingReview.length === 0 ? (
             <Card padding="p-0">
-              <EmptyState icon={CheckCircle2} title="Todos os tours tem avaliação solicitada." />
+              <EmptyState icon={CheckCircle2} title={t('feedbackPage.allRequested')} />
             </Card>
           ) : (
             <>
               <p className="text-xs font-body text-n-500">
-                {pendingReview.length} reserva(s) sem pedido de avaliação enviado.
+                {t('feedbackPage.pendingNote', { count: pendingReview.length })}
               </p>
               <Card padding="p-0">
                 <Table columns={pendingColumns} rows={pendingReview.slice(0, 50)} />
                 {pendingReview.length > 50 && (
-                  <p className="text-xs font-body text-n-400 text-center py-3">A mostrar 50 de {pendingReview.length}</p>
+                  <p className="text-xs font-body text-n-400 text-center py-3">{t('feedbackPage.showing', { shown: 50, total: pendingReview.length })}</p>
                 )}
               </Card>
             </>
@@ -313,22 +318,22 @@ export default function Feedback() {
             <Toggle
               checked={automatico}
               onChange={handleAutomatico}
-              label="Pedir avaliação automaticamente no dia a seguir"
-              hint="Envia um e-mail no dia a seguir à actividade ou estadia, só a reservas directas e uma vez por reserva."
+              label={t('feedbackPage.autoLabel')}
+              hint={t('feedbackPage.autoHint')}
             />
-            {autoErro && <p className="text-xs font-body text-red-600 mt-2" role="alert">Não foi possível guardar. Tente de novo.</p>}
+            {autoErro && <p className="text-xs font-body text-red-600 mt-2" role="alert">{t('feedbackPage.autoError')}</p>}
           </Card>
           <Card padding="px-5 py-5">
-            <h3 className="font-display font-semibold text-sm text-n-700 mb-4">Template do pedido de avaliação</h3>
+            <h3 className="font-display font-semibold text-sm text-n-700 mb-4">{t('feedbackPage.templateTitle')}</h3>
 
             {/* Variables */}
             <div className="mb-4">
-              <p className="text-xs font-body font-bold uppercase tracking-wide text-n-500 mb-2">Variáveis disponíveis</p>
+              <p className="text-xs font-body font-bold uppercase tracking-wide text-n-500 mb-2">{t('feedbackPage.varsTitle')}</p>
               <div className="flex flex-wrap gap-1.5">
                 {TEMPLATE_VARS.map(v => (
                   <button key={v.key} type="button"
                     onClick={() => setTemplate(p => ({ ...p, body_pt: p.body_pt + v.key }))}
-                    title={v.desc}
+                    title={t(`feedbackPage.vars.${v.id}`)}
                     className="text-xs font-mono px-2 py-0.5 rounded-xs bg-ocean-50 text-ocean-700 border border-ocean-100 hover:bg-ocean-100 transition-colors">
                     {v.key}
                   </button>
@@ -338,22 +343,22 @@ export default function Feedback() {
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               <div className="space-y-3">
-                <Input label="Assunto PT" value={template.subject_pt}
+                <Input label={t('feedbackPage.subjectPt')} value={template.subject_pt}
                   onChange={e => setTemplate(p => ({ ...p, subject_pt: e.target.value }))} />
-                <Textarea label="Corpo PT" value={template.body_pt} rows={8}
+                <Textarea label={t('feedbackPage.bodyPt')} value={template.body_pt} rows={8}
                   onChange={e => setTemplate(p => ({ ...p, body_pt: e.target.value }))} />
-                <Input label="Assunto EN" value={template.subject_en}
+                <Input label={t('feedbackPage.subjectEn')} value={template.subject_en}
                   onChange={e => setTemplate(p => ({ ...p, subject_en: e.target.value }))} />
-                <Textarea label="Corpo EN" value={template.body_en} rows={8}
+                <Textarea label={t('feedbackPage.bodyEn')} value={template.body_en} rows={8}
                   onChange={e => setTemplate(p => ({ ...p, body_en: e.target.value }))} />
                 <Button icon={tplSaved ? CheckCircle2 : Save} onClick={handleSaveTemplate} loading={tplSaving}
                   className={tplSaved ? '!bg-[var(--success)] !text-white' : ''}>
-                  {tplSaved ? 'Guardado' : 'Guardar template'}
+                  {tplSaved ? t('feedbackPage.saved') : t('feedbackPage.saveTemplate')}
                 </Button>
               </div>
 
               <div>
-                <p className="text-xs font-mono uppercase tracking-wider text-n-500 mb-3">Preview</p>
+                <p className="text-xs font-mono uppercase tracking-wider text-n-500 mb-3">{t('feedbackPage.preview')}</p>
                 <div className="flex gap-1 mb-3">
                   {['pt', 'en'].map(l => (
                     <button key={l} onClick={() => setPreviewLang(l)}
@@ -366,7 +371,7 @@ export default function Feedback() {
                   <div className="bg-ocean-900 px-4 py-2.5">
                     <p className="text-white text-[11px] font-display font-semibold">SalDesk Tours</p>
                     <p className="text-ocean-300 text-[11px] font-mono mt-0.5">
-                      Assunto: {previewLang === 'pt' ? template.subject_pt : template.subject_en}
+                      {t('feedbackPage.previewSubject')} {previewLang === 'pt' ? template.subject_pt : template.subject_en}
                     </p>
                   </div>
                   <div className="bg-white px-5 py-4">
@@ -378,7 +383,7 @@ export default function Feedback() {
                     </pre>
                   </div>
                   <div className="bg-n-50 px-4 py-2 border-t border-n-100">
-                    <p className="text-[10px] font-mono text-n-400">Preview com dados de exemplo.</p>
+                    <p className="text-[10px] font-mono text-n-400">{t('feedbackPage.sampleNote')}</p>
                   </div>
                 </div>
               </div>
