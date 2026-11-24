@@ -4,6 +4,9 @@ import { io } from 'socket.io-client';
 import { listStaff, getMyProfile } from '../../services/staffService';
 import { listGroups, listMessages, sendMessage } from '../../services/messageService';
 import useAuthStore from '../../store/authStore';
+import { useT } from '../../i18n';
+import { useLingua } from '../../utils/formatoLingua';
+import { rotuloCargo } from '../../pages/staff/shared';
 import LoadingSpinner from './LoadingSpinner';
 
 const AVATAR_BG = ['bg-turquoise-100 text-turquoise-700', 'bg-sand-100 text-sand-600', 'bg-ocean-100 text-ocean-700'];
@@ -14,6 +17,8 @@ const AVATAR_BG = ['bg-turquoise-100 text-turquoise-700', 'bg-sand-100 text-sand
    isso nao ha nada a adaptar por tipo de conta -- so o "height" varia
    consoante o chrome de cada pagina host. */
 export default function StaffChat({ staffId, height = 'calc(100vh - 13rem)' }) {
+  const t = useT();
+  const lang = useLingua();
   const { token } = useAuthStore();
   const [view,            setView]      = useState('list'); // 'list' | 'conversation'
   const [selectedContact, setSelected]  = useState(null);  // { id, name, type:'group'|'dm', ... }
@@ -40,7 +45,7 @@ export default function StaffChat({ staffId, height = 'calc(100vh - 13rem)' }) {
         setGroups(g || []);
         setColleagues((s || []).filter(m => m.id !== staffId));
         if (profile?.operator_id) {
-          setManager({ id: profile.operator_id, name: profile.operator_name || 'Gestor' });
+          setManager({ id: profile.operator_id, name: profile.operator_name || t('staffChat.manager') });
         }
       })
       .catch(() => {})
@@ -119,14 +124,14 @@ export default function StaffChat({ staffId, height = 'calc(100vh - 13rem)' }) {
         {!hasAnything && (
           <div className="flex flex-col items-center justify-center py-16 text-center">
             <MessageCircle size={40} strokeWidth={1} className="text-n-300 mb-3"/>
-            <p className="font-display font-bold text-n-700">Sem conversas</p>
-            <p className="text-sm font-body text-n-400 mt-2">Ainda não existem grupos nem colaboradores associados.</p>
+            <p className="font-display font-bold text-n-700">{t('staffChat.noConversations')}</p>
+            <p className="text-sm font-body text-n-400 mt-2">{t('staffChat.noneLinked')}</p>
           </div>
         )}
 
         {manager && (
           <div>
-            <p className="text-xs font-mono font-bold uppercase tracking-wide text-n-500 mb-3">Gestão</p>
+            <p className="text-xs font-mono font-bold uppercase tracking-wide text-n-500 mb-3">{t('staffChat.management')}</p>
             <button
               onClick={() => openConversation({ id: manager.id, name: manager.name, type: 'manager' })}
               className="w-full bg-white rounded-2xl border border-n-200 shadow-sm px-4 py-3 mb-2 flex items-center gap-3 text-left hover:border-turquoise-300 transition-colors">
@@ -135,7 +140,7 @@ export default function StaffChat({ staffId, height = 'calc(100vh - 13rem)' }) {
               </div>
               <div className="flex-1 min-w-0">
                 <p className="font-display font-bold text-sm text-n-900">{manager.name}</p>
-                <p className="text-xs font-body text-n-400 mt-0.5">Gestor</p>
+                <p className="text-xs font-body text-n-400 mt-0.5">{t('staffChat.manager')}</p>
               </div>
               <ChevronRight size={16} strokeWidth={1.75} className="text-n-300 shrink-0"/>
             </button>
@@ -144,7 +149,7 @@ export default function StaffChat({ staffId, height = 'calc(100vh - 13rem)' }) {
 
         {groups.length > 0 && (
           <div>
-            <p className="text-xs font-mono font-bold uppercase tracking-wide text-n-500 mb-3">Grupos</p>
+            <p className="text-xs font-mono font-bold uppercase tracking-wide text-n-500 mb-3">{t('staffChat.groups')}</p>
             {groups.map(g => (
               <button key={g.id}
                 onClick={() => openConversation({ id: g.id, name: g.name, type: 'group', memberCount: (g.members || []).length })}
@@ -154,7 +159,7 @@ export default function StaffChat({ staffId, height = 'calc(100vh - 13rem)' }) {
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="font-display font-bold text-sm text-n-900">{g.name}</p>
-                  <p className="text-xs font-body text-n-400 mt-0.5">{(g.members || []).length} membros</p>
+                  <p className="text-xs font-body text-n-400 mt-0.5">{t('staffChat.members', { n: (g.members || []).length })}</p>
                 </div>
                 <ChevronRight size={16} strokeWidth={1.75} className="text-n-300 shrink-0"/>
               </button>
@@ -164,7 +169,7 @@ export default function StaffChat({ staffId, height = 'calc(100vh - 13rem)' }) {
 
         {colleagues.length > 0 && (
           <div>
-            <p className="text-xs font-mono font-bold uppercase tracking-wide text-n-500 mb-3">Equipa</p>
+            <p className="text-xs font-mono font-bold uppercase tracking-wide text-n-500 mb-3">{t('staffChat.team')}</p>
             {colleagues.map((c, i) => (
               <button key={c.id}
                 onClick={() => openConversation({ id: c.id, name: c.name, type: 'dm', role: c.role })}
@@ -174,7 +179,7 @@ export default function StaffChat({ staffId, height = 'calc(100vh - 13rem)' }) {
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="font-display font-bold text-sm text-n-900">{c.name}</p>
-                  {c.role && <p className="text-xs font-body text-n-400 mt-0.5">{c.role}</p>}
+                  {c.role && <p className="text-xs font-body text-n-400 mt-0.5">{rotuloCargo(c.role, t, lang)}</p>}
                 </div>
                 <ChevronRight size={16} strokeWidth={1.75} className="text-n-300 shrink-0"/>
               </button>
@@ -207,10 +212,10 @@ export default function StaffChat({ staffId, height = 'calc(100vh - 13rem)' }) {
           <p className="font-display font-bold text-sm text-n-900 truncate">{selectedContact.name}</p>
           <p className="text-xs font-body text-n-400">
             {selectedContact.type === 'group'
-              ? `${selectedContact.memberCount} membros`
+              ? t('staffChat.members', { n: selectedContact.memberCount })
               : selectedContact.type === 'manager'
-              ? 'Gestor'
-              : selectedContact.role || 'Colaborador'}
+              ? t('staffChat.manager')
+              : rotuloCargo(selectedContact.role, t, lang) || t('staffChat.member')}
           </p>
         </div>
       </div>
@@ -221,7 +226,7 @@ export default function StaffChat({ staffId, height = 'calc(100vh - 13rem)' }) {
           <div className="flex justify-center py-8"><LoadingSpinner size={24}/></div>
         ) : messages.length === 0 ? (
           <div className="flex justify-center py-12">
-            <p className="text-xs font-body text-n-400">Sem mensagens ainda. Comece a conversa.</p>
+            <p className="text-xs font-body text-n-400">{t('staffChat.noMessages')}</p>
           </div>
         ) : messages.map((msg, i) => {
           const isOwn = msg.sender_type === 'staff' && msg.sender_id === staffId;
@@ -234,7 +239,7 @@ export default function StaffChat({ staffId, height = 'calc(100vh - 13rem)' }) {
               }`}>
                 {!isOwn && selectedContact.type === 'group' && (
                   <p className="text-[10px] font-mono text-n-400 mb-0.5">
-                    {msg.sender_name || (msg.sender_type === 'manager' ? 'Gestor' : 'Equipa')}
+                    {msg.sender_name || (msg.sender_type === 'manager' ? t('staffChat.manager') : t('staffChat.team'))}
                   </p>
                 )}
                 <p className="leading-relaxed whitespace-pre-wrap break-words">{msg.content}</p>
@@ -251,7 +256,7 @@ export default function StaffChat({ staffId, height = 'calc(100vh - 13rem)' }) {
           value={text}
           onChange={e => setText(e.target.value)}
           onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
-          placeholder="Escreva uma mensagem..."
+          placeholder={t('staffChat.placeholder')}
           className="flex-1 bg-n-50 rounded-xl px-4 py-2.5 text-sm font-body outline-none focus:ring-2 focus:ring-turquoise-300 transition-all"
         />
         <button

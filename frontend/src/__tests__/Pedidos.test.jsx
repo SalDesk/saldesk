@@ -4,6 +4,8 @@ import { MemoryRouter } from 'react-router-dom';
 import Pedidos from '../pages/Pedidos';
 import { listOrders, changeOrderStatus } from '../services/ordersService';
 import { listUnits } from '../services/unitsService';
+import useUiStore from '../store/uiStore';
+import { portuguesNoEcra, chavesCruas } from './helpers/portuguesNoEcra';
 
 /* Sem rede: so os servicos da pagina sao simulados */
 vi.mock('../services/ordersService', () => ({
@@ -225,5 +227,114 @@ describe('Pedidos', () => {
     );
     expect(await screen.findByText('Sem pedidos.')).toBeInTheDocument();
     expect(errSpy).toHaveBeenCalled();
+  });
+});
+
+/* Painel em ingles: os rotulos mudam, o que se grava (estados) fica igual */
+describe('Pedidos em ingles', () => {
+  /* nomes de pratos e de mesas sao dados do operador, nao texto do painel */
+  const DADOS = ['Bacalhau', 'Agua', 'Sumo', 'Esplanada', 'Alergia a marisco', 'sem sal', 'Mesa 4', 'Degustacao'];
+  let errSpy;
+  let warnSpy;
+
+  beforeEach(() => {
+    useUiStore.setState({ lang: 'en' });
+    errSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    listOrders.mockReset().mockResolvedValue(CINCO);
+    changeOrderStatus.mockReset().mockImplementation(async (id, status) => ({ ...CINCO.find(o => o.id === id), status }));
+    listUnits.mockReset().mockResolvedValue(MESAS);
+  });
+
+  afterEach(() => {
+    cleanup();
+    useUiStore.setState({ lang: 'pt' });
+    expect(errSpy).not.toHaveBeenCalled();
+    expect(warnSpy).not.toHaveBeenCalled();
+    errSpy.mockRestore();
+    warnSpy.mockRestore();
+  });
+
+  async function abreEn() {
+    render(
+      <MemoryRouter future={FUTURE}>
+        <Pedidos />
+      </MemoryRouter>
+    );
+    await screen.findByText('5 order(s)');
+  }
+  function linhas() {
+    return within(screen.getByRole('table')).getAllByRole('row').slice(1);
+  }
+  function celulas(linha) {
+    return within(linha).getAllByRole('cell').map(c => c.textContent);
+  }
+  function chip(nome) {
+    return screen.getAllByRole('button', { name: nome })[0];
+  }
+
+  it('mostra_colunas_estados_hora_e_mesas_em_ingles_sem_portugues', async () => {
+    await abreEn();
+    expect(screen.getByRole('heading', { name: 'Orders' })).toBeInTheDocument();
+    expect(within(screen.getByRole('table')).getAllByRole('columnheader').map(c => c.textContent))
+      .toEqual(['Ref', 'Table', 'Items', 'Total', 'Status', 'Time', '']);
+    const hora = new Date(CRIADO).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+    expect(celulas(linhas()[0]).slice(0, 6)).toEqual(['aaaaaaaa', 'Table 4', '2x Bacalhau, 1x Agua', '€37.50', 'Received', hora]);
+    expect(celulas(linhas()[1])[1]).toBe('Table 7');
+    expect(linhas().map(l => celulas(l)[4])).toEqual(['Received', 'Preparing', 'Ready', 'Delivered', 'Cancelled']);
+    expect(screen.getByRole('button', { name: 'Refresh' })).toBeInTheDocument();
+    expect(screen.getByDisplayValue('All tables')).toBeInTheDocument();
+    expect(portuguesNoEcra(DADOS)).toEqual([]);
+    expect(chavesCruas(['orders'])).toEqual([]);
+  });
+
+  it('o_chip_de_estado_em_ingles_pede_o_valor_gravado', async () => {
+    await abreEn();
+    fireEvent.click(chip('Preparing'));
+    await waitFor(() => expect(listOrders).toHaveBeenLastCalledWith({ status: 'preparing' }));
+    fireEvent.click(chip('All'));
+    await waitFor(() => expect(listOrders).toHaveBeenLastCalledWith({}));
+  });
+
+  it.each([
+    ['Received', 'Prepare', 'preparing'],
+    ['Preparing', 'Ready', 'ready'],
+    ['Ready', 'Deliver', 'delivered'],
+  ])('avancar_em_ingles_de_%s_pelo_botao_%s_grava_o_estado_%s', async (rotuloEstado, botao, gravado) => {
+    await abreEn();
+    const linha = linhas().find(l => celulas(l)[4] === rotuloEstado);
+    fireEvent.click(within(linha).getByRole('button', { name: botao }));
+    const estadoAntes = { Received: 'received', Preparing: 'preparing', Ready: 'ready' }[rotuloEstado];
+    const id = CINCO.find(o => o.status === estadoAntes).id;
+    await waitFor(() => expect(changeOrderStatus).toHaveBeenCalledWith(id, gravado));
+  });
+
+  it('cancelar_em_ingles_grava_cancelled_e_o_estado_aparece_traduzido', async () => {
+    await abreEn();
+    const primeira = linhas()[0];
+    fireEvent.click(within(primeira).getByRole('button', { name: 'Cancel' }));
+    await waitFor(() => expect(changeOrderStatus).toHaveBeenCalledWith('aaaaaaaa-0001', 'cancelled'));
+    await waitFor(() => expect(celulas(linhas()[0])[4]).toBe('Cancelled'));
+  });
+
+  it('o_detalhe_em_ingles_traduz_titulo_notas_e_total', async () => {
+    await abreEn();
+    fireEvent.click(within(linhas()[0]).getByRole('button', { name: 'View details' }));
+    const dialogo = await screen.findByRole('dialog');
+    expect(within(dialogo).getByText('Order — Table 4')).toBeInTheDocument();
+    expect(within(dialogo).getByText('Order notes')).toBeInTheDocument();
+    expect(within(dialogo).getByText('Total')).toBeInTheDocument();
+    expect(within(dialogo).getByText('€37.50')).toBeInTheDocument();
+    expect(portuguesNoEcra(DADOS)).toEqual([]);
+  });
+
+  it('sem_pedidos_em_ingles_mostra_o_vazio', async () => {
+    listOrders.mockResolvedValue([]);
+    render(
+      <MemoryRouter future={FUTURE}>
+        <Pedidos />
+      </MemoryRouter>
+    );
+    expect(await screen.findByText('No orders.')).toBeInTheDocument();
   });
 });

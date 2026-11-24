@@ -163,6 +163,18 @@ export const FICHEIROS_CONVERTIDOS = [
   'pages/Feedback.jsx',
   'pages/Reviews.jsx',
   'utils/formatoNota.js',
+  /* Fase 3, tarefa 2: clientes, mensagens, chats e pedidos */
+  'pages/Customers.jsx',
+  'components/crm/CustomerDetail.jsx',
+  'components/crm/rotulosClientes.js',
+  'services/customersService.js',
+  'utils/formatoEuros.js',
+  'pages/Messages.jsx',
+  'components/messaging/WhatsAppSend.jsx',
+  'components/messaging/WhatsAppPendentes.jsx',
+  'components/shared/StaffChat.jsx',
+  'pages/FounderChat.jsx',
+  'pages/Pedidos.jsx',
 ];
 
 /* Textos escritos ao cliente: ficam em portugues em qualquer lingua do painel */

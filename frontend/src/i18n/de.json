@@ -2063,5 +2063,231 @@
     "publishReply": "Antwort veröffentlichen",
     "yourReply": "Ihre Antwort (wird veröffentlicht)",
     "replyPlaceholder": "Vielen Dank für Ihren Besuch und Ihren Kommentar..."
+  },
+  "customersPage": {
+    "segments": {
+      "all": "Alle",
+      "tourist": "Touristen",
+      "local": "Einheimische",
+      "group": "Gruppen",
+      "corporate": "Firmenkunden",
+      "vip": "VIP"
+    },
+    "categories": {
+      "turista": "Tourist",
+      "local": "Einheimischer",
+      "VIP": "VIP",
+      "grupo": "Gruppe",
+      "corporativo": "Firmenkunde"
+    },
+    "tags": {
+      "VIP": "VIP",
+      "grupo": "Gruppe",
+      "corporativo": "Firmenkunde",
+      "fidelizado": "Stammkunde",
+      "novo": "neu",
+      "recorrente": "wiederkehrend",
+      "turista": "Tourist",
+      "local": "einheimisch",
+      "empresa": "Unternehmen"
+    },
+    "language": "Sprache",
+    "agreedPrice": "Vereinbarter Preis",
+    "country": "Land",
+    "subtitle": "{{n}} Kunde(n) registriert",
+    "newCustomer": "Neuer Kunde",
+    "importCsv": "CSV importieren",
+    "metrics": {
+      "totalCustomers": "Kunden gesamt",
+      "totalRevenue": "Gesamtumsatz",
+      "countries": "Länder",
+      "topCustomer": "Top-Kunde"
+    },
+    "importedMsg": "{{n}} Kunde(n) erfolgreich importiert.",
+    "createdMsg": "Kunde erfolgreich angelegt.",
+    "csvHeader": "Name,E-Mail,Telefon,Land,Sprache,Besuche,Gesamtausgaben,Notizen,Erstellt am",
+    "csvFilePrefix": "kunden",
+    "newModal": {
+      "title": "Neuer Kunde",
+      "name": "Name *",
+      "namePlaceholder": "Name des Kunden",
+      "email": "E-Mail *",
+      "phone": "Telefon",
+      "countryCode": "Land (Code)",
+      "countryPlaceholder": "z. B. CV, PT",
+      "category": "Kategorie (optional)",
+      "price": "Vereinbarter Preis (optional)",
+      "pricePlaceholder": "z. B. 45.00",
+      "notes": "Notizen",
+      "notesPlaceholder": "Vorlieben, zusätzlicher Kontext usw.",
+      "required": "Name und E-Mail sind erforderlich",
+      "createError": "Kunde konnte nicht angelegt werden",
+      "create": "Kunde anlegen"
+    },
+    "importModal": {
+      "title": "Kunden per CSV importieren",
+      "expected": "Erwartetes Format (Kopfzeile erforderlich):",
+      "selectFile": "Klicken, um eine CSV-Datei auszuwählen",
+      "fileHint": ".csv-Datei, max. 5 MB",
+      "preview": "Vorschau (erste {{n}} Zeilen)",
+      "import": "Importieren",
+      "importError": "Datei konnte nicht importiert werden"
+    }
+  },
+  "customerDetail": {
+    "sections": {
+      "profile": "Profil",
+      "history": "Verlauf",
+      "comms": "Kommunikation"
+    },
+    "ltv": "LTV",
+    "contact": "Kontakt",
+    "whatsapp": "WhatsApp",
+    "birthday": "Geburtstag",
+    "newTag": "Neuer Tag + Enter",
+    "internalNotes": "Interne Notizen",
+    "noNotes": "Keine Notizen",
+    "history": "Verlauf ({{n}})",
+    "noBookings": "Keine Buchungen",
+    "sendEmailTitle": "E-Mail senden",
+    "emailSent": "E-Mail erfolgreich gesendet",
+    "to": "An",
+    "subject": "Betreff",
+    "subjectPlaceholder": "Betreff der E-Mail",
+    "message": "Nachricht",
+    "bodyPlaceholder": "Text der E-Mail...",
+    "sendEmail": "E-Mail senden",
+    "noWhatsapp": "Keine WhatsApp-Nummer hinterlegt",
+    "templates": {
+      "confirmation": "Buchungsbestätigung",
+      "reminder": "Tour-Erinnerung",
+      "review": "Bewertungsanfrage"
+    },
+    "messages": {
+      "greeting": "Hallo {{name}}, vielen Dank für Ihr Vertrauen!",
+      "confirmation": "Hallo {{name}}! Ihre Buchung ist bestätigt. Wir freuen uns auf Ihren Besuch!",
+      "reminder": "Hallo! Erinnerung an Ihre Tour morgen. Bitte denken Sie an Sonnenschutz und Wasser.",
+      "review": "Vielen Dank für Ihren Besuch! Ihre Bewertung können Sie hier abgeben: https://app.saldesk.cv"
+    }
+  },
+  "messagesPage": {
+    "title": "Nachrichten",
+    "newGroup": "Neue Gruppe",
+    "emptyList": "Keine Mitarbeiter, Gruppen oder Kunden",
+    "staff": "Mitarbeiter",
+    "conversations": "Unterhaltungen",
+    "selectConversation": "Wählen Sie eine Unterhaltung",
+    "typing": "schreibt...",
+    "chatTitle": "Unterhaltung im Website-Chat",
+    "chat": "Chat",
+    "email": "E-Mail",
+    "noEmail": "Keine E-Mail",
+    "noPhone": "Kein Telefon",
+    "noMessages": "Noch keine Nachrichten. Beginnen Sie die Unterhaltung.",
+    "autoReply": "Automatische Antwort",
+    "deliveryFailed": "Zustellung fehlgeschlagen",
+    "sentByEmail": "Per E-Mail gesendet",
+    "sentByWhatsapp": "Per WhatsApp gesendet",
+    "attachFile": "Datei anhängen",
+    "write": "Nachricht schreiben...",
+    "writeByEmail": "Nachricht per E-Mail schreiben...",
+    "writeByWhatsapp": "Nachricht per WhatsApp schreiben...",
+    "send": "Senden",
+    "online": "Online",
+    "groupSublabel": "Gruppe · {{n}} Mitglieder",
+    "customer": "Kunde",
+    "notif": {
+      "group": "Neue Nachricht in einer Gruppe",
+      "guest": "Neue Nachricht von einem Besucher",
+      "staff": "Neue Nachricht von einem Mitarbeiter"
+    },
+    "attachmentMarker": "[Anhang: {{name}}]",
+    "groupModal": {
+      "title": "Neue Gruppe",
+      "name": "Gruppenname",
+      "namePlaceholder": "z. B. Kitesurf-Team",
+      "members": "Mitglieder",
+      "create": "Gruppe erstellen"
+    }
+  },
+  "staffChat": {
+    "noConversations": "Keine Unterhaltungen",
+    "noneLinked": "Es sind noch keine Gruppen oder Mitarbeiter zugeordnet.",
+    "management": "Leitung",
+    "manager": "Manager",
+    "groups": "Gruppen",
+    "members": "{{n}} Mitglieder",
+    "team": "Team",
+    "member": "Mitarbeiter",
+    "noMessages": "Noch keine Nachrichten. Beginnen Sie die Unterhaltung.",
+    "placeholder": "Nachricht schreiben..."
+  },
+  "founderChat": {
+    "title": "SalDesk-Nachrichten",
+    "subtitle": "Direkte Unterhaltung mit dem SalDesk-Team",
+    "emptyTitle": "Noch keine Nachrichten",
+    "emptyText": "Schreiben Sie hier, wenn Sie das SalDesk-Team kontaktieren möchten",
+    "placeholder": "Nachricht schreiben...",
+    "send": "Senden"
+  },
+  "orders": {
+    "title": "Bestellungen",
+    "subtitle": "{{n}} Bestellung(en)",
+    "refresh": "Aktualisieren",
+    "all": "Alle",
+    "allTables": "Alle Tische",
+    "empty": "Keine Bestellungen.",
+    "table": "Tisch {{n}}",
+    "orderTitle": "Bestellung — {{table}}",
+    "orderNotes": "Notizen zur Bestellung",
+    "total": "Gesamt",
+    "columns": {
+      "ref": "Ref.",
+      "table": "Tisch",
+      "items": "Positionen",
+      "total": "Gesamt",
+      "status": "Status",
+      "time": "Uhrzeit"
+    },
+    "cancel": "Stornieren",
+    "viewDetails": "Details ansehen",
+    "status": {
+      "received": "Eingegangen",
+      "preparing": "In Zubereitung",
+      "ready": "Fertig",
+      "delivered": "Geliefert",
+      "cancelled": "Storniert"
+    },
+    "advance": {
+      "received": "Zubereiten",
+      "preparing": "Fertig",
+      "ready": "Liefern"
+    }
+  },
+  "whatsappMessages": {
+    "send": {
+      "confirmation": "Bestätigung",
+      "reminder": "Erinnerung",
+      "review": "Bewertung anfragen",
+      "preparing": "Wird vorbereitet…",
+      "sending": "{{label}}: wird per WhatsApp gesendet",
+      "opened": "{{label}}: WhatsApp geöffnet",
+      "alreadyPrepared": "{{label}} war schon vorbereitet: WhatsApp geöffnet",
+      "prepareError": "Die Nachricht konnte nicht vorbereitet werden",
+      "noPhone": "Für den Kunden ist keine Telefonnummer hinterlegt.",
+      "blocked": "Der Browser hat das Fenster blockiert: WhatsApp öffnen"
+    },
+    "pending": {
+      "title": "WhatsApp zu senden",
+      "open": "WhatsApp öffnen",
+      "more": "+ {{n}} Nachricht(en) zu senden",
+      "triggers": {
+        "booking_confirmed": "Bestätigung",
+        "reminder_d1": "Erinnerung",
+        "review_request": "Bewertung",
+        "automation": "Automatisierung"
+      },
+      "message": "Nachricht"
+    }
   }
 }

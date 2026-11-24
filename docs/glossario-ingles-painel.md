@@ -79,6 +79,10 @@ estes, em singular e plural, em todos os ecras; nao alternar com sinonimos. O po
 | Motorista | Chauffeur | Condutor incluido na reserva de um Executivo ("Chauffeur rate (per day)"). |
 | Avaliacao / Avaliacoes | Review / Reviews | Opiniao e nota de um cliente depois da actividade ou estadia (menu "Reviews", "Review request"); nao usar "Rating" para o texto todo. |
 | Historico de envios | Sending history | Registo das mensagens enviadas pelas automacoes ("Sending history"); os modelos de mensagem ao cliente ficam em portugues e ingles. |
+| Gestor | Manager | O dono ou responsavel do operador nos chats ("Manager", "Management"); nao usar "Owner". |
+| Pedido (restaurante) | Order | Pedido de uma mesa ao restaurante (menu "Orders"); os estados gravados received, preparing, ready, delivered, cancelled mostram-se "Received", "Preparing", "Ready", "Delivered", "Cancelled". |
+| Preco acordado | Agreed price | Preco negociado com um cliente na sua ficha ("Agreed price"). |
+| Etiqueta (cliente) | Tag | Marca livre de um cliente; as etiquetas gravadas (VIP, grupo, corporativo, fidelizado, novo, recorrente...) mostram-se "VIP", "group", "corporate", "loyal", "new", "returning". |
 
 ## Regras
 

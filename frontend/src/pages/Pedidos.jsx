@@ -12,30 +12,31 @@ import Table from '../components/ui/Table';
 import EmptyState from '../components/ui/EmptyState';
 import { Select } from '../components/ui/Input';
 import LoadingSpinner from '../components/shared/LoadingSpinner';
+import { useT } from '../i18n';
+import { useLingua, localeDe } from '../utils/formatoLingua';
+import { eurosDuasCasas } from '../utils/formatoEuros';
 
-const STATUS_LABEL = {
-  received:  'Recebido',
-  preparing: 'Em preparação',
-  ready:     'Pronto',
-  delivered: 'Entregue',
-  cancelled: 'Cancelado',
-};
+/* Estados gravados do pedido; o rotulo vem de orders.status */
 const STATUS_FILTERS = ['', 'received', 'preparing', 'ready', 'delivered', 'cancelled'];
 const STATUS_NEXT = { received: 'preparing', preparing: 'ready', ready: 'delivered' };
-const STATUS_BTN  = { received: 'Preparar', preparing: 'Pronto', ready: 'Entregar' };
 const CANCELABLE  = ['received', 'preparing', 'ready'];
 
 const AUTO_REFRESH_MS = 15_000;
 
-function tableLabel(order) {
+function tableLabel(order, t) {
   const unit = order.units;
   if (!unit) return '—';
   const meta = parseTourMeta(unit.description);
-  return meta.number ? `Mesa ${meta.number}` : unit.name;
+  return meta.number ? t('orders.table', { n: meta.number }) : unit.name;
 }
 
-function fmtTime(iso) {
-  return new Date(iso).toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' });
+/* Rotulo de um estado gravado; um estado que nao conhecemos mostra-se tal e qual */
+function rotuloEstado(estado, t) {
+  return estado && STATUS_FILTERS.includes(estado) ? t(`orders.status.${estado}`) : estado;
+}
+
+function fmtTime(iso, lang) {
+  return new Date(iso).toLocaleTimeString(localeDe(lang), { hour: '2-digit', minute: '2-digit' });
 }
 
 function itemsSummary(order) {
@@ -43,8 +44,10 @@ function itemsSummary(order) {
 }
 
 function OrderDetailModal({ order, onClose }) {
+  const t = useT();
+  const lang = useLingua();
   return (
-    <Modal open={!!order} onClose={onClose} title={order ? `Pedido — ${tableLabel(order)}` : ''} size="sm" footer={null}>
+    <Modal open={!!order} onClose={onClose} title={order ? t('orders.orderTitle', { table: tableLabel(order, t) }) : ''} size="sm" footer={null}>
       {order && (
         <div className="space-y-3">
           <div className="space-y-2">
@@ -55,20 +58,20 @@ function OrderDetailModal({ order, onClose }) {
                   {item.notes && <p className="text-xs font-body text-n-500 mt-0.5">{item.notes}</p>}
                 </div>
                 <span className="text-sm font-display font-bold text-ocean-700 shrink-0">
-                  €{(Number(item.unit_price) * item.quantity).toFixed(2)}
+                  {eurosDuasCasas(Number(item.unit_price) * item.quantity, lang)}
                 </span>
               </div>
             ))}
           </div>
           {order.notes && (
             <div className="bg-n-50 rounded-md px-3 py-2">
-              <p className="text-xs font-body font-bold text-n-500 uppercase tracking-wide mb-1">Notas do pedido</p>
+              <p className="text-xs font-body font-bold text-n-500 uppercase tracking-wide mb-1">{t('orders.orderNotes')}</p>
               <p className="text-sm font-body text-n-700">{order.notes}</p>
             </div>
           )}
           <div className="flex items-center justify-between pt-2 border-t border-n-200">
-            <span className="text-sm font-body font-semibold text-n-700">Total</span>
-            <span className="font-display font-bold text-lg text-ocean-700">€{Number(order.total_price).toFixed(2)}</span>
+            <span className="text-sm font-body font-semibold text-n-700">{t('orders.total')}</span>
+            <span className="font-display font-bold text-lg text-ocean-700">{eurosDuasCasas(order.total_price, lang)}</span>
           </div>
         </div>
       )}
@@ -77,6 +80,8 @@ function OrderDetailModal({ order, onClose }) {
 }
 
 export default function Pedidos() {
+  const t = useT();
+  const lang = useLingua();
   const [orders,       setOrders]       = useState([]);
   const [units,        setUnits]        = useState([]);
   const [loading,      setLoading]      = useState(true);
@@ -143,36 +148,36 @@ export default function Pedidos() {
   const columns = [
     {
       key: 'ref',
-      label: 'Ref',
+      label: t('orders.columns.ref'),
       render: (order) => <span className="text-xs font-mono text-n-400">{order.id?.slice(0, 8)}</span>,
     },
     {
       key: 'mesa',
-      label: 'Mesa',
-      render: (order) => <p className="font-display font-semibold text-sm text-n-900 whitespace-nowrap">{tableLabel(order)}</p>,
+      label: t('orders.columns.table'),
+      render: (order) => <p className="font-display font-semibold text-sm text-n-900 whitespace-nowrap">{tableLabel(order, t)}</p>,
     },
     {
       key: 'itens',
-      label: 'Itens',
+      label: t('orders.columns.items'),
       render: (order) => <p className="text-xs font-body text-n-600 truncate max-w-[280px]">{itemsSummary(order)}</p>,
     },
     {
       key: 'total',
-      label: 'Total',
+      label: t('orders.columns.total'),
       align: 'right',
       render: (order) => (
-        <span className="font-display font-bold text-sm text-ocean-700 tabular-nums">€{Number(order.total_price).toFixed(2)}</span>
+        <span className="font-display font-bold text-sm text-ocean-700 tabular-nums">{eurosDuasCasas(order.total_price, lang)}</span>
       ),
     },
     {
       key: 'estado',
-      label: 'Estado',
-      render: (order) => <Badge variant={order.status}>{STATUS_LABEL[order.status]}</Badge>,
+      label: t('orders.columns.status'),
+      render: (order) => <Badge variant={order.status}>{rotuloEstado(order.status, t)}</Badge>,
     },
     {
       key: 'hora',
-      label: 'Hora',
-      render: (order) => <span className="text-xs font-mono text-n-500">{fmtTime(order.created_at)}</span>,
+      label: t('orders.columns.time'),
+      render: (order) => <span className="text-xs font-mono text-n-500">{fmtTime(order.created_at, lang)}</span>,
     },
     {
       key: 'acoes',
@@ -189,7 +194,7 @@ export default function Pedidos() {
                 disabled={isLoading}
                 className="flex items-center gap-1 px-2 py-1 rounded-xs bg-ocean-700 text-white text-xs font-body font-medium hover:bg-ocean-500 transition-colors disabled:opacity-50 whitespace-nowrap"
               >
-                {STATUS_BTN[order.status]}
+                {t(`orders.advance.${order.status}`)}
                 <ChevronRight size={11} strokeWidth={2} />
               </button>
             )}
@@ -198,12 +203,12 @@ export default function Pedidos() {
                 onClick={() => handleCancel(order)}
                 disabled={isLoading}
                 className="p-1.5 rounded text-n-400 hover:text-error hover:bg-[var(--error-light)] transition-colors disabled:opacity-50"
-                aria-label="Cancelar"
+                aria-label={t('orders.cancel')}
               >
                 <Ban size={13} strokeWidth={1.75} />
               </button>
             )}
-            <Button variant="ghost" size="sm" icon={Eye} onClick={() => setDetailOrder(order)} aria-label="Ver detalhes" />
+            <Button variant="ghost" size="sm" icon={Eye} onClick={() => setDetailOrder(order)} aria-label={t('orders.viewDetails')} />
           </div>
         );
       },
@@ -213,24 +218,24 @@ export default function Pedidos() {
   return (
     <div>
       <PageHeader
-        title="Pedidos"
-        subtitle={`${filtered.length} pedido(s)`}
+        title={t('orders.title')}
+        subtitle={t('orders.subtitle', { n: filtered.length })}
         actions={
           <Button variant="secondary" icon={RefreshCw} onClick={carregar}>
-            Actualizar
+            {t('orders.refresh')}
           </Button>
         }
       />
 
       <div className="flex flex-wrap gap-2 mb-6 items-center">
         <FilterChips
-          options={STATUS_FILTERS.map(s => ({ value: s, label: s ? STATUS_LABEL[s] : 'Todos' }))}
+          options={STATUS_FILTERS.map(s => ({ value: s, label: s ? rotuloEstado(s, t) : t('orders.all') }))}
           value={statusFilter}
           onChange={setStatusFilter}
         />
         <div className="w-44">
           <Select value={unitFilter} onChange={e => setUnitFilter(e.target.value)}>
-            <option value="">Todas as mesas</option>
+            <option value="">{t('orders.allTables')}</option>
             {units.map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
           </Select>
         </div>
@@ -240,7 +245,7 @@ export default function Pedidos() {
         <div className="flex justify-center py-20"><LoadingSpinner size={32} /></div>
       ) : filtered.length === 0 ? (
         <div className="bg-white rounded-md border border-n-200 shadow-sm">
-          <EmptyState title="Sem pedidos." />
+          <EmptyState title={t('orders.empty')} />
         </div>
       ) : (
         <div className="bg-white rounded-md border border-n-200 shadow-sm overflow-hidden">

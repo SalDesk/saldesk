@@ -3323,5 +3323,231 @@
     "publishReply": "Publish reply",
     "yourReply": "Your reply (will be published)",
     "replyPlaceholder": "Thank you for your visit and for your comment..."
+  },
+  "customersPage": {
+    "segments": {
+      "all": "All",
+      "tourist": "Tourists",
+      "local": "Locals",
+      "group": "Groups",
+      "corporate": "Corporate",
+      "vip": "VIP"
+    },
+    "categories": {
+      "turista": "Tourist",
+      "local": "Local",
+      "VIP": "VIP",
+      "grupo": "Group",
+      "corporativo": "Corporate"
+    },
+    "tags": {
+      "VIP": "VIP",
+      "grupo": "group",
+      "corporativo": "corporate",
+      "fidelizado": "loyal",
+      "novo": "new",
+      "recorrente": "returning",
+      "turista": "tourist",
+      "local": "local",
+      "empresa": "company"
+    },
+    "language": "Language",
+    "agreedPrice": "Agreed price",
+    "country": "Country",
+    "subtitle": "{{n}} customer(s) registered",
+    "newCustomer": "New Customer",
+    "importCsv": "Import CSV",
+    "metrics": {
+      "totalCustomers": "Total customers",
+      "totalRevenue": "Total revenue",
+      "countries": "Countries",
+      "topCustomer": "Top customer"
+    },
+    "importedMsg": "{{n}} customer(s) imported successfully.",
+    "createdMsg": "Customer created successfully.",
+    "csvHeader": "Name,Email,Phone,Country,Language,Visits,Total spent,Notes,Created on",
+    "csvFilePrefix": "customers",
+    "newModal": {
+      "title": "New customer",
+      "name": "Name *",
+      "namePlaceholder": "Customer name",
+      "email": "Email *",
+      "phone": "Phone",
+      "countryCode": "Country (code)",
+      "countryPlaceholder": "E.g. CV, PT",
+      "category": "Category (optional)",
+      "price": "Agreed price (optional)",
+      "pricePlaceholder": "E.g. 45.00",
+      "notes": "Notes",
+      "notesPlaceholder": "Preferences, extra context, etc.",
+      "required": "Name and email are required",
+      "createError": "Could not create the customer",
+      "create": "Create customer"
+    },
+    "importModal": {
+      "title": "Import customers via CSV",
+      "expected": "Expected format (header required):",
+      "selectFile": "Click to select a CSV file",
+      "fileHint": ".csv file, max 5MB",
+      "preview": "Preview (first {{n}} lines)",
+      "import": "Import",
+      "importError": "Could not import the file"
+    }
+  },
+  "customerDetail": {
+    "sections": {
+      "profile": "Profile",
+      "history": "History",
+      "comms": "Communication"
+    },
+    "ltv": "LTV",
+    "contact": "Contact",
+    "whatsapp": "WhatsApp",
+    "birthday": "Birthday",
+    "newTag": "New tag + Enter",
+    "internalNotes": "Internal notes",
+    "noNotes": "No notes",
+    "history": "History ({{n}})",
+    "noBookings": "No bookings",
+    "sendEmailTitle": "Send Email",
+    "emailSent": "Email sent successfully",
+    "to": "To",
+    "subject": "Subject",
+    "subjectPlaceholder": "Email subject",
+    "message": "Message",
+    "bodyPlaceholder": "Email body...",
+    "sendEmail": "Send email",
+    "noWhatsapp": "No WhatsApp number on file",
+    "templates": {
+      "confirmation": "Booking confirmation",
+      "reminder": "Tour reminder",
+      "review": "Review request"
+    },
+    "messages": {
+      "greeting": "Hello {{name}}, thank you for choosing us!",
+      "confirmation": "Hello {{name}}! Your booking is confirmed. We look forward to seeing you!",
+      "reminder": "Hello! A reminder about your tour tomorrow. Don't forget to bring sunscreen and water.",
+      "review": "Thank you for your visit! You can leave your review at: https://app.saldesk.cv"
+    }
+  },
+  "messagesPage": {
+    "title": "Messages",
+    "newGroup": "New group",
+    "emptyList": "No staff, groups or customers",
+    "staff": "Staff",
+    "conversations": "Conversations",
+    "selectConversation": "Select a conversation",
+    "typing": "is typing...",
+    "chatTitle": "Website chat conversation",
+    "chat": "Chat",
+    "email": "Email",
+    "noEmail": "No email",
+    "noPhone": "No phone",
+    "noMessages": "No messages yet. Start the conversation.",
+    "autoReply": "Automatic reply",
+    "deliveryFailed": "Delivery failed",
+    "sentByEmail": "Sent by email",
+    "sentByWhatsapp": "Sent by WhatsApp",
+    "attachFile": "Attach file",
+    "write": "Write a message...",
+    "writeByEmail": "Write a message by email...",
+    "writeByWhatsapp": "Write a message by WhatsApp...",
+    "send": "Send",
+    "online": "Online",
+    "groupSublabel": "Group · {{n}} members",
+    "customer": "Customer",
+    "notif": {
+      "group": "New message in a group",
+      "guest": "New message from a visitor",
+      "staff": "New message from a staff member"
+    },
+    "attachmentMarker": "[Attachment: {{name}}]",
+    "groupModal": {
+      "title": "New group",
+      "name": "Group name",
+      "namePlaceholder": "E.g. Kitesurf team",
+      "members": "Members",
+      "create": "Create group"
+    }
+  },
+  "staffChat": {
+    "noConversations": "No conversations",
+    "noneLinked": "There are no groups or staff members linked yet.",
+    "management": "Management",
+    "manager": "Manager",
+    "groups": "Groups",
+    "members": "{{n}} members",
+    "team": "Staff",
+    "member": "Staff member",
+    "noMessages": "No messages yet. Start the conversation.",
+    "placeholder": "Write a message..."
+  },
+  "founderChat": {
+    "title": "SalDesk messages",
+    "subtitle": "Direct conversation with the SalDesk team",
+    "emptyTitle": "No messages yet",
+    "emptyText": "Write here if you need to contact the SalDesk team",
+    "placeholder": "Write a message...",
+    "send": "Send"
+  },
+  "orders": {
+    "title": "Orders",
+    "subtitle": "{{n}} order(s)",
+    "refresh": "Refresh",
+    "all": "All",
+    "allTables": "All tables",
+    "empty": "No orders.",
+    "table": "Table {{n}}",
+    "orderTitle": "Order — {{table}}",
+    "orderNotes": "Order notes",
+    "total": "Total",
+    "columns": {
+      "ref": "Ref",
+      "table": "Table",
+      "items": "Items",
+      "total": "Total",
+      "status": "Status",
+      "time": "Time"
+    },
+    "cancel": "Cancel",
+    "viewDetails": "View details",
+    "status": {
+      "received": "Received",
+      "preparing": "Preparing",
+      "ready": "Ready",
+      "delivered": "Delivered",
+      "cancelled": "Cancelled"
+    },
+    "advance": {
+      "received": "Prepare",
+      "preparing": "Ready",
+      "ready": "Deliver"
+    }
+  },
+  "whatsappMessages": {
+    "send": {
+      "confirmation": "Confirmation",
+      "reminder": "Reminder",
+      "review": "Request review",
+      "preparing": "Preparing…",
+      "sending": "{{label}}: sending by WhatsApp",
+      "opened": "{{label}}: WhatsApp opened",
+      "alreadyPrepared": "{{label}} was already prepared: WhatsApp opened",
+      "prepareError": "Could not prepare the message",
+      "noPhone": "The customer has no phone number on file.",
+      "blocked": "The browser blocked the window: open WhatsApp"
+    },
+    "pending": {
+      "title": "WhatsApp to send",
+      "open": "Open WhatsApp",
+      "more": "+ {{n}} message(s) to send",
+      "triggers": {
+        "booking_confirmed": "Confirmation",
+        "reminder_d1": "Reminder",
+        "review_request": "Review",
+        "automation": "Automation"
+      },
+      "message": "Message"
+    }
   }
 }

@@ -5,19 +5,17 @@ import {
 } from 'lucide-react';
 import { getCustomer, updateCustomer } from '../../services/customersService';
 import api from '../../services/api';
-import { useT } from '../../i18n';
+import { useT, getT } from '../../i18n';
 import Badge from '../ui/Badge';
 import Button from '../ui/Button';
 import Tabs from '../ui/Tabs';
 import Input, { Textarea } from '../ui/Input';
 import LoadingSpinner from '../shared/LoadingSpinner';
 import { rotuloEstadoReserva } from '../../utils/estadoReserva';
-
-function formatDate(d) {
-  if (!d) return '—';
-  const [y, m, day] = d.split('-');
-  return `${day}/${m}/${y}`;
-}
+import { useLingua } from '../../utils/formatoLingua';
+import { eurosInteiros, formatDate } from '../../pages/reservations/shared';
+import { eurosDuasCasas } from '../../utils/formatoEuros';
+import { rotuloEtiqueta } from './rotulosClientes';
 
 function InfoRow({ label, value }) {
   return (
@@ -32,6 +30,7 @@ const SEGMENT_TAGS = ['VIP', 'grupo', 'corporativo', 'fidelizado', 'novo', 'reco
 
 export default function CustomerDetail({ customerId, onClose, onUpdate }) {
   const t = useT();
+  const lang = useLingua();
   const [customer,      setCustomer]     = useState(null);
   const [loading,       setLoading]      = useState(true);
   const [editingNotes,  setEditNotes]    = useState(false);
@@ -122,16 +121,20 @@ export default function CustomerDetail({ customerId, onClose, onUpdate }) {
   function handleWhatsApp() {
     if (!customer?.whatsapp && !customer?.phone) return;
     const number = (customer.whatsapp || customer.phone).replace(/\D/g, '');
-    const text   = encodeURIComponent(`Olá ${customer.first_name || customer.name?.split(' ')[0]}, obrigado pela sua preferência!`);
+    /* Texto para o cliente: fica sempre em portugues, qualquer que seja a lingua do painel */
+    const text   = encodeURIComponent(getT('pt')('customerDetail.messages.greeting', { name: customer.first_name || customer.name?.split(' ')[0] }));
     window.open(`https://wa.me/${number}?text=${text}`, '_blank');
   }
+
+  /* Textos para o cliente: ficam sempre em portugues, qualquer que seja a lingua do painel */
+  const tCliente = getT('pt');
 
   const isVip = (customer?.tags || []).includes('VIP') || Number(customer?.total_spent) > 500;
 
   const SECTIONS = [
-    { key: 'perfil',   label: 'Perfil' },
-    { key: 'tours',    label: 'Histórico' },
-    { key: 'comms',    label: 'Comunicação' },
+    { key: 'perfil',   label: t('customerDetail.sections.profile') },
+    { key: 'tours',    label: t('customerDetail.sections.history') },
+    { key: 'comms',    label: t('customerDetail.sections.comms') },
   ];
 
   return (
@@ -143,13 +146,13 @@ export default function CustomerDetail({ customerId, onClose, onUpdate }) {
         <div className="flex items-center justify-between px-5 py-4 border-b border-n-200 shrink-0">
           <div className="flex items-center gap-2">
             <h2 className="font-display font-bold text-base text-n-900">
-              {loading ? 'A carregar...' : customer?.name}
+              {loading ? t('common.loading') : customer?.name}
             </h2>
             {isVip && !loading && (
               <Crown size={14} strokeWidth={1.75} className="text-sand-500" />
             )}
           </div>
-          <button onClick={onClose} aria-label="Fechar" className="p-1 text-n-400 hover:text-n-700 transition-colors">
+          <button onClick={onClose} aria-label={t('common.close')} className="p-1 text-n-400 hover:text-n-700 transition-colors">
             <X size={18} strokeWidth={1.75} />
           </button>
         </div>
@@ -163,9 +166,9 @@ export default function CustomerDetail({ customerId, onClose, onUpdate }) {
             {/* Metrics */}
             <div className="grid grid-cols-3 border-b border-n-200 shrink-0">
               {[
-                { label: 'Visitas',     value: customer.total_visits },
-                { label: 'LTV',         value: `€${Number(customer.total_spent).toFixed(0)}` },
-                { label: 'País',        value: customer.country_code || '—' },
+                { label: t('customers.visits'),         value: customer.total_visits },
+                { label: t('customerDetail.ltv'),       value: eurosInteiros(customer.total_spent, lang) },
+                { label: t('customersPage.country'),    value: customer.country_code || '—' },
               ].map(m => (
                 <div key={m.label} className="px-4 py-4 text-center border-r last:border-r-0 border-n-200">
                   <p className="font-display font-bold text-xl text-ocean-700">{m.value}</p>
@@ -176,7 +179,7 @@ export default function CustomerDetail({ customerId, onClose, onUpdate }) {
 
             {/* Quick actions */}
             <div className="flex gap-2 px-4 py-3 border-b border-n-100 shrink-0">
-              <Button variant="secondary" size="sm" icon={Mail} onClick={() => setSection('comms')}>Email</Button>
+              <Button variant="secondary" size="sm" icon={Mail} onClick={() => setSection('comms')}>{t('customers.email')}</Button>
               <Button variant="secondary" size="sm" icon={MessageCircle} onClick={handleWhatsApp}>WhatsApp</Button>
             </div>
 
@@ -190,19 +193,19 @@ export default function CustomerDetail({ customerId, onClose, onUpdate }) {
               {activeSection === 'perfil' && (
                 <div className="px-5 py-4 space-y-5">
                   <section>
-                    <h3 className="text-xs font-body font-bold uppercase tracking-wide text-n-500 mb-3">Contacto</h3>
+                    <h3 className="text-xs font-body font-bold uppercase tracking-wide text-n-500 mb-3">{t('customerDetail.contact')}</h3>
                     <div className="space-y-2">
-                      <InfoRow label="Email"    value={customer.email} />
-                      <InfoRow label="Telefone" value={customer.phone} />
+                      <InfoRow label={t('customers.email')} value={customer.email} />
+                      <InfoRow label={t('customers.phone')} value={customer.phone} />
                       <InfoRow label="WhatsApp" value={customer.whatsapp} />
-                      <InfoRow label="Idioma"   value={customer.language?.toUpperCase()} />
-                      <InfoRow label="Aniversário" value={customer.birthday ? formatDate(customer.birthday) : null} />
+                      <InfoRow label={t('customersPage.language')} value={customer.language?.toUpperCase()} />
+                      <InfoRow label={t('customerDetail.birthday')} value={customer.birthday ? formatDate(customer.birthday) : null} />
                     </div>
                   </section>
 
                   {/* Tags */}
                   <section>
-                    <h3 className="text-xs font-body font-bold uppercase tracking-wide text-n-500 mb-2">Tags</h3>
+                    <h3 className="text-xs font-body font-bold uppercase tracking-wide text-n-500 mb-2">{t('customers.tags')}</h3>
                     <div className="flex flex-wrap gap-1.5 mb-2">
                       {SEGMENT_TAGS.map(tag => {
                         const active = (customer.tags || []).includes(tag);
@@ -214,13 +217,13 @@ export default function CustomerDetail({ customerId, onClose, onUpdate }) {
                                 : 'bg-n-50 border-n-200 text-n-500 hover:border-n-400'
                             }`}>
                             {active && <Check size={9} strokeWidth={2.5} />}
-                            {tag}
+                            {rotuloEtiqueta(tag, t, lang)}
                           </button>
                         );
                       })}
                       {(customer.tags || []).filter(t => !SEGMENT_TAGS.includes(t)).map(tag => (
                         <span key={tag} className="flex items-center gap-1 px-2 py-0.5 bg-sand-50 border border-sand-200 text-sand-600 rounded-xs text-xs font-body">
-                          <Tag size={9} strokeWidth={1.75} />{tag}
+                          <Tag size={9} strokeWidth={1.75} />{rotuloEtiqueta(tag, t, lang)}
                           <button onClick={() => toggleTag(tag)} disabled={savingTags} className="ml-0.5 hover:text-error"><X size={9} strokeWidth={2} /></button>
                         </span>
                       ))}
@@ -229,7 +232,7 @@ export default function CustomerDetail({ customerId, onClose, onUpdate }) {
                       <div className="flex-1">
                         <Input value={tagInput} onChange={e => setTagInput(e.target.value)}
                           onKeyDown={e => e.key === 'Enter' && addCustomTag()}
-                          placeholder="Nova tag + Enter" />
+                          placeholder={t('customerDetail.newTag')} />
                       </div>
                     </div>
                   </section>
@@ -237,11 +240,11 @@ export default function CustomerDetail({ customerId, onClose, onUpdate }) {
                   {/* Notas */}
                   <section>
                     <div className="flex items-center justify-between mb-2">
-                      <h3 className="text-xs font-body font-bold uppercase tracking-wide text-n-500">Notas internas</h3>
+                      <h3 className="text-xs font-body font-bold uppercase tracking-wide text-n-500">{t('customerDetail.internalNotes')}</h3>
                       {!editingNotes && (
                         <button onClick={() => setEditNotes(true)}
                           className="text-xs text-ocean-700 hover:underline flex items-center gap-1">
-                          <Pencil size={11} strokeWidth={1.75} /> Editar
+                          <Pencil size={11} strokeWidth={1.75} /> {t('common.edit')}
                         </button>
                       )}
                     </div>
@@ -249,13 +252,13 @@ export default function CustomerDetail({ customerId, onClose, onUpdate }) {
                       <div className="space-y-2">
                         <Textarea value={notes} onChange={e => setNotes(e.target.value)} rows={3} />
                         <div className="flex gap-2">
-                          <Button size="sm" variant="secondary" onClick={() => setEditNotes(false)} className="flex-1">Cancelar</Button>
-                          <Button size="sm" loading={saving} onClick={saveNotes} className="flex-1">Guardar</Button>
+                          <Button size="sm" variant="secondary" onClick={() => setEditNotes(false)} className="flex-1">{t('common.cancel')}</Button>
+                          <Button size="sm" loading={saving} onClick={saveNotes} className="flex-1">{t('common.save')}</Button>
                         </div>
                       </div>
                     ) : (
                       <p className="text-sm font-body text-n-600 whitespace-pre-line min-h-[2rem]">
-                        {customer.notes || <span className="text-n-400 italic">Sem notas</span>}
+                        {customer.notes || <span className="text-n-400 italic">{t('customerDetail.noNotes')}</span>}
                       </p>
                     )}
                   </section>
@@ -266,10 +269,10 @@ export default function CustomerDetail({ customerId, onClose, onUpdate }) {
               {activeSection === 'tours' && (
                 <div className="px-5 py-4">
                   <h3 className="text-xs font-body font-bold uppercase tracking-wide text-n-500 mb-3">
-                    Histórico ({customer.reservations?.length || 0})
+                    {t('customerDetail.history', { n: customer.reservations?.length || 0 })}
                   </h3>
                   {!customer.reservations?.length ? (
-                    <p className="text-sm font-body text-n-400 italic">Sem reservas</p>
+                    <p className="text-sm font-body text-n-400 italic">{t('customerDetail.noBookings')}</p>
                   ) : (
                     <div className="space-y-2">
                       {customer.reservations?.map(r => (
@@ -284,7 +287,7 @@ export default function CustomerDetail({ customerId, onClose, onUpdate }) {
                             <span>{formatDate(r.check_in)}</span>
                             <ArrowRight size={10} strokeWidth={1.75} />
                             <span>{formatDate(r.check_out)}</span>
-                            <span className="ml-auto font-semibold text-n-700">€{Number(r.total_price || r.total_amount || 0).toFixed(2)}</span>
+                            <span className="ml-auto font-semibold text-n-700">{eurosDuasCasas(r.total_price || r.total_amount || 0, lang)}</span>
                           </div>
                         </div>
                       ))}
@@ -298,23 +301,23 @@ export default function CustomerDetail({ customerId, onClose, onUpdate }) {
                 <div className="px-5 py-4 space-y-5">
                   {/* Email form */}
                   <section>
-                    <h3 className="text-xs font-body font-bold uppercase tracking-wide text-n-500 mb-3">Enviar Email</h3>
+                    <h3 className="text-xs font-body font-bold uppercase tracking-wide text-n-500 mb-3">{t('customerDetail.sendEmailTitle')}</h3>
                     {emailSent ? (
                       <div className="flex items-center gap-2 px-3 py-2.5 bg-[var(--success-light)] border border-n-200 rounded-sm text-sm font-body text-[var(--success)]">
                         <Check size={14} strokeWidth={2} />
-                        Email enviado com sucesso
+                        {t('customerDetail.emailSent')}
                       </div>
                     ) : (
                       <form onSubmit={handleSendEmail} className="space-y-3">
-                        <Input label="Para" value={customer.email} readOnly />
-                        <Input label="Assunto" value={emailSubject}
+                        <Input label={t('customerDetail.to')} value={customer.email} readOnly />
+                        <Input label={t('customerDetail.subject')} value={emailSubject}
                           onChange={e => setEmailSubject(e.target.value)} required
-                          placeholder="Assunto do email" />
-                        <Textarea label="Mensagem" value={emailBody}
+                          placeholder={t('customerDetail.subjectPlaceholder')} />
+                        <Textarea label={t('customerDetail.message')} value={emailBody}
                           onChange={e => setEmailBody(e.target.value)} required
-                          rows={4} placeholder="Corpo do email..." />
+                          rows={4} placeholder={t('customerDetail.bodyPlaceholder')} />
                         <Button type="submit" loading={sendingEmail} icon={Send} className="w-full">
-                          Enviar email
+                          {t('customerDetail.sendEmail')}
                         </Button>
                       </form>
                     )}
@@ -326,9 +329,9 @@ export default function CustomerDetail({ customerId, onClose, onUpdate }) {
                     {customer.whatsapp || customer.phone ? (
                       <div className="space-y-2">
                         {[
-                          { label: 'Confirmação de reserva', text: `Olá ${customer.first_name || customer.name?.split(' ')[0]}! A sua reserva foi confirmada. Aguardamos a sua visita!` },
-                          { label: 'Lembrete de tour',       text: `Olá! Lembrete do seu tour amanhã. Não se esqueça de trazer protector solar e água.` },
-                          { label: 'Pedido de avaliação',    text: `Obrigado pela sua visita! Pode deixar a sua avaliação em: https://app.saldesk.cv` },
+                          { label: t('customerDetail.templates.confirmation'), text: tCliente('customerDetail.messages.confirmation', { name: customer.first_name || customer.name?.split(' ')[0] }) },
+                          { label: t('customerDetail.templates.reminder'),     text: tCliente('customerDetail.messages.reminder') },
+                          { label: t('customerDetail.templates.review'),       text: tCliente('customerDetail.messages.review') },
                         ].map(({ label, text }) => {
                           const number = (customer.whatsapp || customer.phone || '').replace(/\D/g, '');
                           return (
@@ -344,7 +347,7 @@ export default function CustomerDetail({ customerId, onClose, onUpdate }) {
                         })}
                       </div>
                     ) : (
-                      <p className="text-sm font-body text-n-400 italic">Sem número WhatsApp registado</p>
+                      <p className="text-sm font-body text-n-400 italic">{t('customerDetail.noWhatsapp')}</p>
                     )}
                   </section>
                 </div>

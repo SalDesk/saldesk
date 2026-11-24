@@ -2063,5 +2063,231 @@
     "publishReply": "Reactie publiceren",
     "yourReply": "Uw reactie (wordt gepubliceerd)",
     "replyPlaceholder": "Bedankt voor uw bezoek en uw opmerking..."
+  },
+  "customersPage": {
+    "segments": {
+      "all": "Alle",
+      "tourist": "Toeristen",
+      "local": "Locals",
+      "group": "Groepen",
+      "corporate": "Zakelijk",
+      "vip": "VIP"
+    },
+    "categories": {
+      "turista": "Toerist",
+      "local": "Local",
+      "VIP": "VIP",
+      "grupo": "Groep",
+      "corporativo": "Zakelijk"
+    },
+    "tags": {
+      "VIP": "VIP",
+      "grupo": "groep",
+      "corporativo": "zakelijk",
+      "fidelizado": "vaste klant",
+      "novo": "nieuw",
+      "recorrente": "terugkerend",
+      "turista": "toerist",
+      "local": "local",
+      "empresa": "bedrijf"
+    },
+    "language": "Taal",
+    "agreedPrice": "Afgesproken prijs",
+    "country": "Land",
+    "subtitle": "{{n}} klant(en) geregistreerd",
+    "newCustomer": "Nieuwe klant",
+    "importCsv": "CSV importeren",
+    "metrics": {
+      "totalCustomers": "Totaal klanten",
+      "totalRevenue": "Totale omzet",
+      "countries": "Landen",
+      "topCustomer": "Topklant"
+    },
+    "importedMsg": "{{n}} klant(en) succesvol geïmporteerd.",
+    "createdMsg": "Klant succesvol aangemaakt.",
+    "csvHeader": "Naam,E-mail,Telefoon,Land,Taal,Bezoeken,Totaal uitgegeven,Notities,Aangemaakt op",
+    "csvFilePrefix": "klanten",
+    "newModal": {
+      "title": "Nieuwe klant",
+      "name": "Naam *",
+      "namePlaceholder": "Naam van de klant",
+      "email": "E-mail *",
+      "phone": "Telefoon",
+      "countryCode": "Land (code)",
+      "countryPlaceholder": "Bijv. CV, PT",
+      "category": "Categorie (optioneel)",
+      "price": "Afgesproken prijs (optioneel)",
+      "pricePlaceholder": "Bijv. 45.00",
+      "notes": "Notities",
+      "notesPlaceholder": "Voorkeuren, extra context, enz.",
+      "required": "Naam en e-mail zijn verplicht",
+      "createError": "Klant kon niet worden aangemaakt",
+      "create": "Klant aanmaken"
+    },
+    "importModal": {
+      "title": "Klanten importeren via CSV",
+      "expected": "Verwacht formaat (koprij verplicht):",
+      "selectFile": "Klik om een CSV-bestand te kiezen",
+      "fileHint": ".csv-bestand, max. 5 MB",
+      "preview": "Voorbeeld (eerste {{n}} regels)",
+      "import": "Importeren",
+      "importError": "Bestand kon niet worden geïmporteerd"
+    }
+  },
+  "customerDetail": {
+    "sections": {
+      "profile": "Profiel",
+      "history": "Geschiedenis",
+      "comms": "Communicatie"
+    },
+    "ltv": "LTV",
+    "contact": "Contact",
+    "whatsapp": "WhatsApp",
+    "birthday": "Verjaardag",
+    "newTag": "Nieuwe tag + Enter",
+    "internalNotes": "Interne notities",
+    "noNotes": "Geen notities",
+    "history": "Geschiedenis ({{n}})",
+    "noBookings": "Geen boekingen",
+    "sendEmailTitle": "E-mail versturen",
+    "emailSent": "E-mail succesvol verstuurd",
+    "to": "Aan",
+    "subject": "Onderwerp",
+    "subjectPlaceholder": "Onderwerp van de e-mail",
+    "message": "Bericht",
+    "bodyPlaceholder": "Inhoud van de e-mail...",
+    "sendEmail": "E-mail versturen",
+    "noWhatsapp": "Geen WhatsApp-nummer geregistreerd",
+    "templates": {
+      "confirmation": "Boekingsbevestiging",
+      "reminder": "Tourherinnering",
+      "review": "Beoordelingsverzoek"
+    },
+    "messages": {
+      "greeting": "Hallo {{name}}, bedankt voor uw voorkeur!",
+      "confirmation": "Hallo {{name}}! Uw boeking is bevestigd. We kijken uit naar uw bezoek!",
+      "reminder": "Hallo! Een herinnering aan uw tour morgen. Vergeet uw zonnebrandcrème en water niet.",
+      "review": "Bedankt voor uw bezoek! U kunt uw beoordeling achterlaten op: https://app.saldesk.cv"
+    }
+  },
+  "messagesPage": {
+    "title": "Berichten",
+    "newGroup": "Nieuwe groep",
+    "emptyList": "Geen medewerkers, groepen of klanten",
+    "staff": "Medewerkers",
+    "conversations": "Gesprekken",
+    "selectConversation": "Selecteer een gesprek",
+    "typing": "is aan het typen...",
+    "chatTitle": "Gesprek via de websitechat",
+    "chat": "Chat",
+    "email": "E-mail",
+    "noEmail": "Geen e-mail",
+    "noPhone": "Geen telefoon",
+    "noMessages": "Nog geen berichten. Begin het gesprek.",
+    "autoReply": "Automatisch antwoord",
+    "deliveryFailed": "Bezorging mislukt",
+    "sentByEmail": "Per e-mail verstuurd",
+    "sentByWhatsapp": "Via WhatsApp verstuurd",
+    "attachFile": "Bestand toevoegen",
+    "write": "Schrijf een bericht...",
+    "writeByEmail": "Schrijf een bericht per e-mail...",
+    "writeByWhatsapp": "Schrijf een bericht via WhatsApp...",
+    "send": "Verzenden",
+    "online": "Online",
+    "groupSublabel": "Groep · {{n}} leden",
+    "customer": "Klant",
+    "notif": {
+      "group": "Nieuw bericht in een groep",
+      "guest": "Nieuw bericht van een bezoeker",
+      "staff": "Nieuw bericht van een medewerker"
+    },
+    "attachmentMarker": "[Bijlage: {{name}}]",
+    "groupModal": {
+      "title": "Nieuwe groep",
+      "name": "Groepsnaam",
+      "namePlaceholder": "Bijv. Kitesurfteam",
+      "members": "Leden",
+      "create": "Groep aanmaken"
+    }
+  },
+  "staffChat": {
+    "noConversations": "Geen gesprekken",
+    "noneLinked": "Er zijn nog geen groepen of medewerkers gekoppeld.",
+    "management": "Beheer",
+    "manager": "Manager",
+    "groups": "Groepen",
+    "members": "{{n}} leden",
+    "team": "Team",
+    "member": "Medewerker",
+    "noMessages": "Nog geen berichten. Begin het gesprek.",
+    "placeholder": "Schrijf een bericht..."
+  },
+  "founderChat": {
+    "title": "SalDesk-berichten",
+    "subtitle": "Direct gesprek met het SalDesk-team",
+    "emptyTitle": "Nog geen berichten",
+    "emptyText": "Schrijf hier als u contact wilt opnemen met het SalDesk-team",
+    "placeholder": "Schrijf een bericht...",
+    "send": "Verzenden"
+  },
+  "orders": {
+    "title": "Bestellingen",
+    "subtitle": "{{n}} bestelling(en)",
+    "refresh": "Vernieuwen",
+    "all": "Alle",
+    "allTables": "Alle tafels",
+    "empty": "Geen bestellingen.",
+    "table": "Tafel {{n}}",
+    "orderTitle": "Bestelling — {{table}}",
+    "orderNotes": "Notities bij de bestelling",
+    "total": "Totaal",
+    "columns": {
+      "ref": "Ref.",
+      "table": "Tafel",
+      "items": "Items",
+      "total": "Totaal",
+      "status": "Status",
+      "time": "Tijd"
+    },
+    "cancel": "Annuleren",
+    "viewDetails": "Details bekijken",
+    "status": {
+      "received": "Ontvangen",
+      "preparing": "In bereiding",
+      "ready": "Klaar",
+      "delivered": "Geleverd",
+      "cancelled": "Geannuleerd"
+    },
+    "advance": {
+      "received": "Bereiden",
+      "preparing": "Klaar",
+      "ready": "Leveren"
+    }
+  },
+  "whatsappMessages": {
+    "send": {
+      "confirmation": "Bevestiging",
+      "reminder": "Herinnering",
+      "review": "Beoordeling vragen",
+      "preparing": "Bezig met voorbereiden…",
+      "sending": "{{label}}: wordt via WhatsApp verstuurd",
+      "opened": "{{label}}: WhatsApp geopend",
+      "alreadyPrepared": "{{label}} was al voorbereid: WhatsApp geopend",
+      "prepareError": "Het bericht kon niet worden voorbereid",
+      "noPhone": "De klant heeft geen telefoonnummer geregistreerd.",
+      "blocked": "De browser heeft het venster geblokkeerd: open WhatsApp"
+    },
+    "pending": {
+      "title": "WhatsApp te versturen",
+      "open": "WhatsApp openen",
+      "more": "+ {{n}} bericht(en) te versturen",
+      "triggers": {
+        "booking_confirmed": "Bevestiging",
+        "reminder_d1": "Herinnering",
+        "review_request": "Beoordeling",
+        "automation": "Automatisering"
+      },
+      "message": "Bericht"
+    }
   }
 }
