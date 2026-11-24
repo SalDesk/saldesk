@@ -9,6 +9,7 @@ import Button from '../../components/ui/Button';
 import Badge from '../../components/ui/Badge';
 import Modal from '../../components/ui/Modal';
 import { useT } from '../../i18n';
+import { formatarData, formatarNumero } from '../../utils/formatoLingua';
 
 /* ─────────────────────────────────────────────────────────
    TAB — FACTURACAO (subscricao SalDesk, distinta das credenciais de
@@ -103,10 +104,10 @@ export default function FacturacaoTab() {
             {isInTrial() && <p className="text-xs font-body text-n-500 mt-1">{t('settings.facturacao.trialDaysLeft', { n: trialDaysLeft() })}</p>}
             {isTrialExpired() && <p className="text-xs font-body text-[var(--error)] mt-1">{t('settings.facturacao.trialEnded')}</p>}
             {hasActiveSubscription && paidUntil && (
-              <p className="text-xs font-body text-n-500 mt-1">{t('settings.facturacao.renewsOn', { date: paidUntil.toLocaleDateString('pt-PT') })}</p>
+              <p className="text-xs font-body text-n-500 mt-1">{t('settings.facturacao.renewsOn', { date: formatarData(paidUntil) })}</p>
             )}
             {!hasActiveSubscription && paidUntil && (
-              <p className="text-xs font-body text-n-500 mt-1">{t('settings.facturacao.paidUntil', { date: paidUntil.toLocaleDateString('pt-PT') })}</p>
+              <p className="text-xs font-body text-n-500 mt-1">{t('settings.facturacao.paidUntil', { date: formatarData(paidUntil) })}</p>
             )}
           </div>
           <Badge variant={STATUS_VARIANT[operator?.plan_status] || 'default'}>
@@ -154,7 +155,7 @@ export default function FacturacaoTab() {
             <div key={p.id} className="flex items-center justify-between gap-3 text-sm font-body py-2 border-b border-n-100 last:border-0">
               <div>
                 <p className="font-semibold text-n-900">{PLAN_LABEL[p.plan] || p.plan}</p>
-                <p className="text-xs text-n-500">{new Date(p.created_at).toLocaleDateString('pt-PT')}</p>
+                <p className="text-xs text-n-500">{formatarData(new Date(p.created_at))}</p>
               </div>
               <div className="text-right">
                 <p className="font-semibold text-n-900">€{Number(p.amount_eur).toFixed(2)}</p>
@@ -171,7 +172,7 @@ export default function FacturacaoTab() {
         <div className="space-y-4">
           <p className="text-sm font-body text-n-600">
             {t('settings.facturacao.plan')} <strong>{PLAN_LABEL[paymentMethodPlan] || paymentMethodPlan}</strong> — €{PLAN_PRICES[paymentMethodPlan]}{t('settings.facturacao.perMonth')}
-            <span className="text-n-400"> (≈ {Math.round((PLAN_PRICES[paymentMethodPlan] || 0) * CVE_PER_EUR).toLocaleString('pt-PT')} CVE)</span>.
+            <span className="text-n-400"> (≈ {formatarNumero(Math.round((PLAN_PRICES[paymentMethodPlan] || 0) * CVE_PER_EUR))} CVE)</span>.
           </p>
           <button
             type="button"

@@ -104,3 +104,7 @@ estes, em singular e plural, em todos os ecras; nao alternar com sinonimos. O po
 - Valores guardados ou comparados no codigo (estados, categorias, cargos, metodos de pagamento) ficam em
   portugues; so o rotulo mostrado passa pela traducao.
 - Alemao e holandes seguem os mesmos conceitos (Buchung / Boeking, Einheit / Eenheid, Kunde / Klant...).
+
+## Cobertura
+
+O painel do operador esta todo coberto: o teste de guarda (frontend/src/__tests__/painelSemPortuguesFixo.test.js) examina todos os ficheiros .js/.jsx de frontend/src, e um ficheiro novo do painel e apanhado sem ser acrescentado a nenhuma lista. As excepcoes (painel do fundador, paginas publicas e do viajante com os seus auxiliares, components/ui/, i18n/ e main.jsx) estao em EXCLUIDOS nesse teste, cada uma com o motivo.

@@ -32,7 +32,7 @@ export function estadiaNoMes() {
 /* De hoje ate hoje+n-1 (7 = hoje..hoje+6); n inteiro >= 1 */
 export function estadiaProximosDias(n) {
   if (!Number.isInteger(n) || n < 1) {
-    throw new RangeError(`estadiaProximosDias: n tem de ser um inteiro >= 1 (recebido: ${n})`);
+    throw new RangeError(`estadiaProximosDias: n must be an integer >= 1 (received: ${n})`);
   }
   const agora = new Date();
   const ano = agora.getFullYear();
