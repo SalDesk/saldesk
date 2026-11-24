@@ -1390,7 +1390,11 @@
       "indoorTable": "Indoor table",
       "outdoorTable": "Outdoor table",
       "vipTable": "VIP table",
-      "terrace": "Terrace"
+      "terrace": "Terrace",
+      "other": "Other",
+      "single": "Single",
+      "double": "Double",
+      "twin": "Twin"
     },
     "editors": {
       "included": "Included",

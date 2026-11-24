@@ -35,6 +35,7 @@ export const TIPO_UNIDADE_CHAVE = {
   'Quarto Standard': 'standardRoom', 'Quarto Double': 'doubleRoom', Suite: 'suite', Apartamento: 'apartment',
   Villa: 'villa', Bungalow: 'bungalow',
   Economico: 'economy', Compacto: 'compact', SUV: 'suv', Pickup: 'pickup', Moto: 'motorbike', Van: 'van', Executivo: 'executive',
+  Single: 'single', Double: 'double', Twin: 'twin', Outro: 'other',
   'Mesa Interior': 'indoorTable', 'Mesa Exterior': 'outdoorTable', 'Mesa VIP': 'vipTable', Terraco: 'terrace',
 };
 export function rotuloTipoUnidade(valor, t, lang = linguaActual()) {

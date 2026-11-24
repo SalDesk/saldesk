@@ -1008,6 +1008,18 @@ describe('Unidades em inglês', () => {
     expect(within(cartao('Quarto Livre', 'Edit')).getByText('Cabana do operador')).toBeInTheDocument();
   });
 
+  it('o tipo Outro (gravado pelos formulários) lê-se Other em inglês e Outro em pt', async () => {
+    await renderPagina([quarto({ unit_type: 'Outro' }), tour({ unit_type: 'Outro' })], 'hotel');
+    expect(within(cartao('Quarto Mar', 'Edit')).getByText('Other')).toBeInTheDocument();
+    cleanup();
+    await renderPagina([tour({ unit_type: 'Outro' })], 'activity');
+    expect(within(cartao('Tour Pedra de Lume', 'Edit')).getByText('Other')).toBeInTheDocument();
+    cleanup();
+    useUiStore.setState({ lang: 'pt' });
+    await renderPagina([tour({ unit_type: 'Outro' })], 'activity');
+    expect(within(cartao('Tour Pedra de Lume')).getByText('Outro')).toBeInTheDocument();
+  });
+
   it('as mesas mostram a zona gravada em inglês (Terraco passa a Terrace)', async () => {
     await renderPagina([
       mesa({ id: 'm1', name: 'Mesa 3', unit_type: 'Terraco' }),
