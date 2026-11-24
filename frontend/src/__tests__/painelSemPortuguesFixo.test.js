@@ -114,6 +114,24 @@ export const FICHEIROS_CONVERTIDOS = [
   'pages/Onboarding.jsx',
   'components/onboarding/OnboardingWizard.jsx',
   'components/onboarding/Step3Complete.jsx',
+  /* Fase 2, tarefa 1: reservas, modais e manifesto */
+  'pages/Reservations.jsx',
+  'pages/reservations/shared.jsx',
+  'pages/reservations/ActivityTable.jsx',
+  'pages/reservations/RestaurantTable.jsx',
+  'pages/reservations/RentacarTable.jsx',
+  'pages/reservations/ColumnCards.jsx',
+  'pages/reservations/DevolucaoModal.jsx',
+  'pages/reservations/LevantamentoModal.jsx',
+  'pages/reservations/NoShowModal.jsx',
+  'pages/reservations/RescheduleModal.jsx',
+  'pages/reservations/RestaurantCreateModal.jsx',
+  'pages/reservations/ManifestoModal.jsx',
+  'components/reservations/ReservationForm.jsx',
+  'components/reservations/ReservationCard.jsx',
+  'components/reservations/ReservationDetailModal.jsx',
+  'components/reservations/StatusBadge.jsx',
+  'components/assignments/AssignCompositeModal.jsx',
 ];
 
 /* Valores portugueses que ficam no codigo de proposito, por ficheiro, com o motivo. */

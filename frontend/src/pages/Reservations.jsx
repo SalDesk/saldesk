@@ -24,11 +24,10 @@ import NoShowModal from './reservations/NoShowModal';
 import LevantamentoModal from './reservations/LevantamentoModal';
 import DevolucaoModal from './reservations/DevolucaoModal';
 import RestaurantCreateModal from './reservations/RestaurantCreateModal';
-import { SOURCE_LABEL } from './reservations/shared';
+import { SOURCES_FILTRO, rotuloOrigem } from './reservations/shared';
 import { mensagemErro } from '../utils/mensagemErro';
 
 const STATUS_FILTERS = ['', 'pending', 'confirmed', 'checked_in', 'checked_out', 'cancelled', 'payment_not_completed'];
-const TURNO_FILTERS = [{ value: '', label: 'Todos turnos' }, { value: 'almoco', label: 'Almoço' }, { value: 'jantar', label: 'Jantar' }];
 
 /* meta.turno so existe quando definido manualmente (RestaurantCreateModal,
    notes_guest). Reservas com hora real (start_time -- publicas ou criadas
@@ -114,7 +113,8 @@ export default function Reservations() {
   const hasFilters = statusFilter || tourFilter || dateFilter || sourceFilter;
 
   /* Chips de estado: '' = Todas, os restantes vem das traducoes */
-  const statusOptions = STATUS_FILTERS.map(s => ({ value: s, label: s === 'payment_not_completed' ? t('reservations.paymentNotCompleted') : s ? t(`reservations.status.${s}`) : 'Todas' }));
+  const statusOptions = STATUS_FILTERS.map(s => ({ value: s, label: s === 'payment_not_completed' ? t('reservations.paymentNotCompleted') : s ? t(`reservations.status.${s}`) : t('reservations.filters.allStatuses') }));
+  const turnoOptions = [{ value: '', label: t('reservations.filters.allShifts') }, { value: 'almoco', label: t('reservations.shift.lunch') }, { value: 'jantar', label: t('reservations.shift.dinner') }];
 
   function clearFilters() {
     setStatusFilter('');
@@ -156,7 +156,7 @@ export default function Reservations() {
      sempre confirmacao (mesmo padrao ja usado noutras paginas, ex:
      Partners.jsx). */
   async function handleDelete(r) {
-    if (!window.confirm('Eliminar esta reserva? Esta acção não pode ser desfeita.')) return;
+    if (!window.confirm(t('reservations.confirmDeleteIrreversible'))) return;
     await deleteReservation(r.id);
     handleUpdate(null, r.id);
   }
@@ -173,12 +173,12 @@ export default function Reservations() {
     <div>
       <PageHeader
         title={t('reservations.title')}
-        subtitle={`${filtered.length} resultado(s)`}
+        subtitle={t('reservations.subtitle', { n: filtered.length })}
         actions={
           <div className="flex flex-wrap gap-2">
             {isActivity && (
               <Button variant="secondary" icon={ClipboardList} onClick={() => setManifesto(true)}>
-                Manifesto
+                {t('reservations.manifestButton')}
               </Button>
             )}
             <Button icon={Plus} onClick={() => { setFormError(''); setModal('create'); }}>
@@ -200,7 +200,7 @@ export default function Reservations() {
             onChange={e => setTourFilter(e.target.value)}
             className="w-44"
           >
-            <option value="">Todos os tours</option>
+            <option value="">{t('reservations.filters.allTours')}</option>
             {units.map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
           </Select>
 
@@ -218,9 +218,9 @@ export default function Reservations() {
             onChange={e => setSourceFilter(e.target.value)}
             className="w-44"
           >
-            <option value="">Todas as origens</option>
-            {Object.entries(SOURCE_LABEL).map(([v, l]) => (
-              <option key={v} value={v}>{l}</option>
+            <option value="">{t('reservations.filters.allSources')}</option>
+            {SOURCES_FILTRO.map((v) => (
+              <option key={v} value={v}>{rotuloOrigem(v, t)}</option>
             ))}
           </Select>
 
@@ -230,7 +230,7 @@ export default function Reservations() {
               className="flex items-center gap-1 px-3 py-1.5 rounded-sm text-xs font-body text-n-500 hover:text-n-900 border border-n-200 hover:border-n-400 bg-white transition-colors"
             >
               <X size={11} strokeWidth={2} />
-              Limpar
+              {t('reservations.filters.clear')}
             </button>
           )}
         </div>
@@ -240,7 +240,7 @@ export default function Reservations() {
           {isRestaurant && (
             <>
               <div className="w-px bg-n-200 self-stretch mx-1" />
-              <FilterChips options={TURNO_FILTERS} value={turnoFilter} onChange={setTurnoFilter} />
+              <FilterChips options={turnoOptions} value={turnoFilter} onChange={setTurnoFilter} />
             </>
           )}
         </div>
@@ -306,7 +306,7 @@ export default function Reservations() {
       <Modal
         open={!!modal}
         onClose={() => setModal(null)}
-        title={modal === 'create' ? t('reservations.new') : 'Editar Reserva'}
+        title={modal === 'create' ? t('reservations.new') : t('reservations.editTitle')}
         size="md"
       >
         {modal && (

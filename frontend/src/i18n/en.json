@@ -508,7 +508,162 @@
     "paymentStatus": "Payment status",
     "paymentMethod": "Payment method",
     "vehicle": "Vehicle",
-    "createdAt": "Created at"
+    "createdAt": "Created at",
+    "subtitle": "{{n}} result(s)",
+    "manifestButton": "Manifest",
+    "editTitle": "Edit Booking",
+    "confirmDeleteIrreversible": "Delete this booking? This action cannot be undone.",
+    "none": "None",
+    "pax": "Guests",
+    "paxCount": "{{n}} guests",
+    "guestsShort": "{{n}} guests",
+    "vehicleSeats": "{{name}} ({{n}} seats)",
+    "tableNumber": "Table {{n}}",
+    "noTable": "No table",
+    "waitlist": "Waiting list",
+    "processing": "Processing...",
+    "saving": "Saving...",
+    "filters": {
+      "allStatuses": "All",
+      "allShifts": "All shifts",
+      "allTours": "All tours",
+      "allSources": "All sources",
+      "clear": "Clear"
+    },
+    "shift": {
+      "lunch": "Lunch",
+      "dinner": "Dinner",
+      "lunchHours": "Lunch · 12:00-15:00",
+      "dinnerHours": "Dinner · 19:00-23:00"
+    },
+    "occasion": {
+      "birthday": "Birthday",
+      "honeymoon": "Honeymoon",
+      "business": "Business",
+      "other": "Other"
+    },
+    "sourceLabel": {
+      "direct": "Direct",
+      "public": "Public page",
+      "manual": "Manual",
+      "conect": "Conect",
+      "admin": "Admin"
+    },
+    "columns": {
+      "ref": "Ref",
+      "tour": "Tour",
+      "pickup": "Pick-up",
+      "dropoff": "Drop-off",
+      "table": "Table",
+      "shift": "Shift",
+      "occasion": "Occasion",
+      "source": "Source"
+    },
+    "actions": {
+      "reschedule": "Reschedule",
+      "sendVoucher": "Send voucher",
+      "noShow": "No-show",
+      "assignTeam": "Assign team",
+      "seat": "Seat",
+      "freeTable": "Free table",
+      "pickup": "Pick-up",
+      "dropoff": "Drop-off",
+      "shiftRequests": "Shift / special requests"
+    },
+    "fuel": {
+      "empty": "Empty",
+      "full": "Full"
+    },
+    "reschedule": {
+      "title": "Reschedule booking",
+      "bookingOf": "Booking for {{name}}",
+      "newDate": "New date",
+      "error": "Could not reschedule"
+    },
+    "noShow": {
+      "title": "Record No-show",
+      "mark": "Mark {{name}} as a no-show?",
+      "noteLabel": "Internal note (optional)",
+      "notePlaceholder": "Reason or remark...",
+      "confirm": "Confirm No-show"
+    },
+    "pickup": {
+      "title": "Car pick-up",
+      "fuelOut": "Fuel level (out)",
+      "kmOut": "Mileage out",
+      "damageOut": "Existing damage (record)",
+      "damageOutPlaceholder": "Describe any existing damage...",
+      "deposit": "Deposit (€)",
+      "depositPaid": "Paid",
+      "confirm": "Confirm pick-up"
+    },
+    "dropoff": {
+      "title": "Car drop-off",
+      "out": "Out: {{km}} km",
+      "fuelIn": "Fuel level (in)",
+      "kmIn": "Mileage in",
+      "kmDriven": "{{km}} km driven",
+      "damageIn": "Damage on return",
+      "damageInPlaceholder": "Describe any damage found on arrival...",
+      "deposit": "Deposit",
+      "depositReturned": "Returned",
+      "depositPartial": "Partly retained",
+      "depositFull": "Fully retained",
+      "amountRetained": "Amount retained (€)",
+      "confirm": "Confirm drop-off"
+    },
+    "restaurantDetails": {
+      "summary": "{{n}} guests · {{unit}}",
+      "occasionLabel": "Special occasion",
+      "requests": "Special requests",
+      "requestsPlaceholder": "Allergies, decoration, vegetarian menu...",
+      "waitlistCheck": "Waiting list (no table available)",
+      "save": "Save details"
+    },
+    "manifest": {
+      "title": "Participant Manifest",
+      "summary": "{{n}} bookings · {{pax}} participants",
+      "export": "Export PDF",
+      "empty": "No participants found.",
+      "prompt": "Select a tour and/or a date to see the manifest.",
+      "name": "Name",
+      "hotelRoom": "Hotel / Room",
+      "emergency": "Emergency contact",
+      "specialReqs": "Special reqs."
+    },
+    "form": {
+      "tourActivity": "Tour / Activity",
+      "selectUnit": "Select unit...",
+      "tourDate": "Tour date",
+      "timeSlot": "Time slot",
+      "selectSlot": "Select time slot...",
+      "slot": "{{time}} ({{n}} seats)",
+      "bookingDate": "Booking date",
+      "people": "{{n}} guest(s)",
+      "nights": "{{n}} night(s)",
+      "customerName": "Customer name",
+      "emailPlaceholder": "email@example.com",
+      "isoHint": "ISO 2 code",
+      "optIn": "The customer agreed to receive messages about this booking on WhatsApp",
+      "source": "Source",
+      "internalPlaceholder": "Internal notes..."
+    },
+    "country": "Country",
+    "assign": {
+      "title": "Assign team",
+      "booking": "Booking",
+      "noUpcoming": "No upcoming pending bookings.",
+      "guide": "Guide",
+      "selectGuide": "Select guide...",
+      "sameDriver": "Is the guide also the driver?",
+      "driver": "Driver",
+      "selectDriver": "Select driver...",
+      "vehicleOptional": "Vehicle (optional)",
+      "noVehiclesPrefix": "No vehicles registered — you can add them under",
+      "noVehiclesSuffix": ".",
+      "error": "Could not assign",
+      "submit": "Assign"
+    }
   },
   "units": {
     "title": "Units",

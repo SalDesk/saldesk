@@ -8,25 +8,9 @@ import LoadingSpinner from '../shared/LoadingSpinner';
 import WhatsAppSend from '../messaging/WhatsAppSend';
 import { rotuloEstadoReserva } from '../../utils/estadoReserva';
 import { mensagemErro } from '../../utils/mensagemErro';
-
-const SOURCE_LABEL = {
-  direct:       'Directo',
-  public:       'Pag. Pública',
-  booking_com:  'Booking.com',
-  airbnb:       'Airbnb',
-  viator:       'Viator',
-  getyourguide: 'GetYourGuide',
-  manual:       'Manual',
-  conect:       'Conect',
-  admin:        'Admin',
-};
-
-const PAYMENT_STATUS_LABEL = {
-  pending:  'Pendente',
-  paid:     'Pago',
-  partial:  'Parcial',
-  refunded: 'Reembolsado',
-};
+import { localeDe, useLingua } from '../../utils/formatoLingua';
+import { rotuloEstadoPagamento } from '../../pages/financial/shared';
+import { formatDate, eurosDecimais, rotuloOrigem, rotuloMetodoReserva } from '../../pages/reservations/shared';
 
 const PAYMENT_STATUS_VARIANT = {
   pending:  'pending',
@@ -35,15 +19,9 @@ const PAYMENT_STATUS_VARIANT = {
   refunded: 'cancelled',
 };
 
-function formatDate(d) {
-  if (!d) return '—';
-  const [y, m, day] = d.split('-');
-  return `${day}/${m}/${y}`;
-}
-
-function formatDateTime(dt) {
+function formatDateTime(dt, lang) {
   if (!dt) return '—';
-  return new Date(dt).toLocaleString('pt-PT', { dateStyle: 'short', timeStyle: 'short' });
+  return new Date(dt).toLocaleString(localeDe(lang), { dateStyle: 'short', timeStyle: 'short' });
 }
 
 function Row({ icon: Icon, label, value }) {
@@ -61,6 +39,7 @@ function Row({ icon: Icon, label, value }) {
 
 export default function ReservationDetailModal({ reservationId, open, onClose }) {
   const t = useT();
+  const lang = useLingua();
   const [reservation, setReservation] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -95,7 +74,7 @@ export default function ReservationDetailModal({ reservationId, open, onClose })
             <div>
               <div className="flex items-center gap-2 flex-wrap">
                 <Badge variant={reservation.status}>{rotuloEstadoReserva(reservation, t)}</Badge>
-                <Badge>{SOURCE_LABEL[reservation.source] || reservation.source}</Badge>
+                <Badge>{rotuloOrigem(reservation.source, t)}</Badge>
                 <span className="text-xs font-mono text-n-400">#{reservation.id?.slice(0, 8)}</span>
               </div>
               <p className="font-display font-bold text-lg text-n-900 mt-2">
@@ -107,11 +86,11 @@ export default function ReservationDetailModal({ reservationId, open, onClose })
             </div>
             <div className="text-right">
               <p className="font-display font-bold text-xl text-ocean-700">
-                €{Number(reservation.total_price || 0).toFixed(2)}
+                {eurosDecimais(reservation.total_price || 0, lang)}
               </p>
               {reservation.amount_paid != null && Number(reservation.amount_paid) > 0 && (
                 <p className="text-xs font-body text-n-500">
-                  {t('reservations.paid')}: €{Number(reservation.amount_paid).toFixed(2)}
+                  {t('reservations.paid')}: {eurosDecimais(reservation.amount_paid, lang)}
                 </p>
               )}
             </div>
@@ -127,21 +106,21 @@ export default function ReservationDetailModal({ reservationId, open, onClose })
                 label={t('reservations.paymentStatus')}
                 value={
                   <Badge variant={PAYMENT_STATUS_VARIANT[reservation.payment_status] || 'default'}>
-                    {PAYMENT_STATUS_LABEL[reservation.payment_status] || reservation.payment_status}
+                    {rotuloEstadoPagamento(reservation.payment_status, t)}
                   </Badge>
                 }
               />
             )}
             {reservation.payment_method && (
-              <Row label={t('reservations.paymentMethod')} value={reservation.payment_method.toUpperCase()} />
+              <Row label={t('reservations.paymentMethod')} value={rotuloMetodoReserva(reservation.payment_method, t, lang)} />
             )}
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4 border-t border-n-100">
             <Row label={t('reservations.customer')} value={reservation.customer_name} />
-            <Row icon={Mail} label="Email" value={reservation.customer_email} />
-            <Row icon={Phone} label="Telefone" value={reservation.customer_phone} />
-            <Row icon={Globe} label="País" value={reservation.customer_country} />
+            <Row icon={Mail} label={t('auth.email')} value={reservation.customer_email} />
+            <Row icon={Phone} label={t('customers.phone')} value={reservation.customer_phone} />
+            <Row icon={Globe} label={t('reservations.country')} value={reservation.customer_country} />
           </div>
 
           {(reservation.cancel_reason === 'payment_not_completed' || reservation.cancel_reason === 'paid_after_expiry') && (
@@ -175,7 +154,7 @@ export default function ReservationDetailModal({ reservationId, open, onClose })
 
           {reservation.fleet?.name && (
             <div className="pt-4 border-t border-n-100">
-              <Row icon={Car} label={t('reservations.vehicle')} value={`${reservation.fleet.name} (${reservation.fleet.capacity} lugares)`} />
+              <Row icon={Car} label={t('reservations.vehicle')} value={t('reservations.vehicleSeats', { name: reservation.fleet.name, n: reservation.fleet.capacity })} />
             </div>
           )}
 
@@ -186,7 +165,7 @@ export default function ReservationDetailModal({ reservationId, open, onClose })
           )}
 
           <div className="pt-4 border-t border-n-100">
-            <Row icon={Clock} label={t('reservations.createdAt')} value={formatDateTime(reservation.created_at)} />
+            <Row icon={Clock} label={t('reservations.createdAt')} value={formatDateTime(reservation.created_at, lang)} />
           </div>
         </div>
       ) : null}

@@ -8,7 +8,8 @@ import Table from '../../components/ui/Table';
 import useMediaQuery from '../../hooks/useMediaQuery';
 import ColumnCards from './ColumnCards';
 import { rotuloEstadoReserva } from '../../utils/estadoReserva';
-import { formatDate, parseRentacarMeta } from './shared';
+import { formatarNumero } from '../../utils/formatoLingua';
+import { formatDate, eurosInteiros, parseRentacarMeta } from './shared';
 
 export default function RentacarTable({ reservations, units, onEdit, onDelete, onLevantamento, onDevolucao, onUpdate, onView }) {
   const t = useT();
@@ -37,12 +38,12 @@ export default function RentacarTable({ reservations, units, onEdit, onDelete, o
   const columns = [
     {
       key: 'ref',
-      label: 'Ref',
+      label: t('reservations.columns.ref'),
       render: (r) => <span className="text-xs font-mono text-n-400">{r.id?.slice(0, 8)}</span>,
     },
     {
       key: 'viatura',
-      label: 'Viatura',
+      label: t('reservations.vehicle'),
       render: (r) => {
         const unit = units.find(u => u.id === r.unit_id);
         let unitMeta = {};
@@ -59,50 +60,50 @@ export default function RentacarTable({ reservations, units, onEdit, onDelete, o
     },
     {
       key: 'levantamento',
-      label: 'Levantamento',
+      label: t('reservations.columns.pickup'),
       sortValue: (r) => r.check_in || '',
       render: (r) => {
         const rcMeta = parseRentacarMeta(r);
         return (
           <div className="whitespace-nowrap">
             <span className="text-sm font-body text-n-700">{formatDate(r.check_in)}</span>
-            {rcMeta.km_out && <p className="text-xs font-mono text-n-400">{Number(rcMeta.km_out).toLocaleString()} km</p>}
+            {rcMeta.km_out && <p className="text-xs font-mono text-n-400">{formatarNumero(rcMeta.km_out)} km</p>}
           </div>
         );
       },
     },
     {
       key: 'devolucao',
-      label: 'Devolução',
+      label: t('reservations.columns.dropoff'),
       sortValue: (r) => r.check_out || '',
       render: (r) => {
         const rcMeta = parseRentacarMeta(r);
         return (
           <div className="whitespace-nowrap">
             <span className="text-sm font-body text-n-700">{formatDate(r.check_out)}</span>
-            {rcMeta.km_in && <p className="text-xs font-mono text-n-400">{Number(rcMeta.km_in).toLocaleString()} km</p>}
+            {rcMeta.km_in && <p className="text-xs font-mono text-n-400">{formatarNumero(rcMeta.km_in)} km</p>}
           </div>
         );
       },
     },
     {
       key: 'cliente',
-      label: 'Cliente',
+      label: t('reservations.customer'),
       render: (r) => <p className="text-sm font-body text-n-900 truncate max-w-[120px]">{r.customer_name || '—'}</p>,
     },
     {
       key: 'estado',
-      label: 'Estado',
+      label: t('common.status'),
       render: (r) => <Badge variant={r.status}>{rotuloEstadoReserva(r, t)}</Badge>,
     },
     {
       key: 'total',
-      label: 'Total',
+      label: t('reservations.total'),
       align: 'right',
       sortValue: (r) => Number(r.total_price || r.total_amount || 0),
       render: (r) => (
         <span className="font-display font-bold text-sm text-ocean-700 whitespace-nowrap">
-          €{Number(r.total_price || r.total_amount || 0).toFixed(0)}
+          {eurosInteiros(r.total_price || r.total_amount)}
         </span>
       ),
     },
@@ -117,7 +118,7 @@ export default function RentacarTable({ reservations, units, onEdit, onDelete, o
               className="flex items-center gap-1 px-2 py-1 rounded-xs bg-[var(--success)] text-white text-xs font-body font-medium hover:brightness-90 transition-colors whitespace-nowrap"
             >
               <MoveRight size={11} strokeWidth={2} />
-              Levantamento
+              {t('reservations.actions.pickup')}
             </button>
           )}
           {r.status === 'checked_in' && (
@@ -126,12 +127,12 @@ export default function RentacarTable({ reservations, units, onEdit, onDelete, o
               className="flex items-center gap-1 px-2 py-1 rounded-xs bg-ocean-700 text-white text-xs font-body font-medium hover:bg-ocean-500 transition-colors whitespace-nowrap"
             >
               <MoveLeft size={11} strokeWidth={2} />
-              Devolução
+              {t('reservations.actions.dropoff')}
             </button>
           )}
           <Button variant="ghost" size="sm" icon={Eye} onClick={() => onView(r)} aria-label={t('reservations.view')} />
-          <Button variant="ghost" size="sm" icon={Pencil} onClick={() => onEdit(r)} aria-label="Editar" />
-          <Button variant="ghost" size="sm" icon={Trash2} onClick={() => onDelete(r)} aria-label="Eliminar" className="hover:text-error" />
+          <Button variant="ghost" size="sm" icon={Pencil} onClick={() => onEdit(r)} aria-label={t('common.edit')} />
+          <Button variant="ghost" size="sm" icon={Trash2} onClick={() => onDelete(r)} aria-label={t('common.delete')} className="hover:text-error" />
         </div>
       ),
     },

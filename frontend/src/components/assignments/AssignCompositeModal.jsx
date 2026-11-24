@@ -7,6 +7,8 @@ import Button from '../ui/Button';
 import { Select } from '../ui/Input';
 import { useT } from '../../i18n';
 import { mensagemErro } from '../../utils/mensagemErro';
+import { useLingua } from '../../utils/formatoLingua';
+import { rotuloCargo } from '../../pages/staff/shared';
 
 /**
  * Atribuicao composta Guia + Condutor + Viatura para reservas de Activity/Tour.
@@ -16,6 +18,7 @@ import { mensagemErro } from '../../utils/mensagemErro';
  */
 export default function AssignCompositeModal({ reservation, reservations, guide, guides, onClose, onDone }) {
   const t = useT();
+  const lang = useLingua();
   const [selected,   setSelected]   = useState(reservation?.id || '');
   const [guideId,    setGuideId]    = useState(guide?.id || '');
   const [driverId,   setDriverId]   = useState(guide?.id || '');
@@ -52,26 +55,26 @@ export default function AssignCompositeModal({ reservation, reservations, guide,
       });
       onDone();
     } catch (err) {
-      setError(mensagemErro(err, t, 'Erro ao atribuir'));
+      setError(mensagemErro(err, t, t('reservations.assign.error')));
     } finally {
       setSaving(false);
     }
   }
 
   return (
-    <Modal open onClose={onClose} title="Atribuir equipa" size="sm"
+    <Modal open onClose={onClose} title={t('reservations.assign.title')} size="sm"
       footer={
         <>
-          <Button variant="secondary" onClick={onClose}>Cancelar</Button>
-          <Button onClick={handleAssign} loading={saving} disabled={!canSubmit}>Atribuir</Button>
+          <Button variant="secondary" onClick={onClose}>{t('common.cancel')}</Button>
+          <Button onClick={handleAssign} loading={saving} disabled={!canSubmit}>{t('reservations.assign.submit')}</Button>
         </>
       }>
       <div className="space-y-4">
         {!reservation && (
           <div>
-            <p className="text-xs font-body font-bold uppercase tracking-wide text-n-500 mb-2">Reserva</p>
+            <p className="text-xs font-body font-bold uppercase tracking-wide text-n-500 mb-2">{t('reservations.assign.booking')}</p>
             {upcoming.length === 0 ? (
-              <p className="text-sm font-body text-n-500 text-center py-4">Sem reservas próximas pendentes.</p>
+              <p className="text-sm font-body text-n-500 text-center py-4">{t('reservations.assign.noUpcoming')}</p>
             ) : (
               <div className="space-y-2 max-h-48 overflow-y-auto">
                 {upcoming.map(r => (
@@ -86,7 +89,7 @@ export default function AssignCompositeModal({ reservation, reservations, guide,
                         {r.units?.name || r.unit_id?.slice(0, 8)}
                       </p>
                       <p className="text-xs font-body text-n-500 mt-0.5">
-                        {r.check_in} · {r.guests} pax · {r.customer_name || '—'}
+                        {r.check_in} · {t('reservations.paxCount', { n: r.guests })} · {r.customer_name || '—'}
                       </p>
                     </div>
                   </label>
@@ -102,35 +105,35 @@ export default function AssignCompositeModal({ reservation, reservations, guide,
               {reservation.units?.name || '—'}
             </p>
             <p className="text-xs font-body text-ocean-600 mt-0.5">
-              {reservation.check_in} · {reservation.guests} pax · {reservation.customer_name || '—'}
+              {reservation.check_in} · {t('reservations.paxCount', { n: reservation.guests })} · {reservation.customer_name || '—'}
             </p>
           </div>
         )}
 
-        <Select label="Guia" value={guideId} onChange={e => setGuideId(e.target.value)} required>
-          <option value="">Seleccionar guia...</option>
-          {(guides || []).map(g => <option key={g.id} value={g.id}>{g.name} ({g.role})</option>)}
+        <Select label={t('reservations.assign.guide')} value={guideId} onChange={e => setGuideId(e.target.value)} required>
+          <option value="">{t('reservations.assign.selectGuide')}</option>
+          {(guides || []).map(g => <option key={g.id} value={g.id}>{g.name} ({rotuloCargo(g.role, t, lang)})</option>)}
         </Select>
 
         <label className="flex items-center gap-2 cursor-pointer select-none">
           <input type="checkbox" checked={samePerson} onChange={e => setSamePerson(e.target.checked)} className="accent-ocean-700" />
-          <span className="text-sm font-body text-n-700">É a mesma pessoa que conduz?</span>
+          <span className="text-sm font-body text-n-700">{t('reservations.assign.sameDriver')}</span>
         </label>
 
-        <Select label="Condutor" value={driverId} onChange={e => setDriverId(e.target.value)} disabled={samePerson} required>
-          <option value="">Seleccionar condutor...</option>
-          {(guides || []).map(g => <option key={g.id} value={g.id}>{g.name} ({g.role})</option>)}
+        <Select label={t('reservations.assign.driver')} value={driverId} onChange={e => setDriverId(e.target.value)} disabled={samePerson} required>
+          <option value="">{t('reservations.assign.selectDriver')}</option>
+          {(guides || []).map(g => <option key={g.id} value={g.id}>{g.name} ({rotuloCargo(g.role, t, lang)})</option>)}
         </Select>
 
-        <Select label="Viatura (opcional)" value={vehicleId} onChange={e => setVehicleId(e.target.value)}>
-          <option value="">Nenhuma</option>
+        <Select label={t('reservations.assign.vehicleOptional')} value={vehicleId} onChange={e => setVehicleId(e.target.value)}>
+          <option value="">{t('reservations.none')}</option>
           {vehicles.map(v => <option key={v.id} value={v.id}>{v.name}</option>)}
         </Select>
 
         {vehicles.length === 0 && (
           <p className="text-xs font-body text-n-500">
-            Nenhuma viatura cadastrada — pode adicionar em{' '}
-            <Link to="/frota" className="text-ocean-700 underline">Frota</Link>.
+            {t('reservations.assign.noVehiclesPrefix')}{' '}
+            <Link to="/frota" className="text-ocean-700 underline">{t('nav.fleet')}</Link>{t('reservations.assign.noVehiclesSuffix')}
           </p>
         )}
 

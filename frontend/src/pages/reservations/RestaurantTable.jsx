@@ -8,12 +8,7 @@ import Table from '../../components/ui/Table';
 import useMediaQuery from '../../hooks/useMediaQuery';
 import ColumnCards from './ColumnCards';
 import { rotuloEstadoReserva } from '../../utils/estadoReserva';
-import { formatDate, parseRestaurantMeta } from './shared';
-
-const TURNO_LABELS = { almoco: 'Almoço', jantar: 'Jantar' };
-const OCASIAO_LABELS = {
-  aniversario: 'Aniversário', lua_de_mel: 'Lua-de-mel', negocios: 'Negócios', outro: 'Outro',
-};
+import { formatDate, parseRestaurantMeta, rotuloTurno, rotuloOcasiao } from './shared';
 
 export default function RestaurantTable({ reservations, units, onEdit, onDelete, onDetails, onUpdate, onView }) {
   const t = useT();
@@ -21,7 +16,7 @@ export default function RestaurantTable({ reservations, units, onEdit, onDelete,
   const movel = useMediaQuery('(max-width: 767px)');
 
   const STATUS_NEXT_R = { pending: 'confirmed', confirmed: 'checked_in', checked_in: 'checked_out' };
-  const STATUS_BTN_R  = { pending: 'Confirmar', confirmed: 'Sentar', checked_in: 'Liberar mesa' };
+  const STATUS_BTN_R  = { pending: t('common.confirm'), confirmed: t('reservations.actions.seat'), checked_in: t('reservations.actions.freeTable') };
 
   async function handleNext(r) {
     const next = STATUS_NEXT_R[r.status];
@@ -47,23 +42,23 @@ export default function RestaurantTable({ reservations, units, onEdit, onDelete,
   const columns = [
     {
       key: 'ref',
-      label: 'Ref',
+      label: t('reservations.columns.ref'),
       render: (r) => <span className="text-xs font-mono text-n-400">{r.id?.slice(0, 8)}</span>,
     },
     {
       key: 'mesa',
-      label: 'Mesa',
+      label: t('reservations.columns.table'),
       render: (r) => {
         const unit    = units.find(u => u.id === r.unit_id);
         let umeta = {};
         try { umeta = JSON.parse(unit?.description || '{}'); } catch {}
-        const tbl    = unit ? (umeta.number ? `Mesa ${umeta.number}` : unit.name) : '—';
+        const tbl    = unit ? (umeta.number ? t('reservations.tableNumber', { n: umeta.number }) : unit.name) : '—';
         const rcMeta = parseRestaurantMeta(r);
         return (
           <>
             <p className="font-display font-semibold text-sm text-n-900">{tbl}</p>
             {rcMeta.lista_espera && (
-              <span className="text-[9px] font-mono uppercase tracking-wide text-[#B45309] bg-[#FFF7ED] px-1.5 py-0.5 rounded">Lista espera</span>
+              <span className="text-[9px] font-mono uppercase tracking-wide text-[#B45309] bg-[#FFF7ED] px-1.5 py-0.5 rounded">{t('reservations.waitlist')}</span>
             )}
           </>
         );
@@ -71,28 +66,28 @@ export default function RestaurantTable({ reservations, units, onEdit, onDelete,
     },
     {
       key: 'turno',
-      label: 'Turno',
+      label: t('reservations.columns.shift'),
       render: (r) => {
         const rcMeta = parseRestaurantMeta(r);
         return (
           <span className="text-xs font-mono text-n-700">
             {r.start_time
               ? r.start_time.slice(0, 5)
-              : (rcMeta.turno ? TURNO_LABELS[rcMeta.turno] || rcMeta.turno : '—')}
+              : (rcMeta.turno ? rotuloTurno(rcMeta.turno, t) : '—')}
           </span>
         );
       },
     },
     {
       key: 'pax',
-      label: 'Pax',
+      label: t('reservations.pax'),
       align: 'center',
       sortValue: (r) => Number(r.guests) || 0,
       render: (r) => <span className="text-sm font-body font-semibold text-n-900">{r.guests}</span>,
     },
     {
       key: 'cliente',
-      label: 'Cliente',
+      label: t('reservations.customer'),
       render: (r) => (
         <>
           <p className="text-sm font-body text-n-900 truncate max-w-[120px]">{r.customer_name || '—'}</p>
@@ -102,17 +97,17 @@ export default function RestaurantTable({ reservations, units, onEdit, onDelete,
     },
     {
       key: 'ocasiao',
-      label: 'Ocasião',
+      label: t('reservations.columns.occasion'),
       render: (r) => {
         const rcMeta = parseRestaurantMeta(r);
         return rcMeta.ocasiao ? (
-          <span className="text-xs font-body text-n-600">{OCASIAO_LABELS[rcMeta.ocasiao] || rcMeta.ocasiao}</span>
+          <span className="text-xs font-body text-n-600">{rotuloOcasiao(rcMeta.ocasiao, t)}</span>
         ) : <span className="text-n-300">—</span>;
       },
     },
     {
       key: 'estado',
-      label: 'Estado',
+      label: t('common.status'),
       render: (r) => <Badge variant={r.status}>{rotuloEstadoReserva(r, t)}</Badge>,
     },
     {
@@ -130,13 +125,13 @@ export default function RestaurantTable({ reservations, units, onEdit, onDelete,
                 <ChevronRight size={11} strokeWidth={2} />
               </button>
             )}
-            <button onClick={() => onDetails(r)} title="Turno / pedidos especiais"
+            <button onClick={() => onDetails(r)} title={t('reservations.actions.shiftRequests')}
               className="p-1.5 rounded text-n-400 hover:text-ocean-700 hover:bg-ocean-50 transition-colors">
               <Utensils size={13} strokeWidth={1.75} />
             </button>
             <Button variant="ghost" size="sm" icon={Eye} onClick={() => onView(r)} aria-label={t('reservations.view')} />
-            <Button variant="ghost" size="sm" icon={Pencil} onClick={() => onEdit(r)} aria-label="Editar" />
-            <Button variant="ghost" size="sm" icon={Trash2} onClick={() => onDelete(r)} aria-label="Eliminar" className="hover:text-error" />
+            <Button variant="ghost" size="sm" icon={Pencil} onClick={() => onEdit(r)} aria-label={t('common.edit')} />
+            <Button variant="ghost" size="sm" icon={Trash2} onClick={() => onDelete(r)} aria-label={t('common.delete')} className="hover:text-error" />
           </div>
         );
       },

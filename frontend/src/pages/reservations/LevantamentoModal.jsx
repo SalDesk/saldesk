@@ -4,9 +4,11 @@ import { updateReservation, changeStatus } from '../../services/reservationsServ
 import Button from '../../components/ui/Button';
 import Input, { Textarea } from '../../components/ui/Input';
 import Modal from '../../components/ui/Modal';
+import { useT } from '../../i18n';
 import { parseRentacarMeta, FuelSelector, GROUP_LABEL_CLASS } from './shared';
 
 export default function LevantamentoModal({ reservation, units, open, onClose, onDone }) {
+  const t = useT();
   const unit = units.find(u => u.id === reservation?.unit_id);
   const prevMeta = parseRentacarMeta(reservation);
 
@@ -54,7 +56,7 @@ export default function LevantamentoModal({ reservation, units, open, onClose, o
   try { unitMeta = JSON.parse(unit?.description || '{}'); } catch {}
 
   return (
-    <Modal open={open} onClose={onClose} title="Levantamento de viatura" size="sm" footer={null}>
+    <Modal open={open} onClose={onClose} title={t('reservations.pickup.title')} size="sm" footer={null}>
       <div className="space-y-5">
         <div className="flex items-center gap-3 p-3 bg-n-50 rounded-md border border-n-200">
           <Car size={16} strokeWidth={1.75} className="text-ocean-700 shrink-0" />
@@ -71,29 +73,29 @@ export default function LevantamentoModal({ reservation, units, open, onClose, o
         </div>
 
         <div>
-          <p className={`${GROUP_LABEL_CLASS} mb-2`}>Nível combustível (saída)</p>
+          <p className={`${GROUP_LABEL_CLASS} mb-2`}>{t('reservations.pickup.fuelOut')}</p>
           <FuelSelector value={form.fuel_out} onChange={v => set('fuel_out', v)} />
         </div>
 
-        <Input label="Km na saída" type="number" value={form.km_out} onChange={e => set('km_out', e.target.value)} placeholder="0" />
+        <Input label={t('reservations.pickup.kmOut')} type="number" value={form.km_out} onChange={e => set('km_out', e.target.value)} placeholder="0" />
 
-        <Textarea label="Danos existentes (registo)" value={form.damages_out} onChange={e => set('damages_out', e.target.value)} rows={2}
-          placeholder="Descrever danos pre-existentes..." />
+        <Textarea label={t('reservations.pickup.damageOut')} value={form.damages_out} onChange={e => set('damages_out', e.target.value)} rows={2}
+          placeholder={t('reservations.pickup.damageOutPlaceholder')} />
 
         <div className="flex items-end gap-3">
           <div className="flex-1">
-            <Input label="Caução (€)" type="number" value={form.caucao} onChange={e => set('caucao', e.target.value)} placeholder="0.00" step="0.01" />
+            <Input label={t('reservations.pickup.deposit')} type="number" value={form.caucao} onChange={e => set('caucao', e.target.value)} placeholder="0.00" step="0.01" />
           </div>
           <label className="flex items-center gap-2 h-9 text-sm font-body text-n-700 cursor-pointer">
             <input type="checkbox" checked={form.caucao_paid} onChange={e => set('caucao_paid', e.target.checked)} className="w-4 h-4 accent-ocean-700" />
-            Paga
+            {t('reservations.pickup.depositPaid')}
           </label>
         </div>
 
         <div className="flex gap-3 pt-1">
-          <Button type="button" variant="secondary" onClick={onClose} className="flex-1">Cancelar</Button>
+          <Button type="button" variant="secondary" onClick={onClose} className="flex-1">{t('common.cancel')}</Button>
           <Button type="button" loading={saving} onClick={handleSave} icon={MoveRight} className="flex-1">
-            {saving ? 'A processar...' : 'Confirmar levantamento'}
+            {saving ? t('reservations.processing') : t('reservations.pickup.confirm')}
           </Button>
         </div>
       </div>

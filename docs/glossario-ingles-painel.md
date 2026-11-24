@@ -53,6 +53,13 @@ estes, em singular e plural, em todos os ecras; nao alternar com sinonimos. O po
 | Obrigacoes | Obligations | INPS, IUR, seguros e subscricao; INPS, IUR, NIF, DNRE, Vinti4 e SISP sao nomes oficiais e nao se traduzem. |
 | Analises | Analytics | O ecra "Analytics" (Score de saude = "Business health score", funil = "Conversion funnel"). |
 | Sazonalidade / Epoca alta | Seasonality / High season | Analise da previsao de procura ("High seasons", "Low seasons"). |
+| Levantamento / Devolucao (viatura) | Pick-up / Drop-off | Entrega e recolha de uma viatura de aluguer ou o ponto de encontro de um tour ("Car pick-up", "Car drop-off"); nao usar "Return" nem "Collection". |
+| No-show | No-show | Cliente que nao apareceu ("Record No-show"); o estado gravado e "no_show". |
+| Manifesto | Manifest | A lista de participantes de um tour num dia, que tambem se imprime ("Participant Manifest"). |
+| Caucao | Deposit | Valor retido ao cliente do rent-a-car; as opcoes sao Returned, Partly retained e Fully retained. |
+| Lista de espera | Waiting list | Reserva de restaurante sem mesa disponivel. |
+| Turno (restaurante) | Shift | Almoco (Lunch) ou jantar (Dinner) de uma reserva de restaurante. |
+| Pax | Guests | Numero de pessoas de uma reserva de tour (coluna "Guests"); o gravado nao muda. |
 
 ## Regras
 

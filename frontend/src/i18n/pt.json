@@ -508,7 +508,162 @@
     "paymentStatus": "Estado do pagamento",
     "paymentMethod": "Método de pagamento",
     "vehicle": "Viatura",
-    "createdAt": "Criada em"
+    "createdAt": "Criada em",
+    "subtitle": "{{n}} resultado(s)",
+    "manifestButton": "Manifesto",
+    "editTitle": "Editar Reserva",
+    "confirmDeleteIrreversible": "Eliminar esta reserva? Esta acção não pode ser desfeita.",
+    "none": "Nenhuma",
+    "pax": "Pax",
+    "paxCount": "{{n}} pax",
+    "guestsShort": "{{n}} hósp.",
+    "vehicleSeats": "{{name}} ({{n}} lugares)",
+    "tableNumber": "Mesa {{n}}",
+    "noTable": "Sem mesa",
+    "waitlist": "Lista espera",
+    "processing": "A processar...",
+    "saving": "A guardar...",
+    "filters": {
+      "allStatuses": "Todas",
+      "allShifts": "Todos turnos",
+      "allTours": "Todos os tours",
+      "allSources": "Todas as origens",
+      "clear": "Limpar"
+    },
+    "shift": {
+      "lunch": "Almoço",
+      "dinner": "Jantar",
+      "lunchHours": "Almoço · 12h-15h",
+      "dinnerHours": "Jantar · 19h-23h"
+    },
+    "occasion": {
+      "birthday": "Aniversário",
+      "honeymoon": "Lua-de-mel",
+      "business": "Negócios",
+      "other": "Outro"
+    },
+    "sourceLabel": {
+      "direct": "Directo",
+      "public": "Pag. Pública",
+      "manual": "Manual",
+      "conect": "Conect",
+      "admin": "Admin"
+    },
+    "columns": {
+      "ref": "Ref",
+      "tour": "Tour",
+      "pickup": "Levantamento",
+      "dropoff": "Devolução",
+      "table": "Mesa",
+      "shift": "Turno",
+      "occasion": "Ocasião",
+      "source": "Origem"
+    },
+    "actions": {
+      "reschedule": "Reagendar",
+      "sendVoucher": "Enviar voucher",
+      "noShow": "No-show",
+      "assignTeam": "Atribuir equipa",
+      "seat": "Sentar",
+      "freeTable": "Liberar mesa",
+      "pickup": "Levantamento",
+      "dropoff": "Devolução",
+      "shiftRequests": "Turno / pedidos especiais"
+    },
+    "fuel": {
+      "empty": "Vazio",
+      "full": "Cheio"
+    },
+    "reschedule": {
+      "title": "Reagendar reserva",
+      "bookingOf": "Reserva de {{name}}",
+      "newDate": "Nova data",
+      "error": "Erro ao reagendar"
+    },
+    "noShow": {
+      "title": "Registar No-Show",
+      "mark": "Marcar {{name}} como no-show?",
+      "noteLabel": "Nota interna (opcional)",
+      "notePlaceholder": "Motivo ou observação...",
+      "confirm": "Confirmar No-Show"
+    },
+    "pickup": {
+      "title": "Levantamento de viatura",
+      "fuelOut": "Nível combustível (saída)",
+      "kmOut": "Km na saída",
+      "damageOut": "Danos existentes (registo)",
+      "damageOutPlaceholder": "Descrever danos pré-existentes...",
+      "deposit": "Caução (€)",
+      "depositPaid": "Paga",
+      "confirm": "Confirmar levantamento"
+    },
+    "dropoff": {
+      "title": "Devolução de viatura",
+      "out": "Saída: {{km}} km",
+      "fuelIn": "Nível combustível (chegada)",
+      "kmIn": "Km na chegada",
+      "kmDriven": "{{km}} km percorridos",
+      "damageIn": "Danos na devolução",
+      "damageInPlaceholder": "Descrever danos verificados na chegada...",
+      "deposit": "Caução",
+      "depositReturned": "Devolvida",
+      "depositPartial": "Retida (parcial)",
+      "depositFull": "Retida (total)",
+      "amountRetained": "Valor retido (€)",
+      "confirm": "Confirmar devolução"
+    },
+    "restaurantDetails": {
+      "summary": "{{n}} pessoas · {{unit}}",
+      "occasionLabel": "Ocasião especial",
+      "requests": "Pedidos especiais",
+      "requestsPlaceholder": "Alergias, decoração, menu vegetariano...",
+      "waitlistCheck": "Lista de espera (sem mesa disponível)",
+      "save": "Guardar detalhes"
+    },
+    "manifest": {
+      "title": "Manifesto de Participantes",
+      "summary": "{{n}} reservas · {{pax}} participantes",
+      "export": "Exportar PDF",
+      "empty": "Nenhum participante encontrado.",
+      "prompt": "Seleccione um tour e/ou uma data para ver o manifesto.",
+      "name": "Nome",
+      "hotelRoom": "Hotel / Quarto",
+      "emergency": "Contacto emergência",
+      "specialReqs": "Req. especiais"
+    },
+    "form": {
+      "tourActivity": "Tour / Actividade",
+      "selectUnit": "Seleccionar unidade...",
+      "tourDate": "Data do tour",
+      "timeSlot": "Horário",
+      "selectSlot": "Seleccionar horário...",
+      "slot": "{{time}} ({{n}} lugares)",
+      "bookingDate": "Data da reserva",
+      "people": "{{n}} pessoa(s)",
+      "nights": "{{n}} noite(s)",
+      "customerName": "Nome do cliente",
+      "emailPlaceholder": "email@exemplo.com",
+      "isoHint": "Código ISO 2",
+      "optIn": "O cliente aceitou receber mensagens sobre esta reserva por WhatsApp",
+      "source": "Fonte",
+      "internalPlaceholder": "Notas internas..."
+    },
+    "country": "País",
+    "assign": {
+      "title": "Atribuir equipa",
+      "booking": "Reserva",
+      "noUpcoming": "Sem reservas próximas pendentes.",
+      "guide": "Guia",
+      "selectGuide": "Seleccionar guia...",
+      "sameDriver": "É a mesma pessoa que conduz?",
+      "driver": "Condutor",
+      "selectDriver": "Seleccionar condutor...",
+      "vehicleOptional": "Viatura (opcional)",
+      "noVehiclesPrefix": "Nenhuma viatura cadastrada — pode adicionar em",
+      "noVehiclesSuffix": ".",
+      "error": "Erro ao atribuir",
+      "submit": "Atribuir"
+    }
   },
   "units": {
     "title": "Unidades",
