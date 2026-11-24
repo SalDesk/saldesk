@@ -90,6 +90,18 @@ describe('BeachSeller', () => {
     expect(screen.getByText(`${MESES[new Date().getMonth()]} ${new Date().getFullYear()}`)).toBeTruthy();
   });
 
+  it('a mensagem ao cliente fica em portugues com o painel em ingles', async () => {
+    const texto = (a) => decodeURIComponent(a.getAttribute('href').split('?text=')[1]);
+    ver(<BeachSeller />);
+    const emPt = texto(await screen.findByRole('link', { name: 'Contactar via WhatsApp' }));
+    cleanup();
+    useUiStore.setState({ lang: 'en' });
+    ver(<BeachSeller />);
+    const emEn = texto(await screen.findByRole('link', { name: 'Contact via WhatsApp' }));
+    expect(emPt).toBe('Olá Ana Lima! Sobre a sua reserva...');
+    expect(emEn).toBe(emPt);
+  });
+
   it('o botao de lingua do cabecalho muda o ecra para ingles', async () => {
     ver(<BeachSeller />);
     expect(await screen.findByText('Olá, Zy')).toBeTruthy();

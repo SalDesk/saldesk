@@ -320,6 +320,27 @@ describe('BeachSale: lingua do painel', () => {
     expect(chavesCruas(['beachSeller', 'staff', 'opcoesActividade'])).toEqual([]);
   });
 
+  it('a confirmacao por WhatsApp ao cliente fica em portugues com o painel em ingles', async () => {
+    const texto = (a) => decodeURIComponent(a.getAttribute('href').split('?text=')[1]);
+    async function ate(nomeLink, lang, tel) {
+      useUiStore.setState({ lang });
+      listUnits.mockResolvedValue([GRANDE]);
+      render(<MemoryRouter future={FUTURE}><BeachSale /></MemoryRouter>);
+      fireEvent.click(await screen.findByRole('button', { name: /Buggy Tour/ }));
+      fireEvent.click(await screen.findByRole('button', { name: '09:00' }));
+      fireEvent.click(screen.getByRole('button', { name: lang === 'pt' ? /Continuar/ : /Continue/ }));
+      fireEvent.change(await screen.findByPlaceholderText(lang === 'pt' ? 'Nome e apelido do cliente' : 'Customer first and last name'), { target: { value: 'Ana Lima' } });
+      fireEvent.change(screen.getAllByPlaceholderText('+238 900 0000')[0], { target: { value: tel } });
+      fireEvent.click(screen.getByRole('button', { name: lang === 'pt' ? /Confirmar Reserva/ : /Confirm booking/ }));
+      return texto(await screen.findByRole('link', { name: nomeLink }));
+    }
+    const emPt = await ate(/WhatsApp/, 'pt', '+238 911 1111');
+    cleanup();
+    const emEn = await ate(/WhatsApp/, 'en', '+238 911 1111');
+    expect(emPt).toMatch(/^Olá Ana Lima! A sua reserva para Buggy Tour no dia (Dom|Seg|Ter|Qua|Qui|Sex|Sab) \d+ (Jan|Fev|Mar|Abr|Mai|Jun|Jul|Ago|Set|Out|Nov|Dez) às 09:00 está confirmada\. Até breve!$/);
+    expect(emEn).toBe(emPt);
+  });
+
   it('uma venda feita em ingles envia o mesmo corpo que em portugues', async () => {
     const pt = await venderAteAoFim({ continuar: /Continuar/, nome: 'Ana Lima', placeholder: 'Nome e apelido do cliente', confirmar: /Confirmar Reserva/ });
     cleanup();

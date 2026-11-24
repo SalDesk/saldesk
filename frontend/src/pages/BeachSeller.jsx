@@ -16,7 +16,7 @@ import Logo from '../components/shared/Logo';
 import StaffChat from '../components/shared/StaffChat';
 import { buildWhatsAppLink } from '../utils/whatsapp';
 import LanguageToggle from '../components/shared/LanguageToggle';
-import { useT } from '../i18n';
+import { useT, getT } from '../i18n';
 import { useLingua, formatarData } from '../utils/formatoLingua';
 import { rotuloMes } from '../utils/rotuloMes';
 import { rotuloDiaMes } from '../utils/formatoVendedor';
@@ -445,7 +445,7 @@ export default function BeachSeller() {
                         </span>
                         {r.customer_phone && (
                           <a
-                            href={buildWhatsAppLink(r.customer_phone, t('beachSeller.list.whatsappGreeting', { name: r.customer_name }))}
+                            href={buildWhatsAppLink(r.customer_phone, getT('pt')('beachSeller.list.whatsappGreeting', { name: r.customer_name }) /* mensagem ao cliente: sempre em portugues */)}
                             target="_blank"
                             rel="noreferrer"
                             onClick={(e) => e.stopPropagation()}

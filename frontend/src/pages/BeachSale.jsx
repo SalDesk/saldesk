@@ -16,7 +16,7 @@ import useAuthStore from '../store/authStore';
 import Logo from '../components/shared/Logo';
 import { buildWhatsAppLink } from '../utils/whatsapp';
 import { getMonthGrid } from '../utils/calendar';
-import { useT } from '../i18n';
+import { useT, getT } from '../i18n';
 import useUiStore from '../store/uiStore';
 import {
   opcoesValidas, nomeOpcao, unidadeOpcao, limitarVeiculos, precoEstimado, opcaoMaisBarata,
@@ -32,6 +32,12 @@ import { eurosInteiros } from './reservations/shared';
 const TODAY = new Date().toLocaleDateString('en-CA');
 const DIAS_SEMANA = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
 const TOUR_ICON_BG = ['bg-turquoise-100 text-turquoise-700', 'bg-sand-100 text-sand-600', 'bg-ocean-100 text-ocean-700'];
+
+/* Mensagem enviada ao cliente: fica sempre em portugues, qualquer que seja a lingua do painel */
+function mensagemConfirmacaoCliente({ clientName, tourName, date, time }) {
+  const tPt = getT('pt');
+  return tPt('beachSeller.sale.whatsappConfirm', { name: clientName, tour: tourName, date: rotuloDiaMes(date, tPt), time });
+}
 
 function parseMeta(description) {
   if (!description?.startsWith('{')) return {};
@@ -712,7 +718,7 @@ export default function BeachSale() {
                 <a
                   href={buildWhatsAppLink(
                     successData.clientPhone,
-                    t('beachSeller.sale.whatsappConfirm', { name: successData.clientName, tour: successData.tourName, date: rotuloDiaMes(successData.date, t), time: successData.time })
+                    mensagemConfirmacaoCliente(successData)
                   )}
                   target="_blank"
                   rel="noreferrer"
