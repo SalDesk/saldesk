@@ -1,6 +1,7 @@
 import { Check, X, Plus, Trash2 } from 'lucide-react';
 import Input, { Textarea } from '../../ui/Input';
 import Button from '../../ui/Button';
+import { useT } from '../../../i18n';
 
 /* Campo nativo das linhas de horario: o teste de caracterizacao liga a hora ao
    campo de lugares como irmaos directos (previousElementSibling), por isso estes
@@ -58,11 +59,11 @@ export function ChipToggle({ label, checked, onChange }) {
 /* Comodidades — chip picker reutilizado pelos 4 formularios. Lista fixa de
    sugestoes, sem texto livre, para manter os valores consistentes entre
    unidades (usado tambem como filtro no catalogo publico no futuro). */
-export function AmenitiesPicker({ options, selected, onToggle }) {
+export function AmenitiesPicker({ options, selected, onToggle, rotulo = (a) => a }) {
   return (
     <div className="flex flex-wrap gap-2 mt-1">
       {options.map(a => (
-        <ChipToggle key={a} label={a} checked={selected.includes(a)} onChange={() => onToggle(a)} />
+        <ChipToggle key={a} label={rotulo(a)} checked={selected.includes(a)} onChange={() => onToggle(a)} />
       ))}
     </div>
   );
@@ -72,6 +73,7 @@ export function AmenitiesPicker({ options, selected, onToggle }) {
    incluidos ou nao incluidos no preco. Mostrado tal e qual na pagina
    publica; secção fica escondida la se ficar vazia (nunca inventa). */
 export function IncludedItemsEditor({ items, onChange }) {
+  const t = useT();
   function addItem(included) { onChange([...items, { label: '', included }]); }
   function updateItem(i, patch) { onChange(items.map((it, idx) => idx === i ? { ...it, ...patch } : it)); }
   function removeItem(i) { onChange(items.filter((_, idx) => idx !== i)); }
@@ -82,28 +84,28 @@ export function IncludedItemsEditor({ items, onChange }) {
           <button
             type="button"
             onClick={() => updateItem(i, { included: !it.included })}
-            title="Clique para alternar entre incluído e não incluído"
+            title={t('unitForm.editors.toggleIncluded')}
             className={`shrink-0 h-9 px-2.5 rounded-sm flex items-center gap-1 border text-xs font-body font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ocean-300 ${
               it.included ? 'bg-green-50 border-green-200 text-green-700' : 'bg-red-50 border-red-200 text-red-600'
             }`}
           >
             {it.included ? <Check size={13} strokeWidth={2.5} /> : <X size={13} strokeWidth={2.5} />}
-            {it.included ? 'Incluído' : 'Não incluído'}
+            {it.included ? t('unitForm.editors.included') : t('unitForm.editors.notIncluded')}
           </button>
           <div className="flex-1 min-w-0">
             <Input
               value={it.label}
               onChange={e => updateItem(i, { label: e.target.value })}
-              placeholder={it.included ? 'Ex: Pequeno-almoço' : 'Ex: Entradas (€5/pessoa), almoço'}
-              aria-label={`Item ${i + 1}`}
+              placeholder={it.included ? t('unitForm.editors.itemIncludedPh') : t('unitForm.editors.itemNotIncludedPh')}
+              aria-label={t('unitForm.editors.itemLabel', { n: i + 1 })}
             />
           </div>
-          <RemoveRowButton label={`Remover item ${i + 1}`} onClick={() => removeItem(i)} />
+          <RemoveRowButton label={t('unitForm.editors.removeItem', { n: i + 1 })} onClick={() => removeItem(i)} />
         </div>
       ))}
       <div className="flex flex-wrap items-center gap-2">
-        <AddRowButton onClick={() => addItem(true)}>Adicionar item incluído</AddRowButton>
-        <AddRowButton onClick={() => addItem(false)}>Adicionar item não incluído</AddRowButton>
+        <AddRowButton onClick={() => addItem(true)}>{t('unitForm.editors.addIncluded')}</AddRowButton>
+        <AddRowButton onClick={() => addItem(false)}>{t('unitForm.editors.addNotIncluded')}</AddRowButton>
       </div>
     </div>
   );
@@ -114,6 +116,7 @@ export function IncludedItemsEditor({ items, onChange }) {
    nunca inventamos uma coordenada em falta). Mesmo padrao de lista
    repetivel do IncludedItemsEditor acima. */
 export function StopsEditor({ stops, onChange }) {
+  const t = useT();
   function addStop() { onChange([...stops, { name: '', desc: '', lat: '', lng: '' }]); }
   function updateStop(i, patch) { onChange(stops.map((s, idx) => idx === i ? { ...s, ...patch } : s)); }
   function removeStop(i) { onChange(stops.filter((_, idx) => idx !== i)); }
@@ -127,37 +130,37 @@ export function StopsEditor({ stops, onChange }) {
               <Input
                 value={s.name}
                 onChange={e => updateStop(i, { name: e.target.value })}
-                placeholder="Ex: Templo do Amanhecer"
-                aria-label={`Nome da paragem ${i + 1}`}
+                placeholder={t('unitForm.editors.stopNamePh')}
+                aria-label={t('unitForm.editors.stopName', { n: i + 1 })}
               />
             </div>
-            <RemoveRowButton label={`Remover paragem ${i + 1}`} onClick={() => removeStop(i)} />
+            <RemoveRowButton label={t('unitForm.editors.removeStop', { n: i + 1 })} onClick={() => removeStop(i)} />
           </div>
           <Textarea
             value={s.desc}
             onChange={e => updateStop(i, { desc: e.target.value })}
-            placeholder="Descrição curta (opcional)"
+            placeholder={t('unitForm.editors.stopDescPh')}
             rows={2}
-            aria-label={`Descrição da paragem ${i + 1}`}
+            aria-label={t('unitForm.editors.stopDesc', { n: i + 1 })}
           />
           <div className="grid grid-cols-2 gap-2">
             <Input
               value={s.lat}
               onChange={e => updateStop(i, { lat: e.target.value })}
-              placeholder="Latitude (opcional)"
-              aria-label={`Latitude da paragem ${i + 1}`}
+              placeholder={t('unitForm.editors.latitudeOptional')}
+              aria-label={t('unitForm.editors.stopLat', { n: i + 1 })}
             />
             <Input
               value={s.lng}
               onChange={e => updateStop(i, { lng: e.target.value })}
-              placeholder="Longitude (opcional)"
-              aria-label={`Longitude da paragem ${i + 1}`}
+              placeholder={t('unitForm.editors.longitudeOptional')}
+              aria-label={t('unitForm.editors.stopLng', { n: i + 1 })}
             />
           </div>
         </div>
       ))}
-      <AddRowButton onClick={addStop}>Adicionar paragem</AddRowButton>
-      <p className="text-xs font-body text-n-500">Sem coordenadas, a paragem aparece na lista mas sem marcador no mapa. Google Maps: botão direito no local → copiar coordenadas.</p>
+      <AddRowButton onClick={addStop}>{t('unitForm.editors.addStop')}</AddRowButton>
+      <p className="text-xs font-body text-n-500">{t('unitForm.editors.stopsNote')}</p>
     </div>
   );
 }
@@ -169,6 +172,7 @@ export function StopsEditor({ stops, onChange }) {
    slot ate ao limite de capacidade indicado). Mesmo padrao de lista
    repetivel do StopsEditor acima. */
 export function TimeSlotsEditor({ slots, onChange }) {
+  const t = useT();
   function addSlot() { onChange([...slots, { time: '', capacity: '' }]); }
   function updateSlot(i, patch) { onChange(slots.map((s, idx) => idx === i ? { ...s, ...patch } : s)); }
   function removeSlot(i) { onChange(slots.filter((_, idx) => idx !== i)); }
@@ -180,7 +184,7 @@ export function TimeSlotsEditor({ slots, onChange }) {
             type="time"
             value={s.time}
             onChange={e => updateSlot(i, { time: e.target.value })}
-            aria-label={`Hora do horário ${i + 1}`}
+            aria-label={t('unitForm.editors.slotTime', { n: i + 1 })}
             className={`w-32 ${NATIVE_FIELD_CLASS}`}
           />
           <input
@@ -188,15 +192,15 @@ export function TimeSlotsEditor({ slots, onChange }) {
             min="1"
             value={s.capacity}
             onChange={e => updateSlot(i, { capacity: e.target.value })}
-            placeholder="Lugares"
-            aria-label={`Lugares do horário ${i + 1}`}
+            placeholder={t('unitForm.editors.slotSpotsPh')}
+            aria-label={t('unitForm.editors.slotSpots', { n: i + 1 })}
             className={`w-28 ${NATIVE_FIELD_CLASS}`}
           />
-          <RemoveRowButton label={`Remover horário ${i + 1}`} onClick={() => removeSlot(i)} />
+          <RemoveRowButton label={t('unitForm.editors.removeSlot', { n: i + 1 })} onClick={() => removeSlot(i)} />
         </div>
       ))}
-      <AddRowButton onClick={addSlot}>Adicionar horário</AddRowButton>
-      <p className="text-xs font-body text-n-500">Sem horários aqui, a reserva continua a funcionar por dia inteiro (como hoje). Ao adicionar um horário, o cliente escolhe entre eles e cada um só aceita reservas até ao número de lugares indicado.</p>
+      <AddRowButton onClick={addSlot}>{t('unitForm.editors.addSlot')}</AddRowButton>
+      <p className="text-xs font-body text-n-500">{t('unitForm.editors.slotsNote')}</p>
     </div>
   );
 }
@@ -209,21 +213,22 @@ export function TimeSlotsEditor({ slots, onChange }) {
    numero de pessoas da reserva). Mesmo padrao de lista repetivel do
    TimeSlotsEditor acima. */
 export function PriceTiersEditor({ tiers, onChange }) {
+  const t = useT();
   function addTier() { onChange([...tiers, { pax_min: '', pax_max: '', price: '' }]); }
-  function updateTier(i, patch) { onChange(tiers.map((t, idx) => idx === i ? { ...t, ...patch } : t)); }
+  function updateTier(i, patch) { onChange(tiers.map((tier, idx) => idx === i ? { ...tier, ...patch } : tier)); }
   function removeTier(i) { onChange(tiers.filter((_, idx) => idx !== i)); }
   return (
     <div className="space-y-2">
-      {tiers.map((t, i) => (
+      {tiers.map((tier, i) => (
         <div key={i} className="flex flex-wrap items-center gap-2">
           <div className="w-24 shrink-0">
             <Input
               type="number"
               min="1"
-              value={t.pax_min}
+              value={tier.pax_min}
               onChange={e => updateTier(i, { pax_min: e.target.value })}
-              placeholder="Mín PAX"
-              aria-label={`Mínimo de pessoas do escalão ${i + 1}`}
+              placeholder={t('unitForm.editors.tierMinPh')}
+              aria-label={t('unitForm.editors.tierMin', { n: i + 1 })}
             />
           </div>
           <span className="text-n-400 text-sm">–</span>
@@ -231,10 +236,10 @@ export function PriceTiersEditor({ tiers, onChange }) {
             <Input
               type="number"
               min="1"
-              value={t.pax_max}
+              value={tier.pax_max}
               onChange={e => updateTier(i, { pax_max: e.target.value })}
-              placeholder="Máx PAX"
-              aria-label={`Máximo de pessoas do escalão ${i + 1}`}
+              placeholder={t('unitForm.editors.tierMaxPh')}
+              aria-label={t('unitForm.editors.tierMax', { n: i + 1 })}
             />
           </div>
           <div className="flex-1 min-w-[110px]">
@@ -242,17 +247,17 @@ export function PriceTiersEditor({ tiers, onChange }) {
               type="number"
               min="0"
               step="0.01"
-              value={t.price}
+              value={tier.price}
               onChange={e => updateTier(i, { price: e.target.value })}
-              placeholder="Preço (€)"
-              aria-label={`Preço do escalão ${i + 1}`}
+              placeholder={t('unitForm.editors.tierPricePh')}
+              aria-label={t('unitForm.editors.tierPrice', { n: i + 1 })}
             />
           </div>
-          <RemoveRowButton label={`Remover escalão ${i + 1}`} onClick={() => removeTier(i)} />
+          <RemoveRowButton label={t('unitForm.editors.removeTier', { n: i + 1 })} onClick={() => removeTier(i)} />
         </div>
       ))}
-      <AddRowButton onClick={addTier}>Adicionar escalão</AddRowButton>
-      <p className="text-xs font-body text-n-500">Ex: 1–2 PAX a 80€, 3–4 PAX a 140€. Se configurado, substitui o "Preço privado" único de abaixo para o número de pessoas coberto por um escalão.</p>
+      <AddRowButton onClick={addTier}>{t('unitForm.editors.addTier')}</AddRowButton>
+      <p className="text-xs font-body text-n-500">{t('unitForm.editors.tiersNote')}</p>
     </div>
   );
 }
@@ -275,25 +280,26 @@ export function SectionLabel({ children }) {
 }
 
 export function OtaFields({ form, set }) {
+  const t = useT();
   return (
     <div>
-      <SectionLabel>Integração OTA (opcional)</SectionLabel>
+      <SectionLabel>{t('unitForm.editors.otaTitle')}</SectionLabel>
       <div className="grid grid-cols-2 gap-3">
         <Input
-          label="ID produto Viator"
+          label={t('unitForm.editors.otaViator')}
           value={form.ota_viator_id}
           onChange={set('ota_viator_id')}
-          placeholder="Ex: 12345P1"
+          placeholder={t('unitForm.editors.otaViatorPh')}
         />
         <Input
-          label="ID produto GetYourGuide"
+          label={t('unitForm.editors.otaGyg')}
           value={form.ota_gyg_id}
           onChange={set('ota_gyg_id')}
-          placeholder="Ex: 67890"
+          placeholder={t('unitForm.editors.otaGygPh')}
         />
       </div>
       <p className="text-xs font-body text-n-500 mt-1.5">
-        Liga esta unidade ao produto correspondente na Viator/GetYourGuide para que as reservas recebidas por webhook sejam atribuídas a esta unidade.
+        {t('unitForm.editors.otaNote')}
       </p>
     </div>
   );
@@ -313,29 +319,30 @@ export function buildOtaProductIds(form) {
    e derivada automaticamente no backend a partir do Select "Categoria"
    que ja existe em cada formulario. */
 export function ConectFields({ form, set }) {
+  const t = useT();
   return (
     <div>
-      <SectionLabel>Coordenadas (opcional — Conect)</SectionLabel>
+      <SectionLabel>{t('unitForm.editors.coordsTitle')}</SectionLabel>
       <div className="grid grid-cols-2 gap-3">
         <Input
-          label="Latitude"
+          label={t('unitForm.editors.latitude')}
           type="number"
           step="0.000001"
           value={form.lat}
           onChange={set('lat')}
-          placeholder="Ex: 16.6013"
+          placeholder={t('unitForm.editors.latPh')}
         />
         <Input
-          label="Longitude"
+          label={t('unitForm.editors.longitude')}
           type="number"
           step="0.000001"
           value={form.lng}
           onChange={set('lng')}
-          placeholder="Ex: -22.9184"
+          placeholder={t('unitForm.editors.lngPh')}
         />
       </div>
       <p className="text-xs font-body text-n-500 mt-1.5">
-        Usadas no catálogo público SalDesk Conect. No Google Maps: clique direito no local → copiar coordenadas.
+        {t('unitForm.editors.coordsNote')}
       </p>
     </div>
   );

@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import UnitForm from '../components/units/UnitForm';
 import useUiStore from '../store/uiStore';
+import { portuguesNoEcra, chavesCruas } from './helpers/portuguesNoEcra';
 
 vi.mock('../services/uploadService', () => ({
   uploadImage: vi.fn(),
@@ -156,3 +157,121 @@ describe('TourForm: opções, suplemento e ofertas', () => {
     expect(screen.queryByText(nota)).toBeNull();
   });
 });
+
+/* A mesma actividade em ingles e alemao: rotulos traduzidos, valores gravados iguais aos de sempre */
+describe('TourForm em inglês e alemão', () => {
+  const UNIDADE = {
+    id: 'u1', name: 'Tour Pedra de Lume', unit_type: 'Passeio de Barco', base_price: 45, capacity: 8, status: 'active', images: [],
+    description: JSON.stringify({
+      name_en: 'Salt Crater Tour', difficulty: 'Moderado', tour_type: 'ambos', languages: ['PT', 'EN'],
+      amenities: ['Seguro', 'Vestiário', 'Snacks e água'], pickup_included: true, meeting_point: 'Hotel Riu',
+      price_tiers: [{ pax_min: 1, pax_max: 2, price: 80 }],
+      included_items: [{ label: 'Almoço', included: true }, { label: 'Bebidas', included: false }],
+      stops: [{ name: 'Praia', desc: 'Bonita', lat: 16.1, lng: -22.5 }],
+      time_slots: [{ time: '08:00', capacity: 6 }],
+      options: [{ id: 'o1', name_pt: 'Buggy', type: 'per_vehicle', price: 50, seats: 4 }],
+      offers: [{ percent: 20, from: '2026-12-01', to: '2026-12-15' }],
+      language_surcharges: { EN: 5 },
+    }),
+  };
+  const DADOS = ['Tour Pedra de Lume', 'Salt Crater Tour', 'Hotel Riu', 'Praia', 'Bonita', 'Almoço', 'Bebidas', 'Buggy'];
+  const emLingua = (lang) => useUiStore.setState({ lang });
+
+  it('em inglês, o formulário e os editores não deixam português nem chaves cruas', () => {
+    emLingua('en');
+    renderForm(UNIDADE);
+    expect(screen.getByText('Operational details')).toBeInTheDocument();
+    expect(screen.getByText('Time slots with limited spots (optional)')).toBeInTheDocument();
+    expect(screen.getByLabelText('Time slot 1 spots')).toBeInTheDocument();
+    expect(screen.getByLabelText('Tier 1 maximum guests')).toBeInTheDocument();
+    expect(screen.getByLabelText('Stop 1 latitude')).toBeInTheDocument();
+    expect(screen.getByText('Meeting point location')).toBeInTheDocument();
+    expect(screen.getByText('Paste coordinates or a Google Maps link')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Save changes' })).toBeInTheDocument();
+    expect(portuguesNoEcra(DADOS)).toEqual([]);
+    expect(chavesCruas(['unitForm', 'opcoesActividade', 'common'])).toEqual([]);
+  });
+
+  it('em inglês, as comodidades, a categoria e os itens mostram o rótulo inglês e gravam o valor português', () => {
+    emLingua('en');
+    const onSave = renderForm(UNIDADE);
+    expect(screen.getByLabelText('Changing room')).toBeChecked();
+    expect(screen.getByLabelText('Snacks and water')).toBeChecked();
+    expect(screen.getByRole('option', { name: 'Boat trip' }).selected).toBe(true);
+    expect(screen.getByRole('button', { name: /Not included/ })).toBeInTheDocument();
+    fireEvent.click(screen.getByLabelText('Towels'));
+    fireEvent.click(botao('Save changes'));
+    const dados = onSave.mock.calls[0][0];
+    expect(dados.unit_type).toBe('Passeio de Barco');
+    expect(JSON.parse(dados.description).amenities).toEqual(['Seguro', 'Vestiário', 'Snacks e água', 'Toalhas']);
+  });
+
+  it('em inglês, "Moderate" mostra-se para Moderado e escolher "Hard" grava Dificil', () => {
+    emLingua('en');
+    const onSave = renderForm(UNIDADE);
+    expect(screen.getByLabelText('Difficulty').value).toBe('Moderado');
+    expect(screen.getByRole('option', { name: 'Moderate' }).selected).toBe(true);
+    fireEvent.change(screen.getByLabelText('Difficulty'), { target: { value: screen.getByRole('option', { name: 'Hard' }).value } });
+    fireEvent.click(botao('Save changes'));
+    expect(JSON.parse(onSave.mock.calls[0][0].description).difficulty).toBe('Dificil');
+  });
+
+  it('em inglês, o tipo de opção grava o id (per_group) e os erros seguem a língua', () => {
+    emLingua('en');
+    const onSave = formularioNovoEn();
+    fireEvent.click(botao('Add option'));
+    fireEvent.click(botao('Create tour'));
+    expect(onSave).not.toHaveBeenCalled();
+    expect(screen.getByText('Enter the name in Portuguese.')).toBeTruthy();
+    expect(screen.getByText('The price must be greater than 0.')).toBeTruthy();
+    expect(portuguesNoEcra()).toEqual([]);
+    escrever(porRotulo('Option 1 name (PT)'), 'Grupo');
+    fireEvent.change(porRotulo('Option 1 type'), { target: { value: screen.getByRole('option', { name: 'Per group' }).value } });
+    escrever(porRotulo('Option 1 price'), '30');
+    fireEvent.click(botao('Create tour'));
+    expect(meta(onSave).options[0]).toMatchObject({ name_pt: 'Grupo', type: 'per_group', price: 30 });
+  });
+
+  it('em inglês, o contador e o aviso do mapa são ingleses', () => {
+    emLingua('en');
+    renderForm(undefined);
+    escrever(porRotulo('Short description PT'), 'abc');
+    expect(screen.getByText('3/160 characters')).toBeInTheDocument();
+    const colar = porRotulo('Paste coordinates or a Google Maps link');
+    escrever(colar, 'xyz');
+    fireEvent.blur(colar);
+    expect(screen.getByText('I could not find coordinates in this text.')).toBeInTheDocument();
+  });
+
+  it('em alemão e neerlandês os editores falam a língua do painel', () => {
+    emLingua('de');
+    renderForm(UNIDADE);
+    expect(screen.getByText('Betriebsdetails')).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: 'Mittel' }).selected).toBe(true);
+    expect(screen.getByLabelText('Plätze von Zeitfenster 1')).toBeInTheDocument();
+    expect(chavesCruas(['unitForm', 'opcoesActividade'])).toEqual([]);
+    cleanup();
+    emLingua('nl');
+    renderForm(UNIDADE);
+    expect(screen.getByText('Operationele details')).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: 'Gemiddeld' }).selected).toBe(true);
+    expect(chavesCruas(['unitForm', 'opcoesActividade'])).toEqual([]);
+  });
+
+  it('em português tudo continua a ler como sempre', () => {
+    renderForm(UNIDADE);
+    expect(screen.getByText('Detalhes Operacionais')).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: 'Moderado' }).selected).toBe(true);
+    expect(screen.getByRole('option', { name: 'Fácil' })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: 'Passeio de Barco' }).selected).toBe(true);
+    expect(screen.getByLabelText('Vestiário')).toBeChecked();
+    expect(screen.getByLabelText('Lugares do horário 1')).toBeInTheDocument();
+  });
+});
+
+function formularioNovoEn() {
+  const onSave = renderForm(undefined);
+  escrever(campoPorEtiqueta(/^Name PT/), 'Passeio');
+  escrever(campoPorEtiqueta(/^Maximum capacity/), '12');
+  return onSave;
+}

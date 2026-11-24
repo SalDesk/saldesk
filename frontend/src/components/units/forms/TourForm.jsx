@@ -12,6 +12,8 @@ import {
   temErrosOpcoes, opcoesParaMeta, suplementosParaMeta, ofertasParaMeta,
 } from './OpcoesActividade';
 import { useT } from '../../../i18n';
+import { DIFICULDADE_CHAVE, rotuloDificuldade, rotuloComodidadeActividade, rotuloTipoUnidade } from '../rotulosUnidades';
+import { useLingua } from '../../../utils/formatoLingua';
 
 /* Rotulos gravados em portugues; a pagina publica traduz-os em EN (utils/paginaActividade) */
 export const ACTIVITY_AMENS   = ['Equipamento incluído', 'Instrutor certificado', 'Seguro', 'Fotografias/Vídeo', 'Transporte', 'Snacks e água', 'Vestiário', 'Toalhas'];
@@ -23,6 +25,7 @@ export function parseTourMeta(description) {
 
 export default function TourForm({ unit, onSave, onCancel, loading, error }) {
   const t = useT();
+  const lang = useLingua();
   const meta = parseTourMeta(unit?.description);
   const [tentouGuardar, setTentouGuardar] = useState(false);
 
@@ -159,160 +162,160 @@ export default function TourForm({ unit, onSave, onCancel, loading, error }) {
     <form onSubmit={handleSubmit} className="space-y-5">
 
       <div>
-        <SectionLabel>Identificação</SectionLabel>
+        <SectionLabel>{t('unitForm.section.identification')}</SectionLabel>
         <div className="space-y-3">
           <div className="grid grid-cols-2 gap-3">
             <Input
-              label="Nome PT"
+              label={t('unitForm.tour.namePt')}
               value={form.name}
               onChange={set('name')}
               required
               autoFocus
-              placeholder="Ex: Mergulho ao Amanhecer"
+              placeholder={t('unitForm.tour.namePtPh')}
             />
             <Input
-              label="Nome EN"
+              label={t('unitForm.tour.nameEn')}
               value={form.name_en}
               onChange={set('name_en')}
-              placeholder="Ex: Sunrise Dive"
+              placeholder={t('unitForm.tour.nameEnPh')}
             />
           </div>
           <div className="grid grid-cols-2 gap-3">
-            <Select label="Categoria" value={form.unit_type} onChange={set('unit_type')} required>
+            <Select label={t('unitForm.tour.category')} value={form.unit_type} onChange={set('unit_type')} required>
               {UNIT_TYPES_BY_OPERATOR.activity.map(tp => (
-                <option key={tp} value={tp}>{tp}</option>
+                <option key={tp} value={tp}>{rotuloTipoUnidade(tp, t, lang)}</option>
               ))}
-              <option value="Outro">Outro</option>
+              <option value="Outro">{t('unitForm.tour.other')}</option>
             </Select>
-            <Select label="Modalidade" value={form.tour_type} onChange={set('tour_type')}>
-              <option value="grupo">Grupo</option>
-              <option value="privado">Privado</option>
-              <option value="ambos">Grupo e Privado</option>
+            <Select label={t('unitForm.tour.mode')} value={form.tour_type} onChange={set('tour_type')}>
+              <option value="grupo">{t('unitForm.tour.modeGroup')}</option>
+              <option value="privado">{t('unitForm.tour.modePrivate')}</option>
+              <option value="ambos">{t('unitForm.tour.modeBoth')}</option>
             </Select>
           </div>
         </div>
       </div>
 
       <div>
-        <SectionLabel>Descrição</SectionLabel>
+        <SectionLabel>{t('unitForm.section.description')}</SectionLabel>
         <div className="space-y-3">
           <Textarea
-            label="Descrição curta PT"
+            label={t('unitForm.tour.shortPt')}
             value={form.short_pt}
             onChange={set('short_pt')}
-            placeholder="Resumo numa frase, mostrado logo abaixo do título..."
+            placeholder={t('unitForm.tour.shortPtPh')}
             rows={2}
             maxLength={160}
-            hint={`${form.short_pt.length}/160 caracteres`}
+            hint={t('unitForm.tour.charsPt', { n: form.short_pt.length })}
           />
           <Textarea
-            label="Descrição curta EN"
+            label={t('unitForm.tour.shortEn')}
             value={form.short_en}
             onChange={set('short_en')}
-            placeholder="One-sentence summary, shown right below the title..."
+            placeholder={t('unitForm.tour.shortEnPh')}
             rows={2}
             maxLength={160}
-            hint={`${form.short_en.length}/160 characters`}
+            hint={t('unitForm.tour.charsEn', { n: form.short_en.length })}
           />
           <Textarea
-            label="Descrição longa PT"
+            label={t('unitForm.tour.longPt')}
             value={form.desc_pt}
             onChange={set('desc_pt')}
-            placeholder="Descrição completa em português. Pode usar vários parágrafos (Enter)..."
+            placeholder={t('unitForm.tour.longPtPh')}
             rows={6}
           />
           <Textarea
-            label="Descrição longa EN"
+            label={t('unitForm.tour.longEn')}
             value={form.desc_en}
             onChange={set('desc_en')}
-            placeholder="Full description in English. You can use several paragraphs (Enter)..."
+            placeholder={t('unitForm.tour.longEnPh')}
             rows={6}
           />
         </div>
       </div>
 
       <div>
-        <SectionLabel>Destaques e o que levar</SectionLabel>
+        <SectionLabel>{t('unitForm.section.highlights')}</SectionLabel>
         <div className="space-y-3">
           <Textarea
-            label="Destaques (PT) — um por linha"
+            label={t('unitForm.tour.highlightsPt')}
             value={form.highlights_pt}
             onChange={set('highlights_pt')}
-            placeholder="Um destaque por linha (Enter)..."
+            placeholder={t('unitForm.tour.highlightsPtPh')}
             rows={4}
           />
           <Textarea
-            label="Destaques (EN) — one per line"
+            label={t('unitForm.tour.highlightsEn')}
             value={form.highlights_en}
             onChange={set('highlights_en')}
-            placeholder="One highlight per line (Enter)..."
+            placeholder={t('unitForm.tour.highlightsEnPh')}
             rows={4}
           />
           <Textarea
-            label="O que levar (PT)"
+            label={t('unitForm.tour.bringPt')}
             value={form.what_to_bring_pt}
             onChange={set('what_to_bring_pt')}
-            placeholder="Ex: Toalha, protector solar, chapéu."
+            placeholder={t('unitForm.tour.bringPtPh')}
             rows={3}
           />
           <Textarea
-            label="O que levar (EN)"
+            label={t('unitForm.tour.bringEn')}
             value={form.what_to_bring_en}
             onChange={set('what_to_bring_en')}
-            placeholder="E.g. Towel, sunscreen, hat."
+            placeholder={t('unitForm.tour.bringEnPh')}
             rows={3}
           />
         </div>
       </div>
 
       <div>
-        <SectionLabel>Detalhes Operacionais</SectionLabel>
+        <SectionLabel>{t('unitForm.section.operational')}</SectionLabel>
         <div className="space-y-3">
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
             <Input
-              label="Duração (horas)"
+              label={t('unitForm.tour.duration')}
               type="number"
               value={form.duration}
               onChange={set('duration')}
               min="0.5"
               step="0.5"
-              placeholder="Ex: 2.5"
+              placeholder={t('unitForm.tour.durationPh')}
             />
-            <Select label="Dificuldade" value={form.difficulty} onChange={set('difficulty')}>
-              <option value="Facil">Fácil</option>
-              <option value="Moderado">Moderado</option>
-              <option value="Dificil">Difícil</option>
+            <Select label={t('unitForm.tour.difficulty')} value={form.difficulty} onChange={set('difficulty')}>
+              {Object.keys(DIFICULDADE_CHAVE).map(v => (
+                <option key={v} value={v}>{rotuloDificuldade(v, t)}</option>
+              ))}
             </Select>
             <Input
-              label="Idade mínima"
+              label={t('unitForm.tour.minAge')}
               type="number"
               value={form.min_age}
               onChange={set('min_age')}
               min="0"
-              placeholder="Ex: 8"
+              placeholder={t('unitForm.tour.minAgePh')}
             />
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
             <Input
-              label="Capacidade máxima"
+              label={t('unitForm.tour.capacity')}
               type="number"
               value={form.capacity}
               onChange={set('capacity')}
               min="1"
               required
-              placeholder="Ex: 12"
+              placeholder={t('unitForm.tour.capacityPh')}
             />
             <Input
-              label="Hora de início"
+              label={t('unitForm.tour.startTime')}
               type="time"
               value={form.start_time}
               onChange={set('start_time')}
             />
             <Input
-              label="Ponto de encontro"
+              label={t('unitForm.tour.meetingPoint')}
               value={form.meeting_point}
               onChange={set('meeting_point')}
-              placeholder="Ex: Marina Santa Maria"
+              placeholder={t('unitForm.tour.meetingPointPh')}
             />
           </div>
           {/* Mostrado nos cartoes do catalogo como "Recolha no hotel" */}
@@ -320,7 +323,7 @@ export default function TourForm({ unit, onSave, onCancel, loading, error }) {
             <input type="checkbox" checked={form.pickup_included}
               onChange={e => setForm(f => ({ ...f, pickup_included: e.target.checked }))}
               className="w-4 h-4 accent-[var(--ocean-700)]" />
-            Inclui recolha no hotel
+            {t('unitForm.tour.pickup')}
           </label>
           {/* Mapa do ponto de encontro: mostrado na pagina do servico e no mapa do catalogo */}
           <LocalizacaoPontoEncontro lat={form.lat} lng={form.lng}
@@ -329,7 +332,7 @@ export default function TourForm({ unit, onSave, onCancel, loading, error }) {
       </div>
 
       <div>
-        <SectionLabel>Idiomas</SectionLabel>
+        <SectionLabel>{t('unitForm.section.languages')}</SectionLabel>
         <div className="flex flex-wrap gap-2 mt-1">
           {LANGUAGES.map(lang => (
             <ChipToggle
@@ -343,10 +346,10 @@ export default function TourForm({ unit, onSave, onCancel, loading, error }) {
       </div>
 
       <div>
-        <SectionLabel>Preços (€ por pessoa)</SectionLabel>
+        <SectionLabel>{t('unitForm.section.prices')}</SectionLabel>
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
           <Input
-            label="Preço adulto (opcional se usar Preço privado/Escalões)"
+            label={t('unitForm.tour.priceAdult')}
             type="number"
             value={form.base_price}
             onChange={set('base_price')}
@@ -355,7 +358,7 @@ export default function TourForm({ unit, onSave, onCancel, loading, error }) {
             placeholder="0.00"
           />
           <Input
-            label="Preço criança"
+            label={t('unitForm.tour.priceChild')}
             type="number"
             value={form.price_child}
             onChange={set('price_child')}
@@ -364,7 +367,7 @@ export default function TourForm({ unit, onSave, onCancel, loading, error }) {
             placeholder="0.00"
           />
           <Input
-            label="Preço privado"
+            label={t('unitForm.tour.pricePrivate')}
             type="number"
             value={form.price_private}
             onChange={set('price_private')}
@@ -376,7 +379,7 @@ export default function TourForm({ unit, onSave, onCancel, loading, error }) {
       </div>
 
       <div>
-        <SectionLabel>Escalões de preço privado por nº de pessoas (opcional)</SectionLabel>
+        <SectionLabel>{t('unitForm.section.tiers')}</SectionLabel>
         <PriceTiersEditor tiers={form.price_tiers} onChange={price_tiers => setForm(f => ({ ...f, price_tiers }))} />
       </div>
 
@@ -384,37 +387,38 @@ export default function TourForm({ unit, onSave, onCancel, loading, error }) {
       <SeccoesOpcoes form={form} setForm={setForm} mostrarErros={tentouGuardar} />
 
       <div>
-        <SectionLabel>Comodidades</SectionLabel>
-        <AmenitiesPicker options={ACTIVITY_AMENS} selected={form.amenities} onToggle={toggleAmen} />
+        <SectionLabel>{t('unitForm.section.amenities')}</SectionLabel>
+        <AmenitiesPicker options={ACTIVITY_AMENS} selected={form.amenities} onToggle={toggleAmen}
+          rotulo={(a) => rotuloComodidadeActividade(a, t)} />
       </div>
 
       <div>
-        <SectionLabel>O que está incluído</SectionLabel>
+        <SectionLabel>{t('unitForm.section.included')}</SectionLabel>
         <IncludedItemsEditor items={form.included_items} onChange={items => setForm(f => ({ ...f, included_items: items }))} />
       </div>
 
       <div>
-        <SectionLabel>Horários com lugares limitados (opcional)</SectionLabel>
+        <SectionLabel>{t('unitForm.section.timeSlots')}</SectionLabel>
         <TimeSlotsEditor slots={form.time_slots} onChange={time_slots => setForm(f => ({ ...f, time_slots }))} />
       </div>
 
       <div>
-        <SectionLabel>Itinerário (opcional)</SectionLabel>
+        <SectionLabel>{t('unitForm.section.itinerary')}</SectionLabel>
         <StopsEditor stops={form.stops} onChange={stops => setForm(f => ({ ...f, stops }))} />
       </div>
 
       <div>
-        <SectionLabel>Informação importante (opcional)</SectionLabel>
-        <Textarea value={form.important_info} onChange={set('important_info')} placeholder="Ex: Traga roupa confortável e protector solar." rows={2} />
+        <SectionLabel>{t('unitForm.section.importantInfo')}</SectionLabel>
+        <Textarea value={form.important_info} onChange={set('important_info')} placeholder={t('unitForm.tour.importantInfoPh')} rows={2} />
       </div>
 
       <div>
-        <SectionLabel>Fotos</SectionLabel>
+        <SectionLabel>{t('unitForm.section.photos')}</SectionLabel>
         <ImageUploader
           value={form.images}
           onChange={(urls) => setForm(f => ({ ...f, images: urls }))}
           maxImages={10}
-          hint="Primeira foto = capa principal · max 10 fotos · 5MB cada"
+          hint={t('unitForm.tour.photosHint')}
         />
       </div>
 
@@ -422,10 +426,10 @@ export default function TourForm({ unit, onSave, onCancel, loading, error }) {
 
       {unit && (
         <div>
-          <SectionLabel>Estado</SectionLabel>
+          <SectionLabel>{t('unitForm.section.status')}</SectionLabel>
           <Select value={form.status} onChange={set('status')}>
-            <option value="active">Activo</option>
-            <option value="inactive">Inactivo</option>
+            <option value="active">{t('unitForm.tour.active')}</option>
+            <option value="inactive">{t('unitForm.tour.inactive')}</option>
           </Select>
         </div>
       )}
@@ -444,10 +448,10 @@ export default function TourForm({ unit, onSave, onCancel, loading, error }) {
 
       <div className="flex gap-3 pt-1">
         <Button type="button" variant="secondary" onClick={onCancel} className="flex-1">
-          Cancelar
+          {t('common.cancel')}
         </Button>
         <Button type="submit" loading={loading} className="flex-1">
-          {unit ? 'Guardar alterações' : 'Criar tour'}
+          {unit ? t('unitForm.tour.saveChanges') : t('unitForm.tour.create')}
         </Button>
       </div>
     </form>

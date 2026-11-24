@@ -136,6 +136,11 @@ export const FICHEIROS_CONVERTIDOS = [
   'pages/Calendar.jsx',
   'components/calendar/CalendarView.jsx',
   'components/calendar/rotulosCalendario.js',
+  /* Fase 2, tarefa 3: formulario de actividade, editores, opcoes e ponto de encontro */
+  'components/units/forms/TourForm.jsx',
+  'components/units/forms/editors.jsx',
+  'components/units/forms/OpcoesActividade.jsx',
+  'components/units/forms/LocalizacaoPontoEncontro.jsx',
 ];
 
 /* Valores portugueses que ficam no codigo de proposito, por ficheiro, com o motivo. */
@@ -156,6 +161,15 @@ export const PERMITIDOS = {
     { valor: 'Venda ao balcao', motivo: 'categoria gravada em cada receita manual (MANUAL_REVENUE_CATEGORIES); o rotulo vem de financial.revenueCategories' },
     { valor: 'Comissao de parceiro', motivo: 'categoria gravada em cada receita manual (MANUAL_REVENUE_CATEGORIES); o rotulo vem de financial.revenueCategories' },
     { valor: 'Aluguer de equipamento', motivo: 'categoria gravada em cada receita manual (MANUAL_REVENUE_CATEGORIES); o rotulo vem de financial.revenueCategories' },
+  ],
+  'components/units/forms/TourForm.jsx': [
+    { valor: 'Equipamento incluído', motivo: 'comodidade fixa de actividade gravada em portugues nos metadados da unidade (ACTIVITY_AMENS); o rotulo vem de unitForm.amenity' },
+    { valor: 'Fotografias/Vídeo', motivo: 'comodidade fixa de actividade gravada em portugues nos metadados da unidade (ACTIVITY_AMENS); o rotulo vem de unitForm.amenity' },
+    { valor: 'Snacks e água', motivo: 'comodidade fixa de actividade gravada em portugues nos metadados da unidade (ACTIVITY_AMENS); o rotulo vem de unitForm.amenity' },
+    { valor: 'Vestiário', motivo: 'comodidade fixa de actividade gravada em portugues nos metadados da unidade (ACTIVITY_AMENS); o rotulo vem de unitForm.amenity' },
+  ],
+  'components/units/forms/editors.jsx': [
+    { valor: 'Passeio de Barco', motivo: 'categoria de actividade gravada em units.unit_type (UNIT_TYPES_BY_OPERATOR); o rotulo vem de unitForm.unitType' },
   ],
 };
 

@@ -3,6 +3,8 @@ import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-libra
 import UnitForm, { parseTourMeta } from '../components/units/UnitForm';
 import useUiStore from '../store/uiStore';
 import { uploadImage } from '../services/uploadService';
+import { getT } from '../i18n';
+import { rotuloDificuldade, rotuloComodidadeActividade, rotuloTipoUnidade } from '../components/units/rotulosUnidades';
 
 /* Sem rede: o unico servico que os formularios tocam (via ImageUploader) e o de upload */
 vi.mock('../services/uploadService', () => ({
@@ -2181,5 +2183,31 @@ describe('formulário genérico com o design system', () => {
     expect(guardar(onSave).base_price).toBe(20);
     fireEvent.click(botao('Cancelar'));
     expect(onCancel).toHaveBeenCalledTimes(1);
+  });
+});
+
+/* Rotulos dos valores gravados nas unidades: o valor nunca muda, so o texto mostrado */
+describe('rotulosUnidades', () => {
+  const pt = getT('pt');
+  const en = getT('en');
+
+  it('rotuloDificuldade: em pt como sempre, em en traduz e um valor desconhecido fica como esta', () => {
+    expect(['Facil', 'Moderado', 'Dificil'].map(v => rotuloDificuldade(v, pt))).toEqual(['Fácil', 'Moderado', 'Difícil']);
+    expect(['Facil', 'Moderado', 'Dificil'].map(v => rotuloDificuldade(v, en))).toEqual(['Easy', 'Moderate', 'Hard']);
+    expect(rotuloDificuldade('Extremo', en)).toBe('Extremo');
+    expect(rotuloDificuldade(undefined, en)).toBeUndefined();
+  });
+
+  it('rotuloComodidadeActividade: as oito comodidades em en; a escrita pelo operador fica como esta', () => {
+    expect(rotuloComodidadeActividade('Seguro', pt)).toBe('Seguro');
+    expect(rotuloComodidadeActividade('Snacks e água', en)).toBe('Snacks and water');
+    expect(rotuloComodidadeActividade('Vista mar', en)).toBe('Vista mar');
+  });
+
+  it('rotuloTipoUnidade: em pt mostra o valor gravado (mesmo sem acento); em en traduz', () => {
+    expect(rotuloTipoUnidade('Sessao', pt, 'pt')).toBe('Sessao');
+    expect(rotuloTipoUnidade('Sessao', en, 'en')).toBe('Session');
+    expect(rotuloTipoUnidade('Passeio de Barco', en, 'en')).toBe('Boat trip');
+    expect(rotuloTipoUnidade('Outra coisa', en, 'en')).toBe('Outra coisa');
   });
 });

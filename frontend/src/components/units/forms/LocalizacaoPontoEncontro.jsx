@@ -3,6 +3,7 @@ import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import Input from '../../ui/Input';
+import { useT } from '../../../i18n';
 import { lerCoordenadas, dentroDeCaboVerde, eLinkCurto } from '../../../utils/coordenadas';
 
 /* Localizacao do ponto de encontro de uma actividade (units.lat / units.lng): mapa onde se
@@ -11,7 +12,6 @@ import { lerCoordenadas, dentroDeCaboVerde, eLinkCurto } from '../../../utils/co
    Spec: docs/superpowers/specs/2026-11-20-ponto-encontro-mapa-design.md */
 
 const SAL = [16.75, -22.93];
-const COLAR = 'Colar coordenadas ou link do Google Maps';
 
 const ICONE = L.divIcon({
   className: '',
@@ -29,6 +29,7 @@ function CliqueNoMapa({ onEscolher }) {
 }
 
 export default function LocalizacaoPontoEncontro({ lat, lng, onChange }) {
+  const t = useT();
   const [colado, setColado] = useState('');
   const [erro, setErro] = useState('');
   /* o mapa recentra quando a localizacao muda por fora dele (colar, remover, sair dos campos);
@@ -45,13 +46,11 @@ export default function LocalizacaoPontoEncontro({ lat, lng, onChange }) {
   }
 
   function lerColado(texto) {
-    const t = (texto ?? colado).trim();
-    if (!t) { setErro(''); return; }
-    const r = lerCoordenadas(t);
+    const lido = (texto ?? colado).trim();
+    if (!lido) { setErro(''); return; }
+    const r = lerCoordenadas(lido);
     if (!r) {
-      setErro(eLinkCurto(t)
-        ? 'Links curtos não trazem coordenadas. Abra o link e copie o endereço completo do browser, ou copie as coordenadas no Google Maps.'
-        : 'Não encontrei coordenadas neste texto.');
+      setErro(eLinkCurto(lido) ? t('unitForm.meeting.errShortLink') : t('unitForm.meeting.errNotFound'));
       return;
     }
     setErro('');
@@ -62,8 +61,8 @@ export default function LocalizacaoPontoEncontro({ lat, lng, onChange }) {
   return (
     <div className="mt-4 space-y-3">
       <div>
-        <p className="text-xs font-body font-bold uppercase tracking-wide text-n-600">Localização do ponto de encontro</p>
-        <p className="text-xs font-body text-n-500 mt-0.5">Clique no mapa para marcar o ponto de encontro. Pode arrastar o marcador.</p>
+        <p className="text-xs font-body font-bold uppercase tracking-wide text-n-600">{t('unitForm.meeting.title')}</p>
+        <p className="text-xs font-body text-n-500 mt-0.5">{t('unitForm.meeting.hint')}</p>
       </div>
 
       <div className="h-56 rounded-md overflow-hidden border border-n-200">
@@ -79,33 +78,33 @@ export default function LocalizacaoPontoEncontro({ lat, lng, onChange }) {
       </div>
 
       <Input
-        label={COLAR}
+        label={t('unitForm.meeting.paste')}
         value={colado}
         onChange={(e) => { setColado(e.target.value); if (erro) setErro(''); }}
-        onPaste={(e) => { const t = e.clipboardData?.getData('text'); if (t) { e.preventDefault(); setColado(t); lerColado(t); } }}
+        onPaste={(e) => { const colou = e.clipboardData?.getData('text'); if (colou) { e.preventDefault(); setColado(colou); lerColado(colou); } }}
         onBlur={() => lerColado()}
         onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); lerColado(); } }}
-        placeholder="Ex: 16.7631, -22.8950"
-        hint="No Google Maps: clique com o botão direito no local e escolha as coordenadas para as copiar."
+        placeholder={t('unitForm.meeting.pastePh')}
+        hint={t('unitForm.meeting.pasteHint')}
         error={erro || undefined}
       />
 
       <div className="grid grid-cols-2 gap-3">
-        <Input label="Latitude" type="number" step="0.000001" value={lat ?? ''} placeholder="Ex: 16.7631"
+        <Input label={t('unitForm.meeting.latitude')} type="number" step="0.000001" value={lat ?? ''} placeholder={t('unitForm.meeting.latPh')}
           onChange={(e) => onChange({ lat: e.target.value, lng: lng ?? '' })}
           onBlur={() => setChaveMapa((k) => k + 1)} />
-        <Input label="Longitude" type="number" step="0.000001" value={lng ?? ''} placeholder="Ex: -22.8950"
+        <Input label={t('unitForm.meeting.longitude')} type="number" step="0.000001" value={lng ?? ''} placeholder={t('unitForm.meeting.lngPh')}
           onChange={(e) => onChange({ lat: lat ?? '', lng: e.target.value })}
           onBlur={() => setChaveMapa((k) => k + 1)} />
       </div>
 
       {temPonto && !dentroDeCaboVerde(latN, lngN) && (
-        <p role="alert" className="text-xs font-body text-amber-700">Este ponto fica fora de Cabo Verde. Confirme a localização.</p>
+        <p role="alert" className="text-xs font-body text-amber-700">{t('unitForm.meeting.outside')}</p>
       )}
       {temPonto && (
         <button type="button" onClick={() => { onChange({ lat: '', lng: '' }); setChaveMapa((k) => k + 1); }}
           className="text-xs font-body font-semibold text-n-600 underline hover:text-n-800">
-          Remover localização
+          {t('unitForm.meeting.remove')}
         </button>
       )}
     </div>

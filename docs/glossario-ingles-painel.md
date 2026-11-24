@@ -62,6 +62,15 @@ estes, em singular e plural, em todos os ecras; nao alternar com sinonimos. O po
 | Pax | Guests | Numero de pessoas de uma reserva de tour (coluna "Guests"); o gravado nao muda. |
 | Vagas | Spots | Lugares livres de uma unidade num dia do calendario ("3/6 spots", "3 spots left"). |
 | Bloquear datas | Block dates | Fechar uma unidade a reservas num intervalo do calendario ("Blocked", "Unblock"). |
+| Ponto de encontro | Meeting point | Onde o grupo se junta para um tour ("Meeting point location"); o gravado e texto livre mais lat/lng. |
+| Dificuldade | Difficulty | Facil / Moderado / Dificil gravados; mostram-se "Easy", "Moderate", "Hard". |
+| Comodidades | Amenities | Lista fixa de extras de uma actividade ("Equipment included", "Towels"); o gravado e o texto portugues. |
+| Opcao (variante) | Option | Variante de uma actividade com preco proprio ("Per person", "Per group", "Per vehicle"); o tipo gravado e per_person, per_group, per_vehicle. |
+| Suplemento de idioma | Language surcharge | Valor fixo por reserva quando o cliente escolhe o idioma do guia. |
+| Oferta | Offer | Desconto automatico por periodo ("Automatic offers"). |
+| Paragem / Itinerario | Stop / Itinerary | Pontos de um tour com coordenadas opcionais. |
+| Escalao de preco | Price tier | Preco privado por intervalo de pessoas ("1-2 guests at 80"). |
+| Horario com lugares | Time slot | Hora de um tour com lugares proprios ("Time slots with limited spots"). |
 
 ## Regras
 
