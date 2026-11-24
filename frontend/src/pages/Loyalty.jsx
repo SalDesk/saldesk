@@ -21,11 +21,13 @@ import Input from '../components/ui/Input';
 import LoadingSpinner from '../components/shared/LoadingSpinner';
 import { useT } from '../i18n';
 import { mensagemErro } from '../utils/mensagemErro';
+import { formatarData, formatarNumero, useLingua } from '../utils/formatoLingua';
 
 const DEFAULT_CONFIG = {
   active: false,
   points_per_euro: 1,
-  /* Niveis por omissao do frontend, com acentos; os de loyaltyController.js (backend) nao tem. */
+  /* Niveis por omissao do frontend, com acentos; os de loyaltyController.js (backend) nao tem.
+     O nome do nivel e o valor gravado; a descricao da recompensa e texto do operador, gravado tal como esta. */
   levels: [
     { name: 'Bronze', min: 0,   max: 100, discount_pct: 5,  reward: '5% desconto em todas as reservas'          },
     { name: 'Prata',  min: 101, max: 499, discount_pct: 10, reward: '10% desconto + upgrade gratuito disponível' },
@@ -40,6 +42,11 @@ const LEVEL_STYLE = {
   Ouro:   { variant: 'direct',  icon: 'bg-sand-50 text-sand-600',                         text: 'text-sand-600'       },
 };
 
+/* Rotulo do nivel pelo nome gravado (Bronze, Prata, Ouro); um nome que nao conhece mostra-se tal e qual */
+function rotuloNivel(name, t) {
+  return Object.prototype.hasOwnProperty.call(LEVEL_STYLE, name) ? t(`loyaltyPage.levels.${name}`) : name;
+}
+
 /* ── Helpers ── */
 function getLevel(points, levels) {
   const pts = Number(points || 0);
@@ -47,18 +54,21 @@ function getLevel(points, levels) {
 }
 
 function LevelBadge({ name }) {
+  const t = useT();
   const s = LEVEL_STYLE[name] || LEVEL_STYLE.Bronze;
-  return <Badge variant={s.variant}>{name}</Badge>;
+  return <Badge variant={s.variant}>{rotuloNivel(name, t)}</Badge>;
 }
 
 /* ── Historico de pontos ── */
-const LEDGER_LABELS = {
-  earn:          { label: 'Ganho',        color: 'text-[var(--success)]' },
-  manual_adjust: { label: 'Ajuste manual', color: 'text-ocean-700' },
-  redeem:        { label: 'Resgate',      color: 'text-sand-600' },
+const LEDGER_COLOR = {
+  earn:          'text-[var(--success)]',
+  manual_adjust: 'text-ocean-700',
+  redeem:        'text-sand-600',
 };
 
 function HistoryList({ customerId, refreshKey }) {
+  const t = useT();
+  const lang = useLingua();
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -72,7 +82,7 @@ function HistoryList({ customerId, refreshKey }) {
 
   if (loading) return <div className="flex justify-center py-4"><LoadingSpinner size={20} /></div>;
   if (history.length === 0) {
-    return <p className="text-xs font-body text-n-400 text-center py-3">Sem movimentos ainda.</p>;
+    return <p className="text-xs font-body text-n-400 text-center py-3">{t('loyaltyPage.noMovements')}</p>;
   }
 
   return (
@@ -80,11 +90,11 @@ function HistoryList({ customerId, refreshKey }) {
       {history.map(h => (
         <div key={h.id} className="flex items-center justify-between text-xs font-body py-1 border-b border-n-100 last:border-0">
           <div className="min-w-0">
-            <span className={`font-semibold ${LEDGER_LABELS[h.type]?.color || 'text-n-600'}`}>
-              {LEDGER_LABELS[h.type]?.label || h.type}
+            <span className={`font-semibold ${LEDGER_COLOR[h.type] || 'text-n-600'}`}>
+              {LEDGER_COLOR[h.type] ? t(`loyaltyPage.ledger.${h.type}`) : h.type}
             </span>
             {h.reason && <span className="text-n-400 truncate"> · {h.reason}</span>}
-            <p className="text-n-400">{new Date(h.created_at).toLocaleDateString('pt-PT')}</p>
+            <p className="text-n-400">{formatarData(new Date(h.created_at), {}, lang)}</p>
           </div>
           <span className={`font-mono font-semibold shrink-0 ${h.points > 0 ? 'text-[var(--success)]' : 'text-[var(--error)]'}`}>
             {h.points > 0 ? '+' : ''}{h.points}
@@ -98,6 +108,7 @@ function HistoryList({ customerId, refreshKey }) {
 /* ── Points Modal ── */
 function PointsModal({ customer, config, onClose, onAdjust, onRedeem }) {
   const t = useT();
+  const lang = useLingua();
   const current = Number(customer?.loyalty_points || 0);
   const [mode,   setMode]   = useState('add');
   const [amount, setAmount] = useState('');
@@ -111,7 +122,7 @@ function PointsModal({ customer, config, onClose, onAdjust, onRedeem }) {
 
   async function handleSave() {
     const delta = Number(amount);
-    if (!delta || delta <= 0) { setError('Introduza um valor válido.'); return; }
+    if (!delta || delta <= 0) { setError(t('loyaltyPage.points.errAmount')); return; }
     setSaving(true);
     setError('');
     try {
@@ -119,7 +130,7 @@ function PointsModal({ customer, config, onClose, onAdjust, onRedeem }) {
       setAmount('');
       setReason('');
       setHistoryKey(k => k + 1);
-    } catch { setError('Erro ao actualizar pontos.'); }
+    } catch { setError(t('loyaltyPage.points.errAdjust')); }
     finally { setSaving(false); }
   }
 
@@ -131,7 +142,7 @@ function PointsModal({ customer, config, onClose, onAdjust, onRedeem }) {
       setRedeemedVoucher(result.voucher);
       setHistoryKey(k => k + 1);
     } catch (err) {
-      setError(mensagemErro(err, t, 'Erro ao resgatar pontos.'));
+      setError(mensagemErro(err, t, t('loyaltyPage.points.errRedeem')));
     } finally { setRedeeming(false); }
   }
 
@@ -150,12 +161,12 @@ function PointsModal({ customer, config, onClose, onAdjust, onRedeem }) {
   const previewLevel = getLevel(preview, config.levels);
 
   return (
-    <Modal open onClose={onClose} title={`Pontos — ${customer?.name || ''}`} size="sm">
+    <Modal open onClose={onClose} title={t('loyaltyPage.points.title', { name: customer?.name || '' })} size="sm">
       <div className="space-y-4">
         <div className="flex items-center justify-between p-3 bg-n-50 rounded-sm border border-n-200">
           <div>
-            <p className="text-xs font-body text-n-500">Pontos actuais</p>
-            <p className="font-display font-bold text-2xl text-n-900">{current.toLocaleString('pt-PT')}</p>
+            <p className="text-xs font-body text-n-500">{t('loyaltyPage.points.current')}</p>
+            <p className="font-display font-bold text-2xl text-n-900">{formatarNumero(current, {}, lang)}</p>
           </div>
           <LevelBadge name={currentLevel.name} />
         </div>
@@ -163,35 +174,35 @@ function PointsModal({ customer, config, onClose, onAdjust, onRedeem }) {
         {/* Resgate */}
         {redeemedVoucher ? (
           <div className="p-3 bg-[var(--success-light)] border border-n-200 rounded-sm space-y-2">
-            <p className="text-xs font-body font-semibold text-[var(--success)]">Voucher gerado — {redeemedVoucher.value}% de desconto</p>
+            <p className="text-xs font-body font-semibold text-[var(--success)]">{t('loyaltyPage.points.voucherCreated', { pct: redeemedVoucher.value })}</p>
             <div className="flex items-center gap-2">
               <code className="flex-1 font-mono text-sm font-bold text-n-900 bg-white border border-n-200 rounded-xs px-2 py-1.5">
                 {redeemedVoucher.code}
               </code>
-              <button type="button" onClick={copyCode} className="p-1.5 rounded text-n-500 hover:text-ocean-700 hover:bg-white transition-colors" title="Copiar código" aria-label="Copiar código">
+              <button type="button" onClick={copyCode} className="p-1.5 rounded text-n-500 hover:text-ocean-700 hover:bg-white transition-colors" title={t('loyaltyPage.points.copyCode')} aria-label={t('loyaltyPage.points.copyCode')}>
                 {copied ? <CheckIcon size={14} strokeWidth={2} className="text-[var(--success)]" /> : <Copy size={14} strokeWidth={1.75} />}
               </button>
             </div>
-            <p className="text-xs font-body text-n-500">Uso único, válido até {new Date(redeemedVoucher.expires_at).toLocaleDateString('pt-PT', { timeZone: 'UTC' })}.</p>
+            <p className="text-xs font-body text-n-500">{t('loyaltyPage.points.singleUse', { date: formatarData(new Date(redeemedVoucher.expires_at), { timeZone: 'UTC' }, lang) })}</p>
           </div>
         ) : (
           <div className="p-3 bg-sand-50 border border-sand-100 rounded-sm">
             <div className="flex items-center justify-between gap-3">
               <div className="min-w-0">
                 <p className="text-xs font-body font-semibold text-n-700 flex items-center gap-1.5">
-                  <Gift size={13} strokeWidth={1.75} /> Resgatar nível {currentLevel.name}
+                  <Gift size={13} strokeWidth={1.75} /> {t('loyaltyPage.points.redeemTier', { level: rotuloNivel(currentLevel.name, t) })}
                 </p>
-                <p className="text-xs font-body text-n-500 truncate">Troca todo o saldo por um voucher de {currentLevel.discount_pct}% (uso único).</p>
+                <p className="text-xs font-body text-n-500 truncate">{t('loyaltyPage.points.redeemHelp', { pct: currentLevel.discount_pct })}</p>
               </div>
               <Button size="sm" variant="secondary" loading={redeeming} disabled={current <= 0} onClick={handleRedeem} className="shrink-0">
-                Resgatar
+                {t('loyaltyPage.points.redeem')}
               </Button>
             </div>
           </div>
         )}
 
         <div className="flex gap-1 bg-n-100 rounded-sm p-0.5">
-          {[{ v: 'add', l: 'Adicionar' }, { v: 'remove', l: 'Remover' }].map(o => (
+          {[{ v: 'add', l: t('loyaltyPage.points.add') }, { v: 'remove', l: t('loyaltyPage.points.remove') }].map(o => (
             <button key={o.v} type="button" aria-pressed={mode === o.v} onClick={() => setMode(o.v)}
               className={`flex-1 py-1.5 text-xs font-body font-semibold rounded-xs transition-colors ${mode === o.v ? 'bg-white text-ocean-700 shadow-sm' : 'text-n-500 hover:text-n-700'}`}>
               {o.l}
@@ -200,26 +211,26 @@ function PointsModal({ customer, config, onClose, onAdjust, onRedeem }) {
         </div>
 
         <Input
-          label="Quantidade de pontos" aria-label="Quantidade de pontos"
+          label={t('loyaltyPage.points.amount')} aria-label={t('loyaltyPage.points.amount')}
           type="number" min="1" step="1"
           value={amount}
           onChange={e => setAmount(e.target.value)}
-          placeholder="Ex: 50"
+          placeholder={t('loyaltyPage.points.amountPlaceholder')}
         />
 
         <Input
-          label="Motivo" aria-label="Motivo"
+          label={t('loyaltyPage.points.reason')} aria-label={t('loyaltyPage.points.reason')}
           value={reason}
           onChange={e => setReason(e.target.value)}
-          placeholder="Ex: reserva especial, ajuste manual..."
+          placeholder={t('loyaltyPage.points.reasonPlaceholder')}
         />
 
         {Number(amount) > 0 && (
           <div className="p-3 bg-ocean-50 border border-ocean-100 rounded-sm">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-body text-n-600">Resultado</span>
+              <span className="text-xs font-body text-n-600">{t('loyaltyPage.points.result')}</span>
               <div className="flex items-center gap-2">
-                <span className="font-display font-bold text-ocean-700">{preview.toLocaleString('pt-PT')} pts</span>
+                <span className="font-display font-bold text-ocean-700">{formatarNumero(preview, {}, lang)} {t('loyaltyPage.points.pts')}</span>
                 {previewLevel.name !== currentLevel.name && (
                   <LevelBadge name={previewLevel.name} />
                 )}
@@ -233,13 +244,13 @@ function PointsModal({ customer, config, onClose, onAdjust, onRedeem }) {
         )}
 
         <div className="flex gap-3">
-          <Button variant="secondary" onClick={onClose} className="flex-1">Fechar</Button>
-          <Button icon={Save} loading={saving} onClick={handleSave} className="flex-1">Guardar ajuste</Button>
+          <Button variant="secondary" onClick={onClose} className="flex-1">{t('loyaltyPage.points.close')}</Button>
+          <Button icon={Save} loading={saving} onClick={handleSave} className="flex-1">{t('loyaltyPage.points.saveAdjust')}</Button>
         </div>
 
         <div className="pt-2 border-t border-n-100">
           <p className="text-xs font-body font-bold uppercase tracking-wide text-n-500 mb-2 flex items-center gap-1.5">
-            <Clock size={12} strokeWidth={1.75} /> Histórico
+            <Clock size={12} strokeWidth={1.75} /> {t('loyaltyPage.points.history')}
           </p>
           <HistoryList customerId={customer.id} refreshKey={historyKey} />
         </div>
@@ -250,9 +261,11 @@ function PointsModal({ customer, config, onClose, onAdjust, onRedeem }) {
 
 /* ── LevelCard ── */
 function LevelCard({ level, index, onUpdate, totalCustomers }) {
+  const t = useT();
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState({ ...level });
   const s = LEVEL_STYLE[level.name] || LEVEL_STYLE.Bronze;
+  const nome = rotuloNivel(level.name, t);
 
   function handleSave() {
     onUpdate(index, draft);
@@ -275,11 +288,11 @@ function LevelCard({ level, index, onUpdate, totalCustomers }) {
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
-            <span className="font-display font-semibold text-sm text-n-900">{level.name}</span>
+            <span className="font-display font-semibold text-sm text-n-900">{nome}</span>
             <LevelBadge name={level.name} />
           </div>
           <p className="text-xs font-body text-n-500 mt-0.5">
-            {level.min}–{level.max != null ? level.max : '∞'} pts · {level.discount_pct}% desconto
+            {t('loyaltyPage.level.range', { min: level.min, max: level.max != null ? level.max : '∞', pct: level.discount_pct })}
           </p>
         </div>
         {open ? <ChevronUp size={16} strokeWidth={1.75} className="text-n-400 shrink-0" /> : <ChevronDown size={16} strokeWidth={1.75} className="text-n-400 shrink-0" />}
@@ -288,19 +301,19 @@ function LevelCard({ level, index, onUpdate, totalCustomers }) {
       {open && (
         <div className="border-t border-n-100 px-4 py-4 space-y-3 bg-n-50">
           <Input
-            label="Desconto (%)" aria-label="Desconto (%)"
+            label={t('loyaltyPage.level.discountPct')} aria-label={t('loyaltyPage.level.discountPct')}
             type="number" min="0" max="100" step="1"
             value={draft.discount_pct}
             onChange={e => setDraft(p => ({ ...p, discount_pct: Number(e.target.value) }))}
           />
           <Input
-            label="Descrição da recompensa" aria-label="Descrição da recompensa"
+            label={t('loyaltyPage.level.rewardDesc')} aria-label={t('loyaltyPage.level.rewardDesc')}
             value={draft.reward}
             onChange={e => setDraft(p => ({ ...p, reward: e.target.value }))}
           />
           {index < 2 && (
             <Input
-              label={`Pontos máximo (nível ${level.name})`} aria-label={`Pontos máximo (nível ${level.name})`}
+              label={t('loyaltyPage.level.maxPoints', { level: nome })} aria-label={t('loyaltyPage.level.maxPoints', { level: nome })}
               type="number" min="1"
               value={draft.max ?? ''}
               onChange={e => setDraft(p => ({ ...p, max: e.target.value ? Number(e.target.value) : null }))}
@@ -308,10 +321,10 @@ function LevelCard({ level, index, onUpdate, totalCustomers }) {
           )}
           <div className="flex gap-2 pt-1">
             <Button variant="secondary" size="sm" onClick={() => { setDraft({ ...level }); setOpen(false); }} className="flex-1">
-              Cancelar
+              {t('loyaltyPage.level.cancel')}
             </Button>
             <Button size="sm" icon={Save} onClick={handleSave} className="flex-1">
-              Guardar
+              {t('loyaltyPage.level.save')}
             </Button>
           </div>
         </div>
@@ -322,6 +335,8 @@ function LevelCard({ level, index, onUpdate, totalCustomers }) {
 
 /* ── Main ── */
 export default function Loyalty() {
+  const t = useT();
+  const lang = useLingua();
   const [activeTab,  setActiveTab]  = useState('config');
   const [config,     setConfig]     = useState(DEFAULT_CONFIG);
   const [configLoading, setConfigLoading] = useState(true);
@@ -399,7 +414,7 @@ export default function Loyalty() {
   /* colunas da tabela de clientes; o destaque (estrela) e do primeiro com pontos */
   const columns = [
     {
-      key: 'name', label: 'Cliente',
+      key: 'name', label: t('loyaltyPage.columns.customer'),
       render: c => (
         <span className="font-body font-semibold text-n-900 whitespace-nowrap">
           {c.name}
@@ -409,25 +424,25 @@ export default function Loyalty() {
         </span>
       ),
     },
-    { key: 'email', label: 'Email', render: c => <span className="text-xs text-n-500">{c.email || '—'}</span> },
-    { key: 'visits', label: 'Visitas', align: 'center', render: c => <span className="font-mono text-n-600">{c.total_visits ?? 0}</span> },
+    { key: 'email', label: t('loyaltyPage.columns.email'), render: c => <span className="text-xs text-n-500">{c.email || '—'}</span> },
+    { key: 'visits', label: t('loyaltyPage.columns.visits'), align: 'center', render: c => <span className="font-mono text-n-600">{c.total_visits ?? 0}</span> },
     {
-      key: 'points', label: 'Pontos',
+      key: 'points', label: t('loyaltyPage.columns.points'),
       render: c => (
         <span className="font-display font-bold text-ocean-700 whitespace-nowrap">
-          {Number(c.loyalty_points || 0).toLocaleString('pt-PT')} pts
+          {formatarNumero(Number(c.loyalty_points || 0), {}, lang)} {t('loyaltyPage.points.pts')}
         </span>
       ),
     },
-    { key: 'level', label: 'Nível', render: c => <LevelBadge name={getLevel(c.loyalty_points, config.levels).name} /> },
+    { key: 'level', label: t('loyaltyPage.columns.tier'), render: c => <LevelBadge name={getLevel(c.loyalty_points, config.levels).name} /> },
     {
-      key: 'reward', label: 'Recompensa',
+      key: 'reward', label: t('loyaltyPage.columns.reward'),
       render: c => <span className="text-xs font-body text-n-500 max-w-[160px] truncate block">{getLevel(c.loyalty_points, config.levels).reward}</span>,
     },
     {
       key: 'acoes', label: '',
       render: c => (
-        <button type="button" onClick={() => setEditingCustomer(c)} aria-label={`Ajustar pontos ${c.name}`}
+        <button type="button" onClick={() => setEditingCustomer(c)} aria-label={t('loyaltyPage.adjustAria', { name: c.name })}
           className="p-1.5 rounded text-n-400 hover:text-ocean-700 hover:bg-ocean-50 transition-colors">
           <Edit2 size={13} strokeWidth={1.75} />
         </button>
@@ -438,7 +453,7 @@ export default function Loyalty() {
   if (configLoading) {
     return (
       <div>
-        <PageHeader title="Programa de Fidelidade" subtitle="Configure níveis, pontos e recompensas" />
+        <PageHeader title={t('loyaltyPage.title')} subtitle={t('loyaltyPage.subtitle')} />
         <div className="flex justify-center py-16"><LoadingSpinner size={32} /></div>
       </div>
     );
@@ -447,25 +462,23 @@ export default function Loyalty() {
   return (
     <div>
       <PageHeader
-        title="Programa de Fidelidade"
-        subtitle="Configure níveis, pontos e recompensas"
+        title={t('loyaltyPage.title')}
+        subtitle={t('loyaltyPage.subtitle')}
       />
 
       {/* Active toggle */}
       <div className={`flex items-center gap-4 px-4 py-3 rounded-md border border-n-200 mb-6 ${config.active ? 'bg-[var(--success-light)]' : 'bg-n-50'}`}>
-        <button type="button" onClick={toggleActive} aria-pressed={config.active} aria-label="Programa de fidelidade" className="shrink-0">
+        <button type="button" onClick={toggleActive} aria-pressed={config.active} aria-label={t('loyaltyPage.programAria')} className="shrink-0">
           {config.active
             ? <ToggleRight size={28} strokeWidth={1.5} className="text-[var(--success)]" />
             : <ToggleLeft  size={28} strokeWidth={1.5} className="text-n-400" />}
         </button>
         <div>
           <p className={`text-sm font-body font-semibold ${config.active ? 'text-[var(--success)]' : 'text-n-600'}`}>
-            Programa {config.active ? 'activo' : 'inactivo'}
+            {config.active ? t('loyaltyPage.programActive') : t('loyaltyPage.programInactive')}
           </p>
           <p className="text-xs font-body text-n-400">
-            {config.active
-              ? 'Os clientes acumulam pontos automaticamente após cada reserva.'
-              : 'Active o programa para começar a atribuir pontos aos clientes.'}
+            {config.active ? t('loyaltyPage.activeHelp') : t('loyaltyPage.inactiveHelp')}
           </p>
         </div>
       </div>
@@ -473,7 +486,7 @@ export default function Loyalty() {
       {/* Tabs */}
       <div className="mb-6">
         <Tabs
-          tabs={[{ id: 'config', label: 'Configuração' }, { id: 'clientes', label: 'Clientes' }]}
+          tabs={[{ id: 'config', label: t('loyaltyPage.tabs.config') }, { id: 'clientes', label: t('loyaltyPage.tabs.customers') }]}
           value={activeTab}
           onChange={setActiveTab}
         />
@@ -483,31 +496,31 @@ export default function Loyalty() {
         <div className="space-y-5">
           {/* Points per euro */}
           <Card padding="px-5 py-5">
-            <h3 className="font-display font-semibold text-sm text-n-700 mb-4">Regra de acumulação</h3>
+            <h3 className="font-display font-semibold text-sm text-n-700 mb-4">{t('loyaltyPage.earning.title')}</h3>
             <div className="flex items-end gap-4 max-w-xs">
               <Input
-                label="Pontos por Euro gasto" aria-label="Pontos por Euro gasto"
+                label={t('loyaltyPage.earning.pointsPerEuro')} aria-label={t('loyaltyPage.earning.pointsPerEuro')}
                 type="number" min="0.1" step="0.1"
                 value={config.points_per_euro}
                 onChange={e => persistConfig({ ...config, points_per_euro: Number(e.target.value) })}
               />
-              <p className="text-xs font-body text-n-500 pb-2 whitespace-nowrap">pt / EUR</p>
+              <p className="text-xs font-body text-n-500 pb-2 whitespace-nowrap">{t('loyaltyPage.earning.unit')}</p>
             </div>
             <p className="text-xs font-body text-n-400 mt-2">
-              Ex: reserva de €100 = {Math.round(100 * config.points_per_euro)} pontos.
+              {t('loyaltyPage.earning.example', { n: Math.round(100 * config.points_per_euro) })}
             </p>
           </Card>
 
           {/* Levels */}
           <Card padding="px-5 py-5">
-            <h3 className="font-display font-semibold text-sm text-n-700 mb-4">Níveis e recompensas</h3>
+            <h3 className="font-display font-semibold text-sm text-n-700 mb-4">{t('loyaltyPage.tiers.title')}</h3>
             <div className="space-y-3">
               {config.levels.map((l, i) => (
                 <LevelCard key={l.name} level={l} index={i} onUpdate={updateLevel} totalCustomers={customers.length} />
               ))}
             </div>
             <p className="text-xs font-body text-n-400 mt-3">
-              Os limites mínimos dos níveis Prata e Ouro são calculados automaticamente a partir do máximo do nível anterior.
+              {t('loyaltyPage.tiers.note')}
             </p>
           </Card>
         </div>
@@ -518,10 +531,10 @@ export default function Loyalty() {
           {/* Summary */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
             {[
-              { label: 'Total clientes',   value: stats.total,  color: 'text-n-900'               },
-              { label: 'Bronze',           value: stats.bronze, color: LEVEL_STYLE.Bronze.text    },
-              { label: 'Prata',            value: stats.prata,  color: LEVEL_STYLE.Prata.text     },
-              { label: 'Ouro',             value: stats.ouro,   color: LEVEL_STYLE.Ouro.text      },
+              { label: t('loyaltyPage.stats.total'),           value: stats.total,  color: 'text-n-900'               },
+              { label: rotuloNivel('Bronze', t),               value: stats.bronze, color: LEVEL_STYLE.Bronze.text    },
+              { label: rotuloNivel('Prata', t),                value: stats.prata,  color: LEVEL_STYLE.Prata.text     },
+              { label: rotuloNivel('Ouro', t),                 value: stats.ouro,   color: LEVEL_STYLE.Ouro.text      },
             ].map(m => (
               <Card key={m.label} padding="px-4 py-3">
                 <div className="flex items-center gap-3">
@@ -540,11 +553,16 @@ export default function Loyalty() {
             <div className="flex-1 min-w-[180px]">
               <Input
                 value={search} onChange={e => setSearch(e.target.value)}
-                placeholder="Pesquisar cliente..." aria-label="Pesquisar cliente"
+                placeholder={t('loyaltyPage.searchPlaceholder')} aria-label={t('loyaltyPage.searchAria')}
               />
             </div>
             <FilterChips
-              options={[{ value: '', label: 'Todos' }, { value: 'Bronze', label: 'Bronze' }, { value: 'Prata', label: 'Prata' }, { value: 'Ouro', label: 'Ouro' }]}
+              options={[
+                { value: '', label: t('loyaltyPage.all') },
+                { value: 'Bronze', label: rotuloNivel('Bronze', t) },
+                { value: 'Prata', label: rotuloNivel('Prata', t) },
+                { value: 'Ouro', label: rotuloNivel('Ouro', t) },
+              ]}
               value={filterLevel}
               onChange={setFilterLevel}
             />
@@ -556,7 +574,7 @@ export default function Loyalty() {
           ) : (
             <Card padding="p-0">
               {sorted.length === 0 ? (
-                <EmptyState icon={Users} title="Sem clientes encontrados." />
+                <EmptyState icon={Users} title={t('loyaltyPage.emptyCustomers')} />
               ) : (
                 <Table columns={columns} rows={sorted} />
               )}

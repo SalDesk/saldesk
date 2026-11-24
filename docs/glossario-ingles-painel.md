@@ -83,6 +83,12 @@ estes, em singular e plural, em todos os ecras; nao alternar com sinonimos. O po
 | Pedido (restaurante) | Order | Pedido de uma mesa ao restaurante (menu "Orders"); os estados gravados received, preparing, ready, delivered, cancelled mostram-se "Received", "Preparing", "Ready", "Delivered", "Cancelled". |
 | Preco acordado | Agreed price | Preco negociado com um cliente na sua ficha ("Agreed price"). |
 | Etiqueta (cliente) | Tag | Marca livre de um cliente; as etiquetas gravadas (VIP, grupo, corporativo, fidelizado, novo, recorrente...) mostram-se "VIP", "group", "corporate", "loyal", "new", "returning". |
+| Fidelidade | Loyalty | O programa de pontos do operador ("Loyalty programme"); os niveis gravados Bronze, Prata e Ouro mostram-se "Bronze", "Silver" e "Gold". |
+| Recompensa | Reward | O que o cliente ganha em cada nivel ou ao trocar pontos ("Reward description"). |
+| Nivel (fidelidade) | Tier | Escalao do programa de fidelidade ("Tier", "Redeem Gold tier"); nao usar "Level". |
+| Pacote / Pacotes | Package / Packages | Varios tours vendidos juntos a preco especial ("Seasonal packages"); os estados gravados activo, inactivo, esgotado mostram-se "Active", "Inactive", "Sold out". |
+| Grupo / Cotacao | Group booking / Quote | Pedido de um grupo ou empresa ("Group bookings and corporate events"); a cotacao e o "Quote" e o sinal e o "Deposit"; os estados gravados pedido, em_analise, proposta_enviada, confirmado, concluido, cancelado mostram-se "Request", "Under review", "Proposal sent", "Confirmed", "Completed", "Cancelled". |
+| Parceiro / Parceria | Partner / Partnership | Operador ou empresa com quem se troca clientes ("Cross-selling partnerships"); tipos gravados hotel, activity, rentacar, restaurant e parcerias recommendation, commission, discount. |
 
 ## Regras
 

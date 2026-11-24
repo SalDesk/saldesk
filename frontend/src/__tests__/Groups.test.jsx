@@ -3,6 +3,8 @@ import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-li
 import Groups from '../pages/Groups';
 import { listGroups, createGroup, updateGroup, deleteGroup, createGroupPayment } from '../services/groupsService';
 import { listUnits } from '../services/unitsService';
+import useUiStore from '../store/uiStore';
+import { portuguesNoEcra, chavesCruas } from './helpers/portuguesNoEcra';
 
 vi.mock('../services/groupsService', () => ({
   listGroups: vi.fn(), createGroup: vi.fn(), updateGroup: vi.fn(), deleteGroup: vi.fn(), createGroupPayment: vi.fn(),
@@ -331,5 +333,138 @@ describe('Grupos com o design system', () => {
     expect(html).not.toMatch(HEX);
     expect(html).not.toMatch(NOMEADAS);
     expect(html.replace(/text-error ml-0[.]5/g, '')).not.toMatch(/(?:text|bg|border)-error/);
+  });
+});
+
+/* ───────────────────────── painel em ingles ───────────────────────── */
+
+describe('Grupos: painel em ingles', () => {
+  /* nomes das empresas, tours e notas dos pagamentos sao dados do operador */
+  const DADOS = ['Empresa', 'Hotel Beta', 'Escola Gama', 'Cancelada SA', 'Análise Lda', 'Proposta Lda', 'Kite', 'Mergulho', 'Alergias', 'Sinal'];
+  const dataEn = (d) => new Date(d + 'T00:00:00Z').toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'UTC' });
+  const botaoNova = () => screen.getAllByText('New quote').find(e => e.closest('button')).closest('button');
+
+  beforeEach(() => { useUiStore.setState({ lang: 'en' }); });
+  afterEach(() => { cleanup(); useUiStore.setState({ lang: 'pt' }); });
+
+  it('a_lista_mostra_rotulos_em_ingles_sem_portugues_nem_chaves_cruas', async () => {
+    await montar();
+    expect(screen.getByText('Group bookings and corporate events')).toBeInTheDocument();
+    expect(kpi('Total quotes')).toBe('6');
+    expect(screen.getAllByText('Confirmed').find(e => e.previousSibling?.className?.includes('text-xl')).previousSibling.textContent).toBe('1');
+    expect(kpi('Confirmed guests')).toBe('80');
+    expect(cartao('Empresa Alfa')).toHaveTextContent('Team building · 20 guests');
+    expect(cartao('Empresa Alfa')).toHaveTextContent('Request');
+    expect(cartao('Hotel Beta')).toHaveTextContent('Wedding / Event');
+    expect(cartao('Cancelada SA')).toHaveTextContent('Cancelled');
+    expect(cartao('Escola Gama')).toHaveTextContent('Completed');
+    ['All', 'Request', 'Under review', 'Proposal sent', 'Confirmed', 'Completed', 'Cancelled'].forEach(r => expect(chip(r)).toBeInTheDocument());
+    expect(portuguesNoEcra(DADOS)).toEqual([]);
+    expect(chavesCruas(['groupsPage'])).toEqual([]);
+  });
+
+  it('o_filtro_por_estado_usa_o_valor_gravado', async () => {
+    await montar();
+    fireEvent.click(chip('Under review'));
+    expect(empresasPorOrdem()).toEqual(['Análise Lda']);
+    fireEvent.click(chip('All'));
+    expect(empresasPorOrdem()).toHaveLength(6);
+    fireEvent.change(screen.getByPlaceholderText('Search company or group...'), { target: { value: 'zzz' } });
+    expect(screen.getByText('No quotes')).toBeInTheDocument();
+    expect(screen.getByText('No quote matches the filters.')).toBeInTheDocument();
+  });
+
+  it('o_cartao_aberto_mostra_condicoes_pagamentos_e_valores_em_en', async () => {
+    await montar();
+    abrir('Empresa Alfa');
+    const c = within(cartao('Empresa Alfa'));
+    expect(c.getByText('Requested tours')).toBeInTheDocument();
+    expect(c.getByText('Kite — €50/guest')).toBeInTheDocument();
+    expect(c.getByText('Final payment').nextSibling).toHaveTextContent('7d before');
+    expect(c.getByText('Proposal valid until').nextSibling).toHaveTextContent(dataEn(dia(10)));
+    expect(c.getByText('Payments received')).toBeInTheDocument();
+    expect(cartao('Empresa Alfa')).toHaveTextContent('€300.00');
+    expect(c.getByText('Total paid')).toBeInTheDocument();
+    expect(c.getByText('Move to: Under review')).toBeInTheDocument();
+    expect(c.getByText('Record payment')).toBeInTheDocument();
+    expect(c.getByText('Print proposal')).toBeInTheDocument();
+    expect(portuguesNoEcra(DADOS)).toEqual([]);
+  });
+
+  it('os_pagamentos_usam_separador_de_milhares_en_e_pt_fica_como_sempre', async () => {
+    const g = { id: 'g9', company: 'Empresa Grande', event_type: 'outro', guests: 5, status: 'pedido', payments: [{ date: '2026-11-01', note: 'Sinal', amount: 1250.5 }], created_at: '2026-11-07T10:00:00Z' };
+    listGroups.mockResolvedValue([g]);
+    await montar('Empresa Grande');
+    abrir('Empresa Grande');
+    expect(cartao('Empresa Grande')).toHaveTextContent('€1,250.50');
+    cleanup();
+    useUiStore.setState({ lang: 'pt' });
+    await montar('Empresa Grande');
+    abrir('Empresa Grande');
+    expect(cartao('Empresa Grande')).toHaveTextContent('€1250.50');
+  });
+
+  it('criar_em_ingles_grava_o_tipo_de_evento_e_o_estado_gravados', async () => {
+    createGroup.mockImplementation(async (d) => ({ id: 'gn', created_at: '2026-11-20T10:00:00Z', ...d }));
+    await montar();
+    fireEvent.click(botaoNova());
+    const dlg = within(screen.getByRole('dialog'));
+    fireEvent.change(dlg.getByLabelText('Company / Group'), { target: { value: 'ACME' } });
+    const tipo = dlg.getByLabelText('Event type');
+    expect(Array.from(tipo.options).map(o => o.textContent)).toEqual(['Team building', 'Incentive trip', 'Group tourism', 'Wedding / Event', 'Other']);
+    fireEvent.change(tipo, { target: { value: Array.from(tipo.options).find(o => o.textContent === 'Wedding / Event').value } });
+    fireEvent.change(dlg.getByLabelText('Number of guests'), { target: { value: '12' } });
+    fireEvent.click(dlg.getByText('Kite — €50/guest'));
+    fireEvent.change(dlg.getByLabelText('Group discount (%)'), { target: { value: '10' } });
+    expect(screen.getByRole('dialog')).toHaveTextContent('Estimated price with discount: €540 (12 guests × 10% discount)');
+    expect(dlg.queryByLabelText('Status')).toBeNull();
+    expect(portuguesNoEcra([...DADOS, 'ACME'], screen.getByRole('dialog'))).toEqual([]);
+    fireEvent.click(dlg.getByRole('button', { name: 'Create quote' }));
+    await waitFor(() => expect(createGroup).toHaveBeenCalledWith(expect.objectContaining({
+      company: 'ACME', event_type: 'casamento', guests: 12, tour_ids: ['u1'], status: 'pedido', signal_pct: 30, days_before: 7,
+    })));
+  });
+
+  it('editar_em_ingles_grava_o_estado_gravado_e_avancar_usa_o_proximo_estado_gravado', async () => {
+    updateGroup.mockImplementation(async (id, d) => ({ ...GRUPOS.find(g => g.id === id), ...d }));
+    await montar();
+    abrir('Empresa Alfa');
+    fireEvent.click(within(cartao('Empresa Alfa')).getByText('Move to: Under review'));
+    await waitFor(() => expect(updateGroup).toHaveBeenCalledWith('g1', { status: 'em_analise' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Edit Empresa Alfa' }));
+    const dlg = within(screen.getByRole('dialog'));
+    const estado = dlg.getByLabelText('Status');
+    expect(Array.from(estado.options).map(o => o.textContent)).toEqual(['Request', 'Under review', 'Proposal sent', 'Confirmed', 'Completed', 'Cancelled']);
+    fireEvent.change(estado, { target: { value: Array.from(estado.options).find(o => o.textContent === 'Proposal sent').value } });
+    fireEvent.click(dlg.getByRole('button', { name: 'Save' }));
+    await waitFor(() => expect(updateGroup).toHaveBeenLastCalledWith('g1', expect.objectContaining({ status: 'proposta_enviada' })));
+  });
+
+  it('registar_pagamento_em_ingles_propoe_a_descricao_em_ingles_e_grava_montante_e_data', async () => {
+    createGroupPayment.mockImplementation(async (id) => ({ ...GRUPOS.find(g => g.id === id) }));
+    await montar();
+    abrir('Empresa Alfa');
+    fireEvent.click(within(cartao('Empresa Alfa')).getByText('Record payment'));
+    const dlg = within(screen.getByRole('dialog'));
+    expect(screen.getByRole('dialog')).toHaveTextContent('Total paid so far: €300.00');
+    expect(dlg.getByLabelText('Description')).toHaveValue('Deposit');
+    fireEvent.change(dlg.getByLabelText('Amount received (€)'), { target: { value: '200' } });
+    fireEvent.click(dlg.getByRole('button', { name: 'Record' }));
+    await waitFor(() => expect(createGroupPayment).toHaveBeenCalledWith('g1', expect.objectContaining({ amount: 200, note: 'Deposit' })));
+  });
+
+  it('o_erro_ao_guardar_e_a_confirmacao_de_eliminar_aparecem_em_ingles', async () => {
+    createGroup.mockRejectedValue(new Error('x'));
+    const confirma = vi.spyOn(window, 'confirm').mockReturnValue(false);
+    await montar();
+    abrir('Hotel Beta');
+    fireEvent.click(screen.getByRole('button', { name: 'Delete Hotel Beta' }));
+    expect(confirma).toHaveBeenCalledWith('Delete this quote?');
+    fireEvent.click(botaoNova());
+    const dlg = within(screen.getByRole('dialog'));
+    fireEvent.change(dlg.getByLabelText('Company / Group'), { target: { value: 'X' } });
+    fireEvent.change(dlg.getByLabelText('Number of guests'), { target: { value: '3' } });
+    fireEvent.click(dlg.getByRole('button', { name: 'Create quote' }));
+    expect(await screen.findByText('Could not save the quote.')).toBeInTheDocument();
   });
 });

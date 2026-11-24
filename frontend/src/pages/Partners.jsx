@@ -19,22 +19,31 @@ import Input, { Textarea, Select } from '../components/ui/Input';
 import LoadingSpinner from '../components/shared/LoadingSpinner';
 import { useT } from '../i18n';
 import { mensagemErro } from '../utils/mensagemErro';
+import { useLingua } from '../utils/formatoLingua';
+import { euroPreco } from '../utils/formatoVendedor';
+import { eurosInteiros } from './reservations/shared';
 
+/* tipos de parceiro e de parceria gravados; os rotulos vem de partnersPage.types e partnersPage.partnershipTypes */
 const PARTNER_TYPES = [
-  { value: 'hotel',      label: 'Hotel / Alojamento', Icon: Hotel   },
-  { value: 'activity',   label: 'Actividade Turística', Icon: Compass },
-  { value: 'rentacar',   label: 'Rent-a-Car',         Icon: Car     },
-  { value: 'restaurant', label: 'Restaurante',        Icon: Utensils },
+  { value: 'hotel',      Icon: Hotel   },
+  { value: 'activity',   Icon: Compass },
+  { value: 'rentacar',   Icon: Car     },
+  { value: 'restaurant', Icon: Utensils },
 ];
 
-const PARTNERSHIP_TYPES = [
-  { value: 'recommendation', label: 'Recomendação mútua (sem comissão)' },
-  { value: 'commission',     label: 'Comissão por reserva referenciada'  },
-  { value: 'discount',       label: 'Desconto cruzado para clientes'     },
-];
+const PARTNERSHIP_TYPES = ['recommendation', 'commission', 'discount'];
+
+/* tipo de parceiro desconhecido mostra-se como o primeiro (hotel), como sempre foi */
+function tipoParceiro(value) {
+  return PARTNER_TYPES.find(p => p.value === value) || PARTNER_TYPES[0];
+}
+function tipoParceria(value) {
+  return PARTNERSHIP_TYPES.includes(value) ? value : PARTNERSHIP_TYPES[0];
+}
 
 /* ── OperatorPicker: pesquisa com debounce sobre operadores reais ── */
 function OperatorPicker({ selected, onSelect }) {
+  const t = useT();
   const [query,     setQuery]     = useState('');
   const [results,   setResults]   = useState([]);
   const [searching, setSearching] = useState(false);
@@ -51,7 +60,7 @@ function OperatorPicker({ selected, onSelect }) {
   }, [query]);
 
   if (selected) {
-    const typeInfo = PARTNER_TYPES.find(t => t.value === selected.operator_type) || PARTNER_TYPES[0];
+    const typeInfo = tipoParceiro(selected.operator_type);
     return (
       <div className="flex items-center gap-3 border border-n-200 rounded-sm px-3 py-2.5 bg-n-50">
         <div className="w-8 h-8 rounded-sm bg-ocean-50 flex items-center justify-center shrink-0">
@@ -59,10 +68,10 @@ function OperatorPicker({ selected, onSelect }) {
         </div>
         <div className="flex-1 min-w-0">
           <p className="font-display font-semibold text-sm text-n-900 truncate">{selected.name}</p>
-          <p className="text-xs font-body text-n-500">{typeInfo.label}</p>
+          <p className="text-xs font-body text-n-500">{t(`partnersPage.types.${typeInfo.value}`)}</p>
         </div>
         <button type="button" onClick={() => onSelect(null)} className="text-xs font-body text-ocean-700 hover:underline shrink-0">
-          Trocar
+          {t('partnersPage.picker.change')}
         </button>
       </div>
     );
@@ -72,23 +81,23 @@ function OperatorPicker({ selected, onSelect }) {
     <div className="relative">
       <Input
         value={query} onChange={e => setQuery(e.target.value)}
-        placeholder="Pesquisar operador pelo nome..." aria-label="Pesquisar operador pelo nome"
+        placeholder={t('partnersPage.picker.placeholder')} aria-label={t('partnersPage.picker.aria')}
       />
       {query.trim().length >= 2 && (
         <div className="mt-1 border border-n-200 rounded-sm bg-white shadow-sm max-h-48 overflow-y-auto">
-          {searching && <p className="text-xs font-body text-n-400 px-3 py-2">A pesquisar...</p>}
+          {searching && <p className="text-xs font-body text-n-400 px-3 py-2">{t('partnersPage.picker.searching')}</p>}
           {!searching && results.length === 0 && (
-            <p className="text-xs font-body text-n-400 px-3 py-2">Nenhum operador encontrado.</p>
+            <p className="text-xs font-body text-n-400 px-3 py-2">{t('partnersPage.picker.none')}</p>
           )}
           {results.map(op => {
-            const typeInfo = PARTNER_TYPES.find(t => t.value === op.operator_type) || PARTNER_TYPES[0];
+            const typeInfo = tipoParceiro(op.operator_type);
             return (
               <button key={op.id} type="button" onClick={() => onSelect(op)}
                 className="w-full flex items-center gap-3 px-3 py-2 hover:bg-ocean-50 transition-colors text-left">
                 <typeInfo.Icon size={15} strokeWidth={1.75} className="text-ocean-700 shrink-0" />
                 <div className="min-w-0">
                   <p className="font-body font-semibold text-sm text-n-900 truncate">{op.name}</p>
-                  <p className="text-xs font-body text-n-400">{typeInfo.label}</p>
+                  <p className="text-xs font-body text-n-400">{t(`partnersPage.types.${typeInfo.value}`)}</p>
                 </div>
               </button>
             );
@@ -132,7 +141,7 @@ function PartnerModal({ partner, onSave, onRequest, onClose }) {
     setError('');
 
     if (mode === 'real' && isNew && !selectedOperator) {
-      setError('Escolhe um operador da lista.');
+      setError(t('partnersPage.modal.errChoose'));
       return;
     }
 
@@ -152,7 +161,7 @@ function PartnerModal({ partner, onSave, onRequest, onClose }) {
         await onSave(base?.id, { ...dadosComuns, name: form.name, partner_type: form.partner_type, active: form.active });
       }
     } catch (err) {
-      setError(mensagemErro(err, t, 'Erro ao guardar parceiro.'));
+      setError(mensagemErro(err, t, t('partnersPage.modal.errSave')));
     } finally {
       setSaving(false);
     }
@@ -162,11 +171,11 @@ function PartnerModal({ partner, onSave, onRequest, onClose }) {
   const needsMessage    = form.partnership_type !== 'discount';
 
   return (
-    <Modal open onClose={onClose} title={isNew ? 'Adicionar parceiro' : 'Editar parceiro'} size="md">
+    <Modal open onClose={onClose} title={isNew ? t('partnersPage.modal.titleNew') : t('partnersPage.modal.titleEdit')} size="md">
       <form onSubmit={handleSubmit} className="space-y-4">
         {isNew && (
           <div className="flex gap-1 bg-n-100 rounded-sm p-0.5">
-            {[{ v: 'manual', l: 'Parceiro externo' }, { v: 'real', l: 'Operador SalDesk' }].map(o => (
+            {[{ v: 'manual', l: t('partnersPage.modal.modeManual') }, { v: 'real', l: t('partnersPage.modal.modeReal') }].map(o => (
               <button key={o.v} type="button" aria-pressed={mode === o.v} onClick={() => setMode(o.v)}
                 className={`flex-1 py-1.5 text-xs font-body font-semibold rounded-xs transition-colors ${mode === o.v ? 'bg-white text-ocean-700 shadow-sm' : 'text-n-500 hover:text-n-700'}`}>
                 {o.l}
@@ -177,16 +186,16 @@ function PartnerModal({ partner, onSave, onRequest, onClose }) {
 
         {mode === 'manual' && (
           <>
-            <Input label="Nome do parceiro" aria-label="Nome do parceiro" value={form.name} onChange={set('name')} required placeholder="Ex: Hotel Morabeza" />
-            <Select label="Tipo de parceiro" aria-label="Tipo de parceiro" value={form.partner_type} onChange={set('partner_type')}>
-              {PARTNER_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
+            <Input label={t('partnersPage.modal.name')} aria-label={t('partnersPage.modal.name')} value={form.name} onChange={set('name')} required placeholder={t('partnersPage.modal.namePlaceholder')} />
+            <Select label={t('partnersPage.modal.partnerType')} aria-label={t('partnersPage.modal.partnerType')} value={form.partner_type} onChange={set('partner_type')}>
+              {PARTNER_TYPES.map(p => <option key={p.value} value={p.value}>{t(`partnersPage.types.${p.value}`)}</option>)}
             </Select>
           </>
         )}
 
         {mode === 'real' && (
           <div>
-            <label className="text-xs font-body font-bold uppercase tracking-wide text-n-600 block mb-1">Operador SalDesk</label>
+            <label className="text-xs font-body font-bold uppercase tracking-wide text-n-600 block mb-1">{t('partnersPage.modal.operatorLabel')}</label>
             {isRealPartner ? (
               <OperatorPicker selected={selectedOperator} onSelect={() => {}} />
             ) : (
@@ -194,50 +203,50 @@ function PartnerModal({ partner, onSave, onRequest, onClose }) {
             )}
             {!isRealPartner && (
               <p className="text-xs font-body text-n-400 mt-1">
-                O pedido fica pendente até o operador escolhido o aceitar.
+                {t('partnersPage.modal.pendingHint')}
               </p>
             )}
           </div>
         )}
 
-        <Select label="Tipo de parceria" aria-label="Tipo de parceria" value={form.partnership_type} onChange={set('partnership_type')}>
-          {PARTNERSHIP_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
+        <Select label={t('partnersPage.modal.partnershipType')} aria-label={t('partnersPage.modal.partnershipType')} value={form.partnership_type} onChange={set('partnership_type')}>
+          {PARTNERSHIP_TYPES.map(v => <option key={v} value={v}>{t(`partnersPage.partnershipTypes.${v}`)}</option>)}
         </Select>
 
         {needsCommission && (
           <div className="grid grid-cols-2 gap-3">
             <Input
-              label="Comissão (%)" aria-label="Comissão (%)"
+              label={t('partnersPage.modal.commission')} aria-label={t('partnersPage.modal.commission')}
               type="number" min="0" max="50" step="0.5"
               value={form.commission_pct} onChange={set('commission_pct')}
-              placeholder="Ex: 10"
-              hint="Percentagem da reserva paga ao parceiro que a referenciou"
+              placeholder={t('partnersPage.modal.commissionPlaceholder')}
+              hint={t('partnersPage.modal.commissionHint')}
             />
             <Input
-              label="Preço médio da reserva (€)" aria-label="Preço médio da reserva (€)"
+              label={t('partnersPage.modal.avgValue')} aria-label={t('partnersPage.modal.avgValue')}
               type="number" min="0" step="1"
               value={form.avg_booking_value} onChange={set('avg_booking_value')}
-              placeholder="Ex: 80"
-              hint="Usado para estimar comissões a pagar/receber no Dashboard"
+              placeholder={t('partnersPage.modal.avgPlaceholder')}
+              hint={t('partnersPage.modal.avgHint')}
             />
           </div>
         )}
 
         {needsMessage && (
           <>
-            <Textarea label="Mensagem de recomendação PT" aria-label="Mensagem de recomendação PT" value={form.message_pt} onChange={set('message_pt')} rows={3}
-              placeholder="Ex: Para o seu alojamento em Sal, recomendamos o nosso parceiro Hotel Morabeza." />
-            <Textarea label="Mensagem de recomendação EN" aria-label="Mensagem de recomendação EN" value={form.message_en} onChange={set('message_en')} rows={3}
-              placeholder="Ex: For your accommodation in Sal, we recommend our partner Hotel Morabeza." />
+            <Textarea label={t('partnersPage.modal.messagePt')} aria-label={t('partnersPage.modal.messagePt')} value={form.message_pt} onChange={set('message_pt')} rows={3}
+              placeholder={t('partnersPage.modal.messagePtPlaceholder')} />
+            <Textarea label={t('partnersPage.modal.messageEn')} aria-label={t('partnersPage.modal.messageEn')} value={form.message_en} onChange={set('message_en')} rows={3}
+              placeholder={t('partnersPage.modal.messageEnPlaceholder')} />
           </>
         )}
 
         {error && <p className="text-xs text-[var(--error)]">{error}</p>}
 
         <div className="flex gap-3 pt-1">
-          <Button type="button" variant="secondary" onClick={onClose} className="flex-1">Cancelar</Button>
+          <Button type="button" variant="secondary" onClick={onClose} className="flex-1">{t('partnersPage.modal.cancel')}</Button>
           <Button type="submit" loading={saving} className="flex-1">
-            {mode === 'real' && isNew ? 'Enviar pedido' : (isNew ? 'Adicionar' : 'Guardar')}
+            {mode === 'real' && isNew ? t('partnersPage.modal.sendRequest') : (isNew ? t('partnersPage.modal.add') : t('partnersPage.modal.save'))}
           </Button>
         </div>
       </form>
@@ -247,6 +256,7 @@ function PartnerModal({ partner, onSave, onRequest, onClose }) {
 
 /* ── BookingLogModal ── */
 function BookingLogModal({ partner, onSave, onClose }) {
+  const t = useT();
   const [direction, setDirection] = useState('sent');
   const [count,     setCount]     = useState('1');
   const [saving,    setSaving]    = useState(false);
@@ -263,20 +273,20 @@ function BookingLogModal({ partner, onSave, onClose }) {
   }
 
   return (
-    <Modal open onClose={onClose} title={`Registar reservas — ${partner.name}`} size="sm">
+    <Modal open onClose={onClose} title={t('partnersPage.log.title', { name: partner.name })} size="sm">
       <div className="space-y-4">
         <div className="flex gap-1 bg-n-100 rounded-sm p-0.5">
-          {[{ v: 'sent', l: 'Reserva enviada ao parceiro' }, { v: 'received', l: 'Reserva recebida do parceiro' }].map(o => (
+          {[{ v: 'sent', l: t('partnersPage.log.sent') }, { v: 'received', l: t('partnersPage.log.received') }].map(o => (
             <button key={o.v} type="button" aria-pressed={direction === o.v} onClick={() => setDirection(o.v)}
               className={`flex-1 py-1.5 text-xs font-body font-semibold rounded-xs transition-colors ${direction === o.v ? 'bg-white text-ocean-700 shadow-sm' : 'text-n-500 hover:text-n-700'}`}>
               {o.l}
             </button>
           ))}
         </div>
-        <Input label="Número de reservas" aria-label="Número de reservas" type="number" min="1" step="1" value={count} onChange={e => setCount(e.target.value)} />
+        <Input label={t('partnersPage.log.count')} aria-label={t('partnersPage.log.count')} type="number" min="1" step="1" value={count} onChange={e => setCount(e.target.value)} />
         <div className="flex gap-3">
-          <Button variant="secondary" onClick={onClose} className="flex-1">Cancelar</Button>
-          <Button loading={saving} onClick={handleSave} className="flex-1">Registar</Button>
+          <Button variant="secondary" onClick={onClose} className="flex-1">{t('partnersPage.log.cancel')}</Button>
+          <Button loading={saving} onClick={handleSave} className="flex-1">{t('partnersPage.log.record')}</Button>
         </div>
       </div>
     </Modal>
@@ -285,6 +295,8 @@ function BookingLogModal({ partner, onSave, onClose }) {
 
 /* ─────────────────────── Main ─────────────────────── */
 export default function Partners() {
+  const t = useT();
+  const lang = useLingua();
   const { operator } = useAuthStore();
   const [partners,  setPartners]  = useState([]);
   const [loading,   setLoading]   = useState(true);
@@ -320,7 +332,7 @@ export default function Partners() {
   }
 
   async function handleDelete(id) {
-    if (!window.confirm('Eliminar este parceiro?')) return;
+    if (!window.confirm(t('partnersPage.confirmDelete'))) return;
     await deletePartner(id);
     setPartners(prev => prev.filter(p => p.id !== id));
   }
@@ -351,15 +363,15 @@ export default function Partners() {
     .reduce((s, p) => s + (p.bookings_received || 0) * (p.avg_booking_value || 0) * (p.commission_pct / 100), 0);
 
   const TABS = [
-    { id: 'parceiros', label: 'Parceiros' },
-    { id: 'pedidos',   label: 'Pedidos', count: pendingReceived.length > 0 ? pendingReceived.length : undefined },
-    { id: 'dashboard', label: 'Dashboard' },
+    { id: 'parceiros', label: t('partnersPage.tabs.partners') },
+    { id: 'pedidos',   label: t('partnersPage.tabs.requests'), count: pendingReceived.length > 0 ? pendingReceived.length : undefined },
+    { id: 'dashboard', label: t('partnersPage.tabs.dashboard') },
   ];
 
   if (loading) {
     return (
       <div>
-        <PageHeader title="Parcerias Cross-Selling" subtitle="Recomendações e comissões entre operadores SalDesk" />
+        <PageHeader title={t('partnersPage.title')} subtitle={t('partnersPage.subtitle')} />
         <div className="flex justify-center py-16"><LoadingSpinner size={32} /></div>
       </div>
     );
@@ -368,10 +380,10 @@ export default function Partners() {
   return (
     <div>
       <PageHeader
-        title="Parcerias Cross-Selling"
-        subtitle="Recomendações e comissões entre operadores SalDesk"
+        title={t('partnersPage.title')}
+        subtitle={t('partnersPage.subtitle')}
         actions={
-          <Button icon={Plus} onClick={() => setModal({ _new: true })}>Adicionar parceiro</Button>
+          <Button icon={Plus} onClick={() => setModal({ _new: true })}>{t('partnersPage.addPartner')}</Button>
         }
       />
 
@@ -384,16 +396,16 @@ export default function Partners() {
           <Card padding="p-0">
             <EmptyState
               icon={Handshake}
-              title="Sem parceiros configurados"
-              description="Adiciona operadores SalDesk parceiros para começar a fazer cross-selling."
-              action={<Button icon={Plus} onClick={() => setModal({ _new: true })}>Adicionar parceiro</Button>}
+              title={t('partnersPage.empty.title')}
+              description={t('partnersPage.empty.description')}
+              action={<Button icon={Plus} onClick={() => setModal({ _new: true })}>{t('partnersPage.addPartner')}</Button>}
             />
           </Card>
         ) : (
           <div className="space-y-3">
             {activePartners.map(p => {
-              const typeInfo = PARTNER_TYPES.find(t => t.value === p.partner_type) || PARTNER_TYPES[0];
-              const pshipType = PARTNERSHIP_TYPES.find(t => t.value === p.partnership_type) || PARTNERSHIP_TYPES[0];
+              const typeInfo = tipoParceiro(p.partner_type);
+              const pshipType = tipoParceria(p.partnership_type);
               const isRejected = p.status === 'rejected';
               return (
                 <Card key={p.id} padding="px-4 py-4 flex items-start gap-4" className={(!p.active || isRejected) ? 'opacity-60' : ''}>
@@ -406,23 +418,23 @@ export default function Partners() {
                         <p className="font-display font-semibold text-sm text-n-900 flex items-center gap-1.5">
                           {p.name}
                           {p.partner_operator_id && <Badge variant="info">SalDesk</Badge>}
-                          {isRejected && <Badge variant="cancelled">Recusado</Badge>}
+                          {isRejected && <Badge variant="cancelled">{t('partnersPage.rejected')}</Badge>}
                         </p>
-                        <p className="text-xs font-body text-n-500 mt-0.5">{typeInfo.label} · {pshipType.label}</p>
+                        <p className="text-xs font-body text-n-500 mt-0.5">{t(`partnersPage.types.${typeInfo.value}`)} · {t(`partnersPage.partnershipTypes.${pshipType}`)}</p>
                         {p.commission_pct > 0 && (
                           <p className="text-xs font-mono text-n-400 mt-0.5">
-                            {p.commission_pct}% comissão{p.avg_booking_value > 0 ? ` · reserva média €${p.avg_booking_value}` : ''}
+                            {t('partnersPage.commissionLine', { pct: p.commission_pct })}{p.avg_booking_value > 0 ? t('partnersPage.avgBookingLine', { amount: euroPreco(p.avg_booking_value, lang) }) : ''}
                           </p>
                         )}
                       </div>
                       <div className="flex items-center gap-4 shrink-0 text-center">
                         <div>
                           <p className="font-display font-bold text-sm text-ocean-700">{p.bookings_sent || 0}</p>
-                          <p className="text-[9px] font-mono text-n-400">enviadas</p>
+                          <p className="text-[9px] font-mono text-n-400">{t('partnersPage.bookingsSent')}</p>
                         </div>
                         <div>
                           <p className="font-display font-bold text-sm text-[var(--success)]">{p.bookings_received || 0}</p>
-                          <p className="text-[9px] font-mono text-n-400">recebidas</p>
+                          <p className="text-[9px] font-mono text-n-400">{t('partnersPage.bookingsReceived')}</p>
                         </div>
                       </div>
                     </div>
@@ -431,21 +443,21 @@ export default function Partners() {
                     )}
                   </div>
                   <div className="flex gap-1 shrink-0">
-                    <button type="button" onClick={() => setLogModal(p)} aria-label={`Registar reservas ${p.name}`}
-                      className="p-1.5 rounded text-n-400 hover:text-ocean-700 hover:bg-ocean-50 transition-colors" title="Registar reservas">
+                    <button type="button" onClick={() => setLogModal(p)} aria-label={t('partnersPage.actions.recordAria', { name: p.name })}
+                      className="p-1.5 rounded text-n-400 hover:text-ocean-700 hover:bg-ocean-50 transition-colors" title={t('partnersPage.actions.record')}>
                       <Handshake size={13} strokeWidth={1.75} />
                     </button>
-                    <button type="button" onClick={() => handleToggle(p)} aria-label={`${p.active ? 'Desactivar' : 'Activar'} ${p.name}`}
+                    <button type="button" onClick={() => handleToggle(p)} aria-label={t(p.active ? 'partnersPage.actions.deactivateAria' : 'partnersPage.actions.activateAria', { name: p.name })}
                       className="p-1.5 rounded text-n-400 hover:text-n-700 hover:bg-n-100 transition-colors">
                       {p.active
                         ? <ToggleRight size={13} strokeWidth={1.75} className="text-ocean-700" />
                         : <ToggleLeft size={13} strokeWidth={1.75} />}
                     </button>
-                    <button type="button" onClick={() => setModal(p)} aria-label={`Editar ${p.name}`}
+                    <button type="button" onClick={() => setModal(p)} aria-label={t('partnersPage.actions.editAria', { name: p.name })}
                       className="p-1.5 rounded text-n-400 hover:text-ocean-700 hover:bg-ocean-50 transition-colors">
                       <Pencil size={13} strokeWidth={1.75} />
                     </button>
-                    <button type="button" onClick={() => handleDelete(p.id)} aria-label={`Eliminar ${p.name}`}
+                    <button type="button" onClick={() => handleDelete(p.id)} aria-label={t('partnersPage.actions.deleteAria', { name: p.name })}
                       className="p-1.5 rounded text-n-400 hover:text-[var(--error)] hover:bg-[var(--error-light)] transition-colors">
                       <Trash2 size={13} strokeWidth={1.75} />
                     </button>
@@ -460,9 +472,9 @@ export default function Partners() {
       {activeTab === 'pedidos' && (
         <div className="space-y-6">
           <div>
-            <h3 className="font-display font-semibold text-sm text-n-700 mb-2">Recebidos</h3>
+            <h3 className="font-display font-semibold text-sm text-n-700 mb-2">{t('partnersPage.requests.received')}</h3>
             {pendingReceived.length === 0 ? (
-              <p className="text-sm font-body text-n-400">Sem pedidos de parceria por responder.</p>
+              <p className="text-sm font-body text-n-400">{t('partnersPage.requests.noneReceived')}</p>
             ) : (
               <div className="space-y-2">
                 {pendingReceived.map(p => (
@@ -473,12 +485,12 @@ export default function Partners() {
                     <div className="flex-1 min-w-0">
                       <p className="font-display font-semibold text-sm text-n-900">{p.name}</p>
                       <p className="text-xs font-body text-n-500">
-                        {(PARTNERSHIP_TYPES.find(t => t.value === p.partnership_type) || PARTNERSHIP_TYPES[0]).label}
-                        {p.commission_pct > 0 ? ` · ${p.commission_pct}% comissão` : ''}
+                        {t(`partnersPage.partnershipTypes.${tipoParceria(p.partnership_type)}`)}
+                        {p.commission_pct > 0 ? ` · ${t('partnersPage.commissionLine', { pct: p.commission_pct })}` : ''}
                       </p>
                     </div>
-                    <Button size="sm" icon={Check} loading={responding === p.id} onClick={() => handleRespond(p.id, 'accepted')}>Aceitar</Button>
-                    <Button size="sm" variant="secondary" icon={X} loading={responding === p.id} onClick={() => handleRespond(p.id, 'rejected')}>Recusar</Button>
+                    <Button size="sm" icon={Check} loading={responding === p.id} onClick={() => handleRespond(p.id, 'accepted')}>{t('partnersPage.requests.accept')}</Button>
+                    <Button size="sm" variant="secondary" icon={X} loading={responding === p.id} onClick={() => handleRespond(p.id, 'rejected')}>{t('partnersPage.requests.reject')}</Button>
                   </Card>
                 ))}
               </div>
@@ -486,9 +498,9 @@ export default function Partners() {
           </div>
 
           <div>
-            <h3 className="font-display font-semibold text-sm text-n-700 mb-2">Enviados</h3>
+            <h3 className="font-display font-semibold text-sm text-n-700 mb-2">{t('partnersPage.requests.sent')}</h3>
             {pendingSent.length === 0 ? (
-              <p className="text-sm font-body text-n-400">Sem pedidos de parceria enviados.</p>
+              <p className="text-sm font-body text-n-400">{t('partnersPage.requests.noneSent')}</p>
             ) : (
               <div className="space-y-2">
                 {pendingSent.map(p => (
@@ -498,10 +510,10 @@ export default function Partners() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="font-display font-semibold text-sm text-n-900">{p.name}</p>
-                      <p className="text-xs font-body text-n-500">A aguardar resposta</p>
+                      <p className="text-xs font-body text-n-500">{t('partnersPage.requests.awaiting')}</p>
                     </div>
-                    <button type="button" onClick={() => handleDelete(p.id)} aria-label={`Cancelar pedido ${p.name}`}
-                      className="p-1.5 rounded text-n-400 hover:text-[var(--error)] hover:bg-[var(--error-light)] transition-colors" title="Cancelar pedido">
+                    <button type="button" onClick={() => handleDelete(p.id)} aria-label={t('partnersPage.requests.cancelAria', { name: p.name })}
+                      className="p-1.5 rounded text-n-400 hover:text-[var(--error)] hover:bg-[var(--error-light)] transition-colors" title={t('partnersPage.requests.cancel')}>
                       <Trash2 size={14} strokeWidth={1.75} />
                     </button>
                   </Card>
@@ -516,10 +528,10 @@ export default function Partners() {
         <div className="space-y-5">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
             {[
-              { label: 'Parceiros activos',     value: activePartners.filter(p => p.active && p.status !== 'rejected').length, color: 'text-n-900' },
-              { label: 'Reservas enviadas',      value: totalSent,                             color: 'text-ocean-700', Icon: ArrowUpRight },
-              { label: 'Reservas recebidas',     value: totalReceived,                         color: 'text-[var(--success)]', Icon: ArrowDownRight },
-              { label: 'Balanco (recebidas - enviadas)', value: totalReceived - totalSent,     color: (totalReceived - totalSent) >= 0 ? 'text-[var(--success)]' : 'text-[var(--error)]' },
+              { label: t('partnersPage.dashboard.activePartners'), value: activePartners.filter(p => p.active && p.status !== 'rejected').length, color: 'text-n-900' },
+              { label: t('partnersPage.dashboard.sent'),           value: totalSent,                             color: 'text-ocean-700', Icon: ArrowUpRight },
+              { label: t('partnersPage.dashboard.received'),       value: totalReceived,                         color: 'text-[var(--success)]', Icon: ArrowDownRight },
+              { label: t('partnersPage.dashboard.balance'),        value: totalReceived - totalSent,             color: (totalReceived - totalSent) >= 0 ? 'text-[var(--success)]' : 'text-[var(--error)]' },
             ].map(m => (
               <Card key={m.label} padding="px-4 py-3">
                 <p className={`font-display font-bold text-xl ${m.color}`}>{m.value}</p>
@@ -531,19 +543,19 @@ export default function Partners() {
           {activePartners.some(p => p.partnership_type === 'commission') && (
             <div className="grid grid-cols-2 gap-4">
               <Card padding="px-5 py-4">
-                <h3 className="font-display font-semibold text-sm text-n-700 mb-3">Comissões a pagar</h3>
-                <p className="font-display font-bold text-2xl text-[var(--error)]">€{commPayable.toFixed(0)}</p>
+                <h3 className="font-display font-semibold text-sm text-n-700 mb-3">{t('partnersPage.dashboard.payable')}</h3>
+                <p className="font-display font-bold text-2xl text-[var(--error)]">{eurosInteiros(commPayable, lang)}</p>
                 <p className="text-xs font-body text-n-400 mt-0.5">
-                  Por reservas que enviaste aos parceiros com comissão.
-                  <br />Requer preços médios configurados por parceiro.
+                  {t('partnersPage.dashboard.payableHelp')}
+                  <br />{t('partnersPage.dashboard.needsAvg')}
                 </p>
               </Card>
               <Card padding="px-5 py-4">
-                <h3 className="font-display font-semibold text-sm text-n-700 mb-3">Comissões a receber</h3>
-                <p className="font-display font-bold text-2xl text-[var(--success)]">€{commReceivable.toFixed(0)}</p>
+                <h3 className="font-display font-semibold text-sm text-n-700 mb-3">{t('partnersPage.dashboard.receivable')}</h3>
+                <p className="font-display font-bold text-2xl text-[var(--success)]">{eurosInteiros(commReceivable, lang)}</p>
                 <p className="text-xs font-body text-n-400 mt-0.5">
-                  Por reservas que os parceiros te enviaram.
-                  <br />Requer preços médios configurados por parceiro.
+                  {t('partnersPage.dashboard.receivableHelp')}
+                  <br />{t('partnersPage.dashboard.needsAvg')}
                 </p>
               </Card>
             </div>
@@ -551,7 +563,7 @@ export default function Partners() {
 
           <div className="px-4 py-3 bg-[var(--info-light)] border border-n-200 rounded-sm">
             <p className="text-xs font-body text-[var(--info)]">
-              <span className="font-semibold">Nota:</span> Para activar as recomendações automáticas (email após tour confirmado, etc.), configura as automações correspondentes em <span className="font-mono">Automações de Comunicação</span>.
+              <span className="font-semibold">{t('partnersPage.dashboard.noteLabel')}</span> {t('partnersPage.dashboard.noteText')} <span className="font-mono">{t('automations.title')}</span>.
             </p>
           </div>
         </div>

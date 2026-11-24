@@ -17,8 +17,11 @@ import FilterChips from '../components/ui/FilterChips';
 import Badge from '../components/ui/Badge';
 import EmptyState from '../components/ui/EmptyState';
 import Input, { Select } from '../components/ui/Input';
-import { useT } from '../i18n';
+import { useT, getT } from '../i18n';
 import { mensagemErro } from '../utils/mensagemErro';
+import { formatarData, useLingua } from '../utils/formatoLingua';
+import { euroPreco } from '../utils/formatoVendedor';
+import { eurosInteiros } from './reservations/shared';
 
 /* ── Helpers ── */
 function generateCode() {
@@ -28,6 +31,7 @@ function generateCode() {
   return code;
 }
 
+/* estado calculado (activo, expirado, esgotado, inactivo); o rotulo vem de vouchersPage.status */
 function voucherStatus(v) {
   if (!v.active) return 'inactivo';
   if (v.expires_at && new Date(v.expires_at) < new Date()) return 'expirado';
@@ -35,19 +39,20 @@ function voucherStatus(v) {
   return 'activo';
 }
 
-const STATUS_CFG = {
-  activo:   { label: 'Activo',   variant: 'confirmed' },
-  expirado: { label: 'Expirado', variant: 'default'   },
-  esgotado: { label: 'Esgotado', variant: 'pending'   },
-  inactivo: { label: 'Inactivo', variant: 'cancelled' },
+const STATUS_VARIANT = {
+  activo: 'confirmed',
+  expirado: 'default',
+  esgotado: 'pending',
+  inactivo: 'cancelled',
 };
 
-function fmtDiscount(v) {
-  return v.type === 'percent' ? `${v.value}%` : `€${Number(v.value).toFixed(0)}`;
+function fmtDiscount(v, lang) {
+  return v.type === 'percent' ? `${v.value}%` : eurosInteiros(v.value, lang);
 }
 
 /* ── CopyBtn ── */
 function CopyBtn({ text }) {
+  const t = useT();
   const [copied, setCopied] = useState(false);
   function copy() {
     navigator.clipboard.writeText(text).then(() => { setCopied(true); setTimeout(() => setCopied(false), 2000); });
@@ -56,7 +61,7 @@ function CopyBtn({ text }) {
     <button onClick={copy}
       className={`flex items-center gap-1.5 text-xs px-2 py-1 rounded-xs font-body font-medium transition-colors ${copied ? 'text-[var(--success)] bg-[var(--success-light)]' : 'text-ocean-700 bg-ocean-50 hover:bg-ocean-100'}`}>
       {copied ? <Check size={11} strokeWidth={2} /> : <Copy size={11} strokeWidth={1.75} />}
-      {copied ? 'Copiado' : 'Copiar'}
+      {copied ? t('vouchersPage.copied') : t('vouchersPage.copy')}
     </button>
   );
 }
@@ -93,8 +98,8 @@ function VoucherModal({ voucher, units, onSave, onClose }) {
 
   async function handleSubmit(e) {
     e.preventDefault();
-    if (!form.code.trim()) { setError('O código é obrigatório.'); return; }
-    if (!form.value || Number(form.value) <= 0) { setError('O valor do desconto deve ser maior que zero.'); return; }
+    if (!form.code.trim()) { setError(t('vouchersPage.modal.errCode')); return; }
+    if (!form.value || Number(form.value) <= 0) { setError(t('vouchersPage.modal.errValue')); return; }
     setError(''); setSaving(true);
     try {
       await onSave(base?.id, {
@@ -105,34 +110,36 @@ function VoucherModal({ voucher, units, onSave, onClose }) {
         max_uses:   form.max_uses   ? Number(form.max_uses)   : 0,
       });
     } catch (err) {
-      setError(mensagemErro(err, t, 'Erro ao guardar voucher.'));
+      setError(mensagemErro(err, t, t('vouchersPage.modal.errSave')));
     } finally {
       setSaving(false);
     }
   }
 
+  const rotuloDesconto = form.type === 'percent' ? t('vouchersPage.modal.discountPct') : t('vouchersPage.modal.discountEur');
+
   return (
-    <Modal open onClose={onClose} title={isNew ? 'Novo voucher' : 'Editar voucher'} size="md">
+    <Modal open onClose={onClose} title={isNew ? t('vouchersPage.modal.titleNew') : t('vouchersPage.modal.titleEdit')} size="md">
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="flex gap-3 items-end">
           <div className="flex-1">
-            <Input label="Código" aria-label="Código" value={form.code} onChange={set('code')} required
-              className="font-mono uppercase" placeholder="Ex: VERAO2025" />
+            <Input label={t('vouchersPage.modal.code')} aria-label={t('vouchersPage.modal.code')} value={form.code} onChange={set('code')} required
+              className="font-mono uppercase" placeholder={t('vouchersPage.modal.codePlaceholder')} />
           </div>
           <Button type="button" variant="secondary" size="sm"
             onClick={() => setForm(p => ({ ...p, code: generateCode() }))}>
-            Gerar
+            {t('vouchersPage.modal.generate')}
           </Button>
         </div>
 
         <div className="grid grid-cols-2 gap-3">
-          <Select label="Tipo de desconto" aria-label="Tipo de desconto" value={form.type} onChange={set('type')}>
-            <option value="percent">Percentagem (%)</option>
-            <option value="fixed">Valor fixo (€)</option>
+          <Select label={t('vouchersPage.modal.discountType')} aria-label={t('vouchersPage.modal.discountType')} value={form.type} onChange={set('type')}>
+            <option value="percent">{t('vouchersPage.modal.typePercent')}</option>
+            <option value="fixed">{t('vouchersPage.modal.typeFixed')}</option>
           </Select>
           <Input
-            label={form.type === 'percent' ? 'Desconto (%)' : 'Desconto (€)'}
-            aria-label={form.type === 'percent' ? 'Desconto (%)' : 'Desconto (€)'}
+            label={rotuloDesconto}
+            aria-label={rotuloDesconto}
             type="number" min={form.type === 'percent' ? '1' : '0.01'} step={form.type === 'percent' ? '1' : '0.01'}
             max={form.type === 'percent' ? '100' : undefined}
             value={form.value} onChange={set('value')} required
@@ -142,24 +149,24 @@ function VoucherModal({ voucher, units, onSave, onClose }) {
 
         <div className="grid grid-cols-2 gap-3">
           <Input
-            label="Mínimo de reserva (€)"
-            aria-label="Mínimo de reserva (€)"
+            label={t('vouchersPage.modal.minBooking')}
+            aria-label={t('vouchersPage.modal.minBooking')}
             type="number" min="0" step="1"
             value={form.min_amount} onChange={set('min_amount')}
-            placeholder="0 = sem mínimo"
+            placeholder={t('vouchersPage.modal.minPlaceholder')}
           />
           <Input
-            label="Limite de usos"
-            aria-label="Limite de usos"
+            label={t('vouchersPage.modal.maxUses')}
+            aria-label={t('vouchersPage.modal.maxUses')}
             type="number" min="0" step="1"
             value={form.max_uses} onChange={set('max_uses')}
-            placeholder="0 = ilimitado"
+            placeholder={t('vouchersPage.modal.maxPlaceholder')}
           />
         </div>
 
         <Input
-          label="Válido até"
-          aria-label="Válido até"
+          label={t('vouchersPage.modal.validUntil')}
+          aria-label={t('vouchersPage.modal.validUntil')}
           type="date"
           value={form.expires_at} onChange={set('expires_at')}
         />
@@ -167,10 +174,10 @@ function VoucherModal({ voucher, units, onSave, onClose }) {
         {units.length > 0 && (
           <div>
             <label className="text-xs font-body font-bold uppercase tracking-wide text-n-600 block mb-2">
-              Tours aplicáveis
+              {t('vouchersPage.modal.applicableTours')}
             </label>
             <p className="text-xs font-body text-n-400 mb-2">
-              {form.unit_ids.length === 0 ? 'Aplicável a todos os tours.' : `${form.unit_ids.length} tour(s) seleccionado(s).`}
+              {form.unit_ids.length === 0 ? t('vouchersPage.modal.allToursApply') : t('vouchersPage.modal.selectedTours', { n: form.unit_ids.length })}
             </p>
             <div className="flex flex-wrap gap-1.5 max-h-28 overflow-y-auto">
               {units.map(u => (
@@ -190,8 +197,8 @@ function VoucherModal({ voucher, units, onSave, onClose }) {
         {error && <p className="text-xs text-[var(--error)]">{error}</p>}
 
         <div className="flex gap-3 pt-1">
-          <Button type="button" variant="secondary" onClick={onClose} className="flex-1">Cancelar</Button>
-          <Button type="submit" loading={saving} className="flex-1">{isNew ? 'Criar voucher' : 'Guardar'}</Button>
+          <Button type="button" variant="secondary" onClick={onClose} className="flex-1">{t('vouchersPage.modal.cancel')}</Button>
+          <Button type="submit" loading={saving} className="flex-1">{isNew ? t('vouchersPage.modal.create') : t('vouchersPage.modal.save')}</Button>
         </div>
       </form>
     </Modal>
@@ -200,23 +207,33 @@ function VoucherModal({ voucher, units, onSave, onClose }) {
 
 /* ── ShareModal ── */
 function ShareModal({ voucher, bookingLink, onClose }) {
+  const t = useT();
+  const lang = useLingua();
   if (!voucher) return null;
-  const discount = fmtDiscount(voucher);
-  const expires  = voucher.expires_at ? ` Válido até ${new Date(voucher.expires_at).toLocaleDateString('pt-PT', { timeZone: 'UTC' })}.` : '';
 
-  const msgPt = `Use o código *${voucher.code}* para obter ${discount} de desconto na sua próxima reserva.${expires} Reserve em: ${bookingLink}`;
-  const msgEn = `Use code *${voucher.code}* to get ${discount} off your next booking.${expires} Book at: ${bookingLink}`;
+  /* Os textos para o cliente ficam na lingua deles (pt e en), qualquer que seja a lingua do painel. A frase
+     "Valido ate" e a mesma nas duas mensagens, como sempre foi. */
+  const tPt = getT('pt');
+  const tEn = getT('en');
+  const desconto = fmtDiscount(voucher, 'pt');
+  const expires = voucher.expires_at
+    ? tPt('vouchersPage.share.expires', { date: formatarData(new Date(voucher.expires_at), { timeZone: 'UTC' }, 'pt') })
+    : '';
+
+  const dadosMsg = { code: voucher.code, discount: desconto, expires, link: bookingLink };
+  const msgPt = tPt('vouchersPage.share.message', dadosMsg);
+  const msgEn = tEn('vouchersPage.share.message', dadosMsg);
 
   return (
-    <Modal open onClose={onClose} title={`Partilhar — ${voucher.code}`} size="sm">
+    <Modal open onClose={onClose} title={t('vouchersPage.share.title', { code: voucher.code })} size="sm">
       <div className="space-y-4">
         <div className="bg-n-50 border border-n-200 rounded-sm p-3">
           <p className="text-xs font-mono font-semibold text-n-700">{voucher.code}</p>
-          <p className="text-xs font-body text-n-600 mt-1">{fmtDiscount(voucher)} de desconto</p>
+          <p className="text-xs font-body text-n-600 mt-1">{t('vouchersPage.share.discountOff', { discount: fmtDiscount(voucher, lang) })}</p>
         </div>
 
         <div>
-          <p className="text-xs font-body font-bold uppercase tracking-wide text-n-600 mb-2">WhatsApp</p>
+          <p className="text-xs font-body font-bold uppercase tracking-wide text-n-600 mb-2">{t('vouchersPage.share.whatsapp')}</p>
           <div className="space-y-2">
             <div className="flex items-center gap-2">
               <p className="text-xs font-body text-n-600 flex-1">PT</p>
@@ -224,7 +241,7 @@ function ShareModal({ voucher, bookingLink, onClose }) {
               <button
                 onClick={() => window.open(`https://wa.me/?text=${encodeURIComponent(msgPt)}`, '_blank', 'noopener')}
                 className="flex items-center gap-1.5 text-xs px-2 py-1 rounded-xs bg-[var(--success)] text-white font-body font-medium hover:opacity-90 transition-opacity">
-                <Share2 size={11} strokeWidth={1.75} />Enviar
+                <Share2 size={11} strokeWidth={1.75} />{t('vouchersPage.share.send')}
               </button>
             </div>
             <div className="flex items-center gap-2">
@@ -233,29 +250,29 @@ function ShareModal({ voucher, bookingLink, onClose }) {
               <button
                 onClick={() => window.open(`https://wa.me/?text=${encodeURIComponent(msgEn)}`, '_blank', 'noopener')}
                 className="flex items-center gap-1.5 text-xs px-2 py-1 rounded-xs bg-[var(--success)] text-white font-body font-medium hover:opacity-90 transition-opacity">
-                <Share2 size={11} strokeWidth={1.75} />Enviar
+                <Share2 size={11} strokeWidth={1.75} />{t('vouchersPage.share.send')}
               </button>
             </div>
           </div>
         </div>
 
         <div>
-          <p className="text-xs font-body font-bold uppercase tracking-wide text-n-600 mb-2">Email</p>
+          <p className="text-xs font-body font-bold uppercase tracking-wide text-n-600 mb-2">{t('vouchersPage.share.email')}</p>
           <div className="flex gap-2">
             <button
-              onClick={() => window.open(`mailto:?subject=${encodeURIComponent('Voucher especial para si')}&body=${encodeURIComponent(msgPt)}`, '_blank')}
+              onClick={() => window.open(`mailto:?subject=${encodeURIComponent(tPt('vouchersPage.share.subject'))}&body=${encodeURIComponent(msgPt)}`, '_blank')}
               className="flex items-center gap-1.5 text-sm px-3 py-2 rounded-sm bg-n-100 text-n-700 font-body hover:bg-n-200 transition-colors">
-              <Mail size={14} strokeWidth={1.75} />Email PT
+              <Mail size={14} strokeWidth={1.75} />{t('vouchersPage.share.emailPt')}
             </button>
             <button
-              onClick={() => window.open(`mailto:?subject=${encodeURIComponent('Special voucher for you')}&body=${encodeURIComponent(msgEn)}`, '_blank')}
+              onClick={() => window.open(`mailto:?subject=${encodeURIComponent(tEn('vouchersPage.share.subject'))}&body=${encodeURIComponent(msgEn)}`, '_blank')}
               className="flex items-center gap-1.5 text-sm px-3 py-2 rounded-sm bg-n-100 text-n-700 font-body hover:bg-n-200 transition-colors">
-              <Mail size={14} strokeWidth={1.75} />Email EN
+              <Mail size={14} strokeWidth={1.75} />{t('vouchersPage.share.emailEn')}
             </button>
           </div>
         </div>
 
-        <Button variant="secondary" onClick={onClose} className="w-full justify-center">Fechar</Button>
+        <Button variant="secondary" onClick={onClose} className="w-full justify-center">{t('vouchersPage.share.close')}</Button>
       </div>
     </Modal>
   );
@@ -263,6 +280,8 @@ function ShareModal({ voucher, bookingLink, onClose }) {
 
 /* ── Main ── */
 export default function Vouchers() {
+  const t = useT();
+  const lang = useLingua();
   const { operator } = useAuthStore();
   const [vouchers,    setVouchers]    = useState([]);
   const [loading,     setLoading]     = useState(true);
@@ -288,7 +307,7 @@ export default function Vouchers() {
   }
 
   async function handleDelete(id) {
-    if (!window.confirm('Eliminar este voucher?')) return;
+    if (!window.confirm(t('vouchersPage.confirmDelete'))) return;
     await deleteVoucher(id);
     setVouchers(prev => prev.filter(v => v.id !== id));
   }
@@ -315,7 +334,7 @@ export default function Vouchers() {
 
   const columns = [
     {
-      key: 'codigo', label: 'Código',
+      key: 'codigo', label: t('vouchersPage.columns.code'),
       render: v => (
         <div className={`flex items-center gap-2 ${!v.active ? 'opacity-60' : ''}`}>
           <span className="font-mono font-bold text-n-900 tracking-wider">{v.code}</span>
@@ -323,10 +342,10 @@ export default function Vouchers() {
         </div>
       ),
     },
-    { key: 'desconto', label: 'Desconto', render: v => <span className="font-display font-bold text-ocean-700">{fmtDiscount(v)}</span> },
-    { key: 'minimo', label: 'Mínimo', render: v => <span className="text-xs font-body text-n-500">{v.min_amount > 0 ? `€${v.min_amount}` : '—'}</span> },
+    { key: 'desconto', label: t('vouchersPage.columns.discount'), render: v => <span className="font-display font-bold text-ocean-700">{fmtDiscount(v, lang)}</span> },
+    { key: 'minimo', label: t('vouchersPage.columns.minimum'), render: v => <span className="text-xs font-body text-n-500">{v.min_amount > 0 ? euroPreco(v.min_amount, lang) : '—'}</span> },
     {
-      key: 'validade', label: 'Validade',
+      key: 'validade', label: t('vouchersPage.columns.validity'),
       render: v => {
         const st = voucherStatus(v);
         const isExpiringSoon = v.expires_at && st === 'activo' &&
@@ -334,42 +353,42 @@ export default function Vouchers() {
         return (
           <div className="flex items-center gap-1.5 text-xs font-mono text-n-500 whitespace-nowrap">
             {isExpiringSoon && <AlertTriangle size={12} strokeWidth={1.75} className="text-[var(--warning)] shrink-0" />}
-            {v.expires_at ? new Date(v.expires_at).toLocaleDateString('pt-PT', { timeZone: 'UTC' }) : '—'}
+            {v.expires_at ? formatarData(new Date(v.expires_at), { timeZone: 'UTC' }, lang) : '—'}
           </div>
         );
       },
     },
-    { key: 'usos', label: 'Usos', render: v => <span className="font-mono text-n-700">{v.uses_count || 0}{v.max_uses > 0 ? `/${v.max_uses}` : ''}</span> },
+    { key: 'usos', label: t('vouchersPage.columns.uses'), render: v => <span className="font-mono text-n-700">{v.uses_count || 0}{v.max_uses > 0 ? `/${v.max_uses}` : ''}</span> },
     {
-      key: 'tours', label: 'Tours',
+      key: 'tours', label: t('vouchersPage.columns.tours'),
       render: v => (
         <span className="text-xs font-body text-n-500">
-          {v.unit_ids?.length > 0 ? `${v.unit_ids.length} tour(s)` : <span className="text-n-400">Todos</span>}
+          {v.unit_ids?.length > 0 ? t('vouchersPage.toursCount', { n: v.unit_ids.length }) : <span className="text-n-400">{t('vouchersPage.allTours')}</span>}
         </span>
       ),
     },
     {
-      key: 'estado', label: 'Estado',
-      render: v => { const cfg = STATUS_CFG[voucherStatus(v)]; return <Badge variant={cfg.variant}>{cfg.label}</Badge>; },
+      key: 'estado', label: t('vouchersPage.columns.status'),
+      render: v => { const st = voucherStatus(v); return <Badge variant={STATUS_VARIANT[st]}>{t(`vouchersPage.status.${st}`)}</Badge>; },
     },
     {
       key: 'acoes', label: '',
       render: v => (
         <div className="flex items-center gap-0.5">
-          <button onClick={() => setShareModal(v)} aria-label={`Partilhar ${v.code}`}
-            className="p-1.5 rounded text-n-400 hover:text-[var(--success)] hover:bg-n-100 transition-colors" title="Partilhar">
+          <button onClick={() => setShareModal(v)} aria-label={t('vouchersPage.actions.shareAria', { code: v.code })}
+            className="p-1.5 rounded text-n-400 hover:text-[var(--success)] hover:bg-n-100 transition-colors" title={t('vouchersPage.actions.share')}>
             <Share2 size={13} strokeWidth={1.75} />
           </button>
-          <button onClick={() => setModal(v)} aria-label={`Editar ${v.code}`}
-            className="p-1.5 rounded text-n-400 hover:text-ocean-700 hover:bg-ocean-50 transition-colors" title="Editar">
+          <button onClick={() => setModal(v)} aria-label={t('vouchersPage.actions.editAria', { code: v.code })}
+            className="p-1.5 rounded text-n-400 hover:text-ocean-700 hover:bg-ocean-50 transition-colors" title={t('vouchersPage.actions.edit')}>
             <Pencil size={13} strokeWidth={1.75} />
           </button>
-          <button onClick={() => handleToggleActive(v)} aria-label={`${v.active ? 'Desactivar' : 'Activar'} ${v.code}`}
-            className="p-1.5 rounded text-n-400 hover:text-n-700 hover:bg-n-100 transition-colors" title={v.active ? 'Desactivar' : 'Activar'}>
+          <button onClick={() => handleToggleActive(v)} aria-label={t(v.active ? 'vouchersPage.actions.deactivateAria' : 'vouchersPage.actions.activateAria', { code: v.code })}
+            className="p-1.5 rounded text-n-400 hover:text-n-700 hover:bg-n-100 transition-colors" title={t(v.active ? 'vouchersPage.actions.deactivate' : 'vouchersPage.actions.activate')}>
             <RefreshCw size={13} strokeWidth={1.75} />
           </button>
-          <button onClick={() => handleDelete(v.id)} aria-label={`Eliminar ${v.code}`}
-            className="p-1.5 rounded text-n-400 hover:text-[var(--error)] hover:bg-[var(--error-light)] transition-colors" title="Eliminar">
+          <button onClick={() => handleDelete(v.id)} aria-label={t('vouchersPage.actions.deleteAria', { code: v.code })}
+            className="p-1.5 rounded text-n-400 hover:text-[var(--error)] hover:bg-[var(--error-light)] transition-colors" title={t('vouchersPage.actions.delete')}>
             <Trash2 size={13} strokeWidth={1.75} />
           </button>
         </div>
@@ -380,20 +399,20 @@ export default function Vouchers() {
   return (
     <div>
       <PageHeader
-        title="Vouchers e Promoções"
-        subtitle="Gerir códigos de desconto"
+        title={t('vouchersPage.title')}
+        subtitle={t('vouchersPage.subtitle')}
         actions={
-          <Button icon={Plus} onClick={() => setModal({ _new: true })}>Novo voucher</Button>
+          <Button icon={Plus} onClick={() => setModal({ _new: true })}>{t('vouchersPage.newVoucher')}</Button>
         }
       />
 
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
         {[
-          { label: 'Total vouchers',  value: total,     icon: Tag      },
-          { label: 'Activos',         value: active,    icon: Gift     },
-          { label: 'Expirados',       value: expired,   icon: Calendar },
-          { label: 'Total utilizações', value: totalUses, icon: BarChart2 },
+          { label: t('vouchersPage.stats.total'),      value: total,     icon: Tag      },
+          { label: t('vouchersPage.stats.active'),     value: active,    icon: Gift     },
+          { label: t('vouchersPage.stats.expired'),    value: expired,   icon: Calendar },
+          { label: t('vouchersPage.stats.totalUses'),  value: totalUses, icon: BarChart2 },
         ].map(m => (
           <Card key={m.label} padding="px-4 py-3">
             <div className="flex items-center gap-3">
@@ -412,11 +431,16 @@ export default function Vouchers() {
       {/* Filters */}
       <div className="flex flex-wrap gap-3 mb-4">
         <div className="flex-1 min-w-[160px] max-w-xs">
-          <Input aria-label="Pesquisar código" value={search} onChange={e => setSearch(e.target.value)}
-            placeholder="Pesquisar código..." className="font-mono" />
+          <Input aria-label={t('vouchersPage.searchAria')} value={search} onChange={e => setSearch(e.target.value)}
+            placeholder={t('vouchersPage.searchPlaceholder')} className="font-mono" />
         </div>
         <FilterChips
-          options={[{ value: '', label: 'Todos' }, { value: 'activo', label: 'Activos' }, { value: 'expirado', label: 'Expirados' }, { value: 'esgotado', label: 'Esgotados' }]}
+          options={[
+            { value: '', label: t('vouchersPage.filters.all') },
+            { value: 'activo', label: t('vouchersPage.filters.active') },
+            { value: 'expirado', label: t('vouchersPage.filters.expired') },
+            { value: 'esgotado', label: t('vouchersPage.filters.usedUp') },
+          ]}
           value={filterStatus}
           onChange={setFilterStatus}
         />
@@ -424,12 +448,12 @@ export default function Vouchers() {
 
       {/* List */}
       {loading ? (
-        <Card><div className="text-center py-14 text-n-400 text-sm font-body">A carregar...</div></Card>
+        <Card><div className="text-center py-14 text-n-400 text-sm font-body">{t('vouchersPage.loading')}</div></Card>
       ) : sorted.length === 0 ? (
         <Card padding="p-0">
-          <EmptyState icon={Tag} title="Sem vouchers"
-            description="Crie o primeiro código de desconto para os seus clientes."
-            action={<Button icon={Plus} onClick={() => setModal({ _new: true })}>Criar voucher</Button>} />
+          <EmptyState icon={Tag} title={t('vouchersPage.empty.title')}
+            description={t('vouchersPage.empty.description')}
+            action={<Button icon={Plus} onClick={() => setModal({ _new: true })}>{t('vouchersPage.empty.create')}</Button>} />
         </Card>
       ) : (
         <Card padding="p-0">

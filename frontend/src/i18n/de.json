@@ -2289,5 +2289,442 @@
       },
       "message": "Nachricht"
     }
+  },
+  "vouchersPage": {
+    "title": "Gutscheine und Aktionen",
+    "subtitle": "Rabattcodes verwalten",
+    "newVoucher": "Neuer Gutschein",
+    "status": {
+      "activo": "Aktiv",
+      "expirado": "Abgelaufen",
+      "esgotado": "Aufgebraucht",
+      "inactivo": "Inaktiv"
+    },
+    "stats": {
+      "total": "Gutscheine gesamt",
+      "active": "Aktiv",
+      "expired": "Abgelaufen",
+      "totalUses": "Einlösungen gesamt"
+    },
+    "searchPlaceholder": "Code suchen...",
+    "searchAria": "Code suchen",
+    "filters": {
+      "all": "Alle",
+      "active": "Aktiv",
+      "expired": "Abgelaufen",
+      "usedUp": "Aufgebraucht"
+    },
+    "columns": {
+      "code": "Code",
+      "discount": "Rabatt",
+      "minimum": "Minimum",
+      "validity": "Gültigkeit",
+      "uses": "Einlösungen",
+      "tours": "Touren",
+      "status": "Status"
+    },
+    "toursCount": "{{n}} Tour(en)",
+    "allTours": "Alle",
+    "actions": {
+      "share": "Teilen",
+      "edit": "Bearbeiten",
+      "deactivate": "Deaktivieren",
+      "activate": "Aktivieren",
+      "delete": "Löschen",
+      "shareAria": "{{code}} teilen",
+      "editAria": "{{code}} bearbeiten",
+      "deactivateAria": "{{code}} deaktivieren",
+      "activateAria": "{{code}} aktivieren",
+      "deleteAria": "{{code}} löschen"
+    },
+    "confirmDelete": "Diesen Gutschein löschen?",
+    "loading": "Wird geladen...",
+    "empty": {
+      "title": "Keine Gutscheine",
+      "description": "Erstellen Sie den ersten Rabattcode für Ihre Kunden.",
+      "create": "Gutschein erstellen"
+    },
+    "copy": "Kopieren",
+    "copied": "Kopiert",
+    "modal": {
+      "titleNew": "Neuer Gutschein",
+      "titleEdit": "Gutschein bearbeiten",
+      "code": "Code",
+      "codePlaceholder": "z. B. SOMMER2025",
+      "generate": "Erzeugen",
+      "discountType": "Rabattart",
+      "typePercent": "Prozent (%)",
+      "typeFixed": "Fester Betrag (€)",
+      "discountPct": "Rabatt (%)",
+      "discountEur": "Rabatt (€)",
+      "minBooking": "Mindestbuchungswert (€)",
+      "minPlaceholder": "0 = kein Minimum",
+      "maxUses": "Einlösungslimit",
+      "maxPlaceholder": "0 = unbegrenzt",
+      "validUntil": "Gültig bis",
+      "applicableTours": "Anwendbare Touren",
+      "allToursApply": "Gilt für alle Touren.",
+      "selectedTours": "{{n}} Tour(en) ausgewählt.",
+      "errCode": "Der Code ist erforderlich.",
+      "errValue": "Der Rabattwert muss größer als null sein.",
+      "errSave": "Der Gutschein konnte nicht gespeichert werden.",
+      "cancel": "Abbrechen",
+      "create": "Gutschein erstellen",
+      "save": "Speichern"
+    },
+    "share": {
+      "title": "Teilen — {{code}}",
+      "discountOff": "{{discount}} Rabatt",
+      "whatsapp": "WhatsApp",
+      "send": "Senden",
+      "email": "E-Mail",
+      "emailPt": "E-Mail PT",
+      "emailEn": "E-Mail EN",
+      "close": "Schließen",
+      "expires": " Gültig bis {{date}}.",
+      "message": "Verwenden Sie den Code *{{code}}*, um {{discount}} Rabatt auf Ihre nächste Buchung zu erhalten.{{expires}} Buchen unter: {{link}}",
+      "subject": "Spezieller Gutschein für Sie"
+    }
+  },
+  "loyaltyPage": {
+    "title": "Treueprogramm",
+    "subtitle": "Stufen, Punkte und Prämien einrichten",
+    "levels": {
+      "Bronze": "Bronze",
+      "Prata": "Silber",
+      "Ouro": "Gold"
+    },
+    "ledger": {
+      "earn": "Erhalten",
+      "manual_adjust": "Manuelle Anpassung",
+      "redeem": "Eingelöst"
+    },
+    "noMovements": "Noch keine Bewegungen.",
+    "points": {
+      "title": "Punkte — {{name}}",
+      "current": "Aktuelle Punkte",
+      "voucherCreated": "Gutschein erstellt — {{pct}} % Rabatt",
+      "copyCode": "Code kopieren",
+      "singleUse": "Einmalig verwendbar, gültig bis {{date}}.",
+      "redeemTier": "Stufe {{level}} einlösen",
+      "redeemHelp": "Tauscht das gesamte Guthaben gegen einen {{pct}}-%-Gutschein (einmalig).",
+      "redeem": "Einlösen",
+      "add": "Hinzufügen",
+      "remove": "Entfernen",
+      "amount": "Anzahl Punkte",
+      "amountPlaceholder": "z. B. 50",
+      "reason": "Grund",
+      "reasonPlaceholder": "z. B. besondere Buchung, manuelle Anpassung...",
+      "result": "Ergebnis",
+      "pts": "Pkt.",
+      "close": "Schließen",
+      "saveAdjust": "Anpassung speichern",
+      "history": "Verlauf",
+      "errAmount": "Geben Sie einen gültigen Wert ein.",
+      "errAdjust": "Die Punkte konnten nicht aktualisiert werden.",
+      "errRedeem": "Die Punkte konnten nicht eingelöst werden."
+    },
+    "level": {
+      "range": "{{min}}–{{max}} Pkt. · {{pct}} % Rabatt",
+      "discountPct": "Rabatt (%)",
+      "rewardDesc": "Beschreibung der Prämie",
+      "maxPoints": "Maximale Punkte (Stufe {{level}})",
+      "cancel": "Abbrechen",
+      "save": "Speichern"
+    },
+    "programAria": "Treueprogramm",
+    "programActive": "Programm aktiv",
+    "programInactive": "Programm inaktiv",
+    "activeHelp": "Kunden sammeln nach jeder Buchung automatisch Punkte.",
+    "inactiveHelp": "Aktivieren Sie das Programm, um Kunden Punkte zu vergeben.",
+    "tabs": {
+      "config": "Konfiguration",
+      "customers": "Kunden"
+    },
+    "earning": {
+      "title": "Sammelregel",
+      "pointsPerEuro": "Punkte pro ausgegebenem Euro",
+      "unit": "Pkt. / EUR",
+      "example": "z. B. Buchung über 100 € = {{n}} Punkte."
+    },
+    "tiers": {
+      "title": "Stufen und Prämien",
+      "note": "Die Mindestgrenzen der Stufen Silber und Gold werden automatisch aus dem Maximum der vorherigen Stufe berechnet."
+    },
+    "stats": {
+      "total": "Kunden gesamt"
+    },
+    "searchPlaceholder": "Kunde suchen...",
+    "searchAria": "Kunde suchen",
+    "all": "Alle",
+    "columns": {
+      "customer": "Kunde",
+      "email": "E-Mail",
+      "visits": "Besuche",
+      "points": "Punkte",
+      "tier": "Stufe",
+      "reward": "Prämie"
+    },
+    "adjustAria": "Punkte anpassen {{name}}",
+    "emptyCustomers": "Keine Kunden gefunden."
+  },
+  "packagesPage": {
+    "title": "Saisonpakete",
+    "subtitle": "Touren zu Paketen mit Sonderpreis kombinieren",
+    "newPackage": "Neues Paket",
+    "status": {
+      "activo": "Aktiv",
+      "inactivo": "Inaktiv",
+      "esgotado": "Ausverkauft",
+      "expirado": "Abgelaufen"
+    },
+    "kpi": {
+      "active": "Aktive Pakete",
+      "bookings": "Buchungen über Pakete",
+      "revenue": "Erzielter Umsatz"
+    },
+    "publicNote": "Aktive Pakete erscheinen automatisch auf der öffentlichen Buchungsseite, sobald das Backend den Endpoint umsetzt",
+    "empty": {
+      "title": "Noch keine Pakete",
+      "description": "Erstellen Sie das erste Paket, indem Sie Touren zu einem Sonderpreis kombinieren.",
+      "create": "Paket erstellen"
+    },
+    "card": {
+      "saves": "{{amount}} sparen",
+      "bookings": "{{n}} Buchung(en)",
+      "remaining": "{{n}} übrig",
+      "deactivate": "Deaktivieren",
+      "activate": "Aktivieren",
+      "deactivateAria": "{{name}} deaktivieren",
+      "activateAria": "{{name}} aktivieren",
+      "editAria": "{{name}} bearbeiten",
+      "deleteAria": "{{name}} löschen"
+    },
+    "confirmDelete": "Dieses Paket löschen?",
+    "modal": {
+      "titleNew": "Neues Paket",
+      "titleEdit": "Paket bearbeiten",
+      "namePt": "Name PT",
+      "nameEn": "Name EN",
+      "namePtPlaceholder": "z. B. Kite + Tauchen Paket",
+      "nameEnPlaceholder": "z. B. Kite + Tauchen Paket",
+      "descPt": "Beschreibung PT",
+      "descEn": "Beschreibung EN",
+      "includedTours": "Enthaltene Touren ({{n}} ausgewählt)",
+      "noTours": "Keine Touren verfügbar. Erstellen Sie zuerst Touren unter Einheiten.",
+      "sumTours": "Summe der einzelnen Touren:",
+      "price": "Paketpreis (€)",
+      "pricePlaceholder": "z. B. 85.00",
+      "customerSaves": "Kunde spart {{amount}} gegenüber Einzelkauf",
+      "limit": "Verkaufslimit (0 = unbegrenzt)",
+      "validFrom": "Gültig ab",
+      "validTo": "Gültig bis",
+      "photo": "Foto (URL)",
+      "photoPlaceholder": "https://beispiel.com/foto.jpg",
+      "status": "Status",
+      "errSave": "Das Paket konnte nicht gespeichert werden.",
+      "cancel": "Abbrechen",
+      "create": "Paket erstellen",
+      "save": "Speichern"
+    }
+  },
+  "groupsPage": {
+    "title": "Gruppenbuchungen und Firmenevents",
+    "subtitle": "Angebote und Vorschläge für Gruppen und Firmen",
+    "newQuote": "Neues Angebot",
+    "eventTypes": {
+      "team_building": "Teambuilding",
+      "incentivo": "Incentive-Reise",
+      "turismo": "Gruppentourismus",
+      "casamento": "Hochzeit / Event",
+      "outro": "Sonstiges"
+    },
+    "statuses": {
+      "pedido": "Anfrage",
+      "em_analise": "In Prüfung",
+      "proposta_enviada": "Vorschlag gesendet",
+      "confirmado": "Bestätigt",
+      "concluido": "Abgeschlossen",
+      "cancelado": "Storniert"
+    },
+    "kpi": {
+      "total": "Angebote gesamt",
+      "confirmed": "Bestätigt",
+      "guests": "Bestätigte Gäste"
+    },
+    "searchPlaceholder": "Firma oder Gruppe suchen...",
+    "searchAria": "Firma oder Gruppe suchen",
+    "all": "Alle",
+    "empty": {
+      "title": "Keine Angebote",
+      "first": "Erfassen Sie das erste Angebot für eine Gruppe oder ein Firmenevent.",
+      "filtered": "Kein Angebot entspricht den Filtern."
+    },
+    "confirmDelete": "Dieses Angebot löschen?",
+    "modal": {
+      "titleNew": "Neues Gruppenangebot",
+      "titleEdit": "Angebot bearbeiten",
+      "company": "Firma / Gruppe",
+      "companyPlaceholder": "z. B. ABC GmbH",
+      "eventType": "Veranstaltungsart",
+      "date": "Gewünschtes Datum",
+      "guests": "Anzahl Personen",
+      "guestsPlaceholder": "z. B. 20",
+      "requestedTours": "Gewünschte Touren ({{n}} ausgewählt)",
+      "noTours": "Keine Touren verfügbar.",
+      "tourPrice": "{{name}} — {{price}}/Gast",
+      "discount": "Gruppenrabatt (%)",
+      "discountPlaceholder": "z. B. 15",
+      "budget": "Geschätztes Budget (€)",
+      "budgetPlaceholder": "Budget des Kunden",
+      "estimated": "Geschätzter Preis mit Rabatt:",
+      "estimatedDetail": "({{guests}} Gäste × {{pct}} % Rabatt)",
+      "deposit": "Anzahlung (%)",
+      "depositHint": "Prozentsatz, der als Anzahlung zu zahlen ist",
+      "daysBefore": "Restbetrag X Tage vorher",
+      "daysBeforeHint": "Tage vor dem Event für die Restzahlung",
+      "proposalValidity": "Gültigkeit des Vorschlags",
+      "notes": "Besondere Hinweise",
+      "notesPlaceholder": "Besondere Bedürfnisse, Allergien, Wünsche der Gruppe...",
+      "status": "Status",
+      "errSave": "Das Angebot konnte nicht gespeichert werden.",
+      "cancel": "Abbrechen",
+      "create": "Angebot erstellen",
+      "save": "Speichern"
+    },
+    "payment": {
+      "title": "Zahlung — {{company}}",
+      "totalPaid": "Bisher gezahlt:",
+      "amount": "Erhaltener Betrag (€)",
+      "date": "Datum",
+      "description": "Beschreibung",
+      "descriptionPlaceholder": "z. B. Anzahlung, Schlusszahlung...",
+      "defaultNote": "Anzahlung",
+      "cancel": "Abbrechen",
+      "record": "Erfassen"
+    },
+    "card": {
+      "requestedTours": "Gewünschte Touren",
+      "guestsCount": "{{n}} Gäste",
+      "discount": "Rabatt",
+      "deposit": "Anzahlung",
+      "finalPayment": "Schlusszahlung",
+      "daysBefore": "{{n}} T. vorher",
+      "proposalUntil": "Vorschlag gültig bis",
+      "notes": "Notizen",
+      "paymentsReceived": "Erhaltene Zahlungen",
+      "totalPaid": "Gesamt gezahlt",
+      "advance": "Weiter zu: {{status}}",
+      "recordPayment": "Zahlung erfassen",
+      "printProposal": "Vorschlag drucken",
+      "editAria": "{{name}} bearbeiten",
+      "deleteAria": "{{name}} löschen"
+    }
+  },
+  "partnersPage": {
+    "title": "Cross-Selling-Partnerschaften",
+    "subtitle": "Empfehlungen und Provisionen zwischen SalDesk-Betreibern",
+    "addPartner": "Partner hinzufügen",
+    "types": {
+      "hotel": "Hotel / Unterkunft",
+      "activity": "Touristische Aktivität",
+      "rentacar": "Autovermietung",
+      "restaurant": "Restaurant"
+    },
+    "partnershipTypes": {
+      "recommendation": "Gegenseitige Empfehlung (ohne Provision)",
+      "commission": "Provision pro vermittelter Buchung",
+      "discount": "Gegenseitiger Rabatt für Kunden"
+    },
+    "picker": {
+      "change": "Ändern",
+      "placeholder": "Betreiber nach Namen suchen...",
+      "aria": "Betreiber nach Namen suchen",
+      "searching": "Suche läuft...",
+      "none": "Kein Betreiber gefunden."
+    },
+    "modal": {
+      "titleNew": "Partner hinzufügen",
+      "titleEdit": "Partner bearbeiten",
+      "modeManual": "Externer Partner",
+      "modeReal": "SalDesk-Betreiber",
+      "name": "Name des Partners",
+      "namePlaceholder": "z. B. Hotel Morabeza",
+      "partnerType": "Partnerart",
+      "operatorLabel": "SalDesk-Betreiber",
+      "pendingHint": "Die Anfrage bleibt ausstehend, bis der gewählte Betreiber sie annimmt.",
+      "partnershipType": "Partnerschaftsart",
+      "commission": "Provision (%)",
+      "commissionPlaceholder": "z. B. 10",
+      "commissionHint": "Prozentsatz der Buchung, der an den vermittelnden Partner gezahlt wird",
+      "avgValue": "Durchschnittlicher Buchungspreis (€)",
+      "avgPlaceholder": "z. B. 80",
+      "avgHint": "Dient zur Schätzung zu zahlender/erhaltener Provisionen im Dashboard",
+      "messagePt": "Empfehlungsnachricht PT",
+      "messageEn": "Empfehlungsnachricht EN",
+      "messagePtPlaceholder": "z. B. Für Ihre Unterkunft auf Sal empfehlen wir unseren Partner Hotel Morabeza.",
+      "messageEnPlaceholder": "z. B. Für Ihre Unterkunft auf Sal empfehlen wir unseren Partner Hotel Morabeza.",
+      "errChoose": "Wählen Sie einen Betreiber aus der Liste.",
+      "errSave": "Der Partner konnte nicht gespeichert werden.",
+      "cancel": "Abbrechen",
+      "sendRequest": "Anfrage senden",
+      "add": "Hinzufügen",
+      "save": "Speichern"
+    },
+    "log": {
+      "title": "Buchungen erfassen — {{name}}",
+      "sent": "An Partner gesendete Buchung",
+      "received": "Vom Partner erhaltene Buchung",
+      "count": "Anzahl Buchungen",
+      "cancel": "Abbrechen",
+      "record": "Erfassen"
+    },
+    "tabs": {
+      "partners": "Partner",
+      "requests": "Anfragen",
+      "dashboard": "Dashboard"
+    },
+    "empty": {
+      "title": "Keine Partner eingerichtet",
+      "description": "Fügen Sie SalDesk-Partnerbetreiber hinzu, um mit Cross-Selling zu beginnen."
+    },
+    "rejected": "Abgelehnt",
+    "commissionLine": "{{pct}} % Provision",
+    "avgBookingLine": " · Ø Buchung {{amount}}",
+    "bookingsSent": "gesendet",
+    "bookingsReceived": "erhalten",
+    "actions": {
+      "record": "Buchungen erfassen",
+      "recordAria": "Buchungen erfassen {{name}}",
+      "deactivateAria": "{{name}} deaktivieren",
+      "activateAria": "{{name}} aktivieren",
+      "editAria": "{{name}} bearbeiten",
+      "deleteAria": "{{name}} löschen"
+    },
+    "confirmDelete": "Diesen Partner löschen?",
+    "requests": {
+      "received": "Erhalten",
+      "noneReceived": "Keine offenen Partnerschaftsanfragen.",
+      "accept": "Annehmen",
+      "reject": "Ablehnen",
+      "sent": "Gesendet",
+      "noneSent": "Keine Partnerschaftsanfragen gesendet.",
+      "awaiting": "Warten auf Antwort",
+      "cancel": "Anfrage abbrechen",
+      "cancelAria": "Anfrage {{name}} abbrechen"
+    },
+    "dashboard": {
+      "activePartners": "Aktive Partner",
+      "sent": "Gesendete Buchungen",
+      "received": "Erhaltene Buchungen",
+      "balance": "Bilanz (erhalten - gesendet)",
+      "payable": "Zu zahlende Provisionen",
+      "payableHelp": "Für Buchungen, die Sie an Partner mit Provision gesendet haben.",
+      "receivable": "Zu erhaltende Provisionen",
+      "receivableHelp": "Für Buchungen, die Partner Ihnen gesendet haben.",
+      "needsAvg": "Erfordert pro Partner festgelegte Durchschnittspreise.",
+      "noteLabel": "Hinweis:",
+      "noteText": "Um automatische Empfehlungen zu aktivieren (E-Mail nach bestätigter Tour usw.), richten Sie die entsprechenden Automatisierungen ein unter"
+    }
   }
 }

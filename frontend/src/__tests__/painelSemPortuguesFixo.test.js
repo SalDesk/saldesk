@@ -175,6 +175,12 @@ export const FICHEIROS_CONVERTIDOS = [
   'components/shared/StaffChat.jsx',
   'pages/FounderChat.jsx',
   'pages/Pedidos.jsx',
+  /* Fase 3, tarefa 3: vouchers, fidelizacao, pacotes, grupos e parceiros */
+  'pages/Vouchers.jsx',
+  'pages/Loyalty.jsx',
+  'pages/Packages.jsx',
+  'pages/Groups.jsx',
+  'pages/Partners.jsx',
 ];
 
 /* Textos escritos ao cliente: ficam em portugues em qualquer lingua do painel */
@@ -183,6 +189,11 @@ const MOTIVO_EXEMPLO = 'dados de exemplo do preview da mensagem ao cliente, que 
 
 /* Valores portugueses que ficam no codigo de proposito, por ficheiro, com o motivo. */
 export const PERMITIDOS = {
+  'pages/Loyalty.jsx': [
+    { valor: '5% desconto em todas as reservas', motivo: 'descricao da recompensa por omissao do nivel, gravada na configuracao do programa de fidelidade e editada pelo operador (o nome do nivel e o valor gravado; o rotulo vem de loyaltyPage.levels)' },
+    { valor: '10% desconto + upgrade gratuito disponível', motivo: 'descricao da recompensa por omissao do nivel, gravada na configuracao do programa de fidelidade e editada pelo operador (o nome do nivel e o valor gravado; o rotulo vem de loyaltyPage.levels)' },
+    { valor: '15% desconto + tour gratuito por ano', motivo: 'descricao da recompensa por omissao do nivel, gravada na configuracao do programa de fidelidade e editada pelo operador (o nome do nivel e o valor gravado; o rotulo vem de loyaltyPage.levels)' },
+  ],
   'components/dashboard/NextDaysStrip.jsx': [
     { valor: 'Sáb', motivo: 'abreviatura do sabado na tabela DIA_SEMANA, que ja tem uma linha por lingua (pt/en/de/nl)' },
   ],

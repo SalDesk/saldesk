@@ -2289,5 +2289,442 @@
       },
       "message": "Bericht"
     }
+  },
+  "vouchersPage": {
+    "title": "Vouchers en acties",
+    "subtitle": "Kortingscodes beheren",
+    "newVoucher": "Nieuwe voucher",
+    "status": {
+      "activo": "Actief",
+      "expirado": "Verlopen",
+      "esgotado": "Opgebruikt",
+      "inactivo": "Inactief"
+    },
+    "stats": {
+      "total": "Totaal vouchers",
+      "active": "Actief",
+      "expired": "Verlopen",
+      "totalUses": "Totaal gebruik"
+    },
+    "searchPlaceholder": "Code zoeken...",
+    "searchAria": "Code zoeken",
+    "filters": {
+      "all": "Alle",
+      "active": "Actief",
+      "expired": "Verlopen",
+      "usedUp": "Opgebruikt"
+    },
+    "columns": {
+      "code": "Code",
+      "discount": "Korting",
+      "minimum": "Minimum",
+      "validity": "Geldigheid",
+      "uses": "Gebruik",
+      "tours": "Tours",
+      "status": "Status"
+    },
+    "toursCount": "{{n}} tour(s)",
+    "allTours": "Alle",
+    "actions": {
+      "share": "Delen",
+      "edit": "Bewerken",
+      "deactivate": "Deactiveren",
+      "activate": "Activeren",
+      "delete": "Verwijderen",
+      "shareAria": "{{code}} delen",
+      "editAria": "{{code}} bewerken",
+      "deactivateAria": "{{code}} deactiveren",
+      "activateAria": "{{code}} activeren",
+      "deleteAria": "{{code}} verwijderen"
+    },
+    "confirmDelete": "Deze voucher verwijderen?",
+    "loading": "Laden...",
+    "empty": {
+      "title": "Geen vouchers",
+      "description": "Maak de eerste kortingscode voor uw klanten.",
+      "create": "Voucher aanmaken"
+    },
+    "copy": "Kopiëren",
+    "copied": "Gekopieerd",
+    "modal": {
+      "titleNew": "Nieuwe voucher",
+      "titleEdit": "Voucher bewerken",
+      "code": "Code",
+      "codePlaceholder": "bijv. ZOMER2025",
+      "generate": "Genereren",
+      "discountType": "Kortingstype",
+      "typePercent": "Percentage (%)",
+      "typeFixed": "Vast bedrag (€)",
+      "discountPct": "Korting (%)",
+      "discountEur": "Korting (€)",
+      "minBooking": "Minimum boeking (€)",
+      "minPlaceholder": "0 = geen minimum",
+      "maxUses": "Gebruikslimiet",
+      "maxPlaceholder": "0 = onbeperkt",
+      "validUntil": "Geldig tot",
+      "applicableTours": "Toepasselijke tours",
+      "allToursApply": "Geldt voor alle tours.",
+      "selectedTours": "{{n}} tour(s) geselecteerd.",
+      "errCode": "De code is verplicht.",
+      "errValue": "De kortingswaarde moet groter zijn dan nul.",
+      "errSave": "De voucher kon niet worden opgeslagen.",
+      "cancel": "Annuleren",
+      "create": "Voucher aanmaken",
+      "save": "Opslaan"
+    },
+    "share": {
+      "title": "Delen — {{code}}",
+      "discountOff": "{{discount}} korting",
+      "whatsapp": "WhatsApp",
+      "send": "Versturen",
+      "email": "E-mail",
+      "emailPt": "E-mail PT",
+      "emailEn": "E-mail EN",
+      "close": "Sluiten",
+      "expires": " Geldig tot {{date}}.",
+      "message": "Gebruik de code *{{code}}* voor {{discount}} korting op uw volgende boeking.{{expires}} Boek op: {{link}}",
+      "subject": "Speciale voucher voor u"
+    }
+  },
+  "loyaltyPage": {
+    "title": "Loyaliteitsprogramma",
+    "subtitle": "Stel niveaus, punten en beloningen in",
+    "levels": {
+      "Bronze": "Brons",
+      "Prata": "Zilver",
+      "Ouro": "Goud"
+    },
+    "ledger": {
+      "earn": "Verdiend",
+      "manual_adjust": "Handmatige aanpassing",
+      "redeem": "Ingewisseld"
+    },
+    "noMovements": "Nog geen transacties.",
+    "points": {
+      "title": "Punten — {{name}}",
+      "current": "Huidige punten",
+      "voucherCreated": "Voucher aangemaakt — {{pct}}% korting",
+      "copyCode": "Code kopiëren",
+      "singleUse": "Eenmalig te gebruiken, geldig tot {{date}}.",
+      "redeemTier": "Niveau {{level}} inwisselen",
+      "redeemHelp": "Wisselt het hele saldo in voor een voucher van {{pct}}% (eenmalig).",
+      "redeem": "Inwisselen",
+      "add": "Toevoegen",
+      "remove": "Verwijderen",
+      "amount": "Aantal punten",
+      "amountPlaceholder": "bijv. 50",
+      "reason": "Reden",
+      "reasonPlaceholder": "bijv. speciale boeking, handmatige aanpassing...",
+      "result": "Resultaat",
+      "pts": "ptn",
+      "close": "Sluiten",
+      "saveAdjust": "Aanpassing opslaan",
+      "history": "Geschiedenis",
+      "errAmount": "Voer een geldige waarde in.",
+      "errAdjust": "De punten konden niet worden bijgewerkt.",
+      "errRedeem": "De punten konden niet worden ingewisseld."
+    },
+    "level": {
+      "range": "{{min}}–{{max}} ptn · {{pct}}% korting",
+      "discountPct": "Korting (%)",
+      "rewardDesc": "Beschrijving van de beloning",
+      "maxPoints": "Maximumpunten (niveau {{level}})",
+      "cancel": "Annuleren",
+      "save": "Opslaan"
+    },
+    "programAria": "Loyaliteitsprogramma",
+    "programActive": "Programma actief",
+    "programInactive": "Programma inactief",
+    "activeHelp": "Klanten sparen automatisch punten na elke boeking.",
+    "inactiveHelp": "Activeer het programma om punten aan klanten toe te kennen.",
+    "tabs": {
+      "config": "Configuratie",
+      "customers": "Klanten"
+    },
+    "earning": {
+      "title": "Spaarregel",
+      "pointsPerEuro": "Punten per bestede euro",
+      "unit": "pt / EUR",
+      "example": "bijv. een boeking van €100 = {{n}} punten."
+    },
+    "tiers": {
+      "title": "Niveaus en beloningen",
+      "note": "De ondergrenzen van de niveaus Zilver en Goud worden automatisch berekend op basis van het maximum van het vorige niveau."
+    },
+    "stats": {
+      "total": "Totaal klanten"
+    },
+    "searchPlaceholder": "Klant zoeken...",
+    "searchAria": "Klant zoeken",
+    "all": "Alle",
+    "columns": {
+      "customer": "Klant",
+      "email": "E-mail",
+      "visits": "Bezoeken",
+      "points": "Punten",
+      "tier": "Niveau",
+      "reward": "Beloning"
+    },
+    "adjustAria": "Punten aanpassen {{name}}",
+    "emptyCustomers": "Geen klanten gevonden."
+  },
+  "packagesPage": {
+    "title": "Seizoenspakketten",
+    "subtitle": "Combineer tours in pakketten tegen een speciale prijs",
+    "newPackage": "Nieuw pakket",
+    "status": {
+      "activo": "Actief",
+      "inactivo": "Inactief",
+      "esgotado": "Uitverkocht",
+      "expirado": "Verlopen"
+    },
+    "kpi": {
+      "active": "Actieve pakketten",
+      "bookings": "Boekingen via pakketten",
+      "revenue": "Gegenereerde omzet"
+    },
+    "publicNote": "Actieve pakketten verschijnen automatisch op de openbare boekingspagina zodra de backend het endpoint implementeert",
+    "empty": {
+      "title": "Nog geen pakketten",
+      "description": "Maak het eerste pakket door tours te combineren tegen een speciale prijs.",
+      "create": "Pakket aanmaken"
+    },
+    "card": {
+      "saves": "Bespaar {{amount}}",
+      "bookings": "{{n}} boeking(en)",
+      "remaining": "{{n}} over",
+      "deactivate": "Deactiveren",
+      "activate": "Activeren",
+      "deactivateAria": "{{name}} deactiveren",
+      "activateAria": "{{name}} activeren",
+      "editAria": "{{name}} bewerken",
+      "deleteAria": "{{name}} verwijderen"
+    },
+    "confirmDelete": "Dit pakket verwijderen?",
+    "modal": {
+      "titleNew": "Nieuw pakket",
+      "titleEdit": "Pakket bewerken",
+      "namePt": "Naam PT",
+      "nameEn": "Naam EN",
+      "namePtPlaceholder": "bijv. Kite + Duik pakket",
+      "nameEnPlaceholder": "bijv. Kite + Duik pakket",
+      "descPt": "Beschrijving PT",
+      "descEn": "Beschrijving EN",
+      "includedTours": "Inbegrepen tours ({{n}} geselecteerd)",
+      "noTours": "Geen tours beschikbaar. Maak eerst tours aan bij Eenheden.",
+      "sumTours": "Som van de afzonderlijke tours:",
+      "price": "Pakketprijs (€)",
+      "pricePlaceholder": "bijv. 85.00",
+      "customerSaves": "Klant bespaart {{amount}} t.o.v. losse aankoop",
+      "limit": "Verkooplimiet (0 = onbeperkt)",
+      "validFrom": "Geldig vanaf",
+      "validTo": "Geldig tot",
+      "photo": "Foto (URL)",
+      "photoPlaceholder": "https://voorbeeld.com/foto.jpg",
+      "status": "Status",
+      "errSave": "Het pakket kon niet worden opgeslagen.",
+      "cancel": "Annuleren",
+      "create": "Pakket aanmaken",
+      "save": "Opslaan"
+    }
+  },
+  "groupsPage": {
+    "title": "Groepsboekingen en bedrijfsevenementen",
+    "subtitle": "Offertes en voorstellen voor groepen en bedrijven",
+    "newQuote": "Nieuwe offerte",
+    "eventTypes": {
+      "team_building": "Teambuilding",
+      "incentivo": "Incentive-reis",
+      "turismo": "Groepstoerisme",
+      "casamento": "Bruiloft / Evenement",
+      "outro": "Overig"
+    },
+    "statuses": {
+      "pedido": "Aanvraag",
+      "em_analise": "In behandeling",
+      "proposta_enviada": "Voorstel verzonden",
+      "confirmado": "Bevestigd",
+      "concluido": "Afgerond",
+      "cancelado": "Geannuleerd"
+    },
+    "kpi": {
+      "total": "Totaal offertes",
+      "confirmed": "Bevestigd",
+      "guests": "Bevestigde gasten"
+    },
+    "searchPlaceholder": "Bedrijf of groep zoeken...",
+    "searchAria": "Bedrijf of groep zoeken",
+    "all": "Alle",
+    "empty": {
+      "title": "Geen offertes",
+      "first": "Registreer de eerste offerte voor een groep of bedrijfsevenement.",
+      "filtered": "Geen offerte komt overeen met de filters."
+    },
+    "confirmDelete": "Deze offerte verwijderen?",
+    "modal": {
+      "titleNew": "Nieuwe groepsofferte",
+      "titleEdit": "Offerte bewerken",
+      "company": "Bedrijf / Groep",
+      "companyPlaceholder": "bijv. Bedrijf ABC",
+      "eventType": "Type evenement",
+      "date": "Gewenste datum",
+      "guests": "Aantal personen",
+      "guestsPlaceholder": "bijv. 20",
+      "requestedTours": "Gewenste tours ({{n}} geselecteerd)",
+      "noTours": "Geen tours beschikbaar.",
+      "tourPrice": "{{name}} — {{price}}/gast",
+      "discount": "Groepskorting (%)",
+      "discountPlaceholder": "bijv. 15",
+      "budget": "Geschat budget (€)",
+      "budgetPlaceholder": "Budget van de klant",
+      "estimated": "Geschatte prijs met korting:",
+      "estimatedDetail": "({{guests}} gasten × {{pct}}% korting)",
+      "deposit": "Aanbetaling (%)",
+      "depositHint": "Percentage dat als aanbetaling wordt betaald",
+      "daysBefore": "Restant X dagen van tevoren",
+      "daysBeforeHint": "Dagen vóór het evenement om het restant te betalen",
+      "proposalValidity": "Geldigheid van het voorstel",
+      "notes": "Bijzondere opmerkingen",
+      "notesPlaceholder": "Bijzondere behoeften, allergieën, voorkeuren van de groep...",
+      "status": "Status",
+      "errSave": "De offerte kon niet worden opgeslagen.",
+      "cancel": "Annuleren",
+      "create": "Offerte aanmaken",
+      "save": "Opslaan"
+    },
+    "payment": {
+      "title": "Betaling — {{company}}",
+      "totalPaid": "Tot nu toe betaald:",
+      "amount": "Ontvangen bedrag (€)",
+      "date": "Datum",
+      "description": "Omschrijving",
+      "descriptionPlaceholder": "bijv. Aanbetaling, Eindbetaling...",
+      "defaultNote": "Aanbetaling",
+      "cancel": "Annuleren",
+      "record": "Registreren"
+    },
+    "card": {
+      "requestedTours": "Gewenste tours",
+      "guestsCount": "{{n}} gasten",
+      "discount": "Korting",
+      "deposit": "Aanbetaling",
+      "finalPayment": "Eindbetaling",
+      "daysBefore": "{{n}}d van tevoren",
+      "proposalUntil": "Voorstel geldig tot",
+      "notes": "Notities",
+      "paymentsReceived": "Ontvangen betalingen",
+      "totalPaid": "Totaal betaald",
+      "advance": "Verder naar: {{status}}",
+      "recordPayment": "Betaling registreren",
+      "printProposal": "Voorstel afdrukken",
+      "editAria": "{{name}} bewerken",
+      "deleteAria": "{{name}} verwijderen"
+    }
+  },
+  "partnersPage": {
+    "title": "Cross-sellingpartnerschappen",
+    "subtitle": "Aanbevelingen en commissies tussen SalDesk-operators",
+    "addPartner": "Partner toevoegen",
+    "types": {
+      "hotel": "Hotel / Accommodatie",
+      "activity": "Toeristische activiteit",
+      "rentacar": "Autoverhuur",
+      "restaurant": "Restaurant"
+    },
+    "partnershipTypes": {
+      "recommendation": "Wederzijdse aanbeveling (zonder commissie)",
+      "commission": "Commissie per doorverwezen boeking",
+      "discount": "Wederzijdse korting voor klanten"
+    },
+    "picker": {
+      "change": "Wijzigen",
+      "placeholder": "Operator zoeken op naam...",
+      "aria": "Operator zoeken op naam",
+      "searching": "Zoeken...",
+      "none": "Geen operator gevonden."
+    },
+    "modal": {
+      "titleNew": "Partner toevoegen",
+      "titleEdit": "Partner bewerken",
+      "modeManual": "Externe partner",
+      "modeReal": "SalDesk-operator",
+      "name": "Naam van de partner",
+      "namePlaceholder": "bijv. Hotel Morabeza",
+      "partnerType": "Type partner",
+      "operatorLabel": "SalDesk-operator",
+      "pendingHint": "Het verzoek blijft in behandeling tot de gekozen operator het accepteert.",
+      "partnershipType": "Type partnerschap",
+      "commission": "Commissie (%)",
+      "commissionPlaceholder": "bijv. 10",
+      "commissionHint": "Percentage van de boeking dat wordt betaald aan de partner die deze doorverwees",
+      "avgValue": "Gemiddelde boekingsprijs (€)",
+      "avgPlaceholder": "bijv. 80",
+      "avgHint": "Wordt gebruikt om te betalen/te ontvangen commissies in het Dashboard te schatten",
+      "messagePt": "Aanbevelingsbericht PT",
+      "messageEn": "Aanbevelingsbericht EN",
+      "messagePtPlaceholder": "bijv. Voor uw accommodatie op Sal raden wij onze partner Hotel Morabeza aan.",
+      "messageEnPlaceholder": "bijv. Voor uw accommodatie op Sal raden wij onze partner Hotel Morabeza aan.",
+      "errChoose": "Kies een operator uit de lijst.",
+      "errSave": "De partner kon niet worden opgeslagen.",
+      "cancel": "Annuleren",
+      "sendRequest": "Verzoek versturen",
+      "add": "Toevoegen",
+      "save": "Opslaan"
+    },
+    "log": {
+      "title": "Boekingen registreren — {{name}}",
+      "sent": "Boeking naar partner gestuurd",
+      "received": "Boeking van partner ontvangen",
+      "count": "Aantal boekingen",
+      "cancel": "Annuleren",
+      "record": "Registreren"
+    },
+    "tabs": {
+      "partners": "Partners",
+      "requests": "Verzoeken",
+      "dashboard": "Dashboard"
+    },
+    "empty": {
+      "title": "Geen partners ingesteld",
+      "description": "Voeg SalDesk-partneroperators toe om met cross-selling te beginnen."
+    },
+    "rejected": "Afgewezen",
+    "commissionLine": "{{pct}}% commissie",
+    "avgBookingLine": " · gemiddelde boeking {{amount}}",
+    "bookingsSent": "verstuurd",
+    "bookingsReceived": "ontvangen",
+    "actions": {
+      "record": "Boekingen registreren",
+      "recordAria": "Boekingen registreren {{name}}",
+      "deactivateAria": "{{name}} deactiveren",
+      "activateAria": "{{name}} activeren",
+      "editAria": "{{name}} bewerken",
+      "deleteAria": "{{name}} verwijderen"
+    },
+    "confirmDelete": "Deze partner verwijderen?",
+    "requests": {
+      "received": "Ontvangen",
+      "noneReceived": "Geen partnerschapsverzoeken om te beantwoorden.",
+      "accept": "Accepteren",
+      "reject": "Weigeren",
+      "sent": "Verstuurd",
+      "noneSent": "Geen partnerschapsverzoeken verstuurd.",
+      "awaiting": "Wachten op antwoord",
+      "cancel": "Verzoek annuleren",
+      "cancelAria": "Verzoek {{name}} annuleren"
+    },
+    "dashboard": {
+      "activePartners": "Actieve partners",
+      "sent": "Verstuurde boekingen",
+      "received": "Ontvangen boekingen",
+      "balance": "Saldo (ontvangen - verstuurd)",
+      "payable": "Te betalen commissies",
+      "payableHelp": "Voor boekingen die u naar partners met commissie hebt gestuurd.",
+      "receivable": "Te ontvangen commissies",
+      "receivableHelp": "Voor boekingen die partners naar u hebben gestuurd.",
+      "needsAvg": "Vereist per partner ingestelde gemiddelde prijzen.",
+      "noteLabel": "Opmerking:",
+      "noteText": "Om automatische aanbevelingen te activeren (e-mail na een bevestigde tour, enz.), stelt u de bijbehorende automatiseringen in bij"
+    }
   }
 }

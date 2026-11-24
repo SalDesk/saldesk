@@ -3549,5 +3549,442 @@
       },
       "message": "Message"
     }
+  },
+  "vouchersPage": {
+    "title": "Vouchers and promotions",
+    "subtitle": "Manage discount codes",
+    "newVoucher": "New voucher",
+    "status": {
+      "activo": "Active",
+      "expirado": "Expired",
+      "esgotado": "Used up",
+      "inactivo": "Inactive"
+    },
+    "stats": {
+      "total": "Total vouchers",
+      "active": "Active",
+      "expired": "Expired",
+      "totalUses": "Total uses"
+    },
+    "searchPlaceholder": "Search code...",
+    "searchAria": "Search code",
+    "filters": {
+      "all": "All",
+      "active": "Active",
+      "expired": "Expired",
+      "usedUp": "Used up"
+    },
+    "columns": {
+      "code": "Code",
+      "discount": "Discount",
+      "minimum": "Minimum",
+      "validity": "Validity",
+      "uses": "Uses",
+      "tours": "Tours",
+      "status": "Status"
+    },
+    "toursCount": "{{n}} tour(s)",
+    "allTours": "All",
+    "actions": {
+      "share": "Share",
+      "edit": "Edit",
+      "deactivate": "Deactivate",
+      "activate": "Activate",
+      "delete": "Delete",
+      "shareAria": "Share {{code}}",
+      "editAria": "Edit {{code}}",
+      "deactivateAria": "Deactivate {{code}}",
+      "activateAria": "Activate {{code}}",
+      "deleteAria": "Delete {{code}}"
+    },
+    "confirmDelete": "Delete this voucher?",
+    "loading": "Loading...",
+    "empty": {
+      "title": "No vouchers",
+      "description": "Create your first discount code for your customers.",
+      "create": "Create voucher"
+    },
+    "copy": "Copy",
+    "copied": "Copied",
+    "modal": {
+      "titleNew": "New voucher",
+      "titleEdit": "Edit voucher",
+      "code": "Code",
+      "codePlaceholder": "e.g. SUMMER2025",
+      "generate": "Generate",
+      "discountType": "Discount type",
+      "typePercent": "Percentage (%)",
+      "typeFixed": "Fixed amount (€)",
+      "discountPct": "Discount (%)",
+      "discountEur": "Discount (€)",
+      "minBooking": "Minimum booking (€)",
+      "minPlaceholder": "0 = no minimum",
+      "maxUses": "Usage limit",
+      "maxPlaceholder": "0 = unlimited",
+      "validUntil": "Valid until",
+      "applicableTours": "Applicable tours",
+      "allToursApply": "Applies to all tours.",
+      "selectedTours": "{{n}} tour(s) selected.",
+      "errCode": "The code is required.",
+      "errValue": "The discount value must be greater than zero.",
+      "errSave": "Could not save the voucher.",
+      "cancel": "Cancel",
+      "create": "Create voucher",
+      "save": "Save"
+    },
+    "share": {
+      "title": "Share — {{code}}",
+      "discountOff": "{{discount}} off",
+      "whatsapp": "WhatsApp",
+      "send": "Send",
+      "email": "Email",
+      "emailPt": "Email PT",
+      "emailEn": "Email EN",
+      "close": "Close",
+      "expires": " Valid until {{date}}.",
+      "message": "Use code *{{code}}* to get {{discount}} off your next booking.{{expires}} Book at: {{link}}",
+      "subject": "Special voucher for you"
+    }
+  },
+  "loyaltyPage": {
+    "title": "Loyalty programme",
+    "subtitle": "Set up tiers, points and rewards",
+    "levels": {
+      "Bronze": "Bronze",
+      "Prata": "Silver",
+      "Ouro": "Gold"
+    },
+    "ledger": {
+      "earn": "Earned",
+      "manual_adjust": "Manual adjustment",
+      "redeem": "Redeemed"
+    },
+    "noMovements": "No transactions yet.",
+    "points": {
+      "title": "Points — {{name}}",
+      "current": "Current points",
+      "voucherCreated": "Voucher created — {{pct}}% off",
+      "copyCode": "Copy code",
+      "singleUse": "Single use, valid until {{date}}.",
+      "redeemTier": "Redeem {{level}} tier",
+      "redeemHelp": "Exchanges the whole balance for a {{pct}}% voucher (single use).",
+      "redeem": "Redeem",
+      "add": "Add",
+      "remove": "Remove",
+      "amount": "Number of points",
+      "amountPlaceholder": "e.g. 50",
+      "reason": "Reason",
+      "reasonPlaceholder": "e.g. special booking, manual adjustment...",
+      "result": "Result",
+      "pts": "pts",
+      "close": "Close",
+      "saveAdjust": "Save adjustment",
+      "history": "History",
+      "errAmount": "Enter a valid value.",
+      "errAdjust": "Could not update the points.",
+      "errRedeem": "Could not redeem the points."
+    },
+    "level": {
+      "range": "{{min}}–{{max}} pts · {{pct}}% discount",
+      "discountPct": "Discount (%)",
+      "rewardDesc": "Reward description",
+      "maxPoints": "Maximum points ({{level}} tier)",
+      "cancel": "Cancel",
+      "save": "Save"
+    },
+    "programAria": "Loyalty programme",
+    "programActive": "Programme active",
+    "programInactive": "Programme inactive",
+    "activeHelp": "Customers earn points automatically after each booking.",
+    "inactiveHelp": "Activate the programme to start giving points to customers.",
+    "tabs": {
+      "config": "Configuration",
+      "customers": "Customers"
+    },
+    "earning": {
+      "title": "Earning rule",
+      "pointsPerEuro": "Points per euro spent",
+      "unit": "pt / EUR",
+      "example": "e.g. a €100 booking = {{n}} points."
+    },
+    "tiers": {
+      "title": "Tiers and rewards",
+      "note": "The minimum limits of the Silver and Gold tiers are calculated automatically from the maximum of the previous tier."
+    },
+    "stats": {
+      "total": "Total customers"
+    },
+    "searchPlaceholder": "Search customer...",
+    "searchAria": "Search customer",
+    "all": "All",
+    "columns": {
+      "customer": "Customer",
+      "email": "Email",
+      "visits": "Visits",
+      "points": "Points",
+      "tier": "Tier",
+      "reward": "Reward"
+    },
+    "adjustAria": "Adjust points {{name}}",
+    "emptyCustomers": "No customers found."
+  },
+  "packagesPage": {
+    "title": "Seasonal packages",
+    "subtitle": "Combine tours into packages at a special price",
+    "newPackage": "New package",
+    "status": {
+      "activo": "Active",
+      "inactivo": "Inactive",
+      "esgotado": "Sold out",
+      "expirado": "Expired"
+    },
+    "kpi": {
+      "active": "Active packages",
+      "bookings": "Bookings from packages",
+      "revenue": "Revenue generated"
+    },
+    "publicNote": "Active packages appear automatically on the public booking page once the backend implements the endpoint",
+    "empty": {
+      "title": "No packages yet",
+      "description": "Create your first package by combining tours at a special price.",
+      "create": "Create package"
+    },
+    "card": {
+      "saves": "Save {{amount}}",
+      "bookings": "{{n}} booking(s)",
+      "remaining": "{{n}} left",
+      "deactivate": "Deactivate",
+      "activate": "Activate",
+      "deactivateAria": "Deactivate {{name}}",
+      "activateAria": "Activate {{name}}",
+      "editAria": "Edit {{name}}",
+      "deleteAria": "Delete {{name}}"
+    },
+    "confirmDelete": "Delete this package?",
+    "modal": {
+      "titleNew": "New package",
+      "titleEdit": "Edit package",
+      "namePt": "Name PT",
+      "nameEn": "Name EN",
+      "namePtPlaceholder": "e.g. Kite + Diving Package",
+      "nameEnPlaceholder": "e.g. Kite + Diving Package",
+      "descPt": "Description PT",
+      "descEn": "Description EN",
+      "includedTours": "Included tours ({{n}} selected)",
+      "noTours": "No tours available. Create tours first in Units.",
+      "sumTours": "Sum of the individual tours:",
+      "price": "Package price (€)",
+      "pricePlaceholder": "e.g. 85.00",
+      "customerSaves": "Customer saves {{amount}} vs buying separately",
+      "limit": "Sales limit (0 = unlimited)",
+      "validFrom": "Valid from",
+      "validTo": "Valid until",
+      "photo": "Photo (URL)",
+      "photoPlaceholder": "https://example.com/photo.jpg",
+      "status": "Status",
+      "errSave": "Could not save the package.",
+      "cancel": "Cancel",
+      "create": "Create package",
+      "save": "Save"
+    }
+  },
+  "groupsPage": {
+    "title": "Group bookings and corporate events",
+    "subtitle": "Quotes and proposals for groups and companies",
+    "newQuote": "New quote",
+    "eventTypes": {
+      "team_building": "Team building",
+      "incentivo": "Incentive trip",
+      "turismo": "Group tourism",
+      "casamento": "Wedding / Event",
+      "outro": "Other"
+    },
+    "statuses": {
+      "pedido": "Request",
+      "em_analise": "Under review",
+      "proposta_enviada": "Proposal sent",
+      "confirmado": "Confirmed",
+      "concluido": "Completed",
+      "cancelado": "Cancelled"
+    },
+    "kpi": {
+      "total": "Total quotes",
+      "confirmed": "Confirmed",
+      "guests": "Confirmed guests"
+    },
+    "searchPlaceholder": "Search company or group...",
+    "searchAria": "Search company or group",
+    "all": "All",
+    "empty": {
+      "title": "No quotes",
+      "first": "Record the first quote for a group or corporate event.",
+      "filtered": "No quote matches the filters."
+    },
+    "confirmDelete": "Delete this quote?",
+    "modal": {
+      "titleNew": "New group quote",
+      "titleEdit": "Edit quote",
+      "company": "Company / Group",
+      "companyPlaceholder": "e.g. ABC Company",
+      "eventType": "Event type",
+      "date": "Requested date",
+      "guests": "Number of guests",
+      "guestsPlaceholder": "e.g. 20",
+      "requestedTours": "Requested tours ({{n}} selected)",
+      "noTours": "No tours available.",
+      "tourPrice": "{{name}} — {{price}}/guest",
+      "discount": "Group discount (%)",
+      "discountPlaceholder": "e.g. 15",
+      "budget": "Estimated budget (€)",
+      "budgetPlaceholder": "Customer budget",
+      "estimated": "Estimated price with discount:",
+      "estimatedDetail": "({{guests}} guests × {{pct}}% discount)",
+      "deposit": "Deposit (%)",
+      "depositHint": "Percentage to pay as a deposit",
+      "daysBefore": "Balance X days before",
+      "daysBeforeHint": "Days before the event to pay the balance",
+      "proposalValidity": "Proposal validity",
+      "notes": "Special notes",
+      "notesPlaceholder": "Special needs, allergies, group preferences...",
+      "status": "Status",
+      "errSave": "Could not save the quote.",
+      "cancel": "Cancel",
+      "create": "Create quote",
+      "save": "Save"
+    },
+    "payment": {
+      "title": "Payment — {{company}}",
+      "totalPaid": "Total paid so far:",
+      "amount": "Amount received (€)",
+      "date": "Date",
+      "description": "Description",
+      "descriptionPlaceholder": "e.g. Deposit, Final payment...",
+      "defaultNote": "Deposit",
+      "cancel": "Cancel",
+      "record": "Record"
+    },
+    "card": {
+      "requestedTours": "Requested tours",
+      "guestsCount": "{{n}} guests",
+      "discount": "Discount",
+      "deposit": "Deposit",
+      "finalPayment": "Final payment",
+      "daysBefore": "{{n}}d before",
+      "proposalUntil": "Proposal valid until",
+      "notes": "Notes",
+      "paymentsReceived": "Payments received",
+      "totalPaid": "Total paid",
+      "advance": "Move to: {{status}}",
+      "recordPayment": "Record payment",
+      "printProposal": "Print proposal",
+      "editAria": "Edit {{name}}",
+      "deleteAria": "Delete {{name}}"
+    }
+  },
+  "partnersPage": {
+    "title": "Cross-selling partnerships",
+    "subtitle": "Recommendations and commissions between SalDesk operators",
+    "addPartner": "Add partner",
+    "types": {
+      "hotel": "Hotel / Accommodation",
+      "activity": "Tourist activity",
+      "rentacar": "Rent-a-Car",
+      "restaurant": "Restaurant"
+    },
+    "partnershipTypes": {
+      "recommendation": "Mutual recommendation (no commission)",
+      "commission": "Commission per referred booking",
+      "discount": "Cross discount for customers"
+    },
+    "picker": {
+      "change": "Change",
+      "placeholder": "Search operator by name...",
+      "aria": "Search operator by name",
+      "searching": "Searching...",
+      "none": "No operator found."
+    },
+    "modal": {
+      "titleNew": "Add partner",
+      "titleEdit": "Edit partner",
+      "modeManual": "External partner",
+      "modeReal": "SalDesk operator",
+      "name": "Partner name",
+      "namePlaceholder": "e.g. Hotel Morabeza",
+      "partnerType": "Partner type",
+      "operatorLabel": "SalDesk operator",
+      "pendingHint": "The request stays pending until the chosen operator accepts it.",
+      "partnershipType": "Partnership type",
+      "commission": "Commission (%)",
+      "commissionPlaceholder": "e.g. 10",
+      "commissionHint": "Percentage of the booking paid to the partner who referred it",
+      "avgValue": "Average booking price (€)",
+      "avgPlaceholder": "e.g. 80",
+      "avgHint": "Used to estimate commissions payable/receivable on the Dashboard",
+      "messagePt": "Recommendation message PT",
+      "messageEn": "Recommendation message EN",
+      "messagePtPlaceholder": "e.g. For your accommodation in Sal, we recommend our partner Hotel Morabeza.",
+      "messageEnPlaceholder": "e.g. For your accommodation in Sal, we recommend our partner Hotel Morabeza.",
+      "errChoose": "Choose an operator from the list.",
+      "errSave": "Could not save the partner.",
+      "cancel": "Cancel",
+      "sendRequest": "Send request",
+      "add": "Add",
+      "save": "Save"
+    },
+    "log": {
+      "title": "Record bookings — {{name}}",
+      "sent": "Booking sent to partner",
+      "received": "Booking received from partner",
+      "count": "Number of bookings",
+      "cancel": "Cancel",
+      "record": "Record"
+    },
+    "tabs": {
+      "partners": "Partners",
+      "requests": "Requests",
+      "dashboard": "Dashboard"
+    },
+    "empty": {
+      "title": "No partners set up",
+      "description": "Add partner SalDesk operators to start cross-selling."
+    },
+    "rejected": "Rejected",
+    "commissionLine": "{{pct}}% commission",
+    "avgBookingLine": " · average booking {{amount}}",
+    "bookingsSent": "sent",
+    "bookingsReceived": "received",
+    "actions": {
+      "record": "Record bookings",
+      "recordAria": "Record bookings {{name}}",
+      "deactivateAria": "Deactivate {{name}}",
+      "activateAria": "Activate {{name}}",
+      "editAria": "Edit {{name}}",
+      "deleteAria": "Delete {{name}}"
+    },
+    "confirmDelete": "Delete this partner?",
+    "requests": {
+      "received": "Received",
+      "noneReceived": "No partnership requests to answer.",
+      "accept": "Accept",
+      "reject": "Decline",
+      "sent": "Sent",
+      "noneSent": "No partnership requests sent.",
+      "awaiting": "Awaiting reply",
+      "cancel": "Cancel request",
+      "cancelAria": "Cancel request {{name}}"
+    },
+    "dashboard": {
+      "activePartners": "Active partners",
+      "sent": "Bookings sent",
+      "received": "Bookings received",
+      "balance": "Balance (received - sent)",
+      "payable": "Commissions payable",
+      "payableHelp": "For bookings you sent to partners with commission.",
+      "receivable": "Commissions receivable",
+      "receivableHelp": "For bookings partners sent you.",
+      "needsAvg": "Requires average prices set per partner.",
+      "noteLabel": "Note:",
+      "noteText": "To activate automatic recommendations (email after a confirmed tour, etc.), set up the corresponding automations in"
+    }
   }
 }
