@@ -23,12 +23,12 @@ export default function ResetPassword() {
     /* Supabase sends token in URL hash: #access_token=...&type=recovery */
     const hash   = window.location.hash.slice(1);
     const params = new URLSearchParams(hash);
-    const t      = params.get('access_token');
+    const accessToken = params.get('access_token');
     const type   = params.get('type');
-    if (!t || type !== 'recovery') {
+    if (!accessToken || type !== 'recovery') {
       setInvalid(true);
     } else {
-      setToken(t);
+      setToken(accessToken);
     }
   }, []);
 
@@ -36,11 +36,11 @@ export default function ResetPassword() {
     e.preventDefault();
     setError('');
     if (getPasswordStrength(form.newPw) < 2) {
-      setError('A password deve ser forte: 8+ caracteres, maiúscula, número e carácter especial.');
+      setError(t('resetPassword.weakPassword'));
       return;
     }
     if (form.newPw !== form.confirm) {
-      setError('As passwords não coincidem.');
+      setError(t('resetPassword.mismatch'));
       return;
     }
     setLoading(true);
@@ -48,7 +48,7 @@ export default function ResetPassword() {
       await resetPassword(token, form.newPw);
       navigate('/login?reset=1');
     } catch (err) {
-      setError(mensagemErro(err, t, 'Link expirado ou inválido. Solicita um novo link de recuperação.'));
+      setError(mensagemErro(err, t, t('resetPassword.expired')));
     } finally {
       setLoading(false);
     }
@@ -62,14 +62,14 @@ export default function ResetPassword() {
             <AlertTriangle size={22} strokeWidth={1.75} className="text-error" />
           </div>
           <div>
-            <p className="font-display font-bold text-base text-n-900">Link inválido ou expirado</p>
+            <p className="font-display font-bold text-base text-n-900">{t('resetPassword.invalidTitle')}</p>
             <p className="text-sm font-body text-n-500 mt-1">
-              Este link de recuperação já não é válido. Solicita um novo.
+              {t('resetPassword.invalidText')}
             </p>
           </div>
           <button onClick={() => navigate('/login')}
             className="text-sm font-body font-semibold text-ocean-700 hover:underline">
-            Voltar ao login
+            {t('resetPassword.backToLogin')}
           </button>
         </div>
       </AuthLayout>
@@ -84,8 +84,8 @@ export default function ResetPassword() {
             <Lock size={18} strokeWidth={1.75} className="text-ocean-700" />
           </div>
           <div>
-            <h1 className="font-display font-bold text-base text-n-900">Nova password</h1>
-            <p className="text-xs font-body text-n-500">Escolhe uma password forte para a tua conta.</p>
+            <h1 className="font-display font-bold text-base text-n-900">{t('resetPassword.title')}</h1>
+            <p className="text-xs font-body text-n-500">{t('resetPassword.subtitle')}</p>
           </div>
         </div>
 
@@ -93,7 +93,7 @@ export default function ResetPassword() {
           {/* New password */}
           <div className="flex flex-col gap-1">
             <label className="text-xs font-body font-bold uppercase tracking-wide text-n-600">
-              Nova password <span className="text-error">*</span>
+              {t('resetPassword.newPassword')} <span className="text-error">*</span>
             </label>
             <div className="relative">
               <input
@@ -116,7 +116,7 @@ export default function ResetPassword() {
           {/* Confirm */}
           <div className="flex flex-col gap-1">
             <label className="text-xs font-body font-bold uppercase tracking-wide text-n-600">
-              Confirmar password <span className="text-error">*</span>
+              {t('resetPassword.confirmPassword')} <span className="text-error">*</span>
             </label>
             <div className="relative">
               <input
@@ -134,7 +134,7 @@ export default function ResetPassword() {
               </button>
             </div>
             {form.confirm && form.newPw !== form.confirm && (
-              <p className="text-xs text-error">As passwords não coincidem.</p>
+              <p className="text-xs text-error">{t('resetPassword.mismatch')}</p>
             )}
           </div>
 
@@ -146,7 +146,7 @@ export default function ResetPassword() {
           )}
 
           <Button type="submit" loading={loading} className="w-full" icon={Lock}>
-            Repor password
+            {t('resetPassword.submit')}
           </Button>
         </form>
       </div>

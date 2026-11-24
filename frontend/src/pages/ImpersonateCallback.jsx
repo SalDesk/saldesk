@@ -5,6 +5,7 @@ import supabaseImpersonateClient from '../lib/supabaseImpersonateClient';
 import useAuthStore from '../store/authStore';
 import api from '../services/api';
 import AuthLayout from '../components/auth/AuthLayout';
+import { useT } from '../i18n';
 
 /* Alvo do redirectTo passado a generateLink({type:'magiclink'}) em
    impersonateOperator (adminController.js). Antes disto nao existia --
@@ -15,8 +16,10 @@ import AuthLayout from '../components/auth/AuthLayout';
    operador real e substituir a sessao actual do browser (aviso ja dado
    ao fundador antes de abrir o link -- guarde a sessao actual). */
 export default function ImpersonateCallback() {
+  const t = useT();
   const { setAuth } = useAuthStore();
   const navigate = useNavigate();
+  /* guarda a chave do texto (nao o texto), para seguir a lingua se mudar */
   const [error, setError] = useState('');
 
   useEffect(() => {
@@ -29,11 +32,11 @@ export default function ImpersonateCallback() {
           headers: { Authorization: `Bearer ${session.access_token}` },
         });
         const { user, operator } = data.data;
-        if (!operator) throw new Error('Sem operador associado a esta conta');
+        if (!operator) throw new Error('No operator linked to this account');
         setAuth(session.access_token, user, operator, session.refresh_token);
         navigate('/', { replace: true });
       } catch {
-        if (!cancelado) setError('Não foi possível entrar como este operador. Gere o link novamente.');
+        if (!cancelado) setError('impersonate.failedText');
       }
     }
 
@@ -46,7 +49,7 @@ export default function ImpersonateCallback() {
     });
 
     const timeout = setTimeout(() => {
-      if (!cancelado) setError('O acesso demorou demasiado tempo. Tente novamente.');
+      if (!cancelado) setError('impersonate.timeout');
     }, 12000);
 
     return () => {
@@ -65,11 +68,11 @@ export default function ImpersonateCallback() {
               <AlertTriangle size={22} strokeWidth={1.75} className="text-error" />
             </div>
             <div>
-              <p className="font-display font-bold text-base text-n-900">Não foi possível entrar</p>
-              <p className="text-sm font-body text-n-500 mt-1">{error}</p>
+              <p className="font-display font-bold text-base text-n-900">{t('impersonate.failedTitle')}</p>
+              <p className="text-sm font-body text-n-500 mt-1">{t(error)}</p>
             </div>
             <a href="/login" className="inline-block text-sm font-body font-semibold text-ocean-700 hover:underline">
-              Voltar ao login
+              {t('impersonate.backToLogin')}
             </a>
           </>
         ) : (
@@ -78,8 +81,8 @@ export default function ImpersonateCallback() {
               <LogIn size={20} strokeWidth={1.75} className="text-ocean-700" />
             </div>
             <div>
-              <p className="font-display font-bold text-base text-n-900">A entrar como operador</p>
-              <p className="text-sm font-body text-n-500 mt-1">Um momento…</p>
+              <p className="font-display font-bold text-base text-n-900">{t('impersonate.enteringTitle')}</p>
+              <p className="text-sm font-body text-n-500 mt-1">{t('impersonate.moment')}</p>
             </div>
           </>
         )}

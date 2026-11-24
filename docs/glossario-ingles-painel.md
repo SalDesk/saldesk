@@ -92,6 +92,9 @@ estes, em singular e plural, em todos os ecras; nao alternar com sinonimos. O po
 | Indicacao / Indicacoes | Referral / Referrals | Negocio que o operador indica a SalDesk (separador Marketing); os estados gravados novo, contactado, demo_agendada, proposta_enviada, convertido, descartado mostram-se "New", "Contacted", "Demo scheduled", "Proposal sent", "Converted", "Discarded". |
 | Post (redes sociais) | Post | Publicacao agendada do planeador de marketing; os estados gravados agendado, publicado, cancelado mostram-se "Scheduled", "Published", "Cancelled"; as redes (Instagram, Facebook) sao marcas e nao se traduzem. |
 | Portal do afiliado | Affiliate portal | Pagina publica /afiliado/:codigo onde o afiliado ve as suas comissoes; segue o idioma do browser e tem o seletor de idioma. |
+| Menu digital / Prato | Digital menu / Dish | O ecra do menu do restaurante; as categorias gravadas (entradas, pratos_principais, sobremesas, bebidas, outros) mostram-se "Starters", "Main Courses", "Desserts", "Drinks", "Other". |
+| Menu de degustacao | Tasting menu | Menu fechado com varios pratos a preco por pessoa. |
+| Editor da pagina publica | Public page editor | Ecra onde o operador activa e ordena as seccoes da pagina de reservas ("Highlights", "About Us", "How It Works"); o texto escrito pelo operador nao se traduz. |
 
 ## Regras
 

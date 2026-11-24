@@ -3,6 +3,8 @@ import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testi
 import PageEditor from '../pages/PageEditor';
 import useAuthStore from '../store/authStore';
 import { updateOperator } from '../services/authService';
+import useUiStore from '../store/uiStore';
+import { portuguesNoEcra, chavesCruas } from './helpers/portuguesNoEcra';
 
 vi.mock('../services/authService', () => ({ updateOperator: vi.fn() }));
 
@@ -348,5 +350,65 @@ describe('Editor da pagina: design system', () => {
     fireEvent.click(botaoGuardar());
     await screen.findByRole('status');
     semCoresForaDosTokens(classes(container));
+  });
+});
+
+/* ───────────────────────── lingua do painel ───────────────────────── */
+
+describe('Editor da pagina: em ingles', () => {
+  const CONTEUDO = {
+    partners: [{ name: 'Câmara Municipal do Sal', logo_url: '', url: '' }],
+    google_reviews: [{ author_name: 'João Silva', author_photo: '', text: 'Excelente passeio, recomendo!' }],
+  };
+  const DADOS_DO_OPERADOR = ['Câmara Municipal do Sal', 'João Silva', 'Excelente passeio, recomendo!'];
+
+  /* desmonta antes de repor a lingua, para nao haver actualizacoes fora de act */
+  afterEach(() => { cleanup(); useUiStore.setState({ lang: 'pt' }); });
+
+  it('os_rotulos_do_editor_ficam_em_ingles_sem_portugues_nem_chaves_cruas', () => {
+    useUiStore.setState({ lang: 'en' });
+    montar({ id: 'o', slug: 'demo', page_config: CONTEUDO });
+    expect(screen.getByText('Public page editor')).toBeInTheDocument();
+    expect([...cartao('Page sections').querySelectorAll('p.flex-1')].map(p => p.textContent)).toEqual(['Highlights', 'Services', 'About Us', 'How It Works', 'Gallery', 'Reviews', 'Service Comparison', 'Live Availability', 'Location & Contact', 'Frequently Asked Questions', 'Partners', 'Video Testimonials', 'Google Reviews', 'Instagram']);
+    expect(screen.getByRole('button', { name: 'Save changes' })).toBeInTheDocument();
+    expect(screen.getByRole('switch', { name: 'Open on Monday' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Move Highlights up' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Remove partner 1' })).toBeInTheDocument();
+    expect(screen.getByText('Closed')).toBeInTheDocument();
+    expect(portuguesNoEcra(DADOS_DO_OPERADOR)).toEqual([]);
+    expect(chavesCruas(['pageEditor'])).toEqual([]);
+  });
+
+  it('o_que_o_operador_escreveu_mostra_se_tal_e_qual', () => {
+    useUiStore.setState({ lang: 'en' });
+    montar({ id: 'o', slug: 'demo', page_config: CONTEUDO });
+    expect(screen.getByDisplayValue('Câmara Municipal do Sal')).toBeInTheDocument();
+    expect(screen.getByDisplayValue('João Silva')).toBeInTheDocument();
+    expect(screen.getByDisplayValue('Excelente passeio, recomendo!')).toBeInTheDocument();
+  });
+
+  it('o_que_se_grava_e_igual_em_ingles_e_em_portugues', async () => {
+    const gravado = {};
+    for (const lang of ['pt', 'en']) {
+      useUiStore.setState({ lang });
+      updateOperator.mockClear();
+      const { unmount } = montar({ id: 'o', slug: 'demo', page_config: CONTEUDO });
+      fireEvent.click(screen.getByRole('switch', { name: lang === 'en' ? 'Open on Sunday' : 'Aberto Domingo' }));
+      fireEvent.click(screen.getByRole('button', { name: lang === 'en' ? 'Save changes' : 'Guardar alterações' }));
+      await waitFor(() => expect(updateOperator).toHaveBeenCalledTimes(1));
+      gravado[lang] = ultimoPageConfig();
+      unmount();
+    }
+    expect(gravado.en).toEqual(gravado.pt);
+    expect(gravado.en.opening_hours.dom.open).toBe(true);
+    expect(gravado.en.partners[0].name).toBe('Câmara Municipal do Sal');
+    expect(gravado.en.sections.map(s => s.key)[0]).toBe('featured');
+  });
+
+  it('em_portugues_continua_igual', () => {
+    montar();
+    expect(screen.getByText('Editor da Página Pública')).toBeInTheDocument();
+    expect(screen.getByText('Fechado')).toBeInTheDocument();
+    expect(screen.getByRole('switch', { name: 'Aberto Segunda' })).toBeInTheDocument();
   });
 });

@@ -1,4 +1,6 @@
 import { Component } from 'react';
+import { getT } from '../i18n';
+import { linguaActual } from '../utils/formatoLingua';
 
 export default class ErrorBoundary extends Component {
   state = { hasError: false, error: null };
@@ -13,12 +15,14 @@ export default class ErrorBoundary extends Component {
 
   render() {
     if (this.state.hasError) {
+      /* classe: nao ha hooks; le a lingua do painel no momento de desenhar */
+      const t = getT(linguaActual());
       return (
         <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
           <div className="card max-w-md w-full text-center">
             <div className="text-5xl mb-4">⚠️</div>
-            <h1 className="text-xl font-bold text-gray-900 mb-2">Algo correu mal</h1>
-            <p className="text-sm text-gray-500 mb-1">Ocorreu um erro inesperado na aplicação.</p>
+            <h1 className="text-xl font-bold text-gray-900 mb-2">{t('errorBoundary.title')}</h1>
+            <p className="text-sm text-gray-500 mb-1">{t('errorBoundary.text')}</p>
             {this.state.error?.message && (
               <code className="block text-xs bg-gray-100 rounded p-2 text-red-600 mb-4 text-left break-all">
                 {this.state.error.message}
@@ -28,7 +32,7 @@ export default class ErrorBoundary extends Component {
               onClick={() => window.location.reload()}
               className="btn-primary px-6"
             >
-              Recarregar a página
+              {t('errorBoundary.reload')}
             </button>
           </div>
         </div>

@@ -1,6 +1,8 @@
 import axios from 'axios';
 import useAuthStore from '../store/authStore';
 import useToastStore from '../store/toastStore';
+import { getT } from '../i18n';
+import { linguaActual } from '../utils/formatoLingua';
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || 'http://localhost:3001/api/v1',
@@ -42,7 +44,7 @@ api.interceptors.response.use(
     if (status === 403 && err.response?.data?.code === 'DEMO_READ_ONLY') {
       useToastStore.getState().addToast({
         type: 'info',
-        message: 'Conta de demonstração — apenas leitura, esta alteração não foi guardada.',
+        message: getT(linguaActual())('apiMessages.demoReadOnly'),
       });
       return Promise.reject(err);
     }

@@ -3,11 +3,16 @@ import { Navigate } from 'react-router-dom';
 import { AlertTriangle } from 'lucide-react';
 import { demoLogin } from '../services/authService';
 import useAuthStore from '../store/authStore';
+import { getT } from '../i18n';
+import { useLingua } from '../utils/formatoLingua';
 
 export default function DemoEntry() {
   const setAuth = useAuthStore((s) => s.setAuth);
   const [status, setStatus] = useState('loading'); // loading | error | done
-  const lang = localStorage.getItem('sd-lang') || 'pt';
+  /* Quem veio do site publico em ingles (sd-lang) continua a ler ingles; senao segue a lingua do painel */
+  const linguaPainel = useLingua();
+  const lang = localStorage.getItem('sd-lang') === 'en' ? 'en' : linguaPainel;
+  const t = getT(lang);
 
   useEffect(() => {
     let cancelled = false;
@@ -31,15 +36,13 @@ export default function DemoEntry() {
             <AlertTriangle size={32} strokeWidth={2} className="text-red-600" />
           </div>
           <h1 className="font-display font-bold text-xl text-n-900 mb-3">
-            {lang === 'en' ? 'Demo unavailable' : 'Demonstração indisponível'}
+            {t('demoEntry.unavailableTitle')}
           </h1>
           <p className="text-sm font-body text-n-500 leading-relaxed mb-6">
-            {lang === 'en'
-              ? 'The demo account could not be reached right now. Please try again shortly.'
-              : 'Não foi possível aceder à conta de demonstração agora. Tente novamente em breve.'}
+            {t('demoEntry.unavailableText')}
           </p>
           <a href="https://saldesk.cv" className="text-sm font-semibold text-ocean-700 hover:underline">
-            {lang === 'en' ? 'Back to saldesk.cv' : 'Voltar a saldesk.cv'}
+            {t('demoEntry.back')}
           </a>
         </div>
       </div>
@@ -51,7 +54,7 @@ export default function DemoEntry() {
       <div className="flex flex-col items-center gap-4">
         <div className="w-8 h-8 border-2 border-ocean-700 border-t-transparent rounded-full animate-spin" />
         <p className="text-sm font-body text-n-500">
-          {lang === 'en' ? 'Preparing demo account...' : 'A preparar a conta de demonstração...'}
+          {t('demoEntry.preparing')}
         </p>
       </div>
     </div>

@@ -193,6 +193,17 @@ export const FICHEIROS_CONVERTIDOS = [
   'pages/marketing/ReferralsTab.jsx',
   'pages/marketing/QrCodeTab.jsx',
   'pages/Integrations.jsx',
+  /* Fase 3, tarefa 5: editor de pagina, menu digital e ecras restantes */
+  'pages/PageEditor.jsx',
+  'pages/MenuDigital.jsx',
+  'pages/settings/PerfilPublicoTab.jsx',
+  'pages/ResetPassword.jsx',
+  'pages/DemoEntry.jsx',
+  'pages/ImpersonateCallback.jsx',
+  'components/ErrorBoundary.jsx',
+  'services/api.js',
+  'utils/userRoles.js',
+  'components/units/rotulosUnidades.js',
 ];
 
 /* Textos escritos ao cliente: ficam em portugues em qualquer lingua do painel */
@@ -268,6 +279,32 @@ export const PERMITIDOS = {
   ],
   'components/automations/AutomationForm.jsx': [
     { valor: 'Olá {{nome}},\\n\\nA sua reserva em {{unidade}} está confirmada.\\n\\nCheck-in: {{check_in}}\\nCheck-out: {{check_out}}\\n\\nObrigado!', motivo: MOTIVO_TEXTO_CLIENTE },
+  ],
+  'pages/MenuDigital.jsx': [
+    { valor: 'Sem nome', motivo: 'nome do prato por omissao, gravado em units.name e mostrado no menu publico do operador (conteudo publicado, fica em portugues)' },
+    { valor: 'Menu Degustação', motivo: 'nome do menu de degustacao por omissao, gravado em units.name e mostrado no menu publico do operador (conteudo publicado, fica em portugues)' },
+  ],
+  'pages/settings/PerfilPublicoTab.jsx': [
+    { valor: 'Obrigado pela sua mensagem. De momento estamos fora do horário de atendimento; responderemos assim que possível.', motivo: 'texto por omissao da resposta automatica do chat do site, que o cliente le em portugues (mensagem enviada ao cliente, nao-objectivo da especificacao)' },
+    { valor: 'Thank you for your message. We are currently outside our opening hours and will reply as soon as we can.', motivo: 'texto por omissao da resposta automatica do chat do site, que o cliente le em ingles (mensagem enviada ao cliente, nao-objectivo da especificacao)' },
+  ],
+  'services/api.js': [
+    { valor: 'Sem refresh token disponível', motivo: 'erro interno apanhado no mesmo ficheiro (refreshAccessToken), nunca mostrado ao operador' },
+  ],
+  'utils/userRoles.js': [
+    { valor: 'Vendedor de Praia', motivo: 'cargo gravado em staff.role e comparado no codigo (CARGO_VENDEDOR); nao e texto mostrado' },
+  ],
+  'components/units/rotulosUnidades.js': [
+    { valor: 'Equipamento incluído', motivo: 'chaves do mapa sao valores guardados: gravado em portugues nos metadados da unidade, o rotulo vem de unitForm' },
+    { valor: 'Fotografias/Vídeo', motivo: 'chaves do mapa sao valores guardados: gravado em portugues nos metadados da unidade, o rotulo vem de unitForm' },
+    { valor: 'Snacks e água', motivo: 'chaves do mapa sao valores guardados: gravado em portugues nos metadados da unidade, o rotulo vem de unitForm' },
+    { valor: 'Vestiário', motivo: 'chaves do mapa sao valores guardados: gravado em portugues nos metadados da unidade, o rotulo vem de unitForm' },
+    { valor: 'Passeio de Barco', motivo: 'chaves do mapa sao valores guardados: gravado em portugues nos metadados da unidade, o rotulo vem de unitForm' },
+    { valor: 'Terraço', motivo: 'chaves do mapa sao valores guardados: gravado em portugues nos metadados da unidade, o rotulo vem de unitForm' },
+    { valor: 'Acesso cadeira de rodas', motivo: 'chaves do mapa sao valores guardados: gravado em portugues nos metadados da unidade, o rotulo vem de unitForm' },
+    { valor: 'Música ao vivo', motivo: 'chaves do mapa sao valores guardados: gravado em portugues nos metadados da unidade, o rotulo vem de unitForm' },
+    { valor: 'Ambiente para crianças', motivo: 'chaves do mapa sao valores guardados: gravado em portugues nos metadados da unidade, o rotulo vem de unitForm' },
+    { valor: 'Sem vista', motivo: 'chaves do mapa sao valores guardados: gravado em portugues nos metadados da unidade, o rotulo vem de unitForm' },
   ],
   'pages/marketing/PostModal.jsx': [
     { valor: 'Novo tour disponível! Reserve já o seu lugar e viva uma experiência única em Cabo Verde.', motivo: MOTIVO_POST },
