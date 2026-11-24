@@ -71,6 +71,10 @@ estes, em singular e plural, em todos os ecras; nao alternar com sinonimos. O po
 | Paragem / Itinerario | Stop / Itinerary | Pontos de um tour com coordenadas opcionais. |
 | Escalao de preco | Price tier | Preco privado por intervalo de pessoas ("1-2 guests at 80"). |
 | Horario com lugares | Time slot | Hora de um tour com lugares proprios ("Time slots with limited spots"). |
+| Viatura | Vehicle | Carro ou moto do rent-a-car ("Register vehicle", "New Vehicle"); a matricula e "Licence plate". |
+| Mesa / Zona | Table / Zone | Mesa de restaurante e a zona onde fica; as zonas gravadas (interior, esplanada, terraco, vip, privado) mostram-se "Indoor", "Outdoor seating", "Terrace", "VIP", "Private". |
+| Epoca | Season | Preco do quarto por epoca ("Low season", "Mid season", "High season", "Peak"). |
+| Motorista | Chauffeur | Condutor incluido na reserva de um Executivo ("Chauffeur rate (per day)"). |
 
 ## Regras
 

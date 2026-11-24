@@ -32,6 +32,12 @@ describe('formularios de unidade: grelhas no telemovel', () => {
     expect(gradesFixas(container)).toEqual([]);
   });
 
+  it.each(['hotel', 'activity', 'rentacar', 'restaurant'])('%s em inglês: as mesmas grelhas, sem colunas fixas de 3+', (tipo) => {
+    useUiStore.setState({ lang: 'en' });
+    const { container } = render(<UnitForm operatorType={tipo} onSave={vi.fn()} onCancel={vi.fn()} />);
+    expect(gradesFixas(container)).toEqual([]);
+  });
+
   it('as grelhas largas ganham colunas a partir do ecra pequeno (sm:)', () => {
     const { container } = render(<UnitForm operatorType="rentacar" onSave={vi.fn()} onCancel={vi.fn()} />);
     const classes = [...container.querySelectorAll('[class*="sm:grid-cols-"]')].map((el) => el.className);

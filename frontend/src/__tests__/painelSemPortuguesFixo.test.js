@@ -141,6 +141,15 @@ export const FICHEIROS_CONVERTIDOS = [
   'components/units/forms/editors.jsx',
   'components/units/forms/OpcoesActividade.jsx',
   'components/units/forms/LocalizacaoPontoEncontro.jsx',
+  /* Fase 2, tarefa 4: pagina de unidades, lista e formularios de quarto, viatura e mesa */
+  'components/shared/ConectRow.jsx',
+  'pages/Units.jsx',
+  'components/units/UnitList.jsx',
+  'components/units/UnitForm.jsx',
+  'components/units/forms/HotelRoomForm.jsx',
+  'components/units/forms/RentacarVehicleForm.jsx',
+  'components/units/forms/RestaurantTableForm.jsx',
+  'components/units/forms/GenericUnitForm.jsx',
 ];
 
 /* Valores portugueses que ficam no codigo de proposito, por ficheiro, com o motivo. */
@@ -167,6 +176,15 @@ export const PERMITIDOS = {
     { valor: 'Fotografias/Vídeo', motivo: 'comodidade fixa de actividade gravada em portugues nos metadados da unidade (ACTIVITY_AMENS); o rotulo vem de unitForm.amenity' },
     { valor: 'Snacks e água', motivo: 'comodidade fixa de actividade gravada em portugues nos metadados da unidade (ACTIVITY_AMENS); o rotulo vem de unitForm.amenity' },
     { valor: 'Vestiário', motivo: 'comodidade fixa de actividade gravada em portugues nos metadados da unidade (ACTIVITY_AMENS); o rotulo vem de unitForm.amenity' },
+  ],
+  'components/units/forms/HotelRoomForm.jsx': [
+    { valor: 'Sem vista', motivo: 'vista do quarto gravada em portugues em meta.view (ROOM_VIEWS); o rotulo vem de unitForm.roomView' },
+  ],
+  'components/units/forms/RestaurantTableForm.jsx': [
+    { valor: 'Terraço', motivo: 'comodidade gravada em portugues nos metadados da unidade e mostrada nas paginas publicas (RESTAURANT_AMENS); o rotulo vem de unitForm.amenities' },
+    { valor: 'Acesso cadeira de rodas', motivo: 'comodidade gravada em portugues nos metadados da unidade e mostrada nas paginas publicas (RESTAURANT_AMENS); o rotulo vem de unitForm.amenities' },
+    { valor: 'Música ao vivo', motivo: 'comodidade gravada em portugues nos metadados da unidade e mostrada nas paginas publicas (RESTAURANT_AMENS); o rotulo vem de unitForm.amenities' },
+    { valor: 'Ambiente para crianças', motivo: 'comodidade gravada em portugues nos metadados da unidade e mostrada nas paginas publicas (RESTAURANT_AMENS); o rotulo vem de unitForm.amenities' },
   ],
   'components/units/forms/editors.jsx': [
     { valor: 'Passeio de Barco', motivo: 'categoria de actividade gravada em units.unit_type (UNIT_TYPES_BY_OPERATOR); o rotulo vem de unitForm.unitType' },

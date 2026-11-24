@@ -676,7 +676,81 @@
     "description": "Description",
     "active": "Active",
     "inactive": "Inactive",
-    "copyLink": "Copy link"
+    "copyLink": "Copy link",
+    "page": {
+      "activity": {
+        "title": "Tours & Activities",
+        "subtitle": "{{n}} tour(s) available",
+        "newBtn": "New Tour",
+        "editPrefix": "Edit tour",
+        "deleteMsg": "Delete the tour \"{{name}}\"? Its bookings will be kept but the tour will no longer be available."
+      },
+      "hotel": {
+        "title": "Rooms & Accommodation",
+        "subtitle": "{{n}} unit(s) registered",
+        "newBtn": "New Unit",
+        "editPrefix": "Edit",
+        "deleteMsg": "Delete the unit \"{{name}}\"? Its bookings will be kept but the unit will no longer be available."
+      },
+      "rentacar": {
+        "title": "Fleet",
+        "subtitle": "{{n}} vehicle(s) registered",
+        "newBtn": "New Vehicle",
+        "editPrefix": "Edit",
+        "deleteMsg": "Delete the vehicle \"{{name}}\"? Its bookings will be kept."
+      },
+      "restaurant": {
+        "title": "Tables",
+        "subtitle": "{{n}} table(s) registered",
+        "newBtn": "New Table",
+        "editPrefix": "Edit",
+        "deleteMsg": "Delete the table \"{{name}}\"? Its bookings will be kept."
+      }
+    },
+    "statTotal": "Total",
+    "statActive": "Active",
+    "statInactive": "Inactive",
+    "incompleteOne": "unit is missing a category and/or coordinates — this data helps SalDesk Conect recommend and locate your services. Edit each unit to fill it in.",
+    "incompleteMany": "units are missing a category and/or coordinates — this data helps SalDesk Conect recommend and locate your services. Edit each unit to fill it in.",
+    "downloadQr": "Download QR code",
+    "qrAlt": "QR code",
+    "list": {
+      "activate": "Activate",
+      "deactivate": "Deactivate",
+      "edit": "Edit",
+      "viewQr": "View QR",
+      "tourType": {
+        "grupo": "Group",
+        "privado": "Private",
+        "ambos": "Group / Private"
+      },
+      "maxPax": "Max {{n}} guests",
+      "minLabel": "Min",
+      "years": "{{n}} years",
+      "perAdult": "/adult",
+      "from": "From",
+      "noPrice": "No price set",
+      "childAmount": "€{{n}} child",
+      "privateAmount": "€{{n}} private",
+      "priceUnit": {
+        "night": "/night",
+        "day": "/day",
+        "hour": "/hour",
+        "session": "/session",
+        "person": "/person"
+      },
+      "capacity": "Capacity {{n}}",
+      "emptyTour": "Create your first tour",
+      "emptyUnit": "Create your first unit"
+    },
+    "conect": {
+      "draft": "Not submitted",
+      "pending_review": "In review",
+      "published": "Published on Conect",
+      "paused": "Paused",
+      "submit": "Submit to Conect",
+      "withdraw": "Withdraw from Conect"
+    }
   },
   "customers": {
     "title": "Customers",
@@ -1221,7 +1295,8 @@
       "itinerary": "Itinerary (optional)",
       "importantInfo": "Important information (optional)",
       "photos": "Photos",
-      "status": "Status"
+      "status": "Status",
+      "capacity": "Capacity"
     },
     "tour": {
       "namePt": "Name PT",
@@ -1386,6 +1461,136 @@
       "lngPh": "E.g. -22.8950",
       "outside": "This point is outside Cape Verde. Please check the location.",
       "remove": "Remove location"
+    },
+    "status": {
+      "active": "Active",
+      "inactive": "Inactive",
+      "tableActive": "Active",
+      "blocked": "Blocked",
+      "cleaning": "Being cleaned",
+      "maintenance": "Under maintenance",
+      "breakdown": "Breakdown"
+    },
+    "hotel": {
+      "number": "Number",
+      "name": "Name",
+      "type": "Type",
+      "floor": "Floor",
+      "view": "View",
+      "adults": "Adults",
+      "children": "Children",
+      "seasonPrices": "Prices by season (€ / night)",
+      "basePrice": "Base price",
+      "low": "Low season",
+      "mid": "Mid season",
+      "high": "High season",
+      "peak": "Peak",
+      "descPh": "Room description...",
+      "importantPh": "E.g. Check-in from 2 pm, check-out by 12 noon.",
+      "create": "Create room"
+    },
+    "roomView": {
+      "sea": "Sea",
+      "garden": "Garden",
+      "pool": "Pool",
+      "city": "City",
+      "none": "No view"
+    },
+    "car": {
+      "brand": "Make",
+      "model": "Model",
+      "year": "Year",
+      "plate": "Licence plate",
+      "colour": "Colour",
+      "colourPh": "White",
+      "category": "Category",
+      "specs": "Specifications",
+      "seats": "Seats",
+      "luggage": "Luggage",
+      "transmission": "Transmission",
+      "manual": "Manual",
+      "automatic": "Automatic",
+      "fuel": "Fuel",
+      "petrol": "Petrol",
+      "diesel": "Diesel",
+      "electric": "Electric",
+      "hybrid": "Hybrid",
+      "chauffeurRate": "Chauffeur rate (per day)",
+      "chauffeurNote": "Charged per day when the customer picks \"chauffeur included\" on the booking.",
+      "prices": "Prices (€)",
+      "pricePerDay": "Base price / day",
+      "kmIncluded": "Km included / day",
+      "kmExtra": "Extra km cost (€)",
+      "discountWeek": "Weekly discount (%)",
+      "discountMonth": "Monthly discount (%)",
+      "driver": "Driver requirements",
+      "minAge": "Minimum age",
+      "licenseYears": "Licence held for (years)",
+      "docs": "Documents — expiry dates",
+      "insuranceUntil": "Insurance until",
+      "iucUntil": "IUC until",
+      "inspectionUntil": "Inspection until",
+      "mileage": "Mileage",
+      "currentKm": "Current km",
+      "nextService": "Next service (km)",
+      "importantPh": "E.g. Deposit required at pick-up, credit card mandatory.",
+      "photosHint": "First photo = cover · max 8 photos · 5MB each",
+      "create": "Register vehicle"
+    },
+    "table": {
+      "number": "Number",
+      "nameOptional": "Name / description (optional)",
+      "namePh": "E.g. Sea View Terrace",
+      "zone": "Zone",
+      "min": "Minimum (guests)",
+      "max": "Maximum (guests)",
+      "options": "Options",
+      "combinable": "Table can be combined with others",
+      "importantPh": "E.g. Booking held for 15 minutes after the scheduled time.",
+      "create": "Create table"
+    },
+    "zones": {
+      "interior": "Indoor",
+      "esplanada": "Outdoor seating",
+      "terrace": "Terrace",
+      "vip": "VIP",
+      "private": "Private"
+    },
+    "generic": {
+      "namePh": "E.g. Ocean View Room",
+      "descPh": "Describe the unit...",
+      "priceUnit": {
+        "night": "per night",
+        "person": "per person",
+        "session": "per session",
+        "day": "per day",
+        "hour": "per hour"
+      }
+    },
+    "amenities": {
+      "ac": "AC",
+      "tv": "TV",
+      "wifi": "WiFi",
+      "safe": "Safe",
+      "minibar": "Minibar",
+      "jacuzzi": "Jacuzzi",
+      "balcony": "Balcony",
+      "bathtub": "Bathtub",
+      "kitchen": "Kitchen",
+      "gps": "GPS",
+      "bluetooth": "Bluetooth",
+      "usb": "USB",
+      "babySeat": "Baby seat",
+      "fourByFour": "4x4",
+      "sunroof": "Sunroof",
+      "rearCamera": "Rear camera",
+      "airConditioning": "Air conditioning",
+      "seaView": "Sea view",
+      "terrace": "Terrace",
+      "wheelchair": "Wheelchair access",
+      "parking": "Parking",
+      "liveMusic": "Live music",
+      "kidsFriendly": "Child-friendly"
     }
   },
   "staff": {

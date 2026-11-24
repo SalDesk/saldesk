@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import Input, { Textarea, Select } from '../../ui/Input';
 import Button from '../../ui/Button';
+import { useT } from '../../../i18n';
+import { rotuloComodidade, rotuloZonaMesa } from '../rotulosUnidades';
 import {
   AmenitiesPicker, IncludedItemsEditor,
   SectionLabel, OtaFields, ConectFields, buildOtaProductIds,
@@ -9,9 +11,8 @@ import {
 const RESTAURANT_AMENS = ['WiFi', 'Ar condicionado', 'Vista mar', 'Terraço', 'Acesso cadeira de rodas', 'Estacionamento', 'Música ao vivo', 'Ambiente para crianças'];
 
 const TABLE_ZONES = ['interior', 'esplanada', 'terraco', 'vip', 'privado'];
+/* Valor gravado em unit_type para cada zona; o que o operador le vem de rotuloZonaMesa */
 const ZONE_LABEL_MAP = { interior: 'Interior', esplanada: 'Esplanada', terraco: 'Terraco', vip: 'VIP', privado: 'Privado' };
-/* O que o operador ve na lista; o unit_type guardado continua a ser o de ZONE_LABEL_MAP. */
-const ZONE_ROTULO = { terraco: 'Terraço' };
 
 function parseTableMeta(description) {
   if (!description?.startsWith('{')) return {};
@@ -29,6 +30,7 @@ function stripMesaPrefix(name, number) {
 }
 
 export default function RestaurantTableForm({ unit, onSave, onCancel, loading, error }) {
+  const t = useT();
   const meta = parseTableMeta(unit?.description);
 
   const [form, setForm] = useState({
@@ -92,30 +94,30 @@ export default function RestaurantTableForm({ unit, onSave, onCancel, loading, e
     <form onSubmit={handleSubmit} className="space-y-5">
 
       <div>
-        <SectionLabel>Identificação</SectionLabel>
+        <SectionLabel>{t('unitForm.section.identification')}</SectionLabel>
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-3">
-          <Input label="Número" value={form.number} onChange={set('number')} placeholder="1" autoFocus />
+          <Input label={t('unitForm.table.number')} value={form.number} onChange={set('number')} placeholder="1" autoFocus />
           <div className="col-span-2">
-            <Input label="Nome / descrição (opcional)" value={form.name} onChange={set('name')} placeholder="Ex: Terraço Vista Mar" />
+            <Input label={t('unitForm.table.nameOptional')} value={form.name} onChange={set('name')} placeholder={t('unitForm.table.namePh')} />
           </div>
         </div>
-        <Select label="Zona" value={form.zone} onChange={set('zone')} required>
+        <Select label={t('unitForm.table.zone')} value={form.zone} onChange={set('zone')} required>
           {TABLE_ZONES.map(z => (
-            <option key={z} value={z}>{ZONE_ROTULO[z] || ZONE_LABEL_MAP[z]}</option>
+            <option key={z} value={z}>{rotuloZonaMesa(z, t)}</option>
           ))}
         </Select>
       </div>
 
       <div>
-        <SectionLabel>Capacidade</SectionLabel>
+        <SectionLabel>{t('unitForm.section.capacity')}</SectionLabel>
         <div className="grid grid-cols-2 gap-3">
-          <Input label="Mínimo (pessoas)" type="number" value={form.capacity_min} onChange={set('capacity_min')} min="1" required />
-          <Input label="Máximo (pessoas)" type="number" value={form.capacity_max} onChange={set('capacity_max')} min="1" required />
+          <Input label={t('unitForm.table.min')} type="number" value={form.capacity_min} onChange={set('capacity_min')} min="1" required />
+          <Input label={t('unitForm.table.max')} type="number" value={form.capacity_max} onChange={set('capacity_max')} min="1" required />
         </div>
       </div>
 
       <div>
-        <SectionLabel>Opções</SectionLabel>
+        <SectionLabel>{t('unitForm.table.options')}</SectionLabel>
         <label className="flex items-center gap-3 cursor-pointer">
           <input
             type="checkbox"
@@ -123,23 +125,23 @@ export default function RestaurantTableForm({ unit, onSave, onCancel, loading, e
             onChange={e => setForm(f => ({ ...f, combinable: e.target.checked }))}
             className="w-4 h-4 accent-ocean-700"
           />
-          <span className="text-sm font-body text-n-700 app:text-[13px]">Mesa combinável com outras</span>
+          <span className="text-sm font-body text-n-700 app:text-[13px]">{t('unitForm.table.combinable')}</span>
         </label>
       </div>
 
       <div>
-        <SectionLabel>Comodidades</SectionLabel>
-        <AmenitiesPicker options={RESTAURANT_AMENS} selected={form.amenities} onToggle={toggleAmen} />
+        <SectionLabel>{t('unitForm.section.amenities')}</SectionLabel>
+        <AmenitiesPicker options={RESTAURANT_AMENS} selected={form.amenities} onToggle={toggleAmen} rotulo={(a) => rotuloComodidade(a, t)} />
       </div>
 
       <div>
-        <SectionLabel>O que está incluído</SectionLabel>
+        <SectionLabel>{t('unitForm.section.included')}</SectionLabel>
         <IncludedItemsEditor items={form.included_items} onChange={items => setForm(f => ({ ...f, included_items: items }))} />
       </div>
 
       <div>
-        <SectionLabel>Informação importante (opcional)</SectionLabel>
-        <Textarea value={form.important_info} onChange={set('important_info')} placeholder="Ex: Reserva mantida por 15 minutos após a hora marcada." rows={2} />
+        <SectionLabel>{t('unitForm.section.importantInfo')}</SectionLabel>
+        <Textarea value={form.important_info} onChange={set('important_info')} placeholder={t('unitForm.table.importantPh')} rows={2} />
       </div>
 
       <OtaFields form={form} set={set} />
@@ -147,10 +149,10 @@ export default function RestaurantTableForm({ unit, onSave, onCancel, loading, e
 
       {unit && (
         <div>
-          <SectionLabel>Estado</SectionLabel>
+          <SectionLabel>{t('unitForm.section.status')}</SectionLabel>
           <Select value={form.status} onChange={set('status')}>
-            <option value="active">Activa</option>
-            <option value="inactive">Bloqueada</option>
+            <option value="active">{t('unitForm.status.tableActive')}</option>
+            <option value="inactive">{t('unitForm.status.blocked')}</option>
           </Select>
         </div>
       )}
@@ -160,9 +162,9 @@ export default function RestaurantTableForm({ unit, onSave, onCancel, loading, e
       )}
 
       <div className="flex gap-3 pt-1">
-        <Button type="button" variant="secondary" onClick={onCancel} className="flex-1">Cancelar</Button>
+        <Button type="button" variant="secondary" onClick={onCancel} className="flex-1">{t('common.cancel')}</Button>
         <Button type="submit" loading={loading} className="flex-1">
-          {unit ? 'Guardar alterações' : 'Criar mesa'}
+          {unit ? t('unitForm.tour.saveChanges') : t('unitForm.table.create')}
         </Button>
       </div>
     </form>

@@ -49,7 +49,7 @@ function TableQrModal({ unit, onClose }) {
   return (
     <Modal open={!!unit} onClose={onClose} title={`QR — ${unit?.name || ''}`} size="sm" footer={null}>
       {blobUrl && (
-        <img src={blobUrl} alt="QR code" className="w-40 h-40 mx-auto mb-4 rounded-md border border-n-200" />
+        <img src={blobUrl} alt={t('units.qrAlt')} className="w-40 h-40 mx-auto mb-4 rounded-md border border-n-200" />
       )}
       <div className="flex items-center gap-2 bg-n-50 border border-n-200 rounded-md px-3 py-2 mb-3">
         <LinkIcon size={12} strokeWidth={1.75} className="text-n-400 shrink-0" />
@@ -58,47 +58,19 @@ function TableQrModal({ unit, onClose }) {
           {copied ? <CheckCircle size={13} strokeWidth={1.75} className="text-[var(--success)]" /> : <Copy size={13} strokeWidth={1.75} />}
         </button>
       </div>
-      <Button onClick={download} className="w-full" icon={QrCode}>Descarregar QR Code</Button>
+      <Button onClick={download} className="w-full" icon={QrCode}>{t('units.downloadQr')}</Button>
     </Modal>
   );
 }
 
-const LABELS = {
-  activity: {
-    title:      'Tours & Actividades',
-    subtitle:   (n) => `${n} tour(s) disponível(is)`,
-    newBtn:     'Novo Tour',
-    editPrefix: 'Editar tour',
-    deleteMsg:  (name) => `Eliminar o tour "${name}"? As reservas associadas serão mantidas mas o tour ficará indisponível.`,
-  },
-  hotel: {
-    title:      'Quartos & Alojamentos',
-    subtitle:   (n) => `${n} unidade(s) registada(s)`,
-    newBtn:     'Nova Unidade',
-    editPrefix: 'Editar',
-    deleteMsg:  (name) => `Eliminar a unidade "${name}"? As reservas associadas serão mantidas mas a unidade ficará indisponível.`,
-  },
-  rentacar: {
-    title:      'Frota',
-    subtitle:   (n) => `${n} viatura(s) registada(s)`,
-    newBtn:     'Nova Viatura',
-    editPrefix: 'Editar',
-    deleteMsg:  (name) => `Eliminar a viatura "${name}"? As reservas associadas serão mantidas.`,
-  },
-  restaurant: {
-    title:      'Mesas',
-    subtitle:   (n) => `${n} mesa(s) registada(s)`,
-    newBtn:     'Nova Mesa',
-    editPrefix: 'Editar',
-    deleteMsg:  (name) => `Eliminar a mesa "${name}"? As reservas associadas serão mantidas.`,
-  },
-};
+/* Textos da pagina por tipo de operador (units.page.<tipo>.*); um tipo sem textos proprios usa os do hotel */
+const PAGINAS = ['activity', 'hotel', 'rentacar', 'restaurant'];
 
 export default function Units() {
   const t = useT();
   const { operator } = useAuthStore();
   const opType = operator?.operator_type || 'hotel';
-  const lbl    = LABELS[opType] || LABELS.hotel;
+  const pagina = PAGINAS.includes(opType) ? opType : 'hotel';
 
   const [units,        setUnits]        = useState([]);
   const [loading,      setLoading]      = useState(true);
@@ -195,18 +167,19 @@ export default function Units() {
     setModal('create');
   }
 
+  const newBtn = t(`units.page.${pagina}.newBtn`);
   const modalTitle = modal === 'create'
-    ? lbl.newBtn
-    : modal ? `${lbl.editPrefix}: ${modal.name}` : '';
+    ? newBtn
+    : modal ? `${t(`units.page.${pagina}.editPrefix`)}: ${modal.name}` : '';
 
   return (
     <div>
       <PageHeader
-        title={lbl.title}
-        subtitle={lbl.subtitle(stats.total)}
+        title={t(`units.page.${pagina}.title`)}
+        subtitle={t(`units.page.${pagina}.subtitle`, { n: stats.total })}
         actions={
           <Button icon={Plus} onClick={abrirCriar}>
-            {lbl.newBtn}
+            {newBtn}
           </Button>
         }
       />
@@ -214,18 +187,18 @@ export default function Units() {
       {!loading && units.length > 0 && (
         <div className="flex gap-4 mb-6">
           <div className="bg-white rounded-sm border border-n-200 px-4 py-2.5 flex items-center gap-2">
-            <span className="text-xs font-body text-n-500">Total</span>
+            <span className="text-xs font-body text-n-500">{t('units.statTotal')}</span>
             <span className="font-display font-bold text-sm text-n-900 tabular-nums">{stats.total}</span>
           </div>
           <div className="bg-[var(--success-light)] rounded-sm border border-n-200 px-4 py-2.5 flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-[var(--success)]" />
-            <span className="text-xs font-body text-[var(--success)]">Activos</span>
+            <span className="text-xs font-body text-[var(--success)]">{t('units.statActive')}</span>
             <span className="font-display font-bold text-sm text-[var(--success)] tabular-nums">{stats.active}</span>
           </div>
           {stats.inactive > 0 && (
             <div className="bg-n-50 rounded-sm border border-n-200 px-4 py-2.5 flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-n-300" />
-              <span className="text-xs font-body text-n-500">Inactivos</span>
+              <span className="text-xs font-body text-n-500">{t('units.statInactive')}</span>
               <span className="font-display font-bold text-sm text-n-500 tabular-nums">{stats.inactive}</span>
             </div>
           )}
@@ -237,8 +210,7 @@ export default function Units() {
           <Sparkles size={16} strokeWidth={1.75} className="text-sand-600 shrink-0 mt-0.5" />
           <p className="text-sm font-body text-n-700">
             <span className="font-semibold">{incompleteUnits.length}</span>
-            {incompleteUnits.length === 1 ? ' unidade está' : ' unidades estão'} sem categoria e/ou coordenadas —
-            estes dados ajudam o SalDesk Conect a recomendar e a localizar os teus serviços. Edita cada unidade para os preencher.
+            {' '}{t(incompleteUnits.length === 1 ? 'units.incompleteOne' : 'units.incompleteMany')}
           </p>
         </div>
       )}
@@ -257,7 +229,7 @@ export default function Units() {
           onSubmitConect={handleSubmitConect}
           onViewQr={opType === 'restaurant' ? setQrTarget : undefined}
           onCreate={abrirCriar}
-          createLabel={lbl.newBtn}
+          createLabel={newBtn}
         />
       )}
 
@@ -299,7 +271,7 @@ export default function Units() {
         }
       >
         <p className="text-sm font-body text-n-700">
-          {lbl.deleteMsg(deleteTarget?.name || '')}
+          {t(`units.page.${pagina}.deleteMsg`, { name: deleteTarget?.name || '' })}
         </p>
       </Modal>
     </div>

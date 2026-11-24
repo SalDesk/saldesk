@@ -2,6 +2,9 @@ import { useState } from 'react';
 import Input, { Textarea, Select } from '../../ui/Input';
 import Button from '../../ui/Button';
 import ImageUploader from '../../shared/ImageUploader';
+import { useT } from '../../../i18n';
+import { rotuloComodidade, rotuloTipoUnidade } from '../rotulosUnidades';
+import { useLingua } from '../../../utils/formatoLingua';
 import {
   AmenitiesPicker, IncludedItemsEditor,
   SectionLabel, OtaFields, ConectFields, buildOtaProductIds, UNIT_TYPES_BY_OPERATOR,
@@ -15,6 +18,8 @@ function parseVehicleMeta(description) {
 }
 
 export default function RentacarVehicleForm({ unit, onSave, onCancel, loading, error }) {
+  const t = useT();
+  const lang = useLingua();
   const meta = parseVehicleMeta(unit?.description);
 
   const [form, setForm] = useState({
@@ -111,41 +116,41 @@ export default function RentacarVehicleForm({ unit, onSave, onCancel, loading, e
     <form onSubmit={handleSubmit} className="space-y-5">
 
       <div>
-        <SectionLabel>Identificação</SectionLabel>
+        <SectionLabel>{t('unitForm.section.identification')}</SectionLabel>
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-3">
-          <Input label="Marca" value={form.brand} onChange={set('brand')} placeholder="Toyota" autoFocus />
-          <Input label="Modelo" value={form.model} onChange={set('model')} placeholder="Hilux" />
-          <Input label="Ano" type="number" value={form.year} onChange={set('year')} placeholder="2022" min="1990" max="2030" />
+          <Input label={t('unitForm.car.brand')} value={form.brand} onChange={set('brand')} placeholder="Toyota" autoFocus />
+          <Input label={t('unitForm.car.model')} value={form.model} onChange={set('model')} placeholder="Hilux" />
+          <Input label={t('unitForm.car.year')} type="number" value={form.year} onChange={set('year')} placeholder="2022" min="1990" max="2030" />
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-          <Input label="Matricula" value={form.plate} onChange={set('plate')} placeholder="AA-00-AA" />
-          <Input label="Cor" value={form.color} onChange={set('color')} placeholder="Branco" />
-          <Select label="Categoria" value={form.unit_type} onChange={set('unit_type')} required>
-            {UNIT_TYPES_BY_OPERATOR.rentacar.map(t => <option key={t} value={t}>{t}</option>)}
+          <Input label={t('unitForm.car.plate')} value={form.plate} onChange={set('plate')} placeholder="AA-00-AA" />
+          <Input label={t('unitForm.car.colour')} value={form.color} onChange={set('color')} placeholder={t('unitForm.car.colourPh')} />
+          <Select label={t('unitForm.car.category')} value={form.unit_type} onChange={set('unit_type')} required>
+            {UNIT_TYPES_BY_OPERATOR.rentacar.map(tp => <option key={tp} value={tp}>{rotuloTipoUnidade(tp, t, lang)}</option>)}
           </Select>
         </div>
       </div>
 
       <div>
-        <SectionLabel>Especificações</SectionLabel>
+        <SectionLabel>{t('unitForm.car.specs')}</SectionLabel>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <Input label="Lugares" type="number" value={form.seats} onChange={set('seats')} min="1" max="20" />
-          <Input label="Bagagens" type="number" value={form.luggage} onChange={set('luggage')} min="0" placeholder="2" />
-          <Select label="Transmissão" value={form.transmission} onChange={set('transmission')}>
-            <option value="manual">Manual</option>
-            <option value="automatico">Automático</option>
+          <Input label={t('unitForm.car.seats')} type="number" value={form.seats} onChange={set('seats')} min="1" max="20" />
+          <Input label={t('unitForm.car.luggage')} type="number" value={form.luggage} onChange={set('luggage')} min="0" placeholder="2" />
+          <Select label={t('unitForm.car.transmission')} value={form.transmission} onChange={set('transmission')}>
+            <option value="manual">{t('unitForm.car.manual')}</option>
+            <option value="automatico">{t('unitForm.car.automatic')}</option>
           </Select>
-          <Select label="Combustível" value={form.fuel} onChange={set('fuel')}>
-            <option value="gasolina">Gasolina</option>
-            <option value="diesel">Diesel</option>
-            <option value="electrico">Eléctrico</option>
-            <option value="hibrido">Hibrido</option>
+          <Select label={t('unitForm.car.fuel')} value={form.fuel} onChange={set('fuel')}>
+            <option value="gasolina">{t('unitForm.car.petrol')}</option>
+            <option value="diesel">{t('unitForm.car.diesel')}</option>
+            <option value="electrico">{t('unitForm.car.electric')}</option>
+            <option value="hibrido">{t('unitForm.car.hybrid')}</option>
           </Select>
         </div>
         {form.unit_type === 'Executivo' && (
           <div className="mt-3">
             <Input
-              label="Tarifa de motorista (por dia)"
+              label={t('unitForm.car.chauffeurRate')}
               type="number"
               value={form.chauffeur_daily_rate}
               onChange={set('chauffeur_daily_rate')}
@@ -153,67 +158,67 @@ export default function RentacarVehicleForm({ unit, onSave, onCancel, loading, e
               step="0.01"
               placeholder="30"
             />
-            <p className="text-xs font-body text-n-500 mt-1">Cobrada por dia quando o cliente escolhe "motorista incluído" na reserva.</p>
+            <p className="text-xs font-body text-n-500 mt-1">{t('unitForm.car.chauffeurNote')}</p>
           </div>
         )}
       </div>
 
       <div>
-        <SectionLabel>Comodidades</SectionLabel>
-        <AmenitiesPicker options={CAR_AMENS} selected={form.amenities} onToggle={toggleAmen} />
+        <SectionLabel>{t('unitForm.section.amenities')}</SectionLabel>
+        <AmenitiesPicker options={CAR_AMENS} selected={form.amenities} onToggle={toggleAmen} rotulo={(a) => rotuloComodidade(a, t)} />
       </div>
 
       <div>
-        <SectionLabel>Preços (€)</SectionLabel>
+        <SectionLabel>{t('unitForm.car.prices')}</SectionLabel>
         <div className="grid grid-cols-2 gap-3 mb-3">
-          <Input label="Preço base / dia" type="number" value={form.base_price} onChange={set('base_price')} min="0" step="0.01" required placeholder="0.00" />
-          <Input label="Km incluidos / dia" type="number" value={form.km_included} onChange={set('km_included')} min="0" placeholder="200" />
+          <Input label={t('unitForm.car.pricePerDay')} type="number" value={form.base_price} onChange={set('base_price')} min="0" step="0.01" required placeholder="0.00" />
+          <Input label={t('unitForm.car.kmIncluded')} type="number" value={form.km_included} onChange={set('km_included')} min="0" placeholder="200" />
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-          <Input label="Custo km extra (€)" type="number" value={form.km_extra_cost} onChange={set('km_extra_cost')} min="0" step="0.01" placeholder="0.30" />
-          <Input label="Desc. semana (%)" type="number" value={form.discount_week} onChange={set('discount_week')} min="0" max="100" placeholder="10" />
-          <Input label="Desc. mês (%)" type="number" value={form.discount_month} onChange={set('discount_month')} min="0" max="100" placeholder="20" />
+          <Input label={t('unitForm.car.kmExtra')} type="number" value={form.km_extra_cost} onChange={set('km_extra_cost')} min="0" step="0.01" placeholder="0.30" />
+          <Input label={t('unitForm.car.discountWeek')} type="number" value={form.discount_week} onChange={set('discount_week')} min="0" max="100" placeholder="10" />
+          <Input label={t('unitForm.car.discountMonth')} type="number" value={form.discount_month} onChange={set('discount_month')} min="0" max="100" placeholder="20" />
         </div>
       </div>
 
       <div>
-        <SectionLabel>Requisitos condutor</SectionLabel>
+        <SectionLabel>{t('unitForm.car.driver')}</SectionLabel>
         <div className="grid grid-cols-2 gap-3">
-          <Input label="Idade mínima" type="number" value={form.min_age} onChange={set('min_age')} min="18" max="99" placeholder="21" />
-          <Input label="Carta há (anos)" type="number" value={form.license_years} onChange={set('license_years')} min="0" placeholder="1" />
+          <Input label={t('unitForm.car.minAge')} type="number" value={form.min_age} onChange={set('min_age')} min="18" max="99" placeholder="21" />
+          <Input label={t('unitForm.car.licenseYears')} type="number" value={form.license_years} onChange={set('license_years')} min="0" placeholder="1" />
         </div>
       </div>
 
       <div>
-        <SectionLabel>Documentos — validades</SectionLabel>
+        <SectionLabel>{t('unitForm.car.docs')}</SectionLabel>
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-          <Input label="Seguro até" type="date" value={form.seguro_expiry} onChange={set('seguro_expiry')} />
-          <Input label="IUC até" type="date" value={form.iuc_expiry} onChange={set('iuc_expiry')} />
-          <Input label="Inspeção até" type="date" value={form.inspecao_expiry} onChange={set('inspecao_expiry')} />
+          <Input label={t('unitForm.car.insuranceUntil')} type="date" value={form.seguro_expiry} onChange={set('seguro_expiry')} />
+          <Input label={t('unitForm.car.iucUntil')} type="date" value={form.iuc_expiry} onChange={set('iuc_expiry')} />
+          <Input label={t('unitForm.car.inspectionUntil')} type="date" value={form.inspecao_expiry} onChange={set('inspecao_expiry')} />
         </div>
       </div>
 
       <div>
-        <SectionLabel>Quilometragem</SectionLabel>
+        <SectionLabel>{t('unitForm.car.mileage')}</SectionLabel>
         <div className="grid grid-cols-2 gap-3">
-          <Input label="Km actuais" type="number" value={form.current_km} onChange={set('current_km')} min="0" placeholder="0" />
-          <Input label="Próxima revisão (km)" type="number" value={form.next_revision_km} onChange={set('next_revision_km')} min="0" placeholder="10000" />
+          <Input label={t('unitForm.car.currentKm')} type="number" value={form.current_km} onChange={set('current_km')} min="0" placeholder="0" />
+          <Input label={t('unitForm.car.nextService')} type="number" value={form.next_revision_km} onChange={set('next_revision_km')} min="0" placeholder="10000" />
         </div>
       </div>
 
       <div>
-        <SectionLabel>O que está incluído</SectionLabel>
+        <SectionLabel>{t('unitForm.section.included')}</SectionLabel>
         <IncludedItemsEditor items={form.included_items} onChange={items => setForm(f => ({ ...f, included_items: items }))} />
       </div>
 
       <div>
-        <SectionLabel>Informação importante (opcional)</SectionLabel>
-        <Textarea value={form.important_info} onChange={set('important_info')} placeholder="Ex: Caução exigida no levantamento, cartão de crédito obrigatório." rows={2} />
+        <SectionLabel>{t('unitForm.section.importantInfo')}</SectionLabel>
+        <Textarea value={form.important_info} onChange={set('important_info')} placeholder={t('unitForm.car.importantPh')} rows={2} />
       </div>
 
       <div>
-        <SectionLabel>Fotos</SectionLabel>
-        <ImageUploader value={form.images} onChange={(urls) => setForm(f => ({ ...f, images: urls }))} maxImages={8} hint="Primeira foto = capa · max 8 fotos · 5MB cada" />
+        <SectionLabel>{t('unitForm.section.photos')}</SectionLabel>
+        <ImageUploader value={form.images} onChange={(urls) => setForm(f => ({ ...f, images: urls }))} maxImages={8} hint={t('unitForm.car.photosHint')} />
       </div>
 
       <OtaFields form={form} set={set} />
@@ -221,12 +226,12 @@ export default function RentacarVehicleForm({ unit, onSave, onCancel, loading, e
 
       {unit && (
         <div>
-          <SectionLabel>Estado</SectionLabel>
+          <SectionLabel>{t('unitForm.section.status')}</SectionLabel>
           <Select value={form.status} onChange={set('status')}>
-            <option value="active">Activo</option>
-            <option value="maintenance">Em manutenção</option>
-            <option value="breakdown">Avaria</option>
-            <option value="inactive">Inactivo</option>
+            <option value="active">{t('unitForm.status.active')}</option>
+            <option value="maintenance">{t('unitForm.status.maintenance')}</option>
+            <option value="breakdown">{t('unitForm.status.breakdown')}</option>
+            <option value="inactive">{t('unitForm.status.inactive')}</option>
           </Select>
         </div>
       )}
@@ -236,9 +241,9 @@ export default function RentacarVehicleForm({ unit, onSave, onCancel, loading, e
       )}
 
       <div className="flex gap-3 pt-1">
-        <Button type="button" variant="secondary" onClick={onCancel} className="flex-1">Cancelar</Button>
+        <Button type="button" variant="secondary" onClick={onCancel} className="flex-1">{t('common.cancel')}</Button>
         <Button type="submit" loading={loading} className="flex-1">
-          {unit ? 'Guardar alterações' : 'Registar viatura'}
+          {unit ? t('unitForm.tour.saveChanges') : t('unitForm.car.create')}
         </Button>
       </div>
     </form>

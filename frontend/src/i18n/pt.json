@@ -676,7 +676,81 @@
     "description": "Descrição",
     "active": "Activa",
     "inactive": "Inactiva",
-    "copyLink": "Copiar link"
+    "copyLink": "Copiar link",
+    "page": {
+      "activity": {
+        "title": "Tours & Actividades",
+        "subtitle": "{{n}} tour(s) disponível(is)",
+        "newBtn": "Novo Tour",
+        "editPrefix": "Editar tour",
+        "deleteMsg": "Eliminar o tour \"{{name}}\"? As reservas associadas serão mantidas mas o tour ficará indisponível."
+      },
+      "hotel": {
+        "title": "Quartos & Alojamentos",
+        "subtitle": "{{n}} unidade(s) registada(s)",
+        "newBtn": "Nova Unidade",
+        "editPrefix": "Editar",
+        "deleteMsg": "Eliminar a unidade \"{{name}}\"? As reservas associadas serão mantidas mas a unidade ficará indisponível."
+      },
+      "rentacar": {
+        "title": "Frota",
+        "subtitle": "{{n}} viatura(s) registada(s)",
+        "newBtn": "Nova Viatura",
+        "editPrefix": "Editar",
+        "deleteMsg": "Eliminar a viatura \"{{name}}\"? As reservas associadas serão mantidas."
+      },
+      "restaurant": {
+        "title": "Mesas",
+        "subtitle": "{{n}} mesa(s) registada(s)",
+        "newBtn": "Nova Mesa",
+        "editPrefix": "Editar",
+        "deleteMsg": "Eliminar a mesa \"{{name}}\"? As reservas associadas serão mantidas."
+      }
+    },
+    "statTotal": "Total",
+    "statActive": "Activos",
+    "statInactive": "Inactivos",
+    "incompleteOne": "unidade está sem categoria e/ou coordenadas — estes dados ajudam o SalDesk Conect a recomendar e a localizar os teus serviços. Edita cada unidade para os preencher.",
+    "incompleteMany": "unidades estão sem categoria e/ou coordenadas — estes dados ajudam o SalDesk Conect a recomendar e a localizar os teus serviços. Edita cada unidade para os preencher.",
+    "downloadQr": "Descarregar QR Code",
+    "qrAlt": "QR code",
+    "list": {
+      "activate": "Activar",
+      "deactivate": "Desactivar",
+      "edit": "Editar",
+      "viewQr": "Ver QR",
+      "tourType": {
+        "grupo": "Grupo",
+        "privado": "Privado",
+        "ambos": "Grupo / Privado"
+      },
+      "maxPax": "Max {{n}} pax",
+      "minLabel": "Min",
+      "years": "{{n}} anos",
+      "perAdult": "/adulto",
+      "from": "A partir de",
+      "noPrice": "Sem preço definido",
+      "childAmount": "€{{n}} criança",
+      "privateAmount": "€{{n}} privado",
+      "priceUnit": {
+        "night": "/noite",
+        "day": "/dia",
+        "hour": "/hora",
+        "session": "/sessão",
+        "person": "/pessoa"
+      },
+      "capacity": "Cap. {{n}}",
+      "emptyTour": "Crie o seu primeiro tour",
+      "emptyUnit": "Crie a sua primeira unidade"
+    },
+    "conect": {
+      "draft": "Não submetido",
+      "pending_review": "Em revisão",
+      "published": "Publicado no Conect",
+      "paused": "Pausado",
+      "submit": "Submeter ao Conect",
+      "withdraw": "Retirar do Conect"
+    }
   },
   "customers": {
     "title": "Clientes",
@@ -1221,7 +1295,8 @@
       "itinerary": "Itinerário (opcional)",
       "importantInfo": "Informação importante (opcional)",
       "photos": "Fotos",
-      "status": "Estado"
+      "status": "Estado",
+      "capacity": "Capacidade"
     },
     "tour": {
       "namePt": "Nome PT",
@@ -1386,6 +1461,136 @@
       "lngPh": "Ex: -22.8950",
       "outside": "Este ponto fica fora de Cabo Verde. Confirme a localização.",
       "remove": "Remover localização"
+    },
+    "status": {
+      "active": "Activo",
+      "inactive": "Inactivo",
+      "tableActive": "Activa",
+      "blocked": "Bloqueada",
+      "cleaning": "Em limpeza",
+      "maintenance": "Em manutenção",
+      "breakdown": "Avaria"
+    },
+    "hotel": {
+      "number": "Número",
+      "name": "Nome",
+      "type": "Tipo",
+      "floor": "Andar",
+      "view": "Vista",
+      "adults": "Adultos",
+      "children": "Crianças",
+      "seasonPrices": "Preços por época (€ / noite)",
+      "basePrice": "Preço base",
+      "low": "Época baixa",
+      "mid": "Época média",
+      "high": "Época alta",
+      "peak": "Pico",
+      "descPh": "Descrição do quarto...",
+      "importantPh": "Ex: Check-in a partir das 14h, check-out até às 12h.",
+      "create": "Criar quarto"
+    },
+    "roomView": {
+      "sea": "Mar",
+      "garden": "Jardim",
+      "pool": "Piscina",
+      "city": "Cidade",
+      "none": "Sem vista"
+    },
+    "car": {
+      "brand": "Marca",
+      "model": "Modelo",
+      "year": "Ano",
+      "plate": "Matricula",
+      "colour": "Cor",
+      "colourPh": "Branco",
+      "category": "Categoria",
+      "specs": "Especificações",
+      "seats": "Lugares",
+      "luggage": "Bagagens",
+      "transmission": "Transmissão",
+      "manual": "Manual",
+      "automatic": "Automático",
+      "fuel": "Combustível",
+      "petrol": "Gasolina",
+      "diesel": "Diesel",
+      "electric": "Eléctrico",
+      "hybrid": "Hibrido",
+      "chauffeurRate": "Tarifa de motorista (por dia)",
+      "chauffeurNote": "Cobrada por dia quando o cliente escolhe \"motorista incluído\" na reserva.",
+      "prices": "Preços (€)",
+      "pricePerDay": "Preço base / dia",
+      "kmIncluded": "Km incluidos / dia",
+      "kmExtra": "Custo km extra (€)",
+      "discountWeek": "Desc. semana (%)",
+      "discountMonth": "Desc. mês (%)",
+      "driver": "Requisitos condutor",
+      "minAge": "Idade mínima",
+      "licenseYears": "Carta há (anos)",
+      "docs": "Documentos — validades",
+      "insuranceUntil": "Seguro até",
+      "iucUntil": "IUC até",
+      "inspectionUntil": "Inspeção até",
+      "mileage": "Quilometragem",
+      "currentKm": "Km actuais",
+      "nextService": "Próxima revisão (km)",
+      "importantPh": "Ex: Caução exigida no levantamento, cartão de crédito obrigatório.",
+      "photosHint": "Primeira foto = capa · max 8 fotos · 5MB cada",
+      "create": "Registar viatura"
+    },
+    "table": {
+      "number": "Número",
+      "nameOptional": "Nome / descrição (opcional)",
+      "namePh": "Ex: Terraço Vista Mar",
+      "zone": "Zona",
+      "min": "Mínimo (pessoas)",
+      "max": "Máximo (pessoas)",
+      "options": "Opções",
+      "combinable": "Mesa combinável com outras",
+      "importantPh": "Ex: Reserva mantida por 15 minutos após a hora marcada.",
+      "create": "Criar mesa"
+    },
+    "zones": {
+      "interior": "Interior",
+      "esplanada": "Esplanada",
+      "terrace": "Terraço",
+      "vip": "VIP",
+      "private": "Privado"
+    },
+    "generic": {
+      "namePh": "Ex: Quarto Ocean View",
+      "descPh": "Descreva a unidade...",
+      "priceUnit": {
+        "night": "por noite",
+        "person": "por pessoa",
+        "session": "por sessão",
+        "day": "por dia",
+        "hour": "por hora"
+      }
+    },
+    "amenities": {
+      "ac": "AC",
+      "tv": "TV",
+      "wifi": "WiFi",
+      "safe": "Cofre",
+      "minibar": "Minibar",
+      "jacuzzi": "Jacuzzi",
+      "balcony": "Varanda",
+      "bathtub": "Banheira",
+      "kitchen": "Cozinha",
+      "gps": "GPS",
+      "bluetooth": "Bluetooth",
+      "usb": "USB",
+      "babySeat": "Cadeira bebe",
+      "fourByFour": "4x4",
+      "sunroof": "Teto solar",
+      "rearCamera": "Camera re",
+      "airConditioning": "Ar condicionado",
+      "seaView": "Vista mar",
+      "terrace": "Terraço",
+      "wheelchair": "Acesso cadeira de rodas",
+      "parking": "Estacionamento",
+      "liveMusic": "Música ao vivo",
+      "kidsFriendly": "Ambiente para crianças"
     }
   },
   "staff": {
