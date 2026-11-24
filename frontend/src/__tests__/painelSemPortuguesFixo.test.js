@@ -59,6 +59,7 @@ export const FICHEIROS_CONVERTIDOS = ficheirosDeCodigo().filter((rel) => !exclui
 
 /* Textos escritos ao cliente: ficam em portugues em qualquer lingua do painel */
 const MOTIVO_TEXTO_CLIENTE = 'mensagem enviada ao cliente, fica em portugues (nao-objectivo da especificacao)';
+const MOTIVO_NOME_AUTOMACAO = 'nome por omissao da automacao gravado em automations.name (valor guardado; nada o compara)';
 const MOTIVO_POST = 'texto de post que o operador publica nas redes sociais, fica em portugues (nao-objectivo da especificacao: conteudo do operador)';
 const MOTIVO_EXEMPLO = 'dados de exemplo do preview da mensagem ao cliente, que e escrita em portugues';
 
@@ -105,17 +106,17 @@ export const PERMITIDOS = {
     { valor: 'Passeio de Barco', motivo: 'categoria de actividade gravada em units.unit_type (UNIT_TYPES_BY_OPERATOR); o rotulo vem de unitForm.unitType' },
   ],
   'pages/Automations.jsx': [
-    { valor: 'Confirmação de reserva', motivo: MOTIVO_TEXTO_CLIENTE },
+    { valor: 'Confirmação de reserva', motivo: MOTIVO_NOME_AUTOMACAO },
     { valor: 'A sua reserva foi confirmada — {nome_tour}', motivo: MOTIVO_TEXTO_CLIENTE },
     { valor: 'Olá {nome_cliente},\\n\\nA sua reserva de {nome_tour} em {data} às {hora} foi confirmada.\\n\\nPonto de encontro: {ponto_encontro}\\nGuia: {guia}\\n\\nLembre-se de trazer protector solar e vestuário confortável.\\n\\nObrigado por escolher a nossa empresa!', motivo: MOTIVO_TEXTO_CLIENTE },
     { valor: 'Olá {nome_cliente}! Confirmamos a sua reserva de *{nome_tour}* em {data} às {hora}. Ponto de encontro: {ponto_encontro}. Guia: {guia}. Qualquer questão, estamos disponíveis!', motivo: MOTIVO_TEXTO_CLIENTE },
     { valor: 'O seu tour é em 7 dias — {nome_tour}', motivo: MOTIVO_TEXTO_CLIENTE },
     { valor: 'Olá {nome_cliente},\\n\\nO seu tour {nome_tour} é em 7 dias, em {data} às {hora}.\\n\\nPonto de encontro: {ponto_encontro}\\nGuia: {guia}\\n\\nO que trazer:\\n- Vestuário confortável\\n- Protector solar e oculos de sol\\n- Água e snack leve\\n- Documento de identidade\\n\\nAte breve!', motivo: MOTIVO_TEXTO_CLIENTE },
-    { valor: 'Instruções D-3', motivo: MOTIVO_TEXTO_CLIENTE },
+    { valor: 'Instruções D-3', motivo: MOTIVO_NOME_AUTOMACAO },
     { valor: 'Instruções finais para o seu tour — {nome_tour}', motivo: MOTIVO_TEXTO_CLIENTE },
     { valor: 'Olá {nome_cliente},\\n\\nO seu tour {nome_tour} é em apenas 3 dias!\\n\\n- Data: {data} às {hora}\\n- Ponto de encontro: {ponto_encontro}\\n- Guia: {guia}\\n\\nEm caso de cancelamento por mau tempo, entraremos em contacto com 24h de antecedência.\\n\\nAte breve!', motivo: MOTIVO_TEXTO_CLIENTE },
     { valor: 'Olá {nome_cliente}! Lembrete: o seu tour *{nome_tour}* é amanhã em {data} às {hora}. Ponto de encontro: {ponto_encontro}. Guia: {guia}. Até amanhã!', motivo: MOTIVO_TEXTO_CLIENTE },
-    { valor: 'Pedido de avaliação', motivo: MOTIVO_TEXTO_CLIENTE },
+    { valor: 'Pedido de avaliação', motivo: MOTIVO_NOME_AUTOMACAO },
     { valor: 'Olá {nome_cliente},\\n\\nEsperamos que tenha tido uma experiência incrível no tour {nome_tour}!\\n\\nA sua opinião é muito importante para nós. Clique no link abaixo para deixar a sua avaliação:\\n\\n→ Avaliar o meu tour\\n\\nObrigado pela sua confiança!', motivo: MOTIVO_TEXTO_CLIENTE },
     { valor: 'Um presente especial para si — {nome_tour}', motivo: MOTIVO_TEXTO_CLIENTE },
     { valor: 'Olá {nome_cliente},\\n\\nObrigado por ter escolhido o tour {nome_tour}!\\n\\nComo agradecimento, temos um desconto especial de 10% para a sua próxima reserva. Use o código: VOLTA10\\n\\nValido por 30 dias. Reserve em: saldesk.cv\\n\\nEsperamos ve-lo em breve!', motivo: MOTIVO_TEXTO_CLIENTE },

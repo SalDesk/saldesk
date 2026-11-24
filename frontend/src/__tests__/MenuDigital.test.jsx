@@ -277,6 +277,13 @@ describe('MenuDigital', () => {
     expect(screen.getByText('Menu Mar')).toBeInTheDocument();
   });
 
+  it('editar um menu de degustação abre o modal com o titulo "Editar Menu" (M maiusculo)', async () => {
+    await abre();
+    fireEvent.click(screen.getByRole('button', { name: 'Editar menu' }));
+    const dialogo = await screen.findByRole('dialog');
+    expect(within(dialogo).getByText('Editar Menu')).toBeInTheDocument();
+  });
+
   it('copiar o URL escreve a ligação do menu na area de transferência', async () => {
     const escrever = vi.fn().mockResolvedValue();
     Object.defineProperty(navigator, 'clipboard', { value: { writeText: escrever }, configurable: true });
@@ -440,6 +447,14 @@ describe('MenuDigital: em ingles', () => {
     fireEvent.click(within(dialogo).getByRole('button', { name: 'Create menu' }));
     await waitFor(() => expect(createUnit).toHaveBeenCalledTimes(1));
     expect(createUnit.mock.calls[0][0]).toMatchObject({ name: 'Menu Mar', unit_type: 'tasting_menu', base_price: 30 });
+  });
+
+  it('editar um menu de degustação abre o modal com o titulo em ingles', async () => {
+    await abreEn();
+    fireEvent.click(screen.getByRole('button', { name: 'Edit menu' }));
+    const dialogo = await screen.findByRole('dialog');
+    expect(within(dialogo).getByText('Edit menu')).toBeInTheDocument();
+    expect(portuguesNoEcra(DADOS, dialogo)).toEqual([]);
   });
 
   it('o aviso de eliminar e o erro de gravar falam ingles', async () => {

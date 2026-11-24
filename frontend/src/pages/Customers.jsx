@@ -132,7 +132,7 @@ function NewCustomerModal({ open, onClose, onCreated }) {
     <Modal open={open} onClose={onClose} title={t('customersPage.newModal.title')} size="md">
       <div className="space-y-4">
         <Input label={t('customersPage.newModal.name')} value={form.name} onChange={(e) => update('name', e.target.value)} placeholder={t('customersPage.newModal.namePlaceholder')} />
-        <Input label={t('customersPage.newModal.email')} type="email" value={form.email} onChange={(e) => update('email', e.target.value)} placeholder="cliente@email.com" />
+        <Input label={t('customersPage.newModal.email')} type="email" value={form.email} onChange={(e) => update('email', e.target.value)} placeholder={t('customersPage.newModal.emailPlaceholder')} />
         <div className="grid grid-cols-2 gap-3">
           <Input label={t('customersPage.newModal.phone')} value={form.phone} onChange={(e) => update('phone', e.target.value)} placeholder="+238..." />
           <Input label={t('customersPage.newModal.countryCode')} value={form.country_code} onChange={(e) => update('country_code', e.target.value)} placeholder={t('customersPage.newModal.countryPlaceholder')} maxLength={2} />

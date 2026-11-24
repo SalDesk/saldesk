@@ -629,7 +629,7 @@ export default function MenuDigital() {
       <Modal
         open={!!modal && modalType === 'tasting'}
         onClose={() => setModal(null)}
-        title={modal === 'tasting_create' ? t('menuDigital.newTastingMenu') : t('menuDigital.editMenu')}
+        title={modal === 'tasting_create' ? t('menuDigital.newTastingMenu') : t('menuDigital.editMenuTitle')}
         size="md"
         footer={null}
       >

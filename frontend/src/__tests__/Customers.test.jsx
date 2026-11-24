@@ -363,6 +363,7 @@ describe('Customers em ingles', () => {
     fireEvent.change(campo(dialogo, 'Email *'), { target: { value: 'n@x.cv' } });
     fireEvent.change(campo(dialogo, 'Country (code)'), { target: { value: 'CV' } });
     expect(within(dialogo).getByPlaceholderText('E.g. CV, PT')).toBeInTheDocument();
+    expect(within(dialogo).getByPlaceholderText('customer@email.com')).toBeInTheDocument();
     fireEvent.click(within(dialogo).getByRole('button', { name: 'Tourist' }));
     fireEvent.click(within(dialogo).getByRole('button', { name: 'Corporate' }));
     fireEvent.change(campo(dialogo, 'Agreed price (optional)'), { target: { value: '45' } });
