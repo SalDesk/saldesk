@@ -77,6 +77,8 @@ estes, em singular e plural, em todos os ecras; nao alternar com sinonimos. O po
 | Mesa / Zona | Table / Zone | Mesa de restaurante e a zona onde fica; as zonas gravadas (interior, esplanada, terraco, vip, privado) mostram-se "Indoor", "Outdoor seating", "Terrace", "VIP", "Private". |
 | Epoca | Season | Preco do quarto por epoca ("Low season", "Mid season", "High season", "Peak"). |
 | Motorista | Chauffeur | Condutor incluido na reserva de um Executivo ("Chauffeur rate (per day)"). |
+| Avaliacao / Avaliacoes | Review / Reviews | Opiniao e nota de um cliente depois da actividade ou estadia (menu "Reviews", "Review request"); nao usar "Rating" para o texto todo. |
+| Historico de envios | Sending history | Registo das mensagens enviadas pelas automacoes ("Sending history"); os modelos de mensagem ao cliente ficam em portugues e ingles. |
 
 ## Regras
 

@@ -5,6 +5,10 @@ import {
   listAutomations, createAutomation, updateAutomation, toggleAutomation, getLogsAll,
 } from '../services/automationsService';
 
+import useUiStore from '../store/uiStore';
+import AutomationCard from '../components/automations/AutomationCard';
+import AutomationForm from '../components/automations/AutomationForm';
+import { portuguesNoEcra, chavesCruas } from './helpers/portuguesNoEcra';
 vi.mock('../services/automationsService', () => ({
   listAutomations: vi.fn(), createAutomation: vi.fn(), updateAutomation: vi.fn(),
   toggleAutomation: vi.fn(), getLogsAll: vi.fn(),
@@ -485,5 +489,155 @@ describe('Automações: design system (histórico)', () => {
     expect(html).not.toMatch(HEX);
     expect(html).not.toMatch(NOMEADAS);
     expect(html.replace(/text-error ml-0[.]5/g, '')).not.toMatch(/(?:text|bg|border)-error/);
+  });
+});
+
+/* ───────────────────────── painel em ingles ───────────────────────── */
+
+/* Textos escritos ao cliente (modelos por omissao, dados de exemplo): ficam em portugues em qualquer lingua do painel */
+const TEXTOS_CLIENTE = ['Olá {nome_cliente}', 'A sua reserva foi confirmada', 'Confirmação de reserva', 'Maria Santos', 'João Silva', 'Praia de Santa Maria', 'Mensagem guardada', 'Assunto PT guardado'];
+
+describe('Automações: painel em inglês', () => {
+  const E_EMAIL = 'New booking — Confirmation email';
+  const E_WHATS = 'New booking — Welcome WhatsApp';
+
+  beforeEach(() => { useUiStore.setState({ lang: 'en' }); });
+  afterEach(() => { cleanup(); useUiStore.setState({ lang: 'pt' }); });
+
+  async function montarEn() {
+    const r = render(<Automations />);
+    await screen.findByText(E_EMAIL);
+    return r;
+  }
+
+  it('mostra_as_sequencias_e_os_rotulos_em_ingles_sem_portugues_nem_chaves_cruas', async () => {
+    await montarEn();
+    expect(screen.getByText('Communication Automations')).toBeInTheDocument();
+    expect(screen.getByText('3 active sequence(s)')).toBeInTheDocument();
+    expect(screen.getByText('Available variables:').parentElement.textContent).toContain('{nome_cliente} · {nome_tour}');
+    expect(screen.getByText('D+7 — Discount on next booking')).toBeInTheDocument();
+    expect(screen.getByText('30 days after the tour')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Deactivate New booking — Confirmation email' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Activate D-7 — Preparation email' })).toBeInTheDocument();
+    expect(screen.getAllByRole('tab').map(t => t.textContent)).toEqual(['Sequences', 'Sending history']);
+    expect(portuguesNoEcra(TEXTOS_CLIENTE)).toEqual([]);
+    expect(chavesCruas(['automations'])).toEqual([]);
+  });
+
+  it('o_editor_e_a_pre_visualizacao_em_ingles_mantem_os_modelos_do_cliente_em_portugues', async () => {
+    await montarEn();
+    fireEvent.click(screen.getByText(E_EMAIL).parentElement.parentElement);
+    expect(screen.getByText('Subject PT')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Edit template' }));
+    expect(screen.getByText('Variables — click to insert into the PT body')).toBeInTheDocument();
+    expect(screen.getByLabelText('Message PT').value).toBe('Mensagem guardada PT');
+    fireEvent.click(screen.getByRole('button', { name: 'View preview' }));
+    expect(screen.getByText('Preview with sample data. Variables are replaced when the message is actually sent.')).toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText('Message PT'), { target: { value: '' } });
+    expect(screen.getByText('(no content)')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Save template' })).toBeInTheDocument();
+    expect(portuguesNoEcra(TEXTOS_CLIENTE)).toEqual([]);
+    expect(chavesCruas(['automations'])).toEqual([]);
+  });
+
+  it('activar_em_ingles_grava_os_mesmos_ids_e_o_mesmo_modelo_em_portugues_que_em_portugues', async () => {
+    createAutomation.mockResolvedValue({ id: 'n1', trigger_type: 'booking_confirmed', trigger_days: null, channel: 'whatsapp', active: true });
+    /* em portugues */
+    useUiStore.setState({ lang: 'pt' });
+    const pt = await montar();
+    fireEvent.click(interruptor(T_WHATS));
+    await waitFor(() => expect(createAutomation).toHaveBeenCalledTimes(1));
+    const payloadPt = createAutomation.mock.calls[0][0];
+    pt.unmount();
+    createAutomation.mockClear();
+    /* em ingles */
+    useUiStore.setState({ lang: 'en' });
+    await montarEn();
+    fireEvent.click(screen.getByText(E_WHATS).parentElement.parentElement.querySelector('button'));
+    await waitFor(() => expect(createAutomation).toHaveBeenCalledTimes(1));
+    const payloadEn = createAutomation.mock.calls[0][0];
+    expect(payloadEn).toEqual(payloadPt);
+    expect(payloadEn).toMatchObject({ trigger_type: 'booking_confirmed', trigger_days: null, channel: 'whatsapp', name: 'Boas-vindas WhatsApp' });
+    expect(payloadEn.message_pt).toMatch(/^Olá \{nome_cliente\}! Confirmamos a sua reserva/);
+  });
+
+  it('o_historico_em_ingles_traduz_colunas_e_estados_e_mantem_os_valores_desconhecidos', async () => {
+    getLogsAll.mockResolvedValue([
+      { id: 'l1', created_at: '2026-11-05T10:30:00Z', automation_name: 'Reminder', recipient_name: 'Maria', channel: 'email', status: 'sent' },
+      { id: 'l2', channel: 'whatsapp', status: 'failed' },
+      { id: 'l3', channel: 'email', status: 'queued' },
+    ]);
+    await montarEn();
+    fireEvent.click(separador('Sending history'));
+    await screen.findByText('Reminder');
+    const cabecalhos = within(screen.getByRole('table')).getAllByRole('columnheader').map(h => h.textContent);
+    expect(cabecalhos).toEqual(['Date', 'Automation', 'Customer', 'Channel', 'Status']);
+    const r = linhas();
+    expect(celulas(r[0])[4]).toBe('Sent');
+    expect(celulas(r[1])[4]).toBe('Failed');
+    expect(celulas(r[2])[4]).toBe('queued');
+    /* en-GB: "05 Nov, 10:30" em vez de "05 nov., 10:30" */
+    expect(celulas(r[0])[0]).toMatch(/^05 Nov/);
+    expect(portuguesNoEcra(['Maria'])).toEqual([]);
+  });
+
+  it('o_vazio_do_historico_em_ingles', async () => {
+    await montarEn();
+    fireEvent.click(separador('Sending history'));
+    await screen.findByText('No sending history.');
+    expect(screen.getByText('Messages will appear here once the first automations have been triggered.')).toBeInTheDocument();
+  });
+});
+
+describe('Automações: cartão e formulário em inglês', () => {
+  beforeEach(() => { useUiStore.setState({ lang: 'en' }); });
+  afterEach(() => { cleanup(); useUiStore.setState({ lang: 'pt' }); });
+
+  const AUTO = { id: 'x1', name: 'Lembrete 7 dias', trigger_type: 'days_before_checkin', trigger_days: 7, channel: 'whatsapp', subject: 'Assunto guardado', active: true };
+
+  it('o_cartao_traduz_gatilho_estado_canal_e_confirmacao_de_eliminar', () => {
+    render(<AutomationCard automation={AUTO} onUpdate={() => {}} onEdit={() => {}} onDelete={() => {}} />);
+    expect(screen.getByText('7 days before check-in')).toBeInTheDocument();
+    expect(screen.getByText('Subject: Assunto guardado')).toBeInTheDocument();
+    expect(screen.getByText('Active')).toBeInTheDocument();
+    expect(screen.getByText('WhatsApp')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Toggle automation' })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Delete' }));
+    expect(screen.getByText('This action cannot be undone.', { exact: false })).toBeInTheDocument();
+    expect(portuguesNoEcra(['Lembrete 7 dias', 'Assunto guardado'])).toEqual([]);
+    expect(chavesCruas(['automations'])).toEqual([]);
+  });
+
+  it('um_gatilho_desconhecido_mostra_se_tal_e_qual', () => {
+    render(<AutomationCard automation={{ ...AUTO, trigger_type: 'outro' }} onUpdate={() => {}} onEdit={() => {}} onDelete={() => {}} />);
+    expect(screen.getByText('outro')).toBeInTheDocument();
+  });
+
+  it('o_formulario_escolhido_em_ingles_grava_os_valores_do_gatilho_e_do_canal', () => {
+    const onSave = vi.fn();
+    const { container } = render(<AutomationForm onSave={onSave} onCancel={() => {}} />);
+    const [gatilho, canal] = screen.getAllByRole('combobox');
+    expect(within(gatilho).getAllByRole('option').map(o => o.textContent)).toEqual([
+      'Booking confirmation', 'Check-in reminder', 'Thank-you after checkout', 'X days before check-in', 'X days after checkout',
+    ]);
+    fireEvent.change(gatilho, { target: { value: 'days_after_checkout' } });
+    fireEvent.change(canal, { target: { value: 'whatsapp' } });
+    expect(screen.getByText('Days after checkout')).toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText(/^Number of days/), { target: { value: '3' } });
+    fireEvent.change(screen.getByLabelText(/^Automation name/), { target: { value: 'Obrigado' } });
+    fireEvent.submit(container.querySelector('form'));
+    expect(onSave).toHaveBeenCalledWith(expect.objectContaining({ name: 'Obrigado', trigger_type: 'days_after_checkout', trigger_days: 3, channel: 'whatsapp' }));
+    expect(screen.getByRole('button', { name: 'Create automation' })).toBeInTheDocument();
+    expect(portuguesNoEcra(['Olá {{nome}}', 'Ex: A sua reserva foi confirmada'])).toEqual([]);
+    expect(chavesCruas(['automations'])).toEqual([]);
+  });
+
+  it('os_exemplos_de_mensagem_ao_cliente_do_formulario_ficam_em_portugues', () => {
+    render(<AutomationForm onSave={() => {}} onCancel={() => {}} />);
+    expect(screen.getByLabelText(/^Message in Portuguese/).placeholder).toMatch(/^Olá \{\{nome\}\}/);
+    expect(screen.getByLabelText(/^Message in English/).placeholder).toMatch(/^Hello \{\{nome\}\}/);
+    /* o exemplo do assunto do email e texto do cliente */
+    fireEvent.change(screen.getAllByRole('combobox')[1], { target: { value: 'email' } });
+    expect(screen.getByLabelText(/^Email subject/).placeholder).toBe('Ex: A sua reserva foi confirmada');
   });
 });

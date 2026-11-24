@@ -10,6 +10,12 @@ import Input, { Select, Textarea } from '../components/ui/Input';
 import LoadingSpinner from '../components/shared/LoadingSpinner';
 import FilterChips from '../components/ui/FilterChips';
 import EmptyState from '../components/ui/EmptyState';
+import { useT } from '../i18n';
+import { formatarData } from '../utils/formatoLingua';
+import { formatarNota } from '../utils/formatoNota';
+
+/* Sugestao de resposta publica ao cliente: texto do cliente, fica em portugues em qualquer lingua do painel */
+const EXEMPLO_RESPOSTA = 'Obrigado pela sua visita e pelo seu comentário...';
 
 const PAGE_SIZE = 10;
 
@@ -27,7 +33,7 @@ function StarRow({ rating, max = 5, size = 14 }) {
 
 function fmtDate(d) {
   if (!d) return '';
-  return new Date(d).toLocaleDateString('pt-PT', { day: '2-digit', month: 'short', year: 'numeric' });
+  return formatarData(new Date(d), { day: '2-digit', month: 'short', year: 'numeric' });
 }
 
 /* ── Star breakdown bar ── */
@@ -63,6 +69,7 @@ function StarBreakdown({ distribution, total }) {
 
 /* ── Review card ── */
 function ReviewCard({ review, onReply }) {
+  const t = useT();
   const unitName = review.reservations?.units?.name || review.units?.name;
   const customer = review.customers?.name || '';
   const country  = review.customers?.country_code;
@@ -76,8 +83,8 @@ function ReviewCard({ review, onReply }) {
             <StarRow rating={review.rating} />
             <span className="text-xs font-mono text-n-400">{fmtDate(review.created_at)}</span>
             {review.is_public
-              ? <Badge variant="confirmed">Pública</Badge>
-              : <Badge variant="default">Privada</Badge>}
+              ? <Badge variant="confirmed">{t('reviewsPage.badgePublic')}</Badge>
+              : <Badge variant="default">{t('reviewsPage.badgePrivate')}</Badge>}
             {unitName && (
               <span className="text-xs font-body text-ocean-700 bg-ocean-50 px-2 py-0.5 rounded">
                 {unitName}
@@ -89,19 +96,19 @@ function ReviewCard({ review, onReply }) {
           {review.comment ? (
             <p className="text-sm font-body text-n-800 leading-relaxed mb-2">{review.comment}</p>
           ) : (
-            <p className="text-sm font-body text-n-400 italic mb-2">Sem comentário</p>
+            <p className="text-sm font-body text-n-400 italic mb-2">{t('reviewsPage.noComment')}</p>
           )}
 
           {/* Customer */}
           <p className="text-xs font-body text-n-500">
-            {customer || 'Cliente anonimo'}
+            {customer || t('reviewsPage.anonymous')}
             {country && ` · ${country}`}
           </p>
 
           {/* Existing reply */}
           {review.reply_text && (
             <div className="mt-3 bg-ocean-50 border border-ocean-100 rounded px-3 py-2.5">
-              <p className="text-xs font-body font-bold text-ocean-700 mb-1">Resposta do operador</p>
+              <p className="text-xs font-body font-bold text-ocean-700 mb-1">{t('reviewsPage.operatorReply')}</p>
               <p className="text-sm font-body text-n-700 leading-relaxed">{review.reply_text}</p>
               {review.replied_at && (
                 <p className="text-xs font-mono text-ocean-400 mt-1">{fmtDate(review.replied_at)}</p>
@@ -115,7 +122,7 @@ function ReviewCard({ review, onReply }) {
           <Button variant="ghost" size="sm" icon={MessageCircle}
             onClick={() => onReply(review)}
             className="shrink-0">
-            Responder
+            {t('reviewsPage.reply')}
           </Button>
         )}
       </div>
@@ -125,6 +132,7 @@ function ReviewCard({ review, onReply }) {
 
 /* ── Main ── */
 export default function Reviews() {
+  const t = useT();
   const [reviews,    setReviews]    = useState([]);
   const [stats,      setStats]      = useState(null);
   const [units,      setUnits]      = useState([]);
@@ -200,8 +208,8 @@ export default function Reviews() {
   return (
     <div>
       <PageHeader
-        title="Avaliações"
-        subtitle={`${reviews.length} no total · ${pendingReply} sem resposta`}
+        title={t('reviewsPage.title')}
+        subtitle={t('reviewsPage.subtitle', { total: reviews.length, pending: pendingReply })}
       />
 
       {/* Stats */}
@@ -212,10 +220,10 @@ export default function Reviews() {
             <div className="flex items-center gap-5">
               <div className="text-center shrink-0">
                 <p className="font-display font-bold text-4xl text-ocean-700 leading-none">
-                  {Number(stats.average || 0).toFixed(1)}
+                  {formatarNota(stats.average || 0)}
                 </p>
                 <StarRow rating={Math.round(stats.average || 0)} size={16} />
-                <p className="text-xs font-body text-n-400 mt-1">{stats.total} avaliações</p>
+                <p className="text-xs font-body text-n-400 mt-1">{t('reviewsPage.totalReviews', { count: stats.total })}</p>
               </div>
               <div className="flex-1">
                 <StarBreakdown distribution={stats.distribution} total={stats.total} />
@@ -227,7 +235,7 @@ export default function Reviews() {
           <Card>
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <span className="text-sm font-body text-n-600">Respondidas</span>
+                <span className="text-sm font-body text-n-600">{t('reviewsPage.answered')}</span>
                 <span className="font-display font-bold text-n-900">
                   {reviews.filter(r => r.reply_text).length}
                   <span className="text-xs font-body text-n-400 ml-1">/ {reviews.length}</span>
@@ -238,7 +246,7 @@ export default function Reviews() {
                   style={{ width: reviews.length ? `${(reviews.filter(r => r.reply_text).length / reviews.length) * 100}%` : '0%' }} />
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-sm font-body text-n-600">Públicas</span>
+                <span className="text-sm font-body text-n-600">{t('reviewsPage.public')}</span>
                 <span className="font-display font-bold text-n-900">
                   {reviews.filter(r => r.is_public).length}
                 </span>
@@ -252,17 +260,17 @@ export default function Reviews() {
               {pendingReply > 0 ? (
                 <>
                   <p className="font-display font-bold text-3xl text-sand-500">{pendingReply}</p>
-                  <p className="text-sm font-body text-n-600">sem resposta</p>
+                  <p className="text-sm font-body text-n-600">{t('reviewsPage.unanswered')}</p>
                   <button
                     onClick={() => { setFilterReply('pending'); setPage(1); }}
                     className="text-xs font-body text-ocean-700 hover:underline mt-1">
-                    Ver agora
+                    {t('reviewsPage.seeNow')}
                   </button>
                 </>
               ) : (
                 <>
                   <Star size={28} strokeWidth={1.25} className="text-sand-500 fill-sand-500" />
-                  <p className="text-sm font-body text-n-600">Todas respondidas</p>
+                  <p className="text-sm font-body text-n-600">{t('reviewsPage.allAnswered')}</p>
                 </>
               )}
             </div>
@@ -274,12 +282,12 @@ export default function Reviews() {
       <div className="flex flex-wrap gap-2 items-center mb-4">
         {/* Search */}
         <div className="w-36">
-          <Input value={search} onChange={e => { setSearch(e.target.value); setPage(1); }} placeholder="Pesquisar..." />
+          <Input value={search} onChange={e => { setSearch(e.target.value); setPage(1); }} placeholder={t('reviewsPage.searchPlaceholder')} />
         </div>
 
         {/* Star filter */}
         <FilterChips
-          options={[0, 5, 4, 3, 2, 1].map(s => ({ value: s, label: s === 0 ? 'Todas' : `${s}★` }))}
+          options={[0, 5, 4, 3, 2, 1].map(s => ({ value: s, label: s === 0 ? t('reviewsPage.all') : `${s}★` }))}
           value={filterStar}
           onChange={s => { setFilterStar(s); setPage(1); }}
         />
@@ -288,7 +296,7 @@ export default function Reviews() {
         {units.length > 0 && (
           <div className="w-40">
             <Select value={filterUnit} onChange={e => { setFilterUnit(e.target.value); setPage(1); }}>
-              <option value="">Todos os serviços</option>
+              <option value="">{t('reviewsPage.allServices')}</option>
               {units.map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
             </Select>
           </div>
@@ -297,23 +305,23 @@ export default function Reviews() {
         {/* Reply filter */}
         <div className="w-32">
           <Select value={filterReply} onChange={e => { setFilterReply(e.target.value); setPage(1); }}>
-            <option value="all">Todas</option>
-            <option value="pending">Sem resposta</option>
-            <option value="replied">Respondidas</option>
+            <option value="all">{t('reviewsPage.all')}</option>
+            <option value="pending">{t('reviewsPage.filterPending')}</option>
+            <option value="replied">{t('reviewsPage.filterReplied')}</option>
           </Select>
         </div>
 
         {/* Sort */}
         <div className="w-32">
           <Select value={filterSort} onChange={e => setFilterSort(e.target.value)}>
-            <option value="recent">Mais recentes</option>
-            <option value="oldest">Mais antigas</option>
-            <option value="best">Melhor nota</option>
-            <option value="worst">Pior nota</option>
+            <option value="recent">{t('reviewsPage.sort.recent')}</option>
+            <option value="oldest">{t('reviewsPage.sort.oldest')}</option>
+            <option value="best">{t('reviewsPage.sort.best')}</option>
+            <option value="worst">{t('reviewsPage.sort.worst')}</option>
           </Select>
         </div>
 
-        <span className="text-xs font-body text-n-400 ml-auto">{filtered.length} resultado(s)</span>
+        <span className="text-xs font-body text-n-400 ml-auto">{t('reviewsPage.results', { count: filtered.length })}</span>
       </div>
 
       {/* List */}
@@ -321,11 +329,11 @@ export default function Reviews() {
         <div className="bg-white border border-n-200 rounded-md">
           <EmptyState
             icon={Star}
-            title="Nenhuma avaliação encontrada"
+            title={t('reviewsPage.empty')}
             action={(filterStar > 0 || filterUnit || filterReply !== 'all' || search) && (
               <Button variant="ghost" size="sm"
                 onClick={() => { setFilterStar(0); setFilterUnit(''); setFilterReply('all'); setSearch(''); setPage(1); }}>
-                Limpar filtros
+                {t('reviewsPage.clearFilters')}
               </Button>
             )}
           />
@@ -339,7 +347,7 @@ export default function Reviews() {
           {hasMore && (
             <div className="flex justify-center pt-2">
               <Button variant="secondary" onClick={() => setPage(p => p + 1)}>
-                Carregar mais ({filtered.length - paginated.length} restantes)
+                {t('reviewsPage.loadMore', { count: filtered.length - paginated.length })}
               </Button>
             </div>
           )}
@@ -347,11 +355,11 @@ export default function Reviews() {
       )}
 
       {/* Reply modal */}
-      <Modal open={!!replyModal} onClose={() => setReplyModal(null)} title="Responder avaliação" size="md"
+      <Modal open={!!replyModal} onClose={() => setReplyModal(null)} title={t('reviewsPage.replyTitle')} size="md"
         footer={
           <>
-            <Button variant="secondary" onClick={() => setReplyModal(null)}>Cancelar</Button>
-            <Button form="reply-form" type="submit" loading={replying} icon={Send}>Publicar resposta</Button>
+            <Button variant="secondary" onClick={() => setReplyModal(null)}>{t('common.cancel')}</Button>
+            <Button form="reply-form" type="submit" loading={replying} icon={Send}>{t('reviewsPage.publishReply')}</Button>
           </>
         }>
         <div className="space-y-4">
@@ -368,11 +376,11 @@ export default function Reviews() {
           </div>
           <form id="reply-form" onSubmit={handleReply}>
             <Textarea
-              label="A sua resposta (será publicada)"
+              label={t('reviewsPage.yourReply')}
               value={replyText}
               onChange={e => setReplyText(e.target.value)}
               required rows={4}
-              placeholder="Obrigado pela sua visita e pelo seu comentário..." />
+              placeholder={EXEMPLO_RESPOSTA} />
           </form>
         </div>
       </Modal>

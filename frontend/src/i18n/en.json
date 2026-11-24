@@ -3117,5 +3117,209 @@
       "sending": "Sending...",
       "save": "Save changes"
     }
+  },
+  "automations": {
+    "title": "Communication Automations",
+    "activeCount": "{{count}} active sequence(s)",
+    "varsAvailable": "Available variables:",
+    "vars": {
+      "nome_cliente": "Customer name",
+      "nome_tour": "Tour/service name",
+      "data": "Tour date",
+      "hora": "Tour time",
+      "guia": "Assigned guide name",
+      "ponto_encontro": "Meeting point"
+    },
+    "tabs": {
+      "sequences": "Sequences",
+      "history": "Sending history"
+    },
+    "seq": {
+      "booking_email": {
+        "title": "New booking — Confirmation email",
+        "subtitle": "Email sent to the customer right after confirmation"
+      },
+      "booking_whatsapp": {
+        "title": "New booking — Welcome WhatsApp",
+        "subtitle": "Message sent to the customer right away via WhatsApp"
+      },
+      "d7_email": {
+        "title": "D-7 — Preparation email",
+        "subtitle": "7 days before the tour"
+      },
+      "d3_email": {
+        "title": "D-3 — Instructions email",
+        "subtitle": "3 days before the tour"
+      },
+      "d1_whatsapp": {
+        "title": "D-1 — Reminder WhatsApp",
+        "subtitle": "Message one day before the tour"
+      },
+      "post1_review": {
+        "title": "D+1 — Review request",
+        "subtitle": "1 day after the tour"
+      },
+      "post7_discount": {
+        "title": "D+7 — Discount on next booking",
+        "subtitle": "7 days after the tour"
+      },
+      "post30_newsletter": {
+        "title": "D+30 — New tours newsletter",
+        "subtitle": "30 days after the tour"
+      }
+    },
+    "activate": "Activate {{title}}",
+    "deactivate": "Deactivate {{title}}",
+    "subjectPt": "Subject PT",
+    "subjectEn": "Subject EN",
+    "messagePt": "Message PT",
+    "messageEn": "Message EN",
+    "editTemplate": "Edit template",
+    "preview": "Preview",
+    "hide": "Hide",
+    "viewPreview": "View preview",
+    "hidePreview": "Hide preview",
+    "variablesHint": "Variables — click to insert into the PT body",
+    "saveTemplate": "Save template",
+    "previewWhatsApp": "WhatsApp preview",
+    "previewSubject": "Subject:",
+    "emptyBody": "(no content)",
+    "sampleNote": "Preview with sample data.",
+    "sampleNoteLong": "Preview with sample data. Variables are replaced when the message is actually sent.",
+    "logs": {
+      "date": "Date",
+      "automation": "Automation",
+      "customer": "Customer",
+      "channel": "Channel",
+      "status": "Status",
+      "sent": "Sent",
+      "failed": "Failed",
+      "emptyTitle": "No sending history.",
+      "emptyDescription": "Messages will appear here once the first automations have been triggered.",
+      "showing": "Showing {{shown}} of {{total}} records"
+    },
+    "trigger": {
+      "booking_confirmed": "Booking confirmation",
+      "checkin_reminder": "Check-in reminder",
+      "checkout_thanks": "Thank-you after checkout",
+      "days_before_checkin": "{{days}} days before check-in",
+      "days_after_checkout": "{{days}} days after checkout"
+    },
+    "triggerOption": {
+      "booking_confirmed": "Booking confirmation",
+      "checkin_reminder": "Check-in reminder",
+      "checkout_thanks": "Thank-you after checkout",
+      "days_before_checkin": "X days before check-in",
+      "days_after_checkout": "X days after checkout"
+    },
+    "card": {
+      "toggle": "Toggle automation",
+      "subject": "Subject: {{subject}}",
+      "active": "Active",
+      "inactive": "Inactive",
+      "edit": "Edit",
+      "delete": "Delete",
+      "deleteIntro": "Delete the automation",
+      "deleteWarning": "This action cannot be undone."
+    },
+    "form": {
+      "name": "Automation name",
+      "namePlaceholder": "E.g. Booking confirmation",
+      "trigger": "Trigger",
+      "channel": "Channel",
+      "days": "Number of days",
+      "daysBefore": "Days before check-in",
+      "daysAfter": "Days after checkout",
+      "subject": "Email subject",
+      "varsTitle": "Available variables",
+      "varsHint": "Click a variable to copy it and use it in the messages below",
+      "messagePt": "Message in Portuguese",
+      "messageEn": "Message in English",
+      "create": "Create automation"
+    }
+  },
+  "feedbackPage": {
+    "title": "Post-Tour Feedback",
+    "subtitle": "Manage reviews and feedback requests",
+    "refresh": "Refresh",
+    "kpi": {
+      "toursDone": "Tours completed",
+      "reviewsReceived": "Reviews received",
+      "responseRate": "Response rate",
+      "average": "Overall average"
+    },
+    "tabs": {
+      "byTour": "By tour",
+      "pending": "Pending ({{count}})",
+      "template": "Template"
+    },
+    "unnamedService": "Unnamed service",
+    "noTours": "No tours with a recorded checkout.",
+    "toursDoneSuffix": "tours completed",
+    "reviewsSuffix": "reviews",
+    "rateSuffix": "response rate",
+    "allRequested": "All tours have a review request.",
+    "pendingNote": "{{count}} booking(s) without a review request sent.",
+    "showing": "Showing {{shown}} of {{total}}",
+    "cols": {
+      "customer": "Customer",
+      "tour": "Tour",
+      "checkout": "Checkout",
+      "daysSince": "Days since checkout"
+    },
+    "resend": "Resend request",
+    "autoLabel": "Request a review automatically the next day",
+    "autoHint": "Sends an email the day after the activity or stay, to direct bookings only and once per booking.",
+    "autoError": "Could not save. Please try again.",
+    "templateTitle": "Review request template",
+    "varsTitle": "Available variables",
+    "vars": {
+      "customerName": "Customer name",
+      "tourName": "Tour name",
+      "reviewLink": "Direct link to the review"
+    },
+    "subjectPt": "Subject PT",
+    "subjectEn": "Subject EN",
+    "bodyPt": "Body PT",
+    "bodyEn": "Body EN",
+    "saveTemplate": "Save template",
+    "saved": "Saved",
+    "preview": "Preview",
+    "previewSubject": "Subject:",
+    "sampleNote": "Preview with sample data."
+  },
+  "reviewsPage": {
+    "title": "Reviews",
+    "subtitle": "{{total}} in total · {{pending}} unanswered",
+    "totalReviews": "{{count}} reviews",
+    "answered": "Answered",
+    "public": "Public",
+    "unanswered": "unanswered",
+    "seeNow": "View now",
+    "allAnswered": "All answered",
+    "searchPlaceholder": "Search...",
+    "all": "All",
+    "allServices": "All services",
+    "filterPending": "Unanswered",
+    "filterReplied": "Answered",
+    "sort": {
+      "recent": "Most recent",
+      "oldest": "Oldest",
+      "best": "Highest rating",
+      "worst": "Lowest rating"
+    },
+    "results": "{{count}} result(s)",
+    "empty": "No reviews found",
+    "clearFilters": "Clear filters",
+    "loadMore": "Load more ({{count}} remaining)",
+    "badgePublic": "Public",
+    "badgePrivate": "Private",
+    "noComment": "No comment",
+    "anonymous": "Anonymous customer",
+    "operatorReply": "Operator reply",
+    "reply": "Reply",
+    "replyTitle": "Reply to review",
+    "publishReply": "Publish reply",
+    "yourReply": "Your reply (will be published)"
   }
 }

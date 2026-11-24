@@ -2,19 +2,15 @@ import { useState } from 'react';
 import { useT } from '../../i18n';
 import Input, { Textarea, Select } from '../ui/Input';
 import Button from '../ui/Button';
+import { rotuloGatilhoOpcao, rotuloCanal, gatilhoTemDias } from './rotulosAutomacoes';
 
-const TRIGGERS = [
-  { value: 'booking_confirmed',   label: 'Confirmação de reserva',     hasDays: false },
-  { value: 'checkin_reminder',    label: 'Lembrete de check-in',        hasDays: false },
-  { value: 'checkout_thanks',     label: 'Agradecimento pós checkout',  hasDays: false },
-  { value: 'days_before_checkin', label: 'X dias antes do check-in',    hasDays: true  },
-  { value: 'days_after_checkout', label: 'X dias após o checkout',      hasDays: true  },
-];
+/* valores gravados; o rotulo vem de rotulosAutomacoes */
+const TRIGGERS = ['booking_confirmed', 'checkin_reminder', 'checkout_thanks', 'days_before_checkin', 'days_after_checkout'];
 
-const CHANNELS = [
-  { value: 'email',    label: 'Email' },
-  { value: 'whatsapp', label: 'WhatsApp' },
-];
+const CHANNELS = ['email', 'whatsapp'];
+
+/* exemplo de assunto de email ao cliente: texto do cliente, fica em portugues em qualquer lingua do painel */
+const EXEMPLO_ASSUNTO_CLIENTE = 'Ex: A sua reserva foi confirmada';
 
 const VARS = ['{{nome}}', '{{unidade}}', '{{check_in}}', '{{check_out}}', '{{total}}', '{{operador}}'];
 
@@ -31,13 +27,13 @@ export default function AutomationForm({ automation, onSave, onCancel, loading, 
   });
 
   const set = (field) => (e) => setForm({ ...form, [field]: e.target.value });
-  const trigger = TRIGGERS.find((t) => t.value === form.trigger_type);
+  const temDias = gatilhoTemDias(form.trigger_type);
 
   function handleSubmit(e) {
     e.preventDefault();
     onSave({
       ...form,
-      trigger_days: trigger?.hasDays ? Number(form.trigger_days) : null,
+      trigger_days: temDias ? Number(form.trigger_days) : null,
     });
   }
 
@@ -47,36 +43,36 @@ export default function AutomationForm({ automation, onSave, onCancel, loading, 
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <Input label="Nome da automação" value={form.name} onChange={set('name')} required placeholder="Ex: Confirmação de reserva" />
+      <Input label={t('automations.form.name')} value={form.name} onChange={set('name')} required placeholder={t('automations.form.namePlaceholder')} />
 
       <div className="grid grid-cols-2 gap-3">
-        <Select label="Trigger" value={form.trigger_type} onChange={set('trigger_type')} required>
-          {TRIGGERS.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
+        <Select label={t('automations.form.trigger')} value={form.trigger_type} onChange={set('trigger_type')} required>
+          {TRIGGERS.map((g) => <option key={g} value={g}>{rotuloGatilhoOpcao(g, t)}</option>)}
         </Select>
-        <Select label="Canal" value={form.channel} onChange={set('channel')} required>
-          {CHANNELS.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
+        <Select label={t('automations.form.channel')} value={form.channel} onChange={set('channel')} required>
+          {CHANNELS.map((c) => <option key={c} value={c}>{rotuloCanal(c)}</option>)}
         </Select>
       </div>
 
-      {trigger?.hasDays && (
+      {temDias && (
         <Input
-          label="Número de dias"
+          label={t('automations.form.days')}
           type="number"
           value={form.trigger_days}
           onChange={set('trigger_days')}
           min="1"
           required
-          hint={form.trigger_type === 'days_before_checkin' ? 'Dias antes do check-in' : 'Dias após o checkout'}
+          hint={form.trigger_type === 'days_before_checkin' ? t('automations.form.daysBefore') : t('automations.form.daysAfter')}
         />
       )}
 
       {form.channel === 'email' && (
-        <Input label="Assunto do email" value={form.subject} onChange={set('subject')} required placeholder="Ex: A sua reserva foi confirmada" />
+        <Input label={t('automations.form.subject')} value={form.subject} onChange={set('subject')} required placeholder={EXEMPLO_ASSUNTO_CLIENTE} />
       )}
 
       {/* Variaveis disponiveis */}
       <div>
-        <p className="text-xs font-body font-bold uppercase tracking-wide text-n-500 mb-2">Variáveis disponíveis</p>
+        <p className="text-xs font-body font-bold uppercase tracking-wide text-n-500 mb-2">{t('automations.form.varsTitle')}</p>
         <div className="flex flex-wrap gap-1.5">
           {VARS.map((v) => (
             <button
@@ -89,11 +85,11 @@ export default function AutomationForm({ automation, onSave, onCancel, loading, 
             </button>
           ))}
         </div>
-        <p className="text-xs font-body text-n-400 mt-1">Clique numa variável para a copiar e use nas mensagens abaixo</p>
+        <p className="text-xs font-body text-n-400 mt-1">{t('automations.form.varsHint')}</p>
       </div>
 
       <Textarea
-        label="Mensagem em Português"
+        label={t('automations.form.messagePt')}
         value={form.message_pt}
         onChange={set('message_pt')}
         required
@@ -102,7 +98,7 @@ export default function AutomationForm({ automation, onSave, onCancel, loading, 
       />
 
       <Textarea
-        label="Mensagem em Inglês"
+        label={t('automations.form.messageEn')}
         value={form.message_en}
         onChange={set('message_en')}
         required
@@ -117,7 +113,7 @@ export default function AutomationForm({ automation, onSave, onCancel, loading, 
       <div className="flex gap-3 pt-2">
         <Button type="button" variant="secondary" onClick={onCancel} className="flex-1">{t('common.cancel')}</Button>
         <Button type="submit" loading={loading} className="flex-1">
-          {automation ? t('common.save') : 'Criar automação'}
+          {automation ? t('common.save') : t('automations.form.create')}
         </Button>
       </div>
     </form>

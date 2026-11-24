@@ -1857,5 +1857,209 @@
       "sending": "Bezig met versturen...",
       "save": "Wijzigingen opslaan"
     }
+  },
+  "automations": {
+    "title": "Communicatie-automatisering",
+    "activeCount": "{{count}} actieve reeks(en)",
+    "varsAvailable": "Beschikbare variabelen:",
+    "vars": {
+      "nome_cliente": "Naam van de klant",
+      "nome_tour": "Naam van de tour/dienst",
+      "data": "Datum van de tour",
+      "hora": "Tijd van de tour",
+      "guia": "Naam van de toegewezen gids",
+      "ponto_encontro": "Ontmoetingspunt"
+    },
+    "tabs": {
+      "sequences": "Reeksen",
+      "history": "Verzendgeschiedenis"
+    },
+    "seq": {
+      "booking_email": {
+        "title": "Nieuwe boeking — Bevestigingsmail",
+        "subtitle": "E-mail naar de klant direct na bevestiging"
+      },
+      "booking_whatsapp": {
+        "title": "Nieuwe boeking — Welkomst-WhatsApp",
+        "subtitle": "Direct bericht aan de klant via WhatsApp"
+      },
+      "d7_email": {
+        "title": "D-7 — Voorbereidingsmail",
+        "subtitle": "7 dagen voor de tour"
+      },
+      "d3_email": {
+        "title": "D-3 — Mail met instructies",
+        "subtitle": "3 dagen voor de tour"
+      },
+      "d1_whatsapp": {
+        "title": "D-1 — Herinnerings-WhatsApp",
+        "subtitle": "Bericht een dag voor de tour"
+      },
+      "post1_review": {
+        "title": "D+1 — Beoordelingsverzoek",
+        "subtitle": "1 dag na de tour"
+      },
+      "post7_discount": {
+        "title": "D+7 — Korting op volgende boeking",
+        "subtitle": "7 dagen na de tour"
+      },
+      "post30_newsletter": {
+        "title": "D+30 — Nieuwsbrief over nieuwe tours",
+        "subtitle": "30 dagen na de tour"
+      }
+    },
+    "activate": "{{title}} activeren",
+    "deactivate": "{{title}} deactiveren",
+    "subjectPt": "Onderwerp PT",
+    "subjectEn": "Onderwerp EN",
+    "messagePt": "Bericht PT",
+    "messageEn": "Bericht EN",
+    "editTemplate": "Sjabloon bewerken",
+    "preview": "Voorbeeld",
+    "hide": "Verbergen",
+    "viewPreview": "Voorbeeld bekijken",
+    "hidePreview": "Voorbeeld verbergen",
+    "variablesHint": "Variabelen — klik om in de PT-tekst in te voegen",
+    "saveTemplate": "Sjabloon opslaan",
+    "previewWhatsApp": "WhatsApp-voorbeeld",
+    "previewSubject": "Onderwerp:",
+    "emptyBody": "(geen inhoud)",
+    "sampleNote": "Voorbeeld met voorbeeldgegevens.",
+    "sampleNoteLong": "Voorbeeld met voorbeeldgegevens. De variabelen worden bij het echte verzenden vervangen.",
+    "logs": {
+      "date": "Datum",
+      "automation": "Automatisering",
+      "customer": "Klant",
+      "channel": "Kanaal",
+      "status": "Status",
+      "sent": "Verzonden",
+      "failed": "Mislukt",
+      "emptyTitle": "Geen verzendgeschiedenis.",
+      "emptyDescription": "Verzonden berichten verschijnen hier zodra de eerste automatiseringen zijn geactiveerd.",
+      "showing": "{{shown}} van {{total}} records worden getoond"
+    },
+    "trigger": {
+      "booking_confirmed": "Boekingsbevestiging",
+      "checkin_reminder": "Check-in-herinnering",
+      "checkout_thanks": "Bedankje na het uitchecken",
+      "days_before_checkin": "{{days}} dagen voor het inchecken",
+      "days_after_checkout": "{{days}} dagen na het uitchecken"
+    },
+    "triggerOption": {
+      "booking_confirmed": "Boekingsbevestiging",
+      "checkin_reminder": "Check-in-herinnering",
+      "checkout_thanks": "Bedankje na het uitchecken",
+      "days_before_checkin": "X dagen voor het inchecken",
+      "days_after_checkout": "X dagen na het uitchecken"
+    },
+    "card": {
+      "toggle": "Automatisering omschakelen",
+      "subject": "Onderwerp: {{subject}}",
+      "active": "Actief",
+      "inactive": "Inactief",
+      "edit": "Bewerken",
+      "delete": "Verwijderen",
+      "deleteIntro": "De automatisering verwijderen:",
+      "deleteWarning": "Deze actie kan niet ongedaan worden gemaakt."
+    },
+    "form": {
+      "name": "Naam van de automatisering",
+      "namePlaceholder": "Bijv. Boekingsbevestiging",
+      "trigger": "Trigger",
+      "channel": "Kanaal",
+      "days": "Aantal dagen",
+      "daysBefore": "Dagen voor het inchecken",
+      "daysAfter": "Dagen na het uitchecken",
+      "subject": "Onderwerp van de e-mail",
+      "varsTitle": "Beschikbare variabelen",
+      "varsHint": "Klik op een variabele om die te kopiëren en in de onderstaande berichten te gebruiken",
+      "messagePt": "Bericht in het Portugees",
+      "messageEn": "Bericht in het Engels",
+      "create": "Automatisering aanmaken"
+    }
+  },
+  "feedbackPage": {
+    "title": "Feedback na de tour",
+    "subtitle": "Beoordelingen en feedbackverzoeken beheren",
+    "refresh": "Vernieuwen",
+    "kpi": {
+      "toursDone": "Uitgevoerde tours",
+      "reviewsReceived": "Ontvangen beoordelingen",
+      "responseRate": "Responspercentage",
+      "average": "Algemeen gemiddelde"
+    },
+    "tabs": {
+      "byTour": "Per tour",
+      "pending": "In afwachting ({{count}})",
+      "template": "Sjabloon"
+    },
+    "unnamedService": "Dienst zonder naam",
+    "noTours": "Geen tours met geregistreerde check-out.",
+    "toursDoneSuffix": "tours uitgevoerd",
+    "reviewsSuffix": "beoordelingen",
+    "rateSuffix": "responspercentage",
+    "allRequested": "Voor alle tours is een beoordeling aangevraagd.",
+    "pendingNote": "{{count}} boeking(en) zonder verzonden beoordelingsverzoek.",
+    "showing": "{{shown}} van {{total}} worden getoond",
+    "cols": {
+      "customer": "Klant",
+      "tour": "Tour",
+      "checkout": "Check-out",
+      "daysSince": "Dagen sinds check-out"
+    },
+    "resend": "Verzoek opnieuw verzenden",
+    "autoLabel": "Beoordeling de volgende dag automatisch aanvragen",
+    "autoHint": "Stuurt de dag na de activiteit of het verblijf een e-mail, alleen voor directe boekingen en één keer per boeking.",
+    "autoError": "Opslaan is niet gelukt. Probeer het opnieuw.",
+    "templateTitle": "Sjabloon voor het beoordelingsverzoek",
+    "varsTitle": "Beschikbare variabelen",
+    "vars": {
+      "customerName": "Naam van de klant",
+      "tourName": "Naam van de tour",
+      "reviewLink": "Directe link naar de beoordeling"
+    },
+    "subjectPt": "Onderwerp PT",
+    "subjectEn": "Onderwerp EN",
+    "bodyPt": "Tekst PT",
+    "bodyEn": "Tekst EN",
+    "saveTemplate": "Sjabloon opslaan",
+    "saved": "Opgeslagen",
+    "preview": "Voorbeeld",
+    "previewSubject": "Onderwerp:",
+    "sampleNote": "Voorbeeld met voorbeeldgegevens."
+  },
+  "reviewsPage": {
+    "title": "Beoordelingen",
+    "subtitle": "{{total}} in totaal · {{pending}} onbeantwoord",
+    "totalReviews": "{{count}} beoordelingen",
+    "answered": "Beantwoord",
+    "public": "Openbaar",
+    "unanswered": "onbeantwoord",
+    "seeNow": "Nu bekijken",
+    "allAnswered": "Alles beantwoord",
+    "searchPlaceholder": "Zoeken...",
+    "all": "Alle",
+    "allServices": "Alle diensten",
+    "filterPending": "Onbeantwoord",
+    "filterReplied": "Beantwoord",
+    "sort": {
+      "recent": "Meest recent",
+      "oldest": "Oudste eerst",
+      "best": "Hoogste beoordeling",
+      "worst": "Laagste beoordeling"
+    },
+    "results": "{{count}} resultaat/resultaten",
+    "empty": "Geen beoordelingen gevonden",
+    "clearFilters": "Filters wissen",
+    "loadMore": "Meer laden ({{count}} resterend)",
+    "badgePublic": "Openbaar",
+    "badgePrivate": "Privé",
+    "noComment": "Geen opmerking",
+    "anonymous": "Anonieme klant",
+    "operatorReply": "Reactie van de aanbieder",
+    "reply": "Beantwoorden",
+    "replyTitle": "Op beoordeling reageren",
+    "publishReply": "Reactie publiceren",
+    "yourReply": "Uw reactie (wordt gepubliceerd)"
   }
 }

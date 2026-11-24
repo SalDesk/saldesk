@@ -5,6 +5,8 @@ import Reviews from '../pages/Reviews';
 import api from '../services/api';
 
 /* Sem rede: so o cliente HTTP e simulado */
+import useUiStore from '../store/uiStore';
+import { portuguesNoEcra, chavesCruas } from './helpers/portuguesNoEcra';
 vi.mock('../services/api', () => ({ default: { get: vi.fn(), put: vi.fn() } }));
 
 const FUTURE = { v7_startTransition: true, v7_relativeSplatPath: true };
@@ -250,5 +252,108 @@ describe('Reviews', () => {
     expect(screen.getByText('Nenhuma avaliação encontrada')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Limpar filtros' })).not.toBeInTheDocument();
     expect(screen.getByText('Todas respondidas')).toBeInTheDocument();
+  });
+});
+
+/* ───────────────────────── painel em ingles ───────────────────────── */
+
+describe('Reviews: painel em inglês', () => {
+  let errSpy;
+  let warnSpy;
+  /* comentarios dos clientes e nomes dos testes: mostram-se tal e qual */
+  const DADOS = ['Excelente passeio', 'Muito bom', 'Obrigado pela visita', 'Obrigado pela sua visita', 'Atraso', 'Cliente', 'Joao', 'Buggy Tour', 'Mergulho', 'Filler'];
+
+  beforeEach(() => {
+    errSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    useUiStore.setState({ lang: 'en' });
+    api.get.mockReset().mockImplementation(async (url) => {
+      if (url === '/reviews') return { data: { data: TODAS } };
+      if (url === '/reviews/stats') return { data: { data: STATS } };
+      if (url === '/units') return { data: { data: UNIDADES } };
+      throw new Error(`pedido inesperado: ${url}`);
+    });
+    api.put.mockReset().mockImplementation(async (url, corpo) => ({
+      data: { data: { ...R1, ...corpo, replied_at: '2026-03-13T10:00:00Z' } },
+    }));
+  });
+
+  afterEach(() => {
+    cleanup();
+    useUiStore.setState({ lang: 'pt' });
+    const erros = errSpy.mock.calls.length;
+    const avisos = warnSpy.mock.calls.length;
+    errSpy.mockRestore();
+    warnSpy.mockRestore();
+    expect(erros).toBe(0);
+    expect(avisos).toBe(0);
+  });
+
+  async function abreEn(subtitulo = '12 in total · 1 unanswered') {
+    render(
+      <MemoryRouter future={FUTURE}>
+        <Reviews />
+      </MemoryRouter>
+    );
+    await screen.findByText(subtitulo);
+  }
+
+  it('mostra_titulo_estatisticas_filtros_e_cartoes_em_ingles_sem_portugues', async () => {
+    await abreEn();
+    expect(screen.getByRole('heading', { name: 'Reviews' })).toBeInTheDocument();
+    expect(screen.getByText('4.2')).toBeInTheDocument();
+    expect(screen.getByText('12 reviews')).toBeInTheDocument();
+    expect(screen.getAllByText('Answered')).toHaveLength(2);
+    expect(screen.getByText('View now')).toBeInTheDocument();
+    expect(screen.getByPlaceholderText('Search...')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'All' })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: 'All services' })).toBeInTheDocument();
+    expect(screen.getAllByRole('option').map(o => o.textContent)).toEqual(expect.arrayContaining([
+      'Unanswered', 'Answered', 'Most recent', 'Oldest', 'Highest rating', 'Lowest rating',
+    ]));
+    expect(screen.getByText('12 result(s)')).toBeInTheDocument();
+    expect(screen.getAllByText('Public').length).toBeGreaterThan(1);
+    expect(screen.getAllByText('Private').length).toBeGreaterThan(0);
+    expect(screen.getByText('Operator reply')).toBeInTheDocument();
+    expect(screen.getByText('No comment')).toBeInTheDocument();
+    expect(screen.getAllByText('Reply')).toHaveLength(2);
+    /* data em formato ingles; o comentario do cliente aparece tal e qual */
+    expect(screen.getAllByText('12 Mar 2026').length).toBeGreaterThan(0);
+    expect(screen.getByText('Excelente passeio')).toBeInTheDocument();
+    expect(portuguesNoEcra(DADOS)).toEqual([]);
+    expect(chavesCruas(['reviewsPage'])).toEqual([]);
+  });
+
+  it('a_nota_media_usa_o_separador_decimal_da_lingua', async () => {
+    useUiStore.setState({ lang: 'de' });
+    await abreEn('12 insgesamt · 1 unbeantwortet');
+    expect(screen.getByText('4,2')).toBeInTheDocument();
+  });
+
+  it('responder_em_ingles_traduz_o_modal_mantem_a_sugestao_em_portugues_e_envia_o_texto_escrito', async () => {
+    await abreEn();
+    fireEvent.click(screen.getAllByRole('button', { name: 'Reply' })[0]);
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
+    expect(screen.getByText('Reply to review')).toBeInTheDocument();
+    const caixa = screen.getByLabelText(/^Your reply \(will be published\)/);
+    expect(caixa.placeholder).toBe('Obrigado pela sua visita e pelo seu comentário...');
+    expect(screen.getByRole('button', { name: 'Cancel' })).toBeInTheDocument();
+    fireEvent.change(caixa, { target: { value: 'Thank you for visiting' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Publish reply' }));
+    await waitFor(() => expect(api.put).toHaveBeenCalledWith('/reviews/r1/reply', { reply_text: 'Thank you for visiting' }));
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+  });
+
+  it('sem_resultados_e_limpar_filtros_em_ingles', async () => {
+    await abreEn();
+    fireEvent.change(screen.getByPlaceholderText('Search...'), { target: { value: 'zzz' } });
+    expect(screen.getByText('No reviews found')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Clear filters' }));
+    expect(screen.getByText('12 result(s)')).toBeInTheDocument();
+  });
+
+  it('carregar_mais_em_ingles', async () => {
+    await abreEn();
+    expect(screen.getByRole('button', { name: 'Load more (2 remaining)' })).toBeInTheDocument();
   });
 });

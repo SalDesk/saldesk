@@ -1857,5 +1857,209 @@
       "sending": "Wird gesendet...",
       "save": "Änderungen speichern"
     }
+  },
+  "automations": {
+    "title": "Kommunikationsautomatisierung",
+    "activeCount": "{{count}} aktive Sequenz(en)",
+    "varsAvailable": "Verfügbare Variablen:",
+    "vars": {
+      "nome_cliente": "Name des Kunden",
+      "nome_tour": "Name der Tour/des Services",
+      "data": "Datum der Tour",
+      "hora": "Uhrzeit der Tour",
+      "guia": "Name des zugewiesenen Guides",
+      "ponto_encontro": "Treffpunkt"
+    },
+    "tabs": {
+      "sequences": "Sequenzen",
+      "history": "Versandverlauf"
+    },
+    "seq": {
+      "booking_email": {
+        "title": "Neue Buchung — Bestätigungs-E-Mail",
+        "subtitle": "E-Mail an den Kunden direkt nach der Bestätigung"
+      },
+      "booking_whatsapp": {
+        "title": "Neue Buchung — WhatsApp-Willkommensnachricht",
+        "subtitle": "Sofortige Nachricht an den Kunden per WhatsApp"
+      },
+      "d7_email": {
+        "title": "D-7 — Vorbereitungs-E-Mail",
+        "subtitle": "7 Tage vor der Tour"
+      },
+      "d3_email": {
+        "title": "D-3 — E-Mail mit Anweisungen",
+        "subtitle": "3 Tage vor der Tour"
+      },
+      "d1_whatsapp": {
+        "title": "D-1 — WhatsApp-Erinnerung",
+        "subtitle": "Nachricht einen Tag vor der Tour"
+      },
+      "post1_review": {
+        "title": "D+1 — Bewertungsanfrage",
+        "subtitle": "1 Tag nach der Tour"
+      },
+      "post7_discount": {
+        "title": "D+7 — Rabatt auf die nächste Buchung",
+        "subtitle": "7 Tage nach der Tour"
+      },
+      "post30_newsletter": {
+        "title": "D+30 — Newsletter zu neuen Touren",
+        "subtitle": "30 Tage nach der Tour"
+      }
+    },
+    "activate": "{{title}} aktivieren",
+    "deactivate": "{{title}} deaktivieren",
+    "subjectPt": "Betreff PT",
+    "subjectEn": "Betreff EN",
+    "messagePt": "Nachricht PT",
+    "messageEn": "Nachricht EN",
+    "editTemplate": "Vorlage bearbeiten",
+    "preview": "Vorschau",
+    "hide": "Ausblenden",
+    "viewPreview": "Vorschau anzeigen",
+    "hidePreview": "Vorschau ausblenden",
+    "variablesHint": "Variablen — zum Einfügen in den PT-Text anklicken",
+    "saveTemplate": "Vorlage speichern",
+    "previewWhatsApp": "WhatsApp-Vorschau",
+    "previewSubject": "Betreff:",
+    "emptyBody": "(kein Inhalt)",
+    "sampleNote": "Vorschau mit Beispieldaten.",
+    "sampleNoteLong": "Vorschau mit Beispieldaten. Die Variablen werden beim tatsächlichen Versand ersetzt.",
+    "logs": {
+      "date": "Datum",
+      "automation": "Automatisierung",
+      "customer": "Kunde",
+      "channel": "Kanal",
+      "status": "Status",
+      "sent": "Gesendet",
+      "failed": "Fehlgeschlagen",
+      "emptyTitle": "Kein Versandverlauf.",
+      "emptyDescription": "Versendete Nachrichten erscheinen hier, sobald die ersten Automatisierungen ausgelöst wurden.",
+      "showing": "{{shown}} von {{total}} Einträgen werden angezeigt"
+    },
+    "trigger": {
+      "booking_confirmed": "Buchungsbestätigung",
+      "checkin_reminder": "Check-in-Erinnerung",
+      "checkout_thanks": "Dankeschön nach dem Check-out",
+      "days_before_checkin": "{{days}} Tage vor dem Check-in",
+      "days_after_checkout": "{{days}} Tage nach dem Check-out"
+    },
+    "triggerOption": {
+      "booking_confirmed": "Buchungsbestätigung",
+      "checkin_reminder": "Check-in-Erinnerung",
+      "checkout_thanks": "Dankeschön nach dem Check-out",
+      "days_before_checkin": "X Tage vor dem Check-in",
+      "days_after_checkout": "X Tage nach dem Check-out"
+    },
+    "card": {
+      "toggle": "Automatisierung umschalten",
+      "subject": "Betreff: {{subject}}",
+      "active": "Aktiv",
+      "inactive": "Inaktiv",
+      "edit": "Bearbeiten",
+      "delete": "Löschen",
+      "deleteIntro": "Die Automatisierung löschen:",
+      "deleteWarning": "Diese Aktion kann nicht rückgängig gemacht werden."
+    },
+    "form": {
+      "name": "Name der Automatisierung",
+      "namePlaceholder": "z. B. Buchungsbestätigung",
+      "trigger": "Auslöser",
+      "channel": "Kanal",
+      "days": "Anzahl der Tage",
+      "daysBefore": "Tage vor dem Check-in",
+      "daysAfter": "Tage nach dem Check-out",
+      "subject": "E-Mail-Betreff",
+      "varsTitle": "Verfügbare Variablen",
+      "varsHint": "Klicken Sie auf eine Variable, um sie zu kopieren und in den Nachrichten unten zu verwenden",
+      "messagePt": "Nachricht auf Portugiesisch",
+      "messageEn": "Nachricht auf Englisch",
+      "create": "Automatisierung erstellen"
+    }
+  },
+  "feedbackPage": {
+    "title": "Feedback nach der Tour",
+    "subtitle": "Bewertungen und Feedback-Anfragen verwalten",
+    "refresh": "Aktualisieren",
+    "kpi": {
+      "toursDone": "Durchgeführte Touren",
+      "reviewsReceived": "Erhaltene Bewertungen",
+      "responseRate": "Antwortquote",
+      "average": "Gesamtdurchschnitt"
+    },
+    "tabs": {
+      "byTour": "Nach Tour",
+      "pending": "Ausstehend ({{count}})",
+      "template": "Vorlage"
+    },
+    "unnamedService": "Service ohne Namen",
+    "noTours": "Keine Touren mit erfasstem Check-out.",
+    "toursDoneSuffix": "Touren durchgeführt",
+    "reviewsSuffix": "Bewertungen",
+    "rateSuffix": "Antwortquote",
+    "allRequested": "Für alle Touren wurde eine Bewertung angefragt.",
+    "pendingNote": "{{count}} Buchung(en) ohne gesendete Bewertungsanfrage.",
+    "showing": "{{shown}} von {{total}} werden angezeigt",
+    "cols": {
+      "customer": "Kunde",
+      "tour": "Tour",
+      "checkout": "Check-out",
+      "daysSince": "Tage seit dem Check-out"
+    },
+    "resend": "Anfrage erneut senden",
+    "autoLabel": "Bewertung am nächsten Tag automatisch anfragen",
+    "autoHint": "Sendet am Tag nach der Aktivität oder dem Aufenthalt eine E-Mail, nur für Direktbuchungen und einmal pro Buchung.",
+    "autoError": "Speichern nicht möglich. Bitte erneut versuchen.",
+    "templateTitle": "Vorlage für die Bewertungsanfrage",
+    "varsTitle": "Verfügbare Variablen",
+    "vars": {
+      "customerName": "Name des Kunden",
+      "tourName": "Name der Tour",
+      "reviewLink": "Direktlink zur Bewertung"
+    },
+    "subjectPt": "Betreff PT",
+    "subjectEn": "Betreff EN",
+    "bodyPt": "Text PT",
+    "bodyEn": "Text EN",
+    "saveTemplate": "Vorlage speichern",
+    "saved": "Gespeichert",
+    "preview": "Vorschau",
+    "previewSubject": "Betreff:",
+    "sampleNote": "Vorschau mit Beispieldaten."
+  },
+  "reviewsPage": {
+    "title": "Bewertungen",
+    "subtitle": "{{total}} insgesamt · {{pending}} unbeantwortet",
+    "totalReviews": "{{count}} Bewertungen",
+    "answered": "Beantwortet",
+    "public": "Öffentlich",
+    "unanswered": "unbeantwortet",
+    "seeNow": "Jetzt ansehen",
+    "allAnswered": "Alle beantwortet",
+    "searchPlaceholder": "Suchen...",
+    "all": "Alle",
+    "allServices": "Alle Services",
+    "filterPending": "Unbeantwortet",
+    "filterReplied": "Beantwortet",
+    "sort": {
+      "recent": "Neueste zuerst",
+      "oldest": "Älteste zuerst",
+      "best": "Beste Bewertung",
+      "worst": "Schlechteste Bewertung"
+    },
+    "results": "{{count}} Ergebnis(se)",
+    "empty": "Keine Bewertungen gefunden",
+    "clearFilters": "Filter zurücksetzen",
+    "loadMore": "Mehr laden ({{count}} übrig)",
+    "badgePublic": "Öffentlich",
+    "badgePrivate": "Privat",
+    "noComment": "Kein Kommentar",
+    "anonymous": "Anonymer Kunde",
+    "operatorReply": "Antwort des Anbieters",
+    "reply": "Antworten",
+    "replyTitle": "Auf Bewertung antworten",
+    "publishReply": "Antwort veröffentlichen",
+    "yourReply": "Ihre Antwort (wird veröffentlicht)"
   }
 }
