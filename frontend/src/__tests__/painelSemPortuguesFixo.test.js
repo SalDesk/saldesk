@@ -150,6 +150,11 @@ export const FICHEIROS_CONVERTIDOS = [
   'components/units/forms/RentacarVehicleForm.jsx',
   'components/units/forms/RestaurantTableForm.jsx',
   'components/units/forms/GenericUnitForm.jsx',
+  /* Fase 2, tarefa 5: vendedor de praia */
+  'pages/BeachSeller.jsx',
+  'pages/BeachSale.jsx',
+  'pages/VendedorPerfil.jsx',
+  'utils/formatoVendedor.js',
 ];
 
 /* Valores portugueses que ficam no codigo de proposito, por ficheiro, com o motivo. */

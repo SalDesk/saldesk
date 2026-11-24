@@ -5,6 +5,7 @@ import BeachSale from '../pages/BeachSale';
 import { listUnits } from '../services/unitsService';
 import { createReservation } from '../services/reservationsService';
 import useUiStore from '../store/uiStore';
+import { portuguesNoEcra, chavesCruas } from './helpers/portuguesNoEcra';
 
 /* Sem rede: servicos simulados. O seletor de buggys e testado a parte. */
 vi.mock('../services/unitsService', () => ({ listUnits: vi.fn() }));
@@ -251,5 +252,81 @@ describe('BeachSale: opções da actividade', () => {
     const corpo = await confirmar();
     expect(corpo).not.toHaveProperty('start_time');
     expect(corpo.notes_internal).toContain('Hora: 09:00');
+  });
+});
+
+describe('BeachSale: lingua do painel', () => {
+  let errSpy;
+  let warnSpy;
+
+  beforeEach(() => {
+    useUiStore.setState({ lang: 'pt' });
+    createReservation.mockReset().mockResolvedValue({ id: 'r1' });
+    errSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    errSpy.mockRestore();
+    warnSpy.mockRestore();
+    cleanup();
+    useUiStore.setState({ lang: 'pt' });
+  });
+
+  const GRANDE = { ...tour({ time_slots: [{ time: '09:00', capacity: 8 }] }), base_price: 1234 };
+
+  async function venderAteAoFim({ continuar, nome, placeholder, confirmar }) {
+    listUnits.mockResolvedValue([GRANDE]);
+    render(<MemoryRouter future={FUTURE}><BeachSale /></MemoryRouter>);
+    fireEvent.click(await screen.findByRole('button', { name: /Buggy Tour/ }));
+    fireEvent.click(await screen.findByRole('button', { name: '09:00' }));
+    fireEvent.click(screen.getByRole('button', { name: continuar }));
+    fireEvent.change(await screen.findByPlaceholderText(placeholder), { target: { value: nome } });
+    fireEvent.click(screen.getByRole('button', { name: confirmar }));
+    await waitFor(() => expect(createReservation).toHaveBeenCalledTimes(1));
+    return createReservation.mock.calls[0][0];
+  }
+
+  it('o botao de lingua do cabecalho passa os passos para ingles e para portugues', async () => {
+    listUnits.mockResolvedValue([GRANDE]);
+    render(<MemoryRouter future={FUTURE}><BeachSale /></MemoryRouter>);
+    fireEvent.click(await screen.findByRole('button', { name: /Buggy Tour/ }));
+    expect(await screen.findByText('Passo 2 de 3 — Data e Grupo')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'en' }));
+    expect(screen.getByText('Step 2 of 3 — Date and group')).toBeTruthy();
+    expect(screen.getByText('Group size')).toBeTruthy();
+    expect(screen.getAllByText('€1,234').length).toBeGreaterThan(0);
+    fireEvent.click(screen.getByRole('button', { name: 'pt' }));
+    expect(screen.getByText('Passo 2 de 3 — Data e Grupo')).toBeTruthy();
+    expect(screen.getAllByText('€1234').length).toBeGreaterThan(0);
+  });
+
+  it('em ingles os tres passos e o fim nao tem portugues nem chaves cruas', async () => {
+    useUiStore.setState({ lang: 'en' });
+    listUnits.mockResolvedValue([GRANDE]);
+    render(<MemoryRouter future={FUTURE}><BeachSale /></MemoryRouter>);
+    await screen.findByText('Select the tour');
+    expect(portuguesNoEcra(['Buggy Tour'])).toEqual([]);
+    fireEvent.click(screen.getByRole('button', { name: /Buggy Tour/ }));
+    await screen.findByText('Group size');
+    expect(portuguesNoEcra(['Buggy Tour'])).toEqual([]);
+    fireEvent.click(screen.getByRole('button', { name: '09:00' }));
+    fireEvent.click(screen.getByRole('button', { name: /Continue/ }));
+    fireEvent.change(await screen.findByPlaceholderText('Customer first and last name'), { target: { value: 'Ana Lima' } });
+    expect(portuguesNoEcra(['Buggy Tour', 'Ana Lima'])).toEqual([]);
+    fireEvent.click(screen.getByRole('button', { name: /Confirm booking/ }));
+    expect(await screen.findByText('Booking confirmed!')).toBeTruthy();
+    expect(portuguesNoEcra(['Buggy Tour', 'Ana Lima'])).toEqual([]);
+    expect(chavesCruas(['beachSeller', 'staff', 'opcoesActividade'])).toEqual([]);
+  });
+
+  it('uma venda feita em ingles envia o mesmo corpo que em portugues', async () => {
+    const pt = await venderAteAoFim({ continuar: /Continuar/, nome: 'Ana Lima', placeholder: 'Nome e apelido do cliente', confirmar: /Confirmar Reserva/ });
+    cleanup();
+    createReservation.mockClear();
+    useUiStore.setState({ lang: 'en' });
+    const en = await venderAteAoFim({ continuar: /Continue/, nome: 'Ana Lima', placeholder: 'Customer first and last name', confirmar: /Confirm booking/ });
+    expect(en).toEqual(pt);
+    expect(en).toMatchObject({ unit_id: 't1', total_amount: 1234, payment_method: 'cash' });
   });
 });

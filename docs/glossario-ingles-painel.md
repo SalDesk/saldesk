@@ -48,6 +48,8 @@ estes, em singular e plural, em todos os ecras; nao alternar com sinonimos. O po
 | Comissao / Comissoes | Commission / Commissions | O que se paga aos vendedores de praia e parceiros ("Pay commission"). |
 | Caixa | Cash | O separador dos pagamentos em dinheiro ("Cash payments"); "Cash flow" so se aparecer o fluxo de caixa. |
 | Previsao | Forecast | Previsao de receita ("Weekly forecast") e o ecra "Demand forecast" (Previsao de Procura). |
+| Fim de Turno | End of shift | O resumo do dia do vendedor de praia ("End of shift"); o texto partilhado e "Shift summary". |
+| Meta Pessoal | Personal goal | O cartao de recordes do vendedor de praia ("Record sales/day"). |
 | Resultado | Profit and loss / Net result | A area "Profit and loss"; o valor final e "Net result". |
 | Margem | Margin | "Net margin", "Margin" por tour. |
 | Obrigacoes | Obligations | INPS, IUR, seguros e subscricao; INPS, IUR, NIF, DNRE, Vinti4 e SISP sao nomes oficiais e nao se traduzem. |
