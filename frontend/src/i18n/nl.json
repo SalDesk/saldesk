@@ -2726,5 +2726,270 @@
       "noteLabel": "Opmerking:",
       "noteText": "Om automatische aanbevelingen te activeren (e-mail na een bevestigde tour, enz.), stelt u de bijbehorende automatiseringen in bij"
     }
+  },
+  "affiliatesPage": {
+    "title": "Partnerprogramma",
+    "subtitle": "Beheer partners en commissies op doorverwezen boekingen",
+    "copied": "Gekopieerd",
+    "copy": "Kopiëren",
+    "modal": {
+      "newTitle": "Nieuwe partner",
+      "editTitle": "Partner bewerken",
+      "name": "Naam",
+      "email": "E-mail",
+      "commission": "Commissie (%)",
+      "code": "Partnercode",
+      "namePlaceholder": "Bijv. Jan Jansen",
+      "emailPlaceholder": "jan@voorbeeld.nl",
+      "codePlaceholder": "Bijv. JAN3K9",
+      "duplicateCode": "Er bestaat al een partner met deze code.",
+      "saveError": "De partner kon niet worden opgeslagen.",
+      "create": "Partner aanmaken"
+    },
+    "payment": {
+      "title": "Betaling — {{name}}",
+      "totalPaid": "TOTAAL BETAALD",
+      "pending": "OPENSTAAND",
+      "amount": "Te betalen bedrag (€)",
+      "date": "Betaaldatum",
+      "note": "Notitie",
+      "defaultNote": "Commissiebetaling",
+      "invalidAmount": "Voer een geldig bedrag in.",
+      "saveError": "De betaling kon niet worden geregistreerd.",
+      "register": "Betaling registreren"
+    },
+    "programActive": "Programma actief",
+    "programInactive": "Programma inactief",
+    "newAffiliate": "Nieuwe partner",
+    "kpi": {
+      "active": "Actieve partners",
+      "bookings": "Gegenereerde boekingen",
+      "paid": "Betaalde commissie",
+      "pending": "Openstaande commissie"
+    },
+    "tabs": {
+      "affiliates": "Partners",
+      "config": "Configuratie",
+      "analytics": "Analytics"
+    },
+    "empty": {
+      "title": "Geen partners geregistreerd",
+      "description": "Maak je eerste partner aan en deel de partnerlink."
+    },
+    "row": {
+      "commission": "{{pct}}% commissie",
+      "registerPayment": "Betaling registreren",
+      "registerPaymentFor": "Betaling registreren {{name}}",
+      "deactivate": "{{name}} deactiveren",
+      "activate": "{{name}} activeren",
+      "edit": "{{name}} bewerken",
+      "delete": "{{name}} verwijderen",
+      "bookings": "Boekingen",
+      "paid": "Betaald",
+      "pending": "Openstaand"
+    },
+    "confirmDelete": "Deze partner verwijderen?",
+    "config": {
+      "title": "Algemene programma-instellingen",
+      "globalCommission": "Algemene commissie (%)",
+      "globalCommissionHint": "Standaardpercentage voor nieuwe partners. Kan per partner worden overschreven.",
+      "minBooking": "Minimale boekingswaarde (€)",
+      "minBookingHint": "Minimale boekingswaarde waarvoor de commissie geldt. 0 = geen minimum.",
+      "saved": "Opgeslagen",
+      "save": "Configuratie opslaan",
+      "portalLabel": "Partnerportaal:",
+      "portalIntro": "Elke partner kan zijn dashboard openen op",
+      "portalMid": "met het geregistreerde e-mailadres. Boekingen via de link (",
+      "portalEnd": ") worden automatisch aan de partner toegewezen."
+    },
+    "analytics": {
+      "empty": "Nog geen partnergegevens.",
+      "top": "Toppartners op boekingen",
+      "line": "{{n}} boekingen · {{paid}} betaald"
+    },
+    "shareText": "Boek je tour: {{link}}"
+  },
+  "affiliatePortal": {
+    "header": "Partnerportaal",
+    "loginTitle": "Inloggen op het portaal",
+    "codeLabel": "Partnercode:",
+    "emailLabel": "Geregistreerd e-mailadres",
+    "emailPlaceholder": "jouw@email.nl",
+    "loginError": "Ongeldig e-mailadres of ongeldige code. Controleer je gegevens en probeer opnieuw.",
+    "signingIn": "Inloggen...",
+    "signIn": "Inloggen",
+    "notAffiliate": "Nog geen partner? Neem contact op met de aanbieder voor je inloggegevens.",
+    "welcome": "Welkom",
+    "commissionPerBooking": "{{pct}}% commissie per boeking",
+    "stats": {
+      "bookings": "Gegenereerde boekingen",
+      "paid": "Betaalde commissie",
+      "pending": "Openstaande commissie",
+      "total": "Geschat totaal"
+    },
+    "linkTitle": "Jouw partnerlink",
+    "copied": "Gekopieerd",
+    "copyLink": "Link kopiëren",
+    "shareText": "Boek je tour met korting: {{link}}",
+    "paymentHistory": "Betalingsgeschiedenis",
+    "logout": "Uitloggen"
+  },
+  "marketingPage": {
+    "title": "Marketing",
+    "subtitle": "Hulpmiddelen voor promotie en contentplanner",
+    "tabs": {
+      "qrcode": "QR-code",
+      "widget": "Widget",
+      "referrals": "Doorverwijzingen",
+      "stats": "Statistieken"
+    },
+    "copied": "Gekopieerd",
+    "copy": "Kopiëren",
+    "qr": {
+      "for": "QR-code voor",
+      "publicProfile": "Openbaar profiel — boekingslink",
+      "color": "Kleur",
+      "colorNamed": "Kleur {{color}}",
+      "customColor": "Eigen kleur",
+      "size": "Grootte — {{size}}px",
+      "sizeAria": "Grootte van de QR-code",
+      "generate": "Voorbeeld genereren",
+      "preview": "Voorbeeld",
+      "alt": "QR-code"
+    },
+    "widget": {
+      "htmlCode": "HTML-code",
+      "code": "Code",
+      "preview": "Voorbeeld",
+      "previewTitle": "Voorbeeld van de widget",
+      "failed": "De widgetcode kon niet worden gegenereerd. Laad de pagina opnieuw en probeer het nog eens.",
+      "pasteHint": "Plak deze code in de HTML van je website waar het formulier moet verschijnen.",
+      "colorNote": "De kleur van de widget is die van je openbare pagina. Stel hem in via",
+      "settingsLink": "Instellingen > Openbaar profiel",
+      "sisp": "Betalen met een Kaapverdische kaart (SISP) opent op het volledige scherm, buiten je site, omdat de bank niet toestaat dat dit binnen een andere pagina wordt geopend. Alle andere boekingen en PayPal blijven op je site."
+    },
+    "referrals": {
+      "inviteTitle": "Verwijs een andere aanbieder door",
+      "inviteText": "Deel je link — wanneer een door jou doorverwezen bedrijf zich bij SalDesk aansluit, neem contact met ons op om je beloning te ontvangen.",
+      "yourLink": "Jouw doorverwijslink",
+      "sent": "Verzonden doorverwijzingen",
+      "converted": "Geconverteerd",
+      "yours": "Jouw doorverwijzingen ({{n}})",
+      "none": "Je hebt nog geen aanbieder doorverwezen.",
+      "cols": {
+        "business": "Bedrijf",
+        "date": "Datum",
+        "status": "Status"
+      },
+      "status": {
+        "novo": "Nieuw",
+        "contactado": "Gecontacteerd",
+        "demo_agendada": "Demo gepland",
+        "proposta_enviada": "Voorstel verzonden",
+        "convertido": "Geconverteerd",
+        "descartado": "Afgewezen"
+      }
+    },
+    "stats": {
+      "visits": "Profielbezoeken",
+      "clicks": "Klikken op de link",
+      "bookings": "Boekingen via de link",
+      "conversion": "Conversiepercentage",
+      "last30": "laatste 30 dagen",
+      "clicksToBookings": "klikken → boekingen",
+      "postsTitle": "Berichten — {{month}}",
+      "total": "Totaal",
+      "published": "Gepubliceerd",
+      "scheduled": "Gepland",
+      "cancelled": "Geannuleerd",
+      "origin": "Herkomst van de boekingen",
+      "noSourcesA": "Herkomstgegevens niet beschikbaar. Configureer het eindpunt",
+      "noSourcesB": "met het veld",
+      "bookingLink": "Link voor directe boeking",
+      "open": "Openen",
+      "sources": {
+        "direct": "Direct",
+        "manual": "Handmatig",
+        "social": "Social"
+      }
+    },
+    "planner": {
+      "title": "Socialmediaplanner",
+      "newPost": "Nieuw bericht",
+      "prevMonth": "Vorige maand",
+      "nextMonth": "Volgende maand",
+      "newPostOn": "Nieuw bericht op {{date}}",
+      "upcoming": "Komende berichten",
+      "noScheduled": "Geen geplande berichten",
+      "editPost": "Bericht bewerken {{text}}",
+      "deletePost": "Bericht verwijderen {{text}}",
+      "published": "Gepubliceerd",
+      "history": "Geschiedenis ({{n}})",
+      "cols": {
+        "text": "Tekst",
+        "platform": "Platform",
+        "date": "Datum",
+        "status": "Status"
+      }
+    },
+    "postStatus": {
+      "agendado": "Gepland",
+      "publicado": "Gepubliceerd",
+      "cancelado": "Geannuleerd"
+    },
+    "post": {
+      "newTitle": "Nieuw bericht",
+      "editTitle": "Bericht bewerken",
+      "template": "Sjabloon",
+      "templates": {
+        "tour_disponivel": "Tour beschikbaar",
+        "ultimas_vagas": "Laatste plaatsen",
+        "avaliacao": "Klantbeoordeling",
+        "promocao": "Speciale aanbieding",
+        "foto_do_dia": "Foto van de dag"
+      },
+      "textPt": "Tekst PT",
+      "textEn": "Tekst EN",
+      "textPtPlaceholder": "Tekst om in het Portugees te plaatsen...",
+      "textEnPlaceholder": "Tekst om in het Engels te plaatsen...",
+      "photo": "Foto (URL)",
+      "photoPlaceholder": "https://voorbeeld.nl/afbeelding.jpg",
+      "platform": "Platform",
+      "dateTime": "Datum en tijd",
+      "state": "Status",
+      "schedule": "Bericht plannen",
+      "preview": "Voorbeeld",
+      "now": "Nu",
+      "pageFallback": "Pagina",
+      "profileFallback": "jouw_profiel",
+      "captionPlaceholder": "Het bijschrift verschijnt hier...",
+      "bodyPlaceholder": "De tekst van het bericht verschijnt hier..."
+    }
+  },
+  "integrationsPage": {
+    "subtitle": "Channel Manager — Viator en GetYourGuide",
+    "refresh": "Vernieuwen",
+    "viatorDescription": "Ervaringenplatform van TripAdvisor",
+    "getyourguideDescription": "Wereldwijd platform voor activiteiten en tours",
+    "productIds": "Product IDs (gescheiden door komma)",
+    "connected": "Verbonden",
+    "disconnected": "Verbroken",
+    "lastSync": "Laatste synchronisatie: {{date}}",
+    "sync": "Synchroniseren",
+    "disconnect": "Verbreken",
+    "configure": "Instellen",
+    "webhookUrls": "Webhook-URLs om in te stellen op de platforms:",
+    "logsTitle": "Integratielogboeken",
+    "events": "{{n}} gebeurtenis(sen)",
+    "cols": {
+      "date": "Datum",
+      "channel": "Kanaal",
+      "event": "Gebeurtenis",
+      "status": "Status",
+      "ref": "OTA-ref.",
+      "error": "Fout"
+    },
+    "configureTitle": "{{name}} instellen",
+    "connect": "Verbinden"
   }
 }

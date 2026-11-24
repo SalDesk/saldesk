@@ -7,7 +7,10 @@ import Card from '../../components/ui/Card';
 import Badge from '../../components/ui/Badge';
 import Table from '../../components/ui/Table';
 import EmptyState from '../../components/ui/EmptyState';
-import { PLATFORMS, STATUS_CONFIG, MONTHS_PT, postDateKey } from './shared';
+import { useT } from '../../i18n';
+import { formatarData, localeDe, useLingua } from '../../utils/formatoLingua';
+import { nomeMes, diaAbreviado } from '../../components/calendar/rotulosCalendario';
+import { PLATFORMS, STATUS_CONFIG, rotuloEstadoPost, postDateKey } from './shared';
 
 /* ── Calendar helpers ── */
 function calendarDays(year, month) {
@@ -19,10 +22,13 @@ function calendarDays(year, month) {
   for (let d = 1; d <= last.getDate(); d++) days.push(d);
   return days;
 }
-const WEEKDAYS  = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sab', 'Dom'];
+/* a semana comeca na segunda: indices de diaAbreviado (0 = domingo) */
+const WEEKDAYS  = [1, 2, 3, 4, 5, 6, 0];
 
 /* ── SocialPlanner ── */
 export default function SocialPlanner({ posts, onAdd, onEdit, onDelete, onMarkPublished }) {
+  const t = useT();
+  const lang = useLingua();
   const today    = new Date();
   const todayStr = today.toISOString().slice(0, 10);
   const [month, setMonth] = useState(new Date(today.getFullYear(), today.getMonth(), 1));
@@ -53,35 +59,35 @@ export default function SocialPlanner({ posts, onAdd, onEdit, onDelete, onMarkPu
 
   /* colunas do historico (precisam dos handlers) */
   const historyColumns = [
-    { key: 'texto', label: 'Texto', render: p => <span className="block max-w-[200px] truncate text-sm font-body text-n-900">{p.text_pt}</span> },
+    { key: 'texto', label: t('marketingPage.planner.cols.text'), render: p => <span className="block max-w-[200px] truncate text-sm font-body text-n-900">{p.text_pt}</span> },
     {
-      key: 'plataforma', label: 'Plataforma',
+      key: 'plataforma', label: t('marketingPage.planner.cols.platform'),
       render: p => {
         const PlatIc = PLATFORMS.find(pl => pl.value === p.platform)?.icon || Globe2;
         return <PlatIc size={15} strokeWidth={1.75} className="text-n-500" />;
       },
     },
     {
-      key: 'data', label: 'Data',
+      key: 'data', label: t('marketingPage.planner.cols.date'),
       render: p => (
         <span className="text-xs font-mono text-n-600 whitespace-nowrap">
-          {p.scheduled_at ? new Date(p.scheduled_at).toLocaleDateString('pt-PT') : '—'}
+          {p.scheduled_at ? formatarData(p.scheduled_at, {}, lang) : '—'}
         </span>
       ),
     },
     {
-      key: 'estado', label: 'Estado',
+      key: 'estado', label: t('marketingPage.planner.cols.status'),
       render: p => {
-        const cfg = STATUS_CONFIG[p.status] || STATUS_CONFIG.agendado;
-        return <Badge variant={cfg.variant}>{cfg.label}</Badge>;
+        const estado = STATUS_CONFIG[p.status] ? p.status : 'agendado';
+        return <Badge variant={STATUS_CONFIG[estado].variant}>{rotuloEstadoPost(estado, t)}</Badge>;
       },
     },
     {
       key: 'acoes', label: '',
       render: p => (
         <div className="flex gap-1 justify-end">
-          <button type="button" aria-label={`Editar post ${(p.text_pt || '').slice(0, 30)}`} onClick={() => onEdit(p)} className="p-1 text-n-400 hover:text-ocean-700 transition-colors"><Pencil size={13} strokeWidth={1.75} /></button>
-          <button type="button" aria-label={`Eliminar post ${(p.text_pt || '').slice(0, 30)}`} onClick={() => onDelete(p.id)} className="p-1 text-n-400 hover:text-[var(--error)] transition-colors"><Trash2 size={13} strokeWidth={1.75} /></button>
+          <button type="button" aria-label={t('marketingPage.planner.editPost', { text: (p.text_pt || '').slice(0, 30) })} onClick={() => onEdit(p)} className="p-1 text-n-400 hover:text-ocean-700 transition-colors"><Pencil size={13} strokeWidth={1.75} /></button>
+          <button type="button" aria-label={t('marketingPage.planner.deletePost', { text: (p.text_pt || '').slice(0, 30) })} onClick={() => onDelete(p.id)} className="p-1 text-n-400 hover:text-[var(--error)] transition-colors"><Trash2 size={13} strokeWidth={1.75} /></button>
         </div>
       ),
     },
@@ -90,25 +96,25 @@ export default function SocialPlanner({ posts, onAdd, onEdit, onDelete, onMarkPu
   return (
     <div>
       <div className="flex items-center justify-between mb-4">
-        <h2 className="font-display font-semibold text-base text-n-900">Planeador de Social Media</h2>
-        <Button icon={Plus} size="sm" onClick={() => onAdd(null)}>Novo post</Button>
+        <h2 className="font-display font-semibold text-base text-n-900">{t('marketingPage.planner.title')}</h2>
+        <Button icon={Plus} size="sm" onClick={() => onAdd(null)}>{t('marketingPage.planner.newPost')}</Button>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Calendar */}
         <Card padding="p-0" className="lg:col-span-2 overflow-hidden">
           <div className="flex items-center justify-between px-4 py-3 border-b border-n-200">
-            <button type="button" aria-label="Mês anterior" onClick={() => setMonth(new Date(year, mon - 1, 1))} className="p-1 rounded hover:bg-n-100 text-n-500 transition-colors">
+            <button type="button" aria-label={t('marketingPage.planner.prevMonth')} onClick={() => setMonth(new Date(year, mon - 1, 1))} className="p-1 rounded hover:bg-n-100 text-n-500 transition-colors">
               <ChevronLeft size={18} strokeWidth={1.75} />
             </button>
-            <p className="font-display font-semibold text-sm text-n-900">{MONTHS_PT[mon]} {year}</p>
-            <button type="button" aria-label="Mês seguinte" onClick={() => setMonth(new Date(year, mon + 1, 1))} className="p-1 rounded hover:bg-n-100 text-n-500 transition-colors">
+            <p className="font-display font-semibold text-sm text-n-900">{nomeMes(mon, t)} {year}</p>
+            <button type="button" aria-label={t('marketingPage.planner.nextMonth')} onClick={() => setMonth(new Date(year, mon + 1, 1))} className="p-1 rounded hover:bg-n-100 text-n-500 transition-colors">
               <ChevronRight size={18} strokeWidth={1.75} />
             </button>
           </div>
           <div className="grid grid-cols-7 border-b border-n-100">
             {WEEKDAYS.map(d => (
-              <div key={d} className="py-2 text-center text-[10px] font-mono font-semibold uppercase tracking-wider text-n-400">{d}</div>
+              <div key={d} className="py-2 text-center text-[10px] font-mono font-semibold uppercase tracking-wider text-n-400">{diaAbreviado(d, t)}</div>
             ))}
           </div>
           <div className="grid grid-cols-7">
@@ -118,7 +124,7 @@ export default function SocialPlanner({ posts, onAdd, onEdit, onDelete, onMarkPu
               const dayPosts = postsByDate[key] || [];
               const isToday  = key === todayStr;
               return (
-                <button key={key} type="button" aria-label={`Novo post em ${key}`} onClick={() => onAdd(key)}
+                <button key={key} type="button" aria-label={t('marketingPage.planner.newPostOn', { date: key })} onClick={() => onAdd(key)}
                   className={`h-16 w-full text-left border-r border-b border-n-100 p-1.5 cursor-pointer hover:bg-ocean-50 transition-colors flex flex-col ${isToday ? 'bg-ocean-50' : ''}`}>
                   <span className={`text-xs font-mono font-semibold w-5 h-5 flex items-center justify-center rounded-full ${isToday ? 'bg-ocean-700 text-white' : 'text-n-600'}`}>{d}</span>
                   <span className="flex flex-wrap gap-0.5 mt-0.5">
@@ -135,10 +141,10 @@ export default function SocialPlanner({ posts, onAdd, onEdit, onDelete, onMarkPu
 
         {/* Upcoming */}
         <div className="flex flex-col gap-3">
-          <p className="text-xs font-mono uppercase tracking-wider text-n-500">Próximos posts</p>
+          <p className="text-xs font-mono uppercase tracking-wider text-n-500">{t('marketingPage.planner.upcoming')}</p>
           {upcoming.length === 0 ? (
             <Card padding="p-0">
-              <EmptyState icon={Calendar} title="Sem posts agendados" />
+              <EmptyState icon={Calendar} title={t('marketingPage.planner.noScheduled')} />
             </Card>
           ) : upcoming.map(p => {
             const dt       = new Date(p.scheduled_at);
@@ -151,19 +157,19 @@ export default function SocialPlanner({ posts, onAdd, onEdit, onDelete, onMarkPu
                     <p className="text-xs font-body text-n-700 truncate">{p.text_pt.slice(0, 50)}{p.text_pt.length > 50 ? '…' : ''}</p>
                   </div>
                   <div className="flex gap-0.5 shrink-0">
-                    <button type="button" aria-label={`Editar post ${p.text_pt.slice(0, 30)}`} onClick={() => onEdit(p)} className="p-1 text-n-400 hover:text-ocean-700 transition-colors"><Pencil size={12} strokeWidth={1.75} /></button>
-                    <button type="button" aria-label={`Eliminar post ${p.text_pt.slice(0, 30)}`} onClick={() => onDelete(p.id)} className="p-1 text-n-400 hover:text-[var(--error)] transition-colors"><Trash2 size={12} strokeWidth={1.75} /></button>
+                    <button type="button" aria-label={t('marketingPage.planner.editPost', { text: p.text_pt.slice(0, 30) })} onClick={() => onEdit(p)} className="p-1 text-n-400 hover:text-ocean-700 transition-colors"><Pencil size={12} strokeWidth={1.75} /></button>
+                    <button type="button" aria-label={t('marketingPage.planner.deletePost', { text: p.text_pt.slice(0, 30) })} onClick={() => onDelete(p.id)} className="p-1 text-n-400 hover:text-[var(--error)] transition-colors"><Trash2 size={12} strokeWidth={1.75} /></button>
                   </div>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-[10px] font-mono text-n-400 flex items-center gap-1">
                     <Clock size={10} strokeWidth={1.75} />
-                    {dt.toLocaleDateString('pt-PT', { day: '2-digit', month: 'short' })} {dt.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' })}
+                    {formatarData(dt, { day: '2-digit', month: 'short' }, lang)} {dt.toLocaleTimeString(localeDe(lang), { hour: '2-digit', minute: '2-digit' })}
                   </span>
                   {isToday2 && (
                     <button type="button" onClick={() => onMarkPublished(p.id)}
                       className="flex items-center gap-1 text-[10px] font-body px-2 py-0.5 bg-[var(--success)] text-white rounded-xs hover:opacity-90 transition-colors">
-                      <CheckCircle2 size={10} strokeWidth={2} />Publicado
+                      <CheckCircle2 size={10} strokeWidth={2} />{t('marketingPage.planner.published')}
                     </button>
                   )}
                 </div>
@@ -176,7 +182,7 @@ export default function SocialPlanner({ posts, onAdd, onEdit, onDelete, onMarkPu
       {/* All posts table */}
       {posts.length > 0 && (
         <div className="mt-6">
-          <p className="text-xs font-mono uppercase tracking-wider text-n-500 mb-3">Histórico ({posts.length})</p>
+          <p className="text-xs font-mono uppercase tracking-wider text-n-500 mb-3">{t('marketingPage.planner.history', { n: posts.length })}</p>
           <Card padding="p-0" className="overflow-hidden">
             <Table
               columns={historyColumns}

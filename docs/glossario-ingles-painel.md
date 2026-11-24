@@ -89,6 +89,9 @@ estes, em singular e plural, em todos os ecras; nao alternar com sinonimos. O po
 | Pacote / Pacotes | Package / Packages | Varios tours vendidos juntos a preco especial ("Seasonal packages"); os estados gravados activo, inactivo, esgotado mostram-se "Active", "Inactive", "Sold out". |
 | Grupo / Cotacao | Group booking / Quote | Pedido de um grupo ou empresa ("Group bookings and corporate events"); a cotacao e o "Quote" e o sinal e o "Deposit"; os estados gravados pedido, em_analise, proposta_enviada, confirmado, concluido, cancelado mostram-se "Request", "Under review", "Proposal sent", "Confirmed", "Completed", "Cancelled". |
 | Parceiro / Parceria | Partner / Partnership | Operador ou empresa com quem se troca clientes ("Cross-selling partnerships"); tipos gravados hotel, activity, rentacar, restaurant e parcerias recommendation, commission, discount. |
+| Indicacao / Indicacoes | Referral / Referrals | Negocio que o operador indica a SalDesk (separador Marketing); os estados gravados novo, contactado, demo_agendada, proposta_enviada, convertido, descartado mostram-se "New", "Contacted", "Demo scheduled", "Proposal sent", "Converted", "Discarded". |
+| Post (redes sociais) | Post | Publicacao agendada do planeador de marketing; os estados gravados agendado, publicado, cancelado mostram-se "Scheduled", "Published", "Cancelled"; as redes (Instagram, Facebook) sao marcas e nao se traduzem. |
+| Portal do afiliado | Affiliate portal | Pagina publica /afiliado/:codigo onde o afiliado ve as suas comissoes; segue o idioma do browser e tem o seletor de idioma. |
 
 ## Regras
 

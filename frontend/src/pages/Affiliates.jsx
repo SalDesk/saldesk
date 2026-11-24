@@ -17,6 +17,10 @@ import Tabs from '../components/ui/Tabs';
 import EmptyState from '../components/ui/EmptyState';
 import Input from '../components/ui/Input';
 import LoadingSpinner from '../components/shared/LoadingSpinner';
+import { getT, useT } from '../i18n';
+import { useLingua } from '../utils/formatoLingua';
+import { eurosDuasCasas } from '../utils/formatoEuros';
+import { eurosInteiros } from './reservations/shared';
 
 const DEFAULT_CONF = { active: false, commission_pct: 10, min_booking_value: 0 };
 
@@ -29,6 +33,7 @@ function genCode(name) {
 
 /* ── CopyBtn ── */
 function CopyBtn({ text, small }) {
+  const t = useT();
   const [copied, setCopied] = useState(false);
   function copy() {
     navigator.clipboard.writeText(text).then(() => { setCopied(true); setTimeout(() => setCopied(false), 2000); });
@@ -37,13 +42,14 @@ function CopyBtn({ text, small }) {
     <button onClick={copy}
       className={`flex items-center gap-1 transition-colors font-body font-medium ${small ? 'text-xs px-2 py-1 rounded-xs' : 'text-sm px-3 py-2 rounded-sm'} ${copied ? 'text-[var(--success)] bg-[var(--success-light)]' : 'text-ocean-700 bg-ocean-50 hover:bg-ocean-100'}`}>
       {copied ? <Check size={small ? 10 : 13} strokeWidth={2} /> : <Copy size={small ? 10 : 13} strokeWidth={1.75} />}
-      {copied ? 'Copiado' : 'Copiar'}
+      {copied ? t('affiliatesPage.copied') : t('affiliatesPage.copy')}
     </button>
   );
 }
 
 /* ── AffiliateModal ── */
 function AffiliateModal({ affiliate, config, onSave, onClose }) {
+  const t = useT();
   const isNew = !affiliate || affiliate._new;
   const base  = isNew ? null : affiliate;
 
@@ -79,33 +85,33 @@ function AffiliateModal({ affiliate, config, onSave, onClose }) {
       });
     } catch (err) {
       setError(err.response?.data?.code === 'DUPLICATE_CODE'
-        ? 'Já existe um afiliado com este código.'
-        : 'Erro ao guardar afiliado.');
+        ? t('affiliatesPage.modal.duplicateCode')
+        : t('affiliatesPage.modal.saveError'));
     } finally {
       setSaving(false);
     }
   }
 
   return (
-    <Modal open onClose={onClose} title={isNew ? 'Novo afiliado' : 'Editar afiliado'} size="sm">
+    <Modal open onClose={onClose} title={isNew ? t('affiliatesPage.modal.newTitle') : t('affiliatesPage.modal.editTitle')} size="sm">
       <form onSubmit={handleSubmit} className="space-y-4">
-        <Input label="Nome" aria-label="Nome" value={form.name} onChange={set('name')} required placeholder="Ex: João Silva" />
-        <Input label="Email" aria-label="Email" type="email" value={form.email} onChange={set('email')} required placeholder="joao@exemplo.com" />
+        <Input label={t('affiliatesPage.modal.name')} aria-label={t('affiliatesPage.modal.name')} value={form.name} onChange={set('name')} required placeholder={t('affiliatesPage.modal.namePlaceholder')} />
+        <Input label={t('affiliatesPage.modal.email')} aria-label={t('affiliatesPage.modal.email')} type="email" value={form.email} onChange={set('email')} required placeholder={t('affiliatesPage.modal.emailPlaceholder')} />
 
         <div className="grid grid-cols-2 gap-3">
-          <Input label="Comissão (%)" aria-label="Comissão (%)" type="number" min="0" max="50" step="0.5"
+          <Input label={t('affiliatesPage.modal.commission')} aria-label={t('affiliatesPage.modal.commission')} type="number" min="0" max="50" step="0.5"
             value={form.commission_pct} onChange={set('commission_pct')} required />
           <div>
-            <Input label="Código de afiliado" aria-label="Código de afiliado" value={form.code} onChange={set('code')} required
-              className="font-mono uppercase" placeholder="Ex: JOA3K9" />
+            <Input label={t('affiliatesPage.modal.code')} aria-label={t('affiliatesPage.modal.code')} value={form.code} onChange={set('code')} required
+              className="font-mono uppercase" placeholder={t('affiliatesPage.modal.codePlaceholder')} />
           </div>
         </div>
 
         {error && <p className="text-xs text-[var(--error)]">{error}</p>}
 
         <div className="flex gap-3 pt-1">
-          <Button type="button" variant="secondary" onClick={onClose} className="flex-1">Cancelar</Button>
-          <Button type="submit" loading={saving} className="flex-1">{isNew ? 'Criar afiliado' : 'Guardar'}</Button>
+          <Button type="button" variant="secondary" onClick={onClose} className="flex-1">{t('common.cancel')}</Button>
+          <Button type="submit" loading={saving} className="flex-1">{isNew ? t('affiliatesPage.modal.create') : t('common.save')}</Button>
         </div>
       </form>
     </Modal>
@@ -114,9 +120,11 @@ function AffiliateModal({ affiliate, config, onSave, onClose }) {
 
 /* ── PaymentModal ── */
 function PaymentModal({ affiliate, onSave, onClose }) {
+  const t = useT();
+  const lang = useLingua();
   const [amount, setAmount] = useState('');
   const [date,   setDate]   = useState(new Date().toISOString().slice(0, 10));
-  const [note,   setNote]   = useState('Pagamento de comissão');
+  const [note,   setNote]   = useState(() => t('affiliatesPage.payment.defaultNote'));
   const [saving, setSaving] = useState(false);
   const [error,  setError]  = useState('');
 
@@ -124,37 +132,37 @@ function PaymentModal({ affiliate, onSave, onClose }) {
   const pending   = Number(affiliate?.commission_pending || 0);
 
   async function handleSave() {
-    if (!amount || Number(amount) <= 0) { setError('Introduza um montante válido.'); return; }
+    if (!amount || Number(amount) <= 0) { setError(t('affiliatesPage.payment.invalidAmount')); return; }
     setSaving(true);
     setError('');
     try {
       await onSave(affiliate.id, { amount: Number(amount), payment_date: date, note });
       onClose();
-    } catch { setError('Erro ao registar pagamento.'); }
+    } catch { setError(t('affiliatesPage.payment.saveError')); }
     finally { setSaving(false); }
   }
 
   return (
-    <Modal open onClose={onClose} title={`Pagamento — ${affiliate?.name}`} size="sm">
+    <Modal open onClose={onClose} title={t('affiliatesPage.payment.title', { name: affiliate?.name })} size="sm">
       <div className="space-y-4">
         <div className="grid grid-cols-2 gap-3">
           <div className="px-3 py-2 bg-n-50 border border-n-200 rounded-sm">
-            <p className="text-[10px] font-mono text-n-400">TOTAL PAGO</p>
-            <p className="font-display font-bold text-sm text-n-700">€{totalPaid.toFixed(2)}</p>
+            <p className="text-[10px] font-mono text-n-400">{t('affiliatesPage.payment.totalPaid')}</p>
+            <p className="font-display font-bold text-sm text-n-700">{eurosDuasCasas(totalPaid, lang)}</p>
           </div>
           <div className="px-3 py-2 bg-[var(--warning-light)] border border-[var(--warning)] rounded-sm">
-            <p className="text-[10px] font-mono text-[var(--warning)]">PENDENTE</p>
-            <p className="font-display font-bold text-sm text-[var(--warning)]">€{pending.toFixed(2)}</p>
+            <p className="text-[10px] font-mono text-[var(--warning)]">{t('affiliatesPage.payment.pending')}</p>
+            <p className="font-display font-bold text-sm text-[var(--warning)]">{eurosDuasCasas(pending, lang)}</p>
           </div>
         </div>
-        <Input label="Montante a pagar (€)" aria-label="Montante a pagar (€)" type="number" min="0.01" step="0.01"
+        <Input label={t('affiliatesPage.payment.amount')} aria-label={t('affiliatesPage.payment.amount')} type="number" min="0.01" step="0.01"
           value={amount} onChange={e => setAmount(e.target.value)} required />
-        <Input label="Data do pagamento" aria-label="Data do pagamento" type="date" value={date} onChange={e => setDate(e.target.value)} />
-        <Input label="Nota" aria-label="Nota" value={note} onChange={e => setNote(e.target.value)} />
+        <Input label={t('affiliatesPage.payment.date')} aria-label={t('affiliatesPage.payment.date')} type="date" value={date} onChange={e => setDate(e.target.value)} />
+        <Input label={t('affiliatesPage.payment.note')} aria-label={t('affiliatesPage.payment.note')} value={note} onChange={e => setNote(e.target.value)} />
         {error && <p className="text-xs text-[var(--error)]">{error}</p>}
         <div className="flex gap-3">
-          <Button variant="secondary" onClick={onClose} className="flex-1">Cancelar</Button>
-          <Button loading={saving} onClick={handleSave} className="flex-1">Registar pagamento</Button>
+          <Button variant="secondary" onClick={onClose} className="flex-1">{t('common.cancel')}</Button>
+          <Button loading={saving} onClick={handleSave} className="flex-1">{t('affiliatesPage.payment.register')}</Button>
         </div>
       </div>
     </Modal>
@@ -163,6 +171,8 @@ function PaymentModal({ affiliate, onSave, onClose }) {
 
 /* ─────────────────────── Main ─────────────────────── */
 export default function Affiliates() {
+  const t = useT();
+  const lang = useLingua();
   const { operator } = useAuthStore();
   const [affiliates, setAffiliates] = useState([]);
   const [config,     setConfig]     = useState(DEFAULT_CONF);
@@ -216,7 +226,7 @@ export default function Affiliates() {
   }
 
   async function handleDelete(id) {
-    if (!window.confirm('Eliminar este afiliado?')) return;
+    if (!window.confirm(t('affiliatesPage.confirmDelete'))) return;
     await deleteAffiliate(id);
     setAffiliates(prev => prev.filter(a => a.id !== id));
   }
@@ -249,7 +259,7 @@ export default function Affiliates() {
   if (loading) {
     return (
       <div>
-        <PageHeader title="Programa de Afiliados" subtitle="Gere afiliados e comissões por reservas referenciadas" />
+        <PageHeader title={t('affiliatesPage.title')} subtitle={t('affiliatesPage.subtitle')} />
         <div className="flex justify-center py-16"><LoadingSpinner size={32} /></div>
       </div>
     );
@@ -261,9 +271,9 @@ export default function Affiliates() {
   const totalPending  = affiliates.reduce((s, a) => s + Number(a.commission_pending || 0), 0);
 
   const TABS = [
-    { id: 'afiliados',  label: 'Afiliados'      },
-    { id: 'config',     label: 'Configuração'   },
-    { id: 'analytics',  label: 'Analytics'      },
+    { id: 'afiliados',  label: t('affiliatesPage.tabs.affiliates') },
+    { id: 'config',     label: t('affiliatesPage.tabs.config') },
+    { id: 'analytics',  label: t('affiliatesPage.tabs.analytics') },
   ];
 
   const topAff = [...affiliates].sort((a, b) => (b.bookings_count || 0) - (a.bookings_count || 0));
@@ -271,8 +281,8 @@ export default function Affiliates() {
   return (
     <div>
       <PageHeader
-        title="Programa de Afiliados"
-        subtitle="Gere afiliados e comissões por reservas referenciadas"
+        title={t('affiliatesPage.title')}
+        subtitle={t('affiliatesPage.subtitle')}
         actions={
           <div className="flex items-center gap-2">
             <button onClick={toggleProgramActive} aria-pressed={!!config.active}
@@ -282,9 +292,9 @@ export default function Affiliates() {
               {config.active
                 ? <ToggleRight size={16} strokeWidth={1.5} />
                 : <ToggleLeft  size={16} strokeWidth={1.5} />}
-              {config.active ? 'Programa activo' : 'Programa inactivo'}
+              {config.active ? t('affiliatesPage.programActive') : t('affiliatesPage.programInactive')}
             </button>
-            <Button icon={Plus} onClick={() => setModal({ _new: true })}>Novo afiliado</Button>
+            <Button icon={Plus} onClick={() => setModal({ _new: true })}>{t('affiliatesPage.newAffiliate')}</Button>
           </div>
         }
       />
@@ -292,10 +302,10 @@ export default function Affiliates() {
       {/* KPIs */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-5">
         {[
-          { label: 'Afiliados activos',   value: affiliates.filter(a => a.active !== false).length, color: 'text-n-900' },
-          { label: 'Reservas geradas',    value: totalBookings,                                       color: 'text-ocean-700' },
-          { label: 'Comissão paga',       value: `€${totalPaid.toFixed(0)}`,                         color: 'text-[var(--success)]' },
-          { label: 'Comissão pendente',   value: `€${totalPending.toFixed(0)}`,                      color: 'text-[var(--warning)]' },
+          { label: t('affiliatesPage.kpi.active'),   value: affiliates.filter(a => a.active !== false).length, color: 'text-n-900' },
+          { label: t('affiliatesPage.kpi.bookings'),    value: totalBookings,                                       color: 'text-ocean-700' },
+          { label: t('affiliatesPage.kpi.paid'),       value: eurosInteiros(totalPaid, lang),                         color: 'text-[var(--success)]' },
+          { label: t('affiliatesPage.kpi.pending'),   value: eurosInteiros(totalPending, lang),                      color: 'text-[var(--warning)]' },
         ].map(m => (
           <Card key={m.label} padding="px-4 py-3">
             <div className="flex items-center gap-3">
@@ -317,9 +327,9 @@ export default function Affiliates() {
       {activeTab === 'afiliados' && (
         affiliates.length === 0 ? (
           <Card padding="p-0">
-            <EmptyState icon={UserPlus} title="Sem afiliados registados"
-              description="Cria o primeiro afiliado e partilha o link de afiliado."
-              action={<Button icon={Plus} onClick={() => setModal({ _new: true })}>Novo afiliado</Button>} />
+            <EmptyState icon={UserPlus} title={t('affiliatesPage.empty.title')}
+              description={t('affiliatesPage.empty.description')}
+              action={<Button icon={Plus} onClick={() => setModal({ _new: true })}>{t('affiliatesPage.newAffiliate')}</Button>} />
           </Card>
         ) : (
           <div className="space-y-3">
@@ -335,24 +345,24 @@ export default function Affiliates() {
                       <div className="flex items-start justify-between gap-2 mb-2">
                         <div>
                           <p className="font-display font-semibold text-sm text-n-900">{a.name}</p>
-                          <p className="text-xs font-body text-n-500">{a.email} · <span className="font-mono">{a.code}</span> · {a.commission_pct || 0}% comissão</p>
+                          <p className="text-xs font-body text-n-500">{a.email} · <span className="font-mono">{a.code}</span> · {t('affiliatesPage.row.commission', { pct: a.commission_pct || 0 })}</p>
                         </div>
                         <div className="flex gap-1 shrink-0">
-                          <button onClick={() => setPayModal(a)} aria-label={`Registar pagamento ${a.name}`}
-                            className="p-1.5 rounded text-n-400 hover:text-ocean-700 hover:bg-ocean-50 transition-colors" title="Registar pagamento">
+                          <button onClick={() => setPayModal(a)} aria-label={t('affiliatesPage.row.registerPaymentFor', { name: a.name })}
+                            className="p-1.5 rounded text-n-400 hover:text-ocean-700 hover:bg-ocean-50 transition-colors" title={t('affiliatesPage.row.registerPayment')}>
                             <Euro size={13} strokeWidth={1.75} />
                           </button>
-                          <button onClick={() => handleToggle(a)} aria-label={`${a.active !== false ? 'Desactivar' : 'Activar'} ${a.name}`}
+                          <button onClick={() => handleToggle(a)} aria-label={t(a.active !== false ? 'affiliatesPage.row.deactivate' : 'affiliatesPage.row.activate', { name: a.name })}
                             className="p-1.5 rounded text-n-400 hover:text-n-700 hover:bg-n-100 transition-colors">
                             {a.active !== false
                               ? <ToggleRight size={13} strokeWidth={1.75} className="text-ocean-700" />
                               : <ToggleLeft size={13} strokeWidth={1.75} />}
                           </button>
-                          <button onClick={() => setModal(a)} aria-label={`Editar ${a.name}`}
+                          <button onClick={() => setModal(a)} aria-label={t('affiliatesPage.row.edit', { name: a.name })}
                             className="p-1.5 rounded text-n-400 hover:text-ocean-700 hover:bg-ocean-50 transition-colors">
                             <Pencil size={13} strokeWidth={1.75} />
                           </button>
-                          <button onClick={() => handleDelete(a.id)} aria-label={`Eliminar ${a.name}`}
+                          <button onClick={() => handleDelete(a.id)} aria-label={t('affiliatesPage.row.delete', { name: a.name })}
                             className="p-1.5 rounded text-n-400 hover:text-[var(--error)] hover:bg-[var(--error-light)] transition-colors">
                             <Trash2 size={13} strokeWidth={1.75} />
                           </button>
@@ -362,9 +372,9 @@ export default function Affiliates() {
                       {/* Stats */}
                       <div className="flex gap-4 text-center mb-3">
                         {[
-                          { label: 'Reservas', value: a.bookings_count || 0, color: 'text-ocean-700' },
-                          { label: 'Pago',     value: `€${Number(a.commission_paid || 0).toFixed(0)}`,    color: 'text-[var(--success)]' },
-                          { label: 'Pendente', value: `€${Number(a.commission_pending || 0).toFixed(0)}`, color: 'text-[var(--warning)]' },
+                          { label: t('affiliatesPage.row.bookings'), value: a.bookings_count || 0, color: 'text-ocean-700' },
+                          { label: t('affiliatesPage.row.paid'),     value: eurosInteiros(a.commission_paid, lang),    color: 'text-[var(--success)]' },
+                          { label: t('affiliatesPage.row.pending'), value: eurosInteiros(a.commission_pending, lang), color: 'text-[var(--warning)]' },
                         ].map(m => (
                           <div key={m.label}>
                             <p className={`font-display font-bold text-sm ${m.color}`}>{m.value}</p>
@@ -380,7 +390,7 @@ export default function Affiliates() {
                         </div>
                         <CopyBtn text={link} small />
                         <button
-                          onClick={() => window.open(`https://wa.me/?text=${encodeURIComponent(`Reserve o seu tour: ${link}`)}`, '_blank', 'noopener')}
+                          onClick={() => window.open(`https://wa.me/?text=${encodeURIComponent(getT('pt')('affiliatesPage.shareText', { link }))}`, '_blank', 'noopener')}
                           className="flex items-center gap-1 text-xs px-2 py-1 rounded-xs bg-[var(--success)] text-white font-body font-medium hover:opacity-90 transition-opacity">
                           <Share2 size={10} strokeWidth={1.75} />
                           WA
@@ -397,35 +407,33 @@ export default function Affiliates() {
 
       {activeTab === 'config' && (
         <Card padding="px-6 py-5">
-          <h3 className="font-display font-semibold text-sm text-n-700 mb-5">Configuração global do programa</h3>
+          <h3 className="font-display font-semibold text-sm text-n-700 mb-5">{t('affiliatesPage.config.title')}</h3>
           <div className="space-y-4 max-w-sm">
-            <Input label="Comissão global (%)" aria-label="Comissão global (%)" type="number" min="0" max="50" step="0.5"
+            <Input label={t('affiliatesPage.config.globalCommission')} aria-label={t('affiliatesPage.config.globalCommission')} type="number" min="0" max="50" step="0.5"
               value={config.commission_pct}
               onChange={e => setConfig(p => ({ ...p, commission_pct: Number(e.target.value) }))}
               className="font-mono"
-              hint="Percentagem padrão para novos afiliados. Pode ser sobreposta por afiliado."
+              hint={t('affiliatesPage.config.globalCommissionHint')}
             />
 
-            <Input label="Mínimo de reserva (€)" aria-label="Mínimo de reserva (€)" type="number" min="0" step="1"
+            <Input label={t('affiliatesPage.config.minBooking')} aria-label={t('affiliatesPage.config.minBooking')} type="number" min="0" step="1"
               value={config.min_booking_value}
               onChange={e => setConfig(p => ({ ...p, min_booking_value: Number(e.target.value) }))}
               className="font-mono"
-              hint="Valor mínimo da reserva para a comissão ser aplicada. 0 = sem mínimo."
+              hint={t('affiliatesPage.config.minBookingHint')}
             />
 
             <Button icon={confSaved ? Check : Save}
               loading={confSaving}
               className={confSaved ? '!bg-[var(--success)] !text-white hover:!opacity-90' : ''}
               onClick={handleSaveConfig}>
-              {confSaved ? 'Guardado' : 'Guardar configuração'}
+              {confSaved ? t('affiliatesPage.config.saved') : t('affiliatesPage.config.save')}
             </Button>
 
             <div className="pt-3 border-t border-n-100">
               <p className="text-xs font-body text-n-400">
-                <span className="font-semibold">Portal do afiliado:</span> Cada afiliado pode aceder ao seu dashboard em{' '}
-                <span className="font-mono">saldesk.cv/afiliado/[CODIGO]</span> com o email registado.
-                As reservas feitas através do link (<span className="font-mono">?ref=CODIGO</span>) sao atribuidas
-                automaticamente ao afiliado.
+                <span className="font-semibold">{t('affiliatesPage.config.portalLabel')}</span> {t('affiliatesPage.config.portalIntro')}{' '}
+                <span className="font-mono">saldesk.cv/afiliado/[CODIGO]</span> {t('affiliatesPage.config.portalMid')}<span className="font-mono">?ref=CODIGO</span>{t('affiliatesPage.config.portalEnd')}
               </p>
             </div>
           </div>
@@ -436,11 +444,11 @@ export default function Affiliates() {
         <div className="space-y-4">
           {topAff.length === 0 ? (
             <Card padding="p-0">
-              <EmptyState icon={BarChart2} title="Sem dados de afiliados ainda." />
+              <EmptyState icon={BarChart2} title={t('affiliatesPage.analytics.empty')} />
             </Card>
           ) : (
             <Card padding="px-5 py-5">
-              <h3 className="font-display font-semibold text-sm text-n-700 mb-4">Top afiliados por reservas</h3>
+              <h3 className="font-display font-semibold text-sm text-n-700 mb-4">{t('affiliatesPage.analytics.top')}</h3>
               <div className="space-y-3">
                 {topAff.map((a, i) => {
                   const maxBookings = topAff[0]?.bookings_count || 1;
@@ -454,7 +462,7 @@ export default function Affiliates() {
                         <div className="flex items-center justify-between mb-1">
                           <p className="text-xs font-body font-semibold text-n-800 truncate">{a.name}</p>
                           <span className="text-xs font-mono text-n-600 shrink-0 ml-2">
-                            {a.bookings_count || 0} reservas · €{Number(a.commission_paid || 0).toFixed(0)} pago
+                            {t('affiliatesPage.analytics.line', { n: a.bookings_count || 0, paid: eurosInteiros(a.commission_paid, lang) })}
                           </span>
                         </div>
                         <div className="h-1.5 bg-n-100 rounded-full overflow-hidden">

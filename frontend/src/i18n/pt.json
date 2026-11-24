@@ -3986,5 +3986,270 @@
       "noteLabel": "Nota:",
       "noteText": "Para activar as recomendações automáticas (email após tour confirmado, etc.), configura as automações correspondentes em"
     }
+  },
+  "affiliatesPage": {
+    "title": "Programa de Afiliados",
+    "subtitle": "Gere afiliados e comissões por reservas referenciadas",
+    "copied": "Copiado",
+    "copy": "Copiar",
+    "modal": {
+      "newTitle": "Novo afiliado",
+      "editTitle": "Editar afiliado",
+      "name": "Nome",
+      "email": "Email",
+      "commission": "Comissão (%)",
+      "code": "Código de afiliado",
+      "namePlaceholder": "Ex: João Silva",
+      "emailPlaceholder": "joao@exemplo.com",
+      "codePlaceholder": "Ex: JOA3K9",
+      "duplicateCode": "Já existe um afiliado com este código.",
+      "saveError": "Erro ao guardar afiliado.",
+      "create": "Criar afiliado"
+    },
+    "payment": {
+      "title": "Pagamento — {{name}}",
+      "totalPaid": "TOTAL PAGO",
+      "pending": "PENDENTE",
+      "amount": "Montante a pagar (€)",
+      "date": "Data do pagamento",
+      "note": "Nota",
+      "defaultNote": "Pagamento de comissão",
+      "invalidAmount": "Introduza um montante válido.",
+      "saveError": "Erro ao registar pagamento.",
+      "register": "Registar pagamento"
+    },
+    "programActive": "Programa activo",
+    "programInactive": "Programa inactivo",
+    "newAffiliate": "Novo afiliado",
+    "kpi": {
+      "active": "Afiliados activos",
+      "bookings": "Reservas geradas",
+      "paid": "Comissão paga",
+      "pending": "Comissão pendente"
+    },
+    "tabs": {
+      "affiliates": "Afiliados",
+      "config": "Configuração",
+      "analytics": "Analytics"
+    },
+    "empty": {
+      "title": "Sem afiliados registados",
+      "description": "Cria o primeiro afiliado e partilha o link de afiliado."
+    },
+    "row": {
+      "commission": "{{pct}}% comissão",
+      "registerPayment": "Registar pagamento",
+      "registerPaymentFor": "Registar pagamento {{name}}",
+      "deactivate": "Desactivar {{name}}",
+      "activate": "Activar {{name}}",
+      "edit": "Editar {{name}}",
+      "delete": "Eliminar {{name}}",
+      "bookings": "Reservas",
+      "paid": "Pago",
+      "pending": "Pendente"
+    },
+    "confirmDelete": "Eliminar este afiliado?",
+    "config": {
+      "title": "Configuração global do programa",
+      "globalCommission": "Comissão global (%)",
+      "globalCommissionHint": "Percentagem padrão para novos afiliados. Pode ser sobreposta por afiliado.",
+      "minBooking": "Mínimo de reserva (€)",
+      "minBookingHint": "Valor mínimo da reserva para a comissão ser aplicada. 0 = sem mínimo.",
+      "saved": "Guardado",
+      "save": "Guardar configuração",
+      "portalLabel": "Portal do afiliado:",
+      "portalIntro": "Cada afiliado pode aceder ao seu dashboard em",
+      "portalMid": "com o email registado. As reservas feitas através do link (",
+      "portalEnd": ") são atribuídas automaticamente ao afiliado."
+    },
+    "analytics": {
+      "empty": "Sem dados de afiliados ainda.",
+      "top": "Top afiliados por reservas",
+      "line": "{{n}} reservas · {{paid}} pago"
+    },
+    "shareText": "Reserve o seu tour: {{link}}"
+  },
+  "affiliatePortal": {
+    "header": "Portal do Afiliado",
+    "loginTitle": "Entrar no portal",
+    "codeLabel": "Código de afiliado:",
+    "emailLabel": "Email registado",
+    "emailPlaceholder": "o-seu@email.com",
+    "loginError": "Email ou código inválido. Verifique os dados e tente novamente.",
+    "signingIn": "A entrar...",
+    "signIn": "Entrar",
+    "notAffiliate": "Ainda não es afiliado? Contacta o operador para obter as tuas credenciais.",
+    "welcome": "Bem-vindo",
+    "commissionPerBooking": "{{pct}}% de comissão por reserva",
+    "stats": {
+      "bookings": "Reservas geradas",
+      "paid": "Comissão paga",
+      "pending": "Comissão pendente",
+      "total": "Total estimado"
+    },
+    "linkTitle": "O teu link de afiliado",
+    "copied": "Copiado",
+    "copyLink": "Copiar link",
+    "shareText": "Reserve o seu tour com desconto: {{link}}",
+    "paymentHistory": "Histórico de pagamentos",
+    "logout": "Sair"
+  },
+  "marketingPage": {
+    "title": "Marketing",
+    "subtitle": "Ferramentas de divulgação e planeador de conteudos",
+    "tabs": {
+      "qrcode": "QR Code",
+      "widget": "Widget",
+      "referrals": "Indicações",
+      "stats": "Estatísticas"
+    },
+    "copied": "Copiado",
+    "copy": "Copiar",
+    "qr": {
+      "for": "QR Code para",
+      "publicProfile": "Perfil público — link de reserva",
+      "color": "Cor",
+      "colorNamed": "Cor {{color}}",
+      "customColor": "Cor personalizada",
+      "size": "Tamanho — {{size}}px",
+      "sizeAria": "Tamanho do QR code",
+      "generate": "Gerar preview",
+      "preview": "Preview",
+      "alt": "QR Code"
+    },
+    "widget": {
+      "htmlCode": "Código HTML",
+      "code": "Código",
+      "preview": "Preview",
+      "previewTitle": "Pré-visualização do widget",
+      "failed": "Não foi possível gerar o código do widget. Recarrega a página e tenta de novo.",
+      "pasteHint": "Cole este código no HTML do seu website onde quer que o formulário apareça.",
+      "colorNote": "A cor do widget é a da sua página pública. Defina-a em",
+      "settingsLink": "Definições > Perfil Público",
+      "sisp": "O pagamento com cartão cabo-verdiano (SISP) abre em ecrã inteiro, fora do seu site, porque o banco não aceita ser aberto dentro de outra página. As restantes reservas e o PayPal ficam no seu site."
+    },
+    "referrals": {
+      "inviteTitle": "Indique outro operador",
+      "inviteText": "Partilhe o seu link — quando um negócio indicado por si aderir à SalDesk, fale connosco para receber a sua recompensa.",
+      "yourLink": "O seu link de indicação",
+      "sent": "Indicações enviadas",
+      "converted": "Convertidas",
+      "yours": "As suas indicações ({{n}})",
+      "none": "Ainda não indicou nenhum operador.",
+      "cols": {
+        "business": "Negócio",
+        "date": "Data",
+        "status": "Estado"
+      },
+      "status": {
+        "novo": "Novo",
+        "contactado": "Contactado",
+        "demo_agendada": "Demo agendada",
+        "proposta_enviada": "Proposta enviada",
+        "convertido": "Convertido",
+        "descartado": "Descartado"
+      }
+    },
+    "stats": {
+      "visits": "Visitas ao perfil",
+      "clicks": "Cliques no link",
+      "bookings": "Reservas via link",
+      "conversion": "Taxa de conversão",
+      "last30": "últimos 30 dias",
+      "clicksToBookings": "cliques → reservas",
+      "postsTitle": "Posts — {{month}}",
+      "total": "Total",
+      "published": "Publicados",
+      "scheduled": "Agendados",
+      "cancelled": "Cancelados",
+      "origin": "Origem das reservas",
+      "noSourcesA": "Dados de origem não disponíveis. Configure o endpoint",
+      "noSourcesB": "com campo",
+      "bookingLink": "Link de reserva directa",
+      "open": "Abrir",
+      "sources": {
+        "direct": "Directa",
+        "manual": "Manual",
+        "social": "Social"
+      }
+    },
+    "planner": {
+      "title": "Planeador de Social Media",
+      "newPost": "Novo post",
+      "prevMonth": "Mês anterior",
+      "nextMonth": "Mês seguinte",
+      "newPostOn": "Novo post em {{date}}",
+      "upcoming": "Próximos posts",
+      "noScheduled": "Sem posts agendados",
+      "editPost": "Editar post {{text}}",
+      "deletePost": "Eliminar post {{text}}",
+      "published": "Publicado",
+      "history": "Histórico ({{n}})",
+      "cols": {
+        "text": "Texto",
+        "platform": "Plataforma",
+        "date": "Data",
+        "status": "Estado"
+      }
+    },
+    "postStatus": {
+      "agendado": "Agendado",
+      "publicado": "Publicado",
+      "cancelado": "Cancelado"
+    },
+    "post": {
+      "newTitle": "Novo post",
+      "editTitle": "Editar post",
+      "template": "Template",
+      "templates": {
+        "tour_disponivel": "Tour disponível",
+        "ultimas_vagas": "Últimas vagas",
+        "avaliacao": "Avaliação de cliente",
+        "promocao": "Promoção especial",
+        "foto_do_dia": "Foto do dia"
+      },
+      "textPt": "Texto PT",
+      "textEn": "Texto EN",
+      "textPtPlaceholder": "Texto para publicar em português...",
+      "textEnPlaceholder": "Text to post in English...",
+      "photo": "Foto (URL)",
+      "photoPlaceholder": "https://exemplo.com/imagem.jpg",
+      "platform": "Plataforma",
+      "dateTime": "Data e hora",
+      "state": "Estado",
+      "schedule": "Agendar post",
+      "preview": "Preview",
+      "now": "Agora",
+      "pageFallback": "Página",
+      "profileFallback": "o_seu_perfil",
+      "captionPlaceholder": "A legenda aparecera aqui...",
+      "bodyPlaceholder": "O texto do post aparecera aqui..."
+    }
+  },
+  "integrationsPage": {
+    "subtitle": "Channel Manager — Viator e GetYourGuide",
+    "refresh": "Actualizar",
+    "viatorDescription": "Plataforma de experiências da TripAdvisor",
+    "getyourguideDescription": "Plataforma global de actividades e tours",
+    "productIds": "Product IDs (separados por virgula)",
+    "connected": "Ligado",
+    "disconnected": "Desligado",
+    "lastSync": "Último sync: {{date}}",
+    "sync": "Sincronizar",
+    "disconnect": "Desligar",
+    "configure": "Configurar",
+    "webhookUrls": "URLs de webhook para configurar nas plataformas:",
+    "logsTitle": "Logs de integração",
+    "events": "{{n}} evento(s)",
+    "cols": {
+      "date": "Data",
+      "channel": "Canal",
+      "event": "Evento",
+      "status": "Estado",
+      "ref": "Ref. OTA",
+      "error": "Erro"
+    },
+    "configureTitle": "Configurar {{name}}",
+    "connect": "Ligar"
   }
 }

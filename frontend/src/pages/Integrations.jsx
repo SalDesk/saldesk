@@ -11,11 +11,12 @@ import Badge from '../components/ui/Badge';
 import Table from '../components/ui/Table';
 import LoadingSpinner from '../components/shared/LoadingSpinner';
 import { mensagemErro } from '../utils/mensagemErro';
+import { localeDe, useLingua } from '../utils/formatoLingua';
 
 const CHANNEL_CONFIG = {
   viator: {
     name:        'Viator',
-    description: 'Plataforma de experiências da TripAdvisor',
+    descriptionKey: 'integrationsPage.viatorDescription',
     color:       'bg-ocean-700',
     fields: [
       { key: 'api_key',     label: 'API Key',      type: 'password', required: true },
@@ -24,11 +25,11 @@ const CHANNEL_CONFIG = {
   },
   getyourguide: {
     name:        'GetYourGuide',
-    description: 'Plataforma global de actividades e tours',
+    descriptionKey: 'integrationsPage.getyourguideDescription',
     color:       'bg-sand-600',
     fields: [
       { key: 'api_key',    label: 'API Key',     type: 'password', required: true },
-      { key: 'product_ids', label: 'Product IDs (separados por virgula)', type: 'text', required: false },
+      { key: 'product_ids', labelKey: 'integrationsPage.productIds', type: 'text', required: false },
     ],
   },
 };
@@ -44,12 +45,14 @@ function apiBaseUrl() {
   return (import.meta.env.VITE_API_URL || 'http://localhost:3001/api/v1').replace(/\/+$/, '');
 }
 
-function formatDate(d) {
+function formatDate(d, lang) {
   if (!d) return '—';
-  return new Date(d).toLocaleString('pt-PT', { dateStyle: 'short', timeStyle: 'short' });
+  return new Date(d).toLocaleString(localeDe(lang), { dateStyle: 'short', timeStyle: 'short' });
 }
 
 function ChannelCard({ channel, onConnect, onDisconnect, onSync, syncing }) {
+  const t = useT();
+  const lang = useLingua();
   const cfg = CHANNEL_CONFIG[channel.channel];
   const connected = channel.is_active && channel.configured !== false;
 
@@ -62,7 +65,7 @@ function ChannelCard({ channel, onConnect, onDisconnect, onSync, syncing }) {
           </div>
           <div>
             <p className="font-display font-semibold text-n-900">{cfg?.name}</p>
-            <p className="text-xs font-body text-n-500 mt-0.5">{cfg?.description}</p>
+            <p className="text-xs font-body text-n-500 mt-0.5">{cfg ? t(cfg.descriptionKey) : undefined}</p>
           </div>
         </div>
         <div className="flex items-center gap-1.5 shrink-0">
@@ -71,7 +74,7 @@ function ChannelCard({ channel, onConnect, onDisconnect, onSync, syncing }) {
             : <XCircle    size={16} strokeWidth={1.75} className="text-n-300" />
           }
           <span className={`text-xs font-body font-semibold ${connected ? 'text-[var(--success)]' : 'text-n-400'}`}>
-            {connected ? 'Ligado' : 'Desligado'}
+            {connected ? t('integrationsPage.connected') : t('integrationsPage.disconnected')}
           </span>
         </div>
       </div>
@@ -83,7 +86,7 @@ function ChannelCard({ channel, onConnect, onDisconnect, onSync, syncing }) {
           )}
           <p className="text-n-600 flex items-center gap-1">
             <Clock size={11} strokeWidth={1.75} className="text-n-400" />
-            Último sync: {formatDate(channel.last_sync_at)}
+            {t('integrationsPage.lastSync', { date: formatDate(channel.last_sync_at, lang) })}
           </p>
           {channel.sync_error && (
             <p className="text-[var(--error)] flex items-center gap-1">
@@ -102,19 +105,19 @@ function ChannelCard({ channel, onConnect, onDisconnect, onSync, syncing }) {
               onClick={() => onSync(channel.channel)}
               className="flex-1"
             >
-              Sincronizar
+              {t('integrationsPage.sync')}
             </Button>
             <Button
               size="sm" variant="ghost" icon={Link2Off}
               onClick={() => onDisconnect(channel.channel)}
               className="hover:text-[var(--error)] hover:bg-[var(--error-light)]"
             >
-              Desligar
+              {t('integrationsPage.disconnect')}
             </Button>
           </>
         ) : (
           <Button size="sm" icon={Link2} onClick={() => onConnect(channel.channel)} className="flex-1">
-            Configurar
+            {t('integrationsPage.configure')}
           </Button>
         )}
       </div>
@@ -122,17 +125,19 @@ function ChannelCard({ channel, onConnect, onDisconnect, onSync, syncing }) {
   );
 }
 
-const LOG_COLUMNS = [
-  { key: 'created_at', label: 'Data',      render: (r) => <span className="font-mono text-xs text-n-600">{formatDate(r.created_at)}</span>, width: '140px' },
-  { key: 'channel',    label: 'Canal',     render: (r) => <Badge variant="info">{r.channel}</Badge>,                                          width: '120px' },
-  { key: 'event_type', label: 'Evento',    render: (r) => <span className="text-xs font-body text-n-700">{r.event_type}</span> },
-  { key: 'status',     label: 'Estado',    render: (r) => <Badge variant={STATUS_BADGE[r.status] || 'default'}>{r.status}</Badge>,             width: '110px' },
-  { key: 'external_ref', label: 'Ref. OTA', render: (r) => <span className="font-mono text-xs text-n-500">{r.external_ref || '—'}</span>,      width: '130px' },
-  { key: 'error_message', label: 'Erro',   render: (r) => r.error_message ? <span className="text-xs text-[var(--error)] truncate max-w-[200px] block">{r.error_message}</span> : <span className="text-n-300">—</span> },
+/* colunas dos logs; precisam do t e da lingua do painel */
+const colunasLogs = (t, lang) => [
+  { key: 'created_at', label: t('integrationsPage.cols.date'),      render: (r) => <span className="font-mono text-xs text-n-600">{formatDate(r.created_at, lang)}</span>, width: '140px' },
+  { key: 'channel',    label: t('integrationsPage.cols.channel'),     render: (r) => <Badge variant="info">{r.channel}</Badge>,                                          width: '120px' },
+  { key: 'event_type', label: t('integrationsPage.cols.event'),    render: (r) => <span className="text-xs font-body text-n-700">{r.event_type}</span> },
+  { key: 'status',     label: t('integrationsPage.cols.status'),    render: (r) => <Badge variant={STATUS_BADGE[r.status] || 'default'}>{r.status}</Badge>,             width: '110px' },
+  { key: 'external_ref', label: t('integrationsPage.cols.ref'), render: (r) => <span className="font-mono text-xs text-n-500">{r.external_ref || '—'}</span>,      width: '130px' },
+  { key: 'error_message', label: t('integrationsPage.cols.error'),   render: (r) => r.error_message ? <span className="text-xs text-[var(--error)] truncate max-w-[200px] block">{r.error_message}</span> : <span className="text-n-300">—</span> },
 ];
 
 export default function Integrations() {
   const t = useT();
+  const lang = useLingua();
   const [channels, setChannels] = useState([]);
   const [logs, setLogs] = useState([]);
   const [logsTotal, setLogsTotal] = useState(0);
@@ -214,10 +219,10 @@ export default function Integrations() {
     <div>
       <PageHeader
         title={t('nav.integrations')}
-        subtitle="Channel Manager — Viator e GetYourGuide"
+        subtitle={t('integrationsPage.subtitle')}
         actions={
           <Button variant="secondary" icon={RefreshCw} onClick={carregar} loading={loading}>
-            Actualizar
+            {t('integrationsPage.refresh')}
           </Button>
         }
       />
@@ -243,7 +248,7 @@ export default function Integrations() {
           {/* Info sobre webhooks */}
           <div className="bg-ocean-50 border border-ocean-100 rounded-sm px-4 py-3">
             <p className="text-xs font-body text-ocean-700">
-              <span className="font-semibold">URLs de webhook para configurar nas plataformas:</span>
+              <span className="font-semibold">{t('integrationsPage.webhookUrls')}</span>
             </p>
             <div className="mt-2 space-y-1">
               {['viator', 'getyourguide'].map((ch) => (
@@ -259,13 +264,13 @@ export default function Integrations() {
           <Card
             header={
               <div className="flex items-center justify-between">
-                <h3 className="font-display font-semibold text-sm text-n-700">Logs de integração</h3>
-                <span className="text-xs font-body text-n-400">{logsTotal} evento(s)</span>
+                <h3 className="font-display font-semibold text-sm text-n-700">{t('integrationsPage.logsTitle')}</h3>
+                <span className="text-xs font-body text-n-400">{t('integrationsPage.events', { n: logsTotal })}</span>
               </div>
             }
             padding="p-0"
           >
-            <Table columns={LOG_COLUMNS} rows={logs} loading={false} />
+            <Table columns={colunasLogs(t, lang)} rows={logs} loading={false} />
           </Card>
         </div>
       )}
@@ -274,24 +279,24 @@ export default function Integrations() {
       <Modal
         open={!!connectModal}
         onClose={() => setConnectModal(null)}
-        title={`Configurar ${cfg?.name || ''}`}
+        title={t('integrationsPage.configureTitle', { name: cfg?.name || '' })}
         size="sm"
         footer={
           <>
             <Button variant="secondary" onClick={() => setConnectModal(null)}>{t('common.cancel')}</Button>
             <Button form="connect-form" type="submit" loading={connectLoading} icon={Link2}>
-              Ligar
+              {t('integrationsPage.connect')}
             </Button>
           </>
         }
       >
         <form id="connect-form" onSubmit={handleConnectSubmit} className="space-y-4">
-          <p className="text-xs font-body text-n-500">{cfg?.description}</p>
+          <p className="text-xs font-body text-n-500">{cfg ? t(cfg.descriptionKey) : undefined}</p>
           {cfg?.fields.map((f) => (
             <Input
               key={f.key}
-              label={f.label}
-              aria-label={f.label}
+              label={f.labelKey ? t(f.labelKey) : f.label}
+              aria-label={f.labelKey ? t(f.labelKey) : f.label}
               type={f.type}
               value={connectForm[f.key] || ''}
               onChange={(e) => setConnectForm({ ...connectForm, [f.key]: e.target.value })}

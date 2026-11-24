@@ -2726,5 +2726,270 @@
       "noteLabel": "Hinweis:",
       "noteText": "Um automatische Empfehlungen zu aktivieren (E-Mail nach bestätigter Tour usw.), richten Sie die entsprechenden Automatisierungen ein unter"
     }
+  },
+  "affiliatesPage": {
+    "title": "Partnerprogramm",
+    "subtitle": "Verwalten Sie Partner und Provisionen für vermittelte Buchungen",
+    "copied": "Kopiert",
+    "copy": "Kopieren",
+    "modal": {
+      "newTitle": "Neuer Partner",
+      "editTitle": "Partner bearbeiten",
+      "name": "Name",
+      "email": "E-Mail",
+      "commission": "Provision (%)",
+      "code": "Partnercode",
+      "namePlaceholder": "z. B. Max Mustermann",
+      "emailPlaceholder": "max@beispiel.de",
+      "codePlaceholder": "z. B. MAX3K9",
+      "duplicateCode": "Es gibt bereits einen Partner mit diesem Code.",
+      "saveError": "Der Partner konnte nicht gespeichert werden.",
+      "create": "Partner anlegen"
+    },
+    "payment": {
+      "title": "Zahlung — {{name}}",
+      "totalPaid": "GESAMT BEZAHLT",
+      "pending": "AUSSTEHEND",
+      "amount": "Zu zahlender Betrag (€)",
+      "date": "Zahlungsdatum",
+      "note": "Notiz",
+      "defaultNote": "Provisionszahlung",
+      "invalidAmount": "Geben Sie einen gültigen Betrag ein.",
+      "saveError": "Die Zahlung konnte nicht erfasst werden.",
+      "register": "Zahlung erfassen"
+    },
+    "programActive": "Programm aktiv",
+    "programInactive": "Programm inaktiv",
+    "newAffiliate": "Neuer Partner",
+    "kpi": {
+      "active": "Aktive Partner",
+      "bookings": "Generierte Buchungen",
+      "paid": "Bezahlte Provision",
+      "pending": "Ausstehende Provision"
+    },
+    "tabs": {
+      "affiliates": "Partner",
+      "config": "Konfiguration",
+      "analytics": "Analytics"
+    },
+    "empty": {
+      "title": "Keine Partner registriert",
+      "description": "Legen Sie den ersten Partner an und teilen Sie den Partnerlink."
+    },
+    "row": {
+      "commission": "{{pct}}% Provision",
+      "registerPayment": "Zahlung erfassen",
+      "registerPaymentFor": "Zahlung erfassen {{name}}",
+      "deactivate": "{{name}} deaktivieren",
+      "activate": "{{name}} aktivieren",
+      "edit": "{{name}} bearbeiten",
+      "delete": "{{name}} löschen",
+      "bookings": "Buchungen",
+      "paid": "Bezahlt",
+      "pending": "Ausstehend"
+    },
+    "confirmDelete": "Diesen Partner löschen?",
+    "config": {
+      "title": "Globale Programmeinstellungen",
+      "globalCommission": "Globale Provision (%)",
+      "globalCommissionHint": "Standardprozentsatz für neue Partner. Kann pro Partner überschrieben werden.",
+      "minBooking": "Mindestbuchungswert (€)",
+      "minBookingHint": "Mindestwert der Buchung, ab dem die Provision gilt. 0 = kein Minimum.",
+      "saved": "Gespeichert",
+      "save": "Konfiguration speichern",
+      "portalLabel": "Partnerportal:",
+      "portalIntro": "Jeder Partner kann sein Dashboard öffnen unter",
+      "portalMid": "mit der registrierten E-Mail. Buchungen über den Link (",
+      "portalEnd": ") werden dem Partner automatisch zugeordnet."
+    },
+    "analytics": {
+      "empty": "Noch keine Partnerdaten.",
+      "top": "Top-Partner nach Buchungen",
+      "line": "{{n}} Buchungen · {{paid}} bezahlt"
+    },
+    "shareText": "Buchen Sie Ihre Tour: {{link}}"
+  },
+  "affiliatePortal": {
+    "header": "Partnerportal",
+    "loginTitle": "Im Portal anmelden",
+    "codeLabel": "Partnercode:",
+    "emailLabel": "Registrierte E-Mail",
+    "emailPlaceholder": "ihre@email.de",
+    "loginError": "E-Mail oder Code ungültig. Prüfen Sie Ihre Angaben und versuchen Sie es erneut.",
+    "signingIn": "Anmeldung läuft...",
+    "signIn": "Anmelden",
+    "notAffiliate": "Noch kein Partner? Wende dich an den Anbieter, um deine Zugangsdaten zu erhalten.",
+    "welcome": "Willkommen",
+    "commissionPerBooking": "{{pct}}% Provision pro Buchung",
+    "stats": {
+      "bookings": "Generierte Buchungen",
+      "paid": "Bezahlte Provision",
+      "pending": "Ausstehende Provision",
+      "total": "Geschätzte Summe"
+    },
+    "linkTitle": "Dein Partnerlink",
+    "copied": "Kopiert",
+    "copyLink": "Link kopieren",
+    "shareText": "Buchen Sie Ihre Tour mit Rabatt: {{link}}",
+    "paymentHistory": "Zahlungsverlauf",
+    "logout": "Abmelden"
+  },
+  "marketingPage": {
+    "title": "Marketing",
+    "subtitle": "Werkzeuge für Werbung und Content-Planer",
+    "tabs": {
+      "qrcode": "QR-Code",
+      "widget": "Widget",
+      "referrals": "Empfehlungen",
+      "stats": "Statistiken"
+    },
+    "copied": "Kopiert",
+    "copy": "Kopieren",
+    "qr": {
+      "for": "QR-Code für",
+      "publicProfile": "Öffentliches Profil — Buchungslink",
+      "color": "Farbe",
+      "colorNamed": "Farbe {{color}}",
+      "customColor": "Eigene Farbe",
+      "size": "Größe — {{size}}px",
+      "sizeAria": "Größe des QR-Codes",
+      "generate": "Vorschau erstellen",
+      "preview": "Vorschau",
+      "alt": "QR-Code"
+    },
+    "widget": {
+      "htmlCode": "HTML-Code",
+      "code": "Code",
+      "preview": "Vorschau",
+      "previewTitle": "Widget-Vorschau",
+      "failed": "Der Widget-Code konnte nicht erstellt werden. Lade die Seite neu und versuche es erneut.",
+      "pasteHint": "Fügen Sie diesen Code dort in das HTML Ihrer Website ein, wo das Formular erscheinen soll.",
+      "colorNote": "Die Widget-Farbe ist die Ihrer öffentlichen Seite. Legen Sie sie fest unter",
+      "settingsLink": "Einstellungen > Öffentliches Profil",
+      "sisp": "Die Zahlung mit kap-verdischer Karte (SISP) öffnet sich im Vollbild außerhalb Ihrer Website, weil die Bank das Öffnen innerhalb einer anderen Seite nicht erlaubt. Alle anderen Buchungen und PayPal bleiben auf Ihrer Website."
+    },
+    "referrals": {
+      "inviteTitle": "Empfehlen Sie einen anderen Anbieter",
+      "inviteText": "Teilen Sie Ihren Link — wenn ein von Ihnen empfohlenes Unternehmen SalDesk beitritt, melden Sie sich bei uns, um Ihre Prämie zu erhalten.",
+      "yourLink": "Ihr Empfehlungslink",
+      "sent": "Gesendete Empfehlungen",
+      "converted": "Umgewandelt",
+      "yours": "Ihre Empfehlungen ({{n}})",
+      "none": "Sie haben noch keinen Anbieter empfohlen.",
+      "cols": {
+        "business": "Unternehmen",
+        "date": "Datum",
+        "status": "Status"
+      },
+      "status": {
+        "novo": "Neu",
+        "contactado": "Kontaktiert",
+        "demo_agendada": "Demo geplant",
+        "proposta_enviada": "Angebot gesendet",
+        "convertido": "Umgewandelt",
+        "descartado": "Verworfen"
+      }
+    },
+    "stats": {
+      "visits": "Profilbesuche",
+      "clicks": "Klicks auf den Link",
+      "bookings": "Buchungen über den Link",
+      "conversion": "Konversionsrate",
+      "last30": "letzte 30 Tage",
+      "clicksToBookings": "Klicks → Buchungen",
+      "postsTitle": "Beiträge — {{month}}",
+      "total": "Gesamt",
+      "published": "Veröffentlicht",
+      "scheduled": "Geplant",
+      "cancelled": "Storniert",
+      "origin": "Herkunft der Buchungen",
+      "noSourcesA": "Herkunftsdaten nicht verfügbar. Konfigurieren Sie den Endpunkt",
+      "noSourcesB": "mit dem Feld",
+      "bookingLink": "Link zur Direktbuchung",
+      "open": "Öffnen",
+      "sources": {
+        "direct": "Direkt",
+        "manual": "Manuell",
+        "social": "Social"
+      }
+    },
+    "planner": {
+      "title": "Social-Media-Planer",
+      "newPost": "Neuer Beitrag",
+      "prevMonth": "Vorheriger Monat",
+      "nextMonth": "Nächster Monat",
+      "newPostOn": "Neuer Beitrag am {{date}}",
+      "upcoming": "Nächste Beiträge",
+      "noScheduled": "Keine geplanten Beiträge",
+      "editPost": "Beitrag bearbeiten {{text}}",
+      "deletePost": "Beitrag löschen {{text}}",
+      "published": "Veröffentlicht",
+      "history": "Verlauf ({{n}})",
+      "cols": {
+        "text": "Text",
+        "platform": "Plattform",
+        "date": "Datum",
+        "status": "Status"
+      }
+    },
+    "postStatus": {
+      "agendado": "Geplant",
+      "publicado": "Veröffentlicht",
+      "cancelado": "Storniert"
+    },
+    "post": {
+      "newTitle": "Neuer Beitrag",
+      "editTitle": "Beitrag bearbeiten",
+      "template": "Vorlage",
+      "templates": {
+        "tour_disponivel": "Tour verfügbar",
+        "ultimas_vagas": "Letzte Plätze",
+        "avaliacao": "Kundenbewertung",
+        "promocao": "Sonderangebot",
+        "foto_do_dia": "Foto des Tages"
+      },
+      "textPt": "Text PT",
+      "textEn": "Text EN",
+      "textPtPlaceholder": "Text zur Veröffentlichung auf Portugiesisch...",
+      "textEnPlaceholder": "Text zur Veröffentlichung auf Englisch...",
+      "photo": "Foto (URL)",
+      "photoPlaceholder": "https://beispiel.de/bild.jpg",
+      "platform": "Plattform",
+      "dateTime": "Datum und Uhrzeit",
+      "state": "Status",
+      "schedule": "Beitrag planen",
+      "preview": "Vorschau",
+      "now": "Jetzt",
+      "pageFallback": "Seite",
+      "profileFallback": "ihr_profil",
+      "captionPlaceholder": "Die Bildunterschrift erscheint hier...",
+      "bodyPlaceholder": "Der Beitragstext erscheint hier..."
+    }
+  },
+  "integrationsPage": {
+    "subtitle": "Channel Manager — Viator und GetYourGuide",
+    "refresh": "Aktualisieren",
+    "viatorDescription": "Erlebnisplattform von TripAdvisor",
+    "getyourguideDescription": "Globale Plattform für Aktivitäten und Touren",
+    "productIds": "Product IDs (durch Komma getrennt)",
+    "connected": "Verbunden",
+    "disconnected": "Getrennt",
+    "lastSync": "Letzte Synchronisierung: {{date}}",
+    "sync": "Synchronisieren",
+    "disconnect": "Trennen",
+    "configure": "Einrichten",
+    "webhookUrls": "Webhook-URLs zur Einrichtung auf den Plattformen:",
+    "logsTitle": "Integrationsprotokolle",
+    "events": "{{n}} Ereignis(se)",
+    "cols": {
+      "date": "Datum",
+      "channel": "Kanal",
+      "event": "Ereignis",
+      "status": "Status",
+      "ref": "OTA-Ref.",
+      "error": "Fehler"
+    },
+    "configureTitle": "{{name}} einrichten",
+    "connect": "Verbinden"
   }
 }

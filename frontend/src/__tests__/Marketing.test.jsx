@@ -4,6 +4,8 @@ import Marketing from '../pages/Marketing';
 import useAuthStore from '../store/authStore';
 import { getBookingLink, getMarketingStats, getWidgetCode, getQrCode, getReferrals } from '../services/marketingService';
 import { listUnits } from '../services/unitsService';
+import useUiStore from '../store/uiStore';
+import { portuguesNoEcra, chavesCruas } from './helpers/portuguesNoEcra';
 
 vi.mock('../services/marketingService', () => ({
   getBookingLink: vi.fn(), getMarketingStats: vi.fn(), getWidgetCode: vi.fn(), getQrCode: vi.fn(), getReferrals: vi.fn(),
@@ -634,5 +636,115 @@ describe('Marketing: design system (Indicações e Estatísticas)', () => {
     await abrir('Estatísticas', 'Origem das reservas');
     html += classes(container);
     semCoresForaDosTokens(html);
+  });
+});
+
+/* ───────────────────────── painel em ingles ───────────────────────── */
+
+describe('Marketing em ingles', () => {
+  const MESES_EN = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+  /* dados dos testes e texto que vem do servidor */
+  const DADOS = ['Buggy Tour', 'Kite Aula', 'Hotel A', 'Rent B', 'Café C', 'Sal Aventura', 'Reservar em Sal Aventura'];
+  beforeEach(() => { useUiStore.setState({ lang: 'en' }); });
+  afterEach(() => { cleanup(); useUiStore.setState({ lang: 'pt' }); });
+
+  async function montarEn() {
+    const r = render(<Marketing />);
+    await screen.findByAltText('QR code');
+    return r;
+  }
+
+  it('o_separador_do_QR_code_segue_a_lingua_do_painel', async () => {
+    await montarEn();
+    expect(screen.getByText('Promotion tools and content planner')).toBeInTheDocument();
+    ['QR code', 'Widget', 'Referrals', 'Statistics'].forEach(r => expect(separador(r)).toBeInTheDocument());
+    expect([...campo('QR code for', 'select').options].map(o => o.textContent)).toEqual(['Public profile — booking link', 'Buggy Tour', 'Kite Aula']);
+    expect(screen.getAllByText('Colour').length).toBeGreaterThan(0);
+    expect(screen.getByRole('button', { name: 'Colour #0D5470' })).toBeInTheDocument();
+    expect(screen.getByLabelText('Custom colour')).toBeInTheDocument();
+    expect(screen.getByText('Size — 300px')).toBeInTheDocument();
+    expect(screen.getByLabelText('QR code size')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Generate preview' })).toBeInTheDocument();
+    expect(screen.getByText('Preview')).toBeInTheDocument();
+    expect(portuguesNoEcra(DADOS)).toEqual([]);
+    expect(chavesCruas(['marketingPage', 'nav'])).toEqual([]);
+  });
+
+  it('o_QR_continua_a_pedir_os_mesmos_parametros_gravados', async () => {
+    await montarEn();
+    expect(ultimaChamadaQr()).toEqual({ size: '300', color: '0D5470' });
+    fireEvent.change(campo('QR code for', 'select'), { target: { value: 'u2' } });
+    await waitFor(() => expect(ultimaChamadaQr()).toEqual({ size: '300', color: '0D5470', unit_id: 'u2' }));
+  });
+
+  it('o_widget_traduz_so_as_explicacoes_e_o_codigo_fica_igual', async () => {
+    await montarEn();
+    await abrir('Widget', 'HTML code');
+    expect(document.querySelector('pre').textContent).toBe(WIDGET_SERVIDOR);
+    expect(screen.getByRole('button', { name: 'Code' })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByText('Paste this code into your website HTML where you want the form to appear.')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Settings > Public profile' })).toHaveAttribute('href', '/definicoes?tab=perfil');
+    expect(document.body.textContent).toContain('The widget colour is the one from your public page. Set it in Settings > Public profile.');
+    expect(screen.getByText(/^Payment with a Cape Verdean card \(SISP\)/)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Preview' }));
+    expect(screen.getByTitle('Widget preview')).toBeInTheDocument();
+    expect(portuguesNoEcra(DADOS)).toEqual([]);
+  });
+
+  it('sem_codigo_do_widget_mostra_o_aviso_em_ingles', async () => {
+    getWidgetCode.mockRejectedValue(new Error('x'));
+    await montarEn();
+    await abrir('Widget', 'HTML code');
+    expect(screen.getByText('Could not generate the widget code. Reload the page and try again.')).toBeInTheDocument();
+  });
+
+  it('as_indicacoes_em_ingles_com_estados_gravados_e_datas_do_ingles', async () => {
+    await montarEn();
+    await abrir('Referrals', 'Your referral link');
+    expect(screen.getByText('Refer another operator')).toBeInTheDocument();
+    expect(valorKpi('Referrals sent')).toBe('3');
+    expect(screen.getAllByText('Converted')[0].previousSibling.textContent).toBe('1');
+    expect(screen.getByText('Your referrals (3)')).toBeInTheDocument();
+    expect(screen.getAllByRole('columnheader').map(h => h.textContent)).toEqual(['Business', 'Date', 'Status']);
+    const linhas = screen.getAllByRole('row').slice(1).map(r => [...r.querySelectorAll('td')].map(td => td.textContent));
+    expect(linhas).toEqual([['Hotel A', '01/11/2026', 'Converted'], ['Rent B', '—', 'Contacted'], ['Café C', '—', 'xyz']]);
+    expect(portuguesNoEcra(DADOS)).toEqual([]);
+    cleanup();
+    getReferrals.mockResolvedValue({ referral_link: 'x', total: 0, convertidos: 0, referred: [] });
+    await montarEn();
+    await abrir('Referrals', 'You have not referred any operator yet.');
+  });
+
+  it('as_estatisticas_em_ingles_com_o_mes_e_as_origens', async () => {
+    const d = new Date();
+    const mes = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+    localStorage.setItem(STORAGE_KEY, JSON.stringify([
+      { id: 'a', scheduled_at: `${mes}-10T10:00`, status: 'agendado', text_pt: 'A' },
+      { id: 'b', scheduled_at: `${mes}-11T10:00`, status: 'publicado', text_pt: 'B' },
+      { id: 'c', scheduled_at: `${mes}-12T10:00`, status: 'cancelado', text_pt: 'C' },
+    ]));
+    const { container } = await montarEn();
+    await abrir('Statistics', 'Profile visits');
+    expect(valorKpi('Profile visits')).toBe('120');
+    expect(valorKpi('Link clicks')).toBe('45');
+    expect(valorKpi('Bookings via link')).toBe('9');
+    expect(valorKpi('Conversion rate')).toBe('20%');
+    expect(screen.getAllByText('last 30 days')).toHaveLength(3);
+    expect(screen.getByText('clicks → bookings')).toBeInTheDocument();
+    expect(screen.getByText(`Posts — ${MESES_EN[d.getMonth()]}`)).toBeInTheDocument();
+    expect(valorKpi('Total')).toBe('3');
+    expect(valorKpi('Published')).toBe('1');
+    expect(valorKpi('Scheduled')).toBe('1');
+    expect(valorKpi('Cancelled')).toBe('1');
+    expect(screen.getByText('Booking sources')).toBeInTheDocument();
+    expect([...container.querySelectorAll('span.w-20')].map(s => s.textContent)).toEqual(['Direct', 'Booking', 'outro', 'Viator']);
+    expect(screen.getByText('Direct booking link')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Open' })).toBeInTheDocument();
+    expect(portuguesNoEcra(DADOS)).toEqual([]);
+    cleanup();
+    getMarketingStats.mockResolvedValue({ profile_views: 1 });
+    await montarEn();
+    await abrir('Statistics', 'Booking sources');
+    expect(document.body.textContent).toContain('Source data not available. Configure the endpoint /marketing/stats with the field sources.');
   });
 });

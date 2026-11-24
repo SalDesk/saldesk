@@ -181,10 +181,23 @@ export const FICHEIROS_CONVERTIDOS = [
   'pages/Packages.jsx',
   'pages/Groups.jsx',
   'pages/Partners.jsx',
+  /* Fase 3, tarefa 4: afiliados, portal do afiliado, marketing e integracoes */
+  'pages/Affiliates.jsx',
+  'pages/AffiliatePortal.jsx',
+  'pages/Marketing.jsx',
+  'pages/marketing/shared.jsx',
+  'pages/marketing/PostModal.jsx',
+  'pages/marketing/SocialPlanner.jsx',
+  'pages/marketing/StatsTab.jsx',
+  'pages/marketing/WidgetTab.jsx',
+  'pages/marketing/ReferralsTab.jsx',
+  'pages/marketing/QrCodeTab.jsx',
+  'pages/Integrations.jsx',
 ];
 
 /* Textos escritos ao cliente: ficam em portugues em qualquer lingua do painel */
 const MOTIVO_TEXTO_CLIENTE = 'mensagem enviada ao cliente, fica em portugues (nao-objectivo da especificacao)';
+const MOTIVO_POST = 'texto de post que o operador publica nas redes sociais, fica em portugues (nao-objectivo da especificacao: conteudo do operador)';
 const MOTIVO_EXEMPLO = 'dados de exemplo do preview da mensagem ao cliente, que e escrita em portugues';
 
 /* Valores portugueses que ficam no codigo de proposito, por ficheiro, com o motivo. */
@@ -255,6 +268,13 @@ export const PERMITIDOS = {
   ],
   'components/automations/AutomationForm.jsx': [
     { valor: 'Olá {{nome}},\\n\\nA sua reserva em {{unidade}} está confirmada.\\n\\nCheck-in: {{check_in}}\\nCheck-out: {{check_out}}\\n\\nObrigado!', motivo: MOTIVO_TEXTO_CLIENTE },
+  ],
+  'pages/marketing/PostModal.jsx': [
+    { valor: 'Novo tour disponível! Reserve já o seu lugar e viva uma experiência única em Cabo Verde.', motivo: MOTIVO_POST },
+    { valor: 'Últimas vagas para este tour! Não perca a oportunidade de explorar a ilha connosco.', motivo: MOTIVO_POST },
+    { valor: 'Os nossos clientes falam por nós. Obrigado pela sua confiança e avaliações incríveis!', motivo: MOTIVO_POST },
+    { valor: 'Promoção especial disponível! Reserve agora e aproveite as nossas tarifas exclusivas.', motivo: MOTIVO_POST },
+    { valor: 'Mais um dia incrível em Cabo Verde. Venha conhecer a nossa ilha e as nossas experiências!', motivo: MOTIVO_POST },
   ],
 };
 

@@ -2,6 +2,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import SocialPlanner from '../pages/marketing/SocialPlanner';
 import PostModal from '../pages/marketing/PostModal';
+import useUiStore from '../store/uiStore';
+import { portuguesNoEcra, chavesCruas } from './helpers/portuguesNoEcra';
 
 /* O Planeador esta escondido na pagina (sem separador): estes testes renderizam os modulos directamente. */
 
@@ -393,5 +395,102 @@ describe('Planeador: dados em falta', () => {
     expect(linha.querySelector('td').textContent).toBe('');
     fireEvent.click(within(linha).getAllByRole('button')[0]);
     expect(h.onEdit).toHaveBeenCalledWith(p);
+  });
+});
+
+/* ───────────────────────── painel em ingles ───────────────────────── */
+
+describe('Planeador em ingles', () => {
+  const DADOS = ['Texto do post', 'Legenda PT', 'Text EN', 'Sal Aventura'];
+  beforeEach(() => { useUiStore.setState({ lang: 'en' }); });
+  afterEach(() => { cleanup(); useUiStore.setState({ lang: 'pt' }); });
+
+  it('o_calendario_e_o_historico_em_ingles_com_os_estados_gravados_intactos', () => {
+    const { container, h } = planner(TODOS);
+    expect(screen.getByText('Social media planner')).toBeInTheDocument();
+    expect(screen.getByText('November 2026')).toBeInTheDocument();
+    ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].forEach(d => expect(screen.getByText(d)).toBeInTheDocument());
+    expect(screen.getByRole('button', { name: 'New post' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Previous month' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Next month' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: `New post on ${HOJE}` })).toBeInTheDocument();
+    expect(screen.getByText('Upcoming posts')).toBeInTheDocument();
+    expect(screen.getByText('History (4)')).toBeInTheDocument();
+    expect(screen.getAllByRole('columnheader').map(c => c.textContent)).toEqual(['Text', 'Platform', 'Date', 'Status', '']);
+    const tabela = within(screen.getByRole('table'));
+    expect(tabela.getAllByText('Scheduled').length).toBeGreaterThan(0);
+    expect(tabela.getByText('Published')).toBeInTheDocument();
+    expect(tabela.getByText('Cancelled')).toBeInTheDocument();
+    expect(screen.getAllByText('15/11/2026').length).toBeGreaterThan(0);
+    expect(screen.getAllByRole('button', { name: 'Edit post Texto do post a' }).length).toBeGreaterThan(0);
+    fireEvent.click(screen.getAllByRole('button', { name: 'Delete post Texto do post a' })[0]);
+    expect(h.onDelete).toHaveBeenCalledWith('a');
+    expect(container.querySelectorAll('span.w-2.h-2.rounded-full').length).toBeGreaterThan(0);
+    expect(portuguesNoEcra(DADOS)).toEqual([]);
+    expect(chavesCruas(['marketingPage', 'calendar'])).toEqual([]);
+  });
+
+  it('o_botao_Published_do_dia_chama_onMarkPublished', () => {
+    const { h } = planner([post('a', `${HOJE}T08:00`)]);
+    fireEvent.click(screen.getByRole('button', { name: 'Published' }));
+    expect(h.onMarkPublished).toHaveBeenCalledWith('a');
+  });
+
+  it('um_post_novo_em_ingles_grava_o_estado_e_a_rede_com_os_valores_de_sempre', () => {
+    const { h } = modal({ _new: true, scheduled_at: '2026-11-20T09:00' });
+    expect(screen.getByText('New post')).toBeInTheDocument();
+    expect(screen.getByText('Template')).toBeInTheDocument();
+    ['Tour available', 'Last spots', 'Customer review', 'Special offer', 'Photo of the day'].forEach(n => expect(screen.getByRole('button', { name: n })).toBeInTheDocument());
+    expect(campo('PT text', 'textarea')).toHaveAttribute('placeholder', 'Text to post in Portuguese...');
+    expect(campo('Photo (URL)')).toHaveAttribute('placeholder', 'https://example.com/image.jpg');
+    expect(screen.getByText('The caption will appear here...')).toBeInTheDocument();
+    fireEvent.change(campo('PT text', 'textarea'), { target: { value: 'Olá' } });
+    fireEvent.change(campo('Date and time'), { target: { value: '2026-11-20T09:00' } });
+    const redes = [...campo('Platform', 'select').options].map(o => [o.value, o.textContent]);
+    expect(redes).toEqual([['instagram', 'Instagram'], ['facebook', 'Facebook'], ['ambos', 'Instagram + Facebook']]);
+    fireEvent.change(campo('Platform', 'select'), { target: { value: 'ambos' } });
+    fireEvent.submit(screen.getByRole('button', { name: 'Schedule post' }).closest('form'));
+    expect(h.onSave).toHaveBeenCalledWith(expect.objectContaining({ text_pt: 'Olá', platform: 'ambos', status: 'agendado', scheduled_at: '2026-11-20T09:00' }));
+  });
+
+  it('editar_em_ingles_escolhe_o_estado_pelo_rotulo_e_grava_o_valor_gravado', () => {
+    const { h } = modal(EXISTENTE);
+    expect(screen.getByText('Edit post')).toBeInTheDocument();
+    const estados = [...campo('Status', 'select').options].map(o => [o.value, o.textContent]);
+    expect(estados).toEqual([['agendado', 'Scheduled'], ['publicado', 'Published'], ['cancelado', 'Cancelled']]);
+    const select = campo('Status', 'select');
+    fireEvent.change(select, { target: { value: estados.find(([, rotulo]) => rotulo === 'Cancelled')[0] } });
+    fireEvent.submit(screen.getByRole('button', { name: 'Save' }).closest('form'));
+    expect(h.onSave).toHaveBeenCalledWith({ ...EXISTENTE, status: 'cancelado', id: 'p1' });
+    expect(portuguesNoEcra(DADOS)).toEqual([]);
+  });
+
+  it('o_template_aplica_os_mesmos_textos_a_publicar_com_o_painel_em_ingles', () => {
+    const { h } = modal({ _new: true });
+    fireEvent.click(screen.getByRole('button', { name: 'Tour available' }));
+    expect(campo('PT text', 'textarea')).toHaveValue('Novo tour disponível! Reserve já o seu lugar e viva uma experiência única em Cabo Verde.');
+    expect(campo('EN text', 'textarea')).toHaveValue('New tour available! Book your spot now and live a unique experience in Cabo Verde.');
+    fireEvent.change(campo('Date and time'), { target: { value: '2026-11-20T09:00' } });
+    fireEvent.submit(screen.getByRole('button', { name: 'Schedule post' }).closest('form'));
+    expect(h.onSave).toHaveBeenCalledWith(expect.objectContaining({
+      text_pt: 'Novo tour disponível! Reserve já o seu lugar e viva uma experiência única em Cabo Verde.',
+      text_en: 'New tour available! Book your spot now and live a unique experience in Cabo Verde.',
+    }));
+  });
+
+  it('o_preview_do_Facebook_em_ingles', () => {
+    render(<PostModal post={null} onSave={vi.fn()} onClose={vi.fn()} />);
+    expect(screen.getAllByText('your_profile')).toHaveLength(2);
+    fireEvent.click(screen.getByRole('button', { name: 'Facebook' }));
+    expect(screen.getByText('Page')).toBeInTheDocument();
+    expect(screen.getByText('Now')).toBeInTheDocument();
+    expect(screen.getByText('The post text will appear here...')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Cancel' })).toBeInTheDocument();
+  });
+
+  it('as_datas_do_planeador_seguem_o_formato_da_lingua_do_painel', () => {
+    useUiStore.setState({ lang: 'de' });
+    planner([post('a', `${HOJE}T08:00`)]);
+    expect(screen.getAllByText('15.11.2026').length).toBeGreaterThan(0);
   });
 });
