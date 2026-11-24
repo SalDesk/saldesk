@@ -275,3 +275,27 @@ function formularioNovoEn() {
   escrever(campoPorEtiqueta(/^Maximum capacity/), '12');
   return onSave;
 }
+
+describe('TourForm: exemplos das opções e ofertas', () => {
+  const abrir = () => {
+    renderForm(undefined);
+    fireEvent.click(screen.getAllByRole('button').find(b => /^(Add option|Adicionar opção)$/.test(b.textContent.trim())));
+    fireEvent.click(screen.getAllByRole('button').find(b => /^(Add offer|Adicionar oferta)$/.test(b.textContent.trim())));
+  };
+
+  it('em inglês os exemplos do nome e do texto da oferta são ingleses', () => {
+    useUiStore.setState({ lang: 'en' });
+    abrir();
+    expect(screen.getByLabelText('Option 1 name (PT)')).toHaveAttribute('placeholder', 'E.g. Double buggy');
+    expect(screen.getByLabelText('Offer 1 text (PT)')).toHaveAttribute('placeholder', 'Special offer (-25%)');
+    expect(portuguesNoEcra()).toEqual([]);
+  });
+
+  it('em português os exemplos são os de sempre', () => {
+    abrir();
+    expect(screen.getByLabelText('Nome PT da opção 1')).toHaveAttribute('placeholder', 'Ex: Buggy duplo');
+    expect(screen.getByLabelText('Nome EN da opção 1')).toHaveAttribute('placeholder', 'Ex: Double buggy');
+    expect(screen.getByLabelText('Texto PT da oferta 1')).toHaveAttribute('placeholder', 'Oferta especial (-25%)');
+    expect(screen.getByLabelText('Texto EN da oferta 1')).toHaveAttribute('placeholder', 'Special offer (-25%)');
+  });
+});

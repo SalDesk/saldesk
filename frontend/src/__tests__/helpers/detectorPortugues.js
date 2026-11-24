@@ -27,6 +27,7 @@ export const PALAVRAS_PORTUGUESAS = [
   'Para', 'Por', 'Com', 'Uma', 'Em', 'Da', 'Ao', 'Ou', 'Na', 'Que', 'De', 'Os',
   'Carregar', 'Remover', 'Criar', 'Voltar', 'Confirmar', 'Enviar', 'Bloquear', 'Ativo', 'Activo', 'Ativa',
   'Activa', 'Nenhum', 'Nenhuma', 'Pessoas', 'pessoas', 'Pago', 'pago',
+  'Oferta', 'Ofertas', 'duplo',
 ];
 
 /* Letras latinas acentuadas (sem o x e o / de multiplicar e dividir). */

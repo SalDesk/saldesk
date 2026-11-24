@@ -1366,6 +1366,12 @@
       "lngPh": "E.g. -22.9184",
       "coordsNote": "Used in the public SalDesk Conect catalogue. In Google Maps: right-click the spot → copy coordinates."
     },
+    "options": {
+      "namePtPh": "E.g. Double buggy",
+      "nameEnPh": "E.g. Double buggy",
+      "offerPtPh": "Special offer (-25%)",
+      "offerEnPh": "Special offer (-25%)"
+    },
     "meeting": {
       "title": "Meeting point location",
       "hint": "Click the map to mark the meeting point. You can drag the marker.",
