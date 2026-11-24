@@ -1,5 +1,8 @@
 import { useMemo, useRef } from 'react';
 import reservationCoversDay from './reservationCoversDay';
+import { useT } from '../../i18n';
+import { useLingua } from '../../utils/formatoLingua';
+import { diaInicial, rotuloEstado } from './rotulosCalendario';
 
 const STATUS_COLORS = {
   confirmed:   'bg-ocean-700 text-white',
@@ -8,8 +11,6 @@ const STATUS_COLORS = {
   checked_out: 'bg-n-300 text-n-700',
   cancelled:   'bg-n-200 text-n-400 line-through',
 };
-
-const WEEK_DAYS = ['D','S','T','Q','Q','S','S'];
 
 function getDaysInMonth(year, month) {
   const total = new Date(year, month + 1, 0).getDate();
@@ -36,6 +37,8 @@ export default function CalendarView({
   onDrop, draggingId,
   filterUnit,
 }) {
+  const t            = useT();
+  const lang         = useLingua();
   const days         = useMemo(() => getDaysInMonth(year, month), [year, month]);
   const todayStr     = toDateStr(new Date());
   const dragDataRef  = useRef(null);
@@ -65,9 +68,14 @@ export default function CalendarView({
   if (!visibleUnits.length) {
     return (
       <div className="flex items-center justify-center py-20 text-n-400">
-        <p className="font-body text-sm">Sem unidades activas. Crie unidades primeiro.</p>
+        <p className="font-body text-sm">{t('calendar.noUnitsCreate')}</p>
       </div>
     );
+  }
+
+  /* Em pt a dica mostra o estado gravado, como sempre; nas outras linguas o rotulo traduzido */
+  function rotuloEstadoTitulo(estado) {
+    return lang === 'pt' ? estado : rotuloEstado(estado, t);
   }
 
   function handleDragStart(e, reservation) {
@@ -101,7 +109,7 @@ export default function CalendarView({
         <thead>
           <tr className="bg-n-50">
             <th className="sticky left-0 z-10 bg-n-50 border-b border-r border-n-200 px-3 py-2.5 text-left text-n-500 font-body font-semibold w-20 min-w-[80px]">
-              Dia
+              {t('calendar.views.day')}
             </th>
             {visibleUnits.map((u) => (
               <th key={u.id} className="border-b border-r border-n-200 px-3 py-2.5 text-left min-w-[130px]">
@@ -123,7 +131,7 @@ export default function CalendarView({
                   <div className="flex items-center gap-1.5">
                     {isToday && <span className="w-1.5 h-1.5 rounded-full bg-ocean-700 shrink-0" />}
                     <span className="font-display font-semibold">{day.getDate()}</span>
-                    <span className="text-n-300">{WEEK_DAYS[day.getDay()]}</span>
+                    <span className="text-n-300">{diaInicial(day.getDay(), t)}</span>
                   </div>
                 </td>
 
@@ -153,8 +161,8 @@ export default function CalendarView({
                               className={`relative rounded-xs px-2 py-0.5 truncate font-body font-medium cursor-grab active:cursor-grabbing select-none transition-opacity ${STATUS_COLORS[reservation.status] || 'bg-n-100 text-n-600'} ${reservation.id === draggingId ? 'opacity-30' : ''} ${isFromSeller(reservation) ? 'border-l-[3px] border-l-sand-500' : ''}`}
                               title={
                                 isFromSeller(reservation)
-                                  ? `${reservation.customer_name} · ${reservation.status} · Vendido por ${getSellerName(reservation)}`
-                                  : `${reservation.customer_name} · ${reservation.status}`
+                                  ? `${reservation.customer_name} · ${rotuloEstadoTitulo(reservation.status)} · ${t('calendar.soldBy', { name: getSellerName(reservation) })}`
+                                  : `${reservation.customer_name} · ${rotuloEstadoTitulo(reservation.status)}`
                               }
                             >
                               {isFromSeller(reservation) && (
@@ -166,7 +174,7 @@ export default function CalendarView({
                         </div>
                       ) : isBlocked ? (
                         <div className="rounded-xs px-2 py-0.5 bg-n-200 text-n-400 font-body">
-                          Bloq.
+                          {t('calendar.blockedShort')}
                         </div>
                       ) : (
                         <div className="h-5" />

@@ -132,6 +132,10 @@ export const FICHEIROS_CONVERTIDOS = [
   'components/reservations/ReservationDetailModal.jsx',
   'components/reservations/StatusBadge.jsx',
   'components/assignments/AssignCompositeModal.jsx',
+  /* Fase 2, tarefa 2: calendario */
+  'pages/Calendar.jsx',
+  'components/calendar/CalendarView.jsx',
+  'components/calendar/rotulosCalendario.js',
 ];
 
 /* Valores portugueses que ficam no codigo de proposito, por ficheiro, com o motivo. */

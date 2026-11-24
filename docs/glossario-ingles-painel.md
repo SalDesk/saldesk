@@ -60,6 +60,8 @@ estes, em singular e plural, em todos os ecras; nao alternar com sinonimos. O po
 | Lista de espera | Waiting list | Reserva de restaurante sem mesa disponivel. |
 | Turno (restaurante) | Shift | Almoco (Lunch) ou jantar (Dinner) de uma reserva de restaurante. |
 | Pax | Guests | Numero de pessoas de uma reserva de tour (coluna "Guests"); o gravado nao muda. |
+| Vagas | Spots | Lugares livres de uma unidade num dia do calendario ("3/6 spots", "3 spots left"). |
+| Bloquear datas | Block dates | Fechar uma unidade a reservas num intervalo do calendario ("Blocked", "Unblock"). |
 
 ## Regras
 

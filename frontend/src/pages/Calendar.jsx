@@ -19,9 +19,11 @@ import CalendarView from '../components/calendar/CalendarView';
 import reservationCoversDay from '../components/calendar/reservationCoversDay';
 import LoadingSpinner from '../components/shared/LoadingSpinner';
 import { mensagemErro } from '../utils/mensagemErro';
-
-const MESES_PT = ['Janeiro','Fevereiro','Marco','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
-const DIAS_ABR  = ['Dom','Seg','Ter','Qua','Qui','Sex','Sab'];
+import { useLingua } from '../utils/formatoLingua';
+import { rotuloMes } from '../utils/rotuloMes';
+import {
+  nomeMes, diaAbreviado, rotuloEstado, dataVista, eurosVista,
+} from '../components/calendar/rotulosCalendario';
 
 const STATUS_COLORS = {
   confirmed:   'bg-ocean-700 text-white',
@@ -32,19 +34,14 @@ const STATUS_COLORS = {
   no_show:     'bg-n-200 text-n-400',
 };
 
-const STATUS_LABELS = {
-  confirmed: 'Confirmada', pending: 'Pendente',
-  checked_in: 'Check-in', checked_out: 'Check-out',
-  cancelled: 'Cancelada', no_show: 'No Show',
-};
-
+/* Legenda: chave do rotulo (estado gravado ou chave calendar.*) e a cor */
 const LEGEND = [
-  { label: 'Confirmada', cls: 'bg-ocean-700' },
-  { label: 'Pendente',   cls: 'bg-sand-400' },
-  { label: 'Check-in',   cls: 'bg-[var(--success)]' },
-  { label: 'Check-out',  cls: 'bg-n-300' },
-  { label: 'Bloqueado',  cls: 'bg-n-200 border border-n-300' },
-  { label: 'Vendido por colaborador', cls: 'bg-white border-l-[3px] border-l-sand-500' },
+  { chave: 'reservations.status.confirmed',   cls: 'bg-ocean-700' },
+  { chave: 'reservations.status.pending',     cls: 'bg-sand-400' },
+  { chave: 'reservations.status.checked_in',  cls: 'bg-[var(--success)]' },
+  { chave: 'reservations.status.checked_out', cls: 'bg-n-300' },
+  { chave: 'calendar.blocked',                cls: 'bg-n-200 border border-n-300' },
+  { chave: 'calendar.legendSoldByStaff',      cls: 'bg-white border-l-[3px] border-l-sand-500' },
 ];
 
 function toDateStr(d) {
@@ -70,6 +67,7 @@ function getWeekDays(startStr) {
 
 export default function Calendar() {
   const t    = useT();
+  const lang = useLingua();
   const hoje = new Date();
 
   const [view,        setView]       = useState('month');
@@ -147,19 +145,19 @@ export default function Calendar() {
   }
 
   function getNavLabel() {
-    if (view === 'month') return `${MESES_PT[mes]} ${ano}`;
+    if (view === 'month') return t('calendar.navMonth', { month: nomeMes(mes, t), year: ano });
     if (view === 'week') {
       const endStr = addDays(weekStr, 6);
       const sd = new Date(weekStr + 'T00:00:00Z');
       const ed = new Date(endStr   + 'T00:00:00Z');
-      const sm = MESES_PT[sd.getUTCMonth()].slice(0, 3);
-      const em = MESES_PT[ed.getUTCMonth()].slice(0, 3);
+      const sm = rotuloMes(sd.getUTCMonth(), t);
+      const em = rotuloMes(ed.getUTCMonth(), t);
       return sd.getUTCMonth() === ed.getUTCMonth()
-        ? `${sd.getUTCDate()} - ${ed.getUTCDate()} ${em} ${ed.getUTCFullYear()}`
-        : `${sd.getUTCDate()} ${sm} - ${ed.getUTCDate()} ${em} ${ed.getUTCFullYear()}`;
+        ? t('calendar.navWeekSameMonth', { start: sd.getUTCDate(), end: ed.getUTCDate(), month: em, year: ed.getUTCFullYear() })
+        : t('calendar.navWeekCross', { start: sd.getUTCDate(), startMonth: sm, end: ed.getUTCDate(), endMonth: em, year: ed.getUTCFullYear() });
     }
     const d = new Date(dayStr + 'T00:00:00Z');
-    return `${d.getUTCDate()} ${MESES_PT[d.getUTCMonth()]} ${d.getUTCFullYear()}`;
+    return t('calendar.navDay', { day: d.getUTCDate(), month: nomeMes(d.getUTCMonth(), t), year: d.getUTCFullYear() });
   }
 
   function handleDayClick(dateStr, unit, reservation) {
@@ -312,7 +310,7 @@ export default function Calendar() {
           <thead>
             <tr className="bg-n-50">
               <th className="sticky left-0 z-10 bg-n-50 border-b border-r border-n-200 px-3 py-2.5 text-left text-n-500 font-body font-semibold min-w-[112px]">
-                Unidade
+                {t('reservations.unit')}
               </th>
               {weekDays.map(d => {
                 const isToday  = d === todayStr;
@@ -321,7 +319,7 @@ export default function Calendar() {
                 return (
                   <th key={d} className={`border-b border-r border-n-200 px-2 py-2 text-center min-w-[80px] ${isToday ? 'bg-ocean-50' : ''}`}>
                     <div className={`font-display font-semibold ${isToday ? 'text-ocean-700' : 'text-n-700'}`}>{dayNum}</div>
-                    <div className="font-body text-n-400 font-normal">{DIAS_ABR[dayOfWk]}</div>
+                    <div className="font-body text-n-400 font-normal">{diaAbreviado(dayOfWk, t)}</div>
                   </th>
                 );
               })}
@@ -368,7 +366,7 @@ export default function Calendar() {
                               }}
                               onClick={e => { e.stopPropagation(); setSelectedEvent(res); }}
                               className={`rounded-xs px-2 py-0.5 truncate font-body font-medium cursor-grab active:cursor-grabbing select-none transition-opacity ${STATUS_COLORS[res.status] || 'bg-n-100 text-n-600'} ${res.id === draggingId ? 'opacity-30' : ''}`}
-                              title={`${res.customer_name} · ${STATUS_LABELS[res.status]}`}
+                              title={`${res.customer_name} · ${rotuloEstado(res.status, t)}`}
                             >
                               {res.check_in === d ? res.customer_name.split(' ')[0] : '·'}
                             </div>
@@ -377,13 +375,13 @@ export default function Calendar() {
                             const slots = getSlotsForCell(unit, d);
                             return slots && lista.some(r => r.check_in === d) ? (
                               <div className={`text-[9px] font-mono text-center ${slots.available === 0 ? 'text-error' : 'text-n-400'}`}>
-                                {slots.available}/{slots.total} vagas
+                                {t('calendar.spots', { available: slots.available, total: slots.total })}
                               </div>
                             ) : null;
                           })()}
                         </div>
                       ) : isBlocked ? (
-                        <div className="rounded-xs px-2 py-0.5 bg-n-200 text-n-400 font-body text-center">Bloq.</div>
+                        <div className="rounded-xs px-2 py-0.5 bg-n-200 text-n-400 font-body text-center">{t('calendar.blockedShort')}</div>
                       ) : (
                         <>
                           <div className="h-5" />
@@ -405,7 +403,7 @@ export default function Calendar() {
             {!visibleUnits.length && (
               <tr>
                 <td colSpan={8} className="py-12 text-center text-n-400 text-sm font-body">
-                  Sem unidades activas.
+                  {t('calendar.noUnits')}
                 </td>
               </tr>
             )}
@@ -418,12 +416,12 @@ export default function Calendar() {
   /* ---- DAY VIEW ---- */
   function renderDayView() {
     const d     = new Date(dayStr + 'T00:00:00Z');
-    const label = `${d.getUTCDate()} de ${MESES_PT[d.getUTCMonth()]} de ${d.getUTCFullYear()}`;
+    const label = t('calendar.dayHeading', { day: d.getUTCDate(), month: nomeMes(d.getUTCMonth(), t), year: d.getUTCFullYear() });
     return (
       <div className="space-y-3">
         <p className="text-sm font-body font-semibold text-n-700">{label}</p>
         {!visibleUnits.length && (
-          <div className="text-center py-12 text-n-400 text-sm font-body">Sem unidades activas.</div>
+          <div className="text-center py-12 text-n-400 text-sm font-body">{t('calendar.noUnits')}</div>
         )}
         {visibleUnits.map(unit => {
           const lista     = getResForCell(unit.id, dayStr);
@@ -438,10 +436,10 @@ export default function Calendar() {
                 {!lista.length && !isBlocked && (
                   <div className="flex items-center gap-1">
                     <Button variant="secondary" size="sm" icon={Plus} onClick={() => abrirNovaReserva({ date: dayStr, unit })}>
-                      Nova reserva
+                      {t('calendar.newBooking')}
                     </Button>
                     <Button variant="ghost" size="sm" icon={Lock} onClick={() => abrirBloqueio({ date: dayStr, unit })}>
-                      Bloquear
+                      {t('calendar.block')}
                     </Button>
                   </div>
                 )}
@@ -457,11 +455,11 @@ export default function Calendar() {
                     >
                       <p className="font-display font-semibold text-sm">{res.customer_name}</p>
                       <p className="text-xs opacity-80 mt-0.5">
-                        {STATUS_LABELS[res.status]} · {res.guests || 1} pax
-                        {res.total_price ? ` · €${Number(res.total_price).toLocaleString('pt-PT')}` : ''}
+                        {rotuloEstado(res.status, t)} · {t('reservations.paxCount', { n: res.guests || 1 })}
+                        {res.total_price ? ` · ${eurosVista(res.total_price, lang)}` : ''}
                         {(() => {
                           const slots = getSlotsForCell(unit, dayStr);
-                          return slots ? ` · ${slots.available} vagas restantes` : '';
+                          return slots ? ` · ${t('calendar.spotsLeft', { n: slots.available })}` : '';
                         })()}
                       </p>
                     </button>
@@ -469,7 +467,7 @@ export default function Calendar() {
                 </div>
               ) : isBlocked ? (
                 <div className="flex items-center justify-between bg-n-100 rounded-sm px-3 py-2">
-                  <span className="text-xs font-body text-n-500">Bloqueado</span>
+                  <span className="text-xs font-body text-n-500">{t('calendar.blocked')}</span>
                   <button
                     className="text-xs font-body text-error hover:underline"
                     onClick={() => {
@@ -479,11 +477,11 @@ export default function Calendar() {
                       if (b) handleUnblock(b.id);
                     }}
                   >
-                    Desbloquear
+                    {t('calendar.unblock')}
                   </button>
                 </div>
               ) : (
-                <div className="text-center py-4 text-n-400 text-xs font-body">Disponível</div>
+                <div className="text-center py-4 text-n-400 text-xs font-body">{t('calendar.available')}</div>
               )}
             </div>
           );
@@ -498,15 +496,15 @@ export default function Calendar() {
     <div>
       <PageHeader
         title={t('nav.calendar')}
-        subtitle="Gerir disponibilidade e reservas"
+        subtitle={t('calendar.subtitle')}
         actions={
           <div className="flex items-center gap-2 flex-wrap">
             {/* View toggle */}
             <div className="flex rounded-sm border border-n-300 overflow-hidden bg-white">
               {[
-                { id: 'month', label: 'Mês' },
-                { id: 'week',  label: 'Semana' },
-                { id: 'day',   label: 'Dia' },
+                { id: 'month', label: t('calendar.views.month') },
+                { id: 'week',  label: t('calendar.views.week') },
+                { id: 'day',   label: t('calendar.views.day') },
               ].map(v => (
                 <button
                   key={v.id}
@@ -536,8 +534,8 @@ export default function Calendar() {
         <div className="flex flex-wrap items-end gap-3 mb-4">
           {/* Unit filter */}
           {(dados.units || []).length > 1 && (
-            <Select label="Por unidade" value={filterUnit} onChange={e => setFilterUnit(e.target.value)} className="w-48">
-              <option value="">Todas as unidades</option>
+            <Select label={t('calendar.byUnit')} value={filterUnit} onChange={e => setFilterUnit(e.target.value)} className="w-48">
+              <option value="">{t('calendar.allUnits')}</option>
               {(dados.units || []).map(u => (
                 <option key={u.id} value={u.id}>{u.name}</option>
               ))}
@@ -546,8 +544,8 @@ export default function Calendar() {
 
           {/* Guide filter */}
           {guides.length > 0 && (
-            <Select label="Por guia" value={filterGuide} onChange={e => setFilterGuide(e.target.value)} className="w-48">
-              <option value="">Todos os guias</option>
+            <Select label={t('calendar.byGuide')} value={filterGuide} onChange={e => setFilterGuide(e.target.value)} className="w-48">
+              <option value="">{t('calendar.allGuides')}</option>
               {guides.map(g => (
                 <option key={g.id} value={g.id}>{g.name}</option>
               ))}
@@ -559,9 +557,9 @@ export default function Calendar() {
       {/* Legend */}
       <div className="flex flex-wrap gap-x-4 gap-y-2 mb-4 px-3 py-2 bg-white border border-n-200 rounded-sm">
         {LEGEND.map(l => (
-          <div key={l.label} className="flex items-center gap-1.5">
+          <div key={l.chave} className="flex items-center gap-1.5">
             <span className={`w-3 h-3 rounded-xs ${l.cls}`} />
-            <span className="text-xs font-body text-n-600">{l.label}</span>
+            <span className="text-xs font-body text-n-600">{t(l.chave)}</span>
           </div>
         ))}
       </div>
@@ -584,15 +582,15 @@ export default function Calendar() {
       ) : view === 'week' ? renderWeekView() : renderDayView()}
 
       {/* Dia livre: criar reserva ou bloquear datas */}
-      <Modal open={!!escolha} onClose={() => setEscolha(null)} title="Dia livre" size="sm">
+      <Modal open={!!escolha} onClose={() => setEscolha(null)} title={t('calendar.freeDay')} size="sm">
         {escolha && (
           <div className="space-y-4">
             <p className="text-sm font-body text-n-600">
-              O que quer fazer em {escolha.unit.name}, {escolha.date}?
+              {t('calendar.freeDayAsk', { unit: escolha.unit.name, date: dataVista(escolha.date, lang) })}
             </p>
             <div className="flex flex-col gap-2">
-              <Button icon={Plus} onClick={() => abrirNovaReserva(escolha)}>Criar reserva</Button>
-              <Button variant="secondary" icon={Lock} onClick={() => abrirBloqueio(escolha)}>Bloquear datas</Button>
+              <Button icon={Plus} onClick={() => abrirNovaReserva(escolha)}>{t('calendar.createBooking')}</Button>
+              <Button variant="secondary" icon={Lock} onClick={() => abrirBloqueio(escolha)}>{t('calendar.blockDates')}</Button>
             </div>
           </div>
         )}
@@ -622,21 +620,21 @@ export default function Calendar() {
       <Modal
         open={!!blockModal}
         onClose={() => setBlockModal(null)}
-        title="Bloquear datas"
+        title={t('calendar.blockDates')}
         size="sm"
         footer={
           <>
-            <Button variant="secondary" onClick={() => setBlockModal(null)}>Cancelar</Button>
-            <Button loading={blockLoading} onClick={handleBlock} icon={Lock}>Bloquear</Button>
+            <Button variant="secondary" onClick={() => setBlockModal(null)}>{t('common.cancel')}</Button>
+            <Button loading={blockLoading} onClick={handleBlock} icon={Lock}>{t('calendar.block')}</Button>
           </>
         }
       >
         <div className="space-y-3">
           <p className="text-sm font-body font-semibold text-n-800">{blockModal?.unit?.name}</p>
           <div className="grid grid-cols-2 gap-3">
-            <Input label="Data início" type="date" value={blockModal?.date || ''} readOnly />
+            <Input label={t('calendar.startDate')} type="date" value={blockModal?.date || ''} readOnly />
             <Input
-              label="Data fim"
+              label={t('calendar.endDate')}
               type="date"
               value={blockEnd}
               onChange={e => setBlockEnd(e.target.value)}
@@ -644,10 +642,10 @@ export default function Calendar() {
             />
           </div>
           <Input
-            label="Motivo (opcional)"
+            label={t('calendar.reason')}
             value={blockReason}
             onChange={e => setBlockReason(e.target.value)}
-            placeholder="Manutenção, uso próprio..."
+            placeholder={t('calendar.reasonPlaceholder')}
           />
         </div>
       </Modal>
@@ -656,7 +654,7 @@ export default function Calendar() {
       <Modal
         open={!!selectedEvent}
         onClose={() => setSelectedEvent(null)}
-        title="Detalhe da reserva"
+        title={t('calendar.detailTitle')}
         size="sm"
       >
         {selectedEvent && (
@@ -664,36 +662,36 @@ export default function Calendar() {
             <div className="flex items-start justify-between gap-3">
               <p className="font-display font-bold text-lg text-n-900 leading-tight">{selectedEvent.customer_name}</p>
               <span className={`shrink-0 text-xs font-body font-semibold px-2 py-0.5 rounded-xs ${STATUS_COLORS[selectedEvent.status] || 'bg-n-100 text-n-600'}`}>
-                {STATUS_LABELS[selectedEvent.status] || selectedEvent.status}
+                {rotuloEstado(selectedEvent.status, t)}
               </span>
             </div>
 
             <div className="grid grid-cols-2 gap-2 text-sm font-body">
               <div className="bg-n-50 rounded-sm p-3">
-                <p className="text-xs text-n-400 mb-0.5">Check-in</p>
-                <p className="font-semibold text-n-800">{selectedEvent.check_in}</p>
+                <p className="text-xs text-n-400 mb-0.5">{t('reservations.checkIn')}</p>
+                <p className="font-semibold text-n-800">{dataVista(selectedEvent.check_in, lang)}</p>
               </div>
               <div className="bg-n-50 rounded-sm p-3">
-                <p className="text-xs text-n-400 mb-0.5">Check-out</p>
-                <p className="font-semibold text-n-800">{selectedEvent.check_out}</p>
+                <p className="text-xs text-n-400 mb-0.5">{t('reservations.checkOut')}</p>
+                <p className="font-semibold text-n-800">{dataVista(selectedEvent.check_out, lang)}</p>
               </div>
               {selectedUnit && (
                 <div className="bg-n-50 rounded-sm p-3">
-                  <p className="text-xs text-n-400 mb-0.5">Unidade</p>
+                  <p className="text-xs text-n-400 mb-0.5">{t('reservations.unit')}</p>
                   <p className="font-semibold text-n-800">{selectedUnit.name}</p>
                 </div>
               )}
               <div className="bg-n-50 rounded-sm p-3">
-                <p className="text-xs text-n-400 mb-0.5">Hóspedes</p>
+                <p className="text-xs text-n-400 mb-0.5">{t('reservations.guests')}</p>
                 <p className="font-semibold text-n-800">{selectedEvent.guests || 1}</p>
               </div>
               {selectedEvent.total_price && (
                 <div className="bg-n-50 rounded-sm p-3 col-span-2">
-                  <p className="text-xs text-n-400 mb-0.5">Total</p>
+                  <p className="text-xs text-n-400 mb-0.5">{t('calendar.total')}</p>
                   <p className="font-semibold text-n-800">
-                    €{Number(selectedEvent.total_price).toLocaleString('pt-PT')}
+                    {eurosVista(selectedEvent.total_price, lang)}
                     {selectedEvent.payment_status === 'paid' && (
-                      <span className="ml-2 text-xs font-normal text-[var(--success)]">Pago</span>
+                      <span className="ml-2 text-xs font-normal text-[var(--success)]">{t('reservations.paid')}</span>
                     )}
                   </p>
                 </div>
@@ -704,29 +702,29 @@ export default function Calendar() {
               {selectedEvent.status === 'pending' && (
                 <Button size="sm" icon={CheckCircle} loading={actionLoading}
                   onClick={() => handleStatusChange(selectedEvent.id, 'confirmed')}>
-                  Confirmar
+                  {t('common.confirm')}
                 </Button>
               )}
               {selectedEvent.status === 'confirmed' && (
                 <Button size="sm" icon={LogIn} loading={actionLoading}
                   onClick={() => handleStatusChange(selectedEvent.id, 'checked_in')}>
-                  Check-in
+                  {t('reservations.checkIn')}
                 </Button>
               )}
               {selectedEvent.status === 'checked_in' && (
                 <Button size="sm" icon={LogOut} loading={actionLoading}
                   onClick={() => handleStatusChange(selectedEvent.id, 'checked_out')}>
-                  Check-out
+                  {t('reservations.checkOut')}
                 </Button>
               )}
               {!['cancelled', 'checked_out', 'no_show'].includes(selectedEvent.status) && (
                 <Button size="sm" variant="danger" icon={XCircle} loading={actionLoading}
                   onClick={() => handleStatusChange(selectedEvent.id, 'cancelled')}>
-                  Cancelar
+                  {t('common.cancel')}
                 </Button>
               )}
               <Button size="sm" variant="ghost" icon={X} onClick={() => setSelectedEvent(null)}>
-                Fechar
+                {t('common.close')}
               </Button>
             </div>
           </div>

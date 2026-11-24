@@ -3,10 +3,11 @@ import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-li
 import { MemoryRouter } from 'react-router-dom';
 import Calendar from '../pages/Calendar';
 import useUiStore from '../store/uiStore';
-import { getCalendar } from '../services/calendarService';
+import { getCalendar, createBlockedDates, updateReservation } from '../services/calendarService';
 import { listStaff } from '../services/staffService';
 import { createReservation } from '../services/reservationsService';
 import { getFleetAvailability } from '../services/fleetService';
+import { portuguesNoEcra, chavesCruas } from './helpers/portuguesNoEcra';
 
 /* Sem rede: os servicos da pagina sao simulados e rejeitam formas de argumentos desconhecidas */
 vi.mock('../services/calendarService', () => ({
@@ -686,6 +687,237 @@ describe('Calendar', () => {
       expect(campo('Unidade', 'select')).toHaveValue('u1');
       expect(campo('Check-in')).toHaveValue(hoje);
       expect(campo('Check-out')).toHaveValue(somaDias(hoje, 1));
+    });
+  });
+
+  /* O calendario segue a lingua do painel: rotulos, meses, dias da semana, montantes e datas. Em pt tudo
+     le exactamente como antes (meses com maiuscula, "Marco", "Sab", montantes e datas gravados). */
+  describe('lingua do painel', () => {
+    const DADOS = ['Quarto Azul', 'Quarto Verde', 'Alfa Silva', 'Beta Costa', 'Gama Dias', 'Guia Ana', 'Guia Rui', 'Rui Mar'];
+    const PREFIXOS = ['calendar', 'reservations', 'common', 'nav', 'errors'];
+
+    function fixaHoje(ano, mes, dia) {
+      vi.useFakeTimers({ toFake: ['Date'] });
+      vi.setSystemTime(new Date(ano, mes - 1, dia, 12, 0, 0));
+    }
+
+    beforeEach(() => {
+      /* terca 24 de novembro de 2026: semana de 23 a 29 de novembro */
+      fixaHoje(2026, 11, 24);
+      createBlockedDates.mockReset().mockResolvedValue({});
+      updateReservation.mockReset().mockResolvedValue({});
+      getFleetAvailability.mockReset().mockResolvedValue([]);
+      createReservation.mockReset().mockResolvedValue({ id: 'nova' });
+      carregaServicos({
+        dados: {
+          units: [{ ...UNIDADES[0], capacity: 6 }, UNIDADES[1]],
+          reservations: [
+            reserva({
+              id: 'r1', unit_id: 'u1', customer_name: 'Alfa Silva', check_in: '2026-11-24', check_out: '2026-11-27',
+              guests: 3, total_price: 12345, payment_status: 'paid', staff_id: 'g1',
+            }),
+            reserva({
+              id: 'r2', unit_id: 'u2', customer_name: 'Beta Costa', status: 'pending', check_in: '2026-11-25', check_out: '2026-11-26',
+              source: 'manual', notes: 'Vendedor: Rui Mar (Praia)',
+            }),
+          ],
+          blocked_dates: [{ id: 'b1', unit_id: 'u2', date: '2026-11-24' }],
+        },
+      });
+    });
+
+    afterEach(() => {
+      /* desmonta antes de repor a lingua, para nenhum componente receber a mudanca fora de act */
+      cleanup();
+      useUiStore.setState({ lang: 'pt' });
+    });
+
+    /* O espaco de milhares do pt-PT e um espaco duro; o texto do ecra chega normalizado */
+    const normaliza = (texto) => texto.replace(/\s/g, ' ');
+
+    function botao(nome) {
+      return screen.getByRole('button', { name: nome });
+    }
+
+    function semPortugues() {
+      expect(portuguesNoEcra(DADOS)).toEqual([]);
+      expect(chavesCruas(PREFIXOS)).toEqual([]);
+    }
+
+    async function abreVista(rotulo) {
+      await abrePagina();
+      await accaoQueRecarrega(() => fireEvent.click(botao(rotulo)));
+    }
+
+    it('em ingles a vista de mes, a legenda, os filtros e o titulo ficam em ingles', async () => {
+      useUiStore.setState({ lang: 'en' });
+      await abrePagina();
+      expect(screen.getByText('November 2026')).toBeInTheDocument();
+      expect(screen.getByText('Manage availability and bookings')).toBeInTheDocument();
+      ['Month', 'Week', 'Day'].forEach((n) => expect(botao(n)).toBeInTheDocument());
+      ['Confirmed', 'Pending', 'Checked In', 'Checked Out', 'Sold by staff member'].forEach((n) => {
+        expect(screen.getByText(n)).toBeInTheDocument();
+      });
+      expect(screen.getByLabelText('By unit')).toBeInTheDocument();
+      expect(screen.getByLabelText('By guide')).toBeInTheDocument();
+      expect(screen.getByRole('option', { name: 'All units' })).toBeInTheDocument();
+      expect(screen.getByRole('option', { name: 'All guides' })).toBeInTheDocument();
+      /* cabecalho da coluna do dia e inicial do dia da semana (24/11/2026 e terca: T) */
+      expect(document.querySelector('thead th').textContent).toBe('Day');
+      expect(document.querySelectorAll('tbody tr')[23].querySelector('td').textContent).toBe('24T');
+      expect(screen.getAllByText('Blocked').length).toBeGreaterThan(1);
+      /* a dica do vendedor e o estado vem traduzidos */
+      expect(screen.getByTitle('Beta Costa · Pending · Sold by Rui Mar')).toBeInTheDocument();
+      semPortugues();
+    });
+
+    it('em portugues a vista de mes le como sempre: Novembro, legenda, estado gravado na dica', async () => {
+      await abrePagina();
+      expect(screen.getByText('Novembro 2026')).toBeInTheDocument();
+      expect(screen.getByText('Gerir disponibilidade e reservas')).toBeInTheDocument();
+      ['Mês', 'Semana', 'Dia'].forEach((n) => expect(botao(n)).toBeInTheDocument());
+      ['Confirmada', 'Pendente', 'Check-in', 'Check-out', 'Vendido por colaborador'].forEach((n) => {
+        expect(screen.getByText(n)).toBeInTheDocument();
+      });
+      expect(document.querySelectorAll('tbody tr')[23].querySelector('td').textContent).toBe('24T');
+      expect(screen.getByTitle('Beta Costa · pending · Vendido por Rui Mar')).toBeInTheDocument();
+      expect(screen.getAllByText('Bloq.').length).toBeGreaterThan(0);
+    });
+
+    it('os nomes dos meses seguem a lingua: November, novembro, Dezember', async () => {
+      const esperado = { en: 'November 2026', pt: 'Novembro 2026', de: 'November 2026', nl: 'november 2026' };
+      for (const [lang, texto] of Object.entries(esperado)) {
+        useUiStore.setState({ lang });
+        const { unmount } = renderPagina();
+        await esperaCarregar();
+        expect(screen.getByText(texto)).toBeInTheDocument();
+        unmount();
+      }
+      useUiStore.setState({ lang: 'de' });
+      renderPagina();
+      await esperaCarregar();
+      /* um mes a frente: Dezember */
+      await accaoQueRecarrega(() => fireEvent.click(botoesNav().seguinte));
+      expect(screen.getByText('Dezember 2026')).toBeInTheDocument();
+    });
+
+    it('em portugues Marco continua a escrever-se como hoje', async () => {
+      fixaHoje(2026, 3, 10);
+      await abrePagina();
+      expect(screen.getByText('Marco 2026')).toBeInTheDocument();
+    });
+
+    it('em ingles a vista de semana mostra os dias e o intervalo na lingua; em pt como sempre', async () => {
+      useUiStore.setState({ lang: 'en' });
+      await abreVista('Week');
+      expect(dias()).toEqual(['23Mon', '24Tue', '25Wed', '26Thu', '27Fri', '28Sat', '29Sun']);
+      expect(screen.getByText('23 - 29 Nov 2026')).toBeInTheDocument();
+      expect(document.querySelector('thead th').textContent).toBe('Unit');
+      expect(screen.getByText('Blocked', { selector: 'div' })).toBeInTheDocument();
+      expect(screen.getByText('3/6 spots')).toBeInTheDocument();
+      expect(screen.getAllByTitle('Alfa Silva · Confirmed')).toHaveLength(3);
+      semPortugues();
+      cleanup();
+
+      useUiStore.setState({ lang: 'pt' });
+      await abreVista('Semana');
+      expect(dias()).toEqual(['23Seg', '24Ter', '25Qua', '26Qui', '27Sex', '28Sab', '29Dom']);
+      expect(screen.getByText('23 - 29 Nov 2026')).toBeInTheDocument();
+      expect(screen.getByText('3/6 vagas')).toBeInTheDocument();
+    });
+
+    it('uma semana que atravessa dois meses usa as abreviaturas dos meses da lingua', async () => {
+      fixaHoje(2026, 12, 29);
+      useUiStore.setState({ lang: 'en' });
+      await abreVista('Week');
+      expect(screen.getByText('28 Dec - 3 Jan 2027')).toBeInTheDocument();
+    });
+
+    it('em ingles o detalhe da reserva mostra montante e datas no formato da lingua e os botoes traduzidos', async () => {
+      useUiStore.setState({ lang: 'en' });
+      await abreVista('Week');
+      fireEvent.click(screen.getAllByTitle('Alfa Silva · Confirmed')[0]);
+      const modal = within(screen.getByRole('dialog'));
+      expect(modal.getByText('Booking details')).toBeInTheDocument();
+      expect(modal.getByText('24/11/2026')).toBeInTheDocument();
+      expect(modal.getByText('27/11/2026')).toBeInTheDocument();
+      expect(modal.getByText(/€12,345/)).toBeInTheDocument();
+      expect(modal.getByText('Paid')).toBeInTheDocument();
+      expect(modal.getByText('Guests')).toBeInTheDocument();
+      expect(modal.getByText('Unit')).toBeInTheDocument();
+      ['Check-in', 'Cancel'].forEach((n) => expect(modal.getByRole('button', { name: n })).toBeInTheDocument());
+      /* o X do cabecalho e o botao do rodape */
+      expect(modal.getAllByRole('button', { name: 'Close' })).toHaveLength(2);
+      semPortugues();
+
+      /* o valor gravado e o de sempre */
+      fireEvent.click(modal.getByRole('button', { name: 'Check-in' }));
+      await waitFor(() => expect(updateReservation).toHaveBeenCalledWith('r1', { status: 'checked_in' }));
+    });
+
+    it('em portugues o detalhe da reserva le como sempre: datas gravadas e montante pt-PT', async () => {
+      await abreVista('Semana');
+      fireEvent.click(screen.getAllByTitle('Alfa Silva · Confirmada')[0]);
+      const modal = within(screen.getByRole('dialog'));
+      expect(modal.getByText('Detalhe da reserva')).toBeInTheDocument();
+      expect(modal.getByText('2026-11-24')).toBeInTheDocument();
+      expect(modal.getByText('2026-11-27')).toBeInTheDocument();
+      expect(modal.getByText(normaliza(`€${Number(12345).toLocaleString('pt-PT')}`), { exact: false })).toBeInTheDocument();
+      expect(modal.getByText('Pago')).toBeInTheDocument();
+      expect(modal.getAllByRole('button', { name: 'Fechar' })).toHaveLength(2);
+    });
+
+    it('em ingles a vista de dia mostra reservas, bloqueios e disponibilidade em ingles', async () => {
+      useUiStore.setState({ lang: 'en' });
+      await abreVista('Day');
+      expect(screen.getAllByText('24 November 2026')).toHaveLength(2);
+      const azul = within(screen.getByText('Quarto Azul', { selector: 'p' }).closest('div.bg-white'));
+      expect(azul.getByText(/Confirmed · 3 guests · €12,345 · 3 spots left/)).toBeInTheDocument();
+      const verde = within(screen.getByText('Quarto Verde', { selector: 'p' }).closest('div.bg-white'));
+      expect(verde.getByText('Blocked')).toBeInTheDocument();
+      expect(verde.getByRole('button', { name: 'Unblock' })).toBeInTheDocument();
+      semPortugues();
+    });
+
+    it('em portugues a vista de dia le como sempre', async () => {
+      await abreVista('Dia');
+      expect(screen.getByText('24 de Novembro de 2026')).toBeInTheDocument();
+      expect(screen.getByText('24 Novembro 2026')).toBeInTheDocument();
+      expect(screen.getByText(normaliza(`Confirmada · 3 pax · €${Number(12345).toLocaleString('pt-PT')} · 3 vagas restantes`))).toBeInTheDocument();
+    });
+
+    it('em ingles o dia livre e o bloqueio ficam em ingles e gravam os mesmos valores', async () => {
+      useUiStore.setState({ lang: 'en' });
+      await abrePagina();
+      /* dia 28, unidade 1 (livre) */
+      fireEvent.click(document.querySelectorAll('tbody tr')[27].querySelectorAll('td')[1]);
+      const livre = within(screen.getByRole('dialog'));
+      expect(livre.getByText('Free day')).toBeInTheDocument();
+      expect(livre.getByText('What would you like to do in Quarto Azul on 28/11/2026?')).toBeInTheDocument();
+      expect(livre.getByRole('button', { name: 'Create booking' })).toBeInTheDocument();
+      semPortugues();
+
+      fireEvent.click(livre.getByRole('button', { name: 'Block dates' }));
+      const bloqueio = within(screen.getByRole('dialog'));
+      expect(bloqueio.getByRole('heading', { name: 'Block dates' })).toBeInTheDocument();
+      expect(bloqueio.getByLabelText('Start date')).toBeInTheDocument();
+      expect(bloqueio.getByLabelText('End date')).toBeInTheDocument();
+      expect(bloqueio.getByLabelText('Reason (optional)')).toHaveAttribute('placeholder', 'Maintenance, own use...');
+      semPortugues();
+      fireEvent.click(bloqueio.getByRole('button', { name: 'Block' }));
+      await waitFor(() => expect(createBlockedDates).toHaveBeenCalledWith({ unit_id: 'u1', dates: ['2026-11-28'], reason: null }));
+    });
+
+    it('em ingles os filtros de unidade e de guia mantem os valores gravados', async () => {
+      useUiStore.setState({ lang: 'en' });
+      await abrePagina();
+      fireEvent.change(screen.getByLabelText('By unit'), { target: { value: 'u2' } });
+      expect([...document.querySelectorAll('thead th')].slice(1).map((th) => th.querySelector('div').textContent)).toEqual(['Quarto Verde']);
+      /* na semana o filtro de guia tambem esconde unidades: u2 nao tem reservas do guia g1 */
+      await accaoQueRecarrega(() => fireEvent.click(botao('Week')));
+      fireEvent.change(screen.getByLabelText('By guide'), { target: { value: 'g1' } });
+      expect(screen.getByText('No active units.')).toBeInTheDocument();
+      semPortugues();
     });
   });
 });
