@@ -3235,7 +3235,8 @@
       "varsHint": "Click a variable to copy it and use it in the messages below",
       "messagePt": "Message in Portuguese",
       "messageEn": "Message in English",
-      "create": "Create automation"
+      "create": "Create automation",
+      "subjectExample": "E.g. Your booking is confirmed"
     }
   },
   "feedbackPage": {
@@ -3320,6 +3321,7 @@
     "reply": "Reply",
     "replyTitle": "Reply to review",
     "publishReply": "Publish reply",
-    "yourReply": "Your reply (will be published)"
+    "yourReply": "Your reply (will be published)",
+    "replyPlaceholder": "Thank you for your visit and for your comment..."
   }
 }

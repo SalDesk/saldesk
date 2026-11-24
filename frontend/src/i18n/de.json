@@ -1975,7 +1975,8 @@
       "varsHint": "Klicken Sie auf eine Variable, um sie zu kopieren und in den Nachrichten unten zu verwenden",
       "messagePt": "Nachricht auf Portugiesisch",
       "messageEn": "Nachricht auf Englisch",
-      "create": "Automatisierung erstellen"
+      "create": "Automatisierung erstellen",
+      "subjectExample": "z. B. Ihre Buchung ist bestätigt"
     }
   },
   "feedbackPage": {
@@ -2060,6 +2061,7 @@
     "reply": "Antworten",
     "replyTitle": "Auf Bewertung antworten",
     "publishReply": "Antwort veröffentlichen",
-    "yourReply": "Ihre Antwort (wird veröffentlicht)"
+    "yourReply": "Ihre Antwort (wird veröffentlicht)",
+    "replyPlaceholder": "Vielen Dank für Ihren Besuch und Ihren Kommentar..."
   }
 }

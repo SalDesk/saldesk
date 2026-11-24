@@ -168,7 +168,6 @@ export const FICHEIROS_CONVERTIDOS = [
 /* Textos escritos ao cliente: ficam em portugues em qualquer lingua do painel */
 const MOTIVO_TEXTO_CLIENTE = 'mensagem enviada ao cliente, fica em portugues (nao-objectivo da especificacao)';
 const MOTIVO_EXEMPLO = 'dados de exemplo do preview da mensagem ao cliente, que e escrita em portugues';
-const MOTIVO_RESPOSTA = 'sugestao de resposta publica ao cliente, fica em portugues (nao-objectivo da especificacao)';
 
 /* Valores portugueses que ficam no codigo de proposito, por ficheiro, com o motivo. */
 export const PERMITIDOS = {
@@ -206,7 +205,8 @@ export const PERMITIDOS = {
   ],
   'components/units/forms/editors.jsx': [
     { valor: 'Passeio de Barco', motivo: 'categoria de actividade gravada em units.unit_type (UNIT_TYPES_BY_OPERATOR); o rotulo vem de unitForm.unitType' },
-  ],  'pages/Automations.jsx': [
+  ],
+  'pages/Automations.jsx': [
     { valor: 'Confirmação de reserva', motivo: MOTIVO_TEXTO_CLIENTE },
     { valor: 'A sua reserva foi confirmada — {nome_tour}', motivo: MOTIVO_TEXTO_CLIENTE },
     { valor: 'Olá {nome_cliente},\\n\\nA sua reserva de {nome_tour} em {data} às {hora} foi confirmada.\\n\\nPonto de encontro: {ponto_encontro}\\nGuia: {guia}\\n\\nLembre-se de trazer protector solar e vestuário confortável.\\n\\nObrigado por escolher a nossa empresa!', motivo: MOTIVO_TEXTO_CLIENTE },
@@ -231,11 +231,7 @@ export const PERMITIDOS = {
     { valor: 'Olá {nome_cliente},\\n\\nObrigado por ter escolhido {nome_tour}. Esperamos que tenha corrido bem!\\n\\nA sua opinião ajuda-nos e ajuda outros viajantes a escolher. Demora menos de um minuto:\\n\\n{link_avaliacao}\\n\\nObrigado!', motivo: MOTIVO_TEXTO_CLIENTE },
   ],
   'components/automations/AutomationForm.jsx': [
-    { valor: 'Ex: A sua reserva foi confirmada', motivo: MOTIVO_TEXTO_CLIENTE },
     { valor: 'Olá {{nome}},\\n\\nA sua reserva em {{unidade}} está confirmada.\\n\\nCheck-in: {{check_in}}\\nCheck-out: {{check_out}}\\n\\nObrigado!', motivo: MOTIVO_TEXTO_CLIENTE },
-  ],
-  'pages/Reviews.jsx': [
-    { valor: 'Obrigado pela sua visita e pelo seu comentário...', motivo: MOTIVO_RESPOSTA },
   ],
 };
 

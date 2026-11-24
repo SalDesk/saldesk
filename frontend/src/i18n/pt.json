@@ -3235,7 +3235,8 @@
       "varsHint": "Clique numa variável para a copiar e use nas mensagens abaixo",
       "messagePt": "Mensagem em Português",
       "messageEn": "Mensagem em Inglês",
-      "create": "Criar automação"
+      "create": "Criar automação",
+      "subjectExample": "Ex: A sua reserva foi confirmada"
     }
   },
   "feedbackPage": {
@@ -3320,6 +3321,7 @@
     "reply": "Responder",
     "replyTitle": "Responder avaliação",
     "publishReply": "Publicar resposta",
-    "yourReply": "A sua resposta (será publicada)"
+    "yourReply": "A sua resposta (será publicada)",
+    "replyPlaceholder": "Obrigado pela sua visita e pelo seu comentário..."
   }
 }

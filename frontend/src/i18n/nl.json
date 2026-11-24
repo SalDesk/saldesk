@@ -1975,7 +1975,8 @@
       "varsHint": "Klik op een variabele om die te kopiëren en in de onderstaande berichten te gebruiken",
       "messagePt": "Bericht in het Portugees",
       "messageEn": "Bericht in het Engels",
-      "create": "Automatisering aanmaken"
+      "create": "Automatisering aanmaken",
+      "subjectExample": "Bijv. Uw boeking is bevestigd"
     }
   },
   "feedbackPage": {
@@ -2060,6 +2061,7 @@
     "reply": "Beantwoorden",
     "replyTitle": "Op beoordeling reageren",
     "publishReply": "Reactie publiceren",
-    "yourReply": "Uw reactie (wordt gepubliceerd)"
+    "yourReply": "Uw reactie (wordt gepubliceerd)",
+    "replyPlaceholder": "Bedankt voor uw bezoek en uw opmerking..."
   }
 }

@@ -628,7 +628,7 @@ describe('Automações: cartão e formulário em inglês', () => {
     fireEvent.submit(container.querySelector('form'));
     expect(onSave).toHaveBeenCalledWith(expect.objectContaining({ name: 'Obrigado', trigger_type: 'days_after_checkout', trigger_days: 3, channel: 'whatsapp' }));
     expect(screen.getByRole('button', { name: 'Create automation' })).toBeInTheDocument();
-    expect(portuguesNoEcra(['Olá {{nome}}', 'Ex: A sua reserva foi confirmada'])).toEqual([]);
+    expect(portuguesNoEcra(['Olá {{nome}}'])).toEqual([]);
     expect(chavesCruas(['automations'])).toEqual([]);
   });
 
@@ -636,8 +636,15 @@ describe('Automações: cartão e formulário em inglês', () => {
     render(<AutomationForm onSave={() => {}} onCancel={() => {}} />);
     expect(screen.getByLabelText(/^Message in Portuguese/).placeholder).toMatch(/^Olá \{\{nome\}\}/);
     expect(screen.getByLabelText(/^Message in English/).placeholder).toMatch(/^Hello \{\{nome\}\}/);
-    /* o exemplo do assunto do email e texto do cliente */
+    /* o exemplo do assunto e uma dica ao operador: traduz-se; os exemplos do corpo sao texto do cliente */
     fireEvent.change(screen.getAllByRole('combobox')[1], { target: { value: 'email' } });
-    expect(screen.getByLabelText(/^Email subject/).placeholder).toBe('Ex: A sua reserva foi confirmada');
+    expect(screen.getByLabelText(/^Email subject/).placeholder).toBe('E.g. Your booking is confirmed');
+  });
+});
+
+describe('Automações: formulário em português', () => {
+  it('o_exemplo_do_assunto_continua_igual_em_portugues', () => {
+    render(<AutomationForm onSave={() => {}} onCancel={() => {}} />);
+    expect(screen.getByLabelText(/^Assunto do email/).placeholder).toBe('Ex: A sua reserva foi confirmada');
   });
 });

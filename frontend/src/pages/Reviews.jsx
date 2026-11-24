@@ -14,8 +14,6 @@ import { useT } from '../i18n';
 import { formatarData } from '../utils/formatoLingua';
 import { formatarNota } from '../utils/formatoNota';
 
-/* Sugestao de resposta publica ao cliente: texto do cliente, fica em portugues em qualquer lingua do painel */
-const EXEMPLO_RESPOSTA = 'Obrigado pela sua visita e pelo seu comentário...';
 
 const PAGE_SIZE = 10;
 
@@ -380,7 +378,7 @@ export default function Reviews() {
               value={replyText}
               onChange={e => setReplyText(e.target.value)}
               required rows={4}
-              placeholder={EXEMPLO_RESPOSTA} />
+              placeholder={t('reviewsPage.replyPlaceholder')} />
           </form>
         </div>
       </Modal>

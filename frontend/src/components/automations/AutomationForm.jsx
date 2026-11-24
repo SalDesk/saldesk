@@ -9,9 +9,6 @@ const TRIGGERS = ['booking_confirmed', 'checkin_reminder', 'checkout_thanks', 'd
 
 const CHANNELS = ['email', 'whatsapp'];
 
-/* exemplo de assunto de email ao cliente: texto do cliente, fica em portugues em qualquer lingua do painel */
-const EXEMPLO_ASSUNTO_CLIENTE = 'Ex: A sua reserva foi confirmada';
-
 const VARS = ['{{nome}}', '{{unidade}}', '{{check_in}}', '{{check_out}}', '{{total}}', '{{operador}}'];
 
 export default function AutomationForm({ automation, onSave, onCancel, loading, error }) {
@@ -67,7 +64,7 @@ export default function AutomationForm({ automation, onSave, onCancel, loading, 
       )}
 
       {form.channel === 'email' && (
-        <Input label={t('automations.form.subject')} value={form.subject} onChange={set('subject')} required placeholder={EXEMPLO_ASSUNTO_CLIENTE} />
+        <Input label={t('automations.form.subject')} value={form.subject} onChange={set('subject')} required placeholder={t('automations.form.subjectExample')} />
       )}
 
       {/* Variaveis disponiveis */}

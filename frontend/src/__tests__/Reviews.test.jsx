@@ -261,7 +261,7 @@ describe('Reviews: painel em inglês', () => {
   let errSpy;
   let warnSpy;
   /* comentarios dos clientes e nomes dos testes: mostram-se tal e qual */
-  const DADOS = ['Excelente passeio', 'Muito bom', 'Obrigado pela visita', 'Obrigado pela sua visita', 'Atraso', 'Cliente', 'Joao', 'Buggy Tour', 'Mergulho', 'Filler'];
+  const DADOS = ['Excelente passeio', 'Muito bom', 'Obrigado pela visita', 'Atraso', 'Cliente', 'Joao', 'Buggy Tour', 'Mergulho', 'Filler'];
 
   beforeEach(() => {
     errSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
@@ -336,7 +336,7 @@ describe('Reviews: painel em inglês', () => {
     expect(screen.getByRole('dialog')).toBeInTheDocument();
     expect(screen.getByText('Reply to review')).toBeInTheDocument();
     const caixa = screen.getByLabelText(/^Your reply \(will be published\)/);
-    expect(caixa.placeholder).toBe('Obrigado pela sua visita e pelo seu comentário...');
+    expect(caixa.placeholder).toBe('Thank you for your visit and for your comment...');
     expect(screen.getByRole('button', { name: 'Cancel' })).toBeInTheDocument();
     fireEvent.change(caixa, { target: { value: 'Thank you for visiting' } });
     fireEvent.click(screen.getByRole('button', { name: 'Publish reply' }));
