@@ -521,7 +521,7 @@ describe('Afiliados em ingles', () => {
     expect(await within(dlg).findByText('Could not save the affiliate.')).toBeInTheDocument();
   });
 
-  it('pagamento_em_ingles_valida_o_montante_e_grava_a_nota_por_omissao_em_ingles', async () => {
+  it('pagamento_em_ingles_valida_o_montante_e_grava_a_nota_por_omissao_em_portugues', async () => {
     createAffiliatePayment.mockResolvedValue({});
     await montar();
     fireEvent.click(within(linha('João Silva')).getByTitle('Record payment'));
@@ -529,12 +529,13 @@ describe('Afiliados em ingles', () => {
     expect(dlg).toHaveTextContent('Payment — João Silva');
     expect(dlg).toHaveTextContent('TOTAL PAID€100.00');
     expect(dlg).toHaveTextContent('PENDING€50.00');
-    expect(portuguesNoEcra(DADOS, dlg)).toEqual([]);
+    expect(within(dlg).getByDisplayValue('Pagamento de comissão')).toBeInTheDocument();
+    expect(portuguesNoEcra([...DADOS, 'Pagamento de comissão'], dlg)).toEqual([]);
     fireEvent.click(within(dlg).getByRole('button', { name: 'Record payment' }));
     expect(await within(dlg).findByText('Enter a valid amount.')).toBeInTheDocument();
     fireEvent.change(within(dlg).getByRole('spinbutton'), { target: { value: '20' } });
     fireEvent.click(within(dlg).getByRole('button', { name: 'Record payment' }));
-    await waitFor(() => expect(createAffiliatePayment).toHaveBeenCalledWith('a1', { amount: 20, payment_date: HOJE, note: 'Commission payment' }));
+    await waitFor(() => expect(createAffiliatePayment).toHaveBeenCalledWith('a1', { amount: 20, payment_date: HOJE, note: 'Pagamento de comissão' }));
   });
 
   it('eliminar_pede_confirmacao_em_ingles_e_apaga_o_mesmo_id', async () => {

@@ -124,7 +124,7 @@ function PaymentModal({ affiliate, onSave, onClose }) {
   const lang = useLingua();
   const [amount, setAmount] = useState('');
   const [date,   setDate]   = useState(new Date().toISOString().slice(0, 10));
-  const [note,   setNote]   = useState(() => t('affiliatesPage.payment.defaultNote'));
+  const [note,   setNote]   = useState(() => getT('pt')('affiliatesPage.payment.defaultNote'));
   const [saving, setSaving] = useState(false);
   const [error,  setError]  = useState('');
 
