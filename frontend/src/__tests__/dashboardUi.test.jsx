@@ -127,6 +127,55 @@ describe('DashboardHeader', () => {
     render(<DashboardHeader title="Painel" view="resumo" onViewChange={() => {}} />);
     expect(screen.getByRole('tab', { name: 'Resumo' })).toHaveAttribute('aria-selected', 'true');
   });
+
+  it('a data fica em DM Mono acima do titulo e o interruptor e uma pilula', () => {
+    render(<DashboardHeader title="Bom dia, Rits" subtitle="Terça-feira, 25 de novembro" view="hoje" onViewChange={() => {}} />);
+    const data = screen.getByText('Terça-feira, 25 de novembro');
+    expect(data.className).toContain('font-mono');
+    const titulo = screen.getByRole('heading', { level: 1 });
+    expect(data.compareDocumentPosition(titulo) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(screen.getByRole('tablist', { name: 'Vista do painel' }).className).toContain('rounded-full');
+  });
+
+  it('Nova reserva e Ver calendario chamam os callbacks e so aparecem quando existem', () => {
+    const nova = vi.fn();
+    const calendario = vi.fn();
+    const { rerender } = render(<DashboardHeader title="Painel" view="hoje" onViewChange={() => {}} />);
+    expect(screen.queryByRole('button', { name: 'Nova reserva' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Ver calendário' })).toBeNull();
+    rerender(<DashboardHeader title="Painel" view="hoje" onViewChange={() => {}} onNovaReserva={nova} onVerCalendario={calendario} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Nova reserva' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Ver calendário' }));
+    expect(nova).toHaveBeenCalledTimes(1);
+    expect(calendario).toHaveBeenCalledTimes(1);
+  });
+
+  it('Nova reserva e um unico botao, sand, que abaixo de 768 px flutua redondo acima da barra de baixo', () => {
+    render(<DashboardHeader title="Painel" view="hoje" onViewChange={() => {}} onNovaReserva={() => {}} />);
+    /* um so botao com este nome: nao ha duplicado para o telemovel */
+    const botao = screen.getByRole('button', { name: 'Nova reserva' });
+    expect(botao.className).toContain('bg-sand-500');
+    expect(botao.className).toContain('max-md:fixed');
+    expect(botao.className).toContain('max-md:rounded-full');
+    /* a BottomNav tem 4rem (h-16): o botao fica acima dela */
+    expect(botao.className).toContain('max-md:bottom-[calc(5rem+env(safe-area-inset-bottom))]');
+  });
+
+  it('as setas mudam de vista como nos outros separadores', () => {
+    const onViewChange = vi.fn();
+    render(<DashboardHeader title="Painel" view="hoje" onViewChange={onViewChange} />);
+    fireEvent.keyDown(screen.getByRole('tab', { name: 'Hoje' }), { key: 'ArrowRight' });
+    expect(onViewChange).toHaveBeenCalledWith('resumo');
+  });
+
+  it('em ingles o interruptor e as accoes saem em ingles', () => {
+    useUiStore.setState({ lang: 'en' });
+    render(<DashboardHeader title="Good morning" view="hoje" onViewChange={() => {}} onNovaReserva={() => {}} onVerCalendario={() => {}} />);
+    expect(screen.getByRole('tablist', { name: 'Dashboard view' })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: 'Today' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'New booking' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'View calendar' })).toBeInTheDocument();
+  });
 });
 
 describe('TrialStrip', () => {

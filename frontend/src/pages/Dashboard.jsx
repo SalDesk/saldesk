@@ -2,7 +2,6 @@ import { useNavigate } from 'react-router-dom';
 import useAuthStore from '../store/authStore';
 import useUiStore from '../store/uiStore';
 import { useT } from '../i18n';
-import Button from '../components/ui/Button';
 import DashboardHeader from '../components/dashboard/DashboardHeader';
 import TrialStrip from '../components/dashboard/TrialStrip';
 import { useEffect } from 'react';
@@ -18,7 +17,7 @@ import GenericDashboard from './dashboard/GenericDashboard';
 import ActivityDashboard from './dashboard/ActivityDashboard';
 import ResumoView from './dashboard/ResumoView';
 
-/* "Sexta-feira, 20 de novembro · 11:42" na lingua da app */
+/* "Sexta-feira, 20 de novembro · 11:42" na lingua da app (a linha da data, em DM Mono) */
 function dataEHora(agora, lang) {
   const data = agora.toLocaleDateString(localeDe(lang), { weekday: 'long', day: 'numeric', month: 'long' });
   const hora = `${String(agora.getHours()).padStart(2, '0')}:${String(agora.getMinutes()).padStart(2, '0')}`;
@@ -51,16 +50,8 @@ export default function Dashboard() {
         subtitle={dataEHora(agora, lang)}
         view={dashboardView}
         onViewChange={setDashboardView}
-        actions={(
-          <>
-            <Button variant="secondary" onClick={() => navigate('/calendario')}>
-              {t('dashboard.activity.viewCalendar')}
-            </Button>
-            <Button variant="primary" onClick={() => navigate('/reservas')}>
-              {t('dashboard.activity.newReservation')}
-            </Button>
-          </>
-        )}
+        onVerCalendario={() => navigate('/calendario')}
+        onNovaReserva={() => navigate('/reservas')}
       />
       <TrialStrip />
       <WhatsAppPendentes />

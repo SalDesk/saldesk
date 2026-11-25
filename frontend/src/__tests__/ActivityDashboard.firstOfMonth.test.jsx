@@ -1,5 +1,5 @@
 import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, render, screen } from '@testing-library/react';
+import { cleanup, render, screen, within } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 
 /* Relogio simulado ANTES de qualquer import: TODAY (shared.jsx) e calculado ao importar o
@@ -32,7 +32,8 @@ const FUTURE = { v7_startTransition: true, v7_relativeSplatPath: true };
 /* Datas escritas a mao (nao calculadas com o codigo em teste) */
 const HOJE = '2026-12-01';
 const AMANHA = '2026-12-02';
-const SEMANA_FIM = '2026-12-07';
+/* os proximos 14 dias: 1 a 14 de dezembro */
+const SEMANA_FIM = '2026-12-14';
 /* os 13 dias antes de hoje atravessam a mudanca de mes */
 const ANTERIOR_INICIO = '2026-11-18';
 const ONTEM = '2026-11-30';
@@ -99,7 +100,7 @@ describe('ActivityDashboard no primeiro dia do mes', () => {
     expect(new Date().toLocaleDateString('en-CA')).toBe(HOJE);
   });
 
-  it('a faixa de 7 dias usa os dados da semana e nao os dos dias anteriores', async () => {
+  it('o mapa de ocupacao usa os dados da semana e nao os dos dias anteriores', async () => {
     carrega({
       hoje: [reserva({ id: 'h1' })],
       semana: [reserva({ id: 'w1' }), reserva({ id: 'w2', check_in: AMANHA })],
@@ -109,8 +110,10 @@ describe('ActivityDashboard no primeiro dia do mes', () => {
     });
     renderActivity();
     expect(await screen.findByText('Próximos 7 dias')).toBeInTheDocument();
-    expect(screen.getAllByText('1 res.')).toHaveLength(2);
-    expect(screen.queryByText('3 res.')).not.toBeInTheDocument();
+    /* capacidade 10: 1 pessoa hoje (w1) e 1 amanha (w2) = duas celulas de 10%; as 3 de ontem nao entram */
+    const mapa = screen.getByRole('table');
+    expect(within(mapa).getAllByText('10%')).toHaveLength(2);
+    expect(within(mapa).queryByText('30%')).not.toBeInTheDocument();
     /* os pagamentos por regularizar vem do pedido proprio (qualquer mes) */
     expect(screen.getByText('3 pagamento(s) por regularizar')).toBeInTheDocument();
   });

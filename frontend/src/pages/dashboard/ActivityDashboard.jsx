@@ -7,14 +7,13 @@ import { listAssignments } from '../../services/assignmentService';
 import { estadiaEm, estadiaProximosDias, estadiaUltimosDias } from '../../services/reservationRanges';
 import { getWeatherForecast, weatherInfo, isBadWeather } from '../../services/weatherService';
 import { useT } from '../../i18n';
-import useUiStore from '../../store/uiStore';
 import useAgora from '../../hooks/useAgora';
 import AttentionPanel from '../../components/dashboard/AttentionPanel';
 import AgendaSaidas from '../../components/dashboard/AgendaSaidas';
 import TilesTendencia from '../../components/dashboard/TilesTendencia';
 import MareDoDia from '../../components/dashboard/MareDoDia';
-import Shortcuts from '../../components/dashboard/Shortcuts';
-import NextDaysStrip from '../../components/dashboard/NextDaysStrip';
+import VentoEMar from '../../components/dashboard/VentoEMar';
+import OcupacaoDias from '../../components/dashboard/OcupacaoDias';
 import Button from '../../components/ui/Button';
 import EmptyState from '../../components/ui/EmptyState';
 import LoadingSpinner from '../../components/shared/LoadingSpinner';
@@ -24,17 +23,21 @@ import { TODAY, uniaoPorId } from './shared';
 import { buildAttentionItems, unpaidReservations } from './dashboardLogic';
 import { eventosAtividades, porReceber } from './agendaLogic';
 import {
-  curvaMare, serieDias, valorDoDia, variacaoSemana, variacaoSemanaPct,
+  curvaMare, serieDias, valorDoDia, variacaoSemana, variacaoSemanaPct, ocupacaoDias,
 } from './mareLogic';
 
 /* ─── Activity dashboard (vista "Hoje") ──────────────────────── */
 
 const ESTADOS_ATIVOS = ['pending', 'confirmed', 'checked_in'];
 
-function weekDays() {
+/* Os proximos 14 dias: os 7 primeiros alimentam a meteorologia e "Requer atencao", os 14 o mapa de ocupacao */
+const DIAS_OCUPACAO = 14;
+const DIAS_SEMANA = 7;
+
+function proximosDias(n) {
   /* Data local do dispositivo, nao UTC -- ver nota junto de TODAY em shared.jsx.
-     next7[0] tem de bater certo com TODAY. */
-  return Array.from({ length: 7 }, (_, i) => {
+     o primeiro dia tem de bater certo com TODAY. */
+  return Array.from({ length: n }, (_, i) => {
     const d = new Date();
     d.setDate(d.getDate() + i);
     return d.toLocaleDateString('en-CA');
@@ -43,20 +46,24 @@ function weekDays() {
 
 export default function ActivityDashboard() {
   const t        = useT();
-  const lang     = useUiStore((s) => s.lang);
   const navigate = useNavigate();
   const agora    = useAgora();
-  const next7    = useMemo(() => weekDays(), []);
+  const dias14   = useMemo(() => proximosDias(DIAS_OCUPACAO), []);
+  const next7    = useMemo(() => dias14.slice(0, DIAS_SEMANA), [dias14]);
 
   const [tours,        setTours]        = useState([]);
   const [todayRes,     setTodayRes]     = useState([]);
   /* null = os 13 dias anteriores nao carregaram: sem tendencia nem variacao */
   const [prevRes,      setPrevRes]      = useState(null);
-  const [weekRes,      setWeekRes]      = useState([]);
+  /* reservas dos proximos 14 dias */
+  const [res14,         setRes14]        = useState([]);
   const [unpaidRes,    setUnpaidRes]    = useState([]);
   const [atribuicoes,  setAtribuicoes]  = useState([]);
   const [loading,      setLoading]      = useState(true);
   const [wxAlerts,     setWxAlerts]     = useState([]);
+  /* Vento e mar: a previsao dos proximos dias e o estado do pedido (falha so afecta o seu cartao) */
+  const [previsao,      setPrevisao]     = useState([]);
+  const [estadoVento,   setEstadoVento]  = useState('a_carregar');
   /* Saida cujo manifesto esta aberto (null = fechado) */
   const [manifesto,    setManifesto]    = useState(null);
 
@@ -67,7 +74,7 @@ export default function ActivityDashboard() {
       listReservations(estadiaEm(TODAY)).catch(() => []),
       /* Os 13 dias antes de hoje: tendencia dos ultimos 7 dias e o mesmo dia da semana passada */
       listReservations(estadiaUltimosDias(13)).catch(() => null),
-      listReservations(estadiaProximosDias(7)).catch(() => []),
+      listReservations(estadiaProximosDias(DIAS_OCUPACAO)).catch(() => []),
       /* Pagamentos por regularizar de QUALQUER mes: com so as reservas do mes, uma divida de um mes
          anterior nunca aparecia em "Requer atencao" */
       listReservations({ payment_status: 'pending,partial' }).catch(() => []),
@@ -78,20 +85,24 @@ export default function ActivityDashboard() {
         setTours(toursData || []);
         setTodayRes(tRes || []);
         setPrevRes(Array.isArray(pRes) ? pRes : null);
-        setWeekRes(wRes || []);
+        setRes14(wRes || []);
         setUnpaidRes(Array.isArray(uRes) ? uRes : []);
         setAtribuicoes(Array.isArray(atr) ? atr : []);
 
         // Cross-reference weather with upcoming tours
         getWeatherForecast()
           .then(forecast => {
+            setPrevisao(forecast);
+            setEstadoVento(forecast.length > 0 ? 'ok' : 'vazio');
+            /* so os primeiros 7 dias: o comportamento do alerta de mau tempo nao muda com os 14 dias */
             const resSet = new Set((wRes || [])
               .filter(r => ['pending', 'confirmed'].includes(r.status))
-              .map(r => r.check_in));
+              .map(r => r.check_in)
+              .filter(d => next7.includes(d)));
             const bad = forecast.filter(d => isBadWeather(d) && resSet.has(d.date));
             setWxAlerts(bad.slice(0, 3));
           })
-          .catch(() => {});
+          .catch(() => setEstadoVento('erro'));
       })
       .catch(() => {})
       .finally(() => setLoading(false));
@@ -124,13 +135,11 @@ export default function ActivityDashboard() {
     quaseEsgotados:  todayByTour.filter(g => (g.tour?.capacity || 0) > 0 && g.guests / g.tour.capacity >= 0.8),
   }), [todayRes, todayByTour]);
 
-  const weekCountMap = useMemo(() => {
-    const m = Object.fromEntries(next7.map(d => [d, 0]));
-    weekRes
-      .filter(r => ESTADOS_ATIVOS.includes(r.status))
-      .forEach(r => { if (m[r.check_in] !== undefined) m[r.check_in]++; });
-    return m;
-  }, [weekRes, next7]);
+  /* Reservas dos primeiros 7 dias (meteorologia e "Requer atencao") */
+  const weekRes = useMemo(() => res14.filter(r => next7.includes(r.check_in)), [res14, next7]);
+
+  /* Ocupacao por servico activo nos proximos 14 dias */
+  const linhasOcupacao = useMemo(() => ocupacaoDias(res14, tours, dias14), [res14, tours, dias14]);
 
   const porPagar = useMemo(() => unpaidReservations(unpaidRes, TODAY), [unpaidRes]);
 
@@ -258,15 +267,16 @@ export default function ActivityDashboard() {
 
         <div className="space-y-4">
           <AttentionPanel items={attentionItems} />
-          <Shortcuts />
-          <NextDaysStrip
-            dias={next7}
-            contagens={weekCountMap}
-            hoje={TODAY}
-            lang={lang}
-            onAbrir={() => navigate('/calendario')}
-          />
+          <VentoEMar dias={previsao.slice(0, 5)} estado={estadoVento} />
         </div>
+      </div>
+
+      {/* Mapa de 14 dias no ecra largo; no telemovel, as barras dos proximos 7 dias */}
+      <div className="hidden md:block">
+        <OcupacaoDias linhas={linhasOcupacao} dias={dias14} />
+      </div>
+      <div className="md:hidden">
+        <OcupacaoDias compacto linhas={linhasOcupacao} dias={next7} />
       </div>
 
       {manifesto && (

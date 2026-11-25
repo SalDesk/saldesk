@@ -42,7 +42,8 @@ function diaLocal(deslocamento) {
 const HOJE = diaLocal(0);
 const ONTEM = diaLocal(-1);
 const AMANHA = diaLocal(1);
-const SEMANA_FIM = diaLocal(6);
+/* os proximos 14 dias: hoje..hoje+13 */
+const SEMANA_FIM = diaLocal(13);
 const ANTERIOR_INICIO = diaLocal(-13);
 const SEMANA_PASSADA = diaLocal(-7);
 
@@ -153,7 +154,7 @@ describe('ActivityDashboard (Hoje)', () => {
     const detalhe = screen.getByRole('complementary', { name: 'Detalhe da saída' });
     expect(within(detalhe).getByText('Santa Maria')).toBeInTheDocument();
     expect(within(detalhe).getByText('Djo')).toBeInTheDocument();
-    expect(screen.queryByRole('table')).toBeNull();
+    expect(within(detalhe).queryByRole('table')).toBeNull();
   });
 
   it('clicar_numa_saida_mostra_o_detalhe_e_nao_navega', async () => {
@@ -297,14 +298,47 @@ describe('ActivityDashboard (Hoje)', () => {
     expect(screen.queryByText('Accoes rapidas')).not.toBeInTheDocument();
   });
 
-  it('a faixa de 7 dias so mostra contagem quando ha reservas', async () => {
+  it('o mapa de ocupacao mostra a percentagem por servico e dia (14 dias)', async () => {
     carregaServicos({ hoje: RES_HOJE, semana: [...RES_HOJE, RES_AMANHA] });
     renderActivity();
-    expect(await screen.findByText('Próximos 7 dias')).toBeInTheDocument();
-    /* hoje: 4 reservas activas; amanha: 1; os outros cinco dias sem contagem */
-    expect(screen.getByText('4 res.')).toBeInTheDocument();
-    expect(screen.getByText('1 res.')).toBeInTheDocument();
-    expect(screen.getAllByText('res.', { exact: false })).toHaveLength(2);
+    const mapa = await screen.findByRole('table', { name: 'Percentagem de lugares vendidos por serviço e por dia' });
+    /* um tour por linha e catorze dias */
+    expect(within(mapa).getAllByRole('row')).toHaveLength(3);
+    expect(within(mapa).getAllByRole('columnheader')).toHaveLength(15);
+    const tourA = within(mapa).getByRole('row', { name: /Tour Teste/ });
+    /* hoje 8 de 10 lugares, amanha 1 de 10, os outros dias vazios */
+    expect(within(tourA).getByText('80%')).toBeInTheDocument();
+    expect(within(tourA).getByText('10%')).toBeInTheDocument();
+    expect(within(tourA).getAllByText('0%')).toHaveLength(12);
+    /* e as barras do telemovel: sete dias */
+    expect(screen.getByText('Próximos 7 dias')).toBeInTheDocument();
+  });
+
+  it('o Hoje de actividades ja nao tem os atalhos nem a faixa de 7 dias antiga', async () => {
+    carregaServicos({ hoje: RES_HOJE });
+    renderActivity();
+    expect(await screen.findByRole('heading', { name: 'Agenda de hoje' })).toBeInTheDocument();
+    expect(screen.queryByText('Atalhos')).not.toBeInTheDocument();
+    expect(screen.queryByText(/^\d+ res\.$/)).not.toBeInTheDocument();
+  });
+
+  it('a falha da previsao do vento so afecta o seu cartao', async () => {
+    carregaServicos({ hoje: RES_HOJE });
+    getWeatherForecast.mockReset().mockRejectedValue(new Error('sem rede'));
+    renderActivity();
+    expect(await screen.findByText('Não foi possível carregar a previsão do vento.')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Agenda de hoje' })).toBeInTheDocument();
+  });
+
+  it('o cartao de vento mostra os cinco dias e avisa quando o vento chega aos 35 km/h', async () => {
+    const dias = [0, 1, 2, 3, 4, 5].map((n) => ({
+      date: diaLocal(n), code: 0, precipitation: 0, ventoKmh: n === 2 ? 38 : 18, ventoDirecao: 45,
+    }));
+    carregaServicos({ hoje: RES_HOJE, meteo: dias });
+    renderActivity();
+    expect(await screen.findByRole('heading', { name: 'Vento e mar' })).toBeInTheDocument();
+    expect(screen.getAllByRole('listitem').filter((li) => li.hasAttribute('data-forte'))).toHaveLength(5);
+    expect(screen.getByText(/vento de até 38 km\/h/)).toBeInTheDocument();
   });
 
   it('reserva sem campos nao lanca', async () => {
