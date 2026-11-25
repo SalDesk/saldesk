@@ -168,6 +168,20 @@ export function quotaDirectas(canais) {
   return Math.round((directas / total) * 100);
 }
 
+/* Percentagens inteiras que somam 100 (maior resto): arredondar uma a uma pode dar 99 ou 101 */
+export function repartirPercentagens(valores) {
+  const total = valores.reduce((s, v) => s + v, 0);
+  if (total <= 0) return valores.map(() => 0);
+  const exactos = valores.map((v) => (v / total) * 100);
+  const base = exactos.map(Math.floor);
+  let falta = 100 - base.reduce((s, v) => s + v, 0);
+  exactos
+    .map((e, i) => ({ i, resto: e - base[i] }))
+    .sort((a, b) => b.resto - a.resto || a.i - b.i)
+    .forEach(({ i }) => { if (falta > 0) { base[i] += 1; falta -= 1; } });
+  return base;
+}
+
 /* Fatias do donut: uma por origem, da maior para a mais pequena; passando de `max`, as mais pequenas
    juntam-se em { source: null, outros: true }. Devolve [{ source, num, pct }] */
 export function fatiasCanais(canais, max = 5) {
@@ -175,26 +189,62 @@ export function fatiasCanais(canais, max = 5) {
     .map((c) => ({ source: c.source, num: Number(c.num_reservas) || 0 }))
     .filter((c) => c.num > 0)
     .sort((a, b) => b.num - a.num);
-  const total = validos.reduce((s, c) => s + c.num, 0);
-  if (total === 0) return [];
+  if (validos.length === 0) return [];
   let fatias = validos;
   if (validos.length > max) {
     const resto = validos.slice(max - 1).reduce((s, c) => s + c.num, 0);
     fatias = [...validos.slice(0, max - 1), { source: null, outros: true, num: resto }];
   }
-  return fatias.map((f) => ({ ...f, pct: Math.round((f.num / total) * 100) }));
+  const pcts = repartirPercentagens(fatias.map((f) => f.num));
+  return fatias.map((f, i) => ({ ...f, pct: pcts[i] }));
 }
 
-/* Paises das reservas: codigo em maiusculas e a percentagem das reservas que tem pais; os n maiores */
+/* Comparar nomes sem maiusculas nem acentos */
+const chaveTexto = (v) => String(v).normalize('NFD').replace(/[̀-ͯ]/g, '').trim().toLowerCase();
+
+/* Nome de pais (em pt e en, sem maiusculas nem acentos) -> codigo ISO; construido uma vez */
+/* Codigos antigos ou especiais que o Intl ainda nomeia (DD, por exemplo, tambem diz "Alemanha") */
+const CODIGOS_OBSOLETOS = new Set(['AN', 'BU', 'CS', 'DD', 'EU', 'EZ', 'FX', 'NT', 'QU', 'SU', 'TP', 'UK', 'UN', 'YD', 'YU', 'ZR']);
+let nomesDePaises = null;
+function codigoPorNome(texto) {
+  if (!nomesDePaises) {
+    nomesDePaises = new Map();
+    const letras = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    ['pt', 'en'].forEach((lingua) => {
+      let nomes;
+      try { nomes = new Intl.DisplayNames([lingua], { type: 'region' }); } catch { return; }
+      for (const a of letras) {
+        for (const b of letras) {
+          const codigo = a + b;
+          if (CODIGOS_OBSOLETOS.has(codigo)) continue;
+          try {
+            const nome = nomes.of(codigo);
+            if (nome && nome !== codigo && !nomesDePaises.has(chaveTexto(nome))) nomesDePaises.set(chaveTexto(nome), codigo);
+          } catch { /* codigo invalido: ignora */ }
+        }
+      }
+    });
+  }
+  return nomesDePaises.get(chaveTexto(texto)) || null;
+}
+
+/* Paises das reservas (texto livre): 2 letras e codigo ISO em maiusculas; um nome conhecido passa a
+   codigo; o resto fica como foi escrito (1a ocorrencia), agrupado sem maiusculas nem acentos.
+   Devolve os n maiores como [{ codigo, pct }] em percentagem das reservas com pais */
 export function topPaises(reservas, n = 5) {
   const contagem = new Map();
   lista(reservas).forEach((r) => {
-    const codigo = String(r.customer_country || '').trim().toUpperCase();
-    if (codigo) contagem.set(codigo, (contagem.get(codigo) || 0) + 1);
+    const texto = String(r.customer_country || '').trim();
+    if (!texto) return;
+    const codigo = /^[A-Za-z]{2}$/.test(texto) ? texto.toUpperCase() : codigoPorNome(texto);
+    const chave = codigo || `t:${chaveTexto(texto)}`;
+    const atual = contagem.get(chave);
+    if (atual) atual.n += 1;
+    else contagem.set(chave, { codigo: codigo || texto, n: 1 });
   });
-  const total = [...contagem.values()].reduce((s, v) => s + v, 0);
-  return [...contagem.entries()]
-    .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+  const total = [...contagem.values()].reduce((s, v) => s + v.n, 0);
+  return [...contagem.values()]
+    .sort((a, b) => b.n - a.n || a.codigo.localeCompare(b.codigo))
     .slice(0, n)
-    .map(([codigo, v]) => ({ codigo, pct: Math.round((v / total) * 100) }));
+    .map((v) => ({ codigo: v.codigo, pct: Math.round((v.n / total) * 100) }));
 }

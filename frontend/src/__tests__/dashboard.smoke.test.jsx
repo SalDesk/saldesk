@@ -174,8 +174,8 @@ describe('Dashboard (fumo por tipo de operador)', () => {
     expect(screen.getByTestId('whatsapp-pendentes')).toBeInTheDocument();
     /* a vista Resumo carrega sozinha: esperar que todos os blocos assentem */
     expect(await screen.findByText('Sem receita neste período')).toBeInTheDocument();
-    expect(await screen.findByText('Sem vendas neste período')).toBeInTheDocument();
-    expect(await screen.findByText('Sem reservas neste período')).toBeInTheDocument();
+    /* canais e servicos mostram o mesmo texto vazio */
+    expect(await screen.findAllByText('Sem reservas neste período')).toHaveLength(2);
   });
 
   it('volta a hoje', async () => {

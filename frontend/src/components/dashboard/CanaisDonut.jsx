@@ -38,7 +38,7 @@ export default function CanaisDonut({ canais, estado }) {
 
   const descricao = t('dashboard.resumo.channels.aria', {
     lista: fatias.map((f) => t('dashboard.resumo.channels.ariaItem', { name: nome(f), pct: formatarNumero(f.pct) })).join(', '),
-  });
+  }) + (directas === null ? '' : ` ${t('dashboard.resumo.channels.ariaDirect', { pct: formatarNumero(directas) })}.`);
 
   let corpo;
   if (estado === 'loading') {

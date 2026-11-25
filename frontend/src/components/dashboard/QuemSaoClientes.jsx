@@ -9,6 +9,7 @@ import EmptyState from '../ui/EmptyState';
 
 /* Nome do pais na lingua do painel; um codigo que o Intl nao entende fica como esta */
 export function nomeDoPais(codigo, lang) {
+  if (!/^[A-Z]{2}$/.test(codigo)) return codigo;
   try {
     return new Intl.DisplayNames([localeDe(lang)], { type: 'region' }).of(codigo) || codigo;
   } catch {

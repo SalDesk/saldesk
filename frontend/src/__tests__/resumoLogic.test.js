@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   periodoResumo, preencherSerie, alinharSeries, melhorPonto, totalActual,
   deltaPercentual, deltaPontos, ocupacaoActividades, listaPossivelmenteCortada, LIMITE_LINHAS,
-  quotaDirectas, topPaises, fatiasCanais,
+  quotaDirectas, topPaises, fatiasCanais, repartirPercentagens,
 } from '../pages/dashboard/resumoLogic';
 
 describe('periodoResumo', () => {
@@ -222,5 +222,33 @@ describe('fatiasCanais', () => {
 
   it('ignora origens sem reservas', () => {
     expect(fatiasCanais([c('direct', 0)])).toEqual([]);
+  });
+});
+
+describe('topPaises: texto livre', () => {
+  it('nomes (sem maiusculas nem acentos, em pt e en) passam a codigo ISO', () => {
+    const r = ['Portugal', 'portugal', 'PT', 'Reino Unido', 'United Kingdom', 'espanha', 'Alemanha'].map((customer_country) => ({ customer_country }));
+    const top = topPaises(r, 10);
+    expect(top.find((p) => p.codigo === 'PT').pct).toBe(43);
+    expect(top.find((p) => p.codigo === 'GB').pct).toBe(29);
+    expect(top.map((p) => p.codigo).sort()).toEqual(['DE', 'ES', 'GB', 'PT']);
+  });
+
+  it('o que nao e pais fica como escrito (1a ocorrencia), agrupado sem maiusculas', () => {
+    const top = topPaises([{ customer_country: ' Lisboa ' }, { customer_country: 'LISBOA' }, { customer_country: 'PT' }]);
+    expect(top).toEqual([{ codigo: 'Lisboa', pct: 67 }, { codigo: 'PT', pct: 33 }]);
+  });
+});
+
+describe('repartirPercentagens', () => {
+  it('soma sempre 100 (maior resto)', () => {
+    expect(repartirPercentagens([1, 1, 1])).toEqual([34, 33, 33]);
+    expect(repartirPercentagens([1, 1, 1]).reduce((a, b) => a + b, 0)).toBe(100);
+    expect(repartirPercentagens([0, 0])).toEqual([0, 0]);
+  });
+
+  it('fatiasCanais usa-o: tres origens iguais somam 100', () => {
+    const f = fatiasCanais([{ source: 'a', num_reservas: 1 }, { source: 'b', num_reservas: 1 }, { source: 'c', num_reservas: 1 }]);
+    expect(f.reduce((s, x) => s + x.pct, 0)).toBe(100);
   });
 });

@@ -51,7 +51,7 @@ describe('CanaisDonut', () => {
   it('desenha o donut com os canais no aria-label, a legenda e as directas ao centro', () => {
     render(<CanaisDonut canais={CANAIS} estado="ok" />);
     const donut = screen.getByRole('img');
-    expect(donut.getAttribute('aria-label')).toMatch(/^Origem das reservas: .*Directo 40%.*Booking\.com 40%.*Pag\. Pública 20%\.$/);
+    expect(donut.getAttribute('aria-label')).toMatch(/^Origem das reservas: .*Directo 40%.*Booking\.com 40%.*Pag\. Pública 20%\. 60% directas\.$/);
     const legenda = screen.getByRole('list');
     expect(within(legenda).getByText('Directo')).toBeInTheDocument();
     expect(within(legenda).getByText('Booking.com')).toBeInTheDocument();
@@ -97,9 +97,29 @@ describe('TopServicos', () => {
     expect(screen.getByText('3 bookings')).toBeInTheDocument();
   });
 
-  it('sem receita mostra o estado vazio', () => {
+  it('sem nenhuma reserva mostra o estado vazio', () => {
     render(<TopServicos servicos={[{ name: 'Tour', num_reservas: 0, receita: 0 }]} estado="ok" />);
-    expect(screen.getByText('Sem vendas neste período')).toBeInTheDocument();
+    expect(screen.getByText('Sem reservas neste período')).toBeInTheDocument();
+  });
+
+  it('sem vendas concluidas ordena por reservas e diz-o', () => {
+    const lista = [
+      { name: 'Tour A', num_reservas: 2, receita: 0 },
+      { name: 'Tour B', num_reservas: 7, receita: 0 },
+      { name: 'Tour C', num_reservas: 0, receita: 0 },
+    ];
+    render(<TopServicos servicos={lista} estado="ok" />);
+    expect(screen.getByText('Ainda sem vendas concluídas neste período; ordenado por reservas.')).toBeInTheDocument();
+    const linhas = screen.getAllByTestId('resumo-top-linha');
+    expect(linhas).toHaveLength(2);
+    expect(linhas[0]).toHaveTextContent('Tour B');
+    expect(linhas[0]).toHaveTextContent('7 reservas');
+    expect(screen.getAllByTestId('resumo-top-barra')[0].style.width).toBe('100%');
+  });
+
+  it('com receita nao mostra a nota de ordenacao por reservas', () => {
+    render(<TopServicos servicos={[{ name: 'Tour', num_reservas: 3, receita: 100 }]} estado="ok" />);
+    expect(screen.queryByText(/ordenado por reservas/)).not.toBeInTheDocument();
   });
 });
 
@@ -135,9 +155,14 @@ describe('QuemSaoClientes', () => {
     expect(screen.getAllByTestId('resumo-pais')[0]).toHaveTextContent('United Kingdom');
   });
 
-  it('um codigo que o Intl nao entende mostra-se como esta', () => {
-    render(<QuemSaoClientes avaliacao={nota} reservas={{ estado: 'ok', dados: [{ customer_country: 'Portugal' }] }} />);
-    expect(screen.getByTestId('resumo-pais')).toHaveTextContent('PORTUGAL');
+  it('texto livre: Portugal, portugal e PT juntam-se; Lisboa fica como escrito', () => {
+    const dados = [{ customer_country: 'Portugal' }, { customer_country: 'portugal' }, { customer_country: 'PT' }, { customer_country: 'Lisboa' }];
+    render(<QuemSaoClientes avaliacao={nota} reservas={{ estado: 'ok', dados }} />);
+    const linhas = screen.getAllByTestId('resumo-pais');
+    expect(linhas).toHaveLength(2);
+    expect(linhas[0]).toHaveTextContent('Portugal');
+    expect(linhas[0]).toHaveTextContent('75%');
+    expect(linhas[1]).toHaveTextContent('Lisboa');
   });
 
   it('com 1000 reservas avisa que so conta as mais recentes', () => {
