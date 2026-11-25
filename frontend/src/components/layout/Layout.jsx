@@ -105,7 +105,7 @@ export default function Layout() {
   }, [setOperator]);
 
   return (
-    <div data-ui="app" className="flex h-screen bg-n-50 app:bg-[var(--surface-app)] overflow-hidden">
+    <div data-ui="app" className="flex h-screen bg-n-50 app:bg-mare-ground overflow-hidden">
       {/* Sidebar — so em desktop, navegacao mobile passa pela bottom nav */}
       <div
         className={[

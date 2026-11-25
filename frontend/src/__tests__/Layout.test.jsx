@@ -74,6 +74,13 @@ describe('Layout: moldura', () => {
     expect(screen.getByText('Navegacao inferior')).toBeInTheDocument();
   });
 
+  it('a raiz e a app e usa o token do fundo Mare', () => {
+    const { container } = montar();
+    const raiz = container.querySelector('[data-ui="app"]');
+    expect(raiz).not.toBeNull();
+    expect(raiz.className).toContain('app:bg-mare-ground');
+  });
+
   it('a faixa de demonstracao so aparece nas contas demo', () => {
     const { unmount } = montar();
     expect(screen.queryByText(/Modo demonstração/)).toBeNull();

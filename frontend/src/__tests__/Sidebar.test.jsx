@@ -41,6 +41,22 @@ describe('Sidebar agrupada', () => {
     }
   });
 
+  it('o item da rota ativa mantem nome e aria-current, com o look Mare', () => {
+    renderSidebar('/reservas');
+    const ativo = screen.getByRole('link', { current: 'page' });
+    expect(ativo).toHaveAttribute('href', '/reservas');
+    expect(ativo.className).toContain('app:bg-ocean-700');
+    expect(ativo.className).toContain('app:min-h-[44px]');
+  });
+
+  it('os cabecalhos de seccao sao maiusculas, ocean-300 e com alvo de 44 px', () => {
+    renderSidebar();
+    const cab = screen.getByRole('button', { name: 'Operação' });
+    expect(cab.className).toContain('app:uppercase');
+    expect(cab.className).toContain('text-ocean-300');
+    expect(cab.className).toContain('app:min-h-[44px]');
+  });
+
   it('crescimento e configuracao comecam recolhidas', () => {
     renderSidebar();
 
