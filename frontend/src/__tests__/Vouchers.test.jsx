@@ -300,7 +300,7 @@ describe('Vouchers: formulário e acções', () => {
 
 describe('Vouchers: partilhar', () => {
   const msgPt = (link) => `Use o código *VERAO20* para obter 20% de desconto na sua próxima reserva. Válido até ${dataPt(dia(60))}. Reserve em: ${link}`;
-  const msgEn = (link) => `Use code *VERAO20* to get 20% off your next booking. Válido até ${dataPt(dia(60))}. Book at: ${link}`;
+  const msgEn = (link) => `Use code *VERAO20* to get 20% off your next booking. Valid until ${new Date(dia(60)).toLocaleDateString('en-GB', { timeZone: 'UTC' })}. Book at: ${link}`;
 
   it('abre_o_modal_e_envia_as_mensagens_pt_e_en_por_whatsapp_e_email', async () => {
     await montar();
