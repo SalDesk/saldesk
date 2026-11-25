@@ -161,6 +161,13 @@ describe('DashboardHeader', () => {
     expect(botao.className).toContain('max-md:bottom-[calc(5rem+env(safe-area-inset-bottom))]');
   });
 
+  it('em telemovel os separadores e Ver calendario tem pelo menos 44 px de altura', () => {
+    render(<DashboardHeader title="Painel" view="hoje" onViewChange={() => {}} onVerCalendario={() => {}} />);
+    expect(screen.getByRole('tab', { name: 'Hoje' }).className).toContain('max-md:min-h-[44px]');
+    expect(screen.getByRole('tab', { name: 'Resumo' }).className).toContain('max-md:min-h-[44px]');
+    expect(screen.getByRole('button', { name: 'Ver calendário' }).className).toContain('max-md:!h-11');
+  });
+
   it('as setas mudam de vista como nos outros separadores', () => {
     const onViewChange = vi.fn();
     render(<DashboardHeader title="Painel" view="hoje" onViewChange={onViewChange} />);

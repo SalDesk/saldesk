@@ -70,6 +70,11 @@ describe('OcupacaoDias (mapa de 14 dias)', () => {
     expect(cabecalhos[5].className).toContain('text-n-500');
   });
 
+  it('o cabecalho do dia le-se com o dia da semana por extenso e o numero', () => {
+    render(<OcupacaoDias linhas={LINHAS} dias={DIAS} />);
+    expect(screen.getAllByRole('columnheader')[1]).toHaveAccessibleName('quarta-feira, 25');
+  });
+
   it('sem servicos activos diz-o em vez de mostrar uma tabela vazia', () => {
     render(<OcupacaoDias linhas={[]} dias={DIAS} />);
     expect(screen.queryByRole('table')).not.toBeInTheDocument();

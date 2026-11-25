@@ -58,7 +58,7 @@ export default function DashboardHeader({
                 tabIndex={activo || (!haActivo && i === 0) ? 0 : -1}
                 onKeyDown={(e) => aoCarregarTecla(e, i)}
                 onClick={() => onViewChange(tab.id)}
-                className={`px-4 h-8 rounded-full text-[13px] font-body font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ocean-300 ${
+                className={`px-4 h-8 max-md:h-11 max-md:min-h-[44px] rounded-full text-[13px] font-body font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ocean-300 ${
                   activo ? 'bg-ocean-900 text-white' : 'text-ocean-700 hover:bg-ocean-50'
                 }`}
               >
@@ -69,7 +69,7 @@ export default function DashboardHeader({
         </div>
 
         {onVerCalendario && (
-          <Button variant="secondary" onClick={onVerCalendario}>
+          <Button variant="secondary" onClick={onVerCalendario} className="max-md:!h-11 max-md:min-h-[44px]">
             {t('dashboard.activity.viewCalendar')}
           </Button>
         )}

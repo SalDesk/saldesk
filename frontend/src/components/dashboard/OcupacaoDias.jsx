@@ -127,6 +127,7 @@ export default function OcupacaoDias({ linhas = [], dias = [], compacto = false 
                   <th
                     key={data}
                     scope="col"
+                    aria-label={`${formatarData(data, { weekday: 'long' }, lang)}, ${Number(data.slice(8, 10))}`}
                     className={`font-mono text-[11px] font-medium text-center ${eFimDeSemana(data) ? 'text-n-900' : 'text-n-500'}`}
                   >
                     <span className="capitalize">{semPonto(formatarData(data, { weekday: 'short' }, lang))}</span>
