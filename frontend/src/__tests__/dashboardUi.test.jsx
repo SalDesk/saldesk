@@ -76,6 +76,7 @@ describe('AttentionPanel', () => {
     renderRouted(<AttentionPanel items={lista} />);
     const rotulos = screen.getAllByRole('listitem').map((li) => within(li).getByRole('button').textContent);
     expect(rotulos).toEqual(['Ver', 'Confirmar', 'Confirmar', 'Cobrar', 'Abrir']);
+    screen.getAllByRole('listitem').forEach((li) => expect(within(li).getByRole('button').className).toContain('min-h-[44px]'));
     expect(within(screen.getByRole('heading', { name: /Requer atenção/ }).parentElement).getByText('5')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Cobrar: Por pagar' }));
     expect(navigateMock).toHaveBeenCalledWith('/reservas');

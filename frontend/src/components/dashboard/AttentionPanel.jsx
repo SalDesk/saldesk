@@ -63,7 +63,7 @@ export default function AttentionPanel({ items }) {
                   type="button"
                   aria-label={`${accao}: ${item.title}`}
                   onClick={() => navigate(item.to)}
-                  className="text-[13px] font-body font-semibold text-ocean-700 hover:text-ocean-900 hover:underline whitespace-nowrap min-h-[28px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sand-500 rounded-sm"
+                  className="inline-flex items-center justify-end text-[13px] font-body font-semibold text-ocean-700 hover:text-ocean-900 hover:underline whitespace-nowrap min-h-[44px] min-w-[44px] -my-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sand-500 rounded-sm"
                 >
                   {accao}
                 </button>

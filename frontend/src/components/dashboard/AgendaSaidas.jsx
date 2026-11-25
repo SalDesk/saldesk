@@ -74,6 +74,7 @@ export default function AgendaSaidas({ eventos, reservasHoje, tours, agoraMin, o
             aria-valuemin={0}
             aria-valuemax={100}
             aria-valuenow={pct}
+            aria-valuetext={t('dashboard.saidas.checkinOf', { a: d.checkin, b: d.total })}
             aria-label={t('dashboard.saidas.checkin')}
             className="h-2 rounded-full bg-ocean-100 overflow-hidden"
           >
@@ -100,7 +101,7 @@ export default function AgendaSaidas({ eventos, reservasHoje, tours, agoraMin, o
           <button
             type="button"
             onClick={() => onAbrirManifesto?.(escolhido)}
-            className="inline-flex items-center min-h-[40px] px-4 rounded-full bg-ocean-900 text-white text-sm font-body font-semibold hover:bg-ocean-800 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sand-500 focus-visible:ring-offset-2"
+            className="inline-flex items-center min-h-[44px] px-4 rounded-full bg-ocean-900 text-white text-sm font-body font-semibold hover:bg-ocean-800 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sand-500 focus-visible:ring-offset-2"
           >
             {t('dashboard.saidas.openManifest')}
           </button>
@@ -131,7 +132,7 @@ export default function AgendaSaidas({ eventos, reservasHoje, tours, agoraMin, o
                 const ativo = escolhido?.id === e.id;
                 const d = detalhes.get(e.id);
                 const sub = e.guias.length > 0
-                  ? t('dashboard.saidas.withGuide', { people: pessoasTexto(d.total), guide: e.guias[0] })
+                  ? t('dashboard.saidas.withGuide', { people: pessoasTexto(d.total), guide: e.guias.join(', ') })
                   : t('dashboard.saidas.withoutGuide', { people: pessoasTexto(d.total) });
                 return (
                   <li key={e.id}>

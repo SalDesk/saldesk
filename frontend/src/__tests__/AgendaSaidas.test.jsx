@@ -97,6 +97,13 @@ describe('AgendaSaidas', () => {
     expect(d).toHaveTextContent(/330/);
   });
 
+  it('o botao do manifesto tem pelo menos 44 px, a barra diz "x de y" e a linha junta os guias', () => {
+    montar({ eventos: [{ ...EVENTOS[1], guias: ['Rui', 'Ana'] }, EVENTOS[2]] });
+    expect(screen.getByRole('button', { name: 'Abrir manifesto' }).className).toContain('min-h-[44px]');
+    expect(screen.getByRole('progressbar', { name: 'Check-in feito' })).toHaveAttribute('aria-valuetext', '3 de 4');
+    expect(screen.getByRole('button', { name: /Mergulho/ })).toHaveTextContent('Rui, Ana');
+  });
+
   it('Abrir manifesto entrega a saida escolhida', () => {
     const props = montar();
     fireEvent.click(screen.getByRole('button', { name: 'Abrir manifesto' }));

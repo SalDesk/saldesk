@@ -24,7 +24,7 @@ import { TODAY, uniaoPorId } from './shared';
 import { buildAttentionItems, unpaidReservations } from './dashboardLogic';
 import { eventosAtividades, porReceber } from './agendaLogic';
 import {
-  curvaMare, reservasDaSaida, serieDias, valorDoDia, variacaoSemana, variacaoSemanaPct,
+  curvaMare, serieDias, valorDoDia, variacaoSemana, variacaoSemanaPct,
 } from './mareLogic';
 
 /* ─── Activity dashboard (vista "Hoje") ──────────────────────── */
@@ -273,7 +273,7 @@ export default function ActivityDashboard() {
         <ManifestoModal
           open
           onClose={() => setManifesto(null)}
-          reservations={reservasDaSaida(manifesto, todayRes, tours)}
+          reservations={todayRes}
           units={tours}
           tourIdInicial={String(manifesto.id).split('|')[0]}
           dataInicial={TODAY}

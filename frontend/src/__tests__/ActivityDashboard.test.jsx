@@ -166,7 +166,7 @@ describe('ActivityDashboard (Hoje)', () => {
     expect(navigateMock).not.toHaveBeenCalled();
   });
 
-  it('abrir_manifesto_mostra_os_clientes_da_saida_escolhida', async () => {
+  it('abrir_manifesto_abre_na_saida_escolhida_e_deixa_mudar_de_tour', async () => {
     const comHora = { ...TOUR_A, description: JSON.stringify({ start_time: '09:00' }) };
     carregaServicos({
       hoje: [
@@ -181,9 +181,11 @@ describe('ActivityDashboard (Hoje)', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Abrir manifesto' }));
     const dialogo = await screen.findByRole('dialog');
     expect(within(dialogo).getByText('Ana Silva')).toBeInTheDocument();
-    /* so os clientes desta saida: nem a das 15:00, nem a de outro tour */
-    expect(within(dialogo).queryByText('Rui Costa')).not.toBeInTheDocument();
+    /* abre no tour e dia da saida; os seletores continuam a funcionar para o dia todo */
     expect(within(dialogo).queryByText('Outro Tour')).not.toBeInTheDocument();
+    fireEvent.change(within(dialogo).getByLabelText('Tour'), { target: { value: 't2' } });
+    expect(within(dialogo).getByText('Outro Tour')).toBeInTheDocument();
+    expect(within(dialogo).queryByText('Ana Silva')).not.toBeInTheDocument();
   });
 
   it('uma_saida_toda_com_check_out_continua_na_agenda', async () => {
