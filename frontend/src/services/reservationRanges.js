@@ -43,3 +43,18 @@ export function estadiaProximosDias(n) {
     stay_to: formatar(ano, mes, dia + n - 1), /* construcao local: seguro com mudancas de hora */
   };
 }
+
+/* Os n dias antes de hoje, sem incluir hoje (n = 13 -> hoje-13 .. hoje-1); n inteiro >= 1 */
+export function estadiaUltimosDias(n) {
+  if (!Number.isInteger(n) || n < 1) {
+    throw new RangeError(`estadiaUltimosDias: n must be an integer >= 1 (received: ${n})`);
+  }
+  const agora = new Date();
+  const ano = agora.getFullYear();
+  const mes = agora.getMonth();
+  const dia = agora.getDate();
+  return {
+    stay_from: formatar(ano, mes, dia - n),
+    stay_to: formatar(ano, mes, dia - 1),
+  };
+}

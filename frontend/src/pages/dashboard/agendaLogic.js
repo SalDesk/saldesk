@@ -24,7 +24,7 @@ export function paraHora(minutos) {
 }
 
 /* Meta JSON guardada na descricao do tour (start_time, duration em horas, meeting_point, time_slots) */
-function metaDoTour(tour) {
+export function metaDoTour(tour) {
   const d = tour?.description;
   if (typeof d !== 'string' || !d.startsWith('{')) return {};
   try {
@@ -35,13 +35,13 @@ function metaDoTour(tour) {
   }
 }
 
-function positivo(valor) {
+export function positivo(valor) {
   const n = Number(valor);
   return Number.isFinite(n) && n > 0 ? n : null;
 }
 
 /* Capacidade do horario (time_slots da ficha) se existir, senao a do tour, senao null */
-function capacidadeDe(tour, meta, horario) {
+export function capacidadeDe(tour, meta, horario) {
   if (horario !== null && Array.isArray(meta.time_slots)) {
     const slot = meta.time_slots.find((s) => s && paraMinutos(String(s.time ?? '')) === horario);
     const cap = positivo(slot?.capacity);
@@ -51,13 +51,15 @@ function capacidadeDe(tour, meta, horario) {
 }
 
 /* Duracao do tour em minutos: meta.duration (horas) x 60, senao a duracao por omissao */
-function duracaoDe(meta) {
+export function duracaoDe(meta) {
   const horas = positivo(meta.duration);
   return horas !== null ? Math.round(horas * 60) : DURACAO_POR_OMISSAO_MIN;
 }
 
 /* Reservas de hoje -> um evento por (tour, horario), pela ordem em que aparecem */
-export function eventosAtividades({ reservas, tours, atribuicoes } = {}) {
+export function eventosAtividades({ reservas, tours, atribuicoes, incluirConcluidas = false } = {}) {
+  /* incluirConcluidas: mantem tambem as reservas com check-out (a agenda das saidas nao perde uma saida ja feita) */
+  const estados = incluirConcluidas ? [...ESTADOS_ATIVOS, 'checked_out'] : ESTADOS_ATIVOS;
   const toursPorId = new Map((Array.isArray(tours) ? tours : []).filter(Boolean).map((t) => [t.id, t]));
 
   /* Guias por reserva (sem atribuicoes canceladas) */
@@ -72,7 +74,7 @@ export function eventosAtividades({ reservas, tours, atribuicoes } = {}) {
 
   const eventos = new Map();
   (Array.isArray(reservas) ? reservas : []).forEach((r) => {
-    if (!r || !ESTADOS_ATIVOS.includes(r.status)) return;
+    if (!r || !estados.includes(r.status)) return;
     const tour = toursPorId.get(r.unit_id);
     if (!tour) return;
     const meta = metaDoTour(tour);

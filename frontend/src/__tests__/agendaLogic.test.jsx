@@ -15,6 +15,14 @@ let seq = 0;
 const r = (o) => ({ id: 'r' + (seq += 1), unit_id: 't1', status: 'confirmed', guests: 2, customer_name: 'Ana Silva', start_time: null, ...o });
 
 describe('agendaLogic: eventos de atividades', () => {
+  it('incluirConcluidas_mantem_as_reservas_com_check_out_e_por_omissao_nao', () => {
+    const reservas = [{ id: 'a', unit_id: 't1', status: 'checked_out', guests: 2 }];
+    expect(eventosAtividades({ reservas, tours: [TOUR] })).toEqual([]);
+    const eventos = eventosAtividades({ reservas, tours: [TOUR], incluirConcluidas: true });
+    expect(eventos).toHaveLength(1);
+    expect(eventos[0].id).toBe('t1|09:00');
+  });
+
   it('paraMinutos aceita HH:MM e HH:MM:SS e recusa lixo', () => {
     expect(paraMinutos('14:00')).toBe(840);
     expect(paraMinutos('14:00:00')).toBe(840);

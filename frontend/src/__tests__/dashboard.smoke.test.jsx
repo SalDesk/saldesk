@@ -23,6 +23,7 @@ vi.mock('../services/financeiroService', () => ({
   getResumo: vi.fn(),
   getReceita: vi.fn().mockResolvedValue([]),
   getUnidades: vi.fn().mockResolvedValue([]),
+  getCanais: vi.fn().mockResolvedValue([]),
 }));
 vi.mock('../services/weatherService', async (importOriginal) => {
   const real = await importOriginal();
@@ -67,7 +68,7 @@ function servicosAFalhar() {
 }
 
 /* Texto que so o componente de cada tipo renderiza (pt, existente no codigo original) */
-const TEXTO_ACTIVITY   = 'Ocupação do mês';
+const TEXTO_ACTIVITY   = 'Maré do dia';
 const TEXTO_HOTEL      = 'Mapa de Quartos — Hoje';
 const TEXTO_RENTACAR   = 'Frota — Estado Actual';
 const TEXTO_RESTAURANT = 'Covers do mês';
@@ -171,6 +172,10 @@ describe('Dashboard (fumo por tipo de operador)', () => {
     /* o cabecalho e a lista de WhatsApp pendentes continuam montados */
     expect(screen.getByText(/^(Bom dia|Boa tarde|Boa noite), Teste$/)).toBeInTheDocument();
     expect(screen.getByTestId('whatsapp-pendentes')).toBeInTheDocument();
+    /* a vista Resumo carrega sozinha: esperar que todos os blocos assentem */
+    expect(await screen.findByText('Sem receita neste período')).toBeInTheDocument();
+    /* canais e servicos mostram o mesmo texto vazio */
+    expect(await screen.findAllByText('Sem reservas neste período')).toHaveLength(2);
   });
 
   it('volta a hoje', async () => {
@@ -298,5 +303,22 @@ describe('Dashboard: virar o dia com o ecrã aberto', () => {
     await screen.findByRole('heading', { name: 'Bom dia, Zy Tours' });
     act(() => { vi.advanceTimersByTime(5 * 60 * 1000); });
     expect(recarregarPagina).not.toHaveBeenCalled();
+  });
+});
+
+describe('Dashboard: espaco por baixo do botao flutuante (telemovel)', () => {
+  beforeEach(() => { servicosVazios(); navigateMock.mockReset(); });
+  afterEach(() => {
+    cleanup();
+    useAuthStore.setState({ operator: null });
+    useUiStore.setState({ lang: 'pt', dashboardView: 'hoje' });
+  });
+
+  it('o_conteudo_acaba_com_um_espaco_do_tamanho_do_botao_nova_reserva', async () => {
+    renderDashboard('activity');
+    const espaco = await screen.findByTestId('espaco-botao-flutuante');
+    expect(espaco.className).toContain('md:hidden');
+    expect(espaco.getAttribute('aria-hidden')).toBe('true');
+    expect(espaco.style.height).toContain('4rem');
   });
 });

@@ -6,10 +6,11 @@ import Modal from '../../components/ui/Modal';
 import { useT } from '../../i18n';
 import { formatDate, eurosInteiros } from './shared';
 
-export default function ManifestoModal({ open, onClose, reservations, units }) {
+/* tourIdInicial e dataInicial (opcionais) abrem o manifesto ja filtrado, por exemplo para uma saida do dia */
+export default function ManifestoModal({ open, onClose, reservations, units, tourIdInicial = '', dataInicial = '' }) {
   const t = useT();
-  const [tourId, setTourId] = useState('');
-  const [date,   setDate]   = useState('');
+  const [tourId, setTourId] = useState(tourIdInicial);
+  const [date,   setDate]   = useState(dataInicial);
 
   const participants = useMemo(() => {
     if (!tourId && !date) return [];

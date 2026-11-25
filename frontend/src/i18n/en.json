@@ -241,15 +241,44 @@
     "optional": "Optional"
   },
   "dashboard": {
+    "mare": {
+      "tiles": {
+        "reservations": "Bookings today",
+        "people": "People on activities",
+        "value": "Value of the day"
+      },
+      "notes": {
+        "reservations": "{{n}} to confirm",
+        "reservationsNone": "Nothing to confirm",
+        "people": "across {{n}} departures",
+        "value": "booked for today",
+        "toReceive": "{{n}} booking(s) unpaid"
+      },
+      "vsLastWeek": "vs the same weekday last week",
+      "wind": {"title": "Wind and sea", "subtitle": "Next 5 days", "loading": "Loading the wind forecast…", "error": "Could not load the wind forecast.", "empty": "No wind forecast available.", "kmh": "{{n}} km/h", "warning": "{{day}}: wind up to {{kmh}} km/h. Consider rescheduling sea activities.", "cardinal": {"N": "N", "NE": "NE", "E": "E", "SE": "SE", "S": "S", "SW": "SW", "W": "W", "NW": "NW"}, "from": "Wind from {{dir}}"},
+      "occupancy": {"title": "Occupancy for the next 14 days", "subtitle": "Seats sold per service; the light days still have room to sell", "caption": "Percentage of seats sold per service and day", "service": "Service", "legendEmpty": "Empty", "legendFull": "Full", "legendNoCapacity": "No capacity set", "empty": "No active services.", "cell": "{{people}} of {{capacity}} seats", "cellNoCapacity": "{{people}} guest(s), no capacity set", "barAria": "{{day}}: {{people}} guest(s)"},
+      "header": {"viewLabel": "Dashboard view"},
+      "errors": {"today": "Could not load today's bookings.", "units": "Could not load the services.", "days": "Could not load the bookings for the coming days."}, "truncated": {"today": "List possibly incomplete", "days": "List possibly incomplete: there are too many bookings to show occupancy reliably."}, "sparkline": "{{label}}, last 7 days: {{values}}",
+      "tide": {
+        "title": "Tide of the day",
+        "subtitle": "People out on activities, hour by hour",
+        "peak": "peak at {{time}}",
+        "now": "now, {{time}}",
+        "departures": "departures today",
+        "empty": "No activities scheduled for today",
+        "emptyNoTime": "Today's bookings have no set time",
+        "aria": "People on activities between {{from}} and {{to}}; peak of {{peak}} at {{time}}; now {{now}}."
+      }
+    },
     "greeting": {"morning": "Good morning, {{name}}", "afternoon": "Good afternoon, {{name}}", "evening": "Good evening, {{name}}"},
-    "agenda": {"title": "Today's schedule", "summary": "{{tours}} tours · {{people}} people", "noTime": "No time set", "done": "Done", "now": "In progress, ends at {{time}}", "toConfirm": "{{n}} to confirm", "nearlyFull": "Nearly full", "guide": "guide {{name}}", "chegada": "Arrival · {{name}}", "partida": "Departure · {{name}}", "levantamento": "Pick-up · {{name}}", "devolucao": "Return · {{name}}", "mesa": "{{name}}", "guests": "{{n}} guest(s)", "nights": "{{n}} night(s)", "preOrder": "pre-order", "empty": "Nothing scheduled today", "summaryHotel": "{{a}} arrivals · {{d}} departures", "summaryRentacar": "{{a}} pick-ups · {{d}} returns", "summaryRestaurant": "{{n}} bookings · {{p}} people"},
+    "saidas": {"checkinOf": "{{a}} of {{b}}", "hint": "Tap a departure to see the detail", "detail": "Departure detail", "nowStatus": "In progress", "nextStatus": "Up next", "doneStatus": "Done", "noTimeStatus": "No time", "noGuideStatus": "No guide", "checkin": "Checked in", "guide": "Guide", "toAssign": "To be assigned", "meeting": "Meeting point", "toReceive": "To collect", "openManifest": "Open manifest", "people": "{{n}} guest(s)", "withGuide": "{{people}} · {{guide}}", "withoutGuide": "{{people}} · no guide"}, "agenda": {"title": "Today's schedule", "summary": "{{tours}} tours · {{people}} people", "noTime": "No time set", "done": "Done", "now": "In progress, ends at {{time}}", "toConfirm": "{{n}} to confirm", "nearlyFull": "Nearly full", "guide": "guide {{name}}", "chegada": "Arrival · {{name}}", "partida": "Departure · {{name}}", "levantamento": "Pick-up · {{name}}", "devolucao": "Return · {{name}}", "mesa": "{{name}}", "guests": "{{n}} guest(s)", "nights": "{{n}} night(s)", "preOrder": "pre-order", "empty": "Nothing scheduled today", "summaryHotel": "{{a}} arrivals · {{d}} departures", "summaryRentacar": "{{a}} pick-ups · {{d}} returns", "summaryRestaurant": "{{n}} bookings · {{p}} people"},
     "hero": {"revenue": "{{month}} revenue", "vsPrev": "{{pct}}% vs last month", "occupancy": "Monthly occupancy", "today": "Today", "peopleToday": "{{n}} people", "inTours": "in {{n}} tours · {{p}} to confirm", "participants": "{{n}} participants", "occupancyToday": "Occupancy today", "roomsOccupied": "{{n}} of {{total}} rooms", "vehiclesRented": "{{n}} of {{total}} vehicles", "tablesTaken": "{{n}} of {{total}} tables", "arrivals": "{{n}} arrivals", "departures": "{{n}} departures · {{p}} arrivals to confirm", "pickups": "{{n}} pick-ups", "returns": "{{n}} returns", "peopleTables": "in {{n}} bookings · {{p}} to confirm"},
     "tiles": {"reservations": "Bookings this month", "rating": "Average rating", "avgValue": "Average booking value", "toReceive": "To receive"},
     "shortcuts": {"title": "Shortcuts", "checkin": "Check-in", "blockDay": "Block a day", "message": "Send message", "payment": "Record payment"},
     "attention": {
       "title": "Needs attention",
       "allClear": "All clear",
-      "open": "Open",
+      "open": "Open", "confirm": "Confirm", "collect": "Collect", "view": "View",
       "weather": "{{n}} tour(s) affected by weather",
       "maintenance": "{{n}} unit(s) under maintenance",
       "unconfirmed": "{{n}} booking(s) to confirm",
@@ -262,17 +291,7 @@
       "today": "Today",
       "summary": "Summary"
     },
-    "summary": {
-      "kpiRevenue": "Revenue this month",
-      "kpiBookings": "Bookings",
-      "kpiAvgValue": "Average value",
-      "kpiOccupancy": "Occupancy",
-      "vsPrevMonth": "vs previous month",
-      "chartTitle": "Revenue, last 30 days",
-      "chartEmpty": "No revenue in the last 30 days",
-      "topServices": "Top-selling services",
-      "topServicesEmpty": "No sales this month"
-    },
+    "summary": {"topServices":"Top-selling services","topServicesEmpty":"No sales this month"}, "resumo": {"channels":{"ariaDirect":"{{pct}}% direct","title":"Where bookings come from","centerLabel":"direct","note":"Direct bookings pay no commission to platforms: every point that goes up here is margin.","empty":"No bookings in this period","error":"Could not load the channels.","others":"Others","aria":"Booking sources: {{lista}}.","ariaItem":"{{name}} {{pct}}%"},"top":{"byBookings":"No completed sales in this period yet; sorted by bookings.","title":"Top earning services","empty":"No bookings in this period","error":"Could not load the services.","bookings":"{{n}} bookings","bookingsOne":"1 booking"},"customers":{"title":"Who the customers are","rating":"Average rating","reviews":"{{n}} reviews","reviewsOne":"1 review","countries":"Where they come from","countriesEmpty":"No countries in this period's bookings","countriesError":"Could not load the countries.","truncated":"Based on the {{n}} most recent bookings of the period"},"period":{"label":"Period","7d":"7 days","30d":"30 days","12m":"12 months"},"tiles":{"revenue":"Revenue","bookings":"Bookings","avgValue":"Average value per booking","occupancy":"Occupancy"},"vsPrevious":"vs previous period","pp":"{{n}} pp","chart":{"title":"Revenue","subtitle":"{{from}} to {{to}}","current":"This period","previous":"Previous period","empty":"No revenue in this period","error":"The revenue could not be loaded.","aria":"Revenue for the period: {{total}}. Best point: {{label}}, {{value}}.","ariaNone":"No revenue in this period.","best":"Best point"}},
     "title": "Dashboard",
     "revenue": "Revenue",
     "occupancy": "Occupancy",

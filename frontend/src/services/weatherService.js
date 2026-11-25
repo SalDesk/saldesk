@@ -10,18 +10,24 @@ export async function getWeatherForecast(lat = DEFAULT_LAT, lng = DEFAULT_LNG) {
   const url =
     'https://api.open-meteo.com/v1/forecast' +
     `?latitude=${lat}&longitude=${lng}` +
-    '&daily=temperature_2m_max,temperature_2m_min,precipitation_sum,weathercode' +
+    '&daily=temperature_2m_max,temperature_2m_min,precipitation_sum,weathercode,wind_speed_10m_max,wind_direction_10m_dominant' +
     '&timezone=Atlantic/Cape_Verde';
   const res = await fetch(url);
   if (!res.ok) throw new Error('Open-Meteo unavailable');
   const json = await res.json();
-  const { time, temperature_2m_max, temperature_2m_min, precipitation_sum, weathercode } = json.daily;
+  const {
+    time, temperature_2m_max, temperature_2m_min, precipitation_sum, weathercode,
+    wind_speed_10m_max, wind_direction_10m_dominant,
+  } = json.daily;
   return time.map((date, i) => ({
     date,
     tempMax:       Math.round(temperature_2m_max[i]),
     tempMin:       Math.round(temperature_2m_min[i]),
     precipitation: Number((precipitation_sum[i] || 0).toFixed(1)),
     code:          weathercode[i],
+    /* vento maximo (km/h) e direcao DE ONDE VEM (graus); null se a previsao nao o traz */
+    ventoKmh:      Number.isFinite(wind_speed_10m_max?.[i]) ? Math.round(wind_speed_10m_max[i]) : null,
+    ventoDirecao:  Number.isFinite(wind_direction_10m_dominant?.[i]) ? Math.round(wind_direction_10m_dominant[i]) : null,
   }));
 }
 
@@ -37,6 +43,11 @@ export function weatherInfo(code) {
   if (code <= 75)  return { chave: 'snow',         iconName: 'Cloud',          color: 'var(--n400)', bg: '#F8FAFC' };
   if (code <= 82)  return { chave: 'showers',      iconName: 'CloudRain',      color: 'var(--ocean-700)', bg: '#DBEAFE' };
   return                  { chave: 'thunderstorm', iconName: 'CloudLightning', color: 'var(--error)', bg: '#FEF2F2' };
+}
+
+/* Vento forte: a partir de limite km/h (inclusive); sem vento conhecido nao ha aviso */
+export function ventoForte(dia, limite = 35) {
+  return Number.isFinite(dia?.ventoKmh) && dia.ventoKmh >= limite;
 }
 
 export function isBadWeather(day) {
