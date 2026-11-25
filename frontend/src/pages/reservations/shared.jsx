@@ -2,6 +2,7 @@
 import FilterChips from '../../components/ui/FilterChips';
 import { useT } from '../../i18n';
 import { formatarData, formatarNumero, linguaActual } from '../../utils/formatoLingua';
+import { eurosDuasCasas } from '../../utils/formatoEuros';
 import { rotuloMetodo } from '../financial/shared';
 
 /* Origens com cor propria; o valor gravado nunca muda, o rotulo vem de rotuloOrigem */
@@ -49,16 +50,13 @@ export function formatDate(d) {
 }
 
 /* Euros: em pt escreve-se como sempre (sem separador de milhares); nas outras linguas com os separadores da lingua.
-   `eurosInteiros` arredonda as tabelas, `eurosDecimais` mostra os centimos (nas outras linguas so se os houver). */
+   `eurosInteiros` arredonda as tabelas, `eurosDecimais` mostra sempre os centimos (o mesmo que eurosDuasCasas). */
 export function eurosInteiros(valor, lang = linguaActual()) {
   const n = Number(valor || 0).toFixed(0);
   return lang === 'pt' ? `€${n}` : `€${formatarNumero(n, {}, lang)}`;
 }
 export function eurosDecimais(valor, lang = linguaActual()) {
-  const n = Number(valor);
-  if (lang === 'pt') return `€${n.toFixed(2)}`;
-  const opcoes = Number.isInteger(n) ? {} : { minimumFractionDigits: 2, maximumFractionDigits: 2 };
-  return `€${formatarNumero(n, opcoes, lang)}`;
+  return eurosDuasCasas(valor, lang);
 }
 
 /* Metodo de pagamento no detalhe: em pt o valor gravado em maiusculas, como sempre; nas outras linguas o rotulo

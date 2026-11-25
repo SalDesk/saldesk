@@ -11,7 +11,7 @@ import useUiStore from '../store/uiStore';
 const TEXTOS = {
   pt: { cancelar: 'Cancelar', confirmar: 'Confirmar', fechar: 'Fechar' },
   en: { cancelar: 'Cancel', confirmar: 'Confirm', fechar: 'Close' },
-  de: { cancelar: 'Abbrechen', confirmar: 'Bestatigen', fechar: 'Schließen' },
+  de: { cancelar: 'Abbrechen', confirmar: 'Bestätigen', fechar: 'Schließen' },
   nl: { cancelar: 'Annuleren', confirmar: 'Bevestigen', fechar: 'Sluiten' },
 };
 

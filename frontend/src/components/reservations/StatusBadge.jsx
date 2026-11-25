@@ -6,7 +6,8 @@ const CONFIG = {
   confirmed:   { cls: 'bg-blue-100 text-blue-700' },
   checked_in:  { cls: 'bg-green-100 text-green-700' },
   checked_out: { cls: 'bg-gray-100 text-gray-600' },
-  cancelled:   { cls: 'bg-red-100 text-red-600' }
+  cancelled:   { cls: 'bg-red-100 text-red-600' },
+  no_show:     { cls: 'bg-gray-100 text-gray-500' }
 };
 
 export default function StatusBadge({ status }) {

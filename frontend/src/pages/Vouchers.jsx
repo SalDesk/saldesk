@@ -211,18 +211,18 @@ function ShareModal({ voucher, bookingLink, onClose }) {
   const lang = useLingua();
   if (!voucher) return null;
 
-  /* Os textos para o cliente ficam na lingua deles (pt e en), qualquer que seja a lingua do painel. A frase
-     "Valido ate" e a mesma nas duas mensagens, como sempre foi. */
+  /* Os textos para o cliente ficam na lingua deles (pt e en), qualquer que seja a lingua do painel. Cada
+     mensagem leva a frase de validade e a data na sua propria lingua. */
   const tPt = getT('pt');
   const tEn = getT('en');
   const desconto = fmtDiscount(voucher, 'pt');
-  const expires = voucher.expires_at
-    ? tPt('vouchersPage.share.expires', { date: formatarData(new Date(voucher.expires_at), { timeZone: 'UTC' }, 'pt') })
-    : '';
+  const validade = (tl, lingua) => (voucher.expires_at
+    ? tl('vouchersPage.share.expires', { date: formatarData(new Date(voucher.expires_at), { timeZone: 'UTC' }, lingua) })
+    : '');
 
-  const dadosMsg = { code: voucher.code, discount: desconto, expires, link: bookingLink };
-  const msgPt = tPt('vouchersPage.share.message', dadosMsg);
-  const msgEn = tEn('vouchersPage.share.message', dadosMsg);
+  const dadosMsg = { code: voucher.code, discount: desconto, link: bookingLink };
+  const msgPt = tPt('vouchersPage.share.message', { ...dadosMsg, expires: validade(tPt, 'pt') });
+  const msgEn = tEn('vouchersPage.share.message', { ...dadosMsg, expires: validade(tEn, 'en') });
 
   return (
     <Modal open onClose={onClose} title={t('vouchersPage.share.title', { code: voucher.code })} size="sm">

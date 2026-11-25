@@ -509,7 +509,7 @@ describe('Detalhe, cartao e formulario da reserva', () => {
 
   it('em ingles: o valor e as datas seguem o en-GB e os rotulos sao ingleses', async () => {
     await abrirDetalhe();
-    expect(screen.getByText('€1,234')).toBeInTheDocument();
+    expect(screen.getByText('€1,234.00')).toBeInTheDocument();
     expect(screen.getByText('Paid: €500.50')).toBeInTheDocument();
     expect(screen.getByText('24/11/2026')).toBeInTheDocument();
     expect(screen.getByText('27/11/2026')).toBeInTheDocument();
@@ -564,7 +564,7 @@ describe('Detalhe, cartao e formulario da reserva', () => {
     expect(screen.getByRole('option', { name: '09:00 (8 seats)' })).toBeInTheDocument();
     fireEvent.change(campo('Tour date'), { target: { value: AMANHA } });
     expect(screen.getByText('1 guest(s)')).toBeInTheDocument();
-    expect(screen.getByText('€25')).toBeInTheDocument();
+    expect(screen.getByText('€25.00')).toBeInTheDocument();
     fireEvent.change(campo('Time slot'), { target: { value: '09:00' } });
     fireEvent.change(campo('Customer'), { target: { value: 'Cliente Alfa' } });
     fireEvent.change(campo('Email'), { target: { value: 'alfa@exemplo.cv' } });
@@ -585,7 +585,7 @@ describe('Detalhe, cartao e formulario da reserva', () => {
     fireEvent.change(campo('Check-in'), { target: { value: AMANHA } });
     fireEvent.change(campo('Check-out'), { target: { value: DEPOIS } });
     expect(screen.getByText('1 night(s)')).toBeInTheDocument();
-    expect(screen.getByText('€50')).toBeInTheDocument();
+    expect(screen.getByText('€50.00')).toBeInTheDocument();
     expect(screen.getByText('The customer agreed to receive messages about this booking on WhatsApp')).toBeInTheDocument();
     semPortugues();
     unmount();
@@ -644,7 +644,7 @@ describe('Helpers de formato', () => {
     expect(eurosInteiros(1234.4, 'en')).toBe('€1,234');
     expect(eurosInteiros(undefined, 'en')).toBe('€0');
     expect(eurosDecimais(1234, 'pt')).toBe('€1234.00');
-    expect(eurosDecimais(1234, 'en')).toBe('€1,234');
+    expect(eurosDecimais(1234, 'en')).toBe('€1,234.00');
     expect(eurosDecimais(1234.5, 'en')).toBe('€1,234.50');
   });
 
