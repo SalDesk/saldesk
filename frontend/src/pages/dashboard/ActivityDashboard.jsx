@@ -1,36 +1,34 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { BookOpen, Compass, Star, Euro, AlertTriangle } from 'lucide-react';
-import { getResumo, getReceita } from '../../services/financeiroService';
+import { BookOpen, Compass } from 'lucide-react';
 import { listUnits } from '../../services/unitsService';
 import { listReservations } from '../../services/reservationsService';
 import { listAssignments } from '../../services/assignmentService';
-import { estadiaEm, estadiaNoMes, estadiaProximosDias } from '../../services/reservationRanges';
+import { estadiaEm, estadiaProximosDias, estadiaUltimosDias } from '../../services/reservationRanges';
 import { getWeatherForecast, weatherInfo, isBadWeather } from '../../services/weatherService';
-import api from '../../services/api';
 import { useT } from '../../i18n';
-import { formatarNumero } from '../../utils/formatoLingua';
 import useUiStore from '../../store/uiStore';
 import useAgora from '../../hooks/useAgora';
 import AttentionPanel from '../../components/dashboard/AttentionPanel';
 import DayAgenda from '../../components/dashboard/DayAgenda';
-import HeroCard from '../../components/dashboard/HeroCard';
-import StatTiles from '../../components/dashboard/StatTiles';
+import TilesTendencia from '../../components/dashboard/TilesTendencia';
+import MareDoDia from '../../components/dashboard/MareDoDia';
 import Shortcuts from '../../components/dashboard/Shortcuts';
 import NextDaysStrip from '../../components/dashboard/NextDaysStrip';
 import Button from '../../components/ui/Button';
 import EmptyState from '../../components/ui/EmptyState';
 import LoadingSpinner from '../../components/shared/LoadingSpinner';
-import { TODAY, mesAtual } from './shared';
+import { eurosInteiros } from '../reservations/shared';
+import { TODAY, uniaoPorId } from './shared';
 import { buildAttentionItems, unpaidReservations } from './dashboardLogic';
+import { eventosAtividades, porReceber } from './agendaLogic';
 import {
-  eventosAtividades, serieReceitaAcumulada, variacaoPercentual, valorMedio, porReceber, localeDe,
-} from './agendaLogic';
+  curvaMare, serieDias, valorDoDia, variacaoSemana, variacaoSemanaPct,
+} from './mareLogic';
 
 /* ─── Activity dashboard (vista "Hoje") ──────────────────────── */
 
 const ESTADOS_ATIVOS = ['pending', 'confirmed', 'checked_in'];
-const ESTADOS_CONFIRMADOS = ['confirmed', 'checked_in', 'checked_out'];
 
 function weekDays() {
   /* Data local do dispositivo, nao UTC -- ver nota junto de TODAY em shared.jsx.
@@ -42,63 +40,42 @@ function weekDays() {
   });
 }
 
-function euros(valor) {
-  return `€${formatarNumero(Math.round(Number(valor) || 0))}`;
-}
-
 export default function ActivityDashboard() {
   const t        = useT();
   const lang     = useUiStore((s) => s.lang);
   const navigate = useNavigate();
   const agora    = useAgora();
-  const periodo  = mesAtual();
   const next7    = useMemo(() => weekDays(), []);
 
   const [tours,        setTours]        = useState([]);
   const [todayRes,     setTodayRes]     = useState([]);
-  const [monthRes,     setMonthRes]     = useState([]);
+  const [prevRes,      setPrevRes]      = useState([]);
   const [weekRes,      setWeekRes]      = useState([]);
-  const [resumo,       setResumo]       = useState(null);
-  const [avgRating,    setAvgRating]    = useState(null);
   const [unpaidRes,    setUnpaidRes]    = useState([]);
-  const [receitaDia,   setReceitaDia]   = useState([]);
   const [atribuicoes,  setAtribuicoes]  = useState([]);
   const [loading,      setLoading]      = useState(true);
   const [wxAlerts,     setWxAlerts]     = useState([]);
 
   useEffect(() => {
-    /* Cada chamada falha para o seu valor vazio: uma falha nao apaga as outras.
-       /reviews/stats devolve { total, average, distribution }; sem avaliacoes
-       (total 0) a media nao existe */
+    /* Cada chamada falha para o seu valor vazio: uma falha nao apaga as outras */
     Promise.all([
       listUnits().catch(() => []),
       listReservations(estadiaEm(TODAY)).catch(() => []),
-      listReservations(estadiaNoMes()).catch(() => []),
+      /* Os 13 dias antes de hoje: tendencia dos ultimos 7 dias e o mesmo dia da semana passada */
+      listReservations(estadiaUltimosDias(13)).catch(() => []),
       listReservations(estadiaProximosDias(7)).catch(() => []),
       /* Pagamentos por regularizar de QUALQUER mes: com so as reservas do mes, uma divida de um mes
          anterior nunca aparecia em "Requer atencao" */
       listReservations({ payment_status: 'pending,partial' }).catch(() => []),
-      getResumo(periodo.inicio, periodo.fim).catch(() => null),
-      api.get('/reviews/stats')
-        .then(r => {
-          const s = r.data?.data;
-          return Number(s?.total) > 0 ? (s.average ?? null) : null;
-        })
-        .catch(() => null),
-      /* Grafico do cartao de destaque: receita por dia, do dia 1 ate hoje */
-      getReceita(periodo.inicio, TODAY, 'day').catch(() => []),
       /* Guias da agenda (cruzados no browser por reservation_id) */
       listAssignments().catch(() => []),
     ])
-      .then(([toursData, tRes, mRes, wRes, uRes, res, avgR, rDia, atr]) => {
+      .then(([toursData, tRes, pRes, wRes, uRes, atr]) => {
         setTours(toursData || []);
         setTodayRes(tRes || []);
-        setMonthRes(mRes || []);
+        setPrevRes(Array.isArray(pRes) ? pRes : []);
         setWeekRes(wRes || []);
         setUnpaidRes(Array.isArray(uRes) ? uRes : []);
-        setResumo(res);
-        setAvgRating(avgR);
-        setReceitaDia(Array.isArray(rDia) ? rDia : []);
         setAtribuicoes(Array.isArray(atr) ? atr : []);
 
         // Cross-reference weather with upcoming tours
@@ -116,30 +93,6 @@ export default function ActivityDashboard() {
       .finally(() => setLoading(false));
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  const kpis = useMemo(() => {
-    const active = tours.filter(t => t.status !== 'inactive' && t.is_active !== false);
-    const monthConf   = monthRes.filter(r => ESTADOS_CONFIRMADOS.includes(r.status));
-    const participants = monthConf.reduce((s, r) => s + (r.guests || 1), 0);
-    const totalCap = active.reduce((s, t) => s + (t.capacity || 0), 0);
-    const daysInMonth = new Date(periodo.fim).getDate();
-    const ocupacao = totalCap > 0
-      ? Math.min(100, Math.round((participants / (totalCap * daysInMonth)) * 100))
-      : 0;
-    const receita = Number(resumo?.atual?.receita) || 0;
-    return {
-      participantes: participants,
-      ocupacao,
-      receita,
-      /* Sem mes anterior na resposta nao ha variacao a mostrar */
-      variacao: resumo?.atual && resumo?.anterior
-        ? variacaoPercentual(resumo.atual.receita, resumo.anterior.receita)
-        : null,
-      reservasMes: monthRes.filter(r => r && r.status !== 'cancelled').length,
-      valorMedio: valorMedio(receita, monthConf.length),
-      rating: avgRating,
-    };
-  }, [tours, monthRes, resumo, avgRating, periodo.fim]);
 
   /* Agenda: um evento por (tour, horario) */
   const eventos = useMemo(
@@ -177,6 +130,25 @@ export default function ActivityDashboard() {
 
   const porPagar = useMemo(() => unpaidReservations(unpaidRes, TODAY), [unpaidRes]);
 
+  /* Mare do dia: pessoas na rua hora a hora */
+  const curva = useMemo(() => curvaMare(todayRes, tours), [todayRes, tours]);
+
+  /* Numeros do dia e tendencia: 14 dias terminados hoje (os 13 anteriores + hoje, sem repetir reservas).
+     O ultimo e hoje; o indice 6 e o mesmo dia da semana passada; a tendencia sao os ultimos 7 */
+  const numeros = useMemo(() => {
+    const todas = uniaoPorId(prevRes, todayRes);
+    const serie = (medida) => serieDias(todas, TODAY, 14, medida);
+    const reservas = serie('reservas');
+    const pessoas = serie('pessoas');
+    const valores = serie('valor');
+    const valorHoje = valorDoDia(todayRes.filter(r => r.check_in === TODAY));
+    return {
+      reservas: { hoje: reservas[13], semanaPassada: reservas[6], serie: reservas.slice(7) },
+      pessoas: { hoje: pessoas[13], semanaPassada: pessoas[6], serie: pessoas.slice(7) },
+      valor: { hoje: valorHoje, semanaPassada: valores[6], serie: valores.slice(7) },
+    };
+  }, [prevRes, todayRes]);
+
   /* Itens do painel "Requer atencao" (meteorologia, pendentes, por pagar, quase cheios) */
   const attentionItems = useMemo(() => buildAttentionItems({
     pendingToday: alertas.pendentes,
@@ -193,36 +165,66 @@ export default function ActivityDashboard() {
 
   if (loading) return <div className="flex justify-center py-20"><LoadingSpinner size={32} /></div>;
 
-  const pessoasHoje = eventos.reduce((s, e) => s + e.pessoas, 0);
   const pendentesHoje = eventos.reduce((s, e) => s + e.pendentes, 0);
-  const mesNome = new Date(`${periodo.inicio}T12:00:00`).toLocaleDateString(localeDe(lang), { month: 'long' });
+  const agoraMin = agora.getHours() * 60 + agora.getMinutes();
+
+  /* Delta: subida boa, descida a pedir atencao, sem variacao neutro */
+  const tomDe = (delta) => {
+    if (!delta) return null;
+    if (delta.startsWith('+')) return 'bom';
+    if (delta.startsWith('-')) return 'aviso';
+    return null;
+  };
+  const tileDe = (id, label, medida, delta, nota, formatar = String) => ({
+    id,
+    label,
+    value: formatar(medida.hoje),
+    delta,
+    deltaTom: tomDe(delta),
+    deltaTitulo: delta ? t('dashboard.mare.vsLastWeek') : null,
+    nota,
+    serie: medida.serie,
+    serieRotulo: t('dashboard.mare.sparkline', { label, values: medida.serie.map(formatar).join(', ') }),
+  });
 
   const tiles = [
-    { id: 'reservas', icon: BookOpen, tone: 'ocean', label: t('dashboard.tiles.reservations'), value: String(kpis.reservasMes) },
-    { id: 'avaliacao', icon: Star, tone: 'sand', label: t('dashboard.tiles.rating'), value: kpis.rating != null ? Number(kpis.rating).toFixed(1) : '—' },
-    { id: 'medio', icon: Euro, tone: 'success', label: t('dashboard.tiles.avgValue'), value: kpis.valorMedio != null ? euros(kpis.valorMedio) : '—' },
-    { id: 'receber', icon: AlertTriangle, tone: 'warning', label: t('dashboard.tiles.toReceive'), value: euros(porReceber(porPagar)) },
+    tileDe(
+      'reservas', t('dashboard.mare.tiles.reservations'), numeros.reservas,
+      variacaoSemana(numeros.reservas.hoje, numeros.reservas.semanaPassada),
+      pendentesHoje > 0 ? t('dashboard.mare.notes.reservations', { n: pendentesHoje }) : t('dashboard.mare.notes.reservationsNone'),
+    ),
+    tileDe(
+      'pessoas', t('dashboard.mare.tiles.people'), numeros.pessoas,
+      variacaoSemanaPct(numeros.pessoas.hoje, numeros.pessoas.semanaPassada),
+      t('dashboard.mare.notes.people', { n: eventos.length }),
+    ),
+    tileDe(
+      'valor', t('dashboard.mare.tiles.value'), numeros.valor,
+      variacaoSemanaPct(numeros.valor.hoje, numeros.valor.semanaPassada),
+      t('dashboard.mare.notes.value'),
+      eurosInteiros,
+    ),
+    {
+      id: 'receber',
+      label: t('dashboard.tiles.toReceive'),
+      value: eurosInteiros(porReceber(porPagar)),
+      delta: porPagar.length > 0 ? String(porPagar.length) : null,
+      deltaTom: 'aviso',
+      nota: t('dashboard.mare.notes.toReceive', { n: porPagar.length }),
+      serie: null,
+    },
   ];
 
   return (
     <div className="space-y-4">
-      <HeroCard
-        receita={kpis.receita}
-        variacao={kpis.variacao}
-        serie={serieReceitaAcumulada(receitaDia, periodo.inicio, TODAY)}
-        ocupacao={kpis.ocupacao}
-        volume={t('dashboard.hero.participants', { n: kpis.participantes })}
-        hojeValor={t('dashboard.hero.peopleToday', { n: pessoasHoje })}
-        hojeDetalhe={t('dashboard.hero.inTours', { n: eventos.length, p: pendentesHoje })}
-        mesNome={mesNome}
-      />
+      <TilesTendencia tiles={tiles} />
 
-      <StatTiles tiles={tiles} />
+      <MareDoDia curva={curva} agoraMin={agoraMin} />
 
       <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1.7fr)_minmax(0,1fr)] gap-4 items-start">
         <DayAgenda
           eventos={eventos}
-          agoraMin={agora.getHours() * 60 + agora.getMinutes()}
+          agoraMin={agoraMin}
           onAbrir={() => navigate('/calendario')}
           vazio={(
             <EmptyState

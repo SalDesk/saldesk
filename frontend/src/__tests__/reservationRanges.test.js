@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { estadiaEm, estadiaNoMes, estadiaProximosDias } from '../services/reservationRanges';
+import { estadiaEm, estadiaNoMes, estadiaProximosDias, estadiaUltimosDias } from '../services/reservationRanges';
 
 /* Relogio simulado so da Date (hora local), restaurado apos cada teste */
 function hoje(ano, mes, dia) {
@@ -51,5 +51,21 @@ describe('estadiaProximosDias', () => {
 
   it.each([0, -1, 1.5])('%s lanca RangeError', (n) => {
     expect(() => estadiaProximosDias(n)).toThrow(RangeError);
+  });
+});
+
+describe('estadiaUltimosDias', () => {
+  it('13 dias antes de 5 Jan 2027 viram o ano e nao incluem hoje', () => {
+    hoje(2027, 1, 5);
+    expect(estadiaUltimosDias(13)).toEqual({ stay_from: '2026-12-23', stay_to: '2027-01-04' });
+  });
+
+  it('1 dia e so ontem', () => {
+    hoje(2026, 11, 3);
+    expect(estadiaUltimosDias(1)).toEqual({ stay_from: '2026-11-02', stay_to: '2026-11-02' });
+  });
+
+  it.each([0, -1, 1.5])('%s lanca RangeError', (n) => {
+    expect(() => estadiaUltimosDias(n)).toThrow(RangeError);
   });
 });

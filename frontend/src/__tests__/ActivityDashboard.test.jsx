@@ -1,14 +1,13 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { portuguesNoEcra, chavesCruas } from './helpers/portuguesNoEcra';
 import { MemoryRouter } from 'react-router-dom';
 import ActivityDashboard from '../pages/dashboard/ActivityDashboard';
 import useUiStore from '../store/uiStore';
 import { listUnits } from '../services/unitsService';
 import { listReservations } from '../services/reservationsService';
-import { getResumo, getReceita } from '../services/financeiroService';
 import { listAssignments } from '../services/assignmentService';
 import { getWeatherForecast } from '../services/weatherService';
-import api from '../services/api';
 
 /* Sem rede: todos os servicos usados pelo dashboard sao simulados */
 vi.mock('../services/unitsService', () => ({
@@ -17,10 +16,6 @@ vi.mock('../services/unitsService', () => ({
 vi.mock('../services/reservationsService', () => ({
   listReservations: vi.fn(),
 }));
-vi.mock('../services/financeiroService', () => ({
-  getResumo: vi.fn(),
-  getReceita: vi.fn(),
-}));
 vi.mock('../services/assignmentService', () => ({
   listAssignments: vi.fn(),
 }));
@@ -28,9 +23,6 @@ vi.mock('../services/weatherService', async (importOriginal) => {
   const real = await importOriginal();
   return { ...real, getWeatherForecast: vi.fn() };
 });
-vi.mock('../services/api', () => ({
-  default: { get: vi.fn() },
-}));
 
 /* Navegacao simulada */
 const navigateMock = vi.hoisted(() => vi.fn());
@@ -51,20 +43,8 @@ const HOJE = diaLocal(0);
 const ONTEM = diaLocal(-1);
 const AMANHA = diaLocal(1);
 const SEMANA_FIM = diaLocal(6);
-const MES_INICIO = HOJE.slice(0, 8) + '01';
-const MES_FIM = (() => {
-  const n = new Date();
-  return new Date(n.getFullYear(), n.getMonth() + 1, 0).toLocaleDateString('en-CA');
-})();
-
-const ZERO = { receita: 0, num_reservas: 0, valor_medio: 0, taxa_ocupacao: 0 };
-function resumo(atual = {}, anterior = {}) {
-  return {
-    atual: { ...ZERO, ...atual },
-    anterior: { ...ZERO, ...anterior },
-    variacao: { ...ZERO },
-  };
-}
+const ANTERIOR_INICIO = diaLocal(-13);
+const SEMANA_PASSADA = diaLocal(-7);
 
 const TOUR_A = { id: 't1', name: 'Tour Teste', capacity: 10, status: 'active', description: null };
 const TOUR_B = { id: 't2', name: 'Barco Azul', capacity: 20, status: 'active', description: null };
@@ -90,9 +70,9 @@ const RES_POR_PAGAR = reserva({ id: 'm1', check_in: ONTEM, payment_status: 'pend
 /* Reserva de amanha (para a faixa de 7 dias e para o aviso de mau tempo) */
 const RES_AMANHA = reserva({ id: 'w1', check_in: AMANHA });
 
-/* Responde conforme o par exato (stay_from, stay_to) pedido: hoje, mes ou semana.
+/* Responde conforme o par exato (stay_from, stay_to) pedido: hoje, 13 dias anteriores ou semana.
    Qualquer outra forma de argumentos (por exemplo from/to) lanca, para apanhar pedidos perdidos. */
-function respostaPorPar(params, { hoje, semana, mes, porPagar = [] }) {
+function respostaPorPar(params, { hoje, semana, anterior, porPagar = [] }) {
   const chaves = Object.keys(params || {}).sort().join(',');
   /* pagamentos por regularizar, de qualquer mes: { payment_status: 'pending,partial' } */
   if (chaves === 'payment_status' && params.payment_status === 'pending,partial') return porPagar;
@@ -101,37 +81,27 @@ function respostaPorPar(params, { hoje, semana, mes, porPagar = [] }) {
   }
   const { stay_from: de, stay_to: ate } = params;
   if (de === HOJE && ate === HOJE) return hoje;
-  /* O dia 1 e o mesmo inicio para semana e mes: so o par completo os separa */
   if (de === HOJE && ate === SEMANA_FIM) return semana;
-  if (de === MES_INICIO && ate === MES_FIM) return mes;
+  if (de === ANTERIOR_INICIO && ate === ONTEM) return anterior;
   throw new Error(`pedido inesperado ${de} ${ate}`);
 }
 
-/* Responde a cada pedido conforme o intervalo pedido: hoje, mes ou semana */
-function carregaServicos({ hoje = [], mes = [], semana = [], porPagar = [], res = resumo(), tours = [TOUR_A, TOUR_B], meteo = [], rating = null, ratingTotal = 3, receitaDia = [], atribuicoes = [] } = {}) {
+/* Responde a cada pedido conforme o intervalo pedido: hoje, 13 dias anteriores ou semana */
+function carregaServicos({ hoje = [], anterior = [], semana = [], porPagar = [], tours = [TOUR_A, TOUR_B], meteo = [], atribuicoes = [] } = {}) {
   listUnits.mockReset().mockResolvedValue(tours);
-  getReceita.mockReset().mockResolvedValue(receitaDia);
   listAssignments.mockReset().mockResolvedValue(atribuicoes);
   listReservations.mockReset().mockImplementation(async (params) => (
-    respostaPorPar(params, { hoje, semana, mes, porPagar })
+    respostaPorPar(params, { hoje, semana, anterior, porPagar })
   ));
-  getResumo.mockReset().mockResolvedValue(res);
   getWeatherForecast.mockReset().mockResolvedValue(meteo);
-  /* Forma real de GET /reviews/stats: { total, average, distribution } */
-  api.get.mockReset().mockResolvedValue({
-    data: { data: rating == null ? null : { total: ratingTotal, average: rating, distribution: {} } },
-  });
 }
 
 function servicosAFalhar() {
   const erro = new Error('falha de rede');
   listUnits.mockReset().mockRejectedValue(erro);
   listReservations.mockReset().mockRejectedValue(erro);
-  getResumo.mockReset().mockRejectedValue(erro);
-  getReceita.mockReset().mockRejectedValue(erro);
   listAssignments.mockReset().mockRejectedValue(erro);
   getWeatherForecast.mockReset().mockRejectedValue(erro);
-  api.get.mockReset().mockRejectedValue(erro);
 }
 
 function renderActivity() {
@@ -174,7 +144,8 @@ describe('ActivityDashboard (Hoje)', () => {
     expect(await screen.findByRole('heading', { name: 'Agenda de hoje' })).toBeInTheDocument();
     const tour = await screen.findByRole('button', { name: /Tour Teste/ });
     expect(tour).toHaveTextContent('8/10 · guia Djo · Santa Maria');
-    expect(screen.getByText('09:00')).toBeInTheDocument();
+    /* a hora aparece na agenda e na pastilha da mare */
+    expect(screen.getAllByText('09:00')).toHaveLength(2);
     /* o segundo tour nao tem hora: vai para "Sem hora marcada", com a reserva pendente */
     expect(screen.getByText('Sem hora marcada')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Barco Azul/ })).toHaveTextContent('1 por confirmar');
@@ -186,14 +157,6 @@ describe('ActivityDashboard (Hoje)', () => {
     renderActivity();
     fireEvent.click(await screen.findByRole('button', { name: /Tour Teste/ }));
     expect(navigateMock).toHaveBeenLastCalledWith('/calendario');
-  });
-
-  it('pessoas_de_hoje_no_cartao_de_destaque', async () => {
-    carregaServicos({ hoje: RES_HOJE });
-    renderActivity();
-    /* 3+3+2 no tour A e 2 (pendente) no B */
-    expect(await screen.findByText('10 pessoas')).toBeInTheDocument();
-    expect(screen.getByText('em 2 tours · 1 por confirmar')).toBeInTheDocument();
   });
 
   it('a_lotacao_da_agenda_nunca_passa_dos_100_nem_rebenta_sem_capacidade', async () => {
@@ -219,7 +182,7 @@ describe('ActivityDashboard (Hoje)', () => {
   });
 
   it('pendentes e por pagar na atencao', async () => {
-    carregaServicos({ hoje: RES_HOJE, mes: [RES_POR_PAGAR, ...RES_HOJE], porPagar: [RES_POR_PAGAR] });
+    carregaServicos({ hoje: RES_HOJE, porPagar: [RES_POR_PAGAR] });
     renderActivity();
     expect(await screen.findByText('1 reserva(s) pendente(s) para hoje')).toBeInTheDocument();
     expect(screen.getByText('1 pagamento(s) por regularizar')).toBeInTheDocument();
@@ -227,7 +190,7 @@ describe('ActivityDashboard (Hoje)', () => {
 
   it('um pagamento por regularizar de meses anteriores tambem aparece (nao so os do mes actual)', async () => {
     const antiga = reserva({ id: 'old', check_in: '2026-01-05', check_out: '2026-01-05', status: 'checked_out', payment_status: 'partial' });
-    carregaServicos({ mes: [], porPagar: [antiga, RES_POR_PAGAR] });
+    carregaServicos({ porPagar: [antiga, RES_POR_PAGAR] });
     renderActivity();
     expect(await screen.findByText('2 pagamento(s) por regularizar')).toBeInTheDocument();
   });
@@ -289,76 +252,12 @@ describe('ActivityDashboard (Hoje)', () => {
   });
 
   it('recentes, mais vendidos e accoes rapidas ja nao estao no Hoje', async () => {
-    carregaServicos({ hoje: RES_HOJE, mes: RES_HOJE });
+    carregaServicos({ hoje: RES_HOJE });
     renderActivity();
     expect(await screen.findByText('8/10')).toBeInTheDocument();
     expect(screen.queryByText('Reservas recentes')).not.toBeInTheDocument();
     expect(screen.queryByText('Top tours do mes')).not.toBeInTheDocument();
     expect(screen.queryByText('Accoes rapidas')).not.toBeInTheDocument();
-  });
-
-  it('mostra_o_cartao_de_destaque_e_os_quatro_numeros', async () => {
-    carregaServicos({
-      hoje: RES_HOJE,
-      mes: RES_HOJE,
-      res: resumo({ receita: 1120 }, { receita: 1000 }),
-      rating: 4.5,
-    });
-    renderActivity();
-    expect(await screen.findByText(`€${(1120).toLocaleString('pt-PT')}`)).toBeInTheDocument();
-    expect(screen.getByText('+12% vs mês anterior')).toBeInTheDocument();
-    expect(screen.getByText('Ocupação do mês')).toBeInTheDocument();
-    ['Reservas no mês', 'Avaliação média', 'Valor médio por reserva', 'Por receber']
-      .forEach((rotulo) => expect(screen.getByText(rotulo)).toBeInTheDocument());
-    /* reservas do mes nao canceladas: 4; avaliacao 4.5 */
-    expect(screen.getByText('Reservas no mês').previousElementSibling).toHaveTextContent(/^4$/);
-    expect(screen.getByText('4.5')).toBeInTheDocument();
-    /* os indicadores antigos sairam */
-    expect(screen.queryByText('Tours hoje')).not.toBeInTheDocument();
-    expect(screen.queryByText('face ao mês anterior')).not.toBeInTheDocument();
-  });
-
-  it('sem_mes_anterior_sem_pilula', async () => {
-    carregaServicos({ res: { atual: { receita: 500 } } });
-    renderActivity();
-    expect(await screen.findByText('€500')).toBeInTheDocument();
-    expect(screen.queryByText(/vs mês anterior/)).not.toBeInTheDocument();
-  });
-
-  it('valor_medio_divide_a_receita_pelas_reservas_confirmadas_do_mes', async () => {
-    /* RES_HOJE: 3 confirmadas e 1 pendente; 920 / 3 = 306,67 */
-    carregaServicos({ mes: RES_HOJE, res: resumo({ receita: 920 }) });
-    renderActivity();
-    const rotulo = await screen.findByText('Valor médio por reserva');
-    expect(rotulo.previousElementSibling).toHaveTextContent(/^€307$/);
-  });
-
-  it('sem_reservas_confirmadas_o_valor_medio_e_um_traco', async () => {
-    carregaServicos({ mes: [], res: resumo({ receita: 920 }) });
-    renderActivity();
-    const rotulo = await screen.findByText('Valor médio por reserva');
-    expect(rotulo.previousElementSibling).toHaveTextContent(/^—$/);
-  });
-
-  it('por_receber_soma_o_que_falta_pagar', async () => {
-    carregaServicos({ porPagar: [reserva({ id: 'p1', check_in: ONTEM, payment_status: 'partial', total_price: 200, amount_paid: 50 })] });
-    renderActivity();
-    const rotulo = await screen.findByText('Por receber');
-    await waitFor(() => expect(rotulo.previousElementSibling).toHaveTextContent(/^€150$/));
-  });
-
-  it('grafico_pede_a_receita_por_dia_do_mes_ate_hoje', async () => {
-    renderActivity();
-    await waitFor(() => expect(getReceita).toHaveBeenCalledWith(MES_INICIO, HOJE, 'day'));
-  });
-
-  it('falha_da_receita_por_dia_ou_das_atribuicoes_nao_apaga_o_resto', async () => {
-    carregaServicos({ hoje: RES_HOJE, res: resumo({ receita: 500 }) });
-    getReceita.mockReset().mockRejectedValue(new Error('falha de rede'));
-    listAssignments.mockReset().mockRejectedValue(new Error('falha de rede'));
-    renderActivity();
-    expect(await screen.findByRole('button', { name: /Tour Teste/ })).toHaveTextContent('8/10');
-    expect(screen.getByText('€500')).toBeInTheDocument();
   });
 
   it('a faixa de 7 dias so mostra contagem quando ha reservas', async () => {
@@ -373,35 +272,21 @@ describe('ActivityDashboard (Hoje)', () => {
 
   it('reserva sem campos nao lanca', async () => {
     const vazia = { id: 'x', status: 'pending' };
-    carregaServicos({ hoje: [vazia], mes: [vazia], semana: [vazia] });
+    carregaServicos({ hoje: [vazia], anterior: [vazia], semana: [vazia] });
     renderActivity();
     expect(await screen.findByText('1 reserva(s) pendente(s) para hoje')).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Agenda de hoje' })).toBeInTheDocument();
   });
 
-  it('a avaliacao media vem de average quando ha avaliacoes', async () => {
-    carregaServicos({ rating: 4.7, ratingTotal: 3 });
-    renderActivity();
-    expect(await screen.findByText('4.7')).toBeInTheDocument();
-  });
-
-  it('sem avaliacoes (total 0) a avaliacao media mostra o traco', async () => {
-    carregaServicos({ rating: 0, ratingTotal: 0 });
-    renderActivity();
-    const rotulo = await screen.findByText('Avaliação média');
-    expect(rotulo.previousElementSibling).toHaveTextContent(/^—$/);
-    expect(screen.queryByText('0.0')).not.toBeInTheDocument();
-  });
-
   it('uma chamada a falhar nao apaga os dados das outras', async () => {
     carregaServicos({ hoje: RES_HOJE });
-    /* so a lista do mes falha; hoje, tours e resumo respondem */
+    /* so a lista dos 13 dias anteriores falha; hoje e tours respondem */
     listReservations.mockReset().mockImplementation(async (params) => {
-      /* hoje e semana respondem (e rejeitam formas inesperadas); o mes falha */
-      if (params.stay_from === MES_INICIO && params.stay_to === MES_FIM) {
+      /* hoje e semana respondem (e rejeitam formas inesperadas); os dias anteriores falham */
+      if (params.stay_from === ANTERIOR_INICIO && params.stay_to === ONTEM) {
         throw new Error('falha de rede');
       }
-      return respostaPorPar(params, { hoje: RES_HOJE, semana: [], mes: [] });
+      return respostaPorPar(params, { hoje: RES_HOJE, semana: [], anterior: [] });
     });
     renderActivity();
     expect(await screen.findByRole('button', { name: /Tour Teste/ })).toHaveTextContent('8/10');
@@ -422,10 +307,10 @@ describe('ActivityDashboard (Hoje)', () => {
     });
     /* uma saida ultrapassada nao e relevante aqui: nunca se pedem os check-ins feitos */
     expect(pedidos).not.toContainEqual({ status: 'checked_in' });
-    /* hoje, mes e semana (hoje..hoje+6) */
+    /* hoje, 13 dias anteriores e semana (hoje..hoje+6) */
     expect(pedidos).toEqual(expect.arrayContaining([
       { stay_from: HOJE, stay_to: HOJE },
-      { stay_from: MES_INICIO, stay_to: MES_FIM },
+      { stay_from: ANTERIOR_INICIO, stay_to: ONTEM },
       { stay_from: HOJE, stay_to: SEMANA_FIM },
     ]));
     /* e os pagamentos por regularizar de qualquer mes */
@@ -438,5 +323,144 @@ describe('ActivityDashboard (Hoje)', () => {
     expect(await screen.findByText('Nenhum tour agendado para hoje')).toBeInTheDocument();
     expect(screen.getByText('Tudo em ordem')).toBeInTheDocument();
     await waitFor(() => expect(listUnits).toHaveBeenCalled());
+  });
+});
+
+/* Numeros do dia e mare do dia */
+const ROTULOS = ['Reservas hoje', 'Pessoas em actividade', 'Valor do dia', 'Por receber'];
+const tileDe = (rotulo) => screen.getByText(rotulo).closest('article');
+
+describe('ActivityDashboard: numeros do dia e mare', () => {
+  let errSpy;
+  let warnSpy;
+
+  beforeEach(() => {
+    useUiStore.setState({ lang: 'pt' });
+    navigateMock.mockReset();
+    carregaServicos();
+    errSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    cleanup();
+    expect(errSpy).not.toHaveBeenCalled();
+    expect(warnSpy).not.toHaveBeenCalled();
+    errSpy.mockRestore();
+    warnSpy.mockRestore();
+  });
+
+  it('quatro_numeros_pela_ordem_e_o_cartao_de_destaque_ja_nao_existe', async () => {
+    carregaServicos({ hoje: RES_HOJE });
+    renderActivity();
+    await screen.findByText('Reservas hoje');
+    const tiles = [...document.querySelectorAll('article[data-tile]')];
+    expect(tiles.map((a) => a.querySelector('span').textContent)).toEqual(ROTULOS);
+    expect(screen.queryByText('Reservas no mês')).not.toBeInTheDocument();
+    expect(screen.queryByText('Ocupação do mês')).not.toBeInTheDocument();
+  });
+
+  it('reservas_e_pessoas_de_hoje_contam_tudo_o_que_nao_esta_cancelado', async () => {
+    /* 3+3+2 no tour A, 2 pendentes no B, e uma cancelada que nao conta */
+    carregaServicos({ hoje: [...RES_HOJE, reserva({ id: 'x', status: 'cancelled', guests: 9 })] });
+    renderActivity();
+    await screen.findByText('Reservas hoje');
+    expect(tileDe('Reservas hoje')).toHaveTextContent(/^Reservas hoje4/);
+    expect(tileDe('Reservas hoje')).toHaveTextContent('1 por confirmar');
+    expect(tileDe('Pessoas em actividade')).toHaveTextContent(/^Pessoas em actividade10/);
+  });
+
+  it('valor_do_dia_e_o_total_reservado_e_nao_o_cobrado', async () => {
+    carregaServicos({
+      hoje: [
+        reserva({ id: 'v1', total_price: 100, status: 'confirmed' }),
+        reserva({ id: 'v2', total_price: 220, status: 'pending', payment_status: 'pending' }),
+        reserva({ id: 'v3', total_price: 999, status: 'cancelled' }),
+      ],
+    });
+    renderActivity();
+    await screen.findByText('Valor do dia');
+    expect(tileDe('Valor do dia')).toHaveTextContent('€320');
+    expect(tileDe('Valor do dia')).not.toHaveTextContent('€0');
+  });
+
+  it('por_receber_soma_o_que_falta_pagar_e_conta_as_reservas', async () => {
+    carregaServicos({ porPagar: [reserva({ id: 'p1', check_in: ONTEM, payment_status: 'partial', total_price: 200, amount_paid: 50 })] });
+    renderActivity();
+    await screen.findByText('Por receber');
+    await waitFor(() => expect(tileDe('Por receber')).toHaveTextContent('€150'));
+    expect(tileDe('Por receber')).toHaveTextContent('1 reserva(s) por pagar');
+    /* sem tendencia que se possa calcular: nao ha grafico neste numero */
+    expect(within(tileDe('Por receber')).queryByRole('img')).toBeNull();
+  });
+
+  it('cada_numero_com_tendencia_tem_o_seu_grafico_com_rotulo', async () => {
+    carregaServicos({ hoje: RES_HOJE });
+    renderActivity();
+    await screen.findByText('Reservas hoje');
+    ['Reservas hoje', 'Pessoas em actividade', 'Valor do dia'].forEach((rotulo) => {
+      const img = within(tileDe(rotulo)).getByRole('img');
+      expect(img.getAttribute('aria-label')).toMatch(new RegExp(`^${rotulo}, últimos 7 dias: `));
+    });
+  });
+
+  it('com_a_semana_passada_a_zero_nao_ha_variacao', async () => {
+    carregaServicos({ hoje: RES_HOJE, anterior: [reserva({ id: 'o', check_in: ONTEM })] });
+    renderActivity();
+    await screen.findByText('Reservas hoje');
+    ['Reservas hoje', 'Pessoas em actividade', 'Valor do dia'].forEach((rotulo) => {
+      expect(tileDe(rotulo).querySelector('.font-mono')).toBeNull();
+    });
+  });
+
+  it('variacao_face_ao_mesmo_dia_da_semana_passada', async () => {
+    /* semana passada: 1 reserva de 2 pessoas e 100 euros; hoje: 4 reservas, 9 pessoas, 300 euros */
+    carregaServicos({
+      hoje: [
+        ...RES_HOJE.slice(0, 3),
+        reserva({ id: 'h5', guests: 1, total_price: 300 }),
+      ],
+      anterior: [reserva({ id: 'sp', check_in: SEMANA_PASSADA, guests: 2, total_price: 100 })],
+    });
+    renderActivity();
+    await screen.findByText('Reservas hoje');
+    expect(tileDe('Reservas hoje')).toHaveTextContent('+3');
+    /* 3+3+2+1 = 9 pessoas contra 2: +350% */
+    expect(tileDe('Pessoas em actividade')).toHaveTextContent('+350%');
+    expect(tileDe('Valor do dia')).toHaveTextContent('+200%');
+  });
+
+  it('mostra_a_mare_do_dia_com_o_pico', async () => {
+    const comHora = { ...TOUR_A, description: JSON.stringify({ start_time: '09:00', duration: 2 }) };
+    carregaServicos({ hoje: RES_HOJE.slice(0, 3), tours: [comHora, TOUR_B] });
+    renderActivity();
+    expect(await screen.findByRole('heading', { name: 'Maré do dia' })).toBeInTheDocument();
+    expect(screen.getByText('pico às 09:00')).toBeInTheDocument();
+    expect(screen.getByText('saídas hoje').previousElementSibling).toHaveTextContent('1');
+  });
+
+  it('falha_das_atribuicoes_nao_apaga_o_resto', async () => {
+    carregaServicos({ hoje: RES_HOJE });
+    listAssignments.mockReset().mockRejectedValue(new Error('falha de rede'));
+    renderActivity();
+    expect(await screen.findByRole('button', { name: /Tour Teste/ })).toHaveTextContent('8/10');
+    expect(screen.getByText('Reservas hoje')).toBeInTheDocument();
+  });
+
+  it('sem_actividades_a_mare_mostra_o_texto_vazio', async () => {
+    renderActivity();
+    expect(await screen.findByText('Sem actividades marcadas para hoje')).toBeInTheDocument();
+  });
+
+  it('em_ingles_os_numeros_e_a_mare_estao_em_ingles', async () => {
+    useUiStore.setState({ lang: 'en' });
+    const comHora = { ...TOUR_A, description: JSON.stringify({ start_time: '09:00', duration: 2 }) };
+    carregaServicos({ hoje: RES_HOJE, tours: [comHora, TOUR_B] });
+    renderActivity();
+    expect(await screen.findByText('Value of the day')).toBeInTheDocument();
+    expect(screen.getByText('Bookings today')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Tide of the day' })).toBeInTheDocument();
+    expect(portuguesNoEcra(['Tour Teste', 'Barco Azul', 'Cliente'])).toEqual([]);
+    expect(chavesCruas(['dashboard'])).toEqual([]);
   });
 });

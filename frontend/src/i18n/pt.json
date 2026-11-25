@@ -241,6 +241,31 @@
     "optional": "Opcional"
   },
   "dashboard": {
+    "mare": {
+      "tiles": {
+        "reservations": "Reservas hoje",
+        "people": "Pessoas em actividade",
+        "value": "Valor do dia"
+      },
+      "notes": {
+        "reservations": "{{n}} por confirmar",
+        "reservationsNone": "Nada por confirmar",
+        "people": "em {{n}} saídas",
+        "value": "reservado para hoje",
+        "toReceive": "{{n}} reserva(s) por pagar"
+      },
+      "vsLastWeek": "face ao mesmo dia da semana passada",
+      "sparkline": "{{label}}, últimos 7 dias: {{values}}",
+      "tide": {
+        "title": "Maré do dia",
+        "subtitle": "Pessoas em actividade, hora a hora",
+        "peak": "pico às {{time}}",
+        "now": "agora, {{time}}",
+        "departures": "saídas hoje",
+        "empty": "Sem actividades marcadas para hoje",
+        "aria": "Pessoas em actividade entre as {{from}} e as {{to}}; pico de {{peak}} às {{time}}; agora {{now}}."
+      }
+    },
     "greeting": {"morning": "Bom dia, {{name}}", "afternoon": "Boa tarde, {{name}}", "evening": "Boa noite, {{name}}"},
     "agenda": {"title": "Agenda de hoje", "summary": "{{tours}} tours · {{people}} pessoas", "noTime": "Sem hora marcada", "done": "Concluído", "now": "A decorrer, termina às {{time}}", "toConfirm": "{{n}} por confirmar", "nearlyFull": "Quase cheio", "guide": "guia {{name}}", "chegada": "Chegada · {{name}}", "partida": "Partida · {{name}}", "levantamento": "Levantamento · {{name}}", "devolucao": "Devolução · {{name}}", "mesa": "{{name}}", "guests": "{{n}} pessoa(s)", "nights": "{{n}} noite(s)", "preOrder": "pré-pedido", "empty": "Nada agendado para hoje", "summaryHotel": "{{a}} chegadas · {{d}} partidas", "summaryRentacar": "{{a}} levantamentos · {{d}} devoluções", "summaryRestaurant": "{{n}} reservas · {{p}} pessoas"},
     "hero": {"revenue": "Receita de {{month}}", "vsPrev": "{{pct}}% vs mês anterior", "occupancy": "Ocupação do mês", "today": "Hoje", "peopleToday": "{{n}} pessoas", "inTours": "em {{n}} tours · {{p}} por confirmar", "participants": "{{n}} participantes", "occupancyToday": "Ocupação hoje", "roomsOccupied": "{{n}} de {{total}} quartos", "vehiclesRented": "{{n}} de {{total}} viaturas", "tablesTaken": "{{n}} de {{total}} mesas", "arrivals": "{{n}} chegadas", "departures": "{{n}} partidas · {{p}} chegadas por confirmar", "pickups": "{{n}} levantamentos", "returns": "{{n}} devoluções", "peopleTables": "em {{n}} reservas · {{p}} por confirmar"},
