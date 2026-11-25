@@ -67,6 +67,9 @@ export default function Dashboard() {
                 ? <RestaurantDashboard />
                 : <GenericDashboard />
       }
+      {/* Espaco do tamanho do botao flutuante "Nova reserva" (telemovel): o ultimo cartao nao fica tapado.
+          O botao ocupa de 5 rem a 8,5 rem acima da base; o main ja reserva 5 rem. */}
+      <div aria-hidden="true" data-testid="espaco-botao-flutuante" className="md:hidden" style={{ height: 'calc(4rem + env(safe-area-inset-bottom))' }} />
     </div>
   );
 }

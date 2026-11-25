@@ -388,10 +388,11 @@ describe('ActivityDashboard (Hoje)', () => {
     expect(pedidos).toContainEqual({ payment_status: 'pending,partial' });
   });
 
-  it('servicos a falhar mostram estados vazios sem erro', async () => {
+  it('servicos a falhar mostram o erro (nao estados vazios) sem rebentar', async () => {
     servicosAFalhar();
     renderActivity();
-    expect(await screen.findByText('Nenhum tour agendado para hoje')).toBeInTheDocument();
+    expect((await screen.findAllByText('Não foi possível carregar as reservas de hoje.')).length).toBe(2);
+    expect(screen.queryByText('Nenhum tour agendado para hoje')).toBeNull();
     expect(screen.getByText('Tudo em ordem')).toBeInTheDocument();
     await waitFor(() => expect(listUnits).toHaveBeenCalled());
   });
@@ -570,5 +571,116 @@ describe('ActivityDashboard: numeros do dia e mare', () => {
     renderActivity();
     expect(await screen.findByText('As reservas de hoje não têm hora marcada')).toBeInTheDocument();
     expect(screen.queryByText('Sem actividades marcadas para hoje')).not.toBeInTheDocument();
+  });
+});
+
+/* Revisao final: listas cortadas e pedidos falhados nao se mostram como dados */
+const mil = (over) => Array.from({ length: 1000 }, (_, i) => reserva({ id: `mil${i}`, ...over }));
+
+describe('ActivityDashboard: falhas e listas cortadas', () => {
+  let errSpy;
+  let warnSpy;
+
+  beforeEach(() => {
+    useUiStore.setState({ lang: 'pt' });
+    navigateMock.mockReset();
+    errSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    cleanup();
+    errSpy.mockRestore();
+    warnSpy.mockRestore();
+  });
+
+  const comHora = { ...TOUR_A, description: JSON.stringify({ start_time: '09:00', duration: 2 }) };
+
+  /* Responde como carregaServicos mas faz falhar o pedido escolhido */
+  function falhaEm(qual, opcoes = {}) {
+    carregaServicos({ hoje: RES_HOJE, tours: [comHora, TOUR_B], ...opcoes });
+    if (qual === 'atribuicoes') listAssignments.mockReset().mockRejectedValue(new Error('falha de rede'));
+    if (qual === 'unidades') listUnits.mockReset().mockRejectedValue(new Error('falha de rede'));
+    if (qual === 'hoje') {
+      const base = listReservations.getMockImplementation();
+      listReservations.mockImplementation(async (params) => {
+        if (params.stay_from === HOJE && params.stay_to === HOJE) throw new Error('falha de rede');
+        return base(params);
+      });
+    }
+  }
+
+  it('se_as_atribuicoes_falham_nao_ha_alarme_de_sem_guia', async () => {
+    falhaEm('atribuicoes');
+    renderActivity();
+    const saida = await screen.findByRole('button', { name: /Tour Teste/ });
+    expect(saida).toHaveTextContent('8 pessoa(s)');
+    expect(screen.queryByText('Sem guia')).toBeNull();
+    expect(screen.queryByText(/sem guia/i)).toBeNull();
+    expect(screen.queryByText('Por atribuir')).toBeNull();
+    expect(screen.getByText('Guia').nextElementSibling).toHaveTextContent('—');
+  });
+
+  it('se_as_reservas_de_hoje_falham_os_numeros_sao_um_travessao_sem_variacao', async () => {
+    /* a semana passada tinha reservas: sem a correccao, "0" contra elas dava "-1" e "-100%" */
+    falhaEm('hoje', { anterior: [reserva({ id: 'p1', check_in: SEMANA_PASSADA, total_price: 50 })] });
+    renderActivity();
+    await screen.findByText('Reservas hoje');
+    ['Reservas hoje', 'Pessoas em actividade', 'Valor do dia'].forEach((rotulo) => {
+      const tile = tileDe(rotulo);
+      expect(tile.querySelector('.font-display')).toHaveTextContent('—');
+      expect(tile.querySelector('.font-mono')).toBeNull();
+      expect(within(tile).queryByRole('img')).toBeNull();
+    });
+    expect(screen.queryByText('-100%')).toBeNull();
+    /* a mare e a agenda dizem a causa, em vez de "sem actividades" */
+    expect(screen.getAllByText('Não foi possível carregar as reservas de hoje.')).toHaveLength(2);
+    expect(screen.queryByText('Sem actividades marcadas para hoje')).toBeNull();
+    expect(screen.queryByText('Nenhum tour agendado para hoje')).toBeNull();
+  });
+
+  it('se_os_servicos_falham_a_mare_a_agenda_e_o_mapa_dizem_o_erro', async () => {
+    falhaEm('unidades');
+    renderActivity();
+    await screen.findByText('Reservas hoje');
+    /* mare + agenda + mapa (desktop) + barras (telemovel) */
+    expect(screen.getAllByText('Não foi possível carregar os serviços.')).toHaveLength(4);
+    expect(screen.queryByText('Sem serviços activos.')).toBeNull();
+    expect(screen.queryByText('As reservas de hoje não têm hora marcada')).toBeNull();
+    expect(screen.queryByText('Nenhum tour agendado para hoje')).toBeNull();
+    /* os numeros de hoje continuam a ser reais */
+    expect(tileDe('Reservas hoje')).toHaveTextContent(/^Reservas hoje4/);
+  });
+
+  it('13_dias_anteriores_possivelmente_cortados_valem_como_falha_sem_tendencia', async () => {
+    carregaServicos({ hoje: RES_HOJE, anterior: mil({ check_in: ONTEM }) });
+    renderActivity();
+    await screen.findByText('Reservas hoje');
+    ['Reservas hoje', 'Pessoas em actividade', 'Valor do dia'].forEach((rotulo) => {
+      expect(within(tileDe(rotulo)).queryByRole('img')).toBeNull();
+      expect(tileDe(rotulo).querySelector('.font-mono')).toBeNull();
+    });
+    expect(tileDe('Reservas hoje')).toHaveTextContent(/^Reservas hoje4/);
+  });
+
+  it('14_dias_possivelmente_cortados_escondem_as_percentagens_do_mapa_e_avisam', async () => {
+    carregaServicos({ hoje: RES_HOJE, semana: mil({ guests: 1, check_in: SEMANA_FIM }) });
+    renderActivity();
+    await screen.findByText('Reservas hoje');
+    expect(screen.getAllByText(/Lista possivelmente incompleta: há reservas a mais/).length).toBeGreaterThan(0);
+    const tabela = screen.getByRole('table');
+    expect(within(tabela).queryByText(/%/)).toBeNull();
+    expect(within(tabela).getAllByText('—').length).toBeGreaterThan(0);
+    /* as barras do telemovel nao desenham dias a partir de dados cortados */
+    expect(screen.queryByRole('img', { name: /pessoa\(s\)$/ })).toBeNull();
+  });
+
+  it('a_lista_de_hoje_possivelmente_cortada_avisa_nos_numeros', async () => {
+    carregaServicos({ hoje: mil({ guests: 1 }) });
+    renderActivity();
+    await screen.findByText('Reservas hoje');
+    ['Reservas hoje', 'Pessoas em actividade', 'Valor do dia'].forEach((rotulo) => {
+      expect(tileDe(rotulo)).toHaveTextContent('Lista possivelmente incompleta');
+    });
   });
 });

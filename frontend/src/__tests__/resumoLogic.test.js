@@ -252,3 +252,14 @@ describe('repartirPercentagens', () => {
     expect(f.reduce((s, x) => s + x.pct, 0)).toBe(100);
   });
 });
+
+describe('topPaises: reservas canceladas', () => {
+  it('nao_conta_reservas_canceladas', () => {
+    const r = [
+      { customer_country: 'GB', status: 'confirmed' },
+      { customer_country: 'PT', status: 'cancelled' },
+      { customer_country: 'PT', status: 'cancelled' },
+    ];
+    expect(topPaises(r)).toEqual([{ codigo: 'GB', pct: 100 }]);
+  });
+});

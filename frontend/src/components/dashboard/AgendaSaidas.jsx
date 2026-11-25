@@ -16,9 +16,10 @@ function duracaoTexto(evento) {
 }
 
 /* Estado visual da saida: "sem guia" (vermelho) sobrepoe-se a tudo o que ainda nao terminou */
-function estadoVisual(evento, agoraMin) {
+function estadoVisual(evento, agoraMin, guiasConhecidos) {
   const estado = estadoDoEvento(evento, agoraMin);
-  const semGuia = evento.guias.length === 0 && estado !== 'concluido';
+  /* com as atribuicoes por carregar nao se sabe quem guia: nao ha alarme de "sem guia" */
+  const semGuia = guiasConhecidos && evento.guias.length === 0 && estado !== 'concluido';
   if (semGuia) return { chave: 'noGuideStatus', tom: 'alerta', estado };
   if (estado === 'a_decorrer') return { chave: 'nowStatus', tom: 'curso', estado };
   if (estado === 'concluido') return { chave: 'doneStatus', tom: 'feito', estado };
@@ -34,8 +35,10 @@ const TONS = {
 };
 
 /* Agenda do dia das atividades: lista de saidas (esquerda) e detalhe da saida escolhida (direita;
-   no telemovel fica por baixo da lista). Eventos ja normalizados por eventosAtividades. */
-export default function AgendaSaidas({ eventos, reservasHoje, tours, agoraMin, onAbrirManifesto, vazio }) {
+   no telemovel fica por baixo da lista). Eventos ja normalizados por eventosAtividades.
+   erro: texto de erro (as reservas ou os servicos nao carregaram) que substitui a lista e o vazio;
+   guiasConhecidos: false quando as atribuicoes nao carregaram (o guia fica "—", sem alarme). */
+export default function AgendaSaidas({ eventos, reservasHoje, tours, agoraMin, onAbrirManifesto, vazio, erro = null, guiasConhecidos = true }) {
   const t = useT();
   const lista = Array.isArray(eventos) ? eventos : [];
   const { semHora, comHora } = ordenarAgenda(lista);
@@ -85,7 +88,7 @@ export default function AgendaSaidas({ eventos, reservasHoje, tours, agoraMin, o
         <dl className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-4 gap-y-2 text-sm font-body">
           <dt className="text-n-600">{t('dashboard.saidas.guide')}</dt>
           <dd className="font-semibold text-n-900">
-            {escolhido.guias.length > 0 ? escolhido.guias.join(', ') : t('dashboard.saidas.toAssign')}
+            {escolhido.guias.length > 0 ? escolhido.guias.join(', ') : (guiasConhecidos ? t('dashboard.saidas.toAssign') : '—')}
           </dd>
           {escolhido.local && (
             <>
@@ -114,26 +117,28 @@ export default function AgendaSaidas({ eventos, reservasHoje, tours, agoraMin, o
     <section className="bg-white border border-n-200 rounded-2xl p-4 lg:p-[22px] flex flex-col gap-3">
       <header className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
         <h2 className="font-display font-semibold text-base lg:text-lg text-ocean-900">{t('dashboard.agenda.title')}</h2>
-        {ordenados.length > 0 && (
+        {!erro && ordenados.length > 0 && (
           <span className="text-[13px] font-body text-n-600 tabular-nums">
             {t('dashboard.agenda.summary', { tours: ordenados.length, people: pessoasTotal })}
           </span>
         )}
       </header>
 
-      {ordenados.length === 0 ? vazio : (
+      {erro ? (
+        <p className="text-sm font-body text-n-600 py-4">{erro}</p>
+      ) : ordenados.length === 0 ? vazio : (
         <>
           <p className="text-[13px] font-body text-n-600">{t('dashboard.saidas.hint')}</p>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
             <ul className="flex flex-col gap-0.5 min-w-0">
               {ordenados.map((e) => {
-                const visual = estadoVisual(e, agoraMin);
+                const visual = estadoVisual(e, agoraMin, guiasConhecidos);
                 const tom = TONS[visual.tom];
                 const ativo = escolhido?.id === e.id;
                 const d = detalhes.get(e.id);
                 const sub = e.guias.length > 0
                   ? t('dashboard.saidas.withGuide', { people: pessoasTexto(d.total), guide: e.guias.join(', ') })
-                  : t('dashboard.saidas.withoutGuide', { people: pessoasTexto(d.total) });
+                  : (guiasConhecidos ? t('dashboard.saidas.withoutGuide', { people: pessoasTexto(d.total) }) : pessoasTexto(d.total));
                 return (
                   <li key={e.id}>
                     <button

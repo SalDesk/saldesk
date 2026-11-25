@@ -258,7 +258,7 @@
       "wind": {"title": "Wind and sea", "subtitle": "Next 5 days", "loading": "Loading the wind forecast…", "error": "Could not load the wind forecast.", "empty": "No wind forecast available.", "kmh": "{{n}} km/h", "warning": "{{day}}: wind up to {{kmh}} km/h. Consider rescheduling sea activities.", "cardinal": {"N": "N", "NE": "NE", "E": "E", "SE": "SE", "S": "S", "SW": "SW", "W": "W", "NW": "NW"}, "from": "Wind from {{dir}}"},
       "occupancy": {"title": "Occupancy for the next 14 days", "subtitle": "Seats sold per service; the light days still have room to sell", "caption": "Percentage of seats sold per service and day", "service": "Service", "legendEmpty": "Empty", "legendFull": "Full", "legendNoCapacity": "No capacity set", "empty": "No active services.", "cell": "{{people}} of {{capacity}} seats", "cellNoCapacity": "{{people}} guest(s), no capacity set", "barAria": "{{day}}: {{people}} guest(s)"},
       "header": {"viewLabel": "Dashboard view"},
-      "sparkline": "{{label}}, last 7 days: {{values}}",
+      "errors": {"today": "Could not load today's bookings.", "units": "Could not load the services.", "days": "Could not load the bookings for the coming days."}, "truncated": {"today": "List possibly incomplete", "days": "List possibly incomplete: there are too many bookings to show occupancy reliably."}, "sparkline": "{{label}}, last 7 days: {{values}}",
       "tide": {
         "title": "Tide of the day",
         "subtitle": "People out on activities, hour by hour",

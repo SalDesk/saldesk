@@ -32,39 +32,50 @@ function eFimDeSemana(data) {
   return dia === 0 || dia === 6;
 }
 
-/* Altura (%) e degrau de uma barra: com capacidade conhecida e a taxa de ocupacao; senao, o dia mais cheio da semana */
-function barraDe(pessoas, capacidade, maximo) {
+/* Altura (%) e degrau de uma barra: com capacidade conhecida e a taxa de ocupacao (so dos servicos com
+   lotacao: pessoas e lotacao saem dos mesmos servicos); sem nenhuma lotacao, o dia mais cheio da semana */
+function barraDe(pessoas, pessoasComLotacao, capacidade, maximo) {
   const base = capacidade ? capacidade : maximo;
-  const razao = base ? pessoas / base : 0;
+  const contadas = capacidade ? pessoasComLotacao : pessoas;
+  const razao = base ? contadas / base : 0;
   const pct = Math.round(razao * 100);
   return {
-    altura: pessoas ? Math.max(6, Math.min(100, pct)) : 0,
+    altura: contadas ? Math.max(6, Math.min(100, pct)) : 0,
     degrau: capacidade ? degrauDe(pct) : DEGRAUS[2],
   };
 }
 
-function Barras({ linhas, dias }) {
+function Nota({ children }) {
+  return <p className="text-[13px] font-body text-n-600">{children}</p>;
+}
+
+function Barras({ linhas, dias, erro, cortada }) {
   const t = useT();
   const lang = useLingua();
   const totais = dias.map((data, i) => {
     let pessoas = 0;
+    let pessoasComLotacao = 0;
     let capacidade = 0;
     linhas.forEach((l) => {
       const c = l.celulas?.[i];
       if (!c) return;
       pessoas += c.pessoas || 0;
-      if (c.capacidade) capacidade += c.capacidade;
+      if (c.capacidade) {
+        capacidade += c.capacidade;
+        pessoasComLotacao += c.pessoas || 0;
+      }
     });
-    return { data, pessoas, capacidade };
+    return { data, pessoas, pessoasComLotacao, capacidade };
   });
   const maximo = totais.reduce((m, x) => Math.max(m, x.pessoas), 0);
 
   return (
     <section aria-labelledby="ocupacao-semana" className="bg-white border border-n-200 rounded-md p-4 space-y-3">
       <h2 id="ocupacao-semana" className="font-display font-semibold text-sm text-n-900">{t('dashboard.activity.next7Days')}</h2>
+      {(erro || cortada) ? <Nota>{erro || t('dashboard.mare.truncated.days')}</Nota> : (
       <div className="grid grid-cols-7 gap-1.5">
-        {totais.map(({ data, pessoas, capacidade }) => {
-          const { altura, degrau } = barraDe(pessoas, capacidade, maximo);
+        {totais.map(({ data, pessoas, pessoasComLotacao, capacidade }) => {
+          const { altura, degrau } = barraDe(pessoas, pessoasComLotacao, capacidade, maximo);
           const dia = semPonto(formatarData(data, { weekday: 'short' }, lang));
           return (
             <div key={data} className="flex flex-col items-center gap-1.5">
@@ -80,17 +91,20 @@ function Barras({ linhas, dias }) {
           );
         })}
       </div>
+      )}
     </section>
   );
 }
 
-export default function OcupacaoDias({ linhas = [], dias = [], compacto = false }) {
+/* erro: texto quando as reservas ou os servicos nao carregaram; cortada: a lista de reservas pode ter ficado
+   pelo limite de linhas, por isso as percentagens nao se mostram (travessao) e ha uma nota */
+export default function OcupacaoDias({ linhas = [], dias = [], compacto = false, erro = null, cortada = false }) {
   const t = useT();
   const lang = useLingua();
   const rows = lista(linhas);
   const days = lista(dias);
 
-  if (compacto) return <Barras linhas={rows} dias={days} />;
+  if (compacto) return <Barras linhas={rows} dias={days} erro={erro} cortada={cortada} />;
 
   const haNeutra = rows.some((l) => lista(l.celulas).some((c) => c.pct === null || c.pct === undefined));
 
@@ -114,9 +128,13 @@ export default function OcupacaoDias({ linhas = [], dias = [], compacto = false 
         </div>
       </div>
 
-      {rows.length === 0 ? (
+      {erro ? (
+        <Nota>{erro}</Nota>
+      ) : rows.length === 0 ? (
         <p className="text-[13px] font-body text-n-500">{t('dashboard.mare.occupancy.empty')}</p>
       ) : (
+        <>
+        {cortada && <Nota>{t('dashboard.mare.truncated.days')}</Nota>}
         <div className="overflow-x-auto">
           <table className="w-full min-w-[760px] border-separate border-spacing-1">
             <caption className="sr-only">{t('dashboard.mare.occupancy.caption')}</caption>
@@ -142,17 +160,17 @@ export default function OcupacaoDias({ linhas = [], dias = [], compacto = false 
                 <tr key={linha.tourId}>
                   <th scope="row" className="text-left text-[13px] font-body font-semibold text-n-900 whitespace-nowrap pr-2">{linha.nome}</th>
                   {lista(linha.celulas).map((c) => {
-                    const degrau = degrauDe(c.pct);
+                    const degrau = cortada ? NEUTRO : degrauDe(c.pct);
                     const semCapacidade = c.pct === null || c.pct === undefined;
                     return (
                       <td key={c.data} className="p-0">
                         <div
-                          title={semCapacidade
+                          title={cortada ? undefined : semCapacidade
                             ? t('dashboard.mare.occupancy.cellNoCapacity', { people: c.pessoas })
                             : t('dashboard.mare.occupancy.cell', { people: c.pessoas, capacity: c.capacidade })}
                           className={`h-[34px] rounded-md font-mono text-[11px] flex items-center justify-center ${degrau.fundo} ${degrau.texto}`}
                         >
-                          {semCapacidade ? c.pessoas : `${c.pct}%`}
+                          {cortada ? '—' : (semCapacidade ? c.pessoas : `${c.pct}%`)}
                         </div>
                       </td>
                     );
@@ -162,6 +180,7 @@ export default function OcupacaoDias({ linhas = [], dias = [], compacto = false 
             </tbody>
           </table>
         </div>
+        </>
       )}
     </section>
   );

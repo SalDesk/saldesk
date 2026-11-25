@@ -98,3 +98,23 @@ describe('TilesTendencia', () => {
     expect(segundo.querySelector('.font-mono')).toBeNull();
   });
 });
+
+describe('MareDoDia: etiquetas das horas (revisao final)', () => {
+  beforeEach(() => useUiStore.setState({ lang: 'pt' }));
+  afterEach(cleanup);
+
+  const textos = (id) => [...screen.getByTestId(id).children].map((el) => el.textContent);
+
+  it('no_telemovel_ha_poucas_etiquetas_e_a_ultima_nao_se_sobrepoe_a_anterior', () => {
+    render(<MareDoDia curva={CURVA} agoraMin={10 * 60} />);
+    /* eixo 07-20: 07 11 15 e 20 (o 19 saia colado ao 20) */
+    expect(textos('mare-horas-telemovel')).toEqual(['07h', '11h', '15h', '20h']);
+    expect(textos('mare-horas-largo')).toEqual(['07h', '09h', '11h', '13h', '15h', '17h', '19h', '20h']);
+  });
+
+  it('com_erro_mostra_o_erro_em_vez_do_vazio_ou_do_grafico', () => {
+    render(<MareDoDia curva={curvaMare([], [TOUR_A])} agoraMin={600} erro="Falhou" />);
+    expect(screen.getByText('Falhou')).toBeInTheDocument();
+    expect(screen.queryByText('Sem actividades marcadas para hoje')).toBeNull();
+  });
+});

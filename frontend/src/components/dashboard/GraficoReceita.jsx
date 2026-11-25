@@ -23,13 +23,13 @@ function rotulosDoEixo(series) {
   return Array.from({ length: MAX_ROTULOS_EIXO }, (_, i) => series[Math.round((i * (n - 1)) / (MAX_ROTULOS_EIXO - 1))].rotulo);
 }
 
-function Dica({ active, payload, series }) {
+export function Dica({ active, payload, series }) {
   const t = useT();
   useLingua();
   if (!active || !payload?.length) return null;
   const ponto = series[payload[0]?.payload?.x];
   if (!ponto) return null;
-  const linha = (valor) => (valor === null ? '—' : `€${formatarNumero(Math.round(valor))}`);
+  const linha = (valor) => (valor === null ? '—' : eurosInteiros(valor));
   return (
     <div className="bg-ocean-900 text-white rounded-lg px-3 py-2 text-xs font-body shadow-md">
       <p className="font-mono text-ocean-200">{ponto.rotulo}</p>
@@ -108,7 +108,7 @@ export default function GraficoReceita({ series, estado, subtitulo }) {
                 stroke="#fff"
                 strokeWidth={2}
                 ifOverflow="visible"
-                label={{ value: `€${formatarNumero(Math.round(melhor.valor))}`, position: 'top', fill: 'var(--ocean-900)', fontSize: 12, fontWeight: 700 }}
+                label={{ value: eurosInteiros(melhor.valor), position: 'top', fill: 'var(--ocean-900)', fontSize: 12, fontWeight: 700 }}
               />
             </AreaChart>
           </ResponsiveContainer>

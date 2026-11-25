@@ -114,3 +114,49 @@ describe('OcupacaoDias compacto (proximos 7 dias)', () => {
     expect(portuguesNoEcra()).toEqual([]);
   });
 });
+
+describe('OcupacaoDias compacto: servicos com e sem lotacao (revisao final)', () => {
+  beforeEach(() => useUiStore.setState({ lang: 'pt' }));
+
+  const altura = (barra) => barra.firstElementChild.style.height;
+
+  it('a_barra_so_conta_os_servicos_com_lotacao', () => {
+    /* A: lotacao 10 com 5 pessoas; B: sem lotacao com 20 pessoas -> a barra e 50%, nao 100% */
+    const linhas = [
+      { tourId: 'a', nome: 'A', celulas: celulas([5], 10) },
+      { tourId: 'b', nome: 'B', celulas: celulas([20], null) },
+    ];
+    render(<OcupacaoDias compacto linhas={linhas} dias={DIAS.slice(0, 7)} />);
+    const barra = screen.getAllByRole('img')[0];
+    expect(altura(barra)).toBe('50%');
+    expect(barra.firstElementChild.className).toContain('bg-ocean-400');
+    /* o numero de pessoas no rotulo continua a ser o total */
+    expect(barra.getAttribute('aria-label')).toMatch(/: 25 pessoa\(s\)$/);
+  });
+
+  it('sem_nenhuma_lotacao_a_barra_e_relativa_e_neutra_sem_percentagem', () => {
+    const linhas = [{ tourId: 'b', nome: 'B', celulas: celulas([20, 10], null) }];
+    render(<OcupacaoDias compacto linhas={linhas} dias={DIAS.slice(0, 7)} />);
+    const barras = screen.getAllByRole('img');
+    expect(altura(barras[0])).toBe('100%');
+    expect(altura(barras[1])).toBe('50%');
+    expect(barras[0].firstElementChild.className).toContain('bg-ocean-400');
+    expect(screen.queryByText(/%/)).toBeNull();
+  });
+});
+
+describe('OcupacaoDias: erro e lista cortada (revisao final)', () => {
+  beforeEach(() => useUiStore.setState({ lang: 'pt' }));
+
+  it('com_erro_mostra_o_erro_e_nao_o_vazio', () => {
+    render(<OcupacaoDias linhas={[]} dias={DIAS} erro="Falhou" />);
+    expect(screen.getByText('Falhou')).toBeInTheDocument();
+    expect(screen.queryByText('Sem serviços activos.')).toBeNull();
+  });
+
+  it('cortada_esconde_as_percentagens', () => {
+    render(<OcupacaoDias linhas={LINHAS} dias={DIAS} cortada />);
+    expect(screen.getByText(/Lista possivelmente incompleta/)).toBeInTheDocument();
+    expect(screen.getByRole('table').textContent).not.toMatch(/%/);
+  });
+});

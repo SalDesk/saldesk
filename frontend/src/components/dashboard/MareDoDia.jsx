@@ -3,13 +3,26 @@ import { useT } from '../../i18n';
 import { pessoasAs } from '../../pages/dashboard/mareLogic';
 
 /* Mare do dia: quantas pessoas estao na rua, hora a hora, com a linha do "agora".
-   curva: resultado de curvaMare (mareLogic.js); agoraMin: minutos desde a meia-noite. */
+   curva: resultado de curvaMare (mareLogic.js); agoraMin: minutos desde a meia-noite;
+   erro: texto quando as reservas ou os servicos nao carregaram (substitui o grafico e o vazio). */
 const LARGURA = 760;
 const ALTURA = 210;
 const TOPO = 8;
 const BASE = 190;
 
 const doisDigitos = (n) => String(n).padStart(2, '0');
+
+/* Etiquetas das horas: de `passo` em `passo` e a ultima. Se a ultima ficar a menos de 2 h da anterior
+   (o que se sobrepunha no telemovel), sai a anterior. */
+function rotulosHoras(inicio, fim, passo) {
+  const horas = [];
+  for (let h = inicio; h <= fim; h += passo) horas.push(h);
+  if (horas[horas.length - 1] !== fim) {
+    if (passo > 2 && horas.length > 1 && fim - horas[horas.length - 1] < 2) horas.pop();
+    horas.push(fim);
+  }
+  return horas;
+}
 const horaCheia = (h) => `${doisDigitos(h)}:00`;
 const horaDeMinutos = (min) => `${doisDigitos(Math.floor(min / 60))}:${doisDigitos(min % 60)}`;
 
@@ -44,7 +57,7 @@ function desenhaAoEntrar(el) {
   );
 }
 
-export default function MareDoDia({ curva, agoraMin, reservasHoje = 0 }) {
+export default function MareDoDia({ curva, agoraMin, reservasHoje = 0, erro = null }) {
   const t = useT();
   const graficoRef = useRef(null);
   const temGrafico = !!curva?.pico;
@@ -62,11 +75,11 @@ export default function MareDoDia({ curva, agoraMin, reservasHoje = 0 }) {
     </div>
   );
 
-  if (!pico || pontos.length === 0) {
+  if (erro || !pico || pontos.length === 0) {
     return (
       <section aria-labelledby="mare-titulo" className="bg-ocean-900 rounded-[18px] p-4 lg:p-6 text-white flex flex-col gap-3">
         {cabecalho}
-        <p className="text-sm font-body text-ocean-200 py-6">{t(reservasHoje > 0 ? 'dashboard.mare.tide.emptyNoTime' : 'dashboard.mare.tide.empty')}</p>
+        <p className="text-sm font-body text-ocean-200 py-6">{erro || t(reservasHoje > 0 ? 'dashboard.mare.tide.emptyNoTime' : 'dashboard.mare.tide.empty')}</p>
       </section>
     );
   }
@@ -87,10 +100,25 @@ export default function MareDoDia({ curva, agoraMin, reservasHoje = 0 }) {
   const nowX = fracao * LARGURA;
   const nowY = yDe(agora);
 
-  /* etiquetas das horas: de duas em duas e a ultima */
-  const horas = [];
-  for (let h = curva.inicioHora; h <= curva.fimHora; h += 2) horas.push(h);
-  if (horas[horas.length - 1] !== curva.fimHora) horas.push(curva.fimHora);
+  /* etiquetas das horas: de duas em duas no ecra largo; no telemovel de quatro em quatro, para nao se sobreporem */
+  const horasLargo = rotulosHoras(curva.inicioHora, curva.fimHora, 2);
+  const horasTelemovel = rotulosHoras(curva.inicioHora, curva.fimHora, 4);
+  const etiquetasHoras = (horas, id, classe) => (
+    <div aria-hidden="true" data-testid={id} className={`relative h-4 font-mono text-[11px] lg:text-xs text-ocean-200 ${classe}`}>
+      {horas.map((h, i) => (
+        <span
+          key={h}
+          className="absolute whitespace-nowrap"
+          style={{
+            left: `${((h - curva.inicioHora) / duracaoEixo) * 100}%`,
+            transform: i === 0 ? 'none' : (h === curva.fimHora ? 'translateX(-100%)' : 'translateX(-50%)'),
+          }}
+        >
+          {`${doisDigitos(h)}h`}
+        </span>
+      ))}
+    </div>
+  );
 
   const rotuloGrafico = t('dashboard.mare.tide.aria', {
     from: horaCheia(curva.inicioHora),
@@ -141,20 +169,8 @@ export default function MareDoDia({ curva, agoraMin, reservasHoje = 0 }) {
         />
       </div>
 
-      <div aria-hidden="true" className="relative h-4 font-mono text-[11px] lg:text-xs text-ocean-200">
-        {horas.map((h, i) => (
-          <span
-            key={h}
-            className="absolute whitespace-nowrap"
-            style={{
-              left: `${((h - curva.inicioHora) / duracaoEixo) * 100}%`,
-              transform: i === 0 ? 'none' : (h === curva.fimHora ? 'translateX(-100%)' : 'translateX(-50%)'),
-            }}
-          >
-            {`${doisDigitos(h)}h`}
-          </span>
-        ))}
-      </div>
+      {etiquetasHoras(horasLargo, 'mare-horas-largo', 'hidden md:block')}
+      {etiquetasHoras(horasTelemovel, 'mare-horas-telemovel', 'md:hidden')}
 
       {saidas.length > 0 && (
         <ul className="flex flex-wrap gap-2">

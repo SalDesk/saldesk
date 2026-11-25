@@ -5,6 +5,7 @@ import ResumoView from '../pages/dashboard/ResumoView';
 import CanaisDonut from '../components/dashboard/CanaisDonut';
 import TopServicos from '../components/dashboard/TopServicos';
 import QuemSaoClientes from '../components/dashboard/QuemSaoClientes';
+import { Dica } from '../components/dashboard/GraficoReceita';
 import useUiStore from '../store/uiStore';
 import useAuthStore from '../store/authStore';
 import { getResumo, getReceita, getUnidades, getCanais } from '../services/financeiroService';
@@ -222,5 +223,25 @@ describe('ResumoView: blocos de baixo', () => {
     expect(await screen.findByTestId('resumo-nota')).toBeInTheDocument();
     expect(portuguesNoEcra(['Tour X', 'Booking.com'])).toEqual([]);
     expect(chavesCruas(['dashboard'])).toEqual([]);
+  });
+});
+
+describe('GraficoReceita: dinheiro no formato do painel', () => {
+  afterEach(cleanup);
+
+  it('a_dica_do_grafico_em_pt_nao_leva_separador_de_milhares', () => {
+    useUiStore.setState({ lang: 'pt' });
+    const series = [{ rotulo: '1 dez', actual: 12345, anterior: 1860 }];
+    render(<Dica active payload={[{ payload: { x: 0 } }]} series={series} />);
+    expect(screen.getByText('€12345')).toBeInTheDocument();
+    expect(screen.getByText(/Período anterior: €1860/)).toBeInTheDocument();
+  });
+
+  it('em_ingles_leva_o_separador_da_lingua', () => {
+    useUiStore.setState({ lang: 'en' });
+    const series = [{ rotulo: 'Dec 1', actual: 12345, anterior: null }];
+    render(<Dica active payload={[{ payload: { x: 0 } }]} series={series} />);
+    expect(screen.getByText('€12,345')).toBeInTheDocument();
+    useUiStore.setState({ lang: 'pt' });
   });
 });

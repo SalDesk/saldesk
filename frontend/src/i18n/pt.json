@@ -258,7 +258,7 @@
       "wind": {"title": "Vento e mar", "subtitle": "Próximos 5 dias", "loading": "A carregar a previsão do vento…", "error": "Não foi possível carregar a previsão do vento.", "empty": "Sem previsão de vento disponível.", "kmh": "{{n}} km/h", "warning": "{{day}}: vento de até {{kmh}} km/h. Considere reagendar as actividades no mar.", "cardinal": {"N": "N", "NE": "NE", "E": "E", "SE": "SE", "S": "S", "SW": "SO", "W": "O", "NW": "NO"}, "from": "Vento de {{dir}}"},
       "occupancy": {"title": "Ocupação dos próximos 14 dias", "subtitle": "Lugares vendidos por serviço; os dias claros são onde ainda há espaço para vender", "caption": "Percentagem de lugares vendidos por serviço e por dia", "service": "Serviço", "legendEmpty": "Vazio", "legendFull": "Cheio", "legendNoCapacity": "Sem lotação definida", "empty": "Sem serviços activos.", "cell": "{{people}} de {{capacity}} lugares", "cellNoCapacity": "{{people}} pessoa(s), sem lotação definida", "barAria": "{{day}}: {{people}} pessoa(s)"},
       "header": {"viewLabel": "Vista do painel"},
-      "sparkline": "{{label}}, últimos 7 dias: {{values}}",
+      "errors": {"today": "Não foi possível carregar as reservas de hoje.", "units": "Não foi possível carregar os serviços.", "days": "Não foi possível carregar as reservas dos próximos dias."}, "truncated": {"today": "Lista possivelmente incompleta", "days": "Lista possivelmente incompleta: há reservas a mais para mostrar a ocupação com certeza."}, "sparkline": "{{label}}, últimos 7 dias: {{values}}",
       "tide": {
         "title": "Maré do dia",
         "subtitle": "Pessoas em actividade, hora a hora",

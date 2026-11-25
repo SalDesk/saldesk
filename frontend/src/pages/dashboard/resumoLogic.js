@@ -234,6 +234,8 @@ function codigoPorNome(texto) {
 export function topPaises(reservas, n = 5) {
   const contagem = new Map();
   lista(reservas).forEach((r) => {
+    /* o grafico dos canais (backend) exclui as canceladas: os paises descrevem as mesmas reservas */
+    if (r.status === 'cancelled') return;
     const texto = String(r.customer_country || '').trim();
     if (!texto) return;
     const codigo = /^[A-Za-z]{2}$/.test(texto) ? texto.toUpperCase() : codigoPorNome(texto);
