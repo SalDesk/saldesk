@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   periodoResumo, preencherSerie, alinharSeries, melhorPonto, totalActual,
   deltaPercentual, deltaPontos, ocupacaoActividades, listaPossivelmenteCortada, LIMITE_LINHAS,
+  quotaDirectas, topPaises, fatiasCanais,
 } from '../pages/dashboard/resumoLogic';
 
 describe('periodoResumo', () => {
@@ -170,5 +171,56 @@ describe('listaPossivelmenteCortada', () => {
     expect(listaPossivelmenteCortada(new Array(1000).fill({}))).toBe(true);
     expect(listaPossivelmenteCortada(new Array(999).fill({}))).toBe(false);
     expect(listaPossivelmenteCortada(null)).toBe(false);
+  });
+});
+
+describe('quotaDirectas', () => {
+  it('conta direct, public e admin pelo numero de reservas', () => {
+    expect(quotaDirectas([
+      { source: 'direct', num_reservas: 4 },
+      { source: 'public', num_reservas: 2 },
+      { source: 'booking_com', num_reservas: 4 },
+    ])).toBe(60);
+    expect(quotaDirectas([{ source: 'admin', num_reservas: 1 }, { source: 'viator', num_reservas: 1 }])).toBe(50);
+  });
+
+  it('sem canais ou sem reservas devolve null', () => {
+    expect(quotaDirectas([])).toBeNull();
+    expect(quotaDirectas(null)).toBeNull();
+    expect(quotaDirectas([{ source: 'direct', num_reservas: 0 }])).toBeNull();
+  });
+});
+
+describe('topPaises', () => {
+  it('maiusculas, sem vazios, em percentagem das reservas com pais', () => {
+    const r = [{ customer_country: 'gb' }, { customer_country: 'GB' }, { customer_country: 'PT' }, { customer_country: '' }, {}];
+    expect(topPaises(r)).toEqual([{ codigo: 'GB', pct: 67 }, { codigo: 'PT', pct: 33 }]);
+  });
+
+  it('limita a n e lida com lista vazia', () => {
+    const r = ['A', 'B', 'C', 'D', 'E', 'F', 'G'].map((c) => ({ customer_country: c }));
+    expect(topPaises(r, 3)).toHaveLength(3);
+    expect(topPaises([])).toEqual([]);
+    expect(topPaises(null)).toEqual([]);
+  });
+});
+
+describe('fatiasCanais', () => {
+  const c = (source, num) => ({ source, num_reservas: num, receita: 0 });
+  it('uma fatia por origem, com a percentagem', () => {
+    expect(fatiasCanais([c('direct', 3), c('airbnb', 1)])).toEqual([
+      { source: 'direct', num: 3, pct: 75 },
+      { source: 'airbnb', num: 1, pct: 25 },
+    ]);
+  });
+
+  it('com mais de 5 origens junta as mais pequenas em Outros', () => {
+    const f = fatiasCanais([c('a', 10), c('b', 8), c('c', 6), c('d', 4), c('e', 2), c('f', 1)]);
+    expect(f).toHaveLength(5);
+    expect(f[4]).toEqual({ source: null, outros: true, num: 3, pct: 10 });
+  });
+
+  it('ignora origens sem reservas', () => {
+    expect(fatiasCanais([c('direct', 0)])).toEqual([]);
   });
 });

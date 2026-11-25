@@ -1,9 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { BookOpen, TrendingUp } from 'lucide-react';
-import { getReceita, getResumo, getUnidades } from '../../services/financeiroService';
+import { getCanais, getReceita, getResumo, getUnidades } from '../../services/financeiroService';
 import { listReservations } from '../../services/reservationsService';
 import { listUnits } from '../../services/unitsService';
+import { getReviewsStats } from '../../services/analyticsService';
 import { estadiaEm } from '../../services/reservationRanges';
 import { useT } from '../../i18n';
 import { formatarData, formatarNumero, useLingua } from '../../utils/formatoLingua';
@@ -11,9 +10,9 @@ import { TODAY } from './shared';
 import useAuthStore from '../../store/authStore';
 import TilesTendencia from '../../components/dashboard/TilesTendencia';
 import GraficoReceita from '../../components/dashboard/GraficoReceita';
-import Badge from '../../components/ui/Badge';
-import EmptyState from '../../components/ui/EmptyState';
-import LoadingSpinner from '../../components/shared/LoadingSpinner';
+import CanaisDonut from '../../components/dashboard/CanaisDonut';
+import TopServicos from '../../components/dashboard/TopServicos';
+import QuemSaoClientes from '../../components/dashboard/QuemSaoClientes';
 import { eurosDecimais, eurosInteiros } from '../reservations/shared';
 import {
   alinharSeries, deltaPercentual, deltaPontos, ocupacaoActividades, periodoResumo, listaPossivelmenteCortada, preencherSerie,
@@ -24,15 +23,6 @@ import {
 
 const PERIODOS = ['7d', '30d', '12m'];
 const PERIODO_INICIAL = '30d';
-
-const STATUS_BADGE_MAP = {
-  pending: 'pending', confirmed: 'confirmed',
-  checked_in: 'info', checked_out: 'default', cancelled: 'cancelled',
-};
-const STATUS_KEY = {
-  pending: 'pending', confirmed: 'confirmed',
-  checked_in: 'active', checked_out: 'completed', cancelled: 'cancelled',
-};
 
 /* Cada pedido falha sozinho: o estado diz se esta a carregar, se correu bem ou se falhou */
 const CARREGAR = { estado: 'loading' };
@@ -59,24 +49,9 @@ function EsqueletoTiles() {
   );
 }
 
-/* Cartao com titulo, usado nos blocos de baixo */
-function Bloco({ icon: Icon, title, action, children }) {
-  return (
-    <section className="bg-white border border-n-200 rounded-sm">
-      <div className="px-4 py-3 border-b border-n-200 flex items-center gap-2">
-        <Icon size={14} strokeWidth={1.75} className="text-n-500" />
-        <h2 className="font-display font-semibold text-sm text-n-900">{title}</h2>
-        {action}
-      </div>
-      {children}
-    </section>
-  );
-}
-
 export default function ResumoView() {
   const t = useT();
   const lang = useLingua();
-  const navigate = useNavigate();
   const opType = useAuthStore((s) => s.operator?.operator_type);
 
   const [chave, setChave] = useState(PERIODO_INICIAL);
@@ -85,7 +60,9 @@ export default function ResumoView() {
   const [resumo, setResumo] = useState(CARREGAR);
   const [receita, setReceita] = useState(CARREGAR);
   const [servicos, setServicos] = useState(CARREGAR);
-  const [recentes, setRecentes] = useState(CARREGAR);
+  const [canais, setCanais] = useState(CARREGAR);
+  const [avaliacao, setAvaliacao] = useState(CARREGAR);
+  const [reservas, setReservas] = useState(CARREGAR);
   const [actividades, setActividades] = useState(CARREGAR);
 
   /* Numeros do periodo (e do anterior, na mesma resposta) */
@@ -114,38 +91,55 @@ export default function ResumoView() {
     return () => { ativo = false; };
   }, [periodo]);
 
-  /* Reservas do periodo e do anterior, mais os servicos: so as actividades precisam (ocupacao) */
+  /* Reservas do periodo (todos os tipos: os paises dos clientes); so as actividades pedem ainda os
+     servicos e o periodo anterior, para a ocupacao. O pedido do periodo e o mesmo para os dois usos. */
   useEffect(() => {
-    if (opType !== 'activity') return undefined;
     let ativo = true;
+    setReservas(CARREGAR);
     setActividades(CARREGAR);
-    Promise.all([
-      listUnits(),
-      listReservations(estadiaEm(periodo.inicio, periodo.fim)),
-      listReservations(estadiaEm(periodo.anteriorInicio, periodo.anteriorFim)).catch(() => null),
-    ]).then(([tours, reservas, reservasAnteriores]) => {
-      if (!ativo) return;
-      setActividades({ estado: 'ok', tours, reservas, reservasAnteriores });
-    }).catch(() => ativo && setActividades({ estado: 'erro' }));
+    const pedido = listReservations(estadiaEm(periodo.inicio, periodo.fim));
+    pedido
+      .then((dados) => ativo && setReservas({ estado: 'ok', dados: Array.isArray(dados) ? dados : [] }))
+      .catch(() => ativo && setReservas({ estado: 'erro' }));
+    if (opType === 'activity') {
+      Promise.all([
+        listUnits(),
+        pedido,
+        listReservations(estadiaEm(periodo.anteriorInicio, periodo.anteriorFim)).catch(() => null),
+      ]).then(([tours, reservasDoPeriodo, reservasAnteriores]) => {
+        if (!ativo) return;
+        setActividades({ estado: 'ok', tours, reservas: reservasDoPeriodo, reservasAnteriores });
+      }).catch(() => ativo && setActividades({ estado: 'erro' }));
+    }
     return () => { ativo = false; };
   }, [opType, periodo]);
 
-  /* Servicos mais vendidos do periodo (o rebuild dos blocos de baixo e a tarefa seguinte) */
+  /* Servicos que mais rendem no periodo */
   useEffect(() => {
     let ativo = true;
     setServicos(CARREGAR);
     getUnidades(periodo.inicio, periodo.fim)
       .then((dados) => ativo && setServicos({ estado: 'ok', dados: Array.isArray(dados) ? dados : [] }))
-      .catch(() => ativo && setServicos({ estado: 'ok', dados: [] }));
+      .catch(() => ativo && setServicos({ estado: 'erro' }));
     return () => { ativo = false; };
   }, [periodo]);
 
-  /* As 5 reservas criadas mais recentemente, de qualquer mes */
+  /* Canais de venda do periodo */
   useEffect(() => {
     let ativo = true;
-    listReservations({ order_by: 'created_at', limit: 5 })
-      .then((dados) => ativo && setRecentes({ estado: 'ok', dados: Array.isArray(dados) ? dados : [] }))
-      .catch(() => ativo && setRecentes({ estado: 'ok', dados: [] }));
+    setCanais(CARREGAR);
+    getCanais(periodo.inicio, periodo.fim)
+      .then((dados) => ativo && setCanais({ estado: 'ok', dados: Array.isArray(dados) ? dados : [] }))
+      .catch(() => ativo && setCanais({ estado: 'erro' }));
+    return () => { ativo = false; };
+  }, [periodo]);
+
+  /* Nota media: de todas as avaliacoes, nao depende do periodo */
+  useEffect(() => {
+    let ativo = true;
+    getReviewsStats()
+      .then((dados) => ativo && setAvaliacao(dados ? { estado: 'ok', dados } : { estado: 'erro' }))
+      .catch(() => ativo && setAvaliacao({ estado: 'erro' }));
     return () => { ativo = false; };
   }, []);
 
@@ -215,16 +209,6 @@ export default function ResumoView() {
     to: formatarData(periodo.fim, formatoData),
   });
 
-  /* Servicos mais vendidos: ate 5, por receita */
-  const topServicos = useMemo(() => (
-    [...(servicos.dados || [])].sort((a, b) => Number(b.receita || 0) - Number(a.receita || 0)).slice(0, 5)
-  ), [servicos]);
-
-  /* Reservas recentes: as 5 criadas mais recentemente */
-  const reservasRecentes = useMemo(() => (
-    [...(recentes.dados || [])].sort((a, b) => new Date(b.created_at) - new Date(a.created_at)).slice(0, 5)
-  ), [recentes]);
-
   return (
     <div className="space-y-4 lg:space-y-6">
       {/* Periodo */}
@@ -253,71 +237,11 @@ export default function ResumoView() {
       {/* Receita contra o periodo anterior */}
       <GraficoReceita series={series} estado={receita.estado} subtitulo={subtitulo} />
 
-      {/* Servicos mais vendidos + Reservas recentes (a refazer na tarefa seguinte) */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <Bloco icon={TrendingUp} title={t('dashboard.summary.topServices')}>
-          {servicos.estado === 'loading' ? (
-            <div className="flex justify-center py-8"><LoadingSpinner size={20} /></div>
-          ) : topServicos.length === 0 ? (
-            <EmptyState icon={TrendingUp} title={t('dashboard.summary.topServicesEmpty')} />
-          ) : (
-            <div className="divide-y divide-n-100">
-              {topServicos.map((s, idx) => (
-                <div key={`${s.name}-${idx}`} className="px-5 py-3 flex items-center gap-3">
-                  <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-display font-bold shrink-0 ${
-                    idx === 0 ? 'bg-sand-300 text-sand-600' : idx === 1 ? 'bg-n-100 text-n-600' : 'bg-n-50 text-n-400'
-                  }`}>{idx + 1}</span>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs font-display font-semibold text-n-900 truncate">{s.name}</p>
-                    <p className="text-[11px] font-body text-n-400">
-                      {s.num_reservas || 0} {t('dashboard.activity.reservationsSuffix')}
-                    </p>
-                  </div>
-                  <p className="text-sm font-display font-bold text-ocean-700 shrink-0">
-                    {`€${formatarNumero(Math.round(Number(s.receita || 0)))}`}
-                  </p>
-                </div>
-              ))}
-            </div>
-          )}
-        </Bloco>
-
-        <Bloco
-          icon={BookOpen}
-          title={t('dashboard.activity.recentReservations')}
-          action={(
-            <button onClick={() => navigate('/reservas')} className="ml-auto text-xs font-body text-ocean-700 hover:underline">
-              {t('dashboard.common.viewAll')}
-            </button>
-          )}
-        >
-          {recentes.estado === 'loading' ? (
-            <div className="flex justify-center py-8"><LoadingSpinner size={20} /></div>
-          ) : reservasRecentes.length === 0 ? (
-            <EmptyState icon={BookOpen} title={t('dashboard.activity.noRecentReservations')} />
-          ) : (
-            <div className="divide-y divide-n-100">
-              {reservasRecentes.map((r) => (
-                <div key={r.id} className="px-5 py-3 flex items-center gap-3">
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs font-display font-semibold text-n-900 truncate">
-                      {r.units?.name || r.unit?.name || '—'}
-                    </p>
-                    <p className="text-[11px] font-body text-n-400 truncate">
-                      {r.customer_name || '—'} · {r.check_in}
-                    </p>
-                  </div>
-                  <div className="text-right shrink-0">
-                    <Badge variant={STATUS_BADGE_MAP[r.status] || 'default'}>
-                      {STATUS_KEY[r.status] ? t(`dashboard.status.${STATUS_KEY[r.status]}`) : r.status}
-                    </Badge>
-                    <p className="text-xs font-body text-n-400 mt-0.5">{r.guests || 1} {t('dashboard.common.pax')}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </Bloco>
+      {/* Canais, servicos que mais rendem e clientes: cada bloco carrega e falha sozinho */}
+      <div className="grid grid-cols-1 md:grid-cols-[repeat(auto-fit,minmax(min(100%,340px),1fr))] gap-4">
+        <CanaisDonut canais={canais.dados} estado={canais.estado} />
+        <TopServicos servicos={servicos.dados} estado={servicos.estado} />
+        <QuemSaoClientes avaliacao={avaliacao} reservas={reservas} />
       </div>
     </div>
   );

@@ -4,21 +4,26 @@ import { MemoryRouter } from 'react-router-dom';
 import ResumoView from '../pages/dashboard/ResumoView';
 import useUiStore from '../store/uiStore';
 import useAuthStore from '../store/authStore';
-import { getResumo, getReceita, getUnidades } from '../services/financeiroService';
+import { getResumo, getReceita, getUnidades, getCanais } from '../services/financeiroService';
 import { listReservations } from '../services/reservationsService';
 import { listUnits } from '../services/unitsService';
+import { getReviewsStats } from '../services/analyticsService';
 
 /* Sem rede: todos os servicos usados pela vista sao simulados */
 vi.mock('../services/financeiroService', () => ({
   getResumo: vi.fn(),
   getReceita: vi.fn(),
   getUnidades: vi.fn(),
+  getCanais: vi.fn(),
 }));
 vi.mock('../services/reservationsService', () => ({
   listReservations: vi.fn(),
 }));
 vi.mock('../services/unitsService', () => ({
   listUnits: vi.fn(),
+}));
+vi.mock('../services/analyticsService', () => ({
+  getReviewsStats: vi.fn(),
 }));
 
 /* TODAY e fixo ao importar: aqui e um valor que cada teste escolhe */
@@ -44,6 +49,8 @@ function servicosVazios() {
   getResumo.mockReset().mockResolvedValue(resumo());
   getReceita.mockReset().mockResolvedValue([]);
   getUnidades.mockReset().mockResolvedValue([]);
+  getCanais.mockReset().mockResolvedValue([]);
+  getReviewsStats.mockReset().mockResolvedValue(null);
   listReservations.mockReset().mockResolvedValue([]);
   listUnits.mockReset().mockResolvedValue([]);
 }
@@ -271,59 +278,5 @@ describe('ResumoView: grafico da receita', () => {
     renderResumo();
     const eixo = await screen.findByTestId('resumo-eixo');
     expect(within(eixo).getByText('10 Fev')).toBeInTheDocument();
-  });
-});
-
-describe('ResumoView: blocos de baixo', () => {
-  it('mostra servicos mais vendidos', async () => {
-    getUnidades.mockResolvedValue([
-      { name: 'Servico A', unit_type: 'tour', num_reservas: 2, receita: 100 },
-      { name: 'Servico B', unit_type: 'tour', num_reservas: 9, receita: 900 },
-      { name: 'Servico C', unit_type: 'tour', num_reservas: 3, receita: 300 },
-      { name: 'Servico D', unit_type: 'tour', num_reservas: 5, receita: 500 },
-      { name: 'Servico E', unit_type: 'tour', num_reservas: 4, receita: 400 },
-      { name: 'Servico F', unit_type: 'tour', num_reservas: 1, receita: 50 },
-    ]);
-    renderResumo();
-    const titulo = await screen.findByText('Serviços mais vendidos');
-    const bloco = titulo.closest('section');
-    await within(bloco).findByText('Servico B');
-    const nomes = within(bloco).getAllByText(/^Servico /).map((el) => el.textContent);
-    expect(nomes).toEqual(['Servico B', 'Servico D', 'Servico E', 'Servico C', 'Servico A']);
-    expect(within(bloco).queryByText('Servico F')).not.toBeInTheDocument();
-  });
-
-  it('as reservas recentes nao usam from/to nem se limitam ao mes', async () => {
-    renderResumo();
-    await screen.findByText('Sem reservas recentes');
-    const pedidos = listReservations.mock.calls.map(([params]) => params);
-    expect(pedidos).toEqual([{ order_by: 'created_at', limit: 5 }]);
-  });
-
-  it('mostra as 5 reservas mais recentes, de qualquer mes', async () => {
-    listReservations.mockResolvedValue(
-      Array.from({ length: 7 }, (_, i) => ({
-        id: `r${i}`,
-        created_at: `2026-11-0${i + 1}T10:00:00Z`,
-        status: 'confirmed',
-        customer_name: `Cliente ${i + 1}`,
-        check_in: '2026-12-10',
-        guests: 2,
-        units: { name: 'Tour X' },
-      })),
-    );
-    renderResumo();
-    const bloco = (await screen.findByText('Reservas recentes')).closest('section');
-    await within(bloco).findByText(/Cliente 7/);
-    expect(within(bloco).getAllByText(/Cliente \d/).length).toBe(5);
-  });
-
-  it('servicos e reservas a falhar mostram os estados vazios', async () => {
-    const erro = new Error('falha de rede');
-    getUnidades.mockRejectedValue(erro);
-    listReservations.mockRejectedValue(erro);
-    renderResumo();
-    expect(await screen.findByText('Sem vendas este mês')).toBeInTheDocument();
-    expect(screen.getByText('Sem reservas recentes')).toBeInTheDocument();
   });
 });

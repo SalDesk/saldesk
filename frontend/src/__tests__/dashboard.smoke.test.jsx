@@ -23,6 +23,7 @@ vi.mock('../services/financeiroService', () => ({
   getResumo: vi.fn(),
   getReceita: vi.fn().mockResolvedValue([]),
   getUnidades: vi.fn().mockResolvedValue([]),
+  getCanais: vi.fn().mockResolvedValue([]),
 }));
 vi.mock('../services/weatherService', async (importOriginal) => {
   const real = await importOriginal();
@@ -173,8 +174,8 @@ describe('Dashboard (fumo por tipo de operador)', () => {
     expect(screen.getByTestId('whatsapp-pendentes')).toBeInTheDocument();
     /* a vista Resumo carrega sozinha: esperar que todos os blocos assentem */
     expect(await screen.findByText('Sem receita neste período')).toBeInTheDocument();
-    expect(await screen.findByText('Sem vendas este mês')).toBeInTheDocument();
-    expect(await screen.findByText('Sem reservas recentes')).toBeInTheDocument();
+    expect(await screen.findByText('Sem vendas neste período')).toBeInTheDocument();
+    expect(await screen.findByText('Sem reservas neste período')).toBeInTheDocument();
   });
 
   it('volta a hoje', async () => {

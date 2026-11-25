@@ -154,3 +154,47 @@ export function rotuloPeriodo(periodo, granularidade, t) {
   const nome = rotuloMes(Number(mes) - 1, t);
   return granularidade === 'month' ? `${nome} ${ano}` : `${Number(dia)} ${nome}`;
 }
+
+/* Origens que contam como reservas directas (sem comissao a plataformas) */
+const ORIGENS_DIRECTAS = ['direct', 'public', 'admin'];
+
+/* Percentagem inteira de reservas directas, pelo numero de reservas de cada canal; sem reservas, null */
+export function quotaDirectas(canais) {
+  const total = lista(canais).reduce((s, c) => s + (Number(c.num_reservas) || 0), 0);
+  if (total <= 0) return null;
+  const directas = lista(canais)
+    .filter((c) => ORIGENS_DIRECTAS.includes(c.source))
+    .reduce((s, c) => s + (Number(c.num_reservas) || 0), 0);
+  return Math.round((directas / total) * 100);
+}
+
+/* Fatias do donut: uma por origem, da maior para a mais pequena; passando de `max`, as mais pequenas
+   juntam-se em { source: null, outros: true }. Devolve [{ source, num, pct }] */
+export function fatiasCanais(canais, max = 5) {
+  const validos = lista(canais)
+    .map((c) => ({ source: c.source, num: Number(c.num_reservas) || 0 }))
+    .filter((c) => c.num > 0)
+    .sort((a, b) => b.num - a.num);
+  const total = validos.reduce((s, c) => s + c.num, 0);
+  if (total === 0) return [];
+  let fatias = validos;
+  if (validos.length > max) {
+    const resto = validos.slice(max - 1).reduce((s, c) => s + c.num, 0);
+    fatias = [...validos.slice(0, max - 1), { source: null, outros: true, num: resto }];
+  }
+  return fatias.map((f) => ({ ...f, pct: Math.round((f.num / total) * 100) }));
+}
+
+/* Paises das reservas: codigo em maiusculas e a percentagem das reservas que tem pais; os n maiores */
+export function topPaises(reservas, n = 5) {
+  const contagem = new Map();
+  lista(reservas).forEach((r) => {
+    const codigo = String(r.customer_country || '').trim().toUpperCase();
+    if (codigo) contagem.set(codigo, (contagem.get(codigo) || 0) + 1);
+  });
+  const total = [...contagem.values()].reduce((s, v) => s + v, 0);
+  return [...contagem.entries()]
+    .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+    .slice(0, n)
+    .map(([codigo, v]) => ({ codigo, pct: Math.round((v / total) * 100) }));
+}
