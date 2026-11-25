@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { vi } from 'vitest';
 import { render, screen, fireEvent, within } from '@testing-library/react';
 import Button from '../components/ui/Button';
 import Badge from '../components/ui/Badge';
@@ -171,5 +172,96 @@ describe('EmptyState', () => {
     expect(screen.getByText('Sem reservas')).toBeInTheDocument();
     expect(screen.getByText('Crie a primeira reserva')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Nova reserva' })).toBeInTheDocument();
+  });
+});
+
+/* Mare: classes app: dentro de [data-ui="app"]; fora dela as classes de sempre continuam na string */
+function naApp(el) {
+  return <div data-ui="app">{el}</div>;
+}
+
+describe('Button (Mare)', () => {
+  it('md e sm tem altura e pilula da app e mantem as classes antigas', () => {
+    render(naApp(<><Button>Medio</Button><Button size="sm">Pequeno</Button></>));
+    const md = screen.getByRole('button', { name: 'Medio' }).className;
+    const sm = screen.getByRole('button', { name: 'Pequeno' }).className;
+    expect(md).toContain('app:h-11');
+    expect(md).toContain('app:rounded-full');
+    expect(md).toContain('h-9');
+    expect(md).toContain('rounded-sm');
+    expect(sm).toContain('app:h-9');
+    expect(sm).toContain('h-8');
+    expect(md).toContain('app:focus-visible:ring-sand-500');
+  });
+
+  it('fora da app as classes de sempre estao la e nao ha rounded-[6px]', () => {
+    render(<Button>Medio</Button>);
+    const cls = screen.getByRole('button', { name: 'Medio' }).className;
+    expect(cls).toContain('h-9');
+    expect(cls).toContain('rounded-sm');
+    expect(cls).not.toContain('rounded-[6px]');
+  });
+
+  it('confirm e ocean-900 com texto branco', () => {
+    render(naApp(<Button variant="confirm">Confirmar</Button>));
+    const cls = screen.getByRole('button', { name: 'Confirmar' }).className;
+    expect(cls).toContain('bg-ocean-900');
+    expect(cls).toContain('hover:bg-ocean-800');
+    expect(cls).toContain('text-white');
+  });
+
+  it('danger continua vermelho solido', () => {
+    render(naApp(<Button variant="danger">Apagar</Button>));
+    const cls = screen.getByRole('button', { name: 'Apagar' }).className;
+    expect(cls).toContain('bg-error');
+    expect(cls).toContain('text-white');
+  });
+
+  it('secondary e branco com contorno ocean-200 e ghost e transparente', () => {
+    render(naApp(<><Button variant="secondary">Sec</Button><Button variant="ghost">Fantasma</Button></>));
+    const sec = screen.getByRole('button', { name: 'Sec' }).className;
+    expect(sec).toContain('app:border-ocean-200');
+    expect(sec).toContain('app:text-ocean-700');
+    expect(sec).toContain('app:hover:border-ocean-500');
+    const gh = screen.getByRole('button', { name: 'Fantasma' }).className;
+    expect(gh).toContain('bg-transparent');
+    expect(gh).toContain('app:hover:bg-ocean-50');
+    expect(gh).toContain('app:rounded-full');
+  });
+});
+
+describe('Tabs (Mare)', () => {
+  it('faixa branca arredondada com borda de cartao e abas em pilula na app', () => {
+    const onChange = vi.fn();
+    render(naApp(<Tabs tabs={[{ id: 'a', label: 'A' }, { id: 'b', label: 'B', count: 3 }]} value="a" onChange={onChange} />));
+    const lista = screen.getByRole('tablist');
+    expect(lista.className).toContain('app:border-mare-card');
+    expect(lista.className).toContain('app:rounded-full');
+    expect(lista.className).toContain('app:bg-white');
+    expect(lista.className).toContain('overflow-x-auto');
+    const a = screen.getByRole('tab', { name: 'A' });
+    const b = screen.getByRole('tab', { name: /B/ });
+    expect(a).toHaveAttribute('aria-selected', 'true');
+    expect(a.className).toContain('app:bg-ocean-900');
+    expect(a.className).toContain('app:min-h-10');
+    expect(b).toHaveAttribute('aria-selected', 'false');
+    fireEvent.click(b);
+    expect(onChange).toHaveBeenCalledWith('b');
+  });
+});
+
+describe('FilterChips (Mare)', () => {
+  it('mantem o estado premido e onChange; o activo e ocean-900 na app', () => {
+    const onChange = vi.fn();
+    render(naApp(<FilterChips options={[{ value: 'x', label: 'X' }, { value: 'y', label: 'Y' }]} value="x" onChange={onChange} />));
+    const x = screen.getByRole('button', { name: 'X' });
+    const y = screen.getByRole('button', { name: 'Y' });
+    expect(x).toHaveAttribute('aria-pressed', 'true');
+    expect(y).toHaveAttribute('aria-pressed', 'false');
+    expect(x.className).toContain('app:bg-ocean-900');
+    expect(x.className).toContain('app:h-9');
+    expect(y.className).toContain('app:border-mare-field');
+    fireEvent.click(y);
+    expect(onChange).toHaveBeenCalledWith('y');
   });
 });

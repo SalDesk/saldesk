@@ -2,19 +2,21 @@ import { Loader2 } from 'lucide-react';
 
 const variants = {
   primary:   'bg-ocean-700 hover:bg-ocean-500 text-white border border-transparent app:bg-sand-500 app:text-ocean-900 app:hover:bg-sand-400',
-  secondary: 'bg-white hover:bg-n-50 text-n-700 border border-n-300 dark:bg-n-800 dark:hover:bg-n-700 dark:text-n-200 dark:border-n-600 app:border-n-300 app:text-n-800',
-  ghost:     'bg-transparent hover:bg-ocean-50 text-ocean-700 border border-transparent dark:text-ocean-300 dark:hover:bg-n-800',
+  secondary: 'bg-white hover:bg-n-50 text-n-700 border border-n-300 dark:bg-n-800 dark:hover:bg-n-700 dark:text-n-200 dark:border-n-600 app:bg-white app:hover:bg-white app:border-ocean-200 app:hover:border-ocean-500 app:text-ocean-700',
+  ghost:     'bg-transparent hover:bg-ocean-50 text-ocean-700 border border-transparent dark:text-ocean-300 dark:hover:bg-n-800 app:text-ocean-700 app:hover:bg-ocean-50',
   danger:    'bg-error hover:bg-red-700 text-white border border-transparent',
   /* CTA de destaque sobre fundos escuros/foto -- ex. login em vidro fosco,
      onde o azul ocean do "primary" nao contrasta o suficiente com o resto
      em tons translucidos. */
   accent:    'bg-sand-500 hover:bg-sand-400 text-ocean-900 border border-transparent font-bold',
+  /* Confirmar: accao positiva em ocean-900 (so muda o aspecto) */
+  confirm:   'bg-ocean-900 hover:bg-ocean-800 text-white border border-transparent',
 };
 
 const sizes = {
-  sm: 'h-8 px-3 text-xs gap-1.5 app:rounded-[6px]',
-  md: 'h-9 px-4 text-sm gap-2 app:rounded-[6px]',
-  lg: 'h-11 px-6 text-sm gap-2 app:rounded-[6px]',
+  sm: 'h-8 px-3 text-xs gap-1.5 app:h-9 app:px-3.5 app:text-[13px] app:rounded-full',
+  md: 'h-9 px-4 text-sm gap-2 app:h-11 app:px-5 app:font-semibold app:rounded-full',
+  lg: 'h-11 px-6 text-sm gap-2 app:h-12 app:px-6 app:font-semibold app:rounded-full',
 };
 
 export default function Button({
@@ -33,7 +35,7 @@ export default function Button({
     <button
       disabled={isDisabled}
       className={[
-        'inline-flex items-center justify-center font-body font-medium rounded-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ocean-300 disabled:opacity-50 disabled:cursor-not-allowed',
+        'inline-flex items-center justify-center font-body font-medium rounded-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ocean-300 app:focus-visible:ring-sand-500 disabled:opacity-50 disabled:cursor-not-allowed',
         variants[variant],
         sizes[size],
         className,

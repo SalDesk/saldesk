@@ -200,3 +200,36 @@ describe('Badge: variante warning', () => {
     expect(screen.getByText('Normal').className).not.toContain('var(--warning)');
   });
 });
+
+describe('Mare: campos e interruptor', () => {
+  it('Input na app: altura 44, raio 12, borda do campo, etiqueta e erro ligados', () => {
+    render(<div data-ui="app"><Input label="Nome" error="Obrigatorio" /></div>);
+    const campo = screen.getByLabelText('Nome');
+    expect(campo.className).toContain('app:h-11');
+    expect(campo.className).toContain('app:rounded-xl');
+    expect(campo.className).toContain('app:focus:ring-sand-500');
+    expect(campo.className).toContain('border-error');
+    expect(campo).toHaveAttribute('aria-invalid', 'true');
+    expect(campo).toHaveAccessibleDescription('Obrigatorio');
+  });
+
+  it('Input sem erro usa a borda do campo; Select e Textarea tambem', () => {
+    render(<div data-ui="app"><Input label="A" /><Select label="B"><option>1</option></Select><Textarea label="C" /></div>);
+    for (const nome of ['A', 'B', 'C']) {
+      expect(screen.getByLabelText(nome).className).toContain('app:border-mare-field');
+    }
+    expect(screen.getByLabelText('B').className).toContain('app:h-11');
+    expect(screen.getByLabelText('C').className).toContain('app:rounded-xl');
+  });
+
+  it('Toggle mantem role e estado e fica turquesa quando ligado', () => {
+    render(<div data-ui="app"><Toggle label="Ligado" checked onChange={() => {}} /><Toggle label="Desligado" checked={false} onChange={() => {}} /></div>);
+    const on = screen.getByRole('switch', { name: 'Ligado' });
+    const off = screen.getByRole('switch', { name: 'Desligado' });
+    expect(on).toHaveAttribute('aria-checked', 'true');
+    expect(on.className).toContain('app:bg-turquoise-600');
+    expect(on.className).toContain('app:before:-inset-y-3');
+    expect(off).toHaveAttribute('aria-checked', 'false');
+    expect(off.className).not.toContain('app:bg-turquoise-600');
+  });
+});
