@@ -57,7 +57,9 @@ export function duracaoDe(meta) {
 }
 
 /* Reservas de hoje -> um evento por (tour, horario), pela ordem em que aparecem */
-export function eventosAtividades({ reservas, tours, atribuicoes } = {}) {
+export function eventosAtividades({ reservas, tours, atribuicoes, incluirConcluidas = false } = {}) {
+  /* incluirConcluidas: mantem tambem as reservas com check-out (a agenda das saidas nao perde uma saida ja feita) */
+  const estados = incluirConcluidas ? [...ESTADOS_ATIVOS, 'checked_out'] : ESTADOS_ATIVOS;
   const toursPorId = new Map((Array.isArray(tours) ? tours : []).filter(Boolean).map((t) => [t.id, t]));
 
   /* Guias por reserva (sem atribuicoes canceladas) */
@@ -72,7 +74,7 @@ export function eventosAtividades({ reservas, tours, atribuicoes } = {}) {
 
   const eventos = new Map();
   (Array.isArray(reservas) ? reservas : []).forEach((r) => {
-    if (!r || !ESTADOS_ATIVOS.includes(r.status)) return;
+    if (!r || !estados.includes(r.status)) return;
     const tour = toursPorId.get(r.unit_id);
     if (!tour) return;
     const meta = metaDoTour(tour);

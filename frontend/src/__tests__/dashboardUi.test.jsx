@@ -65,6 +65,29 @@ describe('AttentionPanel', () => {
     expect(pontos).toEqual(['critical', 'warning', 'info']);
   });
 
+  it('cada linha tem a sua accao pelo tipo do item e a contagem aparece no cabecalho', () => {
+    const lista = [
+      { id: 'weather', severity: 'critical', title: 'Meteo', to: '/meteorologia' },
+      { id: 'unconfirmed', severity: 'warning', title: 'Por confirmar', to: '/reservas' },
+      { id: 'pending', severity: 'warning', title: 'Pendentes', to: '/reservas' },
+      { id: 'unpaid', severity: 'warning', title: 'Por pagar', to: '/reservas' },
+      { id: 'cleaning', severity: 'warning', title: 'Limpezas', to: '/housekeeping' },
+    ];
+    renderRouted(<AttentionPanel items={lista} />);
+    const rotulos = screen.getAllByRole('listitem').map((li) => within(li).getByRole('button').textContent);
+    expect(rotulos).toEqual(['Ver', 'Confirmar', 'Confirmar', 'Cobrar', 'Abrir']);
+    expect(within(screen.getByRole('heading', { name: /Requer atenção/ }).parentElement).getByText('5')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Cobrar: Por pagar' }));
+    expect(navigateMock).toHaveBeenCalledWith('/reservas');
+  });
+
+  it('em ingles as accoes aparecem em ingles', () => {
+    useUiStore.setState({ lang: 'en' });
+    renderRouted(<AttentionPanel items={[{ id: 'unpaid', severity: 'warning', title: 'X', to: '/reservas' }, { id: 'weather', severity: 'critical', title: 'Y', to: '/m' }]} />);
+    expect(screen.getAllByRole('listitem').map((li) => within(li).getByRole('button').textContent)).toEqual(['Collect', 'View']);
+    expect(screen.getByRole('heading', { name: 'Needs attention' })).toBeInTheDocument();
+  });
+
   it('clicar Abrir navega para o destino da linha', () => {
     renderRouted(<AttentionPanel items={items} />);
     const linha = screen.getAllByRole('listitem')[1];

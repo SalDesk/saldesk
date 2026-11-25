@@ -10,7 +10,7 @@ import { useT } from '../../i18n';
 import useUiStore from '../../store/uiStore';
 import useAgora from '../../hooks/useAgora';
 import AttentionPanel from '../../components/dashboard/AttentionPanel';
-import DayAgenda from '../../components/dashboard/DayAgenda';
+import AgendaSaidas from '../../components/dashboard/AgendaSaidas';
 import TilesTendencia from '../../components/dashboard/TilesTendencia';
 import MareDoDia from '../../components/dashboard/MareDoDia';
 import Shortcuts from '../../components/dashboard/Shortcuts';
@@ -18,12 +18,13 @@ import NextDaysStrip from '../../components/dashboard/NextDaysStrip';
 import Button from '../../components/ui/Button';
 import EmptyState from '../../components/ui/EmptyState';
 import LoadingSpinner from '../../components/shared/LoadingSpinner';
+import ManifestoModal from '../reservations/ManifestoModal';
 import { eurosInteiros } from '../reservations/shared';
 import { TODAY, uniaoPorId } from './shared';
 import { buildAttentionItems, unpaidReservations } from './dashboardLogic';
 import { eventosAtividades, porReceber } from './agendaLogic';
 import {
-  curvaMare, serieDias, valorDoDia, variacaoSemana, variacaoSemanaPct,
+  curvaMare, reservasDaSaida, serieDias, valorDoDia, variacaoSemana, variacaoSemanaPct,
 } from './mareLogic';
 
 /* ─── Activity dashboard (vista "Hoje") ──────────────────────── */
@@ -56,6 +57,8 @@ export default function ActivityDashboard() {
   const [atribuicoes,  setAtribuicoes]  = useState([]);
   const [loading,      setLoading]      = useState(true);
   const [wxAlerts,     setWxAlerts]     = useState([]);
+  /* Saida cujo manifesto esta aberto (null = fechado) */
+  const [manifesto,    setManifesto]    = useState(null);
 
   useEffect(() => {
     /* Cada chamada falha para o seu valor vazio: uma falha nao apaga as outras */
@@ -97,7 +100,7 @@ export default function ActivityDashboard() {
 
   /* Agenda: um evento por (tour, horario) */
   const eventos = useMemo(
-    () => eventosAtividades({ reservas: todayRes, tours, atribuicoes }),
+    () => eventosAtividades({ reservas: todayRes, tours, atribuicoes, incluirConcluidas: true }),
     [todayRes, tours, atribuicoes],
   );
 
@@ -233,10 +236,12 @@ export default function ActivityDashboard() {
       <MareDoDia curva={curva} agoraMin={agoraMin} reservasHoje={numeros.reservas.hoje} />
 
       <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1.7fr)_minmax(0,1fr)] gap-4 items-start">
-        <DayAgenda
+        <AgendaSaidas
           eventos={eventos}
+          reservasHoje={todayRes}
+          tours={tours}
           agoraMin={agoraMin}
-          onAbrir={() => navigate('/calendario')}
+          onAbrirManifesto={setManifesto}
           vazio={(
             <EmptyState
               icon={Compass}
@@ -263,6 +268,17 @@ export default function ActivityDashboard() {
           />
         </div>
       </div>
+
+      {manifesto && (
+        <ManifestoModal
+          open
+          onClose={() => setManifesto(null)}
+          reservations={reservasDaSaida(manifesto, todayRes, tours)}
+          units={tours}
+          tourIdInicial={String(manifesto.id).split('|')[0]}
+          dataInicial={TODAY}
+        />
+      )}
     </div>
   );
 }

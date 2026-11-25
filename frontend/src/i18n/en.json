@@ -268,14 +268,14 @@
       }
     },
     "greeting": {"morning": "Good morning, {{name}}", "afternoon": "Good afternoon, {{name}}", "evening": "Good evening, {{name}}"},
-    "agenda": {"title": "Today's schedule", "summary": "{{tours}} tours · {{people}} people", "noTime": "No time set", "done": "Done", "now": "In progress, ends at {{time}}", "toConfirm": "{{n}} to confirm", "nearlyFull": "Nearly full", "guide": "guide {{name}}", "chegada": "Arrival · {{name}}", "partida": "Departure · {{name}}", "levantamento": "Pick-up · {{name}}", "devolucao": "Return · {{name}}", "mesa": "{{name}}", "guests": "{{n}} guest(s)", "nights": "{{n}} night(s)", "preOrder": "pre-order", "empty": "Nothing scheduled today", "summaryHotel": "{{a}} arrivals · {{d}} departures", "summaryRentacar": "{{a}} pick-ups · {{d}} returns", "summaryRestaurant": "{{n}} bookings · {{p}} people"},
+    "saidas": {"hint": "Tap a departure to see the detail", "detail": "Departure detail", "nowStatus": "In progress", "nextStatus": "Up next", "doneStatus": "Done", "noTimeStatus": "No time", "noGuideStatus": "No guide", "checkin": "Checked in", "guide": "Guide", "toAssign": "To be assigned", "meeting": "Meeting point", "toReceive": "To collect", "openManifest": "Open manifest", "people": "{{n}} guest(s)", "withGuide": "{{people}} · {{guide}}", "withoutGuide": "{{people}} · no guide"}, "agenda": {"title": "Today's schedule", "summary": "{{tours}} tours · {{people}} people", "noTime": "No time set", "done": "Done", "now": "In progress, ends at {{time}}", "toConfirm": "{{n}} to confirm", "nearlyFull": "Nearly full", "guide": "guide {{name}}", "chegada": "Arrival · {{name}}", "partida": "Departure · {{name}}", "levantamento": "Pick-up · {{name}}", "devolucao": "Return · {{name}}", "mesa": "{{name}}", "guests": "{{n}} guest(s)", "nights": "{{n}} night(s)", "preOrder": "pre-order", "empty": "Nothing scheduled today", "summaryHotel": "{{a}} arrivals · {{d}} departures", "summaryRentacar": "{{a}} pick-ups · {{d}} returns", "summaryRestaurant": "{{n}} bookings · {{p}} people"},
     "hero": {"revenue": "{{month}} revenue", "vsPrev": "{{pct}}% vs last month", "occupancy": "Monthly occupancy", "today": "Today", "peopleToday": "{{n}} people", "inTours": "in {{n}} tours · {{p}} to confirm", "participants": "{{n}} participants", "occupancyToday": "Occupancy today", "roomsOccupied": "{{n}} of {{total}} rooms", "vehiclesRented": "{{n}} of {{total}} vehicles", "tablesTaken": "{{n}} of {{total}} tables", "arrivals": "{{n}} arrivals", "departures": "{{n}} departures · {{p}} arrivals to confirm", "pickups": "{{n}} pick-ups", "returns": "{{n}} returns", "peopleTables": "in {{n}} bookings · {{p}} to confirm"},
     "tiles": {"reservations": "Bookings this month", "rating": "Average rating", "avgValue": "Average booking value", "toReceive": "To receive"},
     "shortcuts": {"title": "Shortcuts", "checkin": "Check-in", "blockDay": "Block a day", "message": "Send message", "payment": "Record payment"},
     "attention": {
       "title": "Needs attention",
       "allClear": "All clear",
-      "open": "Open",
+      "open": "Open", "confirm": "Confirm", "collect": "Collect", "view": "View",
       "weather": "{{n}} tour(s) affected by weather",
       "maintenance": "{{n}} unit(s) under maintenance",
       "unconfirmed": "{{n}} booking(s) to confirm",

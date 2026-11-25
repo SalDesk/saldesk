@@ -130,18 +130,23 @@ export function variacaoSemanaPct(hoje, semanaPassada) {
 
 /* ── Saida e ocupacao ────────────────────────────────────────── */
 
-/* Pessoas com check-in, total e por receber de uma saida (evento da agenda: id "tour|HH:MM").
+/* Reservas de uma saida (evento da agenda: id "tour|HH:MM").
    A reserva pertence ao evento pela mesma regra de eventosAtividades: tour + (hora propria ?? hora do tour). */
-export function detalheSaida(evento, reservasHoje, tours) {
+export function reservasDaSaida(evento, reservasHoje, tours) {
   const toursPorId = new Map(lista(tours).map((t) => [String(t.id), t]));
   const tourId = String(evento?.tourId ?? String(evento?.id ?? '').split('|')[0]);
   const inicioMin = evento?.inicioMin ?? paraMinutos(evento?.inicio);
-  const doEvento = lista(reservasHoje).filter((r) => {
+  const meta = metaDoTour(toursPorId.get(tourId));
+  return lista(reservasHoje).filter((r) => {
     if (!ativa(r) || String(r.unit_id) !== tourId) return false;
-    const meta = metaDoTour(toursPorId.get(tourId));
     const horario = paraMinutos(r.start_time) ?? paraMinutos(meta.start_time);
     return horario === (inicioMin ?? null);
   });
+}
+
+/* Pessoas com check-in, total e por receber de uma saida */
+export function detalheSaida(evento, reservasHoje, tours) {
+  const doEvento = reservasDaSaida(evento, reservasHoje, tours);
   const soma = (rs) => rs.reduce((s, r) => s + pessoasDe(r), 0);
   return {
     checkin: soma(doEvento.filter((r) => ESTADOS_CHECKIN.includes(r.status))),

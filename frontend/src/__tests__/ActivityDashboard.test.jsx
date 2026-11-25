@@ -143,35 +143,70 @@ describe('ActivityDashboard (Hoje)', () => {
     renderActivity();
     expect(await screen.findByRole('heading', { name: 'Agenda de hoje' })).toBeInTheDocument();
     const tour = await screen.findByRole('button', { name: /Tour Teste/ });
-    expect(tour).toHaveTextContent('8/10 · guia Djo · Santa Maria');
+    expect(tour).toHaveTextContent('8 pessoa(s) · Djo');
     /* a hora aparece na agenda e na pastilha da mare */
     expect(screen.getAllByText('09:00')).toHaveLength(2);
-    /* o segundo tour nao tem hora: vai para "Sem hora marcada", com a reserva pendente */
-    expect(screen.getByText('Sem hora marcada')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Barco Azul/ })).toHaveTextContent('1 por confirmar');
+    /* o segundo tour nao tem hora nem guia: fica no fim da lista, sem hora e sem guia */
+    expect(screen.getByRole('button', { name: /Barco Azul/ })).toHaveTextContent('2 pessoa(s) · sem guiaSem guia');
+    /* o detalhe da saida escolhida mostra o ponto de encontro */
+    fireEvent.click(tour);
+    const detalhe = screen.getByRole('complementary', { name: 'Detalhe da saída' });
+    expect(within(detalhe).getByText('Santa Maria')).toBeInTheDocument();
+    expect(within(detalhe).getByText('Djo')).toBeInTheDocument();
     expect(screen.queryByRole('table')).toBeNull();
   });
 
-  it('clicar_num_evento_abre_o_calendario', async () => {
+  it('clicar_numa_saida_mostra_o_detalhe_e_nao_navega', async () => {
     carregaServicos({ hoje: RES_HOJE });
     renderActivity();
-    fireEvent.click(await screen.findByRole('button', { name: /Tour Teste/ }));
-    expect(navigateMock).toHaveBeenLastCalledWith('/calendario');
+    const barco = await screen.findByRole('button', { name: /Barco Azul/ });
+    fireEvent.click(barco);
+    expect(barco).toHaveAttribute('aria-pressed', 'true');
+    expect(within(screen.getByRole('complementary', { name: 'Detalhe da saída' })).getByText('Barco Azul')).toBeInTheDocument();
+    expect(navigateMock).not.toHaveBeenCalled();
+  });
+
+  it('abrir_manifesto_mostra_os_clientes_da_saida_escolhida', async () => {
+    const comHora = { ...TOUR_A, description: JSON.stringify({ start_time: '09:00' }) };
+    carregaServicos({
+      hoje: [
+        reserva({ id: 'h1', guests: 2, customer_name: 'Ana Silva' }),
+        reserva({ id: 'h2', guests: 1, customer_name: 'Rui Costa', start_time: '15:00' }),
+        reserva({ id: 'h3', unit_id: 't2', guests: 1, customer_name: 'Outro Tour' }),
+      ],
+      tours: [comHora, TOUR_B],
+    });
+    renderActivity();
+    fireEvent.click(await screen.findByRole('button', { name: /09:00.*Tour Teste/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Abrir manifesto' }));
+    const dialogo = await screen.findByRole('dialog');
+    expect(within(dialogo).getByText('Ana Silva')).toBeInTheDocument();
+    /* so os clientes desta saida: nem a das 15:00, nem a de outro tour */
+    expect(within(dialogo).queryByText('Rui Costa')).not.toBeInTheDocument();
+    expect(within(dialogo).queryByText('Outro Tour')).not.toBeInTheDocument();
+  });
+
+  it('uma_saida_toda_com_check_out_continua_na_agenda', async () => {
+    carregaServicos({ hoje: [reserva({ id: 'h1', guests: 2, status: 'checked_out' })] });
+    renderActivity();
+    expect(await screen.findByRole('button', { name: /Tour Teste/ })).toHaveTextContent('2 pessoa(s)');
   });
 
   it('a_lotacao_da_agenda_nunca_passa_dos_100_nem_rebenta_sem_capacidade', async () => {
     carregaServicos({
       hoje: [
-        reserva({ id: 'a', guests: 15 }),
+        reserva({ id: 'a', guests: 15, status: 'checked_in' }),
         reserva({ id: 'b', unit_id: 't3', guests: 4 }),
       ],
       tours: [TOUR_A, { id: 't3', name: 'Sem Capacidade' }],
     });
     renderActivity();
-    expect(await screen.findByRole('button', { name: /Sem Capacidade/ })).toHaveTextContent('4');
-    /* so o tour com capacidade tem barra, limitada a 100 */
-    const barras = screen.getAllByRole('progressbar');
-    expect(barras.map((b) => b.getAttribute('aria-valuenow'))).toEqual(['100']);
+    const semCapacidade = await screen.findByRole('button', { name: /Sem Capacidade/ });
+    expect(semCapacidade).toHaveTextContent('4 pessoa(s)');
+    /* a barra do check-in nunca passa de 100, mesmo com mais pessoas do que a capacidade */
+    fireEvent.click(screen.getByRole('button', { name: /Tour Teste/ }));
+    const barras = screen.getAllByRole('progressbar', { name: 'Check-in feito' });
+    expect(barras.map((b) => Number(b.getAttribute('aria-valuenow')))).toEqual([100]);
   });
 
   it('lotacao quase esgotada aparece na atencao', async () => {
@@ -254,7 +289,7 @@ describe('ActivityDashboard (Hoje)', () => {
   it('recentes, mais vendidos e accoes rapidas ja nao estao no Hoje', async () => {
     carregaServicos({ hoje: RES_HOJE });
     renderActivity();
-    expect(await screen.findByText('8/10')).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Agenda de hoje' })).toBeInTheDocument();
     expect(screen.queryByText('Reservas recentes')).not.toBeInTheDocument();
     expect(screen.queryByText('Top tours do mes')).not.toBeInTheDocument();
     expect(screen.queryByText('Accoes rapidas')).not.toBeInTheDocument();
@@ -289,7 +324,7 @@ describe('ActivityDashboard (Hoje)', () => {
       return respostaPorPar(params, { hoje: RES_HOJE, semana: [], anterior: [] });
     });
     renderActivity();
-    expect(await screen.findByRole('button', { name: /Tour Teste/ })).toHaveTextContent('8/10');
+    expect(await screen.findByRole('button', { name: /Tour Teste/ })).toHaveTextContent('8 pessoa(s)');
     expect(screen.getByText('1 reserva(s) pendente(s) para hoje')).toBeInTheDocument();
     expect(screen.queryByText('Tudo em ordem')).not.toBeInTheDocument();
     expect(screen.queryByText('Nenhum tour agendado para hoje')).not.toBeInTheDocument();
@@ -443,7 +478,7 @@ describe('ActivityDashboard: numeros do dia e mare', () => {
     carregaServicos({ hoje: RES_HOJE });
     listAssignments.mockReset().mockRejectedValue(new Error('falha de rede'));
     renderActivity();
-    expect(await screen.findByRole('button', { name: /Tour Teste/ })).toHaveTextContent('8/10');
+    expect(await screen.findByRole('button', { name: /Tour Teste/ })).toHaveTextContent('8 pessoa(s)');
     expect(screen.getByText('Reservas hoje')).toBeInTheDocument();
   });
 
