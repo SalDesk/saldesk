@@ -79,8 +79,6 @@
   --info:          #71BDD4;
   --info-light:    #0A3F55;
 
-  --surface-app:  #1A2332;
-  --card-border:  #374151;
-  --field-border: #4B5563;
-  --table-head:   #1F2937;
+  /* --surface-app, --card-border, --field-border e --table-head - valores escuros deliberadamente
+     nao definidos (modo escuro fora do ambito); mantem os valores claros. */
 }

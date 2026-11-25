@@ -1,6 +1,6 @@
 export default function PageHeader({ title, subtitle, actions, eyebrow }) {
   return (
-    <div className="flex flex-wrap items-start justify-between gap-y-3 mb-6 pb-5 border-b border-n-200 app:mb-6 app:pb-0 app:border-b-0">
+    <div data-testid="page-header" className="flex flex-wrap items-start justify-between gap-y-3 mb-6 pb-5 border-b border-n-200 app:mb-6 app:pb-0 app:border-b-0">
       <div>
         {eyebrow && (
           <p data-eyebrow className="hidden app:block mb-1 text-xs font-body font-semibold uppercase tracking-[0.08em] text-ocean-600">{eyebrow}</p>
