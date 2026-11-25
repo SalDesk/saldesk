@@ -21,6 +21,13 @@ vi.mock('../services/unitsService', () => ({
   listUnits: vi.fn(),
 }));
 
+/* TODAY e fixo ao importar: aqui e um valor que cada teste escolhe */
+const dia = vi.hoisted(() => ({ hoje: '2026-11-25' }));
+vi.mock('../pages/dashboard/shared', async (importOriginal) => {
+  const real = await importOriginal();
+  return Object.defineProperty({ ...real }, 'TODAY', { get: () => dia.hoje, enumerable: true });
+});
+
 const FUTURE = { v7_startTransition: true, v7_relativeSplatPath: true };
 
 const ZERO = { receita: 0, num_reservas: 0, valor_medio: 0, taxa_ocupacao: 0 };
@@ -171,6 +178,32 @@ describe('ResumoView: numeros', () => {
     expect(listReservations).toHaveBeenCalledWith({ stay_from: '2026-10-27', stay_to: '2026-11-25' });
   });
 
+  it('lista de reservas possivelmente cortada (1000): sem numero nem variacao', async () => {
+    tipoDeOperador('activity');
+    listUnits.mockResolvedValue([{ id: 't1', name: 'Tour', capacity: 10, status: 'active' }]);
+    const mil = Array.from({ length: 1000 }, (_, i) => ({ id: `r${i}`, unit_id: 't1', check_in: '2026-11-02', guests: 1, status: 'confirmed' }));
+    listReservations.mockImplementation(async (p) => (p.stay_from === '2026-10-27' ? mil : []));
+    renderResumo();
+    const ocupacao = (await screen.findByText('Ocupação')).closest('article');
+    await waitFor(() => expect(within(ocupacao).getByText('—')).toBeInTheDocument());
+    expect(within(ocupacao).queryByText(/%|pp/)).not.toBeInTheDocument();
+  });
+
+  it('so o periodo anterior possivelmente cortado: valor sem variacao', async () => {
+    tipoDeOperador('activity');
+    listUnits.mockResolvedValue([{ id: 't1', name: 'Tour', capacity: 10, status: 'active' }]);
+    const mil = Array.from({ length: 1000 }, (_, i) => ({ id: `r${i}`, unit_id: 't1', check_in: '2026-10-02', guests: 1, status: 'confirmed' }));
+    listReservations.mockImplementation(async (p) => {
+      if (p.stay_from === '2026-10-27') return [{ id: 'a', unit_id: 't1', check_in: '2026-11-02', guests: 30, status: 'confirmed' }];
+      if (p.stay_from === '2026-09-27') return mil;
+      return [];
+    });
+    renderResumo();
+    const ocupacao = (await screen.findByText('Ocupação')).closest('article');
+    await waitFor(() => expect(within(ocupacao).getByText('10%')).toBeInTheDocument());
+    expect(within(ocupacao).queryByText(/pp/)).not.toBeInTheDocument();
+  });
+
   it('actividades sem capacidade mostram a ocupacao em branco', async () => {
     tipoDeOperador('activity');
     listUnits.mockResolvedValue([{ id: 't1', name: 'Tour', status: 'active' }]);
@@ -223,7 +256,7 @@ describe('ResumoView: grafico da receita', () => {
 
   it('em ingles os meses do eixo estao em ingles', async () => {
     useUiStore.setState({ lang: 'en' });
-    vi.setSystemTime(new Date(2026, 1, 10, 12, 0));
+    dia.hoje = '2026-02-10';
     getReceita.mockImplementation(async (inicio) => (inicio === '2026-01-12' ? [{ periodo: '2026-02-05', receita: 400 }] : []));
     renderResumo();
     const eixo = await screen.findByTestId('resumo-eixo');
@@ -233,7 +266,7 @@ describe('ResumoView: grafico da receita', () => {
   });
 
   it('em portugues o eixo usa os meses portugueses', async () => {
-    vi.setSystemTime(new Date(2026, 1, 10, 12, 0));
+    dia.hoje = '2026-02-10';
     getReceita.mockImplementation(async (inicio) => (inicio === '2026-01-12' ? [{ periodo: '2026-02-05', receita: 400 }] : []));
     renderResumo();
     const eixo = await screen.findByTestId('resumo-eixo');

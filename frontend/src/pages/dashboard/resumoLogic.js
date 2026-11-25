@@ -77,15 +77,25 @@ export function preencherSerie(dados, inicio, fim, granularidade) {
 
 /* Junta as duas series por posicao: [{ rotulo, actual, anterior }]. A mais curta fica com null.
    Cada serie e [{ rotulo, valor }]; o rotulo e o do periodo actual (ou do anterior, se faltar) */
-export function alinharSeries(actual, anterior) {
+export function alinharSeries(actual, anterior, alinharAoFim = false) {
   const a = lista(actual);
   const b = lista(anterior);
   const n = Math.max(a.length, b.length);
-  return Array.from({ length: n }, (_, i) => ({
-    rotulo: a[i]?.rotulo ?? b[i]?.rotulo ?? '',
-    actual: a[i] ? a[i].valor : null,
-    anterior: b[i] ? b[i].valor : null,
-  }));
+  /* Por mes, a regra do backend (mesmo numero de dias) pode dar ao periodo anterior 11 ou 13 meses:
+     alinha-se pelo fim (ultimo mes com ultimo mes) e o inicio da mais curta fica com null */
+  const de = (l, i) => l[alinharAoFim ? i - (n - l.length) : i];
+  return Array.from({ length: n }, (_, i) => {
+    const x = de(a, i);
+    const y = de(b, i);
+    return { rotulo: x?.rotulo ?? y?.rotulo ?? '', actual: x ? x.valor : null, anterior: y ? y.valor : null };
+  });
+}
+
+/* O backend nao pagina /reservations e o PostgREST corta em 1000 linhas sem avisar (HTTP 200):
+   uma lista com esse tamanho pode estar incompleta e nao serve para calcular numeros */
+export const LIMITE_LINHAS = 1000;
+export function listaPossivelmenteCortada(lista) {
+  return Array.isArray(lista) && lista.length >= LIMITE_LINHAS;
 }
 
 /* O ponto mais alto do periodo actual; sem receita nenhuma, null */

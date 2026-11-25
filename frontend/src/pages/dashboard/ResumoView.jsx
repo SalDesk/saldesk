@@ -7,6 +7,7 @@ import { listUnits } from '../../services/unitsService';
 import { estadiaEm } from '../../services/reservationRanges';
 import { useT } from '../../i18n';
 import { formatarData, formatarNumero, useLingua } from '../../utils/formatoLingua';
+import { TODAY } from './shared';
 import useAuthStore from '../../store/authStore';
 import TilesTendencia from '../../components/dashboard/TilesTendencia';
 import GraficoReceita from '../../components/dashboard/GraficoReceita';
@@ -15,7 +16,7 @@ import EmptyState from '../../components/ui/EmptyState';
 import LoadingSpinner from '../../components/shared/LoadingSpinner';
 import { eurosDecimais, eurosInteiros } from '../reservations/shared';
 import {
-  alinharSeries, deltaPercentual, deltaPontos, ocupacaoActividades, periodoResumo, preencherSerie,
+  alinharSeries, deltaPercentual, deltaPontos, ocupacaoActividades, periodoResumo, listaPossivelmenteCortada, preencherSerie,
   rotuloPeriodo,
 } from './resumoLogic';
 
@@ -77,10 +78,9 @@ export default function ResumoView() {
   const lang = useLingua();
   const navigate = useNavigate();
   const opType = useAuthStore((s) => s.operator?.operator_type);
-  const hoje = useMemo(() => new Date().toLocaleDateString('en-CA'), []);
 
   const [chave, setChave] = useState(PERIODO_INICIAL);
-  const periodo = useMemo(() => periodoResumo(chave, hoje), [chave, hoje]);
+  const periodo = useMemo(() => periodoResumo(chave, TODAY), [chave]);
 
   const [resumo, setResumo] = useState(CARREGAR);
   const [receita, setReceita] = useState(CARREGAR);
@@ -175,8 +175,10 @@ export default function ResumoView() {
       };
     } else if (opType === 'activity') {
       const ac = actividades;
-      const valor = ac.estado === 'ok' ? ocupacaoActividades(ac.reservas, ac.tours, periodo.inicio, periodo.fim) : null;
-      const antes = ac.estado === 'ok' && ac.reservasAnteriores
+      /* Listas possivelmente cortadas (1000 linhas): sem numero; so a do anterior: sem variacao */
+      const valido = ac.estado === 'ok' && !listaPossivelmenteCortada(ac.reservas);
+      const valor = valido ? ocupacaoActividades(ac.reservas, ac.tours, periodo.inicio, periodo.fim) : null;
+      const antes = valido && ac.reservasAnteriores && !listaPossivelmenteCortada(ac.reservasAnteriores)
         ? ocupacaoActividades(ac.reservasAnteriores, ac.tours, periodo.anteriorInicio, periodo.anteriorFim)
         : null;
       ocup = { valor, pontos: deltaPontos(valor, antes) };
@@ -204,7 +206,7 @@ export default function ResumoView() {
     const anterior = receita.anterior.length > 0
       ? rotular(preencherSerie(receita.anterior, periodo.anteriorInicio, periodo.anteriorFim, granularidade))
       : [];
-    return alinharSeries(atual, anterior);
+    return alinharSeries(atual, anterior, granularidade === 'month');
   }, [receita, periodo, lang, t]);
 
   const formatoData = { day: 'numeric', month: 'short', year: 'numeric' };

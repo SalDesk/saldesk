@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   periodoResumo, preencherSerie, alinharSeries, melhorPonto, totalActual,
-  deltaPercentual, deltaPontos, ocupacaoActividades,
+  deltaPercentual, deltaPontos, ocupacaoActividades, listaPossivelmenteCortada, LIMITE_LINHAS,
 } from '../pages/dashboard/resumoLogic';
 
 describe('periodoResumo', () => {
@@ -140,5 +140,35 @@ describe('ocupacaoActividades', () => {
   it('nunca passa de 100', () => {
     const r = [{ unit_id: 't1', check_in: '2026-11-02', guests: 50, status: 'confirmed' }];
     expect(ocupacaoActividades(r, tours, '2026-11-02', '2026-11-02')).toBe(100);
+  });
+});
+
+describe('comparacao mensal alinhada pelo fim', () => {
+  it('com 11 meses anteriores o tracejado fica com null no inicio, sem se deslocar', () => {
+    const p = periodoResumo('12m', '2026-03-01');
+    const rot = (l) => l.map((x) => ({ rotulo: x.periodo, valor: x.valor }));
+    const atual = rot(preencherSerie([], p.inicio, p.fim, 'month'));
+    const anterior = rot(preencherSerie([{ periodo: '2025-03', receita: 7 }], p.anteriorInicio, p.anteriorFim, 'month'));
+    expect(atual).toHaveLength(12);
+    expect(anterior).toHaveLength(11);
+    const s = alinharSeries(atual, anterior, true);
+    expect(s).toHaveLength(12);
+    expect(s[0].anterior).toBeNull();
+    expect(s[11].anterior).toBe(7);
+    expect(s[1].anterior).toBe(0);
+  });
+
+  it('sem alinhar pelo fim continua por posicao', () => {
+    const s = alinharSeries([{ rotulo: 'a', valor: 1 }, { rotulo: 'b', valor: 2 }], [{ rotulo: 'x', valor: 9 }]);
+    expect(s[0].anterior).toBe(9);
+  });
+});
+
+describe('listaPossivelmenteCortada', () => {
+  it('so a partir de 1000 linhas', () => {
+    expect(LIMITE_LINHAS).toBe(1000);
+    expect(listaPossivelmenteCortada(new Array(1000).fill({}))).toBe(true);
+    expect(listaPossivelmenteCortada(new Array(999).fill({}))).toBe(false);
+    expect(listaPossivelmenteCortada(null)).toBe(false);
   });
 });
