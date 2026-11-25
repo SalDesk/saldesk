@@ -1,10 +1,12 @@
 export function Skeleton({ className = '' }) {
-  return <div className={`animate-pulse bg-gray-200 rounded ${className}`} />;
+  /* Na app o raio das caixas e o dos cartoes (14 px), salvo se o chamador ja define o raio */
+  const raioApp = /(^|\s)rounded/.test(className) ? '' : ' app:rounded-[14px]';
+  return <div className={`animate-pulse bg-gray-200 rounded${raioApp} ${className}`} />;
 }
 
 export function SkeletonCard() {
   return (
-    <div className="card space-y-3">
+    <div className="card space-y-3 app:rounded-[18px]">
       <div className="flex items-center justify-between">
         <Skeleton className="h-4 w-2/3" />
         <Skeleton className="h-5 w-16 rounded-full" />
@@ -21,7 +23,7 @@ export function SkeletonCard() {
 
 export function SkeletonMetric() {
   return (
-    <div className="card space-y-3">
+    <div className="card space-y-3 app:rounded-[18px]">
       <div className="flex justify-between">
         <Skeleton className="h-3 w-24" />
         <Skeleton className="h-6 w-6 rounded" />

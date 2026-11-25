@@ -9,6 +9,14 @@ import Table from '../components/ui/Table';
 import Tabs from '../components/ui/Tabs';
 import FilterChips from '../components/ui/FilterChips';
 import EmptyState from '../components/ui/EmptyState';
+import { act } from '@testing-library/react';
+import { Inbox } from 'lucide-react';
+import Card from '../components/ui/Card';
+import Modal from '../components/ui/Modal';
+import ConfirmDialog from '../components/ui/ConfirmDialog';
+import { ToastContainer } from '../components/ui/Toast';
+import useToastStore from '../store/toastStore';
+import { Skeleton } from '../components/ui/Skeleton';
 
 describe('Button', () => {
   it('primary mantem o aspeto antigo e ganha o novo', () => {
@@ -335,5 +343,208 @@ describe('Fora da app as classes sao as de antes (tokens sem app:)', () => {
     const chip = 'inline-flex items-center h-7 px-3 rounded-full border text-xs font-body font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ocean-300';
     expect(semApp(screen.getByRole('button', { name: 'X' }).className)).toEqual(lista(`${chip} bg-ocean-700 border-ocean-700 text-white`));
     expect(semApp(screen.getByRole('button', { name: 'Y' }).className)).toEqual(lista(`${chip} bg-white border-n-300 text-n-700 hover:bg-n-50`));
+  });
+});
+
+/* ---- Tarefa 3: cartoes, tabelas, etiquetas, janelas e avisos (Mare) ---- */
+describe('Card, Table, Badge, Modal, ConfirmDialog, Toast, EmptyState, Skeleton (Mare, dentro da app)', () => {
+  it('Card: raio 18, contorno do token e padding por omissao de 22 px; o padding passado ganha', () => {
+    const { container, unmount } = render(naApp(<Card header="Titulo">corpo</Card>));
+    const raiz = container.querySelector('[data-ui="app"]').firstChild;
+    expect(raiz.className).toContain('app:rounded-[18px]');
+    expect(raiz.className).toContain('app:border-mare-card');
+    expect(raiz.className).not.toContain('app:rounded-sm');
+    const cab = screen.getByText('Titulo');
+    expect(cab.className).toContain('app:font-display');
+    expect(cab.className).toContain('app:text-lg');
+    expect(cab.className).toContain('app:font-semibold');
+    expect(cab.className).not.toContain('app:bg-');
+    expect(screen.getByText('corpo').className).toContain('app:p-[22px]');
+    unmount();
+    render(naApp(<Card padding="p-0">corpo</Card>));
+    expect(screen.getByText('corpo').className).not.toContain('app:p-[22px]');
+  });
+
+  it('Table: cabecalho no token, maiusculas, linhas de 48 px e tom ao passar o rato', () => {
+    render(naApp(<Table columns={[{ key: 'a', label: 'A', sortValue: (r) => r.a }]} rows={[{ id: 1, a: 'x' }]} />));
+    const th = screen.getByRole('columnheader').className;
+    expect(th).toContain('app:bg-mare-head');
+    expect(th).toContain('app:text-n-600');
+    expect(th).toContain('app:font-semibold');
+    expect(th).toContain('app:uppercase');
+    expect(th).not.toContain('app:normal-case');
+    expect(th).not.toContain('app:bg-white');
+    expect(screen.getByRole('button', { name: /A/ }).className).toContain('app:min-h-11');
+    const tr = screen.getByRole('cell', { name: 'x' }).closest('tr').className;
+    expect(tr).toContain('app:h-12');
+    expect(tr).toContain('app:border-n-100');
+    expect(tr).toContain('app:hover:bg-mare-head');
+  });
+
+  it('Badge: as 14 variantes tem o tom certo e um ponto decorativo', () => {
+    const tons = {
+      pending: 'sand', warning: 'sand', preparing: 'sand',
+      confirmed: 'ocean', info: 'ocean', direct: 'ocean', received: 'ocean',
+      checked_in: 'turquoise', ready: 'turquoise', delivered: 'turquoise',
+      checked_out: 'neutral', no_show: 'neutral', default: 'neutral',
+      cancelled: 'red',
+    };
+    const classes = {
+      sand: ['app:bg-sand-100', 'app:text-n-800'],
+      ocean: ['app:bg-ocean-100', 'app:text-ocean-800'],
+      turquoise: ['app:bg-turquoise-100', 'app:text-turquoise-700'],
+      neutral: ['app:bg-n-100', 'app:text-n-700'],
+      red: ['app:bg-[var(--error-light)]', 'app:text-[var(--error)]'],
+    };
+    expect(Object.keys(tons)).toHaveLength(14);
+    for (const [variante, tom] of Object.entries(tons)) {
+      const { container, unmount } = render(naApp(<Badge variant={variante}>Texto</Badge>));
+      const el = container.querySelector('[data-ui="app"]').firstChild;
+      for (const c of classes[tom]) expect(el.className).toContain(c);
+      const ponto = el.querySelector('span[aria-hidden="true"]');
+      expect(ponto).not.toBeNull();
+      expect(ponto.className).toContain('app:inline-block');
+      expect(el.textContent).toBe('Texto');
+      unmount();
+    }
+  });
+
+  it('Modal: o botao de fechar mantem o nome e tem 44 px na app', () => {
+    render(naApp(<Modal open onClose={() => {}} title="Titulo">corpo</Modal>));
+    const fechar = screen.getByRole('button', { name: /fechar|close/i });
+    expect(fechar.className).toContain('app:w-11');
+    expect(fechar.className).toContain('app:h-11');
+    const dialogo = screen.getByRole('dialog');
+    expect(dialogo.className).toContain('app:rounded-[18px]');
+    expect(dialogo.className).not.toContain('app:rounded-sm');
+  });
+
+  it('ConfirmDialog: mantem Cancelar e Confirmar e o botao de perigo; raio 18 na app', () => {
+    const aoConfirmar = vi.fn();
+    const aoCancelar = vi.fn();
+    const { rerender } = render(naApp(<ConfirmDialog mensagem="Certeza?" onConfirmar={aoConfirmar} onCancelar={aoCancelar} />));
+    fireEvent.click(screen.getByRole('button', { name: 'Cancelar' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Confirmar' }));
+    expect(aoCancelar).toHaveBeenCalledTimes(1);
+    expect(aoConfirmar).toHaveBeenCalledTimes(1);
+    expect(screen.getByRole('button', { name: 'Confirmar' }).className).toContain('btn-danger');
+    expect(screen.getByText('Certeza?').parentElement.className).toContain('app:rounded-[18px]');
+    rerender(naApp(<ConfirmDialog mensagem="Certeza?" danger={false} onConfirmar={aoConfirmar} onCancelar={aoCancelar} />));
+    expect(screen.getByRole('button', { name: 'Confirmar' }).className).toContain('btn-primary');
+  });
+
+  it('Toast: pastilha ocean-900 na app e role status mantido', () => {
+    act(() => { useToastStore.setState({ toasts: [{ id: 1, type: 'success', message: 'Guardado' }] }); });
+    render(naApp(<ToastContainer />));
+    const aviso = screen.getByRole('status');
+    expect(aviso.className).toContain('app:bg-ocean-900');
+    expect(aviso.className).toContain('app:rounded-[14px]');
+    expect(aviso).toHaveTextContent('Guardado');
+    act(() => { useToastStore.setState({ toasts: [] }); });
+  });
+
+  it('EmptyState: sem icone mostra a onda decorativa; titulo e acao mantidos', () => {
+    const { container } = render(naApp(<EmptyState title="Nada" action={<button>Criar</button>} />));
+    const svg = container.querySelector('svg');
+    expect(svg).not.toBeNull();
+    expect(svg).toHaveAttribute('aria-hidden', 'true');
+    expect(svg.getAttribute('class')).toContain('app:block');
+    expect(screen.getByText('Nada').className).toContain('app:text-base');
+    expect(screen.getByRole('button', { name: 'Criar' })).toBeInTheDocument();
+    expect(container.querySelector('[data-ui="app"]').firstChild.className).toContain('app:bg-mare-head');
+  });
+
+  it('EmptyState: com icone nao desenha a onda', () => {
+    const { container } = render(naApp(<EmptyState icon={Inbox} title="Nada" />));
+    expect(container.querySelectorAll('svg')).toHaveLength(1);
+    expect(container.querySelector('svg').getAttribute('class') || '').not.toContain('app:block');
+  });
+
+  it('Skeleton: raio da app, salvo se ja traz raio proprio', () => {
+    const { container } = render(naApp(<><Skeleton className="h-4" /><Skeleton className="h-4 rounded-full" /></>));
+    const [a, b] = container.querySelector('[data-ui="app"]').children;
+    expect(a.className).toContain('app:rounded-[14px]');
+    expect(b.className).not.toContain('app:rounded-[14px]');
+  });
+});
+
+describe('Fora da app: Card, Table, Badge, Modal, ConfirmDialog, Toast, EmptyState, Skeleton ficam como antes', () => {
+  it('Card', () => {
+    render(<Card header="Cab" padding="p-6">corpo</Card>);
+    const raiz = screen.getByText('corpo').parentElement;
+    expect(semApp(raiz.className)).toEqual(lista('bg-white dark:bg-n-800 rounded-md border border-n-200 dark:border-n-700 shadow-sm'));
+    expect(semApp(screen.getByText('Cab').className)).toEqual(lista('px-6 py-4 border-b border-n-200 dark:border-n-700'));
+    expect(semApp(screen.getByText('corpo').className)).toEqual(lista('p-6'));
+  });
+
+  it('Table', () => {
+    const { container } = render(<Table columns={[{ key: 'a', label: 'A', sortValue: (r) => r.a }]} rows={[{ id: 1, a: 'x' }]} />);
+    expect(semApp(container.querySelector('thead tr').className)).toEqual(lista('border-b border-n-200'));
+    expect(semApp(screen.getByRole('columnheader').className)).toEqual(lista('px-4 py-3 text-left text-xs font-body font-bold uppercase tracking-wide text-n-500'));
+    expect(semApp(screen.getByRole('button', { name: /A/ }).className)).toEqual(lista('inline-flex items-center gap-1 uppercase tracking-wide font-bold hover:text-n-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ocean-300 rounded-xs'));
+    expect(semApp(screen.getByRole('cell', { name: 'x' }).closest('tr').className)).toEqual(lista('border-b border-n-100 hover:bg-n-50 transition-colors'));
+    expect(semApp(screen.getByRole('cell', { name: 'x' }).className)).toEqual(lista('px-4 py-3 text-n-700'));
+  });
+
+  it('Badge: as 14 variantes, com o ponto escondido', () => {
+    const base = 'inline-flex items-center px-2 py-0.5 rounded-xs text-xs font-body font-semibold uppercase tracking-wide';
+    const v = {
+      confirmed: 'bg-[var(--success-light)] text-[var(--success)]',
+      pending: 'bg-[var(--warning-light)] text-[var(--warning)]',
+      warning: 'bg-[var(--warning-light)] text-[var(--warning)]',
+      cancelled: 'bg-[var(--error-light)] text-[var(--error)]',
+      info: 'bg-[var(--info-light)] text-[var(--info)]',
+      checked_in: 'bg-ocean-50 text-ocean-700 dark:bg-ocean-900 dark:text-ocean-200',
+      checked_out: 'bg-n-100 text-n-600 dark:bg-n-700 dark:text-n-300',
+      no_show: 'bg-n-100 text-n-500 dark:bg-n-700 dark:text-n-400',
+      direct: 'bg-sand-50 text-sand-600 dark:bg-n-700 dark:text-sand-400',
+      default: 'bg-n-100 text-n-600 dark:bg-n-700 dark:text-n-300',
+      received: 'bg-[var(--info-light)] text-[var(--info)]',
+      preparing: 'bg-[var(--warning-light)] text-[var(--warning)]',
+      ready: 'bg-[var(--success-light)] text-[var(--success)]',
+      delivered: 'bg-n-100 text-n-600 dark:bg-n-700 dark:text-n-300',
+    };
+    for (const [nome, cls] of Object.entries(v)) {
+      const { unmount } = render(<Badge variant={nome}>Texto</Badge>);
+      const el = screen.getByText('Texto');
+      expect(semApp(el.className)).toEqual(lista(`${base} ${cls}`));
+      expect(semApp(el.querySelector('span[aria-hidden="true"]').className)).toEqual(['hidden']);
+      unmount();
+    }
+  });
+
+  it('Modal', () => {
+    render(<Modal open onClose={() => {}} title="Titulo">corpo</Modal>);
+    expect(semApp(screen.getByRole('dialog').className)).toEqual(lista('w-full bg-white rounded-lg shadow-lg flex flex-col max-h-[90vh] max-w-lg'));
+    expect(semApp(screen.getByRole('dialog').firstChild.className)).toEqual(lista('flex items-center justify-between px-6 py-4 border-b border-n-200 shrink-0'));
+    expect(semApp(screen.getByText('Titulo').className)).toEqual(lista('font-display font-semibold text-base text-n-900'));
+    expect(semApp(screen.getByRole('button', { name: /fechar|close/i }).className)).toEqual(lista('text-n-400 hover:text-n-700 transition-colors p-1 rounded-sm'));
+  });
+
+  it('ConfirmDialog', () => {
+    render(<ConfirmDialog mensagem="Certeza?" onConfirmar={() => {}} onCancelar={() => {}} />);
+    expect(semApp(screen.getByText('Certeza?').parentElement.className)).toEqual(lista('bg-white rounded-xl shadow-xl p-6 max-w-sm w-full'));
+  });
+
+  it('Toast', () => {
+    act(() => { useToastStore.setState({ toasts: [{ id: 1, type: 'success', message: 'Guardado' }] }); });
+    render(<ToastContainer />);
+    const aviso = screen.getByRole('status');
+    expect(semApp(aviso.className)).toEqual(lista('flex items-center gap-3 px-4 py-3 rounded-xl shadow-lg text-white text-sm min-w-[280px] max-w-sm bg-green-500 animate-fade-in'));
+    expect(semApp(aviso.firstChild.className)).toEqual(lista('text-base font-bold shrink-0'));
+    act(() => { useToastStore.setState({ toasts: [] }); });
+  });
+
+  it('EmptyState: com a onda escondida', () => {
+    const { container } = render(<EmptyState title="Nada" description="Desc" />);
+    expect(semApp(container.firstChild.className)).toEqual(lista('flex flex-col items-center text-center px-4 py-8'));
+    expect(semApp(screen.getByText('Nada').className)).toEqual(lista('font-display font-semibold text-sm text-n-900'));
+    expect(semApp(screen.getByText('Desc').className)).toEqual(lista('font-body text-[13px] text-n-500 mt-0.5'));
+    expect(semApp(container.querySelector('svg').getAttribute('class'))).toEqual(['hidden']);
+  });
+
+  it('Skeleton', () => {
+    const { container } = render(<Skeleton className="h-4" />);
+    expect(semApp(container.firstChild.className)).toEqual(lista('animate-pulse bg-gray-200 rounded h-4'));
   });
 });

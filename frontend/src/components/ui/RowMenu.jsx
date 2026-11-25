@@ -12,6 +12,7 @@ const GAP = 4;
 export default function RowMenu({ label, items }) {
   const [open, setOpen] = useState(false);
   const [pos, setPos] = useState(null);
+  const [naApp, setNaApp] = useState(false);
   const triggerRef = useRef(null);
   const menuRef = useRef(null);
 
@@ -88,8 +89,12 @@ export default function RowMenu({ label, items }) {
         title={label}
         aria-haspopup="menu"
         aria-expanded={open}
-        onClick={() => setOpen((o) => !o)}
-        className="p-1 rounded text-n-400 hover:text-ocean-700 hover:bg-ocean-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ocean-300"
+        onClick={() => {
+          /* O painel abre num portal no body: leva data-ui="app" so se o gatilho estiver dentro da app */
+          setNaApp(Boolean(triggerRef.current?.closest('[data-ui="app"]')));
+          setOpen((o) => !o);
+        }}
+        className="p-1 rounded text-n-400 hover:text-ocean-700 hover:bg-ocean-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ocean-300 app:w-11 app:h-11 app:p-0 app:inline-flex app:items-center app:justify-center app:rounded-full app:focus-visible:ring-sand-500"
       >
         <MoreHorizontal size={15} strokeWidth={1.75} aria-hidden="true" />
       </button>
@@ -97,10 +102,11 @@ export default function RowMenu({ label, items }) {
         <div
           ref={menuRef}
           role="menu"
+          {...(naApp ? { 'data-ui': 'app' } : {})}
           aria-label={label}
           onKeyDown={onMenuKeyDown}
           style={{ position: 'fixed', top: pos?.top ?? 0, left: pos?.left ?? 0, width: MENU_WIDTH, visibility: pos ? 'visible' : 'hidden' }}
-          className="z-50 bg-white rounded-md border border-n-200 shadow-lg py-1"
+          className="z-50 bg-white rounded-md border border-n-200 shadow-lg py-1 app:rounded-[14px] app:border-mare-card"
         >
           {items.map(({ key, label: text, icon: Icon, onClick, danger, disabled }) => (
             <button
@@ -109,7 +115,7 @@ export default function RowMenu({ label, items }) {
               role="menuitem"
               disabled={disabled}
               onClick={() => { close(); onClick(); }}
-              className={`w-full flex items-center gap-2 px-3 py-2 text-left text-sm font-body transition-colors focus-visible:outline-none focus-visible:bg-n-100 disabled:opacity-40 disabled:cursor-not-allowed ${
+              className={`w-full flex items-center gap-2 px-3 py-2 text-left text-sm font-body transition-colors focus-visible:outline-none focus-visible:bg-n-100 app:min-h-11 app:px-4 disabled:opacity-40 disabled:cursor-not-allowed ${
                 danger ? 'text-error hover:bg-red-50' : 'text-n-700 hover:bg-n-50'
               }`}
             >

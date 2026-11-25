@@ -267,8 +267,8 @@ describe('Channel Manager: webhooks e logs', () => {
 describe('Channel Manager: design system', () => {
   it('o_cartao_do_canal_e_Card_e_o_avatar_usa_tokens', async () => {
     await montar();
-    expect(cartao('Viator').closest('[class*="app:rounded-sm"]')).not.toBeNull();
-    expect(cartao('GetYourGuide').closest('[class*="app:rounded-sm"]')).not.toBeNull();
+    expect(cartao('Viator').closest('[class*="app:rounded-[18px]"]')).not.toBeNull();
+    expect(cartao('GetYourGuide').closest('[class*="app:rounded-[18px]"]')).not.toBeNull();
     expect(screen.getByText('V').className).toContain('bg-ocean-700');
     expect(screen.getByText('G').className).toContain('bg-sand-600');
   });

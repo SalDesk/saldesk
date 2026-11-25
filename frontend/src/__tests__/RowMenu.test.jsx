@@ -143,4 +143,34 @@ describe('RowMenu', () => {
     renderMenu([]);
     expect(screen.queryByRole('button', { name: 'Mais accoes' })).not.toBeInTheDocument();
   });
+
+  it('aberto de dentro da app, o painel leva data-ui="app"; fora dela nao', () => {
+    const { unmount } = render(
+      <div data-ui="app">
+        <RowMenu label="Mais accoes" items={[{ key: 'a', label: 'Reagendar', onClick: a }]} />
+      </div>,
+    );
+    fireEvent.click(gatilho());
+    expect(screen.getByRole('menu')).toHaveAttribute('data-ui', 'app');
+    expect(screen.getByRole('menu').className).toContain('app:rounded-[14px]');
+    expect(gatilho().className).toContain('app:w-11');
+    expect(screen.getByRole('menuitem').className).toContain('app:min-h-11');
+    unmount();
+    cleanup();
+    renderMenu();
+    fireEvent.click(gatilho());
+    expect(screen.getByRole('menu')).not.toHaveAttribute('data-ui');
+  });
+
+  it('fora da app as classes do gatilho, painel e itens sao as de antes', () => {
+    const semApp = (cls) => cls.split(/\s+/).filter((t) => t && !t.startsWith('app:')).sort();
+    const lista = (s) => s.split(/\s+/).filter(Boolean).sort();
+    renderMenu();
+    expect(semApp(gatilho().className)).toEqual(lista('p-1 rounded text-n-400 hover:text-ocean-700 hover:bg-ocean-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ocean-300'));
+    fireEvent.click(gatilho());
+    expect(semApp(screen.getByRole('menu').className)).toEqual(lista('z-50 bg-white rounded-md border border-n-200 shadow-lg py-1'));
+    const base = 'w-full flex items-center gap-2 px-3 py-2 text-left text-sm font-body transition-colors focus-visible:outline-none focus-visible:bg-n-100 disabled:opacity-40 disabled:cursor-not-allowed';
+    expect(semApp(screen.getByRole('menuitem', { name: 'Reagendar' }).className)).toEqual(lista(`${base} text-n-700 hover:bg-n-50`));
+    expect(semApp(screen.getByRole('menuitem', { name: 'Eliminar' }).className)).toEqual(lista(`${base} text-error hover:bg-red-50`));
+  });
 });
