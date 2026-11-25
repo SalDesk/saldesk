@@ -206,7 +206,7 @@ describe('Mare: campos e interruptor', () => {
     render(<div data-ui="app"><Input label="Nome" error="Obrigatorio" /></div>);
     const campo = screen.getByLabelText('Nome');
     expect(campo.className).toContain('app:h-11');
-    expect(campo.className).toContain('app:rounded-xl');
+    expect(campo.className).toContain('app:rounded-md');
     expect(campo.className).toContain('app:focus:ring-sand-500');
     expect(campo.className).toContain('border-error');
     expect(campo).toHaveAttribute('aria-invalid', 'true');
@@ -219,7 +219,7 @@ describe('Mare: campos e interruptor', () => {
       expect(screen.getByLabelText(nome).className).toContain('app:border-mare-field');
     }
     expect(screen.getByLabelText('B').className).toContain('app:h-11');
-    expect(screen.getByLabelText('C').className).toContain('app:rounded-xl');
+    expect(screen.getByLabelText('C').className).toContain('app:rounded-md');
   });
 
   it('Toggle mantem role e estado e fica turquesa quando ligado', () => {

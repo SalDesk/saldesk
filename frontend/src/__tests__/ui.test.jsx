@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import Toggle from '../components/ui/Toggle';
+import Input, { Textarea, Select } from '../components/ui/Input';
 import { vi } from 'vitest';
 import { render, screen, fireEvent, within } from '@testing-library/react';
 import Button from '../components/ui/Button';
@@ -263,5 +265,75 @@ describe('FilterChips (Mare)', () => {
     expect(y.className).toContain('app:border-mare-field');
     fireEvent.click(y);
     expect(onChange).toHaveBeenCalledWith('y');
+  });
+});
+
+/* Fora da app: os tokens SEM prefixo app: tem de ser exactamente os de antes do estilo Mare (listas congeladas) */
+const semApp = (cls) => cls.split(/\s+/).filter((t) => t && !t.startsWith('app:')).sort();
+const lista = (s) => s.split(/\s+/).filter(Boolean).sort();
+
+const BTN_BASE = 'inline-flex items-center justify-center font-body font-medium rounded-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ocean-300 disabled:opacity-50 disabled:cursor-not-allowed';
+const BTN_VAR = {
+  primary: 'bg-ocean-700 hover:bg-ocean-500 text-white border border-transparent',
+  secondary: 'bg-white hover:bg-n-50 text-n-700 border border-n-300 dark:bg-n-800 dark:hover:bg-n-700 dark:text-n-200 dark:border-n-600',
+  ghost: 'bg-transparent hover:bg-ocean-50 text-ocean-700 border border-transparent dark:text-ocean-300 dark:hover:bg-n-800',
+  danger: 'bg-error hover:bg-red-700 text-white border border-transparent',
+  accent: 'bg-sand-500 hover:bg-sand-400 text-ocean-900 border border-transparent font-bold',
+  confirm: 'bg-ocean-900 hover:bg-ocean-800 text-white border border-transparent',
+};
+const BTN_SIZE = { sm: 'h-8 px-3 text-xs gap-1.5', md: 'h-9 px-4 text-sm gap-2', lg: 'h-11 px-6 text-sm gap-2' };
+
+const CAMPO_COMUM = 'w-full px-3 rounded-sm border text-sm font-body bg-n-100 text-n-900 dark:bg-n-800 dark:text-n-100 focus:outline-none focus:ring-2 focus:ring-ocean-300 focus:border-ocean-700 focus:bg-white dark:focus:bg-n-800';
+const CAMPO_BORDA = 'border-n-300 dark:border-n-600';
+const CAMPO_ERRO = 'border-error';
+
+describe('Fora da app as classes sao as de antes (tokens sem app:)', () => {
+  it('Button: todas as variantes e tamanhos', () => {
+    for (const v of Object.keys(BTN_VAR)) {
+      for (const s of Object.keys(BTN_SIZE)) {
+        const { unmount } = render(<Button variant={v} size={s}>x</Button>);
+        expect(semApp(screen.getByRole('button').className)).toEqual(lista(`${BTN_BASE} ${BTN_VAR[v]} ${BTN_SIZE[s]}`));
+        unmount();
+      }
+    }
+  });
+
+  it('Input, Select e Textarea (normal e com erro) e etiqueta e erro', () => {
+    const { unmount } = render(<><Input label="a" /><Textarea label="b" /><Select label="c"><option>1</option></Select></>);
+    expect(semApp(screen.getByLabelText('a').className)).toEqual(lista(`${CAMPO_COMUM} h-9 placeholder:text-n-400 transition-colors ${CAMPO_BORDA}`));
+    expect(semApp(screen.getByLabelText('b').className)).toEqual(lista(`${CAMPO_COMUM} py-2 resize-none placeholder:text-n-400 transition-colors ${CAMPO_BORDA}`));
+    expect(semApp(screen.getByLabelText('c').className)).toEqual(lista(`${CAMPO_COMUM} h-9 ${CAMPO_BORDA}`));
+    expect(semApp(screen.getByText('a').className)).toEqual(lista('text-xs font-body font-bold uppercase tracking-wide text-n-600 dark:text-n-400'));
+    unmount();
+    render(<><Input label="a" error="e1" /><Textarea label="b" error="e2" /><Select label="c" error="e3"><option>1</option></Select></>);
+    expect(semApp(screen.getByLabelText('a').className)).toEqual(lista(`${CAMPO_COMUM} h-9 placeholder:text-n-400 transition-colors ${CAMPO_ERRO}`));
+    expect(semApp(screen.getByLabelText('b').className)).toEqual(lista(`${CAMPO_COMUM} py-2 resize-none placeholder:text-n-400 transition-colors ${CAMPO_ERRO}`));
+    expect(semApp(screen.getByLabelText('c').className)).toEqual(lista(`${CAMPO_COMUM} h-9 ${CAMPO_ERRO}`));
+    expect(semApp(screen.getByText('e1').className)).toEqual(lista('text-xs text-error'));
+  });
+
+  it('Toggle ligado e desligado', () => {
+    render(<><Toggle label="on" checked onChange={() => {}} /><Toggle label="off" checked={false} onChange={() => {}} /></>);
+    const base = 'shrink-0 w-10 h-5 rounded-full transition-colors relative mt-0.5';
+    expect(semApp(screen.getByRole('switch', { name: 'on' }).className)).toEqual(lista(`${base} bg-ocean-700`));
+    expect(semApp(screen.getByRole('switch', { name: 'off' }).className)).toEqual(lista(`${base} bg-n-300`));
+  });
+
+  it('Tabs: faixa, aba activa, aba inactiva e contadores', () => {
+    render(<Tabs tabs={[{ id: 'a', label: 'A', count: 1 }, { id: 'b', label: 'B', count: 2 }]} value="a" onChange={() => {}} />);
+    expect(semApp(screen.getByRole('tablist').className)).toEqual(lista('flex items-center gap-1 border-b border-n-200 overflow-x-auto overflow-y-hidden'));
+    const aba = 'inline-flex items-center gap-1.5 px-3 py-2 -mb-px text-[13px] font-body font-medium whitespace-nowrap border-b-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ocean-300 rounded-t-sm';
+    expect(semApp(screen.getByRole('tab', { name: /A/ }).className)).toEqual(lista(`${aba} border-ocean-700 text-ocean-700`));
+    expect(semApp(screen.getByRole('tab', { name: /B/ }).className)).toEqual(lista(`${aba} border-transparent text-n-500 hover:text-n-800`));
+    const cont = 'inline-flex items-center justify-center min-w-[18px] h-[18px] px-1.5 rounded-full text-[11px] font-semibold';
+    expect(semApp(screen.getByText('1').className)).toEqual(lista(`${cont} bg-ocean-50 text-ocean-700`));
+    expect(semApp(screen.getByText('2').className)).toEqual(lista(`${cont} bg-n-100 text-n-600`));
+  });
+
+  it('FilterChips: chip activo e inactivo', () => {
+    render(<FilterChips options={[{ value: 'x', label: 'X' }, { value: 'y', label: 'Y' }]} value="x" onChange={() => {}} />);
+    const chip = 'inline-flex items-center h-7 px-3 rounded-full border text-xs font-body font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ocean-300';
+    expect(semApp(screen.getByRole('button', { name: 'X' }).className)).toEqual(lista(`${chip} bg-ocean-700 border-ocean-700 text-white`));
+    expect(semApp(screen.getByRole('button', { name: 'Y' }).className)).toEqual(lista(`${chip} bg-white border-n-300 text-n-700 hover:bg-n-50`));
   });
 });
