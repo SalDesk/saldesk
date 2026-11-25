@@ -263,6 +263,7 @@
         "now": "now, {{time}}",
         "departures": "departures today",
         "empty": "No activities scheduled for today",
+        "emptyNoTime": "Today's bookings have no set time",
         "aria": "People on activities between {{from}} and {{to}}; peak of {{peak}} at {{time}}; now {{now}}."
       }
     },

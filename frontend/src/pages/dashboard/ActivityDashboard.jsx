@@ -49,7 +49,8 @@ export default function ActivityDashboard() {
 
   const [tours,        setTours]        = useState([]);
   const [todayRes,     setTodayRes]     = useState([]);
-  const [prevRes,      setPrevRes]      = useState([]);
+  /* null = os 13 dias anteriores nao carregaram: sem tendencia nem variacao */
+  const [prevRes,      setPrevRes]      = useState(null);
   const [weekRes,      setWeekRes]      = useState([]);
   const [unpaidRes,    setUnpaidRes]    = useState([]);
   const [atribuicoes,  setAtribuicoes]  = useState([]);
@@ -62,7 +63,7 @@ export default function ActivityDashboard() {
       listUnits().catch(() => []),
       listReservations(estadiaEm(TODAY)).catch(() => []),
       /* Os 13 dias antes de hoje: tendencia dos ultimos 7 dias e o mesmo dia da semana passada */
-      listReservations(estadiaUltimosDias(13)).catch(() => []),
+      listReservations(estadiaUltimosDias(13)).catch(() => null),
       listReservations(estadiaProximosDias(7)).catch(() => []),
       /* Pagamentos por regularizar de QUALQUER mes: com so as reservas do mes, uma divida de um mes
          anterior nunca aparecia em "Requer atencao" */
@@ -73,7 +74,7 @@ export default function ActivityDashboard() {
       .then(([toursData, tRes, pRes, wRes, uRes, atr]) => {
         setTours(toursData || []);
         setTodayRes(tRes || []);
-        setPrevRes(Array.isArray(pRes) ? pRes : []);
+        setPrevRes(Array.isArray(pRes) ? pRes : null);
         setWeekRes(wRes || []);
         setUnpaidRes(Array.isArray(uRes) ? uRes : []);
         setAtribuicoes(Array.isArray(atr) ? atr : []);
@@ -136,12 +137,22 @@ export default function ActivityDashboard() {
   /* Numeros do dia e tendencia: 14 dias terminados hoje (os 13 anteriores + hoje, sem repetir reservas).
      O ultimo e hoje; o indice 6 e o mesmo dia da semana passada; a tendencia sao os ultimos 7 */
   const numeros = useMemo(() => {
+    const valorHoje = valorDoDia(todayRes.filter(r => r.check_in === TODAY));
+    /* sem os dias anteriores so se mostra o valor de hoje: nada de tendencia inventada */
+    if (prevRes === null) {
+      const hoje = serieDias(todayRes, TODAY, 1, 'reservas')[0];
+      const gente = serieDias(todayRes, TODAY, 1, 'pessoas')[0];
+      return {
+        reservas: { hoje, semanaPassada: null, serie: null },
+        pessoas: { hoje: gente, semanaPassada: null, serie: null },
+        valor: { hoje: valorHoje, semanaPassada: null, serie: null },
+      };
+    }
     const todas = uniaoPorId(prevRes, todayRes);
     const serie = (medida) => serieDias(todas, TODAY, 14, medida);
     const reservas = serie('reservas');
     const pessoas = serie('pessoas');
     const valores = serie('valor');
-    const valorHoje = valorDoDia(todayRes.filter(r => r.check_in === TODAY));
     return {
       reservas: { hoje: reservas[13], semanaPassada: reservas[6], serie: reservas.slice(7) },
       pessoas: { hoje: pessoas[13], semanaPassada: pessoas[6], serie: pessoas.slice(7) },
@@ -184,7 +195,7 @@ export default function ActivityDashboard() {
     deltaTitulo: delta ? t('dashboard.mare.vsLastWeek') : null,
     nota,
     serie: medida.serie,
-    serieRotulo: t('dashboard.mare.sparkline', { label, values: medida.serie.map(formatar).join(', ') }),
+    serieRotulo: medida.serie ? t('dashboard.mare.sparkline', { label, values: medida.serie.map((v) => formatar(v)).join(', ') }) : null,
   });
 
   const tiles = [
@@ -219,7 +230,7 @@ export default function ActivityDashboard() {
     <div className="space-y-4">
       <TilesTendencia tiles={tiles} />
 
-      <MareDoDia curva={curva} agoraMin={agoraMin} />
+      <MareDoDia curva={curva} agoraMin={agoraMin} reservasHoje={numeros.reservas.hoje} />
 
       <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1.7fr)_minmax(0,1fr)] gap-4 items-start">
         <DayAgenda

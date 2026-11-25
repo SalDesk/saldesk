@@ -463,4 +463,41 @@ describe('ActivityDashboard: numeros do dia e mare', () => {
     expect(portuguesNoEcra(['Tour Teste', 'Barco Azul', 'Cliente'])).toEqual([]);
     expect(chavesCruas(['dashboard'])).toEqual([]);
   });
+
+  it('os_valores_do_grafico_usam_a_lingua_certa', async () => {
+    useUiStore.setState({ lang: 'en' });
+    carregaServicos({ hoje: [reserva({ id: 'g1', total_price: 12000 })] });
+    renderActivity();
+    await screen.findByText('Value of the day');
+    expect(within(tileDe('Value of the day')).getByRole('img').getAttribute('aria-label')).toContain('€12,000');
+    cleanup();
+    useUiStore.setState({ lang: 'pt' });
+    renderActivity();
+    await screen.findByText('Valor do dia');
+    expect(within(tileDe('Valor do dia')).getByRole('img').getAttribute('aria-label')).toContain('€12000');
+  });
+
+  it('se_os_dias_anteriores_falham_nao_ha_tendencia_nem_variacao_inventadas', async () => {
+    carregaServicos({ hoje: RES_HOJE, semana: [RES_AMANHA] });
+    const base = listReservations.getMockImplementation();
+    listReservations.mockImplementation(async (params) => {
+      if (params.stay_from === ANTERIOR_INICIO && params.stay_to === ONTEM) throw new Error('falha de rede');
+      return base(params);
+    });
+    renderActivity();
+    await screen.findByText('Reservas hoje');
+    expect(tileDe('Reservas hoje')).toHaveTextContent(/^Reservas hoje4/);
+    ['Reservas hoje', 'Pessoas em actividade', 'Valor do dia'].forEach((rotulo) => {
+      expect(within(tileDe(rotulo)).queryByRole('img')).toBeNull();
+      expect(tileDe(rotulo).querySelector('.font-mono')).toBeNull();
+    });
+    expect(screen.getByRole('button', { name: /Tour Teste/ })).toBeInTheDocument();
+  });
+
+  it('com_reservas_mas_sem_hora_a_mare_diz_que_nao_tem_hora', async () => {
+    carregaServicos({ hoje: RES_HOJE });
+    renderActivity();
+    expect(await screen.findByText('As reservas de hoje não têm hora marcada')).toBeInTheDocument();
+    expect(screen.queryByText('Sem actividades marcadas para hoje')).not.toBeInTheDocument();
+  });
 });

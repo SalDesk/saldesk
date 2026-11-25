@@ -44,7 +44,7 @@ function desenhaAoEntrar(el) {
   );
 }
 
-export default function MareDoDia({ curva, agoraMin }) {
+export default function MareDoDia({ curva, agoraMin, reservasHoje = 0 }) {
   const t = useT();
   const graficoRef = useRef(null);
   const temGrafico = !!curva?.pico;
@@ -66,7 +66,7 @@ export default function MareDoDia({ curva, agoraMin }) {
     return (
       <section aria-labelledby="mare-titulo" className="bg-ocean-900 rounded-[18px] p-4 lg:p-6 text-white flex flex-col gap-3">
         {cabecalho}
-        <p className="text-sm font-body text-ocean-200 py-6">{t('dashboard.mare.tide.empty')}</p>
+        <p className="text-sm font-body text-ocean-200 py-6">{t(reservasHoje > 0 ? 'dashboard.mare.tide.emptyNoTime' : 'dashboard.mare.tide.empty')}</p>
       </section>
     );
   }

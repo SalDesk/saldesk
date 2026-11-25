@@ -49,6 +49,12 @@ describe('MareDoDia', () => {
     expect(screen.queryByRole('listitem')).toBeNull();
   });
 
+  it('com_reservas_sem_hora_o_texto_vazio_e_outro', () => {
+    render(<MareDoDia curva={curvaMare([], [TOUR_A])} agoraMin={600} reservasHoje={3} />);
+    expect(screen.getByText('As reservas de hoje não têm hora marcada')).toBeInTheDocument();
+    expect(screen.queryByText('Sem actividades marcadas para hoje')).toBeNull();
+  });
+
   it('em_ingles_mostra_ingles', () => {
     useUiStore.setState({ lang: 'en' });
     render(<MareDoDia curva={CURVA} agoraMin={9 * 60 + 15} />);

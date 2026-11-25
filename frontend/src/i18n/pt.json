@@ -263,6 +263,7 @@
         "now": "agora, {{time}}",
         "departures": "saídas hoje",
         "empty": "Sem actividades marcadas para hoje",
+        "emptyNoTime": "As reservas de hoje não têm hora marcada",
         "aria": "Pessoas em actividade entre as {{from}} e as {{to}}; pico de {{peak}} às {{time}}; agora {{now}}."
       }
     },
