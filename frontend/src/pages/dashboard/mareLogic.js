@@ -12,6 +12,8 @@ const ESTADOS_CHECKIN = ['checked_in', 'checked_out'];
 const HORA_INICIO_OMISSAO = 7;
 const HORA_FIM_OMISSAO = 20;
 
+/* Valor e series: tudo o que nao esta cancelado (inclui no_show), como reservasMes do Dashboard */
+const naoCancelada = (r) => !!r && r.status !== 'cancelled';
 const ativa = (r) => !!r && ESTADOS_MARE.includes(r.status);
 const lista = (v) => (Array.isArray(v) ? v.filter(Boolean) : []);
 const pessoasDe = (r) => positivo(r.guests) ?? 1;
@@ -75,24 +77,22 @@ export function curvaMare(reservas, tours) {
   const saidas = [...saidasPorId.values()]
     .sort((a, b) => a.inicio.localeCompare(b.inicio) || a.titulo.localeCompare(b.titulo));
 
-  const curva = { inicioHora, fimHora, pontos, pico, saidas };
-  /* Intervalos exatos para pessoasAs; fora da forma publica da curva */
-  Object.defineProperty(curva, 'atividades', { value: atividades, enumerable: false });
-  return curva;
+  /* intervalos: atividades exatas (minutos), usadas por pessoasAs */
+  return { inicioHora, fimHora, pontos, pico, saidas, intervalos: atividades };
 }
 
 /* Pessoas na rua num minuto exato (inicio inclusive, fim exclusive) */
 export function pessoasAs(curva, minutos) {
-  return (curva?.atividades || [])
+  return (curva?.intervalos || [])
     .filter((a) => a.inicioMin <= minutos && minutos < a.fimMin)
     .reduce((s, a) => s + a.pessoas, 0);
 }
 
 /* ── Series e variacoes ──────────────────────────────────────── */
 
-/* Total em euros das reservas validas */
+/* Total em euros das reservas nao canceladas */
 export function valorDoDia(reservas) {
-  return lista(reservas).filter(ativa).reduce((s, r) => s + numeroOuZero(r.total_price), 0);
+  return lista(reservas).filter(naoCancelada).reduce((s, r) => s + numeroOuZero(r.total_price), 0);
 }
 
 /* Uma medida por dia, os n dias que terminam em fimData, do mais antigo ao mais recente.
@@ -100,7 +100,7 @@ export function valorDoDia(reservas) {
 export function serieDias(reservas, fimData, n, medida) {
   const dias = diasSeguintes(somarDias(fimData, -(n - 1)), n);
   const porDia = new Map(dias.map((d) => [d, 0]));
-  lista(reservas).filter(ativa).forEach((r) => {
+  lista(reservas).filter(naoCancelada).forEach((r) => {
     if (!porDia.has(r.check_in)) return;
     let valor = 1;
     if (medida === 'valor') valor = numeroOuZero(r.total_price);
@@ -131,13 +131,17 @@ export function variacaoSemanaPct(hoje, semanaPassada) {
 /* ── Saida e ocupacao ────────────────────────────────────────── */
 
 /* Pessoas com check-in, total e por receber de uma saida (evento da agenda: id "tour|HH:MM").
-   Reservas que herdam a hora do tour (sem start_time proprio) so entram se o evento nao tem hora. */
-export function detalheSaida(evento, reservasHoje) {
+   A reserva pertence ao evento pela mesma regra de eventosAtividades: tour + (hora propria ?? hora do tour). */
+export function detalheSaida(evento, reservasHoje, tours) {
+  const toursPorId = new Map(lista(tours).map((t) => [String(t.id), t]));
   const tourId = String(evento?.tourId ?? String(evento?.id ?? '').split('|')[0]);
   const inicioMin = evento?.inicioMin ?? paraMinutos(evento?.inicio);
-  const doEvento = lista(reservasHoje).filter((r) => (
-    ativa(r) && String(r.unit_id) === tourId && paraMinutos(r.start_time) === (inicioMin ?? null)
-  ));
+  const doEvento = lista(reservasHoje).filter((r) => {
+    if (!ativa(r) || String(r.unit_id) !== tourId) return false;
+    const meta = metaDoTour(toursPorId.get(tourId));
+    const horario = paraMinutos(r.start_time) ?? paraMinutos(meta.start_time);
+    return horario === (inicioMin ?? null);
+  });
   const soma = (rs) => rs.reduce((s, r) => s + pessoasDe(r), 0);
   return {
     checkin: soma(doEvento.filter((r) => ESTADOS_CHECKIN.includes(r.status))),

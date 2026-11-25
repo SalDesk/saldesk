@@ -4,7 +4,7 @@ import {
   curvaMare, pessoasAs, serieDias, valorDoDia, variacaoSemana, variacaoSemanaPct,
   detalheSaida, ocupacaoDias, diasSeguintes,
 } from '../pages/dashboard/mareLogic';
-import { porReceber } from '../pages/dashboard/agendaLogic';
+import { porReceber, eventosAtividades } from '../pages/dashboard/agendaLogic';
 
 const tour = (id, name, meta = {}, extra = {}) => ({
   id, name, status: 'active', is_active: true, capacity: null, description: JSON.stringify(meta), ...extra,
@@ -79,6 +79,11 @@ describe('mareLogic', () => {
       res({ check_in: '2026-11-01', total_price: 7 }),
     ];
     expect(valorDoDia(reservas.slice(0, 3))).toBe(150.5);
+    const comNoShow = [...reservas.slice(0, 3), res({ check_in: '2026-11-25', total_price: 20, status: 'no_show', guests: 2 })];
+    expect(valorDoDia(comNoShow)).toBe(170.5);
+    expect(serieDias(comNoShow, '2026-11-25', 1, 'valor')).toEqual([170.5]);
+    expect(serieDias(comNoShow, '2026-11-25', 1, 'reservas')).toEqual([3]);
+    expect(serieDias(comNoShow, '2026-11-25', 1, 'pessoas')).toEqual([7]);
     const valor = serieDias(reservas, '2026-11-25', 7, 'valor');
     expect(valor).toHaveLength(7);
     expect(valor).toEqual([0, 0, 0, 0, 40, 0, 150.5]);
@@ -116,6 +121,23 @@ describe('mareLogic', () => {
     const d = detalheSaida(evento, [...doEvento, ...outras]);
     expect(d).toEqual({ checkin: 5, total: 6, porReceber: porReceber(doEvento) });
     expect(d.porReceber).toBe(80);
+  });
+
+  it('detalheSaida_usa_a_hora_do_tour_como_o_eventosAtividades', () => {
+    const tours = [tour('A', 'Buggy', { start_time: '09:00' })];
+    const reservas = [
+      res({ status: 'checked_in', guests: 2, total_price: 60, amount_paid: 10 }),
+      res({ status: 'confirmed', start_time: '09:00:00', guests: 1, total_price: 30 }),
+      res({ status: 'confirmed', start_time: '11:00', guests: 7 }),
+    ];
+    const ev = eventosAtividades({ reservas, tours }).find((e) => e.inicio === '09:00');
+    expect(detalheSaida(ev, reservas, tours)).toEqual({ checkin: 2, total: 3, porReceber: 80 });
+  });
+
+  it('curvaMare_pessoasAs_funciona_apos_clonar', () => {
+    const c = curvaMare([res({ start_time: '09:00', guests: 4 })], [tour('A', 'Buggy')]);
+    expect(pessoasAs({ ...c }, 9 * 60 + 10)).toBe(4);
+    expect(c.intervalos).toEqual([{ inicioMin: 540, fimMin: 600, pessoas: 4 }]);
   });
 
   it('ocupacaoDias_usa_capacidade_dos_horarios_ou_do_tour', () => {
