@@ -171,6 +171,10 @@ describe('Dashboard (fumo por tipo de operador)', () => {
     /* o cabecalho e a lista de WhatsApp pendentes continuam montados */
     expect(screen.getByText(/^(Bom dia|Boa tarde|Boa noite), Teste$/)).toBeInTheDocument();
     expect(screen.getByTestId('whatsapp-pendentes')).toBeInTheDocument();
+    /* a vista Resumo carrega sozinha: esperar que todos os blocos assentem */
+    expect(await screen.findByText('Sem receita neste período')).toBeInTheDocument();
+    expect(await screen.findByText('Sem vendas este mês')).toBeInTheDocument();
+    expect(await screen.findByText('Sem reservas recentes')).toBeInTheDocument();
   });
 
   it('volta a hoje', async () => {

@@ -291,17 +291,7 @@
       "today": "Hoje",
       "summary": "Resumo"
     },
-    "summary": {
-      "kpiRevenue": "Receita do mês",
-      "kpiBookings": "Reservas",
-      "kpiAvgValue": "Valor médio",
-      "kpiOccupancy": "Ocupação",
-      "vsPrevMonth": "face ao mês anterior",
-      "chartTitle": "Receita dos últimos 30 dias",
-      "chartEmpty": "Sem receita nos últimos 30 dias",
-      "topServices": "Serviços mais vendidos",
-      "topServicesEmpty": "Sem vendas este mês"
-    },
+    "summary": {"topServices":"Serviços mais vendidos","topServicesEmpty":"Sem vendas este mês"}, "resumo": {"period":{"label":"Período","7d":"7 dias","30d":"30 dias","12m":"12 meses"},"tiles":{"revenue":"Receita","bookings":"Reservas","avgValue":"Valor médio por reserva","occupancy":"Ocupação"},"vsPrevious":"face ao período anterior","pp":"{{n}} pp","chart":{"title":"Receita","subtitle":"{{from}} a {{to}}","current":"Este período","previous":"Período anterior","empty":"Sem receita neste período","error":"Não foi possível carregar a receita.","aria":"Receita do período: {{total}}. Melhor ponto: {{label}}, {{value}}.","ariaNone":"Sem receita neste período.","best":"Melhor ponto"}},
     "title": "Dashboard",
     "revenue": "Receita",
     "occupancy": "Ocupação",

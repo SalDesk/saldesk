@@ -1,10 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, render, screen, waitFor, within } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import ResumoView from '../pages/dashboard/ResumoView';
 import useUiStore from '../store/uiStore';
+import useAuthStore from '../store/authStore';
 import { getResumo, getReceita, getUnidades } from '../services/financeiroService';
 import { listReservations } from '../services/reservationsService';
+import { listUnits } from '../services/unitsService';
 
 /* Sem rede: todos os servicos usados pela vista sao simulados */
 vi.mock('../services/financeiroService', () => ({
@@ -15,9 +17,8 @@ vi.mock('../services/financeiroService', () => ({
 vi.mock('../services/reservationsService', () => ({
   listReservations: vi.fn(),
 }));
-/* O grafico nao interessa aqui (ResponsiveContainer nao mede nada no jsdom) */
-vi.mock('../components/financial/RevenueChart', () => ({
-  default: ({ data }) => <div data-testid="grafico" data-pontos={(data || []).length} />,
+vi.mock('../services/unitsService', () => ({
+  listUnits: vi.fn(),
 }));
 
 const FUTURE = { v7_startTransition: true, v7_relativeSplatPath: true };
@@ -37,6 +38,7 @@ function servicosVazios() {
   getReceita.mockReset().mockResolvedValue([]);
   getUnidades.mockReset().mockResolvedValue([]);
   listReservations.mockReset().mockResolvedValue([]);
+  listUnits.mockReset().mockResolvedValue([]);
 }
 
 function renderResumo() {
@@ -47,92 +49,199 @@ function renderResumo() {
   );
 }
 
-/* Datas locais, calculadas aqui sem reutilizar o codigo em teste */
-function dois(n) { return String(n).padStart(2, '0'); }
-function primeiroEUltimoDoMes() {
-  const n = new Date();
-  const y = n.getFullYear(), m = n.getMonth();
-  return {
-    inicio: `${y}-${dois(m + 1)}-01`,
-    fim: `${y}-${dois(m + 1)}-${dois(new Date(y, m + 1, 0).getDate())}`,
-  };
+/* So o relogio e falso; os temporizadores de waitFor continuam reais */
+function hojeFixo(ano, mes, dia) {
+  vi.useFakeTimers({ toFake: ['Date'] });
+  vi.setSystemTime(new Date(ano, mes, dia, 12, 0));
 }
+
+function tipoDeOperador(tipo) {
+  useAuthStore.setState({ operator: { name: 'Zy Tours', operator_type: tipo } });
+}
+
+const RESUMO_COM_VARIACAO = resumo({
+  atual:    { receita: 1200, num_reservas: 14, valor_medio: 90, taxa_ocupacao: 64 },
+  anterior: { receita: 1000, num_reservas: 10, valor_medio: 100, taxa_ocupacao: 60 },
+});
 
 beforeEach(() => {
   servicosVazios();
   useUiStore.setState({ lang: 'pt' });
+  tipoDeOperador('hotel');
+  hojeFixo(2026, 10, 25);
 });
 
 afterEach(() => {
   cleanup();
+  vi.useRealTimers();
   vi.restoreAllMocks();
+  useAuthStore.setState({ operator: null });
+  useUiStore.setState({ lang: 'pt' });
 });
 
-describe('ResumoView', () => {
-  it('pede os dados do mes', async () => {
+describe('ResumoView: periodo', () => {
+  it('mostra os tres periodos, com 30 dias premido por omissao', async () => {
     renderResumo();
-    const { inicio, fim } = primeiroEUltimoDoMes();
-    await waitFor(() => expect(getResumo).toHaveBeenCalledWith(inicio, fim));
-    expect(getUnidades).toHaveBeenCalledWith(inicio, fim);
-    /* as reservas recentes sao as 5 criadas mais recentemente, de qualquer mes */
-    expect(listReservations).toHaveBeenCalledWith({ order_by: 'created_at', limit: 5 });
-    /* grafico: ultimos 30 dias, por dia, a acabar hoje */
-    await waitFor(() => expect(getReceita).toHaveBeenCalled());
-    const [ini30, fim30, gran] = getReceita.mock.calls[0];
-    expect(gran).toBe('day');
-    const hoje = new Date();
-    const esperadoFim = `${hoje.getFullYear()}-${dois(hoje.getMonth() + 1)}-${dois(hoje.getDate())}`;
-    expect(fim30).toBe(esperadoFim);
-    const dias = Math.round((new Date(`${fim30}T00:00:00`) - new Date(`${ini30}T00:00:00`)) / 86400000);
-    expect(dias).toBe(29);
-    await screen.findByText('Receita do mês');
+    const grupo = await screen.findByRole('group', { name: 'Período' });
+    expect(within(grupo).getByRole('button', { name: '7 dias' })).toHaveAttribute('aria-pressed', 'false');
+    expect(within(grupo).getByRole('button', { name: '30 dias' })).toHaveAttribute('aria-pressed', 'true');
+    expect(within(grupo).getByRole('button', { name: '12 meses' })).toHaveAttribute('aria-pressed', 'false');
   });
 
-  it('o pedido das reservas recentes nao usa from/to nem se limita ao mes', async () => {
+  it('pede os 30 dias e o periodo anterior ao abrir', async () => {
     renderResumo();
-    await screen.findByText('Receita do mês');
-    const pedidos = listReservations.mock.calls.map(([params]) => params);
-    pedidos.forEach((p) => {
-      expect(p).not.toHaveProperty('from');
-      expect(p).not.toHaveProperty('to');
-      expect(p).not.toHaveProperty('stay_from');
-      expect(p).not.toHaveProperty('stay_to');
+    await waitFor(() => expect(getResumo).toHaveBeenCalledWith('2026-10-27', '2026-11-25'));
+    await waitFor(() => expect(getReceita).toHaveBeenCalledWith('2026-10-27', '2026-11-25', 'day'));
+    expect(getReceita).toHaveBeenCalledWith('2026-09-27', '2026-10-26', 'day');
+    expect(getUnidades).toHaveBeenCalledWith('2026-10-27', '2026-11-25');
+  });
+
+  it('12 meses pede os intervalos de 12 meses por mes', async () => {
+    renderResumo();
+    await waitFor(() => expect(getResumo).toHaveBeenCalledTimes(1));
+    fireEvent.click(screen.getByRole('button', { name: '12 meses' }));
+    await waitFor(() => expect(getResumo).toHaveBeenCalledWith('2025-12-01', '2026-11-25'));
+    expect(getReceita).toHaveBeenCalledWith('2025-12-01', '2026-11-25', 'month');
+    expect(getReceita).toHaveBeenCalledWith('2024-12-06', '2025-11-30', 'month');
+    expect(screen.getByRole('button', { name: '12 meses' })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByRole('button', { name: '30 dias' })).toHaveAttribute('aria-pressed', 'false');
+  });
+});
+
+describe('ResumoView: numeros', () => {
+  it('mostra os quatro numeros com a variacao face ao periodo anterior', async () => {
+    getResumo.mockResolvedValue(RESUMO_COM_VARIACAO);
+    renderResumo();
+    const receita = (await screen.findByText('€1200')).closest('article');
+    expect(within(receita).getByText('Receita')).toBeInTheDocument();
+    expect(within(receita).getByText('+20%')).toBeInTheDocument();
+    expect(within(receita).getByText('face ao período anterior')).toBeInTheDocument();
+
+    const reservas = screen.getByText('Reservas').closest('article');
+    expect(within(reservas).getByText('14')).toBeInTheDocument();
+    expect(within(reservas).getByText('+40%')).toBeInTheDocument();
+
+    const medio = screen.getByText('Valor médio por reserva').closest('article');
+    expect(within(medio).getByText('€90.00')).toBeInTheDocument();
+    expect(within(medio).getByText('-10%')).toBeInTheDocument();
+
+    const ocupacao = screen.getByText('Ocupação').closest('article');
+    expect(within(ocupacao).getByText('64%')).toBeInTheDocument();
+    expect(within(ocupacao).getByText('+4 pp')).toBeInTheDocument();
+  });
+
+  it('sem periodo anterior (zero) nao ha selo de variacao', async () => {
+    getResumo.mockResolvedValue(resumo({ atual: { receita: 500, num_reservas: 3, valor_medio: 50, taxa_ocupacao: 30 } }));
+    renderResumo();
+    expect(await screen.findByText('€500')).toBeInTheDocument();
+    expect(screen.queryByText(/^[+-]\d+%$/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/pp$/)).not.toBeInTheDocument();
+  });
+
+  it.each(['hotel', 'rentacar'])('%s mostra a ocupacao do backend', async (tipo) => {
+    tipoDeOperador(tipo);
+    getResumo.mockResolvedValue(RESUMO_COM_VARIACAO);
+    renderResumo();
+    expect(await screen.findByText('Ocupação')).toBeInTheDocument();
+    expect(await screen.findByText('64%')).toBeInTheDocument();
+    expect(listUnits).not.toHaveBeenCalled();
+  });
+
+  it.each(['restaurant', 'generic'])('%s nao mostra a ocupacao', async (tipo) => {
+    tipoDeOperador(tipo);
+    getResumo.mockResolvedValue(RESUMO_COM_VARIACAO);
+    renderResumo();
+    expect(await screen.findByText('Valor médio por reserva')).toBeInTheDocument();
+    expect(screen.queryByText('Ocupação')).not.toBeInTheDocument();
+  });
+
+  it('actividades calculam a ocupacao com as reservas do periodo e a variacao com as do anterior', async () => {
+    tipoDeOperador('activity');
+    listUnits.mockResolvedValue([{ id: 't1', name: 'Tour', capacity: 10, status: 'active' }]);
+    listReservations.mockImplementation(async (params) => {
+      if (params.stay_from === '2026-10-27') return [{ id: 'a', unit_id: 't1', check_in: '2026-11-02', guests: 30, status: 'confirmed' }];
+      if (params.stay_from === '2026-09-27') return [{ id: 'b', unit_id: 't1', check_in: '2026-10-02', guests: 15, status: 'confirmed' }];
+      return [];
     });
-    expect(pedidos).toEqual([{ order_by: 'created_at', limit: 5 }]);
-  });
-
-  it('uma reserva criada hoje para um mes futuro aparece nas recentes', async () => {
-    listReservations.mockResolvedValue([
-      { id: 'f1', created_at: '2026-11-13T09:00:00Z', status: 'pending', customer_name: 'Cliente Dezembro', check_in: '2026-12-20', guests: 2, units: { name: 'Tour X' } },
-    ]);
     renderResumo();
-    const bloco = (await screen.findByText('Reservas recentes')).closest('section');
-    expect(await within(bloco).findByText(/Cliente Dezembro/)).toBeInTheDocument();
+    /* 30 pessoas / (10 lugares x 30 dias) = 10%; antes 15 / 300 = 5% */
+    const ocupacao = (await screen.findByText('Ocupação')).closest('article');
+    await waitFor(() => expect(within(ocupacao).getByText('10%')).toBeInTheDocument());
+    expect(within(ocupacao).getByText('+5 pp')).toBeInTheDocument();
+    expect(listReservations).toHaveBeenCalledWith({ stay_from: '2026-10-27', stay_to: '2026-11-25' });
   });
 
-  it('mostra receita e variacao', async () => {
-    getResumo.mockResolvedValue(resumo({
-      atual:    { receita: 1200, num_reservas: 14, valor_medio: 90, taxa_ocupacao: 62.5 },
-      anterior: { receita: 1000, num_reservas: 10, valor_medio: 100, taxa_ocupacao: 50 },
-      variacao: { receita: 20, num_reservas: 4, valor_medio: -10, taxa_ocupacao: 12.5 },
-    }));
+  it('actividades sem capacidade mostram a ocupacao em branco', async () => {
+    tipoDeOperador('activity');
+    listUnits.mockResolvedValue([{ id: 't1', name: 'Tour', status: 'active' }]);
+    getResumo.mockResolvedValue(RESUMO_COM_VARIACAO);
     renderResumo();
-    expect(await screen.findByText(/^€1\s?200$/)).toBeInTheDocument();
-    /* receita: diferenca absoluta em euros */
-    expect(screen.getByText('+€200')).toBeInTheDocument();
-    /* reservas: diferenca absoluta */
-    expect(screen.getByText('14')).toBeInTheDocument();
-    expect(screen.getByText('+4')).toBeInTheDocument();
-    /* valor medio: diferenca absoluta em euros (90 - 100) */
-    expect(screen.getByText('€90')).toBeInTheDocument();
-    /* KpiCard formata o euro negativo com o sinal antes do simbolo */
-    expect(screen.getByText('-€10')).toBeInTheDocument();
-    /* ocupacao: pontos percentuais */
-    expect(screen.getByText('62.5%')).toBeInTheDocument();
-    expect(screen.getByText('+12.5 p.p.')).toBeInTheDocument();
-    expect(screen.getAllByText('face ao mês anterior').length).toBe(4);
+    const ocupacao = (await screen.findByText('Ocupação')).closest('article');
+    await waitFor(() => expect(within(ocupacao).getByText('—')).toBeInTheDocument());
   });
 
+  it('um pedido que falha nao deixa a pagina em branco', async () => {
+    getResumo.mockRejectedValue(new Error('falha de rede'));
+    getReceita.mockResolvedValue([{ periodo: '2026-11-10', receita: 300 }]);
+    renderResumo();
+    expect(await screen.findByTestId('resumo-grafico')).toBeInTheDocument();
+    const receita = document.querySelector('[data-tile="receita"]');
+    expect(within(receita).getByText('—')).toBeInTheDocument();
+  });
+});
+
+describe('ResumoView: grafico da receita', () => {
+  const ATUAL = [{ periodo: '2026-11-10', receita: 300 }, { periodo: '2026-11-20', receita: 700 }];
+
+  it('descreve o total e o melhor ponto', async () => {
+    getReceita.mockImplementation(async (inicio) => (inicio === '2026-10-27' ? ATUAL : []));
+    renderResumo();
+    const grafico = await screen.findByTestId('resumo-grafico');
+    expect(grafico).toHaveAttribute('role', 'img');
+    expect(grafico).toHaveAttribute('aria-label', 'Receita do período: €1000. Melhor ponto: 20 Nov, €700.');
+  });
+
+  it('o grafico desenha-se mesmo sem periodo anterior', async () => {
+    getReceita.mockImplementation(async (inicio) => (inicio === '2026-10-27' ? ATUAL : Promise.reject(new Error('x'))));
+    renderResumo();
+    expect(await screen.findByTestId('resumo-grafico')).toBeInTheDocument();
+  });
+
+  it('sem receita mostra o estado vazio', async () => {
+    renderResumo();
+    expect(await screen.findByText('Sem receita neste período')).toBeInTheDocument();
+    expect(screen.queryByTestId('resumo-grafico')).not.toBeInTheDocument();
+  });
+
+  it('se a receita falhar diz-o, sem tirar os numeros', async () => {
+    getReceita.mockRejectedValue(new Error('falha de rede'));
+    getResumo.mockResolvedValue(RESUMO_COM_VARIACAO);
+    renderResumo();
+    expect(await screen.findByText('Não foi possível carregar a receita.')).toBeInTheDocument();
+    expect(await screen.findByText('€1200')).toBeInTheDocument();
+  });
+
+  it('em ingles os meses do eixo estao em ingles', async () => {
+    useUiStore.setState({ lang: 'en' });
+    vi.setSystemTime(new Date(2026, 1, 10, 12, 0));
+    getReceita.mockImplementation(async (inicio) => (inicio === '2026-01-12' ? [{ periodo: '2026-02-05', receita: 400 }] : []));
+    renderResumo();
+    const eixo = await screen.findByTestId('resumo-eixo');
+    expect(within(eixo).getByText('12 Jan')).toBeInTheDocument();
+    expect(within(eixo).getByText('10 Feb')).toBeInTheDocument();
+    expect(screen.getByTestId('resumo-grafico')).toHaveAttribute('aria-label', 'Revenue for the period: €400. Best point: 5 Feb, €400.');
+  });
+
+  it('em portugues o eixo usa os meses portugueses', async () => {
+    vi.setSystemTime(new Date(2026, 1, 10, 12, 0));
+    getReceita.mockImplementation(async (inicio) => (inicio === '2026-01-12' ? [{ periodo: '2026-02-05', receita: 400 }] : []));
+    renderResumo();
+    const eixo = await screen.findByTestId('resumo-eixo');
+    expect(within(eixo).getByText('10 Fev')).toBeInTheDocument();
+  });
+});
+
+describe('ResumoView: blocos de baixo', () => {
   it('mostra servicos mais vendidos', async () => {
     getUnidades.mockResolvedValue([
       { name: 'Servico A', unit_type: 'tour', num_reservas: 2, receita: 100 },
@@ -151,74 +260,37 @@ describe('ResumoView', () => {
     expect(within(bloco).queryByText('Servico F')).not.toBeInTheDocument();
   });
 
-  it('os blocos usam o mesmo aspeto dos cartoes do Hoje', async () => {
-    getUnidades.mockResolvedValue([
-      { name: 'Servico A', unit_type: 'tour', num_reservas: 2, receita: 100 },
-    ]);
+  it('as reservas recentes nao usam from/to nem se limitam ao mes', async () => {
     renderResumo();
-    const titulo = await screen.findByText('Serviços mais vendidos');
-    const bloco = titulo.closest('section');
-    /* cantos de 8px, contorno e titulo n-900, como o painel de atencao */
-    expect(bloco.className).toContain('rounded-sm');
-    expect(bloco.className).toContain('border-n-200');
-    expect(bloco.className).not.toContain('rounded-lg');
-    expect(bloco.className).not.toContain('shadow-sm');
-    expect(titulo.className).toContain('text-n-900');
-    /* o primeiro lugar usa uma cor que existe na paleta */
-    await within(bloco).findByText('Servico A');
-    expect(within(bloco).getByText('1').className).not.toContain('sand-700');
-    expect(within(bloco).getByText('1').className).toContain('text-sand-600');
+    await screen.findByText('Sem reservas recentes');
+    const pedidos = listReservations.mock.calls.map(([params]) => params);
+    expect(pedidos).toEqual([{ order_by: 'created_at', limit: 5 }]);
   });
 
-  it('mostra as reservas mais recentes', async () => {
+  it('mostra as 5 reservas mais recentes, de qualquer mes', async () => {
     listReservations.mockResolvedValue(
       Array.from({ length: 7 }, (_, i) => ({
         id: `r${i}`,
         created_at: `2026-11-0${i + 1}T10:00:00Z`,
         status: 'confirmed',
         customer_name: `Cliente ${i + 1}`,
-        check_in: '2026-11-10',
+        check_in: '2026-12-10',
         guests: 2,
         units: { name: 'Tour X' },
       })),
     );
     renderResumo();
-    const titulo = await screen.findByText('Reservas recentes');
-    const bloco = titulo.closest('section');
+    const bloco = (await screen.findByText('Reservas recentes')).closest('section');
     await within(bloco).findByText(/Cliente 7/);
     expect(within(bloco).getAllByText(/Cliente \d/).length).toBe(5);
-    expect(within(bloco).queryByText(/Cliente 2 /)).not.toBeInTheDocument();
   });
 
-  it('estado vazio', async () => {
-    renderResumo();
-    expect(await screen.findByText('Sem receita nos últimos 30 dias')).toBeInTheDocument();
-    expect(screen.getByText('Sem vendas este mês')).toBeInTheDocument();
-    expect(screen.getByText('Sem reservas recentes')).toBeInTheDocument();
-    expect(screen.queryByTestId('grafico')).not.toBeInTheDocument();
-    /* os quatro KPIs aparecem a zero */
-    expect(screen.getByText('Receita do mês')).toBeInTheDocument();
-    expect(screen.getByText('0.0%')).toBeInTheDocument();
-  });
-
-  it('mostra o grafico quando ha receita', async () => {
-    getReceita.mockResolvedValue([{ periodo: '2026-11-01', receita: 100, num_reservas: 2 }]);
-    renderResumo();
-    const grafico = await screen.findByTestId('grafico');
-    expect(grafico).toHaveAttribute('data-pontos', '1');
-  });
-
-  it('servicos a falhar', async () => {
+  it('servicos e reservas a falhar mostram os estados vazios', async () => {
     const erro = new Error('falha de rede');
-    getResumo.mockRejectedValue(erro);
-    getReceita.mockRejectedValue(erro);
     getUnidades.mockRejectedValue(erro);
     listReservations.mockRejectedValue(erro);
-    const consoleErro = vi.spyOn(console, 'error').mockImplementation(() => {});
     renderResumo();
     expect(await screen.findByText('Sem vendas este mês')).toBeInTheDocument();
-    expect(screen.getByText('Sem receita nos últimos 30 dias')).toBeInTheDocument();
-    expect(screen.getByText('Receita do mês')).toBeInTheDocument();
-    expect(consoleErro).not.toHaveBeenCalled();
+    expect(screen.getByText('Sem reservas recentes')).toBeInTheDocument();
   });
 });

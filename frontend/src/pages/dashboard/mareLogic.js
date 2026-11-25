@@ -14,9 +14,9 @@ const HORA_FIM_OMISSAO = 20;
 
 /* Valor e series: tudo o que nao esta cancelado (inclui no_show), como reservasMes do Dashboard */
 const naoCancelada = (r) => !!r && r.status !== 'cancelled';
-const ativa = (r) => !!r && ESTADOS_MARE.includes(r.status);
+export const ativa = (r) => !!r && ESTADOS_MARE.includes(r.status);
 const lista = (v) => (Array.isArray(v) ? v.filter(Boolean) : []);
-const pessoasDe = (r) => positivo(r.guests) ?? 1;
+export const pessoasDe = (r) => positivo(r.guests) ?? 1;
 const numeroOuZero = (v) => {
   const n = Number(v);
   return Number.isFinite(n) ? n : 0;
@@ -156,7 +156,7 @@ export function detalheSaida(evento, reservasHoje, tours) {
 }
 
 /* Capacidade do dia: soma dos horarios da ficha; sem horarios, a capacidade do tour; senao null */
-function capacidadeDoDia(tour) {
+export function capacidadeDoDia(tour) {
   const meta = metaDoTour(tour);
   if (Array.isArray(meta.time_slots) && meta.time_slots.length > 0) {
     const soma = meta.time_slots.reduce((s, slot) => {
