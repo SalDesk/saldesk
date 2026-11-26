@@ -21,7 +21,7 @@ const Input = forwardRef(function Input(
     'placeholder:text-n-400 transition-colors',
     'focus:outline-none focus:ring-2 focus:ring-ocean-300 focus:border-ocean-700 focus:bg-white dark:focus:bg-n-800',
     'app:bg-white app:text-sm app:rounded-md app:focus:ring-sand-500',
-    error ? 'border-error app:border-error' : 'border-n-300 dark:border-n-600 app:border-mare-field',
+    error ? 'border-error app:border-error app:focus:border-error' : 'border-n-300 dark:border-n-600 app:border-mare-field app:focus:border-ocean-700',
     props.disabled ? 'opacity-50 cursor-not-allowed' : '',
     className,
   ].join(' ');
@@ -53,7 +53,7 @@ export const Textarea = forwardRef(function Textarea(
     'placeholder:text-n-400 transition-colors',
     'focus:outline-none focus:ring-2 focus:ring-ocean-300 focus:border-ocean-700 focus:bg-white dark:focus:bg-n-800',
     'app:bg-white app:text-sm app:rounded-md app:focus:ring-sand-500',
-    error ? 'border-error app:border-error' : 'border-n-300 dark:border-n-600 app:border-mare-field',
+    error ? 'border-error app:border-error app:focus:border-error' : 'border-n-300 dark:border-n-600 app:border-mare-field app:focus:border-ocean-700',
     props.disabled ? 'opacity-50 cursor-not-allowed' : '',
     className,
   ].join(' ');
@@ -82,7 +82,7 @@ export const Select = forwardRef(function Select(
     'w-full h-9 app:h-11 px-3 rounded-sm border text-sm font-body bg-n-100 text-n-900 dark:bg-n-800 dark:text-n-100',
     'focus:outline-none focus:ring-2 focus:ring-ocean-300 focus:border-ocean-700 focus:bg-white dark:focus:bg-n-800',
     'app:bg-white app:text-sm app:rounded-md app:focus:ring-sand-500',
-    error ? 'border-error app:border-error' : 'border-n-300 dark:border-n-600 app:border-mare-field',
+    error ? 'border-error app:border-error app:focus:border-error' : 'border-n-300 dark:border-n-600 app:border-mare-field app:focus:border-ocean-700',
     props.disabled ? 'opacity-50 cursor-not-allowed' : '',
     className,
   ].join(' ');

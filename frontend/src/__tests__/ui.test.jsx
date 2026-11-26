@@ -235,8 +235,35 @@ describe('Button (Mare)', () => {
     expect(sec).toContain('app:hover:border-ocean-500');
     const gh = screen.getByRole('button', { name: 'Fantasma' }).className;
     expect(gh).toContain('bg-transparent');
-    expect(gh).toContain('app:hover:bg-ocean-50');
+    expect(gh).toContain('hover:bg-ocean-50');
     expect(gh).toContain('app:rounded-full');
+  });
+
+  it('ghost nao tem tokens app: de cor que vencam as classes de quem o usa', () => {
+    render(naApp(<Button variant="ghost" className="hover:text-red-600 hover:bg-red-50">Apagar</Button>));
+    const fichas = screen.getByRole('button', { name: 'Apagar' }).className.split(/\s+/);
+    expect(fichas.filter((t) => t.startsWith('app:text-'))).toEqual([]);
+    expect(fichas.filter((t) => t.startsWith('app:hover:bg-'))).toEqual([]);
+    expect(fichas).toContain('hover:text-red-600');
+  });
+});
+
+describe('Campos (Mare): contorno no foco dentro da app', () => {
+  it('Input, Textarea e Select ficam com borda ocean no foco', () => {
+    render(naApp(<><Input label="a" /><Textarea label="b" /><Select label="c"><option>1</option></Select></>));
+    for (const el of [screen.getByLabelText('a'), screen.getByLabelText('b'), screen.getByLabelText('c')]) {
+      expect(el.className.split(/\s+/)).toContain('app:focus:border-ocean-700');
+      expect(el.className.split(/\s+/)).not.toContain('app:focus:border-error');
+    }
+  });
+
+  it('com erro mantem a borda vermelha no foco', () => {
+    render(naApp(<><Input label="a" error="e1" /><Textarea label="b" error="e2" /><Select label="c" error="e3"><option>1</option></Select></>));
+    for (const el of [screen.getByLabelText('a'), screen.getByLabelText('b'), screen.getByLabelText('c')]) {
+      const fichas = el.className.split(/\s+/);
+      expect(fichas).toContain('app:focus:border-error');
+      expect(fichas).not.toContain('app:focus:border-ocean-700');
+    }
   });
 });
 
