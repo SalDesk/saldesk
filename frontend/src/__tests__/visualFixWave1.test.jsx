@@ -37,9 +37,11 @@ describe('ajustes visuais (fix wave 1)', () => {
     const preco = screen.getByLabelText('Preço do escalão 1');
     expect(preco.closest('div.flex.flex-wrap')).not.toBeNull();
     const remover = screen.getByRole('button', { name: 'Remover escalão 1' });
-    expect(remover.className).toContain('!text-n-400');
-    expect(remover.className).toContain('hover:!text-error');
-    expect(remover.className).toContain('hover:!bg-[var(--error-light)]');
+    /* botao nativo no estilo Mare: neutro, vermelho ao passar o rato, 44 px no telemovel */
+    expect(remover.className).toContain('text-n-500');
+    expect(remover.className).toContain('hover:text-error');
+    expect(remover.className).toContain('hover:bg-[var(--error-light)]');
+    expect(remover.className).toContain('min-h-11');
   });
 
   it('RentacarTable: o botão Levantamento usa o token de sucesso, sem cor hex fixa', () => {

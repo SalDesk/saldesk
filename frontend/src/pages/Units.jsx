@@ -175,6 +175,7 @@ export default function Units() {
   return (
     <div>
       <PageHeader
+        eyebrow={t('nav.sections.operacao')}
         title={t(`units.page.${pagina}.title`)}
         subtitle={t(`units.page.${pagina}.subtitle`, { n: stats.total })}
         actions={
@@ -185,28 +186,28 @@ export default function Units() {
       />
 
       {!loading && units.length > 0 && (
-        <div className="flex gap-4 mb-6">
-          <div className="bg-white rounded-sm border border-n-200 px-4 py-2.5 flex items-center gap-2">
-            <span className="text-xs font-body text-n-500">{t('units.statTotal')}</span>
-            <span className="font-display font-bold text-sm text-n-900 tabular-nums">{stats.total}</span>
+        <div className="flex flex-wrap gap-3 mb-6">
+          <div className="rounded-full border border-mare-card bg-white px-4 py-2 flex items-center gap-2">
+            <span className="text-xs font-body font-semibold text-n-600">{t('units.statTotal')}</span>
+            <span className="font-mono font-bold text-sm text-ocean-900 tabular-nums">{stats.total}</span>
           </div>
-          <div className="bg-[var(--success-light)] rounded-sm border border-n-200 px-4 py-2.5 flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-[var(--success)]" />
-            <span className="text-xs font-body text-[var(--success)]">{t('units.statActive')}</span>
-            <span className="font-display font-bold text-sm text-[var(--success)] tabular-nums">{stats.active}</span>
+          <div className="rounded-full border border-mare-card bg-white px-4 py-2 flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-turquoise-600" />
+            <span className="text-xs font-body font-semibold text-n-600">{t('units.statActive')}</span>
+            <span className="font-mono font-bold text-sm text-ocean-900 tabular-nums">{stats.active}</span>
           </div>
           {stats.inactive > 0 && (
-            <div className="bg-n-50 rounded-sm border border-n-200 px-4 py-2.5 flex items-center gap-2">
+            <div className="rounded-full border border-mare-card bg-white px-4 py-2 flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-n-300" />
-              <span className="text-xs font-body text-n-500">{t('units.statInactive')}</span>
-              <span className="font-display font-bold text-sm text-n-500 tabular-nums">{stats.inactive}</span>
+              <span className="text-xs font-body font-semibold text-n-600">{t('units.statInactive')}</span>
+              <span className="font-mono font-bold text-sm text-ocean-900 tabular-nums">{stats.inactive}</span>
             </div>
           )}
         </div>
       )}
 
       {!loading && incompleteUnits.length > 0 && (
-        <div className="mb-6 px-4 py-3 bg-sand-50 border border-sand-100 rounded-sm flex items-start gap-3">
+        <div className="mb-6 px-4 py-3 bg-sand-50 border border-sand-100 rounded-[14px] flex items-start gap-3">
           <Sparkles size={16} strokeWidth={1.75} className="text-sand-600 shrink-0 mt-0.5" />
           <p className="text-sm font-body text-n-700">
             <span className="font-semibold">{incompleteUnits.length}</span>

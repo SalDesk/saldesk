@@ -7,7 +7,7 @@ import { rotuloComodidade, rotuloTipoUnidade } from '../rotulosUnidades';
 import { useLingua } from '../../../utils/formatoLingua';
 import {
   AmenitiesPicker, IncludedItemsEditor,
-  SectionLabel, OtaFields, ConectFields, buildOtaProductIds, UNIT_TYPES_BY_OPERATOR,
+  SectionLabel, CAIXA_SECAO, OtaFields, ConectFields, buildOtaProductIds, UNIT_TYPES_BY_OPERATOR,
 } from './editors';
 
 const CAR_AMENS = ['AC', 'GPS', 'Bluetooth', 'USB', 'Cadeira bebe', '4x4', 'Teto solar', 'Camera re'];
@@ -115,7 +115,7 @@ export default function RentacarVehicleForm({ unit, onSave, onCancel, loading, e
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
 
-      <div>
+      <div className={CAIXA_SECAO}>
         <SectionLabel>{t('unitForm.section.identification')}</SectionLabel>
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-3">
           <Input label={t('unitForm.car.brand')} value={form.brand} onChange={set('brand')} placeholder="Toyota" autoFocus />
@@ -131,7 +131,7 @@ export default function RentacarVehicleForm({ unit, onSave, onCancel, loading, e
         </div>
       </div>
 
-      <div>
+      <div className={CAIXA_SECAO}>
         <SectionLabel>{t('unitForm.car.specs')}</SectionLabel>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           <Input label={t('unitForm.car.seats')} type="number" value={form.seats} onChange={set('seats')} min="1" max="20" />
@@ -163,12 +163,12 @@ export default function RentacarVehicleForm({ unit, onSave, onCancel, loading, e
         )}
       </div>
 
-      <div>
+      <div className={CAIXA_SECAO}>
         <SectionLabel>{t('unitForm.section.amenities')}</SectionLabel>
         <AmenitiesPicker options={CAR_AMENS} selected={form.amenities} onToggle={toggleAmen} rotulo={(a) => rotuloComodidade(a, t)} />
       </div>
 
-      <div>
+      <div className={CAIXA_SECAO}>
         <SectionLabel>{t('unitForm.car.prices')}</SectionLabel>
         <div className="grid grid-cols-2 gap-3 mb-3">
           <Input label={t('unitForm.car.pricePerDay')} type="number" value={form.base_price} onChange={set('base_price')} min="0" step="0.01" required placeholder="0.00" />
@@ -181,7 +181,7 @@ export default function RentacarVehicleForm({ unit, onSave, onCancel, loading, e
         </div>
       </div>
 
-      <div>
+      <div className={CAIXA_SECAO}>
         <SectionLabel>{t('unitForm.car.driver')}</SectionLabel>
         <div className="grid grid-cols-2 gap-3">
           <Input label={t('unitForm.car.minAge')} type="number" value={form.min_age} onChange={set('min_age')} min="18" max="99" placeholder="21" />
@@ -189,7 +189,7 @@ export default function RentacarVehicleForm({ unit, onSave, onCancel, loading, e
         </div>
       </div>
 
-      <div>
+      <div className={CAIXA_SECAO}>
         <SectionLabel>{t('unitForm.car.docs')}</SectionLabel>
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
           <Input label={t('unitForm.car.insuranceUntil')} type="date" value={form.seguro_expiry} onChange={set('seguro_expiry')} />
@@ -198,7 +198,7 @@ export default function RentacarVehicleForm({ unit, onSave, onCancel, loading, e
         </div>
       </div>
 
-      <div>
+      <div className={CAIXA_SECAO}>
         <SectionLabel>{t('unitForm.car.mileage')}</SectionLabel>
         <div className="grid grid-cols-2 gap-3">
           <Input label={t('unitForm.car.currentKm')} type="number" value={form.current_km} onChange={set('current_km')} min="0" placeholder="0" />
@@ -206,17 +206,17 @@ export default function RentacarVehicleForm({ unit, onSave, onCancel, loading, e
         </div>
       </div>
 
-      <div>
+      <div className={CAIXA_SECAO}>
         <SectionLabel>{t('unitForm.section.included')}</SectionLabel>
         <IncludedItemsEditor items={form.included_items} onChange={items => setForm(f => ({ ...f, included_items: items }))} />
       </div>
 
-      <div>
+      <div className={CAIXA_SECAO}>
         <SectionLabel>{t('unitForm.section.importantInfo')}</SectionLabel>
         <Textarea value={form.important_info} onChange={set('important_info')} placeholder={t('unitForm.car.importantPh')} rows={2} />
       </div>
 
-      <div>
+      <div className={CAIXA_SECAO}>
         <SectionLabel>{t('unitForm.section.photos')}</SectionLabel>
         <ImageUploader value={form.images} onChange={(urls) => setForm(f => ({ ...f, images: urls }))} maxImages={8} hint={t('unitForm.car.photosHint')} />
       </div>
@@ -225,7 +225,7 @@ export default function RentacarVehicleForm({ unit, onSave, onCancel, loading, e
       <ConectFields form={form} set={set} />
 
       {unit && (
-        <div>
+        <div className={CAIXA_SECAO}>
           <SectionLabel>{t('unitForm.section.status')}</SectionLabel>
           <Select value={form.status} onChange={set('status')}>
             <option value="active">{t('unitForm.status.active')}</option>
@@ -237,7 +237,7 @@ export default function RentacarVehicleForm({ unit, onSave, onCancel, loading, e
       )}
 
       {error && (
-        <p className="text-sm font-body px-3 py-2 rounded-sm bg-[var(--error-light)] text-[var(--error)]">{error}</p>
+        <p className="text-sm font-body px-3 py-2 rounded-[14px] bg-[var(--error-light)] text-[var(--error)]">{error}</p>
       )}
 
       <div className="flex gap-3 pt-1">

@@ -126,7 +126,7 @@ export default function GenericUnitForm({ unit, operatorType, onSave, onCancel, 
       )}
 
       {error && (
-        <p className="text-sm font-body px-3 py-2 rounded-sm bg-[var(--error-light)] text-[var(--error)]">
+        <p className="text-sm font-body px-3 py-2 rounded-[14px] bg-[var(--error-light)] text-[var(--error)]">
           {error}
         </p>
       )}

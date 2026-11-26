@@ -5,7 +5,7 @@ import { useT } from '../../../i18n';
 import { rotuloComodidade, rotuloZonaMesa } from '../rotulosUnidades';
 import {
   AmenitiesPicker, IncludedItemsEditor,
-  SectionLabel, OtaFields, ConectFields, buildOtaProductIds,
+  SectionLabel, CAIXA_SECAO, OtaFields, ConectFields, buildOtaProductIds,
 } from './editors';
 
 const RESTAURANT_AMENS = ['WiFi', 'Ar condicionado', 'Vista mar', 'Terraço', 'Acesso cadeira de rodas', 'Estacionamento', 'Música ao vivo', 'Ambiente para crianças'];
@@ -93,7 +93,7 @@ export default function RestaurantTableForm({ unit, onSave, onCancel, loading, e
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
 
-      <div>
+      <div className={CAIXA_SECAO}>
         <SectionLabel>{t('unitForm.section.identification')}</SectionLabel>
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-3">
           <Input label={t('unitForm.table.number')} value={form.number} onChange={set('number')} placeholder="1" autoFocus />
@@ -108,7 +108,7 @@ export default function RestaurantTableForm({ unit, onSave, onCancel, loading, e
         </Select>
       </div>
 
-      <div>
+      <div className={CAIXA_SECAO}>
         <SectionLabel>{t('unitForm.section.capacity')}</SectionLabel>
         <div className="grid grid-cols-2 gap-3">
           <Input label={t('unitForm.table.min')} type="number" value={form.capacity_min} onChange={set('capacity_min')} min="1" required />
@@ -116,9 +116,9 @@ export default function RestaurantTableForm({ unit, onSave, onCancel, loading, e
         </div>
       </div>
 
-      <div>
+      <div className={CAIXA_SECAO}>
         <SectionLabel>{t('unitForm.table.options')}</SectionLabel>
-        <label className="flex items-center gap-3 cursor-pointer">
+        <label className="flex items-center gap-3 min-h-11 md:min-h-0 cursor-pointer">
           <input
             type="checkbox"
             checked={form.combinable}
@@ -129,17 +129,17 @@ export default function RestaurantTableForm({ unit, onSave, onCancel, loading, e
         </label>
       </div>
 
-      <div>
+      <div className={CAIXA_SECAO}>
         <SectionLabel>{t('unitForm.section.amenities')}</SectionLabel>
         <AmenitiesPicker options={RESTAURANT_AMENS} selected={form.amenities} onToggle={toggleAmen} rotulo={(a) => rotuloComodidade(a, t)} />
       </div>
 
-      <div>
+      <div className={CAIXA_SECAO}>
         <SectionLabel>{t('unitForm.section.included')}</SectionLabel>
         <IncludedItemsEditor items={form.included_items} onChange={items => setForm(f => ({ ...f, included_items: items }))} />
       </div>
 
-      <div>
+      <div className={CAIXA_SECAO}>
         <SectionLabel>{t('unitForm.section.importantInfo')}</SectionLabel>
         <Textarea value={form.important_info} onChange={set('important_info')} placeholder={t('unitForm.table.importantPh')} rows={2} />
       </div>
@@ -148,7 +148,7 @@ export default function RestaurantTableForm({ unit, onSave, onCancel, loading, e
       <ConectFields form={form} set={set} />
 
       {unit && (
-        <div>
+        <div className={CAIXA_SECAO}>
           <SectionLabel>{t('unitForm.section.status')}</SectionLabel>
           <Select value={form.status} onChange={set('status')}>
             <option value="active">{t('unitForm.status.tableActive')}</option>
@@ -158,7 +158,7 @@ export default function RestaurantTableForm({ unit, onSave, onCancel, loading, e
       )}
 
       {error && (
-        <p className="text-sm font-body px-3 py-2 rounded-sm bg-[var(--error-light)] text-[var(--error)]">{error}</p>
+        <p className="text-sm font-body px-3 py-2 rounded-[14px] bg-[var(--error-light)] text-[var(--error)]">{error}</p>
       )}
 
       <div className="flex gap-3 pt-1">

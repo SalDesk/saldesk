@@ -899,11 +899,68 @@ describe('Unidades: pecas do design system', () => {
     await renderPagina([quarto(), quarto({ id: 'h2', name: 'Quarto Parado', status: 'inactive' })], 'hotel');
     const classes = (nome) => {
       let el = cartao(nome);
-      while (el && !el.className.includes('border-n-200')) el = el.parentElement;
+      while (el && !el.className.includes('border-mare-card')) el = el.parentElement;
       return el.className;
     };
     expect(classes('Quarto Mar')).not.toContain('opacity-70');
     expect(classes('Quarto Parado')).toContain('opacity-70');
+  });
+
+  describe('estilo Maré', () => {
+    it('o cabeçalho traz o eyebrow Operação', async () => {
+      await renderPagina([tour()]);
+      expect(document.querySelector('[data-eyebrow]')).toHaveTextContent('Operação');
+    });
+
+    it('os contadores são pílulas Maré com os mesmos números', async () => {
+      await renderPagina([tour(), tour({ id: 't2', name: 'Tour Parado', status: 'inactive' })]);
+      for (const [rotulo, n] of [['Total', '2'], ['Activos', '1'], ['Inactivos', '1']]) {
+        const pilula = screen.getByText(rotulo).parentElement;
+        expect(pilula.className).toContain('rounded-full');
+        expect(pilula.className).toContain('border-mare-card');
+        expect(pilula).toHaveTextContent(n);
+      }
+    });
+
+    it('o lembrete de categoria usa a caixa interior Maré', async () => {
+      await renderPagina([tour({ category_id: null })]);
+      const aviso = screen.getByText(/sem categoria e\/ou coordenadas/).parentElement;
+      expect(aviso.className).toContain('rounded-[14px]');
+    });
+
+    it.each(['activity', 'hotel'])('%s: o cartão da unidade usa as classes Maré', async (tipo) => {
+      await renderPagina([TIPOS[tipo].unidade()], tipo);
+      let el = cartao(TIPOS[tipo].nome);
+      while (el && !el.className.includes('border-mare-card')) el = el.parentElement;
+      expect(el).not.toBeNull();
+      expect(el.className).toContain('rounded-[18px]');
+      expect(el.className).toContain('bg-white');
+    });
+
+    it('o preço está em fonte mono com algarismos tabulares', async () => {
+      await renderPagina([tour()]);
+      const preco = within(cartao('Tour Pedra de Lume')).getByText(/€45/);
+      expect(preco.className).toContain('font-mono');
+      expect(preco.className).toContain('tabular-nums');
+      cleanup();
+      await renderPagina([quarto()], 'hotel');
+      expect(within(cartao('Quarto Mar')).getByText('€80.00/noite').className).toContain('font-mono');
+    });
+
+    it('as etiquetas de estado são Badge (com o ponto da app)', async () => {
+      await renderPagina([tour()]);
+      const etiqueta = within(cartao('Tour Pedra de Lume')).getByText('Activo');
+      expect(etiqueta.className).toContain('app:rounded-full');
+      expect(etiqueta.querySelector('span[aria-hidden="true"]')).not.toBeNull();
+    });
+
+    it('os botões só de ícone têm 44 px no telemovel', async () => {
+      await renderPagina([tour()]);
+      const c = cartao('Tour Pedra de Lume');
+      for (const nome of ['Desactivar', 'Editar', 'Eliminar']) {
+        expect(within(c).getByRole('button', { name: nome }).className).toContain('min-h-11');
+      }
+    });
   });
 });
 

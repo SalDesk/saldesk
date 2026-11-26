@@ -7,7 +7,7 @@ import { rotuloComodidade, rotuloTipoUnidade, rotuloVistaQuarto } from '../rotul
 import { useLingua } from '../../../utils/formatoLingua';
 import {
   AmenitiesPicker, IncludedItemsEditor,
-  SectionLabel, OtaFields, ConectFields, buildOtaProductIds,
+  SectionLabel, CAIXA_SECAO, OtaFields, ConectFields, buildOtaProductIds,
 } from './editors';
 
 const ROOM_TYPES  = ['Single', 'Double', 'Twin', 'Suite', 'Apartamento', 'Villa', 'Bungalow'];
@@ -108,7 +108,7 @@ export default function HotelRoomForm({ unit, onSave, onCancel, loading, error }
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
 
-      <div>
+      <div className={CAIXA_SECAO}>
         <SectionLabel>{t('unitForm.section.identification')}</SectionLabel>
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-3">
           <Input label={t('unitForm.hotel.number')} value={form.number} onChange={set('number')} placeholder="101" />
@@ -127,7 +127,7 @@ export default function HotelRoomForm({ unit, onSave, onCancel, loading, error }
         </div>
       </div>
 
-      <div>
+      <div className={CAIXA_SECAO}>
         <SectionLabel>{t('unitForm.section.capacity')}</SectionLabel>
         <div className="grid grid-cols-2 gap-3">
           <Input label={t('unitForm.hotel.adults')} type="number" value={form.capacity}      onChange={set('capacity')}      min="1" required />
@@ -135,12 +135,12 @@ export default function HotelRoomForm({ unit, onSave, onCancel, loading, error }
         </div>
       </div>
 
-      <div>
+      <div className={CAIXA_SECAO}>
         <SectionLabel>{t('unitForm.section.amenities')}</SectionLabel>
         <AmenitiesPicker options={ROOM_AMENS} selected={form.amenities} onToggle={toggleAmen} rotulo={(a) => rotuloComodidade(a, t)} />
       </div>
 
-      <div>
+      <div className={CAIXA_SECAO}>
         <SectionLabel>{t('unitForm.hotel.seasonPrices')}</SectionLabel>
         <div className="grid grid-cols-2 gap-3 mb-3">
           <Input label={t('unitForm.hotel.basePrice')} type="number" value={form.base_price} onChange={set('base_price')} min="0" step="0.01" required placeholder="0.00" />
@@ -153,22 +153,22 @@ export default function HotelRoomForm({ unit, onSave, onCancel, loading, error }
         </div>
       </div>
 
-      <div>
+      <div className={CAIXA_SECAO}>
         <SectionLabel>{t('unitForm.section.description')}</SectionLabel>
         <Textarea value={form.description} onChange={set('description')} placeholder={t('unitForm.hotel.descPh')} rows={2} />
       </div>
 
-      <div>
+      <div className={CAIXA_SECAO}>
         <SectionLabel>{t('unitForm.section.included')}</SectionLabel>
         <IncludedItemsEditor items={form.included_items} onChange={items => setForm(f => ({ ...f, included_items: items }))} />
       </div>
 
-      <div>
+      <div className={CAIXA_SECAO}>
         <SectionLabel>{t('unitForm.section.importantInfo')}</SectionLabel>
         <Textarea value={form.important_info} onChange={set('important_info')} placeholder={t('unitForm.hotel.importantPh')} rows={2} />
       </div>
 
-      <div>
+      <div className={CAIXA_SECAO}>
         <SectionLabel>{t('unitForm.section.photos')}</SectionLabel>
         <ImageUploader
           value={form.images}
@@ -182,7 +182,7 @@ export default function HotelRoomForm({ unit, onSave, onCancel, loading, error }
       <ConectFields form={form} set={set} />
 
       {unit && (
-        <div>
+        <div className={CAIXA_SECAO}>
           <SectionLabel>{t('unitForm.section.status')}</SectionLabel>
           <Select value={form.status} onChange={set('status')}>
             <option value="active">{t('unitForm.status.active')}</option>
@@ -194,7 +194,7 @@ export default function HotelRoomForm({ unit, onSave, onCancel, loading, error }
       )}
 
       {error && (
-        <p className="text-sm font-body px-3 py-2 rounded-sm bg-[var(--error-light)] text-[var(--error)]">{error}</p>
+        <p className="text-sm font-body px-3 py-2 rounded-[14px] bg-[var(--error-light)] text-[var(--error)]">{error}</p>
       )}
 
       <div className="flex gap-3 pt-1">
