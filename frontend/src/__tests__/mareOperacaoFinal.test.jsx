@@ -59,6 +59,15 @@ describe('IconBtn (unitario)', () => {
   });
 });
 
+describe('IconBtn: cor do chamador substitui a cor base', () => {
+  it('com className nao tem text-n-500; sem className tem', () => {
+    const { rerender } = render(<IconBtn icon={Pencil} label="X" className="text-[var(--success)]" onClick={() => {}} />);
+    expect(screen.getByRole('button', { name: 'X' }).className.split(/\s+/)).not.toContain('text-n-500');
+    rerender(<IconBtn icon={Pencil} label="X" onClick={() => {}} />);
+    expect(screen.getByRole('button', { name: 'X' }).className.split(/\s+/)).toContain('text-n-500');
+  });
+});
+
 describe('ReservationCard: botoes de icone a 44 px', () => {
   it('ver, editar e eliminar tem min-h-11', () => {
     const r = { id: 'r1', status: 'pending', source: 'direct', total_price: 10, guests: 2, customer_name: 'Ana', units: { name: 'Quarto' } };
