@@ -23,12 +23,12 @@ describe('ajustes visuais (fix wave 1)', () => {
     expect(lista.className).toContain('overflow-y-hidden');
   });
 
-  it('ConectRow: badge e botão não partem o texto e a linha pode quebrar', () => {
+  it('ConectRow: o badge não parte o texto, o botão quebra dentro do cartão e a linha pode quebrar', () => {
     render(<ConectRow unit={{ id: 'u1', conect_status: 'draft' }} onSubmitConect={() => {}} />);
     const badge = screen.getByText('Não submetido');
     const botao = screen.getByRole('button', { name: /Submeter ao Conect/ });
     expect(badge.className).toContain('whitespace-nowrap');
-    expect(botao.className).toContain('whitespace-nowrap');
+    expect(botao.className).toContain('max-w-full');
     expect(badge.parentElement.className).toContain('flex-wrap');
   });
 

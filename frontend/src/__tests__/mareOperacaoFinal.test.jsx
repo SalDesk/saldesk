@@ -168,10 +168,18 @@ describe('ManifestoModal: estado com o Badge do sistema', () => {
 });
 
 describe('ConectRow: botao com texto a 44 px no telemovel', () => {
-  it('Submeter ao Conect tem min-h-11 md:min-h-0', () => {
+  it('Submeter ao Conect tem min-h-11 md:min-h-9', () => {
     render(<ConectRow unit={{ id: 'x', conect_status: 'draft' }} onSubmitConect={() => {}} />);
     const b = screen.getByRole('button');
     expect(temClasse(b, 'min-h-11')).toBe(true);
-    expect(temClasse(b, 'md:min-h-0')).toBe(true);
+    expect(temClasse(b, 'md:min-h-9')).toBe(true);
+  });
+
+  it('o rotulo pode quebrar dentro do cartao (sem nowrap, com max-w-full)', () => {
+    render(<ConectRow unit={{ id: 'x', conect_status: 'draft' }} onSubmitConect={() => {}} />);
+    const b = screen.getByRole('button');
+    expect(temClasse(b, 'whitespace-nowrap')).toBe(false);
+    expect(temClasse(b, '!whitespace-normal')).toBe(true);
+    expect(temClasse(b, 'max-w-full')).toBe(true);
   });
 });
