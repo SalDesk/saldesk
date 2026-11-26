@@ -115,7 +115,7 @@ export default function RentacarTable({ reservations, units, onEdit, onDelete, o
           {['pending', 'confirmed'].includes(r.status) && (
             <button
               onClick={() => onLevantamento(r)}
-              className="flex items-center gap-1 min-h-9 px-3 rounded-full bg-[var(--success)] text-white text-xs font-body font-semibold hover:brightness-90 transition-colors whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ocean-300 focus-visible:ring-offset-1"
+              className="flex items-center gap-1 min-h-11 md:min-h-9 px-3 rounded-full bg-[var(--success)] text-white text-xs font-body font-semibold hover:brightness-90 transition-colors whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ocean-300 focus-visible:ring-offset-1"
             >
               <MoveRight size={11} strokeWidth={2} />
               {t('reservations.actions.pickup')}
@@ -124,7 +124,7 @@ export default function RentacarTable({ reservations, units, onEdit, onDelete, o
           {r.status === 'checked_in' && (
             <button
               onClick={() => onDevolucao(r)}
-              className="flex items-center gap-1 min-h-9 px-3 rounded-full bg-ocean-700 text-white text-xs font-body font-semibold hover:bg-ocean-500 transition-colors whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ocean-300 focus-visible:ring-offset-1"
+              className="flex items-center gap-1 min-h-11 md:min-h-9 px-3 rounded-full bg-ocean-700 text-white text-xs font-body font-semibold hover:bg-ocean-500 transition-colors whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ocean-300 focus-visible:ring-offset-1"
             >
               <MoveLeft size={11} strokeWidth={2} />
               {t('reservations.actions.dropoff')}

@@ -45,3 +45,23 @@ describe('MareStat', () => {
     expect(container.querySelector('[data-mare-stat-tint]')).toBeNull();
   });
 });
+
+describe('MareStat: ponto sem icone', () => {
+  it('o ponto usa uma cor saturada, diferente da tinta clara da caixa do icone', () => {
+    const ponto = {}; const caixa = {};
+    ['aviso', 'bom'].forEach((tone) => {
+      const a = render(<MareStat label="X" value="1" tone={tone} />);
+      ponto[tone] = a.container.querySelector('[data-mare-stat-tint]').className;
+      a.unmount();
+      const b = render(<MareStat label="X" value="1" tone={tone} icon={Users} />);
+      caixa[tone] = b.container.querySelector('[data-mare-stat-tint]').className;
+      b.unmount();
+    });
+    expect(ponto.aviso).toMatch(/bg-sand-500/);
+    expect(ponto.bom).toMatch(/bg-turquoise-600/);
+    expect(ponto.aviso).not.toMatch(/bg-sand-100|bg-turquoise-100/);
+    expect(caixa.aviso).toMatch(/bg-sand-100/);
+    expect(caixa.aviso).toMatch(/text-n-800/);
+    expect(caixa.bom).toMatch(/bg-turquoise-100/);
+  });
+});

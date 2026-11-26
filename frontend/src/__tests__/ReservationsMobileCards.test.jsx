@@ -155,3 +155,12 @@ describe('cartoes do telemovel: estilo Mare', () => {
     expect(item).toHaveClass('bg-white', 'border', 'border-mare-card', 'rounded-[18px]');
   });
 });
+
+describe('cartoes do telemovel: alvos de toque', () => {
+  it('os botoes de accao do cartao tem 44 px de altura minima', () => {
+    simularEcra(true);
+    carros();
+    const botao = screen.getByRole('button', { name: 'Levantamento' });
+    expect(botao).toHaveClass('min-h-11');
+  });
+});

@@ -2,12 +2,19 @@
    O tom (default, aviso, bom) tinge so a pequena caixa do icone (ou um ponto), nunca o valor. */
 const TONS = {
   default: 'bg-ocean-50 text-ocean-700',
-  aviso:   'bg-sand-100 text-sand-600',
+  aviso:   'bg-sand-100 text-n-800',
   bom:     'bg-turquoise-100 text-turquoise-700',
 };
 
+/* Ponto sem icone: cor saturada, visivel sobre o cartao branco */
+const PONTOS = {
+  default: 'bg-ocean-500',
+  aviso:   'bg-sand-500',
+  bom:     'bg-turquoise-600',
+};
+
 export default function MareStat({ label, value, hint, tone = 'default', icon: Icon }) {
-  const tom = TONS[tone] || TONS.default;
+  const tom = Icon ? (TONS[tone] || TONS.default) : (PONTOS[tone] || PONTOS.default);
   const comCaixa = !!Icon || tone !== 'default';
 
   return (
@@ -18,7 +25,7 @@ export default function MareStat({ label, value, hint, tone = 'default', icon: I
           <span
             data-mare-stat-tint
             aria-hidden="true"
-            className={`shrink-0 inline-flex items-center justify-center rounded-[10px] ${Icon ? 'w-8 h-8' : 'w-2.5 h-2.5 rounded-full mt-1'} ${tom}`}
+            className={`shrink-0 inline-flex items-center justify-center ${Icon ? 'w-8 h-8 rounded-[10px]' : 'w-2.5 h-2.5 rounded-full mt-1'} ${tom}`}
           >
             {Icon && <Icon size={16} strokeWidth={1.75} />}
           </span>

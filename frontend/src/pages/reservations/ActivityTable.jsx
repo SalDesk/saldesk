@@ -175,7 +175,7 @@ export default function ActivityTable({ reservations, units, guides, onEdit, onD
                   <button
                     onClick={() => handleNextStatus(r)}
                     disabled={isLoading}
-                    className="flex items-center gap-1 min-h-9 px-3 rounded-full bg-ocean-700 text-white text-xs font-body font-semibold hover:bg-ocean-500 transition-colors disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ocean-300 focus-visible:ring-offset-1"
+                    className="flex items-center gap-1 min-h-11 px-3 rounded-full bg-ocean-700 text-white text-xs font-body font-semibold hover:bg-ocean-500 transition-colors disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ocean-300 focus-visible:ring-offset-1"
                   >
                     {rotuloProximoEstado(r.status, t)}
                     <ChevronRight size={11} strokeWidth={2} />
