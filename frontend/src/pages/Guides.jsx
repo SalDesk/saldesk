@@ -157,11 +157,11 @@ function GuideCard({ guide, units, onEdit, onDelete, onHistory, onAssign }) {
       <div className="px-4 py-3 border-t border-mare-card flex items-center justify-between gap-2">
         <Badge variant={statusMeta.variant} className="whitespace-nowrap">{t(statusMeta.rotulo)}</Badge>
         <div className="flex gap-1.5">
-          <Button variant="secondary" size="sm" onClick={() => onAssign(guide)}>
+          <Button variant="secondary" size="sm" className="min-h-11 md:min-h-0" onClick={() => onAssign(guide)}>
             <UserPlus size={12} strokeWidth={1.75} className="mr-1" />
             {t('guides.card.assign')}
           </Button>
-          <Button variant="secondary" size="sm" onClick={() => onHistory(guide)}>
+          <Button variant="secondary" size="sm" className="min-h-11 md:min-h-0" onClick={() => onHistory(guide)}>
             {t('guides.card.history')}
           </Button>
         </div>

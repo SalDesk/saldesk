@@ -356,8 +356,8 @@ function DishCard({ dish, onEdit, onDelete, onToggleAvailable, onSubmitConect })
 
         <div className="flex flex-wrap items-center justify-between gap-1 mt-auto">
           <span className="font-mono tabular-nums font-bold text-sm text-ocean-700">{eurosDuasCasas(dish.base_price || 0)}</span>
-          <div className="flex items-center gap-1" title={available ? t('menuDigital.availableHint') : t('menuDigital.unavailableHint')}>
-            <IconBtn icon={CheckCircle} label={t('menuDigital.toggleAvailability')} hover={available ? TOGGLE_HOVER_ACTIVE : TOGGLE_HOVER_INACTIVE} onClick={() => onToggleAvailable(dish)} />
+          <div className="flex items-center gap-1">
+            <IconBtn icon={CheckCircle} label={t('menuDigital.toggleAvailability')} title={available ? t('menuDigital.availableHint') : t('menuDigital.unavailableHint')} className={available ? 'text-[var(--success)]' : ''} hover={available ? TOGGLE_HOVER_ACTIVE : TOGGLE_HOVER_INACTIVE} onClick={() => onToggleAvailable(dish)} />
             <IconBtn icon={Pencil} label={t('menuDigital.edit')} hover={EDIT_HOVER} onClick={() => onEdit(dish)} />
             <IconBtn icon={Trash2} label={t('menuDigital.delete')} hover={DELETE_HOVER} onClick={() => onDelete(dish)} />
           </div>
@@ -513,7 +513,7 @@ export default function MenuDigital() {
           />
         </div>
       ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 mb-8">
+        <div className="grid grid-cols-1 min-[400px]:grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 mb-8">
           {filtered.map(dish => (
             <DishCard
               key={dish.id}
@@ -573,7 +573,7 @@ export default function MenuDigital() {
         </div>
         {menuUrl ? (
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-            <div className="flex-1 min-w-0">
+            <div className="flex-1 min-w-0 w-full sm:w-auto">
               <p className="text-xs font-body text-n-500 mb-1.5">{t('menuDigital.shareUrl')}</p>
               <div className="flex items-center gap-2 bg-mare-head border border-mare-card rounded-[14px] px-3 py-2">
                 <Link size={12} strokeWidth={1.75} className="text-n-400 shrink-0" />

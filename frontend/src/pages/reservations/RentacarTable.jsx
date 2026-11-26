@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Pencil, Trash2, Car, MoveRight, MoveLeft, Eye } from 'lucide-react';
 import { changeStatus } from '../../services/reservationsService';
 import { useT } from '../../i18n';
-import Button from '../../components/ui/Button';
+import { IconBtn, EDIT_HOVER, DELETE_HOVER } from '../../components/shared/IconBtn';
 import Badge from '../../components/ui/Badge';
 import Table from '../../components/ui/Table';
 import useMediaQuery from '../../hooks/useMediaQuery';
@@ -115,7 +115,7 @@ export default function RentacarTable({ reservations, units, onEdit, onDelete, o
           {['pending', 'confirmed'].includes(r.status) && (
             <button
               onClick={() => onLevantamento(r)}
-              className="flex items-center gap-1 min-h-11 md:min-h-9 px-3 rounded-full bg-[var(--success)] text-white text-xs font-body font-semibold hover:brightness-90 transition-colors whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ocean-300 focus-visible:ring-offset-1"
+              className="flex items-center gap-1 min-h-11 md:min-h-9 px-3 rounded-full bg-[var(--success)] text-white text-xs font-body font-semibold hover:brightness-90 transition-colors whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sand-500 focus-visible:ring-offset-1"
             >
               <MoveRight size={11} strokeWidth={2} />
               {t('reservations.actions.pickup')}
@@ -124,15 +124,15 @@ export default function RentacarTable({ reservations, units, onEdit, onDelete, o
           {r.status === 'checked_in' && (
             <button
               onClick={() => onDevolucao(r)}
-              className="flex items-center gap-1 min-h-11 md:min-h-9 px-3 rounded-full bg-ocean-700 text-white text-xs font-body font-semibold hover:bg-ocean-500 transition-colors whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ocean-300 focus-visible:ring-offset-1"
+              className="flex items-center gap-1 min-h-11 md:min-h-9 px-3 rounded-full bg-ocean-700 text-white text-xs font-body font-semibold hover:bg-ocean-500 transition-colors whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sand-500 focus-visible:ring-offset-1"
             >
               <MoveLeft size={11} strokeWidth={2} />
               {t('reservations.actions.dropoff')}
             </button>
           )}
-          <Button variant="ghost" size="sm" icon={Eye} onClick={() => onView(r)} aria-label={t('reservations.view')} />
-          <Button variant="ghost" size="sm" icon={Pencil} onClick={() => onEdit(r)} aria-label={t('common.edit')} />
-          <Button variant="ghost" size="sm" icon={Trash2} onClick={() => onDelete(r)} aria-label={t('common.delete')} className="hover:text-error" />
+          <IconBtn icon={Eye} label={t('reservations.view')} hover={EDIT_HOVER} onClick={() => onView(r)} />
+          <IconBtn icon={Pencil} label={t('common.edit')} hover={EDIT_HOVER} onClick={() => onEdit(r)} />
+          <IconBtn icon={Trash2} label={t('common.delete')} hover={DELETE_HOVER} onClick={() => onDelete(r)} />
         </div>
       ),
     },

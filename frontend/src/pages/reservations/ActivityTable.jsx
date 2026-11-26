@@ -3,6 +3,7 @@ import { ClipboardList, Pencil, Trash2, ChevronRight, CalendarDays, Mail, UserX,
 import { changeStatus } from '../../services/reservationsService';
 import { useT } from '../../i18n';
 import Button from '../../components/ui/Button';
+import { IconBtn, EDIT_HOVER, DELETE_HOVER } from '../../components/shared/IconBtn';
 import Badge from '../../components/ui/Badge';
 import Table from '../../components/ui/Table';
 import RowMenu from '../../components/ui/RowMenu';
@@ -125,7 +126,7 @@ export default function ActivityTable({ reservations, units, guides, onEdit, onD
               <button
                 onClick={() => handleNextStatus(r)}
                 disabled={isLoading}
-                className="flex items-center gap-1 min-h-9 px-3 rounded-full bg-ocean-700 text-white text-xs font-body font-semibold hover:bg-ocean-500 transition-colors disabled:opacity-50 whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ocean-300 focus-visible:ring-offset-1"
+                className="flex items-center gap-1 min-h-9 px-3 rounded-full bg-ocean-700 text-white text-xs font-body font-semibold hover:bg-ocean-500 transition-colors disabled:opacity-50 whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sand-500 focus-visible:ring-offset-1"
               >
                 {rotuloProximoEstado(r.status, t)}
                 <ChevronRight size={11} strokeWidth={2} />
@@ -175,36 +176,23 @@ export default function ActivityTable({ reservations, units, guides, onEdit, onD
                   <button
                     onClick={() => handleNextStatus(r)}
                     disabled={isLoading}
-                    className="flex items-center gap-1 min-h-11 px-3 rounded-full bg-ocean-700 text-white text-xs font-body font-semibold hover:bg-ocean-500 transition-colors disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ocean-300 focus-visible:ring-offset-1"
+                    className="flex items-center gap-1 min-h-11 px-3 rounded-full bg-ocean-700 text-white text-xs font-body font-semibold hover:bg-ocean-500 transition-colors disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sand-500 focus-visible:ring-offset-1"
                   >
                     {rotuloProximoEstado(r.status, t)}
                     <ChevronRight size={11} strokeWidth={2} />
                   </button>
                 )}
-                <button onClick={() => onReschedule(r)} title={t('reservations.actions.reschedule')}
-                  className="p-1.5 rounded text-n-400 hover:text-ocean-700 hover:bg-ocean-50 transition-colors">
-                  <CalendarDays size={13} strokeWidth={1.75} />
-                </button>
-                <button onClick={() => onVoucher(r)} title={t('reservations.actions.sendVoucher')}
-                  disabled={voucherLoading === r.id}
-                  className="p-1.5 rounded text-n-400 hover:text-ocean-700 hover:bg-ocean-50 transition-colors disabled:opacity-40">
-                  <Mail size={13} strokeWidth={1.75} />
-                </button>
+                <IconBtn icon={CalendarDays} label={t('reservations.actions.reschedule')} title={t('reservations.actions.reschedule')} hover={EDIT_HOVER} onClick={() => onReschedule(r)} />
+                <IconBtn icon={Mail} label={t('reservations.actions.sendVoucher')} title={t('reservations.actions.sendVoucher')} hover={EDIT_HOVER} disabled={voucherLoading === r.id} onClick={() => onVoucher(r)} />
                 {!['cancelled','no_show','checked_out'].includes(r.status) && (
-                  <button onClick={() => onNoShow(r)} title={t('reservations.actions.noShow')}
-                    className="p-1.5 rounded text-n-400 hover:text-error hover:bg-red-50 transition-colors">
-                    <UserX size={13} strokeWidth={1.75} />
-                  </button>
+                  <IconBtn icon={UserX} label={t('reservations.actions.noShow')} title={t('reservations.actions.noShow')} hover={DELETE_HOVER} onClick={() => onNoShow(r)} />
                 )}
                 {!['cancelled','no_show'].includes(r.status) && (
-                  <button onClick={() => setAssignRes(r)} title={t('reservations.actions.assignTeam')}
-                    className="p-1.5 rounded text-n-400 hover:text-ocean-700 hover:bg-ocean-50 transition-colors">
-                    <Users size={13} strokeWidth={1.75} />
-                  </button>
+                  <IconBtn icon={Users} label={t('reservations.actions.assignTeam')} title={t('reservations.actions.assignTeam')} hover={EDIT_HOVER} onClick={() => setAssignRes(r)} />
                 )}
-                <Button variant="ghost" size="sm" icon={Eye} onClick={() => onView(r)} aria-label={t('reservations.view')} />
-                <Button variant="ghost" size="sm" icon={Pencil} onClick={() => onEdit(r)} aria-label={t('common.edit')} />
-                <Button variant="ghost" size="sm" icon={Trash2} onClick={() => onDelete(r)} aria-label={t('common.delete')} className="hover:text-error" />
+                <IconBtn icon={Eye} label={t('reservations.view')} hover={EDIT_HOVER} onClick={() => onView(r)} />
+                <IconBtn icon={Pencil} label={t('common.edit')} hover={EDIT_HOVER} onClick={() => onEdit(r)} />
+                <IconBtn icon={Trash2} label={t('common.delete')} hover={DELETE_HOVER} onClick={() => onDelete(r)} />
               </div>
             </div>
           );

@@ -1314,6 +1314,16 @@ describe('Guias (desenho do sistema)', () => {
     expect(within(c).getByRole('button', { name: 'Eliminar' })).toBe(botoesIcone(c)[1]);
   });
 
+  it('Atribuir e Historial chegam aos 44 px no telemovel', async () => {
+    await renderPagina();
+    const c = cartao('Rui Costa');
+    for (const nome of ['Atribuir', 'Historial']) {
+      const b = within(c).getByRole('button', { name: nome });
+      expect(b.className.split(/\s+/)).toContain('min-h-11');
+      expect(b.className.split(/\s+/)).toContain('md:min-h-0');
+    }
+  });
+
   it('o formulário nomeia os botões só com ícone', async () => {
     await renderPagina();
     fireEvent.click(screen.getByRole('button', { name: 'Adicionar guia' }));

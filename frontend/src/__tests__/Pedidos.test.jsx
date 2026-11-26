@@ -106,6 +106,13 @@ describe('Pedidos', () => {
     expect(celulas(l2)[1]).toBe('Mesa 7');
   });
 
+  it('a referencia do pedido usa n-500 (contraste)', async () => {
+    await abre();
+    const ref = within(linhas()[0]).getByText('aaaaaaaa');
+    expect(ref.className.split(/\s+/)).toContain('text-n-500');
+    expect(ref.className.split(/\s+/)).not.toContain('text-n-400');
+  });
+
   it('o subtitulo conta os pedidos', async () => {
     await abre();
     expect(screen.getByText('5 pedido(s)')).toBeInTheDocument();

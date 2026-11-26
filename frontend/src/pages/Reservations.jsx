@@ -228,7 +228,7 @@ export default function Reservations() {
           {hasFilters && (
             <button
               onClick={clearFilters}
-              className="flex items-center gap-1.5 min-h-11 px-4 rounded-full text-sm font-body font-semibold text-ocean-700 hover:text-ocean-900 border border-mare-card hover:border-ocean-500 bg-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ocean-300"
+              className="flex items-center gap-1.5 min-h-11 px-4 rounded-full text-sm font-body font-semibold text-ocean-700 hover:text-ocean-900 border border-mare-card hover:border-ocean-500 bg-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sand-500"
             >
               <X size={13} strokeWidth={2} />
               {t('reservations.filters.clear')}

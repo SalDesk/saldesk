@@ -150,7 +150,7 @@ export default function Pedidos() {
     {
       key: 'ref',
       label: t('orders.columns.ref'),
-      render: (order) => <span className="text-xs font-mono tabular-nums text-n-400">{order.id?.slice(0, 8)}</span>,
+      render: (order) => <span className="text-xs font-mono tabular-nums text-n-500">{order.id?.slice(0, 8)}</span>,
     },
     {
       key: 'mesa',

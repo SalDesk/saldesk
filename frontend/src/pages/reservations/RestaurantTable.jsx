@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Pencil, Trash2, ChevronRight, Utensils, Eye } from 'lucide-react';
 import { changeStatus } from '../../services/reservationsService';
 import { useT } from '../../i18n';
-import Button from '../../components/ui/Button';
+import { IconBtn, EDIT_HOVER, DELETE_HOVER } from '../../components/shared/IconBtn';
 import Badge from '../../components/ui/Badge';
 import Table from '../../components/ui/Table';
 import useMediaQuery from '../../hooks/useMediaQuery';
@@ -120,18 +120,15 @@ export default function RestaurantTable({ reservations, units, onEdit, onDelete,
           <div className="flex items-center gap-1 justify-end flex-wrap">
             {canNext && (
               <button onClick={() => handleNext(r)} disabled={isLoading}
-                className="flex items-center gap-1 min-h-11 md:min-h-9 px-3 rounded-full bg-ocean-700 text-white text-xs font-body font-semibold hover:bg-ocean-500 transition-colors disabled:opacity-50 whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ocean-300 focus-visible:ring-offset-1">
+                className="flex items-center gap-1 min-h-11 md:min-h-9 px-3 rounded-full bg-ocean-700 text-white text-xs font-body font-semibold hover:bg-ocean-500 transition-colors disabled:opacity-50 whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sand-500 focus-visible:ring-offset-1">
                 {STATUS_BTN_R[r.status]}
                 <ChevronRight size={11} strokeWidth={2} />
               </button>
             )}
-            <button onClick={() => onDetails(r)} title={t('reservations.actions.shiftRequests')}
-              className="p-1.5 rounded text-n-400 hover:text-ocean-700 hover:bg-ocean-50 transition-colors">
-              <Utensils size={13} strokeWidth={1.75} />
-            </button>
-            <Button variant="ghost" size="sm" icon={Eye} onClick={() => onView(r)} aria-label={t('reservations.view')} />
-            <Button variant="ghost" size="sm" icon={Pencil} onClick={() => onEdit(r)} aria-label={t('common.edit')} />
-            <Button variant="ghost" size="sm" icon={Trash2} onClick={() => onDelete(r)} aria-label={t('common.delete')} className="hover:text-error" />
+            <IconBtn icon={Utensils} label={t('reservations.actions.shiftRequests')} title={t('reservations.actions.shiftRequests')} hover={EDIT_HOVER} onClick={() => onDetails(r)} />
+            <IconBtn icon={Eye} label={t('reservations.view')} hover={EDIT_HOVER} onClick={() => onView(r)} />
+            <IconBtn icon={Pencil} label={t('common.edit')} hover={EDIT_HOVER} onClick={() => onEdit(r)} />
+            <IconBtn icon={Trash2} label={t('common.delete')} hover={DELETE_HOVER} onClick={() => onDelete(r)} />
           </div>
         );
       },

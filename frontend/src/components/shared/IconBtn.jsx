@@ -7,9 +7,10 @@ export const TOGGLE_HOVER_INACTIVE = 'hover:text-[var(--success)] hover:bg-[var(
 export const EDIT_HOVER            = 'hover:text-ocean-700 hover:bg-ocean-50';
 export const DELETE_HOVER          = 'hover:text-error hover:bg-[var(--error-light)]';
 
-export function IconBtn({ icon: Icon, label, onClick, hover, disabled = false }) {
+/* title (dica ao passar o rato) e className (sinal por estado, ex.: verde quando activo) sao opcionais */
+export function IconBtn({ icon: Icon, label, onClick, hover = '', disabled = false, title, className = '' }) {
   return (
-    <button type="button" onClick={onClick} aria-label={label} disabled={disabled} className={`${ICONE_BASE} ${hover} disabled:opacity-50 disabled:cursor-not-allowed`}>
+    <button type="button" onClick={onClick} aria-label={label} title={title} disabled={disabled} className={`${ICONE_BASE} ${hover} ${className} disabled:opacity-50 disabled:cursor-not-allowed`}>
       <Icon size={16} strokeWidth={1.75} />
     </button>
   );

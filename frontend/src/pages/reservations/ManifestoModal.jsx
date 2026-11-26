@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import { FileText } from 'lucide-react';
+import Badge from '../../components/ui/Badge';
 import Button from '../../components/ui/Button';
 import Input, { Select } from '../../components/ui/Input';
 import Modal from '../../components/ui/Modal';
@@ -95,9 +96,7 @@ export default function ManifestoModal({ open, onClose, reservations, units, tou
                           <td className="px-3 py-2.5 text-xs font-body text-n-600 max-w-[120px] truncate">{extra.special_requirements || r.notes_guest || '—'}</td>
                           <td className="px-3 py-2.5 text-center font-mono tabular-nums font-medium text-sm text-n-900">{r.guests}</td>
                           <td className="px-3 py-2.5">
-                            <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-body font-semibold ${
-                              ['confirmed','checked_in'].includes(r.status) ? 'bg-turquoise-100 text-turquoise-700' : 'bg-n-100 text-n-700'
-                            }`}>{t(`reservations.status.${r.status}`)}</span>
+                            <Badge variant={r.status}>{t(`reservations.status.${r.status}`)}</Badge>
                           </td>
                           <td className="px-3 py-2.5 text-right font-mono tabular-nums font-medium text-sm text-ocean-900">
                             {eurosInteiros(r.total_price || r.total_amount)}

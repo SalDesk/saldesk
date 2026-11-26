@@ -119,6 +119,29 @@ describe('MenuDigital', () => {
     }
   });
 
+  it('o botao de disponibilidade tem o proprio title e o sinal verde; o wrapper nao tem title', async () => {
+    await abre();
+    const [toggle, editar] = botoesDe('Atum Grelhado');
+    expect(toggle).toHaveAttribute('title', 'Disponível — clique para desactivar');
+    expect(toggle.className.split(/\s+/)).toContain('text-[var(--success)]');
+    expect(editar).not.toHaveAttribute('title');
+    expect(toggle.parentElement).not.toHaveAttribute('title');
+    const [toggleInativo] = botoesDe('Pudim');
+    expect(toggleInativo).toHaveAttribute('title', 'Indisponível — clique para activar');
+    expect(toggleInativo.className.split(/\s+/)).not.toContain('text-[var(--success)]');
+  });
+
+  it('a 375 px a grelha tem uma coluna e o endereco comprido fica dentro da coluna', async () => {
+    await abre();
+    const grelha = screen.getByText('Atum Grelhado').closest('.grid');
+    const classes = grelha.className.split(/\s+/);
+    expect(classes).toContain('grid-cols-1');
+    expect(classes).toContain('min-[400px]:grid-cols-2');
+    expect(classes).not.toContain('grid-cols-2');
+    const coluna = screen.getByText(URL_MENU).closest('.min-w-0');
+    expect(coluna.className.split(/\s+/)).toContain('w-full');
+  });
+
   it('o separador de categoria filtra e um prato sem categoria só aparece em Todos', async () => {
     await abre();
     expect(nomesNaGrelha()).toEqual(['Atum Grelhado', 'Pudim', 'Sopa', 'Quebrado']);

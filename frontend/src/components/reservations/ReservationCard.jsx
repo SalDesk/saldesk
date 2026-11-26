@@ -3,6 +3,7 @@ import { CalendarDays, User, ArrowRight, Pencil, Trash2, Car, Eye } from 'lucide
 import { changeStatus, deleteReservation } from '../../services/reservationsService';
 import { useT } from '../../i18n';
 import Badge from '../ui/Badge';
+import { IconBtn, EDIT_HOVER, DELETE_HOVER } from '../shared/IconBtn';
 import Button from '../ui/Button';
 import Modal from '../ui/Modal';
 import { rotuloEstadoReserva } from '../../utils/estadoReserva';
@@ -107,15 +108,10 @@ export default function ReservationCard({ reservation: r, onUpdate, onEdit, onVi
               {rotuloProximoEstado(r.status, t)}
             </Button>
           )}
-          <Button variant="ghost" size="sm" icon={Eye} onClick={() => onView(r)} aria-label={t('reservations.view')} />
-          <Button variant="ghost" size="sm" icon={Pencil} onClick={() => onEdit(r)} aria-label={t('common.edit')} />
+          <IconBtn icon={Eye} label={t('reservations.view')} hover={EDIT_HOVER} onClick={() => onView(r)} />
+          <IconBtn icon={Pencil} label={t('common.edit')} hover={EDIT_HOVER} onClick={() => onEdit(r)} />
           {r.status === 'pending' || r.status === 'cancelled' ? (
-            <Button
-              variant="ghost" size="sm" icon={Trash2}
-              onClick={() => setConfirmDelete(true)}
-              className="hover:text-error hover:bg-[var(--error-light)]"
-              aria-label={t('common.delete')}
-            />
+            <IconBtn icon={Trash2} label={t('common.delete')} hover={DELETE_HOVER} onClick={() => setConfirmDelete(true)} />
           ) : null}
         </div>
       </div>
