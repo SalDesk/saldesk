@@ -200,7 +200,7 @@ export default function Pedidos() {
               </button>
             )}
             {canCancel && (
-              <IconBtn icon={Ban} label={t('orders.cancel')} hover={DELETE_HOVER} onClick={() => { if (!isLoading) handleCancel(order); }} />
+              <IconBtn icon={Ban} label={t('orders.cancel')} hover={DELETE_HOVER} disabled={isLoading} onClick={() => handleCancel(order)} />
             )}
             <IconBtn icon={Eye} label={t('orders.viewDetails')} hover={EDIT_HOVER} onClick={() => setDetailOrder(order)} />
           </div>

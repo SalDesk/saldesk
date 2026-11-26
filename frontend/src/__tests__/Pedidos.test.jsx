@@ -163,6 +163,19 @@ describe('Pedidos', () => {
     await waitFor(() => expect(celulas(linhas()[0])[4]).toBe('Cancelado'));
   });
 
+  it('o botao de cancelar fica desactivado enquanto o pedido esta a ser enviado', async () => {
+    let conclui;
+    changeOrderStatus.mockImplementation(() => new Promise(r => { conclui = () => r({ ...CINCO[0], status: 'cancelled' }); }));
+    await abre();
+    const botao = within(linhas()[0]).getByRole('button', { name: 'Cancelar' });
+    expect(botao).not.toBeDisabled();
+    fireEvent.click(botao);
+    await waitFor(() => expect(botao).toBeDisabled());
+    expect(botao.className).toContain('disabled:opacity-50');
+    await act(async () => { conclui(); });
+    await waitFor(() => expect(celulas(linhas()[0])[4]).toBe('Cancelado'));
+  });
+
   it('entregue e cancelado nao tem avancar nem cancelar', async () => {
     await abre();
     for (const l of linhas().filter(l => ['Entregue', 'Cancelado'].includes(celulas(l)[4]))) {
