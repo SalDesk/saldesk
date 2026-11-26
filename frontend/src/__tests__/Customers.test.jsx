@@ -69,6 +69,12 @@ describe('Customers', () => {
     await screen.findByText('4 cliente(s) registado(s)');
   }
 
+  it('os botoes do cabecalho quebram linha no telemovel (com 44 px o Exportar saia do ecra)', async () => {
+    await abre();
+    const grupo = screen.getByRole('button', { name: /Exportar/ }).parentElement;
+    expect(grupo.className.split(/\s+/)).toContain('flex-wrap');
+  });
+
   function nomes() {
     const tabela = screen.getByRole('table');
     return within(tabela).getAllByRole('row').slice(1).map(l => within(l).getAllByRole('cell')[0].textContent);
