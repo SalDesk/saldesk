@@ -413,3 +413,22 @@ describe('ActivityTable (tabela de reservas de atividades)', () => {
     });
   });
 });
+
+describe('ActivityTable: estilo Mare', () => {
+  afterEach(() => cleanup());
+
+  it('cartao Mare a volta da lista, data e total em font-mono e origem em pilula', () => {
+    useUiStore.setState({ lang: 'pt' });
+    const { container } = render(
+      <MemoryRouter future={FUTURE}>
+        <ActivityTable reservations={[reserva()]} units={[]} guides={[]} onEdit={vi.fn()} onDelete={vi.fn()} onUpdate={vi.fn()}
+          onReschedule={vi.fn()} onNoShow={vi.fn()} onVoucher={vi.fn()} voucherLoading={null} onView={vi.fn()} />
+      </MemoryRouter>
+    );
+    expect(container.firstChild).toHaveClass('bg-white', 'border', 'border-mare-card', 'rounded-[18px]', 'overflow-hidden');
+    const tabela = within(screen.getByRole('table'));
+    expect(tabela.getByText(formatada(HOJE))).toHaveClass('font-mono', 'tabular-nums');
+    expect(tabela.getByText('€100')).toHaveClass('font-mono', 'tabular-nums');
+    expect(tabela.getByText('Directo')).toHaveClass('rounded-full');
+  });
+});

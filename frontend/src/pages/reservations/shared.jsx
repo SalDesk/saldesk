@@ -20,8 +20,8 @@ export function rotuloOrigem(origem, t) {
 }
 
 export const SOURCE_CLASS = {
-  direct:       'bg-ocean-50 text-ocean-700 border border-ocean-100',
-  public:       'bg-ocean-50 text-ocean-700 border border-ocean-100',
+  direct:       'bg-ocean-100 text-ocean-800 border border-ocean-100',
+  public:       'bg-ocean-100 text-ocean-800 border border-ocean-100',
   booking_com:  'bg-blue-50 text-blue-700 border border-blue-200',
   airbnb:       'bg-rose-50 text-rose-700 border border-rose-200',
   viator:       'bg-orange-50 text-orange-700 border border-orange-200',
@@ -77,7 +77,7 @@ export function TextoComNome({ chave, nome }) {
 export function SourceBadge({ source }) {
   const t = useT();
   return (
-    <span className={`text-[10px] font-mono font-medium px-1.5 py-0.5 rounded-xs uppercase tracking-wide whitespace-nowrap ${SOURCE_CLASS[source] || SOURCE_CLASS.manual}`}>
+    <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-body font-semibold whitespace-nowrap ${SOURCE_CLASS[source] || SOURCE_CLASS.manual}`}>
       {rotuloOrigem(source, t)}
     </span>
   );

@@ -354,3 +354,22 @@ describe('RestaurantTable (tabela de reservas de restaurante)', () => {
     });
   });
 });
+
+describe('RestaurantTable: estilo Mare', () => {
+  afterEach(() => cleanup());
+
+  it('cartao Mare a volta da tabela e data e pax em font-mono', () => {
+    useUiStore.setState({ lang: 'pt' });
+    const { container } = render(
+      <MemoryRouter future={FUTURE}>
+        <RestaurantTable reservations={[reserva()]} units={[mesa()]} onEdit={vi.fn()} onDelete={vi.fn()}
+          onDetails={vi.fn()} onUpdate={vi.fn()} onView={vi.fn()} />
+      </MemoryRouter>
+    );
+    expect(container.firstChild).toHaveClass('bg-white', 'border', 'border-mare-card', 'rounded-[18px]', 'overflow-hidden');
+    const tabela = within(screen.getByRole('table'));
+    expect(tabela.getByText(formatada(HOJE))).toHaveClass('font-mono', 'tabular-nums');
+    expect(tabela.getByText('2')).toHaveClass('font-mono', 'tabular-nums');
+    expect(tabela.getByText('20:30')).toHaveClass('font-mono');
+  });
+});

@@ -53,7 +53,7 @@ export default function ReservationCard({ reservation: r, onUpdate, onEdit, onVi
 
   return (
     <>
-      <div className="bg-white rounded-sm border border-n-200 shadow-sm p-4 flex flex-col gap-3">
+      <div className="bg-white rounded-[18px] border border-mare-card p-[22px] flex flex-col gap-3">
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
@@ -67,7 +67,7 @@ export default function ReservationCard({ reservation: r, onUpdate, onEdit, onVi
             </p>
           </div>
           <div className="text-right shrink-0">
-            <p className="font-display font-bold text-base text-ocean-700">
+            <p className="font-mono tabular-nums font-medium text-base text-ocean-900">
               {eurosDecimais(r.total_price)}
             </p>
             <p className="text-xs font-body text-n-400">{t('reservations.guestsShort', { n: r.guests })}</p>
@@ -76,9 +76,9 @@ export default function ReservationCard({ reservation: r, onUpdate, onEdit, onVi
 
         <div className="flex items-center gap-2 text-xs font-body text-n-600">
           <CalendarDays size={13} strokeWidth={1.75} className="text-n-400 shrink-0" />
-          <span>{formatDate(r.check_in)}</span>
+          <span className="font-mono tabular-nums">{formatDate(r.check_in)}</span>
           <ArrowRight size={11} strokeWidth={1.75} className="text-n-300" />
-          <span>{formatDate(r.check_out)}</span>
+          <span className="font-mono tabular-nums">{formatDate(r.check_out)}</span>
         </div>
 
         <div className="flex items-center gap-2 text-xs font-body text-n-600">

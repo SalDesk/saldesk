@@ -43,7 +43,7 @@ export default function RestaurantTable({ reservations, units, onEdit, onDelete,
     {
       key: 'ref',
       label: t('reservations.columns.ref'),
-      render: (r) => <span className="text-xs font-mono text-n-400">{r.id?.slice(0, 8)}</span>,
+      render: (r) => <span className="text-xs font-mono tabular-nums text-n-500">{r.id?.slice(0, 8)}</span>,
     },
     {
       key: 'mesa',
@@ -58,7 +58,7 @@ export default function RestaurantTable({ reservations, units, onEdit, onDelete,
           <>
             <p className="font-display font-semibold text-sm text-n-900">{tbl}</p>
             {rcMeta.lista_espera && (
-              <span className="text-[9px] font-mono uppercase tracking-wide text-[#B45309] bg-[#FFF7ED] px-1.5 py-0.5 rounded">{t('reservations.waitlist')}</span>
+              <span className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-body font-semibold text-n-800 bg-sand-100">{t('reservations.waitlist')}</span>
             )}
           </>
         );
@@ -70,7 +70,7 @@ export default function RestaurantTable({ reservations, units, onEdit, onDelete,
       render: (r) => {
         const rcMeta = parseRestaurantMeta(r);
         return (
-          <span className="text-xs font-mono text-n-700">
+          <span className="text-sm font-mono tabular-nums text-ocean-900">
             {r.start_time
               ? r.start_time.slice(0, 5)
               : (rcMeta.turno ? rotuloTurno(rcMeta.turno, t) : '—')}
@@ -83,7 +83,7 @@ export default function RestaurantTable({ reservations, units, onEdit, onDelete,
       label: t('reservations.pax'),
       align: 'center',
       sortValue: (r) => Number(r.guests) || 0,
-      render: (r) => <span className="text-sm font-body font-semibold text-n-900">{r.guests}</span>,
+      render: (r) => <span className="text-sm font-mono tabular-nums font-medium text-n-900">{r.guests}</span>,
     },
     {
       key: 'cliente',
@@ -91,7 +91,7 @@ export default function RestaurantTable({ reservations, units, onEdit, onDelete,
       render: (r) => (
         <>
           <p className="text-sm font-body text-n-900 truncate max-w-[120px]">{r.customer_name || '—'}</p>
-          <p className="text-xs font-body text-n-400">{formatDate(r.check_in)}</p>
+          <p className="text-xs font-mono tabular-nums text-n-500">{formatDate(r.check_in)}</p>
         </>
       ),
     },
@@ -120,7 +120,7 @@ export default function RestaurantTable({ reservations, units, onEdit, onDelete,
           <div className="flex items-center gap-1 justify-end flex-wrap">
             {canNext && (
               <button onClick={() => handleNext(r)} disabled={isLoading}
-                className="flex items-center gap-1 px-2 py-1 rounded-xs bg-ocean-700 text-white text-xs font-body font-medium hover:bg-ocean-500 transition-colors disabled:opacity-50 whitespace-nowrap">
+                className="flex items-center gap-1 min-h-9 px-3 rounded-full bg-ocean-700 text-white text-xs font-body font-semibold hover:bg-ocean-500 transition-colors disabled:opacity-50 whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ocean-300 focus-visible:ring-offset-1">
                 {STATUS_BTN_R[r.status]}
                 <ChevronRight size={11} strokeWidth={2} />
               </button>
@@ -142,7 +142,7 @@ export default function RestaurantTable({ reservations, units, onEdit, onDelete,
   if (movel) return <ColumnCards columns={columns} rows={reservations} />;
 
   return (
-    <div className="bg-white rounded-md border border-n-200 shadow-sm overflow-hidden">
+    <div className="bg-white rounded-[18px] border border-mare-card overflow-hidden">
       <Table columns={columns} rows={reservations} />
     </div>
   );

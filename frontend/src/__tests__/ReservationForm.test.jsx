@@ -607,9 +607,9 @@ describe('Formulário, detalhe e cartão de reserva', () => {
       expect(screen.getByText(formatada(MAIS_QUATRO))).toBeInTheDocument();
     });
 
-    it('usa a base de cartão do desenho: branco, com borda e cantos de 8 px', () => {
+    it('usa a base de cartão Maré: branco, com borda de cartão e cantos de 18 px', () => {
       const { container } = render(<ReservationCard reservation={reserva()} onUpdate={vi.fn()} onEdit={vi.fn()} onView={vi.fn()} />);
-      expect(container.firstChild).toHaveClass('bg-white', 'border', 'border-n-200', 'rounded-sm');
+      expect(container.firstChild).toHaveClass('bg-white', 'border', 'border-mare-card', 'rounded-[18px]');
     });
 
     it('mostra o buggy quando a reserva tem um', () => {

@@ -140,3 +140,18 @@ describe('restaurante: tabela no ecrã grande, cartões no telemóvel', () => {
     expect(screen.queryByRole('list')).toBeNull();
   });
 });
+
+describe('cartoes do telemovel: estilo Mare', () => {
+  it('rent-a-car e restaurante usam as classes de cartao Mare', () => {
+    simularEcra(true);
+    carros();
+    let item = screen.getAllByRole('listitem')[0];
+    expect(item).toHaveClass('bg-white', 'border', 'border-mare-card', 'rounded-[18px]');
+    expect(item.className).not.toMatch(/border-n-200|shadow-sm/);
+    cleanup();
+    simularEcra(true);
+    mesas();
+    item = screen.getAllByRole('listitem')[0];
+    expect(item).toHaveClass('bg-white', 'border', 'border-mare-card', 'rounded-[18px]');
+  });
+});

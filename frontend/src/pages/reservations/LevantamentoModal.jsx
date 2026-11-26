@@ -58,13 +58,13 @@ export default function LevantamentoModal({ reservation, units, open, onClose, o
   return (
     <Modal open={open} onClose={onClose} title={t('reservations.pickup.title')} size="sm" footer={null}>
       <div className="space-y-5">
-        <div className="flex items-center gap-3 p-3 bg-n-50 rounded-md border border-n-200">
+        <div className="flex items-center gap-3 p-3 bg-mare-head rounded-[14px] border border-mare-card">
           <Car size={16} strokeWidth={1.75} className="text-ocean-700 shrink-0" />
           <div>
             <p className="font-display font-semibold text-sm text-n-900">
               {unitMeta.brand ? `${unitMeta.brand} ${unitMeta.model || ''}`.trim() : unit?.name || '—'}
             </p>
-            {unitMeta.plate && <p className="text-xs font-mono text-n-400">{unitMeta.plate}</p>}
+            {unitMeta.plate && <p className="text-xs font-mono tabular-nums text-n-500">{unitMeta.plate}</p>}
           </div>
           <div className="ml-auto text-right">
             <p className="font-display font-semibold text-sm text-n-900">{reservation?.customer_name || '—'}</p>

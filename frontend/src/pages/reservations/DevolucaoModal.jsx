@@ -62,13 +62,13 @@ export default function DevolucaoModal({ reservation, units, open, onClose, onDo
   return (
     <Modal open={open} onClose={onClose} title={t('reservations.dropoff.title')} size="sm" footer={null}>
       <div className="space-y-5">
-        <div className="flex items-center gap-3 p-3 bg-n-50 rounded-md border border-n-200">
+        <div className="flex items-center gap-3 p-3 bg-mare-head rounded-[14px] border border-mare-card">
           <Car size={16} strokeWidth={1.75} className="text-n-500 shrink-0" />
           <div>
             <p className="font-display font-semibold text-sm text-n-900">
               {unitMeta.brand ? `${unitMeta.brand} ${unitMeta.model || ''}`.trim() : unit?.name || '—'}
             </p>
-            {unitMeta.plate && <p className="text-xs font-mono text-n-400">{unitMeta.plate}</p>}
+            {unitMeta.plate && <p className="text-xs font-mono tabular-nums text-n-500">{unitMeta.plate}</p>}
           </div>
           <div className="ml-auto text-right">
             <p className="font-display font-semibold text-sm text-n-900">{reservation?.customer_name || '—'}</p>
@@ -86,7 +86,7 @@ export default function DevolucaoModal({ reservation, units, open, onClose, onDo
             <Input label={t('reservations.dropoff.kmIn')} type="number" value={form.km_in} onChange={e => set('km_in', e.target.value)} placeholder="0" />
           </div>
           {kmTotal !== null && (
-            <span className="flex items-center h-9 text-sm font-mono text-n-600 whitespace-nowrap">{t('reservations.dropoff.kmDriven', { km: formatarNumero(kmTotal) })}</span>
+            <span className="flex items-center h-9 text-sm font-mono tabular-nums text-n-600 whitespace-nowrap">{t('reservations.dropoff.kmDriven', { km: formatarNumero(kmTotal) })}</span>
           )}
         </div>
 

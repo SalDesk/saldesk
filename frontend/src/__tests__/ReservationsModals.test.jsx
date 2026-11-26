@@ -552,3 +552,24 @@ describe('Modais de Reservas', () => {
     });
   });
 });
+
+describe('Modais de Reservas: estilo Mare', () => {
+  afterEach(() => cleanup());
+
+  const unidade = { id: 'u1', name: 'Carro 1', description: '{"brand":"Fiat","model":"Panda","plate":"S-01-AB"}' };
+  const reserva = { id: 'r1', unit_id: 'u1', customer_name: 'Cliente Alfa', notes_internal: '{}' };
+
+  it('a caixa de resumo do levantamento usa a caixa interior Mare', () => {
+    render(<LevantamentoModal open reservation={reserva} units={[unidade]} onClose={vi.fn()} onDone={vi.fn()} />);
+    const caixa = screen.getByText('S-01-AB').closest('.rounded-\\[14px\\]');
+    expect(caixa).not.toBeNull();
+    expect(caixa).toHaveClass('border', 'border-mare-card');
+  });
+
+  it('a caixa de resumo da devolucao usa a caixa interior Mare', () => {
+    render(<DevolucaoModal open reservation={reserva} units={[unidade]} onClose={vi.fn()} onDone={vi.fn()} />);
+    const caixa = screen.getByText('S-01-AB').closest('.rounded-\\[14px\\]');
+    expect(caixa).not.toBeNull();
+    expect(caixa).toHaveClass('border', 'border-mare-card');
+  });
+});

@@ -75,7 +75,7 @@ export default function ReservationDetailModal({ reservationId, open, onClose })
               <div className="flex items-center gap-2 flex-wrap">
                 <Badge variant={reservation.status}>{rotuloEstadoReserva(reservation, t)}</Badge>
                 <Badge>{rotuloOrigem(reservation.source, t)}</Badge>
-                <span className="text-xs font-mono text-n-400">#{reservation.id?.slice(0, 8)}</span>
+                <span className="text-xs font-mono tabular-nums text-n-500">#{reservation.id?.slice(0, 8)}</span>
               </div>
               <p className="font-display font-bold text-lg text-n-900 mt-2">
                 {reservation.units?.name || '—'}
@@ -85,7 +85,7 @@ export default function ReservationDetailModal({ reservationId, open, onClose })
               )}
             </div>
             <div className="text-right">
-              <p className="font-display font-bold text-xl text-ocean-700">
+              <p className="font-mono tabular-nums font-medium text-xl text-ocean-900">
                 {eurosDecimais(reservation.total_price || 0, lang)}
               </p>
               {reservation.amount_paid != null && Number(reservation.amount_paid) > 0 && (
@@ -124,7 +124,7 @@ export default function ReservationDetailModal({ reservationId, open, onClose })
           </div>
 
           {(reservation.cancel_reason === 'payment_not_completed' || reservation.cancel_reason === 'paid_after_expiry') && (
-            <div className="rounded-md border border-sand-100 bg-sand-50 p-4 space-y-2">
+            <div className="rounded-[14px] border border-sand-100 bg-sand-50 p-4 space-y-2">
               <p className="text-sm font-body text-n-700">
                 {reservation.cancel_reason === 'paid_after_expiry' ? t('reservations.paidAfterExpiryHint') : t('reservations.abandonedHint')}
               </p>
