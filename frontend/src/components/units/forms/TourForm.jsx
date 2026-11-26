@@ -4,7 +4,7 @@ import Button from '../../ui/Button';
 import ImageUploader from '../../shared/ImageUploader';
 import {
   AmenitiesPicker, IncludedItemsEditor, StopsEditor, TimeSlotsEditor, PriceTiersEditor,
-  SectionLabel, ChipToggle, OtaFields, buildOtaProductIds, LANGUAGES, UNIT_TYPES_BY_OPERATOR,
+  SectionLabel, CAIXA_SECAO, ChipToggle, OtaFields, buildOtaProductIds, LANGUAGES, UNIT_TYPES_BY_OPERATOR,
 } from './editors';
 import LocalizacaoPontoEncontro from './LocalizacaoPontoEncontro';
 import {
@@ -161,7 +161,7 @@ export default function TourForm({ unit, onSave, onCancel, loading, error }) {
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
 
-      <div>
+      <div className={CAIXA_SECAO}>
         <SectionLabel>{t('unitForm.section.identification')}</SectionLabel>
         <div className="space-y-3">
           <div className="grid grid-cols-2 gap-3">
@@ -196,7 +196,7 @@ export default function TourForm({ unit, onSave, onCancel, loading, error }) {
         </div>
       </div>
 
-      <div>
+      <div className={CAIXA_SECAO}>
         <SectionLabel>{t('unitForm.section.description')}</SectionLabel>
         <div className="space-y-3">
           <Textarea
@@ -234,7 +234,7 @@ export default function TourForm({ unit, onSave, onCancel, loading, error }) {
         </div>
       </div>
 
-      <div>
+      <div className={CAIXA_SECAO}>
         <SectionLabel>{t('unitForm.section.highlights')}</SectionLabel>
         <div className="space-y-3">
           <Textarea
@@ -268,7 +268,7 @@ export default function TourForm({ unit, onSave, onCancel, loading, error }) {
         </div>
       </div>
 
-      <div>
+      <div className={CAIXA_SECAO}>
         <SectionLabel>{t('unitForm.section.operational')}</SectionLabel>
         <div className="space-y-3">
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
@@ -319,7 +319,7 @@ export default function TourForm({ unit, onSave, onCancel, loading, error }) {
             />
           </div>
           {/* Mostrado nos cartoes do catalogo como "Recolha no hotel" */}
-          <label className="mt-3 flex items-center gap-2 text-sm font-body text-n-700 cursor-pointer">
+          <label className="mt-3 flex items-center gap-2 min-h-11 md:min-h-0 text-sm font-body text-n-700 cursor-pointer">
             <input type="checkbox" checked={form.pickup_included}
               onChange={e => setForm(f => ({ ...f, pickup_included: e.target.checked }))}
               className="w-4 h-4 accent-[var(--ocean-700)]" />
@@ -331,7 +331,7 @@ export default function TourForm({ unit, onSave, onCancel, loading, error }) {
         </div>
       </div>
 
-      <div>
+      <div className={CAIXA_SECAO}>
         <SectionLabel>{t('unitForm.section.languages')}</SectionLabel>
         <div className="flex flex-wrap gap-2 mt-1">
           {LANGUAGES.map(lang => (
@@ -345,7 +345,7 @@ export default function TourForm({ unit, onSave, onCancel, loading, error }) {
         </div>
       </div>
 
-      <div>
+      <div className={CAIXA_SECAO}>
         <SectionLabel>{t('unitForm.section.prices')}</SectionLabel>
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
           <Input
@@ -378,7 +378,7 @@ export default function TourForm({ unit, onSave, onCancel, loading, error }) {
         </div>
       </div>
 
-      <div>
+      <div className={CAIXA_SECAO}>
         <SectionLabel>{t('unitForm.section.tiers')}</SectionLabel>
         <PriceTiersEditor tiers={form.price_tiers} onChange={price_tiers => setForm(f => ({ ...f, price_tiers }))} />
       </div>
@@ -386,33 +386,33 @@ export default function TourForm({ unit, onSave, onCancel, loading, error }) {
       {/* Opcoes (variantes), suplemento de idioma do guia e ofertas automaticas */}
       <SeccoesOpcoes form={form} setForm={setForm} mostrarErros={tentouGuardar} />
 
-      <div>
+      <div className={CAIXA_SECAO}>
         <SectionLabel>{t('unitForm.section.amenities')}</SectionLabel>
         <AmenitiesPicker options={ACTIVITY_AMENS} selected={form.amenities} onToggle={toggleAmen}
           rotulo={(a) => rotuloComodidadeActividade(a, t)} />
       </div>
 
-      <div>
+      <div className={CAIXA_SECAO}>
         <SectionLabel>{t('unitForm.section.included')}</SectionLabel>
         <IncludedItemsEditor items={form.included_items} onChange={items => setForm(f => ({ ...f, included_items: items }))} />
       </div>
 
-      <div>
+      <div className={CAIXA_SECAO}>
         <SectionLabel>{t('unitForm.section.timeSlots')}</SectionLabel>
         <TimeSlotsEditor slots={form.time_slots} onChange={time_slots => setForm(f => ({ ...f, time_slots }))} />
       </div>
 
-      <div>
+      <div className={CAIXA_SECAO}>
         <SectionLabel>{t('unitForm.section.itinerary')}</SectionLabel>
         <StopsEditor stops={form.stops} onChange={stops => setForm(f => ({ ...f, stops }))} />
       </div>
 
-      <div>
+      <div className={CAIXA_SECAO}>
         <SectionLabel>{t('unitForm.section.importantInfo')}</SectionLabel>
         <Textarea value={form.important_info} onChange={set('important_info')} placeholder={t('unitForm.tour.importantInfoPh')} rows={2} />
       </div>
 
-      <div>
+      <div className={CAIXA_SECAO}>
         <SectionLabel>{t('unitForm.section.photos')}</SectionLabel>
         <ImageUploader
           value={form.images}
@@ -425,7 +425,7 @@ export default function TourForm({ unit, onSave, onCancel, loading, error }) {
       <OtaFields form={form} set={set} />
 
       {unit && (
-        <div>
+        <div className={CAIXA_SECAO}>
           <SectionLabel>{t('unitForm.section.status')}</SectionLabel>
           <Select value={form.status} onChange={set('status')}>
             <option value="active">{t('unitForm.tour.active')}</option>
@@ -435,13 +435,13 @@ export default function TourForm({ unit, onSave, onCancel, loading, error }) {
       )}
 
       {tentouGuardar && temErrosOpcoes(form) && (
-        <p className="text-sm font-body px-3 py-2 rounded-sm bg-[var(--error-light)] text-[var(--error)]">
+        <p className="text-sm font-body px-3 py-2 rounded-[14px] bg-[var(--error-light)] text-[var(--error)]">
           {t('opcoesActividade.fixErrors')}
         </p>
       )}
 
       {error && (
-        <p className="text-sm font-body px-3 py-2 rounded-sm bg-[var(--error-light)] text-[var(--error)]">
+        <p className="text-sm font-body px-3 py-2 rounded-[14px] bg-[var(--error-light)] text-[var(--error)]">
           {error}
         </p>
       )}

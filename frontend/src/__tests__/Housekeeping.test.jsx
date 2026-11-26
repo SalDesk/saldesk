@@ -284,6 +284,31 @@ describe('Housekeeping', () => {
     );
     expect(await screen.findByText('Nenhum quarto encontrado')).toBeInTheDocument();
   });
+
+  /* ───────── Estilo Mare ───────── */
+
+  it('mare: o cabecalho traz o eyebrow Operação', async () => {
+    useUiStore.setState({ lang: 'pt' });
+    await abre();
+    expect(document.querySelector('[data-eyebrow]')).toHaveTextContent('Operação');
+  });
+
+  it('mare: o andar e cada quarto sao cartoes Mare, com o estado em Badge e a checklist em mono', async () => {
+    useUiStore.setState({ lang: 'pt' });
+    await abre();
+    const quarto = cartao('Quarto 102');
+    expect(quarto.className).toContain('rounded-[14px]');
+    expect(quarto.className).toContain('border-mare-card');
+    expect(quarto.className).toContain('bg-mare-head');
+    const andar = quarto.parentElement.parentElement;
+    expect(andar.className).toContain('rounded-[18px]');
+    expect(andar.className).toContain('border-mare-card');
+    /* Badge do sistema (com o ponto da app), com o texto do estado */
+    expect(selo('Sujo', quarto).className).toContain('app:rounded-full');
+    const progresso = within(quarto).getByText('0/8');
+    expect(progresso.className).toContain('font-mono');
+    expect(progresso.className).toContain('tabular-nums');
+  });
 });
 
 

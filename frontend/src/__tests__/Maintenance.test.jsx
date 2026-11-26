@@ -360,3 +360,64 @@ describe('Maintenance em inglês', () => {
     expect(screen.getByText('Lavagem')).toBeInTheDocument();
   });
 });
+
+/* ───────────────────────── Estilo Mare ───────────────────────── */
+
+describe('Maintenance (estilo Mare)', () => {
+  let errSpy;
+  let warnSpy;
+
+  beforeEach(() => {
+    useUiStore.setState({ lang: 'pt' });
+    errSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    updateUnit.mockReset().mockResolvedValue({});
+  });
+
+  afterEach(() => {
+    cleanup();
+    expect(errSpy).not.toHaveBeenCalled();
+    expect(warnSpy).not.toHaveBeenCalled();
+    errSpy.mockRestore();
+    warnSpy.mockRestore();
+  });
+
+  function quadro(etiqueta) {
+    return screen.getByText(etiqueta).closest('article');
+  }
+
+  it('o cabeçalho traz o eyebrow Operação', async () => {
+    await abrePronta();
+    expect(document.querySelector('[data-eyebrow]')).toHaveTextContent('Operação');
+  });
+
+  it('os números são quadros MareStat: viaturas, alertas urgentes e em atenção', async () => {
+    await abrePronta();
+    expect(within(quadro('Viaturas')).getByText('4')).toBeInTheDocument();
+    expect(within(quadro('Alertas urgentes')).getByText('4')).toBeInTheDocument();
+    expect(within(quadro('Em atenção')).getByText('1')).toBeInTheDocument();
+  });
+
+  it('os alertas, a tabela de documentos e o historial são cartões Mare', async () => {
+    await abrePronta();
+    const tabela = screen.getByRole('table').closest('[class*="rounded-[18px]"]');
+    expect(tabela.className).toContain('rounded-[18px]');
+    const historial = screen.getByText('Histórico de intervenções').closest('[class*="rounded-[18px]"]');
+    expect(historial.className).toContain('rounded-[18px]');
+    const alerta = screen.getByText('Revisão — em 300km').closest('[class*="border-mare-card"]');
+    expect(alerta.className).toContain('rounded-[14px]');
+  });
+
+  it('o estado do alerta é Badge e matrículas, datas, km e custos estão em mono', async () => {
+    await abrePronta();
+    const expirado = screen.getAllByText('Expirado')[0];
+    expect(expirado.className).toContain('app:rounded-full');
+    const historial = screen.getByText('Histórico de intervenções').closest('[class*="rounded-[18px]"]');
+    expect(within(historial).getByText('AA-11-BB').className).toContain('font-mono');
+    expect(within(historial).getByText('€80.50').className).toContain('font-mono');
+    expect(within(historial).getByText(dia(-40)).className).toContain('font-mono');
+    const km = within(historial).getByText(/11[.,\s]?000 km/);
+    expect(km.className).toContain('font-mono');
+    expect(km.className).toContain('tabular-nums');
+  });
+});

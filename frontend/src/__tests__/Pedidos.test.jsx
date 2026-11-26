@@ -106,6 +106,13 @@ describe('Pedidos', () => {
     expect(celulas(l2)[1]).toBe('Mesa 7');
   });
 
+  it('a referencia do pedido usa n-500 (contraste)', async () => {
+    await abre();
+    const ref = within(linhas()[0]).getByText('aaaaaaaa');
+    expect(ref.className.split(/\s+/)).toContain('text-n-500');
+    expect(ref.className.split(/\s+/)).not.toContain('text-n-400');
+  });
+
   it('o subtitulo conta os pedidos', async () => {
     await abre();
     expect(screen.getByText('5 pedido(s)')).toBeInTheDocument();
@@ -160,6 +167,19 @@ describe('Pedidos', () => {
     expect(comCancelar.map(l => celulas(l)[4])).toEqual(['Recebido', 'Em preparação', 'Pronto']);
     fireEvent.click(within(comCancelar[0]).getByRole('button', { name: 'Cancelar' }));
     await waitFor(() => expect(changeOrderStatus).toHaveBeenCalledWith('aaaaaaaa-0001', 'cancelled'));
+    await waitFor(() => expect(celulas(linhas()[0])[4]).toBe('Cancelado'));
+  });
+
+  it('o botao de cancelar fica desactivado enquanto o pedido esta a ser enviado', async () => {
+    let conclui;
+    changeOrderStatus.mockImplementation(() => new Promise(r => { conclui = () => r({ ...CINCO[0], status: 'cancelled' }); }));
+    await abre();
+    const botao = within(linhas()[0]).getByRole('button', { name: 'Cancelar' });
+    expect(botao).not.toBeDisabled();
+    fireEvent.click(botao);
+    await waitFor(() => expect(botao).toBeDisabled());
+    expect(botao.className).toContain('disabled:opacity-50');
+    await act(async () => { conclui(); });
     await waitFor(() => expect(celulas(linhas()[0])[4]).toBe('Cancelado'));
   });
 
@@ -227,6 +247,35 @@ describe('Pedidos', () => {
     );
     expect(await screen.findByText('Sem pedidos.')).toBeInTheDocument();
     expect(errSpy).toHaveBeenCalled();
+  });
+
+  it('mare: o cabecalho traz o eyebrow Operação', async () => {
+    useUiStore.setState({ lang: 'pt' });
+    await abre();
+    expect(document.querySelector('[data-eyebrow]')).toHaveTextContent('Operação');
+  });
+
+  it('mare: a lista e um cartao Mare, o estado e Badge e valores, horas e mesas vao em mono', async () => {
+    useUiStore.setState({ lang: 'pt' });
+    await abre();
+    const cartao = screen.getByRole('table').closest('.border-mare-card');
+    expect(cartao.className).toContain('rounded-[18px]');
+    const [l1] = linhas();
+    expect(within(l1).getByText('Recebido').className).toContain('app:rounded-full');
+    for (const texto of ['€37.50', 'Mesa 4', hora(CRIADO)]) {
+      const el = within(l1).getByText(texto);
+      expect(el.className).toContain('font-mono');
+      expect(el.className).toContain('tabular-nums');
+    }
+  });
+
+  it('mare: cancelar e ver detalhes sao botoes de icone com 44 px no telemovel', async () => {
+    useUiStore.setState({ lang: 'pt' });
+    await abre();
+    const [l1] = linhas();
+    for (const nome of ['Cancelar', 'Ver detalhes']) {
+      expect(within(l1).getByRole('button', { name: nome }).className).toContain('min-h-11');
+    }
   });
 });
 

@@ -45,3 +45,20 @@ describe('formularios de unidade: grelhas no telemovel', () => {
     expect(classes.some((c) => /sm:grid-cols-3/.test(c))).toBe(true);
   });
 });
+
+describe('formularios de unidade: largura e alvos no telemovel (estilo Mare)', () => {
+  it.each(['hotel', 'activity', 'rentacar', 'restaurant'])('%s: nenhuma largura fixa base acima de 160px e secções com folga reduzida', (tipo) => {
+    const { container } = render(<UnitForm operatorType={tipo} onSave={vi.fn()} onCancel={vi.fn()} />);
+    const largas = [];
+    container.querySelectorAll('[class*="w-"]').forEach((el) => {
+      [...el.classList].forEach((c) => {
+        const m = /^(?:min-)?w-(\d+)$/.exec(c);
+        if (m && Number(m[1]) * 4 > 160) largas.push(c);
+      });
+    });
+    expect(largas).toEqual([]);
+    const caixas = container.querySelectorAll('[class*="rounded-[14px]"][class*="bg-mare-head"]');
+    expect(caixas.length).toBeGreaterThan(0);
+    caixas.forEach((c) => expect(c.className).toMatch(/(^| )p-3( |$)/));
+  });
+});

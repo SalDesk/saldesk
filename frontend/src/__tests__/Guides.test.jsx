@@ -1314,6 +1314,16 @@ describe('Guias (desenho do sistema)', () => {
     expect(within(c).getByRole('button', { name: 'Eliminar' })).toBe(botoesIcone(c)[1]);
   });
 
+  it('Atribuir e Historial chegam aos 44 px no telemovel', async () => {
+    await renderPagina();
+    const c = cartao('Rui Costa');
+    for (const nome of ['Atribuir', 'Historial']) {
+      const b = within(c).getByRole('button', { name: nome });
+      expect(b.className.split(/\s+/)).toContain('min-h-11');
+      expect(b.className.split(/\s+/)).toContain('md:min-h-0');
+    }
+  });
+
   it('o formulário nomeia os botões só com ícone', async () => {
     await renderPagina();
     fireEvent.click(screen.getByRole('button', { name: 'Adicionar guia' }));
@@ -1483,5 +1493,82 @@ describe('Guias em inglês', () => {
     expect(screen.getByText('Click to toggle')).toBeInTheDocument();
     expect(screen.getAllByTitle('Available — click to mark unavailable').length).toBeGreaterThan(0);
     expect(portuguesNoEcra(DADOS)).toEqual([]);
+  });
+});
+
+/* ───────────────────────── Estilo Mare ───────────────────────── */
+
+describe('Guias (estilo Mare)', () => {
+  let errSpy;
+  let warnSpy;
+
+  beforeEach(() => {
+    useUiStore.setState({ lang: 'pt' });
+    defineOperador('hotel');
+    carregaServicos();
+    errSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    cleanup();
+    const erros = errSpy.mock.calls.length;
+    const avisos = warnSpy.mock.calls.length;
+    errSpy.mockRestore();
+    warnSpy.mockRestore();
+    expect(erros).toBe(0);
+    expect(avisos).toBe(0);
+  });
+
+  async function renderPagina() {
+    render(
+      <MemoryRouter future={FUTURE}>
+        <Guides />
+      </MemoryRouter>,
+    );
+    await waitFor(() => expect(listReservations).toHaveBeenCalled());
+    await waitFor(() => expect(document.querySelector('.animate-spin')).toBeNull());
+  }
+
+  function quadro(etiqueta) {
+    return screen.getByText(etiqueta).closest('article');
+  }
+
+  it('o cabeçalho traz o eyebrow Operação', async () => {
+    await renderPagina();
+    expect(document.querySelector('[data-eyebrow]')).toHaveTextContent('Operação');
+  });
+
+  it('os números da equipa são quadros MareStat (sem contar o vendedor de praia)', async () => {
+    await renderPagina();
+    expect(within(quadro('Guias na equipa')).getByText('4')).toBeInTheDocument();
+    expect(within(quadro('Disponíveis agora')).getByText('1')).toBeInTheDocument();
+    expect(within(quadro('Em serviço')).getByText('1')).toBeInTheDocument();
+  });
+
+  it('cada guia é um cartão Mare com o estado em Badge e as línguas em mono', async () => {
+    await renderPagina();
+    const c = cartao('Ana Lopes');
+    const cartaoMare = c.closest('[class*="border-mare-card"]');
+    expect(cartaoMare.className).toContain('rounded-[18px]');
+    const etiqueta = within(c).getByText('Disponível');
+    expect(etiqueta.className).toContain('app:rounded-full');
+    expect(etiqueta.querySelector('span[aria-hidden="true"]')).not.toBeNull();
+    expect(within(c).getByText('PT').className).toContain('font-mono');
+  });
+
+  it('editar e eliminar têm 44 px no telemovel', async () => {
+    await renderPagina();
+    const c = cartao('Ana Lopes');
+    for (const nome of ['Editar', 'Eliminar']) {
+      expect(within(c).getByRole('button', { name: nome }).className).toContain('min-h-11');
+    }
+  });
+
+  it('a tabela de disponibilidade fica num cartão Mare', async () => {
+    await renderPagina();
+    fireEvent.click(separador('Disponibilidade'));
+    const cartaoMare = screen.getByRole('table').closest('[class*="border-mare-card"]');
+    expect(cartaoMare.className).toContain('rounded-[18px]');
   });
 });

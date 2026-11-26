@@ -8,10 +8,10 @@ export default function ColumnCards({ columns, rows }) {
   return (
     <ul className="space-y-3">
       {rows.map((row) => (
-        <li key={row.id} className="bg-white rounded-md border border-n-200 shadow-sm p-4 space-y-2">
+        <li key={row.id} className="bg-white rounded-[18px] border border-mare-card p-[22px] space-y-2">
           {dados.map((c) => (
             <div key={c.key} className="flex items-start justify-between gap-3">
-              <span className="text-xs font-body text-n-400 shrink-0 pt-0.5">{c.label}</span>
+              <span className="text-xs font-body text-n-500 shrink-0 pt-0.5">{c.label}</span>
               <div className="min-w-0 text-right">{c.render(row)}</div>
             </div>
           ))}

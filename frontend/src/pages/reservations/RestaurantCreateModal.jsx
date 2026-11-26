@@ -46,7 +46,7 @@ export default function RestaurantCreateModal({ reservation, units, open, onClos
     <Modal open={open} onClose={onClose} title={t('reservations.details')} size="sm" footer={null}>
       <div className="space-y-4">
         {reservation && (
-          <div className="flex items-center gap-3 p-3 bg-n-50 rounded-md border border-n-200">
+          <div className="flex items-center gap-3 p-3 bg-mare-head rounded-[14px] border border-mare-card">
             <Utensils size={14} strokeWidth={1.75} className="text-ocean-700 shrink-0" />
             <div>
               <p className="font-display font-semibold text-sm text-n-900">{reservation.customer_name || '—'}</p>

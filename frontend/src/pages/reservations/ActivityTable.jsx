@@ -3,6 +3,7 @@ import { ClipboardList, Pencil, Trash2, ChevronRight, CalendarDays, Mail, UserX,
 import { changeStatus } from '../../services/reservationsService';
 import { useT } from '../../i18n';
 import Button from '../../components/ui/Button';
+import { IconBtn, EDIT_HOVER, DELETE_HOVER } from '../../components/shared/IconBtn';
 import Badge from '../../components/ui/Badge';
 import Table from '../../components/ui/Table';
 import RowMenu from '../../components/ui/RowMenu';
@@ -43,7 +44,7 @@ export default function ActivityTable({ reservations, units, guides, onEdit, onD
     {
       key: 'ref',
       label: t('reservations.columns.ref'),
-      render: (r) => <span className="text-xs font-mono text-n-400">{r.id?.slice(0, 8)}</span>,
+      render: (r) => <span className="text-xs font-mono tabular-nums text-n-500">{r.id?.slice(0, 8)}</span>,
     },
     {
       key: 'tour',
@@ -59,7 +60,7 @@ export default function ActivityTable({ reservations, units, guides, onEdit, onD
       key: 'data',
       label: t('common.date'),
       sortValue: (r) => r.check_in || '',
-      render: (r) => <span className="text-sm font-body text-n-700 whitespace-nowrap">{formatDate(r.check_in)}</span>,
+      render: (r) => <span className="text-sm font-mono tabular-nums text-ocean-900 whitespace-nowrap">{formatDate(r.check_in)}</span>,
     },
     {
       key: 'cliente',
@@ -78,7 +79,7 @@ export default function ActivityTable({ reservations, units, guides, onEdit, onD
       label: t('reservations.pax'),
       align: 'center',
       sortValue: (r) => Number(r.guests) || 0,
-      render: (r) => <span className="text-sm font-body font-semibold text-n-900">{r.guests}</span>,
+      render: (r) => <span className="text-sm font-mono tabular-nums font-medium text-n-900">{r.guests}</span>,
     },
     {
       key: 'origem',
@@ -96,7 +97,7 @@ export default function ActivityTable({ reservations, units, guides, onEdit, onD
       align: 'right',
       sortValue: (r) => Number(r.total_price || r.total_amount || 0),
       render: (r) => (
-        <span className="font-display font-bold text-sm text-ocean-700 whitespace-nowrap">
+        <span className="font-mono tabular-nums font-medium text-sm text-ocean-900 whitespace-nowrap">
           {eurosInteiros(r.total_price || r.total_amount)}
         </span>
       ),
@@ -125,7 +126,7 @@ export default function ActivityTable({ reservations, units, guides, onEdit, onD
               <button
                 onClick={() => handleNextStatus(r)}
                 disabled={isLoading}
-                className="flex items-center gap-1 px-2 py-1 rounded-xs bg-ocean-700 text-white text-xs font-body font-medium hover:bg-ocean-500 transition-colors disabled:opacity-50 whitespace-nowrap"
+                className="flex items-center gap-1 min-h-9 px-3 rounded-full bg-ocean-700 text-white text-xs font-body font-semibold hover:bg-ocean-500 transition-colors disabled:opacity-50 whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sand-500 focus-visible:ring-offset-1"
               >
                 {rotuloProximoEstado(r.status, t)}
                 <ChevronRight size={11} strokeWidth={2} />
@@ -141,7 +142,7 @@ export default function ActivityTable({ reservations, units, guides, onEdit, onD
   ];
 
   return (
-    <div className="bg-white rounded-md border border-n-200 shadow-sm overflow-hidden">
+    <div className="bg-white rounded-[18px] border border-mare-card overflow-hidden">
       {/* Mobile card view */}
       <div className="md:hidden divide-y divide-n-100">
         {reservations.map((r) => {
@@ -154,19 +155,19 @@ export default function ActivityTable({ reservations, units, guides, onEdit, onD
                   <p className="font-display font-semibold text-sm text-n-900 truncate">
                     {r.units?.name || units.find(u => u.id === r.unit_id)?.name || '—'}
                   </p>
-                  <p className="text-[11px] font-mono text-n-400 mt-0.5">{r.id?.slice(0, 8)}</p>
+                  <p className="text-[11px] font-mono tabular-nums text-n-500 mt-0.5">{r.id?.slice(0, 8)}</p>
                 </div>
                 <Badge variant={r.status}>{rotuloEstadoReserva(r, t)}</Badge>
               </div>
               <div className="flex items-center gap-3 text-xs font-body text-n-600 flex-wrap">
-                <span>{formatDate(r.check_in)}</span>
+                <span className="font-mono tabular-nums">{formatDate(r.check_in)}</span>
                 {r.customer_name && <span className="truncate max-w-[104px]">{r.customer_name}</span>}
                 {r.customer_country && <span className="text-n-400">{r.customer_country}</span>}
                 {r.guests && <span>{t('reservations.paxCount', { n: r.guests })}</span>}
               </div>
               <div className="flex items-center justify-between gap-2">
                 <SourceBadge source={r.source} />
-                <span className="font-display font-bold text-sm text-ocean-700">
+                <span className="font-mono tabular-nums font-medium text-sm text-ocean-900">
                   {eurosInteiros(r.total_price || r.total_amount)}
                 </span>
               </div>
@@ -175,36 +176,23 @@ export default function ActivityTable({ reservations, units, guides, onEdit, onD
                   <button
                     onClick={() => handleNextStatus(r)}
                     disabled={isLoading}
-                    className="flex items-center gap-1 px-2 py-1 rounded-xs bg-ocean-700 text-white text-xs font-body font-medium hover:bg-ocean-500 transition-colors disabled:opacity-50"
+                    className="flex items-center gap-1 min-h-11 px-3 rounded-full bg-ocean-700 text-white text-xs font-body font-semibold hover:bg-ocean-500 transition-colors disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sand-500 focus-visible:ring-offset-1"
                   >
                     {rotuloProximoEstado(r.status, t)}
                     <ChevronRight size={11} strokeWidth={2} />
                   </button>
                 )}
-                <button onClick={() => onReschedule(r)} title={t('reservations.actions.reschedule')}
-                  className="p-1.5 rounded text-n-400 hover:text-ocean-700 hover:bg-ocean-50 transition-colors">
-                  <CalendarDays size={13} strokeWidth={1.75} />
-                </button>
-                <button onClick={() => onVoucher(r)} title={t('reservations.actions.sendVoucher')}
-                  disabled={voucherLoading === r.id}
-                  className="p-1.5 rounded text-n-400 hover:text-ocean-700 hover:bg-ocean-50 transition-colors disabled:opacity-40">
-                  <Mail size={13} strokeWidth={1.75} />
-                </button>
+                <IconBtn icon={CalendarDays} label={t('reservations.actions.reschedule')} title={t('reservations.actions.reschedule')} hover={EDIT_HOVER} onClick={() => onReschedule(r)} />
+                <IconBtn icon={Mail} label={t('reservations.actions.sendVoucher')} title={t('reservations.actions.sendVoucher')} hover={EDIT_HOVER} disabled={voucherLoading === r.id} onClick={() => onVoucher(r)} />
                 {!['cancelled','no_show','checked_out'].includes(r.status) && (
-                  <button onClick={() => onNoShow(r)} title={t('reservations.actions.noShow')}
-                    className="p-1.5 rounded text-n-400 hover:text-error hover:bg-red-50 transition-colors">
-                    <UserX size={13} strokeWidth={1.75} />
-                  </button>
+                  <IconBtn icon={UserX} label={t('reservations.actions.noShow')} title={t('reservations.actions.noShow')} hover={DELETE_HOVER} onClick={() => onNoShow(r)} />
                 )}
                 {!['cancelled','no_show'].includes(r.status) && (
-                  <button onClick={() => setAssignRes(r)} title={t('reservations.actions.assignTeam')}
-                    className="p-1.5 rounded text-n-400 hover:text-ocean-700 hover:bg-ocean-50 transition-colors">
-                    <Users size={13} strokeWidth={1.75} />
-                  </button>
+                  <IconBtn icon={Users} label={t('reservations.actions.assignTeam')} title={t('reservations.actions.assignTeam')} hover={EDIT_HOVER} onClick={() => setAssignRes(r)} />
                 )}
-                <Button variant="ghost" size="sm" icon={Eye} onClick={() => onView(r)} aria-label={t('reservations.view')} />
-                <Button variant="ghost" size="sm" icon={Pencil} onClick={() => onEdit(r)} aria-label={t('common.edit')} />
-                <Button variant="ghost" size="sm" icon={Trash2} onClick={() => onDelete(r)} aria-label={t('common.delete')} className="hover:text-error" />
+                <IconBtn icon={Eye} label={t('reservations.view')} hover={EDIT_HOVER} onClick={() => onView(r)} />
+                <IconBtn icon={Pencil} label={t('common.edit')} hover={EDIT_HOVER} onClick={() => onEdit(r)} />
+                <IconBtn icon={Trash2} label={t('common.delete')} hover={DELETE_HOVER} onClick={() => onDelete(r)} />
               </div>
             </div>
           );

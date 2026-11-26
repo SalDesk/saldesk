@@ -776,6 +776,11 @@
     }
   },
   "guides": {
+    "stats": {
+      "total": "Gidsen in het team",
+      "active": "Nu beschikbaar",
+      "busy": "Aan het werk"
+    },
     "title": "Gidsen",
     "subtitle": "{{active}} beschikbaar · {{n}} totaal",
     "add": "Gids toevoegen",
@@ -940,8 +945,13 @@
       "saveChanges": "Wijzigingen opslaan"
     }
   },
-  "calendar": {"subtitle": "Beschikbaarheid en boekingen beheren", "views": {"month": "Maand", "week": "Week", "day": "Dag"}, "byUnit": "Per eenheid", "allUnits": "Alle eenheden", "byGuide": "Per gids", "allGuides": "Alle gidsen", "legendSoldByStaff": "Verkocht door medewerker", "soldBy": "Verkocht door {{name}}", "noShow": "Niet verschenen", "blockedShort": "Geblokk.", "spots": "{{available}}/{{total}} plaatsen", "spotsLeft": "{{n}} plaatsen vrij", "noUnits": "Geen actieve eenheden.", "noUnitsCreate": "Geen actieve eenheden. Maak eerst eenheden aan.", "newBooking": "Nieuwe boeking", "block": "Blokkeren", "unblock": "Deblokkeren", "blocked": "Geblokkeerd", "available": "Beschikbaar", "navMonth": "{{month}} {{year}}", "navDay": "{{day}} {{month}} {{year}}", "navWeekSameMonth": "{{start}} - {{end}} {{month}} {{year}}", "navWeekCross": "{{start}} {{startMonth}} - {{end}} {{endMonth}} {{year}}", "dayHeading": "{{day}} {{month}} {{year}}", "freeDay": "Vrije dag", "freeDayAsk": "Wat wilt u doen in {{unit}} op {{date}}?", "createBooking": "Boeking aanmaken", "blockDates": "Datums blokkeren", "startDate": "Startdatum", "endDate": "Einddatum", "reason": "Reden (optioneel)", "reasonPlaceholder": "Onderhoud, eigen gebruik...", "detailTitle": "Boekingsdetails", "total": "Totaal", "months": {"jan": "januari", "feb": "februari", "mar": "maart", "apr": "april", "may": "mei", "jun": "juni", "jul": "juli", "aug": "augustus", "sep": "september", "oct": "oktober", "nov": "november", "dec": "december"}, "weekdays": {"sun": "zo", "mon": "ma", "tue": "di", "wed": "wo", "thu": "do", "fri": "vr", "sat": "za"}, "weekdaysInitial": {"sun": "Z", "mon": "M", "tue": "D", "wed": "W", "thu": "D", "fri": "V", "sat": "Z"}},
+  "calendar": {"subtitle": "Beschikbaarheid en boekingen beheren", "views": {"month": "Maand", "week": "Week", "day": "Dag"}, "byUnit": "Per eenheid", "allUnits": "Alle eenheden", "prevPeriod": "Vorige periode", "nextPeriod": "Volgende periode", "byGuide": "Per gids", "allGuides": "Alle gidsen", "legendSoldByStaff": "Verkocht door medewerker", "soldBy": "Verkocht door {{name}}", "noShow": "Niet verschenen", "blockedShort": "Geblokk.", "spots": "{{available}}/{{total}} plaatsen", "spotsLeft": "{{n}} plaatsen vrij", "noUnits": "Geen actieve eenheden.", "noUnitsCreate": "Geen actieve eenheden. Maak eerst eenheden aan.", "newBooking": "Nieuwe boeking", "block": "Blokkeren", "unblock": "Deblokkeren", "blocked": "Geblokkeerd", "available": "Beschikbaar", "navMonth": "{{month}} {{year}}", "navDay": "{{day}} {{month}} {{year}}", "navWeekSameMonth": "{{start}} - {{end}} {{month}} {{year}}", "navWeekCross": "{{start}} {{startMonth}} - {{end}} {{endMonth}} {{year}}", "dayHeading": "{{day}} {{month}} {{year}}", "freeDay": "Vrije dag", "freeDayAsk": "Wat wilt u doen in {{unit}} op {{date}}?", "createBooking": "Boeking aanmaken", "blockDates": "Datums blokkeren", "startDate": "Startdatum", "endDate": "Einddatum", "reason": "Reden (optioneel)", "reasonPlaceholder": "Onderhoud, eigen gebruik...", "detailTitle": "Boekingsdetails", "total": "Totaal", "months": {"jan": "januari", "feb": "februari", "mar": "maart", "apr": "april", "may": "mei", "jun": "juni", "jul": "juli", "aug": "augustus", "sep": "september", "oct": "oktober", "nov": "november", "dec": "december"}, "weekdays": {"sun": "zo", "mon": "ma", "tue": "di", "wed": "wo", "thu": "do", "fri": "vr", "sat": "za"}, "weekdaysInitial": {"sun": "Z", "mon": "M", "tue": "D", "wed": "W", "thu": "D", "fri": "V", "sat": "Z"}},
   "fleet": {
+    "stats": {
+      "total": "Vlootitems",
+      "available": "Klaar voor gebruik",
+      "maintenance": "In onderhoud"
+    },
     "title": "Vloot en uitrusting",
     "subtitle": "{{available}} beschikbaar van {{total}}",
     "newItem": "Nieuw item",
@@ -987,6 +997,11 @@
     }
   },
   "maintenance": {
+    "stats": {
+      "vehicles": "Voertuigen",
+      "urgent": "Dringende meldingen",
+      "attention": "Aandacht nodig"
+    },
     "title": "Onderhoud",
     "subtitle": "{{vehicles}} voertuig(en) · {{alerts}} melding(en)",
     "record": "Onderhoud registreren",

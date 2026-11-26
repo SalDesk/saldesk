@@ -435,3 +435,60 @@ describe('Reservations', () => {
     });
   });
 });
+
+function formataDia(iso) {
+  const [y, m, d] = iso.split('-');
+  return `${d}/${m}/${y}`;
+}
+
+describe('Reservations: estilo Mare', () => {
+  beforeEach(() => {
+    useUiStore.setState({ lang: 'pt' });
+    navigateMock.mockReset();
+    carregaServicos();
+  });
+  afterEach(() => {
+    cleanup();
+    useAuthStore.setState({ operator: null });
+  });
+
+  it('o cabecalho traz o eyebrow Operacao (EN Operations)', async () => {
+    const { container, unmount } = renderPagina('activity');
+    await screen.findByText('Tour');
+    expect(container.querySelector('[data-eyebrow]')).toHaveTextContent('Operação');
+    unmount();
+    useUiStore.setState({ lang: 'en' });
+    const { container: c2 } = renderPagina('activity');
+    await screen.findByText('Tour');
+    expect(c2.querySelector('[data-eyebrow]')).toHaveTextContent('Operations');
+  });
+
+  it('a lista de atividades fica num cartao Mare, sem segundo contorno', async () => {
+    renderPagina('activity');
+    const tabela = await screen.findByRole('table');
+    const cartao = tabela.closest('.rounded-\\[18px\\]');
+    expect(cartao).not.toBeNull();
+    expect(cartao).toHaveClass('bg-white', 'border', 'border-mare-card');
+    expect(cartao.className).not.toMatch(/border-n-200|shadow-sm/);
+  });
+
+  it('data e total usam font-mono e a origem e uma pilula com o mesmo texto', async () => {
+    renderPagina('activity');
+    const tabela = within(await screen.findByRole('table'));
+    expect(tabela.getAllByText(formataDia(HOJE))[0]).toHaveClass('font-mono', 'tabular-nums');
+    expect(tabela.getAllByText('€100')[0]).toHaveClass('font-mono', 'tabular-nums');
+    const origem = tabela.getAllByText('Directo')[0];
+    expect(origem).toHaveClass('rounded-full');
+    expect(origem).not.toHaveClass('font-mono');
+    expect(origem.tagName).toBe('SPAN');
+    expect(origem.closest('button')).toBeNull();
+  });
+
+  it('hotel: os cartoes de reserva usam as classes de cartao Mare', async () => {
+    renderPagina('hotel');
+    const nome = await screen.findByText('Cliente Alfa');
+    const cartao = nome.closest('.rounded-\\[18px\\]');
+    expect(cartao).not.toBeNull();
+    expect(cartao).toHaveClass('bg-white', 'border', 'border-mare-card');
+  });
+});

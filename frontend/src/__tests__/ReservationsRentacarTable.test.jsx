@@ -334,3 +334,22 @@ describe('RentacarTable (tabela de reservas de rent-a-car)', () => {
     });
   });
 });
+
+describe('RentacarTable: estilo Mare', () => {
+  afterEach(() => cleanup());
+
+  it('cartao Mare a volta da tabela e datas e total em font-mono', () => {
+    useUiStore.setState({ lang: 'pt' });
+    const { container } = render(
+      <MemoryRouter future={FUTURE}>
+        <RentacarTable reservations={[reserva()]} units={[carro()]} onEdit={vi.fn()} onDelete={vi.fn()}
+          onLevantamento={vi.fn()} onDevolucao={vi.fn()} onUpdate={vi.fn()} onView={vi.fn()} />
+      </MemoryRouter>
+    );
+    expect(container.firstChild).toHaveClass('bg-white', 'border', 'border-mare-card', 'rounded-[18px]', 'overflow-hidden');
+    const tabela = within(screen.getByRole('table'));
+    expect(tabela.getByText(formatada(HOJE))).toHaveClass('font-mono', 'tabular-nums');
+    expect(tabela.getByText(formatada(AMANHA))).toHaveClass('font-mono', 'tabular-nums');
+    expect(tabela.getByText('€100')).toHaveClass('font-mono', 'tabular-nums');
+  });
+});

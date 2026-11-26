@@ -1,7 +1,7 @@
 import Input, { Select } from '../../ui/Input';
 import { useT } from '../../../i18n';
 import { novoIdOpcao } from '../../../utils/opcoesActividade';
-import { SectionLabel, AddRowButton, RemoveRowButton } from './editors';
+import { SectionLabel, CAIXA_SECAO, AddRowButton, RemoveRowButton } from './editors';
 
 /* Opcoes (variantes), suplemento de idioma do guia e ofertas automaticas da actividade.
    Estado do formulario em texto; os ajudantes abaixo convertem de e para o meta gravado. */
@@ -147,7 +147,7 @@ export function OpcoesEditor({ options, onChange, mostrarErros }) {
         const e = mostrarErros ? errosOpcao(o) : {};
         const msg = (k) => (e[k] ? t(`opcoesActividade.${e[k]}`) : undefined);
         return (
-          <div key={o.id} className="rounded-sm border border-n-200 p-2 space-y-2">
+          <div key={o.id} className="rounded-[14px] border border-mare-card bg-white p-3 space-y-2">
             <div className="flex flex-wrap items-start gap-2">
               <div className="flex-1 min-w-[140px]">
                 <Input value={o.name_pt} onChange={(ev) => actualizar(i, { name_pt: ev.target.value })}
@@ -226,7 +226,7 @@ export function OfertasEditor({ offers, onChange, mostrarErros }) {
         const e = mostrarErros ? errosOferta(o) : {};
         const msg = (k) => (e[k] ? t(`opcoesActividade.${e[k]}`) : undefined);
         return (
-          <div key={i} className="rounded-sm border border-n-200 p-2 space-y-2">
+          <div key={i} className="rounded-[14px] border border-mare-card bg-white p-3 space-y-2">
             <div className="flex flex-wrap items-start gap-2">
               <div className="w-28 shrink-0">
                 <Input type="number" value={o.percent}
@@ -266,17 +266,17 @@ export function SeccoesOpcoes({ form, setForm, mostrarErros }) {
   const t = useT();
   return (
     <>
-      <div>
+      <div className={CAIXA_SECAO}>
         <SectionLabel>{t('opcoesActividade.optionsTitle')}</SectionLabel>
         <OpcoesEditor options={form.options} mostrarErros={mostrarErros}
           onChange={(options) => setForm((f) => ({ ...f, options }))} />
       </div>
-      <div>
+      <div className={CAIXA_SECAO}>
         <SectionLabel>{t('opcoesActividade.surchargeTitle')}</SectionLabel>
         <SuplementosEditor languages={form.languages} surcharges={form.language_surcharges} mostrarErros={mostrarErros}
           onChange={(language_surcharges) => setForm((f) => ({ ...f, language_surcharges }))} />
       </div>
-      <div>
+      <div className={CAIXA_SECAO}>
         <SectionLabel>{t('opcoesActividade.offersTitle')}</SectionLabel>
         <OfertasEditor offers={form.offers} mostrarErros={mostrarErros}
           onChange={(offers) => setForm((f) => ({ ...f, offers }))} />

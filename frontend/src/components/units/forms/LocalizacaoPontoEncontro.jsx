@@ -65,7 +65,7 @@ export default function LocalizacaoPontoEncontro({ lat, lng, onChange }) {
         <p className="text-xs font-body text-n-500 mt-0.5">{t('unitForm.meeting.hint')}</p>
       </div>
 
-      <div className="h-56 rounded-md overflow-hidden border border-n-200">
+      <div className="h-56 rounded-[14px] overflow-hidden border border-mare-card">
         <MapContainer key={chaveMapa} center={temPonto ? [latN, lngN] : SAL} zoom={temPonto ? 14 : 11}
           style={{ height: '100%', width: '100%' }} scrollWheelZoom={false}>
           <TileLayer attribution="&copy; OpenStreetMap contributors" url="https://tile.openstreetmap.org/{z}/{x}/{y}.png" />
@@ -103,7 +103,7 @@ export default function LocalizacaoPontoEncontro({ lat, lng, onChange }) {
       )}
       {temPonto && (
         <button type="button" onClick={() => { onChange({ lat: '', lng: '' }); setChaveMapa((k) => k + 1); }}
-          className="text-xs font-body font-semibold text-n-600 underline hover:text-n-800">
+          className="inline-flex items-center min-h-11 md:min-h-0 text-xs font-body font-semibold text-n-600 underline hover:text-n-800">
           {t('unitForm.meeting.remove')}
         </button>
       )}

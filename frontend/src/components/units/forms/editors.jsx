@@ -8,7 +8,7 @@ import { useT } from '../../../i18n';
    dois campos ficam como <input> e nao como Input (que os embrulharia num bloco).
    Mesmas classes que o Input do design system. */
 const NATIVE_FIELD_CLASS = [
-  'h-9 px-3 rounded-sm border text-sm font-body bg-n-100 text-n-900 dark:bg-n-800 dark:text-n-100',
+  'h-11 md:h-9 px-3 rounded-sm border text-sm font-body bg-n-100 text-n-900 dark:bg-n-800 dark:text-n-100',
   'placeholder:text-n-400 transition-colors border-n-300 dark:border-n-600',
   'focus:outline-none focus:ring-2 focus:ring-ocean-300 focus:border-ocean-700 focus:bg-white dark:focus:bg-n-800',
   'app:bg-white app:text-[13px]',
@@ -17,22 +17,21 @@ const NATIVE_FIELD_CLASS = [
 /* Botao de remover uma linha dos editores (so icone, por isso leva aria-label) */
 export function RemoveRowButton({ label, onClick }) {
   return (
-    <Button
+    <button
       type="button"
-      variant="ghost"
-      size="sm"
-      icon={Trash2}
       onClick={onClick}
       aria-label={label}
-      className="shrink-0 !text-n-400 hover:!text-error hover:!bg-[var(--error-light)]"
-    />
+      className="shrink-0 inline-flex items-center justify-center min-h-11 min-w-11 md:min-h-9 md:min-w-9 rounded-full text-n-500 hover:text-error hover:bg-[var(--error-light)] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sand-500"
+    >
+      <Trash2 size={16} strokeWidth={1.75} />
+    </button>
   );
 }
 
 /* Botao de adicionar uma linha aos editores */
 export function AddRowButton({ onClick, children }) {
   return (
-    <Button type="button" variant="secondary" size="sm" icon={Plus} onClick={onClick}>
+    <Button type="button" variant="secondary" size="sm" icon={Plus} onClick={onClick} className="min-h-11 md:min-h-0">
       {children}
     </Button>
   );
@@ -44,10 +43,10 @@ export function AddRowButton({ onClick, children }) {
 export function ChipToggle({ label, checked, onChange }) {
   return (
     <label
-      className={`inline-flex items-center h-7 px-3 rounded-full border text-xs font-body font-medium cursor-pointer select-none transition-colors focus-within:ring-2 focus-within:ring-ocean-300 ${
+      className={`inline-flex items-center min-h-11 md:min-h-8 px-3.5 rounded-full border text-xs font-body font-medium cursor-pointer select-none transition-colors focus-within:ring-2 focus-within:ring-ocean-300 ${
         checked
           ? 'bg-ocean-700 border-ocean-700 text-white'
-          : 'bg-white border-n-300 text-n-700 hover:bg-n-50'
+          : 'bg-white border-mare-card text-n-700 hover:bg-mare-head'
       }`}
     >
       <input type="checkbox" className="sr-only" checked={checked} onChange={onChange} />
@@ -85,7 +84,7 @@ export function IncludedItemsEditor({ items, onChange }) {
             type="button"
             onClick={() => updateItem(i, { included: !it.included })}
             title={t('unitForm.editors.toggleIncluded')}
-            className={`shrink-0 h-9 px-2.5 rounded-sm flex items-center gap-1 border text-xs font-body font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ocean-300 ${
+            className={`shrink-0 min-h-11 md:min-h-9 px-3 rounded-full flex items-center gap-1 border text-xs font-body font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ocean-300 ${
               it.included ? 'bg-green-50 border-green-200 text-green-700' : 'bg-red-50 border-red-200 text-red-600'
             }`}
           >
@@ -123,7 +122,7 @@ export function StopsEditor({ stops, onChange }) {
   return (
     <div className="space-y-3">
       {stops.map((s, i) => (
-        <div key={i} className="border border-n-200 rounded-sm p-3 space-y-2">
+        <div key={i} className="rounded-[14px] border border-mare-card bg-white p-3 space-y-2">
           <div className="flex items-center gap-2">
             <span className="shrink-0 w-6 h-6 rounded-full bg-ocean-700 text-white text-xs font-body font-bold flex items-center justify-center">{i + 1}</span>
             <div className="flex-1 min-w-0">
@@ -271,9 +270,12 @@ export const UNIT_TYPES_BY_OPERATOR = {
 
 export const LANGUAGES = ['PT', 'EN', 'DE', 'NL', 'FR', 'ES'];
 
+/* Caixa interior Mare de cada seccao do formulario */
+export const CAIXA_SECAO = 'rounded-[14px] border border-mare-card bg-mare-head p-3 sm:p-4';
+
 export function SectionLabel({ children }) {
   return (
-    <p className="text-xs font-body font-bold uppercase tracking-wide text-ocean-700 border-b border-n-200 pb-1 mb-2 app:normal-case app:tracking-normal app:text-sm app:text-n-900">
+    <p className="font-display text-sm font-semibold text-ocean-900 mb-3">
       {children}
     </p>
   );
@@ -282,7 +284,7 @@ export function SectionLabel({ children }) {
 export function OtaFields({ form, set }) {
   const t = useT();
   return (
-    <div>
+    <div className={CAIXA_SECAO}>
       <SectionLabel>{t('unitForm.editors.otaTitle')}</SectionLabel>
       <div className="grid grid-cols-2 gap-3">
         <Input
@@ -321,7 +323,7 @@ export function buildOtaProductIds(form) {
 export function ConectFields({ form, set }) {
   const t = useT();
   return (
-    <div>
+    <div className={CAIXA_SECAO}>
       <SectionLabel>{t('unitForm.editors.coordsTitle')}</SectionLabel>
       <div className="grid grid-cols-2 gap-3">
         <Input

@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import { FileText } from 'lucide-react';
+import Badge from '../../components/ui/Badge';
 import Button from '../../components/ui/Button';
 import Input, { Select } from '../../components/ui/Input';
 import Modal from '../../components/ui/Modal';
@@ -46,7 +47,7 @@ export default function ManifestoModal({ open, onClose, reservations, units, tou
 
         {(tourId || date) ? (
           <>
-            <div className="bg-ocean-50 border border-ocean-100 rounded-sm px-4 py-3 flex items-center justify-between">
+            <div className="bg-ocean-50 border border-ocean-100 rounded-[14px] px-4 py-3 flex items-center justify-between">
               <div>
                 <p className="font-display font-semibold text-sm text-ocean-900">
                   {tourName || t('reservations.filters.allTours')}{date ? ` · ${formatDate(date)}` : ''}
@@ -61,10 +62,10 @@ export default function ManifestoModal({ open, onClose, reservations, units, tou
             {participants.length === 0 ? (
               <p className="text-sm font-body text-n-500 text-center py-6">{t('reservations.manifest.empty')}</p>
             ) : (
-              <div className="border border-n-200 rounded-sm overflow-hidden overflow-x-auto">
+              <div className="border border-mare-card rounded-[14px] overflow-hidden overflow-x-auto">
                 <table className="w-full text-sm" style={{ minWidth: 820 }}>
                   <thead>
-                    <tr className="bg-n-50 border-b border-n-200">
+                    <tr className="bg-mare-head border-b border-mare-card">
                       <th className="text-left px-3 py-2.5 text-xs font-body font-bold uppercase tracking-wide text-n-500">#</th>
                       <th className="text-left px-3 py-2.5 text-xs font-body font-bold uppercase tracking-wide text-n-500">{t('reservations.manifest.name')}</th>
                       <th className="text-left px-3 py-2.5 text-xs font-body font-bold uppercase tracking-wide text-n-500">{t('customers.phone')}</th>
@@ -81,8 +82,8 @@ export default function ManifestoModal({ open, onClose, reservations, units, tou
                       let extra = {};
                       try { extra = JSON.parse(r.notes_guest || '{}'); } catch {}
                       return (
-                        <tr key={r.id} className="hover:bg-n-50">
-                          <td className="px-3 py-2.5 text-xs font-mono text-n-400">{i + 1}</td>
+                        <tr key={r.id} className="hover:bg-mare-head">
+                          <td className="px-3 py-2.5 text-xs font-mono tabular-nums text-n-500">{i + 1}</td>
                           <td className="px-3 py-2.5">
                             <p className="font-body font-medium text-sm text-n-900">{r.customer_name || '—'}</p>
                             <p className="text-xs font-body text-n-400">{r.customer_country || ''}</p>
@@ -93,13 +94,11 @@ export default function ManifestoModal({ open, onClose, reservations, units, tou
                           </td>
                           <td className="px-3 py-2.5 text-xs font-body text-n-600">{extra.emergency_contact || '—'}</td>
                           <td className="px-3 py-2.5 text-xs font-body text-n-600 max-w-[120px] truncate">{extra.special_requirements || r.notes_guest || '—'}</td>
-                          <td className="px-3 py-2.5 text-center font-body font-semibold text-sm text-n-900">{r.guests}</td>
+                          <td className="px-3 py-2.5 text-center font-mono tabular-nums font-medium text-sm text-n-900">{r.guests}</td>
                           <td className="px-3 py-2.5">
-                            <span className={`text-xs font-mono px-1.5 py-0.5 rounded-xs uppercase tracking-wide ${
-                              ['confirmed','checked_in'].includes(r.status) ? 'bg-[#ECFDF5] text-[#1A7A4A]' : 'bg-n-100 text-n-500'
-                            }`}>{t(`reservations.status.${r.status}`)}</span>
+                            <Badge variant={r.status}>{t(`reservations.status.${r.status}`)}</Badge>
                           </td>
-                          <td className="px-3 py-2.5 text-right font-display font-bold text-sm text-ocean-700">
+                          <td className="px-3 py-2.5 text-right font-mono tabular-nums font-medium text-sm text-ocean-900">
                             {eurosInteiros(r.total_price || r.total_amount)}
                           </td>
                         </tr>
@@ -107,11 +106,11 @@ export default function ManifestoModal({ open, onClose, reservations, units, tou
                     })}
                   </tbody>
                   <tfoot>
-                    <tr className="bg-n-50 border-t border-n-200">
+                    <tr className="bg-mare-head border-t border-mare-card">
                       <td colSpan={6} className="px-3 py-2.5 text-xs font-body font-bold text-n-700 uppercase tracking-wide">{t('reservations.total')}</td>
-                      <td className="px-3 py-2.5 text-center font-display font-bold text-sm text-n-900">{totalPax}</td>
+                      <td className="px-3 py-2.5 text-center font-mono tabular-nums font-medium text-sm text-n-900">{totalPax}</td>
                       <td />
-                      <td className="px-3 py-2.5 text-right font-display font-bold text-sm text-ocean-700">
+                      <td className="px-3 py-2.5 text-right font-mono tabular-nums font-medium text-sm text-ocean-900">
                         {eurosInteiros(participants.reduce((s, r) => s + Number(r.total_price || r.total_amount || 0), 0))}
                       </td>
                     </tr>

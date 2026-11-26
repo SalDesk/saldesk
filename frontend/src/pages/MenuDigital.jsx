@@ -15,6 +15,8 @@ import ImageUploader from '../components/shared/ImageUploader';
 import ConectRow from '../components/shared/ConectRow';
 import FilterChips from '../components/ui/FilterChips';
 import EmptyState from '../components/ui/EmptyState';
+import Badge from '../components/ui/Badge';
+import { IconBtn, EDIT_HOVER, DELETE_HOVER, TOGGLE_HOVER_ACTIVE, TOGGLE_HOVER_INACTIVE } from '../components/shared/IconBtn';
 import { useT } from '../i18n';
 import { mensagemErro } from '../utils/mensagemErro';
 import { eurosDuasCasas } from '../utils/formatoEuros';
@@ -313,13 +315,13 @@ function DishCard({ dish, onEdit, onDelete, onToggleAvailable, onSubmitConect })
   const isToday  = !!meta.daily_special?.[today];
 
   return (
-    <div className={`bg-white rounded-md border border-n-200 shadow-sm overflow-hidden flex flex-col ${!available ? 'opacity-60' : ''}`}>
+    <div className={`rounded-[18px] border border-mare-card bg-white overflow-hidden flex flex-col ${!available ? 'opacity-60' : ''}`}>
       {photo ? (
-        <div className="w-full aspect-video bg-n-100 overflow-hidden">
+        <div className="w-full aspect-video bg-mare-head overflow-hidden">
           <img src={photo} alt={dish.name} className="w-full h-full object-cover" />
         </div>
       ) : (
-        <div className="w-full aspect-video bg-n-100 flex items-center justify-center">
+        <div className="w-full aspect-video bg-mare-head flex items-center justify-center">
           <ChefHat size={28} strokeWidth={1.25} className="text-n-300" />
         </div>
       )}
@@ -352,21 +354,12 @@ function DishCard({ dish, onEdit, onDelete, onToggleAvailable, onSubmitConect })
           </span>
         )}
 
-        <div className="flex items-center justify-between mt-auto">
-          <span className="font-display font-bold text-sm text-ocean-700">{eurosDuasCasas(dish.base_price || 0)}</span>
+        <div className="flex flex-wrap items-center justify-between gap-1 mt-auto">
+          <span className="font-mono tabular-nums font-bold text-sm text-ocean-700">{eurosDuasCasas(dish.base_price || 0)}</span>
           <div className="flex items-center gap-1">
-            <button onClick={() => onToggleAvailable(dish)}
-              aria-label={t('menuDigital.toggleAvailability')}
-              className={`p-1.5 rounded transition-colors ${available ? 'text-[var(--success)] hover:bg-[var(--success-light)]' : 'text-n-400 hover:bg-n-100'}`}
-              title={available ? t('menuDigital.availableHint') : t('menuDigital.unavailableHint')}>
-              <CheckCircle size={13} strokeWidth={1.75} />
-            </button>
-            <button onClick={() => onEdit(dish)} aria-label={t('menuDigital.edit')} className="p-1.5 rounded text-n-400 hover:text-ocean-700 hover:bg-ocean-50 transition-colors">
-              <Pencil size={13} strokeWidth={1.75} />
-            </button>
-            <button onClick={() => onDelete(dish)} aria-label={t('menuDigital.delete')} className="p-1.5 rounded text-n-400 hover:text-error hover:bg-[var(--error-light)] transition-colors">
-              <Trash2 size={13} strokeWidth={1.75} />
-            </button>
+            <IconBtn icon={CheckCircle} label={t('menuDigital.toggleAvailability')} title={available ? t('menuDigital.availableHint') : t('menuDigital.unavailableHint')} className={available ? 'text-[var(--success)]' : ''} hover={available ? TOGGLE_HOVER_ACTIVE : TOGGLE_HOVER_INACTIVE} onClick={() => onToggleAvailable(dish)} />
+            <IconBtn icon={Pencil} label={t('menuDigital.edit')} hover={EDIT_HOVER} onClick={() => onEdit(dish)} />
+            <IconBtn icon={Trash2} label={t('menuDigital.delete')} hover={DELETE_HOVER} onClick={() => onDelete(dish)} />
           </div>
         </div>
         <ConectRow unit={dish} onSubmitConect={onSubmitConect} />
@@ -475,10 +468,11 @@ export default function MenuDigital() {
   return (
     <div>
       <PageHeader
+        eyebrow={t('nav.sections.operacao')}
         title={t('menuDigital.title')}
         subtitle={t('menuDigital.subtitle', { dishes: dishes.length, menus: tastings.length })}
         actions={
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <Button variant="secondary" icon={ChefHat} onClick={() => { setModalType('tasting'); setModal('tasting_create'); }}>
               {t('menuDigital.tastingMenuButton')}
             </Button>
@@ -511,7 +505,7 @@ export default function MenuDigital() {
       {loading ? (
         <div className="flex justify-center py-20"><LoadingSpinner size={32} /></div>
       ) : filtered.length === 0 ? (
-        <div className="bg-white rounded-md border border-n-200 shadow-sm mb-8">
+        <div className="rounded-[18px] border border-mare-card bg-white mb-8">
           <EmptyState
             icon={ChefHat}
             title={t('menuDigital.emptyCategory')}
@@ -519,7 +513,7 @@ export default function MenuDigital() {
           />
         </div>
       ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 mb-8">
+        <div className="grid grid-cols-1 min-[400px]:grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 mb-8">
           {filtered.map(dish => (
             <DishCard
               key={dish.id}
@@ -535,12 +529,12 @@ export default function MenuDigital() {
 
       {/* Menus Degustacao */}
       {tastings.length > 0 && (
-        <div className="bg-white rounded-md border border-n-200 shadow-sm overflow-hidden mb-6">
-          <div className="px-5 py-4 border-b border-n-100 flex items-center gap-2">
+        <div className="rounded-[18px] border border-mare-card bg-white overflow-hidden mb-6">
+          <div className="px-5 py-4 border-b border-mare-card flex items-center gap-2">
             <Star size={14} strokeWidth={1.75} className="text-sand-500" />
             <h2 className="font-display font-semibold text-sm text-n-700">{t('menuDigital.tastingMenusTitle')}</h2>
           </div>
-          <div className="divide-y divide-n-100">
+          <div className="divide-y divide-mare-card">
             {tastings.map(menu => {
               const meta = parseDishMeta(menu);
               const items = meta.items || [];
@@ -549,9 +543,9 @@ export default function MenuDigital() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-baseline gap-2">
                       <p className="font-display font-semibold text-sm text-n-900">{menu.name}</p>
-                      <span className="font-display font-bold text-sm text-ocean-700">{eurosDuasCasas(menu.base_price || 0)}</span>
+                      <span className="font-mono tabular-nums font-bold text-sm text-ocean-700">{eurosDuasCasas(menu.base_price || 0)}</span>
                       {menu.status === 'inactive' && (
-                        <span className="text-[9px] font-mono uppercase tracking-wide px-1.5 py-0.5 rounded bg-n-100 text-n-500">{t('menuDigital.inactive')}</span>
+                        <Badge variant="default">{t('menuDigital.inactive')}</Badge>
                       )}
                     </div>
                     {meta.desc_pt && <p className="text-xs font-body text-n-500 mt-0.5">{meta.desc_pt}</p>}
@@ -561,16 +555,8 @@ export default function MenuDigital() {
                     <ConectRow unit={menu} onSubmitConect={handleSubmitConect} />
                   </div>
                   <div className="flex gap-1 shrink-0">
-                    <button onClick={() => { setModalType('tasting'); setModal(menu); }}
-                      aria-label={t('menuDigital.editMenu')}
-                      className="p-1.5 rounded text-n-400 hover:text-ocean-700 hover:bg-ocean-50 transition-colors">
-                      <Pencil size={13} strokeWidth={1.75} />
-                    </button>
-                    <button onClick={() => setDeleteTarget(menu)}
-                      aria-label={t('menuDigital.deleteMenu')}
-                      className="p-1.5 rounded text-n-400 hover:text-error hover:bg-[var(--error-light)] transition-colors">
-                      <Trash2 size={13} strokeWidth={1.75} />
-                    </button>
+                    <IconBtn icon={Pencil} label={t('menuDigital.editMenu')} hover={EDIT_HOVER} onClick={() => { setModalType('tasting'); setModal(menu); }} />
+                    <IconBtn icon={Trash2} label={t('menuDigital.deleteMenu')} hover={DELETE_HOVER} onClick={() => setDeleteTarget(menu)} />
                   </div>
                 </div>
               );
@@ -580,21 +566,19 @@ export default function MenuDigital() {
       )}
 
       {/* QR Code / Link */}
-      <div className="bg-white rounded-md border border-n-200 shadow-sm p-5">
+      <div className="rounded-[18px] border border-mare-card bg-white p-5">
         <div className="flex items-center gap-2 mb-4">
           <QrCode size={14} strokeWidth={1.75} className="text-n-500" />
           <h2 className="font-display font-semibold text-sm text-n-700">{t('menuDigital.qrTitle')}</h2>
         </div>
         {menuUrl ? (
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-            <div className="flex-1 min-w-0">
+            <div className="flex-1 min-w-0 w-full sm:w-auto">
               <p className="text-xs font-body text-n-500 mb-1.5">{t('menuDigital.shareUrl')}</p>
-              <div className="flex items-center gap-2 bg-n-50 border border-n-200 rounded-md px-3 py-2">
+              <div className="flex items-center gap-2 bg-mare-head border border-mare-card rounded-[14px] px-3 py-2">
                 <Link size={12} strokeWidth={1.75} className="text-n-400 shrink-0" />
                 <span className="text-xs font-mono text-n-700 truncate flex-1">{menuUrl}</span>
-                <button onClick={copyMenuUrl} aria-label={t('menuDigital.copyLink')} className="p-1 text-n-400 hover:text-ocean-700 transition-colors shrink-0">
-                  {copied ? <CheckCircle size={13} strokeWidth={1.75} className="text-[var(--success)]" /> : <Copy size={13} strokeWidth={1.75} />}
-                </button>
+                <IconBtn icon={copied ? CheckCircle : Copy} label={t('menuDigital.copyLink')} hover={EDIT_HOVER} onClick={copyMenuUrl} />
               </div>
             </div>
             <Button icon={QrCode} onClick={downloadQrCode} className="shrink-0">

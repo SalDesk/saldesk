@@ -119,6 +119,29 @@ describe('MenuDigital', () => {
     }
   });
 
+  it('o botao de disponibilidade tem o proprio title e o sinal verde; o wrapper nao tem title', async () => {
+    await abre();
+    const [toggle, editar] = botoesDe('Atum Grelhado');
+    expect(toggle).toHaveAttribute('title', 'Disponível — clique para desactivar');
+    expect(toggle.className.split(/\s+/)).toContain('text-[var(--success)]');
+    expect(editar).not.toHaveAttribute('title');
+    expect(toggle.parentElement).not.toHaveAttribute('title');
+    const [toggleInativo] = botoesDe('Pudim');
+    expect(toggleInativo).toHaveAttribute('title', 'Indisponível — clique para activar');
+    expect(toggleInativo.className.split(/\s+/)).not.toContain('text-[var(--success)]');
+  });
+
+  it('a 375 px a grelha tem uma coluna e o endereco comprido fica dentro da coluna', async () => {
+    await abre();
+    const grelha = screen.getByText('Atum Grelhado').closest('.grid');
+    const classes = grelha.className.split(/\s+/);
+    expect(classes).toContain('grid-cols-1');
+    expect(classes).toContain('min-[400px]:grid-cols-2');
+    expect(classes).not.toContain('grid-cols-2');
+    const coluna = screen.getByText(URL_MENU).closest('.min-w-0');
+    expect(coluna.className.split(/\s+/)).toContain('w-full');
+  });
+
   it('o separador de categoria filtra e um prato sem categoria só aparece em Todos', async () => {
     await abre();
     expect(nomesNaGrelha()).toEqual(['Atum Grelhado', 'Pudim', 'Sopa', 'Quebrado']);
@@ -354,6 +377,37 @@ describe('MenuDigital', () => {
     listUnits.mockRejectedValue(new Error('rede'));
     await abre();
     expect(screen.getByText('Nenhum prato nesta categoria.')).toBeInTheDocument();
+  });
+
+  it('mare: o cabecalho traz o eyebrow Operação e as acoes quebram linha', async () => {
+    useUiStore.setState({ lang: 'pt' });
+    await abre();
+    expect(document.querySelector('[data-eyebrow]')).toHaveTextContent('Operação');
+    const botao = screen.getByRole('button', { name: /Menu Degustação/ });
+    expect(botao.parentElement.className).toContain('flex-wrap');
+  });
+
+  it('mare: cada prato e um cartao Mare com o preco em mono e botoes de icone de 44 px', async () => {
+    useUiStore.setState({ lang: 'pt' });
+    await abre();
+    const c = cartao('Atum Grelhado').closest('[class*="rounded-[18px]"]');
+    expect(c.className).toContain('rounded-[18px]');
+    expect(c.className).toContain('border-mare-card');
+    const preco = within(c).getByText('€12.50');
+    expect(preco.className).toContain('font-mono');
+    expect(preco.className).toContain('tabular-nums');
+    for (const b of botoesDe('Atum Grelhado').slice(0, 3)) expect(b.className).toContain('min-h-11');
+  });
+
+  it('mare: o menu degustacao e o bloco do QR sao cartoes Mare e o inactivo e Badge', async () => {
+    useUiStore.setState({ lang: 'pt' });
+    await abre();
+    const bloco = screen.getByText('Menus Degustação').closest('[class*="rounded-[18px]"]');
+    expect(bloco.className).toContain('rounded-[18px]');
+    const preco = within(bloco).getByText('€45.00');
+    expect(preco.className).toContain('font-mono');
+    expect(within(bloco).getByText('Inactivo').className).toContain('app:rounded-full');
+    expect(screen.getByText(URL_MENU).closest('[class*="rounded-[18px]"]').className).toContain('rounded-[18px]');
   });
 });
 

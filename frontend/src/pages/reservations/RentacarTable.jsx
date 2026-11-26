@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Pencil, Trash2, Car, MoveRight, MoveLeft, Eye } from 'lucide-react';
 import { changeStatus } from '../../services/reservationsService';
 import { useT } from '../../i18n';
-import Button from '../../components/ui/Button';
+import { IconBtn, EDIT_HOVER, DELETE_HOVER } from '../../components/shared/IconBtn';
 import Badge from '../../components/ui/Badge';
 import Table from '../../components/ui/Table';
 import useMediaQuery from '../../hooks/useMediaQuery';
@@ -39,7 +39,7 @@ export default function RentacarTable({ reservations, units, onEdit, onDelete, o
     {
       key: 'ref',
       label: t('reservations.columns.ref'),
-      render: (r) => <span className="text-xs font-mono text-n-400">{r.id?.slice(0, 8)}</span>,
+      render: (r) => <span className="text-xs font-mono tabular-nums text-n-500">{r.id?.slice(0, 8)}</span>,
     },
     {
       key: 'viatura',
@@ -53,7 +53,7 @@ export default function RentacarTable({ reservations, units, onEdit, onDelete, o
             <p className="font-display font-semibold text-sm text-n-900 truncate max-w-[120px]">
               {unitMeta.brand ? `${unitMeta.brand} ${unitMeta.model || ''}`.trim() : unit?.name || '—'}
             </p>
-            {unitMeta.plate && <p className="text-xs font-mono text-n-400">{unitMeta.plate}</p>}
+            {unitMeta.plate && <p className="text-xs font-mono tabular-nums text-n-500">{unitMeta.plate}</p>}
           </>
         );
       },
@@ -66,8 +66,8 @@ export default function RentacarTable({ reservations, units, onEdit, onDelete, o
         const rcMeta = parseRentacarMeta(r);
         return (
           <div className="whitespace-nowrap">
-            <span className="text-sm font-body text-n-700">{formatDate(r.check_in)}</span>
-            {rcMeta.km_out && <p className="text-xs font-mono text-n-400">{formatarNumero(rcMeta.km_out)} km</p>}
+            <span className="text-sm font-mono tabular-nums text-ocean-900">{formatDate(r.check_in)}</span>
+            {rcMeta.km_out && <p className="text-xs font-mono tabular-nums text-n-500">{formatarNumero(rcMeta.km_out)} km</p>}
           </div>
         );
       },
@@ -80,8 +80,8 @@ export default function RentacarTable({ reservations, units, onEdit, onDelete, o
         const rcMeta = parseRentacarMeta(r);
         return (
           <div className="whitespace-nowrap">
-            <span className="text-sm font-body text-n-700">{formatDate(r.check_out)}</span>
-            {rcMeta.km_in && <p className="text-xs font-mono text-n-400">{formatarNumero(rcMeta.km_in)} km</p>}
+            <span className="text-sm font-mono tabular-nums text-ocean-900">{formatDate(r.check_out)}</span>
+            {rcMeta.km_in && <p className="text-xs font-mono tabular-nums text-n-500">{formatarNumero(rcMeta.km_in)} km</p>}
           </div>
         );
       },
@@ -102,7 +102,7 @@ export default function RentacarTable({ reservations, units, onEdit, onDelete, o
       align: 'right',
       sortValue: (r) => Number(r.total_price || r.total_amount || 0),
       render: (r) => (
-        <span className="font-display font-bold text-sm text-ocean-700 whitespace-nowrap">
+        <span className="font-mono tabular-nums font-medium text-sm text-ocean-900 whitespace-nowrap">
           {eurosInteiros(r.total_price || r.total_amount)}
         </span>
       ),
@@ -115,7 +115,7 @@ export default function RentacarTable({ reservations, units, onEdit, onDelete, o
           {['pending', 'confirmed'].includes(r.status) && (
             <button
               onClick={() => onLevantamento(r)}
-              className="flex items-center gap-1 px-2 py-1 rounded-xs bg-[var(--success)] text-white text-xs font-body font-medium hover:brightness-90 transition-colors whitespace-nowrap"
+              className="flex items-center gap-1 min-h-11 md:min-h-9 px-3 rounded-full bg-[var(--success)] text-white text-xs font-body font-semibold hover:brightness-90 transition-colors whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sand-500 focus-visible:ring-offset-1"
             >
               <MoveRight size={11} strokeWidth={2} />
               {t('reservations.actions.pickup')}
@@ -124,15 +124,15 @@ export default function RentacarTable({ reservations, units, onEdit, onDelete, o
           {r.status === 'checked_in' && (
             <button
               onClick={() => onDevolucao(r)}
-              className="flex items-center gap-1 px-2 py-1 rounded-xs bg-ocean-700 text-white text-xs font-body font-medium hover:bg-ocean-500 transition-colors whitespace-nowrap"
+              className="flex items-center gap-1 min-h-11 md:min-h-9 px-3 rounded-full bg-ocean-700 text-white text-xs font-body font-semibold hover:bg-ocean-500 transition-colors whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sand-500 focus-visible:ring-offset-1"
             >
               <MoveLeft size={11} strokeWidth={2} />
               {t('reservations.actions.dropoff')}
             </button>
           )}
-          <Button variant="ghost" size="sm" icon={Eye} onClick={() => onView(r)} aria-label={t('reservations.view')} />
-          <Button variant="ghost" size="sm" icon={Pencil} onClick={() => onEdit(r)} aria-label={t('common.edit')} />
-          <Button variant="ghost" size="sm" icon={Trash2} onClick={() => onDelete(r)} aria-label={t('common.delete')} className="hover:text-error" />
+          <IconBtn icon={Eye} label={t('reservations.view')} hover={EDIT_HOVER} onClick={() => onView(r)} />
+          <IconBtn icon={Pencil} label={t('common.edit')} hover={EDIT_HOVER} onClick={() => onEdit(r)} />
+          <IconBtn icon={Trash2} label={t('common.delete')} hover={DELETE_HOVER} onClick={() => onDelete(r)} />
         </div>
       ),
     },
@@ -142,7 +142,7 @@ export default function RentacarTable({ reservations, units, onEdit, onDelete, o
   if (movel) return <ColumnCards columns={columns} rows={reservations} />;
 
   return (
-    <div className="bg-white rounded-md border border-n-200 shadow-sm overflow-hidden">
+    <div className="bg-white rounded-[18px] border border-mare-card overflow-hidden">
       <Table columns={columns} rows={reservations} />
     </div>
   );

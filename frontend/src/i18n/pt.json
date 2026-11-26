@@ -1985,6 +1985,11 @@
     }
   },
   "guides": {
+    "stats": {
+      "total": "Guias na equipa",
+      "active": "Disponíveis agora",
+      "busy": "Em serviço"
+    },
     "title": "Guias",
     "subtitle": "{{active}} disponível(is) · {{n}} total",
     "add": "Adicionar guia",
@@ -2159,6 +2164,8 @@
     "byUnit": "Por unidade",
     "allUnits": "Todas as unidades",
     "byGuide": "Por guia",
+    "prevPeriod": "Período anterior",
+    "nextPeriod": "Período seguinte",
     "allGuides": "Todos os guias",
     "legendSoldByStaff": "Vendido por colaborador",
     "soldBy": "Vendido por {{name}}",
@@ -2222,6 +2229,11 @@
     }
   },
   "fleet": {
+    "stats": {
+      "total": "Itens na frota",
+      "available": "Prontos a usar",
+      "maintenance": "Em manutenção"
+    },
     "title": "Frota e Equipamento",
     "subtitle": "{{available}} disponível(is) de {{total}}",
     "newItem": "Novo item",
@@ -2267,6 +2279,11 @@
     }
   },
   "maintenance": {
+    "stats": {
+      "vehicles": "Viaturas",
+      "urgent": "Alertas urgentes",
+      "attention": "Em atenção"
+    },
     "title": "Manutenção",
     "subtitle": "{{vehicles}} viatura(s) · {{alerts}} alerta(s)",
     "record": "Registar intervenção",

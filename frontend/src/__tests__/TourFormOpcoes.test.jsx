@@ -299,3 +299,43 @@ describe('TourForm: exemplos das opções e ofertas', () => {
     expect(screen.getByLabelText('Texto EN da oferta 1')).toHaveAttribute('placeholder', 'Special offer (-25%)');
   });
 });
+
+describe('TourForm: estilo Maré', () => {
+  const caixaInterior = (el) => el.className.includes('rounded-[14px]') && el.className.includes('border-mare-card');
+
+  it('as secções do formulário são caixas interiores Maré', () => {
+    renderForm(undefined);
+    for (const titulo of ['Identificação', 'Preços (€ por pessoa)', 'Opções (variantes) da actividade', 'Fotos']) {
+      const p = screen.getAllByText((_, e) => e.tagName === 'P' && e.textContent === titulo)[0];
+      expect(caixaInterior(p.parentElement)).toBe(true);
+    }
+  });
+
+  it('as linhas do editor de opções usam o aspecto de caixa interior', () => {
+    renderForm(undefined);
+    fireEvent.click(botao('Adicionar opção'));
+    const linha = porRotulo('Nome PT da opção 1').closest('[class*="rounded-[14px]"]');
+    expect(linha).not.toBeNull();
+    expect(caixaInterior(linha)).toBe(true);
+  });
+
+  it('as linhas das ofertas também', () => {
+    renderForm(undefined);
+    fireEvent.click(botao('Adicionar oferta'));
+    expect(caixaInterior(porRotulo('Desconto da oferta 1 (%)').closest('[class*="rounded-[14px]"]'))).toBe(true);
+  });
+
+  it('a moldura do mapa do ponto de encontro usa o aspecto de caixa interior', () => {
+    const { container } = render(<UnitForm operatorType="activity" onSave={() => {}} onCancel={() => {}} />);
+    const moldura = container.querySelector('.h-56');
+    expect(moldura).not.toBeNull();
+    expect(caixaInterior(moldura)).toBe(true);
+  });
+
+  it('as etiquetas de idioma e os botões de remover têm alvos de 44 px no telemovel', () => {
+    renderForm(undefined);
+    fireEvent.click(botao('Adicionar opção'));
+    expect(screen.getByLabelText('DE').closest('label').className).toContain('min-h-11');
+    expect(screen.getByRole('button', { name: 'Remover opção 1' }).className).toContain('min-h-11');
+  });
+});

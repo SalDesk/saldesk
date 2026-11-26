@@ -24,7 +24,7 @@ export default function ConectRow({ unit, onSubmitConect }) {
           variant="ghost"
           size="sm"
           icon={Globe2}
-          className="whitespace-nowrap"
+          className="!whitespace-normal !h-auto min-h-11 md:min-h-9 max-w-full text-left"
           onClick={() => onSubmitConect(unit)}
         >
           {canSubmit ? t('units.conect.submit') : t('units.conect.withdraw')}

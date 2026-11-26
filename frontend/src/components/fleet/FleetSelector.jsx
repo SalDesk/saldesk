@@ -49,16 +49,16 @@ export default function FleetSelector({ unitId, date, value, onChange, onLoad, c
           onClick={() => v.available && onChange(v.id)}
           disabled={!v.available}
           aria-pressed={value === v.id}
-          className={`w-full flex items-center justify-between px-4 py-3 rounded-2xl border-2 transition-all app:rounded-md app:border app:transition-colors app:focus-visible:outline-none app:focus-visible:ring-2 app:focus-visible:ring-ocean-300 ${
+          className={`w-full flex items-center justify-between px-4 py-3 rounded-2xl border-2 transition-all app:rounded-[14px] app:border app:min-h-11 app:transition-colors app:focus-visible:outline-none app:focus-visible:ring-2 app:focus-visible:ring-ocean-300 ${
             value === v.id
               ? 'border-ocean-700 bg-ocean-50 app:ring-1 app:ring-ocean-700'
               : v.available
-                ? 'border-n-200 bg-white hover:border-ocean-300'
-                : 'border-n-100 bg-n-50 opacity-50 cursor-not-allowed'
+                ? 'border-n-200 bg-white hover:border-ocean-300 app:border-mare-card app:hover:border-ocean-300'
+                : 'border-n-100 bg-n-50 opacity-50 cursor-not-allowed app:border-mare-card app:bg-mare-head'
           }`}
         >
           <div className="flex items-center gap-3">
-            <div className={`w-10 h-10 rounded-xl app:rounded-sm flex items-center justify-center ${v.available ? 'bg-turquoise-50 app:bg-ocean-50' : 'bg-n-100'}`}>
+            <div className={`w-10 h-10 rounded-xl app:rounded-[10px] flex items-center justify-center ${v.available ? 'bg-turquoise-50 app:bg-ocean-50' : 'bg-n-100'}`}>
               <Car size={18} strokeWidth={1.75} className={v.available ? 'text-turquoise-600 app:text-ocean-700' : 'text-n-400'} />
             </div>
             <div className="text-left">

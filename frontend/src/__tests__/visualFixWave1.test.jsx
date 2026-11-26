@@ -23,12 +23,12 @@ describe('ajustes visuais (fix wave 1)', () => {
     expect(lista.className).toContain('overflow-y-hidden');
   });
 
-  it('ConectRow: badge e botão não partem o texto e a linha pode quebrar', () => {
+  it('ConectRow: o badge não parte o texto, o botão quebra dentro do cartão e a linha pode quebrar', () => {
     render(<ConectRow unit={{ id: 'u1', conect_status: 'draft' }} onSubmitConect={() => {}} />);
     const badge = screen.getByText('Não submetido');
     const botao = screen.getByRole('button', { name: /Submeter ao Conect/ });
     expect(badge.className).toContain('whitespace-nowrap');
-    expect(botao.className).toContain('whitespace-nowrap');
+    expect(botao.className).toContain('max-w-full');
     expect(badge.parentElement.className).toContain('flex-wrap');
   });
 
@@ -37,9 +37,11 @@ describe('ajustes visuais (fix wave 1)', () => {
     const preco = screen.getByLabelText('Preço do escalão 1');
     expect(preco.closest('div.flex.flex-wrap')).not.toBeNull();
     const remover = screen.getByRole('button', { name: 'Remover escalão 1' });
-    expect(remover.className).toContain('!text-n-400');
-    expect(remover.className).toContain('hover:!text-error');
-    expect(remover.className).toContain('hover:!bg-[var(--error-light)]');
+    /* botao nativo no estilo Mare: neutro, vermelho ao passar o rato, 44 px no telemovel */
+    expect(remover.className).toContain('text-n-500');
+    expect(remover.className).toContain('hover:text-error');
+    expect(remover.className).toContain('hover:bg-[var(--error-light)]');
+    expect(remover.className).toContain('min-h-11');
   });
 
   it('RentacarTable: o botão Levantamento usa o token de sucesso, sem cor hex fixa', () => {

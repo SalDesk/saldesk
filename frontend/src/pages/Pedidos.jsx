@@ -15,6 +15,7 @@ import LoadingSpinner from '../components/shared/LoadingSpinner';
 import { useT } from '../i18n';
 import { useLingua, localeDe } from '../utils/formatoLingua';
 import { eurosDuasCasas } from '../utils/formatoEuros';
+import { IconBtn, EDIT_HOVER, DELETE_HOVER } from '../components/shared/IconBtn';
 
 /* Estados gravados do pedido; o rotulo vem de orders.status */
 const STATUS_FILTERS = ['', 'received', 'preparing', 'ready', 'delivered', 'cancelled'];
@@ -57,21 +58,21 @@ function OrderDetailModal({ order, onClose }) {
                   <p className="text-sm font-body font-semibold text-n-900">{item.quantity}x {item.unit_name}</p>
                   {item.notes && <p className="text-xs font-body text-n-500 mt-0.5">{item.notes}</p>}
                 </div>
-                <span className="text-sm font-display font-bold text-ocean-700 shrink-0">
+                <span className="text-sm font-mono tabular-nums font-bold text-ocean-700 shrink-0">
                   {eurosDuasCasas(Number(item.unit_price) * item.quantity, lang)}
                 </span>
               </div>
             ))}
           </div>
           {order.notes && (
-            <div className="bg-n-50 rounded-md px-3 py-2">
+            <div className="bg-mare-head border border-mare-card rounded-[14px] px-3 py-2">
               <p className="text-xs font-body font-bold text-n-500 uppercase tracking-wide mb-1">{t('orders.orderNotes')}</p>
               <p className="text-sm font-body text-n-700">{order.notes}</p>
             </div>
           )}
           <div className="flex items-center justify-between pt-2 border-t border-n-200">
             <span className="text-sm font-body font-semibold text-n-700">{t('orders.total')}</span>
-            <span className="font-display font-bold text-lg text-ocean-700">{eurosDuasCasas(order.total_price, lang)}</span>
+            <span className="font-mono tabular-nums font-bold text-lg text-ocean-700">{eurosDuasCasas(order.total_price, lang)}</span>
           </div>
         </div>
       )}
@@ -149,12 +150,12 @@ export default function Pedidos() {
     {
       key: 'ref',
       label: t('orders.columns.ref'),
-      render: (order) => <span className="text-xs font-mono text-n-400">{order.id?.slice(0, 8)}</span>,
+      render: (order) => <span className="text-xs font-mono tabular-nums text-n-500">{order.id?.slice(0, 8)}</span>,
     },
     {
       key: 'mesa',
       label: t('orders.columns.table'),
-      render: (order) => <p className="font-display font-semibold text-sm text-n-900 whitespace-nowrap">{tableLabel(order, t)}</p>,
+      render: (order) => <p className="font-mono tabular-nums font-semibold text-sm text-n-900 whitespace-nowrap">{tableLabel(order, t)}</p>,
     },
     {
       key: 'itens',
@@ -166,7 +167,7 @@ export default function Pedidos() {
       label: t('orders.columns.total'),
       align: 'right',
       render: (order) => (
-        <span className="font-display font-bold text-sm text-ocean-700 tabular-nums">{eurosDuasCasas(order.total_price, lang)}</span>
+        <span className="font-mono tabular-nums font-bold text-sm text-ocean-700">{eurosDuasCasas(order.total_price, lang)}</span>
       ),
     },
     {
@@ -177,7 +178,7 @@ export default function Pedidos() {
     {
       key: 'hora',
       label: t('orders.columns.time'),
-      render: (order) => <span className="text-xs font-mono text-n-500">{fmtTime(order.created_at, lang)}</span>,
+      render: (order) => <span className="text-xs font-mono tabular-nums text-n-500">{fmtTime(order.created_at, lang)}</span>,
     },
     {
       key: 'acoes',
@@ -192,23 +193,16 @@ export default function Pedidos() {
               <button
                 onClick={() => handleAdvance(order)}
                 disabled={isLoading}
-                className="flex items-center gap-1 px-2 py-1 rounded-xs bg-ocean-700 text-white text-xs font-body font-medium hover:bg-ocean-500 transition-colors disabled:opacity-50 whitespace-nowrap"
+                className="flex items-center justify-center gap-1 px-3 min-h-11 md:min-h-9 rounded-full bg-ocean-700 text-white text-xs font-body font-medium hover:bg-ocean-500 transition-colors disabled:opacity-50 whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sand-500"
               >
                 {t(`orders.advance.${order.status}`)}
                 <ChevronRight size={11} strokeWidth={2} />
               </button>
             )}
             {canCancel && (
-              <button
-                onClick={() => handleCancel(order)}
-                disabled={isLoading}
-                className="p-1.5 rounded text-n-400 hover:text-error hover:bg-[var(--error-light)] transition-colors disabled:opacity-50"
-                aria-label={t('orders.cancel')}
-              >
-                <Ban size={13} strokeWidth={1.75} />
-              </button>
+              <IconBtn icon={Ban} label={t('orders.cancel')} hover={DELETE_HOVER} disabled={isLoading} onClick={() => handleCancel(order)} />
             )}
-            <Button variant="ghost" size="sm" icon={Eye} onClick={() => setDetailOrder(order)} aria-label={t('orders.viewDetails')} />
+            <IconBtn icon={Eye} label={t('orders.viewDetails')} hover={EDIT_HOVER} onClick={() => setDetailOrder(order)} />
           </div>
         );
       },
@@ -218,6 +212,7 @@ export default function Pedidos() {
   return (
     <div>
       <PageHeader
+        eyebrow={t('nav.sections.operacao')}
         title={t('orders.title')}
         subtitle={t('orders.subtitle', { n: filtered.length })}
         actions={
@@ -244,11 +239,11 @@ export default function Pedidos() {
       {loading ? (
         <div className="flex justify-center py-20"><LoadingSpinner size={32} /></div>
       ) : filtered.length === 0 ? (
-        <div className="bg-white rounded-md border border-n-200 shadow-sm">
+        <div className="rounded-[18px] border border-mare-card bg-white">
           <EmptyState title={t('orders.empty')} />
         </div>
       ) : (
-        <div className="bg-white rounded-md border border-n-200 shadow-sm overflow-hidden">
+        <div className="rounded-[18px] border border-mare-card bg-white overflow-hidden">
           <Table columns={columns} rows={filtered} compact />
         </div>
       )}

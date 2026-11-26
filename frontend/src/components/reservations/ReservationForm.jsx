@@ -193,13 +193,13 @@ export default function ReservationForm({ reservation, initial, units, operatorT
       />
 
       {pricePreview && (
-        <div className="bg-ocean-50 border border-ocean-100 rounded-sm px-3 py-2 flex items-center justify-between">
+        <div className="bg-ocean-50 border border-ocean-100 rounded-[14px] px-3 py-2 flex items-center justify-between">
           <span className="text-xs font-body text-ocean-700">
             {pricePreview.tipo === 'activity'
               ? `${t('reservations.form.people', { n: form.guests })}${porVeiculo ? ` · ${t('opcoesActividade.vehiclesCount', { n: veiculos })}` : ''}`
               : t('reservations.form.nights', { n: pricePreview.dias })}
           </span>
-          <span className="font-display font-bold text-ocean-700">{eurosDecimais(pricePreview.total)}</span>
+          <span className="font-mono tabular-nums font-medium text-ocean-900">{eurosDecimais(pricePreview.total)}</span>
         </div>
       )}
 
@@ -237,7 +237,7 @@ export default function ReservationForm({ reservation, initial, units, operatorT
       <Textarea label={t('reservations.internalNotes')} value={form.notes} onChange={set('notes')} rows={2} placeholder={t('reservations.form.internalPlaceholder')} />
 
       {error && (
-        <p className="text-sm font-body px-3 py-2 rounded-sm bg-[var(--error-light)] text-[var(--error)]">{error}</p>
+        <p className="text-sm font-body px-3 py-2 rounded-[14px] bg-[var(--error-light)] text-[var(--error)]">{error}</p>
       )}
 
       <div className="flex gap-3 pt-2">

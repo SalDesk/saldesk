@@ -2,12 +2,12 @@ import { Building2, Compass, Pencil, Trash2, Power, ImageOff, Clock, MapPin, Use
 import { useT } from '../../i18n';
 import Badge from '../ui/Badge';
 import Button from '../ui/Button';
-import Card from '../ui/Card';
 import EmptyState from '../ui/EmptyState';
 import { parseTourMeta } from './UnitForm';
 import ConectRow from '../shared/ConectRow';
 import { formatarNumero, useLingua } from '../../utils/formatoLingua';
 import { rotuloDificuldade, rotuloTipoUnidade } from './rotulosUnidades';
+import { IconBtn, TOGGLE_HOVER_ACTIVE, TOGGLE_HOVER_INACTIVE, EDIT_HOVER, DELETE_HOVER } from '../shared/IconBtn';
 
 /* Valor em euros: em pt como sempre (toFixed, ponto decimal); nas outras linguas com os separadores da lingua */
 function dinheiro(valor, casas, lang) {
@@ -30,23 +30,15 @@ const DIFFICULTY_VARIANT = {
   Dificil:  'cancelled',
 };
 
-/* Botoes so com icone: o realce ao passar o rato depende do estado */
-const TOGGLE_HOVER_ACTIVE   = 'hover:text-error hover:bg-[var(--error-light)]';
-const TOGGLE_HOVER_INACTIVE = 'hover:text-[var(--success)] hover:bg-[var(--success-light)]';
-const DELETE_HOVER          = 'hover:text-error hover:bg-[var(--error-light)]';
-
 /* tipos de tour gravados em meta.tour_type; o texto vem de units.list.tourType */
 const TOUR_TYPES = ['grupo', 'privado', 'ambos'];
 
-/* Cartao de unidade: o cartao do sistema, em coluna, com a miniatura a toda a largura */
+/* Cartao de unidade Mare: em coluna, com a miniatura a toda a largura */
 function UnitCard({ isActive, children }) {
   return (
-    <Card
-      padding="p-0 flex flex-col flex-1"
-      className={`flex flex-col overflow-hidden transition-opacity ${isActive ? '' : 'opacity-70'}`}
-    >
+    <div className={`flex flex-col flex-1 overflow-hidden rounded-[18px] border border-mare-card bg-white transition-opacity ${isActive ? '' : 'opacity-70'}`}>
       {children}
-    </Card>
+    </div>
   );
 }
 
@@ -60,7 +52,7 @@ function TourCard({ unit, onEdit, onDelete, onToggle, onSubmitConect }) {
   return (
     <UnitCard isActive={isActive}>
       {thumb ? (
-        <div className="h-36 overflow-hidden bg-n-100 shrink-0">
+        <div className="h-36 overflow-hidden bg-mare-head shrink-0">
           <img
             src={thumb}
             alt={unit.name}
@@ -72,7 +64,7 @@ function TourCard({ unit, onEdit, onDelete, onToggle, onSubmitConect }) {
           />
         </div>
       ) : (
-        <div className="h-36 bg-ocean-50 flex items-center justify-center shrink-0 border-b border-n-100">
+        <div className="h-36 bg-mare-head flex items-center justify-center shrink-0 border-b border-mare-card">
           <Compass size={32} strokeWidth={1.25} className="text-ocean-300" />
         </div>
       )}
@@ -93,11 +85,11 @@ function TourCard({ unit, onEdit, onDelete, onToggle, onSubmitConect }) {
 
         {/* Tags row */}
         <div className="flex flex-wrap items-center gap-1.5">
-          <span className="text-xs font-body px-2 py-0.5 bg-ocean-50 text-ocean-700 border border-ocean-100 rounded-xs">
+          <span className="text-xs font-body font-medium px-2.5 py-0.5 bg-ocean-50 text-ocean-700 rounded-full">
             {rotuloTipoUnidade(unit.unit_type, t, lang)}
           </span>
           {meta.tour_type && (
-            <span className="text-xs font-body px-2 py-0.5 bg-n-50 text-n-600 border border-n-200 rounded-xs">
+            <span className="text-xs font-body font-medium px-2.5 py-0.5 bg-mare-head text-n-600 border border-mare-card rounded-full">
               {TOUR_TYPES.includes(meta.tour_type) ? t(`units.list.tourType.${meta.tour_type}`) : meta.tour_type}
             </span>
           )}
@@ -147,7 +139,7 @@ function TourCard({ unit, onEdit, onDelete, onToggle, onSubmitConect }) {
         {meta.languages?.length > 0 && (
           <div className="flex flex-wrap gap-1">
             {meta.languages.map(l => (
-              <span key={l} className="text-[10px] font-mono font-medium px-1.5 py-0.5 bg-n-100 text-n-600 rounded-xs uppercase tracking-wide">
+              <span key={l} className="text-[10px] font-mono font-medium px-2 py-0.5 bg-mare-head text-n-600 border border-mare-card rounded-full uppercase tracking-wide">
                 {l}
               </span>
             ))}
@@ -166,14 +158,14 @@ function TourCard({ unit, onEdit, onDelete, onToggle, onSubmitConect }) {
           const startingFrom = tierMin ?? (meta.price_private ? Number(meta.price_private) : null);
           const hasBasePrice = Number(unit.base_price) > 0;
           return (
-            <div className="flex items-end justify-between mt-auto pt-2 border-t border-n-100">
+            <div className="flex items-end justify-between mt-auto pt-2 border-t border-mare-card">
               <div>
                 {hasBasePrice ? (
-                  <p className="font-display font-bold text-base text-ocean-700 tabular-nums">
+                  <p className="font-mono font-semibold text-base text-ocean-900 tabular-nums">
                     €{dinheiro(unit.base_price, 0, lang)}<span className="text-xs font-body font-normal text-n-500">{t('units.list.perAdult')}</span>
                   </p>
                 ) : startingFrom != null ? (
-                  <p className="font-display font-bold text-base text-ocean-700 tabular-nums">
+                  <p className="font-mono font-semibold text-base text-ocean-900 tabular-nums">
                     <span className="text-xs font-body font-normal text-n-500">{t('units.list.from')} </span>€{dinheiro(startingFrom, 0, lang)}
                   </p>
                 ) : (
@@ -187,23 +179,9 @@ function TourCard({ unit, onEdit, onDelete, onToggle, onSubmitConect }) {
                 )}
               </div>
               <div className="flex gap-1">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  icon={Power}
-                  onClick={() => onToggle?.(unit)}
-                  aria-label={isActive ? t('units.list.deactivate') : t('units.list.activate')}
-                  className={isActive ? TOGGLE_HOVER_ACTIVE : TOGGLE_HOVER_INACTIVE}
-                />
-                <Button variant="ghost" size="sm" icon={Pencil} onClick={() => onEdit(unit)} aria-label={t('units.list.edit')} />
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  icon={Trash2}
-                  onClick={() => onDelete(unit)}
-                  className={DELETE_HOVER}
-                  aria-label={t('common.delete')}
-                />
+                <IconBtn icon={Power} onClick={() => onToggle?.(unit)} label={isActive ? t('units.list.deactivate') : t('units.list.activate')} hover={isActive ? TOGGLE_HOVER_ACTIVE : TOGGLE_HOVER_INACTIVE} />
+                <IconBtn icon={Pencil} onClick={() => onEdit(unit)} label={t('units.list.edit')} hover={EDIT_HOVER} />
+                <IconBtn icon={Trash2} onClick={() => onDelete(unit)} label={t('common.delete')} hover={DELETE_HOVER} />
               </div>
             </div>
           );
@@ -222,7 +200,7 @@ export default function UnitList({ units, onEdit, onDelete, onToggle, onSubmitCo
 
   if (!units.length) {
     return (
-      <Card padding="p-0">
+      <div className="rounded-[18px] border border-mare-card bg-white">
         <EmptyState
           icon={isTour ? Compass : Building2}
           title={t('common.noResults')}
@@ -233,7 +211,7 @@ export default function UnitList({ units, onEdit, onDelete, onToggle, onSubmitCo
             </Button>
           )}
         />
-      </Card>
+      </div>
     );
   }
 
@@ -263,7 +241,7 @@ export default function UnitList({ units, onEdit, onDelete, onToggle, onSubmitCo
         return (
           <UnitCard key={unit.id} isActive={isActive}>
             {thumb ? (
-              <div className="h-36 overflow-hidden bg-n-100 shrink-0">
+              <div className="h-36 overflow-hidden bg-mare-head shrink-0">
                 <img
                   src={thumb}
                   alt={unit.name}
@@ -272,7 +250,7 @@ export default function UnitList({ units, onEdit, onDelete, onToggle, onSubmitCo
                 />
               </div>
             ) : (
-              <div className="h-36 bg-n-50 flex items-center justify-center shrink-0 border-b border-n-100">
+              <div className="h-36 bg-mare-head flex items-center justify-center shrink-0 border-b border-mare-card">
                 <ImageOff size={28} strokeWidth={1.25} className="text-n-300" />
               </div>
             )}
@@ -294,45 +272,25 @@ export default function UnitList({ units, onEdit, onDelete, onToggle, onSubmitCo
                 </p>
               )}
 
-              <div className="flex items-center justify-between mt-auto pt-2 border-t border-n-100">
+              <div className="flex items-center justify-between mt-auto pt-2 border-t border-mare-card">
                 <div>
-                  <p className="font-display font-bold text-base text-ocean-700 tabular-nums">{formatPrice(unit, t, lang)}</p>
+                  <p className="font-mono font-semibold text-base text-ocean-900 tabular-nums">{formatPrice(unit, t, lang)}</p>
                   <p className="text-xs font-body text-n-400">{t('units.list.capacity', { n: unit.capacity })}</p>
                 </div>
                 <div className="flex gap-1">
                   {operatorType === 'restaurant' && onViewQr && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      icon={QrCode}
-                      onClick={() => onViewQr(unit)}
-                      aria-label={t('units.list.viewQr')}
-                    />
+                    <IconBtn icon={QrCode} onClick={() => onViewQr(unit)} label={t('units.list.viewQr')} hover={EDIT_HOVER} />
                   )}
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    icon={Power}
-                    onClick={() => onToggle?.(unit)}
-                    aria-label={isActive ? t('units.list.deactivate') : t('units.list.activate')}
-                    className={isActive ? TOGGLE_HOVER_ACTIVE : TOGGLE_HOVER_INACTIVE}
-                  />
-                  <Button variant="ghost" size="sm" icon={Pencil} onClick={() => onEdit(unit)} aria-label={t('units.list.edit')} />
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    icon={Trash2}
-                    onClick={() => onDelete(unit)}
-                    className={DELETE_HOVER}
-                    aria-label={t('common.delete')}
-                  />
+                  <IconBtn icon={Power} onClick={() => onToggle?.(unit)} label={isActive ? t('units.list.deactivate') : t('units.list.activate')} hover={isActive ? TOGGLE_HOVER_ACTIVE : TOGGLE_HOVER_INACTIVE} />
+                  <IconBtn icon={Pencil} onClick={() => onEdit(unit)} label={t('units.list.edit')} hover={EDIT_HOVER} />
+                  <IconBtn icon={Trash2} onClick={() => onDelete(unit)} label={t('common.delete')} hover={DELETE_HOVER} />
                 </div>
               </div>
 
               {unit.pricing_rules?.filter((r) => r.active).length > 0 && (
                 <div className="flex flex-wrap gap-1">
                   {unit.pricing_rules.filter((r) => r.active).slice(0, 2).map((r) => (
-                    <span key={r.id} className="text-xs font-body px-2 py-0.5 bg-sand-50 text-sand-600 rounded-xs">
+                    <span key={r.id} className="text-xs font-body font-medium px-2.5 py-0.5 bg-sand-100 text-n-800 rounded-full">
                       {r.name}
                     </span>
                   ))}
