@@ -24,11 +24,11 @@ const TODAY = new Date().toLocaleDateString('en-CA');
 
 /* Estados de limpeza (so em memoria, nunca gravados); o rotulo vem de housekeeping.states */
 const HK = {
-  clean:      { badge: 'confirmed', dot: 'bg-[var(--success)]', bg: 'bg-[var(--success-light)]' },
-  dirty:      { badge: 'cancelled', dot: 'bg-[var(--error)]',   bg: 'bg-[var(--error-light)]'   },
-  cleaning:   { badge: 'info',      dot: 'bg-ocean-500',        bg: 'bg-ocean-50'               },
-  inspection: { badge: 'pending',   dot: 'bg-[var(--warning)]', bg: 'bg-[var(--warning-light)]' },
-  blocked:    { badge: 'default',   dot: 'bg-n-300',            bg: 'bg-n-50'                   },
+  clean:      { badge: 'confirmed', dot: 'bg-[var(--success)]' },
+  dirty:      { badge: 'cancelled', dot: 'bg-[var(--error)]'   },
+  cleaning:   { badge: 'info',      dot: 'bg-ocean-500'        },
+  inspection: { badge: 'pending',   dot: 'bg-[var(--warning)]' },
+  blocked:    { badge: 'default',   dot: 'bg-n-300'            },
 };
 
 /* Itens da checklist: chaves de housekeeping.checklist; o que fica marcado vive so em memoria */
@@ -184,6 +184,7 @@ export default function Housekeeping() {
   return (
     <div>
       <PageHeader
+        eyebrow={t('nav.sections.operacao')}
         title={t('nav.housekeeping')}
         subtitle={t('housekeeping.subtitle', { date: formatarData(TODAY), n: units.length })}
         actions={
@@ -214,7 +215,7 @@ export default function Housekeeping() {
 
       {/* Urgent alerts */}
       {enriched.filter(r => r.priority === 'double').length > 0 && (
-        <div className="flex items-start gap-3 px-4 py-3 bg-[var(--error-light)] border border-n-200 rounded-md mb-4">
+        <div className="flex items-start gap-3 px-4 py-3 bg-[var(--error-light)] border border-mare-card rounded-[14px] mb-4">
           <AlertTriangle size={15} strokeWidth={1.75} className="text-error shrink-0 mt-0.5" />
           <div>
             <p className="text-sm font-body font-semibold text-error">{t('housekeeping.sameDay')}</p>
@@ -231,11 +232,11 @@ export default function Housekeeping() {
           const isCollapsed = !!collapsed[floor];
           const nomeAndar = floor ? t('housekeeping.floor', { n: floor }) : t('housekeeping.noFloor');
           return (
-            <div key={floor} className="bg-white rounded-md border border-n-200 shadow-sm overflow-hidden">
+            <div key={floor} className="rounded-[18px] border border-mare-card bg-white overflow-hidden">
               <button
                 type="button"
                 onClick={() => setCollapsed(c => ({ ...c, [floor]: !c[floor] }))}
-                className="w-full flex items-center gap-3 px-5 py-3 border-b border-n-100 hover:bg-n-50 transition-colors"
+                className="w-full flex items-center gap-3 px-5 py-3 min-h-11 border-b border-mare-card hover:bg-mare-head transition-colors"
               >
                 <Sparkles size={13} strokeWidth={1.75} className="text-ocean-700 shrink-0" />
                 <span className="font-display font-semibold text-sm text-n-700 flex-1 text-left">{nomeAndar}</span>
@@ -247,7 +248,7 @@ export default function Housekeeping() {
               </button>
 
               {!isCollapsed && (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-px bg-n-100">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 p-3">
                   {floorUnits.map(u => {
                     const entry = byId[u.id];
                     if (!entry) return null;
@@ -259,7 +260,7 @@ export default function Housekeeping() {
                     const pct   = total ? Math.round((done.length / total) * 100) : 0;
 
                     return (
-                      <div key={u.id} className={`p-4 ${st.bg}`}>
+                      <div key={u.id} className="p-4 rounded-[14px] border border-mare-card bg-mare-head">
                         <div className="flex items-start gap-2 mb-2">
                           <span className={`w-2 h-2 rounded-full shrink-0 mt-1.5 ${st.dot}`} />
                           <div className="flex-1 min-w-0">
@@ -302,7 +303,7 @@ export default function Housekeeping() {
                         <button
                           type="button"
                           onClick={() => setChecklistRoom(u)}
-                          className="w-full flex items-center gap-2 text-left"
+                          className="w-full flex items-center gap-2 text-left min-h-11 md:min-h-9"
                         >
                           <div className="flex-1 bg-n-100 rounded-full h-1.5 overflow-hidden">
                             <div
@@ -310,7 +311,7 @@ export default function Housekeeping() {
                               style={{ width: `${pct}%` }}
                             />
                           </div>
-                          <span className="text-[10px] font-mono text-n-500 shrink-0">{done.length}/{total}</span>
+                          <span className="text-[10px] font-mono tabular-nums text-n-500 shrink-0">{done.length}/{total}</span>
                           <CheckSquare size={12} strokeWidth={1.75} className="text-n-400 shrink-0" />
                         </button>
                       </div>
@@ -323,7 +324,7 @@ export default function Housekeeping() {
         })}
 
         {floors.length === 0 && (
-          <div className="bg-white rounded-md border border-n-200 shadow-sm">
+          <div className="rounded-[18px] border border-mare-card bg-white">
             <EmptyState icon={Sparkles} title={t('housekeeping.empty')} />
           </div>
         )}

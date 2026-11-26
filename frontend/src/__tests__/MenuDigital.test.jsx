@@ -355,6 +355,37 @@ describe('MenuDigital', () => {
     await abre();
     expect(screen.getByText('Nenhum prato nesta categoria.')).toBeInTheDocument();
   });
+
+  it('mare: o cabecalho traz o eyebrow Operação e as acoes quebram linha', async () => {
+    useUiStore.setState({ lang: 'pt' });
+    await abre();
+    expect(document.querySelector('[data-eyebrow]')).toHaveTextContent('Operação');
+    const botao = screen.getByRole('button', { name: /Menu Degustação/ });
+    expect(botao.parentElement.className).toContain('flex-wrap');
+  });
+
+  it('mare: cada prato e um cartao Mare com o preco em mono e botoes de icone de 44 px', async () => {
+    useUiStore.setState({ lang: 'pt' });
+    await abre();
+    const c = cartao('Atum Grelhado').closest('[class*="rounded-[18px]"]');
+    expect(c.className).toContain('rounded-[18px]');
+    expect(c.className).toContain('border-mare-card');
+    const preco = within(c).getByText('€12.50');
+    expect(preco.className).toContain('font-mono');
+    expect(preco.className).toContain('tabular-nums');
+    for (const b of botoesDe('Atum Grelhado').slice(0, 3)) expect(b.className).toContain('min-h-11');
+  });
+
+  it('mare: o menu degustacao e o bloco do QR sao cartoes Mare e o inactivo e Badge', async () => {
+    useUiStore.setState({ lang: 'pt' });
+    await abre();
+    const bloco = screen.getByText('Menus Degustação').closest('[class*="rounded-[18px]"]');
+    expect(bloco.className).toContain('rounded-[18px]');
+    const preco = within(bloco).getByText('€45.00');
+    expect(preco.className).toContain('font-mono');
+    expect(within(bloco).getByText('Inactivo').className).toContain('app:rounded-full');
+    expect(screen.getByText(URL_MENU).closest('[class*="rounded-[18px]"]').className).toContain('rounded-[18px]');
+  });
 });
 
 describe('MenuDigital: em ingles', () => {

@@ -228,6 +228,35 @@ describe('Pedidos', () => {
     expect(await screen.findByText('Sem pedidos.')).toBeInTheDocument();
     expect(errSpy).toHaveBeenCalled();
   });
+
+  it('mare: o cabecalho traz o eyebrow Operação', async () => {
+    useUiStore.setState({ lang: 'pt' });
+    await abre();
+    expect(document.querySelector('[data-eyebrow]')).toHaveTextContent('Operação');
+  });
+
+  it('mare: a lista e um cartao Mare, o estado e Badge e valores, horas e mesas vao em mono', async () => {
+    useUiStore.setState({ lang: 'pt' });
+    await abre();
+    const cartao = screen.getByRole('table').closest('.border-mare-card');
+    expect(cartao.className).toContain('rounded-[18px]');
+    const [l1] = linhas();
+    expect(within(l1).getByText('Recebido').className).toContain('app:rounded-full');
+    for (const texto of ['€37.50', 'Mesa 4', hora(CRIADO)]) {
+      const el = within(l1).getByText(texto);
+      expect(el.className).toContain('font-mono');
+      expect(el.className).toContain('tabular-nums');
+    }
+  });
+
+  it('mare: cancelar e ver detalhes sao botoes de icone com 44 px no telemovel', async () => {
+    useUiStore.setState({ lang: 'pt' });
+    await abre();
+    const [l1] = linhas();
+    for (const nome of ['Cancelar', 'Ver detalhes']) {
+      expect(within(l1).getByRole('button', { name: nome }).className).toContain('min-h-11');
+    }
+  });
 });
 
 /* Painel em ingles: os rotulos mudam, o que se grava (estados) fica igual */

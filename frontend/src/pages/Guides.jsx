@@ -29,6 +29,7 @@ import { useT } from '../i18n';
 import { mensagemErro } from '../utils/mensagemErro';
 import { formatarData, useLingua } from '../utils/formatoLingua';
 import { DAYS, CARGO_VENDEDOR, rotuloCargo, rotuloDia } from './staff/shared';
+import { IconBtn, EDIT_HOVER, DELETE_HOVER } from '../components/shared/IconBtn';
 
 const LANGUAGES   = ['PT', 'EN', 'DE', 'NL', 'FR', 'ES'];
 /* Funcoes gravadas tal como estao; o ecra mostra o rotulo de staff.roles */
@@ -53,19 +54,6 @@ const STATUS_META = {
 
 /* Etiqueta de grupo de campos: igual a etiqueta dos campos do sistema */
 const GROUP_LABEL = 'text-xs font-body font-bold uppercase tracking-wide text-n-600 mb-2 app:normal-case app:tracking-normal app:text-[13px] app:text-n-700';
-
-/* Botoes so com icone: nativos, com 44 px no telemovel; o realce ao passar o rato depende da accao */
-const ICONE_BASE = 'inline-flex items-center justify-center min-h-11 min-w-11 md:min-h-9 md:min-w-9 rounded-full text-n-500 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sand-500';
-const EDIT_HOVER   = 'hover:text-ocean-700 hover:bg-ocean-50';
-const DELETE_HOVER = 'hover:text-error hover:bg-[var(--error-light)]';
-
-function IconBtn({ icon: Icon, label, onClick, hover }) {
-  return (
-    <button type="button" onClick={onClick} aria-label={label} className={`${ICONE_BASE} ${hover}`}>
-      <Icon size={16} strokeWidth={1.75} />
-    </button>
-  );
-}
 
 const DOT_META = {
   active:   'bg-[var(--success)]',

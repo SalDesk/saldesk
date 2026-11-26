@@ -7,6 +7,7 @@ import { parseTourMeta } from './UnitForm';
 import ConectRow from '../shared/ConectRow';
 import { formatarNumero, useLingua } from '../../utils/formatoLingua';
 import { rotuloDificuldade, rotuloTipoUnidade } from './rotulosUnidades';
+import { IconBtn, TOGGLE_HOVER_ACTIVE, TOGGLE_HOVER_INACTIVE, EDIT_HOVER, DELETE_HOVER } from '../shared/IconBtn';
 
 /* Valor em euros: em pt como sempre (toFixed, ponto decimal); nas outras linguas com os separadores da lingua */
 function dinheiro(valor, casas, lang) {
@@ -28,21 +29,6 @@ const DIFFICULTY_VARIANT = {
   Moderado: 'pending',
   Dificil:  'cancelled',
 };
-
-/* Botoes so com icone: nativos, com 44 px no telemovel; o realce ao passar o rato depende da accao */
-const ICONE_BASE = 'inline-flex items-center justify-center min-h-11 min-w-11 md:min-h-9 md:min-w-9 rounded-full text-n-500 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sand-500';
-const TOGGLE_HOVER_ACTIVE   = 'hover:text-error hover:bg-[var(--error-light)]';
-const TOGGLE_HOVER_INACTIVE = 'hover:text-[var(--success)] hover:bg-[var(--success-light)]';
-const EDIT_HOVER            = 'hover:text-ocean-700 hover:bg-ocean-50';
-const DELETE_HOVER          = 'hover:text-error hover:bg-[var(--error-light)]';
-
-function IconBtn({ icon: Icon, label, onClick, hover }) {
-  return (
-    <button type="button" onClick={onClick} aria-label={label} className={`${ICONE_BASE} ${hover}`}>
-      <Icon size={16} strokeWidth={1.75} />
-    </button>
-  );
-}
 
 /* tipos de tour gravados em meta.tour_type; o texto vem de units.list.tourType */
 const TOUR_TYPES = ['grupo', 'privado', 'ambos'];
