@@ -50,6 +50,14 @@ describe('AgendaSaidas', () => {
     botoes.forEach((b) => expect(b).toHaveAttribute('aria-pressed'));
   });
 
+  it('lista e detalhe so ficam lado a lado em ecras muito largos (a 1280 px os nomes ficavam cortados)', () => {
+    montar();
+    const lista = screen.getAllByRole('button', { name: /Buggy/ })[0].closest('ul, ol, div.grid');
+    const grelha = lista.closest('.grid.grid-cols-1');
+    expect(grelha.className).toContain('2xl:grid-cols-2');
+    expect(grelha.className).not.toContain('lg:grid-cols-2');
+  });
+
   it('o total de pessoas conta tambem quem ja fez check-out, nao o do evento', () => {
     montar();
     expect(screen.getByRole('button', { name: /Buggy/ })).toHaveTextContent('4 pessoa(s)');

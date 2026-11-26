@@ -306,7 +306,7 @@ describe('Dashboard: virar o dia com o ecrã aberto', () => {
   });
 });
 
-describe('Dashboard: espaco por baixo do botao flutuante (telemovel)', () => {
+describe('Dashboard: sem botao flutuante no telemovel', () => {
   beforeEach(() => { servicosVazios(); navigateMock.mockReset(); });
   afterEach(() => {
     cleanup();
@@ -314,11 +314,9 @@ describe('Dashboard: espaco por baixo do botao flutuante (telemovel)', () => {
     useUiStore.setState({ lang: 'pt', dashboardView: 'hoje' });
   });
 
-  it('o_conteudo_acaba_com_um_espaco_do_tamanho_do_botao_nova_reserva', async () => {
+  it('nao_ha_espaco_reservado_para_um_botao_flutuante', async () => {
     renderDashboard('activity');
-    const espaco = await screen.findByTestId('espaco-botao-flutuante');
-    expect(espaco.className).toContain('md:hidden');
-    expect(espaco.getAttribute('aria-hidden')).toBe('true');
-    expect(espaco.style.height).toContain('4rem');
+    await screen.findByRole('button', { name: 'Nova reserva' });
+    expect(screen.queryByTestId('espaco-botao-flutuante')).toBeNull();
   });
 });

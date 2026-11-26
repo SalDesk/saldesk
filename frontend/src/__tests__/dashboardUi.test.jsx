@@ -150,15 +150,17 @@ describe('DashboardHeader', () => {
     expect(calendario).toHaveBeenCalledTimes(1);
   });
 
-  it('Nova reserva e um unico botao, sand, que abaixo de 768 px flutua redondo acima da barra de baixo', () => {
+  it('Nova reserva e um unico botao sand, no cabecalho tambem no telemovel (a barra de baixo ja tem um botao redondo)', () => {
     render(<DashboardHeader title="Painel" view="hoje" onViewChange={() => {}} onNovaReserva={() => {}} />);
     /* um so botao com este nome: nao ha duplicado para o telemovel */
     const botao = screen.getByRole('button', { name: 'Nova reserva' });
     expect(botao.className).toContain('bg-sand-500');
-    expect(botao.className).toContain('max-md:fixed');
-    expect(botao.className).toContain('max-md:rounded-full');
-    /* a BottomNav tem 4rem (h-16): o botao fica acima dela */
-    expect(botao.className).toContain('max-md:bottom-[calc(5rem+env(safe-area-inset-bottom))]');
+    /* nao flutua: o botao central da BottomNav ja e redondo e sand, dois juntos confundiam */
+    expect(botao.className).not.toContain('max-md:fixed');
+    expect(botao.className).toContain('max-md:min-h-[44px]');
+    /* o texto ve-se tambem no telemovel */
+    expect(botao.textContent).toContain('Nova reserva');
+    expect(botao.querySelector('.max-md\\:hidden')).toBeNull();
   });
 
   it('em telemovel os separadores e Ver calendario tem pelo menos 44 px de altura', () => {
