@@ -350,7 +350,7 @@ export default function Customers() {
         title={t('customers.title')}
         subtitle={t('customersPage.subtitle', { n: customers.length })}
         actions={
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <Button icon={Plus} onClick={() => setNewModal(true)}>
               {t('customersPage.newCustomer')}
             </Button>

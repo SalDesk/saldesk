@@ -63,7 +63,7 @@ export default function Sidebar({ onClose }) {
           key={to}
           type="button"
           onClick={() => setUpgradeModal({ plan: requiredPlan, feature })}
-          className="w-full flex items-center gap-3 pl-3 pr-3 py-2 rounded-r-md border-l-[3px] border-transparent text-sm font-body font-medium text-ocean-300/70 hover:bg-ocean-700/50 hover:text-ocean-200 transition-colors"
+          className="w-full flex items-center gap-3 pl-3 pr-3 py-2 app:min-h-[44px] rounded-r-md border-l-[3px] border-transparent text-sm font-body font-medium text-ocean-300/70 hover:bg-ocean-700/50 hover:text-ocean-200 transition-colors"
         >
           <Icon size={17} strokeWidth={1.75} className="shrink-0" />
           <span className="truncate flex-1 text-left">{label}</span>
@@ -84,9 +84,9 @@ export default function Sidebar({ onClose }) {
         end={end}
         data-tour={TOUR_ANCHOR[to]}
         className={({ isActive }) =>
-          `flex items-center gap-3 pl-3 pr-3 py-2 rounded-r-md border-l-[3px] text-sm font-body font-medium transition-colors ${
+          `flex items-center gap-3 pl-3 pr-3 py-2 app:min-h-[44px] rounded-r-md border-l-[3px] text-sm font-body font-medium transition-colors ${
             isActive
-              ? 'bg-ocean-600 text-white border-sand-500'
+              ? 'bg-ocean-600 app:bg-ocean-700 text-white border-sand-500'
               : 'text-ocean-200 border-transparent hover:bg-ocean-700/60 hover:text-white'
           }`
         }
@@ -99,7 +99,7 @@ export default function Sidebar({ onClose }) {
   }
 
   return (
-    <aside className="w-60 bg-ocean-800 text-white flex flex-col h-full shrink-0">
+    <aside className="w-60 bg-ocean-800 app:bg-ocean-900 text-white flex flex-col h-full shrink-0">
       {/* Logo */}
       <div className="flex items-center justify-between px-5 py-5 border-b border-ocean-700">
         <Logo white size="lg" />
@@ -142,7 +142,7 @@ export default function Sidebar({ onClose }) {
                 aria-controls={listId}
                 aria-disabled={pinned ? 'true' : undefined}
                 onClick={() => { if (!pinned) setNavSectionCollapsed(section.id, !collapsed); }}
-                className={`w-full flex items-center justify-between px-3 py-1.5 text-[11px] font-display font-semibold tracking-wide text-ocean-300 transition-colors ${pinned ? 'cursor-default' : 'hover:text-white'}`}
+                className={`w-full flex items-center justify-between px-3 py-1.5 app:min-h-[44px] text-[11px] font-display font-semibold tracking-wide app:uppercase app:tracking-[0.08em] text-ocean-300 transition-colors ${pinned ? 'cursor-default' : 'hover:text-white'}`}
               >
                 <span>{section.label}</span>
                 <ChevronDown

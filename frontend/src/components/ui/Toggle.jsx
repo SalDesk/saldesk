@@ -18,7 +18,8 @@ function Toggle({ checked, onChange, label, hint: dica, description, 'aria-label
         aria-label={label ? undefined : ariaLabel}
         aria-describedby={hint ? hintId : undefined}
         onClick={() => onChange(!checked)}
-        className={`shrink-0 w-10 h-5 rounded-full transition-colors relative mt-0.5 ${checked ? 'bg-ocean-700' : 'bg-n-300'}`}>
+        /* app: a area de toque estica-se (pseudo-elemento) para 44 px sem mudar o desenho do interruptor */
+        className={`shrink-0 w-10 h-5 rounded-full transition-colors relative mt-0.5 app:before:absolute app:before:content-[''] app:before:-inset-x-0.5 app:before:-inset-y-3 app:focus-visible:outline-none app:focus-visible:ring-2 app:focus-visible:ring-sand-500 ${checked ? 'bg-ocean-700 app:bg-turquoise-600' : 'bg-n-300'}`}>
         <span className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-all ${checked ? 'left-[22px]' : 'left-0.5'}`} />
       </button>
     </div>

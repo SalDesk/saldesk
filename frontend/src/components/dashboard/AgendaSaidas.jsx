@@ -129,7 +129,7 @@ export default function AgendaSaidas({ eventos, reservasHoje, tours, agoraMin, o
       ) : ordenados.length === 0 ? vazio : (
         <>
           <p className="text-[13px] font-body text-n-600">{t('dashboard.saidas.hint')}</p>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
+          <div className="grid grid-cols-1 2xl:grid-cols-2 gap-4 items-start">
             <ul className="flex flex-col gap-0.5 min-w-0">
               {ordenados.map((e) => {
                 const visual = estadoVisual(e, agoraMin, guiasConhecidos);

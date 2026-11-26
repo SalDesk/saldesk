@@ -44,18 +44,18 @@ export default function Modal({
     >
       <div
         className={[
-          'w-full bg-white rounded-lg shadow-lg flex flex-col max-h-[90vh] app:rounded-sm',
+          'w-full bg-white rounded-lg shadow-lg flex flex-col max-h-[90vh] app:rounded-[18px] app:border app:border-mare-card',
           sizes[size],
         ].join(' ')}
         role="dialog"
         aria-modal="true"
       >
         {title && (
-          <div className="flex items-center justify-between px-6 py-4 border-b border-n-200 shrink-0">
+          <div className="flex items-center justify-between px-6 py-4 border-b border-n-200 shrink-0 app:border-n-100 app:px-5">
             <h2 className="font-display font-semibold text-base text-n-900 app:text-base">{title}</h2>
             <button
               onClick={onClose}
-              className="text-n-400 hover:text-n-700 transition-colors p-1 rounded-sm"
+              className="text-n-400 hover:text-n-700 transition-colors p-1 rounded-sm app:w-11 app:h-11 app:inline-flex app:items-center app:justify-center app:rounded-full app:p-0"
               aria-label={t('common.close')}
             >
               <X size={18} strokeWidth={1.75} />

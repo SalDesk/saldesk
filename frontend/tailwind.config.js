@@ -18,6 +18,13 @@ export default {
           100: '#D6EEF5',
           50:  '#EBF7FB',
         },
+        /* Tokens Mare (ver styles/tokens.css): fundo da app, bordas de cartao/campo, cabecalho de tabela */
+        mare: {
+          ground: 'var(--surface-app)',
+          card:   'var(--card-border)',
+          field:  'var(--field-border)',
+          head:   'var(--table-head)',
+        },
         /* Cor da marca do operador na pagina publica (/book/*): variaveis --brand-<tom>-rgb definidas por
            utils/brandPalette.js; sem elas, os valores por omissao sao os do ocean (aspecto de sempre) */
         brand: {

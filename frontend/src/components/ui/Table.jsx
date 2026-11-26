@@ -52,7 +52,7 @@ export default function Table({ columns, rows, loading, emptyMessage, maxHeight,
     <div className={maxHeight ? `overflow-x-auto overflow-y-auto ${maxHeight}` : 'overflow-x-auto'}>
       <table className="w-full text-sm">
         <thead>
-          <tr className="border-b border-n-200">
+          <tr className="border-b border-n-200 app:border-n-100">
             {columns.map((col) => {
               const sortable = typeof col.sortValue === 'function';
               const active = sort.key === col.key && sort.dir;
@@ -65,14 +65,14 @@ export default function Table({ columns, rows, loading, emptyMessage, maxHeight,
                 <th
                   key={col.key}
                   aria-sort={ariaSort}
-                  className={`app:sticky app:top-0 app:z-10 app:bg-white ${padX} py-3 ${alignClass} text-xs font-body font-bold uppercase tracking-wide text-n-500 app:normal-case app:tracking-normal app:text-xs app:py-2`}
+                  className={`app:sticky app:top-0 app:z-10 app:bg-mare-head ${padX} py-3 ${alignClass} text-xs font-body font-bold uppercase tracking-wide text-n-500 app:font-semibold app:uppercase app:tracking-[0.04em] app:text-n-600 app:text-xs app:py-3`}
                   style={{ width: col.width }}
                 >
                   {sortable ? (
                     <button
                       type="button"
                       onClick={() => toggleSort(col.key)}
-                      className="inline-flex items-center gap-1 uppercase tracking-wide font-bold hover:text-n-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ocean-300 rounded-xs app:normal-case app:tracking-normal"
+                      className="inline-flex items-center gap-1 uppercase tracking-wide font-bold hover:text-n-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ocean-300 rounded-xs app:font-semibold app:min-h-11"
                     >
                       {col.label}
                       <SortIcon size={12} strokeWidth={1.75} className={active ? 'text-ocean-700' : 'text-n-300'} aria-hidden="true" />
@@ -96,12 +96,12 @@ export default function Table({ columns, rows, loading, emptyMessage, maxHeight,
             sortedRows.map((row, i) => (
               <tr
                 key={row.id ?? i}
-                className="border-b border-n-100 hover:bg-n-50 transition-colors"
+                className="border-b border-n-100 hover:bg-n-50 transition-colors app:h-12 app:border-n-100 app:hover:bg-mare-head"
               >
                 {columns.map((col) => (
                   <td
                     key={col.key}
-                    className={`${padX} py-3 ${ALIGN_CLASS[col.align] || ''} text-n-700 app:py-2`}
+                    className={`${padX} py-3 ${ALIGN_CLASS[col.align] || ''} text-n-700 app:py-2 app:text-n-700`}
                   >
                     {col.render ? col.render(row) : row[col.key]}
                   </td>

@@ -17,11 +17,11 @@ const Input = forwardRef(function Input(
 ) {
   const { campoId, erroId, dicaId, descricao } = useCampo({ id, error, hint, descricaoExterna });
   const baseClass = [
-    'w-full h-9 px-3 rounded-sm border text-sm font-body bg-n-100 text-n-900 dark:bg-n-800 dark:text-n-100',
+    'w-full h-9 app:h-11 px-3 rounded-sm border text-sm font-body bg-n-100 text-n-900 dark:bg-n-800 dark:text-n-100',
     'placeholder:text-n-400 transition-colors',
     'focus:outline-none focus:ring-2 focus:ring-ocean-300 focus:border-ocean-700 focus:bg-white dark:focus:bg-n-800',
-    'app:bg-white app:text-[13px]',
-    error ? 'border-error' : 'border-n-300 dark:border-n-600',
+    'app:bg-white app:text-sm app:rounded-md app:focus:ring-sand-500',
+    error ? 'border-error app:border-error app:focus:border-error' : 'border-n-300 dark:border-n-600 app:border-mare-field app:focus:border-ocean-700',
     props.disabled ? 'opacity-50 cursor-not-allowed' : '',
     className,
   ].join(' ');
@@ -29,13 +29,13 @@ const Input = forwardRef(function Input(
   return (
     <div className="flex flex-col gap-1">
       {label && (
-        <label htmlFor={campoId} className="text-xs font-body font-bold uppercase tracking-wide text-n-600 dark:text-n-400 app:normal-case app:tracking-normal app:text-[13px] app:text-n-700">
+        <label htmlFor={campoId} className="text-xs font-body font-bold uppercase tracking-wide text-n-600 dark:text-n-400 app:normal-case app:tracking-normal app:text-[13px] app:font-semibold app:text-n-700">
           {label}
           {required && <span className="text-error ml-0.5" aria-hidden="true">*</span>}
         </label>
       )}
       <input ref={ref} id={campoId} required={required} aria-invalid={error ? true : undefined} aria-describedby={descricao} className={baseClass} {...props} />
-      {error && <p id={erroId} className="text-xs text-error">{error}</p>}
+      {error && <p id={erroId} className="text-xs text-error app:text-[13px]">{error}</p>}
       {hint && !error && <p id={dicaId} className="text-xs text-n-500 dark:text-n-400">{hint}</p>}
     </div>
   );
@@ -49,11 +49,11 @@ export const Textarea = forwardRef(function Textarea(
 ) {
   const { campoId, erroId, dicaId, descricao } = useCampo({ id, error, hint, descricaoExterna });
   const baseClass = [
-    'w-full px-3 py-2 rounded-sm border text-sm font-body bg-n-100 text-n-900 dark:bg-n-800 dark:text-n-100 resize-none',
+    'w-full px-3 py-2 app:px-3.5 rounded-sm border text-sm font-body bg-n-100 text-n-900 dark:bg-n-800 dark:text-n-100 resize-none',
     'placeholder:text-n-400 transition-colors',
     'focus:outline-none focus:ring-2 focus:ring-ocean-300 focus:border-ocean-700 focus:bg-white dark:focus:bg-n-800',
-    'app:bg-white app:text-[13px]',
-    error ? 'border-error' : 'border-n-300 dark:border-n-600',
+    'app:bg-white app:text-sm app:rounded-md app:focus:ring-sand-500',
+    error ? 'border-error app:border-error app:focus:border-error' : 'border-n-300 dark:border-n-600 app:border-mare-field app:focus:border-ocean-700',
     props.disabled ? 'opacity-50 cursor-not-allowed' : '',
     className,
   ].join(' ');
@@ -61,13 +61,13 @@ export const Textarea = forwardRef(function Textarea(
   return (
     <div className="flex flex-col gap-1">
       {label && (
-        <label htmlFor={campoId} className="text-xs font-body font-bold uppercase tracking-wide text-n-600 dark:text-n-400 app:normal-case app:tracking-normal app:text-[13px] app:text-n-700">
+        <label htmlFor={campoId} className="text-xs font-body font-bold uppercase tracking-wide text-n-600 dark:text-n-400 app:normal-case app:tracking-normal app:text-[13px] app:font-semibold app:text-n-700">
           {label}
           {required && <span className="text-error ml-0.5" aria-hidden="true">*</span>}
         </label>
       )}
       <textarea ref={ref} rows={rows} id={campoId} required={required} aria-invalid={error ? true : undefined} aria-describedby={descricao} className={baseClass} {...props} />
-      {error && <p id={erroId} className="text-xs text-error">{error}</p>}
+      {error && <p id={erroId} className="text-xs text-error app:text-[13px]">{error}</p>}
       {hint && !error && <p id={dicaId} className="text-xs text-n-500 dark:text-n-400">{hint}</p>}
     </div>
   );
@@ -79,10 +79,10 @@ export const Select = forwardRef(function Select(
 ) {
   const { campoId, erroId, dicaId, descricao } = useCampo({ id, error, hint, descricaoExterna });
   const baseClass = [
-    'w-full h-9 px-3 rounded-sm border text-sm font-body bg-n-100 text-n-900 dark:bg-n-800 dark:text-n-100',
+    'w-full h-9 app:h-11 px-3 rounded-sm border text-sm font-body bg-n-100 text-n-900 dark:bg-n-800 dark:text-n-100',
     'focus:outline-none focus:ring-2 focus:ring-ocean-300 focus:border-ocean-700 focus:bg-white dark:focus:bg-n-800',
-    'app:bg-white app:text-[13px]',
-    error ? 'border-error' : 'border-n-300 dark:border-n-600',
+    'app:bg-white app:text-sm app:rounded-md app:focus:ring-sand-500',
+    error ? 'border-error app:border-error app:focus:border-error' : 'border-n-300 dark:border-n-600 app:border-mare-field app:focus:border-ocean-700',
     props.disabled ? 'opacity-50 cursor-not-allowed' : '',
     className,
   ].join(' ');
@@ -90,7 +90,7 @@ export const Select = forwardRef(function Select(
   return (
     <div className="flex flex-col gap-1">
       {label && (
-        <label htmlFor={campoId} className="text-xs font-body font-bold uppercase tracking-wide text-n-600 dark:text-n-400 app:normal-case app:tracking-normal app:text-[13px] app:text-n-700">
+        <label htmlFor={campoId} className="text-xs font-body font-bold uppercase tracking-wide text-n-600 dark:text-n-400 app:normal-case app:tracking-normal app:text-[13px] app:font-semibold app:text-n-700">
           {label}
           {required && <span className="text-error ml-0.5" aria-hidden="true">*</span>}
         </label>
@@ -98,7 +98,7 @@ export const Select = forwardRef(function Select(
       <select ref={ref} id={campoId} required={required} aria-invalid={error ? true : undefined} aria-describedby={descricao} className={baseClass} {...props}>
         {children}
       </select>
-      {error && <p id={erroId} className="text-xs text-error">{error}</p>}
+      {error && <p id={erroId} className="text-xs text-error app:text-[13px]">{error}</p>}
       {hint && !error && <p id={dicaId} className="text-xs text-n-500 dark:text-n-400">{hint}</p>}
     </div>
   );

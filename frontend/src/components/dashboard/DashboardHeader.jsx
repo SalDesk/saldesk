@@ -78,10 +78,10 @@ export default function DashboardHeader({
             variant="accent"
             onClick={onNovaReserva}
             aria-label={t('dashboard.activity.newReservation')}
-            className="max-md:fixed max-md:right-4 max-md:bottom-[calc(5rem+env(safe-area-inset-bottom))] max-md:z-30 max-md:w-14 max-md:h-14 max-md:p-0 max-md:rounded-full max-md:shadow-lg"
+            className="max-md:!h-11 max-md:min-h-[44px]"
           >
-            <Plus strokeWidth={2} aria-hidden="true" className="shrink-0 w-6 h-6 md:w-4 md:h-4" />
-            <span className="max-md:hidden">{t('dashboard.activity.newReservation')}</span>
+            <Plus strokeWidth={2} aria-hidden="true" className="shrink-0 w-4 h-4" />
+            <span>{t('dashboard.activity.newReservation')}</span>
           </Button>
         )}
       </div>

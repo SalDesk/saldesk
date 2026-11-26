@@ -42,7 +42,12 @@
   --info-light:    #EBF7FB;
 
   /* Superficie de fundo da app do operador */
-  --surface-app: #F1F4F6;
+  --surface-app: #EEF2F4;
+
+  /* Maré: bordas de cartao e de campo, cabecalho de tabela */
+  --card-border:  #DCE5EA;
+  --field-border: #C9D8E0;
+  --table-head:   #F6F9FA;
 
   /* Tipografia */
   --font-display: 'Sora', sans-serif;
@@ -73,4 +78,7 @@
   --error-light:   #4A1414;
   --info:          #71BDD4;
   --info-light:    #0A3F55;
+
+  /* --surface-app, --card-border, --field-border e --table-head - valores escuros deliberadamente
+     nao definidos (modo escuro fora do ambito); mantem os valores claros. */
 }

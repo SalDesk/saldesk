@@ -554,7 +554,7 @@ describe('Marketing: design system (estrutura, QR e Widget)', () => {
   it('o_cartao_KPI_e_Card', async () => {
     await montar();
     await abrir('Estatísticas', 'Visitas ao perfil');
-    expect(screen.getByText('Visitas ao perfil').closest('[class*="app:rounded-sm"]')).not.toBeNull();
+    expect(screen.getByText('Visitas ao perfil').closest('[class*="app:rounded-[18px]"]')).not.toBeNull();
   });
 
   it('sem_hexadecimais_cores_nomeadas_ou_text_error_em_classes_nos_separadores_QR_e_Widget', async () => {
@@ -573,7 +573,7 @@ describe('Marketing: design system (estrutura, QR e Widget)', () => {
 
 /* ───────────────────────── design system: Indicacoes e Estatisticas ───────────────────────── */
 
-const ehCard = (el) => el.closest('[class*="app:rounded-sm"]') !== null;
+const ehCard = (el) => el.closest('[class*="app:rounded-[18px]"]') !== null;
 
 describe('Marketing: design system (Indicações e Estatísticas)', () => {
   it('a_tabela_de_indicacoes_e_Table_com_as_tres_colunas', async () => {
