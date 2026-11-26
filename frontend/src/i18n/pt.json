@@ -2159,6 +2159,8 @@
     "byUnit": "Por unidade",
     "allUnits": "Todas as unidades",
     "byGuide": "Por guia",
+    "prevPeriod": "Período anterior",
+    "nextPeriod": "Período seguinte",
     "allGuides": "Todos os guias",
     "legendSoldByStaff": "Vendido por colaborador",
     "soldBy": "Vendido por {{name}}",

@@ -2159,6 +2159,8 @@
     "byUnit": "By unit",
     "allUnits": "All units",
     "byGuide": "By guide",
+    "prevPeriod": "Previous period",
+    "nextPeriod": "Next period",
     "allGuides": "All guides",
     "legendSoldByStaff": "Sold by staff member",
     "soldBy": "Sold by {{name}}",

@@ -920,4 +920,81 @@ describe('Calendar', () => {
       semPortugues();
     });
   });
+
+  describe('estilo Mare', () => {
+    function fixaHoje(ano, mes, dia) {
+      vi.useFakeTimers({ toFake: ['Date'] });
+      vi.setSystemTime(new Date(ano, mes - 1, dia, 12, 0, 0));
+    }
+
+    it('mostra o sobretitulo da area Operacao', async () => {
+      await abrePagina();
+      expect(document.querySelector('[data-eyebrow]').textContent).toBe('Operação');
+    });
+
+    it('o seletor Mes/Semana/Dia e uma pilula numa pista e marca a vista activa', async () => {
+      await abrePagina();
+      const mes = screen.getByRole('button', { name: 'Mês' });
+      const semana = screen.getByRole('button', { name: 'Semana' });
+      const pista = mes.parentElement;
+      expect(pista.className).toContain('rounded-full');
+      expect(pista.className).toContain('border-mare-card');
+      expect(mes).toHaveAttribute('aria-pressed', 'true');
+      expect(mes.className).toContain('bg-ocean-900');
+      expect(semana).toHaveAttribute('aria-pressed', 'false');
+      await accaoQueRecarrega(() => fireEvent.click(semana));
+      expect(screen.getByRole('button', { name: 'Semana' })).toHaveAttribute('aria-pressed', 'true');
+      expect(screen.getByRole('button', { name: 'Mês' })).toHaveAttribute('aria-pressed', 'false');
+    });
+
+    it('as setas de navegacao sao botoes redondos de 44 px com nome acessivel', async () => {
+      await abrePagina();
+      const { anterior, seguinte } = botoesNav();
+      expect(anterior).toHaveAttribute('aria-label', 'Período anterior');
+      expect(seguinte).toHaveAttribute('aria-label', 'Período seguinte');
+      [anterior, seguinte].forEach((b) => {
+        expect(b.className).toContain('rounded-full');
+        expect(b.className).toContain('w-11');
+        expect(b.className).toContain('h-11');
+      });
+    });
+
+    it('a legenda e os filtros estao num cartao Mare', async () => {
+      await abrePagina();
+      const barra = screen.getByTestId('calendar-toolbar');
+      expect(barra.className).toContain('border-mare-card');
+      expect(barra.className).toContain('rounded-[18px]');
+      expect(within(barra).getByText('Confirmada')).toBeInTheDocument();
+      expect(within(barra).getByDisplayValue('Todos os guias')).toBeInTheDocument();
+    });
+
+    it('a grelha do mes usa a borda de cartao Mare e o cabecalho Mare', async () => {
+      await abrePagina();
+      const tabela = document.querySelector('table');
+      expect(tabela.parentElement.className).toContain('border-mare-card');
+      expect(tabela.parentElement.className).toContain('rounded-[18px]');
+      expect(tabela.querySelector('thead tr').className).toContain('bg-mare-head');
+      expect(tabela.querySelector('tbody td').className).toContain('border-mare-card');
+    });
+
+    it('o dia de hoje no mes tem marca areia e pistas que nao sao so cor (negrito e aria-current)', async () => {
+      fixaHoje(2026, 11, 24);
+      await abrePagina();
+      const hoje = document.querySelectorAll('tbody tr')[23].querySelector('td');
+      expect(hoje).toHaveAttribute('aria-current', 'date');
+      expect(hoje.className).toContain('bg-sand-50');
+      expect(hoje.querySelector('.font-bold').textContent).toBe('24');
+      expect(hoje.querySelector('.bg-sand-500')).not.toBeNull();
+      expect(document.querySelectorAll('[aria-current="date"]')).toHaveLength(1);
+    });
+
+    it('na semana a coluna de hoje tem a mesma marca', async () => {
+      fixaHoje(2026, 11, 24);
+      await abreSemana();
+      const cab = document.querySelector('[aria-current="date"]');
+      expect(cab.tagName).toBe('TH');
+      expect(cab.className).toContain('bg-sand-50');
+      expect(cab.querySelector('.font-bold').textContent).toBe('24');
+    });
+  });
 });

@@ -305,11 +305,11 @@ export default function Calendar() {
   /* ---- WEEK VIEW ---- */
   function renderWeekView() {
     return (
-      <div className="overflow-x-auto rounded-sm border border-n-200 bg-white">
+      <div className="overflow-x-auto rounded-[18px] border border-mare-card bg-white">
         <table className="w-full text-xs border-collapse" style={{ minWidth: Math.max(480, visibleUnits.length * 90 + 120) }}>
           <thead>
-            <tr className="bg-n-50">
-              <th className="sticky left-0 z-10 bg-n-50 border-b border-r border-n-200 px-3 py-2.5 text-left text-n-500 font-body font-semibold min-w-[112px]">
+            <tr className="bg-mare-head">
+              <th className="sticky left-0 z-10 bg-mare-head border-b border-r border-mare-card px-3 py-2.5 text-left text-n-500 font-body font-semibold min-w-[112px]">
                 {t('reservations.unit')}
               </th>
               {weekDays.map(d => {
@@ -317,8 +317,16 @@ export default function Calendar() {
                 const dayNum   = parseInt(d.slice(8), 10);
                 const dayOfWk  = new Date(d + 'T00:00:00Z').getUTCDay();
                 return (
-                  <th key={d} className={`border-b border-r border-n-200 px-2 py-2 text-center min-w-[80px] ${isToday ? 'bg-ocean-50' : ''}`}>
-                    <div className={`font-display font-semibold ${isToday ? 'text-ocean-700' : 'text-n-700'}`}>{dayNum}</div>
+                  <th
+                    key={d}
+                    aria-current={isToday ? 'date' : undefined}
+                    className={`border-b border-r border-mare-card px-2 py-2 text-center min-w-[80px] ${isToday ? 'bg-sand-50' : ''}`}
+                  >
+                    {/* hoje: fundo areia, data em negrito e ponto (nao depende so da cor) */}
+                    <div className={`font-display flex items-center justify-center gap-1 ${isToday ? 'font-bold text-ocean-900' : 'font-semibold text-n-700'}`}>
+                      {isToday && <span className="w-2 h-2 rounded-full bg-sand-500 shrink-0" aria-hidden="true" />}
+                      <span className={isToday ? 'font-bold' : ''}>{dayNum}</span>
+                    </div>
                     <div className="font-body text-n-400 font-normal">{diaAbreviado(dayOfWk, t)}</div>
                   </th>
                 );
@@ -327,8 +335,8 @@ export default function Calendar() {
           </thead>
           <tbody>
             {visibleUnits.map(unit => (
-              <tr key={unit.id} className="border-b border-n-100 hover:bg-n-50/50">
-                <td className="sticky left-0 z-10 bg-white border-r border-n-200 px-3 py-2">
+              <tr key={unit.id} className="border-b border-mare-card hover:bg-n-50/50">
+                <td className="sticky left-0 z-10 bg-white border-r border-mare-card px-3 py-2">
                   <div className="font-body font-semibold text-n-800 truncate max-w-[100px] text-xs">{unit.name}</div>
                   <div className="font-body text-n-400 text-xs truncate">{unit.unit_type}</div>
                 </td>
@@ -340,7 +348,7 @@ export default function Calendar() {
                   return (
                     <td
                       key={d}
-                      className={`border-r border-n-100 px-1.5 py-1.5 cursor-pointer ${isToday ? 'bg-ocean-50/40' : ''}`}
+                      className={`border-r border-mare-card px-1.5 py-1.5 cursor-pointer ${isToday ? 'bg-sand-50' : ''}`}
                       onClick={() => !lista.length && !isBlocked && handleDayClick(d, unit, null)}
                       onDragOver={e => e.preventDefault()}
                       onDrop={e => {
@@ -427,7 +435,7 @@ export default function Calendar() {
           const lista     = getResForCell(unit.id, dayStr);
           const isBlocked = blockedByUnit[unit.id]?.has(dayStr);
           return (
-            <div key={unit.id} className="bg-white border border-n-200 rounded-sm p-4">
+            <div key={unit.id} className="bg-white border border-mare-card rounded-[18px] p-4">
               <div className="flex items-center justify-between mb-3">
                 <div>
                   <p className="font-display font-semibold text-sm text-n-900">{unit.name}</p>
@@ -495,12 +503,13 @@ export default function Calendar() {
   return (
     <div>
       <PageHeader
+        eyebrow={t('nav.sections.operacao')}
         title={t('nav.calendar')}
         subtitle={t('calendar.subtitle')}
         actions={
           <div className="flex items-center gap-2 flex-wrap">
-            {/* View toggle */}
-            <div className="flex rounded-sm border border-n-300 overflow-hidden bg-white">
+            {/* Seletor de vista: pilula na pista (botoes nativos, aria-pressed) */}
+            <div data-testid="calendar-views" className="flex items-center gap-1 rounded-full border border-mare-card bg-white p-1">
               {[
                 { id: 'month', label: t('calendar.views.month') },
                 { id: 'week',  label: t('calendar.views.week') },
@@ -509,59 +518,76 @@ export default function Calendar() {
                 <button
                   key={v.id}
                   type="button"
+                  aria-pressed={view === v.id}
                   onClick={() => setView(v.id)}
-                  className={`h-8 px-3 text-xs font-body font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ocean-300 ${view === v.id ? 'bg-ocean-700 text-white' : 'bg-white text-n-700 hover:bg-n-50'}`}
+                  className={`relative min-h-10 px-4 rounded-full text-sm font-body font-semibold transition-colors before:absolute before:content-[''] before:inset-x-0 before:-inset-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sand-500 ${view === v.id ? 'bg-ocean-900 text-white' : 'text-ocean-700 hover:bg-ocean-50'}`}
                 >
                   {v.label}
                 </button>
               ))}
             </div>
 
-            {/* Navigation */}
+            {/* Navegacao: setas redondas de 44 px */}
             <div className="flex items-center gap-1">
-              <Button variant="secondary" size="sm" icon={ChevronLeft} onClick={() => navigate(-1)} />
-              <span className="font-display font-semibold text-sm text-n-800 min-w-[160px] text-center">
+              <button
+                type="button"
+                aria-label={t('calendar.prevPeriod')}
+                onClick={() => navigate(-1)}
+                className="inline-flex items-center justify-center w-11 h-11 rounded-full border border-mare-card bg-white text-ocean-700 hover:bg-ocean-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sand-500"
+              >
+                <ChevronLeft size={18} aria-hidden="true" />
+              </button>
+              <span className="font-display font-semibold text-sm text-ocean-900 min-w-[160px] text-center">
                 {getNavLabel()}
               </span>
-              <Button variant="secondary" size="sm" icon={ChevronRight} onClick={() => navigate(1)} />
+              <button
+                type="button"
+                aria-label={t('calendar.nextPeriod')}
+                onClick={() => navigate(1)}
+                className="inline-flex items-center justify-center w-11 h-11 rounded-full border border-mare-card bg-white text-ocean-700 hover:bg-ocean-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sand-500"
+              >
+                <ChevronRight size={18} aria-hidden="true" />
+              </button>
             </div>
           </div>
         }
       />
 
-      {/* Filter bar */}
-      {((dados.units || []).length > 1 || guides.length > 0) && (
-        <div className="flex flex-wrap items-end gap-3 mb-4">
-          {/* Unit filter */}
-          {(dados.units || []).length > 1 && (
-            <Select label={t('calendar.byUnit')} value={filterUnit} onChange={e => setFilterUnit(e.target.value)} className="w-48">
-              <option value="">{t('calendar.allUnits')}</option>
-              {(dados.units || []).map(u => (
-                <option key={u.id} value={u.id}>{u.name}</option>
-              ))}
-            </Select>
-          )}
+      {/* Barra do cartao Mare: filtros e legenda */}
+      <div data-testid="calendar-toolbar" className="mb-4 rounded-[18px] border border-mare-card bg-white p-4 space-y-3">
+        {((dados.units || []).length > 1 || guides.length > 0) && (
+          <div className="flex flex-wrap items-end gap-3">
+            {/* Unit filter */}
+            {(dados.units || []).length > 1 && (
+              <Select label={t('calendar.byUnit')} value={filterUnit} onChange={e => setFilterUnit(e.target.value)} className="w-48">
+                <option value="">{t('calendar.allUnits')}</option>
+                {(dados.units || []).map(u => (
+                  <option key={u.id} value={u.id}>{u.name}</option>
+                ))}
+              </Select>
+            )}
 
-          {/* Guide filter */}
-          {guides.length > 0 && (
-            <Select label={t('calendar.byGuide')} value={filterGuide} onChange={e => setFilterGuide(e.target.value)} className="w-48">
-              <option value="">{t('calendar.allGuides')}</option>
-              {guides.map(g => (
-                <option key={g.id} value={g.id}>{g.name}</option>
-              ))}
-            </Select>
-          )}
-        </div>
-      )}
-
-      {/* Legend */}
-      <div className="flex flex-wrap gap-x-4 gap-y-2 mb-4 px-3 py-2 bg-white border border-n-200 rounded-sm">
-        {LEGEND.map(l => (
-          <div key={l.chave} className="flex items-center gap-1.5">
-            <span className={`w-3 h-3 rounded-xs ${l.cls}`} />
-            <span className="text-xs font-body text-n-600">{t(l.chave)}</span>
+            {/* Guide filter */}
+            {guides.length > 0 && (
+              <Select label={t('calendar.byGuide')} value={filterGuide} onChange={e => setFilterGuide(e.target.value)} className="w-48">
+                <option value="">{t('calendar.allGuides')}</option>
+                {guides.map(g => (
+                  <option key={g.id} value={g.id}>{g.name}</option>
+                ))}
+              </Select>
+            )}
           </div>
-        ))}
+        )}
+
+        {/* Legend */}
+        <div className="flex flex-wrap gap-x-4 gap-y-2">
+          {LEGEND.map(l => (
+            <div key={l.chave} className="flex items-center gap-1.5">
+              <span className={`w-3 h-3 rounded-xs ${l.cls}`} />
+              <span className="text-xs font-body text-n-600">{t(l.chave)}</span>
+            </div>
+          ))}
+        </div>
       </div>
 
       {/* Main view */}

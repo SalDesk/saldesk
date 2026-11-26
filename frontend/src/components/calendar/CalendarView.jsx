@@ -104,15 +104,15 @@ export default function CalendarView({
   }
 
   return (
-    <div className="overflow-x-auto rounded-sm border border-n-200 bg-white">
+    <div className="overflow-x-auto rounded-[18px] border border-mare-card bg-white">
       <table className="w-full text-xs border-collapse" style={{ minWidth: visibleUnits.length * 130 + 80 }}>
         <thead>
-          <tr className="bg-n-50">
-            <th className="sticky left-0 z-10 bg-n-50 border-b border-r border-n-200 px-3 py-2.5 text-left text-n-500 font-body font-semibold w-20 min-w-[80px]">
+          <tr className="bg-mare-head">
+            <th className="sticky left-0 z-10 bg-mare-head border-b border-r border-mare-card px-3 py-2.5 text-left text-n-500 font-body font-semibold w-20 min-w-[80px]">
               {t('calendar.views.day')}
             </th>
             {visibleUnits.map((u) => (
-              <th key={u.id} className="border-b border-r border-n-200 px-3 py-2.5 text-left min-w-[130px]">
+              <th key={u.id} className="border-b border-r border-mare-card px-3 py-2.5 text-left min-w-[130px]">
                 <div className="font-display font-semibold text-n-700 truncate">{u.name}</div>
                 <div className="font-body text-n-400 font-normal mt-0.5">{u.unit_type}</div>
               </th>
@@ -126,11 +126,15 @@ export default function CalendarView({
             const isWeekend = day.getDay() === 0 || day.getDay() === 6;
 
             return (
-              <tr key={dateStr} className={`border-b border-n-100 hover:bg-n-50/50 ${isWeekend ? 'bg-n-50/30' : ''}`}>
-                <td className={`sticky left-0 z-10 border-r border-n-200 px-3 py-1.5 font-body font-medium whitespace-nowrap ${isToday ? 'bg-ocean-50 text-ocean-700' : 'bg-white text-n-600'}`}>
+              <tr key={dateStr} className={`border-b border-mare-card hover:bg-n-50/50 ${isWeekend ? 'bg-n-50/30' : ''}`}>
+                <td
+                  aria-current={isToday ? 'date' : undefined}
+                  className={`sticky left-0 z-10 border-r border-mare-card px-3 py-1.5 font-body font-medium whitespace-nowrap ${isToday ? 'bg-sand-50 text-ocean-900' : 'bg-white text-n-600'}`}
+                >
+                  {/* hoje: ponto areia + data em negrito (nao depende so da cor) */}
                   <div className="flex items-center gap-1.5">
-                    {isToday && <span className="w-1.5 h-1.5 rounded-full bg-ocean-700 shrink-0" />}
-                    <span className="font-display font-semibold">{day.getDate()}</span>
+                    {isToday && <span className="w-2 h-2 rounded-full bg-sand-500 shrink-0" aria-hidden="true" />}
+                    <span className={`font-display ${isToday ? 'font-bold' : 'font-semibold'}`}>{day.getDate()}</span>
                     <span className="text-n-300">{diaInicial(day.getDay(), t)}</span>
                   </div>
                 </td>
@@ -145,7 +149,7 @@ export default function CalendarView({
                   return (
                     <td
                       key={unit.id}
-                      className="border-r border-n-100 px-1.5 py-1 cursor-pointer"
+                      className="border-r border-mare-card px-1.5 py-1 cursor-pointer"
                       onClick={() => !lista.length && !isBlocked && onDayClick?.(dateStr, unit, null)}
                       onDragOver={handleDragOver}
                       onDrop={(e) => handleDrop(e, dateStr, unit)}
