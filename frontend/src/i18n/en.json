@@ -1985,6 +1985,11 @@
     }
   },
   "guides": {
+    "stats": {
+      "total": "Guides on the team",
+      "active": "Available now",
+      "busy": "On duty"
+    },
     "title": "Guides",
     "subtitle": "{{active}} available · {{n}} total",
     "add": "Add guide",
@@ -2224,6 +2229,11 @@
     }
   },
   "fleet": {
+    "stats": {
+      "total": "Fleet items",
+      "available": "Ready to use",
+      "maintenance": "In maintenance"
+    },
     "title": "Fleet and equipment",
     "subtitle": "{{available}} available of {{total}}",
     "newItem": "New item",
@@ -2269,6 +2279,11 @@
     }
   },
   "maintenance": {
+    "stats": {
+      "vehicles": "Vehicles",
+      "urgent": "Urgent alerts",
+      "attention": "Needs attention"
+    },
     "title": "Maintenance",
     "subtitle": "{{vehicles}} vehicle(s) · {{alerts}} alert(s)",
     "record": "Record maintenance",

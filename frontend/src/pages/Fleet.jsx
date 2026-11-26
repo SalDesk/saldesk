@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Plus, Pencil, Trash2, Car, Wrench, Package, Users, Compass } from 'lucide-react';
+import { Plus, Pencil, Trash2, Car, Wrench, Package, Users, Compass, CheckCircle } from 'lucide-react';
 import { listFleet, createFleet, updateFleet, deleteFleet } from '../services/fleetService';
 import { listUnits } from '../services/unitsService';
 import PageHeader from '../components/layout/PageHeader';
@@ -10,6 +10,7 @@ import Input, { Select, Textarea } from '../components/ui/Input';
 import Badge from '../components/ui/Badge';
 import EmptyState from '../components/ui/EmptyState';
 import LoadingSpinner from '../components/shared/LoadingSpinner';
+import MareStat from '../components/shared/MareStat';
 import { useT } from '../i18n';
 import { mensagemErro } from '../utils/mensagemErro';
 
@@ -20,6 +21,19 @@ const STATUSES = ['available', 'in_use', 'maintenance', 'retired'];
 /* Variantes do Badge do sistema: disponivel verde, em uso azul, manutencao ambar, retirado neutro */
 const STATUS_BADGE = { available: 'confirmed', in_use: 'checked_in', maintenance: 'pending', retired: 'no_show' };
 const CAPACIDADES = [2, 4, 6, 8, 10, 12];
+
+/* Botoes so com icone: nativos, com 44 px no telemovel; o realce ao passar o rato depende da accao */
+const ICONE_BASE = 'inline-flex items-center justify-center min-h-11 min-w-11 md:min-h-9 md:min-w-9 rounded-full text-n-500 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sand-500';
+const EDIT_HOVER   = 'hover:text-ocean-700 hover:bg-ocean-50';
+const DELETE_HOVER = 'hover:text-error hover:bg-[var(--error-light)]';
+
+function IconBtn({ icon: Icon, label, onClick, hover }) {
+  return (
+    <button type="button" onClick={onClick} aria-label={label} className={`${ICONE_BASE} ${hover}`}>
+      <Icon size={16} strokeWidth={1.75} />
+    </button>
+  );
+}
 
 /* Um estado que a pagina nao conhece fica sem rotulo, como sempre */
 const rotuloEstado = (status, t) => (STATUSES.includes(status) ? t(`fleet.status.${status}`) : undefined);
@@ -146,11 +160,20 @@ export default function Fleet() {
   }
 
   const available = items.filter((i) => i.status === 'available').length;
+  const emManutencao = items.filter((i) => i.status === 'maintenance').length;
 
   return (
     <div>
-      <PageHeader title={t('fleet.title')} subtitle={t('fleet.subtitle', { available, total: items.length })}
+      <PageHeader eyebrow={t('nav.sections.operacao')} title={t('fleet.title')} subtitle={t('fleet.subtitle', { available, total: items.length })}
         actions={<Button icon={Plus} onClick={() => { setFormError(''); setModal('create'); }}>{t('fleet.newItem')}</Button>} />
+
+      {!loading && items.length > 0 && (
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+          <MareStat label={t('fleet.stats.total')} value={items.length} icon={Car} />
+          <MareStat label={t('fleet.stats.available')} value={available} icon={CheckCircle} tone="bom" />
+          <MareStat label={t('fleet.stats.maintenance')} value={emManutencao} icon={Wrench} tone="aviso" />
+        </div>
+      )}
 
       {loading ? (
         <div className="flex justify-center py-20"><LoadingSpinner size={32} /></div>
@@ -164,12 +187,12 @@ export default function Fleet() {
             /* data gravada sem a hora (AAAA-MM-DD), como sempre */
             const dataManutencao = item.next_maintenance_at?.split('T')[0];
             return (
-              <Card key={item.id} padding="p-0 flex flex-col flex-1" className="flex flex-col overflow-hidden">
+              <div key={item.id} className="flex flex-col overflow-hidden rounded-[18px] border border-mare-card bg-white">
                 {/* Photo / placeholder */}
                 {item.images?.[0] ? (
                   <img src={item.images[0]} alt={item.name} className="w-full h-36 object-cover" />
                 ) : (
-                  <div className="w-full h-36 bg-ocean-50 flex items-center justify-center">
+                  <div className="w-full h-36 bg-mare-head border-b border-mare-card flex items-center justify-center">
                     <Icon size={32} strokeWidth={1.25} className="text-ocean-300" />
                   </div>
                 )}
@@ -180,7 +203,7 @@ export default function Fleet() {
                     <div className="min-w-0">
                       <p className="font-display font-semibold text-sm text-n-900 truncate">{item.name}</p>
                       {item.plate && (
-                        <p className="text-xs font-mono text-n-400 mt-0.5">{item.plate}</p>
+                        <p className="text-xs font-mono tabular-nums text-n-500 mt-0.5">{item.plate}</p>
                       )}
                     </div>
                     <Badge variant={STATUS_BADGE[item.status] || 'default'}>{rotuloEstado(item.status, t)}</Badge>
@@ -188,7 +211,7 @@ export default function Fleet() {
 
                   <div className="flex flex-wrap gap-2">
                     {item.capacity && (
-                      <span className="inline-flex items-center gap-1 text-xs font-body text-n-600 bg-n-100 rounded-full px-2.5 py-0.5">
+                      <span className="inline-flex items-center gap-1 text-xs font-body text-n-600 bg-mare-head border border-mare-card rounded-full px-2.5 py-0.5">
                         <Users size={10} strokeWidth={1.75} /> {t('fleet.seats', { n: item.capacity })}
                       </span>
                     )}
@@ -200,7 +223,7 @@ export default function Fleet() {
                   </div>
 
                   {item.next_maintenance_at && (
-                    <p className={`text-xs font-body flex items-center gap-1.5 px-2.5 py-1.5 rounded-sm ${manutencaoAtrasada ? 'bg-[var(--error-light)] text-[var(--error)]' : 'bg-n-50 text-n-500'}`}>
+                    <p className={`text-xs font-mono tabular-nums flex items-center gap-1.5 px-3 py-2 rounded-[14px] border ${manutencaoAtrasada ? 'border-transparent bg-[var(--error-light)] text-[var(--error)]' : 'border-mare-card bg-mare-head text-n-600'}`}>
                       <Wrench size={11} strokeWidth={1.75} />
                       {manutencaoAtrasada
                         ? t('fleet.maintOverdue', { date: dataManutencao })
@@ -208,12 +231,12 @@ export default function Fleet() {
                     </p>
                   )}
 
-                  <div className="flex justify-end gap-1 pt-2 border-t border-n-100 mt-auto">
-                    <Button variant="ghost" size="sm" icon={Pencil} onClick={() => { setFormError(''); setModal(item); }} aria-label={t('common.edit')} />
-                    <Button variant="ghost" size="sm" icon={Trash2} onClick={() => setDeleteTarget(item)} className="hover:text-error hover:bg-[var(--error-light)]" aria-label={t('common.delete')} />
+                  <div className="flex justify-end gap-1 pt-2 border-t border-mare-card mt-auto">
+                    <IconBtn icon={Pencil} label={t('common.edit')} hover={EDIT_HOVER} onClick={() => { setFormError(''); setModal(item); }} />
+                    <IconBtn icon={Trash2} label={t('common.delete')} hover={DELETE_HOVER} onClick={() => setDeleteTarget(item)} />
                   </div>
                 </div>
-              </Card>
+              </div>
             );
           })}
         </div>

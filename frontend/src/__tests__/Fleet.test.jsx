@@ -849,7 +849,7 @@ describe('Frota (desenho do sistema)', () => {
     const livre = screen.getByRole('button', { name: /Buggy 1/ });
     expect(livre.className).toContain('rounded-2xl');
     expect(livre.className).toContain('border-2');
-    expect(livre.className).toContain('app:rounded-md');
+    expect(livre.className).toContain('app:rounded-[14px]');
     expect(livre.className).toContain('app:border');
     const caixa = livre.querySelector('svg').parentElement;
     expect(caixa.className).toContain('bg-turquoise-50');
@@ -1000,5 +1000,167 @@ describe('Frota em inglês', () => {
     expect(within(b1).getByText('Available')).toBeInTheDocument();
     expect(within(screen.getByRole('button', { name: /Buggy 2/ })).getByText('Taken')).toBeInTheDocument();
     expect(portuguesNoEcra(DADOS)).toEqual([]);
+  });
+});
+
+/* ───────────────────────── Estilo Mare ───────────────────────── */
+
+describe('Frota (estilo Mare)', () => {
+  let errSpy;
+  let warnSpy;
+
+  beforeEach(() => {
+    useUiStore.setState({ lang: 'pt' });
+    carregaServicos();
+    errSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    cleanup();
+    const erros = errSpy.mock.calls.length;
+    const avisos = warnSpy.mock.calls.length;
+    errSpy.mockRestore();
+    warnSpy.mockRestore();
+    expect(erros).toBe(0);
+    expect(avisos).toBe(0);
+  });
+
+  async function renderPagina() {
+    render(<Fleet />);
+    await waitFor(() => expect(listFleet).toHaveBeenCalled());
+    await waitFor(() => expect(document.querySelector('.animate-spin')).toBeNull());
+  }
+
+  /* O quadro de um numero: o cartao (article) com essa etiqueta */
+  function quadro(etiqueta) {
+    return screen.getByText(etiqueta).closest('article');
+  }
+
+  it('o cabeçalho traz o eyebrow Operação', async () => {
+    await renderPagina();
+    expect(document.querySelector('[data-eyebrow]')).toHaveTextContent('Operação');
+  });
+
+  it('os números da frota são quadros MareStat com os totais da lista', async () => {
+    await renderPagina();
+    expect(within(quadro('Itens na frota')).getByText('5')).toBeInTheDocument();
+    expect(within(quadro('Prontos a usar')).getByText('1')).toBeInTheDocument();
+    expect(within(quadro('Em manutenção')).getByText('1')).toBeInTheDocument();
+  });
+
+  it('sem itens não aparecem quadros', async () => {
+    carregaServicos({ frota: [] });
+    render(<Fleet />);
+    await screen.findByText('Sem itens de frota registados');
+    expect(screen.queryByText('Itens na frota')).not.toBeInTheDocument();
+  });
+
+  it('cada item é um cartão Mare e a matrícula, a manutenção e o estado seguem o estilo', async () => {
+    await renderPagina();
+    const c = cartao('Kia Sportage');
+    expect(c.className).toContain('rounded-[18px]');
+    expect(c.className).toContain('border-mare-card');
+    const matricula = within(c).getByText('SL-12-AB');
+    expect(matricula.className).toContain('font-mono');
+    expect(matricula.className).toContain('tabular-nums');
+    expect(within(c).getByText(/Manutenção: 2099-06-01/).className).toContain('font-mono');
+    /* Badge do sistema (com o ponto da app) */
+    const etiqueta = within(c).getByText('Disponível');
+    expect(etiqueta.className).toContain('app:rounded-full');
+    expect(etiqueta.querySelector('span[aria-hidden="true"]')).not.toBeNull();
+  });
+
+  it('a manutenção atrasada mantém o aviso vermelho dentro de uma caixa interior', async () => {
+    await renderPagina();
+    const aviso = within(cartao('Prancha Kite 12m')).getByText(/Manutenção atrasada: 2000-03-15/);
+    expect(aviso.className).toContain('rounded-[14px]');
+    expect(aviso.className).toContain('text-[var(--error)]');
+  });
+
+  it('editar e eliminar têm 44 px no telemovel', async () => {
+    await renderPagina();
+    const c = cartao('Kia Sportage');
+    for (const nome of ['Editar', 'Eliminar']) {
+      expect(within(c).getByRole('button', { name: nome }).className).toContain('min-h-11');
+    }
+  });
+});
+
+/* O seletor tambem aparece no portal do vendedor de praia, fora de data-ui="app": ai as classes ficam como eram */
+describe('FleetSelector (estilo Mare)', () => {
+  const BUGGYS = () => [
+    { id: 'v1', name: 'Buggy 1', capacity: 4, available: true },
+    { id: 'v2', name: 'Buggy 2', capacity: 2, available: false },
+    { id: 'v3', name: 'Buggy 3', capacity: 6, available: true },
+  ];
+
+  /* Fichas sem o prefixo app: de cada elemento, pela ordem do documento (vazias saltadas) */
+  function fichasFora(raiz) {
+    return [...raiz.querySelectorAll('*')]
+      .map((e) => (e.getAttribute('class') || '').split(/\s+/).filter((c) => c && !c.startsWith('app:')).join(' '))
+      .filter(Boolean);
+  }
+
+  const BASE = 'w-full flex items-center justify-between px-4 py-3 rounded-2xl border-2 transition-all';
+  const CAIXA = 'w-10 h-10 rounded-xl flex items-center justify-center';
+
+  beforeEach(() => {
+    getFleetAvailability.mockReset().mockResolvedValue(BUGGYS());
+  });
+
+  afterEach(() => cleanup());
+
+  it('fora da app as fichas sem app: são exactamente as de sempre (a esperar e com a lista)', async () => {
+    const espera = adiado();
+    getFleetAvailability.mockReset().mockReturnValue(espera.promise);
+    const { container } = render(<FleetSelector unitId="t1" date="2099-01-15" value="v1" onChange={() => {}} />);
+    expect(fichasFora(container)).toEqual([
+      'flex items-center gap-2 text-xs font-body text-n-400 py-2',
+      'w-4 h-4 border-2 border-n-200 border-t-turquoise-500 rounded-full animate-spin shrink-0',
+    ]);
+    espera.resolve(BUGGYS());
+    await screen.findByText('Escolha o buggy');
+    expect(fichasFora(container)).toEqual([
+      'space-y-2',
+      'text-xs font-mono uppercase tracking-wider text-n-500',
+      `${BASE} border-ocean-700 bg-ocean-50`,
+      'flex items-center gap-3',
+      `${CAIXA} bg-turquoise-50`,
+      'lucide lucide-car text-turquoise-600',
+      'text-left',
+      'font-body font-semibold text-n-900',
+      'text-xs font-body text-n-400',
+      'text-xs font-mono px-2 py-1 rounded-lg bg-turquoise-50 text-turquoise-700',
+      `${BASE} border-n-100 bg-n-50 opacity-50 cursor-not-allowed`,
+      'flex items-center gap-3',
+      `${CAIXA} bg-n-100`,
+      'lucide lucide-car text-n-400',
+      'text-left',
+      'font-body font-semibold text-n-900',
+      'text-xs font-body text-n-400',
+      'text-xs font-mono px-2 py-1 rounded-lg bg-n-100 text-n-400',
+      `${BASE} border-n-200 bg-white hover:border-ocean-300`,
+      'flex items-center gap-3',
+      `${CAIXA} bg-turquoise-50`,
+      'lucide lucide-car text-turquoise-600',
+      'text-left',
+      'font-body font-semibold text-n-900',
+      'text-xs font-body text-n-400',
+      'text-xs font-mono px-2 py-1 rounded-lg bg-turquoise-50 text-turquoise-700',
+    ]);
+  });
+
+  it('dentro da app os botões levam o desenho Mare, todo atras de app:', async () => {
+    const { container } = render(<FleetSelector unitId="t1" date="2099-01-15" value="v1" onChange={() => {}} />);
+    await screen.findByText('Escolha o buggy');
+    const [escolhido, ocupado, livre] = container.querySelectorAll('button');
+    expect(escolhido.className).toContain('app:rounded-[14px]');
+    expect(escolhido.className).toContain('app:min-h-11');
+    expect(ocupado.className).toContain('app:border-mare-card');
+    expect(ocupado.className).toContain('app:bg-mare-head');
+    expect(livre.className).toContain('app:border-mare-card');
+    expect(livre.className).toContain('app:hover:border-ocean-300');
+    expect(escolhido.className).not.toContain('app:rounded-md');
   });
 });

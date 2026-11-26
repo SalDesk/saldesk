@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import {
   Plus, Pencil, Trash2, Star, Camera, Upload, X, Tag,
   Briefcase, Search,
-  Users, Shield, UserPlus,
+  Users, Shield, UserPlus, CheckCircle,
 } from 'lucide-react';
 import {
   listStaff, createStaff, updateStaff, deleteStaff,
@@ -24,6 +24,7 @@ import FilterChips from '../components/ui/FilterChips';
 import Tabs from '../components/ui/Tabs';
 import Table from '../components/ui/Table';
 import LoadingSpinner from '../components/shared/LoadingSpinner';
+import MareStat from '../components/shared/MareStat';
 import { useT } from '../i18n';
 import { mensagemErro } from '../utils/mensagemErro';
 import { formatarData, useLingua } from '../utils/formatoLingua';
@@ -53,8 +54,18 @@ const STATUS_META = {
 /* Etiqueta de grupo de campos: igual a etiqueta dos campos do sistema */
 const GROUP_LABEL = 'text-xs font-body font-bold uppercase tracking-wide text-n-600 mb-2 app:normal-case app:tracking-normal app:text-[13px] app:text-n-700';
 
-/* Botoes so com icone: o realce ao passar o rato */
+/* Botoes so com icone: nativos, com 44 px no telemovel; o realce ao passar o rato depende da accao */
+const ICONE_BASE = 'inline-flex items-center justify-center min-h-11 min-w-11 md:min-h-9 md:min-w-9 rounded-full text-n-500 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sand-500';
+const EDIT_HOVER   = 'hover:text-ocean-700 hover:bg-ocean-50';
 const DELETE_HOVER = 'hover:text-error hover:bg-[var(--error-light)]';
+
+function IconBtn({ icon: Icon, label, onClick, hover }) {
+  return (
+    <button type="button" onClick={onClick} aria-label={label} className={`${ICONE_BASE} ${hover}`}>
+      <Icon size={16} strokeWidth={1.75} />
+    </button>
+  );
+}
 
 const DOT_META = {
   active:   'bg-[var(--success)]',
@@ -93,7 +104,7 @@ function GuideCard({ guide, units, onEdit, onDelete, onHistory, onAssign }) {
   const statusMeta = STATUS_META[guide.status] || STATUS_META.inactive;
 
   return (
-    <Card padding="p-0 flex flex-col flex-1" className="flex flex-col overflow-hidden">
+    <div className="flex flex-col overflow-hidden rounded-[18px] border border-mare-card bg-white">
       <div className="p-4 flex items-start gap-3">
         <GuideAvatar guide={guide} size={52} />
         <div className="flex-1 min-w-0">
@@ -101,7 +112,7 @@ function GuideCard({ guide, units, onEdit, onDelete, onHistory, onAssign }) {
           <p className="text-xs font-body text-n-500 mt-0.5">{rotuloCargo(guide.role, t, lang)}</p>
           <div className="flex items-center gap-2 mt-1.5">
             {rating > 0 && (
-              <span className="flex items-center gap-1 text-xs font-body text-n-700 tabular-nums">
+              <span className="flex items-center gap-1 text-xs font-mono text-n-700 tabular-nums">
                 <Star size={11} strokeWidth={0} className="fill-sand-500 text-sand-500" />
                 {rating.toFixed(1)}
               </span>
@@ -113,8 +124,8 @@ function GuideCard({ guide, units, onEdit, onDelete, onHistory, onAssign }) {
           </div>
         </div>
         <div className="flex gap-0.5 shrink-0">
-          <Button variant="ghost" size="sm" icon={Pencil} onClick={() => onEdit(guide)} aria-label={t('common.edit')} />
-          <Button variant="ghost" size="sm" icon={Trash2} onClick={() => onDelete(guide)} className={DELETE_HOVER} aria-label={t('common.delete')} />
+          <IconBtn icon={Pencil} label={t('common.edit')} hover={EDIT_HOVER} onClick={() => onEdit(guide)} />
+          <IconBtn icon={Trash2} label={t('common.delete')} hover={DELETE_HOVER} onClick={() => onDelete(guide)} />
         </div>
       </div>
 
@@ -125,7 +136,7 @@ function GuideCard({ guide, units, onEdit, onDelete, onHistory, onAssign }) {
             <div className="flex flex-wrap gap-1">
               {langs.map(l => (
                 <span key={l}
-                  className="text-xs font-mono font-medium px-2 py-0.5 bg-ocean-50 text-ocean-700 border border-ocean-100 rounded-xs uppercase">
+                  className="text-xs font-mono font-medium px-2 py-0.5 bg-ocean-50 text-ocean-700 border border-ocean-100 rounded-full uppercase">
                   {l}
                 </span>
               ))}
@@ -138,12 +149,12 @@ function GuideCard({ guide, units, onEdit, onDelete, onHistory, onAssign }) {
             <div className="flex flex-wrap gap-1">
               {certs.slice(0, 3).map(c => (
                 <span key={c}
-                  className="text-xs font-body px-2 py-0.5 bg-n-50 text-n-600 border border-n-200 rounded-xs">
+                  className="text-xs font-body px-2 py-0.5 bg-mare-head text-n-600 border border-mare-card rounded-full">
                   {certRotulo(c, t)}
                 </span>
               ))}
               {certs.length > 3 && (
-                <span className="text-xs font-body px-2 py-0.5 bg-n-100 text-n-500 rounded-xs">
+                <span className="text-xs font-body px-2 py-0.5 bg-n-100 text-n-500 rounded-full">
                   +{certs.length - 3}
                 </span>
               )}
@@ -155,7 +166,7 @@ function GuideCard({ guide, units, onEdit, onDelete, onHistory, onAssign }) {
         )}
       </div>
 
-      <div className="px-4 py-3 border-t border-n-100 flex items-center justify-between gap-2">
+      <div className="px-4 py-3 border-t border-mare-card flex items-center justify-between gap-2">
         <Badge variant={statusMeta.variant} className="whitespace-nowrap">{t(statusMeta.rotulo)}</Badge>
         <div className="flex gap-1.5">
           <Button variant="secondary" size="sm" onClick={() => onAssign(guide)}>
@@ -167,7 +178,7 @@ function GuideCard({ guide, units, onEdit, onDelete, onHistory, onAssign }) {
           </Button>
         </div>
       </div>
-    </Card>
+    </div>
   );
 }
 
@@ -422,23 +433,23 @@ function HistoryModal({ guide, onClose }) {
       ) : (
         <>
           {totalEarned > 0 && (
-            <div className="mb-4 px-4 py-3 bg-ocean-50 border border-ocean-100 rounded-sm flex items-center justify-between">
+            <div className="mb-4 px-4 py-3 bg-mare-head border border-mare-card rounded-[14px] flex items-center justify-between">
               <span className="text-xs font-body font-medium text-ocean-600">{t('guides.history.totalEarned')}</span>
-              <span className="font-display font-bold text-ocean-700 tabular-nums">€{totalEarned.toFixed(2)}</span>
+              <span className="font-mono font-bold text-ocean-700 tabular-nums">€{totalEarned.toFixed(2)}</span>
             </div>
           )}
           <div className="space-y-2">
             {jobs.map(job => (
-              <div key={job.id} className="flex items-start justify-between gap-3 p-3 bg-n-50 rounded-sm border border-n-200">
+              <div key={job.id} className="flex items-start justify-between gap-3 p-3 bg-mare-head rounded-[14px] border border-mare-card">
                 <div className="min-w-0">
                   <p className="text-sm font-display font-semibold text-n-900 truncate">
                     {job.reservations?.units?.name || job.reservation_id?.slice(0, 8) || '—'}
                   </p>
-                  <p className="text-xs font-body text-n-500 mt-0.5">
+                  <p className="text-xs font-mono tabular-nums text-n-500 mt-0.5">
                     {job.assigned_at ? formatarData(new Date(job.assigned_at), {}, lang) : '—'}
                   </p>
                   {job.earnings_amount > 0 && (
-                    <p className="text-xs font-body text-ocean-700 mt-0.5">€{Number(job.earnings_amount).toFixed(2)}</p>
+                    <p className="text-xs font-mono tabular-nums text-ocean-700 mt-0.5">€{Number(job.earnings_amount).toFixed(2)}</p>
                   )}
                 </div>
                 <Badge variant={STATUS_VARIANT[job.status] || 'default'} className="whitespace-nowrap shrink-0">
@@ -596,7 +607,7 @@ function AvailabilityTab({ guides }) {
               onClick={() => toggle(g.id, d)}
               disabled={isSaving}
               title={isAv ? t('guides.availability.availableTitle') : t('guides.availability.unavailableTitle')}
-              className={`w-8 h-8 mx-auto rounded-sm flex items-center justify-center transition-colors ${
+              className={`w-11 h-11 md:w-8 md:h-8 mx-auto rounded-sm flex items-center justify-center transition-colors ${
                 isAv
                   ? 'bg-[var(--success-light)] text-[var(--success)] hover:brightness-95'
                   : 'bg-n-100 text-n-400 hover:bg-n-200'
@@ -611,11 +622,11 @@ function AvailabilityTab({ guides }) {
   ];
 
   return (
-    <Card padding="p-0" className="overflow-x-auto">
+    <div className="overflow-x-auto rounded-[18px] border border-mare-card bg-white">
       <div style={{ minWidth: 620 }}>
         <Table columns={columns} rows={guides} />
       </div>
-      <div className="flex items-center gap-4 px-4 py-2.5 border-t border-n-100 bg-n-50">
+      <div className="flex items-center gap-4 px-4 py-2.5 border-t border-mare-card bg-mare-head">
         <div className="flex items-center gap-1.5">
           <span className="w-3 h-3 rounded-sm bg-[var(--success-light)] border border-[var(--success)] inline-block" />
           <span className="text-xs font-body text-n-500">{t('guides.availability.available')}</span>
@@ -626,7 +637,7 @@ function AvailabilityTab({ guides }) {
         </div>
         <span className="text-xs font-body text-n-400 ml-auto">{t('guides.availability.toggleHint')}</span>
       </div>
-    </Card>
+    </div>
   );
 }
 
@@ -694,6 +705,7 @@ export default function Guides() {
   });
 
   const active = guides.filter(g => g.status === 'active').length;
+  const ocupados = guides.filter(g => g.status === 'busy').length;
 
   const TABS = [
     { id: 'lista',           label: t('guides.tabs.list') },
@@ -709,6 +721,7 @@ export default function Guides() {
   return (
     <div>
       <PageHeader
+        eyebrow={t('nav.sections.operacao')}
         title={t('guides.title')}
         subtitle={t('guides.subtitle', { active, n: guides.length })}
         actions={
@@ -719,6 +732,14 @@ export default function Guides() {
           )
         }
       />
+
+      {!loading && guides.length > 0 && (
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+          <MareStat label={t('guides.stats.total')} value={guides.length} icon={Users} />
+          <MareStat label={t('guides.stats.active')} value={active} icon={CheckCircle} tone="bom" />
+          <MareStat label={t('guides.stats.busy')} value={ocupados} icon={Briefcase} tone="aviso" />
+        </div>
+      )}
 
       {/* Tab bar */}
       <div className="mb-5">

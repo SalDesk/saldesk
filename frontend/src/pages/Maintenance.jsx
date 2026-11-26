@@ -9,8 +9,10 @@ import Modal from '../components/ui/Modal';
 import FilterChips from '../components/ui/FilterChips';
 import Table from '../components/ui/Table';
 import EmptyState from '../components/ui/EmptyState';
+import Badge from '../components/ui/Badge';
 import Input, { Textarea, Select } from '../components/ui/Input';
 import LoadingSpinner from '../components/shared/LoadingSpinner';
+import MareStat from '../components/shared/MareStat';
 import { useT } from '../i18n';
 import { formatarNumero, useLingua } from '../utils/formatoLingua';
 
@@ -34,11 +36,11 @@ function alertSeverity(days) {
   return null;
 }
 
-/* O rotulo de cada gravidade vem de maintenance.severity.<chave> */
+/* O rotulo de cada gravidade vem de maintenance.severity.<chave>; o Badge usa a variante indicada */
 const SEV_STYLE = {
-  expired:  { bg: 'bg-[var(--error-light)]',   text: 'text-[var(--error)]'   },
-  critical: { bg: 'bg-[var(--error-light)]',   text: 'text-[var(--error)]'   },
-  warning:  { bg: 'bg-[var(--warning-light)]', text: 'text-[var(--warning)]' },
+  expired:  { bg: 'bg-[var(--error-light)]',   text: 'text-[var(--error)]',   badge: 'cancelled' },
+  critical: { bg: 'bg-[var(--error-light)]',   text: 'text-[var(--error)]',   badge: 'cancelled' },
+  warning:  { bg: 'bg-[var(--warning-light)]', text: 'text-[var(--warning)]', badge: 'pending'   },
 };
 
 function computeAlerts(units) {
@@ -73,7 +75,7 @@ function DocCell({ dateStr }) {
   const sev  = alertSeverity(days);
   if (!dateStr) return <span className="text-n-300">—</span>;
   const cls = sev ? SEV_STYLE[sev].text : 'text-[var(--success)]';
-  return <span className={`font-mono text-xs ${cls}`}>{dateStr}{sev && ` (${days}d)`}</span>;
+  return <span className={`font-mono tabular-nums text-xs ${cls}`}>{dateStr}{sev && ` (${days}d)`}</span>;
 }
 
 /* Tipos gravados em maintenance_history[].tipo e comparados abaixo: o valor nunca muda com a lingua.
@@ -238,6 +240,9 @@ export default function Maintenance() {
     [history]
   );
 
+  const urgentes = alerts.filter(a => ['expired', 'critical'].includes(a.sev)).length;
+  const emAtencao = alerts.filter(a => a.sev === 'warning').length;
+
   const filteredAlerts = useMemo(() => {
     if (filter === 'all') return alerts;
     return alerts.filter(a => filter === 'expired'
@@ -258,7 +263,7 @@ export default function Maintenance() {
             <p className="font-display font-semibold text-n-900">
               {meta.brand ? `${meta.brand} ${meta.model || ''}`.trim() : u.name}
             </p>
-            {meta.plate && <p className="text-xs font-mono text-n-400">{meta.plate}</p>}
+            {meta.plate && <p className="text-xs font-mono tabular-nums text-n-500">{meta.plate}</p>}
           </div>
         );
       },
@@ -272,7 +277,7 @@ export default function Maintenance() {
       render: (u) => {
         const meta = parseVehicleMeta(u);
         /* o conta-quilometros segue a lingua do painel */
-        return <span className="font-mono text-xs text-n-700">{meta.current_km ? `${formatarNumero(meta.current_km, {}, lang)} km` : '—'}</span>;
+        return <span className="font-mono tabular-nums text-xs text-n-700">{meta.current_km ? `${formatarNumero(meta.current_km, {}, lang)} km` : '—'}</span>;
       },
     },
     {
@@ -285,7 +290,7 @@ export default function Maintenance() {
           : null;
         if (kmLeft === null) return <span className="text-n-300 text-xs font-mono">—</span>;
         return (
-          <span className={`font-mono text-xs ${kmLeft <= 0 ? 'text-[var(--error)]' : kmLeft <= 500 ? 'text-[var(--warning)]' : 'text-n-700'}`}>
+          <span className={`font-mono tabular-nums text-xs ${kmLeft <= 0 ? 'text-[var(--error)]' : kmLeft <= 500 ? 'text-[var(--warning)]' : 'text-n-700'}`}>
             {kmLeft <= 0 ? t('maintenance.table.overdueKm', { km: Math.abs(kmLeft) }) : `${kmLeft}km`}
           </span>
         );
@@ -298,10 +303,17 @@ export default function Maintenance() {
   return (
     <div>
       <PageHeader
+        eyebrow={t('nav.sections.operacao')}
         title={t('maintenance.title')}
         subtitle={t('maintenance.subtitle', { vehicles: units.length, alerts: alerts.length })}
         actions={<Button icon={Plus} onClick={() => setModal(true)}>{t('maintenance.record')}</Button>}
       />
+
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+        <MareStat label={t('maintenance.stats.vehicles')} value={units.length} icon={Car} />
+        <MareStat label={t('maintenance.stats.urgent')} value={urgentes} icon={AlertTriangle} tone={urgentes > 0 ? 'aviso' : 'bom'} />
+        <MareStat label={t('maintenance.stats.attention')} value={emAtencao} icon={Wrench} tone={emAtencao > 0 ? 'aviso' : 'bom'} />
+      </div>
 
       {/* Alert filters */}
       {alerts.length > 0 && (
@@ -309,8 +321,8 @@ export default function Maintenance() {
           <FilterChips
             options={[
               { value: 'all',     label: t('maintenance.filters.all', { n: alerts.length }) },
-              { value: 'expired', label: t('maintenance.filters.urgent', { n: alerts.filter(a => ['expired','critical'].includes(a.sev)).length }) },
-              { value: 'warning', label: t('maintenance.filters.warning', { n: alerts.filter(a => a.sev === 'warning').length }) },
+              { value: 'expired', label: t('maintenance.filters.urgent', { n: urgentes }) },
+              { value: 'warning', label: t('maintenance.filters.warning', { n: emAtencao }) },
             ]}
             value={filter}
             onChange={setFilter}
@@ -325,7 +337,7 @@ export default function Maintenance() {
             const s = SEV_STYLE[a.sev];
             const nome = t(`maintenance.docs.${a.doc}`);
             return (
-              <div key={i} className={`flex items-start gap-3 px-4 py-3 rounded-md border border-n-200 ${s.bg}`}>
+              <div key={i} className={`flex items-start gap-3 px-4 py-3 rounded-[14px] border border-mare-card ${s.bg}`}>
                 <AlertTriangle size={15} strokeWidth={1.75} className={`${s.text} shrink-0 mt-0.5`} />
                 <div className="flex-1 min-w-0">
                   <p className={`text-sm font-body font-medium ${s.text}`}>{a.label}</p>
@@ -342,36 +354,37 @@ export default function Maintenance() {
                     }
                   </p>
                 </div>
-                <span className={`text-[10px] font-mono font-bold uppercase tracking-wide px-2 py-0.5 rounded bg-white ${s.text} shrink-0`}>
-                  {t(`maintenance.severity.${a.sev}`)}
+                {/* fundo branco para o Badge se ver sobre a cor do alerta */}
+                <span className="shrink-0 inline-flex rounded-full bg-white">
+                  <Badge variant={s.badge}>{t(`maintenance.severity.${a.sev}`)}</Badge>
                 </span>
               </div>
             );
           })}
         </div>
       ) : (
-        <div className="flex items-center gap-3 px-4 py-3 rounded-md bg-[var(--success-light)] border border-n-200 mb-8">
+        <div className="flex items-center gap-3 px-4 py-3 rounded-[14px] bg-[var(--success-light)] border border-mare-card mb-8">
           <CheckCircle size={15} strokeWidth={1.75} className="text-[var(--success)] shrink-0" />
           <p className="text-sm font-body text-[var(--success)]">{t('maintenance.noAlerts')}</p>
         </div>
       )}
 
       {/* Fleet document status table */}
-      <div className="bg-white rounded-md border border-n-200 shadow-sm mb-8 overflow-hidden">
-        <div className="px-5 py-4 border-b border-n-100 flex items-center gap-2">
-          <Car size={14} strokeWidth={1.75} className="text-n-500" />
-          <h2 className="font-display font-semibold text-sm text-n-700">{t('maintenance.table.title')}</h2>
+      <div className="bg-white rounded-[18px] border border-mare-card mb-8 overflow-hidden">
+        <div className="px-[22px] py-4 border-b border-mare-card flex items-center gap-2">
+          <Car size={16} strokeWidth={1.75} className="text-n-500" />
+          <h2 className="font-display font-semibold text-lg text-ocean-900">{t('maintenance.table.title')}</h2>
         </div>
         <Table columns={docColumns} rows={units} />
       </div>
 
       {/* Maintenance history */}
-      <div className="bg-white rounded-md border border-n-200 shadow-sm overflow-hidden">
-        <div className="px-5 py-4 border-b border-n-100 flex items-center gap-2">
-          <Wrench size={14} strokeWidth={1.75} className="text-n-500" />
-          <h2 className="font-display font-semibold text-sm text-n-700">{t('maintenance.history.title')}</h2>
+      <div className="bg-white rounded-[18px] border border-mare-card overflow-hidden">
+        <div className="px-[22px] py-4 border-b border-mare-card flex items-center gap-2">
+          <Wrench size={16} strokeWidth={1.75} className="text-n-500" />
+          <h2 className="font-display font-semibold text-lg text-ocean-900">{t('maintenance.history.title')}</h2>
           {totalCost > 0 && (
-            <span className="ml-auto text-xs font-mono text-n-500">
+            <span className="ml-auto text-xs font-mono tabular-nums text-n-500">
               {t('maintenance.history.total')} <strong className="text-n-900">€{totalCost.toFixed(2)}</strong>
             </span>
           )}
@@ -379,26 +392,26 @@ export default function Maintenance() {
         {history.length === 0 ? (
           <EmptyState icon={Wrench} title={t('maintenance.history.empty')} />
         ) : (
-          <div className="divide-y divide-n-100">
+          <div className="divide-y divide-mare-card">
             {history.map((h, i) => {
               const metaU = parseVehicleMeta(h.unit);
               const vLabel = metaU.brand ? `${metaU.brand} ${metaU.model || ''}`.trim() : h.unit.name;
               return (
-                <div key={i} className="px-5 py-3 flex items-start gap-4">
-                  <div className="w-8 h-8 rounded-full bg-n-100 flex items-center justify-center shrink-0 mt-0.5">
+                <div key={i} className="px-[22px] py-3 flex items-start gap-4">
+                  <div className="w-8 h-8 rounded-full bg-mare-head border border-mare-card flex items-center justify-center shrink-0 mt-0.5">
                     <Wrench size={13} strokeWidth={1.75} className="text-n-500" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-baseline gap-2 flex-wrap">
                       <span className="font-display font-semibold text-sm text-n-900">{rotuloTipo(h.tipo, t, lang)}</span>
                       <span className="text-xs font-body text-n-500">{vLabel}</span>
-                      {metaU.plate && <span className="text-xs font-mono text-n-400">{metaU.plate}</span>}
+                      {metaU.plate && <span className="text-xs font-mono tabular-nums text-n-500">{metaU.plate}</span>}
                     </div>
                     <div className="flex gap-3 mt-0.5 flex-wrap">
-                      <span className="text-xs font-mono text-n-500">{h.date}</span>
-                      {h.km    && <span className="text-xs font-mono text-n-400">{formatarNumero(h.km, {}, lang)} km</span>}
-                      {h.cost  && <span className="text-xs font-mono text-[var(--success)]">€{Number(h.cost).toFixed(2)}</span>}
-                      {h.next_date && <span className="text-xs font-mono text-ocean-700">{t('maintenance.history.next', { date: h.next_date })}</span>}
+                      <span className="text-xs font-mono tabular-nums text-n-500">{h.date}</span>
+                      {h.km    && <span className="text-xs font-mono tabular-nums text-n-500">{formatarNumero(h.km, {}, lang)} km</span>}
+                      {h.cost  && <span className="text-xs font-mono tabular-nums text-[var(--success)]">€{Number(h.cost).toFixed(2)}</span>}
+                      {h.next_date && <span className="text-xs font-mono tabular-nums text-ocean-700">{t('maintenance.history.next', { date: h.next_date })}</span>}
                     </div>
                     {h.notes && <p className="text-xs font-body text-n-500 mt-0.5">{h.notes}</p>}
                   </div>
