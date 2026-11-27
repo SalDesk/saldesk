@@ -8,7 +8,7 @@ import {
 } from 'lucide-react';
 import Button from '../../components/ui/Button';
 import { CHECKLIST_KEY, DEFAULT_TASKS, rotuloTarefa } from './shared';
-import Card from '../../components/ui/Card';
+import { IconBtn, EDIT_HOVER, DELETE_HOVER } from '../../components/shared/IconBtn';
 import Input from '../../components/ui/Input';
 import { useT } from '../../i18n';
 import { localeDe, useLingua } from '../../utils/formatoLingua';
@@ -69,53 +69,51 @@ function ChecklistTab() {
     <div className="space-y-4">
       {/* Alert */}
       {isLate && !allDone && (
-        <div className="flex items-center gap-2 px-4 py-3 bg-[var(--warning-light)] border border-[var(--warning)] rounded-sm text-sm font-body text-[var(--warning)]">
+        <div className="flex items-center gap-2 px-4 py-3 bg-[var(--warning-light)] border border-[var(--warning)] rounded-[14px] text-sm font-body text-[var(--warning)]">
           <AlertTriangle size={16} strokeWidth={1.75} className="shrink-0" />
           <span>{t('staff.checklist.lateAlert', { n: incomplete })}</span>
         </div>
       )}
 
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="font-display font-semibold text-n-900">{t('staff.checklist.title')}</p>
-          <p className="text-xs font-body text-n-500 mt-0.5">
+      <div className="flex items-center justify-between gap-3">
+        <div className="min-w-0">
+          <p className="font-display text-lg font-semibold text-ocean-900">{t('staff.checklist.title')}</p>
+          <p className="text-xs font-mono tabular-nums text-n-600 mt-0.5">
             {t('staff.checklist.progress', { date: todayStr, done: doneCount, total: tasks.length })}
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 shrink-0">
           {allDone && (
-            <span className="flex items-center gap-1.5 text-xs font-body text-[var(--success)] bg-[var(--success-light)] px-3 py-1.5 rounded-sm border border-[var(--success)]">
+            <span className="flex items-center gap-1.5 text-xs font-body text-[var(--success)] bg-[var(--success-light)] px-3 py-1.5 rounded-[10px] border border-[var(--success)]">
               <CheckCircle2 size={13} strokeWidth={1.75} />
               {t('staff.checklist.allDone')}
             </span>
           )}
-          <button onClick={() => setConfig(v => !v)} aria-label={t('staff.checklist.configure')}
-            className="p-2 rounded-sm text-n-500 hover:text-ocean-700 hover:bg-ocean-50 transition-colors" title={t('staff.checklist.configure')}>
-            <Settings2 size={16} strokeWidth={1.75} />
-          </button>
+          <IconBtn icon={Settings2} label={t('staff.checklist.configure')} title={t('staff.checklist.configure')}
+            onClick={() => setConfig(v => !v)} hover={EDIT_HOVER} className="text-n-600" />
         </div>
       </div>
 
       {/* Progress bar */}
-      <div className="w-full h-1.5 bg-n-100 rounded-full overflow-hidden">
+      <div className="w-full h-1.5 bg-mare-head rounded-full overflow-hidden">
         <div className="h-full bg-ocean-700 rounded-full transition-all" style={{ width: `${tasks.length ? (doneCount / tasks.length) * 100 : 0}%` }} />
       </div>
 
       {/* Task list */}
-      <Card padding="p-0">
-      <div className="divide-y divide-n-100">
+      <div className="bg-white rounded-[18px] border border-mare-card overflow-hidden">
+      <div className="divide-y divide-mare-card">
         {tasks.map((task, idx) => {
           const done = !!todayCompletions[idx];
           const at   = todayCompletions[idx]?.at;
           return (
             <label key={idx}
-              className={`flex items-start gap-3 px-4 py-3.5 cursor-pointer hover:bg-n-50 transition-colors ${done ? 'opacity-70' : ''}`}>
+              className={`flex items-start gap-3 px-4 py-3.5 min-h-11 cursor-pointer hover:bg-mare-head transition-colors ${done ? 'opacity-70' : ''}`}>
               <input type="checkbox" checked={done} onChange={() => toggle(idx)}
-                className="mt-0.5 w-4 h-4 accent-ocean-700 cursor-pointer" />
-              <div className="flex-1">
-                <p className={`text-sm font-body text-n-800 ${done ? 'line-through text-n-400' : ''}`}>{rotuloTarefa(task, t, lang)}</p>
+                className="mt-0.5 w-4 h-4 accent-ocean-700 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sand-500" />
+              <div className="flex-1 min-w-0">
+                <p className={`text-sm font-body break-words ${done ? 'line-through text-n-600' : 'text-n-800'}`}>{rotuloTarefa(task, t, lang)}</p>
                 {done && at && (
-                  <p className="text-xs font-body text-n-400 mt-0.5">
+                  <p className="text-xs font-mono tabular-nums text-n-600 mt-0.5">
                     {t('staff.checklist.confirmedAt', { time: new Date(at).toLocaleTimeString(localeDe(lang), { hour: '2-digit', minute: '2-digit' }) })}
                   </p>
                 )}
@@ -125,35 +123,33 @@ function ChecklistTab() {
           );
         })}
         {tasks.length === 0 && (
-          <div className="px-4 py-8 text-center text-n-400 text-sm font-body">
+          <div className="px-4 py-8 text-center text-n-600 text-sm font-body">
             {t('staff.checklist.empty')}
           </div>
         )}
       </div>
-      </Card>
+      </div>
 
       {/* Config panel */}
       {configOpen && (
-        <div className="bg-n-50 border border-n-200 rounded-md p-4 space-y-3">
-          <p className="text-xs font-mono uppercase tracking-wide text-n-500">{t('staff.checklist.manage')}</p>
+        <div className="bg-mare-head border border-mare-card rounded-[14px] p-4 space-y-3">
+          <p className="text-xs font-mono uppercase tracking-wide text-n-600">{t('staff.checklist.manage')}</p>
           <div className="space-y-1.5">
             {tasks.map((task, idx) => (
               <div key={idx} className="flex items-center gap-2">
-                <span className="flex-1 text-sm font-body text-n-800 px-3 py-1.5 bg-white border border-n-200 rounded-sm">{rotuloTarefa(task, t, lang)}</span>
-                <button onClick={() => removeTask(idx)} aria-label={t('staff.checklist.removeTask', { task: rotuloTarefa(task, t, lang) })}
-                  className="p-1.5 rounded text-n-400 hover:text-[var(--error)] hover:bg-[var(--error-light)] transition-colors">
-                  <X size={13} strokeWidth={2} />
-                </button>
+                <span className="flex-1 min-w-0 break-words text-sm font-body text-n-800 px-3 py-1.5 bg-white border border-mare-card rounded-[10px]">{rotuloTarefa(task, t, lang)}</span>
+                <IconBtn icon={X} label={t('staff.checklist.removeTask', { task: rotuloTarefa(task, t, lang) })}
+                  onClick={() => removeTask(idx)} hover={DELETE_HOVER} className="text-n-600" />
               </div>
             ))}
           </div>
           <div className="flex gap-2">
-            <div className="flex-1">
+            <div className="flex-1 min-w-0">
               <Input aria-label={t('staff.checklist.newTask')} value={newTask} onChange={e => setNewTask(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && addTask()}
                 placeholder={t('staff.checklist.newTaskPlaceholder')} />
             </div>
-            <Button size="sm" onClick={addTask} icon={Plus}>{t('staff.checklist.add')}</Button>
+            <Button size="sm" className="min-h-11 md:min-h-0" onClick={addTask} icon={Plus}>{t('staff.checklist.add')}</Button>
           </div>
         </div>
       )}

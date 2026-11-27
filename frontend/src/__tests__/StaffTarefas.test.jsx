@@ -300,3 +300,39 @@ describe('Tarefas com o design system', () => {
     expect(html.replace(/text-error ml-0[.]5/g, '')).not.toMatch(/(?:text|bg|border)-error/);
   });
 });
+
+/* ───────────────────────── estilo Mare ───────────────────────── */
+
+describe('Tarefas no estilo Mare', () => {
+  it('as_colunas_sao_caixas_Mare_e_as_tarefas_sao_cartoes_Mare', async () => {
+    await montar();
+    const col = coluna('Pendente');
+    ['rounded-[14px]', 'bg-mare-head', 'border-mare-card'].forEach(c => expect(col.className).toContain(c));
+    const cartao = cartaoDe('Briefing');
+    ['rounded-[18px]', 'border-mare-card', 'bg-white', 'min-w-0'].forEach(c => expect(cartao.className).toContain(c));
+    expect(screen.getByText('Briefing').className).toContain('break-words');
+  });
+
+  it('a_tarefa_atrasada_marca_a_borda_com_o_token_de_erro_sem_duplicar_a_borda_Mare', async () => {
+    await montar();
+    const atrasada = cartaoDe('Tarefa atrasada');
+    expect(atrasada.className).toContain('border-[var(--error)]');
+    expect(atrasada.className).not.toContain('border-mare-card');
+  });
+
+  it('contadores_e_prazos_usam_mono_tabular', async () => {
+    await montar();
+    const contador = screen.getByText('Pendente', { selector: 'span' }).nextSibling;
+    expect(contador.className).toContain('font-mono');
+    expect(contador.className).toContain('tabular-nums');
+    const prazo = within(cartaoDe('Briefing')).getByText(new Date(dia(5)).toLocaleDateString('pt-PT', { day: '2-digit', month: 'short', timeZone: 'UTC' }));
+    expect(prazo.className).toContain('tabular-nums');
+  });
+
+  it('o_botao_de_mover_tem_44px_no_telemovel_e_anel_de_foco', async () => {
+    await montar();
+    const botao = within(cartaoDe('Briefing')).getByRole('button');
+    expect(botao.className).toContain('min-h-11');
+    expect(botao.className).toContain('focus-visible:ring-sand-500');
+  });
+});

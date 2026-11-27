@@ -91,10 +91,10 @@ describe('Chat: conversas', () => {
   it('mensagens_proprias_e_alheias_com_nome_hora_e_resposta', async () => {
     await montar();
     await abrir('Rui');
-    const alheia = (await esperaMsg('Ola equipa')).closest('div.rounded-lg');
+    const alheia = (await esperaMsg('Ola equipa')).closest('div.break-words');
     expect(alheia).toHaveTextContent('Rui'); /* primeiro nome do remetente */
     expect(alheia).toHaveTextContent(/\d{2}:\d{2}/);
-    const propria = screen.getByText('Bom dia').closest('div.rounded-lg');
+    const propria = screen.getByText('Bom dia').closest('div.break-words');
     expect(propria).not.toHaveTextContent('Rui');
     /* a resposta mostra o remetente e o inicio da mensagem original */
     const contexto = propria.parentElement.querySelector('div.border-l-2');
@@ -312,5 +312,42 @@ describe('Chat com o design system', () => {
     expect(html).not.toMatch(NOMEADAS);
     expect(html).not.toMatch(/sand-(?:700|200)/);
     expect(html.replace(/text-error ml-0[.]5/g, '')).not.toMatch(/(?:text|bg|border)-error/);
+  });
+});
+
+/* ───────────────────────── estilo Mare ───────────────────────── */
+
+describe('Chat no estilo Mare', () => {
+  it('o_chat_e_um_cartao_Mare_e_a_caixa_de_escrever_e_uma_caixa_interior', async () => {
+    const { container } = await montar();
+    ['rounded-[18px]', 'border-mare-card', 'bg-white'].forEach(c => expect(container.firstChild.className).toContain(c));
+    await abrir('Equipa Campo');
+    await esperaMsg('Ola equipa');
+    const form = screen.getByPlaceholderText('Escrever mensagem...').closest('form');
+    ['rounded-[14px]', 'bg-mare-head', 'border-mare-card'].forEach(c => expect(form.className).toContain(c));
+  });
+
+  it('as_bolhas_quebram_palavras_e_distinguem_os_lados_e_as_horas_sao_mono', async () => {
+    await montar();
+    await abrir('Equipa Campo');
+    const alheia = (await esperaMsg('Ola equipa')).closest('div.break-words');
+    ['min-w-0', 'bg-mare-head', 'border-mare-card'].forEach(c => expect(alheia.className).toContain(c));
+    const propria = screen.getByText('Bom dia').closest('div.break-words');
+    ['min-w-0', 'bg-ocean-700', 'text-white'].forEach(c => expect(propria.className).toContain(c));
+    [alheia, propria].forEach(b => {
+      const hora = [...b.querySelectorAll('p')].find(p => /^\d{2}:\d{2}$/.test(p.textContent));
+      expect(hora.className).toContain('font-mono');
+      expect(hora.className).toContain('tabular-nums');
+    });
+  });
+
+  it('enviar_continua_a_funcionar_com_o_novo_aspecto', async () => {
+    await montar();
+    await abrir('Equipa Campo');
+    await esperaMsg('Ola equipa');
+    escrever('Ate ja');
+    enviar();
+    await waitFor(() => expect(sendMessage).toHaveBeenCalled());
+    expect(await esperaMsg('Ate ja')).toBeInTheDocument();
   });
 });

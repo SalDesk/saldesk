@@ -110,7 +110,7 @@ describe('Checklist do dia', () => {
   it('remover_tarefa_grava_a_lista', () => {
     render(<ChecklistTab />);
     fireEvent.click(screen.getByTitle('Configurar checklist'));
-    const painel = screen.getByText('Gerir tarefas').closest('div.bg-n-50');
+    const painel = screen.getByText('Gerir tarefas').closest('div.bg-mare-head');
     const linha = within(painel).getByText(DEFAULT_TASKS[1]).parentElement;
     fireEvent.click(linha.querySelector('button'));
     expect(guardado().tasks).toEqual(DEFAULT_TASKS.filter((_, i) => i !== 1));
@@ -167,6 +167,38 @@ describe('Checklist com o design system', () => {
     html += container.innerHTML;
     expect(html).not.toMatch(HEX);
     expect(html).not.toMatch(NOMEADAS);
-    expect(html).not.toMatch(/(?:text|bg|border)-error/);
+    expect(html.replace(/hover:text-error/g, '')).not.toMatch(/(?:text|bg|border)-error/);
+  });
+});
+
+/* ───────────────────────── estilo Mare ───────────────────────── */
+
+describe('Checklist no estilo Mare', () => {
+  it('o_titulo_e_o_progresso_seguem_o_estilo_e_a_lista_e_um_cartao_Mare', () => {
+    render(<ChecklistTab />);
+    const titulo = screen.getByText('Checklist do dia');
+    ['font-display', 'text-lg', 'text-ocean-900'].forEach(c => expect(titulo.className).toContain(c));
+    const progresso = screen.getByText(`${hoje()} · 0/5 concluidas`);
+    ['font-mono', 'tabular-nums'].forEach(c => expect(progresso.className).toContain(c));
+    const lista = screen.getByText(DEFAULT_TASKS[0]).closest('label').parentElement.parentElement;
+    ['bg-white', 'rounded-[18px]', 'border-mare-card'].forEach(c => expect(lista.className).toContain(c));
+  });
+
+  it('marcar_mantem_o_comportamento_e_a_hora_confirmada_usa_mono_tabular', () => {
+    render(<ChecklistTab />);
+    fireEvent.click(caixas()[0]);
+    expect(caixas()[0]).toBeChecked();
+    const hora = screen.getByText(/Confirmado as \d{2}:\d{2}/);
+    ['font-mono', 'tabular-nums'].forEach(c => expect(hora.className).toContain(c));
+  });
+
+  it('o_painel_de_gestao_e_uma_caixa_Mare_e_os_botoes_de_icone_tem_44px', () => {
+    render(<ChecklistTab />);
+    const abrirPainel = screen.getByRole('button', { name: 'Configurar checklist' });
+    expect(abrirPainel.className).toContain('min-h-11');
+    fireEvent.click(abrirPainel);
+    const painel = screen.getByText('Gerir tarefas').closest('div.bg-mare-head');
+    ['rounded-[14px]', 'border-mare-card'].forEach(c => expect(painel.className).toContain(c));
+    expect(screen.getByRole('button', { name: `Remover tarefa - ${DEFAULT_TASKS[0]}` }).className).toContain('min-h-11');
   });
 });
