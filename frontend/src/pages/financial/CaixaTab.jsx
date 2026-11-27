@@ -4,7 +4,7 @@ import Badge from '../../components/ui/Badge';
 import EmptyState from '../../components/ui/EmptyState';
 import MareStat from '../../components/shared/MareStat';
 import LoadingSpinner from '../../components/shared/LoadingSpinner';
-import { PS_VARIANT, CARTAO, TITULO, NUM, rotuloEstadoPagamento, fmtDate, fmtMoney } from './shared';
+import { PS_VARIANT, CARTAO, CartaoFin, NUM, rotuloEstadoPagamento, fmtDate, fmtMoney } from './shared';
 import { useLingua } from '../../utils/formatoLingua';
 import { useT } from '../../i18n';
 
@@ -31,10 +31,9 @@ function CaixaTab({ transacoes, currency, loading }) {
       </div>
       {loading ? <div className="flex justify-center py-8"><LoadingSpinner size={24} /></div> :
        cash.length === 0 ? <div className={CARTAO}><EmptyState icon={Wallet} title={t('financial.cash.empty')} /></div> :
-       <div className={CARTAO}>
-         <div className="mb-3"><h3 className={TITULO}>{t('financial.cash.title')}</h3></div>
+       <CartaoFin titulo={t('financial.cash.title')}>
          <Table columns={columns} rows={cash} compact />
-       </div>}
+       </CartaoFin>}
     </div>
   );
 }

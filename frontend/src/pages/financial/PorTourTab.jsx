@@ -3,7 +3,7 @@ import Table from '../../components/ui/Table';
 import EmptyState from '../../components/ui/EmptyState';
 import ServiceBarChart from '../../components/financial/ServiceBarChart';
 import { IconBtn, EDIT_HOVER } from '../../components/shared/IconBtn';
-import { CARTAO, TITULO, NUM, fmtMoney, unitTotalCost } from './shared';
+import { CARTAO, CartaoFin, NUM, fmtMoney, unitTotalCost } from './shared';
 import { useLingua } from '../../utils/formatoLingua';
 import { useT } from '../../i18n';
 
@@ -45,14 +45,12 @@ function PorTourTab({ unidades, currency, costs, onEditCosts }) {
   ];
   return (
     <div className="space-y-4">
-      <div className={CARTAO}>
-        <div className="mb-3"><h3 className={TITULO}>{t('financial.byTour.revenueByTour')}</h3></div>
+      <CartaoFin titulo={t('financial.byTour.revenueByTour')}>
         <ServiceBarChart data={unidades} currency={currency} />
-      </div>
-      <div className={CARTAO}>
-        <div className="mb-3"><h3 className={TITULO}>{t('financial.byTour.costsByTour')}</h3></div>
+      </CartaoFin>
+      <CartaoFin titulo={t('financial.byTour.costsByTour')}>
         <Table columns={columns} rows={rows} compact />
-      </div>
+      </CartaoFin>
     </div>
   );
 }

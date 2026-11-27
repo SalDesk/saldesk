@@ -18,7 +18,7 @@ import { listExpenses, getSalaryPayments } from '../../services/expensesService'
 import Button from '../../components/ui/Button';
 import MareStat from '../../components/shared/MareStat';
 import LoadingSpinner from '../../components/shared/LoadingSpinner';
-import { EUR_CVE, CARTAO, TITULO, NUM, fmtMoney, fmtEixo, fmtDica } from './shared';
+import { EUR_CVE, CARTAO, CartaoFin, TITULO, NUM, fmtMoney, fmtEixo, fmtDica } from './shared';
 import { useLingua } from '../../utils/formatoLingua';
 import { rotuloMes } from '../../utils/rotuloMes';
 import { useT } from '../../i18n';
@@ -116,8 +116,7 @@ function ResultadoTab({ resumo, currency, periodo }) {
       </div>
 
       {/* Receitas vs Despesas chart */}
-      <div className={CARTAO}>
-        <div className="mb-3"><h3 className={TITULO}>{t('financial.result.chartTitle')}</h3></div>
+      <CartaoFin titulo={t('financial.result.chartTitle')}>
         <ResponsiveContainer width="100%" height={240}>
           <BarChart data={chartData} margin={{ left: 0, right: 8, top: 8, bottom: 0 }}>
             <CartesianGrid stroke="var(--n200)" vertical={false} />
@@ -129,7 +128,7 @@ function ResultadoTab({ resumo, currency, periodo }) {
             <Bar dataKey="despesas" name={t('financial.result.expenses')} fill="var(--sand-500)" radius={[6,6,0,0]} maxBarSize={28} />
           </BarChart>
         </ResponsiveContainer>
-      </div>
+      </CartaoFin>
 
       {/* Breakdown */}
       <div className={CARTAO}>

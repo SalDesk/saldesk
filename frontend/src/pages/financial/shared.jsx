@@ -130,3 +130,16 @@ export function unitTotalCost(c) {
   if (!c) return 0;
   return COST_FIELDS.reduce((s, f) => s + Number(c[f.key] || 0), 0);
 }
+
+/* Cartao do Financeiro: titulo Sora e, opcionalmente, algo ao lado dele (data, botao) */
+export function CartaoFin({ titulo, lado, className = '', children }) {
+  return (
+    <section className={`${CARTAO} ${className}`}>
+      <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+        <h3 className={TITULO}>{titulo}</h3>
+        {lado}
+      </div>
+      {children}
+    </section>
+  );
+}

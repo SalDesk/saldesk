@@ -27,7 +27,7 @@ import ChannelChart from '../components/financial/ChannelChart';
 import ServiceBarChart from '../components/financial/ServiceBarChart';
 import TopCustomersList from '../components/financial/TopCustomersList';
 import LoadingSpinner from '../components/shared/LoadingSpinner';
-import { mesAtual, mesAnterior, esteAno, ultimos30, loadCosts, saveCosts, unitTotalCost, fmtMoney, fmtMoneyOuTraco, CARTAO, TITULO, NUM } from './financial/shared';
+import { mesAtual, mesAnterior, esteAno, ultimos30, loadCosts, saveCosts, unitTotalCost, fmtMoney, fmtMoneyOuTraco, CartaoFin, NUM } from './financial/shared';
 import CostEditModal from './financial/CostEditModal';
 import TransacoesTable from './financial/TransacoesTable';
 import Comparativo from './financial/Comparativo';
@@ -83,19 +83,6 @@ function Variacao({ delta, rotulo, currency }) {
       <span className={`inline-flex items-center gap-1 ${NUM} ${cor}`}><Icone size={12} strokeWidth={2} />{variacaoEuro(delta, currency)}</span>
       {rotulo && <span className="font-body text-n-600">{rotulo}</span>}
     </span>
-  );
-}
-
-/* Cartao do Financeiro: titulo Sora e, opcionalmente, algo ao lado dele (data, botao) */
-function CartaoFin({ titulo, lado, className = '', children }) {
-  return (
-    <section className={`${CARTAO} ${className}`}>
-      <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
-        <h3 className={TITULO}>{titulo}</h3>
-        {lado}
-      </div>
-      {children}
-    </section>
   );
 }
 
@@ -268,10 +255,10 @@ export default function Financial() {
           ) : activeTab === 'geral' ? (
             <div className="space-y-5">
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                <MareStat icon={Euro} label={t('financial.overview.totalRevenue')} value={fmtMoneyOuTraco(atual.receita, currency)} hint={<Variacao delta={variacao.receita} rotulo={t('financial.overview.vsPrevious')} currency={currency} />} />
+                <MareStat icon={Euro} label={t('financial.overview.totalRevenue')} value={fmtMoneyOuTraco(atual.receita, currency)} hint={variacao.receita != null ? <Variacao delta={variacao.receita} rotulo={t('financial.overview.vsPrevious')} currency={currency} /> : undefined} />
                 <MareStat icon={BarChart2} label={t('financial.overview.direct', { pct: directaPct != null ? `${directaPct}%` : '' })} value={String(directas)} hint={ota > 0 ? t('financial.overview.viaOta', { n: ota }) : undefined} />
                 <MareStat icon={Receipt} label={t('financial.overview.avgTicket')} value={fmtMoneyOuTraco(ticketMedio, currency)} />
-                <MareStat icon={TrendingUp} label={t('financial.overview.netMargin', { pct: margemLiq != null && totalCustos > 0 ? ` (${((receitaNum - totalCustos) / receitaNum * 100).toFixed(0)}%)` : '' })} value={fmtMoneyOuTraco(margemLiq, currency)} hint={<Variacao delta={crescimento} rotulo={t('financial.overview.growth')} currency={currency} />} />
+                <MareStat icon={TrendingUp} label={t('financial.overview.netMargin', { pct: margemLiq != null && totalCustos > 0 ? ` (${((receitaNum - totalCustos) / receitaNum * 100).toFixed(0)}%)` : '' })} value={fmtMoneyOuTraco(margemLiq, currency)} hint={crescimento != null ? <Variacao delta={crescimento} rotulo={t('financial.overview.growth')} currency={currency} /> : undefined} />
               </div>
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
                 <CartaoFin className="lg:col-span-2" titulo={t('financial.overview.revenueByPeriod')} lado={<span className={`text-xs ${NUM} text-n-600`}>{periodo.inicio} — {periodo.fim}</span>}>

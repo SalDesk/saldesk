@@ -2,7 +2,7 @@ import { TrendingUp, CalendarDays, BarChart2, AlertTriangle } from 'lucide-react
 import EmptyState from '../../components/ui/EmptyState';
 import MareStat from '../../components/shared/MareStat';
 import LoadingSpinner from '../../components/shared/LoadingSpinner';
-import { CARTAO, TITULO, NUM, fmtMoney, fmtMoneyOuTraco } from './shared';
+import { CARTAO, CartaoFin, NUM, fmtMoney, fmtMoneyOuTraco } from './shared';
 import { useLingua } from '../../utils/formatoLingua';
 import { useT } from '../../i18n';
 
@@ -30,8 +30,7 @@ function PrevisaoTab({ forecast, currency, loading }) {
         <MareStat icon={BarChart2} label={t('financial.forecast.historicalAverage')} value={fmtMoneyOuTraco(historical_avg, currency)} />
       </div>
       {weeks?.length > 0 && (
-        <div className={CARTAO}>
-          <div className="mb-3"><h3 className={TITULO}>{t('financial.forecast.weekly')}</h3></div>
+        <CartaoFin titulo={t('financial.forecast.weekly')}>
           <div className="space-y-0">{weeks.map((w, i) => (
             <div key={i} className="flex flex-wrap items-center justify-between gap-x-6 gap-y-1 py-3 border-b border-n-100 last:border-0">
               <span className={`text-xs ${NUM} text-n-600 break-words min-w-0`}>{w.week_label || w.week}</span>
@@ -41,7 +40,7 @@ function PrevisaoTab({ forecast, currency, loading }) {
               </div>
             </div>
           ))}</div>
-        </div>
+        </CartaoFin>
       )}
     </div>
   );

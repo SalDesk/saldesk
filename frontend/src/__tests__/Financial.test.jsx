@@ -514,4 +514,15 @@ describe('Financeiro no estilo Mare', () => {
     const botaoCve = screen.getByRole('button', { name: 'CVE' });
     expect(botaoCve).toHaveClass('min-h-11', 'focus-visible:ring-sand-500');
   });
+
+  it('sem_periodo_anterior_os_quadros_nao_levam_um_paragrafo_de_pista_vazio', async () => {
+    fin.getResumo.mockResolvedValue({ atual: RESUMO.atual });
+    montar();
+    await prontaVisaoGeral();
+    const quadros = [...document.querySelectorAll('article')];
+    expect(quadros.length).toBeGreaterThanOrEqual(4);
+    for (const q of quadros) {
+      expect([...q.querySelectorAll('p')].filter(p => p.textContent.trim() === '')).toHaveLength(0);
+    }
+  });
 });
