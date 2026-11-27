@@ -705,8 +705,11 @@ describe('Automações: estilo Mare', () => {
     await montar();
     const b = screen.getByRole('button', { name: `Desactivar ${T_EMAIL}` });
     /* border-2 faz o pseudo-elemento medir-se a partir da caixa de preenchimento: 32x16 + 2x6 e 2x14 = 44x44 */
-    expect(b.className).toContain('before:-inset-x-1.5');
-    expect(b.className).toContain('before:-inset-y-3.5');
+    const classes = b.className.split(/\s+/);
+    expect(classes).toContain('before:-inset-x-1.5');
+    expect(classes).toContain('before:-inset-y-3.5');
+    expect(classes).toContain('focus-visible:outline-none');
+    expect(classes).toContain('focus-visible:ring-sand-500');
   });
 
   it('os_botoes_de_PT_EN_e_as_variaveis_tem_44px_no_telemovel_e_anel_de_foco', async () => {
