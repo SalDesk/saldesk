@@ -76,7 +76,10 @@ const separador = (rotulo) => screen.getAllByText(rotulo).find(e => e.closest('b
 const abrir = async (rotulo, ancora) => { fireEvent.click(separador(rotulo)); await screen.findByText(ancora); };
 const campo = (etiqueta, tag = 'input') => screen.getByText(etiqueta).parentElement.querySelector(tag);
 const amostras = (container) => [...container.querySelectorAll('button[style]')];
-const valorKpi = (rotulo) => screen.getByText(rotulo).previousSibling.textContent;
+const valorKpi = (rotulo) => {
+  const art = screen.getByText(rotulo).closest('article');
+  return art ? art.querySelector('p.font-display').textContent : screen.getByText(rotulo).previousSibling.textContent;
+};
 const ultimaChamadaQr = () => getQrCode.mock.calls[getQrCode.mock.calls.length - 1][0];
 
 /* ───────────────────────── caracterizacao: pagina ───────────────────────── */
@@ -455,7 +458,7 @@ describe('Marketing: Estatísticas', () => {
     expect(etiquetas).toEqual(['Directa', 'Booking', 'outro', 'Viator']);
     const larguras = [...container.querySelectorAll('div.h-full.rounded-full')].map(d => d.style.width);
     expect(larguras).toEqual(['100%', '60%', '40%', '20%']);
-    expect([...container.querySelectorAll('span.w-8')].map(s => s.textContent)).toEqual(['5', '3', '2', '1']);
+    expect([...container.querySelectorAll('span.w-8.text-right')].map(s => s.textContent)).toEqual(['5', '3', '2', '1']);
   });
 
   it('sem_sources_mostra_o_aviso_do_endpoint', async () => {
@@ -498,7 +501,7 @@ const classes = (root) => [...root.querySelectorAll('[class]')].map(e => e.getAt
 const semCoresForaDosTokens = (html) => {
   expect(html).not.toMatch(HEX);
   expect(html).not.toMatch(NOMEADAS);
-  expect(html.replace(/text-error ml-0[.]5/g, '')).not.toMatch(/(?:text|bg|border)-error/);
+  expect(html.replace(/text-error ml-0[.]5/g, '').replace(/hover:text-error/g, '')).not.toMatch(/(?:text|bg|border)-error/);
   expect(html).not.toMatch(/bg-red-/);
 };
 
@@ -551,10 +554,12 @@ describe('Marketing: design system (estrutura, QR e Widget)', () => {
     expect(copiado.className).toContain('var(--success)');
   });
 
-  it('o_cartao_KPI_e_Card', async () => {
+  it('o_cartao_KPI_e_MareStat', async () => {
     await montar();
     await abrir('Estatísticas', 'Visitas ao perfil');
-    expect(screen.getByText('Visitas ao perfil').closest('[class*="app:rounded-[18px]"]')).not.toBeNull();
+    const art = screen.getByText('Visitas ao perfil').closest('article');
+    expect(art.className).toContain('border-mare-card');
+    expect(art.className).toContain('rounded-[18px]');
   });
 
   it('sem_hexadecimais_cores_nomeadas_ou_text_error_em_classes_nos_separadores_QR_e_Widget', async () => {
@@ -573,7 +578,7 @@ describe('Marketing: design system (estrutura, QR e Widget)', () => {
 
 /* ───────────────────────── design system: Indicacoes e Estatisticas ───────────────────────── */
 
-const ehCard = (el) => el.closest('[class*="app:rounded-[18px]"]') !== null;
+const ehCard = (el) => { const c = el.closest('section'); return !!c && c.className.includes('border-mare-card') && c.className.includes('rounded-[18px]'); };
 
 describe('Marketing: design system (Indicações e Estatísticas)', () => {
   it('a_tabela_de_indicacoes_e_Table_com_as_tres_colunas', async () => {
@@ -636,6 +641,92 @@ describe('Marketing: design system (Indicações e Estatísticas)', () => {
     await abrir('Estatísticas', 'Origem das reservas');
     html += classes(container);
     semCoresForaDosTokens(html);
+  });
+});
+
+/* ───────────────────────── estilo Mare ───────────────────────── */
+
+describe('Marketing: estilo Mare', () => {
+  it('mostra_o_eyebrow_da_area_Crescimento', async () => {
+    await montar();
+    expect(document.querySelector('[data-eyebrow]').textContent).toBe('Crescimento');
+  });
+
+  it('os_separadores_continuam_a_trocar_de_conteudo', async () => {
+    await montar();
+    await abrir('Widget', 'Código HTML');
+    expect(screen.queryByAltText('QR Code')).toBeNull();
+    await abrir('Estatísticas', 'Visitas ao perfil');
+    expect(screen.queryByText('Código HTML')).toBeNull();
+    fireEvent.click(separador('QR Code'));
+    expect(screen.getByRole('tab', { name: 'QR Code' })).toHaveAttribute('aria-selected', 'true');
+    expect(await screen.findByText('QR Code para')).toBeInTheDocument();
+  });
+
+  it('as_quatro_contagens_das_estatisticas_sao_MareStat_com_os_mesmos_valores', async () => {
+    await montar();
+    await abrir('Estatísticas', 'Visitas ao perfil');
+    const valores = ['Visitas ao perfil', 'Cliques no link', 'Reservas via link', 'Taxa de conversão'].map(r => {
+      const art = screen.getByText(r).closest('article');
+      expect(art.className).toContain('border-mare-card');
+      expect(art.querySelector('[data-mare-stat-tint]')).not.toBeNull();
+      return art.querySelector('p.font-display').textContent;
+    });
+    expect(valores).toEqual(['120', '45', '9', '20%']);
+  });
+
+  it('os_blocos_das_estatisticas_sao_cartoes_Mare_com_titulo_Sora_e_numeros_em_mono', async () => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(postsDoMes()));
+    await montar();
+    await abrir('Estatísticas', 'Origem das reservas');
+    const titulo = screen.getByText('Origem das reservas');
+    expect(titulo.className).toContain('font-display');
+    expect(titulo.className).toContain('text-lg');
+    expect(titulo.className).toContain('text-ocean-900');
+    expect(ehCard(titulo)).toBe(true);
+    expect(ehCard(screen.getByText('Link de reserva directa'))).toBe(true);
+    expect(ehCard(screen.getByText(`Posts — ${MONTHS_PT[new Date().getMonth()]}`))).toBe(true);
+    ['Total', 'Publicados', 'Agendados'].forEach(r => {
+      expect(screen.getByText(r).previousSibling.className).toContain('font-mono');
+      expect(screen.getByText(r).previousSibling.className).toContain('tabular-nums');
+    });
+    const ligacao = screen.getByText('https://saldesk.cv/book/demo');
+    expect(ligacao.className).toContain('break-all');
+    expect(ligacao.parentElement.className).toContain('bg-mare-head');
+  });
+
+  it('o_QR_tem_controlos_e_pre_visualizacao_em_cartoes_Mare', async () => {
+    await montar();
+    expect(screen.getByLabelText('Cor personalizada').closest('section').className).toContain('border-mare-card');
+    expect(screen.getByAltText('QR Code').closest('section').className).toContain('border-mare-card');
+    expect(screen.getByText('saldesk.cv/book/demo').parentElement.className).toContain('bg-mare-head');
+    expect(screen.getByRole('button', { name: 'Gerar preview' })).toBeInTheDocument();
+  });
+
+  it('o_widget_tem_o_codigo_num_cartao_Mare_que_quebra_linhas_e_mantem_o_botao_Copiar', async () => {
+    await montar();
+    await abrir('Widget', 'Código HTML');
+    const pre = document.querySelector('pre');
+    expect(pre.className).toContain('break-all');
+    expect(pre.className).toContain('font-mono');
+    expect(pre.parentElement.className).toContain('bg-mare-head');
+    expect(pre.parentElement.className).toContain('overflow-auto');
+    expect(pre.closest('section').className).toContain('border-mare-card');
+    expect(screen.getByRole('button', { name: 'Copiar' })).toBeInTheDocument();
+  });
+
+  it('as_indicacoes_sao_cartoes_Mare_com_MareStat_e_a_ligacao_quebra_linhas', async () => {
+    await montar();
+    await abrir('Indicações', 'O seu link de indicação');
+    expect(screen.getByText('Indique outro operador').closest('section').className).toContain('border-mare-card');
+    const ligacao = screen.getByText('https://saldesk.cv/operadores.html?ref=demo');
+    expect(ligacao.className).toContain('break-all');
+    expect(ligacao.className).toContain('font-mono');
+    expect(ligacao.closest('section').className).toContain('border-mare-card');
+    expect(screen.getByText('Indicações enviadas').closest('article').className).toContain('border-mare-card');
+    expect(screen.getByRole('table').closest('section').className).toContain('border-mare-card');
+    const data = screen.getAllByRole('row')[1].querySelectorAll('td')[1].firstChild;
+    expect(data.className).toContain('font-mono');
   });
 });
 
@@ -703,7 +794,7 @@ describe('Marketing em ingles', () => {
     await abrir('Referrals', 'Your referral link');
     expect(screen.getByText('Refer another operator')).toBeInTheDocument();
     expect(valorKpi('Referrals sent')).toBe('3');
-    expect(screen.getAllByText('Converted')[0].previousSibling.textContent).toBe('1');
+    expect(screen.getAllByText('Converted')[0].closest('article').querySelector('p.font-display').textContent).toBe('1');
     expect(screen.getByText('Your referrals (3)')).toBeInTheDocument();
     expect(screen.getAllByRole('columnheader').map(h => h.textContent)).toEqual(['Business', 'Date', 'Status']);
     const linhas = screen.getAllByRole('row').slice(1).map(r => [...r.querySelectorAll('td')].map(td => td.textContent));

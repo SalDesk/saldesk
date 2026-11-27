@@ -80,7 +80,7 @@ export default function Marketing() {
 
   return (
     <div>
-      <PageHeader title={t('marketingPage.title')} subtitle={t('marketingPage.subtitle')} />
+      <PageHeader eyebrow={t('nav.sections.crescimento')} title={t('marketingPage.title')} subtitle={t('marketingPage.subtitle')} />
 
       {/* Tabs */}
       <div className="mb-6">

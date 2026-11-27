@@ -1,8 +1,8 @@
 import { Eye, MousePointerClick, TrendingUp, BarChart2, ExternalLink } from 'lucide-react';
-import Card from '../../components/ui/Card';
+import MareStat from '../../components/shared/MareStat';
 import { useT } from '../../i18n';
 import { nomeMes } from '../../components/calendar/rotulosCalendario';
-import { CopyBtn, KpiCard, postDateKey } from './shared';
+import { CopyBtn, postDateKey, valorDoTile, CARTAO, CAIXA, TITULO, NUM } from './shared';
 
 /* Origens com nome de marca (iguais em todas as linguas); as outras vem de marketingPage.stats.sources e
    uma origem desconhecida mostra-se tal e qual */
@@ -33,77 +33,77 @@ export default function StatsTab({ stats, statsLoading, posts, bookingLink }) {
   return (
     <div className="space-y-5">
       {/* KPIs */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <KpiCard icon={Eye}             label={t('marketingPage.stats.visits')}  value={stats?.profile_views ?? 0} sub={t('marketingPage.stats.last30')}  loading={statsLoading} />
-        <KpiCard icon={MousePointerClick} label={t('marketingPage.stats.clicks')}  value={stats?.clicks ?? 0}        sub={t('marketingPage.stats.last30')}  loading={statsLoading} />
-        <KpiCard icon={TrendingUp}      label={t('marketingPage.stats.bookings')}  value={stats?.bookings_direct ?? 0} sub={t('marketingPage.stats.last30')} loading={statsLoading} />
-        <KpiCard icon={BarChart2}       label={t('marketingPage.stats.conversion')}  value={stats ? `${stats.conversion_rate ?? 0}%` : null} sub={t('marketingPage.stats.clicksToBookings')} loading={statsLoading} />
+      <div className="grid grid-cols-1 min-[420px]:grid-cols-2 lg:grid-cols-4 gap-4">
+        <MareStat icon={Eye}               label={t('marketingPage.stats.visits')}     value={valorDoTile(stats?.profile_views ?? 0, statsLoading)}   hint={t('marketingPage.stats.last30')} />
+        <MareStat icon={MousePointerClick} label={t('marketingPage.stats.clicks')}     value={valorDoTile(stats?.clicks ?? 0, statsLoading)}          hint={t('marketingPage.stats.last30')} />
+        <MareStat icon={TrendingUp}        label={t('marketingPage.stats.bookings')}   value={valorDoTile(stats?.bookings_direct ?? 0, statsLoading)} hint={t('marketingPage.stats.last30')} />
+        <MareStat icon={BarChart2}         label={t('marketingPage.stats.conversion')} value={valorDoTile(stats ? `${stats.conversion_rate ?? 0}%` : null, statsLoading)} hint={t('marketingPage.stats.clicksToBookings')} />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Posts this month */}
-        <Card padding="p-5">
-          <h3 className="font-display font-semibold text-sm text-n-700 mb-4">{t('marketingPage.stats.postsTitle', { month: nomeMes(now.getMonth(), t) })}</h3>
-          <div className="flex gap-6">
+        <section className={CARTAO}>
+          <h3 className={`${TITULO} mb-4`}>{t('marketingPage.stats.postsTitle', { month: nomeMes(now.getMonth(), t) })}</h3>
+          <div className="flex flex-wrap gap-x-6 gap-y-3">
             <div>
-              <p className="font-display font-bold text-3xl text-n-900">{postsThisMonth.length}</p>
-              <p className="text-xs font-body text-n-500 mt-0.5">{t('marketingPage.stats.total')}</p>
+              <p className={`${NUM} font-bold text-3xl text-ocean-900`}>{postsThisMonth.length}</p>
+              <p className="text-xs font-body text-n-600 mt-0.5">{t('marketingPage.stats.total')}</p>
             </div>
             <div>
-              <p className="font-display font-bold text-3xl text-[var(--success)]">{publicados}</p>
-              <p className="text-xs font-body text-n-500 mt-0.5">{t('marketingPage.stats.published')}</p>
+              <p className={`${NUM} font-bold text-3xl text-[var(--success)]`}>{publicados}</p>
+              <p className="text-xs font-body text-n-600 mt-0.5">{t('marketingPage.stats.published')}</p>
             </div>
             <div>
-              <p className="font-display font-bold text-3xl text-ocean-500">{agendados}</p>
-              <p className="text-xs font-body text-n-500 mt-0.5">{t('marketingPage.stats.scheduled')}</p>
+              <p className={`${NUM} font-bold text-3xl text-ocean-500`}>{agendados}</p>
+              <p className="text-xs font-body text-n-600 mt-0.5">{t('marketingPage.stats.scheduled')}</p>
             </div>
             {cancelados > 0 && (
               <div>
-                <p className="font-display font-bold text-3xl text-[var(--error)]">{cancelados}</p>
-                <p className="text-xs font-body text-n-500 mt-0.5">{t('marketingPage.stats.cancelled')}</p>
+                <p className={`${NUM} font-bold text-3xl text-[var(--error)]`}>{cancelados}</p>
+                <p className="text-xs font-body text-n-600 mt-0.5">{t('marketingPage.stats.cancelled')}</p>
               </div>
             )}
           </div>
-        </Card>
+        </section>
 
         {/* Origin */}
-        <Card padding="p-5">
-          <h3 className="font-display font-semibold text-sm text-n-700 mb-4">{t('marketingPage.stats.origin')}</h3>
+        <section className={CARTAO}>
+          <h3 className={`${TITULO} mb-4`}>{t('marketingPage.stats.origin')}</h3>
           {sources ? (
             <div className="space-y-2.5">
               {sources.map(([src, count]) => (
                 <div key={src} className="flex items-center gap-3">
-                  <span className="text-xs font-mono text-n-500 w-20 shrink-0">{rotuloOrigemMarketing(src, t)}</span>
+                  <span className="text-xs font-mono text-n-600 w-20 shrink-0 break-words">{rotuloOrigemMarketing(src, t)}</span>
                   <div className="flex-1 h-2 bg-n-100 rounded-full overflow-hidden">
                     <div className="h-full bg-ocean-500 rounded-full transition-all" style={{ width: `${(count / maxSource) * 100}%` }} />
                   </div>
-                  <span className="text-xs font-mono font-semibold text-n-700 w-8 text-right shrink-0">{count}</span>
+                  <span className={`${NUM} text-xs font-semibold text-n-700 w-8 text-right shrink-0`}>{count}</span>
                 </div>
               ))}
             </div>
           ) : (
-            <p className="text-xs font-body text-n-400">
+            <p className="text-xs font-body text-n-600">
               {t('marketingPage.stats.noSourcesA')} <span className="font-mono">/marketing/stats</span> {t('marketingPage.stats.noSourcesB')} <span className="font-mono">sources</span>.
             </p>
           )}
-        </Card>
+        </section>
       </div>
 
       {/* Booking link */}
       {bookingLink && (
-        <Card padding="p-5">
-          <h3 className="font-display font-semibold text-sm text-n-700 mb-3">{t('marketingPage.stats.bookingLink')}</h3>
+        <section className={CARTAO}>
+          <h3 className={`${TITULO} mb-3`}>{t('marketingPage.stats.bookingLink')}</h3>
           <div className="flex items-center gap-3 flex-wrap">
-            <div className="bg-n-50 border border-n-200 rounded-sm px-3 py-2 flex-1 min-w-0">
-              <p className="text-xs font-mono text-n-700 truncate">{bookingLink}</p>
+            <div className={`${CAIXA} flex-1`}>
+              <p className="text-xs font-mono text-n-700 break-all">{bookingLink}</p>
             </div>
             <CopyBtn text={bookingLink} />
             <a href={bookingLink} target="_blank" rel="noreferrer"
-              className="flex items-center gap-1.5 text-sm px-3 py-2 rounded-sm bg-n-100 text-n-700 font-body hover:bg-n-200 transition-colors">
+              className="flex items-center gap-1.5 text-sm px-3 py-2 min-h-11 md:min-h-0 rounded-sm bg-n-100 text-n-700 font-body hover:bg-n-200 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sand-500">
               <ExternalLink size={14} strokeWidth={1.75} />{t('marketingPage.stats.open')}
             </a>
           </div>
-        </Card>
+        </section>
       )}
     </div>
   );

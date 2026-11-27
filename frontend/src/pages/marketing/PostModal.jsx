@@ -31,8 +31,8 @@ const TEMPLATES = [
 function InstagramPreview({ text, photoUrl, username }) {
   const t = useT();
   return (
-    <div className="w-full max-w-[240px] rounded-xl overflow-hidden border border-n-200 shadow-sm bg-white text-left">
-      <div className="flex items-center gap-2 px-3 py-2.5 border-b border-n-100">
+    <div className="w-full max-w-[240px] rounded-[14px] overflow-hidden border border-mare-card bg-white text-left">
+      <div className="flex items-center gap-2 px-3 py-2.5 border-b border-mare-card">
         <div className="w-7 h-7 rounded-full bg-ocean-100 flex items-center justify-center shrink-0">
           <User size={12} strokeWidth={1.75} className="text-ocean-700" />
         </div>
@@ -62,14 +62,14 @@ function InstagramPreview({ text, photoUrl, username }) {
 function FacebookPreview({ text, photoUrl, username }) {
   const t = useT();
   return (
-    <div className="w-full max-w-[240px] rounded-md overflow-hidden border border-n-200 shadow-sm bg-white text-left">
-      <div className="flex items-center gap-2 px-3 py-2.5 border-b border-n-100">
+    <div className="w-full max-w-[240px] rounded-[14px] overflow-hidden border border-mare-card bg-white text-left">
+      <div className="flex items-center gap-2 px-3 py-2.5 border-b border-mare-card">
         <div className="w-8 h-8 rounded-full bg-[var(--info)] flex items-center justify-center shrink-0">
           <User size={13} strokeWidth={1.75} className="text-white" />
         </div>
         <div>
           <p className="text-xs font-body font-semibold text-n-900">{username || t('marketingPage.post.pageFallback')}</p>
-          <p className="text-[10px] font-body text-n-400">{t('marketingPage.post.now')}</p>
+          <p className="text-[11px] font-body text-n-600">{t('marketingPage.post.now')}</p>
         </div>
       </div>
       <div className="px-3 py-2">
@@ -118,7 +118,7 @@ export default function PostModal({ post, onSave, onClose, operatorName }) {
 
   return (
     <Modal open onClose={onClose} title={isNew ? t('marketingPage.post.newTitle') : t('marketingPage.post.editTitle')} size="xl">
-      <div className="flex gap-6">
+      <div className="flex flex-col lg:flex-row gap-6">
         {/* Form */}
         <form onSubmit={handleSubmit} className="flex-1 min-w-0 space-y-4">
           {/* Templates */}
@@ -127,7 +127,7 @@ export default function PostModal({ post, onSave, onClose, operatorName }) {
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
               {TEMPLATES.map(tpl => (
                 <button key={tpl.key} type="button" aria-pressed={selectedTemplate === tpl.key} onClick={() => applyTemplate(tpl.key)}
-                  className={`text-left px-3 py-2 rounded-sm border text-xs font-body transition-colors ${selectedTemplate === tpl.key ? 'bg-ocean-50 border-ocean-300 text-ocean-700' : 'bg-n-50 border-n-200 text-n-600 hover:border-n-400'}`}>
+                  className={`text-left px-3 py-2 min-h-11 md:min-h-0 rounded-[14px] border text-xs font-body transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sand-500 ${selectedTemplate === tpl.key ? 'bg-ocean-50 border-ocean-300 text-ocean-700' : 'bg-mare-head border-mare-card text-n-700 hover:border-ocean-300'}`}>
                   {t(`marketingPage.post.templates.${tpl.key}`)}
                 </button>
               ))}
@@ -138,7 +138,7 @@ export default function PostModal({ post, onSave, onClose, operatorName }) {
           <Textarea label={t('marketingPage.post.textEn')} aria-label={t('marketingPage.post.textEn')} value={form.text_en} onChange={set('text_en')} rows={2} placeholder={t('marketingPage.post.textEnPlaceholder')} />
           <Input label={t('marketingPage.post.photo')} aria-label={t('marketingPage.post.photo')} value={form.photo_url} onChange={set('photo_url')} placeholder={t('marketingPage.post.photoPlaceholder')} />
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 min-[420px]:grid-cols-2 gap-3">
             <Select label={t('marketingPage.post.platform')} aria-label={t('marketingPage.post.platform')} value={form.platform} onChange={set('platform')}>
               {PLATFORMS.map(p => <option key={p.value} value={p.value}>{p.label}</option>)}
             </Select>
@@ -159,11 +159,11 @@ export default function PostModal({ post, onSave, onClose, operatorName }) {
 
         {/* Preview pane */}
         <div className="hidden lg:flex flex-col gap-3 w-56 shrink-0">
-          <p className="text-xs font-mono uppercase tracking-wider text-n-500">{t('marketingPage.post.preview')}</p>
+          <p className="font-display text-base font-semibold text-ocean-900">{t('marketingPage.post.preview')}</p>
           <div className="flex gap-1 mb-1">
             {['instagram', 'facebook'].map(pl => (
               <button key={pl} type="button" aria-pressed={previewPlatform === pl} onClick={() => setPreviewPlatform(pl)}
-                className={`text-xs px-2 py-1 rounded-xs font-body transition-colors capitalize ${previewPlatform === pl ? 'bg-ocean-700 text-white' : 'bg-n-100 text-n-600 hover:bg-n-200'}`}>
+                className={`text-xs px-3 py-1 min-h-9 rounded-full font-body font-medium transition-colors capitalize focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sand-500 ${previewPlatform === pl ? 'bg-ocean-700 text-white' : 'bg-mare-head border border-mare-card text-n-700 hover:bg-ocean-50'}`}>
                 {pl === 'instagram' ? 'Instagram' : 'Facebook'}
               </button>
             ))}
