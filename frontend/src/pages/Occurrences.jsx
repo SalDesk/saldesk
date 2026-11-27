@@ -9,7 +9,9 @@ import { listUnits } from '../services/unitsService';
 import { listOccurrences, createOccurrence, updateOccurrence, deleteOccurrence } from '../services/occurrencesService';
 import PageHeader from '../components/layout/PageHeader';
 import Button from '../components/ui/Button';
-import Card from '../components/ui/Card';
+import Badge from '../components/ui/Badge';
+import MareStat from '../components/shared/MareStat';
+import { IconBtn, EDIT_HOVER, DELETE_HOVER } from '../components/shared/IconBtn';
 import Modal from '../components/ui/Modal';
 import Input, { Textarea, Select } from '../components/ui/Input';
 import LoadingSpinner from '../components/shared/LoadingSpinner';
@@ -32,12 +34,17 @@ const TYPES = [
   { value: 'outro',      Icon: MoreHorizontal, cls: 'text-n-500'            },
 ];
 
+/* variant e a variante do ui/Badge: baixa neutra, media areia, alta aviso, critica vermelha */
 const SEVERITIES = [
-  { value: 'baixa',   cls: 'text-[var(--success)] bg-[var(--success-light)] border-n-200' },
-  { value: 'media',   cls: 'text-[var(--info)] bg-[var(--info-light)] border-n-200'       },
-  { value: 'alta',    cls: 'text-[var(--warning)] bg-[var(--warning-light)] border-n-200' },
-  { value: 'critica', cls: 'text-[var(--error)] bg-[var(--error-light)] border-n-200'     },
+  { value: 'baixa',   variant: 'default'   },
+  { value: 'media',   variant: 'pending'   },
+  { value: 'alta',    variant: 'warning'   },
+  { value: 'critica', variant: 'cancelled' },
 ];
+
+/* Cartao de pagina e caixa interna do estilo Mare */
+const CARTAO = 'bg-white rounded-[18px] border border-mare-card min-w-0';
+const CAIXA  = 'bg-mare-head rounded-[14px] border border-mare-card p-4 space-y-4';
 
 const rotuloTipo = (value, t) => t(`occurrences.types.${value}`);
 const rotuloSev  = (value, t) => t(`occurrences.severities.${value}`);
@@ -52,10 +59,10 @@ function TypeBadge({ typeKey }) {
   const tipo = TYPES.find(x => x.value === typeKey);
   if (!tipo) return <span className="text-xs font-mono text-n-500">{typeKey}</span>;
   return (
-    <span className={`flex items-center gap-1 text-xs font-body font-semibold ${tipo.cls}`}>
-      <tipo.Icon size={11} strokeWidth={1.75} />
+    <Badge variant="default">
+      <tipo.Icon size={12} strokeWidth={1.75} className={`${tipo.cls} shrink-0 mr-1.5`} aria-hidden="true" />
       {rotuloTipo(tipo.value, t)}
-    </span>
+    </Badge>
   );
 }
 
@@ -63,11 +70,7 @@ function SeverityBadge({ sev }) {
   const t = useT();
   const s = SEVERITIES.find(x => x.value === sev);
   if (!s) return null;
-  return (
-    <span className={`text-xs font-mono font-semibold px-2 py-0.5 rounded-xs border ${s.cls}`}>
-      {rotuloSev(s.value, t)}
-    </span>
-  );
+  return <Badge variant={s.variant}>{rotuloSev(s.value, t)}</Badge>;
 }
 
 /* ── OccurrenceModal ── */
@@ -110,6 +113,8 @@ function OccurrenceModal({ occurrence, units, staff, onSave, onClose }) {
   return (
     <Modal open onClose={onClose} title={isNew ? t('occurrences.new') : t('occurrences.editTitle')} size="md">
       <form onSubmit={handleSubmit} className="space-y-4">
+        {/* Caixa 1: quando, o que e onde */}
+        <div className={CAIXA}>
         <Input label={t('occurrences.form.date')} type="date" value={form.date} onChange={set('date')} required />
 
         <div className="grid grid-cols-2 gap-3">
@@ -130,7 +135,10 @@ function OccurrenceModal({ occurrence, units, staff, onSave, onClose }) {
           <option value="">{t('occurrences.form.noStaff')}</option>
           {staff.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
         </Select>
+        </div>
 
+        {/* Caixa 2: o que aconteceu */}
+        <div className={CAIXA}>
         <Textarea label={t('occurrences.form.description')} value={form.description} onChange={set('description')} rows={3} required placeholder={t('occurrences.form.descriptionPlaceholder')} />
 
         <Textarea label={t('occurrences.form.actions')} value={form.actions_taken} onChange={set('actions_taken')} rows={3} placeholder={t('occurrences.form.actionsPlaceholder')} />
@@ -142,6 +150,7 @@ function OccurrenceModal({ occurrence, units, staff, onSave, onClose }) {
           placeholder={t('occurrences.form.photosPlaceholder')}
           hint={t('occurrences.form.photosHint')}
         />
+        </div>
 
         {error && <p className="text-xs text-error">{error}</p>}
 
@@ -174,12 +183,12 @@ function MonthlyReport({ occurrences }) {
   })).filter(s => s.count > 0);
 
   return (
-    <Card padding="px-5 py-5">
-      <h3 className="font-display font-semibold text-sm text-n-700 mb-4">
+    <div className={`${CARTAO} p-[22px]`}>
+      <h3 className="font-display text-lg font-semibold text-ocean-900 mb-4">
         {t('occurrences.report.title', { month: rotuloMes(now.getMonth(), t), year: now.getFullYear() })}
       </h3>
       {monthly.length === 0 ? (
-        <p className="text-xs font-body text-n-400">{t('occurrences.report.empty')}</p>
+        <p className="text-xs font-body text-n-500">{t('occurrences.report.empty')}</p>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
           <div>
@@ -189,7 +198,7 @@ function MonthlyReport({ occurrences }) {
                 <div key={tipo.value} className="flex items-center gap-3">
                   <tipo.Icon size={13} strokeWidth={1.75} className={`${tipo.cls} shrink-0`} />
                   <span className="text-xs font-body text-n-600 flex-1">{rotuloTipo(tipo.value, t)}</span>
-                  <span className="font-mono font-semibold text-xs text-n-800">{tipo.count}</span>
+                  <span className="font-mono tabular-nums font-semibold text-xs text-n-800">{tipo.count}</span>
                 </div>
               ))}
             </div>
@@ -199,12 +208,12 @@ function MonthlyReport({ occurrences }) {
             <div className="space-y-2">
               {bySev.map(s => (
                 <div key={s.value} className="flex items-center gap-3">
-                  <span className={`text-xs font-mono px-1.5 py-0.5 rounded-xs border shrink-0 ${s.cls}`}>{rotuloSev(s.value, t)}</span>
+                  <span className="shrink-0"><Badge variant={s.variant}>{rotuloSev(s.value, t)}</Badge></span>
                   <div className="flex-1 h-1.5 bg-n-100 rounded-full overflow-hidden">
                     <div className="h-full rounded-full bg-ocean-400"
                       style={{ width: `${(s.count / monthly.length) * 100}%` }} />
                   </div>
-                  <span className="font-mono font-semibold text-xs text-n-800 w-5 text-right">{s.count}</span>
+                  <span className="font-mono tabular-nums font-semibold text-xs text-n-800 w-5 text-right">{s.count}</span>
                 </div>
               ))}
             </div>
@@ -212,9 +221,9 @@ function MonthlyReport({ occurrences }) {
         </div>
       )}
       <div className="mt-4 pt-3 border-t border-n-100 flex items-center justify-between">
-        <p className="text-xs font-body text-n-500">{t('occurrences.report.total')} <span className="font-semibold">{monthly.length}</span> {t('occurrences.report.unit')}</p>
+        <p className="text-xs font-body text-n-500">{t('occurrences.report.total')} <span className="font-mono tabular-nums font-semibold">{monthly.length}</span> {t('occurrences.report.unit')}</p>
       </div>
-    </Card>
+    </div>
   );
 }
 
@@ -289,7 +298,7 @@ export default function Occurrences() {
     {
       key: 'data',
       label: t('occurrences.columns.date'),
-      render: (o) => <span className="text-xs font-mono text-n-500 whitespace-nowrap">{fmtDate(o.date || o.created_at, lang)}</span>,
+      render: (o) => <span className="text-xs font-mono tabular-nums text-n-500 whitespace-nowrap">{fmtDate(o.date || o.created_at, lang)}</span>,
     },
     { key: 'tipo', label: t('occurrences.columns.type'), render: (o) => <TypeBadge typeKey={o.type} /> },
     { key: 'severidade', label: t('occurrences.columns.severity'), render: (o) => <SeverityBadge sev={o.severity} /> },
@@ -313,21 +322,15 @@ export default function Occurrences() {
       label: t('occurrences.columns.actions'),
       render: (o) => o.actions_taken
         ? <p className="text-xs font-body text-n-500 line-clamp-2 max-w-[160px]">{o.actions_taken}</p>
-        : <span className="text-xs font-body text-n-300">{t('occurrences.columns.notRecorded')}</span>,
+        : <span className="text-xs font-body text-n-500">{t('occurrences.columns.notRecorded')}</span>,
     },
     {
       key: 'acoes',
       label: '',
       render: (o) => (
         <div className="flex gap-0.5">
-          <button onClick={() => setModal(o)} aria-label={t('common.edit')}
-            className="p-1.5 rounded text-n-400 hover:text-ocean-700 hover:bg-ocean-50 transition-colors">
-            <Pencil size={13} strokeWidth={1.75} />
-          </button>
-          <button onClick={() => handleDelete(o.id)} aria-label={t('common.delete')}
-            className="p-1.5 rounded text-n-400 hover:text-error hover:bg-[var(--error-light)] transition-colors">
-            <Trash2 size={13} strokeWidth={1.75} />
-          </button>
+          <IconBtn icon={Pencil} label={t('common.edit')} onClick={() => setModal(o)} hover={EDIT_HOVER} />
+          <IconBtn icon={Trash2} label={t('common.delete')} onClick={() => handleDelete(o.id)} hover={DELETE_HOVER} />
         </div>
       ),
     },
@@ -336,7 +339,7 @@ export default function Occurrences() {
   if (loading) {
     return (
       <div>
-        <PageHeader title={t('occurrences.title')} subtitle={t('occurrences.subtitle')} />
+        <PageHeader title={t('occurrences.title')} subtitle={t('occurrences.subtitle')} eyebrow={t('nav.sections.clientes')} />
         <div className="flex justify-center py-16"><LoadingSpinner size={32} /></div>
       </div>
     );
@@ -347,6 +350,7 @@ export default function Occurrences() {
       <PageHeader
         title={t('occurrences.title')}
         subtitle={t('occurrences.subtitle')}
+        eyebrow={t('nav.sections.clientes')}
         actions={
           <Button icon={Plus} onClick={() => setModal({ _new: true })}>{t('occurrences.new')}</Button>
         }
@@ -354,13 +358,13 @@ export default function Occurrences() {
 
       {/* Critical alert */}
       {criticals.length > 0 && (
-        <div className="flex items-start gap-3 px-4 py-3 bg-[var(--error-light)] border border-n-200 rounded-md mb-5">
+        <div className="flex items-start gap-3 px-4 py-3 bg-[var(--error-light)] border border-mare-card rounded-[14px] mb-5">
           <AlertTriangle size={16} strokeWidth={1.75} className="text-error shrink-0 mt-0.5" />
-          <div>
+          <div className="min-w-0">
             <p className="text-sm font-body font-semibold text-error">
               {t('occurrences.criticalAlert', { n: criticals.length })}
             </p>
-            <p className="text-xs font-body text-[var(--error)] mt-0.5">
+            <p className="text-xs font-body text-[var(--error)] mt-0.5 break-words">
               {/* sem descricao mostra o tipo: em pt o valor gravado, como sempre; nas outras linguas o rotulo */}
               {criticals.map(o => o.description?.slice(0, 60) || (lang === 'pt' || !TYPES.some(x => x.value === o.type) ? o.type : rotuloTipo(o.type, t))).join(' · ')}
             </p>
@@ -370,20 +374,10 @@ export default function Occurrences() {
 
       {/* KPIs */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-5">
-        {[
-          { label: t('occurrences.kpi.total'),    value: kpis.total,  color: 'text-n-900'   },
-          { label: t('occurrences.kpi.month'),    value: kpis.month,  color: 'text-ocean-700' },
-          { label: t('occurrences.kpi.high'),     value: kpis.alta,   color: 'text-[var(--warning)]' },
-          { label: t('occurrences.kpi.critical'), value: kpis.critica, color: 'text-error' },
-        ].map(m => (
-          <div key={m.label} className="bg-white rounded-md border border-n-200 px-4 py-3 flex items-center gap-3">
-            <FileWarning size={18} strokeWidth={1.75} className="text-n-300 shrink-0" />
-            <div>
-              <p className={`font-display font-bold text-xl ${m.color}`}>{m.value}</p>
-              <p className="text-xs font-body text-n-500">{m.label}</p>
-            </div>
-          </div>
-        ))}
+        <MareStat label={t('occurrences.kpi.total')} value={kpis.total} icon={FileWarning} />
+        <MareStat label={t('occurrences.kpi.month')} value={kpis.month} icon={Clock} />
+        <MareStat label={t('occurrences.kpi.high')} value={kpis.alta} icon={AlertTriangle} tone="aviso" />
+        <MareStat label={t('occurrences.kpi.critical')} value={kpis.critica} icon={Zap} tone="aviso" />
       </div>
 
       {/* Monthly report */}
@@ -413,7 +407,7 @@ export default function Occurrences() {
 
       {/* List */}
       {filtered.length === 0 ? (
-        <Card padding="p-0">
+        <div className={CARTAO}>
           <EmptyState
             icon={FileWarning}
             title={t('occurrences.empty.title')}
@@ -424,11 +418,11 @@ export default function Occurrences() {
               <Button icon={Plus} onClick={() => setModal({ _new: true })}>{t('occurrences.new')}</Button>
             )}
           />
-        </Card>
+        </div>
       ) : (
-        <Card padding="p-0">
+        <div className={`${CARTAO} overflow-hidden`}>
           <Table columns={columns} rows={filtered} compact />
-        </Card>
+        </div>
       )}
 
       {modal && (
