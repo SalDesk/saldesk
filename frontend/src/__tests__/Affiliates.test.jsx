@@ -57,7 +57,7 @@ async function montar(primeiro = 'João Silva') {
   return r;
 }
 const linha = (nome) => screen.getByText(nome, { selector: 'p' }).closest('div.items-start.gap-3');
-const kpi = (rotulo) => screen.getByText(rotulo).previousSibling.textContent;
+const kpi = (rotulo) => screen.getByText(rotulo).closest('article').querySelector('p.font-display').textContent;
 const novoAfiliado = () => screen.getAllByText('Novo afiliado').find(e => e.closest('button')).closest('button');
 const programa = () => screen.getByText(/^Programa (activo|inactivo)$/).closest('button');
 const separador = (rotulo) => screen.getAllByText(rotulo).find(e => e.closest('button, [role="tab"]')).closest('button, [role="tab"]');
@@ -303,7 +303,7 @@ describe('Afiliados com o design system (estrutura, lista e modais)', () => {
     const html = container.innerHTML;
     expect(html).not.toMatch(HEX);
     expect(html).not.toMatch(NOMEADAS);
-    expect(html.replace(/text-error ml-0[.]5/g, '')).not.toMatch(/(?:text|bg|border)-error/);
+    expect(html.replace(/hover:text-error/g, '').replace(/text-error ml-0[.]5/g, '')).not.toMatch(/(?:text|bg|border)-error/);
   });
 });
 
@@ -419,7 +419,7 @@ describe('Afiliados com o design system (configuração e analytics)', () => {
     html += container.innerHTML;
     expect(html).not.toMatch(HEX);
     expect(html).not.toMatch(NOMEADAS);
-    expect(html.replace(/text-error ml-0[.]5/g, '')).not.toMatch(/(?:text|bg|border)-error/);
+    expect(html.replace(/hover:text-error/g, '').replace(/text-error ml-0[.]5/g, '')).not.toMatch(/(?:text|bg|border)-error/);
   });
 });
 
@@ -545,5 +545,97 @@ describe('Afiliados em ingles', () => {
     fireEvent.click(within(linha('João Silva')).getByLabelText('Delete João Silva'));
     expect(confirmar).toHaveBeenCalledWith('Delete this affiliate?');
     await waitFor(() => expect(deleteAffiliate).toHaveBeenCalledWith('a1'));
+  });
+});
+
+/* ───────────────────────── estilo Mare ───────────────────────── */
+
+describe('Afiliados: estilo Mare', () => {
+  const eMare = (el) => {
+    expect(el).not.toBeNull();
+    expect(el.className).toContain('bg-white');
+    expect(el.className).toContain('border-mare-card');
+    expect(el.className).toContain('rounded-[18px]');
+  };
+  const LONGO = 'a'.repeat(90);
+
+  it('mostra_o_eyebrow_da_area_Crescimento_tambem_a_carregar', async () => {
+    listAffiliates.mockReturnValue(new Promise(() => {}));
+    render(<Affiliates />);
+    expect(document.querySelector('[data-eyebrow]')).toHaveTextContent('Crescimento');
+    cleanup();
+    listAffiliates.mockResolvedValue(AFILIADOS);
+    await montar();
+    expect(document.querySelector('[data-eyebrow]')).toHaveTextContent('Crescimento');
+  });
+
+  it('os_totais_sao_MareStat_com_os_mesmos_valores', async () => {
+    await montar();
+    for (const [rotulo, valor] of [['Afiliados activos', '2'], ['Reservas geradas', '14'], ['Comissão paga', '€120'], ['Comissão pendente', '€50']]) {
+      const artigo = screen.getByText(rotulo).closest('article');
+      eMare(artigo);
+      expect(artigo.querySelector('[data-mare-stat-tint]')).not.toBeNull();
+      expect(artigo.querySelector('p.font-display')).toHaveTextContent(valor);
+    }
+  });
+
+  it('cada_afiliado_esta_num_cartao_Mare_e_os_valores_sao_mono', async () => {
+    await montar();
+    const l = linha('João Silva');
+    eMare(l.closest('article'));
+    expect(within(l).getByText('€100').className).toContain('font-mono');
+    expect(within(l).getByText('€100').className).toContain('tabular-nums');
+    expect(within(l).getByText('10').className).toContain('font-mono');
+    expect(within(l).getByText('JOA3K9').className).toContain('font-mono');
+    expect(within(l).getByText('12% comissão').className).toContain('font-mono');
+  });
+
+  it('o_vazio_esta_num_cartao_Mare', async () => {
+    listAffiliates.mockResolvedValue([]);
+    render(<Affiliates />);
+    eMare((await screen.findByText('Sem afiliados registados')).closest('section'));
+  });
+
+  it('os_botoes_de_icone_tem_44px_no_telemovel_e_o_eliminar_mantem_o_hover_vermelho', async () => {
+    await montar();
+    for (const n of ['Registar pagamento João Silva', 'Desactivar João Silva', 'Editar João Silva', 'Eliminar João Silva']) {
+      expect(screen.getByRole('button', { name: n }).className).toContain('min-h-11');
+    }
+    expect(screen.getByRole('button', { name: 'Eliminar João Silva' }).className).toContain('hover:bg-[var(--error-light)]');
+  });
+
+  it('a_ligacao_longa_quebra_dentro_da_caixa_e_o_botao_copiar_fica', async () => {
+    useAuthStore.setState({ operator: { id: 'op1', slug: LONGO } });
+    await montar();
+    const ligacao = `https://saldesk.cv/book/${LONGO}?ref=JOA3K9`;
+    const p = within(linha('João Silva')).getByText(ligacao);
+    expect(p.className).toContain('break-all');
+    expect(p.className).toContain('font-mono');
+    expect(p.className).not.toContain('truncate');
+    expect(p.parentElement.className).toContain('min-w-0');
+    fireEvent.click(within(linha('João Silva')).getByText('Copiar'));
+    expect(clip).toHaveBeenCalledWith(ligacao);
+    expect(await within(linha('João Silva')).findByText('Copiado')).toBeInTheDocument();
+  });
+
+  it('configuracao_e_analytics_estao_em_cartoes_Mare_com_titulo_de_secao', async () => {
+    await montar();
+    fireEvent.click(screen.getByRole('tab', { name: 'Configuração' }));
+    const titulo = await screen.findByText('Configuração global do programa');
+    expect(titulo.tagName).toBe('H2');
+    eMare(titulo.closest('section'));
+    fireEvent.click(screen.getByRole('tab', { name: 'Analytics' }));
+    const top = await screen.findByText('Top afiliados por reservas');
+    expect(top.tagName).toBe('H2');
+    eMare(top.closest('section'));
+    expect(screen.getByText('10 reservas · €100 pago').className).toContain('font-mono');
+  });
+
+  it('o_vazio_do_analytics_esta_num_cartao_Mare', async () => {
+    listAffiliates.mockResolvedValue([]);
+    render(<Affiliates />);
+    await screen.findByText('Sem afiliados registados');
+    fireEvent.click(screen.getByRole('tab', { name: 'Analytics' }));
+    eMare((await screen.findByText('Sem dados de afiliados ainda.')).closest('section'));
   });
 });

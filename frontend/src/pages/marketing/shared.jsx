@@ -1,7 +1,12 @@
 import { useState } from 'react';
 import { Check, Copy, ExternalLink, Share2, Globe2 } from 'lucide-react';
-import Card from '../../components/ui/Card';
 import { useT } from '../../i18n';
+
+/* ── Estilo Mare: cartao de pagina, caixa interior calada, titulo de cartao e figuras ── */
+export const CARTAO = 'bg-white rounded-[18px] border border-mare-card p-[22px] min-w-0';
+export const CAIXA  = 'bg-mare-head rounded-[14px] border border-mare-card px-3.5 py-2.5 min-w-0';
+export const TITULO = 'font-display text-lg font-semibold text-ocean-900';
+export const NUM    = 'font-mono tabular-nums';
 
 /* ── Social planner localStorage ── */
 const STORAGE_KEY = 'saldesk_social_posts_v1';
@@ -41,27 +46,15 @@ export function CopyBtn({ text, small }) {
   }
   return (
     <button type="button" onClick={copy}
-      className={`flex items-center gap-1.5 transition-colors font-body font-medium ${small ? 'text-xs px-2 py-1 rounded-xs' : 'text-sm px-3 py-2 rounded-sm'} ${copied ? 'text-[var(--success)] bg-[var(--success-light)]' : 'text-ocean-700 bg-ocean-50 hover:bg-ocean-100'}`}>
+      className={`flex items-center gap-1.5 transition-colors font-body font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sand-500 ${small ? 'text-xs px-2 py-1 rounded-xs' : 'text-sm px-3 py-2 min-h-11 md:min-h-0 rounded-sm'} ${copied ? 'text-[var(--success)] bg-[var(--success-light)]' : 'text-ocean-700 bg-ocean-50 hover:bg-ocean-100'}`}>
       {copied ? <Check size={small ? 11 : 14} strokeWidth={2} /> : <Copy size={small ? 11 : 14} strokeWidth={1.75} />}
       {copied ? t('marketingPage.copied') : t('marketingPage.copy')}
     </button>
   );
 }
 
-/* ── KpiCard ── */
-export function KpiCard({ icon: Icon, label, value, sub, loading }) {
-  return (
-    <Card padding="p-4 flex items-start gap-3">
-      <div className="w-9 h-9 rounded-sm bg-ocean-50 flex items-center justify-center shrink-0">
-        <Icon size={18} strokeWidth={1.75} className="text-ocean-700" />
-      </div>
-      <div>
-        {loading ? <div className="h-6 w-16 bg-n-100 rounded animate-pulse" /> : (
-          <p className="font-display font-bold text-xl text-n-900">{value ?? '—'}</p>
-        )}
-        <p className="text-xs font-body text-n-500 mt-0.5">{label}</p>
-        {sub && <p className="text-xs font-body text-n-400 mt-0.5">{sub}</p>}
-      </div>
-    </Card>
-  );
+/* ── Valor de um MareStat: barra a pulsar enquanto carrega, travessao sem valor ── */
+export function valorDoTile(value, loading) {
+  if (loading) return <span className="block h-7 w-16 rounded bg-n-100 animate-pulse" />;
+  return value ?? '—';
 }

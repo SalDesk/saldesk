@@ -10,18 +10,23 @@ import { listVouchers, createVoucher, updateVoucher, deleteVoucher } from '../se
 import useAuthStore from '../store/authStore';
 import PageHeader from '../components/layout/PageHeader';
 import Button from '../components/ui/Button';
-import Card from '../components/ui/Card';
 import Modal from '../components/ui/Modal';
 import Table from '../components/ui/Table';
 import FilterChips from '../components/ui/FilterChips';
 import Badge from '../components/ui/Badge';
 import EmptyState from '../components/ui/EmptyState';
 import Input, { Select } from '../components/ui/Input';
+import MareStat from '../components/shared/MareStat';
+import { IconBtn, EDIT_HOVER, DELETE_HOVER } from '../components/shared/IconBtn';
 import { useT, getT } from '../i18n';
 import { mensagemErro } from '../utils/mensagemErro';
 import { formatarData, useLingua } from '../utils/formatoLingua';
 import { euroPreco } from '../utils/formatoVendedor';
 import { eurosInteiros } from './reservations/shared';
+
+/* ── Estilo Mare: cartao de pagina e figuras (codigos, descontos, datas, contagens) ── */
+const CARTAO = 'bg-white rounded-[18px] border border-mare-card p-[22px] min-w-0';
+const NUM = 'font-mono tabular-nums';
 
 /* ── Helpers ── */
 function generateCode() {
@@ -59,7 +64,7 @@ function CopyBtn({ text }) {
   }
   return (
     <button onClick={copy}
-      className={`flex items-center gap-1.5 text-xs px-2 py-1 rounded-xs font-body font-medium transition-colors ${copied ? 'text-[var(--success)] bg-[var(--success-light)]' : 'text-ocean-700 bg-ocean-50 hover:bg-ocean-100'}`}>
+      className={`flex items-center gap-1.5 text-xs px-2 py-1 min-h-11 md:min-h-8 rounded-xs font-body font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sand-500 ${copied ? 'text-[var(--success)] bg-[var(--success-light)]' : 'text-ocean-700 bg-ocean-50 hover:bg-ocean-100'}`}>
       {copied ? <Check size={11} strokeWidth={2} /> : <Copy size={11} strokeWidth={1.75} />}
       {copied ? t('vouchersPage.copied') : t('vouchersPage.copy')}
     </button>
@@ -126,7 +131,7 @@ function VoucherModal({ voucher, units, onSave, onClose }) {
             <Input label={t('vouchersPage.modal.code')} aria-label={t('vouchersPage.modal.code')} value={form.code} onChange={set('code')} required
               className="font-mono uppercase" placeholder={t('vouchersPage.modal.codePlaceholder')} />
           </div>
-          <Button type="button" variant="secondary" size="sm"
+          <Button type="button" variant="secondary" size="sm" className="min-h-11 md:min-h-0"
             onClick={() => setForm(p => ({ ...p, code: generateCode() }))}>
             {t('vouchersPage.modal.generate')}
           </Button>
@@ -182,7 +187,7 @@ function VoucherModal({ voucher, units, onSave, onClose }) {
             <div className="flex flex-wrap gap-1.5 max-h-28 overflow-y-auto">
               {units.map(u => (
                 <button key={u.id} type="button" onClick={() => toggleUnit(u.id)}
-                  className={`text-xs px-2.5 py-1 rounded-sm border font-body transition-colors ${
+                  className={`text-xs px-2.5 py-1 min-h-11 md:min-h-0 rounded-sm border font-body transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sand-500 ${
                     form.unit_ids.includes(u.id)
                       ? 'bg-ocean-700 text-white border-ocean-700'
                       : 'bg-white text-n-600 border-n-200 hover:border-ocean-300'
@@ -227,8 +232,8 @@ function ShareModal({ voucher, bookingLink, onClose }) {
   return (
     <Modal open onClose={onClose} title={t('vouchersPage.share.title', { code: voucher.code })} size="sm">
       <div className="space-y-4">
-        <div className="bg-n-50 border border-n-200 rounded-sm p-3">
-          <p className="text-xs font-mono font-semibold text-n-700">{voucher.code}</p>
+        <div className="bg-mare-head border border-mare-card rounded-[14px] p-3">
+          <p className={`${NUM} text-xs font-semibold text-n-700 break-all`}>{voucher.code}</p>
           <p className="text-xs font-body text-n-600 mt-1">{t('vouchersPage.share.discountOff', { discount: fmtDiscount(voucher, lang) })}</p>
         </div>
 
@@ -240,7 +245,7 @@ function ShareModal({ voucher, bookingLink, onClose }) {
               <CopyBtn text={msgPt} />
               <button
                 onClick={() => window.open(`https://wa.me/?text=${encodeURIComponent(msgPt)}`, '_blank', 'noopener')}
-                className="flex items-center gap-1.5 text-xs px-2 py-1 rounded-xs bg-[var(--success)] text-white font-body font-medium hover:opacity-90 transition-opacity">
+                className="flex items-center gap-1.5 text-xs px-2 py-1 min-h-11 md:min-h-0 rounded-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sand-500 bg-[var(--success)] text-white font-body font-medium hover:opacity-90 transition-opacity">
                 <Share2 size={11} strokeWidth={1.75} />{t('vouchersPage.share.send')}
               </button>
             </div>
@@ -249,7 +254,7 @@ function ShareModal({ voucher, bookingLink, onClose }) {
               <CopyBtn text={msgEn} />
               <button
                 onClick={() => window.open(`https://wa.me/?text=${encodeURIComponent(msgEn)}`, '_blank', 'noopener')}
-                className="flex items-center gap-1.5 text-xs px-2 py-1 rounded-xs bg-[var(--success)] text-white font-body font-medium hover:opacity-90 transition-opacity">
+                className="flex items-center gap-1.5 text-xs px-2 py-1 min-h-11 md:min-h-0 rounded-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sand-500 bg-[var(--success)] text-white font-body font-medium hover:opacity-90 transition-opacity">
                 <Share2 size={11} strokeWidth={1.75} />{t('vouchersPage.share.send')}
               </button>
             </div>
@@ -336,14 +341,14 @@ export default function Vouchers() {
     {
       key: 'codigo', label: t('vouchersPage.columns.code'),
       render: v => (
-        <div className={`flex items-center gap-2 ${!v.active ? 'opacity-60' : ''}`}>
-          <span className="font-mono font-bold text-n-900 tracking-wider">{v.code}</span>
+        <div className={`flex flex-wrap items-center gap-2 ${!v.active ? 'opacity-60' : ''}`}>
+          <span className={`${NUM} font-bold text-n-900 tracking-wider break-all min-w-0`}>{v.code}</span>
           <CopyBtn text={v.code} />
         </div>
       ),
     },
-    { key: 'desconto', label: t('vouchersPage.columns.discount'), render: v => <span className="font-display font-bold text-ocean-700">{fmtDiscount(v, lang)}</span> },
-    { key: 'minimo', label: t('vouchersPage.columns.minimum'), render: v => <span className="text-xs font-body text-n-500">{v.min_amount > 0 ? euroPreco(v.min_amount, lang) : '—'}</span> },
+    { key: 'desconto', label: t('vouchersPage.columns.discount'), render: v => <span className={`${NUM} font-bold text-ocean-700`}>{fmtDiscount(v, lang)}</span> },
+    { key: 'minimo', label: t('vouchersPage.columns.minimum'), render: v => <span className={`${NUM} text-xs text-n-500`}>{v.min_amount > 0 ? euroPreco(v.min_amount, lang) : '—'}</span> },
     {
       key: 'validade', label: t('vouchersPage.columns.validity'),
       render: v => {
@@ -351,19 +356,19 @@ export default function Vouchers() {
         const isExpiringSoon = v.expires_at && st === 'activo' &&
           (new Date(v.expires_at) - new Date()) < 7 * 24 * 60 * 60 * 1000;
         return (
-          <div className="flex items-center gap-1.5 text-xs font-mono text-n-500 whitespace-nowrap">
+          <div className={`flex items-center gap-1.5 text-xs ${NUM} text-n-500 whitespace-nowrap`}>
             {isExpiringSoon && <AlertTriangle size={12} strokeWidth={1.75} className="text-[var(--warning)] shrink-0" />}
             {v.expires_at ? formatarData(new Date(v.expires_at), { timeZone: 'UTC' }, lang) : '—'}
           </div>
         );
       },
     },
-    { key: 'usos', label: t('vouchersPage.columns.uses'), render: v => <span className="font-mono text-n-700">{v.uses_count || 0}{v.max_uses > 0 ? `/${v.max_uses}` : ''}</span> },
+    { key: 'usos', label: t('vouchersPage.columns.uses'), render: v => <span className={`${NUM} text-n-700`}>{v.uses_count || 0}{v.max_uses > 0 ? `/${v.max_uses}` : ''}</span> },
     {
       key: 'tours', label: t('vouchersPage.columns.tours'),
       render: v => (
         <span className="text-xs font-body text-n-500">
-          {v.unit_ids?.length > 0 ? t('vouchersPage.toursCount', { n: v.unit_ids.length }) : <span className="text-n-400">{t('vouchersPage.allTours')}</span>}
+          {v.unit_ids?.length > 0 ? t('vouchersPage.toursCount', { n: v.unit_ids.length }) : <span>{t('vouchersPage.allTours')}</span>}
         </span>
       ),
     },
@@ -375,22 +380,15 @@ export default function Vouchers() {
       key: 'acoes', label: '',
       render: v => (
         <div className="flex items-center gap-0.5">
-          <button onClick={() => setShareModal(v)} aria-label={t('vouchersPage.actions.shareAria', { code: v.code })}
-            className="p-1.5 rounded text-n-400 hover:text-[var(--success)] hover:bg-n-100 transition-colors" title={t('vouchersPage.actions.share')}>
-            <Share2 size={13} strokeWidth={1.75} />
-          </button>
-          <button onClick={() => setModal(v)} aria-label={t('vouchersPage.actions.editAria', { code: v.code })}
-            className="p-1.5 rounded text-n-400 hover:text-ocean-700 hover:bg-ocean-50 transition-colors" title={t('vouchersPage.actions.edit')}>
-            <Pencil size={13} strokeWidth={1.75} />
-          </button>
-          <button onClick={() => handleToggleActive(v)} aria-label={t(v.active ? 'vouchersPage.actions.deactivateAria' : 'vouchersPage.actions.activateAria', { code: v.code })}
-            className="p-1.5 rounded text-n-400 hover:text-n-700 hover:bg-n-100 transition-colors" title={t(v.active ? 'vouchersPage.actions.deactivate' : 'vouchersPage.actions.activate')}>
-            <RefreshCw size={13} strokeWidth={1.75} />
-          </button>
-          <button onClick={() => handleDelete(v.id)} aria-label={t('vouchersPage.actions.deleteAria', { code: v.code })}
-            className="p-1.5 rounded text-n-400 hover:text-[var(--error)] hover:bg-[var(--error-light)] transition-colors" title={t('vouchersPage.actions.delete')}>
-            <Trash2 size={13} strokeWidth={1.75} />
-          </button>
+          <IconBtn icon={Share2} label={t('vouchersPage.actions.shareAria', { code: v.code })} title={t('vouchersPage.actions.share')}
+            onClick={() => setShareModal(v)} hover="hover:text-[var(--success)] hover:bg-[var(--success-light)]" />
+          <IconBtn icon={Pencil} label={t('vouchersPage.actions.editAria', { code: v.code })} title={t('vouchersPage.actions.edit')}
+            onClick={() => setModal(v)} hover={EDIT_HOVER} />
+          <IconBtn icon={RefreshCw} label={t(v.active ? 'vouchersPage.actions.deactivateAria' : 'vouchersPage.actions.activateAria', { code: v.code })}
+            title={t(v.active ? 'vouchersPage.actions.deactivate' : 'vouchersPage.actions.activate')}
+            onClick={() => handleToggleActive(v)} hover="hover:text-n-800 hover:bg-n-100" />
+          <IconBtn icon={Trash2} label={t('vouchersPage.actions.deleteAria', { code: v.code })} title={t('vouchersPage.actions.delete')}
+            onClick={() => handleDelete(v.id)} hover={DELETE_HOVER} />
         </div>
       ),
     },
@@ -399,6 +397,7 @@ export default function Vouchers() {
   return (
     <div>
       <PageHeader
+        eyebrow={t('nav.sections.crescimento')}
         title={t('vouchersPage.title')}
         subtitle={t('vouchersPage.subtitle')}
         actions={
@@ -407,25 +406,11 @@ export default function Vouchers() {
       />
 
       {/* Stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
-        {[
-          { label: t('vouchersPage.stats.total'),      value: total,     icon: Tag      },
-          { label: t('vouchersPage.stats.active'),     value: active,    icon: Gift     },
-          { label: t('vouchersPage.stats.expired'),    value: expired,   icon: Calendar },
-          { label: t('vouchersPage.stats.totalUses'),  value: totalUses, icon: BarChart2 },
-        ].map(m => (
-          <Card key={m.label} padding="px-4 py-3">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-sm bg-ocean-50 flex items-center justify-center shrink-0">
-                <m.icon size={16} strokeWidth={1.75} className="text-ocean-700" />
-              </div>
-              <div>
-                <p className="font-display font-bold text-xl text-n-900">{m.value}</p>
-                <p className="text-xs font-body text-n-500">{m.label}</p>
-              </div>
-            </div>
-          </Card>
-        ))}
+      <div className="grid grid-cols-1 min-[420px]:grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
+        <MareStat label={t('vouchersPage.stats.total')} value={total} icon={Tag} />
+        <MareStat label={t('vouchersPage.stats.active')} value={active} icon={Gift} />
+        <MareStat label={t('vouchersPage.stats.expired')} value={expired} icon={Calendar} />
+        <MareStat label={t('vouchersPage.stats.totalUses')} value={totalUses} icon={BarChart2} />
       </div>
 
       {/* Filters */}
@@ -448,17 +433,17 @@ export default function Vouchers() {
 
       {/* List */}
       {loading ? (
-        <Card><div className="text-center py-14 text-n-400 text-sm font-body">{t('vouchersPage.loading')}</div></Card>
+        <section className={CARTAO}><div className="text-center py-14 text-n-500 text-sm font-body">{t('vouchersPage.loading')}</div></section>
       ) : sorted.length === 0 ? (
-        <Card padding="p-0">
+        <section className="bg-white rounded-[18px] border border-mare-card min-w-0 overflow-hidden">
           <EmptyState icon={Tag} title={t('vouchersPage.empty.title')}
             description={t('vouchersPage.empty.description')}
             action={<Button icon={Plus} onClick={() => setModal({ _new: true })}>{t('vouchersPage.empty.create')}</Button>} />
-        </Card>
+        </section>
       ) : (
-        <Card padding="p-0">
+        <section className="bg-white rounded-[18px] border border-mare-card min-w-0 overflow-hidden">
           <Table columns={columns} rows={sorted} compact />
-        </Card>
+        </section>
       )}
 
       {modal && (

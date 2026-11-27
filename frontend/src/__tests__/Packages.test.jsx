@@ -52,8 +52,8 @@ async function montar(primeiro = 'Pacote Aventura') {
   await screen.findByText(primeiro);
   return r;
 }
-const cartao = (nome) => screen.getByText(nome, { selector: 'p' }).closest('div.overflow-hidden');
-const kpi = (rotulo) => screen.getByText(rotulo).previousSibling.textContent;
+const cartao = (nome) => screen.getByText(nome, { selector: 'p' }).closest('article.overflow-hidden');
+const kpi = (rotulo) => screen.getByText(rotulo).closest('article').querySelector('p.font-display').textContent;
 const novoPacote = () => screen.getAllByText('Novo pacote').find(e => e.closest('button')).closest('button');
 
 /* ───────────────────────── caracterizacao ───────────────────────── */
@@ -257,7 +257,7 @@ describe('Pacotes com o design system', () => {
     const html = container.innerHTML;
     expect(html).not.toMatch(HEX);
     expect(html).not.toMatch(NOMEADAS);
-    expect(html.replace(/text-error ml-0[.]5/g, '')).not.toMatch(/(?:text|bg|border)-error/);
+    expect(html.replace(/hover:text-error/g, '').replace(/text-error ml-0[.]5/g, '')).not.toMatch(/(?:text|bg|border)-error/);
   });
 });
 
@@ -360,5 +360,74 @@ describe('Pacotes: painel em ingles', () => {
     render(<Packages />);
     expect(await screen.findByText('No packages yet')).toBeInTheDocument();
     expect(chavesCruas(['packagesPage'])).toEqual([]);
+  });
+});
+
+/* ───────────────────────── estilo Mare ───────────────────────── */
+
+describe('Pacotes: estilo Mare', () => {
+  const eMare = (el) => {
+    expect(el).not.toBeNull();
+    expect(el.className).toContain('bg-white');
+    expect(el.className).toContain('border-mare-card');
+    expect(el.className).toContain('rounded-[18px]');
+  };
+
+  it('mostra_o_eyebrow_da_area_Crescimento_tambem_a_carregar', async () => {
+    listPackages.mockReturnValue(new Promise(() => {}));
+    render(<Packages />);
+    expect(document.querySelector('[data-eyebrow]')).toHaveTextContent('Crescimento');
+    cleanup();
+    listPackages.mockResolvedValue(PACOTES);
+    await montar();
+    expect(document.querySelector('[data-eyebrow]')).toHaveTextContent('Crescimento');
+  });
+
+  it('os_totais_sao_MareStat_com_os_mesmos_valores', async () => {
+    await montar();
+    for (const [rotulo, valor] of [['Pacotes activos', '4'], ['Reservas por pacotes', '23']]) {
+      const artigo = screen.getByText(rotulo).closest('article');
+      expect(artigo.className).toContain('border-mare-card');
+      expect(artigo.querySelector('p.font-display')).toHaveTextContent(valor);
+    }
+    expect(screen.getByText('Receita gerada').closest('article').className).toContain('border-mare-card');
+    expect(screen.getByText('Pacotes activos').closest('div.grid').className).toContain('min-[420px]:grid-cols-2');
+  });
+
+  it('os_cartoes_dos_pacotes_sao_Mare_e_a_nota_publica_e_uma_caixa_interior', async () => {
+    await montar();
+    eMare(cartao('Pacote Aventura'));
+    const nota = screen.getByText(/\/public\/:slug\/packages/).closest('div');
+    expect(nota.className).toContain('rounded-[14px]');
+    expect(nota.className).toContain('bg-mare-head');
+    cleanup();
+    listPackages.mockResolvedValue([]);
+    render(<Packages />);
+    eMare((await screen.findByText('Sem pacotes criados')).closest('section'));
+  });
+
+  it('precos_datas_e_contagens_usam_font_mono', async () => {
+    await montar();
+    const c = cartao('Pacote Aventura');
+    expect(within(c).getByText('€100').className).toContain('font-mono');
+    expect(within(c).getByText('€140').className).toContain('font-mono');
+    expect(within(c).getByText(`${fmtDate('2026-12-01')} — ${fmtDate(dia(30))}`).className).toContain('font-mono');
+    expect(within(c).getByText('5 reserva(s)').className).toContain('font-mono');
+  });
+
+  it('os_botoes_de_icone_sao_IconBtn_e_o_apagar_mantem_o_vermelho_ao_passar_o_rato', async () => {
+    await montar();
+    const apagar = screen.getByRole('button', { name: 'Eliminar Pacote Aventura' });
+    expect(apagar.className).toContain('min-h-11');
+    expect(apagar.className).toContain('hover:text-error');
+    expect(screen.getByRole('button', { name: 'Editar Pacote Aventura' }).className).toContain('hover:text-ocean-700');
+    expect(screen.getByRole('button', { name: 'Desactivar Pacote Aventura' }).className).toContain('min-h-11');
+  });
+
+  it('o_estado_de_um_pacote_inactivo_nao_fica_dentro_de_opacidade_reduzida', async () => {
+    await montar();
+    const selo = within(cartao('Pacote Inactivo')).getByText('Inactivo');
+    expect(selo.closest('.opacity-70')).toBeNull();
+    expect(cartao('Pacote Aventura').querySelector('img').className).not.toContain('opacity-70');
   });
 });

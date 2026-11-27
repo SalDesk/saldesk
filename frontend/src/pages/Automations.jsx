@@ -10,7 +10,6 @@ import {
 } from '../services/automationsService';
 import PageHeader from '../components/layout/PageHeader';
 import Button from '../components/ui/Button';
-import Card from '../components/ui/Card';
 import Tabs from '../components/ui/Tabs';
 import Badge from '../components/ui/Badge';
 import Table from '../components/ui/Table';
@@ -19,6 +18,14 @@ import Input, { Textarea } from '../components/ui/Input';
 import LoadingSpinner from '../components/shared/LoadingSpinner';
 import { useT } from '../i18n';
 import { formatarData } from '../utils/formatoLingua';
+
+/* Estilo Mare: cartao de pagina, titulo de cartao e figuras */
+const CARTAO = 'bg-white rounded-[18px] border border-mare-card min-w-0';
+const TITULO = 'font-display text-lg font-semibold text-ocean-900';
+const NUM = 'font-mono tabular-nums';
+const FOCO = 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sand-500';
+/* pilula PT/EN da pre-visualizacao: um unico conjunto de cores por estado */
+const pilulaLingua = (activa) => `text-xs px-3 min-h-11 md:min-h-8 rounded-full font-mono transition-colors ${FOCO} ${activa ? 'bg-ocean-700 text-white' : 'bg-n-100 text-n-700 hover:bg-n-200'}`;
 
 /* ── Sequence definitions ── */
 const SEQUENCES = [
@@ -161,7 +168,7 @@ function EmailPreview({ subject, body, isWhatsApp }) {
 
   if (isWhatsApp) {
     return (
-      <div className="border border-n-200 rounded-md overflow-hidden">
+      <div className="border border-mare-card rounded-[14px] overflow-hidden">
         <div className="bg-[var(--success)] px-3 py-2 flex items-center gap-2">
           <MessageCircle size={13} strokeWidth={1.75} className="text-white shrink-0" />
           <p className="text-white text-xs font-body font-semibold">{t('automations.previewWhatsApp')}</p>
@@ -169,18 +176,18 @@ function EmailPreview({ subject, body, isWhatsApp }) {
         <div className="bg-n-100 p-3">
           <div className="bg-white rounded-lg px-3 py-2 max-w-xs shadow-sm">
             <pre className="text-xs font-body text-n-800 whitespace-pre-wrap leading-relaxed">{pb || t('automations.emptyBody')}</pre>
-            <p className="text-[10px] font-mono text-n-400 text-right mt-1">09:00</p>
+            <p className="text-[10px] font-mono tabular-nums text-n-600 text-right mt-1">09:00</p>
           </div>
         </div>
         <div className="bg-n-50 px-3 py-1.5 border-t border-n-100">
-          <p className="text-[10px] font-mono text-n-400">{t('automations.sampleNote')}</p>
+          <p className="text-[11px] font-mono text-n-600">{t('automations.sampleNote')}</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="border border-n-200 rounded-md overflow-hidden">
+    <div className="border border-mare-card rounded-[14px] overflow-hidden">
       <div className="bg-ocean-900 px-4 py-2.5">
         <p className="text-white text-[11px] font-display font-semibold">SalDesk Tours</p>
         {ps && <p className="text-ocean-300 text-[11px] font-mono mt-0.5">{t('automations.previewSubject')} {ps}</p>}
@@ -189,7 +196,7 @@ function EmailPreview({ subject, body, isWhatsApp }) {
         <pre className="text-xs font-body text-n-700 whitespace-pre-wrap leading-relaxed">{pb || t('automations.emptyBody')}</pre>
       </div>
       <div className="bg-n-50 px-4 py-2 border-t border-n-100">
-        <p className="text-[10px] font-mono text-n-400">{t('automations.sampleNoteLong')}</p>
+        <p className="text-[11px] font-mono text-n-600">{t('automations.sampleNoteLong')}</p>
       </div>
     </div>
   );
@@ -293,25 +300,25 @@ function SequenceCard({ seq, automation, onSaved }) {
   const previewBody    = previewLang === 'en' ? form.message_en : form.message_pt;
 
   return (
-    <Card padding="p-0" className={`overflow-hidden transition-opacity ${isActive ? '' : 'opacity-70'}`}>
+    <article className={`${CARTAO} overflow-hidden transition-opacity ${isActive ? '' : 'opacity-70'}`}>
       {/* Header */}
       <div
         role="button" tabIndex={0} aria-expanded={open}
-        className="flex items-center gap-3 px-4 py-3.5 cursor-pointer select-none"
+        className={`flex items-center gap-3 px-[22px] py-4 min-h-11 cursor-pointer select-none ${FOCO}`}
         onClick={toggleOpen}
         onKeyDown={e => {
           if (e.target !== e.currentTarget) return;
           if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleOpen(); }
         }}
       >
-        <div className={`w-8 h-8 rounded-sm flex items-center justify-center shrink-0 ${seq.iconBg}`}>
+        <div className={`w-9 h-9 rounded-[12px] flex items-center justify-center shrink-0 ${seq.iconBg}`}>
           <seq.Icon size={16} strokeWidth={1.75} className={seq.iconColor} />
         </div>
         <div className="flex-1 min-w-0">
-          <p className="font-display font-semibold text-sm text-n-900 truncate">{titulo}</p>
-          <p className="text-xs font-body text-n-500">{t(`automations.seq.${seq.id}.subtitle`)}</p>
+          <h3 className={`${TITULO} truncate`}>{titulo}</h3>
+          <p className="text-xs font-body text-n-600">{t(`automations.seq.${seq.id}.subtitle`)}</p>
         </div>
-        <span className="hidden sm:inline-flex items-center gap-1 text-[10px] font-mono text-n-500 bg-n-100 px-2 py-0.5 rounded-xs shrink-0">
+        <span className="hidden sm:inline-flex items-center gap-1 text-[11px] font-mono text-n-700 bg-n-100 px-2.5 py-0.5 rounded-full shrink-0">
           {hasEmail
             ? <Mail size={10} strokeWidth={1.75} />
             : <MessageCircle size={10} strokeWidth={1.75} />}
@@ -323,36 +330,36 @@ function SequenceCard({ seq, automation, onSaved }) {
           disabled={toggling}
           aria-pressed={isActive}
           aria-label={t(isActive ? 'automations.deactivate' : 'automations.activate', { title: titulo })}
-          className={`relative inline-flex h-5 w-9 shrink-0 rounded-full border-2 border-transparent transition-colors focus:outline-none ${toggling ? 'opacity-50' : ''} ${isActive ? 'bg-ocean-700' : 'bg-n-300'}`}
+          className={`relative inline-flex h-5 w-9 shrink-0 rounded-full border-2 border-transparent transition-colors before:absolute before:content-[''] before:-inset-x-1.5 before:-inset-y-3.5 ${FOCO} ${toggling ? 'opacity-50' : ''} ${isActive ? 'bg-ocean-700' : 'bg-n-300'}`}
         >
           <span className={`inline-block h-4 w-4 rounded-full bg-white shadow transition-transform ${isActive ? 'translate-x-4' : 'translate-x-0'}`} />
         </button>
         {open
-          ? <ChevronUp size={15} strokeWidth={1.75} className="text-n-400 shrink-0" />
-          : <ChevronDown size={15} strokeWidth={1.75} className="text-n-400 shrink-0" />}
+          ? <ChevronUp size={15} strokeWidth={1.75} className="text-n-500 shrink-0" />
+          : <ChevronDown size={15} strokeWidth={1.75} className="text-n-500 shrink-0" />}
       </div>
 
       {/* Expanded */}
       {open && (
-        <div className="border-t border-n-100 px-4 py-4 space-y-4 bg-n-50">
+        <div className="border-t border-mare-card px-[22px] py-4 space-y-4 bg-mare-head">
           {!editing ? (
             /* Read-only */
             <div className="space-y-3">
               {hasEmail && form.subject_pt && (
-                <div className="bg-white border border-n-200 rounded-sm px-3 py-2">
-                  <p className="text-[10px] font-mono text-n-400 mb-0.5 uppercase tracking-wide">{t('automations.subjectPt')}</p>
+                <div className="bg-white border border-mare-card rounded-[14px] px-3 py-2">
+                  <p className="text-[11px] font-mono text-n-600 mb-0.5 uppercase tracking-wide">{t('automations.subjectPt')}</p>
                   <p className="text-xs font-body text-n-700 truncate">{form.subject_pt}</p>
                 </div>
               )}
-              <div className="bg-white border border-n-200 rounded-sm px-3 py-2">
-                <p className="text-[10px] font-mono text-n-400 mb-0.5 uppercase tracking-wide">{t('automations.messagePt')}</p>
+              <div className="bg-white border border-mare-card rounded-[14px] px-3 py-2">
+                <p className="text-[11px] font-mono text-n-600 mb-0.5 uppercase tracking-wide">{t('automations.messagePt')}</p>
                 <p className="text-xs font-body text-n-600 whitespace-pre-wrap line-clamp-3">{form.message_pt}</p>
               </div>
-              <div className="flex gap-2">
-                <Button variant="secondary" size="sm" icon={Edit2} onClick={e => { e.stopPropagation(); setEditing(true); }}>
+              <div className="flex flex-wrap gap-2">
+                <Button variant="secondary" size="sm" icon={Edit2} className="min-h-11 md:min-h-0" onClick={e => { e.stopPropagation(); setEditing(true); }}>
                   {t('automations.editTemplate')}
                 </Button>
-                <Button variant="secondary" size="sm" icon={Eye} onClick={e => { e.stopPropagation(); setPreview(p => !p); }}>
+                <Button variant="secondary" size="sm" icon={Eye} className="min-h-11 md:min-h-0" onClick={e => { e.stopPropagation(); setPreview(p => !p); }}>
                   {preview ? t('automations.hide') : t('automations.preview')}
                 </Button>
               </div>
@@ -361,7 +368,7 @@ function SequenceCard({ seq, automation, onSaved }) {
                   <div className="flex gap-1">
                     {['pt', 'en'].map(l => (
                       <button key={l} type="button" aria-pressed={previewLang === l} onClick={() => setPreviewLang(l)}
-                        className={`text-xs px-2.5 py-1 rounded-xs font-mono transition-colors ${previewLang === l ? 'bg-ocean-700 text-white' : 'bg-n-200 text-n-600 hover:bg-n-300'}`}>
+                        className={pilulaLingua(previewLang === l)}>
                         {l.toUpperCase()}
                       </button>
                     ))}
@@ -375,11 +382,11 @@ function SequenceCard({ seq, automation, onSaved }) {
             <div className="space-y-4">
               {/* Variables */}
               <div>
-                <p className="text-xs font-body font-bold uppercase tracking-wide text-n-500 mb-2">{t('automations.variablesHint')}</p>
+                <p className="text-xs font-body font-bold uppercase tracking-wide text-n-600 mb-2">{t('automations.variablesHint')}</p>
                 <div className="flex flex-wrap gap-1.5">
                   {VARS.map(v => (
                     <button key={v.key} type="button" onClick={() => insertVar(v.key)} title={t(`automations.vars.${v.id}`)}
-                      className="text-xs font-mono px-2 py-0.5 rounded-xs bg-ocean-50 text-ocean-700 border border-ocean-100 hover:bg-ocean-100 transition-colors">
+                      className={`text-xs font-mono px-2.5 min-h-11 md:min-h-8 rounded-full bg-white text-ocean-700 border border-mare-card hover:bg-ocean-50 transition-colors ${FOCO}`}>
                       {v.key}
                     </button>
                   ))}
@@ -397,7 +404,7 @@ function SequenceCard({ seq, automation, onSaved }) {
 
               <div className="flex items-center justify-between">
                 <button type="button" onClick={() => setPreview(p => !p)}
-                  className="text-xs font-body text-ocean-700 hover:underline flex items-center gap-1">
+                  className={`text-xs font-body text-ocean-700 hover:underline flex items-center gap-1 min-h-11 md:min-h-0 rounded-sm ${FOCO}`}>
                   <Eye size={12} strokeWidth={1.75} />
                   {preview ? t('automations.hidePreview') : t('automations.viewPreview')}
                 </button>
@@ -405,7 +412,7 @@ function SequenceCard({ seq, automation, onSaved }) {
                   <div className="flex gap-1">
                     {['pt', 'en'].map(l => (
                       <button key={l} type="button" aria-pressed={previewLang === l} onClick={() => setPreviewLang(l)}
-                        className={`text-xs px-2.5 py-1 rounded-xs font-mono transition-colors ${previewLang === l ? 'bg-ocean-700 text-white' : 'bg-n-200 text-n-600'}`}>
+                        className={pilulaLingua(previewLang === l)}>
                         {l.toUpperCase()}
                       </button>
                     ))}
@@ -428,7 +435,7 @@ function SequenceCard({ seq, automation, onSaved }) {
           )}
         </div>
       )}
-    </Card>
+    </article>
   );
 }
 
@@ -440,7 +447,7 @@ function colunasHistorico(t) {
     {
       key: 'created_at', label: t('automations.logs.date'),
       render: l => (
-        <span className="text-xs font-mono text-n-500 whitespace-nowrap">
+        <span className={`text-xs ${NUM} text-n-600 whitespace-nowrap`}>
           {l.created_at ? formatarData(new Date(l.created_at), { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) : '—'}
         </span>
       ),
@@ -456,7 +463,7 @@ function colunasHistorico(t) {
     {
       key: 'channel', label: t('automations.logs.channel'),
       render: l => (
-        <span className="flex items-center gap-1 text-xs font-body text-n-600">
+        <span className="flex items-center gap-1 text-xs font-body text-n-700">
           {l.channel === 'email'
             ? <Mail size={11} strokeWidth={1.75} />
             : <MessageCircle size={11} strokeWidth={1.75} />}
@@ -481,23 +488,23 @@ function LogsTab({ logs, loading }) {
 
   if (!logs || logs.length === 0) {
     return (
-      <Card padding="p-0">
+      <section className={`${CARTAO} p-[22px]`}>
         <EmptyState
           icon={History}
           title={t('automations.logs.emptyTitle')}
           description={t('automations.logs.emptyDescription')}
         />
-      </Card>
+      </section>
     );
   }
 
   return (
-    <Card padding="p-0">
+    <section className={`${CARTAO} p-[22px]`}>
       <Table columns={colunasHistorico(t)} rows={logs.slice(0, 100)} />
       {logs.length > 100 && (
-        <p className="text-xs font-body text-n-400 text-center py-3">{t('automations.logs.showing', { shown: 100, total: logs.length })}</p>
+        <p className="text-xs font-body text-n-600 text-center pt-3">{t('automations.logs.showing', { shown: 100, total: logs.length })}</p>
       )}
-    </Card>
+    </section>
   );
 }
 
@@ -539,15 +546,16 @@ export default function Automations() {
   return (
     <div>
       <PageHeader
+        eyebrow={t('nav.sections.crescimento')}
         title={t('automations.title')}
         subtitle={t('automations.activeCount', { count: activeCount })}
       />
 
       {/* Info */}
-      <div className="bg-[var(--info-light)] border border-n-200 rounded-sm px-4 py-3 mb-5">
-        <p className="text-xs font-body text-[var(--info)]">
+      <div className="bg-mare-head rounded-[14px] px-4 py-3 mb-5">
+        <p className="text-xs font-body text-ocean-800">
           <span className="font-semibold">{t('automations.varsAvailable')}</span>{' '}
-          {VARS.map(v => v.key).join(' · ')}
+          <span className="font-mono break-words">{VARS.map(v => v.key).join(' · ')}</span>
         </p>
       </div>
 

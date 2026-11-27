@@ -2,10 +2,10 @@ import { useState, useEffect } from 'react';
 import { QrCode, RefreshCw, Download } from 'lucide-react';
 import { getQrCode } from '../../services/marketingService';
 import Button from '../../components/ui/Button';
-import Card from '../../components/ui/Card';
 import { Select } from '../../components/ui/Input';
 import LoadingSpinner from '../../components/shared/LoadingSpinner';
 import { useT } from '../../i18n';
+import { CARTAO, CAIXA, TITULO } from './shared';
 
 const QR_COLORS     = ['#0D5470', '#062A38', '#D4A82A', '#1A7A4A', '#B91C1C', '#1A2332'];
 
@@ -61,7 +61,7 @@ export default function QrCodeTab({ slug, units }) {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
       {/* Controls */}
-      <div className="space-y-5">
+      <section className={`${CARTAO} space-y-5`}>
         <Select label={t('marketingPage.qr.for')} aria-label={t('marketingPage.qr.for')} value={selectedUnit} onChange={e => setSelectedUnit(e.target.value)}>
           <option value="">{t('marketingPage.qr.publicProfile')}</option>
           {units.map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
@@ -72,12 +72,12 @@ export default function QrCodeTab({ slug, units }) {
           <div className="flex items-center gap-2 flex-wrap">
             {QR_COLORS.map(c => (
               <button key={c} type="button" aria-label={t('marketingPage.qr.colorNamed', { color: c })} aria-pressed={qrColor === c} onClick={() => setQrColor(c)}
-                className={`w-7 h-7 rounded-sm border-2 transition-all ${qrColor === c ? 'border-n-700 scale-110' : 'border-transparent hover:scale-105'}`}
+                className={`w-11 h-11 md:w-7 md:h-7 rounded-sm border-2 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sand-500 ${qrColor === c ? 'border-n-700 scale-110' : 'border-transparent hover:scale-105'}`}
                 style={{ backgroundColor: c }} />
             ))}
             <input type="color" aria-label={t('marketingPage.qr.customColor')} value={qrColor} onChange={e => setQrColor(e.target.value)}
-              className="w-7 h-7 rounded-sm cursor-pointer border border-n-300" />
-            <span className="text-xs font-mono text-n-500">{qrColor}</span>
+              className="w-11 h-11 md:w-7 md:h-7 rounded-sm cursor-pointer border border-n-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sand-500" />
+            <span className="text-xs font-mono tabular-nums text-n-600">{qrColor}</span>
           </div>
         </div>
 
@@ -87,30 +87,30 @@ export default function QrCodeTab({ slug, units }) {
           </label>
           <input type="range" aria-label={t('marketingPage.qr.sizeAria')} min="200" max="600" step="50" value={qrSize}
             onChange={e => setQrSize(e.target.value)}
-            className="w-full accent-ocean-700" />
-          <div className="flex justify-between text-[10px] font-mono text-n-400 mt-1">
+            className="w-full accent-ocean-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sand-500" />
+          <div className="flex justify-between text-xs font-mono tabular-nums text-n-600 mt-1">
             <span>200px</span><span>600px</span>
           </div>
         </div>
 
-        <Button icon={RefreshCw} onClick={generateQr} loading={loading} variant="secondary" className="w-full justify-center">
+        <Button icon={RefreshCw} onClick={generateQr} loading={loading} variant="secondary" className="w-full justify-center min-h-11 md:min-h-0">
           {t('marketingPage.qr.generate')}
         </Button>
 
         <div className="flex gap-3">
-          <Button variant="secondary" icon={Download} onClick={downloadPng} disabled={!qrUrl || loading} className="flex-1">
+          <Button variant="secondary" icon={Download} onClick={downloadPng} disabled={!qrUrl || loading} className="flex-1 min-h-11 md:min-h-0">
             PNG
           </Button>
-          <Button variant="secondary" icon={Download} onClick={downloadSvg} disabled={!qrUrl || loading} className="flex-1">
+          <Button variant="secondary" icon={Download} onClick={downloadSvg} disabled={!qrUrl || loading} className="flex-1 min-h-11 md:min-h-0">
             SVG
           </Button>
         </div>
-      </div>
+      </section>
 
       {/* Preview */}
-      <div className="flex flex-col items-center gap-4">
-        <p className="text-xs font-mono uppercase tracking-wider text-n-500 self-start">{t('marketingPage.qr.preview')}</p>
-        <Card padding="p-8 flex items-center justify-center min-h-56" className="w-full">
+      <section className={`${CARTAO} flex flex-col items-center gap-4`}>
+        <h2 className={`${TITULO} self-start`}>{t('marketingPage.qr.preview')}</h2>
+        <div className="w-full min-h-56 flex items-center justify-center rounded-[14px] border border-mare-card bg-white p-6">
           {loading ? (
             <LoadingSpinner size={32} />
           ) : qrUrl ? (
@@ -118,15 +118,15 @@ export default function QrCodeTab({ slug, units }) {
           ) : (
             <QrCode size={64} strokeWidth={0.75} className="text-n-200" />
           )}
-        </Card>
-        <div className="bg-n-50 border border-n-200 rounded-sm px-3 py-2 w-full">
+        </div>
+        <div className={`${CAIXA} w-full`}>
           <p className="text-xs font-mono text-n-600 break-all text-center">
             {selectedUnit
               ? `saldesk.cv/book/${slug || '...'}/servico/${selectedUnit}`
               : `saldesk.cv/book/${slug || '...'}`}
           </p>
         </div>
-      </div>
+      </section>
     </div>
   );
 }

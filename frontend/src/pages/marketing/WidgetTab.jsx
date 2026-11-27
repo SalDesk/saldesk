@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useT } from '../../i18n';
-import { CopyBtn } from './shared';
+import { CopyBtn, CARTAO, CAIXA } from './shared';
 
 /* O codigo vem do servidor (GET /marketing/widget-code): um iframe da pagina publica do operador
    (/book/<slug>?widget=1) com um pequeno script que ajusta a altura do iframe. A cor do widget e a
@@ -32,7 +32,7 @@ function PreviewWidget({ slug }) {
       src={`/book/${encodeURIComponent(slug)}?widget=1&preview=1`}
       width="100%"
       height="500"
-      className="block w-full rounded-md border border-n-200 bg-white"
+      className="block w-full rounded-[14px] bg-white"
       style={{ border: 'none', minHeight: 320 }}
     />
   );
@@ -45,14 +45,14 @@ export default function WidgetTab({ widgetCode, slug }) {
   const codigo = typeof widgetCode === 'string' ? widgetCode : '';
 
   return (
-    <div className="space-y-5">
+    <section className={`${CARTAO} space-y-5`}>
       <div>
-        <div className="flex items-center justify-between mb-2">
+        <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
           <label className="text-xs font-body font-bold uppercase tracking-wide text-n-600">{t('marketingPage.widget.htmlCode')}</label>
-          <div className="flex gap-0.5 bg-n-100 rounded-xs p-0.5">
+          <div className="flex gap-0.5 bg-mare-head border border-mare-card rounded-full p-0.5">
             {['Codigo', 'Preview'].map(m => (
               <button key={m} type="button" aria-pressed={(previewMode ? 'Preview' : 'Codigo') === m} onClick={() => setPreviewMode(m === 'Preview')}
-                className={`text-xs px-3 py-1 rounded-xs font-body transition-colors ${(previewMode ? 'Preview' : 'Codigo') === m ? 'bg-white text-ocean-700 shadow-sm' : 'text-n-500 hover:text-n-700'}`}>
+                className={`text-xs px-4 py-1 min-h-11 md:min-h-8 rounded-full font-body font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sand-500 ${(previewMode ? 'Preview' : 'Codigo') === m ? 'bg-white text-ocean-700 shadow-sm' : 'text-n-600 hover:text-n-800'}`}>
                 {m === 'Codigo' ? t('marketingPage.widget.code') : t('marketingPage.widget.preview')}
               </button>
             ))}
@@ -62,20 +62,20 @@ export default function WidgetTab({ widgetCode, slug }) {
         {previewMode ? (
           <PreviewWidget slug={slug} />
         ) : codigo ? (
-          <div className="bg-n-900 rounded-md p-4 overflow-auto">
-            <pre className="text-xs font-mono text-ocean-300 whitespace-pre-wrap break-all">{codigo}</pre>
+          <div className="bg-mare-head border border-mare-card rounded-[14px] p-4 overflow-auto max-h-96 min-w-0">
+            <pre className="text-xs font-mono text-n-800 whitespace-pre-wrap break-all">{codigo}</pre>
           </div>
         ) : (
-          <div className="border border-n-200 rounded-md bg-n-50 px-4 py-6 text-center">
+          <div className={`${CAIXA} px-4 py-6 text-center`}>
             <p className="text-sm font-body text-n-600">{t('marketingPage.widget.failed')}</p>
           </div>
         )}
       </div>
 
       {codigo && (
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
           <CopyBtn text={codigo} />
-          <p className="text-xs font-body text-n-400 flex-1">
+          <p className="text-xs font-body text-n-600 flex-1 min-w-[12rem]">
             {t('marketingPage.widget.pasteHint')}
           </p>
         </div>
@@ -83,12 +83,12 @@ export default function WidgetTab({ widgetCode, slug }) {
 
       <p className="text-xs font-body text-n-500">
         {t('marketingPage.widget.colorNote')}{' '}
-        <a href="/definicoes?tab=perfil" className="font-semibold text-ocean-700 hover:underline">{t('marketingPage.widget.settingsLink')}</a>.
+        <a href="/definicoes?tab=perfil" className="font-semibold text-ocean-700 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sand-500 rounded-xs">{t('marketingPage.widget.settingsLink')}</a>.
       </p>
 
       <p className="text-xs font-body text-n-500">
         {t('marketingPage.widget.sisp')}
       </p>
-    </div>
+    </section>
   );
 }

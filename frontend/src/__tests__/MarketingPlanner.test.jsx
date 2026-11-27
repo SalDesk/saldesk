@@ -13,7 +13,7 @@ const classes = (root) => [...root.querySelectorAll('[class]')].map(e => e.getAt
 const semCoresForaDosTokens = (html) => {
   expect(html).not.toMatch(HEX);
   expect(html).not.toMatch(NOMEADAS);
-  expect(html.replace(/text-error ml-0[.]5/g, '')).not.toMatch(/(?:text|bg|border)-error/);
+  expect(html.replace(/text-error ml-0[.]5/g, '').replace(/hover:text-error/g, '')).not.toMatch(/(?:text|bg|border)-error/);
   expect(html).not.toMatch(/bg-red-/);
 };
 const norm = (t) => t.replace(/\s/g, ' ');
@@ -384,6 +384,48 @@ describe('Planeador: design system', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Promoção especial' }));
     html += classes(m.container);
     semCoresForaDosTokens(html);
+  });
+});
+
+describe('Planeador: estilo Mare', () => {
+  it('o_calendario_o_historico_e_os_posts_proximos_sao_cartoes_Mare', () => {
+    planner(TODOS);
+    const cal = screen.getByText('Novembro 2026').closest('section');
+    expect(cal.className).toContain('border-mare-card');
+    expect(cal.className).toContain('rounded-[18px]');
+    expect(screen.getByRole('table').closest('section').className).toContain('border-mare-card');
+    const outro = linhaDoPost(proximos(), 'Texto do post d').parentElement;
+    expect(outro.className).toContain('border-mare-card');
+    expect(outro.className).toContain('rounded-[18px]');
+    expect(screen.getByText('Planeador de Social Media').className).toContain('text-ocean-900');
+  });
+
+  it('as_datas_e_os_contadores_usam_font_mono', () => {
+    const { container } = planner(TODOS);
+    const data = within(linhaDoPost(proximos(), 'Texto do post d').parentElement).getByText(/10:00/);
+    expect(data.className).toContain('font-mono');
+    const linha = screen.getAllByRole('row')[1];
+    expect(linha.querySelectorAll('td')[2].firstChild.className).toContain('font-mono');
+    expect(within(dias(container)[14]).getByText('15').className).toContain('font-mono');
+  });
+
+  it('os_botoes_de_editar_e_eliminar_sao_IconBtn_de_44px_no_telemovel', () => {
+    planner([post('d', '2026-11-18T10:00')]);
+    const [editar, eliminar] = within(linhaDoPost(proximos(), 'Texto do post d')).getAllByRole('button');
+    [editar, eliminar].forEach(b => expect(b.className).toContain('min-h-11'));
+    expect(eliminar.className).toContain('hover:text-error');
+  });
+
+  it('o_modal_usa_caixas_interiores_Mare_nas_pre_visualizacoes_e_nos_modelos', () => {
+    modal(EXISTENTE);
+    const ig = screen.getByText('Legenda PT', { selector: 'p.line-clamp-3' }).closest('[class*="border-mare-card"]');
+    expect(ig.className).toContain('rounded-[14px]');
+    fireEvent.click(screen.getByRole('button', { name: 'Facebook' }));
+    const fb = screen.getByText('Legenda PT', { selector: 'p.line-clamp-3' }).closest('[class*="border-mare-card"]');
+    expect(fb.className).toContain('rounded-[14px]');
+    const modelo = screen.getByRole('button', { name: 'Tour disponível' });
+    expect(modelo.className).toContain('bg-mare-head');
+    expect(modelo.className).toContain('rounded-[14px]');
   });
 });
 

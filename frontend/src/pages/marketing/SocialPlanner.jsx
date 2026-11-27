@@ -3,14 +3,14 @@ import {
   ChevronLeft, ChevronRight, Plus, Pencil, Trash2, Calendar, Clock, CheckCircle2, Globe2,
 } from 'lucide-react';
 import Button from '../../components/ui/Button';
-import Card from '../../components/ui/Card';
 import Badge from '../../components/ui/Badge';
 import Table from '../../components/ui/Table';
 import EmptyState from '../../components/ui/EmptyState';
+import { IconBtn, EDIT_HOVER, DELETE_HOVER } from '../../components/shared/IconBtn';
 import { useT } from '../../i18n';
 import { formatarData, localeDe, useLingua } from '../../utils/formatoLingua';
 import { nomeMes, diaAbreviado } from '../../components/calendar/rotulosCalendario';
-import { PLATFORMS, STATUS_CONFIG, rotuloEstadoPost, postDateKey } from './shared';
+import { PLATFORMS, STATUS_CONFIG, rotuloEstadoPost, postDateKey, CARTAO, TITULO, NUM } from './shared';
 
 /* ── Calendar helpers ── */
 function calendarDays(year, month) {
@@ -70,7 +70,7 @@ export default function SocialPlanner({ posts, onAdd, onEdit, onDelete, onMarkPu
     {
       key: 'data', label: t('marketingPage.planner.cols.date'),
       render: p => (
-        <span className="text-xs font-mono text-n-600 whitespace-nowrap">
+        <span className={`text-xs ${NUM} text-n-600 whitespace-nowrap`}>
           {p.scheduled_at ? formatarData(p.scheduled_at, {}, lang) : '—'}
         </span>
       ),
@@ -86,8 +86,8 @@ export default function SocialPlanner({ posts, onAdd, onEdit, onDelete, onMarkPu
       key: 'acoes', label: '',
       render: p => (
         <div className="flex gap-1 justify-end">
-          <button type="button" aria-label={t('marketingPage.planner.editPost', { text: (p.text_pt || '').slice(0, 30) })} onClick={() => onEdit(p)} className="p-1 text-n-400 hover:text-ocean-700 transition-colors"><Pencil size={13} strokeWidth={1.75} /></button>
-          <button type="button" aria-label={t('marketingPage.planner.deletePost', { text: (p.text_pt || '').slice(0, 30) })} onClick={() => onDelete(p.id)} className="p-1 text-n-400 hover:text-[var(--error)] transition-colors"><Trash2 size={13} strokeWidth={1.75} /></button>
+          <IconBtn icon={Pencil} label={t('marketingPage.planner.editPost', { text: (p.text_pt || '').slice(0, 30) })} onClick={() => onEdit(p)} hover={EDIT_HOVER} />
+          <IconBtn icon={Trash2} label={t('marketingPage.planner.deletePost', { text: (p.text_pt || '').slice(0, 30) })} onClick={() => onDelete(p.id)} hover={DELETE_HOVER} />
         </div>
       ),
     },
@@ -95,85 +95,81 @@ export default function SocialPlanner({ posts, onAdd, onEdit, onDelete, onMarkPu
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="font-display font-semibold text-base text-n-900">{t('marketingPage.planner.title')}</h2>
-        <Button icon={Plus} size="sm" onClick={() => onAdd(null)}>{t('marketingPage.planner.newPost')}</Button>
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+        <h2 className={TITULO}>{t('marketingPage.planner.title')}</h2>
+        <Button icon={Plus} size="sm" onClick={() => onAdd(null)} className="min-h-11 md:min-h-0">{t('marketingPage.planner.newPost')}</Button>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Calendar */}
-        <Card padding="p-0" className="lg:col-span-2 overflow-hidden">
-          <div className="flex items-center justify-between px-4 py-3 border-b border-n-200">
-            <button type="button" aria-label={t('marketingPage.planner.prevMonth')} onClick={() => setMonth(new Date(year, mon - 1, 1))} className="p-1 rounded hover:bg-n-100 text-n-500 transition-colors">
-              <ChevronLeft size={18} strokeWidth={1.75} />
-            </button>
-            <p className="font-display font-semibold text-sm text-n-900">{nomeMes(mon, t)} {year}</p>
-            <button type="button" aria-label={t('marketingPage.planner.nextMonth')} onClick={() => setMonth(new Date(year, mon + 1, 1))} className="p-1 rounded hover:bg-n-100 text-n-500 transition-colors">
-              <ChevronRight size={18} strokeWidth={1.75} />
-            </button>
+        <section className="bg-white rounded-[18px] border border-mare-card overflow-hidden min-w-0 lg:col-span-2">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-mare-card">
+            <IconBtn icon={ChevronLeft} label={t('marketingPage.planner.prevMonth')} onClick={() => setMonth(new Date(year, mon - 1, 1))} hover={EDIT_HOVER} />
+            <p className={TITULO}>{nomeMes(mon, t)} {year}</p>
+            <IconBtn icon={ChevronRight} label={t('marketingPage.planner.nextMonth')} onClick={() => setMonth(new Date(year, mon + 1, 1))} hover={EDIT_HOVER} />
           </div>
-          <div className="grid grid-cols-7 border-b border-n-100">
+          <div className="grid grid-cols-7 border-b border-mare-card bg-mare-head">
             {WEEKDAYS.map(d => (
-              <div key={d} className="py-2 text-center text-[10px] font-mono font-semibold uppercase tracking-wider text-n-400">{diaAbreviado(d, t)}</div>
+              <div key={d} className="py-2 text-center text-[11px] font-body font-semibold uppercase tracking-wider text-n-600">{diaAbreviado(d, t)}</div>
             ))}
           </div>
           <div className="grid grid-cols-7">
             {days.map((d, i) => {
-              if (d === null) return <div key={`e${i}`} className="h-16 border-r border-b border-n-100 bg-n-50" />;
+              if (d === null) return <div key={`e${i}`} className="h-16 border-r border-b border-mare-card bg-n-50" />;
               const key      = dayKey(d);
               const dayPosts = postsByDate[key] || [];
               const isToday  = key === todayStr;
               return (
                 <button key={key} type="button" aria-label={t('marketingPage.planner.newPostOn', { date: key })} onClick={() => onAdd(key)}
-                  className={`h-16 w-full text-left border-r border-b border-n-100 p-1.5 cursor-pointer hover:bg-ocean-50 transition-colors flex flex-col ${isToday ? 'bg-ocean-50' : ''}`}>
-                  <span className={`text-xs font-mono font-semibold w-5 h-5 flex items-center justify-center rounded-full ${isToday ? 'bg-ocean-700 text-white' : 'text-n-600'}`}>{d}</span>
+                  className={`h-16 w-full text-left border-r border-b border-mare-card p-1.5 cursor-pointer hover:bg-ocean-50 transition-colors flex flex-col focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-sand-500 ${isToday ? 'bg-ocean-50' : ''}`}>
+                  <span className={`text-xs ${NUM} font-semibold w-6 h-6 flex items-center justify-center rounded-full ${isToday ? 'bg-ocean-700 text-white' : 'text-n-700'}`}>{d}</span>
                   <span className="flex flex-wrap gap-0.5 mt-0.5">
                     {dayPosts.slice(0, 3).map(p => (
                       <span key={p.id} className={`w-2 h-2 rounded-full ${p.status === 'publicado' ? 'bg-[var(--success)]' : p.status === 'cancelado' ? 'bg-[var(--error)]' : 'bg-ocean-500'}`} />
                     ))}
-                    {dayPosts.length > 3 && <span className="text-[9px] font-mono text-n-400">+{dayPosts.length - 3}</span>}
+                    {dayPosts.length > 3 && <span className={`text-[10px] ${NUM} text-n-600`}>+{dayPosts.length - 3}</span>}
                   </span>
                 </button>
               );
             })}
           </div>
-        </Card>
+        </section>
 
         {/* Upcoming */}
-        <div className="flex flex-col gap-3">
-          <p className="text-xs font-mono uppercase tracking-wider text-n-500">{t('marketingPage.planner.upcoming')}</p>
+        <div className="flex flex-col gap-3 min-w-0">
+          <p className={TITULO}>{t('marketingPage.planner.upcoming')}</p>
           {upcoming.length === 0 ? (
-            <Card padding="p-0">
+            <section className={CARTAO}>
               <EmptyState icon={Calendar} title={t('marketingPage.planner.noScheduled')} />
-            </Card>
+            </section>
           ) : upcoming.map(p => {
             const dt       = new Date(p.scheduled_at);
             const isToday2 = postDateKey(p) === todayStr;
             return (
-              <Card key={p.id} padding="p-3 flex flex-col gap-2" className={isToday2 ? '!border-sand-300 !bg-sand-50' : ''}>
+              <section key={p.id} className={`rounded-[18px] border p-4 flex flex-col gap-2 min-w-0 ${isToday2 ? 'border-sand-300 bg-sand-50' : 'border-mare-card bg-white'}`}>
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex items-center gap-2 min-w-0">
                     <PlatformIcon platform={p.platform} />
-                    <p className="text-xs font-body text-n-700 truncate">{p.text_pt.slice(0, 50)}{p.text_pt.length > 50 ? '…' : ''}</p>
+                    <p className="text-sm font-body text-n-800 truncate">{p.text_pt.slice(0, 50)}{p.text_pt.length > 50 ? '…' : ''}</p>
                   </div>
                   <div className="flex gap-0.5 shrink-0">
-                    <button type="button" aria-label={t('marketingPage.planner.editPost', { text: p.text_pt.slice(0, 30) })} onClick={() => onEdit(p)} className="p-1 text-n-400 hover:text-ocean-700 transition-colors"><Pencil size={12} strokeWidth={1.75} /></button>
-                    <button type="button" aria-label={t('marketingPage.planner.deletePost', { text: p.text_pt.slice(0, 30) })} onClick={() => onDelete(p.id)} className="p-1 text-n-400 hover:text-[var(--error)] transition-colors"><Trash2 size={12} strokeWidth={1.75} /></button>
+                    <IconBtn icon={Pencil} label={t('marketingPage.planner.editPost', { text: p.text_pt.slice(0, 30) })} onClick={() => onEdit(p)} hover={EDIT_HOVER} />
+                    <IconBtn icon={Trash2} label={t('marketingPage.planner.deletePost', { text: p.text_pt.slice(0, 30) })} onClick={() => onDelete(p.id)} hover={DELETE_HOVER} />
                   </div>
                 </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-mono text-n-400 flex items-center gap-1">
-                    <Clock size={10} strokeWidth={1.75} />
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <span className={`text-xs ${NUM} text-n-600 flex items-center gap-1`}>
+                    <Clock size={11} strokeWidth={1.75} />
                     {formatarData(dt, { day: '2-digit', month: 'short' }, lang)} {dt.toLocaleTimeString(localeDe(lang), { hour: '2-digit', minute: '2-digit' })}
                   </span>
                   {isToday2 && (
                     <button type="button" onClick={() => onMarkPublished(p.id)}
-                      className="flex items-center gap-1 text-[10px] font-body px-2 py-0.5 bg-[var(--success)] text-white rounded-xs hover:opacity-90 transition-colors">
-                      <CheckCircle2 size={10} strokeWidth={2} />{t('marketingPage.planner.published')}
+                      className="flex items-center gap-1 text-xs font-body font-medium px-3 py-1 min-h-11 md:min-h-0 bg-[var(--success)] text-white rounded-full hover:opacity-90 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sand-500">
+                      <CheckCircle2 size={12} strokeWidth={2} />{t('marketingPage.planner.published')}
                     </button>
                   )}
                 </div>
-              </Card>
+              </section>
             );
           })}
         </div>
@@ -181,15 +177,15 @@ export default function SocialPlanner({ posts, onAdd, onEdit, onDelete, onMarkPu
 
       {/* All posts table */}
       {posts.length > 0 && (
-        <div className="mt-6">
-          <p className="text-xs font-mono uppercase tracking-wider text-n-500 mb-3">{t('marketingPage.planner.history', { n: posts.length })}</p>
-          <Card padding="p-0" className="overflow-hidden">
+        <section className={`${CARTAO} mt-6`}>
+          <p className={`${TITULO} mb-3`}>{t('marketingPage.planner.history', { n: posts.length })}</p>
+          <div className="overflow-x-auto">
             <Table
               columns={historyColumns}
               rows={[...posts].sort((a, b) => b.scheduled_at.localeCompare(a.scheduled_at))}
             />
-          </Card>
-        </div>
+          </div>
+        </section>
       )}
     </div>
   );
